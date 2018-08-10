@@ -780,6 +780,9 @@ _ged_spsr_obj(int *is_valid, struct ged *gedp, const char *objname, const char *
     if (is_valid) {
 	int is_v = !bg_trimesh_solid(bot->num_vertices, bot->num_faces, (fastf_t *)bot->vertices, (int *)bot->faces, NULL);
 	(*is_valid) = is_v;
+	if (!is_v && !opts->quiet) {
+	    bu_log("SPSR: created invalid bot: %s\n", objname);
+	}
     }
 
     if (!opts->make_nmg) {
@@ -1037,9 +1040,13 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
     struct bu_ptbl *ar = NULL;
     struct bu_ptbl ar_failed_nmg = BU_PTBL_INIT_ZERO;
     struct bu_ptbl spsr_succeeded = BU_PTBL_INIT_ZERO;
-    struct bu_ptbl *facetize_failed;
+    struct bu_ptbl facetize_failed = BU_PTBL_INIT_ZERO;
     struct bu_ptbl tmpnames = BU_PTBL_INIT_ZERO;
     struct rt_tess_tol *tol = &(gedp->ged_wdbp->wdb_ttol);
+    const char *sname;
+    const char *mav[3];
+    const char *cmdname = "facetize";
+    struct bu_vls invalid_name = BU_VLS_INIT_ZERO;
 
     /* We need to copy combs above regions that are not themselves regions.
      * Also, facetize will need all "active" regions that will define shapes.
@@ -1108,11 +1115,27 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
     }
 
     /* Regions will have a name mapping both to a new region comb AND a facetized
-     * solid object - set up both */
+     * solid object - set up both names, and create the region combs */
     for (i = 0; i < BU_PTBL_LEN(ar); i++) {
 	struct directory *n = (struct directory *)BU_PTBL_GET(ar, i);
 	_ged_facetize_mkname(gedp, opts, n->d_namep, SOLID_OBJ_NAME);
 	_ged_facetize_mkname(gedp, opts, n->d_namep, COMB_OBJ_NAME);
+	if (!opts->quiet) {
+	    bu_log("Rebuilding region comb %s (%d of %d)...\n", n->d_namep, i+1, BU_PTBL_LEN(ar));
+	}
+	if (_ged_facetize_cpcomb(gedp, n->d_namep, opts) != GED_OK) {
+	    if (opts->verbosity) {
+		bu_log("Failed to creating comb %s for %s \n", bu_avs_get(opts->c_map, n->d_namep), n->d_namep);
+	    }
+	} else {
+	    const char *rcname = bu_avs_get(opts->c_map, n->d_namep);
+	    const char *ssname = bu_avs_get(opts->s_map, n->d_namep);
+	    if (_ged_combadd2(gedp, (char *)rcname, 1, (const char **)&ssname, 0, DB_OP_UNION, 0, 0, NULL, 0) != GED_OK) {
+		if (opts->verbosity) {
+		    bu_log("Error adding %s to comb %s", ssname, rcname);
+		}
+	    }
+	}
     }
 
     /* TODO - someday this object-level facetization should be done in
@@ -1123,39 +1146,50 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	struct directory *n = (struct directory *)BU_PTBL_GET(ar, i);
 	const char *oname = n->d_namep;
 	const char *nname = bu_avs_get(opts->s_map, n->d_namep);
-	/* We're staring a new object, so we want to write out the header in the
-	 * log file the first time we get an NMG logging event.  (Re)set the flag
-	 * so the logger knows to do so. */
-	opts->nmg_log_print_header = 1;
-	bu_vls_sprintf(opts->nmg_log_header, "NMG: tessellating %s (%d of %d) with tolerances a=%g, r=%g, n=%g\n", oname, i+1, BU_PTBL_LEN(ar), tol->abs, tol->rel, tol->norm);
 
-	/* Let the user know what's going on, unless output is suppressed */
-	if (!opts->quiet) {
-	    bu_log("%s", bu_vls_addr(opts->nmg_log_header));
+	if (opts->method_flags & GED_FACETIZE_NMGBOOL) {
+
+	    /* We're staring a new object, so we want to write out the header in the
+	     * log file the first time we get an NMG logging event.  (Re)set the flag
+	     * so the logger knows to do so. */
+	    opts->nmg_log_print_header = 1;
+	    bu_vls_sprintf(opts->nmg_log_header, "NMG: tessellating %s (%d of %d) with tolerances a=%g, r=%g, n=%g\n", oname, i+1, BU_PTBL_LEN(ar), tol->abs, tol->rel, tol->norm);
+
+	    /* Let the user know what's going on, unless output is suppressed */
+	    if (!opts->quiet) {
+		bu_log("%s", bu_vls_addr(opts->nmg_log_header));
+	    }
+
+	    if (_ged_nmg_obj(gedp, 1, (const char **)&oname, nname, opts) != GED_OK) {
+		bu_ptbl_ins(&ar_failed_nmg, (long *)oname);
+	    }
 	}
 
-	if (_ged_nmg_obj(gedp, 1, (const char **)&oname, nname, opts) != GED_OK) {
-	    bu_ptbl_ins(&ar_failed_nmg, (long *)oname);
-	} else {
-	    if (_ged_facetize_cpcomb(gedp, oname, opts) != GED_OK) {
-		if (opts->verbosity) {
-		    bu_log("Failed to creating comb %s for %s \n", bu_avs_get(opts->c_map, oname), oname);
+	/* If nmgbool is OFF and SPSR is ON, we'll have to try SPSR for all of them */
+	if (opts->method_flags == GED_FACETIZE_SPSR) {
+	    int is_valid = 0;
+	    if (_ged_spsr_obj(&is_valid, gedp, oname, nname, opts) == GED_OK) {
+		/* Check the validity */
+		if (is_valid) {
+		    bu_ptbl_ins(&spsr_succeeded, (long *)bu_avs_get(opts->s_map, oname));
+		} else {
+		    /* rename to INVALID and add the bot to the facetize_failed list for inspection */
+		    bu_vls_sprintf(&invalid_name, "%s_SPSR_INVALID-0", nname);
+		    sname = bu_strdup(bu_vls_addr(&invalid_name));
+		    mav[0] = cmdname;
+		    mav[1] = nname;
+		    mav[2] = sname;
+		    ret = ged_move(gedp, 3, (const char **)mav);
+		    bu_ptbl_ins(&tmpnames, (long *)sname);
+		    bu_ptbl_ins(&facetize_failed, (long *)sname);
 		}
 	    } else {
-		const char *rname = bu_avs_get(opts->c_map, oname);
-		const char *sname = bu_avs_get(opts->s_map, oname);
-		if (_ged_combadd2(gedp, (char *)rname, 1, (const char **)&sname, 0, DB_OP_UNION, 0, 0, NULL, 0) != GED_OK) {
-		    if (opts->verbosity) {
-			bu_log("Error adding %s to comb %s", sname, rname);
-		    }
-		}
+		bu_ptbl_ins(&facetize_failed, (long *)oname);
 	    }
 	}
     }
 
-    /* Try SPSR as a fallback, if NMG booleans failed */
-    BU_ALLOC(facetize_failed, struct bu_ptbl);
-    bu_ptbl_init(facetize_failed, 64, "failed list init");
+    /* Try SPSR as a fallback, if NMG booleans failed and SPSR is enabled */
     if (BU_PTBL_LEN(&ar_failed_nmg) > 0 && (opts->method_flags & GED_FACETIZE_SPSR)) {
 	for (i = 0; i < BU_PTBL_LEN(&ar_failed_nmg); i++) {
 	    const char *oname = (const char *)BU_PTBL_GET(&ar_failed_nmg, i);
@@ -1164,38 +1198,20 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	    if (_ged_spsr_obj(&is_valid, gedp, oname, nname, opts) == GED_OK) {
 		/* Check the validity */
 		if (is_valid) {
-		    if (_ged_facetize_cpcomb(gedp, oname, opts) != GED_OK) {
-			if (opts->verbosity) {
-			    bu_log("Failed to creating comb %s for %s \n", bu_avs_get(opts->c_map, oname), oname);
-			}
-		    } else {
-			const char *rname = bu_avs_get(opts->c_map, oname);
-			const char *sname = bu_avs_get(opts->s_map, oname);
-			if (_ged_combadd2(gedp, (char *)rname, 1, (const char **)&sname, 0, DB_OP_UNION, 0, 0, NULL, 0) != GED_OK) {
-			    if (opts->verbosity) {
-				bu_log("Error adding %s to comb %s \n", sname, rname);
-			    }
-			}
-		    }
 		    bu_ptbl_ins(&spsr_succeeded, (long *)bu_avs_get(opts->s_map, oname));
 		} else {
 		    /* rename to INVALID and add the bot to the facetize_failed list for inspection */
-		    const char *sname;
-		    const char *mav[3];
-		    const char *cmdname = "facetize";
-		    struct bu_vls invalid_name = BU_VLS_INIT_ZERO;
 		    bu_vls_sprintf(&invalid_name, "%s_SPSR_INVALID-0", nname);
 		    sname = bu_strdup(bu_vls_addr(&invalid_name));
-		    bu_vls_free(&invalid_name);
 		    mav[0] = cmdname;
 		    mav[1] = nname;
 		    mav[2] = sname;
 		    ret = ged_move(gedp, 3, (const char **)mav);
 		    bu_ptbl_ins(&tmpnames, (long *)sname);
-		    bu_ptbl_ins(facetize_failed, (long *)sname);
+		    bu_ptbl_ins(&facetize_failed, (long *)sname);
 		}
 	    } else {
-		bu_ptbl_ins(facetize_failed, (long *)oname);
+		bu_ptbl_ins(&facetize_failed, (long *)oname);
 	    }
 	}
 	if (BU_PTBL_LEN(&spsr_succeeded) > 0) {
@@ -1209,16 +1225,16 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
     } else {
 	for (i = 0; i < BU_PTBL_LEN(&ar_failed_nmg); i++) {
 	    const char *oname = (const char *)BU_PTBL_GET(&ar_failed_nmg, i);
-	    bu_ptbl_ins(facetize_failed, (long *)oname);
+	    bu_ptbl_ins(&facetize_failed, (long *)oname);
 	}
     }
 
-    if (BU_PTBL_LEN(facetize_failed) > 0) {
+    if (BU_PTBL_LEN(&facetize_failed) > 0) {
 	/* Stash any failed regions into a top level comb for easy subsequent examination */
 	struct bu_vls failed_name = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&failed_name, "%s_FAILED-0", newname);
 	bu_vls_incr(&failed_name, NULL, NULL, &_db_uniq_test, (void *)gedp);
-	ret = _ged_combadd2(gedp, bu_vls_addr(&failed_name), (int)BU_PTBL_LEN(facetize_failed), (const char **)facetize_failed->buffer, 0, DB_OP_UNION, 0, 0, NULL, 0);
+	ret = _ged_combadd2(gedp, bu_vls_addr(&failed_name), (int)BU_PTBL_LEN(&facetize_failed), (const char **)facetize_failed.buffer, 0, DB_OP_UNION, 0, 0, NULL, 0);
     }
 
     /* For all the pc combs, make new versions with the suffixed names */
@@ -1317,29 +1333,27 @@ ged_facetize_regions_memfree:
     }
 
     /* Final report */
-    bu_vls_printf(gedp->ged_result_str, "Objects successfully converted: %d of %d\n", BU_PTBL_LEN(ar) - BU_PTBL_LEN(facetize_failed), BU_PTBL_LEN(ar));
+    bu_vls_printf(gedp->ged_result_str, "Objects successfully converted: %d of %d\n", BU_PTBL_LEN(ar) - BU_PTBL_LEN(&facetize_failed), BU_PTBL_LEN(ar));
     if (BU_PTBL_LEN(&spsr_succeeded)) {
 	bu_vls_printf(gedp->ged_result_str, "Objects converted with SPSR: %d\n", BU_PTBL_LEN(&spsr_succeeded));
     }
-    if (BU_PTBL_LEN(facetize_failed)) {
-	bu_vls_printf(gedp->ged_result_str, "WARNING: %d objects failed:\n", BU_PTBL_LEN(facetize_failed));
-	if (BU_PTBL_LEN(facetize_failed)) {
-	    for (i = 0; i < BU_PTBL_LEN(facetize_failed); i++) {
-		bu_vls_printf(gedp->ged_result_str, "	%s\n", (const char *)BU_PTBL_GET(facetize_failed, i));
-	    }
+    if (BU_PTBL_LEN(&facetize_failed)) {
+	bu_vls_printf(gedp->ged_result_str, "WARNING: %d objects failed:\n", BU_PTBL_LEN(&facetize_failed));
+	for (i = 0; i < BU_PTBL_LEN(&facetize_failed); i++) {
+	    bu_vls_printf(gedp->ged_result_str, "	%s\n", (const char *)BU_PTBL_GET(&facetize_failed, i));
 	}
     }
 
     for (i = 0; i < BU_PTBL_LEN(&tmpnames); i++) {
 	bu_free((char *)BU_PTBL_GET(&tmpnames, i), "temp name string");
     }
+    bu_vls_free(&invalid_name);
     bu_ptbl_free(&tmpnames);
     bu_ptbl_free(pc);
     bu_ptbl_free(ar);
     bu_ptbl_free(&ar_failed_nmg);
-    bu_ptbl_free(facetize_failed);
+    bu_ptbl_free(&facetize_failed);
     bu_ptbl_free(&spsr_succeeded);
-    bu_free(facetize_failed, "failed table");
     bu_free(pc, "pc table");
     bu_free(ar, "ar table");
     return ret;
