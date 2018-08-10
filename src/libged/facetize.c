@@ -84,6 +84,9 @@ struct _ged_facetize_opts {
     struct bu_vls *nmg_log;
     struct bu_vls *nmg_log_header;
     int nmg_log_print_header;
+    int stderr_stashed;
+    int serr;
+    int fnull;
 };
 
 struct _ged_facetize_opts * _ged_facetize_opts_create()
@@ -198,6 +201,21 @@ _ged_facetize_nmg_logging_hook(void *data, void *str)
 HIDDEN void
 _ged_facetize_log_nmg(struct _ged_facetize_opts *o)
 {
+    /* Seriously, bu_bomb, we don't want you blathering
+     * to stderr... shut down stderr temporarily, assuming
+     * we can find /dev/null or something similar */
+    o->fnull = open("/dev/null", O_WRONLY);
+    if (o->fnull == -1) {
+	/* https://gcc.gnu.org/ml/gcc-patches/2005-05/msg01793.html */
+	o->fnull = open("nul", O_WRONLY);
+    }
+    if (o->fnull != -1) {
+	o->serr = fileno(stderr);
+	o->stderr_stashed = dup(o->serr);
+	dup2(o->fnull, o->serr);
+	close(o->fnull);
+    }
+
     /* Set bu_log logging to capture in nmg_log, rather than the
      * application defaults */
     bu_log_hook_delete_all();
@@ -211,6 +229,14 @@ _ged_facetize_log_default(struct _ged_facetize_opts *o)
     /* Restore bu_log logging to the application defaults */
     bu_log_hook_delete_all();
     bu_log_hook_restore_all(o->saved_log_hooks);
+
+    /* Put stderr back */
+    if (o->fnull != -1) {
+	fflush(stderr);
+	dup2(o->stderr_stashed, o->serr);
+	close(o->stderr_stashed);
+	o->fnull = -1;
+    }
 }
 
 HIDDEN void
@@ -1129,7 +1155,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	_ged_facetize_mkname(gedp, opts, n->d_namep, SOLID_OBJ_NAME);
 	_ged_facetize_mkname(gedp, opts, n->d_namep, COMB_OBJ_NAME);
 	if (!opts->quiet) {
-	    bu_log("Rebuilding region comb %s (%d of %d)...\n", n->d_namep, i+1, BU_PTBL_LEN(ar));
+	    bu_log("Copying (sans tree) region comb %s to %s (%d of %d)...\n", n->d_namep, bu_avs_get(opts->c_map, n->d_namep), i+1, BU_PTBL_LEN(ar));
 	}
 	if (_ged_facetize_cpcomb(gedp, n->d_namep, opts) != GED_OK) {
 	    if (opts->verbosity) {
