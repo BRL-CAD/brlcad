@@ -196,15 +196,11 @@ mged_db_search_callback(int argc, const char *argv[], void *userdata)
 
     result = Tcl_GetStringFromObj(Tcl_GetObjResult((Tcl_Interp *)userdata), &len);
 
-    puts(result);
-    fflush(stdout);
-    /* FIXME: this might not be such a good idea, but
-     * if we don't trim the newline then basic things like
-     * `search -exec echo 0` won't work */
-    if (len > 0 && result[len-1] == '\n')
-	result[len-1] = '\0';
+    bu_log("%s", result);
 
-    return TCL_OK == ret && TCL_OK == Tcl_GetBoolean((Tcl_Interp *)userdata, result, &ret) && ret;
+    Tcl_ResetResult((Tcl_Interp *)userdata);
+
+    return ret;
 }
 
 
