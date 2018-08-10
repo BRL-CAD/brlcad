@@ -157,7 +157,7 @@ rt_script_free(struct soltab *stp)
 
 
 int
-rt_script_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_script_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     struct rt_script_internal *script_ip;
 
@@ -178,7 +178,7 @@ rt_script_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn
  * Import a script from the database format to the internal format.
  */
 int
-rt_script_import4(struct rt_db_internal *ip, const struct bu_external *ep, const struct db_i *dbip)
+rt_script_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *UNUSED(mat), const struct db_i *dbip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);
     if (ep) BU_CK_EXTERNAL(ep);
@@ -192,7 +192,7 @@ rt_script_import4(struct rt_db_internal *ip, const struct bu_external *ep, const
  * The name is added by the caller, in the usual place.
  */
 int
-rt_script_export4(struct bu_external *ep, const struct rt_db_internal *ip, const struct db_i *dbip)
+rt_script_export4(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *dbip)
 {
     if (ep) BU_CK_EXTERNAL(ep);
     if (ip) RT_CK_DB_INTERNAL(ip);
@@ -206,8 +206,8 @@ rt_script_export4(struct bu_external *ep, const struct rt_db_internal *ip, const
  * Import a script from the database format to the internal format.
  */
 int
-rt_script_import5(struct rt_db_internal *ip, const struct bu_external *ep)
-{    
+rt_script_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *UNUSED(mat), const struct db_i *UNUSED(dbip))
+{
     struct rt_script_internal *script_ip;
     unsigned char *ptr;
 
@@ -237,7 +237,7 @@ rt_script_import5(struct rt_db_internal *ip, const struct bu_external *ep)
  * The name is added by the caller, in the usual place.
  */
 int
-rt_script_export5(struct bu_external *ep, const struct rt_db_internal *ip, const struct db_i *dbip)
+rt_script_export5(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *dbip)
 {
     struct rt_script_internal *script_ip;
     unsigned char *cp;
@@ -277,7 +277,7 @@ rt_script_export5(struct bu_external *ep, const struct rt_db_internal *ip, const
  * tab, and give parameter values.
  */
 int
-rt_script_describe(struct bu_vls *str, const struct rt_db_internal *ip)
+rt_script_describe(struct bu_vls *str, const struct rt_db_internal *ip, int UNUSED(verbose), double UNUSED(mm2local))
 {
     char buf[256];
     struct rt_script_internal *script_ip =
@@ -352,7 +352,7 @@ rt_script_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const 
 
 
 int
-rt_script_adjust(struct rt_db_internal *intern)
+rt_script_adjust(struct bu_vls *UNUSED(logstr), struct rt_db_internal *intern, int UNUSED(argc), const char **UNUSED(argv))
 {
     struct rt_script_internal *script_ip;
 
