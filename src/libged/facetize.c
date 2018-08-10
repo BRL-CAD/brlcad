@@ -541,6 +541,7 @@ _try_decimate(struct rt_bot_internal *bot, fastf_t feature_size, struct _ged_fac
     } else {
 	/* catch */
 	BU_UNSETJUMP;
+	/* Failed - free the working copy */
 	bu_free(nbot->faces, "free faces");
 	bu_free(nbot->vertices, "free vertices");
 	bu_free(nbot, "free bot");
@@ -549,12 +550,14 @@ _try_decimate(struct rt_bot_internal *bot, fastf_t feature_size, struct _ged_fac
     } BU_UNSETJUMP;
 
     if (success) {
-	bu_free(bot->faces, "free faces");
-	bu_free(bot->vertices, "free vertices");
-	bu_free(bot, "free bot");
+	/* Success - free the old BoT, return the new one */
+	bu_free(obot->faces, "free faces");
+	bu_free(obot->vertices, "free vertices");
+	bu_free(obot, "free bot");
 	_ged_facetize_log_default(o);
 	return nbot;
     } else {
+	/* Failed - free the working copy */
 	bu_free(nbot->faces, "free faces");
 	bu_free(nbot->vertices, "free vertices");
 	bu_free(nbot, "free bot");
