@@ -1261,10 +1261,10 @@ f_exec(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(db
     int i, ret;
     char *name = NULL;
 
-    if (db_node->path->fp_len > 1) {
-	name = db_path_to_string(db_node->path);
-    } else {
+    if (db_node->flags & DB_SEARCH_RETURN_UNIQ_DP) {
 	name = DB_FULL_PATH_CUR_DIR(db_node->path)->d_namep;
+    } else {
+	name = db_path_to_string(db_node->path);
     }
 
     /* fill in each hole in the argv array */
@@ -1274,7 +1274,7 @@ f_exec(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(db
 
     ret = (*plan->p_un.ex._e_callback)(plan->p_un.ex._e_argc, (const char**)plan->p_un.ex._e_argv, plan->p_un.ex._e_userdata);
 
-    if (db_node->path->fp_len > 1) {
+    if (!(db_node->flags & DB_SEARCH_RETURN_UNIQ_DP)) {
     	bu_free(name, "f_exec string");
     }
 
