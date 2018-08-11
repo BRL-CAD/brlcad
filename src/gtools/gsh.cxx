@@ -38,7 +38,7 @@ extern "C" {
 #include "ged.h"
 }
 
-#define GSH_PROMPT "gsh> "
+#define DEFAULT_GSH_PROMPT "g> "
 
 int
 main(int argc, const char **argv)
@@ -51,7 +51,7 @@ main(int argc, const char **argv)
     struct bu_vls msg = BU_VLS_INIT_ZERO;
     struct bu_vls iline= BU_VLS_INIT_ZERO;
     struct bu_vls open_gfile = BU_VLS_INIT_ZERO;
-    const char *gpmpt = GSH_PROMPT;
+    const char *gpmpt = DEFAULT_GSH_PROMPT;
     struct bu_opt_desc d[2];
     BU_OPT(d[0],  "h", "help", "",       NULL,              &print_help,     "print help and exit");
     BU_OPT_NULL(d[1]);
