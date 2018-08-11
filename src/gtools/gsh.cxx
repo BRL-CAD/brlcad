@@ -50,6 +50,7 @@ main(int argc, const char **argv)
     int print_help = 0;
     struct bu_vls msg = BU_VLS_INIT_ZERO;
     struct bu_vls iline= BU_VLS_INIT_ZERO;
+    struct bu_vls open_gfile = BU_VLS_INIT_ZERO;
     const char *gpmpt = GSH_PROMPT;
     struct bu_opt_desc d[2];
     BU_OPT(d[0],  "h", "help", "",       NULL,              &print_help,     "print help and exit");
@@ -99,6 +100,8 @@ main(int argc, const char **argv)
 	    bu_vls_free(&msg);
 	    bu_dlclose(libged);
 	    bu_exit(EXIT_FAILURE, "Could not open %s as a .g file\n", argv[0]) ;
+	} else {
+	    bu_vls_sprintf(&open_gfile, "%s", argv[0]);
 	}
     }
 
@@ -140,25 +143,42 @@ main(int argc, const char **argv)
 	 * awareness at this level, since the gedp pointer
 	 * must respond to them. */
 	if (BU_STR_EQUAL(av[0], "ged_open")) {
-	    if (gedp) ged_close(gedp);
-	    gedp = ged_open("db", argv[1], 0);
+	    if (ac > 1) {
+		if (gedp) ged_close(gedp);
+		gedp = ged_open("db", av[1], 0);
+		bu_vls_sprintf(&open_gfile, "%s", av[1]);
+		printf("Opened file %s\n", bu_vls_addr(&open_gfile));
+	    } else {
+		printf("Error: invalid ged_open call\n");
+	    }
 	    bu_free(input, "input copy");
 	    bu_free(av, "input argv");
 	    bu_vls_trunc(&iline, 0);
 	    continue;
 	}
+
+	if (!gedp) {
+	    printf("Error: no database is currently open.\n");
+	    bu_free(input, "input copy");
+	    bu_free(av, "input argv");
+	    bu_vls_trunc(&iline, 0);
+	    continue;
+	}
+
 
 	if (BU_STR_EQUAL(av[0], "ged_close")) {
 	    ged_close(gedp);
 	    gedp = NULL;
-	    printf("closed open database\n");
+	    printf("closed database %s\n", bu_vls_addr(&open_gfile));
+	    bu_vls_trunc(&open_gfile, 0);
 	    bu_free(input, "input copy");
 	    bu_free(av, "input argv");
 	    bu_vls_trunc(&iline, 0);
 	    continue;
 	}
 
-	/* If we're not opening or closing, standard libged call */
+	/* If we're not opening or closing, and we have an active gedp,
+	 * make a standard libged call */
 	*(void **)(&func) = bu_dlsym(libged, av[0]);
 	if (!func) {
 	    printf("unrecognzied command: %s\n", av[0]);
@@ -177,6 +197,7 @@ done:
     if (gedp) ged_close(gedp);
     linenoiseHistoryFree();
     bu_vls_free(&msg);
+    bu_vls_free(&open_gfile);
     bu_vls_free(&iline);
     return ret;
 }
