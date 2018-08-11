@@ -72,10 +72,10 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (print_help) {
-	const char *usage = bu_opt_describe((struct bu_opt_desc *)&d, NULL);
+	char *usage = bu_opt_describe((struct bu_opt_desc *)&d, NULL);
 	bu_vls_printf(gedp->ged_result_str, "Usage: gdiff [opts] left_obj right_obj\nOptions:\n%s\nRed segments are those generated\nonly from intersections with \"left_obj\" while blue segments represent\nintersections unique to \"right_obj\".  White segments represent intersections\ncommon to both objects. By default, segments unique to left and right objects are displayed.  ", usage);
 	bu_vls_printf(gedp->ged_result_str, "If no tolerance is given, a default of 100mm is used.\n\n Be careful of using too fine a grid - finer grides will (up to a point) yield better visuals, but too fine a grid can cause very long raytracing times.");
-	bu_free((char *)usage, "help str");
+	bu_free(usage, "help str");
 	return GED_OK;
     }
 

@@ -117,7 +117,7 @@ opt_is_filtered(struct bu_opt_desc *d, int f_ac, char **f_av, int accept)
 }
 
 
-HIDDEN const char *
+HIDDEN char *
 bu_opt_describe_internal_ascii(struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings)
 {
     size_t i = 0;
@@ -136,7 +136,7 @@ bu_opt_describe_internal_ascii(struct bu_opt_desc *ds, struct bu_opt_desc_opts *
       bu_opt_desc_t desc_type = BU_OPT_FULL;
       bu_opt_format_t format_type = BU_OPT_ASCII;
     */
-    const char *finalized;
+    char *finalized;
     struct bu_vls description = BU_VLS_INIT_ZERO;
     int *status;
     if (!ds || opt_desc_is_null(&ds[0]))
@@ -406,13 +406,13 @@ docbook_print_long_opt(struct bu_vls *desc, struct bu_opt_desc *d, int opt_type,
 }
 
 
-HIDDEN const char *
+HIDDEN char *
 bu_opt_describe_internal_docbook(struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings)
 {
     int opt_cnt, j;
     int i = 0;
     int show_all_longopts = 0;
-    const char *finalized;
+    char *finalized;
     struct bu_vls description = BU_VLS_INIT_ZERO;
     int *status;
 
@@ -504,7 +504,7 @@ bu_opt_describe_internal_docbook(struct bu_opt_desc *ds, struct bu_opt_desc_opts
 }
 
 
-const char *
+char *
 bu_opt_describe(struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings)
 {
     if (!ds)

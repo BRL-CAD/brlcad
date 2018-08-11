@@ -529,7 +529,6 @@ main(int argc, const char **argv)
     int nret = 0;
     struct db_i *dbip;
     struct nirt_state *ns = NULL;
-    const char *help = NULL;
     const char *np = NULL;
     const char *units_str = NULL;
     char *dot = NULL;
@@ -590,11 +589,11 @@ main(int argc, const char **argv)
     /* If we've been asked to print help or don't know what to do, print help
      * and exit */
     if (print_help || argc < 2 || (silent_mode == SILENT_YES && verbose_mode)) {
+	char *help = bu_opt_describe(d, &dopts);
 	ret = (argc < 2) ? EXIT_FAILURE : EXIT_SUCCESS;
-	help = bu_opt_describe(d, &dopts);
 	bu_vls_sprintf(&msg, "Usage: 'nirt [options] model.g objects...'\n\nNote: by default NIRT is using a new implementation which may have behavior changes.  During migration, old behavior can be enabled by adding the option \"--old\" as the first option to the nirt program.\n\nOptions:\n%s\n", help);
 	nirt_out(&io_data, bu_vls_addr(&msg));
-	if (help) bu_free((char *)help, "help str");
+	if (help) bu_free(help, "help str");
 	goto done;
     }
 

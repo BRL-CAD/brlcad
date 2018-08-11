@@ -233,7 +233,7 @@ HIDDEN void
 _ged_ls_show_help(struct ged *gedp, struct bu_opt_desc *d)
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
-    const char *option_help;
+    char *option_help;
 
     bu_vls_sprintf(&str, "Usage:\n");
     bu_vls_printf(&str,  "ls [-achlpqrs] [object_pattern_1] [object_pattern_2]...\n");
@@ -242,7 +242,7 @@ _ged_ls_show_help(struct ged *gedp, struct bu_opt_desc *d)
 
     if ((option_help = bu_opt_describe(d, NULL))) {
 	bu_vls_printf(&str, "Options:\n%s", option_help);
-	bu_free((char *)option_help, "help str");
+	bu_free(option_help, "help str");
     }
 
     bu_vls_vlscat(gedp->ged_result_str, &str);

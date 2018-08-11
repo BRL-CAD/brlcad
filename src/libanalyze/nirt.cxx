@@ -2104,14 +2104,14 @@ _nirt_cmd_attr(void *ns, int argc, const char *argv[])
     BU_OPT(d[2],  "f", "flush", "",  NULL,   &attr_flush, "clear attribute list");
     BU_OPT(d[3],  "v", "",      "",  NULL,   &val_attrs,  "validate attributes - only accept attributes used by one or more objects in the active database");
     BU_OPT_NULL(d[4]);
-    const char *help = bu_opt_describe(d, NULL);
     const char *ustr = "Usage: attr <opts> <attribute_name_1> <attribute_name_2> ...\nNote: attr with no options and no attributes to add will print the list of active attributes.\nOptions:";
 
     argv++; argc--;
 
     if ((ac = bu_opt_parse(&optparse_msg, argc, (const char **)argv, d)) == -1) {
+	char *help = bu_opt_describe(d, NULL);
 	nerr(nss, "Error: bu_opt value read failure: %s\n\n%s\n%s\n", bu_vls_addr(&optparse_msg), ustr, help);
-	if (help) bu_free((char *)help, "help str");
+	if (help) bu_free(help, "help str");
 	bu_vls_free(&optparse_msg);
 	return -1;
     }
@@ -2120,8 +2120,9 @@ _nirt_cmd_attr(void *ns, int argc, const char *argv[])
     if (attr_flush) nss->i->attrs.clear();
 
     if (print_help || (attr_print && ac > 0)) {
+	char *help = bu_opt_describe(d, NULL);
 	nerr(nss, "%s\n%s", ustr, help);
-	if (help) bu_free((char *)help, "help str");
+	if (help) bu_free(help, "help str");
 	return -1;
     }
     if (attr_print || ac == 0) {
@@ -2228,22 +2229,23 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
     BU_OPT(d[0],  "h", "help",       "",             NULL,   &print_help, "print help and exit");
     BU_OPT(d[1],  "t", "tol",   "<val>",  &bu_opt_fastf_t,   &tol,        "set diff tolerance");
     BU_OPT_NULL(d[2]);
-    const char *help = bu_opt_describe(d, NULL);
     const char *ustr = "Usage: diff [opts] shotfile";
 
     argv++; argc--;
 
     if ((ac = bu_opt_parse(&optparse_msg, argc, (const char **)argv, d)) == -1) {
+	char *help = bu_opt_describe(d, NULL);
 	nerr(nss, "Error: bu_opt value read failure: %s\n\n%s\n%s\n", bu_vls_addr(&optparse_msg), ustr, help);
-	if (help) bu_free((char *)help, "help str");
+	if (help) bu_free(help, "help str");
 	bu_vls_free(&optparse_msg);
 	return -1;
     }
     bu_vls_free(&optparse_msg);
 
     if (print_help || !argv[0]) {
+	char *help = bu_opt_describe(d, NULL);
 	nerr(nss, "%s\n%s", ustr, help);
-	if (help) bu_free((char *)help, "help str");
+	if (help) bu_free(help, "help str");
 	return -1;
     }
 

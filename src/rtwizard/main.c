@@ -775,37 +775,34 @@ rtwizard_help(struct bu_opt_desc *d)
     struct bu_opt_desc_opts settings = BU_OPT_DESC_OPTS_INIT_ZERO;
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_vls filtered = BU_VLS_INIT_ZERO;
-    const char *option_help = NULL;
+    char *option_help = bu_opt_describe(d, &settings);
 
     bu_vls_sprintf(&str, "\nUsage: rtwizard [options]\n\n");
 
     /* I/O options */
     bu_vls_sprintf(&filtered, "h help-dev gui no-gui i o d p v");
     settings.accept = bu_vls_addr(&filtered);
-    option_help = bu_opt_describe(d, &settings);
     if (option_help) {
 	bu_vls_printf(&str, "Input/Output Options:\n%s\n", option_help);
-	bu_free((char *)option_help, "help str");
     }
 
     /* Model View options */
     bu_vls_sprintf(&filtered, "a e twist P z center");
     settings.accept = bu_vls_addr(&filtered);
-    option_help = bu_opt_describe(d, &settings);
     if (option_help) {
 	bu_vls_printf(&str, "Model View Options:\n%s\n", option_help);
-	bu_free((char *)option_help, "help str");
     }
 
     /* Image Generation options */
     bu_vls_sprintf(&filtered, "w n s c g l C line-color non-line-color G O cpu-count t");
     settings.accept = bu_vls_addr(&filtered);
-    option_help = bu_opt_describe(d, &settings);
     if (option_help) {
 	bu_vls_printf(&str, "Image Generation Options:\n%s\n", option_help);
-	bu_free((char *)option_help, "help str");
     }
 
+    if (option_help) {
+	bu_free(option_help, "help str");
+    }
     bu_log("%s", bu_vls_addr(&str));
     bu_vls_free(&str);
     bu_vls_free(&filtered);
@@ -819,7 +816,7 @@ rtwizard_help_dev(struct bu_opt_desc *d)
     struct bu_opt_desc_opts settings = BU_OPT_DESC_OPTS_INIT_ZERO;
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_vls filtered = BU_VLS_INIT_ZERO;
-    const char *option_help = NULL;
+    char *option_help = NULL;
     const char *devopts = "benchmark viewsize orientation eye_pt log-file pid-file";
 
     bu_vls_sprintf(&str, "\nUsage: rtwizard [options]\n\n");
@@ -829,7 +826,7 @@ rtwizard_help_dev(struct bu_opt_desc *d)
     option_help = bu_opt_describe(d, &settings);
     if (option_help) {
 	bu_vls_printf(&str, "Options for developers:\n%s\n", option_help);
-	bu_free((char *)option_help, "help str");
+	bu_free(option_help, "help str");
     }
 
     bu_log("%s", bu_vls_addr(&str));

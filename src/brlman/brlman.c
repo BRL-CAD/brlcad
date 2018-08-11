@@ -225,11 +225,11 @@ BRLMAN_MAIN(
 
     /* If we want help, print help */
     if (print_help) {
-	const char *option_help = bu_opt_describe(d, NULL);
+	char *option_help = bu_opt_describe(d, NULL);
 	bu_log("Usage: brlman [options] [man_page]\n");
 	if (option_help) {
 	    bu_log("Options:\n%s\n", option_help);
-	    bu_free((char *)option_help, "help str");
+	    bu_free(option_help, "help str");
 	}
 	bu_exit(EXIT_SUCCESS, NULL);
     }

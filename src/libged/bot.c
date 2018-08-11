@@ -42,13 +42,13 @@ HIDDEN void
 _bot_show_help(struct ged *gedp, struct bu_opt_desc *d)
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
-    const char *option_help;
+    char *option_help;
 
     bu_vls_sprintf(&str, "Usage: bot [options] [subcommand] [subcommand arguments]\n\n");
 
     if ((option_help = bu_opt_describe(d, NULL))) {
 	bu_vls_printf(&str, "Options:\n%s\n", option_help);
-	bu_free((char *)option_help, "help str");
+	bu_free(option_help, "help str");
     }
     bu_vls_printf(&str, "Subcommands:\n\n");
     bu_vls_printf(&str, "  get   (faces|minEdge|maxEdge|orientation|type|vertices) <bot>\n");

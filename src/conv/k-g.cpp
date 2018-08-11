@@ -603,9 +603,9 @@ main(int argc, char **argv)
 
     if (need_help || argc < 2) {
 	int ret = (argc < 2) ? 1 : 0;
-	const char *help = bu_opt_describe(d, NULL);
+	char *help = bu_opt_describe(d, NULL);
 	bu_log("Usage: k-g [options] input.key out.g\nOptions:\n%s\n", help);
-	if (help) bu_free((char *)help, "help str");
+	if (help) bu_free(help, "help str");
 	bu_exit(ret, NULL);
     }
     if (!bu_file_exists(argv[0], NULL)) {
