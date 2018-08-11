@@ -1272,7 +1272,12 @@ f_exec(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(db
 	plan->p_un.ex._e_argv[plan->p_un.ex._e_holes[i]] = name;
     }
 
-    ret = (*plan->p_un.ex._e_callback)(plan->p_un.ex._e_argc, (const char**)plan->p_un.ex._e_argv, plan->p_un.ex._e_userdata);
+    /* Only try to exec if we actually have a callback */
+    if (plan->p_un.ex._e_callback) {
+	ret = (*plan->p_un.ex._e_callback)(plan->p_un.ex._e_argc, (const char**)plan->p_un.ex._e_argv, plan->p_un.ex._e_userdata);
+    } else {
+	ret = 1;
+    }
 
     if (!(db_node->flags & DB_SEARCH_RETURN_UNIQ_DP)) {
     	bu_free(name, "f_exec string");
