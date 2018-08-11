@@ -200,7 +200,7 @@ mged_db_search_callback(int argc, const char *argv[], void *userdata)
 
     Tcl_ResetResult((Tcl_Interp *)userdata);
 
-    return ret;
+    return TCL_OK == ret;
 }
 
 
