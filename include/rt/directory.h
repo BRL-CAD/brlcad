@@ -65,9 +65,9 @@ struct directory {
     } d_un;
     struct directory * d_forw;  /**< @brief link to next dir entry */
     struct animate * d_animate; /**< @brief link to animation */
-    long d_uses;                /**< @brief # uses, from instancing */
-    size_t d_len;               /**< @brief # of db granules used */
-    long d_nref;                /**< @brief # times ref'ed by COMBs */
+    long d_uses;                /**< @brief number of uses, from instancing */
+    size_t d_len;               /**< @brief number of of db granules used */
+    long d_nref;                /**< @brief number of times ref'ed by COMBs */
     int d_flags;                /**< @brief flags */
     unsigned char d_major_type; /**< @brief object major type */
     unsigned char d_minor_type; /**< @brief object minor type */
