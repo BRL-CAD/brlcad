@@ -2124,6 +2124,18 @@ find_execute_plans(struct db_i *dbip, struct bu_ptbl *results, struct db_node_t 
 	;
 }
 
+HIDDEN void
+free_exec_plan(struct db_plan_t *splan)
+{
+    if (splan->p_un.ex._e_argv) {
+	bu_free(splan->p_un.ex._e_argv, "e_argv");
+	splan->p_un.ex._e_argv = NULL;
+    }
+    if (splan->p_un.ex._e_holes) {
+	bu_free(splan->p_un.ex._e_holes, "e_holes");
+	splan->p_un.ex._e_holes = NULL;
+    }
+}
 
 HIDDEN void
 db_search_free_plan(struct db_plan_t *splan)
@@ -2135,14 +2147,7 @@ db_search_free_plan(struct db_plan_t *splan)
 	for (i = 0; i < BU_PTBL_LEN(plans); i++) {
 	    p = (struct db_plan_t *)BU_PTBL_GET(plans, i);
 	    if (N_EXEC == p->type) {
-		if (splan->p_un.ex._e_argv) {
-		    bu_free(splan->p_un.ex._e_argv, "e_argv");
-		    splan->p_un.ex._e_argv = NULL;
-		}
-		if (splan->p_un.ex._e_holes) {
-		    bu_free(splan->p_un.ex._e_holes, "e_holes");
-		    splan->p_un.ex._e_holes = NULL;
-		}
+		free_exec_plan(splan);
 	    }
 	    BU_PUT(p, struct db_plan_t);
 	}
@@ -2151,14 +2156,7 @@ db_search_free_plan(struct db_plan_t *splan)
 	for (p = plan; p;) {
 	    plan = p->next;
 	    if (N_EXEC == p->type) {
-		if (splan->p_un.ex._e_argv) {
-		    bu_free(splan->p_un.ex._e_argv, "e_argv");
-		    splan->p_un.ex._e_argv = NULL;
-		}
-		if (splan->p_un.ex._e_holes) {
-		    bu_free(splan->p_un.ex._e_holes, "e_holes");
-		    splan->p_un.ex._e_holes = NULL;
-		}
+		free_exec_plan(splan);
 	    }
 	    BU_PUT(p, struct db_plan_t);
 	    p = plan;
