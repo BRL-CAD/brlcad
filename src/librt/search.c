@@ -1278,6 +1278,11 @@ f_exec(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(db
     	bu_free(name, "f_exec string");
     }
 
+    /* Null out the hole pointers again */
+    for (i=0; i<plan->p_un.ex._e_nholes; i++) {
+	plan->p_un.ex._e_argv[plan->p_un.ex._e_holes[i]] = NULL;
+    }
+
     return ret;
 }
 
@@ -2127,14 +2132,15 @@ find_execute_plans(struct db_i *dbip, struct bu_ptbl *results, struct db_node_t 
 HIDDEN void
 free_exec_plan(struct db_plan_t *splan)
 {
-/*    int i;*/
+    int i;
 
     if (splan->p_un.ex._e_argv) {
-#if 0
-	for (i=0; (int)i<splan->p_un.ex._e_argc; i++) {
-	    bu_free(splan->p_un.ex._e_argv[i], "e_argv[i]");
+	for (i=0; i < (int)splan->p_un.ex._e_argc; i++) {
+	    if (splan->p_un.ex._e_argv[i]) {
+		bu_free(splan->p_un.ex._e_argv[i], "e_argv[i]");
+		splan->p_un.ex._e_argv[i] = NULL;
+	    }
 	}
-#endif
 	bu_free(splan->p_un.ex._e_argv, "e_argv");
 	splan->p_un.ex._e_argv = NULL;
     }
