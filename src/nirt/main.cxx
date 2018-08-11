@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file gtools/inirt/main.cxx
+/** @file nirt/main.cxx
  *
  * This program is Natalie's Interactive Ray-Tracer
  *
