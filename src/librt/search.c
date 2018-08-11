@@ -1282,7 +1282,7 @@ f_exec(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(db
 }
 
 HIDDEN int
-c_exec(char *UNUSED(ignore), char ***argvp, int UNUSED(is_ok), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct db_search_context *ctx)
+c_exec(char *UNUSED(ignore), char ***argvp, int UNUSED(is_ok), struct db_plan_t **resultplan, int *db_search_isoutput, struct bu_ptbl *tbl, struct db_search_context *ctx)
 {
     struct db_plan_t *newplan;
     char **e_argv = NULL;
@@ -1291,6 +1291,8 @@ c_exec(char *UNUSED(ignore), char ***argvp, int UNUSED(is_ok), struct db_plan_t 
     int scfound = 0;
     int i = 0;
     int l; /* should this be unsigned? argc is an int, so this could lead to an overflow in many ways */
+
+    *db_search_isoutput = 1;
 
     while (**argvp != NULL && !scfound) {
 	scfound = (**argvp)[0] == ';' && (**argvp)[1] == '\0'; /* is this a semicolon? */
