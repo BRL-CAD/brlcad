@@ -19,112 +19,142 @@
   <section>
     <title>Command Usage</title>
     <section>
-      <title>Step 1 - Find Overlaps</title>
+      <title>Basic Steps to Launch the Overlaps Tool GUI</title>
       <para>
-	Run the <command>check.sh</command> Shell script to find overlaps and generate input
-	for the GUI.
-      </para>
-
-      <para>
-	The basic script invocation looks like this:
-      </para>
-
-      <screen>
-$ ./check.sh model.g [top ...]
-      </screen>
-
-      <para>
-	This assumes <filename>check.sh</filename> and <filename>model.g</filename> are both in your current
-	directory. If they aren't, you can specify full paths to either or
-	both. For example:
-      </para>
-
-      <screen>
-$ ~/checker/check.sh ./models/model.g
-      </screen>
-
-      <para>
-	By default, all top-level objects in the model are checked, but you
-	can specify specific ones if you want to save time or get a shorter
-	and more manageable list to work through.
-      </para>
-
-      <para>
-	The script produces an output directory in the current directory (i.e. not the model directory unless it's the same)
-	named <filename>&lt;model.g&gt;.ck</filename>. If you rerun the script in the same
-	directory, the previous output will be overwritten.
-      </para>
-
-      <para>
-	The script uses the BRL-CAD programs <command>loop</command>, <command>mged</command>, <command>rtcheck</command>, <command>gqa</command>, and
-	<command>mged</command>. It will uses the versions determined by the <varname>PATH</varname>
-	environment variable, or else the ones installed in
-	<filename>/usr/brlcad/bin</filename>.
-      </para>
-
-      <para>
-	In order to find overlaps the script runs <command>rtcheck</command> at size 1024 from
-	16 different views (45 degree steps in az and el directions) and
-	then runs <command>gqa -Ao -g1mm,1mm</command>.
-      </para>
-
-      <warning><para>
-	Running <command>rtcheck</command> and <command>gqa</command> can take many hours for non-trivial
-	geometry. If your terminal window gets closed for any reason, the
-	script will terminate and you'll get incomplete/unusable output.
-      </para></warning>
-    </section> <!-- step 1 - find overlaps -->
+	In the mged command window:
+	<screen>
+mged&gt; overlaps_tool -F [.overlaps file]
+	</screen>
+	</para>
+    </section>
     <section>
-      <title>Step 2 - View &amp; Resolve Overlaps</title>
+      <title>Invocation Details</title>
+      <para>
+	Running just <command>overlaps_tool</command> with no arguments launches the overlaps menu GUI.
+      </para>
+
+      <para>
+	You can give the path of the <filename>.overlaps</filename> file as an argument if the
+	database is in a different directory than the <filename>.ck</filename> results
+	directory is in, or if you rename the database file after
+	generating th results directory. This will cause the checker tool to get launched directly
+      </para>
+
+      <para>
+	The <literal>-F</literal> option tells the tool it's okay to make assumptions about
+	overlaps when doing subtractions (see <xref linkend="subtraction_assumptions"/>).
+      </para>
+    </section>
+    <section>
+      <title>Overlaps Menu GUI</title>
+      <para>
+	The overlaps menu has two sections -- New File and Exisiting File.
+      </para>
+      <para>
+	<screenshot>
+	  <mediaobject>
+	    <imageobject role="html">
+	      <imagedata align="left" fileref="../../articles/en/images/overlap_tool_fig01.png" format="PNG"  width="542"/>
+	    </imageobject>
+	    <imageobject role="fo">
+	      <imagedata align="left" fileref="../../articles/en/images/overlap_tool_fig01.png" format="PNG"  width="542"/>
+	    </imageobject>
+	  </mediaobject>
+	</screenshot>
+      </para>
+
+    </section>
+    <section>
+      <title>New File</title>
       <section>
-	<title>Basic Steps to Launch the Overlap Resolution GUI</title>
-	<orderedlist>
-	  <listitem><para>
-	   Open MGED and load the <filename>check.tcl</filename> script. This adds a <command>check</command> command.
-	  </para></listitem>
+	<title>Create New Overlaps File</title>
+	<para>
+	  The Overlap File Tool is launched, which is used to create new overlaps file.
+	</para>
+	<para>
+	  <screenshot>
+	    <mediaobject>
+	      <imageobject role="html">
+		<imagedata align="left" fileref="../../articles/en/images/overlap_tool_fig02.png" format="PNG"  width="638"/>
+	      </imageobject>
+	      <imageobject role="fo">
+		<imagedata align="left" fileref="../../articles/en/images/overlap_tool_fig02.png" format="PNG"  width="638"/>
+	      </imageobject>
+	    </mediaobject>
+	  </screenshot>
+	</para>
+	<para>
+	  A tree of objects in the database is listed on the left hand side. Pressing the folder icon reveals the
+	  regions inside the objects. Double clicking on the items selects/deselects them.
+	</para>
 
-	  <listitem><para>
-	    Open the .g file that was processed with <filename>check.sh</filename>.
-	  </para></listitem>
+	<para>
+	  The selected items are listed on the right hand side. Double clicking on the listed items deselects it.
+	</para>
 
-	  <listitem><para>
-	   In the mged command window:
+	<para>
+	  There is also an option to manually type in the objects name to select/deselect them with add/remove buttons.
+	  The text entry also supports wildcards like * ? for batch operations.
+	</para>
 
-	  <screen>
-mged&gt; check -F [.overlaps file]
-	  </screen>
-	  </para></listitem>
-	</orderedlist>
+	<para>
+	  Clicking on <emphasis role="bold">check for overlaps</emphasis> button, the tool runs
+	  <command>check overlaps</command> at grid-size of 1024 from 16 different views
+	  (45 degree steps in az and el directions) and then runs <command>check overlaps -g1mm,1mm</command>,
+	  which runs it for three views at 1mm grid spacing.
+	</para>
+
+	<para>
+	  The tool produces an output directory in the current directory (i.e. not the model directory unless it's the same)
+	  named <filename>&lt;model.g&gt;.ck</filename>.
+	</para>
+
+	<warning><para>
+	  Running <command>check overlaps</command> command can take many hours for non-trivial
+	  geometry.
+	</para></warning>
+      </section>
+    </section>
+    <section>
+      <title>Exisiting File</title>
+      <para>
+	These options are to launch the checker tool directly for a previously created overlaps file.
+      </para>
+      <section>
+	<title>Use Last File</title>
+	<para>
+	  This option is activated when there is already a output directory named <filename>&lt;model.g&gt;.ck</filename>
+	  from previous run of the overlaps_tool in the current directory.
+	</para>
       </section>
       <section>
-	<title>Invocation Details</title>
+	<title>Browse Overlaps File</title>
 	<para>
-	  Running just <command>check</command> with no arguments causes the script to look
-	  in the same directory as the open database for a <filename>&lt;model.g&gt;.ck</filename>
-	  directory, which contains a <filename>ck.&lt;model.g&gt;.overlaps</filename> file that has
-	  the primary script output.
-	</para>
-
-	<para>
-	  You can give the path of the <filename>.overlaps</filename> file as an argument if the
-	  database is in a different directory than the <filename>.ck</filename> results
-	  directory is in, or if you rename the database file after
-	  generating th results directory.
-	</para>
-
-	<para>
-	  The <literal>-F</literal> option tells the tool it's okay to make assumptions about
-	  overlaps when doing subtractions (see <xref linkend="subtraction_assumptions"/>).
+	  This option can be used when we want to browse an overlaps file from any location.
+	  If the overlaps file was not made from the currently opened database then it may show a warning and not open the overlaps file.
 	</para>
       </section>
-    </section> <!-- step 2 -->
+    </section>
   </section> <!-- command usage -->
+
   <section>
-    <title>Using the GUI</title>
+    <title>Using the geometry checker GUI</title>
+    <para>
+      <screenshot>
+	<mediaobject>
+	  <imageobject role="html">
+	    <imagedata align="left" fileref="../../articles/en/images/overlap_tool_fig03.png" format="PNG"  width="549"/>
+	  </imageobject>
+	  <imageobject role="fo">
+	    <imagedata align="left" fileref="../../articles/en/images/overlap_tool_fig03.png" format="PNG"  width="549"/>
+	  </imageobject>
+	</mediaobject>
+      </screenshot>
+    </para>
     <section>
       <title>Bounding-Box Volume Calculation</title>
       <para>
-	When you run the check command, the first thing that happens is
+	When the geometry checker is run, the first thing that happens is
 	the volume of the axis-aligned bounding box for each overlapping
 	object is calculated. This can take several minutes depending on
 	the size of the overlaps file.
@@ -277,7 +307,7 @@ mged&gt; check -F [.overlaps file]
       </para>
 
       <para>
-	Providing the <literal>-F</literal> ("first") option to the check command causes the
+	Providing the <literal>-F</literal> ("first") option to the overlaps_tool command causes the
 	overlap GUI to assume that the overlap between an overlapping
 	pair only involves the first unioned solid in their respective
 	trees. Subtracting a combination with the <literal>-F</literal> option enabled

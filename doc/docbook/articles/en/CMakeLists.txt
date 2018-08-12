@@ -90,6 +90,9 @@ set(articles_EN_IMAGES
   images/oed_fig11.png
   images/oed_fig12.png
   images/oed_fig13.png
+  images/overlap_tool_fig01.png
+  images/overlap_tool_fig02.png
+  images/overlap_tool_fig03.png
   images/pipes_fig01.png
   images/pipes_fig02.png
   images/pipes_fig03.png
