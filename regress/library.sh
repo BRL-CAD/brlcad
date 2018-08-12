@@ -49,6 +49,28 @@ DYLD_LIBRARY_PATH=../src/other/tcl/unix:../src/other/tk/unix:$DYLD_LIBRARY_PATH
 export LD_LIBRARY_PATH DYLD_LIBRARY_PATH
 
 
+###
+# log "string to print and log"
+#
+# prints a message to the current tty/output (unless QUIET variable is
+# set) as well as appending to a log (if LOGFILE variable is set)
+log ( ) {
+
+    if test ! "x$LOGFILE" = "x" ; then
+	echo "$*" >> "$LOGFILE"
+    fi
+    if test ! "x$QUIET" = "x1" ; then
+	echo "$*"
+    fi
+}
+
+
+###
+# ensearch {command_to_find}
+#
+# prints the path to a given application binary or script, typically
+# by looking in the bin or bench directory relative to this library
+# script's location
 ensearch ( ) {
     ensearch_file="$1"
     ensearch_dirs="$ARG1/bin ../bin \"$PATH_TO_THIS/../bin\" ../bench \"$PATH_TO_THIS/../bench\" "
