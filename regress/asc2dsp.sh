@@ -43,6 +43,7 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 . "$1/regress/library.sh"
 
 
+LOGFILE=asc2dsp.log
 FAILED=0
 
 A2D="`ensearch asc2dsp`"
@@ -79,7 +80,6 @@ FAILED=0
 
 BASE1=asc2dsp-old
 BASE2=asc2dsp-new
-LOGFILE=asc2dsp.log
 
 TRASH="$LOGFILE $BASE1.pix $BASE1.bw $BASE1.dsp $BASE2.dsp"
 
