@@ -43,7 +43,7 @@ extern "C" {
 int
 main(int argc, const char **argv)
 {
-    struct ged *gedp;
+    struct ged *gedp = NULL;
     void *libged = bu_dlopen(NULL, BU_RTLD_LAZY);
     int ret = EXIT_SUCCESS;
     char *line = NULL;
