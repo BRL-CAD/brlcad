@@ -47,31 +47,31 @@ FAILED=0
 
 A2D="`ensearch asc2dsp`"
 if test ! -f "$A2D" ; then
-    echo "Unable to find asc2dsp, aborting"
+    log "Unable to find asc2dsp, aborting"
     FAILED=1
 fi
 
 CV="`ensearch cv`"
 if test ! -f "$CV" ; then
-    echo "Unable to find cv, aborting"
+    log "Unable to find cv, aborting"
     FAILED=1
 fi
 
 A2P="`ensearch asc2pix`"
 if test ! -f "$A2P" ; then
-    echo "Unable to find asc2pix, aborting"
+    log "Unable to find asc2pix, aborting"
     FAILED=1
 fi
 
 P2B="`ensearch pix-bw`"
 if test ! -f "$P2B" ; then
-    echo "Unable to find pix-bw, aborting"
+    log "Unable to find pix-bw, aborting"
     FAILED=1
 fi
 
 if [ $FAILED -ne 0 ] ; then
-    echo "Unable to find asc2dsp requirements, aborting"
-    echo "-> asc2dsp.sh ABORTED"
+    log "Unable to find asc2dsp requirements, aborting"
+    log "-> asc2dsp.sh ABORTED"
     exit 1
 fi
 
@@ -79,9 +79,9 @@ FAILED=0
 
 BASE1=asc2dsp-old
 BASE2=asc2dsp-new
-LOG=asc2dsp.log
+LOGFILE=asc2dsp.log
 
-TRASH="$LOG $BASE1.pix $BASE1.bw $BASE1.dsp $BASE2.dsp"
+TRASH="$LOGFILE $BASE1.pix $BASE1.bw $BASE1.dsp $BASE2.dsp"
 
 rm -f $TRASH
 
@@ -89,17 +89,17 @@ rm -f $TRASH
 # old first
 # convert dsp data file in asc hex format to pix format
 ASC1="$1/regress/dsp/$BASE1.asc"
-$A2P < $ASC1 > $BASE1.pix 2>>$LOG
+$A2P < $ASC1 > $BASE1.pix 2>>$LOGFILE
 # convert pix to bw format
 # take the blue pixel only
-$P2B -B1.0 $BASE1.pix > $BASE1.bw 2>>$LOG
+$P2B -B1.0 $BASE1.pix > $BASE1.bw 2>>$LOGFILE
 # convert pix to dsp format
-$CV huc nu16 $BASE1.bw $BASE1.dsp 1>>$LOG 2>>$LOG
+$CV huc nu16 $BASE1.bw $BASE1.dsp 1>>$LOGFILE 2>>$LOGFILE
 
 # new
 # convert dsp data file in asc decimal format to dsp format
 ASC2="$1/regress/dsp/$BASE2.asc"
-$A2D $BASE2.asc $BASE2.dsp 1>>$LOG 2>>$LOG
+$A2D $BASE2.asc $BASE2.dsp 1>>$LOGFILE 2>>$LOGFILE
 
 # the two dsp files should be identical
 cmp $BASE1.dsp $BASE2.dsp
@@ -110,9 +110,9 @@ if [ $STATUS -gt 0 ] ; then
 fi
 
 if [ $FAILED = 0 ] ; then
-    echo "-> asc2dsp.sh succeeded"
+    log "-> asc2dsp.sh succeeded"
 else
-    echo "-> asc2dsp.sh FAILED"
+    log "-> asc2dsp.sh FAILED"
 fi
 
 exit $FAILED
