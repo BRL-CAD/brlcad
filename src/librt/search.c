@@ -1258,18 +1258,61 @@ f_depth(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(d
 HIDDEN int
 f_exec(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(dbip), struct bu_ptbl *UNUSED(results))
 {
-    int i, ret;
-    char *name = NULL;
+    /* TODO make this faster by storing the individual "subholes" so they don't have to be recalculated */
+    int ret, hole_i, char_i, plain_begin, plain_len;
+    char **originals = NULL;
+    char **filleds = NULL;
+    char *name;
+    size_t name_len, filled_len, old_filled_len;
+
+    if (0 < plan->p_un.ex._e_nholes) {
+	originals = (char **)bu_calloc(plan->p_un.ex._e_nholes, sizeof(char *), "f_exec originals");
+	filleds = (char **)bu_calloc(plan->p_un.ex._e_nholes, sizeof(char *), "f_exec filleds");
+    }
+
+    for (hole_i=0; hole_i<plan->p_un.ex._e_nholes; hole_i++) {
+	originals[hole_i] = plan->p_un.ex._e_argv[plan->p_un.ex._e_holes[hole_i]];
+    }
 
     if (db_node->flags & DB_SEARCH_RETURN_UNIQ_DP) {
 	name = DB_FULL_PATH_CUR_DIR(db_node->path)->d_namep;
     } else {
 	name = db_path_to_string(db_node->path);
     }
+    name_len = strlen(name);
 
-    /* fill in each hole in the argv array */
-    for (i=0; i<plan->p_un.ex._e_nholes; i++) {
-	plan->p_un.ex._e_argv[plan->p_un.ex._e_holes[i]] = name;
+    for (hole_i=0; hole_i<plan->p_un.ex._e_nholes; hole_i++) {
+	plain_begin = 0;
+	filled_len = 0;
+	plain_len = 0;
+	old_filled_len = 0;
+	for (char_i=0; originals[hole_i][char_i] != '\0'; char_i++) {
+	    if (originals[hole_i][char_i] == '{' && originals[hole_i][char_i+1] == '}') {
+		old_filled_len = filled_len;
+		filled_len += plain_len + name_len;
+		filleds[hole_i] = (char *)bu_realloc(filleds[hole_i],
+			sizeof(char *) * filled_len,
+			"f_exec filleds[hole_i]");
+		memcpy(filleds[hole_i] + old_filled_len, originals[hole_i] + plain_begin, plain_len);
+		memcpy(filleds[hole_i] + old_filled_len + plain_len, name, name_len);
+		plain_begin = char_i + 2;
+		plain_len = 0;
+		char_i++; /* skip closing brace */
+	    } else {
+		plain_len++;
+	    }
+	}
+	old_filled_len = filled_len;
+	filled_len += plain_len + 1 /* for the null byte */;
+	filleds[hole_i] = (char *)bu_realloc(filleds[hole_i],
+		sizeof(char *) * filled_len,
+		"f_exec filleds[hole_i]");
+	memcpy(filleds[hole_i] + old_filled_len, originals[hole_i] + plain_begin, plain_len);
+	filleds[hole_i][filled_len-1] = '\0';
+    }
+
+    for (hole_i=0; hole_i<plan->p_un.ex._e_nholes; hole_i++) {
+	plan->p_un.ex._e_argv[plan->p_un.ex._e_holes[hole_i]] = filleds[hole_i];
     }
 
     /* Only try to exec if we actually have a callback */
@@ -1280,13 +1323,16 @@ f_exec(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(db
     }
 
     if (!(db_node->flags & DB_SEARCH_RETURN_UNIQ_DP)) {
-    	bu_free(name, "f_exec string");
+	bu_free(name, "f_exec string");
     }
 
-    /* Null out the hole pointers again */
-    for (i=0; i<plan->p_un.ex._e_nholes; i++) {
-	plan->p_un.ex._e_argv[plan->p_un.ex._e_holes[i]] = NULL;
+    for (hole_i=0; hole_i<plan->p_un.ex._e_nholes; hole_i++) {
+	plan->p_un.ex._e_argv[plan->p_un.ex._e_holes[hole_i]] = originals[hole_i];
     }
+    if (originals)
+	bu_free(originals, "f_exec originals");
+    if (filleds)
+	bu_free(filleds, "f_exec filleds");
 
     return ret;
 }
@@ -1300,35 +1346,36 @@ c_exec(char *UNUSED(ignore), char ***argvp, int UNUSED(is_ok), struct db_plan_t 
     int nholes = 0;
     int scfound = 0;
     int i = 0;
-    int l; /* should this be unsigned? argc is an int, so this could lead to an overflow in many ways */
+    int l = 0; /* should this be unsigned? argc is an int, so this could lead to an overflow in many ways */
+    int holefound;
 
     *db_search_isoutput = 1;
 
     while (**argvp != NULL && !scfound) {
 	scfound = (**argvp)[0] == ';' && (**argvp)[1] == '\0'; /* is this a semicolon? */
 	if (!scfound) {
-	    e_argv = (char**)bu_realloc(e_argv, sizeof(char**) * (i+1), "e_argv");
-	    if ((**argvp)[0] == '{' && (**argvp)[1] == '}' && (**argvp)[2] == '\0') { /* is this a {}? (ie.: hole) */
+	    e_argv = (char**)bu_realloc(e_argv, sizeof(char**) * (l+1), "e_argv");
+	    holefound = 0;
+	    for (i=0; !holefound && (**argvp)[i]!='\0'; i++) {
+		holefound = (**argvp)[i]=='{' && (**argvp)[i+1]=='}';
+	    }
+	    if (holefound) { /* is this a {}? (ie.: hole) */
 		nholes++;
 		holes = (int *)bu_realloc(holes, sizeof(int) * nholes, "e_holes");
-		holes[nholes - 1] = i;
-		e_argv[i] = NULL;
-	    } else {
-		e_argv[i] = bu_strdupm(**argvp, "e_argv arg");
+		holes[nholes - 1] = l;
 	    }
-	    i++;
+	    e_argv[l] = bu_strdupm(**argvp, "e_argv arg");
+	    l++;
 	}
 	(*argvp)++;
     }
 
-    l = i;
-
     if (!scfound) {
-        /* is this a good idea? */
-        for(i = 0; i < l; i++) {
-            bu_free(e_argv[i], "e_argv arg");
-        }
-        bu_free(e_argv, "e_argv");
+	/* is this a good idea? */
+	for(i = 0; i < l; i++) {
+	    bu_free(e_argv[i], "e_argv arg");
+	}
+	bu_free(e_argv, "e_argv");
 
 	if (holes) {
 	    bu_free(holes, "e_holes");
