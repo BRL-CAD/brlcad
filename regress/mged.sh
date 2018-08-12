@@ -59,6 +59,10 @@ fi
 # run this many commands in parallel
 NPSW=64
 
+# log output to this file
+LOGFILE=mged.log
+rm -f mged.log
+
 
 # test a single command, return 0 if successful
 check_command ( ) {
@@ -67,25 +71,25 @@ check_command ( ) {
     # make sure command exists and will run without error
     output="`$MGED -c mged.g $cmd 2>&1`"
     if test $? != 0 ; then
-	echo "ERROR: $cmd returned non-zero exit status $?"
-	echo "Output: $output"
+	log "ERROR: $cmd returned non-zero exit status $?"
+	log "Output: $output"
 	return 1
     fi
     if test "x`echo \"$output\" | grep -i invalid`" != "x" ; then
-	echo "ERROR: $cmd does not exist!"
-	echo "Output: $output"
+	log "ERROR: $cmd does not exist!"
+	log "Output: $output"
 	return 1
     fi
     if test "x`echo \"$output\" | grep -i error | grep -i -v _error | grep -i -v error_`" != "x" ; then
-	echo "ERROR: $cmd reported an error on default use"
-	echo "Output: $output"
+	log "ERROR: $cmd reported an error on default use"
+	log "Output: $output"
 	return 1
     fi
 
     # make sure command has help listed
     output="`$MGED -c mged.g help $cmd 2>&1`"
     if test "x`echo \"$output\" | grep -i 'no help found'`" != "x" ; then
-	echo "ERROR: $cmd does not have help"
+	log "ERROR: $cmd does not have help"
 	return 1
     fi
 
@@ -95,16 +99,14 @@ check_command ( ) {
 touch mged.g
 output="`$MGED -c mged.g quit 2>&1`"
 if test $? != 0 ; then
-    echo "Output: $output"
-    echo "Unable to run mged, aborting"
+    log "Output: $output"
+    log "Unable to run mged, aborting"
     exit 1
 fi
 
-echo "testing mged commands..."
-
-# make an almost empty database to make sure mged runs
+log "seting up an almost empty database (mged.g) to make sure mged runs"
 rm -f mged.g
-$MGED -c > mged.log 2>&1 <<EOF
+$MGED -c >> $LOGFILE 2>&1 <<EOF
 opendb mged.g y
 in t.s sph 0 0 0 1
 r t.r u t.s
@@ -112,10 +114,12 @@ g all t.r
 quit
 EOF
 if test ! -f mged.g ; then
-    cat mged.log
-    echo "Test file 'mged.g' is missing. Unable to run mged, aborting"
+    cat $LOGFILE
+    log "ERROR: Test file 'mged.g' is missing. Unable to run mged, aborting"
     exit 1
 fi
+
+log "testing mged commands..."
 
 # collect all current commands
 cmds="`$MGED -c mged.g '?' 2>&1 | grep -v Using`"
@@ -131,7 +135,7 @@ FAILED=0
 workers=0
 pids=""
 for cmd in $cmds ; do
-    echo "...$cmd"
+    log "...$cmd"
 
     # BEGIN SPECIALIZATIONS
     # FIXME: there should be NO specializations
@@ -141,14 +145,14 @@ for cmd in $cmds ; do
 exit
 EOF
 	if test $? != 0 ; then
-	    echo "ERROR: $cmd returned non-zero exit status $?"
+	    log "ERROR: $cmd returned non-zero exit status $?"
 	    FAILED="`expr $FAILED + 1`"
 	fi
 	continue
     elif test "x$cmd" = "xedcolor" ; then
 	# edcolor it kicks off an editor, ugh
-	echo "FIXME: Unable to test edcolor"
-	echo "It probably shouldn't kick off an editor without an argument"
+	log "FIXME: Unable to test edcolor"
+	log "It probably shouldn't kick off an editor without an argument"
 	continue
     elif test "x$cmd" = "xgraph" ; then
 	continue
@@ -174,9 +178,9 @@ EOF
 done
 
 if test $FAILED -eq 0 ; then
-    echo "-> mged check succeeded"
+    log "-> mged check succeeded"
 else
-    echo "-> mged check FAILED"
+    log "-> mged check FAILED"
 fi
 
 # clean up
