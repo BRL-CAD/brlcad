@@ -1136,6 +1136,8 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	}
     }
 
+
+    /* Find assemblies and regions */
     BU_ALLOC(pc, struct bu_ptbl);
     if (db_search(pc, DB_SEARCH_RETURN_UNIQ_DP, preserve_combs, argc, dpa, dbip, NULL) < 0) {
 	if (opts->verbosity) {
@@ -1144,11 +1146,6 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	ret = GED_ERROR;
 	goto ged_facetize_regions_memfree;
     }
-    for (i = 0; i < BU_PTBL_LEN(pc); i++) {
-	struct directory *n = (struct directory *)BU_PTBL_GET(pc, i);
-	_ged_facetize_mkname(gedp, opts, n->d_namep, COMB_OBJ_NAME);
-    }
-
     BU_ALLOC(ar, struct bu_ptbl);
     if (db_search(ar, DB_SEARCH_RETURN_UNIQ_DP, active_regions, argc, dpa, dbip, NULL) < 0) {
 	if (opts->verbosity) {
@@ -1157,38 +1154,45 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	ret = GED_ERROR;
 	goto ged_facetize_regions_memfree;
     }
-
     if (!BU_PTBL_LEN(ar)) {
 	/* No active regions (unlikely but technically possible), nothing to do */
 	ret = GED_OK;
 	goto ged_facetize_regions_memfree;
     }
 
-    /* Regions will have a name mapping both to a new region comb AND a facetized
-     * solid object - set up both names, and create the region combs */
+
+    /* Set up all the names we will need */
     for (i = 0; i < BU_PTBL_LEN(ar); i++) {
+	/* Regions will have a name mapping both to a new region comb AND a facetized
+	 * solid object - set up both names, and create the region combs */
 	struct directory *n = (struct directory *)BU_PTBL_GET(ar, i);
 	_ged_facetize_mkname(gedp, opts, n->d_namep, SOLID_OBJ_NAME);
 	_ged_facetize_mkname(gedp, opts, n->d_namep, COMB_OBJ_NAME);
-	if (!opts->quiet) {
-	    bu_log("Copying (sans tree) region comb %s to %s (%d of %d)...\n", n->d_namep, bu_avs_get(opts->c_map, n->d_namep), i+1, BU_PTBL_LEN(ar));
-	}
-	if (_ged_facetize_cpcomb(gedp, n->d_namep, opts) != GED_OK) {
-	    if (opts->verbosity) {
-		bu_log("Failed to creating comb %s for %s \n", bu_avs_get(opts->c_map, n->d_namep), n->d_namep);
-	    }
-	} else {
-	    const char *rcname = bu_avs_get(opts->c_map, n->d_namep);
-	    const char *ssname = bu_avs_get(opts->s_map, n->d_namep);
-	    if (_ged_combadd2(gedp, (char *)rcname, 1, (const char **)&ssname, 0, DB_OP_UNION, 0, 0, NULL, 0) != GED_OK) {
-		if (opts->verbosity) {
-		    bu_log("Error adding %s to comb %s", ssname, rcname);
-		}
-	    }
-	}
+    }
+    for (i = 0; i < BU_PTBL_LEN(pc); i++) {
+	struct directory *n = (struct directory *)BU_PTBL_GET(pc, i);
+	_ged_facetize_mkname(gedp, opts, n->d_namep, COMB_OBJ_NAME);
     }
 
-    /* For all the pc combs, make new versions with the suffixed names */
+
+
+    /* First, add the new toplevel comb to hold all the new geometry */
+    if (!opts->in_place) {
+	ntop = (const char **)bu_calloc(argc, sizeof(const char *), "new top level names");
+	for (i = 0; i < (unsigned int)argc; i++) {
+	    ntop[i] = bu_avs_get(opts->c_map, argv[i]);
+	    if (!ntop[i]) {
+		ntop[i] = bu_avs_get(opts->s_map, argv[i]);
+	    }
+	}
+	if (!opts->quiet) {
+	    bu_log("Creating new top level assembly object %s...\n", newname);
+	}
+	ret = _ged_combadd2(gedp, newname, argc, ntop, 0, DB_OP_UNION, 0, 0, NULL, 0);
+    }
+
+
+    /* For the assemblies, make new versions with the suffixed names */
     if (!opts->quiet) {
 	bu_log("Initializing copies of assembly combinations...\n");
     }
@@ -1217,7 +1221,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	cdp = (struct directory *)BU_PTBL_GET(pc, i);
 	nparent = bu_avs_get(opts->c_map, cdp->d_namep);
 	if (!opts->quiet) {
-	    bu_log("Rebuilding assembly %s (%d of %d) using facetized shapes...\n", nparent, i+1, BU_PTBL_LEN(pc));
+	    bu_log("Rebuilding assembly %s (%d of %d) using facetize object names...\n", nparent, i+1, BU_PTBL_LEN(pc));
 	}
 	if (rt_db_get_internal(&intern, cdp, dbip, NULL, &rt_uniresource) < 0) {
 	    ret = GED_ERROR;
@@ -1248,26 +1252,51 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	bu_free(children, "free children struct directory ptr array");
     }
 
-    /* Last one - add the new toplevel comb to hold all the new geometry */
-    if (!opts->in_place) {
-	ntop = (const char **)bu_calloc(argc, sizeof(const char *), "new top level names");
-	for (i = 0; i < (unsigned int)argc; i++) {
-	    ntop[i] = bu_avs_get(opts->c_map, argv[i]);
-	    if (!ntop[i]) {
-		ntop[i] = bu_avs_get(opts->s_map, argv[i]);
+    /* For regions, make the new region comb and add a reference to the to-be-created solid */
+    for (i = 0; i < BU_PTBL_LEN(ar); i++) {
+	struct directory *n = (struct directory *)BU_PTBL_GET(ar, i);
+	_ged_facetize_mkname(gedp, opts, n->d_namep, SOLID_OBJ_NAME);
+	_ged_facetize_mkname(gedp, opts, n->d_namep, COMB_OBJ_NAME);
+	if (!opts->quiet) {
+	    bu_log("Copying (sans tree) region comb %s to %s (%d of %d)...\n", n->d_namep, bu_avs_get(opts->c_map, n->d_namep), i+1, BU_PTBL_LEN(ar));
+	}
+	if (_ged_facetize_cpcomb(gedp, n->d_namep, opts) != GED_OK) {
+	    if (opts->verbosity) {
+		bu_log("Failed to creating comb %s for %s \n", bu_avs_get(opts->c_map, n->d_namep), n->d_namep);
+	    }
+	} else {
+	    const char *rcname = bu_avs_get(opts->c_map, n->d_namep);
+	    const char *ssname = bu_avs_get(opts->s_map, n->d_namep);
+	    if (_ged_combadd2(gedp, (char *)rcname, 1, (const char **)&ssname, 0, DB_OP_UNION, 0, 0, NULL, 0) != GED_OK) {
+		if (opts->verbosity) {
+		    bu_log("Error adding %s to comb %s", ssname, rcname);
+		}
+	    } else {
+		/* By default, store the original region name and target bot name in attributes to make resuming easier */
+		const char *attrav[5];
+		attrav[0] = "attr";
+		attrav[1] = "set";
+		attrav[2] = rcname;
+		attrav[3] = "facetize_original_region";
+		attrav[4] = n->d_namep;
+		if (ged_attr(gedp, 5, (const char **)&attrav) != GED_OK && opts->verbosity) {
+		    bu_log("Error adding %s to comb %s", ssname, rcname);
+		}
+		attrav[3] = "facetize_target_bot_name";
+		attrav[4] = ssname;
+		if (ged_attr(gedp, 5, (const char **)&attrav) != GED_OK && opts->verbosity) {
+		    bu_log("Error adding %s to comb %s", ssname, rcname);
+		}
 	    }
 	}
-	if (!opts->quiet) {
-	    bu_log("Creating new top level assembly object %s...\n", newname);
-	}
-	ret = _ged_combadd2(gedp, newname, argc, ntop, 0, DB_OP_UNION, 0, 0, NULL, 0);
     }
 
 
-    /* TODO - someday this object-level facetization should be done in
-     * parallel, but that's one deep rabbit hole - for now, just try them in
-     * order and make sure we can handle (non-crashing) failures to convert
-     * sanely. */
+    /* Now, actually trigger the facetize logic on each region.
+     *
+     * TODO - someday this should be done in parallel, but that's one deep
+     * rabbit hole - for now, just try them in order and make sure we can
+     * handle (non-crashing) failures to convert sanely. */
     for (i = 0; i < BU_PTBL_LEN(ar); i++) {
 	struct directory *n = (struct directory *)BU_PTBL_GET(ar, i);
 	const char *oname = n->d_namep;
@@ -1288,6 +1317,21 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 
 	    if (_ged_nmg_obj(gedp, 1, (const char **)&oname, nname, opts) != GED_OK) {
 		bu_ptbl_ins(&ar_failed_nmg, (long *)oname);
+	    } else {
+		/* Success - remove the restart attributes */
+		const char *rcname = bu_avs_get(opts->c_map, n->d_namep);
+		const char *attrav[4];
+		attrav[0] = "attr";
+		attrav[1] = "rm";
+		attrav[2] = rcname;
+		attrav[3] = "facetize_original_region";
+		if (ged_attr(gedp, 4, (const char **)&attrav) != GED_OK && opts->verbosity) {
+		    bu_log("Error removing attribute \"facetize_original_region\" from comb %s", rcname);
+		}
+		attrav[3] = "facetize_target_bot_name";
+		if (ged_attr(gedp, 4, (const char **)&attrav) != GED_OK && opts->verbosity) {
+		    bu_log("Error removing attribute \"facetize_target_bot_name\" from comb %s", rcname);
+		}
 	    }
 	}
 
@@ -1297,6 +1341,22 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	    if (_ged_spsr_obj(&is_valid, gedp, oname, nname, opts) == GED_OK) {
 		/* Check the validity */
 		if (is_valid) {
+		    /* Success - remove the restart attributes */
+		    const char *rcname = bu_avs_get(opts->c_map, n->d_namep);
+		    const char *attrav[4];
+		    attrav[0] = "attr";
+		    attrav[1] = "rm";
+		    attrav[2] = rcname;
+		    attrav[3] = "facetize_original_region";
+		    if (ged_attr(gedp, 4, (const char **)&attrav) != GED_OK && opts->verbosity) {
+			bu_log("Error removing attribute \"facetize_original_region\" from comb %s", rcname);
+		    }
+		    attrav[3] = "facetize_target_bot_name";
+		    if (ged_attr(gedp, 4, (const char **)&attrav) != GED_OK && opts->verbosity) {
+			bu_log("Error removing attribute \"facetize_target_bot_name\" from comb %s", rcname);
+		    }
+
+		    /* Make a note of SPSR success in particular - user may want to inspect */
 		    bu_ptbl_ins(&spsr_succeeded, (long *)bu_avs_get(opts->s_map, oname));
 		} else {
 		    /* rename to INVALID and add the bot to the facetize_failed list for inspection */
