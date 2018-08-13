@@ -37,8 +37,6 @@ ged_echo(struct ged *gedp, int argc, const char *argv[])
 {
     int i;
 
-    static const char *usage = "args";
-
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
