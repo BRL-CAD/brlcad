@@ -65,6 +65,7 @@ struct _ged_facetize_opts {
     int regions;
     int in_place;
     fastf_t decim_feat_perc;
+    struct rt_tess_tol *tol;
 
     /* Poisson specific options */
     int pnt_surf_mode;
@@ -1076,6 +1077,94 @@ _ged_facetize_cpcomb(struct ged *gedp, const char *o, struct _ged_facetize_opts 
     return ret;
 }
 
+#define GED_FACETIZE_INVALID -2
+#define GED_FACETIZE_FAIL -1
+#define GED_NMGBOOL_SUCCESS 0
+#define GED_SPSR_SUCCESS 1
+
+int
+_ged_facetize_region_obj(struct ged *gedp, const char *oname, struct _ged_facetize_opts *opts, int ocnt, int max_cnt)
+{
+    struct bu_vls invalid_name = BU_VLS_INIT_ZERO;
+    int ret = GED_FACETIZE_FAIL;
+    const char *rcname = bu_avs_get(opts->c_map, oname);
+    const char *sname = bu_avs_get(opts->s_map, oname);
+
+    if (opts->method_flags & GED_FACETIZE_NMGBOOL) {
+	/* Return this unless we fail */
+	ret = GED_NMGBOOL_SUCCESS;
+
+	/* We're staring a new object, so we want to write out the header in the
+	 * log file the first time we get an NMG logging event.  (Re)set the flag
+	 * so the logger knows to do so. */
+	opts->nmg_log_print_header = 1;
+	bu_vls_sprintf(opts->nmg_log_header, "NMG: tessellating %s (%d of %d) with tolerances a=%g, r=%g, n=%g\n", oname, ocnt, max_cnt, opts->tol->abs, opts->tol->rel, opts->tol->norm);
+
+	/* Let the user know what's going on, unless output is suppressed */
+	if (!opts->quiet) {
+	    bu_log("%s", bu_vls_addr(opts->nmg_log_header));
+	}
+
+	if (_ged_nmg_obj(gedp, 1, (const char **)&oname, sname, opts) != GED_OK) {
+	    ret = GED_FACETIZE_FAIL;
+	}
+    }
+
+    if (ret < 0 && opts->method_flags & GED_FACETIZE_SPSR) {
+	int is_valid = 0;
+	ret = GED_SPSR_SUCCESS;
+	if (_ged_spsr_obj(&is_valid, gedp, oname, sname, opts) == GED_OK) {
+	    /* Check the validity */
+	    ret = (is_valid) ? GED_SPSR_SUCCESS : GED_FACETIZE_INVALID;
+	    if (ret == GED_FACETIZE_INVALID) {
+		bu_vls_sprintf(&invalid_name, "%s_SPSR_INVALID-0", sname);
+	    }
+	} else {
+	    ret = GED_FACETIZE_FAIL;
+	}
+    }
+
+    if (ret >= 0) {
+	/* Success - remove the restart attributes */
+	const char *attrav[4];
+	attrav[0] = "attr";
+	attrav[1] = "rm";
+	attrav[2] = rcname;
+	attrav[3] = "facetize_original_region";
+	if (ged_attr(gedp, 4, (const char **)&attrav) != GED_OK && opts->verbosity) {
+	    bu_log("Error removing attribute \"facetize_original_region\" from comb %s", rcname);
+	}
+	attrav[3] = "facetize_target_bot_name";
+	if (ged_attr(gedp, 4, (const char **)&attrav) != GED_OK && opts->verbosity) {
+	    bu_log("Error removing attribute \"facetize_target_bot_name\" from comb %s", rcname);
+	}
+    } else {
+	if (bu_vls_strlen(&invalid_name)) {
+	    /* We ended up with an invalid object - rename to
+	     * INVALID and update the name map.
+	     * (Note: by this point in the logic we have created all the combs
+	     * we need with the correct names, so we can stash the invalid name
+	     * in the bu_avs.  If we ever want to return more than one invalid
+	     * object per input region this won't scale, but for now it's
+	     * simple. */
+	    const char *mav[3];
+	    mav[0] = "mv";
+	    mav[1] = sname;
+	    mav[2] = bu_vls_addr(&invalid_name);
+	    if (ged_move(gedp, 3, (const char **)mav) != GED_OK && opts->verbosity) {
+		bu_log("Error: could not move failed SPSR shape %s to name %s\n", oname, bu_avs_get(opts->s_map, oname));
+	    }
+	    /* Now that we are done with sname (which was pointing to the
+	     * opts->s_map entry) update the map */
+	    bu_avs_add(opts->s_map, oname, bu_vls_addr(&invalid_name));
+	}
+    }
+
+    bu_vls_free(&invalid_name);
+    return ret;
+}
+
+
 int
 _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged_facetize_opts *opts)
 {
@@ -1088,21 +1177,18 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
     const char **ntop;
     struct bu_ptbl *pc = NULL;
     struct bu_ptbl *ar = NULL;
-    struct bu_ptbl ar_failed_nmg = BU_PTBL_INIT_ZERO;
     struct bu_ptbl spsr_succeeded = BU_PTBL_INIT_ZERO;
+    struct bu_ptbl spsr_failed = BU_PTBL_INIT_ZERO;
     struct bu_ptbl facetize_failed = BU_PTBL_INIT_ZERO;
-    struct bu_ptbl tmpnames = BU_PTBL_INIT_ZERO;
-    struct rt_tess_tol *tol = &(gedp->ged_wdbp->wdb_ttol);
-    const char *sname;
-    const char *mav[3];
-    const char *cmdname = "facetize";
-    struct bu_vls invalid_name = BU_VLS_INIT_ZERO;
 
     /* We need to copy combs above regions that are not themselves regions.
      * Also, facetize will need all "active" regions that will define shapes.
      * Construct searches to get these sets. */
     const char *preserve_combs = "-type c ! -type r ! -below -type r";
     const char *active_regions = "-type r ! -below -type r";
+
+    /* Used the libged tolerances */
+    opts->tol = &(gedp->ged_wdbp->wdb_ttol);
 
     if (argc) dpa = (struct directory **)bu_calloc(argc, sizeof(struct directory *), "dp array");
     newobj_cnt = _ged_sort_existing_objs(gedp, argc, argv, dpa);
@@ -1124,7 +1210,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	    _ged_facetize_mkname(gedp, opts, argv[i], SOLID_OBJ_NAME);
 
 	    /* Let the user know what's going on, unless output is suppressed */
-	    bu_vls_sprintf(opts->nmg_log_header, "NMG: tessellating solid %s with tolerances a=%g, r=%g, n=%g\n", argv[0], tol->abs, tol->rel, tol->norm);
+	    bu_vls_sprintf(opts->nmg_log_header, "NMG: tessellating solid %s with tolerances a=%g, r=%g, n=%g\n", argv[0], opts->tol->abs, opts->tol->rel, opts->tol->norm);
 	    if (!opts->quiet) {
 		bu_log("%s", bu_vls_addr(opts->nmg_log_header));
 	    }
@@ -1300,127 +1386,41 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
     for (i = 0; i < BU_PTBL_LEN(ar); i++) {
 	struct directory *n = (struct directory *)BU_PTBL_GET(ar, i);
 	const char *oname = n->d_namep;
-	const char *nname = bu_avs_get(opts->s_map, n->d_namep);
-
-	if (opts->method_flags & GED_FACETIZE_NMGBOOL) {
-
-	    /* We're staring a new object, so we want to write out the header in the
-	     * log file the first time we get an NMG logging event.  (Re)set the flag
-	     * so the logger knows to do so. */
-	    opts->nmg_log_print_header = 1;
-	    bu_vls_sprintf(opts->nmg_log_header, "NMG: tessellating %s (%d of %d) with tolerances a=%g, r=%g, n=%g\n", oname, i+1, BU_PTBL_LEN(ar), tol->abs, tol->rel, tol->norm);
-
-	    /* Let the user know what's going on, unless output is suppressed */
-	    if (!opts->quiet) {
-		bu_log("%s", bu_vls_addr(opts->nmg_log_header));
-	    }
-
-	    if (_ged_nmg_obj(gedp, 1, (const char **)&oname, nname, opts) != GED_OK) {
-		bu_ptbl_ins(&ar_failed_nmg, (long *)oname);
-	    } else {
-		/* Success - remove the restart attributes */
-		const char *rcname = bu_avs_get(opts->c_map, n->d_namep);
-		const char *attrav[4];
-		attrav[0] = "attr";
-		attrav[1] = "rm";
-		attrav[2] = rcname;
-		attrav[3] = "facetize_original_region";
-		if (ged_attr(gedp, 4, (const char **)&attrav) != GED_OK && opts->verbosity) {
-		    bu_log("Error removing attribute \"facetize_original_region\" from comb %s", rcname);
-		}
-		attrav[3] = "facetize_target_bot_name";
-		if (ged_attr(gedp, 4, (const char **)&attrav) != GED_OK && opts->verbosity) {
-		    bu_log("Error removing attribute \"facetize_target_bot_name\" from comb %s", rcname);
-		}
-	    }
-	}
-
-	/* If nmgbool is OFF and SPSR is ON, we'll have to try SPSR for all of them */
-	if (opts->method_flags == GED_FACETIZE_SPSR) {
-	    int is_valid = 0;
-	    if (_ged_spsr_obj(&is_valid, gedp, oname, nname, opts) == GED_OK) {
-		/* Check the validity */
-		if (is_valid) {
-		    /* Success - remove the restart attributes */
-		    const char *rcname = bu_avs_get(opts->c_map, n->d_namep);
-		    const char *attrav[4];
-		    attrav[0] = "attr";
-		    attrav[1] = "rm";
-		    attrav[2] = rcname;
-		    attrav[3] = "facetize_original_region";
-		    if (ged_attr(gedp, 4, (const char **)&attrav) != GED_OK && opts->verbosity) {
-			bu_log("Error removing attribute \"facetize_original_region\" from comb %s", rcname);
-		    }
-		    attrav[3] = "facetize_target_bot_name";
-		    if (ged_attr(gedp, 4, (const char **)&attrav) != GED_OK && opts->verbosity) {
-			bu_log("Error removing attribute \"facetize_target_bot_name\" from comb %s", rcname);
-		    }
-
-		    /* Make a note of SPSR success in particular - user may want to inspect */
-		    bu_ptbl_ins(&spsr_succeeded, (long *)bu_avs_get(opts->s_map, oname));
-		} else {
-		    /* rename to INVALID and add the bot to the facetize_failed list for inspection */
-		    bu_vls_sprintf(&invalid_name, "%s_SPSR_INVALID-0", nname);
-		    sname = bu_strdup(bu_vls_addr(&invalid_name));
-		    mav[0] = cmdname;
-		    mav[1] = nname;
-		    mav[2] = sname;
-		    ret = ged_move(gedp, 3, (const char **)mav);
-		    bu_ptbl_ins(&tmpnames, (long *)sname);
-		    bu_ptbl_ins(&facetize_failed, (long *)sname);
-		}
-	    } else {
-		bu_ptbl_ins(&facetize_failed, (long *)oname);
-	    }
-	}
-    }
-
-    /* Try SPSR as a fallback, if NMG booleans failed and SPSR is enabled */
-    if (BU_PTBL_LEN(&ar_failed_nmg) > 0 && (opts->method_flags & GED_FACETIZE_SPSR)) {
-	for (i = 0; i < BU_PTBL_LEN(&ar_failed_nmg); i++) {
-	    const char *oname = (const char *)BU_PTBL_GET(&ar_failed_nmg, i);
-	    const char *nname = bu_avs_get(opts->s_map, oname);
-	    int is_valid = 0;
-	    if (_ged_spsr_obj(&is_valid, gedp, oname, nname, opts) == GED_OK) {
-		/* Check the validity */
-		if (is_valid) {
-		    bu_ptbl_ins(&spsr_succeeded, (long *)bu_avs_get(opts->s_map, oname));
-		} else {
-		    /* rename to INVALID and add the bot to the facetize_failed list for inspection */
-		    bu_vls_sprintf(&invalid_name, "%s_SPSR_INVALID-0", nname);
-		    sname = bu_strdup(bu_vls_addr(&invalid_name));
-		    mav[0] = cmdname;
-		    mav[1] = nname;
-		    mav[2] = sname;
-		    ret = ged_move(gedp, 3, (const char **)mav);
-		    bu_ptbl_ins(&tmpnames, (long *)sname);
-		    bu_ptbl_ins(&facetize_failed, (long *)sname);
-		}
-	    } else {
-		bu_ptbl_ins(&facetize_failed, (long *)oname);
-	    }
-	}
-	if (BU_PTBL_LEN(&spsr_succeeded) > 0) {
-	    /* Put all of the spsr tessellations into their own top level comb for
-	     * easy manual inspection */
-	    struct bu_vls spsr_name = BU_VLS_INIT_ZERO;
-	    bu_vls_sprintf(&spsr_name, "%s_SPSR-0", newname);
-	    bu_vls_incr(&spsr_name, NULL, NULL, &_db_uniq_test, (void *)gedp);
-	    ret = _ged_combadd2(gedp, bu_vls_addr(&spsr_name), (int)BU_PTBL_LEN(&spsr_succeeded), (const char **)spsr_succeeded.buffer, 0, DB_OP_UNION, 0, 0, NULL, 0);
-	}
-    } else {
-	for (i = 0; i < BU_PTBL_LEN(&ar_failed_nmg); i++) {
-	    const char *oname = (const char *)BU_PTBL_GET(&ar_failed_nmg, i);
+	int fret = _ged_facetize_region_obj(gedp, oname, opts, i+1, (int)BU_PTBL_LEN(ar));
+	if (fret < 0) {
 	    bu_ptbl_ins(&facetize_failed, (long *)oname);
 	}
+	if (fret == GED_FACETIZE_INVALID) {
+	    bu_ptbl_ins(&spsr_failed, (long *)bu_avs_get(opts->s_map, oname));
+	}
+	if (fret == GED_SPSR_SUCCESS) {
+	    bu_ptbl_ins(&spsr_succeeded, (long *)bu_avs_get(opts->s_map, oname));
+	}
     }
 
+    /* For easier user inspection of what happened, make some high level debugging combs */
     if (BU_PTBL_LEN(&facetize_failed) > 0) {
 	/* Stash any failed regions into a top level comb for easy subsequent examination */
 	struct bu_vls failed_name = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&failed_name, "%s_FAILED-0", newname);
 	bu_vls_incr(&failed_name, NULL, NULL, &_db_uniq_test, (void *)gedp);
 	ret = _ged_combadd2(gedp, bu_vls_addr(&failed_name), (int)BU_PTBL_LEN(&facetize_failed), (const char **)facetize_failed.buffer, 0, DB_OP_UNION, 0, 0, NULL, 0);
+    }
+    if (BU_PTBL_LEN(&spsr_succeeded) > 0) {
+	/* Put all of the spsr tessellations into their own top level comb for
+	 * easy manual inspection */
+	struct bu_vls spsr_name = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&spsr_name, "%s_SPSR-0", newname);
+	bu_vls_incr(&spsr_name, NULL, NULL, &_db_uniq_test, (void *)gedp);
+	ret = _ged_combadd2(gedp, bu_vls_addr(&spsr_name), (int)BU_PTBL_LEN(&spsr_succeeded), (const char **)spsr_succeeded.buffer, 0, DB_OP_UNION, 0, 0, NULL, 0);
+    }
+    if (BU_PTBL_LEN(&spsr_failed) > 0) {
+	/* Put all of the spsr failed tessellations into their own top level comb for
+	 * easy manual inspection */
+	struct bu_vls spsr_name = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&spsr_name, "%s_SPSR_FAILED-0", newname);
+	bu_vls_incr(&spsr_name, NULL, NULL, &_db_uniq_test, (void *)gedp);
+	ret = _ged_combadd2(gedp, bu_vls_addr(&spsr_name), (int)BU_PTBL_LEN(&spsr_failed), (const char **)spsr_failed.buffer, 0, DB_OP_UNION, 0, 0, NULL, 0);
     }
 
     if (opts->in_place) {
@@ -1459,16 +1459,11 @@ ged_facetize_regions_memfree:
 	}
     }
 
-    for (i = 0; i < BU_PTBL_LEN(&tmpnames); i++) {
-	bu_free((char *)BU_PTBL_GET(&tmpnames, i), "temp name string");
-    }
-    bu_vls_free(&invalid_name);
-    bu_ptbl_free(&tmpnames);
     bu_ptbl_free(pc);
     bu_ptbl_free(ar);
-    bu_ptbl_free(&ar_failed_nmg);
     bu_ptbl_free(&facetize_failed);
     bu_ptbl_free(&spsr_succeeded);
+    bu_ptbl_free(&spsr_failed);
     bu_free(pc, "pc table");
     bu_free(ar, "ar table");
     return ret;
