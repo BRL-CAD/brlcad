@@ -28,7 +28,6 @@
 
 extern "C" {
 #include "bio.h"
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
