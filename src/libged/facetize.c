@@ -63,6 +63,7 @@ struct _ged_facetize_opts {
 
     int nmg_use_tnurbs;
     int regions;
+    int resume;
     int in_place;
     fastf_t decim_feat_perc;
     struct rt_tess_tol *tol;
@@ -104,6 +105,7 @@ struct _ged_facetize_opts * _ged_facetize_opts_create()
     o->screened_poisson = 0;
     o->nmg_use_tnurbs = 0;
     o->regions = 0;
+    o->resume = 0;
     o->in_place = 0;
     o->decim_feat_perc = 0.15;
     BU_GET(o->faceted_suffix, struct bu_vls);
@@ -1083,12 +1085,10 @@ _ged_facetize_cpcomb(struct ged *gedp, const char *o, struct _ged_facetize_opts 
 #define GED_SPSR_SUCCESS 1
 
 int
-_ged_facetize_region_obj(struct ged *gedp, const char *oname, struct _ged_facetize_opts *opts, int ocnt, int max_cnt)
+_ged_facetize_region_obj(struct ged *gedp, const char *oname, const char *cname, const char *sname, struct _ged_facetize_opts *opts, int ocnt, int max_cnt)
 {
     struct bu_vls invalid_name = BU_VLS_INIT_ZERO;
     int ret = GED_FACETIZE_FAIL;
-    const char *rcname = bu_avs_get(opts->c_map, oname);
-    const char *sname = bu_avs_get(opts->s_map, oname);
 
     if (opts->method_flags & GED_FACETIZE_NMGBOOL) {
 	/* Return this unless we fail */
@@ -1129,14 +1129,14 @@ _ged_facetize_region_obj(struct ged *gedp, const char *oname, struct _ged_faceti
 	const char *attrav[4];
 	attrav[0] = "attr";
 	attrav[1] = "rm";
-	attrav[2] = rcname;
+	attrav[2] = cname;
 	attrav[3] = "facetize_original_region";
 	if (ged_attr(gedp, 4, (const char **)&attrav) != GED_OK && opts->verbosity) {
-	    bu_log("Error removing attribute \"facetize_original_region\" from comb %s", rcname);
+	    bu_log("Error removing attribute \"facetize_original_region\" from comb %s", cname);
 	}
 	attrav[3] = "facetize_target_bot_name";
 	if (ged_attr(gedp, 4, (const char **)&attrav) != GED_OK && opts->verbosity) {
-	    bu_log("Error removing attribute \"facetize_target_bot_name\" from comb %s", rcname);
+	    bu_log("Error removing attribute \"facetize_target_bot_name\" from comb %s", cname);
 	}
     } else {
 	if (bu_vls_strlen(&invalid_name)) {
@@ -1164,6 +1164,146 @@ _ged_facetize_region_obj(struct ged *gedp, const char *oname, struct _ged_faceti
     return ret;
 }
 
+int
+_ged_facetize_regions_resume(struct ged *gedp, int argc, const char **argv, struct _ged_facetize_opts *opts)
+{
+    unsigned int i = 0;
+    int newobj_cnt = 0;
+    int ret = GED_OK;
+    struct bu_ptbl *ar = NULL;
+    const char *resume_regions = "-attr facetize_original_region";
+    struct bu_ptbl spsr_succeeded = BU_PTBL_INIT_ZERO;
+    struct bu_ptbl spsr_failed = BU_PTBL_INIT_ZERO;
+    struct bu_ptbl facetize_failed = BU_PTBL_INIT_ZERO;
+    struct directory **dpa = NULL;
+    struct bu_attribute_value_set rnames;
+    struct bu_attribute_value_set bnames;
+    struct db_i *dbip = gedp->ged_wdbp->dbip;
+
+    if (!argc) return GED_ERROR;
+
+    bu_avs_init_empty(&bnames);
+    bu_avs_init_empty(&rnames);
+
+    /* Used the libged tolerances */
+    opts->tol = &(gedp->ged_wdbp->wdb_ttol);
+
+    dpa = (struct directory **)bu_calloc(argc, sizeof(struct directory *), "dp array");
+    newobj_cnt = _ged_sort_existing_objs(gedp, argc, argv, dpa);
+    if (newobj_cnt) {
+	bu_vls_sprintf(gedp->ged_result_str, "one or more new object names supplied to resume.");
+	bu_free(dpa, "free dpa");
+	return GED_ERROR;
+    }
+
+    BU_ALLOC(ar, struct bu_ptbl);
+    if (db_search(ar, DB_SEARCH_RETURN_UNIQ_DP, resume_regions, argc, dpa, dbip, NULL) < 0) {
+	if (opts->verbosity) {
+	    bu_log("Problem searching for active regions - aborting.\n");
+	}
+	ret = GED_ERROR;
+	goto ged_facetize_regions_resume_memfree;
+    }
+    if (!BU_PTBL_LEN(ar)) {
+	/* No active regions (possible), nothing to do */
+	ret = GED_OK;
+	goto ged_facetize_regions_resume_memfree;
+    } else {
+	for (i = 0; i < BU_PTBL_LEN(ar); i++) {
+	    struct directory *n = (struct directory *)BU_PTBL_GET(ar, i);
+	    struct bu_attribute_value_set avs;
+	    const char *rname;
+	    const char *bname;
+	    bu_avs_init_empty(&avs);
+	    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, n)) continue;
+	    rname = bu_avs_get(&avs, "facetize_original_region");
+	    bname = bu_avs_get(&avs, "facetize_target_bot_name");
+	    if (!rname || !bname) {
+		bu_avs_free(&avs);
+		continue;
+	    }
+	    bu_avs_add(&bnames, n->d_namep, bname);
+	    bu_avs_add(&rnames, n->d_namep, rname);
+	    bu_avs_free(&avs);
+	}
+    }
+
+    for (i = 0; i < BU_PTBL_LEN(ar); i++) {
+	struct directory *n = (struct directory *)BU_PTBL_GET(ar, i);
+	const char *cname = n->d_namep;
+	const char *sname = bu_avs_get(&bnames, cname);
+	const char *oname = bu_avs_get(&rnames, cname);
+
+	int fret = _ged_facetize_region_obj(gedp, oname, cname, sname, opts, i+1, (int)BU_PTBL_LEN(ar));
+	if (fret < 0) {
+	    bu_ptbl_ins(&facetize_failed, (long *)oname);
+	}
+	if (fret == GED_FACETIZE_INVALID) {
+	    bu_ptbl_ins(&spsr_failed, (long *)bu_avs_get(opts->s_map, oname));
+	}
+	if (fret == GED_SPSR_SUCCESS) {
+	    bu_ptbl_ins(&spsr_succeeded, (long *)bu_avs_get(opts->s_map, oname));
+	}
+    }
+
+    /* For easier user inspection of what happened, make some high level debugging combs */
+    if (BU_PTBL_LEN(&facetize_failed) > 0) {
+	/* Stash any failed regions into a top level comb for easy subsequent examination */
+	struct bu_vls failed_name = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&failed_name, "%s_FAILED-0", argv[0]);
+	bu_vls_incr(&failed_name, NULL, NULL, &_db_uniq_test, (void *)gedp);
+	ret = _ged_combadd2(gedp, bu_vls_addr(&failed_name), (int)BU_PTBL_LEN(&facetize_failed), (const char **)facetize_failed.buffer, 0, DB_OP_UNION, 0, 0, NULL, 0);
+    }
+    if (BU_PTBL_LEN(&spsr_succeeded) > 0) {
+	/* Put all of the spsr tessellations into their own top level comb for
+	 * easy manual inspection */
+	struct bu_vls spsr_name = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&spsr_name, "%s_SPSR-0", argv[0]);
+	bu_vls_incr(&spsr_name, NULL, NULL, &_db_uniq_test, (void *)gedp);
+	ret = _ged_combadd2(gedp, bu_vls_addr(&spsr_name), (int)BU_PTBL_LEN(&spsr_succeeded), (const char **)spsr_succeeded.buffer, 0, DB_OP_UNION, 0, 0, NULL, 0);
+    }
+    if (BU_PTBL_LEN(&spsr_failed) > 0) {
+	/* Put all of the spsr failed tessellations into their own top level comb for
+	 * easy manual inspection */
+	struct bu_vls spsr_name = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&spsr_name, "%s_SPSR_FAILED-0", argv[0]);
+	bu_vls_incr(&spsr_name, NULL, NULL, &_db_uniq_test, (void *)gedp);
+	ret = _ged_combadd2(gedp, bu_vls_addr(&spsr_name), (int)BU_PTBL_LEN(&spsr_failed), (const char **)spsr_failed.buffer, 0, DB_OP_UNION, 0, 0, NULL, 0);
+    }
+
+
+ged_facetize_regions_resume_memfree:
+
+    /* Done changing stuff - update nref. */
+    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
+
+    if (bu_vls_strlen(opts->nmg_log) && opts->method_flags & GED_FACETIZE_NMGBOOL && opts->verbosity > 1) {
+	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(opts->nmg_log));
+    }
+
+    /* Final report */
+    bu_vls_printf(gedp->ged_result_str, "Objects successfully converted: %d of %d\n", BU_PTBL_LEN(ar) - BU_PTBL_LEN(&facetize_failed), BU_PTBL_LEN(ar));
+    if (BU_PTBL_LEN(&spsr_succeeded)) {
+	bu_vls_printf(gedp->ged_result_str, "Objects converted with SPSR: %d\n", BU_PTBL_LEN(&spsr_succeeded));
+    }
+    if (BU_PTBL_LEN(&facetize_failed)) {
+	bu_vls_printf(gedp->ged_result_str, "WARNING: %d objects failed:\n", BU_PTBL_LEN(&facetize_failed));
+	for (i = 0; i < BU_PTBL_LEN(&facetize_failed); i++) {
+	    bu_vls_printf(gedp->ged_result_str, "	%s\n", (const char *)BU_PTBL_GET(&facetize_failed, i));
+	}
+    }
+
+    bu_avs_free(&bnames);
+    bu_avs_free(&rnames);
+    bu_ptbl_free(&facetize_failed);
+    bu_ptbl_free(&spsr_succeeded);
+    bu_ptbl_free(&spsr_failed);
+    bu_ptbl_free(ar);
+    bu_free(ar, "ar table");
+    bu_free(dpa, "free dpa");
+
+    return ret;
+}
 
 int
 _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged_facetize_opts *opts)
@@ -1190,9 +1330,12 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
     /* Used the libged tolerances */
     opts->tol = &(gedp->ged_wdbp->wdb_ttol);
 
-    if (argc) dpa = (struct directory **)bu_calloc(argc, sizeof(struct directory *), "dp array");
+    if (!argc) return GED_ERROR;
+
+    dpa = (struct directory **)bu_calloc(argc, sizeof(struct directory *), "dp array");
     newobj_cnt = _ged_sort_existing_objs(gedp, argc, argv, dpa);
     if (_ged_validate_objs_list(gedp, argc, argv, opts, newobj_cnt) == GED_ERROR) {
+	bu_free(dpa, "free dpa");
 	return GED_ERROR;
     }
 
@@ -1386,7 +1529,9 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
     for (i = 0; i < BU_PTBL_LEN(ar); i++) {
 	struct directory *n = (struct directory *)BU_PTBL_GET(ar, i);
 	const char *oname = n->d_namep;
-	int fret = _ged_facetize_region_obj(gedp, oname, opts, i+1, (int)BU_PTBL_LEN(ar));
+	const char *cname = bu_avs_get(opts->c_map, oname);
+	const char *sname = bu_avs_get(opts->s_map, oname);
+	int fret = _ged_facetize_region_obj(gedp, oname, cname, sname, opts, i+1, (int)BU_PTBL_LEN(ar));
 	if (fret < 0) {
 	    bu_ptbl_ins(&facetize_failed, (long *)oname);
 	}
@@ -1466,6 +1611,7 @@ ged_facetize_regions_memfree:
     bu_ptbl_free(&spsr_failed);
     bu_free(pc, "pc table");
     bu_free(ar, "ar table");
+    bu_free(dpa, "dpa array");
     return ret;
 }
 
@@ -1485,8 +1631,9 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     static const char *usage = "Usage: facetize [ -nmhT | [--poisson] ] [old_obj1 | new_obj] [old_obj* ...] [old_objN | new_obj]\n";
     static const char *pusage = "Usage: facetize --poisson [-d #] [-w #] [ray sampling options] old_obj new_obj\n";
     int print_help = 0;
+    int need_help = 0;
     struct _ged_facetize_opts *opts = _ged_facetize_opts_create();
-    struct bu_opt_desc d[12];
+    struct bu_opt_desc d[14];
     struct bu_opt_desc pd[12];
 
     BU_OPT(d[0], "h", "help",          "",  NULL,  &print_help,               "Print help and exit");
@@ -1499,8 +1646,9 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[7], "",  "TNURB",         "",  NULL,  &(opts->nmg_use_tnurbs),   "Create TNURB faces rather than planar approximations (experimental)");
     BU_OPT(d[8], "T", "triangles",     "",  NULL,  &(opts->triangulate),      "Generate a NMG solid using only triangles (BoTs, the default output, can only use triangles - this option mimics that behavior for NMG output.)");
     BU_OPT(d[9], "r", "regions",       "",  NULL,  &(opts->regions),          "For combs, walk the trees and create new copies of the hierarchies with each region replaced by a facetized evaluation of that region. (Default is to create one facetized object for all specified inputs.)");
-    BU_OPT(d[10], "",  "in-place",      "",  NULL,  &(opts->in_place),         "Alter the existing tree/object to reference the facetized object.  May only specify one input object with this mode, and no output name.  (Warning: this option changes pre-existing geometry!)");
-    BU_OPT_NULL(d[11]);
+    BU_OPT(d[10], "",  "resume",       "",  NULL,  &(opts->resume),           "Resume an interrupted conversion (region mode only)");
+    BU_OPT(d[11], "",  "in-place",      "",  NULL,  &(opts->in_place),         "Alter the existing tree/object to reference the facetized object.  May only specify one input object with this mode, and no output name.  (Warning: this option changes pre-existing geometry!)");
+    BU_OPT_NULL(d[12]);
 
     /* Poisson specific options */
     BU_OPT(pd[0], "d", "depth",            "#", &bu_opt_int,     &(opts->s_opts.depth),            "Maximum reconstruction depth (default 8)");
@@ -1585,19 +1733,31 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	goto ged_facetize_memfree;
     }
 
+    if (opts->resume && !opts->regions) {
+	bu_vls_printf(gedp->ged_result_str, "--resume is only supported with with region (-r) mode\n");
+	ret = GED_ERROR;
+	goto ged_facetize_memfree;
+    }
+
     /* Check if we want/need help */
-    if (print_help || (argc < 2 && !opts->in_place) || argc < 1) {
+    need_help += (argc < 1);
+    need_help += (argc < 2 && !opts->in_place && !opts->resume);
+    if (print_help || need_help || argc < 1) {
 	_ged_cmd_help(gedp, usage, d);
 	if (opts->method_flags & GED_FACETIZE_SPSR) {
 	    _ged_cmd_help(gedp, pusage, pd);
 	}
-	ret = (print_help || argc < 1) ? GED_OK : GED_ERROR;
+	ret = (need_help) ? GED_ERROR : GED_OK;
 	goto ged_facetize_memfree;
     }
 
     /* Multi-region mode has a different processing logic */
     if (opts->regions) {
-	ret = _ged_facetize_regions(gedp, argc, argv, opts);
+	if (opts->resume) {
+	    ret = _ged_facetize_regions_resume(gedp, argc, argv, opts);
+	} else {
+	    ret = _ged_facetize_regions(gedp, argc, argv, opts);
+	}
     } else {
 	ret = _ged_facetize_objlist(gedp, argc, argv, opts);
     }
