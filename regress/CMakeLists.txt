@@ -302,6 +302,7 @@ set(regress_outfiles
   lights.pix
   lights_diff.pix
   lights_ref.pix
+  mged.g
   mged.log
   moss-diff.log
   moss-png.log
