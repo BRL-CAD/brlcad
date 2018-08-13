@@ -1188,6 +1188,82 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	}
     }
 
+    /* For all the pc combs, make new versions with the suffixed names */
+    if (!opts->quiet) {
+	bu_log("Initializing copies of assembly combinations...\n");
+    }
+    for (i = 0; i < BU_PTBL_LEN(pc); i++) {
+	int j = 0;
+	struct rt_db_internal intern;
+	struct directory *cdp = RT_DIR_NULL;
+	struct directory **children = NULL;
+	struct rt_comb_internal *comb = NULL;
+	int *bool_ops = NULL;
+	matp_t *mats = NULL;
+	const char *nparent;
+	struct directory *n = (struct directory *)BU_PTBL_GET(pc, i);
+
+	if (_ged_facetize_cpcomb(gedp, n->d_namep, opts) != GED_OK) {
+	    if (opts->verbosity) {
+		bu_log("Failed to creating comb %s for %s \n", bu_avs_get(opts->c_map, n->d_namep), n->d_namep);
+	    }
+	    continue;
+	}
+
+	/* Add the members from the map with the settings from the original
+	 * comb */
+
+	RT_DB_INTERNAL_INIT(&intern);
+	cdp = (struct directory *)BU_PTBL_GET(pc, i);
+	nparent = bu_avs_get(opts->c_map, cdp->d_namep);
+	if (!opts->quiet) {
+	    bu_log("Rebuilding assembly %s (%d of %d) using facetized shapes...\n", nparent, i+1, BU_PTBL_LEN(pc));
+	}
+	if (rt_db_get_internal(&intern, cdp, dbip, NULL, &rt_uniresource) < 0) {
+	    ret = GED_ERROR;
+	    goto ged_facetize_regions_memfree;
+	}
+	comb = (struct rt_comb_internal *)intern.idb_ptr;
+	if (db_comb_children(dbip, comb, &children, &bool_ops, &mats) < 0) {
+	    ret = GED_ERROR;
+	    goto ged_facetize_regions_memfree;
+	}
+	j = 0;
+	cdp = children[0];
+	while (cdp != RT_DIR_NULL) {
+	    const char *nc = bu_avs_get(opts->c_map, cdp->d_namep);
+	    matp_t m = (mats[j]) ? mats[j] : NULL;
+	    ret = _ged_combadd2(gedp, (char *)nparent, 1, (const char **)&nc, 0, _int_to_opt(bool_ops[j]), 0, 0, m, 0);
+	    j++;
+	    cdp = children[j];
+	}
+
+	j = 0;
+	while (mats[j]) {
+	    bu_free(mats[j], "free matrix");
+	    j++;
+	}
+	bu_free(mats, "free mats array");
+	bu_free(bool_ops, "free ops");
+	bu_free(children, "free children struct directory ptr array");
+    }
+
+    /* Last one - add the new toplevel comb to hold all the new geometry */
+    if (!opts->in_place) {
+	ntop = (const char **)bu_calloc(argc, sizeof(const char *), "new top level names");
+	for (i = 0; i < (unsigned int)argc; i++) {
+	    ntop[i] = bu_avs_get(opts->c_map, argv[i]);
+	    if (!ntop[i]) {
+		ntop[i] = bu_avs_get(opts->s_map, argv[i]);
+	    }
+	}
+	if (!opts->quiet) {
+	    bu_log("Creating new top level assembly object %s...\n", newname);
+	}
+	ret = _ged_combadd2(gedp, newname, argc, ntop, 0, DB_OP_UNION, 0, 0, NULL, 0);
+    }
+
+
     /* TODO - someday this object-level facetization should be done in
      * parallel, but that's one deep rabbit hole - for now, just try them in
      * order and make sure we can handle (non-crashing) failures to convert
@@ -1285,77 +1361,6 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	bu_vls_sprintf(&failed_name, "%s_FAILED-0", newname);
 	bu_vls_incr(&failed_name, NULL, NULL, &_db_uniq_test, (void *)gedp);
 	ret = _ged_combadd2(gedp, bu_vls_addr(&failed_name), (int)BU_PTBL_LEN(&facetize_failed), (const char **)facetize_failed.buffer, 0, DB_OP_UNION, 0, 0, NULL, 0);
-    }
-
-    /* For all the pc combs, make new versions with the suffixed names */
-    if (!opts->quiet) {
-	bu_log("Initializing copies of assembly combinations...\n");
-    }
-    for (i = 0; i < BU_PTBL_LEN(pc); i++) {
-	struct directory *n = (struct directory *)BU_PTBL_GET(pc, i);
-	if (_ged_facetize_cpcomb(gedp, n->d_namep, opts) != GED_OK) {
-	    if (opts->verbosity) {
-		bu_log("Failed to creating comb %s for %s \n", bu_avs_get(opts->c_map, n->d_namep), n->d_namep);
-	    }
-	}
-    }
-
-    /* For all the pc combs, add the members from the map with the settings from the
-     * original comb */
-    for (i = 0; i < BU_PTBL_LEN(pc); i++) {
-	int j = 0;
-	struct rt_db_internal intern;
-	struct directory *cdp = RT_DIR_NULL;
-	struct directory **children = NULL;
-	struct rt_comb_internal *comb = NULL;
-	int *bool_ops = NULL;
-	matp_t *mats = NULL;
-	const char *nparent;
-	RT_DB_INTERNAL_INIT(&intern);
-	cdp = (struct directory *)BU_PTBL_GET(pc, i);
-	nparent = bu_avs_get(opts->c_map, cdp->d_namep);
-	if (!opts->quiet) {
-	    bu_log("Rebuilding assembly %s (%d of %d) using facetized shapes...\n", nparent, i+1, BU_PTBL_LEN(pc));
-	}
-	if (rt_db_get_internal(&intern, cdp, dbip, NULL, &rt_uniresource) < 0) {
-	    ret = GED_ERROR;
-	    goto ged_facetize_regions_memfree;
-	}
-	comb = (struct rt_comb_internal *)intern.idb_ptr;
-	if (db_comb_children(dbip, comb, &children, &bool_ops, &mats) < 0) {
-	    ret = GED_ERROR;
-	    goto ged_facetize_regions_memfree;
-	}
-	j = 0;
-	cdp = children[0];
-	while (cdp != RT_DIR_NULL) {
-	    const char *nc = bu_avs_get(opts->c_map, cdp->d_namep);
-	    matp_t m = (mats[j]) ? mats[j] : NULL;
-	    ret = _ged_combadd2(gedp, (char *)nparent, 1, (const char **)&nc, 0, _int_to_opt(bool_ops[j]), 0, 0, m, 0);
-	    j++;
-	    cdp = children[j];
-	}
-
-	j = 0;
-	while (mats[j]) {
-	    bu_free(mats[j], "free matrix");
-	    j++;
-	}
-	bu_free(mats, "free mats array");
-	bu_free(bool_ops, "free ops");
-	bu_free(children, "free children struct directory ptr array");
-    }
-
-    /* Last one - add the new toplevel comb to hold all the new geometry */
-    if (!opts->in_place) {
-	ntop = (const char **)bu_calloc(argc, sizeof(const char *), "new top level names");
-	for (i = 0; i < (unsigned int)argc; i++) {
-	    ntop[i] = bu_avs_get(opts->c_map, argv[i]);
-	    if (!ntop[i]) {
-		ntop[i] = bu_avs_get(opts->s_map, argv[i]);
-	    }
-	}
-	ret = _ged_combadd2(gedp, newname, argc, ntop, 0, DB_OP_UNION, 0, 0, NULL, 0);
     }
 
     if (opts->in_place) {
