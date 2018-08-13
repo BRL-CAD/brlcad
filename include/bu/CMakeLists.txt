@@ -22,6 +22,7 @@ set(bu_headers
   magic.h
   malloc.h
   mapped_file.h
+  mime.h
   observer.h
   opt.h
   parallel.h

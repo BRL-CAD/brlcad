@@ -22,9 +22,10 @@ set(LIBBG_SOURCES
 BRLCAD_ADDLIB(libbg "${LIBBG_SOURCES}" "libbn;libbu;libSPR")
 set_target_properties(libbg PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if(CPP_DLL_DEFINES)
-  add_subdirectory(tests)
   set_property(TARGET libbg APPEND PROPERTY COMPILE_DEFINITIONS "SPR_DLL_IMPORTS")
 endif(CPP_DLL_DEFINES)
+
+add_subdirectory(tests)
 
 CMAKEFILES(bg_private.h pointgen.c)
 

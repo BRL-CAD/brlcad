@@ -68,6 +68,12 @@ set(misc_ignore_files
   batch-indent-region.el
   brlcad-config.in
   brlcad.spec.in
+  check/adj_air.sh
+  check/exp_air.sh
+  check/overlaps.sh
+  check/rtcheck.sh
+  check/volume.sh
+  check/gap.sh
   clang-static-analyzer-run.sh
   flawfinder
   jove.emacs
