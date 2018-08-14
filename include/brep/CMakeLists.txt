@@ -11,10 +11,7 @@ set(brep_headers
   surfacetree.h
   util.h
   )
-
-install(FILES ${brep_headers} DESTINATION ${INCLUDE_DIR}/brlcad/brep)
-
-CMAKEFILES(${brep_headers})
+BRLCAD_MANAGE_FILES(brep_headers ${INCLUDE_DIR}/brlcad/brep)
 
 # Local Variables:
 # tab-width: 8

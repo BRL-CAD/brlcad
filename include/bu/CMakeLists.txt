@@ -42,9 +42,7 @@ set(bu_headers
   vlb.h
   vls.h
   )
-install(FILES ${bu_headers} DESTINATION ${INCLUDE_DIR}/brlcad/bu)
-
-CMAKEFILES(${bu_headers})
+BRLCAD_MANAGE_FILES(bu_headers ${INCLUDE_DIR}/brlcad/bu)
 
 # Local Variables:
 # tab-width: 8

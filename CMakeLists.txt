@@ -933,7 +933,7 @@ endif("${CXX_STANDARD_FLAGS}" STREQUAL "")
 # We also allow for multiple projects with this macro, in case
 # subprojects are also managing a config.h.in a file of their own.
 
-set(CONFIG_H_FILE "${BRLCAD_BINARY_DIR}/include/brlcad_config.h.in")
+set(CONFIG_H_FILE "${BRLCAD_BINARY_DIR}/include/conf_headers/brlcad_config.h.in")
 set_source_files_properties(${CONFIG_H_FILE} PROPERTIES GENERATED TRUE)
 
 set(CMAKE_CURRENT_PROJECT BRLCAD)
@@ -3131,8 +3131,8 @@ file(REMOVE "${CMAKE_BINARY_DIR}/CMakeTmp/report_username.c")
 
 #---------------------------------------------------------------------
 # We now have everything we need - configure files
-configure_file("${BRLCAD_SOURCE_DIR}/include/brlcad_ident.h.in" "${BRLCAD_BINARY_DIR}/include/brlcad_ident.h")
-install(FILES "${BRLCAD_BINARY_DIR}/include/brlcad_ident.h" DESTINATION ${INCLUDE_DIR})
+configure_file("${BRLCAD_SOURCE_DIR}/include/brlcad_ident.h.in" "${BRLCAD_BINARY_DIR}/include/conf_headers/brlcad_ident.h")
+BRLCAD_MANAGE_FILES("${BRLCAD_BINARY_DIR}/include/conf_headers/brlcad_ident.h" ${INCLUDE_DIR})
 
 # If we're building on Windows with MSVC, use config_win.h file
 if(MSVC)
@@ -3141,25 +3141,27 @@ endif(MSVC)
 
 # Generate the windows specific file, if needed
 if(WIN32)
-  if(EXISTS "${BRLCAD_BINARY_DIR}/include/config_win.h")
-    configure_file("${BRLCAD_SOURCE_DIR}/include/config_win.h.in" "${BRLCAD_BINARY_DIR}/include/config_win.h.tmp")
-    execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different "${BRLCAD_BINARY_DIR}/include/config_win.h.tmp" "${BRLCAD_BINARY_DIR}/include/config_win.h")
-  else(EXISTS "${BRLCAD_BINARY_DIR}/include/config_win.h")
-    configure_file("${BRLCAD_SOURCE_DIR}/include/config_win.h.in" "${BRLCAD_BINARY_DIR}/include/config_win.h")
-  endif(EXISTS "${BRLCAD_BINARY_DIR}/include/config_win.h")
+  if(EXISTS "${BRLCAD_BINARY_DIR}/include/conf_headers/config_win.h")
+    configure_file("${BRLCAD_SOURCE_DIR}/include/conf_headers/config_win.h.in" "${BRLCAD_BINARY_DIR}/include/conf_headers/config_win.h.tmp")
+    execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different "${BRLCAD_BINARY_DIR}/include/conf_headers/config_win.h.tmp" "${BRLCAD_BINARY_DIR}/include/conf_headers/config_win.h")
+  else(EXISTS "${BRLCAD_BINARY_DIR}/include/conf_headers/config_win.h")
+    configure_file("${BRLCAD_SOURCE_DIR}/include/conf_headers/config_win.h.in" "${BRLCAD_BINARY_DIR}/include/conf_headers/config_win.h")
+  endif(EXISTS "${BRLCAD_BINARY_DIR}/include/conf_headers/config_win.h")
+  BRLCAD_MANAGE_FILES("${BRLCAD_BINARY_DIR}/include/conf_headers/config_win.h" ${INCLUDE_DIR}/brlcad)
 endif(WIN32)
 
 # Configure the brlcad_config.h file:
 CONFIG_H_APPEND(BRLCAD "#endif /* __CONFIG_H__ */\n")
 get_property(CONFIG_H_FILE_CONTENTS GLOBAL PROPERTY ${CMAKE_PROJECT_NAME}_CONFIG_H_CONTENTS)
 file(WRITE ${CONFIG_H_FILE} "${CONFIG_H_FILE_CONTENTS}")
-if(EXISTS "${BRLCAD_BINARY_DIR}/include/brlcad_config.h")
-  configure_file(${CONFIG_H_FILE} "${BRLCAD_BINARY_DIR}/include/brlcad_config.h.tmp")
-  execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different "${BRLCAD_BINARY_DIR}/include/brlcad_config.h.tmp" "${BRLCAD_BINARY_DIR}/include/brlcad_config.h")
-  execute_process(COMMAND ${CMAKE_COMMAND} -E remove "${BRLCAD_BINARY_DIR}/include/brlcad_config.h.tmp")
-else(EXISTS "${BRLCAD_BINARY_DIR}/include/brlcad_config.h")
-  configure_file(${CONFIG_H_FILE} "${BRLCAD_BINARY_DIR}/include/brlcad_config.h")
-endif(EXISTS "${BRLCAD_BINARY_DIR}/include/brlcad_config.h")
+if(EXISTS "${BRLCAD_BINARY_DIR}/include/conf_headers/brlcad_config.h")
+  configure_file(${CONFIG_H_FILE} "${BRLCAD_BINARY_DIR}/include/conf_headers/brlcad_config.h.tmp")
+  execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different "${BRLCAD_BINARY_DIR}/include/conf_headers/brlcad_config.h.tmp" "${BRLCAD_BINARY_DIR}/include/conf_headers/brlcad_config.h")
+  execute_process(COMMAND ${CMAKE_COMMAND} -E remove "${BRLCAD_BINARY_DIR}/include/conf_headers/brlcad_config.h.tmp")
+else(EXISTS "${BRLCAD_BINARY_DIR}/include/conf_headers/brlcad_config.h")
+  configure_file(${CONFIG_H_FILE} "${BRLCAD_BINARY_DIR}/include/conf_headers/brlcad_config.h")
+endif(EXISTS "${BRLCAD_BINARY_DIR}/include/conf_headers/brlcad_config.h")
+BRLCAD_MANAGE_FILES("${BRLCAD_BINARY_DIR}/include/conf_headers/brlcad_config.h" ${INCLUDE_DIR}/brlcad)
 
 #---------------------------------------------------------------------
 # Rules for the toplevel documentation files
@@ -3454,7 +3456,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
   DISTCLEAN("${CMAKE_BINARY_DIR}/CMakeTmp")
   DISTCLEAN("${CMAKE_BINARY_DIR}/configure.new")
   DISTCLEAN("${CMAKE_BINARY_DIR}/INSTALL.new")
-  DISTCLEAN("${CMAKE_BINARY_DIR}/include/brlcad_config.h.in")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/include/conf_headers/brlcad_config.h.in")
   DISTCLEAN("${CMAKE_BINARY_DIR}/CMakeDoxyfile.in")
   DISTCLEAN("${CMAKE_BINARY_DIR}/CMakeDoxygenDefaults.cmake")
   foreach(clearpattern ${DISTCLEAN_OUTFILES})

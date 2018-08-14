@@ -8,10 +8,7 @@ set(bg_headers
   tri_tri.h
   trimesh.h
   )
-
-install(FILES ${bg_headers} DESTINATION ${INCLUDE_DIR}/brlcad/bg)
-
-CMAKEFILES(${bg_headers})
+BRLCAD_MANAGE_FILES(bg_headers ${INCLUDE_DIR}/brlcad/bg)
 
 CMAKEFILES(pointgen.h)
 

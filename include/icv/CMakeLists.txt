@@ -7,10 +7,7 @@ set(icv_headers
   ops.h
   stat.h
   )
-
-install(FILES ${icv_headers} DESTINATION ${INCLUDE_DIR}/brlcad/icv)
-
-CMAKEFILES(${icv_headers})
+BRLCAD_MANAGE_FILES(icv_headers ${INCLUDE_DIR}/brlcad/icv)
 
 # Local Variables:
 # tab-width: 8

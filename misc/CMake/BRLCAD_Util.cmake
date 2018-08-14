@@ -275,9 +275,9 @@ function(NORMALIZE_FILE_LIST inlist)
   # First, figure out whether we have list contents or a list name
   set(havevarname 0)
   foreach(maybefilename ${inlist})
-    if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${maybefilename}")
+    if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${maybefilename}" AND NOT EXISTS "${maybefilename}")
       set(havevarname 1)
-    endif(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${maybefilename}")
+    endif(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${maybefilename}" AND NOT EXISTS "${maybefilename}")
   endforeach(maybefilename ${inlist})
 
   # Put the list contents in the targetvar variable and

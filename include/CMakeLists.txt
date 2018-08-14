@@ -45,35 +45,10 @@ set(public_hdrs
   vmath.h
   wdb.h
   )
-install(FILES ${public_hdrs} DESTINATION ${INCLUDE_DIR}/brlcad)
-CMAKEFILES(${public_hdrs})
-
-# Configuration headers
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/brlcad_config.h" DESTINATION ${INCLUDE_DIR}/brlcad)
-if(WIN32)
-  install(FILES "${CMAKE_CURRENT_BINARY_DIR}/config_win.h" DESTINATION ${INCLUDE_DIR}/brlcad)
-endif(WIN32)
+BRLCAD_MANAGE_FILES("${public_hdrs}" ${INCLUDE_DIR}/brlcad)
 
 # Used by others but still considered private
-install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/brlcad_version.h" DESTINATION ${INCLUDE_DIR})
-CMAKEFILES(brlcad_version.h)
-
-# Enforce the above list - check the public headers to make sure
-# they do not include any private headers.
-#set(inc_error 0)
-#set(msgs "")
-#foreach(header_file ${public_hdrs})
-#  file(READ "${header_file}" contents)
-#  foreach(noinst_file ${noinst_HEADERS})
-#    if("${contents}" MATCHES "include [\"<]${noinst_file}")
-#      set(inc_error 1)
-#      set(msgs "${msgs}\nPublic header file ${header_file} is including private header ${noinst_file}")
-#    endif("${contents}" MATCHES "include [\"<]${noinst_file}")
-#  endforeach(noinst_file ${noinst_HEADERS})
-#endforeach(header_file ${public_hdrs})
-#if(inc_error)
-#  message(FATAL_ERROR "${msgs}\nFATAL ERROR: Public headers are including private headers per messages above.")
-#endif(inc_error)
+BRLCAD_MANAGE_FILES("brlcad_version.h" ${INCLUDE_DIR})
 
 set(include_misc
   brlcad_ident.h.in

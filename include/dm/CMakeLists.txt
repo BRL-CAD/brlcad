@@ -3,10 +3,7 @@ set(dm_headers
   defines.h
   dm_xvars.h
   )
-
-install(FILES ${dm_headers} DESTINATION ${INCLUDE_DIR}/brlcad/dm)
-
-CMAKEFILES(${dm_headers} dm-design.h)
+BRLCAD_MANAGE_FILES(dm_headers ${INCLUDE_DIR}/brlcad/dm)
 
 # Local Variables:
 # tab-width: 8

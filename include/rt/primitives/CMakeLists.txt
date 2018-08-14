@@ -16,11 +16,9 @@ set(primitives_headers
   script.h
   sketch.h
   tgc.h
-  tor.h)
-
-install(FILES ${primitives_headers} DESTINATION ${INCLUDE_DIR}/brlcad/rt/primitives)
-
-CMAKEFILES(${primitives_headers})
+  tor.h
+  )
+BRLCAD_MANAGE_FILES(primitives_headers ${INCLUDE_DIR}/brlcad/rt/primitives)
 
 # Local Variables:
 # tab-width: 8
