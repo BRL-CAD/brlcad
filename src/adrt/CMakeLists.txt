@@ -49,8 +49,8 @@ set(tie_HDRS
   librender/texture.h
   librender/texture_internal.h
   )
-install(FILES ${tie_HDRS} DESTINATION include/tie)
-CMAKEFILES(${tie_HDRS})
+# TODO - should these be in brlcad/tie instead?
+BRLCAD_MANAGE_FILES(tie_HDRS ${INCLUDE_DIR}/tie)
 
 # Tcl/Tk based ISST
 
