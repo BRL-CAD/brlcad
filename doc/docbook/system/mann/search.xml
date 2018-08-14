@@ -201,10 +201,41 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><emphasis remap="B" role="bold">-exec</emphasis> <emphasis remap="I">expression arg1 arg2 ... "{}" ";"</emphasis></term>
+	<term><emphasis remap="B" role="bold">-exec</emphasis> <emphasis remap="I">expression arg1 arg2 ... ";"</emphasis></term>
 	<listitem>
 	  <para>
-	    True if the expression returns true. Any pair of curly braces ('{}') in the parameter list is replaced by the full path of the object. The semicolon terminates the argument list. The semicolon must not be omitted.
+	    True if the Tcl expression returns true. Any pair of curly braces ('{}') in an arguemt is replaced by the name or full path of the object. The semicolon terminates the argument list and must not be omitted.
+	    Remember to quote the parameters properly. The semicolon must stand on its own and must be quoted.
+	  </para>
+	  <para>
+	    When using multiple -exec filters, keep in mind that filters are evaluated lazily, so if you have two -execs and the first one returns false for one node, the second one will not run at all.
+	  </para>
+	  <para>
+	    <table>
+	      <title>Examples</title>
+	      <tgroup cols="2">
+	        <thead>
+	          <row>
+	            <entry>Bad</entry>
+	            <entry>Good</entry>
+	          </row>
+	        </thead>
+	        <tbody>
+	          <row>
+	            <entry>-exec foo ;</entry>
+	            <entry>-exec foo {;} -exec bar ";"</entry>
+	          </row>
+	          <row>
+	            <entry>-exec foo {} ";"</entry>
+	            <entry>-exec foo {{}} "{}" ";"</entry>
+	          </row>
+	          <row>
+	            <entry>-exec foo "{}"bar ";"</entry>
+	            <entry>-exec foo "{}bar" -exec foo "bar{}baz{}bang" ";"</entry>
+	          </row>
+	        </tbody>
+	      </tgroup>
+	    </table>
 	  </para>
 	</listitem>
       </varlistentry>
