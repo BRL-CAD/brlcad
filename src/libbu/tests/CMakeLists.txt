@@ -14,6 +14,7 @@ set(bu_test_srcs
   escape.c
   file_mime.c
   heap.c
+  hook.c
   humanize_number.c
   vls_incr.c
   vls_simplify.c
@@ -678,6 +679,14 @@ add_test(NAME bu_ptbl_cat COMMAND bu_test ptbl cat)
 add_test(NAME bu_ptbl_cat_uniq COMMAND bu_test ptbl cat uniq)
 
 add_test(NAME bu_ptbl_trunc COMMAND bu_test ptbl trunc)
+
+#
+#  *********** hook.c tests ************
+#
+
+add_test(NAME bu_hook_basic COMMAND bu_test hook basic)
+add_test(NAME bu_hook_multiadd COMMAND bu_test hook multiadd)
+add_test(NAME bu_hook_saverestore COMMAND bu_test hook saverestore)
 
 CMAKEFILES(
   tests_bitv.cmake

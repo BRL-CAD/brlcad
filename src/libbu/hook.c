@@ -104,12 +104,12 @@ bu_hook_call(struct bu_hook_list *hlp, void *buf)
 
 
 void
-bu_hook_save_all(struct bu_hook_list *hlp, struct bu_hook_list *save_hlp)
+bu_hook_save_all(struct bu_hook_list *from, struct bu_hook_list *to)
 {
     size_t i;
 
-    for (i = 0; i < hlp->size; i++) {
-	bu_hook_add(save_hlp, hlp->hooks[i].hookfunc, hlp->hooks[i].clientdata);
+    for (i = 0; i < from->size; i++) {
+	bu_hook_add(to, from->hooks[i].hookfunc, from->hooks[i].clientdata);
     }
 }
 
@@ -124,13 +124,13 @@ bu_hook_delete_all(struct bu_hook_list *hlp)
 
 
 void
-bu_hook_restore_all(struct bu_hook_list *hlp, struct bu_hook_list *restore_hlp)
+bu_hook_restore_all(struct bu_hook_list *to, struct bu_hook_list *from)
 {
     /* first delete what's there */
-    bu_hook_delete_all(hlp);
+    bu_hook_delete_all(to);
 
     /* restore using restore_hlp */
-    bu_hook_save_all(restore_hlp, hlp);
+    bu_hook_save_all(from, to);
 }
 
 
