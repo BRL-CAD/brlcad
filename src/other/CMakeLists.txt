@@ -777,6 +777,12 @@ if(BRLCAD_OPENNURBS_BUILD)
   set(OPENNURBS_LIBRARIES "${OPENNURBS_LIBRARY};${ZLIB_LIBRARY}" CACHE STRING "Require opennurbs libraries" FORCE)
   mark_as_advanced(OPENNURBS_INCLUDE_DIRS)
   mark_as_advanced(OPENNURBS_LIBRARIES)
+  get_directory_property(openNURBS_headers_orig DIRECTORY openNURBS DEFINITION OPENNURBS_HEADERS)
+  set(openNURBS_headers)
+  foreach(onhfile ${openNURBS_headers_orig})
+    set(openNURBS_headers ${openNURBS_headers} openNURBS/${onhfile})
+  endforeach(onhfile ${openNURBS_headers_orig})
+  BRLCAD_MANAGE_FILES(openNURBS_headers ${INCLUDE_DIR}/openNURBS)
 endif(BRLCAD_OPENNURBS_BUILD)
 
 # Screened Poisson Reconstruction Library
