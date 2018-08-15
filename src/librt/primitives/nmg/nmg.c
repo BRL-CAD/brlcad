@@ -4826,6 +4826,86 @@ nmg_booltree_evaluate(register union tree *tp, struct bu_list *vlfree, const str
 
 }
 
+#if 0
+/**
+ * This function iterates over every nmg face in r and shifts it slightly.
+ */
+void
+nmg_perturb_region(struct nmgregion *r)
+{
+    struct shell *s;
+    struct faceuse *fu;
+    struct vertex **pt;
+    vect_t offset;
+    int rand_ind = -1;
+
+    /* Iterate over all faces in the NMG */
+    for (BU_LIST_FOR(s, shell, &r->s_hd)) {
+	for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
+	    struct bu_ptbl vert_table;
+	    const struct face_g_plane *fg;
+	    NMG_CK_FACEUSE(fu);
+	    if (fu->orientation != OT_SAME) continue;
+
+	    rand_ind = (rand_ind > BN_RAND_TABSIZE) ? 0 : rand_ind + 1;
+
+	    /* calculate offset vector from plane */
+	    fg = fu->f_p->g.plane_p;
+	    VSCALE(offset, fg->N, 0.01 * BN_TOL_DIST * BN_RANDOM(rand_ind));
+
+	    /* VADD the offset to each vertex */
+	    nmg_tabulate_face_g_verts(&vert_table, fg);
+	    for (BU_PTBL_FOR(pt, (struct vertex **), &vert_table)) {
+		VADD2((*pt)->vg_p->coord, (*pt)->vg_p->coord, offset);
+	    }
+
+	    bu_ptbl_free(&vert_table);
+	}
+    }
+}
+
+void
+nmg_find_leaves(register union tree *tp, struct bu_ptbl *regions)
+{
+    switch (tp->tr_op) {
+	case OP_NOP:
+	    return;
+	case OP_NMG_TESS:
+	    /* Hit a tree leaf */
+	    bu_ptbl_ins_unique(regions, (long *)tp->tr_d.td_r);
+	    return;
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	    nmg_find_leaves(tp->tr_b.tb_left, regions);
+	    nmg_find_leaves(tp->tr_b.tb_right, regions);
+	    break;
+	default:
+	    bu_bomb("nmg_booltree_evaluate(): bad op\n");
+    }
+}
+
+/**
+ * This function iterates over every nmg face in every nmg in the
+ * tree and shifts it slightly.
+ */
+void
+nmg_perturb_tree(union tree *tp)
+{
+    unsigned int i;
+    struct bu_ptbl regions = BU_PTBL_INIT_ZERO;
+    nmg_find_leaves(tp, &regions);
+    if (BU_PTBL_LEN(&regions) > 0) {
+	bu_log("Found %d regions\n", BU_PTBL_LEN(&regions));
+	for (i = 0; i < BU_PTBL_LEN(&regions); i++) {
+	    struct nmgregion *r = (struct nmgregion *)BU_PTBL_GET(&regions, i);
+	    nmg_perturb_region(r);
+	}
+    } else {
+	bu_log("Found NO regions??\n");
+    }
+}
+#endif
 
 /**
  * This is the main application interface to the NMG Boolean
@@ -4867,6 +4947,11 @@ nmg_boolean(union tree *tp, struct model *m, struct bu_list *vlfree, const struc
      * function is called which is when the geometry, in which the boolean
      * to be performed, is always in a single nmg model structure.
      */
+
+#if 0
+    /* TODO - this doesn't seem to help any... */
+    nmg_perturb_tree(tp);
+#endif
 
     /*
      * Evaluate the nodes of the boolean tree one at a time, until
