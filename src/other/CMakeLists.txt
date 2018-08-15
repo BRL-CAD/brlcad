@@ -322,6 +322,15 @@ if(BRLCAD_PNG_BUILD)
   SetTargetFolder(png "Third Party Libraries")
   SetTargetFolder(png-static "Third Party Libraries")
   SetTargetFolder(genfiles "Third Party Libraries")
+
+  # The actual install directory has these in both libpng16 and the toplevel
+  # include directory.  Just put them in the top level include directory - we
+  # don't guarantee libpng16, so an include directory with that version may or
+  # may not be there anyway.
+  BRLCAD_MANAGE_FILES(${CMAKE_CURRENT_BINARY_DIR}/libpng/pnglibconf.h ${INCLUDE_DIR})
+  BRLCAD_MANAGE_FILES(libpng/png.h ${INCLUDE_DIR})
+  BRLCAD_MANAGE_FILES(libpng/pngconf.h ${INCLUDE_DIR})
+
 endif(BRLCAD_PNG_BUILD)
 set(PNG_INCLUDE_DIR ${PNG_PNG_INCLUDE_DIR} CACHE STRING "PNG include directory" FORCE)
 # Since SKIP_INSTALL_FILES doesn't have a PNG prefix, we'll unset it once we're done
@@ -370,6 +379,13 @@ if(BRLCAD_UTAHRLE_BUILD)
   set(BRLCAD_UTAHRLE_INCLUDE_DIR "${UTAHRLE_INCLUDE_DIR}" CACHE STRING "directory with rle.h header" FORCE)
   mark_as_advanced(UTAHRLE_INCLUDE_DIR)
   mark_as_advanced(BRLCAD_UTAHRLE_INCLUDE_DIR)
+  get_directory_property(libutahrle_headers_orig DIRECTORY libutahrle DEFINITION LIBUTAHRLE_PUBLIC_HDRS)
+  set(libutahrle_headers)
+  foreach(utahh ${libutahrle_headers_orig})
+    get_filename_component(utahhf ${utahh} NAME)
+    set(libutahrle_headers ${libutahrle_headers} libutahrle/include/${utahhf})
+  endforeach(utahh ${libutahrle_headers_orig})
+  BRLCAD_MANAGE_FILES(libutahrle_headers ${INCLUDE_DIR})
 endif(BRLCAD_UTAHRLE_BUILD)
 
 # Tcl/Tk presents a number of complexities for BRL-CAD and CMake.
@@ -790,7 +806,7 @@ if(BRLCAD_OPENNURBS_BUILD)
   get_directory_property(openNURBS_headers_orig DIRECTORY openNURBS DEFINITION OPENNURBS_HEADERS)
   set(openNURBS_headers)
   foreach(onhfile ${openNURBS_headers_orig})
-    set(openNURBS_headers ${openNURBS_header} openNURBS/${onhfile})
+    set(openNURBS_headers ${openNURBS_headers} openNURBS/${onhfile})
   endforeach(onhfile ${openNURBS_headers_orig})
   BRLCAD_MANAGE_FILES(openNURBS_headers ${INCLUDE_DIR}/openNURBS)
 endif(BRLCAD_OPENNURBS_BUILD)
