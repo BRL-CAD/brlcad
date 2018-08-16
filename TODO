@@ -1619,6 +1619,22 @@ NEW OBJECTS
   matrix, but may want to encode/preserve scale, translate, rotate
   with prescribed ordering separately for proper reversibility.
 
+  vect_t: eye point
+  vect_t: view center point
+  vect_t: up vector
+  float: perspective angle (-1 ortho?)
+  float: ambient intensity
+  color_t: background / ambient color
+  uint[2]: size / pixel dimensions
+
+  vect_t: rotation vector
+  vect_t: scale vector
+  vect_t: translation vector
+  derivable (or vice-versa):
+  float[2]: grid cell (ortho-only)
+  float[6]: view frustum (implies perspective matrix)
+  float[4]: perspective projection (fov angle, aspect ratio, znear, zfar)
+
 * datum objects.  implement support for datum points, axes, planes,
   and coordinate systems.  Nominal prioritized task decomposition with
   time estimates:
