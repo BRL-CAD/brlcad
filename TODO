@@ -1610,6 +1610,15 @@ ATTRIBUTES
 NEW OBJECTS
 -----------
 
+* view/camera objects.  non-geometry object type that encapsulates the
+  concepts handled by saveview/loadview including awareness of
+  orthogonal vs perspective, ambient lighting levels, and possibly
+  styling/render modes.
+
+  obviously need to be able to derive a homogenous transformation
+  matrix, but may want to encode/preserve scale, translate, rotate
+  with prescribed ordering separately for proper reversibility.
+
 * datum objects.  implement support for datum points, axes, planes,
   and coordinate systems.  Nominal prioritized task decomposition with
   time estimates:
