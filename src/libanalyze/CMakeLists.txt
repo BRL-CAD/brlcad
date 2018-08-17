@@ -48,7 +48,11 @@ set_target_properties(libanalyze PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 add_subdirectory(tests)
 
-CMAKEFILES(analyze_private.h find_subtracted_shapes.cpp)
+CMAKEFILES(
+  analyze_private.h
+  find_subtracted_shapes.cpp
+  wnsurface.cxx
+  )
 
 # Local Variables:
 # tab-width: 8
