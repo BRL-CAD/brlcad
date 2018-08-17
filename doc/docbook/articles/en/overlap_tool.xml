@@ -37,7 +37,7 @@ mged&gt; overlaps_tool -F [.overlaps file]
 	You can give the path of the <filename>.overlaps</filename> file as an argument if the
 	database is in a different directory than the <filename>.ck</filename> results
 	directory is in, or if you rename the database file after
-	generating th results directory. This will cause the checker tool to get launched directly
+	generating th results directory. This will cause the checker tool to get launched directly.
       </para>
 
       <para>
@@ -54,10 +54,10 @@ mged&gt; overlaps_tool -F [.overlaps file]
 	<screenshot>
 	  <mediaobject>
 	    <imageobject role="html">
-	      <imagedata align="left" fileref="../../articles/en/images/overlap_tool_fig01.png" format="PNG"  width="542"/>
+	      <imagedata align="left" fileref="../../articles/en/images/overlap_tool_fig01.gif" format="GIF" width="540"/>
 	    </imageobject>
 	    <imageobject role="fo">
-	      <imagedata align="left" fileref="../../articles/en/images/overlap_tool_fig01.png" format="PNG"  width="542"/>
+	      <imagedata align="left" fileref="../../articles/en/images/overlap_tool_fig01.gif" format="GIF" width="540"/>
 	    </imageobject>
 	  </mediaobject>
 	</screenshot>
@@ -75,10 +75,10 @@ mged&gt; overlaps_tool -F [.overlaps file]
 	  <screenshot>
 	    <mediaobject>
 	      <imageobject role="html">
-		<imagedata align="left" fileref="../../articles/en/images/overlap_tool_fig02.png" format="PNG"  width="638"/>
+		<imagedata align="left" fileref="../../articles/en/images/overlap_tool_fig02.gif" format="GIF" width="636"/>
 	      </imageobject>
 	      <imageobject role="fo">
-		<imagedata align="left" fileref="../../articles/en/images/overlap_tool_fig02.png" format="PNG"  width="638"/>
+		<imagedata align="left" fileref="../../articles/en/images/overlap_tool_fig02.gif" format="GIF" width="636"/>
 	      </imageobject>
 	    </mediaobject>
 	  </screenshot>
@@ -143,10 +143,10 @@ mged&gt; overlaps_tool -F [.overlaps file]
       <screenshot>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="left" fileref="../../articles/en/images/overlap_tool_fig03.png" format="PNG"  width="549"/>
+	    <imagedata align="left" fileref="../../articles/en/images/overlap_tool_fig03.png" format="PNG" width="549"/>
 	  </imageobject>
 	  <imageobject role="fo">
-	    <imagedata align="left" fileref="../../articles/en/images/overlap_tool_fig03.png" format="PNG"  width="549"/>
+	    <imagedata align="left" fileref="../../articles/en/images/overlap_tool_fig03.png" format="PNG" width="549"/>
 	  </imageobject>
 	</mediaobject>
       </screenshot>
