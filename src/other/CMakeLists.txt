@@ -379,6 +379,8 @@ if(BRLCAD_UTAHRLE_BUILD)
   set(BRLCAD_UTAHRLE_INCLUDE_DIR "${UTAHRLE_INCLUDE_DIR}" CACHE STRING "directory with rle.h header" FORCE)
   mark_as_advanced(UTAHRLE_INCLUDE_DIR)
   mark_as_advanced(BRLCAD_UTAHRLE_INCLUDE_DIR)
+
+  # manage installed headers
   get_directory_property(libutahrle_headers_orig DIRECTORY libutahrle DEFINITION LIBUTAHRLE_PUBLIC_HDRS)
   set(libutahrle_headers)
   foreach(utahh ${libutahrle_headers_orig})
@@ -421,7 +423,9 @@ version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
 
 THIRD_PARTY(tcl TCL tcl tcl_DESCRIPTION ALIASES ENABLE_TCL FIND_NAME BRLCADTCL REQUIRED_VARS BRLCAD_LEVEL2)
+
 if(BRLCAD_TCL_BUILD)
+
   SetTargetFolder(tclsh "Third Party Executables")
   SetTargetFolder(tcl "Third Party Libraries")
   SetTargetFolder(tclstub "Third Party Libraries")
@@ -451,6 +455,16 @@ if(BRLCAD_TCL_BUILD)
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tcl/library/Makefile")
   DISTCLEAN("${CMAKE_BINARY_DIR}/lib/tcl8")
   DISTCLEAN("${CMAKE_BINARY_DIR}/lib/tcl8.5")
+
+  # manage installed headers
+  get_directory_property(tcl_headers_orig DIRECTORY tcl DEFINITION TCL_HDRS)
+  set(tcl_headers)
+  foreach(tclh ${tcl_headers_orig})
+    get_filename_component(tclhf ${tclh} NAME)
+    set(tcl_headers ${tcl_headers} tcl/generic/${tclhf})
+  endforeach(tclh ${tcl_headers_orig})
+  BRLCAD_MANAGE_FILES(tcl_headers ${INCLUDE_DIR})
+
 ELSE(BRLCAD_TCL_BUILD)
   if(${TCL_TCLSH_EXECUTABLE})
     BRLCAD_INCLUDE_FILE(tcl.h HAVE_TCL_H)
@@ -554,6 +568,16 @@ if(BRLCAD_TK_BUILD)
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tk/pkgIndex.tcl")
   DISTCLEAN("${CMAKE_BINARY_DIR}/lib/tk8.5")
   DISTCLEAN("${CMAKE_BINARY_DIR}/lib/tk8.5.19")
+
+  # manage installed headers
+  get_directory_property(tk_headers_orig DIRECTORY tk DEFINITION TK_HDRS)
+  set(tk_headers)
+  foreach(tkh ${tk_headers_orig})
+    get_filename_component(tkhf ${tkh} NAME)
+    set(tk_headers ${tk_headers} tk/generic/${tkhf})
+  endforeach(tkh ${tk_headers_orig})
+  BRLCAD_MANAGE_FILES(tk_headers ${INCLUDE_DIR})
+
 ELSE(BRLCAD_TK_BUILD)
   if(BRLCAD_ENABLE_TK)
     BRLCAD_INCLUDE_FILE(tk.h HAVE_TK_H)
@@ -655,6 +679,16 @@ if(BRLCAD_ITCL_BUILD)
   DISTCLEAN("${CMAKE_BINARY_DIR}/lib/itcl3.4")
   SetTargetFolder(itcl "Third Party Libraries")
   SetTargetFolder(itclstub "Third Party Libraries")
+
+  # manage installed headers
+  get_directory_property(itcl_headers_orig DIRECTORY incrTcl/itcl DEFINITION ITCL_HDRS)
+  set(itcl_headers)
+  foreach(itclh ${itcl_headers_orig})
+    get_filename_component(itclhf ${itclh} NAME)
+    set(itcl_headers ${itcl_headers} incrTcl/itcl/generic/${itclhf})
+  endforeach(itclh ${itcl_headers_orig})
+  BRLCAD_MANAGE_FILES(itcl_headers ${INCLUDE_DIR})
+
 ELSE(BRLCAD_ITCL_BUILD)
   # We have Itcl package AND Itcl library - we're good.
   set(ITCL_VERSION "${ITCL_PACKAGE_VERSION}" CACHE STRING "ITCL_VERSION" FORCE)
@@ -689,6 +723,16 @@ if(BRLCAD_ITK_BUILD)
   set(ITK_VERSION "3.3" CACHE STRING "ITK_VERSION" FORCE)
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/incrTcl/itk/pkgIndex.tcl")
   DISTCLEAN("${CMAKE_BINARY_DIR}/lib/itk3.4")
+
+  # manage installed headers
+  get_directory_property(itk_headers_orig DIRECTORY incrTcl/itk DEFINITION ITK_HDRS)
+  set(itk_headers)
+  foreach(itkh ${itk_headers_orig})
+    get_filename_component(itkhf ${itkh} NAME)
+    set(itk_headers ${itk_headers} incrTcl/itk/generic/${itkhf})
+  endforeach(itkh ${itk_headers_orig})
+  BRLCAD_MANAGE_FILES(itk_headers ${INCLUDE_DIR})
+
 ELSE(BRLCAD_ITK_BUILD)
   # We have Itcl/Itk packages AND Itcl/Itk libraries - we're good.
   set(ITK_VERSION "${ITCL_VERSION}" CACHE STRING "ITK_VERSION" FORCE)
@@ -945,6 +989,7 @@ if(BRLCAD_LEVEL2)
   mark_as_advanced(CLIPPER_INCLUDE_DIR)
   SetTargetFolder(clipper "Third Party Libraries")
   SetTargetFolder(clipper-static "Third Party Libraries")
+  BRLCAD_MANAGE_FILES(clipper/clipper.hpp ${INCLUDE_DIR})
 endif(BRLCAD_LEVEL2)
 
 # VDSlib - A View-Dependent Simplification and Rendering Library For
