@@ -327,9 +327,19 @@ if(BRLCAD_PNG_BUILD)
   # include directory.  Just put them in the top level include directory - we
   # don't guarantee libpng16, so an include directory with that version may or
   # may not be there anyway.
-  BRLCAD_MANAGE_FILES(${CMAKE_CURRENT_BINARY_DIR}/libpng/pnglibconf.h ${INCLUDE_DIR})
-  BRLCAD_MANAGE_FILES(libpng/png.h ${INCLUDE_DIR})
-  BRLCAD_MANAGE_FILES(libpng/pngconf.h ${INCLUDE_DIR})
+  BRLCAD_MANAGE_FILES(libpng/png.h ${INCLUDE_DIR} FOLDER libpng)
+  BRLCAD_MANAGE_FILES(libpng/pngconf.h ${INCLUDE_DIR} FOLDER libpng)
+  add_custom_command(
+    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/pnglibconf.sentinel"
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different ${CMAKE_CURRENT_BINARY_DIR}/libpng/pnglibconf.h ${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/pnglibconf.h
+    COMMAND ${CMAKE_COMMAND} -E touch "${CMAKE_CURRENT_BINARY_DIR}/pnglibconf.sentinel"
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/libpng/pnglibconf.h
+    )
+  add_custom_target(pnglibconf_cp ALL DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/pnglibconf.sentinel")
+  BRLCAD_ADD_DIR_LIST_ENTRY(DATA_TARGETS "${CMAKE_CURRENT_BINARY_DIR}" pnglibconf_cp)
+  set_target_properties(pnglibconf_cp PROPERTIES FOLDER "BRL-CAD File Setup/libpng")
+  add_dependencies(pnglibconf_cp genfiles)
+  add_dependencies(png pnglibconf_cp)
 
 endif(BRLCAD_PNG_BUILD)
 set(PNG_INCLUDE_DIR ${PNG_PNG_INCLUDE_DIR} CACHE STRING "PNG include directory" FORCE)
@@ -905,6 +915,26 @@ set(INCLUDE_INSTALL_DIR ${INCLUDE_DIR})
 set(BIN_INSTALL_DIR ${BIN_DIR})
 set(LIB_INSTALL_DIR ${LIB_DIR})
 
+
+function(SC_MANAGE_HDRS src_dir src_var target_dir)
+  get_directory_property(sc_headers_orig DIRECTORY ${src_dir} DEFINITION ${src_var})
+  set(sc_headers)
+  foreach(scfile ${sc_headers_orig})
+    get_filename_component(scf ${scfile} NAME)
+    set(sc_headers ${sc_headers} ${src_dir}/${scf})
+  endforeach(scfile ${sc_headers_orig})
+  BRLCAD_MANAGE_FILES(${sc_headers} ${target_dir} FOLDER stepcode)
+endfunction(SC_MANAGE_HDRS)
+
+function(SC_MANAGE_HDRS2 src_dir src_var target_dir)
+  get_directory_property(sc_headers_orig DIRECTORY ${src_dir} DEFINITION ${src_var})
+  set(sc_headers)
+  foreach(scfile ${sc_headers_orig})
+    set(sc_headers ${sc_headers} ${src_dir}/${scfile})
+  endforeach(scfile ${sc_headers_orig})
+  BRLCAD_MANAGE_FILES(${sc_headers} ${target_dir} FOLDER stepcode)
+endfunction(SC_MANAGE_HDRS2)
+
 set(sc_ALIASES ENABLE_SCL ENABLE_STEP ENABLE_STEP_CLASS_LIBRARIES)
 set(sc_DESCRIPTION "
 Option for enabling and disabling compilation of the NIST Step Class
@@ -928,6 +958,33 @@ if(BRLCAD_SC_BUILD)
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/stepcode/include/sc_cf.h.in")
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/stepcode/include/sc_version_string.h")
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/stepcode/src/express/ExpParser_expparse/expparse.y")
+
+  # stepcode has a lot of installed headers...
+  SC_MANAGE_HDRS(stepcode/src/base SC_BASE_HDRS ${INCLUDE_DIR}/stepcode/base)
+  SC_MANAGE_HDRS(stepcode/src/cldai SC_CLDAI_HDRS ${INCLUDE_DIR}/stepcode/cldai)
+  SC_MANAGE_HDRS(stepcode/src/cleditor SC_CLEDITOR_HDRS ${INCLUDE_DIR}/stepcode/cleditor)
+  SC_MANAGE_HDRS(stepcode/src/cllazyfile SC_CLLAZYFILE_HDRS ${INCLUDE_DIR}/stepcode/cllazyfile)
+  SC_MANAGE_HDRS(stepcode/src/clstepcore SC_CLSTEPCORE_HDRS ${INCLUDE_DIR}/stepcode/clstepcore)
+  SC_MANAGE_HDRS(stepcode/src/clutils SC_CLUTILS_HDRS ${INCLUDE_DIR}/stepcode/clutils)
+  SC_MANAGE_HDRS2(stepcode/include express_HDRS ${INCLUDE_DIR}/stepcode/express)
+  SC_MANAGE_HDRS2(stepcode/include exppp_HDRS ${INCLUDE_DIR}/stepcode/exppp)
+  BRLCAD_MANAGE_FILES(stepcode/include/ordered_attrs.h ${INCLUDE_DIR}/stepcode)
+  BRLCAD_MANAGE_FILES(stepcode/include/sc_export.h ${INCLUDE_DIR}/stepcode)
+  BRLCAD_MANAGE_FILES(stepcode/include/sc_stdbool.h ${INCLUDE_DIR}/stepcode)
+  get_directory_property(scbdir DIRECTORY stepcode/include DEFINITION SC_BINARY_DIR)
+  get_directory_property(sciidir DIRECTORY stepcode/include DEFINITION INCLUDE_INSTALL_DIR)
+  add_custom_command(
+    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/sc_gen_hdrs.sentinel"
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different ${scbdir}/${sciidir}/sc_cf.h ${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/stepcode/sc_cf.h
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different ${scbdir}/${sciidir}/sc_version_string.h ${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/stepcode/sc_version_string.h
+    COMMAND ${CMAKE_COMMAND} -E touch "${CMAKE_CURRENT_BINARY_DIR}/sc_gen_hdrs.sentinel"
+    DEPENDS ${scbdir}/${sciidir}/sc_cf.h
+    )
+  add_custom_target(sc_gen_hdrs_cp ALL DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/sc_gen_hdrs.sentinel")
+  BRLCAD_ADD_DIR_LIST_ENTRY(DATA_TARGETS "${CMAKE_CURRENT_BINARY_DIR}" sc_gen_hdrs_cp)
+  set_target_properties(sc_gen_hdrs_cp PROPERTIES FOLDER "BRL-CAD File Setup/stepcode")
+  add_dependencies(express sc_gen_hdrs_cp)
+
 endif(BRLCAD_SC_BUILD)
 set(IS_SUBBUILD ${IS_SUBBUILD_STASH})
 mark_as_advanced(SC_BUILD_TYPE)
