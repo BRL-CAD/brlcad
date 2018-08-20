@@ -42,23 +42,27 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . "$1/regress/library.sh"
 
+LOGFILE=gqa.log
+rm -f $LOGFILE
+log "=== TESTING 'gqa' ==="
+
 MGED="`ensearch mged`"
 if test ! -f "$MGED" ; then
-    echo "Unable to find mged, aborting"
+    log "Unable to find mged, aborting"
     exit 1
 fi
 
 GQABIN="`ensearch gqa`"
 if test ! -f "$GQABIN" ; then
-    echo "Unable to find gqa, aborting"
+    log "Unable to find gqa, aborting"
     exit 1
 fi
 
-rm -f gqa.g density_table.txt gqa.log gqa_mged.log gqa.mged
-
+rm -f density_table.txt
 echo "5 1 stuff" > density_table.txt
 echo "2 1 gas" >> density_table.txt
 
+rm -f gqa.mged
 cat > gqa.mged <<EOF
 units m
 bo -i u c _DENSITIES density_table.txt
@@ -78,7 +82,6 @@ mater closed_box.r "plastic tr=0.5 di=0.5 sp=0.5" 128 128 128 0
 
 r open_box.r u box1.s - box3.s
 mater open_box.r "plastic tr=0.5 di=0.5 sp=0.5" 128 128 128 0
-
 
 r exposed_air.r u box3.s
 adjust exposed_air.r air 2
@@ -105,13 +108,18 @@ r overlap_obj.r u box3.s
 adjust overlap_obj.r GIFTMater 5
 g overlaps closed_box.r overlap_obj.r
 
-
 q
 EOF
 
-$MGED -c gqa.g <<EOF > gqa_mged.log 2>&1
+
+log "... running mged to create a geometry database (gqa.g)"
+rm -f gqa.g
+$MGED -c gqa.g <<EOF >> $LOGFILE 2>&1
 `cat gqa.mged`
 EOF
+
+GQA="$GQABIN -u m,m^3,kg -g 250mm-50mm -p gqa."
+STATUS=0
 
 #
 # now that the inputs have been built, run the tests
@@ -125,89 +133,42 @@ EOF
 # exposed_air.r         = 576 m^3
 # open_box.r = 1000-576 = 424 m^3
 
+rm -f gqa.overlaps.plot3
+run $GQA -Ao gqa.g overlaps
 
-GQA="$GQABIN -u m,m^3,kg -g 250mm-50mm -p"
-export GQA
+rm -f gqa.exp_air.plot3
+run $GQA -Ae gqa.g exposed_air.g
 
-STATUS=0
-export STATUS
+rm -f gqa.adj_air.plot3
+run $GQA -Aa gqa.g adj_air.g
 
-#
-# somehow need to check results of these
-#
-CMD="$GQA -Ao gqa.g overlaps"
-echo $CMD
-echo $CMD >> gqa.log
-$CMD >> gqa.log 2>&1
+rm -f gqa.gaps.plot3
+run $GQA -Ag gqa.g gap.g
 
+rm -f gqa.volume.plot3
+run $GQA -Av -v gqa.g closed_box.r
 
-echo >> gqa.log
-CMD="$GQA -Ae gqa.g exposed_air.g"
-echo $CMD
-echo $CMD >> gqa.log 2>&1
-$CMD >> gqa.log 2>&1
+run $GQA -r -Aw -v gqa.g closed_box.r
 
-echo >> gqa.log
-CMD="$GQA -Aa gqa.g adj_air.g"
-echo $CMD
-echo $CMD >> gqa.log 2>&1
-$CMD >> gqa.log 2>&1
+rm -f gqa.volume.plot3
+run $GQA -r -Avw gqa.g solid_box.r
 
-echo >> gqa.log
-CMD="$GQA -Ag gqa.g gap.g"
-echo $CMD
-echo $CMD >> gqa.log 2>&1
-$CMD >> gqa.log 2>&1
+rm -f gqa.volume.plot3
+run $GQA -r -Avw gqa.g adj_air.g
 
-echo >> gqa.log
-CMD="$GQA -Av -v gqa.g closed_box.r"
-echo $CMD
-echo $CMD >> gqa.log 2>&1
-$CMD >> gqa.log 2>&1
+rm -f gqa.overlaps.plot3
+run $GQA -r -v -g 0.25m-25mm -Awo gqa.g closed_box.r
 
-echo >> gqa.log
-CMD="$GQA -r -Aw -v gqa.g closed_box.r"
-echo $CMD
-echo $CMD >> gqa.log 2>&1
-$CMD >> gqa.log 2>&1
+rm -f gqa.overlaps.plot3
+run $GQA -g 50mm -Ao gqa.g closed_box.r
 
-
-echo >> gqa.log
-CMD="$GQA -r -Avw gqa.g solid_box.r"
-echo $CMD
-echo $CMD >> gqa.log 2>&1
-$CMD >> gqa.log 2>&1
-
-
-echo >> gqa.log
-CMD="$GQA -r -Avw gqa.g adj_air.g"
-echo $CMD
-echo $CMD >> gqa.log 2>&1
-$CMD >> gqa.log 2>&1
-
-
-echo >> gqa.log
-CMD="$GQA -r -v -g 0.25m-25mm -Awo gqa.g closed_box.r"
-echo $CMD
-echo $CMD >> gqa.log 2>&1
-$CMD >> gqa.log 2>&1
-
-
-CMD="$GQA -g 50mm -Ao gqa.g closed_box.r"
-echo $CMD
-echo $CMD >> gqa.log 2>&1
-$CMD >> gqa.log 2>&1
-
-CMD="$GQA -Am gqa.g closed_box.r"
-echo $CMD
-echo $CMD >> gqa.log 2>&1
-$CMD >> gqa.log 2>&1
+run $GQA -Am gqa.g closed_box.r
 
 
 if [ $STATUS = 0 ] ; then
-    echo "-> gqa.sh succeeded"
+    log "-> gqa.sh succeeded"
 else
-    echo "-> gqa.sh FAILED"
+    log "-> gqa.sh FAILED, see $PATH_TO_THIS/$LOGFILE"
 fi
 
 exit $STATUS

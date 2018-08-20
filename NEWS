@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 201X-XX-XX  Release 7.28.0                                     ---
 ----------------------------------------------------------------------
 
+* improved gqa plot file handling and documentation - Sean Morrison
 * improved rt usage reporting with categorized options - Sean Morrison
 * removed rt -f framerate option for animating shaders - Sean Morrison
 * removed "pixd" support: rt -d option and pixdsplit - Sean Morrison

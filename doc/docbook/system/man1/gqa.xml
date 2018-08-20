@@ -431,14 +431,19 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-p</option></term>
+	<term><option>-p </option><emphasis remap="I">plot_prefix</term>
 	<listitem>
 	  <para>
-	    Specifies that <command>gqa</command> should produce plot files for each of the analyses
-	    it performs.  These can be overlaid on the geometry in <emphasis remap="I">mged</emphasis>
-	    with the <emphasis remap="I">overlay</emphasis> command to help visualize the analysis results.
-	    Each of the different analysis types write to a separate plot file and use different
-	    colors for drawing.
+	    Specifies that <command>gqa</command> should produce plot
+	    files for each of the analyses it performs.  Depending on
+	    the analysis type(s) requested, plot files will be named
+	    with the specified prefix prepended to one of
+	    volume.plot3, gaps.plot3, overlaps.plot3, adj_air.plot3,
+	    and/or exp_air.plot3 accordingly. Plot data can be
+	    visualized in <emphasis remap="I">mged</emphasis> with
+	    the <emphasis remap="I">overlay</emphasis> command.  Each
+	    of the different analysis types write to a separate plot
+	    file and use different colors for drawing.
 	  </para>
 	</listitem>
       </varlistentry>
