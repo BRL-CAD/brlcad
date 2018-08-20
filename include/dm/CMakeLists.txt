@@ -5,6 +5,8 @@ set(dm_headers
   )
 BRLCAD_MANAGE_FILES(dm_headers ${INCLUDE_DIR}/brlcad/dm)
 
+CMAKEFILES(dm-design.h)
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake
