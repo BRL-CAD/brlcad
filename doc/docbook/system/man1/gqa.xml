@@ -431,7 +431,7 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-p </option><emphasis remap="I">plot_prefix</term>
+	<term><option>-p </option><emphasis remap="I">plot_prefix</emphasis></term>
 	<listitem>
 	  <para>
 	    Specifies that <command>gqa</command> should produce plot
