@@ -2,6 +2,7 @@
 #include "nanoflann.hpp"
 
 #include "vmath.h"
+#include "bn/mat.h"
 #include "rt/geom.h"
 
 struct NF_PC {
@@ -50,6 +51,8 @@ wn_mesh(struct rt_pnts_internal *pnts)
     pind = 0;
     for (BU_LIST_FOR(pn, pnt_normal, &(pl->l))) {
 
+	bu_log("pnt %d: center %g %g %g\n", pind, V3ARGS(pn->v));
+
 	/* 2.  Find k-nearest-neighbors set */
 	size_t num_results = 3;
 	std::vector<size_t> ret_index(num_results);
@@ -70,14 +73,35 @@ wn_mesh(struct rt_pnts_internal *pnts)
 	 * grazing ray reporting weirdness... */
 
 
-	/* 3.  Find best fit plane for knn set.  Thoughts:
+	/* 3.  Find best fit plane for knn set.
 	 *
-	 * Port https://github.com/lucasmaystre/svdlibc to libbn data types and use
-	 * the SVD plane fitter from test_bot2nurbs.cpp */
+	 * Thought:  port https://github.com/lucasmaystre/svdlibc to libbn data
+	 * types and use the SVD plane fitter from test_bot2nurbs.cpp 
+	 *
+	 * As a first cut, try to use the tangent plane to the query point for
+	 * this since we're (at the moment, anyway) guaranteed to have normals
+	 * associated with the points anyway?  Eventually we probably want the
+	 * above anyway to sanely handle weird things like thick plate mode
+	 * inputs where normal behavior in the same point area is going to be
+	 * strange, but for now see if we can go super simple...
+	 */
+	vect_t ux;
+	bn_vec_ortho(ux, pn->n);
+	VUNITIZE(ux);
 
-
-	/* 4.  Project 3D points into plane, get 2D pnt set */
-
+	/* 4.  Project 3D points into plane, get 2D pnt set. */
+	point2d_t *knn2dpnts = (point2d_t *)bu_calloc(num_results, sizeof(point2d_t), "knn 2d points");
+	for (size_t i = 0; i < num_results; i++) {
+	    vect_t v3d;
+	    vect_t v3d_ortho, v3d_parallel;
+	    vect_t v2d_ortho, v2d_parallel;
+	    point_t *p = cloud.pts.at(ret_index[i]);
+	    bu_log("pnt %d(%d): center %g %g %g\n", pind, i, V3ARGS(*p));
+	    VSUB2(v3d, *p, pn->v);
+	    VPROJECT(v3d, pn->n, v3d_parallel, v3d_ortho);
+	    VPROJECT(v3d_ortho, ux, v2d_parallel, v2d_ortho);
+	    V2SET(knn2dpnts[i], MAGNITUDE(v2d_parallel), MAGNITUDE(v2d_ortho));
+	}
 
 	/* 5.  Calculate Voronoi diagram in 2D.  Thoughts:
 	 *
