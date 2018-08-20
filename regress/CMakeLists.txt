@@ -282,9 +282,14 @@ set(regress_outfiles
   g-nff.m35.g
   g-nff.m35.nff
   gaps.plot3
+  gqa.adj_air.plot3
+  gqa.exp_air.plot3
   gqa.g
+  gqa.gaps.plot3
   gqa.log
   gqa.mged
+  gqa.overlaps.plot3
+  gqa.volume.plot3
   gqa_mged.log
   iges.g
   iges.log

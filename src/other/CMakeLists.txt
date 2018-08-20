@@ -983,6 +983,8 @@ if(BRLCAD_SC_BUILD)
   BRLCAD_ADD_DIR_LIST_ENTRY(DATA_TARGETS "${CMAKE_CURRENT_BINARY_DIR}" sc_gen_hdrs_cp)
   set_target_properties(sc_gen_hdrs_cp PROPERTIES FOLDER "BRL-CAD File Setup/stepcode")
   add_dependencies(express sc_gen_hdrs_cp)
+  DISTCLEAN("${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/stepcode/sc_cf.h.in")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/stepcode/sc_version_string.h")
 
 endif(BRLCAD_SC_BUILD)
 set(IS_SUBBUILD ${IS_SUBBUILD_STASH})
