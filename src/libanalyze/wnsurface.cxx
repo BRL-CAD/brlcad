@@ -30,33 +30,39 @@ extern "C" void
 wn_mesh(struct rt_pnts_internal *pnts)
 {
     int pind = 0;
-    fastf_t *ai;
+    fastf_t *voronoi_areas;
     struct pnt_normal *pn, *pl;
     NF_PC cloud;
-    const NF_Adaptor pc2kd(cloud);
     typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<fastf_t, NF_Adaptor >, NF_Adaptor, 3 > nf_kdtree_t;
 
     /* 1.  Build kdtree for nanoflann to get nearest neighbor lookup */
-    nf_kdtree_t index(3, pc2kd, nanoflann::KDTreeSingleIndexAdaptorParams(10));
     pl = (struct pnt_normal *)pnts->point;
     for (BU_LIST_FOR(pn, pnt_normal, &(pl->l))) {
 	cloud.pts.push_back(&(pn->v));
     }
+    const NF_Adaptor pc2kd(cloud);
+    nf_kdtree_t index(3, pc2kd, nanoflann::KDTreeSingleIndexAdaptorParams(10));
     index.buildIndex();
 
     /* Calculate a[i] parameters for points */
-    ai = (fastf_t *)bu_calloc(pnts->count, sizeof(fastf_t), "a[i] values");
+    voronoi_areas = (fastf_t *)bu_calloc(pnts->count, sizeof(fastf_t), "a[i] values");
     pl = (struct pnt_normal *)pnts->point;
     pind = 0;
     for (BU_LIST_FOR(pn, pnt_normal, &(pl->l))) {
-	const size_t num_results = 1;
-	size_t ret_index;
-	fastf_t out_dist_sq;
 
 	/* 2.  Find k-nearest-neighbors set */
-	nanoflann::KNNResultSet<fastf_t> resultSet(num_results);
-	resultSet.init(&ret_index, &out_dist_sq);
-	index.findNeighbors(resultSet, &(pn->v), nanoflann::SearchParams(10));
+	size_t num_results = 3;
+	std::vector<size_t> ret_index(num_results);
+	std::vector<fastf_t> out_dist_sqr(num_results);
+	index.knnSearch(pn->v, num_results, &ret_index[0], &out_dist_sqr[0]);
+	// In case of less points in the tree than requested:
+	ret_index.resize(num_results);
+	out_dist_sqr.resize(num_results);
+	std::cout << "knnSearch(" << pind << "): num_results=" << num_results << "\n";
+	for (size_t i = 0; i < num_results; i++) {
+	    std::cout << "idx["<< i << "]=" << ret_index[i] << " dist["<< i << "]=" << out_dist_sqr[i] << std::endl;
+	}
+	std::cout << "\n";
 
 	/* MAYBE: Discard point if it doesn't have more than 2 other points
 	 * within .01*radius of the bounding sphere of the object - in that situation
@@ -79,6 +85,7 @@ wn_mesh(struct rt_pnts_internal *pnts)
 	 * additional mapping logic to make sure we can extract a polygon for a
 	 * given point from the generated voronoi diagram.
 	 */
+	voronoi_areas[pind] = 0.0;
 
 	/* 6.  Calculate the area of the Voronoi polygon around the current
 	 * point - paper uses TRIANGLE but couldn't we just use
