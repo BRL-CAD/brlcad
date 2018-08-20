@@ -55,8 +55,6 @@ public:
 
   /**
    * Triangulate
-   *
-   * @param tcx
    */
   int Triangulate(SweepContext& tcx, bool finalize = true, int num_points = -1);
 
@@ -69,8 +67,6 @@ private:
 
   /**
    * Start sweeping the Y-sorted point set from bottom to top
-   *
-   * @param tcx
    */
   int SweepPoints(SweepContext& tcx, int num_points = -1);
 
@@ -79,19 +75,9 @@ private:
    * create a new triangle. If needed new holes and basins
    * will be filled to.
    *
-   * @param tcx
-   * @param point
-   * @return
    */
   Node* PointEvent(SweepContext& tcx, Point *point);
 
-   /**
-     *
-     *
-     * @param tcx
-     * @param edge
-     * @param node
-     */
   int EdgeEvent(SweepContext& tcx, Edge* edge, Node* node);
 
   int EdgeEvent(SweepContext& tcx, Point *ep, Point *eq, Triangle* triangle, Point *point);
@@ -99,16 +85,11 @@ private:
   /**
    * Creates a new front triangle and legalize it
    *
-   * @param tcx
-   * @param point
-   * @param node
-   * @return
    */
   Node* NewFrontTriangle(SweepContext& tcx, Point *point, Node* node);
   void UpdateNodeAngleCircum(Node* n);
   /**
    * Adds a triangle to the advancing front to fill a hole.
-   * @param tcx
    * @param node - middle node, that is the bottom of the hole
    */
   void Fill(SweepContext& tcx, Node* node);
@@ -163,10 +144,6 @@ private:
 
   /**
    * Fills holes in the Advancing Front
-   *
-   *
-   * @param tcx
-   * @param n
    */
   void CheckCircleEvent(SweepContext& tcx, double currentheight);
   void FillAdvancingFront(SweepContext& tcx, Node* n);
@@ -196,7 +173,6 @@ private:
    * First we decide a left,bottom and right node that forms the
    * boundaries of the basin. Then we do a reqursive fill.
    *
-   * @param tcx
    * @param node - starting node, this or next node will be left node
    */
   void FillBasin(SweepContext& tcx, Node* node);
@@ -204,7 +180,6 @@ private:
   /**
    * Recursive algorithm to fill a Basin with triangles
    *
-   * @param tcx
    * @param node - bottom_node
    * @param cnt - counter used to alternate on even and odd numbers
    */
@@ -238,7 +213,6 @@ private:
    * After a flip we have two triangles and know that only one will still be
    * intersecting the edge. So decide which to contiune with and legalize the other
    *
-   * @param tcx
    * @param o - should be the result of an orient2d( eq, op, ep )
    * @param t - triangle 1
    * @param ot - triangle 2
@@ -252,12 +226,6 @@ private:
      * When we need to traverse from one triangle to the next we need
      * the point in current triangle that is the opposite point to the next
      * triangle.
-     *
-     * @param ep
-     * @param eq
-     * @param ot
-     * @param op
-     * @return
      */
   Point* NextFlipPoint(Point *ep, Point *eq, Triangle& ot, Point *op);
 
@@ -267,7 +235,6 @@ private:
      * point that is inside the flip triangle scan area. When found
      * we generate a new flipEdgeEvent
      *
-     * @param tcx
      * @param ep - last point on the edge we are traversing
      * @param eq - first point on the edge we are traversing
      * @param flipTriangle - the current triangle sharing the point eq with edge
