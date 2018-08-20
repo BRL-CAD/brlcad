@@ -3141,7 +3141,7 @@ endif(MSVC)
 
 # Generate the windows specific file, if needed
 if(WIN32)
-  configure_file("${BRLCAD_SOURCE_DIR}/include/conf_headers/config_win.h.in" "${BRLCAD_BINARY_DIR}/include/conf_headers/config_win.h.tmp")
+  configure_file("${BRLCAD_SOURCE_DIR}/include/config_win.h.in" "${BRLCAD_BINARY_DIR}/include/conf_headers/config_win.h.tmp")
   execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different "${BRLCAD_BINARY_DIR}/include/conf_headers/config_win.h.tmp" "${BRLCAD_BINARY_DIR}/include/conf_headers/config_win.h")
   # For Ninja (CMP0058)
   add_custom_command(
