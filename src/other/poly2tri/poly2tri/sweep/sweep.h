@@ -117,10 +117,10 @@ private:
    *  a,b and c<br>
    *  d is outside B if orient2d(a,b,d) or orient2d(c,a,d) is CW<br>
    *  This preknowledge gives us a way to optimize the incircle test
-   * @param a - triangle point, opposite d
-   * @param b - triangle point
-   * @param c - triangle point
-   * @param d - point opposite a
+   * @param pa - triangle point, opposite d
+   * @param pb - triangle point
+   * @param pc - triangle point
+   * @param pd - point opposite a
    * @return true if d is inside circle, false if on circle edge
    */
   bool Incircle(Point *pa, Point *pb, Point *pc, Point *pd);
@@ -181,7 +181,6 @@ private:
    * Recursive algorithm to fill a Basin with triangles
    *
    * @param node - bottom_node
-   * @param cnt - counter used to alternate on even and odd numbers
    */
   void FillBasinReq(SweepContext& tcx, Node* node);
 
@@ -237,9 +236,7 @@ private:
      *
      * @param ep - last point on the edge we are traversing
      * @param eq - first point on the edge we are traversing
-     * @param flipTriangle - the current triangle sharing the point eq with edge
-     * @param t
-     * @param p
+     * @param flip_triangle - the current triangle sharing the point eq with edge
      */
   int FlipScanEdgeEvent(SweepContext& tcx, Point *ep, Point *eq, Triangle& flip_triangle, Triangle& t, Point *p);
 
