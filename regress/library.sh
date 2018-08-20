@@ -71,13 +71,18 @@ log ( ) {
 # helper function runs a given command, logs it to a file, and stashes
 # the return status.  reads LOGFILE global, increments STATUS global.
 run ( ) {
-    cmd="$*"
-    log "... running $cmd"
-    $cmd >> $LOGFILE 2>&1
+    log "... running $@"
+    "$@" >> $LOGFILE 2>&1
     ret=$?
-    if test $ret -ne 0 ; then
-	STATUS="`expr $STATUS + 1`"
-    fi
+    case "x$STATUS" in
+	'x'|*[!0-9]*)
+	    break;;
+	*)
+	    if test $ret -ne 0 ; then
+		STATUS="`expr $STATUS + 1`"
+	    fi
+	    ;;
+    esac
     return $ret
 }
 
