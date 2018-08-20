@@ -66,6 +66,23 @@ log ( ) {
 
 
 ###
+# run command [arg1] [arg2] [...]
+#
+# helper function runs a given command, logs it to a file, and stashes
+# the return status.  reads LOGFILE global, increments STATUS global.
+run ( ) {
+    cmd="$*"
+    log "... running $cmd"
+    $cmd >> $LOGFILE 2>&1
+    ret=$?
+    if test $ret -ne 0 ; then
+	STATUS="`expr $STATUS + 1`"
+    fi
+    return $ret
+}
+
+
+###
 # ensearch {command_to_find}
 #
 # prints the path to a given application binary or script, typically
