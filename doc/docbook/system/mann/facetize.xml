@@ -1,90 +1,163 @@
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="facetize">
 
-<refmeta>
-  <refentrytitle>FACETIZE</refentrytitle>
-  <manvolnum>nged</manvolnum>
-  <refmiscinfo class="source">BRL-CAD</refmiscinfo>
-  <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
-</refmeta>
+  <refmeta>
+    <refentrytitle>FACETIZE</refentrytitle>
+    <manvolnum>nged</manvolnum>
+    <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+    <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
+  </refmeta>
 
-<refnamediv xml:id="name">
-  <refname>facetize</refname>
-  <refpurpose>
-    Creates <emphasis>new_object</emphasis> using <emphasis>old_object</emphasis> as a
-    starting point and then creating an NMG or BoT approximation of the original shape.
-   </refpurpose>
-</refnamediv>
+  <refnamediv xml:id="name">
+    <refname>facetize</refname>
+    <refpurpose>
+      Creates <emphasis>new_object</emphasis> using <emphasis>old_object</emphasis> as a
+      starting point and then creating an NMG or BoT approximation of the original shape.
+    </refpurpose>
+  </refnamediv>
 
-<!-- body begins here -->
-<refsynopsisdiv xml:id="synopsis">
-  <cmdsynopsis sepchar=" ">
-    <command>facetize</command>
-    <group choice="opt">
-      <arg choice="opt" rep="norepeat">-h</arg>
-      <arg choice="opt" rep="norepeat">-n</arg>
-      <arg choice="opt" rep="norepeat">-T</arg>
-      <arg choice="opt" rep="norepeat">-m</arg>
-    </group>
-    <group choice="opt">
+  <!-- body begins here -->
+  <refsynopsisdiv xml:id="synopsis">
+    <cmdsynopsis sepchar=" ">
+      <command>facetize</command>
+      <group choice="opt">
+	<arg choice="opt" rep="norepeat">-h</arg>
+	<arg choice="opt" rep="norepeat">-n</arg>
+	<arg choice="opt" rep="norepeat">-T</arg>
+	<arg choice="opt" rep="norepeat">-m</arg>
+	<arg choice="opt" rep="norepeat">--nmgbool</arg>
+      </group>
+      <group choice="opt">
+	<arg choice="opt" rep="norepeat">--poisson</arg>
+	<arg choice="opt" rep="norepeat">poisson options</arg>
+      </group>
+      <arg choice="req" rep="norepeat"><replaceable>old_object new_object</replaceable></arg>
+    </cmdsynopsis>
+    <cmdsynopsis sepchar=" ">
+      <command>facetize --poisson</command>
+      <group choice="opt">
+	<arg choice="opt" rep="norepeat">-d</arg>
+	<arg choice="opt" rep="norepeat">-w</arg>
+	<arg choice="opt" rep="norepeat">--samples-per-node</arg>
+      </group>
+      <group>
+	<arg choice="opt">-t</arg>
+	<arg choice="opt" rep="norepeat">--surface</arg>
+	<arg choice="opt" rep="norepeat">--grid</arg>
+	<arg choice="opt" rep="norepeat">--rand</arg>
+	<arg choice="opt" rep="norepeat">--sobol</arg>
+	<arg choice="opt" rep="norepeat">--max-pnts</arg>
+	<arg choice="opt" rep="norepeat">--max-time</arg>
+      </group>
+      <arg choice="req" rep="norepeat"><replaceable>old_object new_object</replaceable></arg>
+    </cmdsynopsis>
+    <cmdsynopsis sepchar=" ">
+      <command>facetize -r --resume</command>
+      <arg choice="opt" rep="norepeat">--nmgbool</arg>
       <arg choice="opt" rep="norepeat">--poisson</arg>
-      <arg choice="opt" rep="norepeat">poisson options</arg>
-    </group>
-     <arg choice="req" rep="norepeat"><replaceable>old_object new_object</replaceable></arg>
-  </cmdsynopsis>
-  <cmdsynopsis sepchar=" ">
-    <command>facetize --poisson</command>
-    <group choice="opt">
-      <arg choice="opt" rep="norepeat">-d</arg>
-      <arg choice="opt" rep="norepeat">-w</arg>
-      <arg choice="opt" rep="norepeat">--samples-per-node</arg>
-    </group>
-    <group>
-      <arg choice="opt">-t</arg>
-      <arg choice="opt" rep="norepeat">--surface</arg>
-      <arg choice="opt" rep="norepeat">--grid</arg>
-      <arg choice="opt" rep="norepeat">--rand</arg>
-      <arg choice="opt" rep="norepeat">--sobol</arg>
-      <arg choice="opt" rep="norepeat">--max-pnts</arg>
-      <arg choice="opt" rep="norepeat">--max-time</arg>
-    </group>
-     <arg choice="req" rep="norepeat"><replaceable>old_object new_object</replaceable></arg>
-  </cmdsynopsis>
-</refsynopsisdiv>
+      <arg choice="req" rep="norepeat"><replaceable>output_hierarchy_obj</replaceable></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
 
-<refsection xml:id="description"><title>DESCRIPTION</title>
+  <refsection xml:id="description">
+    <title>DESCRIPTION</title>
+    <para>
+      Creates <emphasis>new_object</emphasis> as planar primitive shape (either an NMG or a BOT)
+      approximating the volume bound by <emphasis>old_object</emphasis>.
+    </para>
+    <para>
+      By default, conversions will first attempt a standard NMG facetization and boolean evaluation of
+      the existing geometry.  If that attempt fails, a fall-back method using point sampling and mesh
+      reconstruction will be tried.  The options "--nmgbool" and "--poisson" may be used to limit the
+      attempted conversion methods to either just NMG or just Screened Poisson Surface Reconstruction
+      (SPSR).
+    </para>
+    <para>
+      Often, it is acceptable or desirable to perform facetization on each region individually within a
+      geometry hierarchy, rather than trying for a single "all or nothing" shape.  This mode, available
+      with the -r flag, has the advantage of allowing for partial conversion of complex models even when
+      individual shapes within the model cannot be converted, as well as preserving all pre-existing
+      region attributes such as color and region ID.  The drawback is it will not produce a single
+      geometry object containing all output.
+    </para>
+    <para>
+      The Screened Poisson Surface Reconstruction algorithm, in addition to it's -d, -w, and --samples-per-node
+      parameters, also offers control over the initial raytrace sampling used to generate the initial
+      point set from the input geometry.  To learn more about these options, see the manual page for
+      the "pnts gen" subcommand.
+    </para>
+    <para>
+      Because conversion is often a long process, the facetize command (when run in region mode) works
+      in a way that allows an incomplete conversion to resume work.  For example, if a large model is
+      to be converted it may be advantageous to attempt just the NMG conversion on the hierarchy first
+      to get a sense of the work to be done.  After the initial attempt, global facetize parameters can
+      be adjusted and a second NMG run attempted, perhaps this time with SPSR reconstruction also enabled.
+      Note that this works only for a hierarchy generated with the facetize -r option - arbitrary
+      existing hierarchies will not store the information needed to resume a conversion.
+    </para>
+  </refsection>
 
-  <para>
-    Creates <emphasis>new_object</emphasis> as planar primitive shape (either an NMG or a BOT) approximating the
-    volume bound by <emphasis>old_object</emphasis>.
-  </para>
-</refsection>
+  <refsection xml:id="examples">
+    <title>EXAMPLES</title>
+    
+    <example>
+      <title>Create a facetized BOT version of an existing object.</title>
+      <para>
+	The example shows the use of the <command>facetize</command> command to create a facetized
+	BOT version of an existing object (<emphasis>old_object</emphasis>) and renaming that facetized
+	object (<emphasis>new_object</emphasis>).  It will try first NMG conversion, and if that fails
+	attempts SPSR conversion.
+      </para>
+      <para>
+	<prompt>mged&gt;</prompt> <userinput>facetize region1.r region1.bot</userinput>
+      </para>
+    </example>
+    
+    <example>
+      <title>Facetize all regions in a hierarchy.</title>
+      <para>
+	This runs the per region conversion on all regions under the "model" assembly and creates
+	a new conversion hierarchy under model_facetized.
+      </para>
+      <para>
+	<prompt>mged&gt;</prompt> <userinput>facetize -r model model_facetized</userinput>
+      </para>
+    </example>
+    
+    <example>
+      <title>Facetize all regions in a hierarchy, attempting only NMG conversion.</title>
+      <para>
+	This runs the per region conversion on all regions, but in the case of failure will not attempt
+	any fallback conversion methods.
+      </para>
+      <para>
+	<prompt>mged&gt;</prompt> <userinput>facetize -r --nmgbool model model_facetized</userinput>
+      </para>
+    </example>
 
-<refsection xml:id="examples"><title>EXAMPLES</title>
+    <example>
+      <title>Retry only failed conversion objects in a previous facetization attempt.</title>
+      <para>
+	This retries the per region conversion on all regions that didn't originally succeed in the initial
+	conversion attempt, attempting only SPSR reconstruction without first retrying NMG conversion.
+      </para>
+      <para>
+	<prompt>mged&gt;</prompt> <userinput>facetize -r --poisson --resume model_facetized</userinput>
+      </para>
+    </example>
+  </refsection>
 
-  <para>The example shows the use of the <command>facetize</command> command to create a facetized BOT version 	of an existing object (<emphasis>old_object</emphasis>) and renaming that facetized object(<emphasis>	new_object</emphasis>).
-  </para>
-  <example><title>Create a facetized BOT version of an existing object.</title>
+  <refsection xml:id="author">
+    <title>AUTHOR</title>
+    <para>BRL-CAD Team</para>
+  </refsection>
 
-    <variablelist>
-      <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>facetize region1.r region1.nmg</userinput></term>
-	   <listitem>
-	     <para>Creates a facetized BOT version of existing object <emphasis>region1.r</emphasis>.
-		     </para>
-	   </listitem>
-      </varlistentry>
-    </variablelist>
-  </example>
+  <refsection xml:id="bug_reports">
+    <title>BUG REPORTS</title>
 
- </refsection>
-
-<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
-
-<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
-
-  <para>
-    Reports of bugs or problems should be submitted via electronic
-    mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
-  </para>
-</refsection>
+    <para>
+      Reports of bugs or problems should be submitted via electronic
+      mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
+    </para>
+  </refsection>
+  
 </refentry>
