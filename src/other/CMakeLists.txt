@@ -340,6 +340,7 @@ if(BRLCAD_PNG_BUILD)
   set_target_properties(pnglibconf_cp PROPERTIES FOLDER "BRL-CAD File Setup/libpng")
   add_dependencies(pnglibconf_cp genfiles)
   add_dependencies(png pnglibconf_cp)
+  DISTCLEAN("${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/pnglibconf.h")
 
 endif(BRLCAD_PNG_BUILD)
 set(PNG_INCLUDE_DIR ${PNG_PNG_INCLUDE_DIR} CACHE STRING "PNG include directory" FORCE)
