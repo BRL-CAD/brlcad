@@ -62,14 +62,7 @@ BU_EXPORT extern int bu_file_exists(const char *path, int *fd);
  * either filename is empty or NULL, it is treated as non-existent
  * and, as such, will also return false.
  */
-BU_EXPORT extern int bu_same_file(const char *fn1, const char *fn2);
-
-/**
- * returns truthfully as to whether or not the two provided file
- * descriptors are the same file.  if either file does not exist, the
- * result is false.
- */
-BU_EXPORT extern int bu_same_fd(int fd1, int fd2);
+BU_EXPORT extern int bu_file_same(const char *fn1, const char *fn2);
 
 /**
  * returns truthfully if current user can read the specified file or

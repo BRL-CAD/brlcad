@@ -124,7 +124,7 @@ file_compare_info(HANDLE handle1, HANDLE handle2)
 
 
 int
-bu_same_file(const char *fn1, const char *fn2)
+bu_file_same(const char *fn1, const char *fn2)
 {
     int ret = 0;
     char *rp1, *rp2;
@@ -186,44 +186,6 @@ bu_same_file(const char *fn1, const char *fn2)
 
     bu_free(rp1, "free rp1");
     bu_free(rp2, "free rp2");
-
-    return ret;
-}
-
-
-int
-bu_same_fd(int fd1, int fd2)
-{
-    int ret = 0;
-
-    if (UNLIKELY(fd1<0 || fd2<0)) {
-	return 0;
-    }
-
-    {
-
-/* Ditto bu_same_file() reasoning, assume GetFullPathname implies we have HANDLEs */
-#ifdef HAVE_GETFULLPATHNAME
-	HANDLE handle1, handle2;
-
-	handle1 = (HANDLE)_get_osfhandle(fd1);
-	handle2 = (HANDLE)_get_osfhandle(fd2);
-
-	ret = file_compare_info(handle1, handle2);
-#else
-	/* are these files the same inode on same device?
-	 *
-	 * NOTE: fstat() works on Windows, but does not set an inode value
-	 * for non-UNIX filesystems.
-	 */
-	struct stat sb1, sb2;
-	if ((fstat(fd1, &sb1) == 0) && (fstat(fd2, &sb2) == 0) &&
-	    (sb1.st_dev == sb2.st_dev) && (sb1.st_ino == sb2.st_ino)) {
-	    ret = 1;
-	}
-#endif /* HAVE_GETFULLPATHNAME */
-
-    }
 
     return ret;
 }

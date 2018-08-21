@@ -1357,3 +1357,5 @@ s/bu_path_canonicalize[[:space:]]*\(([^,]*)/bu_realpath(\1, NULL/g
 	duplicate functionality consolidated to bu_realpath() [7.27] 
 s/gqa(.*)-p/gqa\1-p ""/g
 	gqa now takes a prefix for plot file output
+s/bu_same_file/bu_file_same/g
+        renamed for API consistency [7.27]

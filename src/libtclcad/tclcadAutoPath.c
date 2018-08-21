@@ -210,7 +210,7 @@ tclcad_auto_path(Tcl_Interp *interp)
     snprintf(buffer, MAX_BUF, "%s%cbin%c%s", root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, bu_getprogname());
 
     /* are we running from an installed binary? if so add to path */
-    if (bu_file_exists(buffer, NULL) && bu_same_file(buffer, which_argv)) {
+    if (bu_file_exists(buffer, NULL) && bu_file_same(buffer, which_argv)) {
 	from_installed = 1;
 	join_path(&auto_path, root, "lib", NULL);
 	join_path(&auto_path, root, "lib", bu_vls_addr(&tcl), NULL);

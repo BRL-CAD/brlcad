@@ -326,7 +326,7 @@ main(int argc, char **argv)
     /* diff case */
     if (argc == 2) {
 
-	if (bu_same_file(argv[0], argv[1])) {
+	if (bu_file_same(argv[0], argv[1])) {
 	    bu_exit(1, "Same database file specified as both left and right diff inputs: %s\n", argv[0]);
 	}
 
@@ -365,19 +365,19 @@ main(int argc, char **argv)
     /* diff3 case */
     if (argc == 3) {
 
-	if (bu_same_file(argv[0], argv[1]) && bu_same_file(argv[2], argv[1])) {
+	if (bu_file_same(argv[0], argv[1]) && bu_file_same(argv[2], argv[1])) {
 	    bu_exit(1, "Same database file specified for all three inputs: %s\n", argv[0]);
 	}
 
-	if (bu_same_file(argv[0], argv[1])) {
+	if (bu_file_same(argv[0], argv[1])) {
 	    bu_exit(1, "Same database file specified as both ancestor and left diff inputs: %s\n", argv[0]);
 	}
 
-	if (bu_same_file(argv[1], argv[2])) {
+	if (bu_file_same(argv[1], argv[2])) {
 	    bu_exit(1, "Same database file specified as both ancestor and right diff inputs: %s\n", argv[1]);
 	}
 
-	if (bu_same_file(argv[0], argv[2])) {
+	if (bu_file_same(argv[0], argv[2])) {
 	    bu_exit(1, "Same database file specified as both left and right diff inputs: %s\n", argv[0]);
 	}
 
