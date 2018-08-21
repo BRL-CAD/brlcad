@@ -3137,40 +3137,40 @@ endif(RU_RESULT)
 string(STRIP ${BRLCAD_COMPILE_USER} BRLCAD_COMPILE_USER)
 file(REMOVE "${CMAKE_BINARY_DIR}/CMakeTmp/report_username.c")
 
-#---------------------------------------------------------------------
-# We now have everything we need - configure files
-configure_file("${BRLCAD_SOURCE_DIR}/include/brlcad_ident.h.in" "${BRLCAD_BINARY_DIR}/include/conf_headers/brlcad_ident.h")
-BRLCAD_MANAGE_FILES("${BRLCAD_BINARY_DIR}/include/conf_headers/brlcad_ident.h" ${INCLUDE_DIR})
-
 # If we're building on Windows with MSVC, use config_win.h file
 if(MSVC)
-  CONFIG_H_APPEND(BRLCAD "#include \"config_win.h\"\n")
+  CONFIG_H_APPEND(BRLCAD "#include \"brlcad/config_win.h\"\n")
 endif(MSVC)
 
-# Generate the windows specific file, if needed
-if(WIN32)
-  configure_file("${BRLCAD_SOURCE_DIR}/include/config_win.h.in" "${BRLCAD_BINARY_DIR}/include/conf_headers/config_win.h.tmp")
-  execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different "${BRLCAD_BINARY_DIR}/include/conf_headers/config_win.h.tmp" "${BRLCAD_BINARY_DIR}/include/conf_headers/config_win.h")
-  # For Ninja (CMP0058)
-  add_custom_command(
-    OUTPUT "${BRLCAD_BINARY_DIR}/include/conf_headers/config_win.h"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${BRLCAD_BINARY_DIR}/include/conf_headers/config_win.h.tmp" "${BRLCAD_BINARY_DIR}/include/conf_headers/config_win.h"
-    )
-  BRLCAD_MANAGE_FILES("${BRLCAD_BINARY_DIR}/include/conf_headers/config_win.h" ${INCLUDE_DIR}/brlcad)
-endif(WIN32)
-
-# Configure the brlcad_config.h file:
+# Finalize brlcad_config.h
 CONFIG_H_APPEND(BRLCAD "#endif /* __CONFIG_H__ */\n")
 get_property(CONFIG_H_FILE_CONTENTS GLOBAL PROPERTY ${CMAKE_PROJECT_NAME}_CONFIG_H_CONTENTS)
 file(WRITE ${CONFIG_H_FILE} "${CONFIG_H_FILE_CONTENTS}")
 configure_file(${CONFIG_H_FILE} "${BRLCAD_BINARY_DIR}/include/conf_headers/brlcad_config.h.tmp")
-execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different "${BRLCAD_BINARY_DIR}/include/conf_headers/brlcad_config.h.tmp" "${BRLCAD_BINARY_DIR}/include/conf_headers/brlcad_config.h")
-# For Ninja (CMP0058)
-add_custom_command(
-  OUTPUT "${BRLCAD_BINARY_DIR}/include/conf_headers/brlcad_config.h"
-  COMMAND ${CMAKE_COMMAND} -E copy_if_different "${BRLCAD_BINARY_DIR}/include/conf_headers/brlcad_config.h.tmp" "${BRLCAD_BINARY_DIR}/include/conf_headers/brlcad_config.h"
-  )
-BRLCAD_MANAGE_FILES("${BRLCAD_BINARY_DIR}/include/conf_headers/brlcad_config.h" ${INCLUDE_DIR}/brlcad)
+
+#---------------------------------------------------------------------
+# We now have everything we need - configure files
+
+# Do the configurations, and place files appropriately in the build dir
+function(BUILD_CFG_HDR chdr targetdir)
+  get_filename_component(ohdr "${chdr}" NAME_WE)
+  configure_file("${chdr}" "${BRLCAD_BINARY_DIR}/${targetdir}/${ohdr}.h")
+  install(FILES "${BRLCAD_BINARY_DIR}/${targetdir}/${ohdr}.h" DESTINATION ${targetdir})
+  DISTCLEAN("${BRLCAD_BINARY_DIR}/${targetdir}/${ohdr}.h")
+  if(CMAKE_CONFIGURATION_TYPES)
+    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+      string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+      configure_file("${chdr}" "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${targetdir}/${ohdr}.h")
+      DISTCLEAN("${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${targetdir}/${ohdr}.h")
+    endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+  endif(CMAKE_CONFIGURATION_TYPES)
+endfunction(BUILD_CFG_HDR chdr targetdir)
+
+BUILD_CFG_HDR(${BRLCAD_SOURCE_DIR}/include/brlcad_ident.h.in ${INCLUDE_DIR})
+BUILD_CFG_HDR(${BRLCAD_BINARY_DIR}/include/conf_headers/brlcad_config.h.tmp ${INCLUDE_DIR}/brlcad)
+if(MSVC)
+  BUILD_CFG_HDR(${BRLCAD_SOURCE_DIR}/include/config_win.h.in ${INCLUDE_DIR}/brlcad)
+endif(MSVC)
 
 #---------------------------------------------------------------------
 # Rules for the toplevel documentation files
