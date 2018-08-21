@@ -1,4 +1,4 @@
-opendb solids-simple.g y
+opendb solids.simple.g y
 
 units mm
 in sph.s sph 0 0 0 50
@@ -13,5 +13,5 @@ center 0 0 0
 set perspective 30
 size 1000
 ae 25 45
-saveview solids-simple.rt
+saveview solids.simple.rt
 q

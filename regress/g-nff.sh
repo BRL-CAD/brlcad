@@ -42,50 +42,47 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . "$1/regress/library.sh"
 
+LOGFILE=g-nff.log
+rm -f $LOGFILE
+log "=== TESTING 'g-nff' ==="
+
 MGED="`ensearch mged`"
 if test ! -f "$MGED" ; then
-    echo "Unable to find mged, aborting"
+    log "Unable to find mged, aborting"
     exit 1
 fi
 ASC2G="`ensearch asc2g`"
 if test ! -f "$ASC2G" ; then
-    echo "Unable to find asc2g, aborting"
+    log "Unable to find asc2g, aborting"
     exit 1
 fi
 GZIP="`which gzip`"
 if test ! -f "$GZIP" ; then
-    echo "Unable to find gzip, aborting"
+    log "Unable to find gzip, aborting"
     exit 1
 fi
 GNFF="`ensearch g-nff`"
 if test ! -f "$GNFF" ; then
-    echo "Unable to find 'g-nff', aborting"
+    log "Unable to find 'g-nff', aborting"
     exit 1
 fi
 
-FILS='g-nff.err g-nff.log g-nff.m35.nff g-nff.m35.asc g-nff.m35.g'
-
-rm -f $FILS
-
 # get known test failure.g file
-$GZIP -d -c "$1/regress/tgms/m35.asc.gz" > g-nff.m35.asc
-$ASC2G g-nff.m35.asc g-nff.m35.g
+rm -f g-nff.m35.asc
+log "... running gzip decompress"
+$GZIP -d -c "$PATH_TO_THIS/tgms/m35.asc.gz" > g-nff.m35.asc 2>> $LOGFILE
 
-# .g to nff:
-$GNFF -e g-nff.err -o g-nff.m35.nff g-nff.m35.g r516 2> g-nff.log 1>/dev/null
+rm -f g-nff.m35.g
+run $ASC2G g-nff.m35.asc g-nff.m35.g
+
+# .g to nff
+run $GNFF -e g-nff.err -o g-nff.m35.nff g-nff.m35.g r516
 STATUS=$?
 
-if [ X$STATUS != X0 ] ; then
-    echo g-nff FAILED
-else
-    echo g-nff completed successfully
-fi
-
-
 if [ X$STATUS = X0 ] ; then
-    echo "-> g-nff.sh succeeded"
+    log "-> g-nff.sh succeeded"
 else
-    echo "-> g-nff.sh FAILED"
+    log "-> g-nff.sh FAILED, see `pwd`/$LOGFILE"
 fi
 
 exit $STATUS

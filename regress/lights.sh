@@ -42,30 +42,32 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . "$1/regress/library.sh"
 
+LOGFILE=lights.log
+rm -f $LOGFILE
+log "=== TESTING rendering with lights ==="
+
 RT="`ensearch rt`"
 if test ! -f "$RT" ; then
-    echo "Unable to find rt, aborting"
+    log "Unable to find rt, aborting"
     exit 1
 fi
 A2G="`ensearch asc2g`"
 if test ! -f "$A2G" ; then
-    echo "Unable to find asc2g, aborting"
+    log "Unable to find asc2g, aborting"
     exit 1
 fi
 A2P="`ensearch asc2pix`"
 if test ! -f "$A2P" ; then
-    echo "Unable to find asc2pix, aborting"
+    log "Unable to find asc2pix, aborting"
     exit 1
 fi
 PIXDIFF="`ensearch pixdiff`"
 if test ! -f "$PIXDIFF" ; then
-    echo "Unable to find pixdiff, aborting"
+    log "Unable to find pixdiff, aborting"
     exit 1
 fi
 
-
-rm -f lights.pix
-
+rm -f lights.asc
 cat > lights.asc <<EOF
 title {Untitled BRL-CAD Database}
 units mm
@@ -87,28 +89,33 @@ attr set {local.r} {region} {R} {rgb} {255/255/255} {oshader} {light {s 4  pt {-
 put {all.g} comb region no tree {u {u {l infinite.r} {l local.r}} {u {l plate.r} {l shadow_objs.r}}}
 EOF
 
-$A2G lights.asc lights.g
-rm -f lights.asc
+run $A2G lights.asc lights.g
 
-echo rendering lights...
-$RT -M -B -p30 -o lights.pix lights.g 'all.g' 2> lights.log <<EOF
+log rendering lights...
+rm -f lights.pix
+$RT -M -B -p30 -o lights.pix lights.g 'all.g' >> $LOGFILE 2>&1 <<EOF
 viewsize 1.600000000000000e+02;
 orientation 0.000000000000000e+00 0.000000000000000e+00 0.000000000000000e+00 1.000000000000000e+00;
 eye_pt 0.000000000000000e+00 0.000000000000000e+00 7.950000000000000e+01;
 start 0; clean;
 end;
-
 EOF
 
-$A2P < "$1/regress/lights_ref.asc"  > lights_ref.pix
-$PIXDIFF lights.pix lights_ref.pix > lights_diff.pix 2>> lights.log
-NUMBER_WRONG=`tr , '\012' < lights.log | awk '/many/ {print $1}'`
-echo "lights.pix $NUMBER_WRONG off by many"
+log "... running $A2P < $PATH_TO_THIS/lights_ref.asc > lights.ref.pix"
+rm -f lights.ref.pix
+$A2P < "$PATH_TO_THIS/lights_ref.asc" > lights.ref.pix 2>> $LOGFILE
+
+log "... running $PIXDIFF lights.pix lights.ref.pix > lights.diff.pix"
+rm -f lights.diff.pix
+$PIXDIFF lights.pix lights.ref.pix > lights.diff.pix 2>> $LOGFILE
+
+NUMBER_WRONG=`tail -n1 $LOGFILE | tr , '\012' | awk '/many/ {print $1}'`
+log "lights.pix $NUMBER_WRONG off by many"
 
 if [ X$NUMBER_WRONG = X0 ] ; then
-    echo "-> lights.sh succeeded"
+    log "-> lights.sh succeeded"
 else
-    echo "-> lights.sh FAILED"
+    log "-> lights.sh FAILED, see `pwd`/$LOGFILE"
 fi
 
 exit $NUMBER_WRONG

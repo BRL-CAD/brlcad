@@ -42,40 +42,43 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . "$1/regress/library.sh"
 
+LOGFILE=moss.log
+rm -f $LOGFILE
+log "=== TESTING moss rendering ==="
+
 RT="`ensearch rt`"
 if test ! -f "$RT" ; then
-    echo "Unable to find rt, aborting"
+    log "Unable to find rt, aborting"
     exit 1
 fi
 A2G="`ensearch asc2g`"
 if test ! -f "$A2G" ; then
-    echo "Unable to find asc2g, aborting"
+    log "Unable to find asc2g, aborting"
     exit 1
 fi
 A2P="`ensearch asc2pix`"
 if test ! -f "$A2P" ; then
-    echo "Unable to find asc2pix, aborting"
+    log "Unable to find asc2pix, aborting"
     exit 1
 fi
 PIXDIFF="`ensearch pixdiff`"
 if test ! -f "$PIXDIFF" ; then
-    echo "Unable to find pixdiff, aborting"
+    log "Unable to find pixdiff, aborting"
     exit 1
 fi
 PIX2PNG="`ensearch pix-png`"
 if test ! -f "$PIX2PNG" ; then
-    echo "Unable to find pix-png, aborting"
+    log "Unable to find pix-png, aborting"
     exit 1
 fi
 PNG2PIX="`ensearch png-pix`"
 if test ! -f "$PNG2PIX" ; then
-    echo "Unable to find png-pix, aborting"
+    log "Unable to find png-pix, aborting"
     exit 1
 fi
 
 
-rm -f moss.pix moss.log moss.png moss2.pix
-
+rm -f moss.asc
 cat > moss.asc << EOF
 I 0 v4
 Gary Moss's "World on a Platter"
@@ -107,10 +110,12 @@ M u tor.r 1.000000000000e+00 0.000000000000e+00 0.000000000000e+00 0.00000000000
 M u light.r 1.000000000000e+00 0.000000000000e+00 0.000000000000e+00 0.000000000000e+00 0.000000000000e+00 1.000000000000e+00 0.000000000000e+00 0.000000000000e+00 0.000000000000e+00 0.000000000000e+00 1.000000000000e+00 0.000000000000e+00 0.000000000000e+00 0.000000000000e+00 0.000000000000e+00 1.000000000000e+00 0
 EOF
 
-$A2G moss.asc moss.g
+rm -f moss.g
+run $A2G moss.asc moss.g
 
-echo "rendering moss..."
-$RT -P 1 -B -C0/0/50 -M -s 512 -o moss.pix moss.g all.g > moss.log 2>&1 << EOF
+log "... rendering moss"
+rm -f moss.pix
+$RT -P 1 -B -C0/0/50 -M -s 512 -o moss.pix moss.g all.g >> $LOGFILE 2>&1 << EOF
 viewsize 1.572026215e+02;
 eye_pt 6.379990387e+01 3.271768951e+01 3.366661453e+01;
 viewrot -5.735764503e-01 8.191520572e-01 0.000000000e+00
@@ -124,33 +129,45 @@ EOF
 
 
 if [ ! -f moss.pix ] ; then
-    echo "raytrace failed to create moss.pix"
+    log "raytrace failed to create moss.pix"
     NUMBER_WRONG=-1
 else
-    if [ ! -f "$1/regress/mosspix.asc" ] ; then
-	echo "No reference file for moss.pix"
+    if [ ! -f "$PATH_TO_THIS/mosspix.asc" ] ; then
+	log "No reference file for moss.pix"
     else
-	$A2P < "$1/regress/mosspix.asc" > moss_ref.pix
-	$PIXDIFF moss.pix moss_ref.pix > moss.pix.diff 2> moss-diff.log
+	log "...running $A2P < $PATH_TO_THIS/mosspix.asc > moss.ref.pix"
+	rm -f moss.ref.pix
+	$A2P < "$PATH_TO_THIS/mosspix.asc" > moss.ref.pix
 
-	echo "moss.pix vs moss_ref.pix differences:"
-	tr , '\012' < moss-diff.log | grep many
-	if test $? -ne 0 ; then
-	    echo ""
-	fi
+	log "... running pixdiff moss.pix moss.ref.pix > moss.pix.diff"
+	rm -f moss.pix.diff
+	$PIXDIFF moss.pix moss.ref.pix > moss.pix.diff 2>> $LOGFILE
+	different="`tail -n1 $LOGFILE | tr , '\012' | grep many`"
+	log "moss.pix vs moss.ref.pix differences:"
+	log "$different"
     fi
 
-    $PIX2PNG -s 512 moss.pix > moss.png
-    $PNG2PIX moss.png > moss2.pix
-    $PIXDIFF moss.pix moss2.pix > moss_png.diff 2> moss-png.log
-    NUMBER_WRONG=`tr , '\012' < moss-png.log | awk '/many/ {print $1}'`
-    echo moss.pix $NUMBER_WRONG off by many
+    log "... running $PIX2PNG -s 512 moss.pix > moss.pix.png"
+    rm -f moss.pix.png
+    $PIX2PNG -s 512 moss.pix > moss.pix.png 2>> $LOGFILE
+
+    log "... running $PNG2PIX moss.pix.png > moss.pix.png.pix"
+    rm -f moss.pix.png.pix
+    $PNG2PIX moss.pix.png > moss.pix.png.pix 2>> $LOGFILE
+
+    log "... running $PIXDIFF moss.pix moss.pix.png.pix > moss.roundtrip.diff"
+    rm -f moss.roundtrip.diff
+    $PIXDIFF moss.pix moss.pix.png.pix > moss.roundtrip.diff 2>> $LOGFILE
+
+    NUMBER_WRONG=`tail -n1 $LOGFILE | tr , '\012' | awk '/many/ {print $1}'`
+    log "moss.pix $NUMBER_WRONG off by many"
 fi
 
+
 if [ X$NUMBER_WRONG = X0 ] ; then
-    echo '-> moss.sh succeeded'
+    log "-> moss.sh succeeded"
 else
-    echo '-> moss.sh FAILED'
+    log "-> moss.sh FAILED, see `pwd`/$LOGFILE"
 fi
 
 exit $NUMBER_WRONG

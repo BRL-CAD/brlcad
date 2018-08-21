@@ -45,21 +45,23 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . "$1/regress/library.sh"
 
+LOGFILE=red.log
+rm -f $LOGFILE
+log "=== TESTING red command ==="
+
 MGED="`ensearch mged`"
 if test ! -f "$MGED" ; then
-    echo "Unable to find mged, aborting"
+    log "Unable to find mged, aborting"
     exit 1
 fi
 
 FAILURES=0
 
-echo "testing mged 'red' command..."
-rm -f red.log
 
 # make our starting database
 create_db ( ) {
     rm -f red.g
-    $MGED -c >> red.log 2>&1 <<EOF
+    $MGED -c >> $LOGFILE 2>&1 <<EOF
 opendb red.g y
 make sph sph
 make sph sph2
@@ -76,119 +78,125 @@ quit
 EOF
 
     if test $? != 0 ; then
-	echo "INTERNAL ERROR: mged returned non-zero exit status $?"
+	log "INTERNAL ERROR: mged returned non-zero exit status $?"
 	exit 1
     fi
     if test ! -f red.g ; then
-	echo "INTERNAL ERROR: Unable to run mged, aborting"
+	log "INTERNAL ERROR: Unable to run mged, aborting"
 	exit 1
     fi
 
 }
+
 
 assert_different ( ) {
     if test "x`diff $SAMPLE $REDFILE`" = "x" ; then
-	echo "ERROR: sed failed"
+	log "ERROR: sed failed"
 	exit 1
     fi
 }
+
 
 should_be_different ( ) {
     if test $# -ne 2 ; then
-	echo "INTERNAL ERROR: should_be_different has wrong arg count ($# -ne 2)"
+	log "INTERNAL ERROR: should_be_different has wrong arg count ($# -ne 2)"
 	exit 1
     fi
     if test "x$1" = "x" ; then
-	echo "INTERNAL ERROR: should_be_different has empty file #1"
+	log "INTERNAL ERROR: should_be_different has empty file #1"
 	exit 1
     fi
     if test "x$2" = "x" ; then
-	echo "INTERNAL ERROR: should_be_different has empty file #2"
+	log "INTERNAL ERROR: should_be_different has empty file #2"
 	exit 1
     fi
     if test "x`diff $1 $2`" = "x" ; then
-	echo "ERROR: 'red' failed  ($1 and $2 are identical, expected change)"
+	log "ERROR: 'red' failed  ($1 and $2 are identical, expected change)"
 	FAILURES="`expr $FAILURES + 1`"
 	export FAILURES
     fi
 }
+
 
 should_be_same ( ) {
     if test $# -ne 2 ; then
-	echo "INTERNAL ERROR: should_be_same has wrong arg count ($# -ne 2)"
+	log "INTERNAL ERROR: should_be_same has wrong arg count ($# -ne 2)"
 	exit 1
     fi
     if test "x$1" = "x" ; then
-	echo "INTERNAL ERROR: should_be_same has empty file #1"
+	log "INTERNAL ERROR: should_be_same has empty file #1"
 	exit 1
     fi
     if test "x$2" = "x" ; then
-	echo "INTERNAL ERROR: should_be_same has empty file #2"
+	log "INTERNAL ERROR: should_be_same has empty file #2"
 	exit 1
     fi
     if test "x`diff $1 $2`" != "x" ; then
-	echo "ERROR: 'red' failed  ($1 and $2 are different, expected no change)"
-	diff -u $1 $2
+	log "ERROR: 'red' failed  ($1 and $2 are different, expected no change)"
+	run diff -u $1 $2
 	FAILURES="`expr $FAILURES + 1`"
 	export FAILURES
     fi
 }
 
+
 dump ( ) {
     if test $# -ne 2 ; then
-	echo "INTERNAL ERROR: dump has wrong arg count ($# -ne 2)"
+	log "INTERNAL ERROR: dump has wrong arg count ($# -ne 2)"
 	exit 1
     fi
     if test "x$1" = "x" ; then
-	echo "INTERNAL ERROR: dump has empty object name #1"
+	log "INTERNAL ERROR: dump has empty object name #1"
 	exit 1
     fi
     if test "x$2" = "x" ; then
-	echo "INTERNAL ERROR: dump has empty file name #2"
+	log "INTERNAL ERROR: dump has empty file name #2"
 	exit 1
     fi
     rm -f $2
-    EDITOR=cat $MGED -c red.g red $1 2>/dev/null > $2
+    EDITOR=cat $MGED -c red.g red $1 2>> $LOGFILE > $2
 }
+
 
 edit_and_dump ( ) {
     if test $# -ne 2 ; then
-	echo "INTERNAL ERROR: edit_and_dump has wrong arg count ($# -ne 2)"
+	log "INTERNAL ERROR: edit_and_dump has wrong arg count ($# -ne 2)"
 	exit 1
     fi
     if test "x$1" = "x" ; then
-	echo "INTERNAL ERROR: edit_and_dump has empty object name #1"
+	log "INTERNAL ERROR: edit_and_dump has empty object name #1"
 	exit 1
     fi
     if test "x$2" = "x" ; then
-	echo "INTERNAL ERROR: edit_and_dump has empty file name #2"
+	log "INTERNAL ERROR: edit_and_dump has empty file name #2"
 	exit 1
     fi
-    $MGED -c red.g red $1 >> red.log 2>&1
+    run $MGED -c red.g red $1
     dump $1 $2
 }
 
+
 init ( ) {
     if test $# -ne 2 ; then
-	echo "INTERNAL ERROR: init has wrong arg count ($# -ne 2)"
+	log "INTERNAL ERROR: init has wrong arg count ($# -ne 2)"
 	exit 1
     fi
     if test "x$1" = "x" ; then
-	echo "INTERNAL ERROR: init has empty description string #1"
+	log "INTERNAL ERROR: init has empty description string #1"
 	exit 1
     fi
     if test "x$2" = "x" ; then
-	echo "INTERNAL ERROR: init has empty file name #2"
+	log "INTERNAL ERROR: init has empty file name #2"
 	exit 1
     fi
-    echo "===== $1 ====="
+    log "===== $1 ====="
     create_db
     REDFILE="$2"
     export REDFILE
 }
 
 # write out our "editor"
-rm -rf red.edit.sh
+rm -f red.edit.sh
 cat > red.edit.sh <<EOF
 #!/bin/sh
 cat \$REDFILE > \$1
@@ -196,7 +204,6 @@ EOF
 chmod u+rwx red.edit.sh
 EDITOR="./red.edit.sh"
 export EDITOR
-
 
 # write out our initial unedited objects, verify sanity
 create_db
@@ -521,10 +528,11 @@ assert_different
 edit_and_dump sph_rot.c $REDFILE.new
 should_be_same $MATRIX $REDFILE.new
 
+
 if test $FAILURES -eq 0 ; then
-    echo "-> mged 'red' check succeeded"
+    log "-> mged 'red' check succeeded"
 else
-    echo "-> mged 'red' check FAILED"
+    log "-> mged 'red' check FAILED, see `pwd`/$LOGFILE"
 fi
 
 exit $FAILED

@@ -42,6 +42,10 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . "$1/regress/library.sh"
 
+LOGFILE=nirt.log
+rm -f $LOGFILE
+log "=== TESTING nirt ==="
+
 MGED="`ensearch mged`"
 if test ! -f "$MGED" ; then
     echo "Unable to find mged, aborting"
@@ -53,9 +57,7 @@ if test ! -f "$NIRT" ; then
     exit 1
 fi
 
-# Clear old files
-rm -f nirt.mged nirt_g.log nirt.g nirt.ref nirt.out nirt.log
-
+rm -f nirt.mged nirt.g
 cat > nirt.mged <<EOF
 opendb nirt.g y
 title "NIRT example database"
@@ -79,49 +81,54 @@ comb center_cube_air u center_box.s
 attr set center_cube_air region 1 air 1
 EOF
 
-$MGED -c > nirt_g.log 2>&1 << EOF
+$MGED -c >> $LOGFILE 2>&1 << EOF
 `cat nirt.mged`
 EOF
 
-echo "NIRT Program Output:" > nirt.out
-echo "NIRT Error Log:" > nirt.log
-echo "*** Test 1 - shot command ***" >> nirt.out
-$NIRT -v -H 0 -e "s;q" nirt.g center_cube.r >> nirt.out 2>> nirt.log
-echo "*** Test 2 - xyz command ***" >> nirt.out
-$NIRT -v -H 0 -e "xyz;xyz 0 0 .5;s;q" nirt.g center_cube.r >> nirt.out 2>> nirt.log
-echo "*** Test 3 - backout command ***" >> nirt.out
-$NIRT -v -H 0 -e "s;backout 1;s;q" nirt.g left_and_right_cubes.r >> nirt.out 2>> nirt.log
-echo "*** Test 4 - backout/xyz interaction ***" >> nirt.out
-$NIRT -v -H 0 -e "backout 0;xyz;xyz 0 0 .5;s;backout 1;xyz;backout 0;xyz;backout 1;xyz 0 0 .8;s;backout 0;s;q" nirt.g left_and_right_cubes.r >> nirt.out 2>> nirt.log
-echo "*** Test 5 - dir command***" >> nirt.out
-$NIRT -v -H 0 -e "xyz 0 0 0;dir;s;dir -1 -.5 0;dir;s;dir 0 0 1;s;q" nirt.g left_and_right_cubes.r >> nirt.out 2>> nirt.log
-echo "*** Test 6 - reporting of overlaps ***" >> nirt.out
-$NIRT -v -H 0 -e "backout 1;s;dir 0 0 -1;s;q" nirt.g overlap_example >> nirt.out 2>> nirt.log
-echo "*** Test 7 - output formatting ***" >> nirt.out
-$NIRT -v -H 0 -b -f csv -e "s;q" nirt.g left_cube.r center_cube.r right_cube.r >> nirt.out 2>> nirt.log
-$NIRT -v -H 0 -b -f csv-gap -e "s;q" nirt.g left_cube.r center_cube.r right_cube.r >> nirt.out 2>> nirt.log
-$NIRT -v -H 0 -b -f default -e "s;q" nirt.g left_cube.r center_cube.r right_cube.r >> nirt.out 2>> nirt.log
-$NIRT -v -H 0 -b -f entryexit -e "s;q" nirt.g left_cube.r center_cube.r right_cube.r >> nirt.out 2>> nirt.log
-$NIRT -v -H 0 -b -f gap1 -e "s;q" nirt.g left_cube.r center_cube.r right_cube.r >> nirt.out 2>> nirt.log
-$NIRT -v -H 0 -b -f gap2 -e "s;q" nirt.g left_cube.r center_cube.r right_cube.r >> nirt.out 2>> nirt.log
-echo "*** Test 8 - attribute reporting ***" >> nirt.out
-$NIRT -v -H 0 -b -e "attr -p; attr rgb; attr -p;s;attr -f;attr -p; attr rgb region;attr -p;s;q" nirt.g left_cube_color.r center_cube_color.r right_cube_color.r >> nirt.out 2>> nirt.log
-$NIRT -v -H 0 -b -A rgb -e "attr -p;s;q" nirt.g left_cube_color.r center_cube_color.r right_cube_color.r >> nirt.out 2>> nirt.log
-echo "*** Test 9 - units ***" >> nirt.out
-$NIRT -v -H 0 -b -e "units;s;units m;s;units in;s;units ft;s;q" nirt.g center_cube.r >> nirt.out 2>> nirt.log
-echo "*** Test 10 - air regions ***" >> nirt.out
-$NIRT -v -H 0 -b -e "s;q" nirt.g left_cube.r center_cube_air >> nirt.out 2>> nirt.log
-$NIRT -v -H 0 -b -u 0 -e "s;q" nirt.g left_cube.r center_cube_air >> nirt.out 2>> nirt.log
-$NIRT -v -H 0 -b -u 1 -e "s;q" nirt.g left_cube.r center_cube_air >> nirt.out 2>> nirt.log
-echo "*** Test 11 - parsing with spaces before semicolon, Patch #314 ***" >> nirt.out
-$NIRT -v -H 0 -e "xyz 0.5 1.5 0.5; dir 0 -1 0; s; q" nirt.g center_cube.r >> nirt.out 2>> nirt.log
-$NIRT -v -H 0 -e "xyz 0.5 1.5 0.5 ; dir 0 -1 0; s; q;" nirt.g center_cube.r >> nirt.out 2>> nirt.log
 
+rm -f nirt.out
+logfile_saved="$LOGFILE"
+LOGFILE=nirt.out
 
+log "*** Test 1 - shot command ***"
+run $NIRT -v -H 0 -e "s;q" nirt.g center_cube.r
+log "*** Test 2 - xyz command ***"
+run $NIRT -v -H 0 -e "xyz;xyz 0 0 .5;s;q" nirt.g center_cube.r
+log "*** Test 3 - backout command ***"
+run $NIRT -v -H 0 -e "s;backout 1;s;q" nirt.g left_and_right_cubes.r
+log "*** Test 4 - backout/xyz interaction ***"
+run $NIRT -v -H 0 -e "backout 0;xyz;xyz 0 0 .5;s;backout 1;xyz;backout 0;xyz;backout 1;xyz 0 0 .8;s;backout 0;s;q" nirt.g left_and_right_cubes.r
+log "*** Test 5 - dir command***"
+run $NIRT -v -H 0 -e "xyz 0 0 0;dir;s;dir -1 -.5 0;dir;s;dir 0 0 1;s;q" nirt.g left_and_right_cubes.r
+log "*** Test 6 - reporting of overlaps ***"
+run $NIRT -v -H 0 -e "backout 1;s;dir 0 0 -1;s;q" nirt.g overlap_example
+log "*** Test 7 - output formatting ***"
+run $NIRT -v -H 0 -b -f csv -e "s;q" nirt.g left_cube.r center_cube.r right_cube.r
+run $NIRT -v -H 0 -b -f csv-gap -e "s;q" nirt.g left_cube.r center_cube.r right_cube.r
+run $NIRT -v -H 0 -b -f default -e "s;q" nirt.g left_cube.r center_cube.r right_cube.r
+run $NIRT -v -H 0 -b -f entryexit -e "s;q" nirt.g left_cube.r center_cube.r right_cube.r
+run $NIRT -v -H 0 -b -f gap1 -e "s;q" nirt.g left_cube.r center_cube.r right_cube.r
+run $NIRT -v -H 0 -b -f gap2 -e "s;q" nirt.g left_cube.r center_cube.r right_cube.r
+log "*** Test 8 - attribute reporting ***"
+run $NIRT -v -H 0 -b -e "attr -p; attr rgb; attr -p;s;attr -f;attr -p; attr rgb region;attr -p;s;q" nirt.g left_cube_color.r center_cube_color.r right_cube_color.r
+run $NIRT -v -H 0 -b -A rgb -e "attr -p;s;q" nirt.g left_cube_color.r center_cube_color.r right_cube_color.r
+log "*** Test 9 - units ***"
+run $NIRT -v -H 0 -b -e "units;s;units m;s;units in;s;units ft;s;q" nirt.g center_cube.r
+log "*** Test 10 - air regions ***"
+run $NIRT -v -H 0 -b -e "s;q" nirt.g left_cube.r center_cube_air
+run $NIRT -v -H 0 -b -u 0 -e "s;q" nirt.g left_cube.r center_cube_air
+run $NIRT -v -H 0 -b -u 1 -e "s;q" nirt.g left_cube.r center_cube_air
+log "*** Test 11 - parsing with spaces before semicolon, Patch #314 ***"
+run $NIRT -v -H 0 -e "xyz 0.5 1.5 0.5; dir 0 -1 0; s; q" nirt.g center_cube.r
+run $NIRT -v -H 0 -e "xyz 0.5 1.5 0.5 ; dir 0 -1 0; s; q;" nirt.g center_cube.r
 
+# restore for final printing
+LOGFILE="$logfile_saved"
+
+rm -f nirt.ref
 cat >> nirt.ref <<EOF
-NIRT Program Output:
 *** Test 1 - shot command ***
+... running ../bin/nirt -v -H 0 -e s;q nirt.g center_cube.r
 Output format: default (specify -L option for descriptive listing)
 Formats available: csv-gap csv default diff entryexit gap1 gap2 (specify via -f option)
 Database file:  'nirt.g'
@@ -138,6 +145,7 @@ Direction (x y z) = (-1.00000000 0.00000000 0.00000000)  (az el) = (0.00000000 0
 center_cube.r        (   1.0000    0.0000    0.0000)   2.0000   0.0000 
 Quitting...
 *** Test 2 - xyz command ***
+... running ../bin/nirt -v -H 0 -e xyz;xyz 0 0 .5;s;q nirt.g center_cube.r
 Output format: default (specify -L option for descriptive listing)
 Formats available: csv-gap csv default diff entryexit gap1 gap2 (specify via -f option)
 Database file:  'nirt.g'
@@ -155,6 +163,7 @@ Direction (x y z) = (-1.00000000 0.00000000 0.00000000)  (az el) = (0.00000000 0
 center_cube.r        (   1.0000    0.0000    0.5000)   2.0000   0.0000 
 Quitting...
 *** Test 3 - backout command ***
+... running ../bin/nirt -v -H 0 -e s;backout 1;s;q nirt.g left_and_right_cubes.r
 Output format: default (specify -L option for descriptive listing)
 Formats available: csv-gap csv default diff entryexit gap1 gap2 (specify via -f option)
 Database file:  'nirt.g'
@@ -176,6 +185,7 @@ left_and_right_cubes.r (   3.0000    0.0000    0.0000)   2.0000   0.0000
 left_and_right_cubes.r (  -1.0000    0.0000    0.0000)   2.0000   0.0000 
 Quitting...
 *** Test 4 - backout/xyz interaction ***
+... running ../bin/nirt -v -H 0 -e backout 0;xyz;xyz 0 0 .5;s;backout 1;xyz;backout 0;xyz;backout 1;xyz 0 0 .8;s;backout 0;s;q nirt.g left_and_right_cubes.r
 Output format: default (specify -L option for descriptive listing)
 Formats available: csv-gap csv default diff entryexit gap1 gap2 (specify via -f option)
 Database file:  'nirt.g'
@@ -204,6 +214,7 @@ Direction (x y z) = (-1.00000000 0.00000000 0.00000000)  (az el) = (0.00000000 0
 left_and_right_cubes.r (  -1.0000    0.0000    0.8000)   2.0000   0.0000 
 Quitting...
 *** Test 5 - dir command***
+... running ../bin/nirt -v -H 0 -e xyz 0 0 0;dir;s;dir -1 -.5 0;dir;s;dir 0 0 1;s;q nirt.g left_and_right_cubes.r
 Output format: default (specify -L option for descriptive listing)
 Formats available: csv-gap csv default diff entryexit gap1 gap2 (specify via -f option)
 Database file:  'nirt.g'
@@ -229,6 +240,7 @@ Direction (x y z) = (0.00000000 0.00000000 1.00000000)  (az el) = (0.00000000 -9
 You missed the target
 Quitting...
 *** Test 6 - reporting of overlaps ***
+... running ../bin/nirt -v -H 0 -e backout 1;s;dir 0 0 -1;s;q nirt.g overlap_example
 Output format: default (specify -L option for descriptive listing)
 Formats available: csv-gap csv default diff entryexit gap1 gap2 (specify via -f option)
 Database file:  'nirt.g'
@@ -253,6 +265,7 @@ center_overlap.r     (   0.0000    0.0000    1.0000)   2.0000   0.0000
 OVERLAP: 'all_cubes.r' and 'center_overlap.r' xyz_in=(0 0 1) los=2
 Quitting...
 *** Test 7 - output formatting ***
+... running ../bin/nirt -v -H 0 -b -f csv -e s;q nirt.g left_cube.r center_cube.r right_cube.r
 Output format: csv (specify -L option for descriptive listing)
 Formats available: csv-gap csv default diff entryexit gap1 gap2 (specify via -f option)
 Database file:  'nirt.g'
@@ -274,6 +287,7 @@ reg_name,path_name,reg_id,x_in,y_in,z_in,d_in,x_out,y_out,z_out,d_out,los,scaled
 "left_cube.r","/left_cube.r",1002,-1.000000,0.000000,0.000000,-1.000000,-3.000000,0.000000,0.000000,-3.000000,2.000000,2.000000,0.000000,0.000000,0,1
 
 Quitting...
+... running ../bin/nirt -v -H 0 -b -f csv-gap -e s;q nirt.g left_cube.r center_cube.r right_cube.r
 Output format: csv-gap (specify -L option for descriptive listing)
 Formats available: csv-gap csv default diff entryexit gap1 gap2 (specify via -f option)
 Database file:  'nirt.g'
@@ -295,6 +309,7 @@ reg_name,path_name,reg_id,x_in,y_in,z_in,d_in,x_out,y_out,z_out,d_out,los,scaled
 "left_cube.r","/left_cube.r",1002,-1.000000,0.000000,0.000000,-1.000000,-3.000000,0.000000,0.000000,-3.000000,2.000000,2.000000,0.000000,0.000000,0,1
 
 Quitting...
+... running ../bin/nirt -v -H 0 -b -f default -e s;q nirt.g left_cube.r center_cube.r right_cube.r
 Output format: default (specify -L option for descriptive listing)
 Formats available: csv-gap csv default diff entryexit gap1 gap2 (specify via -f option)
 Database file:  'nirt.g'
@@ -312,6 +327,7 @@ right_cube.r         (   3.0000    0.0000    0.0000)   2.0000   0.0000
 center_cube.r        (   1.0000    0.0000    0.0000)   2.0000   0.0000 
 left_cube.r          (  -1.0000    0.0000    0.0000)   2.0000   0.0000 
 Quitting...
+... running ../bin/nirt -v -H 0 -b -f entryexit -e s;q nirt.g left_cube.r center_cube.r right_cube.r
 Output format: entryexit (specify -L option for descriptive listing)
 Formats available: csv-gap csv default diff entryexit gap1 gap2 (specify via -f option)
 Database file:  'nirt.g'
@@ -329,6 +345,7 @@ right_cube.r         (   3.0000    0.0000    0.0000) (   1.0000    0.0000    0.0
 center_cube.r        (   1.0000    0.0000    0.0000) (  -1.0000    0.0000    0.0000)   0.0000 
 left_cube.r          (  -1.0000    0.0000    0.0000) (  -3.0000    0.0000    0.0000)   0.0000 
 Quitting...
+... running ../bin/nirt -v -H 0 -b -f gap1 -e s;q nirt.g left_cube.r center_cube.r right_cube.r
 Output format: gap1 (specify -L option for descriptive listing)
 Formats available: csv-gap csv default diff entryexit gap1 gap2 (specify via -f option)
 Database file:  'nirt.g'
@@ -346,6 +363,7 @@ right_cube.r         (   3.0000    0.0000    0.0000)   2.0000   0.0000
 center_cube.r        (   1.0000    0.0000    0.0000)   2.0000   0.0000 
 left_cube.r          (  -1.0000    0.0000    0.0000)   2.0000   0.0000 
 Quitting...
+... running ../bin/nirt -v -H 0 -b -f gap2 -e s;q nirt.g left_cube.r center_cube.r right_cube.r
 Output format: gap2 (specify -L option for descriptive listing)
 Formats available: csv-gap csv default diff entryexit gap1 gap2 (specify via -f option)
 Database file:  'nirt.g'
@@ -364,6 +382,7 @@ center_cube.r        (   1.0000    0.0000    0.0000)   2.0000   0.0000
 left_cube.r          (  -1.0000    0.0000    0.0000)   2.0000   0.0000 
 Quitting...
 *** Test 8 - attribute reporting ***
+... running ../bin/nirt -v -H 0 -b -e attr -p; attr rgb; attr -p;s;attr -f;attr -p; attr rgb region;attr -p;s;q nirt.g left_cube_color.r center_cube_color.r right_cube_color.r
 Output format: default (specify -L option for descriptive listing)
 Formats available: csv-gap csv default diff entryexit gap1 gap2 (specify via -f option)
 Database file:  'nirt.g'
@@ -396,6 +415,7 @@ right_cube_color.r   (   3.0000    0.0000    0.0000)   2.0000   0.0000 color=0/0
 center_cube_color.r  (   1.0000    0.0000    0.0000)   2.0000   0.0000 color=0/255/0 region=R 
 left_cube_color.r    (  -1.0000    0.0000    0.0000)   2.0000   0.0000 color=255/0/0 region=R 
 Quitting...
+... running ../bin/nirt -v -H 0 -b -A rgb -e attr -p;s;q nirt.g left_cube_color.r center_cube_color.r right_cube_color.r
 Output format: default (specify -L option for descriptive listing)
 Formats available: csv-gap csv default diff entryexit gap1 gap2 (specify via -f option)
 Database file:  'nirt.g'
@@ -415,6 +435,7 @@ center_cube_color.r  (   1.0000    0.0000    0.0000)   2.0000   0.0000 color=0/2
 left_cube_color.r    (  -1.0000    0.0000    0.0000)   2.0000   0.0000 color=255/0/0 
 Quitting...
 *** Test 9 - units ***
+... running ../bin/nirt -v -H 0 -b -e units;s;units m;s;units in;s;units ft;s;q nirt.g center_cube.r
 Output format: default (specify -L option for descriptive listing)
 Formats available: csv-gap csv default diff entryexit gap1 gap2 (specify via -f option)
 Database file:  'nirt.g'
@@ -444,6 +465,7 @@ Direction (x y z) = (-1.00000000 0.00000000 0.00000000)  (az el) = (0.00000000 0
 center_cube.r        (   0.0033    0.0000    0.0000)   0.0066   0.0000 
 Quitting...
 *** Test 10 - air regions ***
+... running ../bin/nirt -v -H 0 -b -e s;q nirt.g left_cube.r center_cube_air
 Output format: default (specify -L option for descriptive listing)
 Formats available: csv-gap csv default diff entryexit gap1 gap2 (specify via -f option)
 Database file:  'nirt.g'
@@ -459,6 +481,7 @@ Direction (x y z) = (-1.00000000 0.00000000 0.00000000)  (az el) = (0.00000000 0
     Region Name               Entry (x y z)              LOS  Obliq_in Attrib
 left_cube.r          (  -1.0000    0.0000    0.0000)   2.0000   0.0000 
 Quitting...
+... running ../bin/nirt -v -H 0 -b -u 0 -e s;q nirt.g left_cube.r center_cube_air
 Output format: default (specify -L option for descriptive listing)
 Formats available: csv-gap csv default diff entryexit gap1 gap2 (specify via -f option)
 Database file:  'nirt.g'
@@ -474,6 +497,7 @@ Direction (x y z) = (-1.00000000 0.00000000 0.00000000)  (az el) = (0.00000000 0
     Region Name               Entry (x y z)              LOS  Obliq_in Attrib
 left_cube.r          (  -1.0000    0.0000    0.0000)   2.0000   0.0000 
 Quitting...
+... running ../bin/nirt -v -H 0 -b -u 1 -e s;q nirt.g left_cube.r center_cube_air
 Output format: default (specify -L option for descriptive listing)
 Formats available: csv-gap csv default diff entryexit gap1 gap2 (specify via -f option)
 Database file:  'nirt.g'
@@ -491,6 +515,7 @@ center_cube_air      (   1.0000    0.0000    0.0000)   2.0000   0.0000
 left_cube.r          (  -1.0000    0.0000    0.0000)   2.0000   0.0000 
 Quitting...
 *** Test 11 - parsing with spaces before semicolon, Patch #314 ***
+... running ../bin/nirt -v -H 0 -e xyz 0.5 1.5 0.5; dir 0 -1 0; s; q nirt.g center_cube.r
 Output format: default (specify -L option for descriptive listing)
 Formats available: csv-gap csv default diff entryexit gap1 gap2 (specify via -f option)
 Database file:  'nirt.g'
@@ -506,6 +531,7 @@ Direction (x y z) = (0.00000000 -1.00000000 0.00000000)  (az el) = (90.00000000 
     Region Name               Entry (x y z)              LOS  Obliq_in Attrib
 center_cube.r        (   0.5000    1.0000    0.5000)   2.0000   0.0000 
 Quitting...
+... running ../bin/nirt -v -H 0 -e xyz 0.5 1.5 0.5 ; dir 0 -1 0; s; q; nirt.g center_cube.r
 Output format: default (specify -L option for descriptive listing)
 Formats available: csv-gap csv default diff entryexit gap1 gap2 (specify via -f option)
 Database file:  'nirt.g'
@@ -523,13 +549,13 @@ center_cube.r        (   0.5000    1.0000    0.5000)   2.0000   0.0000
 Quitting...
 EOF
 
-cmp nirt.ref nirt.out
+run cmp nirt.ref nirt.out
 STATUS=$?
 
-if [ X$STATUS != X0 ] ; then
-    echo "nirt results differ $STATUS"
+if [ X$STATUS = X0 ] ; then
+    log "-> nirt.sh succeeded"
 else
-    echo "-> nirt.sh succeeded"
+    log "-> nirt.sh FAILED, see `pwd`/$LOGFILE"
 fi
 
 exit $STATUS

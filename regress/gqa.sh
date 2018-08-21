@@ -168,7 +168,7 @@ run $GQA -Am gqa.g closed_box.r
 if [ $STATUS = 0 ] ; then
     log "-> gqa.sh succeeded"
 else
-    log "-> gqa.sh FAILED, see $PATH_TO_THIS/$LOGFILE"
+    log "-> gqa.sh FAILED, see `pwd`/$LOGFILE"
 fi
 
 exit $STATUS

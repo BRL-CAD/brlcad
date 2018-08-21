@@ -45,114 +45,117 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # source common library functionality, setting ARGS, NAME_OF_THIS,
 # PATH_TO_THIS, and THIS.
 . "$1/regress/library.sh"
+
+LOGFILE=comgeom.log
+rm -f $LOGFILE
+log "=== TESTING 'comgeom-g' and 'vdeck' ==="
+
 ASC2G="`ensearch asc2g`"
 if test ! -f "$ASC2G" ; then
-    echo "Unable to find asc2g, aborting"
+    log "Unable to find asc2g, aborting"
     exit 1
 fi
 VDECK="`ensearch vdeck`"
 if test ! -f "$VDECK" ; then
-    echo "Unable to find vdeck, aborting"
+    log "Unable to find vdeck, aborting"
     exit 1
 fi
 COMGEOM="`ensearch comgeom-g`"
 if test ! -f "$COMGEOM" ; then
-    echo "Unable to find comgeom-g, aborting"
+    log "Unable to find comgeom-g, aborting"
     exit 1
 fi
 GZIP="`which gzip`"
 if test ! -f "$GZIP" ; then
-    echo "Unable to find gzip, aborting"
+    log "Unable to find gzip, aborting"
     exit 1
 fi
 
 FAILURES=0
 
-TFILS='vdeck.log comgeom.m35.asc comgeom.m35.g comgeom.m35-baseline.cg comgeom.m35.cg comgeom.t-v5.g comgeom.t-v4.g comgeom-g.log solids regions region_ids'
-
-echo "...testing 'vdeck' command..."
-
-rm -f $TFILS
-
 # make our starting database
+rm -f comgeom.m35.asc
+log "... running gzip decompress"
 $GZIP -d -c "$1/regress/tgms/m35.asc.gz" > comgeom.m35.asc
-$ASC2G comgeom.m35.asc comgeom.m35.g
+rm -f comgeom.m35.g
+run $ASC2G comgeom.m35.asc comgeom.m35.g
 
 # get our
 # using vdeck interactively to convert .g to GIFT
 #(following example in red.sh and mged test)
-$VDECK comgeom.m35.g >> vdeck.log 2>&1 <<EOF
+rm -f solids regions region_ids
+log "... running $VDECK comgeom.m35.g"
+$VDECK comgeom.m35.g >> $LOGFILE 2>&1 <<EOF
 i all.g
 d
 q
 EOF
 
 # assemble pieces to compare with test version
+rm -f comgeom.m35.cg
 cat solids     >  comgeom.m35.cg
 cat regions    >> comgeom.m35.cg
 cat region_ids >> comgeom.m35.cg
 
 # get test version
+rm -f comgeom.m35-baseline.cg
+log "... running gzip decompress"
 $GZIP -d -c "$1/regress/tgms/m35.cg.gz" > comgeom.m35-baseline.cg
 
 cmp comgeom.m35.cg comgeom.m35-baseline.cg
 STATUS=$?
 
 if [ X$STATUS != X0 ] ; then
-    echo "vdeck results differ $STATUS"
+    log "vdeck results differ $STATUS"
     FAILURES="`expr $FAILURES + 1`"
-    export FAILURES
 else
-    echo "vdeck test succeeded (1 of 3)"
+    log "vdeck test succeeded (1 of 3)"
 fi
 
 # the part 2 test checks for a known (but corrected) failures to
 # convert ars solids, it also checks all solid types recognized
 # by vdeck
-echo "...testing 'comgeom-g' command (GIFT v5)..."
-$COMGEOM "$1/regress/tgms/cgtest.cg" comgeom.t-v5.g 1>>comgeom-g.log 2>> comgeom-g.log
+log "...testing 'comgeom-g' command (GIFT v5)..."
+rm -f comgeom.t-v5.g
+run $COMGEOM "$1/regress/tgms/cgtest.cg" comgeom.t-v5.g
 STATUS=$?
 
 if [ X$STATUS != X0 ] ; then
-    echo "comgeom-g conversion errors: $STATUS"
+    log "comgeom-g conversion errors: $STATUS"
     FAILURES="`expr $FAILURES + 1`"
-    export FAILURES
 else
     ERR=`grep error comgeom-g.log`
     if test "x$ERR" = "x" ; then
-	echo "comgeom-g v5 test succeeded (2 of 3)"
+	log "comgeom-g v5 test succeeded (2 of 3)"
     else
-	echo "comgeom-g v5 errors, see  'comgeom-g.log'"
+	log "comgeom-g v5 errors, see  'comgeom-g.log'"
 	FAILURES="`expr $FAILURES + 1`"
-	export FAILURES
     fi
 fi
 
 # the part 3 test checks comgeom-g against a GIFT v4 tgm
-echo "...testing 'comgeom-g' command (GIFT v4)..."
-$COMGEOM -v4 "$1/regress/tgms/comgeom-tgt-1-v4.cg" comgeom.t-v4.g 1>>comgeom-g.log 2>> comgeom-g.log
+log "...testing 'comgeom-g' command (GIFT v4)..."
+rm -f comgeom.t-v4.g
+run $COMGEOM -v4 "$PATH_TO_THIS/tgms/comgeom-tgt-1-v4.cg" comgeom.t-v4.g
 STATUS=$?
 
 if [ X$STATUS != X0 ] ; then
-    echo "comgeom-g conversion errors: $STATUS"
+    log "comgeom-g conversion errors: $STATUS"
     FAILURES="`expr $FAILURES + 1`"
-    export FAILURES
 else
     ERR=`grep error comgeom-g.log`
     if test "x$ERR" = "x" ; then
-	echo "comgeom-g v4 test succeeded (3 of 3)"
+	log "comgeom-g v4 test succeeded (3 of 3)"
     else
-	echo "comgeom-g v4 errors, see  'comgeom-g.log'"
+	log "comgeom-g v4 errors, see  'comgeom-g.log'"
 	FAILURES="`expr $FAILURES + 1`"
-	export FAILURES
     fi
 fi
 
 if test $FAILURES -eq 0 ; then
-    echo "-> vdeck/comgeom-g check succeeded"
+    log "-> vdeck/comgeom-g check succeeded"
 else
-    echo "-> vdeck/comgeom-g check FAILED"
-    echo "   See 'comgeom-g.log'"
+    log "-> vdeck/comgeom-g check FAILED, see `pwd`/$LOGFILE"
 fi
 
 exit $FAILED

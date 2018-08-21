@@ -42,47 +42,40 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . "$1/regress/library.sh"
 
+LOGFILE=g-dot.log
+rm -f $LOGFILE
+log "=== TESTING 'g-dot' ==="
+
 MGED="`ensearch mged`"
 if test ! -f "$MGED" ; then
-    echo "Unable to find mged, aborting"
+    log "Unable to find mged, aborting"
     exit 1
 fi
 
 GDOT="`ensearch g-dot`"
 if test ! -f "$GDOT" ; then
-    echo "Unable to find 'g-dot', aborting"
+    log "Unable to find 'g-dot', aborting"
     exit 1
 fi
 
-TFILS='g-dot.log g-dot.g g-dot.dot'
-
-rm -f $TFILS
-
-STATUS=0
-
-$MGED -c 2> g-dot.log <<EOF
+log "... creating a geometry database (g-dot.g)"
+rm -f g-dot.g
+$MGED -c >> $LOGFILE 2>&1 <<EOF
 opendb g-dot.g y
 in rpp.s rpp 0 10 0 10 0 10
 r rpp.r u rpp.s
 q
 EOF
 
-# .g to dot:
-$GDOT -o g-dot.dot g-dot.g rpp.r 2>> g-dot.log > /dev/null
+# .g to dot
+rm -f g-dot.dot
+run $GDOT -o g-dot.dot g-dot.g rpp.r
 STATUS=$?
 
-if [ X$STATUS != X0 ] ; then
-    echo g-dot FAILED
-else
-    echo g-dot completed successfully
-fi
-
-
 if [ X$STATUS = X0 ] ; then
-    echo "-> g-dot.sh succeeded"
-    rm -f $TFILS
+    log "-> g-dot.sh succeeded"
 else
-    echo "-> g-dot.sh FAILED"
+    log "-> g-dot.sh FAILED, see `pwd`/$LOGFILE"
 fi
 
 exit $STATUS

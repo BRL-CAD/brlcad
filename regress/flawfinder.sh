@@ -35,43 +35,39 @@
 #
 ###
 
-TOPSRC="$1"
-if test "x$TOPSRC" = "x" ; then
-    TOPSRC="."
-fi
-if test ! -f "$TOPSRC/misc/flawfinder" ; then
-    echo "Unable to find flawfinder in misc directory, aborting"
+# Ensure /bin/sh
+export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
+
+# source common library functionality, setting ARGS, NAME_OF_THIS,
+# PATH_TO_THIS, and THIS.
+. "$1/regress/library.sh"
+
+LOGFILE=flawfinder.log
+rm -f $LOGFILE
+log "=== TESTING flawfinder ==="
+
+if test ! -f "$PATH_TO_THIS/../misc/flawfinder" ; then
+    log "Unable to find flawfinder in misc directory, aborting"
     exit 1
 fi
 
-HAVE_PYTHON=no
-if test "x`env python -V 2>&1 | awk '{print $1}'`" = "xPython" ; then
-    HAVE_PYTHON=yes
+if test "x`env python -V 2>&1 | awk '{print $1}'`" != "xPython" ; then
+    log "No python available, skipping"
+    exit 0
 fi
 
-if test "x$HAVE_PYTHON" = "xyes" ; then
+run ${PATH_TO_THIS}/../misc/flawfinder --followdotdir --minlevel=5 --singleline --neverignore --falsepositive --quiet ${PATH_TO_THIS}/../src/[^o]*
 
-    echo "running flawfinder..."
+NUMBER_WRONG=0
+if test "x`grep \"No hits found.\" $LOGFILE`" = "x" ; then
+    NUMBER_WRONG="`grep \"Hits = \" $LOGFILE | awk '{print $3}'`"
+fi
 
-    rm -f flawfinder.log
-    ${TOPSRC}/misc/flawfinder --followdotdir --minlevel=5 --singleline --neverignore --falsepositive --quiet ${TOPSRC}/src/[^o]* > flawfinder.log 2>&1
-
-    NUMBER_WRONG=0
-    if test "x`grep \"No hits found.\" flawfinder.log`" = "x" ; then
-	NUMBER_WRONG="`grep \"Hits = \" flawfinder.log | awk '{print $3}'`"
-    fi
-
-    if test "x$NUMBER_WRONG" = "x0" ; then
-	echo "-> flawfinder.sh succeeded"
-    else
-	if test -f flawfinder.log ; then
-	    cat flawfinder.log
-	fi
-	echo "-> flawfinder.sh FAILED"
-    fi
-
-fi # HAVE_PYTHON
-
+if test "x$NUMBER_WRONG" = "x0" ; then
+    log "-> flawfinder.sh succeeded"
+else
+    log "-> flawfinder.sh FAILED, see `pwd`/$LOGFILE"
+fi
 
 exit $NUMBER_WRONG
 

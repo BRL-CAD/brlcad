@@ -42,47 +42,50 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . "$1/regress/library.sh"
 
+LOGFILE=shaders.log
+rm -f $LOGFILE
+log "=== TESTING rendering with shaders ==="
+
 MGED="`ensearch mged`"
 if test ! -f "$MGED" ; then
-    echo "Unable to find mged, aborting"
+    log "Unable to find mged, aborting"
     exit 1
 fi
 
 RT="`ensearch rt`"
 if test ! -f "$RT" ; then
-    echo "Unable to find rt, aborting"
+    log "Unable to find rt, aborting"
     exit 1
 fi
 
 PIXDIFF="`ensearch pixdiff`"
 if test ! -f "$PIXDIFF" ; then
-    echo "Unable to find pixdiff, aborting"
+    log "Unable to find pixdiff, aborting"
     exit 1
 fi
 
 ASC2PIX="`ensearch asc2pix`"
 if test ! -f "$ASC2PIX" ; then
-    echo "Unable to find asc2pix, aborting"
+    log "Unable to find asc2pix, aborting"
     exit 1
 fi
 
 GENCOLOR="`ensearch gencolor`"
 if test ! -f "$GENCOLOR" ; then
-    echo "Unable to find gencolor, aborting"
+    log "Unable to find gencolor, aborting"
     exit 1
 fi
 
-EAGLECAD=eagleCAD-512x438.pix
-rm -f shaders.rt shaders.g shaders.rt.pix shaders.pixdiff.log shaders.rt.log shaders.log shaders.txt shaders.dat $EAGLECAD shaders.mged
 
-TOP_SRCDIR="$1"
-
-if [ ! -f ebm.bw ] ; then
-	$GENCOLOR -r205 0 16 32 64 128 | dd of=ebm.bw bs=1024 count=1
-fi
+log "... running $GENCOLOR -r205 0 16 32 64 128 | dd of=shaders.ebm.bw bs=1024 count=1"
+rm -f shaders.ebm.bw
+$GENCOLOR -r205 0 16 32 64 128 | dd of=shaders.ebm.bw bs=1024 count=1 2>> $LOGFILE
 
 
-$ASC2PIX > $EAGLECAD << EOF
+log "... creating eaglecad texture"
+EAGLECAD=shaders.eagleCAD-512x438.pix
+rm -f $EAGLECAD
+$ASC2PIX > $EAGLECAD 2>> $LOGFILE << EOF
 FFFFFD
 FEFEFD
 FFFFFD
@@ -224341,9 +224344,10 @@ FEFEFD
 FEFEFD
 EOF
 
+log "... creating shader geometry file (shaders.g)"
+rm -f shaders.mged shaders.g shaders.rt shaders.half.prj shaders.ell_2.prj
 cat > shaders.mged <<EOF
 opendb shaders.g y
-
 
 puts ""
 puts "glob_compat_mode \$glob_compat_mode"
@@ -224352,8 +224356,8 @@ puts "glob_compat_mode \$glob_compat_mode "
 
 in half.s half 0 0 1 -1
 r half.r u half.s
-prj_add shaders.txt $EAGLECAD 512 438
-mater half.r "stack prj shaders.txt;plastic di=.8 sp=.3"  76 158 113 0
+prj_add shaders.half.prj $EAGLECAD 512 438
+mater half.r "stack prj shaders.half.prj;plastic di=.8 sp=.3" 76 158 113 0
 
 g all.g half.r
 
@@ -224400,7 +224404,6 @@ foreach p {1 2 3 4 5} {
 
 set glob_compat_mode 1
 
-
 mater ell_1.r "stack camo s=48;plastic di=.9 sp=.3" 255 255 255 0
 
 mater ell_4.r "stack fbmbump s=256;plastic" 255 255 255 0
@@ -224410,7 +224413,7 @@ mater ell_10.r "stack turcolor s=256;plastic" 255 255 255 0
 mater ell_15.r "stack gravel s=256;plastic" 255 255 255 0
 mater ell_14.r "stack grunge s=256;plastic" 255 255 255 0
 
-mater ell_6.r "stack bwtexture file=ebm.bw w=32 n=32;plastic" 200 200 200 0
+mater ell_6.r "stack bwtexture file=shaders.ebm.bw w=32 n=32;plastic" 200 200 200 0
 mater ell_7.r "cloud" 200 200 200 0
 mater ell_6.r "stack texture file=$EAGLECAD w=512 n=438;plastic" 200 200 200 0
 
@@ -224446,13 +224449,13 @@ mater ell_18.r "stack bump file=$EAGLECAD w=512 n=438;mirror" 255 255 255 0
 #
 # Set up a projection shader
 #
+
 press top
 center -640 -1280 100
 size 300
 press top
-prj_add shaders.dat $EAGLECAD 512 438
-mater ell_2.r "stack prj shaders.dat;plastic di=.9" 200 200 200 0
-
+prj_add shaders.ell_2.prj $EAGLECAD 512 438
+mater ell_2.r "stack prj shaders.ell_2.prj;plastic di=.9" 200 200 200 0
 
 #
 # Now set up the view to render
@@ -224474,23 +224477,21 @@ saveview shaders.rt
 q
 EOF
 
-if $MGED -c > shaders.log 2>&1 << EOF
+$MGED -c >> $LOGFILE 2>&1 << EOF
 `cat shaders.mged`
 EOF
 
-[ ! -f shaders.rt ] ; then
-    echo 'mged failed to create shaders.rt'
-    echo '-> shaders.sh FAILED'
+if [ ! -f shaders.rt ] ; then
+    log "ERROR: mged failed to create shaders.rt"
+    log "-> shaders.sh FAILED, see `pwd`/$LOGFILE"
     exit 1
 fi
-mv shaders.rt shaders.rt.orig
 
 # use our RT instead of searching PATH
-sed "s,^rt,$RT," < shaders.rt.orig > shaders.rt
-
-rm shaders.rt.orig
-chmod 775 shaders.rt
-echo 'rendering shaders...'
+run mv shaders.rt shaders.rt.orig
+sed "s,^rt,$RT," < shaders.rt.orig > shaders.rt 2>> $LOGFILE
+run rm -f shaders.rt.orig
+run chmod 775 shaders.rt
 
 # NOTICE: -P1 and -B are required because the 25th shader (top-right
 # corner ellipsoid) is a random transparency shader.  that shader
@@ -224498,8 +224499,9 @@ echo 'rendering shaders...'
 # render must run single-threaded in order to obtain a repeatably
 # matching sequence.
 
-./shaders.rt -B -U 1 -P 1
-# the script creates shaders.rt.log
+log 'rendering shaders...'
+rm -f shaders.rt.pix shaders.rt.log
+run ./shaders.rt -B -U 1 -P 1
 
 # determine the behavior of tail
 case "x`echo 'tail' | tail -n 1 2>&1`" in
@@ -224509,29 +224511,33 @@ esac
 
 NUMBER_WRONG=1
 if [ ! -f shaders.rt.pix ] ; then
-	echo "shaders raytrace failed to create shaders.rt.pix"
-	echo '-> shaders.sh FAILED'
-	exit 1
-else
-	if [ ! -f "$TOP_SRCDIR/regress/shaderspix.asc" ] ; then
-		echo No reference file for $TOP_SRCDIR/regress/shaders.rt.pix
-	else
-		$ASC2PIX < "$TOP_SRCDIR/regress/shaderspix.asc" > shaders_ref.pix
-		$PIXDIFF shaders.rt.pix shaders_ref.pix > shaders.rt.diff.pix 2> shaders.rt.pixdiff.log
-
-		NUMBER_WRONG=`tr , '\012' < shaders.rt.pixdiff.log | awk '/many/ {print $1}' | tail -${TAIL_N}1`
-		export NUMBER_WRONG
-		echo "shaders.rt.pix $NUMBER_WRONG off by many"
-	fi
+    log "ERROR: shaders raytrace failed to create shaders.rt.pix"
+    log "-> shaders.sh FAILED, see `pwd`/$LOGFILE"
+    exit 1
 fi
 
-if [ X$NUMBER_WRONG = X0 ] ; then
-    echo '-> shaders.sh succeeded'
+if [ ! -f "$PATH_TO_THIS/shaderspix.asc" ] ; then
+    log "No reference file for $PATH_TO_THIS/shaders.rt.pix"
 else
-    echo '-> shaders.sh FAILED'
+    rm -f shaders.ref.pix
+    $ASC2PIX < "$PATH_TO_THIS/shaderspix.asc" > shaders.ref.pix 2>> $LOGFILE
+
+    rm -f shaders.rt.diff.pix
+    $PIXDIFF shaders.rt.pix shaders.ref.pix > shaders.rt.diff.pix 2>> $LOGFILE
+
+    NUMBER_WRONG=`tail -n1 $LOGFILE | tr , '\012' | awk '/many/ {print $1}' | tail -${TAIL_N}1`
+    log "shaders.rt.pix $NUMBER_WRONG off by many"
+fi
+
+
+if [ X$NUMBER_WRONG = X0 ] ; then
+    log "-> shaders.sh succeeded"
+else
+    log "-> shaders.sh FAILED, see `pwd`/$LOGFILE"
 fi
 
 exit $NUMBER_WRONG
+
 # Local Variables:
 # mode: sh
 # tab-width: 8

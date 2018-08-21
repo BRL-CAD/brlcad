@@ -46,6 +46,10 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . "$1/regress/library.sh"
 
+LOGFILE=usage.log
+rm -f $LOGFILE
+log "=== TESTING utility usage statements ==="
+
 # don't pop up a window on the commands that invoke tk
 DISPLAY=/dev/null
 export DISPLAY
@@ -57,16 +61,16 @@ WAIT=8
 
 RT="`ensearch rt`"
 if test ! -f "$RT" ; then
-    echo "Unable to find rt, aborting"
+    log "Unable to find rt, aborting"
     exit 1
 fi
 
 works="`$RT -h -? 2>&1`"
 if test $? -ne 0 ; then
-    echo "Unable to run rt, aborting"
+    log "Unable to run rt, aborting"
     exit 1
 elif test "x$works" = "x" ; then
-    echo "Unable to get usage from rt, aborting"
+    log "Unable to get usage from rt, aborting"
     exit 1
 fi
 
@@ -76,10 +80,7 @@ if test "x$exists" != "xtimeout" ; then
 fi
 
 
-echo "Testing usage statements ..."
-
-dir="`dirname $RT`"
-rm -f usage.log
+log "Testing usage statements ..."
 
 
 # run a single command, wrapped in a function so we can background it
@@ -89,10 +90,10 @@ rm -f usage.log
 test_usage ( ) {
     cmd=$1
 
-    echo "=== $cmd === (pid: $$)" >> usage.log
+    log "=== $cmd === (pid: $$)"
 
     usage="`timeout ${WAIT} $cmd -h -? 2>&1`"
-    echo "$usage" >> usage.log
+    log "$usage"
 
     length=`echo "$usage" | grep -v -i DEPREC | grep -v -i WARN | grep -v -i ERROR | grep -v -i FAIL | awk '{print length, $0}' | sort -nr | head -1 | awk '{print $1}'`
     if test "x$length" = "x" ; then
@@ -106,28 +107,28 @@ test_usage ( ) {
     printf "  %-30s lines:%3d  maxline:%3d\n" "$cmd ..." "$lines" "$length"
 
     if test "x`echo $usage | grep -i usage`" != "x" ; then
-	echo "USAGE=\"\`expr \$USAGE + 1\`\" # $cmd" >> usage.log
+	log "USAGE=\"\`expr \$USAGE + 1\`\" # $cmd"
     else
-	echo "NOUSE=\"\`expr \$NOUSE + 1\`\" # $cmd" >> usage.log
+	log "NOUSE=\"\`expr \$NOUSE + 1\`\" # $cmd"
     fi
     if test $length -gt 80 ; then
-	echo "LONG=\"\`expr \$LONG + 1\`\" # $cmd" >> usage.log
+	log "LONG=\"\`expr \$LONG + 1\`\" # $cmd"
     elif test $length -lt 8 ; then
-	echo "SHORT=\"\`expr \$SHORT + 1\`\" # $cmd" >> usage.log
+	log "SHORT=\"\`expr \$SHORT + 1\`\" # $cmd"
     fi
     if test "x`echo $usage | grep -i DEPREC`" != "x" ; then
-	echo "DEPREC=\"\`expr \$DEPREC + 1\`\" # $cmd" >> usage.log
+	log "DEPREC=\"\`expr \$DEPREC + 1\`\" # $cmd"
     elif test "x`echo $usage | grep -i WARN`" != "x" ; then
-	echo "WARNED=\"\`expr \$WARNED + 1\`\" # $cmd" >> usage.log
+	log "WARNED=\"\`expr \$WARNED + 1\`\" # $cmd"
     fi
     if test "x`echo $usage | grep -i ERROR`" != "x" ; then
-	echo "FAILED=\"\`expr \$FAILED + 1\`\" # $cmd" >> usage.log
+	log "FAILED=\"\`expr \$FAILED + 1\`\" # $cmd"
     elif test "x`echo $usage | grep -i FAIL`" != "x" ; then
-	echo "FAILED=\"\`expr \$FAILED + 1\`\" # $cmd" >> usage.log
+	log "FAILED=\"\`expr \$FAILED + 1\`\" # $cmd"
     fi
-    echo "CNT=\"\`expr \$CNT + 1\`\" # $cmd" >> usage.log
+    log "CNT=\"\`expr \$CNT + 1\`\" # $cmd"
 
-    # echo $length
+    # log $length
 }
 
 
@@ -140,8 +141,8 @@ wait_on ( ) {
 	while test "x`jobs -p | grep $pid`" != "x" ; do
 	    if test $waited -gt `expr $WAIT + 2` ; then
 		kill -9 $pid >/dev/null 2>&1
-		# echo "FAILED=\"\`expr \$FAILED + 1\`\" # $pid" >> usage.log
-		# echo "CNT=\"\`expr \$CNT + 1\`\" # $cmd" >> usage.log
+		# log "FAILED=\"\`expr \$FAILED + 1\`\" # $pid"
+		# log "CNT=\"\`expr \$CNT + 1\`\" # $cmd"
 		break
 	    fi
 	    sleep 1
@@ -162,6 +163,7 @@ FAILED=0
 DEPREC=0
 workers=0
 pids=""
+dir="`dirname $RT`"
 for cmd in $dir/* ; do
     test_usage "$cmd" &
 
@@ -176,7 +178,7 @@ done
 wait_on "$pids"
 
 # tabulate results from tallies we stored in the log file
-vars="`grep -E '(CNT=|LONG=|SHORT=|USAGE=|NOUSE=|WARNED=|FAILED=|DEPREC=)' usage.log`"
+vars="`grep -E '(CNT=|LONG=|SHORT=|USAGE=|NOUSE=|WARNED=|FAILED=|DEPREC=)' $LOGFILE`"
 while read var ; do
     eval $var # increments our VARIABLES above
 done <<EOF
@@ -184,28 +186,30 @@ $vars
 EOF
 
 # print a summary
-printf "\nCOMMAND SUMMARY:\n"
-echo "---------------------------------------------------------------------"
-echo "| TOTAL | Usage | NoUsage | Long | Short | Deprecated | Warn | Fail |"
-printf "| %5d | %5d | %7d | %4d | %5d | %10d | %4d | %4d |\n" $CNT $USAGE $NOUSE $LONG $SHORT $DEPREC $WARNED $FAILED
-echo "---------------------------------------------------------------------"
+log ""
+log "COMMAND SUMMARY:"
+log ""
+log "---------------------------------------------------------------------"
+log "| TOTAL | Usage | NoUsage | Long | Short | Deprecated | Warn | Fail |"
+log "`printf \"| %5d | %5d | %7d | %4d | %5d | %10d | %4d | %4d |\n\" $CNT $USAGE $NOUSE $LONG $SHORT $DEPREC $WARNED $FAILED`"
+log "---------------------------------------------------------------------"
+
 
 NEED_FIXING=86
 if test $LONG -lt `expr $NEED_FIXING + 1` ; then
     if test $LONG -ne $NEED_FIXING ; then
-	echo "********************************************************"
-	echo "FIXME: UPDATE THE LONG USAGE COUNT IN $0 - expected $NEED_FIXING, found $LONG"
-	echo "********************************************************"
+	log "********************************************************"
+	log "FIXME: UPDATE THE LONG USAGE COUNT IN $0 - expected $NEED_FIXING, found $LONG"
+	log "********************************************************"
     else
 	rm -f usage.log
     fi
-    echo "-> usage check succeeded"
+    log "-> usage check succeeded"
 else
-    echo "-> usage check FAILED"
+    log "-> usage check FAILED, see `pwd`/$LOGFILE"
 fi
 
 exit 0
-
 
 # Local Variables:
 # tab-width: 8

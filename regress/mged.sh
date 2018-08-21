@@ -46,22 +46,23 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . "$1/regress/library.sh"
 
+# log output to this file
+LOGFILE=mged.log
+rm -f mged.log
+log "=== TESTING mged commands ==="
+
 # don't pop up a window on the commands that invoke tk
 DISPLAY=/dev/null
 export DISPLAY
 
 MGED="`ensearch mged`"
 if test ! -f "$MGED" ; then
-    echo "Unable to find mged, aborting"
+    log "Unable to find mged, aborting"
     exit 1
 fi
 
 # run this many commands in parallel
 NPSW=64
-
-# log output to this file
-LOGFILE=mged.log
-rm -f mged.log
 
 
 # test a single command, return 0 if successful
@@ -177,30 +178,12 @@ EOF
     fi
 done
 
+
 if test $FAILED -eq 0 ; then
     log "-> mged check succeeded"
 else
-    log "-> mged check FAILED"
+    log "-> mged check FAILED, see `pwd`/$LOGFILE"
 fi
-
-# clean up
-# remove test databases (but only if tests succeed)
-if test $FAILED -eq 0 ; then
-    tgms="mged.g"
-    for t in $tgms ; do
-      if test -f $t ; then
-	rm $t
-      fi
-    done
-    # remove test files
-    tfils="t.solids t.regions"
-    for t in $tfils ; do
-      if test -f $t ; then
-	rm $t
-      fi
-    done
-fi
-
 
 exit $FAILED
 

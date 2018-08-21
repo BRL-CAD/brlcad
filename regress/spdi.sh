@@ -42,33 +42,36 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . "$1/regress/library.sh"
 
+LOGFILE=spdi.log
+rm -f $LOGFILE
+log "=== TESTING spdi ==="
+
 MGED="`ensearch mged`"
 if test ! -f "$MGED" ; then
-    echo "Unable to find mged, aborting"
+    log "Unable to find mged, aborting"
     exit 1
 fi
 
 RT="`ensearch rt`"
 if test ! -f "$RT" ; then
-	echo "Unable to find rt, aborting"
+	log "Unable to find rt, aborting"
 	exit 1
 fi
 
 PIXDIFF="`ensearch pixdiff`"
 if test ! -f "$PIXDIFF" ; then
-	echo "Unable to find pixdiff, aborting"
+	log "Unable to find pixdiff, aborting"
 	exit 1
 fi
 
 ASC2PIX="`ensearch asc2pix`"
 if test ! -f "$ASC2PIX" ; then
-	echo "Unable to find asc2pix, aborting"
+	log "Unable to find asc2pix, aborting"
 	exit 1
 fi
 
 
-rm -f spdi.g spdi.log spdi spdi.pix spdi_mged.log spdi.mged
-
+rm -f spdi.mged
 cat > spdi.mged <<EOF
 
 set glob_compat_mode 0
@@ -107,13 +110,15 @@ g all.g light1.r
 q
 EOF
 
-$MGED -c spdi.g << EOF > spdi_mged.log 2>&1
+log "... creating geometry database (spdi.g)"
+rm -f spdi.g
+$MGED -c spdi.g << EOF > $LOGFILE 2>&1
 `cat spdi.mged`
 EOF
 
-echo "rendering..."
-
-$RT -M -B -o spdi.pix spdi.g 'all.g' 2>> spdi.log <<EOF
+log "... rendering spdi"
+rm -f spdi.pix
+$RT -M -B -o spdi.pix spdi.g 'all.g' 2>> $LOGFILE <<EOF
 viewsize 3.200000000000000e+03;
 orientation 0.000000000000000e+00 0.000000000000000e+00 0.000000000000000e+00 1.000000000000000e+00;
 eye_pt 0.000000000000000e+00 0.000000000000000e+00 2.413000000000000e+03;
@@ -121,18 +126,24 @@ start 0; clean;
 end;
 
 EOF
-$ASC2PIX < "$1/regress/spdipix.asc" > spdi_ref.pix
-$PIXDIFF spdi.pix spdi_ref.pix > spdi_diff.pix 2>> spdi.log
-NUMBER_WRONG=`tr , '\012' < spdi.log | awk '/many/ {print $1}'`
-echo "spdi.pix $NUMBER_WRONG off by many"
+
+rm -f spdi.ref.pix
+$ASC2PIX < "$PATH_TO_THIS/spdipix.asc" > spdi.ref.pix
+
+rm -f spdi.diff.pix
+$PIXDIFF spdi.pix spdi.ref.pix > spdi.diff.pix 2>> $LOGFILE
+NUMBER_WRONG=`tail -n1 $LOGFILE | tr , '\012' | awk '/many/ {print $1}'`
+log "spdi.pix $NUMBER_WRONG off by many"
+
 
 if [ "X$NUMBER_WRONG" = "X0" ] ; then
-    echo "-> spdi.sh succeeded"
+    log "-> spdi.sh succeeded"
 else
-    echo "-> spdi.sh FAILED"
+    log "-> spdi.sh FAILED, see `pwd`/$LOGFILE"
 fi
 
 exit $NUMBER_WRONG
+
 # Local Variables:
 # mode: sh
 # tab-width: 8

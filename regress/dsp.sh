@@ -42,25 +42,27 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . "$1/regress/library.sh"
 
+LOGFILE=dsp.log
+rm -f dsp.log
+log "=== TESTING dsp primitive ==="
+
 MGED="`ensearch mged`"
 if test ! -f "$MGED" ; then
-    echo "Unable to find mged, aborting"
+    log "Unable to find mged, aborting"
     exit 1
 fi
 
 CV="`ensearch cv`"
 if test ! -f "$CV" ; then
-    echo "Unable to find cv, aborting"
+    log "Unable to find cv, aborting"
     exit 1
 fi
 
 A2P="`ensearch asc2pix`"
 if test ! -f "$A2P" ; then
-    echo "Unable to find asc2pix, aborting"
+    log "Unable to find asc2pix, aborting"
     exit 1
 fi
-
-rm -f dsp.log
 
 FAILED=0
 
@@ -69,22 +71,20 @@ FAILED=0
 CASES='2 3'
 
 for i in $CASES ; do
-
-  "$1/regress/dsp/run-dsp-case-set-$i.sh" "$1"
-  STATUS=$?
-  if [ $STATUS -gt 0 ] ; then
-    FAILED="`expr $FAILED + 1`"
-  fi
-
+    run "$PATH_TO_THIS/dsp/run-dsp-case-set-$i.sh" "$1"
+    ret=$?
+    if [ $ret -gt 0 ] ; then
+	FAILED="`expr $FAILED + 1`"
+    fi
 done
 
-# create random 10x10 datasets
+# TODO: create random 10x10 datasets
+
 
 if [ $FAILED = 0 ] ; then
-    echo "-> dsp.sh succeeded"
+    log "-> dsp.sh succeeded"
 else
-    echo "-> dsp.sh FAILED"
-    echo "   with $FAILED failed tests"
+    log "-> dsp.sh FAILED, see `pwd`/$LOGFILE"
 fi
 
 exit $FAILED

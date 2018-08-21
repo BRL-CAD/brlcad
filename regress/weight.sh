@@ -42,6 +42,10 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . "$1/regress/library.sh"
 
+LOGFILE=weight.log
+rm -f $LOGFILE
+log "=== TESTING rtweight ==="
+
 MGED="`ensearch mged`"
 if test ! -f "$MGED" ; then
     echo "Unable to find mged, aborting"
@@ -54,8 +58,8 @@ if test ! -f "$RTWEIGHT" ; then
 fi
 
 # FIRST TEST =================================
-rm -f .density .density0 weight.log weight.g weight.ref weight.out weight.mged
 
+rm -f weight.mged
 cat > weight.mged <<EOF
 opendb weight.g y
 units cm
@@ -63,16 +67,20 @@ in box rpp 0 1 0 1 0 1
 r box.r u box
 EOF
 
+log "... creating rtweight geometry database (weight.g)"
 $MGED -c > weight.log 2>&1 << EOF
 `cat weight.mged`
 EOF
 
+rm -f .density
 cat > .density <<EOF
 1 7.8295        steel
 EOF
 
-$RTWEIGHT -a 25 -e 35 -s128 -o weight.out weight.g box.r > weight.log 2>&1
+rm -f weight.out
+run $RTWEIGHT -a 25 -e 35 -s128 -o weight.out weight.g box.r
 
+rm -f weight.ref
 cat >> weight.ref <<EOF
 RT Weight Program Output:
 
@@ -115,11 +123,11 @@ EOF
 tr -d ' \t' < weight.ref | grep -v DensityTableUsed | grep -v TimeStamp > weight.ref_ns
 tr -d ' \t' < weight.out | grep -v DensityTableUsed | grep -v TimeStamp > weight.out_ns
 
-cmp weight.ref_ns weight.out_ns
+run cmp weight.ref_ns weight.out_ns
 STATUS=$?
 
 if [ X$STATUS != X0 ] ; then
-    echo "rtweight results differ $STATUS"
+    echo "ERROR: rtweight results differ $STATUS"
 else
     echo "-> weight.sh succeeded (1 of 2)"
 fi
@@ -128,12 +136,10 @@ fi
 
 # Need to do a slightly more elaborate test
 # save first density file in case we fail here
-mv .density .density0
 
-rm -f weight2.log weight2.g weight2.ref weight2.out weight2.mged
-
-cat > weight2.mged <<EOF
-opendb weight2.g y
+rm -f weight.test2.mged
+cat > weight.test2.mged <<EOF
+opendb weight.test2.g y
 units cm
 in box1 rpp 0 1 0 1 0 1
 in box2 rpp 2 3 2 3 2 3
@@ -150,12 +156,15 @@ attr set box3.r region_id 1010
 g boxes box1.r box2.r box3.r
 EOF
 
-$MGED -c > weight2.log 2>&1 << EOF
-`cat weight2.mged`
+log "... creating second geometry database (weight.test2.g)"
+$MGED -c > $LOGFILE 2>&1 << EOF
+`cat weight.test2.mged`
 EOF
 
-# test handling of a more complex
-# density file
+# test handling of a more complex density file
+if test -f .density ; then
+    mv .density .density.weight1
+fi
 cat > .density <<EOF
 #  Test density file with comments and bad input
 2    7.82      Carbon Tool Steel
@@ -179,9 +188,10 @@ cat > .density <<EOF
 99999 70.84    Kryptonite
 EOF
 
-$RTWEIGHT -a 25 -e 35 -s128 -o weight2.out weight2.g boxes > weight2.log 2>&1
+run $RTWEIGHT -a 25 -e 35 -s128 -o weight.test2.out weight.test2.g boxes
 
-cat >> weight2.ref <<EOF
+rm -f weight.test2.ref
+cat >> weight.test2.ref <<EOF
 RT Weight Program Output:
 
 Database Title: "Untitled BRL-CAD Database"
@@ -233,31 +243,21 @@ EOF
 
 # eliminate the time stamp lines which are obviously different and
 # the file path which is not germane to the test
-tr -d ' \t' < weight2.ref | grep -v DensityTableUsed | grep -v TimeStamp > weight2.ref_ns
-tr -d ' \t' < weight2.out | grep -v DensityTableUsed | grep -v TimeStamp > weight2.out_ns
+tr -d ' \t' < weight.test2.ref | grep -v DensityTableUsed | grep -v TimeStamp > weight.test2.ref_ns
+tr -d ' \t' < weight.test2.out | grep -v DensityTableUsed | grep -v TimeStamp > weight.test2.out_ns
 
-cmp weight2.ref_ns weight2.out_ns
+run cmp weight.test2.ref_ns weight.test2.out_ns
 STATUS=$?
 
 if [ X$STATUS != X0 ] ; then
-    echo "rtweight results differ $STATUS"
+    log "rtweight results differ $STATUS"
 fi
 
 
 if [ X$STATUS = X0 ] ; then
-    echo "-> weight.sh succeeded (2 of 2)"
+    log "-> weight.sh succeeded (2 of 2)"
 else
-    echo "-> weight.sh FAILED (2 of 2)"
-fi
-
-# remove all test products here, but only if all tests pass
-if [ X$STATUS = X0 ] ; then
-    # now remove all generated files
-    rm -f weight.out_ns  weight.ref_ns
-    rm -f weight2.ref_ns weight2.out_ns
-    rm -f .density .density0
-    rm -f weight.log  weight.g  weight.ref  weight.out  weight.mged
-    rm -f weight2.log weight2.g weight2.ref weight2.out weight2.mged
+    log "-> weight.sh FAILED (2 of 2), see `pwd`/$LOGFILE"
 fi
 
 exit $STATUS
