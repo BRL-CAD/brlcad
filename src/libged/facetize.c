@@ -1306,6 +1306,82 @@ ged_facetize_regions_resume_memfree:
 }
 
 int
+_ged_facetize_add_children(struct ged *gedp, struct directory *cdp, struct _ged_facetize_opts *opts)
+{
+    int i = 0;
+    int ret = GED_OK;
+    struct db_i *dbip = gedp->ged_wdbp->dbip;
+    struct rt_db_internal intern;
+    struct rt_comb_internal *comb = NULL;
+    struct directory **children = NULL;
+    int child_cnt = 0;
+    int *bool_ops = NULL;
+    matp_t *mats = NULL;
+    int non_ident_mat = 0;
+    int non_union_bool = 0;
+    const char *nparent;
+
+    RT_DB_INTERNAL_INIT(&intern);
+    nparent = bu_avs_get(opts->c_map, cdp->d_namep);
+    if (rt_db_get_internal(&intern, cdp, dbip, NULL, &rt_uniresource) < 0) {
+	ret = GED_ERROR;
+	goto ged_facetize_add_children_memfree;
+    }
+    comb = (struct rt_comb_internal *)intern.idb_ptr;
+    child_cnt = db_comb_children(dbip, comb, &children, &bool_ops, &mats);
+    if (child_cnt <= 0) {
+	ret = GED_ERROR;
+	goto ged_facetize_add_children_memfree;
+    }
+
+    /* See if anything fancy is going in with the comb children... */
+    for (i = 0; i < child_cnt; i++) {
+	if (mats[i] && !bn_mat_is_identity(mats[i])) non_ident_mat++;
+    }
+    for (i = 0; i < child_cnt; i++) {
+	if (_int_to_opt(bool_ops[i]) != DB_OP_UNION) non_union_bool++;
+    }
+
+    if (non_ident_mat || non_union_bool) {
+	/* More complicated comb, have to rebuild item by item */
+	for (i = 0; i < child_cnt; i++) {
+	    const char *nc = bu_avs_get(opts->c_map, children[i]->d_namep);
+	    matp_t m = (mats[i]) ? mats[i] : NULL;
+	    if (_ged_combadd2(gedp, (char *)nparent, 1, (const char **)&nc, 0, _int_to_opt(bool_ops[i]), 0, 0, m, 0) != GED_OK) {
+		ret = GED_ERROR;
+		goto ged_facetize_add_children_memfree;
+	    }
+	}
+    } else {
+	/* Simple comb, rebuild in one shot */
+	const char **av = (const char **)bu_calloc(child_cnt, sizeof(const char *), "av array");
+	for (i = 0; i < child_cnt; i++) {
+	    av[i] = bu_avs_get(opts->c_map, children[i]->d_namep);
+	}
+	ret = _ged_combadd2(gedp, (char *)nparent, child_cnt, av, 0, DB_OP_UNION, 0, 0, NULL, 0);
+    }
+
+ged_facetize_add_children_memfree:
+
+    if (mats) {
+	for (i = 0; i < child_cnt; i++) {
+	    if (mats[i]) {
+		bu_free(mats[i], "free matrix");
+	    }
+	}
+	bu_free(mats, "free mats array");
+    }
+
+    if (bool_ops) {
+	bu_free(bool_ops, "free ops");
+    }
+
+    bu_free(children, "free children struct directory ptr array");
+
+    return ret;
+}
+
+int
 _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged_facetize_opts *opts)
 {
     char *newname = NULL;
@@ -1426,13 +1502,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	bu_log("Initializing copies of assembly combinations...\n");
     }
     for (i = 0; i < BU_PTBL_LEN(pc); i++) {
-	int j = 0;
-	struct rt_db_internal intern;
 	struct directory *cdp = RT_DIR_NULL;
-	struct directory **children = NULL;
-	struct rt_comb_internal *comb = NULL;
-	int *bool_ops = NULL;
-	matp_t *mats = NULL;
 	const char *nparent;
 	struct directory *n = (struct directory *)BU_PTBL_GET(pc, i);
 
@@ -1445,40 +1515,17 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 
 	/* Add the members from the map with the settings from the original
 	 * comb */
-
-	RT_DB_INTERNAL_INIT(&intern);
 	cdp = (struct directory *)BU_PTBL_GET(pc, i);
 	nparent = bu_avs_get(opts->c_map, cdp->d_namep);
 	if (!opts->quiet) {
 	    bu_log("Rebuilding assembly %s (%d of %d) using facetize object names...\n", nparent, i+1, BU_PTBL_LEN(pc));
 	}
-	if (rt_db_get_internal(&intern, cdp, dbip, NULL, &rt_uniresource) < 0) {
-	    ret = GED_ERROR;
-	    goto ged_facetize_regions_memfree;
+	if (_ged_facetize_add_children(gedp, cdp, opts) != GED_OK) {
+	    if (!opts->quiet) {
+		bu_log("Error: Rebuilding of assembly %s failed!\n", cdp->d_namep, BU_PTBL_LEN(pc));
+	    }
+	    continue;
 	}
-	comb = (struct rt_comb_internal *)intern.idb_ptr;
-	if (db_comb_children(dbip, comb, &children, &bool_ops, &mats) < 0) {
-	    ret = GED_ERROR;
-	    goto ged_facetize_regions_memfree;
-	}
-	j = 0;
-	cdp = children[0];
-	while (cdp != RT_DIR_NULL) {
-	    const char *nc = bu_avs_get(opts->c_map, cdp->d_namep);
-	    matp_t m = (mats[j]) ? mats[j] : NULL;
-	    ret = _ged_combadd2(gedp, (char *)nparent, 1, (const char **)&nc, 0, _int_to_opt(bool_ops[j]), 0, 0, m, 0);
-	    j++;
-	    cdp = children[j];
-	}
-
-	j = 0;
-	while (mats[j]) {
-	    bu_free(mats[j], "free matrix");
-	    j++;
-	}
-	bu_free(mats, "free mats array");
-	bu_free(bool_ops, "free ops");
-	bu_free(children, "free children struct directory ptr array");
     }
 
     /* For regions, make the new region comb and add a reference to the to-be-created solid */
