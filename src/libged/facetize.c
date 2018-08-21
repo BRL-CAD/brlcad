@@ -1345,8 +1345,17 @@ _ged_facetize_add_children(struct ged *gedp, struct directory *cdp, struct _ged_
     if (non_ident_mat || non_union_bool) {
 	/* More complicated comb, have to rebuild item by item */
 	for (i = 0; i < child_cnt; i++) {
+	    matp_t m = NULL;
 	    const char *nc = bu_avs_get(opts->c_map, children[i]->d_namep);
-	    matp_t m = (mats[i]) ? mats[i] : NULL;
+	    if (!nc) {
+		nc = bu_avs_get(opts->s_map, children[i]->d_namep);
+	    }
+	    if (!nc) {
+		bu_log("Error - object %s has no name mapping??\n", children[i]->d_namep);
+		ret = GED_ERROR;
+		goto ged_facetize_add_children_memfree;
+	    }
+	    m = (mats[i]) ? mats[i] : NULL;
 	    if (_ged_combadd2(gedp, (char *)nparent, 1, (const char **)&nc, 0, _int_to_opt(bool_ops[i]), 0, 0, m, 0) != GED_OK) {
 		ret = GED_ERROR;
 		goto ged_facetize_add_children_memfree;
@@ -1357,6 +1366,14 @@ _ged_facetize_add_children(struct ged *gedp, struct directory *cdp, struct _ged_
 	const char **av = (const char **)bu_calloc(child_cnt, sizeof(const char *), "av array");
 	for (i = 0; i < child_cnt; i++) {
 	    av[i] = bu_avs_get(opts->c_map, children[i]->d_namep);
+	    if (!av[i]) {
+		av[i] = bu_avs_get(opts->s_map, children[i]->d_namep);
+	    }
+	    if (!av[i]) {
+		bu_log("Error - object %s has no name mapping??\n", children[i]->d_namep);
+		ret = GED_ERROR;
+		goto ged_facetize_add_children_memfree;
+	    }
 	}
 	ret = _ged_combadd2(gedp, (char *)nparent, child_cnt, av, 0, DB_OP_UNION, 0, 0, NULL, 0);
     }
@@ -1401,7 +1418,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
      * Also, facetize will need all "active" regions that will define shapes.
      * Construct searches to get these sets. */
     const char *preserve_combs = "-type c ! -type r ! -below -type r";
-    const char *active_regions = "-type r ! -below -type r";
+    const char *active_regions = "( -type r ! -below -type r ) -or ( ! -below -type r ! -type comb )";
 
     /* Used the libged tolerances */
     opts->tol = &(gedp->ged_wdbp->wdb_ttol);
@@ -1471,11 +1488,18 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	/* Regions will have a name mapping both to a new region comb AND a facetized
 	 * solid object - set up both names, and create the region combs */
 	struct directory *n = (struct directory *)BU_PTBL_GET(ar, i);
+	bu_log("Region name generating for %s\n", n->d_namep);
 	_ged_facetize_mkname(gedp, opts, n->d_namep, SOLID_OBJ_NAME);
-	_ged_facetize_mkname(gedp, opts, n->d_namep, COMB_OBJ_NAME);
+
+	/* Only generate a comb name if the "region" is actually a comb... 
+	 * this may not be true for solids with no regions above them. */
+	if ((n->d_flags & RT_DIR_COMB)) {
+	    _ged_facetize_mkname(gedp, opts, n->d_namep, COMB_OBJ_NAME);
+	}
     }
     for (i = 0; i < BU_PTBL_LEN(pc); i++) {
 	struct directory *n = (struct directory *)BU_PTBL_GET(pc, i);
+	bu_log("Comb name generating for %s\n", n->d_namep);
 	_ged_facetize_mkname(gedp, opts, n->d_namep, COMB_OBJ_NAME);
     }
 
