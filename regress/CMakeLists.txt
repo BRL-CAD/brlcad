@@ -93,10 +93,10 @@ CMAKEFILES(
   analyze.asc
   asc2dsp.sh
   bots.sh
-  burst/ktank_crit.ids
   burst/ktank.b
-  burst/ktank_armor.ids
   burst/ktank_air.ids
+  burst/ktank_armor.ids
+  burst/ktank_crit.ids
   comgeom.sh
   dsp.sh
   dsp/asc2dsp-new.asc
@@ -127,32 +127,32 @@ CMAKEFILES(
   gqa.sh
   iges.sh
   library.sh
+  lights.asc
   lights.cmake
   lights.sh
-  lights.asc
   mged.sh
   mged_test.sh
-  moss.sh
   moss.asc
+  moss.sh
   nirt.sh
   nurbs/brep-3dm.tar.bz2
   red.sh
   repository.sh
-  shaders.sh
   shaders.asc
+  shaders.sh
+  solids.asc
   solids.sh
   solids.simple.asc
-  solids.asc
-  spdi.sh
   spdi.asc
+  spdi.sh
   tgms/comgeom.cg
   tgms/comgeom.tgt-1-v4-documented.cg
   tgms/comgeom.tgt-1-v4.cg
-  tgms/solids.dsp.dat
   tgms/m35.asc.gz
   tgms/m35.cg.gz
-  tgms/solids.simple.mged
+  tgms/solids.dsp.dat
   tgms/solids.mged
+  tgms/solids.simple.mged
   usage.sh
   weight.sh
   )
