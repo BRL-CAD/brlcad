@@ -1488,10 +1488,10 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	/* Regions will have a name mapping both to a new region comb AND a facetized
 	 * solid object - set up both names, and create the region combs */
 	struct directory *n = (struct directory *)BU_PTBL_GET(ar, i);
-	bu_log("Region name generating for %s\n", n->d_namep);
+
 	_ged_facetize_mkname(gedp, opts, n->d_namep, SOLID_OBJ_NAME);
 
-	/* Only generate a comb name if the "region" is actually a comb... 
+	/* Only generate a comb name if the "region" is actually a comb...
 	 * this may not be true for solids with no regions above them. */
 	if ((n->d_flags & RT_DIR_COMB)) {
 	    _ged_facetize_mkname(gedp, opts, n->d_namep, COMB_OBJ_NAME);
@@ -1499,7 +1499,6 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
     }
     for (i = 0; i < BU_PTBL_LEN(pc); i++) {
 	struct directory *n = (struct directory *)BU_PTBL_GET(pc, i);
-	bu_log("Comb name generating for %s\n", n->d_namep);
 	_ged_facetize_mkname(gedp, opts, n->d_namep, COMB_OBJ_NAME);
     }
 
