@@ -129,32 +129,32 @@ CMAKEFILES(
   library.sh
   lights.cmake
   lights.sh
-  lights_ref.asc
+  lights.asc
   master_fetch.sh
   master_prep.sh
   mged.sh
   mged_test.sh
   moss.sh
-  mosspix.asc
+  moss.asc
   nirt.sh
   nurbs/brep-3dm.tar.bz2
   red.sh
   repository.sh
   shaders.sh
-  shaderspix.asc
+  shaders.asc
   slave_build.sh
   solids.sh
-  solids-simplepix.asc
-  solidspix.asc
+  solids.simple.asc
+  solids.asc
   spdi.sh
-  spdipix.asc
-  tgms/cgtest.cg
-  tgms/comgeom-tgt-1-v4-documented.cg
-  tgms/comgeom-tgt-1-v4.cg
-  tgms/dsp.dat
+  spdi.asc
+  tgms/comgeom.cg
+  tgms/comgeom.tgt-1-v4-documented.cg
+  tgms/comgeom.tgt-1-v4.cg
+  tgms/solids.dsp.dat
   tgms/m35.asc.gz
   tgms/m35.cg.gz
-  tgms/solids-simple.mged
+  tgms/solids.simple.mged
   tgms/solids.mged
   usage.sh
   weight.sh

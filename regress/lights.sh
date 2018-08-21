@@ -101,9 +101,9 @@ start 0; clean;
 end;
 EOF
 
-log "... running $A2P < $PATH_TO_THIS/lights_ref.asc > lights.ref.pix"
+log "... running $A2P < $PATH_TO_THIS/lights.asc > lights.ref.pix"
 rm -f lights.ref.pix
-$A2P < "$PATH_TO_THIS/lights_ref.asc" > lights.ref.pix 2>> $LOGFILE
+$A2P < "$PATH_TO_THIS/lights.asc" > lights.ref.pix 2>> $LOGFILE
 
 log "... running $PIXDIFF lights.pix lights.ref.pix > lights.diff.pix"
 rm -f lights.diff.pix

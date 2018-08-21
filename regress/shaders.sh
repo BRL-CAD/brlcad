@@ -224516,12 +224516,14 @@ if [ ! -f shaders.rt.pix ] ; then
     exit 1
 fi
 
-if [ ! -f "$PATH_TO_THIS/shaderspix.asc" ] ; then
+if [ ! -f "$PATH_TO_THIS/shaders.asc" ] ; then
     log "No reference file for $PATH_TO_THIS/shaders.rt.pix"
 else
+    log "... running $ASC2PIX < $PATH_TO_THIS/shaders.asc > shaders.ref.pix"
     rm -f shaders.ref.pix
-    $ASC2PIX < "$PATH_TO_THIS/shaderspix.asc" > shaders.ref.pix 2>> $LOGFILE
+    $ASC2PIX < "$PATH_TO_THIS/shaders.asc" > shaders.ref.pix 2>> $LOGFILE
 
+    log "... running $PIXDIFF shaders.rt.pix shaders.ref.pix > shaders.rt.diff.pix"
     rm -f shaders.rt.diff.pix
     $PIXDIFF shaders.rt.pix shaders.ref.pix > shaders.rt.diff.pix 2>> $LOGFILE
 

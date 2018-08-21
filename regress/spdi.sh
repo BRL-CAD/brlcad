@@ -127,9 +127,11 @@ end;
 
 EOF
 
+log "... running $ASC2PIX < $PATH_TO_THIS/spdi.asc > spdi.ref.pix"
 rm -f spdi.ref.pix
-$ASC2PIX < "$PATH_TO_THIS/spdipix.asc" > spdi.ref.pix
+$ASC2PIX < "$PATH_TO_THIS/spdi.asc" > spdi.ref.pix
 
+log "... running $PIXDIFF spdi.pix spdi.ref.pix > spdi.diff.pix"
 rm -f spdi.diff.pix
 $PIXDIFF spdi.pix spdi.ref.pix > spdi.diff.pix 2>> $LOGFILE
 NUMBER_WRONG=`tail -n1 $LOGFILE | tr , '\012' | awk '/many/ {print $1}'`

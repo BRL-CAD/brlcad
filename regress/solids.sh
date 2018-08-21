@@ -78,7 +78,7 @@ fi
 # generate TGM from script
 log "... running mged to create simple solids (solids.simple.g)"
 rm -f solids.simple.g solids.simple.rt
-$MGED -c >> $LOGFILE 2>&1 < "$PATH_TO_THIS/tgms/solids-simple.mged"
+$MGED -c >> $LOGFILE 2>&1 < "$PATH_TO_THIS/tgms/solids.simple.mged"
 
 if [ ! -f solids.simple.rt ] ; then
     log "ERROR: mged failed to create solids.simple.rt script"
@@ -98,13 +98,13 @@ if [ ! -f solids.simple.rt.pix ] ; then
 	log "ERROR: raytrace failed, see `pwd`/$LOGFILE"
 	exit 1
 fi
-if [ ! -f "$PATH_TO_THIS/solids-simplepix.asc" ] ; then
+if [ ! -f "$PATH_TO_THIS/solids.simple.asc" ] ; then
 	log "ERROR: No reference file for solids.simple.rt.pix"
 	exit 1
 fi
 
 rm -f solids.simple.ref.pix
-$A2P < "$PATH_TO_THIS/solids-simplepix.asc" > solids.simple.ref.pix
+$A2P < "$PATH_TO_THIS/solids.simple.asc" > solids.simple.ref.pix
 
 rm -f solids.simple.pix.diff
 $PIXDIFF solids.simple.rt.pix solids.simple.ref.pix > solids.simple.pix.diff 2>> $LOGFILE
@@ -134,9 +134,9 @@ if [ ! -f solids.ebm.bw ] ; then
 fi
 
 # generate required pix file
-log "... running $A2P < $PATH_TO_THIS/tgms/dsp.dat > solids.dsp.pix"
+log "... running $A2P < $PATH_TO_THIS/tgms/solids.dsp.dat > solids.dsp.pix"
 rm -f solids.dsp.pix
-$A2P < "$PATH_TO_THIS/tgms/dsp.dat" > solids.dsp.pix
+$A2P < "$PATH_TO_THIS/tgms/solids.dsp.dat" > solids.dsp.pix
 if [ ! -f solids.dsp.pix ] ; then
     log "ERROR: Failed to generate file 'solids.dsp.pix'"
     log "-> solids.sh FAILED (test 2 of 2), see `pwd`/$LOGFILE"
@@ -165,14 +165,16 @@ if [ ! -f solids.rt.pix ] ; then
 	log "ERROR: solids raytrace failed, see `pwd`/$LOGFILE"
 	exit 1
 fi
-if [ ! -f "$PATH_TO_THIS/solidspix.asc" ] ; then
+if [ ! -f "$PATH_TO_THIS/solids.asc" ] ; then
 	log "ERROR: No reference file for solids.rt.pix"
 	exit 1
 fi
 
+log "... running $A2P < $PATH_TO_THIS/solids.asc > solids.ref.pix"
 rm -f solids.ref.pix
-$A2P < "$PATH_TO_THIS/solidspix.asc" > solids.ref.pix
+$A2P < "$PATH_TO_THIS/solids.asc" > solids.ref.pix
 
+log "... running $PIXDIFF solids.rt.pix solids.ref.pix > solids.pix.diff"
 rm -f solids.pix.diff
 $PIXDIFF solids.rt.pix solids.ref.pix > solids.pix.diff 2> $LOGFILE
 

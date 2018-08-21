@@ -132,14 +132,14 @@ if [ ! -f moss.pix ] ; then
     log "raytrace failed to create moss.pix"
     NUMBER_WRONG=-1
 else
-    if [ ! -f "$PATH_TO_THIS/mosspix.asc" ] ; then
+    if [ ! -f "$PATH_TO_THIS/moss.asc" ] ; then
 	log "No reference file for moss.pix"
     else
-	log "...running $A2P < $PATH_TO_THIS/mosspix.asc > moss.ref.pix"
+	log "... running $A2P < $PATH_TO_THIS/moss.asc > moss.ref.pix"
 	rm -f moss.ref.pix
-	$A2P < "$PATH_TO_THIS/mosspix.asc" > moss.ref.pix
+	$A2P < "$PATH_TO_THIS/moss.asc" > moss.ref.pix
 
-	log "... running pixdiff moss.pix moss.ref.pix > moss.pix.diff"
+	log "... running $PIXDIFF moss.pix moss.ref.pix > moss.pix.diff"
 	rm -f moss.pix.diff
 	$PIXDIFF moss.pix moss.ref.pix > moss.pix.diff 2>> $LOGFILE
 	different="`tail -n1 $LOGFILE | tr , '\012' | grep many`"

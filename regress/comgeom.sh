@@ -117,7 +117,7 @@ fi
 # by vdeck
 log "...testing 'comgeom-g' command (GIFT v5)..."
 rm -f comgeom.t-v5.g
-run $COMGEOM "$1/regress/tgms/cgtest.cg" comgeom.t-v5.g
+run $COMGEOM "$1/regress/tgms/comgeom.cg" comgeom.t-v5.g
 STATUS=$?
 
 if [ X$STATUS != X0 ] ; then
@@ -136,7 +136,7 @@ fi
 # the part 3 test checks comgeom-g against a GIFT v4 tgm
 log "...testing 'comgeom-g' command (GIFT v4)..."
 rm -f comgeom.t-v4.g
-run $COMGEOM -v4 "$PATH_TO_THIS/tgms/comgeom-tgt-1-v4.cg" comgeom.t-v4.g
+run $COMGEOM -v4 "$PATH_TO_THIS/tgms/comgeom.tgt-1-v4.cg" comgeom.t-v4.g
 STATUS=$?
 
 if [ X$STATUS != X0 ] ; then
