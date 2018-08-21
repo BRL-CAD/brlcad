@@ -79,9 +79,8 @@ if(SH_EXEC)
   # source tree, then scanning different sets of files for properties.
   Sh_Regression_Test(repository "")
   set_tests_properties(regress-repository PROPERTIES TIMEOUT 600)
-  Sh_Regression_Test(mged mged)
-  set_tests_properties(regress-mged PROPERTIES TIMEOUT 600)
 
+  Sh_Regression_Test(mged mged)
   Sh_Regression_Test(red mged)
   Sh_Regression_Test(nirt "mged;nirt")
   Sh_Regression_Test(comgeom "mged;asc2g;vdeck;comgeom-g")
