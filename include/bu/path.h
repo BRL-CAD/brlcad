@@ -39,16 +39,17 @@ __BEGIN_DECLS
 
 /** @addtogroup bu_path
  *
- *  @brief
- *  Functionality for processing operating system and geometry database path
- *  strings.
+ * @brief Routines for manipulating path strings.
  *
- *  Routines in this header have no knowledge of the file system,
- *  beyond an awareness of the path separator in use in the working operating
- *  system environment. They will not check for the presence or absence of
- *  objects on disk or in a geometry database - they operate only on the the
- *  path string itself.  Any validation of the path is the responsibility of
- *  the caller.
+ * operating system and geometry
+ * database path strings.
+ *
+ * Typically being used for operating system and geometry database
+ * path strings, routines in this header do NOT have knowledge of or
+ * access the filesystem.  They will not check for the presence or
+ * absence of objects on disk or in a geometry database - they operate
+ * only on the the path string itself.  Any validation of the path is
+ * the responsibility of the caller or other routines.
  */
 /** @{ */
 /** @file bu/path.h */

@@ -36,10 +36,11 @@ __BEGIN_DECLS
 
 /** @addtogroup bu_file
  *
- * @brief
- * Support routines for identifying properties of files and
- * directories such as whether they exist or are the same as another
- * given file.
+ * @brief Routines for handling, inspecting, and comparing files and
+ * directories.
+ *
+ * These routines involve filesystem interaction such as reporting
+ * whether a file exists or is of a particular type.
  *
  */
 /** @{ */
