@@ -47,8 +47,16 @@ set(public_hdrs
   )
 BRLCAD_MANAGE_FILES("${public_hdrs}" ${INCLUDE_DIR}/brlcad)
 
-# Used by others but still considered private
-BRLCAD_MANAGE_FILES("brlcad_version.h" ${INCLUDE_DIR})
+# Used by others but still considered private - not installed
+configure_file(brlcad_version.h "${BRLCAD_BINARY_DIR}/${INCLUDE_DIR}/brlcad_version.h" COPYONLY)
+DISTCLEAN("${BRLCAD_BINARY_DIR}/${INCLUDE_DIR}/brlcad_version.h")
+if(CMAKE_CONFIGURATION_TYPES)
+  foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+    string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+    configure_file(brlcad_version.h "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${INCLUDE_DIR}/brlcad_version.h")
+    DISTCLEAN("${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${INCLUDE_DIR}/brlcad_version.h")
+  endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+endif(CMAKE_CONFIGURATION_TYPES)
 
 set(include_misc
   brlcad_ident.h.in
