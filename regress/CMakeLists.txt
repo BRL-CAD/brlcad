@@ -130,8 +130,6 @@ CMAKEFILES(
   lights.cmake
   lights.sh
   lights.asc
-  master_fetch.sh
-  master_prep.sh
   mged.sh
   mged_test.sh
   moss.sh
@@ -142,7 +140,6 @@ CMAKEFILES(
   repository.sh
   shaders.sh
   shaders.asc
-  slave_build.sh
   solids.sh
   solids.simple.asc
   solids.asc
