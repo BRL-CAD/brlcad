@@ -1,5 +1,40 @@
 #include "common.h"
+
 #include "nanoflann.hpp"
+
+
+#if defined(__GNUC__) && (__GNUC__ == 4 && __GNUC_MINOR__ < 6) && !defined(__clang__)
+#  pragma message "Disabling GCC float equality comparison warnings via pragma due to jc_voronoi ..."
+#endif
+#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__)
+#  pragma GCC diagnostic push
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic push
+#endif
+#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)) && !defined(__clang__)
+#  pragma GCC diagnostic ignored "-Wfloat-equal"
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic ignored "-Wfloat-equal"
+#endif
+
+/* https://github.com/JCash/voronoi */
+
+#define JC_VORONOI_IMPLEMENTATION
+#define JCV_REAL_TYPE double
+#define JCV_FABS fabs
+#define JCV_SQRT sqrt
+#define JCV_ATAN2 atan2
+#include "jc_voronoi.h"
+
+#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__)
+#  pragma GCC diagnostic pop
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic pop
+#endif
+
 
 #include "vmath.h"
 #include "bn/mat.h"
@@ -89,8 +124,14 @@ wn_mesh(struct rt_pnts_internal *pnts)
 	bn_vec_ortho(ux, pn->n);
 	VUNITIZE(ux);
 
-	/* 4.  Project 3D points into plane, get 2D pnt set. */
-	point2d_t *knn2dpnts = (point2d_t *)bu_calloc(num_results, sizeof(point2d_t), "knn 2d points");
+	/* 4.  Project 3D points into plane, get 2D pnt set.
+	 *
+	 * Note: because the KNN search will return the query point as the
+	 * first point in all cases (because in this situation the query point
+	 * is itself part of the search set) we don't need to specially add it.
+	 * Should we ever want to do this with arbitrary points, we won't be
+	 * able to assume the query point is in ret_index */
+	jcv_point *knn2dpnts = (jcv_point *)bu_calloc(num_results, sizeof(jcv_point), "knn 2d points");
 	for (size_t i = 0; i < num_results; i++) {
 	    vect_t v3d;
 	    vect_t v3d_ortho, v3d_parallel;
@@ -100,7 +141,8 @@ wn_mesh(struct rt_pnts_internal *pnts)
 	    VSUB2(v3d, *p, pn->v);
 	    VPROJECT(v3d, pn->n, v3d_parallel, v3d_ortho);
 	    VPROJECT(v3d_ortho, ux, v2d_parallel, v2d_ortho);
-	    V2SET(knn2dpnts[i], MAGNITUDE(v2d_parallel), MAGNITUDE(v2d_ortho));
+	    knn2dpnts[i].x = MAGNITUDE(v2d_parallel);
+	    knn2dpnts[i].y = MAGNITUDE(v2d_ortho);
 	}
 
 	/* 5.  Calculate Voronoi diagram in 2D.  Thoughts:
@@ -109,13 +151,29 @@ wn_mesh(struct rt_pnts_internal *pnts)
 	 * additional mapping logic to make sure we can extract a polygon for a
 	 * given point from the generated voronoi diagram.
 	 */
-	voronoi_areas[pind] = 0.0;
+	jcv_diagram diagram;
+	memset(&diagram, 0, sizeof(jcv_diagram));
+	jcv_diagram_generate(num_results, knn2dpnts, NULL, &diagram );
+	const jcv_site* sites = jcv_diagram_get_sites(&diagram);
+	const jcv_site* site = &sites[0]; // CHECK:  We want the cell around the query point, presumably this is it?
 
 	/* 6.  Calculate the area of the Voronoi polygon around the current
-	 * point - paper uses TRIANGLE but couldn't we just use
-	 * http://alienryderflex.com/polygon_area/ for the area? */
+	 * point.
+	 *
+	 * Hmm... paper uses TRIANGLE, but couldn't we just use Green's Theorem
+	 * a.l.a http://alienryderflex.com/polygon_area/ for the area? */
 
-	/*ai[pind] = polygon_area(...);*/
+	const jcv_graphedge* e = site->edges;
+	double parea2 = 0.0;
+	while( e ) {
+	    /* Note - we're assuming the edges are in polygon defining order
+	     * here - if not, we will need to fix that... */
+	    parea2 += (e->pos[1].x + e->pos[0].x) * (e->pos[1].y - e->pos[0].y);
+	    e = e->next;
+	}
+	voronoi_areas[pind] = fabs(parea2) * 0.5;
+
+	bu_log("voronoi_area[%d]: %g\n", pind, voronoi_areas[pind]);
 
 	pind++;
     }
