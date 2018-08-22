@@ -21,11 +21,12 @@
 #include "common.h"
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/avs.h"
-#include "bu/file.h"
 #include "bu/malloc.h"
 #include "raytrace.h"
 #include "../librt_private.h"
+
 
 /* Note - initially, the thought was to use only librt API for this, without
  * pulling in libwdb.  Normally libwdb should be used to create objects of this

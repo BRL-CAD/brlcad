@@ -41,10 +41,12 @@
 #  include <sys/select.h> /* for select */
 #endif
 
+#include "bu/app.h"
 #include "vmath.h"
 #include "tclcad.h"
 
 extern int cmdInit(Tcl_Interp *interp);
+
 
 #ifdef BWISH
 Tk_Window tkwin;

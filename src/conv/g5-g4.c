@@ -43,6 +43,7 @@
 #include <string.h>
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/debug.h"
 #include "bu/units.h"
 #include "bn.h"

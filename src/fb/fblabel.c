@@ -30,9 +30,9 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "bu/app.h"
 #include "bu/color.h"
 #include "bu/getopt.h"
-#include "bu/file.h"
 #include "bu/exit.h"
 #include "bu/vfont.h"
 #include "fb.h"

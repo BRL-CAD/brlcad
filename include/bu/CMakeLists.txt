@@ -1,4 +1,5 @@
 set(bu_headers
+  app.h
   avs.h
   bitv.h
   cmd.h

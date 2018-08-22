@@ -37,6 +37,7 @@
 #include "bio.h"
 
 /* interface headers */
+#include "bu/app.h"
 #include "bu/debug.h"
 #include "bu/getopt.h"
 #include "vmath.h"

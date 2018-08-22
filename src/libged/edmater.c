@@ -31,8 +31,11 @@
 #   include <unistd.h>
 #endif
 
+#include "bu/app.h"
+#include "bu/file.h"
 #include "bu/getopt.h"
 #include "./ged_private.h"
+
 
 int
 ged_edmater(struct ged *gedp, int argc, const char *argv[])

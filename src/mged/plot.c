@@ -31,8 +31,9 @@
 #endif
 #include "bresource.h"
 
-#include "vmath.h"
+#include "bu/app.h"
 #include "bu/units.h"
+#include "vmath.h"
 #include "raytrace.h"
 #include "bn/plot3.h"
 

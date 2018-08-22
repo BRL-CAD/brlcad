@@ -60,12 +60,13 @@
 #  include "tk.h"
 #endif
 
-#include "vmath.h"
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/debug.h"
 #include "bu/units.h"
 #include "bu/version.h"
 #include "bu/time.h"
+#include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
 #include "libtermio.h"

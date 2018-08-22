@@ -33,8 +33,9 @@
 #include <errno.h>
 #include "bio.h"
 
-#include "vmath.h"
+#include "bu/app.h"
 #include "bu/getopt.h"
+#include "vmath.h"
 #include "nmg.h"
 #include "rt/geom.h"
 #include "raytrace.h"

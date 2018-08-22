@@ -33,6 +33,7 @@
 #include <errno.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/file.h"
 #include "bu/malloc.h"
 #include "bu/parallel.h"

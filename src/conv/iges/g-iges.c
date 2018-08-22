@@ -46,6 +46,7 @@
 #include "raytrace.h"
 #include "rt/geom.h"
 
+#include "bu/app.h"
 #include "bu/parallel.h"
 #include "bu/getopt.h"
 /* private */

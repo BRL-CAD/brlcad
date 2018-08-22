@@ -42,7 +42,9 @@
 #include "bresource.h"
 
 #include "bn.h"
+#include "bu/app.h"
 #include "bu/cmd.h"
+#include "bu/file.h"
 #include "vmath.h"
 
 #include "./qray.h"
@@ -51,6 +53,7 @@
 #if defined(HAVE_FDOPEN) && !defined(HAVE_DECL_FDOPEN)
 extern FILE *fdopen(int fd, const char *mode);
 #endif
+
 
 /**
  * Invoke nirt with the current view & stuff

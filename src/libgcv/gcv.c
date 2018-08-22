@@ -28,8 +28,10 @@
 #include <string.h>
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/debug.h"
 #include "bu/dylib.h"
+#include "bu/file.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/mime.h"

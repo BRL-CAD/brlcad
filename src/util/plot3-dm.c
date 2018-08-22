@@ -37,13 +37,14 @@
 #include "tcl.h"
 #include "tk.h"
 
-#include "vmath.h"
+#include "bu/app.h"
 #include "bu/getopt.h"
-
+#include "vmath.h"
 #include "rt/db4.h"
 #include "raytrace.h"
 #include "bn.h"
 #include "dm.h"
+
 
 struct cmdtab {
     char *ct_name;

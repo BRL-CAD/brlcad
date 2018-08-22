@@ -71,6 +71,7 @@
 #include <ctype.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bn.h"
 #include "vmath.h"
 #include "raytrace.h"

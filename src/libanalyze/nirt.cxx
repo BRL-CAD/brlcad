@@ -50,7 +50,7 @@ extern "C" off_t ftello(FILE *);
 #  define delta_str "Delta"
 #endif
 
-extern "C" {
+#include "bu/app.h"
 #include "bu/color.h"
 #include "bu/cmd.h"
 #include "bu/malloc.h"
@@ -59,7 +59,7 @@ extern "C" {
 #include "bu/str.h"
 #include "bu/vls.h"
 #include "analyze.h"
-}
+
 
 /* NIRT segment types */
 #define NIRT_MISS_SEG      1    /**< @brief Ray segment representing a miss */

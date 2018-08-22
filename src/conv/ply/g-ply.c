@@ -33,6 +33,7 @@
 #include <string.h>
 #include <limits.h>
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/parallel.h"
 #include "bu/hash.h"

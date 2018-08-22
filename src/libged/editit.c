@@ -34,6 +34,8 @@
 
 #include "bresource.h"
 
+#include "bu/app.h"
+#include "bu/file.h"
 #include "bu/path.h"
 #include "ged.h"
 

@@ -24,9 +24,11 @@
 
 #include "common.h"
 
+#include "bu/app.h"
 #include "bu/cmd.h"
 #include "bu/getopt.h"
 #include "ged.h"
+
 
 static const char *usage =
     "[-b] [-n] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] geom.g [bot1 bot2 ...]\n";

@@ -36,6 +36,7 @@
 
 /* interface headers */
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "nmg.h"
 #include "rt/geom.h"

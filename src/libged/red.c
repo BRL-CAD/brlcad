@@ -35,6 +35,8 @@
 #define __restrict /* quell gcc 4.1.2 system regex.h -pedantic-errors */
 #include <regex.h>
 
+#include "bu/app.h"
+#include "bu/file.h"
 #include "bu/getopt.h"
 #include "rt/db4.h"
 #include "raytrace.h"

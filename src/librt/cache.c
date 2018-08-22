@@ -42,6 +42,8 @@
 #include "bnetwork.h"
 
 /* implementation headers */
+#include "bu/app.h"
+#include "bu/file.h"
 #include "bu/cv.h"
 #include "bu/path.h"
 #include "bu/str.h"

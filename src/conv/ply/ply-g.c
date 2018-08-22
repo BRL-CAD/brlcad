@@ -35,6 +35,7 @@
 
 /* interface headers */
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/debug.h"
 #include "bu/getopt.h"
 #include "bu/endian.h"

@@ -31,6 +31,7 @@
 #include "bio.h"
 
 /* implementation headers */
+#include "bu/app.h"
 #include "bu/debug.h"
 #include "bu/file.h"
 #include "bu/parallel.h"

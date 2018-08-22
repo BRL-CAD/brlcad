@@ -36,9 +36,9 @@
 #include <png.h>
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/log.h"
-#include "bu/file.h"
 #include "bu/malloc.h"
 #include "bn.h"
 #include "fb.h"

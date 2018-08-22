@@ -62,6 +62,7 @@
 
 #include "./bu/defines.h"
 #include "./bu/version.h"
+#include "./bu/app.h"
 #include "./bu/avs.h"
 #include "./bu/bitv.h"
 #include "./bu/cmd.h"

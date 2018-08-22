@@ -35,6 +35,7 @@
 #include <errno.h>
 #include <ctype.h>
 
+#include "bu/app.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rt/geom.h"

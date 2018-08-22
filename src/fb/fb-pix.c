@@ -29,8 +29,8 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 
+#include "bu/app.h"
 #include "bu/getopt.h"
-#include "bu/file.h"
 #include "bu/exit.h"
 #include "vmath.h"
 #include "fb.h"

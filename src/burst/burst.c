@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <signal.h>
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/file.h"
 #include "bu/str.h"

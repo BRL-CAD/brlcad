@@ -27,6 +27,7 @@
 #include "tcl.h"
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/color.h"
 #include "bu/file.h"
 #include "bu/mime.h"

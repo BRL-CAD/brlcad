@@ -33,6 +33,7 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/sort.h"
 #include "vmath.h"

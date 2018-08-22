@@ -26,16 +26,16 @@
 
 #include "common.h"
 
-extern "C" {
 #include "bio.h"
 #include <stdlib.h>
 #include <string.h>
 
+extern "C" {
 #include "linenoise.h"
+}
 
 #include "bu.h"
 #include "ged.h"
-}
 
 #define DEFAULT_GSH_PROMPT "g> "
 

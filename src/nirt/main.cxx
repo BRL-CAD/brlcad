@@ -41,21 +41,25 @@ extern "C" off_t ftello(FILE *);
 #endif
 #include <fstream>
 
-
-extern "C" {
-#include "linenoise.h"
 #include "brlcad_ident.h"
+#include "bu/app.h"
 #include "bu/env.h"
 #include "bu/opt.h"
 #include "bu/path.h"
 #include "bu/units.h"
 #include "analyze.h"
 
+extern "C" {
+#include "linenoise.h"
+}
+
 #if defined(HAVE_POPEN) && !defined(HAVE_DECL_POPEN)
+extern "C" {
 extern FILE *popen(const char *command, const char *mode);
 extern int pclose(FILE *stream);
-#endif
 }
+#endif
+
 
 #define SILENT_UNSET    0
 #define SILENT_YES      1

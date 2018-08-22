@@ -31,6 +31,7 @@
 #endif
 #include "bresource.h"
 
+#include "bu/app.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"

@@ -34,7 +34,7 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "bu/file.h"
+#include "bu/app.h"
 #include "nmg.h"
 #include "rt/db4.h"
 #include "rt/geom.h"

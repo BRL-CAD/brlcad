@@ -31,6 +31,7 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/env.h"
 #include "bu/getopt.h"
 #include "bu/list.h"

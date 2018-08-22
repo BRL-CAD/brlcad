@@ -32,14 +32,14 @@
 #endif
 #include "bresource.h"
 
-#include "bu/cmd.h"
-
+#include "bu/app.h"
 
 #include "./ged_private.h"
 
 #if defined(HAVE_FDOPEN) && !defined(HAVE_DECL_FDOPEN)
 extern FILE *fdopen(int fd, const char *mode);
 #endif
+
 
 struct ged_rtcheck {
 #ifdef _WIN32

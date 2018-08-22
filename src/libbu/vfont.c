@@ -22,7 +22,8 @@
 
 #include <stdio.h>
 #include <string.h> /* for memset */
-#include "bu/file.h"
+
+#include "bu/app.h"
 #include "bu/malloc.h"
 #include "bu/vfont.h"
 
