@@ -65,21 +65,21 @@ main(int argc, char **argv)
 	return 11;
     }
 
-    ifpath = bu_realpath(argv[1], NULL);
+    ifpath = bu_file_realpath(argv[1], NULL);
     if ((ifd = open(ifpath, O_RDONLY | O_BINARY)) < 0) {
 	perror(ifpath);
-	bu_free(ifpath, "ifpath alloc from bu_realpath");
+	bu_free(ifpath, "ifpath alloc from bu_file_realpath");
 	return 12;
     }
-    bu_free(ifpath, "ifpath alloc from bu_realpath");
+    bu_free(ifpath, "ifpath alloc from bu_file_realpath");
 
-    ofpath = bu_realpath(argv[2], NULL);
+    ofpath = bu_file_realpath(argv[2], NULL);
     if ((ofd = creat(ofpath, 0664)) < 0) {
 	perror(ofpath);
-	bu_free(ofpath, "ofpath alloc from bu_realpath");
+	bu_free(ofpath, "ofpath alloc from bu_file_realpath");
 	return 13;
     }
-    bu_free(ofpath, "ofpath alloc from bu_realpath");
+    bu_free(ofpath, "ofpath alloc from bu_file_realpath");
 
     setmode(ofd, O_BINARY);
 

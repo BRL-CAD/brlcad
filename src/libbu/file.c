@@ -142,8 +142,8 @@ bu_file_same(const char *fn1, const char *fn2)
     }
 
     /* make sure symlinks to the same file report as same */
-    rp1 = bu_realpath(fn1, NULL);
-    rp2 = bu_realpath(fn2, NULL);
+    rp1 = bu_file_realpath(fn1, NULL);
+    rp2 = bu_file_realpath(fn2, NULL);
 
     /* pretend identical paths could be tested atomically.  same name
      * implies they're the same even if lookups would be different on

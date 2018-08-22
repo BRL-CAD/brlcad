@@ -34,6 +34,7 @@
 #include "bio.h"
 
 #include "bu/parallel.h"
+#include "bu/interrupt.h"
 #include "vmath.h"
 #include "rt/db4.h"
 #include "raytrace.h"
@@ -189,13 +190,13 @@ db_write(struct db_i *dbip, const void *addr, size_t count, off_t offset)
 	return -1;
     }
     bu_semaphore_acquire(BU_SEM_SYSCALL);
-    bu_suspend_interrupts();
+    bu_interrupt_suspend();
 
     (void)bu_fseek(dbip->dbi_fp, offset, 0);
     got = fwrite(addr, 1, count, dbip->dbi_fp);
     fflush(dbip->dbi_fp);
 
-    bu_restore_interrupts();
+    bu_interrupt_restore();
     bu_semaphore_release(BU_SEM_SYSCALL);
     if (got != count) {
 	perror("db_write");

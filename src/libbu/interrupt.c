@@ -190,7 +190,7 @@ interrupt_restore_signal(int signum)
 
 
 int
-bu_suspend_interrupts()
+bu_interrupt_suspend()
 {
     int ret = 0;
 
@@ -216,7 +216,7 @@ bu_suspend_interrupts()
 
 
 int
-bu_restore_interrupts()
+bu_interrupt_restore()
 {
     int ret = 0;
 

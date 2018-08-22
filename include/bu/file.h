@@ -159,15 +159,14 @@ BU_EXPORT extern size_t bu_file_list(const char *path, const char *pattern, char
 
 
 /**
- * Call canonicalization routines to both expand and validate
- * a path name.
+ * This routine expands a path to a resolved canonical full path.
  *
- * Returns a pointer to the canonical path. If resolved_path is
- * NULL, caller is responsible for freeing the returned path
- * via bu_free.  If supplying a result string, the string must hold
- * at least MAXPATHLEN characters.
+ * Returns a pointer to the canonical path. If resolved_path is NULL,
+ * caller is responsible for freeing the returned path via bu_free.
+ * If supplying a non-NULL resolved_path buffer, it must hold at least
+ * MAXPATHLEN characters.
  */
-BU_EXPORT extern char * bu_realpath(const char *path, char *resolved_path);
+BU_EXPORT extern char *bu_file_realpath(const char *path, char *resolved_path);
 
 
 /**
@@ -363,43 +362,6 @@ BU_EXPORT extern const char *bu_brlcad_root(const char *rhs, int fail_quietly);
  * string, before calling again.
  */
 BU_EXPORT extern const char *bu_brlcad_data(const char *rhs, int fail_quietly);
-
-
-
-/**
- *
- * Routines for managing signals.  In particular, provide a common
- * means to temporarily buffer processing a signal during critical
- * write operations.
- *
- */
-
-/**
- * Defer signal processing and interrupts before critical sections.
- *
- * Signal processing for a variety of signals that would otherwise
- * disrupt the logic of an application are put on hold until
- * bu_restore_interrupts() is called.
- *
- * If an interrupt signal is received while suspended, it will be
- * raised when/if interrupts are restored.
- *
- * Returns 0 on success.
- * Returns non-zero on error (with perror set if signal() failure).
- */
-BU_EXPORT extern int bu_suspend_interrupts(void);
-
-/**
- * Resume signal processing and interrupts after critical sections.
- *
- * If a signal was raised since bu_suspend_interrupts() was called,
- * the previously installed signal handler will be immediately called
- * albeit only once even if multiple signals were received.
- *
- * Returns 0 on success.
- * Returns non-zero on error (with perror set if signal() failure).
- */
-BU_EXPORT extern int bu_restore_interrupts(void);
 
 
 /** NEW: Do not use. */

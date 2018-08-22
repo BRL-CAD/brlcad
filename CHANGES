@@ -1358,4 +1358,12 @@ s/bu_path_canonicalize[[:space:]]*\(([^,]*)/bu_realpath(\1, NULL/g
 s/gqa(.*)-p/gqa\1-p ""/g
 	gqa now takes a prefix for plot file output
 s/bu_same_file/bu_file_same/g
+s/bu_realpath/bu_file_realpath/g
+s/bu_suspend_interrupts/bu_interrupt_suspend/g
+s/bu_restore_interrupts/bu_interrupt_restore/g
         renamed for API consistency [7.27]
+
+# tentative
+s/bu_getprogname\([[:space:]]*\)/bu_app_name\(NULL\)/g
+s/bu_setprogname/bu_app_name/g
+s/bu_argv0_full_path\([[:space:]]*\)/bu_file_realpath\(bu_app_name\(NULL\)\)/g

@@ -71,7 +71,7 @@ bu_getcwd(char *buf, size_t size)
 #ifdef HAVE_REALPATH
 	/* FIXME: shouldn't have gotten here with -std=c99 (HAVE_REALPATH test not working right?) */
 	char rbuf[MAXPATHLEN] = {0};
-	char *rwd = bu_realpath(cbuf, rbuf);
+	char *rwd = bu_file_realpath(cbuf, rbuf);
 	if (rwd
 	    && strlen(rwd) > 0
 	    && bu_file_exists(rwd, NULL))

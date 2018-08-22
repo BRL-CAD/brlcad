@@ -17,6 +17,7 @@ set(bu_headers
   hash.h
   hist.h
   hook.h
+  interrupt.h
   list.h
   log.h
   magic.h

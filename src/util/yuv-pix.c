@@ -103,16 +103,16 @@ get_args(int argc, char **argv)
     } else {
 	char *ifname;
 	file_name = argv[bu_optind];
-	ifname = bu_realpath(file_name, NULL);
+	ifname = bu_file_realpath(file_name, NULL);
 	if ((infd = open(ifname, 0)) < 0) {
 	    perror(ifname);
 	    fprintf(stderr,
 		    "yuv-pix: cannot open \"%s(canonical %s)\" for reading\n",
 		    file_name, ifname);
-	    bu_free(ifname, "ifname alloc from bu_realpath");
+	    bu_free(ifname, "ifname alloc from bu_file_realpath");
 	    return 0;
 	}
-	bu_free(ifname, "ifname alloc from bu_realpath");
+	bu_free(ifname, "ifname alloc from bu_file_realpath");
 
 	fileinput++;
     }

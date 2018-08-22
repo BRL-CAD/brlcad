@@ -262,7 +262,7 @@ ged_lc(struct ged *gedp, int argc, const char *argv[])
 
     if (file_name) {
 	char *norm_name;
-	norm_name = bu_realpath(file_name, NULL);
+	norm_name = bu_file_realpath(file_name, NULL);
 	if (file_name[0] == '-') {
 	    bu_vls_printf(gedp->ged_result_str, "Error: File name can not start with '-'.\n");
 	    error_cnt++;

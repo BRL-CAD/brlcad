@@ -335,7 +335,7 @@ bu_brlcad_root(const char *rhs, int fail_quietly)
     lhs = bu_argv0_full_path();
     if (lhs) {
 	char *dirpath;
-	char *real_path = bu_realpath(lhs, NULL);
+	char *real_path = bu_file_realpath(lhs, NULL);
 	dirpath = bu_path_dirname(real_path);
 	snprintf(real_path, MAXPATHLEN, "%s", dirpath);
 	bu_free(dirpath, "free bu_path_dirname");

@@ -2094,7 +2094,7 @@ main(int ac, char *av[])
     conversion_factor_to_milimeters[2] = 1000.0;
     conversion_factor_to_milimeters[3] = 30000.0;
 
-    input_filename = bu_realpath(av[1], NULL);
+    input_filename = bu_file_realpath(av[1], NULL);
 
     bu_vls_strcpy(&temp_filename, input_filename);
     bu_vls_strcat(&temp_filename, ".tmp");
@@ -2151,7 +2151,7 @@ main(int ac, char *av[])
     }
 
     /* cleanup */
-    bu_free(input_filename, "bu_realpath");
+    bu_free(input_filename, "bu_file_realpath");
     bu_vls_free(&temp_filename);
     bu_vls_free(&dsp_output_filename);
     bu_vls_free(&model_output_filename);
