@@ -99,11 +99,11 @@ main(int argc, char *argv[])
     }
 
     /* copy any lines preceding the first "start" command */
-    last_pos = bu_ftell(stdin);
+    last_pos = ftell(stdin);
     while (bu_fgets(line, MAXLEN, stdin)!=NULL) {
 	if (bu_strncmp(line, "start", 5)) {
 	    printf("%s", line);
-	    last_pos = bu_ftell(stdin);
+	    last_pos = ftell(stdin);
 	} else
 	    break;
     }
@@ -133,9 +133,9 @@ main(int argc, char *argv[])
 	number = -1;
 	success = 0; /* tells whether or not any frames have been found which have the current frame number*/
 	if (incremental) {
-	    bu_fseek(stdin, 0, 0);
+	    fseek(stdin, 0, 0);
 	} else {
-	    bu_fseek(stdin, last_pos, 0);
+	    fseek(stdin, last_pos, 0);
 	}
 
 	reserve = MAXLEN*MAXLINES;
@@ -158,7 +158,7 @@ main(int argc, char *argv[])
 		    printf("%s", line);
 		    if (!suppressed) printf("clean;\n");
 		    success = 1;
-		    last_pos = bu_ftell(stdin);
+		    last_pos = ftell(stdin);
 		}
 		/* print contents until next "end" */
 		while (bu_fgets(line, MAXLEN, stdin)!=NULL) {
