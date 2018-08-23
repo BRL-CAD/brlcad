@@ -24,6 +24,8 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * rtwizard unit test legitimately failing on mac/windows
 
+* nirt 'hv' command isn't working
+
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
