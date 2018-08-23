@@ -299,15 +299,15 @@ wn_calc_coeffs(struct octree *t, int depth, std::map<struct pnt_normal *, fastf_
 
     if (!t || !t->npnts->size()) return;
 
-    bu_log("%*sDepth %d: calculating coefficients from %d points...\n", depth, "", depth, t->npnts->size());
+//    bu_log("%*sDepth %d: calculating coefficients from %d points...\n", depth, "", depth, t->npnts->size());
     wn_calc_coeff(t, va);
 
     /* Print results */
-    bu_log("%*sn_wsum: %g %g %g\n", depth, "", V3ARGS(t->n_wsum));
+    //bu_log("%*sn_wsum: %g %g %g\n", depth, "", V3ARGS(t->n_wsum));
     for (int i = 0; i < 9; i++) bu_vls_printf(&w1, "%g ", t->w1[i]);
     for (int i = 0; i < 27; i++) bu_vls_printf(&w2, "%g ", t->w2[i]);
-    bu_log("%*sw1: %s\n", depth, "", bu_vls_addr(&w1));
-    bu_log("%*sw2: %s\n", depth, "", bu_vls_addr(&w2));
+    //bu_log("%*sw1: %s\n", depth, "", bu_vls_addr(&w1));
+    //bu_log("%*sw2: %s\n", depth, "", bu_vls_addr(&w2));
     bu_vls_free(&w1);
     bu_vls_free(&w2);
 
@@ -440,7 +440,7 @@ wn_calc(struct octree *t, struct pnt_normal *q, double beta, std::map<struct pnt
 /* nanoflann adaptor for BRL-CAD points */
 
 struct NF_PC {
-    std::vector<point_t *> pts;
+    std::vector<struct pnt_normal *> pts;
 };
 
 struct NF_Adaptor {
@@ -450,9 +450,9 @@ struct NF_Adaptor {
     inline size_t kdtree_get_point_count() const { return derived().pts.size(); }
     inline fastf_t kdtree_get_pt(const size_t idx, int dim) const
     {
-	if (dim == 0) return (*(derived().pts[idx]))[X];
-	if (dim == 1) return (*(derived().pts[idx]))[Y];
-	return (*(derived().pts[idx]))[Z];
+	if (dim == 0) return derived().pts[idx]->v[X];
+	if (dim == 1) return derived().pts[idx]->v[Y];
+	return derived().pts[idx]->v[Z];
     }
     template <class BBOX> bool kdtree_get_bbox(BBOX&) const {return false;}
 };
@@ -462,7 +462,7 @@ struct NF_Adaptor {
  */
 
 extern "C" void
-wn_mesh(struct rt_pnts_internal *pnts, fastf_t beta)
+wn_mesh(struct rt_pnts_internal *pnts, fastf_t beta, struct pnt_normal *q)
 {
     int pind = 0;
     std::map<struct pnt_normal *, fastf_t> voronoi_areas;
@@ -475,7 +475,7 @@ wn_mesh(struct rt_pnts_internal *pnts, fastf_t beta)
     /* 1.  Build kdtree for nanoflann to get nearest neighbor lookup */
     pl = (struct pnt_normal *)pnts->point;
     for (BU_LIST_FOR(pn, pnt_normal, &(pl->l))) {
-	cloud.pts.push_back(&(pn->v));
+	cloud.pts.push_back(pn);
     }
     const NF_Adaptor pc2kd(cloud);
     nf_kdtree_t index(3, pc2kd, nanoflann::KDTreeSingleIndexAdaptorParams(10));
@@ -486,24 +486,41 @@ wn_mesh(struct rt_pnts_internal *pnts, fastf_t beta)
     pind = 0;
     for (BU_LIST_FOR(pn, pnt_normal, &(pl->l))) {
 
-	bu_log("pnt %d: center %g %g %g\n", pind, V3ARGS(pn->v));
+	//bu_log("pnt %d: center %g %g %g\n", pind, V3ARGS(pn->v));
 	/* Running calculation of center pnt calculation input and bbox */
 	VADD2(p_center, p_center, pn->v);
 	VMINMAX(pmin, pmax, pn->v);
 
-	/* 2.  Find k-nearest-neighbors set */
-	size_t num_results = 3;
+	/* 2.  Find k-nearest-neighbors set, filter by normal */
+	size_t num_results = 20;
 	std::vector<size_t> ret_index(num_results);
 	std::vector<fastf_t> out_dist_sqr(num_results);
 	index.knnSearch(pn->v, num_results, &ret_index[0], &out_dist_sqr[0]);
 	// In case of less points in the tree than requested:
 	ret_index.resize(num_results);
 	out_dist_sqr.resize(num_results);
-	std::cout << "knnSearch(" << pind << "): num_results=" << num_results << "\n";
+
+	/* Filter the KNN points based on the pn normal - don't project anything pointing
+	 * the wrong way */
+	size_t num_results2 = 0;
+	std::vector<size_t> ret_index2;
+	std::vector<fastf_t> out_dist_sqr2;
 	for (size_t i = 0; i < num_results; i++) {
-	    std::cout << "idx["<< i << "]=" << ret_index[i] << " dist["<< i << "]=" << out_dist_sqr[i] << std::endl;
+	    struct pnt_normal *p = cloud.pts.at(ret_index[i]);
+	    fastf_t dotp = VDOT(p->n, pn->n);
+	    if (dotp >= 0) {
+		ret_index2.push_back(ret_index[i]);
+		out_dist_sqr2.push_back(out_dist_sqr[i]);
+		num_results2++;
+	    }
+	}
+#if 0
+	std::cout << "knnSearch(" << pind << ") normal filtered: num_results=" << num_results2 << "\n";
+	for (size_t i = 0; i < num_results2; i++) {
+	    std::cout << "idx["<< i << "]=" << ret_index2[i] << " dist["<< i << "]=" << out_dist_sqr2[i] << std::endl;
 	}
 	std::cout << "\n";
+#endif
 
 	/* MAYBE: Discard point if it doesn't have more than 2 other points
 	 * within .01*radius of the bounding sphere of the object - in that situation
@@ -534,14 +551,14 @@ wn_mesh(struct rt_pnts_internal *pnts, fastf_t beta)
 	 * is itself part of the search set) we don't need to specially add it.
 	 * Should we ever want to do this with arbitrary points, we won't be
 	 * able to assume the query point is in ret_index */
-	jcv_point *knn2dpnts = (jcv_point *)bu_calloc(num_results, sizeof(jcv_point), "knn 2d points");
-	for (size_t i = 0; i < num_results; i++) {
+	jcv_point *knn2dpnts = (jcv_point *)bu_calloc(num_results2, sizeof(jcv_point), "knn 2d points");
+	for (size_t i = 0; i < num_results2; i++) {
 	    vect_t v3d;
 	    vect_t v3d_ortho, v3d_parallel;
 	    vect_t v2d_ortho, v2d_parallel;
-	    point_t *p = cloud.pts.at(ret_index[i]);
-	    bu_log("pnt %d(%d): center %g %g %g\n", pind, i, V3ARGS(*p));
-	    VSUB2(v3d, *p, pn->v);
+	    struct pnt_normal *pc = cloud.pts.at(ret_index2[i]);
+	    //bu_log("pnt %d(%d): center %g %g %g\n", pind, i, V3ARGS(pc->v));
+	    VSUB2(v3d, pc->v, pn->v);
 	    VPROJECT(v3d, pn->n, v3d_parallel, v3d_ortho);
 	    VPROJECT(v3d_ortho, ux, v2d_parallel, v2d_ortho);
 	    knn2dpnts[i].x = MAGNITUDE(v2d_parallel);
@@ -609,8 +626,8 @@ wn_mesh(struct rt_pnts_internal *pnts, fastf_t beta)
      *
      * although again we have to figure out how to feed its inputs using the WN
      */
-    struct pnt_normal query_pnt;
-    wn_calc(t, &query_pnt, beta, &voronoi_areas);
+    fastf_t wn = wn_calc(t, q, beta, &voronoi_areas);
+    bu_log("wn: %g\n", wn);
 }
 
 // Local Variables:
