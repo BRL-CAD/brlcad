@@ -52,6 +52,8 @@ CMAKEFILES(
   analyze_private.h
   find_subtracted_shapes.cpp
   wnsurface.cxx
+  polygonizer.c
+  polygonizer.h
   )
 
 # Local Variables:
