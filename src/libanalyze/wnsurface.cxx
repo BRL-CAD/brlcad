@@ -43,29 +43,49 @@ extern "C" {
 /* Guided by http://tensor-compiler.org/codegen.html with
  * expression A(i,j) = B(i) * C(j) */
 void
-tensor2(fastf_t **o, vect_t *v1, vect_t *v2)
+tensor2_outer_product(fastf_t **o, vect_t *v1, vect_t *v2)
 {
-    int i, j;
-    for (i = 0; i < 3; i++) {
-	for (j = 0; j < 3; j++) {
+    for (int i = 0; i < 3; i++) {
+	for (int j = 0; j < 3; j++) {
 	    (*o)[(i * 3) + j] = (*v1)[i] * (*v2)[j];
 	}
     }
 }
 
+/* https://math.stackexchange.com/questions/401778/tensors-inner-product */
+fastf_t
+tensor2_inner_product(fastf_t *a, fastf_t *b)
+{
+    fastf_t ret = 0.0;
+    for (int i = 0; i < 9; i++) {
+	ret += a[i] * b[i];
+    }
+    return ret;
+}
+
 /* Guided by http://tensor-compiler.org/codegen.html with
  * expression A(i,j,k) = B(i) * C(j) * D(k) */
 void
-tensor3(fastf_t **o, vect_t *v1, vect_t *v2, vect_t *v3)
+tensor3_outer_product(fastf_t **o, vect_t *v1, vect_t *v2, vect_t *v3)
 {
-    int i, j, k;
-    for (i = 0; i < 3; i++) {
-	for (j = 0; j < 3; j++) {
-	    for (k = 0; k < 3; k++) {
+    for (int i = 0; i < 3; i++) {
+	for (int j = 0; j < 3; j++) {
+	    for (int k = 0; k < 3; k++) {
 		(*o)[(((i * 3) + j) * 3) + k] = (*v1)[i] * (*v2)[j] * (*v3)[k];
 	    }
 	}
     }
+}
+
+/* https://math.stackexchange.com/questions/401778/tensors-inner-product */
+fastf_t
+tensor3_inner_product(fastf_t *a, fastf_t *b)
+{
+    fastf_t ret = 0.0;
+    for (int i = 0; i < 27; i++) {
+	ret += a[i] * b[i];
+    }
+    return ret;
 }
 
 /* Based on https://github.com/brandonpelfrey/SimpleOctree */
@@ -90,10 +110,10 @@ struct octree {
     std::vector<struct pnt_normal *> *npnts;
 
     /* Winding number calculation coefficients for this node */
-    vect_t w0;
+    vect_t n_wsum;
     fastf_t w1[9];
     fastf_t w2[27];
-    point_t p_wsum;
+    point_t p_wavg;
 };
 
 struct octree *
@@ -130,6 +150,19 @@ octree_node_octant(struct octree *t, struct pnt_normal *p)
     if(p->v[Z] >= t->origin[Z]) oct |= 1;
     return oct;
 }
+
+#if 0
+int
+octree_contains(struct octree *t, struct pnt_normal *p)
+{
+    vect_t cmin, cmax;
+    VADD2(cmax, t->origin, t->hdim);
+    VSUB2(cmin, t->origin, t->hdim);
+    if (p->v[X] > cmax[X] || p->v[Y] > cmax[Y] || p->v[Z] > cmax[Z]) return 0;
+    if (p->v[X] < cmin[X] || p->v[Y] < cmin[Y] || p->v[Z] < cmin[Z]) return 0;
+    return 1;
+}
+#endif
 
 int
 octree_node_is_leaf(struct octree *t)
@@ -197,7 +230,7 @@ void
 wn_calc_coeff(struct octree *t, std::map<struct pnt_normal *, fastf_t> *va)
 {
     point_t pavg = VINIT_ZERO;
-    vect_t nsum = VINIT_ZERO;
+    vect_t n_wsum = VINIT_ZERO;
     fastf_t va_sum = 0.0;
     if (!t || !t->npnts->size()) return;
 
@@ -214,24 +247,24 @@ wn_calc_coeff(struct octree *t, std::map<struct pnt_normal *, fastf_t> *va)
 	VSCALE(pcurr, pcurr, (*va)[cp]);
 	VSCALE(ncurr, ncurr, (*va)[cp]);
 	VADD2(pavg, pavg, pcurr);
-	VADD2(nsum, nsum, ncurr);
+	VADD2(n_wsum, n_wsum, ncurr);
 	va_sum = va_sum + (*va)[cp];
     }
-    VSCALE(t->p_wsum, pavg, 1.0/va_sum);
-    VMOVE(t->w0, nsum);
+    VSCALE(t->p_wavg, pavg, 1.0/va_sum);
+    VMOVE(t->n_wsum, n_wsum);
 
     for (npnts_it = t->npnts->begin(); npnts_it != t->npnts->end(); npnts_it++) {
 	vect_t pp = VINIT_ZERO;
 	vect_t ppw = VINIT_ZERO;
 	fastf_t *w1 = (fastf_t *)bu_calloc(9, sizeof(fastf_t), "w1");
-	fastf_t *w2 = (fastf_t *)bu_calloc(27, sizeof(fastf_t), "w1");
+	fastf_t *w2 = (fastf_t *)bu_calloc(27, sizeof(fastf_t), "w2");
 	struct pnt_normal *cp = *npnts_it;
 
-	VSUB2(pp, cp->v, t->p_wsum);
+	VSUB2(pp, cp->v, t->p_wavg);
 	VSCALE(ppw, pp, (*va)[cp]);
 
-	tensor2(&w1, &ppw, &(cp->n));
-	tensor3(&w2, &ppw, &pp, &(cp->n));
+	tensor2_outer_product(&w1, &ppw, &(cp->n));
+	tensor3_outer_product(&w2, &ppw, &pp, &(cp->n));
 
 	for (int i = 0; i < 9; i++) t->w1[i] += w1[i];
 	for (int i = 0; i < 27; i++) t->w2[i] += w2[i];
@@ -254,7 +287,7 @@ wn_calc_coeffs(struct octree *t, int depth, std::map<struct pnt_normal *, fastf_
     wn_calc_coeff(t, va);
 
     /* Print results */
-    bu_log("%*sw0: %g %g %g\n", depth, "", V3ARGS(t->w0));
+    bu_log("%*sn_wsum: %g %g %g\n", depth, "", V3ARGS(t->n_wsum));
     for (int i = 0; i < 9; i++) bu_vls_printf(&w1, "%g ", t->w1[i]);
     for (int i = 0; i < 27; i++) bu_vls_printf(&w2, "%g ", t->w2[i]);
     bu_log("%*sw1: %s\n", depth, "", bu_vls_addr(&w1));
@@ -270,43 +303,48 @@ wn_calc_coeffs(struct octree *t, int depth, std::map<struct pnt_normal *, fastf_
 }
 
 /* Eqn. 22 */
-void
-g1(vect_t *o, point_t *q, point_t *p_wavg)
+vect_t *
+calc_g1(point_t *q, point_t *p_wavg)
 {
     vect_t r;
+    vect_t *o = (vect_t *)bu_calloc(1, sizeof(vect_t), "o");
     VSUB2(r, *p_wavg, *q);
     fastf_t rmag = MAGNITUDE(r);
     fastf_t denom = 4.0 * M_PI * rmag * rmag * rmag;
     VSCALE(*o, r, 1.0/denom);
+    return o;
 }
 
 /* Eqn. 23 */
-void
-g2(fastf_t **o, point_t *q, point_t *p_wavg)
+fastf_t *
+calc_g2(point_t *q, point_t *p_wavg)
 {
     vect_t r;
     VSUB2(r, *p_wavg, *q);
     fastf_t id[9];
-    fastf_t *rr = (fastf_t *)bu_calloc(9, sizeof(fastf_t), "w1");
+    fastf_t *o = (fastf_t *)bu_calloc(9, sizeof(fastf_t), "o");
+    fastf_t *rr = (fastf_t *)bu_calloc(9, sizeof(fastf_t), "rr");
     for (int i = 0; i < 9; i++) id[i] = 0.0;
     fastf_t rmag = MAGNITUDE(r);
     fastf_t denom1 = 4.0 * M_PI * rmag * rmag * rmag;
     fastf_t denom2 = (4.0 * M_PI * rmag * rmag * rmag * rmag * rmag);
-    tensor2(&rr, &r, &r);
+    tensor2_outer_product(&rr, &r, &r);
     id[0] = 1.0/denom1;
     id[4] = 1.0/denom1;
     id[8] = 1.0/denom1;
     for (int i = 0; i < 9; i++) rr[i] = rr[i] * 3.0/denom2;
-    for (int i = 0; i < 9; i++) (*o)[i] = id[i] - rr[i];
+    for (int i = 0; i < 9; i++) o[i] = id[i] - rr[i];
     bu_free(rr, "rr");
+    return o;
 }
 
 /* Eqn. 24 */
-void
-g3(fastf_t **o, point_t *q, point_t *p_wavg)
+fastf_t *
+calc_g3(point_t *q, point_t *p_wavg)
 {
     vect_t r;
     fastf_t t1[27];
+    fastf_t *o = (fastf_t *)bu_calloc(27, sizeof(fastf_t), "w1");
     fastf_t *t2 = (fastf_t *)bu_calloc(27, sizeof(fastf_t), "w1");
     for (int i = 0; i < 27; i++) t1[i] = 0.0;
     vect_t idents[3];
@@ -315,15 +353,15 @@ g3(fastf_t **o, point_t *q, point_t *p_wavg)
     VSET(idents[2], 0, 0, 1);
     VSUB2(r, *p_wavg, *q);
     fastf_t rmag = MAGNITUDE(r);
+
     fastf_t m1 = -1.0 / (4.0 * M_PI * rmag * rmag * rmag * rmag * rmag);
-    fastf_t m2 = 15.0 /(4.0 * M_PI * rmag * rmag * rmag * rmag * rmag * rmag * rmag);
     for (int i = 0; i < 3; i++) {
-	fastf_t *temp1 = (fastf_t *)bu_calloc(27, sizeof(fastf_t), "w1");
-	fastf_t *temp2 = (fastf_t *)bu_calloc(27, sizeof(fastf_t), "w1");
-	fastf_t *temp3 = (fastf_t *)bu_calloc(27, sizeof(fastf_t), "w1");
-	tensor3(&temp1, &r, &idents[i], &idents[i]);
-	tensor3(&temp2, &idents[i], &r, &idents[i]);
-	tensor3(&temp3, &idents[i], &idents[i], &r);
+	fastf_t *temp1 = (fastf_t *)bu_calloc(27, sizeof(fastf_t), "temp1");
+	fastf_t *temp2 = (fastf_t *)bu_calloc(27, sizeof(fastf_t), "temp2");
+	fastf_t *temp3 = (fastf_t *)bu_calloc(27, sizeof(fastf_t), "temp3");
+	tensor3_outer_product(&temp1, &r, &idents[i], &idents[i]);
+	tensor3_outer_product(&temp2, &idents[i], &r, &idents[i]);
+	tensor3_outer_product(&temp3, &idents[i], &idents[i], &r);
 	for (int j = 0; j < 27; j++) t1[j] += temp1[j];
 	for (int j = 0; j < 27; j++) t1[j] += temp2[j];
 	for (int j = 0; j < 27; j++) t1[j] += temp3[j];
@@ -331,31 +369,54 @@ g3(fastf_t **o, point_t *q, point_t *p_wavg)
 	bu_free(temp2, "temp2");
 	bu_free(temp3, "temp3");
     }
-    tensor3((fastf_t **)&t2, &r, &r, &r);
     for (int j = 0; j < 27; j++) t1[j] = t1[j] * m1;
-    for (int j = 0; j < 27; j++) t1[j] = t2[j] * m2;
-    for (int j = 0; j < 27; j++) (*o)[j] = t1[j] + t2[j];
+
+    tensor3_outer_product((fastf_t **)&t2, &r, &r, &r);
+    fastf_t m2 = 15.0 /(4.0 * M_PI * rmag * rmag * rmag * rmag * rmag * rmag * rmag);
+    for (int j = 0; j < 27; j++) t2[j] = t2[j] * m2;
+
+    for (int j = 0; j < 27; j++) o[j] = t1[j] + t2[j];
     bu_free(t2, "t2");
+
+    return o;
 }
 
+/* Algorithm 1 from the paper */
 double
-wn_calc(struct octree *t, struct pnt_normal *q, std::map<struct pnt_normal *, fastf_t> *va)
+wn_calc(struct octree *t, struct pnt_normal *q, double beta, std::map<struct pnt_normal *, fastf_t> *va)
 {
-    double wn;
-
+    double wn = 0.0;
     if (!t) return DBL_MAX;
 
-    // If q not in t bbox, calculate and return wn approxmation
-
-    // If not a leaf node, sum the wn approximations of the children
-    // and return the sum.
-    for(int i = 0; i < 8; i++) {
-	wn += wn_calc(t->children[octree_node_octant(t, q)], q, va);
+    // If the query point is far enough away from the weighted avg. pnt,
+    // calculate the approximation
+    if (DIST_PT_PT(q->v, t->p_wavg) > beta) {
+	vect_t *g1pq = calc_g1(&(q->v), &(t->p_wavg));
+	fastf_t *g2pq = calc_g2(&(q->v), &(t->p_wavg));
+	fastf_t *g3pq = calc_g3(&(q->v), &(t->p_wavg));
+	wn = VDOT(t->n_wsum, *g1pq) + tensor2_inner_product(t->w1, g2pq) + tensor3_inner_product(t->w2, g3pq);
+	bu_free(g1pq, "g1pq");
+	bu_free(g2pq, "g2pq");
+	bu_free(g3pq, "g3pq");
+	return wn;
     }
 
-    // If leaf node, calculate area-weighted dipole contributed by
-    // associated point(s) and return the sum
+    int is_leaf = octree_node_is_leaf(t);
+    if (!is_leaf) {
 
+	// If q is not far enough away and t is not a leaf node, sum the wn
+	// approximations of the children and return the sum.
+	for(int i = 0; i < 8; i++) {
+	    wn += wn_calc(t->children[octree_node_octant(t, q)], q, beta, va);
+	}
+    } else {
+	point_t pq;
+	VSUB2(pq, t->p_wavg, q->v);
+	fastf_t pqm = MAGNITUDE(pq);
+	fastf_t numerator = VDOT(pq, t->n_wsum);
+	fastf_t denom = 4*M_PI*pqm*pqm*pqm;
+	wn = numerator/denom;
+    }
     return wn;
 }
 
@@ -385,7 +446,7 @@ struct NF_Adaptor {
  */
 
 extern "C" void
-wn_mesh(struct rt_pnts_internal *pnts)
+wn_mesh(struct rt_pnts_internal *pnts, fastf_t beta)
 {
     int pind = 0;
     std::map<struct pnt_normal *, fastf_t> voronoi_areas;
@@ -533,7 +594,7 @@ wn_mesh(struct rt_pnts_internal *pnts)
      * although again we have to figure out how to feed its inputs using the WN
      */
     struct pnt_normal query_pnt;
-    wn_calc(t, &query_pnt, &voronoi_areas);
+    wn_calc(t, &query_pnt, beta, &voronoi_areas);
 }
 
 // Local Variables:
