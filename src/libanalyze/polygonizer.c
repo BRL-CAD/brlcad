@@ -107,15 +107,6 @@ typedef struct polygonizer_vertex VERTEX;	   /* surface vertex */
 
 typedef struct polygonizer_vertices VERTICES;
 
-typedef struct triangle {
-    int i1, i2, i3;
-} TRIANGLE;
-
-typedef struct triangles {
-    int count, max;
-    TRIANGLE *ptr;
-} TRIANGLES;
-
 typedef struct corner {		   /* corner of a cube */
     int i, j, k;		   /* (i, j, k) is index within lattice */
     point_t p;                     /* location */
@@ -163,14 +154,15 @@ typedef struct process {	   /* parameters, function, storage */
     polygonize_func_t function;	   /* implicit surface function */
     void *d;                       /* implicit surface function data */
     polygonize_triproc_t triproc;  /* triangle output function */
+    void *td;                      /* triangle output function data */
     double size, delta;		   /* cube size, normal delta */
     int bounds;			   /* cube range within lattice */
     point_t start;		   /* start point on surface */
     CUBES *cubes;		   /* active cubes */
-    VERTICES vertices;		   /* surface vertices */
     CENTERLIST **centers;	   /* cube center hash table */
     CORNERLIST **corners;	   /* corner value hash table */
     EDGELIST **edges;		   /* edge and vertex id hash table */
+    struct polygonizer_mesh *m;    /* vertices and triangles generated */
 } PROCESS;
 
 
@@ -344,32 +336,21 @@ vnormal(point_t *point, PROCESS *p, point_t *v)
     }
 }
 
-
-/* vertid: return index for vertex on edge:
- * c1->value and c2->value are presumed of different sign
- * return saved index if any; else compute vertex and save */
-
-
-/* addtovertices: add v to sequence of vertices */
-
+/* add_vertex: add v to sequence of vertices */
 void
-addtovertices(VERTICES *vertices, VERTEX v)
+add_vertex(VERTICES *vertices, VERTEX *v)
 {
+    struct polygonizer_vertex *vnew;
     if (vertices->count == vertices->max) {
-	int i;
-	VERTEX *vnew;
 	vertices->max = vertices->count == 0 ? 10 : 2*vertices->count;
-	vnew = (VERTEX *) bu_calloc(vertices->max, sizeof(VERTEX), "vertex");
-	for (i = 0; i < vertices->count; i++) vnew[i] = vertices->ptr[i];
-	if (vertices->ptr != NULL) free((char *) vertices->ptr);
-	vertices->ptr = vnew;
+	vertices->ptr = (struct polygonizer_vertex *)bu_realloc(vertices->ptr, vertices->max * sizeof(struct polygonizer_vertex), "vertices");
     }
-    vertices->ptr[vertices->count++] = v;
+    vnew = &(vertices->ptr[vertices->count++]);
+    VMOVE(vnew->position, v->position);
+    VMOVE(vnew->normal, v->normal);
 }
 
-
 /* setedge: set vertex id for edge */
-
 void
 setedge(EDGELIST *table[], int i1, int j1, int k1, int i2, int j2, int k2, int vid)
 {
@@ -387,6 +368,9 @@ setedge(EDGELIST *table[], int i1, int j1, int k1, int i2, int j2, int k2, int v
     table[index] = enew;
 }
 
+/* vertid: return index for vertex on edge:
+ * c1->value and c2->value are presumed of different sign
+ * return saved index if any; else compute vertex and save */
 int
 vertid(CORNER *c1, CORNER *c2, PROCESS *p)
 {
@@ -398,8 +382,8 @@ vertid(CORNER *c1, CORNER *c2, PROCESS *p)
     VMOVE(b, c2->p);
     converge(&a, &b, c1->value, p->function, &v.position, p->d); /* position */
     vnormal(&v.position, p, &v.normal);			   /* normal */
-    addtovertices(&p->vertices, v);			   /* save vertex */
-    vid = p->vertices.count-1;
+    add_vertex(&p->m->vertices, &v);			   /* save vertex */
+    vid = p->m->vertices.count-1;
     setedge(p->edges, c1->i, c1->j, c1->k, c2->i, c2->j, c2->k, vid);
     return vid;
 }
@@ -407,6 +391,23 @@ vertid(CORNER *c1, CORNER *c2, PROCESS *p)
 
 /**** Tetrahedral Polygonization ****/
 
+int
+add_triangle(int i1, int i2, int i3, PROCESS *p)
+{
+    struct polygonizer_triangle *t;
+    struct polygonizer_triangles *triangles = &p->m->triangles;
+    if (triangles->count == triangles->max) {
+	triangles->max = triangles->count == 0 ? 10 : 2*triangles->count;
+	triangles->ptr = (struct polygonizer_triangle *)bu_realloc(triangles->ptr, triangles->max * sizeof(struct polygonizer_triangle), "triangles");
+    }
+    t = &(triangles->ptr[triangles->count++]);
+    t->i1 = i1;
+    t->i2 = i2;
+    t->i3 = i3;
+
+    if (!p->triproc) return 1;
+    return p->triproc(i1, i2, i3, &p->m->vertices, p->td);
+}
 
 /* dotet: triangulate the tetrahedron
  * b, c, d should appear clockwise when viewed from a
@@ -437,165 +438,50 @@ dotet(CUBE *cube, int c1, int c2, int c3, int c4, PROCESS *p)
     if (cpos != dpos) e6 = vertid(c, d, p);
     /* 14 productive tetrahedral cases (0000 and 1111 do not yield polygons */
     switch (index) {
-	case 1:	 return p->triproc(e5, e6, e3, &p->vertices);
-	case 2:	 return p->triproc(e2, e6, e4, &p->vertices);
-	case 3:	 return p->triproc(e3, e5, e4, &p->vertices) &&
-		 p->triproc(e3, e4, e2, &p->vertices);
-	case 4:	 return p->triproc(e1, e4, e5, &p->vertices);
-	case 5:	 return p->triproc(e3, e1, e4, &p->vertices) &&
-		 p->triproc(e3, e4, e6, &p->vertices);
-	case 6:	 return p->triproc(e1, e2, e6, &p->vertices) &&
-		 p->triproc(e1, e6, e5, &p->vertices);
-	case 7:	 return p->triproc(e1, e2, e3, &p->vertices);
-	case 8:	 return p->triproc(e1, e3, e2, &p->vertices);
-	case 9:	 return p->triproc(e1, e5, e6, &p->vertices) &&
-		 p->triproc(e1, e6, e2, &p->vertices);
-	case 10: return p->triproc(e1, e3, e6, &p->vertices) &&
-		 p->triproc(e1, e6, e4, &p->vertices);
-	case 11: return p->triproc(e1, e5, e4, &p->vertices);
-	case 12: return p->triproc(e3, e2, e4, &p->vertices) &&
-		 p->triproc(e3, e4, e5, &p->vertices);
-	case 13: return p->triproc(e6, e2, e4, &p->vertices);
-	case 14: return p->triproc(e5, e3, e6, &p->vertices);
+	case 1:	 return add_triangle(e5, e6, e3, p);
+	case 2:	 return add_triangle(e2, e6, e4, p);
+	case 3:	 return add_triangle(e3, e5, e4, p) && add_triangle(e3, e4, e2, p);
+	case 4:	 return add_triangle(e1, e4, e5, p);
+	case 5:	 return add_triangle(e3, e1, e4, p) && add_triangle(e3, e4, e6, p);
+	case 6:	 return add_triangle(e1, e2, e6, p) && add_triangle(e1, e6, e5, p);
+	case 7:	 return add_triangle(e1, e2, e3, p);
+	case 8:	 return add_triangle(e1, e3, e2, p);
+	case 9:	 return add_triangle(e1, e5, e6, p) && add_triangle(e1, e6, e2, p);
+	case 10: return add_triangle(e1, e3, e6, p) && add_triangle(e1, e6, e4, p);
+	case 11: return add_triangle(e1, e5, e4, p);
+	case 12: return add_triangle(e3, e2, e4, p) && add_triangle(e3, e4, e5, p);
+	case 13: return add_triangle(e6, e2, e4, p);
+	case 14: return add_triangle(e5, e3, e6, p);
     }
     return 1;
 }
-
-
-/**** Cubical Polygonization (optional) ****/
-
-#define LB	0  /* left bottom edge	*/
-#define LT	1  /* left top edge	*/
-#define LN	2  /* left near edge	*/
-#define LF	3  /* left far edge	*/
-#define RB	4  /* right bottom edge */
-#define RT	5  /* right top edge	*/
-#define RN	6  /* right near edge	*/
-#define RF	7  /* right far edge	*/
-#define BN	8  /* bottom near edge	*/
-#define BF	9  /* bottom far edge	*/
-#define TN	10 /* top near edge	*/
-#define TF	11 /* top far edge	*/
-
-static INTLISTS *cubetable[256];
-
-/*			edge: LB, LT, LN, LF, RB, RT, RN, RF, BN, BF, TN, TF */
-static int corner1[12]	   = {LBN,LTN,LBN,LBF,RBN,RTN,RBN,RBF,LBN,LBF,LTN,LTF};
-static int corner2[12]	   = {LBF,LTF,LTN,LTF,RBF,RTF,RTN,RTF,RBN,RBF,RTN,RTF};
-static int leftface[12]	   = {B,  L,  L,  F,  R,  T,  N,  R,  N,  B,  T,  F};
-/* face on left when going corner1 to corner2 */
-static int rightface[12]   = {L,  T,  N,  L,  B,  R,  R,  F,  B,  F,  N,  T};
-/* face on right when going corner1 to corner2 */
-
-
-/* docube: triangulate the cube directly, without decomposition */
-
-int docube (cube, p)
-    CUBE *cube;
-    PROCESS *p;
-{
-    INTLISTS *polys;
-    int i, index = 0;
-    for (i = 0; i < 8; i++) if (cube->corners[i]->value > 0.0) index += (1<<i);
-    for (polys = cubetable[index]; polys; polys = polys->next) {
-	INTLIST *edges;
-	int a = -1, b = -1, count = 0;
-	for (edges = polys->list; edges; edges = edges->next) {
-	    CORNER *c1 = cube->corners[corner1[edges->i]];
-	    CORNER *c2 = cube->corners[corner2[edges->i]];
-	    int c = vertid(c1, c2, p);
-	    if (++count > 2 && ! p->triproc(a, b, c, &p->vertices)) return 0;
-	    if (count < 3) a = b;
-	    b = c;
-	}
-    }
-    return 1;
-}
-
-
-/* nextcwedge: return next clockwise edge from given edge around given face */
-
-int
-nextcwedge (int edge, int face)
-{
-    switch (edge) {
-	case LB: return (face == L)? LF : BN;
-	case LT: return (face == L)? LN : TF;
-	case LN: return (face == L)? LB : TN;
-	case LF: return (face == L)? LT : BF;
-	case RB: return (face == R)? RN : BF;
-	case RT: return (face == R)? RF : TN;
-	case RN: return (face == R)? RT : BN;
-	case RF: return (face == R)? RB : TF;
-	case BN: return (face == B)? RB : LN;
-	case BF: return (face == B)? LB : RF;
-	case TN: return (face == T)? LT : RN;
-	case TF: return (face == T)? RT : LF;
-    }
-    return -1;
-}
-
-
-/* otherface: return face adjoining edge that is not the given face */
-
-int
-otherface (int edge, int face)
-{
-    int other = leftface[edge];
-    return face == other? rightface[edge] : other;
-}
-
-
-/* makecubetable: create the 256 entry table for cubical polygonization */
 
 void
-makecubetable()
+polygonizer_mesh_free(struct polygonizer_mesh *m)
 {
-    int i, e, c, done[12], pos[8];
-    for (i = 0; i < 256; i++) {
-	for (e = 0; e < 12; e++) done[e] = 0;
-	for (c = 0; c < 8; c++) pos[c] = BIT(i, c);
-	for (e = 0; e < 12; e++)
-	    if (!done[e] && (pos[corner1[e]] != pos[corner2[e]])) {
-		INTLIST *ints = 0;
-		INTLISTS *lists = (INTLISTS *) bu_calloc(1, sizeof(INTLISTS), "intlists");
-		int start = e, edge = e;
-		/* get face that is to right of edge from pos to neg corner: */
-		int face = pos[corner1[e]]? rightface[e] : leftface[e];
-		while (1) {
-		    edge = nextcwedge(edge, face);
-		    done[edge] = 1;
-		    if (pos[corner1[edge]] != pos[corner2[edge]]) {
-			INTLIST *tmp = ints;
-			ints = (INTLIST *) bu_calloc(1, sizeof(INTLIST), "intlist");
-			ints->i = edge;
-			ints->next = tmp; /* add edge to head of list */
-			if (edge == start) break;
-			face = otherface(edge, face);
-		    }
-		}
-		lists->list = ints; /* add ints to head of table entry */
-		lists->next = cubetable[i];
-		cubetable[i] = lists;
-	    }
-    }
+    if (!m) return;
+    bu_free(m->vertices.ptr, "vertices");
+    bu_free(m->triangles.ptr, "triangles");
+    bu_free(m, "mesh");
 }
 
 /**** An Implicit Surface Polygonizer ****/
 
-int
-polygonalize(
+struct polygonizer_mesh *
+polygonize(
 	polygonize_func_t pf,
 	void *pf_d,
 	fastf_t size,
 	int bounds,
 	point_t p_s,
 	polygonize_triproc_t triproc,
-	int mode)
+	void *triproc_d)
 {
     PROCESS p;
-    int n, noabort;
+    int n;
+    int pabort = 0;
     TEST in, out;
+    struct polygonizer_mesh *m = (struct polygonizer_mesh *)bu_calloc(1, sizeof(struct polygonizer_mesh), "results");
 
     p.function = pf;
     p.triproc = triproc;
@@ -603,12 +489,13 @@ polygonalize(
     p.bounds = bounds;
     p.delta = size/(double)(RES*RES);
     p.d = pf_d;
+    p.td = triproc_d;
+    p.m = m;
 
     /* allocate hash tables and build cube polygon table: */
     p.centers = (CENTERLIST **) bu_calloc(HASHSIZE, sizeof(CENTERLIST *), "hashsize centerlist");
     p.corners = (CORNERLIST **) bu_calloc(HASHSIZE,sizeof(CORNERLIST *), "hashsize, cornerlist");
     p.edges =	(EDGELIST   **) bu_calloc(2*HASHSIZE,sizeof(EDGELIST *), "2*hashsize, edgelist");
-    makecubetable();
 
     /* find point on surface, beginning search at point p_s: */
     srand(1);
@@ -616,7 +503,8 @@ polygonalize(
     out = find(0, &p, p_s);
     if (!in.ok || !out.ok) {
 	bu_log ("polygonizer: Error, can't find starting point");
-	return -1;
+	polygonizer_mesh_free(m);
+	return NULL;
     }
     converge(&in.p, &out.p, in.value, p.function, &p.start, p.d);
 
@@ -629,8 +517,11 @@ polygonalize(
     for (n = 0; n < 8; n++)
 	p.cubes->cube.corners[n] = setcorner(&p, BIT(n,2), BIT(n,1), BIT(n,0));
 
-    p.vertices.count = p.vertices.max = 0; /* no vertices yet */
-    p.vertices.ptr = NULL;
+    p.m->vertices.count = p.m->vertices.max = 0; /* no vertices yet */
+    p.m->vertices.ptr = NULL;
+
+    p.m->triangles.count = p.m->triangles.max = 0; /* no triangles yet */
+    p.m->triangles.ptr = NULL;
 
     setcenter(p.centers, 0, 0, 0);
 
@@ -639,18 +530,19 @@ polygonalize(
 	CUBES *temp = p.cubes;
 	c = p.cubes->cube;
 
-	noabort = mode == POLYGONIZE_TET?
-	    /* either decompose into tetrahedra and polygonize: */
+	/* decompose into tetrahedra and polygonize: */
+	pabort =
 	    dotet(&c, LBN, LTN, RBN, LBF, &p) &&
 	    dotet(&c, RTN, LTN, LBF, RBN, &p) &&
 	    dotet(&c, RTN, LTN, LTF, LBF, &p) &&
 	    dotet(&c, RTN, RBN, LBF, RBF, &p) &&
 	    dotet(&c, RTN, LBF, LTF, RBF, &p) &&
-	    dotet(&c, RTN, LTF, RTF, RBF, &p)
-	    :
-	    /* or polygonize the cube directly: */
-	    docube(&c, &p);
-	if (! noabort) return -1;
+	    dotet(&c, RTN, LTF, RTF, RBF, &p);
+
+	if (pabort) {
+	    polygonizer_mesh_free(m);
+	    return NULL;
+	}
 
 	/* pop current cube from stack */
 	p.cubes = p.cubes->next;
@@ -663,7 +555,8 @@ polygonalize(
 	testface(c.i, c.j, c.k-1, &c, N, LBN, LTN, RBN, RTN, &p);
 	testface(c.i, c.j, c.k+1, &c, F, LBF, LTF, RBF, RTF, &p);
     }
-    return 0;
+
+    return m;
 }
 
 /*

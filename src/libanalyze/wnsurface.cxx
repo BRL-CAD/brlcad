@@ -35,6 +35,7 @@
 #endif
 
 extern "C" {
+#include "./polygonizer.h"
 #include "vmath.h"
 #include "bn/mat.h"
 #include "rt/geom.h"
@@ -397,7 +398,12 @@ calc_g3(point_t *q, point_t *p_wavg)
     return o;
 }
 
-/* Algorithm 1 from the paper */
+
+
+/*
+ * Calculate the actual Winding Number used to drive polygonalization
+ * (Algorithm 1 from the paper)
+ */
 double
 wn_calc(struct octree *t, struct pnt_normal *q, double beta, std::map<struct pnt_normal *, fastf_t> *va)
 {
@@ -461,9 +467,16 @@ struct NF_Adaptor {
  * http://www.dgp.toronto.edu/projects/fast-winding-numbers/):
  */
 
-extern "C" void
-wn_mesh(struct rt_pnts_internal *pnts, fastf_t beta, struct pnt_normal *q)
+struct wn_tree {
+    struct octree *t;
+    std::map<struct pnt_normal *, fastf_t> *voronoi_areas;
+};
+
+extern "C" struct wn_tree *
+wn_tree_create(struct rt_pnts_internal *pnts)
 {
+    struct wn_tree *wnt = new struct wn_tree;
+    wnt->voronoi_areas = new std::map<struct pnt_normal *, fastf_t>;
     int pind = 0;
     std::map<struct pnt_normal *, fastf_t> voronoi_areas;
     struct pnt_normal *pn, *pl;
@@ -591,9 +604,9 @@ wn_mesh(struct rt_pnts_internal *pnts, fastf_t beta, struct pnt_normal *q)
 	    parea2 += (e->pos[1].x + e->pos[0].x) * (e->pos[1].y - e->pos[0].y);
 	    e = e->next;
 	}
-	voronoi_areas[pn] = fabs(parea2) * 0.5;
+	(*wnt->voronoi_areas)[pn] = fabs(parea2) * 0.5;
 
-	bu_log("voronoi_area[%d]: %g\n", pind, voronoi_areas[pn]);
+	bu_log("voronoi_area[%d]: %g\n", pind, (*wnt->voronoi_areas)[pn]);
 
 	pind++;
     }
@@ -602,33 +615,78 @@ wn_mesh(struct rt_pnts_internal *pnts, fastf_t beta, struct pnt_normal *q)
     vect_t halfDim = VINIT_ZERO;
     VSCALE(p_center, p_center, 1.0/pind);
     VSET(halfDim, fabs(pmax[X] - pmin[X])/2, fabs(pmax[Y] - pmin[Y])/2, fabs(pmax[Z] - pmin[Z])/2);
-    struct octree *t = octree_node_create(&p_center, &halfDim);
+    wnt->t = octree_node_create(&p_center, &halfDim);
     for (BU_LIST_FOR(pn, pnt_normal, &(pl->l))) {
-	octree_insert(t, pn);
+	octree_insert(wnt->t, pn);
     }
 
+    /* 8.  Pre-compute the wn approximation coefficients */
+    wn_calc_coeffs(wnt->t, 0, wnt->voronoi_areas);
 
-    /* 7. Figure out how to set up the actual WN calculation to make the input
-     * used to drive polygonalization, based on:
-     *
-     * https://github.com/sideeffects/WindingNumber
-     * https://www.sidefx.com/docs/hdk/_s_o_p___winding_number_8_c_source.html
-     */
-    wn_calc_coeffs(t, 0, &voronoi_areas);
-
-
-    /* 8. The paper mentions using a "continuation method [Wyvill et al.  1986]
-     * for voxelization and isosurface extraction."  That appears to be this
-     * approach:
-     *
-     * http://www.unchainedgeometry.com/jbloom/papers.html
-     * https://github.com/Tonsty/polygonizer
-     *
-     * although again we have to figure out how to feed its inputs using the WN
-     */
-    fastf_t wn = wn_calc(t, q, beta, &voronoi_areas);
-    bu_log("wn: %g\n", wn);
+    return wnt;
 }
+
+void
+wn_tree_destroy(struct wn_tree *d)
+{
+    if (!d) return;
+    if (d->voronoi_areas) delete d->voronoi_areas;
+    delete d;
+    d = NULL;
+}
+
+extern "C" fastf_t
+wn_report(struct rt_pnts_internal *pnts, fastf_t beta, struct pnt_normal *q)
+{
+    struct wn_tree *wnt = wn_tree_create(pnts);
+    if (!wnt) return DBL_MAX;
+    fastf_t wn = wn_calc(wnt->t, q, beta, wnt->voronoi_areas);
+    wn_tree_destroy(wnt);
+    return wn;
+}
+
+struct wn_peval_data {
+    struct wn_tree *wnt;
+    double beta;
+};
+
+
+int
+wn_peval(point_t q, void *d)
+{
+    struct pnt_normal pq;
+    VMOVE(pq.v, q);
+    struct wn_peval_data *wntd = (struct wn_peval_data *)d;
+    fastf_t wn = wn_calc(wntd->wnt->t, &pq, wntd->beta, wntd->wnt->voronoi_areas);
+    return (wn < 0) ? 1 : -1;
+}
+
+
+/* The paper mentions using a "continuation method [Wyvill et al.  1986]
+ * for voxelization and isosurface extraction."  That appears to be this
+ * approach:
+ *
+ * http://www.unchainedgeometry.com/jbloom/papers.html
+ * https://github.com/Tonsty/polygonizer
+ */
+extern "C" int
+wn_mesh(int **faces, int *num_faces, point_t **vertices, int *num_vertices, struct rt_pnts_internal *pnts, fastf_t b)
+{
+    struct wn_peval_data wntd;
+    struct pnt_normal *pl;
+    if (!faces || !num_faces || !vertices || !num_vertices || !pnts) return -1;
+    wntd.beta = (b > 0) ? b : 2.3;
+    wntd.wnt = wn_tree_create(pnts);
+    if (!wntd.wnt) return -1;
+
+    pl = (struct pnt_normal *)pnts->point;
+    struct polygonizer_mesh *m = polygonize(&wn_peval, (void *)&wntd, 1, 1, pl->v, NULL, NULL);
+
+    wn_tree_destroy(wntd.wnt);
+
+    return (m) ? 1 : 0;
+}
+
 
 // Local Variables:
 // tab-width: 8
