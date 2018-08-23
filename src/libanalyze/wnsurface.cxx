@@ -114,6 +114,8 @@ struct octree {
     fastf_t w1[9];
     fastf_t w2[27];
     point_t p_wavg;
+    point_t p_center;
+    fastf_t r;
 };
 
 struct octree *
@@ -229,7 +231,8 @@ octree_insert(struct octree *t, struct pnt_normal *p)
 void
 wn_calc_coeff(struct octree *t, std::map<struct pnt_normal *, fastf_t> *va)
 {
-    point_t pavg = VINIT_ZERO;
+    point_t p_center = VINIT_ZERO;
+    point_t p_wavg = VINIT_ZERO;
     vect_t n_wsum = VINIT_ZERO;
     fastf_t va_sum = 0.0;
     if (!t || !t->npnts->size()) return;
@@ -240,17 +243,22 @@ wn_calc_coeff(struct octree *t, std::map<struct pnt_normal *, fastf_t> *va)
     std::vector<struct pnt_normal *>::iterator npnts_it;
     for (npnts_it = t->npnts->begin(); npnts_it != t->npnts->end(); npnts_it++) {
 	struct pnt_normal *cp = *npnts_it;
+
 	point_t pcurr;
-	vect_t ncurr;
 	VMOVE(pcurr, cp->v);
-	VMOVE(ncurr, cp->n);
+	VADD2(p_center, p_center, pcurr);
 	VSCALE(pcurr, pcurr, (*va)[cp]);
+	VADD2(p_wavg, p_wavg, pcurr);
+
+	vect_t ncurr;
+	VMOVE(ncurr, cp->n);
 	VSCALE(ncurr, ncurr, (*va)[cp]);
-	VADD2(pavg, pavg, pcurr);
 	VADD2(n_wsum, n_wsum, ncurr);
+
 	va_sum = va_sum + (*va)[cp];
     }
-    VSCALE(t->p_wavg, pavg, 1.0/va_sum);
+    VSCALE(t->p_center, p_center, 1.0/((fastf_t)t->npnts->size()));
+    VSCALE(t->p_wavg, p_wavg, 1.0/va_sum);
     VMOVE(t->n_wsum, n_wsum);
 
     for (npnts_it = t->npnts->begin(); npnts_it != t->npnts->end(); npnts_it++) {
@@ -272,6 +280,14 @@ wn_calc_coeff(struct octree *t, std::map<struct pnt_normal *, fastf_t> *va)
 	bu_free(w2, "w2");
     }
     for (int i = 0; i < 27; i++) t->w2[i] = t->w2[i] * 0.5;
+
+    fastf_t r = -DBL_MAX;
+    for (npnts_it = t->npnts->begin(); npnts_it != t->npnts->end(); npnts_it++) {
+	struct pnt_normal *cp = *npnts_it;
+	fastf_t dpp = DIST_PT_PT(cp->v, t->p_center);
+	if (dpp > r) r = dpp;
+    }
+    t->r = r;
 }
 
 void
@@ -390,7 +406,7 @@ wn_calc(struct octree *t, struct pnt_normal *q, double beta, std::map<struct pnt
 
     // If the query point is far enough away from the weighted avg. pnt,
     // calculate the approximation
-    if (DIST_PT_PT(q->v, t->p_wavg) > beta) {
+    if (DIST_PT_PT(q->v, t->p_center) > t->r * beta) {
 	vect_t *g1pq = calc_g1(&(q->v), &(t->p_wavg));
 	fastf_t *g2pq = calc_g2(&(q->v), &(t->p_wavg));
 	fastf_t *g3pq = calc_g3(&(q->v), &(t->p_wavg));
@@ -451,7 +467,7 @@ wn_mesh(struct rt_pnts_internal *pnts, fastf_t beta)
     int pind = 0;
     std::map<struct pnt_normal *, fastf_t> voronoi_areas;
     struct pnt_normal *pn, *pl;
-    point_t pcenter = VINIT_ZERO;
+    point_t p_center = VINIT_ZERO;
     point_t pmin, pmax;
     NF_PC cloud;
     typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<fastf_t, NF_Adaptor >, NF_Adaptor, 3 > nf_kdtree_t;
@@ -472,7 +488,7 @@ wn_mesh(struct rt_pnts_internal *pnts, fastf_t beta)
 
 	bu_log("pnt %d: center %g %g %g\n", pind, V3ARGS(pn->v));
 	/* Running calculation of center pnt calculation input and bbox */
-	VADD2(pcenter, pcenter, pn->v);
+	VADD2(p_center, p_center, pn->v);
 	VMINMAX(pmin, pmax, pn->v);
 
 	/* 2.  Find k-nearest-neighbors set */
@@ -567,9 +583,9 @@ wn_mesh(struct rt_pnts_internal *pnts, fastf_t beta)
 
     /* 7.  Construct the octree for the input points */
     vect_t halfDim = VINIT_ZERO;
-    VSCALE(pcenter, pcenter, 1.0/pind);
+    VSCALE(p_center, p_center, 1.0/pind);
     VSET(halfDim, fabs(pmax[X] - pmin[X])/2, fabs(pmax[Y] - pmin[Y])/2, fabs(pmax[Z] - pmin[Z])/2);
-    struct octree *t = octree_node_create(&pcenter, &halfDim);
+    struct octree *t = octree_node_create(&p_center, &halfDim);
     for (BU_LIST_FOR(pn, pnt_normal, &(pl->l))) {
 	octree_insert(t, pn);
     }
