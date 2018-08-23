@@ -276,6 +276,9 @@ _obj_to_pnts(struct ged *gedp, int argc, const char **argv)
     struct bu_opt_desc d[9];
     BU_OPT(d[0], "h", "help",      "",  NULL,            &print_help,     "Print help and exit");
     BU_OPT(d[1], "t", "tolerance", "#", &bu_opt_fastf_t, &len_tol,        "Specify sampling grid spacing (in mm).");
+    /* TODO - this isn't actually what we probably want here - what we want is to treat the object as
+     * one huge region and report only *those* points.  The current behavior is more correctly named
+     * something like "visible".  Need to fix... */
     BU_OPT(d[2], "",  "surface",   "",  NULL,            &pnt_surf_mode,  "Save only first and last points along ray.");
     BU_OPT(d[3], "",  "grid",      "",  NULL,            &pnt_grid_mode,  "Sample using a gridded ray pattern (default).");
     BU_OPT(d[4], "",  "rand",      "",  NULL,            &pnt_rand_mode,  "Sample using a random Marsaglia ray pattern on the bounding sphere.");
