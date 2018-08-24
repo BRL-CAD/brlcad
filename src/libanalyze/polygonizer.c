@@ -493,7 +493,7 @@ add_triangle(int i1, int i2, int i3, PROCESS *p)
     t->i2 = i2;
     t->i3 = i3;
 
-    if (!p->triproc) return 0;
+    if (!p->triproc) return 1;
     return p->triproc(i1, i2, i3, &p->m->vertices, p->td);
 }
 
@@ -524,9 +524,7 @@ dotet(CUBE *cube, int c1, int c2, int c3, int c4, PROCESS *p)
     if (bpos != cpos) e4 = vertid(b, c, p);
     if (bpos != dpos) e5 = vertid(b, d, p);
     if (cpos != dpos) e6 = vertid(c, d, p);
-    if (e1 < 0 || e2 < 0 || e3 < 0 || e4 < 0 || e5 < 0 || e6 < 0) return 0;
     /* 14 productive tetrahedral cases (0000 and 1111 do not yield polygons */
-    bu_log("index: %d\n", index);
     switch (index) {
 	case 1:	 return add_triangle(e5, e6, e3, p);
 	case 2:	 return add_triangle(e2, e6, e4, p);
@@ -569,7 +567,7 @@ polygonize(
 {
     PROCESS p;
     int n;
-    int pabort = 0;
+    int noabort = 0;
     TEST in, out;
     struct polygonizer_mesh *m = (struct polygonizer_mesh *)bu_calloc(1, sizeof(struct polygonizer_mesh), "results");
 
@@ -623,7 +621,7 @@ polygonize(
 	c = p.cubes->cube;
 
 	/* decompose into tetrahedra and polygonize: */
-	pabort =
+	noabort =
 	    dotet(&c, LBN, LTN, RBN, LBF, &p) &&
 	    dotet(&c, RTN, LTN, LBF, RBN, &p) &&
 	    dotet(&c, RTN, LTN, LTF, LBF, &p) &&
@@ -631,7 +629,7 @@ polygonize(
 	    dotet(&c, RTN, LBF, LTF, RBF, &p) &&
 	    dotet(&c, RTN, LTF, RTF, RBF, &p);
 
-	if (pabort) {
+	if (!noabort) {
 	    polygonizer_mesh_free(m);
 	    return NULL;
 	}
@@ -773,7 +771,7 @@ analyze_polygonize(
     struct pnt_normal *rtpnt;
     PROCESS p;
     int n;
-    int pabort = 0;
+    int noabort = 0;
     struct polygonizer_mesh *m;
     struct application *ap;
     struct resource *resp;
@@ -846,7 +844,7 @@ analyze_polygonize(
 	c = p.cubes->cube;
 
 	/* decompose into tetrahedra and polygonize: */
-	pabort =
+	noabort =
 	    dotet(&c, LBN, LTN, RBN, LBF, &p) &&
 	    dotet(&c, RTN, LTN, LBF, RBN, &p) &&
 	    dotet(&c, RTN, LTN, LTF, LBF, &p) &&
@@ -854,7 +852,8 @@ analyze_polygonize(
 	    dotet(&c, RTN, LBF, LTF, RBF, &p) &&
 	    dotet(&c, RTN, LTF, RTF, RBF, &p);
 
-	if (pabort) {
+	if (!noabort) {
+	    bu_log("aborting\n");
 	    polygonizer_mesh_free(m);
 	    return -1;
 	}
@@ -882,8 +881,8 @@ analyze_polygonize(
 	for (i = 0; i < m->triangles.count; i++) {
 	    bu_log("face %d: (%g %g %g) (%g %g %g) (%g %g %g)\n", i, V3ARGS(m->vertices.ptr[m->triangles.ptr[i].i1].position), V3ARGS(m->vertices.ptr[m->triangles.ptr[i].i2].position), V3ARGS(m->vertices.ptr[m->triangles.ptr[i].i3].position));
 	    nfaces[i*3 + 0] = m->triangles.ptr[i].i1;
-	    nfaces[i*3 + 1] = m->triangles.ptr[i].i2;
-	    nfaces[i*3 + 2] = m->triangles.ptr[i].i3;
+	    nfaces[i*3 + 1] = m->triangles.ptr[i].i3;
+	    nfaces[i*3 + 2] = m->triangles.ptr[i].i2;
 	}
 	(*num_faces) = m->triangles.count;
 	(*num_vertices) = m->vertices.count;
