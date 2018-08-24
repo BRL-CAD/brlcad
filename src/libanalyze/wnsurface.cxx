@@ -668,6 +668,13 @@ wn_peval(point_t q, void *d)
  *
  * http://www.unchainedgeometry.com/jbloom/papers.html
  * https://github.com/Tonsty/polygonizer
+ *
+ * TODO:  see if the following paper could improve this (no idea how hard
+ * it would be to implement...):
+ *
+ * Bruno Rodrigues de Araújo and Joaquim Armando Pires Jorge, "Adaptive
+ * polygonization of implicit surfaces", Computers & Graphics, Vol. 29, pp.
+ * 686–696 (2005)
  */
 extern "C" int
 wn_mesh(int **faces, int *num_faces, point_t **vertices, int *num_vertices, struct rt_pnts_internal *pnts, fastf_t b)
@@ -679,11 +686,26 @@ wn_mesh(int **faces, int *num_faces, point_t **vertices, int *num_vertices, stru
     wntd.wnt = wn_tree_create(pnts);
     if (!wntd.wnt) return -1;
 
+    /* Try to get an estimate of the size we need to get reasonable fidelity out of the mesh. */
+    double xlen = wntd.wnt->t->hdim[X] * 2;
+    double ylen = wntd.wnt->t->hdim[Y] * 2;
+    double zlen = wntd.wnt->t->hdim[Z] * 2;
+    double psize = (xlen < ylen) ? xlen : ylen;
+    psize = (psize < zlen) ? psize : zlen;
+    psize = psize * 0.01;
+
     pl = (struct pnt_normal *)pnts->point;
-    struct polygonizer_mesh *m = polygonize(&wn_peval, (void *)&wntd, 1, 1, pl->v, NULL, NULL);
+
+    /* Note that we do NOT want to limit the portion of the model we are
+     * considering via bounds - in testing that results in incomplete
+     * tessellations of the shape for small values, and on the flip side
+     * doesn't seem to be bothered by arbitrarily large values.  Consequently,
+     * we set it to INT_MAX */
+    struct polygonizer_mesh *m = polygonize(&wn_peval, (void *)&wntd, psize, INT_MAX, pl->v, NULL, NULL);
 
     wn_tree_destroy(wntd.wnt);
 
+    polygonizer_mesh_free(m);
     return (m) ? 1 : 0;
 }
 
