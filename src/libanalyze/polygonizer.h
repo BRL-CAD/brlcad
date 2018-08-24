@@ -24,7 +24,7 @@
  * point q is inside or outside the surface.  The value in d is intended to
  * hold any information needed when evaluating the function.
  */
-typedef int (*polygonize_func_t)(point_t q, void *d);
+typedef int (*polygonize_func_t)(point_t *q, void *d);
 
 
 /* Containers for polygonizer output */

@@ -55,6 +55,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/types.h>
 #include "bu/log.h"
 #include "bu/malloc.h"
@@ -179,9 +180,10 @@ setcorner (PROCESS *p, int i, int j, int k)
 	}
     l = (CORNERLIST *) bu_calloc(1, sizeof(CORNERLIST), "cornerlist");
     l->i = i; l->j = j; l->k = k;
-    l->value = c->value = p->function(c->p, p->d);
+    l->value = c->value = p->function(&(c->p), p->d);
     l->next = p->corners[index];
     p->corners[index] = l;
+
     return c;
 }
 
@@ -252,7 +254,7 @@ find(int sign, PROCESS *pr, point_t p)
 	test.p[X] = p[X]+range*(RAND()-0.5);
 	test.p[Y] = p[Y]+range*(RAND()-0.5);
 	test.p[Z] = p[Z]+range*(RAND()-0.5);
-	test.value = pr->function(test.p, pr->d);
+	test.value = pr->function(&test.p, pr->d);
 	if (sign == (test.value > 0.0)) return test;
 	range = range*1.0005; /* slowly expand search outwards */
     }
@@ -299,7 +301,7 @@ converge(point_t *p1, point_t *p2, double v, polygonize_func_t function, point_t
 	(*p)[Y] = 0.5*(pos[Y]+ neg[Y]);
 	(*p)[Z] = 0.5*(pos[Z]+ neg[Z]);
 	if (i++ == RES) return;
-	if ((function(*p, d)) > 0.0) {
+	if ((function(p, d)) > 0.0) {
 	    VMOVE(pos, *p);
 	} else {
 	    VMOVE(neg, *p);
@@ -313,16 +315,16 @@ void
 vnormal(point_t *point, PROCESS *p, point_t *v)
 {
     point_t temp;
-    double f = p->function(*point, p->d);
+    double f = p->function(point, p->d);
     VMOVE(temp, *point);
     temp[X] = temp[X] + p->delta;
-    (*v)[X] = p->function(temp, p->d)-f;
+    (*v)[X] = p->function(&temp, p->d)-f;
     VMOVE(temp, *point);
     temp[Y] = temp[Y] + p->delta;
-    (*v)[Y] = p->function(temp, p->d)-f;
+    (*v)[Y] = p->function(&temp, p->d)-f;
     VMOVE(temp, *point);
     temp[Z] = temp[Z] + p->delta;
-    (*v)[Z] = p->function(temp, p->d)-f;
+    (*v)[Z] = p->function(&temp, p->d)-f;
     f = MAGNITUDE(*v);
     if (!NEAR_ZERO(f, VUNITIZE_TOL)) {
 	VSCALE(*v, *v, 1.0/f);
@@ -387,10 +389,10 @@ crossing(point_t *n, point_t *p, point_t *p1, point_t *p2, double vorient, struc
 
     /* TODO - which way does the ray go, and which point do we use as the starting point ??? If this
      * is wrong nothing will work */
-    VSUB2(rdir, pos, neg);
+    VSUB2(rdir, neg, pos);
     VUNITIZE(rdir);
 
-    VMOVE(ap->a_ray.r_pt, neg);
+    VMOVE(ap->a_ray.r_pt, pos);
     VMOVE(ap->a_ray.r_dir, rdir);
 
     VSETALL(pt->v, DBL_MAX);
@@ -491,7 +493,7 @@ add_triangle(int i1, int i2, int i3, PROCESS *p)
     t->i2 = i2;
     t->i3 = i3;
 
-    if (!p->triproc) return 1;
+    if (!p->triproc) return 0;
     return p->triproc(i1, i2, i3, &p->m->vertices, p->td);
 }
 
@@ -524,6 +526,7 @@ dotet(CUBE *cube, int c1, int c2, int c3, int c4, PROCESS *p)
     if (cpos != dpos) e6 = vertid(c, d, p);
     if (e1 < 0 || e2 < 0 || e3 < 0 || e4 < 0 || e5 < 0 || e6 < 0) return 0;
     /* 14 productive tetrahedral cases (0000 and 1111 do not yield polygons */
+    bu_log("index: %d\n", index);
     switch (index) {
 	case 1:	 return add_triangle(e5, e6, e3, p);
 	case 2:	 return add_triangle(e2, e6, e4, p);
@@ -648,28 +651,145 @@ polygonize(
     return m;
 }
 
-
-struct polygonizer_mesh *
-rt_polygonize(
-	struct application *ap,
-	fastf_t size,
-	point_t p_s)
+HIDDEN int
+in_out_hit(struct application *ap, struct partition *partH, struct seg *UNUSED(segs))
 {
-    struct pnt_normal rtpnt;
+    struct partition *part = partH->pt_forw;
+    struct soltab *stp = part->pt_inseg->seg_stp;
+
+    int *ret = (int *)(ap->a_uptr);
+
+    RT_CK_APPLICATION(ap);
+
+    _tgc_hack_fix(part, stp);
+
+#if 0
+    {
+    point_t hit_pnt;
+    VJOIN1(hit_pnt, ap->a_ray.r_pt, part->pt_outhit->hit_dist, ap->a_ray.r_dir);
+    bu_log("r_pt: %g %g %g\n", V3ARGS(ap->a_ray.r_pt));
+    bu_log("r_dir: %g %g %g\n", V3ARGS(ap->a_ray.r_dir));
+    bu_log("hit_pnt: %g %g %g\n", V3ARGS(hit_pnt));
+    bu_log("Hit dist: %g\n", part->pt_inhit->hit_dist);
+    }
+#endif
+
+    if (part->pt_inhit->hit_dist < 0) {
+	(*ret) = -1;
+    }
+
+    return 0;
+}
+
+int
+in_out_miss(struct application *UNUSED(ap))
+{
+    return 0;
+}
+
+int
+pnt_in_out(point_t *p, void *d)
+{
+    int i;
+    int fret = 1;
+    int dir_results[6] = {0, 0, 0, 0, 0, 0};
+    struct application *ap = (struct application *)d;
+    int (*a_hit)(struct application *, struct partition *, struct seg *);
+    int (*a_miss)(struct application *);
+    void *uptr_stash;
+
+    vect_t mx, my, mz, px, py, pz;
+    VSET(mx, -1,  0,  0);
+    VSET(my,  0, -1,  0);
+    VSET(mz,  0,  0, -1);
+    VSET(px,  1,  0,  0);
+    VSET(py,  0,  1,  0);
+    VSET(pz,  0,  0,  1);
+
+    /* reuse existing application, just cache pre-existing hit routines and
+     * substitute our own */
+    a_hit = ap->a_hit;
+    a_miss = ap->a_miss;
+    uptr_stash = ap->a_uptr;
+
+    ap->a_hit = in_out_hit;
+    ap->a_miss = in_out_miss;
+
+    VMOVE(ap->a_ray.r_pt, *p);
+
+    /* Check the six directions to see if any of them indicate we are inside */
+
+    /* -x */
+    ap->a_uptr = &(dir_results[0]);
+    VMOVE(ap->a_ray.r_dir, mx);
+    (void)rt_shootray(ap);
+    /* -y */
+    ap->a_uptr = &(dir_results[1]);
+    VMOVE(ap->a_ray.r_dir, my);
+    (void)rt_shootray(ap);
+    /* -z */
+    ap->a_uptr = &(dir_results[2]);
+    VMOVE(ap->a_ray.r_dir, mz);
+    (void)rt_shootray(ap);
+    /* x */
+    ap->a_uptr = &(dir_results[3]);
+    VMOVE(ap->a_ray.r_dir, px);
+    (void)rt_shootray(ap);
+    /* y */
+    ap->a_uptr = &(dir_results[4]);
+    VMOVE(ap->a_ray.r_dir, py);
+    (void)rt_shootray(ap);
+    /* z */
+    ap->a_uptr = &(dir_results[5]);
+    VMOVE(ap->a_ray.r_dir, pz);
+    (void)rt_shootray(ap);
+
+    for (i = 0; i < 6; i++) {
+	if (dir_results[i] < 0) fret = -1;
+    }
+
+    /* restore application */
+    ap->a_hit = a_hit;
+    ap->a_miss = a_miss;
+    ap->a_uptr = uptr_stash;
+    bu_log("In/Out status of %g %g %g: %d\n", V3ARGS(*p), fret);
+
+    return fret;
+}
+
+
+int
+analyze_polygonize(
+	int **faces,
+       	int *num_faces,
+       	point_t **vertices,
+       	int *num_vertices,
+	fastf_t size,
+	point_t p_s,
+       	const char *obj,
+       	struct db_i *dbip)
+{
+    int ncpus = bu_avail_cpus();
+    struct pnt_normal *rtpnt;
     PROCESS p;
     int n;
     int pabort = 0;
-    struct polygonizer_mesh *m = (struct polygonizer_mesh *)bu_calloc(1, sizeof(struct polygonizer_mesh), "results");
+    struct polygonizer_mesh *m;
+    struct application *ap;
+    struct resource *resp;
+    struct rt_i *rtip;
 
-    p.function = NULL;
+    if (!faces || !num_faces || !vertices || !num_vertices || !obj || !dbip) return -1;
+
+    p.function = pnt_in_out;
     p.triproc = NULL;
     p.bounds = INT_MAX;
     p.delta = 0;
-    p.d = NULL;
     p.td = NULL;
     p.raytrace = 1;
 
-    p.ap = ap;
+    m = (struct polygonizer_mesh *)bu_calloc(1, sizeof(struct polygonizer_mesh), "results");
+
     p.size = size;
     p.m = m;
 
@@ -681,12 +801,27 @@ rt_polygonize(
     /* p_s must be on the surface for this method */
     VMOVE(p.start, p_s);
 
-    /* Set callbacks */
-    p.ap->a_onehit = 1;
-    p.ap->a_hit = first_hit;
-    p.ap->a_overlap = NULL;
-    p.ap->a_miss = crossing_miss;
-    p.ap->a_uptr = (void *)&rtpnt;
+    /* Set up raytracing */
+    BU_GET(ap, struct application);
+    RT_APPLICATION_INIT(ap);
+    BU_GET(resp, struct resource);
+    rtip = rt_new_rti(dbip);
+    rt_init_resource(resp, 0, rtip);
+    ap->a_rt_i = rtip;
+    ap->a_resource = resp;
+    ap->a_onehit = 1;
+    ap->a_hit = first_hit;
+    ap->a_miss = crossing_miss;
+    ap->a_overlap = NULL;
+    ap->a_logoverlap = rt_silent_logoverlap;
+    BU_GET(rtpnt, struct pnt_normal);
+    ap->a_uptr = (void *)rtpnt;
+    if ((rt_gettree(rtip, obj) < 0)) {
+	return -1;
+    }
+    rt_prep_parallel(rtip, ncpus);
+    p.ap = ap;
+    p.d = ap;
 
     /* push initial cube on stack: */
     p.cubes = (CUBES *) bu_calloc(1, sizeof(CUBES), "cubes"); /* list of 1 */
@@ -721,7 +856,7 @@ rt_polygonize(
 
 	if (pabort) {
 	    polygonizer_mesh_free(m);
-	    return NULL;
+	    return -1;
 	}
 
 	/* pop current cube from stack */
@@ -736,7 +871,28 @@ rt_polygonize(
 	testface(c.i, c.j, c.k+1, &c, F, LBF, LTF, RBF, RTF, &p);
     }
 
-    return m;
+    /* Translate m into vert and face arrays */
+    if (m->triangles.count && m->vertices.count) {
+	int i = 0;
+	int *nfaces = (int *)bu_calloc(m->triangles.count * 3, sizeof(int), "faces array");
+	point_t *nverts = (point_t *)bu_calloc(m->vertices.count, sizeof(point_t), "verts array");
+	for (i = 0; i < m->vertices.count; i++) {
+	    VMOVE(nverts[i], m->vertices.ptr[i].position);
+	}
+	for (i = 0; i < m->triangles.count; i++) {
+	    bu_log("face %d: (%g %g %g) (%g %g %g) (%g %g %g)\n", i, V3ARGS(m->vertices.ptr[m->triangles.ptr[i].i1].position), V3ARGS(m->vertices.ptr[m->triangles.ptr[i].i2].position), V3ARGS(m->vertices.ptr[m->triangles.ptr[i].i3].position));
+	    nfaces[i*3 + 0] = m->triangles.ptr[i].i1;
+	    nfaces[i*3 + 1] = m->triangles.ptr[i].i2;
+	    nfaces[i*3 + 2] = m->triangles.ptr[i].i3;
+	}
+	(*num_faces) = m->triangles.count;
+	(*num_vertices) = m->vertices.count;
+	(*faces) = nfaces;
+	(*vertices) = nverts;
+	return 0;
+    } else {
+	return -1;
+    }
 }
 
 /*
