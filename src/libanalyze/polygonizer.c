@@ -43,15 +43,6 @@
  * find (called by polygonize): search for point with given polarity
  * dotet (called by polygonize) set edge vertices, output triangle by
  *    invoking callback
- *
- * The section Cubical Polygonization contains routines to polygonize directly
- * from the lattice cell rather than first decompose it into tetrahedra;
- * dotet, however, is recommended over docube.
- *
- * The section Storage provides routines to handle the linked lists
- * in the hash tables.
- *
- * The section Vertices contains the following routines.
  * vertid (called by dotet): given two corner indices defining a cell edge,
  *    test whether the edge has been stored in the hash table; if so, return its
  *    associated vertex index. If not, compute intersection of edge and implicit
@@ -68,6 +59,7 @@
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "./polygonizer.h"
+#include "raytrace.h"
 
 #define RES	10  /* # converge iterations    */
 
@@ -162,6 +154,8 @@ typedef struct process {	   /* parameters, function, storage */
     CENTERLIST **centers;	   /* cube center hash table */
     CORNERLIST **corners;	   /* corner value hash table */
     EDGELIST **edges;		   /* edge and vertex id hash table */
+    int raytrace;                  /* if non-zero, use raytracer for the converge step */
+    struct application *ap;        /* librt application structure to use if we are raytracing */
     struct polygonizer_mesh *m;    /* vertices and triangles generated */
 } PROCESS;
 
@@ -315,7 +309,6 @@ converge(point_t *p1, point_t *p2, double v, polygonize_func_t function, point_t
 
 
 /* vnormal: compute unit length surface normal at point */
-
 void
 vnormal(point_t *point, PROCESS *p, point_t *v)
 {
@@ -334,6 +327,91 @@ vnormal(point_t *point, PROCESS *p, point_t *v)
     if (!NEAR_ZERO(f, VUNITIZE_TOL)) {
 	VSCALE(*v, *v, 1.0/f);
     }
+}
+
+
+HIDDEN void
+_tgc_hack_fix(struct partition *part, struct soltab *stp) {
+    /* hack fix for bad tgc surfaces - avoids a logging crash, which is probably something else altogether... */
+    if (bu_strncmp("rec", stp->st_meth->ft_label, 3) == 0 || bu_strncmp("tgc", stp->st_meth->ft_label, 3) == 0) {
+
+	/* correct invalid surface number */
+	if (part->pt_inhit->hit_surfno < 1 || part->pt_inhit->hit_surfno > 3) {
+	    part->pt_inhit->hit_surfno = 2;
+	}
+	if (part->pt_outhit->hit_surfno < 1 || part->pt_outhit->hit_surfno > 3) {
+	    part->pt_outhit->hit_surfno = 2;
+	}
+    }
+}
+
+HIDDEN int
+first_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
+{
+    struct partition *part = PartHeadp->pt_forw;
+    struct soltab *stp = part->pt_inseg->seg_stp;
+    struct pnt_normal *pt = (struct pnt_normal *)(ap->a_uptr);
+
+    RT_CK_APPLICATION(ap);
+
+    _tgc_hack_fix(part, stp);
+
+    VJOIN1(pt->v, ap->a_ray.r_pt, part->pt_inhit->hit_dist, ap->a_ray.r_dir);
+    RT_HIT_NORMAL(pt->n, part->pt_inhit, stp, &(app->a_ray), part->pt_inflip);
+
+    return 0;
+}
+
+int
+crossing_miss(struct application *UNUSED(ap))
+{
+    bu_log("missed???????\n");
+    return 0;
+}
+
+/* Given the two points, find the hit point and normal using the raytracer */
+int
+crossing(point_t *n, point_t *p, point_t *p1, point_t *p2, double vorient, struct application *ap)
+{
+    struct pnt_normal *pt = (struct pnt_normal *)(ap->a_uptr);
+    point_t pos, neg;
+    vect_t rdir;
+    if (vorient < 0) {
+	VMOVE(pos, *p2);
+	VMOVE(neg, *p1);
+    }
+    else {
+	VMOVE(pos, *p1);
+	VMOVE(neg, *p2);
+    }
+
+    /* TODO - which way does the ray go, and which point do we use as the starting point ??? If this
+     * is wrong nothing will work */
+    VSUB2(rdir, pos, neg);
+    VUNITIZE(rdir);
+
+    VMOVE(ap->a_ray.r_pt, neg);
+    VMOVE(ap->a_ray.r_dir, rdir);
+
+    VSETALL(pt->v, DBL_MAX);
+    VSETALL(pt->n, DBL_MAX);
+
+    (void)rt_shootray(ap);
+
+    VMOVE(*p, pt->v);
+    VMOVE(*n, pt->n);
+
+    if (!(pt->v[X] < DBL_MAX) || !(pt->n[X] < DBL_MAX)) {
+	bu_log("Fatal error, could not find crossing!\n");
+	return -1;
+    }
+
+    return 0;
+    /* MAYBE - if we have a field definition as well, fall back on the field
+     * evaluation if the raytracer doesn't give us something sensible.  If the
+     * field doesn't converge to a solution locally, ask the raytracer to
+     * augment the initial point cloud in this region and locally
+     * rebuild/refine the octree. */
 }
 
 /* add_vertex: add v to sequence of vertices */
@@ -380,8 +458,16 @@ vertid(CORNER *c1, CORNER *c2, PROCESS *p)
     if (vid != -1) return vid;			     /* previously computed */
     VMOVE(a, c1->p);
     VMOVE(b, c2->p);
-    converge(&a, &b, c1->value, p->function, &v.position, p->d); /* position */
-    vnormal(&v.position, p, &v.normal);			   /* normal */
+
+    if (!p->raytrace) {
+	converge(&a, &b, c1->value, p->function, &v.position, p->d); /* position */
+	vnormal(&v.position, p, &v.normal);			   /* normal */
+    } else {
+	if (crossing(&v.normal, &v.position, &a, &b, c1->value, p->ap) < 0) {
+	    return -1;
+	}
+    }
+
     add_vertex(&p->m->vertices, &v);			   /* save vertex */
     vid = p->m->vertices.count-1;
     setedge(p->edges, c1->i, c1->j, c1->k, c2->i, c2->j, c2->k, vid);
@@ -436,6 +522,7 @@ dotet(CUBE *cube, int c1, int c2, int c3, int c4, PROCESS *p)
     if (bpos != cpos) e4 = vertid(b, c, p);
     if (bpos != dpos) e5 = vertid(b, d, p);
     if (cpos != dpos) e6 = vertid(c, d, p);
+    if (e1 < 0 || e2 < 0 || e3 < 0 || e4 < 0 || e5 < 0 || e6 < 0) return 0;
     /* 14 productive tetrahedral cases (0000 and 1111 do not yield polygons */
     switch (index) {
 	case 1:	 return add_triangle(e5, e6, e3, p);
@@ -490,6 +577,8 @@ polygonize(
     p.delta = size/(double)(RES*RES);
     p.d = pf_d;
     p.td = triproc_d;
+    p.raytrace = 0;
+    p.ap = NULL;
     p.m = m;
 
     /* allocate hash tables and build cube polygon table: */
@@ -507,6 +596,97 @@ polygonize(
 	return NULL;
     }
     converge(&in.p, &out.p, in.value, p.function, &p.start, p.d);
+
+    /* push initial cube on stack: */
+    p.cubes = (CUBES *) bu_calloc(1, sizeof(CUBES), "cubes"); /* list of 1 */
+    p.cubes->cube.i = p.cubes->cube.j = p.cubes->cube.k = 0;
+    p.cubes->next = NULL;
+
+    /* set corners of initial cube: */
+    for (n = 0; n < 8; n++)
+	p.cubes->cube.corners[n] = setcorner(&p, BIT(n,2), BIT(n,1), BIT(n,0));
+
+    p.m->vertices.count = p.m->vertices.max = 0; /* no vertices yet */
+    p.m->vertices.ptr = NULL;
+
+    p.m->triangles.count = p.m->triangles.max = 0; /* no triangles yet */
+    p.m->triangles.ptr = NULL;
+
+    setcenter(p.centers, 0, 0, 0);
+
+    while (p.cubes != NULL) { /* process active cubes till none left */
+	CUBE c;
+	CUBES *temp = p.cubes;
+	c = p.cubes->cube;
+
+	/* decompose into tetrahedra and polygonize: */
+	pabort =
+	    dotet(&c, LBN, LTN, RBN, LBF, &p) &&
+	    dotet(&c, RTN, LTN, LBF, RBN, &p) &&
+	    dotet(&c, RTN, LTN, LTF, LBF, &p) &&
+	    dotet(&c, RTN, RBN, LBF, RBF, &p) &&
+	    dotet(&c, RTN, LBF, LTF, RBF, &p) &&
+	    dotet(&c, RTN, LTF, RTF, RBF, &p);
+
+	if (pabort) {
+	    polygonizer_mesh_free(m);
+	    return NULL;
+	}
+
+	/* pop current cube from stack */
+	p.cubes = p.cubes->next;
+	free((char *) temp);
+	/* test six face directions, maybe add to stack: */
+	testface(c.i-1, c.j, c.k, &c, L, LBN, LBF, LTN, LTF, &p);
+	testface(c.i+1, c.j, c.k, &c, R, RBN, RBF, RTN, RTF, &p);
+	testface(c.i, c.j-1, c.k, &c, B, LBN, LBF, RBN, RBF, &p);
+	testface(c.i, c.j+1, c.k, &c, T, LTN, LTF, RTN, RTF, &p);
+	testface(c.i, c.j, c.k-1, &c, N, LBN, LTN, RBN, RTN, &p);
+	testface(c.i, c.j, c.k+1, &c, F, LBF, LTF, RBF, RTF, &p);
+    }
+
+    return m;
+}
+
+
+struct polygonizer_mesh *
+rt_polygonize(
+	struct application *ap,
+	fastf_t size,
+	point_t p_s)
+{
+    struct pnt_normal rtpnt;
+    PROCESS p;
+    int n;
+    int pabort = 0;
+    struct polygonizer_mesh *m = (struct polygonizer_mesh *)bu_calloc(1, sizeof(struct polygonizer_mesh), "results");
+
+    p.function = NULL;
+    p.triproc = NULL;
+    p.bounds = INT_MAX;
+    p.delta = 0;
+    p.d = NULL;
+    p.td = NULL;
+    p.raytrace = 1;
+
+    p.ap = ap;
+    p.size = size;
+    p.m = m;
+
+    /* allocate hash tables and build cube polygon table: */
+    p.centers = (CENTERLIST **) bu_calloc(HASHSIZE, sizeof(CENTERLIST *), "hashsize centerlist");
+    p.corners = (CORNERLIST **) bu_calloc(HASHSIZE,sizeof(CORNERLIST *), "hashsize, cornerlist");
+    p.edges =	(EDGELIST   **) bu_calloc(2*HASHSIZE,sizeof(EDGELIST *), "2*hashsize, edgelist");
+
+    /* p_s must be on the surface for this method */
+    VMOVE(p.start, p_s);
+
+    /* Set callbacks */
+    p.ap->a_onehit = 1;
+    p.ap->a_hit = first_hit;
+    p.ap->a_overlap = NULL;
+    p.ap->a_miss = crossing_miss;
+    p.ap->a_uptr = (void *)&rtpnt;
 
     /* push initial cube on stack: */
     p.cubes = (CUBES *) bu_calloc(1, sizeof(CUBES), "cubes"); /* list of 1 */
