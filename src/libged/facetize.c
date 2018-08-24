@@ -21,6 +21,9 @@
  *
  * The facetize command.
  *
+ * TODO - clean up handling of reporting combs for fallback methods.
+ * resume still is doing SPSR, for example...
+ *
  */
 
 #include "common.h"
@@ -1830,7 +1833,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	if (fret == GED_FACETIZE_INVALID) {
 	    bu_ptbl_ins(&continuation_failed, (long *)bu_avs_get(opts->s_map, oname));
 	}
-	if (fret == GED_SPSR_SUCCESS) {
+	if (fret == GED_CONTINUATION_SUCCESS) {
 	    bu_ptbl_ins(&continuation_succeeded, (long *)bu_avs_get(opts->s_map, oname));
 	}
     }

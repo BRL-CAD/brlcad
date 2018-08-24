@@ -60,8 +60,68 @@
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/time.h"
-#include "./polygonizer.h"
 #include "raytrace.h"
+
+/**
+ * Callback function signature for the function used to decide if the query
+ * point q is inside or outside the surface.  The value in d is intended to
+ * hold any information needed when evaluating the function.
+ */
+typedef int (*polygonize_func_t)(point_t *q, void *d);
+
+
+/* Containers for polygonizer output */
+
+struct polygonizer_vertex {            /* surface vertex */
+    point_t position;
+    point_t normal;                    /* surface normal */
+};
+
+/* list of vertices in polygonization */
+struct polygonizer_vertices {
+    int count;
+    int max;
+    struct polygonizer_vertex *ptr;
+};
+
+struct polygonizer_triangle {
+    int i1;
+    int i2;
+    int i3;
+};
+
+struct polygonizer_triangles {
+    int count;
+    int max;
+    struct polygonizer_triangle *ptr;
+};
+
+struct polygonizer_mesh {
+    struct polygonizer_vertices vertices;
+    struct polygonizer_triangles triangles;
+};
+
+void polygonizer_mesh_free(struct polygonizer_mesh *m);
+
+/**
+ * Callback function signature for the function called when a triangle is
+ * generated - this allows an application (for example) to incrementally
+ * display progress as the algorithm is running.
+ *
+ * i1, i2, i3 (indices into the vertex array defining the triangle)
+ * vertices (the vertex array, indexed from 0)
+ *
+ * vertices are ccw when viewed from the out (positive) side in a left-handed
+ * coordinate system
+ *
+ * vertex normals point outwards
+ *
+ * Function should return 1 to continue the polygonalization, 0 to abort
+ */
+typedef int (*polygonize_triproc_t)(int i1, int i2, int i3, struct polygonizer_vertices *vertices, void *d);
+
+
+
 
 #define RES	10  /* # converge iterations    */
 
@@ -267,16 +327,16 @@ find(int sign, PROCESS *pr, point_t p)
 /* getedge: return vertex id for edge; return -1 if not set */
 
 int
-getedge(EDGELIST *table[], int i1, int j1, int k1, int i2, int j2, int k2)
+getedge(EDGELIST *table[], int gei1, int gej1, int gek1, int gei2, int gej2, int gek2)
 {
     EDGELIST *q;
-    if (i1>i2 || (i1==i2 && (j1>j2 || (j1==j2 && k1>k2)))) {
-	int t=i1; i1=i2; i2=t; t=j1; j1=j2; j2=t; t=k1; k1=k2; k2=t;
+    if (gei1>gei2 || (gei1==gei2 && (gej1>gej2 || (gej1==gej2 && gek1>gek2)))) {
+	int t=gei1; gei1=gei2; gei2=t; t=gej1; gej1=gej2; gej2=t; t=gek1; gek1=gek2; gek2=t;
     };
-    q = table[HASH(i1, j1, k1)+HASH(i2, j2, k2)];
+    q = table[HASH(gei1, gej1, gek1)+HASH(gei2, gej2, gek2)];
     for (; q != NULL; q = q->next)
-	if (q->i1 == i1 && q->j1 == j1 && q->k1 == k1 &&
-		q->i2 == i2 && q->j2 == j2 && q->k2 == k2)
+	if (q->i1 == gei1 && q->j1 == gej1 && q->k1 == gek1 &&
+		q->i2 == gei2 && q->j2 == gej2 && q->k2 == gek2)
 	    return q->vid;
     return -1;
 }
@@ -387,8 +447,6 @@ crossing(point_t *n, point_t *p, point_t *p1, point_t *p2, double vorient, struc
 	VMOVE(neg, *p2);
     }
 
-    /* TODO - which way does the ray go, and which point do we use as the starting point ??? If this
-     * is wrong nothing will work */
     VSUB2(rdir, neg, pos);
     VUNITIZE(rdir);
 
@@ -432,17 +490,17 @@ add_vertex(VERTICES *vertices, VERTEX *v)
 
 /* setedge: set vertex id for edge */
 void
-setedge(EDGELIST *table[], int i1, int j1, int k1, int i2, int j2, int k2, int vid)
+setedge(EDGELIST *table[], int sei1, int sej1, int sek1, int sei2, int sej2, int sek2, int vid)
 {
     unsigned int index;
     EDGELIST *enew;
-    if (i1>i2 || (i1==i2 && (j1>j2 || (j1==j2 && k1>k2)))) {
-	int t=i1; i1=i2; i2=t; t=j1; j1=j2; j2=t; t=k1; k1=k2; k2=t;
+    if (sei1>sei2 || (sei1==sei2 && (sej1>sej2 || (sej1==sej2 && sek1>sek2)))) {
+	int t=sei1; sei1=sei2; sei2=t; t=sej1; sej1=sej2; sej2=t; t=sek1; sek1=sek2; sek2=t;
     }
-    index = HASH(i1, j1, k1) + HASH(i2, j2, k2);
+    index = HASH(sei1, sej1, sek1) + HASH(sei2, sej2, sek2);
     enew = (EDGELIST *) bu_calloc(1, sizeof(EDGELIST), "edgelist");
-    enew->i1 = i1; enew->j1 = j1; enew->k1 = k1;
-    enew->i2 = i2; enew->j2 = j2; enew->k2 = k2;
+    enew->i1 = sei1; enew->j1 = sej1; enew->k1 = sek1;
+    enew->i2 = sei2; enew->j2 = sej2; enew->k2 = sek2;
     enew->vid = vid;
     enew->next = table[index];
     table[index] = enew;
@@ -562,101 +620,6 @@ polygonizer_mesh_free(struct polygonizer_mesh *m)
     bu_free(m, "mesh");
 }
 
-/**** An Implicit Surface Polygonizer ****/
-
-struct polygonizer_mesh *
-polygonize(
-	polygonize_func_t pf,
-	void *pf_d,
-	fastf_t size,
-	int bounds,
-	point_t p_s,
-	polygonize_triproc_t triproc,
-	void *triproc_d)
-{
-    PROCESS p;
-    int n;
-    int noabort = 0;
-    TEST in, out;
-    struct polygonizer_mesh *m = (struct polygonizer_mesh *)bu_calloc(1, sizeof(struct polygonizer_mesh), "results");
-
-    p.function = pf;
-    p.triproc = triproc;
-    p.size = size;
-    p.bounds = bounds;
-    p.delta = size/(double)(RES*RES);
-    p.d = pf_d;
-    p.td = triproc_d;
-    p.raytrace = 0;
-    p.ap = NULL;
-    p.m = m;
-
-    /* allocate hash tables and build cube polygon table: */
-    p.centers = (CENTERLIST **) bu_calloc(HASHSIZE, sizeof(CENTERLIST *), "hashsize centerlist");
-    p.corners = (CORNERLIST **) bu_calloc(HASHSIZE,sizeof(CORNERLIST *), "hashsize, cornerlist");
-    p.edges =	(EDGELIST   **) bu_calloc(2*HASHSIZE,sizeof(EDGELIST *), "2*hashsize, edgelist");
-
-    /* find point on surface, beginning search at point p_s: */
-    srand(1);
-    in = find(1, &p, p_s);
-    out = find(0, &p, p_s);
-    if (!in.ok || !out.ok) {
-	bu_log ("polygonizer: Error, can't find starting point");
-	polygonizer_mesh_free(m);
-	return NULL;
-    }
-    converge(&in.p, &out.p, in.value, p.function, &p.start, p.d);
-
-    /* push initial cube on stack: */
-    p.cubes = (CUBES *) bu_calloc(1, sizeof(CUBES), "cubes"); /* list of 1 */
-    p.cubes->cube.i = p.cubes->cube.j = p.cubes->cube.k = 0;
-    p.cubes->next = NULL;
-
-    /* set corners of initial cube: */
-    for (n = 0; n < 8; n++)
-	p.cubes->cube.corners[n] = setcorner(&p, BIT(n,2), BIT(n,1), BIT(n,0));
-
-    p.m->vertices.count = p.m->vertices.max = 0; /* no vertices yet */
-    p.m->vertices.ptr = NULL;
-
-    p.m->triangles.count = p.m->triangles.max = 0; /* no triangles yet */
-    p.m->triangles.ptr = NULL;
-
-    setcenter(p.centers, 0, 0, 0);
-
-    while (p.cubes != NULL) { /* process active cubes till none left */
-	CUBE c;
-	CUBES *temp = p.cubes;
-	c = p.cubes->cube;
-
-	/* decompose into tetrahedra and polygonize: */
-	noabort =
-	    dotet(&c, LBN, LTN, RBN, LBF, &p) &&
-	    dotet(&c, RTN, LTN, LBF, RBN, &p) &&
-	    dotet(&c, RTN, LTN, LTF, LBF, &p) &&
-	    dotet(&c, RTN, RBN, LBF, RBF, &p) &&
-	    dotet(&c, RTN, LBF, LTF, RBF, &p) &&
-	    dotet(&c, RTN, LTF, RTF, RBF, &p);
-
-	if (!noabort) {
-	    polygonizer_mesh_free(m);
-	    return NULL;
-	}
-
-	/* pop current cube from stack */
-	p.cubes = p.cubes->next;
-	free((char *) temp);
-	/* test six face directions, maybe add to stack: */
-	testface(c.i-1, c.j, c.k, &c, L, LBN, LBF, LTN, LTF, &p);
-	testface(c.i+1, c.j, c.k, &c, R, RBN, RBF, RTN, RTF, &p);
-	testface(c.i, c.j-1, c.k, &c, B, LBN, LBF, RBN, RBF, &p);
-	testface(c.i, c.j+1, c.k, &c, T, LTN, LTF, RTN, RTF, &p);
-	testface(c.i, c.j, c.k-1, &c, N, LBN, LTN, RBN, RTN, &p);
-	testface(c.i, c.j, c.k+1, &c, F, LBF, LTF, RBF, RTF, &p);
-    }
-
-    return m;
-}
 
 HIDDEN int
 in_out_hit(struct application *ap, struct partition *partH, struct seg *UNUSED(segs))
@@ -752,7 +715,7 @@ pnt_in_out(point_t *p, void *d)
     return fret;
 }
 
-
+/**** An Implicit Surface Polygonizer ****/
 int
 analyze_polygonize(
 	int **faces,
