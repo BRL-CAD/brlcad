@@ -394,7 +394,7 @@ vnormal(point_t *point, PROCESS *p, point_t *v)
 
 
 HIDDEN void
-_tgc_hack_fix(struct partition *part, struct soltab *stp) {
+_polygonizer_tgc_hack_fix(struct partition *part, struct soltab *stp) {
     /* hack fix for bad tgc surfaces - avoids a logging crash, which is probably something else altogether... */
     if (bu_strncmp("rec", stp->st_meth->ft_label, 3) == 0 || bu_strncmp("tgc", stp->st_meth->ft_label, 3) == 0) {
 
@@ -417,7 +417,7 @@ first_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSE
 
     RT_CK_APPLICATION(ap);
 
-    _tgc_hack_fix(part, stp);
+    _polygonizer_tgc_hack_fix(part, stp);
 
     VJOIN1(pt->v, ap->a_ray.r_pt, part->pt_inhit->hit_dist, ap->a_ray.r_dir);
     RT_HIT_NORMAL(pt->n, part->pt_inhit, stp, &(app->a_ray), part->pt_inflip);
@@ -631,7 +631,7 @@ in_out_hit(struct application *ap, struct partition *partH, struct seg *UNUSED(s
 
     RT_CK_APPLICATION(ap);
 
-    _tgc_hack_fix(part, stp);
+    _polygonizer_tgc_hack_fix(part, stp);
 
     if (part->pt_inhit->hit_dist < 0) {
 	(*ret) = -1;
