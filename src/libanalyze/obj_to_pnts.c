@@ -36,6 +36,27 @@
 #include "analyze.h"
 #include "./analyze_private.h"
 
+struct pnt_normal_thickness {
+    struct pnt_normal *pt;
+    fastf_t thickness;
+};
+
+struct pnt_normal_thickness *
+pnthickness_create() {
+    struct pnt_normal_thickness *p;
+    BU_GET(p, struct pnt_normal_thickness);
+    BU_ALLOC(p->pt, struct pnt_normal);
+    return p;
+}
+
+/* Deliberately don't destroy p->pt, as (locally)
+ * it is used to construct the final pnts object */
+void
+pnthickness_free(struct pnt_normal_thickness *p) {
+    if (!p) return;
+    BU_PUT(p, struct pnt_normal_thickness);
+}
+
 HIDDEN void
 _tgc_hack_fix(struct partition *part, struct soltab *stp) {
     /* hack fix for bad tgc surfaces - avoids a logging crash, which is probably something else altogether... */
@@ -54,7 +75,8 @@ _tgc_hack_fix(struct partition *part, struct soltab *stp) {
 HIDDEN int
 outer_pnts_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
 {
-    struct pnt_normal *in_pt, *out_pt;
+    double thickness = 0.0;
+    struct pnt_normal_thickness *in_pt, *out_pt;
     struct partition *in_part = PartHeadp->pt_forw;
     struct partition *out_part = PartHeadp->pt_back;
     struct soltab *stp = in_part->pt_inseg->seg_stp;
@@ -67,17 +89,22 @@ outer_pnts_hit(struct application *ap, struct partition *PartHeadp, struct seg *
     _tgc_hack_fix(in_part, stp);
     _tgc_hack_fix(out_part, ostp);
 
-    BU_ALLOC(in_pt, struct pnt_normal);
-    VJOIN1(in_pt->v, ap->a_ray.r_pt, in_part->pt_inhit->hit_dist, ap->a_ray.r_dir);
-    RT_HIT_NORMAL(in_pt->n, in_part->pt_inhit, stp, &(app->a_ray), in_part->pt_inflip);
+    in_pt = pnthickness_create();
+    VJOIN1(in_pt->pt->v, ap->a_ray.r_pt, in_part->pt_inhit->hit_dist, ap->a_ray.r_dir);
+    RT_HIT_NORMAL(in_pt->pt->n, in_part->pt_inhit, stp, &(app->a_ray), in_part->pt_inflip);
+    in_pt->thickness = 0.0;
     bu_ptbl_ins(pnset, (long *)in_pt);
 
     /* add "out" hit point info (unless half-space) */
     if (bu_strncmp("half", ostp->st_meth->ft_label, 4) != 0) {
-	BU_ALLOC(out_pt, struct pnt_normal);
-	VJOIN1(out_pt->v, ap->a_ray.r_pt, out_part->pt_outhit->hit_dist, ap->a_ray.r_dir);
-	RT_HIT_NORMAL(out_pt->n, out_part->pt_outhit, ostp, &(app->a_ray), out_part->pt_outflip);
+	out_pt = pnthickness_create();
+	VJOIN1(out_pt->pt->v, ap->a_ray.r_pt, out_part->pt_outhit->hit_dist, ap->a_ray.r_dir);
+	RT_HIT_NORMAL(out_pt->pt->n, out_part->pt_outhit, ostp, &(app->a_ray), out_part->pt_outflip);
 	bu_ptbl_ins(pnset, (long *)out_pt);
+
+	thickness = DIST_PT_PT(in_pt->pt->v, out_pt->pt->v) * 0.5;
+	in_pt->thickness = thickness;
+	out_pt->thickness = thickness;
     }
 
     return 0;
@@ -86,7 +113,8 @@ outer_pnts_hit(struct application *ap, struct partition *PartHeadp, struct seg *
 HIDDEN int
 all_pnts_hit(struct application *app, struct partition *partH, struct seg *UNUSED(segs))
 {
-    struct pnt_normal *pt;
+    double thickness = 0.0;
+    struct pnt_normal_thickness *in_pt, *out_pt;
     struct partition *pp;
     struct soltab *stp;
     struct rt_gen_worker_vars *s = (struct rt_gen_worker_vars *)(app->a_uptr);
@@ -100,17 +128,22 @@ all_pnts_hit(struct application *app, struct partition *partH, struct seg *UNUSE
 	/* always add in hit */
 	stp = pp->pt_inseg->seg_stp;
 	_tgc_hack_fix(pp, stp);
-	BU_ALLOC(pt, struct pnt_normal);
-	VJOIN1(pt->v, app->a_ray.r_pt, pp->pt_inhit->hit_dist, app->a_ray.r_dir);
-	RT_HIT_NORMAL(pt->n, pp->pt_inhit, stp, &(app->a_ray), pp->pt_inflip);
-	bu_ptbl_ins(pnset, (long *)pt);
+	in_pt = pnthickness_create();
+	VJOIN1(in_pt->pt->v, app->a_ray.r_pt, pp->pt_inhit->hit_dist, app->a_ray.r_dir);
+	RT_HIT_NORMAL(in_pt->pt->n, pp->pt_inhit, stp, &(app->a_ray), pp->pt_inflip);
+	in_pt->thickness = 0.0;
+	bu_ptbl_ins(pnset, (long *)in_pt);
 
 	/* add "out" hit point unless it's a half-space */
 	if (bu_strncmp("half", stp->st_meth->ft_label, 4) != 0) {
-	    BU_ALLOC(pt, struct pnt_normal);
-	    VJOIN1(pt->v, app->a_ray.r_pt, pp->pt_outhit->hit_dist, app->a_ray.r_dir);
-	    RT_HIT_NORMAL(pt->n, pp->pt_outhit, stp, &(app->a_ray), pp->pt_outflip);
-	    bu_ptbl_ins(pnset, (long *)pt);
+	    out_pt = pnthickness_create();
+	    VJOIN1(out_pt->pt->v, app->a_ray.r_pt, pp->pt_outhit->hit_dist, app->a_ray.r_dir);
+	    RT_HIT_NORMAL(out_pt->pt->n, pp->pt_outhit, stp, &(app->a_ray), pp->pt_outflip);
+	    bu_ptbl_ins(pnset, (long *)out_pt);
+
+	    thickness = DIST_PT_PT(in_pt->pt->v, out_pt->pt->v) * 0.5;
+	    in_pt->thickness = thickness;
+	    out_pt->thickness = thickness;
 	}
     }
 
@@ -201,7 +234,7 @@ get_sobol_rays(fastf_t *rays, long int craynum, point_t center, fastf_t radius, 
 
 /* 0 = success, -1 error */
 int
-analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, struct db_i *dbip,
+analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, fastf_t *avg_thickness, struct db_i *dbip,
        const char *obj, struct bn_tol *tol, int flags, int max_pnts, int max_time)
 {
     int pntcnt = 0;
@@ -210,6 +243,7 @@ analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, struct db_i *dbip,
     fastf_t oldtime, currtime;
     int ind = 0;
     int count = 0;
+    double avgt = 0.0;
     struct rt_i *rtip;
     int ncpus = bu_avail_cpus();
     struct rt_gen_worker_vars *state = (struct rt_gen_worker_vars *)bu_calloc(ncpus+1, sizeof(struct rt_gen_worker_vars ), "state");
@@ -392,6 +426,8 @@ analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, struct db_i *dbip,
 	ret = ANALYZE_ERROR;
     } else {
 	int pc = 0;
+	int total_pnts = 0;
+	long double thickness_total = 0.0;
 	rpnts->count = pntcnt;
 	BU_ALLOC(rpnts->point, struct pnt_normal);
 	BU_LIST_INIT(&(((struct pnt_normal *)rpnts->point)->l));
@@ -400,7 +436,11 @@ analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, struct db_i *dbip,
 	    pc = 0;
 	    for (i = 0; i < ncpus+1; i++) {
 		for (j = 0; j < (int)BU_PTBL_LEN(grid_pnts[i]); j++) {
-		    BU_LIST_PUSH(&(((struct pnt_normal *)rpnts->point)->l), &((struct pnt_normal *)BU_PTBL_GET(grid_pnts[i], j))->l);
+		    struct pnt_normal_thickness *pnthick = (struct pnt_normal_thickness *)BU_PTBL_GET(grid_pnts[i], j);
+		    BU_LIST_PUSH(&(((struct pnt_normal *)rpnts->point)->l), &(pnthick->pt)->l);
+		    thickness_total += pnthick->thickness;
+		    BU_PUT(pnthick, struct pnt_normal_thickness);
+		    total_pnts++;
 		    pc++;
 		    if (pc == pntcnt_grid) break;
 		}
@@ -412,7 +452,11 @@ analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, struct db_i *dbip,
 	    pc = 0;
 	    for (i = 0; i < ncpus+1; i++) {
 		for (j = 0; j < (int)BU_PTBL_LEN(rand_pnts[i]); j++) {
-		    BU_LIST_PUSH(&(((struct pnt_normal *)rpnts->point)->l), &((struct pnt_normal *)BU_PTBL_GET(rand_pnts[i], j))->l);
+		    struct pnt_normal_thickness *pnthick = (struct pnt_normal_thickness *)BU_PTBL_GET(rand_pnts[i], j);
+		    BU_LIST_PUSH(&(((struct pnt_normal *)rpnts->point)->l), &(pnthick->pt)->l);
+		    thickness_total += pnthick->thickness;
+		    BU_PUT(pnthick, struct pnt_normal_thickness);
+		    total_pnts++;
 		    pc++;
 		    if (pc == pntcnt_rand) break;
 		}
@@ -424,7 +468,11 @@ analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, struct db_i *dbip,
 	    pc = 0;
 	    for (i = 0; i < ncpus+1; i++) {
 		for (j = 0; j < (int)BU_PTBL_LEN(sobol_pnts[i]); j++) {
-		    BU_LIST_PUSH(&(((struct pnt_normal *)rpnts->point)->l), &((struct pnt_normal *)BU_PTBL_GET(sobol_pnts[i], j))->l);
+		    struct pnt_normal_thickness *pnthick = (struct pnt_normal_thickness *)BU_PTBL_GET(sobol_pnts[i], j);
+		    BU_LIST_PUSH(&(((struct pnt_normal *)rpnts->point)->l), &(pnthick->pt)->l);
+		    thickness_total += pnthick->thickness;
+		    BU_PUT(pnthick, struct pnt_normal_thickness);
+		    total_pnts++;
 		    pc++;
 		    if (pc == pntcnt_sobol) break;
 		}
@@ -432,7 +480,11 @@ analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, struct db_i *dbip,
 	    }
 	}
 	ret = 0;
+
+	avgt = thickness_total / (double)total_pnts;
+	if (avg_thickness) (*avg_thickness) = avgt;
     }
+
 
 memfree:
     /* Free memory not stored in tables */

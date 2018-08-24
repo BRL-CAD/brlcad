@@ -770,7 +770,7 @@ _ged_spsr_obj(int *is_valid, struct ged *gedp, const char *objname, const char *
 	    bu_vls_free(&pnt_msg);
 	}
 
-	if (analyze_obj_to_pnts(pnts, gedp->ged_wdbp->dbip, objname, &btol, flags, opts->max_pnts, opts->max_time)) {
+	if (analyze_obj_to_pnts(pnts, NULL, gedp->ged_wdbp->dbip, objname, &btol, flags, opts->max_pnts, opts->max_time)) {
 	    if (!opts->quiet) {
 		bu_log("SPSR: point generation failed: %s\n", objname);
 	    }
