@@ -18,6 +18,7 @@ set(LIBANALYZE_SOURCES
   nirt.cxx
   obj_to_pnts.c
   overlaps.c
+  polygonizer.c
   raydiff.c
   #find_subtracted_shapes.cpp
   surf_area.c

@@ -46,7 +46,7 @@
 
 #define GED_FACETIZE_NMGBOOL  0x1
 #define GED_FACETIZE_SPSR  0x2
-#define GED_FACETIZE_MC  0x4
+#define GED_FACETIZE_CONTINUATION  0x4
 
 struct _ged_facetize_opts {
 
@@ -58,14 +58,14 @@ struct _ged_facetize_opts {
     int make_nmg;
     int nmgbool;
     int screened_poisson;
-    int marching_cube;
+    int continuation;
     int method_flags;
 
     int nmg_use_tnurbs;
     int regions;
     int resume;
     int in_place;
-    fastf_t decim_feat_perc;
+    fastf_t feat_perc;
     struct rt_tess_tol *tol;
 
     /* Poisson specific options */
@@ -101,13 +101,13 @@ struct _ged_facetize_opts * _ged_facetize_opts_create()
     o->triangulate = 0;
     o->make_nmg = 0;
     o->nmgbool = 0;
-    o->marching_cube = 0;
+    o->continuation = 0;
     o->screened_poisson = 0;
     o->nmg_use_tnurbs = 0;
     o->regions = 0;
     o->resume = 0;
     o->in_place = 0;
-    o->decim_feat_perc = 0.15;
+    o->feat_perc = 0.15;
     BU_GET(o->faceted_suffix, struct bu_vls);
     bu_vls_init(o->faceted_suffix);
     bu_vls_sprintf(o->faceted_suffix, ".bot");
@@ -117,7 +117,7 @@ struct _ged_facetize_opts * _ged_facetize_opts_create()
     o->pnt_rand_mode = 0;
     o->pnt_sobol_mode = 0;
     o->max_pnts = 0;
-    o->max_time = 0;
+    o->max_time = 30;
     o->len_tol = 0.0;
     o->s_opts = s_opts;
 
@@ -514,15 +514,12 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
 }
 
 HIDDEN int
-_try_nmg_triangulate(struct ged *gedp, struct model *nmg_model, int marching_cube, struct _ged_facetize_opts *o)
+_try_nmg_triangulate(struct ged *gedp, struct model *nmg_model, struct _ged_facetize_opts *o)
 {
     _ged_facetize_log_nmg(o);
     if (!BU_SETJUMP) {
 	/* try */
-	if (marching_cube == 1)
-	    nmg_triangulate_model_mc(nmg_model, &gedp->ged_wdbp->wdb_tol);
-	else
-	    nmg_triangulate_model(nmg_model, &RTG.rtg_vlfree, &gedp->ged_wdbp->wdb_tol);
+	nmg_triangulate_model(nmg_model, &RTG.rtg_vlfree, &gedp->ged_wdbp->wdb_tol);
     } else {
 	/* catch */
 	BU_UNSETJUMP;
@@ -810,7 +807,7 @@ _ged_spsr_obj(int *is_valid, struct ged *gedp, const char *objname, const char *
     }
 
 /* do decimation */
-    if (opts->decim_feat_perc > 0) {
+    if (opts->feat_perc > 0) {
 	struct rt_bot_internal *obot = bot;
 	fastf_t feature_size = 0.0;
 	fastf_t xlen = fabs(rpp_max[X] - rpp_min[X]);
@@ -818,10 +815,10 @@ _ged_spsr_obj(int *is_valid, struct ged *gedp, const char *objname, const char *
 	fastf_t zlen = fabs(rpp_max[Z] - rpp_min[Z]);
 	feature_size = (xlen < ylen) ? xlen : ylen;
 	feature_size = (feature_size < zlen) ? feature_size : zlen;
-	feature_size = feature_size * ((opts->decim_feat_perc > 1.0) ? 1.0 : opts->decim_feat_perc);
+	feature_size = feature_size * ((opts->feat_perc > 1.0) ? 1.0 : opts->feat_perc);
 
 	if (opts->verbosity) {
-	    bu_log("SPSR: trying decimation with decimation size percentage: %g\n", opts->decim_feat_perc);
+	    bu_log("SPSR: trying decimation with decimation size percentage: %g\n", opts->feat_perc);
 	}
 
 	bot = _try_decimate(bot, feature_size, opts);
@@ -877,6 +874,197 @@ ged_facetize_spsr_memfree:
     return ret;
 }
 
+
+HIDDEN int
+_ged_continuation_obj(int *is_valid, struct ged *gedp, const char *objname, const char *newname, struct _ged_facetize_opts *opts)
+{
+    int ret = GED_OK;
+    double avg_thickness = 0.0;
+    double min_len = 0.0;
+    double max_len = 0.0;
+    fastf_t feature_size;
+    double xlen, ylen, zlen;
+    struct directory *dp;
+    struct db_i *dbip = gedp->ged_wdbp->dbip;
+    struct rt_db_internal in_intern;
+    struct bn_tol btol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
+    struct rt_pnts_internal *pnts;
+    struct rt_bot_internal *bot = NULL;
+    struct pnt_normal *pn, *pl;
+    int polygonize_failure = 1;
+    int flags = 0;
+    int free_pnts = 0;
+    int max_pnts = 50000;
+    point_t *input_points_3d = NULL;
+    vect_t *input_normals_3d = NULL;
+    point_t rpp_min, rpp_max;
+    point_t obj_min, obj_max;
+    VSETALL(rpp_min, INFINITY);
+    VSETALL(rpp_max, -INFINITY);
+
+    dp = db_lookup(dbip, objname, LOOKUP_QUIET);
+
+    if (rt_db_get_internal(&in_intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	if (opts->verbosity) {
+	    bu_log("Error: could not determine type of object %s, skipping\n", objname);
+	}
+	return GED_ERROR;
+    }
+
+    if (in_intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_PNTS || in_intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_HALF) {
+	/* If we have a point cloud or half, this won't work */
+	return GED_ERROR;
+    }
+
+    BU_ALLOC(pnts, struct rt_pnts_internal);
+    pnts->magic = RT_PNTS_INTERNAL_MAGIC;
+    pnts->scale = 0.0;
+    pnts->count = 0;
+    pnts->type = RT_PNT_TYPE_NRM;
+    free_pnts = 1;
+
+    /* Key some settings off the bbox size */
+    ged_get_obj_bounds(gedp, 1, (const char **)&objname, 0, obj_min, obj_max);
+    VMINMAX(rpp_min, rpp_max, (double *)obj_min);
+    VMINMAX(rpp_min, rpp_max, (double *)obj_max);
+    xlen = fabs(rpp_max[X] - rpp_min[X]);
+    ylen = fabs(rpp_max[Y] - rpp_min[Y]);
+    zlen = fabs(rpp_max[Z] - rpp_min[Z]);
+
+    /* Pick our mode(s) */
+    flags |= ANALYZE_OBJ_TO_PNTS_RAND;
+    flags |= ANALYZE_OBJ_TO_PNTS_SOBOL;
+
+    if (opts->max_pnts) {
+	max_pnts = opts->max_pnts;
+    }
+
+    /* Shoot - we need both the avg thickness of the hit partitions and seed points */
+    if (analyze_obj_to_pnts(pnts, &avg_thickness, gedp->ged_wdbp->dbip, objname, &btol, flags, max_pnts, opts->max_time) ||
+	    pnts->count <= 0) {
+	if (!opts->quiet) {
+	    bu_log("Continuation Method: point generation failed: %s\n", objname);
+	}
+	ret = GED_ERROR;
+	goto ged_facetize_continuation_memfree;
+    }
+
+    /* Find the smallest value from either the bounding box lengths or the avg
+     * thickness observed by the rays.  Some fraction of this value is our box
+     * size for the polygonizer and the decimation routine */
+    min_len = (xlen < ylen) ? xlen : ylen;
+    min_len = (min_len < zlen) ? min_len : zlen;
+    min_len = (min_len < avg_thickness) ? min_len : avg_thickness;
+    max_len = (xlen > ylen) ? xlen : ylen;
+    max_len = (max_len > zlen) ? max_len : zlen;
+    max_len = (max_len > avg_thickness) ? max_len : avg_thickness;
+
+    if (opts->feat_perc > 0) {
+	feature_size = min_len * opts->feat_perc;
+    } else {
+	feature_size = min_len;
+    }
+
+    /* Build the BoT */
+    BU_ALLOC(bot, struct rt_bot_internal);
+    bot->magic = RT_BOT_INTERNAL_MAGIC;
+    bot->mode = RT_BOT_SOLID;
+    bot->orientation = RT_BOT_UNORIENTED;
+    bot->thickness = (fastf_t *)NULL;
+    bot->face_mode = (struct bu_bitv *)NULL;
+
+    /* Run the polygonize routine.  Because it is quite simple to accidentally
+     * specify inputs that will take huge amounts of time to run, we will
+     * attempt a series of progressively courser polygonize runs until we
+     * either succeed, or reach a feature size that is .1*max_len without
+     * succeeding. If max_time has been explicitly set to 0 by the caller this
+     * will run unbounded, but the algorithm is n**2 and we're trying the
+     * finest level first so may run a *very* long time... */
+    pl = (struct pnt_normal *)pnts->point;
+    pn = BU_LIST_PNEXT(pnt_normal, pl);
+    while (polygonize_failure && feature_size < 0.1*max_len) {
+	polygonize_failure = analyze_polygonize(&(bot->faces), (int *)&(bot->num_faces),
+		    (point_t **)&(bot->vertices),
+		    (int *)&(bot->num_vertices),
+		    feature_size, pn->v, objname, gedp->ged_wdbp->dbip, opts->max_time);
+	if (polygonize_failure) {
+	    if (!opts->quiet && polygonize_failure == 2) {
+		bu_log("Continuation Method timed out after %d seconds with size %g\n", opts->max_time, feature_size);
+	    }
+	    feature_size = feature_size * 2;
+	}
+    }
+    if (polygonize_failure) {
+	if (!opts->quiet) {
+	    bu_log("Continuation Method: surface reconstruction failed: %s\n", objname);
+	}
+	ret = GED_ERROR;
+	goto ged_facetize_continuation_memfree;
+    }
+
+    /* do decimation */
+    if (opts->feat_perc > 0) {
+	struct rt_bot_internal *obot = bot;
+
+	if (!opts->quiet) {
+	    bu_log("Continuation Method: decimating with feature size %g\n", 2*feature_size);
+	}
+
+	bot = _try_decimate(bot, 2*feature_size, opts);
+
+	if (bot == obot && opts->verbosity) {
+	    bu_log("Continuation Method: decimation failed, returning original BoT (may be large)\n");
+	}
+    }
+
+    if (is_valid) {
+	int is_v = !bg_trimesh_solid(bot->num_vertices, bot->num_faces, (fastf_t *)bot->vertices, (int *)bot->faces, NULL);
+	(*is_valid) = is_v;
+	if (!is_v && !opts->quiet) {
+	    bu_log("Continuation Method: created invalid bot: %s\n", objname);
+	}
+    }
+
+    if (!opts->make_nmg) {
+
+	ret = _write_bot(gedp, bot, newname, opts);
+
+    } else {
+	/* Convert BoT to NMG */
+	struct model *m = nmg_mm();
+	struct nmgregion *r;
+	struct rt_db_internal intern;
+
+	/* Use intern to fake out rt_bot_tess, since it expects an
+	 * rt_db_internal wrapper */
+	RT_DB_INTERNAL_INIT(&intern);
+	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	intern.idb_type = ID_BOT;
+	intern.idb_ptr = (void *)bot;
+	if (rt_bot_tess(&r, m, &intern, NULL, &btol) < 0) {
+	    if (!opts->quiet) {
+		bu_log("Continuation Method: failed to convert BoT to NMG: %s\n", objname);
+	    }
+	    rt_db_free_internal(&intern);
+	    ret = GED_ERROR;
+	    goto ged_facetize_continuation_memfree;
+	} else {
+	    /* OK,have NMG now - write it out */
+	    ret = _write_nmg(gedp, m, newname, opts);
+	    rt_db_free_internal(&intern);
+	}
+    }
+
+ged_facetize_continuation_memfree:
+    if (free_pnts) bu_free(pnts, "free pnts");
+    if (input_points_3d) bu_free(input_points_3d, "3d pnts");
+    if (input_normals_3d) bu_free(input_normals_3d, "3d pnts");
+    rt_db_free_internal(&in_intern);
+
+    return ret;
+}
+
+
 int
 _ged_nmg_obj(struct ged *gedp, int argc, const char **argv, const char *newname, struct _ged_facetize_opts *opts)
 {
@@ -895,7 +1083,7 @@ _ged_nmg_obj(struct ged *gedp, int argc, const char **argv, const char *newname,
 
     /* Triangulate model, if requested */
     if (opts->triangulate && opts->make_nmg) {
-	if (_try_nmg_triangulate(gedp, nmg_model, opts->marching_cube, opts) != GED_OK) {
+	if (_try_nmg_triangulate(gedp, nmg_model, opts) != GED_OK) {
 	    if (opts->verbosity > 1) {
 		bu_log("NMG(%s):  triangulation failed, aborting\n", newname);
 	    }
@@ -995,6 +1183,25 @@ _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _ged
 	    }
 	}
 
+
+	if (flags & GED_FACETIZE_CONTINUATION) {
+	    if (argc != 1) {
+		if (opts->verbosity) {
+		    bu_log("Continuation mode (currently) only supports one existing object at a time as input - not attempting.\n");
+		}
+		flags = flags & ~(GED_FACETIZE_CONTINUATION);
+	    } else {
+		int is_valid = 1;
+		if (_ged_continuation_obj(&is_valid, gedp, argv[0], newname, opts) == GED_OK) {
+		    done_trying = 1;
+		    ret = GED_OK;
+		} else {
+		    flags = flags & ~(GED_FACETIZE_CONTINUATION);
+		    continue;
+		}
+	    }
+	}
+
 	if (flags & GED_FACETIZE_SPSR) {
 	    if (argc != 1) {
 		if (opts->verbosity) {
@@ -1083,6 +1290,7 @@ _ged_facetize_cpcomb(struct ged *gedp, const char *o, struct _ged_facetize_opts 
 #define GED_FACETIZE_FAIL -1
 #define GED_NMGBOOL_SUCCESS 0
 #define GED_SPSR_SUCCESS 1
+#define GED_CONTINUATION_SUCCESS 2
 
 int
 _ged_facetize_region_obj(struct ged *gedp, const char *oname, const char *cname, const char *sname, struct _ged_facetize_opts *opts, int ocnt, int max_cnt)
@@ -1106,6 +1314,20 @@ _ged_facetize_region_obj(struct ged *gedp, const char *oname, const char *cname,
 	}
 
 	if (_ged_nmg_obj(gedp, 1, (const char **)&oname, sname, opts) != GED_OK) {
+	    ret = GED_FACETIZE_FAIL;
+	}
+    }
+
+    if (ret < 0 && opts->method_flags & GED_FACETIZE_CONTINUATION) {
+	int is_valid = 0;
+	ret = GED_CONTINUATION_SUCCESS;
+	if (_ged_continuation_obj(&is_valid, gedp, oname, sname, opts) == GED_OK) {
+	    /* Check the validity */
+	    ret = (is_valid) ? GED_CONTINUATION_SUCCESS : GED_FACETIZE_INVALID;
+	    if (ret == GED_FACETIZE_INVALID) {
+		bu_vls_sprintf(&invalid_name, "%s_CONTINUATION_INVALID-0", sname);
+	    }
+	} else {
 	    ret = GED_FACETIZE_FAIL;
 	}
     }
@@ -1410,8 +1632,8 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
     const char **ntop;
     struct bu_ptbl *pc = NULL;
     struct bu_ptbl *ar = NULL;
-    struct bu_ptbl spsr_succeeded = BU_PTBL_INIT_ZERO;
-    struct bu_ptbl spsr_failed = BU_PTBL_INIT_ZERO;
+    struct bu_ptbl continuation_succeeded = BU_PTBL_INIT_ZERO;
+    struct bu_ptbl continuation_failed = BU_PTBL_INIT_ZERO;
     struct bu_ptbl facetize_failed = BU_PTBL_INIT_ZERO;
 
     /* We need to copy combs above regions that are not themselves regions.
@@ -1606,10 +1828,10 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	    bu_ptbl_ins(&facetize_failed, (long *)oname);
 	}
 	if (fret == GED_FACETIZE_INVALID) {
-	    bu_ptbl_ins(&spsr_failed, (long *)bu_avs_get(opts->s_map, oname));
+	    bu_ptbl_ins(&continuation_failed, (long *)bu_avs_get(opts->s_map, oname));
 	}
 	if (fret == GED_SPSR_SUCCESS) {
-	    bu_ptbl_ins(&spsr_succeeded, (long *)bu_avs_get(opts->s_map, oname));
+	    bu_ptbl_ins(&continuation_succeeded, (long *)bu_avs_get(opts->s_map, oname));
 	}
     }
 
@@ -1621,21 +1843,21 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	bu_vls_incr(&failed_name, NULL, NULL, &_db_uniq_test, (void *)gedp);
 	ret = _ged_combadd2(gedp, bu_vls_addr(&failed_name), (int)BU_PTBL_LEN(&facetize_failed), (const char **)facetize_failed.buffer, 0, DB_OP_UNION, 0, 0, NULL, 0);
     }
-    if (BU_PTBL_LEN(&spsr_succeeded) > 0) {
-	/* Put all of the spsr tessellations into their own top level comb for
+    if (BU_PTBL_LEN(&continuation_succeeded) > 0) {
+	/* Put all of the continuation tessellations into their own top level comb for
 	 * easy manual inspection */
-	struct bu_vls spsr_name = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&spsr_name, "%s_SPSR-0", newname);
-	bu_vls_incr(&spsr_name, NULL, NULL, &_db_uniq_test, (void *)gedp);
-	ret = _ged_combadd2(gedp, bu_vls_addr(&spsr_name), (int)BU_PTBL_LEN(&spsr_succeeded), (const char **)spsr_succeeded.buffer, 0, DB_OP_UNION, 0, 0, NULL, 0);
+	struct bu_vls continuation_name = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&continuation_name, "%s_CONTINUATION-0", newname);
+	bu_vls_incr(&continuation_name, NULL, NULL, &_db_uniq_test, (void *)gedp);
+	ret = _ged_combadd2(gedp, bu_vls_addr(&continuation_name), (int)BU_PTBL_LEN(&continuation_succeeded), (const char **)continuation_succeeded.buffer, 0, DB_OP_UNION, 0, 0, NULL, 0);
     }
-    if (BU_PTBL_LEN(&spsr_failed) > 0) {
-	/* Put all of the spsr failed tessellations into their own top level comb for
+    if (BU_PTBL_LEN(&continuation_failed) > 0) {
+	/* Put all of the continuation failed tessellations into their own top level comb for
 	 * easy manual inspection */
-	struct bu_vls spsr_name = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&spsr_name, "%s_SPSR_FAILED-0", newname);
-	bu_vls_incr(&spsr_name, NULL, NULL, &_db_uniq_test, (void *)gedp);
-	ret = _ged_combadd2(gedp, bu_vls_addr(&spsr_name), (int)BU_PTBL_LEN(&spsr_failed), (const char **)spsr_failed.buffer, 0, DB_OP_UNION, 0, 0, NULL, 0);
+	struct bu_vls continuation_name = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&continuation_name, "%s_CONTINUATION_FAILED-0", newname);
+	bu_vls_incr(&continuation_name, NULL, NULL, &_db_uniq_test, (void *)gedp);
+	ret = _ged_combadd2(gedp, bu_vls_addr(&continuation_name), (int)BU_PTBL_LEN(&continuation_failed), (const char **)continuation_failed.buffer, 0, DB_OP_UNION, 0, 0, NULL, 0);
     }
 
     if (opts->in_place) {
@@ -1664,8 +1886,8 @@ ged_facetize_regions_memfree:
 
     /* Final report */
     bu_vls_printf(gedp->ged_result_str, "Objects successfully converted: %d of %d\n", BU_PTBL_LEN(ar) - BU_PTBL_LEN(&facetize_failed), BU_PTBL_LEN(ar));
-    if (BU_PTBL_LEN(&spsr_succeeded)) {
-	bu_vls_printf(gedp->ged_result_str, "Objects converted with SPSR: %d\n", BU_PTBL_LEN(&spsr_succeeded));
+    if (BU_PTBL_LEN(&continuation_succeeded)) {
+	bu_vls_printf(gedp->ged_result_str, "Objects converted with the Continuation Method: %d\n", BU_PTBL_LEN(&continuation_succeeded));
     }
     if (BU_PTBL_LEN(&facetize_failed)) {
 	bu_vls_printf(gedp->ged_result_str, "WARNING: %d objects failed:\n", BU_PTBL_LEN(&facetize_failed));
@@ -1677,8 +1899,8 @@ ged_facetize_regions_memfree:
     bu_ptbl_free(pc);
     bu_ptbl_free(ar);
     bu_ptbl_free(&facetize_failed);
-    bu_ptbl_free(&spsr_succeeded);
-    bu_ptbl_free(&spsr_failed);
+    bu_ptbl_free(&continuation_succeeded);
+    bu_ptbl_free(&continuation_failed);
     bu_free(pc, "pc table");
     bu_free(ar, "ar table");
     bu_free(dpa, "dpa array");
@@ -1703,22 +1925,24 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     int print_help = 0;
     int need_help = 0;
     struct _ged_facetize_opts *opts = _ged_facetize_opts_create();
-    struct bu_opt_desc d[14];
-    struct bu_opt_desc pd[12];
+    struct bu_opt_desc d[15];
+    struct bu_opt_desc pd[10];
 
-    BU_OPT(d[0], "h", "help",          "",  NULL,  &print_help,               "Print help and exit");
-    BU_OPT(d[1], "v", "verbose",       "",  &_ged_vopt,  &(opts->verbosity),  "Verbose output (multiple flags increase verbosity)");
-    BU_OPT(d[2], "q", "quiet",         "",  NULL,  &(opts->quiet),            "Suppress all output (overrides verbose flag)");
-    BU_OPT(d[3], "",  "nmgbool",       "",  NULL,  &(opts->nmgbool),          "Use the standard libnmg boolean mesh evaluation to create output (Default)");
-    BU_OPT(d[4], "m", "marching-cube", "",  NULL,  &(opts->marching_cube),    "Use the raytraced points and marching cube algorithm to create output");
-    BU_OPT(d[5], "",  "poisson",       "",  NULL,  &(opts->screened_poisson), "Use raytraced points and SPSR to create output - run -h --poisson to see more options for this mode");
-    BU_OPT(d[6], "n", "NMG",           "",  NULL,  &(opts->make_nmg),         "Create an N-Manifold Geometry (NMG) object (default is to create a triangular BoT mesh)");
-    BU_OPT(d[7], "",  "TNURB",         "",  NULL,  &(opts->nmg_use_tnurbs),   "Create TNURB faces rather than planar approximations (experimental)");
-    BU_OPT(d[8], "T", "triangles",     "",  NULL,  &(opts->triangulate),      "Generate a NMG solid using only triangles (BoTs, the default output, can only use triangles - this option mimics that behavior for NMG output.)");
-    BU_OPT(d[9], "r", "regions",       "",  NULL,  &(opts->regions),          "For combs, walk the trees and create new copies of the hierarchies with each region replaced by a facetized evaluation of that region. (Default is to create one facetized object for all specified inputs.)");
-    BU_OPT(d[10], "",  "resume",       "",  NULL,  &(opts->resume),           "Resume an interrupted conversion (region mode only)");
+    BU_OPT(d[0],  "h", "help",          "",  NULL,  &print_help,               "Print help and exit");
+    BU_OPT(d[1],  "v", "verbose",       "",  &_ged_vopt,  &(opts->verbosity),  "Verbose output (multiple flags increase verbosity)");
+    BU_OPT(d[2],  "q", "quiet",         "",  NULL,  &(opts->quiet),            "Suppress all output (overrides verbose flag)");
+    BU_OPT(d[3],  "",  "nmgbool",       "",  NULL,  &(opts->nmgbool),          "Use the standard libnmg boolean mesh evaluation to create output (Default)");
+    BU_OPT(d[4],  "",  "continuation",  "",  NULL,  &(opts->continuation),     "Use the Continuation Method to sample the object and create output");
+    BU_OPT(d[5],  "",  "poisson",       "",  NULL,  &(opts->screened_poisson), "Use raytraced points and SPSR to create output - run -h --poisson to see more options for this mode");
+    BU_OPT(d[6],  "n", "NMG",           "",  NULL,  &(opts->make_nmg),         "Create an N-Manifold Geometry (NMG) object (default is to create a triangular BoT mesh)");
+    BU_OPT(d[7],  "",  "TNURB",         "",  NULL,  &(opts->nmg_use_tnurbs),   "Create TNURB faces rather than planar approximations (experimental)");
+    BU_OPT(d[8],  "T", "triangles",     "",  NULL,  &(opts->triangulate),      "Generate a NMG solid using only triangles (BoTs, the default output, can only use triangles - this option mimics that behavior for NMG output.)");
+    BU_OPT(d[9],  "r", "regions",       "",  NULL,  &(opts->regions),          "For combs, walk the trees and create new copies of the hierarchies with each region replaced by a facetized evaluation of that region. (Default is to create one facetized object for all specified inputs.)");
+    BU_OPT(d[10], "",  "resume",        "",  NULL,  &(opts->resume),           "Resume an interrupted conversion (region mode only)");
     BU_OPT(d[11], "",  "in-place",      "",  NULL,  &(opts->in_place),         "Alter the existing tree/object to reference the facetized object.  May only specify one input object with this mode, and no output name.  (Warning: this option changes pre-existing geometry!)");
-    BU_OPT_NULL(d[12]);
+    BU_OPT(d[12], "F", "feature-size",  "#", &bu_opt_fastf_t, &(opts->feat_perc),  "Percentage of the minimum length (based on the bounding box dimensions and average of observed solid raytracing lengths) to use as a feature size in methods needing this input. Default is 0.15, max is 1 (Note: setting this to 0 disables decimation, which may produce very large meshes).");
+    BU_OPT(d[13], "",  "max-time",         "#", &bu_opt_int,     &(opts->max_time),       "Maximum time to spend per step (in seconds).  Default is 30.  Zero means either the default (for routines which could run indefinitely) or run to completion (if there is a theoretical termination point for the algorithm) - be careful of specifying zero because it is quite easy to produce extremely long runs!.");
+    BU_OPT_NULL(d[14]);
 
     /* Poisson specific options */
     BU_OPT(pd[0], "d", "depth",            "#", &bu_opt_int,     &(opts->s_opts.depth),            "Maximum reconstruction depth (default 8)");
@@ -1730,9 +1954,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(pd[6], "",  "rand",             "",  NULL,            &(opts->pnt_rand_mode),  "Sample using a random Marsaglia ray pattern on the bounding sphere.");
     BU_OPT(pd[7], "",  "sobol",            "",  NULL,            &(opts->pnt_sobol_mode), "Sample using a Sobol pseudo-random Marsaglia ray pattern on the bounding sphere.");
     BU_OPT(pd[8], "",  "max-pnts",         "#", &bu_opt_int,     &(opts->max_pnts),       "Maximum number of pnts to return per non-grid sampling method.");
-    BU_OPT(pd[9], "",  "max-time",         "#", &bu_opt_int,     &(opts->max_time),       "Maximum time to spend per-method (in seconds) when using non-grid sampling.");
-    BU_OPT(pd[10], "F",  "decimation-size-percentage",         "#", &bu_opt_fastf_t,     &(opts->decim_feat_perc),       "Percentage of the minimum bounding box length to use as a feature size when decimating. Default is 0.15, max is 1 (Note: setting this to 0 disables decimation, which for SPSR outputs may produce very large meshes).");
-    BU_OPT_NULL(pd[11]);
+    BU_OPT_NULL(pd[9]);
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -1770,14 +1992,14 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* Sort out which methods we can try */
-    if (!opts->nmgbool && !opts->screened_poisson && !opts->marching_cube) {
-	/* Default to NMGBOOL and SPSR active */
+    if (!opts->nmgbool && !opts->screened_poisson && !opts->continuation) {
+	/* Default to NMGBOOL and Continuation active */
 	opts->method_flags |= GED_FACETIZE_NMGBOOL;
-	opts->method_flags |= GED_FACETIZE_SPSR;
+	opts->method_flags |= GED_FACETIZE_CONTINUATION;
     } else {
 	if (opts->nmgbool)          opts->method_flags |= GED_FACETIZE_NMGBOOL;
 	if (opts->screened_poisson) opts->method_flags |= GED_FACETIZE_SPSR;
-	if (opts->marching_cube)    opts->method_flags |= GED_FACETIZE_MC;
+	if (opts->continuation)    opts->method_flags |= GED_FACETIZE_CONTINUATION;
     }
 
     if (opts->method_flags & GED_FACETIZE_SPSR) {
@@ -1791,8 +2013,8 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* Check for a couple of non-valid combinations */
-    if (opts->method_flags == GED_FACETIZE_SPSR && opts->nmg_use_tnurbs) {
-	bu_vls_printf(gedp->ged_result_str, "Note: Screened Poisson reconstruction does not support TNURBS output\n");
+    if ((opts->method_flags == GED_FACETIZE_SPSR || opts->method_flags == GED_FACETIZE_CONTINUATION) && opts->nmg_use_tnurbs) {
+	bu_vls_printf(gedp->ged_result_str, "Note: Specified reconstruction method(s) do not all support TNURBS output\n");
 	ret = GED_ERROR;
 	goto ged_facetize_memfree;
     }

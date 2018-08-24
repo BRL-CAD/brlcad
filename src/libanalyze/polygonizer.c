@@ -59,6 +59,7 @@
 #include <sys/types.h>
 #include "bu/log.h"
 #include "bu/malloc.h"
+#include "bu/time.h"
 #include "./polygonizer.h"
 #include "raytrace.h"
 
@@ -367,7 +368,6 @@ first_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSE
 int
 crossing_miss(struct application *UNUSED(ap))
 {
-    bu_log("missed???????\n");
     return 0;
 }
 
@@ -404,7 +404,7 @@ crossing(point_t *n, point_t *p, point_t *p1, point_t *p2, double vorient, struc
     VMOVE(*n, pt->n);
 
     if (!(pt->v[X] < DBL_MAX) || !(pt->n[X] < DBL_MAX)) {
-	bu_log("Fatal error, could not find crossing!\n");
+	bu_log("Continuous Meshing: Fatal error, could not find crossing!\n");
 	return -1;
     }
 
@@ -508,7 +508,14 @@ dotet(CUBE *cube, int c1, int c2, int c3, int c4, PROCESS *p)
     CORNER *b = cube->corners[c2];
     CORNER *c = cube->corners[c3];
     CORNER *d = cube->corners[c4];
-    int index = 0, apos, bpos, cpos, dpos, e1, e2, e3, e4, e5, e6;
+    int index = 0;
+    int e1 = 0;
+    int e2 = 0;
+    int e3 = 0;
+    int e4 = 0;
+    int e5 = 0;
+    int e6 = 0;
+    int apos, bpos, cpos, dpos;
     apos = (a->value > 0.0);
     bpos = (b->value > 0.0);
     cpos = (c->value > 0.0);
@@ -524,6 +531,8 @@ dotet(CUBE *cube, int c1, int c2, int c3, int c4, PROCESS *p)
     if (bpos != cpos) e4 = vertid(b, c, p);
     if (bpos != dpos) e5 = vertid(b, d, p);
     if (cpos != dpos) e6 = vertid(c, d, p);
+    /* If one of the vertid calculations failed, we're done */
+    if (e1 < 0 || e2 < 0 || e3 < 0 || e4 < 0 || e5 < 0 || e6 < 0) return 0;
     /* 14 productive tetrahedral cases (0000 and 1111 do not yield polygons */
     switch (index) {
 	case 1:	 return add_triangle(e5, e6, e3, p);
@@ -661,17 +670,6 @@ in_out_hit(struct application *ap, struct partition *partH, struct seg *UNUSED(s
 
     _tgc_hack_fix(part, stp);
 
-#if 0
-    {
-    point_t hit_pnt;
-    VJOIN1(hit_pnt, ap->a_ray.r_pt, part->pt_outhit->hit_dist, ap->a_ray.r_dir);
-    bu_log("r_pt: %g %g %g\n", V3ARGS(ap->a_ray.r_pt));
-    bu_log("r_dir: %g %g %g\n", V3ARGS(ap->a_ray.r_dir));
-    bu_log("hit_pnt: %g %g %g\n", V3ARGS(hit_pnt));
-    bu_log("Hit dist: %g\n", part->pt_inhit->hit_dist);
-    }
-#endif
-
     if (part->pt_inhit->hit_dist < 0) {
 	(*ret) = -1;
     }
@@ -750,7 +748,6 @@ pnt_in_out(point_t *p, void *d)
     ap->a_hit = a_hit;
     ap->a_miss = a_miss;
     ap->a_uptr = uptr_stash;
-    bu_log("In/Out status of %g %g %g: %d\n", V3ARGS(*p), fret);
 
     return fret;
 }
@@ -765,8 +762,10 @@ analyze_polygonize(
 	fastf_t size,
 	point_t p_s,
        	const char *obj,
-       	struct db_i *dbip)
+       	struct db_i *dbip,
+	int max_time)
 {
+    int ret = 0;
     int ncpus = bu_avail_cpus();
     struct pnt_normal *rtpnt;
     PROCESS p;
@@ -776,8 +775,12 @@ analyze_polygonize(
     struct application *ap;
     struct resource *resp;
     struct rt_i *rtip;
+    fastf_t timestamp;
+    fastf_t mt = (max_time > 0) ? (fastf_t)max_time : 0.0;
 
     if (!faces || !num_faces || !vertices || !num_vertices || !obj || !dbip) return -1;
+
+    timestamp = bu_gettime();
 
     p.function = pnt_in_out;
     p.triproc = NULL;
@@ -815,7 +818,8 @@ analyze_polygonize(
     BU_GET(rtpnt, struct pnt_normal);
     ap->a_uptr = (void *)rtpnt;
     if ((rt_gettree(rtip, obj) < 0)) {
-	return -1;
+	ret = -1;
+	goto analyze_polygonizer_memfree;
     }
     rt_prep_parallel(rtip, ncpus);
     p.ap = ap;
@@ -853,9 +857,8 @@ analyze_polygonize(
 	    dotet(&c, RTN, LTF, RTF, RBF, &p);
 
 	if (!noabort) {
-	    bu_log("aborting\n");
-	    polygonizer_mesh_free(m);
-	    return -1;
+	    ret = -1;
+	    goto analyze_polygonizer_memfree;
 	}
 
 	/* pop current cube from stack */
@@ -868,6 +871,12 @@ analyze_polygonize(
 	testface(c.i, c.j+1, c.k, &c, T, LTN, LTF, RTN, RTF, &p);
 	testface(c.i, c.j, c.k-1, &c, N, LBN, LTN, RBN, RTN, &p);
 	testface(c.i, c.j, c.k+1, &c, F, LBF, LTF, RBF, RTF, &p);
+
+	if (((bu_gettime() - timestamp)/1e6) > mt) {
+	    /* Taking too long, bail */
+	    ret = 2;
+	    goto analyze_polygonizer_memfree;
+	}
     }
 
     /* Translate m into vert and face arrays */
@@ -879,7 +888,6 @@ analyze_polygonize(
 	    VMOVE(nverts[i], m->vertices.ptr[i].position);
 	}
 	for (i = 0; i < m->triangles.count; i++) {
-	    bu_log("face %d: (%g %g %g) (%g %g %g) (%g %g %g)\n", i, V3ARGS(m->vertices.ptr[m->triangles.ptr[i].i1].position), V3ARGS(m->vertices.ptr[m->triangles.ptr[i].i2].position), V3ARGS(m->vertices.ptr[m->triangles.ptr[i].i3].position));
 	    nfaces[i*3 + 0] = m->triangles.ptr[i].i1;
 	    nfaces[i*3 + 1] = m->triangles.ptr[i].i3;
 	    nfaces[i*3 + 2] = m->triangles.ptr[i].i2;
@@ -888,10 +896,25 @@ analyze_polygonize(
 	(*num_vertices) = m->vertices.count;
 	(*faces) = nfaces;
 	(*vertices) = nverts;
-	return 0;
+	ret = 0;
     } else {
-	return -1;
+	ret = -1;
     }
+
+analyze_polygonizer_memfree:
+    polygonizer_mesh_free(m);
+
+    /* TODO - need to do a better job of cleanup we're probably leaking memory here,
+     * from the rt containers if nowhere else... */
+    bu_free(p.centers, "centerlist");
+    bu_free(p.corners, "cornerlist");
+    bu_free(p.edges, "edgelist");
+    /* rtip ? */
+    BU_PUT(resp, struct resource);
+    BU_PUT(ap, struct appliation);
+    BU_PUT(rtpnt, struct pnt_normal);
+
+    return ret;
 }
 
 /*
