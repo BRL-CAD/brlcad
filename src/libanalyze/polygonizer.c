@@ -615,8 +615,8 @@ void
 polygonizer_mesh_free(struct polygonizer_mesh *m)
 {
     if (!m) return;
-    bu_free(m->vertices.ptr, "vertices");
-    bu_free(m->triangles.ptr, "triangles");
+    if (m->vertices.ptr) bu_free(m->vertices.ptr, "vertices");
+    if (m->triangles.ptr) bu_free(m->triangles.ptr, "triangles");
     bu_free(m, "mesh");
 }
 
