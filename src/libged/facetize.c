@@ -188,6 +188,67 @@ _db_uniq_test(struct bu_vls *n, void *data)
     return 0;
 }
 
+HIDDEN void
+_rt_pnts_bbox(point_t rpp_min, point_t rpp_max, struct rt_pnts_internal *pnts)
+{
+    struct pnt_normal *pn = NULL;
+    struct pnt_normal *pl = NULL;
+    if (!rpp_min || !rpp_max || !pnts || !pnts->point) return;
+    VSETALL(rpp_min, INFINITY);
+    VSETALL(rpp_max, -INFINITY);
+    pl = (struct pnt_normal *)pnts->point;
+    for (BU_LIST_FOR(pn, pnt_normal, &(pl->l))) {
+	VMINMAX(rpp_min, rpp_max, pn->v);
+    }
+}
+
+HIDDEN void
+_pnts_bbox(point_t rpp_min, point_t rpp_max, int pnt_cnt, point_t *pnts)
+{
+    int i = 0;
+    if (!rpp_min || !rpp_max || !pnts || !pnts || !pnt_cnt) return;
+    VSETALL(rpp_min, INFINITY);
+    VSETALL(rpp_max, -INFINITY);
+    for (i = 0; i < pnt_cnt; i++) {
+	VMINMAX(rpp_min, rpp_max, pnts[i]);
+    }
+}
+
+/* Check the volume of the bounding box of the vertices of a BoT against the
+ * bounding box of a point cloud - a large difference means something
+ * probably isn't right.  For the moment, use >50% difference. */
+HIDDEN int
+_ged_facetize_pnts_array_compare(int pnt_cnt, point_t *pnts_array, struct rt_pnts_internal *pnts, const char *method)
+{
+
+    point_t p_min, p_max;
+    point_t b_min, b_max;
+    fastf_t p_xlen, p_ylen, p_zlen;
+    fastf_t b_xlen, b_ylen, b_zlen;
+    fastf_t pvol, bvol, delta_vol;
+    _rt_pnts_bbox(p_min, p_max, pnts);
+    _pnts_bbox(b_min, b_max, pnt_cnt, pnts_array);
+#if 0
+    bu_log("pnts bbox: %g %g %g, %g %g %g\n", V3ARGS(p_min), V3ARGS(p_max));
+    bu_log("bot  bbox: %g %g %g, %g %g %g\n", V3ARGS(b_min), V3ARGS(b_max));
+#endif
+    p_xlen = fabs(p_max[X] - p_min[X]);
+    p_ylen = fabs(p_max[Y] - p_min[Y]);
+    p_zlen = fabs(p_max[Z] - p_min[Z]);
+    pvol = p_xlen * p_ylen * p_zlen;
+    b_xlen = fabs(b_max[X] - b_min[X]);
+    b_ylen = fabs(b_max[Y] - b_min[Y]);
+    b_zlen = fabs(b_max[Z] - b_min[Z]);
+    bvol = b_xlen * b_ylen * b_zlen;
+    delta_vol = fabs(pvol - bvol);
+    if (delta_vol > pvol * 0.5) {
+	bu_log("%s: BoT bbox volume (%g) is widely different than the sampled point cloud bbox volume (%g), rejecting.\n", method, bvol, pvol);
+	return GED_ERROR;
+    }
+    return GED_OK;
+}
+
+
 HIDDEN int
 _ged_facetize_bomb_hook(void *cdata, void *str)
 {
@@ -1022,6 +1083,14 @@ _ged_continuation_obj(int *is_valid, struct ged *gedp, const char *objname, cons
 	if (bot == obot && opts->verbosity) {
 	    bu_log("Continuation Method: decimation failed, returning original BoT (may be large)\n");
 	}
+    }
+
+    /* Check the volume of the bounding box of the BoT against the bounding box
+     * of the point cloud - a large difference means something probably isn't
+     * right.  For the moment, use >50% difference. */
+    ret = _ged_facetize_pnts_array_compare(bot->num_vertices, (point_t *)bot->vertices, pnts, "Continuation Method");
+    if (ret == GED_ERROR) {;
+	goto ged_facetize_continuation_memfree;
     }
 
     if (is_valid) {
