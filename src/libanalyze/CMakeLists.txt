@@ -16,7 +16,7 @@ set(LIBANALYZE_SOURCES
   mass.c
   moments.c
   nirt.cxx
-  obj_to_pnts.c
+  obj_to_pnts.cxx
   overlaps.c
   polygonizer.c
   raydiff.c
