@@ -219,6 +219,7 @@ typedef struct process {	   /* parameters, function, storage */
     int raytrace;                  /* if non-zero, use raytracer for the converge step */
     struct application *ap;        /* librt application structure to use if we are raytracing */
     struct polygonizer_mesh *m;    /* vertices and triangles generated */
+    struct bu_ptbl *f;             /* bu_malloc/bu_calloc'ed items to free */
 } PROCESS;
 
 
@@ -231,6 +232,7 @@ setcorner (PROCESS *p, int i, int j, int k)
     CORNER *c = (CORNER *) bu_calloc(1, sizeof(CORNER), "corner");
     int index = HASH(i, j, k);
     CORNERLIST *l = p->corners[index];
+    bu_ptbl_ins(p->f, (long *)c);
     c->i = i; c->p[X] = p->start[X]+((double)i-.5)*p->size;
     c->j = j; c->p[Y] = p->start[Y]+((double)j-.5)*p->size;
     c->k = k; c->p[Z] = p->start[Z]+((double)k-.5)*p->size;
@@ -240,6 +242,7 @@ setcorner (PROCESS *p, int i, int j, int k)
 	    return c;
 	}
     l = (CORNERLIST *) bu_calloc(1, sizeof(CORNERLIST), "cornerlist");
+    bu_ptbl_ins(p->f, (long *)l);
     l->i = i; l->j = j; l->k = k;
     l->value = c->value = p->function(&(c->p), p->d);
     l->next = p->corners[index];
@@ -252,13 +255,14 @@ setcorner (PROCESS *p, int i, int j, int k)
  * return 1 if already set; otherwise, set and return 0 */
 
 int
-setcenter(CENTERLIST *table[], int i, int j, int k)
+setcenter(PROCESS *p, CENTERLIST *table[], int i, int j, int k)
 {
     int index = HASH(i, j, k);
     CENTERLIST *snew, *l, *q = table[index];
     for (l = q; l != NULL; l = l->next)
 	if (l->i == i && l->j == j && l->k == k) return 1;
     snew = (CENTERLIST *) bu_calloc(1, sizeof(CENTERLIST), "centerlist");
+    bu_ptbl_ins(p->f, (long *)snew);
     snew->i = i; snew->j = j; snew->k = k; snew->next = q;
     table[index] = snew;
     return 0;
@@ -281,7 +285,7 @@ testface(int i, int j, int k, CUBE *old, int face, int c1, int c2, int c3, int c
 	    (old->corners[c3]->value > 0) == pos &&
 	    (old->corners[c4]->value > 0) == pos) return;
     if (abs(i) > p->bounds || abs(j) > p->bounds || abs(k) > p->bounds) return;
-    if (setcenter(p->centers, i, j, k)) return;
+    if (setcenter(p, p->centers, i, j, k)) return;
 
     /* create new cube: */
     cnew.i = i;
@@ -490,7 +494,7 @@ add_vertex(VERTICES *vertices, VERTEX *v)
 
 /* setedge: set vertex id for edge */
 void
-setedge(EDGELIST *table[], int sei1, int sej1, int sek1, int sei2, int sej2, int sek2, int vid)
+setedge(PROCESS *p, EDGELIST *table[], int sei1, int sej1, int sek1, int sei2, int sej2, int sek2, int vid)
 {
     unsigned int index;
     EDGELIST *enew;
@@ -499,6 +503,7 @@ setedge(EDGELIST *table[], int sei1, int sej1, int sek1, int sei2, int sej2, int
     }
     index = HASH(sei1, sej1, sek1) + HASH(sei2, sej2, sek2);
     enew = (EDGELIST *) bu_calloc(1, sizeof(EDGELIST), "edgelist");
+    bu_ptbl_ins(p->f, (long *)enew);
     enew->i1 = sei1; enew->j1 = sej1; enew->k1 = sek1;
     enew->i2 = sei2; enew->j2 = sej2; enew->k2 = sek2;
     enew->vid = vid;
@@ -530,7 +535,7 @@ vertid(CORNER *c1, CORNER *c2, PROCESS *p)
 
     add_vertex(&p->m->vertices, &v);			   /* save vertex */
     vid = p->m->vertices.count-1;
-    setedge(p->edges, c1->i, c1->j, c1->k, c2->i, c2->j, c2->k, vid);
+    setedge(p, p->edges, c1->i, c1->j, c1->k, c2->i, c2->j, c2->k, vid);
     return vid;
 }
 
@@ -732,7 +737,7 @@ analyze_polygonize(
     int ncpus = bu_avail_cpus();
     struct pnt_normal *rtpnt;
     PROCESS p;
-    int n;
+    int i, n;
     int noabort = 0;
     struct polygonizer_mesh *m;
     struct application *ap;
@@ -751,6 +756,9 @@ analyze_polygonize(
     p.delta = 0;
     p.td = NULL;
     p.raytrace = 1;
+
+    BU_GET(p.f , struct bu_ptbl);
+    bu_ptbl_init(p.f , 64, "free list");
 
     m = (struct polygonizer_mesh *)bu_calloc(1, sizeof(struct polygonizer_mesh), "results");
 
@@ -803,7 +811,7 @@ analyze_polygonize(
     p.m->triangles.count = p.m->triangles.max = 0; /* no triangles yet */
     p.m->triangles.ptr = NULL;
 
-    setcenter(p.centers, 0, 0, 0);
+    setcenter(&p, p.centers, 0, 0, 0);
 
     while (p.cubes != NULL) { /* process active cubes till none left */
 	CUBE c;
@@ -844,7 +852,6 @@ analyze_polygonize(
 
     /* Translate m into vert and face arrays */
     if (m->triangles.count && m->vertices.count) {
-	int i = 0;
 	int *nfaces = (int *)bu_calloc(m->triangles.count * 3, sizeof(int), "faces array");
 	point_t *nverts = (point_t *)bu_calloc(m->vertices.count, sizeof(point_t), "verts array");
 	for (i = 0; i < m->vertices.count; i++) {
@@ -866,12 +873,16 @@ analyze_polygonize(
 
 analyze_polygonizer_memfree:
     polygonizer_mesh_free(m);
-
-    /* TODO - need to do a better job of cleanup we're probably leaking memory here,
-     * from the rt containers if nowhere else... */
+    for (i = 0; i < (int)BU_PTBL_LEN(p.f); i++) {
+	bu_free(BU_PTBL_GET(p.f, i), "free list item");
+    }
+    bu_ptbl_free(p.f);
+    BU_PUT(p.f, struct bu_ptbl);
     bu_free(p.centers, "centerlist");
     bu_free(p.corners, "cornerlist");
     bu_free(p.edges, "edgelist");
+    /* TODO - need to do a better job of cleanup we're probably leaking memory here,
+     * from the rt containers if nowhere else... */
     /* rtip ? */
     BU_PUT(resp, struct resource);
     BU_PUT(ap, struct appliation);
