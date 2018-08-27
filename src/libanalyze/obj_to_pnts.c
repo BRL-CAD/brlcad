@@ -511,6 +511,8 @@ memfree:
     if (grid_pnts) bu_free(grid_pnts, "free state containers");
     if (rand_pnts) bu_free(rand_pnts, "free state containers");
     if (sobol_pnts) bu_free(sobol_pnts, "free state containers");
+
+    rt_free_rti(rtip); 
     bu_free(state, "free state containers");
     bu_free(resp, "free resources");
     return ret;

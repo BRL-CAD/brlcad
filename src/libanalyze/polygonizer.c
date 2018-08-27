@@ -872,6 +872,8 @@ analyze_polygonize(
     }
 
 analyze_polygonizer_memfree:
+
+    /* polygonizer memory */
     polygonizer_mesh_free(m);
     for (i = 0; i < (int)BU_PTBL_LEN(p.f); i++) {
 	bu_free(BU_PTBL_GET(p.f, i), "free list item");
@@ -881,9 +883,9 @@ analyze_polygonizer_memfree:
     bu_free(p.centers, "centerlist");
     bu_free(p.corners, "cornerlist");
     bu_free(p.edges, "edgelist");
-    /* TODO - need to do a better job of cleanup we're probably leaking memory here,
-     * from the rt containers if nowhere else... */
-    /* rtip ? */
+
+    /* LIBRT memory */
+    rt_free_rti(rtip);
     BU_PUT(resp, struct resource);
     BU_PUT(ap, struct appliation);
     BU_PUT(rtpnt, struct pnt_normal);
