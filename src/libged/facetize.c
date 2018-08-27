@@ -1063,12 +1063,15 @@ _ged_continuation_obj(int *is_valid, struct ged *gedp, const char *objname, cons
     }
 
 ged_facetize_continuation_memfree:
-    if (free_pnts) {
-	struct pnt_normal *entry;
+    if (free_pnts && pnts) {
 	struct pnt_normal *rpnt = (struct pnt_normal *)pnts->point;
-	while (BU_LIST_WHILE(entry, pnt_normal, &(rpnt->l))) {
-	    BU_LIST_DEQUEUE(&(entry->l));
-	    BU_PUT(entry, struct pnt_normal);
+	if (rpnt) {
+	    struct pnt_normal *entry;
+	    while (BU_LIST_WHILE(entry, pnt_normal, &(rpnt->l))) {
+		BU_LIST_DEQUEUE(&(entry->l));
+		BU_PUT(entry, struct pnt_normal);
+	    }
+	    BU_PUT(rpnt, struct pnt_normal);
 	}
 	bu_free(pnts, "free pnts");
     }
