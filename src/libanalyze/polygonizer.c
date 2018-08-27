@@ -731,7 +731,8 @@ analyze_polygonize(
 	point_t p_s,
        	const char *obj,
        	struct db_i *dbip,
-	int max_time)
+	int max_time,
+	int verbosity)
 {
     int ret = 0;
     int ncpus = bu_avail_cpus();
@@ -744,11 +745,13 @@ analyze_polygonize(
     struct resource *resp;
     struct rt_i *rtip;
     fastf_t timestamp;
+    fastf_t timestamp2;
     fastf_t mt = (max_time > 0) ? (fastf_t)max_time : 0.0;
 
     if (!faces || !num_faces || !vertices || !num_vertices || !obj || !dbip) return -1;
 
     timestamp = bu_gettime();
+    timestamp2 = bu_gettime();
 
     p.function = pnt_in_out;
     p.triproc = NULL;
@@ -847,6 +850,14 @@ analyze_polygonize(
 	    /* Taking too long, bail */
 	    ret = 2;
 	    goto analyze_polygonizer_memfree;
+	}
+
+	if (((bu_gettime() - timestamp2)/1e6) > 5) {
+	    if (verbosity) {
+		int delta = (int)(bu_gettime() - timestamp)/1e6;
+		bu_log("Triangle count after %d seconds: %d\n", delta, m->triangles.count);
+	    }
+	    timestamp2 = bu_gettime();
 	}
     }
 

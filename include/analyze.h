@@ -365,7 +365,7 @@ ANALYZE_EXPORT int analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, double *a
 	       const char *obj, struct bn_tol *tol, int flags, int max_pnts, int max_time);
 
 ANALYZE_EXPORT extern int
-analyze_polygonize(int **faces, int *num_faces, point_t **vertices, int *num_vertices, fastf_t size, point_t p_s, const char *obj, struct db_i *dbip, int max_time);
+analyze_polygonize(int **faces, int *num_faces, point_t **vertices, int *num_vertices, fastf_t size, point_t p_s, const char *obj, struct db_i *dbip, int max_time, int verbosity);
 
 
 struct current_state;

@@ -1050,7 +1050,7 @@ _ged_continuation_obj(int *is_valid, struct ged *gedp, const char *objname, cons
 	polygonize_failure = analyze_polygonize(&(bot->faces), (int *)&(bot->num_faces),
 		    (point_t **)&(bot->vertices),
 		    (int *)&(bot->num_vertices),
-		    feature_size, pn->v, objname, gedp->ged_wdbp->dbip, opts->max_time);
+		    feature_size, pn->v, objname, gedp->ged_wdbp->dbip, opts->max_time, opts->verbosity);
 	if (polygonize_failure) {
 	    if (!opts->quiet && polygonize_failure == 2) {
 		bu_log("Continuation Method timed out after %d seconds with size %g\n", opts->max_time, feature_size);
