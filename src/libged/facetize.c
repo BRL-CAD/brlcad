@@ -949,7 +949,6 @@ _ged_continuation_obj(int *is_valid, struct ged *gedp, const char *objname, cons
     int ret = GED_OK;
     double avg_thickness = 0.0;
     double min_len = 0.0;
-    double max_len = 0.0;
     fastf_t feature_size;
     double xlen, ylen, zlen;
     struct directory *dp;
@@ -1022,9 +1021,6 @@ _ged_continuation_obj(int *is_valid, struct ged *gedp, const char *objname, cons
     min_len = (xlen < ylen) ? xlen : ylen;
     min_len = (min_len < zlen) ? min_len : zlen;
     min_len = (min_len < avg_thickness) ? min_len : avg_thickness;
-    max_len = (xlen > ylen) ? xlen : ylen;
-    max_len = (max_len > zlen) ? max_len : zlen;
-    max_len = (max_len > avg_thickness) ? max_len : avg_thickness;
 
     if (opts->feat_perc > 0) {
 	feature_size = min_len * opts->feat_perc;
@@ -1043,13 +1039,14 @@ _ged_continuation_obj(int *is_valid, struct ged *gedp, const char *objname, cons
     /* Run the polygonize routine.  Because it is quite simple to accidentally
      * specify inputs that will take huge amounts of time to run, we will
      * attempt a series of progressively courser polygonize runs until we
-     * either succeed, or reach a feature size that is .1*max_len without
-     * succeeding. If max_time has been explicitly set to 0 by the caller this
-     * will run unbounded, but the algorithm is n**2 and we're trying the
-     * finest level first so may run a *very* long time... */
+     * either succeed, or reach a feature size that is greater than the average
+     * thickness according to the raytracer without succeeding. If max_time has
+     * been explicitly set to 0 by the caller this will run unbounded, but the
+     * algorithm is n**2 and we're trying the finest level first so may run a
+     * *very* long time... */
     pl = (struct pnt_normal *)pnts->point;
     pn = BU_LIST_PNEXT(pnt_normal, pl);
-    while (polygonize_failure && feature_size < 0.1*max_len) {
+    while (polygonize_failure && feature_size <= avg_thickness) {
 	polygonize_failure = analyze_polygonize(&(bot->faces), (int *)&(bot->num_faces),
 		    (point_t **)&(bot->vertices),
 		    (int *)&(bot->num_vertices),
