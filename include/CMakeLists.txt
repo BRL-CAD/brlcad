@@ -60,6 +60,7 @@ endif(CMAKE_CONFIGURATION_TYPES)
 
 set(include_misc
   brlcad_ident.h.in
+  brlcad_version.h
   conf/BrlcadConfig.tmpl
   conf/MAJOR
   conf/MINOR
