@@ -49,11 +49,13 @@ pnthickness_create() {
     return p;
 }
 
-/* Deliberately don't destroy p->pt, as (locally)
- * it is used to construct the final pnts object */
+/* p->pt may be  used to construct the final pnts object */
 void
-pnthickness_free(struct pnt_normal_thickness *p) {
+pnthickness_free(struct pnt_normal_thickness *p, int free_pnt) {
     if (!p) return;
+    if (free_pnt) {
+	bu_free(p->pt, "free pnt");
+    }
     BU_PUT(p, struct pnt_normal_thickness);
 }
 
@@ -290,7 +292,7 @@ analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, fastf_t *avg_thickness, stru
     rt_prep_parallel(rtip, ncpus);
 
     currtime = bu_gettime();
-    bu_log("prep time: %.1f\n", (currtime - oldtime)/1.0e6);
+    bu_log("Object to Point Set prep time: %.1f\n", (currtime - oldtime)/1.0e6);
 
     /* Regardless of whether or not we're shooting the grid, it is our
      * guide for how many rays to fire */
@@ -437,14 +439,16 @@ analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, fastf_t *avg_thickness, stru
 	    for (i = 0; i < ncpus+1; i++) {
 		for (j = 0; j < (int)BU_PTBL_LEN(grid_pnts[i]); j++) {
 		    struct pnt_normal_thickness *pnthick = (struct pnt_normal_thickness *)BU_PTBL_GET(grid_pnts[i], j);
-		    BU_LIST_PUSH(&(((struct pnt_normal *)rpnts->point)->l), &(pnthick->pt)->l);
-		    thickness_total += pnthick->thickness;
-		    pnthickness_free(pnthick);
-		    total_pnts++;
+		    if (pc < pntcnt_grid) {
+			BU_LIST_PUSH(&(((struct pnt_normal *)rpnts->point)->l), &(pnthick->pt)->l);
+			thickness_total += pnthick->thickness;
+			pnthickness_free(pnthick, 0);
+			total_pnts++;
+		    } else {
+			pnthickness_free(pnthick, 1);
+		    }
 		    pc++;
-		    if (pc == pntcnt_grid) break;
 		}
-		if (pc == pntcnt_grid) break;
 	    }
 	}
 	/* Random points */
@@ -453,14 +457,16 @@ analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, fastf_t *avg_thickness, stru
 	    for (i = 0; i < ncpus+1; i++) {
 		for (j = 0; j < (int)BU_PTBL_LEN(rand_pnts[i]); j++) {
 		    struct pnt_normal_thickness *pnthick = (struct pnt_normal_thickness *)BU_PTBL_GET(rand_pnts[i], j);
-		    BU_LIST_PUSH(&(((struct pnt_normal *)rpnts->point)->l), &(pnthick->pt)->l);
-		    thickness_total += pnthick->thickness;
-		    pnthickness_free(pnthick);
-		    total_pnts++;
+		    if (pc < pntcnt_rand) {
+			BU_LIST_PUSH(&(((struct pnt_normal *)rpnts->point)->l), &(pnthick->pt)->l);
+			thickness_total += pnthick->thickness;
+			pnthickness_free(pnthick, 0);
+			total_pnts++;
+		    } else {
+			pnthickness_free(pnthick, 1);
+		    }
 		    pc++;
-		    if (pc == pntcnt_rand) break;
 		}
-		if (pc == pntcnt_rand) break;
 	    }
 	}
 	/* Sobol points */
@@ -469,14 +475,16 @@ analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, fastf_t *avg_thickness, stru
 	    for (i = 0; i < ncpus+1; i++) {
 		for (j = 0; j < (int)BU_PTBL_LEN(sobol_pnts[i]); j++) {
 		    struct pnt_normal_thickness *pnthick = (struct pnt_normal_thickness *)BU_PTBL_GET(sobol_pnts[i], j);
-		    BU_LIST_PUSH(&(((struct pnt_normal *)rpnts->point)->l), &(pnthick->pt)->l);
-		    thickness_total += pnthick->thickness;
-		    pnthickness_free(pnthick);
-		    total_pnts++;
+		    if (pc < pntcnt_sobol) {
+			BU_LIST_PUSH(&(((struct pnt_normal *)rpnts->point)->l), &(pnthick->pt)->l);
+			thickness_total += pnthick->thickness;
+			pnthickness_free(pnthick, 0);
+			total_pnts++;
+		    } else {
+			pnthickness_free(pnthick, 1);
+		    }
 		    pc++;
-		    if (pc == pntcnt_sobol) break;
 		}
-		if (pc == pntcnt_sobol) break;
 	    }
 	}
 	ret = 0;
