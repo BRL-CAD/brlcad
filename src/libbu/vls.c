@@ -994,7 +994,6 @@ bu_vls_incr(struct bu_vls *name, const char *regex_str, const char *incr_spec, b
     int i = 0;
     int j = 0;
     int offset = 0;
-    regex_t compiled_regex;
     regmatch_t *incr_substrs;
     regmatch_t *num_substrs;
     struct bu_vls new_name = BU_VLS_INIT_ZERO;
@@ -1012,19 +1011,27 @@ bu_vls_incr(struct bu_vls *name, const char *regex_str, const char *incr_spec, b
 
     while (!success) {
 	/* Find incrementer. */
-	ret = regcomp(&compiled_regex, rs, REG_EXTENDED);
-	if (ret != 0) return -1;
-	incr_substrs = (regmatch_t *)bu_calloc(bu_vls_strlen(name) + 1, sizeof(regmatch_t), "regex results");
-	ret = regexec(&compiled_regex, bu_vls_addr(name), bu_vls_strlen(name) + 1, incr_substrs, 0);
-	if (ret == REG_NOMATCH) {
-	    bu_vls_printf(name, "0");
-	    bu_free(incr_substrs, "free regex results");
+	{
+	    regex_t compiled_regex;
+	    ret = regcomp(&compiled_regex, rs, REG_EXTENDED);
+	    if (ret != 0) {
+		regfree(&compiled_regex);
+		return -1;
+	    }
 	    incr_substrs = (regmatch_t *)bu_calloc(bu_vls_strlen(name) + 1, sizeof(regmatch_t), "regex results");
 	    ret = regexec(&compiled_regex, bu_vls_addr(name), bu_vls_strlen(name) + 1, incr_substrs, 0);
 	    if (ret == REG_NOMATCH) {
+		bu_vls_printf(name, "0");
 		bu_free(incr_substrs, "free regex results");
-		return -1;
+		incr_substrs = (regmatch_t *)bu_calloc(bu_vls_strlen(name) + 1, sizeof(regmatch_t), "regex results");
+		ret = regexec(&compiled_regex, bu_vls_addr(name), bu_vls_strlen(name) + 1, incr_substrs, 0);
+		if (ret == REG_NOMATCH) {
+		    bu_free(incr_substrs, "free regex results");
+		    regfree(&compiled_regex);
+		    return -1;
+		}
 	    }
+	    regfree(&compiled_regex);
 	}
 	i = bu_vls_strlen(name);
 	while(incr_substrs[i].rm_so == -1 || incr_substrs[i].rm_eo == -1) i--;
@@ -1037,19 +1044,26 @@ bu_vls_incr(struct bu_vls *name, const char *regex_str, const char *incr_spec, b
 	bu_vls_strncpy(&new_name, bu_vls_addr(name)+offset, incr_substrs[j].rm_so - offset);
 
 	/* Find number. */
-	ret = regcomp(&compiled_regex, num_regex, REG_EXTENDED);
-	if (ret != 0) return -1;
-	num_substrs = (regmatch_t *)bu_calloc(bu_vls_strlen(&curr_incr) + 1, sizeof(regmatch_t), "regex results");
-	ret = regexec(&compiled_regex, bu_vls_addr(&curr_incr), bu_vls_strlen(&curr_incr) + 1, num_substrs, 0);
-	if (ret == REG_NOMATCH) {
-	    bu_vls_free(&new_name);
-	    bu_vls_free(&ispec);
-	    bu_vls_free(&curr_incr);
-	    bu_free(num_substrs, "free regex results");
-	    return -1;
+	{
+	    regex_t compiled_regex;
+	    ret = regcomp(&compiled_regex, num_regex, REG_EXTENDED);
+	    if (ret != 0) {
+		regfree(&compiled_regex);
+		return -1;
+	    }
+	    num_substrs = (regmatch_t *)bu_calloc(bu_vls_strlen(&curr_incr) + 1, sizeof(regmatch_t), "regex results");
+	    ret = regexec(&compiled_regex, bu_vls_addr(&curr_incr), bu_vls_strlen(&curr_incr) + 1, num_substrs, 0);
+	    if (ret == REG_NOMATCH) {
+		bu_vls_free(&new_name);
+		bu_vls_free(&ispec);
+		bu_vls_free(&curr_incr);
+		bu_free(num_substrs, "free regex results");
+		regfree(&compiled_regex);
+		return -1;
+	    }
+	    bu_vls_substr(&num_str, &curr_incr, num_substrs[1].rm_so, num_substrs[1].rm_eo - num_substrs[1].rm_so);
+	    regfree(&compiled_regex);
 	}
-	bu_vls_substr(&num_str, &curr_incr, num_substrs[1].rm_so, num_substrs[1].rm_eo - num_substrs[1].rm_so);
-
 
 	/* Either used the supplied incrementing specification or initialize with the default */
 	if (!incr_spec) {
@@ -1077,8 +1091,11 @@ bu_vls_incr(struct bu_vls *name, const char *regex_str, const char *incr_spec, b
 	} else {
 	    success = 1;
 	}
+
+	bu_free(num_substrs, "free regex results");
     }
 
+    bu_vls_free(&num_str);
     bu_vls_free(&new_name);
     bu_vls_free(&ispec);
     bu_vls_free(&curr_incr);

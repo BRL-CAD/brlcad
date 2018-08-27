@@ -439,7 +439,7 @@ analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, fastf_t *avg_thickness, stru
 		    struct pnt_normal_thickness *pnthick = (struct pnt_normal_thickness *)BU_PTBL_GET(grid_pnts[i], j);
 		    BU_LIST_PUSH(&(((struct pnt_normal *)rpnts->point)->l), &(pnthick->pt)->l);
 		    thickness_total += pnthick->thickness;
-		    BU_PUT(pnthick, struct pnt_normal_thickness);
+		    pnthickness_free(pnthick);
 		    total_pnts++;
 		    pc++;
 		    if (pc == pntcnt_grid) break;
@@ -455,7 +455,7 @@ analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, fastf_t *avg_thickness, stru
 		    struct pnt_normal_thickness *pnthick = (struct pnt_normal_thickness *)BU_PTBL_GET(rand_pnts[i], j);
 		    BU_LIST_PUSH(&(((struct pnt_normal *)rpnts->point)->l), &(pnthick->pt)->l);
 		    thickness_total += pnthick->thickness;
-		    BU_PUT(pnthick, struct pnt_normal_thickness);
+		    pnthickness_free(pnthick);
 		    total_pnts++;
 		    pc++;
 		    if (pc == pntcnt_rand) break;
@@ -471,7 +471,7 @@ analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, fastf_t *avg_thickness, stru
 		    struct pnt_normal_thickness *pnthick = (struct pnt_normal_thickness *)BU_PTBL_GET(sobol_pnts[i], j);
 		    BU_LIST_PUSH(&(((struct pnt_normal *)rpnts->point)->l), &(pnthick->pt)->l);
 		    thickness_total += pnthick->thickness;
-		    BU_PUT(pnthick, struct pnt_normal_thickness);
+		    pnthickness_free(pnthick);
 		    total_pnts++;
 		    pc++;
 		    if (pc == pntcnt_sobol) break;
@@ -508,13 +508,22 @@ memfree:
 	    }
 	}
     }
+    for (i = 0; i < ncpus+1; i++) {
+	/* free rays */
+	if (state[i].rays) {
+	    bu_free(state[i].rays, "rand rays");
+	}
+    }
     if (grid_pnts) bu_free(grid_pnts, "free state containers");
     if (rand_pnts) bu_free(rand_pnts, "free state containers");
     if (sobol_pnts) bu_free(sobol_pnts, "free state containers");
 
-    rt_free_rti(rtip); 
+    for (i = 0; i < ncpus+1; i++) {
+	rt_clean_resource(rtip, &resp[i]);
+    }
+    rt_free_rti(rtip);
     bu_free(state, "free state containers");
-    bu_free(resp, "free resources");
+    bu_free(resp, "free resources array");
     return ret;
 }
 

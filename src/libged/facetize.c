@@ -276,7 +276,10 @@ _ged_facetize_mkname(struct ged *gedp, struct _ged_facetize_opts *opts, const ch
 	    bu_vls_sprintf(&incr_template, "%s", n);
 	}
     }
-    if (!bu_vls_strlen(&incr_template)) return;
+    if (!bu_vls_strlen(&incr_template)) {
+	bu_vls_free(&incr_template);
+	return;
+    }
     if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&incr_template), LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(&incr_template, "-0");
 	bu_vls_incr(&incr_template, NULL, NULL, &_db_uniq_test, (void *)gedp);
@@ -288,6 +291,8 @@ _ged_facetize_mkname(struct ged *gedp, struct _ged_facetize_opts *opts, const ch
     if (type == COMB_OBJ_NAME) {
 	bu_avs_add(opts->c_map, n, bu_vls_addr(&incr_template));
     }
+
+    bu_vls_free(&incr_template);
 }
 
 /* Sort the argv array to list existing objects first and everything else at
@@ -898,8 +903,6 @@ _ged_continuation_obj(int *is_valid, struct ged *gedp, const char *objname, cons
     int flags = 0;
     int free_pnts = 0;
     int max_pnts = 50000;
-    point_t *input_points_3d = NULL;
-    vect_t *input_normals_3d = NULL;
     point_t rpp_min, rpp_max;
     point_t obj_min, obj_max;
     VSETALL(rpp_min, INFINITY);
@@ -924,6 +927,7 @@ _ged_continuation_obj(int *is_valid, struct ged *gedp, const char *objname, cons
     pnts->scale = 0.0;
     pnts->count = 0;
     pnts->type = RT_PNT_TYPE_NRM;
+    pnts->point = NULL;
     free_pnts = 1;
 
     /* Key some settings off the bbox size */
@@ -1059,9 +1063,15 @@ _ged_continuation_obj(int *is_valid, struct ged *gedp, const char *objname, cons
     }
 
 ged_facetize_continuation_memfree:
-    if (free_pnts) bu_free(pnts, "free pnts");
-    if (input_points_3d) bu_free(input_points_3d, "3d pnts");
-    if (input_normals_3d) bu_free(input_normals_3d, "3d pnts");
+    if (free_pnts) {
+	struct pnt_normal *entry;
+	struct pnt_normal *rpnt = (struct pnt_normal *)pnts->point;
+	while (BU_LIST_WHILE(entry, pnt_normal, &(rpnt->l))) {
+	    BU_LIST_DEQUEUE(&(entry->l));
+	    BU_PUT(entry, struct pnt_normal);
+	}
+	bu_free(pnts, "free pnts");
+    }
     rt_db_free_internal(&in_intern);
 
     return ret;
@@ -1285,6 +1295,8 @@ _ged_facetize_cpcomb(struct ged *gedp, const char *o, struct _ged_facetize_opts 
 
     /* apply attributes to new comb */
     db5_update_attributes(dp, &avs, dbip);
+
+    rt_db_free_internal(&ointern);
 
     return ret;
 }
@@ -1632,7 +1644,6 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
     unsigned int i = 0;
     struct directory **dpa = NULL;
     struct db_i *dbip = gedp->ged_wdbp->dbip;
-    const char **ntop;
     struct bu_ptbl *pc = NULL;
     struct bu_ptbl *ar = NULL;
     struct bu_ptbl continuation_succeeded = BU_PTBL_INIT_ZERO;
@@ -1731,7 +1742,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 
     /* First, add the new toplevel comb to hold all the new geometry */
     if (!opts->in_place) {
-	ntop = (const char **)bu_calloc(argc, sizeof(const char *), "new top level names");
+	const char **ntop = (const char **)bu_calloc(argc, sizeof(const char *), "new top level names");
 	for (i = 0; i < (unsigned int)argc; i++) {
 	    ntop[i] = bu_avs_get(opts->c_map, argv[i]);
 	    if (!ntop[i]) {
@@ -1742,6 +1753,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	    bu_log("Creating new top level assembly object %s...\n", newname);
 	}
 	ret = _ged_combadd2(gedp, newname, argc, ntop, 0, DB_OP_UNION, 0, 0, NULL, 0);
+	bu_free(ntop, "new top level names");
     }
 
 
@@ -1845,6 +1857,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	bu_vls_sprintf(&failed_name, "%s_FAILED-0", newname);
 	bu_vls_incr(&failed_name, NULL, NULL, &_db_uniq_test, (void *)gedp);
 	ret = _ged_combadd2(gedp, bu_vls_addr(&failed_name), (int)BU_PTBL_LEN(&facetize_failed), (const char **)facetize_failed.buffer, 0, DB_OP_UNION, 0, 0, NULL, 0);
+	bu_vls_free(&failed_name);
     }
     if (BU_PTBL_LEN(&continuation_succeeded) > 0) {
 	/* Put all of the continuation tessellations into their own top level comb for
@@ -1853,6 +1866,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	bu_vls_sprintf(&continuation_name, "%s_CONTINUATION-0", newname);
 	bu_vls_incr(&continuation_name, NULL, NULL, &_db_uniq_test, (void *)gedp);
 	ret = _ged_combadd2(gedp, bu_vls_addr(&continuation_name), (int)BU_PTBL_LEN(&continuation_succeeded), (const char **)continuation_succeeded.buffer, 0, DB_OP_UNION, 0, 0, NULL, 0);
+	bu_vls_free(&continuation_name);
     }
     if (BU_PTBL_LEN(&continuation_failed) > 0) {
 	/* Put all of the continuation failed tessellations into their own top level comb for
@@ -1861,6 +1875,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	bu_vls_sprintf(&continuation_name, "%s_CONTINUATION_FAILED-0", newname);
 	bu_vls_incr(&continuation_name, NULL, NULL, &_db_uniq_test, (void *)gedp);
 	ret = _ged_combadd2(gedp, bu_vls_addr(&continuation_name), (int)BU_PTBL_LEN(&continuation_failed), (const char **)continuation_failed.buffer, 0, DB_OP_UNION, 0, 0, NULL, 0);
+	bu_vls_free(&continuation_name);
     }
 
     if (opts->in_place) {

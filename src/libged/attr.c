@@ -195,6 +195,7 @@ attr_print(struct ged *gedp, struct bu_attribute_value_set *avs, int argc, const
 int
 ged_attr(struct ged *gedp, int argc, const char *argv[])
 {
+    int ret = GED_OK;
     size_t i;
     struct directory *dp;
     struct bu_attribute_value_pair *avpp;
@@ -259,7 +260,8 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
     if (path_cnt == 0) {
 	bu_vls_printf(gedp->ged_result_str, "Cannot locate objects matching %s\n", argv[2]);
-	return GED_ERROR;
+	ret = GED_ERROR;
+	goto ged_attr_memfree;
     }
 
     if (scmd == ATTR_SORT) {
@@ -275,7 +277,8 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
 	    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
-		return GED_ERROR;
+		ret = GED_ERROR;
+		goto ged_attr_memfree;
 	    }
 	    bu_sort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), attr_cmp, NULL);
 	    /* get a jump on calculating name and value lengths */
@@ -289,7 +292,8 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
 	    /* pretty print */
 	    if ((attr_pretty_print(gedp, dp, argv[2])) != GED_OK) {
-		return GED_ERROR;
+		ret = GED_ERROR;
+		goto ged_attr_memfree;
 	    }
 	    if (argc == 3) {
 		/* just list the already sorted attribute-value pairs */
@@ -319,7 +323,8 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
 	    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
-		return GED_ERROR;
+		ret = GED_ERROR;
+		goto ged_attr_memfree;
 	    }
 	    bu_sort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), attr_cmp, NULL);
 
@@ -347,7 +352,8 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 				dp->d_namep,
 				argv[i]);
 			bu_avs_free(&avs);
-			return GED_ERROR;
+			ret = GED_ERROR;
+			goto ged_attr_memfree;
 		    }
 		    if (do_separators) {
 			if (c_sep == -1)
@@ -374,7 +380,8 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
 		if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
 		    bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
-		    return GED_ERROR;
+		    ret = GED_ERROR;
+		    goto ged_attr_memfree;
 		}
 		bu_sort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), attr_cmp, NULL);
 
@@ -435,7 +442,8 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	    dp = paths[i];
 	    if (db5_get_attributes(gedp->ged_wdbp->dbip, &lavs, dp)) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
-		return GED_ERROR;
+		ret = GED_ERROR;
+		goto ged_attr_memfree;
 	    }
 	    bu_avs_merge(&avs, &lavs);
 	    bu_avs_free(&lavs);
@@ -453,7 +461,8 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	if ((argc - 3) % 2) {
 	    bu_vls_printf(gedp->ged_result_str,
 		    "Error: attribute names and values must be in pairs!!!\n");
-	    return GED_ERROR;
+	    ret = GED_ERROR;
+	    goto ged_attr_memfree;
 	}
 	for (i = 0; i < path_cnt; i++) {
 	    size_t j = 3;
@@ -463,7 +472,8 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
 	    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
-		return GED_ERROR;
+		ret = GED_ERROR;
+		goto ged_attr_memfree;
 	    }
 	    bu_sort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), attr_cmp, NULL);
 	    while (j < (size_t)argc) {
@@ -478,7 +488,8 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str,
 			"Error: failed to update attributes\n");
 		bu_avs_free(&avs);
-		return GED_ERROR;
+		ret = GED_ERROR;
+		goto ged_attr_memfree;
 	    }
 	    /* avs is freed by db5_update_attributes() */
 	}
@@ -493,7 +504,8 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
 	    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
-		return GED_ERROR;
+		ret = GED_ERROR;
+		goto ged_attr_memfree;
 	    }
 	    bu_sort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), attr_cmp, NULL);
 
@@ -508,7 +520,8 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str,
 			"Error: failed to update attributes\n");
 		bu_avs_free(&avs);
-		return GED_ERROR;
+		ret = GED_ERROR;
+		goto ged_attr_memfree;
 	    }
 	    /* avs is freed by db5_replace_attributes() */
 	}
@@ -518,7 +531,8 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	if ((argc-3) % 2) {
 	    bu_vls_printf(gedp->ged_result_str,
 			  "Error: attribute names and values must be in pairs!!!\n");
-	    return GED_ERROR;
+	    ret = GED_ERROR;
+	    goto ged_attr_memfree;
 	}
 	for (i = 0; i < path_cnt; i++) {
 	    size_t j = 3;
@@ -528,7 +542,8 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
 	    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
-		return GED_ERROR;
+		ret = GED_ERROR;
+		goto ged_attr_memfree;
 	    }
 	    bu_sort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), attr_cmp, NULL);
 
@@ -555,7 +570,8 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str,
 			"Error: failed to update attributes\n");
 		bu_avs_free(&avs);
-		return GED_ERROR;
+		ret = GED_ERROR;
+		goto ged_attr_memfree;
 	    }
 
 	    /* avs is freed by db5_replace_attributes() */
@@ -572,7 +588,8 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
 	    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
-		return GED_ERROR;
+		ret = GED_ERROR;
+		goto ged_attr_memfree;
 	    }
 
 	    /* get a jump on calculating name and value lengths */
@@ -586,7 +603,8 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
 	    /* pretty print */
 	    if ((attr_pretty_print(gedp, dp, dp->d_namep)) != GED_OK) {
-		return GED_ERROR;
+		ret = GED_ERROR;
+		goto ged_attr_memfree;
 	    }
 
 	    if (argc == 3) {
@@ -601,10 +619,15 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "ERROR: unrecognized attr subcommand %s\n", argv[1]);
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
 
-	return GED_ERROR;
+	ret = GED_ERROR;
+	goto ged_attr_memfree;
     }
 
-    return GED_OK;
+ged_attr_memfree:
+
+    bu_free(paths, "db_ls paths");
+
+    return ret;
 }
 
 
