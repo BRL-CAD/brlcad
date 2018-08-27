@@ -242,8 +242,7 @@ _ged_facetize_pnts_array_compare(int pnt_cnt, point_t *pnts_array, struct rt_pnt
     bvol = b_xlen * b_ylen * b_zlen;
     delta_vol = fabs(pvol - bvol);
     if (delta_vol > pvol * 0.5) {
-	bu_log("%s: BoT bbox volume (%g) is widely different than the sampled point cloud bbox volume (%g), rejecting.\n", method, bvol, pvol);
-	return GED_ERROR;
+	bu_log("%s: Warning, BoT bbox volume (%g) is widely different than the sampled point cloud bbox volume (%g).\n", method, bvol, pvol);
     }
     return GED_OK;
 }
