@@ -42,6 +42,41 @@
 /**************************************************/
 
 /**
+ * Major version number.  Constitutes substantial incompatibility,
+ * typically associated with a new geometry file format incompatible
+ * with the previous revision or unprecedented feature change.
+ */
+#define BRLCAD_VERSION_MAJOR @BRLCAD_VERSION_MAJOR@
+
+/**
+ * Minor version number.  Constitutes significant development activity
+ * that may be incompatible with prior API and typically includes one
+ * or more feature changes.
+ *
+ * Even minor numbers are used for public releases.  Odd minor numbers
+ * are used for developmnt releases.  Development releases may contain
+ * known issues or incomplete features.
+ */
+#define BRLCAD_VERSION_MINOR @BRLCAD_VERSION_MINOR@
+
+/**
+ * Patch version number.  Constitutes relatively minor feature changes
+ * and bug fixes.  Public releases typically backwards-compatible
+ * across MAJOR.MINOR releases that only differ in PATCH number.
+ */
+#define BRLCAD_VERSION_PATCH @BRLCAD_VERSION_PATCH@
+
+#define BRLCAD_DATA "@CMAKE_INSTALL_PREFIX@/@DATA_DIR@"
+#define BRLCAD_ROOT "@CMAKE_INSTALL_PREFIX@"
+#define BRLCAD_BIN_DIR "@BIN_DIR@"
+#define BRLCAD_LIB_DIR "@LIB_DIR@"
+#define BRLCAD_INCLUDE_DIR "@INCLUDE_DIR@"
+#define BRLCAD_DATA_DIR "@DATA_DIR@"
+#define BRLCAD_DOC_DIR "@DOC_DIR@"
+#define BRLCAD_MAN_DIR "@MAN_DIR@"
+
+
+/**
  * Compile-time macro for testing whether the current compilation
  * matches or precedes a given version triplet.  Returns false if the
  * triplet come after the current compilation version, true otherwise.

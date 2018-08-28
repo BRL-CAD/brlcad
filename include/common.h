@@ -46,12 +46,12 @@
 #if defined(BRLCADBUILD) && defined(HAVE_CONFIG_H)
 
 #  if defined(_WIN32) && !defined(__CYGWIN__) && !defined(__MINGW32__)
-#    include "brlcad/brlcad_config.h"
+#    include "brlcad_config.h"
 #    /* Put this after brlcad_config.h, since some of the tests
        	in here require defines from brlcad_config.h */
-#    include "brlcad/config_win.h"
+#    include "config_win.h"
 #  else
-#    include "brlcad/brlcad_config.h"
+#    include "brlcad_config.h"
 #  endif  /* _WIN32 */
 
 /* Simulates drand48() functionality using rand() which is assumed to

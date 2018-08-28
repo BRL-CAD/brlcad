@@ -37,7 +37,6 @@
 #include "bu/str.h"
 #include "bu/vls.h"
 
-/* private headers */
 #include "brlcad_version.h"
 
 

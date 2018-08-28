@@ -289,12 +289,15 @@ else(CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_CURRENT_BUILD_DIR_INSTALL "${CMAKE_BINARY_DIR}")
 endif(CMAKE_CONFIGURATION_TYPES)
 
+
 #---------------------------------------------------------------------
-# For multi-configuration builds, make sure we get the build specific
-# include directories
+# Set up include paths for generated header files.  For multi-config
+# builds, make sure we get build-specific dirs.
 if(CMAKE_CONFIGURATION_TYPES)
   include_directories(${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${INCLUDE_DIR})
   include_directories(${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${INCLUDE_DIR}/brlcad)
+else(CMAKE_CONFIGURATION_TYPES)
+  include_directories(${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/brlcad)
 endif(CMAKE_CONFIGURATION_TYPES)
 
 #---------------------------------------------------------------------
@@ -435,7 +438,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
 	  set_property(GLOBAL APPEND PROPERTY CMAKE_IGNORE_FILES "${item_absolute}")
 	endif("${SUBPATH_TEST}" STREQUAL "1")
       else("${SUBPATH_TEST}" STREQUAL "0")
-	message(WARNING "The generated file ${file} is passed to configure_file but does not have the GENERATED source file property set in CMake.  It is HIGHLY recommended that the generated property be set for this file in \"${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt\" using a command with the following form:\nset_source_files_properties(<file> PROPERTIES GENERATED TRUE)\n(or in \"${CMAKE_SOURCE_DIR}/src/other/CMakeLists.txt\" for third party components with their own build system.)\n")
+	message(WARNING "The generated file ${file} is passed to configure_file but does not have the GENERATED source file property set in CMake.  It is HIGHLY recommended that the GENERATED property be set for this file in \"${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt\" using a command with the following form:\nset_source_files_properties(<file> PROPERTIES GENERATED TRUE)\n(or in \"${CMAKE_SOURCE_DIR}/src/other/CMakeLists.txt\" for third party components with their own build system.)\n")
       endif("${SUBPATH_TEST}" STREQUAL "0")
     endif(NOT IS_GENERATED)
     if(NOT ${targetfile} MATCHES "distclean")
@@ -942,7 +945,6 @@ endif("${CXX_STANDARD_FLAGS}" STREQUAL "")
 # subprojects are also managing a config.h.in a file of their own.
 
 set(CONFIG_H_FILE "${BRLCAD_BINARY_DIR}/include/conf_headers/brlcad_config.h.in")
-set_source_files_properties(${CONFIG_H_FILE} PROPERTIES GENERATED TRUE)
 
 set(CMAKE_CURRENT_PROJECT BRLCAD)
 
@@ -967,19 +969,6 @@ CONFIG_H_APPEND(BRLCAD "#define PACKAGE_BUGREPORT \"https://brlcad.org\"\n")
 CONFIG_H_APPEND(BRLCAD "#define PACKAGE_NAME \"BRL-CAD\"\n")
 CONFIG_H_APPEND(BRLCAD "#define PACKAGE_STRING \"BRL-CAD ${BRLCAD_VERSION}\"\n")
 CONFIG_H_APPEND(BRLCAD "#define PACKAGE_TARNAME \"brlcad\"\n")
-CONFIG_H_APPEND(BRLCAD "#define BRLCAD_DATA \"${CMAKE_INSTALL_PREFIX}/${DATA_DIR}\"\n")
-CONFIG_H_APPEND(BRLCAD "#define BRLCAD_ROOT \"${CMAKE_INSTALL_PREFIX}\"\n")
-CONFIG_H_APPEND(BRLCAD "#define BRLCAD_BIN_DIR \"${BIN_DIR}\"\n")
-CONFIG_H_APPEND(BRLCAD "#define BRLCAD_LIB_DIR \"${LIB_DIR}\"\n")
-CONFIG_H_APPEND(BRLCAD "#define BRLCAD_INCLUDE_DIR \"${INCLUDE_DIR}\"\n")
-CONFIG_H_APPEND(BRLCAD "#define BRLCAD_DATA_DIR \"${DATA_DIR}\"\n")
-CONFIG_H_APPEND(BRLCAD "#define BRLCAD_DOC_DIR \"${DOC_DIR}\"\n")
-CONFIG_H_APPEND(BRLCAD "#define BRLCAD_MAN_DIR \"${MAN_DIR}\"\n")
-
-# Write out our version information
-CONFIG_H_APPEND(BRLCAD "#define BRLCAD_VERSION_MAJOR ${BRLCAD_VERSION_MAJOR}\n")
-CONFIG_H_APPEND(BRLCAD "#define BRLCAD_VERSION_MINOR ${BRLCAD_VERSION_MINOR}\n")
-CONFIG_H_APPEND(BRLCAD "#define BRLCAD_VERSION_PATCH ${BRLCAD_VERSION_PATCH}\n")
 
 # Let programs know what the executable suffix is on this platform, if any
 CONFIG_H_APPEND(BRLCAD "#define EXECUTABLE_SUFFIX \"${CMAKE_EXECUTABLE_SUFFIX}\"\n")
@@ -2364,16 +2353,16 @@ endif(APPLE)
 # Mark X11 as available if it is enabled and we find Xlib.h
 if(BRLCAD_ENABLE_X11)
   message("X11 detected and enabled")
-  if(X11_Xlib_INCLUDE_PATH AND CONFIG_H_FILE)
+  if(X11_Xlib_INCLUDE_PATH)
     set(HAVE_X11_XLIB_H 1)
     CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_X11_XLIB_H 1\n")
     message("Defining HAVE_X11_XLIB_H")
-  endif(X11_Xlib_INCLUDE_PATH AND CONFIG_H_FILE)
-  if(X11_Xi_INCLUDE_PATH AND CONFIG_H_FILE)
+  endif(X11_Xlib_INCLUDE_PATH)
+  if(X11_Xi_INCLUDE_PATH)
     set(HAVE_X11_EXTENSIONS_XINPUT_H 1)
     CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_X11_EXTENSIONS_XINPUT_H 1\n")
     message("Defining HAVE_X11_EXTENSIONS_XINPUT_H")
-  endif(X11_Xi_INCLUDE_PATH AND CONFIG_H_FILE)
+  endif(X11_Xi_INCLUDE_PATH)
 endif(BRLCAD_ENABLE_X11)
 
 # math library
@@ -2724,17 +2713,17 @@ endif (HAVE_DAEMON)
 # ntohll and htonll may be harder to spot - do some extra tests
 if("${HAVE_NTOHLL}" STREQUAL "")
   CHECK_SYMBOL_EXISTS(ntohll "sys/_endian.h" HAVE_NTOHLL_SYS__ENDIAN)
-  if(HAVE_NTOHLL_SYS__ENDIAN AND CONFIG_H_FILE)
+  if(HAVE_NTOHLL_SYS__ENDIAN)
     set(HAVE_NTOHLL 1 CACHE INTERNAL "Have function NTOHLL")
     CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_NTOHLL 1\n")
-  endif(HAVE_NTOHLL_SYS__ENDIAN AND CONFIG_H_FILE)
+  endif(HAVE_NTOHLL_SYS__ENDIAN)
 endif("${HAVE_NTOHLL}" STREQUAL "")
 if("${HAVE_HTONLL}" STREQUAL "")
   CHECK_SYMBOL_EXISTS(htonll "sys/_endian.h" HAVE_HTONLL_SYS__ENDIAN)
-  if(HAVE_HTONLL_SYS__ENDIAN AND CONFIG_H_FILE)
+  if(HAVE_HTONLL_SYS__ENDIAN)
     set(HAVE_HTONLL 1 CACHE INTERNAL "Have function HTONLL")
     CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_HTONLL 1\n")
-  endif(HAVE_HTONLL_SYS__ENDIAN AND CONFIG_H_FILE)
+  endif(HAVE_HTONLL_SYS__ENDIAN)
 endif("${HAVE_HTONLL}" STREQUAL "")
 
 # Test for _snprintf() if we don't have snprintf
@@ -3138,10 +3127,9 @@ endif(MSVC)
 # Finalize brlcad_config.h
 CONFIG_H_APPEND(BRLCAD "#endif /* __CONFIG_H__ */\n")
 get_property(CONFIG_H_FILE_CONTENTS GLOBAL PROPERTY ${CMAKE_PROJECT_NAME}_CONFIG_H_CONTENTS)
+set_source_files_properties(${CONFIG_H_FILE} PROPERTIES GENERATED TRUE)
 file(WRITE ${CONFIG_H_FILE} "${CONFIG_H_FILE_CONTENTS}")
 configure_file(${CONFIG_H_FILE} "${BRLCAD_BINARY_DIR}/include/conf_headers/brlcad_config.h.tmp")
-
-# We now have everything we need - generate the brlcad_config.h header
 BUILD_CFG_HDR(${BRLCAD_BINARY_DIR}/include/conf_headers/brlcad_config.h.tmp ${INCLUDE_DIR}/brlcad)
 
 #---------------------------------------------------------------------

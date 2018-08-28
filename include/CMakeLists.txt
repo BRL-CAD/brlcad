@@ -21,7 +21,6 @@ set(public_hdrs
   bresource.h
   brlcad.h
   brlcad.i
-  brlcad_version.h
   bsocket.h
   bu.h
   common.h
@@ -48,25 +47,17 @@ set(public_hdrs
   )
 BRLCAD_MANAGE_FILES("${public_hdrs}" ${INCLUDE_DIR}/brlcad)
 
-BUILD_CFG_HDR(brlcad_ident.h.in ${INCLUDE_DIR})
+BUILD_CFG_HDR(brlcad_ident.h.in ${INCLUDE_DIR}/brlcad)
+BUILD_CFG_HDR(brlcad_version.h.in ${INCLUDE_DIR}/brlcad)
 
 # FIXME: shouldn't exist, needs to be absorbed into brlcad_config.h
 if(MSVC)
   BUILD_CFG_HDR(config_win.h.in ${INCLUDE_DIR}/brlcad)
 endif(MSVC)
 
-configure_file(brlcad_version.h "${BRLCAD_BINARY_DIR}/${INCLUDE_DIR}/brlcad_version.h" COPYONLY)
-DISTCLEAN("${BRLCAD_BINARY_DIR}/${INCLUDE_DIR}/brlcad_version.h")
-if(CMAKE_CONFIGURATION_TYPES)
-  foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-    string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-    configure_file(brlcad_version.h "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${INCLUDE_DIR}/brlcad_version.h")
-    DISTCLEAN("${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${INCLUDE_DIR}/brlcad_version.h")
-  endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-endif(CMAKE_CONFIGURATION_TYPES)
-
 set(include_misc
   brlcad_ident.h.in
+  brlcad_version.h.in
   conf/BrlcadConfig.tmpl
   conf/MAJOR
   conf/MINOR
