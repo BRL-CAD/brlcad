@@ -2097,7 +2097,7 @@ const struct rt_functab OBJ[] = {
 	/* 41 */
 	RT_FUNCTAB_MAGIC, "ID_PNTS", "pnts",
 	0,
-	NULL, /* prep */
+	RTFUNCTAB_FUNC_PREP_CAST(rt_pnts_prep),
 	NULL, /* shot */
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_pnts_print),
 	NULL, /* norm */
