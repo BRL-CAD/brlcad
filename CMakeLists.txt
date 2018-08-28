@@ -963,7 +963,7 @@ CONFIG_H_APPEND(BRLCAD "#define __CONFIG_H__\n")
 
 # Set up some of the define statements for path information and other basics
 CONFIG_H_APPEND(BRLCAD "#define PACKAGE \"brlcad\"\n")
-CONFIG_H_APPEND(BRLCAD "#define PACKAGE_BUGREPORT \"http://brlcad.org\"\n")
+CONFIG_H_APPEND(BRLCAD "#define PACKAGE_BUGREPORT \"https://brlcad.org\"\n")
 CONFIG_H_APPEND(BRLCAD "#define PACKAGE_NAME \"BRL-CAD\"\n")
 CONFIG_H_APPEND(BRLCAD "#define PACKAGE_STRING \"BRL-CAD ${BRLCAD_VERSION}\"\n")
 CONFIG_H_APPEND(BRLCAD "#define PACKAGE_TARNAME \"brlcad\"\n")
@@ -2869,157 +2869,6 @@ if(BRLCAD_PRINT_MSGS)
   message("***********************************************************")
 endif(BRLCAD_PRINT_MSGS)
 
-if(MSVC)
-  # By default, do not warn when built on machines using only VS Express
-  # From: http://www.cmake.org/pipermail/cmake/2011-May/044166.html
-  if(NOT DEFINED CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_NO_WARNINGS)
-    set(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_NO_WARNINGS ON)
-  endif()
-  # For Windows, we need some dlls to be redistributed with the installer.
-  include(InstallRequiredSystemLibraries)
-
-  # For portability with older Windows versions - remove this once we are no
-  # longer worried about Windows versions older than Windows 7/Windows 2008 R2
-  # https://blogs.msdn.microsoft.com/vcblog/2009/08/27/windows-sdk-v7-0v7-0a-incompatibility-workaround/
-  add_definitions(-DPSAPI_VERSION=1)
-
-  # Before we finalize, set some specific global linker flags
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /STACK:10000000 /NOLOGO")
-  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /STACK:10000000 /NOLOGO")
-  set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} /STACK:10000000 /NOLOGO")
-endif(MSVC)
-
-#-----------------------------------------------------------------------------
-# Before we head into src/other and misc/tools, store all the build
-# flags that have been built up.  It's hard to be sure what will and
-# won't be set in those directories, so make sure we can restore the
-# BRL-CAD flags for the actual BRL-CAD subdirectories.
-CACHE_BUILD_FLAGS(_BRLCAD)
-
-# For lower build levels, some of the third party components are not
-# needed.  define some variables we can use for testing.
-set(BRLCAD_LEVEL2 0)
-set(BRLCAD_LEVEL3 0)
-if(NOT BRLCAD_ENABLE_TARGETS)
-  set(BRLCAD_LEVEL2 1)
-  set(BRLCAD_LEVEL3 1)
-else(NOT BRLCAD_ENABLE_TARGETS)
-  if(${BRLCAD_ENABLE_TARGETS} GREATER 1)
-    set(BRLCAD_LEVEL2 1)
-  endif(${BRLCAD_ENABLE_TARGETS} GREATER 1)
-  if(${BRLCAD_ENABLE_TARGETS} GREATER 2)
-    set(BRLCAD_LEVEL3 1)
-  endif(${BRLCAD_ENABLE_TARGETS} GREATER 2)
-endif(NOT BRLCAD_ENABLE_TARGETS)
-
-# At the start, clear the src/other subdirs list so repeated
-# configures will correctly add the required directories
-set(SRC_OTHER_ADDED_DIRS "" CACHE STRING "initialize 3rd party sub-directories list" FORCE)
-mark_as_advanced(SRC_OTHER_ADDED_DIRS)
-
-function(SetTargetFolder targetname folder)
-  if(TARGET ${targetname})
-    set_target_properties(${targetname} PROPERTIES FOLDER "${folder}")
-  endif(TARGET ${targetname})
-endfunction(SetTargetFolder)
-
-# Load some CMake macros to handle the special case of third party libraries.
-include(ThirdParty)
-
-# Add misc/tools for tools that are used in BRL-CAD's build process
-# but are not otherwise usable in BRL-CAD (due to licensing, design
-# intent, etc.)  misc/tools must be handled before src/other because
-# some of src/other's projects need tools from misc/tools.
-add_subdirectory(misc/tools)
-
-# Now that we've done the system tests with BRL-CAD's compile flags,
-# add src/other to pick up any tests it needs.  We must add src/other
-# before the main BRL-CAD directories to provide the necessary build
-# targets.  Remember that src/other wipes the top level flags generated
-# by BRL-CAD for its own subdirectories - it is added after the BRL-CAD
-# tests so the CACHE reflects BRL-CAD's test results.
-add_subdirectory(src/other)
-
-# Now put back the BRL-CAD flags
-RESTORE_CACHED_BUILD_FLAGS(_BRLCAD)
-
-# Restore BRL-CAD configurations, if necessary
-if(NOT ENABLE_ALL_CONFIG_TYPES)
-  if(CMAKE_CONFIGURATION_TYPES AND NOT "${CMAKE_CONFIGURATION_TYPES}" STREQUAL "Debug;Release")
-    set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Allowed BRL-CAD configuration types" FORCE)
-  endif(CMAKE_CONFIGURATION_TYPES AND NOT "${CMAKE_CONFIGURATION_TYPES}" STREQUAL "Debug;Release")
-endif(NOT ENABLE_ALL_CONFIG_TYPES)
-
-# *******************************************************************
-if(BRLCAD_PRINT_MSGS)
-  message("***********************************************************")
-  message("*        Stage 9 of 9 - Define BRL-CAD Build Targets      *")
-  message("***********************************************************")
-endif(BRLCAD_PRINT_MSGS)
-
-# Enable CTest Testing support - this is done after src/other is
-# added to avoid incorporating src/other CTests into BRL-CAD's own
-# testing.  TODO - probably should control this with an option.
-include(CTest)
-mark_as_advanced(BUILD_TESTING)
-
-# We've done the toplevel configure steps, now add the subdirectories
-function(verbose_add_subdirectory root dir)
-  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir})
-    if(BRLCAD_PRINT_MSGS)
-      if(NOT "${root}" STREQUAL "")
-	message("-- Adding ${root}/${dir}...")
-      else(NOT "${root}" STREQUAL "")
-	message("-- Adding ${dir}...")
-      endif(NOT "${root}" STREQUAL "")
-    endif(BRLCAD_PRINT_MSGS)
-    add_subdirectory(${dir})
-    if(BRLCAD_PRINT_MSGS)
-      if(NOT "${root}" STREQUAL "")
-	message("-- Adding ${root}/${dir} - done")
-      else(NOT "${root}" STREQUAL "")
-	message("-- Adding ${dir} - done")
-      endif(NOT "${root}" STREQUAL "")
-    endif(BRLCAD_PRINT_MSGS)
-  else(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir})
-    if(BRLCAD_PRINT_MSGS)
-      if(NOT "${root}" STREQUAL "")
-	message("-- Addition of directory ${root}/${dir} requested, but not found on filesystem - skipping")
-      else(NOT "${root}" STREQUAL "")
-	message("-- Addition of directory ${dir} requested, but not found on filesystem - skipping")
-      endif(NOT "${root}" STREQUAL "")
-    endif(BRLCAD_PRINT_MSGS)
-  endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir})
-endfunction()
-
-verbose_add_subdirectory("" src)
-verbose_add_subdirectory("" include)
-verbose_add_subdirectory("" sh)
-verbose_add_subdirectory("" misc)
-if(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
-  verbose_add_subdirectory("" doc)
-  verbose_add_subdirectory("" db)
-  verbose_add_subdirectory("" bench)
-  verbose_add_subdirectory("" regress)
-endif(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
-
-# Restore BRL-CAD configurations, if necessary
-if(NOT ENABLE_ALL_CONFIG_TYPES)
-  if(CMAKE_CONFIGURATION_TYPES AND NOT "${CMAKE_CONFIGURATION_TYPES}" STREQUAL "Debug;Release")
-    set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Allowed BRL-CAD configuration types" FORCE)
-  endif(CMAKE_CONFIGURATION_TYPES AND NOT "${CMAKE_CONFIGURATION_TYPES}" STREQUAL "Debug;Release")
-endif(NOT ENABLE_ALL_CONFIG_TYPES)
-
-# *******************************************************************
-# ***        Output and Summarize Results - Stage 9 of 9          ***
-# *******************************************************************
-
-#---------------------------------------------------------------------
-# Record compile-time information we may want to report at run-time.
-
-# Make sure we have the target dir
-file(MAKE_DIRECTORY "${BRLCAD_BINARY_DIR}/${DATA_DIR}/data")
-
 # COUNT - Count how many times the configuration has changed.
 set(buildCounter 0)
 if(EXISTS "${BRLCAD_CNT_FILE}")
@@ -3137,6 +2986,150 @@ endif(RU_RESULT)
 string(STRIP ${BRLCAD_COMPILE_USER} BRLCAD_COMPILE_USER)
 file(REMOVE "${CMAKE_BINARY_DIR}/CMakeTmp/report_username.c")
 
+if(MSVC)
+  # By default, do not warn when built on machines using only VS Express
+  # From: http://www.cmake.org/pipermail/cmake/2011-May/044166.html
+  if(NOT DEFINED CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_NO_WARNINGS)
+    set(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_NO_WARNINGS ON)
+  endif()
+  # For Windows, we need some dlls to be redistributed with the installer.
+  include(InstallRequiredSystemLibraries)
+
+  # For portability with older Windows versions - remove this once we are no
+  # longer worried about Windows versions older than Windows 7/Windows 2008 R2
+  # https://blogs.msdn.microsoft.com/vcblog/2009/08/27/windows-sdk-v7-0v7-0a-incompatibility-workaround/
+  add_definitions(-DPSAPI_VERSION=1)
+
+  # Before we finalize, set some specific global linker flags
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /STACK:10000000 /NOLOGO")
+  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /STACK:10000000 /NOLOGO")
+  set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} /STACK:10000000 /NOLOGO")
+endif(MSVC)
+
+#-----------------------------------------------------------------------------
+# Before we head into src/other and misc/tools, store all the build
+# flags that have been built up.  It's hard to be sure what will and
+# won't be set in those directories, so make sure we can restore the
+# BRL-CAD flags for the actual BRL-CAD subdirectories.
+CACHE_BUILD_FLAGS(_BRLCAD)
+
+# For lower build levels, some of the third party components are not
+# needed.  define some variables we can use for testing.
+set(BRLCAD_LEVEL2 0)
+set(BRLCAD_LEVEL3 0)
+if(NOT BRLCAD_ENABLE_TARGETS)
+  set(BRLCAD_LEVEL2 1)
+  set(BRLCAD_LEVEL3 1)
+else(NOT BRLCAD_ENABLE_TARGETS)
+  if(${BRLCAD_ENABLE_TARGETS} GREATER 1)
+    set(BRLCAD_LEVEL2 1)
+  endif(${BRLCAD_ENABLE_TARGETS} GREATER 1)
+  if(${BRLCAD_ENABLE_TARGETS} GREATER 2)
+    set(BRLCAD_LEVEL3 1)
+  endif(${BRLCAD_ENABLE_TARGETS} GREATER 2)
+endif(NOT BRLCAD_ENABLE_TARGETS)
+
+# At the start, clear the src/other subdirs list so repeated
+# configures will correctly add the required directories
+set(SRC_OTHER_ADDED_DIRS "" CACHE STRING "initialize 3rd party sub-directories list" FORCE)
+mark_as_advanced(SRC_OTHER_ADDED_DIRS)
+
+function(SetTargetFolder targetname folder)
+  if(TARGET ${targetname})
+    set_target_properties(${targetname} PROPERTIES FOLDER "${folder}")
+  endif(TARGET ${targetname})
+endfunction(SetTargetFolder)
+
+# Load some CMake macros to handle the special case of third party libraries.
+include(ThirdParty)
+
+# Add misc/tools for tools that are used in BRL-CAD's build process
+# but are not otherwise usable in BRL-CAD (due to licensing, design
+# intent, etc.)  misc/tools must be handled before src/other because
+# some of src/other's projects need tools from misc/tools.
+add_subdirectory(misc/tools)
+
+# Now that we've done the system tests with BRL-CAD's compile flags,
+# add src/other to pick up any tests it needs.  We must add src/other
+# before the main BRL-CAD directories to provide the necessary build
+# targets.  Remember that src/other wipes the top level flags generated
+# by BRL-CAD for its own subdirectories - it is added after the BRL-CAD
+# tests so the CACHE reflects BRL-CAD's test results.
+add_subdirectory(src/other)
+
+# Now put back the BRL-CAD flags
+RESTORE_CACHED_BUILD_FLAGS(_BRLCAD)
+
+# Restore BRL-CAD configurations, if necessary
+if(NOT ENABLE_ALL_CONFIG_TYPES)
+  if(CMAKE_CONFIGURATION_TYPES AND NOT "${CMAKE_CONFIGURATION_TYPES}" STREQUAL "Debug;Release")
+    set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Allowed BRL-CAD configuration types" FORCE)
+  endif(CMAKE_CONFIGURATION_TYPES AND NOT "${CMAKE_CONFIGURATION_TYPES}" STREQUAL "Debug;Release")
+endif(NOT ENABLE_ALL_CONFIG_TYPES)
+
+
+
+if(BRLCAD_PRINT_MSGS)
+  message("***********************************************************")
+  message("*        Stage 9 of 9 - Output and Summarize Config       *")
+  message("***********************************************************")
+endif(BRLCAD_PRINT_MSGS)
+
+# Enable CTest Testing support - this is done after src/other is added
+# to avoid incorporating src/other CTests into BRL-CAD's own testing.
+include(CTest)
+mark_as_advanced(BUILD_TESTING)
+
+# We've done the toplevel configure steps, now add the subdirectories
+function(verbose_add_subdirectory root dir)
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir})
+    if(BRLCAD_PRINT_MSGS)
+      if(NOT "${root}" STREQUAL "")
+	message("-- Adding ${root}/${dir}...")
+      else(NOT "${root}" STREQUAL "")
+	message("-- Adding ${dir}...")
+      endif(NOT "${root}" STREQUAL "")
+    endif(BRLCAD_PRINT_MSGS)
+    add_subdirectory(${dir})
+    if(BRLCAD_PRINT_MSGS)
+      if(NOT "${root}" STREQUAL "")
+	message("-- Adding ${root}/${dir} - done")
+      else(NOT "${root}" STREQUAL "")
+	message("-- Adding ${dir} - done")
+      endif(NOT "${root}" STREQUAL "")
+    endif(BRLCAD_PRINT_MSGS)
+  else(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir})
+    if(BRLCAD_PRINT_MSGS)
+      if(NOT "${root}" STREQUAL "")
+	message("-- Addition of directory ${root}/${dir} requested, but not found on filesystem - skipping")
+      else(NOT "${root}" STREQUAL "")
+	message("-- Addition of directory ${dir} requested, but not found on filesystem - skipping")
+      endif(NOT "${root}" STREQUAL "")
+    endif(BRLCAD_PRINT_MSGS)
+  endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir})
+endfunction()
+
+verbose_add_subdirectory("" src)
+verbose_add_subdirectory("" include)
+verbose_add_subdirectory("" sh)
+verbose_add_subdirectory("" misc)
+if(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
+  verbose_add_subdirectory("" doc)
+  verbose_add_subdirectory("" db)
+  verbose_add_subdirectory("" bench)
+  verbose_add_subdirectory("" regress)
+endif(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
+
+# Restore BRL-CAD configurations, if necessary
+if(NOT ENABLE_ALL_CONFIG_TYPES)
+  if(CMAKE_CONFIGURATION_TYPES AND NOT "${CMAKE_CONFIGURATION_TYPES}" STREQUAL "Debug;Release")
+    set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Allowed BRL-CAD configuration types" FORCE)
+  endif(CMAKE_CONFIGURATION_TYPES AND NOT "${CMAKE_CONFIGURATION_TYPES}" STREQUAL "Debug;Release")
+endif(NOT ENABLE_ALL_CONFIG_TYPES)
+
+# Make sure we have the target dir
+file(MAKE_DIRECTORY "${BRLCAD_BINARY_DIR}/${DATA_DIR}/data")
+
 # If we're building on Windows with MSVC, use config_win.h file
 if(MSVC)
   CONFIG_H_APPEND(BRLCAD "#include \"brlcad/config_win.h\"\n")
@@ -3148,29 +3141,8 @@ get_property(CONFIG_H_FILE_CONTENTS GLOBAL PROPERTY ${CMAKE_PROJECT_NAME}_CONFIG
 file(WRITE ${CONFIG_H_FILE} "${CONFIG_H_FILE_CONTENTS}")
 configure_file(${CONFIG_H_FILE} "${BRLCAD_BINARY_DIR}/include/conf_headers/brlcad_config.h.tmp")
 
-#---------------------------------------------------------------------
-# We now have everything we need - configure files
-
-# Do the configurations, and place files appropriately in the build dir
-function(BUILD_CFG_HDR chdr targetdir)
-  get_filename_component(ohdr "${chdr}" NAME_WE)
-  configure_file("${chdr}" "${BRLCAD_BINARY_DIR}/${targetdir}/${ohdr}.h")
-  install(FILES "${BRLCAD_BINARY_DIR}/${targetdir}/${ohdr}.h" DESTINATION ${targetdir})
-  DISTCLEAN("${BRLCAD_BINARY_DIR}/${targetdir}/${ohdr}.h")
-  if(CMAKE_CONFIGURATION_TYPES)
-    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-      string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-      configure_file("${chdr}" "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${targetdir}/${ohdr}.h")
-      DISTCLEAN("${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${targetdir}/${ohdr}.h")
-    endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-  endif(CMAKE_CONFIGURATION_TYPES)
-endfunction(BUILD_CFG_HDR chdr targetdir)
-
-BUILD_CFG_HDR(${BRLCAD_SOURCE_DIR}/include/brlcad_ident.h.in ${INCLUDE_DIR})
+# We now have everything we need - generate the brlcad_config.h header
 BUILD_CFG_HDR(${BRLCAD_BINARY_DIR}/include/conf_headers/brlcad_config.h.tmp ${INCLUDE_DIR}/brlcad)
-if(MSVC)
-  BUILD_CFG_HDR(${BRLCAD_SOURCE_DIR}/include/config_win.h.in ${INCLUDE_DIR}/brlcad)
-endif(MSVC)
 
 #---------------------------------------------------------------------
 # Rules for the toplevel documentation files

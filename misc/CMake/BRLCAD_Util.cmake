@@ -259,6 +259,23 @@ function(CMAKEFILES_IN_DIR filestoignore targetdir)
   endif(NOT BRLCAD_IS_SUBBUILD)
 endfunction(CMAKEFILES_IN_DIR)
 
+# configure a header for substitution and installation given a header
+# template and an installation directory.
+function(BUILD_CFG_HDR chdr targetdir)
+  get_filename_component(ohdr "${chdr}" NAME_WE)
+  configure_file("${chdr}" "${BRLCAD_BINARY_DIR}/${targetdir}/${ohdr}.h")
+  install(FILES "${BRLCAD_BINARY_DIR}/${targetdir}/${ohdr}.h" DESTINATION ${targetdir})
+  DISTCLEAN("${BRLCAD_BINARY_DIR}/${targetdir}/${ohdr}.h")
+  if(CMAKE_CONFIGURATION_TYPES)
+    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+      string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+      configure_file("${chdr}" "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${targetdir}/${ohdr}.h")
+      DISTCLEAN("${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${targetdir}/${ohdr}.h")
+    endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+  endif(CMAKE_CONFIGURATION_TYPES)
+endfunction(BUILD_CFG_HDR chdr targetdir)
+
+
 #-----------------------------------------------------------------------------
 # It is sometimes convenient to be able to supply both a filename and a
 # variable name containing a list of files to a single function.  This routine

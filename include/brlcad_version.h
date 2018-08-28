@@ -20,13 +20,15 @@
 
 /** @file brlcad_version.h
  *
- * PRIVATE container header for determining compile-time version
- * information about BRL-CAD.
+ * Header for determining compile-time version information about
+ * BRL-CAD.
  *
- * External applications should NOT use or include this file.  They
- * should use the library-specific LIBRARY_version() functions.
- * (e.g. bu_version())
+ * External applications are discouraged from using compile-time
+ * versioning.  Applications are encouraged to use library-specific
+ * LIBRARY_version() functions.  (e.g. bu_version())
  *
+ * NOTE: In order to use compile-time API, applicaitons need to define
+ * BRLCADBUILD and HAVE_CONFIG_H before including this header.
  */
 
 #ifndef BRLCAD_VERSION_H

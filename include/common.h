@@ -19,12 +19,16 @@
  */
 
 /** @addtogroup common
- *  This header wraps the system-specific encapsulation of
- *  brlcad_config.h and removes need to conditionally include
- *  brlcad_config.h everywhere based on HAVE_CONFIG_H.  The common
- *  definitions are symbols common to the platform being built that
- *  are either detected via configure or hand crafted, as is the case
- *  for the win32 platform.
+ *
+ * This header wraps system and compilation-specific defines from
+ * brlcad_config.h and removes need to conditionally include
+ * brlcad_config.h everywhere based on HAVE_CONFIG_H.  The common
+ * definitions are symbols common to the platform being built that are
+ * either detected via configure or hand crafted, as is the case for
+ * the win32 platform.
+ *
+ * NOTE: In order to use compile-time API, applicaitons need to define
+ * BRLCADBUILD and HAVE_CONFIG_H before including this header.
  *
  */
 /** @{ */
