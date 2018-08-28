@@ -33,6 +33,7 @@
 #include "bu/exit.h"
 #include "bu/hook.h"
 #include "bu/cmd.h"
+#include "bu/time.h"
 #include "bn/tol.h"
 #include "bg/spsr.h"
 #include "bg/trimesh.h"
@@ -946,10 +947,14 @@ ged_facetize_spsr_memfree:
 HIDDEN int
 _ged_continuation_obj(int *is_valid, struct ged *gedp, const char *objname, const char *newname, struct _ged_facetize_opts *opts)
 {
+    int first_run = 1;
+    int fatal_error_cnt = 0;
     int ret = GED_OK;
     double avg_thickness = 0.0;
     double min_len = 0.0;
-    fastf_t feature_size;
+    fastf_t feature_size, target_feature_size;
+    int face_cnt = 0;
+    double prev_feat_size;
     double xlen, ylen, zlen;
     struct directory *dp;
     struct db_i *dbip = gedp->ged_wdbp->dbip;
@@ -958,7 +963,7 @@ _ged_continuation_obj(int *is_valid, struct ged *gedp, const char *objname, cons
     struct rt_pnts_internal *pnts;
     struct rt_bot_internal *bot = NULL;
     struct pnt_normal *pn, *pl;
-    int polygonize_failure = 1;
+    int polygonize_failure = 0;
     int flags = 0;
     int free_pnts = 0;
     int max_pnts = 50000;
@@ -1015,6 +1020,10 @@ _ged_continuation_obj(int *is_valid, struct ged *gedp, const char *objname, cons
 	goto ged_facetize_continuation_memfree;
     }
 
+    if (opts->verbosity) {
+	bu_log("Continuation Method: average raytrace thickness: %g\n", avg_thickness);
+    }
+
     /* Find the smallest value from either the bounding box lengths or the avg
      * thickness observed by the rays.  Some fraction of this value is our box
      * size for the polygonizer and the decimation routine */
@@ -1023,9 +1032,9 @@ _ged_continuation_obj(int *is_valid, struct ged *gedp, const char *objname, cons
     min_len = (min_len < avg_thickness) ? min_len : avg_thickness;
 
     if (opts->feat_perc > 0) {
-	feature_size = min_len * opts->feat_perc;
+	target_feature_size = min_len * opts->feat_perc;
     } else {
-	feature_size = min_len;
+	target_feature_size = min_len;
     }
 
     /* Build the BoT */
@@ -1035,18 +1044,30 @@ _ged_continuation_obj(int *is_valid, struct ged *gedp, const char *objname, cons
     bot->orientation = RT_BOT_UNORIENTED;
     bot->thickness = (fastf_t *)NULL;
     bot->face_mode = (struct bu_bitv *)NULL;
+    bot->faces = NULL;
+    bot->vertices = NULL;
 
     /* Run the polygonize routine.  Because it is quite simple to accidentally
      * specify inputs that will take huge amounts of time to run, we will
      * attempt a series of progressively courser polygonize runs until we
-     * either succeed, or reach a feature size that is greater than the average
-     * thickness according to the raytracer without succeeding. If max_time has
-     * been explicitly set to 0 by the caller this will run unbounded, but the
-     * algorithm is n**2 and we're trying the finest level first so may run a
-     * *very* long time... */
+     * either succeed, or reach a feature size that is greater than 2x the
+     * average thickness according to the raytracer without succeeding. If
+     * max_time has been explicitly set to 0 by the caller this will run
+     * unbounded, but the algorithm is n**2 and we're trying the finest level
+     * first so may run a *very* long time... */
     pl = (struct pnt_normal *)pnts->point;
     pn = BU_LIST_PNEXT(pnt_normal, pl);
-    while (polygonize_failure && feature_size <= avg_thickness) {
+    feature_size = 2*avg_thickness;
+    prev_feat_size = feature_size;
+    while (!polygonize_failure && (feature_size > 0.5*target_feature_size || face_cnt < 1000) && fatal_error_cnt < 3) {
+	double timestamp = bu_gettime();
+	double delta;
+	fastf_t *verts = bot->vertices;
+	int *faces = bot->faces;
+	int num_faces = bot->num_faces;
+	int num_verts = bot->num_vertices;
+	bot->vertices = NULL;
+	bot->faces = NULL;
 	polygonize_failure = analyze_polygonize(&(bot->faces), (int *)&(bot->num_faces),
 		    (point_t **)&(bot->vertices),
 		    (int *)&(bot->num_vertices),
@@ -1055,10 +1076,51 @@ _ged_continuation_obj(int *is_valid, struct ged *gedp, const char *objname, cons
 	    if (!opts->quiet && polygonize_failure == 2) {
 		bu_log("Continuation Method timed out after %d seconds with size %g\n", opts->max_time, feature_size);
 	    }
-	    feature_size = feature_size * 2;
+	    bot->faces = faces;
+	    bot->vertices = verts;
+	    bot->num_vertices = num_verts;
+	    bot->num_faces = num_faces;
+	    if (polygonize_failure != 2) {
+		/* Something about the previous size didn't work - nudge the feature size and try again
+		 * unless we've had multiple fatal errors. */
+		polygonize_failure = 0;
+		prev_feat_size = feature_size;
+		delta = (bu_gettime() - timestamp)/1e6;
+		if (!opts->quiet) {
+		    bu_log("Continuation Method fatal error at size %g\n", opts->max_time, feature_size);
+		}
+		feature_size = feature_size * ((!first_run) ? 0.95 : 0.1);
+		fatal_error_cnt++;
+		first_run = 0;
+		continue;
+	    }
+	    feature_size = prev_feat_size;
+	    if (!opts->quiet) {
+		bu_log("Continuation Method: using last successful BoT with %d faces, feature size %g\n", bot->num_faces, feature_size);
+	    }
+	} else {
+	    if (!opts->quiet) {
+		bu_log("Continuation Method succeeded with size %g\n", opts->max_time, feature_size);
+	    }
+	    if (verts) bu_free(verts, "old verts");
+	    if (faces) bu_free(faces, "old faces");
+	    /* if we have a fatal error, decrement on subsequent success */
+	    if (fatal_error_cnt) {
+		fatal_error_cnt--;
+	    }
+	    prev_feat_size = feature_size;
+	    delta = (bu_gettime() - timestamp)/1e6;
+	    feature_size = feature_size * ((delta < 5.0) ? 0.7 : 0.9);
+	    face_cnt = bot->num_faces;
 	}
+	first_run = 0;
     }
-    if (polygonize_failure) {
+
+    if (feature_size < target_feature_size && !opts->quiet) {
+	bu_log("Continuation Method: successfully polygonalized BoT with %d faces at feature size %g\n", bot->num_faces, feature_size);
+    }
+
+    if (!bot->faces) {
 	if (!opts->quiet) {
 	    bu_log("Continuation Method: surface reconstruction failed: %s\n", objname);
 	}
@@ -1071,13 +1133,16 @@ _ged_continuation_obj(int *is_valid, struct ged *gedp, const char *objname, cons
 	struct rt_bot_internal *obot = bot;
 
 	if (!opts->quiet) {
-	    bu_log("Continuation Method: decimating with feature size %g\n", 2*feature_size);
+	    bu_log("Continuation Method: decimating with feature size %g\n", 1.5*feature_size);
 	}
 
-	bot = _try_decimate(bot, 2*feature_size, opts);
+	bot = _try_decimate(bot, 1.5*feature_size, opts);
 
 	if (bot == obot && opts->verbosity) {
 	    bu_log("Continuation Method: decimation failed, returning original BoT (may be large)\n");
+	} 
+	if (bot != obot && !opts->quiet) {
+	    bu_log("Continuation Method: decimation succeeded, final BoT has %d faces\n", bot->num_faces);
 	}
     }
 
