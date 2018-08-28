@@ -2155,7 +2155,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	cdp = (struct directory *)BU_PTBL_GET(pc, i);
 	nparent = bu_avs_get(opts->c_map, cdp->d_namep);
 	if (!opts->quiet) {
-	    bu_log("Duplicating assembly %s (%d of %d)...\n", nparent, i+1, BU_PTBL_LEN(pc));
+	    bu_log("Duplicating assembly (%d of %d) %s -> %s\n", i+1, BU_PTBL_LEN(pc), cdp->d_namep, nparent);
 	}
 	if (_ged_facetize_add_children(gedp, cdp, opts) != GED_OK) {
 	    if (!opts->quiet) {
@@ -2171,7 +2171,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	_ged_facetize_mkname(gedp, opts, n->d_namep, SOLID_OBJ_NAME);
 	_ged_facetize_mkname(gedp, opts, n->d_namep, COMB_OBJ_NAME);
 	if (!opts->quiet) {
-	    bu_log("Copying (sans tree) region comb %s (%d of %d)...\n", n->d_namep, i+1, BU_PTBL_LEN(ar));
+	    bu_log("Copying region (%d of %d) %s -> %s\n", i+1, BU_PTBL_LEN(ar), n->d_namep, bu_avs_get(opts->c_map, n->d_namep));
 	}
 	if (_ged_facetize_cpcomb(gedp, n->d_namep, opts) != GED_OK) {
 	    if (opts->verbosity) {
