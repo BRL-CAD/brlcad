@@ -1663,6 +1663,8 @@ _ged_methodattr_set(struct ged *gedp, struct _ged_facetize_opts *opts, const cha
 	    bu_log("Error adding attribute %s to comb %s", attrav[3], rcname);
 	}
     }
+
+    bu_vls_free(&anum);
 }
 
 int
