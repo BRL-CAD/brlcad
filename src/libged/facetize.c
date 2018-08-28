@@ -1092,15 +1092,16 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
 	goto ged_facetize_continuation_memfree;
     }
 
-    /* Check the volume of the bounding box of the BoT against the bounding box
+    /* Check the volume of the bounding box of input object against the bounding box
      * of the point cloud - a large difference means something probably isn't
-     * right.  For the moment, use >50% difference. */
+     * right.  This one we are a bit more generous with, since the parent bbox
+     * may not be terribly tight. */
     {
 	point_t p_min, p_max;
 	_rt_pnts_bbox(p_min, p_max, pnts);
 	r->pnts_bbox_vol = _bbox_vol(p_min, p_max);
 	r->obj_bbox_vol = _bbox_vol(rpp_min, rpp_max);
-	if (fabs(r->pnts_bbox_vol - r->obj_bbox_vol) > r->pnts_bbox_vol * 0.5) {
+	if (fabs(r->obj_bbox_vol - r->pnts_bbox_vol)/r->obj_bbox_vol > 1) {
 	    ret = GED_ERROR;
 	    r->failure_mode = GED_FACETIZE_FAILURE_PNTBBOX;
 	    goto ged_facetize_continuation_memfree;
@@ -1108,7 +1109,7 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
     }
 
     if (opts->verbosity) {
-	bu_log("Continuation Method: average raytrace thickness: %g\n", avg_thickness);
+	bu_log("CM: average raytrace thickness: %g\n", avg_thickness);
     }
 
     /* Find the smallest value from either the bounding box lengths or the avg
@@ -1161,10 +1162,11 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
 		    feature_size, pn->v, objname, gedp->ged_wdbp->dbip, opts->max_time, opts->verbosity);
 	if (polygonize_failure) {
 	    if (!opts->quiet && polygonize_failure == 2) {
-		bu_log("Continuation Method: timed out after %d seconds with size %g\n", opts->max_time, feature_size);
+		bu_log("CM: timed out after %d seconds with size %g\n", opts->max_time, feature_size);
 		/* If we still haven't had a successful run, back the feature size out and try again */
 		if (first_run) {
-		    feature_size = feature_size * 1.5;
+		    polygonize_failure = 0;
+		    feature_size = feature_size * 5;
 		    fatal_error_cnt++;
 		    continue;
 		}
@@ -1179,7 +1181,7 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
 		polygonize_failure = 0;
 		prev_feat_size = feature_size;
 		if (!opts->quiet) {
-		    bu_log("Continuation Method: error at size %g\n", feature_size);
+		    bu_log("CM: error at size %g\n", feature_size);
 		}
 		/* If we've had a successful first run, just nudge the feature
 		 * size down and retry.  If we haven't succeeded yet, and we've
@@ -1188,14 +1190,14 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
 		 * multiple fatal errors, try dropping it by half. */
 		feature_size = feature_size * ((!first_run) ? 0.95 : ((fatal_error_cnt) ? 0.5 : 0.1));
 		if (!opts->quiet) {
-		    bu_log("Continuation Method: retrying with size %g\n", feature_size);
+		    bu_log("CM: retrying with size %g\n", feature_size);
 		}
 		fatal_error_cnt++;
 		continue;
 	    }
 	    feature_size = successful_feature_size;
 	    if (!opts->quiet && bot->faces) {
-		bu_log("Continuation Method: unable to polygonize at target size (%g), using last successful BoT with %d faces, feature size %g\n", target_feature_size, bot->num_faces, successful_feature_size);
+		bu_log("CM: unable to polygonize at target size (%g), using last successful BoT with %d faces, feature size %g\n", target_feature_size, bot->num_faces, successful_feature_size);
 	    }
 	} else {
 	    if (verts) bu_free(verts, "old verts");
@@ -1208,7 +1210,7 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
 	    successful_feature_size = feature_size;
 	    delta = (int)((bu_gettime() - timestamp)/1e6);
 	    if (!opts->quiet) {
-		bu_log("Continuation Method: succeeded in %d seconds with size %g\n", delta, feature_size);
+		bu_log("CM: completed in %d seconds with size %g\n", delta, feature_size);
 	    }
 	    feature_size = feature_size * ((delta < 5) ? 0.7 : 0.9);
 	    face_cnt = bot->num_faces;
@@ -1217,12 +1219,12 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
     }
 
     if (feature_size < target_feature_size && !opts->quiet) {
-	bu_log("Continuation Method: successfully polygonalized BoT with %d faces at feature size %g\n", bot->num_faces, feature_size);
+	bu_log("CM: successfully polygonized BoT with %d faces at feature size %g\n", bot->num_faces, feature_size);
     }
 
     if (!bot->faces) {
 	if (!opts->quiet) {
-	    bu_log("Continuation Method: surface reconstruction failed: %s\n", objname);
+	    bu_log("CM: surface reconstruction failed: %s\n", objname);
 	}
 	r->failure_mode = GED_FACETIZE_FAILURE_CONTINUATION_SURFACE;
 	ret = GED_ERROR;
@@ -1234,7 +1236,7 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
 	struct rt_bot_internal *obot = bot;
 
 	if (opts->verbosity) {
-	    bu_log("Continuation Method: decimating with feature size %g\n", 1.5*feature_size);
+	    bu_log("CM: decimating with feature size %g\n", 1.5*feature_size);
 	}
 
 	bot = _try_decimate(bot, 1.5*feature_size, opts);
@@ -1246,8 +1248,8 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
 	    ret = GED_ERROR;
 	    goto ged_facetize_continuation_memfree;
 	}
-	if (bot != obot && !opts->quiet) {
-	    bu_log("Continuation Method: decimation succeeded, final BoT has %d faces\n", bot->num_faces);
+	if (bot != obot && opts->verbosity) {
+	    bu_log("CM: decimation succeeded, final BoT has %d faces\n", bot->num_faces);
 	}
     }
 
@@ -1259,7 +1261,7 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
 	_pnts_bbox(b_min, b_max, bot->num_vertices, (point_t *)bot->vertices);
 	r->bot_bbox_vol = _bbox_vol(b_min, b_max);
 	if (fabs(r->pnts_bbox_vol - r->bot_bbox_vol) > r->pnts_bbox_vol * 0.5) {
-	    ret = GED_ERROR;
+	    ret = GED_FACETIZE_FAILURE;
 	    r->failure_mode = GED_FACETIZE_FAILURE_BOTBBOX;
 	    if (bot->vertices) bu_free(bot->vertices, "verts");
 	    if (bot->faces) bu_free(bot->faces, "verts");
@@ -1274,7 +1276,7 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
 	    r->failure_mode = GED_FACETIZE_FAILURE_BOTINVALID;
 	    if (bot->vertices) bu_free(bot->vertices, "verts");
 	    if (bot->faces) bu_free(bot->faces, "verts");
-	    ret = GED_ERROR;
+	    ret = GED_FACETIZE_FAILURE;
 	    goto ged_facetize_continuation_memfree;
 	}
     }
@@ -1456,13 +1458,13 @@ _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _ged
 		flags = flags & ~(GED_FACETIZE_CONTINUATION);
 	    } else {
 		struct _ged_facetize_report_info cinfo;
-		if (_ged_continuation_obj(&cinfo, gedp, argv[0], newname, opts) == GED_OK) {
+		if (_ged_continuation_obj(&cinfo, gedp, argv[0], newname, opts) == GED_FACETIZE_SUCCESS) {
 		    done_trying = 1;
 		    ret = GED_OK;
 		} else {
 		    if (opts->verbosity) {
 			struct bu_vls lmsg = BU_VLS_INIT_ZERO;
-			_ged_facetize_failure_msg(&lmsg, cinfo.failure_mode, "Continuation Method", &cinfo);
+			_ged_facetize_failure_msg(&lmsg, cinfo.failure_mode, "CM", &cinfo);
 			bu_log("%s", bu_vls_addr(&lmsg));
 			bu_vls_free(&lmsg);
 		    }
@@ -1690,14 +1692,14 @@ _ged_facetize_region_obj(struct ged *gedp, const char *oname, const char *cname,
 	struct _ged_facetize_report_info cinfo;
 
 	if (!opts->quiet) {
-	    bu_log("Continuation Method: tessellating %s (%d of %d)\n", oname, ocnt, max_cnt);
+	    bu_log("CM: tessellating %s (%d of %d)\n", oname, ocnt, max_cnt);
 	}
 
 	ret = _ged_continuation_obj(&cinfo, gedp, oname, sname, opts);
 	if (ret == GED_FACETIZE_FAILURE) {
-	    if (opts->verbosity) {
+	    if (!opts->quiet) {
 		struct bu_vls lmsg = BU_VLS_INIT_ZERO;
-		_ged_facetize_failure_msg(&lmsg, cinfo.failure_mode, "Continuation Method", &cinfo);
+		_ged_facetize_failure_msg(&lmsg, cinfo.failure_mode, "CM", &cinfo);
 		bu_log("%s", bu_vls_addr(&lmsg));
 		bu_vls_free(&lmsg);
 	    }
@@ -1827,14 +1829,14 @@ _ged_facetize_regions_resume(struct ged *gedp, int argc, const char **argv, stru
 	}
 
 	for (i = 0; i < BU_PTBL_LEN(ar2); i++) {
-	    struct directory *n = (struct directory *)BU_PTBL_GET(ar, i);
+	    struct directory *n = (struct directory *)BU_PTBL_GET(ar2, i);
 	    const char *cname = n->d_namep;
 	    const char *sname = bu_avs_get(&bnames, cname);
 	    const char *oname = bu_avs_get(&rnames, cname);
 	    struct directory *dp = db_lookup(dbip, sname, LOOKUP_QUIET);
 
 	    if (dp == RT_DIR_NULL) {
-		if (_ged_facetize_region_obj(gedp, oname, cname, sname, opts, i+1, (int)BU_PTBL_LEN(ar), cmethod) == GED_FACETIZE_FAILURE) {
+		if (_ged_facetize_region_obj(gedp, oname, cname, sname, opts, i+1, (int)BU_PTBL_LEN(ar2), cmethod) == GED_FACETIZE_FAILURE) {
 		    bu_ptbl_ins(ar, (long *)n);
 		}
 	    }
@@ -1852,7 +1854,7 @@ _ged_facetize_regions_resume(struct ged *gedp, int argc, const char **argv, stru
 	struct bu_vls failed_name = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&failed_name, "%s_FAILED-0", argv[0]);
 	bu_vls_incr(&failed_name, NULL, NULL, &_db_uniq_test, (void *)gedp);
-	for (i = 0; i < BU_PTBL_LEN(ar); i++) {
+	for (i = 0; i < BU_PTBL_LEN(ar2); i++) {
 	    struct directory *n = (struct directory *)BU_PTBL_GET(ar2, i);
 	    avv[i] = n->d_namep;
 	}
