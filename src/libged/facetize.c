@@ -1025,7 +1025,8 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
     fastf_t target_feature_size = 0.0;
     int face_cnt = 0;
     double prev_feat_size;
-    double successful_feature_size;
+    double successful_feature_size = 0.0;
+    int decimation_succeeded = 0;
     double xlen, ylen, zlen;
     struct directory *dp;
     struct db_i *dbip = gedp->ged_wdbp->dbip;
@@ -1098,6 +1099,8 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
      * may not be terribly tight. */
     {
 	point_t p_min, p_max;
+	VSETALL(p_min, INFINITY);
+	VSETALL(p_max, -INFINITY);
 	_rt_pnts_bbox(p_min, p_max, pnts);
 	r->pnts_bbox_vol = _bbox_vol(p_min, p_max);
 	r->obj_bbox_vol = _bbox_vol(rpp_min, rpp_max);
@@ -1248,8 +1251,8 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
 	    ret = GED_ERROR;
 	    goto ged_facetize_continuation_memfree;
 	}
-	if (bot != obot && opts->verbosity) {
-	    bu_log("CM: decimation succeeded, final BoT has %d faces\n", bot->num_faces);
+	if (bot != obot) {
+	    decimation_succeeded = 1;
 	}
     }
 
@@ -1258,6 +1261,8 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
      * right.  For the moment, use >50% difference. */
     {
 	point_t b_min, b_max;
+	VSETALL(b_min, INFINITY);
+	VSETALL(b_max, -INFINITY);
 	_pnts_bbox(b_min, b_max, bot->num_vertices, (point_t *)bot->vertices);
 	r->bot_bbox_vol = _bbox_vol(b_min, b_max);
 	if (fabs(r->pnts_bbox_vol - r->bot_bbox_vol) > r->pnts_bbox_vol * 0.5) {
@@ -1279,6 +1284,10 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
 	    ret = GED_FACETIZE_FAILURE;
 	    goto ged_facetize_continuation_memfree;
 	}
+    }
+
+    if (decimation_succeeded && !opts->quiet) {
+	bu_log("CM: decimation succeeded, final BoT has %d faces\n", bot->num_faces);
     }
 
     if (!opts->make_nmg) {
@@ -1612,19 +1621,19 @@ _ged_methodattr_set(struct ged *gedp, struct _ged_facetize_opts *opts, const cha
 
     if (method == GED_FACETIZE_NMGBOOL) {
 	struct rt_tess_tol *tol = &(gedp->ged_wdbp->wdb_ttol);
-	attrav[3] = "nmg_abs";
+	attrav[3] = "facetize:nmg_abs";
 	bu_vls_sprintf(&anum, "%g", tol->abs);
 	attrav[4] = bu_vls_addr(&anum);
 	if (ged_attr(gedp, 5, (const char **)&attrav) != GED_OK && opts->verbosity) {
 	    bu_log("Error adding attribute %s to comb %s", attrav[3], rcname);
 	}
-	attrav[3] = "nmg_rel";
+	attrav[3] = "facetize:nmg_rel";
 	bu_vls_sprintf(&anum, "%g", tol->rel);
 	attrav[4] = bu_vls_addr(&anum);
 	if (ged_attr(gedp, 5, (const char **)&attrav) != GED_OK && opts->verbosity) {
 	    bu_log("Error adding attribute %s to comb %s", attrav[3], rcname);
 	}
-	attrav[3] = "nmg_norm";
+	attrav[3] = "facetize:nmg_norm";
 	bu_vls_sprintf(&anum, "%g", tol->norm);
 	attrav[4] = bu_vls_addr(&anum);
 	if (ged_attr(gedp, 5, (const char **)&attrav) != GED_OK && opts->verbosity) {
@@ -1633,13 +1642,13 @@ _ged_methodattr_set(struct ged *gedp, struct _ged_facetize_opts *opts, const cha
     }
 
     if (info && method == GED_FACETIZE_CONTINUATION) {
-	attrav[3] = "continuation_feature_size";
+	attrav[3] = "facetize:continuation_feature_size";
 	bu_vls_sprintf(&anum, "%g", info->feature_size);
 	attrav[4] = bu_vls_addr(&anum);
 	if (ged_attr(gedp, 5, (const char **)&attrav) != GED_OK && opts->verbosity) {
 	    bu_log("Error adding attribute %s to comb %s", attrav[3], rcname);
 	}
-	attrav[3] = "continuation_average_thickness";
+	attrav[3] = "facetize:continuation_average_thickness";
 	bu_vls_sprintf(&anum, "%g", info->avg_thickness);
 	attrav[4] = bu_vls_addr(&anum);
 	if (ged_attr(gedp, 5, (const char **)&attrav) != GED_OK && opts->verbosity) {
@@ -1648,7 +1657,7 @@ _ged_methodattr_set(struct ged *gedp, struct _ged_facetize_opts *opts, const cha
     }
 
     if (info && info->failure_mode == GED_FACETIZE_FAILURE_PNTGEN) {
-	attrav[3] = "EMPTY";
+	attrav[3] = "facetize:EMPTY";
 	attrav[4] = "1";
 	if (ged_attr(gedp, 5, (const char **)&attrav) != GED_OK && opts->verbosity) {
 	    bu_log("Error adding attribute %s to comb %s", attrav[3], rcname);
@@ -1740,7 +1749,7 @@ _ged_facetize_regions_resume(struct ged *gedp, int argc, const char **argv, stru
     int ret = GED_OK;
     struct bu_ptbl *ar = NULL;
     struct bu_ptbl *ar2 = NULL;
-    const char *resume_regions = "-attr facetize_original_region";
+    const char *resume_regions = "-attr facetize:original_region";
     struct directory **dpa = NULL;
     struct bu_attribute_value_set rnames;
     struct bu_attribute_value_set bnames;
@@ -1789,8 +1798,8 @@ _ged_facetize_regions_resume(struct ged *gedp, int argc, const char **argv, stru
 	const char *bname;
 	bu_avs_init_empty(&avs);
 	if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, n)) continue;
-	rname = bu_avs_get(&avs, "facetize_original_region");
-	bname = bu_avs_get(&avs, "facetize_target_name");
+	rname = bu_avs_get(&avs, "facetize:original_region");
+	bname = bu_avs_get(&avs, "facetize:target_name");
 	if (!rname || !bname) {
 	    bu_avs_free(&avs);
 	    continue;
@@ -2172,12 +2181,12 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 		attrav[0] = "attr";
 		attrav[1] = "set";
 		attrav[2] = rcname;
-		attrav[3] = "facetize_original_region";
+		attrav[3] = "facetize:original_region";
 		attrav[4] = n->d_namep;
 		if (ged_attr(gedp, 5, (const char **)&attrav) != GED_OK && opts->verbosity) {
 		    bu_log("Error adding attribute facetize_original_region to comb %s", rcname);
 		}
-		attrav[3] = "facetize_target_name";
+		attrav[3] = "facetize:target_name";
 		attrav[4] = ssname;
 		if (ged_attr(gedp, 5, (const char **)&attrav) != GED_OK && opts->verbosity) {
 		    bu_log("Error adding attribute facetize_target_name to comb %s", rcname);
