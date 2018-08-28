@@ -65,14 +65,9 @@ static const char *BRLCAD_USER = "@BRLCAD_COMPILE_USER@";
 static const int BRLCAD_COUNT = @BRLCAD_COMPILE_COUNT@;
 
 
-#define BRLCAD_DATA "@CMAKE_INSTALL_PREFIX@/@DATA_DIR@"
 #define BRLCAD_ROOT "@CMAKE_INSTALL_PREFIX@"
-#define BRLCAD_BIN_DIR "@BIN_DIR@"
-#define BRLCAD_LIB_DIR "@LIB_DIR@"
-#define BRLCAD_INCLUDE_DIR "@INCLUDE_DIR@"
-#define BRLCAD_DATA_DIR "@DATA_DIR@"
-#define BRLCAD_DOC_DIR "@DOC_DIR@"
-#define BRLCAD_MAN_DIR "@MAN_DIR@"
+#define BRLCAD_DATA "@CMAKE_INSTALL_PREFIX@/@DATA_DIR@"
+
 
 /**
  * Provides the release identifier details along with basic

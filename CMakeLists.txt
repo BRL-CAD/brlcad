@@ -944,7 +944,7 @@ endif("${CXX_STANDARD_FLAGS}" STREQUAL "")
 # We also allow for multiple projects with this macro, in case
 # subprojects are also managing a config.h.in a file of their own.
 
-set(CONFIG_H_FILE "${BRLCAD_BINARY_DIR}/include/conf_headers/brlcad_config.h.in")
+set(CONFIG_H_FILE "${BRLCAD_BINARY_DIR}/include/brlcad_config.h.in")
 
 set(CMAKE_CURRENT_PROJECT BRLCAD)
 
@@ -2797,19 +2797,16 @@ if(WIN32)
   # CHECK_CXX_FLAG(WX)
 
   CHECK_SYMBOL_EXISTS(hypot "math.h" HAVE_HYPOT)
-  #If we don't have it, need to define it as _hypot in config_win
   if(NOT HAVE_HYPOT)
     set(hypot 1)
   endif(NOT HAVE_HYPOT)
 
   CHECK_SYMBOL_EXISTS(asinh "math.h" HAVE_ASINH)
-  #If we don't have it, need to define it in config_win
   if(NOT HAVE_ASINH)
     set(asinh 1)
   endif(NOT HAVE_ASINH)
 
   CHECK_SYMBOL_EXISTS(isnan "math.h" HAVE_ISNAN)
-  #If we don't have it, need to define it in config_win
   if(HAVE_ISNAN)
     CONFIG_H_APPEND(BRLCAD "#define HAVE_ISNAN 1\n")
   else(HAVE_ISNAN)
@@ -2820,7 +2817,6 @@ if(WIN32)
   endif(HAVE_ISNAN)
 
   CHECK_SYMBOL_EXISTS(isinf "math.h" HAVE_ISINF)
-  #If we don't have it, need to define it in config_win
   if(NOT HAVE_ISINF)
     set(isinf 1)
   endif(NOT HAVE_ISINF)
@@ -2828,19 +2824,16 @@ if(WIN32)
   CHECK_SYMBOL_EXISTS(rint "math.h" HAVE_RINT)
 
   CHECK_SYMBOL_EXISTS(fmax "math.h" HAVE_FMAX)
-  #If we don't have it, need to define it in config_win
   if(NOT HAVE_FMAX)
     set(fmax 1)
   endif(NOT HAVE_FMAX)
 
   CHECK_SYMBOL_EXISTS(nextafterf "math.h" HAVE_NEXTAFTERF)
-  #If we don't have it, need to define it in config_win
   if(NOT HAVE_NEXTAFTERF)
     set(nextafterf 1)
   endif(NOT HAVE_NEXTAFTERF)
 
   CHECK_SYMBOL_EXISTS(nextafterl "math.h" HAVE_NEXTAFTERL)
-  #If we don't have it, need to define it in config_win
   if(NOT HAVE_NEXTAFTERL)
     set(nextafterl 1)
   endif(NOT HAVE_NEXTAFTERL)
@@ -3129,8 +3122,7 @@ CONFIG_H_APPEND(BRLCAD "#endif /* __CONFIG_H__ */\n")
 get_property(CONFIG_H_FILE_CONTENTS GLOBAL PROPERTY ${CMAKE_PROJECT_NAME}_CONFIG_H_CONTENTS)
 set_source_files_properties(${CONFIG_H_FILE} PROPERTIES GENERATED TRUE)
 file(WRITE ${CONFIG_H_FILE} "${CONFIG_H_FILE_CONTENTS}")
-configure_file(${CONFIG_H_FILE} "${BRLCAD_BINARY_DIR}/include/conf_headers/brlcad_config.h.tmp")
-BUILD_CFG_HDR(${BRLCAD_BINARY_DIR}/include/conf_headers/brlcad_config.h.tmp ${INCLUDE_DIR}/brlcad)
+BUILD_CFG_HDR(${CONFIG_H_FILE} ${INCLUDE_DIR}/brlcad)
 
 #---------------------------------------------------------------------
 # Rules for the toplevel documentation files
@@ -3425,9 +3417,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
   DISTCLEAN("${CMAKE_BINARY_DIR}/CMakeTmp")
   DISTCLEAN("${CMAKE_BINARY_DIR}/configure.new")
   DISTCLEAN("${CMAKE_BINARY_DIR}/INSTALL.new")
-  DISTCLEAN("${CMAKE_BINARY_DIR}/include/conf_headers/brlcad_config.h.in")
-  DISTCLEAN("${CMAKE_BINARY_DIR}/include/conf_headers/brlcad_config.h.tmp")
-  DISTCLEAN("${CMAKE_BINARY_DIR}/include/conf_headers/config_win.h.tmp")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/include/brlcad_config.h.in")
   DISTCLEAN("${CMAKE_BINARY_DIR}/CMakeDoxyfile.in")
   DISTCLEAN("${CMAKE_BINARY_DIR}/CMakeDoxygenDefaults.cmake")
   foreach(clearpattern ${DISTCLEAN_OUTFILES})
