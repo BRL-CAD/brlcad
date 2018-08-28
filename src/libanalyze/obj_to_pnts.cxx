@@ -246,7 +246,7 @@ analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, fastf_t *avg_thickness, stru
     int ind = 0;
     int count = 0;
     double avgt = 0.0;
-    struct rt_i *rtip;
+    struct rt_i *rtip = NULL;
     int ncpus = bu_avail_cpus();
     struct rt_gen_worker_vars *state = (struct rt_gen_worker_vars *)bu_calloc(ncpus+1, sizeof(struct rt_gen_worker_vars ), "state");
     struct bu_ptbl **grid_pnts = NULL;
