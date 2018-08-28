@@ -1095,7 +1095,7 @@ _ged_continuation_obj(int *is_valid, struct ged *gedp, const char *objname, cons
 		continue;
 	    }
 	    feature_size = prev_feat_size;
-	    if (!opts->quiet) {
+	    if (!opts->quiet && bot->faces) {
 		bu_log("Continuation Method: using last successful BoT with %d faces, feature size %g\n", bot->num_faces, feature_size);
 	    }
 	} else {
