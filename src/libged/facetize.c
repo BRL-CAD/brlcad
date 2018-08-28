@@ -128,7 +128,8 @@ struct _ged_facetize_opts {
     int regions;
     int resume;
     int in_place;
-    fastf_t feat_perc;
+    fastf_t feature_size;
+    fastf_t d_feature_size;
     struct rt_tess_tol *tol;
 
     /* Poisson specific options */
@@ -175,7 +176,8 @@ struct _ged_facetize_opts * _ged_facetize_opts_create()
     o->regions = 0;
     o->resume = 0;
     o->in_place = 0;
-    o->feat_perc = 0.15;
+    o->feature_size = 0.0;
+    o->d_feature_size = 0.0;
     BU_GET(o->faceted_suffix, struct bu_vls);
     bu_vls_init(o->faceted_suffix);
     bu_vls_sprintf(o->faceted_suffix, ".bot");
@@ -945,19 +947,23 @@ _ged_spsr_obj(int *is_valid, struct ged *gedp, const char *objname, const char *
 	goto ged_facetize_spsr_memfree;
     }
 
-/* do decimation */
-    if (opts->feat_perc > 0) {
+    /* do decimation */
+    {
 	struct rt_bot_internal *obot = bot;
 	fastf_t feature_size = 0.0;
-	fastf_t xlen = fabs(rpp_max[X] - rpp_min[X]);
-	fastf_t ylen = fabs(rpp_max[Y] - rpp_min[Y]);
-	fastf_t zlen = fabs(rpp_max[Z] - rpp_min[Z]);
-	feature_size = (xlen < ylen) ? xlen : ylen;
-	feature_size = (feature_size < zlen) ? feature_size : zlen;
-	feature_size = feature_size * ((opts->feat_perc > 1.0) ? 1.0 : opts->feat_perc);
+        if (opts->feature_size > 0) {
+	    feature_size = opts->feature_size;
+	} else {
+	    fastf_t xlen = fabs(rpp_max[X] - rpp_min[X]);
+	    fastf_t ylen = fabs(rpp_max[Y] - rpp_min[Y]);
+	    fastf_t zlen = fabs(rpp_max[Z] - rpp_min[Z]);
+	    feature_size = (xlen < ylen) ? xlen : ylen;
+	    feature_size = (feature_size < zlen) ? feature_size : zlen;
+	    feature_size = feature_size * 0.15;
+	}
 
 	if (opts->verbosity) {
-	    bu_log("SPSR: trying decimation with decimation size percentage: %g\n", opts->feat_perc);
+	    bu_log("SPSR: trying decimation with decimation feature size: %g\n", feature_size);
 	}
 
 	bot = _try_decimate(bot, feature_size, opts);
@@ -1122,10 +1128,10 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
     min_len = (min_len < zlen) ? min_len : zlen;
     min_len = (min_len < avg_thickness) ? min_len : avg_thickness;
 
-    if (opts->feat_perc > 0) {
-	target_feature_size = min_len * opts->feat_perc;
+    if (opts->feature_size > 0) {
+	target_feature_size = feature_size;
     } else {
-	target_feature_size = min_len;
+	target_feature_size = min_len * 0.15;
     }
 
     /* Build the BoT */
@@ -1235,14 +1241,15 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
     }
 
     /* do decimation */
-    if (opts->feat_perc > 0) {
+    {
+	fastf_t d_feature_size = (opts->d_feature_size > 0) ? opts->d_feature_size : 1.5 * feature_size;
 	struct rt_bot_internal *obot = bot;
 
 	if (opts->verbosity) {
-	    bu_log("CM: decimating with feature size %g\n", 1.5*feature_size);
+	    bu_log("CM: decimating with feature size %g\n", d_feature_size);
 	}
 
-	bot = _try_decimate(bot, 1.5*feature_size, opts);
+	bot = _try_decimate(bot, d_feature_size, opts);
 
 	if (bot == obot) {
 	    r->failure_mode = GED_FACETIZE_FAILURE_DECIMATION;
@@ -1439,7 +1446,7 @@ _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _ged
 	if (flags & GED_FACETIZE_NMGBOOL) {
 	    opts->nmg_log_print_header = 1;
 	    if (argc == 1) {
-		bu_vls_sprintf(opts->nmg_log_header, "NMG: tessellating %s with tolerances a=%g, r=%g, n=%g\n", argv[0], tol->abs, tol->rel, tol->norm);
+		bu_vls_sprintf(opts->nmg_log_header, "NMG: tessellating %s...\n", argv[0], tol->abs, tol->rel, tol->norm);
 	    } else {
 		bu_vls_sprintf(opts->nmg_log_header, "NMG: tessellating %d objects with tolerances a=%g, r=%g, n=%g\n", argc, tol->abs, tol->rel, tol->norm);
 	    }
@@ -2148,11 +2155,11 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	cdp = (struct directory *)BU_PTBL_GET(pc, i);
 	nparent = bu_avs_get(opts->c_map, cdp->d_namep);
 	if (!opts->quiet) {
-	    bu_log("Rebuilding assembly %s (%d of %d) using facetize object names...\n", nparent, i+1, BU_PTBL_LEN(pc));
+	    bu_log("Duplicating assembly %s (%d of %d)...\n", nparent, i+1, BU_PTBL_LEN(pc));
 	}
 	if (_ged_facetize_add_children(gedp, cdp, opts) != GED_OK) {
 	    if (!opts->quiet) {
-		bu_log("Error: Rebuilding of assembly %s failed!\n", cdp->d_namep, BU_PTBL_LEN(pc));
+		bu_log("Error: duplication of assembly %s failed!\n", cdp->d_namep, BU_PTBL_LEN(pc));
 	    }
 	    continue;
 	}
@@ -2164,7 +2171,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	_ged_facetize_mkname(gedp, opts, n->d_namep, SOLID_OBJ_NAME);
 	_ged_facetize_mkname(gedp, opts, n->d_namep, COMB_OBJ_NAME);
 	if (!opts->quiet) {
-	    bu_log("Copying (sans tree) region comb %s to %s (%d of %d)...\n", n->d_namep, bu_avs_get(opts->c_map, n->d_namep), i+1, BU_PTBL_LEN(ar));
+	    bu_log("Copying (sans tree) region comb %s (%d of %d)...\n", n->d_namep, i+1, BU_PTBL_LEN(ar));
 	}
 	if (_ged_facetize_cpcomb(gedp, n->d_namep, opts) != GED_OK) {
 	    if (opts->verbosity) {
@@ -2326,7 +2333,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     int print_help = 0;
     int need_help = 0;
     struct _ged_facetize_opts *opts = _ged_facetize_opts_create();
-    struct bu_opt_desc d[15];
+    struct bu_opt_desc d[16];
     struct bu_opt_desc pd[10];
 
     BU_OPT(d[0],  "h", "help",          "",  NULL,  &print_help,               "Print help and exit");
@@ -2341,9 +2348,10 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[9],  "r", "regions",       "",  NULL,  &(opts->regions),          "For combs, walk the trees and create new copies of the hierarchies with each region replaced by a facetized evaluation of that region. (Default is to create one facetized object for all specified inputs.)");
     BU_OPT(d[10], "",  "resume",        "",  NULL,  &(opts->resume),           "Resume an interrupted conversion (region mode only)");
     BU_OPT(d[11], "",  "in-place",      "",  NULL,  &(opts->in_place),         "Alter the existing tree/object to reference the facetized object.  May only specify one input object with this mode, and no output name.  (Warning: this option changes pre-existing geometry!)");
-    BU_OPT(d[12], "F", "feature-size",  "#", &bu_opt_fastf_t, &(opts->feat_perc),  "Percentage of the minimum length (based on the bounding box dimensions and average of observed solid raytracing lengths) to use as a feature size in methods needing this input. Default is 0.15, max is 1 (Note: setting this to 0 disables decimation, which may produce very large meshes).");
-    BU_OPT(d[13], "",  "max-time",         "#", &bu_opt_int,     &(opts->max_time),       "Maximum time to spend per step (in seconds).  Default is 30.  Zero means either the default (for routines which could run indefinitely) or run to completion (if there is a theoretical termination point for the algorithm) - be careful of specifying zero because it is quite easy to produce extremely long runs!.");
-    BU_OPT_NULL(d[14]);
+    BU_OPT(d[12], "F", "feature-size",  "#", &bu_opt_fastf_t, &(opts->feature_size),  "Initial feature length to try for sampling based methods.  By default this will be based on the average thickness observed by the raytracer.");
+    BU_OPT(d[13], "", "decimation-feature-size",  "#", &bu_opt_fastf_t, &(opts->d_feature_size),  "Initial feature length to try for decimation in sampling based methods.  By default, this value is set to 1.5x the feature size.");
+    BU_OPT(d[14], "",  "max-time",         "#", &bu_opt_int,     &(opts->max_time),       "Maximum time to spend per step (in seconds).  Default is 30.  Zero means either the default (for routines which could run indefinitely) or run to completion (if there is a theoretical termination point for the algorithm) - be careful of specifying zero because it is quite easy to produce extremely long runs!.");
+    BU_OPT_NULL(d[15]);
 
     /* Poisson specific options */
     BU_OPT(pd[0], "d", "depth",            "#", &bu_opt_int,     &(opts->s_opts.depth),            "Maximum reconstruction depth (default 8)");
