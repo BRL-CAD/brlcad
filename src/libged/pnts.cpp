@@ -360,7 +360,7 @@ _obj_to_pnts(struct ged *gedp, int argc, const char **argv)
     pnts->scale = 0.0;
     pnts->type = RT_PNT_TYPE_NRM;
 
-    if (analyze_obj_to_pnts(pnts, &avg_thickness, gedp->ged_wdbp->dbip, obj_name, &btol, flags, max_pnts, max_time)) {
+    if (analyze_obj_to_pnts(pnts, &avg_thickness, gedp->ged_wdbp->dbip, obj_name, &btol, flags, max_pnts, max_time, 2)) {
 	bu_vls_sprintf(gedp->ged_result_str, "Error: point generation failed\n");
 	return GED_ERROR;
     }

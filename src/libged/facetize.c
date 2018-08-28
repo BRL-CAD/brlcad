@@ -906,7 +906,7 @@ _ged_spsr_obj(int *is_valid, struct ged *gedp, const char *objname, const char *
 	    bu_vls_free(&pnt_msg);
 	}
 
-	if (analyze_obj_to_pnts(pnts, NULL, gedp->ged_wdbp->dbip, objname, &btol, flags, opts->max_pnts, opts->max_time)) {
+	if (analyze_obj_to_pnts(pnts, NULL, gedp->ged_wdbp->dbip, objname, &btol, flags, opts->max_pnts, opts->max_time, opts->verbosity)) {
 	    if (!opts->quiet) {
 		bu_log("SPSR: point generation failed: %s\n", objname);
 	    }
@@ -1086,7 +1086,7 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
     }
 
     /* Shoot - we need both the avg thickness of the hit partitions and seed points */
-    if (analyze_obj_to_pnts(pnts, &avg_thickness, gedp->ged_wdbp->dbip, objname, &btol, flags, max_pnts, opts->max_time) || pnts->count <= 0) {
+    if (analyze_obj_to_pnts(pnts, &avg_thickness, gedp->ged_wdbp->dbip, objname, &btol, flags, max_pnts, opts->max_time, opts->verbosity) || pnts->count <= 0) {
 	r->failure_mode = GED_FACETIZE_FAILURE_PNTGEN;
 	ret = GED_ERROR;
 	goto ged_facetize_continuation_memfree;

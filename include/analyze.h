@@ -362,7 +362,7 @@ ANALYZE_EXPORT int nirt_line_segments(struct bn_vlblock **segs, struct nirt_stat
 #define ANALYZE_OBJ_TO_PNTS_RAND  0x4 /**< @brief sample using Marsaglia sampling on the bounding sphere with pseudo random numbers */
 #define ANALYZE_OBJ_TO_PNTS_SOBOL 0x8 /**< @brief sample using Marsaglia sampling on the bounding sphere with Sobol' low-discrepancy-sequence generation */
 ANALYZE_EXPORT int analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, double *avg_thickness, struct db_i *dbip,
-	       const char *obj, struct bn_tol *tol, int flags, int max_pnts, int max_time);
+	       const char *obj, struct bn_tol *tol, int flags, int max_pnts, int max_time, int verbosity);
 
 ANALYZE_EXPORT extern int
 analyze_polygonize(int **faces, int *num_faces, point_t **vertices, int *num_vertices, fastf_t size, point_t p_s, const char *obj, struct db_i *dbip, int max_time, int verbosity);

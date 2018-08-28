@@ -237,7 +237,7 @@ get_sobol_rays(fastf_t *rays, long int craynum, point_t center, fastf_t radius, 
 /* 0 = success, -1 error */
 int
 analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, fastf_t *avg_thickness, struct db_i *dbip,
-       const char *obj, struct bn_tol *tol, int flags, int max_pnts, int max_time)
+       const char *obj, struct bn_tol *tol, int flags, int max_pnts, int max_time, int verbosity)
 {
     int pntcnt = 0;
     int ret, i, j;
@@ -292,7 +292,10 @@ analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, fastf_t *avg_thickness, stru
     rt_prep_parallel(rtip, ncpus);
 
     currtime = bu_gettime();
-    bu_log("Object to Point Set prep time: %.1f\n", (currtime - oldtime)/1.0e6);
+
+    if (verbosity > 1) {
+	bu_log("Object to Point Set prep time: %.1f\n", (currtime - oldtime)/1.0e6);
+    }
 
     /* Regardless of whether or not we're shooting the grid, it is our
      * guide for how many rays to fire */
@@ -317,7 +320,9 @@ analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, fastf_t *avg_thickness, stru
 	for (i = 0; i < ncpus+1; i++) {
 	    state[i].rays = NULL;
 	}
-	bu_log("analyze time: %.1f\n", (currtime - oldtime)/1.0e6);
+	if (verbosity > 1) {
+	    bu_log("analyze time: %.1f\n", (currtime - oldtime)/1.0e6);
+	}
     }
 
     if (flags & ANALYZE_OBJ_TO_PNTS_RAND || flags & ANALYZE_OBJ_TO_PNTS_SOBOL) {
