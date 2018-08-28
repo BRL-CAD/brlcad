@@ -884,6 +884,13 @@ analyze_polygonize(
 
 analyze_polygonizer_memfree:
 
+
+    while (p.cubes != NULL) { /* free any remaining cubes */
+	CUBES *temp = p.cubes;
+	p.cubes = p.cubes->next;
+	free((char *) temp);
+    }
+
     /* polygonizer memory */
     polygonizer_mesh_free(m);
     for (i = 0; i < (int)BU_PTBL_LEN(p.f); i++) {
