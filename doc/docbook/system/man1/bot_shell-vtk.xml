@@ -20,7 +20,7 @@
     <arg choice='opt'>-d <replaceable>debug_level</replaceable></arg>
     <arg choice='opt'>-g <replaceable>cell_size</replaceable></arg>
     <arg choice='plain'>-o <replaceable>vtk_polydata_output</replaceable></arg>
-    <arg choice='plain'><replaceable>brlcad_database.g</replaceable></arg>
+    <arg choice='plain'><replaceable>database.g</replaceable></arg>
     <arg choice='plain'><replaceable>object1</replaceable></arg>
     <arg choice='opt'><arg choice='plain'><replaceable>object2</replaceable></arg><arg choice='plain' rep='repeat'><replaceable>object3</replaceable></arg></arg>
 </cmdsynopsis>
