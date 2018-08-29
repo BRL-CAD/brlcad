@@ -40,6 +40,10 @@
 #include <errno.h>
 #include "bio.h"
 
+#ifdef HAVE_SYS_SYSINFO_H
+#  include <sys/sysinfo.h>
+#endif
+
 #include "bu/env.h"
 #include "bu/malloc.h"
 
@@ -88,6 +92,22 @@ bu_setenv(const char *name, const char *value, int overwrite)
 #endif
 }
 
+long int
+bu_avail_mem()
+{
+#ifdef HAVE_SYS_SYSINFO_H
+    {
+	struct sysinfo s;
+	sysinfo(&s);
+	return (s.freeram + s.bufferram + s.sharedram) * s.mem_unit;
+    }
+#endif
+    /* TODO - Use GlobalMemoryStatusEx on Windows, see
+     * https://msdn.microsoft.com/en-us/library/windows/desktop/aa366589 */
+
+    /* Don't know how to figure this out if the above haven't worked */
+    return -1;
+}
 
 /*
  * Local Variables:
