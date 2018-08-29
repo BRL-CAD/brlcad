@@ -1994,10 +1994,14 @@ ged_facetize_regions_resume_memfree:
 
     bu_avs_free(&bnames);
     bu_avs_free(&rnames);
-    bu_ptbl_free(ar2);
-    bu_ptbl_free(ar);
-    bu_free(ar2, "ar table");
-    bu_free(ar, "ar table");
+    if (ar2) {
+	bu_ptbl_free(ar2);
+	bu_free(ar2, "ar table");
+    }
+    if (ar) {
+	bu_ptbl_free(ar);
+	bu_free(ar, "ar table");
+    }
     bu_free(dpa, "free dpa");
 
     return ret;
@@ -2397,12 +2401,18 @@ ged_facetize_regions_memfree:
 	}
     }
 
-    bu_ptbl_free(pc);
-    bu_ptbl_free(ar2);
-    bu_ptbl_free(ar);
-    bu_free(pc, "pc table");
-    bu_free(ar2, "ar table");
-    bu_free(ar, "ar table");
+    if (ar2) {
+	bu_ptbl_free(ar2);
+	bu_free(ar2, "ar table");
+    }
+    if (ar) {
+	bu_ptbl_free(ar);
+	bu_free(ar, "ar table");
+    }
+    if (pc) {
+	bu_ptbl_free(pc);
+	bu_free(pc, "pc table");
+    }
     bu_free(dpa, "dpa array");
     return ret;
 }
