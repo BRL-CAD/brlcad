@@ -207,26 +207,6 @@ BU_EXPORT extern const char *bu_brlcad_dir(const char *dirkey, int fail_quietly)
  */
 BU_EXPORT extern const char *bu_brlcad_root(const char *rhs, int fail_quietly);
 
-/**
- * @brief
- * Locate where the BRL-CAD data resources are installed.
- *
- * The BRL-CAD data resources are searched for in the following order
- * of precedence by testing for the existence of rhs if provided or
- * the directory existence otherwise:
- *
- *   BRLCAD_DATA environment variable if set
- *   BRLCAD_DATA compile-time path
- *   bu_brlcad_root/DATA_DIR path
- *   bu_brlcad_root/share path
- *   current directory
- *
- * A STATIC buffer is returned.  It is the caller's responsibility to
- * call bu_strdup() or make other provisions to save the returned
- * string, before calling again.
- */
-BU_EXPORT extern const char *bu_brlcad_data(const char *rhs, int fail_quietly);
-
 
 /** @} */
 

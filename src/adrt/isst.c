@@ -628,7 +628,7 @@ const char *fullname;
     argv = __argv;
 #endif
 
-    /* Need progname set for bu_brlcad_root/bu_brlcad_data to work */
+    /* initialize progname for run-tim resource finding */
     bu_setprogname(argv[0]);
 
 #ifdef HAVE_WINDOWS_H
@@ -653,7 +653,7 @@ const char *fullname;
     argv++; argc--;
     tclcad_set_argv(interp, argc, argv);
 
-    isst_tcl = bu_brlcad_data("tclscripts/isst/isst.tcl", 1);
+    isst_tcl = bu_brlcad_root("share/tclscripts/isst/isst.tcl", 1);
     Tcl_DStringInit(&temp);
     fullname = Tcl_TranslateFileName(interp, isst_tcl, &temp);
     status = Tcl_EvalFile(interp, fullname);

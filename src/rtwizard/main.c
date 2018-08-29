@@ -933,7 +933,7 @@ main(int argc, char **argv)
     BU_OPT(d[33], "",  "pid-file",      "filename",  &bu_opt_vls,     s->pid_file,      "File used to communicate PID numbers (for app developers)");
     BU_OPT_NULL(d[34]);
 
-    /* Need progname set for bu_brlcad_root/bu_brlcad_data to work */
+    /* initialize progname for run-time resource finding */
     bu_setprogname(argv[0]);
     av0 = argv[0];
 
@@ -1077,7 +1077,7 @@ main(int argc, char **argv)
 	/* We're using this path on the file system, not in Tcl: translate it
 	 * to the appropriate form before doing the eval */
 	Tcl_DStringInit(&temp);
-	rtwizard = bu_brlcad_data("tclscripts/rtwizard/rtwizard", 1);
+	rtwizard = bu_brlcad_root("share/tclscripts/rtwizard/rtwizard", 1);
 	fullname = Tcl_TranslateFileName(interp, rtwizard, &temp);
 	status = Tcl_EvalFile(interp, fullname);
 	Tcl_DStringFree(&temp);

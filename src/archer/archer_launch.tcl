@@ -62,10 +62,10 @@ if {[file exists [file normalize $argv0]]} {
 }
 
 # Itk's default class doesn't keep the menu, but Archer needs it - redefine itk:Toplevel
-set itk_file [file join [bu_brlcad_data "tclscripts"] archer itk_redefines.tcl]
+set itk_file [file join [bu_brlcad_root "share/tclscripts"] archer itk_redefines.tcl]
 if { ![file exists $itk_file] } {
 	#try src tree
-	set itk_file [file join [bu_brlcad_data "src"] tclscripts archer itk_redefines.tcl]
+	set itk_file [file join [bu_brlcad_root "src"] tclscripts archer itk_redefines.tcl]
 	if { ![file exists $itk_file] } {
 		#try local relative
 		set itk_file [file join src tclscripts archer itk_redefines.tcl]
@@ -151,10 +151,10 @@ proc createSplashScreen {} {
 
     if {$useImage} {
 	# try installed, uninstalled
-	set imgfile [file join [bu_brlcad_data "tclscripts"] archer images aboutArcher.png]
+	set imgfile [file join [bu_brlcad_root "share/tclscripts"] archer images aboutArcher.png]
 	if { ![file exists $imgfile] } {
 	    # try src tree
-	    set imgfile [file join [bu_brlcad_data "src"] archer images aboutArcher.png]
+	    set imgfile [file join [bu_brlcad_root "src"] archer images aboutArcher.png]
 	    if { [!file exists $imgfile] } {
 		# try local relative
 	        set imgfile [file join tclscripts archer images aboutArcher.png]
@@ -241,7 +241,7 @@ proc main {} {
 	wm title $::ArcherCore::application "Archer $brlcad_version"
 	if {$tcl_platform(os) == "Windows NT"} {
 	    wm iconbitmap $::ArcherCore::application -default \
-		[file join [bu_brlcad_data "icons"] archer.ico]
+		[file join [bu_brlcad_root "share/icons"] archer.ico]
 	}
 	set size [wm maxsize $::ArcherCore::application]
 	set w [lindex $size 0]
@@ -260,7 +260,7 @@ proc main {} {
 	wm title . "Archer $brlcad_version"
 	if {$tcl_platform(os) == "Windows NT"} {
 	    wm iconbitmap . -default \
-		[file join [bu_brlcad_data "html"] manuals archer archer.ico]
+		[file join [bu_brlcad_root "share/html"] manuals archer archer.ico]
 	}
 	set ::ArcherCore::application [Archer .\#auto]
 	set size [wm maxsize .]

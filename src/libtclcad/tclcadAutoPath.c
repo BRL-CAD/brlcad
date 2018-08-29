@@ -121,7 +121,7 @@ join_path(struct bu_vls *path_list, ...)
  * BRLCAD_ROOT/lib/itclITCL_VERSION/itcl.tcl
  * BRLCAD_ROOT/lib/itkITCL_VERSION/itk.tcl
  * BRLCAD_ROOT/lib/iwidgetsIWIDGETS_VERSION/iwidgets.tcl
- * BRLCAD_DATA/tclscripts/pkgIndex.tcl and subdirs
+ * BRLCAD_ROOT/share/tclscripts/pkgIndex.tcl and subdirs
  *
  ** source invocation paths
  * src/other/tcl/library/init.tcl
@@ -187,7 +187,7 @@ tclcad_auto_path(Tcl_Interp *interp)
     root = bu_brlcad_root("", 1);
     bu_vls_printf(&root_buf, "%s", root);
     root = bu_vls_addr(&root_buf);
-    data = bu_brlcad_data("", 1);
+    data = bu_brlcad_root("share", 1);
 
     /* determine if TCLCAD_LIBRARY_PATH is set */
     library_path = getenv("TCLCAD_LIBRARY_PATH");

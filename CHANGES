@@ -1362,6 +1362,8 @@ s/bu_realpath/bu_file_realpath/g
 s/bu_suspend_interrupts/bu_interrupt_suspend/g
 s/bu_restore_interrupts/bu_interrupt_restore/g
         renamed for API consistency [7.27]
+s/bu_brlcad_data[[:space:]]*\(/bu_brlcad_root("share/"/g
+        replaced by new BU API
 
 # tentative
 s/bu_getprogname\([[:space:]]*\)/bu_app_name\(NULL\)/g

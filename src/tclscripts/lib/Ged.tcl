@@ -162,7 +162,6 @@ package provide cadwidgets::Ged 1.0
 	method bounds_all {args}
 	method brep {args}
 	method bu_units_conversion {args}
-	method bu_brlcad_data {args}
 	method bu_brlcad_dir {args}
 	method bu_brlcad_root {args}
 	method bu_prmem {args}
@@ -1381,10 +1380,6 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::bu_units_conversion {args} {
     uplevel \#0 bu_units_conversion $args
-}
-
-::itcl::body cadwidgets::Ged::bu_brlcad_data {args} {
-    uplevel \#0 bu_brlcad_data $args
 }
 
 ::itcl::body cadwidgets::Ged::bu_brlcad_dir {args} {
@@ -6220,7 +6215,6 @@ package provide cadwidgets::Ged 1.0
 	[brepname] - convert the non-BREP object to BREP form
 	[suffix] - convert non-BREP comb to unevaluated BREP form}}
     $help add bu_units_conversion  {{units} {}}
-    $help add bu_brlcad_data	{{subdir} {}}
     $help add bu_brlcad_dir	{{dirkey} {}}
     $help add bu_brlcad_root	{{subdir} {}}
     $help add bu_prmem		{{title} {}}

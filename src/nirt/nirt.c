@@ -144,7 +144,7 @@ listformats(char ***names)
     struct bu_vls vlsfileline = BU_VLS_INIT_ZERO;
 
     /* get a nirt directory listing */
-    bu_vls_printf(&nirtfilespath, "%s", bu_brlcad_data("nirt", 0));
+    bu_vls_printf(&nirtfilespath, "%s", bu_brlcad_root("share/nirt", 0));
     files = bu_file_list(bu_vls_addr(&nirtfilespath), suffix, &filearray);
     if (names)
 	*names = filearray;
@@ -258,7 +258,7 @@ enqueue_script(struct bu_list *qp, int type, char *string)
 	cfPtr = fopen(bu_vls_addr(&str), "rb");
 	if (cfPtr == NULL) {
 	    bu_vls_trunc(&str, 0);
-	    bu_vls_printf(&str, "%s/%s.nrt", bu_brlcad_data("nirt", 0), string);
+	    bu_vls_printf(&str, "%s/%s.nrt", bu_brlcad_root("share/nirt", 0), string);
 	    cfPtr = fopen(bu_vls_addr(&str), "rb");
 	    if (cfPtr != NULL) {
 		fclose(cfPtr);

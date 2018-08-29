@@ -1120,7 +1120,7 @@ appInit(Tcl_Interp *_interp)
 	bu_exit (1, "appInit: Failed to get main window.\n");
 
     /* Locate the BRL-CAD-specific Tcl scripts */
-    filename = bu_brlcad_data("tclscripts", 0);
+    filename = bu_brlcad_root("share/tclscripts", 0);
 
     bu_vls_printf(&str2, "%s/plot3-dm", filename);
     bu_vls_printf(&str, "wm withdraw .; set auto_path [linsert $auto_path 0 %s %s]",
@@ -1148,7 +1148,7 @@ main(int argc, char *argv[])
 {
     const char usage[] = "Usage: plot3-dm [-t o|X] plot_file(s)\n";
 
-    /* Need progname set for bu_brlcad_root/bu_brlcad_data to work */
+    /* initialize prognam for run-time reousrce finding */
     bu_setprogname(argv[0]);
 
     if (!get_args(argc, argv))

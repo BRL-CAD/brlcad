@@ -3828,14 +3828,14 @@ nirt_init(struct nirt_state *ns)
     /* Set up the default NIRT formatting output */
     std::ifstream fs;
     std::string fmtline;
-    fs.open(bu_brlcad_data("nirt/default.nrt", 0), std::fstream::binary);
+    fs.open(bu_brlcad_root("share/nirt/default.nrt", 0), std::fstream::binary);
     if (!fs.is_open()) {
-	bu_log("Error - could not load default NIRT formatting file: %s\n", bu_brlcad_data("nirt/default.nrt", 0));
+	bu_log("Error - could not load default NIRT formatting file: %s\n", bu_brlcad_root("share/nirt/default.nrt", 0));
 	return -1;
     }
     while (std::getline(fs, fmtline)) {
 	if (nirt_exec(ns, fmtline.c_str()) < 0) {
-	    bu_log("Error - could not load default NIRT formatting file: %s\n", bu_brlcad_data("nirt/default.nrt", 0));
+	    bu_log("Error - could not load default NIRT formatting file: %s\n", bu_brlcad_root("share/nirt/default.nrt", 0));
 	    return -1;
 	}
     }

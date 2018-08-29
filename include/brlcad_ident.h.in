@@ -64,9 +64,10 @@ static const char *BRLCAD_USER = "@BRLCAD_COMPILE_USER@";
  */
 static const int BRLCAD_COUNT = @BRLCAD_COMPILE_COUNT@;
 
-
-#define BRLCAD_ROOT "@CMAKE_INSTALL_PREFIX@"
-#define BRLCAD_DATA "@CMAKE_INSTALL_PREFIX@/@DATA_DIR@"
+/**
+ * Configured installation root, sometimes not used.
+ */
+static const char *BRLCAD_ROOT = "@CMAKE_INSTALL_PREFIX@";
 
 
 /**

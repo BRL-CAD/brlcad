@@ -326,30 +326,6 @@ tcl_bu_brlcad_root(void *clientData,
 
 
 /**
- * A wrapper for bu_brlcad_data.
- *
- * @param clientData	- associated data/state
- * @param argc		- number of elements in argv
- * @param argv		- command name and arguments
- *
- * @return BRLCAD_OK if successful, otherwise, BRLCAD_ERROR.
- */
-HIDDEN int
-tcl_bu_brlcad_data(void *clientData,
-		   int argc,
-		   const char **argv)
-{
-    Tcl_Interp *interp = (Tcl_Interp *)clientData;
-    if (argc != 2) {
-	bu_log("Usage: bu_brlcad_data subdir\n");
-	return BRLCAD_ERROR;
-    }
-    Tcl_AppendResult(interp, bu_brlcad_data(argv[1], 1), NULL);
-    return BRLCAD_OK;
-}
-
-
-/**
  * A wrapper for bu_units_conversion.
  *
  * @param clientData	- associated data/state
@@ -403,7 +379,6 @@ Bu_Init(void *p)
 
     static struct bu_cmdtab cmds[] = {
 	{"bu_units_conversion",		tcl_bu_units_conversion},
-	{"bu_brlcad_data",		tcl_bu_brlcad_data},
 	{"bu_brlcad_dir",		tcl_bu_brlcad_dir},
 	{"bu_brlcad_root",		tcl_bu_brlcad_root},
 	{"bu_prmem",			tcl_bu_prmem},

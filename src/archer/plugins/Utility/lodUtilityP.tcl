@@ -24,10 +24,10 @@
 #        configuration utility.
 #
 
-set filename [file join [bu_brlcad_data "plugins"] archer Utility lodUtilityP LODUtilityP.tcl]
+set filename [file join [bu_brlcad_root "share/plugins"] archer Utility lodUtilityP LODUtilityP.tcl]
 if { ![file exists $filename] } {
     # non-tclscript resource, look in the source invocation path
-    set filename [file join [bu_brlcad_data "src"] archer plugins Utility lodUtilityP LODUtilityP.tcl]
+    set filename [file join [bu_brlcad_root "src"] archer plugins Utility lodUtilityP LODUtilityP.tcl]
 }
 if { ![file exists $filename] } {
     puts "Could not load the LODUtilityP plugin, skipping $filename"

@@ -204,7 +204,7 @@ BRLMAN_MAIN(
     argv = __argv;
 #endif
 
-    /* Need progname set for bu_brlcad_root/bu_brlcad_data to work */
+    /* initialize progname for run-time resource finding */
     bu_setprogname(argv[0]);
 
     /* Handle options in C */
@@ -413,7 +413,7 @@ BRLMAN_MAIN(
 	    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
 	}
 
-	brlman_tcl = bu_brlcad_data("tclscripts/brlman/brlman.tcl", 1);
+	brlman_tcl = bu_brlcad_root("share/tclscripts/brlman/brlman.tcl", 1);
 	Tcl_DStringInit(&temp);
 	fullname = Tcl_TranslateFileName(interp, brlman_tcl, &temp);
 	status = Tcl_EvalFile(interp, fullname);

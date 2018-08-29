@@ -169,14 +169,6 @@ if(NOT "$ENV{BRLCAD_ROOT}" STREQUAL "" AND NOT BRLCAD_ROOT_OVERRIDE)
   endif(SLEEP_EXEC)
 endif(NOT "$ENV{BRLCAD_ROOT}" STREQUAL "" AND NOT BRLCAD_ROOT_OVERRIDE)
 
-# While we're at it, complain if BRLCAD_DATA is set
-if(NOT "$ENV{BRLCAD_DATA}" STREQUAL "" AND NOT BRLCAD_DATA_OVERRIDE)
-  message(WARNING "\nBRLCAD_DATA is presently set to \"$ENV{BRLCAD_DATA}\"\nBRLCAD_DATA should typically be used only when needed as a runtime override, not during compilation.  Building with BRLCAD_ROOT set may produce unexpected behavior during both compilation and subsequent program execution.  It is *highly* recommended that BRLCAD_DATA be unset and not used.\n")
-  if(SLEEP_EXEC)
-    execute_process(COMMAND ${SLEEP_EXEC} 2)
-  endif(SLEEP_EXEC)
-endif(NOT "$ENV{BRLCAD_DATA}" STREQUAL "" AND NOT BRLCAD_DATA_OVERRIDE)
-
 # If CMAKE_INSTALL_PREFIX is "/usr", be VERY noisy about it - a make install in
 # this location is dangerous/destructive on some systems.
 if("${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr" AND NOT BRLCAD_ALLOW_INSTALL_TO_USR)

@@ -118,7 +118,7 @@ _list_formats(struct nirt_io_data *io_data, char ***names)
     struct bu_vls fl = BU_VLS_INIT_ZERO;
 
     /* get a nirt directory listing */
-    bu_vls_printf(&nfp, "%s", bu_brlcad_data("nirt", 0));
+    bu_vls_printf(&nfp, "%s", bu_brlcad_root("share/nirt", 0));
     files = bu_file_list(bu_vls_addr(&nfp), suffix, &filearray);
     if (names) *names = filearray;
 
@@ -194,7 +194,7 @@ _enqueue_file(struct bu_vls *msg, int argc, const char **argv, void *set_var)
     file.open(argv[0]);
     if (!file.is_open()) {
 	struct bu_vls str = BU_VLS_INIT_ZERO;
-	bu_vls_printf(&str, "%s/%s.nrt", bu_brlcad_data("nirt", 0), argv[0]);
+	bu_vls_printf(&str, "%s/%s.nrt", bu_brlcad_root("share/nirt", 0), argv[0]);
 	file.open(bu_vls_addr(&str));
 	bu_vls_free(&str);
 	if (!file.is_open()) return -1;

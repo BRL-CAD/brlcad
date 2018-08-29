@@ -641,7 +641,7 @@ osgl_open(Tcl_Interp *interp, int argc, char **argv)
 	return DM_NULL;
     }
     privvars->fontNormal = FONS_INVALID;
-    privvars->fontNormal = fonsAddFont(privvars->fs, "sans", bu_brlcad_data("fonts/ProFont.ttf", 0));
+    privvars->fontNormal = fonsAddFont(privvars->fs, "sans", bu_brlcad_root("share/fonts/ProFont.ttf", 0));
 
     /* This is the applications display list offset */
     dmp->dm_displaylist = glGenLists(0);

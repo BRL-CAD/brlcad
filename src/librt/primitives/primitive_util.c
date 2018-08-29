@@ -554,8 +554,8 @@ clt_get_program(cl_context context, cl_device_id device, cl_uint count, const ch
 
     programs = (cl_program*)bu_calloc(count, sizeof(cl_program), "programs");
     for (i=0; i<count; i++) {
-	snprintf(file, MAXPATHLEN, "%s%c%s", BRLCAD_OPENCL_DIR, BU_DIR_SEPARATOR, filenames[i]);
-	snprintf(path, MAXPATHLEN, "%s", bu_brlcad_data(file, 0));
+	snprintf(file, MAXPATHLEN, "%s%c%s", "share/" BRLCAD_OPENCL_DIR, BU_DIR_SEPARATOR, filenames[i]);
+	snprintf(path, MAXPATHLEN, "%s", bu_brlcad_root(file, 0));
 
         pc_string = clt_read_code(path, &pc_length);
         programs[i] = clCreateProgramWithSource(context, 1, &pc_string, &pc_length, &error);
@@ -653,7 +653,7 @@ clt_init(void)
         if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL command queue");
 
 	/* locate opencl directory */
-	snprintf(path, MAXPATHLEN, "%s", bu_brlcad_data(BRLCAD_OPENCL_DIR, 0));
+	snprintf(path, MAXPATHLEN, "%s", bu_brlcad_root("share/" BRLCAD_OPENCL_DIR, 0));
 
 	/* compile opencl programs */
 	snprintf(args, MAXPATHLEN, "-I %s -D RT_SINGLE_HIT=1", path);
