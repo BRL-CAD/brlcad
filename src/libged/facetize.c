@@ -1950,7 +1950,7 @@ _ged_facetize_regions_resume(struct ged *gedp, int argc, const char **argv, stru
 		    bu_ptbl_ins(ar, (long *)n);
 
 		    avail_mem = bu_avail_mem();
-		    if (avail_mem > 0 && avail_mem < 150000000) {
+		    if (avail_mem > 0 && avail_mem < GED_FACETIZE_MEMORY_THRESHOLD) {
 			bu_log("Too little available memory to continue, aborting\n");
 			ret = GED_ERROR;
 			goto ged_facetize_regions_resume_memfree;
@@ -2351,7 +2351,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 		    bu_ptbl_ins(ar2, (long *)n);
 
 		    avail_mem = bu_avail_mem();
-		    if (avail_mem > 0 && avail_mem < 150000000) {
+		    if (avail_mem > 0 && avail_mem < GED_FACETIZE_MEMORY_THRESHOLD) {
 			bu_log("Too little available memory to continue, aborting\n");
 			ret = GED_ERROR;
 			goto ged_facetize_regions_memfree;
