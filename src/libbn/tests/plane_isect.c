@@ -28,7 +28,7 @@
 #include "bn.h"
 
 
-#define TOL_INIT { BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 }
+#define TOL_INIT { BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6, 0.0, 0.0 }
 
 
 static int

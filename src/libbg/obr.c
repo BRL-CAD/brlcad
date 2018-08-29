@@ -136,7 +136,7 @@ pnt2d_array_get_dimension(const point2d_t *pnts, int pnt_cnt, point2d_t *p_cente
 
     i = 0;
     while (i < pnt_cnt) {
-	const struct bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST / 2, BN_TOL_DIST *BN_TOL_DIST / 4, 1e-6, 1 - 1e-6};
+	const struct bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST / 2, BN_TOL_DIST *BN_TOL_DIST / 4, 1e-6, 1 - 1e-6, 0.0, 0.0};
 	fastf_t dist_sq;
 	fastf_t pca[2];
 	point_t A_3D, B_3D, curr_pnt_3D;

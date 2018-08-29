@@ -830,7 +830,7 @@ _ged_spsr_obj(struct _ged_facetize_report_info *r, struct ged *gedp, const char 
     int decimation_succeeded = 0;
     struct db_i *dbip = gedp->ged_wdbp->dbip;
     struct rt_db_internal in_intern;
-    struct bn_tol btol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
+    struct bn_tol btol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6, 0.0, 0.0 };
     struct rt_pnts_internal *pnts;
     struct rt_bot_internal *bot = NULL;
     struct pnt_normal *pn, *pl;
@@ -1064,7 +1064,7 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
     struct directory *dp;
     struct db_i *dbip = gedp->ged_wdbp->dbip;
     struct rt_db_internal in_intern;
-    struct bn_tol btol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
+    struct bn_tol btol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6, 0.0, 0.0 };
     struct rt_pnts_internal *pnts;
     struct rt_bot_internal *bot = NULL;
     struct pnt_normal *pn, *pl;

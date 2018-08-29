@@ -38,7 +38,7 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
 {
     size_t i;
     struct analyze_raydiff_results *results;
-    struct bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6 };
+    struct bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6, 0.0, 0.0 };
 
     int do_diff_raytrace = 1;
     int view_left = 0;

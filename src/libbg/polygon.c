@@ -576,7 +576,7 @@ remove_hole(int **poly, const size_t poly_npts, const int *hole, const size_t ho
     double hole_largest_x = -DBL_MAX;
     point2d_t hpnt, ep, e1, e2, isect;
     vect_t hdir;
-    struct bn_tol ltol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
+    struct bn_tol ltol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6, 0.0, 0.0 };
     V2SETALL(e1,0);
     V2SETALL(e2,0);
     V2SETALL(isect,0);

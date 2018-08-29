@@ -55,7 +55,7 @@ rt_nmg_mirror(struct rt_db_internal *ip, register const plane_t plane)
     static point_t origin = {0.0, 0.0, 0.0};
 
     static const struct bn_tol tol = {
-	BN_TOL_MAGIC, 0.0005, 0.0005*0.0005, 1e-6, 1-1e-6
+	BN_TOL_MAGIC, 0.0005, 0.0005*0.0005, 1e-6, 1-1e-6, 0.0, 0.0
     };
 
     RT_CK_DB_INTERNAL(ip);

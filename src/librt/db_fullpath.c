@@ -255,7 +255,7 @@ db_fullpath_to_vls(struct bu_vls *vls, const struct db_full_path *full_path, con
 {
     size_t i;
     int type;
-    const struct bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
+    const struct bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6, 0.0, 0.0 };
 
     if (!full_path)
 	return;

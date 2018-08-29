@@ -71,7 +71,9 @@ static struct bn_tol extr_tol = {
     RT_LEN_TOL,
     RT_LEN_TOL*RT_LEN_TOL,
     0.0,
-    1.0
+    1.0,
+    0.0,
+    0.0
 };
 
 
