@@ -118,6 +118,31 @@ _ged_facetize_failure_msg(struct bu_vls *msg, int type, const char *prefix, stru
     }
 }
 
+const char *
+_ged_facetize_attr(int method)
+{
+    static const char *nmg_flag = "facetize:NMG";
+    static const char *continuation_flag = "facetize:CM";
+    static const char *spsr_flag = "facetize:SPSR";
+    if (method == GED_FACETIZE_NMGBOOL) return nmg_flag;
+    if (method == GED_FACETIZE_CONTINUATION) return continuation_flag;
+    if (method == GED_FACETIZE_SPSR) return spsr_flag;
+    return NULL;
+}
+
+int
+_ged_facetize_attempted(struct ged *gedp, const char *oname, int method)
+{
+    int ret = 0;
+    struct bu_attribute_value_set avs;
+    struct directory *dp = db_lookup(gedp->ged_wdbp->dbip, oname, LOOKUP_QUIET);
+    if (!dp) return 0;
+    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) return 0;
+    if (bu_avs_get(&avs, _ged_facetize_attr(method))) ret = 1;
+    bu_avs_free(&avs);
+    return ret;
+}
+
 struct _ged_facetize_opts {
 
     int quiet;
@@ -134,6 +159,7 @@ struct _ged_facetize_opts {
     int nmg_use_tnurbs;
     int regions;
     int resume;
+    int retry;
     int in_place;
     fastf_t feature_size;
     fastf_t d_feature_size;
@@ -182,6 +208,7 @@ struct _ged_facetize_opts * _ged_facetize_opts_create()
     o->nmg_use_tnurbs = 0;
     o->regions = 0;
     o->resume = 0;
+    o->retry = 0;
     o->in_place = 0;
     o->feature_size = 0.0;
     o->d_feature_size = 0.0;
@@ -600,6 +627,10 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
     struct db_tree_state init_state;
     union tree *facetize_tree;
     struct model *nmg_model;
+    struct bn_tol *tol;
+
+    BU_GET(tol, struct bn_tol);
+    BN_TOL_INIT(tol);
 
     _ged_facetize_log_nmg(o);
 
@@ -607,12 +638,23 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
 
     /* Establish tolerances */
     init_state.ts_ttol = &gedp->ged_wdbp->wdb_ttol;
-    init_state.ts_tol = &gedp->ged_wdbp->wdb_tol;
+
+    /* We're going to use timeout (potentially) on NMG, so take the wdb
+     * tol as a starting point and set the timing info */
+    tol->dist = gedp->ged_wdbp->wdb_tol.dist;
+    tol->dist_sq = gedp->ged_wdbp->wdb_tol.dist_sq;
+    tol->perp = gedp->ged_wdbp->wdb_tol.perp;
+    tol->para = gedp->ged_wdbp->wdb_tol.para;
+    tol->tstart = bu_gettime();
+    tol->tmax = o->max_time * 1e6;
+
+    init_state.ts_tol = tol;
 
     facetize_tree = (union tree *)0;
     nmg_model = nmg_mm();
     init_state.ts_m = &nmg_model;
 
+    if (!BU_SETJUMP) {
     i = db_walk_tree(gedp->ged_wdbp->dbip, argc, (const char **)argv,
 	    1,
 	    &init_state,
@@ -623,8 +665,15 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
 	    nmg_booltree_leaf_tess,
 	    (void *)&facetize_tree
 	    );
+    } else {
+	/* catch */
+	BU_UNSETJUMP;
+	nmg_km(nmg_model);
+	_ged_facetize_log_default(o);
+	return NULL;
+    } BU_UNSETJUMP;
 
-    if (i < 0) {
+    if (failed || i < 0 || (tol->tmax > 0 && ((bu_gettime() - tol->tstart) > tol->tmax))) {
 	/* Destroy NMG */
 	nmg_km(nmg_model);
 	_ged_facetize_log_default(o);
@@ -634,7 +683,7 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
     if (facetize_tree) {
 	if (!BU_SETJUMP) {
 	    /* try */
-	    failed = nmg_boolean(facetize_tree, nmg_model, &RTG.rtg_vlfree, &gedp->ged_wdbp->wdb_tol, &rt_uniresource);
+	    failed = nmg_boolean(facetize_tree, nmg_model, &RTG.rtg_vlfree, tol, &rt_uniresource);
 	} else {
 	    /* catch */
 	    BU_UNSETJUMP;
@@ -657,6 +706,7 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
 	db_free_tree(facetize_tree, &rt_uniresource);
     }
 
+    BU_PUT(tol, struct bn_tol);
     _ged_facetize_log_default(o);
     return (failed) ? NULL : nmg_model;
 }
@@ -1683,6 +1733,11 @@ _ged_methodattr_set(struct ged *gedp, struct _ged_facetize_opts *opts, const cha
 
     if (method == GED_FACETIZE_NMGBOOL) {
 	struct rt_tess_tol *tol = &(gedp->ged_wdbp->wdb_ttol);
+	attrav[3] = _ged_facetize_attr(method);
+	attrav[4] = "1";
+	if (ged_attr(gedp, 5, (const char **)&attrav) != GED_OK && opts->verbosity) {
+	    bu_log("Error adding attribute %s to comb %s", attrav[3], rcname);
+	}
 	attrav[3] = "facetize:nmg_abs";
 	bu_vls_sprintf(&anum, "%g", tol->abs);
 	attrav[4] = bu_vls_addr(&anum);
@@ -1704,6 +1759,11 @@ _ged_methodattr_set(struct ged *gedp, struct _ged_facetize_opts *opts, const cha
     }
 
     if (info && method == GED_FACETIZE_CONTINUATION) {
+	attrav[3] = _ged_facetize_attr(method);
+	attrav[4] = "1";
+	if (ged_attr(gedp, 5, (const char **)&attrav) != GED_OK && opts->verbosity) {
+	    bu_log("Error adding attribute %s to comb %s", attrav[3], rcname);
+	}
 	attrav[3] = "facetize:continuation_feature_size";
 	bu_vls_sprintf(&anum, "%g", info->feature_size);
 	attrav[4] = bu_vls_addr(&anum);
@@ -1719,6 +1779,11 @@ _ged_methodattr_set(struct ged *gedp, struct _ged_facetize_opts *opts, const cha
     }
 
     if (method == GED_FACETIZE_SPSR) {
+	attrav[3] = _ged_facetize_attr(method);
+	attrav[4] = "1";
+	if (ged_attr(gedp, 5, (const char **)&attrav) != GED_OK && opts->verbosity) {
+	    bu_log("Error adding attribute %s to comb %s", attrav[3], rcname);
+	}
 	attrav[3] = "facetize:spsr_depth";
 	bu_vls_sprintf(&anum, "%g", opts->s_opts.depth);
 	attrav[4] = bu_vls_addr(&anum);
@@ -1945,12 +2010,12 @@ _ged_facetize_regions_resume(struct ged *gedp, int argc, const char **argv, stru
 	    const char *oname = bu_avs_get(&rnames, cname);
 	    struct directory *dp = db_lookup(dbip, sname, LOOKUP_QUIET);
 
-	    if (dp == RT_DIR_NULL) {
+	    if (dp == RT_DIR_NULL && (opts->retry || !_ged_facetize_attempted(gedp, cname, cmethod))) {
 		if (_ged_facetize_region_obj(gedp, oname, cname, sname, opts, i+1, (int)BU_PTBL_LEN(ar2), cmethod) == GED_FACETIZE_FAILURE) {
 		    bu_ptbl_ins(ar, (long *)n);
 
 		    avail_mem = bu_avail_mem();
-		    if (avail_mem > 0 && avail_mem < GED_FACETIZE_MEMORY_THRESHOLD) {
+		    if (avail_mem >= 0 && avail_mem < GED_FACETIZE_MEMORY_THRESHOLD) {
 			bu_log("Too little available memory to continue, aborting\n");
 			ret = GED_ERROR;
 			goto ged_facetize_regions_resume_memfree;
@@ -2351,7 +2416,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 		    bu_ptbl_ins(ar2, (long *)n);
 
 		    avail_mem = bu_avail_mem();
-		    if (avail_mem > 0 && avail_mem < GED_FACETIZE_MEMORY_THRESHOLD) {
+		    if (avail_mem >= 0 && avail_mem < GED_FACETIZE_MEMORY_THRESHOLD) {
 			bu_log("Too little available memory to continue, aborting\n");
 			ret = GED_ERROR;
 			goto ged_facetize_regions_memfree;
@@ -2451,7 +2516,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     int print_help = 0;
     int need_help = 0;
     struct _ged_facetize_opts *opts = _ged_facetize_opts_create();
-    struct bu_opt_desc d[16];
+    struct bu_opt_desc d[17];
     struct bu_opt_desc pd[10];
 
     BU_OPT(d[0],  "h", "help",          "",  NULL,  &print_help,               "Print help and exit");
@@ -2465,11 +2530,12 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[8],  "T", "triangles",     "",  NULL,  &(opts->triangulate),      "Generate a NMG solid using only triangles (BoTs, the default output, can only use triangles - this option mimics that behavior for NMG output.)");
     BU_OPT(d[9],  "r", "regions",       "",  NULL,  &(opts->regions),          "For combs, walk the trees and create new copies of the hierarchies with each region replaced by a facetized evaluation of that region. (Default is to create one facetized object for all specified inputs.)");
     BU_OPT(d[10], "",  "resume",        "",  NULL,  &(opts->resume),           "Resume an interrupted conversion (region mode only)");
-    BU_OPT(d[11], "",  "in-place",      "",  NULL,  &(opts->in_place),         "Alter the existing tree/object to reference the facetized object.  May only specify one input object with this mode, and no output name.  (Warning: this option changes pre-existing geometry!)");
-    BU_OPT(d[12], "F", "feature-size",  "#", &bu_opt_fastf_t, &(opts->feature_size),  "Initial feature length to try for sampling based methods.  By default this will be based on the average thickness observed by the raytracer.");
-    BU_OPT(d[13], "", "decimation-feature-size",  "#", &bu_opt_fastf_t, &(opts->d_feature_size),  "Initial feature length to try for decimation in sampling based methods.  By default, this value is set to 1.5x the feature size.");
-    BU_OPT(d[14], "",  "max-time",         "#", &bu_opt_int,     &(opts->max_time),       "Maximum time to spend per step (in seconds).  Default is 30.  Zero means either the default (for routines which could run indefinitely) or run to completion (if there is a theoretical termination point for the algorithm) - be careful of specifying zero because it is quite easy to produce extremely long runs!.");
-    BU_OPT_NULL(d[15]);
+    BU_OPT(d[11], "",  "retry",         "",  NULL,  &(opts->retry),            "When resuming an interrupted conversion, re-try operations that previously failed (default is to not repeat previous attempts with already-attempted methods.)");
+    BU_OPT(d[12], "",  "in-place",      "",  NULL,  &(opts->in_place),         "Alter the existing tree/object to reference the facetized object.  May only specify one input object with this mode, and no output name.  (Warning: this option changes pre-existing geometry!)");
+    BU_OPT(d[13], "F", "feature-size",  "#", &bu_opt_fastf_t, &(opts->feature_size),  "Initial feature length to try for sampling based methods.  By default this will be based on the average thickness observed by the raytracer.");
+    BU_OPT(d[14], "", "decimation-feature-size",  "#", &bu_opt_fastf_t, &(opts->d_feature_size),  "Initial feature length to try for decimation in sampling based methods.  By default, this value is set to 1.5x the feature size.");
+    BU_OPT(d[15], "",  "max-time",         "#", &bu_opt_int,     &(opts->max_time),       "Maximum time to spend per step (in seconds).  Default is 30.  Zero means either the default (for routines which could run indefinitely) or run to completion (if there is a theoretical termination point for the algorithm) - be careful of specifying zero because it is quite easy to produce extremely long runs!.");
+    BU_OPT_NULL(d[16]);
 
     /* Poisson specific options */
     BU_OPT(pd[0], "d", "depth",            "#", &bu_opt_int,     &(opts->s_opts.depth),            "Maximum reconstruction depth (default 8)");
