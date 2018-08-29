@@ -62,6 +62,7 @@
 #define GED_FACETIZE_FAILURE_DECIMATION 6
 #define GED_FACETIZE_FAILURE_NMG 7
 #define GED_FACETIZE_FAILURE_CONTINUATION_SURFACE 10
+#define GED_FACETIZE_FAILURE_SPSR_SURFACE 11
 
 
 struct _ged_facetize_report_info {
@@ -104,6 +105,9 @@ _ged_facetize_failure_msg(struct bu_vls *msg, int type, const char *prefix, stru
 	    break;
 	case GED_FACETIZE_FAILURE_CONTINUATION_SURFACE:
 	    bu_vls_printf(msg, "%s: continuation polygonization surface build failed.\n", prefix);
+	    break;
+	case GED_FACETIZE_FAILURE_SPSR_SURFACE:
+	    bu_vls_printf(msg, "%s: Screened Poisson surface reconstruction failed.\n", prefix);
 	    break;
 	default:
 	    return;
@@ -816,10 +820,11 @@ _write_nmg(struct ged *gedp, struct model *nmg_model, const char *name, struct _
 }
 
 HIDDEN int
-_ged_spsr_obj(int *is_valid, struct ged *gedp, const char *objname, const char *newname, struct _ged_facetize_opts *opts)
+_ged_spsr_obj(struct _ged_facetize_report_info *r, struct ged *gedp, const char *objname, const char *newname, struct _ged_facetize_opts *opts)
 {
     int ret = GED_OK;
     struct directory *dp;
+    int decimation_succeeded = 0;
     struct db_i *dbip = gedp->ged_wdbp->dbip;
     struct rt_db_internal in_intern;
     struct bn_tol btol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
@@ -838,28 +843,38 @@ _ged_spsr_obj(int *is_valid, struct ged *gedp, const char *objname, const char *
 
     dp = db_lookup(dbip, objname, LOOKUP_QUIET);
 
-    if (!opts->quiet) {
-	bu_log("SPSR: tessellating %s with depth %d, interpolation weight %g, and samples-per-node %g\n", objname, opts->s_opts.depth, opts->s_opts.point_weight, opts->s_opts.samples_per_node);
-    }
+    r->failure_mode = GED_FACETIZE_FAILURE;
+
+    if (!r) return GED_FACETIZE_FAILURE;
+
+    /* From here on out, assume success until we fail */
+    r->failure_mode = GED_FACETIZE_SUCCESS;
 
     if (rt_db_get_internal(&in_intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	if (opts->verbosity) {
 	    bu_log("Error: could not determine type of object %s, skipping\n", objname);
 	}
-	return GED_ERROR;
+	r->failure_mode = GED_FACETIZE_FAILURE;
+	return GED_FACETIZE_FAILURE;
     }
+
+    /* If we have a half, this won't work */
+    if (in_intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_HALF) {
+	r->failure_mode = GED_FACETIZE_FAILURE;
+	return GED_FACETIZE_FAILURE;
+    }
+
+    /* Key some settings off the bbox size */
+    ged_get_obj_bounds(gedp, 1, (const char **)&objname, 0, obj_min, obj_max);
+    VMINMAX(rpp_min, rpp_max, (double *)obj_min);
+    VMINMAX(rpp_min, rpp_max, (double *)obj_max);
+
 
     if (in_intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_PNTS) {
 	/* If we have a point cloud, there's no need to raytrace it */
 	pnts = (struct rt_pnts_internal *)in_intern.idb_ptr;
 	pl = (struct pnt_normal *)pnts->point;
 
-	/* Key some settings off the bbox size - ged_get_obj_bounds not
-	 * currently working on pnt sets, so just run through the pnts. */
-	for (BU_LIST_FOR(pn, pnt_normal, &(pl->l))) {
-	    VMINMAX(rpp_min, rpp_max, (double *)pn->v);
-	    i++;
-	}
     } else {
 	struct bu_vls pnt_msg = BU_VLS_INIT_ZERO;
 	BU_ALLOC(pnts, struct rt_pnts_internal);
@@ -867,11 +882,6 @@ _ged_spsr_obj(int *is_valid, struct ged *gedp, const char *objname, const char *
 	pnts->scale = 0.0;
 	pnts->type = RT_PNT_TYPE_NRM;
 	free_pnts = 1;
-
-	/* Key some settings off the bbox size */
-	ged_get_obj_bounds(gedp, 1, (const char **)&objname, 0, obj_min, obj_max);
-	VMINMAX(rpp_min, rpp_max, (double *)obj_min);
-	VMINMAX(rpp_min, rpp_max, (double *)obj_max);
 
 	/* Pick our mode(s) */
 	if (!opts->pnt_grid_mode && !opts->pnt_rand_mode && !opts->pnt_sobol_mode) {
@@ -893,26 +903,26 @@ _ged_spsr_obj(int *is_valid, struct ged *gedp, const char *objname, const char *
 
 	if (opts->verbosity) {
 	    bu_vls_printf(&pnt_msg, "SPSR: generating points from %s with the following settings:\n", objname);
-	    bu_vls_printf(&pnt_msg, "      point sampling methods:");
-	    if (flags & ANALYZE_OBJ_TO_PNTS_GRID) bu_vls_printf(&pnt_msg, " grid");
-	    if (flags & ANALYZE_OBJ_TO_PNTS_RAND) bu_vls_printf(&pnt_msg, " rand");
-	    if (flags & ANALYZE_OBJ_TO_PNTS_SOBOL) bu_vls_printf(&pnt_msg, " sobol");
-	    bu_vls_printf(&pnt_msg, "\n");
-	    if (opts->max_pnts) {
-		bu_vls_printf(&pnt_msg, "      Maximum pnt count per method: %d", opts->max_pnts);
-	    }
-	    if (opts->max_time) {
-		bu_vls_printf(&pnt_msg, "      Maximum time per method (sec): %d", opts->max_time);
+	    if (opts->verbosity > 1) {
+		bu_vls_printf(&pnt_msg, "      point sampling methods:");
+		if (flags & ANALYZE_OBJ_TO_PNTS_GRID) bu_vls_printf(&pnt_msg, " grid");
+		if (flags & ANALYZE_OBJ_TO_PNTS_RAND) bu_vls_printf(&pnt_msg, " rand");
+		if (flags & ANALYZE_OBJ_TO_PNTS_SOBOL) bu_vls_printf(&pnt_msg, " sobol");
+		bu_vls_printf(&pnt_msg, "\n");
+		if (opts->max_pnts) {
+		    bu_vls_printf(&pnt_msg, "      Maximum pnt count per method: %d", opts->max_pnts);
+		}
+		if (opts->max_time) {
+		    bu_vls_printf(&pnt_msg, "      Maximum time per method (sec): %d", opts->max_time);
+		}
 	    }
 	    bu_log("%s\n", bu_vls_addr(&pnt_msg));
 	    bu_vls_free(&pnt_msg);
 	}
 
 	if (analyze_obj_to_pnts(pnts, NULL, gedp->ged_wdbp->dbip, objname, &btol, flags, opts->max_pnts, opts->max_time, opts->verbosity)) {
-	    if (!opts->quiet) {
-		bu_log("SPSR: point generation failed: %s\n", objname);
-	    }
-	    ret = GED_ERROR;
+	    r->failure_mode = GED_FACETIZE_FAILURE_PNTGEN;
+	    ret = GED_FACETIZE_FAILURE;
 	    goto ged_facetize_spsr_memfree;
 	}
     }
@@ -940,10 +950,8 @@ _ged_spsr_obj(int *is_valid, struct ged *gedp, const char *objname, const char *
 		(const point_t *)input_points_3d,
 		(const vect_t *)input_normals_3d,
 		pnts->count, &(opts->s_opts)) ) {
-	if (!opts->quiet) {
-	    bu_log("SPSR: Screened Poisson surface reconstruction failed: %s\n", objname);
-	}
-	ret = GED_ERROR;
+	r->failure_mode = GED_FACETIZE_FAILURE_SPSR_SURFACE;
+	ret = GED_FACETIZE_FAILURE;
 	goto ged_facetize_spsr_memfree;
     }
 
@@ -963,21 +971,37 @@ _ged_spsr_obj(int *is_valid, struct ged *gedp, const char *objname, const char *
 	}
 
 	if (opts->verbosity) {
-	    bu_log("SPSR: trying decimation with decimation feature size: %g\n", feature_size);
+	    bu_log("SPSR: decimating with feature size: %g\n", feature_size);
 	}
 
 	bot = _try_decimate(bot, feature_size, opts);
-	if (bot == obot && opts->verbosity) {
-	    bu_log("SPSR: decimation failed, returning original BoT (may be large)\n");
+	   
+	if (bot == obot) {
+	    r->failure_mode = GED_FACETIZE_FAILURE_DECIMATION;
+	    if (bot->vertices) bu_free(bot->vertices, "verts");
+	    if (bot->faces) bu_free(bot->faces, "verts");
+	    ret = GED_FACETIZE_FAILURE;
+	    goto ged_facetize_spsr_memfree;
+	}
+	if (bot != obot) {
+	    decimation_succeeded = 1;
 	}
     }
 
-    if (is_valid) {
+    /* Check validity - do not return an invalid BoT */
+    {
 	int is_v = !bg_trimesh_solid(bot->num_vertices, bot->num_faces, (fastf_t *)bot->vertices, (int *)bot->faces, NULL);
-	(*is_valid) = is_v;
-	if (!is_v && !opts->quiet) {
-	    bu_log("SPSR: created invalid bot: %s\n", objname);
+	if (!is_v) {
+	    r->failure_mode = GED_FACETIZE_FAILURE_BOTINVALID;
+	    if (bot->vertices) bu_free(bot->vertices, "verts");
+	    if (bot->faces) bu_free(bot->faces, "verts");
+	    ret = GED_FACETIZE_FAILURE;
+	    goto ged_facetize_spsr_memfree;
 	}
+    }
+
+    if (decimation_succeeded && !opts->quiet) {
+	bu_log("SPSR: decimation succeeded, final BoT has %d faces\n", bot->num_faces);
     }
 
     if (!opts->make_nmg) {
@@ -987,7 +1011,7 @@ _ged_spsr_obj(int *is_valid, struct ged *gedp, const char *objname, const char *
     } else {
 	/* Convert BoT to NMG */
 	struct model *m = nmg_mm();
-	struct nmgregion *r;
+	struct nmgregion *nr;
 	struct rt_db_internal intern;
 
 	/* Use intern to fake out rt_bot_tess, since it expects an
@@ -996,12 +1020,13 @@ _ged_spsr_obj(int *is_valid, struct ged *gedp, const char *objname, const char *
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_type = ID_BOT;
 	intern.idb_ptr = (void *)bot;
-	if (rt_bot_tess(&r, m, &intern, NULL, &btol) < 0) {
+	if (rt_bot_tess(&nr, m, &intern, NULL, &btol) < 0) {
 	    if (!opts->quiet) {
 		bu_log("SPSR: failed to convert BoT to NMG: %s\n", objname);
 	    }
 	    rt_db_free_internal(&intern);
-	    ret = GED_ERROR;
+	    ret = GED_FACETIZE_FAILURE;
+	    r->failure_mode = GED_FACETIZE_FAILURE_NMG;
 	    goto ged_facetize_spsr_memfree;
 	} else {
 	    /* OK,have NMG now - write it out */
@@ -1052,19 +1077,25 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
 
     dp = db_lookup(dbip, objname, LOOKUP_QUIET);
 
-    if (!r) return GED_ERROR;
+    r->failure_mode = GED_FACETIZE_FAILURE;
+
+    if (!r) return GED_FACETIZE_FAILURE;
+
+    /* From here on out, assume success until we fail */
     r->failure_mode = GED_FACETIZE_SUCCESS;
 
     if (rt_db_get_internal(&in_intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	if (opts->verbosity) {
 	    bu_log("Error: could not determine type of object %s, skipping\n", objname);
 	}
-	return GED_ERROR;
+	r->failure_mode = GED_FACETIZE_FAILURE;
+	return GED_FACETIZE_FAILURE;
     }
 
     if (in_intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_PNTS || in_intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_HALF) {
 	/* If we have a point cloud or half, this won't work */
-	return GED_ERROR;
+	r->failure_mode = GED_FACETIZE_FAILURE;
+	return GED_FACETIZE_FAILURE;
     }
 
 
@@ -1095,7 +1126,7 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
     /* Shoot - we need both the avg thickness of the hit partitions and seed points */
     if (analyze_obj_to_pnts(pnts, &avg_thickness, gedp->ged_wdbp->dbip, objname, &btol, flags, max_pnts, opts->max_time, opts->verbosity) || pnts->count <= 0) {
 	r->failure_mode = GED_FACETIZE_FAILURE_PNTGEN;
-	ret = GED_ERROR;
+	ret = GED_FACETIZE_FAILURE;
 	goto ged_facetize_continuation_memfree;
     }
 
@@ -1111,7 +1142,7 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
 	r->pnts_bbox_vol = _bbox_vol(p_min, p_max);
 	r->obj_bbox_vol = _bbox_vol(rpp_min, rpp_max);
 	if (fabs(r->obj_bbox_vol - r->pnts_bbox_vol)/r->obj_bbox_vol > 1) {
-	    ret = GED_ERROR;
+	    ret = GED_FACETIZE_FAILURE;
 	    r->failure_mode = GED_FACETIZE_FAILURE_PNTBBOX;
 	    goto ged_facetize_continuation_memfree;
 	}
@@ -1236,7 +1267,7 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
 	    bu_log("CM: surface reconstruction failed: %s\n", objname);
 	}
 	r->failure_mode = GED_FACETIZE_FAILURE_CONTINUATION_SURFACE;
-	ret = GED_ERROR;
+	ret = GED_FACETIZE_FAILURE;
 	goto ged_facetize_continuation_memfree;
     }
 
@@ -1255,7 +1286,7 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
 	    r->failure_mode = GED_FACETIZE_FAILURE_DECIMATION;
 	    if (bot->vertices) bu_free(bot->vertices, "verts");
 	    if (bot->faces) bu_free(bot->faces, "verts");
-	    ret = GED_ERROR;
+	    ret = GED_FACETIZE_FAILURE;
 	    goto ged_facetize_continuation_memfree;
 	}
 	if (bot != obot) {
@@ -1315,7 +1346,7 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
 	intern.idb_ptr = (void *)bot;
 	if (rt_bot_tess(&nr, m, &intern, NULL, &btol) < 0) {
 	    rt_db_free_internal(&intern);
-	    ret = GED_ERROR;
+	    ret = GED_FACETIZE_FAILURE;
 	    r->failure_mode = GED_FACETIZE_FAILURE_NMG;
 	    goto ged_facetize_continuation_memfree;
 	} else {
@@ -1478,7 +1509,7 @@ _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _ged
 		    done_trying = 1;
 		    ret = GED_OK;
 		} else {
-		    if (opts->verbosity) {
+		    if (!opts->quiet) {
 			struct bu_vls lmsg = BU_VLS_INIT_ZERO;
 			_ged_facetize_failure_msg(&lmsg, cinfo.failure_mode, "CM", &cinfo);
 			bu_log("%s", bu_vls_addr(&lmsg));
@@ -1497,10 +1528,17 @@ _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _ged
 		}
 		flags = flags & ~(GED_FACETIZE_SPSR);
 	    } else {
-		if (_ged_spsr_obj(NULL, gedp, argv[0], newname, opts) == GED_OK) {
+		struct _ged_facetize_report_info cinfo;
+		if (_ged_spsr_obj(&cinfo, gedp, argv[0], newname, opts) == GED_FACETIZE_SUCCESS) {
 		    done_trying = 1;
 		    ret = GED_OK;
 		} else {
+		    if (!opts->quiet) {
+			struct bu_vls lmsg = BU_VLS_INIT_ZERO;
+			_ged_facetize_failure_msg(&lmsg, cinfo.failure_mode, "SPSR", &cinfo);
+			bu_log("%s", bu_vls_addr(&lmsg));
+			bu_vls_free(&lmsg);
+		    }
 		    flags = flags & ~(GED_FACETIZE_SPSR);
 		    continue;
 		}
@@ -1663,6 +1701,27 @@ _ged_methodattr_set(struct ged *gedp, struct _ged_facetize_opts *opts, const cha
 	}
     }
 
+    if (method == GED_FACETIZE_SPSR) {
+	attrav[3] = "facetize:spsr_depth";
+	bu_vls_sprintf(&anum, "%g", opts->s_opts.depth);
+	attrav[4] = bu_vls_addr(&anum);
+	if (ged_attr(gedp, 5, (const char **)&attrav) != GED_OK && opts->verbosity) {
+	    bu_log("Error adding attribute %s to comb %s", attrav[3], rcname);
+	}
+	attrav[3] = "facetize:spsr_weight";
+	bu_vls_sprintf(&anum, "%g", opts->s_opts.point_weight);
+	attrav[4] = bu_vls_addr(&anum);
+	if (ged_attr(gedp, 5, (const char **)&attrav) != GED_OK && opts->verbosity) {
+	    bu_log("Error adding attribute %s to comb %s", attrav[3], rcname);
+	}
+	attrav[3] = "facetize:spsr_samples_per_node";
+	bu_vls_sprintf(&anum, "%g", opts->s_opts.samples_per_node);
+	attrav[4] = bu_vls_addr(&anum);
+	if (ged_attr(gedp, 5, (const char **)&attrav) != GED_OK && opts->verbosity) {
+	    bu_log("Error adding attribute %s to comb %s", attrav[3], rcname);
+	}
+    }
+
     if (info && info->failure_mode == GED_FACETIZE_FAILURE_PNTGEN) {
 	attrav[3] = "facetize:EMPTY";
 	attrav[4] = "1";
@@ -1734,15 +1793,30 @@ _ged_facetize_region_obj(struct ged *gedp, const char *oname, const char *cname,
     }
 
     if (cmethod == GED_FACETIZE_SPSR) {
-	int is_valid = 0;
-	ret = GED_FACETIZE_SUCCESS;
-	if (_ged_spsr_obj(&is_valid, gedp, oname, sname, opts) == GED_OK) {
-	    /* Check the validity */
-	    ret = (is_valid) ? GED_FACETIZE_SUCCESS : GED_FACETIZE_FAILURE;
-	    return ret;
-	} else {
-	    return GED_FACETIZE_FAILURE;
+	struct _ged_facetize_report_info cinfo;
+
+	if (!opts->quiet) {
+	    bu_log("SPSR: tessellating %s with depth %d, interpolation weight %g, and samples-per-node %g\n", oname, opts->s_opts.depth, opts->s_opts.point_weight, opts->s_opts.samples_per_node);
 	}
+
+	ret =_ged_spsr_obj(&cinfo, gedp, oname, sname, opts);
+	if (ret == GED_FACETIZE_FAILURE) {
+	    if (!opts->quiet) {
+		struct bu_vls lmsg = BU_VLS_INIT_ZERO;
+		_ged_facetize_failure_msg(&lmsg, cinfo.failure_mode, "SPSR", &cinfo);
+		bu_log("%s", bu_vls_addr(&lmsg));
+		bu_vls_free(&lmsg);
+	    }
+	} else {
+	    if (_ged_methodcomb_add(gedp, opts, sname, GED_FACETIZE_SPSR) != GED_OK && opts->verbosity > 1) {
+		bu_log("Error adding %s to methodology combination\n", sname);
+	    }
+	}
+
+	/* Regardless of the outcome, record what settings were tried. */
+	_ged_methodattr_set(gedp, opts, cname, GED_FACETIZE_SPSR, NULL);
+
+	return ret;
     }
 
     return GED_FACETIZE_FAILURE;
