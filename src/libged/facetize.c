@@ -1312,6 +1312,24 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
 	}
     }
 
+    /* Check the volume of the bounding box of the BoT against the bounding box
+     * of the point cloud - a large difference means something probably isn't
+     * right.  For the moment, use >50% difference. */
+    {
+	point_t b_min, b_max;
+	VSETALL(b_min, INFINITY);
+	VSETALL(b_max, -INFINITY);
+	_pnts_bbox(b_min, b_max, bot->num_vertices, (point_t *)bot->vertices);
+	r->bot_bbox_vol = _bbox_vol(b_min, b_max);
+	if (fabs(r->pnts_bbox_vol - r->bot_bbox_vol) > r->pnts_bbox_vol * 0.5) {
+	    ret = GED_FACETIZE_FAILURE;
+	    r->failure_mode = GED_FACETIZE_FAILURE_BOTBBOX;
+	    if (bot->vertices) bu_free(bot->vertices, "verts");
+	    if (bot->faces) bu_free(bot->faces, "verts");
+	    goto ged_facetize_continuation_memfree;
+	}
+    }
+
     /* Check validity - do not return an invalid BoT */
     {
 	int is_v = !bg_trimesh_solid(bot->num_vertices, bot->num_faces, (fastf_t *)bot->vertices, (int *)bot->faces, NULL);
