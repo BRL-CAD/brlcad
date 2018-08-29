@@ -98,8 +98,12 @@ bu_avail_mem()
 #ifdef HAVE_SYS_SYSINFO_H
     {
 	struct sysinfo s;
+	long int avail_ram;
+	long int used_swap;
 	sysinfo(&s);
-	return (s.freeram + s.bufferram + s.sharedram) * s.mem_unit;
+	avail_ram = s.freeram + s.bufferram + s.sharedram;
+	used_swap = s.totalswap - s.freeswap;
+	return (avail_ram - used_swap > 0) ? (avail_ram - used_swap) * s.mem_unit : 0;
     }
 #endif
     /* TODO - Use GlobalMemoryStatusEx on Windows, see
