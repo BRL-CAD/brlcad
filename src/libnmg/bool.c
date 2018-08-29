@@ -40,6 +40,7 @@
 
 #include "vmath.h"
 #include "bu/malloc.h"
+#include "bu/time.h"
 #include "bn/plot3.h"
 #include "nmg.h"
 
@@ -695,9 +696,15 @@ HIDDEN struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
     }
 
     nmg_shell_coplanar_face_merge(sA, tol, 1, vlfree);
+
+    NMG_TIMEOUT("nmg_bool()", tol);
+
     nmg_shell_coplanar_face_merge(sB, tol, 1, vlfree);
 
+    NMG_TIMEOUT("nmg_bool()", tol);
+
     nmg_model_fuse(m, vlfree, tol);
+
 
     if (nmg_check_closed_shell(sA, tol)) {
 	if (nmg_debug & DEBUG_BOOL &&
@@ -762,6 +769,8 @@ HIDDEN struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 
     /* Perform shell/shell intersections */
     nmg_crackshells(sA, sB, vlfree, tol);
+
+    NMG_TIMEOUT("nmg_bool()", tol);
 
     if (nmg_debug & DEBUG_BOOL) {
 	bu_log("Just After Crackshells:\nShell A:\n");
@@ -896,6 +905,8 @@ HIDDEN struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	nmg_vmodel(m);
     }
 
+    NMG_TIMEOUT("nmg_bool()", tol);
+
     nmg_m_reindex(m, 0);
 
     /* Allocate storage for classlist[]. Allocate each of the 8 class
@@ -943,6 +954,8 @@ HIDDEN struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	bu_free((char *)m->manifolds, "free manifolds table");
 	m->manifolds = (char *)NULL;
     }
+
+    NMG_TIMEOUT("nmg_bool()", tol);
 
     if (nmg_debug & (DEBUG_GRAPHCL|DEBUG_PL_LOOP)) {
 	nmg_class_nothing_broken = 1;

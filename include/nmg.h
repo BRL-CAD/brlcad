@@ -73,6 +73,7 @@
 #include "bu/log.h"
 #include "bu/magic.h"
 #include "bu/ptbl.h"
+#include "bu/time.h"
 #include "bn/plane.h"
 #include "bn/tol.h"
 #include "bn/vlist.h"
@@ -220,6 +221,15 @@ __BEGIN_DECLS
 #define NMG_CK_VERTEXUSE_A_CNURB(_p)  NMG_CKMAG(_p, NMG_VERTEXUSE_A_CNURB_MAGIC, "vertexuse_a_cnurb")
 #define NMG_CK_VERTEXUSE_A_EITHER(_p) NMG_CK2MAG(_p, NMG_VERTEXUSE_A_PLANE_MAGIC, NMG_VERTEXUSE_A_CNURB_MAGIC, "vertexuse_a_plane|vertexuse_a_cnurb")
 #define NMG_CK_LIST(_p)               BU_CKMAG(_p, BU_LIST_HEAD_MAGIC, "bu_list")
+
+/* Timeout bailouts */
+#define NMG_TIMEOUT(_fname, _ftol) do { \
+    if (_ftol->tmax > 0 && ((bu_gettime() - _ftol->tstart) > _ftol->tmax)) { \
+	int delta = (int)((bu_gettime() - tol->tstart)/1e6); \
+	bu_log("%s: operation timed out, operation has lasted %d seconds, > threshold (%d)\n", _fname, delta, (int)(tol->tmax/1e6)); \
+	bu_bomb("operation timed out\n"); \
+    } } while (0)
+
 
 /* Used only in nmg_mod.c */
 #define NMG_TEST_EDGEUSE(_p) \
