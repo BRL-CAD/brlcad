@@ -1055,7 +1055,6 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
     fastf_t feature_size = 0.0;
     fastf_t target_feature_size = 0.0;
     int face_cnt = 0;
-    double prev_feat_size;
     double successful_feature_size = 0.0;
     int decimation_succeeded = 0;
     double xlen, ylen, zlen;
@@ -1186,7 +1185,6 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
     pl = (struct pnt_normal *)pnts->point;
     pn = BU_LIST_PNEXT(pnt_normal, pl);
     feature_size = 2*avg_thickness;
-    prev_feat_size = feature_size;
     while (!polygonize_failure && (feature_size > 0.9*target_feature_size || face_cnt < 1000) && fatal_error_cnt < 4) {
 	double timestamp = bu_gettime();
 	int delta;
@@ -1219,7 +1217,6 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
 		/* Something about the previous size didn't work - nudge the feature size and try again
 		 * unless we've had multiple fatal errors. */
 		polygonize_failure = 0;
-		prev_feat_size = feature_size;
 		if (!opts->quiet) {
 		    bu_log("CM: error at size %g\n", feature_size);
 		}
@@ -1246,7 +1243,6 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
 	    if (fatal_error_cnt) {
 		fatal_error_cnt--;
 	    }
-	    prev_feat_size = feature_size;
 	    successful_feature_size = feature_size;
 	    delta = (int)((bu_gettime() - timestamp)/1e6);
 	    if (!opts->quiet) {
