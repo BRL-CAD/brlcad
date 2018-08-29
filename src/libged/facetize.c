@@ -30,6 +30,7 @@
 
 #include <string.h>
 
+#include "bu/env.h"
 #include "bu/exit.h"
 #include "bu/hook.h"
 #include "bu/cmd.h"
@@ -64,6 +65,8 @@
 #define GED_FACETIZE_FAILURE_CONTINUATION_SURFACE 10
 #define GED_FACETIZE_FAILURE_SPSR_SURFACE 11
 
+/* size of available memory (in bytes) below which we can't continue */
+#define GED_FACETIZE_MEMORY_THRESHOLD 150000000
 
 struct _ged_facetize_report_info {
     double feature_size;
@@ -1917,6 +1920,7 @@ _ged_facetize_regions_resume(struct ged *gedp, int argc, const char **argv, stru
     while (methods && BU_PTBL_LEN(ar2) > 0) {
 	struct bu_ptbl *tmp;
 	int cmethod = 0;
+	long int avail_mem = bu_avail_mem();
 	bu_ptbl_reset(ar);
 
 	if (!cmethod && (methods & GED_FACETIZE_NMGBOOL)) {
@@ -1944,6 +1948,13 @@ _ged_facetize_regions_resume(struct ged *gedp, int argc, const char **argv, stru
 	    if (dp == RT_DIR_NULL) {
 		if (_ged_facetize_region_obj(gedp, oname, cname, sname, opts, i+1, (int)BU_PTBL_LEN(ar2), cmethod) == GED_FACETIZE_FAILURE) {
 		    bu_ptbl_ins(ar, (long *)n);
+
+		    avail_mem = bu_avail_mem();
+		    if (avail_mem > 0 && avail_mem < 150000000) {
+			bu_log("Too little available memory to continue, aborting\n");
+			ret = GED_ERROR;
+			goto ged_facetize_regions_resume_memfree;
+		    }
 		}
 	    }
 	}
@@ -2306,10 +2317,11 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
     BU_ALLOC(ar2, struct bu_ptbl);
     bu_ptbl_init(ar2, 8, "second table");
     to_convert = BU_PTBL_LEN(ar);
- 
+
     while (methods && BU_PTBL_LEN(ar) > 0) {
 	struct bu_ptbl *tmp;
 	int cmethod = 0;
+	long int avail_mem = bu_avail_mem();
 	bu_ptbl_reset(ar2);
 
 	if (!cmethod && (methods & GED_FACETIZE_NMGBOOL)) {
@@ -2337,6 +2349,14 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	    if (dp == RT_DIR_NULL) {
 		if (_ged_facetize_region_obj(gedp, oname, cname, sname, opts, i+1, (int)BU_PTBL_LEN(ar), cmethod) == GED_FACETIZE_FAILURE) {
 		    bu_ptbl_ins(ar2, (long *)n);
+
+		    avail_mem = bu_avail_mem();
+		    if (avail_mem > 0 && avail_mem < 150000000) {
+			bu_log("Too little available memory to continue, aborting\n");
+			ret = GED_ERROR;
+			goto ged_facetize_regions_memfree;
+		    }
+
 		}
 	    }
 	}
