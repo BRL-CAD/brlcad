@@ -85,7 +85,11 @@ brlcad_ident(const char *title)
 
     /* optional title */
     isize = strlen(ident);
-    if (title)
+
+    /* TODO - BRLCAD_ROOT has nothing to do with printing the title.
+     * Ugly hack to quell a compiler warning about BRLCAD_ROOT sometimes being
+     * unused, until the proper fix is in place. */
+    if (title && BRLCAD_ROOT)
 	snprintf(ident + isize, 1024 - isize, "  %s\n", title);
 
     /* compile info */
