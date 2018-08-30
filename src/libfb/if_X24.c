@@ -212,7 +212,7 @@ static struct modeflags {
     { 's',  MODE10_MASK, MODE10_SHARED,
       "Use shared memory backing store" },
     { 'z',	MODE11_MASK, MODE11_ZAP,
-      "Zap (free) shared memory" },
+      "Zap (free) shared memory and exit" },
     { 'D',	MODEV_MASK, FLG_VD24 << 1,
       "Select 24-bit DirectColor display if available" },
     { 'T',	MODEV_MASK, FLG_VT24 << 1,
@@ -2474,7 +2474,7 @@ X24_open(fb *ifp, const char *file, int width, int height)
     if ((mode & MODE11_MASK) == MODE11_ZAP) {
 	/* Only task: Attempt to release shared memory segment */
 	X24_zapmem();
-	return -1;
+	return 1;
     }
 
     if (width <= 0)
