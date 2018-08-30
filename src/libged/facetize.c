@@ -627,10 +627,6 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
     struct db_tree_state init_state;
     union tree *facetize_tree;
     struct model *nmg_model;
-    struct bn_tol *tol;
-
-    BU_GET(tol, struct bn_tol);
-    BN_TOL_INIT(tol);
 
     _ged_facetize_log_nmg(o);
 
@@ -638,17 +634,7 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
 
     /* Establish tolerances */
     init_state.ts_ttol = &gedp->ged_wdbp->wdb_ttol;
-
-    /* We're going to use timeout (potentially) on NMG, so take the wdb
-     * tol as a starting point and set the timing info */
-    tol->dist = gedp->ged_wdbp->wdb_tol.dist;
-    tol->dist_sq = gedp->ged_wdbp->wdb_tol.dist_sq;
-    tol->perp = gedp->ged_wdbp->wdb_tol.perp;
-    tol->para = gedp->ged_wdbp->wdb_tol.para;
-    tol->tstart = bu_gettime();
-    tol->tmax = o->max_time * 1e6;
-
-    init_state.ts_tol = tol;
+    init_state.ts_tol = &gedp->ged_wdbp->wdb_tol;
 
     facetize_tree = (union tree *)0;
     nmg_model = nmg_mm();
@@ -673,7 +659,7 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
 	return NULL;
     } BU_UNSETJUMP;
 
-    if (failed || i < 0 || (tol->tmax > 0 && ((bu_gettime() - tol->tstart) > tol->tmax))) {
+    if (failed || i < 0) {
 	/* Destroy NMG */
 	nmg_km(nmg_model);
 	_ged_facetize_log_default(o);
@@ -683,7 +669,7 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
     if (facetize_tree) {
 	if (!BU_SETJUMP) {
 	    /* try */
-	    failed = nmg_boolean(facetize_tree, nmg_model, &RTG.rtg_vlfree, tol, &rt_uniresource);
+	    failed = nmg_boolean(facetize_tree, nmg_model, &RTG.rtg_vlfree, &gedp->ged_wdbp->wdb_tol, &rt_uniresource);
 	} else {
 	    /* catch */
 	    BU_UNSETJUMP;
@@ -706,7 +692,6 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
 	db_free_tree(facetize_tree, &rt_uniresource);
     }
 
-    BU_PUT(tol, struct bn_tol);
     _ged_facetize_log_default(o);
     return (failed) ? NULL : nmg_model;
 }
@@ -880,7 +865,7 @@ _ged_spsr_obj(struct _ged_facetize_report_info *r, struct ged *gedp, const char 
     int decimation_succeeded = 0;
     struct db_i *dbip = gedp->ged_wdbp->dbip;
     struct rt_db_internal in_intern;
-    struct bn_tol btol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6, 0.0, 0.0 };
+    struct bn_tol btol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
     struct rt_pnts_internal *pnts;
     struct rt_bot_internal *bot = NULL;
     struct pnt_normal *pn, *pl;
@@ -1115,7 +1100,7 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
     struct directory *dp;
     struct db_i *dbip = gedp->ged_wdbp->dbip;
     struct rt_db_internal in_intern;
-    struct bn_tol btol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6, 0.0, 0.0 };
+    struct bn_tol btol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
     struct rt_pnts_internal *pnts;
     struct rt_bot_internal *bot = NULL;
     struct pnt_normal *pn, *pl;

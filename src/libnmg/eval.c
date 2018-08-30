@@ -51,7 +51,7 @@ struct nmg_bool_state {
 };
 
 
-HIDDEN void nmg_eval_shell(struct shell *s, struct nmg_bool_state *bs, const struct bn_tol *tol);
+HIDDEN void nmg_eval_shell(struct shell *s, struct nmg_bool_state *bs);
 HIDDEN void nmg_eval_plot(struct nmg_bool_state *bs, int num);
 
 
@@ -228,10 +228,10 @@ nmg_evaluate_boolean(struct shell *sA, struct shell *sB, int op, char **classlis
     bool_state.bs_tol = tol;
 
     bool_state.bs_isA = 1;
-    nmg_eval_shell(sA, &bool_state, tol);
+    nmg_eval_shell(sA, &bool_state);
 
     bool_state.bs_isA = 0;
-    nmg_eval_shell(sB, &bool_state, tol);
+    nmg_eval_shell(sB, &bool_state);
 
     if (nmg_debug & DEBUG_BOOLEVAL) {
 	bu_log("nmg_evaluate_boolean(sA=%p, sB=%p, op=%d), evaluations done\n",
@@ -353,7 +353,7 @@ out:
  * Note that there is no moving of items from one shell to another.
  */
 HIDDEN void
-nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs, const struct bn_tol *tol)
+nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 {
     struct faceuse *fu;
     struct faceuse *nextfu;
@@ -379,8 +379,6 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs, const struct
     while (BU_LIST_NOT_HEAD(fu, &s->fu_hd)) {
 	NMG_CK_FACEUSE(fu);
 	nextfu = BU_LIST_PNEXT(faceuse, fu);
-
-	NMG_TIMEOUT("nmg_eval_shell()", tol);
 
 	/* Faceuse mates will be handled at same time as OT_SAME fu */
 	if (fu->orientation != OT_SAME) {
@@ -474,9 +472,6 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs, const struct
 	    lu = nextlu;
 	    continue;
 	}
-
-	NMG_TIMEOUT("nmg_eval_shell()", tol);
-
 	NMG_CK_LOOP(lu->l_p);
 	switch (nmg_eval_action(&lu->l_p->magic, bs)) {
 	    case BACTION_KILL:
@@ -508,7 +503,6 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs, const struct
 	    nexteu = BU_LIST_PNEXT(edgeuse, nexteu);
 
 	/* Consider this edge */
-	NMG_TIMEOUT("nmg_eval_shell()", tol);
 	NMG_CK_EDGE(eu->e_p);
 	switch (nmg_eval_action(&eu->e_p->magic, bs)) {
 	    case BACTION_KILL:
@@ -553,7 +547,6 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs, const struct
 	vu = BU_LIST_PNEXT(vertexuse, &lu->down_hd);
 	NMG_CK_VERTEXUSE(vu);
 	NMG_CK_VERTEX(vu->v_p);
-	NMG_TIMEOUT("nmg_eval_shell()", tol);
 	switch (nmg_eval_action(&vu->v_p->magic, bs)) {
 	    case BACTION_KILL:
 		/* Eliminate the loopuse, and mate */

@@ -39,7 +39,6 @@
 #include "bu/malloc.h"
 #include "bu/sort.h"
 #include "bu/str.h"
-#include "bu/time.h"
 #include "bn/mat.h"
 #include "nmg.h"
 
@@ -1707,8 +1706,6 @@ nmg_model_face_fuse(struct model *m, struct bu_list *vlfree, const struct bn_tol
 
 	    if (fg1 == fg2) continue;	/* Already shared */
 
-	    NMG_TIMEOUT("nmg_model_face_fuse()", tol);
-
 	    if (nmg_two_face_fuse(f1, f2, tol) > 0)
 		total++;
 	}
@@ -1850,8 +1847,6 @@ nmg_break_e_on_v(const uint32_t *magic_p, struct bu_list *vlfree, const struct b
 		int code;
 		struct edgeuse *new_eu;
 
-		NMG_TIMEOUT("nmg_break_e_on_v()", tol);
-
 		v = *vp;
 		if (va == v) continue;
 		if (vb == v) continue;
@@ -1870,7 +1865,6 @@ nmg_break_e_on_v(const uint32_t *magic_p, struct bu_list *vlfree, const struct b
 		    bu_log("nmg_break_e_on_v() code=%d, why wasn't this vertex fused?\n", code);
 		    continue;
 		}
-
 
 		if (nmg_debug & (DEBUG_BOOL|DEBUG_BASIC))
 		    bu_log("nmg_break_e_on_v(): breaking eu %p (e=%p) at vertex %p\n",
@@ -1962,29 +1956,20 @@ nmg_model_fuse(struct model *m, struct bu_list *vlfree, const struct bn_tol *tol
 	}
     }
 
-    NMG_TIMEOUT("nmg_model_fuse()", tol);
-
     /* Step 2 -- the face geometry */
     if (nmg_debug & DEBUG_BASIC)
 	bu_log("nmg_model_fuse: faces\n");
     total += nmg_model_face_fuse(m, vlfree, tol);
-
-    NMG_TIMEOUT("nmg_model_fuse()", tol);
 
     /* Step 3 -- edges */
     if (nmg_debug & DEBUG_BASIC)
 	bu_log("nmg_model_fuse: edges\n");
     total += nmg_edge_fuse(&m->magic, vlfree, tol);
 
-
-    NMG_TIMEOUT("nmg_model_fuse()", tol);
-
     /* Step 4 -- edge geometry */
     if (nmg_debug & DEBUG_BASIC)
 	bu_log("nmg_model_fuse: edge geometries\n");
     total += nmg_edge_g_fuse(&m->magic, vlfree, tol);
-
-    NMG_TIMEOUT("nmg_model_fuse()", tol);
 
     if (nmg_debug & DEBUG_BASIC && total > 0)
 	bu_log("nmg_model_fuse(): %d entities fused\n", total);

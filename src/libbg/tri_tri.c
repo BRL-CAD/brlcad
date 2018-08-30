@@ -187,7 +187,7 @@ int bg_tri_tri_isect_coplanar(point_t V0, point_t V1, point_t V2,
     point_t E1, E2, N;
     plane_t P1, P2;
     static const struct bn_tol tol = {
-	BN_TOL_MAGIC, EPSILON, EPSILON*EPSILON, 1e-6, 1-1e-6, 0.0, 0.0
+	BN_TOL_MAGIC, EPSILON, EPSILON*EPSILON, 1e-6, 1-1e-6
     };
 
     /* compute plane of triangle (V0, V1, V2) */

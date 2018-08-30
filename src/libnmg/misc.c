@@ -4147,7 +4147,6 @@ nmg_decompose_shell(struct shell *s, struct bu_list *vlfree, const struct bn_tol
 
 	for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd)) {
 	    /* build two lists, one of winged edges, the other not */
-	    NMG_TIMEOUT("nmg_decompose_shell()", tol);
 	    if (nmg_radial_face_count(eu, s) > 2)
 		bu_ptbl_ins_unique(&shared_edges, (long *)eu);
 	    else
@@ -4191,7 +4190,6 @@ nmg_decompose_shell(struct shell *s, struct bu_list *vlfree, const struct bn_tol
 
 		for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd)) {
 		    /* build two lists, one of winged edges, the other not */
-		    NMG_TIMEOUT("nmg_decompose_shell()", tol);
 		    if (nmg_radial_face_count(eu, s) > 2)
 			bu_ptbl_ins_unique(&shared_edges, (long *)eu);
 		    else
@@ -4237,7 +4235,6 @@ nmg_decompose_shell(struct shell *s, struct bu_list *vlfree, const struct bn_tol
 	for (i=0; i<BU_PTBL_LEN(&shared_edges); i++) {
 	    int faces_at_edge=0;
 	    size_t k;
-	    NMG_TIMEOUT("nmg_decompose_shell()", tol);
 
 	    /* Construct a list of shells for this edge.
 	     * shells_at_edge[i] is the number of edgeuses of this
@@ -4297,7 +4294,6 @@ nmg_decompose_shell(struct shell *s, struct bu_list *vlfree, const struct bn_tol
 	    for (i=0; i<BU_PTBL_LEN(&shared_edges); i++) {
 		struct faceuse *fu_of_eu1;
 		int found_missed_face=0;
-		NMG_TIMEOUT("nmg_decompose_shell()", tol);
 
 		eu = (struct edgeuse *)BU_PTBL_GET(&shared_edges, i);
 		NMG_CK_EDGEUSE(eu);
@@ -4385,7 +4381,6 @@ nmg_decompose_shell(struct shell *s, struct bu_list *vlfree, const struct bn_tol
 	    /* push all edgeuses of "fu" onto the stack */
 	    for (BU_LIST_FOR (lu, loopuse, &fu->lu_hd)) {
 		NMG_CK_LOOPUSE(lu);
-		NMG_TIMEOUT("nmg_decompose_shell()", tol);
 
 		if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
 		    continue;
@@ -4433,7 +4428,6 @@ nmg_decompose_shell(struct shell *s, struct bu_list *vlfree, const struct bn_tol
 			continue;
 		    for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd)) {
 			/* build two lists, one of winged edges, the other not */
-			NMG_TIMEOUT("nmg_decompose_shell()", tol);
 			if (nmg_radial_face_count(eu, s) > 2)
 			    bu_ptbl_ins_unique(&shared_edges, (long *)eu);
 			else
@@ -4475,7 +4469,6 @@ nmg_decompose_shell(struct shell *s, struct bu_list *vlfree, const struct bn_tol
 	fu = BU_LIST_FIRST(faceuse, &s->fu_hd);
 	while (BU_LIST_NOT_HEAD(fu, &s->fu_hd)) {
 	    struct faceuse *next_fu;
-	    NMG_TIMEOUT("nmg_decompose_shell()", tol);
 
 	    next_fu = BU_LIST_NEXT(faceuse, &fu->l);
 	    while (BU_LIST_NOT_HEAD(next_fu, &s->fu_hd) && next_fu->orientation != OT_SAME)

@@ -75,8 +75,6 @@ struct bn_tol {
     double dist_sq;		/**< @brief dist * dist */
     double perp;		/**< @brief nearly 0 */
     double para;		/**< @brief nearly 1 */
-    double tstart;              /**< @brief timestamp for start of process */
-    double tmax;                /**< @brief maximum time (in milliseconds) */
 };
 
 /**
@@ -93,15 +91,13 @@ struct bn_tol {
 	(_p)->dist_sq = 0.0; \
 	(_p)->perp = 0.0; \
 	(_p)->para = 1.0; \
-	(_p)->tstart = 0.0; \
-	(_p)->tmax = 0.0; \
     }
 
 /**
  * macro suitable for declaration statement zero-initialization of a
  * bn_tol struct.
  */
-#define BN_TOL_INIT_ZERO { BN_TOL_MAGIC, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0 }
+#define BN_TOL_INIT_ZERO { BN_TOL_MAGIC, 0.0, 0.0, 0.0, 1.0 }
 
 /**
  * returns truthfully whether a bn_tol struct has been initialized.

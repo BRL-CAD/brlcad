@@ -440,7 +440,7 @@ tclcad_bn_dist_pt2_lseg2(ClientData UNUSED(clientData), Tcl_Interp *interp, int 
     fastf_t dist;
     int ret;
     static const struct bn_tol tol = {
-	BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST*BN_TOL_DIST, 1e-6, 1-1e-6, 0.0, 0.0
+	BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST*BN_TOL_DIST, 1e-6, 1-1e-6
     };
 
     if (argc != 4) {
@@ -499,7 +499,7 @@ tclcad_bn_isect_line2_line2(ClientData UNUSED(clientData), Tcl_Interp *interp, i
     vect_t c = VINIT_ZERO;
     int i;
     static const struct bn_tol tol = {
-	BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST*BN_TOL_DIST, 1e-6, 1-1e-6, 0.0, 0.0
+	BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST*BN_TOL_DIST, 1e-6, 1-1e-6
     };
 
     if (argc != 5) {
@@ -556,7 +556,7 @@ tclcad_bn_isect_line3_line3(ClientData UNUSED(clientData), Tcl_Interp *interp, i
     vect_t dir, c;
     int i;
     static const struct bn_tol tol = {
-	BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST*BN_TOL_DIST, 1e-6, 1-1e-6, 0.0, 0.0
+	BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST*BN_TOL_DIST, 1e-6, 1-1e-6
     };
     if (argc != 5) {
 	bu_vls_printf(&result,
@@ -979,7 +979,7 @@ tclcad_bn_mat_fromto(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc
     mat_t o;
     vect_t from, to;
     static const struct bn_tol tol = {
-	BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST*BN_TOL_DIST, 1e-6, 1-1e-6, 0.0, 0.0
+	BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST*BN_TOL_DIST, 1e-6, 1-1e-6
     };
 
     if (argc < 3 || bn_decode_vect(from, argv[1]) < 3 ||

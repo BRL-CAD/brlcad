@@ -36,7 +36,6 @@
 
 #include "vmath.h"
 #include "bu/cv.h"
-#include "bu/time.h"
 #include "bg/polygon.h"
 #include "nmg.h"
 #include "rt/db4.h"
@@ -4668,9 +4667,7 @@ nmg_booltree_evaluate(register union tree *tp, struct bu_list *vlfree, const str
 
     /* Handle a boolean operation node.  First get its leaves. */
     tl = nmg_booltree_evaluate(tp->tr_b.tb_left, vlfree, tol, resp);
-    NMG_TIMEOUT("nmg_booltree_evaluate()", tol);
     tr = nmg_booltree_evaluate(tp->tr_b.tb_right, vlfree, tol, resp);
-    NMG_TIMEOUT("nmg_booltree_evaluate()", tol);
 
     if (tl) {
 	RT_CK_TREE(tl);
@@ -4792,8 +4789,6 @@ nmg_booltree_evaluate(register union tree *tp, struct bu_list *vlfree, const str
     if (tr->tr_d.td_r->m_p != tl->tr_d.td_r->m_p) {
 	nmg_merge_models(tl->tr_d.td_r->m_p, tr->tr_d.td_r->m_p);
     }
-
-    NMG_TIMEOUT("nmg_booltree_evaluate()", tol);
 
     /* input r1 and r2 are destroyed, output is new region */
     reg = nmg_do_bool(tl->tr_d.td_r, tr->tr_d.td_r, op, vlfree, tol);

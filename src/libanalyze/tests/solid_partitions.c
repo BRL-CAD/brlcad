@@ -34,8 +34,8 @@ main(int argc, char **argv)
     int ncpus = bu_avail_cpus();
     struct db_i *dbip = DBI_NULL;
     struct directory *dp = RT_DIR_NULL;
-    struct bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6, 0.0, 0.0 };
-    struct bn_tol rtol = {BN_TOL_MAGIC, 10, 0.5 * 0.5, 1.0e-6, 1.0 - 1.0e-6, 0.0, 0.0 };
+    struct bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6 };
+    struct bn_tol rtol = {BN_TOL_MAGIC, 10, 0.5 * 0.5, 1.0e-6, 1.0 - 1.0e-6 };
     struct resource resp;
     struct rt_gen_worker_vars state;
     struct rt_i *rtip;
