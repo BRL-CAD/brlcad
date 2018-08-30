@@ -1164,8 +1164,7 @@ X24_blit(fb *ifp, int x_1, int y_1, int w, int h, int flags /* BLIT_xxx flags */
 		 * Calculate the beginning of the line where we are going
 		 * to be outputting pixels.
 		 */
-		opix = &(xi->xi_pix[oy * xi->xi_image->bytes_per_line]);
-		/* + ox * (xi->xi_image->bits_per_pixel/8)]); */
+		opix = &(xi->xi_pix[oy * xi->xi_image->bytes_per_line + ox * (xi->xi_image->bits_per_pixel/8)]);
 
 		/*
 		 * Our source of pixels in packed RGB order
