@@ -1109,6 +1109,7 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
     fastf_t target_feature_size = 0.0;
     int face_cnt = 0;
     double successful_feature_size = 0.0;
+    unsigned int successful_bot_count = 0;
     int decimation_succeeded = 0;
     double xlen, ylen, zlen;
     struct directory *dp;
@@ -1251,7 +1252,7 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
 		    (point_t **)&(bot->vertices),
 		    (int *)&(bot->num_vertices),
 		    feature_size, pn->v, objname, gedp->ged_wdbp->dbip, opts->max_time, opts->verbosity);
-	if (polygonize_failure) {
+	if (polygonize_failure || bot->num_faces < successful_bot_count) {
 	    if (!opts->quiet && polygonize_failure == 2) {
 		bu_log("CM: timed out after %d seconds with size %g\n", opts->max_time, feature_size);
 		/* If we still haven't had a successful run, back the feature size out and try again */
@@ -1303,6 +1304,7 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
 	    }
 	    feature_size = feature_size * ((delta < 5) ? 0.7 : 0.9);
 	    face_cnt = bot->num_faces;
+	    successful_bot_count = bot->num_faces;
 	}
 	first_run = 0;
     }
