@@ -2010,16 +2010,20 @@ _ged_facetize_regions_resume(struct ged *gedp, int argc, const char **argv, stru
 	    const char *oname = bu_avs_get(&rnames, cname);
 	    struct directory *dp = db_lookup(dbip, sname, LOOKUP_QUIET);
 
-	    if (dp == RT_DIR_NULL && (opts->retry || !_ged_facetize_attempted(gedp, cname, cmethod))) {
-		if (_ged_facetize_region_obj(gedp, oname, cname, sname, opts, i+1, (int)BU_PTBL_LEN(ar2), cmethod) == GED_FACETIZE_FAILURE) {
-		    bu_ptbl_ins(ar, (long *)n);
+	    if (dp == RT_DIR_NULL) {
+		if (opts->retry || !_ged_facetize_attempted(gedp, cname, cmethod)) {
+		    if (_ged_facetize_region_obj(gedp, oname, cname, sname, opts, i+1, (int)BU_PTBL_LEN(ar2), cmethod) == GED_FACETIZE_FAILURE) {
+			bu_ptbl_ins(ar, (long *)n);
 
-		    avail_mem = bu_avail_mem();
-		    if (avail_mem >= 0 && avail_mem < GED_FACETIZE_MEMORY_THRESHOLD) {
-			bu_log("Too little available memory to continue, aborting\n");
-			ret = GED_ERROR;
-			goto ged_facetize_regions_resume_memfree;
+			avail_mem = bu_avail_mem();
+			if (avail_mem >= 0 && avail_mem < GED_FACETIZE_MEMORY_THRESHOLD) {
+			    bu_log("Too little available memory to continue, aborting\n");
+			    ret = GED_ERROR;
+			    goto ged_facetize_regions_resume_memfree;
+			}
 		    }
+		} else {
+		    bu_ptbl_ins(ar, (long *)n);
 		}
 	    }
 	}
