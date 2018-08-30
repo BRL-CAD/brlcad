@@ -58,7 +58,10 @@ set(LIBNMG_SOURCES
   visit.c
   )
 
-CMAKEFILES(junk.c)
+CMAKEFILES(
+  alloc.cpp
+  junk.c
+)
 
 BRLCAD_ADDLIB(libnmg "${LIBNMG_SOURCES}" "libbg;libbn;libbu;${STDCXX_LIBRARIES}")
 
