@@ -1994,7 +1994,7 @@ X24_getmem(fb *ifp)
     FB_CK_FB(ifp);
 
     pixsize = ifp->if_max_height * ifp->if_max_width * sizeof(RGBpixel);
-    size = pixsize + sizeof (*xi->xi_rgb_cmap);
+    size = pixsize + sizeof(ColorMap);
 
     /*
      * get shared mem segment, creating it if it does not exist
@@ -2012,9 +2012,11 @@ X24_getmem(fb *ifp)
 		    fb_log("X24_getmem: can't create fb file, using private memory instead, errno %d\n", errno);
 		else if (lseek(fd, size, SEEK_SET) < 0)
 		    fb_log("X24_getmem: can't seek fb file, using private memory instead, errno %d\n", errno);
+		else if (write(fd, &isnew, 1) < 0)
+		    fb_log("X24_getmem: can't zero fb file, using private memory instead, errno %d\n", errno);
 		else if (lseek(fd, 0, SEEK_SET) < 0)
 		    fb_log("X24_getmem: can't seek fb file, using private memory instead, errno %d\n", errno);
-		else if ((mem = (char *)mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0)) == (char *) -1)
+		else if ((mem = (char *)mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0)) == MAP_FAILED)
 		    fb_log("X24_getmem: can't mmap fb file, using private memory instead, errno %d\n", errno);
 		else {
 		    close(fd);
@@ -2066,7 +2068,7 @@ store\n  Run shell command 'limit datasize unlimited' and try again.\n", size);
     }
 
     xi->xi_rgb_cmap = (ColorMap *) mem;
-    xi->xi_mem = (unsigned char *) mem + sizeof (*xi->xi_rgb_cmap);
+    xi->xi_mem = (unsigned char *) mem + sizeof(ColorMap);
 
     /* Clear memory frame buffer to black */
     if (isnew) {
@@ -3134,7 +3136,7 @@ X24_write(fb *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 
     /* Get the bits to the screen */
 
-    if (x + count <= (size_t)xi->xi_iwidth) {
+    if (x + count < (size_t)xi->xi_iwidth) {
 	X24_blit(ifp, x, y, count, 1, BLIT_DISP);
     } else {
 	size_t ylines;
