@@ -16,9 +16,13 @@
 <refsynopsisdiv xml:id="synopsis">
 <cmdsynopsis sepchar=" ">
   <command>fbpoint</command>
+    <arg choice="opt" rep="norepeat">-F <replaceable>framebuffer</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-w <replaceable>width</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-n <replaceable>height</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-s <replaceable>squaresize</replaceable></arg>
     <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-x </arg><arg choice="opt" rep="norepeat"><replaceable>prefix</replaceable></arg></arg>
     <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-y </arg><arg choice="opt" rep="norepeat"><replaceable>prefix</replaceable></arg></arg>
-    <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat"><replaceable>initx</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>inity</replaceable></arg></arg>
+    <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat"><replaceable>initialx</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>initialy</replaceable></arg></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -34,7 +38,7 @@ pixel, on standard error
 <command>fbpoint</command>
 also writes the last set of coordinates pointed to on standard out on exit.
 The starting position is center-screen unless optional
-<emphasis remap="I">initx inity</emphasis>
+<emphasis remap="I">initialx initialy</emphasis>
 is given.</para>
 
 <para>The

@@ -32,6 +32,7 @@
 #include "bu/color.h"
 #include "bu/str.h"
 #include "bu/exit.h"
+#include "bu/getopt.h"
 #include "vmath.h"
 #include "fb.h"
 #include "libtermio.h"
@@ -47,15 +48,10 @@ int oldX, oldY;		/* previous position */
 
 int Run = 1;		/* Tells when to stop the main loop */
 
-int xflag, yflag;
-char *xprefix = NULL;
-char *yprefix = NULL;
-char null_str = '\0';
-
 void SimpleInput(void);
 
 char usage[] = "\
-Usage: fbpoint [-H] [-x[prefix]] [-y[prefix]] [initx inity]\n";
+Usage: fbpoint [-F framebuffer] [-s squaresize] [-w width] [-n height] [-x[prefix]] [-y[prefix]] [initialx initialy]\n";
 
 static char *help = "\
 Char:   Command:                                                \r\n\
@@ -139,28 +135,57 @@ SimpleInput(void)	/* ==== get keyboard input.	*/
 int
 main(int argc, char **argv)
 {
+    int c;
     int width, height;
+    int xflag = 0;
+    int yflag = 0;
+
+    const char *framebuffer = NULL;
+    const char *xprefix = NULL;
+    const char *yprefix = NULL;
+    const char null_str = '\0';
 
     setbuf(stderr, (char *)malloc(BUFSIZ));
     width = height = 512;
     curX = curY = -1;
 
-    while (argc > 1) {
-	if (BU_STR_EQUAL(argv[1], "-H")) {
-	    width = height = 1024;
-	} else if (bu_strncmp(argv[1], "-x", 2) == 0) {
-	    if (xflag++ != 0)
+    while ((c = bu_getopt(argc, argv, "F:s:w:n:S:W:N:x::y::h?")) != -1) {
+	if (bu_optopt == '?')
+	    c = 'h';
+	switch(c) {
+	    case 'F':
+		framebuffer = bu_optarg;
 		break;
-	    xprefix = &argv[1][2];
-	} else if (bu_strncmp(argv[1], "-y", 2) == 0) {
-	    if (yflag++ != 0)
+	    case 's':
+		width = height = atoi(bu_optarg);
 		break;
-	    yprefix = &argv[1][2];
-	} else
-	    break;
-	argc--;
-	argv++;
+	    case 'w':
+		width = atoi(bu_optarg);
+		break;
+	    case 'n':
+		height = atoi(bu_optarg);
+		break;
+	    case 'x':
+		xflag++;
+		if (bu_optarg && *bu_optarg != '\0')
+		    xprefix = bu_optarg;
+		break;
+	    case 'y':
+		yflag++;
+		if (bu_optarg && *bu_optarg != '\0')
+		    yprefix = bu_optarg;
+		break;
+	    case 'h':
+		fprintf(stderr, "%s", usage);
+		return 0;
+	    default:
+		fprintf(stderr, "ERROR: argument missing or bad option specified\n");
+		fprintf(stderr, "%s", usage);
+		return 1;
+	}
     }
+    argc -= bu_optind;
+    argv += bu_optind;
 
     /*
      * Check for optional starting coordinate.
@@ -186,7 +211,7 @@ main(int argc, char **argv)
     if (yprefix == NULL)
 	yprefix = &null_str;
 
-    if ((fbp = fb_open(NULL, width, height)) == NULL)
+    if ((fbp = fb_open(framebuffer, width, height)) == NULL)
 	bu_exit(12, "Unable to open framebuffer\n");
 
     JumpSpeed = fb_getwidth(fbp)/16;
