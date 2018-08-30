@@ -51,8 +51,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * rtwizard unit test legitimately failing on mac/windows
 
-* nirt 'hv' command isn't working
-
 * implement a bu alarm(2)-style interface so we can abort library
   routines gracefully from application code.
 

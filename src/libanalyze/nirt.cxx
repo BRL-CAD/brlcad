@@ -2660,20 +2660,20 @@ _nirt_cmd_grid_coor(void *ns, int argc, const char *argv[])
 	nerr(nss, "Usage:  hv %s\n", _nirt_get_desc_args("hv"));
 	return -1;
     }
-    if (bu_opt_fastf_t(&opt_msg, 1, argv, (void *)&(nss->i->vals->h)) == -1) {
+    if (bu_opt_fastf_t(&opt_msg, 1, argv, (void *)&grid[0]) == -1) {
 	nerr(nss, "%s\n", bu_vls_addr(&opt_msg));
 	bu_vls_free(&opt_msg);
 	return -1;
     }
     argc--; argv++;
-    if (bu_opt_fastf_t(&opt_msg, 1, argv, (void *)&(nss->i->vals->v)) == -1) {
+    if (bu_opt_fastf_t(&opt_msg, 1, argv, (void *)&grid[1]) == -1) {
 	nerr(nss, "%s\n", bu_vls_addr(&opt_msg));
 	bu_vls_free(&opt_msg);
 	return -1;
     }
     argc--; argv++;
     if (argc) {
-	if (bu_opt_fastf_t(&opt_msg, 1, argv, (void *)&(nss->i->vals->d_orig)) == -1) {
+	if (bu_opt_fastf_t(&opt_msg, 1, argv, (void *)&grid[2]) == -1) {
 	    nerr(nss, "%s\n", bu_vls_addr(&opt_msg));
 	    bu_vls_free(&opt_msg);
 	    return -1;
