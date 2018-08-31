@@ -68,8 +68,12 @@ extern "C" void *
 nmg_realloc(void *ptr, size_t size, const char *str)
 {
     void *nmem = NULL;
-    if (ptr && nmgmem && nmgmem->find(ptr) != nmgmem->end()) {
-	nmgmem->erase(nmgmem->find(ptr));
+    std::set<void *>::iterator p_it;
+    if (ptr && nmgmem) {
+	p_it = nmgmem->find(ptr);
+	if (p_it != nmgmem->end()) {
+	    nmgmem->erase(p_it);
+	}
     }
     nmem = bu_realloc(ptr, size, str);
     if (nmg_memtrack && nmem) {
@@ -85,9 +89,13 @@ nmg_realloc(void *ptr, size_t size, const char *str)
 extern "C" void
 nmg_free(void *m, const char *s)
 {
+    std::set<void *>::iterator p_it;
     if (!m) return;
-    if (nmgmem && nmgmem->find(m) != nmgmem->end()) {
-	nmgmem->erase(nmgmem->find(m));
+    if (nmgmem) {
+	p_it = nmgmem->find(m);
+	if (p_it != nmgmem->end()) {
+	    nmgmem->erase(p_it);
+	}
     }
     bu_free(m, s);
 }
