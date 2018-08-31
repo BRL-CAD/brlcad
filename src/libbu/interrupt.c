@@ -32,9 +32,6 @@
 #include "common.h"
 
 #include <signal.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
 
 #include "bu/file.h"
 #include "bu/log.h"
@@ -243,26 +240,6 @@ bu_interrupt_restore()
     return 0;
 }
 
-void
-bu_alarm_callback_set(void func(int))
-{
-    if (!func) return;
-#ifdef HAVE_UNISTD_H
-    signal(SIGALRM, func);
-#endif
-}
-
-void
-#ifdef HAVE_UNISTD_H
-bu_alarm(unsigned int stime)
-#else
-bu_alarm(unsigned int UNUSED(stime))
-#endif /*HAVE_UNISTD_H*/
-{
-#ifdef HAVE_UNISTD_H
-    alarm(stime);
-#endif
-}
 
 /*
  * Local Variables:

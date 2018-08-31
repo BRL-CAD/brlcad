@@ -296,21 +296,6 @@ void _ged_facetize_opts_destroy(struct _ged_facetize_opts *o)
     BU_PUT(o, struct _ged_facetize_opts);
 }
 
-/* TODO - the problem here may be that we are interrupting via signal, then
- * longjmping, and then calling unsafe functions, which is undefined behavior
- * according to http://man7.org/linux/man-pages/man7/signal-safety.7.html
- */
-HIDDEN void
-_ged_facetize_sem_reset()
-{
-    int i;
-    for (i = 0; i < BU_SEM_LAST; i++) {
-	bu_semaphore_release(i);
-    }
-
-    /* TODO - can any of the RT_SEM locks end up in a bad state? */
-}
-
 HIDDEN db_op_t
 _int_to_opt(int op)
 {
@@ -431,11 +416,6 @@ _ged_facetize_log_default(struct _ged_facetize_opts *o)
 	close(o->stderr_stashed);
 	o->fnull = -1;
     }
-
-    /* We may need to do this after an interrupted NMG process,
-     * reset the semaphores to avoid a possible infinite mutex
-     * lock wait */
-    _ged_facetize_sem_reset();
 
     /* Restore bu_bomb hooks to the application defaults */
     bu_bomb_delete_all_hooks();
@@ -637,10 +617,6 @@ facetize_region_end(struct db_tree_state *tsp,
     return TREE_NULL;
 }
 
-void _nmg_timeout() {
-    longjmp(bu_jmpbuf[bu_parallel_id()], 1);
-}
-
 HIDDEN struct model *
 _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnurbs, struct _ged_facetize_opts *o)
 {
@@ -662,11 +638,8 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
     nmg_model = nmg_mm();
     init_state.ts_m = &nmg_model;
 
-    bu_alarm_callback_set(_nmg_timeout);
-
     if (!BU_SETJUMP) {
 	/* try */
-	bu_alarm(o->max_time);
 	i = db_walk_tree(gedp->ged_wdbp->dbip, argc, (const char **)argv,
 	    1,
 	    &init_state,
@@ -693,7 +666,6 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
     if (facetize_tree) {
 	if (!BU_SETJUMP) {
 	    /* try */
-	    bu_alarm(o->max_time);
 	    failed = nmg_boolean(facetize_tree, nmg_model, &RTG.rtg_vlfree, &gedp->ged_wdbp->wdb_tol, &rt_uniresource);
 	} else {
 	    /* catch */
@@ -725,10 +697,8 @@ _try_nmg_triangulate(struct ged *gedp, struct model *nmg_model, struct _ged_face
 {
     _ged_facetize_log_nmg(o);
 
-    bu_alarm_callback_set(_nmg_timeout);
     if (!BU_SETJUMP) {
 	/* try */
-	bu_alarm(o->max_time);
 	nmg_triangulate_model(nmg_model, &RTG.rtg_vlfree, &gedp->ged_wdbp->wdb_tol);
     } else {
 	/* catch */
