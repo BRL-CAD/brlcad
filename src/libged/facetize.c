@@ -299,10 +299,10 @@ void _ged_facetize_opts_destroy(struct _ged_facetize_opts *o)
 HIDDEN void
 _ged_facetize_sem_reset()
 {
-    /* TODO - can any of the other BU_SEM locks end up in a bad state? */
-#if defined(MALLOC_NOT_MP_SAFE) 
-    bu_semaphore_release(BU_SEM_MALLOC); 
-#endif
+    int i;
+    for (i = 0; i < BU_SEM_LAST; i++) {
+	bu_semaphore_release(i);
+    }
 
     /* TODO - can any of the RT_SEM locks end up in a bad state? */
 }
