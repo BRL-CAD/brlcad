@@ -35,9 +35,9 @@ int nmg_memtrack = 0;
 static struct bu_ptbl *nmgmem;
 
 extern "C" void *
-nmg_alloc(size_t size)
+nmg_malloc(size_t size, const char *str)
 {
-    void *nmem = bu_calloc(1, size, "NMG_ALLOC");
+    void *nmem = bu_malloc(size, str);
     if (nmg_memtrack) {
 	if (!nmgmem) {
 	    BU_GET(nmgmem, struct bu_ptbl);
@@ -48,15 +48,49 @@ nmg_alloc(size_t size)
     return nmem;
 }
 
+
+extern "C" void *
+nmg_calloc(int cnt, size_t size, const char *str)
+{
+    void *nmem = bu_calloc(cnt, size, str);
+    if (nmg_memtrack) {
+	if (!nmgmem) {
+	    BU_GET(nmgmem, struct bu_ptbl);
+	    bu_ptbl_init(nmgmem, 8, "nmg mem init");
+	}
+	bu_ptbl_ins(nmgmem, (long *)nmem);
+    }
+    return nmem;
+}
+
+
+extern "C" void *
+nmg_realloc(register void *ptr, size_t size, const char *str)
+{
+    void *nmem = NULL;
+    if (ptr && nmgmem) {
+	bu_ptbl_rm(nmgmem, (long *)ptr);
+    }
+    nmem = bu_realloc(ptr, size, str);
+    if (nmg_memtrack && nmem) {
+	if (!nmgmem) {
+	    BU_GET(nmgmem, struct bu_ptbl);
+	    bu_ptbl_init(nmgmem, 8, "nmg mem init");
+	}
+	bu_ptbl_ins(nmgmem, (long *)nmem);
+    }
+    return nmem;
+}
+
+
 extern "C" void
-nmg_free(void *m, size_t UNUSED(s))
+nmg_free(void *m, const char *s)
 {
     if (!m) return;
-    if (nmg_memtrack) {
+    if (nmgmem) {
 	bu_ptbl_rm(nmgmem, (long *)m);
-    } else {
     }
-    bu_free(m, "nmg free");
+    bu_free(m, s);
 }
 
 extern "C" void

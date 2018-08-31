@@ -164,7 +164,7 @@ nmg_tri_plfu(struct faceuse *fu, struct bu_list *tbl2d, struct bu_list *vlfree)
     }
 
     bu_log("\tplotting %s\n", name);
-    b = (long *)bu_calloc(fu->s_p->r_p->m_p->maxindex,
+    b = (long *)nmg_calloc(fu->s_p->r_p->m_p->maxindex,
 			  sizeof(long), "bit vec"),
 
 	pl_erase(fp);
@@ -212,7 +212,7 @@ nmg_tri_plfu(struct faceuse *fu, struct bu_list *tbl2d, struct bu_list *vlfree)
     }
 
 
-    bu_free((char *)b, "plot table");
+    nmg_free((char *)b, "plot table");
     fclose(fp);
 }
 
@@ -284,7 +284,7 @@ map_vu_to_2d(struct vertexuse *vu, struct bu_list *tbl2d, fastf_t *mat, struct f
     /* if this vertexuse has already been transformed, we're done */
     if (find_pt2d(tbl2d, vu)) return;
 
-    BU_ALLOC(np, struct pt2d);
+    NMG_ALLOC(np, struct pt2d);
     np->coord[2] = 0.0;
     np->vu_p = vu;
     BU_LIST_MAGIC_SET(&np->l, NMG_PT2D_MAGIC);
@@ -346,7 +346,7 @@ map_vu_to_2d(struct vertexuse *vu, struct bu_list *tbl2d, fastf_t *mat, struct f
 	}
 
 	/* add vertexuse to list */
-	BU_ALLOC(p, struct pt2d);
+	NMG_ALLOC(p, struct pt2d);
 	p->vu_p = vu_p;
 	VMOVE(p->coord, np->coord);
 	BU_LIST_MAGIC_SET(&p->l, NMG_PT2D_MAGIC);
@@ -387,7 +387,7 @@ nmg_flatten_face(struct faceuse *fu, fastf_t *TformMat, const struct bn_tol *tol
 
     NMG_CK_FACEUSE(fu);
 
-    BU_ALLOC(tbl2d, struct bu_list);
+    NMG_ALLOC(tbl2d, struct bu_list);
 
     /* we use the 0 index entry in the table as the head of the sorted
      * list of vertices.  This is safe since the 0 index is always for
@@ -496,7 +496,7 @@ map_new_vertexuse(struct bu_list *tbl2d, struct vertexuse *vu_p)
 	return;
     }
     /* allocate memory for new 2D point */
-    BU_ALLOC(new_pt2d, struct pt2d);
+    NMG_ALLOC(new_pt2d, struct pt2d);
 
     /* find another use of the same vertex that is already mapped */
     for (BU_LIST_FOR(vu, vertexuse, &vu_p->v_p->vu_hd)) {
@@ -2007,7 +2007,7 @@ nmg_triangulate_rm_degen_loopuse(struct faceuse *fu, const struct bn_tol *tol)
     BN_CK_TOL(tol);
     NMG_CK_FACEUSE(fu);
 
-    book_keeping_array = (size_t *)bu_calloc(book_keeping_array_alloc_cnt, sizeof(size_t),
+    book_keeping_array = (size_t *)nmg_calloc(book_keeping_array_alloc_cnt, sizeof(size_t),
 					     "book_keeping_array");
 
     /* remove loopuse with < 3 vertices */
@@ -2114,7 +2114,7 @@ nmg_triangulate_rm_degen_loopuse(struct faceuse *fu, const struct bn_tol *tol)
 				if (unique_vertex_cnt >= book_keeping_array_alloc_cnt) {
 				    book_keeping_array_alloc_cnt = unique_vertex_cnt;
 				    book_keeping_array_alloc_cnt += 10;
-				    book_keeping_array_tmp = (size_t *)bu_realloc((void *)book_keeping_array,
+				    book_keeping_array_tmp = (size_t *)nmg_realloc((void *)book_keeping_array,
 										  book_keeping_array_alloc_cnt * sizeof(size_t),
 										  "book_keeping_array realloc");
 				    book_keeping_array = book_keeping_array_tmp;
@@ -2158,7 +2158,7 @@ nmg_triangulate_rm_degen_loopuse(struct faceuse *fu, const struct bn_tol *tol)
     }
 
 out:
-    bu_free(book_keeping_array, "book_keeping_array");
+    nmg_free(book_keeping_array, "book_keeping_array");
     return ret;
 }
 
@@ -3136,7 +3136,7 @@ insert_above(struct loopuse *lu, struct loopuse_tree_node *node, struct bu_list 
 
     NMG_CK_LOOPUSE(lu);
     /* XXX -  where is this released? */
-    BU_ALLOC(new_node, struct loopuse_tree_node);
+    NMG_ALLOC(new_node, struct loopuse_tree_node);
     BU_LIST_INIT(&(new_node->l));
     new_node->l.magic = 0;
     new_node->lu = lu;
@@ -3253,7 +3253,7 @@ insert_node(struct loopuse *lu, struct bu_list *head,
 
     if (!found || (result2 == NMG_CLASS_AinB)) {
 	/* XXX -  where is this released? */
-	BU_ALLOC(new_node, struct loopuse_tree_node);
+	NMG_ALLOC(new_node, struct loopuse_tree_node);
 	BU_LIST_INIT(&(new_node->l));
 	/* unset magic from BU_LIST_HEAD_MAGIC to zero since this node
 	 * is not going to be a head
@@ -3288,7 +3288,7 @@ nmg_build_loopuse_tree(struct faceuse *fu, struct loopuse_tree_node **root, stru
 
     /* create initial head node */
     /* XXX -  where is this released? */
-    BU_ALLOC(*root, struct loopuse_tree_node);
+    NMG_ALLOC(*root, struct loopuse_tree_node);
     BU_LIST_INIT(&((*root)->l));
     BU_LIST_INIT(&((*root)->children_hd));
     (*root)->parent = (struct loopuse_tree_node *)NULL;
@@ -3545,10 +3545,10 @@ nmg_triangulate_fu(struct faceuse *fu, struct bu_list *vlfree, const struct bn_t
 out1:
     while (BU_LIST_WHILE(pt, pt2d, tbl2d)) {
 	BU_LIST_DEQUEUE(&pt->l);
-	bu_free((char *)pt, "pt2d free");
+	nmg_free((char *)pt, "pt2d free");
     }
 
-    bu_free((char *)tbl2d, "discard tbl2d");
+    nmg_free((char *)tbl2d, "discard tbl2d");
 
 out2:
     return ret;
@@ -3726,14 +3726,14 @@ triangulate:
 
     while (BU_LIST_WHILE(tp, trap, &tlist)) {
 	BU_LIST_DEQUEUE(&tp->l);
-	bu_free((char *)tp, "trapezoid free");
+	nmg_free((char *)tp, "trapezoid free");
     }
 
     while (BU_LIST_WHILE(pt, pt2d, tbl2d)) {
 	BU_LIST_DEQUEUE(&pt->l);
-	bu_free((char *)pt, "pt2d free");
+	nmg_free((char *)pt, "pt2d free");
     }
-    bu_free((char *)tbl2d, "discard tbl2d");
+    nmg_free((char *)tbl2d, "discard tbl2d");
 
     return;
 }

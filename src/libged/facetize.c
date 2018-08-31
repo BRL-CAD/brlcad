@@ -630,8 +630,6 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
     union tree *facetize_tree;
     struct model *nmg_model;
 
-    nmg_memtrack = 1;
-
     _ged_facetize_log_nmg(o);
 
     db_init_db_tree_state(&init_state, gedp->ged_wdbp->dbip, gedp->ged_wdbp->wdb_resp);
@@ -662,14 +660,12 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
     } else {
 	/* catch */
 	BU_UNSETJUMP;
-	nmg_km(nmg_model);
 	_ged_facetize_log_default(o);
 	return NULL;
     } BU_UNSETJUMP;
 
     if (failed || i < 0) {
 	/* Destroy NMG */
-	nmg_destroy();
 	_ged_facetize_log_default(o);
 	return NULL;
     }
@@ -682,7 +678,6 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
 	} else {
 	    /* catch */
 	    BU_UNSETJUMP;
-	    nmg_destroy();
 	    _ged_facetize_log_default(o);
 	    return NULL;
 	} BU_UNSETJUMP;
@@ -701,8 +696,6 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
 	db_free_tree(facetize_tree, &rt_uniresource);
     }
 
-    nmg_memtrack = 0;
-
     _ged_facetize_log_default(o);
     return (failed) ? NULL : nmg_model;
 }
@@ -711,14 +704,17 @@ HIDDEN int
 _try_nmg_triangulate(struct ged *gedp, struct model *nmg_model, struct _ged_facetize_opts *o)
 {
     _ged_facetize_log_nmg(o);
+
+    bu_alarm_callback_set(_nmg_timeout);
     if (!BU_SETJUMP) {
 	/* try */
+	bu_alarm(o->max_time);
 	nmg_triangulate_model(nmg_model, &RTG.rtg_vlfree, &gedp->ged_wdbp->wdb_tol);
     } else {
 	/* catch */
 	BU_UNSETJUMP;
+	nmg_destroy();
 	bu_log("WARNING: triangulation failed!!!\n");
-	nmg_km(nmg_model);
 	_ged_facetize_log_default(o);
 	return GED_ERROR;
     } BU_UNSETJUMP;
@@ -1450,6 +1446,8 @@ _ged_nmg_obj(struct ged *gedp, int argc, const char **argv, const char *newname,
     struct model *nmg_model = NULL;
     struct rt_bot_internal *bot = NULL;
 
+    nmg_memtrack = 1;
+
     nmg_model = _try_nmg_facetize(gedp, argc, argv, opts->nmg_use_tnurbs, opts);
     if (nmg_model == NULL) {
 	if (opts->verbosity > 1) {
@@ -1474,7 +1472,6 @@ _ged_nmg_obj(struct ged *gedp, int argc, const char **argv, const char *newname,
 
 	/* Make and write out the bot */
 	bot = _try_nmg_to_bot(gedp, nmg_model, opts);
-	nmg_km(nmg_model);
 
 	if (!bot) {
 	    if (opts->verbosity > 1) {
@@ -1497,6 +1494,7 @@ ged_nmg_obj_memfree:
     if (!opts->quiet && ret != GED_OK) {
 	bu_log("NMG: failed to generate %s\n", newname);
     }
+    nmg_destroy();
 
     return ret;
 }
