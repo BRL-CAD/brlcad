@@ -25,6 +25,8 @@
 
 #include "common.h"
 
+#include <set>
+
 #include "bu/malloc.h"
 #include "bu/ptbl.h"
 #include "nmg.h"
@@ -32,7 +34,7 @@
 /* A naive version, until the correct one is working */
 
 int nmg_memtrack = 0;
-static struct bu_ptbl *nmgmem;
+static std::set<void *> *nmgmem;
 
 extern "C" void *
 nmg_malloc(size_t size, const char *str)
@@ -40,10 +42,9 @@ nmg_malloc(size_t size, const char *str)
     void *nmem = bu_malloc(size, str);
     if (nmg_memtrack) {
 	if (!nmgmem) {
-	    BU_GET(nmgmem, struct bu_ptbl);
-	    bu_ptbl_init(nmgmem, 8, "nmg mem init");
+	    nmgmem = new std::set<void *>;
 	}
-	bu_ptbl_ins(nmgmem, (long *)nmem);
+	nmgmem->insert(nmem);
     }
     return nmem;
 }
@@ -55,29 +56,27 @@ nmg_calloc(int cnt, size_t size, const char *str)
     void *nmem = bu_calloc(cnt, size, str);
     if (nmg_memtrack) {
 	if (!nmgmem) {
-	    BU_GET(nmgmem, struct bu_ptbl);
-	    bu_ptbl_init(nmgmem, 8, "nmg mem init");
+	    nmgmem = new std::set<void *>;
 	}
-	bu_ptbl_ins(nmgmem, (long *)nmem);
+	nmgmem->insert(nmem);
     }
     return nmem;
 }
 
 
 extern "C" void *
-nmg_realloc(register void *ptr, size_t size, const char *str)
+nmg_realloc(void *ptr, size_t size, const char *str)
 {
     void *nmem = NULL;
-    if (ptr && nmgmem) {
-	bu_ptbl_rm(nmgmem, (long *)ptr);
+    if (ptr && nmgmem && nmgmem->find(ptr) != nmgmem->end()) {
+	nmgmem->erase(nmgmem->find(ptr));
     }
     nmem = bu_realloc(ptr, size, str);
     if (nmg_memtrack && nmem) {
 	if (!nmgmem) {
-	    BU_GET(nmgmem, struct bu_ptbl);
-	    bu_ptbl_init(nmgmem, 8, "nmg mem init");
+	    nmgmem = new std::set<void *>;
 	}
-	bu_ptbl_ins(nmgmem, (long *)nmem);
+	nmgmem->insert(nmem);
     }
     return nmem;
 }
@@ -87,8 +86,8 @@ extern "C" void
 nmg_free(void *m, const char *s)
 {
     if (!m) return;
-    if (nmgmem) {
-	bu_ptbl_rm(nmgmem, (long *)m);
+    if (nmgmem && nmgmem->find(m) != nmgmem->end()) {
+	nmgmem->erase(nmgmem->find(m));
     }
     bu_free(m, s);
 }
@@ -96,14 +95,14 @@ nmg_free(void *m, const char *s)
 extern "C" void
 nmg_destroy()
 {
-    unsigned int i = 0;
+    std::set<void *>::iterator nmg_it;
     nmg_memtrack = 0;
     if (!nmgmem) return;
-    for (i = 0; i < BU_PTBL_LEN(nmgmem); i++) {
-	void *m = (void *)BU_PTBL_GET(nmgmem, i);
+    for (nmg_it = nmgmem->begin(); nmg_it != nmgmem->end(); nmg_it++) {
+	void *m = *nmg_it;
 	bu_free(m, "NMG_FREE");
     }
-    BU_PUT(nmgmem, struct bu_ptbl);
+    delete nmgmem;
     nmgmem = NULL;
 }
 
