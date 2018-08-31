@@ -296,6 +296,10 @@ void _ged_facetize_opts_destroy(struct _ged_facetize_opts *o)
     BU_PUT(o, struct _ged_facetize_opts);
 }
 
+/* TODO - the problem here may be that we are interrupting via signal, then
+ * longjmping, and then calling unsafe functions, which is undefined behavior
+ * according to http://man7.org/linux/man-pages/man7/signal-safety.7.html
+ */
 HIDDEN void
 _ged_facetize_sem_reset()
 {
