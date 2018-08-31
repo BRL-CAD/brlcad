@@ -676,11 +676,9 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
     } else {
 	/* catch */
 	BU_UNSETJUMP;
-	_ged_facetize_sem_reset();
 	_ged_facetize_log_default(o);
 	return NULL;
     } BU_UNSETJUMP;
-    _ged_facetize_sem_reset();
 
     if (failed || i < 0) {
 	/* Destroy NMG */
@@ -696,11 +694,9 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
 	} else {
 	    /* catch */
 	    BU_UNSETJUMP;
-	    _ged_facetize_sem_reset();
 	    _ged_facetize_log_default(o);
 	    return NULL;
 	} BU_UNSETJUMP;
-	_ged_facetize_sem_reset();
 
     } else {
 	failed = 1;
@@ -733,12 +729,10 @@ _try_nmg_triangulate(struct ged *gedp, struct model *nmg_model, struct _ged_face
     } else {
 	/* catch */
 	BU_UNSETJUMP;
-	_ged_facetize_sem_reset();
 	bu_log("WARNING: triangulation failed!!!\n");
 	_ged_facetize_log_default(o);
 	return GED_ERROR;
     } BU_UNSETJUMP;
-    _ged_facetize_sem_reset();
     _ged_facetize_log_default(o);
     return GED_OK;
 }
@@ -754,11 +748,9 @@ _try_nmg_to_bot(struct ged *gedp, struct model *nmg_model, struct _ged_facetize_
     } else {
 	/* catch */
 	BU_UNSETJUMP;
-	_ged_facetize_sem_reset();
 	_ged_facetize_log_default(o);
 	return NULL;
     } BU_UNSETJUMP;
-    _ged_facetize_sem_reset();
     _ged_facetize_log_default(o);
     return bot;
 }
