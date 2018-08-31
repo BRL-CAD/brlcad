@@ -21,9 +21,6 @@
  *
  * The facetize command.
  *
- * TODO - clean up handling of reporting combs for fallback methods.
- * resume still is doing SPSR, for example...
- *
  */
 
 #include "common.h"
@@ -33,6 +30,7 @@
 #include "bu/env.h"
 #include "bu/exit.h"
 #include "bu/hook.h"
+#include "bu/interrupt.h"
 #include "bu/cmd.h"
 #include "bu/time.h"
 #include "bn/tol.h"
@@ -619,6 +617,10 @@ facetize_region_end(struct db_tree_state *tsp,
     return TREE_NULL;
 }
 
+void _nmg_timeout() {
+    longjmp(bu_jmpbuf[bu_parallel_id()], 1);
+}
+
 HIDDEN struct model *
 _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnurbs, struct _ged_facetize_opts *o)
 {
@@ -627,6 +629,8 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
     struct db_tree_state init_state;
     union tree *facetize_tree;
     struct model *nmg_model;
+
+    nmg_memtrack = 1;
 
     _ged_facetize_log_nmg(o);
 
@@ -640,8 +644,12 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
     nmg_model = nmg_mm();
     init_state.ts_m = &nmg_model;
 
+    bu_alarm_callback_set(_nmg_timeout);
+
     if (!BU_SETJUMP) {
-    i = db_walk_tree(gedp->ged_wdbp->dbip, argc, (const char **)argv,
+	/* try */
+	bu_alarm(o->max_time);
+	i = db_walk_tree(gedp->ged_wdbp->dbip, argc, (const char **)argv,
 	    1,
 	    &init_state,
 	    0,			/* take all regions */
@@ -661,7 +669,7 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
 
     if (failed || i < 0) {
 	/* Destroy NMG */
-	nmg_km(nmg_model);
+	nmg_destroy();
 	_ged_facetize_log_default(o);
 	return NULL;
     }
@@ -669,18 +677,19 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
     if (facetize_tree) {
 	if (!BU_SETJUMP) {
 	    /* try */
+	    bu_alarm(o->max_time);
 	    failed = nmg_boolean(facetize_tree, nmg_model, &RTG.rtg_vlfree, &gedp->ged_wdbp->wdb_tol, &rt_uniresource);
 	} else {
 	    /* catch */
 	    BU_UNSETJUMP;
-	    db_free_tree(facetize_tree, &rt_uniresource);
-	    nmg_km(nmg_model);
+	    nmg_destroy();
 	    _ged_facetize_log_default(o);
 	    return NULL;
 	} BU_UNSETJUMP;
 
     } else {
 	failed = 1;
+	nmg_destroy();
     }
 
     if (!failed && facetize_tree) {
@@ -691,6 +700,8 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
     if (facetize_tree) {
 	db_free_tree(facetize_tree, &rt_uniresource);
     }
+
+    nmg_memtrack = 0;
 
     _ged_facetize_log_default(o);
     return (failed) ? NULL : nmg_model;

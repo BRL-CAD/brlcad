@@ -600,17 +600,15 @@ struct vertexuse_a_cnurb {
 };
 
 /**
- * storage allocation support
- * OBSOLETE
+ * storage allocation/deallocation support
  */
-#define NMG_GETSTRUCT(p, str) BU_GET(p, struct str)
 
-/**
- * storage de-allocation support
- * OBSOLETE
- */
-#define NMG_FREESTRUCT(ptr, str) BU_PUT(ptr, struct str)
-
+NMG_EXPORT extern int nmg_memtrack;
+NMG_EXPORT void *nmg_alloc(size_t s);
+NMG_EXPORT void nmg_free(void *, size_t s);
+NMG_EXPORT void nmg_destroy();
+#define NMG_GETSTRUCT(p, str) p = (struct str *)nmg_alloc(sizeof(struct str))
+#define NMG_FREESTRUCT(p, str) nmg_free(p, sizeof(struct str))
 
 /*
  * Macros to create and destroy storage for the NMG data structures.

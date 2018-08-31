@@ -67,6 +67,18 @@ BU_EXPORT extern int bu_interrupt_suspend(void);
  */
 BU_EXPORT extern int bu_interrupt_restore(void);
 
+/**
+ * Send an alarm signal to trigger a registered callback function
+ * after stime seconds.
+ */
+BU_EXPORT extern int bu_alarm_callback_set(void func(int));
+
+/**
+ * Send an alarm signal to trigger a registered callback function
+ * after stime seconds.
+ */
+BU_EXPORT extern int bu_alarm(unsigned int stime);
+
 
 /** @} */
 
