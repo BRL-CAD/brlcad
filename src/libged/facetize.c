@@ -296,6 +296,17 @@ void _ged_facetize_opts_destroy(struct _ged_facetize_opts *o)
     BU_PUT(o, struct _ged_facetize_opts);
 }
 
+HIDDEN void
+_ged_facetize_sem_reset()
+{
+    /* TODO - can any of the other BU_SEM locks end up in a bad state? */
+#if defined(MALLOC_NOT_MP_SAFE) 
+    bu_semaphore_release(BU_SEM_MALLOC); 
+#endif
+
+    /* TODO - can any of the RT_SEM locks end up in a bad state? */
+}
+
 HIDDEN db_op_t
 _int_to_opt(int op)
 {
@@ -416,6 +427,11 @@ _ged_facetize_log_default(struct _ged_facetize_opts *o)
 	close(o->stderr_stashed);
 	o->fnull = -1;
     }
+
+    /* We may need to do this after an interrupted NMG process,
+     * reset the semaphores to avoid a possible infinite mutex
+     * lock wait */
+    _ged_facetize_sem_reset();
 
     /* Restore bu_bomb hooks to the application defaults */
     bu_bomb_delete_all_hooks();
@@ -660,9 +676,11 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
     } else {
 	/* catch */
 	BU_UNSETJUMP;
+	_ged_facetize_sem_reset();
 	_ged_facetize_log_default(o);
 	return NULL;
     } BU_UNSETJUMP;
+    _ged_facetize_sem_reset();
 
     if (failed || i < 0) {
 	/* Destroy NMG */
@@ -678,9 +696,11 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
 	} else {
 	    /* catch */
 	    BU_UNSETJUMP;
+	    _ged_facetize_sem_reset();
 	    _ged_facetize_log_default(o);
 	    return NULL;
 	} BU_UNSETJUMP;
+	_ged_facetize_sem_reset();
 
     } else {
 	failed = 1;
@@ -713,11 +733,12 @@ _try_nmg_triangulate(struct ged *gedp, struct model *nmg_model, struct _ged_face
     } else {
 	/* catch */
 	BU_UNSETJUMP;
-	nmg_destroy();
+	_ged_facetize_sem_reset();
 	bu_log("WARNING: triangulation failed!!!\n");
 	_ged_facetize_log_default(o);
 	return GED_ERROR;
     } BU_UNSETJUMP;
+    _ged_facetize_sem_reset();
     _ged_facetize_log_default(o);
     return GED_OK;
 }
@@ -733,10 +754,11 @@ _try_nmg_to_bot(struct ged *gedp, struct model *nmg_model, struct _ged_facetize_
     } else {
 	/* catch */
 	BU_UNSETJUMP;
+	_ged_facetize_sem_reset();
 	_ged_facetize_log_default(o);
 	return NULL;
     } BU_UNSETJUMP;
-
+    _ged_facetize_sem_reset();
     _ged_facetize_log_default(o);
     return bot;
 }
