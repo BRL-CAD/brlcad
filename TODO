@@ -2490,6 +2490,15 @@ DOCUMENTATION
 
 * document the saveview/loadview options.
 
+* Investigate multi-process application architecture (such as that
+  used by Chromium) to allow MGED and similar command driven applications
+  to gracefully abort commands mid-execution.  Information to consider:
+
+  https://www.chromium.org/developers/design-documents/plugin-architecture
+  https://www.chromium.org/developers/design-documents/multi-process-architecture
+  https://www.chromium.org/developers/design-documents/inter-process-communication
+  https://www.open-mpi.org/doc/v3.1/man3/MPI_Comm_spawn.3.php
+
 * BRL-CAD Overview Diagram
 	Completed, but not integrated
 
