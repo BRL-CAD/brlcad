@@ -98,6 +98,57 @@
       <emphasis>--in-place</emphasis> option in combination with the <emphasis>-r</emphasis> option.
     </para>
   </refsection>
+
+    <refsection xml:id="examples">
+    <title>EXAMPLES</title>
+    
+    <example>
+      <title>Create a facetized BOT version of an existing object.</title>
+      <para>
+	The example shows the use of the <command>facetize</command> command to create a facetized
+	BOT version of an existing object (<emphasis>old_object</emphasis>) and renaming that facetized
+	object (<emphasis>new_object</emphasis>).  It will try first NMG conversion, and if that fails
+	attempts CM conversion.
+      </para>
+      <para>
+	<prompt>mged&gt;</prompt> <userinput>facetize region1.r region1.bot</userinput>
+      </para>
+    </example>
+    
+    <example>
+      <title>Facetize all regions in a hierarchy.</title>
+      <para>
+	This runs the per region conversion on all regions under the "model" assembly and creates
+	a new conversion hierarchy under model_facetized.
+      </para>
+      <para>
+	<prompt>mged&gt;</prompt> <userinput>facetize -r model model.f</userinput>
+      </para>
+    </example>
+    
+    <example>
+      <title>Facetize all regions in a hierarchy, attempting only NMG conversion.</title>
+      <para>
+	This runs the per region conversion on all regions, but in the case of failure will not attempt
+	any fallback conversion methods.
+      </para>
+      <para>
+	<prompt>mged&gt;</prompt> <userinput>facetize -r --nmgbool model model.f</userinput>
+      </para>
+    </example>
+
+    <example>
+      <title>Retry failed conversion objects in a previous facetization attempt with new methodology.</title>
+      <para>
+	This retries the per region conversion on all regions that didn't originally succeed in the initial
+	conversion attempt, attempting only CM reconstruction without first retrying NMG conversion.
+      </para>
+      <para>
+	<prompt>mged&gt;</prompt> <userinput>facetize -r --resume model.f</userinput>
+      </para>
+    </example>
+
+  </refsection>
   
   <refsection xml:id="methodology">
     <title>METHODOLOGY</title>
@@ -164,75 +215,6 @@
     </para>
   </refsection>
   
-
-  
-
-  <refsection xml:id="examples">
-    <title>EXAMPLES</title>
-    
-    <example>
-      <title>Create a facetized BOT version of an existing object.</title>
-      <para>
-	The example shows the use of the <command>facetize</command> command to create a facetized
-	BOT version of an existing object (<emphasis>old_object</emphasis>) and renaming that facetized
-	object (<emphasis>new_object</emphasis>).  It will try first NMG conversion, and if that fails
-	attempts CM conversion.
-      </para>
-      <para>
-	<prompt>mged&gt;</prompt> <userinput>facetize region1.r region1.bot</userinput>
-      </para>
-    </example>
-    
-    <example>
-      <title>Facetize all regions in a hierarchy.</title>
-      <para>
-	This runs the per region conversion on all regions under the "model" assembly and creates
-	a new conversion hierarchy under model_facetized.
-      </para>
-      <para>
-	<prompt>mged&gt;</prompt> <userinput>facetize -r model model.f</userinput>
-      </para>
-    </example>
-    
-    <example>
-      <title>Facetize all regions in a hierarchy, attempting only NMG conversion.</title>
-      <para>
-	This runs the per region conversion on all regions, but in the case of failure will not attempt
-	any fallback conversion methods.
-      </para>
-      <para>
-	<prompt>mged&gt;</prompt> <userinput>facetize -r --nmgbool model model.f</userinput>
-      </para>
-    </example>
-
-    <example>
-      <title>Retry failed conversion objects in a previous facetization attempt with new methodology.</title>
-      <para>
-	This retries the per region conversion on all regions that didn't originally succeed in the initial
-	conversion attempt, attempting only CM reconstruction without first retrying NMG conversion.
-      </para>
-      <para>
-	<prompt>mged&gt;</prompt> <userinput>facetize -r --resume model.f</userinput>
-      </para>
-    </example>
-
-    <example>
-      <title>Retry only failed conversion objects in a previous facetization attempt - retry all methodologies.</title>
-      <para>
-	This retries the per region conversion on all regions that didn't originally succeed in the initial
-	conversion attempt, attempting first NMG, then CM, then SPSR conversion.  This is warranted if
-	settings were changed, geometry was updated, or other changes warrant re-attempting steps that
-	previously did not succeed.  The poisson flag is also added to maximize conversion successes even
-	if there are non-solid shapes in the model.  On a non-trivial model this is likely to be a very
-	long running command.
-      </para>
-      <para>
-	<prompt>mged&gt;</prompt> <userinput>facetize -r --nmgbool --continuation --poisson --retry --resume model.f</userinput>
-      </para>
-    </example>
-    
-  </refsection>
-
   <refsection xml:id="author">
     <title>AUTHOR</title>
     <para>BRL-CAD Team</para>
