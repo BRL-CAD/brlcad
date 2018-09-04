@@ -1193,7 +1193,7 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
     min_len = (min_len < avg_thickness) ? min_len : avg_thickness;
 
     if (opts->feature_size > 0) {
-	target_feature_size = feature_size;
+	target_feature_size = 0.5*feature_size;
     } else {
 	target_feature_size = min_len * 0.15;
     }
@@ -1218,7 +1218,11 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
      * first so may run a *very* long time... */
     pl = (struct pnt_normal *)pnts->point;
     pn = BU_LIST_PNEXT(pnt_normal, pl);
-    feature_size = 2*avg_thickness;
+    if (opts->feature_size > 0) {
+	feature_size = opts->feature_size;
+    } else {
+	feature_size = 2*avg_thickness;
+    }
     while (!polygonize_failure && (feature_size > 0.9*target_feature_size || face_cnt < 1000) && fatal_error_cnt < 4) {
 	double timestamp = bu_gettime();
 	int delta;
@@ -1247,7 +1251,7 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
 	    bot->vertices = verts;
 	    bot->num_vertices = num_verts;
 	    bot->num_faces = num_faces;
-	    if (polygonize_failure != 2) {
+	    if (polygonize_failure != 2 && opts->feature_size <= 0) {
 		/* Something about the previous size didn't work - nudge the feature size and try again
 		 * unless we've had multiple fatal errors. */
 		polygonize_failure = 0;
@@ -1268,15 +1272,17 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
 	    }
 	    feature_size = successful_feature_size;
 	    if (!opts->quiet && bot->faces) {
-		bu_log("CM: unable to polygonize at target size (%g), using last successful BoT with %d faces, feature size %g\n", target_feature_size, bot->num_faces, successful_feature_size);
+		if (opts->feature_size <= 0) {
+		    bu_log("CM: unable to polygonize at target size (%g), using last successful BoT with %d faces, feature size %g\n", target_feature_size, bot->num_faces, successful_feature_size);
+		} else {
+		    bu_log("CM: successfully created %d faces, feature size %g\n", bot->num_faces, successful_feature_size);
+		}
 	    }
 	} else {
 	    if (verts) bu_free(verts, "old verts");
 	    if (faces) bu_free(faces, "old faces");
-	    /* if we have had a fatal error in the past, decrement on subsequent success */
-	    if (fatal_error_cnt) {
-		fatal_error_cnt--;
-	    }
+	    /* if we have had a fatal error in the past, reset on subsequent success */
+	    fatal_error_cnt = 0;
 	    successful_feature_size = feature_size;
 	    delta = (int)((bu_gettime() - timestamp)/1e6);
 	    if (!opts->quiet) {
