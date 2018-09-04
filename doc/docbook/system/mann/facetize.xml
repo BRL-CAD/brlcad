@@ -72,8 +72,41 @@
       progress on large conversion tasks.
     </para>
   </refsection>
+  
+  <refsection xml:id="regions">
+    <title>PER-REGION FACETIZATION AND PARTIAL CONVERSIONS</title>
+    <para>
+      Often, it is desirable to perform facetization on each region individually within a
+      geometry hierarchy, rather than trying for a single "all or nothing" shape.  This mode, available
+      with the <emphasis>-r</emphasis> flag, has the advantage of allowing for partial conversion of complex models even when
+      individual shapes within the model cannot be converted, as well as preserving all pre-existing
+      region attributes such as color and region ID.
+    </para>
+    <para>
+      Because multi-region hierarchy conversion is often a long process, the facetize command (when run in region mode) works
+      in a way that allows an incomplete conversion to resume work.  For example, if a large model is
+      to be converted it may be advantageous to attempt just the NMG conversion on the hierarchy first
+      to get a sense of the work to be done.  After the initial attempt, global facetize parameters can
+      be adjusted and a second NMG run attempted, perhaps this time with SPSR reconstruction also enabled.
+      Note that this works only for a hierarchy generated with the <command>facetize</command>.
+    </para>
+    <para>
+      By default the <command>facetize</command> command attempts to be non-destructive when operating on
+      objects - it will not rename or replace any existing geometry in normal operational modes.  However,
+      if a user needs to create a new version of an existing hierarchy which replaces geometry below regions
+      with BoT objects but leaves all upper level names intact, this may be accomplished by specifying the
+      <emphasis>--in-place</emphasis> option in combination with the <emphasis>-r</emphasis> option.
+    </para>
+  </refsection>
+  
   <refsection xml:id="methodology">
     <title>METHODOLOGY</title>
+    <para>
+      Ideally users would not need to concern themselves with the details of how <command>facetize</command>
+      works, but unfortunately there are a significant number of real world geometries which will cause problems
+      for the current implementation.  In those cases, deeper understanding of what is happening can be
+      very important to maximizing the success of a conversion.
+    </para>
     <para>
       By default, conversions will first attempt a standard NMG facetization and boolean evaluation of
       the existing geometry.  When it succeeds, NMG's output is generally the best quality output that
@@ -105,15 +138,15 @@
       observed average thickness.
     </para>
     <para>
-      Because Bloomenthal's method tends to generate a very large number of triangles, it is necessary to post
+      Because CM tends to generate a very large number of triangles, it is necessary to post
       process its initial mesh with a decimation routine to remove triangles which are not necessary to actual
       feature representation.  This process is also feature-size based, and by default is set to 1.5x the feature size.
       However, if the user wishes to preserve more triangles than the default behavior they may manually
       override this parameter with the <emphasis>--decimation-feature-size</emphasis> option.
     </para>
     <para>
-      Both NMG boolean evaluation and Bloomenthal's method assume a geometry hierarchy containing only
-      valid solid objects.  Both of these methods will refuse to process any tree containing recognizably
+      Both NMG and CM assume a geometry hierarchy containing only
+      valid solid objects.  Both methods will refuse to process any tree containing recognizably
       non-solid objects, as these tend to cause run-time problems and generate invalid outputs.  For non-solid
       objects, the "--poisson" methodology may be enabled - it will apply the Kazhdan et. al. Screened Poisson Surface
       Reconstruction (SPSR) process to a pseudo-randomly sampled point set generated from <emphasis>old_object</emphasis>.  This
@@ -131,31 +164,7 @@
     </para>
   </refsection>
   
-  <refsection xml:id="regions">
-    <title>PER-REGION FACETIZATION AND PARTIAL CONVERSIONS</title>
-    <para>
-      Often, it is desirable to perform facetization on each region individually within a
-      geometry hierarchy, rather than trying for a single "all or nothing" shape.  This mode, available
-      with the <emphasis>-r</emphasis> flag, has the advantage of allowing for partial conversion of complex models even when
-      individual shapes within the model cannot be converted, as well as preserving all pre-existing
-      region attributes such as color and region ID.
-    </para>
-    <para>
-      Because multi-region hierarchy conversion is often a long process, the facetize command (when run in region mode) works
-      in a way that allows an incomplete conversion to resume work.  For example, if a large model is
-      to be converted it may be advantageous to attempt just the NMG conversion on the hierarchy first
-      to get a sense of the work to be done.  After the initial attempt, global facetize parameters can
-      be adjusted and a second NMG run attempted, perhaps this time with SPSR reconstruction also enabled.
-      Note that this works only for a hierarchy generated with the <command>facetize</command>.
-    </para>
-    <para>
-      By default the <command>facetize</command> command attempts to be non-destructive when operating on
-      objects - it will not rename or replace any existing geometry in normal operational modes.  However,
-      if a user needs to create a new version of an existing hierarchy which replaces geometry below regions
-      with BoT objects but leaves all upper level names intact, this may be accomplished by specifying the
-      <emphasis>--in-place</emphasis> option in combination with the <emphasis>-r</emphasis> option.
-    </para>
-  </refsection>
+
   
 
   <refsection xml:id="examples">
