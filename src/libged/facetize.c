@@ -152,7 +152,9 @@ struct _ged_facetize_opts {
     fastf_t feature_size;
     fastf_t feature_scale;
     fastf_t d_feature_size;
+    int max_time;
     struct rt_tess_tol *tol;
+    struct bu_vls *faceted_suffix;
 
     /* NMG specific options */
     int triangulate;
@@ -161,18 +163,10 @@ struct _ged_facetize_opts {
     int screened_poisson;
     int continuation;
     int method_flags;
-
     int nmg_use_tnurbs;
 
     /* Poisson specific options */
-    int pnt_surf_mode;
-    int pnt_grid_mode;
-    int pnt_rand_mode;
-    int pnt_sobol_mode;
     int max_pnts;
-    int max_time;
-    fastf_t len_tol;
-    struct bu_vls *faceted_suffix;
     struct bg_3d_spsr_opts s_opts;
 
     /* internal */
@@ -216,13 +210,8 @@ struct _ged_facetize_opts * _ged_facetize_opts_create()
     bu_vls_init(o->faceted_suffix);
     bu_vls_sprintf(o->faceted_suffix, ".bot");
 
-    o->pnt_surf_mode = 0;
-    o->pnt_grid_mode = 0;
-    o->pnt_rand_mode = 0;
-    o->pnt_sobol_mode = 0;
     o->max_pnts = 0;
     o->max_time = 30;
-    o->len_tol = 0.0;
     o->s_opts = s_opts;
 
     BU_ALLOC(o->c_map, struct bu_attribute_value_set);
@@ -553,7 +542,17 @@ _ged_facetize_solid_objs(struct ged *gedp, int argc, struct directory **dpa, str
     int ret = 1;
     struct bu_ptbl *bot_dps = NULL;
     const char *bot_objs = "-type bot";
+    const char *pnt_objs = "-type pnts";
     if (argc < 1 || !dpa || !gedp) return 0;
+
+    /* If we have pnts, it's not a solid tree */
+    if (db_search(NULL, DB_SEARCH_QUIET, pnt_objs, argc, dpa, gedp->ged_wdbp->dbip, NULL) > 0) {
+	if (opts->verbosity) {
+	    bu_log("-- Found pnts objects in tree\n");
+	}
+	return 0;
+    }
+
     BU_ALLOC(bot_dps, struct bu_ptbl);
     if (db_search(bot_dps, DB_SEARCH_RETURN_UNIQ_DP, bot_objs, argc, dpa, gedp->ged_wdbp->dbip, NULL) < 0) {
 	if (opts->verbosity) {
@@ -574,7 +573,7 @@ _ged_facetize_solid_objs(struct ged *gedp, int argc, struct directory **dpa, str
 	RT_BOT_CK_MAGIC(bot);
 	not_solid = bg_trimesh_solid2((int)bot->num_vertices, (int)bot->num_faces, bot->vertices, bot->faces, NULL);
 	if (not_solid) {
-	    if (!opts->quiet) {
+	    if (opts->verbosity) {
 		bu_log("-- Found non solid BoT: %s\n", bot_dp->d_namep);
 	    }
 	    ret = 0;
@@ -956,51 +955,19 @@ _ged_spsr_obj(struct _ged_facetize_report_info *r, struct ged *gedp, const char 
 	pl = (struct pnt_normal *)pnts->point;
 
     } else {
-	struct bu_vls pnt_msg = BU_VLS_INIT_ZERO;
+	int max_pnts = (opts->max_pnts) ? opts->max_pnts : 200000;
 	BU_ALLOC(pnts, struct rt_pnts_internal);
 	pnts->magic = RT_PNTS_INTERNAL_MAGIC;
 	pnts->scale = 0.0;
 	pnts->type = RT_PNT_TYPE_NRM;
+	flags = ANALYZE_OBJ_TO_PNTS_RAND;
 	free_pnts = 1;
 
-	/* Pick our mode(s) */
-	if (!opts->pnt_grid_mode && !opts->pnt_rand_mode && !opts->pnt_sobol_mode) {
-	    flags |= ANALYZE_OBJ_TO_PNTS_GRID;
-	} else {
-	    if (opts->pnt_grid_mode)  flags |= ANALYZE_OBJ_TO_PNTS_GRID;
-	    if (opts->pnt_rand_mode)  flags |= ANALYZE_OBJ_TO_PNTS_RAND;
-	    if (opts->pnt_sobol_mode) flags |= ANALYZE_OBJ_TO_PNTS_SOBOL;
-	}
-
-	/* If we don't have a tolerance, try to guess something sane from the bbox */
-	if (NEAR_ZERO(opts->len_tol, RT_LEN_TOL)) {
-	    opts->len_tol = DIST_PT_PT(rpp_max, rpp_min) * 0.01;
-	    if (opts->verbosity > 1) {
-		bu_log("SPSR: no tolerance specified for %s, using %f\n", newname, opts->len_tol);
-	    }
-	}
-	btol.dist = opts->len_tol;
-
 	if (opts->verbosity) {
-	    bu_vls_printf(&pnt_msg, "SPSR: generating points from %s with the following settings:\n", objname);
-	    if (opts->verbosity > 1) {
-		bu_vls_printf(&pnt_msg, "      point sampling methods:");
-		if (flags & ANALYZE_OBJ_TO_PNTS_GRID) bu_vls_printf(&pnt_msg, " grid");
-		if (flags & ANALYZE_OBJ_TO_PNTS_RAND) bu_vls_printf(&pnt_msg, " rand");
-		if (flags & ANALYZE_OBJ_TO_PNTS_SOBOL) bu_vls_printf(&pnt_msg, " sobol");
-		bu_vls_printf(&pnt_msg, "\n");
-		if (opts->max_pnts) {
-		    bu_vls_printf(&pnt_msg, "      Maximum pnt count per method: %d", opts->max_pnts);
-		}
-		if (opts->max_time) {
-		    bu_vls_printf(&pnt_msg, "      Maximum time per method (sec): %d", opts->max_time);
-		}
-	    }
-	    bu_log("%s\n", bu_vls_addr(&pnt_msg));
-	    bu_vls_free(&pnt_msg);
+	    bu_log("SPSR: generating %d points from %s\n", objname);
 	}
 
-	if (analyze_obj_to_pnts(pnts, NULL, gedp->ged_wdbp->dbip, objname, &btol, flags, opts->max_pnts, opts->max_time, opts->verbosity)) {
+	if (analyze_obj_to_pnts(pnts, NULL, gedp->ged_wdbp->dbip, objname, &btol, flags, max_pnts, opts->max_time, opts->verbosity)) {
 	    r->failure_mode = GED_FACETIZE_FAILURE_PNTGEN;
 	    ret = GED_FACETIZE_FAILURE;
 	    goto ged_facetize_spsr_memfree;
@@ -1593,11 +1560,18 @@ _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _ged
 
     /* Before we try this, check that all the objects in the specified tree(s) are valid solids */
     if (!_ged_facetize_solid_objs(gedp, argc, dpa, opts)) {
-	if (!opts->quiet) {
-	    bu_log("Facetization aborted: non-solid objects in specified tree(s).\n");
+	if (flags & GED_FACETIZE_SPSR) {
+	    if (flags != GED_FACETIZE_SPSR) {
+		bu_log("non-solid objects in specified tree(s) - falling back on point sampling/reconstruction methodology\n");
+	    }
+	    flags = GED_FACETIZE_SPSR;
+	} else {
+	    if (!opts->quiet) {
+		bu_log("Facetization aborted: non-solid objects in specified tree(s).\n");
+	    }
+	    bu_free(dpa, "dp array");
+	    return GED_ERROR;
 	}
-	bu_free(dpa, "dp array");
-	return GED_ERROR;
     }
 
     /* Done with dpa */
@@ -1889,14 +1863,6 @@ _ged_facetize_region_obj(struct ged *gedp, const char *oname, const char *cname,
 	return GED_ERROR;
     }
 
-    /* Before we try this, check that all the objects in the specified tree(s) are valid solids */
-    if (!_ged_facetize_solid_objs(gedp, 1, &dp, opts)) {
-	if (!opts->quiet) {
-	    bu_log("%s: facetization aborted, non-solid objects in tree.\n", dp->d_namep);
-	}
-	return GED_ERROR;
-    }
-
     if (cmethod == GED_FACETIZE_NMGBOOL) {
 
 	/* We're staring a new object, so we want to write out the header in the
@@ -2065,6 +2031,8 @@ _ged_facetize_regions_resume(struct ged *gedp, int argc, const char **argv, stru
 	long int avail_mem = bu_avail_mem();
 	bu_ptbl_reset(ar);
 
+
+
 	if (!cmethod && (methods & GED_FACETIZE_NMGBOOL)) {
 	    cmethod = GED_FACETIZE_NMGBOOL;
 	    methods = methods & ~(GED_FACETIZE_NMGBOOL);
@@ -2089,6 +2057,17 @@ _ged_facetize_regions_resume(struct ged *gedp, int argc, const char **argv, stru
 
 	    if (dp == RT_DIR_NULL) {
 		if (opts->retry || !_ged_facetize_attempted(gedp, cname, cmethod)) {
+		    /* Before we try this (unless we're point sampling), check that all the objects in the specified tree(s) are valid solids */
+		    struct directory *odp = db_lookup(gedp->ged_wdbp->dbip, oname, LOOKUP_QUIET);
+
+		    if (odp == RT_DIR_NULL || (!_ged_facetize_solid_objs(gedp, 1, &odp, opts) && cmethod != GED_FACETIZE_SPSR)) {
+			if (!opts->quiet) {
+			    bu_log("%s: non-solid objects in specified tree(s) - cannot apply facetization method %s\n", oname, _ged_facetize_attr(cmethod));
+			}
+			bu_ptbl_ins(ar, (long *)n);
+			continue;
+		    }
+
 		    if (_ged_facetize_region_obj(gedp, oname, cname, sname, opts, i+1, (int)BU_PTBL_LEN(ar2), cmethod) == GED_FACETIZE_FAILURE) {
 			bu_ptbl_ins(ar, (long *)n);
 
@@ -2493,6 +2472,17 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	    struct directory *dp = db_lookup(dbip, sname, LOOKUP_QUIET);
 
 	    if (dp == RT_DIR_NULL) {
+		/* Before we try this (unless we're point sampling), check that all the objects in the specified tree(s) are valid solids */
+		struct directory *odp = db_lookup(gedp->ged_wdbp->dbip, oname, LOOKUP_QUIET);
+
+		if (odp == RT_DIR_NULL || (!_ged_facetize_solid_objs(gedp, 1, &odp, opts) && cmethod != GED_FACETIZE_SPSR)) {
+		    if (!opts->quiet) {
+			bu_log("%s: non-solid objects in specified tree(s) - cannot apply facetization method %s\n", oname, _ged_facetize_attr(cmethod));
+		    }
+		    bu_ptbl_ins(ar2, (long *)n);
+		    continue;
+		}
+
 		if (_ged_facetize_region_obj(gedp, oname, cname, sname, opts, i+1, (int)BU_PTBL_LEN(ar), cmethod) == GED_FACETIZE_FAILURE) {
 		    bu_ptbl_ins(ar2, (long *)n);
 
@@ -2597,8 +2587,8 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     int print_help = 0;
     int need_help = 0;
     struct _ged_facetize_opts *opts = _ged_facetize_opts_create();
-    struct bu_opt_desc d[18];
-    struct bu_opt_desc pd[10];
+    struct bu_opt_desc d[19];
+    struct bu_opt_desc pd[4];
 
     BU_OPT(d[0],  "h", "help",          "",  NULL,  &print_help,               "Print help and exit");
     BU_OPT(d[1],  "v", "verbose",       "",  &_ged_vopt,  &(opts->verbosity),  "Verbose output (multiple flags increase verbosity)");
@@ -2613,23 +2603,18 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[10], "",  "resume",        "",  NULL,  &(opts->resume),           "Resume an interrupted conversion (region mode only)");
     BU_OPT(d[11], "",  "retry",         "",  NULL,  &(opts->retry),            "When resuming an interrupted conversion, re-try operations that previously failed (default is to not repeat previous attempts with already-attempted methods.)");
     BU_OPT(d[12], "",  "in-place",      "",  NULL,  &(opts->in_place),         "Alter the existing tree/object to reference the facetized object.  May only specify one input object with this mode, and no output name.  (Warning: this option changes pre-existing geometry!)");
-    BU_OPT(d[13], "F", "feature-scale", "#", &bu_opt_fastf_t, &(opts->feature_scale),  "Scale factor of the average thickness observed by the raytracer to use for a targeted feature size.  Defaults to 0.15, overridden by --feature-size option");
+    BU_OPT(d[13], "F", "feature-scale", "#", &bu_opt_fastf_t, &(opts->feature_scale),  "Percentage of the average thickness observed by the raytracer to use for a targeted feature size.  Defaults to 0.15, overridden by --feature-size option");
     BU_OPT(d[14], "",  "feature-size",  "#", &bu_opt_fastf_t, &(opts->feature_size),  "Explicit feature length to try for sampling based methods - overrides feature-scale.");
     BU_OPT(d[15], "", "decimation-feature-size",  "#", &bu_opt_fastf_t, &(opts->d_feature_size),  "Initial feature length to try for decimation in sampling based methods.  By default, this value is set to 1.5x the feature size.");
     BU_OPT(d[16], "",  "max-time",         "#", &bu_opt_int,     &(opts->max_time),       "Maximum time to spend per processing step (in seconds).  Default is 30.  Zero means either the default (for routines which could run indefinitely) or run to completion (if there is a theoretical termination point for the algorithm) - be careful of specifying zero because it is quite easy to produce extremely long runs!.");
-    BU_OPT_NULL(d[17]);
+    BU_OPT(pd[17], "",  "max-pnts",         "#", &bu_opt_int,     &(opts->max_pnts),                "Maximum number of pnts to use when applying ray sampling methods.");
+    BU_OPT_NULL(d[18]);
 
     /* Poisson specific options */
     BU_OPT(pd[0], "d", "depth",            "#", &bu_opt_int,     &(opts->s_opts.depth),            "Maximum reconstruction depth (default 8)");
     BU_OPT(pd[1], "w", "interpolate",      "#", &bu_opt_fastf_t, &(opts->s_opts.point_weight),     "Lower values (down to 0.0) bias towards a smoother mesh, higher values bias towards interpolation accuracy. (Default 2.0)");
     BU_OPT(pd[2], "",  "samples-per-node", "#", &bu_opt_fastf_t, &(opts->s_opts.samples_per_node), "How many samples should go into a cell before it is refined. (Default 1.5)");
-    BU_OPT(pd[3], "t", "tolerance",        "#", &bu_opt_fastf_t, &(opts->len_tol),        "Specify sampling grid spacing (in mm).");
-    BU_OPT(pd[4], "",  "surface",          "",  NULL,            &(opts->pnt_surf_mode),  "Save only first and last points along ray.");
-    BU_OPT(pd[5], "",  "grid",             "",  NULL,            &(opts->pnt_grid_mode),  "Sample using a gridded ray pattern (default).");
-    BU_OPT(pd[6], "",  "rand",             "",  NULL,            &(opts->pnt_rand_mode),  "Sample using a random Marsaglia ray pattern on the bounding sphere.");
-    BU_OPT(pd[7], "",  "sobol",            "",  NULL,            &(opts->pnt_sobol_mode), "Sample using a Sobol pseudo-random Marsaglia ray pattern on the bounding sphere.");
-    BU_OPT(pd[8], "",  "max-pnts",         "#", &bu_opt_int,     &(opts->max_pnts),       "Maximum number of pnts to return per non-grid sampling method.");
-    BU_OPT_NULL(pd[9]);
+    BU_OPT_NULL(pd[3]);
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
