@@ -1053,7 +1053,7 @@ _ged_spsr_obj(struct _ged_facetize_report_info *r, struct ged *gedp, const char 
 	}
 
 	bot = _try_decimate(bot, feature_size, opts);
-	   
+
 	if (bot == obot) {
 	    r->failure_mode = GED_FACETIZE_FAILURE_DECIMATION;
 	    if (bot->vertices) bu_free(bot->vertices, "verts");
@@ -1271,7 +1271,7 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
     } else {
 	feature_size = 2*avg_thickness;
     }
-    while (!polygonize_failure && (feature_size > 0.9*target_feature_size || face_cnt < 1000) && fatal_error_cnt < 4) {
+    while (!polygonize_failure && (feature_size > 0.9*target_feature_size || face_cnt < 1000) && fatal_error_cnt < 8) {
 	double timestamp = bu_gettime();
 	int delta;
 	fastf_t *verts = bot->vertices;
@@ -1284,9 +1284,12 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
 		    (point_t **)&(bot->vertices),
 		    (int *)&(bot->num_vertices),
 		    feature_size, pn->v, objname, gedp->ged_wdbp->dbip, opts->max_time, opts->verbosity);
-	if (polygonize_failure || bot->num_faces < successful_bot_count) {
-	    if (!opts->quiet && polygonize_failure == 2) {
-		bu_log("CM: timed out after %d seconds with size %g\n", opts->max_time, feature_size);
+	delta = (int)((bu_gettime() - timestamp)/1e6);
+	if (polygonize_failure || bot->num_faces < successful_bot_count || delta < 2) {
+	    if (polygonize_failure == 2) {
+		if (!opts->quiet) {
+		    bu_log("CM: timed out after %d seconds with size %g\n", opts->max_time, feature_size);
+		}
 		/* If we still haven't had a successful run, back the feature size out and try again */
 		if (first_run) {
 		    polygonize_failure = 0;
@@ -1332,7 +1335,6 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
 	    /* if we have had a fatal error in the past, reset on subsequent success */
 	    fatal_error_cnt = 0;
 	    successful_feature_size = feature_size;
-	    delta = (int)((bu_gettime() - timestamp)/1e6);
 	    if (!opts->quiet) {
 		bu_log("CM: completed in %d seconds with size %g\n", delta, feature_size);
 	    }
