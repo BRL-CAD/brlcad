@@ -543,6 +543,51 @@ _ged_validate_objs_list(struct ged *gedp, int argc, const char *argv[], struct _
     return GED_OK;
 }
 
+HIDDEN
+int
+_ged_facetize_solid_objs(struct ged *gedp, int argc, struct directory **dpa, struct _ged_facetize_opts *opts)
+{
+    unsigned int i;
+    int ret = 1;
+    struct bu_ptbl *bot_dps = NULL;
+    const char *bot_objs = "-type bot";
+    if (argc < 1 || !dpa || !gedp) return 0;
+    BU_ALLOC(bot_dps, struct bu_ptbl);
+    if (db_search(bot_dps, DB_SEARCH_RETURN_UNIQ_DP, bot_objs, argc, dpa, gedp->ged_wdbp->dbip, NULL) < 0) {
+	if (opts->verbosity) {
+	    bu_log("Problem searching for BoTs - aborting.\n");
+	}
+	ret = 0;
+	goto ged_facetize_solid_objs_memfree;
+    }
+
+    /* Got all the BoT objects in the tree, check each of them for validity */
+    for (i = 0; i < BU_PTBL_LEN(bot_dps); i++) {
+	struct rt_db_internal intern;
+	struct rt_bot_internal *bot;
+	int not_solid;
+	struct directory *bot_dp = (struct directory *)BU_PTBL_GET(bot_dps, i);
+	GED_DB_GET_INTERNAL(gedp, &intern, bot_dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
+	bot = (struct rt_bot_internal *)intern.idb_ptr;
+	RT_BOT_CK_MAGIC(bot);
+	not_solid = bg_trimesh_solid2((int)bot->num_vertices, (int)bot->num_faces, bot->vertices, bot->faces, NULL);
+	if (not_solid) {
+	    if (!opts->quiet) {
+		bu_log("Found non solid BoT: %s\n", bot_dp->d_namep);
+	    }
+	    ret = 0;
+	}
+	rt_db_free_internal(&intern);
+    }
+
+    /* TODO - any other objects that need a pre-boolean validity check? */
+
+ged_facetize_solid_objs_memfree:
+    bu_ptbl_free(bot_dps);
+    bu_free(bot_dps, "bot directory pointer table");
+    return ret;
+}
+
 HIDDEN int
 _ged_facetize_obj_swap(struct ged *gedp, const char *o, const char *n)
 {
@@ -1501,6 +1546,7 @@ _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _ged
     int done_trying = 0;
     int newobj_cnt;
     char *newname;
+    struct directory **dpa = NULL;
     struct db_i *dbip = gedp->ged_wdbp->dbip;
     struct bu_vls oname = BU_VLS_INIT_ZERO;
     int flags = opts->method_flags;
@@ -1510,8 +1556,10 @@ _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _ged
 
     if (argc < 0) return GED_ERROR;
 
-    newobj_cnt = _ged_sort_existing_objs(gedp, argc, argv, NULL);
+    dpa = (struct directory **)bu_calloc(argc, sizeof(struct directory *), "dp array");
+    newobj_cnt = _ged_sort_existing_objs(gedp, argc, argv, dpa);
     if (_ged_validate_objs_list(gedp, argc, argv, opts, newobj_cnt) == GED_ERROR) {
+	bu_free(dpa, "dp array");
 	return GED_ERROR;
     }
 
@@ -1528,6 +1576,18 @@ _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _ged
 	}
 	newname = (char *)bu_vls_addr(&oname);
     }
+
+    /* Before we try this, check that all the objects in the specified tree(s) are valid solids */
+    if (!_ged_facetize_solid_objs(gedp, argc, dpa, opts)) {
+	if (!opts->quiet) {
+	    bu_log("Facetization aborted: non-solid objects in specified tree(s).\n");
+	}
+	bu_free(dpa, "dp array");
+	return GED_ERROR;
+    }
+
+    /* Done with dpa */
+    bu_free(dpa, "dp array");
 
     while (!done_trying) {
 
@@ -1809,6 +1869,19 @@ int
 _ged_facetize_region_obj(struct ged *gedp, const char *oname, const char *cname, const char *sname, struct _ged_facetize_opts *opts, int ocnt, int max_cnt, int cmethod)
 {
     int ret = GED_FACETIZE_FAILURE;
+    struct directory *dp = db_lookup(gedp->ged_wdbp->dbip, oname, LOOKUP_QUIET);
+
+    if (dp == RT_DIR_NULL) {
+	return GED_ERROR;
+    }
+
+    /* Before we try this, check that all the objects in the specified tree(s) are valid solids */
+    if (!_ged_facetize_solid_objs(gedp, 1, &dp, opts)) {
+	if (!opts->quiet) {
+	    bu_log("Facetization aborted: non-solid objects in tree of %s.\n", dp->d_namep);
+	}
+	return GED_ERROR;
+    }
 
     if (cmethod == GED_FACETIZE_NMGBOOL) {
 
