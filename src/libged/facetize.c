@@ -145,6 +145,14 @@ struct _ged_facetize_opts {
 
     int quiet;
     int verbosity;
+    int regions;
+    int resume;
+    int retry;
+    int in_place;
+    fastf_t feature_size;
+    fastf_t feature_scale;
+    fastf_t d_feature_size;
+    struct rt_tess_tol *tol;
 
     /* NMG specific options */
     int triangulate;
@@ -155,13 +163,6 @@ struct _ged_facetize_opts {
     int method_flags;
 
     int nmg_use_tnurbs;
-    int regions;
-    int resume;
-    int retry;
-    int in_place;
-    fastf_t feature_size;
-    fastf_t d_feature_size;
-    struct rt_tess_tol *tol;
 
     /* Poisson specific options */
     int pnt_surf_mode;
@@ -209,6 +210,7 @@ struct _ged_facetize_opts * _ged_facetize_opts_create()
     o->retry = 0;
     o->in_place = 0;
     o->feature_size = 0.0;
+    o->feature_scale = 0.15;
     o->d_feature_size = 0.0;
     BU_GET(o->faceted_suffix, struct bu_vls);
     bu_vls_init(o->faceted_suffix);
@@ -573,7 +575,7 @@ _ged_facetize_solid_objs(struct ged *gedp, int argc, struct directory **dpa, str
 	not_solid = bg_trimesh_solid2((int)bot->num_vertices, (int)bot->num_faces, bot->vertices, bot->faces, NULL);
 	if (not_solid) {
 	    if (!opts->quiet) {
-		bu_log("Found non solid BoT: %s\n", bot_dp->d_namep);
+		bu_log("-- Found non solid BoT: %s\n", bot_dp->d_namep);
 	    }
 	    ret = 0;
 	}
@@ -1243,7 +1245,11 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
     if (opts->feature_size > 0) {
 	target_feature_size = 0.5*feature_size;
     } else {
-	target_feature_size = min_len * 0.15;
+	target_feature_size = min_len * opts->feature_scale;
+    }
+
+    if (opts->verbosity) {
+	bu_log("CM: targeting feature size %g\n", target_feature_size);
     }
 
     /* Build the BoT */
@@ -1886,7 +1892,7 @@ _ged_facetize_region_obj(struct ged *gedp, const char *oname, const char *cname,
     /* Before we try this, check that all the objects in the specified tree(s) are valid solids */
     if (!_ged_facetize_solid_objs(gedp, 1, &dp, opts)) {
 	if (!opts->quiet) {
-	    bu_log("Facetization aborted: non-solid objects in tree of %s.\n", dp->d_namep);
+	    bu_log("%s: facetization aborted, non-solid objects in tree.\n", dp->d_namep);
 	}
 	return GED_ERROR;
     }
@@ -2591,7 +2597,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     int print_help = 0;
     int need_help = 0;
     struct _ged_facetize_opts *opts = _ged_facetize_opts_create();
-    struct bu_opt_desc d[17];
+    struct bu_opt_desc d[18];
     struct bu_opt_desc pd[10];
 
     BU_OPT(d[0],  "h", "help",          "",  NULL,  &print_help,               "Print help and exit");
@@ -2607,10 +2613,11 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[10], "",  "resume",        "",  NULL,  &(opts->resume),           "Resume an interrupted conversion (region mode only)");
     BU_OPT(d[11], "",  "retry",         "",  NULL,  &(opts->retry),            "When resuming an interrupted conversion, re-try operations that previously failed (default is to not repeat previous attempts with already-attempted methods.)");
     BU_OPT(d[12], "",  "in-place",      "",  NULL,  &(opts->in_place),         "Alter the existing tree/object to reference the facetized object.  May only specify one input object with this mode, and no output name.  (Warning: this option changes pre-existing geometry!)");
-    BU_OPT(d[13], "F", "feature-size",  "#", &bu_opt_fastf_t, &(opts->feature_size),  "Initial feature length to try for sampling based methods.  By default this will be based on the average thickness observed by the raytracer.");
-    BU_OPT(d[14], "", "decimation-feature-size",  "#", &bu_opt_fastf_t, &(opts->d_feature_size),  "Initial feature length to try for decimation in sampling based methods.  By default, this value is set to 1.5x the feature size.");
-    BU_OPT(d[15], "",  "max-time",         "#", &bu_opt_int,     &(opts->max_time),       "Maximum time to spend per step (in seconds).  Default is 30.  Zero means either the default (for routines which could run indefinitely) or run to completion (if there is a theoretical termination point for the algorithm) - be careful of specifying zero because it is quite easy to produce extremely long runs!.");
-    BU_OPT_NULL(d[16]);
+    BU_OPT(d[13], "F", "feature-scale", "#", &bu_opt_fastf_t, &(opts->feature_scale),  "Scale factor of the average thickness observed by the raytracer to use for a targeted feature size.  Defaults to 0.15, overridden by --feature-size option");
+    BU_OPT(d[14], "",  "feature-size",  "#", &bu_opt_fastf_t, &(opts->feature_size),  "Explicit feature length to try for sampling based methods - overrides feature-scale.");
+    BU_OPT(d[15], "", "decimation-feature-size",  "#", &bu_opt_fastf_t, &(opts->d_feature_size),  "Initial feature length to try for decimation in sampling based methods.  By default, this value is set to 1.5x the feature size.");
+    BU_OPT(d[16], "",  "max-time",         "#", &bu_opt_int,     &(opts->max_time),       "Maximum time to spend per processing step (in seconds).  Default is 30.  Zero means either the default (for routines which could run indefinitely) or run to completion (if there is a theoretical termination point for the algorithm) - be careful of specifying zero because it is quite easy to produce extremely long runs!.");
+    BU_OPT_NULL(d[17]);
 
     /* Poisson specific options */
     BU_OPT(pd[0], "d", "depth",            "#", &bu_opt_int,     &(opts->s_opts.depth),            "Maximum reconstruction depth (default 8)");
