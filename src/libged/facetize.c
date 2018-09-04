@@ -1345,7 +1345,7 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
 	first_run = 0;
     }
 
-    if (feature_size < target_feature_size && !opts->quiet) {
+    if (bot->num_faces && feature_size < target_feature_size && !opts->quiet) {
 	bu_log("CM: successfully polygonized BoT with %d faces at feature size %g\n", bot->num_faces, feature_size);
     }
 
