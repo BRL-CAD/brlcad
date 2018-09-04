@@ -1068,12 +1068,15 @@ _ged_spsr_obj(struct _ged_facetize_report_info *r, struct ged *gedp, const char 
 
     /* Check validity - do not return an invalid BoT */
     {
-	int is_v = !bg_trimesh_solid(bot->num_vertices, bot->num_faces, (fastf_t *)bot->vertices, (int *)bot->faces, NULL);
-	if (!is_v) {
+	int not_solid = bg_trimesh_solid2(bot->num_vertices, bot->num_faces, (fastf_t *)bot->vertices, (int *)bot->faces, NULL);
+	if (not_solid) {
 	    r->failure_mode = GED_FACETIZE_FAILURE_BOTINVALID;
 	    if (bot->vertices) bu_free(bot->vertices, "verts");
 	    if (bot->faces) bu_free(bot->faces, "verts");
 	    ret = GED_FACETIZE_FAILURE;
+	    if (!opts->quiet) {
+		bu_log("SPSR: facetization failed, final BoT was not solid\n", bot->num_faces);
+	    }
 	    goto ged_facetize_spsr_memfree;
 	}
     }
@@ -1414,12 +1417,15 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
 
     /* Check validity - do not return an invalid BoT */
     {
-	int is_v = !bg_trimesh_solid(bot->num_vertices, bot->num_faces, (fastf_t *)bot->vertices, (int *)bot->faces, NULL);
-	if (!is_v) {
+	int not_solid = bg_trimesh_solid2(bot->num_vertices, bot->num_faces, (fastf_t *)bot->vertices, (int *)bot->faces, NULL);
+	if (not_solid) {
 	    r->failure_mode = GED_FACETIZE_FAILURE_BOTINVALID;
 	    if (bot->vertices) bu_free(bot->vertices, "verts");
 	    if (bot->faces) bu_free(bot->faces, "verts");
 	    ret = GED_FACETIZE_FAILURE;
+	    if (!opts->quiet) {
+		bu_log("CM: facetization failed, final BoT was not solid\n", bot->num_faces);
+	    }
 	    goto ged_facetize_continuation_memfree;
 	}
     }
