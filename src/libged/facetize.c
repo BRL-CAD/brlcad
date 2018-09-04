@@ -2606,8 +2606,8 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[13], "F", "feature-scale", "#", &bu_opt_fastf_t, &(opts->feature_scale),  "Percentage of the average thickness observed by the raytracer to use for a targeted feature size.  Defaults to 0.15, overridden by --feature-size option");
     BU_OPT(d[14], "",  "feature-size",  "#", &bu_opt_fastf_t, &(opts->feature_size),  "Explicit feature length to try for sampling based methods - overrides feature-scale.");
     BU_OPT(d[15], "", "decimation-feature-size",  "#", &bu_opt_fastf_t, &(opts->d_feature_size),  "Initial feature length to try for decimation in sampling based methods.  By default, this value is set to 1.5x the feature size.");
-    BU_OPT(d[16], "",  "max-time",         "#", &bu_opt_int,     &(opts->max_time),       "Maximum time to spend per processing step (in seconds).  Default is 30.  Zero means either the default (for routines which could run indefinitely) or run to completion (if there is a theoretical termination point for the algorithm) - be careful of specifying zero because it is quite easy to produce extremely long runs!.");
-    BU_OPT(pd[17], "",  "max-pnts",         "#", &bu_opt_int,     &(opts->max_pnts),                "Maximum number of pnts to use when applying ray sampling methods.");
+    BU_OPT(d[16], "",  "max-time",      "#", &bu_opt_int,     &(opts->max_time),       "Maximum time to spend per processing step (in seconds).  Default is 30.  Zero means either the default (for routines which could run indefinitely) or run to completion (if there is a theoretical termination point for the algorithm) - be careful of specifying zero because it is quite easy to produce extremely long runs!.");
+    BU_OPT(d[17], "",  "max-pnts",      "#", &bu_opt_int,     &(opts->max_pnts),                "Maximum number of pnts to use when applying ray sampling methods.");
     BU_OPT_NULL(d[18]);
 
     /* Poisson specific options */
