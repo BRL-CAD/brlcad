@@ -11,7 +11,7 @@
     <refname>facetize</refname>
     <refpurpose>
       Creates <emphasis>new_object</emphasis> using <emphasis>old_object</emphasis> as a
-      starting point and then creating an NMG or BoT approximation of the original shape.
+      guide, creating an evaluated NMG or BoT planar approximation of the original shape.
     </refpurpose>
   </refnamediv>
 
@@ -19,41 +19,39 @@
   <refsynopsisdiv xml:id="synopsis">
     <cmdsynopsis sepchar=" ">
       <command>facetize</command>
-      <group choice="opt">
-	<arg choice="opt" rep="norepeat">-h</arg>
-	<arg choice="opt" rep="norepeat">-n</arg>
-	<arg choice="opt" rep="norepeat">-T</arg>
-	<arg choice="opt" rep="norepeat">-m</arg>
-	<arg choice="opt" rep="norepeat">--nmgbool</arg>
-      </group>
-      <group choice="opt">
-	<arg choice="opt" rep="norepeat">--poisson</arg>
-	<arg choice="opt" rep="norepeat">poisson options</arg>
-      </group>
+      <arg choice="opt" rep="norepeat">-h</arg>
+      <arg choice="opt" rep="norepeat">-v</arg>
+      <arg choice="opt" rep="norepeat">-q</arg>
+      <arg choice="opt" rep="norepeat">-r</arg>
+      <arg choice="opt" rep="norepeat">-n</arg>
+      <arg choice="opt" rep="norepeat">-T</arg>
+      <arg choice="opt" rep="norepeat">--nmgbool</arg>
+      <arg choice="opt" rep="norepeat">--continuation</arg>
+      <arg choice="opt" rep="norepeat">--poisson</arg>
+      <arg choice="req" rep="norepeat"><replaceable>old_object new_object</replaceable></arg>
+    </cmdsynopsis>
+    <cmdsynopsis sepchar=" ">
+      <command>facetize --continuation</command>
+      <arg choice="opt" rep="norepeat">--feature-scale</arg>
+      <arg choice="opt" rep="norepeat">--feature-size</arg>
+      <arg choice="opt" rep="norepeat">--decimation-feature-size</arg>
+      <arg choice="opt" rep="norepeat">--max-time</arg>
+      <arg choice="opt" rep="norepeat">--max-pnts</arg>
       <arg choice="req" rep="norepeat"><replaceable>old_object new_object</replaceable></arg>
     </cmdsynopsis>
     <cmdsynopsis sepchar=" ">
       <command>facetize --poisson</command>
-      <group choice="opt">
-	<arg choice="opt" rep="norepeat">-d</arg>
-	<arg choice="opt" rep="norepeat">-w</arg>
-	<arg choice="opt" rep="norepeat">--samples-per-node</arg>
-      </group>
-      <group>
-	<arg choice="opt">-t</arg>
-	<arg choice="opt" rep="norepeat">--surface</arg>
-	<arg choice="opt" rep="norepeat">--grid</arg>
-	<arg choice="opt" rep="norepeat">--rand</arg>
-	<arg choice="opt" rep="norepeat">--sobol</arg>
-	<arg choice="opt" rep="norepeat">--max-pnts</arg>
-	<arg choice="opt" rep="norepeat">--max-time</arg>
-      </group>
+      <arg choice="opt" rep="norepeat">-d</arg>
+      <arg choice="opt" rep="norepeat">-w</arg>
+      <arg choice="opt" rep="norepeat">--samples-per-node</arg>
       <arg choice="req" rep="norepeat"><replaceable>old_object new_object</replaceable></arg>
     </cmdsynopsis>
     <cmdsynopsis sepchar=" ">
-      <command>facetize -r --resume</command>
-      <arg choice="opt" rep="norepeat">--nmgbool</arg>
-      <arg choice="opt" rep="norepeat">--poisson</arg>
+      <command>facetize -r</command>
+      <arg choice="opt" rep="norepeat">standard_options</arg>
+      <arg choice="opt" rep="norepeat">--resume</arg>
+      <arg choice="opt" rep="norepeat">--retry</arg>
+      <arg choice="opt" rep="norepeat">--in-place</arg>
       <arg choice="req" rep="norepeat"><replaceable>output_hierarchy_obj</replaceable></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
@@ -62,39 +60,103 @@
     <title>DESCRIPTION</title>
     <para>
       Creates <emphasis>new_object</emphasis> as planar primitive shape (either an NMG or a BOT)
-      approximating the volume bound by <emphasis>old_object</emphasis>.
+      approximating the 3D volume bound by <emphasis>old_object</emphasis>.  The <emphasis>-r</emphasis>
+      option will operate per-region rather than on an entire object and produces a new hiearchy.
     </para>
+    <para>
+      There are a number of different verbosity levels available for the facetize command.  One or mulitple specifications
+      of the <emphasis>-v</emphasis> flag will increase reporting detail about what the facetize command is doing in various
+      steps. To silence all output
+      specify the <emphasis>-q</emphasis> flag - this is generally not recommended as the messages produced by the
+      facetize command often contain important information about conversion failures in addition to reporting incremental
+      progress on large conversion tasks.
+    </para>
+  </refsection>
+  <refsection xml:id="methodology">
+    <title>METHODOLOGY</title>
     <para>
       By default, conversions will first attempt a standard NMG facetization and boolean evaluation of
-      the existing geometry.  If that attempt fails, a fall-back method using point sampling and mesh
-      reconstruction will be tried.  The options "--nmgbool" and "--poisson" may be used to limit the
-      attempted conversion methods to either just NMG or just Screened Poisson Surface Reconstruction
-      (SPSR).
+      the existing geometry.  When it succeeds, NMG's output is generally the best quality output that
+      can be produced by any of BRL-CAD's available facetization methods.  If NMG booleans fail, a fall-back method based
+      on Bloomenthal's continuation method (CM) polygonalizer will be attempted by default.Note
+      that if any of the methodology flags (<emphasis>--nmgbool</emphasis>,<emphasis>--continuation</emphasis>,
+      or <emphasis>--poisson</emphasis>) are explicitly enabled, the other methodologies will be disabled unless they
+      too are explicitly enabled.
     </para>
     <para>
-      Often, it is acceptable or desirable to perform facetization on each region individually within a
+      While the <command>facetize</command> command does not itself expose options to adjust the behavior of
+      the NMG boolean methodology, it will respect MGED's settings for absolute (<emphasis>abs</emphasis>),
+      relative (<emphasis>rel</emphasis>), and normal (<emphasis>norm</emphasis>) tolerances which are set with
+      the MGED <command>tol</command> command.  These settings may be changed between repeated runs of the
+      facetize command to attempt different NMG evaluations.
+    </para>
+    <para>
+      Bloomenthal's continuation method tends to be slower and exhibit artifacts around sharp corners - users
+      are advised to inspect the output from this method manually to ensure it will meet their needs. (All objects
+      created with this methodology in a multi-region hierarchical conversion are also included in a top level
+      combination with CONTINUATION in the name to allow users to more easily inspect them.)  By default, the
+      BRL-CAD raytracer is used to shoot pseudo-random rays at the object and accumulate an average observed
+      thickness of the model.  This thickness is then used as the basis for an initial guess at the appropriate
+      stepping size used by the CM walker (smaller means more triangles, and longer run times, but potentially
+      better preservation of small features.)  The initial thickness is multiplied by a scale factor, which
+      defaults to 0.15 but may be overridden by the user with the <emphasis>--feature-scale</emphasis> option.
+      Alternately, if the user has some specific knowledge of what feature size they are likely to want, they
+      may use the <emphasis>--feature-size</emphasis> option to directly set this parameter independent of the
+      observed average thickness.
+    </para>
+    <para>
+      Because Bloomenthal's method tends to generate a very large number of triangles, it is necessary to post
+      process its initial mesh with a decimation routine to remove triangles which are not necessary to actual
+      feature representation.  This process is also feature-size based, and by default is set to 1.5x the feature size.
+      However, if the user wishes to preserve more triangles than the default behavior they may manually
+      override this parameter with the <emphasis>--decimation-feature-size</emphasis> option.
+    </para>
+    <para>
+      Both NMG boolean evaluation and Bloomenthal's method assume a geometry hierarchy containing only
+      valid solid objects.  Both of these methods will refuse to process any tree containing recognizably
+      non-solid objects, as these tend to cause run-time problems and generate invalid outputs.  For non-solid
+      objects, the "--poisson" methodology may be enabled - it will apply the Kazhdan et. al. Screened Poisson Surface
+      Reconstruction (SPSR) process to a pseudo-randomly sampled point set generated from <emphasis>old_object</emphasis>.  This
+      methodology may not cope well with the type of points sets generated from CAD geometry and is off
+      by default in normal <command>facetize</command> processing, but it is also the only currently available
+      methodology in BRL-CAD which has a chance of generating a valid mesh from non-solid inputs.
+    </para>
+    <para>
+      There are three parameters available for the SPSR methodology specifically:  maximum reconstruction depth
+      (<emphasis>-d</emphasis>) will control the level of detail in the output mesh, point weight (<emphasis>-w</emphasis>)
+      which impacts how much the output will attempt to interpolate the original inputs, and samples per node
+      (see the Kazhdan et. al. paper for more information.)  For situations where the user wishes to experiment
+      with different point sampling schemes, they are referred to the <command>pnts</command> command which offers
+      more fine grained controls when it comes to generating point sets from BRL-CAD objects.
+    </para>
+  </refsection>
+  
+  <refsection xml:id="regions">
+    <title>PER-REGION FACETIZATION AND PARTIAL CONVERSIONS</title>
+    <para>
+      Often, it is desirable to perform facetization on each region individually within a
       geometry hierarchy, rather than trying for a single "all or nothing" shape.  This mode, available
-      with the -r flag, has the advantage of allowing for partial conversion of complex models even when
+      with the <emphasis>-r</emphasis> flag, has the advantage of allowing for partial conversion of complex models even when
       individual shapes within the model cannot be converted, as well as preserving all pre-existing
-      region attributes such as color and region ID.  The drawback is it will not produce a single
-      geometry object containing all output.
+      region attributes such as color and region ID.
     </para>
     <para>
-      The Screened Poisson Surface Reconstruction algorithm, in addition to it's -d, -w, and --samples-per-node
-      parameters, also offers control over the initial raytrace sampling used to generate the initial
-      point set from the input geometry.  To learn more about these options, see the manual page for
-      the "pnts gen" subcommand.
-    </para>
-    <para>
-      Because conversion is often a long process, the facetize command (when run in region mode) works
+      Because multi-region hierarchy conversion is often a long process, the facetize command (when run in region mode) works
       in a way that allows an incomplete conversion to resume work.  For example, if a large model is
       to be converted it may be advantageous to attempt just the NMG conversion on the hierarchy first
       to get a sense of the work to be done.  After the initial attempt, global facetize parameters can
       be adjusted and a second NMG run attempted, perhaps this time with SPSR reconstruction also enabled.
-      Note that this works only for a hierarchy generated with the facetize -r option - arbitrary
-      existing hierarchies will not store the information needed to resume a conversion.
+      Note that this works only for a hierarchy generated with the <command>facetize</command>.
+    </para>
+    <para>
+      By default the <command>facetize</command> command attempts to be non-destructive when operating on
+      objects - it will not rename or replace any existing geometry in normal operational modes.  However,
+      if a user needs to create a new version of an existing hierarchy which replaces geometry below regions
+      with BoT objects but leaves all upper level names intact, this may be accomplished by specifying the
+      <emphasis>--in-place</emphasis> option in combination with the <emphasis>-r</emphasis> option.
     </para>
   </refsection>
+  
 
   <refsection xml:id="examples">
     <title>EXAMPLES</title>
@@ -105,7 +167,7 @@
 	The example shows the use of the <command>facetize</command> command to create a facetized
 	BOT version of an existing object (<emphasis>old_object</emphasis>) and renaming that facetized
 	object (<emphasis>new_object</emphasis>).  It will try first NMG conversion, and if that fails
-	attempts SPSR conversion.
+	attempts CM conversion.
       </para>
       <para>
 	<prompt>mged&gt;</prompt> <userinput>facetize region1.r region1.bot</userinput>
@@ -119,7 +181,7 @@
 	a new conversion hierarchy under model_facetized.
       </para>
       <para>
-	<prompt>mged&gt;</prompt> <userinput>facetize -r model model_facetized</userinput>
+	<prompt>mged&gt;</prompt> <userinput>facetize -r model model.f</userinput>
       </para>
     </example>
     
@@ -130,20 +192,36 @@
 	any fallback conversion methods.
       </para>
       <para>
-	<prompt>mged&gt;</prompt> <userinput>facetize -r --nmgbool model model_facetized</userinput>
+	<prompt>mged&gt;</prompt> <userinput>facetize -r --nmgbool model model.f</userinput>
       </para>
     </example>
 
     <example>
-      <title>Retry only failed conversion objects in a previous facetization attempt.</title>
+      <title>Retry failed conversion objects in a previous facetization attempt with new methodology.</title>
       <para>
 	This retries the per region conversion on all regions that didn't originally succeed in the initial
-	conversion attempt, attempting only SPSR reconstruction without first retrying NMG conversion.
+	conversion attempt, attempting only CM reconstruction without first retrying NMG conversion.
       </para>
       <para>
-	<prompt>mged&gt;</prompt> <userinput>facetize -r --poisson --resume model_facetized</userinput>
+	<prompt>mged&gt;</prompt> <userinput>facetize -r --resume model.f</userinput>
       </para>
     </example>
+
+    <example>
+      <title>Retry only failed conversion objects in a previous facetization attempt - retry all methodologies.</title>
+      <para>
+	This retries the per region conversion on all regions that didn't originally succeed in the initial
+	conversion attempt, attempting first NMG, then CM, then SPSR conversion.  This is warranted if
+	settings were changed, geometry was updated, or other changes warrant re-attempting steps that
+	previously did not succeed.  The poisson flag is also added to maximize conversion successes even
+	if there are non-solid shapes in the model.  On a non-trivial model this is likely to be a very
+	long running command.
+      </para>
+      <para>
+	<prompt>mged&gt;</prompt> <userinput>facetize -r --nmgbool --continuation --poisson --retry --resume model.f</userinput>
+      </para>
+    </example>
+    
   </refsection>
 
   <refsection xml:id="author">
