@@ -179,6 +179,26 @@ if(BRLCAD_INSTALL_EXAMPLE_GEOMETRY)
    BRLCAD_ADDDATA(terra.dsp db)
 endif(BRLCAD_INSTALL_EXAMPLE_GEOMETRY)
 
+if(SH_EXEC)
+  add_custom_target(convert)
+  set_target_properties(convert PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
+  set_target_properties(convert PROPERTIES FOLDER "BRL-CAD Conversion Tests")
+
+  macro(Sh_Conversion_Test gfile depends_list)
+    add_custom_target(convert-${gfile} COMMAND ${SH_EXEC} ${CMAKE_SOURCE_DIR}/sh/conversion.sh GED=$<TARGET_FILE:mged> ${CMAKE_BINARY_DIR}/${DATA_DIR}/db/${gfile})
+    set_target_properties(convert-${gfile} PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
+    set_target_properties(convert-${gfile} PROPERTIES FOLDER "BRL-CAD Conversion Tests")
+    add_dependencies(convert convert-${gfile})
+    if(NOT "${depends_list}" STREQUAL "")
+      add_dependencies(convert-${gfile} ${depends_list})
+      add_dependencies(convert ${depends_list})
+    endif(NOT "${depends_list}" STREQUAL "")
+  endmacro(Sh_Conversion_Test)
+
+  Sh_Conversion_Test(moss.g "mged")
+  Sh_Conversion_Test(boolean-ops.g "mged")
+endif(SH_EXEC)
+
 CMAKEFILES(
   ${G_BENCHMARK_MODELS}
   ${G_SAMPLE_MODELS}
