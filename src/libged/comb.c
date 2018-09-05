@@ -30,7 +30,9 @@
 #include "bu/cmd.h"
 #include "bu/getopt.h"
 #include "bu/sort.h"
+#include "bg/trimesh.h"
 #include "wdb.h"
+#include "analyze.h"
 
 #include "./ged_private.h"
 
@@ -461,6 +463,91 @@ comb_lift_region(struct ged *gedp, struct directory *dp)
     return GED_OK;
 }
 
+HIDDEN int
+comb_decimate(struct ged *gedp, struct directory *dp)
+{
+    unsigned int i;
+    int ret = GED_OK;
+    struct bu_ptbl *bot_dps = NULL;
+    const char *bot_objs = "-type bot";
+    struct db_i *dbip = gedp->ged_wdbp->dbip;
+
+    BU_ALLOC(bot_dps, struct bu_ptbl);
+    if (db_search(bot_dps, DB_SEARCH_RETURN_UNIQ_DP, bot_objs, 1, &dp, gedp->ged_wdbp->dbip, NULL) < 0) {
+	bu_log("Problem searching for BoTs - aborting.\n");
+	ret = GED_ERROR;
+	goto comb_decimate_memfree;
+    }
+
+    for (i = 0; i < BU_PTBL_LEN(bot_dps); i++) {
+	struct bn_tol btol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
+	struct rt_db_internal intern;
+	struct rt_bot_internal *bot;
+	int not_solid;
+	int old_face_cnt;
+	int edges_removed;
+	point_t obj_min, obj_max;
+	fastf_t bbox_diag;
+	fastf_t avg_thickness;
+	fastf_t fs;
+	struct directory *bot_dp = (struct directory *)BU_PTBL_GET(bot_dps, i);
+	GED_DB_GET_INTERNAL(gedp, &intern, bot_dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
+	bot = (struct rt_bot_internal *)intern.idb_ptr;
+	RT_BOT_CK_MAGIC(bot);
+	ged_get_obj_bounds(gedp, 1, (const char **)&bot_dp->d_namep, 0, obj_min, obj_max);
+	bbox_diag = DIST_PT_PT(obj_min, obj_max);
+
+	/* Get avg thickness from raytracer */
+	if (analyze_obj_to_pnts(NULL, &avg_thickness, dbip, bot_dp->d_namep, &btol, ANALYZE_OBJ_TO_PNTS_RAND, 100000, 5, 0)) {
+	    fs = 0.0005*bbox_diag;
+	} else {
+	    fs = 0.01*avg_thickness;
+	}
+
+	/* do initial decimation */
+	old_face_cnt = bot->num_faces;
+	edges_removed = rt_bot_decimate_gct(bot, fs);
+	if (edges_removed >= 0) {
+	    not_solid = bg_trimesh_solid2((int)bot->num_vertices, (int)bot->num_faces, bot->vertices, bot->faces, NULL);
+	    bu_log("%s: %d edges removed, %d faces removed, valid: %d\n", bot_dp->d_namep, edges_removed, old_face_cnt - bot->num_faces, !not_solid);
+	} else {
+	    bu_log("%s: decimation failure\n", bot_dp->d_namep);
+	}
+	if (not_solid) {
+	    int scnt = 2;
+	    fs = 2*fs;
+	    while (not_solid && fs < bbox_diag*0.1) {
+		old_face_cnt = bot->num_faces;
+		edges_removed = rt_bot_decimate_gct(bot, fs);
+		if (edges_removed >= 0) {
+		    not_solid = bg_trimesh_solid2((int)bot->num_vertices, (int)bot->num_faces, bot->vertices, bot->faces, NULL);
+		    bu_log("%s(%d): %d edges removed, %d faces removed, valid: %d\n", bot_dp->d_namep, scnt, edges_removed, old_face_cnt - bot->num_faces, !not_solid);
+		} else {
+		    bu_log("%s(%d): decimation failure\n", bot_dp->d_namep, scnt);
+		}
+		scnt++;
+		fs = 2*fs;
+	    }
+	}
+
+	if (edges_removed >= 0) {
+	    if (not_solid) {
+		bu_log("Unable to create a valid version of %s via decimation\n", bot_dp->d_namep);
+	    } else {
+		if (wdb_put_internal(gedp->ged_wdbp, bot_dp->d_namep, &intern, 1.0) < 0) {
+		    bu_log("Failed to write decimated version of %s back to database\n", bot_dp->d_namep);
+		}
+	    }
+	}
+    }
+
+
+comb_decimate_memfree:
+    bu_ptbl_free(bot_dps);
+    bu_free(bot_dps, "bot directory pointer table");
+
+    return ret;
+}
 
 int
 ged_comb(struct ged *gedp, int argc, const char *argv[])
@@ -470,6 +557,7 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
     char *comb_name;
     int i,c, sum;
     db_op_t oper;
+    int do_decimation = 0;
     int set_region = 0;
     int set_comb = 0;
     int standard_comb_build = 1;
@@ -477,7 +565,7 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
     int flatten_comb = 0;
     int lift_region_comb = 0;
     int alter_existing = 1;
-    static const char *usage = "[-c|-r] [-w|-f|-l] [-S] comb_name [<operation object>]";
+    static const char *usage = "[-c|-r] [-w|-f|-l] [-d] [-S] comb_name [<operation object>]";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -503,10 +591,13 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
 
     bu_optind = 1;
     /* Grab any arguments off of the argv list */
-    while ((c = bu_getopt(argc, (char **)argv, "crwflS")) != -1) {
+    while ((c = bu_getopt(argc, (char **)argv, "cdflrswFS")) != -1) {
 	switch (c) {
 	    case 'c' :
 		set_comb = 1;
+		break;
+	    case 'd' :
+		do_decimation = 1;
 		break;
 	    case 'r' :
 		set_region = 1;
@@ -559,7 +650,7 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(gedp->ged_result_str, "ERROR: %s is not a combination", comb_name);
 	    return GED_ERROR;
 	}
-	if (!alter_existing) {
+	if (!alter_existing && !do_decimation) {
 	    bu_vls_printf(gedp->ged_result_str, "ERROR: %s already exists.", comb_name);
 	    return GED_ERROR;
 	}
@@ -568,6 +659,11 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
     /* Update references once before we start all of this - db_search
      * needs nref to be current to work correctly. */
     db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
+
+    /* Do decimation, if that's enabled */
+    if (do_decimation) {
+	return comb_decimate(gedp, dp);
+    }
 
     /* If we aren't performing one of the option operations,
      * proceed with the standard comb build */
