@@ -257,7 +257,7 @@ analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, fastf_t *avg_thickness, stru
     int pntcnt_rand = 0;
     int pntcnt_sobol = 0;
 
-    if (!rpnts || !dbip || !obj || !tol || ncpus == 0) {
+    if (!dbip || !obj || !tol || ncpus == 0) {
 	ret = 0;
 	goto memfree;
     }
@@ -435,9 +435,11 @@ analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, fastf_t *avg_thickness, stru
 	int pc = 0;
 	int total_pnts = 0;
 	long double thickness_total = 0.0;
-	rpnts->count = pntcnt;
-	BU_ALLOC(rpnts->point, struct pnt_normal);
-	BU_LIST_INIT(&(((struct pnt_normal *)rpnts->point)->l));
+	if (rpnts) {
+	    rpnts->count = pntcnt;
+	    BU_ALLOC(rpnts->point, struct pnt_normal);
+	    BU_LIST_INIT(&(((struct pnt_normal *)rpnts->point)->l));
+	}
 	/* Grid points */
 	if (grid_pnts) {
 	    pc = 0;
@@ -445,7 +447,9 @@ analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, fastf_t *avg_thickness, stru
 		for (j = 0; j < (int)BU_PTBL_LEN(grid_pnts[i]); j++) {
 		    struct pnt_normal_thickness *pnthick = (struct pnt_normal_thickness *)BU_PTBL_GET(grid_pnts[i], j);
 		    if (pc < pntcnt_grid) {
-			BU_LIST_PUSH(&(((struct pnt_normal *)rpnts->point)->l), &(pnthick->pt)->l);
+			if (rpnts) {
+			    BU_LIST_PUSH(&(((struct pnt_normal *)rpnts->point)->l), &(pnthick->pt)->l);
+			}
 			thickness_total += pnthick->thickness;
 			pnthickness_free(pnthick, 0);
 			total_pnts++;
@@ -463,7 +467,9 @@ analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, fastf_t *avg_thickness, stru
 		for (j = 0; j < (int)BU_PTBL_LEN(rand_pnts[i]); j++) {
 		    struct pnt_normal_thickness *pnthick = (struct pnt_normal_thickness *)BU_PTBL_GET(rand_pnts[i], j);
 		    if (pc < pntcnt_rand) {
-			BU_LIST_PUSH(&(((struct pnt_normal *)rpnts->point)->l), &(pnthick->pt)->l);
+			if (rpnts) {
+			    BU_LIST_PUSH(&(((struct pnt_normal *)rpnts->point)->l), &(pnthick->pt)->l);
+			}
 			thickness_total += pnthick->thickness;
 			pnthickness_free(pnthick, 0);
 			total_pnts++;
@@ -481,7 +487,9 @@ analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, fastf_t *avg_thickness, stru
 		for (j = 0; j < (int)BU_PTBL_LEN(sobol_pnts[i]); j++) {
 		    struct pnt_normal_thickness *pnthick = (struct pnt_normal_thickness *)BU_PTBL_GET(sobol_pnts[i], j);
 		    if (pc < pntcnt_sobol) {
-			BU_LIST_PUSH(&(((struct pnt_normal *)rpnts->point)->l), &(pnthick->pt)->l);
+			if (rpnts) {
+			    BU_LIST_PUSH(&(((struct pnt_normal *)rpnts->point)->l), &(pnthick->pt)->l);
+			}
 			thickness_total += pnthick->thickness;
 			pnthickness_free(pnthick, 0);
 			total_pnts++;
