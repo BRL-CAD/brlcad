@@ -1514,7 +1514,9 @@ ged_nmg_obj_memfree:
     if (!opts->quiet && ret != GED_OK) {
 	bu_log("NMG: failed to generate %s\n", newname);
     }
-    nmg_destroy();
+    if (!opts->make_nmg) {
+	nmg_destroy();
+    }
 
     return ret;
 }
