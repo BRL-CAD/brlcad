@@ -635,8 +635,12 @@ cmd_ged_plain_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, 
 
     /* redraw any objects specified that are already drawn */
     if (argc > 1) {
+	struct bu_vls rcache = BU_VLS_INIT_ZERO;
 	int who_ret;
 	const char *who_cmd[2] = {"who", NULL};
+
+	/* Stash previous result string state so who cmd doesn't replace it */
+	bu_vls_sprintf(&rcache, "%s", bu_vls_addr(gedp->ged_result_str));
 
 	who_ret = ged_who(gedp, 1, who_cmd);
 	if (who_ret == GED_OK) {
@@ -668,6 +672,10 @@ cmd_ged_plain_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, 
 	    bu_free(who_argv, "who_argv");
 	    bu_free(str, "result strdup");
 	}
+
+	/* Restore ged result str */
+	bu_vls_sprintf(gedp->ged_result_str, "%s", bu_vls_addr(&rcache));
+	bu_vls_free(&rcache);
     }
 
     if (ret & GED_HELP || ret == GED_OK)
