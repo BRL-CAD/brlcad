@@ -215,6 +215,37 @@
     </para>
   </refsection>
   
+  <refsection xml:id="util">
+    <title>USEFUL TRICKS</title>
+    <para>
+      These are some useful tricks for targeted manipulation of the facetization process.
+    </para>
+    <example>
+      <title>Reset CM state of a subset of objects.</title>
+      <para>
+	Use search -exec to reset just the continuation method flag (will result in resume
+	retrying CM on all missing objects, without triggering the full retry of all methods
+	entailed by the --retry option.)  More targeted searches can do this reset for more
+	narrow subsets of the .g database.
+      </para>
+      <para>
+	<prompt>mged&gt;</prompt> <userinput>search -attr facetize:CM -exec attr rm "{}" facetize:CM ";"</userinput>
+      </para>
+    </example>
+    
+    <example>
+      <title>List invalid BoT objects below a comb</title>
+      <para>
+	Use search -exec and a Tcl proc to report on invalid objects below a comb.
+      </para>
+      <para>
+	<prompt>mged&gt;</prompt> <userinput>proc echoinvalid {objname} { if {!\[bot check solid $objname\] } { puts $objname } }</userinput>
+	<prompt>mged&gt;</prompt> <userinput>search comb -type bot -exec echoinvalid "{}" ";"</userinput>
+      </para>
+    </example>
+    
+  </refsection>
+  
   <refsection xml:id="author">
     <title>AUTHOR</title>
     <para>BRL-CAD Team</para>
