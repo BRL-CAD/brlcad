@@ -212,9 +212,6 @@
 #   define lseek _lseek
 #endif
 
-/* set up fseek */
-#define fseek _fseek
-
 #cmakedefine fmax __max
 #define ioctl ioctlsocket
 
