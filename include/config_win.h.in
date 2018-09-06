@@ -213,18 +213,7 @@
 #endif
 
 /* set up fseek */
-#if !defined(fseek) && defined(HAVE__FSEEKI64) && defined(SIZEOF_VOID_P) && SIZEOF_VOID_P == 8
-#   define fseek _fseeki64
-#else
-#   define fseek _fseek
-#endif
-
-/* set up ftell */
-#if !defined(ftell) && defined(HAVE__FTELLI64) && defined(SIZEOF_VOID_P) && SIZEOF_VOID_P == 8
-#   define ftell _ftelli64
-#else
-#   define ftell _ftell
-#endif
+#define fseek _fseek
 
 #cmakedefine fmax __max
 #define ioctl ioctlsocket
