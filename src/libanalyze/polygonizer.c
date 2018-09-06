@@ -61,6 +61,7 @@
 #include "bu/malloc.h"
 #include "bu/time.h"
 #include "raytrace.h"
+#include "analyze.h"
 
 /**
  * Callback function signature for the function used to decide if the query

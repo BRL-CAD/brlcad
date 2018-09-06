@@ -32,7 +32,6 @@
 
 #include "bu/sort.h"
 #include "ged.h"
-#include "analyze.h"
 
 
 typedef struct {
