@@ -34,6 +34,7 @@
 #include <signal.h>
 
 #include "bu/file.h"
+#include "bu/interrupt.h"
 #include "bu/log.h"
 #include "bu/exit.h"
 
