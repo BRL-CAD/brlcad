@@ -24,15 +24,15 @@ BRLCAD_LIB_INCLUDE_DIRS(bu BU_INCLUDE_DIRS BU_LOCAL_INCLUDE_DIRS)
 # Use configure_file to make copies of the mime input files,
 # so CMake will get notified for the need for a re-configure
 # if they are edited.
-configure_file(${BRLCAD_SOURCE_DIR}/misc/mime.types ${CMAKE_CURRENT_BINARY_DIR}/tmp COPYONLY)
-configure_file(${BRLCAD_SOURCE_DIR}/misc/mime_cad.types ${CMAKE_CURRENT_BINARY_DIR}/tmp COPYONLY)
-execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/tmp)
+configure_file(${BRLCAD_SOURCE_DIR}/misc/mime.types ${CMAKE_CURRENT_BINARY_DIR}/mime.tmp COPYONLY)
+configure_file(${BRLCAD_SOURCE_DIR}/misc/mime_cad.types ${CMAKE_CURRENT_BINARY_DIR}/mime.tmp COPYONLY)
+execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/mime.tmp)
 
 # Run the generation process
 include(${CMAKE_CURRENT_SOURCE_DIR}/mime.cmake)
 
 # We do want to install the mime header
-install(FILES ${BU_MIME_TYPES_H_FILE} DESTINATION ${INCLUDE_DIR}/brlcad/bu)
+BRLCAD_MANAGE_FILES("${BU_MIME_TYPES_H_FILE}" ${INCLUDE_DIR}/brlcad/bu)
 
 # Year 2038+ support
 set_property(SOURCE y2038/time64.c PROPERTY EXTERNAL 1)
