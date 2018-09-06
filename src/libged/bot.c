@@ -302,7 +302,15 @@ bot_check(struct ged *gedp, int argc, const char *argv[], struct bu_opt_desc *d,
 
     if (argc < 3 || BU_STR_EQUAL(check, "solid")) {
 	struct bg_trimesh_solid_errors errors = BG_TRIMESH_SOLID_ERRORS_INIT_NULL;
-	int not_solid = bg_trimesh_solid2(num_vertices, num_faces, bot->vertices, bot->faces, visualize_results ? &errors : NULL);
+	int not_solid;
+
+	if (bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_PLATE_NOCOS) {
+	    bu_vls_printf(gedp->ged_result_str, "1");
+	    rt_db_free_internal(ip);
+	    return GED_OK;
+	}
+
+	not_solid = bg_trimesh_solid2(num_vertices, num_faces, bot->vertices, bot->faces, visualize_results ? &errors : NULL);
 	bu_vls_printf(gedp->ged_result_str, not_solid ? "0" : "1");
 
 	if (not_solid && visualize_results) {
