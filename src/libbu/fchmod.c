@@ -38,6 +38,7 @@
 #  endif
 #endif
 
+#include "bu/app.h"
 #include "bu/file.h"
 #include "bu/str.h"
 
