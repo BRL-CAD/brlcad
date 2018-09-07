@@ -536,8 +536,8 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 		    /* variables used to determine final effects of
 		       field length and precision (different for
 		       strings versus numbers) */
-		    int minfldwid = -1;
-		    int maxstrlen = -1;
+		    ssize_t minfldwid = -1;
+		    ssize_t maxstrlen = -1;
 
 		    char *str = va_arg(ap, char *);
 		    const char *fp = fbufp;
@@ -549,14 +549,14 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 
 			    if (!f.have_dot) {
 				if (*fp == '0') {
-				    bu_sscanf(fp, "%d", &f.fieldlen);
+				    bu_sscanf(fp, "%zd", &f.fieldlen);
 				} else {
 				    f.fieldlen = atoi(fp);
 				}
 				f.flags |= FIELDLEN;
 			    } else {
 				if (*fp == '0') {
-				    bu_sscanf(fp, "%d", &f.precision);
+				    bu_sscanf(fp, "%zd", &f.precision);
 				} else {
 				    f.precision = atoi(fp);
 				}
@@ -589,7 +589,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 		    }
 
 		    if (str) {
-			int stringlen = (int)strlen(str);
+			size_t stringlen = strlen(str);
 			struct bu_vls tmpstr = BU_VLS_INIT_ZERO;
 
 			/* use a copy of the string */
@@ -598,21 +598,21 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 			/* handle a non-empty string */
 			/* strings may be truncated */
 			if (maxstrlen >= 0) {
-			    if (maxstrlen < stringlen) {
+			    if ((size_t)maxstrlen < stringlen) {
 				/* have to truncate */
 				bu_vls_trunc(&tmpstr, maxstrlen);
 				stringlen = maxstrlen;
 			    } else {
-				maxstrlen = stringlen;
+				maxstrlen = (ssize_t)stringlen;
 			    }
 			}
 			minfldwid = minfldwid < maxstrlen ? maxstrlen : minfldwid;
 
-			if (stringlen < minfldwid) {
+			if ((ssize_t)stringlen < minfldwid) {
 			    /* padding spaces needed */
 			    /* start a temp string to deal with padding */
 			    struct bu_vls padded = BU_VLS_INIT_ZERO;
-			    int i;
+			    size_t i;
 
 			    if (f.left_justify) {
 				/* string goes before padding spaces */
