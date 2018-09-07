@@ -571,12 +571,14 @@ _ged_facetize_solid_objs(struct ged *gedp, int argc, struct directory **dpa, str
 	GED_DB_GET_INTERNAL(gedp, &intern, bot_dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
 	bot = (struct rt_bot_internal *)intern.idb_ptr;
 	RT_BOT_CK_MAGIC(bot);
-	not_solid = bg_trimesh_solid2((int)bot->num_vertices, (int)bot->num_faces, bot->vertices, bot->faces, NULL);
-	if (not_solid) {
-	    if (opts->verbosity) {
-		bu_log("-- Found non solid BoT: %s\n", bot_dp->d_namep);
+	if (bot->mode != RT_BOT_PLATE && bot->mode != RT_BOT_PLATE_NOCOS) {
+	    not_solid = bg_trimesh_solid2((int)bot->num_vertices, (int)bot->num_faces, bot->vertices, bot->faces, NULL);
+	    if (not_solid) {
+		if (opts->verbosity) {
+		    bu_log("-- Found non solid BoT: %s\n", bot_dp->d_namep);
+		}
+		ret = 0;
 	    }
-	    ret = 0;
 	}
 	rt_db_free_internal(&intern);
     }
