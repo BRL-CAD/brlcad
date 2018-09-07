@@ -40,7 +40,9 @@ cmake_minimum_required(VERSION 3.1.3)
 # Set CMake project name
 project(GDAL)
 
-set(CMAKE_CXX_STANDARD 11)
+if(NOT MSVC OR "${MSVC_VERSION}" GREATER 1700)
+   set(CMAKE_CXX_STANDARD 11)
+endif(NOT MSVC OR "${MSVC_VERSION}" GREATER 1700)
 
 include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}
@@ -116,10 +118,11 @@ include(CheckCXXSourceRuns)
 check_cxx_source_runs("${nullptr_src}" HAVE_NULLPTR)
 
 if(HAVE_NULLPTR)
-  add_definitions(-DHAVE_CXX11)
+  if(NOT MSVC OR "${MSVC_VERSION}" GREATER 1700)
+     add_definitions(-DHAVE_CXX11)
+  endif(NOT MSVC OR "${MSVC_VERSION}" GREATER 1700)
   add_definitions(-DNULL_AS_NULLPTR)
 endif(HAVE_NULLPTR)
-
 
 if(MSVC)
   add_definitions(-DUSE_WIN32_MUTEX)
