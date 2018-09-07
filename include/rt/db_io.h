@@ -289,17 +289,21 @@ RT_EXPORT extern void db5_make_free_object(struct bu_external *ep,
 
 
 /**
- * Given a variable-width length field in network order (XDR), store
- * it in *lenp.
+ * Given a variable-width length field character pointer (cp) in
+ * network order (XDR), store it in *lenp.
  *
- * This routine processes signed values.
+ * Format is typically expected to be one of:
+ *   DB5HDR_WIDTHCODE_8BIT
+ *   DB5HDR_WIDTHCODE_16BIT
+ *   DB5HDR_WIDTHCODE_32BIT
+ *   DB5HDR_WIDTHCODE_64BIT
  *
  * Returns -
  * The number of bytes of input that were decoded.
  */
-RT_EXPORT extern int db5_decode_signed(size_t			*lenp,
-				       const unsigned char	*cp,
-				       int			format);
+RT_EXPORT extern size_t db5_decode_signed(size_t *lenp,
+					  const unsigned char *cp,
+					  int format);
 
 /**
  * Given a variable-width length field in network order (XDR), store
