@@ -584,6 +584,7 @@ HIDDEN int
 _write_pnts(struct ged *gedp, int argc, const char **argv)
 {
     int print_help = 0;
+    int ply_out = 0;
     int opt_ret = 0;
     FILE *fp;
     struct rt_db_internal intern;
@@ -593,11 +594,12 @@ _write_pnts(struct ged *gedp, int argc, const char **argv)
     const char *pnt_prim = NULL;
     const char *filename = NULL;
     const char *usage = "Usage: pnts write [options] <pnts_obj> <output_file>\n\nWrites out data based on the point type, one row per point, using a format of x y z [i j k] [scale] [R G B] (bracketed groups may or may not be present depending on point type.)\n\n";
-    struct bu_opt_desc d[3];
+    struct bu_opt_desc d[4];
     int precis = 0;
     BU_OPT(d[0], "h", "help",      "",   NULL,         &print_help,   "Print help and exit");
     BU_OPT(d[1], "p", "precision", "#",  &bu_opt_int,  &precis,       "Number of digits after decimal to use when printing out numbers (default 17)");
-    BU_OPT_NULL(d[2]);
+    BU_OPT(d[2], "",  "ply",       "",   NULL,         &ply_out,      "Write output using PLY format instead of x y z [i j k] [scale] [R G B] text file");
+    BU_OPT_NULL(d[3]);
 
     argc-=(argc>0); argv+=(argc>0); /* skip command name argv[0] */
 
@@ -655,6 +657,28 @@ _write_pnts(struct ged *gedp, int argc, const char **argv)
 	return GED_ERROR;
     }
 
+    if (ply_out) {
+	fprintf(fp, "ply\nformat ascii 1.0\ncomment %s\n", pnt_dp->d_namep);
+	fprintf(fp, "element vertex %ld\n", pnts->count);
+	fprintf(fp, "property double x\n");
+	fprintf(fp, "property double y\n");
+	fprintf(fp, "property double z\n");
+	if (pnts->type == RT_PNT_TYPE_NRM || pnts->type == RT_PNT_TYPE_SCA_NRM
+		|| pnts->type == RT_PNT_TYPE_COL_NRM || pnts->type == RT_PNT_TYPE_COL_SCA_NRM) {
+	    fprintf(fp, "property double nx\n");
+	    fprintf(fp, "property double ny\n");
+	    fprintf(fp, "property double nz\n");
+	}
+	if (pnts->type == RT_PNT_TYPE_COL || pnts->type == RT_PNT_TYPE_COL_SCA
+		|| pnts->type == RT_PNT_TYPE_COL_NRM || pnts->type == RT_PNT_TYPE_COL_SCA_NRM) {
+	    fprintf(fp, "property uchar red\n");
+	    fprintf(fp, "property uchar green\n");
+	    fprintf(fp, "property uchar blue\n");
+	}
+	fprintf(fp, "element face 0\n");
+	fprintf(fp, "end_header\n");
+    }
+
     if (pnts->type == RT_PNT_TYPE_PNT) {
 	struct pnt *pn = NULL;
 	struct pnt *pl = (struct pnt *)pnts->point;
@@ -705,9 +729,18 @@ _write_pnts(struct ged *gedp, int argc, const char **argv)
 	    for (i = 0; i < 3; i++) {
 		_pnts_fastf_t_to_vls(&pnt_str, pn->v[i], precis);
 		fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
+		if (i != 2 || (i == 2 && !ply_out)) {
+		    fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
+		} else {
+		    fprintf(fp, "%s\n", bu_vls_addr(&pnt_str));
+		}
 	    }
-	    _pnts_fastf_t_to_vls(&pnt_str, pn->s, precis);
-	    fprintf(fp, "%s\n", bu_vls_addr(&pnt_str));
+
+	    /* TODO - not sure how to handle scale with PLY */
+	    if (!ply_out) {
+		_pnts_fastf_t_to_vls(&pnt_str, pn->s, precis);
+		fprintf(fp, "%s\n", bu_vls_addr(&pnt_str));
+	    }
 	}
 	rt_db_free_internal(&intern);
 	fclose(fp);
@@ -747,8 +780,11 @@ _write_pnts(struct ged *gedp, int argc, const char **argv)
 		_pnts_fastf_t_to_vls(&pnt_str, pn->v[i], precis);
 		fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
 	    }
-	    _pnts_fastf_t_to_vls(&pnt_str, pn->s, precis);
-	    fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
+	    /* TODO - not sure how to handle scale with PLY */
+	    if (!ply_out) {
+		_pnts_fastf_t_to_vls(&pnt_str, pn->s, precis);
+		fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
+	    }
 	    if (bu_color_to_rgb_chars(&(pn->c), rgb)) {
 		bu_vls_sprintf(gedp->ged_result_str, "Error: cannot process point color\n");
 		rt_db_free_internal(&intern);
@@ -800,10 +836,17 @@ _write_pnts(struct ged *gedp, int argc, const char **argv)
 	    }
 	    for (i = 0; i < 3; i++) {
 		_pnts_fastf_t_to_vls(&pnt_str, pn->n[i], precis);
-		fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
+		if (i != 2 || (i == 2 && !ply_out)) {
+		    fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
+		} else {
+		    fprintf(fp, "%s\n", bu_vls_addr(&pnt_str));
+		}
 	    }
-	    _pnts_fastf_t_to_vls(&pnt_str, pn->s, precis);
-	    fprintf(fp, "%s\n", bu_vls_addr(&pnt_str));
+	    /* TODO - not sure how to handle scale with PLY */
+	    if (!ply_out) {
+		_pnts_fastf_t_to_vls(&pnt_str, pn->s, precis);
+		fprintf(fp, "%s\n", bu_vls_addr(&pnt_str));
+	    }
 	}
 	rt_db_free_internal(&intern);
 	fclose(fp);
@@ -824,8 +867,11 @@ _write_pnts(struct ged *gedp, int argc, const char **argv)
 		_pnts_fastf_t_to_vls(&pnt_str, pn->n[i], precis);
 		fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
 	    }
-	    _pnts_fastf_t_to_vls(&pnt_str, pn->s, precis);
-	    fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
+	    /* TODO - not sure how to handle scale with PLY */
+	    if (!ply_out) {
+		_pnts_fastf_t_to_vls(&pnt_str, pn->s, precis);
+		fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
+	    }
 	    if (bu_color_to_rgb_chars(&(pn->c), rgb)) {
 		bu_vls_sprintf(gedp->ged_result_str, "Error: cannot process point color\n");
 		rt_db_free_internal(&intern);
