@@ -483,7 +483,7 @@ comb_decimate(struct ged *gedp, struct directory *dp)
 	struct bn_tol btol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
 	struct rt_db_internal intern;
 	struct rt_bot_internal *bot;
-	int not_solid;
+	int not_solid = 0;
 	int old_face_cnt;
 	int edges_removed;
 	point_t obj_min, obj_max;
