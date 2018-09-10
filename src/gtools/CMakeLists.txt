@@ -31,6 +31,9 @@ BRLCAD_ADDEXEC(gsh "${GSH_SRCS}"  "libged;libbu" NO_INSTALL)
 add_subdirectory(beset)
 add_subdirectory(gdiff)
 
+add_subdirectory(tests)
+
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake
