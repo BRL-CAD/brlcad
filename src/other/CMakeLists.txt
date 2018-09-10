@@ -867,13 +867,13 @@ if(BRLCAD_OPENNURBS_BUILD)
 endif(BRLCAD_OPENNURBS_BUILD)
 
 # Screened Poisson Reconstruction Library
-set(poissonrecon_DESCRIPTION "
-Option for enabling and disabling compilation of the PoissonRecon library
-provided with BRL-CAD's source code.  Default is AUTO, responsive to
-the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
-version if BRLCAD_BUNDLED_LIBS is also AUTO.
+set(spsr_DESCRIPTION "
+Option for enabling and disabling compilation of the Screened Poisson
+Surface Reconstruction library provided with BRL-CAD's source code.
+Default is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option
+and testing first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
-THIRD_PARTY(PoissonRecon SPSR PoissonRecon poissonrecon_DESCRIPTION ALIASES
+THIRD_PARTY(libspsr SPSR libspsr spsr_DESCRIPTION ALIASES
   ENABLE_SPSR FLAGS NOSYS)
 if(BRLCAD_SPSR_BUILD)
   SetTargetFolder(PoissonRecon "Third Party Executables")

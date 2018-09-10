@@ -27,7 +27,7 @@
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bg/spsr.h"
-#include "../other/PoissonRecon/Src/SPSR.h"
+#include "../other/libspsr/Src/SPSR.h"
 
 struct c_vert {
     point_t p;
