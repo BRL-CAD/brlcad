@@ -27,7 +27,7 @@
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bg/spsr.h"
-#include "../other/PoissonRecon/Src/SPR.h"
+#include "../other/PoissonRecon/Src/SPSR.h"
 
 struct c_vert {
     point_t p;
@@ -41,7 +41,7 @@ bg_3d_spsr(int **faces, int *num_faces, point_t **points, int *num_pnts,
 	int num_input_pnts, struct bg_3d_spsr_opts *spsr_opts)
 {
     int i = 0;
-    struct spr_options opts = SPR_OPTIONS_DEFAULT_INIT;
+    struct spsr_options opts = SPSR_OPTIONS_DEFAULT_INIT;
     struct c_vert **c_verts = (struct c_vert **)bu_calloc(num_input_pnts, sizeof(struct c_vert *), "output array");
     if (spsr_opts) {
 	if (spsr_opts->depth) opts.depth = spsr_opts->depth;
@@ -56,7 +56,7 @@ bg_3d_spsr(int **faces, int *num_faces, point_t **points, int *num_pnts,
 	v->is_set = 1;
 	c_verts[i] = v;
     }
-    (void)spr_surface_build(faces, num_faces, (double **)points, num_pnts, (const struct cvertex **)c_verts, num_input_pnts, &opts);
+    (void)spsr_surface_build(faces, num_faces, (double **)points, num_pnts, (const struct cvertex **)c_verts, num_input_pnts, &opts);
     for (i = 0; i < num_input_pnts; i++) {
 	BU_PUT(c_verts[i], struct c_vert);
     }

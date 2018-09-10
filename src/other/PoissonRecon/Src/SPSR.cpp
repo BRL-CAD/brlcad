@@ -30,7 +30,7 @@ DAMAGE.
 #include <stdlib.h>
 #include <math.h>
 #include <float.h>
-#include "SPR.h"
+#include "SPSR.h"
 #include <iostream>
 #ifdef _WIN32
 #include <Windows.h>
@@ -51,8 +51,8 @@ void DumpOutput2( char* str , const char* format , ... ) {};
 
 
 extern "C" int
-spr_surface_build(int **faces, int *num_faces, double **points, int *num_pnts,
-		const struct cvertex **verts, int cnt, struct spr_options *opts)
+spsr_surface_build(int **faces, int *num_faces, double **points, int *num_pnts,
+		const struct cvertex **verts, int cnt, struct spsr_options *opts)
 {
     if (!num_pnts || !num_faces || !points || !faces) return -1;
     // Probably unnecessary but here to be consistent with original code

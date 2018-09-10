@@ -19,10 +19,10 @@ set(LIBBG_SOURCES
   util.c
   )
 
-BRLCAD_ADDLIB(libbg "${LIBBG_SOURCES}" "libbn;libbu;libSPR")
+BRLCAD_ADDLIB(libbg "${LIBBG_SOURCES}" "libbn;libbu;libSPSR")
 set_target_properties(libbg PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if(CPP_DLL_DEFINES)
-  set_property(TARGET libbg APPEND PROPERTY COMPILE_DEFINITIONS "SPR_DLL_IMPORTS")
+  set_property(TARGET libbg APPEND PROPERTY COMPILE_DEFINITIONS "SPSR_DLL_IMPORTS")
 endif(CPP_DLL_DEFINES)
 
 add_subdirectory(tests)

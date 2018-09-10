@@ -26,20 +26,20 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF S
 DAMAGE.
 */
 
-#ifndef SPR_INCLUDED
-#define SPR_INCLUDED
+#ifndef SPSR_INCLUDED
+#define SPSR_INCLUDED
 
 #include "cvertex.h"
 
-#ifndef SPR_EXPORT
-#  if defined(SPR_DLL_EXPORTS) && defined(SPR_DLL_IMPORTS)
-#    error "Only SPR_DLL_EXPORTS or SPR_DLL_IMPORTS can be defined, not both."
-#  elif defined(SPR_DLL_EXPORTS)
-#    define SPR_EXPORT __declspec(dllexport)
-#  elif defined(SPR_DLL_IMPORTS)
-#    define SPR_EXPORT __declspec(dllimport)
+#ifndef SPSR_EXPORT
+#  if defined(SPSR_DLL_EXPORTS) && defined(SPSR_DLL_IMPORTS)
+#    error "Only SPSR_DLL_EXPORTS or SPSR_DLL_IMPORTS can be defined, not both."
+#  elif defined(SPSR_DLL_EXPORTS)
+#    define SPSR_EXPORT __declspec(dllexport)
+#  elif defined(SPSR_DLL_IMPORTS)
+#    define SPSR_EXPORT __declspec(dllimport)
 #  else
-#    define SPR_EXPORT
+#    define SPSR_EXPORT
 #  endif
 #endif
 
@@ -55,7 +55,7 @@ DAMAGE.
 
 __BEGIN_DECLS
 
-struct spr_options {
+struct spsr_options {
 	const char *xform;
 	const char *voxelgrid;
 	const char *confidence;
@@ -82,15 +82,15 @@ struct spr_options {
 	double pointweight;
 };
 
-#define SPR_OPTIONS_DEFAULT_INIT { NULL, NULL, NULL, NULL, 0, 0, 8, 0, 6, 1, 8, -1, 5, 0, 8, 1, 1, 1.0, 1.1, 0.001, 4.0 }
+#define SPSR_OPTIONS_DEFAULT_INIT { NULL, NULL, NULL, NULL, 0, 0, 8, 0, 6, 1, 8, -1, 5, 0, 8, 1, 1, 1.0, 1.1, 0.001, 4.0 }
 
-SPR_EXPORT extern int
-spr_surface_build(int **faces, int *num_faces, double **points, int *num_pnts,
-		const struct cvertex **verts, int cnt, struct spr_options *opts);
+SPSR_EXPORT extern int
+spsr_surface_build(int **faces, int *num_faces, double **points, int *num_pnts,
+		const struct cvertex **verts, int cnt, struct spsr_options *opts);
 
 __END_DECLS
 
-#endif /* SPR_INCLUDE */
+#endif /* SPSR_INCLUDE */
 
 /*
  * Local Variables:
