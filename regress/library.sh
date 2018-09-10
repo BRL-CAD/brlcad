@@ -71,7 +71,7 @@ log ( ) {
 # helper function runs a given command, logs it to a file, and stashes
 # the return status.  reads LOGFILE global, increments STATUS global.
 run ( ) {
-    log "... running ${@:2}"
+    log "... running $@"
     "$@" >> $LOGFILE 2>&1
     ret=$?
     case "x$STATUS" in
