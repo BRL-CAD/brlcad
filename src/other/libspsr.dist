@@ -1,4 +1,4 @@
-set(PoissonRecon_ignore_files
+set(libspsr_ignore_files
 CMakeLists.txt
 LICENSE
 Src/Allocator.h
