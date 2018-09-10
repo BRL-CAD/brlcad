@@ -39,8 +39,8 @@ Src/PointStream.inl
 Src/PoissonRecon.cpp
 Src/Polynomial.h
 Src/Polynomial.inl
-Src/SPR.cpp
-Src/SPR.h
+Src/SPSR.cpp
+Src/SPSR.h
 Src/SparseMatrix.h
 Src/SparseMatrix.inl
 Src/SurfaceTrimmer.cpp
