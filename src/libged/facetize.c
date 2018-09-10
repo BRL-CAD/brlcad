@@ -1096,6 +1096,43 @@ ged_facetize_spsr_memfree:
     return ret;
 }
 
+HIDDEN
+int
+_ged_check_plate_mode(struct ged *gedp, struct directory *dp)
+{
+    unsigned int i;
+    int ret = 0;
+    struct bu_ptbl *bot_dps = NULL;
+    const char *bot_objs = "-type bot";
+    if (!dp || !gedp) return 0;
+
+    BU_ALLOC(bot_dps, struct bu_ptbl);
+    if (db_search(bot_dps, DB_SEARCH_RETURN_UNIQ_DP, bot_objs, 1, &dp, gedp->ged_wdbp->dbip, NULL) < 0) {
+	goto ged_check_plate_mode_memfree;
+    }
+
+    /* Got all the BoT objects in the tree, check each of them for validity */
+    for (i = 0; i < BU_PTBL_LEN(bot_dps); i++) {
+	struct rt_db_internal intern;
+	struct rt_bot_internal *bot;
+	struct directory *bot_dp = (struct directory *)BU_PTBL_GET(bot_dps, i);
+	GED_DB_GET_INTERNAL(gedp, &intern, bot_dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
+	bot = (struct rt_bot_internal *)intern.idb_ptr;
+	RT_BOT_CK_MAGIC(bot);
+	if (bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_PLATE_NOCOS) {
+	    ret = 1;
+	    rt_db_free_internal(&intern);
+	    goto ged_check_plate_mode_memfree;
+	}
+	rt_db_free_internal(&intern);
+    }
+
+ged_check_plate_mode_memfree:
+    bu_ptbl_free(bot_dps);
+    bu_free(bot_dps, "bot directory pointer table");
+    return ret;
+}
+
 HIDDEN int
 _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, const char *objname, const char *newname, struct _ged_facetize_opts *opts)
 {
@@ -1133,6 +1170,8 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
     r->failure_mode = GED_FACETIZE_FAILURE;
 
     if (!r) return GED_FACETIZE_FAILURE;
+
+    if (_ged_check_plate_mode(gedp, dp)) return GED_FACETIZE_FAILURE;
 
     /* From here on out, assume success until we fail */
     r->failure_mode = GED_FACETIZE_SUCCESS;
