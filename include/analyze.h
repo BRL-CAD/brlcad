@@ -364,8 +364,14 @@ ANALYZE_EXPORT int nirt_line_segments(struct bn_vlblock **segs, struct nirt_stat
 ANALYZE_EXPORT int analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, double *avg_thickness, struct db_i *dbip,
 	       const char *obj, struct bn_tol *tol, int flags, int max_pnts, int max_time, int verbosity);
 
+struct analyze_polygonize_params {
+    int max_time;
+    long int minimum_free_mem;
+    int verbosity;
+};
+#define ANALYZE_POLYGONIZE_PARAMS_DEFAULT { 30, 150000000, 0 }
 ANALYZE_EXPORT extern int
-analyze_polygonize(int **faces, int *num_faces, point_t **vertices, int *num_vertices, fastf_t size, point_t p_s, const char *obj, struct db_i *dbip, int max_time, int verbosity);
+analyze_polygonize(int **faces, int *num_faces, point_t **vertices, int *num_vertices, fastf_t size, point_t p_s, const char *obj, struct db_i *dbip, struct analyze_polygonize_params *p);
 
 
 struct current_state;

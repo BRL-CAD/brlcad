@@ -64,8 +64,6 @@
 #include "raytrace.h"
 #include "analyze.h"
 
-#define POLYGONIZE_MEMORY_THRESHOLD 150000000
-
 /**
  * Callback function signature for the function used to decide if the query
  * point q is inside or outside the surface.  The value in d is intended to
@@ -735,8 +733,8 @@ analyze_polygonize(
 	point_t p_s,
        	const char *obj,
        	struct db_i *dbip,
-	int max_time,
-	int verbosity)
+	struct analyze_polygonize_params *params
+	)
 {
     int ret = 0;
     int ncpus = bu_avail_cpus();
@@ -750,7 +748,7 @@ analyze_polygonize(
     struct rt_i *rtip;
     fastf_t timestamp;
     fastf_t timestamp2;
-    fastf_t mt = (max_time > 0) ? (fastf_t)max_time : 0.0;
+    fastf_t mt = (params && params->max_time > 0) ? (fastf_t)params->max_time : 0.0;
 
     if (!faces || !num_faces || !vertices || !num_vertices || !obj || !dbip) return -1;
 
@@ -857,15 +855,17 @@ analyze_polygonize(
 	    goto analyze_polygonizer_memfree;
 	}
 
-	avail_mem = bu_avail_mem();
-	if (avail_mem >= 0 && avail_mem < POLYGONIZE_MEMORY_THRESHOLD) {
-	    /* memory too tight, bail */
-	    ret = 2;
-	    goto analyze_polygonizer_memfree;
+	if (params && params->minimum_free_mem > 0) {
+	    avail_mem = bu_avail_mem();
+	    if (avail_mem >= 0 && avail_mem < params->minimum_free_mem) {
+		/* memory too tight, bail */
+		ret = 2;
+		goto analyze_polygonizer_memfree;
+	    }
 	}
 
 	if (((bu_gettime() - timestamp2)/1e6) > 5) {
-	    if (verbosity) {
+	    if (params && params->verbosity) {
 		int delta = (int)(bu_gettime() - timestamp)/1e6;
 		bu_log("Triangle count after %d seconds: %d\n", delta, m->triangles.count);
 	    }
