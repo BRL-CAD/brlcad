@@ -129,7 +129,7 @@ LOGFILE="$logfile_saved"
 # scrub output so we're not sensitive to things we don't care about
 # like the path to nirt.
 rm -f nirt.out
-log "substituting $NIRT with nirt`"
+log "substituting $NIRT with nirt"
 sed "/ running / s|$NIRT|nirt|g" < nirt.out.raw > nirt.out
 if test -f nirt.out ; then
     rm -f nirt.out.raw
