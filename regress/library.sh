@@ -49,6 +49,9 @@ DYLD_LIBRARY_PATH=../src/other/tcl/unix:../src/other/tk/unix:$DYLD_LIBRARY_PATH
 export LD_LIBRARY_PATH DYLD_LIBRARY_PATH
 
 is_absolute() {
+    if test "x$1" = "x" ; then
+	return
+    fi
     case "$1" in
 	/*)
 	    true;
@@ -61,8 +64,8 @@ is_absolute() {
 
 # make sure if LOGFILE is specified externally that it refers to a
 # full path.  some tests change directories.
-if ! is_absolute "$LOGFILE" ; then
-    LOGFILE=`pwd`/$LOGFILE
+if ! test "x$LOGFILE" = "x" && ! is_absolute "$LOGFILE" ; then
+    LOGFILE="`pwd`/$LOGFILE"
 fi
 
 
