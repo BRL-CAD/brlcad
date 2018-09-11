@@ -223,7 +223,6 @@ set(regress_outfiles
   iges.m35.g
   iges_file3.iges
   iges_stdout_new.g
-  lights.asc
   lights.diff.pix
   lights.g
   lights.log
@@ -231,7 +230,6 @@ set(regress_outfiles
   lights.ref.pix
   mged.g
   mged.log
-  moss.asc
   moss.g
   moss.log
   moss.pix
