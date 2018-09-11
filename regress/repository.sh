@@ -52,7 +52,7 @@ if test "x$TOPSRC" = "x" ; then
     TOPSRC="."
 fi
 
-LOGFILE=repository.log
+LOGFILE=`pwd`/repository.log
 rm -f $LOGFILE
 log "=== TESTING repository sources ==="
 
@@ -94,7 +94,7 @@ for i in bio.h bnetwork.h bsocket.h ; do
     if test "x$FOUND" = "x" ; then
 	log "-> $i header check succeeded"
     else
-	log "-> $i header check FAILED, see `pwd`/$LOGFILE"
+	log "-> $i header check FAILED, see $LOGFILE"
 	FAILED="`expr $FAILED + 1`"
     fi
 done
@@ -121,7 +121,7 @@ done
 if test "x$FOUND" = "x" ; then
     log "-> bio.h check succeeded"
 else
-    log "-> bio.h check FAILED, see `pwd`/$LOGFILE"
+    log "-> bio.h check FAILED, see $LOGFILE"
     FAILED="`expr $FAILED + 1`"
 fi
 
@@ -147,7 +147,7 @@ done
 if test "x$FOUND" = "x" ; then
     log "-> bnetwork.h check succeeded"
 else
-    log "-> bnetwork.h check FAILED, see `pwd`/$LOGFILE"
+    log "-> bnetwork.h check FAILED, see $LOGFILE"
 # TODO: uncomment after fixing the existing cases
 #    FAILED="`expr $FAILED + 1`"
 fi
@@ -206,7 +206,7 @@ done
 if test "x$FOUND" = "x" ; then
     log "-> common.h check succeeded"
 else
-    log "-> common.h check FAILED, see `pwd`/$LOGFILE"
+    log "-> common.h check FAILED, see $LOGFILE"
     FAILED="`expr $FAILED + 1`"
 fi
 
@@ -263,7 +263,7 @@ done
 if test "x$FOUND" = "x" ; then
     log "-> API usage check succeeded"
 else
-    log "-> API usage check FAILED, see `pwd`/$LOGFILE"
+    log "-> API usage check FAILED, see $LOGFILE"
     FAILED="`expr $FAILED + 1`"
 fi
 
@@ -382,7 +382,7 @@ if test $FOUND -lt `expr $NEED_FIXING + 1` ; then
     fi
     log "-> platform symbol usage check succeeded"
 else
-    log "-> platform symbol usage check FAILED, see `pwd`/$LOGFILE - expected $NEED_FIXING, found $FOUND"
+    log "-> platform symbol usage check FAILED, see $LOGFILE - expected $NEED_FIXING, found $FOUND"
     FAILED="`expr $FAILED + 1`"
 fi
 
