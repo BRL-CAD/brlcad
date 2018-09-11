@@ -228,24 +228,6 @@ bu_brlcad_root(const char *rhs, int fail_quietly)
 	bu_vls_strcat(&searched, where);
     }
 
-    /* BRLCAD_ROOT compile-time path */
-#ifdef BRLCAD_ROOT
-    lhs = BRLCAD_ROOT;
-    if (lhs) {
-	snprintf(where, MAX_WHERE_SIZE, "\tBRLCAD_ROOT compile-time path [%s]\n", lhs);
-	if (join_path(result, lhs, rhs, &searched, where)) {
-	    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
-		bu_log("Found: BRLCAD_ROOT compile-time path [%s]\n", result);
-	    }
-	    bu_vls_free(&searched);
-	    return result;
-	}
-    }
-#else
-    snprintf(where, MAX_WHERE_SIZE, "\tBRLCAD_ROOT compile-time path [UNKNOWN]\n");
-    bu_vls_strcat(&searched, where);
-#endif
-
     /* run-time path identification */
     lhs = bu_argv0_full_path();
     if (lhs) {
@@ -271,24 +253,23 @@ bu_brlcad_root(const char *rhs, int fail_quietly)
 	bu_vls_strcat(&searched, where);
     }
 
-    /* /usr/brlcad static path */
-    {
-	const char *root = BRLCAD_ROOT;
-	/* only check /usr/brlcad if not already tested earlier via BRLCAD_ROOT */
-
-	if (root[0] != '/' || root[1] != 'u' || root[ 2] != 's' || root[ 3] != 'r' ||
-	    root[4] != '/' || root[5] != 'b' || root[ 6] != 'r' || root[ 7] != 'l' ||
-	    root[8] != 'c' || root[9] != 'a' || root[10] != 'd' || root[11] != '\0') {
-
-	    if (join_path(result, "/usr/brlcad", rhs, &searched, "\t/usr/brlcad default path\n")) {
-		if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
-		    bu_log("Found: /usr/brlcad default path [%s]\n", result);
-		}
-		bu_vls_free(&searched);
-		return result;
+    /* BRLCAD_ROOT compile-time path */
+#ifdef BRLCAD_ROOT
+    lhs = BRLCAD_ROOT;
+    if (lhs) {
+	snprintf(where, MAX_WHERE_SIZE, "\tBRLCAD_ROOT compile-time path [%s]\n", lhs);
+	if (join_path(result, lhs, rhs, &searched, where)) {
+	    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
+		bu_log("Found: BRLCAD_ROOT compile-time path [%s]\n", result);
 	    }
+	    bu_vls_free(&searched);
+	    return result;
 	}
     }
+#else
+    snprintf(where, MAX_WHERE_SIZE, "\tBRLCAD_ROOT compile-time path [UNKNOWN]\n");
+    bu_vls_strcat(&searched, where);
+#endif
 
     /* current directory */
     if (join_path(result, ".", rhs, &searched, "\tcurrent directory\n")) {

@@ -195,9 +195,8 @@ BU_EXPORT extern const char *bu_brlcad_dir(const char *dirkey, int fail_quietly)
  * directory existence otherwise:
  *
  *   BRLCAD_ROOT environment variable if set
- *   BRLCAD_ROOT compile-time path
  *   run-time path identification
- *   /usr/brlcad static path
+ *   BRLCAD_ROOT compile-time path
  *   current directory
  *
  * @return
