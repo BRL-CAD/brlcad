@@ -48,12 +48,29 @@ LD_LIBRARY_PATH=../src/other/tcl/unix:../src/other/tk/unix:$LD_LIBRARY_PATH
 DYLD_LIBRARY_PATH=../src/other/tcl/unix:../src/other/tk/unix:$DYLD_LIBRARY_PATH
 export LD_LIBRARY_PATH DYLD_LIBRARY_PATH
 
+is_absolute() {
+    case "$1" in
+	/*)
+	    true;
+	    ;;
+	*)
+	    false;
+	    ;;
+    esac
+}
+
+# make sure if LOGFILE is specified externally that it refers to a
+# full path.  some tests change directories.
+if ! is_absolute "$LOGFILE" ; then
+    LOGFILE=`pwd`/$LOGFILE
+fi
+
 
 ###
 # log "string to print and log"
 #
 # prints a message to the current tty/output (unless QUIET variable is
-# set) as well as appending to a log (if LOGFILE variable is set)
+# set) as well as appending to a log (if LOGFILE variable is set).
 log ( ) {
 
     if test ! "x$LOGFILE" = "x" ; then
