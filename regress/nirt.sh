@@ -42,8 +42,10 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . "$1/regress/library.sh"
 
-LOGFILE=`pwd`/nirt.log
-rm -f $LOGFILE
+if test "x$LOGFILE" = "x" ; then
+    LOGFILE=`pwd`/nirt.log
+    rm -f $LOGFILE
+fi
 log "=== TESTING nirt ==="
 
 MGED="`ensearch mged`"
@@ -90,6 +92,7 @@ log "Running nirt tests, saving output to nirt.out"
 rm -f nirt.out.raw
 logfile_saved="$LOGFILE"
 LOGFILE=`pwd`/nirt.out.raw
+
 
 log "*** Test 1 - shot command ***"
 run $NIRT -v -H 0 -e "s;q" nirt.g center_cube.r

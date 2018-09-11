@@ -46,8 +46,10 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . "$1/regress/library.sh"
 
-LOGFILE=`pwd`/comgeom.log
-rm -f $LOGFILE
+if test "x$LOGFILE" = "x" ; then
+    LOGFILE=`pwd`/comgeom.log
+    rm -f $LOGFILE
+fi
 log "=== TESTING 'comgeom-g' and 'vdeck' ==="
 
 ASC2G="`ensearch asc2g`"

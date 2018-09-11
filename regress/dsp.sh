@@ -42,8 +42,10 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . "$1/regress/library.sh"
 
-LOGFILE=`pwd`/dsp.log
-rm -f dsp.log
+if test "x$LOGFILE" = "x" ; then
+    LOGFILE=`pwd`/dsp.log
+    rm -f $LOGFILE
+fi
 log "=== TESTING dsp primitive ==="
 
 MGED="`ensearch mged`"

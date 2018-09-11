@@ -47,8 +47,10 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 . "$1/regress/library.sh"
 
 # log output to this file
-LOGFILE=`pwd`/mged.log
-rm -f mged.log
+if test "x$LOGFILE" = "x" ; then
+    LOGFILE=`pwd`/mged.log
+    rm -f $LOGFILE
+fi
 log "=== TESTING mged commands ==="
 
 # don't pop up a window on the commands that invoke tk

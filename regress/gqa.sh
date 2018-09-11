@@ -42,8 +42,10 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . "$1/regress/library.sh"
 
-LOGFILE=`pwd`/gqa.log
-rm -f $LOGFILE
+if test "x$LOGFILE" = "x" ; then
+    LOGFILE=`pwd`/gqa.log
+    rm -f $LOGFILE
+fi
 log "=== TESTING 'gqa' ==="
 
 MGED="`ensearch mged`"

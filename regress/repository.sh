@@ -52,8 +52,10 @@ if test "x$TOPSRC" = "x" ; then
     TOPSRC="."
 fi
 
-LOGFILE=`pwd`/repository.log
-rm -f $LOGFILE
+if test "x$LOGFILE" = "x" ; then
+    LOGFILE=`pwd`/repository.log
+    rm -f $LOGFILE
+fi
 log "=== TESTING repository sources ==="
 
 FAILED=0
