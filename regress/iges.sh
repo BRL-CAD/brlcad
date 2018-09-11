@@ -42,7 +42,7 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . "$1/regress/library.sh"
 
-LOGFILE=iges.log
+LOGFILE=`pwd`/iges.log
 rm -f $LOGFILE
 log "=== TESTING iges conversion ==="
 
@@ -139,7 +139,7 @@ STATUS=$?
 if [ X$STATUS = X0 ] ; then
     log "-> iges.sh succeeded"
 else
-    log "-> iges.sh FAILED, see `pwd`/$LOGFILE"
+    log "-> iges.sh FAILED, see $LOGFILE"
 fi
 
 exit $STATUS

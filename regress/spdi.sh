@@ -42,7 +42,7 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . "$1/regress/library.sh"
 
-LOGFILE=spdi.log
+LOGFILE=`pwd`/spdi.log
 rm -f $LOGFILE
 log "=== TESTING spdi ==="
 
@@ -141,7 +141,7 @@ log "spdi.pix $NUMBER_WRONG off by many"
 if [ "X$NUMBER_WRONG" = "X0" ] ; then
     log "-> spdi.sh succeeded"
 else
-    log "-> spdi.sh FAILED, see `pwd`/$LOGFILE"
+    log "-> spdi.sh FAILED, see $LOGFILE"
 fi
 
 exit $NUMBER_WRONG

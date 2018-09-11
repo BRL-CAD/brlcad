@@ -42,7 +42,7 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . "$1/regress/library.sh"
 
-LOGFILE=moss.log
+LOGFILE=`pwd`/moss.log
 rm -f $LOGFILE
 log "=== TESTING moss rendering ==="
 
@@ -167,7 +167,7 @@ fi
 if [ X$NUMBER_WRONG = X0 ] ; then
     log "-> moss.sh succeeded"
 else
-    log "-> moss.sh FAILED, see `pwd`/$LOGFILE"
+    log "-> moss.sh FAILED, see $LOGFILE"
 fi
 
 exit $NUMBER_WRONG

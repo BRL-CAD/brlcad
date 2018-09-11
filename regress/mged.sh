@@ -47,7 +47,7 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 . "$1/regress/library.sh"
 
 # log output to this file
-LOGFILE=mged.log
+LOGFILE=`pwd`/mged.log
 rm -f mged.log
 log "=== TESTING mged commands ==="
 
@@ -182,7 +182,7 @@ done
 if test $FAILED -eq 0 ; then
     log "-> mged check succeeded"
 else
-    log "-> mged check FAILED, see `pwd`/$LOGFILE"
+    log "-> mged check FAILED, see $LOGFILE"
 fi
 
 exit $FAILED

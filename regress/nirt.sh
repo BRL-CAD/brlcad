@@ -42,7 +42,7 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . "$1/regress/library.sh"
 
-LOGFILE=nirt.log
+LOGFILE=`pwd`/nirt.log
 rm -f $LOGFILE
 log "=== TESTING nirt ==="
 
@@ -89,7 +89,7 @@ log "Running nirt tests, saving output to nirt.out"
 
 rm -f nirt.out.raw
 logfile_saved="$LOGFILE"
-LOGFILE=nirt.out.raw
+LOGFILE=`pwd`/nirt.out.raw
 
 log "*** Test 1 - shot command ***"
 run $NIRT -v -H 0 -e "s;q" nirt.g center_cube.r
@@ -565,7 +565,7 @@ STATUS=$?
 if [ X$STATUS = X0 ] ; then
     log "-> nirt.sh succeeded"
 else
-    log "-> nirt.sh FAILED, see `pwd`/$LOGFILE"
+    log "-> nirt.sh FAILED, see $LOGFILE"
 fi
 
 exit $STATUS

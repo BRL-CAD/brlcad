@@ -46,7 +46,7 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . "$1/regress/library.sh"
 
-LOGFILE=comgeom.log
+LOGFILE=`pwd`/comgeom.log
 rm -f $LOGFILE
 log "=== TESTING 'comgeom-g' and 'vdeck' ==="
 
@@ -155,7 +155,7 @@ fi
 if test $FAILURES -eq 0 ; then
     log "-> vdeck/comgeom-g check succeeded"
 else
-    log "-> vdeck/comgeom-g check FAILED, see `pwd`/$LOGFILE"
+    log "-> vdeck/comgeom-g check FAILED, see $LOGFILE"
 fi
 
 exit $FAILED

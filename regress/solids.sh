@@ -42,7 +42,7 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . "$1/regress/library.sh"
 
-LOGFILE=solids.log
+LOGFILE=`pwd`/solids.log
 rm -f $LOGFILE
 log "=== TESTING rendering solids ==="
 
@@ -82,7 +82,7 @@ $MGED -c >> $LOGFILE 2>&1 < "$PATH_TO_THIS/tgms/solids.simple.mged"
 
 if [ ! -f solids.simple.rt ] ; then
     log "ERROR: mged failed to create solids.simple.rt script"
-    log "-> solids.sh FAILED (test 1 of 2), see `pwd`/$LOGFILE"
+    log "-> solids.sh FAILED (test 1 of 2), see $LOGFILE"
     exit 1
 fi
 mv solids.simple.rt solids.simple.orig.rt
@@ -95,7 +95,7 @@ chmod 775 solids.simple.rt
 log '... rendering solids'
 ./solids.simple.rt >> $LOGFILE 2>&1
 if [ ! -f solids.simple.rt.pix ] ; then
-	log "ERROR: raytrace failed, see `pwd`/$LOGFILE"
+	log "ERROR: raytrace failed, see $LOGFILE"
 	exit 1
 fi
 if [ ! -f "$PATH_TO_THIS/solids.simple.asc" ] ; then
@@ -116,7 +116,7 @@ log "solids.simple.rt.pix $NUMBER_WRONG off by many"
 if [ X$NUMBER_WRONG = X0 ] ; then
     log "-> solids.sh succeeded (test 1 of 2)"
 else
-    log "-> solids.sh FAILED (test 1 of 2), see `pwd`/$LOGFILE"
+    log "-> solids.sh FAILED (test 1 of 2), see $LOGFILE"
 fi
 
 
@@ -129,7 +129,7 @@ rm -f solids.ebm.bw
 $GENCOLOR -r205 0 16 32 64 128 | dd of=solids.ebm.bw bs=1024 count=1 > $LOGFILE 2>&1
 if [ ! -f solids.ebm.bw ] ; then
     log "ERROR: Failed to create file 'solids.ebm.bw'"
-    log "-> solids.sh FAILED, see `pwd`/$LOGFILE"
+    log "-> solids.sh FAILED, see $LOGFILE"
     exit 1
 fi
 
@@ -139,7 +139,7 @@ rm -f solids.dsp.pix
 $A2P < "$PATH_TO_THIS/tgms/solids.dsp.dat" > solids.dsp.pix
 if [ ! -f solids.dsp.pix ] ; then
     log "ERROR: Failed to generate file 'solids.dsp.pix'"
-    log "-> solids.sh FAILED (test 2 of 2), see `pwd`/$LOGFILE"
+    log "-> solids.sh FAILED (test 2 of 2), see $LOGFILE"
     exit 1
 fi
 
@@ -150,7 +150,7 @@ $MGED -c >> $LOGFILE 2>&1 < "$PATH_TO_THIS/tgms/solids.mged"
 
 if [ ! -f solids.rt ] ; then
     log "ERROR: mged failed to create solids.rt script"
-    log "-> solids.sh FAILED (test 2 of 2), see `pwd`/$LOGFILE"
+    log "-> solids.sh FAILED (test 2 of 2), see $LOGFILE"
     exit 1
 fi
 run mv solids.rt solids.orig.rt
@@ -162,7 +162,7 @@ log '... rendering solids'
 rm -f solids.rt.pix solids.rt.log
 run ./solids.rt
 if [ ! -f solids.rt.pix ] ; then
-	log "ERROR: solids raytrace failed, see `pwd`/$LOGFILE"
+	log "ERROR: solids raytrace failed, see $LOGFILE"
 	exit 1
 fi
 if [ ! -f "$PATH_TO_THIS/solids.asc" ] ; then
@@ -186,7 +186,7 @@ log "solids.rt.pix $NUMBER_WRONG off by many"
 if [ X$NUMBER_WRONG = X0 ] ; then
     log "-> solids.sh succeeded (test 2 of 2)"
 else
-    log "-> solids.sh FAILED (test 2 of 2), see `pwd`/$LOGFILE"
+    log "-> solids.sh FAILED (test 2 of 2), see $LOGFILE"
 fi
 
 exit $NUMBER_WRONG

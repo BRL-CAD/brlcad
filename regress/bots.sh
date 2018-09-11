@@ -46,7 +46,7 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . "$1/regress/library.sh"
 
-LOGFILE=bots.log
+LOGFILE=`pwd`/bots.log
 rm -f $LOGFILE
 log "=== TESTING BoT primitive ==="
 
@@ -227,7 +227,7 @@ fi
 if test $FAILED -eq 0 ; then
     log "-> BoT check succeeded"
 else
-    log "-> BoT check FAILED, see `pwd`/$LOGFILE"
+    log "-> BoT check FAILED, see $LOGFILE"
 fi
 
 exit $FAILED

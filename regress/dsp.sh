@@ -42,7 +42,7 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . "$1/regress/library.sh"
 
-LOGFILE=dsp.log
+LOGFILE=`pwd`/dsp.log
 rm -f dsp.log
 log "=== TESTING dsp primitive ==="
 
@@ -84,7 +84,7 @@ done
 if [ $FAILED = 0 ] ; then
     log "-> dsp.sh succeeded"
 else
-    log "-> dsp.sh FAILED, see `pwd`/$LOGFILE"
+    log "-> dsp.sh FAILED, see $LOGFILE"
 fi
 
 exit $FAILED

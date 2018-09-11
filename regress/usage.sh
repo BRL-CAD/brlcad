@@ -46,7 +46,7 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . "$1/regress/library.sh"
 
-LOGFILE=usage.log
+LOGFILE=`pwd`/usage.log
 rm -f $LOGFILE
 log "=== TESTING utility usage statements ==="
 
@@ -206,7 +206,7 @@ if test $LONG -lt `expr $NEED_FIXING + 1` ; then
     fi
     log "-> usage check succeeded"
 else
-    log "-> usage check FAILED, see `pwd`/$LOGFILE"
+    log "-> usage check FAILED, see $LOGFILE"
 fi
 
 exit 0

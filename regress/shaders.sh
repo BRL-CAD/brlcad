@@ -42,7 +42,7 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . "$1/regress/library.sh"
 
-LOGFILE=shaders.log
+LOGFILE=`pwd`/shaders.log
 rm -f $LOGFILE
 log "=== TESTING rendering with shaders ==="
 
@@ -224483,7 +224483,7 @@ EOF
 
 if [ ! -f shaders.rt ] ; then
     log "ERROR: mged failed to create shaders.rt"
-    log "-> shaders.sh FAILED, see `pwd`/$LOGFILE"
+    log "-> shaders.sh FAILED, see $LOGFILE"
     exit 1
 fi
 
@@ -224512,7 +224512,7 @@ esac
 NUMBER_WRONG=1
 if [ ! -f shaders.rt.pix ] ; then
     log "ERROR: shaders raytrace failed to create shaders.rt.pix"
-    log "-> shaders.sh FAILED, see `pwd`/$LOGFILE"
+    log "-> shaders.sh FAILED, see $LOGFILE"
     exit 1
 fi
 
@@ -224535,7 +224535,7 @@ fi
 if [ X$NUMBER_WRONG = X0 ] ; then
     log "-> shaders.sh succeeded"
 else
-    log "-> shaders.sh FAILED, see `pwd`/$LOGFILE"
+    log "-> shaders.sh FAILED, see $LOGFILE"
 fi
 
 exit $NUMBER_WRONG

@@ -42,7 +42,7 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . "$1/regress/library.sh"
 
-LOGFILE=asc2dsp.log
+LOGFILE=`pwd`/asc2dsp.log
 rm -f $LOGFILE
 log "=== TESTING asc2dsp ==="
 
@@ -102,7 +102,7 @@ STATUS=$?
 
 
 if [ $STATUS -gt 0 ] ; then
-    log "-> asc2dsp.sh FAILED, see `pwd`/$LOGFILE"
+    log "-> asc2dsp.sh FAILED, see $LOGFILE"
 else
     log "-> asc2dsp.sh succeeded"
 fi

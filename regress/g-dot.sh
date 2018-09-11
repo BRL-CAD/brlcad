@@ -42,7 +42,7 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . "$1/regress/library.sh"
 
-LOGFILE=g-dot.log
+LOGFILE=`pwd`/g-dot.log
 rm -f $LOGFILE
 log "=== TESTING 'g-dot' ==="
 
@@ -75,7 +75,7 @@ STATUS=$?
 if [ X$STATUS = X0 ] ; then
     log "-> g-dot.sh succeeded"
 else
-    log "-> g-dot.sh FAILED, see `pwd`/$LOGFILE"
+    log "-> g-dot.sh FAILED, see $LOGFILE"
 fi
 
 exit $STATUS

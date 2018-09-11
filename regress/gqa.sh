@@ -42,7 +42,7 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . "$1/regress/library.sh"
 
-LOGFILE=gqa.log
+LOGFILE=`pwd`/gqa.log
 rm -f $LOGFILE
 log "=== TESTING 'gqa' ==="
 
@@ -168,7 +168,7 @@ run $GQA -Am gqa.g closed_box.r
 if [ $STATUS = 0 ] ; then
     log "-> gqa.sh succeeded"
 else
-    log "-> gqa.sh FAILED, see `pwd`/$LOGFILE"
+    log "-> gqa.sh FAILED, see $LOGFILE"
 fi
 
 exit $STATUS

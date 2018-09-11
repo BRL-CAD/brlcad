@@ -45,7 +45,7 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . "$1/regress/library.sh"
 
-LOGFILE=red.log
+LOGFILE=`pwd`/red.log
 rm -f $LOGFILE
 log "=== TESTING red command ==="
 
@@ -532,7 +532,7 @@ should_be_same $MATRIX $REDFILE.new
 if test $FAILURES -eq 0 ; then
     log "-> mged 'red' check succeeded"
 else
-    log "-> mged 'red' check FAILED, see `pwd`/$LOGFILE"
+    log "-> mged 'red' check FAILED, see $LOGFILE"
 fi
 
 exit $FAILED

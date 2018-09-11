@@ -42,7 +42,7 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . "$1/regress/library.sh"
 
-LOGFILE=weight.log
+LOGFILE=`pwd`/weight.log
 rm -f $LOGFILE
 log "=== TESTING rtweight ==="
 
@@ -257,7 +257,7 @@ fi
 if [ X$STATUS = X0 ] ; then
     log "-> weight.sh succeeded (2 of 2)"
 else
-    log "-> weight.sh FAILED (2 of 2), see `pwd`/$LOGFILE"
+    log "-> weight.sh FAILED (2 of 2), see $LOGFILE"
 fi
 
 exit $STATUS

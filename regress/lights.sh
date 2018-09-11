@@ -42,7 +42,7 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . "$1/regress/library.sh"
 
-LOGFILE=lights.log
+LOGFILE=`pwd`/lights.log
 rm -f $LOGFILE
 log "=== TESTING rendering with lights ==="
 
@@ -115,7 +115,7 @@ log "lights.pix $NUMBER_WRONG off by many"
 if [ X$NUMBER_WRONG = X0 ] ; then
     log "-> lights.sh succeeded"
 else
-    log "-> lights.sh FAILED, see `pwd`/$LOGFILE"
+    log "-> lights.sh FAILED, see $LOGFILE"
 fi
 
 exit $NUMBER_WRONG

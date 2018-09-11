@@ -42,7 +42,7 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . "$1/regress/library.sh"
 
-LOGFILE=flawfinder.log
+LOGFILE=`pwd`/flawfinder.log
 rm -f $LOGFILE
 log "=== TESTING flawfinder ==="
 
@@ -66,7 +66,7 @@ fi
 if test "x$NUMBER_WRONG" = "x0" ; then
     log "-> flawfinder.sh succeeded"
 else
-    log "-> flawfinder.sh FAILED, see `pwd`/$LOGFILE"
+    log "-> flawfinder.sh FAILED, see $LOGFILE"
 fi
 
 exit $NUMBER_WRONG

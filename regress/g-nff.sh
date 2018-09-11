@@ -42,7 +42,7 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . "$1/regress/library.sh"
 
-LOGFILE=g-nff.log
+LOGFILE=`pwd`/g-nff.log
 rm -f $LOGFILE
 log "=== TESTING 'g-nff' ==="
 
@@ -82,7 +82,7 @@ STATUS=$?
 if [ X$STATUS = X0 ] ; then
     log "-> g-nff.sh succeeded"
 else
-    log "-> g-nff.sh FAILED, see `pwd`/$LOGFILE"
+    log "-> g-nff.sh FAILED, see $LOGFILE"
 fi
 
 exit $STATUS
