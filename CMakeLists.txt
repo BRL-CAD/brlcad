@@ -492,7 +492,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
     COMMAND ${CMAKE_COMMAND} -E echo "      regression tests.  To consider a build viable for production use,"
     COMMAND ${CMAKE_COMMAND} -E echo "      these tests must pass.  Dependencies are compiled automatically."
     COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
-    COMMAND ${CMAKE_CTEST_COMMAND} -C ${CONFIG} -LE \"Regression|NOT_WORKING\" -E \"^regress-|NOTE|benchmark|util-\" --output-on-failure ${JFLAG}
+    COMMAND ${CMAKE_CTEST_COMMAND} -C ${CONFIG} -LE \"Regression|NOT_WORKING\" -E \"^regress-|NOTE|benchmark|slow-\" --output-on-failure ${JFLAG}
     COMMAND ${CMAKE_CTEST_COMMAND} -C ${CONFIG} -R \"benchmark\" --output-on-failure ${JFLAG}
     COMMAND ${CMAKE_CTEST_COMMAND} -C ${CONFIG} -L \"Regression\" --output-on-failure ${JFLAG}
     )
@@ -534,7 +534,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
     COMMAND ${CMAKE_COMMAND} -E echo "      tests not currently under development\\).  All dependencies required"
     COMMAND ${CMAKE_COMMAND} -E echo "      by the tests are compiled automatically."
     COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
-    COMMAND ${CMAKE_CTEST_COMMAND} -C ${CONFIG} -LE \"Regression|NOT_WORKING\" -E \"^regress-|NOTE|benchmark|util-\" ${JFLAG}
+    COMMAND ${CMAKE_CTEST_COMMAND} -C ${CONFIG} -LE \"Regression|NOT_WORKING\" -E \"^regress-|NOTE|benchmark|slow-\" ${JFLAG}
     )
 
   set_target_properties(unit PROPERTIES FOLDER "BRL-CAD Validation Testing")
@@ -649,10 +649,10 @@ if(NOT BRLCAD_IS_SUBBUILD)
     endif ("${cnt}" GREATER 0)
 
     # add test to unit and check targets
-    if (NOT "${test_name}" MATCHES ^regress- AND NOT "${test_prog}" MATCHES ^regress- AND NOT "${test_name}" MATCHES ^util- AND NOT "${test_name}" STREQUAL "benchmark" AND NOT "${test_name}" MATCHES ^NOTE:)
+    if (NOT "${test_name}" MATCHES ^regress- AND NOT "${test_prog}" MATCHES ^regress- AND NOT "${test_name}" MATCHES ^slow- AND NOT "${test_name}" STREQUAL "benchmark" AND NOT "${test_name}" MATCHES ^NOTE:)
       add_dependencies(unit ${test_prog})
       add_dependencies(check ${test_prog})
-    endif (NOT "${test_name}" MATCHES ^regress- AND NOT "${test_prog}" MATCHES ^regress- AND NOT "${test_name}" MATCHES ^util- AND NOT "${test_name}" STREQUAL "benchmark" AND NOT "${test_name}" MATCHES ^NOTE:)
+    endif (NOT "${test_name}" MATCHES ^regress- AND NOT "${test_prog}" MATCHES ^regress- AND NOT "${test_name}" MATCHES ^slow- AND NOT "${test_name}" STREQUAL "benchmark" AND NOT "${test_name}" MATCHES ^NOTE:)
 
   endfunction(add_test NAME test_name COMMAND test_prog)
 endif(NOT BRLCAD_IS_SUBBUILD)
