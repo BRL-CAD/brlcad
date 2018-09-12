@@ -18,8 +18,6 @@
  * information.
  */
 
-/* FIXME:  Should use sigaction(2) instead of BSD signal semantics for
- * conformance, portability, and safety. */
 #if defined(C99_POSIX_USE_BSD)
 /* defining _BSD_SOURCE should ensure BSD signal semantics as well
  * as sig_t for glibc on Linux according to 'man signal(2)'
@@ -50,10 +48,10 @@ typedef void (*sig_t)(int);
 /* hard-coded maximum signal number we can defer due to array we're
  * using for quick O(1) access in a single container for all signals.
  */
-#define _BU_MAX_SIGNUM 128
+#define INTERRUPT_MAX_SIGNUM 128
 
 /* keeps track of whether signal processing is put on hold */
-volatile sig_atomic_t interrupt_defer_signal[_BU_MAX_SIGNUM] = {
+volatile sig_atomic_t interrupt_defer_signal[INTERRUPT_MAX_SIGNUM] = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -65,7 +63,7 @@ volatile sig_atomic_t interrupt_defer_signal[_BU_MAX_SIGNUM] = {
 };
 
 /* keeps track of whether a signal was received while on hold */
-volatile sig_atomic_t interrupt_signal_pending[_BU_MAX_SIGNUM] = {
+volatile sig_atomic_t interrupt_signal_pending[INTERRUPT_MAX_SIGNUM] = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -77,7 +75,7 @@ volatile sig_atomic_t interrupt_signal_pending[_BU_MAX_SIGNUM] = {
 };
 
 /* keeps track of the installed signal handler that is suspended */
-volatile sig_t interrupt_signal_func[_BU_MAX_SIGNUM] = {
+volatile sig_t interrupt_signal_func[INTERRUPT_MAX_SIGNUM] = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -117,18 +115,14 @@ interrupt_suspend_signal_handler(int signum)
 HIDDEN int
 interrupt_suspend_signal(int signum)
 {
-    BU_ASSERT(signum < _BU_MAX_SIGNUM && "signal number out of range");
+    BU_ASSERT(signum < INTERRUPT_MAX_SIGNUM && "signal number out of range");
 
     if (interrupt_signal_func[signum] == interrupt_suspend_signal_handler) {
 	return 1;
     }
 
 
-#if !defined(BRLCAD_USE_SIGACTION)
     interrupt_signal_func[signum] = signal(signum, interrupt_suspend_signal_handler);
-#else
-    interrupt_signal_func[signum] = signal(signum, interrupt_suspend_signal_handler);
-#endif
 
     if (interrupt_signal_func[signum] == SIG_ERR) {
 	interrupt_signal_func[signum] = (sig_t)0;
@@ -158,7 +152,7 @@ interrupt_suspend_signal(int signum)
 HIDDEN int
 interrupt_restore_signal(int signum)
 {
-    BU_ASSERT(signum < _BU_MAX_SIGNUM && "signal number out of range");
+    BU_ASSERT(signum < INTERRUPT_MAX_SIGNUM && "signal number out of range");
 
     /* must be before the test to avoid a race condition */
     interrupt_defer_signal[signum]--;
@@ -171,11 +165,7 @@ interrupt_restore_signal(int signum)
 	    return 1;
 	}
 
-#if !defined(BRLCAD_USE_SIGACTION)
 	ret = signal(signum, interrupt_signal_func[signum]);
-#else
-	ret = signal(signum, interrupt_signal_func[signum]);
-#endif
 
 	interrupt_signal_func[signum] = (sig_t)0;
 	interrupt_signal_pending[signum] = 0;
