@@ -58,11 +58,6 @@ if test ! -f "$A2G" ; then
     log "Unable to find asc2g, aborting"
     exit 1
 fi
-A2P="`ensearch asc2pix`"
-if test ! -f "$A2P" ; then
-    log "Unable to find asc2pix, aborting"
-    exit 1
-fi
 PIXDIFF="`ensearch pixdiff`"
 if test ! -f "$PIXDIFF" ; then
     log "Unable to find pixdiff, aborting"
@@ -103,13 +98,9 @@ start 0; clean;
 end;
 EOF
 
-log "... running $A2P < $PATH_TO_THIS/lights.asc > lights.ref.pix"
-rm -f lights.ref.pix
-$A2P < "$PATH_TO_THIS/lights.asc" > lights.ref.pix 2>> $LOGFILE
-
-log "... running $PIXDIFF lights.pix lights.ref.pix > lights.diff.pix"
+log "... running $PIXDIFF lights.pix $PATH_TO_THIS/lights.pix > lights.diff.pix"
 rm -f lights.diff.pix
-$PIXDIFF lights.pix lights.ref.pix > lights.diff.pix 2>> $LOGFILE
+$PIXDIFF lights.pix $PATH_TO_THIS/lights.pix > lights.diff.pix 2>> $LOGFILE
 
 NUMBER_WRONG=`tail -n1 $LOGFILE | tr , '\012' | awk '/many/ {print $1}'`
 log "lights.pix $NUMBER_WRONG off by many"

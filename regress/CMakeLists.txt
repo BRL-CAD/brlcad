@@ -62,11 +62,11 @@ if(SH_EXEC)
     set_tests_properties(regress-${testname} PROPERTIES TIMEOUT 60)
   endmacro(Sh_Regression_Test)
 
-  Sh_Regression_Test(moss "rt;asc2g;pixdiff;asc2pix;pix-png;png-pix")
-  Sh_Regression_Test(lights "rt;asc2g;pixdiff;asc2pix")
+  Sh_Regression_Test(moss "rt;asc2g;pixdiff;pix-png;png-pix")
+  Sh_Regression_Test(lights "rt;asc2g;pixdiff")
   Sh_Regression_Test(solids "rt;mged;pixdiff;asc2pix;gencolor")
-  Sh_Regression_Test(shaders "rt;mged;pixdiff;asc2pix;gencolor")
-  Sh_Regression_Test(spdi "rt;mged;pixdiff;asc2pix")
+  Sh_Regression_Test(shaders "rt;mged;pixdiff;gencolor")
+  Sh_Regression_Test(spdi "rt;mged;pixdiff")
   Sh_Regression_Test(iges "iges-g;g-iges;mged;asc2g")
   Sh_Regression_Test(weight "rtweight;mged")
   Sh_Regression_Test(gqa "gqa;mged")
@@ -127,23 +127,24 @@ CMAKEFILES(
   gqa.sh
   iges.sh
   library.sh
-  lights.asc
+  lights.pix
   lights.cmake
   lights.sh
   mged.sh
   mged_test.sh
-  moss.asc
+  moss.pix
   moss.sh
   nirt.sh
   nurbs/brep-3dm.tar.bz2
   red.sh
   repository.sh
-  shaders.asc
+  shaders.eagleCAD-512x438.pix
+  shaders.pix
   shaders.sh
-  solids.asc
+  solids.pix
   solids.sh
-  solids.simple.asc
-  spdi.asc
+  solids.simple.pix
+  spdi.pix
   spdi.sh
   tgms/comgeom.cg
   tgms/comgeom.tgt-1-v4-documented.cg
@@ -337,7 +338,6 @@ set(regress_outfiles
   region_ids
   regions
   repository.log
-  shaders.eagleCAD-512x438.pix
   shaders.ebm.bw
   shaders.ell_2.prj
   shaders.g
