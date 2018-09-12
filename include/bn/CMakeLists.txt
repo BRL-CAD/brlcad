@@ -31,6 +31,7 @@ set(bn_headers
 BRLCAD_MANAGE_FILES(bn_headers ${INCLUDE_DIR}/brlcad/bn)
 
 CMAKEFILES(numgen.h)
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

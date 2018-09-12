@@ -470,6 +470,8 @@ if(CPP_DLL_DEFINES)
   endforeach(scp ${SCIMPORTS})
 endif(CPP_DLL_DEFINES)
 
+CMAKEFILES(CMakeLists.txt)
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

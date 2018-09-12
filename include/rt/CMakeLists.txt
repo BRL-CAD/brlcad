@@ -60,6 +60,7 @@ set(rt_headers
   xray.h
   )
 BRLCAD_MANAGE_FILES(rt_headers ${INCLUDE_DIR}/brlcad/rt)
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

@@ -18,6 +18,7 @@ BRLCAD_ADDEXEC(rtsrv "../rt/usage.cpp;../rt/view.c;../rt/do.c;../rt/heatgraph.c;
 SET_TARGET_PROPERTIES(rtsrv PROPERTIES COMPILE_DEFINITIONS "RTSRV")
 
 CMAKEFILES(ihost.h protocol.h)
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

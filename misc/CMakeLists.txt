@@ -57,6 +57,7 @@ add_subdirectory(osl_shaders)
 
 set(misc_ignore_files
   Bullet_Box_Chain_Demo.cpp
+  CMakeLists.txt
   Description.txt
   Makefile.defs
   archlinux/PKGBUILD

@@ -134,6 +134,7 @@ set(mged_tcl_DATA
 BRLCAD_ADDDATA(mged_tcl_DATA tclscripts/mged)
 
 CMAKEFILES(rrmb.tcl)
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

@@ -693,6 +693,7 @@ CMAKEFILES(
   tests_vls.cmake
 )
 
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

@@ -139,6 +139,7 @@ BRLCAD_ADDDATA(nonie.r.12 vfont)
 add_subdirectory(tests)
 
 set(bu_ignore_files
+  CMakeLists.txt
   bitv.h
   charclass.h
   mime.cmake

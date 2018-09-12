@@ -33,6 +33,7 @@ add_subdirectory(gdiff)
 
 add_subdirectory(tests)
 
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

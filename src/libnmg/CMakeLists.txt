@@ -60,6 +60,7 @@ set(LIBNMG_SOURCES
   )
 
 CMAKEFILES(
+  CMakeLists.txt
   alloc.cpp
   junk.c
 )

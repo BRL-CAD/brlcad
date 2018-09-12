@@ -161,6 +161,7 @@ install(PROGRAMS intaval-g.py DESTINATION bin)
 
 
 set(conv_ignore_files
+  CMakeLists.txt
   Formats.csv
   comgeom/try.sh
   dbclean.sh

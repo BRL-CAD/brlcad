@@ -136,6 +136,7 @@ if(BRLCAD_ENABLE_OSG)
   add_dependencies(libdm profont_ProFont_ttf_cp)
 endif(BRLCAD_ENABLE_OSG)
 set(libdm_ignore_files
+  CMakeLists.txt
   README
   TODO
   dm-Null.h

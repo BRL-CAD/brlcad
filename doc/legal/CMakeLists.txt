@@ -6,6 +6,7 @@ set(doc_legal
 ADD_DOC(doc_legal legal)
 
 CMAKEFILES(bsd.txt bdl.txt lgpl.txt)
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

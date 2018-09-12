@@ -144,6 +144,7 @@ set(hacking_brlcad_images
    )
 CMAKEFILES(${hacking_brlcad_images})
 CMAKEFILES(HACKING_BRL-CAD.xml)
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

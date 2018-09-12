@@ -374,6 +374,7 @@ add_subdirectory(tests)
 add_subdirectory(simulate/tests)
 
 set(ged_ignore_files
+  CMakeLists.txt
   TODO
   pnts_util.h
   ged_private.h

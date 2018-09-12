@@ -128,6 +128,7 @@ set(lessons_ES_IMAGES
   )
 ADD_DOC(lessons_ES_IMAGES html/lessons/es/images)
 ADD_DOCBOOK("HTML;PHP;PDF" lessons_ES lessons/es lessons_ES_IMAGES_cp)
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

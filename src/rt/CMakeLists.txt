@@ -87,6 +87,7 @@ set_property(TARGET rtweight APPEND PROPERTY COMPILE_DEFINITIONS "RT_TXT_OUTPUT"
 BRLCAD_ADDEXEC(rtxray "${LIBRTUIF_SOURCES};viewxray.c" "${CMAKE_THREAD_LIBS_INIT};librt;libnmg;libfb;liboptical;libicv;${M_LIBRARY}")
 
 set(rt_ignore_files
+  CMakeLists.txt
   ext.h
   libfb-dummy.c
   main.c

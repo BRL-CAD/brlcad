@@ -8,6 +8,8 @@ set(swidgets_scripts_TCLSCRIPTS
 BRLCAD_ADDDATA(swidgets_scripts_TCLSCRIPTS tclscripts/swidgets/scripts)
 tclIndex_BUILD(tclscripts/swidgets/scripts)
 
+CMAKEFILES(CMakeLists.txt)
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

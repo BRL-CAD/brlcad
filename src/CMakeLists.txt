@@ -171,7 +171,10 @@ if(BRLCAD_ENABLE_BRLCAD_LIBRARY AND USE_OBJECT_LIBS)
   endwhile(${current_level} LESS ${HIGHEST_TARGET_LEVEL})
 endif(BRLCAD_ENABLE_BRLCAD_LIBRARY AND USE_OBJECT_LIBS)
 
-CMAKEFILES(README)
+CMAKEFILES(
+  CMakeLists.txt
+  README
+  )
 
 # Add a convenience directory that is only added to the
 # build if it exists.  This directory is ignored by svn,

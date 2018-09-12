@@ -6,6 +6,7 @@ set(cmake_ignore_files
   BRLCAD_Summary.cmake
   BRLCAD_Targets.cmake
   BRLCAD_Util.cmake
+  CMakeLists.txt
   CheckCInline.cmake
   CheckCSourceRuns.cmake
   CompilerFlags.cmake

@@ -387,6 +387,8 @@ endif(CPP_DLL_DEFINES)
 
 add_subdirectory(tests)
 
+CMAKEFILES(CMakeLists.txt)
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

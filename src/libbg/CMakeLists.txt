@@ -28,6 +28,7 @@ endif(CPP_DLL_DEFINES)
 add_subdirectory(tests)
 
 CMAKEFILES(bg_private.h pointgen.c)
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

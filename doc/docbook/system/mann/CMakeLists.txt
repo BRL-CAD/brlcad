@@ -257,6 +257,7 @@ ADD_DOCBOOK("HTML;PHP" mann_INTRO mann "")
 
 
 CMAKEFILES(mged_cmd_template.xml)
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

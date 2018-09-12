@@ -50,6 +50,7 @@ set_target_properties(libanalyze PROPERTIES VERSION 20.0.1 SOVERSION 20)
 add_subdirectory(tests)
 
 CMAKEFILES(
+  CMakeLists.txt
   analyze_private.h
   find_subtracted_shapes.cpp
   wnsurface.cxx

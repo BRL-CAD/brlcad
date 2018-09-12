@@ -26,6 +26,8 @@ set(XSL_FO_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-le
 add_subdirectory(en)
 add_subdirectory(es)
 
+CMAKEFILES(CMakeLists.txt)
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

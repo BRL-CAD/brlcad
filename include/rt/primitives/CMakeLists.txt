@@ -20,6 +20,8 @@ set(primitives_headers
   )
 BRLCAD_MANAGE_FILES(primitives_headers ${INCLUDE_DIR}/brlcad/rt/primitives)
 
+CMAKEFILES(CMakeLists.txt)
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

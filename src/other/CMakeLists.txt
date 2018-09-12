@@ -1238,6 +1238,7 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/linenoise.dist)
 CMAKEFILES_IN_DIR(linenoise_ignore_files linenoise)
 
 CMAKEFILES(README)
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

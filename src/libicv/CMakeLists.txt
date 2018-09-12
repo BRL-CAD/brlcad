@@ -33,6 +33,7 @@ endif(CPP_DLL_DEFINES)
 add_subdirectory(tests)
 
 CMAKEFILES(
+  CMakeLists.txt
   TODO
   icv_private.h
   )

@@ -254,6 +254,7 @@ set_source_files_properties(chan_mult.xml PROPERTIES EXTRA_MAN1_OUTPUTS "chan_ad
 ADD_DOCBOOK("HTML;PHP;MAN1;PDF" man1_EN man1 "")
 
 CMAKEFILES(pictx.xml)
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

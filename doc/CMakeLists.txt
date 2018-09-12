@@ -229,6 +229,7 @@ configure_file(pad_file.xml.in "${CMAKE_CURRENT_BINARY_DIR}/pad_file.xml" @ONLY)
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/pad_file.xml" DESTINATION ${DOC_DIR})
 
 CMAKEFILES(
+  CMakeLists.txt
   README.OSCON-2014
   STARTERS
   STRATEGY

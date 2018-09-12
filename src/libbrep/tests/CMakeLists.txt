@@ -3,6 +3,7 @@ set(distcheck_files
   )
 
 CMAKEFILES(${distcheck_files})
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

@@ -29,6 +29,7 @@ set_property(TARGET csg APPEND PROPERTY INCLUDE_DIRECTORIES "${LEMON_csg_parser_
 
 
 CMAKEFILES(csg.h csg_parser.lemon csg_scanner.perplex)
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

@@ -4,6 +4,7 @@ set(gcv_headers
   util.h
   )
 BRLCAD_MANAGE_FILES(gcv_headers ${INCLUDE_DIR}/brlcad/gcv)
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

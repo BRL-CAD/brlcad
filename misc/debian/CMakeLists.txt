@@ -96,6 +96,7 @@ set(debian_ignore_files
   source/include-binaries
   )
 CMAKEFILES(${debian_ignore_files})
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

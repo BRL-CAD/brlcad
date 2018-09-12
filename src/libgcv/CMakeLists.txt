@@ -42,6 +42,7 @@ add_test(NAME bottess_test COMMAND test_bottess)
 
 
 set(GCV_IGNORE_FILES
+  CMakeLists.txt
   NOTES
   soup.h
   tri_intersect.h

@@ -217,6 +217,7 @@ endif(SH_EXEC)
 CMAKEFILES(
   ${G_BENCHMARK_MODELS}
   ${G_SAMPLE_MODELS}
+  CMakeLists.txt
   aet.rt
   cornell.rt
   cube.rt

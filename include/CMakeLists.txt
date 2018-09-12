@@ -56,6 +56,7 @@ if(MSVC)
 endif(MSVC)
 
 set(include_misc
+  CMakeLists.txt
   brlcad_ident.h.in
   brlcad_version.h.in
   conf/BrlcadConfig.tmpl

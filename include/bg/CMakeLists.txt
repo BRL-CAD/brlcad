@@ -11,6 +11,7 @@ set(bg_headers
 BRLCAD_MANAGE_FILES(bg_headers ${INCLUDE_DIR}/brlcad/bg)
 
 CMAKEFILES(pointgen.h)
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

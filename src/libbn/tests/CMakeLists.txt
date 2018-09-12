@@ -1122,6 +1122,7 @@ add_test(NAME bn_quat_log_2 COMMAND bn_test qmath 10 0.548,0.365,0.730,0.183 0.7
 
 CMAKEFILES(poly_cubic_roots.c poly_quartic_roots.c)
 CMAKEFILES(bntester.dat)
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

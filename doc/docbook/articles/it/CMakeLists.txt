@@ -16,6 +16,8 @@ set(articles_IT_IMAGES
 ADD_DOC(articles_IT_IMAGES html/articles/it/images)
 ADD_DOCBOOK("HTML;PHP;PDF" articles_IT articles/it articles_IT_IMAGES_cp)
 
+CMAKEFILES(CMakeLists.txt)
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

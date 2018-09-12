@@ -165,7 +165,11 @@ ADD_DOC(articles_EN_IMAGES html/articles/en/images)
 
 ADD_DOCBOOK("HTML;PHP;PDF" articles_EN articles/en articles_EN_IMAGES_cp)
 
-CMAKEFILES(images/tire_fig12.svg images/tire_fig13.svg)
+CMAKEFILES(
+  CMakeLists.txt
+  images/tire_fig12.svg
+  images/tire_fig13.svg
+  )
 
 # Local Variables:
 # tab-width: 8

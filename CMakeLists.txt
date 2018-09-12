@@ -451,7 +451,6 @@ if(NOT BRLCAD_IS_SUBBUILD)
     # can probably revisit at least part of this by getting a list of source
     # directories for all targets at the end of the build and setting
     # properties then.
-    set_property(GLOBAL APPEND PROPERTY CMAKE_IGNORE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/${name}/CMakeLists.txt")
     DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/${name}/CMakeFiles")
     DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/${name}/cmake_install.cmake")
     foreach(clearpattern ${DISTCLEAN_OUTFILES})

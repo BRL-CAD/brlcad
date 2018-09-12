@@ -183,6 +183,7 @@ SetTargetFolder(xslt "Third Party Libraries")
 SetTargetFolder(exslt "Third Party Libraries")
 
 CMAKEFILES(README)
+CMAKEFILES(CMakeLists.txt)
 
 # Locac Variables:
 # tab-width: 8

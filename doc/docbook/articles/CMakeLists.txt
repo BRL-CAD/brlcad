@@ -28,6 +28,8 @@ add_subdirectory(hy)
 add_subdirectory(it)
 add_subdirectory(ru)
 
+CMAKEFILES(CMakeLists.txt)
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

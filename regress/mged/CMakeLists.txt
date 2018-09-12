@@ -114,6 +114,7 @@ set_target_properties(regress-mged-cmds PROPERTIES FOLDER "BRL-CAD Regression Te
 set_target_properties(regress-mged-cmds PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
 
 CMAKEFILES(
+  CMakeLists.txt
   mged.tcl
   regression_resources.tcl
   run_test

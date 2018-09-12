@@ -48,6 +48,8 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 
 endif(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 
+CMAKEFILES(CMakeLists.txt)
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

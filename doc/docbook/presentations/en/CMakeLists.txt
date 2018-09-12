@@ -18,6 +18,7 @@ ADD_DOC(presentations_EN_IMAGES html/presentations/en/images)
 ADD_DOCBOOK("HTML;PHP;PPT;PDF" presentations_EN presentations/en presentations_EN_IMAGES_cp)
 
 CMAKEFILES(README.txt)
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

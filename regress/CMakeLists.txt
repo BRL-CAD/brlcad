@@ -394,6 +394,8 @@ set(regress_outfiles_fullpaths ${regress_outfiles_fullpaths} "${CMAKE_BINARY_DIR
 set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${regress_outfiles_fullpaths}")
 DISTCLEAN(${regress_outfiles_fullpaths})
 
+CMAKEFILES(CMakeLists.txt)
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake
