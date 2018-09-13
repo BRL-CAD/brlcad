@@ -51,9 +51,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * rtwizard unit test legitimately failing on mac/windows
 
-* implement a bu alarm(2)-style interface so we can abort library
-  routines gracefully from application code.
-
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
@@ -175,6 +172,10 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   - https://github.com/s-u/multicore/blob/master/src/forknt.c
   - https://github.com/diacritic/BoxFort
   - https://yuhui-lin.github.io/blog/2017/08/01/serialization
+
+* Implement a bu alarm(2)-style interface so we can abort library
+  routines gracefully from application code. A quick initial attempt
+  at this didn't succeed very well (r71644 has what was tried).
 
 * cppclean audit
 
