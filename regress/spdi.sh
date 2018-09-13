@@ -122,9 +122,9 @@ end;
 
 EOF
 
-log "... running $PIXDIFF spdi.pix $PATH_TO_THIS/spdi.pix > spdi.diff.pix"
+log "... running $PIXDIFF spdi.pix $PATH_TO_THIS/spdi.ref.pix > spdi.diff.pix"
 rm -f spdi.diff.pix
-$PIXDIFF spdi.pix $PATH_TO_THIS/spdi.pix > spdi.diff.pix 2>> $LOGFILE
+$PIXDIFF spdi.pix $PATH_TO_THIS/spdi.ref.pix > spdi.diff.pix 2>> $LOGFILE
 NUMBER_WRONG=`tail -n1 $LOGFILE | tr , '\012' | awk '/many/ {print $1}'`
 log "spdi.pix $NUMBER_WRONG off by many"
 

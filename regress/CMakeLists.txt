@@ -127,24 +127,24 @@ CMAKEFILES(
   gqa.sh
   iges.sh
   library.sh
-  lights.pix
+  lights.ref.pix
   lights.cmake
   lights.sh
   mged.sh
   mged_test.sh
-  moss.pix
+  moss.ref.pix
   moss.sh
   nirt.sh
   nurbs/brep-3dm.tar.bz2
   red.sh
   repository.sh
   shaders.eagleCAD-512x438.pix
-  shaders.pix
+  shaders.ref.pix
   shaders.sh
-  solids.pix
+  solids.ref.pix
   solids.sh
-  solids.simple.pix
-  spdi.pix
+  solids.simple.ref.pix
+  spdi.ref.pix
   spdi.sh
   tgms/comgeom.cg
   tgms/comgeom.tgt-1-v4-documented.cg

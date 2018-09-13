@@ -100,13 +100,13 @@ if [ ! -f solids.simple.rt.pix ] ; then
 	log "ERROR: raytrace failed, see $LOGFILE"
 	exit 1
 fi
-if [ ! -f "$PATH_TO_THIS/solids.simple.pix" ] ; then
+if [ ! -f "$PATH_TO_THIS/solids.simple.ref.pix" ] ; then
 	log "ERROR: No reference file for solids.simple.rt.pix"
 	exit 1
 fi
 
 rm -f solids.simple.pix.diff
-$PIXDIFF solids.simple.rt.pix $PATH_TO_THIS/solids.simple.pix > solids.simple.pix.diff 2>> $LOGFILE
+$PIXDIFF solids.simple.rt.pix $PATH_TO_THIS/solids.simple.ref.pix > solids.simple.pix.diff 2>> $LOGFILE
 
 log "... running tail -n1 $LOGFILE | tr , '\012' | awk '/many/ {print $1}'"
 NUMBER_WRONG=`tail -n1 $LOGFILE | tr , '\012' | awk '/many/ {print $1}'`
@@ -164,14 +164,14 @@ if [ ! -f solids.rt.pix ] ; then
 	log "ERROR: solids raytrace failed, see $LOGFILE"
 	exit 1
 fi
-if [ ! -f "$PATH_TO_THIS/solids.pix" ] ; then
+if [ ! -f "$PATH_TO_THIS/solids.ref.pix" ] ; then
 	log "ERROR: No reference file for solids.rt.pix"
 	exit 1
 fi
 
-log "... running $PIXDIFF solids.rt.pix $PATH_TO_THIS/solids.pix > solids.pix.diff"
+log "... running $PIXDIFF solids.rt.pix $PATH_TO_THIS/solids.ref.pix > solids.pix.diff"
 rm -f solids.pix.diff
-$PIXDIFF solids.rt.pix $PATH_TO_THIS/solids.pix > solids.pix.diff 2> $LOGFILE
+$PIXDIFF solids.rt.pix $PATH_TO_THIS/solids.ref.pix > solids.pix.diff 2> $LOGFILE
 
 tail -n1 $LOGFILE | tr , '\012' | awk '/many/ {print $0}'
 NUMBER_WRONG=`tail -n1 $LOGFILE | tr , '\012' | awk '/many/ {print $1}'`

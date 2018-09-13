@@ -252,12 +252,12 @@ if [ ! -f shaders.rt.pix ] ; then
     exit 1
 fi
 
-if [ ! -f "$PATH_TO_THIS/shaders.pix" ] ; then
+if [ ! -f "$PATH_TO_THIS/shaders.ref.pix" ] ; then
     log "No reference file for $PATH_TO_THIS/shaders.rt.pix"
 else
-    log "... running $PIXDIFF shaders.rt.pix $PATH_TO_THIS/shaders.pix > shaders.rt.diff.pix"
+    log "... running $PIXDIFF shaders.rt.pix $PATH_TO_THIS/shaders.ref.pix > shaders.rt.diff.pix"
     rm -f shaders.rt.diff.pix
-    $PIXDIFF shaders.rt.pix $PATH_TO_THIS/shaders.pix > shaders.rt.diff.pix 2>> $LOGFILE
+    $PIXDIFF shaders.rt.pix $PATH_TO_THIS/shaders.ref.pix > shaders.rt.diff.pix 2>> $LOGFILE
 
     NUMBER_WRONG=`tail -n1 $LOGFILE | tr , '\012' | awk '/many/ {print $1}' | tail -${TAIL_N}1`
     log "shaders.rt.pix $NUMBER_WRONG off by many"

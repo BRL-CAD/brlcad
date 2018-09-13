@@ -98,9 +98,9 @@ start 0; clean;
 end;
 EOF
 
-log "... running $PIXDIFF lights.pix $PATH_TO_THIS/lights.pix > lights.diff.pix"
+log "... running $PIXDIFF lights.pix $PATH_TO_THIS/lights.ref.pix > lights.diff.pix"
 rm -f lights.diff.pix
-$PIXDIFF lights.pix $PATH_TO_THIS/lights.pix > lights.diff.pix 2>> $LOGFILE
+$PIXDIFF lights.pix $PATH_TO_THIS/lights.ref.pix > lights.diff.pix 2>> $LOGFILE
 
 NUMBER_WRONG=`tail -n1 $LOGFILE | tr , '\012' | awk '/many/ {print $1}'`
 log "lights.pix $NUMBER_WRONG off by many"
