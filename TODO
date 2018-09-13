@@ -2180,31 +2180,6 @@ point cloud rendering, instead of hard-coding it.
   handling ray dispatch: https://github.com/cameron314/concurrentqueue
 
 
-LIBPC
------
-
-* BNF Parser for generation of constraint objects from expressions
-
-* Make better pc_pc_set, pc_param and pc_constraint structures
-instead of the current ugly ones.
-
-* Test constraint solution via Read->Generate->Solve->Update routine
-
-* Implement Non-deterministic solution techniques:  Backjumping,
-Backmarking
-
-* Implement Deterministic propagators: NC, AC1-7, PC1-5
-
-* Check STL structures in public API ; wrapping with bu_list
-
-* Boost constrained_value based functor integration for 'compiled'
-constraints
-
-* Implement Hypergraph representation system
-
-* Explore analytic and symbolic solution system
-
-
 INFRASTRUCTURE
 --------------
 
