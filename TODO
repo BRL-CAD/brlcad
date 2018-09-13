@@ -168,6 +168,14 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* implement a bu_exec wrapper and investigate something like capnproto
+  to build up a process-isolated command execution system for libged.
+  Possibly useful resources:
+
+  - https://github.com/s-u/multicore/blob/master/src/forknt.c
+  - https://github.com/diacritic/BoxFort
+  - https://yuhui-lin.github.io/blog/2017/08/01/serialization
+
 * cppclean audit
 
 * add a multiview rt script to regression testing (e.g., see rtwalk output)
