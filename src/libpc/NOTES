@@ -47,12 +47,8 @@ license isn't viral):
 http://www.minizinc.org/2.0/index.html
 
 It's being actively developed in C++ rather than Mercury, which is a Good Thing
-from a support standpoint.  Even has its own CMake build.  It's not stable yet,
-but if it works out libpc might end up being a thin wrapper over this API plus
-a batch of predefined constraints...
+from a support standpoint.
 
-Would require a flex -> perplex and bison -> lemon conversion from the looks
-of it, for a portable src/other version that doesn't use pre-generated files.
-Maybe in this case, since we presumably wouldn't be developing libminizinc
-ourselves the way we did with stepcode, we could get away with pre-generated
-cached files in the event flex/bison aren't around...
+Note that SafeInt, which they call out as being MS-PL licensed, now has an
+MIT licensed version available here:  https://github.com/dcleblanc/SafeInt
+
