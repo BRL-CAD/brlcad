@@ -56,8 +56,6 @@ struct identt {
 
 static int idfd = 0;
 static int rd_idfd = 0;
-static FILE *tabptr = NULL;
-
 
 HIDDEN int
 tables_check(char *a, char *b)
@@ -112,7 +110,7 @@ tables_sol_number(const matp_t matrix, char *name, size_t *old, size_t *numsol)
 
 
 HIDDEN void
-tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, const fastf_t *old_mat, int flag, size_t *numreg, size_t *numsol)
+tables_new(struct ged *gedp, struct bu_vls *tabptr, struct directory *dp, struct bu_ptbl *cur_path, const fastf_t *old_mat, int flag, size_t *numreg, size_t *numsol)
 {
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
@@ -160,22 +158,18 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, con
     BU_ASSERT(actual_count == node_count);
 
     if (dp->d_flags & RT_DIR_REGION) {
-	struct bu_vls str = BU_VLS_INIT_ZERO;
-
 	(*numreg)++;
-	bu_vls_printf(&str, " %-4zu %4ld %4ld %4ld %4ld  ",
+	bu_vls_printf(tabptr, " %-4zu %4ld %4ld %4ld %4ld  ",
 		      *numreg, comb->region_id, comb->aircode, comb->GIFTmater, comb->los);
-	bu_vls_fwrite(tabptr, &str);
-	bu_vls_free(&str);
 
 	for (k = 0; k < BU_PTBL_LEN(cur_path); k++) {
 	    struct directory *path_dp;
 
 	    path_dp = (struct directory *)BU_PTBL_GET(cur_path, k);
 	    RT_CK_DIR(path_dp);
-	    fprintf(tabptr, "/%s", path_dp->d_namep);
+	    bu_vls_printf(tabptr, "/%s", path_dp->d_namep);
 	}
-	fprintf(tabptr, "/%s:\n", dp->d_namep);
+	bu_vls_printf(tabptr, "/%s:\n", dp->d_namep);
 
 	if (flag == ID_TABLE)
 	    goto out;
@@ -206,11 +200,11 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, con
 
 	    if ((sol_dp=db_lookup(gedp->ged_wdbp->dbip, tree_list[i].tl_tree->tr_l.tl_name, LOOKUP_QUIET)) != RT_DIR_NULL) {
 		if (sol_dp->d_flags & RT_DIR_COMB) {
-		    fprintf(tabptr, "   RG %c %s\n",
+		    bu_vls_printf(tabptr, "   RG %c %s\n",
 			    op, sol_dp->d_namep);
 		    continue;
 		} else if (!(sol_dp->d_flags & RT_DIR_SOLID)) {
-		    fprintf(tabptr, "   ?? %c %s\n",
+		    bu_vls_printf(tabptr, "   ?? %c %s\n",
 			    op, sol_dp->d_namep);
 		    continue;
 		} else {
@@ -225,20 +219,20 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, con
 			nsoltemp = 0;
 		    }
 		    nsoltemp = tables_sol_number((matp_t)temp_mat, tree_list[i].tl_tree->tr_l.tl_name, &old, numsol);
-		    fprintf(tabptr, "   %c [%d] ", op, nsoltemp);
+		    bu_vls_printf(tabptr, "   %c [%d] ", op, nsoltemp);
 		}
 	    } else {
 		const matp_t mat = (matp_t)old_mat;
 		nsoltemp = tables_sol_number(mat, tree_list[i].tl_tree->tr_l.tl_name, &old, numsol);
-		fprintf(tabptr, "   %c [%d] ", op, nsoltemp);
+		bu_vls_printf(tabptr, "   %c [%d] ", op, nsoltemp);
 		continue;
 	    }
 
 	    if (flag == REG_TABLE || old) {
-		(void) fprintf(tabptr, "%s\n", tree_list[i].tl_tree->tr_l.tl_name);
+		bu_vls_printf(tabptr, "%s\n", tree_list[i].tl_tree->tr_l.tl_name);
 		continue;
 	    } else
-		(void) fprintf(tabptr, "%s:  ", tree_list[i].tl_tree->tr_l.tl_name);
+		bu_vls_printf(tabptr, "%s:  ", tree_list[i].tl_tree->tr_l.tl_name);
 
 	    if (!old && (sol_dp->d_flags & RT_DIR_SOLID)) {
 		/* if we get here, we must be looking for a solid table */
@@ -248,7 +242,7 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, con
 		    OBJ[sol_intern.idb_type].ft_describe(&tmp_vls, &sol_intern, 1, gedp->ged_wdbp->dbip->dbi_base2local) < 0) {
 		    bu_vls_printf(gedp->ged_result_str, "%s describe error\n", tree_list[i].tl_tree->tr_l.tl_name);
 		}
-		fprintf(tabptr, "%s", bu_vls_addr(&tmp_vls));
+		bu_vls_printf(tabptr, "%s", bu_vls_addr(&tmp_vls));
 		bu_vls_free(&tmp_vls);
 	    }
 	    if (nsoltemp && (sol_dp->d_flags & RT_DIR_SOLID))
@@ -296,7 +290,7 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, con
 	    } else {
 		MAT_COPY(new_mat, old_mat);
 	    }
-	    tables_new(gedp, nextdp, cur_path, new_mat, flag, numreg, numsol);
+	    tables_new(gedp, tabptr, nextdp, cur_path, new_mat, flag, numreg, numsol);
 	    bu_ptbl_trunc(cur_path, cur_length);
 	}
     } else {
@@ -318,6 +312,8 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
     static const char sortcmd_long[] = "sort --numeric --key=2, 2 --output /tmp/ord_id ";
     struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
     struct bu_vls cmd = BU_VLS_INIT_ZERO;
+    struct bu_vls tabptr = BU_VLS_INIT_ZERO;
+    FILE *test_f = NULL;
     struct bu_ptbl cur_path;
     int flag;
     int status;
@@ -368,11 +364,12 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* open the file */
-    if ((tabptr=fopen(argv[1], "w+")) == NULL) {
+    if ((test_f=fopen(argv[1], "w+")) == NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s:  Can't open %s\n", argv[0], argv[1]);
 	status = GED_ERROR;
 	goto end;
     }
+    fclose(test_f);
 
     if (flag == SOL_TABLE || flag == REG_TABLE) {
 	/* temp file for discrimination of solids */
@@ -388,31 +385,31 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
     (void)time(&now);
     timep = ctime(&now);
     timep[24] = '\0';
-    fprintf(tabptr, "1 -8    Summary Table {%s}  (written: %s)\n", argv[0], timep);
-    fprintf(tabptr, "2 -7         file name    : %s\n", gedp->ged_wdbp->dbip->dbi_filename);
-    fprintf(tabptr, "3 -6         \n");
-    fprintf(tabptr, "4 -5         \n");
+    bu_vls_printf(&tabptr, "1 -8    Summary Table {%s}  (written: %s)\n", argv[0], timep);
+    bu_vls_printf(&tabptr, "2 -7         file name    : %s\n", gedp->ged_wdbp->dbip->dbi_filename);
+    bu_vls_printf(&tabptr, "3 -6         \n");
+    bu_vls_printf(&tabptr, "4 -5         \n");
 #ifndef _WIN32
-    fprintf(tabptr, "5 -4         user         : %s\n", getpwuid(getuid())->pw_gecos);
+    bu_vls_printf(&tabptr, "5 -4         user         : %s\n", getpwuid(getuid())->pw_gecos);
 #else
     {
 	char uname[256];
 	DWORD dwNumBytes = 256;
 	if (GetUserName(uname, &dwNumBytes))
-	    fprintf(tabptr, "5 -4         user         : %s\n", uname);
+	    bu_vls_printf(&tabptr, "5 -4         user         : %s\n", uname);
 	else
-	    fprintf(tabptr, "5 -4         user         : UNKNOWN\n");
+	    bu_vls_printf(&tabptr, "5 -4         user         : UNKNOWN\n");
     }
 #endif
-    fprintf(tabptr, "6 -3         target title : %s\n", gedp->ged_wdbp->dbip->dbi_title);
-    fprintf(tabptr, "7 -2         target units : %s\n", bu_units_string(gedp->ged_wdbp->dbip->dbi_local2base));
-    fprintf(tabptr, "8 -1         objects      :");
+    bu_vls_printf(&tabptr, "6 -3         target title : %s\n", gedp->ged_wdbp->dbip->dbi_title);
+    bu_vls_printf(&tabptr, "7 -2         target units : %s\n", bu_units_string(gedp->ged_wdbp->dbip->dbi_local2base));
+    bu_vls_printf(&tabptr, "8 -1         objects      :");
     for (i = 2; i < (size_t)argc; i++) {
 	if ((i%8) == 0)
-	    fprintf(tabptr, "\n                           ");
-	fprintf(tabptr, " %s", argv[i]);
+	    bu_vls_printf(&tabptr, "\n                           ");
+	bu_vls_printf(&tabptr, " %s", argv[i]);
     }
-    fprintf(tabptr, "\n\n");
+    bu_vls_printf(&tabptr, "\n\n");
 
     /* make the tables */
     for (i = 2; i < (size_t)argc; i++) {
@@ -420,7 +417,7 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
 
 	bu_ptbl_reset(&cur_path);
 	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) != RT_DIR_NULL)
-	    tables_new(gedp, dp, &cur_path, (const fastf_t *)bn_mat_identity, flag, &numreg, &numsol);
+	    tables_new(gedp, &tabptr, dp, &cur_path, (const fastf_t *)bn_mat_identity, flag, &numreg, &numsol);
 	else
 	    bu_vls_printf(gedp->ged_result_str, "%s:  skip this object\n", argv[i]);
     }
@@ -428,28 +425,41 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
     bu_vls_printf(gedp->ged_result_str, "Summary written in: %s\n", argv[1]);
 
     if (flag == SOL_TABLE || flag == REG_TABLE) {
-	struct bu_vls str = BU_VLS_INIT_ZERO;
+	FILE *ftabptr = NULL;
 
 	/* FIXME: should not assume /tmp */
 	bu_file_delete("/tmp/mged_discr\0");
 
-	bu_vls_printf(&str, "\n\nNumber Primitives = %zu  Number Regions = %zu\n",
+	bu_vls_printf(&tabptr, "\n\nNumber Primitives = %zu  Number Regions = %zu\n",
 		      numsol, numreg);
-	bu_vls_fwrite(tabptr, &str);
-	bu_vls_free(&str);
 
 	bu_vls_printf(gedp->ged_result_str, "Processed %lu Primitives and %lu Regions\n",
 		      numsol, numreg);
 
-	(void)fclose(tabptr);
+	if ((ftabptr=fopen(argv[1], "w+")) == NULL) {
+	    bu_vls_printf(gedp->ged_result_str, "%s:  Can't open %s\n", argv[0], argv[1]);
+	    status = GED_ERROR;
+	    goto end;
+	}
+	bu_vls_fwrite(ftabptr, &tabptr);
+	(void)fclose(ftabptr);
+
     } else {
 	int ret;
+	FILE *ftabptr = NULL;
 	FILE *outFile;
 	struct bu_mapped_file *inFile;
 	const char *currptr;
 
-	fprintf(tabptr, "* 9999999\n* 9999999\n* 9999999\n* 9999999\n* 9999999\n");
-	(void)fclose(tabptr);
+	bu_vls_printf(&tabptr, "* 9999999\n* 9999999\n* 9999999\n* 9999999\n* 9999999\n");
+
+	if ((ftabptr=fopen(argv[1], "w+")) == NULL) {
+	    bu_vls_printf(gedp->ged_result_str, "%s:  Can't open %s\n", argv[0], argv[1]);
+	    status = GED_ERROR;
+	    goto end;
+	}
+	bu_vls_fwrite(ftabptr, &tabptr);
+	(void)fclose(ftabptr);
 
 	bu_vls_printf(gedp->ged_result_str, "Processed %lu Regions\n", numreg);
 
@@ -487,9 +497,11 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
 	bu_file_delete("/tmp/ord_id\0");
     }
 
+
 end:
     bu_vls_free(&cmd);
     bu_vls_free(&tmp_vls);
+    bu_vls_free(&tabptr);
     bu_ptbl_free(&cur_path);
 
     return status;
