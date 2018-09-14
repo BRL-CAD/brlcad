@@ -229,7 +229,6 @@ set(regress_outfiles
   lights.g
   lights.log
   lights.pix
-  lights.ref.pix
   mged.g
   mged.log
   moss.asc
@@ -239,7 +238,6 @@ set(regress_outfiles
   moss.pix.diff
   moss.pix.png
   moss.pix.png.pix
-  moss.ref.pix
   moss.roundtrip.diff
   nirt.g
   nirt.log
@@ -346,7 +344,6 @@ set(regress_outfiles
   shaders.half.prj
   shaders.log
   shaders.mged
-  shaders.ref.pix
   shaders.rt
   shaders.rt.diff.pix
   shaders.rt.log
@@ -357,13 +354,11 @@ set(regress_outfiles
   solids.g
   solids.log
   solids.pix.diff
-  solids.ref.pix
   solids.rt
   solids.rt.log
   solids.rt.pix
   solids.simple.g
   solids.simple.pix.diff
-  solids.simple.ref.pix
   solids.simple.rt
   solids.simple.rt.log
   solids.simple.rt.pix
@@ -372,7 +367,6 @@ set(regress_outfiles
   spdi.log
   spdi.mged
   spdi.pix
-  spdi.ref.pix
   weight.g
   weight.log
   weight.mged
