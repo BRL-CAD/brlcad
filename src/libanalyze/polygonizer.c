@@ -769,6 +769,7 @@ analyze_polygonize(
 
     p.size = size;
     p.m = m;
+    p.cubes = NULL;
 
     /* allocate hash tables and build cube polygon table: */
     p.centers = (CENTERLIST **) bu_calloc(HASHSIZE, sizeof(CENTERLIST *), "hashsize centerlist");
@@ -819,7 +820,7 @@ analyze_polygonize(
     setcenter(&p, p.centers, 0, 0, 0);
 
     while (p.cubes != NULL) { /* process active cubes till none left */
-	long int avail_mem = bu_avail_mem();
+	long int avail_mem = 0;
 	CUBE c;
 	CUBES *temp = p.cubes;
 	c = p.cubes->cube;
@@ -905,11 +906,13 @@ analyze_polygonizer_memfree:
 
     /* polygonizer memory */
     polygonizer_mesh_free(m);
-    for (i = 0; i < (int)BU_PTBL_LEN(p.f); i++) {
-	bu_free(BU_PTBL_GET(p.f, i), "free list item");
+    if (p.f) {
+	for (i = 0; i < (int)BU_PTBL_LEN(p.f); i++) {
+	    bu_free(BU_PTBL_GET(p.f, i), "free list item");
+	}
+	bu_ptbl_free(p.f);
+	BU_PUT(p.f, struct bu_ptbl);
     }
-    bu_ptbl_free(p.f);
-    BU_PUT(p.f, struct bu_ptbl);
     bu_free(p.centers, "centerlist");
     bu_free(p.corners, "cornerlist");
     bu_free(p.edges, "edgelist");
