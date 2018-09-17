@@ -1903,7 +1903,7 @@ _ged_methodattr_set(struct ged *gedp, struct _ged_facetize_opts *opts, const cha
 }
 
 int
-_ged_facetize_region_obj(struct ged *gedp, const char *oname, const char *cname, const char *sname, struct _ged_facetize_opts *opts, int ocnt, int max_cnt, int cmethod)
+_ged_facetize_region_obj(struct ged *gedp, const char *oname, const char *cname, const char *sname, struct _ged_facetize_opts *opts, int ocnt, int max_cnt, int cmethod, struct _ged_facetize_report_info *cinfo)
 {
     int ret = GED_FACETIZE_FAILURE;
     struct directory *dp = db_lookup(gedp->ged_wdbp->dbip, oname, LOOKUP_QUIET);
@@ -1940,20 +1940,19 @@ _ged_facetize_region_obj(struct ged *gedp, const char *oname, const char *cname,
     }
 
     if (cmethod == GED_FACETIZE_CONTINUATION) {
-	struct _ged_facetize_report_info cinfo;
 
 	if (!opts->quiet) {
 	    bu_log("CM: tessellating %s (%d of %d)\n", oname, ocnt, max_cnt);
 	}
 
 	/* Regardless of the outcome, record what settings were tried. */
-	_ged_methodattr_set(gedp, opts, cname, GED_FACETIZE_CONTINUATION, &cinfo);
+	_ged_methodattr_set(gedp, opts, cname, GED_FACETIZE_CONTINUATION, cinfo);
 
-	ret = _ged_continuation_obj(&cinfo, gedp, oname, sname, opts);
+	ret = _ged_continuation_obj(cinfo, gedp, oname, sname, opts);
 	if (ret == GED_FACETIZE_FAILURE) {
 	    if (!opts->quiet) {
 		struct bu_vls lmsg = BU_VLS_INIT_ZERO;
-		_ged_facetize_failure_msg(&lmsg, cinfo.failure_mode, "CM", &cinfo);
+		_ged_facetize_failure_msg(&lmsg, cinfo->failure_mode, "CM", cinfo);
 		bu_log("%s", bu_vls_addr(&lmsg));
 		bu_vls_free(&lmsg);
 	    }
@@ -1967,7 +1966,6 @@ _ged_facetize_region_obj(struct ged *gedp, const char *oname, const char *cname,
     }
 
     if (cmethod == GED_FACETIZE_SPSR) {
-	struct _ged_facetize_report_info cinfo;
 
 	if (!opts->quiet) {
 	    bu_log("SPSR: tessellating %s with depth %d, interpolation weight %g, and samples-per-node %g\n", oname, opts->s_opts.depth, opts->s_opts.point_weight, opts->s_opts.samples_per_node);
@@ -1976,11 +1974,11 @@ _ged_facetize_region_obj(struct ged *gedp, const char *oname, const char *cname,
 	/* Regardless of the outcome, record what settings were tried. */
 	_ged_methodattr_set(gedp, opts, cname, GED_FACETIZE_SPSR, NULL);
 
-	ret =_ged_spsr_obj(&cinfo, gedp, oname, sname, opts);
+	ret =_ged_spsr_obj(cinfo, gedp, oname, sname, opts);
 	if (ret == GED_FACETIZE_FAILURE) {
 	    if (!opts->quiet) {
 		struct bu_vls lmsg = BU_VLS_INIT_ZERO;
-		_ged_facetize_failure_msg(&lmsg, cinfo.failure_mode, "SPSR", &cinfo);
+		_ged_facetize_failure_msg(&lmsg, cinfo->failure_mode, "SPSR", cinfo);
 		bu_log("%s", bu_vls_addr(&lmsg));
 		bu_vls_free(&lmsg);
 	    }
@@ -2103,11 +2101,15 @@ _ged_facetize_regions_resume(struct ged *gedp, int argc, const char **argv, stru
 	    const char *sname = bu_avs_get(&bnames, cname);
 	    const char *oname = bu_avs_get(&rnames, cname);
 	    struct directory *dp = db_lookup(dbip, sname, LOOKUP_QUIET);
+	    struct _ged_facetize_report_info cinfo;
 
 	    if (dp == RT_DIR_NULL) {
 		if (opts->retry || !_ged_facetize_attempted(gedp, cname, cmethod)) {
 		    /* Before we try this (unless we're point sampling), check that all the objects in the specified tree(s) are valid solids */
 		    struct directory *odp = db_lookup(gedp->ged_wdbp->dbip, oname, LOOKUP_QUIET);
+
+		    /* Regardless of the outcome, record what settings were tried. */
+		    _ged_methodattr_set(gedp, opts, cname, cmethod, &cinfo);
 
 		    if (odp == RT_DIR_NULL || (!_ged_facetize_solid_objs(gedp, 1, &odp, opts) && cmethod != GED_FACETIZE_SPSR)) {
 			if (!opts->quiet) {
@@ -2117,7 +2119,7 @@ _ged_facetize_regions_resume(struct ged *gedp, int argc, const char **argv, stru
 			continue;
 		    }
 
-		    if (_ged_facetize_region_obj(gedp, oname, cname, sname, opts, i+1, (int)BU_PTBL_LEN(ar2), cmethod) == GED_FACETIZE_FAILURE) {
+		    if (_ged_facetize_region_obj(gedp, oname, cname, sname, opts, i+1, (int)BU_PTBL_LEN(ar2), cmethod, &cinfo) == GED_FACETIZE_FAILURE) {
 			bu_ptbl_ins(ar, (long *)n);
 
 			avail_mem = bu_avail_mem();
@@ -2523,6 +2525,10 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	    if (dp == RT_DIR_NULL) {
 		/* Before we try this (unless we're point sampling), check that all the objects in the specified tree(s) are valid solids */
 		struct directory *odp = db_lookup(gedp->ged_wdbp->dbip, oname, LOOKUP_QUIET);
+		struct _ged_facetize_report_info cinfo;
+
+		/* Regardless of the outcome, record what settings were tried. */
+		_ged_methodattr_set(gedp, opts, cname, cmethod, &cinfo);
 
 		if (odp == RT_DIR_NULL || (!_ged_facetize_solid_objs(gedp, 1, &odp, opts) && cmethod != GED_FACETIZE_SPSR)) {
 		    if (!opts->quiet) {
@@ -2532,7 +2538,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 		    continue;
 		}
 
-		if (_ged_facetize_region_obj(gedp, oname, cname, sname, opts, i+1, (int)BU_PTBL_LEN(ar), cmethod) == GED_FACETIZE_FAILURE) {
+		if (_ged_facetize_region_obj(gedp, oname, cname, sname, opts, i+1, (int)BU_PTBL_LEN(ar), cmethod, &cinfo) == GED_FACETIZE_FAILURE) {
 		    bu_ptbl_ins(ar2, (long *)n);
 
 		    avail_mem = bu_avail_mem();
