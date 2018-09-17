@@ -1903,7 +1903,7 @@ _ged_methodattr_set(struct ged *gedp, struct _ged_facetize_opts *opts, const cha
 }
 
 int
-_ged_facetize_region_obj(struct ged *gedp, const char *oname, const char *cname, const char *sname, struct _ged_facetize_opts *opts, int ocnt, int max_cnt, int cmethod, struct _ged_facetize_report_info *cinfo)
+_ged_facetize_region_obj(struct ged *gedp, const char *oname, const char *sname, struct _ged_facetize_opts *opts, int ocnt, int max_cnt, int cmethod, struct _ged_facetize_report_info *cinfo)
 {
     int ret = GED_FACETIZE_FAILURE;
     struct directory *dp = db_lookup(gedp->ged_wdbp->dbip, oname, LOOKUP_QUIET);
@@ -2110,7 +2110,7 @@ _ged_facetize_regions_resume(struct ged *gedp, int argc, const char **argv, stru
 			continue;
 		    }
 
-		    if (_ged_facetize_region_obj(gedp, oname, cname, sname, opts, i+1, (int)BU_PTBL_LEN(ar2), cmethod, &cinfo) == GED_FACETIZE_FAILURE) {
+		    if (_ged_facetize_region_obj(gedp, oname, sname, opts, i+1, (int)BU_PTBL_LEN(ar2), cmethod, &cinfo) == GED_FACETIZE_FAILURE) {
 			bu_ptbl_ins(ar, (long *)n);
 
 			avail_mem = bu_avail_mem();
@@ -2529,7 +2529,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 		    continue;
 		}
 
-		if (_ged_facetize_region_obj(gedp, oname, cname, sname, opts, i+1, (int)BU_PTBL_LEN(ar), cmethod, &cinfo) == GED_FACETIZE_FAILURE) {
+		if (_ged_facetize_region_obj(gedp, oname, sname, opts, i+1, (int)BU_PTBL_LEN(ar), cmethod, &cinfo) == GED_FACETIZE_FAILURE) {
 		    bu_ptbl_ins(ar2, (long *)n);
 
 		    avail_mem = bu_avail_mem();
