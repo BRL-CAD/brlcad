@@ -1925,6 +1925,9 @@ _ged_facetize_region_obj(struct ged *gedp, const char *oname, const char *cname,
 	    bu_log("%s", bu_vls_addr(opts->nmg_log_header));
 	}
 
+	/* Regardless of the outcome, record what settings were tried. */
+	_ged_methodattr_set(gedp, opts, cname, GED_FACETIZE_NMGBOOL, NULL);
+
 	ret = _ged_nmg_obj(gedp, 1, (const char **)&oname, sname, opts);
 
 	if (ret != GED_FACETIZE_FAILURE) {
@@ -1932,9 +1935,6 @@ _ged_facetize_region_obj(struct ged *gedp, const char *oname, const char *cname,
 		bu_log("Error adding %s to methodology combination\n", sname);
 	    }
 	}
-
-	/* Regardless of the outcome, record what settings were tried. */
-	_ged_methodattr_set(gedp, opts, cname, GED_FACETIZE_NMGBOOL, NULL);
 
 	return ret;
     }
@@ -1945,6 +1945,9 @@ _ged_facetize_region_obj(struct ged *gedp, const char *oname, const char *cname,
 	if (!opts->quiet) {
 	    bu_log("CM: tessellating %s (%d of %d)\n", oname, ocnt, max_cnt);
 	}
+
+	/* Regardless of the outcome, record what settings were tried. */
+	_ged_methodattr_set(gedp, opts, cname, GED_FACETIZE_CONTINUATION, &cinfo);
 
 	ret = _ged_continuation_obj(&cinfo, gedp, oname, sname, opts);
 	if (ret == GED_FACETIZE_FAILURE) {
@@ -1960,9 +1963,6 @@ _ged_facetize_region_obj(struct ged *gedp, const char *oname, const char *cname,
 	    }
 	}
 
-	/* Regardless of the outcome, record what settings were tried. */
-	_ged_methodattr_set(gedp, opts, cname, GED_FACETIZE_CONTINUATION, &cinfo);
-
 	return ret;
     }
 
@@ -1972,6 +1972,9 @@ _ged_facetize_region_obj(struct ged *gedp, const char *oname, const char *cname,
 	if (!opts->quiet) {
 	    bu_log("SPSR: tessellating %s with depth %d, interpolation weight %g, and samples-per-node %g\n", oname, opts->s_opts.depth, opts->s_opts.point_weight, opts->s_opts.samples_per_node);
 	}
+
+	/* Regardless of the outcome, record what settings were tried. */
+	_ged_methodattr_set(gedp, opts, cname, GED_FACETIZE_SPSR, NULL);
 
 	ret =_ged_spsr_obj(&cinfo, gedp, oname, sname, opts);
 	if (ret == GED_FACETIZE_FAILURE) {
@@ -1986,9 +1989,6 @@ _ged_facetize_region_obj(struct ged *gedp, const char *oname, const char *cname,
 		bu_log("Error adding %s to methodology combination\n", sname);
 	    }
 	}
-
-	/* Regardless of the outcome, record what settings were tried. */
-	_ged_methodattr_set(gedp, opts, cname, GED_FACETIZE_SPSR, NULL);
 
 	return ret;
     }
