@@ -35,6 +35,7 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "bu/sort.h"
 #include "bu/units.h"
 #include "./ged_private.h"
 
@@ -135,6 +136,23 @@ struct table_obj {
     struct bu_vls *path;
     struct bu_ptbl *tree_objs;
 };
+
+static int
+sort_table_objs(const void *a, const void *b, void *UNUSED(arg))
+{
+    struct table_obj *ao = *(struct table_obj **)a;
+    struct table_obj *bo = *(struct table_obj **)b;
+    if (ao->region_id > bo->region_id) return 1;
+    if (ao->region_id < bo->region_id) return -1;
+    if (ao->aircode > bo->aircode) return 1;
+    if (ao->aircode < bo->aircode) return -1;
+    if (ao->GIFTmater > bo->GIFTmater) return 1;
+    if (ao->GIFTmater < bo->GIFTmater) return -1;
+    if (ao->los > bo->los) return 1;
+    if (ao->los < bo->los) return -1;
+    return bu_strcmp(bu_vls_addr(ao->path), bu_vls_addr(bo->path));
+}
+
 
 HIDDEN void
 tables_objs_print(struct bu_vls *tabvls, struct bu_ptbl *tabptr, int type)
@@ -375,6 +393,36 @@ out:
     return;
 }
 
+HIDDEN void
+tables_header(struct bu_vls *tabvls, int argc, const char **argv, struct ged *gedp, char *timep)
+{
+    int i;
+    bu_vls_printf(tabvls, "1 -8    Summary Table {%s}  (written: %s)\n", argv[0], timep);
+    bu_vls_printf(tabvls, "2 -7         file name    : %s\n", gedp->ged_wdbp->dbip->dbi_filename);
+    bu_vls_printf(tabvls, "3 -6         \n");
+    bu_vls_printf(tabvls, "4 -5         \n");
+#ifndef _WIN32
+    bu_vls_printf(tabvls, "5 -4         user         : %s\n", getpwuid(getuid())->pw_gecos);
+#else
+    {
+	char uname[256];
+	DWORD dwNumBytes = 256;
+	if (GetUserName(uname, &dwNumBytes))
+	    bu_vls_printf(tabvls, "5 -4         user         : %s\n", uname);
+	else
+	    bu_vls_printf(tabvls, "5 -4         user         : UNKNOWN\n");
+    }
+#endif
+    bu_vls_printf(tabvls, "6 -3         target title : %s\n", gedp->ged_wdbp->dbip->dbi_title);
+    bu_vls_printf(tabvls, "7 -2         target units : %s\n", bu_units_string(gedp->ged_wdbp->dbip->dbi_local2base));
+    bu_vls_printf(tabvls, "8 -1         objects      :");
+    for (i = 2; i < argc; i++) {
+	if ((i%8) == 0)
+	    bu_vls_printf(tabvls, "\n                           ");
+	bu_vls_printf(tabvls, " %s", argv[i]);
+    }
+    bu_vls_printf(tabvls, "\n\n");
+}
 
 int
 ged_tables(struct ged *gedp, int argc, const char *argv[])
@@ -383,6 +431,7 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
     struct bu_vls cmd = BU_VLS_INIT_ZERO;
     struct bu_vls tabvls = BU_VLS_INIT_ZERO;
     FILE *test_f = NULL;
+    FILE *ftabvls = NULL;
     struct bu_ptbl cur_path;
     int flag;
     int status;
@@ -455,32 +504,8 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
     (void)time(&now);
     timep = ctime(&now);
     timep[24] = '\0';
-    bu_vls_printf(&tabvls, "1 -8    Summary Table {%s}  (written: %s)\n", argv[0], timep);
-    bu_vls_printf(&tabvls, "2 -7         file name    : %s\n", gedp->ged_wdbp->dbip->dbi_filename);
-    bu_vls_printf(&tabvls, "3 -6         \n");
-    bu_vls_printf(&tabvls, "4 -5         \n");
-#ifndef _WIN32
-    bu_vls_printf(&tabvls, "5 -4         user         : %s\n", getpwuid(getuid())->pw_gecos);
-#else
-    {
-	char uname[256];
-	DWORD dwNumBytes = 256;
-	if (GetUserName(uname, &dwNumBytes))
-	    bu_vls_printf(&tabvls, "5 -4         user         : %s\n", uname);
-	else
-	    bu_vls_printf(&tabvls, "5 -4         user         : UNKNOWN\n");
-    }
-#endif
-    bu_vls_printf(&tabvls, "6 -3         target title : %s\n", gedp->ged_wdbp->dbip->dbi_title);
-    bu_vls_printf(&tabvls, "7 -2         target units : %s\n", bu_units_string(gedp->ged_wdbp->dbip->dbi_local2base));
-    bu_vls_printf(&tabvls, "8 -1         objects      :");
-    for (i = 2; i < (size_t)argc; i++) {
-	if ((i%8) == 0)
-	    bu_vls_printf(&tabvls, "\n                           ");
-	bu_vls_printf(&tabvls, " %s", argv[i]);
-    }
-    bu_vls_printf(&tabvls, "\n\n");
 
+    tables_header(&tabvls, argc, argv, gedp, timep);
 
     BU_GET(tabobjs, struct bu_ptbl);
     bu_ptbl_init(tabobjs, 8, "f_tables: objects");
@@ -501,80 +526,33 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
     bu_vls_printf(gedp->ged_result_str, "Summary written in: %s\n", argv[1]);
 
     if (flag == SOL_TABLE || flag == REG_TABLE) {
-	FILE *ftabvls = NULL;
-
-	/* FIXME: should not assume /tmp */
-	bu_file_delete("/tmp/mged_discr\0");
-
 	bu_vls_printf(&tabvls, "\n\nNumber Primitives = %zu  Number Regions = %zu\n",
 		      numsol, numreg);
 
 	bu_vls_printf(gedp->ged_result_str, "Processed %lu Primitives and %lu Regions\n",
 		      numsol, numreg);
-
-	if ((ftabvls=fopen(argv[1], "w+")) == NULL) {
-	    bu_vls_printf(gedp->ged_result_str, "%s:  Can't open %s\n", argv[0], argv[1]);
-	    status = GED_ERROR;
-	    goto end;
-	}
-	bu_vls_fwrite(ftabvls, &tabvls);
-	(void)fclose(ftabvls);
-
     } else {
-	static const char sortcmd_orig[] = "sort -n +1 -2 -o /tmp/ord_id ";
-	static const char sortcmd_long[] = "sort --numeric --key=2, 2 --output /tmp/ord_id ";
-	int ret;
-	FILE *ftabvls = NULL;
-	FILE *outFile;
-	struct bu_mapped_file *inFile;
-	const char *currptr;
-
 	bu_vls_printf(&tabvls, "* 9999999\n* 9999999\n* 9999999\n* 9999999\n* 9999999\n");
 
-	if ((ftabvls=fopen(argv[1], "w+")) == NULL) {
-	    bu_vls_printf(gedp->ged_result_str, "%s:  Can't open %s\n", argv[0], argv[1]);
-	    status = GED_ERROR;
-	    goto end;
-	}
-	bu_vls_fwrite(ftabvls, &tabvls);
-	(void)fclose(ftabvls);
+	tables_header(&tabvls, argc, argv, gedp, timep);
 
 	bu_vls_printf(gedp->ged_result_str, "Processed %lu Regions\n", numreg);
 
-	/* make ordered idents - tries newer gnu 'sort' syntax if not successful */
-	bu_vls_strcpy(&cmd, sortcmd_orig);
-	bu_vls_strcat(&cmd, argv[1]);
-	bu_vls_strcat(&cmd, " 2> /dev/null");
-	if (system(bu_vls_addr(&cmd)) != 0) {
-	    bu_vls_trunc(&cmd, 0);
-	    bu_vls_strcpy(&cmd, sortcmd_long);
-	    bu_vls_strcat(&cmd, argv[1]);
-	    ret = system(bu_vls_addr(&cmd));
-	    if (ret != 0)
-		bu_log("WARNING: sort failure detected\n");
-	}
-	bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&cmd));
+	/* make ordered idents and re-print */
+	bu_sort(BU_PTBL_BASEADDR(tabobjs), BU_PTBL_LEN(tabobjs), sizeof(struct table_obj *), sort_table_objs, NULL);
 
- 	inFile = bu_open_mapped_file("/tmp/ord_id", (char *)NULL);
- 	if (!inFile) {
- 	    bu_vls_printf(gedp->ged_result_str, "Cannot open temporary file %s\n", argv[1]);
- 	    return GED_ERROR;
- 	}
- 	outFile = fopen(argv[1], "a");
- 	if (!outFile) {
- 	    bu_vls_printf(gedp->ged_result_str, "Cannot open output file %s\n", argv[1]);
- 	    return GED_ERROR;
- 	}
- 	currptr = (const char *)(inFile->buf);
- 	for (i = 0; i < inFile->buflen; i++) {
- 	    fputc(*(currptr + i), outFile);
- 	}
- 	bu_close_mapped_file(inFile);
- 	fclose(outFile);
+	tables_objs_print(&tabvls, tabobjs, flag);
 
-	bu_file_delete("/tmp/ord_id\0");
+	bu_vls_printf(&tabvls, "* 9999999\n* 9999999\n* 9999999\n* 9999999\n* 9999999\n");
     }
 
+    if ((ftabvls=fopen(argv[1], "w+")) == NULL) {
+	bu_vls_printf(gedp->ged_result_str, "%s:  Can't open %s\n", argv[0], argv[1]);
+	status = GED_ERROR;
+	goto end;
+    }
+    bu_vls_fwrite(ftabvls, &tabvls);
+    (void)fclose(ftabvls);
 
 end:
     bu_vls_free(&cmd);
