@@ -194,20 +194,6 @@ is_socket(int fd)
 }
 
 
-#ifdef SIGALRM
-static void
-sigalarm(int UNUSED(code))
-{
-    printf("alarm %s\n", fb_server_fbp ? "FBP" : "NULL");
-    if (fb_server_fbp != FB_NULL) {
-	fb_poll(fb_server_fbp);
-    }
-    (void)signal(SIGALRM, sigalarm);	/* some systems remove handler */
-    alarm(1);
-}
-#endif
-
-
 static void
 setup_socket(int fd)
 {
@@ -411,10 +397,6 @@ main(int argc, char **argv)
 #ifdef SIGPIPE
     (void)signal(SIGPIPE, SIG_IGN);
 #endif
-#ifdef SIGALRM
-    (void)signal(SIGALRM, sigalarm);
-#endif
-    /*alarm(1)*/
 
     FD_ZERO(&select_list);
     fb_server_select_list = &select_list;
