@@ -72,7 +72,7 @@ main(int argc, const char **argv)
     bu_vls_trunc(&msg, 0);
 
     if (print_help) {
-	char *help = bu_opt_describe(d, NULL);
+	const char *help = bu_opt_describe(d, NULL);
 	bu_vls_sprintf(&msg, "Usage: 'gsh [options] model.g'\n\nOptions:\n%s\n", help);
 	bu_free((char *)help, "done with help string");
 	fputs(bu_vls_addr(&msg), stderr);
