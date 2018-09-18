@@ -182,6 +182,11 @@ HIDDEN int to_data_arrows(struct ged *gedp,
 			  ged_func_ptr func,
 			  const char *usage,
 			  int maxargs);
+HIDDEN int to_data_arrows_func(Tcl_Interp *interp,
+			       struct ged *gedp,
+			       struct ged_dm_view *gdvp,
+			       int argc,
+			       const char *argv[]);
 HIDDEN int to_data_axes(struct ged *gedp,
 			int argc,
 			const char *argv[],
@@ -194,6 +199,11 @@ HIDDEN int to_data_labels(struct ged *gedp,
 			  ged_func_ptr func,
 			  const char *usage,
 			  int maxargs);
+HIDDEN int to_data_labels_func(Tcl_Interp *interp,
+			       struct ged *gedp,
+			       struct ged_dm_view *gdvp,
+			       int argc,
+			       const char *argv[]);
 HIDDEN int to_data_lines(struct ged *gedp,
 			 int argc,
 			 const char *argv[],
@@ -230,6 +240,12 @@ HIDDEN int to_data_pick(struct ged *gedp,
 			ged_func_ptr func,
 			const char *usage,
 			int maxargs);
+HIDDEN int
+to_data_pick_func(struct ged *gedp,
+		  struct ged_dm_view *gdvp,
+		  int argc,
+		  const char *argv[],
+		  const char *usage);
 HIDDEN int to_data_vZ(struct ged *gedp,
 		      int argc,
 		      const char *argv[],
@@ -2677,6 +2693,42 @@ to_copy(struct ged *gedp,
 }
 
 
+int
+go_data_arrows(Tcl_Interp *interp,
+	       struct ged *gedp,
+	       struct ged_dm_view *gdvp,
+	       int argc,
+	       const char *argv[],
+	       const char *usage)
+{
+    int ret;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc < 2 || 5 < argc) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    /* Don't allow go_refresh() to be called */
+    if (current_top != NULL)
+	current_top->to_gop->go_refresh_on = 0;
+
+    ret = to_data_arrows_func(interp, gedp, gdvp, argc, argv);
+    if (ret == GED_ERROR)
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+
+    return ret;
+}
+
+
 HIDDEN int
 to_data_arrows(struct ged *gedp,
 	       int argc,
@@ -2686,7 +2738,7 @@ to_data_arrows(struct ged *gedp,
 	       int UNUSED(maxargs))
 {
     struct ged_dm_view *gdvp;
-    struct bview_data_arrow_state *gdasp;
+    int ret;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -2712,21 +2764,40 @@ to_data_arrows(struct ged *gedp,
 	return GED_ERROR;
     }
 
+    /* shift the command name to argv[1] before calling to_data_labels_func */
+    argv[1] = argv[0];
+    ret = to_data_arrows_func(current_top->to_interp, gedp, gdvp, argc-1, argv+1);
+    if (ret == GED_ERROR)
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+
+    return ret;
+}
+
+
+HIDDEN int
+to_data_arrows_func(Tcl_Interp *interp,
+		    struct ged *gedp,
+		    struct ged_dm_view *gdvp,
+		    int argc,
+		    const char *argv[])
+{
+    struct bview_data_arrow_state *gdasp;
+
     if (argv[0][0] == 's')
 	gdasp = &gdvp->gdv_view->gv_sdata_arrows;
     else
 	gdasp = &gdvp->gdv_view->gv_data_arrows;
 
-    if (BU_STR_EQUAL(argv[2], "draw")) {
-	if (argc == 3) {
+    if (BU_STR_EQUAL(argv[1], "draw")) {
+	if (argc == 2) {
 	    bu_vls_printf(gedp->ged_result_str, "%d", gdasp->gdas_draw);
 	    return GED_OK;
 	}
 
-	if (argc == 4) {
+	if (argc == 3) {
 	    int i;
 
-	    if (bu_sscanf(argv[3], "%d", &i) != 1)
+	    if (bu_sscanf(argv[2], "%d", &i) != 1)
 		goto bad;
 
 	    if (i)
@@ -2741,20 +2812,20 @@ to_data_arrows(struct ged *gedp,
 	goto bad;
     }
 
-    if (BU_STR_EQUAL(argv[2], "color")) {
-	if (argc == 3) {
+    if (BU_STR_EQUAL(argv[1], "color")) {
+	if (argc == 2) {
 	    bu_vls_printf(gedp->ged_result_str, "%d %d %d",
 			  V3ARGS(gdasp->gdas_color));
 	    return GED_OK;
 	}
 
-	if (argc == 6) {
+	if (argc == 5) {
 	    int r, g, b;
 
 	    /* set background color */
-	    if (bu_sscanf(argv[3], "%d", &r) != 1 ||
-		bu_sscanf(argv[4], "%d", &g) != 1 ||
-		bu_sscanf(argv[5], "%d", &b) != 1)
+	    if (bu_sscanf(argv[2], "%d", &r) != 1 ||
+		bu_sscanf(argv[3], "%d", &g) != 1 ||
+		bu_sscanf(argv[4], "%d", &b) != 1)
 		goto bad;
 
 	    /* validate color */
@@ -2772,16 +2843,16 @@ to_data_arrows(struct ged *gedp,
 	goto bad;
     }
 
-    if (BU_STR_EQUAL(argv[2], "line_width")) {
-	if (argc == 3) {
+    if (BU_STR_EQUAL(argv[1], "line_width")) {
+	if (argc == 2) {
 	    bu_vls_printf(gedp->ged_result_str, "%d", gdasp->gdas_line_width);
 	    return GED_OK;
 	}
 
-	if (argc == 4) {
+	if (argc == 3) {
 	    int line_width;
 
-	    if (bu_sscanf(argv[3], "%d", &line_width) != 1)
+	    if (bu_sscanf(argv[2], "%d", &line_width) != 1)
 		goto bad;
 
 	    gdasp->gdas_line_width = line_width;
@@ -2793,10 +2864,10 @@ to_data_arrows(struct ged *gedp,
 	goto bad;
     }
 
-    if (BU_STR_EQUAL(argv[2], "points")) {
+    if (BU_STR_EQUAL(argv[1], "points")) {
 	register int i;
 
-	if (argc == 3) {
+	if (argc == 2) {
 	    for (i = 0; i < gdasp->gdas_num_points; ++i) {
 		bu_vls_printf(gedp->ged_result_str, " {%lf %lf %lf} ",
 			      V3ARGS(gdasp->gdas_points[i]));
@@ -2804,12 +2875,12 @@ to_data_arrows(struct ged *gedp,
 	    return GED_OK;
 	}
 
-	if (argc == 4) {
+	if (argc == 3) {
 	    int ac;
 	    const char **av;
 
-	    if (Tcl_SplitList(current_top->to_interp, argv[3], &ac, &av) != TCL_OK) {
-		bu_vls_printf(gedp->ged_result_str, "%s", Tcl_GetStringResult(current_top->to_interp));
+	    if (Tcl_SplitList(interp, argv[2], &ac, &av) != TCL_OK) {
+		bu_vls_printf(gedp->ged_result_str, "%s", Tcl_GetStringResult(interp));
 		return GED_ERROR;
 	    }
 
@@ -2858,16 +2929,16 @@ to_data_arrows(struct ged *gedp,
 	}
     }
 
-    if (BU_STR_EQUAL(argv[2], "tip_length")) {
-	if (argc == 3) {
+    if (BU_STR_EQUAL(argv[1], "tip_length")) {
+	if (argc == 2) {
 	    bu_vls_printf(gedp->ged_result_str, "%d", gdasp->gdas_tip_length);
 	    return GED_OK;
 	}
 
-	if (argc == 4) {
+	if (argc == 3) {
 	    int tip_length;
 
-	    if (bu_sscanf(argv[3], "%d", &tip_length) != 1)
+	    if (bu_sscanf(argv[2], "%d", &tip_length) != 1)
 		goto bad;
 
 	    gdasp->gdas_tip_length = tip_length;
@@ -2879,16 +2950,16 @@ to_data_arrows(struct ged *gedp,
 	goto bad;
     }
 
-    if (BU_STR_EQUAL(argv[2], "tip_width")) {
-	if (argc == 3) {
+    if (BU_STR_EQUAL(argv[1], "tip_width")) {
+	if (argc == 2) {
 	    bu_vls_printf(gedp->ged_result_str, "%d", gdasp->gdas_tip_width);
 	    return GED_OK;
 	}
 
-	if (argc == 4) {
+	if (argc == 3) {
 	    int tip_width;
 
-	    if (bu_sscanf(argv[3], "%d", &tip_width) != 1)
+	    if (bu_sscanf(argv[2], "%d", &tip_width) != 1)
 		goto bad;
 
 	    gdasp->gdas_tip_width = tip_width;
@@ -2901,7 +2972,6 @@ to_data_arrows(struct ged *gedp,
     }
 
 bad:
-    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
     return GED_ERROR;
 }
 
@@ -3108,6 +3178,42 @@ bad:
 }
 
 
+int
+go_data_labels(Tcl_Interp *interp,
+	       struct ged *gedp,
+	       struct ged_dm_view *gdvp,
+	       int argc,
+	       const char *argv[],
+	       const char *usage)
+{
+    int ret;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc < 2 || 5 < argc) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    /* Don't allow go_refresh() to be called */
+    if (current_top != NULL)
+	current_top->to_gop->go_refresh_on = 0;
+
+    ret = to_data_labels_func(interp, gedp, gdvp, argc, argv);
+    if (ret == GED_ERROR)
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+
+    return ret;
+}
+
+
 HIDDEN int
 to_data_labels(struct ged *gedp,
 	       int argc,
@@ -3117,7 +3223,7 @@ to_data_labels(struct ged *gedp,
 	       int UNUSED(maxargs))
 {
     struct ged_dm_view *gdvp;
-    struct bview_data_label_state *gdlsp;
+    int ret;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -3143,21 +3249,40 @@ to_data_labels(struct ged *gedp,
 	return GED_ERROR;
     }
 
+    /* shift the command name to argv[1] before calling to_data_labels_func */
+    argv[1] = argv[0];
+    ret = to_data_labels_func(current_top->to_interp, gedp, gdvp, argc-1, argv+1);
+    if (ret == GED_ERROR)
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+
+    return ret;
+}
+
+
+HIDDEN int
+to_data_labels_func(Tcl_Interp *interp,
+		    struct ged *gedp,
+		    struct ged_dm_view *gdvp,
+		    int argc,
+		    const char *argv[])
+{
+    struct bview_data_label_state *gdlsp;
+
     if (argv[0][0] == 's')
 	gdlsp = &gdvp->gdv_view->gv_sdata_labels;
     else
 	gdlsp = &gdvp->gdv_view->gv_data_labels;
 
-    if (BU_STR_EQUAL(argv[2], "draw")) {
-	if (argc == 3) {
+    if (BU_STR_EQUAL(argv[1], "draw")) {
+	if (argc == 2) {
 	    bu_vls_printf(gedp->ged_result_str, "%d", gdlsp->gdls_draw);
 	    return GED_OK;
 	}
 
-	if (argc == 4) {
+	if (argc == 3) {
 	    int i;
 
-	    if (bu_sscanf(argv[3], "%d", &i) != 1)
+	    if (bu_sscanf(argv[2], "%d", &i) != 1)
 		goto bad;
 
 	    if (i)
@@ -3172,20 +3297,20 @@ to_data_labels(struct ged *gedp,
 	goto bad;
     }
 
-    if (BU_STR_EQUAL(argv[2], "color")) {
-	if (argc == 3) {
+    if (BU_STR_EQUAL(argv[1], "color")) {
+	if (argc == 2) {
 	    bu_vls_printf(gedp->ged_result_str, "%d %d %d",
 			  V3ARGS(gdlsp->gdls_color));
 	    return GED_OK;
 	}
 
-	if (argc == 6) {
+	if (argc == 5) {
 	    int r, g, b;
 
 	    /* set background color */
-	    if (bu_sscanf(argv[3], "%d", &r) != 1 ||
-		bu_sscanf(argv[4], "%d", &g) != 1 ||
-		bu_sscanf(argv[5], "%d", &b) != 1)
+	    if (bu_sscanf(argv[2], "%d", &r) != 1 ||
+		bu_sscanf(argv[3], "%d", &g) != 1 ||
+		bu_sscanf(argv[4], "%d", &b) != 1)
 		goto bad;
 
 	    /* validate color */
@@ -3203,12 +3328,12 @@ to_data_labels(struct ged *gedp,
 	goto bad;
     }
 
-    if (BU_STR_EQUAL(argv[2], "labels")) {
+    if (BU_STR_EQUAL(argv[1], "labels")) {
 	register int i;
 
 	/* { {{label this} {0 0 0}} {{label that} {100 100 100}} }*/
 
-	if (argc == 3) {
+	if (argc == 2) {
 	    for (i = 0; i < gdlsp->gdls_num_labels; ++i) {
 		bu_vls_printf(gedp->ged_result_str, "{{%s}", gdlsp->gdls_labels[i]);
 		bu_vls_printf(gedp->ged_result_str, " {%lf %lf %lf}} ",
@@ -3217,12 +3342,12 @@ to_data_labels(struct ged *gedp,
 	    return GED_OK;
 	}
 
-	if (argc == 4) {
+	if (argc == 3) {
 	    int ac;
 	    const char **av;
 
-	    if (Tcl_SplitList(current_top->to_interp, argv[3], &ac, &av) != TCL_OK) {
-		bu_vls_printf(gedp->ged_result_str, "%s", Tcl_GetStringResult(current_top->to_interp));
+	    if (Tcl_SplitList(interp, argv[2], &ac, &av) != TCL_OK) {
+		bu_vls_printf(gedp->ged_result_str, "%s", Tcl_GetStringResult(interp));
 		return GED_ERROR;
 	    }
 
@@ -3252,7 +3377,7 @@ to_data_labels(struct ged *gedp,
 		const char **sub_av;
 		double scan[ELEMENTS_PER_VECT];
 
-		if (Tcl_SplitList(current_top->to_interp, av[i], &sub_ac, &sub_av) != TCL_OK) {
+		if (Tcl_SplitList(interp, av[i], &sub_ac, &sub_av) != TCL_OK) {
 		    /*XXX Need a macro for the following lines. Do something similar for the rest. */
 		    bu_free((void *)gdlsp->gdls_labels, "data labels");
 		    bu_free((void *)gdlsp->gdls_points, "data points");
@@ -3260,7 +3385,7 @@ to_data_labels(struct ged *gedp,
 		    gdlsp->gdls_points = (point_t *)0;
 		    gdlsp->gdls_num_labels = 0;
 
-		    bu_vls_printf(gedp->ged_result_str, "%s", Tcl_GetStringResult(current_top->to_interp));
+		    bu_vls_printf(gedp->ged_result_str, "%s", Tcl_GetStringResult(interp));
 		    Tcl_Free((char *)av);
 		    to_refresh_view(gdvp);
 		    return GED_ERROR;
@@ -3309,16 +3434,16 @@ to_data_labels(struct ged *gedp,
 	}
     }
 
-    if (BU_STR_EQUAL(argv[2], "size")) {
-	if (argc == 3) {
+    if (BU_STR_EQUAL(argv[1], "size")) {
+	if (argc == 2) {
 	    bu_vls_printf(gedp->ged_result_str, "%d", gdlsp->gdls_size);
 	    return GED_OK;
 	}
 
-	if (argc == 4) {
+	if (argc == 3) {
 	    int size;
 
-	    if (bu_sscanf(argv[3], "%d", &size) != 1)
+	    if (bu_sscanf(argv[2], "%d", &size) != 1)
 		goto bad;
 
 	    gdlsp->gdls_size = size;
@@ -3332,7 +3457,6 @@ to_data_labels(struct ged *gedp,
 
 
 bad:
-    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
     return GED_ERROR;
 }
 
@@ -5050,6 +5174,35 @@ to_data_move_point_mode(struct ged *gedp,
 }
 
 
+int
+go_data_pick(struct ged *gedp,
+	     struct ged_dm_view *gdvp,
+	     int argc,
+	     const char *argv[],
+	     const char *usage)
+{
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc < 2 || 3 < argc) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    /* Don't allow go_refresh() to be called */
+    if (current_top != NULL)
+	current_top->to_gop->go_refresh_on = 0;
+
+    return to_data_pick_func(gedp, gdvp, argc, argv, usage);
+}
+
+
 HIDDEN int
 to_data_pick(struct ged *gedp,
 	     int argc,
@@ -5058,31 +5211,7 @@ to_data_pick(struct ged *gedp,
 	     const char *usage,
 	     int UNUSED(maxargs))
 {
-    int mx, my, width, height;
-    fastf_t cx, cy;
-    fastf_t vx, vy;
-    fastf_t sf;
-    point_t dpoint, vpoint;
-    register int i;
     struct ged_dm_view *gdvp;
-    fastf_t top_z = -MAX_FASTF;
-    point_t top_point = VINIT_ZERO;
-    size_t top_i = 0;
-    size_t top_j = 0;
-    size_t top_k = 0;
-    int found_top = 0;
-    char *top_data_str = NULL;
-    char *top_data_label = NULL;
-    static fastf_t tol = 0.015;
-    static char *data_polygons_str = "data_polygons";
-    static char *data_labels_str = "data_labels";
-    static char *sdata_labels_str = "sdata_labels";
-    static char *data_lines_str = "data_lines";
-    static char *sdata_lines_str = "sdata_lines";
-    static char *data_arrows_str = "data_arrows";
-    static char *sdata_arrows_str = "sdata_arrows";
-    static char *data_axes_str = "data_axes";
-    static char *sdata_axes_str = "sdata_axes";
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -5108,14 +5237,52 @@ to_data_pick(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    if (argc == 3) {
-	if (bu_sscanf(argv[2], "%d %d", &mx, &my) != 2)
+    /* shift the command name to argv[1] before calling to_data_pick_func */
+    argv[1] = argv[0];
+    return to_data_pick_func(gedp, gdvp, argc-1, argv+1, usage);
+}
+
+
+HIDDEN int
+to_data_pick_func(struct ged *gedp,
+		  struct ged_dm_view *gdvp,
+		  int argc,
+		  const char *argv[],
+		  const char *usage)
+{
+    int mx, my, width, height;
+    fastf_t cx, cy;
+    fastf_t vx, vy;
+    fastf_t sf;
+    point_t dpoint, vpoint;
+    register int i;
+    fastf_t top_z = -MAX_FASTF;
+    point_t top_point = VINIT_ZERO;
+    size_t top_i = 0;
+    size_t top_j = 0;
+    size_t top_k = 0;
+    int found_top = 0;
+    char *top_data_str = NULL;
+    char *top_data_label = NULL;
+    static fastf_t tol = 0.015;
+    static char *data_polygons_str = "data_polygons";
+    static char *data_labels_str = "data_labels";
+    static char *sdata_labels_str = "sdata_labels";
+    static char *data_lines_str = "data_lines";
+    static char *sdata_lines_str = "sdata_lines";
+    static char *data_arrows_str = "data_arrows";
+    static char *sdata_arrows_str = "sdata_arrows";
+    static char *data_axes_str = "data_axes";
+    static char *sdata_axes_str = "sdata_axes";
+
+    if (argc == 2) {
+	if (bu_sscanf(argv[1], "%d %d", &mx, &my) != 2)
 	    goto bad;
     } else {
-	if (bu_sscanf(argv[2], "%d", &mx) != 1)
+	if (bu_sscanf(argv[1], "%d", &mx) != 1)
 	    goto bad;
 
-	if (bu_sscanf(argv[3], "%d", &my) != 1)
+	if (bu_sscanf(argv[2], "%d", &my) != 1)
 	    goto bad;
     }
 
@@ -13088,6 +13255,31 @@ to_transparency(struct ged *gedp,
 }
 
 
+int
+go_view_axes(struct ged_obj *gop,
+	     struct ged_dm_view *gdvp,
+	     int argc,
+	     const char *argv[],
+	     const char *usage)
+{
+    /* initialize result */
+    bu_vls_trunc(gop->go_gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(gop->go_gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc < 3 || 6 < argc) {
+	bu_vls_printf(gop->go_gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    return to_axes(gop->go_gedp, gdvp, &gdvp->gdv_view->gv_view_axes, argc, argv, usage);
+}
+
+
 HIDDEN int
 to_view_axes(struct ged *gedp,
 	     int argc,
@@ -14192,7 +14384,7 @@ to_refresh_all_views(struct tclcad_obj *top)
 HIDDEN void
 to_refresh_view(struct ged_dm_view *gdvp)
 {
-    if (!current_top->to_gop->go_refresh_on)
+    if (current_top == NULL || !current_top->to_gop->go_refresh_on)
 	return;
 
     if (to_is_viewable(gdvp))

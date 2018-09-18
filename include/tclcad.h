@@ -315,6 +315,28 @@ TCLCAD_EXPORT extern void go_refresh(struct ged_obj *gop,
 TCLCAD_EXPORT extern void go_refresh_draw(struct ged_obj *gop,
 					  struct ged_dm_view *gdvp,
 					  int restore_zbuffer);
+TCLCAD_EXPORT extern int go_view_axes(struct ged_obj *gop,
+				      struct ged_dm_view *gdvp,
+				      int argc,
+				      const char *argv[],
+				      const char *usage);
+TCLCAD_EXPORT extern int go_data_labels(Tcl_Interp *interp,
+					struct ged *gedp,
+					struct ged_dm_view *gdvp,
+					int argc,
+					const char *argv[],
+					const char *usage);
+TCLCAD_EXPORT extern int go_data_arrows(Tcl_Interp *interp,
+					struct ged *gedp,
+					struct ged_dm_view *gdvp,
+					int argc,
+					const char *argv[],
+					const char *usage);
+TCLCAD_EXPORT extern int go_data_pick(struct ged *gedp,
+				      struct ged_dm_view *gdvp,
+				      int argc,
+				      const char *argv[],
+				      const char *usage);
 
 /* defined in cmdhist_obj.c */
 TCLCAD_EXPORT extern int Cho_Init(Tcl_Interp *interp);
