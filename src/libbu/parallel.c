@@ -717,10 +717,6 @@ bu_parallel(void (*func)(int, void *), size_t ncpu, void *arg)
 	for (i = 0; i < nthreadc; i++) {
 	    bu_log("bu_parallel(): thread_tbl[%zu] = %p\n", i, (void *)thread_tbl[i]);
 	}
-#    ifdef SIGINFO
-	/* may be BSD-only (calls _thread_dump_info()) */
-	raise(SIGINFO);
-#    endif
     }
 
     /*
