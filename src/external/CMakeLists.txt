@@ -9,7 +9,6 @@ add_subdirectory(Cubit)
 add_subdirectory(Unigraphics)
 
 CMAKEFILES(README)
-CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8
