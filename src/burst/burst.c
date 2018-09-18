@@ -41,13 +41,6 @@
 #include "./ascii.h"
 
 
-#ifndef SIGCLD
-#  define SIGCLD SIGCHLD
-#endif
-#ifndef SIGTSTP
-#  define SIGTSTP 18
-#endif
-
 #define DEBUG_BURST 0 /* 1 enables debugging for this module */
 
 /*

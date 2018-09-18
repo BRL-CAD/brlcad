@@ -26,7 +26,6 @@
 #define DO_SUPPRESSIONS 0
 
 #include <stdlib.h>
-#include <signal.h>
 #include <time.h>
 #include <math.h>
 #include <string.h>
@@ -5412,8 +5411,6 @@ main(int ac, char *av[])
 
     /* start up UG interface */
     UF_initialize();
-
-    /*signal( SIGBUS, abort );*/
 
     /* process part listed on command line */
     printf("file %s\n", av[i]);
