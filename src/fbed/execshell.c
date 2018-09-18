@@ -84,14 +84,14 @@ exec_Shell(char **args)
 	    void (*istat)(), (*qstat)(), (*cstat)();
 	    istat = signal(SIGINT, SIG_IGN);
 	    qstat = signal(SIGQUIT, SIG_IGN);
-	    cstat = signal(SIGCLD, SIG_DFL);
+	    cstat = signal(SIGCHLD, SIG_DFL);
 	    while (	(pid = wait(&stat_loc)) != -1
 			&& pid != child_pid
 		)
 		;
 	    (void)signal(SIGINT, istat);
 	    (void)signal(SIGQUIT, qstat);
-	    (void)signal(SIGCLD, cstat);
+	    (void)signal(SIGCHLD, cstat);
 	    if (pid == -1) {
 		fb_log("\"%s\" (%d) wait failed : no children.\n",
 			__FILE__, __LINE__
