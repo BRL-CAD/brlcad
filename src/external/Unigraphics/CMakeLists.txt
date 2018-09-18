@@ -45,6 +45,7 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 
   # Distcheck file list
   CMAKEFILES(${ug_g_srcs} conv.h log.h shim.h ug-g.1 ug_misc.h)
+  CMAKEFILES(CMakeLists.txt)
 
 endif(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 
