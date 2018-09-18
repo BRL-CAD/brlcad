@@ -114,6 +114,7 @@ struct _ged_client_data {
     int draw_normals;
     int draw_solid_lines_only;
     int draw_no_surfaces;
+    int draw_non_subtract_only;
     int shade_per_vertex_normals;
     int draw_edge_uses;
     int fastpath_count;			/* statistics */
