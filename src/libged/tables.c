@@ -52,15 +52,32 @@ static int idfd = 0;
 static int rd_idfd = 0;
 
 
-/* TODO - this approach to tables_sol_number is pretty ugly - need
- * to think about what it actually means to be a unique solid in
- * the database and do something more intelligent.  For example,
- * if we have two paths:
+/* TODO - this approach to tables_sol_number assignment is pretty ugly, and
+ * arguably even wrong in that it is hiding an exact floating point comparison
+ * of matrices behind the (char *) case of the identt structure.
+ *
+ * That said, this logic is doing something interesting in that it is
+ * attempting to move the definition of a unique solid beyond just the object
+ * to the object instance - e.g. it incorporates the matrix in the parent comb
+ * in its uniqueness test.
+ *
+ * Need to think about what it actually means to be a unique instance in the
+ * database and do something more intelligent.  For example, if we have two
+ * paths:
  *
  * a/b/c.s  and  d/e/c.s
  *
- * do they describe the same solid in space if their matrices are
- * all identity and their booleans all unions? */
+ * do they describe the same instance in space if their matrices are all identity
+ * and their booleans all unions?  Their path structure is different, but the
+ * volume in space they are denoting as occupied is not.
+ *
+ * One possible approach to this would be to enhance full path data structures
+ * to incorporate matrix awareness, define an API to compare two such paths
+ * including a check for solid uniqueness (e.g. return same if the two paths
+ * define the same solid, even if the paths themselves differ), and then
+ * construct the set of paths for the tables input object trees and use that
+ * set to test for the uniqueness of a given path.
+ */
 
 
 /* structure to distinguish new solids from existing (old) solids */
