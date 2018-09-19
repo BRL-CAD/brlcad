@@ -85,7 +85,7 @@
 #include "fb.h"
 #include "fb/fb_ogl.h"
 
-#define CJDEBUG 0
+#define OGL_DEBUG 0
 #define DIRECT_COLOR_VISUAL_ALLOWED 0
 
 /* XXX - arbitrary upper bound */
@@ -144,13 +144,12 @@ struct ogl_clip {
  */
 struct sgiinfo {
     short mi_curs_on;
-    short mi_cmap_flag;		/* enabled when there is a non-linear map in memory */
+    short mi_cmap_flag;			/* enabled when there is a non-linear map in memory */
     int mi_shmid;
-    int mi_memwidth;		/* width of scanline in if_mem */
-    short mi_xoff;		/* X viewport offset, rel. window*/
-    short mi_yoff;		/* Y viewport offset, rel. window*/
-    int mi_doublebuffer;	/* 0=singlebuffer 1=doublebuffer */
-    struct ogl_pixel mi_scanline[XMAXSCREEN];	/* one scanline */
+    int mi_pixwidth;			/* width of scanline in if_mem (in pixels) */
+    short mi_xoff;			/* X viewport offset, rel. window*/
+    short mi_yoff;			/* Y viewport offset, rel. window*/
+    int mi_doublebuffer;		/* 0=singlebuffer 1=doublebuffer */
 };
 
 
@@ -192,12 +191,8 @@ struct oglinfo {
 #define if_zoomflag u4.l	/* zoom > 1 */
 #define if_mode u5.l		/* see MODE_* defines */
 
-#define MARGIN 4		/* # pixels margin to screen edge */
-
 #define CLIP_XTRA 1
 
-#define WIN_L (ifp->if_max_width - ifp->if_width - MARGIN)
-#define WIN_T (ifp->if_max_height - ifp->if_height - MARGIN)
 
 /*
  * The mode has several independent bits:
@@ -431,39 +426,44 @@ ogl_xmit_scanlines(register fb *ifp, int ybase, int nlines, int xbase, int npix)
 	/* Software colormap each line as it's transmitted */
 	register int x;
 	register struct ogl_pixel *oglp;
-	register struct ogl_pixel *op;
+	register struct ogl_pixel *scanline;
 
 	y = ybase;
-	if (CJDEBUG) printf("Doing sw colormap xmit\n");
+
+	if (OGL_DEBUG)
+	    printf("Doing sw colormap xmit\n");
+
 	/* Perform software color mapping into temp scanline */
-	op = SGIINFO(ifp)->mi_scanline;
+	scanline = (struct ogl_pixel *)calloc(ifp->if_width, sizeof(struct ogl_pixel));
+	if (scanline == NULL) {
+	    fb_log("ogl_getmem: scanline memory malloc failed\n");
+	    return;
+	}
+
 	for (n=nlines; n>0; n--, y++) {
-	    oglp = (struct ogl_pixel *)&ifp->if_mem[
-		(y*SGIINFO(ifp)->mi_memwidth)*
-		sizeof(struct ogl_pixel) ];
+	    oglp = (struct ogl_pixel *)&ifp->if_mem[(y*SGIINFO(ifp)->mi_pixwidth) * sizeof(struct ogl_pixel) ];
 	    for (x=xbase+npix-1; x>=xbase; x--) {
-		op[x].red   = CMR(ifp)[oglp[x].red];
-		op[x].green = CMG(ifp)[oglp[x].green];
-		op[x].blue  = CMB(ifp)[oglp[x].blue];
+		scanline[x].red   = CMR(ifp)[oglp[x].red];
+		scanline[x].green = CMG(ifp)[oglp[x].green];
+		scanline[x].blue  = CMB(ifp)[oglp[x].blue];
 	    }
 
 	    glPixelStorei(GL_UNPACK_SKIP_PIXELS, xbase);
 	    glRasterPos2i(xbase, y);
-	    glDrawPixels(npix, 1, GL_BGRA_EXT, GL_UNSIGNED_BYTE,
-			 (const GLvoid *) op);
-
+	    glDrawPixels(npix, 1, GL_BGRA_EXT, GL_UNSIGNED_BYTE, (const GLvoid *)scanline);
 	}
+
+	(void)free((void *)scanline);
 
     } else {
 	/* No need for software colormapping */
 
-	glPixelStorei(GL_UNPACK_ROW_LENGTH, SGIINFO(ifp)->mi_memwidth);
+	glPixelStorei(GL_UNPACK_ROW_LENGTH, SGIINFO(ifp)->mi_pixwidth);
 	glPixelStorei(GL_UNPACK_SKIP_PIXELS, xbase);
 	glPixelStorei(GL_UNPACK_SKIP_ROWS, ybase);
 
 	glRasterPos2i(xbase, ybase);
-	glDrawPixels(npix, nlines, GL_BGRA_EXT, GL_UNSIGNED_BYTE,
-		     (const GLvoid *) ifp->if_mem);
+	glDrawPixels(npix, nlines, GL_BGRA_EXT, GL_UNSIGNED_BYTE, (const GLvoid *) ifp->if_mem);
     }
 }
 
@@ -515,8 +515,8 @@ ogl_cminit(register fb *ifp)
 HIDDEN int
 ogl_getmem(fb *ifp)
 {
-    int pixsize;
-    int size;
+    size_t pixsize;
+    size_t size;
     int i;
     char *sp;
     int new_mem = 0;
@@ -524,60 +524,63 @@ ogl_getmem(fb *ifp)
 
     errno = 0;
 
+    pixsize = ifp->if_height * ifp->if_width * sizeof(struct ogl_pixel);
+
+    /* shared memory behaves badly if we try to allocate too much, so
+     * arbitrarily constrain it to our default 512x512 size & samller.
+     */
+    if (pixsize > sizeof(struct ogl_pixel)*512*512) {
+	/* let the user know */
+	ifp->if_mode |= MODE_1MALLOC;
+	fb_log("ogl_getmem: image too big for shared memory, using private\n");
+    }
+
     if ((ifp->if_mode & MODE_1MASK) == MODE_1MALLOC) {
-	/*
-	 * In this mode, only malloc as much memory as is needed.
-	 */
-	SGIINFO(ifp)->mi_memwidth = ifp->if_width;
-	pixsize = ifp->if_height * ifp->if_width * sizeof(struct ogl_pixel);
+	/* In this mode, only malloc as much memory as is needed. */
+	SGIINFO(ifp)->mi_pixwidth = ifp->if_width;
 	size = pixsize + sizeof(struct ogl_cmap);
 
 	sp = (char *)calloc(1, size);
-	if (sp == 0) {
+	if (sp == NULL) {
 	    fb_log("ogl_getmem: frame buffer memory malloc failed\n");
-	    goto fail;
+	    return -1;
 	}
+
 	new_mem = 1;
-	goto success;
+
+    } else {
+	/* The shared memory section never changes size */
+	SGIINFO(ifp)->mi_pixwidth = ifp->if_max_width;
+
+	pixsize = ifp->if_max_height * ifp->if_max_width * sizeof(struct ogl_pixel);
+	size = pixsize + sizeof(struct ogl_cmap);
+
+	shm_result = bu_shmget(&(SGIINFO(ifp)->mi_shmid), &sp, SHMEM_KEY, size);
+
+	if (shm_result == -1) {
+	    memset(sp, 0, size); /* match calloc */
+	    new_mem = 1;
+	} else if (shm_result == 1) {
+	    ifp->if_mode |= MODE_1MALLOC;
+	    fb_log("ogl_getmem:  Unable to attach to shared memory, using private\n");
+	    if ((sp = (char *)calloc(1, size)) == NULL) {
+		fb_log("ogl_getmem:  malloc failure\n");
+		return -1;
+	    }
+	    new_mem = 1;
+	}
     }
 
-    /* The shared memory section never changes size */
-    SGIINFO(ifp)->mi_memwidth = ifp->if_max_width;
-
-    /*
-     * On some platforms lrectwrite() runs off the end! So, provide a
-     * pad area of 2 scanlines.  (1 line is enough, but this avoids
-     * risk of damage to colormap table.)
-     */
-    pixsize = (ifp->if_max_height+2) * ifp->if_max_width *
-	sizeof(struct ogl_pixel);
-
-    size = pixsize + sizeof(struct ogl_cmap);
-
-
-    shm_result = bu_shmget(&(SGIINFO(ifp)->mi_shmid), &sp, SHMEM_KEY, (size_t)size);
-
-    if (shm_result == 1) goto fail;
-    if (shm_result == -1) new_mem = 1;
-
-success:
     ifp->if_mem = sp;
-    ifp->if_cmap = sp + pixsize;	/* cmap at end of area */
-    i = CMB(ifp)[255];		/* try to deref last word */
+    ifp->if_cmap = sp + pixsize; /* cmap at end of area */
+    i = CMB(ifp)[255];		 /* try to deref last word */
     CMB(ifp)[255] = i;
 
     /* Provide non-black colormap on creation of new shared mem */
     if (new_mem)
 	ogl_cminit(ifp);
+
     return 0;
-fail:
-    fb_log("ogl_getmem:  Unable to attach to shared memory.\n");
-    if ((sp = (char *)calloc(1, size)) == NULL) {
-	fb_log("ogl_getmem:  malloc failure\n");
-	return -1;
-    }
-    new_mem = 1;
-    goto success;
 }
 
 
@@ -587,14 +590,20 @@ ogl_zapmem(void)
     int shmid;
     int i;
 
+    errno = 0;
+
     if ((shmid = shmget(SHMEM_KEY, 0, 0)) < 0) {
-	fb_log("ogl_zapmem shmget failed, errno=%d\n", errno);
+	if (errno != ENOENT) {
+	    fb_log("ogl_zapmem shmget failed, errno=%d\n", errno);
+	    perror("shmget");
+	}
 	return;
     }
 
     i = shmctl(shmid, IPC_RMID, 0);
     if (i < 0) {
 	fb_log("ogl_zapmem shmctl failed, errno=%d\n", errno);
+	perror("shmctl");
 	return;
     }
     fb_log("if_ogl: shared memory released\n");
@@ -679,7 +688,8 @@ expose_callback(fb *ifp)
     XWindowAttributes xwa;
     struct ogl_clip *clp;
 
-    if (CJDEBUG) fb_log("entering expose_callback()\n");
+    if (OGL_DEBUG)
+	printf("entering expose_callback()\n");
 
     if (glXMakeCurrent(OGL(ifp)->dispp, OGL(ifp)->wind, OGL(ifp)->glxc)==False) {
 	fb_log("Warning, expose_callback: glXMakeCurrent unsuccessful.\n");
@@ -781,18 +791,18 @@ expose_callback(fb *ifp)
 	backbuffer_to_screen(ifp, -1);
     }
 
-    if (CJDEBUG) {
+    if (OGL_DEBUG) {
 	int dbb, db, view[4], getster, getaux;
 	glGetIntegerv(GL_VIEWPORT, view);
 	glGetIntegerv(GL_DOUBLEBUFFER, &dbb);
 	glGetIntegerv(GL_DRAW_BUFFER, &db);
-	fb_log("Viewport: x %d y %d width %d height %d\n", view[0],
+	printf("Viewport: x %d y %d width %d height %d\n", view[0],
 	       view[1], view[2], view[3]);
-	fb_log("expose: double buffered: %d, draw buffer %d\n", dbb, db);
-	fb_log("front %d\tback%d\n", GL_FRONT, GL_BACK);
+	printf("expose: double buffered: %d, draw buffer %d\n", dbb, db);
+	printf("front %d\tback%d\n", GL_FRONT, GL_BACK);
 	glGetIntegerv(GL_STEREO, &getster);
 	glGetIntegerv(GL_AUX_BUFFERS, &getaux);
-	fb_log("double %d, stereo %d, aux %d\n", dbb, getster, getaux);
+	printf("double %d, stereo %d, aux %d\n", dbb, getster, getaux);
     }
 
     /* unattach context for other threads to use */
@@ -872,7 +882,7 @@ ogl_do_event(fb *ifp)
 				}
 
 				oglp = (struct ogl_pixel *)&ifp->if_mem[
-				    (y*SGIINFO(ifp)->mi_memwidth)*
+				    (y*SGIINFO(ifp)->mi_pixwidth)*
 				    sizeof(struct ogl_pixel) ];
 
 				fb_log("At image (%d, %d), real RGB=(%3d %3d %3d)\n",
@@ -1154,6 +1164,10 @@ fb_ogl_open(fb *ifp, const char *file, int width, int height)
     ifp->if_width = width;
     ifp->if_height = height;
 
+    /* Attach to shared memory, potentially with a screen repaint */
+    if (ogl_getmem(ifp) < 0)
+	return -1;
+
     SGIINFO(ifp)->mi_curs_on = 1;
 
     /* Build a descriptive window title bar */
@@ -1172,10 +1186,6 @@ fb_ogl_open(fb *ifp, const char *file, int width, int height)
     ifp->if_xcenter = width/2;
     ifp->if_ycenter = height/2;
 
-    /* Attach to shared memory, potentially with a screen repaint */
-    if (ogl_getmem(ifp) < 0)
-	return -1;
-
     /* Open an X connection to the display.  Sending NULL to XOpenDisplay
        tells it to use the DISPLAY environment variable. */
     if ((OGL(ifp)->dispp = XOpenDisplay(NULL)) == NULL) {
@@ -1183,10 +1193,8 @@ fb_ogl_open(fb *ifp, const char *file, int width, int height)
 	return -1;
     }
     ifp->if_selfd = ConnectionNumber(OGL(ifp)->dispp);
-    if (CJDEBUG) {
-	printf("Connection opened to X display on fd %d.\n",
-	       ConnectionNumber(OGL(ifp)->dispp));
-    }
+    if (OGL_DEBUG)
+	printf("Connection opened to X display on fd %d.\n", ConnectionNumber(OGL(ifp)->dispp));
 
     /* Choose an appropriate visual. */
     if ((OGL(ifp)->vip = fb_ogl_choose_visual(ifp)) == NULL) {
@@ -1202,13 +1210,15 @@ fb_ogl_open(fb *ifp, const char *file, int width, int height)
     }
 
     direct = glXIsDirect(OGL(ifp)->dispp, OGL(ifp)->glxc);
-    if (CJDEBUG) {
-	fb_log("Framebuffer drawing context is %s.\n", direct ? "direct" : "indirect");
-    }
+    if (OGL_DEBUG)
+	printf("Framebuffer drawing context is %s.\n", direct ? "direct" : "indirect");
 
     /* Create a colormap for this visual */
     SGIINFO(ifp)->mi_cmap_flag = !is_linear_cmap(ifp);
     if (!OGL(ifp)->soft_cmap_flag) {
+	if (OGL_DEBUG)
+	    printf("Loading read/write colormap.\n");
+
 	OGL(ifp)->xcmap = XCreateColormap(OGL(ifp)->dispp,
 					  RootWindow(OGL(ifp)->dispp,
 						     OGL(ifp)->vip->screen),
@@ -1217,7 +1227,6 @@ fb_ogl_open(fb *ifp, const char *file, int width, int height)
 	/* initialize virtual colormap - it will be loaded into
 	 * the hardware. This code has not yet been tested.
 	 */
-	if (CJDEBUG) printf("Loading read/write colormap.\n");
 	for (i = 0; i < 256; i++) {
 	    color_cell[i].pixel = i;
 	    color_cell[i].red = CMR(ifp)[i];
@@ -1228,9 +1237,9 @@ fb_ogl_open(fb *ifp, const char *file, int width, int height)
 	XStoreColors(OGL(ifp)->dispp, OGL(ifp)->xcmap, color_cell, 256);
     } else {
 	/* read only colormap */
-	if (CJDEBUG) {
-	    printf("Allocating read-only colormap.");
-	}
+	if (OGL_DEBUG)
+	    printf("Allocating read-only colormap.\n");
+
 	OGL(ifp)->xcmap = XCreateColormap(OGL(ifp)->dispp,
 					  RootWindow(OGL(ifp)->dispp,
 						     OGL(ifp)->vip->screen),
@@ -1257,43 +1266,54 @@ fb_ogl_open(fb *ifp, const char *file, int width, int height)
 #define XCreateWindowDebug(display, parent, x, y, width, height,	\
 			   border_width, depth, class, visual, valuemask, \
 			   attributes)					\
-    (printf("XCreateWindow(display = %08X, \n", (long)display),		\
-     printf("                parent = %08X, \n", (long)parent),		\
+    (printf("XCreateWindow(display = %08X, \n", (unsigned int)display),		\
+     printf("                parent = %08X, \n", (unsigned int)parent),		\
      printf("                     x = %d, \n", x),			\
      printf("                     y = %d, \n", y),			\
-     printf("                 width = %d, \n", width),			\
-     printf("                height = %d, \n", height),			\
-     printf("          border_width = %d, \n", border_width),		\
-     printf("                 depth = %d, \n", depth),			\
-     printf("                 class = %d, \n", class),			\
-     printf("                visual = %08X, \n", (long)visual),		\
-     printf("             valuemask = %08X, \n", valuemask),		\
+     printf("                 width = %d, \n", (int)width),			\
+     printf("                height = %d, \n", (int)height),			\
+     printf("          border_width = %d, \n", (int)border_width),		\
+     printf("                 depth = %d, \n", (int)depth),			\
+     printf("                 class = %d, \n", (int)class),			\
+     printf("                visual = %08X, \n", (unsigned int)visual),		\
+     printf("             valuemask = %08X, \n", (unsigned int)valuemask),		\
      printf("            attributes = {"),				\
-     (valuemask & CWBackPixmap) ? printf(" background_pixmap = %08X ", (long)((attributes)->background_pixmap)) : 0, \
-     (valuemask & CWBackPixel) ? printf(" background_pixel = %08X ", (attributes)->background_pixel) : 0, \
-     (valuemask & CWBorderPixmap) ? printf(" border_pixmap = %08X ", (long)((attributes)->border_pixmap)) : 0, \
-     (valuemask & CWBorderPixel) ? printf(" border_pixel = %08X ", (attributes)->border_pixel) : 0, \
+     (valuemask & CWBackPixmap) ? printf(" background_pixmap = %08X ", (unsigned int)((attributes)->background_pixmap)) : 0, \
+     (valuemask & CWBackPixel) ? printf(" background_pixel = %08X ", (unsigned int)(attributes)->background_pixel) : 0, \
+     (valuemask & CWBorderPixmap) ? printf(" border_pixmap = %08X ", (unsigned int)((attributes)->border_pixmap)) : 0, \
+     (valuemask & CWBorderPixel) ? printf(" border_pixel = %08X ", (unsigned int)(attributes)->border_pixel) : 0, \
      (valuemask & CWBitGravity) ? printf(" bit_gravity = %d ", (attributes)->bit_gravity) : 0, \
      (valuemask & CWWinGravity) ? printf(" win_gravity = %d ", (attributes)->win_gravity) : 0, \
      (valuemask & CWBackingStore) ? printf(" backing_store = %d ", (attributes)->backing_store) : 0, \
-     (valuemask & CWBackingPlanes) ? printf(" backing_planes = %d ", (attributes)->backing_planes) : 0, \
-     (valuemask & CWBackingPixel) ? printf(" backing_pixel = %08X ", (attributes)->backing_pixel) : 0, \
+     (valuemask & CWBackingPlanes) ? printf(" backing_planes = %u ", (unsigned int)(attributes)->backing_planes) : 0, \
+     (valuemask & CWBackingPixel) ? printf(" backing_pixel = %08X ", (unsigned int)(attributes)->backing_pixel) : 0, \
      (valuemask & CWOverrideRedirect) ? printf(" override_redirect = %d ", (attributes)->override_redirect) : 0, \
      (valuemask & CWSaveUnder) ? printf(" save_under = %d ", (attributes)->save_under) : 0, \
-     (valuemask & CWEventMask) ? printf(" event_mask = %08X ", (attributes)->event_mask) : 0, \
-     (valuemask & CWDontPropagate) ? printf(" do_not_propagate_mask = %08X ", (attributes)->do_not_propagate_mask) : 0, \
-     (valuemask & CWColormap) ? printf(" colormap = %08X ", (long)((attributes)->colormap)) : 0, \
-     (valuemask & CWCursor) ? printf(" cursor = %08X ", (long)((attributes)->cursor)) : 0, \
+     (valuemask & CWEventMask) ? printf(" event_mask = %08X ", (unsigned int)(attributes)->event_mask) : 0, \
+     (valuemask & CWDontPropagate) ? printf(" do_not_propagate_mask = %08X ", (unsigned int)(attributes)->do_not_propagate_mask) : 0, \
+     (valuemask & CWColormap) ? printf(" colormap = %08X ", (unsigned int)((attributes)->colormap)) : 0, \
+     (valuemask & CWCursor) ? printf(" cursor = %08X ", (unsigned int)((attributes)->cursor)) : 0, \
      printf(" }\n")) > 0 ? XCreateWindow(display, parent, x, y, width, height, border_width, depth, class, visual, valuemask, attributes) : -1;
 
-    OGL(ifp)->wind = XCreateWindow(OGL(ifp)->dispp,
-				   RootWindow(OGL(ifp)->dispp,
-					      OGL(ifp)->vip->screen),
-				   0, 0, ifp->if_width, ifp->if_height, 0,
-				   OGL(ifp)->vip->depth,
-				   InputOutput,
-				   OGL(ifp)->vip->visual,
-				   valuemask, &swa);
+    if (OGL_DEBUG) {
+	OGL(ifp)->wind = XCreateWindowDebug(OGL(ifp)->dispp,
+					    RootWindow(OGL(ifp)->dispp,
+						       OGL(ifp)->vip->screen),
+					    0, 0, ifp->if_width, ifp->if_height, 0,
+					    OGL(ifp)->vip->depth,
+					    InputOutput,
+					    OGL(ifp)->vip->visual,
+					    valuemask, &swa);
+    } else {
+	OGL(ifp)->wind = XCreateWindow(OGL(ifp)->dispp,
+				       RootWindow(OGL(ifp)->dispp,
+						  OGL(ifp)->vip->screen),
+				       0, 0, ifp->if_width, ifp->if_height, 0,
+				       OGL(ifp)->vip->depth,
+				       InputOutput,
+				       OGL(ifp)->vip->visual,
+				       valuemask, &swa);
+    }
 
     XStoreName(OGL(ifp)->dispp, OGL(ifp)->wind, title);
 
@@ -1414,33 +1434,30 @@ ogl_open_existing(fb *ifp, int width, int height, struct fb_platform_specific *f
 }
 
 
-HIDDEN int
-ogl_final_close(fb *ifp)
+int
+ogl_close_existing(fb *ifp)
 {
-
-    if (CJDEBUG) {
-	printf("ogl_final_close: All done...goodbye!\n");
-    }
-
     if (OGL(ifp)->cursor)
 	XDestroyWindow(OGL(ifp)->dispp, OGL(ifp)->cursor);
 
-    XDestroyWindow(OGL(ifp)->dispp, OGL(ifp)->wind);
-    XFreeColormap(OGL(ifp)->dispp, OGL(ifp)->xcmap);
-
     if (SGIL(ifp) != NULL) {
+
 	/* free up memory associated with image */
 	if (SGIINFO(ifp)->mi_shmid != -1) {
+
+	    errno = 0;
+
 	    /* detach from shared memory */
 	    if (shmdt(ifp->if_mem) == -1) {
-		fb_log("fb_ogl_close shmdt failed, errno=%d\n",
-		       errno);
+		fb_log("fb_ogl_close: shmdt failed, errno=%d\n", errno);
+		perror("shmdt");
 		return -1;
 	    }
 	} else {
 	    /* free private memory */
 	    (void)free(ifp->if_mem);
 	}
+
 	/* free state information */
 	(void)free((char *)SGIL(ifp));
 	SGIL(ifp) = NULL;
@@ -1451,6 +1468,25 @@ ogl_final_close(fb *ifp)
 	OGLL(ifp) = NULL;
     }
 
+    return 0;
+}
+
+
+HIDDEN int
+ogl_final_close(fb *ifp)
+{
+    Display *display = OGL(ifp)->dispp;
+    Window window = OGL(ifp)->wind;
+    Colormap colormap = OGL(ifp)->xcmap;
+
+    if (OGL_DEBUG)
+	printf("ogl_final_close: All done...goodbye!\n");
+
+    ogl_close_existing(ifp);
+
+    XDestroyWindow(display, window);
+    XFreeColormap(display, colormap);
+
     ogl_nwindows--;
     return 0;
 }
@@ -1459,6 +1495,9 @@ ogl_final_close(fb *ifp)
 HIDDEN int
 ogl_flush(fb *ifp)
 {
+    if (OGL_DEBUG)
+	printf("flushing, copy flag is %d\n", OGL(ifp)->copy_flag);
+
     if ((ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH) {
 	if (glXMakeCurrent(OGL(ifp)->dispp, OGL(ifp)->wind, OGL(ifp)->glxc)==False) {
 	    fb_log("Warning, ogl_flush: glXMakeCurrent unsuccessful.\n");
@@ -1475,8 +1514,6 @@ ogl_flush(fb *ifp)
 	/* unattach context for other threads to use, also flushes */
 	glXMakeCurrent(OGL(ifp)->dispp, None, NULL);
     }
-
-    printf("flushing! copy flag is %d\n", OGL(ifp)->copy_flag);
 
     XFlush(OGL(ifp)->dispp);
     glFlush();
@@ -1509,7 +1546,7 @@ fb_ogl_close(fb *ifp)
 	(ifp->if_mode & MODE_2MASK) == MODE_2TRANSIENT)
 	return ogl_final_close(ifp);
 
-    if (CJDEBUG)
+    if (OGL_DEBUG)
 	printf("fb_ogl_close: remaining open to linger awhile.\n");
 
     /*
@@ -1543,39 +1580,6 @@ fb_ogl_close(fb *ifp)
 }
 
 
-int
-ogl_close_existing(fb *ifp)
-{
-    if (OGL(ifp)->cursor)
-	XDestroyWindow(OGL(ifp)->dispp, OGL(ifp)->cursor);
-
-    if (SGIL(ifp) != NULL) {
-	/* free up memory associated with image */
-	if (SGIINFO(ifp)->mi_shmid != -1) {
-	    /* detach from shared memory */
-	    if (shmdt(ifp->if_mem) == -1) {
-		fb_log("fb_ogl_close: shmdt failed, errno=%d\n",
-		       errno);
-		return -1;
-	    }
-	} else {
-	    /* free private memory */
-	    (void)free(ifp->if_mem);
-	}
-	/* free state information */
-	(void)free((char *)SGIL(ifp));
-	SGIL(ifp) = NULL;
-    }
-
-    if (OGLL(ifp) != NULL) {
-	(void)free((char *)OGLL(ifp));
-	OGLL(ifp) = NULL;
-    }
-
-    return 0;
-}
-
-
 /*
  * Free shared memory resources, and close.
  */
@@ -1584,7 +1588,9 @@ ogl_free(fb *ifp)
 {
     int ret;
 
-    if (CJDEBUG) printf("entering ogl_free\n");
+    if (OGL_DEBUG)
+	printf("entering ogl_free\n");
+
     /* Close the framebuffer */
     ret = ogl_final_close(ifp);
 
@@ -1604,7 +1610,8 @@ ogl_clear(fb *ifp, unsigned char *pp)
     register int cnt;
     register int y;
 
-    if (CJDEBUG) printf("entering ogl_clear\n");
+    if (OGL_DEBUG)
+	printf("entering ogl_clear\n");
 
     /* Set clear colors */
     if (pp != RGBPIXEL_NULL) {
@@ -1622,7 +1629,7 @@ ogl_clear(fb *ifp, unsigned char *pp)
     /* Flood rectangle in shared memory */
     for (y = 0; y < ifp->if_height; y++) {
 	oglp = (struct ogl_pixel *)&ifp->if_mem[
-	    (y*SGIINFO(ifp)->mi_memwidth+0)*sizeof(struct ogl_pixel) ];
+	    (y*SGIINFO(ifp)->mi_pixwidth)*sizeof(struct ogl_pixel) ];
 	for (cnt = ifp->if_width-1; cnt >= 0; cnt--) {
 	    *oglp++ = bg;	/* struct copy */
 	}
@@ -1674,7 +1681,8 @@ ogl_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
     struct ogl_clip *clp;
 
-    if (CJDEBUG) printf("entering ogl_view\n");
+    if (OGL_DEBUG)
+	printf("entering ogl_view\n");
 
     if (xzoom < 1) xzoom = 1;
     if (yzoom < 1) yzoom = 1;
@@ -1744,7 +1752,8 @@ ogl_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 HIDDEN int
 ogl_getview(fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
-    if (CJDEBUG) printf("entering ogl_getview\n");
+    if (OGL_DEBUG)
+	printf("entering ogl_getview\n");
 
     *xcenter = ifp->if_xcenter;
     *ycenter = ifp->if_ycenter;
@@ -1765,7 +1774,8 @@ ogl_read(fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
     ssize_t ret;
     register struct ogl_pixel *oglp;
 
-    if (CJDEBUG) printf("entering ogl_read\n");
+    if (OGL_DEBUG)
+	printf("entering ogl_read\n");
 
     if (x < 0 || x >= ifp->if_width ||
 	y < 0 || y >= ifp->if_height)
@@ -1784,7 +1794,7 @@ ogl_read(fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 	    scan_count = count;
 
 	oglp = (struct ogl_pixel *)&ifp->if_mem[
-	    (y*SGIINFO(ifp)->mi_memwidth+x)*sizeof(struct ogl_pixel) ];
+	    (y*SGIINFO(ifp)->mi_pixwidth+x)*sizeof(struct ogl_pixel) ];
 
 	n = scan_count;
 	while (n) {
@@ -1818,7 +1828,8 @@ ogl_write(fb *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t c
     register int x;
     register int y;
 
-    if (CJDEBUG) printf("entering ogl_write\n");
+    if (OGL_DEBUG)
+	printf("entering ogl_write\n");
 
     /* fast exit cases */
     pix_count = count;
@@ -1848,7 +1859,7 @@ ogl_write(fb *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t c
 	    scan_count = pix_count;
 
 	oglp = (struct ogl_pixel *)&ifp->if_mem[
-	    (y*SGIINFO(ifp)->mi_memwidth+x)*sizeof(struct ogl_pixel) ];
+	    (y*SGIINFO(ifp)->mi_pixwidth+x)*sizeof(struct ogl_pixel) ];
 
 	n = scan_count;
 	if ((n & 3) != 0) {
@@ -1944,7 +1955,8 @@ ogl_writerect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned
     register unsigned char *cp;
     register struct ogl_pixel *oglp;
 
-    if (CJDEBUG) printf("entering ogl_writerect\n");
+    if (OGL_DEBUG)
+	printf("entering ogl_writerect\n");
 
 
     if (width <= 0 || height <= 0)
@@ -1956,7 +1968,7 @@ ogl_writerect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned
     cp = (unsigned char *)(pp);
     for (y = ymin; y < ymin+height; y++) {
 	oglp = (struct ogl_pixel *)&ifp->if_mem[
-	    (y*SGIINFO(ifp)->mi_memwidth+xmin)*sizeof(struct ogl_pixel) ];
+	    (y*SGIINFO(ifp)->mi_pixwidth+xmin)*sizeof(struct ogl_pixel) ];
 	for (x = xmin; x < xmin+width; x++) {
 	    /* alpha channel is always zero */
 	    oglp->red   = cp[RED];
@@ -2008,7 +2020,8 @@ ogl_bwwriterect(fb *ifp, int xmin, int ymin, int width, int height, const unsign
     register unsigned char *cp;
     register struct ogl_pixel *oglp;
 
-    if (CJDEBUG) printf("entering ogl_bwwriterect\n");
+    if (OGL_DEBUG)
+	printf("entering ogl_bwwriterect\n");
 
 
     if (width <= 0 || height <= 0)
@@ -2020,7 +2033,7 @@ ogl_bwwriterect(fb *ifp, int xmin, int ymin, int width, int height, const unsign
     cp = (unsigned char *)(pp);
     for (y = ymin; y < ymin+height; y++) {
 	oglp = (struct ogl_pixel *)&ifp->if_mem[
-	    (y*SGIINFO(ifp)->mi_memwidth+xmin)*sizeof(struct ogl_pixel) ];
+	    (y*SGIINFO(ifp)->mi_pixwidth+xmin)*sizeof(struct ogl_pixel) ];
 	for (x = xmin; x < xmin+width; x++) {
 	    register int val;
 	    /* alpha channel is always zero */
@@ -2064,7 +2077,8 @@ ogl_rmap(register fb *ifp, register ColorMap *cmp)
 {
     register int i;
 
-    if (CJDEBUG) printf("entering ogl_rmap\n");
+    if (OGL_DEBUG)
+	printf("entering ogl_rmap\n");
 
     /* Just parrot back the stored colormap */
     for (i = 0; i < 256; i++) {
@@ -2082,7 +2096,8 @@ ogl_wmap(register fb *ifp, register const ColorMap *cmp)
     register int i;
     int prev;	/* !0 = previous cmap was non-linear */
 
-    if (CJDEBUG) printf("entering ogl_wmap\n");
+    if (OGL_DEBUG)
+	printf("entering ogl_wmap\n");
 
     prev = SGIINFO(ifp)->mi_cmap_flag;
     if (cmp == COLORMAP_NULL) {
