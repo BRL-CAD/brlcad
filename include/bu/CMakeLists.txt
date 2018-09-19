@@ -33,6 +33,7 @@ set(bu_headers
   ptbl.h
   redblack.h
   simd.h
+  snooze.h
   sort.h
   str.h
   tc.h
