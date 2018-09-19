@@ -65,8 +65,8 @@
 #define CJDEBUG 0
 
 /* XXX - arbitrary upper bound */
-#define XMAXSCREEN 16383
-#define YMAXSCREEN 16383
+#define XMAXSCREEN 32*1024
+#define YMAXSCREEN 32*1024
 
 /* Internal callbacks etc.*/
 HIDDEN void wgl_do_event(fb *ifp);
@@ -140,7 +140,7 @@ struct sgiinfo {
     short mi_xoff;		/* X viewport offset, rel. window*/
     short mi_yoff;		/* Y viewport offset, rel. window*/
     int mi_doublebuffer;	/* 0=singlebuffer 1=doublebuffer */
-    struct wgl_pixel mi_scanline[XMAXSCREEN+1];	/* one scanline */
+    struct wgl_pixel mi_scanline[XMAXSCREEN];	/* one scanline */
 };
 
 
@@ -2108,8 +2108,8 @@ fb wgl_interface =
     wgl_free,		/* free resources */
     wgl_help,		/* help message */
     "Microsoft Windows OpenGL",	/* device description */
-    XMAXSCREEN+1,	/* max width */
-    YMAXSCREEN+1,	/* max height */
+    XMAXSCREEN,		/* max width */
+    YMAXSCREEN,		/* max height */
     "/dev/wgl",		/* short device name */
     512,		/* default/current width */
     512,		/* default/current height */

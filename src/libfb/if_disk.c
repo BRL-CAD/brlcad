@@ -44,6 +44,10 @@
 
 #define if_seekpos u5.l	/* stored seek position */
 
+/* XXX - arbitrary upper bound */
+#define XMAXSCREEN 32*1024
+#define YMAXSCREEN 32*1024
+
 
 HIDDEN int
 dsk_open(fb *ifp, const char *file, int width, int height)
@@ -384,8 +388,8 @@ fb disk_interface = {
     dsk_free,
     dsk_help,
     "Disk File Interface",
-    32*1024,		/* the sky's really the limit here */
-    32*1024,
+    XMAXSCREEN,		/* the sky's really the limit here */
+    YMAXSCREEN,
     "filename",		/* not in list so name is safe */
     512,
     512,

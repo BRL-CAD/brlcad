@@ -62,6 +62,11 @@
 #define PCP(ptr)	((struct pkg_conn *)((ptr)->u1.p))
 #define PCPL(ptr)	((ptr)->u1.p)	/* left hand side version */
 
+/* XXX - arbitrary upper bound */
+#define XMAXSCREEN 32*1024
+#define YMAXSCREEN 32*1024
+
+
 /* Package Handlers. */
 static void pkgerror(struct pkg_conn *pcpp, char *buf);	/* error message handler */
 static struct pkg_switch pkgswitch[] = {
@@ -810,8 +815,8 @@ fb remote_interface = {
     rem_free,
     rem_help,
     "Remote Device Interface",	/* should be filled in */
-    32*1024,			/* " */
-    32*1024,			/* " */
+    XMAXSCREEN,			/* max width */
+    YMAXSCREEN,			/* max height */
     "host:[dev]",
     512,
     512,

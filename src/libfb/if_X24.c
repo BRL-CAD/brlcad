@@ -78,6 +78,11 @@
 #include "fb/fb_X.h"
 
 
+/* XXX - arbitrary upper bound */
+#define XMAXSCREEN 32*1024
+#define YMAXSCREEN 32*1024
+
+
 /*
  * Per window state information.
  */
@@ -3515,8 +3520,8 @@ fb X24_interface =  {
     X24_free,		/* free resources */
     X24_help,		/* help message */
     "24 bit X Window System (X11)",	/* device description */
-    2048,		/* max width */
-    2048,		/* max height */
+    XMAXSCREEN,		/* max width */
+    YMAXSCREEN,		/* max height */
     "/dev/X",		/* short device name */
     512,		/* default/current width */
     512,		/* default/current height */

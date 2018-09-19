@@ -47,6 +47,11 @@ struct stkinfo {
 #define SI(ptr) ((struct stkinfo *)((ptr)->u1.p))
 #define SIL(ptr) ((ptr)->u1.p)		/* left hand side version */
 
+/* XXX - arbitrary upper bound */
+#define XMAXSCREEN 32*1024
+#define YMAXSCREEN 32*1024
+
+
 HIDDEN int
 stk_open(fb *ifp, const char *file, int width, int height)
 {
@@ -463,8 +468,8 @@ fb stk_interface =  {
     stk_free,		/* free resources */
     stk_help,		/* help function */
     "Multiple Device Stacker", /* device description */
-    32*1024,		/* max width */
-    32*1024,		/* max height */
+    XMAXSCREEN,		/* max width */
+    YMAXSCREEN,		/* max height */
     "/dev/stack",		/* short device name */
     4,			/* default/current width */
     4,			/* default/current height */

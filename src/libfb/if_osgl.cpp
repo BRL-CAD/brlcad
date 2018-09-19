@@ -51,8 +51,8 @@ extern "C" {
 #define DIRECT_COLOR_VISUAL_ALLOWED 0
 
 /* XXX - arbitrary upper bound */
-#define XMAXSCREEN 16383
-#define YMAXSCREEN 16383
+#define XMAXSCREEN 32*1024
+#define YMAXSCREEN 32*1024
 
 HIDDEN int osgl_nwindows = 0; 	/* number of open windows */
 /*HIDDEN XColor color_cell[256];*/		/* used to set colormap */
@@ -110,7 +110,7 @@ struct sgiinfo {
     int mi_memwidth;		/* width of scanline in if_mem */
     short mi_xoff;		/* X viewport offset, rel. window*/
     short mi_yoff;		/* Y viewport offset, rel. window*/
-    struct osgl_pixel mi_scanline[XMAXSCREEN+1];	/* one scanline */
+    struct osgl_pixel mi_scanline[XMAXSCREEN];	/* one scanline */
 };
 
 
@@ -1604,8 +1604,8 @@ fb osgl_interface =
     osgl_free,		/* free resources */
     osgl_help,		/* help message */
     bu_strdup("OpenSceneGraph OpenGL"),	/* device description */
-    XMAXSCREEN+1,	/* max width */
-    YMAXSCREEN+1,	/* max height */
+    XMAXSCREEN,		/* max width */
+    YMAXSCREEN,		/* max height */
     bu_strdup("/dev/osgl"),		/* short device name */
     512,		/* default/current width */
     512,		/* default/current height */

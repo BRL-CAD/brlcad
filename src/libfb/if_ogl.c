@@ -89,8 +89,8 @@
 #define DIRECT_COLOR_VISUAL_ALLOWED 0
 
 /* XXX - arbitrary upper bound */
-#define XMAXSCREEN 16383
-#define YMAXSCREEN 16383
+#define XMAXSCREEN 32*1024
+#define YMAXSCREEN 32*1024
 
 HIDDEN int ogl_nwindows = 0; 	/* number of open windows */
 HIDDEN XColor color_cell[256];		/* used to set colormap */
@@ -150,7 +150,7 @@ struct sgiinfo {
     short mi_xoff;		/* X viewport offset, rel. window*/
     short mi_yoff;		/* Y viewport offset, rel. window*/
     int mi_doublebuffer;	/* 0=singlebuffer 1=doublebuffer */
-    struct ogl_pixel mi_scanline[XMAXSCREEN+1];	/* one scanline */
+    struct ogl_pixel mi_scanline[XMAXSCREEN];	/* one scanline */
 };
 
 
@@ -2351,8 +2351,8 @@ fb ogl_interface =
     ogl_free,		/* free resources */
     ogl_help,		/* help message */
     "Silicon Graphics OpenGL",	/* device description */
-    XMAXSCREEN+1,	/* max width */
-    YMAXSCREEN+1,	/* max height */
+    XMAXSCREEN,		/* max width */
+    YMAXSCREEN,		/* max height */
     "/dev/ogl",		/* short device name */
     512,		/* default/current width */
     512,		/* default/current height */

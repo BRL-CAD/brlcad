@@ -37,6 +37,11 @@
 #include "fb.h"
 
 
+/* XXX - arbitrary upper bound */
+#define XMAXSCREEN 32*1024
+#define YMAXSCREEN 32*1024
+
+
 HIDDEN int
 _fb_null_open(fb *ifp, const char *UNUSED(file), int width, int height)
 {
@@ -284,8 +289,8 @@ fb fb_null_interface =  {
     _fb_null_free,		/* free resources */
     _fb_null_help,		/* help message */
     "Null Device",	/* device description */
-    32*1024,		/* max width */
-    32*1024,		/* max height */
+    XMAXSCREEN,		/* max width */
+    YMAXSCREEN,		/* max height */
     "/dev/null",	/* short device name */
     512,		/* default/current width */
     512,		/* default/current height */

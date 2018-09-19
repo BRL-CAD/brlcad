@@ -36,6 +36,12 @@
 #include "fb_private.h"
 #include "fb.h"
 
+
+/* XXX - arbitrary upper bound */
+#define XMAXSCREEN 32*1024
+#define YMAXSCREEN 32*1024
+
+
 HIDDEN int
 deb_open(fb *ifp, const char *file, int width, int height)
 {
@@ -389,8 +395,8 @@ fb debug_interface = {
     deb_free,
     deb_help,
     "Debugging Interface",
-    32*1024,		/* max width */
-    32*1024,		/* max height */
+    XMAXSCREEN,		/* max width */
+    YMAXSCREEN,		/* max height */
     "/dev/debug",
     512,			/* current/default width */
     512,			/* current/default height */
