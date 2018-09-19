@@ -258,9 +258,9 @@ HIDDEN struct modeflags {
     { 'c',	MODE_7MASK, MODE_7SWCMAP,
       "Perform software colormap - else use hardware colormap if possible" },
     { 's',	MODE_9MASK, MODE_9SINGLEBUF,
-      "Single buffer -  else double buffer if possible" },
+      "Single buffer - else double buffer if possible" },
     { 'b',	MODE_11MASK, MODE_11COPY,
-      "Fast pan and zoom using backbuffer copy -  else normal " },
+      "Fast pan and zoom using backbuffer copy - else normal " },
     { 'D',	MODE_12MASK, MODE_12DELAY_WRITES_TILL_FLUSH,
       "Don't update screen until fb_flush() is called.  (Double buffer sim)" },
     { 'z',	MODE_15MASK, MODE_15ZAP,
@@ -545,7 +545,7 @@ ogl_getmem(fb *ifp)
     SGIINFO(ifp)->mi_memwidth = ifp->if_max_width;
 
     /*
-     * On some platforms lrectwrite() runs off the end!  So, provide a
+     * On some platforms lrectwrite() runs off the end! So, provide a
      * pad area of 2 scanlines.  (1 line is enough, but this avoids
      * risk of damage to colormap table.)
      */
@@ -1312,11 +1312,9 @@ fb_ogl_open(fb *ifp, const char *file, int width, int height)
 }
 
 
-
-int
-_ogl_open_existing(fb *ifp, Display *dpy, Window win, Colormap cmap, XVisualInfo *vip, int width, int height, GLXContext glxc, int double_buffer, int soft_cmap)
+static int
+open_existing(fb *ifp, Display *dpy, Window win, Colormap cmap, XVisualInfo *vip, int width, int height, GLXContext glxc, int double_buffer, int soft_cmap)
 {
-
     /*XXX for now use private memory */
     ifp->if_mode = MODE_1MALLOC;
 
@@ -1379,6 +1377,7 @@ _ogl_open_existing(fb *ifp, Display *dpy, Window win, Colormap cmap, XVisualInfo
     return 0;
 }
 
+
 HIDDEN struct fb_platform_specific *
 ogl_get_fbps(uint32_t magic)
 {
@@ -1401,16 +1400,17 @@ ogl_put_fbps(struct fb_platform_specific *fbps)
     return;
 }
 
+
 HIDDEN int
 ogl_open_existing(fb *ifp, int width, int height, struct fb_platform_specific *fb_p)
 {
     struct ogl_fb_info *ogl_internal = (struct ogl_fb_info *)fb_p->data;
     BU_CKMAG(fb_p, FB_OGL_MAGIC, "ogl framebuffer");
-    return _ogl_open_existing(ifp, ogl_internal->dpy, ogl_internal->win,
-	    ogl_internal->cmap, ogl_internal->vip, width, height, ogl_internal->glxc,
-	    ogl_internal->double_buffer, ogl_internal->soft_cmap);
+    return open_existing(ifp, ogl_internal->dpy, ogl_internal->win,
+			 ogl_internal->cmap, ogl_internal->vip, width, height, ogl_internal->glxc,
+			 ogl_internal->double_buffer, ogl_internal->soft_cmap);
 
-        return 0;
+    return 0;
 }
 
 
@@ -1535,7 +1535,7 @@ fb_ogl_close(fb *ifp)
      */
     fclose(stdin);
 
-    while(ogl_poll(ifp)) {
+    while (ogl_poll(ifp)) {
 	bu_snooze(fb_poll_rate(ifp));
     }
 
@@ -2377,6 +2377,7 @@ fb ogl_interface =
     {0}, /* u5 */
     {0}  /* u6 */
 };
+
 
 /* Because class is actually used to access a struct
  * entry in this file, preserve our redefinition
