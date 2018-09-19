@@ -32,6 +32,12 @@
 
 
 /**
+ * @brief Convert second to microsecond
+ */
+#define BU_SEC2USEC(sec) (1000000LL * (sec))
+
+
+/**
  * suspend the current thread for at least the specified number of
  * microseconds.
  *
