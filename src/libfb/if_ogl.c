@@ -79,6 +79,7 @@
 #include "bu/color.h"
 #include "bu/malloc.h"
 #include "bu/parallel.h"
+#include "bu/snooze.h"
 #include "bu/str.h"
 #include "fb_private.h"
 #include "fb.h"
@@ -148,8 +149,6 @@ struct sgiinfo {
     int mi_memwidth;		/* width of scanline in if_mem */
     short mi_xoff;		/* X viewport offset, rel. window*/
     short mi_yoff;		/* Y viewport offset, rel. window*/
-    int mi_pid;			/* for multi-cpu check */
-    int mi_parent;		/* PID of linger-mode process */
     int mi_doublebuffer;	/* 0=singlebuffer 1=doublebuffer */
     struct ogl_pixel mi_scanline[XMAXSCREEN+1];	/* one scanline */
 };
@@ -268,13 +267,6 @@ HIDDEN struct modeflags {
       "Zap (free) shared memory.  Can also be done with fbfree command" },
     { '\0', 0, 0, "" }
 };
-
-
-HIDDEN void
-sigkid(int UNUSED(pid))
-{
-    exit(0);
-}
 
 
 /* BACKBUFFER_TO_SCREEN - copy pixels from copy on the backbuffer to
@@ -1145,24 +1137,8 @@ fb_ogl_open(fb *ifp, const char *file, int width, int height)
 	return -1;
     }
 
-    SGIINFO(ifp)->mi_shmid = -1;	/* indicate no shared memory */
-
-    /* the Silicon Graphics Library Window management routines use
-     * shared memory. This causes lots of problems when you want to
-     * pass a window structure to a child process.  One hack to get
-     * around this is to immediately fork and create a child process
-     * and sleep until the child sends a kill signal to the parent
-     * process. (in FBCLOSE) This allows us to use the traditional fb
-     * utility programs as well as allow the frame buffer window to
-     * remain around until killed by the menu subsystem.
-     */
-
-    if ((ifp->if_mode & MODE_2MASK) == MODE_2LINGERING) {
-	/* save parent pid for later signalling */
-	SGIINFO(ifp)->mi_parent = bu_process_id();
-
-	signal(SIGUSR1, sigkid);
-    }
+    /* default to no shared memory */
+    SGIINFO(ifp)->mi_shmid = -1;
 
     /* use defaults if invalid width and height specified */
     if (width <= 0)
@@ -1195,7 +1171,6 @@ fb_ogl_open(fb *ifp, const char *file, int width, int height)
     ifp->if_yzoom = 1;	/* for zoom fakeout */
     ifp->if_xcenter = width/2;
     ifp->if_ycenter = height/2;
-    SGIINFO(ifp)->mi_pid = bu_process_id();
 
     /* Attach to shared memory, potentially with a screen repaint */
     if (ogl_getmem(ifp) < 0)
@@ -1361,7 +1336,9 @@ _ogl_open_existing(fb *ifp, Display *dpy, Window win, Colormap cmap, XVisualInfo
 
     OGL(ifp)->use_ext_ctrl = 1;
 
-    SGIINFO(ifp)->mi_shmid = -1;	/* indicate no shared memory */
+    /* default to no shared memory */
+    SGIINFO(ifp)->mi_shmid = -1;
+
     ifp->if_width = ifp->if_max_width = width;
     ifp->if_height = ifp->if_max_height = height;
 
@@ -1376,7 +1353,6 @@ _ogl_open_existing(fb *ifp, Display *dpy, Window win, Colormap cmap, XVisualInfo
     ifp->if_yzoom = 1;	/* for zoom fakeout */
     ifp->if_xcenter = width/2;
     ifp->if_ycenter = height/2;
-    SGIINFO(ifp)->mi_pid = bu_process_id();
 
     /* Attach to shared memory, potentially with a screen repaint */
     if (ogl_getmem(ifp) < 0)
@@ -1499,16 +1475,31 @@ ogl_flush(fb *ifp)
 	/* unattach context for other threads to use, also flushes */
 	glXMakeCurrent(OGL(ifp)->dispp, None, NULL);
     }
+
+    printf("flushing! copy flag is %d\n", OGL(ifp)->copy_flag);
+
     XFlush(OGL(ifp)->dispp);
     glFlush();
+
     return 0;
+}
+
+
+/*
+ * Handle any pending input events
+ */
+HIDDEN int
+ogl_poll(fb *ifp)
+{
+    ogl_do_event(ifp);
+
+    return OGL(ifp)->alive;
 }
 
 
 HIDDEN int
 fb_ogl_close(fb *ifp)
 {
-
     ogl_flush(ifp);
 
     /* only the last open window can linger -
@@ -1544,8 +1535,8 @@ fb_ogl_close(fb *ifp)
      */
     fclose(stdin);
 
-    while (0 < OGL(ifp)->alive) {
-	ogl_do_event(ifp);
+    while(ogl_poll(ifp)) {
+	bu_snooze(fb_poll_rate(ifp));
     }
 
     return 0;
@@ -1582,21 +1573,6 @@ ogl_close_existing(fb *ifp)
     }
 
     return 0;
-}
-
-
-/*
- * Handle any pending input events
- */
-HIDDEN int
-ogl_poll(fb *ifp)
-{
-    ogl_do_event(ifp);
-
-    if (OGL(ifp)->alive < 0)
-	return 1;
-    else
-	return 0;
 }
 
 
@@ -2393,7 +2369,7 @@ fb ogl_interface =
     0L,			/* page_curpos */
     0L,			/* page_pixels */
     0,			/* debug */
-    60000000,		/* refresh rate (from fbserv, which had 60 seconds as its default... not sure why) */
+    50000,		/* refresh rate */
     {0}, /* u1 */
     {0}, /* u2 */
     {0}, /* u3 */
