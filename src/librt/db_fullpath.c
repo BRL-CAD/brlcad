@@ -591,36 +591,66 @@ db_full_path_search(const struct db_full_path *a, const struct directory *dp)
     return 0;
 }
 
+HIDDEN int
+cyclic_path(const struct db_full_path *fp, const char *test_name, long int depth)
+{
+    if (!test_name || !fp || depth < 0)
+	return 0;
+
+    /* Check the path starting at depth to see if we have a match. */
+    while (depth >= 0) {
+	if (BU_STR_EQUAL(test_name, fp->fp_names[depth]->d_namep)) {
+	    return 1;
+	}
+	depth--;
+    }
+
+    /* not cyclic */
+    return 0;
+}
 
 int
-cyclic_path(const struct db_full_path *fp, const char *name)
+db_full_path_cyclic(const struct db_full_path *fp, const char *lname, int full_check)
 {
-    /* skip the last one added since it is currently being tested. */
     long int depth;
     const char *test_name;
+    const struct directory *dp;
 
-    if (!name || !fp)
+    if (!fp)
 	return 0;
 
     RT_CK_FULL_PATH(fp);
 
     depth = fp->fp_len - 1;
 
-    if (name[0] != '\0') {
-	test_name = name;
-    } else {
-	const struct directory *dp = DB_FULL_PATH_CUR_DIR(fp);
-	if (!dp)
-	    return 0;
+    if (!full_check) {
+	if (lname) {
+	    test_name = lname;
+	} else {
+	    dp = DB_FULL_PATH_CUR_DIR(fp);
+	    if (!dp)
+		return 0;
 
-	test_name = dp->d_namep;
+	    test_name = dp->d_namep;
+	    depth--;
+	}
+
+	return cyclic_path(fp, test_name, depth);
     }
 
-    /* check the path to see if it is groundhog day */
-    while (--depth >= 0) {
-	if (BU_STR_EQUAL(test_name, fp->fp_names[depth]->d_namep)) {
-	    return 1;
-	}
+    /* full_check is set - check everything */
+    if (lname) {
+	if (cyclic_path(fp, lname, depth)) return 1;
+    }
+
+
+    /* Check each element in the path against all elements
+     * above it - the first instance of a cycle ends
+     * the check. */
+    while (depth > 0) {
+	test_name = fp->fp_names[depth]->d_namep;
+	depth--;
+	if (cyclic_path(fp, lname, depth)) return 1;
     }
 
     /* not cyclic */

@@ -112,18 +112,6 @@ extern const union cutter *rt_advance_to_next_cell(struct rt_shootray_status *ss
 extern void rt_plot_cell(const union cutter *cutp, struct rt_shootray_status *ssp, struct bu_list *waiting_segs_hd, struct rt_i *rtip);
 
 
-/* db_fullpath.c */
-
-/**
- * Function to test whether a path has a cyclic entry in it.
- *
- * @param fp [i] Full path to test
- * @param name [i] String to use when checking path (optional).  If NULL, use the name of the current directory pointer in fp.
- * @return 1 if the path is cyclic, 0 if it is not.
- */
-extern int cyclic_path(const struct db_full_path *fp, const char *name);
-
-
 /* db_diff.c */
 
 /**

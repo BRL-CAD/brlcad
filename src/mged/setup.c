@@ -200,6 +200,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"labelface", f_labelface, GED_FUNC_PTR_NULL},
     {"lc", cmd_ged_plain_wrapper, ged_lc},
     {"left", f_bv_left, GED_FUNC_PTR_NULL},
+    {"lint", cmd_ged_plain_wrapper, ged_lint},
     {"listeval", cmd_ged_plain_wrapper, ged_pathsum},
     {"lm", cmd_lm, GED_FUNC_PTR_NULL},
     {"loadtk", cmd_tk, GED_FUNC_PTR_NULL},

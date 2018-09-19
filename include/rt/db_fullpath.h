@@ -201,6 +201,25 @@ RT_EXPORT extern int db_full_path_match_top(const struct db_full_path	*a,
 RT_EXPORT extern int db_full_path_search(const struct db_full_path *a,
 					 const struct directory *dp);
 
+
+/**
+ * Function to test whether a path has a cyclic entry in it.
+ *
+ * @param fp [i] Full path to test
+ * @param lname [i] String to use when checking path (optional).  If NULL, use the name of the current directory pointer in fp.
+ * @param full_check [i] Flag to instruct the cyclic test to check using all directory pointers in fp, not just the lname/current dp test.
+ * @return 1 if the path is cyclic, 0 if it is not.
+ *
+ * By default, only the leaf (or test_name if supplied) will be used to test if
+ * the path is cyclic.  If full_check is set, all object names in the path will
+ * be checked, as well as lname if set.  This more expensive check is not
+ * necessary if calling code is checking for cyclic paths as paths are being
+ * built, but is necessary to fully "clear" a db_full_path from an arbitrary
+ * source.  Calling code must use its knowledge of the origins of the full path
+ * (or lack thereof) to determine how much validation work is needed.
+ */
+RT_EXPORT extern int db_full_path_cyclic(const struct db_full_path *p, const char *lname, int full_check);
+
 /**
  * Build the transformation matrix obtained when traversing the path
  * to the specified depth.

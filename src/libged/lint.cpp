@@ -74,27 +74,146 @@ _ged_lint_opts_verify(struct _ged_lint_opts *o)
     }
 }
 
-int
-_ged_cyclic_check(struct ged *gedp, int argc, struct directory *dpa)
+/* Because lint is intended to be a deep inspection of the .g looking for problems,
+ * we need to do this check using the low level tree walk rather than operating on
+ * a search result set (which has checks to filter out cyclic paths.) */
+HIDDEN void
+_ged_cyclic_search_subtree(struct db_full_path *path, int curr_bool, union tree *tp,
+	void (*traverse_func) (struct db_full_path *path, void *), void *client_data)
 {
+    struct directory *dp;
+    struct ged *gedp = (struct ged *)client_data;
+    int bool_val = curr_bool;
+
+    if (!tp) {
+	return;
+    }
+
+    RT_CK_FULL_PATH(path);
+    RT_CK_TREE(tp);
+
+    switch (tp->tr_op) {
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+	    if (tp->tr_op == OP_UNION) bool_val = 2;
+	    if (tp->tr_op == OP_INTERSECT) bool_val = 3;
+	    if (tp->tr_op == OP_SUBTRACT) bool_val = 4;
+	    _ged_cyclic_search_subtree(path, bool_val, tp->tr_b.tb_right, traverse_func, client_data);
+	    /* fall through */
+	case OP_NOT:
+	case OP_GUARD:
+	case OP_XNOP:
+	    _ged_cyclic_search_subtree(path, OP_UNION, tp->tr_b.tb_left, traverse_func, client_data);
+	    break;
+	case OP_DB_LEAF:
+	    if ((dp=db_lookup(gedp->ged_wdbp->dbip, tp->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
+		return;
+	    } else {
+		/* See if we've got a cyclic path */
+		db_add_node_to_full_path(path, dp);
+		DB_FULL_PATH_SET_CUR_BOOL(path, bool_val);
+		if (!db_full_path_cyclic(path, NULL, 0)) {
+		    /* Not cyclic - keep going */
+		    traverse_func(path, client_data);
+		} else {
+		    /* Cyclic - report it */
+		    char *path_string = db_path_to_string(path);
+		    bu_vls_printf(gedp->ged_result_str, "%s\n", path_string);
+		    bu_free(path_string, "free path str");
+		}
+		DB_FULL_PATH_POP(path);
+		break;
+	    }
+
+	default:
+	    bu_log("db_functree_subtree: unrecognized operator %d\n", tp->tr_op);
+	    bu_bomb("db_functree_subtree: unrecognized operator\n");
+    }
+}
+
+void
+_ged_cyclic_search(struct db_full_path *fp, void *client_data)
+{
+    struct ged *gedp = (struct ged *)client_data;
+    struct directory *dp;
+
+    RT_CK_FULL_PATH(fp);
+
+    dp = DB_FULL_PATH_CUR_DIR(fp);
+
+    if (!dp) return;
+
+    /* If we're not looking at a comb object we can't have
+     * cyclic paths - else, walk the comb */
+    if (dp->d_flags & RT_DIR_COMB) {
+	struct rt_db_internal in;
+	struct rt_comb_internal *comb;
+
+	if (rt_db_get_internal(&in, dp, gedp->ged_wdbp->dbip, NULL, &rt_uniresource) < 0) return;
+
+	comb = (struct rt_comb_internal *)in.idb_ptr;
+	_ged_cyclic_search_subtree(fp, OP_UNION, comb->tree, _ged_cyclic_search, client_data);
+	rt_db_free_internal(&in);
+    }
+}
+
+int
+_ged_cyclic_check(struct ged *gedp, int argc, struct directory **dpa)
+{
+    int i;
+    struct db_full_path *start_path = NULL;
     int ret = GED_OK;
-    if (!gedp || argc == 0 || !dpa) return GED_ERROR;
+    if (!gedp) return GED_ERROR;
+    if (argc) {
+	if (!dpa) return GED_ERROR;
+	BU_GET(start_path, struct db_full_path);
+	db_full_path_init(start_path);
+	for (i = 0; i < argc; i++) {
+	    db_add_node_to_full_path(start_path, dpa[i]);
+	    _ged_cyclic_search(start_path, (void *)gedp);
+	    DB_FULL_PATH_POP(start_path);
+	}
+    } else {
+	struct directory *dp;
+	BU_GET(start_path, struct db_full_path);
+	db_full_path_init(start_path);
+	/* We can't do db_ls to get a set of tops objects here, because a cyclic
+	 * path can produce a situation where there are no tops objects and/or
+	 * hide the paths we need to report. */
+	for (i = 0; i < RT_DBNHASH; i++) {
+	    for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+		db_add_node_to_full_path(start_path, dp);
+		_ged_cyclic_search(start_path, (void *)gedp);
+		DB_FULL_PATH_POP(start_path);
+	    }
+	}
+    }
+    db_free_full_path(start_path);
+    BU_PUT(start_path, struct db_full_path);
     return ret;
 }
 
 int
-_ged_missing_check(struct ged *gedp, int argc, struct directory *dpa)
+_ged_missing_check(struct ged *gedp, int argc, struct directory **dpa)
 {
     int ret = GED_OK;
-    if (!gedp || argc == 0 || !dpa) return GED_ERROR;
+    if (!gedp) return GED_ERROR;
+    if (argc) {
+	if (!dpa) return GED_ERROR;
+    }	
     return ret;
 }
 
 int
-_ged_non_solid_check(struct ged *gedp, int argc, struct directory *dpa)
+_ged_non_solid_check(struct ged *gedp, int argc, struct directory **dpa)
 {
     int ret = GED_OK;
-    if (!gedp || argc == 0 || !dpa) return GED_ERROR;
+    if (!gedp) return GED_ERROR;
+    if (argc) {
+	if (!dpa) return GED_ERROR;
+    }	
     return ret;
 }
 
@@ -107,7 +226,7 @@ ged_lint(struct ged *gedp, int argc, const char *argv[])
     int print_help = 0;
     struct _ged_lint_opts *opts;
     struct bu_opt_desc d[6];
-    struct directory *dpa;
+    struct directory **dpa = NULL;
     int nonexist_obj_cnt = 0;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -131,23 +250,24 @@ ged_lint(struct ged *gedp, int argc, const char *argv[])
     /* parse standard options */
     argc = bu_opt_parse(NULL, argc, argv, d);
 
-    if (print_help || !argc) {
+    if (print_help) {
 	_ged_cmd_help(gedp, usage, d);
-	ret = (print_help) ? GED_OK : GED_ERROR;
+	ret = GED_OK;
 	goto ged_lint_memfree;
     }
 
-    dpa = (struct directory *)bu_calloc(argc+1, sizeof(struct directory *), "dp array");
-    nonexist_obj_cnt = _ged_sort_existing_objs(gedp, argc, argv, &dpa);
-
-    if (nonexist_obj_cnt) {
-	int i;
-	bu_vls_printf(gedp->ged_result_str, "Object argument(s) supplied to lint that do not exist in the database:\n");
-	for (i = argc - nonexist_obj_cnt - 1; i < argc; i++) {
-	    bu_vls_printf(gedp->ged_result_str, " %s\n", argv[i]);
+    if (argc) {
+	dpa = (struct directory **)bu_calloc(argc+1, sizeof(struct directory *), "dp array");
+	nonexist_obj_cnt = _ged_sort_existing_objs(gedp, argc, argv, dpa);
+	if (nonexist_obj_cnt) {
+	    int i;
+	    bu_vls_printf(gedp->ged_result_str, "Object argument(s) supplied to lint that do not exist in the database:\n");
+	    for (i = argc - nonexist_obj_cnt - 1; i < argc; i++) {
+		bu_vls_printf(gedp->ged_result_str, " %s\n", argv[i]);
+	    }
+	    ret = GED_ERROR;
+	    goto ged_lint_memfree;
 	}
-	ret = GED_ERROR;
-	goto ged_lint_memfree;
     }
 
     _ged_lint_opts_verify(opts);

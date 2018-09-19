@@ -196,7 +196,7 @@ db_fullpath_list_subtree(struct db_full_path *path, int curr_bool, union tree *t
 		    db_dup_full_path(newpath, path);
 		    /* Insert the path in the bu_ptbl collecting paths */
 		    bu_ptbl_ins(lcd->full_paths, (long *)newpath);
-		    if (!cyclic_path(path, NULL)) {
+		    if (!db_full_path_cyclic(path, NULL, 0)) {
 			/* Keep going */
 			traverse_func(path, client_data);
 		    } else {
