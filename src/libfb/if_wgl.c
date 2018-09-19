@@ -551,7 +551,7 @@ wgl_open(fb *ifp, const char *file, int width, int height)
     HINSTANCE hinstance;
     DWORD Dword;
     WNDCLASS wndclass;
-	int gotvisual;
+    int gotvisual;
 
     FB_CK_FB(ifp);
 
@@ -711,8 +711,8 @@ wgl_open(fb *ifp, const char *file, int width, int height)
 
 
     /* Choose an appropriate visual. */
-	gotvisual = wgl_choose_visual(ifp);
-	if (!gotvisual) {
+    gotvisual = wgl_choose_visual(ifp);
+    if (!gotvisual) {
 	fb_log("wgl_open: Couldn't find an appropriate visual.  Exiting.\n");
 	return -1;
     }
@@ -736,6 +736,7 @@ wgl_open(fb *ifp, const char *file, int width, int height)
     return 0;
 }
 
+
 HIDDEN struct fb_platform_specific *
 wgl_get_fbps(uint32_t magic)
 {
@@ -758,17 +759,18 @@ wgl_put_fbps(struct fb_platform_specific *fbps)
     return;
 }
 
-int
-_wgl_open_existing(fb *ifp,
-		   Display *dpy,
-		   Window win,
-		   Colormap cmap,
-		   HDC hdc,
-		   int width,
-		   int height,
-		   HGLRC glxc,
-		   int double_buffer,
-		   int soft_cmap)
+
+HIDDEN int
+open_existing(fb *ifp,
+	      Display *dpy,
+	      Window win,
+	      Colormap cmap,
+	      HDC hdc,
+	      int width,
+	      int height,
+	      HGLRC glxc,
+	      int double_buffer,
+	      int soft_cmap)
 {
 
     /* XXX for now use private memory */
@@ -836,9 +838,9 @@ wgl_open_existing(fb *ifp, int width, int height, struct fb_platform_specific *f
 {
     struct wgl_fb_info *wgl_internal = (struct wgl_fb_info *)fb_p->data;
     BU_CKMAG(fb_p, FB_WGL_MAGIC, "wgl framebuffer");
-    return _wgl_open_existing(ifp, wgl_internal->dpy, wgl_internal->win, wgl_internal->cmap,
-	    wgl_internal->hdc, width, height,
-	    wgl_internal->glxc, wgl_internal->double_buffer, wgl_internal->soft_cmap);
+    return open_existing(ifp, wgl_internal->dpy, wgl_internal->win, wgl_internal->cmap,
+			 wgl_internal->hdc, width, height,
+			 wgl_internal->glxc, wgl_internal->double_buffer, wgl_internal->soft_cmap);
     return 0;
 }
 
@@ -906,6 +908,18 @@ wgl_flush(fb *ifp)
 }
 
 
+/*
+ * Handle any pending input events
+ */
+HIDDEN int
+wgl_poll(fb *ifp)
+{
+    wgl_do_event(ifp);
+
+    return WGL(ifp)->alive;
+}
+
+
 HIDDEN int
 wgl_close(fb *ifp)
 {
@@ -942,8 +956,9 @@ wgl_close(fb *ifp)
      */
     fclose(stdin);
 
-    while (0 < WGL(ifp)->alive)
-	wgl_do_event(ifp);
+    while (wgl_poll(ifp)) {
+	bu_snooze(fb_poll_rate(ifp));
+    }
 
     return 0;
 }
@@ -972,21 +987,6 @@ wgl_close_existing(fb *ifp)
     }
 
     return 0;
-}
-
-
-/*
- * Handle any pending input events
- */
-HIDDEN int
-wgl_poll(fb *ifp)
-{
-    wgl_do_event(ifp);
-
-    if (WGL(ifp)->alive < 0)
-	return 1;
-    else
-	return 0;
 }
 
 
@@ -1984,7 +1984,7 @@ wgl_choose_visual(fb *ifp)
 {
     int iPixelFormat;
     PIXELFORMATDESCRIPTOR pfd;
-	BOOL good;
+    BOOL good;
 
     iPixelFormat  = GetPixelFormat(WGL(ifp)->hdc);
     pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
@@ -2021,7 +2021,7 @@ wgl_choose_visual(fb *ifp)
     WGL(ifp)->soft_cmap_flag = 1;
 
     if (good)
-		return 1;
+	return 1;
     return 0;
 }
 
@@ -2126,7 +2126,13 @@ fb wgl_interface =
     0L,			/* page_curpos */
     0L,			/* page_pixels */
     0,			/* debug */
-    250			/* refresh rate (from fbserv) */
+    50000,		/* refresh rate */
+    {0}, /* u1 */
+    {0}, /* u2 */
+    {0}, /* u3 */
+    {0}, /* u4 */
+    {0}, /* u5 */
+    {0}  /* u6 */
 };
 
 
