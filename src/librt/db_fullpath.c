@@ -591,7 +591,7 @@ db_full_path_search(const struct db_full_path *a, const struct directory *dp)
     return 0;
 }
 
-HIDDEN int
+int
 cyclic_path(const struct db_full_path *fp, const char *test_name, long int depth)
 {
     if (!test_name || !fp || depth < 0)

@@ -899,7 +899,7 @@ _db_recurse_subtree(union tree *tp, struct db_tree_state *msp, struct db_full_pa
 	    }
 
 	    /* protect against cyclic geometry */
-	    if (db_full_path_cyclic(pathp, tp->tr_l.tl_name, 0)) {
+	    if (cyclic_path(pathp, tp->tr_l.tl_name, pathp->fp_len - 2)) {
 		int depth = pathp->fp_len;
 
 		bu_log("Detected cyclic reference of %s\nPath stack is:\n", tp->tr_l.tl_name);
