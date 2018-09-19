@@ -139,8 +139,6 @@ struct sgiinfo {
     int mi_memwidth;		/* width of scanline in if_mem */
     short mi_xoff;		/* X viewport offset, rel. window*/
     short mi_yoff;		/* Y viewport offset, rel. window*/
-    int mi_pid;			/* for multi-cpu check */
-    int mi_parent;		/* PID of linger-mode process */
     int mi_doublebuffer;	/* 0=singlebuffer 1=doublebuffer */
     struct wgl_pixel mi_scanline[XMAXSCREEN+1];	/* one scanline */
 };
@@ -668,7 +666,6 @@ wgl_open(fb *ifp, const char *file, int width, int height)
     ifp->if_yzoom = 1;	/* for zoom fakeout */
     ifp->if_xcenter = width/2;
     ifp->if_ycenter = height/2;
-    SGI(ifp)->mi_pid = bu_process_id();
 
     /* Attach to shared memory, potentially with a screen repaint */
     if (wgl_getmem(ifp) < 0)
@@ -808,7 +805,6 @@ _wgl_open_existing(fb *ifp,
     ifp->if_yzoom = 1;	/* for zoom fakeout */
     ifp->if_xcenter = width/2;
     ifp->if_ycenter = height/2;
-    SGI(ifp)->mi_pid = bu_process_id();
 
     /* Attach to shared memory, potentially with a screen repaint */
     if (wgl_getmem(ifp) < 0)
