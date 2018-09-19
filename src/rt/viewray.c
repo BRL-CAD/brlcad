@@ -37,6 +37,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "bu/snooze.h"
 #include "vmath.h"
 #include "raytrace.h"
 
@@ -175,7 +176,7 @@ int
 view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int UNUSED(minus_o), int UNUSED(minus_F))
 {
     bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
-    sleep(1);
+    bu_snooze(BU_SEC2USEC(1));
 
     /* Handling of air in librt */
     use_air = 1;

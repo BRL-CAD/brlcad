@@ -794,7 +794,7 @@ do_run(int a, int b)
 	    /* flush the pipe */
 	    if (close(p[1]) == -1) {
 		perror("Unable to close the communication pipe");
-		sleep(1); /* give the parent time to read */
+		bu_snooze(BU_SEC2USEC(1)); /* give the parent time to read */
 	    }
 	    bu_exit(0, NULL);
 	} else {

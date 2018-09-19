@@ -47,6 +47,7 @@
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/parallel.h"
+#include "bu/snooze.h"
 #include "bu/str.h"
 
 /* strict c99 doesn't declare kill() (but POSIX does) */
@@ -294,7 +295,7 @@ backtrace(char * const *args, int fd)
 	kill(getppid(), SIGCHLD);
 #    endif
 #  endif
-	sleep(2);
+	bu_snooze(BU_SEC2USEC(2));
     }
 
     exit(0);
@@ -378,12 +379,12 @@ bu_backtrace(FILE *fp)
 	while ((interrupt_wait == 0) && (end.tv_sec - start.tv_sec < 45 /* seconds */)) {
 	    /* do nothing, wait for debugger to attach but don't wait too long */;
 	    gettimeofday(&end, NULL);
-	    sleep(1);
+	    bu_snooze(BU_SEC2USEC(1));
 	}
     }
 #else
     /* FIXME: need something better here for win32 */
-    sleep(10);
+    bu_snooze(BU_SEC2USEC(10));
 #endif
 
     if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {

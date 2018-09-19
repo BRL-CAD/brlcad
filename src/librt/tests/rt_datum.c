@@ -490,7 +490,7 @@ main(int UNUSED(argc), char *argv[])
 
 
 
-    /*sleep(1000);*/
+    /*bu_snooze(BU_SEC2USEC(1000));*/
 
     db_close(dbip);
     /*bu_file_delete(tmpfile);*/

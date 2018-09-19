@@ -42,6 +42,7 @@
 #include "bu/file.h"
 #include "bu/exit.h"
 #include "bu/log.h"
+#include "bu/snooze.h"
 #include "vmath.h"
 #include "fb.h"
 
@@ -380,7 +381,7 @@ main(int argc, char **argv)
 		skipbytes(infd, (off_t)(file_width-file_xoff-xskip-scanpix)*sizeof(RGBpixel));
 	}
     }
-    sleep(pause_sec);
+    bu_snooze(BU_SEC2USEC(pause_sec));
     if (fb_close(fbp) < 0) {
 	fprintf(stderr, "pix-fb: Warning: fb_close() error\n");
     }

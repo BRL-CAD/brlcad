@@ -37,7 +37,7 @@ datetime_main(int argc, char **argv)
 	    size_t counter = 1;
 
 	    time0 = bu_gettime();
-	    sleep(1);
+	    bu_snooze(BU_SEC2USEC(1));
 	    time1 = bu_gettime();
 
 	    if (time1 - time0 <= 0)

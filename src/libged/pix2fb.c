@@ -38,6 +38,7 @@
 #endif
 
 #include "bu/getopt.h"
+#include "bu/snooze.h"
 #include "fb.h"
 
 #include "pkg.h"
@@ -203,7 +204,7 @@ ged_pix2fb(struct ged *gedp, int argc, const char *argv[])
     if (infd != 0)
 	close(infd);
 
-    sleep(pause_sec);
+    bu_snooze(BU_SEC2USEC(pause_sec));
 
     if (ret == BRLCAD_OK)
 	return GED_OK;

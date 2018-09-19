@@ -113,6 +113,7 @@
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/parallel.h"
+#include "bu/snooze.h"
 #include "bu/str.h"
 
 #include "./parallel.h"
@@ -411,7 +412,7 @@ parallel_wait_for_slot(int throttle, struct parallel_info *parent, size_t max_th
 	if (threads < max_threads || !throttle) {
 	    return;
 	}
-	sleep(1);
+	bu_snooze(BU_SEC2USEC(1));
     }
 }
 

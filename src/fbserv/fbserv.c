@@ -79,6 +79,7 @@
 #include "../libfb/fb_private.h" /* for _fb_disk_enable */
 #include "bu/getopt.h"
 #include "bu/exit.h"
+#include "bu/snooze.h"
 #include "vmath.h"
 #include "fb.h"
 #include "pkg.h"
@@ -470,7 +471,7 @@ main(int argc, char **argv)
     init_syslog();
     while ((netfd = pkg_permserver(portname, 0, 0, comm_error)) < 0) {
 	static int error_count=0;
-	sleep(1);
+	bu_snooze(BU_SEC2USEC(1));
 	if (error_count++ < 60) {
 	    continue;
 	}

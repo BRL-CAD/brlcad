@@ -50,6 +50,7 @@
 
 #include "bu/list.h"
 #include "bu/str.h"
+#include "bu/snooze.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
@@ -208,7 +209,7 @@ main(int argc, char **argv)
 	(void)pkg_send(MSG_CMD, argv[3], strlen(argv[3])+1, pcsrv);
 
 	/* Prevent chasing the package with an immediate TCP close */
-	sleep(1);
+	bu_snooze(BU_SEC2USEC(1));
 
 	pkg_close(pcsrv);
 	return 0;

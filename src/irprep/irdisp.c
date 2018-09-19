@@ -36,6 +36,7 @@
 
 #include "bu/str.h"
 #include "bu/exit.h"
+#include "bu/snooze.h"
 #include "vmath.h"
 
 
@@ -52,7 +53,7 @@ main(void)
     int ret;
 
     fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
-    sleep(1);
+    bu_snooze(BU_SEC2USEC(1));
 
     /* Find option.  */
     printf("This takes a BRL-CAD mged model with a PRISM\n");

@@ -66,6 +66,7 @@
 #include "bu/units.h"
 #include "bu/version.h"
 #include "bu/time.h"
+#include "bu/snooze.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
@@ -1247,7 +1248,7 @@ main(int argc, char *argv[])
 
 	    } else {
 		/* no pipe, so just wait a little while */
-		sleep(3);
+		bu_snooze(BU_SEC2USEC(3));
 	    }
 
 	    /* exit instead of mged_finish as this is the parent

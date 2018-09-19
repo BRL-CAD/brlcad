@@ -32,7 +32,7 @@
 
 
 /**
- * @brief Convert second to microsecond
+ * Convert seconds to microseconds
  */
 #define BU_SEC2USEC(sec) (1000000LL * (sec))
 

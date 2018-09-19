@@ -46,6 +46,7 @@
 #include "bu/getopt.h"
 #include "bu/malloc.h"
 #include "bu/log.h"
+#include "bu/snooze.h"
 #include "vmath.h"
 
 
@@ -122,7 +123,7 @@ main (int argc, char **argv)
     struct colstr *array = NULL;	/* Array for color information.  */
 
     fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
-    sleep(1);
+    bu_snooze(BU_SEC2USEC(1));
 
     bu_opterr = 0;
     while ((ch = bu_getopt(argc, argv, "h?")) != -1)

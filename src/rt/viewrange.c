@@ -33,6 +33,7 @@
 #include <stdlib.h>
 #include <math.h>
 
+#include "bu/snooze.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "bn/plot3.h"
@@ -78,7 +79,7 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int UNU
 {
 
     bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
-    sleep(1);
+    bu_snooze(BU_SEC2USEC(1));
 
     ap->a_hit = rayhit;
     ap->a_miss = raymiss;

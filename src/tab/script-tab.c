@@ -35,6 +35,7 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu/snooze.h"
 #include "vmath.h"
 #include "raytrace.h"
 
@@ -282,7 +283,7 @@ main(int argc, char **argv)
     int ret;
 
     fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
-    sleep(1);
+    bu_snooze(BU_SEC2USEC(1));
 
     if (argc != 1 || isatty(fileno(stdin))) {
 	fprintf(stderr, "Usage: %s < script > table\n", argv[0]);

@@ -48,6 +48,7 @@
 #include "bu/debug.h"
 #include "bu/getopt.h"
 #include "bu/str.h"
+#include "bu/snooze.h"
 
 #include "adrt.h"		/* adrt Defines */
 #include "adrt_struct.h"	/* adrt common structs */
@@ -365,7 +366,7 @@ master_networking(void *ptr)
     if (go_daemon_mode) {
 	/* spinlock until other socket is good */
 	while (master_listener_result == 1)
-	    sleep(0);
+	    bu_snooze(BU_SEC2USEC(0));
 	/* if both sockets are listening, background. */
 	if (master_listener_result == 0 && observer_listener_result == 0) {
 #ifdef HAVE_WORKING_DAEMON_FUNCTION

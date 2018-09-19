@@ -32,6 +32,8 @@
 #include "bu/log.h"
 #include "bu/cv.h"
 #include "bu/str.h"
+#include "bu/snooze.h"
+
 
 #define TBAD	0	/* no such command */
 #define TNONE	1	/* no arguments */
@@ -214,7 +216,7 @@ main(int argc, char **argv)
     int i;
 
     bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
-    sleep(1);
+    bu_snooze(BU_SEC2USEC(1));
 
     while (argc > 1) {
 	if (BU_STR_EQUAL(argv[1], "-v")) {

@@ -32,6 +32,7 @@
 #include "bresource.h"
 
 #include "bu/exit.h"
+#include "bu/snooze.h"
 #include "fb.h"
 
 #include "./std.h"
@@ -72,7 +73,7 @@ exec_Shell(char **args)
 		);
 	    return -1;
 	case  0 : /* Child process - execute. */
-	    sleep(2);
+	    bu_snooze(BU_SEC2USEC(2));
 	    (void)execvp(args[0], args);
 	    fb_log("%s : could not execute.\n", args[0]);
 	    bu_exit(1, NULL);

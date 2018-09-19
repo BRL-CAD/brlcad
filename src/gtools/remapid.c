@@ -39,6 +39,7 @@
 #include "bu/getopt.h"
 #include "bu/redblack.h"
 #include "bu/vls.h"
+#include "bu/snooze.h"
 #include "bn.h"
 #include "rt/db4.h"
 #include "vmath.h"
@@ -804,7 +805,7 @@ main(int argc, char **argv)
     bu_stdin->file_ptr = stdin;		/* LINUX-required init */
 
     fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.  It is considered superseded by reid+remat\n\n");
-    sleep(1);
+    bu_snooze(BU_SEC2USEC(1));
 
     while ((ch = bu_getopt(argc, argv, "gth?")) != -1)
 	switch (ch) {

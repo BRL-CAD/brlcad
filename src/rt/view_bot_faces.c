@@ -39,6 +39,7 @@
 #endif
 
 #include "bu/parallel.h"
+#include "bu/snooze.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "bn/plot3.h"
@@ -126,7 +127,7 @@ int
 view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int minus_o, int UNUSED(minus_F))
 {
     bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
-    sleep(1);
+    bu_snooze(BU_SEC2USEC(1));
 
     /* report air regions */
     use_air = 1;

@@ -57,6 +57,7 @@
 #include "vmath.h"
 #include "bu/getopt.h"
 #include "bu/exit.h"
+#include "bu/snooze.h"
 
 
 #define OPT_STRING "a:c:e:iprh?"	/* For bu_getopt(3) */
@@ -149,7 +150,7 @@ main (int argc, char **argv)
     int i;                  /* Dummy variable for loop indexing */
 
     fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
-    sleep(1);
+    bu_snooze(BU_SEC2USEC(1));
 
     /* Handle command-line options */
     while ((Ch = bu_getopt(argc, argv, OPT_STRING)) != -1)

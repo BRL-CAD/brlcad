@@ -41,6 +41,7 @@
 #include "bu/str.h"
 #include "bu/exit.h"
 #include "bu/log.h"
+#include "bu/snooze.h"
 
 #include "fb_private.h"
 #include "fb.h"
@@ -384,7 +385,7 @@ tk_write(fb *ifp, int UNUSED(x), int y, const unsigned char *pixelp, size_t coun
     /* Send values and data to parent for display */
     if (write(p[1], tkwrite_buffer, 3 * ifp->if_width + 3*sizeof(uint32_t)) == -1) {
 	perror("Unable to write to pipe");
-	sleep(1);
+	bu_snooze(BU_SEC2USEC(1));
     }
 
     return (ssize_t)count;
