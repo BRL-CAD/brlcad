@@ -74,6 +74,11 @@ _ged_lint_opts_verify(struct _ged_lint_opts *o)
     }
 }
 
+struct _ged_cyclic_data {
+    struct ged *gedp;
+    struct bu_ptbl *paths;
+};
+
 /* Because lint is intended to be a deep inspection of the .g looking for problems,
  * we need to do this check using the low level tree walk rather than operating on
  * a search result set (which has checks to filter out cyclic paths.) */
@@ -82,7 +87,8 @@ _ged_cyclic_search_subtree(struct db_full_path *path, int curr_bool, union tree 
 	void (*traverse_func) (struct db_full_path *path, void *), void *client_data)
 {
     struct directory *dp;
-    struct ged *gedp = (struct ged *)client_data;
+    struct _ged_cyclic_data *cdata = (struct _ged_cyclic_data *)client_data;
+    struct ged *gedp = cdata->gedp;
     int bool_val = curr_bool;
 
     if (!tp) {
@@ -120,8 +126,7 @@ _ged_cyclic_search_subtree(struct db_full_path *path, int curr_bool, union tree 
 		} else {
 		    /* Cyclic - report it */
 		    char *path_string = db_path_to_string(path);
-		    bu_vls_printf(gedp->ged_result_str, "%s\n", path_string);
-		    bu_free(path_string, "free path str");
+		    bu_ptbl_ins(cdata->paths, (long *)path_string);
 		}
 		DB_FULL_PATH_POP(path);
 		break;
@@ -136,7 +141,8 @@ _ged_cyclic_search_subtree(struct db_full_path *path, int curr_bool, union tree 
 void
 _ged_cyclic_search(struct db_full_path *fp, void *client_data)
 {
-    struct ged *gedp = (struct ged *)client_data;
+    struct _ged_cyclic_data *cdata = (struct _ged_cyclic_data *)client_data;
+    struct ged *gedp = cdata->gedp;
     struct directory *dp;
 
     RT_CK_FULL_PATH(fp);
@@ -160,7 +166,7 @@ _ged_cyclic_search(struct db_full_path *fp, void *client_data)
 }
 
 int
-_ged_cyclic_check(struct ged *gedp, int argc, struct directory **dpa)
+_ged_cyclic_check(struct _ged_cyclic_data *cdata, struct ged *gedp, int argc, struct directory **dpa)
 {
     int i;
     struct db_full_path *start_path = NULL;
@@ -172,7 +178,7 @@ _ged_cyclic_check(struct ged *gedp, int argc, struct directory **dpa)
 	db_full_path_init(start_path);
 	for (i = 0; i < argc; i++) {
 	    db_add_node_to_full_path(start_path, dpa[i]);
-	    _ged_cyclic_search(start_path, (void *)gedp);
+	    _ged_cyclic_search(start_path, (void *)cdata);
 	    DB_FULL_PATH_POP(start_path);
 	}
     } else {
@@ -185,7 +191,7 @@ _ged_cyclic_check(struct ged *gedp, int argc, struct directory **dpa)
 	for (i = 0; i < RT_DBNHASH; i++) {
 	    for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 		db_add_node_to_full_path(start_path, dp);
-		_ged_cyclic_search(start_path, (void *)gedp);
+		_ged_cyclic_search(start_path, (void *)cdata);
 		DB_FULL_PATH_POP(start_path);
 	    }
 	}
@@ -220,7 +226,7 @@ _ged_non_solid_check(struct ged *gedp, int argc, struct directory **dpa)
 extern "C" int
 ged_lint(struct ged *gedp, int argc, const char *argv[])
 {
-
+    size_t pc;
     int ret = GED_OK;
     static const char *usage = "Usage: lint [ -CMS ] [obj1] [obj2] [...]\n";
     int print_help = 0;
@@ -228,6 +234,7 @@ ged_lint(struct ged *gedp, int argc, const char *argv[])
     struct bu_opt_desc d[6];
     struct directory **dpa = NULL;
     int nonexist_obj_cnt = 0;
+    struct _ged_cyclic_data *cdata;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
@@ -273,9 +280,21 @@ ged_lint(struct ged *gedp, int argc, const char *argv[])
     _ged_lint_opts_verify(opts);
 
     if (opts->cyclic_check) {
-	ret = _ged_cyclic_check(gedp, argc, dpa);
+	bu_log("Checking for cyclic paths...\n");
+	BU_GET(cdata, struct _ged_cyclic_data);
+	cdata->gedp = gedp;
+	BU_GET(cdata->paths, struct bu_ptbl);
+	bu_ptbl_init(cdata->paths, 0, "path table");
+	ret = _ged_cyclic_check(cdata, gedp, argc, dpa);
 	if (ret != GED_OK) {
 	    goto ged_lint_memfree;
+	}
+	if (BU_PTBL_LEN(cdata->paths)) {
+	    bu_vls_printf(gedp->ged_result_str, "Found cyclic paths:\n");
+	    for (pc = 0; pc < BU_PTBL_LEN(cdata->paths); pc++) {
+		char *path = (char *)BU_PTBL_GET(cdata->paths, pc);
+		bu_vls_printf(gedp->ged_result_str, "  %s\n", path);
+	    }
 	}
     }
 
@@ -295,7 +314,13 @@ ged_lint(struct ged *gedp, int argc, const char *argv[])
 
 ged_lint_memfree:
     _ged_lint_opts_destroy(opts);
-
+    for (pc = 0; pc < BU_PTBL_LEN(cdata->paths); pc++) {
+	char *path = (char *)BU_PTBL_GET(cdata->paths, pc);
+	bu_free(path, "free cyclic path");
+    }
+    bu_ptbl_free(cdata->paths);
+    BU_PUT(cdata->paths, struct bu_ptbl);
+    BU_PUT(cdata, struct _ged_cyclic_data);
     if (dpa) bu_free(dpa, "dp array");
 
     return ret;
