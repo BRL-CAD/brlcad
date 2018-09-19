@@ -161,6 +161,7 @@ set(LIBGED_SOURCES
   killtree.c
   label.c
   lc.c
+  lint.cpp
   list.c
   loadview.c
   lod.c

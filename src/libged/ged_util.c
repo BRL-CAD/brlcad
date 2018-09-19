@@ -275,6 +275,49 @@ _ged_cmd_help(struct ged *gedp, const char *usage, struct bu_opt_desc *d)
     bu_vls_free(&str);
 }
 
+int
+_ged_vopt(struct bu_vls *UNUSED(msg), int UNUSED(argc), const char **UNUSED(argv), void *set_var)
+{
+    int *v_set = (int *)set_var;
+    (*v_set) = (*v_set) + 1;
+    return 0;
+}
+
+/* Sort the argv array to list existing objects first and everything else at
+ * the end.  Returns the number of argv entries where db_lookup failed */
+int
+_ged_sort_existing_objs(struct ged *gedp, int argc, const char *argv[], struct directory **dpa)
+{
+    int i = 0;
+    int exist_cnt = 0;
+    int nonexist_cnt = 0;
+    struct directory *dp;
+    const char **exists = (const char **)bu_calloc(argc, sizeof(const char *), "obj exists array");
+    const char **nonexists = (const char **)bu_calloc(argc, sizeof(const char *), "obj nonexists array");
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    for (i = 0; i < argc; i++) {
+	dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_QUIET);
+	if (dp == RT_DIR_NULL) {
+	    nonexists[nonexist_cnt] = argv[i];
+	    nonexist_cnt++;
+	} else {
+	    exists[exist_cnt] = argv[i];
+	    if (dpa) dpa[exist_cnt] = dp;
+	    exist_cnt++;
+	}
+    }
+    for (i = 0; i < exist_cnt; i++) {
+	argv[i] = exists[i];
+    }
+    for (i = 0; i < nonexist_cnt; i++) {
+	argv[i + exist_cnt] = nonexists[i];
+    }
+
+    bu_free(exists, "exists array");
+    bu_free(nonexists, "nonexists array");
+
+    return nonexist_cnt;
+}
 
 /*
  * Local Variables:

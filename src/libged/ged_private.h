@@ -570,6 +570,20 @@ extern struct directory ** _ged_getspace(struct db_i *dbip,
  */
 extern void _ged_cmd_help(struct ged *gedp, const char *usage, struct bu_opt_desc *d);
 
+/* Option for verbosity variable setting */
+extern int _ged_vopt(struct bu_vls *msg, int argc, const char **argv, void *set_var);
+
+/**
+ * Routine for checking argc/argv list for existing objects and sorting anything
+ * that isn't a valid object to the end of the list.  Returns the number of
+ * argv entries where db_lookup failed.  Optionally takes a pointer to a directory
+ * pointer array and will stash found directory pointers there - caller must make
+ * sure the allocated array is large enough to hold up to argc pointers.
+ */
+extern int
+_ged_sort_existing_objs(struct ged *gedp, int argc, const char *argv[], struct directory **dpa);
+
+
 __END_DECLS
 
 #endif /* LIBGED_GED_PRIVATE_H */
