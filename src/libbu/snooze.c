@@ -24,11 +24,11 @@
  */
 
 #include "common.h"
-
 #include <sys/types.h>
 #ifdef HAVE_SYS_SELECT_H
 #  include <sys/select.h>
 #endif
+#include "bsocket.h" /* for timeval */
 
 #include "bu/snooze.h"
 
