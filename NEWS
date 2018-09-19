@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 201X-XX-XX  Release 7.28.0                                     ---
 ----------------------------------------------------------------------
 
+* improved lingering framebuffer CPU utilization  - Sean Morrison
 * updated 'draw -S' option to work with shaded objects - Bob Parker
 * fixed numerous fb* command bugs w/ X11 framebuffers - Sean Morrison
 * extended fbpoint support to more varied framebuffers - Sean Morrison
