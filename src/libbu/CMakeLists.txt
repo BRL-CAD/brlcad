@@ -109,6 +109,7 @@ set(LIBBU_SOURCES
   sort.c
   sscanf.c
   scan.c
+  snooze.c
   str.c
   tc.c
   temp.c
