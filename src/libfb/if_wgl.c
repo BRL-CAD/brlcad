@@ -224,7 +224,7 @@ struct wglinfo {
 /* and copy current view to front */
 #define MODE_15MASK	(1<<14)
 #define MODE_15NORMAL	(0<<14)
-#define MODE_15ZAP	(1<<14)	/* zap the shared memory segment */
+#define MODE_15MASK	(1<<14)
 
 HIDDEN struct modeflags {
     char c;
@@ -248,41 +248,10 @@ HIDDEN struct modeflags {
       "Fast pan and zoom using backbuffer copy - else normal " },
     { 'D',	MODE_12MASK, MODE_12DELAY_WRITES_TILL_FLUSH,
       "Don't update screen until fb_flush() is called.  (Double buffer sim)" },
-    { 'z',	MODE_15MASK, MODE_15ZAP,
-      "Zap (free) shared memory.  Can also be done with fbfree command" },
     { '\0', 0, 0, "" }
 };
 
 
-/************************************************************************/
-/******************* Shared Memory Support ******************************/
-/************************************************************************/
-
-/*
- * Because there is no hardware zoom or pan, we need to repaint the
- * screen (with big pixels) to implement these operations.  This means
- * that the actual "contents" of the frame buffer need to be stored
- * somewhere else.  If possible, we allocate a shared memory segment
- * to contain that image.  This has several advantages, the most
- * important being that when operating the display in 12-bit output
- * mode, pixel-readbacks still give the full 24-bits of color.  System
- * V shared memory persists until explicitly killed, so this also
- * means that in MEX mode, the previous contents of the frame buffer
- * still exist, and can be again accessed, even though the MEX windows
- * are transient, per-process.
- *
- * There are a few oddities, however.  The worst is that System V will
- * not allow the break (see sbrk(2)) to be set above a shared memory
- * segment, and shmat(2) does not seem to allow the selection of any
- * reasonable memory address (like 6 Mbytes up) for the shared memory.
- * In the initial version of this routine, that prevented subsequent
- * calls to malloc() from succeeding, quite a drawback.  The
- * work-around used here is to increase the current break to a large
- * value, attach to the shared memory, and then return the break to
- * its original value.  This should allow most reasonable requests for
- * memory to be satisfied.  In special cases, the values used here
- * might need to be increased.
- */
 HIDDEN int
 wgl_getmem(fb *ifp)
 {
@@ -315,24 +284,18 @@ success:
     i = CMB(ifp)[255];			/* try to deref last word */
     CMB(ifp)[255] = i;
 
-    /* Provide non-black colormap on creation of new shared mem */
+    /* Provide non-black colormap on creation of new mem */
     if (new)
 	wgl_cminit(ifp);
     return 0;
 fail:
-    fb_log("wgl_getmem:  Unable to attach to shared memory.\n");
+    fb_log("wgl_getmem:  Unable to allocate memory.\n");
     if ((sp = calloc(1, size)) == NULL) {
 	fb_log("wgl_getmem:  malloc failure\n");
 	return -1;
     }
     new = 1;
     goto success;
-}
-
-
-void
-wgl_zapmem(void)
-{
 }
 
 
@@ -600,12 +563,6 @@ wgl_open(fb *ifp, const char *file, int width, int height)
 	    if (!alpha)
 		mode |= atoi(modebuf);
 	}
-
-	if ((mode & MODE_15MASK) == MODE_15ZAP) {
-	    /* Only task: Attempt to release shared memory segment */
-	    wgl_zapmem();
-	    return -1;
-	}
     }
     ifp->if_mode = mode;
 
@@ -624,16 +581,6 @@ wgl_open(fb *ifp, const char *file, int width, int height)
     }
 
     SGI(ifp)->mi_shmid = -1;	/* indicate no shared memory */
-
-    /* the Silicon Graphics Library Window management routines use
-     * shared memory. This causes lots of problems when you want to
-     * pass a window structure to a child process.  One hack to get
-     * around this is to immediately fork and create a child process
-     * and sleep until the child sends a kill signal to the parent
-     * process. (in FBCLOSE) This allows us to use the traditional fb
-     * utility programs as well as allow the frame buffer window to
-     * remain around until killed by the menu subsystem.
-     */
 
     /* use defaults if invalid width and height specified */
     if (width <= 0)
@@ -667,7 +614,7 @@ wgl_open(fb *ifp, const char *file, int width, int height)
     ifp->if_xcenter = width/2;
     ifp->if_ycenter = height/2;
 
-    /* Attach to shared memory, potentially with a screen repaint */
+    /* Allocate memory, potentially with a screen repaint */
     if (wgl_getmem(ifp) < 0)
 	return -1;
 
@@ -808,7 +755,7 @@ open_existing(fb *ifp,
     ifp->if_xcenter = width/2;
     ifp->if_ycenter = height/2;
 
-    /* Attach to shared memory, potentially with a screen repaint */
+    /* Allocate memory, potentially with a screen repaint */
     if (wgl_getmem(ifp) < 0)
 	return -1;
 
@@ -989,7 +936,7 @@ wgl_close_existing(fb *ifp)
 
 
 /*
- * Free shared memory resources, and close.
+ * Free memory resources, and close.
  */
 HIDDEN int
 wgl_free(fb *ifp)
@@ -1002,10 +949,6 @@ wgl_free(fb *ifp)
     /* Close the framebuffer */
     ret = wgl_final_close(ifp);
 
-    if ((ifp->if_mode & MODE_1MASK) == MODE_1SHARED) {
-	/* If shared mem, release the shared memory segment */
-	wgl_zapmem();
-    }
     return ret;
 }
 
@@ -1037,7 +980,7 @@ wgl_clear(fb *ifp, unsigned char *pp)
 	bg.blue  = 0;
     }
 
-    /* Flood rectangle in shared memory */
+    /* Flood rectangle in memory */
     for (y=0; y < ifp->if_height; y++) {
 	wglp = (struct wgl_pixel *)&ifp->if_mem[
 	    (y*SGI(ifp)->mi_memwidth+0)*sizeof(struct wgl_pixel) ];
