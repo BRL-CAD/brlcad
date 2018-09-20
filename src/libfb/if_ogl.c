@@ -1247,7 +1247,7 @@ fb_ogl_open(fb *ifp, const char *file, int width, int height)
      (valuemask & CWColormap) ? printf(" colormap = %08X ", (unsigned int)((attributes)->colormap)) : 0, \
      (valuemask & CWCursor) ? printf(" cursor = %08X ", (unsigned int)((attributes)->cursor)) : 0, \
      printf(" }\n")) > 0 ? XCreateWindow(display, parent, x, y, width, height, border_width, depth, class, visual, valuemask, attributes) : -1;
-
+#if 0
     if (FB_DEBUG) {
 	OGL(ifp)->wind = XCreateWindowDebug(OGL(ifp)->dispp,
 					    RootWindow(OGL(ifp)->dispp,
@@ -1258,6 +1258,7 @@ fb_ogl_open(fb *ifp, const char *file, int width, int height)
 					    OGL(ifp)->vip->visual,
 					    valuemask, &swa);
     } else {
+#endif
 	OGL(ifp)->wind = XCreateWindow(OGL(ifp)->dispp,
 				       RootWindow(OGL(ifp)->dispp,
 						  OGL(ifp)->vip->screen),
@@ -1266,7 +1267,9 @@ fb_ogl_open(fb *ifp, const char *file, int width, int height)
 				       InputOutput,
 				       OGL(ifp)->vip->visual,
 				       valuemask, &swa);
+#if 0
     }
+#endif
 
     XStoreName(OGL(ifp)->dispp, OGL(ifp)->wind, title);
 
