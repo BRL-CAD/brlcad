@@ -117,7 +117,7 @@ extern void rt_plot_cell(const union cutter *cutp, struct rt_shootray_status *ss
  * Function to test whether a path has a cyclic entry in it.
  *
  * @param fp [i] Full path to test
- * @param name [i] String to use when checking path.
+ * @param test_name [i] String to use when checking path.
  * @param depth [i] Starting depth for path node name comparisons.
  * @return 1 if the path is cyclic, 0 if it is not.
  */
