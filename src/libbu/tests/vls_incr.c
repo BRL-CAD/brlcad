@@ -29,7 +29,7 @@
 
 
 int
-vls_incr_main(int argc, char **argv)
+main(int argc, char **argv)
 {
     int ret = 1;
     int i = 0;

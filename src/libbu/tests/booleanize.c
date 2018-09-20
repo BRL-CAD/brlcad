@@ -24,7 +24,7 @@
 
 
 int
-booleanize_main(int argc, char *argv[])
+main(int argc, char *argv[])
 {
     int result_true = 0;
     int result_false = 0;

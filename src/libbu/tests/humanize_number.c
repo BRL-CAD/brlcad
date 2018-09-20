@@ -491,7 +491,7 @@ testskipped(size_t i)
 }
 
 int
-humanize_number_main(int argc, char * const argv[])
+main(int argc, char * const argv[])
 {
     char *buf;
     char *flag_str, *scale_str;

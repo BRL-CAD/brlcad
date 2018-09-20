@@ -74,7 +74,7 @@ automatic_test(const char *input)
 
 
 int
-dirname_main(int argc, char *argv[])
+main(int argc, char *argv[])
 {
     if (argc == 1)
        return !automatic_test(NULL);

@@ -134,7 +134,7 @@ check_format_chars(void)
 
 
 int
-vls_vprintf_main(int argc, char *argv[])
+main(int argc, char *argv[])
 {
 
     int test_num = 0;

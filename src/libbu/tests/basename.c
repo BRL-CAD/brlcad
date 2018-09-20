@@ -127,7 +127,7 @@ compare_bu_to_system_basename(const char *input)
 
 
 int
-basename_main(int argc, char *argv[])
+main(int argc, char *argv[])
 {
     /* If we don't have any args at all, test NULL */
     if (argc == 1) {

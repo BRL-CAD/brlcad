@@ -60,7 +60,7 @@ test_b64_encode(const signed char *str)
 
 
 int
-b64_main(int ac, char *av[])
+main(int ac, char *av[])
 {
     if (ac != 1)
 	fprintf(stderr,"Usage: %s \n", av[0]);

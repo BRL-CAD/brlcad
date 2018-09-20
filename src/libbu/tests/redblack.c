@@ -47,7 +47,7 @@ displayNode(void* data, int dep)
 
 
 int
-redblack_main(int UNUSED(ac), char *UNUSED(av[]))
+main(int UNUSED(ac), char *UNUSED(av[]))
 {
     struct bu_rb_tree *testTree;
     void *searchedValue;

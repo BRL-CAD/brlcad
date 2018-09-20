@@ -82,7 +82,7 @@ test_encode(const char *str)
 
 
 int
-encode_main(int ac, char *av[])
+main(int ac, char *av[])
 {
     int test_num = 0;
     if (ac != 2)

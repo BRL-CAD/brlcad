@@ -211,7 +211,7 @@ test_bu_color_from_rgb_chars(int argc, char *argv[])
 
 
 int
-color_main(int argc, char *argv[])
+main(int argc, char *argv[])
 {
     int function_num = 0;
 

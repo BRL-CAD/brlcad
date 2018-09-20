@@ -63,7 +63,7 @@ pc_compare(const char *input, const char *expected_str, bu_path_component_t type
 
 
 int
-path_component_main(int argc, char *argv[])
+main(int argc, char *argv[])
 {
     const char *control = NULL;
     int intarg = 0;

@@ -29,7 +29,7 @@
 
 
 int
-vls_simplify_main(int argc, char **argv)
+main(int argc, char **argv)
 {
     int ret = 0;
     struct bu_vls vstr = BU_VLS_INIT_ZERO;

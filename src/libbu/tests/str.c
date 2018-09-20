@@ -172,7 +172,7 @@ test_bu_strncmp_like_functions(int argc, char *argv[], int (*fun)(const char *, 
 }
 
 int
-str_main(int argc, char *argv[])
+main(int argc, char *argv[])
 {
     int function_num = 0;
 

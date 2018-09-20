@@ -53,7 +53,7 @@ bomb_callback(const void *data, const char *str)
 }
 
 int
-badmagic_main(int argc, char *argv[])
+main(int argc, char *argv[])
 {
     unsigned char *misalign = (unsigned char *)bu_malloc(1, "bu_badmagic.c");
     uint32_t *ptr = (uint32_t *)bu_malloc(sizeof(uint32_t), "bu_badmagic.c");

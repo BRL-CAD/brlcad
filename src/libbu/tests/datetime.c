@@ -22,7 +22,7 @@
 
 
 int
-datetime_main(int argc, char **argv)
+main(int argc, char **argv)
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
     int64_t curr_time;

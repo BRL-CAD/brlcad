@@ -199,7 +199,7 @@ test_bu_ptbl_trunc(void)
 }
 
 int
-ptbl_main(int argc, char *argv[])
+main(int argc, char *argv[])
 {
     size_t ptbl_size;
 

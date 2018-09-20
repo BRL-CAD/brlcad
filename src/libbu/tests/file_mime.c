@@ -43,7 +43,7 @@ test_ext(const char *str, bu_mime_context_t context, int expected)
 
 
 int
-file_mime_main(int ac, char *av[])
+main(int ac, char *av[])
 {
     int context = 0;
     int expected = 0;

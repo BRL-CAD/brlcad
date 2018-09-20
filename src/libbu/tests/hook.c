@@ -176,7 +176,7 @@ test_bu_hook_saverestore(void)
 }
 
 int
-hook_main(int argc, char *argv[])
+main(int argc, char *argv[])
 {
     if (argc < 2) {
 	bu_exit(1, "ERROR: usage: %s test_name [test_args...]\n", argv[0]);

@@ -131,7 +131,7 @@ parallel_test(size_t ncpu, size_t reps)
 
 
 int
-semaphore_main(int argc, char **argv)
+main(int argc, char **argv)
 {
     const char * const USAGE = "Usage: %s [-P ncpu] [-n reps]\n";
 

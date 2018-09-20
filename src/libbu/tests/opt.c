@@ -872,7 +872,7 @@ int desc_3(int test_num)
 
 
 int
-opt_main(int argc, char **argv)
+main(int argc, char **argv)
 {
     int ret = -1;
     long desc_num;

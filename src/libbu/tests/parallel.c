@@ -91,7 +91,7 @@ tally(size_t ncpu)
 
 
 int
-parallel_main(int argc, char *argv[])
+main(int argc, char *argv[])
 {
     const char * const USAGE = "Usage: %s [-P ncpu]\n";
 

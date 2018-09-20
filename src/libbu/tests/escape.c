@@ -38,7 +38,7 @@ esc_compare(const char *input, const char *output, const char *correct)
 
 
 int
-escape_main(int ac, char *av[])
+main(int ac, char *av[])
 {
     int function_num = 0;
     int test_num = 0;

@@ -674,7 +674,7 @@ test_bu_vls_substr(int argc, char **argv)
 
 
 int
-vls_main(int argc, char *argv[])
+main(int argc, char *argv[])
 {
     int function_num = 0;
 
