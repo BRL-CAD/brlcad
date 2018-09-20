@@ -41,11 +41,6 @@
 #include "fb.h"
 
 
-/* XXX - arbitrary upper bound */
-#define XMAXSCREEN 32*1024
-#define YMAXSCREEN 32*1024
-
-
 /* Per connection private info */
 struct mem_info {
     fb *fbp;		/* attached frame buffer (if any) */
@@ -504,8 +499,8 @@ fb memory_interface =  {
     mem_close,		/* free */
     mem_help,		/* help message */
     "Memory Buffer",	/* device description */
-    XMAXSCREEN,		/* max width */
-    YMAXSCREEN,		/* max height */
+    FB_XMAXSCREEN,	/* max width */
+    FB_YMAXSCREEN,	/* max height */
     "/dev/mem",		/* short device name */
     512,		/* default/current width */
     512,		/* default/current height */

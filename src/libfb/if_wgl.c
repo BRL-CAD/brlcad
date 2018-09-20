@@ -62,11 +62,6 @@
 #include "fb_private.h"
 #include "fb/fb_wgl.h"
 
-#define CJDEBUG 0
-
-/* XXX - arbitrary upper bound */
-#define XMAXSCREEN 32*1024
-#define YMAXSCREEN 32*1024
 
 /* Internal callbacks etc.*/
 HIDDEN void wgl_do_event(fb *ifp);
@@ -444,7 +439,7 @@ wgl_xmit_scanlines(fb *ifp, int ybase, int nlines, int xbase, int npix)
 
 	y = ybase;
 
-	if (CJDEBUG)
+	if (FB_DEBUG)
 	    printf("Doing sw colormap xmit\n");
 
 	/* Perform software color mapping into temp scanline */
@@ -853,10 +848,8 @@ wgl_open_existing(fb *ifp, int width, int height, struct fb_platform_specific *f
 HIDDEN int
 wgl_final_close(fb *ifp)
 {
-
-    if (CJDEBUG) {
+    if (FB_DEBUG)
 	printf("wgl_final_close: All done...goodbye!\n");
-    }
 
     if (WGL(ifp)->glxc) {
 	wglDeleteContext(WGL(ifp)->glxc);
@@ -938,7 +931,7 @@ wgl_close(fb *ifp)
 	(ifp->if_mode & MODE_2MASK) == MODE_2TRANSIENT)
 	return wgl_final_close(ifp);
 
-    if (CJDEBUG)
+    if (FB_DEBUG)
 	printf("wgl_close: remaining open to linger awhile.\n");
 
     /*
@@ -1003,7 +996,9 @@ wgl_free(fb *ifp)
 {
     int ret;
 
-    if (CJDEBUG) printf("entering wgl_free\n");
+    if (FB_DEBUG)
+	printf("entering wgl_free\n");
+
     /* Close the framebuffer */
     ret = wgl_final_close(ifp);
 
@@ -1026,7 +1021,8 @@ wgl_clear(fb *ifp, unsigned char *pp)
     int cnt;
     int y;
 
-    if (CJDEBUG) printf("entering wgl_clear\n");
+    if (FB_DEBUG)
+	printf("entering wgl_clear\n");
 
     /* Set clear colors */
     if (pp != RGBPIXEL_NULL) {
@@ -1096,7 +1092,8 @@ wgl_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
     struct wgl_clip *clp;
 
-    if (CJDEBUG) printf("entering wgl_view\n");
+    if (FB_DEBUG)
+	printf("entering wgl_view\n");
 
     if (xzoom < 1) xzoom = 1;
     if (yzoom < 1) yzoom = 1;
@@ -1165,7 +1162,8 @@ wgl_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 HIDDEN int
 wgl_getview(fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
-    if (CJDEBUG) printf("entering wgl_getview\n");
+    if (FB_DEBUG)
+	printf("entering wgl_getview\n");
 
     *xcenter = ifp->if_xcenter;
     *ycenter = ifp->if_ycenter;
@@ -1188,7 +1186,8 @@ wgl_read(fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
     int ret;
     struct wgl_pixel *wglp;
 
-    if (CJDEBUG) printf("entering wgl_read\n");
+    if (FB_DEBUG)
+	printf("entering wgl_read\n");
 
     if (x < 0 || x >= ifp->if_width ||
 	y < 0 || y >= ifp->if_height)
@@ -1243,7 +1242,8 @@ wgl_write(fb *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t c
     int x;
     int y;
 
-    if (CJDEBUG) printf("entering wgl_write\n");
+    if (FB_DEBUG)
+	printf("entering wgl_write\n");
 
     /* fast exit cases */
     pix_count = count;
@@ -1373,7 +1373,8 @@ wgl_writerect(fb *ifp,
     unsigned char *cp;
     struct wgl_pixel *wglp;
 
-    if (CJDEBUG) printf("entering wgl_writerect\n");
+    if (FB_DEBUG)
+	printf("entering wgl_writerect\n");
 
 
     if (width <= 0 || height <= 0)
@@ -1442,7 +1443,8 @@ wgl_bwwriterect(fb *ifp,
     unsigned char *cp;
     struct wgl_pixel *wglp;
 
-    if (CJDEBUG) printf("entering wgl_bwwriterect\n");
+    if (FB_DEBUG)
+	printf("entering wgl_bwwriterect\n");
 
 
     if (width <= 0 || height <= 0)
@@ -1498,7 +1500,8 @@ wgl_rmap(fb *ifp, ColorMap *cmp)
 {
     int i;
 
-    if (CJDEBUG) printf("entering wgl_rmap\n");
+    if (FB_DEBUG)
+	printf("entering wgl_rmap\n");
 
     /* Just parrot back the stored colormap */
     for (i = 0; i < 256; i++) {
@@ -1547,7 +1550,8 @@ wgl_wmap(fb *ifp, const ColorMap *cmp)
     int i;
     int prev;	/* !0 = previous cmap was non-linear */
 
-    if (CJDEBUG) printf("entering wgl_wmap\n");
+    if (FB_DEBUG)
+	printf("entering wgl_wmap\n");
 
     prev = SGI(ifp)->mi_cmap_flag;
     if (cmp == COLORMAP_NULL) {
@@ -1738,7 +1742,8 @@ expose_callback(fb *ifp, int eventPtr)
 {
     struct wgl_clip *clp;
 
-    if (CJDEBUG) fb_log("entering expose_callback()\n");
+    if (FB_DEBUG)
+	fb_log("entering expose_callback()\n");
 
     if (wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc) == False) {
 	fb_log("Warning, libfb/expose_callback: wglMakeCurrent unsuccessful.\n");
@@ -1837,7 +1842,7 @@ expose_callback(fb *ifp, int eventPtr)
 	backbuffer_to_screen(ifp, -1);
     }
 
-    if (CJDEBUG) {
+    if (FB_DEBUG) {
 	int dbb, db, view[4], getster, getaux;
 	glGetIntegerv(GL_VIEWPORT, view);
 	glGetIntegerv(GL_DOUBLEBUFFER, &dbb);
@@ -2113,8 +2118,8 @@ fb wgl_interface =
     wgl_free,		/* free resources */
     wgl_help,		/* help message */
     "Microsoft Windows OpenGL",	/* device description */
-    XMAXSCREEN,		/* max width */
-    YMAXSCREEN,		/* max height */
+    FB_XMAXSCREEN,	/* max width */
+    FB_YMAXSCREEN,	/* max height */
     "/dev/wgl",		/* short device name */
     512,		/* default/current width */
     512,		/* default/current height */

@@ -47,10 +47,6 @@ struct stkinfo {
 #define SI(ptr) ((struct stkinfo *)((ptr)->u1.p))
 #define SIL(ptr) ((ptr)->u1.p)		/* left hand side version */
 
-/* XXX - arbitrary upper bound */
-#define XMAXSCREEN 32*1024
-#define YMAXSCREEN 32*1024
-
 
 HIDDEN int
 stk_open(fb *ifp, const char *file, int width, int height)
@@ -453,13 +449,13 @@ fb stk_interface =  {
     stk_rmap,		/* colormap_read */
     stk_wmap,		/* colormap_write */
     stk_view,		/* set view */
-    stk_getview,		/* get view */
-    stk_setcursor,		/* define cursor */
+    stk_getview,	/* get view */
+    stk_setcursor,	/* define cursor */
     stk_cursor,		/* set cursor */
-    stk_getcursor,		/* get cursor */
-    stk_readrect,		/* read rectangle */
-    stk_writerect,		/* write rectangle */
-    stk_bwreadrect,		/* read bw rectangle */
+    stk_getcursor,	/* get cursor */
+    stk_readrect,	/* read rectangle */
+    stk_writerect,	/* write rectangle */
+    stk_bwreadrect,	/* read bw rectangle */
     stk_bwwriterect,	/* write bw rectangle */
     stk_configure_window,
     stk_refresh,
@@ -468,15 +464,15 @@ fb stk_interface =  {
     stk_free,		/* free resources */
     stk_help,		/* help function */
     "Multiple Device Stacker", /* device description */
-    XMAXSCREEN,		/* max width */
-    YMAXSCREEN,		/* max height */
-    "/dev/stack",		/* short device name */
+    FB_XMAXSCREEN,	/* max width */
+    FB_YMAXSCREEN,	/* max height */
+    "/dev/stack",	/* short device name */
     4,			/* default/current width */
     4,			/* default/current height */
     -1,			/* select fd */
     -1,			/* file descriptor */
-    1, 1,			/* zoom */
-    2, 2,			/* window center */
+    1, 1,		/* zoom */
+    2, 2,		/* window center */
     0, 0, 0,		/* cursor */
     PIXEL_NULL,		/* page_base */
     PIXEL_NULL,		/* page_curp */

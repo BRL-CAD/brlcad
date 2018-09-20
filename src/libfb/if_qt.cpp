@@ -42,11 +42,6 @@
 #include "bu/str.h"
 
 
-/* XXX - arbitrary upper bound */
-#define XMAXSCREEN 32*1024
-#define YMAXSCREEN 32*1024
-
-
 class QMainWindow: public QWindow {
 
 public:
@@ -1381,8 +1376,8 @@ fb qt_interface =  {
     qt_free,		/* free resources */
     qt_help,		/* help message */
     (char *)"Qt Device",/* device description */
-    XMAXSCREEN,		/* max width */
-    YMAXSCREEN,		/* max height */
+    FB_XMAXSCREEN,	/* max width */
+    FB_YMAXSCREEN,	/* max height */
     (char *)"/dev/Qt",	/* short device name */
     512,		/* default/current width */
     512,		/* default/current height */

@@ -64,6 +64,13 @@ FB_EXPORT extern fb memory_interface, fb_null_interface;
 /* Shared memory (shmget et. al.) key common to multiple framebuffers */
 #define SHMEM_KEY 42
 
+/* XXX - arbitrary upper bound */
+#define FB_XMAXSCREEN 32*1024
+#define FB_YMAXSCREEN 32*1024
+
+/* setting to 1 turns on general intrface debugging for all fb types */
+#define FB_DEBUG 0
+
 
 __BEGIN_DECLS
 

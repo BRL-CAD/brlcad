@@ -85,12 +85,8 @@
 #include "fb.h"
 #include "fb/fb_ogl.h"
 
-#define OGL_DEBUG 0
-#define DIRECT_COLOR_VISUAL_ALLOWED 0
 
-/* XXX - arbitrary upper bound */
-#define XMAXSCREEN 32*1024
-#define YMAXSCREEN 32*1024
+#define DIRECT_COLOR_VISUAL_ALLOWED 0
 
 HIDDEN int ogl_nwindows = 0; 	/* number of open windows */
 HIDDEN XColor color_cell[256];		/* used to set colormap */
@@ -430,7 +426,7 @@ ogl_xmit_scanlines(register fb *ifp, int ybase, int nlines, int xbase, int npix)
 
 	y = ybase;
 
-	if (OGL_DEBUG)
+	if (FB_DEBUG)
 	    printf("Doing sw colormap xmit\n");
 
 	/* Perform software color mapping into temp scanline */
@@ -688,7 +684,7 @@ expose_callback(fb *ifp)
     XWindowAttributes xwa;
     struct ogl_clip *clp;
 
-    if (OGL_DEBUG)
+    if (FB_DEBUG)
 	printf("entering expose_callback()\n");
 
     if (glXMakeCurrent(OGL(ifp)->dispp, OGL(ifp)->wind, OGL(ifp)->glxc)==False) {
@@ -791,7 +787,7 @@ expose_callback(fb *ifp)
 	backbuffer_to_screen(ifp, -1);
     }
 
-    if (OGL_DEBUG) {
+    if (FB_DEBUG) {
 	int dbb, db, view[4], getster, getaux;
 	glGetIntegerv(GL_VIEWPORT, view);
 	glGetIntegerv(GL_DOUBLEBUFFER, &dbb);
@@ -1193,7 +1189,7 @@ fb_ogl_open(fb *ifp, const char *file, int width, int height)
 	return -1;
     }
     ifp->if_selfd = ConnectionNumber(OGL(ifp)->dispp);
-    if (OGL_DEBUG)
+    if (FB_DEBUG)
 	printf("Connection opened to X display on fd %d.\n", ConnectionNumber(OGL(ifp)->dispp));
 
     /* Choose an appropriate visual. */
@@ -1210,13 +1206,13 @@ fb_ogl_open(fb *ifp, const char *file, int width, int height)
     }
 
     direct = glXIsDirect(OGL(ifp)->dispp, OGL(ifp)->glxc);
-    if (OGL_DEBUG)
+    if (FB_DEBUG)
 	printf("Framebuffer drawing context is %s.\n", direct ? "direct" : "indirect");
 
     /* Create a colormap for this visual */
     SGIINFO(ifp)->mi_cmap_flag = !is_linear_cmap(ifp);
     if (!OGL(ifp)->soft_cmap_flag) {
-	if (OGL_DEBUG)
+	if (FB_DEBUG)
 	    printf("Loading read/write colormap.\n");
 
 	OGL(ifp)->xcmap = XCreateColormap(OGL(ifp)->dispp,
@@ -1237,7 +1233,7 @@ fb_ogl_open(fb *ifp, const char *file, int width, int height)
 	XStoreColors(OGL(ifp)->dispp, OGL(ifp)->xcmap, color_cell, 256);
     } else {
 	/* read only colormap */
-	if (OGL_DEBUG)
+	if (FB_DEBUG)
 	    printf("Allocating read-only colormap.\n");
 
 	OGL(ifp)->xcmap = XCreateColormap(OGL(ifp)->dispp,
@@ -1295,7 +1291,7 @@ fb_ogl_open(fb *ifp, const char *file, int width, int height)
      (valuemask & CWCursor) ? printf(" cursor = %08X ", (unsigned int)((attributes)->cursor)) : 0, \
      printf(" }\n")) > 0 ? XCreateWindow(display, parent, x, y, width, height, border_width, depth, class, visual, valuemask, attributes) : -1;
 
-    if (OGL_DEBUG) {
+    if (FB_DEBUG) {
 	OGL(ifp)->wind = XCreateWindowDebug(OGL(ifp)->dispp,
 					    RootWindow(OGL(ifp)->dispp,
 						       OGL(ifp)->vip->screen),
@@ -1479,7 +1475,7 @@ ogl_final_close(fb *ifp)
     Window window = OGL(ifp)->wind;
     Colormap colormap = OGL(ifp)->xcmap;
 
-    if (OGL_DEBUG)
+    if (FB_DEBUG)
 	printf("ogl_final_close: All done...goodbye!\n");
 
     ogl_close_existing(ifp);
@@ -1495,7 +1491,7 @@ ogl_final_close(fb *ifp)
 HIDDEN int
 ogl_flush(fb *ifp)
 {
-    if (OGL_DEBUG)
+    if (FB_DEBUG)
 	printf("flushing, copy flag is %d\n", OGL(ifp)->copy_flag);
 
     if ((ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH) {
@@ -1546,7 +1542,7 @@ fb_ogl_close(fb *ifp)
 	(ifp->if_mode & MODE_2MASK) == MODE_2TRANSIENT)
 	return ogl_final_close(ifp);
 
-    if (OGL_DEBUG)
+    if (FB_DEBUG)
 	printf("fb_ogl_close: remaining open to linger awhile.\n");
 
     /*
@@ -1588,7 +1584,7 @@ ogl_free(fb *ifp)
 {
     int ret;
 
-    if (OGL_DEBUG)
+    if (FB_DEBUG)
 	printf("entering ogl_free\n");
 
     /* Close the framebuffer */
@@ -1610,7 +1606,7 @@ ogl_clear(fb *ifp, unsigned char *pp)
     register int cnt;
     register int y;
 
-    if (OGL_DEBUG)
+    if (FB_DEBUG)
 	printf("entering ogl_clear\n");
 
     /* Set clear colors */
@@ -1681,7 +1677,7 @@ ogl_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
     struct ogl_clip *clp;
 
-    if (OGL_DEBUG)
+    if (FB_DEBUG)
 	printf("entering ogl_view\n");
 
     if (xzoom < 1) xzoom = 1;
@@ -1752,7 +1748,7 @@ ogl_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 HIDDEN int
 ogl_getview(fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
-    if (OGL_DEBUG)
+    if (FB_DEBUG)
 	printf("entering ogl_getview\n");
 
     *xcenter = ifp->if_xcenter;
@@ -1774,7 +1770,7 @@ ogl_read(fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
     ssize_t ret;
     register struct ogl_pixel *oglp;
 
-    if (OGL_DEBUG)
+    if (FB_DEBUG)
 	printf("entering ogl_read\n");
 
     if (x < 0 || x >= ifp->if_width ||
@@ -1828,7 +1824,7 @@ ogl_write(fb *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t c
     register int x;
     register int y;
 
-    if (OGL_DEBUG)
+    if (FB_DEBUG)
 	printf("entering ogl_write\n");
 
     /* fast exit cases */
@@ -1955,7 +1951,7 @@ ogl_writerect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned
     register unsigned char *cp;
     register struct ogl_pixel *oglp;
 
-    if (OGL_DEBUG)
+    if (FB_DEBUG)
 	printf("entering ogl_writerect\n");
 
 
@@ -2020,7 +2016,7 @@ ogl_bwwriterect(fb *ifp, int xmin, int ymin, int width, int height, const unsign
     register unsigned char *cp;
     register struct ogl_pixel *oglp;
 
-    if (OGL_DEBUG)
+    if (FB_DEBUG)
 	printf("entering ogl_bwwriterect\n");
 
 
@@ -2077,7 +2073,7 @@ ogl_rmap(register fb *ifp, register ColorMap *cmp)
 {
     register int i;
 
-    if (OGL_DEBUG)
+    if (FB_DEBUG)
 	printf("entering ogl_rmap\n");
 
     /* Just parrot back the stored colormap */
@@ -2096,7 +2092,7 @@ ogl_wmap(register fb *ifp, register const ColorMap *cmp)
     register int i;
     int prev;	/* !0 = previous cmap was non-linear */
 
-    if (OGL_DEBUG)
+    if (FB_DEBUG)
 	printf("entering ogl_wmap\n");
 
     prev = SGIINFO(ifp)->mi_cmap_flag;
@@ -2366,8 +2362,8 @@ fb ogl_interface =
     ogl_free,		/* free resources */
     ogl_help,		/* help message */
     "Silicon Graphics OpenGL",	/* device description */
-    XMAXSCREEN,		/* max width */
-    YMAXSCREEN,		/* max height */
+    FB_XMAXSCREEN,	/* max width */
+    FB_YMAXSCREEN,	/* max height */
     "/dev/ogl",		/* short device name */
     512,		/* default/current width */
     512,		/* default/current height */

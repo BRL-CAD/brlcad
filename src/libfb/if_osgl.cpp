@@ -47,12 +47,7 @@ extern "C" {
 #include "fb_private.h"
 }
 
-#define CJDEBUG 0
 #define DIRECT_COLOR_VISUAL_ALLOWED 0
-
-/* XXX - arbitrary upper bound */
-#define XMAXSCREEN 32*1024
-#define YMAXSCREEN 32*1024
 
 HIDDEN int osgl_nwindows = 0; 	/* number of open windows */
 /*HIDDEN XColor color_cell[256];*/		/* used to set colormap */
@@ -295,7 +290,8 @@ osgl_xmit_scanlines(register fb *ifp, int ybase, int nlines, int xbase, int npix
 
 	y = ybase;
 
-	if (CJDEBUG) printf("Doing sw colormap xmit\n");
+	if (FB_DEBUG)
+	    printf("Doing sw colormap xmit\n");
 
 	/* Perform software color mapping into temp scanline */
 	scanline = (struct osgl_pixel *)calloc(ifp->if_width, sizeof(struct osgl_pixel));
@@ -789,10 +785,8 @@ osgl_open_existing(fb *ifp, int width, int height, struct fb_platform_specific *
 HIDDEN int
 osgl_final_close(fb *ifp)
 {
-
-    if (CJDEBUG) {
+    if (FB_DEBUG)
 	printf("osgl_final_close: All done...goodbye!\n");
-    }
 
     if (OSGL(ifp)->viewer) {
 	OSGL(ifp)->viewer->setDone(true);
@@ -855,7 +849,7 @@ fb_osgl_close(fb *ifp)
 	    (ifp->if_mode & MODE_2MASK) == MODE_2TRANSIENT)
 	return osgl_final_close(ifp);
 
-    if (CJDEBUG)
+    if (FB_DEBUG)
 	printf("fb_osgl_close: remaining open to linger awhile.\n");
 
     /*
@@ -948,7 +942,9 @@ osgl_free(fb *ifp)
 {
     int ret;
 
-    if (CJDEBUG) printf("entering osgl_free\n");
+    if (FB_DEBUG)
+	printf("entering osgl_free\n");
+
     /* Close the framebuffer */
     ret = osgl_final_close(ifp);
 
@@ -968,7 +964,8 @@ osgl_clear(fb *ifp, unsigned char *pp)
     register int cnt;
     register int y;
 
-    if (CJDEBUG) printf("entering osgl_clear\n");
+    if (FB_DEBUG)
+	printf("entering osgl_clear\n");
 
     /* Set clear colors */
     if (pp != RGBPIXEL_NULL) {
@@ -1030,7 +1027,8 @@ osgl_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
     struct osgl_clip *clp;
 
-    if (CJDEBUG) printf("entering osgl_view\n");
+    if (FB_DEBUG)
+	printf("entering osgl_view\n");
 
     if (xzoom < 1) xzoom = 1;
     if (yzoom < 1) yzoom = 1;
@@ -1087,7 +1085,8 @@ osgl_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 HIDDEN int
 osgl_getview(fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
-    if (CJDEBUG) printf("entering osgl_getview\n");
+    if (FB_DEBUG)
+	printf("entering osgl_getview\n");
 
     *xcenter = ifp->if_xcenter;
     *ycenter = ifp->if_ycenter;
@@ -1108,7 +1107,8 @@ osgl_read(fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
     ssize_t ret;
     register struct osgl_pixel *osglp;
 
-    if (CJDEBUG) printf("entering osgl_read\n");
+    if (FB_DEBUG)
+	printf("entering osgl_read\n");
 
     if (x < 0 || x >= ifp->if_width ||
 	y < 0 || y >= ifp->if_height)
@@ -1164,7 +1164,8 @@ osgl_write(fb *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t 
 
     FB_CK_FB(ifp);
 
-    if (CJDEBUG) printf("entering osgl_write\n");
+    if (FB_DEBUG)
+	printf("entering osgl_write\n");
 
     /* fast exit cases */
     pix_count = count;
@@ -1326,7 +1327,8 @@ osgl_writerect(fb *ifp, int xmin, int ymin, int width, int height, const unsigne
     register unsigned char *cp;
     register struct osgl_pixel *osglp;
 
-    if (CJDEBUG) printf("entering osgl_writerect\n");
+    if (FB_DEBUG)
+	printf("entering osgl_writerect\n");
 
     if (width <= 0 || height <= 0)
 	return 0;  /* do nothing */
@@ -1384,7 +1386,8 @@ osgl_bwwriterect(fb *ifp, int xmin, int ymin, int width, int height, const unsig
     register unsigned char *cp;
     register struct osgl_pixel *osglp;
 
-    if (CJDEBUG) printf("entering osgl_bwwriterect\n");
+    if (FB_DEBUG)
+	printf("entering osgl_bwwriterect\n");
 
     if (width <= 0 || height <= 0)
 	return 0;  /* do nothing */
@@ -1434,7 +1437,8 @@ osgl_rmap(register fb *ifp, register ColorMap *cmp)
 {
     register int i;
 
-    if (CJDEBUG) printf("entering osgl_rmap\n");
+    if (FB_DEBUG)
+	printf("entering osgl_rmap\n");
 
     /* Just parrot back the stored colormap */
     for (i = 0; i < 256; i++) {
@@ -1452,7 +1456,8 @@ osgl_wmap(register fb *ifp, register const ColorMap *cmp)
     register int i;
     int prev;	/* !0 = previous cmap was non-linear */
 
-    if (CJDEBUG) printf("entering osgl_wmap\n");
+    if (FB_DEBUG)
+	printf("entering osgl_wmap\n");
 
     prev = SGI(ifp)->mi_cmap_flag;
     if (cmp == COLORMAP_NULL) {

@@ -47,11 +47,6 @@
 #include "fb.h"
 
 
-/* XXX - arbitrary upper bound */
-#define XMAXSCREEN 32*1024
-#define YMAXSCREEN 32*1024
-
-
 Tcl_Interp *fbinterp;
 Tk_Window fbwin;
 Tk_PhotoHandle fbphoto;
@@ -612,14 +607,14 @@ fb tk_interface = {
     tk_free,
     tk_help,
     "Debugging Interface",
-    XMAXSCREEN,		/* max width */
-    YMAXSCREEN,		/* max height */
+    FB_XMAXSCREEN,	/* max width */
+    FB_YMAXSCREEN,	/* max height */
     "/dev/tk",
-    512,			/* current/default width */
-    512,			/* current/default height */
+    512,		/* current/default width */
+    512,		/* current/default height */
     -1,			/* select fd */
     -1,			/* file descriptor */
-    1, 1,			/* zoom */
+    1, 1,		/* zoom */
     256, 256,		/* window center */
     0, 0, 0,		/* cursor */
     PIXEL_NULL,		/* page_base */
