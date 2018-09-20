@@ -218,7 +218,7 @@ RT_EXPORT extern int db_full_path_search(const struct db_full_path *a,
  * source.  Calling code must use its knowledge of the origins of the full path
  * (or lack thereof) to determine how much validation work is needed.
  */
-RT_EXPORT extern int db_full_path_cyclic(const struct db_full_path *p, const char *lname, int full_check);
+RT_EXPORT extern int db_full_path_cyclic(const struct db_full_path *fp, const char *lname, int full_check);
 
 /**
  * Build the transformation matrix obtained when traversing the path
