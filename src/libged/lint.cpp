@@ -234,7 +234,7 @@ ged_lint(struct ged *gedp, int argc, const char *argv[])
     struct bu_opt_desc d[6];
     struct directory **dpa = NULL;
     int nonexist_obj_cnt = 0;
-    struct _ged_cyclic_data *cdata;
+    struct _ged_cyclic_data *cdata = NULL;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
@@ -314,13 +314,15 @@ ged_lint(struct ged *gedp, int argc, const char *argv[])
 
 ged_lint_memfree:
     _ged_lint_opts_destroy(opts);
-    for (pc = 0; pc < BU_PTBL_LEN(cdata->paths); pc++) {
-	char *path = (char *)BU_PTBL_GET(cdata->paths, pc);
-	bu_free(path, "free cyclic path");
+    if (cdata) {
+	for (pc = 0; pc < BU_PTBL_LEN(cdata->paths); pc++) {
+	    char *path = (char *)BU_PTBL_GET(cdata->paths, pc);
+	    bu_free(path, "free cyclic path");
+	}
+	bu_ptbl_free(cdata->paths);
+	BU_PUT(cdata->paths, struct bu_ptbl);
+	BU_PUT(cdata, struct _ged_cyclic_data);
     }
-    bu_ptbl_free(cdata->paths);
-    BU_PUT(cdata->paths, struct bu_ptbl);
-    BU_PUT(cdata, struct _ged_cyclic_data);
     if (dpa) bu_free(dpa, "dp array");
 
     return ret;
