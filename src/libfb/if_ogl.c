@@ -1244,7 +1244,7 @@ fb_ogl_open(fb *ifp, const char *file, int width, int height)
      (valuemask & CWDontPropagate) ? printf(" do_not_propagate_mask = %08X f", (uint32_t)(attributes)->do_not_propagate_mask) : 0, \
      (valuemask & CWColormap) ? printf(" colormap = %08X ", (uint32_t)(uintptr_t)((attributes)->colormap)) : 0, \
      (valuemask & CWCursor) ? printf(" cursor = %08X ", (uint32_t)(uintptr_t)((attributes)->cursor)) : 0, \
-     printf(" }\n")) > 0 ? XCreateWindow(display, parent, x, y, width, height, border_width, depth, class, visual, valuemask, attributes) : -1;
+     printf(" }\n")) > 0 ? XCreateWindow(display, parent, x, y, width, height, border_width, depth, class, visual, valuemask, attributes) : (Window)-1;
     if (FB_DEBUG) {
 	OGL(ifp)->wind = XCreateWindowDebug(OGL(ifp)->dispp,
 					    RootWindow(OGL(ifp)->dispp,
