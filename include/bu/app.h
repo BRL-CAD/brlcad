@@ -207,6 +207,71 @@ BU_EXPORT extern const char *bu_brlcad_dir(const char *dirkey, int fail_quietly)
 BU_EXPORT extern const char *bu_brlcad_root(const char *rhs, int fail_quietly);
 
 
+typedef enum {
+    BU_DIR_CURR=0,  /* (unknown) current working directory */
+    BU_DIR_INIT,    /* (unknown) initial working directory */
+    BU_DIR_BIN,     /* (read-only) user executables (bin) */
+    BU_DIR_LIB,     /* (read-only) object libraries (lib) */
+    BU_DIR_LIBEXEC, /* (read-only) object libraries (libexec) */
+    BU_DIR_INCLUDE, /* (read-only) C/C++ header files (include) */
+    BU_DIR_DATA,    /* (read-only) data files (share) */
+    BU_DIR_DOC,     /* (read-only) documentation, (DATA/doc) */
+    BU_DIR_MAN,     /* (read-only) manual pages, (DATA/man) */
+    BU_DIR_TEMP,    /* (read/write) temporary files (TEMP) */
+    BU_DIR_HOME,    /* (read/write) user home directory (HOME) */
+    BU_DIR_CACHE,   /* (read/write) user cache directory (BU_CACHE_DIR) */
+    BU_DIR_CONFIG,  /* (read/write) user config directory (HOME/.app) */
+    BU_DIR_EXT,     /* (n/a) optional executable extension */
+    BU_DIR_LIBEXT,  /* (n/a) optional library extension */
+    BU_DIR_UNKNOWN
+} bu_dir_t;
+
+/**
+ * Find a particular user, system, or runtime directory.
+ *
+ * This function writes into buffer and returns, if found, the path to
+ * a given filesystm resource.  The caller may specify paths to
+ * subdirectories and/or filenames as a NULL-terminated vararg list.
+ *
+ * Paths returned will use the native directory separator.  Callers
+ * may also manually concatenate subdirectory resources (e.g.,
+ * "share/db/moss.g") using forward slashes and they will be converted
+ * to the native separator.
+ *
+ * @param result if non-NULL, buffer should have >= MAXPATHLEN chars
+ * @param len is the size of the result buffer
+ * @param ... must be one of the above enumerations or a string/path
+ *
+ * @return
+ * Full path to the specified resource will be returned.  This will be
+ * 'buffer' or, when NULL, a read-only STATIC buffer will be returned
+ * that will be the caller's responsibility to bu_strdup() or
+ * otherwise save before a subsequent call to bu_dir() returns.
+ *
+ @code
+   // e.g., /home/user
+   const char *pwd = bu_dir(NULL, 0, BU_DIR_CURR, NULL);
+
+   // e.g., /opt/brlcad/bin/rt
+   char rt[MAXPATHLEN] = {0};
+   bu_dir(rt, MAXPATHLEN, BU_DIR_BIN, "rt", BU_DIR_EXT, NULL);
+   execl(rt, "rt", NULL);
+
+   // e.g., C:\\BRL-CAD 7.123.4\\bin\\librt.dll
+   const char *lib = bu_dir(NULL, 0, BU_DIR_LIB, "librt", BU_DIR_LIBEXT, NULL);
+
+   // e.g., /opt/app-7.123.4/share/tclscripts/mged/help.tcl
+   char ts[MAXPATHLEN] = {0};
+   bu_dir(ts, MAXPATHLEN, BU_DIR_DATA, "tclscripts/mged", NULL);
+   bu_dir(ts, MAXPATHLEN, ts, "help.tcl", NULL);
+
+   // e.g., C:\\BRL-CAD 7.123.4\\libexec\\mged\\tops.exe
+   const char *tops = bu_dir(NULL, 0, BU_DIR_LIBEXEC, "mged/tops", BU_DIR_EXT, NULL);
+ @endcode
+ */
+BU_EXPORT extern const char *bu_dir(struct bu_vls *result, .../*, NULL */);
+
+
 /** @} */
 
 __END_DECLS
