@@ -147,6 +147,48 @@ struct fb_internal {
     } u1, u2, u3, u4, u5, u6;
 };
 
+
+/*
+ * Structure of color map in shared memory region.  Has exactly the
+ * same format as the SGI hardware "gammaramp" map Note that only the
+ * lower 8 bits are significant.
+ */
+struct fb_cmap {
+    short cmr[256];
+    short cmg[256];
+    short cmb[256];
+};
+
+
+/*
+ * This defines the format of the in-memory framebuffer copy.  The
+ * alpha component and reverse order are maintained for compatibility
+ * with /dev/sgi
+ */
+struct fb_pixel {
+    unsigned char blue;
+    unsigned char green;
+    unsigned char red;
+    unsigned char alpha;
+};
+
+
+/* Clipping structure for zoom/pan operations */
+struct fb_clip {
+    int xpixmin;	/* view clipping planes clipped to pixel memory space*/
+    int xpixmax;
+    int ypixmin;
+    int ypixmax;
+    int xscrmin;	/* view clipping planes */
+    int xscrmax;
+    int yscrmin;
+    int yscrmax;
+    double oleft;	/* glOrtho parameters */
+    double oright;
+    double otop;
+    double obottom;
+};
+
 /*
  * Some functions and variables we couldn't hide.
  * Not for general consumption.

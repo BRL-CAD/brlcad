@@ -54,49 +54,6 @@ HIDDEN int osgl_nwindows = 0; 	/* number of open windows */
 
 
 /*
- * Structure of color map in shared memory region.  Has exactly the
- * same format as the SGI hardware "gammaramp" map Note that only the
- * lower 8 bits are significant.
- */
-struct osgl_cmap {
-    short cmr[256];
-    short cmg[256];
-    short cmb[256];
-};
-
-
-/*
- * This defines the format of the in-memory framebuffer copy.  The
- * alpha component and reverse order are maintained for compatibility
- * with /dev/sgi
- */
-struct osgl_pixel {
-    unsigned char blue;
-    unsigned char green;
-    unsigned char red;
-    unsigned char alpha;
-};
-
-
-/* Clipping structure for zoom/pan operations */
-struct osgl_clip {
-    int xpixmin;	/* view clipping planes clipped to pixel memory space*/
-    int xpixmax;
-    int ypixmin;
-    int ypixmax;
-    int xscrmin;	/* view clipping planes */
-    int xscrmax;
-    int yscrmin;
-    int yscrmax;
-    double oleft;	/* glOrtho parameters */
-    double oright;
-    double otop;
-    double obottom;
-
-};
-
-
-/*
  * Per window state information, overflow area.
  */
 struct sgiinfo {
@@ -132,7 +89,7 @@ struct osglinfo {
     int win_height;		/* actual window height */
     int vp_width;		/* actual viewport width */
     int vp_height;		/* actual viewport height */
-    struct osgl_clip clip;	/* current view clipping */
+    struct fb_clip clip;	/* current view clipping */
     /*Window cursor;*/
     /*XVisualInfo *vip;*/	/* pointer to info on current visual */
     /*Colormap xcmap;*/		/* xstyle color map */
@@ -146,9 +103,9 @@ struct osglinfo {
 #define OSGLL(ptr) ((ptr)->u6.p)	/* left hand side version */
 #define if_mem u2.p		/* shared memory pointer */
 #define if_cmap u3.p		/* color map in shared memory */
-#define CMR(x) ((struct osgl_cmap *)((x)->if_cmap))->cmr
-#define CMG(x) ((struct osgl_cmap *)((x)->if_cmap))->cmg
-#define CMB(x) ((struct osgl_cmap *)((x)->if_cmap))->cmb
+#define CMR(x) ((struct fb_cmap *)((x)->if_cmap))->cmr
+#define CMG(x) ((struct fb_cmap *)((x)->if_cmap))->cmg
+#define CMB(x) ((struct fb_cmap *)((x)->if_cmap))->cmb
 #define if_zoomflag u4.l	/* zoom > 1 */
 #define if_mode u5.l		/* see MODE_* defines */
 
@@ -224,7 +181,7 @@ osgl_xmit_scanlines(register fb *ifp, int ybase, int nlines, int xbase, int npix
     register int y;
     register int n;
     int sw_cmap;	/* !0 => needs software color map */
-    struct osgl_clip *clp;
+    struct fb_clip *clp;
 
     /* Caller is expected to handle attaching context, etc. */
 
@@ -285,8 +242,8 @@ osgl_xmit_scanlines(register fb *ifp, int ybase, int nlines, int xbase, int npix
     if (sw_cmap) {
 	/* Software colormap each line as it's transmitted */
 	register int x;
-	register struct osgl_pixel *osglp;
-	register struct osgl_pixel *scanline;
+	register struct fb_pixel *osglp;
+	register struct fb_pixel *scanline;
 
 	y = ybase;
 
@@ -294,7 +251,7 @@ osgl_xmit_scanlines(register fb *ifp, int ybase, int nlines, int xbase, int npix
 	    printf("Doing sw colormap xmit\n");
 
 	/* Perform software color mapping into temp scanline */
-	scanline = (struct osgl_pixel *)calloc(ifp->if_width, sizeof(struct osgl_pixel));
+	scanline = (struct fb_pixel *)calloc(ifp->if_width, sizeof(struct fb_pixel));
 	if (scanline == NULL) {
 	    fb_log("osgl_getmem: scanline memory malloc failed\n");
 	    return;
@@ -302,9 +259,9 @@ osgl_xmit_scanlines(register fb *ifp, int ybase, int nlines, int xbase, int npix
 
 	for (n=nlines; n>0; n--, y++) {
 	    if (!OSGL(ifp)->viewer) {
-		osglp = (struct osgl_pixel *)&ifp->if_mem[(y*SGI(ifp)->mi_memwidth) * sizeof(struct osgl_pixel)];
+		osglp = (struct fb_pixel *)&ifp->if_mem[(y*SGI(ifp)->mi_memwidth) * sizeof(struct fb_pixel)];
 	    } else {
-		osglp = (struct osgl_pixel *)(OSGL(ifp)->image->data(0,y,0));
+		osglp = (struct fb_pixel *)(OSGL(ifp)->image->data(0,y,0));
 	    }
 	    for (x=xbase+npix-1; x>=xbase; x--) {
 		scanline[x].red   = CMR(ifp)[osglp[x].red];
@@ -366,8 +323,8 @@ osgl_getmem(fb *ifp)
 	 * In this mode, only malloc as much memory as is needed.
 	 */
 	SGI(ifp)->mi_memwidth = ifp->if_width;
-	pixsize = ifp->if_height * ifp->if_width * sizeof(struct osgl_pixel);
-	size = pixsize + sizeof(struct osgl_cmap);
+	pixsize = ifp->if_height * ifp->if_width * sizeof(struct fb_pixel);
+	size = pixsize + sizeof(struct fb_cmap);
 
 	sp = (char *)calloc(1, size);
 	if (sp == 0) {
@@ -388,9 +345,9 @@ osgl_getmem(fb *ifp)
      * risk of damage to colormap table.)
      */
     pixsize = (ifp->if_max_height+2) * ifp->if_max_width *
-	sizeof(struct osgl_pixel);
+	sizeof(struct fb_pixel);
 
-    size = pixsize + sizeof(struct osgl_cmap);
+    size = pixsize + sizeof(struct fb_cmap);
 
 
     shm_result = bu_shmget(&(SGI(ifp)->mi_shmid), &sp, SHMEM_KEY, (size_t)size);
@@ -456,9 +413,9 @@ osgl_zapmem(void)
  *		(xpixmin, xpixmax, ypixmin, ypixmax)
  */
 void
-osgl_clipper(register fb *ifp)
+fb_clipper(register fb *ifp)
 {
-    register struct osgl_clip *clp;
+    register struct fb_clip *clp;
     register int i;
     double pixels;
 
@@ -521,7 +478,7 @@ osgl_configureWindow(fb *ifp, int width, int height)
     ifp->if_ycenter = height/2;
 
     osgl_getmem(ifp);
-    osgl_clipper(ifp);
+    fb_clipper(ifp);
 
     glViewport(0, 0, OSGL(ifp)->win_width, OSGL(ifp)->win_height);
     return 0;
@@ -746,7 +703,7 @@ _osgl_open_existing(fb *ifp, int width, int height, void *glc, void *traits)
     OSGL(ifp)->alive = 1;
     OSGL(ifp)->firstTime = 1;
 
-    osgl_clipper(ifp);
+    fb_clipper(ifp);
 
     return 0;
 }
@@ -959,8 +916,8 @@ osgl_free(fb *ifp)
 HIDDEN int
 osgl_clear(fb *ifp, unsigned char *pp)
 {
-    struct osgl_pixel bg;
-    register struct osgl_pixel *osglp;
+    struct fb_pixel bg;
+    register struct fb_pixel *osglp;
     register int cnt;
     register int y;
 
@@ -983,9 +940,9 @@ osgl_clear(fb *ifp, unsigned char *pp)
     /* Flood rectangle in shared memory */
     for (y = 0; y < ifp->if_height; y++) {
 	if (!OSGL(ifp)->viewer) {
-	    osglp = (struct osgl_pixel *)&ifp->if_mem[(y*SGI(ifp)->mi_memwidth+0)*sizeof(struct osgl_pixel) ];
+	    osglp = (struct fb_pixel *)&ifp->if_mem[(y*SGI(ifp)->mi_memwidth+0)*sizeof(struct fb_pixel) ];
 	} else {
-	    osglp = (struct osgl_pixel *)(OSGL(ifp)->image->data(0,y,0));
+	    osglp = (struct fb_pixel *)(OSGL(ifp)->image->data(0,y,0));
 	}
 	for (cnt = ifp->if_width-1; cnt >= 0; cnt--) {
 	    *osglp++ = bg;	/* struct copy */
@@ -1025,7 +982,7 @@ osgl_clear(fb *ifp, unsigned char *pp)
 HIDDEN int
 osgl_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
-    struct osgl_clip *clp;
+    struct fb_clip *clp;
 
     if (FB_DEBUG)
 	printf("entering osgl_view\n");
@@ -1054,7 +1011,7 @@ osgl_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 
 
     if (OSGL(ifp)->use_ext_ctrl) {
-	osgl_clipper(ifp);
+	fb_clipper(ifp);
     } else {
 
 	if (!OSGL(ifp)->viewer && OSGL(ifp)->glc) {
@@ -1064,7 +1021,7 @@ osgl_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 	    glMatrixMode(GL_PROJECTION);
 	    glLoadIdentity();
 
-	    osgl_clipper(ifp);
+	    fb_clipper(ifp);
 	    clp = &(OSGL(ifp)->clip);
 	    glOrtho(clp->oleft, clp->oright, clp->obottom, clp->otop, -1.0, 1.0);
 	    glPixelZoom((float) ifp->if_xzoom, (float) ifp->if_yzoom);
@@ -1105,7 +1062,7 @@ osgl_read(fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
     size_t scan_count;	/* # pix on this scanline */
     register unsigned char *cp;
     ssize_t ret;
-    register struct osgl_pixel *osglp;
+    register struct fb_pixel *osglp;
 
     if (FB_DEBUG)
 	printf("entering osgl_read\n");
@@ -1127,9 +1084,9 @@ osgl_read(fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 	    scan_count = count;
 
 	if (!OSGL(ifp)->viewer) {
-	    osglp = (struct osgl_pixel *)&ifp->if_mem[(y*SGI(ifp)->mi_memwidth+x)*sizeof(struct osgl_pixel) ];
+	    osglp = (struct fb_pixel *)&ifp->if_mem[(y*SGI(ifp)->mi_memwidth+x)*sizeof(struct fb_pixel) ];
 	} else {
-	    osglp = (struct osgl_pixel *)(OSGL(ifp)->image->data(0,y,0));
+	    osglp = (struct fb_pixel *)(OSGL(ifp)->image->data(0,y,0));
 	}
 
 	n = scan_count;
@@ -1237,7 +1194,7 @@ osgl_write(fb *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t 
 
 	while (pix_count) {
 	    size_t n;
-	    register struct osgl_pixel *osglp;
+	    register struct fb_pixel *osglp;
 
 	    if (y >= ifp->if_height)
 		break;
@@ -1248,9 +1205,9 @@ osgl_write(fb *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t 
 		scan_count = pix_count;
 
 	    if (!OSGL(ifp)->viewer) {
-		osglp = (struct osgl_pixel *)&ifp->if_mem[(y*SGI(ifp)->mi_memwidth+x)*sizeof(struct osgl_pixel) ];
+		osglp = (struct fb_pixel *)&ifp->if_mem[(y*SGI(ifp)->mi_memwidth+x)*sizeof(struct fb_pixel) ];
 	    } else {
-		osglp = (struct osgl_pixel *)(OSGL(ifp)->image->data(0,y,0));
+		osglp = (struct fb_pixel *)(OSGL(ifp)->image->data(0,y,0));
 	    }
 
 	    n = scan_count;
@@ -1325,7 +1282,7 @@ osgl_writerect(fb *ifp, int xmin, int ymin, int width, int height, const unsigne
     register int x;
     register int y;
     register unsigned char *cp;
-    register struct osgl_pixel *osglp;
+    register struct fb_pixel *osglp;
 
     if (FB_DEBUG)
 	printf("entering osgl_writerect\n");
@@ -1339,9 +1296,9 @@ osgl_writerect(fb *ifp, int xmin, int ymin, int width, int height, const unsigne
     cp = (unsigned char *)(pp);
     for (y = ymin; y < ymin+height; y++) {
 	if (!OSGL(ifp)->viewer) {
-	    osglp = (struct osgl_pixel *)&ifp->if_mem[(y*SGI(ifp)->mi_memwidth+xmin)*sizeof(struct osgl_pixel) ];
+	    osglp = (struct fb_pixel *)&ifp->if_mem[(y*SGI(ifp)->mi_memwidth+xmin)*sizeof(struct fb_pixel) ];
 	} else {
-	    osglp = (struct osgl_pixel *)(OSGL(ifp)->image->data(0,y,0));
+	    osglp = (struct fb_pixel *)(OSGL(ifp)->image->data(0,y,0));
 	}
 	for (x = xmin; x < xmin+width; x++) {
 	    /* alpha channel is always zero */
@@ -1384,7 +1341,7 @@ osgl_bwwriterect(fb *ifp, int xmin, int ymin, int width, int height, const unsig
     register int x;
     register int y;
     register unsigned char *cp;
-    register struct osgl_pixel *osglp;
+    register struct fb_pixel *osglp;
 
     if (FB_DEBUG)
 	printf("entering osgl_bwwriterect\n");
@@ -1398,9 +1355,9 @@ osgl_bwwriterect(fb *ifp, int xmin, int ymin, int width, int height, const unsig
     cp = (unsigned char *)(pp);
     for (y = ymin; y < ymin+height; y++) {
 	if (!OSGL(ifp)->viewer) {
-	    osglp = (struct osgl_pixel *)&ifp->if_mem[(y*SGI(ifp)->mi_memwidth+xmin)*sizeof(struct osgl_pixel) ];
+	    osglp = (struct fb_pixel *)&ifp->if_mem[(y*SGI(ifp)->mi_memwidth+xmin)*sizeof(struct fb_pixel) ];
 	} else {
-	    osglp = (struct osgl_pixel *)(OSGL(ifp)->image->data(0,y,0));
+	    osglp = (struct fb_pixel *)(OSGL(ifp)->image->data(0,y,0));
 	}
 	for (x = xmin; x < xmin+width; x++) {
 	    register int val;
@@ -1541,7 +1498,7 @@ int
 osgl_refresh(fb *ifp, int x, int y, int w, int h)
 {
     int mm;
-    struct osgl_clip *clp;
+    struct fb_clip *clp;
 
     if (w < 0) {
 	w = -w;
@@ -1558,7 +1515,7 @@ osgl_refresh(fb *ifp, int x, int y, int w, int h)
     glPushMatrix();
     glLoadIdentity();
 
-    osgl_clipper(ifp);
+    fb_clipper(ifp);
     clp = &(OSGL(ifp)->clip);
     glOrtho(clp->oleft, clp->oright, clp->obottom, clp->otop, -1.0, 1.0);
     glPixelZoom((float) ifp->if_xzoom, (float) ifp->if_yzoom);
