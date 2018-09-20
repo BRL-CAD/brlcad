@@ -269,7 +269,7 @@ typedef enum {
    const char *tops = bu_dir(NULL, 0, BU_DIR_LIBEXEC, "mged/tops", BU_DIR_EXT, NULL);
  @endcode
  */
-BU_EXPORT extern const char *bu_dir(struct bu_vls *result, .../*, NULL */);
+BU_EXPORT extern const char *bu_dir(char *result, size_t len, .../*, NULL */);
 
 
 /** @} */
