@@ -2104,7 +2104,8 @@ _ged_facetize_regions_resume(struct ged *gedp, int argc, const char **argv, stru
 	bu_vls_incr(&failed_name, NULL, NULL, &_db_uniq_test, (void *)gedp);
 	for (i = 0; i < BU_PTBL_LEN(ar2); i++) {
 	    struct directory *n = (struct directory *)BU_PTBL_GET(ar2, i);
-	    avv[i] = n->d_namep;
+	    const char *oname = bu_avs_get(&rnames, n->d_namep);
+	    avv[i] = oname;
 	}
 	ret = _ged_combadd2(gedp, bu_vls_addr(&failed_name), (int)BU_PTBL_LEN(ar2), avv, 0, DB_OP_UNION, 0, 0, NULL, 0);
 	bu_vls_free(&failed_name);
@@ -2126,7 +2127,8 @@ ged_facetize_regions_resume_memfree:
 	bu_vls_printf(gedp->ged_result_str, "WARNING: %d objects failed:\n", BU_PTBL_LEN(ar2));
 	for (i = 0; i < BU_PTBL_LEN(ar2); i++) {
 	    struct directory *n = (struct directory *)BU_PTBL_GET(ar2, i);
-	    bu_vls_printf(gedp->ged_result_str, "	%s\n", n->d_namep);
+	    const char *oname = bu_avs_get(&rnames, n->d_namep);
+	    bu_vls_printf(gedp->ged_result_str, "	%s\n", oname);
 	}
     }
 
