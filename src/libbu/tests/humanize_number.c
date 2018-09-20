@@ -491,7 +491,7 @@ testskipped(size_t i)
 }
 
 int
-main(int argc, char * const argv[])
+main(int argc, char *argv[])
 {
     char *buf;
     char *flag_str, *scale_str;

@@ -65,7 +65,7 @@ comp_4(const void *num1, const void *num2, void *cmp)
 
 
 int
-main(int argc, char **argv)
+main(int argc, char *argv[])
 {
     int arg_1[6] = {5, 2, 6, -15, 168, 3};
     int exp_1[6] = {-15, 2, 3, 5, 6, 168};

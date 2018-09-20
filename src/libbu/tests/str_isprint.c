@@ -47,7 +47,7 @@ test_str_isprint(const char *inp , int texp)
 
 
 int
-main(int argc, char **argv)
+main(int argc, char *argv[])
 {
     int test_num = 0;
 

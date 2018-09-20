@@ -973,7 +973,7 @@ test_bu_hexstr_to_binstr(int argc, char **argv)
 
 
 int
-main(int argc, char **argv)
+main(int argc, char *argv[])
 {
     int function_num = 0;
 
