@@ -1216,38 +1216,35 @@ fb_ogl_open(fb *ifp, const char *file, int width, int height)
 	ButtonPressMask | ButtonReleaseMask;
     swa.colormap = OGL(ifp)->xcmap;
 
-#define XCreateWindowDebug(display, parent, x, y, width, height,	\
-			   border_width, depth, class, visual, valuemask, \
-			   attributes)					\
-    (printf("XCreateWindow(display = %08X, \n", (unsigned int)display),		\
-     printf("                parent = %08X, \n", (unsigned int)parent),		\
-     printf("                     x = %d, \n", x),			\
-     printf("                     y = %d, \n", y),			\
-     printf("                 width = %d, \n", (int)width),			\
-     printf("                height = %d, \n", (int)height),			\
-     printf("          border_width = %d, \n", (int)border_width),		\
-     printf("                 depth = %d, \n", (int)depth),			\
-     printf("                 class = %d, \n", (int)class),			\
-     printf("                visual = %08X, \n", (unsigned int)visual),		\
-     printf("             valuemask = %08X, \n", (unsigned int)valuemask),		\
-     printf("            attributes = {"),				\
-     (valuemask & CWBackPixmap) ? printf(" background_pixmap = %08X ", (unsigned int)((attributes)->background_pixmap)) : 0, \
-     (valuemask & CWBackPixel) ? printf(" background_pixel = %08X ", (unsigned int)(attributes)->background_pixel) : 0, \
-     (valuemask & CWBorderPixmap) ? printf(" border_pixmap = %08X ", (unsigned int)((attributes)->border_pixmap)) : 0, \
-     (valuemask & CWBorderPixel) ? printf(" border_pixel = %08X ", (unsigned int)(attributes)->border_pixel) : 0, \
+#define XCreateWindowDebug(display, parent, x, y, width, height, border_width, depth, class, visual, valuemask, attributes) \
+    (printf("XCreateWindow(display = %08X, \n", (uint32_t)(uintptr_t)display), \
+     printf("                parent = %08X, \n", (uint32_t)(uintptr_t)parent), \
+     printf("                     x = %d, \n", x), \
+     printf("                     y = %d, \n", y), \
+     printf("                 width = %d, \n", (int)width), \
+     printf("                height = %d, \n", (int)height), \
+     printf("          border_width = %d, \n", (int)border_width), \
+     printf("                 depth = %d, \n", (int)depth), \
+     printf("                 class = %d, \n", (int)class), \
+     printf("                visual = %08X, \n", (uint32_t)(uintptr_t)visual), \
+     printf("             valuemask = %08X, \n", (uint32_t)valuemask), \
+     printf("            attributes = {"), \
+     (valuemask & CWBackPixmap) ? printf(" background_pixmap = %08X ", (uint32_t)(uintptr_t)((attributes)->background_pixmap)) : 0, \
+     (valuemask & CWBackPixel) ? printf(" background_pixel = %08X ", (uint32_t)(attributes)->background_pixel) : 0, \
+     (valuemask & CWBorderPixmap) ? printf(" border_pixmap = %08X ", (uint32_t)(uintptr_t)((attributes)->border_pixmap)) : 0, \
+     (valuemask & CWBorderPixel) ? printf(" border_pixel = %08X ", (uint32_t)(attributes)->border_pixel) : 0, \
      (valuemask & CWBitGravity) ? printf(" bit_gravity = %d ", (attributes)->bit_gravity) : 0, \
      (valuemask & CWWinGravity) ? printf(" win_gravity = %d ", (attributes)->win_gravity) : 0, \
      (valuemask & CWBackingStore) ? printf(" backing_store = %d ", (attributes)->backing_store) : 0, \
-     (valuemask & CWBackingPlanes) ? printf(" backing_planes = %u ", (unsigned int)(attributes)->backing_planes) : 0, \
-     (valuemask & CWBackingPixel) ? printf(" backing_pixel = %08X ", (unsigned int)(attributes)->backing_pixel) : 0, \
+     (valuemask & CWBackingPlanes) ? printf(" backing_planes = %u ", (uint32_t)(attributes)->backing_planes) : 0, \
+     (valuemask & CWBackingPixel) ? printf(" backing_pixel = %08X ", (uint32_t)(attributes)->backing_pixel) : 0, \
      (valuemask & CWOverrideRedirect) ? printf(" override_redirect = %d ", (attributes)->override_redirect) : 0, \
      (valuemask & CWSaveUnder) ? printf(" save_under = %d ", (attributes)->save_under) : 0, \
-     (valuemask & CWEventMask) ? printf(" event_mask = %08X ", (unsigned int)(attributes)->event_mask) : 0, \
-     (valuemask & CWDontPropagate) ? printf(" do_not_propagate_mask = %08X ", (unsigned int)(attributes)->do_not_propagate_mask) : 0, \
-     (valuemask & CWColormap) ? printf(" colormap = %08X ", (unsigned int)((attributes)->colormap)) : 0, \
-     (valuemask & CWCursor) ? printf(" cursor = %08X ", (unsigned int)((attributes)->cursor)) : 0, \
+     (valuemask & CWEventMask) ? printf(" event_mask = %08X ", (uint32_t)(attributes)->event_mask) : 0, \
+     (valuemask & CWDontPropagate) ? printf(" do_not_propagate_mask = %08X f", (uint32_t)(attributes)->do_not_propagate_mask) : 0, \
+     (valuemask & CWColormap) ? printf(" colormap = %08X ", (uint32_t)(uintptr_t)((attributes)->colormap)) : 0, \
+     (valuemask & CWCursor) ? printf(" cursor = %08X ", (uint32_t)(uintptr_t)((attributes)->cursor)) : 0, \
      printf(" }\n")) > 0 ? XCreateWindow(display, parent, x, y, width, height, border_width, depth, class, visual, valuemask, attributes) : -1;
-#if 0
     if (FB_DEBUG) {
 	OGL(ifp)->wind = XCreateWindowDebug(OGL(ifp)->dispp,
 					    RootWindow(OGL(ifp)->dispp,
@@ -1258,7 +1255,6 @@ fb_ogl_open(fb *ifp, const char *file, int width, int height)
 					    OGL(ifp)->vip->visual,
 					    valuemask, &swa);
     } else {
-#endif
 	OGL(ifp)->wind = XCreateWindow(OGL(ifp)->dispp,
 				       RootWindow(OGL(ifp)->dispp,
 						  OGL(ifp)->vip->screen),
@@ -1267,9 +1263,7 @@ fb_ogl_open(fb *ifp, const char *file, int width, int height)
 				       InputOutput,
 				       OGL(ifp)->vip->visual,
 				       valuemask, &swa);
-#if 0
     }
-#endif
 
     XStoreName(OGL(ifp)->dispp, OGL(ifp)->wind, title);
 
