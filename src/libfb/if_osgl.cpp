@@ -110,7 +110,6 @@ struct sgiinfo {
     int mi_memwidth;		/* width of scanline in if_mem */
     short mi_xoff;		/* X viewport offset, rel. window*/
     short mi_yoff;		/* Y viewport offset, rel. window*/
-    struct osgl_pixel mi_scanline[XMAXSCREEN];	/* one scanline */
 };
 
 
@@ -292,30 +291,37 @@ osgl_xmit_scanlines(register fb *ifp, int ybase, int nlines, int xbase, int npix
 	/* Software colormap each line as it's transmitted */
 	register int x;
 	register struct osgl_pixel *osglp;
-	register struct osgl_pixel *op;
+	register struct osgl_pixel *scanline;
 
 	y = ybase;
+
 	if (CJDEBUG) printf("Doing sw colormap xmit\n");
+
 	/* Perform software color mapping into temp scanline */
-	op = SGI(ifp)->mi_scanline;
+	scanline = (struct osgl_pixel *)calloc(ifp->if_width, sizeof(struct osgl_pixel));
+	if (scanline == NULL) {
+	    fb_log("osgl_getmem: scanline memory malloc failed\n");
+	    return;
+	}
+
 	for (n=nlines; n>0; n--, y++) {
 	    if (!OSGL(ifp)->viewer) {
-		osglp = (struct osgl_pixel *)&ifp->if_mem[(y*SGI(ifp)->mi_memwidth)*sizeof(struct osgl_pixel) ];
+		osglp = (struct osgl_pixel *)&ifp->if_mem[(y*SGI(ifp)->mi_memwidth) * sizeof(struct osgl_pixel)];
 	    } else {
 		osglp = (struct osgl_pixel *)(OSGL(ifp)->image->data(0,y,0));
 	    }
 	    for (x=xbase+npix-1; x>=xbase; x--) {
-		op[x].red   = CMR(ifp)[osglp[x].red];
-		op[x].green = CMG(ifp)[osglp[x].green];
-		op[x].blue  = CMB(ifp)[osglp[x].blue];
+		scanline[x].red   = CMR(ifp)[osglp[x].red];
+		scanline[x].green = CMG(ifp)[osglp[x].green];
+		scanline[x].blue  = CMB(ifp)[osglp[x].blue];
 	    }
 
 	    glPixelStorei(GL_UNPACK_SKIP_PIXELS, xbase);
 	    glRasterPos2i(xbase, y);
-	    glDrawPixels(npix, 1, GL_BGRA_EXT, GL_UNSIGNED_BYTE,
-		    (const GLvoid *) op);
-
+	    glDrawPixels(npix, 1, GL_BGRA_EXT, GL_UNSIGNED_BYTE, (const GLvoid *)scanline);
 	}
+
+	(void)free((void *)scanline);
 
     } else {
 	/* No need for software colormapping */

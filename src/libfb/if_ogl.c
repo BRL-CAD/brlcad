@@ -441,7 +441,7 @@ ogl_xmit_scanlines(register fb *ifp, int ybase, int nlines, int xbase, int npix)
 	}
 
 	for (n=nlines; n>0; n--, y++) {
-	    oglp = (struct ogl_pixel *)&ifp->if_mem[(y*SGIINFO(ifp)->mi_pixwidth) * sizeof(struct ogl_pixel) ];
+	    oglp = (struct ogl_pixel *)&ifp->if_mem[(y*SGIINFO(ifp)->mi_pixwidth) * sizeof(struct ogl_pixel)];
 	    for (x=xbase+npix-1; x>=xbase; x--) {
 		scanline[x].red   = CMR(ifp)[oglp[x].red];
 		scanline[x].green = CMG(ifp)[oglp[x].green];
