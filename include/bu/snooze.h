@@ -30,6 +30,7 @@
 
 #include "bu/defines.h"
 
+__BEGIN_DECLS
 
 /**
  * Convert seconds to microseconds
@@ -47,6 +48,7 @@
  */
 BU_EXPORT extern int bu_snooze(int64_t useconds);
 
+__END_DECLS
 
 #endif /* BU_SNOOZE_H */
 
