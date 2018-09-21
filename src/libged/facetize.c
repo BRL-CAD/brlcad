@@ -62,6 +62,7 @@
 #define GED_FACETIZE_FAILURE_NMG 7
 #define GED_FACETIZE_FAILURE_CONTINUATION_SURFACE 10
 #define GED_FACETIZE_FAILURE_SPSR_SURFACE 11
+#define GED_FACETIZE_FAILURE_SPSR_NONMATCHING 12
 
 /* size of available memory (in bytes) below which we can't continue */
 #define GED_FACETIZE_MEMORY_THRESHOLD 150000000
@@ -109,6 +110,9 @@ _ged_facetize_failure_msg(struct bu_vls *msg, int type, const char *prefix, stru
 	    break;
 	case GED_FACETIZE_FAILURE_SPSR_SURFACE:
 	    bu_vls_printf(msg, "%s: Screened Poisson surface reconstruction failed.\n", prefix);
+	    break;
+	case GED_FACETIZE_FAILURE_SPSR_NONMATCHING:
+	    bu_vls_printf(msg, "%s: Screened Poisson surface reconstruction did not produce a BoT matching the original shape.\n", prefix);
 	    break;
 	default:
 	    return;
@@ -876,6 +880,7 @@ _ged_spsr_obj(struct _ged_facetize_report_info *r, struct ged *gedp, const char 
     struct rt_pnts_internal *pnts;
     struct rt_bot_internal *bot = NULL;
     struct pnt_normal *pn, *pl;
+    double avg_thickness = 0.0;
     int flags = 0;
     int i = 0;
     int free_pnts = 0;
@@ -933,7 +938,7 @@ _ged_spsr_obj(struct _ged_facetize_report_info *r, struct ged *gedp, const char 
 	    bu_log("SPSR: generating %d points from %s\n", objname);
 	}
 
-	if (analyze_obj_to_pnts(pnts, NULL, gedp->ged_wdbp->dbip, objname, &btol, flags, max_pnts, opts->max_time, opts->verbosity)) {
+	if (analyze_obj_to_pnts(pnts, &avg_thickness, gedp->ged_wdbp->dbip, objname, &btol, flags, max_pnts, opts->max_time, opts->verbosity)) {
 	    r->failure_mode = GED_FACETIZE_FAILURE_PNTGEN;
 	    ret = GED_FACETIZE_FAILURE;
 	    goto ged_facetize_spsr_memfree;
@@ -1014,6 +1019,71 @@ _ged_spsr_obj(struct _ged_facetize_report_info *r, struct ged *gedp, const char 
 	    }
 	    goto ged_facetize_spsr_memfree;
 	}
+    }
+
+    /* Because SPSR has some observed failure modes that produce a "valid" BoT totally different
+     * from the original shape, if we know the avg. thickness of the original object raytrace
+     * the candidate BoT and compare the avg. thicknesses */
+    if (avg_thickness > 0) {
+	const char *av[3];
+	int max_pnts = (opts->max_pnts) ? opts->max_pnts : 200000;
+	double navg_thickness = 0.0;
+	struct bu_vls tmpname = BU_VLS_INIT_ZERO;
+	struct rt_bot_internal *tbot = NULL;
+	BU_ALLOC(tbot, struct rt_bot_internal);
+	tbot->magic = RT_BOT_INTERNAL_MAGIC;
+	tbot->mode = RT_BOT_SOLID;
+	tbot->orientation = RT_BOT_UNORIENTED;
+	tbot->thickness = (fastf_t *)NULL;
+	tbot->face_mode = (struct bu_bitv *)NULL;
+
+	tbot->num_vertices = bot->num_vertices;
+	tbot->num_faces = bot->num_faces;
+	tbot->vertices = (fastf_t *)bu_malloc(sizeof(fastf_t) * tbot->num_vertices * 3, "vert array");
+	memcpy(tbot->vertices, bot->vertices, sizeof(fastf_t) * tbot->num_vertices * 3);
+	tbot->faces = (int *)bu_malloc(sizeof(int) * tbot->num_faces * 3, "faces array");
+	memcpy(tbot->faces, bot->faces, sizeof(int) * tbot->num_faces *3);
+
+	flags = ANALYZE_OBJ_TO_PNTS_RAND;
+	bu_vls_sprintf(&tmpname, "%s.tmp", newname);
+	if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&tmpname), LOOKUP_QUIET) != RT_DIR_NULL) {
+	    bu_vls_printf(&tmpname, "-0");
+	    bu_vls_incr(&tmpname, NULL, NULL, &_db_uniq_test, (void *)gedp);
+	}
+	if (_write_bot(gedp, tbot, bu_vls_addr(&tmpname), opts) == GED_ERROR) {
+	    bu_log("SPSR: could not write BoT to temporary name %s\n", bu_vls_addr(&tmpname));
+	    bu_vls_free(&tmpname);
+	    ret = GED_FACETIZE_FAILURE;
+	    goto ged_facetize_spsr_memfree;
+	}
+
+	if (analyze_obj_to_pnts(NULL, &navg_thickness, gedp->ged_wdbp->dbip, bu_vls_addr(&tmpname), &btol, flags, max_pnts, opts->max_time, opts->verbosity)) {
+	    bu_log("SPSR: could not raytrace temporary BoT %s\n", bu_vls_addr(&tmpname));
+	    ret = GED_FACETIZE_FAILURE;
+	}
+
+	/* Remove the temporary BoT object, succeed or fail. */
+	av[0] = "kill";
+	av[1] = bu_vls_addr(&tmpname);
+	av[2] = NULL;
+	(void)ged_kill(gedp, 2, (const char **)av);
+
+	if (ret == GED_FACETIZE_FAILURE) {
+	    bu_vls_free(&tmpname);
+	    goto ged_facetize_spsr_memfree;
+	}
+
+
+	if (fabs(avg_thickness - navg_thickness) > avg_thickness * 0.5) {
+	    bu_log("SPSR: BoT average sampled thickness %f is widely different from original sampled thickness %f\n", navg_thickness, avg_thickness);
+	    ret = GED_FACETIZE_FAILURE;
+	    r->failure_mode = GED_FACETIZE_FAILURE_SPSR_NONMATCHING;
+	    bu_vls_free(&tmpname);
+	    goto ged_facetize_spsr_memfree;
+	}
+
+	/* Passed test, continue */
+	bu_vls_free(&tmpname);
     }
 
     if (decimation_succeeded && !opts->quiet) {
@@ -1926,6 +1996,10 @@ _ged_facetize_region_obj(struct ged *gedp, const char *oname, const char *sname,
     if (cmethod == GED_FACETIZE_SPSR) {
 
 	if (!opts->quiet) {
+	    bu_log("SPSR: tessellating %s (%d of %d)\n", oname, ocnt, max_cnt);
+	}
+
+	if (opts->verbosity) {
 	    bu_log("SPSR: tessellating %s with depth %d, interpolation weight %g, and samples-per-node %g\n", oname, opts->s_opts.depth, opts->s_opts.point_weight, opts->s_opts.samples_per_node);
 	}
 
