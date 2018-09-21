@@ -12,7 +12,9 @@ macro(Add_Regression_Test testname depends_list)
       add_dependencies(check ${depends_list})
     endif(TARGET check)
   endif(NOT "${depends_list}" STREQUAL "")
-  set_tests_properties(regress-${testname} PROPERTIES TIMEOUT 60)
+  if(NOT BRLCAD_DISABLE_REGRESS_TIMEOUT)
+    set_tests_properties(regress-${testname} PROPERTIES TIMEOUT 60)
+  endif(NOT BRLCAD_DISABLE_REGRESS_TIMEOUT)
 endmacro(Add_Regression_Test)
 
 # Define the toplevel regression target - unless specifically excluded
@@ -59,7 +61,9 @@ if(SH_EXEC)
 	add_dependencies(check ${depends_list})
       endif(TARGET check)
     endif(NOT "${depends_list}" STREQUAL "")
-    set_tests_properties(regress-${testname} PROPERTIES TIMEOUT 60)
+    if(NOT BRLCAD_DISABLE_REGRESS_TIMEOUT)
+      set_tests_properties(regress-${testname} PROPERTIES TIMEOUT 60)
+    endif(NOT BRLCAD_DISABLE_REGRESS_TIMEOUT)
   endmacro(Sh_Regression_Test)
 
   Sh_Regression_Test(moss "rt;asc2g;pixdiff;pix-png;png-pix")
@@ -78,7 +82,9 @@ if(SH_EXEC)
   # violates this as it spends considerable time scanning the entire
   # source tree, then scanning different sets of files for properties.
   Sh_Regression_Test(repository "")
-  set_tests_properties(regress-repository PROPERTIES TIMEOUT 600)
+  if(NOT BRLCAD_DISABLE_REGRESS_TIMEOUT)
+    set_tests_properties(regress-repository PROPERTIES TIMEOUT 600)
+  endif(NOT BRLCAD_DISABLE_REGRESS_TIMEOUT)
 
   Sh_Regression_Test(mged mged)
   Sh_Regression_Test(red mged)
