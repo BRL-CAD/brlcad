@@ -2660,8 +2660,8 @@ int
 ged_facetize(struct ged *gedp, int argc, const char *argv[])
 {
     int ret = GED_OK;
-    static const char *usage = "Usage: facetize [ -nmhT | [--poisson] ] [old_obj1 | new_obj] [old_obj* ...] [old_objN | new_obj]\n";
-    static const char *pusage = "Usage: facetize --poisson [-d #] [-w #] [ray sampling options] old_obj new_obj\n";
+    static const char *usage = "Usage: facetize [ -nmhT | [--NMG] [--CM] [--SPSR] ] [old_obj1 | new_obj] [old_obj* ...] [old_objN | new_obj]\n";
+    static const char *pusage = "Usage: facetize --SPSR [-d #] [-w #] [ray sampling options] old_obj new_obj\n";
     int print_help = 0;
     int need_help = 0;
     struct _ged_facetize_opts *opts = _ged_facetize_opts_create();
@@ -2671,9 +2671,9 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[0],  "h", "help",          "",  NULL,  &print_help,               "Print help and exit");
     BU_OPT(d[1],  "v", "verbose",       "",  &_ged_vopt,  &(opts->verbosity),  "Verbose output (multiple flags increase verbosity)");
     BU_OPT(d[2],  "q", "quiet",         "",  NULL,  &(opts->quiet),            "Suppress all output (overrides verbose flag)");
-    BU_OPT(d[3],  "",  "nmgbool",       "",  NULL,  &(opts->nmgbool),          "Use the standard libnmg boolean mesh evaluation to create output (Default)");
-    BU_OPT(d[4],  "",  "continuation",  "",  NULL,  &(opts->continuation),     "Use the Continuation Method to sample the object and create output");
-    BU_OPT(d[5],  "",  "poisson",       "",  NULL,  &(opts->screened_poisson), "Use raytraced points and SPSR to create output - run -h --poisson to see more options for this mode");
+    BU_OPT(d[3],  "",  "NMG",           "",  NULL,  &(opts->nmgbool),          "Use the standard libnmg boolean mesh evaluation to create output (Default)");
+    BU_OPT(d[4],  "",  "CM",            "",  NULL,  &(opts->continuation),     "Use the Continuation Method to sample the object and create output");
+    BU_OPT(d[5],  "",  "SPSR",          "",  NULL,  &(opts->screened_poisson), "Use raytraced points and SPSR to create output - run -h --SPSR to see more options for this mode");
     BU_OPT(d[6],  "n", "NMG",           "",  NULL,  &(opts->make_nmg),         "Create an N-Manifold Geometry (NMG) object (default is to create a triangular BoT mesh)");
     BU_OPT(d[7],  "",  "TNURB",         "",  NULL,  &(opts->nmg_use_tnurbs),   "Create TNURB faces rather than planar approximations (experimental)");
     BU_OPT(d[8],  "T", "triangles",     "",  NULL,  &(opts->triangulate),      "Generate a NMG solid using only triangles (BoTs, the default output, can only use triangles - this option mimics that behavior for NMG output.)");

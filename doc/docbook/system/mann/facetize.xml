@@ -25,13 +25,13 @@
       <arg choice="opt" rep="norepeat">-r</arg>
       <arg choice="opt" rep="norepeat">-n</arg>
       <arg choice="opt" rep="norepeat">-T</arg>
-      <arg choice="opt" rep="norepeat">--nmgbool</arg>
-      <arg choice="opt" rep="norepeat">--continuation</arg>
-      <arg choice="opt" rep="norepeat">--poisson</arg>
+      <arg choice="opt" rep="norepeat">--NMG</arg>
+      <arg choice="opt" rep="norepeat">--CM</arg>
+      <arg choice="opt" rep="norepeat">--SPSR</arg>
       <arg choice="req" rep="norepeat"><replaceable>old_object new_object</replaceable></arg>
     </cmdsynopsis>
     <cmdsynopsis sepchar=" ">
-      <command>facetize --continuation</command>
+      <command>facetize --CM</command>
       <arg choice="opt" rep="norepeat">--feature-scale</arg>
       <arg choice="opt" rep="norepeat">--feature-size</arg>
       <arg choice="opt" rep="norepeat">--decimation-feature-size</arg>
@@ -40,7 +40,7 @@
       <arg choice="req" rep="norepeat"><replaceable>old_object new_object</replaceable></arg>
     </cmdsynopsis>
     <cmdsynopsis sepchar=" ">
-      <command>facetize --poisson</command>
+      <command>facetize --SPSR</command>
       <arg choice="opt" rep="norepeat">-d</arg>
       <arg choice="opt" rep="norepeat">-w</arg>
       <arg choice="opt" rep="norepeat">--samples-per-node</arg>
@@ -133,7 +133,7 @@
 	any fallback conversion methods.
       </para>
       <para>
-	<prompt>mged&gt;</prompt> <userinput>facetize -r --nmgbool model model.f</userinput>
+	<prompt>mged&gt;</prompt> <userinput>facetize -r --NMG model model.f</userinput>
       </para>
     </example>
 
@@ -163,8 +163,8 @@
       the existing geometry.  When it succeeds, NMG's output is generally the best quality output that
       can be produced by any of BRL-CAD's available facetization methods.  If NMG booleans fail, a fall-back method based
       on Bloomenthal's continuation method (CM) polygonalizer will be attempted by default.Note
-      that if any of the methodology flags (<emphasis>--nmgbool</emphasis>,<emphasis>--continuation</emphasis>,
-      or <emphasis>--poisson</emphasis>) are explicitly enabled, the other methodologies will be disabled unless they
+      that if any of the methodology flags (<emphasis>--NMG</emphasis>,<emphasis>--CM</emphasis>,
+      or <emphasis>--SPSR</emphasis>) are explicitly enabled, the other methodologies will be disabled unless they
       too are explicitly enabled.
     </para>
     <para>
@@ -199,7 +199,7 @@
       Both NMG and CM assume a geometry hierarchy containing only
       valid solid objects.  Both methods will refuse to process any tree containing recognizably
       non-solid objects, as these tend to cause run-time problems and generate invalid outputs.  For non-solid
-      objects, the "--poisson" methodology may be enabled - it will apply the Kazhdan et. al. Screened Poisson Surface
+      objects, the "--SPSR" methodology may be enabled - it will apply the Kazhdan et. al. Screened Poisson Surface
       Reconstruction (SPSR) process to a pseudo-randomly sampled point set generated from <emphasis>old_object</emphasis>.  This
       methodology may not cope well with the type of points sets generated from CAD geometry and is off
       by default in normal <command>facetize</command> processing, but it is also the only currently available
