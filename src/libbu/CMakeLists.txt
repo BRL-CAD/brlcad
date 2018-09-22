@@ -32,6 +32,7 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/m
 include(${CMAKE_CURRENT_SOURCE_DIR}/mime.cmake)
 
 # We do want to install the mime header
+set_source_files_properties("${BU_MIME_TYPES_H_FILE}" PROPERTIES GENERATED TRUE)
 BUILD_CFG_HDR("${BU_MIME_TYPES_H_FILE}" ${INCLUDE_DIR}/brlcad/bu)
 
 # Year 2038+ support
