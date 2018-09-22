@@ -25,9 +25,11 @@
 #include "common.h"
 
 #include <set>
+#include <map>
 
 extern "C" {
 #include "bu/opt.h"
+#include "bg/trimesh.h"
 #include "raytrace.h"
 #include "./ged_private.h"
 }
@@ -36,7 +38,7 @@ struct _ged_lint_opts {
     int verbosity;
     int cyclic_check;
     int missing_check;
-    int non_solid_check;
+    int invalid_shape_check;
 };
 
 struct _ged_lint_opts *
@@ -47,7 +49,7 @@ _ged_lint_opts_create()
     o->verbosity = 0;
     o->cyclic_check = 0;
     o->missing_check = 0;
-    o->non_solid_check = 0;
+    o->invalid_shape_check = 0;
     return o;
 }
 
@@ -68,11 +70,11 @@ _ged_lint_opts_verify(struct _ged_lint_opts *o)
     if (!o) return;
     if (o->cyclic_check) checks_set = 1;
     if (o->missing_check) checks_set = 1;
-    if (o->non_solid_check) checks_set = 1;
+    if (o->invalid_shape_check) checks_set = 1;
     if (!checks_set) {
 	o->cyclic_check = 1;
 	o->missing_check = 1;
-	o->non_solid_check = 1;
+	o->invalid_shape_check = 1;
     }
 }
 
@@ -87,6 +89,17 @@ struct _ged_missing_data {
     std::set<std::string> missing;
 };
 
+struct invalid_obj {
+    std::string name;
+    std::string type;
+    std::string error;
+};
+
+struct _ged_invalid_data {
+    struct ged *gedp;
+    std::set<struct directory *> invalid_dps;
+    std::map<struct directory *, struct invalid_obj> invalid_msgs;
+};
 
 /* Because lint is intended to be a deep inspection of the .g looking for problems,
  * we need to do this check using the low level tree walk rather than operating on
@@ -289,14 +302,81 @@ _ged_missing_check(struct _ged_missing_data *mdata, struct ged *gedp, int argc, 
     return ret;
 }
 
+void
+_ged_invalid_prim_check(struct _ged_invalid_data *idata, struct ged *gedp, struct directory *dp)
+{
+    struct invalid_obj obj;
+    struct rt_db_internal intern;
+    struct rt_bot_internal *bot;
+    int not_valid = 0;
+    if (!idata || !gedp || !dp) return;
+
+    /* Comb validity is handled separately */
+    if (dp->d_flags & RT_DIR_COMB) return;
+
+    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) return;
+    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD) {
+	rt_db_free_internal(&intern);
+	return;
+    }
+
+    switch (intern.idb_minor_type) {
+	case DB5_MINORTYPE_BRLCAD_BOT:
+	    bot = (struct rt_bot_internal *)intern.idb_ptr;
+	    RT_BOT_CK_MAGIC(bot);
+	    if (bot->mode != RT_BOT_PLATE && bot->mode != RT_BOT_PLATE_NOCOS) {
+		not_valid = bg_trimesh_solid2((int)bot->num_vertices, (int)bot->num_faces, bot->vertices, bot->faces, NULL);
+		if (not_valid) {
+		    obj.name = std::string(dp->d_namep);
+		    obj.type= std::string("bot");
+		    obj.error = std::string("failed bot solid test");
+		}
+	    }
+	    break;
+	default:
+	    break;
+    }
+
+    if (not_valid) {
+	idata->invalid_dps.insert(dp);
+	idata->invalid_msgs.insert(std::pair<struct directory *, struct invalid_obj>(dp, obj));
+    }
+
+    rt_db_free_internal(&intern);
+}
+
 int
-_ged_non_solid_check(struct ged *gedp, int argc, struct directory **dpa)
+_ged_invalid_shape_check(struct _ged_invalid_data *idata, struct ged *gedp, int argc, struct directory **dpa)
 {
     int ret = GED_OK;
-    if (!gedp) return GED_ERROR;
+    struct directory *dp;
     if (argc) {
+	unsigned int i;
+	struct bu_ptbl *pc = NULL;
+	const char *osearch = "! -type comb";
 	if (!dpa) return GED_ERROR;
+	BU_ALLOC(pc, struct bu_ptbl);
+	if (db_search(pc, DB_SEARCH_RETURN_UNIQ_DP, osearch, argc, dpa, gedp->ged_wdbp->dbip, NULL) < 0) {
+	    ret = GED_ERROR;
+	    bu_ptbl_free(pc);
+	    bu_free(pc, "pc table");
+	} else {
+	    for (i = 0; i < BU_PTBL_LEN(pc); i++) {
+		dp = (struct directory *)BU_PTBL_GET(pc, i);
+		_ged_invalid_prim_check(idata, gedp, dp);
+	    }
+	    bu_ptbl_free(pc);
+	    bu_free(pc, "pc table");
+	}
+    } else {
+	int i;
+	for (i = 0; i < RT_DBNHASH; i++) {
+	    for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+		_ged_invalid_prim_check(idata, gedp, dp);
+	    }
+	}
     }
+
     return ret;
 }
 
@@ -313,6 +393,7 @@ ged_lint(struct ged *gedp, int argc, const char *argv[])
     int nonexist_obj_cnt = 0;
     struct _ged_cyclic_data *cdata = NULL;
     struct _ged_missing_data *mdata = new struct _ged_missing_data;
+    struct _ged_invalid_data *idata = new struct _ged_invalid_data;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
@@ -323,7 +404,7 @@ ged_lint(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[1],  "v", "verbose",       "",  &_ged_vopt,  &(opts->verbosity),  "Verbose output (multiple flags increase verbosity)");
     BU_OPT(d[2],  "C", "cyclic",        "",  NULL,  &(opts->cyclic_check),     "Check for cyclic paths (combs whose children reference their parents - potential for infinite looping)");
     BU_OPT(d[3],  "M", "missing",       "",  NULL,  &(opts->missing_check),    "Check for objects reference by combs that are not in the database");
-    BU_OPT(d[4],  "S", "non-solid",     "",  NULL,  &(opts->non_solid_check),  "Check for objects that are intended to be solid but do not satisfy that criteria (for example, non-solid BoTs)");
+    BU_OPT(d[4],  "I", "invalid-shape", "",  NULL,  &(opts->invalid_shape_check),  "Check for objects that are intended to be valid shapes but do not satisfy that criteria (examples include non-solid BoTs and twisted arbs)");
     BU_OPT_NULL(d[5]);
 
     /* skip command name argv[0] */
@@ -393,11 +474,22 @@ ged_lint(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    if (opts->non_solid_check) {
-	ret = _ged_non_solid_check(gedp, argc, dpa);
+    if (opts->invalid_shape_check) {
+	ret = _ged_invalid_shape_check(idata, gedp, argc, dpa);
 	if (ret != GED_OK) {
 	    goto ged_lint_memfree;
 	}
+	if (idata->invalid_dps.size()) {
+	    std::set<struct directory *>::iterator d_it;
+	    bu_vls_printf(gedp->ged_result_str, "Found invalid objects:\n");
+	    for (d_it = idata->invalid_dps.begin(); d_it != idata->invalid_dps.end(); d_it++) {
+		struct directory *dp = *d_it;
+		struct invalid_obj msgdata = idata->invalid_msgs.find(dp)->second;
+		std::string msg = msgdata.name + std::string("[") + msgdata.type + std::string("] ") + msgdata.error;
+		bu_vls_printf(gedp->ged_result_str, "  %s\n", msg.c_str());
+	    }
+	}
+
     }
 
 ged_lint_memfree:
