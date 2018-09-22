@@ -24,6 +24,8 @@
 
 #include "common.h"
 
+#include <set>
+
 extern "C" {
 #include "bu/opt.h"
 #include "raytrace.h"
@@ -78,6 +80,13 @@ struct _ged_cyclic_data {
     struct ged *gedp;
     struct bu_ptbl *paths;
 };
+
+
+struct _ged_missing_data {
+    struct ged *gedp;
+    std::set<std::string> missing;
+};
+
 
 /* Because lint is intended to be a deep inspection of the .g looking for problems,
  * we need to do this check using the low level tree walk rather than operating on
@@ -201,14 +210,82 @@ _ged_cyclic_check(struct _ged_cyclic_data *cdata, struct ged *gedp, int argc, st
     return ret;
 }
 
-int
-_ged_missing_check(struct ged *gedp, int argc, struct directory **dpa)
+HIDDEN void
+_ged_lint_comb_find_invalid(struct _ged_missing_data *mdata, const char *parent, struct db_i *dbip, union tree *tp)
 {
+    if (!tp) return;
+
+    RT_CHECK_DBI(dbip);
+    RT_CK_TREE(tp);
+
+    switch (tp->tr_op) {
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+	    _ged_lint_comb_find_invalid(mdata, parent, dbip, tp->tr_b.tb_right);
+	    /* fall through */
+	case OP_NOT:
+	case OP_GUARD:
+	case OP_XNOP:
+	    _ged_lint_comb_find_invalid(mdata, parent, dbip, tp->tr_b.tb_left);
+	    break;
+	case OP_DB_LEAF:
+	    if (db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_QUIET) == RT_DIR_NULL) {
+		std::string inst = std::string(parent) + std::string("/") + std::string(tp->tr_l.tl_name);
+		mdata->missing.insert(inst);
+	    }
+	    break;
+	default:
+	    bu_log("_ged_lint_comb_find_invalid: unrecognized operator %d\n", tp->tr_op);
+	    bu_bomb("_ged_lint_comb_find_invalid\n");
+    }
+}
+
+int
+_ged_missing_check(struct _ged_missing_data *mdata, struct ged *gedp, int argc, struct directory **dpa)
+{
+    struct directory *dp;
     int ret = GED_OK;
     if (!gedp) return GED_ERROR;
     if (argc) {
+	unsigned int i;
+	struct bu_ptbl *pc = NULL;
+	const char *osearch = "-type comb";
 	if (!dpa) return GED_ERROR;
-    }	
+	BU_ALLOC(pc, struct bu_ptbl);
+	if (db_search(pc, DB_SEARCH_RETURN_UNIQ_DP, osearch, argc, dpa, gedp->ged_wdbp->dbip, NULL) < 0) {
+	    ret = GED_ERROR;
+	    bu_ptbl_free(pc);
+	    bu_free(pc, "pc table");
+	} else {
+	    for (i = 0; i < BU_PTBL_LEN(pc); i++) {
+		dp = (struct directory *)BU_PTBL_GET(pc, i);
+		if (dp->d_flags & RT_DIR_COMB) {
+		    struct rt_db_internal in;
+		    struct rt_comb_internal *comb;
+		    if (rt_db_get_internal(&in, dp, gedp->ged_wdbp->dbip, NULL, &rt_uniresource) < 0) continue;
+		    comb = (struct rt_comb_internal *)in.idb_ptr;
+		    _ged_lint_comb_find_invalid(mdata, dp->d_namep, gedp->ged_wdbp->dbip, comb->tree);
+		}
+	    }
+	    bu_ptbl_free(pc);
+	    bu_free(pc, "pc table");
+	}
+    } else {
+	int i;
+	for (i = 0; i < RT_DBNHASH; i++) {
+	    for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+		if (dp->d_flags & RT_DIR_COMB) {
+		    struct rt_db_internal in;
+		    struct rt_comb_internal *comb;
+		    if (rt_db_get_internal(&in, dp, gedp->ged_wdbp->dbip, NULL, &rt_uniresource) < 0) continue;
+		    comb = (struct rt_comb_internal *)in.idb_ptr;
+		    _ged_lint_comb_find_invalid(mdata, dp->d_namep, gedp->ged_wdbp->dbip, comb->tree);
+		}
+	    }
+	}
+    }
     return ret;
 }
 
@@ -219,7 +296,7 @@ _ged_non_solid_check(struct ged *gedp, int argc, struct directory **dpa)
     if (!gedp) return GED_ERROR;
     if (argc) {
 	if (!dpa) return GED_ERROR;
-    }	
+    }
     return ret;
 }
 
@@ -235,6 +312,7 @@ ged_lint(struct ged *gedp, int argc, const char *argv[])
     struct directory **dpa = NULL;
     int nonexist_obj_cnt = 0;
     struct _ged_cyclic_data *cdata = NULL;
+    struct _ged_missing_data *mdata = new struct _ged_missing_data;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
@@ -299,9 +377,19 @@ ged_lint(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (opts->missing_check) {
-	ret = _ged_missing_check(gedp, argc, dpa);
+	bu_log("Checking for references to non-extant objects...\n");
+	mdata->gedp = gedp;
+	ret = _ged_missing_check(mdata, gedp, argc, dpa);
 	if (ret != GED_OK) {
 	    goto ged_lint_memfree;
+	}
+	if (mdata->missing.size()) {
+	    std::set<std::string>::iterator s_it;
+	    bu_vls_printf(gedp->ged_result_str, "Found references to missing objects:\n");
+	    for (s_it = mdata->missing.begin(); s_it != mdata->missing.end(); s_it++) {
+		std::string mstr = *s_it;
+		bu_vls_printf(gedp->ged_result_str, "  %s\n", mstr.c_str());
+	    }
 	}
     }
 
@@ -323,6 +411,9 @@ ged_lint_memfree:
 	BU_PUT(cdata->paths, struct bu_ptbl);
 	BU_PUT(cdata, struct _ged_cyclic_data);
     }
+
+    delete mdata;
+
     if (dpa) bu_free(dpa, "dp array");
 
     return ret;
