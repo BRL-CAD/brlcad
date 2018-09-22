@@ -55,6 +55,10 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
+* tree command shouldn't infinite loop when encountering a cyclic
+  path - need to print a warning and stop walking.  Requries full
+  path awareness in tree command walk.
+
 * move the rt_*_timer timing facilities to libbu and rework to allow
   contexts, allowing for more than one timer to be active.  Make sure
   the old librt API can be obsoleted cleanly.
