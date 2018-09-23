@@ -302,6 +302,9 @@ _ged_missing_check(struct _ged_missing_data *mdata, struct ged *gedp, int argc, 
     return ret;
 }
 
+/* Someday, when we have parametric constraint evaluation for parameters for primitives, we can hook
+ * that into this logic as well... for now, run various special-case routines that are available to
+ * spot various categories of problematic primtivies. */
 void
 _ged_invalid_prim_check(struct _ged_invalid_data *idata, struct ged *gedp, struct directory *dp)
 {
@@ -313,6 +316,7 @@ _ged_invalid_prim_check(struct _ged_invalid_data *idata, struct ged *gedp, struc
     struct db5_raw_internal raw;
     unsigned char *cp;
     char datasrc;
+    char *sketch_name;
     struct bu_vls dsp_name = BU_VLS_INIT_ZERO;
     if (!idata || !gedp || !dp) return;
 
@@ -343,7 +347,7 @@ _ged_invalid_prim_check(struct _ged_invalid_data *idata, struct ged *gedp, struc
 	    rt_db_free_internal(&intern);
 	    break;
 	case DB5_MINORTYPE_BRLCAD_DSP:
-	    /* For DSP we can't do a full import, since the potential invalidity we're looking to detect will cause
+	    /* For DSP we can't do a full import up front, since the potential invalidity we're looking to detect will cause
 	     * the import to fail.  Partially crack it, enough to where we can get what we need */
 	    if (db_get_external(&ext, dp, gedp->ged_wdbp->dbip) < 0) return;
 	    if (db5_get_raw_internal_ptr(&raw, ext.ext_buf) == NULL) {
@@ -372,6 +376,25 @@ _ged_invalid_prim_check(struct _ged_invalid_data *idata, struct ged *gedp, struc
 		}
 	    }
 	    bu_vls_free(&dsp_name);
+	    bu_free_external(&ext);
+	    break;
+	case DB5_MINORTYPE_BRLCAD_EXTRUDE:
+	    /* For EXTRUDE we can't do a full import up front, since the potential invalidity we're looking to detect will cause
+	     * the import to fail.  Partially crack it, enough to where we can get what we need */
+	    if (db_get_external(&ext, dp, gedp->ged_wdbp->dbip) < 0) return;
+            if (db5_get_raw_internal_ptr(&raw, ext.ext_buf) == NULL) {
+                bu_free_external(&ext);
+                return;
+            }
+            cp = (unsigned char *)raw.body.ext_buf;
+	    sketch_name = (char *)cp + ELEMENTS_PER_VECT*4*SIZEOF_NETWORK_DOUBLE + SIZEOF_NETWORK_LONG;
+	    if (db_lookup(gedp->ged_wdbp->dbip, sketch_name, LOOKUP_QUIET) == RT_DIR_NULL) {
+		obj.name = std::string(dp->d_namep);
+		obj.type= std::string("dsp");
+		obj.error = std::string("lists nonextant sketch object '") + std::string(sketch_name) + std::string("' as its data source");
+		not_valid = 1;
+	    }
+	    // TODO - check for empty sketch as well
 	    bu_free_external(&ext);
 	    break;
 	default:
