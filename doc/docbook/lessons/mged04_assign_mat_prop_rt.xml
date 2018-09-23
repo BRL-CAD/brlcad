@@ -2,7 +2,7 @@
   <info><title>Assigning Material Properties and Raytracing in <application>MGED</application></title>
 
 
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../books/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
 
     <legalnotice>
        <para>Approved for public release; distribution is unlimited</para>
@@ -166,10 +166,10 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" fileref="../../lessons/en/images/mged04_commandwindow.png" format="PNG"/>
+	    <imagedata align="center" fileref="../../lessons/images/mged04_commandwindow.png" format="PNG"/>
 	  </imageobject>
 	  <imageobject role="fo">
-	    <imagedata align="center" fileref="../../lessons/en/images/mged04_commandwindow.png" format="PNG"/>
+	    <imagedata align="center" fileref="../../lessons/images/mged04_commandwindow.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -283,10 +283,10 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" fileref="../../lessons/en/images/mged04_raytracedshapes.png" format="PNG"/>
+	    <imagedata align="center" fileref="../../lessons/images/mged04_raytracedshapes.png" format="PNG"/>
 	  </imageobject>
 	  <imageobject role="fo">
-	    <imagedata align="center" fileref="../../lessons/en/images/mged04_raytracedshapes.png" format="PNG"/>
+	    <imagedata align="center" fileref="../../lessons/images/mged04_raytracedshapes.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -337,8 +337,8 @@
 	<tgroup cols="2">
 	  <tbody>
 	    <row>
-	      <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../lessons/en/images/mged04_raytracedshapes.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../lessons/en/images/mged04_raytracedshapes.png"/></imageobject></inlinemediaobject></entry>
-	      <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../lessons/en/images/mged04_fb_overlay_mode.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../lessons/en/images/mged04_fb_overlay_mode.png"/></imageobject></inlinemediaobject></entry>
+	      <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../lessons/images/mged04_raytracedshapes.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../lessons/images/mged04_raytracedshapes.png"/></imageobject></inlinemediaobject></entry>
+	      <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../lessons/images/mged04_fb_overlay_mode.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../lessons/images/mged04_fb_overlay_mode.png"/></imageobject></inlinemediaobject></entry>
 	    </row>
 	    <row>
 	      <entry>Framebuffer in Underlay Mode</entry>

@@ -319,13 +319,13 @@ Once the frames have been computed, they can be turned into a ``postage stamp an
 <figure>
 <mediaobject>
   <imageobject>
-    <imagedata fileref="../../articles/en/images/moss_sm.gif" width="300"/>
+    <imagedata fileref="../../articles/images/moss_sm.gif" width="300"/>
   </imageobject>
   <textobject><phrase>An illustration of the Pythagorean Theorem</phrase></textobject>
 </mediaobject>
 </figure>
 
-<link  xlink:href="../../articles/en/images/moss.mpg">
+<link  xlink:href="../../articles/images/moss.mpg">
 moss.mpg
 </link>
 </para>
@@ -351,7 +351,7 @@ In BRL-CAD matrices are stored in a traditional mathematics form. This is differ
 <figure>
 <mediaobject>
   <imageobject>
-    <imagedata fileref="../../articles/en/images/matrix.gif" width="100" />
+    <imagedata fileref="../../articles/images/matrix.gif" width="100" />
   </imageobject>
 </mediaobject>
 </figure>
@@ -364,7 +364,7 @@ As a result, points and vectors in 3 dimensional space are represented as 4-tupl
 <figure>
 <mediaobject>
   <imageobject>
-    <imagedata fileref="../../articles/en/images/equation.gif" width="300"/>
+    <imagedata fileref="../../articles/images/equation.gif" width="300"/>
   </imageobject>
 </mediaobject>
 </figure>
@@ -379,7 +379,7 @@ The matrix operations in a BRL-CAD database can be thought of as living in the a
 <figure>
 <mediaobject>
   <imageobject>
-    <imagedata fileref="../../articles/en/images/dagtbl.gif" width="400" />
+    <imagedata fileref="../../articles/images/dagtbl.gif" width="400" />
   </imageobject>
 </mediaobject>
 </figure>
@@ -394,7 +394,7 @@ The program rt would transform the origin (and other parameters) of ``tor'' with
 <figure>
 <mediaobject>
   <imageobject>
-    <imagedata fileref="../../articles/en/images/trans.gif"/>
+    <imagedata fileref="../../articles/images/trans.gif"/>
   </imageobject>
 </mediaobject>
 </figure>
@@ -412,7 +412,7 @@ where Path specifies the arc where the operation takes place. Either a specific 
 <figure>
 <mediaobject>
   <imageobject>
-    <imagedata fileref="../../articles/en/images/animtbl.gif"/>
+    <imagedata fileref="../../articles/images/animtbl.gif"/>
   </imageobject>
 </mediaobject>
 </figure>
@@ -484,7 +484,7 @@ EOF
 <figure>
 <mediaobject>
   <imageobject>
-    <imagedata fileref="../../articles/en/images/transboth.gif"/>
+    <imagedata fileref="../../articles/images/transboth.gif"/>
   </imageobject>
 </mediaobject>
 </figure>
@@ -563,11 +563,11 @@ Doing a little vector math we find the vertex of the ``ellipse.s'' as it is foun
 <figure>
 <mediaobject>
   <imageobject>
-    <imagedata fileref="../../articles/en/images/v_eqn1.gif" width="300"/>
+    <imagedata fileref="../../articles/images/v_eqn1.gif" width="300"/>
   </imageobject>
 </mediaobject>
 </figure>
-<link  xlink:href="../../articles/en/images/ell.mpg">
+<link  xlink:href="../../articles/images/ell.mpg">
 ell.mpg
 </link>
 
@@ -578,7 +578,7 @@ Now we subtract this from the origin of ``tor'' to get a vector that will transl
 <figure>
 <mediaobject>
   <imageobject>
-    <imagedata fileref="../../articles/en/images/v_eqn2.gif" width="400"/>
+    <imagedata fileref="../../articles/images/v_eqn2.gif" width="400"/>
   </imageobject>
 </mediaobject>
 </figure>
@@ -702,7 +702,7 @@ Once again, a postage stamp animation can be created to view the positioning and
 <figure>
 <mediaobject>
   <imageobject>
-    <imagedata fileref="../../articles/en/images/ell_sm.gif" scale="50"/>
+    <imagedata fileref="../../articles/images/ell_sm.gif" scale="50"/>
   </imageobject>
 </mediaobject>
 </figure>

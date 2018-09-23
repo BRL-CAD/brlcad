@@ -831,42 +831,42 @@
       <itemizedlist>
         <listitem>
           <para>
-        <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeI.php">BRL-CAD Tutorial Series-VolumeI</link>
+        <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeI.php">BRL-CAD Tutorial Series-VolumeI</link>
           </para>
           <itemizedlist>
             <listitem>
               <para>
-              <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeI.php#whatisbrlcad">What is Brlcad ?</link>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeI.php#whatisbrlcad">What is Brlcad ?</link>
               </para>
             </listitem>
             <listitem>
               <para>
-              <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeI.php#whycsg">Why CSG Modeling?</link>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeI.php#whycsg">Why CSG Modeling?</link>
               </para>
             </listitem>
             <listitem>
               <para>
-              <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeI.php#packagecontent">Package Content</link>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeI.php#packagecontent">Package Content</link>
               </para>
             </listitem>
             <listitem>
               <para>
-              <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeI.php#libraries">Libraries</link>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeI.php#libraries">Libraries</link>
               </para>
             </listitem>
             <listitem>
               <para>
-              <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeI.php#toolsutilities">Tools Utilities</link>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeI.php#toolsutilities">Tools Utilities</link>
               </para>
             </listitem>
             <listitem>
               <para>
-              <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeI.php#benchmarkingimages"> Benchmark Testing</link>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeI.php#benchmarkingimages"> Benchmark Testing</link>
               </para>
             </listitem>
             <listitem>
               <para>
-              <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeI.php#acknowledgments">Acknowledgments</link>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeI.php#acknowledgments">Acknowledgments</link>
               </para>
             </listitem>
 
@@ -874,727 +874,727 @@
         </listitem>
     <listitem>
       <para>
-      <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php">BRL-CAD Tutorial Series-VolumeII</link>
+      <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php">BRL-CAD Tutorial Series-VolumeII</link>
       </para>
       <itemizedlist>
         <listitem>
           <para>
-          <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#Preface">Preface</link>
+          <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#Preface">Preface</link>
           </para>
         </listitem>
         <listitem>
           <para>
-          <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#Acknowledgments">Acknowledgments</link>
+          <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#Acknowledgments">Acknowledgments</link>
           </para>
         </listitem>
         <listitem>
           <para>
-          <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-1">Creating Primitive Shapes</link>
+          <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-1">Creating Primitive Shapes</link>
           </para>
           <itemizedlist>
             <listitem>
               <para>
-              <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#launching_mged">Launching the MGED Program</link>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#launching_mged">Launching the MGED Program</link>
               </para>
             </listitem>
             <listitem>
               <para>
-              <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#entering_commands">Entering Commands</link>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#entering_commands">Entering Commands</link>
               </para>
             </listitem>
             <listitem>
               <para>
-              <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#using_gui">Using Gui</link>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#using_gui">Using Gui</link>
               </para>
             </listitem>
             <listitem>
               <para>
-              <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#open_new_database">Open New Database</link>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#open_new_database">Open New Database</link>
               </para>
             </listitem>
             <listitem>
               <para>
-              <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#create_new_database">Create New Database</link>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#create_new_database">Create New Database</link>
               </para>
             </listitem>
             <listitem>
               <para>
-              <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#assign_title">Assign Title</link>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#assign_title">Assign Title</link>
               </para>
             </listitem>
             <listitem>
               <para>
-              <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#set_units">Set Units</link>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#set_units">Set Units</link>
               </para>
             </listitem>
             <listitem>
               <para>
-              <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#select_primitive">Select Primitive</link>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#select_primitive">Select Primitive</link>
               </para>
             </listitem>
             <listitem>
               <para>
-              <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#create_sphere_cmd_line">Create Sphere Cmd Line</link>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#create_sphere_cmd_line">Create Sphere Cmd Line</link>
               </para>
             </listitem>
             <listitem>
               <para>
-              <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#clear_window">Clear Window</link>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#clear_window">Clear Window</link>
               </para>
             </listitem>
             <listitem>
               <para>
-              <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#draw_object">Draw Object</link>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#draw_object">Draw Object</link>
               </para>
             </listitem>
             <listitem>
               <para>
-              <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#erase_from_window">Erase From Window</link>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#erase_from_window">Erase From Window</link>
               </para>
             </listitem>
             <listitem>
               <para>
-              <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#create_sphere_gui">Create Sphere Gui</link>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#create_sphere_gui">Create Sphere Gui</link>
               </para>
             </listitem>
             <listitem>
               <para>
-              <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#view_params">View Params</link>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#view_params">View Params</link>
               </para>
             </listitem>
             <listitem>
               <para>
-              <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#list_db_contents">List db Contents</link>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#list_db_contents">List db Contents</link>
               </para>
             </listitem>
             <listitem>
               <para>
-              <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#kill_object">Kill Object</link>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#kill_object">Kill Object</link>
               </para>
             </listitem>
             <listitem>
               <para>
-              <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#editing_commands">Editing Commands</link>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#editing_commands">Editing Commands</link>
               </para>
             </listitem>
             <listitem>
               <para>
-              <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#quitting">Quitting</link>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#quitting">Quitting</link>
               </para>
             </listitem>
             <listitem>
               <para>
-              <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#creating_primitive_shapes_review">Creating Primitive Shapes Review</link>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#creating_primitive_shapes_review">Creating Primitive Shapes Review</link>
               </para>
             </listitem>
           </itemizedlist>
         </listitem>
       <listitem>
         <para>
-        <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-2"> Learning the Viewing Options</link>
+        <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-2"> Learning the Viewing Options</link>
         </para>
       <itemizedlist>
       <listitem>
         <para>
-        <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#creating_radio">Creating Radio</link>
+        <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#creating_radio">Creating Radio</link>
         </para>
       </listitem>
       <listitem>
         <para>
-        <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#locating_viewing_info_cmd_window">Locating Viewing info Cmd Window</link>
+        <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#locating_viewing_info_cmd_window">Locating Viewing info Cmd Window</link>
         </para>
       </listitem>
       <listitem>
         <para>
-        <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#entering_commands">Entering Commands</link>
+        <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#entering_commands">Entering Commands</link>
         </para>
       </listitem>
       <listitem>
         <para>
-        <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#entering_commands">Entering Commands</link>
+        <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#entering_commands">Entering Commands</link>
         </para>
       </listitem>
       <listitem>
         <para>
-        <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#coord_sys_summary">Coord sys Summary</link>
+        <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#coord_sys_summary">Coord sys Summary</link>
         </para>
       </listitem>
       <listitem>
         <para>
-        <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#view_radio_angles">View Radio Angles</link>
+        <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#view_radio_angles">View Radio Angles</link>
         </para>
       </listitem>
       <listitem>
         <para>
-        <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#shift_grips">Shift Grips</link>
+        <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#shift_grips">Shift Grips</link>
         </para>
       </listitem>
       <listitem>
         <para>
-        <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#learning_viewing_options_review">Learning viewing options Review</link>
+        <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#learning_viewing_options_review">Learning viewing options Review</link>
         </para>
       </listitem>
       </itemizedlist>
       </listitem>
       <listitem>
         <para>
-        <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#Lessons-3">Using the Insert Command to Size and Place Shapes</link>
+        <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#Lessons-3">Using the Insert Command to Size and Place Shapes</link>
         </para>
        <itemizedlist>
       <listitem>
         <para>
-        <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#new_db_myShapes">New db MyShapes</link>
+        <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#new_db_myShapes">New db MyShapes</link>
         </para>
       </listitem>
       <listitem>
         <para>
-        <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#sphere_make">Sphere Make</link>
+        <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#sphere_make">Sphere Make</link>
         </para>
       </listitem>
       <listitem>
         <para>
-        <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#using_in">Using in</link>
+        <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#using_in">Using in</link>
         </para>
       </listitem>
       <listitem>
         <para>
-        <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#args_on_one_line">Args on one Line</link>
+        <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#args_on_one_line">Args on one Line</link>
         </para>
       </listitem>
       <listitem>
         <para>
-        <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#command_combined_in">Command Combined in</link>
+        <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#command_combined_in">Command Combined in</link>
         </para>
       </listitem>
       <listitem>
         <para>
-        <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#mged_naming_conventions">Mged Naming Conventions</link>
+        <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#mged_naming_conventions">Mged Naming Conventions</link>
         </para>
       </listitem>
       <listitem>
         <para>
-        <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#view_shapes">View Shapes</link>
+        <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#view_shapes">View Shapes</link>
         </para>
       </listitem>
       <listitem>
         <para>
-        <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#using_insert_command_quit">Using insert command quit</link>
+        <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#using_insert_command_quit">Using insert command quit</link>
         </para>
       </listitem>
       <listitem>
         <para>
-        <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#using_insert_command_review">using insert command review</link>  </para>
+        <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#using_insert_command_review">using insert command review</link>  </para>
       </listitem>
 </itemizedlist>
 </listitem>
 <listitem>
 <para>
-<link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-4">Assigning Material Properties and Raytracing</link>
+<link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-4">Assigning Material Properties and Raytracing</link>
 </para>
 <itemizedlist>
 <listitem>
 <para>
-<link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#assigning_material_properties_and_raytracing_opendb">Assigning material properties and raytracing opendb</link>
+<link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#assigning_material_properties_and_raytracing_opendb">Assigning material properties and raytracing opendb</link>
 </para>
 </listitem>
 <listitem>
 <para>
-<link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#create_region">Create Region</link>
+<link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#create_region">Create Region</link>
 </para>
 </listitem>
 <listitem>
 <para>
-<link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#assign_material_prop">Assign Material Prop</link>
+<link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#assign_material_prop">Assign Material Prop</link>
 </para>
 </listitem>
 <listitem>
 <para>
-<link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#clear_window_new_region">Clear Window New Region</link>
+<link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#clear_window_new_region">Clear Window New Region</link>
 </para>
 </listitem>
 <listitem>
 <para>
-<link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#raytrace_model">Raytrace Model</link>
+<link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#raytrace_model">Raytrace Model</link>
 </para>
 </listitem>
 <listitem>
 <para>
-<link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#layers_graphics_window">Layers Graphics Window</link>
+<link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#layers_graphics_window">Layers Graphics Window</link>
 </para>
 </listitem>
 <listitem>
 <para>
-<link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#clear_graphics_window">Clear Graphics Window</link>
+<link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#clear_graphics_window">Clear Graphics Window</link>
 </para>
 </listitem>
 <listitem>
 <para>
-<link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#assigning_material_properties_and_raytracing_review">Review</link>
+<link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#assigning_material_properties_and_raytracing_review">Review</link>
 </para>
 </listitem>
 </itemizedlist>
 </listitem>
 <listitem>
 <para>
-<link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-5">Learning About Boolean Expressions</link>
+<link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-5">Learning About Boolean Expressions</link>
 </para>
 <itemizedlist>
 <listitem>
 <para>
-<link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#boolean_tools">Boolean Tools</link>
+<link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#boolean_tools">Boolean Tools</link>
 </para>
 </listitem>
 <listitem>
 <para>
-<link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#making_regions_bool_ops">Making regions bool ops</link>
+<link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#making_regions_bool_ops">Making regions bool ops</link>
 </para>
 </listitem>
 <listitem>
 <para>
-<link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#operator_precedence">Operator Precedence</link>
+<link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#operator_precedence">Operator Precedence</link>
 </para>
 </listitem>
 <listitem>
 <para>
-<link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#learning_boolean_operations_review">Review</link>
+<link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#learning_boolean_operations_review">Review</link>
 </para>
 </listitem>
 </itemizedlist>
 </listitem>
 <listitem>
 <para>
-<link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-6">Creating a Goblet</link>
+<link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-6">Creating a Goblet</link>
 </para>
 <itemizedlist>
 <listitem>
 <para>
-<link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#goblet_new_database">Goblet New Database</link>
+<link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#goblet_new_database">Goblet New Database</link>
 </para>
 </listitem>
 <listitem>
 <para>
-<link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#goblet_view_data_tree">Goblet view Data Tree</link>
+<link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#goblet_view_data_tree">Goblet view Data Tree</link>
 </para>
 </listitem>
 <listitem>
 <para>
-<link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#raytracing_goblet">Raytracing Goblet</link>
+<link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#raytracing_goblet">Raytracing Goblet</link>
 </para>
 </listitem>
 <listitem>
 <para>
-<link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#creating_goblet_review">Creating Goblet Review</link>
+<link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#creating_goblet_review">Creating Goblet Review</link>
 </para>
 </listitem>
 <listitem>
 <para>
-<link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#making_goblet_regions">Making Goblet Regions</link>
+<link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#making_goblet_regions">Making Goblet Regions</link>
 </para>
 </listitem>
 <listitem>
 <para>
-<link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#making_goblet_region_comb">Making Goblet Region Comb</link>
+<link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#making_goblet_region_comb">Making Goblet Region Comb</link>
 </para>
 </listitem>
 <listitem>
 <para>
-<link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#making_goblet_region_comb">Making Goblet Region Comb</link>
+<link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#making_goblet_region_comb">Making Goblet Region Comb</link>
 </para>
 </listitem>
 </itemizedlist>
 </listitem>
 <listitem>
 <para>
-<link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-8"> Assigning Material Properties to Your Goblet</link>
+<link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-8"> Assigning Material Properties to Your Goblet</link>
 </para>
 <itemizedlist>
   <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#goblet_review_opening_db">Goblet review opening db</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#goblet_review_opening_db">Goblet review opening db</link>
   </para>
   </listitem>
   <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#goblet_assign_colors">Goblet assign colors</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#goblet_assign_colors">Goblet assign colors</link>
   </para>
   </listitem>
   <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#goblet_transparency_mirror">Goblet transparency mirror</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#goblet_transparency_mirror">Goblet transparency mirror</link>
   </para>
   </listitem>
   <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#goblet_newforms_raytrace">Goblet newforms Raytrace</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#goblet_newforms_raytrace">Goblet newforms Raytrace</link>
   </para>
   </listitem>
   <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#goblet_material_properties_review">Goblet material properties review</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#goblet_material_properties_review">Goblet material properties review</link>
   </para>
   </listitem>
 </itemizedlist>
 </listitem>
 <listitem>
 <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson">Assigning More Material Properties to Your Goblet</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson">Assigning More Material Properties to Your Goblet</link>
   </para>
 <itemizedlist>
 <listitem>
 <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#goblet_specular_diffuse">Goblet specular diffuse</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#goblet_specular_diffuse">Goblet specular diffuse</link>
   </para>
 </listitem>
 <listitem>
 <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#goblet_refractive_index">Goblet refractive index</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#goblet_refractive_index">Goblet refractive index</link>
   </para>
 </listitem>
 <listitem>
 <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#goblet_shininess">Goblet shininess</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#goblet_shininess">Goblet shininess</link>
   </para>
 </listitem>
 <listitem>
 <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#goblet_extinction">Goblet extinction</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#goblet_extinction">Goblet extinction</link>
   </para>
 </listitem>
 <listitem>
 <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#goblet_emission">Goblet emission</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#goblet_emission">Goblet emission</link>
   </para>
 </listitem>
 <listitem>
 <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#goblet_shader_attributes">Goblet shader attributes</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#goblet_shader_attributes">Goblet shader attributes</link>
   </para>
 </listitem>
 </itemizedlist>
 </listitem>
 <listitem>
 <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#goblet_material_properties2_review">Goblet material properties2 review</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#goblet_material_properties2_review">Goblet material properties2 review</link>
   </para>
  <itemizedlist>
   <listitem>
 <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-9">Creating a Globe in a Display Box</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-9">Creating a Globe in a Display Box</link>
   </para>
 </listitem>
   <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#globe_in_display_newdb">Globe in display newdb</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#globe_in_display_newdb">Globe in display newdb</link>
   </para>
   </listitem>
   <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#globe_create_display_box">Globe create display box</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#globe_create_display_box">Globe create display box</link>
   </para>
   </listitem>
   <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#create_globe_in_box">Create globe in box</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#create_globe_in_box">Create globe in box</link>
   </para>
   </listitem>
   <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#globe_assign_mater_prop">Globe assign mater prop</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#globe_assign_mater_prop">Globe assign mater prop</link>
   </para>
   </listitem>
   <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#globe_move_rotate">Globe move rotate</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#globe_move_rotate">Globe move rotate</link>
   </para>
   </listitem>
   <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#globe_use_color_tool">Globe use color tool</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#globe_use_color_tool">Globe use color tool</link>
   </para>
   </listitem>
   <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#globe_in_display_box_review">Globe in display box review</link>
-  </para>
-  </listitem>
-  </itemizedlist>
-</listitem>
-  <listitem>
-  <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-11">Refining the Mug</link>
-  </para>
-  <itemizedlist>
-  <listitem>
-  <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#mug_new_db">Mug new db</link>
-  </para>
-  </listitem>
-  <listitem>
-  <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#mug_outside_cyl">Mug outside cyl</link>
-  </para>
-  </listitem>
-  <listitem>
-  <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#mug_handle">Mug handle</link>
-  </para>
-  </listitem>
-  <listitem>
-  <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#mug_comb1">Mug comb1</link>
-  </para>
-  </listitem>
-  <listitem>
-  <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#mug_comb2">Mug comb2</link>
-  </para>
-  </listitem>
-  <listitem>
-  <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#mug_region">Mug region</link>
-  </para>
-  </listitem>
-  <listitem>
-  <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#mug_review">Mug review</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#globe_in_display_box_review">Globe in display box review</link>
   </para>
   </listitem>
   </itemizedlist>
 </listitem>
   <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-12">Creating the Mug Through the GUI</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-11">Refining the Mug</link>
   </para>
   <itemizedlist>
   <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#mug_mater_prop_mater_cmd">Mug mater prop mater cmd</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#mug_new_db">Mug new db</link>
+  </para>
+  </listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#mug_outside_cyl">Mug outside cyl</link>
+  </para>
+  </listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#mug_handle">Mug handle</link>
+  </para>
+  </listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#mug_comb1">Mug comb1</link>
+  </para>
+  </listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#mug_comb2">Mug comb2</link>
+  </para>
+  </listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#mug_region">Mug region</link>
+  </para>
+  </listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#mug_review">Mug review</link>
+  </para>
+  </listitem>
+  </itemizedlist>
+</listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-12">Creating the Mug Through the GUI</link>
+  </para>
+  <itemizedlist>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#mug_mater_prop_mater_cmd">Mug mater prop mater cmd</link>
   </para>
 </listitem>
   <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#mug_raytrace1">Mug raytrace1</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#mug_raytrace1">Mug raytrace1</link>
   </para>
 </listitem>
   <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#mug_refining">Mug refining</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#mug_refining">Mug refining</link>
   </para>
 </listitem>
   <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#mug_torus_cup_combine">Mug torus cup combine</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#mug_torus_cup_combine">Mug torus cup combine</link>
   </para>
 </listitem>
   <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#refining_mug_review">Refining mug review</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#refining_mug_review">Refining mug review</link>
   </para>
 </listitem>
   </itemizedlist>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-13">Placing Shapes in 3-D Space</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-13">Placing Shapes in 3-D Space</link>
   </para>
   <itemizedlist>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#candle_create_tabletop">candle create tabletop</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#candle_create_tabletop">candle create tabletop</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#candle_create_base">candle create base</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#candle_create_base">candle create base</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#candle_create_candle">candle create candle</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#candle_create_candle">candle create candle</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#candle_create_flame">candle create flame</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#candle_create_flame">candle create flame</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#candle_create_combination">candle create combination</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#candle_create_combination">candle create combination</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#candle_check_data_tree">candle check data tree</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#candle_check_data_tree">candle check data tree</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#candle_assign_mater_prop">candle assign mater prop</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#candle_assign_mater_prop">candle assign mater prop</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#candle_raytrace">candle raytrace</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#candle_raytrace">candle raytrace</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#placing_shapes_in_3d_review">placing shapes in 3d review</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#placing_shapes_in_3d_review">placing shapes in 3d review</link>
   </para>
 </listitem>
   </itemizedlist>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-14">Gaining More Practice Placing Shapes in Space</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-14">Gaining More Practice Placing Shapes in Space</link>
   </para>
   <itemizedlist>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#candle_base_1st_sphere">candle base 1st sphere</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#candle_base_1st_sphere">candle base 1st sphere</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#multipane_feature">multipane feature</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#multipane_feature">multipane feature</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#copies_of_shapes">copies of shapes</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#copies_of_shapes">copies of shapes</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#practice_make_regions_spheres">practice make regions spheres</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#practice_make_regions_spheres">practice make regions spheres</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#candle_base_spheres_combine">candle base spheres combine</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#candle_base_spheres_combine">candle base spheres combine</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#placing_shapes_in_3d_2_review">placing shapes in 3d 2 review</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#placing_shapes_in_3d_2_review">placing shapes in 3d 2 review</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#candle_assign_mater_prop">candle assign mater prop</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#candle_assign_mater_prop">candle assign mater prop</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#candle_raytrace">candle raytrace</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#candle_raytrace">candle raytrace</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#placing_shapes_in_3d_review">placing shapes in 3d review</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#placing_shapes_in_3d_review">placing shapes in 3d review</link>
   </para>
 </listitem>
 </itemizedlist>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-15">Creating a Toy Truck</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-15">Creating a Toy Truck</link>
   </para>
   <itemizedlist>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#truck_cab_in_cmd">truck cab in cmd</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#truck_cab_in_cmd">truck cab in cmd</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#truck_hood_in_cmd">truck hood in cmd</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#truck_hood_in_cmd">truck hood in cmd</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#truck_cab_wheel_well">truck cab wheel well</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#truck_cab_wheel_well">truck cab wheel well</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#ok_accept_apply_reset_cancel_dismiss">ok accept apply reset cancel dismiss</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#ok_accept_apply_reset_cancel_dismiss">ok accept apply reset cancel dismiss</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#truck_wheel_well_prim_edit_cpy">truck wheel well prim edit cpy</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#truck_wheel_well_prim_edit_cpy">truck wheel well prim edit cpy</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#truck_cab_shape_comb">truck cab shape comb</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#truck_cab_shape_comb">truck cab shape comb</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#truck_body_in_cmd">truck body in cmd</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#truck_body_in_cmd">truck body in cmd</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#prim_ed_wheel_wells">prim ed wheel wells</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#prim_ed_wheel_wells">prim ed wheel wells</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#truck_body_wheel_wells_comb">truck body wheel wells comb</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#truck_body_wheel_wells_comb">truck body wheel wells comb</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#truck_cab_body_region">truck cab body region</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#truck_cab_body_region">truck cab body region</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#truck_wheels">truck wheels</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#truck_wheels">truck wheels</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#truck_wheels_region">truck wheels region</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#truck_wheels_region">truck wheels region</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#truck_regions_mater_props">truck regions mater props</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#truck_regions_mater_props">truck regions mater props</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#on_screen_help">on screen help</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#on_screen_help">on screen help</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#stacker_shading">stacker shading</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#stacker_shading">stacker shading</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#using_stacker_shading">using stacker shading</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#using_stacker_shading">using stacker shading</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#truck_combine_regions">truck combine regions</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#truck_combine_regions">truck combine regions</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#truck_raytracing">truck raytracing</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#truck_raytracing">truck raytracing</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#creating_toy_truck_review">creating toy truck review</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#creating_toy_truck_review">creating toy truck review</link>
   </para>
 </listitem>
 
@@ -1602,52 +1602,52 @@
 </listitem>
  <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-16"> Learning Modeling Techniques and Structures</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-16"> Learning Modeling Techniques and Structures</link>
   </para>
   <itemizedlist>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#radio_shapes_to_regions">Radio shapes to regions</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#radio_shapes_to_regions">Radio shapes to regions</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#body_of_radio">body of radio</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#body_of_radio">body of radio</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#radio_other_regions">radio other regions</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#radio_other_regions">radio other regions</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#radio_assembly_comb">radio assembly comb</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#radio_assembly_comb">radio assembly comb</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#radio_assign_mater_props">radio assign mater props</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#radio_assign_mater_props">radio assign mater props</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#radio_internal_components">radio internal components</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#radio_internal_components">radio internal components</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#radio_specialty_models">radio specialty models</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#radio_specialty_models">radio specialty models</link>
   </para>
 </listitem>
    <listitem>
   <para>
-    <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#radio_structure_redefinition">radio structure redefinition</link>
+    <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#radio_structure_redefinition">radio structure redefinition</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#modeling_techniques_and_structures_review">modeling techniques and structures review</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#modeling_techniques_and_structures_review">modeling techniques and structures review</link>
   </para>
 </listitem>
 </itemizedlist>
@@ -1656,27 +1656,27 @@
 </listitem>
  <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIII.php">BRL-CAD_Tutorial_Series-VolumeIII</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php">BRL-CAD_Tutorial_Series-VolumeIII</link>
   </para>
   <itemizedlist>
   <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIII.php#volIIIintro">Introduction</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#volIIIintro">Introduction</link>
   </para>
 </listitem>
   <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIII.php#modelprocess">The Model Process</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#modelprocess">The Model Process</link>
   </para>
   <itemizedlist>
     <listitem>
       <para>
-    <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIII.php#The_Importance_of_the_Model_Mission">The Importance of the Model Mission</link>
+    <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#The_Importance_of_the_Model_Mission">The Importance of the Model Mission</link>
       </para>
     </listitem>
     <listitem>
       <para>
-    <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIII.php#M_O_D_E_L_A_Five-Step_Approach_to_Creating_Effective_Models">M-O-D-E-L: A Five-Step Approach to Creating Effective Models</link>
+    <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#M_O_D_E_L_A_Five-Step_Approach_to_Creating_Effective_Models">M-O-D-E-L: A Five-Step Approach to Creating Effective Models</link>
       </para>
     </listitem>
   </itemizedlist>
@@ -1684,124 +1684,124 @@
 
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIII.php##projshader_resize">Projshader resize</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php##projshader_resize">Projshader resize</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIII.php#projshader_getimage">Projshader getimage</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#projshader_getimage">Projshader getimage</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIII.php#projshader_actframe">Projshader actframe</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#projshader_actframe">Projshader actframe</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIII.php#projshader_dispimage">Projshader dispimage</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#projshader_dispimage">Projshader dispimage</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIII.php#projshader_overlayimage">Projshader overlay image</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#projshader_overlayimage">Projshader overlay image</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIII.php#projshader_savesettingsfile">Projshader savesettings file</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#projshader_savesettingsfile">Projshader savesettings file</link>
   </para>
 </listitem>
    <listitem>
   <para>
-    <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIII.php#projshader_projectfront">Projshader projectfront</link>
+    <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#projshader_projectfront">Projshader projectfront</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIII.php#build_pattern_generalinfo">Build pattern generalinfo</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#build_pattern_generalinfo">Build pattern generalinfo</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIII.php#build_pattern_generalinfo">Build pattern general Info</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#build_pattern_generalinfo">Build pattern general Info</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIII.php#build_pattern_names">Build pattern names</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#build_pattern_names">Build pattern names</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIII.php#build_pattern_fields">Build pattern fields</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#build_pattern_fields">Build pattern fields</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIII.php#build_pattern_stringsub">Build pattern stringsub</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#build_pattern_stringsub">Build pattern stringsub</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIII.php#build_pattern_recpatterns">Build pattern recpatterns</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#build_pattern_recpatterns">Build pattern recpatterns</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIII.php#build_pattern_cylind">Build pattern cyl ind</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#build_pattern_cylind">Build pattern cyl ind</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIII.php#build_pattern_spherical">Build pattern spherical</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#build_pattern_spherical">Build pattern spherical</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIII.php#volIIImodelprocess">Model process</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#volIIImodelprocess">Model process</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIII.php#volIIImeasuringdata">Measuring data</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#volIIImeasuringdata">Measuring data</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIII.php#volIIIorganizing">organizing</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#volIIIorganizing">organizing</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIII.php#volIIIdevgeometry">develop geometry</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#volIIIdevgeometry">develop geometry</link>
   </para>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIII.php#build_pattern_recpatterns">Build pattern recpatterns</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#build_pattern_recpatterns">Build pattern recpatterns</link>
   </para>
 </listitem>
 </itemizedlist>
 </listitem>
  <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIV.php">BRL-CAD_Tutorial_Series-VolumeIV</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php">BRL-CAD_Tutorial_Series-VolumeIV</link>
   </para>
   <itemizedlist>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIV.php#chapt_introduction">Introduction</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#chapt_introduction">Introduction</link>
   </para>
   <itemizedlist>
     <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIV.php#Background_Purpose_and_Scope">Background, Purpose, and Scope</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Background_Purpose_and_Scope">Background, Purpose, and Scope</link>
   </para>
     </listitem>
     <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIV.php#The_Need_for_Conversion">The Need for Conversion</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#The_Need_for_Conversion">The Need for Conversion</link>
   </para>
     </listitem>
 
@@ -1809,174 +1809,174 @@
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIV.php#chapt_pert_char">Pert char</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#chapt_pert_char">Pert char</link>
   </para>
 <itemizedlist>
   <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIV.php#CSG_vs._BREP">CSG_vs._BREP</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#CSG_vs._BREP">CSG_vs._BREP</link>
   </para>
   </listitem>
   <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIV.php#Prerelease_6.0_Database_vs._Current_Format">Prerelease 6.0 Database vs. Current Format</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Prerelease_6.0_Database_vs._Current_Format">Prerelease 6.0 Database vs. Current Format</link>
   </para>
   </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIV.php#Converters_Currently_Available_in_BRL-CAD">Converters Currently Available in BRL-CAD</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Converters_Currently_Available_in_BRL-CAD">Converters Currently Available in BRL-CAD</link>
   </para>
   </listitem>
 </itemizedlist>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIV.php#sec_convert_from_to_ascii">Convert from to ascii</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#sec_convert_from_to_ascii">Convert from to ascii</link>
   </para>
   <itemizedlist>
     <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_From_ASCII">Converting From ASCII</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_From_ASCII">Converting From ASCII</link>
   </para>
     </listitem>
     <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_to_ASCII">Converting_to_ASCII</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_to_ASCII">Converting_to_ASCII</link>
   </para>
     </listitem>
   </itemizedlist>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIV.php#sec_convert_to_brlcad">Convert to brlcad</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#sec_convert_to_brlcad">Convert to brlcad</link>
   </para>
 <itemizedlist>
   <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIV.php#General_Information_About_Converting_to_BRL-CAD">General Information About Converting to BRL-CAD</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#General_Information_About_Converting_to_BRL-CAD">General Information About Converting to BRL-CAD</link>
   </para>
   </listitem>
   <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_From_AutoCAD_DXF_Format">Converting From AutoCAD DXF Format</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_From_AutoCAD_DXF_Format">Converting From AutoCAD DXF Format</link>
   </para>
   </listitem>
   <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_From_Elysium_Neutral_Facetted_Format">Converting From Elysium Neutral Facetted Format</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_From_Elysium_Neutral_Facetted_Format">Converting From Elysium Neutral Facetted Format</link>
   </para>
   </listitem>
   <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_From_EUCLID_Format">Converting From EUCLID Format</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_From_EUCLID_Format">Converting From EUCLID Format</link>
   </para>
   </listitem>
   <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_From_FASTGEN_Format">Converting From FASTGEN Format</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_From_FASTGEN_Format">Converting From FASTGEN Format</link>
   </para>
   </listitem>
   <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_From_IGES_Format">Converting From IGES Format</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_From_IGES_Format">Converting From IGES Format</link>
   </para>
   </listitem>
   <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_From_Jack">Converting From Jack</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_From_Jack">Converting From Jack</link>
   </para>
   </listitem>
   <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_From_NASTRAN_Format">Converting From NASTRAN Format</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_From_NASTRAN_Format">Converting From NASTRAN Format</link>
   </para>
   </listitem>
   <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_From_Pro_E_Format">Converting From Pro/E Format</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_From_Pro_E_Format">Converting From Pro/E Format</link>
   </para>
   </listitem>
   <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_From_STL_Format">Converting From STL Format</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_From_STL_Format">Converting From STL Format</link>
   </para>
   </listitem>
   <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_From_TANKILL_Format">Converting From TANKILL Format</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_From_TANKILL_Format">Converting From TANKILL Format</link>
   </para>
   </listitem>
   <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_From_Unigraphics_Format">Converting From Unigraphics Format</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_From_Unigraphics_Format">Converting From Unigraphics Format</link>
   </para>
   </listitem>
   <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_From_Viewpoint_Datalabs_Format">Converting From Viewpoint Datalabs Format</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_From_Viewpoint_Datalabs_Format">Converting From Viewpoint Datalabs Format</link>
   </para>
   </listitem>
 </itemizedlist>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIV.php#sec_convert_from_brlcad">Convert from brlcad</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#sec_convert_from_brlcad">Convert from brlcad</link>
   </para>
   <itemizedlist>
     <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIV.php#General_Information_About_Converting_From_BRL-CAD">General Information About Converting From BRL-CAD</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#General_Information_About_Converting_From_BRL-CAD">General Information About Converting From BRL-CAD</link>
   </para>
     </listitem>
     <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_to_ACAD_Format">Converting to ACAD Format</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_to_ACAD_Format">Converting to ACAD Format</link>
   </para>
     </listitem>
     <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_to_AutoCAD_DXF_Format">Converting to AutoCAD DXF Format</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_to_AutoCAD_DXF_Format">Converting to AutoCAD DXF Format</link>
   </para>
     </listitem>
     <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_to_EUCLID_Format">Converting to EUCLID Format</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_to_EUCLID_Format">Converting to EUCLID Format</link>
   </para>
     </listitem>
     <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_to_IGES_Format">Converting to IGES Format
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_to_IGES_Format">Converting to IGES Format
 </link>
   </para>
     </listitem>
     <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_to_Jack">Converting to Jack</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_to_Jack">Converting to Jack</link>
   </para>
     </listitem>
     <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_to_STL_Format">Converting to STL Format</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_to_STL_Format">Converting to STL Format</link>
   </para>
     </listitem>
     <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_to_TANKILL_Format">Converting to TANKILL Format</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_to_TANKILL_Format">Converting to TANKILL Format</link>
   </para>
     </listitem>
     <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_to_VRML_Format">Converting to VRML Format</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_to_VRML_Format">Converting to VRML Format</link>
   </para>
     </listitem>
     <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_to_Wavefront_Format">Converting to Wavefront Format</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_to_Wavefront_Format">Converting to Wavefront Format</link>
   </para>
     </listitem>
     <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_to_X3D_Format">Converting to X3D Format</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_to_X3D_Format">Converting to X3D Format</link>
   </para>
     </listitem>
 
@@ -1984,29 +1984,29 @@
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIII.php#sec_build_new_converter">Build new converter</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#sec_build_new_converter">Build new converter</link>
   </para>
   <itemizedlist>
     <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIII.php#General_Information_About_Building_a_New_Converter">General Information About Building a New Converter</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#General_Information_About_Building_a_New_Converter">General Information About Building a New Converter</link>
   </para>
     </listitem>
     <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIII.php#Converting_From_BRL-CAD">Converting From BRL-CAD</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#Converting_From_BRL-CAD">Converting From BRL-CAD</link>
   </para>
     </listitem>
     <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIII.php#Converting_to_BRL-CAD">Converting to BRL-CAD</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#Converting_to_BRL-CAD">Converting to BRL-CAD</link>
   </para>
     </listitem>
   </itemizedlist>
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIII.php#sec_postconversion_issues">Postconversion issues</link>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#sec_postconversion_issues">Postconversion issues</link>
   </para>
 </listitem>
 </itemizedlist>

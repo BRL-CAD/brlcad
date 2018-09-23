@@ -2614,7 +2614,7 @@ proc title_node_handler {node} {
     set tlparent [$itk_component(archerHelp) childsite]
 
 
-    if {[file exists [file join [bu_brlcad_root "share/doc/html"] books en BRL-CAD_Tutorial_Series-VolumeI.html]] &&
+    if {[file exists [file join [bu_brlcad_root "share/doc/html"] books BRL-CAD_Tutorial_Series-VolumeI.html]] &&
 	[file exists [file join [bu_brlcad_root "share/doc/html"] toc.html]] } {
 
 	# Table of Contents
@@ -2656,7 +2656,7 @@ proc title_node_handler {node} {
 	set htmlviewer [$hv3htmlviewer html]
 	$htmlviewer configure -parsemode html
 	$htmlviewer configure -imagecmd Archer::mkHelpTkImage
-	set help_fd [lindex [list [file join [bu_brlcad_root "share/doc/html"] books en BRL-CAD_Tutorial_Series-VolumeI.html]] 0]
+	set help_fd [lindex [list [file join [bu_brlcad_root "share/doc/html"] books BRL-CAD_Tutorial_Series-VolumeI.html]] 0]
 	get_html_data $help_fd
 	$htmlviewer parse $archer_help_data
 
