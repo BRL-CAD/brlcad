@@ -314,6 +314,9 @@ _ged_invalid_prim_check(struct _ged_invalid_data *idata, struct ged *gedp, struc
     /* Comb validity is handled separately */
     if (dp->d_flags & RT_DIR_COMB) return;
 
+    if (dp->d_flags & RT_DIR_HIDDEN) return;
+    if (dp->d_addr == RT_DIR_PHONY_ADDR) return;
+
     if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) return;
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD) {
 	rt_db_free_internal(&intern);
