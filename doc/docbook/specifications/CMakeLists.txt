@@ -23,8 +23,12 @@ set(XSL_PHP_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/wordpres
 set(XSL_HTML_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-specification-xhtml-stylesheet.xsl")
 set(XSL_FO_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-specification-fo-stylesheet.xsl")
 
+set(specifications_EN
+  BRL_CAD_g_format_V5.xml
+  )
+ADD_DOCBOOK("HTML;PHP;PDF" specifications_EN specifications/en "")
 
-add_subdirectory(en)
+CMAKEFILES(BRL_CAD_g_format_V6.xml)
 CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
