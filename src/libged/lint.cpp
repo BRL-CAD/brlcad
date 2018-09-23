@@ -309,6 +309,11 @@ _ged_invalid_prim_check(struct _ged_invalid_data *idata, struct ged *gedp, struc
     struct rt_db_internal intern;
     struct rt_bot_internal *bot;
     int not_valid = 0;
+    struct bu_external ext = BU_EXTERNAL_INIT_ZERO;
+    struct db5_raw_internal raw;
+    unsigned char *cp;
+    char datasrc;
+    struct bu_vls dsp_name = BU_VLS_INIT_ZERO;
     if (!idata || !gedp || !dp) return;
 
     /* Comb validity is handled separately */
@@ -317,14 +322,14 @@ _ged_invalid_prim_check(struct _ged_invalid_data *idata, struct ged *gedp, struc
     if (dp->d_flags & RT_DIR_HIDDEN) return;
     if (dp->d_addr == RT_DIR_PHONY_ADDR) return;
 
-    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) return;
-    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD) {
-	rt_db_free_internal(&intern);
-	return;
-    }
 
-    switch (intern.idb_minor_type) {
+    switch (dp->d_minor_type) {
 	case DB5_MINORTYPE_BRLCAD_BOT:
+	    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) return;
+	    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD) {
+		rt_db_free_internal(&intern);
+		return;
+	    }
 	    bot = (struct rt_bot_internal *)intern.idb_ptr;
 	    RT_BOT_CK_MAGIC(bot);
 	    if (bot->mode != RT_BOT_PLATE && bot->mode != RT_BOT_PLATE_NOCOS) {
@@ -335,6 +340,39 @@ _ged_invalid_prim_check(struct _ged_invalid_data *idata, struct ged *gedp, struc
 		    obj.error = std::string("failed bot solid test");
 		}
 	    }
+	    rt_db_free_internal(&intern);
+	    break;
+	case DB5_MINORTYPE_BRLCAD_DSP:
+	    /* For DSP we can't do a full import, since the potential invalidity we're looking to detect will cause
+	     * the import to fail.  Partially crack it, enough to where we can get what we need */
+	    if (db_get_external(&ext, dp, gedp->ged_wdbp->dbip) < 0) return;
+	    if (db5_get_raw_internal_ptr(&raw, ext.ext_buf) == NULL) {
+		bu_free_external(&ext);
+		return;
+	    }
+	    cp = (unsigned char *)raw.body.ext_buf;
+	    cp += 2*SIZEOF_NETWORK_LONG + SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_MAT + SIZEOF_NETWORK_SHORT;
+	    datasrc = *cp;
+	    cp++; cp++;
+	    bu_vls_strncpy(&dsp_name, (char *)cp, raw.body.ext_nbytes - (cp - (unsigned char *)raw.body.ext_buf));
+	    if (datasrc == RT_DSP_SRC_OBJ) {
+		if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&dsp_name), LOOKUP_QUIET) == RT_DIR_NULL) {
+		    obj.name = std::string(dp->d_namep);
+		    obj.type= std::string("dsp");
+		    obj.error = std::string("lists nonextant binary object '") + std::string(bu_vls_addr(&dsp_name)) + std::string("' as its data source");
+		    not_valid = 1;
+		}
+	    }
+	    if (datasrc == RT_DSP_SRC_FILE) {
+		if (!bu_file_exists(bu_vls_addr(&dsp_name), NULL)) {
+		    obj.name = std::string(dp->d_namep);
+		    obj.type= std::string("dsp");
+		    obj.error = std::string("lists nonextant file '") + std::string(bu_vls_addr(&dsp_name)) + std::string("' as its data source");
+		    not_valid = 1;
+		}
+	    }
+	    bu_vls_free(&dsp_name);
+	    bu_free_external(&ext);
 	    break;
 	default:
 	    break;
@@ -345,7 +383,6 @@ _ged_invalid_prim_check(struct _ged_invalid_data *idata, struct ged *gedp, struc
 	idata->invalid_msgs.insert(std::pair<struct directory *, struct invalid_obj>(dp, obj));
     }
 
-    rt_db_free_internal(&intern);
 }
 
 int
@@ -478,6 +515,7 @@ ged_lint(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (opts->invalid_shape_check) {
+	bu_log("Checking for invalid objects...\n");
 	ret = _ged_invalid_shape_check(idata, gedp, argc, dpa);
 	if (ret != GED_OK) {
 	    goto ged_lint_memfree;
