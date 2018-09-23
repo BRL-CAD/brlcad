@@ -121,6 +121,7 @@ set(mann_EN
   l_muves.xml
   labelvert.xml
   lc.xml
+  lint.xml
   listeval.xml
   lm.xml
   loadtk.xml

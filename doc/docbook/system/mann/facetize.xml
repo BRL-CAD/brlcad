@@ -72,7 +72,7 @@
       progress on large conversion tasks.
     </para>
   </refsection>
-  
+
   <refsection xml:id="regions">
     <title>PER-REGION FACETIZATION AND PARTIAL CONVERSIONS</title>
     <para>
@@ -101,7 +101,7 @@
 
     <refsection xml:id="examples">
     <title>EXAMPLES</title>
-    
+
     <example>
       <title>Create a facetized BOT version of an existing object.</title>
       <para>
@@ -114,7 +114,7 @@
 	<prompt>mged&gt;</prompt> <userinput>facetize region1.r region1.bot</userinput>
       </para>
     </example>
-    
+
     <example>
       <title>Facetize all regions in a hierarchy.</title>
       <para>
@@ -125,7 +125,7 @@
 	<prompt>mged&gt;</prompt> <userinput>facetize -r model model.f</userinput>
       </para>
     </example>
-    
+
     <example>
       <title>Facetize all regions in a hierarchy, attempting only NMG conversion.</title>
       <para>
@@ -149,7 +149,7 @@
     </example>
 
   </refsection>
-  
+
   <refsection xml:id="methodology">
     <title>METHODOLOGY</title>
     <para>
@@ -214,7 +214,7 @@
       more fine grained controls when it comes to generating point sets from BRL-CAD objects.
     </para>
   </refsection>
-  
+
   <refsection xml:id="util">
     <title>USEFUL TRICKS</title>
     <para>
@@ -232,20 +232,19 @@
 	<prompt>mged&gt;</prompt> <userinput>search -attr facetize:CM -exec attr rm "{}" facetize:CM ";"</userinput>
       </para>
     </example>
-    
+
     <example>
       <title>List invalid BoT objects below a comb</title>
       <para>
-	Use search -exec and a Tcl proc to report on invalid objects below a comb.
+	Use lint -M to report on invalid objects below a comb.
       </para>
       <para>
-	<prompt>mged&gt;</prompt> <userinput>proc echoinvalid {objname} { if {!\[bot check solid $objname\] } { puts $objname } }</userinput>
-	<prompt>mged&gt;</prompt> <userinput>search comb -type bot -exec echoinvalid "{}" ";"</userinput>
+	<prompt>mged&gt;</prompt> <userinput> lint -M model.f</userinput>
       </para>
     </example>
-    
+
   </refsection>
-  
+
   <refsection xml:id="author">
     <title>AUTHOR</title>
     <para>BRL-CAD Team</para>
@@ -259,5 +258,5 @@
       mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
     </para>
   </refsection>
-  
+
 </refentry>
