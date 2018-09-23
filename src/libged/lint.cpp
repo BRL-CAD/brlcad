@@ -224,7 +224,7 @@ _ged_cyclic_check(struct _ged_cyclic_data *cdata, struct ged *gedp, int argc, st
 }
 
 HIDDEN void
-_ged_lint_comb_find_invalid(struct _ged_missing_data *mdata, const char *parent, struct db_i *dbip, union tree *tp)
+_ged_lint_comb_find_missing(struct _ged_missing_data *mdata, const char *parent, struct db_i *dbip, union tree *tp)
 {
     if (!tp) return;
 
@@ -236,12 +236,12 @@ _ged_lint_comb_find_invalid(struct _ged_missing_data *mdata, const char *parent,
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 	case OP_XOR:
-	    _ged_lint_comb_find_invalid(mdata, parent, dbip, tp->tr_b.tb_right);
+	    _ged_lint_comb_find_missing(mdata, parent, dbip, tp->tr_b.tb_right);
 	    /* fall through */
 	case OP_NOT:
 	case OP_GUARD:
 	case OP_XNOP:
-	    _ged_lint_comb_find_invalid(mdata, parent, dbip, tp->tr_b.tb_left);
+	    _ged_lint_comb_find_missing(mdata, parent, dbip, tp->tr_b.tb_left);
 	    break;
 	case OP_DB_LEAF:
 	    if (db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_QUIET) == RT_DIR_NULL) {
@@ -254,6 +254,68 @@ _ged_lint_comb_find_invalid(struct _ged_missing_data *mdata, const char *parent,
 	    bu_bomb("_ged_lint_comb_find_invalid\n");
     }
 }
+
+HIDDEN void
+_ged_lint_shape_find_missing(struct _ged_missing_data *mdata, struct db_i *dbip, struct directory *dp)
+{
+    struct bu_external ext = BU_EXTERNAL_INIT_ZERO;
+    struct db5_raw_internal raw;
+    unsigned char *cp;
+    char datasrc;
+    char *sketch_name;
+    struct bu_vls dsp_name = BU_VLS_INIT_ZERO;
+
+    if (!mdata || !dbip || !dp) return;
+
+    switch (dp->d_minor_type) {
+   	case DB5_MINORTYPE_BRLCAD_DSP:
+	    /* For DSP we can't do a full import up front, since the potential invalidity we're looking to detect will cause
+	     * the import to fail.  Partially crack it, enough to where we can get what we need */
+	    if (db_get_external(&ext, dp, dbip) < 0) return;
+	    if (db5_get_raw_internal_ptr(&raw, ext.ext_buf) == NULL) {
+		bu_free_external(&ext);
+		return;
+	    }
+	    cp = (unsigned char *)raw.body.ext_buf;
+	    cp += 2*SIZEOF_NETWORK_LONG + SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_MAT + SIZEOF_NETWORK_SHORT;
+	    datasrc = *cp;
+	    cp++; cp++;
+	    bu_vls_strncpy(&dsp_name, (char *)cp, raw.body.ext_nbytes - (cp - (unsigned char *)raw.body.ext_buf));
+	    if (datasrc == RT_DSP_SRC_OBJ) {
+		if (db_lookup(dbip, bu_vls_addr(&dsp_name), LOOKUP_QUIET) == RT_DIR_NULL) {
+		    std::string inst = std::string(dp->d_namep) + std::string("/") + std::string(bu_vls_addr(&dsp_name));
+		    mdata->missing.insert(inst);
+		}
+	    }
+	    if (datasrc == RT_DSP_SRC_FILE) {
+		if (!bu_file_exists(bu_vls_addr(&dsp_name), NULL)) {
+		    std::string inst = std::string(dp->d_namep) + std::string("/") + std::string(bu_vls_addr(&dsp_name));
+		    mdata->missing.insert(inst);
+		}
+	    }
+	    bu_vls_free(&dsp_name);
+	    bu_free_external(&ext);
+	    break;
+	case DB5_MINORTYPE_BRLCAD_EXTRUDE:
+	    /* For EXTRUDE we can't do a full import up front, since the potential invalidity we're looking to detect will cause
+	     * the import to fail.  Partially crack it, enough to where we can get what we need */
+	    if (db_get_external(&ext, dp, dbip) < 0) return;
+            if (db5_get_raw_internal_ptr(&raw, ext.ext_buf) == NULL) {
+                bu_free_external(&ext);
+                return;
+            }
+            cp = (unsigned char *)raw.body.ext_buf;
+	    sketch_name = (char *)cp + ELEMENTS_PER_VECT*4*SIZEOF_NETWORK_DOUBLE + SIZEOF_NETWORK_LONG;
+	    if (db_lookup(dbip, sketch_name, LOOKUP_QUIET) == RT_DIR_NULL) {
+		std::string inst = std::string(dp->d_namep) + std::string("/") + std::string(sketch_name);
+		mdata->missing.insert(inst);
+	    }
+	    bu_free_external(&ext);
+	    break;
+	default:
+	    break;	    
+    }
+} 
 
 int
 _ged_missing_check(struct _ged_missing_data *mdata, struct ged *gedp, int argc, struct directory **dpa)
@@ -279,7 +341,9 @@ _ged_missing_check(struct _ged_missing_data *mdata, struct ged *gedp, int argc, 
 		    struct rt_comb_internal *comb;
 		    if (rt_db_get_internal(&in, dp, gedp->ged_wdbp->dbip, NULL, &rt_uniresource) < 0) continue;
 		    comb = (struct rt_comb_internal *)in.idb_ptr;
-		    _ged_lint_comb_find_invalid(mdata, dp->d_namep, gedp->ged_wdbp->dbip, comb->tree);
+		    _ged_lint_comb_find_missing(mdata, dp->d_namep, gedp->ged_wdbp->dbip, comb->tree);
+		} else {
+		    _ged_lint_shape_find_missing(mdata, gedp->ged_wdbp->dbip, dp);
 		}
 	    }
 	    bu_ptbl_free(pc);
@@ -294,7 +358,9 @@ _ged_missing_check(struct _ged_missing_data *mdata, struct ged *gedp, int argc, 
 		    struct rt_comb_internal *comb;
 		    if (rt_db_get_internal(&in, dp, gedp->ged_wdbp->dbip, NULL, &rt_uniresource) < 0) continue;
 		    comb = (struct rt_comb_internal *)in.idb_ptr;
-		    _ged_lint_comb_find_invalid(mdata, dp->d_namep, gedp->ged_wdbp->dbip, comb->tree);
+		    _ged_lint_comb_find_missing(mdata, dp->d_namep, gedp->ged_wdbp->dbip, comb->tree);
+		} else {
+		    _ged_lint_shape_find_missing(mdata, gedp->ged_wdbp->dbip, dp);
 		}
 	    }
 	}
@@ -312,20 +378,10 @@ _ged_invalid_prim_check(struct _ged_invalid_data *idata, struct ged *gedp, struc
     struct rt_db_internal intern;
     struct rt_bot_internal *bot;
     int not_valid = 0;
-    struct bu_external ext = BU_EXTERNAL_INIT_ZERO;
-    struct db5_raw_internal raw;
-    unsigned char *cp;
-    char datasrc;
-    char *sketch_name;
-    struct bu_vls dsp_name = BU_VLS_INIT_ZERO;
     if (!idata || !gedp || !dp) return;
-
-    /* Comb validity is handled separately */
-    if (dp->d_flags & RT_DIR_COMB) return;
 
     if (dp->d_flags & RT_DIR_HIDDEN) return;
     if (dp->d_addr == RT_DIR_PHONY_ADDR) return;
-
 
     switch (dp->d_minor_type) {
 	case DB5_MINORTYPE_BRLCAD_BOT:
@@ -346,56 +402,14 @@ _ged_invalid_prim_check(struct _ged_invalid_data *idata, struct ged *gedp, struc
 	    }
 	    rt_db_free_internal(&intern);
 	    break;
+	case DB5_MINORTYPE_BRLCAD_ARB8:
+	    // TODO - check for twisted arbs.
+	    break;
 	case DB5_MINORTYPE_BRLCAD_DSP:
-	    /* For DSP we can't do a full import up front, since the potential invalidity we're looking to detect will cause
-	     * the import to fail.  Partially crack it, enough to where we can get what we need */
-	    if (db_get_external(&ext, dp, gedp->ged_wdbp->dbip) < 0) return;
-	    if (db5_get_raw_internal_ptr(&raw, ext.ext_buf) == NULL) {
-		bu_free_external(&ext);
-		return;
-	    }
-	    cp = (unsigned char *)raw.body.ext_buf;
-	    cp += 2*SIZEOF_NETWORK_LONG + SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_MAT + SIZEOF_NETWORK_SHORT;
-	    datasrc = *cp;
-	    cp++; cp++;
-	    bu_vls_strncpy(&dsp_name, (char *)cp, raw.body.ext_nbytes - (cp - (unsigned char *)raw.body.ext_buf));
-	    if (datasrc == RT_DSP_SRC_OBJ) {
-		if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&dsp_name), LOOKUP_QUIET) == RT_DIR_NULL) {
-		    obj.name = std::string(dp->d_namep);
-		    obj.type= std::string("dsp");
-		    obj.error = std::string("lists nonextant binary object '") + std::string(bu_vls_addr(&dsp_name)) + std::string("' as its data source");
-		    not_valid = 1;
-		}
-	    }
-	    if (datasrc == RT_DSP_SRC_FILE) {
-		if (!bu_file_exists(bu_vls_addr(&dsp_name), NULL)) {
-		    obj.name = std::string(dp->d_namep);
-		    obj.type= std::string("dsp");
-		    obj.error = std::string("lists nonextant file '") + std::string(bu_vls_addr(&dsp_name)) + std::string("' as its data source");
-		    not_valid = 1;
-		}
-	    }
-	    bu_vls_free(&dsp_name);
-	    bu_free_external(&ext);
+	    // TODO - check for empty data object and zero length dimension vectors.
 	    break;
 	case DB5_MINORTYPE_BRLCAD_EXTRUDE:
-	    /* For EXTRUDE we can't do a full import up front, since the potential invalidity we're looking to detect will cause
-	     * the import to fail.  Partially crack it, enough to where we can get what we need */
-	    if (db_get_external(&ext, dp, gedp->ged_wdbp->dbip) < 0) return;
-            if (db5_get_raw_internal_ptr(&raw, ext.ext_buf) == NULL) {
-                bu_free_external(&ext);
-                return;
-            }
-            cp = (unsigned char *)raw.body.ext_buf;
-	    sketch_name = (char *)cp + ELEMENTS_PER_VECT*4*SIZEOF_NETWORK_DOUBLE + SIZEOF_NETWORK_LONG;
-	    if (db_lookup(gedp->ged_wdbp->dbip, sketch_name, LOOKUP_QUIET) == RT_DIR_NULL) {
-		obj.name = std::string(dp->d_namep);
-		obj.type= std::string("dsp");
-		obj.error = std::string("lists nonextant sketch object '") + std::string(sketch_name) + std::string("' as its data source");
-		not_valid = 1;
-	    }
-	    // TODO - check for empty sketch as well
-	    bu_free_external(&ext);
+	    // TODO - check for empty sketch and zero length dimension vectors.
 	    break;
 	default:
 	    break;
