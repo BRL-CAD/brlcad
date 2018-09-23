@@ -45,10 +45,8 @@ set(presentations_EN_IMAGES
   images/special-character-interpretation.png
   images/tk-based-gui-for-mged.png
   )
-ADD_DOC(presentations_EN_IMAGES html/presentations/en/images)
-ADD_DOCBOOK("HTML;PHP;PPT;PDF" presentations_EN presentations/en presentations_EN_IMAGES_cp)
-
-CMAKEFILES(README.txt)
+ADD_DOC(presentations_EN_IMAGES html/presentations/images)
+ADD_DOCBOOK("HTML;PHP;PPT;PDF" presentations_EN presentations presentations_EN_IMAGES_cp)
 
 CMAKEFILES(README)
 CMAKEFILES(CMakeLists.txt)

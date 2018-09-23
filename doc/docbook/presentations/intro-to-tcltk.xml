@@ -85,14 +85,14 @@
     <imagedata
        align='center'
        width='5.5in' scalefit='1'
-       fileref="../../presentations/en/images/tk-based-gui-for-mged.png"
+       fileref="../presentations/images/tk-based-gui-for-mged.png"
     /><!-- was: width='100%' -->
   </imageobject>
   <imageobject role='fo'>
     <imagedata
        align='center'
        width='5.5in' scalefit='1'
-       fileref="../../presentations/en/images/tk-based-gui-for-mged.png"
+       fileref="../presentations/images/tk-based-gui-for-mged.png"
     />
   </imageobject>
 </mediaobject>
@@ -359,14 +359,14 @@
     <imagedata
        align='center'
        width='5.5in' scalefit='1'
-       fileref="../../presentations/en/images/special-character-interpretation.png"
+       fileref="../presentations/images/special-character-interpretation.png"
     /><!-- was: width='100%' -->
   </imageobject>
   <imageobject role='fo'>
     <imagedata
        align='center'
        width='5.5in' scalefit='1'
-       fileref="../../presentations/en/images/special-character-interpretation.png"
+       fileref="../presentations/images/special-character-interpretation.png"
     />
   </imageobject>
 </mediaobject>
@@ -672,14 +672,14 @@ sph-part s1.s s2.s part.s
     <imagedata
        align='center'
        width='5.5in' scalefit='1'
-       fileref="../../presentations/en/images/copy-sph-part-left.png"
+       fileref="../presentations/images/copy-sph-part-left.png"
     /><!-- was: width='100%' -->
   </imageobject>
   <imageobject role='fo'>
     <imagedata
        align='center'
        width='5.5in' scalefit='1'
-       fileref="../../presentations/en/images/copy-sph-part-left.png"
+       fileref="../presentations/images/copy-sph-part-left.png"
     />
   </imageobject>
 </mediaobject>
@@ -693,14 +693,14 @@ sph-part s1.s s2.s part.s
     <imagedata
        align='center'
        width='5.5in' scalefit='1'
-       fileref="../../presentations/en/images/copy-sph-part-right.png"
+       fileref="../presentations/images/copy-sph-part-right.png"
     /><!-- was: width='100%' -->
   </imageobject>
   <imageobject role='fo'>
     <imagedata
        align='center'
        width='5.5in' scalefit='1'
-       fileref="../../presentations/en/images/copy-sph-part-right.png"
+       fileref="../presentations/images/copy-sph-part-right.png"
     />
   </imageobject>
 </mediaobject>
@@ -754,14 +754,14 @@ sph-part s1.s s2.s part.s
     <imagedata
        align='center'
        width='5.5in' scalefit='1'
-       fileref="../../presentations/en/images/mged-defaults.png"
+       fileref="../presentations/images/mged-defaults.png"
     /><!-- was: width='100%' -->
   </imageobject>
   <imageobject role='fo'>
     <imagedata
        align='center'
        width='5.5in' scalefit='1'
-       fileref="../../presentations/en/images/mged-defaults.png"
+       fileref="../presentations/images/mged-defaults.png"
     />
   </imageobject>
 </mediaobject>

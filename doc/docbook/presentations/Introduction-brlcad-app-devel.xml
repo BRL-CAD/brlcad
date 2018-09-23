@@ -2,10 +2,10 @@
 <section>
 <title>Application Development with BRL-CAD</title>
 <para>
-<link xlink:href="../../presentations/en/brlcad-app-devel_2.html">
+<link xlink:href="../presentations/en/brlcad-app-devel_2.html">
  <inlinemediaobject>
  	   <imageobject condition="web">
-      <imagedata fileref="../../presentations/en/images/brlcad_app_devel.png"/>
+      <imagedata fileref="../presentations/images/brlcad_app_devel.png"/>
         </imageobject>
     </inlinemediaobject>
 </link>

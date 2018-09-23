@@ -14,10 +14,10 @@
 <section>
   <title>What is Tcl/Tk?</title>
 <para>
-<link xlink:href="../../presentations/en/to-tcltk_2.html">
+<link xlink:href="../presentations/to-tcltk_2.html">
    <inlinemediaobject>
      <imageobject condition="web">
-      <imagedata fileref="../../presentations/en/images/intro_tcl_tk.png"/>
+      <imagedata fileref="../presentations/images/intro_tcl_tk.png"/>
         </imageobject>
     </inlinemediaobject>
 </link>
