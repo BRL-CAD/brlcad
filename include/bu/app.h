@@ -223,7 +223,7 @@ typedef enum {
     BU_DIR_CONFIG,  /* (read/write) user config directory (HOME/.app) */
     BU_DIR_EXT,     /* (n/a) optional executable extension */
     BU_DIR_LIBEXT,  /* (n/a) optional library extension */
-    BU_DIR_UNKNOWN
+    BU_DIR_END
 } bu_dir_t;
 
 /**

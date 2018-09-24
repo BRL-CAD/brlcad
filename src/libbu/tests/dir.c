@@ -116,6 +116,7 @@ main(int argc, char *argv[])
     bu_dir_t type;
     size_t i;
     int ret;
+    char *gret;
     int failures = 0;
     const char *cpath;
     const char *initp;
@@ -149,8 +150,8 @@ main(int argc, char *argv[])
 #ifdef HAVE_GETCWD
     memset(path, 0, MAXPATHLEN);
     currp = bu_dir(NULL, 0, BU_DIR_CURR, NULL);
-    ret = getcwd(path, MAXPATHLEN);
-    if (ret != 0) {
+    gret = getcwd(path, MAXPATHLEN);
+    if (gret == NULL) {
 	perror("ERROR, getcwd");
 	failures++;
     }
