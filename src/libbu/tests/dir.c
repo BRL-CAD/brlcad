@@ -49,6 +49,7 @@ main(int argc, char *argv[])
     }
 
     /* basic test, get the current directory */
+#ifdef HAVE_GETCWD
     memset(path, 0, MAXPATHLEN);
     currp = bu_dir(NULL, 0, BU_DIR_CURR, NULL);
     if (!getcwd(path, MAXPATHLEN)) {
@@ -58,6 +59,7 @@ main(int argc, char *argv[])
 	    failures++;
 	}
     }
+#endif
 
     /* each directory lookup should return something */
     for (type = BU_DIR_CURR; type != BU_DIR_UNKNOWN; type++) {
