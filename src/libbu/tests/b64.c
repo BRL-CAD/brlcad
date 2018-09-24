@@ -63,7 +63,7 @@ int
 main(int ac, char *av[])
 {
     if (ac != 1)
-	fprintf(stderr,"Usage: %s \n", av[0]);
+	bu_exit(1, "Usage: %s\n", av[0]);
 
     test_b64_encode((const signed char *)"hello world!");
     test_b64_encode((const signed char *)"!@#&#$%@&#$^@(*&^%(#$@&^#*$nasty_string!<>?");
