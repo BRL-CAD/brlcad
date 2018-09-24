@@ -2570,7 +2570,7 @@ proc Archer::html_help_display {me} {
 
 
 proc Archer::mkHelpTkImage {file} {
-    set fullpath [file join [bu_brlcad_root "share/doc/html"] manuals mged $file]
+    set fullpath [file join [bu_brlcad_root "share/doc/html"] manuals $file]
     set name [image create photo -file $fullpath]
     return [list $name [list image delete $name]]
 }
