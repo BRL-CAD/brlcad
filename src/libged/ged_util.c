@@ -279,7 +279,9 @@ int
 _ged_vopt(struct bu_vls *UNUSED(msg), int UNUSED(argc), const char **UNUSED(argv), void *set_var)
 {
     int *v_set = (int *)set_var;
-    (*v_set) = (*v_set) + 1;
+    if (v_set) {
+	(*v_set) = (*v_set) + 1;
+    }
     return 0;
 }
 

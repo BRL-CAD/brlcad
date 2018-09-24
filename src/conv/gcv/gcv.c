@@ -56,6 +56,8 @@ gcv_fmt_fun(struct bu_vls *UNUSED(msgs), int argc, const char **argv, void *set_
     int args_used = 0;
     struct gcv_fmt_opts *gfo = (struct gcv_fmt_opts *)set_var;
 
+    if (!gfo) return -1;
+
     if (!argv || argc < 1 ) return 0;
 
     for (i = 0; i < argc; i++) {

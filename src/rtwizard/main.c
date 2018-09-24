@@ -345,9 +345,13 @@ int
 opt_width(struct bu_vls *msg, int argc, const char **argv, void *settings)
 {
     struct rtwizard_settings *s = (struct rtwizard_settings *)settings;
-    int ret = bu_opt_int(msg, argc, argv, (void *)&s->width);
-    if (ret != -1) s->width_set = 1;
-    return ret;
+    if (s) {
+	int ret = bu_opt_int(msg, argc, argv, (void *)&s->width);
+	if (ret != -1) s->width_set = 1;
+	return ret;
+    } else {
+	return -1;
+    }
 }
 
 
@@ -355,22 +359,30 @@ int
 opt_height(struct bu_vls *msg, int argc, const char **argv, void *settings)
 {
     struct rtwizard_settings *s = (struct rtwizard_settings *)settings;
-    int ret = bu_opt_int(msg, argc, argv, (void *)&s->height);
-    if (ret != -1) s->height_set = 1;
-    return ret;
+    if (s) {
+	int ret = bu_opt_int(msg, argc, argv, (void *)&s->height);
+	if (ret != -1) s->height_set = 1;
+	return ret;
+    } else {
+	return -1;
+    }
 }
 
 int
 opt_size(struct bu_vls *msg, int argc, const char **argv, void *settings)
 {
     struct rtwizard_settings *s = (struct rtwizard_settings *)settings;
-    int ret = bu_opt_int(msg, argc, argv, (void *)&s->size);
-    if (ret != -1) {
-	s->size_set = 1;
-	if (!s->width_set) s->width = s->size;
-	if (!s->height_set) s->height = s->size;
+    if (s) {
+	int ret = bu_opt_int(msg, argc, argv, (void *)&s->size);
+	if (ret != -1) {
+	    s->size_set = 1;
+	    if (!s->width_set) s->width = s->size;
+	    if (!s->height_set) s->height = s->size;
+	}
+	return ret;
+    } else {
+	return -1;
     }
-    return ret;
 }
 
 int
@@ -402,7 +414,9 @@ opt_objs(struct bu_vls *msg, int argc, const char **argv, void *obj_tbl)
     /* TODO - use quote/unquote routines to scrub names... */
 
     for (i = 0; i < acnum; i++) {
-	bu_ptbl_ins(t, (long *)bu_strdup(avnum[i]));
+	if (t) {
+	    bu_ptbl_ins(t, (long *)bu_strdup(avnum[i]));
+	}
     }
     bu_free(objs, "string dup");
     bu_free(avnum, "array memory");
@@ -426,7 +440,9 @@ opt_letter(struct bu_vls *msg, int argc, const char **argv, void *l)
 	return -1;
     }
 
-    (*letter) = argv[0][0];
+    if (letter) {
+	(*letter) = argv[0][0];
+    }
 
     return 1;
 }
@@ -475,10 +491,12 @@ opt_quat(struct bu_vls *msg, int argc, const char **argv, void *inq)
 	bu_free(str1, "free tmp str");
 	/* If we got here, we do have four numbers */
 	if (have_four) {
-	    (*q)[0] = q1;
-	    (*q)[1] = q2;
-	    (*q)[2] = q3;
-	    (*q)[3] = q4;
+	    if (q) {
+		(*q)[0] = q1;
+		(*q)[1] = q2;
+		(*q)[2] = q3;
+		(*q)[3] = q4;
+	    }
 	    return 1;
 	}
     } else {
@@ -505,10 +523,12 @@ opt_quat(struct bu_vls *msg, int argc, const char **argv, void *inq)
 	    if (msg) bu_vls_sprintf(msg, "Not a number: %s.\n", argv[3]);
 	    return -1;
 	}
-	(*q)[0] = q1;
-	(*q)[1] = q2;
-	(*q)[2] = q3;
-	(*q)[3] = q4;
+	if (q) {
+	    (*q)[0] = q1;
+	    (*q)[1] = q2;
+	    (*q)[2] = q3;
+	    (*q)[3] = q4;
+	}
 	return 1;
     } else {
 	if (msg) bu_vls_sprintf(msg, "No valid quaternion found: %s\n", argv[0]);

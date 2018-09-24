@@ -91,60 +91,80 @@ static int inches = 0;
 static int print_help = 0;
 
 static int
-parse_tol_abs(struct bu_vls *error_msg, int argc, const char **argv, void *UNUSED(set_var))
+parse_tol_abs(struct bu_vls *error_msg, int argc, const char **argv, void *set_var)
 {
     int ret;
     BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "absolute tolerance");
 
-    ret = bu_opt_fastf_t(error_msg, argc, argv, (void *)&(ttol.abs));
-    ttol.rel = 0.0;
-    return ret;
+    if (set_var) {
+	ret = bu_opt_fastf_t(error_msg, argc, argv, (void *)&(ttol.abs));
+	ttol.rel = 0.0;
+	return ret;
+    } else {
+	return -1;
+    }
 }
 
 
 static int
-parse_tol_norm(struct bu_vls *error_msg, int argc, const char **argv, void *UNUSED(set_var))
+parse_tol_norm(struct bu_vls *error_msg, int argc, const char **argv, void *set_var)
 {
     int ret;
     BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "normal tolerance");
 
-    ret = bu_opt_fastf_t(error_msg, argc, argv, (void *)&(ttol.norm));
-    ttol.rel = 0.0;
-    return ret;
+    if (set_var) {
+	ret = bu_opt_fastf_t(error_msg, argc, argv, (void *)&(ttol.norm));
+	ttol.rel = 0.0;
+	return ret;
+    } else {
+	return -1;
+    }
 }
 
 
 static int
-parse_tol_dist(struct bu_vls *error_msg, int argc, const char **argv, void *UNUSED(set_var))
+parse_tol_dist(struct bu_vls *error_msg, int argc, const char **argv, void *set_var)
 {
     int ret;
     BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "distance tolerance");
 
-    ret = bu_opt_fastf_t(error_msg, argc, argv, (void *)&(tol.dist));
-    tol.dist_sq = tol.dist * tol.dist;
-    rt_pr_tol(&tol);
-    return ret;
+    if (set_var) {
+	ret = bu_opt_fastf_t(error_msg, argc, argv, (void *)&(tol.dist));
+	tol.dist_sq = tol.dist * tol.dist;
+	rt_pr_tol(&tol);
+	return ret;
+    } else {
+	return -1;
+    }
 }
 
 
 static int
-parse_debug_rt(struct bu_vls *error_msg, int argc, const char **argv, void *UNUSED(set_var))
+parse_debug_rt(struct bu_vls *error_msg, int argc, const char **argv, void *set_var)
 {
     BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "debug rt");
 
-    sscanf(argv[0], "%x", (unsigned int *)&RTG.debug);
-    return 1;
+    if (set_var) {
+	sscanf(argv[0], "%x", (unsigned int *)&RTG.debug);
+	return 1;
+    } else {
+	return -1;
+    }
 }
 
 
 static int
-parse_debug_nmg(struct bu_vls *error_msg, int argc, const char **argv, void *UNUSED(set_var))
+parse_debug_nmg(struct bu_vls *error_msg, int argc, const char **argv, void *set_var)
 {
     BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "debug nmg");
 
-    sscanf(argv[0], "%x", (unsigned int *)&nmg_debug);
-    NMG_debug = nmg_debug;
-    return 1;
+    if (set_var) {
+	sscanf(argv[0], "%x", (unsigned int *)&nmg_debug);
+	NMG_debug = nmg_debug;
+	return 1;
+    } else {
+	return -1;
+    }
 }
 
 
@@ -158,8 +178,8 @@ static struct bu_opt_desc options[] = {
     {"a", "", "#",          parse_tol_abs,   &ttol,        "absolute tolerance"},
     {"n", "", "#",          parse_tol_norm,  &ttol,        "surface normal tolerance"},
     {"D", "", "#",          parse_tol_dist,  &tol,         "distance tolerance"},
-    {"x", "", "level",      parse_debug_rt,  NULL,         "set RT debug flag"},
-    {"X", "", "level",      parse_debug_nmg, NULL,         "set NMG debug flag"},
+    {"x", "", "level",      parse_debug_rt,  &RTG.debug,   "set RT debug flag"},
+    {"X", "", "level",      parse_debug_nmg, &nmg_debug,   "set NMG debug flag"},
     {"e", "", "error_file", bu_opt_str,      &error_file,  "error file name"},
     {"o", "", "output.obj", bu_opt_str,      &output_file, "output file name"},
     {"P", "", "#",          bu_opt_int,      &ncpu,        "number of CPUs"},

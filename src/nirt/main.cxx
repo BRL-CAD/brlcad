@@ -155,7 +155,9 @@ extern "C" int
 _dequeue_scripts(struct bu_vls *UNUSED(msg), int UNUSED(argc), const char **UNUSED(argv), void *set_var)
 {
     std::vector<std::string> *init_scripts = (std::vector<std::string> *)set_var;
-    init_scripts->clear();
+    if (set_var) {
+	init_scripts->clear();
+    }
     return 0;
 }
 
@@ -164,7 +166,9 @@ _enqueue_script(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 {
     std::vector<std::string> *init_scripts = (std::vector<std::string> *)set_var;
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "nirt script enqueue");
-    init_scripts->push_back(argv[0]);
+    if (set_var) {
+	init_scripts->push_back(argv[0]);
+    }
     return 1;
 }
 
@@ -173,7 +177,9 @@ _enqueue_attrs(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 {
     std::set<std::string> *attrs = (std::set<std::string> *)set_var;
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "nirt attr enqueue");
-    attrs->insert(argv[0]);
+    if (set_var) {
+	attrs->insert(argv[0]);
+    }
     return 1;
 }
 
@@ -199,16 +205,22 @@ _enqueue_file(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 	bu_vls_free(&str);
 	if (!file.is_open()) return -1;
 	while (std::getline(file, s)) {
-	    sfd->init_scripts->push_back(s);
+	    if (sfd) {
+		sfd->init_scripts->push_back(s);
+	    }
 	}
     } else {
 	while (std::getline(file, s)) {
-	    sfd->init_scripts->push_back(s);
+	    if (sfd) {
+		sfd->init_scripts->push_back(s);
+	    }
 	}
     }
 
-    bu_vls_sprintf(sfd->filename, "%s", argv[0]);
-    sfd->file_cnt++;
+    if (sfd) {
+	bu_vls_sprintf(sfd->filename, "%s", argv[0]);
+	sfd->file_cnt++;
+    }
 
     return 1;
 }
@@ -219,13 +231,13 @@ _decode_overlap(struct bu_vls *msg, int argc, const char **argv, void *set_var)
     int *oval = (int *)set_var;
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "nirt overlap handle");
     if (BU_STR_EQUAL(argv[0], "resolve") || BU_STR_EQUAL(argv[0], "0")) {
-	(*oval) = OVLP_RESOLVE;
+	if (oval) (*oval) = OVLP_RESOLVE;
     } else if (BU_STR_EQUAL(argv[0], "rebuild_fastgen") || BU_STR_EQUAL(argv[0], "1")) {
-	(*oval) = OVLP_REBUILD_FASTGEN;
+	if (oval) (*oval) = OVLP_REBUILD_FASTGEN;
     } else if (BU_STR_EQUAL(argv[0], "rebuild_all") || BU_STR_EQUAL(argv[0], "2")) {
-	(*oval) = OVLP_REBUILD_ALL;
+	if (oval) (*oval) = OVLP_REBUILD_ALL;
     } else if (BU_STR_EQUAL(argv[0], "retain") || BU_STR_EQUAL(argv[0], "3")) {
-	(*oval) = OVLP_RETAIN;
+	if (oval) (*oval) = OVLP_RETAIN;
     } else {
 	bu_log("Illegal overlap_claims specification: '%s'\n", argv[0]);
 	return -1;

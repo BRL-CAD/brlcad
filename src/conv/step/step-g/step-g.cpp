@@ -67,8 +67,12 @@ parse_opt_O(struct bu_vls *error_msg, int argc, const char **argv, void *set_var
     BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "-O");
 
     ofile->overwrite = true;
-    ret = bu_opt_str(error_msg, argc, argv, &ofile->filename);
-    return ret;
+    if (ofile) {
+	ret = bu_opt_str(error_msg, argc, argv, &ofile->filename);
+	return ret;
+    } else {
+	return -1;
+    }
 }
 
 int

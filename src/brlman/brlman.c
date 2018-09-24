@@ -83,15 +83,19 @@ opt_lang(struct bu_vls *msg, int argc, const char **argv, void *l)
 {
     int i = 0;
     struct bu_vls *lang = (struct bu_vls *)l;
-    int ret = bu_opt_vls(msg, argc, argv, (void *)l);
-    if (ret == -1) return -1;
-    if (bu_vls_strlen(lang) != 2) return -1;
-    /* Only return valid if we've got one of the ISO639-1 lang codes */
-    while (iso639_1[i]) {
-	if (BU_STR_EQUAL(bu_vls_addr(lang), iso639_1[i])) return ret;
-	i++;
+    if (lang) {
+	int ret = bu_opt_vls(msg, argc, argv, (void *)l);
+	if (ret == -1) return -1;
+	if (bu_vls_strlen(lang) != 2) return -1;
+	/* Only return valid if we've got one of the ISO639-1 lang codes */
+	while (iso639_1[i]) {
+	    if (BU_STR_EQUAL(bu_vls_addr(lang), iso639_1[i])) return ret;
+	    i++;
+	}
+	return -1;
+    } else {
+	return -1;
     }
-    return -1;
 }
 
 
