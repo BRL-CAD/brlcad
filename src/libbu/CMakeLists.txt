@@ -61,6 +61,7 @@ set(LIBBU_SOURCES
   convert.c
   crashreport.c
   ctype.c
+  dir.c
   dirent.c
   datetime.c
   dylib.c
