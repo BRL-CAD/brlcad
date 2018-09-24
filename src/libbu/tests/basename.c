@@ -129,12 +129,6 @@ compare_bu_to_system_basename(const char *input)
 int
 main(int argc, char *argv[])
 {
-    {   /* supports running wrapped or unwrapped */
-	char base_name[MAXPATHLEN] = {0};
-	if (BU_STR_EQUAL(bu_path_basename(argv[0], base_name), "bu_test"))
-	    argc--, argv++;
-    }
-
     /* If we don't have any args at all, test NULL */
     if (argc == 1) {
 	compare_bu_to_system_basename(NULL);

@@ -64,7 +64,7 @@ main(int argc, char *argv[])
     int line = 42, testnum;
 
     if (argc < 2) {
-	bu_exit(1, "Must specify a function number. [%s]\n", argv[0]);
+	bu_exit(1, "Usage: %s {number}\nMust specify a function number.\n", argv[0]);
     }
 
     bu_bomb_add_hook((bu_hook_t)&bomb_callback, (void *)expected_str);

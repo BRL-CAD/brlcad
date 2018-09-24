@@ -978,7 +978,8 @@ main(int argc, char *argv[])
     int function_num = 0;
 
     if (argc < 2) {
-	bu_exit(1, "ERROR: input format is function_num function_test_args [%s]\n", argv[0]);
+	bu_log("Usage: %s {function_num} {function_test_arg0} {...}", argv[0]);
+	bu_exit(1, "ERROR: missing function number\n");
     }
 
     sscanf(argv[1], "%d", &function_num);

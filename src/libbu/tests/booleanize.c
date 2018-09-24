@@ -32,16 +32,15 @@ main(int argc, char *argv[])
 
     const char *input = NULL;
 
-    if (argc > 3 || argc == 2 ) {
-	fprintf(stderr, "Usage: %s [test_string expect_true]\n", argv[0]);
+    if (argc > 3) {
+	fprintf(stderr, "Usage: %s {test_string} [expect_true]\n", argv[0]);
 	return 1;
-    }
-
-    if (argc > 1) {
-	input = argv[1];
     }
     if (argc > 2) {
 	expect_true = atol(argv[2]);
+    }
+    if (argc > 1) {
+	input = argv[1];
     }
 
     result_true = bu_str_true(input);
