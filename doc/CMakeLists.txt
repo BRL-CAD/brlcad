@@ -1,10 +1,4 @@
-if(BRLCAD_EXTRADOCS)
-  verbose_add_subdirectory(doc docbook)
-else(BRLCAD_EXTRADOCS)
-  include(${CMAKE_CURRENT_SOURCE_DIR}/docbook_files.cmake)
-  CMAKEFILES_IN_DIR(docbook_files docbook)
-endif(BRLCAD_EXTRADOCS)
-
+verbose_add_subdirectory(doc docbook)
 verbose_add_subdirectory(doc html)
 verbose_add_subdirectory(doc legal)
 
@@ -234,7 +228,6 @@ CMAKEFILES(
   STARTERS
   STRATEGY
   csv_to_comgeom.txt
-  docbook_files.cmake
   implicit_constraints.txt
   lcov.txt
   pad_file.xml.in

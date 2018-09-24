@@ -186,7 +186,11 @@ set(articles_EN_IMAGES
   images/rim.gif
   images/rim.jpg
   )
-ADD_DOC(articles_EN_IMAGES articles/images)
+if(BRLCAD_EXTRADOCS)
+  ADD_DOC(articles_EN_IMAGES articles/images)
+else(BRLCAD_EXTRADOCS)
+  CMAKEFILES(${articles_EN_IMAGES})
+endif(BRLCAD_EXTRADOCS)
 
 ADD_DOCBOOK("HTML;PHP;PDF" articles_EN articles articles_EN_IMAGES_cp)
 

@@ -154,7 +154,12 @@ set(lessons_EN_IMAGES
   images/mged16_radio_structure_3.png
   images/mged16_radio_cutaways.png
   )
-ADD_DOC(lessons_EN_IMAGES lessons/images)
+if(BRLCAD_EXTRADOCS)
+  ADD_DOC(lessons_EN_IMAGES lessons/images)
+else(BRLCAD_EXTRADOCS)
+  CMAKEFILES(${lessons_EN_IMAGES})
+endif(BRLCAD_EXTRADOCS)
+
 ADD_DOCBOOK("HTML;PHP;PDF" lessons_EN lessons lessons_EN_IMAGES_cp)
 
 add_subdirectory(es)

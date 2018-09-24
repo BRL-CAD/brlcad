@@ -126,7 +126,12 @@ set(lessons_ES_IMAGES
   images/mged16_radio_wireframe_circ_board.png
   images/mged16_radio_with_mater_props.png
   )
-ADD_DOC(lessons_ES_IMAGES html/lessons/es/images)
+if(BRLCAD_EXTRADOCS)
+  ADD_DOC(lessons_ES_IMAGES html/lessons/es/images)
+else(BRLCAD_EXTRADOCS)
+  CMAKEFILES(${lessons_ES_IMAGES})
+endif(BRLCAD_EXTRADOCS)
+
 ADD_DOCBOOK("HTML;PHP;PDF" lessons_ES lessons/es lessons_ES_IMAGES_cp)
 CMAKEFILES(CMakeLists.txt)
 

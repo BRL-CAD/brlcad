@@ -177,93 +177,95 @@ macro(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
   # Mark files for distcheck
   CMAKEFILES(${xml_files})
 
-  set(all_outfiles)
+  if(BRLCAD_EXTRADOCS)
+    set(all_outfiles)
 
-  # Each file gets its own script file and custom command, which handle all
-  # the outputs to be produced from that file.
-  foreach(fname ${xml_files})
-    get_filename_component(fname_root "${fname}" NAME_WE)
-    get_filename_component(filename "${fname}" ABSOLUTE)
+    # Each file gets its own script file and custom command, which handle all
+    # the outputs to be produced from that file.
+    foreach(fname ${xml_files})
+      get_filename_component(fname_root "${fname}" NAME_WE)
+      get_filename_component(filename "${fname}" ABSOLUTE)
 
-    # Find out which outputs we're actually going to produce, between
-    # what's currently enabled and what the command says the target
-    # *can* produce
-    set(CURRENT_OUTPUT_FORMATS)
-    foreach(fmt ${fmts})
-      list(FIND OUTPUT_FORMATS "${fmt}" IN_LIST)
-      if(NOT "${IN_LIST}" STREQUAL "-1")
-	set(CURRENT_OUTPUT_FORMATS ${CURRENT_OUTPUT_FORMATS} ${fmt})
-      endif(NOT "${IN_LIST}" STREQUAL "-1")
-    endforeach(fmt ${fmts})
+      # Find out which outputs we're actually going to produce, between
+      # what's currently enabled and what the command says the target
+      # *can* produce
+      set(CURRENT_OUTPUT_FORMATS)
+      foreach(fmt ${fmts})
+	list(FIND OUTPUT_FORMATS "${fmt}" IN_LIST)
+	if(NOT "${IN_LIST}" STREQUAL "-1")
+	  set(CURRENT_OUTPUT_FORMATS ${CURRENT_OUTPUT_FORMATS} ${fmt})
+	endif(NOT "${IN_LIST}" STREQUAL "-1")
+      endforeach(fmt ${fmts})
 
-    # Now that we know our formats, prepare output paths
-    set(outputs)
-    foreach(fmt ${fmts})
-      list(FIND OUTPUT_FORMATS "${fmt}" IN_LIST)
-      if(NOT "${IN_LIST}" STREQUAL "-1")
-	set(${fmt}_OUTFILE_RAW "${bin_root}/${${fmt}_DIR}${outdir}/${fname_root}.${${fmt}_EXTENSION}")
-	# Use CMAKE_CFG_INTDIR for build system output list, but need
-	# BUILD_TYPE form of path for scripts and install commands.
-	if(CMAKE_CONFIGURATION_TYPES)
-	  string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" ${fmt}_OUTFILE "${${fmt}_OUTFILE_RAW}")
-	else(CMAKE_CONFIGURATION_TYPES)
-	  set(${fmt}_OUTFILE "${${fmt}_OUTFILE_RAW}")
-	endif(CMAKE_CONFIGURATION_TYPES)
-	set(outputs ${outputs} ${${fmt}_OUTFILE_RAW})
-	install(FILES "${${fmt}_OUTFILE}" DESTINATION ${${fmt}_DIR}${outdir})
-      endif(NOT "${IN_LIST}" STREQUAL "-1")
-    endforeach(fmt ${OUTPUT_FORMATS})
-
-    # If we have more outputs than the default, they need to be handled here.
-    foreach(fmt ${fmts})
-      list(FIND OUTPUT_FORMATS "${fmt}" IN_LIST)
-      if(NOT "${IN_LIST}" STREQUAL "-1")
-	set(${fmt}_EXTRAS)
-	get_property(EXTRA_OUTPUTS SOURCE ${fname} PROPERTY EXTRA_${fmt}_OUTPUTS)
-	foreach(extra_out ${EXTRA_OUTPUTS})
-	  # Pass the file name to the script's extras list, in case the script
-	  # has to manually place the file in the correct directory...
-	  set(${fmt}_EXTRAS ${${fmt}_EXTRAS} "${extra_out}")
-
+      # Now that we know our formats, prepare output paths
+      set(outputs)
+      foreach(fmt ${fmts})
+	list(FIND OUTPUT_FORMATS "${fmt}" IN_LIST)
+	if(NOT "${IN_LIST}" STREQUAL "-1")
+	  set(${fmt}_OUTFILE_RAW "${bin_root}/${${fmt}_DIR}${outdir}/${fname_root}.${${fmt}_EXTENSION}")
 	  # Use CMAKE_CFG_INTDIR for build system output list, but need
 	  # BUILD_TYPE form of path for scripts and install commands.
-	  set(${fmt}_EXTRA_RAW "${bin_root}/${${fmt}_DIR}${outdir}/${extra_out}")
 	  if(CMAKE_CONFIGURATION_TYPES)
-	    string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" ${fmt}_EXTRA "${${fmt}_EXTRA_RAW}")
+	    string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" ${fmt}_OUTFILE "${${fmt}_OUTFILE_RAW}")
 	  else(CMAKE_CONFIGURATION_TYPES)
-	    set(${fmt}_EXTRA "${${fmt}_EXTRA_RAW}")
+	    set(${fmt}_OUTFILE "${${fmt}_OUTFILE_RAW}")
 	  endif(CMAKE_CONFIGURATION_TYPES)
-	  set(outputs ${outputs} ${${fmt}_EXTRA_RAW})
-	  install(FILES "${${fmt}_EXTRA}" DESTINATION ${${fmt}_DIR}${outdir})
-	endforeach(extra_out ${EXTRA_OUTPUTS})
-      endif(NOT "${IN_LIST}" STREQUAL "-1")
+	  set(outputs ${outputs} ${${fmt}_OUTFILE_RAW})
+	  install(FILES "${${fmt}_OUTFILE}" DESTINATION ${${fmt}_DIR}${outdir})
+	endif(NOT "${IN_LIST}" STREQUAL "-1")
+      endforeach(fmt ${OUTPUT_FORMATS})
 
-    endforeach(fmt ${fmts})
+      # If we have more outputs than the default, they need to be handled here.
+      foreach(fmt ${fmts})
+	list(FIND OUTPUT_FORMATS "${fmt}" IN_LIST)
+	if(NOT "${IN_LIST}" STREQUAL "-1")
+	  set(${fmt}_EXTRAS)
+	  get_property(EXTRA_OUTPUTS SOURCE ${fname} PROPERTY EXTRA_${fmt}_OUTPUTS)
+	  foreach(extra_out ${EXTRA_OUTPUTS})
+	    # Pass the file name to the script's extras list, in case the script
+	    # has to manually place the file in the correct directory...
+	    set(${fmt}_EXTRAS ${${fmt}_EXTRAS} "${extra_out}")
 
-    set(all_outfiles ${all_outfiles} ${outputs})
+	    # Use CMAKE_CFG_INTDIR for build system output list, but need
+	    # BUILD_TYPE form of path for scripts and install commands.
+	    set(${fmt}_EXTRA_RAW "${bin_root}/${${fmt}_DIR}${outdir}/${extra_out}")
+	    if(CMAKE_CONFIGURATION_TYPES)
+	      string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" ${fmt}_EXTRA "${${fmt}_EXTRA_RAW}")
+	    else(CMAKE_CONFIGURATION_TYPES)
+	      set(${fmt}_EXTRA "${${fmt}_EXTRA_RAW}")
+	    endif(CMAKE_CONFIGURATION_TYPES)
+	    set(outputs ${outputs} ${${fmt}_EXTRA_RAW})
+	    install(FILES "${${fmt}_EXTRA}" DESTINATION ${${fmt}_DIR}${outdir})
+	  endforeach(extra_out ${EXTRA_OUTPUTS})
+	endif(NOT "${IN_LIST}" STREQUAL "-1")
 
-    # As long as we're outputting *something*, we have a target to produce
-    if(NOT "${outputs}" STREQUAL "")
-      string(MD5 path_md5 "${CMAKE_CURRENT_SOURCE_DIR}/${fname}")
-      configure_file(${BRLCAD_CMAKE_DIR}/docbook.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/dbp_${fname_root}-${path_md5}.cmake @ONLY)
-      add_custom_command(
-	OUTPUT ${outputs}
-	COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/dbp_${fname_root}-${path_md5}.cmake
-	DEPENDS ${fname} ${XMLLINT_EXECUTABLE_TARGET} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} ${deps_list}
-	)
-      # For now, we'll skip generating per-input-file build targets - that's not normally how
-      # the docbook targets are built.
-      #add_custom_target(docbook-${fname_root}-${path_md5} DEPENDS ${outputs})
-      #set_target_properties(docbook-${fname_root}-${path_md5} PROPERTIES FOLDER "DocBook")
-    endif(NOT "${outputs}" STREQUAL "")
+      endforeach(fmt ${fmts})
 
-  endforeach(fname ${xml_files})
+      set(all_outfiles ${all_outfiles} ${outputs})
 
-  if(NOT "${all_outfiles}" STREQUAL "")
-    add_custom_target(docbook-${target_root} ALL DEPENDS ${all_outfiles})
-    set_target_properties(docbook-${target_root} PROPERTIES FOLDER "DocBook")
-    add_dependencies(docbook docbook-${target_root})
-  endif(NOT "${all_outfiles}" STREQUAL "")
+      # As long as we're outputting *something*, we have a target to produce
+      if(NOT "${outputs}" STREQUAL "")
+	string(MD5 path_md5 "${CMAKE_CURRENT_SOURCE_DIR}/${fname}")
+	configure_file(${BRLCAD_CMAKE_DIR}/docbook.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/dbp_${fname_root}-${path_md5}.cmake @ONLY)
+	add_custom_command(
+	  OUTPUT ${outputs}
+	  COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/dbp_${fname_root}-${path_md5}.cmake
+	  DEPENDS ${fname} ${XMLLINT_EXECUTABLE_TARGET} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} ${deps_list}
+	  )
+	# For now, we'll skip generating per-input-file build targets - that's not normally how
+	# the docbook targets are built.
+	#add_custom_target(docbook-${fname_root}-${path_md5} DEPENDS ${outputs})
+	#set_target_properties(docbook-${fname_root}-${path_md5} PROPERTIES FOLDER "DocBook")
+      endif(NOT "${outputs}" STREQUAL "")
+
+    endforeach(fname ${xml_files})
+
+    if(NOT "${all_outfiles}" STREQUAL "")
+      add_custom_target(docbook-${target_root} ALL DEPENDS ${all_outfiles})
+      set_target_properties(docbook-${target_root} PROPERTIES FOLDER "DocBook")
+      add_dependencies(docbook docbook-${target_root})
+    endif(NOT "${all_outfiles}" STREQUAL "")
+  endif(BRLCAD_EXTRADOCS)
 
 endmacro(ADD_DOCBOOK)
 

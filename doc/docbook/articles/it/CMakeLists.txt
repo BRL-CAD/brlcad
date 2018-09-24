@@ -13,7 +13,12 @@ set(articles_IT_IMAGES
   images/brlcad-overview-data-flow.png
   images/sflogo.png
   )
-ADD_DOC(articles_IT_IMAGES html/articles/it/images)
+if(BRLCAD_EXTRADOCS)
+  ADD_DOC(articles_IT_IMAGES html/articles/it/images)
+else(BRLCAD_EXTRADOCS)
+  CMAKEFILES(${articles_IT_IMAGES})
+endif(BRLCAD_EXTRADOCS)
+
 ADD_DOCBOOK("HTML;PHP;PDF" articles_IT articles/it articles_IT_IMAGES_cp)
 
 CMAKEFILES(CMakeLists.txt)
