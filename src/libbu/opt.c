@@ -548,12 +548,12 @@ opt_is_flag(const char *opt, const struct bu_opt_desc *ds, const char *arg)
      * the option isn't a valid arg for this opt, opt can be a flag */
     if (desc && desc->arg_process) {
 	if (arg) {
-	    arg_offset = (*desc->arg_process)(NULL, 1, &arg, desc->set_var);
+	    arg_offset = (*desc->arg_process)(NULL, 1, &arg, NULL);
 	    if (!arg_offset) {
 		return 1;
 	    }
 	} else {
-	    arg_offset = (*desc->arg_process)(NULL, 0, NULL, desc->set_var);
+	    arg_offset = (*desc->arg_process)(NULL, 0, NULL, NULL);
 	    if (!arg_offset) {
 		return 1;
 	    }
@@ -1195,7 +1195,9 @@ bu_opt_vect_t(struct bu_vls *msg, int argc, const char **argv, void *vec)
 	bu_free(str1, "free tmp str");
 	/* If we got here, we do have three numbers */
 	if (have_three) {
-	    VSET(*v, v1, v2, v3);
+	    if (v) {
+		VSET(*v, v1, v2, v3);
+	    }
 	    return 1;
 	}
     } else {
@@ -1229,7 +1231,9 @@ bu_opt_vect_t(struct bu_vls *msg, int argc, const char **argv, void *vec)
 	    return -1;
 	}
 	/* If we got here, 3 did the job */
-	VSET(*v, v1, v2, v3);
+	if (v) {
+	    VSET(*v, v1, v2, v3);
+	}
 	return 3;
     } else {
 	/* Not valid with 1 and don't have 3 - we require at least one, so
