@@ -97,6 +97,7 @@ struct invalid_obj {
 
 struct _ged_invalid_data {
     struct ged *gedp;
+    struct _ged_lint_opts *o;
     std::set<struct directory *> invalid_dps;
     std::map<struct directory *, struct invalid_obj> invalid_msgs;
 };
@@ -313,9 +314,9 @@ _ged_lint_shape_find_missing(struct _ged_missing_data *mdata, struct db_i *dbip,
 	    bu_free_external(&ext);
 	    break;
 	default:
-	    break;	    
+	    break;
     }
-} 
+}
 
 int
 _ged_missing_check(struct _ged_missing_data *mdata, struct ged *gedp, int argc, struct directory **dpa)
@@ -377,19 +378,21 @@ _ged_invalid_prim_check(struct _ged_invalid_data *idata, struct ged *gedp, struc
     struct invalid_obj obj;
     struct rt_db_internal intern;
     struct rt_bot_internal *bot;
+    struct bu_vls vlog = BU_VLS_INIT_ZERO;
     int not_valid = 0;
     if (!idata || !gedp || !dp) return;
 
     if (dp->d_flags & RT_DIR_HIDDEN) return;
     if (dp->d_addr == RT_DIR_PHONY_ADDR) return;
 
+    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) return;
+    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD) {
+	rt_db_free_internal(&intern);
+	return;
+    }
+
     switch (dp->d_minor_type) {
 	case DB5_MINORTYPE_BRLCAD_BOT:
-	    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) return;
-	    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD) {
-		rt_db_free_internal(&intern);
-		return;
-	    }
 	    bot = (struct rt_bot_internal *)intern.idb_ptr;
 	    RT_BOT_CK_MAGIC(bot);
 	    if (bot->mode != RT_BOT_PLATE && bot->mode != RT_BOT_PLATE_NOCOS) {
@@ -401,6 +404,18 @@ _ged_invalid_prim_check(struct _ged_invalid_data *idata, struct ged *gedp, struc
 		}
 	    }
 	    rt_db_free_internal(&intern);
+	    break;
+	case DB5_MINORTYPE_BRLCAD_BREP:
+	    not_valid = !rt_brep_valid(&intern, &vlog);
+	    if (not_valid) {
+		obj.name = std::string(dp->d_namep);
+		obj.type= std::string("brep");
+		if (idata->o->verbosity) {
+		    obj.error = std::string(bu_vls_addr(&vlog));
+		} else {
+		    obj.error = std::string("failed OpenNURBS validity test");
+		}
+	    }
 	    break;
 	case DB5_MINORTYPE_BRLCAD_ARB8:
 	    // TODO - check for twisted arbs.
@@ -420,6 +435,7 @@ _ged_invalid_prim_check(struct _ged_invalid_data *idata, struct ged *gedp, struc
 	idata->invalid_msgs.insert(std::pair<struct directory *, struct invalid_obj>(dp, obj));
     }
 
+    bu_vls_free(&vlog);
 }
 
 int
@@ -515,6 +531,7 @@ ged_lint(struct ged *gedp, int argc, const char *argv[])
 
     _ged_lint_opts_verify(opts);
 
+
     if (opts->cyclic_check) {
 	bu_log("Checking for cyclic paths...\n");
 	BU_GET(cdata, struct _ged_cyclic_data);
@@ -553,6 +570,7 @@ ged_lint(struct ged *gedp, int argc, const char *argv[])
 
     if (opts->invalid_shape_check) {
 	bu_log("Checking for invalid objects...\n");
+	idata->o = opts;
 	ret = _ged_invalid_shape_check(idata, gedp, argc, dpa);
 	if (ret != GED_OK) {
 	    goto ged_lint_memfree;
