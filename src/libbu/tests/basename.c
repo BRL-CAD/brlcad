@@ -111,7 +111,7 @@ compare_bu_to_system_basename(const char *input)
     char *bu_out = get_bu_output(input);
 
     if (BU_STR_EQUAL(sys_out, bu_out)) {
-	printf("%24s -> %24s [PASSED]\n", input, bu_out);
+	bu_log("%24s -> %24s [PASSED]\n", input, bu_out);
 	bu_free(bu_out, "bu output");
 	bu_free(sys_out, "system output");
     } else {
@@ -129,6 +129,12 @@ compare_bu_to_system_basename(const char *input)
 int
 main(int argc, char *argv[])
 {
+    {   /* supports running wrapped or unwrapped */
+	char base_name[MAXPATHLEN] = {0};
+	if (BU_STR_EQUAL(bu_path_basename(argv[0], base_name), "bu_test"))
+	    argc--, argv++;
+    }
+
     /* If we don't have any args at all, test NULL */
     if (argc == 1) {
 	compare_bu_to_system_basename(NULL);
@@ -136,7 +142,7 @@ main(int argc, char *argv[])
 
     /* If we have something, print it and test it */
     if (argc > 1) {
-       printf("Testing string \"%s\"\n", argv[1]);
+       bu_log("Testing string \"%s\"\n", argv[1]);
        compare_bu_to_system_basename(argv[1]);
     }
 
