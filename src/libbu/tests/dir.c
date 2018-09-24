@@ -140,9 +140,6 @@ main(int argc, char *argv[])
     enum2str[BU_DIR_LIBEXT] = CPP_STR(BU_DIR_LIBEXT);
     enum2str[BU_DIR_END] = CPP_STR(BU_DIR_END);
 
-    if (BU_STR_EQUAL(bu_path_basename(argv[0], path), "bu_test"))
-	argc--, argv++;
-
     if (argc != 1) {
 	fprintf(stderr, "Usage: %s\n", argv[0]);
 	return 1;
