@@ -99,6 +99,7 @@ set(LIBBU_SOURCES
   parallel.c
   parse.c
   path.c
+  path_normalize.c
   printb.c
   process.c
   progname.c
