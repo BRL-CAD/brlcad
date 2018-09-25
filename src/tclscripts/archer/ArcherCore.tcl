@@ -1549,22 +1549,6 @@ namespace eval ArcherCore {
 	    -text "Raytrace" -menu {
 		options -tearoff 0
 
-		cascade checkoverlaps \
-		    -label "check overlaps" \
-		    -menu {
-			command fifty \
-			    -label "50x50" \
-			    -helpstr "Check for overlaps using a 50x50 grid"
-			command hundred \
-			    -label "100x100" \
-			    -helpstr "Check for overlaps using a 100x100 grid"
-			command twofiftysix \
-			    -label "256x256" \
-			    -helpstr "Check for overlaps using a 256x256 grid"
-			command fivetwelve \
-			    -label "512x512" \
-			    -helpstr "Check for overlaps using a 512x512 grid"
-		    }
 		cascade rt \
 		    -label "rt" \
 		    -menu {
@@ -1613,20 +1597,6 @@ namespace eval ArcherCore {
 		    -helpstr "Launch nirt from view center"
 	    }
 
-	$itk_component(canvas_menu) menuconfigure .raytrace.checkoverlaps \
-	    -state disabled
-	$itk_component(canvas_menu) menuconfigure .raytrace.checkoverlaps.fifty \
-	    -command [::itcl::code $this launchCheckOverlaps 50] \
-	    -state disabled
-	$itk_component(canvas_menu) menuconfigure .raytrace.checkoverlaps.hundred \
-	    -command [::itcl::code $this launchCheckOverlaps 100] \
-	    -state disabled
-	$itk_component(canvas_menu) menuconfigure .raytrace.checkoverlaps.twofiftysix \
-	    -command [::itcl::code $this launchCheckOverlaps 256] \
-	    -state disabled
-	$itk_component(canvas_menu) menuconfigure .raytrace.checkoverlaps.fivetwelve \
-	    -command [::itcl::code $this launchCheckOverlaps 512] \
-	    -state disabled
 	$itk_component(canvas_menu) menuconfigure .raytrace.rt \
 	    -state disabled
 	$itk_component(canvas_menu) menuconfigure .raytrace.rt.fivetwelve \
@@ -2090,16 +2060,6 @@ namespace eval ArcherCore {
     #bind $itk_component(ged) <Enter> {focus %W}
 
     if {$mViewOnly && !$mNoToolbar} {
-	$itk_component(canvas_menu) menuconfigure .raytrace.checkoverlaps \
-	    -state normal
-	$itk_component(canvas_menu) menuconfigure .raytrace.checkoverlaps.fifty \
-	    -state normal
-	$itk_component(canvas_menu) menuconfigure .raytrace.checkoverlaps.hundred \
-	    -state normal
-	$itk_component(canvas_menu) menuconfigure .raytrace.checkoverlaps.twofiftysix \
-	    -state normal
-	$itk_component(canvas_menu) menuconfigure .raytrace.checkoverlaps.fivetwelve \
-	    -state normal
 	$itk_component(canvas_menu) menuconfigure .raytrace.rt \
 	    -state normal
 	$itk_component(canvas_menu) menuconfigure .raytrace.rt.fivetwelve \
