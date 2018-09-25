@@ -156,8 +156,7 @@ main(int argc, char *argv[])
 #endif
 
     /* each directory lookup should return something */
-    type = BU_DIR_CURR;
-    while (type != BU_DIR_END) {
+    for (type = BU_DIR_CURR; type != BU_DIR_END; type = (bu_dir_t)(type + 1)) {
 	memset(path, 0, MAXPATHLEN);
 
 	if (type == BU_DIR_EXT || type == BU_DIR_LIBEXT)
@@ -166,7 +165,6 @@ main(int argc, char *argv[])
 	bu_dir(path, MAXPATHLEN, type, NULL);
 	PRINT(type, path, !=, "");
 	check(!BU_STR_EMPTY(path), &failures);
-	type = (bu_dir_t)(type + 1);
     }
 
     /* test absolute composition */
