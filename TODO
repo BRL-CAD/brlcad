@@ -47,8 +47,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
     breaks if an application changes its notion of the current working
     directory after initialization, for example.
 
-* rtwizard unit test legitimately failing on mac/windows
-
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
@@ -166,6 +164,8 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* rtwizard unit test legitimately failing on mac/windows
 
 * implement a bu_exec wrapper and investigate something like capnproto
   to build up a process-isolated command execution system for libged.
