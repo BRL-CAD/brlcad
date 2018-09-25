@@ -230,6 +230,7 @@ bu_brlcad_root(const char *rhs, int fail_quietly)
 
     /* run-time path identification */
     lhs = bu_argv0_full_path();
+    snprintf(where, MAX_WHERE_SIZE, "\trun-time path identification [UNKNOWN]\n");
     if (lhs) {
 	char *dirpath;
 	char *real_path = bu_file_realpath(lhs, NULL);
@@ -249,7 +250,6 @@ bu_brlcad_root(const char *rhs, int fail_quietly)
 	}
 	bu_free(real_path, "free real_path");
     } else {
-	snprintf(where, MAX_WHERE_SIZE, "\trun-time path identification [UNKNOWN]\n");
 	bu_vls_strcat(&searched, where);
     }
 
