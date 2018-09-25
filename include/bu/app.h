@@ -209,7 +209,7 @@ BU_EXPORT extern const char *bu_brlcad_root(const char *rhs, int fail_quietly);
 
 
 typedef enum {
-    BU_DIR_CURR=0,  /* (unknown) current working directory */
+    BU_DIR_CURR=1,  /* (unknown) current working directory */
     BU_DIR_INIT,    /* (unknown) initial working directory */
     BU_DIR_BIN,     /* (read-only) user executables (bin) */
     BU_DIR_LIB,     /* (read-only) object libraries (lib) */
