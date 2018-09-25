@@ -1955,9 +1955,9 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     hoc_register_menu_data "Tools" "LOD5 Configuration" "LOD Configuration"\
 	{ { summary "A tool for configuring Level of Detail drawing." } }
 
-    .$id.menubar.tools add command -label "Overlap Tool" -underline 0\
-	-command "overlap_tool $id"
-    hoc_register_menu_data "Tools" "Overlap Tool" "Overlap Tool"\
+    .$id.menubar.tools add command -label "Overlaps Tool" -underline 0\
+	-command "overlaps_tool"
+    hoc_register_menu_data "Tools" "Overlaps Tool" "Overlaps Tool"\
 	{ { summary "A tool for discovering and correcting overlapping regions." } }
 
     # BEGIN ACTIONS (perform some operation (subtle (bogus) difference))

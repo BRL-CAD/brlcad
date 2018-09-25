@@ -31,7 +31,7 @@ changes made.  See document footer for additional details.
 * added "check overlaps" menu option to Archer - Saran Narayan
 * improved 'idents' command portability - Daniel Ramirez
 * changed remrt/rtsrv to no longer report overlaps - Sean Morrison
-* fixed unhandled exception in MGED's Overlap Tool - Saran Narayan
+* improved GUI of MGED's Overlap Tool - Saran Narayan
 * fixed geometry directory building bug in remrt/rtsrv - Sean Morrison
 * fixed gcv problem with full paths on Windows - Cliff Yapp
 * removed precision limitation in NIRT input parsing - Cliff Yapp

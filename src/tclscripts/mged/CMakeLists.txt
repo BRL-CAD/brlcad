@@ -56,7 +56,6 @@ set(mged_TCLSCRIPTS
   mouse.tcl
   mview.tcl
   openw.tcl
-  overlap.tcl
   plot.tcl
   points.tcl
   prj_add.tcl
