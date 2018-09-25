@@ -2192,7 +2192,8 @@ if(NOT MSVC)
     CHECK_C_FLAG(Winline)
     if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
       # g++ 4.7 spews unquellable bogus warnings on default
-      # constructors (e.g., in opennurbs and boost)
+      # constructors (e.g., in opennurbs and boost) and there
+      # are reports of problems with newer GCC as well.
       CHECK_CXX_FLAG(Wno-inline)
     else()
       CHECK_CXX_FLAG(Winline)
