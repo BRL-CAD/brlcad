@@ -133,20 +133,21 @@ BU_EXPORT extern const char *bu_whereis(const char *cmd);
  * This routine is NOT thread-safe.
  *
  * Typical Use:
- @code
-  FILE *fp;
-  char filename[MAXPATHLEN];
-  fp = bu_temp_file(&filename, MAXPATHLEN); // get file name
-  ...
-  fclose(fp); // close the file when you're done
-  ...
-  fp = bu_temp_file(NULL, 0); // don't need file name
-  bu_fchmod(fileno(fp), 0777);
-  ...
-  rewind(fp);
-  while (fputc(0, fp) == 0);
-  fclose(fp);
- @endcode
+ *
+ * @code
+ * FILE *fp;
+ * char filename[MAXPATHLEN];
+ * fp = bu_temp_file(&filename, MAXPATHLEN); // get file name
+ * ...
+ * fclose(fp); // close the file when you're done
+ * ...
+ * fp = bu_temp_file(NULL, 0); // don't need file name
+ * bu_fchmod(fileno(fp), 0777);
+ * ...
+ * rewind(fp);
+ * while (fputc(0, fp) == 0);
+ * fclose(fp);
+ * @endcode
  */
 BU_EXPORT extern FILE *bu_temp_file(char *filepath, size_t len);
 
@@ -226,6 +227,7 @@ typedef enum {
     BU_DIR_END
 } bu_dir_t;
 
+
 /**
  * Find a particular user, system, or runtime directory.
  *
@@ -248,26 +250,28 @@ typedef enum {
  * that will be the caller's responsibility to bu_strdup() or
  * otherwise save before a subsequent call to bu_dir() returns.
  *
- @code
-   // e.g., /home/user
-   const char *pwd = bu_dir(NULL, 0, BU_DIR_CURR, NULL);
-
-   // e.g., /opt/brlcad/bin/rt
-   char rt[MAXPATHLEN] = {0};
-   bu_dir(rt, MAXPATHLEN, BU_DIR_BIN, "rt", BU_DIR_EXT, NULL);
-   execl(rt, "rt", NULL);
-
-   // e.g., C:\\BRL-CAD 7.123.4\\bin\\librt.dll
-   const char *lib = bu_dir(NULL, 0, BU_DIR_LIB, "librt", BU_DIR_LIBEXT, NULL);
-
-   // e.g., /opt/app-7.123.4/share/tclscripts/mged/help.tcl
-   char ts[MAXPATHLEN] = {0};
-   bu_dir(ts, MAXPATHLEN, BU_DIR_DATA, "tclscripts/mged", NULL);
-   bu_dir(ts, MAXPATHLEN, ts, "help.tcl", NULL);
-
-   // e.g., C:\\BRL-CAD 7.123.4\\libexec\\mged\\tops.exe
-   const char *tops = bu_dir(NULL, 0, BU_DIR_LIBEXEC, "mged/tops", BU_DIR_EXT, NULL);
- @endcode
+ * @code
+ *
+ * // e.g., /home/user
+ * const char *pwd = bu_dir(NULL, 0, BU_DIR_CURR, NULL);
+ *
+ * // e.g., /opt/brlcad/bin/rt
+ * char rt[MAXPATHLEN] = {0};
+ * bu_dir(rt, MAXPATHLEN, BU_DIR_BIN, "rt", BU_DIR_EXT, NULL);
+ * execl(rt, "rt", NULL);
+ *
+ * // e.g., C:\\BRL-CAD 7.123.4\\bin\\librt.dll
+ * const char *lib = bu_dir(NULL, 0, BU_DIR_LIB, "librt", BU_DIR_LIBEXT, NULL);
+ *
+ * // e.g., /opt/app-7.123.4/share/tclscripts/mged/help.tcl
+ * char ts[MAXPATHLEN] = {0};
+ * bu_dir(ts, MAXPATHLEN, BU_DIR_DATA, "tclscripts/mged", NULL);
+ * bu_dir(ts, MAXPATHLEN, ts, "help.tcl", NULL);
+ *
+ * // e.g., C:\\BRL-CAD 7.123.4\\libexec\\mged\\tops.exe
+ * const char *tops = bu_dir(NULL, 0, BU_DIR_LIBEXEC, "mged/tops", BU_DIR_EXT, NULL);
+ *
+ * @endcode
  */
 BU_EXPORT extern const char *bu_dir(char *result, size_t len, .../*, NULL */);
 
