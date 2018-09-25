@@ -47,8 +47,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
     breaks if an application changes its notion of the current working
     directory after initialization, for example.
 
-* fix regions/idents table commands, broken on Windows
-
 * rtwizard unit test legitimately failing on mac/windows
 
 
