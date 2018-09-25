@@ -76,11 +76,11 @@ automatic_test(const char *input)
 int
 main(int argc, char *argv[])
 {
+    if (argc > 2)
+       fprintf(stderr, "Usage: %s {test_string}\n", argv[0]);
+
     if (argc == 1)
        return !automatic_test(NULL);
-
-    if (argc > 2)
-       fprintf(stderr,"Usage: %s test_string\n", argv[0]);
 
     return !automatic_test(argv[1]);
 }

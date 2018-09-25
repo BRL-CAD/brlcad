@@ -26,9 +26,11 @@
 #include <stdlib.h> /* for strtol */
 #include <ctype.h>
 #include <errno.h> /* for errno */
+
 #include "bu.h"
 #include "bn.h"
 #include "string.h"
+
 
 struct StrCmp {
     bool operator()(const char *str1, const char *str2) const {
@@ -36,12 +38,16 @@ struct StrCmp {
     }
 };
 
-int uniq_test(struct bu_vls *n, void *data)
+
+int
+uniq_test(struct bu_vls *n, void *data)
 {
     std::set<const char *, StrCmp> *sset = (std::set<const char *, StrCmp> *)data;
-    if (sset->find(bu_vls_addr(n)) == sset->end()) return 1;
+    if (sset->find(bu_vls_addr(n)) == sset->end())
+	return 1;
     return 0;
 }
+
 
 int
 main(int argc, char **argv)
@@ -53,12 +59,14 @@ main(int argc, char **argv)
     sset->insert(str1);
 
     /* Sanity check */
-    if (argc < 3) bu_exit(1, "ERROR: wrong number of parameters");
+    if (argc < 3)
+	bu_exit(1, "Usage: %s {initial} {expected}\n", argv[0]);
 
     bu_vls_sprintf(&name, "%s", argv[1]);
     (void)bu_vls_incr(&name, NULL, NULL, &uniq_test, (void *)sset);
 
-    if (BU_STR_EQUAL(bu_vls_addr(&name), argv[2])) ret = 0;
+    if (BU_STR_EQUAL(bu_vls_addr(&name), argv[2]))
+	ret = 0;
 
     bu_log("output: %s\n", bu_vls_addr(&name));
 

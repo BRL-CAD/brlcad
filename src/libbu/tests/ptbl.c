@@ -204,14 +204,14 @@ main(int argc, char *argv[])
     size_t ptbl_size;
 
     if (argc < 2) {
-	bu_exit(1, "ERROR: usage: %s test_name [test_args...]\n", argv[0]);
+	bu_exit(1, "Usage: %s test_name [test_args...]\n", argv[0]);
     }
 
     if (BU_STR_EQUAL(argv[1], "init")) {
 	ptbl_size = 100;
 	if (argc > 2) {
 	    if (bu_opt_long(NULL, 2, (const char **) argv, (void *) &ptbl_size) < 0) {
-	    bu_log("\nINFO: init: could not convert argument, using size=100\n");
+		bu_log("\nINFO: init: could not convert argument, using size=100\n");
 	    }
 	}
 

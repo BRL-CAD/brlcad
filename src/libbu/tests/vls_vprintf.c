@@ -143,12 +143,11 @@ main(int argc, char *argv[])
     const char *word = "Lawyer";
 
     if (argc < 2) {
-	fprintf(stderr,"Usage: %s test_num\n", argv[0]);
+	fprintf(stderr, "Usage: %s {test_num}\n", argv[0]);
 	return 1;
     }
 
     sscanf(argv[1], "%d", &test_num);
-
 
     switch (test_num) {
 	case 1:

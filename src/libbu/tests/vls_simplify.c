@@ -39,14 +39,18 @@ main(int argc, char *argv[])
     const char *trim_chars = NULL;
 
     /* Sanity check */
-    if (argc < 3) bu_exit(1, "ERROR: wrong number of parameters");
+    if (argc < 3)
+	bu_exit(1, "Usage: %s {start_str} {expected_str} {keep_chars} {dedup_chars} {trim_chars}\n", argv[0]);
 
     bu_vls_sprintf(&vstr, "%s", argv[1]);
     expected = argv[2];
 
-    if (argc > 3 && strlen(argv[3]) > 0) keep_chars = argv[3];
-    if (argc > 4 && strlen(argv[4]) > 0) dedup_chars = argv[4];
-    if (argc > 5 && strlen(argv[5]) > 0) trim_chars = argv[5];
+    if (argc > 3 && strlen(argv[3]) > 0)
+	keep_chars = argv[3];
+    if (argc > 4 && strlen(argv[4]) > 0)
+	dedup_chars = argv[4];
+    if (argc > 5 && strlen(argv[5]) > 0)
+	trim_chars = argv[5];
 
     (void)bu_vls_simplify(&vstr, keep_chars, dedup_chars, trim_chars);
 

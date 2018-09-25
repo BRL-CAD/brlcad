@@ -109,8 +109,7 @@ main(int argc, char *argv[])
 	    pc_compare(argv[1], control, BU_PATH_EXT);
 	    break;
 	default:
-	    bu_log("Error - unknown component\n");
-	    break;
+	    bu_exit(1, "ERROR: unknown component\n");
     }
 
     return 0;

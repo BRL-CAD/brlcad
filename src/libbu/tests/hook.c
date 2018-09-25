@@ -179,7 +179,7 @@ int
 main(int argc, char *argv[])
 {
     if (argc < 2) {
-	bu_exit(1, "ERROR: usage: %s test_name [test_args...]\n", argv[0]);
+	bu_exit(1, "Usage: %s {basic|multiadd|saverestore} [args...]\n", argv[0]);
     }
 
     if (BU_STR_EQUAL(argv[1], "basic")) {

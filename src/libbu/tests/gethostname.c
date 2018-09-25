@@ -28,12 +28,15 @@
 int
 main(void)
 {
-    char host[100];
     int status;
+    char host[MAXPATHLEN] = {0};
 
-    status = bu_gethostname(host, 100);
-    printf("%s\n", host);
-    printf("%d\n", status);
+    status = bu_gethostname(host, MAXPATHLEN);
+    if (BU_STR_EMPTY(host))
+	return 1;
+
+    bu_log("HOST: %s\n", host);
+    bu_log("STATUS: %d\n", status);
 
     return status;
 }

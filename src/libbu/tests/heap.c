@@ -41,7 +41,7 @@
  * it's always faster.
  */
 int
-heap_main (int ac, char *av[])
+main(int ac, char *av[])
 {
     int i;
     void *ptr;
@@ -49,7 +49,7 @@ heap_main (int ac, char *av[])
     size_t freecalls = 0;
 
     if (ac > 1) {
-	fprintf(stderr,"Usage: %s\n", av[0]);
+	fprintf(stderr, "Usage: %s\n", av[0]);
 	return 1;
     }
 

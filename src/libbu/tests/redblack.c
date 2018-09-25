@@ -55,6 +55,7 @@ main(int UNUSED(ac), char *UNUSED(av[]))
     int i = 0;
     int passed = 0;
     bu_rb_cmp_t farray[1];
+
     farray[0] = &compareFunc;
 
     testTree = bu_rb_create("TestingTree", 1, farray);

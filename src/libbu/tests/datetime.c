@@ -27,9 +27,14 @@ main(int argc, char *argv[])
     struct bu_vls result = BU_VLS_INIT_ZERO;
     int64_t curr_time;
     int function_num;
-    if (argc != 2)
+
+    if (argc != 2) {
+	bu_log("Usage: %s {function_num}\n", argv[0]);
 	bu_exit(1, "ERROR: wrong number of parameters");
+    }
+
     sscanf(argv[1], "%d", &function_num);
+
     switch (function_num) {
 	case 0:	{
 	    int64_t time0, time1, time2;

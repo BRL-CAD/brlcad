@@ -782,6 +782,7 @@ main(int argc, char *argv[])
     doVlsTests();
 
     printf("bu_sscanf: testing complete\n");
+
     return 0;
 }
 

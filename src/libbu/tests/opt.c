@@ -881,8 +881,10 @@ main(int argc, char *argv[])
     char *endptr = NULL;
 
     /* Sanity check */
-    if (argc < 4)
-	bu_exit(1, "ERROR: wrong number of parameters - need option desc num, category and test num");
+    if (argc < 4) {
+	bu_log("Usage: %s {desc_number} {category_num} {test_num}\n", argv[0]);
+	bu_exit(1, "ERROR: wrong number of parameters - need desc num, category and test num\n");
+    }
 
     /* Set the option description to used based on the input number */
     desc_num = strtol(argv[1], &endptr, 0);
@@ -894,7 +896,7 @@ main(int argc, char *argv[])
 
     test_num = strtol(argv[3], &endptr, 0);
     if (endptr && strlen(endptr) != 0) {
-	bu_exit(1, "Invalid test number: %s\n", argv[2]);
+	bu_exit(2, "Invalid test number: %s\n", argv[2]);
     }
 
     switch (desc_num) {

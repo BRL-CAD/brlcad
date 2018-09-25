@@ -41,7 +41,8 @@ main(int argc, char *argv[])
     const char *formatting = NULL;
 
     /* Sanity check */
-    if (argc < 6) bu_exit(1, "ERROR: wrong number of parameters");
+    if (argc < 6)
+	bu_exit(1, "Usage: %s {name} {num} {formatting} {incr_count} {expected}\n", argv[0]);
 
     if (BU_STR_EQUAL(argv[2], "1")) {
 	rs = rs_complex;
