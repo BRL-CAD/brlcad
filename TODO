@@ -165,6 +165,11 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* sort gqa/rtcheck/check/lint/analyze/g_lint functionality into
+  logical groupings (probably analyze - calculate properties and
+  lint - find problems). Come up with a command design that
+  lets us rationalize the features and reduce the command set.
+
 * rtwizard unit test legitimately failing on mac/windows
 
 * implement a bu_exec wrapper and investigate something like capnproto
