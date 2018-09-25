@@ -793,6 +793,9 @@ utah_newton_solver(const BBNode* sbv, const ON_Surface* surf, const ON_Ray& r, O
 
 	if (NEAR_ZERO(J, BREP_INTERSECTION_ROOT_EPSILON)) {
 	    // perform jittered perturbation in parametric domain....
+	    // FIXME:  drand48 call should be replaced by a faster libbn
+	    // random mechanism - common.h's definition of drand48 on 
+	    // Windows showed hot in profiling.
 	    uv.x = uv.x + .1 * drand48() * (uv0.x - uv.x);
 	    uv.y = uv.y + .1 * drand48() * (uv0.y - uv.y);
 	    continue;
