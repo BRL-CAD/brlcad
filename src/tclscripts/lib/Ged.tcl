@@ -205,7 +205,6 @@ package provide cadwidgets::Ged 1.0
 	method debugbu {args}
 	method debugdir {args}
 	method debuglib {args}
-	method debugmem {args}
 	method debugnmg {args}
 	method decompose {args}
 	method delay {args}
@@ -327,7 +326,6 @@ package provide cadwidgets::Ged 1.0
 	method mat_arb_rot {args}
 	method match {args}
 	method mater {args}
-	method memprint {args}
 	method mirror {args}
 	method model2grid_lu {args}
 	method model2view {args}
@@ -1607,10 +1605,6 @@ package provide cadwidgets::Ged 1.0
     eval $mGed debuglib $args
 }
 
-::itcl::body cadwidgets::Ged::debugmem {args} {
-    eval $mGed debugmem $args
-}
-
 ::itcl::body cadwidgets::Ged::debugnmg {args} {
     eval $mGed debugnmg $args
 }
@@ -2271,10 +2265,6 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::mater {args} {
     eval $mGed mater $args
-}
-
-::itcl::body cadwidgets::Ged::memprint {args} {
-    eval $mGed memprint $args
 }
 
 ::itcl::body cadwidgets::Ged::mirror {args} {
@@ -6245,7 +6235,6 @@ package provide cadwidgets::Ged 1.0
     $help add debugbu		{{[hex_code]} {activate libbu debugging}}
     $help add debugdir		{{} {dump of database directory}}
     $help add debuglib		{{[hex_code]} {activate librt debugging}}
-    $help add debugmem		{{[hex_code]} {activate memory debugging}}
     $help add debugnmg		{{[hex_code]} {activate nmg debugging}}
     $help add decompose		{{nmg_solid [prefix]}	{decompose nmg_solid into maximally connected shells}}
     $help add delay		{{sec usec} {delay processing for the specified amount of time}}
@@ -6345,7 +6334,6 @@ package provide cadwidgets::Ged 1.0
     $help add mat_xform_about_pt {{xform pt} {}}
     $help add mat_arb_rot	{{pt dir angle} {returns a rotation matrix}}
     $help add mater		{{region shader R G B inherit} {modify region's material information}}
-    $help add memprint		{{} {print memory}}
     $help add mirror		{{[-p point] [-d dir] [-x] [-y] [-z] [-o offset] old new}	{mirror object along the specified axis}}
     $help add model2grid_lu	{{x y z} {convert model xyz to grid coordinates (local units)}}
     $help add model2view	{{} {returns the model2view matrix}}

@@ -4345,11 +4345,6 @@
     </listitem>
     <listitem>
       <para>
-        <link xlink:href="../../mann/en/debugmem.php">De Bugmem</link>
-      </para>
-    </listitem>
-    <listitem>
-      <para>
         <link xlink:href="../../mann/en/debugnmg.php">De Bugnmg</link>
       </para>
     </listitem>
@@ -4711,11 +4706,6 @@
     <listitem>
       <para>
         <link xlink:href="../../mann/en/matpick.php">Mat Pick</link>
-      </para>
-    </listitem>
-    <listitem>
-      <para>
-        <link xlink:href="../../mann/en/memprint.php">Memprint</link>
       </para>
     </listitem>
     <listitem>

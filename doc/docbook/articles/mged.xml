@@ -5188,9 +5188,6 @@ x 					delete character
 </row>
 <row>
   <entry>
-    <link linkend="debugmem">debugmem</link>
-  </entry>
-  <entry>
     <link linkend="debugnmg">debugnmg</link>
   </entry>
   <entry>
@@ -5393,9 +5390,6 @@ x 					delete character
   </entry>
   <entry>
     <link linkend="matpick">matpick</link>
-  </entry>
-  <entry>
-    <link linkend="memprint">memprint</link>
   </entry>
   <entry>
     <link linkend="mirface">mirface</link>
@@ -8480,9 +8474,7 @@ x 					delete character
           <emphasis>librt</emphasis> and
           <link linkend="debugnmg">debugnmg</link> for the
           NMG  portion of
-          <emphasis>librt</emphasis>. Other debugging commands include
-          <link linkend="debugmem">debugmem</link> and
-          <link linkend="debugdir">debugdir</link>.
+          <emphasis>librt</emphasis>.
         </para>
       </listitem>
     </varlistentry>
@@ -8596,9 +8588,7 @@ x 					delete character
           <emphasis>libbu</emphasis> and
           <link linkend="debugnmg">debugnmg</link> for the
           NMG portion of
-          <emphasis>librt</emphasis>. Other debugging commands include
-          <link linkend="debugmem">debugmem</link> and
-          <link linkend="debugdir">debugdir</link>.
+          <emphasis>librt</emphasis>.
         </para>
       </listitem>
     </varlistentry>
@@ -8625,41 +8615,6 @@ x 					delete character
   <para>
     <emphasis role="strong"></emphasis>
   </para>
-  <variablelist xml:id="debugmem">
-    <varlistentry>
-      <term>
-        debugmem
-      </term>
-      <listitem>
-        <para>
-          The <quote>debugmem</quote> command prints a list of all the
-          memory blocks that have been allocated and recorded in the
-          <emphasis>memdebug</emphasis> table. Memory allocation is not
-          normally recorded in the <emphasis>memdebug</emphasis> table,
-          but executing the
-          <link linkend="debugbu"><emphasis>debugbu</emphasis></link><emphasis>2</emphasis>
-          command will turn on the &lt;MEM_CHECK&gt; flag, and as long
-          as that flag is set, all memory allocation will be recorded.
-        </para>
-      </listitem>
-    </varlistentry>
-    <varlistentry>
-      <term>
-        Examples:
-      </term>
-      <listitem>
-        <para>
-          mged&gt; debugmem
-        </para>
-      </listitem>
-    </varlistentry>
-  </variablelist>
-  <para>
-    – Get a list of allocated memory blocks.
-  </para>
-  <para>
-    <emphasis role="strong"></emphasis>
-  </para>
   <variablelist xml:id="debugnmg">
     <varlistentry>
       <term>
@@ -8676,9 +8631,7 @@ x 					delete character
           libraries are <link linkend="debuglib">debuglib</link> for
           <emphasis>librt</emphasis> and
           <link linkend="debugbu">debugbu</link> for
-          <emphasis>libbu</emphasis>. Other debugging commands include
-          <link linkend="debugmem">debugmem</link> and
-          <link linkend="debugdir">debugdir</link>.
+          <emphasis>libbu</emphasis>.
         </para>
       </listitem>
     </varlistentry>
@@ -12152,35 +12105,6 @@ foo.r_xpand/R
   <para>
     – Select the matrix for <emphasis>region3</emphasis> in
     <emphasis>group1</emphasis> for editing.
-  </para>
-  <para>
-    <emphasis role="strong"></emphasis>
-  </para>
-  <variablelist>
-    <varlistentry>
-      <term xml:id="memprint">
-        memprint
-      </term>
-      <listitem>
-        <para>
-          The <quote>memprint</quote> command displays memory maps for
-          debugging purposes.
-        </para>
-      </listitem>
-    </varlistentry>
-    <varlistentry>
-      <term>
-        Examples:
-      </term>
-      <listitem>
-        <para>
-          mged&gt; memprint
-        </para>
-      </listitem>
-    </varlistentry>
-  </variablelist>
-  <para>
-    – List memory maps.
   </para>
   <para>
     <emphasis role="strong"></emphasis>

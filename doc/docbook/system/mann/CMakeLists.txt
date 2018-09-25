@@ -61,7 +61,6 @@ set(mann_EN
   debugbu.xml
   debugdir.xml
   debuglib.xml
-  debugmem.xml
   debugnmg.xml
   decompose.xml
   delay.xml
@@ -133,7 +132,6 @@ set(mann_EN
   man.xml
   mater.xml
   matpick.xml
-  memprint.xml
   mirface.xml
   mrot.xml
   mv.xml

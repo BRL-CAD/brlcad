@@ -126,9 +126,7 @@
 <TD WIDTH="21%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#debuglib"><FONT SIZE=2>debuglib</FONT></A></TD>
 </TR>
-<TR><TD WIDTH="18%" VALIGN="MIDDLE">
-<FONT SIZE=2><P></FONT><A HREF="#debugmem"><FONT SIZE=2>debugmem</FONT></A></TD>
-<TD WIDTH="19%" VALIGN="MIDDLE">
+<TR><TD WIDTH="19%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#debugnmg"><FONT SIZE=2>debugnmg</FONT></A></TD>
 <TD WIDTH="20%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#decompose"><FONT SIZE=2>decompose</FONT></A></TD>
@@ -262,8 +260,6 @@
 <FONT SIZE=2><P></FONT><A HREF="#mater"><FONT SIZE=2>mater</FONT></A></TD>
 <TD WIDTH="20%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#matpick"><FONT SIZE=2>matpick</FONT></A></TD>
-<TD WIDTH="22%" VALIGN="MIDDLE">
-<FONT SIZE=2><P></FONT><A HREF="#memprint"><FONT SIZE=2>memprint</FONT></A></TD>
 <TD WIDTH="21%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#mirface"><FONT SIZE=2>mirface</FONT></A></TD>
 </TR>
@@ -1233,7 +1229,7 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 
 <B><DL>
 <DT><A NAME="debugbu"></A>debugbu</B> [<I>hex_code</I>]</DT>
-<DD>The &quot;debugbu&quot; command allows the user to set or check the debug flags used by <I>libbu</I>.  With no arguments, the <I>debugbu</I> command displays all the possible settings for the <I>bu_debug</I> flag and the current value.  When a <I>hex_code</I> is supplied, that value is used as the new value for <I>bu_debug</I>.  Similar debug commands for other <I>BRL-CAD</I> libraries are <A HREF="#debuglib">debuglib</A> for <I>librt</I> and <A HREF="#debugnmg">debugnmg</A> for the <A HREF="#NMG">NMG</A> portion of <I>librt</I>.  Other debugging commands include <A HREF="#debugmem">debugmem</A> and <A HREF="#debugdir">debugdir</A>.</DD>
+<DD>The &quot;debugbu&quot; command allows the user to set or check the debug flags used by <I>libbu</I>.  With no arguments, the <I>debugbu</I> command displays all the possible settings for the <I>bu_debug</I> flag and the current value.  When a <I>hex_code</I> is supplied, that value is used as the new value for <I>bu_debug</I>.  Similar debug commands for other <I>BRL-CAD</I> libraries are <A HREF="#debuglib">debuglib</A> for <I>librt</I> and <A HREF="#debugnmg">debugnmg</A> for the <A HREF="#NMG">NMG</A> portion of <I>librt</I>.</DD>
 <FONT SIZE=4><DT>Examples:</DT>
 </FONT>
 <DD><tt>mged&gt;</TT> <B>debugbu</DD>
@@ -1270,7 +1266,7 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
 <DT><A NAME="debuglib"></A>debuglib</B> [<I>hex_code</I>]</DT>
-<DD>The &quot;debuglib&quot; command allows the user to set or check the debug flags used by <I>librt</I>.  With no arguments, the <I>debuglib</I> command displays all the possible settings for the <I>librt</I> debug flag and the current value.  When a <I>hex_code</I> is supplied, that value is used as the new value for the flag.  Similar debug commands for other <I>BRL-CAD</I> libraries are <A HREF="#debugbu">debugbu</A> for <I>libbu</I> and <A HREF="#debugnmg">debugnmg</A> for the <A HREF="#NMG">NMG</A> portion of <I>librt</I>.  Other debugging commands include <A HREF="#debugmem">debugmem</A> and <A HREF="#debugdir">debugdir</A>.</DD>
+<DD>The &quot;debuglib&quot; command allows the user to set or check the debug flags used by <I>librt</I>.  With no arguments, the <I>debuglib</I> command displays all the possible settings for the <I>librt</I> debug flag and the current value.  When a <I>hex_code</I> is supplied, that value is used as the new value for the flag.  Similar debug commands for other <I>BRL-CAD</I> libraries are <A HREF="#debugbu">debugbu</A> for <I>libbu</I> and <A HREF="#debugnmg">debugnmg</A> for the <A HREF="#NMG">NMG</A> portion of <I>librt</I>.</DD>
 <FONT SIZE=4><DT>Examples:</DT>
 </FONT><TT><DD>mged&gt;</TT> <B>debuglib</DD>
 </DL>
@@ -1282,17 +1278,8 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
-<DT><A NAME="debugmem"></A>debugmem</DT>
-</B><DD>The &quot;debugmem&quot; command prints a list of all the memory blocks that have been allocated and recorded in the <I>memdebug</I> table. Memory allocation is not normally recorded in the <I>memdebug</I> table, but executing the <A HREF="#debugbu"><I>debugbu</I></A><I> 2</I> command will turn on the &lt;MEM_CHECK&gt; flag, and as long as that flag is set, all memory allocation will be recorded.</DD>
-<FONT SIZE=4><DT>Examples:</DT>
-</FONT><TT><DD>mged&gt;</TT> <B>debugmem</DD>
-</DL>
-</B><FONT SIZE=2><P>-- Get a list of allocated memory blocks. </P>
-
-<P><HR ALIGN="RIGHT"></P>
-</FONT><B><DL>
 <DT><A NAME="debugnmg"></A>debugnmg</B> [<I>hex_code</I>] </DT>
-<DD>The &quot;debugnmg&quot; command with no options displays a list of all possible debug flags available for <A HREF="#NMG">NMG</A> processing.  If the command is invoked with a hex number argument, that value is used as the new value for the <I>NMG</I> debug flag.  Similar debug commands for other <I>BRL-CAD</I> libraries are <A HREF="#debuglib">debuglib</A> for <I>librt</I> and <A HREF="#debugbu">debugbu</A> for <I>libbu</I>.  Other debugging commands include <A HREF="#debugmem">debugmem</A> and <A HREF="#debugdir">debugdir</A>.</DD>
+<DD>The &quot;debugnmg&quot; command with no options displays a list of all possible debug flags available for <A HREF="#NMG">NMG</A> processing.  If the command is invoked with a hex number argument, that value is used as the new value for the <I>NMG</I> debug flag.  Similar debug commands for other <I>BRL-CAD</I> libraries are <A HREF="#debuglib">debuglib</A> for <I>librt</I> and <A HREF="#debugbu">debugbu</A> for <I>libbu</I>.</DD>
 <FONT SIZE=4><DT>Examples:</DT>
 </FONT><TT><DD>mged&gt;</TT> <B>debugnmg 100</DD>
 </DL>
@@ -2243,14 +2230,6 @@ foo.r_xpand/R
 </FONT><TT><DD>mged&gt;</TT> <B>matpick group1/region3</DD>
 </DL>
 </B><FONT SIZE=2><P>-- Select the matrix for <I>region3</I> in <I>group1</I> for editing. </P>
-<P><HR ALIGN="RIGHT"></P>
-</FONT><B><DL>
-<DT><A NAME="memprint"></A>memprint</DT>
-</B><DD>The &quot;memprint&quot; command displays memory maps for debugging purposes.</DD>
-<FONT SIZE=4><DT>Examples:</DT>
-</FONT><TT><DD>mged&gt;</TT> <B>memprint</DD>
-</DL>
-</B><FONT SIZE=2><P>-- List memory maps. </P>
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
 <DT><A NAME="mirface"></A>mirface</B> <I>#### x</I>|<I>y</I>|<I>z</DT>
