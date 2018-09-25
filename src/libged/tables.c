@@ -161,13 +161,9 @@ sort_table_objs(const void *a, const void *b, void *UNUSED(arg))
     struct table_obj *bo = *(struct table_obj **)b;
     if (ao->region_id > bo->region_id) return 1;
     if (ao->region_id < bo->region_id) return -1;
-    if (ao->aircode > bo->aircode) return 1;
-    if (ao->aircode < bo->aircode) return -1;
-    if (ao->GIFTmater > bo->GIFTmater) return 1;
-    if (ao->GIFTmater < bo->GIFTmater) return -1;
-    if (ao->los > bo->los) return 1;
-    if (ao->los < bo->los) return -1;
-    return bu_strcmp(bu_vls_addr(ao->path), bu_vls_addr(bo->path));
+    if (ao->numreg > bo->numreg) return 1;
+    if (ao->numreg < bo->numreg) return -1;
+    return 0;
 }
 
 
