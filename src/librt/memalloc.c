@@ -333,16 +333,6 @@ rt_mempurge(struct mem_map **pp)
 }
 
 
-void
-rt_memprint(struct mem_map **pp)
-{
-    register struct mem_map *curp;
-
-    bu_log("rt_memprint(%p):  address, length\n", (void *)*pp);
-    for (curp = *pp; curp; curp = curp->m_nxtp)
-	bu_log(" a=%ld, l=%.5zu\n", curp->m_addr, curp->m_size);
-}
-
 
 void
 rt_memclose(void)
@@ -354,6 +344,15 @@ rt_memclose(void)
 	bu_free((char *)mp, "struct mem_map " CPP_FILELINE);
     }
 }
+
+
+/* DEPRECATED */
+void
+rt_memprint(struct mem_map **UNUSED(pp))
+{
+    bu_log("rt_memprint() is deprecated\n");
+}
+
 
 
 /*

@@ -28,7 +28,6 @@ set(MGED_SOURCES
   clone.c
   color_scheme.c
   columns.c
-  dir.c
   dm-generic.c
   dodraw.c
   doevent.c

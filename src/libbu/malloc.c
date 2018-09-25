@@ -32,7 +32,6 @@
 #include "bio.h"
 
 #include "bu/debug.h"
-#include "bu/list.h"
 #include "bu/malloc.h"
 #include "bu/parallel.h"
 #include "bu/exit.h"
@@ -63,25 +62,6 @@ typedef enum {
     CALLOC
 } alloc_t;
 
-
-#define MDB_MAGIC 0x12348969
-struct memdebug {
-    uint32_t magic;		/* corruption can be everywhere */
-    void *mdb_addr;
-    const char *mdb_str;
-    size_t mdb_len;
-};
-static struct memdebug *bu_memdebug = (struct memdebug *)NULL;
-static size_t bu_memdebug_len = 0;
-#define MEMDEBUG_NULL ((struct memdebug *)0)
-
-struct memqdebug {
-    struct bu_list q;
-    struct memdebug m;
-};
-
-static struct bu_list *bu_memq = BU_LIST_NULL;
-#define MEMQDEBUG_NULL ((struct memqdebug *)0)
 
 /* non-published globals */
 extern const char bu_vls_message[];
@@ -292,66 +272,8 @@ bu_realloc(register void *ptr, size_t siz, const char *str)
 void
 bu_prmem(const char *str)
 {
-    register struct memdebug *mp;
-    register struct memqdebug *mqp;
-    register uint32_t *ip;
-    register size_t count = 0;
-
-    fprintf(stderr, "\nbu_prmem(): dynamic memory use (%s)\n", str);
-    fprintf(stderr, " Address Length Purpose\n");
-    if (bu_memdebug_len > 0) {
-	mp = &bu_memdebug[bu_memdebug_len-1];
-	for (; mp >= bu_memdebug; mp--) {
-	    if (!mp->magic) continue;
-	    if (mp->magic != MDB_MAGIC) bu_bomb("memdebug_check() malloc tracing table corrupted!\n");
-	    if (mp->mdb_len == 0) continue;
-
-	    count++;
-	    ip = (uint32_t *)(((char *)mp->mdb_addr)+mp->mdb_len-sizeof(uint32_t));
-	    if (mp->mdb_str == bu_strdup_message) {
-		fprintf(stderr, "%p %llu bu_strdup: \"%s\"\n",
-			mp->mdb_addr, (unsigned long long)mp->mdb_len,
-			((char *)mp->mdb_addr));
-	    } else if (mp->mdb_str == bu_vls_message) {
-		fprintf(stderr, "%p %llu bu_vls: \"%s\"\n",
-			mp->mdb_addr, (unsigned long long)mp->mdb_len,
-			((char *)mp->mdb_addr));
-	    } else {
-		fprintf(stderr, "%p %llu %s\n",
-			mp->mdb_addr, (unsigned long long)mp->mdb_len,
-			mp->mdb_str);
-	    }
-	    if (*ip != MDB_MAGIC) {
-		fprintf(stderr, "\tCorrupted end marker was=x%lx\ts/b=x%x\n",
-			(unsigned long)*ip, MDB_MAGIC);
-	    }
-	}
-    }
-
-
-    if (bu_memq != BU_LIST_NULL) {
-	fprintf(stderr, "memdebug queue\n Address Length Purpose\n");
-	BU_LIST_EACH(bu_memq, mqp, struct memqdebug) {
-	    if (!BU_LIST_MAGIC_EQUAL(&(mqp->q), MDB_MAGIC)
-		|| !BU_LIST_MAGIC_EQUAL(&(mqp->m), MDB_MAGIC))
-		bu_bomb("bu_prmem() malloc tracing queue corrupted!\n");
-	    if (mqp->m.mdb_str == bu_strdup_message) {
-		fprintf(stderr, "%p %llu bu_strdup: \"%s\"\n",
-			mqp->m.mdb_addr, (unsigned long long)mqp->m.mdb_len,
-			((char *)mqp->m.mdb_addr));
-	    } else if (mqp->m.mdb_str == bu_vls_message) {
-		fprintf(stderr, "%p %llu bu_vls: \"%s\"\n",
-			mqp->m.mdb_addr, (unsigned long long)mqp->m.mdb_len,
-			((char *)mqp->m.mdb_addr));
-	    } else {
-		fprintf(stderr, "%p %llu %s\n",
-			mqp->m.mdb_addr, (unsigned long long)mqp->m.mdb_len,
-			mqp->m.mdb_str);
-	    }
-	}
-    }
-
-    fprintf(stderr, "%lu allocation entries\n", (unsigned long)count);
+    fprintf(stderr, "bu_prmem: no op\n");
+    fprintf(stderr, "bu_prmem: str=%s\n", str);
 }
 
 
@@ -397,33 +319,7 @@ bu_ck_malloc_ptr(void *ptr, const char *str)
 int
 bu_mem_barriercheck(void)
 {
-    register struct memdebug *mp = &bu_memdebug[bu_memdebug_len-1];
-    register uint32_t *ip;
-
-    if (UNLIKELY(bu_memdebug == (struct memdebug *)0)) {
-	fprintf(stderr, "bu_mem_barriercheck() no memdebug table yet\n");
-	return 0;
-    }
-    bu_semaphore_acquire(BU_SEM_MALLOC);
-    for (; mp >= bu_memdebug; mp--) {
-	if (!mp->magic) continue;
-	if (mp->magic != MDB_MAGIC) {
-	    bu_semaphore_release(BU_SEM_MALLOC);
-	    fprintf(stderr, "  mp->magic = x%lx, s/b=x%x\n", (unsigned long)(mp->magic), MDB_MAGIC);
-	    bu_bomb("bu_mem_barriercheck() malloc tracing table corrupted!\n");
-	}
-	if (mp->mdb_len == 0) continue;
-	ip = (uint32_t *)(((char *)mp->mdb_addr)+mp->mdb_len-sizeof(uint32_t));
-	if (*ip != MDB_MAGIC) {
-	    bu_semaphore_release(BU_SEM_MALLOC);
-	    fprintf(stderr, "ERROR bu_mem_barriercheck(%p, len=%llu) barrier word corrupted!\n\tbarrier at %p was=x%lx s/b=x%x %s\n",
-		    mp->mdb_addr, (unsigned long long)mp->mdb_len,
-		    (void *)ip, (unsigned long)*ip, MDB_MAGIC, mp->mdb_str);
-	    return -1;	/* FAIL */
-	}
-    }
-    bu_semaphore_release(BU_SEM_MALLOC);
-    return 0;			/* OK */
+    return 0;
 }
 
 

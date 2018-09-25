@@ -89,7 +89,6 @@ set(LIBGED_SOURCES
   debugbu.c
   debugdir.c
   debuglib.c
-  debugmem.c
   debugnmg.c
   decompose.c
   delay.c

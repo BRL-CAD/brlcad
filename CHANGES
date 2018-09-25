@@ -130,7 +130,11 @@ removed at any time.
 7.28
 ----
 include/bu/malloc.h
-        bu_ck_malloc_ptr, bu_mem_barriercheck [deprecated 7.28]
+        bu_ck_malloc_ptr, bu_mem_barriercheck, bu_prmem
+	replaced by modern memory analyzers [deprecated 7.28]
+
+include/rt/mem.h
+	rt_memprint [deprecated 7.28]
 
 include/vmath.h
         VCOMB3, VCOMB3N, VJOIN4
