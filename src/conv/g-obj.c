@@ -167,27 +167,6 @@ parse_debug_nmg(struct bu_vls *error_msg, int argc, const char **argv, void *set
     }
 }
 
-
-static struct bu_opt_desc options[] = {
-    {"?", "", NULL,         NULL,            &print_help,  "print help and exit"},
-    {"h", "", NULL,         NULL,            &print_help,  "print help and exit"},
-    {"i", "", NULL,         NULL,            &inches,      "change output units from mm to inches"},
-    {"m", "", NULL,         NULL,            &usemtl,      "output usemtl statements"},
-    {"u", "", NULL,         NULL,            &do_normals,  "output vertex normals"},
-    {"v", "", NULL,         NULL,            &verbose,     "verbose output"},
-    {"a", "", "#",          parse_tol_abs,   &ttol,        "absolute tolerance"},
-    {"n", "", "#",          parse_tol_norm,  &ttol,        "surface normal tolerance"},
-    {"D", "", "#",          parse_tol_dist,  &tol,         "distance tolerance"},
-    {"x", "", "level",      parse_debug_rt,  &RTG.debug,   "set RT debug flag"},
-    {"X", "", "level",      parse_debug_nmg, &nmg_debug,   "set NMG debug flag"},
-    {"e", "", "error_file", bu_opt_str,      &error_file,  "error file name"},
-    {"o", "", "output.obj", bu_opt_str,      &output_file, "output file name"},
-    {"P", "", "#",          bu_opt_int,      &ncpu,        "number of CPUs"},
-    {"r", "", "#",          bu_opt_fastf_t,  &ttol.rel,    "relative tolerance"},
-    BU_OPT_DESC_NULL
-};
-
-
 int
 main(int argc, const char **argv)
 {
@@ -195,6 +174,23 @@ main(int argc, const char **argv)
     double percent;
     struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
     const char *prog_name = argv[0];
+    struct bu_opt_desc options[16];
+    BU_OPT(options[0], "?", "", NULL,          NULL,            &print_help,  "print help and exit");
+    BU_OPT(options[1], "h", "", NULL,          NULL,            &print_help,  "print help and exit");
+    BU_OPT(options[2], "i", "", NULL,          NULL,            &inches,      "change output units from mm to inches");
+    BU_OPT(options[3], "m", "", NULL,          NULL,            &usemtl,      "output usemtl statements");
+    BU_OPT(options[4], "u", "", NULL,          NULL,            &do_normals,  "output vertex normals");
+    BU_OPT(options[5], "v", "", NULL,          NULL,            &verbose,     "verbose output");
+    BU_OPT(options[6], "a", "", "#",           parse_tol_abs,   &ttol,        "absolute tolerance");
+    BU_OPT(options[7], "n", "", "#",           parse_tol_norm,  &ttol,        "surface normal tolerance");
+    BU_OPT(options[8], "D", "", "#",           parse_tol_dist,  &tol,         "distance tolerance");
+    BU_OPT(options[9], "x", "", "level",       parse_debug_rt,  &RTG.debug,   "set RT debug flag");
+    BU_OPT(options[10], "X", "", "level",      parse_debug_nmg, &nmg_debug,   "set NMG debug flag");
+    BU_OPT(options[11], "e", "", "error_file", bu_opt_str,      &error_file,  "error file name");
+    BU_OPT(options[12], "o", "", "output.obj", bu_opt_str,      &output_file, "output file name");
+    BU_OPT(options[13], "P", "", "#",          bu_opt_int,      &ncpu,        "number of CPUs");
+    BU_OPT(options[14], "r", "", "#",          bu_opt_fastf_t,  &ttol.rel,    "relative tolerance");
+    BU_OPT_NULL(options[15]);
 
     bu_setprogname(argv[0]);
     bu_setlinebuf(stderr);
