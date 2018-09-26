@@ -5,6 +5,8 @@ set(doc_legal
   )
 ADD_DOC(doc_legal legal)
 
+add_subdirectory(embedded)
+
 CMAKEFILES(bsd.txt bdl.txt lgpl.txt)
 CMAKEFILES(CMakeLists.txt)
 
