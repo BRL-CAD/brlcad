@@ -35,6 +35,35 @@
 #define _LARGE_FILE_API
     /* This makes the the x64() functions available on AIX */
 
+#define CHARMALLOCARRAY(arrayName, nElements) do { \
+    void * array; \
+    mallocProduct(&array, nElements, sizeof(arrayName[0])); \
+    arrayName = (char *)array; \
+} while (0)
+
+#define ACHARMALLOCARRAY(arrayName, nElements) do { \
+    void * array; \
+    mallocProduct(&array, nElements, sizeof(arrayName[0])); \
+    arrayName = (char **)array; \
+} while (0)
+
+#define CHARREALLOCARRAY(arrayName, nElements) { \
+	    void * array; \
+	    array = arrayName; \
+	    reallocProduct(&array, nElements, sizeof(arrayName[0])); \
+	    arrayName = (char *)array; \
+} while (0)
+
+#define CHARREALLOCARRAY_NOFAIL(arrayName, nElements) \
+	do { \
+		    CHARREALLOCARRAY(arrayName, nElements); \
+		    if ((arrayName) == NULL) \
+		        abort(); \
+	} while(0)
+
+
+#include <string>
+
 extern "C" {
 #include <stdio.h>
 #include <stdarg.h>
@@ -169,7 +198,7 @@ pm_allocrow(unsigned int const cols,
         pm_error("Arithmetic overflow multiplying %u by %u to get the "
                  "size of a row to allocate.", cols, size);
 
-    itrow = malloc(cols * size);
+    itrow = (char *)malloc(cols * size);
     if (itrow == NULL)
         pm_error("out of memory allocating a row");
 
@@ -208,22 +237,22 @@ pm_allocarray(int const cols, int const rows, int const size )  {
     char** rowIndex;
     char * rowheap;
 
-    MALLOCARRAY(rowIndex, rows + 1);
+    ACHARMALLOCARRAY(rowIndex, rows + 1);
     if (rowIndex == NULL)
         pm_error("out of memory allocating row index (%u rows) for an array",
                  rows);
 
-    if (cols != 0 && rows != 0 && UINT_MAX / cols / rows < size)
+    if (cols != 0 && rows != 0 && UINT_MAX / cols / rows < (unsigned int)size)
         /* Too big even to request the memory ! */
         rowheap = NULL;
     else
-        rowheap = malloc((unsigned int)rows * cols * size);
+        rowheap = (char *)malloc((unsigned int)rows * cols * size);
 
     if (rowheap == NULL) {
         /* We couldn't get the whole heap in one block, so try fragmented
            format.
         */
-        unsigned int row;
+        int row;
         
         rowIndex[rows] = NULL;   /* Declare it fragmented format */
 
@@ -236,7 +265,7 @@ pm_allocarray(int const cols, int const rows, int const size )  {
         }
     } else {
         /* It's unfragmented format */
-        unsigned int row;
+        int row;
         rowIndex[rows] = rowheap;  /* Declare it unfragmented format */
 
         for (row = 0; row < rows; ++row)
@@ -256,7 +285,7 @@ pm_freearray(char ** const rowIndex,
     if (rowheap != NULL)
         free(rowheap);
     else {
-        unsigned int row;
+        int row;
         for (row = 0; row < rows; ++row)
             pm_freerow(rowIndex[row]);
     }
@@ -640,7 +669,7 @@ pm_arg0toprogname(const char arg0[]) {
    but truncated at 64 characters.
 -----------------------------------------------------------------------------*/
     static char retval[64+1];
-    char *slash_pos;
+    const char *slash_pos;
 
     /* Chop any directories off the left end */
     slash_pos = strrchr(arg0, '/');
@@ -848,7 +877,7 @@ pm_make_tmpfile(FILE **       const filePP,
     if (fd < 0)
         pm_error("Unable to create temporary file according to name "
                  "pattern '%s'.  mkstemp() failed with "
-                 "errno %d (%s)", filenameTemplate, errno, strerror(errno));
+                 "errno %d (%s)", filenameTemplate.c_str(), errno, strerror(errno));
     else {
         fileP = fdopen(fd, "w+b");
 
@@ -856,7 +885,6 @@ pm_make_tmpfile(FILE **       const filePP,
             pm_error("Unable to create temporary file.  fdopen() failed "
                      "with errno %d (%s)", errno, strerror(errno));
     }
-    strfree(filenameTemplate);
 
     *filenameP = filenameBuffer;
     *filePP = fileP;
@@ -874,7 +902,7 @@ pm_tmpfile(void) {
 
     unlink(tmpfile);
 
-    strfree(tmpfile);
+    free((void *)tmpfile);
 
     return fileP;
 }
@@ -1232,7 +1260,7 @@ pm_read_unknown_size(FILE * const file,
 
     *nread = 0;
     nalloc = PM_BUF_SIZE;
-    MALLOCARRAY(buf, nalloc);
+    CHARMALLOCARRAY(buf, nalloc);
 
     eof = FALSE;  /* initial value */
 
@@ -1244,7 +1272,7 @@ pm_read_unknown_size(FILE * const file,
                 nalloc += PM_MAX_BUF_INC;
             else
                 nalloc += nalloc;
-            REALLOCARRAY_NOFAIL(buf, nalloc);
+            CHARREALLOCARRAY_NOFAIL(buf, nalloc);
         }
 
         val = getc(file);
@@ -1317,7 +1345,7 @@ pm_tell2(FILE *       const fileP,
                  "Errno = %s (%d)\n", strerror(errno), errno);
 
     if (fileposSize == sizeof(pm_filepos)) {
-        pm_filepos * const fileposP_filepos = fileposP;
+        pm_filepos * const fileposP_filepos = (pm_filepos * const)fileposP;
         *fileposP_filepos = filepos;
     } else if (fileposSize == sizeof(long)) {
         if (sizeof(pm_filepos) > sizeof(long) &&
@@ -1325,7 +1353,7 @@ pm_tell2(FILE *       const fileP,
             pm_error("File size is too large to represent in the %u bytes "
                      "that were provided to pm_tell2()", fileposSize);
         else {
-            long * const fileposP_long = fileposP;
+            long * const fileposP_long = (long * const)fileposP;
             *fileposP_long = (long)filepos;
         }
     } else
