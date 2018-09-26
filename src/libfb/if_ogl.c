@@ -480,12 +480,12 @@ ogl_getmem(fb *ifp)
     pixsize = ifp->if_height * ifp->if_width * sizeof(struct fb_pixel);
 
     /* shared memory behaves badly if we try to allocate too much, so
-     * arbitrarily constrain it to our default 512x512 size & samller.
+     * arbitrarily constrain it to our default 1000x1000 size & samller.
      */
-    if (pixsize > sizeof(struct fb_pixel)*512*512) {
+    if (pixsize > sizeof(struct fb_pixel)*1000*1000) {
 	/* let the user know */
 	ifp->if_mode |= MODE_1MALLOC;
-	fb_log("ogl_getmem: image too big for shared memory, using private\n");
+	/* fb_log("ogl_getmem: image too big for shared memory, using private\n"); */
     }
 
     if ((ifp->if_mode & MODE_1MASK) == MODE_1MALLOC) {
