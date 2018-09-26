@@ -1,6 +1,6 @@
 /*
  * Translation to libbn data types of Franklin's point-in-polygon test.
- * See http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
+ * See https://wrf.ecse.rpi.edu//Research/Short_Notes/pnpoly.html
  * for a discussion of the subtleties involved with the inequality tests.
  * The below copyright applies to just the function bg_pt_in_polygon,
  * not the whole of polygon.c
