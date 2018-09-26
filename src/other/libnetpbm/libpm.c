@@ -35,6 +35,7 @@
 #define _LARGE_FILE_API
     /* This makes the the x64() functions available on AIX */
 
+extern "C" {
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
@@ -47,8 +48,6 @@
 #include "pm_c_util.h"
 #include "version.h"
 #include "compile.h"
-#include "nstring.h"
-/*#include "shhopt.h"*/
 #include "mallocvar.h"
 #include "pm.h"
 
@@ -290,13 +289,9 @@ pm_keymatch(char *       const strarg,
         c2 = *keyword++;
         if ( c2 == '\0' )
             return 0;
-        if ( ISUPPER( c1 ) )
-            c1 = tolower( c1 );
-        if ( ISUPPER( c2 ) )
-            c2 = tolower( c2 );
-        if ( c1 != c2 )
-            return 0;
-        }
+	if ( tolower(c1) != tolower(c2) )
+		return 0;
+	}
     return 1;
 }
 
@@ -815,14 +810,15 @@ mkstemp2(char * const filenameBuffer) {
 }
 
 
+} /* extern "C" */
 
-void
+extern "C" void
 pm_make_tmpfile(FILE **       const filePP,
                 const char ** const filenameP) {
 
     int fd;
     FILE * fileP;
-    const char * filenameTemplate;
+    std::string filenameTemplate;
     char * filenameBuffer;  /* malloc'ed */
     unsigned int fnamelen;
     const char * tmpdir;
@@ -842,14 +838,10 @@ pm_make_tmpfile(FILE **       const filePP,
         dirseparator = "";
     else
         dirseparator = "/";
-    
-    asprintfN(&filenameTemplate, "%s%s%s%s", 
-              tmpdir, dirseparator, pm_progname, "_XXXXXX");
 
-    if (filenameTemplate == NULL)
-        pm_error("Unable to allocate storage for temporary file name");
+    filenameTemplate = std::string(tmpdir) + std::string(dirseparator) + std::string(pm_progname) + std::string("_XXXXXX");
 
-    filenameBuffer = strdup(filenameTemplate);
+    filenameBuffer = strdup(filenameTemplate.c_str());
 
     fd = mkstemp2(filenameBuffer);
 
@@ -870,7 +862,7 @@ pm_make_tmpfile(FILE **       const filePP,
     *filePP = fileP;
 }
 
-
+extern "C" {
 
 FILE * 
 pm_tmpfile(void) {
@@ -1505,5 +1497,5 @@ pm_check(FILE *               const file,
         if (retval_p) *retval_p = PM_CHECK_UNCHECKABLE;
 }
 
-
+} /* extern "C" */
 
