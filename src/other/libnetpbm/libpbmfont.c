@@ -17,6 +17,7 @@
 #include <string.h>
 
 #include "pm_c_util.h"
+#include "nstring.h"
 #include "pbm.h"
 #include "pbmfont.h"
 #include "mallocvar.h"

@@ -1,6 +1,7 @@
 set(libnetpbm_ignore_files
 CMakeLists.txt
 README
+TODO
 bitio.c
 bitio.h
 colorname.c
@@ -63,7 +64,11 @@ standardppmdfont.c
 util/bitreverse.h
 util/intcode.h
 util/mallocvar.h
+util/nstring.c
+util/nstring.h
+util/LICENSE_nstring.txt
 util/pm_c_util.h
 util/ppmdcfont.c
+util/testnstring.c
 version.h.in
 )

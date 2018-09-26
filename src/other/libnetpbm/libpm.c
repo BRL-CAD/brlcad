@@ -47,6 +47,8 @@
 #include "pm_c_util.h"
 #include "version.h"
 #include "compile.h"
+#include "nstring.h"
+/*#include "shhopt.h"*/
 #include "mallocvar.h"
 #include "pm.h"
 

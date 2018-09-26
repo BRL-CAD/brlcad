@@ -22,6 +22,7 @@
 
 #include "pm_c_util.h"
 #include "mallocvar.h"
+#include "nstring.h"
 #include "pam.h"
 #include "ppm.h"
 #include "libpbm.h"
