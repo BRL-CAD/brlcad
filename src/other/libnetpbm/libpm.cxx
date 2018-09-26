@@ -63,6 +63,8 @@
 
 
 #include <string>
+#include <io.h>  
+
 
 extern "C" {
 #include <stdio.h>
@@ -791,21 +793,32 @@ mkstempx(char * const filenameBuffer) {
     int fd;
     unsigned int attempts;
     bool gotFile;
-    bool error;
+    bool error = FALSE;
 
-    for (attempts = 0, gotFile = FALSE, error = FALSE;
-         !gotFile && !error && attempts < 100;
-         ++attempts) {
+	for (attempts = 0, gotFile = FALSE, error = FALSE;
+		!gotFile && !error && attempts < 100;
+		++attempts) {
 
-        char * rc;
-        rc = mktemp(filenameBuffer);
+		char * rc;
+#ifdef WIN32
+		int err = _mktemp_s(filenameBuffer, strlen(filenameBuffer) + 9 + 1);
+		if (err != 0) {
+			rc == NULL;
+			error = TRUE;
+	    }
+#else
+		rc = mktemp(filenameBuffer);
+		if (rc == NULL) error = TRUE;
+#endif
 
-        if (rc == NULL)
-            error = TRUE;
-        else {
+        if (!error) {
             int rc;
 
+#ifdef WIN32
+			rc = _open(filenameBuffer, O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
+#else 
             rc = open(filenameBuffer, O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
+#endif
 
             if (rc == 0) {
                 fd = rc;
