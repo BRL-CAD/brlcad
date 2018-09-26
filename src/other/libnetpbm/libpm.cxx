@@ -63,8 +63,9 @@
 
 
 #include <string>
-#include <io.h>  
-
+#ifdef WIN32
+# include <io.h>
+#endif
 
 extern "C" {
 #include <stdio.h>
