@@ -6,8 +6,10 @@ set(doc_legal
 ADD_DOC(doc_legal legal)
 
 add_subdirectory(embedded)
+add_subdirectory(other)
 
 CMAKEFILES(bsd.txt bdl.txt lgpl.txt)
+CMAKEFILES(README.txt)
 CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
