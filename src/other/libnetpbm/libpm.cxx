@@ -773,7 +773,33 @@ tmpDir(char *tmpdir_aux_win32) {
 
 #ifndef HAVE_MKSTEMP
 /* Pull in the mkstemp logic from BRL-CAD's libbu */
-HIDDEN int
+int64_t mkstemp_gettime() {
+#ifdef WIN32
+    LARGE_INTEGER count; 
+    static LARGE_INTEGER freq = {0};
+
+    if (freq.QuadPart == 0)
+        if (QueryPerformanceFrequency(&freq) == 0) {
+            bu_log("QueryPerformanceFrequency failed\n");
+            return -1;
+        }
+
+    if (QueryPerformanceCounter(&count) == 0) {
+        bu_log("QueryPerformanceCounter failed\n");
+        return -1;
+    }
+
+    return 1e6*count.QuadPart/freq.QuadPart;
+#else
+    struct timeval nowTime;
+
+    gettimeofday(&nowTime, NULL);
+    return ((int64_t)nowTime.tv_sec * (int64_t)1000000
+            + (int64_t)nowTime.tv_usec);
+#endif
+}
+
+static int
 mkstemp(char *file_template)
 {
     int fd = -1;
@@ -798,7 +824,7 @@ mkstemp(char *file_template)
 
     do {
         /* replace the template with random chars */
-        srand((unsigned)(bu_gettime() % UINT_MAX));
+        srand((unsigned)(mkstemp_gettime() % UINT_MAX));
         for (i=start; i>=end; i--) {
             file_template[i] = replace[(int)(replacelen * ((double)rand() / (double)RAND_MAX))];
         }
