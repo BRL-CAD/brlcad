@@ -6,7 +6,6 @@
 =============================================================================*/
 
 #include "pm_c_util.h"
-#include "nstring.h"
 #include "ppm.h"
 
 typedef double fzLog;

@@ -21,7 +21,6 @@
 #include <stdlib.h>
 #include <errno.h>
 
-#include "nstring.h"
 #include "colorname.h"
 
 static int lineNo;

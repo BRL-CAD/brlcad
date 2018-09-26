@@ -115,7 +115,6 @@ set(NETPBM_SRCS
   libpamn.c
   libpammap.c
   libpamcolor.c
-  util/nstring.c
   )
 
 set(NETPBM_HEADERS
@@ -133,7 +132,6 @@ set(NETPBM_HEADERS
   ppm.h
   ppmcmap.h
   ppmfloyd.h
-  util/nstring.h
   )
 
 if(NOT DEFINED BUILD_SHARED_LIBS)
