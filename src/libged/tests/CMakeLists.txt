@@ -1,5 +1,4 @@
 BRLCAD_ADDEXEC(test_tops test_tops.c libged TEST)
-add_dependencies(test_tops moss.g)
 add_test(NAME test_tops_moss COMMAND test_tops "${CMAKE_CURRENT_SOURCE_DIR}/ged_tests.g")
 
 # Note the lint tests are kept in a separate file, since its bad input examples
