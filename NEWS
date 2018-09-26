@@ -21,7 +21,7 @@ search -exec
 overlap tool
 facetize improvements
 
-* added an MGED 'lint' command for finding bad geometry - CLiff Yapp
+* added new MGED 'lint' command for finding bad geometry - Cliff Yapp
 * improved lingering framebuffer CPU utilization  - Sean Morrison
 * updated 'draw -S' option to work with shaded objects - Bob Parker
 * fixed numerous fb* command bugs w/ X11 framebuffers - Sean Morrison
