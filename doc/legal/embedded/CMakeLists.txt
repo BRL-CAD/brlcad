@@ -45,6 +45,8 @@ set(embedded_licenses
   y2038.txt
   )
 
+ADD_DOC(embedded_licenses legal/embedded)
+
 CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:

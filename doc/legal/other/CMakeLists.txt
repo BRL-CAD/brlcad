@@ -28,6 +28,8 @@ set(other_licenses
   tktable.txt
   )
 
+ADD_DOC(other_licenses legal/other)
+
 CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
