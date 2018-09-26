@@ -12,6 +12,9 @@
   (in addition to being the library for handling the PBM format).
 
 **************************************************************************/
+
+#include <string>
+
 #define _SVID_SOURCE
     /* Make sure P_tmpdir is defined in GNU libc 2.0.7 (_XOPEN_SOURCE 500
        does it in other libc's).  pm_config.h defines TMPDIR as P_tmpdir
@@ -62,7 +65,6 @@
 	} while(0)
 
 
-#include <string>
 #ifdef WIN32
 # include <io.h>
 # include <Windows.h>
