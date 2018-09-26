@@ -42,6 +42,7 @@ set(LIBRT_SOURCES
   comb/db_comb.c
   constraint.c
   cut.c
+  cut_hlbvh.c
   db5_alloc.c
   db5_attr.c
   db5_attr_registry.cpp
