@@ -24,7 +24,7 @@ libpbmvms.c
 libpgm.h
 libpgm1.c
 libpgm2.c
-libpm.c
+libpm.cxx
 libpnm1.c
 libpnm2.c
 libpnm3.c
