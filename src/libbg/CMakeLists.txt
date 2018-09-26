@@ -12,6 +12,8 @@ set(LIBBG_SOURCES
   chull3d.cpp
   obr.c
   polygon.c
+  polygon_ear_clipping.c
+  polygon_point_in.c
   spsr.c
   tri_ray.c
   tri_tri.c
