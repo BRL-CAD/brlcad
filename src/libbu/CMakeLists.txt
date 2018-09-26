@@ -119,6 +119,8 @@ set(LIBBU_SOURCES
   temp.c
   thread.cpp
   units.c
+  units_dehumanize.c
+  units_humanize.c
   uuid.c
   vers.c
   vfont.c
