@@ -1,6 +1,7 @@
 set(libnetpbm_ignore_files
 CMakeLists.txt
 README
+TODO
 bitio.c
 bitio.h
 colorname.c
