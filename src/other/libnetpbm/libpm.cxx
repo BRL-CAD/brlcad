@@ -771,87 +771,47 @@ tmpDir(char *tmpdir_aux_win32) {
     return tmpdir;
 }
 
+#ifndef HAVE_MKSTEMP
+/* Pull in the mkstemp logic from BRL-CAD's libbu */
+HIDDEN int
+mkstemp(char *file_template)
+{
+    int fd = -1;
+    int counter = 0;
+    size_t i;
+    size_t start, end;
 
+    static const char replace[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    static int replacelen = sizeof(replace) - 1;
 
-#if !defined(HAVE_MKSTEMP)
-static int
-mkstempx(char * const filenameBuffer) {
-/*----------------------------------------------------------------------------
-  This is meant to be equivalent to POSIX mkstemp().
+    if (!file_template || file_template[0] == '\0')
+        return -1;
 
-  On some old systems, mktemp() is a security hazard that allows a hacker
-  to read or write our temporary file or cause us to read or write some
-  unintended file.  On other systems, mkstemp() does not exist.
-
-  A Windows/mingw environment is one which doesn't have mkstemp()
-  (2006.06.15).
-
-  We assume that if a system doesn't have mkstemp() that its mktemp()
-  is safe, or that the total situation is such that the problems of
-  mktemp() are not a problem for the user.
------------------------------------------------------------------------------*/
-    int retval;
-    int fd;
-    unsigned int attempts;
-    bool gotFile;
-    bool error = FALSE;
-
-	for (attempts = 0, gotFile = FALSE, error = FALSE;
-		!gotFile && !error && attempts < 100;
-		++attempts) {
-
-		char * rc;
-#ifdef WIN32
-		int err = _mktemp_s(filenameBuffer, strlen(filenameBuffer) + 9 + 1);
-		if (err != 0) {
-			rc == NULL;
-			error = TRUE;
-	    }
-#else
-		rc = mktemp(filenameBuffer);
-		if (rc == NULL) error = TRUE;
-#endif
-
-        if (!error) {
-            int rc;
-
-#ifdef WIN32
-			rc = _open(filenameBuffer, O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
-#else 
-            rc = open(filenameBuffer, O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
-#endif
-
-            if (rc == 0) {
-                fd = rc;
-                gotFile = TRUE;
-            } else {
-                if (errno == EEXIST) {
-                    /* We'll just have to keep trying */
-                } else 
-                    error = TRUE;
-            }
+    /* identify the replacement suffix */
+    start = end = strlen(file_template)-1;
+    for (i=strlen(file_template)-1; i>=0; i--) {
+        if (file_template[i] != 'X') {
+            break;
         }
-    }    
-    if (gotFile)
-        retval = fd;
-    else
-        retval = -1;
+        end = i;
+    }
 
-    return retval;
-}
-#endif
-
-
-static int
-mkstemp2(char * const filenameBuffer) {
-
-#ifdef HAVE_MKSTEMP
-    return mkstemp(filenameBuffer);
+    do {
+        /* replace the template with random chars */
+        srand((unsigned)(bu_gettime() % UINT_MAX));
+        for (i=start; i>=end; i--) {
+            file_template[i] = replace[(int)(replacelen * ((double)rand() / (double)RAND_MAX))];
+        }
+#ifdef WIN32
+        fd = _open(file_template, O_CREAT | O_EXCL | O_TRUNC | O_RDWR | O_TEMPORARY, S_IRUSR | S_IWUSR);
 #else
-    return mkstempx(filenameBuffer);
+        fd = open(file_template, O_CREAT | O_EXCL | O_TRUNC | O_RDWR | O_TEMPORARY, S_IRUSR | S_IWUSR);
 #endif
-}
+    } while ((fd == -1) && (counter++ < 1000));
 
+    return fd;
+}
+#endif
 
 } /* extern "C" */
 
@@ -886,7 +846,7 @@ pm_make_tmpfile(FILE **       const filePP,
 
     filenameBuffer = strdup(filenameTemplate.c_str());
 
-    fd = mkstemp2(filenameBuffer);
+    fd = mkstemp(filenameBuffer);
 
     if (fd < 0)
         pm_error("Unable to create temporary file according to name "
