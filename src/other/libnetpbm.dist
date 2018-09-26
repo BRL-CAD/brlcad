@@ -65,6 +65,7 @@ util/intcode.h
 util/mallocvar.h
 util/nstring.c
 util/nstring.h
+util/LICENSE_nstring.txt
 util/pm_c_util.h
 util/ppmdcfont.c
 util/testnstring.c
