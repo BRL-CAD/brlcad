@@ -21,6 +21,7 @@ search -exec
 overlap tool
 facetize improvements
 
+* fixed crash mixing flat and full path MGED searches - Cliff Yapp
 * improved MGED ls command's help message - Cliff Yapp
 * added -exec option to MGED's search command - Peter Pronai
 * added new MGED 'lint' command for finding bad geometry - Cliff Yapp
