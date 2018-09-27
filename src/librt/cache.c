@@ -58,7 +58,8 @@ struct rt_cache {
 HIDDEN void
 cache_check(const struct rt_cache *cache)
 {
-    if (!cache) return;
+    if (!cache)
+	return;
     RT_CK_DBI(cache->dbip);
 }
 
@@ -70,21 +71,16 @@ cache_generate_name(char name[STATIC_ARRAY(37)], const struct soltab *stp)
     struct db5_raw_internal raw_internal;
     uint8_t namespace_uuid[16];
     uint8_t uuid[16];
+    const uint8_t base_namespace_uuid[16] = {0x4a, 0x3e, 0x13, 0x3f, 0x1a, 0xfc, 0x4d, 0x6c, 0x9a, 0xdd, 0x82, 0x9b, 0x7b, 0xb6, 0xc6, 0xc1};
+    uint8_t mat_buffer[SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_MAT];
+    const fastf_t *matp = stp->st_matp ? stp->st_matp : bn_mat_identity;
 
     RT_CK_SOLTAB(stp);
 
-    {
-	const uint8_t base_namespace_uuid[16] = {0x4a, 0x3e, 0x13, 0x3f, 0x1a, 0xfc, 0x4d, 0x6c, 0x9a, 0xdd, 0x82, 0x9b, 0x7b, 0xb6, 0xc6, 0xc1};
-	char mat_buffer[SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_MAT];
+    bu_cv_htond((unsigned char *)mat_buffer, (unsigned char *)matp, ELEMENTS_PER_MAT);
 
-	bu_cv_htond((unsigned char *)mat_buffer,
-		    (unsigned char *)(stp->st_matp ? stp->st_matp : bn_mat_identity),
-		    ELEMENTS_PER_MAT);
-
-	if (5 != bu_uuid_create(namespace_uuid, sizeof(mat_buffer),
-				(const uint8_t *)mat_buffer, base_namespace_uuid))
-	    bu_bomb("bu_uuid_create() failed");
-    }
+    if (bu_uuid_create(namespace_uuid, sizeof(mat_buffer), mat_buffer, base_namespace_uuid) != 5)
+	bu_bomb("bu_uuid_create() failed");
 
     if (db_get_external(&raw_external, stp->st_dp, stp->st_rtip->rti_dbip))
 	bu_bomb("db_get_external() failed");
@@ -169,7 +165,8 @@ have_cache_file:
 void
 rt_cache_close(struct rt_cache *cache)
 {
-    if (!cache) return;
+    if (!cache)
+	return;
 
     cache_check(cache);
 
