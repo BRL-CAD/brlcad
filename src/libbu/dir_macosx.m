@@ -19,13 +19,13 @@
  */
 /** @file dir_macosx.m
  *
- * Implementation of path-finding functions for general app use.
+ * Mac-specific ObjC implementation of path-finding functions.
  *
  */
 
 #include "common.h"
 
-#include <AppKit/AppKit.h>
+#include <Foundation/Foundation.h>
 
 #include "bu/str.h"
 
