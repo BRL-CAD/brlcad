@@ -129,9 +129,9 @@ function(FILE_LANG sfile outvar)
     endif(${srcfile_ext} STREQUAL ".hxx" OR ${srcfile_ext} STREQUAL ".hpp" OR ${srcfile_ext} STREQUAL ".hh")
 
     # C
-    if(${srcfile_ext} STREQUAL ".c" OR ${srcfile_ext} STREQUAL ".h")
+    if(${srcfile_ext} STREQUAL ".c" OR ${srcfile_ext} STREQUAL ".h" OR ${srcfile_ext} STREQUAL ".m")
       set(file_language C)
-    endif(${srcfile_ext} STREQUAL ".c" OR ${srcfile_ext} STREQUAL ".h")
+    endif(${srcfile_ext} STREQUAL ".c" OR ${srcfile_ext} STREQUAL ".h" OR ${srcfile_ext} STREQUAL ".m")
 
     # If we can't figure it out, assume C...
     if(NOT file_language)
