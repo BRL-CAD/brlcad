@@ -3461,19 +3461,13 @@ mark_as_advanced(CMAKE_C_COMPILER)
 # been documented.  Make an updated copy of the "INSTALL" file and see whether
 # anything has changed.
 #
-# Although the general principle of this build is to leave the src dir
-# pristine after configuration and compilation, the INSTALL and configure files
-# represent one of two cases where the default behavior is to alter the files
-# if changes have occurred.  (The other is cached generated outputs from tools
-# such as re2c and lemon.) For the purposes of this project, a given
-# option's documentation is defined in the CMakeLists.txt source file with
-# the option definition logic - the text in INSTALL is simply an output from
-# that, and is never the correct place for manual changes.
-#
-# As with generated outputs, this auto-updating behavior can be overridden
-# by setting the CMake variable LOCKED_SOURCE_DIR to ON - in that case, a
-# warning about out-of-sync files is printed but no automatic updating takes
-# place in the source tree.
+# Although the CMake configure process should leave the src dir pristine, the
+# INSTALL and configure files present a problem in that they *do* need to be
+# updated in the source tree.  As a compromise, what will happen when versions
+# of these files are produced that are different from those found in the source
+# tree the configure process will fail, with a message indicating that the user
+# needs to move the newly generated version of the file(s) into the correct
+# locations in the source tree.
 
 set(CONFIG_FATAL_ERROR 0)
 
