@@ -797,10 +797,9 @@ osgl_poll(fb *ifp)
 {
     osgl_do_event(ifp);
 
-    if (OSGL(ifp)->alive < 0)
-	return 1;
-    else
+    if (OSGL(ifp)->alive)
 	return 0;
+    return 1;
 }
 
 

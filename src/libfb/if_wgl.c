@@ -820,7 +820,9 @@ wgl_poll(fb *ifp)
 {
     wgl_do_event(ifp);
 
-    return WGL(ifp)->alive;
+    if (WGL(ifp)->alive)
+	return 0;
+    return 1;
 }
 
 
@@ -860,7 +862,7 @@ wgl_close(fb *ifp)
      */
     fclose(stdin);
 
-    while (wgl_poll(ifp)) {
+    while (!wgl_poll(ifp)) {
 	bu_snooze(fb_poll_rate(ifp));
     }
 

@@ -1480,7 +1480,9 @@ ogl_poll(fb *ifp)
 {
     ogl_do_event(ifp);
 
-    return OGL(ifp)->alive;
+    if (OGL(ifp)->alive)
+	return 0;
+    return 1;
 }
 
 
@@ -1522,7 +1524,7 @@ fb_ogl_close(fb *ifp)
      */
     fclose(stdin);
 
-    while (ogl_poll(ifp)) {
+    while (!ogl_poll(ifp)) {
 	bu_snooze(fb_poll_rate(ifp));
     }
 
