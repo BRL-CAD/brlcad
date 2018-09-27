@@ -34,10 +34,6 @@
 
 #include "./vegetation.h"
 
-#if defined(HAVE_SRAND48) && !defined(HAVE_DECL_SRAND48)
-extern void srand48(long int seedval);
-#endif
-
 static void
 ageStructure(structure_t *structure)
 {
@@ -306,15 +302,16 @@ branchWithProbability(plant_t *plant, structure_t* structure, unsigned int minAg
 	    if ((structure->segment[i]->age >= minAge) && (structure->segment[i]->age <= maxAge)) {
 
 		/* see if we branch */
-		if (drand48() <= probability) {
+		if (bn_randmt() <= probability) {
 		    double branchPoint, branchPointRadius;
 		    vect_t direction;
 		    growthPoint_t *newGrowthPoint;
 
 		    /* decide whether or not to use an endpoint */
-		    if (drand48() <= plant->characteristic->branchAtEndpointRate) {
+		    if (bn_randmt() <= plant->characteristic->branchAtEndpointRate) {
+
 			/* randomly pick between the two points evenly */
-			if (drand48() < 0.5) {
+			if (bn_randmt() < 0.5) {
 			    branchPoint = 0.0;
 			    branchPointRadius = structure->segment[i]->startRadius;
 			} else {
@@ -327,7 +324,7 @@ branchWithProbability(plant_t *plant, structure_t* structure, unsigned int minAg
 		    } else {
 
 			/* pick a point on the segment to branch from */
-			branchPoint = drand48() * (double)structure->segment[i]->length;
+			branchPoint = bn_randmt() * (double)structure->segment[i]->length;
 			/*
 			  printf("branching between %f and %f at %f\n", 0.0, structure->segment[i]->length,  branchPoint);
 			*/
@@ -351,9 +348,9 @@ branchWithProbability(plant_t *plant, structure_t* structure, unsigned int minAg
 
 		    /* figure out a direction to grow */
 		    VMOVE(direction, structure->segment[i]->direction);
-		    direction[X] += (drand48() * (plant->characteristic->branchMaxVariation[X] - plant->characteristic->branchMinVariation[X])) + plant->characteristic->branchMinVariation[X];
-		    direction[Y] += (drand48() * (plant->characteristic->branchMaxVariation[Y] - plant->characteristic->branchMinVariation[Y])) + plant->characteristic->branchMinVariation[Y];
-		    direction[Z] += (drand48() * (plant->characteristic->branchMaxVariation[Z] - plant->characteristic->branchMinVariation[Z])) + plant->characteristic->branchMinVariation[Z];
+		    direction[X] += (bn_randmt() * (plant->characteristic->branchMaxVariation[X] - plant->characteristic->branchMinVariation[X])) + plant->characteristic->branchMinVariation[X];
+		    direction[Y] += (bn_randmt() * (plant->characteristic->branchMaxVariation[Y] - plant->characteristic->branchMinVariation[Y])) + plant->characteristic->branchMinVariation[Y];
+		    direction[Z] += (bn_randmt() * (plant->characteristic->branchMaxVariation[Z] - plant->characteristic->branchMinVariation[Z])) + plant->characteristic->branchMinVariation[Z];
 		    VUNITIZE(direction);
 		    /*
 		      VPRINT("New Growth Direction: ", direction);
@@ -366,7 +363,7 @@ branchWithProbability(plant_t *plant, structure_t* structure, unsigned int minAg
 
 		    /* length and radius is based off of the segment we grew off of -- random initial length */
 		    /* !!! just use the prior length until working !!! */
-		    newGrowthPoint->length = structure->segment[i]->length - (structure->segment[i]->length * plant->characteristic->lengthDecayRate); /* * drand48(); */
+		    newGrowthPoint->length = structure->segment[i]->length - (structure->segment[i]->length * plant->characteristic->lengthDecayRate); /* * bn_randmt(); */
 
 		    /* starting radius is exactly in line with where on the segment we start from */
 		    newGrowthPoint->radius = branchPointRadius;
@@ -513,7 +510,7 @@ growPlant(plant_t *plant)
 	    point->length -= point->length * point->lengthDecay;
 	    /* jitter next segment length */
 	    if (!NEAR_EQUAL(plant->characteristic->lengthMaxVariation, plant->characteristic->lengthMinVariation, ZERO_TOLERANCE)) {
-		point->length += (drand48() * (plant->characteristic->lengthMaxVariation - plant->characteristic->lengthMinVariation)) + plant->characteristic->lengthMinVariation;
+		point->length += (bn_randmt() * (plant->characteristic->lengthMaxVariation - plant->characteristic->lengthMinVariation)) + plant->characteristic->lengthMinVariation;
 	    }
 	    /* clamp the length to positive values */
 	    if (point->length < ZERO_TOLERANCE) {
@@ -527,7 +524,7 @@ growPlant(plant_t *plant)
 	    point->radius -= point->radius * point->radiusDecay;
 	    /* jitter next radius */
 	    if (!NEAR_EQUAL(plant->characteristic->radiusMaxVariation, plant->characteristic->radiusMinVariation, ZERO_TOLERANCE)) {
-		point->radius += (drand48() * (plant->characteristic->radiusMaxVariation - plant->characteristic->radiusMinVariation)) + plant->characteristic->radiusMinVariation;
+		point->radius += (bn_randmt() * (plant->characteristic->radiusMaxVariation - plant->characteristic->radiusMinVariation)) + plant->characteristic->radiusMinVariation;
 	    }
 	    /* clamp the radius to positive values */
 	    if (point->radius < ZERO_TOLERANCE) {
@@ -541,9 +538,9 @@ growPlant(plant_t *plant)
 	    /* jitter the growth direction */
 	    VSUB2(newGrowthDirection, plant->characteristic->dirMaxVariation, plant->characteristic->dirMinVariation);
 	    if (!VNEAR_ZERO(newGrowthDirection, ZERO_TOLERANCE)) {
-		point->direction[X] += (drand48() * newGrowthDirection[X]) + plant->characteristic->dirMinVariation[X];
-		point->direction[Y] += (drand48() * newGrowthDirection[Y]) + plant->characteristic->dirMinVariation[Y];
-		point->direction[Z] += (drand48() * newGrowthDirection[Z]) + plant->characteristic->dirMinVariation[Z];
+		point->direction[X] += (bn_randmt() * newGrowthDirection[X]) + plant->characteristic->dirMinVariation[X];
+		point->direction[Y] += (bn_randmt() * newGrowthDirection[Y]) + plant->characteristic->dirMinVariation[Y];
+		point->direction[Z] += (bn_randmt() * newGrowthDirection[Z]) + plant->characteristic->dirMinVariation[Z];
 		VUNITIZE(point->direction);
 		/* VPRINT("Point direction: ", point->direction); */
 	    }
@@ -579,9 +576,9 @@ growPlant(plant_t *plant)
 		    /* jitter the growth direction */
 		    VSUB2(newGrowthDirection, plant->characteristic->dirMaxVariation, plant->characteristic->dirMinVariation);
 		    if (!VNEAR_ZERO(newGrowthDirection, ZERO_TOLERANCE)) {
-			point->direction[X] += (drand48() * newGrowthDirection[X]) + plant->characteristic->dirMinVariation[X];
-			point->direction[Y] += (drand48() * newGrowthDirection[Y]) + plant->characteristic->dirMinVariation[Y];
-			point->direction[Z] += (drand48() * newGrowthDirection[Z]) + plant->characteristic->dirMinVariation[Z];
+			point->direction[X] += (bn_randmt() * newGrowthDirection[X]) + plant->characteristic->dirMinVariation[X];
+			point->direction[Y] += (bn_randmt() * newGrowthDirection[Y]) + plant->characteristic->dirMinVariation[Y];
+			point->direction[Z] += (bn_randmt() * newGrowthDirection[Z]) + plant->characteristic->dirMinVariation[Z];
 			VUNITIZE(point->direction);
 			/* VPRINT("Point direction: ", point->direction); */
 		    }
@@ -936,11 +933,7 @@ main(int argc, char *argv[])
 
     /* save the seed just in case we want to know it */
     seed=time(0);
-#ifndef HAVE_SRAND48
-    srand(seed);
-#else
-    srand48(seed);
-#endif
+    bn_randmt_seed(seed);
     printf("Vegetation seed is %ld\n", seed);
 
     fp=wdb_fopen("vegetation.g");
