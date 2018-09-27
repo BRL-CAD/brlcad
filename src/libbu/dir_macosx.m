@@ -33,17 +33,10 @@
 void
 dir_cache_macosx(char *path, size_t len)
 {
-    NSAutoreleasePool *pool;
-    NSArray *paths;
-    NSString *cache;
-
-    pool = [[NSAutoreleasePool alloc] init];
-    paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
-    cache = [paths objectAtIndex:0];
-
-    bu_strlcat(path, [cache UTF8String], len);
-
-    [pool drain];
+    NSURL *cache;
+    cache = [[[NSFileManager defaultManager] URLsForDirectory:NSCachesDirectory inDomains:NSUserDomainMask] objectAtIndex:0];
+    if (cache)
+	bu_strlcat(path, [[cache path] UTF8String], len);
 }
 
 
