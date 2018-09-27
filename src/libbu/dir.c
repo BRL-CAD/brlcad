@@ -38,6 +38,9 @@
 #  include <pwd.h>
 #endif
 #include "bio.h"
+#ifdef HAVE_WINDOWS_H
+#  include <ShlObj.h>
+#endif
 
 #include "bu/app.h"
 #include "bu/vls.h"
@@ -156,9 +159,9 @@ dir_home(char *buf, size_t len)
 #ifdef HAVE_WINDOWS_H
     if (BU_STR_EMPTY(path)) {
 	PWSTR wpath;
-	if (SHGetKnownFolderPath(FOLDERID_Profile, 0, NULL, &wpath) == S_OK) {
-	    wcscpy_s(path, MAXPATHLEN, wpath);
-	    CoTaskMemFree(wpath);
+	if (SHGetKnownFolderPath(&FOLDERID_Profile, 0, NULL, &wpath) == S_OK) {
+		wcstombs(path, wpath, MAXPATHLEN);
+		CoTaskMemFree(wpath);
 	}
     }
 #endif
@@ -204,8 +207,8 @@ dir_cache(char *buf, size_t len)
 #ifdef HAVE_WINDOWS_H
     if (BU_STR_EMPTY(path)) {
 	PWSTR wpath;
-	if (SHGetKnownFolderPath(FOLDERID_RoamingAppData, 0, NULL, &wpath) == S_OK) {
-	    wcscpy_s(path, MAXPATHLEN, wpath);
+	if (SHGetKnownFolderPath(&FOLDERID_RoamingAppData, 0, NULL, &wpath) == S_OK) {
+		wcstombs(path, wpath, MAXPATHLEN);
 	    CoTaskMemFree(wpath);
 	}
     }
