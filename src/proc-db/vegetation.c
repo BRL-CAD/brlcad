@@ -314,7 +314,7 @@ branchWithProbability(plant_t *plant, structure_t* structure, unsigned int minAg
 		    /* decide whether or not to use an endpoint */
 		    if (drand48() <= plant->characteristic->branchAtEndpointRate) {
 			/* randomly pick between the two points evenly */
-			if (drand48() < 5.0) {
+			if (drand48() < 0.5) {
 			    branchPoint = 0.0;
 			    branchPointRadius = structure->segment[i]->startRadius;
 			} else {
