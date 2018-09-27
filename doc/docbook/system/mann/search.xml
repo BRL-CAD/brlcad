@@ -210,33 +210,6 @@
 	  <para>
 	    When using multiple -exec filters, keep in mind that filters are evaluated lazily, so if you have two -execs and the first one returns false for one node, the second one will not run at all.
 	  </para>
-	  <para>
-	    <table>
-	      <title>Examples</title>
-	      <tgroup cols="2">
-	        <thead>
-	          <row>
-	            <entry>Bad</entry>
-	            <entry>Good</entry>
-	          </row>
-	        </thead>
-	        <tbody>
-	          <row>
-	            <entry>-exec foo ;</entry>
-	            <entry>-exec foo {;} -exec bar ";"</entry>
-	          </row>
-	          <row>
-	            <entry>-exec foo {} ";"</entry>
-	            <entry>-exec foo {{}} "{}" ";"</entry>
-	          </row>
-	          <row>
-	            <entry>-exec foo "{}"bar ";"</entry>
-	            <entry>-exec foo "{}bar" -exec foo "bar{}baz{}bang" ";"</entry>
-	          </row>
-	        </tbody>
-	      </tgroup>
-	    </table>
-	  </para>
 	</listitem>
       </varlistentry>
       <varlistentry>
@@ -932,31 +905,43 @@
       </para>
     </example>
 
-    <example><title>Using <command>search</command> Results</title>
+    <example><title>Operating on Sets of <command>search</command> Results</title>
       <para>
-	<command>search</command> supports a <command>find</command> command style
-	<option>exec</option> option, that lets you do custom filtering and execute arbitrary commands on the objects.
-	To illustrate, load the M35 example model and search for all regions below subtractions or intersections:
+	There are two available methods for working with sets of <command>search</command> results.  The first is the
+	<option>exec</option> option, which is used in the following example to search for all regions below subtractions
+	or intersections in the m35.g example model in BRL-CAD and draw the objects' wireframes in the display manager:
 	<literallayout>
 	  <computeroutput>
 	    <prompt>mged&gt;</prompt><userinput>search all.g -type region -and ( -below -bool - -or -below -bool + ) -exec draw "{}" ";"</userinput>
+	    <prompt>mged&gt;</prompt><userinput>autoview</userinput>
 	  </computeroutput>
 	</literallayout>
-	The above command finds all regions below the <emphasis>all.g</emphasis>
-	object that are also below subtraction or intersection operators and draws those regions in the MGED
-	display manager window.
       </para>
       <para>
-	Another common operation to apply to a set of results is to set
-	their colors to random RGB values (here we use random numbers and avoid any value less than 30 to keep objects more visible):
+	Another possibility, especially useful for doing multiple sequential operations which would be awkward to write out
+	in a single search line, is to assign the results of a search command to a Tcl variable.  To illustrate, let's
+	randomize the colors of all regions in the "cab" assembly of the m35.g example model and then assign
+	a glass shader with transparency as a follow-on step.
+      </para>
+      <para>
+	First, we collect the set of search results into a Tcl variable:
 	<literallayout>
 	  <computeroutput>
 	    <prompt>mged&gt;</prompt><userinput> set glob_compat_mode 0</userinput>
-	    <prompt>mged&gt;</prompt><userinput> search -exec eval {attr set {} color [expr {int(rand()*225)+30}]/[expr {int(rand()*225)+30}]/[expr {int(rand()*225)+30}]} ";"</userinput>
+	    <prompt>mged&gt;</prompt><userinput> set search_results [search cab -type region]</userinput>
 	  </computeroutput>
 	</literallayout>
-	This approach uses Tcl's random number generator to generate different RGB strings to use for each object in the results list.
-	If we also want to add transparency to the resulting model, an additional foreach line on the same results set can do the job:
+      </para>
+      <para>
+	Next we randomize the colors using Tcl's functionality (here we use random numbers and avoid any value less than 30 to keep objects more visible):
+	<literallayout>
+	  <computeroutput>
+	    <prompt>mged&gt;</prompt><userinput> foreach i $search_results {attr set $i color [expr {int(rand()*225)+30}]/[expr {int(rand()*225)+30}]/[expr {int(rand()*225)+30}]}</userinput>
+	  </computeroutput>
+	</literallayout>
+      </para>
+      <para>
+	Finally, we add transparency to the same regions:
 	<literallayout>
 	  <computeroutput>
 	    <prompt>mged&gt;</prompt><userinput> foreach i $search_results {attr set $i shader {glass {tr 0.7 ri 1}}}</userinput>
@@ -965,7 +950,7 @@
       </para>
       <note>
 	<para>
-	  Remember when setting region colors to check for the presence of a <emphasis>regionid_colortable</emphasis> attribute on the _GLOBAL object - if such a table is present (the m35.g sample model has one, for example) you need to remove that table before the colors on the individual regions will "take":
+	  Remember when setting region colors to check for the presence of a <emphasis>regionid_colortable</emphasis> attribute on the _GLOBAL object - if such a table is present (the m35.g sample model has one, for example) you need to remove that table (and for MGED wireframes, re-open the database) before the colors on the individual regions will "take":
 	  <literallayout>
 	    <computeroutput>
 	      <prompt>mged&gt;</prompt><userinput> attr rm _GLOBAL regionid_colortable</userinput>
