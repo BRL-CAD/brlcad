@@ -56,13 +56,7 @@ dir_temp(char *buf, size_t len)
     if (!buf || !len)
 	return buf;
 
-    /* method #1: libbu override */
-    env = getenv("LIBBU_TEMP");
-    if (!BU_STR_EMPTY(env)) {
-	bu_strlcpy(path, env, MAXPATHLEN);
-    }
-
-    /* method #2: environment variable dirs */
+    /* method #1: environment variable dirs */
     if (BU_STR_EMPTY(path)) {
 	const char *envdirs[] = {"TMPDIR", "TEMP", "TMP", NULL};
 	env = NULL;
@@ -79,14 +73,14 @@ dir_temp(char *buf, size_t len)
 	}
     }
 
-    /* method 3a: platform standard (macosx) */
+    /* method 2a: platform standard (macosx) */
 #ifdef _CS_DARWIN_USER_DIR
     if (BU_STR_EMPTY(path)) {
 	confstr(_CS_DARWIN_USER_TEMP_DIR, path, len);
     }
 #endif
 
-    /* method 3b: platform standard (windows */
+    /* method 2b: platform standard (windows */
 #ifdef HAVE_WINDOWS_H
     if (BU_STR_EMPTY(path)) {
 	char temp[MAXPATHLEN] = {0};
@@ -133,13 +127,7 @@ dir_home(char *buf, size_t len)
     if (!buf || !len)
 	return buf;
 
-    /* method #1: libbu override */
-    env = getenv("LIBBU_HOME");
-    if (!BU_STR_EMPTY(env)) {
-	bu_strlcpy(path, env, len);
-    }
-
-    /* method #2: environment variable */
+    /* method #1: environment variable */
     if (BU_STR_EMPTY(path)) {
 	env = getenv("HOME");
 	if (env && strlen(env)) {
@@ -147,7 +135,7 @@ dir_home(char *buf, size_t len)
 	}
     }
 
-    /* method #3a: platform standard (linux/max) */
+    /* method #2a: platform standard (linux/max) */
 #ifdef HAVE_PWD_H
     if (BU_STR_EMPTY(path)) {
 	struct passwd *upwd = getpwuid(getuid());
@@ -157,14 +145,14 @@ dir_home(char *buf, size_t len)
     }
 #endif
 
-    /* method #3b: platform standard (macosx) */
+    /* method #2b: platform standard (macosx) */
 #ifdef _CS_DARWIN_USER_DIR
     if (BU_STR_EMPTY(path)) {
 	confstr(_CS_DARWIN_USER_DIR, path, len);
     }
 #endif
 
-    /* method #3c: platform standard (windows) */
+    /* method #2c: platform standard (windows) */
 #ifdef HAVE_WINDOWS_H
     if (BU_STR_EMPTY(path)) {
 	PWSTR wpath;
@@ -175,7 +163,7 @@ dir_home(char *buf, size_t len)
     }
 #endif
 
-    /* method #4: system root! */
+    /* method #3: system root! */
     if (BU_STR_EMPTY(path)) {
 	char root[2] = {BU_DIR_SEPARATOR, 0};
 	bu_strlcpy(path, root, MAXPATHLEN);
@@ -196,13 +184,7 @@ dir_cache(char *buf, size_t len)
     if (!buf || !len)
 	return buf;
 
-    /* method #1: libbu override */
-    env = getenv("LIBBU_CACHE");
-    if (!BU_STR_EMPTY(env)) {
-	bu_strlcpy(path, env, len);
-    }
-
-    /* method #2a: platform standard (linux) */
+    /* method #1a: platform standard (linux) */
     if (BU_STR_EMPTY(path)) {
 	env = getenv("XDG_CACHE_HOME");
 	if (!BU_STR_EMPTY(env)) {
@@ -210,7 +192,7 @@ dir_cache(char *buf, size_t len)
 	}
     }
 
-    /* method #2b: platform standard (macosx) */
+    /* method #1b: platform standard (macosx) */
 #ifdef HAVE_FOUNDATION_FOUNDATION_H
     if (BU_STR_EMPTY(path)) {
 	extern void dir_cache_macosx(char *buf, size_t len);
@@ -218,7 +200,7 @@ dir_cache(char *buf, size_t len)
     }
 #endif
 
-    /* method #2c: platform standard (windows) */
+    /* method #1c: platform standard (windows) */
 #ifdef HAVE_WINDOWS_H
     if (BU_STR_EMPTY(path)) {
 	PWSTR wpath;
@@ -229,7 +211,7 @@ dir_cache(char *buf, size_t len)
     }
 #endif
 
-    /* method 3: fallback to home directory subdir */
+    /* method 2: fallback to home directory subdir */
     if (BU_STR_EMPTY(path)) {
 	dir_home(temp, MAXPATHLEN);
 	bu_strlcat(path, temp, MAXPATHLEN);
@@ -237,7 +219,7 @@ dir_cache(char *buf, size_t len)
 	bu_strlcat(path, "/.cache", MAXPATHLEN);
     }
 
-    /* method 4: fallback to temp directory subdir */
+    /* method 3: fallback to temp directory subdir */
     if (BU_STR_EMPTY(path)) {
 	dir_temp(temp, MAXPATHLEN);
 	bu_strlcat(path, temp, MAXPATHLEN);
