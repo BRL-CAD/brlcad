@@ -21,6 +21,7 @@ search -exec
 overlap tool
 facetize improvements
 
+* improved MGED ls command's help message - Cliff Yapp
 * added -exec option to MGED's search command - Peter Pronai
 * added new MGED 'lint' command for finding bad geometry - Cliff Yapp
 * improved lingering framebuffer CPU utilization  - Sean Morrison
