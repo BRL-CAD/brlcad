@@ -281,6 +281,9 @@ else(CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_CURRENT_BUILD_DIR_INSTALL "${CMAKE_BINARY_DIR}")
 endif(CMAKE_CONFIGURATION_TYPES)
 
+# Mark CMAKE_CONFIGURATION_TYPES as advanced - users shouldn't be adjusting this
+# directly.
+mark_as_advanced(CMAKE_CONFIGURATION_TYPES)
 
 #---------------------------------------------------------------------
 # Set up include paths for generated header files.  For multi-config
@@ -862,9 +865,11 @@ cmake_set_rpath()
 if(NOT "${CMAKE_C_FLAGS}" STREQUAL "" AND NOT DEFINED CMAKE_C_FLAGS_DEFAULT)
   set(CMAKE_C_FLAGS_DEFAULT "${CMAKE_C_FLAGS}" CACHE STRING "Default C flags" FORCE)
 endif(NOT "${CMAKE_C_FLAGS}" STREQUAL "" AND NOT DEFINED CMAKE_C_FLAGS_DEFAULT)
+mark_as_advanced(CMAKE_C_FLAGS_DEFAULT)
 if(NOT "${CMAKE_CXX_FLAGS}" STREQUAL "" AND NOT DEFINED CMAKE_CXX_FLAGS_DEFAULT)
   set(CMAKE_CXX_FLAGS_DEFAULT "${CMAKE_CXX_FLAGS}" CACHE STRING "Default CXX flags" FORCE)
 endif(NOT "${CMAKE_CXX_FLAGS}" STREQUAL "" AND NOT DEFINED CMAKE_CXX_FLAGS_DEFAULT)
+mark_as_advanced(CMAKE_CXX_FLAGS_DEFAULT)
 
 # C
 
