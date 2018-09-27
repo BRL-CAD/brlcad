@@ -1715,6 +1715,7 @@ CHECK_CXX_FLAG(fexceptions)
 # needs to be increased from the default ANSI minimum of 17.
 CHECK_CXX_FLAG(ftemplate-depth-128)
 
+
 # dynamic SSE optimizations for NURBS processing
 #
 # XXX disable the SSE flags for now as they can cause illegal instructions.
@@ -2330,16 +2331,13 @@ BRLCAD_CHECK_LIBRARY(BSD c daemon)
 # Check for CoreFoundation and Cocoa on Apple
 if(APPLE)
   include(CMakeFindFrameworks)
-  CMAKE_FIND_FRAMEWORKS(CoreFoundation)
-  if(CoreFoundation_FRAMEWORKS)
-    set(CoreFoundation_LIBRARIES "-framework CoreFoundation" CACHE FILEPATH "CoreFoundation framework" FORCE)
-  endif(CoreFoundation_FRAMEWORKS)
-  CMAKE_FIND_FRAMEWORKS(Cocoa)
-  if(Cocoa_FRAMEWORKS)
-    set(Cocoa_LIBRARIES "-framework Cocoa" CACHE FILEPATH "Cocoa framework" FORCE)
-  endif(Cocoa_FRAMEWORKS)
+  CMAKE_FIND_FRAMEWORKS(Foundation)
+  if(Foundation_FRAMEWORKS)
+    set(Foundation_LIBRARIES "-framework Foundation" CACHE FILEPATH "Foundation framework" FORCE)
+    CONFIG_H_APPEND(BRLCAD "#define HAVE_FOUNDATION_FOUNDATION_H 1\n")
+  endif(Foundation_FRAMEWORKS)
   mark_as_advanced(CMAKE_OSX_ARCHITECTURES CMAKE_OSX_DEPLOYMENT_TARGET CMAKE_OSX_SYSROOT)
-  mark_as_advanced(CoreFoundation_LIBRARIES Cocoa_LIBRARIES)
+  mark_as_advanced(Foundation_LIBRARIES)
 endif(APPLE)
 
 # Mark X11 as available if it is enabled and we find Xlib.h
