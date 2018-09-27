@@ -67,13 +67,13 @@ rt_new_rti(struct db_i *dbip)
 
     /* XXX Move to rt_global_init() ? */
     if (BU_LIST_FIRST(bu_list, &RTG.rtg_vlfree) == 0) {
-	char *envflags;
-	envflags = getenv("LIBRT_DEBUG");
-	if (envflags) {
+	char *debug_flags;
+	debug_flags = getenv("LIBRT_DEBUG");
+	if (debug_flags) {
 	    if (RTG.debug)
-		bu_log("WARNING: discarding LIBRT_DEBUG value in favor of application specified flags\n");
+		bu_log("WARNING: discarding LIBRT_DEBUG value in favor of application-specified flags\n");
 	    else
-		RTG.debug = strtol(envflags, NULL, 0x10);
+		RTG.debug = strtol(debug_flags, NULL, 0x10);
 	}
 
 	BU_LIST_INIT(&RTG.rtg_vlfree);
