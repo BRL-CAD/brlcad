@@ -43,6 +43,10 @@ if(HAVE_FPIC)
   set_property(SOURCE y2038/time64.c APPEND PROPERTY COMPILE_FLAGS "-fPIC")
 endif(HAVE_FPIC)
 
+if(Foundation_FRAMEWORKS)
+  set(DIR_MACOSX_M dir_macosx.m)
+endif(Foundation_FRAMEWORKS)
+
 set(LIBBU_SOURCES
   y2038/time64.c
   affinity.c
@@ -62,6 +66,7 @@ set(LIBBU_SOURCES
   crashreport.c
   ctype.c
   dir.c
+  ${DIR_MACOSX_M}
   dirent.c
   datetime.c
   dylib.c
@@ -131,13 +136,14 @@ set(LIBBU_SOURCES
   which.c
   xdr.c
   )
+
 if(NOT CMAKE_CXX_STANDARD EQUAL 98)
   set(LIBBU_SOURCES ${LIBBU_SOURCES} parallel_cpp11thread.cpp)
 else(NOT CMAKE_CXX_STANDARD EQUAL 98)
   CMAKEFILES(parallel_cpp11thread.cpp)
 endif(NOT CMAKE_CXX_STANDARD EQUAL 98)
 
-BRLCAD_ADDLIB(libbu "${LIBBU_SOURCES}" "${CMAKE_THREAD_LIBS_INIT};${DL_LIBRARY};${WINSOCK_LIB};${PSAPI_LIB};${BSON_LIBRARIES};${UUID_LIBRARIES};${REGEX_LIBRARY};${M_LIBRARY}")
+BRLCAD_ADDLIB(libbu "${LIBBU_SOURCES}" "${Foundation_LIBRARIES};${CMAKE_THREAD_LIBS_INIT};${DL_LIBRARY};${WINSOCK_LIB};${PSAPI_LIB};${BSON_LIBRARIES};${UUID_LIBRARIES};${REGEX_LIBRARY};${M_LIBRARY}")
 set_target_properties(libbu PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 BRLCAD_ADDDATA(fix.6r vfont)

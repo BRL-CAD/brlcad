@@ -21,6 +21,9 @@
  *
  * Implementation of path-finding functions for general app use.
  *
+ * TODO: make sure returned paths are absolute and exist
+ * TODO: check for trailing path separator (e.g., temp)
+ *
  */
 
 #include "common.h"
@@ -28,52 +31,226 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+#ifdef HAVE_SYS_TYPES_H
+#  include <sys/types.h>
+#endif
+#ifdef HAVE_PWD_H
+#  include <pwd.h>
+#endif
+#include "bio.h"
 
 #include "bu/app.h"
 #include "bu/vls.h"
 #include "bu/log.h"
 #include "bu/str.h"
+#include "bu/file.h"
 
 
 static const char *
 dir_temp(char *buf, size_t len)
 {
-    const char *temp = getenv("TEMP");
+    size_t i;
+    const char *env;
+    char path[MAXPATHLEN] = {0};
 
-    if (len && temp && strlen(temp)) {
-	bu_strlcpy(buf, temp, len);
+    if (!buf || !len)
 	return buf;
+
+    /* method #1: libbu override */
+    env = getenv("LIBBU_TEMP");
+    if (!BU_STR_EMPTY(env)) {
+	bu_strlcpy(path, env, MAXPATHLEN);
     }
-    return NULL;
+
+    /* method #2: environment variable dirs */
+    if (BU_STR_EMPTY(path)) {
+	const char *envdirs[] = {"TMPDIR", "TEMP", "TMP", NULL};
+	env = NULL;
+
+	for (i=0; envdirs[i]; i++) {
+	    env = getenv(envdirs[i]);
+	    if (env && env[0] != '\0' && bu_file_writable(env) && bu_file_executable(env)) {
+		break;
+	    }
+	}
+
+	if (!BU_STR_EMPTY(env)) {
+	    bu_strlcpy(path, env, MAXPATHLEN);
+	}
+    }
+
+    /* method 3a: platform standard (macosx) */
+#ifdef _CS_DARWIN_USER_DIR
+    if (BU_STR_EMPTY(path)) {
+	confstr(_CS_DARWIN_USER_TEMP_DIR, path, len);
+    }
+#endif
+
+    /* method 3b: platform standard (windows */
+#ifdef HAVE_WINDOWS_H
+    if (BU_STR_EMPTY(path)) {
+	char temp[MAXPATHLEN] = {0};
+	if (GetTempPathA(MAXPATHLEN, temp) > 0) {
+	    bu_strlcpy(path, temp, MAXPATHLEN);
+	}
+    }
+#endif
+
+    /* method #3: explicit paths */
+    if (BU_STR_EMPTY(path)) {
+	const char *dir = NULL;
+	const char *trydirs[] = {
+	    "C:\\TEMP",
+	    "C:\\WINDOWS\\TEMP",
+	    "/tmp",
+	    "/usr/tmp",
+	    "/var/tmp",
+	    ".", /* last resort */
+	    NULL
+	};
+	for (i=0; trydirs[i]; i++) {
+	    dir = trydirs[i];
+	    if (dir && dir[0] != '\0' && bu_file_writable(dir) && bu_file_executable(dir)) {
+		break;
+	    }
+	}
+	if (!BU_STR_EMPTY(dir)) {
+	    bu_strlcpy(path, dir, MAXPATHLEN);
+	}
+    }
+
+    bu_strlcpy(buf, path, len);
+    return buf;
 }
 
 
 static const char *
 dir_home(char *buf, size_t len)
 {
-    const char *home = getenv("HOME");
+    const char *env;
+    char path[MAXPATHLEN] = {0};
 
-    if (len && home && strlen(home)) {
-	bu_strlcpy(buf, home, len);
+    if (!buf || !len)
 	return buf;
+
+    /* method #1: libbu override */
+    env = getenv("LIBBU_HOME");
+    if (!BU_STR_EMPTY(env)) {
+	bu_strlcpy(path, env, len);
     }
-    return NULL;
+
+    /* method #2: environment variable */
+    if (BU_STR_EMPTY(path)) {
+	env = getenv("HOME");
+	if (env && strlen(env)) {
+	    bu_strlcpy(path, env, len);
+	}
+    }
+
+    /* method #3a: platform standard (linux/max) */
+#ifdef HAVE_PWD_H
+    if (BU_STR_EMPTY(path)) {
+	struct passwd *upwd = getpwuid(getuid());
+	if (upwd && upwd->pw_dir) {
+	    bu_strlcpy(path, upwd->pw_dir, MAXPATHLEN);
+	}
+    }
+#endif
+
+    /* method #3b: platform standard (macosx) */
+#ifdef _CS_DARWIN_USER_DIR
+    if (BU_STR_EMPTY(path)) {
+	confstr(_CS_DARWIN_USER_DIR, path, len);
+    }
+#endif
+
+    /* method #3c: platform standard (windows) */
+#ifdef HAVE_WINDOWS_H
+    if (BU_STR_EMPTY(path)) {
+	PWSTR wpath;
+	if (SHGetKnownFolderPath(FOLDERID_Profile, 0, NULL, &wpath) == S_OK) {
+	    wcscpy_s(path, MAXPATHLEN, wpath);
+	    CoTaskMemFree(wpath);
+	}
+    }
+#endif
+
+    /* method #4: system root! */
+    if (BU_STR_EMPTY(path)) {
+	char root[2] = {BU_DIR_SEPARATOR, 0};
+	bu_strlcpy(path, root, MAXPATHLEN);
+    }
+
+    bu_strlcpy(buf, path, len);
+    return buf;
 }
 
 
 static const char *
 dir_cache(char *buf, size_t len)
 {
-    char home[MAXPATHLEN] = {0};
+    const char *env;
+    char path[MAXPATHLEN] = {0};
+    char temp[MAXPATHLEN] = {0};
 
-    dir_home(home, MAXPATHLEN);
-    bu_strlcat(home, "/.cache", MAXPATHLEN);
-
-    if (len) {
-	bu_strlcpy(buf, home, len);
+    if (!buf || !len)
 	return buf;
+
+    /* method #1: libbu override */
+    env = getenv("LIBBU_CACHE");
+    if (!BU_STR_EMPTY(env)) {
+	bu_strlcpy(path, env, len);
     }
-    return NULL;
+
+    /* method #2a: platform standard (linux) */
+    if (BU_STR_EMPTY(path)) {
+	env = getenv("XDG_CACHE_HOME");
+	if (!BU_STR_EMPTY(env)) {
+	    bu_strlcpy(path, env, len);
+	}
+    }
+
+    /* method #2b: platform standard (macosx) */
+#ifdef HAVE_FOUNDATION_FOUNDATION_H
+    if (BU_STR_EMPTY(path)) {
+	extern void dir_cache_macosx(char *buf, size_t len);
+	dir_cache_macosx(path, MAXPATHLEN);
+    }
+#endif
+
+    /* method #2c: platform standard (windows) */
+#ifdef HAVE_WINDOWS_H
+    if (BU_STR_EMPTY(path)) {
+	PWSTR wpath;
+	if (SHGetKnownFolderPath(FOLDERID_RoamingAppData, 0, NULL, &wpath) == S_OK) {
+	    wcscpy_s(path, MAXPATHLEN, wpath);
+	    CoTaskMemFree(wpath);
+	}
+    }
+#endif
+
+    /* method 3: fallback to home directory subdir */
+    if (BU_STR_EMPTY(path)) {
+	dir_home(temp, MAXPATHLEN);
+	bu_strlcat(path, temp, MAXPATHLEN);
+	/* FIXME: assumes slash */
+	bu_strlcat(path, "/.cache", MAXPATHLEN);
+    }
+
+    /* method 4: fallback to temp directory subdir */
+    if (BU_STR_EMPTY(path)) {
+	dir_temp(temp, MAXPATHLEN);
+	bu_strlcat(path, temp, MAXPATHLEN);
+	/* FIXME: assumes slash */
+	bu_strlcat(path, "/.cache", MAXPATHLEN);
+    }
+
+    /* finally, append our application subdirectory */
+    /* FIXME: assumes slash */
+    bu_strlcat(path, "/BRL-CAD", MAXPATHLEN);
+
+    bu_strlcpy(buf, path, len);
+    return buf;
 }
 
 
