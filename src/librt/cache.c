@@ -71,6 +71,7 @@ cache_generate_name(char name[STATIC_ARRAY(37)], const struct soltab *stp)
     struct db5_raw_internal raw_internal;
     uint8_t namespace_uuid[16];
     uint8_t uuid[16];
+    /* arbitrary namespace for a v5 uuid */
     const uint8_t base_namespace_uuid[16] = {0x4a, 0x3e, 0x13, 0x3f, 0x1a, 0xfc, 0x4d, 0x6c, 0x9a, 0xdd, 0x82, 0x9b, 0x7b, 0xb6, 0xc6, 0xc1};
     uint8_t mat_buffer[SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_MAT];
     const fastf_t *matp = stp->st_matp ? stp->st_matp : bn_mat_identity;
@@ -88,8 +89,7 @@ cache_generate_name(char name[STATIC_ARRAY(37)], const struct soltab *stp)
     if (db5_get_raw_internal_ptr(&raw_internal, raw_external.ext_buf) == NULL)
 	bu_bomb("rt_db_external5_to_internal5() failed");
 
-    if (5 != bu_uuid_create(uuid, raw_internal.body.ext_nbytes,
-			    raw_internal.body.ext_buf, namespace_uuid))
+    if (bu_uuid_create(uuid, raw_internal.body.ext_nbytes, raw_internal.body.ext_buf, namespace_uuid) != 5)
 	bu_bomb("bu_uuid_create() failed");
 
     if (bu_uuid_encode(uuid, (uint8_t *)name))
@@ -110,13 +110,16 @@ rt_cache_open(void)
     char temppath[MAXPATHLEN];
     int create;
     struct rt_cache *result;
+
     BU_GET(result, struct rt_cache);
 
     /* First, check HOME, tmp and the current working directory for
      * a pre-existing cache file */
-    if ((home_path = getenv("HOME")) != (char *)NULL) {
+    home_path = getenv("HOME");
+    if (home_path != (char *)NULL) {
 	bu_vls_sprintf(&full_path, "%s/%s", home_path, file_name);
-	if (bu_file_exists(bu_vls_addr(&full_path), NULL)) goto have_cache_file;
+	if (bu_file_exists(bu_vls_addr(&full_path), NULL))
+	    goto have_cache_file;
     }
 
     /* create a temp file in order to extract the tmp file working
@@ -129,13 +132,15 @@ rt_cache_open(void)
 	    bu_vls_sprintf(&full_path, "%s/%s", bu_vls_addr(&dir), file_name);
 	    bu_vls_sprintf(&tmp_path, "%s/%s", bu_vls_addr(&dir), file_name);
 	    bu_vls_free(&dir);
-	    if (bu_file_exists(bu_vls_addr(&full_path),NULL)) goto have_cache_file;
+	    if (bu_file_exists(bu_vls_addr(&full_path),NULL))
+		goto have_cache_file;
 	}
     }
 
     /* As a last resort, check the current directory */
     bu_vls_sprintf(&full_path, "%s", file_name);
-    if (bu_file_exists(bu_vls_addr(&full_path),NULL)) goto have_cache_file;
+    if (bu_file_exists(bu_vls_addr(&full_path),NULL))
+	goto have_cache_file;
 
     /* If we got this far, we have nothing.  If we have HOME, use that, else
      * fall back on tmp, and as a last resort try current dir */
@@ -149,7 +154,11 @@ rt_cache_open(void)
 
 have_cache_file:
     create = !bu_file_exists(bu_vls_addr(&full_path), NULL);
-    result->dbip = create ? db_create(bu_vls_addr(&full_path), 5) : db_open(bu_vls_addr(&full_path), DB_OPEN_READWRITE);
+    if (create)
+	result->dbip = db_create(bu_vls_addr(&full_path), 5);
+    else
+	result->dbip = db_open(bu_vls_addr(&full_path), DB_OPEN_READWRITE);
+
     bu_vls_free(&full_path);
 
     if (!result->dbip || (!create && db_dirbuild(result->dbip))) {
@@ -182,6 +191,7 @@ compress_external(struct bu_external *external)
     int compressed = 0;
     uint8_t *buffer;
     size_t compressed_size;
+
     BU_CK_EXTERNAL(external);
 
     compressed_size = LZ4_compressBound(external->ext_nbytes);
@@ -251,8 +261,7 @@ cache_try_load(const struct rt_cache *cache,
     if (stp->st_specific)
 	bu_bomb("already prepped");
 
-    if (cache_dir->d_major_type != DB5_MAJORTYPE_BINARY_MIME
-	|| cache_dir->d_minor_type != 0)
+    if (cache_dir->d_major_type != DB5_MAJORTYPE_BINARY_MIME || cache_dir->d_minor_type != 0)
 	bu_bomb("invalid object type");
 
     {
@@ -269,13 +278,14 @@ cache_try_load(const struct rt_cache *cache,
 	    struct bu_attribute_value_set attributes;
 	    const char *version_str;
 
-	    if (0 > db5_import_attributes(&attributes, &raw_internal.attributes))
+	    if (db5_import_attributes(&attributes, &raw_internal.attributes) < 0)
 		bu_bomb("db5_import_attributes() failed");
 
 	    if (bu_strcmp(cache_mime_type, bu_avs_get(&attributes, "mime_type")))
 		bu_bomb("invalid MIME type");
 
-	    if (!(version_str = bu_avs_get(&attributes, "rt_cache::version")))
+	    version_str = bu_avs_get(&attributes, "rt_cache::version");
+	    if (!version_str)
 		bu_bomb("missing version");
 
 	    {
@@ -323,8 +333,7 @@ cache_try_store(struct rt_cache *cache, struct directory *cache_dir,
     cache_dir->d_major_type = DB5_MAJORTYPE_BINARY_MIME;
     cache_dir->d_minor_type = 0;
 
-    if (rt_obj_prep_serialize(stp, internal, &data_external, &version)
-	|| version == (size_t)-1)
+    if (rt_obj_prep_serialize(stp, internal, &data_external, &version) || version == (size_t)-1)
 	bu_bomb("rt_obj_prep_serialize() failed");
 
     compress_external(&data_external);
@@ -368,25 +377,25 @@ rt_cache_prep(struct rt_cache *cache, struct soltab *stp,
     RT_CK_DB_INTERNAL(internal);
 
     cache_generate_name(name, stp);
-    if (cache) dir = db_lookup(cache->dbip, name, 0);
+    if (cache)
+	dir = db_lookup(cache->dbip, name, 0);
 
     if (dir != RT_DIR_NULL) {
-	if (!cache_try_load(cache, dir, stp, internal))
+	if (!cache_try_load(cache, dir, stp, internal)) {
 	    bu_bomb("cache_try_load() failed");
+	}
     } else {
 	char type = 0;
 
 	if (rt_obj_prep(stp, internal, stp->st_rtip))
 	    return 1;
 
-	if (cache) {
-	    if (OBJ[stp->st_id].ft_prep_serialize) {
-		if (!(dir = db_diradd(cache->dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_NON_GEOM,
-				(void *)&type)))
-		    bu_bomb("db_diradd() failed");
-
-		cache_try_store(cache, dir, stp, internal);
+	if (cache && OBJ[stp->st_id].ft_prep_serialize) {
+	    if (!(dir = db_diradd(cache->dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_NON_GEOM, (void *)&type))) {
+		bu_bomb("db_diradd() failed");
 	    }
+
+	    cache_try_store(cache, dir, stp, internal);
 	}
     }
 
