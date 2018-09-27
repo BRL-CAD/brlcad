@@ -109,19 +109,19 @@ _rt_tree_region_assign(union tree *tp, const struct region *regionp)
 HIDDEN int
 _rt_gettree_region_start(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *combp, void *UNUSED(client_data))
 {
-  if (tsp) {
-    RT_CK_RTI(tsp->ts_rtip);
-    RT_CK_RESOURCE(tsp->ts_resp);
-    if (pathp) RT_CK_FULL_PATH(pathp);
-    if (combp) RT_CHECK_COMB(combp);
+    if (tsp) {
+	RT_CK_RTI(tsp->ts_rtip);
+	RT_CK_RESOURCE(tsp->ts_resp);
+	if (pathp) RT_CK_FULL_PATH(pathp);
+	if (combp) RT_CHECK_COMB(combp);
 
-    /* Ignore "air" regions unless wanted */
-    if (tsp->ts_rtip->useair == 0 &&  tsp->ts_aircode != 0) {
-      tsp->ts_rtip->rti_air_discards++;
-      return -1;	/* drop this region */
+	/* Ignore "air" regions unless wanted */
+	if (tsp->ts_rtip->useair == 0 &&  tsp->ts_aircode != 0) {
+	    tsp->ts_rtip->rti_air_discards++;
+	    return -1;	/* drop this region */
+	}
     }
-  }
-  return 0;
+    return 0;
 }
 
 
@@ -736,7 +736,8 @@ rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **
 	return -1;		/* FAIL */
     }
 
-    if (argc <= 0) return -1;	/* FAIL */
+    if (argc <= 0)
+	return -1;	/* FAIL */
 
     tbl = bu_hash_create(64);
     rtip->Orca_hash_tbl = (void *)tbl;
@@ -877,7 +878,8 @@ again:
 	db_ck_tree(regp->reg_treetop);
     }
 
-    if (i < 0) return i;
+    if (i < 0)
+	return i;
 
     if (rtip->nsolids <= prev_sol_count)
 	bu_log("rt_gettrees(%s) warning:  no primitives found\n", argv[0]);
@@ -1019,15 +1021,17 @@ rt_find_solid(const struct rt_i *rtip, const char *name)
     struct directory *dp;
 
     RT_CHECK_RTI(rtip);
-    if ((dp = db_lookup((struct db_i *)rtip->rti_dbip, (char *)name,
-			LOOKUP_QUIET)) == RT_DIR_NULL)
+    dp = db_lookup((struct db_i *)rtip->rti_dbip, (char *)name, LOOKUP_QUIET);
+    if (dp == RT_DIR_NULL)
 	return RT_SOLTAB_NULL;
 
     RT_VISIT_ALL_SOLTABS_START(stp, (struct rt_i *)rtip) {
-	if (stp->st_dp == dp)
+	if (stp->st_dp == dp) {
 	    return stp;
-    } RT_VISIT_ALL_SOLTABS_END
-	  return RT_SOLTAB_NULL;
+	}
+    } RT_VISIT_ALL_SOLTABS_END;
+
+    return RT_SOLTAB_NULL;
 }
 
 
@@ -1108,7 +1112,8 @@ rt_bit_tree(struct bit_tree *btp, const union tree *tp, size_t *len)
         case OP_SOLID:
             /* Tree Leaf */
             st_bit = tp->tr_a.tu_stp->st_bit;
-            if (btp) btp[idx].val = (st_bit << 3) | UOP_SOLID;
+            if (btp)
+		btp[idx].val = (st_bit << 3) | UOP_SOLID;
             return;
         case OP_SUBTRACT:
             uop = UOP_SUBTRACT;
@@ -1131,7 +1136,8 @@ rt_bit_tree(struct bit_tree *btp, const union tree *tp, size_t *len)
     rt_bit_tree(btp, tp->tr_b.tb_left, len);
 
     rchild = *len;
-    if (btp) btp[idx].val = (rchild << 3) | uop;
+    if (btp)
+	btp[idx].val = (rchild << 3) | uop;
 
     rt_bit_tree(btp, tp->tr_b.tb_right, len);
 }
