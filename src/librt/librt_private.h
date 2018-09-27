@@ -153,8 +153,8 @@ extern int db_read(const struct db_i *dbip, void *addr, size_t count, off_t offs
  * default, attributes are not included in size calculations.
  *
  * The FORCE_RECALC flag is also optional and will result in a re-evaluation of
- * the cached size information in the directory structures instead of using any
- * cached information from previous db5_size evaluations. This flag should be
+ * the stored size information in the directory structures instead of using any
+ * stored information from previous db5_size evaluations. This flag should be
  * supplied if the geometry information in the database has changed since the
  * last db5_size call.
  */
