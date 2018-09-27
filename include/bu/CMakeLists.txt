@@ -4,7 +4,6 @@ set(bu_headers
   bitv.h
   cmd.h
   color.h
-  column.h
   cv.h
   debug.h
   defines.h
@@ -47,6 +46,7 @@ set(bu_headers
   )
 BRLCAD_MANAGE_FILES(bu_headers ${INCLUDE_DIR}/brlcad/bu)
 CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(column.h)
 
 # Local Variables:
 # tab-width: 8
