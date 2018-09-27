@@ -45,6 +45,8 @@ endif(HAVE_FPIC)
 
 if(Foundation_FRAMEWORKS)
   set(DIR_MACOSX_M dir_macosx.m)
+else(Foundation_FRAMEWORKS)
+  CMAKEFILES(dir_macosx.m)
 endif(Foundation_FRAMEWORKS)
 
 set(LIBBU_SOURCES
