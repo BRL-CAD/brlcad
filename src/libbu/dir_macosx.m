@@ -30,13 +30,21 @@
 #include "bu/str.h"
 
 
+static void
+path_lookup(char *path, size_t len, NSSearchPathDirectory dir)
+{
+    NSURL *result;
+    result = [[[NSFileManager defaultManager] URLsForDirectory:dir inDomains:NSUserDomainMask] objectAtIndex:0];
+    if (result)
+	bu_strlcat(path, [[result path] UTF8String], len);
+}
+
+
+
 void
 dir_cache_macosx(char *path, size_t len)
 {
-    NSURL *cache;
-    cache = [[[NSFileManager defaultManager] URLsForDirectory:NSCachesDirectory inDomains:NSUserDomainMask] objectAtIndex:0];
-    if (cache)
-	bu_strlcat(path, [[cache path] UTF8String], len);
+    path_lookup(path, len, NSCachesDirectory);
 }
 
 
