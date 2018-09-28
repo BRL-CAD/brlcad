@@ -13,13 +13,25 @@ changes made.  See document footer for additional details.
 --- 201X-XX-XX  Release 7.28.0                                     ---
 ----------------------------------------------------------------------
 
-Major features of release to hit in commentary paragraph(s):
+This major release of BRL-CAD incorporates a new feature for caching
+of raytrace acceleration structures used when working with explicit
+boundary representation (BREP) Non-uniform Rational Basis Spline
+(NURBS) solids.  This will result in significant improvements to
+run times when repeatedly raytracing BREP solids.
 
-prep cache
-GDAL based terrain import via gcv
-search -exec
-overlap tool
-facetize improvements
+Support for terrain import has been significantly expanded with the
+addition of a new Geospatial Data Abstraction Library (GDAL) based
+importer to the gcv conversion tool.  
+
+Also new in this release are a greatly improved graphical geometry
+overlap resolving tool and support in the MGED search command for
+an "exec" option which will allow users to execute MGED commands
+on search results.
+
+The MGED facetize command for generating polygonal geometry from
+BRL-CAD objects has received significant attention, including the
+incorporation of a "per-region" conversion mode, new conversion
+methodologies and usability enhancements.
 
 * fixed crash mixing flat and full path MGED searches - Cliff Yapp
 * improved MGED ls command's help message - Cliff Yapp
