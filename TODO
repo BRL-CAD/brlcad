@@ -273,12 +273,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * moodycamel as libbu queue/list/ptbl implementation
 
-* update dem-g to not use full paths for dsp primitive data locations -
-  should default to embedding the data in the .g file as a binary object,
-  with an option for a relative path if the user explicitly requests
-  it.  Full paths make for non-portable .g files and should only exist 
-  if the user explicitly manipulates the dsp to create such a path.
-
 * define geometry URL and VFS behavior
 
 * change _mged_ command prefix to a simple '.' prefix to hide/protect
@@ -2425,7 +2419,6 @@ DOCUMENTATION
 * these eventually get put into gcv (hopefully not needing docs):
 
     3dm-g
-    dem-g
     g-dot
     g-jack
     g-off
