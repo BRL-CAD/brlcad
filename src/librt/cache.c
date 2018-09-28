@@ -253,6 +253,8 @@ cache_try_load(const struct rt_cache *cache,
 {
     struct bu_external data_external = BU_EXTERNAL_INIT_ZERO;
     size_t version = (size_t)-1;
+    struct bu_external raw_external;
+    struct db5_raw_internal raw_internal;
 
     cache_check(cache);
     RT_CK_DIR(cache_dir);
@@ -264,48 +266,44 @@ cache_try_load(const struct rt_cache *cache,
     if (cache_dir->d_major_type != DB5_MAJORTYPE_BINARY_MIME || cache_dir->d_minor_type != 0)
 	bu_bomb("invalid object type");
 
+    if (db_get_external(&raw_external, cache_dir, cache->dbip))
+	bu_bomb("db_get_external() failed");
+
+    if (db5_get_raw_internal_ptr(&raw_internal, raw_external.ext_buf) == NULL)
+	bu_bomb("rt_db_external5_to_internal5() failed");
+
     {
-	struct bu_external raw_external;
-	struct db5_raw_internal raw_internal;
+	struct bu_attribute_value_set attributes;
+	const char *version_str;
 
-	if (db_get_external(&raw_external, cache_dir, cache->dbip))
-	    bu_bomb("db_get_external() failed");
+	if (db5_import_attributes(&attributes, &raw_internal.attributes) < 0)
+	    bu_bomb("db5_import_attributes() failed");
 
-	if (db5_get_raw_internal_ptr(&raw_internal, raw_external.ext_buf) == NULL)
-	    bu_bomb("rt_db_external5_to_internal5() failed");
+	if (bu_strcmp(cache_mime_type, bu_avs_get(&attributes, "mime_type")))
+	    bu_bomb("invalid MIME type");
+
+	version_str = bu_avs_get(&attributes, "rt_cache::version");
+	if (!version_str)
+	    bu_bomb("missing version");
 
 	{
-	    struct bu_attribute_value_set attributes;
-	    const char *version_str;
+	    const char *endptr;
 
-	    if (db5_import_attributes(&attributes, &raw_internal.attributes) < 0)
-		bu_bomb("db5_import_attributes() failed");
+	    errno = 0;
+	    version = strtol(version_str, (char **)&endptr, 10);
 
-	    if (bu_strcmp(cache_mime_type, bu_avs_get(&attributes, "mime_type")))
-		bu_bomb("invalid MIME type");
-
-	    version_str = bu_avs_get(&attributes, "rt_cache::version");
-	    if (!version_str)
-		bu_bomb("missing version");
-
-	    {
-		const char *endptr;
-
-		errno = 0;
-		version = strtol(version_str, (char **)&endptr, 10);
-
-		if ((version == 0 && errno) || endptr == version_str || *endptr)
-		    bu_bomb("invalid version");
-	    }
-
-	    bu_avs_free(&attributes);
+	    if ((version == 0 && errno) || endptr == version_str || *endptr)
+		bu_bomb("invalid version");
 	}
 
-	uncompress_external(&raw_internal.body, &data_external);
-	bu_free_external(&raw_external);
+	bu_avs_free(&attributes);
     }
 
+    uncompress_external(&raw_internal.body, &data_external);
+    bu_free_external(&raw_external);
+
     if (rt_obj_prep_serialize(stp, internal, &data_external, &version)) {
+	/* failed to serialize */
 	bu_free_external(&data_external);
 	return 0;
     }
@@ -369,29 +367,30 @@ int
 rt_cache_prep(struct rt_cache *cache, struct soltab *stp,
 	      struct rt_db_internal *internal)
 {
-    char name[37];
+    int ret = 0; /* success */
+    char name[37] = {0};
     struct directory *dir = RT_DIR_NULL;
 
     cache_check(cache);
     RT_CK_SOLTAB(stp);
     RT_CK_DB_INTERNAL(internal);
 
-    cache_generate_name(name, stp);
-    if (cache)
-	dir = db_lookup(cache->dbip, name, 0);
+    if (!cache)
+	return rt_obj_prep(stp, internal, stp->st_rtip);
 
-    if (dir != RT_DIR_NULL) {
-	if (!cache_try_load(cache, dir, stp, internal)) {
-	    bu_bomb("cache_try_load() failed");
-	}
-    } else {
+    cache_generate_name(name, stp);
+    dir = db_lookup(cache->dbip, name, 0);
+
+    if (!dir || cache_try_load(cache, dir, stp, internal) == 0) {
 	char type = 0;
 
-	if (rt_obj_prep(stp, internal, stp->st_rtip))
-	    return 1;
+	/* not in cache so run prep and, if successful, cache it */
 
-	if (cache && OBJ[stp->st_id].ft_prep_serialize) {
-	    if (!(dir = db_diradd(cache->dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_NON_GEOM, (void *)&type))) {
+	ret = rt_obj_prep(stp, internal, stp->st_rtip);
+
+	if (ret == 0 && OBJ[stp->st_id].ft_prep_serialize) {
+	    dir = db_diradd(cache->dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_NON_GEOM, (void *)&type);
+	    if (!dir) {
 		bu_bomb("db_diradd() failed");
 	    }
 
@@ -399,7 +398,7 @@ rt_cache_prep(struct rt_cache *cache, struct soltab *stp,
 	}
     }
 
-    return 0;
+    return ret;
 }
 
 
