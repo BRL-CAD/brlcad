@@ -15,21 +15,21 @@ else(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")
 endif(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")
 
 get_filename_component(EXE "@CMAKE_COMMAND@" EXT)
-set(DEMG "${BDIR}/dem-g${EXE}")
+set(DEMG "${BDIR}/gcv${EXE}")
 
 # Unpack
 execute_process(COMMAND "@CMAKE_COMMAND@" -E tar xjf "${CSDIR}/hawaii-c.tar.bz2" WORKING_DIRECTORY "${CBDIR}")
 
 # Run the converter
-execute_process(COMMAND "${DEMG}" "${CBDIR}/hawaii-c" OUTPUT_VARIABLE dem_g_log ERROR_VARIABLE dem_g_log)
+execute_process(COMMAND "${DEMG}" "${CBDIR}/hawaii-c" "${CBDIR}/hawaii-c.g" OUTPUT_VARIABLE dem_g_log ERROR_VARIABLE dem_g_log)
 file(WRITE "${CBDIR}/regress-dem.log" "${dem_g_log}")
 
 # Known "good" md5sum of output for comparison
-set(EXPECTED_MD5 "cf87c3b174840f18f5653c677af1f433")
+set(EXPECTED_MD5 "80f98f409514586e0be12884e2118230")
 
 # get and clean up md5sum from generated output
-execute_process(COMMAND "@CMAKE_COMMAND@" -E md5sum "${CBDIR}/hawaii-c.dsp" OUTPUT_VARIABLE genmd5)
-string(REPLACE " ${CBDIR}/hawaii-c.dsp" "" genmd5 "${genmd5}")
+execute_process(COMMAND "@CMAKE_COMMAND@" -E md5sum "${CBDIR}/hawaii-c.g" OUTPUT_VARIABLE genmd5)
+string(REPLACE " ${CBDIR}/hawaii-c.g" "" genmd5 "${genmd5}")
 string(STRIP "${genmd5}" genmd5)
 
 # Check md5sum for a match
