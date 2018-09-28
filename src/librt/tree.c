@@ -32,9 +32,7 @@
 #include "rt/db4.h"
 #include "raytrace.h"
 
-#ifdef CACHE_ENABLED
-#  include "./cache.h"
-#endif
+#include "./cache.h"
 
 
 #define ACQUIRE_SEMAPHORE_TREE(_hash) switch ((_hash)&03) {	\
@@ -128,9 +126,7 @@ _rt_gettree_region_start(struct db_tree_state *tsp, const struct db_full_path *p
 struct rt_gettree_data
 {
     struct bu_hash_tbl *tbl;
-#ifdef CACHE_ENABLED
     struct rt_cache *cache;
-#endif
 };
 
 
@@ -521,16 +517,11 @@ _rt_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, st
     VSETALL(stp->st_min,  INFINITY);
 
     /*
-     * If the ft_prep routine wants to keep the internal structure,
-     * that is OK, as long as idb_ptr is set to null.  Note that the
-     * prep routine may have changed st_id.
+     * If prep wants to keep the internal structure, that is OK, as
+     * long as idb_ptr is set to null.  Note that the prep routine may
+     * have changed st_id.
      */
-#ifdef CACHE_ENABLED
     ret = rt_cache_prep(data->cache, stp, ip);
-#else
-    ret = rt_obj_prep(stp, ip, stp->st_rtip);
-#endif
-
     if (ret) {
 	int hash;
 	/* Error, solid no good */
@@ -728,6 +719,8 @@ rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **
     int num_attrs=0;
     point_t region_min, region_max;
 
+    const char *librt_cache = NULL;
+
     RT_CHECK_RTI(rtip);
     RT_CK_DBI(rtip->rti_dbip);
 
@@ -738,6 +731,8 @@ rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **
 
     if (argc <= 0)
 	return -1;	/* FAIL */
+
+    librt_cache = getenv("LIBRT_CACHE");
 
     tbl = bu_hash_create(64);
     rtip->Orca_hash_tbl = (void *)tbl;
@@ -752,7 +747,6 @@ rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **
 	tree_state.ts_dbip = rtip->rti_dbip;
 	tree_state.ts_rtip = rtip;
 	tree_state.ts_resp = NULL;	/* sanity.  Needs to be updated */
-
 
 	if (attrs) {
 	    if (db_version(rtip->rti_dbip) < 5) {
@@ -782,9 +776,9 @@ rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **
 	}
 
 	data.tbl = tbl;
-#ifdef CACHE_ENABLED
-	data.cache = rt_cache_open();
-#endif
+	if (BU_STR_EMPTY(librt_cache) || bu_file_exists(librt_cache, NULL)) {
+	    data.cache = rt_cache_open();
+	}
 
 	i = db_walk_tree(rtip->rti_dbip, argc, argv, ncpus,
 			 &tree_state,
@@ -793,9 +787,7 @@ rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **
 			 _rt_gettree_leaf, (void *)&data);
 	bu_avs_free(&tree_state.ts_attrs);
 
-#ifdef CACHE_ENABLED
 	rt_cache_close(data.cache);
-#endif
     }
 
     /* DEBUG:  Ensure that all region trees are valid */
