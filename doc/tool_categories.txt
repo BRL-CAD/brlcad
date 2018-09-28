@@ -37,7 +37,6 @@ bot_dump
 bot_shell-vtk
 comgeom-g
 cy-g
-dem-g
 dxf-g
 enf-g
 euclid-g

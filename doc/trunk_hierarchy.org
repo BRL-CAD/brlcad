@@ -2582,7 +2582,6 @@
 ***** [[file:../src/conv/shp/shapelib/shapefil.h][shapefil.h]]
 ***** [[file:../src/conv/shp/shapelib/license.html][license.html]]
 ***** [[file:../src/conv/shp/shapelib/safileio.c][safileio.c]]
-*** [[file:../src/conv/dem-g.c][dem-g.c]]
 *** [[file:../src/conv/g-egg.c][g-egg.c]]
 *** [[file:../src/conv/ply][ply]]
 **** [[file:../src/conv/ply/g-ply.c][g-ply.c]]
