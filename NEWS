@@ -63,6 +63,7 @@ methodologies and usability enhancements.
 * improved triangle mesh error detection for "bot check" command
 	- Nick Reed, Cliff Yapp, Jon Engbert
 * fixed graphical mode initial page loading in brlman - Cliff Yapp
+* added GDAL terrain import support to gcv - Cliff Yapp
 * added 'bot_dump' command to MGED - Nick Reed
 * ported MGED 'screengrab' command to Windows - Nick Reed
 * removed spectral tracing: libmultispectral & rttherm - Cliff Yapp
