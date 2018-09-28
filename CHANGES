@@ -395,6 +395,8 @@ pixdsplit, rt -d
 	removed, broken tool [minimally impacting]
 libmultispectral, rttherm, ssamp-bw, ssampview, ssampview.tcl
 	removed, broken tools [minimally impacting]
+dem-g
+	removed, superseded by gcv+GDAL [minimally impacting]
 
 7.26.0
 ------
