@@ -274,11 +274,12 @@ rt_pr_hitarray_vls(struct bu_vls *v, const char *str, register const struct hit 
  * stack, to preserve simplicity.  On machines with limited stack
  * space, such as the Gould, this subroutine may overwhelm the stack
  * on complex expressions.
+ *
+ * @param tp tree pointer
+ * @param lvl recursion level
  */
 void
 rt_pr_tree(register const union tree *tp, int lvl)
-
-/* recursion level */
 {
     register int i;
 
@@ -522,13 +523,14 @@ rt_pr_tree_str(const union tree *tree)
  * 0 bit value
  * 1 name
  * 2 bit number
+ *
+ * @param tp Tree to print
+ * @param partp Partition to evaluate
+ * @param pr_name 1=print name, 0=print value
+ * @param lvl Recursion level
  */
 void
 rt_pr_tree_val(register const union tree *tp, const struct partition *partp, int pr_name, int lvl)
-/* Tree to print */
-/* Partition to evaluate */
-/* 1=print name, 0=print value */
-/* Recursion level */
 {
 
     if (lvl == 0) {
@@ -626,12 +628,12 @@ out:
 #ifdef USE_OPENCL
 /**
  * Produce representations of this bit bool tree
+ * @param btp Tree to print
+ * @param idx Offset in tree
+ * @param lvl Recursion level
  */
 void
 rt_pr_bit_tree(const struct bit_tree *btp, int idx, int lvl)
-/* Tree to print */
-/* Offset in tree */
-/* Recursion level */
 {
     unsigned uop, val;
 

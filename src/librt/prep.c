@@ -1918,8 +1918,8 @@ rt_unprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
 
 /**
  * This routine "re-preps" the list of objects specified in the
- *"unprepped" list of the "objs" structure. This structure must
- *previously have been passed to "rt_unprep"
+ * "unprepped" list of the "objs" structure. This structure must
+ * previously have been passed to "rt_unprep"
  */
 int
 rt_reprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *resp)
