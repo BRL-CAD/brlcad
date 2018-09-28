@@ -139,14 +139,14 @@ rt_cache_open(void)
 	    bu_vls_sprintf(&full_path, "%s/%s", bu_vls_addr(&dir), file_name);
 	    bu_vls_sprintf(&tmp_path, "%s/%s", bu_vls_addr(&dir), file_name);
 	    bu_vls_free(&dir);
-	    if (bu_file_exists(bu_vls_addr(&full_path),NULL))
+	    if (bu_file_exists(bu_vls_addr(&full_path), NULL))
 		goto have_cache_file;
 	}
     }
 
     /* As a last resort, check the current directory */
     bu_vls_sprintf(&full_path, "%s", file_name);
-    if (bu_file_exists(bu_vls_addr(&full_path),NULL))
+    if (bu_file_exists(bu_vls_addr(&full_path), NULL))
 	goto have_cache_file;
 
     /* If we got this far, we have nothing.  If we have HOME, use that, else

@@ -1067,7 +1067,7 @@ f_type(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
     if (!bu_path_match(plan->p_un._type_data, "shape", 0) &&
 	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_COMBINATION &&
 	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_ANNOT &&
-        intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_SCRIPT &&
+	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_SCRIPT &&
 	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_CONSTRAINT &&
 	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_GRIP &&
 	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_JOINT
@@ -1614,11 +1614,11 @@ option(char *name)
  */
 HIDDEN int
 find_create(char ***argvp,
-                     struct db_plan_t **resultplan,
-                     struct bu_ptbl *UNUSED(results),
-                     int *db_search_isoutput,
-                     int quiet, struct bu_ptbl *tbl,
-                     struct db_search_context *ctx)
+		     struct db_plan_t **resultplan,
+		     struct bu_ptbl *UNUSED(results),
+		     int *db_search_isoutput,
+		     int quiet, struct bu_ptbl *tbl,
+		     struct db_search_context *ctx)
 {
     OPTION *p;
     struct db_plan_t *newplan = NULL;
@@ -2081,9 +2081,9 @@ or_squish(struct db_plan_t *plan, struct db_plan_t **resultplan)           /* pl
 
 HIDDEN struct db_plan_t *
 db_search_form_plan(char **argv,
-                    int quiet,
-                    struct bu_ptbl *tbl,
-                    struct db_search_context *ctx)
+		    int quiet,
+		    struct bu_ptbl *tbl,
+		    struct db_search_context *ctx)
 {
     struct db_plan_t *plan = NULL;
     struct db_plan_t *tail = NULL;

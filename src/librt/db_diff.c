@@ -232,7 +232,7 @@ avpp_val_compare(const char *val1, const char *val2, const struct bn_tol *diff_t
 int
 db_avs_diff(const struct bu_attribute_value_set *left_set,
 	    const struct bu_attribute_value_set *right_set,
-            const struct bn_tol *diff_tol,
+	    const struct bn_tol *diff_tol,
 	    int (*add_func)(const char *attr_name, const char *attr_val, void *data),
 	    int (*del_func)(const char *attr_name, const char *attr_val, void *data),
 	    int (*chgd_func)(const char *attr_name, const char *attr_val_left, const char *attr_val_right, void *data),
@@ -439,9 +439,9 @@ int
 db_diff_dp(const struct db_i *left,
 	const struct db_i *right,
 	const struct directory *left_dp,
-       	const struct directory *right_dp,
-       	const struct bn_tol *diff_tol,
-       	db_compare_criteria_t flags,
+	const struct directory *right_dp,
+	const struct bn_tol *diff_tol,
+	db_compare_criteria_t flags,
 	struct diff_result *ext_result)
 {
     int state = DIFF_EMPTY;
@@ -594,7 +594,7 @@ int
 db_avs_diff3(const struct bu_attribute_value_set *left_set,
 	    const struct bu_attribute_value_set *ancestor_set,
 	    const struct bu_attribute_value_set *right_set,
-            const struct bn_tol *diff_tol,
+	    const struct bn_tol *diff_tol,
 	    int (*add_func)(const char *attr_name, const char *attr_val_left, const char *attr_val_right, void *data),
 	    int (*del_func)(const char *attr_name, const char *attr_val_left, const char *attr_val_ancestor, const char *attr_val_right, void *data),
 	    int (*chgd_func)(const char *attr_name, const char *attr_val_left, const char *attr_val_ancestor, const char *attr_val_right, void *data),
@@ -609,19 +609,19 @@ db_avs_diff3(const struct bu_attribute_value_set *left_set,
 	const char *val_left = bu_avs_get(left_set, avp->name);
 	const char *val_right = bu_avs_get(right_set, avp->name);
 
-        /* The possibilities are:
-         *
-         * (!val_left && !val_right) && val_ancestor
-         * (val_left && !val_right) && (val_ancestor == val_left)
-         * (val_left && !val_right) && (val_ancestor != val_left)
-         * (!val_left && val_right) && (val_ancestor == val_right)
-         * (!val_left && val_right) && (val_ancestor != val_right)
-         * (val_left == val_right) && (val_ancestor == val_left)
-         * (val_left == val_right) && (val_ancestor != val_left)
-         * (val_left != val_right) && (val_ancestor == val_left)
-         * (val_left != val_right) && (val_ancestor == val_right)
-         * (val_left != val_right) && (val_ancestor != val_left && val_ancestor != val_right)
-         */
+	/* The possibilities are:
+	 *
+	 * (!val_left && !val_right) && val_ancestor
+	 * (val_left && !val_right) && (val_ancestor == val_left)
+	 * (val_left && !val_right) && (val_ancestor != val_left)
+	 * (!val_left && val_right) && (val_ancestor == val_right)
+	 * (!val_left && val_right) && (val_ancestor != val_right)
+	 * (val_left == val_right) && (val_ancestor == val_left)
+	 * (val_left == val_right) && (val_ancestor != val_left)
+	 * (val_left != val_right) && (val_ancestor == val_left)
+	 * (val_left != val_right) && (val_ancestor == val_right)
+	 * (val_left != val_right) && (val_ancestor != val_left && val_ancestor != val_right)
+	 */
 
 	if (!val_left || !val_right) {
 	    /* Removed from both - no conflict, nothing to merge */
@@ -679,10 +679,10 @@ db_avs_diff3(const struct bu_attribute_value_set *left_set,
 
     /* Now do left_set - anything in ancestor has already been handled */
     for (BU_AVS_FOR(avp, left_set)) {
-        const char *val_ancestor = bu_avs_get(ancestor_set, avp->name);
-        if (!val_ancestor) {
+	const char *val_ancestor = bu_avs_get(ancestor_set, avp->name);
+	if (!val_ancestor) {
 	    const char *val_left = bu_avs_get(left_set, avp->name);
-            const char *val_right = bu_avs_get(right_set, avp->name);
+	    const char *val_right = bu_avs_get(right_set, avp->name);
 	    /* (val_left && !val_right) */
 	    if (val_left && !val_right) {
 		if (add_func) {state |= add_func(avp->name, val_left, NULL, client_data);}
@@ -696,12 +696,12 @@ db_avs_diff3(const struct bu_attribute_value_set *left_set,
 		    if (conflict_func) {state |= conflict_func(avp->name, val_left, NULL, val_right, client_data);}
 		}
 	    }
-        }
+	}
     }
 
     /* Last but not least, right_set - anything in ancestor and/or left_set has already been handled */
     for (BU_AVS_FOR(avp, right_set)) {
-        if (!bu_avs_get(ancestor_set, avp->name) && !bu_avs_get(left_set, avp->name)) {
+	if (!bu_avs_get(ancestor_set, avp->name) && !bu_avs_get(left_set, avp->name)) {
 	    if (add_func) {state |= add_func(avp->name, NULL, avp->value, client_data);}
 	}
     }
@@ -796,9 +796,9 @@ db_diff3_dp(const struct db_i *left,
 	const struct db_i *right,
 	const struct directory *left_dp,
 	const struct directory *ancestor_dp,
-       	const struct directory *right_dp,
-       	const struct bn_tol *diff3_tol,
-       	db_compare_criteria_t flags,
+	const struct directory *right_dp,
+	const struct bn_tol *diff3_tol,
+	db_compare_criteria_t flags,
 	struct diff_result *ext_result)
 {
     int state = DIFF_EMPTY;
@@ -898,9 +898,9 @@ db_diff3(const struct db_i *dbip_left,
 
 	/* If we're checking everything, we want a sanity check to make sure we spot it when the objects differ */
 	if (flags == DB_COMPARE_ALL &&
-	       	dp_left != RT_DIR_NULL && dp_left->d_major_type != DB5_MAJORTYPE_ATTRIBUTE_ONLY &&
-	       	dp_ancestor != RT_DIR_NULL && dp_ancestor->d_major_type != DB5_MAJORTYPE_ATTRIBUTE_ONLY &&
-	       	dp_right != RT_DIR_NULL && dp_right->d_major_type != DB5_MAJORTYPE_ATTRIBUTE_ONLY) {
+		dp_left != RT_DIR_NULL && dp_left->d_major_type != DB5_MAJORTYPE_ATTRIBUTE_ONLY &&
+		dp_ancestor != RT_DIR_NULL && dp_ancestor->d_major_type != DB5_MAJORTYPE_ATTRIBUTE_ONLY &&
+		dp_right != RT_DIR_NULL && dp_right->d_major_type != DB5_MAJORTYPE_ATTRIBUTE_ONLY) {
 	    if (db_get_external(&ext_left, dp_left, dbip_left) || db_get_external(&ext_ancestor, dp_ancestor, dbip_ancestor) || db_get_external(&ext_right, dp_right, dbip_right)) {
 		bu_log("WARNING: unexpected failure reading serialized data for %s and %s\n", dp_left->d_namep, dp_ancestor->d_namep);
 	    } else {

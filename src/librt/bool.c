@@ -44,7 +44,6 @@
 #include "raytrace.h"
 
 
-
 /* Boolean values.  Not easy to change, but defined symbolically */
 #define BOOL_FALSE 0
 #define BOOL_TRUE 1

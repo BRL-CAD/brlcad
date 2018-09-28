@@ -333,7 +333,6 @@ rt_mempurge(struct mem_map **pp)
 }
 
 
-
 void
 rt_memclose(void)
 {
@@ -352,7 +351,6 @@ rt_memprint(struct mem_map **UNUSED(pp))
 {
     bu_log("rt_memprint() is deprecated\n");
 }
-
 
 
 /*

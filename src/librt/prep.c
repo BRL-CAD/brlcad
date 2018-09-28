@@ -465,7 +465,7 @@ rt_btree_translate(struct rt_i *rtip, struct soltab **primitives, struct bit_tre
     RT_CK_RTI(rtip);
 
     for (i=start; i<end; i++) {
-        uop = btp[i].val & 7;
+	uop = btp[i].val & 7;
 	if (uop == UOP_SOLID) {
 	    st_bit = btp[i].val >> 3;
 	    for (j = 0; j < n_primitives; j++) {
@@ -488,13 +488,13 @@ build_regions_table(cl_uint *regions_table, struct bit_tree *btp, size_t start, 
 
     rt_index = n_regions/32 + 1;
     for (i=start; i<end; i++) {
-        uop = btp[i].val & 7;
+	uop = btp[i].val & 7;
 	if (uop == UOP_SOLID) {
-            st_bit = btp[i].val >> 3;
+	    st_bit = btp[i].val >> 3;
 	    if (st_bit < n_primitives) {
-	        regions_table[st_bit * rt_index + (reg_id >> 5)] |= 1 << (reg_id & 31);
+		regions_table[st_bit * rt_index + (reg_id >> 5)] |= 1 << (reg_id & 31);
 	    }
-        }
+	}
     }
 }
 
@@ -517,21 +517,21 @@ clt_prep(struct rt_i *rtip)
 
     i = 0;
     RT_VISIT_ALL_SOLTABS_START(stp, rtip) {
-        /* Ignore "dead" solids in the list.  (They failed prep) */
-        if (stp->st_aradius <= 0)
+	/* Ignore "dead" solids in the list.  (They failed prep) */
+	if (stp->st_aradius <= 0)
 	    continue;
-        /* Infinite solids make the BVH construction explode. */
-        if (stp->st_aradius >= INFINITY)
+	/* Infinite solids make the BVH construction explode. */
+	if (stp->st_aradius >= INFINITY)
 	    continue;
 
-        primitives[i++] = stp;
+	primitives[i++] = stp;
     } RT_VISIT_ALL_SOLTABS_END;
 
     n_primitives = i;
 
     if (n_primitives != 0) {
-        /* Build BVH tree for primitives */
-        cl_int total_nodes = 0;
+	/* Build BVH tree for primitives */
+	cl_int total_nodes = 0;
 	struct clt_linear_bvh_node *nodes;
 	long *ordered_prims;
 	fastf_t *centroids;
@@ -557,7 +557,7 @@ clt_prep(struct rt_i *rtip)
 	bu_free(bounds, "bounds");
 	bu_free(centroids, "centroids");
 
-        clt_db_store_bvh(total_nodes, nodes);
+	clt_db_store_bvh(total_nodes, nodes);
 	bu_free(nodes, "nodes");
 
 	if (ordered_prims) {
@@ -651,7 +651,7 @@ clt_prep(struct rt_i *rtip)
 	    for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
 		RT_CK_REGION(regp);
 
-                regions[i].btree_offset = len;
+		regions[i].btree_offset = len;
 		regions[i].reg_aircode = regp->reg_aircode;
 		regions[i].reg_bit = regp->reg_bit;
 		regions[i].reg_all_unions = regp->reg_all_unions;
