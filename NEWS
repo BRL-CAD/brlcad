@@ -21,7 +21,8 @@ run times when repeatedly raytracing BREP solids.
 
 Support for terrain import has been significantly expanded with the
 addition of a new Geospatial Data Abstraction Library (GDAL) based
-importer to the gcv conversion tool.  
+importer to the gcv conversion tool.  GDAL brings with it support for
+dozens of different terrain data formats.
 
 Also new in this release are a greatly improved graphical geometry
 overlap resolving tool and support in the MGED search command for
