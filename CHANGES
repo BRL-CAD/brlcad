@@ -147,6 +147,11 @@ MGED commands
 	savekey, shaded_mode, sync
 	Removed as part of distillation effort [deprecated 7.28]
 
+libtermio, libcursor
+	Public API scope reduction - any client code that needs
+	to interact with the terminal at these levels should handle
+	what is needed locally.
+
 7.26
 ----
 ray tracing tools
