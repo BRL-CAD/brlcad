@@ -719,8 +719,6 @@ rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **
     int num_attrs=0;
     point_t region_min, region_max;
 
-    const char *librt_cache = NULL;
-
     RT_CHECK_RTI(rtip);
     RT_CK_DBI(rtip->rti_dbip);
 
@@ -731,8 +729,6 @@ rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **
 
     if (argc <= 0)
 	return -1;	/* FAIL */
-
-    librt_cache = getenv("LIBRT_CACHE");
 
     tbl = bu_hash_create(64);
     rtip->Orca_hash_tbl = (void *)tbl;
@@ -776,9 +772,7 @@ rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **
 	}
 
 	data.tbl = tbl;
-	if (BU_STR_EMPTY(librt_cache) || bu_file_exists(librt_cache, NULL)) {
-	    data.cache = rt_cache_open();
-	}
+	data.cache = rt_cache_open();
 
 	i = db_walk_tree(rtip->rti_dbip, argc, argv, ncpus,
 			 &tree_state,

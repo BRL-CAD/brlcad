@@ -110,6 +110,13 @@ rt_cache_open(void)
     char temppath[MAXPATHLEN];
     int create;
     struct rt_cache *result;
+    const char *librt_cache = NULL;
+
+    librt_cache = getenv("LIBRT_CACHE");
+    if (!BU_STR_EMPTY(librt_cache) && bu_str_false(librt_cache)) {
+	/* default unset is on, so it's explicitly turned off */
+	return NULL;
+    }
 
     BU_GET(result, struct rt_cache);
 
