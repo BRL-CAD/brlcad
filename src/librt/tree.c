@@ -123,7 +123,7 @@ _rt_gettree_region_start(struct db_tree_state *tsp, const struct db_full_path *p
 }
 
 
-struct rt_gettree_data
+struct gettree_data
 {
     struct bu_hash_tbl *tbl;
     struct rt_cache *cache;
@@ -148,7 +148,7 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
     struct directory *dp = NULL;
     size_t shader_len=0;
     struct rt_i *rtip;
-    struct bu_hash_tbl *tbl = ((struct rt_gettree_data *)client_data)->tbl;
+    struct bu_hash_tbl *tbl = ((struct gettree_data *)client_data)->tbl;
     matp_t inv_mat;
     struct bu_attribute_value_set avs;
     struct bu_attribute_value_pair *avpp;
@@ -442,7 +442,7 @@ _rt_find_identical_solid(const matp_t mat, struct directory *dp, struct rt_i *rt
 HIDDEN union tree *
 _rt_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *client_data)
 {
-    struct rt_gettree_data *data;
+    struct gettree_data *data;
     struct soltab *stp;
     struct directory *dp;
     matp_t mat;
@@ -460,7 +460,7 @@ _rt_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, st
     RT_CK_RESOURCE(tsp->ts_resp);
     dp = DB_FULL_PATH_CUR_DIR(pathp);
 
-    data = (struct rt_gettree_data *)client_data;
+    data = (struct gettree_data *)client_data;
 
     if (!data)
 	bu_bomb("missing argument");
@@ -736,7 +736,7 @@ rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **
     prev_sol_count = rtip->nsolids;
 
     {
-	struct rt_gettree_data data;
+	struct gettree_data data;
 	struct db_tree_state tree_state;
 
 	tree_state = rt_initial_tree_state;	/* struct copy */
