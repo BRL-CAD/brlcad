@@ -116,6 +116,7 @@ cache_format(const char *librt_cache)
     struct bu_vls path = BU_VLS_INIT_ZERO;
     const char *cpath = NULL;
     struct bu_vls fmt_str = BU_VLS_INIT_ZERO;
+    size_t ret;
     FILE *fp;
 
     bu_vls_printf(&path, "%s%c%s", librt_cache, BU_DIR_SEPARATOR, "format");
@@ -126,16 +127,25 @@ cache_format(const char *librt_cache)
     }
 
     fp = fopen(cpath, "r");
-    bu_vls_free(&path);
     if (!fp) {
+	bu_vls_free(&path);
 	return -2;
     }
 
     bu_vls_gets(&fmt_str, fp);
     fclose(fp);
 
-    bu_sscanf(bu_vls_cstr(&fmt_str), "%d", &format);
+    ret = bu_sscanf(bu_vls_cstr(&fmt_str), "%d", &format);
+    if (ret != 1) {
+	fp = fopen(cpath, "w");
+	bu_vls_sprintf(&fmt_str, "%d\n", format);
+	if (fp) {
+	    ret = fwrite(bu_vls_cstr(&fmt_str), bu_vls_strlen(&fmt_str), 1, fp);
+	}
+	fclose(fp);
+    }
     bu_vls_free(&fmt_str);
+    bu_vls_free(&path);
 
     return format;
 }
