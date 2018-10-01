@@ -52,6 +52,15 @@
 static const char DSLASH[2] = {BU_DIR_SEPARATOR, '\0'};
 
 
+static void
+nibble_trailing_slash(char *path)
+{
+    if ((strlen(path) > 1) && path[strlen(path)-1] == BU_DIR_SEPARATOR) {
+	path[strlen(path)-1] = '\0'; /* nibble any trailing slash */
+    }
+}
+
+
 static const char *
 dir_temp(char *buf, size_t len)
 {
@@ -119,9 +128,7 @@ dir_temp(char *buf, size_t len)
 	}
     }
 
-    if ((strlen(path) > 1) && path[strlen(path)-1] == BU_DIR_SEPARATOR) {
-	path[strlen(path)-1] = '\0'; /* nibble the trailing slash */
-    }
+    nibble_trailing_slash(path);
 
     bu_strlcpy(buf, path, len);
     return buf;
@@ -178,6 +185,8 @@ dir_home(char *buf, size_t len)
 	char root[2] = {BU_DIR_SEPARATOR, 0};
 	bu_strlcpy(path, root, MAXPATHLEN);
     }
+
+    nibble_trailing_slash(path);
 
     bu_strlcpy(buf, path, len);
     return buf;
@@ -236,6 +245,8 @@ dir_cache(char *buf, size_t len)
 	bu_strlcat(path, DSLASH, MAXPATHLEN);
 	bu_strlcat(path, ".cache", MAXPATHLEN);
     }
+
+    nibble_trailing_slash(path);
 
     /* finally, append our application subdirectory */
     bu_strlcat(path, DSLASH, MAXPATHLEN);
