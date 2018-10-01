@@ -1,7 +1,7 @@
 /*                        O B J E C T S . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2016 United States Government as represented by
+ * Copyright (c) 2008-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -858,6 +858,8 @@ GED_EXPORT extern int ged_track2(struct bu_vls *log_str, struct rt_wdb *wdbp, co
 /* defined in wdb_importFg4Section.c */
 GED_EXPORT int wdb_importFg4Section_cmd(void *data, int argc, const char *argv[]);
 
+
+GED_EXPORT int ged_pnts(struct ged *gedp, int argc, const char *argv[]);
 
 
 __END_DECLS

@@ -1,7 +1,7 @@
 /*                      C O M B . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2016 United States Government as represented by
+ * Copyright (c) 1993-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -51,8 +51,7 @@ RT_EXPORT extern int rt_comb_export4(struct bu_external                 *ep,
 RT_EXPORT extern void db_comb_describe(struct bu_vls    *str,
                                        const struct rt_comb_internal    *comb,
                                        int              verbose,
-                                       double           mm2local,
-                                       struct resource  *resp);
+                                       double           mm2local);
 
 /**
  * OBJ[ID_COMBINATION].ft_describe() method
@@ -60,9 +59,7 @@ RT_EXPORT extern void db_comb_describe(struct bu_vls    *str,
 RT_EXPORT extern int rt_comb_describe(struct bu_vls     *str,
                                       const struct rt_db_internal *ip,
                                       int               verbose,
-                                      double            mm2local,
-                                      struct resource *resp,
-                                      struct db_i *db_i);
+                                      double            mm2local);
 
 /**
  * fills in rgb with the color for a given comb combination

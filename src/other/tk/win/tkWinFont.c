@@ -1307,7 +1307,15 @@ MultiFontTextOut(
     for (p = source; p < end; ) {
 	next = p + Tcl_UtfToUniChar(p, &ch);
 	thisSubFontPtr = FindSubFontForChar(fontPtr, ch, &lastSubFontPtr);
-	if (thisSubFontPtr != lastSubFontPtr) {
+
+	/*
+	 * The drawing API has a limit of 32767 pixels in one go.
+	 * To avoid spending time on a rare case we do not measure each char,
+	 * instead we limit to drawing chunks of 200 bytes since that works
+	 * well in practice.
+	 */
+
+	if ((thisSubFontPtr != lastSubFontPtr) || (p-source > 200)) {
 	    if (p > source) {
 		familyPtr = lastSubFontPtr->familyPtr;
  		Tcl_UtfToExternalDString(familyPtr->encoding, source,

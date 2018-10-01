@@ -1,7 +1,7 @@
 /*                         D A G . C P P
  * BRL-CAD
  *
- * Copyright (c) 2012-2016 United States Government as represented by
+ * Copyright (c) 2012-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -823,13 +823,11 @@ ged_graph(struct ged *gedp, int argc, const char *argv[])
 
 #endif
 
-
-/*
- * Local Variables:
- * tab-width: 8
- * mode: C
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8

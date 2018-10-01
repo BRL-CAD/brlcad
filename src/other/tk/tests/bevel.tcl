@@ -147,14 +147,12 @@ set ind [.t.t index end]
  xxxx} {} SSSSS sol100 {xxxx
  x} {} SSSSSSSSSSSSSSSSSS sol100 {x
  xxx} {} SSSSSSSSS sol100 xxxx {}
-}
 
 .t.t insert end "\n\nA thinner border is continuous"
 .t.t insert end {
  xxxx} {} SSSSS sol12 {xxxx
  x} {} SSSSSSSSSSSSSSSSSS sol12 {x
  xxx} {} SSSSSSSSS sol12 xxxx {}
-}
 
 .t.t tag add big $ind end
 

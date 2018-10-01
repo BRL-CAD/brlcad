@@ -499,10 +499,10 @@ proc ::hv3::gui_bookmark {} {
 proc mann_pages {lang_type} {
    set disabledByDefault [list Introduction]
    set mann_list []
-   if {[file exists [file join [bu_brlcad_data html] mann/$lang_type]} {
-       set manFiles [glob -nocomplain -directory [file join [bu_brlcad_data html] mann/$lang_type] *.html ]
+   if {[file exists [file join [bu_brlcad_root "share/html"] mann/$lang_type]} {
+       set manFiles [glob -nocomplain -directory [file join [bu_brlcad_root "share/html"] mann/$lang_type] *.html ]
    } else {
-       set manFiles [glob -nocomplain -directory [file join [bu_brlcad_data html] mann] *.html ]
+       set manFiles [glob -nocomplain -directory [file join [bu_brlcad_root "share/html"] mann] *.html ]
    }
    foreach manFile $manFiles {
       set rootName [file rootname [file tail $manFile]]
@@ -642,7 +642,7 @@ proc gui_build {widget_array} {
   foreach manFile $mann_list {
      .middle.treeframe.tree insert {} end -text "$manFile"
   }
-  bind .middle.treeframe.tree <<TreeviewSelect>> {gui_current goto file:///[file join [bu_brlcad_data html] mann/[.middle.treeframe.tree item [.middle.treeframe.tree focus] -text].html]}
+  bind .middle.treeframe.tree <<TreeviewSelect>> {gui_current goto file:///[file join [bu_brlcad_root "share/html"] mann/[.middle.treeframe.tree item [.middle.treeframe.tree focus] -text].html]}
   bind .middle.treeframe.tree <Control-f> {gui_current Find}
   bind .middle.treeframe.tree <Control-F> {gui_current Find}
 
@@ -972,7 +972,7 @@ proc main {args} {
 	set enablejavascript 1
       }
       default {
-	set uri [::tkhtml::uri file:///[file join [bu_brlcad_data html] mann en Introduction.html] ]
+	set uri [::tkhtml::uri file:///[file join [bu_brlcad_root "share/html"] mann en Introduction.html] ]
 	lappend docs [$uri resolve $val.html]
 	$uri destroy
       }
@@ -981,9 +981,9 @@ proc main {args} {
 
   ::hv3::dbinit
 
-  if {[llength $docs] == 0} {set docs [list file:///[file join [bu_brlcad_data html] mann/en/Introduction.html]] }
+  if {[llength $docs] == 0} {set docs [list file:///[file join [bu_brlcad_root "share/html"] mann/en/Introduction.html]] }
   set ::hv3::newuri [lindex $docs 0]
-  set ::hv3::homeuri file:///[file join [bu_brlcad_data html] mann/en/Introduction.html ]
+  set ::hv3::homeuri file:///[file join [bu_brlcad_root "share/html"] mann/en/Introduction.html ]
 
   # Build the GUI
   gui_build     ::hv3::MGEDHelp

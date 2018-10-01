@@ -1,7 +1,7 @@
 /*                      P I X C L U M P . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2016 United States Government as represented by
+ * Copyright (c) 1997-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -211,11 +211,11 @@ main (int argc, char **argv)
     switch (argc - bu_optind) {
 	case 0:
 	    infp = stdin;
-	    /* Break intentionally omitted */
+	    /* fall through */
 	case 1:
 	    outf_name = "stdout";
 	    outfp = stdout;
-	    /* Break intentionally omitted */
+	    /* fall through */
 	case 2:
 	    break;
 	default:

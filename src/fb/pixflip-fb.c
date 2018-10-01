@@ -1,7 +1,7 @@
 /*                    P I X F L I P - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2016 United States Government as represented by
+ * Copyright (c) 1988-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -47,6 +47,7 @@
 #include "bu/file.h"
 #include "bu/str.h"
 #include "bu/exit.h"
+#include "bu/snooze.h"
 #include "fb.h"
 
 
@@ -172,7 +173,7 @@ main(int argc, char **argv)
     FD_SET(fileno(stdin), &readfds);
 
     fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
-    sleep(1);
+    bu_snooze(BU_SEC2USEC(1));
 
     if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);
@@ -238,13 +239,13 @@ main(int argc, char **argv)
 	    snprintf(name, sizeof(name), "%s.%d", input_basename, framenumber);
 	}
 
-	ifname = bu_realpath(name, NULL);
+	ifname = bu_file_realpath(name, NULL);
 	if ((fd=open(ifname, 0))<0) {
 	    perror(ifname);
-	    bu_free(ifname, "ifname alloc from bu_realpath");
+	    bu_free(ifname, "ifname alloc from bu_file_realpath");
 	    goto done;
 	}
-	bu_free(ifname, "ifname alloc from bu_realpath");
+	bu_free(ifname, "ifname alloc from bu_file_realpath");
 
 	/* Read in .pix file.  Bottom to top */
 	i = read(fd, obuf, scanbytes);

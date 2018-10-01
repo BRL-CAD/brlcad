@@ -1,7 +1,7 @@
 /*                     V L S _ I N C R . C
  * BRL-CAD
  *
- * Copyright (c) 2015-2016 United States Government as represented by
+ * Copyright (c) 2015-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@
 
 
 int
-vls_incr_main(int argc, char **argv)
+main(int argc, char *argv[])
 {
     int ret = 1;
     int i = 0;
@@ -41,7 +41,8 @@ vls_incr_main(int argc, char **argv)
     const char *formatting = NULL;
 
     /* Sanity check */
-    if (argc < 6) bu_exit(1, "ERROR: wrong number of parameters");
+    if (argc < 6)
+	bu_exit(1, "Usage: %s {name} {num} {formatting} {incr_count} {expected}\n", argv[0]);
 
     if (BU_STR_EQUAL(argv[2], "1")) {
 	rs = rs_complex;

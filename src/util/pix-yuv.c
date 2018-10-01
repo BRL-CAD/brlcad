@@ -1,7 +1,7 @@
 /*                       P I X - Y U V . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2016 United States Government as represented by
+ * Copyright (c) 1995-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -104,16 +104,16 @@ get_args(int argc, char **argv)
     } else {
 	char *ifname;
 	file_name = argv[bu_optind];
-	ifname = bu_realpath(file_name, NULL);
+	ifname = bu_file_realpath(file_name, NULL);
 	if ((infd = open(ifname, 0)) < 0) {
 	    perror(ifname);
 	    fprintf(stderr,
 		    "pix-yuv: cannot open \"%s(canonical %s)\" for reading\n",
 		    file_name, ifname);
-	    bu_free(ifname, "ifname alloc from bu_realpath");
+	    bu_free(ifname, "ifname alloc from bu_file_realpath");
 	    return 0;
 	}
-	bu_free(ifname, "ifname alloc from bu_realpath");
+	bu_free(ifname, "ifname alloc from bu_file_realpath");
 	fileinput++;
     }
 

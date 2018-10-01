@@ -1,7 +1,7 @@
 /*                          C L I P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -55,7 +55,7 @@ clip_code(fastf_t x, fastf_t y, fastf_t clip_min, fastf_t clip_max)
     return cval;
 }
 
-/* clip a 2-D integer line seg against the size of the display */
+
 int
 bn_lseg_clip(fastf_t *xp1, fastf_t *yp1, fastf_t *xp2, fastf_t *yp2, fastf_t clip_min, fastf_t clip_max)
 {
@@ -110,20 +110,9 @@ bn_lseg_clip(fastf_t *xp1, fastf_t *yp1, fastf_t *xp2, fastf_t *yp2, fastf_t cli
     return 0;
 }
 
-/*
- * Clip a ray against a rectangular parallelepiped (RPP)
- * that has faces parallel to the coordinate planes (a clipping RPP).
- * The RPP is defined by a minimum point and a maximum point.
- *
- * Returns -
- * 0 if ray does not hit RPP,
- * !0 if ray hits RPP.
- *
- * Implicit Return -
- * if !0 was returned, "a" and "b" have been clipped to the RPP.
- */
+
 int
-bn_ray_vclip(vect_t a, vect_t b, fastf_t *min, fastf_t *max)
+bn_ray_vclip(vect_t a, vect_t b, fastf_t *min_pt, fastf_t *max_pt)
 {
     static vect_t diff;
     static double sv;
@@ -137,22 +126,22 @@ bn_ray_vclip(vect_t a, vect_t b, fastf_t *min, fastf_t *max)
     maxdist = CLIP_DISTANCE;
     VSUB2(diff, b, a);
 
-    for (i = 0; i < 3; i++, pt++, dir++, max++, min++) {
+    for (i = 0; i < 3; i++, pt++, dir++, max_pt++, min_pt++) {
         if (*dir < -EPSILON) {
-	    sv = (*min - *pt) / *dir;
+	    sv = (*min_pt - *pt) / *dir;
             if (sv < 0.0)
                 return 0;       /* MISS */
 
-	    st = (*max - *pt) / *dir;
+	    st = (*max_pt - *pt) / *dir;
 	    V_MAX(mindist, st);
 	    V_MIN(maxdist, sv);
 
         }  else if (*dir > EPSILON) {
-	    st = (*max - *pt) / *dir;
+	    st = (*max_pt - *pt) / *dir;
             if (st < 0.0)
                 return 0;       /* MISS */
 
-	    sv = (*min - *pt) / *dir;
+	    sv = (*min_pt - *pt) / *dir;
 	    V_MAX(mindist, sv);
 	    V_MIN(maxdist, st);
         } else {
@@ -161,7 +150,7 @@ bn_ray_vclip(vect_t a, vect_t b, fastf_t *min, fastf_t *max)
              * (i.e., this ray is aligned with this axis),
              * merely check against the boundaries.
              */
-            if ((*min > *pt) || (*max < *pt))
+            if ((*min_pt > *pt) || (*max_pt < *pt))
                 return 0;       /* MISS */
         }
     }
@@ -199,10 +188,9 @@ adc_model_to_adc_view(struct bview_adc_state *adcs, mat_t model2view, fastf_t am
 void
 adc_grid_to_adc_view(struct bview_adc_state *adcs, mat_t model2view, fastf_t amax)
 {
-    point_t model_pt;
+    point_t model_pt = VINIT_ZERO;
     point_t view_pt;
 
-    VSETALL(model_pt, 0.0);
     MAT4X3PNT(view_pt, model2view, model_pt);
     VADD2(adcs->pos_view, view_pt, adcs->pos_grid);
     adcs->dv_x = adcs->pos_view[X] * amax;
@@ -213,10 +201,9 @@ adc_grid_to_adc_view(struct bview_adc_state *adcs, mat_t model2view, fastf_t ama
 void
 adc_view_to_adc_grid(struct bview_adc_state *adcs, mat_t model2view)
 {
-    point_t model_pt;
+    point_t model_pt = VINIT_ZERO;
     point_t view_pt;
 
-    VSETALL(model_pt, 0.0);
     MAT4X3PNT(view_pt, model2view, model_pt);
     VSUB2(adcs->pos_grid, adcs->pos_view, view_pt);
 }

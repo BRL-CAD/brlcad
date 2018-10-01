@@ -1,7 +1,7 @@
 /*                      R E D B L A C K . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,7 +25,6 @@
 
 #include "bu/defines.h"
 #include "bu/magic.h"
-#include "bu/list.h"
 #include "bu/bitv.h"
 
 __BEGIN_DECLS
@@ -79,17 +78,22 @@ __BEGIN_DECLS
  */
 struct bu_rb_list
 {
-    struct bu_list l;
+    size_t size, capacity;
     union
     {
-	struct bu_rb_node *rbl_n;
-	struct bu_rb_package *rbl_p;
+	struct bu_rb_node **rbl_n;
+	struct bu_rb_package **rbl_p;
     } rbl_u;
 };
-#define rbl_magic l.magic
 #define rbl_node rbl_u.rbl_n
 #define rbl_package rbl_u.rbl_p
 #define BU_RB_LIST_NULL ((struct bu_rb_list *) 0)
+#define BU_RB_LIST_INIT(_l, _m) { \
+    (_l).size = (_l).capacity = 0; \
+    (_l)._m = NULL; \
+}
+
+#define BU_RB_LIST_INIT_CAPACITY 4
 
 
 /**
@@ -146,9 +150,7 @@ typedef struct bu_rb_tree bu_rb_tree_t;
 	(_rb)->rbt_nm_orders = 0; \
 	(_rb)->rbt_compar = NULL; \
 	(_rb)->rbt_root = (_rb)->rbt_unique = (_rb)->rbt_current = NULL; \
-	BU_LIST_INIT(&(_rb)->rbt_nodes.l); \
 	(_rb)->rbt_nodes.rbl_u.rbl_n = (_rb)->rbt_nodes.rbl_u.rbl_p = NULL; \
-	BU_LIST_INIT(&(_rb)->rbt_packages.l); \
 	(_rb)->rbt_packages.rbl_u.rbl_n = (_rb)->rbt_packages.rbl_u.rbl_p = NULL; \
 	(_rb)->rbt_empty_node = NULL; \
     }
@@ -158,7 +160,7 @@ typedef struct bu_rb_tree bu_rb_tree_t;
  * bu_rb_tree struct.  does not allocate memory.
  */
 #define BU_RB_TREE_INIT_ZERO { BU_RB_TREE_MAGIC, 0, NULL, 0, NULL, 0, NULL, NULL, NULL, NULL, \
-	{ BU_LIST_INIT_ZER0, {NULL, NULL} }, { BU_LIST_INIT_ZER0, {NULL, NULL} }, NULL, NULL, NULL }
+	{ 0, 0, NULL }, { 0, 0, NULL }, NULL, NULL, NULL }
 
 /**
  * returns truthfully whether a bu_rb_tree has been initialized.
@@ -189,7 +191,7 @@ struct bu_rb_package
 {
     uint32_t rbp_magic;	/**< Magic no. for integrity check */
     struct bu_rb_node **rbp_node;	/**< Containing nodes */
-    struct bu_rb_list *rbp_list_pos;	/**< Place in the list of all pkgs.  */
+    size_t rbp_list_pos;	/**< Place in the list of all pkgs.  */
     void *rbp_data;	/**< Application data */
 };
 #define BU_RB_PKG_NULL ((struct bu_rb_package *) 0)
@@ -212,7 +214,7 @@ struct bu_rb_node
     int *rbn_size;			/**< Sizes of subtrees rooted here */
     struct bu_rb_package **rbn_package;	/**< Contents of this node */
     int rbn_pkg_refs;			/**< How many orders are being used?  */
-    struct bu_rb_list *rbn_list_pos;	/**< Place in the list of all nodes */
+    size_t rbn_list_pos;	/**< Place in the list of all nodes */
 };
 #define BU_RB_NODE_NULL ((struct bu_rb_node *) 0)
 
@@ -245,24 +247,8 @@ enum BU_RB_WALK_ORDER {
  * and the comparison functions (one per order).  bu_rb_create()
  * returns a pointer to the red-black tree header record.
  */
-BU_EXPORT extern struct bu_rb_tree *bu_rb_create(const char *description, int nm_orders, int (**compare_funcs)(const void *, const void *));
-/* A macro for correct casting of a rb compare function for use a function argument: */
-#define BU_RB_COMPARE_FUNC_CAST_AS_FUNC_ARG(_func) ((int (*)(void))_func)
-
-/**
- * Create a single-order red-black tree
- *
- * This function has two parameters: a comment describing the tree to
- * create and a comparison function.  bu_rb_create1() builds an array
- * of one function pointer and passes it to bu_rb_create().
- * bu_rb_create1() returns a pointer to the red-black tree header
- * record.
- *
- * N.B. - Since this function allocates storage for the array of
- * function pointers, in order to avoid memory leaks on freeing the
- * tree, applications should call bu_rb_free1(), NOT bu_rb_free().
- */
-BU_EXPORT extern struct bu_rb_tree *bu_rb_create1(const char *description, int (*compare_func)(void));
+typedef int (*bu_rb_cmp_t)(const void *, const void *);
+BU_EXPORT extern struct bu_rb_tree *bu_rb_create(const char *description, int nm_orders, bu_rb_cmp_t *compare_funcs);
 
 /** @brief Routines to delete a node from a red-black tree */
 

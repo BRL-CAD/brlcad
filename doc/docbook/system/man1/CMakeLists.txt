@@ -157,7 +157,6 @@ set(man1_EN
   pixcrop.xml
   pixcut.xml
   pixdiff.xml
-  pixdsplit.xml
   pixfade.xml
   pixfilter.xml
   pixhalve.xml
@@ -219,7 +218,6 @@ set(man1_EN
   rtregis.xml
   rtscale.xml
   rtshot.xml
-  rttherm.xml
   rtwalk.xml
   rtweight.xml
   rtwizard.xml
@@ -229,7 +227,6 @@ set(man1_EN
   shapefact.xml
   showshot.xml
   showtherm.xml
-  ssamp-bw.xml
   stl-g.xml
   sun-pix.xml
   tabinterp.xml
@@ -257,6 +254,7 @@ set_source_files_properties(chan_mult.xml PROPERTIES EXTRA_MAN1_OUTPUTS "chan_ad
 ADD_DOCBOOK("HTML;PHP;MAN1;PDF" man1_EN man1 "")
 
 CMAKEFILES(pictx.xml)
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

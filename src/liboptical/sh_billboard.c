@@ -1,7 +1,7 @@
 /*                  S H _ B I L L B O A R D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -144,7 +144,6 @@ new_image(const struct bu_structparse *UNUSED(sdp),
 	bu_log("error opening image %s\n", bu_vls_addr(&bbd_sp->img_filename));
 	bu_bomb("");
     }
-    BU_CK_MAPPED_FILE(bbdi->img_mf);
 
     bbdi->img_width = bbd_sp->img_width;
     bbdi->img_width = bbd_sp->img_height;
@@ -368,7 +367,7 @@ do_ray_image(struct application *ap,
     unsigned char *pixels, *color;
     int val;
     static const double rgb255 = 1.0 / 256.0;
-    vect_t cum_color;
+    vect_t cum_color = VINIT_ZERO;
     point_t pt;
     vect_t vpt;
     double radius;
@@ -436,7 +435,6 @@ do_ray_image(struct application *ap,
 
     tot = (uhi - ulo + 1) * (vhi - vlo + 1); /* total # of pixels */
     color_count = 0; /* */
-    VSETALL(cum_color, 0.0);
     for (v = vlo; v <= vhi; v++) {
 	for (u = ulo; u <= uhi; u++) {
 	    color = &pixels[v*bi->img_width*3 + u*3];

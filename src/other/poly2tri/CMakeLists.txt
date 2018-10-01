@@ -1,5 +1,5 @@
 # Minimum required version of CMake
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.1.3)
 
 # Set CMake project name
 project(Poly2Tri)
@@ -26,13 +26,15 @@ set(LIBP2T_PUBLIC_HDRS
   poly2tri/poly2tri.h
   poly2tri/common/shapes.h
   poly2tri/sweep/cdt.h
-  )
-set(LIBP2T_PRIVATE_HDRS
-  poly2tri/common/utils.h
   poly2tri/sweep/advancing_front.h
   poly2tri/sweep/sweep.h
   poly2tri/sweep/sweep_context.h
   )
+
+set(LIBP2T_PRIVATE_HDRS
+  poly2tri/common/utils.h
+  )
+
 set(LIBP2T_SOURCES
   poly2tri/common/shapes.cc
   poly2tri/common/utils.cc

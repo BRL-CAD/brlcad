@@ -1,7 +1,7 @@
 /*                      P L O T 3 - D M . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2016 United States Government as represented by
+ * Copyright (c) 1999-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,13 +37,14 @@
 #include "tcl.h"
 #include "tk.h"
 
-#include "vmath.h"
+#include "bu/app.h"
 #include "bu/getopt.h"
-
+#include "vmath.h"
 #include "rt/db4.h"
 #include "raytrace.h"
 #include "bn.h"
 #include "dm.h"
+
 
 struct cmdtab {
     char *ct_name;
@@ -1119,7 +1120,7 @@ appInit(Tcl_Interp *_interp)
 	bu_exit (1, "appInit: Failed to get main window.\n");
 
     /* Locate the BRL-CAD-specific Tcl scripts */
-    filename = bu_brlcad_data("tclscripts", 0);
+    filename = bu_brlcad_root("share/tclscripts", 0);
 
     bu_vls_printf(&str2, "%s/plot3-dm", filename);
     bu_vls_printf(&str, "wm withdraw .; set auto_path [linsert $auto_path 0 %s %s]",
@@ -1146,6 +1147,9 @@ int
 main(int argc, char *argv[])
 {
     const char usage[] = "Usage: plot3-dm [-t o|X] plot_file(s)\n";
+
+    /* initialize prognam for run-time reousrce finding */
+    bu_setprogname(argv[0]);
 
     if (!get_args(argc, argv))
 	bu_exit (1, "%s", usage);

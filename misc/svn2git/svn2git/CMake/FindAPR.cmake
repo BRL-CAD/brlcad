@@ -50,6 +50,7 @@ else (APR_LIBRARIES AND APR_INCLUDE_DIRS)
       apr.h
     PATHS
       ${_APR_INCLUDEDIR}
+      ${APR_INSTALL_PATH}/include
       /usr/include
       /usr/local/include
       /opt/local/include
@@ -63,6 +64,7 @@ else (APR_LIBRARIES AND APR_INCLUDE_DIRS)
     NAMES
       apr-1
     PATHS
+      ${APR_INSTALL_PATH}/lib
       ${_APR_LIBDIR}
       /usr/lib
       /usr/local/lib

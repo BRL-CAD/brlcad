@@ -1,6 +1,6 @@
 if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   # Minimum required version of CMake
-  cmake_minimum_required(VERSION 3.0.2)
+  cmake_minimum_required(VERSION 3.1.3)
 
   # Set CMake project name
   project(G2SAT)
@@ -14,6 +14,10 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     "${ZLIB_INCLUDE_DIR}"
     "${REGEX_INCLUDE_DIR}"
     )
+
+  # The build shims aren't so great at mocking the initialization
+  # behavior of the real code.
+  CHECK_CXX_FLAG("Wno-maybe-uninitialized")
 
   set(g_sat_srcs g-sat.cpp)
   add_definitions(-DTEST_BUILD)
@@ -38,6 +42,7 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   endif(CPP_DLL_DEFINES)
 
   CMAKEFILES(${g_sat_srcs} shim.h)
+  CMAKEFILES(CMakeLists.txt)
 
 endif(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 

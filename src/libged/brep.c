@@ -1,7 +1,7 @@
 /*                         B R E P . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2016 United States Government as represented by
+ * Copyright (c) 2008-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -194,7 +194,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
     db_op_t op = DB_OP_NULL;
     int opt_ret = 0;
     struct bu_opt_desc d[2];
-    BU_OPT(d[0], "C", "color", "r/g/b", &bu_opt_color, (void *)&color, "Set color");
+    BU_OPT(d[0], "C", "color", "r/g/b", &bu_opt_color, &color, "Set color");
     BU_OPT_NULL(d[1]);
 
     opt_ret = bu_opt_parse(NULL, argc, argv, d);
@@ -388,7 +388,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 
 	rt_brep_boolean(&intern_res, &intern, &intern2, op);
 	bip = (struct rt_brep_internal*)intern_res.idb_ptr;
-	mk_brep(gedp->ged_wdbp, argv[4], bip->brep);
+	mk_brep(gedp->ged_wdbp, argv[4], (void *)(bip->brep));
 	rt_db_free_internal(&intern);
 	rt_db_free_internal(&intern2);
 	rt_db_free_internal(&intern_res);

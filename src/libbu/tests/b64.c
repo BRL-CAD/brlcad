@@ -1,7 +1,7 @@
 /*                         B 6 4 . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2016 United States Government as represented by
+ * Copyright (c) 2011-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -60,10 +60,10 @@ test_b64_encode(const signed char *str)
 
 
 int
-b64_main(int ac, char *av[])
+main(int ac, char *av[])
 {
     if (ac != 1)
-	fprintf(stderr,"Usage: %s \n", av[0]);
+	bu_exit(1, "Usage: %s\n", av[0]);
 
     test_b64_encode((const signed char *)"hello world!");
     test_b64_encode((const signed char *)"!@#&#$%@&#$^@(*&^%(#$@&^#*$nasty_string!<>?");

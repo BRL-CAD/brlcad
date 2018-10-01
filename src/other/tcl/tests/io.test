@@ -38,6 +38,7 @@ testConstraint testfevent       [llength [info commands testfevent]]
 testConstraint testchannelevent [llength [info commands testchannelevent]]
 testConstraint testmainthread   [llength [info commands testmainthread]]
 testConstraint testthread       [llength [info commands testthread]]
+testConstraint testobj		[llength [info commands testobj]]
 
 # You need a *very* special environment to do some tests.  In
 # particular, many file systems do not support large-files...
@@ -6129,6 +6130,8 @@ test io-47.6 {file events on shared files, deleting file events} {testfevent fil
     close $f
     set x
 } {{script 1} {}}
+unset path(foo)
+removeFile foo
 
 set path(bar) [makeFile {} bar]
 
@@ -6231,6 +6234,9 @@ test io-48.3 {testing readability conditions} {stdio unix nonBlockFiles openpipe
     close $f
     list $x $l
 } {done {0 1 0 1 0 1 0 1 0 1 0 1 0 0}}
+unset path(bar)
+removeFile bar
+
 test io-48.4 {lf write, testing readability, ^Z termination, auto read mode} {fileevent} {
     file delete $path(test1)
     set f [open $path(test1) w]
@@ -8521,6 +8527,24 @@ test io-73.5 {effect of eof on encoding end flags} -setup {
     close $rfd
     removeFile io-73.5
 } -result [list 1 1 more\u00a0data 1]
+
+test io-74.1 {[104f2885bb] improper cache validity check} -setup {
+    set fn [makeFile {} io-74.1]
+    set rfd [open $fn r]
+    testobj freeallvars
+    interp create slave
+} -constraints testobj -body {
+    teststringobj set 1 [string range $rfd 0 end]
+    read [teststringobj get 1]		
+    testobj duplicate 1 2
+    interp transfer {} $rfd slave
+    catch {read [teststringobj get 1]}
+    read [teststringobj get 2]		
+} -cleanup {
+    interp delete slave
+    testobj freeallvars
+    removeFile io-74.1
+} -returnCodes error -match glob -result {can not find channel named "*"}
 
 # ### ### ### ######### ######### #########
 

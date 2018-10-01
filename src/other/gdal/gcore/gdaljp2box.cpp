@@ -54,7 +54,7 @@ CPL_CVSID("$Id$");
 
 GDALJP2Box::GDALJP2Box( VSILFILE *fpIn ) :
     fpVSIL(fpIn),
-#if HAVE_CXX11
+#if HAVE_CXX11 && !defined(_WIN32)
     szBoxType{'\0', '\0', '\0', '\0', '\0'},
 #endif
     nBoxOffset(-1),
@@ -62,7 +62,7 @@ GDALJP2Box::GDALJP2Box( VSILFILE *fpIn ) :
     nDataOffset(-1),
     pabyData(NULL)
 {
-#if !HAVE_CXX11
+#if !HAVE_CXX11 || defined(_WIN32)
     std::fill_n(szBoxType, CPL_ARRAYSIZE(szBoxType), '\0');
 #endif
 }

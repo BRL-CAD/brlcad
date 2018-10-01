@@ -1,7 +1,7 @@
 /*                       F A S T 4 - G . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2016 United States Government as represented by
+ * Copyright (c) 1994-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,6 +35,7 @@
 #include "bio.h"
 
 /* interface headers */
+#include "bu/app.h"
 #include "bu/debug.h"
 #include "bu/getopt.h"
 #include "rt/db4.h"
@@ -47,7 +48,7 @@
 
 
 /* NOTE: there should be no space after comma */
-#define STRCOMMA ","
+#define COMMA ','
 
 
 /* convenient macro for building regions */
@@ -570,8 +571,6 @@ Insert_region_name(char *name, int reg_id)
 	}
     }
     Check_names();
-    if (RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck())
-	bu_log("ERROR: bu_mem_barriercheck failed in Insert_region_name\n");
 }
 
 
@@ -613,8 +612,6 @@ make_unique_name(char *name)
 	bu_vls_printf(&vls, "%s_%d", name, name_count);
 	(void)Search_names(name_root, bu_vls_addr(&vls), &found);
     }
-    if (RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck())
-	bu_log("ERROR: bu_mem_barriercheck failed in make_unique_name\n");
 
     return bu_vls_strgrab(&vls);
 }
@@ -706,8 +703,6 @@ Insert_name(struct name_tree **root, char *name, int inner)
 	}
 	ptr->nleft = new_ptr;
     }
-    if (RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck())
-	bu_log("ERROR: bu_mem_barriercheck failed in Insert_name\n");
 }
 
 
@@ -947,8 +942,6 @@ f4_do_name(void)
     Insert_region_name(tmp_name, region_id);
 
     name_count = 0;
-    if (RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck())
-	bu_log("ERROR: bu_mem_barriercheck failed in f4_do_name\n");
 }
 
 
@@ -960,9 +953,6 @@ f4_do_grid(void)
 
     if (!pass)	/* not doing geometry yet */
 	return;
-
-    if (RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck())
-	bu_log("ERROR: bu_mem_barriercheck failed at start of f4_do_grid\n");
 
     bu_strlcpy(field, &line[8], sizeof(field));
     grid_no = atoi(field);
@@ -986,11 +976,7 @@ f4_do_grid(void)
     }
 
     VSET(grid_points[grid_no], x*25.4, y*25.4, z*25.4);
-
     V_MAX(max_grid_no, grid_no);
-
-    if (RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck())
-	bu_log("ERROR: bu_mem_barriercheck failed at end of f4_do_grid\n");
 }
 
 
@@ -1706,18 +1692,12 @@ Add_holes(int type, int gr, int comp, struct hole_list *ptr)
 	if (!skip_region(gr*1000 + comp)) {
 	    /* add holes for this region to the list of regions to process */
 	    hptr = ptr;
-	    if (RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck())
-		bu_log("ERROR: bu_mem_barriercheck failed in Add_hole\n");
 	    while (hptr) {
 		if (f4_do_skips == region_list_len) {
 		    region_list_len += REGION_LIST_BLOCK;
 		    region_list = (int *)bu_realloc((char *)region_list, region_list_len*sizeof(int), "region_list");
-		    if (RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck())
-			bu_log("ERROR: bu_mem_barriercheck failed in Add_hole (after realloc)\n");
 		}
 		region_list[f4_do_skips++] = 1000*hptr->group + hptr->component;
-		if (RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck())
-		    bu_log("ERROR: bu_mem_barriercheck failed in Add_hole (after adding %d\n)\n", 1000*hptr->group + hptr->component);
 		hptr = hptr->next;
 	    }
 	}
@@ -1862,13 +1842,9 @@ f4_Add_bot_face(int pt1, int pt2, int pt3, fastf_t thick, int pos)
 
     if (face_count >= face_size) {
 	face_size += GRID_BLOCK;
-	if (bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck())
-	    bu_log("memory corrupted before realloc of faces, thickness, and facemode\n");
 	faces = (int *)bu_realloc((void *)faces,  face_size*3*sizeof(int), "faces");
 	thickness = (fastf_t *)bu_realloc((void *)thickness, face_size*sizeof(fastf_t), "thickness");
 	facemode = (char *)bu_realloc((void *)facemode, face_size*sizeof(char), "facemode");
-	if (bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck())
-	    bu_log("memory corrupted after realloc of faces, thickness, and facemode\n");
     }
 
     faces[face_count*3] = pt1;
@@ -1884,9 +1860,6 @@ f4_Add_bot_face(int pt1, int pt2, int pt3, fastf_t thick, int pos)
     }
 
     face_count++;
-
-    if (bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck())
-	bu_log("memory corrupted at end of f4_Add_bot_face()\n");
 }
 
 
@@ -1911,15 +1884,11 @@ f4_do_tri(void)
 	return;
 
     if (faces == NULL) {
-	if (bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck())
-	    bu_log("memory corrupted before malloc of faces\n");
 	faces = (int *)bu_malloc(GRID_BLOCK*3*sizeof(int), "faces");
 	thickness = (fastf_t *)bu_malloc(GRID_BLOCK*sizeof(fastf_t), "thickness");
 	facemode = (char *)bu_malloc(GRID_BLOCK*sizeof(char), "facemode");
 	face_size = GRID_BLOCK;
 	face_count = 0;
-	if (bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck())
-	    bu_log("memory corrupted after malloc of faces, thickness, and facemode\n");
     }
 
     bu_strlcpy(field, &line[24], sizeof(field));
@@ -1951,13 +1920,7 @@ f4_do_tri(void)
     if (f4_do_plot)
 	plot_tri(pt1, pt2, pt3);
 
-    if (bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck())
-	bu_log("memory corrupted before call to f4_Add_bot_face()\n");
-
     f4_Add_bot_face(pt1, pt2, pt3, thick, pos);
-
-    if (bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck())
-	bu_log("memory corrupted after call to f4_Add_bot_face()\n");
 }
 
 
@@ -2112,7 +2075,7 @@ skip_section(void)
     off_t section_start;
 
     /* skip to start of next section */
-    section_start = bu_ftell(fpin);
+    section_start = ftell(fpin);
     if (section_start < 0) {
 	bu_exit(1, "Error: couldn't get input file's current file position.\n");
     }
@@ -2123,7 +2086,7 @@ skip_section(void)
 	       bu_strncmp(line, "WALL", 4) &&
 	       bu_strncmp(line, "VEHICLE", 7))
 	{
-	    section_start = bu_ftell(fpin);
+	    section_start = ftell(fpin);
 	    if (section_start < 0) {
 		bu_exit(1, "Error: couldn't get input file's current file position.\n");
 	    }
@@ -2132,7 +2095,7 @@ skip_section(void)
 	}
     }
     /* seek to start of the section */
-    bu_fseek(fpin, section_start, SEEK_SET);
+    fseek(fpin, section_start, SEEK_SET);
 }
 
 
@@ -2367,8 +2330,6 @@ Process_hole_wall(void)
 {
     if (debug)
 	bu_log("Process_hole_wall\n");
-    if (bu_debug & BU_DEBUG_MEM_CHECK)
-	bu_prmem("At start of Process_hole_wall:");
 
     rewind(fpin);
     while (1) {
@@ -2458,8 +2419,6 @@ Process_input(int pass_number)
 
     if (debug)
 	bu_log("\n\nProcess_input(pass = %d)\n", pass_number);
-    if (bu_debug & BU_DEBUG_MEM_CHECK)
-	bu_prmem("At start of Process_input:");
 
     if (pass_number != 0 && pass_number != 1) {
 	bu_exit(1, "Process_input: illegal pass number %d\n", pass_number);
@@ -2537,7 +2496,7 @@ make_region_list(char *str)
     region_list_len = REGION_LIST_BLOCK;
     f4_do_skips = 0;
 
-    ptr = strtok(str, STRCOMMA);
+    ptr = strtok(str, CPP_XSTR(COMMA));
     while (ptr) {
 	if ((ptr2=strchr(ptr, '-'))) {
 	    int i, start, stop;
@@ -2546,18 +2505,12 @@ make_region_list(char *str)
 	    ptr2++;
 	    start = atoi(ptr);
 	    stop = atoi(ptr2);
-	    if (bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck())
-		bu_log("ERROR: bu_mem_barriercheck failed in make_region_list\n");
 	    for (i=start; i<=stop; i++) {
 		if (f4_do_skips == region_list_len) {
 		    region_list_len += REGION_LIST_BLOCK;
 		    region_list = (int *)bu_realloc((char *)region_list, region_list_len*sizeof(int), "region_list");
-		    if (bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck())
-			bu_log("ERROR: bu_mem_barriercheck failed in make_region_list (after realloc)\n");
 		}
 		region_list[f4_do_skips++] = i;
-		if (bu_debug&BU_DEBUG_MEM_CHECK &&  bu_mem_barriercheck())
-		    bu_log("ERROR: bu_mem_barriercheck failed in make_region_list (after adding %d)\n", i);
 	    }
 	} else {
 	    if (f4_do_skips == region_list_len) {
@@ -2824,9 +2777,6 @@ main(int argc, char **argv)
 		break;
 	}
     }
-
-    if (bu_debug & BU_DEBUG_MEM_CHECK)
-	bu_log("doing memory checking\n");
 
     if (argc-bu_optind != 2) {
 	usage();

@@ -4,6 +4,9 @@
  * either coincidental or necessary for compilation.
  */
 
+#include "common.h"
+
+#include <stdio.h> /* for size_t */
 #include "vmath.h"
 
 #define ACCESS_AVAILABLE			1

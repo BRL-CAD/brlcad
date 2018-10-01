@@ -1,7 +1,7 @@
 /*                    V E G E T A T I O N . H
  * BRL-CAD
  *
- * Copyright (c) 1998-2016 United States Government as represented by
+ * Copyright (c) 1998-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,10 +28,6 @@
  */
 #ifndef PROC_DB_VEGETATION_H
 #define PROC_DB_VEGETATION_H
-
-#if defined(_WIN32) && !defined(__CYGWIN__)
-#define _CRT_RAND_S
-#endif
 
 #include "common.h"
 

@@ -13,6 +13,14 @@ set(LIBREGEX_SOURCES
   regfree.c
   )
 
+if(NOT DEFINED BIN_DIR)
+  set(BIN_DIR bin)
+endif(NOT DEFINED BIN_DIR)
+
+if(NOT DEFINED LIB_DIR)
+  set(LIB_DIR lib)
+endif(NOT DEFINED LIB_DIR)
+
 add_library(regex SHARED ${LIBREGEX_SOURCES})
 set_target_properties(regex PROPERTIES VERSION 1.0.4 SOVERSION 1)
 if(MSVC)

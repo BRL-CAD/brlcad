@@ -105,7 +105,7 @@ for Target in $Names; do
 	First=$Target
 	sed -e "/man\.macros/r $SrcDir/man.macros" -e "/man\.macros/d" \
 	    $ManPage > $Dir/$First
-	chmod 444 $Dir/$First
+	chmod 644 $Dir/$First
 	$Gzip $Dir/$First
     else
 	ln $SymOrLoc$First$Gz $Dir/$Target$Gz

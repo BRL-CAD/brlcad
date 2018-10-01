@@ -1,7 +1,7 @@
 /*                           I - A . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -24,6 +24,9 @@
 #include "common.h"
 #include "bio.h"
 
+#include "bu/snooze.h"
+
+
 int
 main(void)
 {
@@ -31,7 +34,7 @@ main(void)
     int n, i;
 
     fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
-    sleep(1);
+    bu_snooze(BU_SEC2USEC(1));
 
     while ((n=fread(ibuf, sizeof(*ibuf), 1024, stdin)) > 0) {
 	for (i=0; i < n; ++i)

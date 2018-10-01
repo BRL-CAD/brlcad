@@ -1,7 +1,7 @@
 /*                         T R A C E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2016 United States Government as represented by
+ * Copyright (c) 2008-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -170,11 +170,10 @@ ged_trace(struct directory *dp,
     bu_vls_printf(gtdp->gtd_gedp->ged_result_str, "%s:\n", dp->d_namep);
     if (!OBJ[id].ft_describe ||
 	OBJ[id].ft_describe(gtdp->gtd_gedp->ged_result_str,
-				   &intern,
-				   verbose,
-				   gtdp->gtd_gedp->ged_wdbp->dbip->dbi_base2local,
-				   &rt_uniresource,
-				   gtdp->gtd_gedp->ged_wdbp->dbip) < 0)
+			    &intern,
+			    verbose,
+			    gtdp->gtd_gedp->ged_wdbp->dbip->dbi_base2local) < 0)
+
 	bu_vls_printf(gtdp->gtd_gedp->ged_result_str, "%s: describe error\n", dp->d_namep);
     rt_db_free_internal(&intern);
 }

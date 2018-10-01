@@ -1,7 +1,7 @@
 /*                         F I L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,6 +37,7 @@
 
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/debug.h"
 #include "bu/file.h"
 #include "bu/log.h"
@@ -124,7 +125,7 @@ file_compare_info(HANDLE handle1, HANDLE handle2)
 
 
 int
-bu_same_file(const char *fn1, const char *fn2)
+bu_file_same(const char *fn1, const char *fn2)
 {
     int ret = 0;
     char *rp1, *rp2;
@@ -142,8 +143,8 @@ bu_same_file(const char *fn1, const char *fn2)
     }
 
     /* make sure symlinks to the same file report as same */
-    rp1 = bu_realpath(fn1, NULL);
-    rp2 = bu_realpath(fn2, NULL);
+    rp1 = bu_file_realpath(fn1, NULL);
+    rp2 = bu_file_realpath(fn2, NULL);
 
     /* pretend identical paths could be tested atomically.  same name
      * implies they're the same even if lookups would be different on
@@ -186,44 +187,6 @@ bu_same_file(const char *fn1, const char *fn2)
 
     bu_free(rp1, "free rp1");
     bu_free(rp2, "free rp2");
-
-    return ret;
-}
-
-
-int
-bu_same_fd(int fd1, int fd2)
-{
-    int ret = 0;
-
-    if (UNLIKELY(fd1<0 || fd2<0)) {
-	return 0;
-    }
-
-    {
-
-/* Ditto bu_same_file() reasoning, assume GetFullPathname implies we have HANDLEs */
-#ifdef HAVE_GETFULLPATHNAME
-	HANDLE handle1, handle2;
-
-	handle1 = (HANDLE)_get_osfhandle(fd1);
-	handle2 = (HANDLE)_get_osfhandle(fd2);
-
-	ret = file_compare_info(handle1, handle2);
-#else
-	/* are these files the same inode on same device?
-	 *
-	 * NOTE: fstat() works on Windows, but does not set an inode value
-	 * for non-UNIX filesystems.
-	 */
-	struct stat sb1, sb2;
-	if ((fstat(fd1, &sb1) == 0) && (fstat(fd2, &sb2) == 0) &&
-	    (sb1.st_dev == sb2.st_dev) && (sb1.st_ino == sb2.st_ino)) {
-	    ret = 1;
-	}
-#endif /* HAVE_GETFULLPATHNAME */
-
-    }
 
     return ret;
 }
@@ -356,6 +319,14 @@ bu_file_symbolic(const char *path)
 	return 0;
     }
 
+    /* c99 portability */
+#if !defined(S_ISLNK)
+#  if defined(S_IFLNK)
+#    define S_ISLNK(m) (((m) & S_IFMT) == S_IFLNK)
+#  else
+#    define S_ISLNK(m) (((m) & 0170000) == 0120000)
+#  endif
+#endif
     return (S_ISLNK(sb.st_mode));
 }
 
@@ -411,37 +382,6 @@ bu_file_delete(const char *path)
 
     /* deleted */
     return 1;
-}
-
-
-int
-bu_fseek(FILE *stream, off_t offset, int origin)
-{
-    int ret;
-
-#if defined(HAVE__FSEEKI64) && defined(SIZEOF_VOID_P) && SIZEOF_VOID_P == 8
-    ret = _fseeki64(stream, offset, origin);
-#else
-    ret = fseek(stream, offset, origin);
-#endif
-
-    return ret;
-}
-
-
-off_t
-bu_ftell(FILE *stream)
-{
-    off_t ret;
-
-#if defined(HAVE__FTELLI64) && defined(SIZEOF_VOID_P) && SIZEOF_VOID_P == 8
-    /* windows 64bit */
-    ret = _ftelli64(stream);
-#else
-    ret = ftell(stream);
-#endif
-
-    return ret;
 }
 
 

@@ -1,7 +1,7 @@
 /*                           G C V . C
  * BRL-CAD
  *
- * Copyright (c) 2015-2016 United States Government as represented by
+ * Copyright (c) 2015-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,9 @@
 #include <string.h>
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/debug.h"
+#include "bu/dylib.h"
 #include "bu/file.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
@@ -305,8 +307,8 @@ _gcv_plugins_load(struct bu_ptbl *filter_table, const char *path)
 	if (error_msg)
 	    bu_log("%s\n", error_msg);
 
-	bu_log("bu_dlopen() failed for '%s'\n", path);
-	bu_bomb("bu_dlopen() failed");
+	bu_log("Unable to dynamically load '%s' (skipping)\n", path);
+	return;
     }
 
     info_val = bu_dlsym(dl_handle, "gcv_plugin_info");
@@ -318,15 +320,16 @@ _gcv_plugins_load(struct bu_ptbl *filter_table, const char *path)
 	if (error_msg)
 	    bu_log("%s\n", error_msg);
 
-	bu_log("bu_dlsym() failed for '%s'\n", path);
-	bu_bomb("could not find 'gcv_plugin_info' symbol in plugin");
+	bu_log("Unable to load symbols from '%s' (skipping)\n", path);
+	bu_log("Could not find 'gcv_plugin_info' symbol in plugin\n");
+	return;
     }
 
     plugin = plugin_info();
 
     if (!plugin || !plugin->filters) {
-	bu_log("invalid gcv_plugin in '%s'\n", path);
-	bu_bomb("invalid gcv_plugin");
+	bu_log("Invalid plugin encountered from '%s' (skipping)\n", path);
+	return;
     }
 
     for (current = plugin->filters; *current; ++current)

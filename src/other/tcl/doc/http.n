@@ -369,7 +369,10 @@ set token [::http::geturl https://my.secure.site/]
 .TP
 \fB::http::unregister\fR \fIproto\fR
 This procedure unregisters a protocol handler that was previously
-registered via \fB::http::register\fR.
+registered via \fB::http::register\fR, returning a two-item list of
+the default port and handler command that was previously installed
+(via \fB::http::register\fR) if there was such a handler, and an error if
+there was no such handler.
 .SH ERRORS
 The \fB::http::geturl\fR procedure will raise errors in the following cases:
 invalid command line options,

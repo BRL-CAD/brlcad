@@ -1,5 +1,6 @@
 set(libregex_ignore_files
 CMakeLists.txt
+COPYRIGHT
 cclass.h
 cname.h
 engine.c

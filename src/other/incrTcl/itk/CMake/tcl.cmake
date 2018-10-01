@@ -49,19 +49,17 @@ MACRO(TCL_CHECK_INCLUDE_FILE filename var)
 ENDMACRO(TCL_CHECK_INCLUDE_FILE)
 
 MACRO(TCL_CHECK_INCLUDE_FILE_USABILITY filename var)
-	CHECK_INCLUDE_FILE(${filename} HAVE_${var})
-	IF(HAVE_${var})
+	CHECK_INCLUDE_FILE(${filename} ${var})
+	IF(${var})
 		SET(HEADER_SRC "
 #include <${filename}>
 main(){};
 		")
 		CHECK_C_SOURCE_COMPILES("${HEADER_SRC}" ${var}_USABLE)
-	ENDIF(HAVE_${var})
-	IF(NOT HAVE_${var} OR NOT ${var}_USABLE)
-		add_definitions(-DNO_${var}=1)
-	ELSE(NOT HAVE_${var} OR NOT ${var}_USABLE)
-		add_definitions(-DHAVE_${var}=1)
-	ENDIF(NOT HAVE_${var} OR NOT ${var}_USABLE)
+	ENDIF(${var})
+	IF(${var} OR ${var}_USABLE)
+		add_definitions(-D${var}=1)
+	ENDIF(${var} OR ${var}_USABLE)
 ENDMACRO(TCL_CHECK_INCLUDE_FILE_USABILITY filename var)
 
 # Wrapper for function testing
@@ -78,20 +76,19 @@ MACRO(TCL_CHECK_TYPE_SIZE typename var)
       SET(headers ${headers} ${arg})
    ENDFOREACH(arg ${ARGN})
    SET(CHECK_EXTRA_INCLUDE_FILES ${headers})
-   CHECK_TYPE_SIZE(${typename} HAVE_${var}_T)
+   CHECK_TYPE_SIZE(${typename} ${var}_T)
    SET(CHECK_EXTRA_INCLUDE_FILES)
-   IF(HAVE_${var}_T)
-      add_definitions(-DHAVE_${var}_T=1)
-      add_definitions(-DSIZEOF${var}=${HAVE_${var}_T})
-   ENDIF(HAVE_${var}_T)
+   IF(${var}_T)
+      add_definitions(-D${var}_T=1)
+   ENDIF(${var}_T)
 ENDMACRO(TCL_CHECK_TYPE_SIZE)
 
 # Check for a member of a structure
 MACRO(TCL_CHECK_STRUCT_HAS_MEMBER structname member header var)
-   CHECK_STRUCT_HAS_MEMBER(${structname} ${member} ${header} HAVE_${var})
-   IF(HAVE_${var})
-      add_definitions(-DHAVE_${var}=1)
-   ENDIF(HAVE_${var})
+   CHECK_STRUCT_HAS_MEMBER(${structname} ${member} ${header} ${var})
+   IF(${var})
+      add_definitions(-D${var}=1)
+   ENDIF(${var})
 ENDMACRO(TCL_CHECK_STRUCT_HAS_MEMBER)
 
 
@@ -173,6 +170,10 @@ MACRO(SC_ENABLE_THREADS)
 		IF(HAVE_PTHREAD_ATTR_SETSTACKSIZE)
 			ADD_TCL_CFLAG(HAVE_PTHREAD_ATTR_SETSTACKSIZE)
 		ENDIF(HAVE_PTHREAD_ATTR_SETSTACKSIZE)
+		CHECK_FUNCTION_EXISTS(pthread_atfork HAVE_PTHREAD_ATFORK)
+		IF(HAVE_PTHREAD_ATFORK)
+			ADD_TCL_CFLAG(HAVE_PTHREAD_ATFORK)
+		ENDIF(HAVE_PTHREAD_ATFORK)
 		CHECK_FUNCTION_EXISTS(pthread_attr_get_np HAVE_PTHREAD_ATTR_GET_NP)
 		CHECK_FUNCTION_EXISTS(pthread_getattr_np HAVE_PTHREAD_GETATTR_NP)
 		IF(HAVE_PTHREAD_ATTR_GET_NP)
@@ -365,17 +366,39 @@ MACRO(SC_MISSING_POSIX_HEADERS)
 	IF(NOT HAVE_DIRENT_H)
 		add_definitions(-DNO_DIRENT_H=1)
 	ENDIF(NOT HAVE_DIRENT_H)
-	TCL_CHECK_INCLUDE_FILE_USABILITY(float.h FLOAT_H)
-	TCL_CHECK_INCLUDE_FILE_USABILITY(values.h VALUES_H)
-	TCL_CHECK_INCLUDE_FILE_USABILITY(limits.h LIMITS_H)
+	TCL_CHECK_INCLUDE_FILE_USABILITY(float.h HAVE_FLOAT_H)
+	IF(NOT HAVE_FLOAT_H)
+		add_definitions(-DNO_FLOAT_H=1)
+	ENDIF(NOT HAVE_FLOAT_H)
+	TCL_CHECK_INCLUDE_FILE_USABILITY(values.h HAVE_VALUES_H)
+	IF(NOT HAVE_VALUES_H)
+		add_definitions(-DNO_VALUES_H=1)
+	ENDIF(NOT HAVE_VALUES_H)
+	TCL_CHECK_INCLUDE_FILE_USABILITY(limits.h HAVE_LIMITS_H)
+	IF(NOT HAVE_LIMITS_H)
+		add_definitions(-DNO_LIMITS_H=1)
+	ENDIF(NOT HAVE_LIMITS_H)
 	TCL_CHECK_INCLUDE_FILE(stdlib.h HAVE_STDLIB_H)
+	IF(NOT HAVE_STDLIB_H)
+                # autotools build also checks if we have the standard
+                # strtol, strtoul, strtod functions
+		add_definitions(-DNO_STDLIB_H=1)
+	ENDIF(NOT HAVE_STDLIB_H)
 	TCL_CHECK_INCLUDE_FILE(string.h HAVE_STRING_H)
 	IF(NOT HAVE_STRING_H)
+                # autotools build also checks if we have the strstr
+                # and strerror functions
 		add_definitions(-DNO_STRING_H=1)
 	ENDIF(NOT HAVE_STRING_H)
-	TCL_CHECK_INCLUDE_FILE_USABILITY(sys/wait.h SYS_WAIT_H)
-	TCL_CHECK_INCLUDE_FILE_USABILITY(dlfcn.h DLFCN_H)
-	TCL_CHECK_INCLUDE_FILE_USABILITY(sys/param.h SYS_PARAM_H)
+	TCL_CHECK_INCLUDE_FILE_USABILITY(sys/wait.h HAVE_SYS_WAIT_H)
+	IF(NOT HAVE_SYS_WAIT_H)
+		add_definitions(-DNO_SYS_WAIT_H=1)
+	ENDIF(NOT HAVE_SYS_WAIT_H)
+	TCL_CHECK_INCLUDE_FILE_USABILITY(dlfcn.h HAVE_DLFCN_H)
+	IF(NOT HAVE_DLFCN_H)
+		add_definitions(-DNO_DLFCN_H=1)
+	ENDIF(NOT HAVE_DLFCN_H)
+	TCL_CHECK_INCLUDE_FILE_USABILITY(sys/param.h HAVE_SYS_PARAM_H)
 ENDMACRO(SC_MISSING_POSIX_HEADERS)
 
 
@@ -410,8 +433,8 @@ ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "^SunOS$")
 #
 #--------------------------------------------------------------------
 MACRO(SC_TIME_HANDLER)
-	TCL_CHECK_INCLUDE_FILE_USABILITY(sys/time.h SYS_TIME_H)
-	TCL_CHECK_STRUCT_HAS_MEMBER("struct tm" tm_zone time.h STRUCT_TM_TM_ZONE)
+	TCL_CHECK_INCLUDE_FILE_USABILITY(sys/time.h HAVE_SYS_TIME_H)
+	TCL_CHECK_STRUCT_HAS_MEMBER("struct tm" tm_zone time.h HAVE_STRUCT_TM_TM_ZONE)
 	IF(HAVE_STRUCT_TM_TM_ZONE)
 		ADD_TCL_CFLAG(HAVE_TM_ZONE)
 	ELSE(HAVE_STRUCT_TM_TM_ZONE)
@@ -431,8 +454,8 @@ return 0;
 	TCL_CHECK_FUNCTION_EXISTS(gmtime_r HAVE_GMTIME_R)
 	TCL_CHECK_FUNCTION_EXISTS(localtime_r HAVE_LOCALTIME_R)
 	TCL_CHECK_FUNCTION_EXISTS(mktime HAVE_MKTIME)
-	TCL_CHECK_STRUCT_HAS_MEMBER("struct tm" tm_tzadj time.h TM_TZADJ)
-	TCL_CHECK_STRUCT_HAS_MEMBER("struct tm" tm_gmtoff time.h TM_GMTOFF)
+	TCL_CHECK_STRUCT_HAS_MEMBER("struct tm" tm_tzadj time.h HAVE_TM_TZADJ)
+	TCL_CHECK_STRUCT_HAS_MEMBER("struct tm" tm_gmtoff time.h HAVE_TM_GMTOFF)
 	SET(TZONE_SRC_1 "
 #include <time.h>
 int main () {
@@ -526,7 +549,7 @@ MACRO(SC_TCL_LINK_LIBS)
 	ENDIF(TCL_LINK_LIBS)
 	MARK_AS_ADVANCED(TCL_LINK_LIBS)
 
-	TCL_CHECK_INCLUDE_FILE_USABILITY(net/errno.h NET_ERRNO_H)
+	TCL_CHECK_INCLUDE_FILE_USABILITY(net/errno.h HAVE_NET_ERRNO_H)
 	CHECK_FUNCTION_EXISTS(connect HAVE_CONNECT)
 	IF(NOT HAVE_CONNECT)
 		CHECK_FUNCTION_EXISTS(setsockopt HAVE_SETSOCKOPT)
@@ -569,6 +592,22 @@ ENDMACRO(SC_TCL_LINK_LIBS)
 # Detect and set up 64-bit compiling here.  LOTS of TODO here
 #--------------------------------------------------------------------
 MACRO(SC_TCL_64BIT_FLAGS)
+	# See if we should use long anyway.  Note that we substitute
+	# in the type that is our current guess (long long) for a
+	# 64-bit type inside this check program.
+	SET(LONG_SRC "
+int main () {
+    switch (0) {
+        case 1: case (sizeof(long long)==sizeof(long)): ;
+    }
+return 0;
+}
+   ")
+	CHECK_C_SOURCE_COMPILES("${LONG_SRC}" LONG_NOT_LONG_LONG)
+	IF(NOT LONG_NOT_LONG_LONG)
+		add_definitions(-DTCL_WIDE_INT_IS_LONG=1)
+	ENDIF(NOT LONG_NOT_LONG_LONG)
+
 	IF(NOT CMAKE_SIZEOF_VOID_P)
 		MESSAGE(WARNING "CMAKE_SIZEOF_VOID_P is not defined - assuming 32-bit platform")
 		SET(CMAKE_SIZEOF_VOID_P 4)
@@ -655,8 +694,8 @@ ENDMACRO(SC_TCL_CHECK_BROKEN_FUNC)
 # SC_TCL_GETHOSTBYADDR_R
 #--------------------------------------------------------------------
 MACRO(SC_TCL_GETHOSTBYADDR_R)
-	TCL_CHECK_FUNCTION_EXISTS(gethostbyaddr_r HAVE_GETHOSTBYADDR_R)
-	IF(HAVE_GETHOSTBYADDR_R)
+	TCL_CHECK_FUNCTION_EXISTS(gethostbyaddr_r TCL_HAVE_GETHOSTBYADDR_R)
+	IF(TCL_HAVE_GETHOSTBYADDR_R)
 		SET(HAVE_GETHOSTBYADDR_R_7_SRC "
 #include <netdb.h>
 int main(){
@@ -671,10 +710,10 @@ int h_errnop;
 (void) gethostbyaddr_r(addr, length, type, result, buffer, buflen, &h_errnop);
 return 0;}
 		")
-		CHECK_C_SOURCE_COMPILES("${HAVE_GETHOSTBYADDR_R_7_SRC}"  HAVE_GETHOSTBYADDR_R_7)
-		IF(HAVE_GETHOSTBYADDR_R_7)
+		CHECK_C_SOURCE_COMPILES("${HAVE_GETHOSTBYADDR_R_7_SRC}"  TCL_HAVE_GETHOSTBYADDR_R_7)
+		IF(TCL_HAVE_GETHOSTBYADDR_R_7)
 			ADD_TCL_CFLAG(HAVE_GETHOSTBYADDR_R_7)
-		ELSE(HAVE_GETHOSTBYADDR_R_7)
+		ELSE(TCL_HAVE_GETHOSTBYADDR_R_7)
 			SET(HAVE_GETHOSTBYADDR_R_8_SRC "
 #include <netdb.h>
 int main(){
@@ -689,12 +728,12 @@ int h_errnop;
 (void) gethostbyaddr_r(addr, length, type, result, buffer, buflen, &resultp, &h_errnop);
 return 0;}
 			")
-			CHECK_C_SOURCE_COMPILES("${HAVE_GETHOSTBYADDR_R_8_SRC}" HAVE_GETHOSTBYADDR_R_8)
-			IF(HAVE_GETHOSTBYADDR_R_8)
-			   ADD_TCL_CFLAG(HAVE_GETHOSTBYADDR_R_8)
-			ENDIF(HAVE_GETHOSTBYADDR_R_8)
-		ENDIF(HAVE_GETHOSTBYADDR_R_7)
-	ENDIF(HAVE_GETHOSTBYADDR_R)
+			CHECK_C_SOURCE_COMPILES("${HAVE_GETHOSTBYADDR_R_8_SRC}" TCL_HAVE_GETHOSTBYADDR_R_8)
+			IF(TCL_HAVE_GETHOSTBYADDR_R_8)
+				ADD_TCL_CFLAG(HAVE_GETHOSTBYADDR_R_8)
+			ENDIF(TCL_HAVE_GETHOSTBYADDR_R_8)
+		ENDIF(TCL_HAVE_GETHOSTBYADDR_R_7)
+	ENDIF(TCL_HAVE_GETHOSTBYADDR_R)
 ENDMACRO(SC_TCL_GETHOSTBYADDR_R)
 
 #--------------------------------------------------------------------

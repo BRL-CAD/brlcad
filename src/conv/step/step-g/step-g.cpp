@@ -1,7 +1,7 @@
 /*                     S T E P - G . C P P
  * BRL-CAD
  *
- * Copyright (c) 1994-2016 United States Government as represented by
+ * Copyright (c) 1994-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -67,8 +67,12 @@ parse_opt_O(struct bu_vls *error_msg, int argc, const char **argv, void *set_var
     BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "-O");
 
     ofile->overwrite = true;
-    ret = bu_opt_str(error_msg, argc, argv, &ofile->filename);
-    return ret;
+    if (ofile) {
+	ret = bu_opt_str(error_msg, argc, argv, &ofile->filename);
+	return ret;
+    } else {
+	return -1;
+    }
 }
 
 int

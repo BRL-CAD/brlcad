@@ -7,6 +7,7 @@ pkgIndex_BUILD(tclscripts/tcllib)
 tclIndex_BUILD(tclscripts/tcllib)
 
 CMAKEFILES(license.terms)
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

@@ -1,7 +1,7 @@
 #               B R L C A D _ U T I L . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2016 United States Government as represented by
+# Copyright (c) 2011-2018 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -259,6 +259,23 @@ function(CMAKEFILES_IN_DIR filestoignore targetdir)
   endif(NOT BRLCAD_IS_SUBBUILD)
 endfunction(CMAKEFILES_IN_DIR)
 
+# configure a header for substitution and installation given a header
+# template and an installation directory.
+function(BUILD_CFG_HDR chdr targetdir)
+  get_filename_component(ohdr "${chdr}" NAME_WE)
+  configure_file("${chdr}" "${BRLCAD_BINARY_DIR}/${targetdir}/${ohdr}.h")
+  install(FILES "${BRLCAD_BINARY_DIR}/${targetdir}/${ohdr}.h" DESTINATION ${targetdir})
+  DISTCLEAN("${BRLCAD_BINARY_DIR}/${targetdir}/${ohdr}.h")
+  if(CMAKE_CONFIGURATION_TYPES)
+    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+      string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+      configure_file("${chdr}" "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${targetdir}/${ohdr}.h")
+      DISTCLEAN("${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${targetdir}/${ohdr}.h")
+    endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+  endif(CMAKE_CONFIGURATION_TYPES)
+endfunction(BUILD_CFG_HDR chdr targetdir)
+
+
 #-----------------------------------------------------------------------------
 # It is sometimes convenient to be able to supply both a filename and a
 # variable name containing a list of files to a single function.  This routine
@@ -275,9 +292,9 @@ function(NORMALIZE_FILE_LIST inlist)
   # First, figure out whether we have list contents or a list name
   set(havevarname 0)
   foreach(maybefilename ${inlist})
-    if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${maybefilename}")
+    if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${maybefilename}" AND NOT EXISTS "${maybefilename}")
       set(havevarname 1)
-    endif(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${maybefilename}")
+    endif(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${maybefilename}" AND NOT EXISTS "${maybefilename}")
   endforeach(maybefilename ${inlist})
 
   # Put the list contents in the targetvar variable and
@@ -672,14 +689,14 @@ int main(int argc, const char **argv) {
   if (strncmp(argv[1], \"final\", 5) == 0) {
     if (argc < 4) return 1;
     printf(\"Done.\\n\\nBRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DATE}\\n\\nElapsed compilation time: \");
-    infp = fopen(argv[2], \"r\"); (void)fscanf(infp, \"%ld\", &start_time); ; fclose(infp); printtime(((long)t) - start_time);
+    infp = fopen(argv[2], \"r\"); if (!fscanf(infp, \"%ld\", &start_time)) return 1; fclose(infp); printtime(((long)t) - start_time);
     printf(\"\\nElapsed time since configuration: \");
-    infp = fopen(argv[3], \"r\"); (void)fscanf(infp, \"%ld\", &start_time); ; fclose(infp); printtime(((long)t) - start_time);
+    infp = fopen(argv[3], \"r\"); if (!fscanf(infp, \"%ld\", &start_time)) return 1; fclose(infp); printtime(((long)t) - start_time);
     printf(\"\\n---\\n${INSTALL_LINE}\\n${BENCHMARK_LINE}\\n\\n\");
     return 0;
   }
   printf(\"%s\", argv[1]);
-  infp = fopen(argv[2], \"r\"); (void)fscanf(infp, \"%ld\", &start_time); ; fclose(infp); printtime(((long)t) - start_time);
+  infp = fopen(argv[2], \"r\"); if (!fscanf(infp, \"%ld\", &start_time)) return 1; ; fclose(infp); printtime(((long)t) - start_time);
   printf(\"\\n\");
   return 0;
 }

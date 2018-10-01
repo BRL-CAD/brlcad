@@ -1,7 +1,7 @@
 /*                 B R E P L I C A T O R . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2016 United States Government as represented by
+ * Copyright (c) 2008-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -445,7 +445,7 @@ main(int argc, char *argv[])
     mk_id(wdbp, "Breplicator test geometry");
 
     bu_log("Creating the BREP as BRL-CAD geometry\n");
-    ret = mk_brep(wdbp, name, brep);
+    ret = mk_brep(wdbp, name, (void *)brep);
     if (ret) {
 	delete brep;
 	wdb_close(wdbp);

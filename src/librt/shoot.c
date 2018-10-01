@@ -1,7 +1,7 @@
 /*                         S H O O T . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2016 United States Government as represented by
+ * Copyright (c) 2000-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -126,46 +126,6 @@ rt_res_pieces_clean(struct resource *resp, struct rt_i *rtip)
 }
 
 
-/**
- * Along the given axis, find which NUgrid cell this value lies in.
- * Use method of binary subdivision.
- */
-int
-rt_find_nugrid(const struct nugridnode *nugnp, int axis, fastf_t val)
-{
-    int min;
-    int max;
-    int lim = nugnp->nu_cells_per_axis[axis]-1;
-    int cur;
-
-    if (val < nugnp->nu_axis[axis][0].nu_spos ||
-	val > nugnp->nu_axis[axis][lim].nu_epos)
-	return -1;
-
-    min = 0;
-    max = lim;
-again:
-    cur = (min + max) / 2;
-
-    if (cur <= 0) return 0;
-    if (cur >= lim) return lim;
-
-    if (val < nugnp->nu_axis[axis][cur].nu_spos) {
-	max = cur;
-	goto again;
-    }
-    if (val > nugnp->nu_axis[axis][cur+1].nu_epos) {
-	min = cur+1;
-	goto again;
-    }
-
-    if (val < nugnp->nu_axis[axis][cur].nu_epos)
-	return cur;
-
-    return cur+1;
-}
-
-
 const union cutter *
 rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 {
@@ -223,148 +183,6 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 
     top:
 	switch (curcut->cut_type) {
-	    case CUT_NUGRIDNODE: {
-		/*********************************************************
-		 * NOTE: This portion implements Gigante's non-uniform 3-D
-		 * space grid/mesh discretization.
-		 *********************************************************/
-		register int out_axis;
-		register const struct nu_axis **nu_axis =
-		    (const struct nu_axis **)&curcut->nugn.nu_axis[0];
-		register const int *nu_stepsize =
-		    &curcut->nugn.nu_stepsize[0];
-		register const int *nu_cells_per_axis =
-		    &curcut->nugn.nu_cells_per_axis[0];
-		register const union cutter *nu_grid =
-		    curcut->nugn.nu_grid;
-
-		if (ssp->lastcell == CUTTER_NULL || ssp->lastcell->cut_type != CUT_NUGRIDNODE) {
-		    /* We have just started into this NUgrid.  We must
-		     * find our location and set up the NUgrid traversal
-		     * state variables.
-		     */
-		    register int x, y, z;
-
-		    px = ap->a_ray.r_pt[X] + t0*ap->a_ray.r_dir[X];
-		    py = ap->a_ray.r_pt[Y] + t0*ap->a_ray.r_dir[Y];
-		    pz = ap->a_ray.r_pt[Z] + t0*ap->a_ray.r_dir[Z];
-
-		    /* Must find cell that contains newray.r_pt.  We do
-		     * this by binary subdivision.  If any are out of
-		     * bounds, we have left the NUgrid and will pop a
-		     * level off the stack in the outer loop (if
-		     * applicable).
-		     */
-		    x = rt_find_nugrid(&curcut->nugn, X, px);
-		    if (x<0) break;
-		    y = rt_find_nugrid(&curcut->nugn, Y, py);
-		    if (y<0) break;
-		    z = rt_find_nugrid(&curcut->nugn, Z, pz);
-		    if (z<0) break;
-
-		    cutp = &nu_grid[z*nu_stepsize[Z] +
-				    y*nu_stepsize[Y] +
-				    x*nu_stepsize[X]];
-
-		    ssp->igrid[X] = x;
-		    ssp->igrid[Y] = y;
-		    ssp->igrid[Z] = z;
-
-		    NUGRID_T_SETUP(X, px, x);
-		    NUGRID_T_SETUP(Y, py, y);
-		    NUGRID_T_SETUP(Z, pz, z);
-		} else {
-		    /* Advance from previous cell to next cell.  Take next
-		     * step, finding ray entry distance.
-		     */
-		    cutp = ssp->lastcell;
-		    out_axis = ssp->out_axis;
-
-		    /* We may be simply advancing to the next box in the
-		     * *same* NUgrid cell (if, for instance, the NUgrid
-		     * cell is a cutnode with boxnode leaves).  So if t0
-		     * hasn't advanced past the end of the box, advance a
-		     * tiny bit (less than rt_ct_optim makes boxnodes) and
-		     * be handled by tree-traversing code below.
-		     */
-
-		    if (cutp->cut_type == CUT_CUTNODE &&
-			t0 + ssp->ap->a_rt_i->rti_tol.dist < ssp->tv[out_axis]) {
-			t0 += ssp->ap->a_rt_i->rti_tol.dist;
-			break;
-		    }
-
-		    /* Advance to the next cell as appropriate, bailing
-		     * out with cutp=CUTTER_NULL if we run past the end of
-		     * the NUgrid array.
-		     */
-
-		nugrid_again:
-		    t0 = ssp->tv[out_axis];
-		    if (ssp->rstep[out_axis] > 0) {
-			if (++(ssp->igrid[out_axis]) >=
-			    nu_cells_per_axis[out_axis]) {
-			    cutp = CUTTER_NULL;
-			    break;
-			}
-
-			if (cutp != CUTTER_NULL && cutp != ssp->curcut) {
-			    cutp += nu_stepsize[out_axis];
-			}
-		    } else {
-			if (--(ssp->igrid[out_axis]) < 0) {
-			    cutp = CUTTER_NULL;
-			    break;
-			}
-			if (cutp != CUTTER_NULL && cutp != ssp->curcut) {
-			    cutp -= nu_stepsize[out_axis];
-			}
-		    }
-
-		    /* Update t advancement value for this axis */
-		    NUGRID_T_ADV(out_axis, ssp->igrid[out_axis]);
-		}
-
-		/* find minimum exit t value */
-		if (ssp->tv[X] < ssp->tv[Y]) {
-		    if (ssp->tv[Z] < ssp->tv[X]) {
-			out_axis = Z;
-		    } else {
-			out_axis = X;
-		    }
-		} else {
-		    if (ssp->tv[Z] < ssp->tv[Y]) {
-			out_axis = Z;
-		    } else {
-			out_axis = Y;
-		    }
-		}
-
-		/* Zip through empty cells. */
-		if (cutp->cut_type == CUT_BOXNODE &&
-		    cutp->bn.bn_len <= 0 &&
-		    cutp->bn.bn_piecelen <= 0) {
-		    ++ssp->resp->re_nempty_cells;
-		    goto nugrid_again;
-		}
-
-		ssp->out_axis = out_axis;
-		ssp->lastcell = cutp;
-
-		if (RT_G_DEBUG&DEBUG_ADVANCE)
-		    bu_log("t0=%g found in cell (%d, %d, %d), out_axis=%c at %g; cell is %s\n",
-			   t0,
-			   ssp->igrid[X], ssp->igrid[Y],
-			   ssp->igrid[Z],
-			   "XYZ*"[ssp->out_axis],
-			   ssp->tv[out_axis],
-			   cutp->cut_type==CUT_CUTNODE?"cut":
-			   cutp->cut_type==CUT_BOXNODE?"box":
-			   cutp->cut_type==CUT_NUGRIDNODE?"nu":
-			   "?");
-		break;
-	    } /* CUT_NUGRIDNODE */
-
 	    case CUT_CUTNODE:
 		/* fall through */
 
@@ -405,19 +223,6 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 	px = ap->a_ray.r_pt[X] + t0*ap->a_ray.r_dir[X];
 	py = ap->a_ray.r_pt[Y] + t0*ap->a_ray.r_dir[Y];
 	pz = ap->a_ray.r_pt[Z] + t0*ap->a_ray.r_dir[Z];
-
-	/* Optimization: when it's a boxnode in a nugrid, just
-	 * return.
-	 */
-	if (cutp->cut_type == CUT_BOXNODE &&
-	    curcut->cut_type == CUT_NUGRIDNODE) {
-	    ssp->newray.r_pt[X] = px;
-	    ssp->newray.r_pt[Y] = py;
-	    ssp->newray.r_pt[Z] = pz;
-	    ssp->newray.r_min = 0;
-	    ssp->newray.r_max = ssp->tv[ssp->out_axis] - t0;
-	    goto done_return_cutp;
-	}
 
 	/* Given direction of travel, see if point is outside bound.
 	 * This will be the model RPP for NUBSP.
@@ -582,7 +387,7 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 		    goto push_to_next_box;
 		}
 
-	    done_return_cutp:	ssp->lastcut = cutp;
+		ssp->lastcut = cutp;
 		ssp->dist_corr = t0;
 		ssp->box_start = t0 + ssp->newray.r_min;
 		ssp->box_end = t0 + ssp->newray.r_max;
@@ -592,23 +397,6 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 			ssp->box_start, ssp->box_end);
 		}
 		return cutp;
-	    case CUT_NUGRIDNODE: {
-		struct rt_shootray_status *old;
-
-		BU_ALLOC(old, struct rt_shootray_status);
-		*old = *ssp;	/* struct copy */
-
-		/* Descend into node */
-		ssp->old_status = old;
-		ssp->lastcut = ssp->lastcell = CUTTER_NULL;
-		curcut = ssp->curcut = cutp;
-		VSET(ssp->curmin, cutp->nugn.nu_axis[X][0].nu_spos,
-		     cutp->nugn.nu_axis[Y][0].nu_spos,
-		     cutp->nugn.nu_axis[Z][0].nu_spos);
-		VSET(ssp->curmax, ssp->curcut->nugn.nu_axis[X][ssp->curcut->nugn.nu_cells_per_axis[X]-1].nu_epos,
-		     ssp->curcut->nugn.nu_axis[Y][ssp->curcut->nugn.nu_cells_per_axis[Y]-1].nu_epos,
-		     ssp->curcut->nugn.nu_axis[Z][ssp->curcut->nugn.nu_cells_per_axis[Z]-1].nu_epos);
-		break; }
 	    case CUT_CUTNODE:
 		bu_bomb("rt_advance_to_next_cell: impossible: cutnote as leaf!");
 		break;
@@ -644,14 +432,13 @@ escaped_from_model:
  * bit vector (provided by the caller) gets a bit set for every
  * primitive that meets the above criteria.  No primitive
  * intersections are performed.
- *
- * XXX This routine does not work for NUGRID XXX
  */
 fastf_t
 rt_find_backing_dist(struct rt_shootray_status *ss, struct bu_bitv *backbits) {
-    fastf_t min_backing_dist=BACKING_DIST;
-    fastf_t cur_dist=0.0;
-    point_t cur_pt;
+    fastf_t min_backing_dist = BACKING_DIST;
+    fastf_t prev_dist = -1.0;
+    fastf_t curr_dist = 0.0;
+    point_t curr_pt;
     union cutter *cutp;
     struct bu_bitv *solidbits;
     struct xray ray;
@@ -669,19 +456,19 @@ rt_find_backing_dist(struct rt_shootray_status *ss, struct bu_bitv *backbits) {
 
     ray = ss->ap->a_ray;	/* struct copy, don't mess with the original */
 
-    /* cur_dist keeps track of where we are along the ray.  stop when
-     * cur_dist reaches far intersection of ray and model bounding box
+    VMOVE(curr_pt, ss->ap->a_ray.r_pt);
+
+    /* curr_dist keeps track of where we are along the ray.  stop when
+     * curr_dist reaches far intersection of ray and model bounding box
      */
-    while (cur_dist <= ss->ap->a_ray.r_max) {
-	/* calculate the current point along the ray */
-	VJOIN1(cur_pt, ss->ap->a_ray.r_pt, cur_dist, ss->ap->a_ray.r_dir);
+    while (curr_dist <= ss->ap->a_ray.r_max && !EQUAL(curr_dist, prev_dist)) {
 
 	/* descend into the space partitioning tree based on this
 	 * point.
 	 */
 	cutp = &ss->ap->a_rt_i->rti_CutHead;
 	while (cutp->cut_type == CUT_CUTNODE) {
-	    if (cur_pt[cutp->cn.cn_axis] >= cutp->cn.cn_point) {
+	    if (curr_pt[cutp->cn.cn_axis] >= cutp->cn.cn_point) {
 		cutp=cutp->cn.cn_r;
 	    } else {
 		cutp=cutp->cn.cn_l;
@@ -699,8 +486,9 @@ rt_find_backing_dist(struct rt_shootray_status *ss, struct bu_bitv *backbits) {
 	     */
 	    goto done;
 	} else {
-	    /* increment cur_dist into next cell for next execution of this loop */
-	    cur_dist = ray.r_max + ss->ap->a_rt_i->rti_tol.dist;
+	    /* increment curr_dist into next cell for next execution of this loop */
+	    prev_dist = curr_dist;
+	    curr_dist = ray.r_max + ss->ap->a_rt_i->rti_tol.dist;
 	}
 
 	/* process this box node (look at all the pieces) */
@@ -726,7 +514,12 @@ rt_find_backing_dist(struct rt_shootray_status *ss, struct bu_bitv *backbits) {
 		BU_BITSET(solidbits, plp->stp->st_bit);
 	    }
 	}
+
+	/* calculate the next point along the ray */
+	VJOIN1(curr_pt, ss->ap->a_ray.r_pt, curr_dist, ss->ap->a_ray.r_dir);
+
     }
+
 done:
     /* put our bit vector on the resource list */
     BU_CK_BITV(solidbits);
@@ -1135,16 +928,8 @@ rt_shootray(register struct application *ap)
     ss.lastcut = CUTTER_NULL;
     ss.old_status = (struct rt_shootray_status *)NULL;
     ss.curcut = &ap->a_rt_i->rti_CutHead;
-    if (ss.curcut->cut_type == CUT_NUGRIDNODE) {
-	ss.lastcell = CUTTER_NULL;
-	VSET(ss.curmin, ss.curcut->nugn.nu_axis[X][0].nu_spos,
-	     ss.curcut->nugn.nu_axis[Y][0].nu_spos,
-	     ss.curcut->nugn.nu_axis[Z][0].nu_spos);
-	VSET(ss.curmax, ss.curcut->nugn.nu_axis[X][ss.curcut->nugn.nu_cells_per_axis[X]-1].nu_epos,
-	     ss.curcut->nugn.nu_axis[Y][ss.curcut->nugn.nu_cells_per_axis[Y]-1].nu_epos,
-	     ss.curcut->nugn.nu_axis[Z][ss.curcut->nugn.nu_cells_per_axis[Z]-1].nu_epos);
-    } else if (ss.curcut->cut_type == CUT_CUTNODE ||
-	       ss.curcut->cut_type == CUT_BOXNODE) {
+
+    if (ss.curcut->cut_type == CUT_CUTNODE || ss.curcut->cut_type == CUT_BOXNODE) {
 	ss.lastcell = ss.curcut;
 	VMOVE(ss.curmin, rtip->mdl_min);
 	VMOVE(ss.curmax, rtip->mdl_max);
@@ -1467,33 +1252,23 @@ weave:
 	goto out;
     }
 
-    /*
-     * Ray/model intersections exist.  Pass the list to the user's
-     * a_hit() routine.  Note that only the hit_dist elements of
-     * pt_inhit and pt_outhit have been computed yet.  To compute both
-     * hit_point and hit_normal, use the
-     *
-     * RT_HIT_NORMAL(NULL, hitp, stp, rayp, 0);
-     *
-     * macro.  To compute just hit_point, use
-     *
-     * VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
-     */
 hitit:
+    /* Ray/model intersections exist */
+
     if (debug_shoot) rt_pr_partitions(rtip, &FinalPart, "a_hit()");
 
-    /*
-     * Before recursing, release storage for unused Initial
+    /* Before recursing, release storage for unused Initial
      * partitions.  finished_segs can not be released yet, because
      * FinalPart partitions will point to hits in those segments.
      */
     RT_FREE_PT_LIST(&InitialPart, resp);
 
-    /*
-     * finished_segs is only used by special hit routines which don't
+    /* finished_segs is only used by special hit routines which don't
      * follow the traditional solid modeling paradigm.
      */
     if (RT_G_DEBUG&DEBUG_ALLHITS) rt_pr_partitions(rtip, &FinalPart, "Partition list passed to a_hit() routine");
+
+    /* Invoke caller's a_hit callback with the list of partitions */
     if (ap->a_hit) {
 	ap->a_return = ap->a_hit(ap, &FinalPart, &finished_segs);
 	status = "HIT";
@@ -1705,16 +1480,8 @@ rt_cell_n_on_ray(register struct application *ap, int n)
     ss.lastcut = CUTTER_NULL;
     ss.old_status = (struct rt_shootray_status *)NULL;
     ss.curcut = &ap->a_rt_i->rti_CutHead;
-    if (ss.curcut->cut_type == CUT_NUGRIDNODE) {
-	ss.lastcell = CUTTER_NULL;
-	VSET(ss.curmin, ss.curcut->nugn.nu_axis[X][0].nu_spos,
-	     ss.curcut->nugn.nu_axis[Y][0].nu_spos,
-	     ss.curcut->nugn.nu_axis[Z][0].nu_spos);
-	VSET(ss.curmax, ss.curcut->nugn.nu_axis[X][ss.curcut->nugn.nu_cells_per_axis[X]-1].nu_epos,
-	     ss.curcut->nugn.nu_axis[Y][ss.curcut->nugn.nu_cells_per_axis[Y]-1].nu_epos,
-	     ss.curcut->nugn.nu_axis[Z][ss.curcut->nugn.nu_cells_per_axis[Z]-1].nu_epos);
-    } else if (ss.curcut->cut_type == CUT_CUTNODE ||
-	       ss.curcut->cut_type == CUT_BOXNODE) {
+
+    if (ss.curcut->cut_type == CUT_CUTNODE || ss.curcut->cut_type == CUT_BOXNODE) {
 	ss.lastcell = ss.curcut;
 	VMOVE(ss.curmin, rtip->mdl_min);
 	VMOVE(ss.curmax, rtip->mdl_max);

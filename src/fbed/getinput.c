@@ -1,7 +1,7 @@
 /*                      G E T I N P U T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -216,7 +216,7 @@ get_Input(char* inbuf, size_t bufsz, const char* msg)
 		    *macro_ptr++ = c;
 		    *macro_ptr = NUL;
 		}
-		/* Fall through to default case! */
+		/* fall through */
 	    default : /* Insert character at cursor. */
 	    {
 		char *q = p;
@@ -445,7 +445,7 @@ get_Func_Name(char* inbuf, size_t bufsz, const char* msg)
 		    *macro_ptr++ = c;
 		    *macro_ptr = NUL;
 		}
-		/* Fall through to default case! */
+		/* fall through */
 	    default : /* Insert character at cursor. */
 	    {
 		char *q = p;

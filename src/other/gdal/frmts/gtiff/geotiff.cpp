@@ -36,6 +36,7 @@
 #endif
 
 #include "cpl_port.h"  // Must be first.
+
 #include "gtiff.h"
 
 // TODO(schwehr): Move this to cpl_port.h?
@@ -96,11 +97,13 @@
 #include "gt_wkt_srs_priv.h"
 #include "ogr_spatialref.h"
 #include "tiff.h"
-#include "tif_float.h"
-#include "tiffio.h"
 #ifdef INTERNAL_LIBTIFF
 #  include "tiffiop.h"
+#  include "../gtiff/libtiff/tiffio.h"
+#else
+#  include "tiffio.h"
 #endif
+#include "tif_float.h"
 #include "tiffvers.h"
 #include "tifvsi.h"
 #include "xtiffio.h"

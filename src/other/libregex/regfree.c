@@ -8,12 +8,12 @@
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- *  * Redistributions of source code must retain the above copyright
+ * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- *  * Redistributions in binary form must reproduce the above copyright
+ * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- *  * Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -29,30 +29,19 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)regfree.c	8.3 (Berkeley) 3/20/94
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)regfree.c	8.3 (Berkeley) 3/20/94";
-#else
-static char rcsid[] = "$NetBSD: regfree.c,v 1.4 1995/02/27 13:29:56 cgd Exp $";
-#endif
-#endif /* LIBC_SCCS and not lint */
-
-#include "regex.h"
+#include "./regex.h"
 #include "./utils.h"
 #include "./regex2.h"
 
 /*
  - regfree - free everything
- = extern void regfree(regex_t *);
  */
 void
-regfree(preg)
-regex_t *preg;
+regfree(regex_t *preg)
 {
-	register struct re_guts *g;
+	struct re_guts *g;
 
 	if (preg->re_magic != MAGIC1)	/* oops */
 		return;			/* nice to complain, but hard */
@@ -70,6 +59,6 @@ regex_t *preg;
 	if (g->setbits != NULL)
 		free((char *)g->setbits);
 	if (g->must != NULL)
-		free(g->must);
+	free(g->must);
 	free((char *)g);
 }

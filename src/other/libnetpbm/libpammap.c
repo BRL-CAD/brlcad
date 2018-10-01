@@ -17,7 +17,6 @@
 
 #include "pm_c_util.h"
 #include "mallocvar.h"
-#include "nstring.h"
 #include "pam.h"
 #include "pammap.h"
 
@@ -388,15 +387,13 @@ pnm_computetuplefreqhash(struct pam *   const pamP,
 
 
 
-static void
+static int 
 alloctupletable(const struct pam * const pamP, 
                 unsigned int       const size,
-                tupletable *       const tupletableP,
-                const char **      const errorP) {
-    
-    if (UINT_MAX / sizeof(struct tupleint) < size)
-        asprintfN(errorP, "size %u is too big for arithmetic", size);
-    else {
+                tupletable *       const tupletableP) {
+
+    if (UINT_MAX / sizeof(struct tupleint) < size) return 1;
+    {
         unsigned int const mainTableSize = size * sizeof(struct tupleint *);
         unsigned int const tupleIntSize = 
             sizeof(struct tupleint) - sizeof(sample) 
@@ -406,23 +403,20 @@ alloctupletable(const struct pam * const pamP,
            each individual tuple, we do a trick here and allocate everything
            as a single malloc block and suballocate internally.
         */
-        if ((UINT_MAX - mainTableSize) / tupleIntSize < size)
-            asprintfN(errorP, "size %u is too big for arithmetic", size);
-        else {
+        if ((UINT_MAX - mainTableSize) / tupleIntSize < size) return 1;
+
+        {
             unsigned int const allocSize = mainTableSize + size * tupleIntSize;
             void * pool;
-    
+
             pool = malloc(allocSize);
 
-            if (!pool)
-                asprintfN(errorP, "Unable to allocate %u bytes for a %u-entry "
-                          "tuple table", allocSize, size);
-            else {
+            if (!pool) return 1;
+
+            {
                 tupletable const tbl = (tupletable) pool;
 
                 unsigned int i;
-
-                *errorP = NULL;
 
                 for (i = 0; i < size; ++i)
                     tbl[i] = (struct tupleint *)
@@ -432,21 +426,19 @@ alloctupletable(const struct pam * const pamP,
             }
         }
     }
+
+    return 0;
 }
 
 
 
 tupletable
-pnm_alloctupletable(const struct pam * const pamP, 
+pnm_alloctupletable(const struct pam * const pamP,
                     unsigned int       const size) {
 
     tupletable retval;
-    const char * error;
 
-    alloctupletable(pamP, size, &retval, &error);
-
-    if (error) {
-        strfree(error);
+    if (alloctupletable(pamP, size, &retval)) {
         pm_error("Failed to allocation tuple table of size %u", size);
     }
     return retval;
@@ -495,12 +487,8 @@ tuplehashtotable(const struct pam * const pamP,
    in the table to tuples or anything else in existing space.
 -----------------------------------------------------------------------------*/
     tupletable tupletable;
-    const char * error;
 
-    alloctupletable(pamP, allocsize, &tupletable, &error);
-
-    if (error) {
-        strfree(error);
+    if (alloctupletable(pamP, allocsize, &tupletable)) {
         pm_error("Failed to allocate table table of size %u", allocsize);
     } else {
         unsigned int i, j;

@@ -26,6 +26,8 @@ BRLCAD_ADDEXEC(pix2asc pix2asc.c libbu)
 
 BRLCAD_ADDEXEC(g2asc g2asc.c "libtclcad;librt;libnmg;libbu;${WINSOCK_LIB}")
 
+CMAKEFILES(CMakeLists.txt)
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

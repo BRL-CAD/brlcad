@@ -1,7 +1,7 @@
 /*                          P N T S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2016 United States Government as represented by
+ * Copyright (c) 2008-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -57,6 +57,29 @@ pnts_unpack_double(unsigned char *buf, unsigned char *data, unsigned int count)
     return buf;
 }
 
+HIDDEN void
+_pnts_calc_bbox(point_t *min, point_t *max, point_t *v, fastf_t scale)
+{
+    point_t sph_min, sph_max;
+    if (!min || !max || !v) return;
+    if (scale > 0) {
+	/* we're making spheres out of these, so the bbox
+	 * has to take that into account */
+	sph_min[X] = (*v)[X] - scale;
+	sph_max[X] = (*v)[X] + scale;
+	sph_min[Y] = (*v)[Y] - scale;
+	sph_max[Y] = (*v)[Y] + scale;
+	sph_min[Z] = (*v)[Z] - scale;
+	sph_max[Z] = (*v)[Z] + scale;
+	VMINMAX((*min), (*max), sph_min);
+	VMINMAX((*min), (*max), sph_max);
+
+    } else {
+	VMINMAX((*min), (*max), (*v));
+    }
+}
+
+
 /**
  * Calculate a bounding box for a set of points
  */
@@ -65,40 +88,115 @@ rt_pnts_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct
     struct rt_pnts_internal *pnts;
     struct bu_list *head;
     struct pnt *point;
-    point_t sph_min, sph_max;
+    struct pnt_color *point_color;
+    struct pnt_scale *point_scale;
+    struct pnt_normal *point_normal;
+    struct pnt_color_scale *point_color_scale;
+    struct pnt_color_normal *point_color_normal;
+    struct pnt_scale_normal *point_scale_normal;
+    struct pnt_color_scale_normal *point_color_scale_normal;
 
     RT_CK_DB_INTERNAL(ip);
     pnts = (struct rt_pnts_internal *)ip->idb_ptr;
     RT_PNTS_CK_MAGIC(pnts);
 
-    if (pnts->count > 0) {
-	point = (struct pnt *)pnts->point;
-	head = &point->l;
-    } else {
+    if (pnts->count <= 0) {
 	return 0;
     }
 
     VSETALL((*min), INFINITY);
     VSETALL((*max), -INFINITY);
 
-    if (pnts->scale > 0) {
-	/* we're making spheres out of these, so the bbox
-	 * has to take that into account */
-	for (BU_LIST_FOR(point, pnt, head)) {
-	    sph_min[X] = point->v[X] - pnts->scale;
-	    sph_max[X] = point->v[X] + pnts->scale;
-	    sph_min[Y] = point->v[Y] - pnts->scale;
-	    sph_max[Y] = point->v[Y] + pnts->scale;
-	    sph_min[Z] = point->v[Z] - pnts->scale;
-	    sph_max[Z] = point->v[Z] + pnts->scale;
-	    VMINMAX((*min), (*max), sph_min);
-	    VMINMAX((*min), (*max), sph_max);
-	}
-    } else {
-	for (BU_LIST_FOR(point, pnt, head)) {
-	    VMINMAX((*min), (*max), point->v);
-	}
+    switch (pnts->type) {
+	case RT_PNT_TYPE_PNT:
+	    point = (struct pnt *)pnts->point;
+	    head = &point->l;
+	    for (BU_LIST_FOR(point, pnt, head)) {
+		_pnts_calc_bbox(min, max, &(point->v), pnts->scale);
+	    }
+	    break;
+	case RT_PNT_TYPE_COL:
+	    point_color = (struct pnt_color *)pnts->point;
+	    head = &point_color->l;
+	    for (BU_LIST_FOR(point_color, pnt_color, head)) {
+		_pnts_calc_bbox(min, max, &(point_color->v), pnts->scale);
+	    }
+	    break;
+	case RT_PNT_TYPE_SCA:
+	    point_scale = (struct pnt_scale *)pnts->point;
+	    head = &point_scale->l;
+	    for (BU_LIST_FOR(point_scale, pnt_scale, head)) {
+		_pnts_calc_bbox(min, max, &(point_scale->v), pnts->scale);
+	    }
+	    break;
+	case RT_PNT_TYPE_NRM:
+	    point_normal = (struct pnt_normal *)pnts->point;
+	    head = &point_normal->l;
+	    for (BU_LIST_FOR(point_normal, pnt_normal, head)) {
+		_pnts_calc_bbox(min, max, &(point_normal->v), pnts->scale);
+	    }
+	    break;
+	case RT_PNT_TYPE_COL_SCA:
+	    point_color_scale = (struct pnt_color_scale *)pnts->point;
+	    head = &point_color_scale->l;
+	    for (BU_LIST_FOR(point_color_scale, pnt_color_scale, head)) {
+		_pnts_calc_bbox(min, max, &(point_color_scale->v), pnts->scale);
+	    }
+	    break;
+	case RT_PNT_TYPE_COL_NRM:
+	    point_color_normal = (struct pnt_color_normal *)pnts->point;
+	    head = &point_color_normal->l;
+	    for (BU_LIST_FOR(point_color_normal, pnt_color_normal, head)) {
+		_pnts_calc_bbox(min, max, &(point_color_normal->v), pnts->scale);
+	    }
+	    break;
+	case RT_PNT_TYPE_SCA_NRM:
+	    point_scale_normal = (struct pnt_scale_normal *)pnts->point;
+	    head = &point_scale_normal->l;
+	    for (BU_LIST_FOR(point_scale_normal, pnt_scale_normal, head)) {
+		_pnts_calc_bbox(min, max, &(point_scale_normal->v), pnts->scale);
+	    }
+	    break;
+	case RT_PNT_TYPE_COL_SCA_NRM:
+	    point_color_scale_normal = (struct pnt_color_scale_normal *)pnts->point;
+	    head = &point_color_scale_normal->l;
+	    for (BU_LIST_FOR(point_color_scale_normal, pnt_color_scale_normal, head)) {
+		_pnts_calc_bbox(min, max, &(point_color_scale_normal->v), pnts->scale);
+	    }
+	    break;
+	default:
+	    break;
     }
+
+    return 0;
+}
+
+int
+rt_pnts_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
+{
+    struct rt_pnts_internal *pnts_ip;
+
+    RT_CK_DB_INTERNAL(ip);
+    pnts_ip = (struct rt_pnts_internal *)ip->idb_ptr;
+    RT_PNTS_CK_MAGIC(pnts_ip);
+
+    if (rt_pnts_bbox(ip, &(stp->st_min), &(stp->st_max), &(rtip->rti_tol))) return 1;
+
+    /* Compute bounding sphere which contains the bounding RPP.*/
+    {
+	vect_t work;
+	register fastf_t f;
+
+	VADD2SCALE(stp->st_center, stp->st_min, stp->st_max, 0.5);
+	VSUB2SCALE(work, stp->st_max, stp->st_min, 0.5);
+
+	f = work[X];
+	if (work[Y] > f) f = work[Y];
+	if (work[Z] > f) f = work[Z];
+	stp->st_aradius = f;
+	stp->st_bradius = MAGNITUDE(work);
+    }
+
     return 0;
 }
 
@@ -706,41 +804,57 @@ rt_pnts_print(register const struct soltab *stp)
 	    register struct pnt *point;
 	    for (BU_LIST_FOR(point, pnt, &(((struct pnt *)pnts->point)->l))) {
 	    }
+
+	    break;
 	}
 	case RT_PNT_TYPE_COL: {
 	    register struct pnt_color *point;
 	    for (BU_LIST_FOR(point, pnt_color, &(((struct pnt_color *)pnts->point)->l))) {
 	    }
+
+	    break;
 	}
 	case RT_PNT_TYPE_SCA: {
 	    register struct pnt_scale *point;
 	    for (BU_LIST_FOR(point, pnt_scale, &(((struct pnt_scale *)pnts->point)->l))) {
 	    }
+
+	    break;
 	}
 	case RT_PNT_TYPE_NRM: {
 	    register struct pnt_normal *point;
 	    for (BU_LIST_FOR(point, pnt_normal, &(((struct pnt_normal *)pnts->point)->l))) {
 	    }
+
+	    break;
 	}
 	case RT_PNT_TYPE_COL_SCA: {
 	    register struct pnt_color_scale *point;
 	    for (BU_LIST_FOR(point, pnt_color_scale, &(((struct pnt_color_scale *)pnts->point)->l))) {
 	    }
+
+	    break;
 	}
 	case RT_PNT_TYPE_COL_NRM: {
 	    register struct pnt_color_normal *point;
 	    for (BU_LIST_FOR(point, pnt_color_normal, &(((struct pnt_color_normal *)pnts->point)->l))) {
 	    }
+
+	    break;
 	}
 	case RT_PNT_TYPE_SCA_NRM: {
 	    register struct pnt_scale_normal *point;
 	    for (BU_LIST_FOR(point, pnt_scale_normal, &(((struct pnt_scale_normal *)pnts->point)->l))) {
 	    }
+
+	    break;
 	}
 	case RT_PNT_TYPE_COL_SCA_NRM: {
 	    register struct pnt_color_scale_normal *point;
 	    for (BU_LIST_FOR(point, pnt_color_scale_normal, &(((struct pnt_color_scale_normal *)pnts->point)->l))) {
 	    }
+
+	    break;
 	}
 	default:
 	    bu_log("ERROR: unknown points primitive type (type=%d)\n", pnts->type);

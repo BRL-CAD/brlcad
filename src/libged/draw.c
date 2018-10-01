@@ -1,7 +1,7 @@
 /*                         D R A W . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2016 United States Government as represented by
+ * Copyright (c) 2008-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -126,8 +126,12 @@ draw_check_leaf(struct db_tree_state *tsp,
     struct _ged_client_data *dgcdp = (struct _ged_client_data *)client_data;
 
     /* Indicate success by returning something other than TREE_NULL */
-    RT_GET_TREE(curtree, tsp->ts_resp);
+    BU_GET(curtree, union tree);
+    RT_TREE_INIT(curtree);
     curtree->tr_op = OP_NOP;
+
+    if (dgcdp->draw_non_subtract_only && (tsp->ts_sofar & (TS_SOFAR_MINUS|TS_SOFAR_INTER)))
+	return curtree;
 
     switch (dgcdp->dmode) {
 	case _GED_SHADED_MODE_BOTS:
@@ -594,7 +598,6 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
     int c;
     int ncpu = 1;
     int nmg_use_tnurbs = 0;
-    int skip_subtractions = 0;
     int enable_fastpath = 0;
     struct model *nmg_model;
     struct _ged_client_data dgcdp;
@@ -636,6 +639,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 	dgcdp.draw_normals = 0;
 	dgcdp.draw_solid_lines_only = 0;
 	dgcdp.draw_no_surfaces = 0;
+	dgcdp.draw_non_subtract_only = 0;
 	dgcdp.shade_per_vertex_normals = 0;
 	dgcdp.draw_edge_uses = 0;
 	dgcdp.wireframe_color_override = 0;
@@ -677,7 +681,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		    break;
 		case 'S':
 		    dgcdp.draw_no_surfaces = 1;
-		    skip_subtractions = 1;
+		    dgcdp.draw_non_subtract_only = 1;
 		    break;
 		case 'T':
 		    dgcdp.nmg_triangulate = 0;
@@ -940,7 +944,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 			continue;
 		    }
 
-		    ret = dl_redraw(gdlp, gedp->ged_wdbp->dbip, &gedp->ged_wdbp->wdb_initial_tree_state, gedp->ged_gvp, gedp->ged_create_vlist_callback, skip_subtractions);
+		    ret = dl_redraw(gdlp, gedp->ged_wdbp->dbip, &gedp->ged_wdbp->wdb_initial_tree_state, gedp->ged_gvp, gedp->ged_create_vlist_callback, dgcdp.draw_non_subtract_only);
 		    if (ret < 0) {
 			/* restore view bot threshold */
 			if (gedp && gedp->ged_gvp) gedp->ged_gvp->gv_bot_threshold = threshold_cached;

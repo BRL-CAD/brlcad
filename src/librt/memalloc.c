@@ -1,7 +1,7 @@
 /*                      M E M A L L O C . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -334,17 +334,6 @@ rt_mempurge(struct mem_map **pp)
 
 
 void
-rt_memprint(struct mem_map **pp)
-{
-    register struct mem_map *curp;
-
-    bu_log("rt_memprint(%p):  address, length\n", (void *)*pp);
-    for (curp = *pp; curp; curp = curp->m_nxtp)
-	bu_log(" a=%ld, l=%.5zu\n", curp->m_addr, curp->m_size);
-}
-
-
-void
 rt_memclose(void)
 {
     register struct mem_map *mp;
@@ -353,6 +342,14 @@ rt_memclose(void)
 	rt_mem_freemap = mp->m_nxtp;
 	bu_free((char *)mp, "struct mem_map " CPP_FILELINE);
     }
+}
+
+
+/* DEPRECATED */
+void
+rt_memprint(struct mem_map **UNUSED(pp))
+{
+    bu_log("rt_memprint() is deprecated\n");
 }
 
 

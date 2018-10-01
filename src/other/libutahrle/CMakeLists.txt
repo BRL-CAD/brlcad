@@ -33,7 +33,7 @@
 # ***                libutahrle CMakeLists.txt                     ***
 # *******************************************************************
 
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.1.3)
 
 project(UTAHRLE)
 
@@ -78,8 +78,6 @@ if(UTAHRLE_HAVE_COMMON_H)
 endif(UTAHRLE_HAVE_COMMON_H)
 
 set(LIBUTAHRLE_PUBLIC_HDRS
-  ${CMAKE_CURRENT_SOURCE_DIR}/include/exit_status.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/include/pyramid.h
   ${CMAKE_CURRENT_SOURCE_DIR}/include/rle.h
   ${CMAKE_CURRENT_SOURCE_DIR}/include/rle_code.h
   ${CMAKE_CURRENT_SOURCE_DIR}/include/rle_config.h

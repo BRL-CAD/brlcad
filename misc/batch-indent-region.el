@@ -65,6 +65,7 @@ Emacs. For example, invoke:
 	(c-set-offset 'innamespace 0)
 	(c-set-offset 'inline-open 0)
 	(indent-region (point-min) (point-max) nil)
+	(tabify (point-min) (point-max))
 	(save-buffer)
 	(setq command-line-args-left (cdr command-line-args-left))))
 

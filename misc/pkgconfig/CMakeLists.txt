@@ -51,7 +51,6 @@ if("${BRLCAD_ENABLE_TARGETS}" GREATER 1 OR "${BRLCAD_ENABLE_TARGETS}" STREQUAL "
     libgcv.pc.in
     libged.pc.in
     libicv.pc.in
-    libmultispectral.pc.in
     liboptical.pc.in
     libpc.pc.in
     libpkg.pc.in
@@ -65,6 +64,7 @@ foreach(pkgfile ${pkgconfig_DATA})
 endforeach(pkgfile ${pkgconfig_DATA})
 
 CMAKEFILES(${pkgconfig_DATA})
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

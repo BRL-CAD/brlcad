@@ -1,7 +1,7 @@
 /*                          T T C P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,6 +32,8 @@
  * Mike Muuss and Terry Slattery have released this code to the Public Domain.
  */
 
+#undef _POSIX_C_SOURCE
+#undef _XOPEN_SOURCE
 #define BSD43
 /* #define BSD42 */
 /* #define BSD41a */

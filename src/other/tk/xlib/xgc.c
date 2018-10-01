@@ -521,7 +521,7 @@ XDrawImageString(
 }
 #endif
 
-void
+int
 XDrawPoint(
     Display *display,
     Drawable d,
@@ -529,10 +529,10 @@ XDrawPoint(
     int x,
     int y)
 {
-    XDrawLine(display, d, gc, x, y, x, y);
+    return XDrawLine(display, d, gc, x, y, x, y);
 }
 
-void
+int
 XDrawPoints(
     Display *display,
     Drawable d,
@@ -541,16 +541,19 @@ XDrawPoints(
     int npoints,
     int mode)
 {
-    int i;
+    int res = Success;
 
-    for (i=0; i<npoints; i++) {
-	XDrawLine(display, d, gc,
-		points[i].x, points[i].y, points[i].x, points[i].y);
+    while (npoints-- > 0) {
+	res = XDrawLine(display, d, gc,
+		points[0].x, points[0].y, points[0].x, points[0].y);
+	if (res != Success) break;
+	++points;
     }
+    return res;
 }
 
 #if !defined(MAC_OSX_TK)
-void
+int
 XDrawSegments(
     Display *display,
     Drawable d,
@@ -558,6 +561,7 @@ XDrawSegments(
     XSegment *segments,
     int nsegments)
 {
+    return Success;
 }
 #endif
 

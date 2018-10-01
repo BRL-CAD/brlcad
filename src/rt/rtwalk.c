@@ -1,7 +1,7 @@
 /*                        R T W A L K . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2016 United States Government as represented by
+ * Copyright (c) 1987-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,6 +35,7 @@
 
 #include "bu/parallel.h"
 #include "bu/getopt.h"
+#include "bu/snooze.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "bn/plot3.h"
@@ -134,7 +135,7 @@ main(int argc, char **argv)
     int	i;
 
     fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
-    sleep(1);
+    bu_snooze(BU_SEC2USEC(1));
 
     if (!get_args(argc, (const char **)argv)) {
 	(void)fputs(usage, stderr);

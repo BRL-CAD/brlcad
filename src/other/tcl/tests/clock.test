@@ -15416,30 +15416,9 @@ test clock-5.29 {time zone boundary case 1948-09-26 01:00:01} detroit {
     clock format -671047199 -format {%H:%M:%S %z %Z} \
         -timezone :America/Detroit
 } {01:00:01 -0500 EST}
-test clock-5.30 {time zone boundary case 1967-06-14 01:59:59} detroit {
-    clock format -80499601 -format {%H:%M:%S %z %Z} \
-        -timezone :America/Detroit
-} {01:59:59 -0500 EST}
-test clock-5.31 {time zone boundary case 1967-06-14 03:00:00} detroit {
-    clock format -80499600 -format {%H:%M:%S %z %Z} \
-        -timezone :America/Detroit
-} {03:00:00 -0400 EDT}
-test clock-5.32 {time zone boundary case 1967-06-14 03:00:01} detroit {
-    clock format -80499599 -format {%H:%M:%S %z %Z} \
-        -timezone :America/Detroit
-} {03:00:01 -0400 EDT}
-test clock-5.33 {time zone boundary case 1967-10-29 01:59:59} detroit {
-    clock format -68666401 -format {%H:%M:%S %z %Z} \
-        -timezone :America/Detroit
-} {01:59:59 -0400 EDT}
-test clock-5.34 {time zone boundary case 1967-10-29 01:00:00} detroit {
-    clock format -68666400 -format {%H:%M:%S %z %Z} \
-        -timezone :America/Detroit
-} {01:00:00 -0500 EST}
-test clock-5.35 {time zone boundary case 1967-10-29 01:00:01} detroit {
-    clock format -68666399 -format {%H:%M:%S %z %Z} \
-        -timezone :America/Detroit
-} {01:00:01 -0500 EST}
+
+# Detroit did not observe Daylight Saving Time in 1967
+
 test clock-5.36 {time zone boundary case 1972-12-31 23:59:59} detroit {
     clock format 94712399 -format {%H:%M:%S %z %Z} \
         -timezone :America/Detroit

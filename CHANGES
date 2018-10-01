@@ -129,6 +129,12 @@ removed at any time.
 
 7.28
 ----
+include/bu/malloc.h
+        bu_ck_malloc_ptr, bu_mem_barriercheck, bu_prmem
+	replaced by modern memory analyzers [deprecated 7.28]
+
+include/rt/mem.h
+	rt_memprint [deprecated 7.28]
 
 include/vmath.h
         VCOMB3, VCOMB3N, VJOIN4
@@ -141,11 +147,16 @@ MGED commands
 	savekey, shaded_mode, sync
 	Removed as part of distillation effort [deprecated 7.28]
 
+libtermio, libcursor
+	Public API scope reduction - any client code that needs
+	to interact with the terminal at these levels should handle
+	what is needed locally.
+
 7.26
 ----
 ray tracing tools
 	lgt : functionally replaced by nirt
-	rtcell', rtfrac', rtpp, rtrad', rtrange, rtray, rtregis, rtsil'
+	rtcell', rtfrac', rtpp, rtrad', rtrange, rtray, rtregis
 	Removed as part of distillation effort [deprecated 7.26]
 converter tools
 	cy-g, euclid-g, euclid_format', euclid_unformat', g-euclid,
@@ -182,7 +193,6 @@ signal analysis tools
 	Removed as part of distillation effort [deprecated 7.26]
 infrared & shapefactor tools
 	all_sf', if-X, ifdisp, pictx, showterm, firpass, secpass, shapefact
-	ssamp-bw, ssampview', ssampview.tcl'
 	Removed as part of distillation effort [deprecated 7.26]
 misc tools
 	fix_polysolids' : obsolete primitive
@@ -381,6 +391,17 @@ include/raytrace.h
 ***                       OBSOLETED CHANGES                        ***
 **********************************************************************
                     (reverse chronological order)
+
+7.28.0
+------
+rt -f framerate
+	removed [minimally impacting]
+pixdsplit, rt -d
+	removed, broken tool [minimally impacting]
+libmultispectral, rttherm, ssamp-bw, ssampview, ssampview.tcl
+	removed, broken tools [minimally impacting]
+dem-g
+	removed, superseded by gcv+GDAL [minimally impacting]
 
 7.26.0
 ------
@@ -1316,12 +1337,13 @@ s/rt_nurb_scopy/nmg_nurb_scopy/g
 s/rt_nurb_sinterp/nmg_nurb_sinterp/g
 s/rt_nurb_solve/nmg_nurb_solve/g
 s/rt_nurb_to_poly/nmg_nurb_to_poly/g
-        rename old nurbs functions intertwined with nmg to use nmg prefix [7.26]
+        rename old nurbs functions intertwined with nmg to use nmg prefix [7.27]
 s/RTG.NMG_debug/nmg_debug/g
-	make nmg debug flag top level, like libbu's [7.26]
+	make nmg debug flag top level, like libbu's [7.27]
 s/BU_ASSERT(_[A-Z_]+)\(([^,]+|.*\(.*,.*\)),([^,]+|.*\(.*,.*\)),([^,]+|.*\(.*,.*\))\);/BU_ASSERT(\2\3\4);/g
-	consolidated BU_ASSERT_PTR, BU_ASSERT_LONG, BU_ASSERT_SIZE_T, BU_ASSERT_SSIZE_T, BU_ASSERT_DOUBLE [7.26]
+	consolidated BU_ASSERT_PTR, BU_ASSERT_LONG, BU_ASSERT_SIZE_T, BU_ASSERT_SSIZE_T, BU_ASSERT_DOUBLE [7.27]
 s/BU_FLSTR/CPP_FILELINE/g
+        symbol now owned by common.h, not specific to libbu [7.27]
 s/vert_root/bn_vert_tree/g
 s/create_vert_tree[[:space:]]*\(/bn_vert_tree_create\(/g
 s/create_vert_tree_w_norms[[:space:]]*\(/bn_vert_tree_create_w_norms\(/g
@@ -1329,3 +1351,32 @@ s/free_vert_tree[[:space:]]*\(/bn_vert_tree_destroy\(/g
 s/Add_vert[[:space:]]*\(([^,]*,)([^,]*,)([^,]*,)([^,]*,)/bn_vert_tree_add\(\4\1\2\3/g
 s/Add_vert_and_norm[[:space:]]*\(([^,]*,)([^,]*,)([^,]*,)([^,]*,)([^,]*,)([^,]*,)([^,]*,)/bn_vert_tree_add_w_norm\(\7\1\2\3\4\5\6/g
 s/clean_vert_tree[[:space:]]*\(/bn_vert_tree_clean\(/g
+        symbols renamed per convention with their library prefix [7.27]
+s/BU_DEBUG_MEM_CHECK/0/g
+s/DEBUG_MEM_FULL/0/g
+        developer debugging symbols removed [7.27]
+s/bu_dirname\(/bu_path_dirname\(/g
+s/bu_basename\(/bu_path_basename\(/g
+s/bu_normalize\(/bu_path_normalize\(/g
+s/bu_argv_from_path\(/bu_path_to_argv\(/g
+        renamed path functons with proper group label [7.27]
+s/bu_fnmatch\(/bu_path_match\(/g
+s/BU_FNMATCH_LEADING_DIR/0x0/g
+s/BU_FNMATCH_/BU_PATH_MATCH/g
+        renamed for consistency, simplified [7.27]
+s/bu_path_canonicalize[[:space:]]*\(([^,]*)/bu_realpath(\1, NULL/g
+	duplicate functionality consolidated to bu_realpath() [7.27] 
+s/gqa(.*)-p/gqa\1-p ""/g
+	gqa now takes a prefix for plot file output
+s/bu_same_file/bu_file_same/g
+s/bu_realpath/bu_file_realpath/g
+s/bu_suspend_interrupts/bu_interrupt_suspend/g
+s/bu_restore_interrupts/bu_interrupt_restore/g
+        renamed for API consistency [7.27]
+s/bu_brlcad_data[[:space:]]*\(/bu_brlcad_root("share/"/g
+        replaced by new BU API
+
+# tentative
+s/bu_getprogname\([[:space:]]*\)/bu_app_name\(NULL\)/g
+s/bu_setprogname/bu_app_name/g
+s/bu_argv0_full_path\([[:space:]]*\)/bu_file_realpath\(bu_app_name\(NULL\)\)/g

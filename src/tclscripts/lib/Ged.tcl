@@ -1,7 +1,7 @@
 #                          G E D . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2016 United States Government as represented by
+# Copyright (c) 1998-2018 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -162,10 +162,8 @@ package provide cadwidgets::Ged 1.0
 	method bounds_all {args}
 	method brep {args}
 	method bu_units_conversion {args}
-	method bu_brlcad_data {args}
 	method bu_brlcad_dir {args}
 	method bu_brlcad_root {args}
-	method bu_mem_barriercheck {args}
 	method bu_prmem {args}
 	method bu_get_value_by_keyword {args}
 	method bu_rgb_to_hsv {args}
@@ -173,6 +171,7 @@ package provide cadwidgets::Ged 1.0
 	method c {args}
 	method cat {args}
 	method center {args}
+	method check {args}
 	method clear {args}
 	method clone {args}
 	method coil {args}
@@ -206,7 +205,6 @@ package provide cadwidgets::Ged 1.0
 	method debugbu {args}
 	method debugdir {args}
 	method debuglib {args}
-	method debugmem {args}
 	method debugnmg {args}
 	method decompose {args}
 	method delay {args}
@@ -328,7 +326,6 @@ package provide cadwidgets::Ged 1.0
 	method mat_arb_rot {args}
 	method match {args}
 	method mater {args}
-	method memprint {args}
 	method mirror {args}
 	method model2grid_lu {args}
 	method model2view {args}
@@ -405,6 +402,7 @@ package provide cadwidgets::Ged 1.0
 	method pane_autoview {_pane args}
 	method pane_bind {_pane _event _script}
 	method pane_center {_pane args}
+	method pane_check {_pane args}
 	method pane_constrain_rmode {_pane args}
 	method pane_constrain_tmode {_pane args}
 	method pane_data_scale_mode {_pane args}
@@ -1382,20 +1380,12 @@ package provide cadwidgets::Ged 1.0
     uplevel \#0 bu_units_conversion $args
 }
 
-::itcl::body cadwidgets::Ged::bu_brlcad_data {args} {
-    uplevel \#0 bu_brlcad_data $args
-}
-
 ::itcl::body cadwidgets::Ged::bu_brlcad_dir {args} {
     uplevel \#0 bu_brlcad_dir $args
 }
 
 ::itcl::body cadwidgets::Ged::bu_brlcad_root {args} {
     uplevel \#0 bu_brlcad_root $args
-}
-
-::itcl::body cadwidgets::Ged::bu_mem_barriercheck {args} {
-    uplevel \#0 bu_mem_barriercheck $args
 }
 
 ::itcl::body cadwidgets::Ged::bu_prmem {args} {
@@ -1424,6 +1414,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::center {args} {
     eval $mGed center $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::check {args} {
+    eval $mGed check $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::clear {args} {
@@ -1609,10 +1603,6 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::debuglib {args} {
     eval $mGed debuglib $args
-}
-
-::itcl::body cadwidgets::Ged::debugmem {args} {
-    eval $mGed debugmem $args
 }
 
 ::itcl::body cadwidgets::Ged::debugnmg {args} {
@@ -2130,7 +2120,7 @@ package provide cadwidgets::Ged 1.0
     set binpath [bu_brlcad_root "bin"]
     catch {exec [file join $binpath fb-fb] $fbs_port $port &}
 
-    if {$tcl_platform(platform) == "windows"} {
+    if {$::tcl_platform(platform) == "windows"} {
 	set kill_cmd [auto_execok taskkill]
     } else {
 	set kill_cmd [auto_execok kill]
@@ -2275,10 +2265,6 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::mater {args} {
     eval $mGed mater $args
-}
-
-::itcl::body cadwidgets::Ged::memprint {args} {
-    eval $mGed memprint $args
 }
 
 ::itcl::body cadwidgets::Ged::mirror {args} {
@@ -2606,6 +2592,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::pane_center {_pane args} {
     eval $mGed center $itk_component($_pane) $args
+}
+
+::itcl::body cadwidgets::Ged::pane_check {_pane args} {
+    eval $mGed check $itk_component($_pane) $args
 }
 
 ::itcl::body cadwidgets::Ged::pane_constrain_rmode {_pane args} {
@@ -5086,7 +5076,7 @@ package provide cadwidgets::Ged 1.0
     # Turn off <Enter> bindings. This fixes the problem where various
     # various dialogs disappear when the mouse enters the geometry
     # window when on the "windows" platform.
-    if {$tcl_platform(platform) == "windows"} {
+    if {$::tcl_platform(platform) == "windows"} {
 	foreach dm {ur ul ll lr} {
 	    bind $itk_component($dm) <Enter> {}
 	}
@@ -6215,10 +6205,8 @@ package provide cadwidgets::Ged 1.0
 	[brepname] - convert the non-BREP object to BREP form
 	[suffix] - convert non-BREP comb to unevaluated BREP form}}
     $help add bu_units_conversion  {{units} {}}
-    $help add bu_brlcad_data	{{subdir} {}}
     $help add bu_brlcad_dir	{{dirkey} {}}
     $help add bu_brlcad_root	{{subdir} {}}
-    $help add bu_mem_barriercheck {{} {}}
     $help add bu_prmem		{{title} {}}
     $help add bu_get_value_by_keyword {{iwant list} {}}
     $help add bu_rgb_to_hsv	{{rgb} {}}
@@ -6226,6 +6214,7 @@ package provide cadwidgets::Ged 1.0
     $help add c		{{[-gr] comb_name <boolean_expr>} {create or extend a combination using standard notation}}
     $help add cat	{{<objects>} {list attributes (brief)}}
     $help add center		{{["x y z"]} {set/get the view center}}
+    $help add check		{{{subcommand} [options] [objects]} {do geometry analysis on the current view or specified objects}}
     $help add clear		{{} {clear screen}}
     $help add clone		{{[options] object} {clone the specified object}}
     $help add coord		{{[m|v]} {set/get the coordinate system}}
@@ -6246,7 +6235,6 @@ package provide cadwidgets::Ged 1.0
     $help add debugbu		{{[hex_code]} {activate libbu debugging}}
     $help add debugdir		{{} {dump of database directory}}
     $help add debuglib		{{[hex_code]} {activate librt debugging}}
-    $help add debugmem		{{[hex_code]} {activate memory debugging}}
     $help add debugnmg		{{[hex_code]} {activate nmg debugging}}
     $help add decompose		{{nmg_solid [prefix]}	{decompose nmg_solid into maximally connected shells}}
     $help add delay		{{sec usec} {delay processing for the specified amount of time}}
@@ -6346,7 +6334,6 @@ package provide cadwidgets::Ged 1.0
     $help add mat_xform_about_pt {{xform pt} {}}
     $help add mat_arb_rot	{{pt dir angle} {returns a rotation matrix}}
     $help add mater		{{region shader R G B inherit} {modify region's material information}}
-    $help add memprint		{{} {print memory}}
     $help add mirror		{{[-p point] [-d dir] [-x] [-y] [-z] [-o offset] old new}	{mirror object along the specified axis}}
     $help add model2grid_lu	{{x y z} {convert model xyz to grid coordinates (local units)}}
     $help add model2view	{{} {returns the model2view matrix}}

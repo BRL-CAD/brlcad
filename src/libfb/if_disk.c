@@ -1,7 +1,7 @@
 /*                       I F _ D I S K . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2016 United States Government as represented by
+ * Copyright (c) 1986-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -368,10 +368,10 @@ fb disk_interface = {
     dsk_write,
     dsk_rmap,
     dsk_wmap,
-    fb_sim_view,		/* set view */
-    fb_sim_getview,		/* get view */
-    fb_null_setcursor,		/* define cursor */
-    fb_sim_cursor,		/* set cursor */
+    fb_sim_view,	/* set view */
+    fb_sim_getview,	/* get view */
+    fb_null_setcursor,	/* define cursor */
+    fb_sim_cursor,	/* set cursor */
     fb_sim_getcursor,	/* get cursor */
     fb_sim_readrect,
     fb_sim_writerect,
@@ -384,14 +384,14 @@ fb disk_interface = {
     dsk_free,
     dsk_help,
     "Disk File Interface",
-    32*1024,		/* the sky's really the limit here */
-    32*1024,
+    FB_XMAXSCREEN,	/* the sky's really the limit here */
+    FB_YMAXSCREEN,
     "filename",		/* not in list so name is safe */
     512,
     512,
     -1,			/* select fd */
     -1,
-    1, 1,			/* zoom */
+    1, 1,		/* zoom */
     256, 256,		/* window center */
     0, 0, 0,		/* cursor */
     PIXEL_NULL,

@@ -1,7 +1,7 @@
 /*                         M A G I C . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,8 +34,6 @@ bu_identify_magic(register uint32_t magic)
 	    return "bu_attribute_value_set";
 	case BU_BITV_MAGIC:
 	    return "bu_bitv";
-	case BU_COLOR_MAGIC:
-	    return "bu_color";
 	case BU_EXTERNAL_MAGIC:
 	    return "bu_external";
 	case BU_HASH_ENTRY_MAGIC:
@@ -150,6 +148,8 @@ bu_identify_magic(register uint32_t magic)
 	    return "rt_rhc_internal";
 	case RT_RPC_INTERNAL_MAGIC:
 	    return "rt_rpc_internal";
+	case RT_SCRIPT_INTERNAL_MAGIC:
+	    return "rt_script_internal";
 	case RT_SKETCH_INTERNAL_MAGIC:
 	    return "rt_sketch_internal";
 	case RT_SUBMODEL_INTERNAL_MAGIC:

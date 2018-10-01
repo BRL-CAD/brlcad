@@ -1,7 +1,7 @@
 /*                       C O L U M N S . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2016 United States Government as represented by
+ * Copyright (c) 1985-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -76,21 +76,6 @@ vls_col_eol(struct bu_vls *str)
 	bu_vls_putc(str, '\n');
     col_count = 0;
     col_len = 0;
-}
-
-
-/*
- * Given two pointers to pointers to directory entries, do a string compare
- * on the respective names and return that value.
- */
-int
-cmpdirname(const void *a, const void *b)
-{
-    struct directory **dp1, **dp2;
-
-    dp1 = (struct directory **)a;
-    dp2 = (struct directory **)b;
-    return bu_strcmp((*dp1)->d_namep, (*dp2)->d_namep);
 }
 
 

@@ -19,15 +19,11 @@ set(LIBRTUIF_SOURCES
   main.c
   opt.c
   scanline.c
+  usage.cpp
   worker.c
   )
 
 BRLCAD_ADDLIB(librtuif "${LIBRTUIF_SOURCES}" "${M_LIBRARY}" STATIC NO_INSTALL)
-
-add_library(librtuif_multispectral STATIC ${LIBRTUIF_SOURCES})
-set_property(TARGET librtuif_multispectral APPEND PROPERTY LINKER_LANGUAGE C)
-set_property(TARGET librtuif_multispectral APPEND PROPERTY COMPILE_DEFINITIONS "RT_MULTISPECTRAL")
-set_property(TARGET librtuif_multispectral APPEND PROPERTY FOLDER "BRL-CAD Static Libraries")
 
 if(BRLCAD_ENABLE_OPENCL)
   set(OPENCL_LIBS ${OPENCL_LIBRARIES})
@@ -91,6 +87,7 @@ set_property(TARGET rtweight APPEND PROPERTY COMPILE_DEFINITIONS "RT_TXT_OUTPUT"
 BRLCAD_ADDEXEC(rtxray "${LIBRTUIF_SOURCES};viewxray.c" "${CMAKE_THREAD_LIBS_INIT};librt;libnmg;libfb;liboptical;libicv;${M_LIBRARY}")
 
 set(rt_ignore_files
+  CMakeLists.txt
   ext.h
   libfb-dummy.c
   main.c

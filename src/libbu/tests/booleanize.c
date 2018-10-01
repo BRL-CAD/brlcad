@@ -1,7 +1,7 @@
 /*                   B O O L E A N I Z E . C
  * BRL-CAD
  *
- * Copyright (c) 2012-2016 United States Government as represented by
+ * Copyright (c) 2012-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,7 +24,7 @@
 
 
 int
-booleanize_main(int argc, char *argv[])
+main(int argc, char *argv[])
 {
     int result_true = 0;
     int result_false = 0;
@@ -32,16 +32,15 @@ booleanize_main(int argc, char *argv[])
 
     const char *input = NULL;
 
-    if (argc > 3 || argc == 2 ) {
-	fprintf(stderr, "Usage: %s [test_string expect_true]\n", argv[0]);
+    if (argc > 3) {
+	fprintf(stderr, "Usage: %s {test_string} [expect_true]\n", argv[0]);
 	return 1;
-    }
-
-    if (argc > 1) {
-	input = argv[1];
     }
     if (argc > 2) {
 	expect_true = atol(argv[2]);
+    }
+    if (argc > 1) {
+	input = argv[1];
     }
 
     result_true = bu_str_true(input);

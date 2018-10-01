@@ -1,7 +1,7 @@
 /*                         L S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2016 United States Government as represented by
+ * Copyright (c) 2008-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,166 +30,11 @@
 
 #include "bu/cmd.h"
 #include "bu/getopt.h"
+#include "bu/opt.h"
 #include "bu/sort.h"
 #include "bu/units.h"
 
 #include "./ged_private.h"
-
-
-#define RT_TERMINAL_WIDTH 80
-#define RT_COLUMNS ((RT_TERMINAL_WIDTH + V4_MAXNAME - 1) / V4_MAXNAME)
-
-
-/**
- * This routine walks through the directory entry list and mallocs
- * enough space for pointers to hold the number of entries specified
- * by the argument if > 0.
- *
- */
-struct directory **
-_ged_getspace(struct db_i *dbip,
-	      size_t num_entries)
-{
-    struct directory **dir_basep;
-
-    if (num_entries == 0)
-	num_entries = db_directory_size(dbip);
-
-    /* Allocate and cast num_entries worth of pointers */
-    dir_basep = (struct directory **) bu_calloc((num_entries+1), sizeof(struct directory *), "_ged_getspace *dir[]");
-    return dir_basep;
-}
-
-
-/**
- * Given two pointers to pointers to directory entries, do a string
- * compare on the respective names and return that value.
- */
-static int
-cmpdirname(const void *a, const void *b, void *UNUSED(arg))
-{
-    struct directory **dp1, **dp2;
-
-    dp1 = (struct directory **)a;
-    dp2 = (struct directory **)b;
-    return bu_strcmp((*dp1)->d_namep, (*dp2)->d_namep);
-}
-
-/**
- * Given two pointers to pointers to directory entries, compare
- * the dp->d_len sizes.
- */
-static int
-cmpdlen(const void *a, const void *b, void *UNUSED(arg))
-{
-    int cmp = 0;
-    struct directory **dp1, **dp2;
-
-    dp1 = (struct directory **)a;
-    dp2 = (struct directory **)b;
-    if ((*dp1)->d_len > (*dp2)->d_len) cmp = 1;
-    if ((*dp1)->d_len < (*dp2)->d_len) cmp = -1;
-    return cmp;
-}
-
-
-/**
- * Given a pointer to a list of pointers to names and the number of
- * names in that list, sort and print that list in column order over
- * four columns.
- */
-void
-_ged_vls_col_pr4v(struct bu_vls *vls,
-		  struct directory **list_of_names,
-		  size_t num_in_list,
-		  int no_decorate,
-		  int ssflag)
-{
-    size_t lines, i, j, k, this_one;
-    size_t namelen;
-    size_t maxnamelen;	/* longest name in list */
-    size_t cwidth;	/* column width */
-    size_t numcol;	/* number of columns */
-
-    if (!ssflag) {
-	bu_sort((void *)list_of_names,
-		(unsigned)num_in_list, (unsigned)sizeof(struct directory *),
-		cmpdirname, NULL);
-    } else {
-	bu_sort((void *)list_of_names,
-		(unsigned)num_in_list, (unsigned)sizeof(struct directory *),
-		cmpdlen, NULL);
-    }
-
-    /*
-     * Traverse the list of names, find the longest name and set the
-     * the column width and number of columns accordingly.  If the
-     * longest name is greater than 80 characters, the number of
-     * columns will be one.
-     */
-    maxnamelen = 0;
-    for (k = 0; k < num_in_list; k++) {
-	namelen = strlen(list_of_names[k]->d_namep);
-	if (namelen > maxnamelen)
-	    maxnamelen = namelen;
-    }
-
-    if (maxnamelen <= 16)
-	maxnamelen = 16;
-    cwidth = maxnamelen + 4;
-
-    if (cwidth > 80)
-	cwidth = 80;
-    numcol = RT_TERMINAL_WIDTH / cwidth;
-
-    /*
-     * For the number of (full and partial) lines that will be needed,
-     * print in vertical format.
-     */
-    lines = (num_in_list + (numcol - 1)) / numcol;
-    for (i = 0; i < lines; i++) {
-	for (j = 0; j < numcol; j++) {
-	    this_one = j * lines + i;
-	    bu_vls_printf(vls, "%s", list_of_names[this_one]->d_namep);
-	    namelen = strlen(list_of_names[this_one]->d_namep);
-
-	    /*
-	     * Region and ident checks here....  Since the code has
-	     * been modified to push and sort on pointers, the
-	     * printing of the region and ident flags must be delayed
-	     * until now.  There is no way to make the decision on
-	     * where to place them before now.
-	     */
-	    if (!no_decorate && list_of_names[this_one]->d_flags & RT_DIR_COMB) {
-		bu_vls_putc(vls, '/');
-		namelen++;
-	    }
-
-	    if (!no_decorate && list_of_names[this_one]->d_flags & RT_DIR_REGION) {
-		bu_vls_putc(vls, 'R');
-		namelen++;
-	    }
-
-	    /*
-	     * Size check (partial lines), and line termination.  Note
-	     * that this will catch the end of the lines that are full
-	     * too.
-	     */
-	    if (this_one + lines >= num_in_list) {
-		bu_vls_putc(vls, '\n');
-		break;
-	    } else {
-		/*
-		 * Pad to next boundary as there will be another entry
-		 * to the right of this one.
-		 */
-		while (namelen++ < cwidth)
-		    bu_vls_putc(vls, ' ');
-	    }
-	}
-    }
-}
-
 
 static void
 vls_long_dpp(struct ged *gedp,
@@ -384,6 +229,124 @@ vls_line_dpp(struct ged *gedp,
     }
 }
 
+HIDDEN void
+_ged_ls_show_help(struct ged *gedp, struct bu_opt_desc *d)
+{
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+    char *option_help;
+
+    bu_vls_sprintf(&str, "Usage:\n");
+    bu_vls_printf(&str,  "ls [-achlpqrs] [object_pattern_1] [object_pattern_2]...\n");
+    bu_vls_printf(&str,  "ls -A [-o] [-achlpqrs] [Key1{value1}] [Key2{value2}]...\n");
+    bu_vls_printf(&str,  "\n");
+
+    if ((option_help = bu_opt_describe(d, NULL))) {
+	bu_vls_printf(&str, "Options:\n%s", option_help);
+	bu_free(option_help, "help str");
+    }
+
+    bu_vls_vlscat(gedp->ged_result_str, &str);
+    bu_vls_free(&str);
+}
+
+struct _ged_ls_data {
+    int aflag;	   /* print all objects without formatting */
+    int cflag;	   /* print combinations */
+    int rflag;	   /* print regions */
+    int sflag;	   /* print solids */
+    int lflag;	   /* use long format */
+    int qflag;	   /* quiet flag - do a quiet lookup */
+    int hflag;	   /* use human readable units for size in long format */
+    int ssflag;	   /* sort by size in long format */
+    int or_flag;   /* flag for "one attribute match is sufficient" mode */
+    struct bu_ptbl *results_obj;
+    struct bu_ptbl *results_fullpath;
+    int dir_flags;
+};
+
+/* select objects based on attributes and flags */
+int
+_ged_ls_attr_objs(struct ged *gedp, struct _ged_ls_data *ls, int argc, const char *argv[])
+{
+    int i;
+    struct bu_attribute_value_set avs;
+    int op;
+
+    if ((argc < 2) || (argc%2 != 0)) {
+	/* should be even number of name/value pairs */
+	bu_log("Error: ls -A option expects even number of 'name value' pairs\n\n");
+	return GED_ERROR;
+    }
+
+    op = (ls->or_flag) ? 2 : 1;
+
+    bu_avs_init(&avs, argc, "wdb_ls_cmd avs");
+    for (i = 0; i < argc; i += 2) {
+	if (ls->or_flag) {
+	    bu_avs_add_nonunique(&avs, (char *)argv[i], (char *)argv[i+1]);
+	} else {
+	    bu_avs_add(&avs, (char *)argv[i], (char *)argv[i+1]);
+	}
+    }
+
+    ls->results_obj = db_lookup_by_attr(gedp->ged_wdbp->dbip, ls->dir_flags, &avs, op);
+    bu_avs_free(&avs);
+
+    return GED_OK;
+}
+
+
+/* select objects based on name patterns and flags */
+void
+_ged_ls_named_objs(struct ged *gedp, struct _ged_ls_data *ls, int argc, const char *argv[])
+{
+    int i, lq;
+
+    lq = (ls->qflag) ? LOOKUP_QUIET : LOOKUP_NOISY;
+
+    for (i = 0; i < argc; i++) {
+	int is_path = 0;
+	const char *pc = argv[i];
+	while(*pc != '\0' && !is_path) {
+	    is_path = (*pc == '/');
+	    pc++;
+	}
+	/* If this is (potentially) a path, handle as a path, else as an object name */
+
+	if (is_path) {
+	    /* TODO - for now, just do a db_lookup on the full path, but need to rework
+	     * the printing logic and formatting to properly deal with paths */
+	    struct directory *dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], lq);
+	    if (dp != RT_DIR_NULL && ((dp->d_flags & ls->dir_flags) != 0)) {
+		bu_ptbl_ins(ls->results_obj, (long *)dp);
+	    }
+
+	} else {
+	    struct directory *dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], lq);
+	    if (dp != RT_DIR_NULL && ((dp->d_flags & ls->dir_flags) != 0)) {
+		bu_ptbl_ins(ls->results_obj, (long *)dp);
+	    }
+	}
+    }
+}
+
+void
+_ged_ls_data_init(struct _ged_ls_data *d)
+{
+    if (!d) return;
+    d->aflag = 0;
+    d->cflag = 0;
+    d->rflag = 0;
+    d->sflag = 0;
+    d->lflag = 0;
+    d->qflag = 0;
+    d->hflag = 0;
+    d->ssflag = 0;
+    d->or_flag = 0;
+    d->results_obj = NULL;
+    d->results_fullpath = NULL;
+    d->dir_flags = 0;
+}
 
 /**
  * List objects in this database
@@ -391,167 +354,124 @@ vls_line_dpp(struct ged *gedp,
 int
 ged_ls(struct ged *gedp, int argc, const char *argv[])
 {
+    int i;
+    int ret_ac = 0;
     struct directory *dp;
-    size_t i;
-    int c;
-    int aflag = 0;		/* print all objects without formatting */
-    int cflag = 0;		/* print combinations */
-    int rflag = 0;		/* print regions */
-    int sflag = 0;		/* print solids */
-    int lflag = 0;		/* use long format */
-    int qflag = 0;		/* quiet flag - do a quiet lookup */
-    int hflag = 0;		/* use human readable units for size in long format */
-    int ssflag = 0;		/* sort by size in long format */
-    int attr_flag = 0;		/* arguments are attribute name/value pairs */
-    int or_flag = 0;		/* flag indicating that any one attribute match is sufficient
-				 * default is all attributes must match.
-				 */
-    struct directory **dirp;
     struct directory **dirp0 = (struct directory **)NULL;
-    static const char *usage = "[-A name/value pairs] OR [-acrslopq] object(s)";
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+    int print_help = 0;
+    struct _ged_ls_data ls;
+    int attr_flag = 0; /* arguments are attribute name/value pairs */
+    struct bu_opt_desc d[13];
+    BU_OPT(d[0],  "h", "help",           "",  NULL, &print_help,   "Print help and exit");
+    BU_OPT(d[1],  "a", "all",            "",  NULL, &(ls.aflag),   "Do not ignore HIDDEN objects.");
+    BU_OPT(d[2],  "c", "combs",          "",  NULL, &(ls.cflag),   "List combinations");
+    BU_OPT(d[3],  "r", "regions",        "",  NULL, &(ls.rflag),   "List regions");
+    BU_OPT(d[4],  "p", "primitives",     "",  NULL, &(ls.sflag),   "List primitives");
+    BU_OPT(d[5],  "s", "",               "",  NULL, &(ls.sflag),   "");
+    BU_OPT(d[6],  "q", "quiet",          "",  NULL, &(ls.qflag),   "Suppress informational output messages during database lookup process");
+    BU_OPT(d[7],  "l", "",               "",  NULL, &(ls.lflag),   "Use long reporting format");
+    BU_OPT(d[8],  "H", "human-readable", "",  NULL, &(ls.hflag),   "When printing using long format, use human readable sizes for object size");
+    BU_OPT(d[9],  "S", "sort",           "",  NULL, &(ls.ssflag),  "Sort using object size");
+    BU_OPT(d[10], "A", "attributes",     "",  NULL, &attr_flag,    "List objects having all of the specified attribute name/value pairs");
+    BU_OPT(d[11], "o", "or",             "",  NULL, &(ls.or_flag), "In attribute mode, match if one or more attribute patterns match");
+    BU_OPT_NULL(d[12]);
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
-    /* initialize result */
+    /* initialize */
+    _ged_ls_data_init(&ls);
     bu_vls_trunc(gedp->ged_result_str, 0);
     ged_results_clear(gedp->ged_results);
 
-    bu_optind = 1;	/* re-init bu_getopt() */
-    while ((c = bu_getopt(argc, (char * const *)argv, "acrslopqAHS")) != -1) {
-	switch (c) {
-	    case 'A':
-		attr_flag = 1;
-		break;
-	    case 'o':
-		or_flag = 1;
-		break;
-	    case 'a':
-		aflag = 1;
-		break;
-	    case 'c':
-		cflag = 1;
-		break;
-	    case 'q':
-		qflag = 1;
-		break;
-	    case 'r':
-		rflag = 1;
-		break;
-	    case 's':
-	    case 'p':
-		sflag = 1;
-		break;
-	    case 'l':
-		lflag = 1;
-		break;
-	    case 'H':
-		hflag = 1;
-		break;
-	    case 'S':
-		ssflag = 1;
-		break;
-	    default:
-		bu_vls_printf(gedp->ged_result_str, "Unrecognized option - %c", c);
-		_ged_results_add(gedp->ged_results, bu_vls_addr(gedp->ged_result_str));
-		return GED_ERROR;
-	}
+    /* Skip first arg */
+    argv++; argc--;
+
+    /* Handle options, if any */
+    ret_ac = bu_opt_parse(&str, argc, argv, d);
+    if (ret_ac < 0) {
+	bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&str));
+	bu_vls_free(&str);
+	return GED_ERROR;
     }
-    /* skip options processed plus command name */
-    argc -= bu_optind;
-    argv += bu_optind;
+    if (print_help) {
+	_ged_ls_show_help(gedp, d);
+	bu_vls_free(&str);
+	return GED_OK;
+    }
+
+    /* object patterns are whatever is left in argv (none is OK) */
+    argc = ret_ac;
+
+    /* Set object type filter via flags */
+    ls.dir_flags = 0;
+    if (ls.aflag) ls.dir_flags = -1;
+    if (ls.cflag) ls.dir_flags = RT_DIR_COMB;
+    if (ls.sflag) ls.dir_flags = RT_DIR_SOLID;
+    if (ls.rflag) ls.dir_flags = RT_DIR_REGION;
+    if (!ls.dir_flags) ls.dir_flags = -1 ^ RT_DIR_HIDDEN;
 
     /* create list of selected objects from database */
     if (attr_flag) {
-	/* select objects based on attributes */
-	struct bu_ptbl *tbl;
-	struct bu_attribute_value_set avs;
-	int dir_flags;
-	int op;
-	if ((argc < 2) || (argc%2 != 0)) {
-	    /* should be even number of name/value pairs */
-	    bu_log("ls -A option expects even number of 'name value' pairs\n");
-	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	    _ged_results_add(gedp->ged_results, bu_vls_addr(gedp->ged_result_str));
-	    return TCL_ERROR;
+
+	/* In this scenario we're only going to get object names, and db_lookup_by_attr will provide
+	 * the table for us, so don't init either of them.  */
+	if (_ged_ls_attr_objs(gedp, &ls, argc, argv) != GED_OK) {
+	    return GED_ERROR;
 	}
 
-	if (or_flag) {
-	    op = 2;
-	} else {
-	    op = 1;
-	}
-
-	dir_flags = 0;
-	if (aflag) dir_flags = -1;
-	if (cflag) dir_flags = RT_DIR_COMB;
-	if (sflag) dir_flags = RT_DIR_SOLID;
-	if (rflag) dir_flags = RT_DIR_REGION;
-	if (!dir_flags) dir_flags = -1 ^ RT_DIR_HIDDEN;
-
-	bu_avs_init(&avs, argc, "wdb_ls_cmd avs");
-	for (i = 0; i < (size_t)argc; i += 2) {
-	    if (or_flag) {
-		bu_avs_add_nonunique(&avs, (char *)argv[i], (char *)argv[i+1]);
-	    } else {
-		bu_avs_add(&avs, (char *)argv[i], (char *)argv[i+1]);
-	    }
-	}
-
-	tbl = db_lookup_by_attr(gedp->ged_wdbp->dbip, dir_flags, &avs, op);
-	bu_avs_free(&avs);
-
-	dirp = _ged_getspace(gedp->ged_wdbp->dbip, BU_PTBL_LEN(tbl));
-	dirp0 = dirp;
-	for (i = 0; i < BU_PTBL_LEN(tbl); i++) {
-	    *dirp++ = (struct directory *)BU_PTBL_GET(tbl, i);
-	}
-
-	bu_ptbl_free(tbl);
-	bu_free((char *)tbl, "wdb_ls_cmd ptbl");
-    } else if (argc > 0) {
-	/* Just list specified names */
-	dirp = _ged_getspace(gedp->ged_wdbp->dbip, argc);
-	dirp0 = dirp;
-	/*
-	 * Verify the names, and add pointers to them to the array.
-	 */
-	for (i = 0; i < (size_t)argc; i++) {
-	    if (qflag) {
-		dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_QUIET);
-	    } else {
-		dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY);
-	    }
-	    if (dp  == RT_DIR_NULL)
-		continue;
-	    *dirp++ = dp;
-	}
     } else {
-	/* Full table of contents */
-	dirp = _ged_getspace(gedp->ged_wdbp->dbip, 0);	/* Enough for all */
-	dirp0 = dirp;
-	/*
-	 * Walk the directory list adding pointers (to the directory
-	 * entries) to the array.
-	 */
-	for (i = 0; i < RT_DBNHASH; i++)
-	    for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-		if (!aflag && (dp->d_flags & RT_DIR_HIDDEN))
-		    continue;
-		*dirp++ = dp;
+
+	/* Object name results are possible both with and without arguments -
+	 * init that table regardless */
+	BU_ALLOC(ls.results_obj, struct bu_ptbl);
+	bu_ptbl_init(ls.results_obj, 128, "object name results");
+
+	if (argc > 0) {
+
+	    /* If we have arguments we might also have full path results - set
+	     * up the fullpath table */
+	    BU_ALLOC(ls.results_fullpath, struct bu_ptbl);
+	    bu_ptbl_init(ls.results_fullpath, 128, "full path results");
+
+	    _ged_ls_named_objs(gedp, &ls, argc, argv);
+
+	} else {
+
+	    /* No guidance at all - just list all names. Walk the directory
+	     * list adding pointers (to the directory entries) to the tbl.
+	     */
+	    for (i = 0; i < RT_DBNHASH; i++) {
+		for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+		    if (!ls.aflag && (dp->d_flags & RT_DIR_HIDDEN)) continue;
+		    if (((dp->d_flags & ls.dir_flags) != 0)) {
+			bu_ptbl_ins(ls.results_obj, (long *)dp);
+		    }
+		}
 	    }
+	}
     }
 
-    if (lflag)
-	vls_long_dpp(gedp, dirp0, (int)(dirp - dirp0), aflag, cflag, rflag, sflag, hflag, ssflag);
-    else if (aflag || cflag || rflag || sflag)
-	vls_line_dpp(gedp, dirp0, (int)(dirp - dirp0), aflag, cflag, rflag, sflag, ssflag);
+    dirp0 = (struct directory **)ls.results_obj->buffer;
+    if (ls.lflag)
+	vls_long_dpp(gedp, dirp0, (int)BU_PTBL_LEN(ls.results_obj), ls.aflag, ls.cflag, ls.rflag, ls.sflag, ls.hflag, ls.ssflag);
+    else if (ls.aflag || ls.cflag || ls.rflag || ls.sflag)
+	vls_line_dpp(gedp, dirp0, (int)BU_PTBL_LEN(ls.results_obj), ls.aflag, ls.cflag, ls.rflag, ls.sflag, ls.ssflag);
     else {
-	_ged_vls_col_pr4v(gedp->ged_result_str, dirp0, (int)(dirp - dirp0), 0, ssflag);
+	_ged_vls_col_pr4v(gedp->ged_result_str, dirp0, (int)BU_PTBL_LEN(ls.results_obj), 0, ls.ssflag);
 	_ged_results_add(gedp->ged_results, bu_vls_addr(gedp->ged_result_str));
     }
 
-    bu_free((void *)dirp0, "_ged_getspace dp[]");
+    if (ls.results_obj) {
+	bu_ptbl_free(ls.results_obj);
+	bu_free((void *)ls.results_obj, "object name results");
+    }
+
+    if (ls.results_fullpath) {
+	bu_ptbl_free(ls.results_fullpath);
+	bu_free((void *)ls.results_fullpath, "full path results");
+    }
 
     return GED_OK;
 }

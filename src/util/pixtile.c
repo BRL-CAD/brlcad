@@ -1,7 +1,7 @@
 /*                       P I X T I L E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2016 United States Government as represented by
+ * Copyright (c) 1986-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -182,13 +182,13 @@ main(int argc, char **argv)
 		    snprintf(name, sizeof(name), "%s.%d", base_name, framenumber);
 		}
 
-		ifname = bu_realpath(name, NULL);
+		ifname = bu_file_realpath(name, NULL);
 		if ((fd=open(ifname, 0))<0) {
 		    perror(ifname);
-		    bu_free(ifname, "ifname alloc from bu_realpath");
+		    bu_free(ifname, "ifname alloc from bu_file_realpath");
 		    goto done;
 		}
-		bu_free(ifname, "ifname alloc from bu_realpath");
+		bu_free(ifname, "ifname alloc from bu_file_realpath");
 	    }
 	    /* Read in .pix file.  Bottom to top */
 	    for (i=0; i<file_height; i++) {

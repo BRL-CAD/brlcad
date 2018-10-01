@@ -1,7 +1,7 @@
 /*                            U I . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -21,6 +21,7 @@
 /** @file burst/ui.c
  *
  */
+
 
 #include "common.h"
 
@@ -43,6 +44,12 @@
 
 
 #define DEBUG_UI 0
+
+
+#if defined(__GNUC__) && __GNUC__ >= 7 && !defined(__clang__) && !defined(__INTEL_COMPILER)
+#  pragma GCC diagnostic ignored "-Wformat-truncation"
+#endif
+
 
 static char promptbuf[LNBUFSZ];
 #ifdef HAVE_TERMLIB

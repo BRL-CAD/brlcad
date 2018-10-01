@@ -38,7 +38,6 @@ set(DOX_LIBS
   libwdb
   librt
   liboptical
-  libmultispectral
   libgcv
   libanalyze
   libged
@@ -88,13 +87,6 @@ INPUT += \"${CMAKE_SOURCE_DIR}/include/nmg.h\"
     ")
   endif("${libname}" STREQUAL "librt")
 
-  # libmultispectral header doesn't fit the template
-  if("${libname}" STREQUAL "libmultispectral")
-    set(INPUTS "${INPUTS}
-INPUT += \"${CMAKE_SOURCE_DIR}/include/spectrum.h\"
-    ")
-  endif("${libname}" STREQUAL "libmultispectral")
-
   # libtermio header doesn't fit the template
   if("${libname}" STREQUAL "libtermio")
     set(INPUTS "${INPUTS}
@@ -134,13 +126,6 @@ INPUT += \"${CMAKE_SOURCE_DIR}/include/raytrace.h\"
 INPUT += \"${CMAKE_SOURCE_DIR}/include/nmg.h\"
     ")
   endif("${libname}" STREQUAL "librt")
-
-  # libmultispectral header doesn't fit the template
-  if("${libname}" STREQUAL "libmultispectral")
-    set(lib_inputs "${lib_inputs}
-INPUT += \"${CMAKE_SOURCE_DIR}/include/spectrum.h\"
-    ")
-  endif("${libname}" STREQUAL "libmultispectral")
 
   # libtermio header doesn't fit the template
   if("${libname}" STREQUAL "libtermio")
@@ -205,7 +190,6 @@ set(doxygen_ignore_files
   libgcv.dox
   libged.dox
   libicv.dox
-  libmultispectral.dox
   libnmg.dox
   liboptical.dox
   libpc.dox

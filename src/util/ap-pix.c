@@ -1,7 +1,7 @@
 /*                        A P - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2016 United States Government as represented by
+ * Copyright (c) 1986-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -80,9 +80,9 @@ main(int argc, char **argv)
 	bu_exit(2, "%s: can't open \"%s\"\n", argv0, argv[1]);
     }
     yelfp = fopen(argv[1], "r");
-    bu_fseek(yelfp, 50*sizeof(yelline), 0);
+    fseek(yelfp, 50*sizeof(yelline), 0);
     cyafp = fopen(argv[1], "r");
-    bu_fseek(cyafp, 100*sizeof(cyaline), 0);
+    fseek(cyafp, 100*sizeof(cyaline), 0);
 
     line = 0;
     while ((int)fread(&cyaline, sizeof(cyaline), 1, cyafp) > 0) {

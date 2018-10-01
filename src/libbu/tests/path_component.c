@@ -1,7 +1,7 @@
 /*                 P A T H _ C O M P O N E N T . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2016 United States Government as represented by
+ * Copyright (c) 2011-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -63,7 +63,7 @@ pc_compare(const char *input, const char *expected_str, bu_path_component_t type
 
 
 int
-path_component_main(int argc, char *argv[])
+main(int argc, char *argv[])
 {
     const char *control = NULL;
     int intarg = 0;
@@ -109,8 +109,7 @@ path_component_main(int argc, char *argv[])
 	    pc_compare(argv[1], control, BU_PATH_EXT);
 	    break;
 	default:
-	    bu_log("Error - unknown component\n");
-	    break;
+	    bu_exit(1, "ERROR: unknown component\n");
     }
 
     return 0;

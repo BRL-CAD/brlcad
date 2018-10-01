@@ -171,6 +171,10 @@ proc httpdRespond { sock } {
 	    set html "$bindata[info hostname]:$port$data(url)"
 	    set type application/octet-stream
 	}
+	*xml* {
+	    set html [encoding convertto utf-8 "<test>\u1234</test>"]
+	    set type "application/xml;charset=UTF-8"
+	}
 	*post* {
 	    set html "Got [string length $data(query)] bytes"
 	    set type text/plain

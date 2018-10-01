@@ -1,7 +1,7 @@
 /*                           M G E D . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2016 United States Government as represented by
+ * Copyright (c) 1993-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -60,11 +60,14 @@
 #  include "tk.h"
 #endif
 
-#include "vmath.h"
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/debug.h"
 #include "bu/units.h"
 #include "bu/version.h"
+#include "bu/time.h"
+#include "bu/snooze.h"
+#include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
 #include "libtermio.h"
@@ -572,7 +575,7 @@ mged_process_char(char ch)
 #define CTRL_W      '\027'
 #define ESC         27
 #define BACKSPACE   '\b'
-#ifdef WIN32
+#ifdef _WIN32
 # undef DELETE
 #endif
 #define DELETE      127
@@ -808,7 +811,7 @@ mged_process_char(char ch)
 		bu_vls_addr(&input_str)[input_str_index - 1];
 	    bu_vls_addr(&input_str)[input_str_index - 1] = ch;
 	    bu_log("\b");
-	    bu_log("%c%c", bu_vls_addr(&input_str)+input_str_index-1, bu_vls_addr(&input_str)+input_str_index);
+	    bu_log("%c%c", bu_vls_addr(&input_str)[input_str_index-1], bu_vls_addr(&input_str)[input_str_index]);
 	    ++input_str_index;
 	    escaped = bracketed = 0;
 	    break;
@@ -1009,6 +1012,8 @@ mged_process_char(char ch)
 		bracketed = 1;
 		break;
 	    }
+
+	    /* fall through */
 	case '~':
 	    if (tilded) {
 		/* we were in an escape sequence (Mac delete key),
@@ -1018,6 +1023,7 @@ mged_process_char(char ch)
 		break;
 	    }
 	    /* Fall through if not escaped! */
+	    /* fall through */
 	default:
 	    if (!isprint((int)ch))
 		break;
@@ -1123,7 +1129,7 @@ main(int argc, char *argv[])
 		break;
 	    default:
 		bu_log("Unrecognized option (%c)\n", bu_optopt);
-		/* Fall through to help */
+		/* fall through */
 	    case 'h':
 		bu_exit(1, "Usage:  %s [-a attach] [-b] [-c] [-d display] [-h|?] [-r] [-x#] [-X#] [-v] [database [command]]\n", argv[0]);
 	}
@@ -1242,7 +1248,7 @@ main(int argc, char *argv[])
 
 	    } else {
 		/* no pipe, so just wait a little while */
-		sleep(3);
+		bu_snooze(BU_SEC2USEC(3));
 	    }
 
 	    /* exit instead of mged_finish as this is the parent
@@ -1358,6 +1364,8 @@ main(int argc, char *argv[])
 	if (classic_mged) {
 	    /* identify */
 
+	    (void)Tcl_Eval(INTERP, "set mged_console_mode classic");
+
 	    bu_log("%s\n", brlcad_ident("Geometry Editor (MGED)"));
 
 #if !defined(_WIN32) || defined(__CYGWIN__)
@@ -1374,6 +1382,8 @@ main(int argc, char *argv[])
 	    int status;
 	    struct bu_vls vls = BU_VLS_INIT_ZERO;
 	    struct bu_vls error = BU_VLS_INIT_ZERO;
+
+	    (void)Tcl_Eval(INTERP, "set mged_console_mode gui");
 
 	    if (dpy_string != (char *)NULL)
 		bu_vls_printf(&vls, "loadtk %s", dpy_string);
@@ -1398,6 +1408,8 @@ main(int argc, char *argv[])
 	    }
 	    bu_vls_free(&error);
 	}
+    } else {
+	(void)Tcl_Eval(INTERP, "set mged_console_mode batch");
     }
 
     if (!interactive || classic_mged || old_mged_gui) {
@@ -1467,7 +1479,7 @@ main(int argc, char *argv[])
 		status = Tcl_Eval(INTERP, bu_vls_addr(&vls));
 	    } else {
 		Tcl_DString temp;
-		const char *archer = bu_brlcad_data("tclscripts/archer/archer_launch.tcl", 1);
+		const char *archer = bu_brlcad_root("share/tclscripts/archer/archer_launch.tcl", 1);
 		const char *archer_trans;
 		Tcl_DStringInit(&temp);
 		archer_trans = Tcl_TranslateFileName(INTERP, archer, &temp);
@@ -1856,8 +1868,6 @@ stdin_input(ClientData clientData, int UNUSED(mask))
 		c = 0;
 	    if (c > CHAR_MAX)
 		c = CHAR_MAX;
-	    if (!isascii(c))
-		continue;
 #endif
 	    mged_process_char(c);
 #ifdef TRY_STDIN_INPUT_HACK
@@ -2278,10 +2288,8 @@ refresh(void)
     struct bu_vls overlay_vls = BU_VLS_INIT_ZERO;
     struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
     int do_overlay = 1;
-    double elapsed_time;
+    int64_t elapsed_time, start_time = bu_gettime();
     int do_time = 0;
-
-    rt_prep_timer();
 
     FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
 	if (!p->dml_view_state)
@@ -2434,11 +2442,11 @@ refresh(void)
 
     /* a frame was drawn */
     if (do_time) {
-	(void)rt_get_timer((struct bu_vls *)0, &elapsed_time);
+	elapsed_time = bu_gettime() - start_time;
 	/* Only use reasonable measurements */
-	if (elapsed_time > 1.0e-5 && elapsed_time < 30) {
+	if (elapsed_time > 10LL && elapsed_time < 30000000LL) {
 	    /* Smoothly transition to new speed */
-	    frametime = 0.9 * frametime + 0.1 * elapsed_time;
+	    frametime = 0.9 * frametime + 0.1 * elapsed_time / 1000000LL;
 	}
     }
 
@@ -2816,7 +2824,6 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     bu_vls_init(&wdbp->wdb_name);
     bu_vls_strcpy(&wdbp->wdb_name, MGED_DB_NAME);
 
-    BU_LIST_INIT(&wdbp->wdb_observers.l);
     wdbp->wdb_interp = interpreter;
 
     /* append to list of rt_wdb's */

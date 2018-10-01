@@ -11,8 +11,8 @@
 # For conditions of distribution and use, see the disclaimer
 # and license in png.h
 
-cmake_minimum_required(VERSION 3.0.2)
-cmake_policy(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.1.3)
+cmake_policy(VERSION 3.1.3)
 
 # Use new variable expansion policy.
 if (POLICY CMP0053)

@@ -43,7 +43,7 @@
 /* protos */
 
 static int CheckForCompilerFeature(const char *option);
-static int CheckForLinkerFeature(const char *option);
+static int CheckForLinkerFeature(const char **options, int count);
 static int IsIn(const char *string, const char *substring);
 static int SubstituteFile(const char *substs, const char *filename);
 static int QualifyPath(const char *path);
@@ -74,6 +74,7 @@ main(
     char msg[300];
     DWORD dwWritten;
     int chars;
+    char *s;
 
     /*
      * Make sure children (cl.exe and link.exe) are kept quiet.
@@ -102,16 +103,16 @@ main(
 	    }
 	    return CheckForCompilerFeature(argv[2]);
 	case 'l':
-	    if (argc != 3) {
+	    if (argc < 3) {
 		chars = snprintf(msg, sizeof(msg) - 1,
-	       		"usage: %s -l <linker option>\n"
+	       		"usage: %s -l <linker option> ?<mandatory option> ...?\n"
 			"Tests for whether link.exe supports an option\n"
 			"exitcodes: 0 == no, 1 == yes, 2 == error\n", argv[0]);
 		WriteFile(GetStdHandle(STD_ERROR_HANDLE), msg, chars,
 			&dwWritten, NULL);
 		return 2;
 	    }
-	    return CheckForLinkerFeature(argv[2]);
+	    return CheckForLinkerFeature(&argv[2], argc-2);
 	case 'f':
 	    if (argc == 2) {
 		chars = snprintf(msg, sizeof(msg) - 1,
@@ -153,8 +154,13 @@ main(
 		    &dwWritten, NULL);
 		return 0;
 	    }
-	    printf("%s\n", GetVersionFromFile(argv[2], argv[3], *(argv[1]+2) - '0'));
-	    return 0;
+	    s = GetVersionFromFile(argv[2], argv[3], *(argv[1]+2) - '0');
+	    if (s && *s) {
+		printf("%s\n", s);
+		return 0;
+	    } else
+		return 1; /* Version not found. Return non-0 exit code */
+
 	case 'Q':
 	    if (argc != 3) {
 		chars = snprintf(msg, sizeof(msg) - 1,
@@ -313,7 +319,8 @@ CheckForCompilerFeature(
 
 static int
 CheckForLinkerFeature(
-    const char *option)
+    const char **options,
+    int count)
 {
     STARTUPINFO si;
     PROCESS_INFORMATION pi;
@@ -322,7 +329,8 @@ CheckForLinkerFeature(
     char msg[300];
     BOOL ok;
     HANDLE hProcess, h, pipeThreads[2];
-    char cmdline[100];
+    int i;
+    char cmdline[255];
 
     hProcess = GetCurrentProcess();
 
@@ -368,7 +376,11 @@ CheckForLinkerFeature(
      * Append our option for testing.
      */
 
-    lstrcat(cmdline, option);
+    for (i = 0; i < count; i++) {
+	lstrcat(cmdline, " \"");
+	lstrcat(cmdline, options[i]);
+	lstrcat(cmdline, "\"");
+    }
 
     ok = CreateProcess(
 	    NULL,	    /* Module name. */
@@ -433,7 +445,9 @@ CheckForLinkerFeature(
     return !(strstr(Out.buffer, "LNK1117") != NULL ||
 	    strstr(Err.buffer, "LNK1117") != NULL ||
 	    strstr(Out.buffer, "LNK4044") != NULL ||
-	    strstr(Err.buffer, "LNK4044") != NULL);
+	    strstr(Err.buffer, "LNK4044") != NULL ||
+	    strstr(Out.buffer, "LNK4224") != NULL ||
+	    strstr(Err.buffer, "LNK4224") != NULL);
 }
 
 static DWORD WINAPI

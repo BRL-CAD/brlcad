@@ -1,7 +1,7 @@
 /*                           V L S . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -372,7 +372,7 @@ BU_EXPORT extern void bu_vls_detab(struct bu_vls *vp);
  * Add a string to the beginning of the vls.
  */
 BU_EXPORT extern void bu_vls_prepend(struct bu_vls *vp,
-				     char *str);
+				     const char *str);
 
 
 /**

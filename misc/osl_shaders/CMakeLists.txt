@@ -16,6 +16,7 @@ set(osl_ignore_files
   stdosl.h
   )
 CMAKEFILES(${osl_ignore_files})
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

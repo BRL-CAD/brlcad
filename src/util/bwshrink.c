@@ -1,7 +1,7 @@
 /*                      B W S H R I N K . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -153,13 +153,13 @@ parse_args(int ac, char **av)
 	    usage();
     }
     if (bu_optind < ac) {
-	char *ifname = bu_realpath(av[bu_optind], NULL);
+	char *ifname = bu_file_realpath(av[bu_optind], NULL);
 	if (freopen(ifname, "r", stdin) == (FILE *)NULL) {
 	    perror(ifname);
 	    bu_exit (-1, NULL);
 	} else
 	    filename = av[bu_optind];
-	bu_free(ifname, "ifname alloc from bu_realpath");
+	bu_free(ifname, "ifname alloc from bu_file_realpath");
     }
     if (bu_optind+1 < ac)
 	fprintf(stderr, "%s: Excess arguments ignored\n", progname);

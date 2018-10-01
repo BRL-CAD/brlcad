@@ -1,7 +1,7 @@
 /*                     T I M E R U N I X . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2016 United States Government as represented by
+ * Copyright (c) 1985-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,12 +33,19 @@
 # include <sys/machd.h>
 #endif
 
+#include "bu/vls.h"
+#include "bu/str.h"
+
+#ifndef HAVE_DECL_TIME
+time_t time(time_t *);
+#endif
+
+
 #ifndef HZ
 /* It's not always in sys/param.h;  if not, guess */
 #  define HZ 60
 #  define DEFAULT_HZ yes
 #endif
-
 
 
 /* Standard System V stuff */

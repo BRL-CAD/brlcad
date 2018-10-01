@@ -1,7 +1,7 @@
 /*                        C A M E R A . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2016 United States Government as represented by
+ * Copyright (c) 2007-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -20,16 +20,13 @@
 
 #include "common.h"
 
-#ifdef HAVE_DLFCN_H
-# include <dlfcn.h>
-#endif
-
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
 #include "bio.h"
 #include "bu/parallel.h"
+#include "bu/dylib.h"
 #include "raytrace.h" /* for last RT_SEM_LAST */
 
 #include "camera.h"

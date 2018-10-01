@@ -1,7 +1,7 @@
 /*                         D D I S P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,6 +31,7 @@
 #include "bu/color.h"
 #include "bu/str.h"
 #include "bu/exit.h"
+#include "bu/snooze.h"
 #include "fb.h"
 
 
@@ -194,7 +195,7 @@ main(int argc, char **argv)
 	else
 	    lineout(fbp, buf, n);
 	if (pause_time)
-	    sleep(pause_time);
+	    bu_snooze(BU_SEC2USEC(pause_time));
     }
     fb_close(fbp);
 

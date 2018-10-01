@@ -145,7 +145,7 @@ test cmdAH-4.5 {Tcl_EncodingObjCmd} {
 } 8C
 test cmdAH-4.6 {Tcl_EncodingObjCmd} {
     set system [encoding system]
-    encoding system identity
+    encoding system iso8859-1
     set x [encoding convertto jis0208 \u4e4e]
     encoding system $system
     set x
@@ -165,7 +165,7 @@ test cmdAH-4.9 {Tcl_EncodingObjCmd} {
 } \u4e4e
 test cmdAH-4.10 {Tcl_EncodingObjCmd} {
     set system [encoding system]
-    encoding system identity
+    encoding system iso8859-1
     set x [encoding convertfrom jis0208 8C]
     encoding system $system
     set x
@@ -178,11 +178,11 @@ test cmdAH-4.12 {Tcl_EncodingObjCmd} {
 } {1 {wrong # args: should be "encoding system ?encoding?"}}
 test cmdAH-4.13 {Tcl_EncodingObjCmd} {
     set system [encoding system]
-    encoding system identity
+    encoding system iso8859-1
     set x [encoding system]
     encoding system $system
     set x
-} identity
+} iso8859-1
 
 test cmdAH-5.1 {Tcl_FileObjCmd} {
     list [catch file msg] $msg

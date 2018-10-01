@@ -285,13 +285,6 @@ libfft: The Fast-Fourier Transform library is a signal processing
 library for performing FFTs or inverse FFTs efficiently.
 	Depends on: libm
 
-libmultispectral: The multispectral optics library is a separate
-compilation mode of the optics library where support for additional
-bands of energy are added.  By providing a defined spectrum of energy,
-the raytrace library will produce different signal analyses for a
-given set of geometry.
-	Depends on: librt libbn libbu libtcl
-
 liboptical: The optical library is the basis for BRL-CAD's shaders.
 This includes shaders such as the Phong and Cook-Torrence lighting
 models, as well as various visual effects such as texturing, marble,
@@ -409,9 +402,10 @@ SOURCE CODE LANGUAGES
 The vast majority of BRL-CAD is written in ANSI C with the intent to
 be strictly conformant to the C standard.  A majority of the MGED
 geometry editor is written in a combination of C, Tcl/Tk, and Incr
-Tcl/Tk.  The BRL-CAD Benchmark, build system, and utility scripts are
-written in what should be POSIX-compliant Bourne Shell Script.  An
-initial implementation of a BRL-CAD Geometry Server is written in PHP.
+Tcl/Tk.  The BRL-CAD Benchmark and utility scripts are written in what
+should be POSIX-compliant Bourne Shell Script.  The build system uses
+the CMake build tool.  An initial implementation of a BRL-CAD Geometry
+Server is written in PHP.
 
 With release 7.0, BRL-CAD has moved forward and worked toward making
 all of BRL-CAD C code conform strictly with the ANSI/ISO standard for
@@ -569,17 +563,27 @@ variables should be utilized instead of the standard C facility:
   bu_malloc() instead of malloc()
   bu_calloc() instead of calloc()
   bu_realloc() instead of realloc()
-  bu_fgets() instead of fgets()
   bu_free() instead of free()
-  bu_log() instead of printf()
+
   bu_bomb() instead of abort()
   bu_exit() instead of printf()+exit()
-  bu_dirname() instead of dirname()
+  bu_snooze() instead of sleep(), usleep(), nanosleep()
+
   bu_getopt() instead of getopt()
   bu_opterr instead of opterr
   bu_optind instead of optind
   bu_optopt instead of optopt
   bu_optarg instead of optarg
+
+  bu_file_delete() instead of unlink(), rmdir(), and remove()
+  bu_path_basename() instead of basename()
+  bu_path_dirname() instead of dirname()
+  bu_path_match() instead of fnmatch()
+
+  bu_log() instead of printf()
+  bu_fgets() instead of fgets()
+  bu_sort() instead of qsort()
+
   bu_strdup() instead of strdup()
   bu_strlcat() instead of strcat(), strncat(), and strlcat()
   bu_strlcpy() instead of strcpy(), strncpy(), and strlcpy()
@@ -587,8 +591,6 @@ variables should be utilized instead of the standard C facility:
   bu_strcasecmp() and BU_STR_EQUIV() instead of stricmp()/strcasecmp()
   bu_strncmp() instead of strncmp()
   bu_strcasecmp() instead of strnicmp()/strncasecmp()
-  bu_file_delete() instead of unlink(), rmdir(), and remove()
-  bu_sort() instead of qsort()
 
 Similarly, ANSI C functions are preferred over the BSD and POSIX
 interfaces.  The following functions should be used:
@@ -1263,7 +1265,7 @@ Release steps are as follows:
     PREV=[[last_trunk_rev]]
     echo "PREV=$PREV"
 
-    svn co svn://svn.code.sf.net/p/brlcad/code/brlcad/branches/RELEASE brlcad.RELEASE
+    svn co https://svn.code.sf.net/p/brlcad/code/brlcad/branches/RELEASE brlcad.RELEASE
     cd brlcad.RELEASE
     svn merge https://svn.code.sf.net/p/brlcad/code/brlcad/trunk@$PREV https://svn.code.sf.net/p/brlcad/code/brlcad/trunk@HEAD .
 

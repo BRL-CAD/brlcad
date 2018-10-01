@@ -1,7 +1,7 @@
 /*                     N M G _ C L A S S . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2016 United States Government as represented by
+ * Copyright (c) 1993-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -373,7 +373,7 @@ out:
 	point_t mid_pt;
 	point_t left_pt;
 	fu = eu->up.lu_p->up.fu_p;
-	bits = (long *)bu_calloc(nmg_find_model(&fu->l.magic)->maxindex, sizeof(long), "bits[]");
+	bits = (long *)nmg_calloc(nmg_find_model(&fu->l.magic)->maxindex, sizeof(long), "bits[]");
 	sprintf(buf, "faceclass%d.plot3", num++);
 	if ((fp = fopen(buf, "wb")) == NULL)
 	    bu_bomb(buf);
@@ -385,7 +385,7 @@ out:
 	VJOIN1(left_pt, mid_pt, 500, left);
 	pdv_3line(fp, mid_pt, left_pt);
 	fclose(fp);
-	bu_free((char *)bits, "bits[]");
+	nmg_free((char *)bits, "bits[]");
 	bu_log("wrote %s\n", buf);
     }
 }
@@ -481,7 +481,8 @@ nmg_class_pt_l(struct neighbor *closest, const fastf_t *pt, const struct loopuse
 	       closest->dist, nmg_class_name(closest->nmg_class));
 }
 
-
+/* TODO - do we need this? */
+#if 0
 /**
  * This is intended as an internal routine to support nmg_lu_reorient().
  *
@@ -578,6 +579,7 @@ again:
     }
     return nmg_class;
 }
+#endif
 
 
 /* Ray direction vectors for Jordan curve algorithm */
@@ -650,7 +652,7 @@ nmg_class_pt_s(const fastf_t *pt, const struct shell *s, const int in_or_out_onl
     }
 
     if (!in_or_out_only) {
-	faces_seen = (long *)bu_calloc(m->maxindex, sizeof(long), "nmg_class_pt_s faces_seen[]");
+	faces_seen = (long *)nmg_calloc(m->maxindex, sizeof(long), "nmg_class_pt_s faces_seen[]");
 	/*
 	 * First pass:  Try hard to see if point is ON a face.
 	 */
@@ -673,9 +675,9 @@ nmg_class_pt_s(const fastf_t *pt, const struct shell *s, const int in_or_out_onl
 		 * short circuit everything.
 		 */
 		nmg_class = nmg_class_pt_fu_except(pt, fu, (struct loopuse *)0,
-						   (void (*)(struct edgeuse *, point_t, const char *))NULL,
-						   (void (*)(struct vertexuse *, point_t, const char *))NULL,
-						   (const char *)NULL, 0, 0, vlfree, tol);
+						   NULL,
+						   NULL,
+						   NULL, 0, 0, vlfree, tol);
 		if (nmg_class == NMG_CLASS_AonBshared) {
 		    bu_bomb("nmg_class_pt_s(): function nmg_class_pt_fu_except returned AonBshared when it can only return AonBanti\n");
 		}
@@ -761,7 +763,7 @@ retry:
 
 out:
     if (!in_or_out_only) {
-	bu_free((char *)faces_seen, "nmg_class_pt_s faces_seen[]");
+	nmg_free((char *)faces_seen, "nmg_class_pt_s faces_seen[]");
     }
 
     if (nmg_debug & DEBUG_CLASSIFY) {
@@ -1615,7 +1617,7 @@ class_lu_vs_s(struct loopuse *lu, struct shell *s, char **classlist, struct bu_l
 		struct model *m;
 
 		m = nmg_find_model(lu->up.magic_p);
-		b = (long *)bu_calloc(m->maxindex, sizeof(long), "nmg_pl_lu flag[]");
+		b = (long *)nmg_calloc(m->maxindex, sizeof(long), "nmg_pl_lu flag[]");
 		for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 		    if (NMG_INDEX_TEST(classlist[NMG_CLASS_AinB], eu->e_p))
 			nmg_euprint("In:  edgeuse", eu);
@@ -1636,7 +1638,7 @@ class_lu_vs_s(struct loopuse *lu, struct shell *s, char **classlist, struct bu_l
 		    bu_log("wrote %s\n", buf);
 		}
 		nmg_pr_lu(lu, "");
-		bu_free((char *)b, "nmg_pl_lu flag[]");
+		nmg_free((char *)b, "nmg_pl_lu flag[]");
 	    }
 
 	    if (seen_error > 3) {
@@ -2090,7 +2092,8 @@ nmg_classify_pt_loop(const point_t pt,
     return closest.nmg_class;
 }
 
-
+/* TODO - do we need this? */
+#if 0
 /**
  * Find any point that is interior to LU
  *
@@ -2108,7 +2111,7 @@ nmg_get_interior_pt(fastf_t *pt, const struct loopuse *lu, struct bu_list *vlfre
     fastf_t point_count = 0.0;
     double one_over_count;
     point_t test_pt;
-    point_t average_pt;
+    point_t average_pt = VINIT_ZERO;
     int i;
 
     NMG_CK_LOOPUSE(lu);
@@ -2124,7 +2127,6 @@ nmg_get_interior_pt(fastf_t *pt, const struct loopuse *lu, struct bu_list *vlfre
 	return 3;
 
     /* first try just averaging all the vertices */
-    VSETALL(average_pt, 0.0);
     for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 	struct vertex_g *vg;
 	NMG_CK_EDGEUSE(eu);
@@ -2193,6 +2195,7 @@ nmg_get_interior_pt(fastf_t *pt, const struct loopuse *lu, struct bu_list *vlfre
     VMOVE(pt, average_pt);
     return 4;
 }
+#endif
 
 
 /**

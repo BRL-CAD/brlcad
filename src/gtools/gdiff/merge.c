@@ -1,7 +1,7 @@
 /*                     M E R G E . C
  * BRL-CAD
  *
- * Copyright (c) 2014-2016 United States Government as represented by
+ * Copyright (c) 2014-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -123,6 +123,7 @@ dp_changed_copy(struct db_i *merged_dbip, struct diff_result *dr,
 	    if (rt_db_put_internal(new_dp, merged_dbip, &ip, &rt_uniresource) < 0) {
 		return -1;
 	    }
+	    /* fall through */
 	case 1:
 	    if ((new_dp = db_diradd(merged_dbip, dr->dp_left->d_namep, RT_DIR_PHONY_ADDR, 0, dr->dp_left->d_flags, (void *)&dr->dp_left->d_minor_type)) == RT_DIR_NULL) {
 		return -1;

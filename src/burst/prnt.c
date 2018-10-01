@@ -1,7 +1,7 @@
 /*                          P R N T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -41,6 +41,9 @@
 #include "./ascii.h"
 #include "./extern.h"
 
+#if defined(HAVE_VSNPRINTF) && !defined(HAVE_DECL_VSNPRINTF) && !defined(vsnprintf)
+extern int vsnprintf(char *str, size_t size, const char *format, va_list ap);
+#endif
 
 #define MAX_COLS 128
 

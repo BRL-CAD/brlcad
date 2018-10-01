@@ -1,7 +1,7 @@
 /*                           L S . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2016 United States Government as represented by
+ * Copyright (c) 2013-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -75,7 +75,7 @@ db_ls(const struct db_i *dbip, int flags, const char *pattern, struct directory 
 	for (i = 0; i < RT_DBNHASH; i++) {
 	    for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 		if (dp_eval_flags(dp,flags)) {
-		    if (!pattern || !bu_fnmatch(pattern, dp->d_namep, 0)) {
+		    if (!pattern || !bu_path_match(pattern, dp->d_namep, 0)) {
 			(*dpv)[objcount] = dp;
 			objcount++;
 		    }

@@ -1,7 +1,7 @@
 /*                         I F _ T K . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2016 United States Government as represented by
+ * Copyright (c) 2007-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,16 +33,15 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-#ifdef HAVE_NETINET_IN_H
-#  include <netinet/in.h>
-#endif
 #include <tcl.h>
 #include <tk.h>
+#include "bnetwork.h"
 
 #include "bu/color.h"
 #include "bu/str.h"
 #include "bu/exit.h"
 #include "bu/log.h"
+#include "bu/snooze.h"
 
 #include "fb_private.h"
 #include "fb.h"
@@ -381,7 +380,7 @@ tk_write(fb *ifp, int UNUSED(x), int y, const unsigned char *pixelp, size_t coun
     /* Send values and data to parent for display */
     if (write(p[1], tkwrite_buffer, 3 * ifp->if_width + 3*sizeof(uint32_t)) == -1) {
 	perror("Unable to write to pipe");
-	sleep(1);
+	bu_snooze(BU_SEC2USEC(1));
     }
 
     return (ssize_t)count;
@@ -429,8 +428,8 @@ HIDDEN int
 tk_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
     FB_CK_FB(ifp);
-    fb_log("fb_view(0x%lx, %4d, %4d, %4d, %4d)\n",
-	   (unsigned long)ifp, xcenter, ycenter, xzoom, yzoom);
+    fb_log("fb_view(%p, %4d, %4d, %4d, %4d)\n",
+	   (void *)ifp, xcenter, ycenter, xzoom, yzoom);
     fb_sim_view(ifp, xcenter, ycenter, xzoom, yzoom);
     return 0;
 }
@@ -440,8 +439,8 @@ HIDDEN int
 tk_getview(fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
     FB_CK_FB(ifp);
-    fb_log("fb_getview(0x%lx, 0x%x, 0x%x, 0x%x, 0x%x)\n",
-	   (unsigned long)ifp, xcenter, ycenter, xzoom, yzoom);
+    fb_log("fb_getview(%p, %p, %p, %p, %p)\n",
+	   (void *)ifp, (void *)xcenter, (void *)ycenter, (void *)xzoom, (void *)yzoom);
     fb_sim_getview(ifp, xcenter, ycenter, xzoom, yzoom);
     fb_log(" <= %d %d %d %d\n",
 	   *xcenter, *ycenter, *xzoom, *yzoom);
@@ -453,8 +452,8 @@ HIDDEN int
 tk_setcursor(fb *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
 {
     FB_CK_FB(ifp);
-    fb_log("fb_setcursor(0x%lx, 0x%lx, %d, %d, %d, %d)\n",
-	   (unsigned long)ifp, bits, xbits, ybits, xorig, yorig);
+    fb_log("fb_setcursor(%p, %p, %d, %d, %d, %d)\n",
+	   (void *)ifp, (void *)bits, xbits, ybits, xorig, yorig);
     return 0;
 }
 
@@ -473,8 +472,8 @@ HIDDEN int
 tk_getcursor(fb *ifp, int *mode, int *x, int *y)
 {
     FB_CK_FB(ifp);
-    fb_log("fb_getcursor(0x%lx, 0x%x, 0x%x, 0x%x)\n",
-	   (unsigned long)ifp, mode, x, y);
+    fb_log("fb_getcursor(%p, %p, %p, %p)\n",
+	   (void *)ifp, (void *)mode, (void *)x, (void *)y);
     fb_sim_getcursor(ifp, mode, x, y);
     fb_log(" <= %d %d %d\n", *mode, *x, *y);
     return 0;
@@ -608,14 +607,14 @@ fb tk_interface = {
     tk_free,
     tk_help,
     "Debugging Interface",
-    32*1024,		/* max width */
-    32*1024,		/* max height */
+    FB_XMAXSCREEN,	/* max width */
+    FB_YMAXSCREEN,	/* max height */
     "/dev/tk",
-    512,			/* current/default width */
-    512,			/* current/default height */
+    512,		/* current/default width */
+    512,		/* current/default height */
     -1,			/* select fd */
     -1,			/* file descriptor */
-    1, 1,			/* zoom */
+    1, 1,		/* zoom */
     256, 256,		/* window center */
     0, 0, 0,		/* cursor */
     PIXEL_NULL,		/* page_base */

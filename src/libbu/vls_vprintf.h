@@ -1,7 +1,7 @@
 /*                    V L S _ V P R I N T F . H
  * BRL-CAD
  *
- * Copyright (c) 1998-2016 United States Government as represented by
+ * Copyright (c) 1998-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,12 +41,12 @@ static const int VP_PRINT   = 1;
 typedef struct
 vprintf_flags
 {
-    int fieldlen;
+    ssize_t fieldlen;
     int flags;
     int have_digit;
     int have_dot;
     int left_justify;
-    int precision;
+    ssize_t precision;
 } vflags_t;
 
 /* private shared function decls */

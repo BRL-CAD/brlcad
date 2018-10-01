@@ -324,7 +324,7 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
     bu_vls_trunc(&shoal_name, 0);
     if (data->island_type == BREP) {
 	subbrep_obj_name(data->island_type, data->island_id, rname, &shoal_name);
-	mk_brep(wdbp, bu_vls_addr(&shoal_name), data->local_brep);
+	mk_brep(wdbp, bu_vls_addr(&shoal_name), (void *)(data->local_brep));
 	n_bool_op = &(data->local_brep_bool_op);
     } else {
 	subbrep_obj_name(data->nucleus->shoal_type, data->nucleus->shoal_id, rname, &shoal_name);
@@ -425,7 +425,7 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 	//    rgb[i] = static_cast<unsigned char>(255.0 * drand48() + 0.5);
 
 	bu_vls_sprintf(&brep_name, "%s-brep_obj_%d.s", rname, data->island_id);
-	mk_brep(wdbp, bu_vls_addr(&brep_name), data->local_brep);
+	mk_brep(wdbp, bu_vls_addr(&brep_name), (void *)(data->local_brep));
 
 	(void)mk_addmember(bu_vls_addr(&brep_name), &(bcomb.l), NULL, db_str2op((const char *)&un));
 	mk_lcomb(wdbp, bu_vls_addr(&bcomb_name), &bcomb, 1, "plastic", "di=.8 sp=.2", rgb, 0);
@@ -512,7 +512,7 @@ _obj_brep_to_csg(struct ged *gedp, struct bu_vls *log, struct bu_attribute_value
 	    for (BU_LIST_FOR(olist, bu_list, &pcomb.l)) comb_objs++;
 	    if (comb_objs > 1) {
 		// We're not setting the region flag here in case there is a hierarchy above us that
-		// takes care of it.  TODO - support knowing whether that's true and doing the right thing. 
+		// takes care of it.  TODO - support knowing whether that's true and doing the right thing.
 		mk_lcomb(wdbp, bu_vls_addr(&comb_name), &pcomb, 0, NULL, NULL, NULL, 0);
 	    } else {
 		// TODO - Fix up name of first item in list to reflect top level naming to
@@ -871,7 +871,7 @@ _ged_brep_tikz(struct ged *gedp, const char *dp_name, const char *outfile)
     struct bu_ptbl breps = BU_PTBL_INIT_ZERO;
     const char *brep_search = "-type brep";
     db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
-    (void)db_search(&breps, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, brep_search, 1, &dp, gedp->ged_wdbp->dbip);
+    (void)db_search(&breps, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, brep_search, 1, &dp, gedp->ged_wdbp->dbip, NULL);
     for(size_t i = 0; i < BU_PTBL_LEN(&breps); i++) {
 	struct rt_db_internal bintern;
 	struct rt_brep_internal *b_ip = NULL;

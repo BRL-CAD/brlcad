@@ -1,7 +1,7 @@
 /*                          M A I N . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2016 United States Government as represented by
+ * Copyright (c) 1985-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -73,7 +73,6 @@ mat_t		model2view;
 
 /***** variables shared with worker() ******/
 struct application APP;
-vect_t		left_eye_delta;
 int		report_progress;	/* !0 = user wants progress report */
 extern int	incr_mode;		/* !0 for incremental resolution */
 extern size_t	incr_nlevel;		/* number of levels */
@@ -83,8 +82,6 @@ extern size_t	incr_nlevel;		/* number of levels */
 /***** variables shared with do.c *****/
 extern int	pix_start;		/* pixel to start at */
 extern int	pix_end;		/* pixel to end at */
-extern int	nobjs;			/* Number of cmd-line treetops */
-extern char	**objtab;		/* array of treetop strings */
 size_t		n_malloc;		/* Totals at last check */
 size_t		n_free;
 size_t		n_realloc;
@@ -155,17 +152,8 @@ int main(int argc, const char **argv)
     elevation = 25.0;
 
     AmbientIntensity = 0.4;
-#ifndef RT_MULTISPECTRAL
     background[0] = background[1] = 0.0;
     background[2] = 1.0/255.0; /* slightly non-black */
-#else
-    {
-	extern struct bn_table *bn_table_make_visible_and_uniform(int num, double first, double last, int vis_nsamp);
-	extern fastf_t spectrum_param[];
-	spectrum = bn_table_make_visible_and_uniform((int)spectrum_param[0], spectrum_param[1], spectrum_param[2], 20);
-	BN_GET_TABDATA(background, spectrum);
-    }
-#endif
 
     /* Before option processing, get default number of processors */
     npsw = bu_avail_cpus();		/* Use all that are present */
@@ -176,10 +164,16 @@ int main(int argc, const char **argv)
     application_init();
 
     /* Process command line options */
-    if (!get_args(argc, argv))  {
-	usage(argv[0]);
+    i = get_args(argc, argv);
+    if (i < 0)  {
+	usage(argv[0], 0);
 	return 1;
+    } else if (i == 0) {
+	/* asking for help is ok */
+	usage(argv[0], 1);
+	return 0;
     }
+
     /* Identify the versions of the libraries we are using. */
     if (rt_verbosity & VERBOSE_LIBVERSIONS) {
 	fprintf(stderr, "%s%s%s%s\n",
@@ -205,7 +199,7 @@ int main(int argc, const char **argv)
 
     if (bu_optind >= argc) {
 	fprintf(stderr, "%s:  BRL-CAD geometry database not specified\n", argv[0]);
-	usage(argv[0]);
+	usage(argv[0], 0);
 	return 1;
     }
 
@@ -301,11 +295,12 @@ int main(int argc, const char **argv)
 
     title_file = argv[bu_optind];
     title_obj = argv[bu_optind+1];
-    nobjs = argc - bu_optind - 1;
-    objtab = (char **)&(argv[bu_optind+1]);
+    objc = argc - bu_optind - 1;
+    objv = (char **)&(argv[bu_optind+1]);
 
-    if (nobjs <= 0) {
+    if (objc <= 0) {
 	bu_log("%s: no objects specified -- raytrace aborted\n", argv[0]);
+	usage(argv[0], 0);
 	return 1;
     }
 
@@ -336,10 +331,14 @@ int main(int argc, const char **argv)
 	bu_vls_strcat(&str, "\nopendb ");
 	bu_vls_strcat(&str, title_file);
 	bu_vls_strcat(&str, ";\ntree ");
+
+	/* arbitrarily limit the number of command-line objects being
+	 * echo'd back for log printing, followed by ellipses.
+	 */
 	bu_vls_from_argv( &str,
-			  nobjs <= 16 ? nobjs : 16,
+			  objc <= 16 ? objc : 16,
 			  (const char **)argv+bu_optind+1);
-	if (nobjs > 16)
+	if (objc > 16)
 	    bu_vls_strcat(&str, " ...");
 	else
 	    bu_vls_putc(&str, ';');
@@ -364,8 +363,6 @@ int main(int argc, const char **argv)
 
     /* Copy values from command line options into rtip */
     rtip->rti_space_partition = space_partition;
-    rtip->rti_nugrid_dimlimit = nugrid_dimlimit;
-    rtip->rti_nu_gfactor = nu_gfactor;
     rtip->useair = use_air;
     rtip->rti_save_overlaps = save_overlaps;
     if (rt_dist_tol > 0)  {
@@ -428,7 +425,7 @@ int main(int argc, const char **argv)
 	bu_semaphore_release(BU_SEM_SYSCALL);
 
 #ifdef USE_OPENCL
-        clt_connect_fb(fbp);
+	clt_connect_fb(fbp);
 #endif
     }
     if ((outputfile == (char *)0) && (fbp == FB_NULL)) {

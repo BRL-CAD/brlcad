@@ -609,6 +609,9 @@ tests/cmds.test
 tests/color.test
 tests/config.test
 tests/constraints.tcl
+tests/corruptMangled.gif
+tests/corruptMangled4G.gif
+tests/corruptTruncated.gif
 tests/cursor.test
 tests/dialog.test
 tests/earth.gif
@@ -650,6 +653,7 @@ tests/panedwindow.test
 tests/place.test
 tests/pwrdLogo150.gif
 tests/raise.test
+tests/red.gif
 tests/safe.test
 tests/scale.test
 tests/scrollbar.test
@@ -891,6 +895,7 @@ xlib/X11/keysym.h
 xlib/X11/keysymdef.h
 xlib/X11/license.terms
 xlib/license.terms
+xlib/rgb.txt
 xlib/xbytes.h
 xlib/xcolors.c
 xlib/xdraw.c

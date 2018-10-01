@@ -1,7 +1,7 @@
 /*                         S E T U P . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2016 United States Government as represented by
+ * Copyright (c) 1985-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,6 +31,7 @@
 #include <string.h>
 
 /* common headers */
+#include "bu/app.h"
 #include "bn.h"
 #include "vmath.h"
 #include "tclcad.h"
@@ -82,6 +83,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"bot", cmd_ged_plain_wrapper, ged_bot},
     {"bot_condense", cmd_ged_plain_wrapper, ged_bot_condense},
     {"bot_decimate", cmd_ged_plain_wrapper, ged_bot_decimate},
+    {"bot_dump", cmd_ged_plain_wrapper, ged_bot_dump},
     {"bot_face_fuse", cmd_ged_plain_wrapper, ged_bot_face_fuse},
     {"bot_face_sort", cmd_ged_plain_wrapper, ged_bot_face_sort},
     {"bot_flip", cmd_ged_plain_wrapper, ged_bot_flip},
@@ -97,6 +99,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"cat", cmd_ged_info_wrapper, ged_cat},
     {"cc", cmd_ged_plain_wrapper, ged_cc},
     {"center", cmd_center, GED_FUNC_PTR_NULL},
+    {"check", cmd_ged_plain_wrapper, ged_check},
     {"clone", cmd_ged_edit_wrapper, ged_clone},
     {"closedb", f_closedb, GED_FUNC_PTR_NULL},
     {"cmd_win", cmd_cmd_win, GED_FUNC_PTR_NULL},
@@ -119,7 +122,6 @@ static struct cmdtab mged_cmdtab[] = {
     {"debugbu", cmd_ged_plain_wrapper, ged_debugbu},
     {"debugdir", cmd_ged_plain_wrapper, ged_debugdir},
     {"debuglib", cmd_ged_plain_wrapper, ged_debuglib},
-    {"debugmem", cmd_ged_plain_wrapper, ged_debugmem},
     {"debugnmg", cmd_ged_plain_wrapper, ged_debugnmg},
     {"decompose", cmd_ged_plain_wrapper, ged_decompose},
     {"delay", cmd_ged_plain_wrapper, ged_delay},
@@ -197,6 +199,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"labelface", f_labelface, GED_FUNC_PTR_NULL},
     {"lc", cmd_ged_plain_wrapper, ged_lc},
     {"left", f_bv_left, GED_FUNC_PTR_NULL},
+    {"lint", cmd_ged_plain_wrapper, ged_lint},
     {"listeval", cmd_ged_plain_wrapper, ged_pathsum},
     {"lm", cmd_lm, GED_FUNC_PTR_NULL},
     {"loadtk", cmd_tk, GED_FUNC_PTR_NULL},
@@ -213,7 +216,6 @@ static struct cmdtab mged_cmdtab[] = {
     {"match", cmd_ged_plain_wrapper, ged_match},
     {"mater", cmd_ged_plain_wrapper, ged_mater},
     {"matpick", f_matpick, GED_FUNC_PTR_NULL},
-    {"memprint", f_memprint, GED_FUNC_PTR_NULL},
     {"mged_update", f_update, GED_FUNC_PTR_NULL},
     {"mged_wait", f_wait, GED_FUNC_PTR_NULL},
     {"mirface", f_mirface, GED_FUNC_PTR_NULL},
@@ -255,6 +257,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"permute", f_permute, GED_FUNC_PTR_NULL},
     {"plot", cmd_ged_plain_wrapper, ged_plot},
     {"png", cmd_ged_plain_wrapper, ged_png},
+    {"pnts", cmd_ged_plain_wrapper, ged_pnts},
     {"prcolor", cmd_ged_plain_wrapper, ged_prcolor},
     {"prefix", cmd_ged_plain_wrapper, ged_prefix},
     {"press", f_press, GED_FUNC_PTR_NULL},
@@ -477,6 +480,7 @@ mged_setup(Tcl_Interp **interpreter)
     mged_global_variable_setup(*interpreter);
     mged_variable_setup(*interpreter);
     gedp->ged_interp = (void *)*interpreter;
+    gedp->ged_interp_eval = &mged_db_search_callback;
 
     /* Tcl needs to write nulls onto subscripted variable names */
     bu_vls_printf(&str, "%s(state)", MGED_DISPLAY_VAR);

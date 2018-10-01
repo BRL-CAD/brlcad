@@ -45,6 +45,8 @@ if(MSVC)
   set_target_properties(ifc-g PROPERTIES COMPILE_DEFINITIONS "${ifcg_IMPORTS}")
 endif(MSVC)
 
+CMAKEFILES(CMakeLists.txt)
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

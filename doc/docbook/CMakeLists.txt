@@ -54,6 +54,7 @@ add_subdirectory(system)
 CMAKEFILES(README fop.xconf.in log4j.properties)
 CMAKEFILES(README.DB_authors_notes)
 CMAKEFILES(css/brlcad.css)
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

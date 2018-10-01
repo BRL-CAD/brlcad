@@ -1,7 +1,7 @@
 /*             S U R F A C E I N T E R S E C T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2009-2016 United States Government as represented by
+ * Copyright (c) 2009-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,9 +40,11 @@
 void
 Push(const ON_Surface *surf, double *s, double *t, ON_3dVector vec)
 {
+    int ret;
     ON_3dVector ds, dt;
     ON_3dPoint value;
-    assert(surf->Ev1Der(*s, *t, value, ds, dt));
+    ret = surf->Ev1Der(*s, *t, value, ds, dt);
+    if (!ret) return;
     double delta_s, delta_t;
     ON_DecomposeVector(vec, ds, dt, &delta_s, &delta_t);
     *s += delta_s;

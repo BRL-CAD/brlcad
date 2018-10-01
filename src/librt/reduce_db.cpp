@@ -1,7 +1,7 @@
 /*                   R E D U C E _ D B . C P P
  * BRL-CAD
  *
- * Copyright (c) 2016 United States Government as represented by
+ * Copyright (c) 2016-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,7 +40,7 @@
 #include <string>
 
 
-namespace
+namespace reduce_db
 {
 
 
@@ -134,13 +134,6 @@ remove_dead_references(db_i &db)
 	}
     }
 }
-
-
-}
-
-
-namespace
-{
 
 
 struct Hierarchy;
@@ -523,7 +516,7 @@ extern "C"
     {
 	RT_CK_DBI(db);
 
-	remove_dead_references(*db);
+	reduce_db::remove_dead_references(*db);
 
 	std::set<std::string> preserved_attributes;
 	std::set<directory *> preserved_combs;
@@ -542,7 +535,7 @@ extern "C"
 	    }
 	}
 
-	Hierarchy hierarchy(*db, preserved_attributes, preserved_combs);
+	reduce_db::Hierarchy hierarchy(*db, preserved_attributes, preserved_combs);
 	hierarchy.merge();
 	hierarchy.write();
     }

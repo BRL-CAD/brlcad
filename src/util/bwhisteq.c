@@ -1,7 +1,7 @@
 /*                      B W H I S T E Q . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2016 United States Government as represented by
+ * Copyright (c) 1986-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -105,7 +105,7 @@ main(int argc, char **argv)
 	    fprintf(stderr, "result[%d] = %d\n", i, result[i]);
     }
 
-    bu_fseek(fp, 0, 0);
+    fseek(fp, 0, 0);
     while ((n = fread(buf, 1, BUFSIZE, fp)) > 0) {
 	for (i = 0; i < n; i++) {
 	    long idx = buf[i];

@@ -1,7 +1,7 @@
 /*                  D I R N A M E . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2016 United States Government as represented by
+ * Copyright (c) 2011-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -53,9 +53,9 @@ automatic_test(const char *input)
 	ans = dirname(dirname_buf_input);
 
     if (!input)
-	res = bu_dirname(NULL);
+	res = bu_path_dirname(NULL);
     else
-	res = bu_dirname(buf_input);
+	res = bu_path_dirname(buf_input);
 
     if (BU_STR_EQUAL(res, ans)) {
 	printf("%24s -> %24s [PASSED]\n", input, res);
@@ -74,13 +74,13 @@ automatic_test(const char *input)
 
 
 int
-dirname_main(int argc, char *argv[])
+main(int argc, char *argv[])
 {
+    if (argc > 2)
+       fprintf(stderr, "Usage: %s {test_string}\n", argv[0]);
+
     if (argc == 1)
        return !automatic_test(NULL);
-
-    if (argc > 2)
-       fprintf(stderr,"Usage: %s test_string\n", argv[0]);
 
     return !automatic_test(argv[1]);
 }

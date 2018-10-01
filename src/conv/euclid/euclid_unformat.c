@@ -1,7 +1,7 @@
 /*               E U C L I D _ U N F O R M A T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,6 +31,7 @@
 #include <string.h>
 
 #include "bio.h"
+#include "bu/snooze.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rt/geom.h"
@@ -50,7 +51,7 @@ main(int argc, char *argv[])
     int old_id=(-1), e;
 
     bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
-    sleep(1);
+    bu_snooze(BU_SEC2USEC(1));
 
     printf("$03");
 

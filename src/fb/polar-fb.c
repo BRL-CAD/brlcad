@@ -1,7 +1,7 @@
 /*                      P O L A R - F B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,6 +32,7 @@
 
 #include "bu/color.h"
 #include "bu/log.h"
+#include "bu/snooze.h"
 #include "fb.h"
 #include "vmath.h"
 
@@ -390,7 +391,7 @@ main (int argc, char **argv)
     void (*Fill_Func)(unsigned char *, double, double, int, int) = Fill_Empty;
 
     bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
-    sleep(1);
+    bu_snooze(BU_SEC2USEC(1));
 
     /* Initialize things */
     ProgName = *argv;

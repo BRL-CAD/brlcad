@@ -27,7 +27,6 @@ set(iges-g_SRCS
   b-spline.c
   block2.c
   brep.c
-  brlabs.c
   check_names.c
   cone.c
   conv_drawings.c
@@ -96,6 +95,7 @@ BRLCAD_ADDEXEC(g-iges "g-iges.c;iges.c" "librt;libnmg;libbu;${M_LIBRARY}")
 
 set(iges_ignore_files
   BrepHandler.cpp
+  CMakeLists.txt
   PullbackCurve.cpp
   PullbackCurve.h
   add_face.cpp

@@ -1,7 +1,7 @@
 /*                          E N V . H
  * BRL-CAD
  *
- * Copyright (c) 2007-2016 United States Government as represented by
+ * Copyright (c) 2007-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,6 +38,11 @@ __BEGIN_DECLS
 /** @file bu/env.h */
 
 BU_EXPORT extern int bu_setenv(const char *name, const char *value, int overwrite);
+
+/* Attempts to report available free RAM (not disk or swap space) on
+ * the current machine.  Returns -1 if this information is not
+ * available. */
+BU_EXPORT extern long int bu_avail_mem();
 
 /** @} */
 

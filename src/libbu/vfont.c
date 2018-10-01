@@ -1,7 +1,7 @@
 /*                         V F O N T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,7 +22,8 @@
 
 #include <stdio.h>
 #include <string.h> /* for memset */
-#include "bu/file.h"
+
+#include "bu/app.h"
 #include "bu/malloc.h"
 #include "bu/vfont.h"
 
@@ -48,7 +49,7 @@ get_font(const char* fontname, void (*vfont_log)(const char *fmt, ...))
 
     if (fontname[0] != '/') {
 	/* absolute path */
-	const char *vfont = bu_brlcad_data("vfont", 1);
+	const char *vfont = bu_brlcad_root("share/vfont", 1);
 	if (vfont)
 	    snprintf(fname, FONTNAMESZ, "%s/%s", vfont, fontname);
 	else
@@ -98,7 +99,7 @@ get_font(const char* fontname, void (*vfont_log)(const char *fmt, ...))
     /* Addresses of characters in the file are relative to point in
      * the file after the directory, so grab the current position.
      */
-    font.offset = bu_ftell(font.ffdes);
+    font.offset = ftell(font.ffdes);
 
     return font;
 }
@@ -137,7 +138,7 @@ vfont_get(char *font)
 
     /* Open the file and read in the header information. */
     if ((fp = fopen(const_font, "rb")) == NULL) {
-	snprintf(fname, FONTNAMESZ, "%s/%s", (char *)bu_brlcad_data("vfont", 0), const_font);
+	snprintf(fname, FONTNAMESZ, "%s/%s", (char *)bu_brlcad_root("share/vfont", 0), const_font);
 	if ((fp = fopen(fname, "rb")) == NULL) {
 	    snprintf(fname, FONTNAMESZ, "%s/%s", FONTDIR2, const_font);
 	    if ((fp = fopen(fname, "rb")) == NULL) {

@@ -60,6 +60,7 @@ add_executable(fftest fftest.c)
 SetTargetFolder(fftest "Compilation Utilities")
 target_link_libraries(fftest libfft ${M_LIBRARY})
 CMAKEFILES(fftest.c)
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

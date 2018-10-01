@@ -31,8 +31,7 @@
       a <emphasis>hex_code</emphasis> is supplied, that value is used as the new value
       for the flag. Similar debug commands for other <emphasis>BRL-CAD</emphasis> libraries
       are <command>debugbu</command> for <emphasis>libbu</emphasis> and
-      <command>debugnmg</command>for the NMG portion of <emphasis>librt</emphasis>. Other
-      debugging commands include <command>debugmem</command> and <command>debugdir</command>.
+      <command>debugnmg</command>for the NMG portion of <emphasis>librt</emphasis>.
     </para>
   </refsection>
 

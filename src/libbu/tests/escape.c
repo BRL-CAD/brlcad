@@ -1,7 +1,7 @@
 /*                   E S C A P E . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2016 United States Government as represented by
+ * Copyright (c) 2011-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,7 +38,7 @@ esc_compare(const char *input, const char *output, const char *correct)
 
 
 int
-escape_main(int ac, char *av[])
+main(int ac, char *av[])
 {
     int function_num = 0;
     int test_num = 0;
@@ -46,7 +46,7 @@ escape_main(int ac, char *av[])
     char buffer[32];
 
     if (ac < 3)
-	fprintf(stderr,"Usage: %s function_to_test test_number\n", av[0]);
+	bu_exit(1, "Usage: %s {function_number} {test_number}\n", av[0]);
 
     sscanf(av[1], "%d", &function_num);
     sscanf(av[2], "%d", &test_num);
@@ -180,16 +180,19 @@ escape_main(int ac, char *av[])
 		bufp = bu_str_unescape(bu_str_escape("abc", "b", buffer, 32), NULL, 0);
 		pass = esc_compare("abc", bufp, "abc");
 		bu_free(bufp, NULL);
+		/* fall through */
 
 	    case 2:
 		bufp = bu_str_unescape(bu_str_escape("abc\\cba", "b", buffer, 32), NULL, 0);
 		pass = esc_compare("abc\\cba", bufp, "abccba");
 		bu_free(bufp, NULL);
+		/* fall through */
 
 	    case 3:
 		bufp = bu_str_unescape(bu_str_escape("abc\\\\cba", "b", buffer, 32), NULL, 0);
 		pass = esc_compare("abc\\\\cba", bufp, "abc\\cba");
 		bu_free(bufp, NULL);
+		/* fall through */
 
 	    case 4:
 		bufp = bu_str_unescape(bu_str_escape("abc\\\\\\c\\ba\\", "b", buffer, 32), NULL, 0);

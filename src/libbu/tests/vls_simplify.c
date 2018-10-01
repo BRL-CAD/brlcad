@@ -1,7 +1,7 @@
 /*                   V L S _ S I M P L I F Y . C
  * BRL-CAD
  *
- * Copyright (c) 2015-2016 United States Government as represented by
+ * Copyright (c) 2015-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@
 
 
 int
-vls_simplify_main(int argc, char **argv)
+main(int argc, char *argv[])
 {
     int ret = 0;
     struct bu_vls vstr = BU_VLS_INIT_ZERO;
@@ -39,14 +39,18 @@ vls_simplify_main(int argc, char **argv)
     const char *trim_chars = NULL;
 
     /* Sanity check */
-    if (argc < 3) bu_exit(1, "ERROR: wrong number of parameters");
+    if (argc < 3)
+	bu_exit(1, "Usage: %s {start_str} {expected_str} {keep_chars} {dedup_chars} {trim_chars}\n", argv[0]);
 
     bu_vls_sprintf(&vstr, "%s", argv[1]);
     expected = argv[2];
 
-    if (argc > 3 && strlen(argv[3]) > 0) keep_chars = argv[3];
-    if (argc > 4 && strlen(argv[4]) > 0) dedup_chars = argv[4];
-    if (argc > 5 && strlen(argv[5]) > 0) trim_chars = argv[5];
+    if (argc > 3 && strlen(argv[3]) > 0)
+	keep_chars = argv[3];
+    if (argc > 4 && strlen(argv[4]) > 0)
+	dedup_chars = argv[4];
+    if (argc > 5 && strlen(argv[5]) > 0)
+	trim_chars = argv[5];
 
     (void)bu_vls_simplify(&vstr, keep_chars, dedup_chars, trim_chars);
 

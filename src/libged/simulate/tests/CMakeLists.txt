@@ -4,6 +4,7 @@ if(BRLCAD_ENABLE_BULLET)
 endif(BRLCAD_ENABLE_BULLET)
 
 CMAKEFILES(simulate_test.cpp)
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8
