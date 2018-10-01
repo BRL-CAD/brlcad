@@ -1,7 +1,7 @@
 /*                        O C T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2016 United States Government as represented by
+ * Copyright (c) 1986-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -311,7 +311,7 @@ write_Octree(Octree *parentp, FILE *fp)
 {
     PtList *ptp;
     F_Hdr_Ptlist hdr_ptlist;
-    off_t addr = bu_ftell(fp);
+    off_t addr = ftell(fp);
 
     if (addr < 0) {
 	bu_log("Error: couldn't get input file's current file position.\n");
@@ -337,7 +337,7 @@ write_Octree(Octree *parentp, FILE *fp)
     }
     if (hdr_ptlist.f_length > 0) {
 	/* Go back and fudge point count.			*/
-	if (bu_fseek(fp, addr, 0)) {
+	if (fseek(fp, addr, 0)) {
 	    bu_log("\"%s\"(%d) Fseek failed.\n", __FILE__, __LINE__);
 	    return 0;
 	}
@@ -349,7 +349,7 @@ write_Octree(Octree *parentp, FILE *fp)
 	    return 0;
 	}
 	/* Re-position write pointer to end-of-file.		*/
-	if (bu_fseek(fp, 0, 2)) {
+	if (fseek(fp, 0, 2)) {
 	    bu_log("\"%s\"(%d) Fseek failed.\n", __FILE__, __LINE__);
 	    return 0;
 	}
@@ -393,13 +393,8 @@ ir_shootray_octree(struct application *ap)
 {
     vect_t inv_dir;	/* Inverses of ap->a_ray.r_dir */
     Octree *leafp = NULL;	/* Intersected octree leaf.	*/
-    inv_dir[X] = inv_dir[Y] = inv_dir[Z] = INFINITY;
-    if (!ZERO(ap->a_ray.r_dir[X]))
-	inv_dir[X] = 1.0 / ap->a_ray.r_dir[X];
-    if (!ZERO(ap->a_ray.r_dir[Y]))
-	inv_dir[Y] = 1.0 / ap->a_ray.r_dir[Y];
-    if (!ZERO(ap->a_ray.r_dir[Z]))
-	inv_dir[Z] = 1.0 / ap->a_ray.r_dir[Z];
+    VINVDIR(inv_dir, ap->a_ray.r_dir);
+
     /* Descend octree from root to find the closest intersected leaf node.
        Store minimum hit distance in "a_uvec[0]" field of application
        structure.  Implicitly return the leaf node in "leafp".

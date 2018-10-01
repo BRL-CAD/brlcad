@@ -1,7 +1,7 @@
 /*                     A N I M _ T I M E . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2016 United States Government as represented by
+ * Copyright (c) 1993-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,6 +36,7 @@
 #include "vmath.h"
 #include "bu/getopt.h"
 #include "bu/malloc.h"
+#include "bu/snooze.h"
 
 
 #define OPT_STR "ds:e:i:f:qm:vh?"
@@ -162,7 +163,7 @@ main(int argc, char **argv)
     double end, *x, *y, *z;
 
     fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
-    sleep(1);
+    bu_snooze(BU_SEC2USEC(1));
 
     if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))) {
 	usage();

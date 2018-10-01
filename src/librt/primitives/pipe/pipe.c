@@ -1,7 +1,7 @@
 /*                          P I P E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2016 United States Government as represented by
+ * Copyright (c) 1990-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -48,6 +48,13 @@
 #include "wdb.h"
 #include "../../librt_private.h"
 
+#if defined(HAVE_ISNAN) && !defined(HAVE_DECL_ISNAN) && !defined(isnan)
+extern int isnan(double x);
+#endif
+
+#if defined(HAVE_ISINF) && !defined(HAVE_DECL_ISINF) && !defined(isinf)
+extern int isinf(double x);
+#endif
 
 struct id_pipe {
     struct bu_list l;

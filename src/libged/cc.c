@@ -1,7 +1,7 @@
 /*                         C C . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2016 United States Government as represented by
+ * Copyright (c) 2009-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,11 +32,6 @@
 #include "bu/cmd.h"
 
 #include "./ged_private.h"
-
-
-#define RT_TERMINAL_WIDTH 80
-#define RT_COLUMNS ((RT_TERMINAL_WIDTH + V4_MAXNAME - 1) / V4_MAXNAME)
-
 
 /*
  * List constraint objects in this database

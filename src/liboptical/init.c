@@ -1,7 +1,7 @@
 /*                          I N I T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2016 United States Government as represented by
+ * Copyright (c) 1998-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,20 +35,19 @@
 #include "raytrace.h"
 #include "optical.h"
 
-int rt_verbosity = -1;	/* blather incessantly by default */
 int rdebug;			/* RT program debugging */
 double AmbientIntensity = 0.4;	/* Ambient light intensity */
-struct bn_table *spectrum = NULL;
 
-#ifdef RT_MULTISPECTRAL
-struct bn_tabdata *background = NULL;	/* radiant emittance of bg */
-#else
 vect_t background = VINIT_ZERO; /* Black */
-#endif
 
 /* initialized in the app code view handler */
 struct region env_region;
 
+extern struct mfuncs camo_mfuncs[];
+extern struct mfuncs light_mfuncs[];
+extern struct mfuncs stk_mfuncs[];
+extern struct mfuncs phg_mfuncs[];
+extern struct mfuncs noise_mfuncs[];
 
 #define MFUNCS(_name)							\
     { mlib_add_shader(headp, _name); }
@@ -70,7 +69,6 @@ optical_shader_init(struct mfuncs **headp)
     MFUNCS(stk_mfuncs);
     MFUNCS(noise_mfuncs);
 
-#ifndef RT_MULTISPECTRAL
     DMFUNCS(null_mfuncs); /* null test shader */
     DMFUNCS(cloud_mfuncs);
     DMFUNCS(spm_mfuncs);
@@ -98,7 +96,6 @@ optical_shader_init(struct mfuncs **headp)
     DMFUNCS(osl_mfuncs);
 #endif
 
-#endif
 }
 
 

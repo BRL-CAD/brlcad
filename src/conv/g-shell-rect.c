@@ -1,7 +1,7 @@
 /*                  G - S H E L L - R E C T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,6 +37,7 @@
 #include "bio.h"
 
 /* interface headers */
+#include "bu/app.h"
 #include "bu/debug.h"
 #include "bu/getopt.h"
 #include "vmath.h"
@@ -427,24 +428,7 @@ Get_extremes(struct shell *s, struct application *ap, struct hitmiss **hitmiss,
     rd.seghead = &seghead;
 
     /* Compute the inverse of the direction cosines */
-    if (!ZERO(rp->r_dir[X])) {
-	rd.rd_invdir[X]=1.0 / rp->r_dir[X];
-    } else {
-	rd.rd_invdir[X] = INFINITY;
-	rp->r_dir[X] = 0.0;
-    }
-    if (!ZERO(rp->r_dir[Y])) {
-	rd.rd_invdir[Y]=1.0/rp->r_dir[Y];
-    } else {
-	rd.rd_invdir[Y] = INFINITY;
-	rp->r_dir[Y] = 0.0;
-    }
-    if (!ZERO(rp->r_dir[Z])) {
-	rd.rd_invdir[Z]=1.0/rp->r_dir[Z];
-    } else {
-	rd.rd_invdir[Z] = INFINITY;
-	rp->r_dir[Z] = 0.0;
-    }
+    VINVDIR(rd.rd_invdir, rp->r_dir);
     rd.magic = NMG_RAY_DATA_MAGIC;
 
     nmg_isect_ray_model((struct nmg_ray_data *)&rd,&RTG.rtg_vlfree);
@@ -1045,12 +1029,11 @@ shrink_wrap(struct shell *s)
     for (vert_no = 0; vert_no < BU_PTBL_LEN(&extra_verts); vert_no++) {
 	struct vertex *v;
 	struct vertexuse *vu;
-	vect_t dir;
+	vect_t dir = VINIT_ZERO;
 	vect_t abs_dir;
 	int dir_index;
 
 	v = (struct vertex *)BU_PTBL_GET(&extra_verts, vert_no);
-	VSETALL(dir, 0.0);
 	for (BU_LIST_FOR(vu, vertexuse, &v->vu_hd)) {
 	    vect_t norm;
 

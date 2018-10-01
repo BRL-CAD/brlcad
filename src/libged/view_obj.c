@@ -1,7 +1,7 @@
 /*                      V I E W _ O B J . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2016 United States Government as represented by
+ * Copyright (c) 1997-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -164,7 +164,6 @@ vo_open_cmd(const char *oname)
     vop->vo_coord = 'v';
     vop->vo_rotate_about = 'v';
     vo_update(vop, 0);
-    BU_LIST_INIT(&vop->vo_observers.l);
     vop->vo_callback = (void (*)())0;
 
     /* append to list of view_obj's */
@@ -1950,7 +1949,7 @@ vo_arot_cmd(struct view_obj *vop,
 	    int (*func)())
 {
     mat_t newrot;
-    point_t pt;
+    point_t pt = VINIT_ZERO;
     vect_t axis;
 
     /* intentionally double for scan */
@@ -1990,7 +1989,6 @@ vo_arot_cmd(struct view_obj *vop,
 	return TCL_ERROR;
     }
 
-    VSETALL(pt, 0.0);
     VUNITIZE(axis);
 
     bn_mat_arb_rot(newrot, pt, axis, angle*DEG2RAD);

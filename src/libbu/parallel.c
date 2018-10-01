@@ -1,7 +1,7 @@
 /*                      P A R A L L E L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,38 +26,48 @@
 #include <string.h>
 #include <signal.h>
 
+#ifdef HAVE_SYS_TYPES_H
+#  include <sys/types.h>
+/* sys/sysctl.h may need help with c90-era BSD/XOPEN API */
+#  ifndef _U_LONG
+#    define u_long unsigned long
+#  endif
+#  ifndef _U_INT
+#    define u_int unsigned int
+#  endif
+#  ifndef _U_SHORT
+#    define u_short unsigned short
+#  endif
+#  ifndef _U_CHAR
+#    define u_char unsigned char
+#  endif
+#endif
+
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif
 
 #ifdef linux
-#  include <sys/types.h>
 #  include <sys/stat.h>
 #endif
 
 #if defined(__FreeBSD__) || defined(__OpenBSD__)
-#  include <sys/types.h>
 #  include <sys/param.h>
 #  include <sys/sysctl.h>
 #  include <sys/stat.h>
 #endif
 
 #ifdef __APPLE__
-#  include <sys/types.h>
 #  include <sys/stat.h>
 #  include <sys/param.h>
 #  include <sys/sysctl.h>
 #endif
 
 #ifdef __sp3__
-#  include <sys/types.h>
 #  include <sys/sysconfig.h>
 #  include <sys/var.h>
 #endif
 
-#ifdef HAVE_SYS_TYPES_H
-#  include <sys/types.h>
-#endif
 #ifdef HAVE_ULOCKS_H
 #  include <ulocks.h>
 #endif
@@ -93,7 +103,7 @@
 #  define rt_thread_t pthread_t
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
 #  define rt_thread_t HANDLE
 #endif
 
@@ -103,9 +113,16 @@
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/parallel.h"
+#include "bu/snooze.h"
 #include "bu/str.h"
 
 #include "./parallel.h"
+
+/* #define CPP11THREAD */
+
+#if defined(CPP11THREAD)
+void parallel_cpp11thread(void (*func)(int, void *), size_t ncpu, void *arg);
+#endif /* CPP11THREAD */
 
 
 typedef enum {
@@ -320,6 +337,7 @@ bu_avail_cpus(void)
 
 #ifdef PARALLEL
 
+#if !defined(HAVE_THREAD_LOCAL)  || !defined(CPP11THREAD)
 /* this function provides book-keeping so that we give out unique
  * thread identifiers and for tracking a thread's parent context.
  *
@@ -394,14 +412,16 @@ parallel_wait_for_slot(int throttle, struct parallel_info *parent, size_t max_th
 	if (threads < max_threads || !throttle) {
 	    return;
 	}
-	sleep(1);
+	bu_snooze(BU_SEC2USEC(1));
     }
 }
 
 
-HIDDEN void
-parallel_interface_arg(struct thread_data *user_thread_data)
+HIDDEN void *
+parallel_interface_arg(void *utd)
 {
+    struct thread_data *user_thread_data = (struct thread_data *)utd;
+
     /* keep track of our parallel ID number */
     thread_set_cpu(user_thread_data->cpu_id);
 
@@ -426,6 +446,7 @@ parallel_interface_arg(struct thread_data *user_thread_data)
 
     parallel_mapping(PARALLEL_PUT, user_thread_data->cpu_id, 0);
 
+    return NULL;
 }
 
 
@@ -445,7 +466,7 @@ parallel_interface_arg_stub(struct thread_data *user_thread_data)
 }
 #endif
 
-
+#endif /* !HAVE_THREAD_LOCAL || !CPP11THREAD */
 #endif /* PARALLEL */
 
 
@@ -460,6 +481,22 @@ bu_parallel(void (*func)(int, void *), size_t ncpu, void *arg)
     bu_log("bu_parallel(%zu., %p):  Not compiled for PARALLEL machine, running single-threaded\n", ncpu, arg);
     /* do the work anyways */
     (*func)(0, arg);
+
+#elif defined(HAVE_THREAD_LOCAL) && defined(CPP11THREAD)
+
+
+    if (!func)
+	return; /* nothing to do */
+
+    if (ncpu == 1) {
+	func(ncpu, arg);
+	return;
+    } else if (ncpu > MAX_PSW) {
+	bu_log("WARNING: bu_parallel() ncpu(%zd) > MAX_PSW(%d), adjusting ncpu\n", ncpu, MAX_PSW);
+	ncpu = MAX_PSW;
+    }
+
+    parallel_cpp11thread(func, ncpu, arg);
 
 #else
 
@@ -511,7 +548,7 @@ bu_parallel(void (*func)(int, void *), size_t ncpu, void *arg)
 	/* otherwise, limit ourselves to what is actually available */
 	avail_cpus = bu_avail_cpus();
 	if (ncpu > avail_cpus) {
-	    bu_log("%zd cpus requested, but only %d available\n", ncpu, avail_cpus);
+	    bu_log("%zd cpus requested, but only %zu available\n", ncpu, avail_cpus);
 	    ncpu = avail_cpus;
 	}
     }
@@ -588,7 +625,7 @@ bu_parallel(void (*func)(int, void *), size_t ncpu, void *arg)
     for (x = 0; x < ncpu; x++) {
 	parallel_wait_for_slot(throttle, parent, ncpu);
 
-	if (thr_create(0, 0, (void *(*)(void *))parallel_interface_arg, &thread_context[x], 0, &thread)) {
+	if (thr_create(0, 0, parallel_interface_arg, &thread_context[x], 0, &thread)) {
 	    bu_log("ERROR: bu_parallel: thr_create(0x0, 0x0, 0x%x, 0x0, 0, 0x%x) failed for processor thread # %d\n",
 		   parallel_interface_arg, &thread, x);
 	    /* Not much to do, lump it */
@@ -660,7 +697,7 @@ bu_parallel(void (*func)(int, void *), size_t ncpu, void *arg)
 
 	parallel_wait_for_slot(throttle, parent, ncpu);
 
-	if (pthread_create(&thread, &attrs, (void *(*)(void *))parallel_interface_arg, &thread_context[x])) {
+	if (pthread_create(&thread, &attrs, parallel_interface_arg, &thread_context[x])) {
 	    bu_log("ERROR: bu_parallel: pthread_create(0x0, 0x0, 0x%lx, 0x0, 0, %p) failed for processor thread # %zu\n",
 		   (unsigned long int)parallel_interface_arg, (void *)&thread, x);
 
@@ -679,12 +716,8 @@ bu_parallel(void (*func)(int, void *), size_t ncpu, void *arg)
 
     if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL)) {
 	for (i = 0; i < nthreadc; i++) {
-	    bu_log("bu_parallel(): thread_tbl[%d] = %p\n", i, (void *)thread_tbl[i]);
+	    bu_log("bu_parallel(): thread_tbl[%zu] = %p\n", i, (void *)thread_tbl[i]);
 	}
-#    ifdef SIGINFO
-	/* may be BSD-only (calls _thread_dump_info()) */
-	raise(SIGINFO);
-#    endif
     }
 
     /*
@@ -696,12 +729,12 @@ bu_parallel(void (*func)(int, void *), size_t ncpu, void *arg)
 	int ret;
 
 	if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL))
-	    bu_log("bu_parallel(): waiting for thread %p to complete:\t(loop:%d) (nthreadc:%zu) (nthreade:%zu)\n",
+	    bu_log("bu_parallel(): waiting for thread %p to complete:\t(loop:%zu) (nthreadc:%zu) (nthreade:%zu)\n",
 		   (void *)thread_tbl[x], x, nthreadc, nthreade);
 
 	if ((ret = pthread_join(thread_tbl[x], NULL)) != 0) {
 	    /* badness happened */
-	    bu_log("pthread_join(thread_tbl[%d]=%p) ret=%d\n", x, (void *)thread_tbl[x], ret);
+	    bu_log("pthread_join(thread_tbl[%zu]=%p) ret=%d\n", x, (void *)thread_tbl[x], ret);
 	}
 
 	nthreade++;
@@ -720,7 +753,7 @@ bu_parallel(void (*func)(int, void *), size_t ncpu, void *arg)
 #  endif /* end if posix threads */
 
 
-#  ifdef WIN32
+#  ifdef _WIN32
     /* Create the Win32 threads */
     nthreadc = 0;
     for (i = 0; i < ncpu; i++) {

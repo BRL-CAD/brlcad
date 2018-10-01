@@ -1,7 +1,7 @@
 /*                       I F _ N U L L . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2016 United States Government as represented by
+ * Copyright (c) 1989-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -279,13 +279,13 @@ fb fb_null_interface =  {
     _fb_null_writerect,	/* bw rectangle write */
     _fb_null_configure_window,
     _fb_null_refresh,
-    _fb_null_poll,		/* handle events */
-    _fb_null_flush,		/* flush output */
-    _fb_null_free,		/* free resources */
-    _fb_null_help,		/* help message */
+    _fb_null_poll,	/* handle events */
+    _fb_null_flush,	/* flush output */
+    _fb_null_free,	/* free resources */
+    _fb_null_help,	/* help message */
     "Null Device",	/* device description */
-    32*1024,		/* max width */
-    32*1024,		/* max height */
+    FB_XMAXSCREEN,	/* max width */
+    FB_YMAXSCREEN,	/* max height */
     "/dev/null",	/* short device name */
     512,		/* default/current width */
     512,		/* default/current height */

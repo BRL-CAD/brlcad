@@ -1,7 +1,7 @@
 /*                        E X T E R N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -113,8 +113,7 @@ extern void do_line(int xpos, int ypos, const char *line, RGBpixel (*menu_border
 extern int pad_open(int n);
 extern void pad_close(void);
 
-extern void pos_close();
-extern int fb_Init_Menu();
+extern void pos_close(void);
 
 extern void clr_CRNL();
 extern void clr_Echo();

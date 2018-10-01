@@ -1,7 +1,7 @@
 /*                          L A B E L S . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2016 United States Government as represented by
+ * Copyright (c) 1998-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -506,6 +506,8 @@ dm_label_primitive(struct rt_wdb *wdbp,
 	case DB5_MINORTYPE_BRLCAD_SKETCH:
 	    break;
 	case DB5_MINORTYPE_BRLCAD_ANNOT:
+	    break;
+	case DB5_MINORTYPE_BRLCAD_SCRIPT:
 	    break;
 	case DB5_MINORTYPE_BRLCAD_EXTRUDE:
 	    break;

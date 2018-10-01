@@ -1,7 +1,7 @@
 /*                          D M - T K . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2016 United States Government as represented by
+ * Copyright (c) 1988-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -46,15 +46,11 @@
 #include <X11/Xutil.h>
 #include <X11/X.h>
 
-#define USE_DIALS_AND_BUTTONS 0
-
 #ifdef HAVE_X11_XOSDEFS_H
 #  include <X11/Xfuncproto.h>
 #  include <X11/Xosdefs.h>
 #endif
-#if USE_DIALS_AND_BUTTONS
-#  include <X11/extensions/XInput.h>
-#endif
+
 #if defined(linux)
 #  undef X_NOT_STDC_ENV
 #  undef X_NOT_POSIX

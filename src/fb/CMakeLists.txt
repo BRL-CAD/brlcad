@@ -65,10 +65,9 @@ endif(CPP_DLL_DEFINES)
 
 BRLCAD_ADDEXEC(spm-fb spm-fb.c "libfb;libbn")
 
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
-  add_subdirectory(tests)
-endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
+add_subdirectory(tests)
 
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

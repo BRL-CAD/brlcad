@@ -2,7 +2,7 @@
 #
 # BRL-CAD
 #
-# Copyright (c) 2011-2016 United States Government as represented by
+# Copyright (c) 2011-2018 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -220,7 +220,7 @@ if(SVN_EXEC AND EXISTS "@CMAKE_SOURCE_DIR@/.svn")
   endif(BUILD_FILES_NOT_IN_SVN)
 
   # Either of the previous two cases halts distcheck until fixed.
-  mark_as_advanced(FORCE_DISTCHECK)
+  set(FORCE_DISTCHECK @FORCE_DISTCHECK@)
   if (SVN_FILES_NOT_IN_BUILD OR BUILD_FILES_NOT_IN_SVN)
     if (NOT FORCE_DISTCHECK)
       message(FATAL_ERROR "ERROR: Distcheck cannot proceed until build files and repo are in sync (set -DFORCE_DISTCHECK=ON to override)")

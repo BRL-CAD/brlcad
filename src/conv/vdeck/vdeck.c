@@ -1,7 +1,7 @@
 /*                         V D E C K . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2016 United States Government as represented by
+ * Copyright (c) 1990-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -642,7 +642,7 @@ gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct
     if (debug) {
 	struct bu_vls str = BU_VLS_INIT_ZERO;
 	/* verbose = 1, mm2local = 1.0 */
-	if (ip->idb_meth->ft_describe(&str, ip, 1, 1.0, &rt_uniresource, dbip) < 0) {
+	if (ip->idb_meth->ft_describe(&str, ip, 1, 1.0) < 0) {
 	    bu_log("rt_gettree_leaf(%s):  solid describe failure\n",
 		   dp->d_namep);
 	}
@@ -1218,7 +1218,7 @@ deck(char *prefix)
     ewrite(solfp, LF, 1);
 
     /* Save space for number of solids and regions.			*/
-    savsol = bu_ftell(solfp);
+    savsol = ftell(solfp);
     if (savsol < 0) {
 	perror("ftell");
     }
@@ -1272,7 +1272,7 @@ deck(char *prefix)
 
     /* Go back, and add number of solids and regions on second card. */
     if (savsol >= 0)
-	bu_fseek(solfp, savsol, 0);
+	fseek(solfp, savsol, 0);
 
     itoa(nns, buff, 5);
     ewrite(solfp, buff, 5);

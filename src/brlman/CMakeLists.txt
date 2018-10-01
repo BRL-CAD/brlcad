@@ -28,6 +28,7 @@ add_dependencies(brlman brlman_tcl_cp)
 foreach(item ${tclindex_target_list})
   add_dependencies(brlman ${item})
 endforeach(item ${tclindex_target_list})
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

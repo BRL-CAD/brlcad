@@ -1,7 +1,7 @@
 /*                           T E A . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -101,7 +101,7 @@ main(int argc, char **argv)
     while ((i=bu_getopt(argc, argv, "dh?")) != -1) {
 	switch (i) {
 	    case 'd':
-		RTG.debug |= DEBUG_MEM | DEBUG_MEM_FULL;
+		RTG.debug |= DEBUG_MEM;
 		break;
 	    default:
 		bu_log("Usage: %s [-d]\n", *argv);

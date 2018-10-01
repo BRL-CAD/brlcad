@@ -61,6 +61,7 @@ if(MSVC)
 endif(MSVC)
 
 set(IGNORE_FILES
+  CMakeLists.txt
   AP203.h
   Assembly_Product.h
   Comb.h

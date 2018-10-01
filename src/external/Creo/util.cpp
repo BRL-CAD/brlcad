@@ -1,7 +1,7 @@
 /*                    U T I L . C P P
  * BRL-CAD
  *
- * Copyright (c) 2017 United States Government as represented by
+ * Copyright (c) 2017-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -493,7 +493,7 @@ ProError PopupMsg(const char *title, const char *msg)
 {
     wchar_t wtitle[CREO_NAME_MAX];
     wchar_t wmsg[CREO_MSG_MAX];
-    ProUIMessageButton* button;
+    ProUIMessageButton* button = NULL;
     ProUIMessageButton bresult;
 
     ProArrayAlloc(1, sizeof(ProUIMessageButton), 1, (ProArray*)&button);

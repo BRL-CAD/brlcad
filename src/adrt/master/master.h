@@ -1,7 +1,7 @@
 /*                        M A S T E R . H
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2016 United States Government as represented by
+ * Copyright (c) 2007-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,7 +26,7 @@
 
 #include "rt/tie.h"
 
-extern void master_init(int port, int obs_port, char *list, char *exec, char *comp_host);
+extern void master_init(int port, int obs_port, char *list, char *exec, char *comp_host, int verbose);
 
 extern unsigned char go_daemon_mode;
 extern unsigned int master_listener_result;

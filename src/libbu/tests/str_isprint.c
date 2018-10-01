@@ -1,7 +1,7 @@
 /*                     S T R _ I S P R I N T . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2016 United States Government as represented by
+ * Copyright (c) 2007-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -47,12 +47,12 @@ test_str_isprint(const char *inp , int texp)
 
 
 int
-str_isprint_main(int argc, char **argv)
+main(int argc, char *argv[])
 {
     int test_num = 0;
 
     if (argc < 2) {
-       fprintf(stderr,"Usage: %s test_num\n", argv[0]);
+       fprintf(stderr, "Usage: %s {test_num}\n", argv[0]);
        return 1;
     }
 

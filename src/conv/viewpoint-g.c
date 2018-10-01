@@ -1,7 +1,7 @@
 /*                   V I E W P O I N T - G . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2016 United States Government as represented by
+ * Copyright (c) 1993-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,7 +38,9 @@
 #include "bio.h"
 
 /* interface headers */
+#include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/snooze.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rt/geom.h"
@@ -94,7 +96,7 @@ main(int argc, char **argv)
     struct wmember reg_head;
 
     bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
-    sleep(1);
+    bu_snooze(BU_SEC2USEC(1));
 
     bu_setprogname(argv[0]);
 

@@ -50,6 +50,12 @@ gmtime64_r() is a 64-bit equivalent of gmtime_r().
 #include "time64.h"
 #include "time64_limits.h"
 
+#include "bu/log.h"
+
+#ifndef HAVE_DECL_TZSET
+extern void tzset (void);
+#endif
+
 /* Max/min for mktime() */
 /* MODIFIED: Assign to each field so as not to depend on system field
    ordering
@@ -322,40 +328,6 @@ Time64_T timegm64(const struct TM *date) {
     return(seconds);
 }
 
-
-static int check_tm(struct TM *tm)
-{
-    /* Don't forget leap seconds */
-    assert(tm->tm_sec >= 0);
-    assert(tm->tm_sec <= 61);
-
-    assert(tm->tm_min >= 0);
-    assert(tm->tm_min <= 59);
-
-    assert(tm->tm_hour >= 0);
-    assert(tm->tm_hour <= 23);
-
-    assert(tm->tm_mday >= 1);
-    assert(tm->tm_mday <= days_in_month[IS_LEAP(tm->tm_year)][tm->tm_mon]);
-
-    assert(tm->tm_mon  >= 0);
-    assert(tm->tm_mon  <= 11);
-
-    assert(tm->tm_wday >= 0);
-    assert(tm->tm_wday <= 6);
-
-    assert(tm->tm_yday >= 0);
-    assert(tm->tm_yday <= length_of_year[IS_LEAP(tm->tm_year)]);
-
-#ifdef HAS_TM_TM_GMTOFF
-    assert(tm->tm_gmtoff >= -24 * 60 * 60);
-    assert(tm->tm_gmtoff <=  24 * 60 * 60);
-#endif
-
-    return 1;
-}
-
-
 /* The exceptional centuries without leap years cause the cycle to
    shift by 16
 */
@@ -399,7 +371,7 @@ static Year cycle_offset(Year year)
 */
 static int safe_year(const Year year)
 {
-    int ret;
+    int ret = 0;
     Year year_cycle;
 
     if( year >= MIN_SAFE_YEAR && year <= MAX_SAFE_YEAR ) {
@@ -424,19 +396,19 @@ static int safe_year(const Year year)
     if( year_cycle < 0 )
         year_cycle = SOLAR_CYCLE_LENGTH + year_cycle;
 
-    assert( year_cycle >= 0 );
-    assert( year_cycle < SOLAR_CYCLE_LENGTH );
+    BU_ASSERT( year_cycle >= 0 );
+    BU_ASSERT( year_cycle < SOLAR_CYCLE_LENGTH );
     if( year < MIN_SAFE_YEAR )
         ret = safe_years_low[year_cycle];
     else if( year > MAX_SAFE_YEAR )
         ret = safe_years_high[year_cycle];
     else
-        assert(0);
+        bu_bomb("unexpected value for year");
 
     TIME64_TRACE3("# year: %lld, year_cycle: %lld, safe_year: %d\n",
           year, year_cycle, ret);
 
-    assert(ret <= MAX_SAFE_YEAR && ret >= MIN_SAFE_YEAR);
+    BU_ASSERT(ret <= MAX_SAFE_YEAR && ret >= MIN_SAFE_YEAR);
 
     return ret;
 }
@@ -510,7 +482,7 @@ void copy_TM64_to_tm(const struct TM *src, struct tm *dest) {
 struct tm * fake_localtime_r(const time_t *ytime, struct tm *result) {
     const struct tm *static_result = localtime(ytime);
 
-    assert(result != NULL);
+    BU_ASSERT(result != NULL);
 
     if( static_result == NULL ) {
         memset(result, 0, sizeof(*result));
@@ -527,7 +499,7 @@ struct tm * fake_localtime_r(const time_t *ytime, struct tm *result) {
 struct tm * fake_gmtime_r(const time_t *ytime, struct tm *result) {
     const struct tm *static_result = gmtime(ytime);
 
-    assert(result != NULL);
+    BU_ASSERT(result != NULL);
 
     if( static_result == NULL ) {
         memset(result, 0, sizeof(*result));
@@ -621,7 +593,7 @@ struct TM *gmtime64_r (const Time64_T *in_time, struct TM *p)
     Year year = 70;
     int cycles = 0;
 
-    assert(p != NULL);
+    BU_ASSERT(p != NULL);
 
     /* Use the system gmtime() if time_t is small enough */
     if( SHOULD_USE_SYSTEM_GMTIME(*in_time) ) {
@@ -630,7 +602,6 @@ struct TM *gmtime64_r (const Time64_T *in_time, struct TM *p)
         GMTIME_R(&safe_time, &safe_date);
 
         copy_tm_to_TM64(&safe_date, p);
-        assert(check_tm(p));
 
         return p;
     }
@@ -732,8 +703,6 @@ struct TM *gmtime64_r (const Time64_T *in_time, struct TM *p)
     p->tm_mon  = v_tm_mon;
     p->tm_wday = v_tm_wday;
 
-    assert(check_tm(p));
-
     return p;
 }
 
@@ -746,7 +715,7 @@ struct TM *localtime64_r (const Time64_T *ytime, struct TM *local_tm)
     Year orig_year;
     int month_diff;
 
-    assert(local_tm != NULL);
+    BU_ASSERT(local_tm != NULL);
 
     /* Use the system localtime() if time_t is small enough */
     if( SHOULD_USE_SYSTEM_LOCALTIME(*ytime) ) {
@@ -757,7 +726,6 @@ struct TM *localtime64_r (const Time64_T *ytime, struct TM *local_tm)
         LOCALTIME_R(&safe_time, &safe_date);
 
         copy_tm_to_TM64(&safe_date, local_tm);
-        assert(check_tm(local_tm));
 
         return local_tm;
     }
@@ -821,8 +789,6 @@ struct TM *localtime64_r (const Time64_T *ytime, struct TM *local_tm)
     */
     if( !IS_LEAP(local_tm->tm_year) && local_tm->tm_yday == 365 )
         local_tm->tm_yday--;
-
-    assert(check_tm(local_tm));
 
     return local_tm;
 }

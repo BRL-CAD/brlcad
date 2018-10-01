@@ -1,7 +1,7 @@
 /*                  C O M B _ S T D . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2016 United States Government as represented by
+ * Copyright (c) 2008-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -179,7 +179,8 @@ add_operand(struct ged *gedp, struct bu_list *hp, char *name)
     ptr_lparen = strchr(name, '(');
     ptr_rparen = strchr(name, ')');
 
-    RT_GET_TREE(node, &rt_uniresource);
+    BU_GET(node, union tree);
+    RT_TREE_INIT(node);
     node->tr_op = OP_DB_LEAF;
     node->tr_l.tl_mat = (matp_t)NULL;
     if (ptr_lparen || ptr_rparen) {
@@ -629,10 +630,10 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 	    comb->los = gedp->ged_wdbp->wdb_los_default;
 	    comb->GIFTmater = gedp->ged_wdbp->wdb_mat_default;
 
-	    bu_vls_printf(gedp->ged_result_str, "Creating region with attrs: region_id=%d, ", comb->region_id);
+	    bu_vls_printf(gedp->ged_result_str, "Creating region with attrs: region_id=%ld, ", comb->region_id);
 	    if (comb->aircode)
-		bu_vls_printf(gedp->ged_result_str, "air=%d, ", comb->aircode);
-	    bu_vls_printf(gedp->ged_result_str, "los=%d, material_id=%d\n",
+		bu_vls_printf(gedp->ged_result_str, "air=%ld, ", comb->aircode);
+	    bu_vls_printf(gedp->ged_result_str, "los=%ld, material_id=%ld\n",
 			  comb->los,
 			  comb->GIFTmater);
 

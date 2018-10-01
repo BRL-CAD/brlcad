@@ -1,7 +1,7 @@
 /*                   P A R T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2017 United States Government as represented by
+ * Copyright (c) 2017-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -597,7 +597,7 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
 	}
 
 	/* Check solidity */
-	int bot_is_solid = !bg_trimesh_solid(vert_tree->curr_vert, (size_t)(faces.size()/3), vert_tree->the_array, &faces[0], NULL);
+	int bot_is_solid = !bg_trimesh_solid((int)vert_tree->curr_vert, (int)faces.size() / 3, vert_tree->the_array, &faces[0], NULL);
 
 	/* If it's not solid and we're testing solidity, keep trying... */
 	if (!bot_is_solid) {

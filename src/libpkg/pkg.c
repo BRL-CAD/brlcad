@@ -1,7 +1,7 @@
 /*                           P K G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -81,7 +81,7 @@
 #  include <sys/netinet/tcp.h>
 #endif
 
-#ifdef HAVE_WRITEV
+#ifdef HAVE_SYS_UIO_H
 #  include <sys/uio.h>		/* for struct iovec (writev) */
 #endif
 
@@ -142,7 +142,7 @@
 int pkg_nochecking = 0;	/* set to disable extra checking for input */
 int pkg_permport = 0;	/* TCP port that pkg_permserver() is listening on XXX */
 
-#define MAX_PKG_ERRBUF_SIZE 80
+#define MAX_PKG_ERRBUF_SIZE 128
 static char _pkg_errbuf[MAX_PKG_ERRBUF_SIZE] = {0};
 static FILE *_pkg_debug = (FILE*)NULL;
 

@@ -1,7 +1,7 @@
 /*                          F E N C E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -623,13 +623,20 @@ char *getName(const char *base, int num, const char *paramstring)
  *****************************************/
 char *getPrePostName(char *prefix, char *base, char *suffix)
 {
+    struct bu_vls tmpbuf = BU_VLS_INIT_ZERO;
     static char newname[DEFAULT_MAXNAMELENGTH];
 
     memset(newname, 0, DEFAULT_MAXNAMELENGTH);
 
-    if (prefix) snprintf(newname, DEFAULT_MAXNAMELENGTH, "%s", prefix);
-    if (base) snprintf(newname, DEFAULT_MAXNAMELENGTH, "%s%s", newname, base);
-    if (suffix) snprintf(newname, DEFAULT_MAXNAMELENGTH, "%s%s", newname, suffix);
+    if (prefix) bu_vls_printf(&tmpbuf, "%s", prefix);
+    if (base) bu_vls_printf(&tmpbuf, "%s%s", newname, base);
+    if (suffix) bu_vls_printf(&tmpbuf, "%s%s", newname, suffix);
+
+    if (prefix || base || suffix) {
+	snprintf(newname, DEFAULT_MAXNAMELENGTH, "%s", bu_vls_addr(&tmpbuf));
+    }
+
+    bu_vls_free(&tmpbuf);
 
     return newname;
 }

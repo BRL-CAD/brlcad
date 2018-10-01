@@ -1,7 +1,7 @@
 /*                   G _ B O T _ I N C L U D E . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2016 United States Government as represented by
+ * Copyright (c) 1999-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -738,7 +738,8 @@ CPP_XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct sol
 				dn = hits[j].hit_vpriv[X];
 			    } else if (keep2 == -1) {
 				keep2 = j;
-				dn = hits[j].hit_vpriv[X];
+				/* TODO: assignment not used - should it be? */
+				/*dn = hits[j].hit_vpriv[X];*/
 				break;
 			    }
 			}

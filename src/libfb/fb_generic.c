@@ -1,7 +1,7 @@
 /*                    F B _ G E N E R I C . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2016 United States Government as represented by
+ * Copyright (c) 1986-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -148,10 +148,11 @@ fb_put_platform_specific(struct fb_platform_specific *fb_p)
 fb *
 fb_open_existing(const char *file, int width, int height, struct fb_platform_specific *fb_p)
 {
-    fb *ifp = (fb *) calloc(sizeof(fb), 1);
+    fb *ifp = (fb *)calloc(sizeof(fb), 1);
+    if (!ifp) return NULL;
     fb_set_interface(ifp, file);
     fb_set_magic(ifp, FB_MAGIC);
-    ifp->if_open_existing(ifp, width, height, fb_p);
+    if (ifp->if_open_existing) ifp->if_open_existing(ifp, width, height, fb_p);
     return ifp;
 }
 
@@ -221,6 +222,7 @@ int fb_clear_fd(fb *ifp, fd_set *list)
 
 void fb_set_magic(fb *ifp, uint32_t magic)
 {
+    if (!ifp) return;
     ifp->if_magic = magic;
 }
 
@@ -464,12 +466,17 @@ found_interface:
     /* Mark OK by filling in magic number */
     ifp->if_magic = FB_MAGIC;
 
-    if ((i=(*ifp->if_open)(ifp, file, width, height)) <= -1) {
-	fb_log("fb_open: can't open device \"%s\", ret=%d.\n",
-	       file, i);
+    i=(*ifp->if_open)(ifp, file, width, height);
+    if (i != 0) {
 	ifp->if_magic = 0;		/* sanity */
 	free((void *) ifp->if_name);
 	free((void *) ifp);
+
+	if (i < 0)
+	    fb_log("fb_open: can't open device \"%s\", ret=%d.\n", file, i);
+	else
+	    bu_exit(0, "Terminating early by request\n"); /* e.g., zap memory */
+
 	return FB_NULL;
     }
     return ifp;

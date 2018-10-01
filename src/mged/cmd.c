@@ -1,7 +1,7 @@
 /*                           C M D . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2016 United States Government as represented by
+ * Copyright (c) 1985-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -55,6 +55,27 @@
 #include "./cmd.h"
 #include "./mged_dm.h"
 #include "./sedit.h"
+
+#ifdef _WIN32
+/* limited to seconds only */
+void gettimeofday(struct timeval *tp, struct timezone *tzp)
+{
+
+	time_t ltime;
+
+	time(&ltime);
+
+	tp->tv_sec = ltime;
+	tp->tv_usec = 0;
+
+}
+#else
+   /* for strict c90 */
+#  if !defined(HAVE_DECL_GETTIMEOFDAY) && !defined(gettimeofday)
+      extern int gettimeofday(struct timeval *, void *);
+#  endif
+#endif
+
 
 
 extern void update_grids(fastf_t sf);		/* in grid.c */
@@ -147,6 +168,39 @@ gui_output(void *clientData, void *str)
 
     len = (int)strlen((const char *)str);
     return len;
+}
+
+
+int
+mged_db_search_callback(int argc, const char *argv[], void *userdata)
+{
+    /* FIXME: pretty much copied from tclcad, ideally this should call
+     * tclcad's eval instead of doing its own thing but this is probably
+     * fine for now */
+    int ret;
+    int i;
+    int len;
+    char *result = NULL;
+
+    Tcl_DString script;
+    Tcl_DStringInit(&script);
+    if (argc<=0) /* empty exec is a true no-op */
+    	return 1;
+    Tcl_DStringAppend(&script, argv[0], -1);
+
+    for (i = 1; i < argc; ++i)
+	Tcl_DStringAppendElement(&script, argv[i]);
+
+    ret =Tcl_Eval((Tcl_Interp *)userdata, Tcl_DStringValue(&script));
+    Tcl_DStringFree(&script);
+
+    result = Tcl_GetStringFromObj(Tcl_GetObjResult((Tcl_Interp *)userdata), &len);
+
+    bu_log("%s", result);
+
+    Tcl_ResetResult((Tcl_Interp *)userdata);
+
+    return TCL_OK == ret;
 }
 
 
@@ -581,8 +635,12 @@ cmd_ged_plain_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, 
 
     /* redraw any objects specified that are already drawn */
     if (argc > 1) {
+	struct bu_vls rcache = BU_VLS_INIT_ZERO;
 	int who_ret;
 	const char *who_cmd[2] = {"who", NULL};
+
+	/* Stash previous result string state so who cmd doesn't replace it */
+	bu_vls_sprintf(&rcache, "%s", bu_vls_addr(gedp->ged_result_str));
 
 	who_ret = ged_who(gedp, 1, who_cmd);
 	if (who_ret == GED_OK) {
@@ -614,6 +672,10 @@ cmd_ged_plain_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, 
 	    bu_free(who_argv, "who_argv");
 	    bu_free(str, "result strdup");
 	}
+
+	/* Restore ged result str */
+	bu_vls_sprintf(gedp->ged_result_str, "%s", bu_vls_addr(&rcache));
+	bu_vls_free(&rcache);
     }
 
     if (ret & GED_HELP || ret == GED_OK)
@@ -945,20 +1007,7 @@ cmd_set_more_default(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int
 }
 
 
-#ifdef _WIN32
-/* limited to seconds only */
-void gettimeofday(struct timeval *tp, struct timezone *tzp)
-{
 
-    time_t ltime;
-
-    time(&ltime);
-
-    tp->tv_sec = ltime;
-    tp->tv_usec = 0;
-
-}
-#endif
 
 
 /**

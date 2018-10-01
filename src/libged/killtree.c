@@ -1,7 +1,7 @@
 /*                         K I L L T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2016 United States Government as represented by
+ * Copyright (c) 2008-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -67,7 +67,7 @@ find_reference(struct db_i *dbip, const char *topobj, const char *obj)
      */
     bu_vls_printf(&str, "-depth >0 -not -below -name %s -name %s", topobj, obj);
 
-    ret = db_search(NULL, DB_SEARCH_TREE, bu_vls_cstr(&str), 0, NULL, dbip);
+    ret = db_search(NULL, DB_SEARCH_TREE, bu_vls_cstr(&str), 0, NULL, dbip, NULL);
 
     bu_vls_free(&str);
 

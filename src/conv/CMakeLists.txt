@@ -54,8 +54,6 @@ BRLCAD_ADDEXEC(cy-g cy-g.c "libwdb;${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(dbupgrade dbupgrade.c "libwdb;librt;libbu")
 
-BRLCAD_ADDEXEC(dem-g dem-g.c "libwdb;${M_LIBRARY}")
-
 BRLCAD_ADDEXEC(k-g k-g.cpp "libwdb;librt;libbu;${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(dxf-g dxf/dxf-g.c "libwdb;librt;libnmg;libbn;libbu;${M_LIBRARY}")
@@ -161,6 +159,7 @@ install(PROGRAMS intaval-g.py DESTINATION bin)
 
 
 set(conv_ignore_files
+  CMakeLists.txt
   Formats.csv
   comgeom/try.sh
   dbclean.sh

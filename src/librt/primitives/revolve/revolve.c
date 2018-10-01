@@ -1,7 +1,7 @@
 /*                           R E V O L V E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2016 United States Government as represented by
+ * Copyright (c) 1990-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1544,22 +1544,15 @@ rt_revolve_xform(
     const mat_t mat,
     struct rt_db_internal *ip,
     int release,
-    struct db_i *dbip,
-    struct resource *resp)
+    struct db_i *dbip)
 {
     struct rt_revolve_internal *rip, *rop;
     point_t tmp_vec;
 
     if (dbip) RT_CK_DBI(dbip);
     RT_CK_DB_INTERNAL(ip);
-    RT_CK_RESOURCE(resp);
     rip = (struct rt_revolve_internal *)ip->idb_ptr;
     RT_REVOLVE_CK_MAGIC(rip);
-
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at start of revolve_xform():\n");
-	bu_mem_barriercheck();
-    }
 
     if (op != ip) {
 	RT_DB_INTERNAL_INIT(op);
@@ -1593,11 +1586,6 @@ rt_revolve_xform(
 	rop->skt = rt_copy_sketch(rip->skt);
     } else {
 	rop->skt = (struct rt_sketch_internal *)NULL;
-    }
-
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at end of revolve_xform():\n");
-	bu_mem_barriercheck();
     }
 
     return 0;

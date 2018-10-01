@@ -1,7 +1,7 @@
 /*                 L I B R T _ P R I V A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2016 United States Government as represented by
+ * Copyright (c) 2011-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -111,17 +111,17 @@ extern const union cutter *rt_advance_to_next_cell(struct rt_shootray_status *ss
  */
 extern void rt_plot_cell(const union cutter *cutp, struct rt_shootray_status *ssp, struct bu_list *waiting_segs_hd, struct rt_i *rtip);
 
-
 /* db_fullpath.c */
 
 /**
  * Function to test whether a path has a cyclic entry in it.
  *
  * @param fp [i] Full path to test
- * @param name [i] String to use when checking path (optional).  If NULL, use the name of the current directory pointer in fp.
+ * @param test_name [i] String to use when checking path.
+ * @param depth [i] Starting depth for path node name comparisons.
  * @return 1 if the path is cyclic, 0 if it is not.
  */
-extern int cyclic_path(const struct db_full_path *fp, const char *name);
+extern int cyclic_path(const struct db_full_path *fp, const char *test_name, long int depth);
 
 
 /* db_diff.c */
@@ -153,8 +153,8 @@ extern int db_read(const struct db_i *dbip, void *addr, size_t count, off_t offs
  * default, attributes are not included in size calculations.
  *
  * The FORCE_RECALC flag is also optional and will result in a re-evaluation of
- * the cached size information in the directory structures instead of using any
- * cached information from previous db5_size evaluations. This flag should be
+ * the stored size information in the directory structures instead of using any
+ * stored information from previous db5_size evaluations. This flag should be
  * supplied if the geometry information in the database has changed since the
  * last db5_size call.
  */
@@ -224,6 +224,7 @@ CLT_DECLARE_INTERFACE(arb);
 CLT_DECLARE_INTERFACE(ars);
 CLT_DECLARE_INTERFACE(rec);
 CLT_DECLARE_INTERFACE(sph);
+CLT_DECLARE_INTERFACE(ebm);
 CLT_DECLARE_INTERFACE(part);
 CLT_DECLARE_INTERFACE(epa);
 CLT_DECLARE_INTERFACE(ehy);
@@ -231,6 +232,7 @@ CLT_DECLARE_INTERFACE(bot);
 CLT_DECLARE_INTERFACE(eto);
 CLT_DECLARE_INTERFACE(rhc);
 CLT_DECLARE_INTERFACE(rpc);
+CLT_DECLARE_INTERFACE(hrt);
 
 extern size_t clt_bot_pack(struct bu_pool *pool, struct soltab *stp);
 #endif

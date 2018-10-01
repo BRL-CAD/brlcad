@@ -1,7 +1,7 @@
 /*                        I F _ M E M . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2016 United States Government as represented by
+ * Copyright (c) 1989-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -499,8 +499,8 @@ fb memory_interface =  {
     mem_close,		/* free */
     mem_help,		/* help message */
     "Memory Buffer",	/* device description */
-    8192,		/* max width */
-    8192,		/* max height */
+    FB_XMAXSCREEN,	/* max width */
+    FB_YMAXSCREEN,	/* max height */
     "/dev/mem",		/* short device name */
     512,		/* default/current width */
     512,		/* default/current height */

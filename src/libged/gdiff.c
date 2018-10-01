@@ -1,7 +1,7 @@
 /*                         G D I F F . C
  * BRL-CAD
  *
- * Copyright (c) 2014-2016 United States Government as represented by
+ * Copyright (c) 2014-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -55,12 +55,12 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
     const char **av = argv+1;
 
     struct bu_opt_desc d[7];
-    BU_OPT(d[0], "h", "help",      "", NULL, (void *)&print_help, "Print help.");
-    BU_OPT(d[1], "g", "grid-spacing",      "#", &bu_opt_fastf_t, (void *)&len_tol, "Controls spacing of test ray grids (units are mm.)");
-    BU_OPT(d[2], "l", "view-left", "", NULL, (void *)&view_left, "Visualize volumes occurring only in the left object");
-    BU_OPT(d[3], "b", "view-both", "", NULL, (void *)&view_overlap, "Visualize volumes common to both objects");
-    BU_OPT(d[4], "r", "view-right", "", NULL, (void *)&view_right, "Visualize volumes occurring only in the right object");
-    BU_OPT(d[5], "G", "grazing",    "", NULL, (void *)&grazereport, "Report differences in grazing hits");
+    BU_OPT(d[0], "h", "help",         "",  NULL,            &print_help,   "Print help.");
+    BU_OPT(d[1], "g", "grid-spacing", "#", &bu_opt_fastf_t, &len_tol,      "Controls spacing of test ray grids (units are mm.)");
+    BU_OPT(d[2], "l", "view-left",    "",  NULL,            &view_left,    "Visualize volumes occurring only in the left object");
+    BU_OPT(d[3], "b", "view-both",    "",  NULL,            &view_overlap, "Visualize volumes common to both objects");
+    BU_OPT(d[4], "r", "view-right",   "",  NULL,            &view_right,   "Visualize volumes occurring only in the right object");
+    BU_OPT(d[5], "G", "grazing",      "",  NULL,            &grazereport,  "Report differences in grazing hits");
     BU_OPT_NULL(d[6]);
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -72,10 +72,10 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (print_help) {
-	const char *usage = bu_opt_describe((struct bu_opt_desc *)&d, NULL);
+	char *usage = bu_opt_describe((struct bu_opt_desc *)&d, NULL);
 	bu_vls_printf(gedp->ged_result_str, "Usage: gdiff [opts] left_obj right_obj\nOptions:\n%s\nRed segments are those generated\nonly from intersections with \"left_obj\" while blue segments represent\nintersections unique to \"right_obj\".  White segments represent intersections\ncommon to both objects. By default, segments unique to left and right objects are displayed.  ", usage);
 	bu_vls_printf(gedp->ged_result_str, "If no tolerance is given, a default of 100mm is used.\n\n Be careful of using too fine a grid - finer grides will (up to a point) yield better visuals, but too fine a grid can cause very long raytracing times.");
-	bu_free((char *)usage, "help str");
+	bu_free(usage, "help str");
 	return GED_OK;
     }
 

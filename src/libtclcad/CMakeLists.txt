@@ -20,7 +20,7 @@ set(TCLCAD_LOCAL_INCLUDE_DIRS
 BRLCAD_LIB_INCLUDE_DIRS(tclcad TCLCAD_INCLUDE_DIRS TCLCAD_LOCAL_INCLUDE_DIRS)
 
 if(BRLCAD_ENABLE_X11)
-  set(TCLCAD_XLIBS ${TCLCAD_XLIBS} ${X11_LIBRARIES} ${X11_Xi_LIB})
+  set(TCLCAD_XLIBS ${TCLCAD_XLIBS} ${X11_LIBRARIES})
 endif(BRLCAD_ENABLE_X11)
 
 set(LIBTCLCAD_SRCS
@@ -38,6 +38,7 @@ BRLCAD_ADDLIB(libtclcad "${LIBTCLCAD_SRCS}" "libged;libdm;libfb;libnmg;libbn;lib
 SET_TARGET_PROPERTIES(libtclcad PROPERTIES VERSION 20.0.1 SOVERSION 20)
 set(tclcad_ignore_files tclcad_private.h)
 CMAKEFILES(${tclcad_ignore_files})
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

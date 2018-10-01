@@ -1,7 +1,7 @@
 /*                            I R . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -152,7 +152,7 @@ display_Temps(int xmin, int ymin)
 static int
 get_IR(int x, int y, int *fahp, FILE *fp)
 {
-    if (bu_fseek(fp, (y*IR_DATA_WID + x)*sizeof(int), 0) != 0)
+    if (fseek(fp, (y*IR_DATA_WID + x)*sizeof(int), 0) != 0)
 	return 0;
     else
 	if (fread((char *) fahp, (int) sizeof(int), 1, fp) != 1)

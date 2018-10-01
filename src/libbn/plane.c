@@ -1,7 +1,7 @@
 /*                         P L A N E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,6 +42,15 @@
 
 #define UNIT_SQ_TOL 1.0e-13
 
+#if defined(HAVE_NEXTAFTER) && !defined(HAVE_DECL_NEXTAFTER) && !defined(__cplusplus)
+extern double nextafter(double x, double y);
+#endif
+#if defined(HAVE_NEXTAFTERF) && !defined(HAVE_DECL_NEXTAFTERF) && !defined(__cplusplus)
+extern float nextafterf(float x, float y);
+#endif
+#if defined(HAVE_MODFF) && !defined(HAVE_DECL_MODFF) && !defined(__cplusplus)
+extern float modff(float x, float *iptr);
+#endif
 
 double
 bn_dist_pt3_pt3(const fastf_t *a, const fastf_t *b)
@@ -2443,88 +2452,6 @@ bn_isect_planes(fastf_t *pt, const fastf_t (*planes)[4], const size_t pl_count)
 
     return 0;
 
-}
-
-
-/**
- * Intersect a line segment with a rectangular parallelepiped (RPP)
- * that has faces parallel to the coordinate planes (a clipping RPP).
- * The RPP is defined by a minimum point and a maximum point.  This is
- * a very close relative to rt_in_rpp() from librt/shoot.c
- *
- * @return 0   if ray does not hit RPP,
- * @return !0  if ray hits RPP.
- *
- * @param[in, out] a	Start point of lseg
- * @param[in, out] b	End point of lseg
- * @param[in] min	min point of RPP
- * @param[in] max	amx point of RPP
- *
- * if !0 was returned, "a" and "b" have been clipped to the RPP.
- */
-int
-bn_isect_lseg_rpp(fastf_t *a,
-		  fastf_t *b,
-		  register fastf_t *min,
-		  register fastf_t *max)
-{
-    vect_t diff;
-    register fastf_t *pt = &a[0];
-    register fastf_t *dir = &diff[0];
-    register int i;
-    register double sv;
-    register double st;
-    register double mindist, maxdist;
-
-    mindist = -MAX_FASTF;
-    maxdist = MAX_FASTF;
-    VSUB2(diff, b, a);
-
-    for (i=0; i < 3; i++, pt++, dir++, max++, min++) {
-	if (*dir < -SQRT_SMALL_FASTF) {
-	    sv = (*min - *pt) / *dir;
-	    if (sv < 0.0)
-		return 0;	/* MISS */
-
-	    st = (*max - *pt) / *dir;
-	    V_MAX(mindist, st);
-	    V_MIN(maxdist, sv);
-
-	}  else if (*dir > SQRT_SMALL_FASTF) {
-	    st = (*max - *pt) / *dir;
-	    if (st < 0.0)
-		return 0;	/* MISS */
-
-	    sv = (*min - *pt) / *dir;
-	    V_MAX(mindist, sv);
-	    V_MIN(maxdist, st);
-
-	} else {
-	    /* If direction component along this axis is NEAR 0,
-	     * (i.e., this ray is aligned with this axis), merely
-	     * check against the boundaries.
-	     */
-	    if ((*min > *pt) || (*max < *pt))
-		return 0;	/* MISS */
-	}
-    }
-    if (mindist >= maxdist)
-	return 0;	/* MISS */
-
-    if (mindist > 1 || maxdist < 0)
-	return 0;	/* MISS */
-
-    if (mindist >= 0 && maxdist <= 1)
-	return 1;	/* HIT within box, no clipping needed */
-
-    /* Don't grow one end of a contained segment */
-    V_MAX(mindist, 0);
-    V_MIN(maxdist, 1);
-
-    /* Compute actual intercept points */
-    VJOIN1(b, a, maxdist, diff);		/* b must go first */
-    VJOIN1(a, a, mindist, diff);
-    return 1;		/* HIT */
 }
 
 

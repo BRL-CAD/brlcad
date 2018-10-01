@@ -17,21 +17,26 @@ db="$1"
 sz="1024"
 pwd=`pwd`
 
+cmd_exists() {
+    which "$1" >/dev/null 2>&1
+}
+
 find_cmd() {
     local cmd="$1"
     local ocmd="$1"
-    local ret
+    local ret=1
 
-    # if not in path, try alternative
-    if ! which "$cmd" >/dev/null 2>&1; then
-	cmd="/usr/brlcad/bin/$cmd"
-    fi
+    for stdpath in "" "/usr/brlcad/bin/" "/usr/brlcad/stable/bin/"; do
+	fullcmd="$stdpath$cmd"
 
-    # if still not found, report error
-    which "$cmd" >/dev/null 2>&1
-    ret=$?
+	if cmd_exists "$fullcmd"; then
+	    cmd="$fullcmd"
+	    ret=0
+	    break
+	fi
+    done 
 
-    if [ $ret -ne 0 ]; then
+    if [ "$ret" -ne 0 ]; then
 	echo "Error: couldn't find \"$ocmd\" command." >&2
     fi
 
@@ -132,11 +137,10 @@ for obj in $tops ; do
 		    }' $OBJ.$az.$el.rtcheck.log |
 		    cut -f 1,2,3,9 -d ' ' |
 		    awk '{if ($2 < $1) { tmp = $1; $1 = $2; $2 = tmp}; print $1, $2, $3 * $4}' >> $OBJ.pairings
-
-		cat $OBJ.pairings >> $JOB.pairings
 	    fi
 	done
     done
+    cat $OBJ.pairings >> $JOB.pairings
 done
 
 

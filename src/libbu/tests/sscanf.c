@@ -1,7 +1,7 @@
 /*                   T E S T _ S S C A N F . C
  * BRL-CAD
  *
- * Copyright (c) 2012-2016 United States Government as represented by
+ * Copyright (c) 2012-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -782,6 +782,7 @@ main(int argc, char *argv[])
     doVlsTests();
 
     printf("bu_sscanf: testing complete\n");
+
     return 0;
 }
 

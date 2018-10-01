@@ -76,6 +76,7 @@ int bu_b64_encode_block_internal(const signed char* plaintext_in, size_t length_
 		result = (fragment & 0x0fc) >> 2;
 		*codechar++ = bu_b64_encode_value(result);
 		result = (fragment & 0x003) << 4;
+		/* fall through */
 	    case step_B:
 		if (plainchar == plaintextend) {
 		    state_in->result = result;
@@ -86,6 +87,7 @@ int bu_b64_encode_block_internal(const signed char* plaintext_in, size_t length_
 		result |= (fragment & 0x0f0) >> 4;
 		*codechar++ = bu_b64_encode_value(result);
 		result = (fragment & 0x00f) << 2;
+		/* fall through */
 	    case step_C:
 		if (plainchar == plaintextend) {
 		    state_in->result = result;
@@ -170,6 +172,7 @@ int bu_b64_decode_block_internal(const signed char* code_in, const size_t length
 		    fragment = (signed char)bu_b64_decode_value(*codechar++);
 		} while (fragment < 0);
 		*plainchar    = (fragment & 0x03f) << 2;
+		/* fall through */
 	    case step_b:
 		do {
 		    if (codechar == code_in+length_in) {
@@ -181,6 +184,7 @@ int bu_b64_decode_block_internal(const signed char* code_in, const size_t length
 		} while (fragment < 0);
 		*plainchar++ |= (fragment & 0x030) >> 4;
 		*plainchar    = (fragment & 0x00f) << 4;
+		/* fall through */
 	    case step_c:
 		do {
 		    if (codechar == code_in+length_in) {
@@ -192,6 +196,7 @@ int bu_b64_decode_block_internal(const signed char* code_in, const size_t length
 		} while (fragment < 0);
 		*plainchar++ |= (fragment & 0x03c) >> 2;
 		*plainchar    = (fragment & 0x003) << 6;
+		/* fall through */
 	    case step_d:
 		do {
 		    if (codechar == code_in+length_in) {

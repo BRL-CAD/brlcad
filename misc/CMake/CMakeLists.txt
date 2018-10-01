@@ -2,9 +2,11 @@ set(cmake_ignore_files
   BRLCAD_CPackOptions.cmake.in
   BRLCAD_CheckFunctions.cmake
   BRLCAD_Options.cmake
+  BRLCAD_Regress_Util.cmake
   BRLCAD_Summary.cmake
   BRLCAD_Targets.cmake
   BRLCAD_Util.cmake
+  CMakeLists.txt
   CheckCInline.cmake
   CheckCSourceRuns.cmake
   CompilerFlags.cmake
@@ -35,11 +37,11 @@ set(cmake_ignore_files
   FindRE2C.cmake
   FindREGEX.cmake
   FindSCL.cmake
+  FindSSE.cmake
   FindSTL.cmake
   FindShellDeps.cmake
   FindTBB.cmake
   FindTERMLIB.cmake
-  FindTINYCTHREAD.cmake
   FindUTAHRLE.cmake
   FindUUID.cmake
   FindVDS.cmake

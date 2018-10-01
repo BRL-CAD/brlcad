@@ -1,7 +1,7 @@
 /*                           T I E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2016 United States Government as represented by
+ * Copyright (c) 2008-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,8 +34,12 @@
 
 #include "bio.h"
 
-
 #include "tieprivate.h"
+
+#if defined(HAVE_ISNAN) && !defined(HAVE_DECL_ISNAN) && !defined(isnan)
+extern int isnan(double x);
+#endif
+
 
 #define TIE_TAB1 "\1\0\0\2\2\1"	/* Triangle Index Table */
 
@@ -232,6 +236,7 @@ TIE_VAL(tie_work)(struct tie_s *tie, struct tie_ray_s *ray, struct tie_id_s *id,
      * Precompute direction inverse since it's used in a bunch of
      * divides, this allows those divides to become fast multiplies.
      */
+    /* FIXME: consolidate with VINVDIR, but also computes sign bit */
     for (i = 0; i < 3; i++) {
 	if (ZERO(ray->dir[i]))
 	    ray->dir[i] = TIE_PREC;

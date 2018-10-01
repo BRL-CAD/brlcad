@@ -30,6 +30,8 @@ if(SWIG_FOUND AND NOT "${SWIG_USE_FILE}" STREQUAL "")
 
 endif(SWIG_FOUND AND NOT "${SWIG_USE_FILE}" STREQUAL "")
 
+CMAKEFILES(CMakeLists.txt)
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

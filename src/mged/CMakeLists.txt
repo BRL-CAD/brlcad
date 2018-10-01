@@ -28,7 +28,6 @@ set(MGED_SOURCES
   clone.c
   color_scheme.c
   columns.c
-  dir.c
   dm-generic.c
   dodraw.c
   doevent.c
@@ -89,6 +88,7 @@ BRLCAD_ADDEXEC(cad_boundp cad_boundp.c "libbu;${M_LIBRARY}")
 BRLCAD_ADDEXEC(cad_parea cad_parea.c libbu)
 
 set(mged_ignore_files
+  CMakeLists.txt
   bool_rewrite.c
   cmd.h
   comb_bool.h

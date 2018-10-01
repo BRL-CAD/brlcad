@@ -1,7 +1,7 @@
 /*                        V L I S T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -77,6 +77,7 @@ bn_vlist_bbox(struct bn_vlist *vp, point_t *bmin, point_t *bmax)
 		break;
 	    case BN_VLIST_DISPLAY_MAT:
 		disp_mode = 1;
+		/* fall through */
 	    case BN_VLIST_LINE_MOVE:
 	    case BN_VLIST_LINE_DRAW:
 	    case BN_VLIST_POLY_MOVE:

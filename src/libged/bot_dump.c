@@ -1,7 +1,7 @@
 /*                         B O T _ D U M P . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2016 United States Government as represented by
+ * Copyright (c) 2008-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -53,8 +53,7 @@
 
 #define V3ARGS_SCALE(_a) (_a)[X]*cfactor, (_a)[Y]*cfactor, (_a)[Z]*cfactor
 
-static char usage[] = "\
-Usage: %s [-b] [-n] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] [bot1 bot2 ...]\n";
+static char usage[] = "[-b] [-n] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] [bot1 bot2 ...]";
 
 
 struct _ged_bot_dump_client_data {
@@ -729,10 +728,10 @@ _ged_bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int f
 
 
 static union tree *
-bot_dump_leaf(struct db_tree_state *tsp,
-		  const struct db_full_path *pathp,
-		  struct rt_db_internal *ip,
-		  void *client_data)
+bot_dump_leaf(struct db_tree_state *UNUSED(tsp),
+	      const struct db_full_path *pathp,
+	      struct rt_db_internal *UNUSED(ip),
+	      void *client_data)
 {
     int ret;
     union tree *curtree;
@@ -742,10 +741,9 @@ bot_dump_leaf(struct db_tree_state *tsp,
     struct rt_bot_internal *bot;
     struct _ged_bot_dump_client_data *gbdcdp = (struct _ged_bot_dump_client_data *)client_data;
 
-    if (ip) RT_CK_DB_INTERNAL(ip);
-
     /* Indicate success by returning something other than TREE_NULL */
-    RT_GET_TREE(curtree, tsp->ts_resp);
+    BU_GET(curtree, union tree);
+    RT_TREE_INIT(curtree);
     curtree->tr_op = OP_NOP;
 
     dp = pathp->fp_names[pathp->fp_len-1];
@@ -819,7 +817,7 @@ bot_dump_get_args(struct ged *gedp, int argc, const char *argv[])
 		else if (BU_STR_EQUAL("stl", bu_optarg))
 		    output_type = OTYPE_STL;
 		else {
-		    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+		    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s\n", argv[0], usage);
 		    return GED_ERROR;
 		}
 		break;
@@ -832,7 +830,7 @@ bot_dump_get_args(struct ged *gedp, int argc, const char *argv[])
 
 		break;
 	    default:
-		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s\n", argv[0], usage);
 		return GED_ERROR;
 	}
     }
@@ -863,7 +861,7 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, usage, argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s\n", argv[0], usage);
 	return GED_HELP;
     }
 
@@ -884,7 +882,7 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
 
     if (!output_file && !output_directory) {
 	if (binary) {
-	    bu_vls_printf(gedp->ged_result_str, "Can't output binary to stdout\nUsage: %s %s", argv[0], usage);
+	    bu_vls_printf(gedp->ged_result_str, "Can't output binary to stdout\nUsage: %s %s\n", argv[0], usage);
 	    return GED_ERROR;
 	}
 	fp = stdout;

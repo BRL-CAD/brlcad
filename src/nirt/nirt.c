@@ -1,7 +1,7 @@
 /*                          N I R T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,6 +31,7 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/env.h"
 #include "bu/getopt.h"
 #include "bu/list.h"
@@ -143,7 +144,7 @@ listformats(char ***names)
     struct bu_vls vlsfileline = BU_VLS_INIT_ZERO;
 
     /* get a nirt directory listing */
-    bu_vls_printf(&nirtfilespath, "%s", bu_brlcad_data("nirt", 0));
+    bu_vls_printf(&nirtfilespath, "%s", bu_brlcad_root("share/nirt", 0));
     files = bu_file_list(bu_vls_addr(&nirtfilespath), suffix, &filearray);
     if (names)
 	*names = filearray;
@@ -257,7 +258,7 @@ enqueue_script(struct bu_list *qp, int type, char *string)
 	cfPtr = fopen(bu_vls_addr(&str), "rb");
 	if (cfPtr == NULL) {
 	    bu_vls_trunc(&str, 0);
-	    bu_vls_printf(&str, "%s/%s.nrt", bu_brlcad_data("nirt", 0), string);
+	    bu_vls_printf(&str, "%s/%s.nrt", bu_brlcad_root("share/nirt", 0), string);
 	    cfPtr = fopen(bu_vls_addr(&str), "rb");
 	    if (cfPtr != NULL) {
 		fclose(cfPtr);
@@ -359,7 +360,7 @@ run_scripts(struct bu_list *sl, struct rt_i *rtip)
 
 
 int
-main(int argc, char *argv[])
+old_nirt_main(int argc, char *argv[])
 {
     struct rt_i *rtip = NULL;
 
@@ -398,7 +399,7 @@ main(int argc, char *argv[])
 
     /* Handle command-line options */
     while ((Ch = bu_getopt(argc, argv, OPT_STRING)) != -1) {
-    	if (bu_optopt == '?') Ch='h';
+	if (bu_optopt == '?') Ch='h';
 	switch (Ch) {
 	    case 'A':
 		attrib_add(bu_optarg, &need_prep);
@@ -435,6 +436,7 @@ main(int argc, char *argv[])
 	    case 'L':
 		listformats(NULL);
 		bu_exit(EXIT_SUCCESS, NULL);
+		break;
 	    case 'M':
 		mat_flag = 1;
 		break;

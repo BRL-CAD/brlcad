@@ -20,6 +20,8 @@ BRLCAD_ADDEXEC(firpass "firpass.c;subroutines.c" "librt;${M_LIBRARY}")
 BRLCAD_ADDEXEC(secpass "secpass.c;subroutines.c" "librt;${M_LIBRARY}")
 BRLCAD_ADDEXEC(shapefact shapefact.c "librt;${M_LIBRARY}")
 
+CMAKEFILES(CMakeLists.txt)
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

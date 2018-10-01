@@ -1,7 +1,7 @@
 /*               P U L L B A C K C U R V E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2009-2016 United States Government as represented by
+ * Copyright (c) 2009-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -2025,7 +2025,11 @@ toUV(brlcad::SurfaceTree *surftree, const ON_Curve *curve, ON_2dPoint& out_pt, d
 
 
 double
+#ifdef NDEBUG
+randomPointFromRange(PBCData& UNUSED(data), ON_2dPoint& UNUSED(out), double lo, double hi)
+#else
 randomPointFromRange(PBCData& data, ON_2dPoint& out, double lo, double hi)
+#endif
 {
     assert(lo < hi);
     double random_pos = drand48() * (RANGE_HI - RANGE_LO) + RANGE_LO;
@@ -2955,7 +2959,11 @@ pullback_samples_from_closed_surface(PBCData* data,
 
     ON_2dPointArray *samples= new ON_2dPointArray();
     size_t numKnots = curve->SpanCount();
-    double *knots = new double[numKnots+1];
+    if (numKnots > INT_MAX - 1) {
+	bu_log("Error - more than INT_MAX - 1 knots in curve\n");
+	return;
+    }
+    double *knots = new double[(unsigned int)(numKnots+1)];
 
     curve->GetSpanVector(knots);
 

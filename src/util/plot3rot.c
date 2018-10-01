@@ -1,7 +1,7 @@
 /*                      P L O T 3 R O T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2016 United States Government as represented by
+ * Copyright (c) 1986-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -523,9 +523,9 @@ dofile(FILE *fp)
 		break;
 	    default:
 		bu_log("plot3rot: unrecognized command '%c' (0x%x)\n",
-		       (isascii(c) && isprint(c)) ? c : '?',
+		       (isprint(c)) ? c : '?',
 		       c);
-		bu_log("plot3rot: ftell = %ld\n", bu_ftell(fp));
+		bu_log("plot3rot: ftell = %ld\n", ftell(fp));
 		putchar(c);
 		break;
 	}

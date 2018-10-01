@@ -15,6 +15,7 @@ set(tgf_SRCS
 BRLCAD_ADDEXEC(tgf-g "${tgf_SRCS}" "libwdb;librt;libbu")
 
 set(intaval_ignore_files
+  CMakeLists.txt
   glob.h
   read_dra.h
   readme.txt

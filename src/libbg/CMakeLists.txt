@@ -12,20 +12,25 @@ set(LIBBG_SOURCES
   chull3d.cpp
   obr.c
   polygon.c
+  polygon_ear_clipping.c
+  polygon_point_in.c
+  spsr.c
   tri_ray.c
   tri_tri.c
   trimesh.c
   util.c
   )
 
-BRLCAD_ADDLIB(libbg "${LIBBG_SOURCES}" "libbn;libbu")
+BRLCAD_ADDLIB(libbg "${LIBBG_SOURCES}" "libbn;libbu;libSPSR")
 set_target_properties(libbg PROPERTIES VERSION 20.0.1 SOVERSION 20)
+if(CPP_DLL_DEFINES)
+  set_property(TARGET libbg APPEND PROPERTY COMPILE_DEFINITIONS "SPSR_DLL_IMPORTS")
+endif(CPP_DLL_DEFINES)
 
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
-  add_subdirectory(tests)
-endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
+add_subdirectory(tests)
 
 CMAKEFILES(bg_private.h pointgen.c)
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

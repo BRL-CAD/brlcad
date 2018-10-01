@@ -1,7 +1,7 @@
 /*                           R B . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2016 United States Government as represented by
+ * Copyright (c) 1998-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <string.h>
 
 #include "bu/log.h"
 #include "bu/malloc.h"
@@ -34,8 +35,8 @@
  */
 #define RB_CKORDER(t, o)						\
     if (UNLIKELY(((o) < 0) || ((o) >= (t)->rbt_nm_orders))) {		\
-	char buf[128] = {0};						\
-	snprintf(buf, 128, "ERROR: Order %d outside 0..%d (nm_orders-1), file %s, line %d\n", \
+	char buf[256] = {0};						\
+	snprintf(buf, 256, "ERROR: Order %d outside 0..%d (nm_orders-1), file %s, line %d\n", \
 		 (o), (t)->rbt_nm_orders - 1, __FILE__, __LINE__);	\
 	bu_bomb(buf);							\
     }
@@ -110,7 +111,7 @@
 
 
 struct bu_rb_tree *
-bu_rb_create(const char *description, int nm_orders, int (**compare_funcs)(const void *, const void *))
+bu_rb_create(const char *description, int nm_orders, bu_rb_cmp_t *compare_funcs)
 {
     int order;
     struct bu_rb_tree *tree;
@@ -160,8 +161,8 @@ bu_rb_create(const char *description, int nm_orders, int (**compare_funcs)(const
     tree->rbt_current = RB_NULL(tree);
     for (order = 0; order < nm_orders; ++order)
 	RB_ROOT(tree, order) = RB_NULL(tree);
-    BU_LIST_INIT(&(tree->rbt_nodes.l));
-    BU_LIST_INIT(&(tree->rbt_packages.l));
+    BU_RB_LIST_INIT(tree->rbt_nodes, rbl_node);
+    BU_RB_LIST_INIT(tree->rbt_packages, rbl_node);
 
     /*
      * Initialize the nil sentinel
@@ -180,23 +181,11 @@ bu_rb_create(const char *description, int nm_orders, int (**compare_funcs)(const
     return tree;
 }
 
-
-struct bu_rb_tree *
-bu_rb_create1(const char *description, int (*compare_func)(void))
-{
-    int (**cfp)(const void *, const void *);
-
-    cfp = (int (**)(const void *, const void *))
-	bu_malloc(sizeof(int (*)(const void *, const void *)), "red-black function table");
-    *cfp = (int (*)(const void *, const void *)) compare_func;
-    return bu_rb_create(description, 1, cfp);
-}
-
-
 void
 rb_free_node(struct bu_rb_node *node)
 {
     struct bu_rb_tree *tree;
+    size_t rbn_list_pos = node->rbn_list_pos;
 
     BU_CKMAG(node, BU_RB_NODE_MAGIC, "red-black node");
 
@@ -208,8 +197,6 @@ rb_free_node(struct bu_rb_node *node)
     /*
      * Remove node from the list of all nodes
      */
-    BU_CKMAG(node->rbn_list_pos, BU_RB_LIST_MAGIC, "red-black list element");
-    BU_LIST_DEQUEUE(&(node->rbn_list_pos->l));
 
     bu_free((void *) node->rbn_parent, "red-black parents");
     bu_free((void *) node->rbn_left, "red-black left children");
@@ -218,51 +205,59 @@ rb_free_node(struct bu_rb_node *node)
     if (node->rbn_size)
 	bu_free((void *) node->rbn_size, "red-black size");
     bu_free((void *) node->rbn_package, "red-black packages");
-    bu_free((void *) node->rbn_list_pos, "red-black list element");
     bu_free((void *) node, "red-black node");
+
+    memmove(tree->rbt_nodes.rbl_node + rbn_list_pos,
+	    tree->rbt_nodes.rbl_node + rbn_list_pos + 1,
+	    sizeof tree->rbt_nodes.rbl_node[0] * (tree->rbt_nodes.size - rbn_list_pos));
+    tree->rbt_nodes.size--;
 }
 
 
 void
 rb_free_package(struct bu_rb_package *package)
 {
+    struct bu_rb_tree *tree;
+    size_t rbp_list_pos = package->rbp_list_pos;
+
     BU_CKMAG(package, BU_RB_PKG_MAGIC, "red-black package");
+
+    tree = (*package->rbp_node)->rbn_tree;
 
     /*
      * Remove node from the list of all packages
      */
-    BU_CKMAG(package->rbp_list_pos, BU_RB_LIST_MAGIC,
-	     "red-black list element");
-    BU_LIST_DEQUEUE(&(package->rbp_list_pos->l));
-
     bu_free((void *) package->rbp_node, "red-black package nodes");
-    bu_free((void *) package->rbp_list_pos, "red-black list element");
     bu_free((void *) package, "red-black package");
+
+    memmove(tree->rbt_nodes.rbl_package + rbp_list_pos,
+	    tree->rbt_nodes.rbl_package + rbp_list_pos + 1,
+	    sizeof tree->rbt_nodes.rbl_package[0] * (tree->rbt_nodes.size - rbp_list_pos));
+    tree->rbt_nodes.size--;
 }
 
 void
 bu_rb_free(struct bu_rb_tree *tree, void (*free_data)(void *))
 {
-    struct bu_rb_list *rblp;
     struct bu_rb_node *node;
     struct bu_rb_package *package;
+    size_t i;
 
     BU_CKMAG(tree, BU_RB_TREE_MAGIC, "red-black tree");
 
     /*
      * Free all the nodes
      */
-    while (BU_LIST_WHILE(rblp, bu_rb_list, &(tree->rbt_nodes.l))) {
-	BU_CKMAG(rblp, BU_RB_LIST_MAGIC, "red-black list element");
-	rb_free_node(rblp->rbl_node);
+    for (i = 0; i < tree->rbt_nodes.size; i++) {
+	    node = tree->rbt_nodes.rbl_node[i];
+	rb_free_node(node);
     }
 
     /*
      * Free all the packages
      */
-    while (BU_LIST_WHILE(rblp, bu_rb_list, &(tree->rbt_packages.l))) {
-	BU_CKMAG(rblp, BU_RB_LIST_MAGIC, "red-black list element");
-	package = rblp->rbl_package;
+    for (i = 0; i < tree->rbt_packages.size; i++) {
+	package = tree->rbt_packages.rbl_package[i];
 	BU_CKMAG(package, BU_RB_PKG_MAGIC, "red-black package");
 	if (free_data)
 	    free_data(package->rbp_data);
@@ -503,7 +498,6 @@ rb_neighbor(struct bu_rb_node *node, int order, int sense)
 }
 
 
-
 /**
  * Delete a node from one order of a red-black tree
  *
@@ -617,14 +611,12 @@ _rb_describe_node(struct bu_rb_node *node, int depth)
 {
     struct bu_rb_tree *tree;
     struct bu_rb_package *package;
-    void (*pp)(void *, const int);	/* Pretty print function */
 
     BU_CKMAG(node, BU_RB_NODE_MAGIC, "red-black node");
     tree = node->rbn_tree;
     RB_CKORDER(tree, d_order);
 
     package = (node->rbn_package)[d_order];
-    pp = (void (*)(void *, const int))tree->rbt_print;
 
     bu_log("%*snode <%p>...\n", depth * 2, "", (void*)node);
     bu_log("%*s  tree:    <%p>\n", depth * 2, "", (void*)node->rbn_tree);
@@ -634,8 +626,8 @@ _rb_describe_node(struct bu_rb_node *node, int depth)
     bu_log("%*s  color:   %s\n", depth * 2, "", (RB_GET_COLOR(node, d_order) == RB_RED) ? "RED" : (RB_GET_COLOR(node, d_order) == RB_BLK) ? "BLACK" : "Huh?");
     bu_log("%*s  package: <%p>\n", depth * 2, "", (void*)package);
 
-    if ((pp != 0) && (package != BU_RB_PKG_NULL))
-	(*pp)(package->rbp_data, depth);
+    if ((tree->rbt_print != 0) && (package != BU_RB_PKG_NULL))
+	(*tree->rbt_print)(package->rbp_data);
     else
 	bu_log("\n");
 }
@@ -901,7 +893,6 @@ bu_rb_summarize_tree(struct bu_rb_tree *tree)
 }
 
 
-
 void *
 bu_rb_extreme(struct bu_rb_tree *tree, int order, int sense)
 {
@@ -1008,18 +999,18 @@ _rb_insert(struct bu_rb_tree *tree, int order, struct bu_rb_node *new_node)
     while (node != RB_NULL(tree)) {
 	parent = node;
 	++RB_SIZE(parent, order);
-	if (UNLIKELY(tree->rbt_debug & BU_RB_DEBUG_OS))
+    if (UNLIKELY(tree->rbt_debug & BU_RB_DEBUG_OS))
 	    bu_log("_rb_insert(%p): size(%p, %d)=%d\n",
 		   (void*)new_node, (void*)parent, order, RB_SIZE(parent, order));
 	comparison = compare(RB_DATA(new_node, order),
 			     RB_DATA(node, order));
 	if (comparison < 0) {
-	    if (UNLIKELY(tree->rbt_debug & BU_RB_DEBUG_INSERT))
+	if (UNLIKELY(tree->rbt_debug & BU_RB_DEBUG_INSERT))
 		bu_log("_rb_insert(%p): <_%d <%p>, going left\n",
 		       (void*)new_node, order, (void*)node);
 	    node = RB_LEFT_CHILD(node, order);
 	} else {
-	    if (UNLIKELY(tree->rbt_debug & BU_RB_DEBUG_INSERT))
+	if (UNLIKELY(tree->rbt_debug & BU_RB_DEBUG_INSERT))
 		bu_log("_rb_insert(%p): >=_%d <%p>, going right\n",
 		       (void*)new_node, order, (void*)node);
 	    node = RB_RIGHT_CHILD(node, order);
@@ -1089,7 +1080,6 @@ bu_rb_insert(struct bu_rb_tree *tree, void *data)
     int result = 0;
     struct bu_rb_node *node;
     struct bu_rb_package *package;
-    struct bu_rb_list *rblp;
 
     BU_CKMAG(tree, BU_RB_TREE_MAGIC, "red-black tree");
 
@@ -1117,21 +1107,44 @@ bu_rb_insert(struct bu_rb_tree *tree, void *data)
     /*
      * Make a new package and add it to the list of all packages.
      */
+	if (tree->rbt_packages.capacity == 0) {
+	    tree->rbt_packages.capacity = BU_RB_LIST_INIT_CAPACITY;
+	    tree->rbt_packages.rbl_package = (struct bu_rb_package **)bu_malloc(
+		    sizeof tree->rbt_packages.rbl_package[0] * tree->rbt_packages.capacity,
+		    "initial rb list init");
+	} else if (tree->rbt_packages.size == tree->rbt_packages.capacity) {
+	    tree->rbt_packages.capacity *= 2;
+	    tree->rbt_packages.rbl_package = (struct bu_rb_package **)bu_realloc(
+		tree->rbt_packages.rbl_package,
+		    sizeof tree->rbt_packages.rbl_package[0] * tree->rbt_packages.capacity,
+		    "initial rb list init");
+	}
+
     BU_ALLOC(package, struct bu_rb_package);
     package->rbp_node = (struct bu_rb_node **)
 	bu_malloc(nm_orders * sizeof(struct bu_rb_node *),
 		  "red-black package nodes");
 
-    BU_ALLOC(rblp, struct bu_rb_list);
-    rblp->rbl_magic = BU_RB_LIST_MAGIC;
-    rblp->rbl_package = package;
-
-    BU_LIST_PUSH(&(tree->rbt_packages.l), rblp);
-    package->rbp_list_pos = rblp;
+    package->rbp_list_pos = tree->rbt_packages.size;
+    tree->rbt_packages.rbl_package[tree->rbt_packages.size] = package;
+    tree->rbt_packages.size++;
 
     /*
      * Make a new node and add it to the list of all nodes.
      */
+	if (tree->rbt_nodes.capacity == 0) {
+	    tree->rbt_nodes.capacity = BU_RB_LIST_INIT_CAPACITY;
+	    tree->rbt_nodes.rbl_node = (struct bu_rb_node **)bu_malloc(
+		    sizeof tree->rbt_nodes.rbl_node[0] * tree->rbt_nodes.capacity,
+		    "initial rb list init");
+	} else if (tree->rbt_nodes.size == tree->rbt_nodes.capacity) {
+	    tree->rbt_nodes.capacity *= 2;
+	    tree->rbt_nodes.rbl_node = (struct bu_rb_node **)bu_realloc(
+		tree->rbt_nodes.rbl_node,
+		    sizeof tree->rbt_nodes.rbl_node[0] * tree->rbt_nodes.capacity,
+		    "initial rb list init");
+	}
+
     node = (struct bu_rb_node *)
 	bu_malloc(sizeof(struct bu_rb_node), "red-black node");
     node->rbn_parent = (struct bu_rb_node **)
@@ -1153,12 +1166,9 @@ bu_rb_insert(struct bu_rb_tree *tree, void *data)
 	bu_malloc(nm_orders * sizeof(struct bu_rb_package *),
 		  "red-black packages");
 
-    BU_ALLOC(rblp, struct bu_rb_list);
-    rblp->rbl_magic = BU_RB_LIST_MAGIC;
-    rblp->rbl_node = node;
-
-    BU_LIST_PUSH(&(tree->rbt_nodes.l), rblp);
-    node->rbn_list_pos = rblp;
+    node->rbn_list_pos = tree->rbt_nodes.size;
+    tree->rbt_nodes.rbl_node[tree->rbt_nodes.size] = node;
+    tree->rbt_nodes.size++;
 
     /*
      * Fill in the package

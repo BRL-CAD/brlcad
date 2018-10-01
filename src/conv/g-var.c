@@ -1,7 +1,7 @@
 /*                     G - V A R . C
  * BRL-CAD
  *
- * Copyright (c) 2002-2016 United States Government as represented by
+ * Copyright (c) 2002-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,6 +34,7 @@
 #include <math.h>
 
 /* interface headers */
+#include "bu/app.h"
 #include "bu/endian.h"
 #include "bu/getopt.h"
 #include "wdb.h"

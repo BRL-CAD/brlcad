@@ -1,7 +1,7 @@
 /*                   B R E P _ C U B E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -258,7 +258,7 @@ main(int argc, char** argv)
     if (!brep)
 	bu_exit(1, "ERROR: unable to make the cube\n");
 
-    mk_brep(outfp, geom_name, brep);
+    mk_brep(outfp, geom_name, (void *)brep);
 
     //mk_comb1(outfp, "cube.r", geom_name, 1);
     unsigned char rgb[] = {255, 255, 255};

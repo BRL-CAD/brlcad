@@ -1,7 +1,7 @@
 /*                   B R E P _ C O B B . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013-2016 United States Government as represented by
+ * Copyright (c) 2013-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Based off of code from Ayam:
@@ -294,7 +294,7 @@ main(int argc, char** argv)
 
 
     brep = Cobb_Sphere(1, &origin);
-    mk_brep(outfp, geom_name, brep);
+    mk_brep(outfp, geom_name, (void *)brep);
 
     //mk_comb1(outfp, "cube.r", geom_name, 1);
     unsigned char rgb[] = {50, 255, 50};

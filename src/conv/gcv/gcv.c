@@ -1,7 +1,7 @@
 /*                           G C V . C P P
  * BRL-CAD
  *
- * Copyright (c) 2015-2016 United States Government as represented by
+ * Copyright (c) 2015-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -55,6 +55,8 @@ gcv_fmt_fun(struct bu_vls *UNUSED(msgs), int argc, const char **argv, void *set_
     int i = 0;
     int args_used = 0;
     struct gcv_fmt_opts *gfo = (struct gcv_fmt_opts *)set_var;
+
+    if (!gfo) return -1;
 
     if (!argv || argc < 1 ) return 0;
 
@@ -207,7 +209,10 @@ extract_format_prefix(struct bu_vls *format, const char *input)
 	int ret = 0;
 	bu_vls_sprintf(&wformat, "%s", input);
 	bu_vls_trunc(&wformat, -1 * strlen(colon_pos));
-	if (bu_vls_strlen(&wformat) > 0) {
+	/* Note: because Windows supports drive letters in the form {drive}: in
+	 * paths, we can't use single characters as format specifiers for the
+	 * {format}: prefix - they must be multi-character. */
+	if (bu_vls_strlen(&wformat) > 1) {
 	    ret = 1;
 	    if (format) bu_vls_sprintf(format, "%s", bu_vls_addr(&wformat));
 	}
@@ -489,6 +494,8 @@ main(int ac, const char **av)
 	BU_OPT_DESC_NULL
     };
 
+    bu_setprogname(av[0]);
+
     gcv_fmt_opts_init(&in_only_opts, gcv_opt_desc);
     gcv_fmt_opts_init(&out_only_opts, gcv_opt_desc);
     gcv_fmt_opts_init(&both_opts, gcv_opt_desc);
@@ -499,9 +506,9 @@ main(int ac, const char **av)
     ac-=(ac>0); av+=(ac>0); /* skip program name argv[0] if present */
 
     if (ac == 0) {
-	const char *help = bu_opt_describe(gcv_opt_desc, NULL);
+	char *help = bu_opt_describe(gcv_opt_desc, NULL);
 	bu_log("%s\n", help);
-	if (help) bu_free((char *)help, "help str");
+	if (help) bu_free(help, "help str");
 	/* TODO - print some help */
 	goto cleanup;
     }
@@ -519,10 +526,10 @@ main(int ac, const char **av)
 	    /* TODO - generate some help based on format */
 	} else {
 	    { /* Test static help print  */
-		const char *help = bu_opt_describe(gcv_opt_desc, NULL);
+		char *help = bu_opt_describe(gcv_opt_desc, NULL);
 		bu_log("Options:\n");
 		bu_log("%s\n", help);
-		if (help) bu_free((char *)help, "help str");
+		if (help) bu_free(help, "help str");
 	    }
 
 #if 0

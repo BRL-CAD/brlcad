@@ -1,7 +1,7 @@
 /*                        P I X R O T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2016 United States Government as represented by
+ * Copyright (c) 1986-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -190,7 +190,7 @@ main(int argc, char **argv)
 		xout = (nyin - 1) - lasty;
 		outbyte = ((yout * nyin) + xout) * pixbytes;
 		if (outplace != outbyte) {
-		    if (bu_fseek(ofp, outbyte, 0) < 0) {
+		    if (fseek(ofp, outbyte, 0) < 0) {
 			bu_exit(3, "pixrot: Can't seek on output, yet I need to!\n");
 		    }
 		    outplace = outbyte;
@@ -215,7 +215,7 @@ main(int argc, char **argv)
 		xout = yin;
 		outbyte = ((yout * nyin) + xout) * pixbytes;
 		if (outplace != outbyte) {
-		    if (bu_fseek(ofp, outbyte, 0) < 0) {
+		    if (fseek(ofp, outbyte, 0) < 0) {
 			bu_exit(3, "pixrot: Can't seek on output, yet I need to!\n");
 		    }
 		    outplace = outbyte;
@@ -232,7 +232,7 @@ main(int argc, char **argv)
 		yout = (nyin - 1) - y;
 		outbyte = yout * scanbytes;
 		if (outplace != outbyte) {
-		    if (bu_fseek(ofp, outbyte, 0) < 0) {
+		    if (fseek(ofp, outbyte, 0) < 0) {
 			bu_exit(3, "pixrot: Can't seek on output, yet I need to!\n");
 		    }
 		    outplace = outbyte;

@@ -1,7 +1,7 @@
 /*                        B U T T E R . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,6 +34,10 @@
 #include <math.h>
 
 #include "fft.h"
+
+#if defined(HAVE_HYPOT) && !defined(HAVE_DECL_HYPOT)
+extern double hypot(double x, double y);
+#endif
 
 /*
  * Returns the magnitude of the transfer function Hs(s) for a 1/3

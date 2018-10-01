@@ -1,7 +1,7 @@
 /*                      G - E U C L I D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,8 +34,10 @@
 #include "bio.h"
 
 /* interface headers */
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/parallel.h"
+#include "bu/snooze.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rt/geom.h"
@@ -453,7 +455,7 @@ main(int argc, char **argv)
     double percent;
 
     bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
-    sleep(1);
+    bu_snooze(BU_SEC2USEC(1));
 
     bu_setprogname(argv[0]);
     bu_setlinebuf(stderr);

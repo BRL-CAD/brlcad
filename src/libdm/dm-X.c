@@ -1,7 +1,7 @@
 /*                          D M - X . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2016 United States Government as represented by
+ * Copyright (c) 1988-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,15 +37,15 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
-#define USE_DIALS_AND_BUTTONS 1
-
 #ifdef HAVE_X11_XOSDEFS_H
 #  include <X11/Xfuncproto.h>
 #  include <X11/Xosdefs.h>
 #endif
-#if USE_DIALS_AND_BUTTONS
+
+#ifdef HAVE_X11_EXTENSIONS_XINPUT_H
 #  include <X11/extensions/XInput.h>
-#endif
+#endif /* HAVE_X11_XINPUT_H */
+
 #if defined(linux)
 #  undef X_NOT_STDC_ENV
 #  undef X_NOT_POSIX
@@ -425,7 +425,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
     static int count = 0;
     int make_square = -1;
     XGCValues gcv;
-#if USE_DIALS_AND_BUTTONS
+#ifdef HAVE_X11_EXTENSIONS_XINPUT_H
     int j, k;
     int ndevices;
     int nclass = 0;
@@ -687,7 +687,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 	    goto Skip_dials;
     }
 
-#if USE_DIALS_AND_BUTTONS
+#ifdef HAVE_X11_EXTENSIONS_XINPUT_H
     /*
      * Take a look at the available input devices. We're looking for
      * "dial+buttons".
@@ -860,11 +860,6 @@ X_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
     static int nvectors = 0;
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
     struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
-
-    if (dmp->dm_debugLevel) {
-	bu_log("X_drawVList()\n");
-	bu_log("vp - %lu, perspective - %d\n", vp, dmp->dm_perspective);
-    }
 
     /* delta is used in clipping to insure clipped endpoint is
      * slightly in front of eye plane (perspective mode only).  This

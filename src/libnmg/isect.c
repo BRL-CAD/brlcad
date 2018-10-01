@@ -1,7 +1,7 @@
 /*                  N M G _ R T _ I S E C T . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2016 United States Government as represented by
+ * Copyright (c) 1994-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -140,7 +140,7 @@ nmg_rt_isect_plfu(struct faceuse *fu, fastf_t *pt, fastf_t *plane_pt, struct bu_
     }
 
     bu_log("overlay %s\n", name);
-    b = (long *)bu_calloc(fu->s_p->r_p->m_p->maxindex,
+    b = (long *)nmg_calloc(fu->s_p->r_p->m_p->maxindex,
 			  sizeof(long), "bit vec");
 
 	pl_erase(fp);
@@ -157,7 +157,7 @@ nmg_rt_isect_plfu(struct faceuse *fu, fastf_t *pt, fastf_t *plane_pt, struct bu_
     pl_color(fp, 255, 50, 50);
     pdv_3line(fp, pt, plane_pt);
 
-    bu_free((char *)b, "bit vec");
+    nmg_free((char *)b, "bit vec");
     fclose(fp);
 }
 
@@ -181,7 +181,7 @@ pleu(struct edgeuse *eu, fastf_t *pt, fastf_t *plane_pt)
 
     bu_log("overlay %s\n", name);
     m = nmg_find_model(eu->up.magic_p);
-    b = (long *)bu_calloc(m->maxindex, sizeof(long), "bit vec");
+    b = (long *)nmg_calloc(m->maxindex, sizeof(long), "bit vec");
 
     pl_erase(fp);
 
@@ -202,7 +202,7 @@ pleu(struct edgeuse *eu, fastf_t *pt, fastf_t *plane_pt)
     nmg_pl_eu(fp, eu, b, 255, 255, 255);
     pl_color(fp, 255, 50, 50);
     pdv_3line(fp, pt, plane_pt);
-    bu_free((char *)b, "bit vec");
+    nmg_free((char *)b, "bit vec");
     fclose(fp);
 }
 
@@ -1625,7 +1625,7 @@ isect_ray_loopuse(struct nmg_ray_data *rd, struct loopuse *lu_p, struct bu_list 
 
 
 HIDDEN void
-eu_touch_func(struct edgeuse *eu, fastf_t *pt, char *priv, struct bu_list *vlfree)
+eu_touch_func(struct edgeuse *eu, fastf_t *pt, const char *priv, struct bu_list *vlfree)
 {
     struct edgeuse *eu_next;
     struct nmg_ray_data *rd;
@@ -1832,7 +1832,7 @@ isect_ray_snurb_face(struct nmg_ray_data *rd, struct faceuse *fu, struct face_g_
 
 	if (planar) {
 	    vect_t u_dir, v_dir;
-	    point_t ctl_pt[4];
+	    point_t ctl_pt[4] = {VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO};
 	    vect_t hit_dir;
 	    int i, j;
 	    int rational;
@@ -1892,7 +1892,7 @@ isect_ray_snurb_face(struct nmg_ray_data *rd, struct faceuse *fu, struct face_g_
 	    if (u >= srf->u.knots[0] && u <= srf->u.knots[srf->u.k_size-1] &&
 		v >= srf->v.knots[0] && v <= srf->v.knots[srf->v.k_size-1])
 	    {
-		BU_ALLOC(hp, struct nmg_nurb_uv_hit);
+		NMG_ALLOC(hp, struct nmg_nurb_uv_hit);
 		hp->next = (struct nmg_nurb_uv_hit *)NULL;
 		hp->sub = 0;
 		hp->u = u;
@@ -1953,7 +1953,7 @@ isect_ray_snurb_face(struct nmg_ray_data *rd, struct faceuse *fu, struct face_g_
 		if (nmg_debug & DEBUG_RT_ISECT)
 		    bu_log("\tNot a hit\n");
 
-		bu_free((char *)hp, "hit");
+		nmg_free((char *)hp, "hit");
 		hp = next;
 		continue;
 	    }
@@ -2047,13 +2047,12 @@ isect_ray_snurb_face(struct nmg_ray_data *rd, struct faceuse *fu, struct face_g_
 
 	    hit_ins(rd, myhit);
 
-	    bu_free((char *)hp, "hit");
+	    nmg_free((char *)hp, "hit");
 	    hp = next;
 	}
 	nmg_nurb_free_snurb(srf);
     }
 }
-
 
 HIDDEN void
 isect_ray_planar_face(struct nmg_ray_data *rd, struct faceuse *fu_p, struct bu_list *vlfree)
@@ -2131,7 +2130,7 @@ isect_ray_planar_face(struct nmg_ray_data *rd, struct faceuse *fu_p, struct bu_l
     else
 	pt_class = nmg_class_pt_fu_except(plane_pt, fu_p,
 					  (struct loopuse *)NULL,
-					  (void (*)(struct edgeuse *, point_t, const char *))eu_touch_func,
+					  eu_touch_func,
 					  (void (*)(struct vertexuse *, point_t, const char *))vu_touch_func,
 					  (char *)rd,
 					  NMG_FPI_PERGEOM,
@@ -2694,24 +2693,7 @@ nmg_class_ray_vs_shell(struct nmg_ray *rp, const struct shell *s, const int in_o
     }
 
     /* Compute the inverse of the direction cosines */
-    if (!ZERO(rp->r_dir[X])) {
-	rd.rd_invdir[X]=1.0/rp->r_dir[X];
-    } else {
-	rd.rd_invdir[X] = INFINITY;
-	rp->r_dir[X] = 0.0;
-    }
-    if (!ZERO(rp->r_dir[Y])) {
-	rd.rd_invdir[Y]=1.0/rp->r_dir[Y];
-    } else {
-	rd.rd_invdir[Y] = INFINITY;
-	rp->r_dir[Y] = 0.0;
-    }
-    if (!ZERO(rp->r_dir[Z])) {
-	rd.rd_invdir[Z]=1.0/rp->r_dir[Z];
-    } else {
-	rd.rd_invdir[Z] = INFINITY;
-	rp->r_dir[Z] = 0.0;
-    }
+    VINVDIR(rd.rd_invdir, rp->r_dir);
 
     rd.rp = rp;
     rd.tol = tol;
@@ -2719,7 +2701,7 @@ nmg_class_ray_vs_shell(struct nmg_ray *rp, const struct shell *s, const int in_o
     rd.stp = NULL;
     rd.seghead = NULL;
     rd.magic = NMG_RAY_DATA_MAGIC;
-    rd.hitmiss = (struct nmg_hitmiss **)bu_calloc(rd.rd_m->maxindex,
+    rd.hitmiss = (struct nmg_hitmiss **)nmg_calloc(rd.rd_m->maxindex,
 					      sizeof(struct nmg_hitmiss *), "nmg geom hit list");
     rd.classifying_ray = 1;
 
@@ -2776,12 +2758,12 @@ nmg_class_ray_vs_shell(struct nmg_ray *rp, const struct shell *s, const int in_o
 	while (BU_LIST_WHILE(hitp, nmg_hitmiss, &re_nmgfree)) {
 	    NMG_CK_HITMISS(hitp);
 	    BU_LIST_DEQUEUE((struct bu_list *)hitp);
-	    bu_free((void *)hitp, "struct nmg_hitmiss");
+	    nmg_free((void *)hitp, "struct nmg_hitmiss");
 	}
     }
 
     /* free the hitmiss table */
-    bu_free((char *)rd.hitmiss, "free nmg geom hit list");
+    nmg_free((char *)rd.hitmiss, "free nmg geom hit list");
 
     if (!rd.rd_m->manifolds) {
 	/* If there is no manifolds list attached to the model
@@ -2792,7 +2774,7 @@ nmg_class_ray_vs_shell(struct nmg_ray *rp, const struct shell *s, const int in_o
 	 * function and should be freed in the nmg_bool
 	 * function.
 	 */
-	bu_free((char *)rd.manifolds, "free local manifolds table");
+	nmg_free((char *)rd.manifolds, "free local manifolds table");
 	rd.manifolds = NULL; /* sanity */
     }
 

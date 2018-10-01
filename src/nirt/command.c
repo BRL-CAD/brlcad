@@ -1,7 +1,7 @@
 /*                       C O M M A N D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,7 +37,6 @@
 
 #include "./nirt.h"
 #include "./usrfmt.h"
-
 
 char local_u_name[65];
 double base2local;		/* from db_i struct, not fastf_t */
@@ -535,7 +534,8 @@ do_overlap_claims(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 void
 cm_attr(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 {
-    while (isascii(*buffer) && isspace((int)*buffer)) buffer++;
+    while (isspace((int)*buffer))
+	buffer++;
 
     if (strlen(buffer) == 0) {
 	com_usage(ctp);
@@ -561,7 +561,7 @@ cm_debug(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
     char *cp = buffer;
 
     /* This is really icky -- should have argc, argv interface */
-    while (*cp && isascii(*cp) && isspace((int)*cp))  cp++;
+    while (*cp && isspace((int)*cp))  cp++;
     if (*cp == '\0') {
 	/* display current value */
 	bu_printb("debug ", nirt_debug, DEBUG_FMT);
@@ -585,7 +585,7 @@ cm_libdebug(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 
     /* This is really icky -- should have argc, argv interface */
 
-    while (*cp && isascii(*cp) && isspace((int)*cp))
+    while (*cp && isspace((int)*cp))
 	cp++;
 
     if (*cp == '\0') {
