@@ -49,6 +49,9 @@
 #include "bu/file.h"
 
 
+static const char DSLASH[2] = {BU_DIR_SEPARATOR, '\0'};
+
+
 static const char *
 dir_temp(char *buf, size_t len)
 {
@@ -114,6 +117,10 @@ dir_temp(char *buf, size_t len)
 	if (!BU_STR_EMPTY(dir)) {
 	    bu_strlcpy(path, dir, MAXPATHLEN);
 	}
+    }
+
+    if ((strlen(path) > 1) && path[strlen(path)-1] == BU_DIR_SEPARATOR) {
+	path[strlen(path)-1] = '\0'; /* nibble the trailing slash */
     }
 
     bu_strlcpy(buf, path, len);
@@ -218,21 +225,21 @@ dir_cache(char *buf, size_t len)
     if (BU_STR_EMPTY(path)) {
 	dir_home(temp, MAXPATHLEN);
 	bu_strlcat(path, temp, MAXPATHLEN);
-	/* FIXME: assumes slash */
-	bu_strlcat(path, "/.cache", MAXPATHLEN);
+	bu_strlcat(path, DSLASH, MAXPATHLEN);
+	bu_strlcat(path, ".cache", MAXPATHLEN);
     }
 
     /* method 3: fallback to temp directory subdir */
     if (BU_STR_EMPTY(path)) {
 	dir_temp(temp, MAXPATHLEN);
 	bu_strlcat(path, temp, MAXPATHLEN);
-	/* FIXME: assumes slash */
-	bu_strlcat(path, "/.cache", MAXPATHLEN);
+	bu_strlcat(path, DSLASH, MAXPATHLEN);
+	bu_strlcat(path, ".cache", MAXPATHLEN);
     }
 
     /* finally, append our application subdirectory */
-    /* FIXME: assumes slash */
-    bu_strlcat(path, "/BRL-CAD", MAXPATHLEN);
+    bu_strlcat(path, DSLASH, MAXPATHLEN);
+    bu_strlcat(path, "BRL-CAD", MAXPATHLEN);
 
     bu_strlcpy(buf, path, len);
     return buf;
@@ -245,7 +252,8 @@ dir_config(char *buf, size_t len)
     char home[MAXPATHLEN] = {0};
 
     dir_home(home, MAXPATHLEN);
-    bu_strlcat(home, "/.config", MAXPATHLEN);
+    bu_strlcat(home, DSLASH, MAXPATHLEN);
+    bu_strlcat(home, ".config", MAXPATHLEN);
 
     if (len) {
 	bu_strlcpy(buf, home, len);
