@@ -24,7 +24,6 @@ rtscale
 rtshot
 rtsil
 rtsrv
-rttherm
 rtwalk
 rtweight
 rtwizard (GUI)
@@ -38,7 +37,6 @@ bot_dump
 bot_shell-vtk
 comgeom-g
 cy-g
-dem-g
 dxf-g
 enf-g
 euclid-g
@@ -150,7 +148,6 @@ pix-yuv
 png-bw
 png-pix
 rle-pix
-ssamp-bw
 sun-pix
 u-a
 u-bw
@@ -259,7 +256,6 @@ pixcolors
 pixcount
 pixcut
 pixdiff
-pixdsplit
 pixelswap
 pixembed
 pixfade
@@ -292,7 +288,6 @@ random
 script-tab
 scriptsort
 smod
-ssampview (GUI)
 syn
 tabinterp
 tabsub

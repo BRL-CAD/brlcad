@@ -466,37 +466,37 @@ TestplatformChmod(
 	TCL_DECLARE_MUTEX(initializeMutex)
 	Tcl_MutexLock(&initializeMutex);
 	if (!initialized) {
-	    HINSTANCE hInstance = LoadLibrary("Advapi32");
+	    HMODULE handle = GetModuleHandle(TEXT("ADVAPI"));
 
-	    if (hInstance != NULL) {
+	    if (handle != NULL) {
 		setNamedSecurityInfoProc = (setNamedSecurityInfoADef)
-			GetProcAddress(hInstance, "SetNamedSecurityInfoA");
+			GetProcAddress(handle, "SetNamedSecurityInfoA");
 		getFileSecurityProc = (getFileSecurityADef)
-			GetProcAddress(hInstance, "GetFileSecurityA");
+			GetProcAddress(handle, "GetFileSecurityA");
 		getAceProc = (getAceDef)
-			GetProcAddress(hInstance, "GetAce");
+			GetProcAddress(handle, "GetAce");
 		addAceProc = (addAceDef)
-			GetProcAddress(hInstance, "AddAce");
+			GetProcAddress(handle, "AddAce");
 		equalSidProc = (equalSidDef)
-			GetProcAddress(hInstance, "EqualSid");
+			GetProcAddress(handle, "EqualSid");
 		addAccessDeniedAceProc = (addAccessDeniedAceDef)
-			GetProcAddress(hInstance, "AddAccessDeniedAce");
+			GetProcAddress(handle, "AddAccessDeniedAce");
 		initializeAclProc = (initializeAclDef)
-			GetProcAddress(hInstance, "InitializeAcl");
+			GetProcAddress(handle, "InitializeAcl");
 		getLengthSidProc = (getLengthSidDef)
-			GetProcAddress(hInstance, "GetLengthSid");
+			GetProcAddress(handle, "GetLengthSid");
 		getAclInformationProc = (getAclInformationDef)
-			GetProcAddress(hInstance, "GetAclInformation");
+			GetProcAddress(handle, "GetAclInformation");
 		getSecurityDescriptorDaclProc = (getSecurityDescriptorDaclDef)
-			GetProcAddress(hInstance, "GetSecurityDescriptorDacl");
+			GetProcAddress(handle, "GetSecurityDescriptorDacl");
 		lookupAccountNameProc = (lookupAccountNameADef)
-			GetProcAddress(hInstance, "LookupAccountNameA");
+			GetProcAddress(handle, "LookupAccountNameA");
 		getSidLengthRequiredProc = (getSidLengthRequiredDef)
-			GetProcAddress(hInstance, "GetSidLengthRequired");
+			GetProcAddress(handle, "GetSidLengthRequired");
 		initializeSidProc = (initializeSidDef)
-			GetProcAddress(hInstance, "InitializeSid");
+			GetProcAddress(handle, "InitializeSid");
 		getSidSubAuthorityProc = (getSidSubAuthorityDef)
-			GetProcAddress(hInstance, "GetSidSubAuthority");
+			GetProcAddress(handle, "GetSidSubAuthority");
 
 		if (setNamedSecurityInfoProc && getAceProc && addAceProc
 			&& equalSidProc && addAccessDeniedAceProc

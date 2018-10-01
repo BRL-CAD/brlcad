@@ -730,6 +730,27 @@ TkIntXlibStubs tkIntXlibStubs = {
     XSynchronize, /* 112 */
     XSync, /* 113 */
     XVisualIDFromVisual, /* 114 */
+    NULL, /* 115 */
+    NULL, /* 116 */
+    NULL, /* 117 */
+    NULL, /* 118 */
+    NULL, /* 119 */
+    NULL, /* 120 */
+    NULL, /* 121 */
+    NULL, /* 122 */
+    NULL, /* 123 */
+    NULL, /* 124 */
+    NULL, /* 125 */
+    NULL, /* 126 */
+    NULL, /* 127 */
+    NULL, /* 128 */
+    NULL, /* 129 */
+    NULL, /* 130 */
+    NULL, /* 131 */
+    NULL, /* 132 */
+    XDrawSegments, /* 133 */
+    XDrawPoint, /* 134 */
+    XDrawPoints, /* 135 */
 #endif /* WIN */
 #ifdef MAC_OSX_TK /* AQUA */
     XSetDashes, /* 0 */

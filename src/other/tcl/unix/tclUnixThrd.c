@@ -810,7 +810,8 @@ TclpFreeAllocCache(
 {
     if (ptr != NULL) {
 	/*
-	 * Called by the pthread lib when a thread exits
+	 * Called by TclFinalizeThreadAllocThread() during the thread
+	 * finalization initiated from Tcl_FinalizeThread()
 	 */
 
 	TclFreeAllocCache(ptr);
@@ -818,7 +819,7 @@ TclpFreeAllocCache(
 
     } else if (initialized) {
 	/*
-	 * Called by us in TclFinalizeThreadAlloc() during the library
+	 * Called by TclFinalizeThreadAlloc() during the process
 	 * finalization initiated from Tcl_Finalize()
 	 */
 
@@ -833,7 +834,7 @@ TclpGetAllocCache(void)
     if (!initialized) {
 	pthread_mutex_lock(allocLockPtr);
 	if (!initialized) {
-	    pthread_key_create(&key, TclpFreeAllocCache);
+	    pthread_key_create(&key, NULL);
 	    initialized = 1;
 	}
 	pthread_mutex_unlock(allocLockPtr);

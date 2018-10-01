@@ -5,6 +5,7 @@
  *
  * Copyright 2001 Sariel Har-Peled (ssaarriieell@cs.uiuc.edu)
  *
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of either:
  *
@@ -18,6 +19,10 @@
  *   Software Foundation; either version 2.1, or (at your option)
  *   any later version.
  *
+ * or 
+ *  
+ * * MIT license 
+ * 
  * Code is based on the paper:
  *   A Practical Approach for Computing the Diameter of a
  *        Point-Set (in ACM Sym. on Computation Geometry
@@ -25,6 +30,10 @@
  *   Sariel Har-Peled (http://www.uiuc.edu/~sariel)
  *--------------------------------------------------------------
  * History
+ *  3/6/18 
+ *        - Tobias Stohr reported & fixed a bug wis missing
+ *          constructor for 
+ * 8/19/16 - Clifford Yap updated the source
  * 3/28/01 -
  *     This is a more robust version of the code. It should
  *     handlereally abnoxious inputs well (i.e., points with equal
@@ -181,9 +190,6 @@ public:
     gdiam_real   brute_diameter( int  a_lo, int  a_hi,
                                  int  b_lo, int  b_hi,
                                  GPointPair  & diam ) const {
-        double  max_dist;
-
-        max_dist = 0;
         for  ( int  ind = a_lo; ind <= a_hi; ind++ )
             for  ( int  jnd = b_lo; jnd <= b_hi; jnd++ )
                 diam.update_diam( arr[ ind ], arr[ jnd ] );
@@ -194,9 +200,6 @@ public:
                                  int  b_lo, int  b_hi,
                                  GPointPair  & diam,
                                  const gdiam_point  dir ) const {
-        double  max_dist;
-
-        max_dist = 0;
         for  ( int  ind = a_lo; ind <= a_hi; ind++ )
             for  ( int  jnd = b_lo; jnd <= b_hi; jnd++ )
                 diam.update_diam( arr[ ind ], arr[ jnd ], dir );
@@ -208,9 +211,6 @@ public:
                            const gdiam_point  * b_lo,
                            const gdiam_point  * b_hi,
                            GPointPair  & diam ) const {
-        double  max_dist;
-
-        max_dist = 0;
         for  ( const gdiam_point  * ind = a_lo; ind <= a_hi; ind++ )
             for  ( const gdiam_point   * jnd = b_lo; jnd <= b_hi; jnd++ )
                 diam.update_diam( *ind, *jnd );
@@ -223,9 +223,6 @@ public:
                                  const gdiam_point  * b_hi,
                                  GPointPair  & diam,
                                  const gdiam_point  dir ) const {
-        double  max_dist;
-
-        max_dist = 0;
         for  ( const gdiam_point  * ind = a_lo; ind <= a_hi; ind++ )
             for  ( const gdiam_point   * jnd = b_lo; jnd <= b_hi; jnd++ )
                 diam.update_diam( *ind, *jnd, dir );
@@ -1300,7 +1297,7 @@ inline int     AreaSign( const point2d  & a,
                          const point2d  & b,
                          const point2d  & c )
 {
-    ldouble  area, area1, area2;
+    ldouble  area;//, area1, area2;
 
     area = a.x * b.y - a.y * b.x +
         a.y * c.x - a.x * c.y +
@@ -1523,16 +1520,15 @@ isLeft( const point2d &P0, const point2d &P1, const point2d &P2 )
 
 
 
-// TODO - need to try switching to Monotone Chain Algorithm to avoid the area computation, which
+// Switched to Monotone Chain Algorithm to avoid the area computation, which
 // is problematic for strict weak ordering when doing sorting.  Useful links:
 // http://stackoverflow.com/questions/1041620/most-efficient-way-to-erase-duplicates-and-sort-a-c-vector
 // http://geomalgorithms.com/a10-_hull-1.html
-
 void  convex_hull( vec_point_2d  & in, vec_point_2d  & out )
 {
 
     CompareByAngle  comp;
-    int  ind, position;
+    int  position;
 
     assert( in.size() > 1 );
 
@@ -1632,7 +1628,7 @@ void  convex_hull( vec_point_2d  & in, vec_point_2d  & out )
     }
     if (minmax != minmin)
         out.push_back(in[minmin]);  // push  joining endpoint onto stack
-#ifdef _THIS_LOCKS_MGED_
+#ifndef GDIAM_QUIET
     std::vector<point2d_ptr>::iterator it;
     for(it = out.begin(); it != out.end(); it++){
 	    std::cout << "point: " << (*it)->x << "," << (*it)->y << "\n";
@@ -1975,6 +1971,8 @@ private:
     int  size;
 
 public:
+    ProjPointSet() : arr(NULL), in_arr(NULL), size( 0 ) {}
+
     ~ProjPointSet() {
         term();
     }

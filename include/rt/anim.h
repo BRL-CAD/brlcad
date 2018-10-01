@@ -1,7 +1,7 @@
 /*                          A N I M . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2016 United States Government as represented by
+ * Copyright (c) 1993-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,12 +25,17 @@
 #define RT_ANIM_H
 
 #include "common.h"
+
+/* interface headers */
 #include "vmath.h"
 #include "bu/vls.h"
 #include "bu/file.h"
 #include "rt/defines.h"
 #include "rt/mater.h"
 #include "rt/db_fullpath.h"
+
+/* system headers */
+#include "bio.h" /* for FILE */
 
 __BEGIN_DECLS
 

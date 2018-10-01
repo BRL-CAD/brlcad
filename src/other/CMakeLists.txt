@@ -35,6 +35,37 @@ RESTORE_CACHED_BUILD_FLAGS(_CMAKE_DEFAULT)
 # Quiet all warnings in this directory
 DISABLE_WARNINGS()
 
+# For src/other, be liberal about standards
+unset(CMAKE_C_EXTENSIONS)
+unset(CMAKE_C_STANDARD_REQUIRED)
+unset(CMAKE_C_STANDARD)
+unset(CMAKE_CXX_EXTENSIONS)
+unset(CMAKE_CXX_STANDARD_REQUIRED)
+unset(CMAKE_CXX_STANDARD)
+
+###############################################################################
+# Unlike the misc/tools directory components built in src/other are part of
+# the distribution, not just the compilation.  Hence we need to make sure of
+# some basic compatibility between the build settings.
+
+# We don't want to try to mix 32 and 64 bit builds so despite clearing the
+# parent build flags,  set the 32/64 bit flag specifically if we have it from
+# the parent build.
+if(${CMAKE_WORD_SIZE} MATCHES "64BIT" AND NOT CMAKE_CL_64 AND DEFINED 64BIT_FLAG)
+  ADD_NEW_FLAG(C 64BIT_FLAG ALL)
+  ADD_NEW_FLAG(CXX 64BIT_FLAG ALL)
+  ADD_NEW_FLAG(SHARED_LINKER 64BIT_FLAG ALL)
+  ADD_NEW_FLAG(EXE_LINKER 64BIT_FLAG ALL)
+endif(${CMAKE_WORD_SIZE} MATCHES "64BIT" AND NOT CMAKE_CL_64 AND DEFINED 64BIT_FLAG)
+if(${CMAKE_WORD_SIZE} MATCHES "32BIT" AND NOT MSVC AND DEFINED 32BIT_FLAG)
+  ADD_NEW_FLAG(C 32BIT_FLAG ALL)
+  ADD_NEW_FLAG(CXX 32BIT_FLAG ALL)
+  ADD_NEW_FLAG(SHARED_LINKER 32BIT_FLAG ALL)
+  ADD_NEW_FLAG(EXE_LINKER 32BIT_FLAG ALL)
+endif(${CMAKE_WORD_SIZE} MATCHES "32BIT" AND NOT MSVC AND DEFINED 32BIT_FLAG)
+
+###############################################################################
+
 # Set a variable that will tell build logic in subdirectories that there is a
 # parent build.  This will in some cases disable attempts to define settings
 # such as RPATH values that we need the parent build to manage.
@@ -68,6 +99,9 @@ THIRD_PARTY(libregex REGEX regex regex_DESCRIPTION ALIASES ENABLE_REGEX)
 BRLCAD_INCLUDE_FILE(regex.h HAVE_REGEX_H)
 SetTargetFolder(regex "Third Party Libraries")
 SetTargetFolder(regex-static "Third Party Libraries")
+if(BRLCAD_REGEX_BUILD)
+  BRLCAD_MANAGE_FILES(libregex/regex.h ${INCLUDE_DIR})
+endif(BRLCAD_REGEX_BUILD)
 
 CHECK_LIBRARY_EXISTS(c regcomp "" HAVE_LIBC_REGEX)
 if(BUILD_SHARED_LIBS AND HAVE_LIBC_REGEX AND "${BRLCAD_REGEX}" MATCHES "BUNDLED")
@@ -112,18 +146,10 @@ SetTargetFolder(zlib "Third Party Libraries")
 SetTargetFolder(zlib-static "Third Party Libraries")
 SetTargetFolder(example "Third Party Executables")
 SetTargetFolder(minigzip "Third Party Executables")
-
-# tinycthread Library - C11 style threads portability wrapper 
-set(tinycthread_DESCRIPTION "
-Option for enabling and disabling compilation of the tinycthread library
-provided with BRL-CAD's source distribution.  Default is AUTO,
-responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
-first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
-")
-THIRD_PARTY(tinycthread TINYCTHREAD tinycthread tinycthread_DESCRIPTION ALIASES ENABLE_TINYCTHREAD)
-SetTargetFolder(tinycthread "Third Party Libraries")
-SetTargetFolder(tinycthread-static "Third Party Libraries")
-
+if(BRLCAD_ZLIB_BUILD)
+  BRLCAD_MANAGE_FILES(libz/zlib.h ${INCLUDE_DIR})
+  BRLCAD_MANAGE_FILES(${CMAKE_CURRENT_BINARY_DIR}/libz/zconf.h ${INCLUDE_DIR})
+endif(BRLCAD_ZLIB_BUILD)
 
 # LZ4 compression/decompression library
 set(lz4_DESCRIPTION "
@@ -139,6 +165,9 @@ if(BRLCAD_LZ4_BUILD)
   mark_as_advanced(LIBLZ4_INCLUDE_DIR)
   SetTargetFolder(lz4 "Third Party Libraries")
   SetTargetFolder(lz4-static "Third Party Libraries")
+  BRLCAD_MANAGE_FILES(lz4/lz4.h ${INCLUDE_DIR})
+  BRLCAD_MANAGE_FILES(lz4/lz4frame.h ${INCLUDE_DIR})
+  BRLCAD_MANAGE_FILES(lz4/lz4hc.h ${INCLUDE_DIR})
 endif(BRLCAD_LZ4_BUILD)
 
 
@@ -268,11 +297,13 @@ AUTO.
 # Note - we don't actually know the libpng build target name for the
 # shared library at this point - use png as a stub and override
 # once we know what PNG_LIB_NAME is.
+set(CMAKE_FIND_FRAMEWORK LAST)
 THIRD_PARTY(libpng PNG png png_DESCRIPTION REQUIRED_VARS BRLCAD_LEVEL2 ALIASES ENABLE_PNG)
 if(BRLCAD_PNG_BUILD)
 
   set(PNG_LIBRARY png CACHE STRING "PNG_LIBRARY" FORCE)
   set(PNG_PNG_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/libpng;${CMAKE_CURRENT_SOURCE_DIR}/libpng" CACHE STRING "PNG include directory" FORCE)
+  mark_as_advanced(PNG_PNG_INCLUDE_DIR)
 
   # On Haiku the find_library call sets this variable directly, which is not
   # how we handle things elsewhere in BRL-CAD - unset the variable in that
@@ -291,6 +322,26 @@ if(BRLCAD_PNG_BUILD)
   SetTargetFolder(png "Third Party Libraries")
   SetTargetFolder(png-static "Third Party Libraries")
   SetTargetFolder(genfiles "Third Party Libraries")
+
+  # The actual install directory has these in both libpng16 and the toplevel
+  # include directory.  Just put them in the top level include directory - we
+  # don't guarantee libpng16, so an include directory with that version may or
+  # may not be there anyway.
+  BRLCAD_MANAGE_FILES(libpng/png.h ${INCLUDE_DIR} FOLDER libpng)
+  BRLCAD_MANAGE_FILES(libpng/pngconf.h ${INCLUDE_DIR} FOLDER libpng)
+  add_custom_command(
+    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/pnglibconf.sentinel"
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different ${CMAKE_CURRENT_BINARY_DIR}/libpng/pnglibconf.h ${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/pnglibconf.h
+    COMMAND ${CMAKE_COMMAND} -E touch "${CMAKE_CURRENT_BINARY_DIR}/pnglibconf.sentinel"
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/libpng/pnglibconf.h
+    )
+  add_custom_target(pnglibconf_cp ALL DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/pnglibconf.sentinel")
+  BRLCAD_ADD_DIR_LIST_ENTRY(DATA_TARGETS "${CMAKE_CURRENT_BINARY_DIR}" pnglibconf_cp)
+  set_target_properties(pnglibconf_cp PROPERTIES FOLDER "BRL-CAD File Setup/libpng")
+  add_dependencies(pnglibconf_cp genfiles)
+  add_dependencies(png pnglibconf_cp)
+  DISTCLEAN("${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/pnglibconf.h")
+
 endif(BRLCAD_PNG_BUILD)
 set(PNG_INCLUDE_DIR ${PNG_PNG_INCLUDE_DIR} CACHE STRING "PNG include directory" FORCE)
 # Since SKIP_INSTALL_FILES doesn't have a PNG prefix, we'll unset it once we're done
@@ -339,6 +390,15 @@ if(BRLCAD_UTAHRLE_BUILD)
   set(BRLCAD_UTAHRLE_INCLUDE_DIR "${UTAHRLE_INCLUDE_DIR}" CACHE STRING "directory with rle.h header" FORCE)
   mark_as_advanced(UTAHRLE_INCLUDE_DIR)
   mark_as_advanced(BRLCAD_UTAHRLE_INCLUDE_DIR)
+
+  # manage installed headers
+  get_directory_property(libutahrle_headers_orig DIRECTORY libutahrle DEFINITION LIBUTAHRLE_PUBLIC_HDRS)
+  set(libutahrle_headers)
+  foreach(utahh ${libutahrle_headers_orig})
+    get_filename_component(utahhf ${utahh} NAME)
+    set(libutahrle_headers ${libutahrle_headers} libutahrle/include/${utahhf})
+  endforeach(utahh ${libutahrle_headers_orig})
+  BRLCAD_MANAGE_FILES(libutahrle_headers ${INCLUDE_DIR})
 endif(BRLCAD_UTAHRLE_BUILD)
 
 # Tcl/Tk presents a number of complexities for BRL-CAD and CMake.
@@ -374,7 +434,9 @@ version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
 
 THIRD_PARTY(tcl TCL tcl tcl_DESCRIPTION ALIASES ENABLE_TCL FIND_NAME BRLCADTCL REQUIRED_VARS BRLCAD_LEVEL2)
+
 if(BRLCAD_TCL_BUILD)
+
   SetTargetFolder(tclsh "Third Party Executables")
   SetTargetFolder(tcl "Third Party Libraries")
   SetTargetFolder(tclstub "Third Party Libraries")
@@ -404,6 +466,16 @@ if(BRLCAD_TCL_BUILD)
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tcl/library/Makefile")
   DISTCLEAN("${CMAKE_BINARY_DIR}/lib/tcl8")
   DISTCLEAN("${CMAKE_BINARY_DIR}/lib/tcl8.5")
+
+  # manage installed headers
+  get_directory_property(tcl_headers_orig DIRECTORY tcl DEFINITION TCL_HDRS)
+  set(tcl_headers)
+  foreach(tclh ${tcl_headers_orig})
+    get_filename_component(tclhf ${tclh} NAME)
+    set(tcl_headers ${tcl_headers} tcl/generic/${tclhf})
+  endforeach(tclh ${tcl_headers_orig})
+  BRLCAD_MANAGE_FILES(tcl_headers ${INCLUDE_DIR})
+
 ELSE(BRLCAD_TCL_BUILD)
   if(${TCL_TCLSH_EXECUTABLE})
     BRLCAD_INCLUDE_FILE(tcl.h HAVE_TCL_H)
@@ -507,6 +579,16 @@ if(BRLCAD_TK_BUILD)
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tk/pkgIndex.tcl")
   DISTCLEAN("${CMAKE_BINARY_DIR}/lib/tk8.5")
   DISTCLEAN("${CMAKE_BINARY_DIR}/lib/tk8.5.19")
+
+  # manage installed headers
+  get_directory_property(tk_headers_orig DIRECTORY tk DEFINITION TK_HDRS)
+  set(tk_headers)
+  foreach(tkh ${tk_headers_orig})
+    get_filename_component(tkhf ${tkh} NAME)
+    set(tk_headers ${tk_headers} tk/generic/${tkhf})
+  endforeach(tkh ${tk_headers_orig})
+  BRLCAD_MANAGE_FILES(tk_headers ${INCLUDE_DIR})
+
 ELSE(BRLCAD_TK_BUILD)
   if(BRLCAD_ENABLE_TK)
     BRLCAD_INCLUDE_FILE(tk.h HAVE_TK_H)
@@ -608,6 +690,16 @@ if(BRLCAD_ITCL_BUILD)
   DISTCLEAN("${CMAKE_BINARY_DIR}/lib/itcl3.4")
   SetTargetFolder(itcl "Third Party Libraries")
   SetTargetFolder(itclstub "Third Party Libraries")
+
+  # manage installed headers
+  get_directory_property(itcl_headers_orig DIRECTORY incrTcl/itcl DEFINITION ITCL_HDRS)
+  set(itcl_headers)
+  foreach(itclh ${itcl_headers_orig})
+    get_filename_component(itclhf ${itclh} NAME)
+    set(itcl_headers ${itcl_headers} incrTcl/itcl/generic/${itclhf})
+  endforeach(itclh ${itcl_headers_orig})
+  BRLCAD_MANAGE_FILES(itcl_headers ${INCLUDE_DIR})
+
 ELSE(BRLCAD_ITCL_BUILD)
   # We have Itcl package AND Itcl library - we're good.
   set(ITCL_VERSION "${ITCL_PACKAGE_VERSION}" CACHE STRING "ITCL_VERSION" FORCE)
@@ -642,6 +734,16 @@ if(BRLCAD_ITK_BUILD)
   set(ITK_VERSION "3.3" CACHE STRING "ITK_VERSION" FORCE)
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/incrTcl/itk/pkgIndex.tcl")
   DISTCLEAN("${CMAKE_BINARY_DIR}/lib/itk3.4")
+
+  # manage installed headers
+  get_directory_property(itk_headers_orig DIRECTORY incrTcl/itk DEFINITION ITK_HDRS)
+  set(itk_headers)
+  foreach(itkh ${itk_headers_orig})
+    get_filename_component(itkhf ${itkh} NAME)
+    set(itk_headers ${itk_headers} incrTcl/itk/generic/${itkhf})
+  endforeach(itkh ${itk_headers_orig})
+  BRLCAD_MANAGE_FILES(itk_headers ${INCLUDE_DIR})
+
 ELSE(BRLCAD_ITK_BUILD)
   # We have Itcl/Itk packages AND Itcl/Itk libraries - we're good.
   set(ITK_VERSION "${ITCL_VERSION}" CACHE STRING "ITK_VERSION" FORCE)
@@ -756,23 +858,29 @@ if(BRLCAD_OPENNURBS_BUILD)
   set(OPENNURBS_LIBRARIES "${OPENNURBS_LIBRARY};${ZLIB_LIBRARY}" CACHE STRING "Require opennurbs libraries" FORCE)
   mark_as_advanced(OPENNURBS_INCLUDE_DIRS)
   mark_as_advanced(OPENNURBS_LIBRARIES)
+  get_directory_property(openNURBS_headers_orig DIRECTORY openNURBS DEFINITION OPENNURBS_HEADERS)
+  set(openNURBS_headers)
+  foreach(onhfile ${openNURBS_headers_orig})
+    set(openNURBS_headers ${openNURBS_headers} openNURBS/${onhfile})
+  endforeach(onhfile ${openNURBS_headers_orig})
+  BRLCAD_MANAGE_FILES(openNURBS_headers ${INCLUDE_DIR}/openNURBS)
 endif(BRLCAD_OPENNURBS_BUILD)
 
 # Screened Poisson Reconstruction Library
-set(poissonrecon_DESCRIPTION "
-Option for enabling and disabling compilation of the PoissonRecon library
-provided with BRL-CAD's source code.  Default is AUTO, responsive to
-the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
-version if BRLCAD_BUNDLED_LIBS is also AUTO.
+set(spsr_DESCRIPTION "
+Option for enabling and disabling compilation of the Screened Poisson
+Surface Reconstruction library provided with BRL-CAD's source code.
+Default is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option
+and testing first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
-THIRD_PARTY(PoissonRecon SPR PoissonRecon poissonrecon_DESCRIPTION ALIASES
-  ENABLE_SPR REQUIRED_VARS "BRLCAD_ENABLE_SPR"  FLAGS NOSYS)
-if(BRLCAD_SPR_BUILD)
+THIRD_PARTY(libspsr SPSR libspsr spsr_DESCRIPTION ALIASES
+  ENABLE_SPSR FLAGS NOSYS)
+if(BRLCAD_SPSR_BUILD)
   SetTargetFolder(PoissonRecon "Third Party Executables")
   SetTargetFolder(SurfaceTrimmer "Third Party Executables")
-  SetTargetFolder(libSPR "Third Party Libraries")
-  SetTargetFolder(libSPR-static "Third Party Libraries")
-endif(BRLCAD_SPR_BUILD)
+  SetTargetFolder(libSPSR "Third Party Libraries")
+  SetTargetFolder(libSPSR-static "Third Party Libraries")
+endif(BRLCAD_SPSR_BUILD)
 
 if(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
 #=== LIBBSON ==================================================
@@ -808,6 +916,26 @@ set(INCLUDE_INSTALL_DIR ${INCLUDE_DIR})
 set(BIN_INSTALL_DIR ${BIN_DIR})
 set(LIB_INSTALL_DIR ${LIB_DIR})
 
+
+function(SC_MANAGE_HDRS src_dir src_var target_dir)
+  get_directory_property(sc_headers_orig DIRECTORY ${src_dir} DEFINITION ${src_var})
+  set(sc_headers)
+  foreach(scfile ${sc_headers_orig})
+    get_filename_component(scf ${scfile} NAME)
+    set(sc_headers ${sc_headers} ${src_dir}/${scf})
+  endforeach(scfile ${sc_headers_orig})
+  BRLCAD_MANAGE_FILES(${sc_headers} ${target_dir} FOLDER stepcode)
+endfunction(SC_MANAGE_HDRS)
+
+function(SC_MANAGE_HDRS2 src_dir src_var target_dir)
+  get_directory_property(sc_headers_orig DIRECTORY ${src_dir} DEFINITION ${src_var})
+  set(sc_headers)
+  foreach(scfile ${sc_headers_orig})
+    set(sc_headers ${sc_headers} ${src_dir}/${scfile})
+  endforeach(scfile ${sc_headers_orig})
+  BRLCAD_MANAGE_FILES(${sc_headers} ${target_dir} FOLDER stepcode)
+endfunction(SC_MANAGE_HDRS2)
+
 set(sc_ALIASES ENABLE_SCL ENABLE_STEP ENABLE_STEP_CLASS_LIBRARIES)
 set(sc_DESCRIPTION "
 Option for enabling and disabling compilation of the NIST Step Class
@@ -831,6 +959,34 @@ if(BRLCAD_SC_BUILD)
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/stepcode/include/sc_cf.h.in")
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/stepcode/include/sc_version_string.h")
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/stepcode/src/express/ExpParser_expparse/expparse.y")
+
+  # stepcode has a lot of installed headers...
+  SC_MANAGE_HDRS(stepcode/src/base SC_BASE_HDRS ${INCLUDE_DIR}/stepcode/base)
+  SC_MANAGE_HDRS(stepcode/src/cldai SC_CLDAI_HDRS ${INCLUDE_DIR}/stepcode/cldai)
+  SC_MANAGE_HDRS(stepcode/src/cleditor SC_CLEDITOR_HDRS ${INCLUDE_DIR}/stepcode/cleditor)
+  SC_MANAGE_HDRS(stepcode/src/clstepcore SC_CLSTEPCORE_HDRS ${INCLUDE_DIR}/stepcode/clstepcore)
+  SC_MANAGE_HDRS(stepcode/src/clutils SC_CLUTILS_HDRS ${INCLUDE_DIR}/stepcode/clutils)
+  SC_MANAGE_HDRS2(stepcode/include express_HDRS ${INCLUDE_DIR}/stepcode/express)
+  SC_MANAGE_HDRS2(stepcode/include exppp_HDRS ${INCLUDE_DIR}/stepcode/exppp)
+  BRLCAD_MANAGE_FILES(stepcode/include/ordered_attrs.h ${INCLUDE_DIR}/stepcode)
+  BRLCAD_MANAGE_FILES(stepcode/include/sc_export.h ${INCLUDE_DIR}/stepcode)
+  BRLCAD_MANAGE_FILES(stepcode/include/sc_stdbool.h ${INCLUDE_DIR}/stepcode)
+  get_directory_property(scbdir DIRECTORY stepcode/include DEFINITION SC_BINARY_DIR)
+  get_directory_property(sciidir DIRECTORY stepcode/include DEFINITION INCLUDE_INSTALL_DIR)
+  add_custom_command(
+    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/sc_gen_hdrs.sentinel"
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different ${scbdir}/${sciidir}/sc_cf.h ${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/stepcode/sc_cf.h
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different ${scbdir}/${sciidir}/sc_version_string.h ${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/stepcode/sc_version_string.h
+    COMMAND ${CMAKE_COMMAND} -E touch "${CMAKE_CURRENT_BINARY_DIR}/sc_gen_hdrs.sentinel"
+    DEPENDS ${scbdir}/${sciidir}/sc_cf.h
+    )
+  add_custom_target(sc_gen_hdrs_cp ALL DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/sc_gen_hdrs.sentinel")
+  BRLCAD_ADD_DIR_LIST_ENTRY(DATA_TARGETS "${CMAKE_CURRENT_BINARY_DIR}" sc_gen_hdrs_cp)
+  set_target_properties(sc_gen_hdrs_cp PROPERTIES FOLDER "BRL-CAD File Setup/stepcode")
+  add_dependencies(express sc_gen_hdrs_cp)
+  DISTCLEAN("${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/stepcode/sc_cf.h")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/stepcode/sc_version_string.h")
+
 endif(BRLCAD_SC_BUILD)
 set(IS_SUBBUILD ${IS_SUBBUILD_STASH})
 mark_as_advanced(SC_BUILD_TYPE)
@@ -892,6 +1048,7 @@ if(BRLCAD_LEVEL2)
   mark_as_advanced(CLIPPER_INCLUDE_DIR)
   SetTargetFolder(clipper "Third Party Libraries")
   SetTargetFolder(clipper-static "Third Party Libraries")
+  BRLCAD_MANAGE_FILES(clipper/clipper.hpp ${INCLUDE_DIR})
 endif(BRLCAD_LEVEL2)
 
 # VDSlib - A View-Dependent Simplification and Rendering Library For
@@ -998,6 +1155,11 @@ CMAKEFILES_IN_DIR(poly2tri_ignore_files poly2tri)
 DISTCLEAN("${CMAKE_CURRENT_SOURCE_DIR}/poly2tri/Makefile")
 set(P2T_LIBRARY "p2t" CACHE STRING "Poly2Tri library" FORCE)
 set(P2T_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/poly2tri" CACHE STRING "Directory containing poly2tri header" FORCE)
+get_directory_property(poly2tri_headers DIRECTORY poly2tri DEFINITION LIBP2T_PUBLIC_HDRS)
+foreach(phfile ${poly2tri_headers})
+  get_filename_component(phfile_dir ${phfile} DIRECTORY)
+  BRLCAD_MANAGE_FILES(poly2tri/${phfile} ${INCLUDE_DIR}/${phfile_dir})
+endforeach(phfile ${poly2tri_headers})
 SetTargetFolder(p2t "Third Party Libraries")
 SetTargetFolder(p2t-static "Third Party Libraries")
 mark_as_advanced(P2T_LIBRARY)
@@ -1029,7 +1191,7 @@ AUTO.
 THIRD_PARTY(proj-4 PROJ4 proj4 proj4_DESCRIPTION REQUIRED_VARS "BRLCAD_ENABLE_GDAL;BRLCAD_LEVEL2" ALIASES ENABLE_PROJ4)
 if(BRLCAD_PROJ4_BUILD)
   set(PROJ4_LIBRARY proj CACHE STRING "libproj" FORCE)
-  set(PROJ4_INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/proj-4;${CMAKE_CURRENT_SOURCE_DIR}/proj-4/src" CACHE STRING "proj-4 includes" FORCE)
+  set(PROJ4_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/proj-4;${CMAKE_CURRENT_SOURCE_DIR}/proj-4/src" CACHE STRING "proj-4 includes" FORCE)
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/proj-4/proj_config.h")
   SetTargetFolder(proj "Third Party Libraries/GDAL")
 endif(BRLCAD_PROJ4_BUILD)
@@ -1071,7 +1233,12 @@ mark_as_advanced(GDAL_LIBRARY)
 include("${CMAKE_CURRENT_SOURCE_DIR}/gct.dist")
 CMAKEFILES_IN_DIR(gct_ignore_files gct)
 
+# linenoise is used by applications directly
+include(${CMAKE_CURRENT_SOURCE_DIR}/linenoise.dist)
+CMAKEFILES_IN_DIR(linenoise_ignore_files linenoise)
+
 CMAKEFILES(README)
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

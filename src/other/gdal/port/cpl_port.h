@@ -435,6 +435,7 @@ typedef unsigned int  GUIntptr_t;
 #include <fcntl.h>
 #endif
 
+#ifdef __cplusplus
 extern "C++" {
 #include <string>
 #include <cstdio>
@@ -445,14 +446,20 @@ extern "C++" {
 #include <iostream>
 #include <sstream>
 }
+#endif
 #endif /* __GNUC__ */
 
-#undef NULL
-#define NULL nullptr
+#ifdef __cplusplus
+#  undef NULL
+#  define NULL nullptr
+#endif
+
 #else /* defined(NULL_AS_NULLPTR) && HAVE_CXX11 */
+
 #ifndef NULL
 #  define NULL  0
 #endif
+
 #endif /* defined(NULL_AS_NULLPTR) && HAVE_CXX11 */
 /*! @endcond */
 

@@ -1,7 +1,7 @@
 /*                         M A G I C . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2016 United States Government as represented by
+ * Copyright (c) 2008-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -125,6 +125,7 @@ __BEGIN_DECLS
 #define RT_PNTS_INTERNAL_MAGIC		0x706e7473 /**< pnts */
 #define RT_ANNOT_INTERNAL_MAGIC		0x616e6e6f /**< anno */
 #define RT_HRT_INTERNAL_MAGIC		0x6872743f /**< hrt? */
+#define RT_SCRIPT_INTERNAL_MAGIC	0x73637269 /**< scri */
 
 /* n-manifold geometry */
 
@@ -237,7 +238,7 @@ __BEGIN_DECLS
 #  define BU_CKMAG(_ptr, _magic, _str) (void)(_ptr)
 #else
 #  define BU_CKMAG(_ptr, _magic, _str) do { \
-        if (UNLIKELY(((const uintptr_t)(_ptr) == 0) || ((const uintptr_t)(_ptr) & (sizeof((const uintptr_t)(_ptr))-1)) || *((const uint32_t *)(_ptr)) != (uint32_t)(_magic))) { \
+        if (UNLIKELY(((uintptr_t)(_ptr) == 0) || ((uintptr_t)(_ptr) & (sizeof((uintptr_t)(_ptr))-1)) || *((const uint32_t *)(_ptr)) != (uint32_t)(_magic))) { \
             bu_badmagic((const uint32_t *)(_ptr), (uint32_t)(_magic), _str, __FILE__, __LINE__); \
         } \
     } while (0)

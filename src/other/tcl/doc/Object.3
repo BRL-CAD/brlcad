@@ -3,7 +3,7 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 .TH Tcl_Obj 3 8.5 Tcl "Tcl Library Procedures"
 .so man.macros
 .BS
@@ -94,7 +94,7 @@ Also, most Tcl values are only read and never modified.
 This is especially true for procedure arguments,
 which can be shared between the caller and the called procedure.
 Assignment and argument binding is done by
-simply assigning a pointer to the value. 
+simply assigning a pointer to the value.
 Reference counting is used to determine when it is safe to
 reclaim an object's storage.
 .PP
@@ -249,7 +249,7 @@ The \fBincr\fR command first gets an integer from \fIx\fR's object
 by calling \fBTcl_GetIntFromObj\fR.
 This procedure checks whether the object is already an integer object.
 Since it is not, it converts the object
-by setting the object's \fIinternalRep.longValue\fR member
+by setting the object's internal representation
 to the integer \fB123\fR
 and setting the object's \fItypePtr\fR
 to point to the integer Tcl_ObjType structure.

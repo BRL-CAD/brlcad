@@ -10,10 +10,8 @@ set(ged_headers
   rt.h
   view.h
   )
-
-install(FILES ${ged_headers} DESTINATION ${INCLUDE_DIR}/brlcad/ged)
-
-CMAKEFILES(${ged_headers})
+BRLCAD_MANAGE_FILES(ged_headers ${INCLUDE_DIR}/brlcad/ged)
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

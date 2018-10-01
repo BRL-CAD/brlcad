@@ -1,7 +1,7 @@
 /*			S H A D E F U N C S . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2016 United States Government as represented by
+ * Copyright (c) 1993-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -70,7 +70,11 @@ struct mfuncs {
 #define MFI_HIT		0x08		/**< @brief  Need just hit point */
 
 /** for bu_printb() */
-#define MFI_FORMAT	"\020\4HIT\3LIGHT\2UV\1NORMAL"
+#define MFI_FORMAT	"\020" /* print hex */ \
+    "\4HIT" \
+    "\3LIGHT" \
+    "\2UV" \
+    "\1NORMAL"
 
 
 /* mf_flags lists important details about individual shaders */

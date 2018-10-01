@@ -62,8 +62,6 @@ public:
 
   /**
    * Constructor - add polyline with non repeating points
-   *
-   * @param polyline
    */
   P2T_EXPORT CDT();
   P2T_EXPORT CDT(std::vector<Point*> &polyline);
@@ -72,25 +70,19 @@ public:
    * Destructor - clean up memory
    */
   P2T_EXPORT ~CDT();
-  
+
   /**
    * Add outer loop
-   *
-   * @param polyline
    */
   P2T_EXPORT void AddOuterLoop(std::vector<Point*> &polyline);
 
   /**
    * Add a hole
-   *
-   * @param polyline
    */
   P2T_EXPORT void AddHole(std::vector<Point*> &polyline);
 
   /**
    * Add a steiner point
-   *
-   * @param point
    */
   P2T_EXPORT void AddPoint(Point* point);
 

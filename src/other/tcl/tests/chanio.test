@@ -5732,6 +5732,8 @@ test chan-io-47.6 {file events on shared files, deleting file events} {testfeven
     chan close $f
     set x
 } {{script 1} {}}
+unset path(foo)
+removeFile foo
 
 set path(bar) [makeFile {} bar]
 
@@ -5834,6 +5836,9 @@ test chan-io-48.3 {testing readability conditions} {stdio unix nonBlockFiles ope
     chan close $f
     list $x $l
 } {done {0 1 0 1 0 1 0 1 0 1 0 1 0 0}}
+unset path(bar)
+removeFile bar 
+
 test chan-io-48.4 {lf write, testing readability, ^Z termination, auto read mode} {fileevent} {
     file delete $path(test1)
     set f [open $path(test1) w]

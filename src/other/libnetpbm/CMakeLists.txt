@@ -34,19 +34,10 @@
 # *******************************************************************
 
 # Minimum required version of CMake
-cmake_minimum_required(VERSION 3.0.2)
-if(COMMAND CMAKE_POLICY)
-  if ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
-    CMAKE_POLICY(SET CMP0046 NEW)
-    CMAKE_POLICY(SET CMP0053 NEW)
-    CMAKE_POLICY(SET CMP0054 NEW)
-  endif ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
-endif(COMMAND CMAKE_POLICY)
-
+cmake_minimum_required(VERSION 3.1.3)
 
 # set CMake project name
 project(NETPBM)
-
 
 if(NOT BIN_DIR)
   set(BIN_DIR bin)
@@ -95,7 +86,7 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_BI
 execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/pm_config_new.h)
 
 set(NETPBM_SRCS
-  libpm.c
+  libpm.cxx
   fileio.c
   bitio.c
   colorname.c
@@ -124,7 +115,6 @@ set(NETPBM_SRCS
   libpamn.c
   libpammap.c
   libpamcolor.c
-  util/nstring.c
   )
 
 set(NETPBM_HEADERS
@@ -142,7 +132,6 @@ set(NETPBM_HEADERS
   ppm.h
   ppmcmap.h
   ppmfloyd.h
-  util/nstring.h
   )
 
 if(NOT DEFINED BUILD_SHARED_LIBS)

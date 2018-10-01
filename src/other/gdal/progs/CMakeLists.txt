@@ -12,6 +12,11 @@ target_link_libraries(gdalinfo gdal)
 set_target_properties(gdalinfo PROPERTIES FOLDER "Third Party Executables/GDAL")
 install(TARGETS gdalinfo DESTINATION ${BIN_DIR})
 
+add_executable(gdallocationinfo gdallocationinfo.cpp)
+target_link_libraries(gdallocationinfo gdal)
+set_target_properties(gdallocationinfo PROPERTIES FOLDER "Third Party Executables/GDAL")
+install(TARGETS gdallocationinfo DESTINATION ${BIN_DIR})
+
 add_executable(gdal_translate gdal_translate_bin.cpp)
 target_link_libraries(gdal_translate gdal)
 set_target_properties(gdal_translate PROPERTIES FOLDER "Third Party Executables/GDAL")

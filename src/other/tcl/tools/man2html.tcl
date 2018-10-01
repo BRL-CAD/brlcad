@@ -2,8 +2,6 @@
 # \
 exec tclsh "$0" ${1+"$@"}
 
-package require Tcl 8.4
-
 # man2html.tcl --
 #
 # This file contains procedures that work in conjunction with the

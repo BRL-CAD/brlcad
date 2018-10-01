@@ -10,10 +10,6 @@
 # See the file "license.terms" for information on usage and redistribution of
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
-package require Tcl 8.5	;# Guard against [source] in an 8.4- interp before
-			;# using 8.5 [package] features.
-# Insist on running with compatible version of Tcl
-package require Tcl 8.5.0
 # Verify that we have Tk binary and script components from the same release
 package require -exact Tk  8.5.19
 

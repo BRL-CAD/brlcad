@@ -2047,6 +2047,12 @@ TkFinalize(
 {
     ExitHandler *exitPtr;
 
+#if defined(_WIN32) && !defined(STATIC_BUILD)
+    if (!tclStubsPtr) {
+	return;
+    }
+#endif
+
     Tcl_DeleteExitHandler(TkFinalize, NULL);
 
     Tcl_MutexLock(&exitMutex);

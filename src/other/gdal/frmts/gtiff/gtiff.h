@@ -35,7 +35,11 @@
 #include "cpl_string.h"
 
 #include "gdal.h"
-#include "tiffio.h"
+#ifdef INTERNAL_LIBTIFF
+#  include "../gtiff/libtiff/tiffio.h"
+#else
+#  include "tiffio.h"
+#endif
 
 CPL_C_START
 int    GTiffOneTimeInit();

@@ -294,6 +294,9 @@ Tk_FreeGC(
     register TkGC *gcPtr;
     TkDisplay *dispPtr = TkGetDisplay(display);
 
+    if (!dispPtr)
+        return;
+
     if (!dispPtr->gcInit) {
 	Tcl_Panic("Tk_FreeGC called before Tk_GetGC");
     }

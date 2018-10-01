@@ -1,7 +1,6 @@
 set(libgdiam_ignore_files
 CMakeLists.txt
-LICENSE.GPL2
-LICENSE.LGPL21
+LICENSE.MIT
 README
 gdiam.cpp
 gdiam.hpp

@@ -1020,7 +1020,7 @@ SOURCE=..\generic\regerrs.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\generic\regextcl.h
+SOURCE=..\generic\regex.h
 # End Source File
 # Begin Source File
 

@@ -1,7 +1,7 @@
 /*                     M A L L O C . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -86,11 +86,6 @@ BU_EXPORT extern void *bu_realloc(void *ptr,
 				     const char *str);
 
 /**
- * Print map of memory currently in use.
- */
-BU_EXPORT extern void bu_prmem(const char *str);
-
-/**
  * On systems with the CalTech malloc(), the amount of storage
  * ACTUALLY ALLOCATED is the amount requested rounded UP to the
  * nearest power of two.  For structures which are acquired and
@@ -106,32 +101,6 @@ BU_EXPORT extern void bu_prmem(const char *str);
  * unused memory will be consumed.
  */
 BU_EXPORT extern int bu_malloc_len_roundup(int nbytes);
-
-/**
- * For a given pointer allocated by bu_malloc(), bu_calloc(), or
- * BU_ALLOC() check the magic number stored after the allocation area
- * when BU_DEBUG_MEM_CHECK is set.
- *
- * This is the individual version of bu_mem_barriercheck().
- *
- * returns if pointer good or BU_DEBUG_MEM_CHECK not set, bombs if
- * memory is corrupted.
- */
-BU_EXPORT extern void bu_ck_malloc_ptr(void *ptr, const char *str);
-
-/**
- * Check *all* entries in the memory debug table for barrier word
- * corruption.  Intended to be called periodically through an
- * application during debugging.  Has to run single-threaded, to
- * prevent table mutation.
- *
- * This is the bulk version of bu_ck_malloc_ptr()
- *
- * Returns -
- *  -1	something is wrong
- *   0	all is OK;
- */
-BU_EXPORT extern int bu_mem_barriercheck(void);
 
 /**
  * really fast heap-based memory allocation intended for "small"
@@ -244,8 +213,16 @@ BU_EXPORT extern int bu_shmget(int *shmid, char **shared_memory, int key, size_t
  */
 #define BU_FREE(_ptr, _type) do { bu_free(_ptr, #_type " (BU_FREE) " CPP_FILELINE); _ptr = (_type *)NULL; } while (0)
 
-
 /** @} */
+
+/* DEPRECATED */
+BU_EXPORT extern void bu_prmem(const char *str);
+
+/* DEPRECATED: use valgrind/memcheck, SGcheck */
+BU_EXPORT extern void bu_ck_malloc_ptr(void *ptr, const char *str);
+
+/* DEPRECATED: use valgrind/memcheck, SGcheck */
+BU_EXPORT extern int bu_mem_barriercheck(void);
 
 __END_DECLS
 

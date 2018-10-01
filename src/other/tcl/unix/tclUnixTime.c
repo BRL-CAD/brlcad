@@ -161,7 +161,7 @@ TclpGetWideClicks(void)
 	Tcl_Time time;
 
 	(*tclGetTimeProcPtr) (&time, tclTimeClientData);
-	now = (Tcl_WideInt) (time.sec*1000000 + time.usec);
+	now = ((Tcl_WideInt)time.sec)*1000000 + time.usec;
     } else {
 #ifdef MAC_OSX_TCL
 	now = (Tcl_WideInt) (mach_absolute_time() & INT64_MAX);

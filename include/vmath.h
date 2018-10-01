@@ -1,7 +1,7 @@
 /*                         V M A T H . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,12 +21,22 @@
 /** @{ */
 /** @file vmath.h
  *
- * @brief vector/matrix math, matrix representation
+ * @brief fundamental vector, matrix, quaternion math macros
  *
- * This header file defines many commonly used 3D vector math macros,
- * and operates on vect_t, point_t, mat_t, and quat_t objects.
+ * VMATH defines commonly needed macros for 2D/3D/4D math involving:
  *
- * 4 x 4 Matrix manipulation functions...
+ *   points (point2d_t, point_t, and hpoint_t),
+ *   vectors (vect2d_t, vect_t, and hvect_t),
+ *   quaternions (quat_t),
+ *   planes (plane_t), and
+ *   4x4 matrices (mat_t).
+ *
+ * By default, all floating point numbers are stored in arrays using
+ * the 'fastf_t' type definition.  It should be manually typedef'd to
+ * the "fastest" 64-bit floating point type available on the current
+ * hardware with at least 64 bits of precision.  On 16 and 32 bit
+ * machines, this is typically "double", but on 64 bit machines, it
+ * could be "float".
  *
  * Matrix array elements have the following positions in the matrix:
  * @code
@@ -39,10 +49,10 @@
  * @endcode
  *
  * Note that while many people in the computer graphics field use
- * post-multiplication with row vectors (i.e., vector * matrix * matrix
- * ...) the BRL-CAD system uses the more traditional representation
- * of column vectors (i.e., ... matrix * matrix * vector).  (The
- * matrices in these two representations are the transposes of each
+ * post-multiplication with row vectors (i.e., vector * matrix *
+ * matrix ...) VMATH uses the more traditional representation of
+ * column vectors (i.e., ... matrix * matrix * vector).  (The matrices
+ * in these two representations are the transposes of each
  * other). Therefore, when transforming a vector by a matrix,
  * pre-multiplication is used, i.e.:
  *
@@ -73,13 +83,15 @@
  * Most of these macros require that the result be in separate
  * storage, distinct from the input parameters, except where noted.
  *
+ * IMPLEMENTOR NOTES
+ *
  * When writing macros like this, it is very important that any
  * variables declared within a macro code blocks start with an
  * underscore in order to (hopefully) minimize any name conflicts with
  * user-provided parameters, such as _f in the following example:
  *
  * @code
- * #define ABC() do { register double _f; do stuff; } while (0)
+ * #define ABC() do { double _f; do stuff; } while (0)
  * @endcode
  *
  * All of the macros that introduce a scope like the preceding
@@ -102,11 +114,11 @@
 /* for floating point tolerances and other math constants */
 #include <float.h>
 
-/* for fastf_t */
-#include "bu/defines.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-__BEGIN_DECLS
 
 #ifndef M_
 #  define M_		XXX /**< all with 36-digits of precision */
@@ -182,6 +194,57 @@ __BEGIN_DECLS
 
 
 /**
+ * Definitions about limits of floating point representation
+ * Eventually, should be tied to type of hardware (IEEE, IBM, Cray)
+ * used to implement the fastf_t type.
+ *
+ * MAX_FASTF - Very close to the largest value that can be held by a
+ * fastf_t without overflow.  Typically specified as an integer power
+ * of ten, to make the value easy to spot when printed.  TODO: macro
+ * function syntax instead of constant (DEPRECATED)
+ *
+ * SQRT_MAX_FASTF - sqrt(MAX_FASTF), or slightly smaller.  Any number
+ * larger than this, if squared, can be expected to * produce an
+ * overflow.  TODO: macro function syntax instead of constant
+ * (DEPRECATED)
+ *
+ * SMALL_FASTF - Very close to the smallest value that can be
+ * represented while still being greater than zero.  Any number
+ * smaller than this (and non-negative) can be considered to be
+ * zero; dividing by such a number can be expected to produce a
+ * divide-by-zero error.  All divisors should be checked against
+ * this value before actual division is performed.  TODO: macro
+ * function syntax instead of constant (DEPRECATED)
+ *
+ * SQRT_SMALL_FASTF - sqrt(SMALL_FASTF), or slightly larger.  The
+ * value of this is quite a lot larger than that of SMALL_FASTF.  Any
+ * number smaller than this, when squared, can be expected to produce
+ * a zero result.  TODO: macro function syntax instead of constant
+ * (DEPRECATED)
+ *
+ */
+#if defined(vax)
+/* DEC VAX "D" format, the most restrictive */
+#  define MAX_FASTF		1.0e37	/* Very close to the largest number */
+#  define SQRT_MAX_FASTF	1.0e18	/* This squared just avoids overflow */
+#  define SMALL_FASTF		1.0e-37	/* Anything smaller is zero */
+#  define SQRT_SMALL_FASTF	1.0e-18	/* This squared gives zero */
+#else
+/* IBM format, being the next most restrictive format */
+#  define MAX_FASTF		1.0e73	/* Very close to the largest number */
+#  define SQRT_MAX_FASTF	1.0e36	/* This squared just avoids overflow */
+#  define SMALL_FASTF		1.0e-77	/* Anything smaller is zero */
+#  if defined(aux)
+#    define SQRT_SMALL_FASTF	1.0e-40 /* _doprnt error in libc */
+#  else
+#    define SQRT_SMALL_FASTF	1.0e-39	/* This squared gives zero */
+#  endif
+#endif
+
+/** DEPRECATED, do not use */
+#define SMALL SQRT_SMALL_FASTF
+
+/**
  * It is necessary to have a representation of 1.0/0.0 or log(0),
  * i.e., "infinity" that fits within the dynamic range of the machine
  * being used.  This constant places an upper bound on the size object
@@ -233,6 +296,7 @@ __BEGIN_DECLS
 #  endif
 #endif
 
+
 /** @brief number of fastf_t's per vect2d_t */
 #define ELEMENTS_PER_VECT2D	2
 
@@ -257,9 +321,13 @@ __BEGIN_DECLS
 /** @brief number of fastf_t's per mat_t */
 #define ELEMENTS_PER_MAT	(ELEMENTS_PER_PLANE*ELEMENTS_PER_PLANE)
 
+
 /*
- * Types for matrices and vectors.
+ * Fundamental types
  */
+
+/** @brief fastest 64-bit (or larger) floating point type */
+typedef double fastf_t;
 
 /** @brief 2-tuple vector */
 typedef fastf_t vect2d_t[ELEMENTS_PER_VECT2D];
@@ -300,29 +368,6 @@ typedef fastf_t mat_t[ELEMENTS_PER_MAT];
 /** @brief pointer to a 4x4 matrix */
 typedef fastf_t *matp_t;
 
-/** Vector component names for homogeneous (4-tuple) vectors */
-typedef enum bn_vector_component_ {
-    X = 0,
-    Y = 1,
-    Z = 2,
-    W = 3,
-    H = W
-} bn_vector_component;
-
-/**
- * Locations of deltas (MD*) and scaling values (MS*) in a 4x4
- * Homogeneous Transform matrix
- */
-typedef enum bn_matrix_component_ {
-    MSX = 0,
-    MDX = 3,
-    MSY = 5,
-    MDY = 7,
-    MSZ = 10,
-    MDZ = 11,
-    MSA = 15
-} bn_matrix_component;
-
 /**
  * @brief Definition of a plane equation
  *
@@ -346,6 +391,29 @@ typedef enum bn_matrix_component_ {
  *@n VDOT(D, N) > 0 ray exits halfspace defined by plane
  */
 typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
+
+/** Vector component names for homogeneous (4-tuple) vectors */
+typedef enum vmath_vector_component_ {
+    X = 0,
+    Y = 1,
+    Z = 2,
+    W = 3,
+    H = W
+} vmath_vector_component;
+
+/**
+ * Locations of deltas (MD*) and scaling values (MS*) in a 4x4
+ * Homogeneous Transform matrix
+ */
+typedef enum vmath_matrix_component_ {
+    MSX = 0,
+    MDX = 3,
+    MSY = 5,
+    MDY = 7,
+    MSZ = 10,
+    MDZ = 11,
+    MSA = 15
+} vmath_matrix_component;
 
 /**
  * Evaluates truthfully whether a number is not within valid range of
@@ -796,7 +864,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 
 /** @brief Set all elements of N-vector to same scalar value. */
 #define VSETALLN(v, s, n) do { \
-	register size_t _j; \
+	size_t _j; \
 	for (_j=0; _j < (size_t)(n); _j++) v[_j]=(s); \
     } while (0)
 
@@ -824,7 +892,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 
 /** @brief Transfer vector of length `n' at `v' to vector at `o'. */
 #define VMOVEN(o, v, n) do { \
-	register size_t _vmove; \
+	size_t _vmove; \
 	for (_vmove = 0; _vmove < (size_t)(n); _vmove++) { \
 	    (o)[_vmove] = (v)[_vmove]; \
 	} \
@@ -891,7 +959,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * `o'.
  */
 #define VADD2N(o, a, b, n) do { \
-	register size_t _vadd2; \
+	size_t _vadd2; \
 	for (_vadd2 = 0; _vadd2 < (size_t)(n); _vadd2++) { \
 		(o)[_vadd2] = (a)[_vadd2] + (b)[_vadd2]; \
 	} \
@@ -933,7 +1001,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * `a', store result at `o'.
  */
 #define VSUB2N(o, a, b, n) do { \
-	register size_t _vsub2; \
+	size_t _vsub2; \
 	for (_vsub2 = 0; _vsub2 < (size_t)(n); _vsub2++) { \
 		(o)[_vsub2] = (a)[_vsub2] - (b)[_vsub2]; \
 	} \
@@ -963,7 +1031,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 
 /** @brief Vectors:  O = A - B - C for vectors of length `n'. */
 #define VSUB3N(o, a, b, c, n) do { \
-	register size_t _vsub3; \
+	size_t _vsub3; \
 	for (_vsub3 = 0; _vsub3 < (size_t)(n); _vsub3++) { \
 		(o)[_vsub3] = (a)[_vsub3] - (b)[_vsub3] - (c)[_vsub3]; \
 	} \
@@ -996,7 +1064,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * result at `o'.
  */
 #define VADD3N(o, a, b, c, n) do { \
-	register size_t _vadd3; \
+	size_t _vadd3; \
 	for (_vadd3 = 0; _vadd3 < (size_t)(n); _vadd3++) { \
 		(o)[_vadd3] = (a)[_vadd3] + (b)[_vadd3] + (c)[_vadd3]; \
 	} \
@@ -1038,7 +1106,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * result at `o'.
  */
 #define VADD4N(o, a, b, c, d, n) do { \
-	register size_t _vadd4;		   \
+	size_t _vadd4;		   \
 	for (_vadd4 = 0; _vadd4 < (size_t)(n); _vadd4++) { \
 		(o)[_vadd4] = (a)[_vadd4] + (b)[_vadd4] + (c)[_vadd4] + (d)[_vadd4]; \
 	} \
@@ -1071,7 +1139,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * result at `o'
  */
 #define VSCALEN(o, v, s, n) do { \
-	register size_t _vscale; \
+	size_t _vscale; \
 	for (_vscale = 0; _vscale < (size_t)(n); _vscale++) { \
 		(o)[_vscale] = (v)[_vscale] * (s); \
 	} \
@@ -1120,7 +1188,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * result by `s'.  Often used to find the midpoint.
  */
 #define VADD2SCALEN(o, a, b, s, n) do { \
-	register size_t _vadd2scale; \
+	size_t _vadd2scale; \
 	for (_vadd2scale = 0; \
 	     _vadd2scale < (size_t)(n); \
 	     _vadd2scale++) { \
@@ -1143,7 +1211,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * scale result by `s'.
  */
 #define VSUB2SCALEN(o, a, b, s, n) do { \
-	register size_t _vsub2scale; \
+	size_t _vsub2scale; \
 	for (_vsub2scale = 0; \
 	     _vsub2scale < (size_t)(n); \
 	     _vsub2scale++) { \
@@ -1170,7 +1238,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * DEPRECATED: API inconsistent, use combo of other macros.
  */
 #define VCOMB3N(o, a, b, c, d, e, f, n) do { \
-	register size_t _vcomb3; \
+	size_t _vcomb3; \
 	for (_vcomb3 = 0; \
 	     _vcomb3 < (size_t)(n); \
 	     _vcomb3++) { \
@@ -1192,7 +1260,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * scalars.
  */
 #define VCOMB2N(o, sa, a, sb, b, n) do { \
-	register size_t _vcomb2; \
+	size_t _vcomb2; \
 	for (_vcomb2 = 0; \
 	     _vcomb2 < (size_t)(n); \
 	     _vcomb2++) { \
@@ -1256,7 +1324,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
     } while (0)
 
 #define VJOIN2N(o, a, sb, b, sc, c, n) do { \
-	register size_t _vjoin2; \
+	size_t _vjoin2; \
 	for (_vjoin2 = 0; \
 	     _vjoin2 < (size_t)(n); \
 	     _vjoin2++) { \
@@ -1312,7 +1380,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * This is basically a shorthand for VSCALEN();VADD2N();.
  */
 #define VJOIN1N(o, a, sb, b, n) do { \
-	register size_t _vjoin1; \
+	size_t _vjoin1; \
 	for (_vjoin1 = 0; \
 	     _vjoin1 < (size_t)(n); \
 	     _vjoin1++) { \
@@ -1338,7 +1406,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * scalar `sb' times vector at `b'
  */
 #define VBLEND2N(o, sa, a, sb, b, n) do { \
-	register size_t _vblend2; \
+	size_t _vblend2; \
 	for (_vblend2 = 0; \
 	     _vblend2 < (size_t)(n); \
 	     _vblend2++) { \
@@ -1629,7 +1697,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * in space.  Output and input points should be separate arrays.
  */
 #define MAT4X3PNT(o, m, i) do { \
-	register double _f; \
+	double _f; \
 	_f = 1.0/((m)[12]*(i)[X] + (m)[13]*(i)[Y] + (m)[14]*(i)[Z] + (m)[15]); \
 	(o)[X]=((m)[0]*(i)[X] + (m)[1]*(i)[Y] + (m)[ 2]*(i)[Z] + (m)[3]) * _f; \
 	(o)[Y]=((m)[4]*(i)[X] + (m)[5]*(i)[Y] + (m)[ 6]*(i)[Z] + (m)[7]) * _f; \
@@ -1641,7 +1709,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * and input points should be separate arrays.
  */
 #define PNT3X4MAT(o, i, m) do { \
-	register double _f; \
+	double _f; \
 	_f = 1.0/((i)[X]*(m)[3] + (i)[Y]*(m)[7] + (i)[Z]*(m)[11] + (m)[15]); \
 	(o)[X]=((i)[X]*(m)[0] + (i)[Y]*(m)[4] + (i)[Z]*(m)[8] + (m)[12]) * _f; \
 	(o)[Y]=((i)[X]*(m)[1] + (i)[Y]*(m)[5] + (i)[Z]*(m)[9] + (m)[13]) * _f; \
@@ -1665,7 +1733,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * 1.0.  Output and input vectors should be separate arrays.
  */
 #define MAT4X3VEC(o, m, i) do { \
-	register double _f; \
+	double _f; \
 	_f = 1.0/((m)[15]); \
 	(o)[X] = ((m)[0]*(i)[X] + (m)[1]*(i)[Y] + (m)[ 2]*(i)[Z]) * _f; \
 	(o)[Y] = ((m)[4]*(i)[X] + (m)[5]*(i)[Y] + (m)[ 6]*(i)[Z]) * _f; \
@@ -1681,7 +1749,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * Output and input vectors should be separate arrays.
  */
 #define VEC3X4MAT(o, i, m) do { \
-	register double _f; \
+	double _f; \
 	_f = 1.0/((m)[15]); \
 	(o)[X] = ((i)[X]*(m)[0] + (i)[Y]*(m)[4] + (i)[Z]*(m)[8]) * _f; \
 	(o)[Y] = ((i)[X]*(m)[1] + (i)[Y]*(m)[5] + (i)[Z]*(m)[9]) * _f; \
@@ -1690,16 +1758,12 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 
 /** @brief Multiply a Relative 2-Vector by most of a 4x4 matrix. */
 #define VEC2X4MAT(o, i, m) do { \
-	register double _f; \
+	double _f; \
 	_f = 1.0/((m)[15]); \
 	(o)[X] = ((i)[X]*(m)[0] + (i)[Y]*(m)[4]) * _f; \
 	(o)[Y] = ((i)[X]*(m)[1] + (i)[Y]*(m)[5]) * _f; \
 	(o)[Z] = ((i)[X]*(m)[2] + (i)[Y]*(m)[6]) * _f; \
     } while (0)
-
-/** @brief Test a vector for non-unit length. */
-#define BN_VEC_NON_UNIT_LEN(_vec)	\
-	(fabs(MAGSQ(_vec)) < 0.0001 || fabs(fabs(MAGSQ(_vec))-1) > 0.0001)
 
 /**
  * @brief Included below are macros to update min and max X, Y, Z
@@ -1788,7 +1852,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * QUAT_FROM_ROT_DEG(quat, 180.0, 1.0, 0.0, 0.0, 0.0);
  */
 #define QUAT_FROM_ROT(q, r, x, y, z) do { \
-	register fastf_t _rot = (r) * 0.5; \
+	fastf_t _rot = (r) * 0.5; \
 	QSET(q, x, y, z, cos(_rot)); \
 	VUNITIZE(q); \
 	_rot = sin(_rot); /* _rot is really just a temp variable now */ \
@@ -1796,7 +1860,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
     } while (0)
 
 #define QUAT_FROM_VROT(q, r, v) do { \
-	register fastf_t _rot = (r) * 0.5; \
+	fastf_t _rot = (r) * 0.5; \
 	VMOVE(q, v); \
 	VUNITIZE(q); \
 	(q)[W] = cos(_rot); \
@@ -1862,7 +1926,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 
 /** @brief Normalize quaternion 'a' to be a unit quaternion. */
 #define QUNITIZE(a) do { \
-	register double _f; \
+	double _f; \
 	_f = QMAGNITUDE(a); \
 	if (_f < VDIVIDE_TOL) _f = 0.0; else _f = 1.0/_f; \
 	(a)[X] *= _f; (a)[Y] *= _f; (a)[Z] *= _f; (a)[W] *= _f; \
@@ -1905,7 +1969,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 
 /** @brief Multiplicative inverse quaternion */
 #define QINVERSE(a, b) do { \
-	register double _f = QMAGSQ(b); \
+	double _f = QMAGSQ(b); \
 	if (_f < VDIVIDE_TOL) _f = 0.0; else _f = 1.0/_f; \
 	(a)[X] = -(b)[X] * _f; \
 	(a)[Y] = -(b)[Y] * _f; \
@@ -2011,7 +2075,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 
 /** Convert an azimuth/elevation to a direction vector. */
 #define V3DIR_FROM_AZEL(_d, _a, _e) do { \
-	register fastf_t _c_e = cos(_e); \
+	fastf_t _c_e = cos(_e); \
 	(_d)[X] = cos(_a) * _c_e; \
 	(_d)[Y] = sin(_a) * _c_e; \
 	(_d)[Z] = sin(_e); \
@@ -2138,7 +2202,10 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  */
 #define MAT_INIT_ZERO {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
 
-__END_DECLS
+
+#ifdef __cplusplus
+} /* end extern "C" */
+#endif
 
 #endif /* VMATH_H */
 

@@ -559,6 +559,15 @@ test event-11.6 {Tcl_VwaitCmd procedure: round robin scheduling, same source} {
     removeFile $test2file
     list $x $y $z
 } {3 3 done}
+test event-11.7 {Bug 16828b3744} {
+    after idle {
+	set ::t::v 1
+	namespace delete ::t
+    }
+    namespace eval ::t {
+	vwait ::t::v
+    }
+} {}
 
 
 test event-12.1 {Tcl_UpdateCmd procedure} {

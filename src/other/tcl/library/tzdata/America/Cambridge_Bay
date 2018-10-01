@@ -1,7 +1,7 @@
 # created by tools/tclZIC.tcl - do not edit
 
 set TZData(:America/Cambridge_Bay) {
-    {-9223372036854775808 0 0 zzz}
+    {-9223372036854775808 0 0 -00}
     {-1577923200 -25200 0 MST}
     {-880210800 -21600 1 MWT}
     {-769395600 -21600 1 MPT}

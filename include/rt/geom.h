@@ -1,7 +1,7 @@
 /*                        G E O M . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -862,7 +862,8 @@ typedef enum {
     RT_PNT_TYPE_COL_SCA = 0+1+2,
     RT_PNT_TYPE_COL_NRM = 0+1+4,
     RT_PNT_TYPE_SCA_NRM = 0+2+4,
-    RT_PNT_TYPE_COL_SCA_NRM = 0+1+2+4
+    RT_PNT_TYPE_COL_SCA_NRM = 0+1+2+4,
+    RT_PNT_UNKNOWN = 8
 } rt_pnt_type;
 
 struct pnt {
@@ -1036,7 +1037,17 @@ struct rt_hrt_internal
     fastf_t d;          /**< @brief distance to cusps */
 };
 #define RT_HRT_CK_MAGIC(_p) BU_CKMAG(_p, RT_HRT_INTERNAL_MAGIC, "rt_hrt_internal")
+
+
+/** @addtogroup rt_script */
+/** @{ */
+struct rt_script_internal {
+    uint32_t script_magic;
+    struct bu_vls s_type;
+};
+#define RT_SCRIPT_CK_MAGIC(_p) BU_CKMAG(_p, RT_SCRIPT_INTERNAL_MAGIC, "rt_script_internal")
 /** @} */
+
 
 
 __END_DECLS

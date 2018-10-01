@@ -35,10 +35,14 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # Minimum required version of CMake
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.1.3)
 
 # Set CMake project name
 project(GDAL)
+
+if(NOT MSVC OR "${MSVC_VERSION}" GREATER 1700)
+   set(CMAKE_CXX_STANDARD 11)
+endif(NOT MSVC OR "${MSVC_VERSION}" GREATER 1700)
 
 include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}
@@ -49,7 +53,7 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/ogr/ogrsf_frmts
   ${CMAKE_CURRENT_SOURCE_DIR}/gnm
   ${CMAKE_CURRENT_SOURCE_DIR}/apps
-  ${PROJ4_INCLUDE_DIRS}
+  ${PROJ4_INCLUDE_DIR}
   )
 
 if(NOT LIB_DIR)
@@ -69,17 +73,56 @@ endif(NOT DEFINED BUILD_SHARED_LIBS)
 include(CheckCCompilerFlag)
 include(CheckCXXCompilerFlag)
 
+find_package(SSE) # checks SSE, AVX and AVX2
+
+CHECK_SSE(CXX "AVX" " ;-mavx;/arch:AVX")
+IF(C_AVX_FOUND)
+  MESSAGE(STATUS "AVX Found")
+  add_definitions(-DHAVE_AVX_AT_COMPILE_TIME)
+ENDIF(C_AVX_FOUND)
+
+CHECK_SSE(CXX "SSE" " ;-msse;/arch:SSE")
+IF(C_SSE_FOUND)
+  MESSAGE(STATUS "SSE Found")
+  add_definitions(-DHAVE_SSE_AT_COMPILE_TIME)
+ENDIF(C_SSE_FOUND)
+
+CHECK_SSE(CXX "SSSE3" " ;-mssse3;/arch:SSE3")
+IF(C_SSSE3_FOUND)
+  MESSAGE(STATUS "MSSSE3 Found")
+  add_definitions(-DHAVE_SSSE3_AT_COMPILE_TIME)
+ENDIF(C_SSSE3_FOUND)
+
 add_definitions(-DPROJ_STATIC)
 add_definitions(-DGDAL_COMPILATION)
 add_definitions(-DGNM_ENABLED)
 add_definitions(-DGNMFILE_ENABLED)
 add_definitions(-DGNMDB_ENABLED)
 add_definitions(-DUSE_ONLY_CRYPTODLL_ALG)
-add_definitions(-DHAVE_AVX_AT_COMPILE_TIME)
-add_definitions(-DHAVE_SSSE3_AT_COMPILE_TIME)
-add_definitions(-DHAVE_SSSE_AT_COMPILE_TIME)
 add_definitions(-DINST_DATA=\"${CMAKE_INSTALL_PREFIX}/${DATA_DIR}/gdal\")
 set(HAVE_IEEEFP 1) # TODO test this for real
+
+# see if we have nullptr: https://stackoverflow.com/a/14112019
+set(nullptr_src "
+#include <cstddef>
+#include <iostream>
+int retval;
+void r(int i) {if (i < 0) {std::cout << \"Error - wrong function called\";} retval = 1;}
+void r(char *c){retval = (!c) ? 0 : 1;}
+int main() {
+  retval = 1;
+  r(nullptr);
+  return retval;
+}")
+include(CheckCXXSourceRuns)
+check_cxx_source_runs("${nullptr_src}" HAVE_NULLPTR)
+
+if(HAVE_NULLPTR)
+  if(NOT MSVC OR "${MSVC_VERSION}" GREATER 1700)
+     add_definitions(-DHAVE_CXX11)
+  endif(NOT MSVC OR "${MSVC_VERSION}" GREATER 1700)
+  add_definitions(-DNULL_AS_NULLPTR)
+endif(HAVE_NULLPTR)
 
 if(MSVC)
   add_definitions(-DUSE_WIN32_MUTEX)
@@ -101,7 +144,8 @@ endif(PNG_LIBRARY)
 include(CheckTypeSize)
 check_type_size(int SIZEOF_INT)
 check_type_size(long SIZEOF_LONG)
-check_type_size("unsigned long" SIZEOF_UNSIGNED_LONG)
+check_type_size("unsigned long" SIZEOF_ULONG)
+set(SIZEOF_UNSIGNED_LONG ${SIZEOF_ULONG})
 set(SIZEOF_VOIDP ${CMAKE_SIZEOF_VOID_P})
 check_type_size("long long" HAVE_LONG_LONG)
 check_type_size(int8 HAVE_INT8)
@@ -168,6 +212,19 @@ if(NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "x86_64" AND NOT "${CMAKE_SYSTEM_PROC
 endif(NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "x86_64" AND NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "i*86" AND NOT "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "AMD64")
 
 # Threads
+CHECK_INCLUDE_FILE(pthread.h PROBE_PTHREAD_H)
+if (NOT PROBE_PTHREAD_H)
+  cmake_push_check_state(RESET)
+  # pthread.h on FreeBSD 10 and some older Linucies use non-c90 types
+  set(CMAKE_REQUIRED_DEFINITIONS "-Dclockid_t=clock_t")
+  set(CMAKE_REQUIRED_FLAGS "-pthread")
+  CHECK_INCLUDE_FILE(pthread.h PROBE_PTHREAD_H_CLOCKID_T)
+  if (PROBE_PTHREAD_H_CLOCKID_T)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Dclockid_t=clock_t -pthread")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Dclockid_t=clock_t -pthread")
+    set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+  endif (PROBE_PTHREAD_H_CLOCKID_T)
+endif (NOT PROBE_PTHREAD_H)
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 find_package(Threads)
 if(CMAKE_USE_PTHREADS_INIT)

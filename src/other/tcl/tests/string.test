@@ -1111,6 +1111,9 @@ test string-11.54 {string match, failure} {
 	    [string match *a*l*\u0000*cba* $longString] \
 	    [string match *===* $longString]
 } {0 1 1 1 0 0}
+test string-11.55 {string match, invalid binary optimization} {
+    [format string] match \u0141 [binary format c 65]
+} 0
 
 test string-12.1 {string range} {
     list [catch {string range} msg] $msg
@@ -1291,6 +1294,12 @@ test string-14.16 {string replace} {
 test string-14.17 {string replace} {
     string replace abcdefghijklmnop end end-1
 } {abcdefghijklmnop}
+test string-14.18 {string replace} {
+    string replace abcdefghijklmnop 10 9 XXX
+} {abcdefghijklmnop}
+test string-14.19 {string replace} {
+    string replace {} -1 0 A
+} A
 
 test string-15.1 {string tolower too few args} {
     list [catch {string tolower} msg] $msg

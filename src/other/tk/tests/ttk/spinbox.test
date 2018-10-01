@@ -199,6 +199,27 @@ test spinbox-2.4 "current command -- value not in list" -constraints nyi -setup 
     destroy .sb
 } -result -1
 
+test spinbox-3.0 "textarea should expand to fill widget" -setup {
+    set SBV 5
+    set ::spinbox_test {}
+    ttk::spinbox .sb -from 0 -to 10 -textvariable SBV
+} -body {
+    grid .sb -sticky ew
+    grid columnconfigure . 0 -weight 1
+    bind . <Map> {
+        after idle {
+            wm geometry . "210x80"
+            after 100 {set ::spinbox_test [.sb identify element 5 5]}
+        }
+        bind . <Map> {}
+    }
+    after 500 {set ::spinbox_wait 1} ; vwait ::spinbox_wait
+    set ::spinbox_test
+} -cleanup {
+    destroy .sb
+    unset -nocomplain ::spinbox_test SBV
+} -result {textarea}
+
 # nostomp: NB intentional difference between ttk::spinbox and tk::spinbox;
 # see also #1439266
 #
