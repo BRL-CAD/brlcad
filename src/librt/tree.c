@@ -521,7 +521,11 @@ _rt_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, st
      * long as idb_ptr is set to null.  Note that the prep routine may
      * have changed st_id.
      */
-    ret = rt_cache_prep(data->cache, stp, ip);
+    if (rtip->rti_dbip->dbi_version > 4) {
+	ret = rt_cache_prep(data->cache, stp, ip);
+    } else {
+	ret = rt_obj_prep(stp, ip, stp->st_rtip);
+    }
     if (ret) {
 	int hash;
 	/* Error, solid no good */
@@ -772,7 +776,9 @@ rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **
 	}
 
 	data.tbl = tbl;
-	data.cache = rt_cache_open();
+	if (rtip->rti_dbip->dbi_version > 4) {
+	    data.cache = rt_cache_open();
+	}
 
 	i = db_walk_tree(rtip->rti_dbip, argc, argv, ncpus,
 			 &tree_state,
@@ -781,7 +787,9 @@ rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **
 			 _rt_gettree_leaf, (void *)&data);
 	bu_avs_free(&tree_state.ts_attrs);
 
-	rt_cache_close(data.cache);
+	if (rtip->rti_dbip->dbi_version > 4) {
+	    rt_cache_close(data.cache);
+	}
     }
 
     /* DEBUG:  Ensure that all region trees are valid */
