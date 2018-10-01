@@ -935,7 +935,7 @@ _ged_spsr_obj(struct _ged_facetize_report_info *r, struct ged *gedp, const char 
 	free_pnts = 1;
 
 	if (opts->verbosity) {
-	    bu_log("SPSR: generating %d points from %s\n", objname);
+	    bu_log("SPSR: generating %d points from %s\n", max_pnts, objname);
 	}
 
 	if (analyze_obj_to_pnts(pnts, &avg_thickness, gedp->ged_wdbp->dbip, objname, &btol, flags, max_pnts, opts->max_time, opts->verbosity)) {
@@ -1015,7 +1015,7 @@ _ged_spsr_obj(struct _ged_facetize_report_info *r, struct ged *gedp, const char 
 	    if (bot->faces) bu_free(bot->faces, "verts");
 	    ret = GED_FACETIZE_FAILURE;
 	    if (!opts->quiet) {
-		bu_log("SPSR: facetization failed, final BoT was not solid\n", bot->num_faces);
+		bu_log("SPSR: facetization failed, final BoT was not solid\n");
 	    }
 	    goto ged_facetize_spsr_memfree;
 	}
@@ -1087,7 +1087,7 @@ _ged_spsr_obj(struct _ged_facetize_report_info *r, struct ged *gedp, const char 
     }
 
     if (decimation_succeeded && !opts->quiet) {
-	bu_log("SPSR: decimation succeeded, final BoT has %d faces\n", bot->num_faces);
+	bu_log("SPSR: decimation succeeded, final BoT has %d faces\n", (int)bot->num_faces);
     }
 
     if (!opts->make_nmg) {
@@ -1378,9 +1378,9 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
 	    feature_size = successful_feature_size;
 	    if (!opts->quiet && bot->faces) {
 		if (opts->feature_size <= 0) {
-		    bu_log("CM: unable to polygonize at target size (%g), using last successful BoT with %d faces, feature size %g\n", target_feature_size, bot->num_faces, successful_feature_size);
+		    bu_log("CM: unable to polygonize at target size (%g), using last successful BoT with %d faces, feature size %g\n", target_feature_size, (int)bot->num_faces, successful_feature_size);
 		} else {
-		    bu_log("CM: successfully created %d faces, feature size %g\n", bot->num_faces, successful_feature_size);
+		    bu_log("CM: successfully created %d faces, feature size %g\n", (int)bot->num_faces, successful_feature_size);
 		}
 	    }
 	} else {
@@ -1400,7 +1400,7 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
     }
 
     if (bot->num_faces && feature_size < target_feature_size && !opts->quiet) {
-	bu_log("CM: successfully polygonized BoT with %d faces at feature size %g\n", bot->num_faces, feature_size);
+	bu_log("CM: successfully polygonized BoT with %d faces at feature size %g\n", (int)bot->num_faces, feature_size);
     }
 
     if (!bot->faces) {
@@ -1480,14 +1480,14 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
 	    if (bot->faces) bu_free(bot->faces, "verts");
 	    ret = GED_FACETIZE_FAILURE;
 	    if (!opts->quiet) {
-		bu_log("CM: facetization failed, final BoT was not solid\n", bot->num_faces);
+		bu_log("CM: facetization failed, final BoT was not solid\n");
 	    }
 	    goto ged_facetize_continuation_memfree;
 	}
     }
 
     if (decimation_succeeded && !opts->quiet) {
-	bu_log("CM: decimation succeeded, final BoT has %d faces\n", bot->num_faces);
+	bu_log("CM: decimation succeeded, final BoT has %d faces\n", (int)bot->num_faces);
     }
 
     if (!opts->make_nmg) {
@@ -1665,7 +1665,7 @@ _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _ged
 	if (flags & GED_FACETIZE_NMGBOOL) {
 	    opts->nmg_log_print_header = 1;
 	    if (argc == 1) {
-		bu_vls_sprintf(opts->nmg_log_header, "NMG: tessellating %s...\n", argv[0], tol->abs, tol->rel, tol->norm);
+		bu_vls_sprintf(opts->nmg_log_header, "NMG: tessellating %s...\n", argv[0]);
 	    } else {
 		bu_vls_sprintf(opts->nmg_log_header, "NMG: tessellating %d objects with tolerances a=%g, r=%g, n=%g\n", argc, tol->abs, tol->rel, tol->norm);
 	    }
@@ -1906,7 +1906,7 @@ _ged_methodattr_set(struct ged *gedp, struct _ged_facetize_opts *opts, const cha
 	    bu_log("Error adding attribute %s to comb %s", attrav[3], rcname);
 	}
 	attrav[3] = "facetize:spsr_depth";
-	bu_vls_sprintf(&anum, "%g", opts->s_opts.depth);
+	bu_vls_sprintf(&anum, "%d", opts->s_opts.depth);
 	attrav[4] = bu_vls_addr(&anum);
 	if (ged_attr(gedp, 5, (const char **)&attrav) != GED_OK && opts->verbosity) {
 	    bu_log("Error adding attribute %s to comb %s", attrav[3], rcname);
@@ -2196,9 +2196,9 @@ ged_facetize_regions_resume_memfree:
     }
 
     /* Final report */
-    bu_vls_printf(gedp->ged_result_str, "Objects successfully converted: %d of %d\n", to_convert - BU_PTBL_LEN(ar2), to_convert);
+    bu_vls_printf(gedp->ged_result_str, "Objects successfully converted: %d of %d\n", (int)(to_convert - BU_PTBL_LEN(ar2)), to_convert);
     if (BU_PTBL_LEN(ar2)) {
-	bu_vls_printf(gedp->ged_result_str, "WARNING: %d objects failed:\n", BU_PTBL_LEN(ar2));
+	bu_vls_printf(gedp->ged_result_str, "WARNING: %d objects failed:\n", (int)BU_PTBL_LEN(ar2));
 	for (i = 0; i < BU_PTBL_LEN(ar2); i++) {
 	    struct directory *n = (struct directory *)BU_PTBL_GET(ar2, i);
 	    const char *oname = bu_avs_get(&rnames, n->d_namep);
@@ -2469,7 +2469,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	}
 	if (_ged_facetize_add_children(gedp, cdp, opts) != GED_OK) {
 	    if (!opts->quiet) {
-		bu_log("Error: duplication of assembly %s failed!\n", cdp->d_namep, BU_PTBL_LEN(pc));
+		bu_log("Error: duplication of assembly %s failed!\n", cdp->d_namep);
 	    }
 	    continue;
 	}
@@ -2481,7 +2481,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	_ged_facetize_mkname(gedp, opts, n->d_namep, SOLID_OBJ_NAME);
 	_ged_facetize_mkname(gedp, opts, n->d_namep, COMB_OBJ_NAME);
 	if (!opts->quiet) {
-	    bu_log("Copying region (%d of %d) %s -> %s\n", i+1, BU_PTBL_LEN(ar), n->d_namep, bu_avs_get(opts->c_map, n->d_namep));
+	    bu_log("Copying region (%d of %d) %s -> %s\n", (int)(i+1), (int)BU_PTBL_LEN(ar), n->d_namep, bu_avs_get(opts->c_map, n->d_namep));
 	}
 	if (_ged_facetize_cpcomb(gedp, n->d_namep, opts) != GED_OK) {
 	    if (opts->verbosity) {
@@ -2630,9 +2630,9 @@ ged_facetize_regions_memfree:
     }
 
     /* Final report */
-    bu_vls_printf(gedp->ged_result_str, "Objects successfully converted: %d of %d\n", to_convert - BU_PTBL_LEN(ar), to_convert);
+    bu_vls_printf(gedp->ged_result_str, "Objects successfully converted: %d of %d\n", (int)(to_convert - BU_PTBL_LEN(ar)), to_convert);
     if (BU_PTBL_LEN(ar)) {
-	bu_vls_printf(gedp->ged_result_str, "WARNING: %d objects failed:\n", BU_PTBL_LEN(ar));
+	bu_vls_printf(gedp->ged_result_str, "WARNING: %d objects failed:\n", (int)BU_PTBL_LEN(ar));
 	for (i = 0; i < BU_PTBL_LEN(ar); i++) {
 	    struct directory *n = (struct directory *)BU_PTBL_GET(ar, i);
 	    bu_vls_printf(gedp->ged_result_str, "	%s\n", n->d_namep);
