@@ -30,7 +30,11 @@
 
 /* system headers */
 #include <errno.h>
-
+#include <string.h>
+#include <ctype.h>
+#ifdef HAVE_SYS_STAT_H
+#  include <sys/stat.h> /* for mkdir */
+#endif
 #include <lz4.h>
 
 #include "bnetwork.h"
@@ -61,6 +65,79 @@ cache_check(const struct rt_cache *cache)
     if (!cache)
 	return;
     RT_CK_DBI(cache->dbip);
+}
+
+
+HIDDEN int
+cache_create_path(const char *path, int is_file)
+{
+    char *dir;
+
+    if (bu_file_exists(path, NULL)) {
+	if (is_file && !bu_file_directory(path))
+	    return 1;
+	/* file in the way! */
+	return -1;
+    }
+
+    if (!path /* empty or root path (recursive base case) */
+	|| strlen(path) == 0
+	|| (strlen(path) == 1 && path[0] == BU_DIR_SEPARATOR)
+	|| (strlen(path) == 1 && path[0] == '/')
+	|| (strlen(path) == 3 && isalpha(path[0]) && path[1] == ':' && path[2] == BU_DIR_SEPARATOR)
+	|| (strlen(path) == 3 && isalpha(path[0]) && path[1] == ':' && path[2] == '/'))
+    {
+	return 1;
+    }
+    dir = bu_path_dirname(path);
+    cache_create_path(dir, 0);
+    bu_free(dir, "dirname");
+
+    if (!is_file && !bu_file_directory(path)) {
+#ifdef HAVE_WINDOWS_H
+	CreateDirectory(path, NULL);
+#else
+	/* mode: 775 */
+	mkdir(path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+#endif
+    } else if (is_file && !bu_file_exists(path, NULL)) {
+	/* touch file */
+	FILE *fp = fopen(path, "w");
+	fclose(fp);
+    }
+    return bu_file_exists(path, NULL);
+}
+
+
+HIDDEN int
+cache_format(const char *librt_cache)
+{
+    int format = 0;
+    struct bu_vls path = BU_VLS_INIT_ZERO;
+    const char *cpath = NULL;
+    struct bu_vls fmt_str = BU_VLS_INIT_ZERO;
+    FILE *fp;
+
+    bu_vls_printf(&path, "%s%c%s", librt_cache, BU_DIR_SEPARATOR, "format");
+    cpath = bu_vls_cstr(&path);
+    if (!cache_create_path(cpath, 1) || !bu_file_exists(cpath, NULL)) {
+	bu_vls_free(&path);
+	return -1;
+    }
+
+    fp = fopen(cpath, "r");
+    bu_vls_free(&path);
+    if (!fp) {
+	return -2;
+    }
+
+    bu_vls_gets(&fmt_str, fp);
+    fclose(fp);
+
+    bu_sscanf(bu_vls_cstr(&fmt_str), "%d", &format);
+    bu_vls_free(&fmt_str);
+
+    return format;
 }
 
 
@@ -102,71 +179,64 @@ cache_generate_name(char name[STATIC_ARRAY(37)], const struct soltab *stp)
 struct rt_cache *
 rt_cache_open(void)
 {
-    struct bu_vls full_path = BU_VLS_INIT_ZERO;
-    struct bu_vls tmp_path = BU_VLS_INIT_ZERO;
-    const char * const file_name = "rt_cache.tmp";
-    char *home_path;
-    FILE *tmpfp;
-    char temppath[MAXPATHLEN];
+    const char *librt_cache = NULL;
+    struct bu_vls rtdb = BU_VLS_INIT_ZERO;
+    char cache[MAXPATHLEN] = {0};
+    int format = 0;
     int create;
     struct rt_cache *result;
-    const char *librt_cache = NULL;
 
     librt_cache = getenv("LIBRT_CACHE");
-    if (!BU_STR_EMPTY(librt_cache) && bu_str_false(librt_cache)) {
-	/* default unset is on, so it's explicitly turned off */
-	return NULL;
-    }
+    if (!BU_STR_EMPTY(librt_cache)) {
+	int disabled = 0;
 
-    BU_GET(result, struct rt_cache);
+	/* default unset is on, so do nothing if explicitly off */
+	if (bu_str_false(librt_cache))
+	    return NULL;
 
-    /* First, check HOME, tmp and the current working directory for
-     * a pre-existing cache file */
-    home_path = getenv("HOME");
-    if (home_path != (char *)NULL) {
-	bu_vls_sprintf(&full_path, "%s/%s", home_path, file_name);
-	if (bu_file_exists(bu_vls_addr(&full_path), NULL))
-	    goto have_cache_file;
-    }
+	librt_cache = bu_file_realpath(librt_cache, cache);
 
-    /* create a temp file in order to extract the tmp file working
-     * directory - we have our own name, but need the path */
-    tmpfp = bu_temp_file(temppath, MAXPATHLEN);
-    if (tmpfp != NULL) {
-	struct bu_vls dir = BU_VLS_INIT_ZERO;
-	fclose(tmpfp);
-	if (bu_path_component(&dir, temppath, BU_PATH_DIRNAME)) {
-	    bu_vls_sprintf(&full_path, "%s/%s", bu_vls_addr(&dir), file_name);
-	    bu_vls_sprintf(&tmp_path, "%s/%s", bu_vls_addr(&dir), file_name);
-	    bu_vls_free(&dir);
-	    if (bu_file_exists(bu_vls_addr(&full_path), NULL))
-		goto have_cache_file;
+	if (!bu_file_directory(librt_cache)) {
+	    bu_log("WARNING: Caching disabled. Specified directory does not exist.\n");
+	    disabled = 1;
+	} else if (!bu_file_writable(librt_cache)) {
+	    bu_log("WARNING: Caching disabled. Specified directory is not writable.\n");
+	    disabled = 1;
+	}
+	if (disabled) {
+	    bu_log("         Specified: LIBRT_CACHE=%s\n"
+		   "         To enable, specify a writable directory that exists.\n"
+		   "         Unsetting LIBRT_CACHE will use system default.\n"
+		   , librt_cache);
+	    return NULL;
+	}
+    } else {
+	/* LIBRT_CACHE is either set-and-empty or unset.  Default is on. */
+	librt_cache = bu_dir(cache, MAXPATHLEN, BU_DIR_CACHE, ".rt", NULL);
+	if (!bu_file_exists(librt_cache, NULL)) {
+	    cache_create_path(librt_cache, 0);
 	}
     }
 
-    /* As a last resort, check the current directory */
-    bu_vls_sprintf(&full_path, "%s", file_name);
-    if (bu_file_exists(bu_vls_addr(&full_path), NULL))
-	goto have_cache_file;
+    /* cache dir should exist by now */
+    if (!bu_file_exists(librt_cache, NULL) || !bu_file_directory(librt_cache))
+	return NULL;
 
-    /* If we got this far, we have nothing.  If we have HOME, use that, else
-     * fall back on tmp, and as a last resort try current dir */
-    if (home_path) {
-	bu_vls_sprintf(&full_path, "%s/%s", home_path, file_name);
-    } else if (bu_vls_strlen(&tmp_path) > 0) {
-	bu_vls_sprintf(&full_path, "%s", bu_vls_addr(&tmp_path));
-    } else {
-	bu_vls_sprintf(&full_path, "%s", file_name);
-    }
+    format = cache_format(librt_cache);
+    if (format < 0)
+	return NULL;
 
-have_cache_file:
-    create = !bu_file_exists(bu_vls_addr(&full_path), NULL);
+    /* actual v0 cache is just a single file for now */
+    bu_vls_printf(&rtdb, "%s%c%s", librt_cache, BU_DIR_SEPARATOR, "rt.db");
+    create = !bu_file_exists(bu_vls_addr(&rtdb), NULL);
+
+    BU_GET(result, struct rt_cache);
     if (create)
-	result->dbip = db_create(bu_vls_addr(&full_path), 5);
+	result->dbip = db_create(bu_vls_addr(&rtdb), 5);
     else
-	result->dbip = db_open(bu_vls_addr(&full_path), DB_OPEN_READWRITE);
+	result->dbip = db_open(bu_vls_addr(&rtdb), DB_OPEN_READWRITE);
 
-    bu_vls_free(&full_path);
+    bu_vls_free(&rtdb);
 
     if (!result->dbip || (!create && db_dirbuild(result->dbip))) {
 	db_close(result->dbip);
@@ -187,6 +257,7 @@ rt_cache_close(struct rt_cache *cache)
     cache_check(cache);
 
     db_close(cache->dbip);
+    cache->dbip = NULL; /* sanity */
     BU_PUT(cache, struct rt_cache);
 }
 
