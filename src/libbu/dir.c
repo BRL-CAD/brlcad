@@ -250,7 +250,7 @@ dir_cache(char *buf, size_t len)
 
     /* finally, append our application subdirectory */
     bu_strlcat(path, DSLASH, MAXPATHLEN);
-    bu_strlcat(path, "BRL-CAD", MAXPATHLEN);
+    bu_strlcat(path, PACKAGE_NAME, MAXPATHLEN);
 
     bu_strlcpy(buf, path, len);
     return buf;
