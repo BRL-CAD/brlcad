@@ -26,6 +26,7 @@
 
 #include <set>
 #include <map>
+#include <string>
 
 extern "C" {
 #include "bu/opt.h"
