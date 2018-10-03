@@ -836,16 +836,6 @@ cmake_set_rpath()
 # (i.e., -std=xxx flags) and API (i.e., -D_POSIX_C_SOURCE defines) to
 # permit and utilize respectively.  Common profiles:
 #
-#   1989-1998: C90 & C++98  (target: 1990)
-#     ISO/IEC 9899:1990 __STDC__
-#     ISO/IEC 14882:1998 __cplusplus==199711L
-#     ISO/IEC 9945-1:1990 -D_POSIX_C_SOURCE=199009L (or =1)
-#     X/Open Portability Guide 3 (1989) -D_XOPEN_SOURCE=3
-#   1999-2010: C99 & C++98 (skippable,  target: 2000)
-#     ISO/IEC 9899:1999 __STDC_VERSION__==199901L
-#     ISO/IEC 14882:2011 __cplusplus==201103L
-#     IEEE 1003.1-2001 -D_POSIX_C_SOURCE=200112L
-#     X/Open Single UNIX Specification, Version 2 (1998) -D_XOPEN_SOURCE=500
 #   2011-2016: C11 & C++11 (ignoring C++14, target: 2013)
 #     ISO/IEC 9899:2011 __STDC_VERSION__==201112L
 #     ISO/IEC 14882:2011 __cplusplus==201103L
@@ -858,7 +848,6 @@ cmake_set_rpath()
 #     Open Group Single UNIX Specification, Version 4 (2008+) -D_XOPEN_SOURCE=700
 #
 # Sources: https://sourceforge.net/p/predef/wiki/Standards/
-
 
 # For certain platforms (in particular Visual C++) we want to keep some pre-defined
 # flags that are commonly used in the build logic.
@@ -875,32 +864,17 @@ mark_as_advanced(CMAKE_CXX_FLAGS_DEFAULT)
 
 unset(C_STANDARD_FLAGS)
 set(CMAKE_C_EXTENSIONS OFF)
-# Punt for now on multiconfig tools like Visual Studio and XCode, and just go
-# with the more modern standard in all cases.  After the next (last) C90
-# release, we will be using a uniform standard for all build types and that
-# means it's not worth trying to manage per-build-config standards.
-if("${CMAKE_BUILD_TYPE}" STREQUAL "Release" OR CMAKE_CONFIGURATION_TYPES)
-  set(CMAKE_C_STANDARD 99)
-  set(CMAKE_C_STANDARD_REQUIRED ON)
-  set(API_FLAGS "-D_POSIX_C_SOURCE=200112L -D_XOPEN_SOURCE=500")
-  if(CMAKE_C_EXTENSIONS)
-    set(C_STANDARD_FLAGS "${CMAKE_C${CMAKE_C_STANDARD}_EXTENSION_COMPILE_OPTION}")
-  else()
-    set(C_STANDARD_FLAGS "${CMAKE_C${CMAKE_C_STANDARD}_STANDARD_COMPILE_OPTION} ${API_FLAGS}")
-  endif(CMAKE_C_EXTENSIONS)
-  if("${C_STANDARD_FLAGS}" STREQUAL "")
-    message(FATAL_ERROR "C standard specification failure: compiler does not support the C${CMAKE_C_STANDARD} standard:\n${CMAKE_C_COMPILE_FEATURES}")
-  endif("${C_STANDARD_FLAGS}" STREQUAL "")
+set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+set(API_FLAGS "-D_POSIX_C_SOURCE=200112L -D_XOPEN_SOURCE=500")
+if(CMAKE_C_EXTENSIONS)
+  set(C_STANDARD_FLAGS "${CMAKE_C${CMAKE_C_STANDARD}_EXTENSION_COMPILE_OPTION}")
 else()
-  set(CMAKE_C_STANDARD 90)
-  set(CMAKE_C_STANDARD_REQUIRED ON)
-  set(API_FLAGS "-D_POSIX_C_SOURCE=199009L -D_XOPEN_SOURCE=3")
-  if(CMAKE_C_EXTENSIONS)
-    set(C_STANDARD_FLAGS "${CMAKE_C${CMAKE_C_STANDARD}_EXTENSION_COMPILE_OPTION}")
-  else()
-    set(C_STANDARD_FLAGS "${CMAKE_C${CMAKE_C_STANDARD}_STANDARD_COMPILE_OPTION} ${API_FLAGS}")
-  endif(CMAKE_C_EXTENSIONS)
-endif("${CMAKE_BUILD_TYPE}" STREQUAL "Release" OR CMAKE_CONFIGURATION_TYPES)
+  set(C_STANDARD_FLAGS "${CMAKE_C${CMAKE_C_STANDARD}_STANDARD_COMPILE_OPTION} ${API_FLAGS}")
+endif(CMAKE_C_EXTENSIONS)
+if("${C_STANDARD_FLAGS}" STREQUAL "")
+  message(FATAL_ERROR "C standard specification failure: compiler does not support the C${CMAKE_C_STANDARD} standard:\n${CMAKE_C_COMPILE_FEATURES}")
+endif("${C_STANDARD_FLAGS}" STREQUAL "")
 set(C_STANDARD_FLAGS "${CMAKE_C_FLAGS_DEFAULT} ${C_STANDARD_FLAGS}")
 string(STRIP "${C_STANDARD_FLAGS}" C_STANDARD_FLAGS)
 
@@ -908,7 +882,7 @@ string(STRIP "${C_STANDARD_FLAGS}" C_STANDARD_FLAGS)
 
 unset(CXX_STANDARD_FLAGS)
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_CXX_STANDARD 98)
+set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if(CMAKE_CXX_EXTENSIONS)
   set(CXX_STANDARD_FLAGS "${CMAKE_CXX${CMAKE_CXX_STANDARD}_EXTENSION_COMPILE_OPTION}")
