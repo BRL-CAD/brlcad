@@ -2583,11 +2583,21 @@ else (HAVE_THREAD_LOCAL)
   endif (HAVE___THREAD)
 endif (HAVE_THREAD_LOCAL)
 
+# Test for C++11 features that we need - CMake will sometimes assert that a
+# C++11 compiler flag exists, but the actual compiler support for C++11 language
+# ends up lacking in practice.
+include(CheckCXX11Features)
+cxx11_check_feature("nullptr" HAS_CXX11_NULLPTR)
+
+
 # see if the compiler supports %z as a size_t print width specifier
 BRLCAD_CHECK_PERCENT_Z()
 
 # see if the compiler supports [static] array hints
 BRLCAD_CHECK_STATIC_ARRAYS()
+
+# see if we have a TLS intrinsic, first check C++11 compliance
+check_cxx_source_compiles("static thread_local int i = 0; int main() { return i; }" HAVE_THREAD_LOCAL)
 
 
 # *******************************************************************

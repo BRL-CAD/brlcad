@@ -9,7 +9,8 @@ BRLCAD_LIB_INCLUDE_DIRS(bg BG_INCLUDE_DIRS "")
 
 set(LIBBG_SOURCES
   chull.c
-  chull3d.cpp
+  QuickHull.cxx
+  chull3d.cxx
   obr.c
   polygon.c
   polygon_ear_clipping.c
@@ -29,7 +30,13 @@ endif(CPP_DLL_DEFINES)
 
 add_subdirectory(tests)
 
-CMAKEFILES(bg_private.h pointgen.c)
+set(bg_ignore
+  QuickHull.hpp
+  bg_private.h
+  pointgen.c
+  )
+
+CMAKEFILES(${bg_ignore})
 CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
