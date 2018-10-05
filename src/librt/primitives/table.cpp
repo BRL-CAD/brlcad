@@ -43,7 +43,7 @@ extern "C" {
 
 #define RT_DECLARE_INTERFACE(name) \
     extern int rt_##name##_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip); \
-    extern int rt_##name##_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead); \
+    extern int rt_##name##_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead); \
     extern int rt_##name##_piece_shot(struct rt_piecestate *psp, struct rt_piecelist *plp, double dist_corr, struct xray *rp, struct application *ap, struct seg *seghead); \
     extern void rt_##name##_piece_hitsegs(struct rt_piecestate *psp, struct seg *seghead, struct application *ap); \
     extern void rt_##name##_print(const struct soltab *stp); \

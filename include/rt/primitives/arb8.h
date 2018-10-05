@@ -39,8 +39,8 @@ RT_EXPORT extern int rt_arb_get_cgtype(
     int *cgtype,
     struct rt_arb_internal *arb,
     const struct bn_tol *tol,
-    register int *uvec,  /* array of indexes to unique points in arb->pt[] */
-    register int *svec); /* array of indexes to like points in arb->pt[] */
+    int *uvec,  /* array of indexes to unique points in arb->pt[] */
+    int *svec); /* array of indexes to like points in arb->pt[] */
 RT_EXPORT extern int rt_arb_std_type(const struct rt_db_internal *ip,
                                      const struct bn_tol *tol);
 RT_EXPORT extern void rt_arb_centroid(point_t                       *cent,

@@ -138,7 +138,7 @@ RT_EXPORT extern struct partition *rt_shootray_simple(struct application *ap,
  * PRIVATE: this is new API and should be considered private for the
  * time being.
  */
-RT_EXPORT extern int rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays);
+RT_EXPORT extern int rt_shootray_bundle(struct application *ap, struct xray *rays, int nrays);
 
 /**
  * To be called only in non-parallel mode, to tally up the statistics
