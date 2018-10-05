@@ -206,6 +206,7 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     openNURBS
     regex
     zlib1
+	libSPSR
     )
   set(BRLCAD_STATIC_LIBS)
   set(brlcadlibs_notinstalled)
@@ -285,6 +286,8 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
       set(DAT_TEXT_DIR "${CREO_ROOT_DIR}/${MDIR}/${CREO_MSG_DIR}")
       configure_file(creo-brl.dat.in ${CMAKE_CURRENT_BINARY_DIR}/${CFG_TYPE}/creo-brl-debug.dat @ONLY)
     endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+	set_property(TARGET creo-brl-exe APPEND PROPERTY COMPILE_DEFINITIONS "TINYCTHREAD_DLL_IMPORTS")
+	set_property(TARGET creo-brl-exe APPEND PROPERTY COMPILE_DEFINITIONS "SPSR_DLL_IMPORTS")
   endif(DEFINED CREO_EXEC_PLUGIN)
 
   # Install the resource files
