@@ -606,7 +606,7 @@ struct vertexuse_a_cnurb {
 NMG_EXPORT extern int nmg_memtrack;
 NMG_EXPORT void *nmg_malloc(size_t s, const char *msg);
 NMG_EXPORT void *nmg_calloc(int cnt, size_t s, const char *msg);
-NMG_EXPORT void *nmg_realloc(register void *ptr, size_t s, const char *msg);
+NMG_EXPORT void *nmg_realloc(void *ptr, size_t s, const char *msg);
 NMG_EXPORT void nmg_free(void *, const char *str);
 NMG_EXPORT void nmg_destroy();
 #define NMG_GETSTRUCT(p, str) p = (struct str *)nmg_calloc(1, sizeof(struct str), "NMG_GETSTRUCT")
@@ -1244,9 +1244,9 @@ struct nmg_ray_data {
 
 int
 ray_in_rpp(struct nmg_ray *rp,
-	register const fastf_t *invdir,       /* inverses of rp->r_dir[] */
-	register const fastf_t *min,
-	register const fastf_t *max);
+	const fastf_t *invdir,       /* inverses of rp->r_dir[] */
+	const fastf_t *min,
+	const fastf_t *max);
 
 /**
  * global nmg animation vblock callback

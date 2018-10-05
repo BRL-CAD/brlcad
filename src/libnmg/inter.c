@@ -2005,9 +2005,9 @@ nmg_isect_wireloop3p_face3p(struct nmg_inter_struct *bs, struct loopuse *lu, str
 /* FIXME: UGH, Bloody hell, another one. */
 int
 ray_in_rpp(struct nmg_ray *rp,
-          register const fastf_t *invdir,       /* inverses of rp->r_dir[] */
-          register const fastf_t *min,
-          register const fastf_t *max)
+          const fastf_t *invdir,       /* inverses of rp->r_dir[] */
+          const fastf_t *min,
+          const fastf_t *max)
 {
     register const fastf_t *pt = &rp->r_pt[0];
     register fastf_t sv;
