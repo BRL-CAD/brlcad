@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 201X-XX-XX  Release 7.30.0                                     ---
 ----------------------------------------------------------------------
 
+* fixed dbconcat behavior for binary database objects - Cliff Yapp
 
 ----------------------------------------------------------------------
 --- 2018-10-01  Release 7.28.0                                     ---
