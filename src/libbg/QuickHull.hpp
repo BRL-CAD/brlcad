@@ -790,32 +790,8 @@ namespace quickhull {
 		return m_vertices;
 	    }
 
-	    // Export the mesh to a Waveform OBJ file
-	    void writeWaveformOBJ(const std::string& filename, const std::string& objectName = "quickhull")
-	    {
-		std::ofstream objFile;
-		objFile.open (filename);
-		objFile << "o " << objectName << "\n";
-		for (const auto& v : getVertexBuffer()) {
-		    objFile << "v " << v.x << " " << v.y << " " << v.z << "\n";
-		}
-		const auto& indBuf = getIndexBuffer();
-		size_t triangleCount = indBuf.size()/3;
-		for (size_t i=0;i<triangleCount;i++) {
-		    objFile << "f " << indBuf[i*3]+1 << " " << indBuf[i*3+1]+1 << " " << indBuf[i*3+2]+1 << "\n";
-		}
-		objFile.close();
-	    }
-
 	};
 
-
-
-    struct DiagnosticsData {
-	size_t m_failedHorizonEdges; // How many times QuickHull failed to solve the horizon edge. Failures lead to degenerated convex hulls.
-
-	DiagnosticsData() : m_failedHorizonEdges(0) { }
-    };
 
     template<typename FloatType>
 	class QuickHull {
@@ -829,7 +805,6 @@ namespace quickhull {
 	    VertexDataSource<FloatType> m_vertexData;
 	    MeshBuilder<FloatType> m_mesh;
 	    std::array<IndexType,6> m_extremeValues;
-	    DiagnosticsData m_diagnostics;
 
 	    // Temporary variables used during iteration process
 	    std::vector<IndexType> m_newFaceIndices;
@@ -955,11 +930,6 @@ namespace quickhull {
 	    // Returns:
 	    //   Convex hull of the point cloud as a mesh object with half edge structure.
 	    HalfEdgeMesh<FloatType, IndexType> getConvexHullAsMesh(const FloatType* vertexData, size_t vertexCount, bool CCW, FloatType eps = Epsilon);
-
-	    // Get diagnostics about last generated convex hull
-	    const DiagnosticsData& getDiagnostics() {
-		return m_diagnostics;
-	    }
 	};
 
     /*

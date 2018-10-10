@@ -75,9 +75,6 @@ namespace quickhull {
 	    m_epsilon = epsilon*m_scale;
 	    m_epsilonSquared = m_epsilon*m_epsilon;
 
-	    // Reset diagnostics
-	    m_diagnostics = DiagnosticsData();
-
 	    m_planar = false; // The planar case happens when all the points appear to lie on a two dimensional subspace of R^3.
 	    createConvexHalfEdgeMesh();
 	    if (m_planar) {
@@ -195,7 +192,6 @@ namespace quickhull {
 
 		// Order horizon edges so that they form a loop. This may fail due to numerical instability in which case we give up trying to solve horizon edge for this point and accept a minor degeneration in the convex hull.
 		if (!reorderHorizonEdges(horizonEdges)) {
-		    m_diagnostics.m_failedHorizonEdges++;
 		    std::cerr << "Failed to solve horizon edge." << std::endl;
 		    auto it = std::find(tf.m_pointsOnPositiveSide->begin(),tf.m_pointsOnPositiveSide->end(),activePointIndex);
 		    tf.m_pointsOnPositiveSide->erase(it);
