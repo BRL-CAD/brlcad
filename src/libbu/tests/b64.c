@@ -54,7 +54,7 @@ test_b64_encode(const signed char *str)
     bu_free(decoded, "free decoded");
 
     if (!passed) {
-	bu_exit(1, "");
+	bu_exit(1, "b64 test failed");
     }
 }
 
