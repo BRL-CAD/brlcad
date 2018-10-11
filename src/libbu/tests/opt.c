@@ -82,10 +82,10 @@ set_msg_str(struct bu_vls *msg, int ac, const char **av)
     set_msg_str(&parse_msgs, ac, av); \
     ret = bu_opt_parse(&parse_msgs, ac, av, d); \
     if (ret || _var != _exp) { \
-	bu_vls_printf(&parse_msgs, "\nError - expected value \"%d\" and got value %d\n", _exp, _var); \
+	bu_vls_printf(&parse_msgs, "\nError - expected value \"%ld\" and got value %ld\n", (long int)_exp, (long int)_var); \
 	val_ok = 0; \
     } else { \
-	bu_vls_printf(&parse_msgs, "  \nGot expected value: %s = %d\n", _name, _var); \
+	bu_vls_printf(&parse_msgs, "  \nGot expected value: %s = %ld\n", _name, (long int)_var); \
     } \
 }
 
@@ -816,28 +816,28 @@ int desc_3(int test_num)
 	    av[0] = "-V";
 	    av[1] = "2,10,30";
 	    ret = bu_opt_parse(&parse_msgs, 0, NULL, d);
-	    EXPECT_SUCCESS_VECT("vect_t", v, 2, 10, 30);
+	    EXPECT_SUCCESS_VECT("vect_t", v, 2.0, 10.0, 30.0);
 	    break;
 	case 1:
 	    ac = 2;
 	    av[0] = "-V";
 	    av[1] = "2/10/30";
 	    ret = bu_opt_parse(&parse_msgs, 0, NULL, d);
-	    EXPECT_SUCCESS_VECT("vect_t", v, 2, 10, 30);
+	    EXPECT_SUCCESS_VECT("vect_t", v, 2.0, 10.0, 30.0);
 	    break;
 	case 2:
 	    ac = 2;
 	    av[0] = "-V";
 	    av[1] = "30.3,2,-10.1";
 	    ret = bu_opt_parse(&parse_msgs, 0, NULL, d);
-	    EXPECT_SUCCESS_VECT("vect_t", v, 30.3, 2, -10.1);
+	    EXPECT_SUCCESS_VECT("vect_t", v, 30.3, 2.0, -10.1);
 	    break;
 	case 3:
 	    ac = 2;
 	    av[0] = "-V";
 	    av[1] = "30.3, 2, -10.1";
 	    ret = bu_opt_parse(&parse_msgs, 0, NULL, d);
-	    EXPECT_SUCCESS_VECT("vect_t", v, 30.3, 2, -10.1);
+	    EXPECT_SUCCESS_VECT("vect_t", v, 30.3, 2.0, -10.1);
 	    break;
 	case 4:
 	    ac = 4;
@@ -846,7 +846,7 @@ int desc_3(int test_num)
 	    av[2] = "2";
 	    av[3] = "-10.1";
 	    ret = bu_opt_parse(&parse_msgs, 0, NULL, d);
-	    EXPECT_SUCCESS_VECT("vect_t", v, 30.3, 2, -10.1);
+	    EXPECT_SUCCESS_VECT("vect_t", v, 30.3, 2.0, -10.1);
 	    break;
 
     }
