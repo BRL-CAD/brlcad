@@ -612,6 +612,9 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
 
 	retval = mk_bot(gedp->ged_wdbp, argv[2], RT_BOT_SOLID, RT_BOT_CCW, err, vc, fc, (fastf_t *)vert_array, faces, NULL, NULL);
 
+	bu_free(faces, "free faces");
+	bu_free(vert_array, "free verts");
+
 	if (retval) {
 	    rt_db_free_internal(&intern);
 	    return GED_ERROR;
