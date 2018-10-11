@@ -73,10 +73,10 @@ set(standard_header_template
 #endif
 #ifdef HAVE_SYS_SYSCTL_H
 # if defined(_XOPEN_SOURCE) && _XOPEN_SOURCE < 500
-#  define u_char unsigned char
-#  define u_int unsigned int
-#  define u_long unsigned long
-#  define u_short unsigned short
+typedef unsigned char u_char;
+typedef unsigned int u_int;
+typedef unsigned long u_long;
+typedef unsigned short u_short;
 # endif
 # include <sys/sysctl.h>
 #endif

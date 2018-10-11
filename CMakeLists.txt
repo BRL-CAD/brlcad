@@ -2481,7 +2481,7 @@ BRLCAD_INCLUDE_FILE(uuid/uuid.h HAVE_UUID_UUID_H) # for uuid_generate() on Mac &
 BRLCAD_INCLUDE_FILE(windows.h HAVE_WINDOWS_H) # for QueryPerformanceCounter() on Windows
 
 # custom sys/sysctl.h test due to BSDisms when compiling as c90-era API
-check_c_source_compiles("#define u_char unsigned char\n#define u_int unsigned int\n#define u_long unsigned long\n#define u_short unsigned short\n#include <sys/sysctl.h>\nint main() { return 0; }" HAVE_SYS_SYSCTL_H)
+check_c_source_compiles("typedef unsigned char u_char;\ntypedef unsigned int u_int;\ntypedef unsigned long u_long;\ntypedef unsigned short u_short;\n#include <sys/sysctl.h>\nint main() { return 0; }" HAVE_SYS_SYSCTL_H)
 if(HAVE_SYS_SYSCTL_H)
   CONFIG_H_APPEND(BRLCAD "#define HAVE_SYS_SYSCTL_H 1\n")
 endif(HAVE_SYS_SYSCTL_H)
