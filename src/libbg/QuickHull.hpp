@@ -232,22 +232,22 @@ namespace quickhull {
 
     template<typename T>
 	class Pool {
-	    std::vector<std::shared_ptr<T>> m_data;
+	    std::vector<std::unique_ptr<T>> m_data;
 	    public:
 	    void clear() {
 		m_data.clear();
 	    }
 
-	    void reclaim(std::shared_ptr<T>& ptr) {
+	    void reclaim(std::unique_ptr<T>& ptr) {
 		m_data.push_back(std::move(ptr));
 	    }
 
-	    std::shared_ptr<T> get() {
+	    std::unique_ptr<T> get() {
 		if (m_data.size()==0) {
-		    return std::shared_ptr<T>(new T());
+		    return std::unique_ptr<T>(new T());
 		}
 		auto it = m_data.end()-1;
-		std::shared_ptr<T> r = std::move(*it);
+		std::unique_ptr<T> r = std::move(*it);
 		m_data.erase(it);
 		return r;
 	    }
@@ -344,7 +344,7 @@ namespace quickhull {
 		    std::uint8_t m_isVisibleFaceOnCurrentIteration : 1;
 		    std::uint8_t m_inFaceStack : 1;
 		    std::uint8_t m_horizonEdgesOnCurrentIteration : 3; // Bit for each half edge assigned to this face, each being 0 or 1 depending on whether the edge belongs to horizon edge
-		    std::shared_ptr<std::vector<IndexType>> m_pointsOnPositiveSide;
+		    std::unique_ptr<std::vector<IndexType>> m_pointsOnPositiveSide;
 
 		    Face() : m_he(std::numeric_limits<IndexType>::max()),
 		    m_mostDistantPointDist(0),
@@ -356,6 +356,34 @@ namespace quickhull {
 		    {
 
 		    }
+
+			Face& operator=(const Face& old)
+			{
+				m_he = old.m_he;
+				m_P = old.m_P;
+				m_mostDistantPointDist = old.m_mostDistantPointDist;
+				m_mostDistantPoint = old.m_mostDistantPoint;
+				m_visibilityCheckedOnIteration = old.m_visibilityCheckedOnIteration;
+				m_isVisibleFaceOnCurrentIteration = old.m_isVisibleFaceOnCurrentIteration;
+				m_inFaceStack = old.m_inFaceStack;
+				m_horizonEdgesOnCurrentIteration = old.m_horizonEdgesOnCurrentIteration;
+				//m_pointsOnPositiveSide = std::move(getIndexVectorFromPool());
+				//std::copy(old.m_pointsOnPositiveSide->begin(), old.m_pointsOnPositiveSide->end(), std::back_inserter(*m_pointsOnPositiveSide));
+				//m_pointsOnPositiveSide = std::move(old.m_pointsOnPositiveSide);
+				return *this;
+			}
+			Face(const Face& old)
+			{
+				m_he = old.m_he;
+				m_P = old.m_P;
+				m_mostDistantPointDist = old.m_mostDistantPointDist;
+				m_mostDistantPoint = old.m_mostDistantPoint;
+				m_visibilityCheckedOnIteration = old.m_visibilityCheckedOnIteration;
+				m_isVisibleFaceOnCurrentIteration = old.m_isVisibleFaceOnCurrentIteration;
+				m_inFaceStack = old.m_inFaceStack;
+				m_horizonEdgesOnCurrentIteration = old.m_horizonEdgesOnCurrentIteration;
+				//m_pointsOnPositiveSide = std::move(old.m_pointsOnPositiveSide);
+			}
 
 		    void disable() {
 			m_he = std::numeric_limits<IndexType>::max();
@@ -400,7 +428,7 @@ namespace quickhull {
 		}
 
 		// Mark a face as disabled and return a pointer to the points that were on the positive of it.
-		std::shared_ptr<std::vector<IndexType>> disableFace(IndexType faceIndex) {
+		std::unique_ptr<std::vector<IndexType>> disableFace(IndexType faceIndex) {
 		    auto& f = m_faces[faceIndex];
 		    f.disable();
 		    m_disabledFaces.push_back(faceIndex);
@@ -648,7 +676,7 @@ namespace quickhull {
 
     template<typename T>
 	class ConvexHull {
-	    std::shared_ptr<std::vector<Vector3<T>>> m_optimizedVertexBuffer;
+	    std::unique_ptr<std::vector<Vector3<T>>> m_optimizedVertexBuffer;
 	    VertexDataSource<T> m_vertices;
 	    std::vector<size_t> m_indices;
 	    public:
@@ -809,7 +837,7 @@ namespace quickhull {
 	    // Temporary variables used during iteration process
 	    std::vector<IndexType> m_newFaceIndices;
 	    std::vector<IndexType> m_newHalfEdgeIndices;
-	    std::vector< std::shared_ptr<std::vector<IndexType>> > m_disabledFacePointVectors;
+	    std::vector< std::unique_ptr<std::vector<IndexType>> > m_disabledFacePointVectors;
 
 	    // Create a half edge mesh representing the base tetrahedron from
 	    // which the QuickHull iteration proceeds. m_extremeValues must be
@@ -837,8 +865,8 @@ namespace quickhull {
 	    // amount of std::vectors we have to deal with, and impact on
 	    // performance is remarkable.
 	    Pool<std::vector<IndexType>> m_indexVectorPool;
-	    inline std::shared_ptr<std::vector<IndexType>> getIndexVectorFromPool();
-	    inline void reclaimToIndexVectorPool(std::shared_ptr<std::vector<IndexType>>& ptr);
+	    inline std::unique_ptr<std::vector<IndexType>> getIndexVectorFromPool();
+	    inline void reclaimToIndexVectorPool(std::unique_ptr<std::vector<IndexType>>& ptr);
 
 	    // Associates a point with a face if the point resides on the
 	    // positive side of the plane. Returns true if the points was on
@@ -937,20 +965,20 @@ namespace quickhull {
      */
 
     template<typename T>
-	std::shared_ptr<std::vector<IndexType>> QuickHull<T>::getIndexVectorFromPool() {
+	std::unique_ptr<std::vector<IndexType>> QuickHull<T>::getIndexVectorFromPool() {
 	    auto r = std::move(m_indexVectorPool.get());
 	    r->clear();
 	    return r;
 	}
 
     template<typename T>
-	void QuickHull<T>::reclaimToIndexVectorPool(std::shared_ptr<std::vector<IndexType>>& ptr) {
+	void QuickHull<T>::reclaimToIndexVectorPool(std::unique_ptr<std::vector<IndexType>>& ptr) {
 	    const size_t oldSize = ptr->size();
 	    if ((oldSize+1)*128 < ptr->capacity()) {
 		// Reduce memory usage! Huge vectors are needed at the
 		// beginning of iteration when faces have many points on their
 		// positive side. Later on, smaller vectors will suffice.
-		ptr.reset();
+		ptr.reset(nullptr);
 		return;
 	    }
 	    m_indexVectorPool.reclaim(ptr);
