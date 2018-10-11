@@ -532,11 +532,11 @@ namespace quickhull {
 		}
 
 		std::array<IndexType,2> getVertexIndicesOfHalfEdge(const HalfEdge& he) const {
-		    return {m_halfEdges[he.m_opp].m_endVertex,he.m_endVertex};
+		    return {{m_halfEdges[he.m_opp].m_endVertex,he.m_endVertex}};
 		}
 
 		std::array<IndexType,3> getHalfEdgeIndicesOfFace(const Face& f) const {
-		    return {f.m_he,m_halfEdges[f.m_he].m_next,m_halfEdges[m_halfEdges[f.m_he].m_next].m_next};
+		    return {{f.m_he,m_halfEdges[f.m_he].m_next,m_halfEdges[m_halfEdges[f.m_he].m_next].m_next}};
 		}
 	};
 

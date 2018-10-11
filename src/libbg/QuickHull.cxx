@@ -316,7 +316,7 @@ namespace quickhull {
 
     template <typename T>
 	std::array<IndexType,6> QuickHull<T>::getExtremeValues() {
-	    std::array<IndexType,6> outIndices{0,0,0,0,0,0};
+	    std::array<IndexType,6> outIndices{{0,0,0,0,0,0}};
 	    T extremeVals[6] = {m_vertexData[0].x,m_vertexData[0].x,m_vertexData[0].y,m_vertexData[0].y,m_vertexData[0].z,m_vertexData[0].z};
 	    const size_t vCount = m_vertexData.size();
 	    for (size_t i=1;i<vCount;i++) {
@@ -448,7 +448,7 @@ namespace quickhull {
 
 	    // These three points form the base triangle for our tetrahedron.
 	    assert(selectedPoints.first != maxI && selectedPoints.second != maxI);
-	    std::array<size_t,3> baseTriangle{selectedPoints.first, selectedPoints.second, maxI};
+	    std::array<size_t,3> baseTriangle{{selectedPoints.first, selectedPoints.second, maxI}};
 	    const Vector3<T> baseTriangleVertices[]={ m_vertexData[baseTriangle[0]], m_vertexData[baseTriangle[1]],  m_vertexData[baseTriangle[2]] };
 
 	    // Next step is to find the 4th vertex of the tetrahedron. We
