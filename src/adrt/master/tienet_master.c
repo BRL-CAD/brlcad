@@ -56,6 +56,9 @@
 #include "bu/log.h"
 #include "master.h"
 
+#if defined(HAVE_GETHOSTBYNAME) && !defined(HAVE_DECL_GETHOSTBYNAME) && !defined(_WINSOCKAPI_)
+extern struct hostent *gethostbyname(const char *);
+#endif
 
 typedef struct tienet_master_data_s {
     void *data;

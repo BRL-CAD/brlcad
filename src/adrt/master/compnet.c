@@ -36,6 +36,10 @@
 #include "adrt.h"
 #include "tienet.h"
 
+#if defined(HAVE_GETHOSTBYNAME) && !defined(HAVE_DECL_GETHOSTBYNAME) && !defined(_WINSOCKAPI_)
+extern struct hostent *gethostbyname(const char *);
+#endif
+
 int master_compserv_socket;
 int master_compserv_active;
 
