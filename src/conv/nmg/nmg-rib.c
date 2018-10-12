@@ -50,7 +50,7 @@ void
 usage(char *s)
 {
     if (s) {
-	bu_log(s);
+	bu_log("%s", s);
     }
 
     (void) bu_exit(1, "Usage: %s [-t] file.g nmg_solid [ nmg_solid ... ]\n",

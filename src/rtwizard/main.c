@@ -963,7 +963,7 @@ main(int argc, char **argv)
     uac = bu_opt_parse(&optparse_msg, argc, (const char **)argv, d);
 
     if (uac == -1) {
-	bu_exit(1, bu_vls_addr(&optparse_msg));
+	bu_exit(1, "%s", bu_vls_addr(&optparse_msg));
     }
     bu_vls_free(&optparse_msg);
 

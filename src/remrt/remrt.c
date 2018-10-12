@@ -440,7 +440,7 @@ statechange(struct servers *sp, int newstate)
 static void
 remrt_log(const char *msg)
 {
-    bu_log(msg);
+    bu_log("%s", msg);
 }
 
 
