@@ -554,7 +554,7 @@ main(int argc, const char **argv)
     struct bu_vls ncmd = BU_VLS_INIT_ZERO;
     struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
     double scan[16] = MAT_INIT_ZERO;
-    size_t prec = std::numeric_limits<fastf_t>::digits10 + 2; // TODO - once we enable C++ 11 switch this to (p > std::numeric_limits<fastf_t>::max_digits10)
+    size_t prec = std::numeric_limits<fastf_t>::max_digits10;
     char *buf = NULL;
     int  status = 0x0;
     mat_t m;

@@ -667,8 +667,7 @@ _nirt_digits(fastf_t ftol)
 HIDDEN std::string
 _nirt_dbl_to_str(double d, size_t p)
 {
-    // TODO - once we enable C++ 11 switch the precision below to std::numeric_limits<double>::max_digits10
-    size_t prec = (p) ? p : std::numeric_limits<double>::digits10 + 2;
+    size_t prec = (p) ? p : std::numeric_limits<double>::max_digits10;
     bu_log("prec: %zu\n",prec);
     std::ostringstream ss;
     ss << std::fixed << std::setprecision(prec) << d;
@@ -681,8 +680,7 @@ HIDDEN double
 _nirt_str_to_dbl(std::string s, size_t p)
 {
     double d;
-    // TODO - once we enable C++ 11 switch the precision below to std::numeric_limits<double>::max_digits10
-    size_t prec = (p) ? p : std::numeric_limits<double>::digits10 + 2;
+    size_t prec = (p) ? p : std::numeric_limits<double>::max_digits10;
     std::stringstream ss(s);
     ss >> std::setprecision(prec) >> std::fixed >> d;
     //bu_log("str   : %s\ndbl   : %.17f\n", s.c_str(), d);
@@ -1336,9 +1334,8 @@ _nirt_fmt_sp_width_precision_check(struct nirt_state *nss, std::string &fmt_sp)
 	    case 'E':
 	    case 'g':
 	    case 'G':
-		// TODO - once we enable C++ 11 switch the test below to (p > std::numeric_limits<fastf_t>::max_digits10) and update the nerr msg.
-		if (p_num > std::numeric_limits<fastf_t>::digits10 + 2) {
-		    nerr(nss, "Error: precision specification in format specifier substring \"%s\" of specifier \"%s\" exceeds allowed maximum (%d)\n", pn.c_str(), fmt_sp.c_str(), std::numeric_limits<fastf_t>::digits10 + 2);
+		if (p_num > std::numeric_limits<fastf_t>::max_digits10) {
+		    nerr(nss, "Error: precision specification in format specifier substring \"%s\" of specifier \"%s\" exceeds allowed maximum (%d)\n", pn.c_str(), fmt_sp.c_str(), std::numeric_limits<fastf_t>::max_digits10);
 		    return -1;
 		}
 		break;
