@@ -588,7 +588,7 @@ main(int argc, const char **argv)
 
     argv++; argc--;
     if ((ac = bu_opt_parse(&optparse_msg, argc, (const char **)argv, d)) == -1) {
-       	bu_exit(EXIT_FAILURE, bu_vls_addr(&optparse_msg));
+       	bu_exit(EXIT_FAILURE, "%s", bu_vls_addr(&optparse_msg));
     }
     bu_vls_free(&optparse_msg);
 
