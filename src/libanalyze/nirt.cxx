@@ -1611,7 +1611,7 @@ _nirt_print_fmt_substr(struct nirt_state *nss, struct bu_vls *ostr, const char *
 {
     if (!ostr || !fmt || !r) return;
     if (!key || !strlen(key)) {
-	bu_vls_printf(ostr, fmt);
+	bu_vls_printf(ostr, "%s", fmt);
 	return;
     }
     nirt_print_key("x_orig", r->orig[X] * base2local);
