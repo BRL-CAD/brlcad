@@ -775,7 +775,7 @@ mged_process_char(char ch)
 	    if (input_str_index == bu_vls_strlen(&input_str))
 		break;
 	    pr_prompt(interactive);
-	    bu_log("%*V", input_str_index, &input_str);
+	    bu_log("%*s", (int)input_str_index, bu_vls_addr(&input_str));
 	    escaped = bracketed = 0;
 	    break;
 	case CTRL_B:                   /* Back one character */

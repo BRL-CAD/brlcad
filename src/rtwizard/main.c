@@ -566,9 +566,9 @@ void print_rtwizard_state(struct rtwizard_settings *s) {
     bu_vls_printf(&slog, "log_file: %s\n", bu_vls_addr(s->log_file));
     bu_vls_printf(&slog, "pid_file: %s\n", bu_vls_addr(s->pid_file));
 
-    bu_vls_printf(&slog, "width(%d): %d\n", s->width_set, s->width);
-    bu_vls_printf(&slog, "height(%d): %d\n", s->height_set, s->height);
-    bu_vls_printf(&slog, "size(%d): %d\n", s->size_set, s->size);
+    bu_vls_printf(&slog, "width(%d): %zu\n", s->width_set, s->width);
+    bu_vls_printf(&slog, "height(%d): %zu\n", s->height_set, s->height);
+    bu_vls_printf(&slog, "size(%d): %zu\n", s->size_set, s->size);
     bu_vls_printf(&slog, "bkg_color: %d,%d,%d\n", (int)s->bkg_color->buc_rgb[0], (int)s->bkg_color->buc_rgb[1], (int)s->bkg_color->buc_rgb[2]);
     bu_vls_printf(&slog, "line_color: %d,%d,%d\n", (int)s->line_color->buc_rgb[0], (int)s->line_color->buc_rgb[1], (int)s->line_color->buc_rgb[2]);
     bu_vls_printf(&slog, "non_line_color: %d,%d,%d\n", (int)s->non_line_color->buc_rgb[0], (int)s->non_line_color->buc_rgb[1], (int)s->non_line_color->buc_rgb[2]);
@@ -644,24 +644,24 @@ Init_RtWizard_Vars(Tcl_Interp *interp, struct rtwizard_settings *s)
     }
 
     if (s->width_set) {
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(width) %d", s->width);
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(width) %zu", s->width);
 	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
     }
 
     if (s->height_set) {
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(scanlines) %d", s->height);
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(scanlines) %zu", s->height);
 	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
     }
 
     if (s->size_set) {
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(size) %d", s->size);
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(size) %zu", s->size);
 	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
 	if (!s->width_set) {
-	    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(width) %d", s->size);
+	    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(width) %zu", s->size);
 	    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
 	}
 	if (!s->height_set) {
-	    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(scanlines) %d", s->size);
+	    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(scanlines) %zu", s->size);
 	    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
 	}
     }

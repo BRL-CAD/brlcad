@@ -72,7 +72,7 @@ log_elements(p_ply ply_fp)
 	    bu_log("Could not get info of this element\n");
 	    continue;
 	}
-	bu_log("There are %d instances of the %s element:\n", ninstances, elem_name);
+	bu_log("There are %ld instances of the %s element:\n", ninstances, elem_name);
 
 	/* iterate over all properties of current element */
 	while ((prop = ply_get_next_property(elem, prop))) {
@@ -142,7 +142,7 @@ face_cb(p_ply_argument argument)
 	bu_bomb("Unable to import face lists");
     }
     if (list_len < 3 || list_len > 4) {
-	bu_log("ignoring face with %d vertices\n", list_len);
+	bu_log("ignoring face with %ld vertices\n", list_len);
 	return 1;
     }
     ply_get_argument_user_data(argument, (void **)&pbot, NULL);
@@ -324,13 +324,13 @@ main(int argc, char *argv[])
 	    rgb[i] = (unsigned char) irgb[i];
 	}
 	if (mk_comb(out_fp, bu_vls_addr(&region_name), &head, 1, NULL, NULL, rgb, 1000, 0, 1, 100, 0, 0, 0)) {
-	    bu_log("ERROR: Failed to write region(%s) to database\n", region_name);
+	    bu_log("ERROR: Failed to write region(%s) to database\n", bu_vls_addr(&region_name));
 	    goto free_bot;
 	}
     }
 
     if (verbose) {
-	bu_log("Wrote region %s\n", region_name);
+	bu_log("Wrote region %s\n", bu_vls_addr(&region_name));
     }
 
 free_bot:

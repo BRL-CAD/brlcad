@@ -446,11 +446,11 @@ db_sync(struct db_i *dbip)
     /* flush the file */
     (void)fflush(dbip->dbi_fp);
 
-#if defined(HAVE_FSYNC) && !defined(STRICT_FLAGS)
+#if defined(HAVE_FSYNC)
     /* make sure it's written out */
     (void)fsync(fileno(dbip->dbi_fp));
 #else
-#  if defined(HAVE_SYNC) && !defined(STRICT_FLAGS)
+#  if defined(HAVE_SYNC)
     /* try the whole filesystem if sans fsync() */
     sync();
 #  endif

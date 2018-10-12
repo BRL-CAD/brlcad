@@ -247,7 +247,7 @@ _pnts_to_bot(struct ged *gedp, int argc, const char **argv)
     GED_DB_DIRADD(gedp, dp, bot_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, GED_ERROR);
     GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, GED_ERROR);
 
-    bu_vls_printf(gedp->ged_result_str, "Generated BoT object %s with %d triangles", bot_name, pntcnt);
+    bu_vls_printf(gedp->ged_result_str, "Generated BoT object %s with %ld triangles", bot_name, pntcnt);
 
     rt_db_free_internal(&intern);
     return GED_OK;
@@ -368,7 +368,7 @@ _obj_to_pnts(struct ged *gedp, int argc, const char **argv)
     GED_DB_DIRADD(gedp, dp, pnt_prim, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, GED_ERROR);
     GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, GED_ERROR);
 
-    bu_vls_printf(gedp->ged_result_str, "Generated pnts object %s with %d points, avg. partition thickness %g", pnt_prim, pnts->count, avg_thickness);
+    bu_vls_printf(gedp->ged_result_str, "Generated pnts object %s with %ld points, avg. partition thickness %g", pnt_prim, pnts->count, avg_thickness);
 
     return GED_OK;
 }
@@ -573,7 +573,7 @@ _read_pnts(struct ged *gedp, int argc, const char **argv)
     GED_DB_DIRADD(gedp, dp, pnt_prim, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, GED_ERROR);
     GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, GED_ERROR);
 
-    bu_vls_printf(gedp->ged_result_str, "Generated pnts object %s with %d points", pnt_prim, pnts->count);
+    bu_vls_printf(gedp->ged_result_str, "Generated pnts object %s with %ld points", pnt_prim, pnts->count);
 
     bu_vls_free(&fmt);
     if (nums) bu_free(nums, "free old nums array");

@@ -154,7 +154,7 @@ add_comb(struct db_i *dbip, const char *name, int obj_argc, const char **obj_arg
     }
     if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
 	rt_db_free_internal(&intern);
-	bu_log("%s error: Database write error, aborting\n");
+	bu_log("Error: Database write error, aborting\n");
 	return 1;
     }
 

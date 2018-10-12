@@ -1181,7 +1181,7 @@ res_pr(void)
     bu_log("\nResource use summary, by processor:\n");
     res = &resource[0];
     for (i = 0; i < npsw; i++, res++) {
-	bu_log("---CPU %d:\n", i);
+	bu_log("---CPU %zu:\n", i);
 	if (res->re_magic != RESOURCE_MAGIC) {
 	    bu_log("Bad magic number!\n");
 	    continue;

@@ -221,7 +221,7 @@ tk_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
 
     if (dmp->dm_debugLevel) {
 	bu_log("tk_drawVList()\n");
-	bu_log("vp - %lu, perspective - %d\n", vp, dmp->dm_perspective);
+	bu_log("vp - %p, perspective - %d\n", (void *)vp, dmp->dm_perspective);
     }
 
     /* delta is used in clipping to insure clipped endpoint is slightly

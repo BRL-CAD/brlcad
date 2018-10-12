@@ -288,7 +288,7 @@ processChar(char ch)
 	    if (input_str_index == bu_vls_strlen(&input_str))
 		break;
 	    insert_prompt();
-	    bu_log("%*V", input_str_index, &input_str);
+	    bu_log("%*s", (int)input_str_index, bu_vls_addr(&input_str));
 	    escaped = bracketed = 0;
 	    break;
 	case CTRL_B:                   /* Back one character */
@@ -324,7 +324,7 @@ processChar(char ch)
 		bu_vls_addr(&input_str)[input_str_index - 1];
 	    bu_vls_addr(&input_str)[input_str_index - 1] = ch;
 	    bu_log("\b");
-	    bu_log("%c%c", bu_vls_addr(&input_str)+input_str_index-1, bu_vls_addr(&input_str)+input_str_index);
+	    bu_log("%c%c", (bu_vls_addr(&input_str)+input_str_index-1)[0], (bu_vls_addr(&input_str)+input_str_index)[0]);
 	    ++input_str_index;
 	    escaped = bracketed = 0;
 	    break;

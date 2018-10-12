@@ -32,7 +32,7 @@ Get_cnurb_curve(int curve_de, int *linear)
 
     curve = (curve_de - 1)/2;
     if (curve >= dirarraylen) {
-	bu_log("Get_cnurb_curve: DE=%zu is too large, dirarraylen = %zu\n", curve_de, dirarraylen);
+	bu_log("Get_cnurb_curve: DE=%d is too large, dirarraylen = %zu\n", curve_de, dirarraylen);
 	return (struct edge_g_cnurb *)NULL;
     }
 

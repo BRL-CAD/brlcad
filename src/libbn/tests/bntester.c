@@ -232,7 +232,7 @@ main(int argc, char **argv)
 	    case 'i': /* input file name */
 		string_length = strlen(bu_optarg);
 		if (string_length >= BUFSIZ) {
-		    bu_log("Input file name too long, length was %d but must be less than %d\n",
+		    bu_log("Input file name too long, length was %zu but must be less than %d\n",
 			   string_length, BUFSIZ);
 		    bu_exit(EXIT_FAILURE, USAGE);
 		}
@@ -242,7 +242,7 @@ main(int argc, char **argv)
 	    case 'o': /* output file name */
 		string_length = strlen(bu_optarg);
 		if (string_length >= BUFSIZ) {
-		    bu_log("Output file name too long, length was %d but must be less than %d\n",
+		    bu_log("Output file name too long, length was %zu but must be less than %d\n",
 			   string_length, BUFSIZ);
 		    bu_exit(EXIT_FAILURE, USAGE);
 		}

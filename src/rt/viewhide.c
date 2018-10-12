@@ -133,7 +133,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
      *  tree walking and database prepping to still be done in parallel.
      */
     if ( npsw >= 1 )  {
-	bu_log("Note: changing from %d cpus to 1 cpu\n", npsw );
+	bu_log("Note: changing from %zu cpus to 1 cpu\n", npsw );
 	npsw = 1;		/* Disable parallel processing */
     }
 

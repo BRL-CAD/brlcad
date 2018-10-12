@@ -857,7 +857,7 @@ main(int argc, const char **argv)
 	}
 
 	// Now, construct a dir command line from the m matrix
-	bu_vls_sprintf(&ncmd, "dir %.*f %.*f %.*f", prec, -m[8], prec, -m[9], prec, -m[10]);
+	bu_vls_sprintf(&ncmd, "dir %.*f %.*f %.*f", (int)prec, -m[8], (int)prec, -m[9], (int)prec, -m[10]);
 	if (nirt_exec(ns, bu_vls_addr(&ncmd)) < 0) {
 	    nirt_err(&io_data, "nirt: read_mat(): Failed to set the view direction\n");
 	    ret = EXIT_FAILURE;

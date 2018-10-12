@@ -320,7 +320,7 @@ nmg_to_ply(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 	    for (vi = 0; vi < 3; vi++) {
 		coords = (double *)bu_hash_get(v_tbl_regs[cur_region], (const unsigned char *)(f_regs[cur_region][fi] + vi), sizeof(long));
 		if (!coords) {
-		    bu_log("ERROR: No vertex found for face with index %d!\n", f_regs[cur_region][fi][vi]);
+		    bu_log("ERROR: No vertex found for face with index %ld!\n", f_regs[cur_region][fi][vi]);
 		    goto free_nmg;
 		}
 		ply_write(ply_fp, coords[3]);
@@ -364,7 +364,7 @@ free_nmg:
     nmg_km(the_model);
     rt_vlist_cleanup();
     db_close(dbip);
-    bu_exit(1, "");
+    bu_exit(1, NULL);
 }
 
 static void
@@ -803,7 +803,7 @@ main(int argc, char **argv)
 		for (vi = 0; vi < 3; vi++) {
 		    coords = (double *)bu_hash_get(v_tbl_regs[ri], (const unsigned char *)(f_regs[ri][fi] + vi), sizeof(long));
 		    if (!coords) {
-			bu_log("ERROR: No vertex found for face with index %d!\n", f_regs[ri][fi][vi]);
+			bu_log("ERROR: No vertex found for face with index %ld!\n", f_regs[ri][fi][vi]);
 			ply_close(ply_fp);
 			goto free_all;
 		    }

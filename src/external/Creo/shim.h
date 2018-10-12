@@ -147,7 +147,7 @@ typedef int ProIdTable[2];
 typedef int __internal_facetset[3];
 typedef struct pf {int id;} ProFeature;
 typedef struct pmatp {double mass_density;} ProMaterialProps;
-typedef struct pmp {int density; int mass; int volume;} ProMassProperty;
+typedef struct pmp {double density; double mass; double volume;} ProMassProperty;
 typedef struct proparam {wchar_t *id;} ProParameter;
 typedef struct prouc {double scale;} ProUnitConversion;
 typedef struct psap {double color_rgb[3];double transparency;double shininess;double diffuse;double highlite;} ProSurfaceAppearanceProps;

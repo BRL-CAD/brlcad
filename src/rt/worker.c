@@ -836,7 +836,7 @@ do_run(int a, int b)
     /* Tally up the statistics */
     for (cpu=0; cpu < npsw; cpu++) {
 	if (resource[cpu].re_magic != RESOURCE_MAGIC) {
-	    bu_log("ERROR: CPU %d resources corrupted, statistics bad\n", cpu);
+	    bu_log("ERROR: CPU %zu resources corrupted, statistics bad\n", cpu);
 	    continue;
 	}
 	rt_add_res_stats(APP.a_rt_i, &resource[cpu]);

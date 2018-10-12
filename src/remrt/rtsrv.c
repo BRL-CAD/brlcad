@@ -320,7 +320,7 @@ main(int argc, char **argv)
 	RTG.rtg_parallel = 0;
     }
 
-    bu_log("using %d of %d cpus\n",
+    bu_log("using %zu of %d cpus\n",
 	   npsw, avail_cpus);
 
     /* Before option processing, do application-specific initialization */

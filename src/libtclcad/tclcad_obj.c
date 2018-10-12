@@ -4345,12 +4345,12 @@ to_data_polygons(struct ged *gedp,
 	    goto bad;
 
 	if (bu_sscanf(argv[4], "%lf %lf", &vdir[X], &vdir[Y]) != 2) {
-	    bu_vls_printf(gedp->ged_result_str, "%s: bad dir", argv[0], argv[4]);
+	    bu_vls_printf(gedp->ged_result_str, "%s: bad dir: %s", argv[0], argv[4]);
 	    goto bad;
 	}
 
 	if (bu_sscanf(argv[5], "%lf", &vdelta) != 1) {
-	    bu_vls_printf(gedp->ged_result_str, "%s: bad delta", argv[0], argv[5]);
+	    bu_vls_printf(gedp->ged_result_str, "%s: bad delta: %s", argv[0], argv[5]);
 	    goto bad;
 	}
 

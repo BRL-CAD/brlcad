@@ -669,7 +669,7 @@ _nirt_dbl_to_str(double d, size_t p)
 {
     // TODO - once we enable C++ 11 switch the precision below to std::numeric_limits<double>::max_digits10
     size_t prec = (p) ? p : std::numeric_limits<double>::digits10 + 2;
-    bu_log("prec: %d\n",prec);
+    bu_log("prec: %zu\n",prec);
     std::ostringstream ss;
     ss << std::fixed << std::setprecision(prec) << d;
     std::string sd = ss.str();
@@ -1001,7 +1001,7 @@ _nirt_diff_report(struct nirt_state *nss)
 	    struct nirt_seg *left = sd->left;
 	    struct nirt_seg *right = sd->right;
 	    if (left->type != right->type) {
-		bu_vls_printf(&dreport, "  Segment %d type mismatch : Original %s, Current %s\n", j, _nirt_seg_string(sd->left->type), _nirt_seg_string(sd->right->type));
+		bu_vls_printf(&dreport, "  Segment %zu type mismatch : Original %s, Current %s\n", j, _nirt_seg_string(sd->left->type), _nirt_seg_string(sd->right->type));
 		nout(nss, "%s", bu_vls_addr(&dreport));
 		bu_vls_free(&dreport);
 		return 1;
@@ -1013,7 +1013,7 @@ _nirt_diff_report(struct nirt_state *nss)
 		    break;
 		case NIRT_PARTITION_SEG:
 		    if (!nss->i->diff_settings->report_partitions) continue;
-		    bu_vls_printf(&dreport, "  Segment difference(%s):\n", _nirt_seg_string(sd->left->type), j);
+		    bu_vls_printf(&dreport, "  Segment difference(%s)[%zu]:\n", _nirt_seg_string(sd->left->type), j);
 		    if (bu_vls_strcmp(left->reg_name, right->reg_name) && nss->i->diff_settings->report_partition_reg_names) {
 			bu_vls_printf(&dreport, "    Region Name: '%s' -> '%s'\n", bu_vls_addr(left->reg_name), bu_vls_addr(right->reg_name));
 			reporting_diff = 1;
@@ -1059,7 +1059,7 @@ _nirt_diff_report(struct nirt_state *nss)
 		    break;
 		case NIRT_GAP_SEG:
 		    if (!nss->i->diff_settings->report_gaps) continue;
-		    bu_vls_printf(&dreport, "  Segment difference(%s):\n", _nirt_seg_string(sd->left->type), j);
+		    bu_vls_printf(&dreport, "  Segment difference(%s)[%zu]:\n", _nirt_seg_string(sd->left->type), j);
 		    if (sd->gap_in_delta > nss->i->diff_settings->dist_delta_tol && nss->i->diff_settings->report_gap_dists) {
 			std::string oval = _nirt_dbl_to_str(sd->gap_in_delta, _nirt_digits(nss->i->diff_settings->dist_delta_tol));
 			bu_vls_printf(&dreport, "    DIST_PT_PT(gap_in_old,gap_in_new): %s\n", oval.c_str());
@@ -1073,7 +1073,7 @@ _nirt_diff_report(struct nirt_state *nss)
 		    break;
 		case NIRT_OVERLAP_SEG:
 		    if (!nss->i->diff_settings->report_overlaps) continue;
-		    bu_vls_printf(&dreport, "  Segment difference(%s):\n", _nirt_seg_string(sd->left->type), j);
+		    bu_vls_printf(&dreport, "  Segment difference(%s)[%zu]:\n", _nirt_seg_string(sd->left->type), j);
 		    if (bu_vls_strcmp(left->ov_reg1_name, right->ov_reg1_name) && nss->i->diff_settings->report_overlap_reg_names) {
 			bu_vls_printf(&dreport, "    Region 1 Name: '%s' -> '%s'\n", bu_vls_addr(left->ov_reg1_name), bu_vls_addr(right->ov_reg1_name));
 			reporting_diff = 1;
@@ -1344,7 +1344,7 @@ _nirt_fmt_sp_width_precision_check(struct nirt_state *nss, std::string &fmt_sp)
 		break;
 	    case 's':
 		if ((size_t)p_num > pn.max_size()) {
-		    nerr(nss, "Error: precision specification in format specifier substring \"%s\" of specifier \"%s\" exceeds allowed maximum (%d)\n", pn.c_str(), fmt_sp.c_str(), pn.max_size());
+		    nerr(nss, "Error: precision specification in format specifier substring \"%s\" of specifier \"%s\" exceeds allowed maximum (%zu)\n", pn.c_str(), fmt_sp.c_str(), pn.max_size());
 		    return -1;
 		}
 		break;
@@ -2319,7 +2319,7 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
 		have_ray = 1;
 		std::vector<std::string> substrs = _nirt_string_split(rstr);
 		if (substrs.size() != 6) {
-		    nerr(nss, "Error processing ray line \"%s\"!\nExpected 6 elements, found %d\n", line.c_str(), substrs.size());
+		    nerr(nss, "Error processing ray line \"%s\"!\nExpected 6 elements, found %zu\n", line.c_str(), substrs.size());
 		    delete df;
 		    return -1;
 		}
@@ -2350,7 +2350,7 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
 		std::string hstr = line.substr(7);
 		std::vector<std::string> substrs = _nirt_string_split(hstr);
 		if (substrs.size() != 15) {
-		    nerr(nss, "Error processing hit line \"%s\"!\nExpected 15 elements, found %d\n", hstr.c_str(), substrs.size());
+		    nerr(nss, "Error processing hit line \"%s\"!\nExpected 15 elements, found %zu\n", hstr.c_str(), substrs.size());
 		    return -1;
 		}
 		struct nirt_seg *seg;
@@ -2387,7 +2387,7 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
 		std::string gstr = line.substr(7);
 		std::vector<std::string> substrs = _nirt_string_split(gstr);
 		if (substrs.size() != 7) {
-		    nerr(nss, "Error processing gap line \"%s\"!\nExpected 7 elements, found %d\n", gstr.c_str(), substrs.size());
+		    nerr(nss, "Error processing gap line \"%s\"!\nExpected 7 elements, found %zu\n", gstr.c_str(), substrs.size());
 		    return -1;
 		}
 		struct nirt_seg *seg;
@@ -2421,7 +2421,7 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
 		std::string ostr = line.substr(11);
 		std::vector<std::string> substrs = _nirt_string_split(ostr);
 		if (substrs.size() != 11) {
-		    nerr(nss, "Error processing overlap line \"%s\"!\nExpected 11 elements, found %d\n", ostr.c_str(), substrs.size());
+		    nerr(nss, "Error processing overlap line \"%s\"!\nExpected 11 elements, found %zu\n", ostr.c_str(), substrs.size());
 		    return -1;
 		}
 		struct nirt_seg *seg;

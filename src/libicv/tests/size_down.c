@@ -126,14 +126,14 @@ int main(int argc, char* argv[])
 
     bif = icv_read(in_file, format, inx, iny);
     icv_resize(bif, method, 0, 0, (unsigned int) factor);
-    bu_log("File information width %d height%d\n", bif->width, bif->height);
+    bu_log("File information width %zu height %zu\n", bif->width, bif->height);
 
     for (index = 0; index < 65536; index++)
 	bu_log("index = %ld, data = %f\n", index, bif->data[index]);
 
 
     icv_write(bif,out_file, format);
-    bu_log("File information width %d height%d channels = %d\n", bif->width, bif->height, bif->channels);
+    bu_log("File information width %zu height %zu channels = %zu\n", bif->width, bif->height, bif->channels);
     icv_destroy(bif);
 
     return 0;

@@ -174,7 +174,7 @@ tables_objs_print(struct bu_vls *tabvls, struct bu_ptbl *tabptr, int type)
     struct table_obj *o;
     for (i = 0; i < BU_PTBL_LEN(tabptr); i++) {
 	o = (struct table_obj *)BU_PTBL_GET(tabptr, i);
-	bu_vls_printf(tabvls, " %-4zu %4ld %4ld %4ld %4ld  ",
+	bu_vls_printf(tabvls, " %-4d %4d %4d %4d %4d  ",
 		o->numreg, o->region_id, o->aircode, o->GIFTmater, o->los);
 
 	bu_vls_printf(tabvls, "%s", bu_vls_addr(o->path));

@@ -224,7 +224,7 @@ usage(const char *argv0, int verbose)
 	     * unless all option+description lines fit within 80chars
 	     */
 	    if (longest_opt + longest_desc + 4 /* option padding */ <= 80) {
-		bu_log("  %s%*s  %s\n", j->option.c_str(), longest_opt-(int)j->option.length(), "", j->description.c_str());
+		bu_log("  %s%*s  %s\n", j->option.c_str(), (int)(longest_opt-(int)j->option.length()), "", j->description.c_str());
 	    } else {
 
 		/* arbitrary, 16 makes a nice 20/60 split */
@@ -235,9 +235,9 @@ usage(const char *argv0, int verbose)
 		if (j->option.length() > limitation) {
 		    bu_log("  %s\n", j->option.c_str());
 		    if (j->description.length() > 0)
-			bu_log("    %*s%s\n", limitation, "", j->description.c_str());
+			bu_log("    %*s%s\n", (int)limitation, "", j->description.c_str());
 		} else {
-		    bu_log("  %s%*s  %s\n", j->option.c_str(), limitation-(int)j->option.length(), "", j->description.c_str());
+		    bu_log("  %s%*s  %s\n", j->option.c_str(), (int)(limitation-(int)j->option.length()), "", j->description.c_str());
 		}
 	    }
 	}

@@ -64,7 +64,7 @@ Do_subfigs()
 	subfigdef_index = (subfigdef_de - 1)/2;
 	if (subfigdef_index >= totentities) {
 	    bu_log("Singular Subfigure Instance Entity gives Subfigure Definition");
-	    bu_log("\tEntity DE of %d, largest DE in file is %d\n",
+	    bu_log("\tEntity DE of %d, largest DE in file is %zu\n",
 		   subfigdef_de, (totentities * 2) - 1);
 	    continue;
 	}
@@ -134,7 +134,7 @@ Do_subfigs()
 
 	    if (idx >= totentities) {
 		bu_log("Subfigure Definition Entity gives Member Entity");
-		bu_log("\tDE of %d, largest DE in file is %d\n",
+		bu_log("\tDE of %d, largest DE in file is %zu\n",
 		       members[j], (totentities * 2) - 1);
 		continue;
 	    }
