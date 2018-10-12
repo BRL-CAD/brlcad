@@ -171,8 +171,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * add a multiview rt script to regression testing (e.g., see rtwalk output)
 
-* screengrab on windows
-
 * bot overlaps when unoriented, when clearly not overlapping
 
 * improve rtweight .density file handling on Windows, can't find it.
