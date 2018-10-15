@@ -787,7 +787,7 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 	    rmax[1] = bboxpnts[1][1];
 	    rmax[2] = bboxpnts[1][2];
 	    mk_rpp(cinfo->wdbp, bu_vls_addr(sname), rmin, rmax);
-	    creo_log(cinfo, MSG_DEBUG, "%s: writing bounding box as placeholder.\n", pname);
+	    creo_log(cinfo, MSG_FAIL, "%s: replaced with bounding box.\n", pname);
 	    goto have_part;
 	} else {
 	    wchar_t *stable = stable_wchar(cinfo, wname);
@@ -796,7 +796,7 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 	    } else {
 		cinfo->empty->insert(stable);
 	    }
-		creo_log(cinfo, MSG_FAIL, "%s not converted.\n", pname);
+	    creo_log(cinfo, MSG_FAIL, "%s not converted.\n", pname);
 	    ret = status;
 	    goto cleanup;
 	}
