@@ -116,9 +116,8 @@ BG_EXPORT int bg_3d_coplanar_chull(point_t** hull, const point_t* points_3d, int
  * @param	num_input_pnts the number of points in the input set
  * @return dimension of output (3 is three dimensional faces and hulls, 2 is a polygon hull in a plane, etc.)
  *
- * This routine is based off of Ken Clarkson's hull program from
- * http://www.netlib.org/voronoi/hull.html - see the file chull3d.c
- * for the full copyright and license statement.
+ * This routine is based off of Antti Kuukka's implementation of the QuickHull
+ * algorithm: https://github.com/akuukka/quickhull implementation
 */
 BG_EXPORT int bg_3d_chull(int **faces, int *num_faces, point_t **vertices, int *num_vertices,
                           const point_t *input_points_3d, int num_input_pnts);
