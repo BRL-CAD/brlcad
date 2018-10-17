@@ -1,6 +1,5 @@
 set(bg_headers
   chull.h
-  clipper.hpp
   defines.h
   obr.h
   polygon.h

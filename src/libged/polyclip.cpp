@@ -28,8 +28,9 @@
 
 #include "common.h"
 
+#include "clipper.hpp"
+
 #include "bu/sort.h"
-#include "bg/clipper.hpp"
 #include "ged.h"
 
 

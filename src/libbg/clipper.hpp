@@ -46,7 +46,6 @@ extern "C" {
 #include <cstdlib>
 #include <ostream>
 
-
 namespace ClipperLib {
 
     enum ClipType { ctIntersection, ctUnion, ctDifference, ctXor };
