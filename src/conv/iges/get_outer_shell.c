@@ -1,7 +1,7 @@
 /*               G E T _ O U T E R _ S H E L L . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2016 United States Government as represented by
+ * Copyright (c) 1993-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -26,7 +26,7 @@ Get_outer_shell(struct nmgregion *r, int entityno)
 {
 
     int sol_num;		/* IGES solid type number */
-    int no_of_faces;		/* Number of faces in shell */
+    int no_of_faces = 0;		/* Number of faces in shell */
     int face_count = 0;		/* Number of faces actually made */
     int *face_de;		/* Directory sequence numbers for faces */
     int *face_orient;		/* Orientation of faces */

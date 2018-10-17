@@ -1,7 +1,7 @@
 /*                     O B J _ W R I T E . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2016 United States Government as represented by
+ * Copyright (c) 1996-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -392,9 +392,9 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 
     if (RT_G_DEBUG&DEBUG_TREEWALK || pstate->gcv_options->verbosity_level) {
 	char *sofar = db_path_to_string(pathp);
-	bu_log("\ndo_region_end(%d %d%%) %s\n",
+	bu_log("\ndo_region_end(%zu %zu%%) %s\n",
 	       pstate->regions_tried,
-	       pstate->regions_tried>0 ? (pstate->regions_converted * 100) / pstate->regions_tried : 0,
+	       (pstate->regions_tried>0) ? (pstate->regions_converted * 100) / pstate->regions_tried : 0,
 	       sofar);
 	bu_free(sofar, "path string");
     }
@@ -466,7 +466,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 
 	npercent = (float)(pstate->regions_converted * 100) / pstate->regions_tried;
 	tpercent = (float)(pstate->regions_written * 100) / pstate->regions_tried;
-	bu_log("Tried %zu regions; %d conv. to NMG's, %zu conv. to tri.; nmgper = %.2f%%, triper = %.2f%%\n",
+	bu_log("Tried %zu regions; %zu conv. to NMG's, %zu conv. to tri.; nmgper = %.2f%%, triper = %.2f%%\n",
 	       pstate->regions_tried, pstate->regions_converted, pstate->regions_written, npercent, tpercent);
     }
 
@@ -566,9 +566,8 @@ obj_write(struct gcv_context *context, const struct gcv_opts *gcv_options, const
     return 1;
 }
 
-
 const struct gcv_filter gcv_conv_obj_write = {
-    "OBJ Writer", GCV_FILTER_WRITE, BU_MIME_MODEL_OBJ,
+    "OBJ Writer", GCV_FILTER_WRITE, BU_MIME_MODEL_OBJ, NULL,
     obj_write_create_opts, obj_write_free_opts, obj_write
 };
 

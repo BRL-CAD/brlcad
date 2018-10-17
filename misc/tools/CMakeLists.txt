@@ -24,6 +24,13 @@ CLEAR_BUILD_FLAGS()
 # Restore CMake defaults, in case they are needed
 RESTORE_CACHED_BUILD_FLAGS(_CMAKE_DEFAULT)
 
+# For misc/tools, be liberal about standards
+if(NOT MSVC)
+  set(CMAKE_C_EXTENSIONS ON)
+  set(CMAKE_C_STANDARD 99)
+  set(CMAKE_C_STANDARD_REQUIRED OFF)
+endif(NOT MSVC)
+
 # Quiet all warnings in this directory
 DISABLE_WARNINGS()
 
@@ -138,8 +145,6 @@ first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 THIRD_PARTY_EXECUTABLE(astyle astyle "BRLCAD_LEVEL2" astyle_ALIASES astyle_DESCRIPTION)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/astyle/Makefile)
 
-CMAKEFILES(astyle.dist)
-
 # dom2dox - Doc-O-Matic to Doxygen C++ source converter
 include(${CMAKE_CURRENT_SOURCE_DIR}/dom2dox.dist)
 CMAKEFILES_IN_DIR(dom2dox_ignore_files dom2dox)
@@ -176,6 +181,9 @@ SetTargetFolder(xmllint "Compilation Utilities")
 SetTargetFolder(xml "Third Party Libraries")
 SetTargetFolder(xslt "Third Party Libraries")
 SetTargetFolder(exslt "Third Party Libraries")
+
+CMAKEFILES(README)
+CMAKEFILES(CMakeLists.txt)
 
 # Locac Variables:
 # tab-width: 8

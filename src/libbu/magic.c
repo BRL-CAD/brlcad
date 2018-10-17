@@ -1,7 +1,7 @@
 /*                         M A G I C . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,8 +34,6 @@ bu_identify_magic(register uint32_t magic)
 	    return "bu_attribute_value_set";
 	case BU_BITV_MAGIC:
 	    return "bu_bitv";
-	case BU_COLOR_MAGIC:
-	    return "bu_color";
 	case BU_EXTERNAL_MAGIC:
 	    return "bu_external";
 	case BU_HASH_ENTRY_MAGIC:
@@ -96,6 +94,8 @@ bu_identify_magic(register uint32_t magic)
 	    /*
 	     * Primitives
 	     */
+	case RT_ANNOT_INTERNAL_MAGIC:
+	    return "rt_annot_internal";
 	case RT_ARBN_INTERNAL_MAGIC:
 	    return "rt_arbn_internal";
 	case RT_ARB_INTERNAL_MAGIC:
@@ -148,6 +148,8 @@ bu_identify_magic(register uint32_t magic)
 	    return "rt_rhc_internal";
 	case RT_RPC_INTERNAL_MAGIC:
 	    return "rt_rpc_internal";
+	case RT_SCRIPT_INTERNAL_MAGIC:
+	    return "rt_script_internal";
 	case RT_SKETCH_INTERNAL_MAGIC:
 	    return "rt_sketch_internal";
 	case RT_SUBMODEL_INTERNAL_MAGIC:
@@ -276,6 +278,8 @@ bu_identify_magic(register uint32_t magic)
 	     */
 	case ANIMATE_MAGIC:
 	    return "librt animate";
+	case ANN_TSEG_MAGIC:
+	    return "ann_tseg";
 	case CURVE_BEZIER_MAGIC:
 	    return "curve_bezier";
 	case CURVE_CARC_MAGIC:
@@ -283,7 +287,7 @@ bu_identify_magic(register uint32_t magic)
 	case CURVE_LSEG_MAGIC:
 	    return "curve_lseg";
 	case CURVE_NURB_MAGIC:
-	    return "curve_nurb";
+	    return "curve_nurb"; 
 	case DB5_RAW_INTERNAL_MAGIC:
 	    return "db5 raw internal";
 	case DBI_MAGIC:

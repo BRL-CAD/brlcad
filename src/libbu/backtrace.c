@@ -1,7 +1,7 @@
 /*                     B A C K T R A C E . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2016 United States Government as represented by
+ * Copyright (c) 2007-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,23 +42,29 @@
 #include "bio.h"
 
 /* common headers */
+#include "bu/app.h"
 #include "bu/debug.h"
-#include "bu/file.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/parallel.h"
+#include "bu/snooze.h"
 #include "bu/str.h"
 
 /* strict c99 doesn't declare kill() (but POSIX does) */
-#if defined(HAVE_KILL) && !defined(HAVE_DECL_KILL)
+#ifndef HAVE_DECL_KILL
 extern int kill(pid_t, int);
 #endif
 
 /* fileno() may be a macro (e.g., Windows) or may not even be declared
  * when compiling strict, but declare it as needed
  */
-#if defined(HAVE_FILENO) && !defined(HAVE_DECL_FILENO)
+#ifndef HAVE_DECL_FILENO
 extern int fileno(FILE*);
+#endif
+
+/* strict c90 doesn't provide basics */
+#ifndef HAVE_DECL_GETTIMEOFDAY
+extern int gettimeofday(struct timeval *, void *);
 #endif
 
 
@@ -289,7 +295,7 @@ backtrace(char * const *args, int fd)
 	kill(getppid(), SIGCHLD);
 #    endif
 #  endif
-	sleep(2);
+	bu_snooze(BU_SEC2USEC(2));
     }
 
     exit(0);
@@ -373,12 +379,12 @@ bu_backtrace(FILE *fp)
 	while ((interrupt_wait == 0) && (end.tv_sec - start.tv_sec < 45 /* seconds */)) {
 	    /* do nothing, wait for debugger to attach but don't wait too long */;
 	    gettimeofday(&end, NULL);
-	    sleep(1);
+	    bu_snooze(BU_SEC2USEC(1));
 	}
     }
 #else
     /* FIXME: need something better here for win32 */
-    sleep(10);
+    bu_snooze(BU_SEC2USEC(10));
 #endif
 
     if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {

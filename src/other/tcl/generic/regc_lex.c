@@ -256,20 +256,33 @@ static const chr brbacks[] = {	/* \s within brackets */
     CHR('s'), CHR('p'), CHR('a'), CHR('c'), CHR('e'),
     CHR(':'), CHR(']')
 };
+
+#define PUNCT_CONN \
+	CHR('_'), \
+	0x203f /* UNDERTIE */, \
+	0x2040 /* CHARACTER TIE */,\
+	0x2054 /* INVERTED UNDERTIE */,\
+	0xfe33 /* PRESENTATION FORM FOR VERTICAL LOW LINE */, \
+	0xfe34 /* PRESENTATION FORM FOR VERTICAL WAVY LOW LINE */, \
+	0xfe4d /* DASHED LOW LINE */, \
+	0xfe4e /* CENTRELINE LOW LINE */, \
+	0xfe4f /* WAVY LOW LINE */, \
+	0xff3f /* FULLWIDTH LOW LINE */
+
 static const chr backw[] = {	/* \w */
     CHR('['), CHR('['), CHR(':'),
     CHR('a'), CHR('l'), CHR('n'), CHR('u'), CHR('m'),
-    CHR(':'), CHR(']'), CHR('_'), CHR(']')
+    CHR(':'), CHR(']'), PUNCT_CONN, CHR(']')
 };
 static const chr backW[] = {	/* \W */
     CHR('['), CHR('^'), CHR('['), CHR(':'),
     CHR('a'), CHR('l'), CHR('n'), CHR('u'), CHR('m'),
-    CHR(':'), CHR(']'), CHR('_'), CHR(']')
+    CHR(':'), CHR(']'), PUNCT_CONN, CHR(']')
 };
 static const chr brbackw[] = {	/* \w within brackets */
     CHR('['), CHR(':'),
     CHR('a'), CHR('l'), CHR('n'), CHR('u'), CHR('m'),
-    CHR(':'), CHR(']'), CHR('_')
+    CHR(':'), CHR(']'), PUNCT_CONN
 };
 
 /*

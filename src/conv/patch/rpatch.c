@@ -1,7 +1,7 @@
 /*                        R P A T C H . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -205,6 +205,7 @@ main(int argc, char **argv)
 		break;
 	    case '?':
 		bu_exit(1, "%s", usage);
+		break;
 	    default:
 		bu_exit(1, "Illegal option (%c)\n%s", c, usage);
 	}

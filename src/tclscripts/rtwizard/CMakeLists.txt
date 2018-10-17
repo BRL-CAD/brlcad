@@ -64,7 +64,7 @@ set(PictureTypeF_DATA
   )
 BRLCAD_ADDDATA(PictureTypeF_DATA tclscripts/rtwizard/examples/PictureTypeF)
 
-CMAKEFILES(examples)
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

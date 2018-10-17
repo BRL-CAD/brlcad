@@ -1,7 +1,7 @@
 /*                        V I E W P P . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2016 United States Government as represented by
+ * Copyright (c) 1985-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,6 +34,7 @@
 
 #include <stdio.h>
 
+#include "bu/snooze.h"
 #include "vmath.h"
 #include "raytrace.h"
 
@@ -41,19 +42,6 @@
 
 
 const char title[] = "RT Pretty Picture";
-
-void
-usage(const char *argv0)
-{
-    bu_log("Usage:  %s [options] model.g objects... >file.pp\n", argv0);
-    bu_log("Options:\n");
-    bu_log(" -s #		Grid size in pixels, default 512, max 1024\n");
-    bu_log(" -a Az		Azimuth in degrees	(conflicts with -M)\n");
-    bu_log(" -e Elev	Elevation in degrees	(conflicts with -M)\n");
-    bu_log(" -M		Read model2view matrix on stdin (conflicts with -a, -e)\n");
-    bu_log(" -x #		Set librt debug flags\n");
-}
-
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
@@ -67,7 +55,7 @@ static int last_ihigh;			/* last inten_high */
 static int ntomiss;			/* number of pixels to miss */
 static int col;				/* column; for PP 75 char/line crap */
 
-void view_pixel(void) {}
+void view_pixel(struct application *UNUSED(ap)) {}
 
 #define pchar(c) {putc(c, stdout);if (col++==74) {putc('\n', stdout);col=0;}}
 
@@ -149,7 +137,7 @@ ppmiss(struct application *UNUSED(ap))
 }
 
 void
-view_eol(void)
+view_eol(struct application *UNUSED(ap))
 {
     pchar('.');		/* End of scanline */
     last_solidp = SOLTAB_NULL;
@@ -160,21 +148,21 @@ view_eol(void)
  * Called when the picture is finally done.
  */
 void
-view_end(void)
+view_end(struct application *UNUSED(ap))
 {
     fprintf(stdout, "/\n");	/* end of view */
     fflush(stdout);
 }
 
 int
-view_init(register struct application *ap, char *file, char *obj, int minus_o)
+view_init(struct application *ap, char *file, char *obj, int minus_o, int UNUSED(minus_F))
 {
     ap->a_hit = pphit;
     ap->a_miss = ppmiss;
     ap->a_onehit = 1;
 
     bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
-    sleep(1);
+    bu_snooze(BU_SEC2USEC(1));
 
     if (!minus_o)
 	fprintf(stderr, "Warning:  -o ignored, .PP goes to stdout\n");
@@ -185,12 +173,17 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
     return 0;		/* no framebuffer needed */
 }
 
-void view_2init(void) {;}
+/* stubs */
+void view_2init(struct application *UNUSED(ap), char *UNUSED(framename)) {;}
+void view_setup(struct rt_i *UNUSED(rtip)) {}
+void view_cleanup(struct rt_i *UNUSED(rtip)) {}
 
-void view_setup(void) {}
-void view_cleanup(void) {}
 
-void application_init (void) {}
+void
+application_init (void)
+{
+    option("", "-o file.pp", "Output pretty picture file", 0);
+}
 
 /*
  * Local Variables:

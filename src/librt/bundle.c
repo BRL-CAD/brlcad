@@ -1,7 +1,7 @@
 /*                        B U N D L E . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2016 United States Government as represented by
+ * Copyright (c) 1985-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -71,7 +71,7 @@ struct shootrays_data {
  * XXX maybe parameter with NORM, UV, CURVE bits?
  */
 int
-rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays)
+rt_shootray_bundle(struct application *ap, struct xray *rays, int nrays)
 {
     struct rt_shootray_status ss;
     struct seg new_segs;	/* from solid intersections */
@@ -184,6 +184,7 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
     }
 
     /* Compute the inverse of the direction cosines */
+    /* TODO: utilize VINVDIR after getting rid of nugrid */
     if (ap->a_ray.r_dir[X] < -SQRT_SMALL_FASTF) {
 	ss.abs_inv_dir[X] = -(ss.inv_dir[X]=1.0/ap->a_ray.r_dir[X]);
 	ss.rstep[X] = -1;
@@ -262,16 +263,8 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
     ss.lastcut = CUTTER_NULL;
     ss.old_status = (struct rt_shootray_status *)NULL;
     ss.curcut = &ap->a_rt_i->rti_CutHead;
-    if (ss.curcut->cut_type == CUT_NUGRIDNODE) {
-	ss.lastcell = CUTTER_NULL;
-	VSET(ss.curmin, ss.curcut->nugn.nu_axis[X][0].nu_spos,
-	     ss.curcut->nugn.nu_axis[Y][0].nu_spos,
-	     ss.curcut->nugn.nu_axis[Z][0].nu_spos);
-	VSET(ss.curmax, ss.curcut->nugn.nu_axis[X][ss.curcut->nugn.nu_cells_per_axis[X]-1].nu_epos,
-	     ss.curcut->nugn.nu_axis[Y][ss.curcut->nugn.nu_cells_per_axis[Y]-1].nu_epos,
-	     ss.curcut->nugn.nu_axis[Z][ss.curcut->nugn.nu_cells_per_axis[Z]-1].nu_epos);
-    } else if (ss.curcut->cut_type == CUT_CUTNODE ||
-	       ss.curcut->cut_type == CUT_BOXNODE) {
+
+    if (ss.curcut->cut_type == CUT_CUTNODE || ss.curcut->cut_type == CUT_BOXNODE) {
 	ss.lastcell = ss.curcut;
 	VMOVE(ss.curmin, rtip->mdl_min);
 	VMOVE(ss.curmax, rtip->mdl_max);

@@ -2,7 +2,7 @@
 #                      A S C 2 D S P . S H
 # BRL-CAD
 #
-# Copyright (c) 2010-2016 United States Government as represented by
+# Copyright (c) 2010-2018 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -42,80 +42,74 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . "$1/regress/library.sh"
 
-
-FAILED=0
+if test "x$LOGFILE" = "x" ; then
+    LOGFILE=`pwd`/asc2dsp.log
+    rm -f $LOGFILE
+fi
+log "=== TESTING asc2dsp ==="
 
 A2D="`ensearch asc2dsp`"
 if test ! -f "$A2D" ; then
-    echo "Unable to find asc2dsp, aborting"
-    FAILED=1
+    log "Unable to find asc2dsp, aborting"
+    exit 1
 fi
 
 CV="`ensearch cv`"
 if test ! -f "$CV" ; then
-    echo "Unable to find cv, aborting"
-    FAILED=1
+    log "Unable to find cv, aborting"
+    exit 1
 fi
 
 A2P="`ensearch asc2pix`"
 if test ! -f "$A2P" ; then
-    echo "Unable to find asc2pix, aborting"
-    FAILED=1
+    log "Unable to find asc2pix, aborting"
+    exit 1
 fi
 
 P2B="`ensearch pix-bw`"
 if test ! -f "$P2B" ; then
-    echo "Unable to find pix-bw, aborting"
-    FAILED=1
-fi
-
-if [ $FAILED -ne 0 ] ; then
-    echo "Unable to find asc2dsp requirements, aborting"
-    echo "-> asc2dsp.sh ABORTED"
+    log "Unable to find pix-bw, aborting"
     exit 1
 fi
 
-FAILED=0
 
-BASE1=asc2dsp-old
-BASE2=asc2dsp-new
-LOG=asc2dsp.log
+BASE1=asc2dsp.old
+BASE2=asc2dsp.new
 
-TRASH="$LOG $BASE1.pix $BASE1.bw $BASE1.dsp $BASE2.dsp"
-
-rm -f $TRASH
 
 # we generate one dsp file the old way and one the new way--they should be identical
 # old first
-# convert dsp data file in asc hex format to pix format
+log "... convert dsp data file in asc hex format to pix format"
 ASC1="$1/regress/dsp/$BASE1.asc"
-$A2P < $ASC1 > $BASE1.pix 2>>$LOG
-# convert pix to bw format
-# take the blue pixel only
-$P2B -B1.0 $BASE1.pix > $BASE1.bw 2>>$LOG
-# convert pix to dsp format
-$CV huc nu16 $BASE1.bw $BASE1.dsp 1>>$LOG 2>>$LOG
+rm -f $BASE1.pix
+$A2P < $ASC1 > $BASE1.pix 2>>$LOGFILE
 
-# new
-# convert dsp data file in asc decimal format to dsp format
+log "convert pix to bw format"
+rm -f $BASE1.bw
+# take the blue pixel only
+$P2B -B1.0 $BASE1.pix > $BASE1.bw 2>>$LOGFILE
+
+log "convert pix to dsp format"
+rm -f $BASE1.dsp
+run $CV huc nu16 $BASE1.bw $BASE1.dsp
+
+log "convert dsp data file in asc decimal format to dsp format"
 ASC2="$1/regress/dsp/$BASE2.asc"
-$A2D $BASE2.asc $BASE2.dsp 1>>$LOG 2>>$LOG
+rm -f $BASE2.dsp
+run $A2D $BASE2.asc $BASE2.dsp
 
 # the two dsp files should be identical
-cmp $BASE1.dsp $BASE2.dsp
+run cmp $BASE1.dsp $BASE2.dsp
 STATUS=$?
 
+
 if [ $STATUS -gt 0 ] ; then
-  FAILED=1
-fi
-
-if [ $FAILED = 0 ] ; then
-    echo "-> asc2dsp.sh succeeded"
+    log "-> asc2dsp.sh FAILED, see $LOGFILE"
 else
-    echo "-> asc2dsp.sh FAILED"
+    log "-> asc2dsp.sh succeeded"
 fi
 
-exit $FAILED
+exit $STATUS
 
 # Local Variables:
 # mode: sh

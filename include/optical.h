@@ -1,7 +1,7 @@
 /*                            O P T I C A L . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,21 +38,6 @@ __BEGIN_DECLS
 #include "optical/debug.h"
 #include "optical/shadework.h"
 #include "optical/shadefuncs.h"
-
-/* for libmultispectral */
-
-/* FIXME: these should not need to be declared for libmultispectral.
- * breaks encapsulation/modularity of shaders if we have to list them
- * in more than one place.  maybe give multispectral arrays their own
- * suffix so as not to conflict.
- */
-
-OPTICAL_EXPORT extern struct mfuncs camo_mfuncs[];
-OPTICAL_EXPORT extern struct mfuncs light_mfuncs[];
-OPTICAL_EXPORT extern struct mfuncs stk_mfuncs[];
-OPTICAL_EXPORT extern struct mfuncs phg_mfuncs[];
-OPTICAL_EXPORT extern struct mfuncs noise_mfuncs[];
-OPTICAL_EXPORT extern struct bn_table *spectrum;
 
 /**
  * this function sets the provided mfuncs head pointer to the list of

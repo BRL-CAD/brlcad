@@ -1,7 +1,7 @@
 /*                    V L S _ V P R I N T F. C
  * BRL-CAD
  *
- * Copyright (c) 2011-2016 United States Government as represented by
+ * Copyright (c) 2011-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -134,7 +134,7 @@ check_format_chars(void)
 
 
 int
-vls_vprintf_main(int argc, char *argv[])
+main(int argc, char *argv[])
 {
 
     int test_num = 0;
@@ -143,12 +143,11 @@ vls_vprintf_main(int argc, char *argv[])
     const char *word = "Lawyer";
 
     if (argc < 2) {
-	fprintf(stderr,"Usage: %s test_num\n", argv[0]);
+	fprintf(stderr, "Usage: %s {test_num}\n", argv[0]);
 	return 1;
     }
 
     sscanf(argv[1], "%d", &test_num);
-
 
     switch (test_num) {
 	case 1:

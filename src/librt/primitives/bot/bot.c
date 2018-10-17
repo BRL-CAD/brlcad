@@ -1,7 +1,7 @@
 /*                           B O T . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2016 United States Government as represented by
+ * Copyright (c) 1999-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -253,7 +253,7 @@ size_t
 clt_bot_pack(struct bu_pool *pool, struct soltab *stp)
 {
     struct bot_specific *bot = (struct bot_specific *)stp->st_specific;
-    uint ntri;
+    unsigned ntri;
     size_t i;
     struct clt_linear_bvh_node *nodes;
 
@@ -420,7 +420,7 @@ rt_bot_prep_pieces(struct bot_specific *bot,
  * Calculate an RPP for a BoT
  */
 int
-rt_bot_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+rt_bot_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     struct rt_bot_internal *bot_ip;
     size_t tri_index;
     point_t p1, p2, p3;
@@ -491,7 +491,7 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	rt_bot_mintie = atoi(getenv("LIBRT_BOT_MINTIE"));
     }
 
-    if (rt_bot_bbox(ip, &(stp->st_min), &(stp->st_max))) return 1;
+    if (rt_bot_bbox(ip, &(stp->st_min), &(stp->st_max), &(rtip->rti_tol))) return 1;
 
     if (rt_bot_mintie > 0 && bot_ip->num_faces >= rt_bot_mintie /* FIXME: (necessary?) && (bot_ip->face_normals != NULL || bot_ip->orientation != RT_BOT_UNORIENTED) */)
 	ret = bottie_prep_double(stp, bot_ip, rtip);
@@ -721,18 +721,6 @@ rt_bot_free(struct soltab *stp)
 }
 
 
-int
-rt_bot_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, const struct bn_tol *tol)
-{
-    if (stp) RT_CK_SOLTAB(stp);
-    if (tol) BN_CK_TOL(tol);
-    if (!min) return 0;
-    if (!max) return 0;
-
-    return 0;
-}
-
-
 vdsNode *
 build_vertex_tree(struct rt_bot_internal *bot)
 {
@@ -870,7 +858,7 @@ rt_bot_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 
     fold_data.root = vertex_tree;
     fold_data.point_spacing = info->point_spacing;
-    (void)rt_bot_bbox(ip, &min, &max);
+    (void)rt_bot_bbox(ip, &min, &max, NULL);
     d1 = max[0] - min[0];
     d2 = max[1] - min[1];
     d3 = max[2] - min[2];
@@ -913,7 +901,7 @@ rt_bot_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
         }
 
 int
-rt_bot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *info)
+rt_bot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *tol, const struct rt_view_info *info)
 {
     struct rt_bot_internal *bot_ip;
     size_t i;
@@ -939,7 +927,7 @@ rt_bot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     } else {
 	/* too big - just draw the bbox */
 	point_t min, max;
-	(void)rt_bot_bbox(ip, &min, &max);
+	(void)rt_bot_bbox(ip, &min, &max, tol);
 	BOT_BB_PLOT_VLIST(min, max);
     }
 
@@ -2496,7 +2484,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 		    return BRLCAD_ERROR;
 		}
 		if ((size_t)len != bot->num_faces || len <= 0) {
-		    bu_vls_printf(logstr, "Only %d face normals? Must provide normals for all faces!!!", len);
+		    bu_vls_printf(logstr, "Only %d face normals? Must provide normals for all faces.", len);
 		    if (obj_array) bu_free((char *)obj_array, "obj_array");
 		    return BRLCAD_ERROR;
 		}
@@ -2607,7 +2595,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 		    return BRLCAD_ERROR;
 		}
 		if (len <= 0) {
-		    bu_vls_printf(logstr, "Must provide at least one normal!!!");
+		    bu_vls_printf(logstr, "Must provide at least one normal.");
 		    return BRLCAD_ERROR;
 		}
 		bot->num_normals = len;
@@ -2676,7 +2664,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 		    return BRLCAD_ERROR;
 		}
 		if (len <= 0) {
-		    bu_vls_printf(logstr, "Must provide at least one vertex!!!");
+		    bu_vls_printf(logstr, "Must provide at least one vertex.");
 		    return BRLCAD_ERROR;
 		}
 		bot->num_vertices = len;
@@ -2740,7 +2728,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 		    return BRLCAD_ERROR;
 		}
 		if (len <= 0) {
-		    bu_vls_printf(logstr, "Must provide at least one face!!!");
+		    bu_vls_printf(logstr, "Must provide at least one face.");
 		    return BRLCAD_ERROR;
 		}
 		bot->num_faces = len;
@@ -2863,7 +2851,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 		    return BRLCAD_ERROR;
 		}
 		if (len <= 0) {
-		    bu_vls_printf(logstr, "Must provide at least one thickness!!!");
+		    bu_vls_printf(logstr, "Must provide at least one thickness.");
 		    return BRLCAD_ERROR;
 		}
 		if ((size_t)len > bot->num_faces) {
@@ -3483,6 +3471,7 @@ rt_bot_face_fuse(struct rt_bot_internal *bot)
 		    if (!ZERO(bot->thickness[i] - bot->thickness[j]) ||
 			(BU_BITTEST(bot->face_mode, i)?1:0) != (BU_BITTEST(bot->face_mode, j)?1:0))
 			break;
+		    /* fall through */
 		case RT_BOT_SOLID:
 		case RT_BOT_SURFACE:
 		    if (bot->orientation == RT_BOT_UNORIENTED) {
@@ -3700,11 +3689,11 @@ rt_bot_sort_faces(struct rt_bot_internal *bot, size_t tris_per_piece)
     int *piece_verts = (int *)NULL;	/* a list of vertices in the current piece (each vertex appears only once) */
     unsigned char *vert_count;		/* an array used to hold the number of piece vertices that appear in each BOT face */
     size_t new_face_count = 0;		/* the current number of faces in the "new_faces" list */
-    size_t faces_left;			/* the number of faces in the "old_faces" array that have not yet been used */
-    size_t piece_len;			/* the current number of faces in the piece */
-    size_t max_verts;			/* the maximum number of piece_verts found in a single unused face */
-    size_t i;
-    size_t j;
+    size_t faces_left = 0;		/* the number of faces in the "old_faces" array that have not yet been used */
+    size_t piece_len = 0;		/* the current number of faces in the piece */
+    size_t max_verts = 0;		/* the maximum number of piece_verts found in a single unused face */
+    size_t i = 0;
+    size_t j = 0;
 
     RT_BOT_CK_MAGIC(bot);
 
@@ -3778,7 +3767,6 @@ rt_bot_sort_faces(struct rt_bot_internal *bot, size_t tris_per_piece)
 		new_face_count++;
 	    }
 	    piece_len = 0;
-	    max_verts = 0;
 
 	    /* set flag to skip the loop below */
 	    done_with_piece = 1;
@@ -4099,35 +4087,11 @@ rt_bot_smooth(struct rt_bot_internal *bot, const char *bot_name, struct db_i *db
 
 	    /* back out to bounding box limits */
 
-	    /* Compute the inverse of the direction cosines */
-	    if (ap.a_ray.r_dir[X] < -SQRT_SMALL_FASTF) {
-		inv_dir[X] = 1.0/ap.a_ray.r_dir[X];
-	    } else if (ap.a_ray.r_dir[X] > SQRT_SMALL_FASTF) {
-		inv_dir[X] = 1.0/ap.a_ray.r_dir[X];
-	    } else {
-		ap.a_ray.r_dir[X] = 0.0;
-		inv_dir[X] = INFINITY;
-	    }
-	    if (ap.a_ray.r_dir[Y] < -SQRT_SMALL_FASTF) {
-		inv_dir[Y] = 1.0/ap.a_ray.r_dir[Y];
-	    } else if (ap.a_ray.r_dir[Y] > SQRT_SMALL_FASTF) {
-		inv_dir[Y] = 1.0/ap.a_ray.r_dir[Y];
-	    } else {
-		ap.a_ray.r_dir[Y] = 0.0;
-		inv_dir[Y] = INFINITY;
-	    }
-	    if (ap.a_ray.r_dir[Z] < -SQRT_SMALL_FASTF) {
-		inv_dir[Z]=1.0/ap.a_ray.r_dir[Z];
-	    } else if (ap.a_ray.r_dir[Z] > SQRT_SMALL_FASTF) {
-		inv_dir[Z]=1.0/ap.a_ray.r_dir[Z];
-	    } else {
-		ap.a_ray.r_dir[Z] = 0.0;
-		inv_dir[Z] = INFINITY;
-	    }
+	    /* Compute inverse of the direction cosines */
+	    VINVDIR(inv_dir, ap.a_ray.r_dir);
 
 	    if (!rt_in_rpp(&ap.a_ray, inv_dir, rtip->mdl_min, rtip->mdl_max)) {
-		/* ray missed!!! */
-		bu_log("ERROR: Ray missed target!!!!\n");
+		bu_log("ERROR: Ray missed target!!!\n");
 	    }
 	    VJOIN1(ap.a_ray.r_pt, ap.a_ray.r_pt, ap.a_ray.r_min, ap.a_ray.r_dir);
 	    ap.a_user = i;
@@ -4166,11 +4130,10 @@ rt_bot_smooth(struct rt_bot_internal *bot, const char *bot_name, struct db_i *db
 
 	/* process each vertex in his face */
 	for (k = 0; k < 3; k++) {
-	    vect_t ave_norm;
+	    vect_t ave_norm = VINIT_ZERO;
 
 	    /* the actual vertex index */
 	    vert_no = bot->faces[i*3+k];
-	    VSETALL(ave_norm, 0.0);
 
 	    /* find all the faces that use this vertex */
 	    for (j = 0; j < bot->num_faces * 3; j++) {

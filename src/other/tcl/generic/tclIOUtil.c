@@ -413,7 +413,6 @@ Tcl_GetCwd(
     return Tcl_DStringValue(cwdPtr);
 }
 
-/* Obsolete */
 int
 Tcl_EvalFile(
     Tcl_Interp *interp,		/* Interpreter in which to process file. */
@@ -639,8 +638,8 @@ FsGetFirstFilesystem(void)
 }
 
 /*
- * The epoch can be changed both by filesystems being added or removed and by
- * env(HOME) changing.
+ * The epoch can be changed by filesystems being added or removed, by changing
+ * the "system encoding" and by env(HOME) changing.
  */
 
 int
@@ -1763,7 +1762,7 @@ Tcl_FSEvalFileEx(
      * this cross-platform to allow for scripted documents. [Bug: 2040]
      */
 
-    Tcl_SetChannelOption(interp, chan, "-eofchar", "\32");
+    Tcl_SetChannelOption(interp, chan, "-eofchar", "\32 {}");
 
     /*
      * If the encoding is specified, set it for the channel. Else don't touch

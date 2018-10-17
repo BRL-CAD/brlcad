@@ -1,7 +1,7 @@
 /*                           M G E D . H
  * BRL-CAD
  *
- * Copyright (c) 1985-2016 United States Government as represented by
+ * Copyright (c) 1985-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -623,6 +623,7 @@ int epain(struct rt_db_internal *ip, fastf_t thick[2]);
 int etoin(struct rt_db_internal *ip, fastf_t thick[1]);
 
 /* set.c */
+extern void fbserv_set_port(const struct bu_structparse *, const char *, void *, const char *, void *);
 extern void set_scroll_private(const struct bu_structparse *, const char *, void *, const char *, void *);
 extern void mged_variable_setup(Tcl_Interp *interpreter);
 

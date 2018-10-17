@@ -21,7 +21,8 @@
  * like a worthwhile improvement to use the table.
  */
 
-#define MAX_KEYCODE 145 /* VK_SCROLL is the last entry in our table below */
+#define MAX_KEYCODE 179 /* VK_MEDIA_PLAY_PAUSE is the last entry in our table below */
+/* cf. https://msdn.microsoft.com/en-us/library/windows/desktop/dd375731(v=vs.85).aspx */
 
 static const KeySym keymap[] = {
     NoSymbol, NoSymbol, NoSymbol, XK_Cancel, NoSymbol,
@@ -53,7 +54,13 @@ static const KeySym keymap[] = {
     XK_F19, XK_F20, XK_F21, XK_F22, XK_F23,
     XK_F24, NoSymbol, NoSymbol, NoSymbol, NoSymbol,
     NoSymbol, NoSymbol, NoSymbol, NoSymbol, XK_Num_Lock,
-    XK_Scroll_Lock
+    XK_Scroll_Lock, NoSymbol, NoSymbol, NoSymbol, NoSymbol,
+    NoSymbol, NoSymbol, NoSymbol, NoSymbol, NoSymbol, /*150 0x96*/
+    NoSymbol, NoSymbol, NoSymbol, NoSymbol, NoSymbol, /*155 0x9b*/
+    NoSymbol, NoSymbol, NoSymbol, NoSymbol, NoSymbol, /*160 0xa0*/
+    NoSymbol, NoSymbol, NoSymbol, NoSymbol, NoSymbol, /*165 0xa5*/
+    NoSymbol, NoSymbol, NoSymbol, XK_XF86AudioMute, XK_XF86AudioLowerVolume, /*170 0xaa*/
+    XK_XF86AudioRaiseVolume, XK_XF86AudioNext, XK_XF86AudioPrev, XK_XF86AudioStop, XK_XF86AudioPlay  /*175 0xaf*/
 };
 
 /*

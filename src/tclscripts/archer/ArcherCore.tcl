@@ -1,7 +1,7 @@
 #                      A R C H E R C O R E . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2016 United States Government as represented by
+# Copyright (c) 2002-2018 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -199,6 +199,7 @@ namespace eval ArcherCore {
 	method bot_sync            {args}
 	method bot_vertex_fuse     {args}
 	method brep                {args}
+	method brlman              {args}
 	method c                   {args}
 	method cd                  {args}
 	method clear               {args}
@@ -226,6 +227,7 @@ namespace eval ArcherCore {
 	method edcomb              {args}
 	method edmater             {args}
 	method d                   {args}
+	method dsp                 {args}
 	method erase               {args}
 	method ev                  {args}
 	method exists              {args}
@@ -308,7 +310,7 @@ namespace eval ArcherCore {
 	method Z                   {args}
 	method zap                 {args}
 
-	if {$tcl_platform(platform) != "windows"} {
+	if {$::tcl_platform(platform) != "windows"} {
 	    set SystemWindowFont Helvetica
 	    set SystemWindowText black
 	    set SystemWindow $LABEL_BACKGROUND_COLOR
@@ -581,9 +583,9 @@ namespace eval ArcherCore {
 	    3ptarb adjust arced attr bb bev B blast bo bot bot_condense \
 	    bot_decimate bot_face_fuse bot_face_sort bot_flip bot_fuse \
 	    bot_merge bot_smooth bot_split bot_sync bot_vertex_fuse \
-	    brep c cd clear clone closedb color comb comb_color combmem \
+	    brep brlman c cd clear clone closedb color comb comb_color combmem \
 	    copy copyeval copymat cp cpi dbconcat dbExpand decompose \
-	    delete draw e E edarb edcodes edcolor edcomb edit edmater d erase ev exists \
+	    delete draw dsp e E edarb edcodes edcolor edcomb edit edmater d erase ev exists \
 	    exit facetize fracture freezeGUI g get graph group hide human i igraph \
 	    importFg4Section in inside item kill killall killrefs \
 	    killtree l lc ls make make_name make_pnts man mater mirror move \
@@ -654,6 +656,7 @@ namespace eval ArcherCore {
 	method compareViewAxesSizes {a b}
 	method compareModelAxesSizes {a b}
 
+	method launchCheckOverlaps {_size}
 	method launchNirt {}
 	method launchRtApp {_app _size}
 
@@ -1017,7 +1020,7 @@ namespace eval ArcherCore {
     global env
     global tcl_platform
 
-    if {$tcl_platform(platform) == "windows"} {
+    if {$::tcl_platform(platform) == "windows"} {
 	set mDisplayFontSizes {0 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29}
     } else {
 	set mDisplayFontSizes {0 5 6 7 8 9 10 12}
@@ -1085,7 +1088,7 @@ namespace eval ArcherCore {
 	set env(DISPLAY) ":0"
     }
 
-    set mImgDir [file join [bu_brlcad_data "tclscripts"] archer images]
+    set mImgDir [file join [bu_brlcad_root "share/tclscripts"] archer images]
 
     if {[llength $args] == 1} {
 	set args [lindex $args 0]
@@ -5352,7 +5355,7 @@ namespace eval ArcherCore {
 	set mDbReadOnly 1
     } elseif {[file exists $mTarget]} {
 	if {[file writable $mTarget] ||
-	    ($tcl_platform(platform) == "windows" && ![file attributes $mTarget -readonly])} {
+	    ($::tcl_platform(platform) == "windows" && ![file attributes $mTarget -readonly])} {
 	    set mDbReadOnly 0
 	} else {
 	    set mDbReadOnly 1
@@ -5894,6 +5897,15 @@ namespace eval ArcherCore {
     return 0
 }
 
+::itcl::body ArcherCore::launchCheckOverlaps {size} {
+    putString "running check overlaps -G $size -i -o -q"
+    if {[catch {$itk_component(ged) check overlaps -G $size -i -o -q} output]} {
+	tk_messageBox -message "$output"
+	return
+    }
+    putString "$output"
+}
+
 ::itcl::body ArcherCore::launchNirt {} {
     putString "nirt -b"
     putString [$itk_component(ged) nirt -b]
@@ -6133,6 +6145,11 @@ namespace eval ArcherCore {
     eval gedWrapper brep 0 1 1 2 $args
 }
 
+::itcl::body ArcherCore::brlman {args} {
+    # simple (intentionally undocumented) pass-through alias
+    man $args
+}
+
 ::itcl::body ArcherCore::c {args} {
     eval gedWrapper c 0 1 1 2 $args
 
@@ -6362,6 +6379,10 @@ namespace eval ArcherCore {
     }
 
     return $ret
+}
+
+::itcl::body ArcherCore::dsp {args} {
+    eval gedWrapper dsp 0 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::E {args} {

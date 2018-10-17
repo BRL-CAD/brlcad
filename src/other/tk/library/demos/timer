@@ -5,7 +5,6 @@ exec wish "$0" ${1+"$@"}
 # timer --
 # This script generates a counter with start and stop buttons.
 
-package require Tcl 8.4
 package require Tk
 
 label .counter -text 0.00 -relief raised -width 10 -padx 2m -pady 1m

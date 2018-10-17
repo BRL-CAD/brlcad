@@ -24,23 +24,33 @@ BRLCAD_LIB_INCLUDE_DIRS(bu BU_INCLUDE_DIRS BU_LOCAL_INCLUDE_DIRS)
 # Use configure_file to make copies of the mime input files,
 # so CMake will get notified for the need for a re-configure
 # if they are edited.
-configure_file(${BRLCAD_SOURCE_DIR}/misc/mime.types ${CMAKE_CURRENT_BINARY_DIR}/tmp COPYONLY)
-configure_file(${BRLCAD_SOURCE_DIR}/misc/mime_cad.types ${CMAKE_CURRENT_BINARY_DIR}/tmp COPYONLY)
-execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/tmp)
+configure_file(${BRLCAD_SOURCE_DIR}/misc/mime.types ${CMAKE_CURRENT_BINARY_DIR}/mime.tmp COPYONLY)
+configure_file(${BRLCAD_SOURCE_DIR}/misc/mime_cad.types ${CMAKE_CURRENT_BINARY_DIR}/mime.tmp COPYONLY)
+execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/mime.tmp)
 
 # Run the generation process
 include(${CMAKE_CURRENT_SOURCE_DIR}/mime.cmake)
 
 # We do want to install the mime header
-install(FILES ${BU_MIME_H_FILE} DESTINATION ${INCLUDE_DIR}/brlcad/bu)
+set_source_files_properties("${BU_MIME_TYPES_H_FILE}" PROPERTIES GENERATED TRUE)
+BUILD_CFG_HDR("${BU_MIME_TYPES_H_FILE}" ${INCLUDE_DIR}/brlcad/bu)
 
-# Year 2038+ support lib
-BRLCAD_ADDLIB(y2038 "y2038/time64.c" "")
-if(CPP_DLL_DEFINES)
-  set_property(TARGET y2038 APPEND PROPERTY COMPILE_DEFINITIONS "Y2038_DLL_EXPORTS")
-endif(CPP_DLL_DEFINES)
+# Year 2038+ support
+set_property(SOURCE y2038/time64.c PROPERTY EXTERNAL 1)
+include(CheckCCompilerFlag)
+check_c_compiler_flag(-fPIC HAVE_FPIC)
+if(HAVE_FPIC)
+  set_property(SOURCE y2038/time64.c APPEND PROPERTY COMPILE_FLAGS "-fPIC")
+endif(HAVE_FPIC)
+
+if(Foundation_FRAMEWORKS)
+  set(DIR_MACOSX_M dir_macosx.m)
+else(Foundation_FRAMEWORKS)
+  CMAKEFILES(dir_macosx.m)
+endif(Foundation_FRAMEWORKS)
 
 set(LIBBU_SOURCES
+  y2038/time64.c
   affinity.c
   argv.c
   avs.c
@@ -57,9 +67,11 @@ set(LIBBU_SOURCES
   convert.c
   crashreport.c
   ctype.c
+  dir.c
+  ${DIR_MACOSX_M}
   dirent.c
   datetime.c
-  dlfcn.c
+  dylib.c
   encode.c
   endian.c
   env.c
@@ -89,12 +101,12 @@ set(LIBBU_SOURCES
   mappedfile.c
   ${BU_MIME_C_FILE}
   mread.c
-  namegen.c
   observer.c
   opt.c
   parallel.c
   parse.c
   path.c
+  path_normalize.c
   printb.c
   process.c
   progname.c
@@ -107,10 +119,15 @@ set(LIBBU_SOURCES
   sort.c
   sscanf.c
   scan.c
+  snooze.c
   str.c
+  tc.c
+  tcllist.c
   temp.c
   thread.cpp
   units.c
+  units_dehumanize.c
+  units_humanize.c
   uuid.c
   vers.c
   vfont.c
@@ -122,20 +139,22 @@ set(LIBBU_SOURCES
   xdr.c
   )
 
-BRLCAD_ADDLIB(libbu "${LIBBU_SOURCES}" "${CMAKE_THREAD_LIBS_INIT};${DL_LIBRARY};${WINSOCK_LIB};${PSAPI_LIB};${BSON_LIBRARIES};${UUID_LIBRARIES};${REGEX_LIBRARY};${M_LIBRARY};y2038")
+if(NOT CMAKE_CXX_STANDARD EQUAL 98)
+  set(LIBBU_SOURCES ${LIBBU_SOURCES} parallel_cpp11thread.cpp)
+else(NOT CMAKE_CXX_STANDARD EQUAL 98)
+  CMAKEFILES(parallel_cpp11thread.cpp)
+endif(NOT CMAKE_CXX_STANDARD EQUAL 98)
+
+BRLCAD_ADDLIB(libbu "${LIBBU_SOURCES}" "${Foundation_LIBRARIES};${CMAKE_THREAD_LIBS_INIT};${DL_LIBRARY};${WINSOCK_LIB};${PSAPI_LIB};${BSON_LIBRARIES};${UUID_LIBRARIES};${REGEX_LIBRARY};${M_LIBRARY}")
 set_target_properties(libbu PROPERTIES VERSION 20.0.1 SOVERSION 20)
-if(CPP_DLL_DEFINES)
-  set_property(TARGET libbu APPEND PROPERTY COMPILE_DEFINITIONS "Y2038_DLL_IMPORTS")
-endif(CPP_DLL_DEFINES)
 
 BRLCAD_ADDDATA(fix.6r vfont)
 BRLCAD_ADDDATA(nonie.r.12 vfont)
 
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
-  add_subdirectory(tests)
-endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
+add_subdirectory(tests)
 
 set(bu_ignore_files
+  CMakeLists.txt
   bitv.h
   charclass.h
   mime.cmake

@@ -1,7 +1,7 @@
 /*                           S E T . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2016 United States Government as represented by
+ * Copyright (c) 1990-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,7 +33,6 @@
 #include "tcl.h"
 
 /* external sp_hook functions */
-extern void fbserv_set_port(const struct bu_structparse *, const char *, void *, const char *, void *);
 extern void predictor_hook(const struct bu_structparse *, const char *, void *, const char *, void *);
 
 /* exported sp_hook functions */

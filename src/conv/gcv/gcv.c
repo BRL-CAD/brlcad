@@ -1,7 +1,7 @@
 /*                           G C V . C P P
  * BRL-CAD
  *
- * Copyright (c) 2015-2016 United States Government as represented by
+ * Copyright (c) 2015-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -55,6 +55,8 @@ gcv_fmt_fun(struct bu_vls *UNUSED(msgs), int argc, const char **argv, void *set_
     int i = 0;
     int args_used = 0;
     struct gcv_fmt_opts *gfo = (struct gcv_fmt_opts *)set_var;
+
+    if (!gfo) return -1;
 
     if (!argv || argc < 1 ) return 0;
 
@@ -207,7 +209,10 @@ extract_format_prefix(struct bu_vls *format, const char *input)
 	int ret = 0;
 	bu_vls_sprintf(&wformat, "%s", input);
 	bu_vls_trunc(&wformat, -1 * strlen(colon_pos));
-	if (bu_vls_strlen(&wformat) > 0) {
+	/* Note: because Windows supports drive letters in the form {drive}: in
+	 * paths, we can't use single characters as format specifiers for the
+	 * {format}: prefix - they must be multi-character. */
+	if (bu_vls_strlen(&wformat) > 1) {
 	    ret = 1;
 	    if (format) bu_vls_sprintf(format, "%s", bu_vls_addr(&wformat));
 	}
@@ -391,10 +396,21 @@ gcv_do_conversion(
     struct gcv_context context;
 
     for (BU_PTBL_FOR(entry, (const struct gcv_filter * const *), filters)) {
-	if ((*entry)->filter_type == GCV_FILTER_READ && (*entry)->mime_type == in_type)
-	    in_filter = *entry;
-	else if ((*entry)->filter_type == GCV_FILTER_WRITE && (*entry)->mime_type == out_type)
-	    out_filter = *entry;
+	bu_mime_model_t emt = (*entry)->mime_type;
+	if ((*entry)->filter_type == GCV_FILTER_READ) {
+	    if (!in_filter && (emt != BU_MIME_MODEL_AUTO) && (emt == in_type)) in_filter = *entry;
+	    if (!in_filter && (emt == BU_MIME_MODEL_AUTO) &&
+		    ((*entry)->data_supported && in_path && (*(*entry)->data_supported)(in_path)) ) {
+	       	in_filter = *entry;
+	    }
+	}
+	if ((*entry)->filter_type == GCV_FILTER_WRITE) {
+	    if (!out_filter && (emt != BU_MIME_MODEL_AUTO) && (emt == out_type)) out_filter = *entry;
+	    if (!out_filter && (emt == BU_MIME_MODEL_AUTO) &&
+		    ((*entry)->data_supported && (*(*entry)->data_supported)(bu_file_mime_str(out_type, BU_MIME_MODEL))) ) {
+		out_filter = *entry;
+	    }
+	}
     }
 
     if (!in_filter)
@@ -478,6 +494,8 @@ main(int ac, const char **av)
 	BU_OPT_DESC_NULL
     };
 
+    bu_setprogname(av[0]);
+
     gcv_fmt_opts_init(&in_only_opts, gcv_opt_desc);
     gcv_fmt_opts_init(&out_only_opts, gcv_opt_desc);
     gcv_fmt_opts_init(&both_opts, gcv_opt_desc);
@@ -488,9 +506,9 @@ main(int ac, const char **av)
     ac-=(ac>0); av+=(ac>0); /* skip program name argv[0] if present */
 
     if (ac == 0) {
-	const char *help = bu_opt_describe(gcv_opt_desc, NULL);
+	char *help = bu_opt_describe(gcv_opt_desc, NULL);
 	bu_log("%s\n", help);
-	if (help) bu_free((char *)help, "help str");
+	if (help) bu_free(help, "help str");
 	/* TODO - print some help */
 	goto cleanup;
     }
@@ -508,10 +526,10 @@ main(int ac, const char **av)
 	    /* TODO - generate some help based on format */
 	} else {
 	    { /* Test static help print  */
-		const char *help = bu_opt_describe(gcv_opt_desc, NULL);
+		char *help = bu_opt_describe(gcv_opt_desc, NULL);
 		bu_log("Options:\n");
 		bu_log("%s\n", help);
-		if (help) bu_free((char *)help, "help str");
+		if (help) bu_free(help, "help str");
 	    }
 
 #if 0
@@ -629,15 +647,13 @@ main(int ac, const char **av)
 	out_fmt = NULL;
     }
 
-    /* If we get to this point without knowing both input and output types, we've got a problem */
+    /* If we get to this point without knowing the input type, it's up to the plugins to see if
+     * any of them can figure it out. */
     if (in_type == BU_MIME_MODEL_UNKNOWN) {
-	if (bu_vls_strlen(&in_path) > 0) {
-	    bu_vls_printf(&slog, "Error: no format type identified for input path: %s\n", bu_vls_addr(&in_path));
-	} else {
-	    bu_vls_printf(&slog, "Error: no input format type identified.\n");
-	}
-	ret = 1;
+	in_type = BU_MIME_MODEL_AUTO;
     }
+
+    /* If we get to this point without knowing the *output* type, we've got a problem */
     if (out_type == BU_MIME_MODEL_UNKNOWN) {
 	if (bu_vls_strlen(&out_path) > 0) {
 	    bu_vls_printf(&slog, "Error: no format type identified for output path: %s\n", bu_vls_addr(&out_path));
@@ -655,7 +671,11 @@ main(int ac, const char **av)
      * parsing results for debugging. */
     in_fmt = bu_file_mime_str((int)in_type, BU_MIME_MODEL);
     out_fmt = bu_file_mime_str((int)out_type, BU_MIME_MODEL);
-    bu_log("Input file format: %s\n", in_fmt);
+    if (in_fmt) {
+	bu_log("Input file format: %s\n", in_fmt);
+    } else {
+	bu_log("Input file format: AUTO\n");
+    }
     bu_log("Output file format: %s\n", out_fmt);
     bu_log("Input file path: %s\n", bu_vls_addr(&in_path));
     bu_log("Output file path: %s\n", bu_vls_addr(&out_path));
@@ -700,7 +720,7 @@ main(int ac, const char **av)
 
     /* Clean up */
 cleanup:
-    if (bu_vls_strlen(&slog) > 0) bu_log("%s", bu_vls_addr(&slog));
+    if (bu_vls_strlen(&slog) > 0 && ret != 0) bu_log("%s", bu_vls_addr(&slog));
     if (in_fmt) bu_free((char *)in_fmt, "input format string");
     if (out_fmt) bu_free((char *)out_fmt, "output format string");
     bu_vls_free(&in_format);

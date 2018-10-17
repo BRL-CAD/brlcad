@@ -1,7 +1,7 @@
 /*                       U U I D . C
  * BRL-CAD
  *
- * Copyright (c) 2016 United States Government as represented by
+ * Copyright (c) 2016-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@
 
 
 int
-uuid_main(int ac, char *av[])
+main(int ac, char *av[])
 {
     int test = 0;
     uint8_t uuid[16] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,

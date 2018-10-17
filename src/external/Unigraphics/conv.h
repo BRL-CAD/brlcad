@@ -1,7 +1,7 @@
 /*                          C O N V . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -45,7 +45,7 @@ typedef struct ug_tol {
 extern ug_tol ugtol;
 
 extern int debug;
-#define dprintf if (debug) printf
+#define ugdprintf if (debug) printf
 
 #endif /* EXTERNAL_UNIGRAPHICS_CONV_H */
 

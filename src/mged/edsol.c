@@ -1,7 +1,7 @@
 /*                         E D S O L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2016 United States Government as represented by
+ * Copyright (c) 1985-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -2325,6 +2325,16 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 		*strp = "V";
 		break;
 	    }
+	case ID_ANNOT:
+	    {
+		struct rt_annot_internal *ann =
+		    (struct rt_annot_internal *)ip->idb_ptr;
+		RT_ANNOT_CK_MAGIC(ann);
+
+		VMOVE(mpt, ann->V);
+		*strp = "V";
+		break;
+	    }
 	case ID_EXTRUDE:
 	    {
 		struct rt_extrude_internal *extr =
@@ -2468,6 +2478,7 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 		    break;
 		}
 	    }
+	    /* fall through */
 	default:
 	    Tcl_AppendResult(INTERP, "get_solid_keypoint: unrecognized solid type (setting keypoint to origin)\n", (char *)NULL);
 	    VSETALL(mpt, 0.0);
@@ -4677,7 +4688,7 @@ sedit(void)
 		es_peqn[es_menu][W]=VDOT(&es_peqn[es_menu][0], work);
 		/* find new vertices, put in record in vector notation */
 
-                (void)rt_arb_calc_points(arb, es_type, (const plane_t *)es_peqn, &mged_tol);
+		(void)rt_arb_calc_points(arb, es_type, (const plane_t *)es_peqn, &mged_tol);
 	    }
 	    break;
 	case ECMD_ARB_SETUP_ROTFACE:
@@ -5583,6 +5594,8 @@ sedit(void)
 		    nmg_rebound(m, &mged_tol);
 		}
 	    }
+
+	    /* fall through */
 
 	case ECMD_NMG_ESPLIT:
 	    {
@@ -7300,12 +7313,10 @@ vls_solid(struct bu_vls *vp, struct rt_db_internal *ip, const mat_t mat)
     transform_editing_solid(&intern, mat, (struct rt_db_internal *)ip, 0);
 
     if (id != ID_ARS && id != ID_POLY && id != ID_BOT) {
-	if (OBJ[id].ft_describe(vp, &intern, 1 /*verbose*/,
-				       base2local, &rt_uniresource, dbip) < 0)
+	if (OBJ[id].ft_describe(vp, &intern, 1 /*verbose*/, base2local) < 0)
 	    Tcl_AppendResult(INTERP, "vls_solid: describe error\n", (char *)NULL);
     } else {
-	if (OBJ[id].ft_describe(vp, &intern, 0 /* not verbose */,
-				       base2local, &rt_uniresource, dbip) < 0)
+	if (OBJ[id].ft_describe(vp, &intern, 0 /* not verbose */, base2local) < 0)
 	    Tcl_AppendResult(INTERP, "vls_solid: describe error\n", (char *)NULL);
     }
 
@@ -8661,6 +8672,7 @@ f_keypoint(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const ch
 				   &es_int, es_mat);
 		break;
 	    }
+	    /* fall through */
 	default:
 	    Tcl_AppendResult(interp, "Usage: 'keypoint [<x y z> | reset]'\n", (char *)NULL);
 	    return TCL_ERROR;

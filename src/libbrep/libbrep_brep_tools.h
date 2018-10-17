@@ -1,7 +1,7 @@
 /*            L I B B R E P _ B R E P _ T O O L S . H
  * BRL-CAD
  *
- * Copyright (c) 2013-2016 United States Government as represented by
+ * Copyright (c) 2013-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -57,6 +57,8 @@
 #ifndef BREP_EXPORT
 #  if defined(BREP_DLL_EXPORTS) && defined(BREP_DLL_IMPORTS)
 #    error "Only BREP_DLL_EXPORTS or BREP_DLL_IMPORTS can be defined, not both."
+#  elif defined(STATIC_BUILD)
+#    define BREP_EXPORT
 #  elif defined(BREP_DLL_EXPORTS)
 #    define BREP_EXPORT __declspec(dllexport)
 #  elif defined(BREP_DLL_IMPORTS)

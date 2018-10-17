@@ -1,7 +1,7 @@
 /*                        B N _ S T R . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -48,6 +48,8 @@ __BEGIN_DECLS
  * XXX don't spoil the conversion.
  */
 
+BN_EXPORT extern int bn_decode_angle(double *ang,
+				     const char *str);
 BN_EXPORT extern int bn_decode_mat(mat_t m,
 				   const char *str);
 BN_EXPORT extern int bn_decode_quat(quat_t q,

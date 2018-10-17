@@ -1,7 +1,7 @@
 /*                        N M G _ P R . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2016 United States Government as represented by
+ * Copyright (c) 1993-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -994,7 +994,7 @@ nmg_pl_lu_around_eu(const struct edgeuse *eu, struct bu_list *vlfree)
 	return;
     }
 
-    b = (long *)bu_calloc(nmg_find_model((uint32_t *)eu)->maxindex, sizeof(long),
+    b = (long *)nmg_calloc(nmg_find_model((uint32_t *)eu)->maxindex, sizeof(long),
 			  "nmg_pl_lu_around_eu flag[]");
 
     /* To go correct way around, start with arg's mate,
@@ -1017,7 +1017,7 @@ nmg_pl_lu_around_eu(const struct edgeuse *eu, struct bu_list *vlfree)
 	eu1 = eu1->radial_p;
     } while (eu1 != eu);
 
-    bu_free((char *)b, "nmg_pl_lu_around_eu flag[]");
+    nmg_free((char *)b, "nmg_pl_lu_around_eu flag[]");
     fclose(fp);
     bu_log("Wrote %s\n", buf);
 }

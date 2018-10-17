@@ -15,7 +15,7 @@ LDIR=$1 . "$1/regress/dsp/dsp-common.sh"
 
 WID=2
 LEN=$WID
-BASE=dsp-$WID
+BASE=dsp.$WID
 
 CASES='1 2 3 4 5'
 

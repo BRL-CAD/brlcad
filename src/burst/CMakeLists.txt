@@ -36,6 +36,7 @@ set(burst_SOURCES
 BRLCAD_ADDEXEC(burst "${burst_SOURCES}" "librt;libfb;${LIBTERMIO};${TERMLIB_LIBRARY};${M_LIBRARY}")
 
 set(burst_noinst_HEADERS
+  CMakeLists.txt
   ascii.h
   burst.h
   extern.h

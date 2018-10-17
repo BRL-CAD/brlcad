@@ -1,7 +1,7 @@
 /*                         I N P U T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2016 United States Government as represented by
+ * Copyright (c) 1998-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -45,6 +45,11 @@
 /* interface headers */
 #include "tcl.h"
 #include "libtermio.h"
+
+/* for strict c90 */
+#ifndef HAVE_DECL_GETTIMEOFDAY
+extern int gettimeofday(struct timeval *, void *);
+#endif
 
 
 #define CTRL_A      1
@@ -283,7 +288,7 @@ processChar(char ch)
 	    if (input_str_index == bu_vls_strlen(&input_str))
 		break;
 	    insert_prompt();
-	    bu_log("%*V", input_str_index, &input_str);
+	    bu_log("%*s", (int)input_str_index, bu_vls_addr(&input_str));
 	    escaped = bracketed = 0;
 	    break;
 	case CTRL_B:                   /* Back one character */
@@ -319,7 +324,7 @@ processChar(char ch)
 		bu_vls_addr(&input_str)[input_str_index - 1];
 	    bu_vls_addr(&input_str)[input_str_index - 1] = ch;
 	    bu_log("\b");
-	    bu_log("%c%c", bu_vls_addr(&input_str)+input_str_index-1, bu_vls_addr(&input_str)+input_str_index);
+	    bu_log("%c%c", (bu_vls_addr(&input_str)+input_str_index-1)[0], (bu_vls_addr(&input_str)+input_str_index)[0]);
 	    ++input_str_index;
 	    escaped = bracketed = 0;
 	    break;
@@ -515,7 +520,7 @@ processChar(char ch)
 		bracketed = 1;
 		break;
 	    }
-	    /* Fall through if not escaped! */
+	    /* fall through - not escaped */
 	default:
 	    if (!isprint((int)ch))
 		break;

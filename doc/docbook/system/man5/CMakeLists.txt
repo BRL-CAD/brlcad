@@ -26,6 +26,7 @@ set(man5_EN
   burst_shotline_files.xml
   bw.xml
   cmap.xml
+  nirt_formatting.xml
   pix.xml
   plot3.xml
   STEP.xml
@@ -33,6 +34,7 @@ set(man5_EN
 set(attribute_DEPS attr_std_list_xml attr_std_table_xml)
 
 ADD_DOCBOOK("HTML;PHP;MAN5;PDF" man5_EN man5 "${attribute_DEPS}")
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

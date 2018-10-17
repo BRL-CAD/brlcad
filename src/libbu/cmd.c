@@ -1,7 +1,7 @@
 /*                           C M D . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2016 United States Government as represented by
+ * Copyright (c) 1998-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,9 +38,7 @@ bu_cmd(const struct bu_cmdtab *cmds, int argc, const char **argv, int cmd_index,
     }
 
     for (ctp = cmds; ctp->ct_name != (char *)NULL; ctp++) {
-	if (ctp->ct_name[0] == argv[cmd_index][0]
-	    && BU_STR_EQUAL(ctp->ct_name, argv[cmd_index]))
-	{
+	if (BU_STR_EQUAL(ctp->ct_name, argv[cmd_index])) {
 	    if (retval) {
 		*retval = (*ctp->ct_func)(data, argc, argv);
 	    } else {

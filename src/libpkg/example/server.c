@@ -1,7 +1,7 @@
 /*                       S E R V E R . C
  * BRL-CAD
  *
- * Copyright (c) 2006-2016 United States Government as represented by
+ * Copyright (c) 2006-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,6 +37,7 @@
 #include "bu/malloc.h"
 #include "bu/getopt.h"
 #include "bu/vls.h"
+#include "bu/snooze.h"
 #include "pkg.h"
 #include "ncp.h"
 
@@ -110,7 +111,7 @@ main() {
 	client = pkg_getclient(netfd, callbacks, NULL, 0);
 	if (client == PKC_NULL) {
 	    bu_log("Connection seems to be busy, waiting...\n");
-	    sleep(10);
+	    bu_snooze(BU_SEC2USEC(10));
 	    continue;
 	} else if (client == PKC_ERROR) {
 	    bu_log("Fatal error accepting client connection.\n");

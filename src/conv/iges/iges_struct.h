@@ -1,7 +1,7 @@
 /*                   I G E S _ S T R U C T . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -50,7 +50,7 @@ struct file_list
     char *file_name;		/* Name of external file */
     char obj_name[NAMESIZE+1];	/* BRL-CAD name for top level object */
 };
-
+#define IGES_FILE_LIST_INIT_ZERO {BU_LIST_INIT_ZERO, NULL, {0}}
 
 /* linked list of used BRL-CAD object names */
 struct name_list

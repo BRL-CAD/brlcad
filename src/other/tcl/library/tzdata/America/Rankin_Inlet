@@ -1,7 +1,7 @@
 # created by tools/tclZIC.tcl - do not edit
 
 set TZData(:America/Rankin_Inlet) {
-    {-9223372036854775808 0 0 zzz}
+    {-9223372036854775808 0 0 -00}
     {-410227200 -21600 0 CST}
     {-147895200 -14400 1 CDDT}
     {-131565600 -21600 0 CST}

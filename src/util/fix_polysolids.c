@@ -1,7 +1,7 @@
 /*                F I X _ P O L Y S O L I D S . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2016 United States Government as represented by
+ * Copyright (c) 1995-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -59,6 +59,7 @@
 #include "raytrace.h"
 #include "rt/db4.h"
 #include "bu/getopt.h"
+#include "bu/snooze.h"
 #include "bn.h"
 
 int
@@ -87,7 +88,7 @@ main(int argc, char *argv[])
     int done=0;
 
     fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
-    sleep(1);
+    bu_snooze(BU_SEC2USEC(1));
 
     /* XXX These need to be improved */
     tol.magic = BN_TOL_MAGIC;

@@ -1,7 +1,7 @@
 /*                        P N G - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2016 United States Government as represented by
+ * Copyright (c) 1998-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -57,7 +57,7 @@ Usage: png2fb [-H -i -c -v -z -1] [-m #lines]\n\
 	[-x file_xoff] [-y file_yoff] [-X scr_xoff] [-Y scr_yoff]\n\
 	[-S squarescrsize] [file.png]\n";
 
-int
+static int
 get_args(int argc, char **argv)
 {
     int c;

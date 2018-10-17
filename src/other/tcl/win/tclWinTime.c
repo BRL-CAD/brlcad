@@ -281,8 +281,6 @@ NativeGetTime(
     ClientData clientData)
 {
     struct _timeb t;
-    int useFtime = 1;		/* Flag == TRUE if we need to fall back on
-				 * ftime rather than using the perf counter. */
 
     /*
      * Initialize static storage on the first trip through.
@@ -398,6 +396,10 @@ NativeGetTime(
 	 * time.
 	 */
 
+	ULARGE_INTEGER fileTimeLastCall;
+	LARGE_INTEGER perfCounterLastCall, curCounterFreq;
+				/* Copy with current data of calibration cycle */
+
 	LARGE_INTEGER curCounter;
 				/* Current performance counter. */
 	Tcl_WideInt curFileTime;/* Current estimated time, expressed as 100-ns
@@ -411,9 +413,29 @@ NativeGetTime(
 	posixEpoch.LowPart = 0xD53E8000;
 	posixEpoch.HighPart = 0x019DB1DE;
 
+	QueryPerformanceCounter(&curCounter);
+
+	/*
+	 * Hold time section locked as short as possible
+	 */
 	EnterCriticalSection(&timeInfo.cs);
 
-	QueryPerformanceCounter(&curCounter);
+	fileTimeLastCall.QuadPart = timeInfo.fileTimeLastCall.QuadPart;
+	perfCounterLastCall.QuadPart = timeInfo.perfCounterLastCall.QuadPart;
+	curCounterFreq.QuadPart = timeInfo.curCounterFreq.QuadPart;
+
+	LeaveCriticalSection(&timeInfo.cs);
+
+	/*
+	 * If calibration cycle occurred after we get curCounter
+	 */
+	if (curCounter.QuadPart <= perfCounterLastCall.QuadPart) {
+	    usecSincePosixEpoch =
+		(fileTimeLastCall.QuadPart - posixEpoch.QuadPart) / 10;
+	    timePtr->sec = (long) (usecSincePosixEpoch / 1000000);
+	    timePtr->usec = (unsigned long) (usecSincePosixEpoch % 1000000);
+	    return;
+	}
 
 	/*
 	 * If it appears to be more than 1.1 seconds since the last trip
@@ -425,31 +447,27 @@ NativeGetTime(
 	 * loop should recover.
 	 */
 
-	if (curCounter.QuadPart - timeInfo.perfCounterLastCall.QuadPart <
-		11 * timeInfo.curCounterFreq.QuadPart / 10) {
-	    curFileTime = timeInfo.fileTimeLastCall.QuadPart +
-		 ((curCounter.QuadPart - timeInfo.perfCounterLastCall.QuadPart)
-		    * 10000000 / timeInfo.curCounterFreq.QuadPart);
-	    timeInfo.fileTimeLastCall.QuadPart = curFileTime;
-	    timeInfo.perfCounterLastCall.QuadPart = curCounter.QuadPart;
+	if (curCounter.QuadPart - perfCounterLastCall.QuadPart <
+		11 * curCounterFreq.QuadPart / 10
+	) {
+	    curFileTime = fileTimeLastCall.QuadPart +
+		 ((curCounter.QuadPart - perfCounterLastCall.QuadPart)
+		    * 10000000 / curCounterFreq.QuadPart);
+
 	    usecSincePosixEpoch = (curFileTime - posixEpoch.QuadPart) / 10;
 	    timePtr->sec = (long) (usecSincePosixEpoch / 1000000);
 	    timePtr->usec = (unsigned long) (usecSincePosixEpoch % 1000000);
-	    useFtime = 0;
+	    return;
 	}
-
-	LeaveCriticalSection(&timeInfo.cs);
     }
 
-    if (useFtime) {
-	/*
-	 * High resolution timer is not available. Just use ftime.
-	 */
+    /*
+     * High resolution timer is not available. Just use ftime.
+     */
 
-	_ftime(&t);
-	timePtr->sec = (long)t.time;
-	timePtr->usec = t.millitm * 1000;
-    }
+    _ftime(&t);
+    timePtr->sec = (long)t.time;
+    timePtr->usec = t.millitm * 1000;
 }
 
 /*

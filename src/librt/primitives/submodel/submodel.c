@@ -1,7 +1,7 @@
 /*                      S U B M O D E L . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2016 United States Government as represented by
+ * Copyright (c) 2000-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -607,18 +607,6 @@ rt_submodel_free(struct soltab *stp)
 }
 
 
-int
-rt_submodel_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, const struct bn_tol *tol)
-{
-    if (stp) RT_CK_SOLTAB(stp);
-    if (tol) BN_CK_TOL(tol);
-    if (!min) return 0;
-    if (!max) return 0;
-
-    return 0;
-}
-
-
 struct goodies {
     struct db_i *dbip;
     struct bu_list *vheadp;
@@ -665,7 +653,8 @@ rt_submodel_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path 
     }
 
     /* Indicate success by returning something other than TREE_NULL */
-    RT_GET_TREE(curtree, tsp->ts_resp);
+    BU_GET(curtree, union tree);
+    RT_TREE_INIT(curtree);
     curtree->tr_op = OP_NOP;
 
     return curtree;

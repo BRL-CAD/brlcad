@@ -44,6 +44,7 @@ set(mann_EN
   c.xml
   cat.xml
   center.xml
+  check.xml
   color.xml
   comb.xml
   comb_color.xml
@@ -60,7 +61,6 @@ set(mann_EN
   debugbu.xml
   debugdir.xml
   debuglib.xml
-  debugmem.xml
   debugnmg.xml
   decompose.xml
   delay.xml
@@ -120,6 +120,7 @@ set(mann_EN
   l_muves.xml
   labelvert.xml
   lc.xml
+  lint.xml
   listeval.xml
   lm.xml
   loadtk.xml
@@ -131,7 +132,6 @@ set(mann_EN
   man.xml
   mater.xml
   matpick.xml
-  memprint.xml
   mirface.xml
   mrot.xml
   mv.xml
@@ -256,6 +256,7 @@ ADD_DOCBOOK("HTML;PHP" mann_INTRO mann "")
 
 
 CMAKEFILES(mged_cmd_template.xml)
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

@@ -1,7 +1,7 @@
 /*                    D O _ O P T I O N S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,6 +34,7 @@
 #  include <unistd.h>
 #endif
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/log.h"
 #include "bu/file.h"
@@ -50,6 +51,9 @@
 #include "./screen.h"
 #include "./cursors.h"
 
+#if defined(HAVE_KILL) && !defined(__cplusplus)
+extern int kill(pid_t, int);
+#endif
 
 #define MAX_ARGS 81
 #define MAX_COLS 128
@@ -572,7 +576,6 @@ HMitem debug_items[] =
     { "partition", "info about boolweave()", 0, 0, 0, 0, DEBUG_PARTITION },
     { "cut", "space subdivision details", 0, 0, 0, 0, DEBUG_CUT },
     { "boxing", "object/box checking details", 0, 0, 0, 0, DEBUG_BOXING },
-    { "memory", "dynamic memory operations", 0, 0, 0, 0, DEBUG_MEM },
     { "testing", "one-shot debugging flag", 0, 0, 0, 0, DEBUG_TESTING },
     { "fdiff", "bool/fdiff debugging", 0, 0, 0, 0, DEBUG_FDIFF },
     { "RGB", "trace color computation", 0, 0, 0, 0, DEBUG_RGB },

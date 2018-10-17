@@ -10,9 +10,9 @@ while [ "$1" != "" ]
 do
    case $1
    in
-     --enable-all)                options="$options -DBRLCAD_BUNDLED_LIBS=ON";
+     --enable-all)                options="$options -DBRLCAD_BUNDLED_LIBS=BUNDLED";
                                   shift;;
-     --disable-all)                options="$options -DBRLCAD_BUNDLED_LIBS=OFF";
+     --disable-all)                options="$options -DBRLCAD_BUNDLED_LIBS=SYSTEM";
                                   shift;;
      --enable-opengl)                options="$options -DBRLCAD_ENABLE_OPENGL=ON";
                                   shift;;
@@ -70,14 +70,6 @@ do
                                   shift;;
      --disable-all-cxx)                options="$options -DENABLE_ALL_CXX_COMPILE=OFF";
                                   shift;;
-     --enable-posix)                options="$options -DENABLE_POSIX_COMPLIANCE=ON";
-                                  shift;;
-     --disable-posix)                options="$options -DENABLE_POSIX_COMPLIANCE=OFF";
-                                  shift;;
-     --strict-iso-c)                options="$options -DENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE=ON";
-                                  shift;;
-     --strict-iso-c)                options="$options -DENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE=OFF";
-                                  shift;;
      --enable-docs)                options="$options -DBRLCAD_EXTRADOCS=ON";
                                   shift;;
      --disable-docs)                options="$options -DBRLCAD_EXTRADOCS=OFF";
@@ -125,10 +117,6 @@ do
      --enable-libz)                options="$options -DBRLCAD_ZLIB=BUNDLED";
                                   shift;;
      --disable-libz)                options="$options -DBRLCAD_ZLIB=SYSTEM";
-                                  shift;;
-     --enable-tinycthread)                options="$options -DBRLCAD_TINYCTHREAD=BUNDLED";
-                                  shift;;
-     --disable-tinycthread)                options="$options -DBRLCAD_TINYCTHREAD=SYSTEM";
                                   shift;;
      --enable-lz4)                options="$options -DBRLCAD_LZ4=BUNDLED";
                                   shift;;
@@ -186,9 +174,9 @@ do
                                   shift;;
      --disable-opennurbs)                options="$options -DBRLCAD_OPENNURBS=SYSTEM";
                                   shift;;
-     --enable-spr)                options="$options -DBRLCAD_SPR=BUNDLED";
+     --enable-spsr)                options="$options -DBRLCAD_SPSR=BUNDLED";
                                   shift;;
-     --disable-spr)                options="$options -DBRLCAD_SPR=SYSTEM";
+     --disable-spsr)                options="$options -DBRLCAD_SPSR=SYSTEM";
                                   shift;;
      --enable-scl)                options="$options -DBRLCAD_SC=BUNDLED";
                                   shift;;
@@ -214,9 +202,13 @@ do
                                   shift;;
      --disable-gdiam)                options="$options -DBRLCAD_GDIAM=SYSTEM";
                                   shift;;
-     --enable-bullet)                options="$options -DBRLCAD_BULLET=BUNDLED";
+     --enable-proj4)                options="$options -DBRLCAD_PROJ4=BUNDLED";
                                   shift;;
-     --disable-bullet)                options="$options -DBRLCAD_BULLET=SYSTEM";
+     --disable-proj4)                options="$options -DBRLCAD_PROJ4=SYSTEM";
+                                  shift;;
+     --enable-gdal)                options="$options -DBRLCAD_GDAL=BUNDLED";
+                                  shift;;
+     --disable-gdal)                options="$options -DBRLCAD_GDAL=SYSTEM";
                                   shift;;
      --prefix=*)   	          inputstr=$1;
 				  options="$options -DCMAKE_INSTALL_PREFIX=${inputstr#--prefix=}";

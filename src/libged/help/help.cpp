@@ -1,7 +1,7 @@
 /*                         H E L P . C
  * BRL-CAD
  *
- * Copyright (c) 2017 United States Government as represented by
+ * Copyright (c) 2017-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,7 +23,10 @@
 #include <ctype.h>
 #include <string>
 
+#include "bu/app.h"
+#include "bu/file.h"
 #include "ged.h"
+
 
 HIDDEN struct bu_list *help_cmd(void);
 

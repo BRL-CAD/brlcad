@@ -1609,8 +1609,6 @@ ReflectWatch(
 	return;
     }
 
-    rcPtr->interest = mask;
-
     /*
      * Are we in the correct thread?
      */
@@ -1633,6 +1631,7 @@ ReflectWatch(
 
     Tcl_Preserve(rcPtr);
 
+    rcPtr->interest = mask;
     maskObj = DecodeEventMask(mask);
     /* assert maskObj.refCount == 1 */
     (void) InvokeTclMethod(rcPtr, METH_WATCH, maskObj, NULL, NULL);
@@ -3083,6 +3082,7 @@ ForwardProc(
         /* assert maskObj.refCount == 1 */
 
         Tcl_Preserve(rcPtr);
+	rcPtr->interest = paramPtr->watch.mask;
 	(void) InvokeTclMethod(rcPtr, METH_WATCH, maskObj, NULL, NULL);
 	Tcl_DecrRefCount(maskObj);
         Tcl_Release(rcPtr);

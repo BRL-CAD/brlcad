@@ -1,7 +1,7 @@
 /*                      N A C A X . C
  * BRL-CAD
  *
- * Copyright (c) 2014-2016 United States Government as represented by
+ * Copyright (c) 2014-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -58,7 +58,6 @@ void ParametrizeAirfoil(struct fortran_array *xupper, struct fortran_array *yupp
 static fastf_t Polynomial(struct fortran_array *c, fastf_t x);
 
 void SetSixDigitPoints(int family, fastf_t tc, struct fortran_array *xt, struct fortran_array *yt);
-
 
 
 /**
@@ -214,7 +213,7 @@ InterpolateCombinedAirfoil(struct fortran_array *x, struct fortran_array *yt, st
     int k;
     int n, nn;
     int nupper, nlower;
-    fastf_t sbar;
+    fastf_t sbar = 0.0;
     const fastf_t TOL = 1e-6;
     struct fortran_array *xupper, *yupper, *xlower, *ylower;
     struct fortran_array *xupper_short, *yupper_short, *xlower_short, *ylower_short;
@@ -330,7 +329,7 @@ InterpolateUpperAndLower(struct fortran_array *xupper, struct fortran_array *yup
     int k;
     int nn;
     int nupper, nlower;
-    fastf_t sbar;
+    fastf_t sbar = 0.0;
     const fastf_t TOL = 1e-6;
     struct fortran_array *xupperCopy, *yupperCopy, *xlowerCopy, *ylowerCopy;
     struct fortran_array *xupperCopy_short, *yupperCopy_short, *xlowerCopy_short, *ylowerCopy_short;
@@ -841,7 +840,8 @@ SetSixDigitPoints(int family, fastf_t tc, struct fortran_array *xt, struct fortr
     const fastf_t A = 1.0;
     const int NP = 201;
     fastf_t phi[201], eps[201], psi[201];
-    const fastf_t *orig_eps, *orig_psi;
+    const fastf_t *orig_eps = NULL;
+    const fastf_t *orig_psi = NULL;
     bn_complex_t tmp;
     bn_complex_t z[201], zprime[201], zeta[201], zfinal[201];
     int i;
@@ -855,24 +855,31 @@ SetSixDigitPoints(int family, fastf_t tc, struct fortran_array *xt, struct fortr
     case 1:
 	orig_eps = EPS1;
 	orig_psi = PSI1;
+	break;
     case 2:
 	orig_eps = EPS2;
 	orig_psi = PSI2;
+	break;
     case 3:
 	orig_eps = EPS3;
 	orig_psi = PSI3;
+	break;
     case 4:
 	orig_eps = EPS4;
 	orig_psi = PSI4;
+	break;
     case 5:
 	orig_eps = EPS5;
 	orig_psi = PSI5;
+	break;
     case 6:
 	orig_eps = EPS6;
 	orig_psi = PSI6;
+	break;
     case 7:
 	orig_eps = EPS7;
 	orig_psi = PSI7;
+	break;
     case 8:
 	orig_eps = EPS8;
 	orig_psi = PSI8;
@@ -1043,7 +1050,7 @@ Thickness6(int family, fastf_t toc, struct fortran_array *x,
     const fastf_t TOL = 1e-6;
     int errCode;
     int k, n;
-    fastf_t sx;
+    fastf_t sx = 0.0;
     struct fortran_array *xt, *yt;
     struct fortran_array *minus_yt;
     struct fortran_array *xLocal, *yLocal, *sLocal, *xpLocal, *ypLocal;

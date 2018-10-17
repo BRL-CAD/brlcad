@@ -1,7 +1,7 @@
 /*                        D O Z O O M . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2016 United States Government as represented by
+ * Copyright (c) 1985-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,6 +34,10 @@
 #include "./mged.h"
 #include "./sedit.h"
 #include "./mged_dm.h"
+
+#if defined(HAVE_NEXTAFTER) && !defined(HAVE_DECL_NEXTAFTER)
+extern double nextafter(double x, double y);
+#endif
 
 mat_t perspective_mat;
 mat_t incr_change;

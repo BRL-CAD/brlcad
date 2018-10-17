@@ -1,7 +1,7 @@
 /*                      D B _ M A T C H . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2016 United States Government as represented by
+ * Copyright (c) 1994-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -44,7 +44,7 @@ db_regexp_match_all(struct bu_vls *dest, struct db_i *dbip, const char *pattern)
 
     for (i = num = 0; i < RT_DBNHASH; i++) {
 	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    if (bu_fnmatch(pattern, dp->d_namep, 0) != 0)
+	    if (bu_path_match(pattern, dp->d_namep, 0) != 0)
 		continue;
 	    if (num == 0)
 		bu_vls_strcat(dest, dp->d_namep);

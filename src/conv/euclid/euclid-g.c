@@ -1,7 +1,7 @@
 /*                      E U C L I D - G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,7 +35,9 @@
 #include "bio.h"
 
 /* interface headers */
+#include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/snooze.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
@@ -100,7 +102,7 @@ main(int argc, char **argv)
     bu_setprogname(argv[0]);
 
     bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
-    sleep(1);
+    bu_snooze(BU_SEC2USEC(1));
 
     fpin = stdin;
     efile = NULL;
@@ -488,9 +490,6 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
 	    cur_id = -1;
     } while (reg_id == cur_id);
 
-    if (RT_G_DEBUG&DEBUG_MEM_FULL)
-	bu_prmem("After building faces:\n");
-
     /* Associate the vertex geometry, ccw. */
     if (debug)
 	bu_log("Associating vertex geometry:\n");
@@ -523,9 +522,6 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
 	return cur_id;
     }
 
-    if (RT_G_DEBUG&DEBUG_MEM_FULL)
-	bu_prmem("Before assoc face geom:\n");
-
     /* Associate the face geometry. */
     if (debug)
 	bu_log("Associating face geometry:\n");
@@ -546,9 +542,6 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
 	bu_log("Rebound\n");
     nmg_rebound(m, &tol);
 
-    if (RT_G_DEBUG&DEBUG_MEM_FULL)
-	bu_prmem("Before gluing faces:\n");
-
     /* Glue faceuses together. */
     if (debug)
 	bu_log("Glueing faces\n");
@@ -563,9 +556,6 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
     if (debug)
 	bu_log("Fix normals\n");
     nmg_fix_normals(s, &RTG.rtg_vlfree, &tol);
-
-    if (RT_G_DEBUG&DEBUG_MEM_FULL)
-	bu_prmem("After fixing normals:\n");
 
     if (debug)
 	bu_log("nmg_s_join_touchingloops(%p)\n", (void *)s);
@@ -591,13 +581,7 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
 	bu_log("Verify plane equations:\n");
     }
 
-    if (RT_G_DEBUG&DEBUG_MEM_FULL)
-	bu_prmem("Before nmg_make_faces_within_tol():\n");
-
     nmg_make_faces_within_tol(s, &RTG.rtg_vlfree, &tol);
-
-    if (RT_G_DEBUG&DEBUG_MEM_FULL)
-	bu_prmem("After nmg_make_faces_within_tol():\n");
 
     if (debug) {
 	bu_log("Checking faceuses:\n");
@@ -643,7 +627,7 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
     }
 
     if (debug)
-	bu_log("%d vertices out of tolerance after fixing out of tolerance faces\n", nmg_ck_geometry(m, &RTG.rtg_vlfree, &tol));
+	bu_log("%zu vertices out of tolerance after fixing out of tolerance faces\n", nmg_ck_geometry(m, &RTG.rtg_vlfree, &tol));
 
     nmg_s_join_touchingloops(s, &tol);
     nmg_s_split_touchingloops(s, &tol);

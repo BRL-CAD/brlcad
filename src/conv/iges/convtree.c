@@ -1,7 +1,7 @@
 /*                      C O N V T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2016 United States Government as represented by
+ * Copyright (c) 1990-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,9 +29,6 @@
 #include "./iges_extern.h"
 
 
-#define MEMCHECK if ((bu_debug & BU_DEBUG_MEM_CHECK) && (bu_mem_barriercheck())) bu_log("memory corruption found in file %s at line %d\n", __FILE__, __LINE__)
-
-
 union tree *Readtree();
 union tree *Copytree();
 
@@ -49,11 +46,8 @@ Convtree()
     int att_de = 0;
     struct brlcad_att brl_att;
     size_t i;
-    int j, k;
-
-    if (bu_debug & BU_DEBUG_MEM_CHECK)
-	bu_log("Doing memory checking in Convtree()\n");
-    MEMCHECK;
+    int j = 0;
+    int k = 0;
 
     bu_log("\nConverting boolean tree entities:\n");
 
@@ -68,17 +62,13 @@ Convtree()
 
 	if (dir[i]->param <= pstart) {
 	    /* Illegal parameter address */
-	    bu_log("Entity number %d (Boolean Tree) does not have a legal parameter pointer\n", i);
+	    bu_log("Entity number %zu (Boolean Tree) does not have a legal parameter pointer\n", i);
 	    continue;
 	}
 
 	Readrec(dir[i]->param); /* read first record into buffer */
 
-	MEMCHECK;
-
 	ptr = Readtree(dir[i]->rot); /* construct the tree */
-
-	MEMCHECK;
 
 	if (!ptr) {
 	    /* failure */
@@ -136,17 +126,13 @@ Convtree()
 	}
 	bu_vls_init(&comb->material);
 
-	MEMCHECK;
 	if (wdb_export(fdout, dir[i]->name, (void *)comb, ID_COMBINATION, mk_conv2mm))
 	    bu_exit(1, "mk_export_fwrite() failed for combination (%s)\n", dir[i]->name);
 
 	conv++;
-
-	MEMCHECK;
     }
 
     bu_log("Converted %d trees successfully out of %d total trees\n", conv, tottrees);
-    MEMCHECK;
 }
 
 /*

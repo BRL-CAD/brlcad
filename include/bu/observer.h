@@ -1,7 +1,7 @@
 /*                   B U _ O B S E R V E R . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,7 +25,6 @@
 
 #include "bu/defines.h"
 #include "bu/magic.h"
-#include "bu/list.h"
 #include "bu/vls.h"
 
 __BEGIN_DECLS
@@ -44,12 +43,17 @@ typedef void (bu_observer_eval_t)(void *, const char *);
  * TBD
  */
 struct bu_observer {
-    struct bu_list l;
+    uint32_t magic;
     struct bu_vls observer;
     struct bu_vls cmd;
 };
 typedef struct bu_observer bu_observer_t;
 #define BU_OBSERVER_NULL ((struct bu_observer *)0)
+
+struct bu_observer_list {
+    size_t size, capacity;
+    struct bu_observer *observers;
+};
 
 /**
  * asserts the integrity of a non-head node bu_observer struct.
@@ -60,7 +64,7 @@ typedef struct bu_observer bu_observer_t;
  * initializes a bu_observer struct without allocating any memory.
  */
 #define BU_OBSERVER_INIT(_op) { \
-	BU_LIST_INIT_MAGIC(&(_op)->l, BU_OBSERVER_MAGIC); \
+    (_op)->magic = BU_OBSERVER_MAGIC; \
 	BU_VLS_INIT(&(_op)->observer); \
 	BU_VLS_INIT(&(_op)->cmd); \
     }
@@ -69,7 +73,9 @@ typedef struct bu_observer bu_observer_t;
  * macro suitable for declaration statement initialization of a bu_observer
  * struct.  does not allocate memory.  not suitable for a head node.
  */
-#define BU_OBSERVER_INIT_ZERO { {BU_OBSERVER_MAGIC, BU_LIST_NULL, BU_LIST_NULL}, BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO }
+#define BU_OBSERVER_INIT_ZERO { BU_OBSERVER_MAGIC, BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO }
+
+#define BU_OBSERVER_LIST_INIT_ZERO { 0, 0, NULL }
 
 /**
  * returns truthfully whether a bu_observer has been initialized.
@@ -87,12 +93,12 @@ BU_EXPORT extern int bu_observer_cmd(void *clientData, int argc, const char *arg
 /**
  * Notify observers.
  */
-BU_EXPORT extern void bu_observer_notify(void *context, struct bu_observer *headp, char *self, bu_observer_eval_t *ofunc);
+BU_EXPORT extern void bu_observer_notify(void *context, struct bu_observer_list *observers, char *self, bu_observer_eval_t *ofunc);
 
 /**
  * Free observers.
  */
-BU_EXPORT extern void bu_observer_free(struct bu_observer *);
+BU_EXPORT extern void bu_observer_free(struct bu_observer_list *);
 
 /** @} */
 

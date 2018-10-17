@@ -1,7 +1,7 @@
 /*			  M E T A B A L L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2016 United States Government as represented by
+ * Copyright (c) 1985-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -607,18 +607,6 @@ rt_metaball_free(register struct soltab *stp)
     struct rt_metaball_internal *metaball = (struct rt_metaball_internal *)stp->st_specific;
 
     bu_free((char *)metaball, "rt_metaball_internal");
-}
-
-
-int
-rt_metaball_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, const struct bn_tol *tol)
-{
-    if (stp) RT_CK_SOLTAB(stp);
-    if (tol) BN_CK_TOL(tol);
-    if (!min) return 0;
-    if (!max) return 0;
-
-    return 0;
 }
 
 

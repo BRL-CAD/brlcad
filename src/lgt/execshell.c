@@ -1,7 +1,7 @@
 /*                     E X E C S H E L L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -44,6 +44,12 @@
 #define DFL_SHELL "/bin/sh"
 #define CSH "/bin/csh"
 #define TCSH "/usr/brl/bin/tcsh"
+
+
+#if defined(__GNUC__) && __GNUC__ >= 7 && !defined(__clang__) && !defined(__INTEL_COMPILER)
+#  pragma GCC diagnostic ignored "-Wformat-truncation"
+#endif
+
 
 void
 loc_Perror(char *msg)
@@ -106,6 +112,7 @@ exec_Shell(char **args)
 		(void) execvp(args[0], args);
 		loc_Perror(args[0]);
 		bu_exit(errno, NULL);
+		return -1;
 	    }
 	default :
 	    {

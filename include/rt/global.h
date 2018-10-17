@@ -1,7 +1,7 @@
 /*                       G L O B A L . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2016 United States Government as represented by
+ * Copyright (c) 1993-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,10 +26,11 @@
 
 #include "common.h"
 
+#include "rt/wdb.h"
 #include "vmath.h"
-#include "rt/defines.h"
 
 __BEGIN_DECLS
+
 
 /**
  * Definitions for librt.a which are global to the library regardless
@@ -64,12 +65,17 @@ RT_EXPORT extern struct rt_g RTG;
 
 #define RT_ADD_VLIST(hd, pnt, draw) BN_ADD_VLIST(&RTG.rtg_vlfree, hd, pnt, draw)
 
+/** set the transformation matrix to display matrix */
+#define RT_VLIST_SET_DISP_MAT(_dest_hd, _ref_pt) BN_VLIST_SET_DISP_MAT(&RTG.rtg_vlfree, _dest_hd, _ref_pt)
+
+/** set the transformation matrix to model matrix */
+#define RT_VLIST_SET_MODEL_MAT(_dest_hd) BN_VLIST_SET_MODEL_MAT(&RTG.rtg_vlfree, _dest_hd)
+
 /** Set a point size to apply to the vlist elements that follow. */
 #define RT_VLIST_SET_POINT_SIZE(hd, size) BN_VLIST_SET_POINT_SIZE(&RTG.rtg_vlfree, hd, size)
 
 /** Set a line width to apply to the vlist elements that follow. */
 #define RT_VLIST_SET_LINE_WIDTH(hd, width) BN_VLIST_SET_LINE_WIDTH(&RTG.rtg_vlfree, hd, width)
-
 
 
 __END_DECLS

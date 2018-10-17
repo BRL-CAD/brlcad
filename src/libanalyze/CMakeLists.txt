@@ -11,9 +11,15 @@ BRLCAD_LIB_INCLUDE_DIRS(analyze ANALYZE_INCLUDE_DIRS "")
 set(LIBANALYZE_SOURCES
   api.c
   centroid.c
+  check_options.c
   density.c
   inside.c
+  mass.c
+  moments.c
+  nirt.cxx
+  obj_to_pnts.cxx
   overlaps.c
+  polygonizer.c
   raydiff.c
   #find_subtracted_shapes.cpp
   surf_area.c
@@ -26,6 +32,7 @@ set(LIBANALYZE_SOURCES
   MeshHealing/Geometry.cpp
   MeshHealing/Stitch.cpp
   heal_mesh.cpp
+  GridGeneration/rectangular_grid.c
   )
 
 set(libanalyze_ignored_files
@@ -38,14 +45,17 @@ set(libanalyze_ignored_files
 )
 CMAKEFILES(${libanalyze_ignored_files})
 
-BRLCAD_ADDLIB(libanalyze "${LIBANALYZE_SOURCES}" "${TCL_LIBRARY};libbu;librt")
+BRLCAD_ADDLIB(libanalyze "${LIBANALYZE_SOURCES}" "librt;libbu")
 set_target_properties(libanalyze PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
-  add_subdirectory(tests)
-endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
+add_subdirectory(tests)
 
-CMAKEFILES(analyze_private.h find_subtracted_shapes.cpp)
+CMAKEFILES(
+  CMakeLists.txt
+  analyze_private.h
+  find_subtracted_shapes.cpp
+  wnsurface.cxx
+  )
 
 # Local Variables:
 # tab-width: 8

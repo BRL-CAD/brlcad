@@ -1,7 +1,7 @@
 /*                       E D M A T E R . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2016 United States Government as represented by
+ * Copyright (c) 2008-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,8 +31,11 @@
 #   include <unistd.h>
 #endif
 
+#include "bu/app.h"
+#include "bu/file.h"
 #include "bu/getopt.h"
 #include "./ged_private.h"
+
 
 int
 ged_edmater(struct ged *gedp, int argc, const char *argv[])

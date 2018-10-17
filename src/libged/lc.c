@@ -1,7 +1,7 @@
 /*                         L C . C
  * BRL-CAD
  *
- * Copyright (c) 2014-2016 United States Government as represented by
+ * Copyright (c) 2014-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -262,7 +262,7 @@ ged_lc(struct ged *gedp, int argc, const char *argv[])
 
     if (file_name) {
 	char *norm_name;
-	norm_name = bu_realpath(file_name, NULL);
+	norm_name = bu_file_realpath(file_name, NULL);
 	if (file_name[0] == '-') {
 	    bu_vls_printf(gedp->ged_result_str, "Error: File name can not start with '-'.\n");
 	    error_cnt++;
@@ -294,7 +294,7 @@ ged_lc(struct ged *gedp, int argc, const char *argv[])
     /* The 7 is for the "-name" and '\0' */
     plan = (char *) bu_malloc(sizeof(char) * (strlen(group_name) + 7), "ged_lc");
     sprintf(plan, "-name %s", group_name);
-    matches = db_search(&results1, DB_SEARCH_TREE, plan, 0, NULL, gedp->ged_wdbp->dbip);
+    matches = db_search(&results1, DB_SEARCH_TREE, plan, 0, NULL, gedp->ged_wdbp->dbip, NULL);
     if (matches < 1) {
 	bu_vls_printf(gedp->ged_result_str, "Error: Group '%s' does not exist.\n", group_name);
 	return GED_ERROR;
@@ -310,7 +310,7 @@ ged_lc(struct ged *gedp, int argc, const char *argv[])
     path = (char *) bu_malloc(sizeof(char) * (strlen(group_name) + 2), "ged_lc");
     sprintf(path, "/%s", group_name);
     db_string_to_path(&root, gedp->ged_wdbp->dbip, path);
-    matches = db_search(&results2, DB_SEARCH_TREE, plan, root.fp_len, root.fp_names, gedp->ged_wdbp->dbip);
+    matches = db_search(&results2, DB_SEARCH_TREE, plan, root.fp_len, root.fp_names, gedp->ged_wdbp->dbip, NULL);
     bu_free(path, "ged_lc");
     if (matches < 1) { return GED_ERROR; }
     regions = (struct region_record *) bu_malloc(sizeof(struct region_record) * BU_PTBL_LEN(&results2), "ged_lc");
@@ -435,12 +435,12 @@ print_results:
 	print_cmd_args(output, orig_argc, orig_argv);
     }
 
-    bu_vls_printf(output, "List length: %d\n", BU_PTBL_LEN(&results2) - ignored_cnt);
+    bu_vls_printf(output, "List length: %lu\n", BU_PTBL_LEN(&results2) - ignored_cnt);
     bu_vls_printf(output, "%-*s %-*s %-*s %-*s %s\n",
-		  region_id_len_max + 1, "ID",
-		  material_id_len_max + 1, "MAT",
-		  los_len_max, "LOS",
-		  obj_len_max,  "REGION",
+		  (int)region_id_len_max + 1, "ID",
+		  (int)material_id_len_max + 1, "MAT",
+		  (int)los_len_max, "LOS",
+		  (int)obj_len_max,  "REGION",
 		  "PARENT");
     end = BU_PTBL_LEN(&results2);
     if (descending_sort_flag) {
@@ -451,10 +451,10 @@ print_results:
     for (i = start; i != end; i += incr) {
 	if (regions[i].ignore) { continue; }
 	bu_vls_printf(output, "%-*s %-*s %-*s %-*s %s\n",
-		      region_id_len_max + 1, regions[i].region_id,
-		      material_id_len_max + 1, regions[i].material_id,
-		      los_len_max, regions[i].los,
-		      obj_len_max, regions[i].obj_name,
+		      (int)region_id_len_max + 1, regions[i].region_id,
+		      (int)material_id_len_max + 1, regions[i].material_id,
+		      (int)los_len_max, regions[i].los,
+		      (int)obj_len_max, regions[i].obj_name,
 		      regions[i].obj_parent);
     }
     bu_vls_printf(gedp->ged_result_str, "Done.");

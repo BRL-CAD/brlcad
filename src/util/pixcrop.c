@@ -1,7 +1,7 @@
 /*                        B W C R O P . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2016 United States Government as represented by
+ * Copyright (c) 1986-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,6 +36,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h> /* for INT_MAX */
+#include "vmath.h"
 
 #include "bu/file.h"
 #include "bu/malloc.h"
@@ -101,7 +102,7 @@ fill_buffer(int y)
     buf_start = y - buflines/2;
     if (buf_start < 0) buf_start = 0;
 
-    bu_fseek(ifp, 0, 0);
+    fseek(ifp, 0, 0);
     ret = fread(buffer, scanlen, 3*buflines, ifp);
     if (ret == 0)
 	perror("fread");
@@ -111,7 +112,7 @@ fill_buffer(int y)
 int
 main(int argc, char **argv)
 {
-    float x1, y1, x2, y2, x, y;
+    float px1, py1, px2, py2, px, py;
     size_t row, col;
     ssize_t yindex;
     char value;
@@ -251,26 +252,26 @@ main(int argc, char **argv)
     /* Move all points */
     for (row = 0; row < ynum; row++) {
 	/* calculate left point of row */
-	x1 = ((ulx-llx)/(fastf_t)(ynum-1)) * (fastf_t)row + llx;
-	y1 = ((uly-lly)/(fastf_t)(ynum-1)) * (fastf_t)row + lly;
+	px1 = ((ulx-llx)/(fastf_t)(ynum-1)) * (fastf_t)row + llx;
+	py1 = ((uly-lly)/(fastf_t)(ynum-1)) * (fastf_t)row + lly;
 	/* calculate right point of row */
-	x2 = ((urx-lrx)/(fastf_t)(ynum-1)) * (fastf_t)row + lrx;
-	y2 = ((ury-lry)/(fastf_t)(ynum-1)) * (fastf_t)row + lry;
+	px2 = ((urx-lrx)/(fastf_t)(ynum-1)) * (fastf_t)row + lrx;
+	py2 = ((ury-lry)/(fastf_t)(ynum-1)) * (fastf_t)row + lry;
 
 	for (col = 0; col < xnum; col++) {
 	    /* calculate point along row */
-	    x = ((x2-x1)/(fastf_t)(xnum-1)) * (fastf_t)col + x1;
-	    y = ((y2-y1)/(fastf_t)(xnum-1)) * (fastf_t)col + y1;
+	    px = ((px2-px1)/(fastf_t)(xnum-1)) * (fastf_t)col + px1;
+	    py = ((py2-py1)/(fastf_t)(xnum-1)) * (fastf_t)col + py1;
 
 	    /* Make sure we are in the buffer */
-	    yindex = round(y) - buf_start;
+	    yindex = round(py) - buf_start;
 	    if (yindex >= buflines) {
-		fill_buffer(round(y));
-		yindex = round(y) - buf_start;
+		fill_buffer(round(py));
+		yindex = round(py) - buf_start;
 	    }
 	    yindex = yindex + buf_start;
 
-	    subsc = 3* (yindex * scanlen + round(x) );
+	    subsc = 3* (yindex * scanlen + round(px) );
 	    value = buffer[ subsc ];
 	    ret = fwrite(&value, sizeof(value), 1, ofp);
 	    value = buffer[ subsc+1 ];

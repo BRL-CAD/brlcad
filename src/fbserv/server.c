@@ -1,7 +1,7 @@
 /*                        S E R V E R . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2016 United States Government as represented by
+ * Copyright (c) 1998-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,6 +36,7 @@
 #include "bsocket.h"
 
 #include "bu/color.h"
+#include "bu/log.h"
 #include "fb.h"
 #include "vmath.h"
 #include "pkg.h"

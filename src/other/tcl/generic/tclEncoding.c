@@ -976,7 +976,7 @@ Tcl_GetEncodingNames(
  * Side effects:
  *	The reference count of the new system encoding is incremented. The
  *	reference count of the old system encoding is decremented and it may
- *	be freed.
+ *	be freed. All VFS cached information is invalidated.
  *
  *------------------------------------------------------------------------
  */
@@ -1007,6 +1007,7 @@ Tcl_SetSystemEncoding(
     FreeEncoding(systemEncoding);
     systemEncoding = encoding;
     Tcl_MutexUnlock(&encodingMutex);
+    Tcl_FSMountsChanged(NULL);
 
     return TCL_OK;
 }

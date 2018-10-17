@@ -25,7 +25,13 @@ file(WRITE  "${CMAKE_BINARY_DIR}/CMakeTmp/benchmsg.cmake" "message(\"---\")\n")
 file(APPEND "${CMAKE_BINARY_DIR}/CMakeTmp/benchmsg.cmake" "message(\"Run 'make benchmark-clean' in the bench directory to delete the logic\")\n")
 file(APPEND "${CMAKE_BINARY_DIR}/CMakeTmp/benchmsg.cmake" "message(\"and image files generated during the benchmark analysis.\")\n")
 
-CMAKEFILES(lgt.sh run.sh try.sh viewdiff.sh)
+CMAKEFILES(
+  CMakeLists.txt
+  lgt.sh
+  run.sh
+  try.sh
+  viewdiff.sh
+  )
 
 if(SH_EXEC)
   # CTest enabled short run of the benchmark suite

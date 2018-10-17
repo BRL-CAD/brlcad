@@ -1,7 +1,7 @@
 /*                        D E F I N E S . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2016 United States Government as represented by
+ * Copyright (c) 2008-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,6 +33,8 @@
 #include "bu/hash.h"
 #include "bu/list.h"
 #include "bu/vls.h"
+#include "dm/bview.h"
+#include "rt/search.h"
 
 __BEGIN_DECLS
 
@@ -229,6 +231,7 @@ struct ged {
     int (*run)(struct ged *gedp, int ac, char *av[]);
 
     void *ged_interp; /* Temporary - do not rely on when designing new functionality */
+    db_search_callback_t ged_interp_eval; /* FIXME: broke the rule written on the previous line */
 
     /* Interface to LIBDM */
     int ged_dm_width;

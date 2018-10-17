@@ -1,7 +1,7 @@
 /*                          M E M . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2016 United States Government as represented by
+ * Copyright (c) 1993-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -101,14 +101,13 @@ RT_EXPORT extern void rt_memfree(struct mem_map **pp,
 RT_EXPORT extern void rt_mempurge(struct mem_map **pp);
 
 /**
- * Print a memory chain.
- */
-RT_EXPORT extern void rt_memprint(struct mem_map **pp);
-
-/**
  * Return all the storage used by the rt_mem_freemap.
  */
 RT_EXPORT extern void rt_memclose(void);
+
+
+/* DEPRECATED */
+/*RT_EXPORT extern void rt_memprint(struct mem_map **pp);*/
 
 
 __END_DECLS

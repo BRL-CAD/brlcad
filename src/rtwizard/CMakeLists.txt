@@ -17,6 +17,8 @@ foreach(item ${tclindex_target_list})
   add_dependencies(rtwizard ${item})
 endforeach(item ${tclindex_target_list})
 
+CMAKEFILES(CMakeLists.txt)
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

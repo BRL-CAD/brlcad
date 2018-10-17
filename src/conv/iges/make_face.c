@@ -1,7 +1,7 @@
 /*                     M A K E _ F A C E . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2016 United States Government as represented by
+ * Copyright (c) 1993-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,10 +28,10 @@ struct faceuse *
 Make_planar_face(struct shell *s, int entityno, int face_orient)
 {
 
-    int sol_num;	/* IGES solid type number */
-    int no_of_edges;	/* edge count for this loop */
-    int no_of_param_curves;
-    int vert_count = 0;	/* Actual number of vertices used to make face */
+    int sol_num = 0;		/* IGES solid type number */
+    int no_of_edges = 0;	/* edge count for this loop */
+    int no_of_param_curves = 0;
+    int vert_count = 0;		/* Actual number of vertices used to make face */
     struct iges_edge_use *edge_list;	/* list of edgeuses from iges loop entity */
     struct faceuse *fu = NULL;	/* NMG face use */
     struct loopuse *lu;		/* NMG loop use */

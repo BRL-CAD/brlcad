@@ -1,7 +1,7 @@
 /*                       P I X - R L E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2016 United States Government as represented by
+ * Copyright (c) 1986-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,6 +33,9 @@
 #include "bu/exit.h"
 #include "fb.h"
 
+#if defined(HAVE_GETHOSTNAME) && !defined(HAVE_DECL_GETHOSTNAME)
+extern int gethostname(char *name, size_t len);
+#endif
 
 /*
  * system installed RLE reports a re-define, so undef it to quell the
@@ -44,7 +47,7 @@
 
 static rle_hdr outrle;
 
-static char comment[128];
+static char comment[143];
 #if HAVE_GETHOSTNAME
 static char host[128];
 #endif
@@ -97,23 +100,23 @@ main(int argc, char **argv)
     outrle.comments = (const char **)0;
 
     /* Add comments to the header file, since we have one */
-    snprintf(comment, 128, "converted_from=%s", infile);
+    snprintf(comment, sizeof(comment) / sizeof(comment[0]), "converted_from=%s", infile);
     rle_putcom(bu_strdup(comment), &outrle);
     now = time(0);
     sprintf(comment, "converted_date=%24.24s", ctime(&now));
     rle_putcom(bu_strdup(comment), &outrle);
     if ((who = getenv("USER")) != (char *)0) {
-	snprintf(comment, 128, "converted_by=%s", who);
+	snprintf(comment, sizeof(comment) / sizeof(comment[0]), "converted_by=%s", who);
 	rle_putcom(bu_strdup(comment), &outrle);
     } else {
 	if ((who = getenv("LOGNAME")) != (char *)0) {
-	    snprintf(comment, 128, "converted_by=%s", who);
+	    snprintf(comment, sizeof(comment) / sizeof(comment[0]), "converted_by=%s", who);
 	    rle_putcom(bu_strdup(comment), &outrle);
 	}
     }
 #ifdef HAVE_GETHOSTNAME
     gethostname(host, sizeof(host));
-    snprintf(comment, 128, "converted_host=%s", host);
+    snprintf(comment, sizeof(comment) / sizeof(comment[0]), "converted_host=%s", host);
     rle_putcom(bu_strdup(comment), &outrle);
 #endif
 

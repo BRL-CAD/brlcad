@@ -1,7 +1,7 @@
 /*                           S T R . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2016 United States Government as represented by
+ * Copyright (c) 1995-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,6 +37,30 @@
 #include "vmath.h"
 #include "bu/str.h"
 #include "bn/str.h"
+
+
+int
+bn_decode_angle(double *ang, const char *str)
+{
+    char unit[5];
+    double val;
+    int ret;
+
+    ret = sscanf(str,"%lf%4s",&val,unit);
+    if (ret == 1) {
+	*ang = val;
+    } else if (ret == 2) {
+	if (BU_STR_EQUAL(unit,"rad")) {
+	    *ang = (val * RAD2DEG);
+	} else if (BU_STR_EQUAL(unit,"deg")){
+	    *ang = val;
+	} else {
+	    ret = 0;
+	}
+    }
+    return ret;
+}
+
 
 int
 bn_decode_mat(fastf_t *mat, const char *str)

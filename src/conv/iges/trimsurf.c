@@ -1,7 +1,7 @@
 /*                      T R I M S U R F . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2016 United States Government as represented by
+ * Copyright (c) 1994-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -53,14 +53,14 @@ Get_nurb_surf(int entityno, struct model *m)
 {
     struct face_g_snurb *srf;
     point_t pt;
-    int entity_type;
+    int entity_type = 0;
     int i;
     int rational;
     int ncoords;
     int n_rows, n_cols, u_order, v_order;
     int n_u, n_v;
     int pt_type;
-    double a;
+    double a = 0.0;
 
     /* Acquiring Data */
 
@@ -226,17 +226,20 @@ struct edge_g_cnurb *
 Get_cnurb(int entity_no)
 {
     struct edge_g_cnurb *crv;
-    point_t pt, pt2;
-    int entity_type;
-    int num_pts;
-    int degree;
-    int i;
-    int planar;
-    int rational;
-    int pt_type;
-    int ncoords;
-    double a;
-    double x, y, z;
+    double a = 0.0;
+    double x = 0.0;
+    double y = 0.0;
+    double z = 0.0;
+    int degree = 0;
+    int entity_type = 0;
+    int i = 0;
+    int ncoords = 0;
+    int num_pts = 0;
+    int planar = 0;
+    int pt_type = 0;
+    int rational = 0;
+    point_t pt = VINIT_ZERO;
+    point_t pt2 = VINIT_ZERO;
 
     if (dir[entity_no]->param <= pstart) {
 	bu_log("Get_cnurb: Illegal parameter pointer for entity D%07d (%s)\n" ,
@@ -313,14 +316,12 @@ void
 Assign_vu_geom(struct vertexuse *vu, fastf_t u, fastf_t v, struct face_g_snurb *srf)
 {
     point_t uvw;
-    hpoint_t pt_on_srf;
+    hpoint_t pt_on_srf = HINIT_ZERO;
     struct vertexuse *vu1;
     int moved = 0;
 
     NMG_CK_VERTEXUSE(vu);
     NMG_CK_SNURB(srf);
-
-    VSETALLN(pt_on_srf, 0.0, 4);
 
     if (u < srf->u.knots[0] || v < srf->v.knots[0] ||
 	u > srf->u.knots[srf->u.k_size-1] || v > srf->v.knots[srf->v.k_size-1]) {
@@ -530,10 +531,13 @@ Make_trim_loop(int entity_no, int orientation, struct face_g_snurb *srf, struct 
     struct edgeuse *eu;
     struct edgeuse *new_eu;
     struct vertex *vp;
-    int entity_type;
-    int ncoords;
-    double x, y, z;
-    fastf_t u, v;
+    int entity_type = 0;
+    int ncoords = 0;
+    double x = 0.0;
+    double y = 0.0;
+    double z = 0.0;
+    fastf_t u = 0.0;
+    fastf_t v = 0.0;
     int i;
 
     NMG_CK_SNURB(srf);
@@ -712,9 +716,11 @@ struct loopuse *
 Make_loop(int entity_no, int orientation, int on_surf_de, struct face_g_snurb *srf, struct faceuse *fu)
 {
     struct loopuse *lu;
-    int entity_type;
-    int surf_de, param_curve_de, model_curve_de;
-    int i;
+    int entity_type = 0;
+    int surf_de = 0;
+    int param_curve_de = 0;
+    int model_curve_de = 0;
+    int i = 0;
 
     NMG_CK_SNURB(srf);
     NMG_CK_FACEUSE(fu);
@@ -897,8 +903,8 @@ trim_surf(int entityno, struct shell *s)
     struct loopuse *lu;
     struct loopuse *kill_lu;
     struct vertex *verts[3];
-    int entity_type;
-    int surf_de;
+    int entity_type = 0;
+    int surf_de = 0;
     int has_outer_boundary, inner_loop_count, outer_loop;
     int *inner_loop = NULL;
     int i;
@@ -908,11 +914,6 @@ trim_surf(int entityno, struct shell *s)
 
     m = nmg_find_model(&s->l.magic);
     NMG_CK_MODEL(m);
-
-    if (bu_debug & BU_DEBUG_MEM_CHECK) {
-	bu_log("barriercheck at start of trim_surf():\n");
-	bu_mem_barriercheck();
-    }
 
     /* Acquiring Data */
     if (dir[entityno]->param <= pstart) {
@@ -950,52 +951,22 @@ trim_surf(int entityno, struct shell *s)
     for (i = 0; i < 3; i++)
 	verts[i] = (struct vertex *)NULL;
 
-    if (bu_debug & BU_DEBUG_MEM_CHECK) {
-	bu_log("barriercheck before making face:\n");
-	bu_mem_barriercheck();
-    }
-
     fu = nmg_cface(s, verts, 3);
     Assign_surface_to_fu(fu, srf);
 
     kill_lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
 
     if (!has_outer_boundary) {
-	if (bu_debug & BU_DEBUG_MEM_CHECK) {
-	    bu_log("barriercheck before making default loop():\n");
-	    bu_mem_barriercheck();
-	}
-
 	lu = Make_default_loop(srf, fu);
     } else {
-	if (bu_debug & BU_DEBUG_MEM_CHECK) {
-	    bu_log("barriercheck before Make_loop():\n");
-	    bu_mem_barriercheck();
-	}
-
 	lu = Make_loop((outer_loop-1)/2, OT_SAME, surf_de, srf, fu);
     }
-
-    if (bu_debug & BU_DEBUG_MEM_CHECK) {
-	bu_log("barriercheck after making loop:\n");
-	bu_mem_barriercheck();
-    }
-
 
     (void)nmg_klu(kill_lu);
 
     /* first loop is an outer loop, orientation must be OT_SAME */
-    if (bu_debug & BU_DEBUG_MEM_CHECK) {
-	bu_log("barriercheck before nmg_snurb_calc_lu_uv_orient(():\n");
-	bu_mem_barriercheck();
-	bu_log("check complete!\n");
-    }
 
     lu_uv_orient = nmg_snurb_calc_lu_uv_orient(lu);
-    if (bu_debug & BU_DEBUG_MEM_CHECK) {
-	bu_log("barriercheck after nmg_snurb_calc_lu_uv_orient(():\n");
-	bu_mem_barriercheck();
-    }
     if (lu_uv_orient == OT_SAME)
 	nmg_set_lu_orientation(lu, 0);
     else {
@@ -1364,27 +1335,18 @@ Convtrimsurfs()
 
     bu_log("\n\nConverting Trimmed Surface entities:\n");
 
-    if (RT_G_DEBUG & DEBUG_MEM_FULL)
-	bu_mem_barriercheck();
-
     m = nmg_mm();
     r = nmg_mrsv(m);
     s = BU_LIST_FIRST(shell, &r->s_hd);
 
     for (i = 0; i < totentities; i++) {
 	if (dir[i]->type == 144) {
-	    if (RT_G_DEBUG & DEBUG_MEM_FULL)
-		bu_mem_barriercheck();
-
 	    totsurfs++;
 	    fu = trim_surf(i, s);
 	    if (fu) {
 		nmg_face_bb(fu->f_p, &tol);
 		convsurf++;
 	    }
-	    if (RT_G_DEBUG & DEBUG_MEM_FULL)
-		bu_mem_barriercheck();
-
 	}
     }
 
@@ -1395,11 +1357,8 @@ Convtrimsurfs()
     /* do some raytracing to get face orientations correct */
     for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
 	struct faceuse *fu2;
-	point_t mid_pt;
+	point_t mid_pt = VINIT_ZERO;
 	vect_t ray_dir;
-
-	/* initialize for compiler */
-	VSETALL(mid_pt, 0.0);
 
 	if (fu->orientation != OT_SAME)
 	    continue;
@@ -1437,9 +1396,6 @@ Convtrimsurfs()
 
     bu_log("Converted %zu Trimmed Surfaces successfully out of %zu total Trimmed Surfaces\n", convsurf, totsurfs);
 
-    if (RT_G_DEBUG & DEBUG_MEM_FULL)
-	bu_mem_barriercheck();
-
     if (convsurf) {
 	(void)nmg_vertex_fuse(&m->magic, &RTG.rtg_vlfree, &tol);
 
@@ -1448,16 +1404,10 @@ Convtrimsurfs()
 	else
 	    mk_nmg(fdout, "Trimmed_surf", m);
     }
-    if (RT_G_DEBUG & DEBUG_MEM_FULL)
-	bu_mem_barriercheck();
 
     if (!convsurf) {
 	nmg_km(m);
     }
-
-    if (RT_G_DEBUG & DEBUG_MEM_FULL)
-	bu_mem_barriercheck();
-
 }
 
 

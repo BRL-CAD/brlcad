@@ -3253,13 +3253,11 @@ UpdateStringOfBignum(
     if (status != MP_OKAY) {
 	Tcl_Panic("radix size failure in UpdateStringOfBignum");
     }
-    if (size == 3) {
+    if (size < 2) {
 	/*
-	 * mp_radix_size() returns 3 when more than INT_MAX bytes would be
+	 * mp_radix_size() returns < 2 when more than INT_MAX bytes would be
 	 * needed to hold the string rep (because mp_radix_size ignores
-	 * integer overflow issues). When we know the string rep will be more
-	 * than 3, we can conclude the string rep would overflow our string
-	 * length limits.
+	 * integer overflow issues).
 	 *
 	 * Note that so long as we enforce our bignums to the size that fits
 	 * in a packed bignum, this branch will never be taken.

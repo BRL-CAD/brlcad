@@ -1,7 +1,7 @@
 /*       M E S H C O N V E R S I O N _ B R L C A D . C P P
  * BRL-CAD
  *
- * Copyright (c) 2016 United States Government as represented by
+ * Copyright (c) 2016-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -144,7 +144,6 @@ BrlcadMesh::initEdges()
     for (unsigned int i = 0; i < num_faces; ++i) {
 
 	DCEL_Edge temp;
-	std::pair<int, int> id;
 
 	for (unsigned int j = 0; j < VERTICES_PER_FACE; ++j){
 	    v1 = bot->faces[VERTICES_PER_FACE * i + j];

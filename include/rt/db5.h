@@ -1,7 +1,7 @@
 /*                           D B 5 . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -169,9 +169,10 @@ struct db5_ondisk_header {
 
 #define DB5_MINORTYPE_BRLCAD_REVOLVE		40
 #define DB5_MINORTYPE_BRLCAD_PNTS		41
-#define DB5_MINORTYPE_BRLCAD_ANNOTATION		42
+#define DB5_MINORTYPE_BRLCAD_ANNOT		42
 #define DB5_MINORTYPE_BRLCAD_HRT		43
 #define DB5_MINORTYPE_BRLCAD_DATUM		44
+#define DB5_MINORTYPE_BRLCAD_SCRIPT     45
 
 /* Uniform-array binary */
 #define DB5_MINORTYPE_BINU_WID_MASK		0x30
@@ -225,9 +226,23 @@ struct db5_raw_internal {
  */
 #define DB5_ENC_LEN(len) (1 << len)
 
-RT_EXPORT extern unsigned char *db5_encode_length(unsigned char	*cp,
-						   size_t		val,
-						   int		format);
+
+/**
+ * Given a value and a variable-width format spec, store it in network
+ * order.
+ *
+ * Returns -
+ * pointer to next available byte.
+ */
+RT_EXPORT extern unsigned char *db5_encode_length(unsigned char *cp,
+						  size_t val,
+						  int format);
+
+/**
+ * Returns -
+ * on success, pointer to first unused byte
+ * NULL, on error
+ */
 RT_EXPORT extern const unsigned char *db5_get_raw_internal_ptr(struct db5_raw_internal *rip,
 								const unsigned char *ip);
 

@@ -101,11 +101,6 @@ triangulate_array(ON_2dPointArray &on2dpts, int *verts_map, int **ffaces, int lo
 	int old_ind = (*ffaces)[i];
 	(*ffaces)[i] = verts_map[old_ind];
     }
-#if 0
-    for (int i = 0; i < num_faces; i++) {
-	bu_log("face %d: %d, %d, %d\n", i, (*ffaces)[i*3], (*ffaces)[i*3+1], (*ffaces)[i*3+2]);
-    }
-#endif
 
     bu_free(verts2d, "free verts2d");
     bu_free(pt_ind, "free verts2d");
@@ -128,13 +123,6 @@ triangulate_array_with_holes(ON_2dPointArray &on2dpts, int *verts_map, int loop_
     for (int i = 0; i < on2dpts.Count(); i++) {
 	V2MOVE(verts2d[i], on2dpts[i]);
     }
-
-#if 0
-    for (int i = 0; i < 8; i++) {
-	ON_3dPoint p = brep->m_V[verts_map[i]].Point();
-	bu_log("vert(%d): %f, %f, %f\n", verts_map[i], p.x, p.y, p.z);
-    }
-#endif
 
     // Outer loop first
     size_t outer_npts = loop_starts[1] - loop_starts[0];
@@ -208,11 +196,6 @@ triangulate_array_with_holes(ON_2dPointArray &on2dpts, int *verts_map, int loop_
 	int old_ind = (*ffaces)[i];
 	(*ffaces)[i] = verts_map[old_ind];
     }
-#if 0
-    for (int i = 0; i < num_faces; i++) {
-	bu_log("face %d: %d, %d, %d\n", i, (*ffaces)[i*3], (*ffaces)[i*3+1], (*ffaces)[i*3+2]);
-    }
-#endif
 
     bu_free(verts2d, "free verts2d");
 
@@ -376,7 +359,7 @@ shoal_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_shoal_data *data, 
 
     // Find a suitable seed vert
     int seed_vert = -1;
-    const ON_BrepEdge *first_edge;
+    const ON_BrepEdge *first_edge = NULL;
     for (se_it = shoal_edges.begin(); se_it != shoal_edges.end(); se_it++) {
 	first_edge = &(brep->m_E[(int)(*se_it)]);
 	if (ignored_verts.find(first_edge->Vertex(0)->m_vertex_index) == ignored_verts.end()) {
@@ -399,7 +382,7 @@ shoal_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_shoal_data *data, 
     int curr_edge = -1;
     int prev_edge = -1;
     //bu_log("first edge: %d\n", first_edge->m_edge_index);
-    while (curr_edge != first_edge->m_edge_index && curr_vert != seed_vert) {
+    while (first_edge && curr_edge != first_edge->m_edge_index && curr_vert != seed_vert) {
 	// Once we're past the first edge, initialize our terminating condition if not already set.
 	if (curr_edge == -1) curr_edge = first_edge->m_edge_index;
 	if (curr_vert == -1) curr_vert = seed_vert;

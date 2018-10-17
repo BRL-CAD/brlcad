@@ -114,7 +114,6 @@ BRLCAD_ADDEXEC(pixcount pixcount.c libbu)
 BRLCAD_ADDEXEC(pixcrop pixcrop.c libbu)
 BRLCAD_ADDEXEC(pixcut pixcut.c "libfb;libbu")
 BRLCAD_ADDEXEC(pixdiff pixdiff.c libbu)
-BRLCAD_ADDEXEC(pixdsplit pixdsplit.c libbu)
 BRLCAD_ADDEXEC(pixelswap pixelswap.c libbu)
 BRLCAD_ADDEXEC(pixembed pixembed.c libbu)
 BRLCAD_ADDEXEC(pixfade pixfade.c "libicv;libbu")
@@ -176,6 +175,7 @@ BRLCAD_ADDEXEC(roots_example roots_example.c "libbu;librt" NO_INSTALL)
 BRLCAD_ADDDATA(roots_example.c sample_applications)
 
 CMAKEFILES(bombardier.h rle_args.h morphedit.tcl plot3debug.c)
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

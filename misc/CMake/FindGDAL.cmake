@@ -32,8 +32,6 @@
 # FindGDAL
 # --------
 #
-#
-#
 # Locate gdal
 #
 # This module accepts the following environment variables:
@@ -69,66 +67,114 @@
 #
 #include "gdal.h"
 
+include(CheckCSourceCompiles)
+function(GDALTRANS_TEST HGDALTRANS)
+
+  set(CMAKE_REQUIRED_INCLUDES ${GDAL_INCLUDE_DIR})
+  set(CMAKE_REQUIRED_LIBRARIES ${GDAL_LIBRARY})
+
+  set(GT_SRCS "
+  #include <gdal.h>
+  #include <gdalwarper.h>
+  #include <gdal_utils.h>
+  #include <cpl_conv.h>
+  #include <cpl_string.h>
+  #include <cpl_multiproc.h>
+  #include <ogr_spatialref.h>
+  #include <vrtdataset.h>
+
+  int main(int ac, char *av[])
+  {
+  GDALDatasetH gd = GDALTranslate(NULL, NULL, NULL, NULL);
+  }
+  ")
+
+  CHECK_C_SOURCE_COMPILES("${GT_SRCS}" H_GT)
+
+  set(${HGDALTRANS} ${H_GT} PARENT_SCOPE)
+
+endfunction(GDALTRANS_TEST)
+
+
 find_path(GDAL_INCLUDE_DIR gdal.h
   HINTS
-    ENV GDAL_DIR
-    ENV GDAL_ROOT
+  ENV GDAL_DIR
+  ENV GDAL_ROOT
   PATH_SUFFIXES
-     include/gdal
-     include/GDAL
-     include
+  include/gdal
+  include/GDAL
+  include
   PATHS
-      ~/Library/Frameworks/gdal.framework/Headers
-      /Library/Frameworks/gdal.framework/Headers
-      /sw # Fink
-      /opt/local # DarwinPorts
-      /opt/csw # Blastwave
-      /opt
-)
+  ~/Library/Frameworks/gdal.framework/Headers
+  /Library/Frameworks/gdal.framework/Headers
+  /sw # Fink
+  /opt/local # DarwinPorts
+  /opt/csw # Blastwave
+  /opt
+  )
 
 # Use gdal-config to obtain the library version (this should hopefully
 # allow us to -lgdal1.x.y where x.y are correct version)
 # For some reason, libgdal development packages do not contain
 # libgdal.so...
 find_program(GDAL_CONFIG gdal-config
-        HINTS
-        ENV GDAL_DIR
-        ENV GDAL_ROOT
-        PATH_SUFFIXES bin
-        PATHS
-        /sw # Fink
-        /opt/local # DarwinPorts
-        /opt/csw # Blastwave
-        /opt
-        )
+  HINTS
+  ENV GDAL_DIR
+  ENV GDAL_ROOT
+  PATH_SUFFIXES bin
+  PATHS
+  /sw # Fink
+  /opt/local # DarwinPorts
+  /opt/csw # Blastwave
+  /opt
+  )
 
 if(GDAL_CONFIG AND NOT "${GDAL_CONFIG}" MATCHES "NOTFOUND")
-        exec_program(${GDAL_CONFIG} ARGS --libs OUTPUT_VARIABLE GDAL_CONFIG_LIBS)
-        if(GDAL_CONFIG_LIBS)
-    	    string(REGEX MATCHALL "-l[^ ]+" _gdal_dashl ${GDAL_CONFIG_LIBS})
-    	    string(REPLACE "-l" "" _gdal_lib "${_gdal_dashl}")
-    	    string(REGEX MATCHALL "-L[^ ]+" _gdal_dashL ${GDAL_CONFIG_LIBS})
-    	    string(REPLACE "-L" "" _gdal_libpath "${_gdal_dashL}")
-        endif()
+  exec_program(${GDAL_CONFIG} ARGS --libs OUTPUT_VARIABLE GDAL_CONFIG_LIBS)
+  if(GDAL_CONFIG_LIBS)
+    string(REGEX MATCHALL "-l[^ ]+" _gdal_dashl ${GDAL_CONFIG_LIBS})
+    string(REPLACE "-l" "" _gdal_lib "${_gdal_dashl}")
+    string(REGEX MATCHALL "-L[^ ]+" _gdal_dashL ${GDAL_CONFIG_LIBS})
+    string(REPLACE "-L" "" _gdal_libpath "${_gdal_dashL}")
+  endif(GDAL_CONFIG_LIBS)
 endif(GDAL_CONFIG AND NOT "${GDAL_CONFIG}" MATCHES "NOTFOUND")
 
 find_library(GDAL_LIBRARY
-  NAMES ${_gdal_lib} gdal gdal_i gdal1.5.0 gdal1.4.0 gdal1.3.2 GDAL
+  NAMES ${_gdal_lib} gdal GDAL
   HINTS
-     ENV GDAL_DIR
-     ENV GDAL_ROOT
-     ${_gdal_libpath}
+  ENV GDAL_DIR
+  ENV GDAL_ROOT
+  ${_gdal_libpath}
   PATH_SUFFIXES lib
   PATHS
-    /sw
-    /opt/local
-    /opt/csw
-    /opt
-    /usr/freeware
-)
+  /sw
+  /opt/local
+  /opt/csw
+  /opt
+  /usr/freeware
+  )
+
+# Check for GDALTranslate - if we don't have that, we're not in business
+if(GDAL_LIBRARY AND GDAL_INCLUDE_DIR)
+  GDALTRANS_TEST(HAVE_GDALTRANSLATE)
+  if(NOT HAVE_GDALTRANSLATE)
+    set(GDAL_LIBRARY NOTFOUND)
+    set(GDAL_INCLUDE_DIR "")
+  endif(NOT HAVE_GDALTRANSLATE)
+endif(GDAL_LIBRARY AND GDAL_INCLUDE_DIR)
 
 include(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(GDAL DEFAULT_MSG GDAL_LIBRARY GDAL_INCLUDE_DIR)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(GDAL DEFAULT_MSG GDAL_LIBRARY GDAL_INCLUDE_DIR HAVE_GDALTRANSLATE)
 
-set(GDAL_LIBRARIES ${GDAL_LIBRARY})
-set(GDAL_INCLUDE_DIRS ${GDAL_INCLUDE_DIR})
+if(HAVE_GDALTRANSLATE)
+  set(GDAL_LIBRARIES ${GDAL_LIBRARY})
+  set(GDAL_INCLUDE_DIRS ${GDAL_INCLUDE_DIR})
+endif(HAVE_GDALTRANSLATE)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8
+

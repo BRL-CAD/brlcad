@@ -1,7 +1,7 @@
 #               F I N D T E R M L I B . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2016 United States Government as represented by
+# Copyright (c) 2011-2018 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -45,38 +45,99 @@ include(CheckLibraryExists)
 include(CheckIncludeFiles)
 include(CheckCSourceRuns)
 
-macro(TERMLIB_CHECK_LIBRARY lname func headers)
+set(termlib_src "
+#ifdef HAVE_TERMLIB_H
+#  include <termlib.h>
+#else
+#  ifdef HAVE_NCURSES_H
+#    include <ncurses.h>
+#  else
+#    ifdef HAVE_CURSES_H
+#      include <curses.h>
+#    else
+#      ifdef HAVE_TERMCAP_H
+#        include <termcap.h>
+#      else
+#        ifdef HAVE_TERMINFO_H
+#          include <terminfo.h>
+#        else
+#          ifdef HAVE_TINFO_H
+#            include <tinfo.h>
+#          endif
+#        endif
+#      endif
+#    endif
+#  endif
+#  ifdef HAVE_TERM_H
+#    include <term.h>
+#  endif
+#endif
+int main (void) {
+   char buffer[2048] = {0};
+   (void)tgetent(buffer, \"vt100\");
+   return 0;
+}
+")
+
+include(CheckCCompilerFlag)
+check_c_compiler_flag(-Wall WALL_FLAG)
+if(WALL_FLAG)
+  set(WALL_DEF "-Wall")
+endif(WALL_FLAG)
+check_c_compiler_flag(-Werror WERROR_FLAG)
+if(WERROR_FLAG)
+  set(WERROR_DEF "-Werror")
+endif(WERROR_FLAG)
+
+function(TERMLIB_CHECK_LIBRARY lname func headers)
   if(NOT TERMLIB_LIBRARY OR "${TERMLIB_LIBRARY}" MATCHES "NOTFOUND")
     CHECK_LIBRARY_EXISTS(${lname} ${func} "" HAVE_TERMLIB_${lname})
     if(HAVE_TERMLIB_${lname})
       # Got lib, now sort through headers
       foreach(hdr ${headers})
-	string(TOUPPER "${hdr}" HDR)
-	string(REGEX REPLACE "[^A-Z0-9]" "_" HDR "${HDR}")
-	CHECK_INCLUDE_FILES(${hdr} HAVE_${HDR})
 	if(NOT TERMLIB_INCLUDE_DIR OR "${TERMLIB_INCLUDE_DIR}" MATCHES "NOTFOUND")
+	  string(TOUPPER "${hdr}" HDR)
+	  string(REGEX REPLACE "[^A-Z0-9]" "_" HDR "${HDR}")
+	  CHECK_INCLUDE_FILES(${hdr} HAVE_${HDR})
 	  find_path(TERMLIB_INCLUDE_DIR "${hdr}")
 	  if(NOT "${TERMLIB_INCLUDE_DIR}" MATCHES "NOTFOUND")
-	    set(LIBTERM_RESULT)
+	    set(LIBTERM_RESULT 1)
 	    set(TERMLIB_LIBRARY "${lname}")
-	    configure_file("${BRLCAD_CMAKE_DIR}/test_srcs/termlib.c.in" "${CMAKE_BINARY_DIR}/CMakeTmp/termlib.c")
-	    set(CMAKE_REQUIRED_LIBRARIES_BAK ${CMAKE_REQUIRED_LIBRARIES})
-	    set(CMAKE_REQUIRED_LIBRARIES ${TERMLIB_LIBRARY})
-	    if(NOT DEFINED LIBTERM_RESULT)
-	      CHECK_C_SOURCE_RUNS("${CMAKE_BINARY_DIR}/CMakeTmp/termlib.c" LIBTERM_RESULT)
-	    endif(NOT DEFINED LIBTERM_RESULT)
-	    if(NOT LIBTERM_RESULT)
+	    file(WRITE "${CMAKE_BINARY_DIR}/CMakeTmp/termlib.c" "${termlib_src}")
+	    if(LIBTERM_RESULT)
+	      set(CMAKE_C_FLAGS "") # We need -Wall and -Werror, without -w
+              try_run(LIBTERM_RESULT LIBTERM_COMPILE "${CMAKE_BINARY_DIR}/CMakeTmp"
+		"${CMAKE_BINARY_DIR}/CMakeTmp/termlib.c"
+		COMPILE_DEFINITIONS -DHAVE_${HDR} ${WALL_DEF} ${WERROR_DEF}
+		LINK_LIBRARIES "${lname}"
+		COMPILE_OUTPUT_VARIABLE CTERM_OUT
+		RUN_OUTPUT_VARIABLE RTERM_OUT)
+	      #message("CTERM: ${CTERM_OUT}")
+	      #message("RTERM: ${RTERM_OUT}")
+	      #message("LIBTERM_RESULT: ${LIBTERM_RESULT}")
+	    endif(LIBTERM_RESULT)
+	    file(REMOVE "${CMAKE_BINARY_DIR}/CMakeTmp/termlib.c")
+	    if(LIBTERM_RESULT)
 	      set(TERMLIB_LIBRARY "NOTFOUND" CACHE STRING "TERMLIB" FORCE)
-	    else(NOT LIBTERM_RESULT)
-	      set(TERMLIB_LIBRARY ${TERMLIB_LIBRARY} CACHE STRING "TERMLIB" FORCE)
-	    endif(NOT LIBTERM_RESULT)
-	    set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES_BAK})
+	      set(TERMLIB_INCLUDE_DIR "NOTFOUND"  CACHE STRING "TERMLIB" FORCE)
+	      unset(HAVE_${HDR} CACHE)
+	    else(LIBTERM_RESULT)
+	      # Have a winning combination.  Set lib and include dir
+	      set(TERMLIB_LIBRARY ${lname} CACHE STRING "TERMLIB" FORCE)
+	      set(TERMLIB_LIBRARY ${lname} PARENT_SCOPE)
+	      set(TERMLIB_INCLUDE_DIR "${TERMLIB_INCLUDE_DIR}"  CACHE STRING "TERMLIB" FORCE)
+	      set(TERMLIB_INCLUDE_DIR "${TERMLIB_INCLUDE_DIR}"  PARENT_SCOPE)
+	      # We also want this header's test (and only this header) to be
+	      # reported as successful in the parent
+	      set(HAVE_${HDR} 1 CACHE BOOL "TERMLIB" FORCE PARENT_SCOPE)
+	      return()
+	    endif(LIBTERM_RESULT)
 	  endif(NOT "${TERMLIB_INCLUDE_DIR}" MATCHES "NOTFOUND")
 	endif(NOT TERMLIB_INCLUDE_DIR OR "${TERMLIB_INCLUDE_DIR}" MATCHES "NOTFOUND")
       endforeach(hdr ${headers})
     endif(HAVE_TERMLIB_${lname})
   endif(NOT TERMLIB_LIBRARY OR "${TERMLIB_LIBRARY}" MATCHES "NOTFOUND")
-endmacro(TERMLIB_CHECK_LIBRARY lname func)
+endfunction(TERMLIB_CHECK_LIBRARY lname func)
 
 TERMLIB_CHECK_LIBRARY(termlib tputs "termlib.h")
 TERMLIB_CHECK_LIBRARY(ncurses tputs "ncurses.h;curses.h;termcap.h;term.h")

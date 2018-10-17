@@ -1,7 +1,7 @@
 #                   T A B L E V I E W . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2016 United States Government as represented by
+# Copyright (c) 1998-2018 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -60,7 +60,7 @@
 	common SystemButtonFace
 	common SystemButtonText
 
-	if {$tcl_platform(os) != "Windows NT"} {
+	if {$::tcl_platform(os) != "Windows NT"} {
 	    set SystemWindowFont Helvetica
 	    set SystemWindowText black
 	    set SystemWindow \#d9d9d9

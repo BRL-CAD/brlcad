@@ -103,43 +103,12 @@
       </varlistentry>
 
       <varlistentry>
-	<term><option>-d #</option></term>
-	<listitem>
-	  <para>sets flag for reporting of pixel distances: 1 for on, 0 (default) for off.
-	  (Each pixel is represented by 3 bytes of color information followed by 8 bytes
-	  for a double, in IEEE format, which gives the distance to the ray's first hit.
-	  If the ray doesn't hit, a zero distance is reported by default
-	  which causes <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-	  to write only the color information.
-	  See
-	  <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
-	  and
-	  <citerefentry><refentrytitle>pixd</refentrytitle><manvolnum>5</manvolnum></citerefentry>.)</para>
-	</listitem>
-      </varlistentry>
-
-      <varlistentry>
 	<term><option>-e #</option></term>
 	<listitem>
 	  <para>selects auto-sizing, and gives the view elevation in degrees.  Used with
 	  <option>-a</option>
 	  and conflicts with
 	  <option>-M </option>.</para>
-	</listitem>
-      </varlistentry>
-
-      <varlistentry>
-	<term><option>-f #</option></term>
-	<listitem>
-	  <para>sets the expected playback rate in frames-per-second;
-	  the default is 30.
-	  Several time-evolving shaders
-	  such as
-	  <emphasis remap="I">fire</emphasis>
-	  and
-	  <emphasis remap="I">grass</emphasis>
-	  need to know the time at which each frame and pixel occur to drive their
-	  evolution.</para>
 	</listitem>
       </varlistentry>
 
@@ -326,11 +295,15 @@
       </varlistentry>
 
       <varlistentry>
-	<term><option>-v #</option></term>
+	<term><option>-v [#]</option></term>
 	<listitem>
-	  <para>sets the verbosity bit vector flags for <command>rtedge</command> .
-	  Use -v 0 for no output or -v fff for all available output.
-	  See include/brlcad/rtprivate.h for various bit definitions.</para>
+	  <para>sets the output verbosity level for
+	  <command>rtedge</command>.  You can use -v 0 for no/minimal
+	  output or add -v repeatedly up through four levels (e.g.,
+	  -vvvv) to see all available output.  Default is all
+	  available output.  The -v option will also take a specific
+	  hexadecimal value to turn on specific message categories
+	  (e.g., -v 0xFF010030) of output.</para>
 	</listitem>
       </varlistentry>
 
@@ -577,9 +550,12 @@
 	<term><option>-W</option></term>
 	<listitem>
 	  <para>
-	    inverts the foreground and background colors, changing the default from
-	    white lines on a black background to black lines on a white
-	    background
+            specifies black lines on a white background.  this option
+            sets the image background color to a nearly pure white RGB
+            of 255/255/254 and the foreground edge color to a nearly
+            pure black RGB of 0/0/1.  This is equivalent to setting -c
+            "set background=255/255/254" and -c "set
+            foreground=0/0/1".
 	  </para>
 	</listitem>
       </varlistentry>
@@ -1075,7 +1051,7 @@ EOF
   </refsection>
 
   <refsection xml:id="copyright"><title>COPYRIGHT</title>
-  <para>This software is Copyright (c) 2001-2016 United States Government as
+  <para>This software is Copyright (c) 2001-2018 United States Government as
   represented by the U.S. Army Research Laboratory.</para>
   </refsection>
 

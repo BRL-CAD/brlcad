@@ -1,7 +1,7 @@
 /*                          D M -  Q T . H
  * BRL-CAD
  *
- * Copyright (c) 2013-2016 United States Government as represented by
+ * Copyright (c) 2013-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -68,7 +68,9 @@ struct qt_vars {
     QPixmap *pix;
     QPainter *painter;
     QFont *font;
-    mat_t qmat;
+    fastf_t *qmat;
+    mat_t mod_mat;      /* default model transformation matrix */
+    mat_t disp_mat;     /* display transformation matrix */
     QImage *img;
     int drawFb;
 };

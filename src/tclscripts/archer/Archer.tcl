@@ -1,7 +1,7 @@
 #                     A R C H E R . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2016 United States Government as represented by
+# Copyright (c) 2002-2018 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -37,11 +37,11 @@ namespace eval Archer {
     set extraMgedCommands ""
     set corePluginInit ""
 
-    set pluginsdir [file join [bu_brlcad_data "plugins"] archer]
+    set pluginsdir [file join [bu_brlcad_root "share/plugins"] archer]
     if {![file exists $pluginsdir]} {
 	# searching 'src' is only necessary for items installed to a
 	# different hierarchy.
-	set pluginsdir [file join [bu_brlcad_data "src"] archer plugins]
+	set pluginsdir [file join [bu_brlcad_root "src"] archer plugins]
     }
 
     foreach plugin_type {Core Commands} {
@@ -255,6 +255,7 @@ package provide Archer 1.0
 	#XXX Need to split up menuStatusCB into one method per menu
 	method menuStatusCB {_w}
 	method modesMenuStatusCB {_w}
+	method checkOverlapsMenuStatusCB {_w}
 	method rtCheckMenuStatusCB {_w}
 	method rtEdgeMenuStatusCB {_w}
 	method rtMenuStatusCB {_w}
@@ -679,13 +680,13 @@ package provide Archer 1.0
     set pwd [::pwd]
 
     # developer & user plugins
-    set pluginPath [file join [bu_brlcad_data "plugins"] archer]
+    set pluginPath [file join [bu_brlcad_root "share/plugins"] archer]
     if { ![file exists $pluginPath] } {
 	# try a source dir invocation
 
 	# searching 'src' is only necessary for items installed to a
 	# different hierarchy.
-	set pluginPath [file join [bu_brlcad_data "src"] archer plugins]
+	set pluginPath [file join [bu_brlcad_root "src"] archer plugins]
     }
     if { ![file exists $pluginPath] } {
 	# give up on loading any plugins
@@ -1094,7 +1095,7 @@ package provide Archer 1.0
 	set dbname [file normalize $mTarget]
 	set execpath [file dirname [file normalize $argv0]]
 
-	if {$tcl_platform(platform) == "windows"} {
+	if {$::tcl_platform(platform) == "windows"} {
 	    set rtwizname [file join $execpath rtwizard.exe]
 	} else {
 	    set rtwizname [file join $execpath rtwizard]
@@ -2422,7 +2423,7 @@ package provide Archer 1.0
     } {}
 
     # About Info
-    set imgfile [file join [bu_brlcad_data "tclscripts"] archer images aboutArcher.png]
+    set imgfile [file join [bu_brlcad_root "share/tclscripts"] archer images aboutArcher.png]
     set aboutImg [image create photo -file $imgfile]
     itk_component add aboutInfo {
 	::ttk::label $itk_component(aboutDialogTabs).aboutInfo \
@@ -2440,7 +2441,7 @@ package provide Archer 1.0
 	    -textbackground $SystemButtonFace
     } {}
 
-    set brlcadLicenseFile [file join [bu_brlcad_data "."] COPYING]
+    set brlcadLicenseFile [file join [bu_brlcad_root "share"] COPYING]
     if {![catch {open $brlcadLicenseFile "r"} fd]} {
 	set brlcadLicenseInfo [read $fd]
 	close $fd
@@ -2459,7 +2460,7 @@ package provide Archer 1.0
 	    -textbackground $SystemButtonFace
     } {}
 
-    set ackFile [file join [bu_brlcad_data "doc"] archer_ack.txt]
+    set ackFile [file join [bu_brlcad_root "share/doc"] archer_ack.txt]
     if {![catch {open $ackFile "r"} fd]} {
 	set ackInfo [read $fd]
 	close $fd
@@ -2472,7 +2473,7 @@ package provide Archer 1.0
     } {}
 
     # try installed, uninstalled
-    set imgfile [file join [bu_brlcad_data "tclscripts"] mged mike-tux.png]
+    set imgfile [file join [bu_brlcad_root "share/tclscripts"] mged mike-tux.png]
     set mikeImg [image create photo -file $imgfile]
     itk_component add mikePic {
 	::label $itk_component(mikeF).pic \
@@ -2500,7 +2501,7 @@ package provide Archer 1.0
 	    -textbackground $SystemButtonFace
     } {}
 
-    set mikeInfoFile [file join [bu_brlcad_data "tclscripts"] mged mike-dedication.txt]
+    set mikeInfoFile [file join [bu_brlcad_root "share/tclscripts"] mged mike-dedication.txt]
     if {![catch {open $mikeInfoFile "r"} fd]} {
 	set mikeInfo [read -nonewline $fd]
 	close $fd
@@ -2538,7 +2539,7 @@ proc ::get_html_data {helpfile} {
 
 proc Archer::get_html_man_data {cmdname} {
     global archer_help_data
-    set help_fd [open [file join [bu_brlcad_data "doc/html"] mann $cmdname.html]]
+    set help_fd [open [file join [bu_brlcad_root "share/doc/html"] mann $cmdname.html]]
     set archer_help_data [read $help_fd]
     close $help_fd
 }
@@ -2561,7 +2562,7 @@ proc Archer::html_help_display {me} {
     if {[catch {regexp {(home://blank)(.+)} $origurl match prefix tempurl} msg]} {
 	tk_messageBox -message "html_help_display: regexp failed, msg - $msg"
     }
-    set url [bu_brlcad_data "doc/html"]
+    set url [bu_brlcad_root "share/doc/html"]
     append url $tempurl
     get_html_data $url
     $htmlviewer reset
@@ -2570,7 +2571,7 @@ proc Archer::html_help_display {me} {
 
 
 proc Archer::mkHelpTkImage {file} {
-    set fullpath [file join [bu_brlcad_data "doc/html"] manuals mged $file]
+    set fullpath [file join [bu_brlcad_root "share/doc/html"] manuals $file]
     set name [image create photo -file $fullpath]
     return [list $name [list image delete $name]]
 }
@@ -2614,8 +2615,8 @@ proc title_node_handler {node} {
     set tlparent [$itk_component(archerHelp) childsite]
 
 
-    if {[file exists [file join [bu_brlcad_data "doc/html"] books en BRL-CAD_Tutorial_Series-VolumeI.html]] &&
-	[file exists [file join [bu_brlcad_data "doc/html"] toc.html]] } {
+    if {[file exists [file join [bu_brlcad_root "share/doc/html"] books BRL-CAD_Tutorial_Series-VolumeI.html]] &&
+	[file exists [file join [bu_brlcad_root "share/doc/html"] toc.html]] } {
 
 	# Table of Contents
 	itk_component add archerHelpToC {
@@ -2628,7 +2629,7 @@ proc title_node_handler {node} {
 	set docstoclist [::hv3::hv3 $docstoc.htmlview -width 250 -requestcmd Archer::html_help_display]
 	set docstochtml [$docstoclist html]
 	$docstochtml configure -parsemode html
-	set help_fd [lindex [list [file join [bu_brlcad_data "doc/html"] toc.html]] 0]
+	set help_fd [lindex [list [file join [bu_brlcad_root "share/doc/html"] toc.html]] 0]
 	::get_html_data $help_fd
 	$docstochtml parse $archer_help_data
 
@@ -2656,7 +2657,7 @@ proc title_node_handler {node} {
 	set htmlviewer [$hv3htmlviewer html]
 	$htmlviewer configure -parsemode html
 	$htmlviewer configure -imagecmd Archer::mkHelpTkImage
-	set help_fd [lindex [list [file join [bu_brlcad_data "doc/html"] books en BRL-CAD_Tutorial_Series-VolumeI.html]] 0]
+	set help_fd [lindex [list [file join [bu_brlcad_root "share/doc/html"] books BRL-CAD_Tutorial_Series-VolumeI.html]] 0]
 	::get_html_data $help_fd
 	$htmlviewer parse $archer_help_data
 
@@ -3466,13 +3467,6 @@ proc title_node_handler {node} {
 
     after idle "$itk_component(aboutDialog) center; $itk_component(mouseOverridesDialog) center"
 
-    #    if {$tcl_platform(platform) == "windows"} {
-    #	wm attributes $itk_component(aboutDialog) -topmost 1
-    #	wm attributes $itk_component(mouseOverridesDialog) -topmost 1
-    #    }
-
-    #    wm group $itk_component(aboutDialog) [namespace tail $this]
-    #    wm group $itk_component(mouseOverridesDialog) [namespace tail $this]
     }
 }
 
@@ -4033,6 +4027,25 @@ proc title_node_handler {node} {
 	keep -background
     }
 
+    itk_component add ${_prefix}checkoverlapsmenu {
+	::menu $itk_component(${_prefix}raytracemenu).${_prefix}checkoverlapsmenu \
+	    -tearoff 0
+    } {
+	keep -background
+    }
+    $itk_component(${_prefix}checkoverlapsmenu) add command \
+	-label "50x50" \
+	-command [::itcl::code $this launchCheckOverlaps 50]
+    $itk_component(${_prefix}checkoverlapsmenu) add command \
+	-label "100x100" \
+	-command [::itcl::code $this launchCheckOverlaps 100]
+    $itk_component(${_prefix}checkoverlapsmenu) add command \
+	-label "256x256" \
+	-command [::itcl::code $this launchCheckOverlaps 256]
+    $itk_component(${_prefix}checkoverlapsmenu) add command \
+	-label "512x512" \
+	-command [::itcl::code $this launchCheckOverlaps 512]
+
     itk_component add ${_prefix}rtmenu {
 	::menu $itk_component(${_prefix}raytracemenu).${_prefix}rtmenu \
 	    -tearoff 0
@@ -4084,6 +4097,11 @@ proc title_node_handler {node} {
 	-label "Window Size" \
 	-command [::itcl::code $this launchRtApp rtedge window]
 
+    $itk_component(${_prefix}raytracemenu) add cascade \
+	-label "check overlaps" \
+	-menu $itk_component(${_prefix}checkoverlapsmenu) \
+	-state disabled
+    $itk_component(${_prefix}raytracemenu) add separator
     $itk_component(${_prefix}raytracemenu) add cascade \
 	-label "rt" \
 	-menu $itk_component(${_prefix}rtmenu) \
@@ -4160,6 +4178,7 @@ proc title_node_handler {node} {
     bind $itk_component(${_prefix}helpmenu) <<MenuSelect>> [::itcl::code $this menuStatusCB %W]
 
     bind $itk_component(${_prefix}raytracemenu) <<MenuSelect>> [::itcl::code $this menuStatusCB %W]
+    bind $itk_component(${_prefix}checkoverlapsmenu) <<MenuSelect>> [::itcl::code $this checkOverlapsMenuStatusCB %W]
     bind $itk_component(${_prefix}rtmenu) <<MenuSelect>> [::itcl::code $this rtMenuStatusCB %W]
     bind $itk_component(${_prefix}rtcheckmenu) <<MenuSelect>> [::itcl::code $this rtCheckMenuStatusCB %W]
     bind $itk_component(${_prefix}rtedgemenu) <<MenuSelect>> [::itcl::code $this rtEdgeMenuStatusCB %W]
@@ -4786,6 +4805,34 @@ proc title_node_handler {node} {
 	    default {
 		set mStatusStr ""
 	    }
+    }
+}
+
+
+::itcl::body Archer::checkOverlapsMenuStatusCB {_w} {
+    if {$mDoStatus} {
+	# entry might not support -label (i.e. tearoffs)
+	if {[catch {$_w entrycget active -label} op]} {
+	    set op ""
+	}
+
+	switch -- $op {
+	    "50x50" {
+		set mStatusStr "Run check overlaps with a size of 50 on the displayed geometry"
+	    }
+	    "100x100" {
+		set mStatusStr "Run check overlaps with a size of 100 on the displayed geometry"
+	    }
+	    "256x256" {
+		set mStatusStr "Run check overlaps with a size of 256 on the displayed geometry"
+	    }
+	    "512x512" {
+		set mStatusStr "Run check overlaps with a size of 512 on the displayed geometry"
+	    }
+	    default {
+		set mStatusStr ""
+	    }
+	}
     }
 }
 
@@ -5851,6 +5898,17 @@ proc title_node_handler {node} {
 	-text "Raytrace" -menu {
 	    options -tearoff 0
 
+	    cascade checkoverlaps -label "check overlaps" -menu {
+		command checkoverlaps50 -label "50x50" \
+		    -helpstr "Run check overlaps -G 50."
+		command checkoverlaps100 -label "100x100" \
+		    -helpstr "Run check overlaps -G 100."
+		command checkoverlaps256 -label "256x256" \
+		    -helpstr "Run check overlaps -G 256."
+		command checkoverlaps512 -label "512x512" \
+		    -helpstr "Run check overlaps -G 512."
+	    }
+
 	    cascade rt -label "rt" -menu {
 		command rt512 -label "512x512" \
 		    -helpstr "Render the current view with rt -s 512."
@@ -5883,6 +5941,17 @@ proc title_node_handler {node} {
 	    command nirt -label "nirt" \
 		-helpstr "Fire nirt at current view."
 	}
+	
+    $itk_component(menubar) menuconfigure .raytrace.checkoverlaps \
+	-state disabled
+    $itk_component(menubar) menuconfigure .raytrace.checkoverlaps.checkoverlaps50 \
+	-command [::itcl::code $this launchCheckOverlaps 50]
+    $itk_component(menubar) menuconfigure .raytrace.checkoverlaps.checkoverlaps100 \
+	-command [::itcl::code $this launchCheckOverlaps 100]
+    $itk_component(menubar) menuconfigure .raytrace.checkoverlaps.checkoverlaps256 \
+	-command [::itcl::code $this launchCheckOverlaps 256]
+    $itk_component(menubar) menuconfigure .raytrace.checkoverlaps.checkoverlaps512 \
+	-command [::itcl::code $this launchCheckOverlaps 512]
 
     $itk_component(menubar) menuconfigure .raytrace.rt \
 	-state disabled
@@ -6164,6 +6233,7 @@ proc title_node_handler {node} {
 		$itk_component(${prefix}modesmenu) entryconfigure "Snap Grid" -state normal
 		$itk_component(${prefix}modesmenu) entryconfigure "Angle/Distance Cursor" -state normal
 
+		$itk_component(${prefix}raytracemenu) entryconfigure "check overlaps" -state normal
 		$itk_component(${prefix}raytracemenu) entryconfigure "rt" -state normal
 		$itk_component(${prefix}raytracemenu) entryconfigure "rtcheck" -state normal
 		$itk_component(${prefix}raytracemenu) entryconfigure "rtedge" -state normal
@@ -6194,6 +6264,7 @@ proc title_node_handler {node} {
 	    $itk_component(menubar) menuconfigure .modes.sgrid -state normal
 	    $itk_component(menubar) menuconfigure .modes.adc -state normal
 
+	    $itk_component(menubar) menuconfigure .raytrace.checkoverlaps -state normal
 	    $itk_component(menubar) menuconfigure .raytrace.rt -state normal
 	    $itk_component(menubar) menuconfigure .raytrace.rtcheck -state normal
 	    $itk_component(menubar) menuconfigure .raytrace.rtedge -state normal

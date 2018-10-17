@@ -1,7 +1,7 @@
 /*                        L I B F U N C S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -60,36 +60,6 @@ lwrapper_func(ClientData data, Tcl_Interp *interp, int argc, const char *argv[])
 
 #define TINYBUFSIZ 32
 #define SMALLBUFSIZ 256
-
-/**
- * A wrapper for bu_mem_barriercheck.
- *
- * \@param clientData    - UNUSED, present for signature matching
- * @param argc		- number of elements in argv
- * @param argv		- command name and arguments
- *
- * @return BRLCAD_OK if successful, otherwise, BRLCAD_ERROR.
- */
-HIDDEN int
-tcl_bu_mem_barriercheck(void *UNUSED(clientData),
-			int argc,
-			const char **argv)
-{
-    int ret;
-
-    if (argc > 1) {
-	bu_log("Usage: %s\n", argv[0]);
-	return BRLCAD_ERROR;
-    }
-
-    ret = bu_mem_barriercheck();
-    if (UNLIKELY(ret < 0)) {
-	bu_log("bu_mem_barriercheck() failed\n");
-	return BRLCAD_ERROR;
-    }
-    return BRLCAD_OK;
-}
-
 
 /**
  * A wrapper for bu_prmem. Prints map of memory currently in use, to
@@ -356,30 +326,6 @@ tcl_bu_brlcad_root(void *clientData,
 
 
 /**
- * A wrapper for bu_brlcad_data.
- *
- * @param clientData	- associated data/state
- * @param argc		- number of elements in argv
- * @param argv		- command name and arguments
- *
- * @return BRLCAD_OK if successful, otherwise, BRLCAD_ERROR.
- */
-HIDDEN int
-tcl_bu_brlcad_data(void *clientData,
-		   int argc,
-		   const char **argv)
-{
-    Tcl_Interp *interp = (Tcl_Interp *)clientData;
-    if (argc != 2) {
-	bu_log("Usage: bu_brlcad_data subdir\n");
-	return BRLCAD_ERROR;
-    }
-    Tcl_AppendResult(interp, bu_brlcad_data(argv[1], 1), NULL);
-    return BRLCAD_OK;
-}
-
-
-/**
  * A wrapper for bu_units_conversion.
  *
  * @param clientData	- associated data/state
@@ -433,10 +379,8 @@ Bu_Init(void *p)
 
     static struct bu_cmdtab cmds[] = {
 	{"bu_units_conversion",		tcl_bu_units_conversion},
-	{"bu_brlcad_data",		tcl_bu_brlcad_data},
 	{"bu_brlcad_dir",		tcl_bu_brlcad_dir},
 	{"bu_brlcad_root",		tcl_bu_brlcad_root},
-	{"bu_mem_barriercheck",		tcl_bu_mem_barriercheck},
 	{"bu_prmem",			tcl_bu_prmem},
 	{"bu_get_value_by_keyword",	tcl_bu_get_value_by_keyword},
 	{"bu_rgb_to_hsv",		tcl_bu_rgb_to_hsv},
@@ -549,8 +493,10 @@ tclcad_bn_isect_line2_line2(ClientData UNUSED(clientData), Tcl_Interp *interp, i
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
     fastf_t dist[2];
-    point_t pt, a;
-    vect_t dir, c;
+    point_t pt = VINIT_ZERO;
+    point_t a = VINIT_ZERO;
+    vect_t dir = VINIT_ZERO;
+    vect_t c = VINIT_ZERO;
     int i;
     static const struct bn_tol tol = {
 	BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST*BN_TOL_DIST, 1e-6, 1-1e-6
@@ -564,11 +510,6 @@ tclcad_bn_isect_line2_line2(ClientData UNUSED(clientData), Tcl_Interp *interp, i
     }
 
     /* i = bn_isect_line2_line2 {0 0} {1 0} {1 1} {0 -1} */
-
-    VSETALL(pt, 0.0);
-    VSETALL(dir, 0.0);
-    VSETALL(a, 0.0);
-    VSETALL(c, 0.0);
 
     if (bn_decode_vect(pt, argv[1]) < 2) {
 	bu_vls_printf(&result, "bn_isect_line2_line2 no pt: %s\n", argv[0]);
@@ -2023,20 +1964,6 @@ tclcad_rt_pr_cutter(Tcl_Interp *interp, const union cutter *cutp)
 	    }
 	    bu_vls_strcat(&str, "}");
 	    break;
-	case CUT_NUGRIDNODE:
-	    bu_vls_printf(&str, "type nugridnode");
-	    for (i = 0; i < 3; i++) {
-		bu_vls_printf(&str, " %c {", xyz[i]);
-		bu_vls_printf(&str, "spos %.25G epos %.25G width %.25g",
-			      cutp->nugn.nu_axis[i]->nu_spos,
-			      cutp->nugn.nu_axis[i]->nu_epos,
-			      cutp->nugn.nu_axis[i]->nu_width);
-		bu_vls_printf(&str, " cells_per_axis %d",
-			      cutp->nugn.nu_cells_per_axis[i]);
-		bu_vls_printf(&str, " stepsize %d}",
-			      cutp->nugn.nu_stepsize[i]);
-	    }
-	    break;
 	default:
 	    bu_vls_printf(&str, "tclcad_rt_pr_cutter() bad pointer cutp=%p",
 			  (void *)cutp);
@@ -2369,10 +2296,9 @@ tclcad_rt_prep(ClientData clientData, Tcl_Interp *interp, int argc, const char *
 		  rtip->needprep
 	);
 
-    bu_vls_printf(&str, " space_partition_type %s n_nugridnode %d n_cutnode %d n_boxnode %d n_empty %ld",
-		  rtip->rti_space_partition == RT_PART_NUGRID ?
-		  "NUGrid" : "NUBSP",
-		  rtip->rti_ncut_by_type[CUT_NUGRIDNODE],
+    bu_vls_printf(&str, " space_partition_type %s n_cutnode %d n_boxnode %d n_empty %ld",
+		  rtip->rti_space_partition == RT_PART_NUBSPT ?
+		  "NUBSP" : "unknown",
 		  rtip->rti_ncut_by_type[CUT_CUTNODE],
 		  rtip->rti_ncut_by_type[CUT_BOXNODE],
 		  rtip->nempty_cells);

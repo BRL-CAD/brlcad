@@ -1,7 +1,7 @@
 /*                     C S G B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -63,7 +63,7 @@ write_out(struct rt_wdb* fp, struct rt_db_internal *ip, const char *name, struct
     /* write the object in brep/nurbs form */
     brep = ON_Brep::New();
     ip->idb_meth->ft_brep(&brep, ip, tol);
-    mk_brep(fp, bname.c_str(), brep);
+    mk_brep(fp, bname.c_str(), (void *)brep);
     // delete brep;
 }
 

@@ -1,7 +1,7 @@
 /*                          H I S T . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2016 United States Government as represented by
+ * Copyright (c) 1990-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -159,7 +159,7 @@ hist_pr_suppress(register const struct bu_hist *histp, const char *title, int ze
 	if (mark_count <= 0 && histp->hg_bins[i] > 0)
 	    mark_count = 1;
 	if (mark_count > NMARKS) {
-	    bu_log("mark_count=%d, NMARKS=%d, hg_bins[%d]=%ld, maxcount=%ld\n",
+	    bu_log("mark_count=%d, NMARKS=%d, hg_bins[%zu]=%ld, maxcount=%ld\n",
 		   mark_count, NMARKS, i, histp->hg_bins[i], maxcount);
 	    bu_bomb("bu_hist_pr() bogus mark_count\n");
 	}

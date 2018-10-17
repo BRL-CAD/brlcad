@@ -1,5 +1,5 @@
 # To minimize the number of build targets and binaries that are created, we
-# combine most (not all) of the unit tests into a single program.
+# combine some of the unit tests into a single program.
 
 set(bu_test_srcs
   b64.c
@@ -9,16 +9,20 @@ set(bu_test_srcs
   booleanize.c
   color.c
   datetime.c
+  dir.c
   dirname.c
   encode.c
   escape.c
   file_mime.c
   heap.c
+  hook.c
   humanize_number.c
-  namegen.c
+  vls_incr.c
+  vls_simplify.c
   opt.c
   parallel.c
   path_component.c
+  ptbl.c
   redblack.c
   semaphore.c
   sort.c
@@ -35,7 +39,7 @@ set(BU_TEST_SRC_SWITCHES)
 set(BU_TEST_LIST)
 foreach(srcfile ${bu_test_srcs})
   get_filename_component(NAME_ROOT ${srcfile} NAME_WE)
-  set(BU_TEST_SRC_INCLUDES "${BU_TEST_SRC_INCLUDES}\n#include \"libbu/tests/${srcfile}\"")
+  set(BU_TEST_SRC_INCLUDES "${BU_TEST_SRC_INCLUDES}\n#define main ${NAME_ROOT}_main\n#include \"libbu/tests/${srcfile}\"\n#undef main\n")
   set(BU_TEST_SRC_SWITCHES "${BU_TEST_SRC_SWITCHES}\n	if (BU_STR_EQUAL(av[0], \"${NAME_ROOT}\")) return ${NAME_ROOT}_main(ac,av);")
   set(BU_TEST_LIST "${BU_TEST_LIST}\\n	${NAME_ROOT}")
 endforeach(srcfile ${bu_test_srcs})
@@ -60,31 +64,31 @@ BRLCAD_ADDEXEC(bu_gethostname gethostname.c libbu TEST)
 #  ************ basename.c tests *************
 #
 
-###############################
-#      bu_basename testing    #
-###############################
-add_test(NAME bu_basename_null                                   COMMAND bu_test basename) # tests NULL
-add_test(NAME bu_basename_empty                                  COMMAND bu_test basename "")
-add_test(NAME bu_basename_sl_usr_sl_dir_sl_file                  COMMAND bu_test basename "/usr/dir/file")
-add_test(NAME bu_basename_sl_usr_sl_dir_sl_                      COMMAND bu_test basename "/usr/dir/")
-add_test(NAME bu_basename_sl_usr_bsl__sl_dir                     COMMAND bu_test basename "/usr\\\\/dir")
-add_test(NAME bu_basename_sl_usr_sl__p_                          COMMAND bu_test basename "/usr/.")
-add_test(NAME bu_basename_sl_usr_sl_                             COMMAND bu_test basename "/usr/")
-add_test(NAME bu_basename_sl_usr                                 COMMAND bu_test basename "/usr")
-add_test(NAME bu_basename_usr                                    COMMAND bu_test basename "usr")
-add_test(NAME bu_basename_sl_usr_sl_some_sp_long_sl_file         COMMAND bu_test basename "/usr/some long/file")
-add_test(NAME bu_basename_sl_usr_sl_some_sp_file                 COMMAND bu_test basename "/usr/some file")
-add_test(NAME bu_basename_C_c__sl_usr_sl_some_bsl__sp_drivepath  COMMAND bu_test basename "C:/usr/some\\\\ drivepath")
-add_test(NAME bu_basename_sl_a_sp_test_sp_file                   COMMAND bu_test basename "/a test file")
-add_test(NAME bu_basename_another_sp_file                        COMMAND bu_test basename "another file")
-add_test(NAME bu_basename_C_c__bsl__Temp                         COMMAND bu_test basename "C:\\\\Temp")
-add_test(NAME bu_basename_C_c__sl_Temp                           COMMAND bu_test basename "C:/Temp")
-add_test(NAME bu_basename_sl_                                    COMMAND bu_test basename "/")
-add_test(NAME bu_basename_sl__sl__sl__sl__sl_                    COMMAND bu_test basename "/////")
-add_test(NAME bu_basename_p_                                     COMMAND bu_test basename ".")
-add_test(NAME bu_basename_p__p_                                  COMMAND bu_test basename "..")
-add_test(NAME bu_basename_p__p__p_                               COMMAND bu_test basename "...")
-add_test(NAME bu_basename_sp__sp__sp_                            COMMAND bu_test basename "   ")
+####################################
+#      bu_path_basename testing    #
+####################################
+add_test(NAME bu_path_basename_null                                   COMMAND bu_test basename) # tests NULL
+add_test(NAME bu_path_basename_empty                                  COMMAND bu_test basename "")
+add_test(NAME bu_path_basename_sl_usr_sl_dir_sl_file                  COMMAND bu_test basename "/usr/dir/file")
+add_test(NAME bu_path_basename_sl_usr_sl_dir_sl_                      COMMAND bu_test basename "/usr/dir/")
+add_test(NAME bu_path_basename_sl_usr_bsl__sl_dir                     COMMAND bu_test basename "/usr\\\\/dir")
+add_test(NAME bu_path_basename_sl_usr_sl__p_                          COMMAND bu_test basename "/usr/.")
+add_test(NAME bu_path_basename_sl_usr_sl_                             COMMAND bu_test basename "/usr/")
+add_test(NAME bu_path_basename_sl_usr                                 COMMAND bu_test basename "/usr")
+add_test(NAME bu_path_basename_usr                                    COMMAND bu_test basename "usr")
+add_test(NAME bu_path_basename_sl_usr_sl_some_sp_long_sl_file         COMMAND bu_test basename "/usr/some long/file")
+add_test(NAME bu_path_basename_sl_usr_sl_some_sp_file                 COMMAND bu_test basename "/usr/some file")
+add_test(NAME bu_path_basename_C_c__sl_usr_sl_some_bsl__sp_drivepath  COMMAND bu_test basename "C:/usr/some\\\\ drivepath")
+add_test(NAME bu_path_basename_sl_a_sp_test_sp_file                   COMMAND bu_test basename "/a test file")
+add_test(NAME bu_path_basename_another_sp_file                        COMMAND bu_test basename "another file")
+add_test(NAME bu_path_basename_C_c__bsl__Temp                         COMMAND bu_test basename "C:\\\\Temp")
+add_test(NAME bu_path_basename_C_c__sl_Temp                           COMMAND bu_test basename "C:/Temp")
+add_test(NAME bu_path_basename_sl_                                    COMMAND bu_test basename "/")
+add_test(NAME bu_path_basename_sl__sl__sl__sl__sl_                    COMMAND bu_test basename "/////")
+add_test(NAME bu_path_basename_p_                                     COMMAND bu_test basename ".")
+add_test(NAME bu_path_basename_p__p_                                  COMMAND bu_test basename "..")
+add_test(NAME bu_path_basename_p__p__p_                               COMMAND bu_test basename "...")
+add_test(NAME bu_path_basename_sp__sp__sp_                            COMMAND bu_test basename "   ")
 
 
 ##########################################
@@ -168,31 +172,31 @@ add_test(NAME bu_str_isprint_carriage_return      COMMAND bu_test str_isprint 7)
 #  ************ dirname.c tests *************
 #
 
-##############################
-#      bu_dirname testing    #
-##############################
-add_test(NAME bu_dirname__usr_dir_file COMMAND bu_test dirname "/usr/dir/file")
-add_test(NAME bu_dirname__usr_dir_ COMMAND bu_test dirname "/usr/dir/")
-add_test(NAME bu_dirname__usr__bsl__dir COMMAND bu_test dirname "/usr\\\\/dir")
-add_test(NAME bu_dirname__usr_period COMMAND bu_test dirname "/usr/.")
-add_test(NAME bu_dirname__usr_ COMMAND bu_test dirname "/usr/")
-add_test(NAME bu_dirname__usr COMMAND bu_test dirname "/usr")
-add_test(NAME bu_dirname_usr COMMAND bu_test dirname "usr")
-add_test(NAME bu_dirname__usr_some_sp_long_file COMMAND bu_test dirname "/usr/some long/file")
-add_test(NAME bu_dirname__usr_some_sp_file COMMAND bu_test dirname "/usr/some file")
-add_test(NAME bu_dirname__usr_some__bsl__sp_drivepath COMMAND bu_test dirname "C:/usr/some\\\\ drivepath")
-add_test(NAME bu_dirname__a_sp_file COMMAND bu_test dirname "/a test file")
-add_test(NAME bu_dirname_another_file COMMAND bu_test dirname "another file")
-add_test(NAME bu_dirname_C_colon__bsl_Temp COMMAND bu_test dirname "C:\\\\Temp")
-add_test(NAME bu_dirname_C_colon__Temp COMMAND bu_test dirname "C:/Temp")
-add_test(NAME bu_dirname__ COMMAND bu_test dirname "/")
-add_test(NAME bu_dirname______ COMMAND bu_test dirname "/////")
-add_test(NAME bu_dirname__period_ COMMAND bu_test dirname ".")
-add_test(NAME bu_dirname__period__period_ COMMAND bu_test dirname "..")
-add_test(NAME bu_dirname__period__period__period_ COMMAND bu_test dirname "...")
-add_test(NAME bu_dirname__sp__sp__sp_ COMMAND bu_test dirname "   ")
-add_test(NAME bu_dirname_empty COMMAND bu_test dirname "")
-add_test(NAME bu_dirname_null COMMAND bu_test dirname)
+###################################
+#      bu_path_dirname testing    #
+###################################
+add_test(NAME bu_path_dirname__usr_dir_file COMMAND bu_test dirname "/usr/dir/file")
+add_test(NAME bu_path_dirname__usr_dir_ COMMAND bu_test dirname "/usr/dir/")
+add_test(NAME bu_path_dirname__usr__bsl__dir COMMAND bu_test dirname "/usr\\\\/dir")
+add_test(NAME bu_path_dirname__usr_period COMMAND bu_test dirname "/usr/.")
+add_test(NAME bu_path_dirname__usr_ COMMAND bu_test dirname "/usr/")
+add_test(NAME bu_path_dirname__usr COMMAND bu_test dirname "/usr")
+add_test(NAME bu_path_dirname_usr COMMAND bu_test dirname "usr")
+add_test(NAME bu_path_dirname__usr_some_sp_long_file COMMAND bu_test dirname "/usr/some long/file")
+add_test(NAME bu_path_dirname__usr_some_sp_file COMMAND bu_test dirname "/usr/some file")
+add_test(NAME bu_path_dirname__usr_some__bsl__sp_drivepath COMMAND bu_test dirname "C:/usr/some\\\\ drivepath")
+add_test(NAME bu_path_dirname__a_sp_file COMMAND bu_test dirname "/a test file")
+add_test(NAME bu_path_dirname_another_file COMMAND bu_test dirname "another file")
+add_test(NAME bu_path_dirname_C_colon__bsl_Temp COMMAND bu_test dirname "C:\\\\Temp")
+add_test(NAME bu_path_dirname_C_colon__Temp COMMAND bu_test dirname "C:/Temp")
+add_test(NAME bu_path_dirname__ COMMAND bu_test dirname "/")
+add_test(NAME bu_path_dirname______ COMMAND bu_test dirname "/////")
+add_test(NAME bu_path_dirname__period_ COMMAND bu_test dirname ".")
+add_test(NAME bu_path_dirname__period__period_ COMMAND bu_test dirname "..")
+add_test(NAME bu_path_dirname__period__period__period_ COMMAND bu_test dirname "...")
+add_test(NAME bu_path_dirname__sp__sp__sp_ COMMAND bu_test dirname "   ")
+add_test(NAME bu_path_dirname_empty COMMAND bu_test dirname "")
+add_test(NAME bu_path_dirname_null COMMAND bu_test dirname)
 
 #
 #  ************ escape.c tests *************
@@ -320,6 +324,12 @@ add_test(NAME bu_sort_fastf_inf COMMAND bu_test sort 10)
 # of floats.
 
 add_test(NAME bu_rgb_to_hsv_1 COMMAND bu_test color 1 192,78,214 290.294,0.636,0.839)
+add_test(NAME bu_rgb_to_hsv_2 COMMAND bu_test color 1 0,0,0 0.0,0.0,0.0)
+add_test(NAME bu_rgb_to_hsv_3 COMMAND bu_test color 1 255,255,255 0.0,0.0,1.0)
+add_test(NAME bu_rgb_to_hsv_4 COMMAND bu_test color 1 255,0,0 0.0,1.0,1.0)
+add_test(NAME bu_rgb_to_hsv_5 COMMAND bu_test color 1 0,255,0 120.0,1.0,1.0)
+add_test(NAME bu_rgb_to_hsv_6 COMMAND bu_test color 1 0,0,255 240.0,1.0,1.0)
+add_test(NAME bu_rgb_to_hsv_7 COMMAND bu_test color 1 128,128,128 0.0,0.0,0.501)
 
 # For function #2 (bu_hsv_to_rgb) the <args> format is as follows:
 #
@@ -330,6 +340,12 @@ add_test(NAME bu_rgb_to_hsv_1 COMMAND bu_test color 1 192,78,214 290.294,0.636,0
 # of floats.
 
 add_test(NAME bu_hsv_to_rgb_1 COMMAND bu_test color 2 290.294,0.636,0.839 192,78,214)
+add_test(NAME bu_hsv_to_rgb_2 COMMAND bu_test color 2 0.0,0.0,0.0 0,0,0)
+add_test(NAME bu_hsv_to_rgb_3 COMMAND bu_test color 2 0.0,0.0,1.0 255,255,255)
+add_test(NAME bu_hsv_to_rgb_4 COMMAND bu_test color 2 0.0,1.0,1.0 255,0,0)
+add_test(NAME bu_hsv_to_rgb_5 COMMAND bu_test color 2 120.0,1.0,1.0 0,255,0)
+add_test(NAME bu_hsv_to_rgb_6 COMMAND bu_test color 2 240.0,1.0,1.0 0,0,255)
+add_test(NAME bu_hsv_to_rgb_7 COMMAND bu_test color 2 0.0,0.0,0.501 128,128,128)
 
 # For function #3 (bu_str_to_rgb) the <args> format is as follows:
 #
@@ -338,9 +354,18 @@ add_test(NAME bu_hsv_to_rgb_1 COMMAND bu_test color 2 290.294,0.636,0.839 192,78
 # Where rgb colors are represented by comma-separated triples of
 # integers.
 
-add_test(NAME bu_str_to_rgb_1 COMMAND bu_test color 3 "#C04ED6" 192,78,214)
-add_test(NAME bu_str_to_rgb_2 COMMAND bu_test color 3 "192/78/214" 192,78,214)
-add_test(NAME bu_str_to_rgb_3 COMMAND bu_test color 3 "192 78 214" 192,78,214)
+add_test(NAME bu_str_to_rgb_1 COMMAND bu_test color 3 "1 2 3" 1,2,3)
+add_test(NAME bu_str_to_rgb_2 COMMAND bu_test color 3 "78/214/192" 78,214,192)
+add_test(NAME bu_str_to_rgb_3 COMMAND bu_test color 3 "214 192 78" 214,192,78)
+add_test(NAME bu_str_to_rgb_4 COMMAND bu_test color 3 "192,214,78" 192,214,78)
+add_test(NAME bu_str_to_rgb_5 COMMAND bu_test color 3 "1234/1234/1234" 11,22,33) # invalid
+add_test(NAME bu_str_to_rgb_6 COMMAND bu_test color 3 "-1 -2 -3" 11,22,33) # invalid
+add_test(NAME bu_str_to_rgb_7 COMMAND bu_test color 3 "#000000" 0,0,0)
+add_test(NAME bu_str_to_rgb_8 COMMAND bu_test color 3 "#ffffff" 255,255,255)
+add_test(NAME bu_str_to_rgb_9 COMMAND bu_test color 3 "#FfFFfF" 255,255,255)
+add_test(NAME bu_str_to_rgb_10 COMMAND bu_test color 3 "#fff" 255,255,255)
+add_test(NAME bu_str_to_rgb_11 COMMAND bu_test color 3 "#C04ED6" 192,78,214)
+add_test(NAME bu_str_to_rgb_12 COMMAND bu_test color 3 "#C4D" 204,68,221)
 
 # For function #4 (bu_color_to_rgb_floats) the <args> format is as follows:
 #
@@ -350,6 +375,7 @@ add_test(NAME bu_str_to_rgb_3 COMMAND bu_test color 3 "192 78 214" 192,78,214)
 # integers or floats.
 
 add_test(NAME bu_color_to_rgb_floats_1 COMMAND bu_test color 4 192,78,214)
+
 #
 # ************ str.c tests ************
 #
@@ -469,21 +495,45 @@ add_test(NAME bu_badmagic_null_ptr    COMMAND bu_test badmagic 3)
 add_test(NAME bu_badmagic_misaligned  COMMAND bu_test badmagic 4)
 
 #
-#  *********** namegen.c tests ************
+#  *********** vls_incr.c tests ************
 #
 
-add_test(NAME bu_namegen_1  COMMAND bu_test namegen "test1.r"      0 "NULL"        1  "test2.r")
-add_test(NAME bu_namegen_2  COMMAND bu_test namegen "test1.r"      0 "0:0:0:0"     10 "test11.r")
-add_test(NAME bu_namegen_3  COMMAND bu_test namegen "test1_1.r"    0 "0:0:0:0"     2  "test1_3.r")
-add_test(NAME bu_namegen_4  COMMAND bu_test namegen "test-1.r"     0 "0:0:0:0"     1  "test-2.r")
-add_test(NAME bu_namegen_5  COMMAND bu_test namegen "test1.r"      0 "3:0:0:0"     1  "test002.r")
-add_test(NAME bu_namegen_6  COMMAND bu_test namegen "test1.r"      0 "3:5:0:0"     1  "test005.r")
-add_test(NAME bu_namegen_7  COMMAND bu_test namegen "test5.r"      0 "3:5:0:0"     1  "test006.r")
-add_test(NAME bu_namegen_8  COMMAND bu_test namegen "test8.r"      0 "0:0:9:0"     2  "test0.r")
-add_test(NAME bu_namegen_9  COMMAND bu_test namegen "test1.r"      0 "0:0:0:2"     2  "test5.r")
-add_test(NAME bu_namegen_10 COMMAND bu_test namegen "test90.r"     0 "4:20:99:5"   2  "test0020.r")
-add_test(NAME bu_namegen_11 COMMAND bu_test namegen "test_1_obj.r" 1 "0:0:0:0:-:-" 1  "test-2-obj.r")
-add_test(NAME bu_namegen_12 COMMAND bu_test namegen "test.r"       1 "3:0:0:0:-"   5  "test.r-005")
+add_test(NAME bu_vls_incr_1  COMMAND bu_test vls_incr "test1.r"      0 "NULL"        1  "test2.r")
+add_test(NAME bu_vls_incr_2  COMMAND bu_test vls_incr "test1.r"      0 "0:0:0:0"    10  "test11.r")
+add_test(NAME bu_vls_incr_3  COMMAND bu_test vls_incr "test1_1.r"    0 "0:0:0:0"     2  "test1_3.r")
+add_test(NAME bu_vls_incr_4  COMMAND bu_test vls_incr "test-1.r"     0 "0:0:0:0"     1  "test-2.r")
+add_test(NAME bu_vls_incr_5  COMMAND bu_test vls_incr "test1.r"      0 "3:0:0:0"     1  "test002.r")
+add_test(NAME bu_vls_incr_6  COMMAND bu_test vls_incr "test1.r"      0 "3:5:0:0"     1  "test005.r")
+add_test(NAME bu_vls_incr_7  COMMAND bu_test vls_incr "test5.r"      0 "3:5:0:0"     1  "test006.r")
+add_test(NAME bu_vls_incr_8  COMMAND bu_test vls_incr "test8.r"      0 "0:0:9:0"     2  "test0.r")
+add_test(NAME bu_vls_incr_9  COMMAND bu_test vls_incr "test1.r"      0 "0:0:0:2"     2  "test5.r")
+add_test(NAME bu_vls_incr_10 COMMAND bu_test vls_incr "test90.r"     0 "4:20:99:5"   2  "test0020.r")
+add_test(NAME bu_vls_incr_11 COMMAND bu_test vls_incr "test_1_obj.r" 1 "0:0:0:0:-:-" 1  "test-2-obj.r")
+add_test(NAME bu_vls_incr_12 COMMAND bu_test vls_incr "test.r"       1 "3:0:0:0:-"   5  "test.r-005")
+add_test(NAME bu_vls_incr_13 COMMAND bu_test vls_incr "test1"        0 "NULL"        1  "test2")
+add_test(NAME bu_vls_incr_14 COMMAND bu_test vls_incr "test20"       0 "NULL"      100  "test120")
+add_test(NAME bu_vls_incr_15 COMMAND bu_test vls_incr "test"         0 "NULL"        1  "test1")
+add_test(NAME bu_vls_incr_16 COMMAND bu_test vls_incr "test"         0 "0:0:0:0:-"   1  "test-1")
+
+BRLCAD_ADDEXEC(bu_vls_incr_uniq vls_incr_uniq.cpp libbu TEST)
+add_test(NAME bu_vls_incr_uniq_1  COMMAND bu_vls_incr_uniq  "test.r1" "test.r3")
+add_test(NAME bu_vls_incr_uniq_2  COMMAND bu_vls_incr_uniq  "test.r2" "test.r3")
+
+#
+#  *********** vls_simlify.c tests ************
+#
+
+add_test(NAME bu_vls_simplify_1  COMMAND bu_test vls_simplify "^%test1@@%"    "__test1___")
+add_test(NAME bu_vls_simplify_2  COMMAND bu_test vls_simplify "^%test1@@%"    "_test1_"     ""   "_")
+add_test(NAME bu_vls_simplify_3  COMMAND bu_test vls_simplify "^%test1@@%"    "_test1@@_"   "@"  "_")
+add_test(NAME bu_vls_simplify_4  COMMAND bu_test vls_simplify "^%test1.s@@%"  "_test1_s_"   ""   "_")
+add_test(NAME bu_vls_simplify_5  COMMAND bu_test vls_simplify "^%test1.s@@%"  "_test1.s_"   "."  "_")
+add_test(NAME bu_vls_simplify_6  COMMAND bu_test vls_simplify "^%test1.s@@%"  "test1.s"     "."  "_"  "_")
+add_test(NAME bu_vls_simplify_7  COMMAND bu_test vls_simplify "^%test1.s@@%"  "%test1.s_%"  ".%" "_"  "_")
+add_test(NAME bu_vls_simplify_8  COMMAND bu_test vls_simplify "^%test1.s@@%"  "test1.s"     ".%" "_"  "%_")
+add_test(NAME bu_vls_simplify_9  COMMAND bu_test vls_simplify "^%test1.s@@%"  "test1.s@"    ".@" "_@" "_")
+add_test(NAME bu_vls_simplify_10 COMMAND bu_test vls_simplify "^%test1.s@@%"  "test1.s"     ".@" "_@" "@_")
+add_test(NAME bu_vls_simplify_11 COMMAND bu_test vls_simplify "^%test@1.s@@%" "test@1.s"    ".@" "_@" "@_")
 
 #
 #  *********** opt.c tests ************
@@ -567,6 +617,7 @@ add_test(NAME bu_opt_2_color_12  COMMAND bu_test opt 2 C 12)
 add_test(NAME bu_opt_2_color_13  COMMAND bu_test opt 2 C 13)
 add_test(NAME bu_opt_2_color_14  COMMAND bu_test opt 2 C 14)
 add_test(NAME bu_opt_2_color_15  COMMAND bu_test opt 2 C 15)
+add_test(NAME bu_opt_2_color_16  COMMAND bu_test opt 2 C 16)
 
 # vector tests
 add_test(NAME bu_opt_3_vect_00  COMMAND bu_test opt 3 V 0)
@@ -607,12 +658,43 @@ add_test(NAME bu_uuid_encode COMMAND bu_test uuid)
 #add_test(NAME bu_uuid_compare COMMAND bu_test uuid 1)
 #add_test(NAME bu_uuid_encode  COMMAND bu_test uuid 2)
 
+#
+#  *********** ptbl.c tests ************
+#
+
+add_test(NAME bu_ptbl_init_default COMMAND bu_test ptbl init)
+add_test(NAME bu_ptbl_init_0 COMMAND bu_test ptbl init 0)
+add_test(NAME bu_ptbl_init_10000 COMMAND bu_test ptbl init 10000)
+
+add_test(NAME bu_ptbl_reset COMMAND bu_test ptbl reset)
+add_test(NAME bu_ptbl_zero COMMAND bu_test ptbl zero)
+
+add_test(NAME bu_ptbl_ins COMMAND bu_test ptbl ins)
+add_test(NAME bu_ptbl_ins_uniq COMMAND bu_test ptbl ins uniq)
+add_test(NAME bu_ptbl_locate COMMAND bu_test ptbl locate)
+
+add_test(NAME bu_ptbl_rm_cons COMMAND bu_test ptbl rm cons)
+add_test(NAME bu_ptbl_rm_mix COMMAND bu_test ptbl rm mix)
+
+add_test(NAME bu_ptbl_cat COMMAND bu_test ptbl cat)
+add_test(NAME bu_ptbl_cat_uniq COMMAND bu_test ptbl cat uniq)
+
+add_test(NAME bu_ptbl_trunc COMMAND bu_test ptbl trunc)
+
+#
+#  *********** hook.c tests ************
+#
+
+add_test(NAME bu_hook_basic COMMAND bu_test hook basic)
+add_test(NAME bu_hook_multiadd COMMAND bu_test hook multiadd)
+add_test(NAME bu_hook_saverestore COMMAND bu_test hook saverestore)
 
 CMAKEFILES(
   tests_bitv.cmake
   tests_vls.cmake
 )
 
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

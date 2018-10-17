@@ -1,7 +1,7 @@
 /*                        R T F U N C . H
  * BRL-CAD
  *
- * Copyright (c) 2010-2016 United States Government as represented by
+ * Copyright (c) 2010-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -155,7 +155,7 @@ RT_EXPORT extern int rt_obj_adjust(struct bu_vls *logstr, struct rt_db_internal 
 /**
  * describe an object in text form (used by the 'l' command)
  */
-RT_EXPORT extern int rt_obj_describe(struct bu_vls *logstr, const struct rt_db_internal *ip, int verbose, double mm2local, struct resource *resp, struct db_i *dbip);
+RT_EXPORT extern int rt_obj_describe(struct bu_vls *logstr, const struct rt_db_internal *ip, int verbose, double mm2local);
 
 /**
  * create a 'default' object
@@ -165,7 +165,7 @@ RT_EXPORT extern int rt_obj_make(const struct rt_functab *ftp, struct rt_db_inte
 /**
  * apply a matrix transformation to an object (translation, rotation, scale)
  */
-RT_EXPORT extern int rt_obj_xform(struct rt_db_internal *op, const mat_t mat, struct rt_db_internal *ip, int release, struct db_i *dbip, struct resource *resp);
+RT_EXPORT extern int rt_obj_xform(struct rt_db_internal *op, const mat_t mat, struct rt_db_internal *ip, int release, struct db_i *dbip);
 
 /**
  * obtain parameters for an object in libpc form

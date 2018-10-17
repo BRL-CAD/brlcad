@@ -3,14 +3,8 @@ set(RAW_INCLUDE_DIRS
   ${RT_INCLUDE_DIRS}
   ${WDB_INCLUDE_DIRS}
   )
-LIST(REMOVE_DUPLICATES RAW_INCLUDE_DIRS)
+list(REMOVE_DUPLICATES RAW_INCLUDE_DIRS)
 include_directories(${RAW_INCLUDE_DIRS})
-
-if(MSVC)
-  add_definitions(
-    -DON_DLL_IMPORTS
-    )
-endif(MSVC)
 
 set(rawg_SRCS
   Bot.cpp
@@ -24,6 +18,7 @@ add_dependencies(g-raw libgcv_plugins)
 
 set(RAW_IGNORE_FILES
   Bot.h
+  CMakeLists.txt
   RegionList.h
   )
 CMAKEFILES(${RAW_IGNORE_FILES})

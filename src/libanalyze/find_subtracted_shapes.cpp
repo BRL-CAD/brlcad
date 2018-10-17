@@ -621,7 +621,8 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
 	    for (size_t si = 0; si < BU_PTBL_LEN(&to_subtract); si++) {
 		struct subbrep_island_data *s = (struct subbrep_island_data *)BU_PTBL_GET(&to_subtract, si);
 		tree_list[curr_count].tl_op = OP_UNION;
-		RT_GET_TREE(tp, &rt_uniresource);
+		BU_GET(tp, union tree);
+		RT_TREE_INIT(tp);
 		tree_list[curr_count].tl_tree = tp;
 		tp->tr_l.tl_op = OP_DB_LEAF;
 		tp->tr_l.tl_name = bu_strdup(bu_vls_addr(s->obj_name));

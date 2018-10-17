@@ -1,7 +1,7 @@
 /*                        A T T A C H . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2016 United States Government as represented by
+ * Copyright (c) 1985-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -116,7 +116,6 @@ extern int Osgl_dm_init();
 # endif
 #endif /* DM_OSGL */
 
-extern void fbserv_set_port(void);		/* defined in fbserv.c */
 extern void share_dlist(struct dm_list *dlp2);	/* defined in share.c */
 
 extern struct _color_scheme default_color_scheme;
@@ -365,7 +364,7 @@ release(char *name, int need_close)
 	if (mged_variables->mv_listen) {
 	    /* drop all clients */
 	    mged_variables->mv_listen = 0;
-	    fbserv_set_port();
+	    fbserv_set_port(NULL, NULL, NULL, NULL, NULL);
 	}
 
 	/* release framebuffer resources */

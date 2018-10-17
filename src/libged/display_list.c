@@ -1,7 +1,7 @@
 /*                  D I S P L A Y _ L I S T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2016 United States Government as represented by
+ * Copyright (c) 2008-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,6 +30,7 @@
 
 #include "bu/ptbl.h"
 #include "bu/str.h"
+#include "bu/color.h"
 #include "bn/plot3.h"
 
 #include "rt/solid.h"
@@ -1115,7 +1116,8 @@ append_solid_to_display_list(
     bu_semaphore_release(RT_SEM_MODEL);
 
     /* indicate success by returning something other than TREE_NULL */
-    RT_GET_TREE(curtree, tsp->ts_resp);
+    BU_GET(curtree, union tree);
+    RT_TREE_INIT(curtree);
     curtree->tr_op = OP_NOP;
 
     return curtree;

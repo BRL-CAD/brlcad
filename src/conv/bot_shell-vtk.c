@@ -1,7 +1,7 @@
 /*                 B O T _ S H E L L - V T K . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -57,8 +57,10 @@
 #include "bio.h"
 
 /* interface headers */
+#include "bu/app.h"
 #include "bu/debug.h"
 #include "bu/getopt.h"
+#include "bu/snooze.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rt/geom.h"
@@ -390,7 +392,7 @@ main(int argc, char *argv[])
     int database_index;
 
     bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
-    sleep(1);
+    bu_snooze(BU_SEC2USEC(1));
 
     bu_setprogname(argv[0]);
 
@@ -537,11 +539,10 @@ main(int argc, char *argv[])
 	    bot = (struct bot_specific *)stp->st_specific;
 	    tri = (struct tri_specific *)bot->bot_facelist;
 	    while (tri) {
-		point_t p2, p3, sum;
+		point_t p2, p3, sum = VINIT_ZERO;
 
 		VADD2(p2, tri->tri_A, tri->tri_BA);
 		VADD2(p3, tri->tri_A, tri->tri_CA);
-		VSETALL(sum, 0.0);
 		VADD2(sum, sum, tri->tri_A);
 		VADD2(sum, sum, p2);
 		VADD2(sum, sum, p3);

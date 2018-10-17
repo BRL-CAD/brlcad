@@ -116,6 +116,7 @@ else(BRLCAD_ENABLE_OSL)
 endif(BRLCAD_ENABLE_OSL)
 
 CMAKEFILES(
+  CMakeLists.txt
   liboslrend.cpp
   oslexec_pvt.h
   render_svc.h

@@ -1,7 +1,7 @@
 /*                       F B _ R E C T . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2016 United States Government as represented by
+ * Copyright (c) 1997-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,6 +32,7 @@
 #include <stdio.h>
 
 #include "bu/color.h"
+#include "bu/log.h"
 #include "fb_private.h"
 #include "fb.h"
 

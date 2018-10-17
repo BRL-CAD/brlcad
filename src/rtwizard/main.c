@@ -1,7 +1,7 @@
 /*                        M A I N . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2016 United States Government as represented by
+ * Copyright (c) 1986-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,8 +27,10 @@
 #include "tcl.h"
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/color.h"
 #include "bu/file.h"
+#include "bu/mime.h"
 #include "bu/malloc.h"
 #include "bu/log.h"
 #include "bu/path.h"
@@ -93,10 +95,13 @@ struct rtwizard_settings {
 
 };
 
-struct rtwizard_settings * rtwizard_settings_create() {
+
+struct rtwizard_settings *
+rtwizard_settings_create()
+{
     struct rtwizard_settings *s;
-    fastf_t white[3] = {255.0, 255.0, 255.0};
-    fastf_t black[3] = {0.0, 0.0, 0.0};
+    unsigned char white[3] = {255, 255, 255};
+    unsigned char black[3] = {0, 0, 0};
     BU_GET(s, struct rtwizard_settings);
     s->magic = RTWIZARD_MAGIC;
     BU_GET(s->color, struct bu_ptbl);
@@ -118,11 +123,11 @@ struct rtwizard_settings * rtwizard_settings_create() {
     bu_vls_init(s->pid_file);
 
     BU_GET(s->bkg_color, struct bu_color);
-    (void)bu_color_from_rgb_floats(s->bkg_color, white);
+    (void)bu_color_from_rgb_chars(s->bkg_color, white);
     BU_GET(s->line_color, struct bu_color);
-    (void)bu_color_from_rgb_floats(s->line_color, black);
+    (void)bu_color_from_rgb_chars(s->line_color, black);
     BU_GET(s->non_line_color, struct bu_color);
-    (void)bu_color_from_rgb_floats(s->non_line_color, black);
+    (void)bu_color_from_rgb_chars(s->non_line_color, black);
     s->benchmark = 0;
     s->port = -1;
     s->cpus = 0;
@@ -156,6 +161,7 @@ struct rtwizard_settings * rtwizard_settings_create() {
     s->verbose = 0;
     return s;
 }
+
 
 void rtwizard_settings_destroy(struct rtwizard_settings *s) {
     bu_ptbl_free(s->color);
@@ -339,9 +345,13 @@ int
 opt_width(struct bu_vls *msg, int argc, const char **argv, void *settings)
 {
     struct rtwizard_settings *s = (struct rtwizard_settings *)settings;
-    int ret = bu_opt_int(msg, argc, argv, (void *)&s->width);
-    if (ret != -1) s->width_set = 1;
-    return ret;
+    if (s) {
+	int ret = bu_opt_int(msg, argc, argv, (void *)&s->width);
+	if (ret != -1) s->width_set = 1;
+	return ret;
+    } else {
+	return -1;
+    }
 }
 
 
@@ -349,22 +359,30 @@ int
 opt_height(struct bu_vls *msg, int argc, const char **argv, void *settings)
 {
     struct rtwizard_settings *s = (struct rtwizard_settings *)settings;
-    int ret = bu_opt_int(msg, argc, argv, (void *)&s->height);
-    if (ret != -1) s->height_set = 1;
-    return ret;
+    if (s) {
+	int ret = bu_opt_int(msg, argc, argv, (void *)&s->height);
+	if (ret != -1) s->height_set = 1;
+	return ret;
+    } else {
+	return -1;
+    }
 }
 
 int
 opt_size(struct bu_vls *msg, int argc, const char **argv, void *settings)
 {
     struct rtwizard_settings *s = (struct rtwizard_settings *)settings;
-    int ret = bu_opt_int(msg, argc, argv, (void *)&s->size);
-    if (ret != -1) {
-	s->size_set = 1;
-	if (!s->width_set) s->width = s->size;
-	if (!s->height_set) s->height = s->size;
+    if (s) {
+	int ret = bu_opt_int(msg, argc, argv, (void *)&s->size);
+	if (ret != -1) {
+	    s->size_set = 1;
+	    if (!s->width_set) s->width = s->size;
+	    if (!s->height_set) s->height = s->size;
+	}
+	return ret;
+    } else {
+	return -1;
     }
-    return ret;
 }
 
 int
@@ -396,7 +414,9 @@ opt_objs(struct bu_vls *msg, int argc, const char **argv, void *obj_tbl)
     /* TODO - use quote/unquote routines to scrub names... */
 
     for (i = 0; i < acnum; i++) {
-	bu_ptbl_ins(t, (long *)bu_strdup(avnum[i]));
+	if (t) {
+	    bu_ptbl_ins(t, (long *)bu_strdup(avnum[i]));
+	}
     }
     bu_free(objs, "string dup");
     bu_free(avnum, "array memory");
@@ -420,7 +440,9 @@ opt_letter(struct bu_vls *msg, int argc, const char **argv, void *l)
 	return -1;
     }
 
-    (*letter) = argv[0][0];
+    if (letter) {
+	(*letter) = argv[0][0];
+    }
 
     return 1;
 }
@@ -469,10 +491,12 @@ opt_quat(struct bu_vls *msg, int argc, const char **argv, void *inq)
 	bu_free(str1, "free tmp str");
 	/* If we got here, we do have four numbers */
 	if (have_four) {
-	    (*q)[0] = q1;
-	    (*q)[1] = q2;
-	    (*q)[2] = q3;
-	    (*q)[3] = q4;
+	    if (q) {
+		(*q)[0] = q1;
+		(*q)[1] = q2;
+		(*q)[2] = q3;
+		(*q)[3] = q4;
+	    }
 	    return 1;
 	}
     } else {
@@ -499,10 +523,12 @@ opt_quat(struct bu_vls *msg, int argc, const char **argv, void *inq)
 	    if (msg) bu_vls_sprintf(msg, "Not a number: %s.\n", argv[3]);
 	    return -1;
 	}
-	(*q)[0] = q1;
-	(*q)[1] = q2;
-	(*q)[2] = q3;
-	(*q)[3] = q4;
+	if (q) {
+	    (*q)[0] = q1;
+	    (*q)[1] = q2;
+	    (*q)[2] = q3;
+	    (*q)[3] = q4;
+	}
 	return 1;
     } else {
 	if (msg) bu_vls_sprintf(msg, "No valid quaternion found: %s\n", argv[0]);
@@ -540,9 +566,9 @@ void print_rtwizard_state(struct rtwizard_settings *s) {
     bu_vls_printf(&slog, "log_file: %s\n", bu_vls_addr(s->log_file));
     bu_vls_printf(&slog, "pid_file: %s\n", bu_vls_addr(s->pid_file));
 
-    bu_vls_printf(&slog, "width(%d): %d\n", s->width_set, s->width);
-    bu_vls_printf(&slog, "height(%d): %d\n", s->height_set, s->height);
-    bu_vls_printf(&slog, "size(%d): %d\n", s->size_set, s->size);
+    bu_vls_printf(&slog, "width(%d): %zu\n", s->width_set, s->width);
+    bu_vls_printf(&slog, "height(%d): %zu\n", s->height_set, s->height);
+    bu_vls_printf(&slog, "size(%d): %zu\n", s->size_set, s->size);
     bu_vls_printf(&slog, "bkg_color: %d,%d,%d\n", (int)s->bkg_color->buc_rgb[0], (int)s->bkg_color->buc_rgb[1], (int)s->bkg_color->buc_rgb[2]);
     bu_vls_printf(&slog, "line_color: %d,%d,%d\n", (int)s->line_color->buc_rgb[0], (int)s->line_color->buc_rgb[1], (int)s->line_color->buc_rgb[2]);
     bu_vls_printf(&slog, "non_line_color: %d,%d,%d\n", (int)s->non_line_color->buc_rgb[0], (int)s->non_line_color->buc_rgb[1], (int)s->non_line_color->buc_rgb[2]);
@@ -618,24 +644,24 @@ Init_RtWizard_Vars(Tcl_Interp *interp, struct rtwizard_settings *s)
     }
 
     if (s->width_set) {
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(width) %d", s->width);
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(width) %zu", s->width);
 	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
     }
 
     if (s->height_set) {
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(scanlines) %d", s->height);
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(scanlines) %zu", s->height);
 	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
     }
 
     if (s->size_set) {
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(size) %d", s->size);
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(size) %zu", s->size);
 	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
 	if (!s->width_set) {
-	    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(width) %d", s->size);
+	    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(width) %zu", s->size);
 	    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
 	}
 	if (!s->height_set) {
-	    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(scanlines) %d", s->size);
+	    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(scanlines) %zu", s->size);
 	    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
 	}
     }
@@ -770,37 +796,34 @@ rtwizard_help(struct bu_opt_desc *d)
     struct bu_opt_desc_opts settings = BU_OPT_DESC_OPTS_INIT_ZERO;
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_vls filtered = BU_VLS_INIT_ZERO;
-    const char *option_help = NULL;
+    char *option_help = bu_opt_describe(d, &settings);
 
     bu_vls_sprintf(&str, "\nUsage: rtwizard [options]\n\n");
 
     /* I/O options */
     bu_vls_sprintf(&filtered, "h help-dev gui no-gui i o d p v");
     settings.accept = bu_vls_addr(&filtered);
-    option_help = bu_opt_describe(d, &settings);
     if (option_help) {
 	bu_vls_printf(&str, "Input/Output Options:\n%s\n", option_help);
-	bu_free((char *)option_help, "help str");
     }
 
     /* Model View options */
     bu_vls_sprintf(&filtered, "a e twist P z center");
     settings.accept = bu_vls_addr(&filtered);
-    option_help = bu_opt_describe(d, &settings);
     if (option_help) {
 	bu_vls_printf(&str, "Model View Options:\n%s\n", option_help);
-	bu_free((char *)option_help, "help str");
     }
 
     /* Image Generation options */
     bu_vls_sprintf(&filtered, "w n s c g l C line-color non-line-color G O cpu-count t");
     settings.accept = bu_vls_addr(&filtered);
-    option_help = bu_opt_describe(d, &settings);
     if (option_help) {
 	bu_vls_printf(&str, "Image Generation Options:\n%s\n", option_help);
-	bu_free((char *)option_help, "help str");
     }
 
+    if (option_help) {
+	bu_free(option_help, "help str");
+    }
     bu_log("%s", bu_vls_addr(&str));
     bu_vls_free(&str);
     bu_vls_free(&filtered);
@@ -814,7 +837,7 @@ rtwizard_help_dev(struct bu_opt_desc *d)
     struct bu_opt_desc_opts settings = BU_OPT_DESC_OPTS_INIT_ZERO;
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_vls filtered = BU_VLS_INIT_ZERO;
-    const char *option_help = NULL;
+    char *option_help = NULL;
     const char *devopts = "benchmark viewsize orientation eye_pt log-file pid-file";
 
     bu_vls_sprintf(&str, "\nUsage: rtwizard [options]\n\n");
@@ -824,7 +847,7 @@ rtwizard_help_dev(struct bu_opt_desc *d)
     option_help = bu_opt_describe(d, &settings);
     if (option_help) {
 	bu_vls_printf(&str, "Options for developers:\n%s\n", option_help);
-	bu_free((char *)option_help, "help str");
+	bu_free(option_help, "help str");
     }
 
     bu_log("%s", bu_vls_addr(&str));
@@ -930,7 +953,7 @@ main(int argc, char **argv)
     BU_OPT(d[33], "",  "pid-file",      "filename",  &bu_opt_vls,     s->pid_file,      "File used to communicate PID numbers (for app developers)");
     BU_OPT_NULL(d[34]);
 
-    /* Need progname set for bu_brlcad_root/bu_brlcad_data to work */
+    /* initialize progname for run-time resource finding */
     bu_setprogname(argv[0]);
     av0 = argv[0];
 
@@ -940,7 +963,7 @@ main(int argc, char **argv)
     uac = bu_opt_parse(&optparse_msg, argc, (const char **)argv, d);
 
     if (uac == -1) {
-	bu_exit(1, bu_vls_addr(&optparse_msg));
+	bu_exit(1, "%s", bu_vls_addr(&optparse_msg));
     }
     bu_vls_free(&optparse_msg);
 
@@ -1074,7 +1097,7 @@ main(int argc, char **argv)
 	/* We're using this path on the file system, not in Tcl: translate it
 	 * to the appropriate form before doing the eval */
 	Tcl_DStringInit(&temp);
-	rtwizard = bu_brlcad_data("tclscripts/rtwizard/rtwizard", 1);
+	rtwizard = bu_brlcad_root("share/tclscripts/rtwizard/rtwizard", 1);
 	fullname = Tcl_TranslateFileName(interp, rtwizard, &temp);
 	status = Tcl_EvalFile(interp, fullname);
 	Tcl_DStringFree(&temp);

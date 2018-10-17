@@ -1,7 +1,7 @@
 /*                            P R . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2016 United States Government as represented by
+ * Copyright (c) 1993-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,7 +35,6 @@
 #include "vmath.h"
 
 #include "raytrace.h"
-
 
 void
 rt_pr_soltab(register const struct soltab *stp)
@@ -275,11 +274,12 @@ rt_pr_hitarray_vls(struct bu_vls *v, const char *str, register const struct hit 
  * stack, to preserve simplicity.  On machines with limited stack
  * space, such as the Gould, this subroutine may overwhelm the stack
  * on complex expressions.
+ *
+ * @param tp tree pointer
+ * @param lvl recursion level
  */
 void
 rt_pr_tree(register const union tree *tp, int lvl)
-
-/* recursion level */
 {
     register int i;
 
@@ -523,13 +523,14 @@ rt_pr_tree_str(const union tree *tree)
  * 0 bit value
  * 1 name
  * 2 bit number
+ *
+ * @param tp Tree to print
+ * @param partp Partition to evaluate
+ * @param pr_name 1=print name, 0=print value
+ * @param lvl Recursion level
  */
 void
 rt_pr_tree_val(register const union tree *tp, const struct partition *partp, int pr_name, int lvl)
-/* Tree to print */
-/* Partition to evaluate */
-/* 1=print name, 0=print value */
-/* Recursion level */
 {
 
     if (lvl == 0) {
@@ -624,6 +625,66 @@ out:
     if (lvl == 0) bu_log("\n");
 }
 
+#ifdef USE_OPENCL
+/**
+ * Produce representations of this bit bool tree
+ * @param btp Tree to print
+ * @param idx Offset in tree
+ * @param lvl Recursion level
+ */
+void
+rt_pr_bit_tree(const struct bit_tree *btp, int idx, int lvl)
+{
+    unsigned uop, val;
+
+    uop = btp[idx].val & 7;
+    val = btp[idx].val >> 3;
+
+    if (lvl == 0) bu_log("bit tree: ");
+
+    switch (uop) {
+	case UOP_SOLID:
+	    /* Tree leaf */
+	    bu_log("%d", val);
+	    if (lvl == 0) bu_log("\n");
+	    return;
+	case UOP_SUBTRACT:
+	    bu_log("(");
+	    rt_pr_bit_tree(btp, idx+1, lvl+1);
+	    bu_log(" %c ", DB_OP_SUBTRACT);
+	    rt_pr_bit_tree(btp, val, lvl+1);
+	    bu_log(")");
+	    break;
+	case UOP_UNION:
+	    bu_log("(");
+	    rt_pr_bit_tree(btp, idx+1, lvl+1);
+	    bu_log(" %c ", DB_OP_UNION);
+	    rt_pr_bit_tree(btp, val, lvl+1);
+	    bu_log(")");
+	    break;
+	case UOP_INTERSECT:
+	    bu_log("(");
+	    rt_pr_bit_tree(btp, idx+1, lvl+1);
+	    bu_log(" %c ", DB_OP_INTERSECT);
+	    rt_pr_bit_tree(btp, val, lvl+1);
+	    bu_log(")");
+	    break;
+	case UOP_XOR:
+	    bu_log("(");
+	    rt_pr_bit_tree(btp, idx+1, lvl+1);
+	    bu_log(" XOR ");
+	    rt_pr_bit_tree(btp, val, lvl+1);
+	    bu_log(")");
+	    break;
+
+	default:
+	    bu_log("rt_pr_bit_tree: bad op[%d]\n", uop);
+	    exit(1);
+	    break;
+    }
+    if (lvl == 0) bu_log("\n");
+}
+#endif
 
 void
 rt_pr_fallback_angle(struct bu_vls *str, const char *prefix, const double *angles)

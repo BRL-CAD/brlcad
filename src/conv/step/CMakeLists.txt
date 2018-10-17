@@ -12,6 +12,9 @@ CHECK_CXX_FLAG("wd4065") # switch contains default but no case labels
 CHECK_CXX_FLAG("wd4251") # exporting STL objects
 CHECK_CXX_FLAG("wd4800") # implicit conversions to bool
 
+# Also quell a GCC warning for similar reasons.
+CHECK_CXX_FLAG("Wno-ignored-qualifiers")
+
 
 set(STEPCODE_DIR ${BRLCAD_SOURCE_DIR}/src/other/stepcode)
 set(STEP_INCLUDE_DIRS
@@ -119,18 +122,43 @@ endif(BRLCAD_ENABLE_IFC)
 CMAKEFILES(
   AP_Common.h
   BRLCADWrapper.h
+  CMakeLists.txt
   STEPWrapper.h
-  ap_schema.h
   ap203_elements.txt
+  ap203e2-g/CMakeLists.txt
   ap203e2_elements.txt
+  ap214-g/CMakeLists.txt
   ap214e3_elements.txt
-  ap203e2-g
-  ap214-g
-  ap242-g
-  g-ap203e2
-  g-ap214
-  g-ap242
-  ifc-g
+  ap242-g/CMakeLists.txt
+  ap242-g/Factory.cpp
+  ap242-g/GlobalUnitAssignedContext.cpp
+  ap242-g/GlobalUnitAssignedContext.h
+  ap242-g/MeasureValue.cpp
+  ap242-g/MeasureValue.h
+  ap242-g/MeasureWithUnit.cpp
+  ap242-g/MeasureWithUnit.h
+  ap242-g/PropertyDefinitionRepresentation.cpp
+  ap242-g/PropertyDefinitionRepresentation.h
+  ap242-g/RepresentedDefinition.cpp
+  ap242-g/RepresentedDefinition.h
+  ap_schema.h
+  g-ap203e2/AP203e2.h
+  g-ap203e2/CMakeLists.txt
+  g-ap203e2/g-ap203e2.cpp
+  g-ap214/AP214e3.h
+  g-ap214/Add_Tree.cpp
+  g-ap214/CMakeLists.txt
+  g-ap214/Comb.cpp
+  g-ap214/G_Objects.cpp
+  g-ap214/Shape_Definition_Representation.cpp
+  g-ap214/g-ap214.cpp
+  g-ap242/AP242.h
+  g-ap242/CMakeLists.txt
+  g-ap242/g-ap242.cpp
+  ifc-g/CMakeLists.txt
+  ifc-g/IFCWrapper.cpp
+  ifc-g/IFCWrapper.h
+  ifc-g/ifc-g.cpp
   )
 
 DISTCLEAN(${SCHEMA_OUT_DIR}/make_schema)

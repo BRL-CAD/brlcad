@@ -1,7 +1,7 @@
 /*                           R E V O L V E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2016 United States Government as represented by
+ * Copyright (c) 1990-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1463,7 +1463,7 @@ rt_revolve_tess(struct nmgregion **UNUSED(r), struct model *UNUSED(m), struct rt
  * Apply modeling transformations as well.
  */
 int
-rt_revolve_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp)
+rt_revolve_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip)
 {
     struct rt_revolve_internal *rip;
 
@@ -1503,7 +1503,11 @@ rt_revolve_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
 	       sketch_name);
 	rip->skt = (struct rt_sketch_internal *)NULL;
     } else {
-	if (rt_db_get_internal(&tmp_ip, dp, dbip, bn_mat_identity, resp) != ID_SKETCH) {
+	/* initialize before our first use */
+	if (rt_uniresource.re_magic != RESOURCE_MAGIC)
+	    rt_init_resource(&rt_uniresource, 0, NULL);
+
+	if (rt_db_get_internal(&tmp_ip, dp, dbip, bn_mat_identity, &rt_uniresource) != ID_SKETCH) {
 	    bu_log("ERROR: Cannot import sketch (%s) for extrusion\n",
 		   sketch_name);
 	    bu_free(ip->idb_ptr, "extrusion");
@@ -1540,22 +1544,15 @@ rt_revolve_xform(
     const mat_t mat,
     struct rt_db_internal *ip,
     int release,
-    struct db_i *dbip,
-    struct resource *resp)
+    struct db_i *dbip)
 {
     struct rt_revolve_internal *rip, *rop;
     point_t tmp_vec;
 
     if (dbip) RT_CK_DBI(dbip);
     RT_CK_DB_INTERNAL(ip);
-    RT_CK_RESOURCE(resp);
     rip = (struct rt_revolve_internal *)ip->idb_ptr;
     RT_REVOLVE_CK_MAGIC(rip);
-
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at start of revolve_xform():\n");
-	bu_mem_barriercheck();
-    }
 
     if (op != ip) {
 	RT_DB_INTERNAL_INIT(op);
@@ -1589,11 +1586,6 @@ rt_revolve_xform(
 	rop->skt = rt_copy_sketch(rip->skt);
     } else {
 	rop->skt = (struct rt_sketch_internal *)NULL;
-    }
-
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at end of revolve_xform():\n");
-	bu_mem_barriercheck();
     }
 
     return 0;

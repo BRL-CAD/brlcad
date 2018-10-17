@@ -34,20 +34,7 @@
 # *******************************************************************
 
 # Minimum required version of CMake
-cmake_minimum_required(VERSION 2.8.8)
-if(COMMAND CMAKE_POLICY)
-  if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-    CMAKE_POLICY(SET CMP0026 OLD)
-    CMAKE_POLICY(SET CMP0042 NEW)
-  endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-
-  if ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
-    CMAKE_POLICY(SET CMP0046 NEW)
-    CMAKE_POLICY(SET CMP0053 NEW)
-    CMAKE_POLICY(SET CMP0054 NEW)
-  endif ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
-endif(COMMAND CMAKE_POLICY)
-
+cmake_minimum_required(VERSION 3.1.3)
 
 # set CMake project name
 project(LZ4)
@@ -116,9 +103,12 @@ endif(MSVC)
 
 if(BUILD_STATIC_LIBS)
   add_library(lz4-static STATIC ${LZ4_SRCS})
-  if(NOT WIN32)
+  if(MSVC)
+    # msvc does not append 'lib' - do it here to have consistent name
+    set_target_properties(lz4-static PROPERTIES PREFIX "lib")
+  else(MSVC)  
     set_target_properties(lz4-static PROPERTIES OUTPUT_NAME "lz4")
-  endif(NOT WIN32)
+  endif(MSVC)
   install(TARGETS lz4-static
     RUNTIME DESTINATION ${BIN_DIR}
     LIBRARY DESTINATION ${LIB_DIR}

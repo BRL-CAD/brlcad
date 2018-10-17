@@ -1,7 +1,7 @@
 /*                           D S P . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2016 United States Government as represented by
+ * Copyright (c) 1999-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -544,51 +544,15 @@ plot_cell_top(struct isect_stuff *isect,
 
 
 HIDDEN void
-dsp_print_v4(struct bu_vls *vls, const struct rt_dsp_internal *dsp_ip)
+dsp_print(struct bu_vls *vls, const struct rt_dsp_internal *dsp_ip)
 {
-    point_t pt, v;
-    RT_DSP_CK_MAGIC(dsp_ip);
-    BU_CK_VLS(&dsp_ip->dsp_name);
-    BU_CK_VLS(vls);
-
-    bu_vls_printf(vls, "Displacement Map\n  file='%s' w=%u n=%u sm=%d",
-		  bu_vls_addr(&dsp_ip->dsp_name),
-		  dsp_ip->dsp_xcnt,
-		  dsp_ip->dsp_ycnt,
-		  dsp_ip->dsp_smooth);
-
-    VSETALL(pt, 0.0);
-
-    MAT4X3PNT(v, dsp_ip->dsp_stom, pt);
-
-    bu_vls_printf(vls, " (origin at %g %g %g)mm\n", V3INTCLAMPARGS(v));
-
-    bu_vls_printf(vls, "  stom=\n");
-    bu_vls_printf(vls, "  %8.3f %8.3f %8.3f %8.3f\n",
-		  V4INTCLAMPARGS(dsp_ip->dsp_stom));
-
-    bu_vls_printf(vls, "  %8.3f %8.3f %8.3f %8.3f\n",
-		  V4INTCLAMPARGS(&dsp_ip->dsp_stom[4]));
-
-    bu_vls_printf(vls, "  %8.3f %8.3f %8.3f %8.3f\n",
-		  V4INTCLAMPARGS(&dsp_ip->dsp_stom[8]));
-
-    bu_vls_printf(vls, "  %8.3f %8.3f %8.3f %8.3f\n",
-		  V4INTCLAMPARGS(&dsp_ip->dsp_stom[12]));
-}
-
-
-HIDDEN void
-dsp_print_v5(struct bu_vls *vls,
-	     const struct rt_dsp_internal *dsp_ip)
-{
-    point_t pt, v;
+    point_t pt = VINIT_ZERO;
+    point_t v = VINIT_ZERO;
 
     BU_CK_VLS(vls);
 
     RT_DSP_CK_MAGIC(dsp_ip);
     BU_CK_VLS(&dsp_ip->dsp_name);
-
 
     bu_vls_printf(vls, "Displacement Map\n");
 
@@ -624,9 +588,6 @@ dsp_print_v5(struct bu_vls *vls,
 			  dsp_ip->dsp_cuttype); break;
     }
 
-
-    VSETALL(pt, 0.0);
-
     MAT4X3PNT(v, dsp_ip->dsp_stom, pt);
 
     bu_vls_printf(vls, " (origin at %g %g %g)mm\n", V3INTCLAMPARGS(v));
@@ -653,21 +614,9 @@ rt_dsp_print(register const struct soltab *stp)
     bu_vls_printf(&vls, "\n---------db version: %d----------\n",
 		  db_version(stp->st_rtip->rti_dbip));
 
-    switch (db_version(stp->st_rtip->rti_dbip)) {
-	case 4:
-	    BU_CK_VLS(&vls);
-	    dsp_print_v4(&vls, &(dsp->dsp_i));
-	    break;
-	case 5:
-	    BU_CK_VLS(&vls);
-	    dsp_print_v5(&vls, &(dsp->dsp_i));
-	    break;
-    }
-
+    dsp_print(&vls, &(dsp->dsp_i));
     bu_log("%s", bu_vls_addr(&vls));
-
-    if (BU_VLS_IS_INITIALIZED(&vls)) bu_vls_free(&vls);
-
+    bu_vls_free(&vls);
 }
 
 
@@ -906,7 +855,6 @@ rt_dsp_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 		bu_log("dsp(%s): no data file or data file empty\n", bu_vls_addr(&dsp_ip->dsp_name));
 		return 1; /* BAD */
 	    }
-	    BU_CK_MAPPED_FILE(dsp_ip->dsp_mp);
 
 	    /* we do this here and now because we will need it for the
 	     * dsp_specific structure in a few lines
@@ -1034,7 +982,6 @@ rt_dsp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 		bu_log("dsp(%s): no data file or data file empty\n", bu_vls_addr(&dsp_ip->dsp_name));
 		return 1; /* BAD */
 	    }
-	    BU_CK_MAPPED_FILE(dsp_ip->dsp_mp);
 
 	    /* we do this here and now because we will need it for the
 	     * dsp_specific structure in a few lines
@@ -2603,7 +2550,6 @@ rt_dsp_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     switch (dsp->dsp_i.dsp_datasrc) {
 	case RT_DSP_SRC_V4_FILE:
 	case RT_DSP_SRC_FILE:
-	    BU_CK_MAPPED_FILE(dsp->dsp_i.dsp_mp);
 	    break;
 	case RT_DSP_SRC_OBJ:
 	    RT_CK_DB_INTERNAL(dsp->dsp_i.dsp_bip);
@@ -2854,7 +2800,6 @@ rt_dsp_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
     switch (dsp->dsp_i.dsp_datasrc) {
 	case RT_DSP_SRC_V4_FILE:
 	case RT_DSP_SRC_FILE:
-	    BU_CK_MAPPED_FILE(dsp->dsp_i.dsp_mp);
 	    break;
 	case RT_DSP_SRC_OBJ:
 	    RT_CK_DB_INTERNAL(dsp->dsp_i.dsp_bip);
@@ -3156,17 +3101,6 @@ rt_dsp_free(register struct soltab *stp)
 }
 
 
-/* FIXME: can't 'rt_dsp_class' be replaced by 'rt_generic_class'? */
-int
-rt_dsp_class(const struct soltab *UNUSED(s), const vect_t UNUSED(v0), const vect_t UNUSED(v2), const struct bn_tol *UNUSED(b))
-{
-    if (RT_G_DEBUG & DEBUG_HF)
-	bu_log("rt_dsp_class()\n");
-
-    return 0;
-}
-
-
 int
 rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
@@ -3201,7 +3135,6 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 		}
 		return 0;
 	    }
-	    BU_CK_MAPPED_FILE(dsp_ip->dsp_mp);
 	    break;
 	case RT_DSP_SRC_OBJ:
 	    if (!dsp_ip->dsp_bip) {
@@ -3581,7 +3514,6 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		}
 		return -1;
 	    }
-	    BU_CK_MAPPED_FILE(dsp_ip->dsp_mp);
 	    break;
 	case RT_DSP_SRC_OBJ:
 	    if (!dsp_ip->dsp_bip) {
@@ -4095,7 +4027,7 @@ get_file_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
 
 
 /* FIXME, not publicly exposed anywhere as it's a non-geom object */
-extern int rt_binunif_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local, struct resource *resp, struct db_i *db_i);
+extern int rt_binunif_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local);
 
 
 /**
@@ -4134,7 +4066,7 @@ get_obj_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
 	size_t i = 0;
 	size_t size;
 	struct bu_vls binudesc = BU_VLS_INIT_ZERO;
-	rt_binunif_describe(&binudesc, dsp_ip->dsp_bip, 0, dbip->dbi_base2local, NULL, (struct db_i *)dbip);
+	rt_binunif_describe(&binudesc, dsp_ip->dsp_bip, 0, dbip->dbi_base2local);
 
 	/* skip the first title line */
 	size = bu_vls_strlen(&binudesc);
@@ -4145,12 +4077,12 @@ get_obj_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
 	    bu_vls_nibble(&binudesc, 1);
 
 	bu_log("ERROR: Binary object '%s' has invalid data (expected type %d, found %d).\n"
-	       "       Expecting %llu 16-bit unsigned short (nus) integer data values.\n"
+	       "       Expecting %zu 16-bit unsigned short (nus) integer data values.\n"
 	       "       Encountered %s\n",
 	       bu_vls_cstr(&dsp_ip->dsp_name),
 	       DB5_MINORTYPE_BINU_16BITINT_U,
 	       bip->type,
-	       dsp_ip->dsp_xcnt * dsp_ip->dsp_ycnt,
+	       (size_t)(dsp_ip->dsp_xcnt * dsp_ip->dsp_ycnt),
 	       bu_vls_cstr(&binudesc));
 	return -2;
     }
@@ -4378,15 +4310,13 @@ rt_dsp_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
  * Apply modeling transformations as well.
  */
 int
-rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip, struct resource *resp)
+rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_dsp_internal *dsp_ip;
     unsigned char *cp;
 
     /* must be double for import and export */
     double scanmat[16];
-
-    if (resp) RT_CK_RESOURCE(resp);
 
     if (RT_G_DEBUG & DEBUG_HF)
 	bu_log("rt_dsp_import4_v5()\n");
@@ -4489,7 +4419,7 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
  * The name is added by the caller, in the usual place.
  */
 int
-rt_dsp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip, struct resource *resp)
+rt_dsp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *UNUSED(dbip))
 {
     struct rt_dsp_internal *dsp_ip;
     unsigned long name_len;
@@ -4498,9 +4428,6 @@ rt_dsp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     /* must be double for import and export */
     double scanmat[16];
-
-    if (resp) RT_CK_RESOURCE(resp);
-    if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_DSP) return -1;
@@ -4592,37 +4519,17 @@ rt_dsp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
  * tab, and give parameter values.
  */
 int
-rt_dsp_describe(struct bu_vls *str,
-		const struct rt_db_internal *ip,
-		int UNUSED(verbose),
-		double UNUSED(mm2local),
-		struct resource *resp,
-		struct db_i *db_ip)
+rt_dsp_describe(struct bu_vls *str, const struct rt_db_internal *ip, int UNUSED(verbose), double UNUSED(mm2local))
 {
     register struct rt_dsp_internal *dsp_ip =
 	(struct rt_dsp_internal *)ip->idb_ptr;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-    if (resp) RT_CK_RESOURCE(resp);
-    if (db_ip) RT_CK_DBI(db_ip);
-
-    if (RT_G_DEBUG & DEBUG_HF)
-	bu_log("rt_dsp_describe()\n");
-
     RT_DSP_CK_MAGIC(dsp_ip);
 
-    switch (db_version(db_ip)) {
-	case 4:
-	    dsp_print_v4(&vls, dsp_ip);
-	    break;
-	case 5:
-	    dsp_print_v5(&vls, dsp_ip);
-	    break;
-    }
-
+    dsp_print(&vls, dsp_ip);
     bu_vls_vlscat(str, &vls);
-
-    if (BU_VLS_IS_INITIALIZED(&vls)) bu_vls_free(&vls);
+    bu_vls_free(&vls);
 
     return 0;
 }
@@ -4636,9 +4543,6 @@ void
 rt_dsp_ifree(struct rt_db_internal *ip)
 {
     register struct rt_dsp_internal *dsp_ip;
-
-    if (RT_G_DEBUG & DEBUG_HF)
-	bu_log("rt_dsp_ifree()\n");
 
     RT_CK_DB_INTERNAL(ip);
 
@@ -4814,7 +4718,6 @@ swap_cell_pts(int A[3],
     switch (dsp->dsp_i.dsp_cuttype) {
 	case DSP_CUT_DIR_llUR:
 	    return 0;
-	    break;
 
 	case DSP_CUT_DIR_ADAPT: {
 	    int lo[2], hi[2];
@@ -4879,10 +4782,10 @@ swap_cell_pts(int A[3],
 
 		return 0;
 	    }
-
-	    /* fallthrough */
-
 	}
+
+	/* fall through */
+
 	case DSP_CUT_DIR_ULlr: {
 	    /* prefer the B-C cut */
 	    int tmp[3];

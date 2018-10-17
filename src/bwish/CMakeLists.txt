@@ -36,6 +36,7 @@ if(BRLCAD_ENABLE_TK)
   set_target_properties(bwish PROPERTIES FOLDER "BRL-CAD Executables")
 
 endif(BRLCAD_ENABLE_TK)
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

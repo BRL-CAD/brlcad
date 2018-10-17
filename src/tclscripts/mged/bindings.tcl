@@ -1,7 +1,7 @@
 #                    B I N D I N G S . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2016 United States Government as represented by
+# Copyright (c) 2004-2018 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -138,8 +138,8 @@ proc default_key_bindings { w } {
     bind $w o "winset $w; press oill; break"
     bind $w q "winset $w; press reject; break"
     bind $w A "winset $w; press accept; break"
-    bind $w P "winset $w; sed_apply; break"
-    bind $w S "winset $w; sed_reset; break"
+    bind $w P "winset $w; catch {sed_apply}; break"
+    bind $w S "winset $w; catch {sed_reset}; break"
     bind $w u "winset $w; svb; break"
     bind $w <F1> "winset $w; dm set depthcue !; update_gui $w depthcue \[dm set depthcue\]; break"
     bind $w <F2> "winset $w; dm set zclip !; update_gui $w zclip \[dm set zclip\]; break"
@@ -235,6 +235,10 @@ proc forward_key_bindings { w } {
     bind $w o {}
     bind $w q {}
     bind $w u {}
+    bind $w c {}
+    bind $w A {}
+    bind $w P {}
+    bind $w S {}
     bind $w <F1> {}
     bind $w <F2> {}
     bind $w <F3> {}
@@ -279,7 +283,7 @@ proc default_mouse_bindings { w } {
     global tcl_platform
 
     # default button bindings
-    if {![regexp {^[0-9]+} $tcl_platform(osVersion) osMajorVersion]} {
+    if {![regexp {^[0-9]+} $::tcl_platform(osVersion) osMajorVersion]} {
 	set osMajorVersion 0
     }
 
@@ -288,7 +292,7 @@ proc default_mouse_bindings { w } {
 	bind $w <2> "winset $w; set tmpstr \[dm m %x %y\]; print_return_val \$tmpstr; break"
 	bind $w <3> "winset $w; zoom 2.0; break"
 
-	if {$tcl_platform(os) == "Darwin"} {
+	if {$::tcl_platform(os) == "Darwin"} {
 	    # Mac option-key emulates mouse 2 (doesn't work?)
 	    bind $w <Option-ButtonPress-1> "winset $w; set tmpstr \[dm m %x %y\]; print_return_val \$tmpstr; break"
 	    # Mac command-key emulates mouse 3
@@ -299,7 +303,7 @@ proc default_mouse_bindings { w } {
 	bind $w <2> "winset $w; focus $w; set tmpstr \[dm m %x %y\]; print_return_val \$tmpstr; break"
 	bind $w <3> "winset $w; focus $w; zoom 2.0; break"
 
-	if {$tcl_platform(os) == "Darwin"} {
+	if {$::tcl_platform(os) == "Darwin"} {
 	    # Mac command-key emulates mouse 2 (doesn't work?)
 	    bind $w <Option-ButtonPress-1> "winset $w; focus $w; set tmpstr \[dm m %x %y\]; print_return_val \$tmpstr; break"
 	    # Mac command-key emulates mouse 3

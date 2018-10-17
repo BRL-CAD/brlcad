@@ -1,7 +1,7 @@
 /*                           R O T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2016 United States Government as represented by
+ * Copyright (c) 1986-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -42,13 +42,14 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/str.h"
 #include "bu/log.h"
-#include "bu/file.h"
 #include "bu/getopt.h"
 #include "bu/malloc.h"
 #include "bn.h"
 
+/* TODO: Yuck... why are we using globals for all this?? */
 
 ssize_t buflines, scanbytes;
 ssize_t firsty = -1;	/* first "y" scanline in buffer */
@@ -59,7 +60,7 @@ unsigned char *obp;
 ssize_t nxin = 512;
 ssize_t nyin = 512;
 ssize_t yin, xout, yout;
-int plus90, minus90, reverse, invert;
+int plus90, minus90, reverse, rot_invert;
 size_t pixbytes = 1;
 
 
@@ -86,7 +87,7 @@ get_args(size_t argc, const char **argv, FILE **ifp, FILE **ofp, double *angle)
 		reverse++;
 		break;
 	    case 'i':
-		invert++;
+		rot_invert++;
 		break;
 	    case '#':
 		pixbytes = atoi(bu_optarg);
@@ -350,7 +351,7 @@ icv_rot(size_t argc, const char *argv[])
 		xout = (nyin - 1) - lasty;
 		outbyte = ((yout * nyin) + xout) * pixbytes;
 		if (outplace != outbyte) {
-		    if (bu_fseek(ofp, outbyte, SEEK_SET) < 0) {
+		    if (fseek(ofp, outbyte, SEEK_SET) < 0) {
 			ret = 3;
 			perror("fseek");
 			bu_log("ERROR: %s can't seek on output (ofp=%p, outbyte=%zd)\n", argv[0], (void *)ofp, outbyte);
@@ -380,7 +381,7 @@ icv_rot(size_t argc, const char *argv[])
 		xout = yin;
 		outbyte = ((yout * nyin) + xout) * pixbytes;
 		if (outplace != outbyte) {
-		    if (bu_fseek(ofp, outbyte, SEEK_SET) < 0) {
+		    if (fseek(ofp, outbyte, SEEK_SET) < 0) {
 			ret = 3;
 			perror("fseek");
 			bu_log("ERROR: %s can't seek on output (ofp=%p, outbyte=%zd)\n", argv[0], (void *)ofp, outbyte);
@@ -397,12 +398,12 @@ icv_rot(size_t argc, const char *argv[])
 		}
 		outplace += buflines*pixbytes;
 	    }
-	} else if (invert) {
+	} else if (rot_invert) {
 	    for (y = lasty+1; (ssize_t)y > firsty; y--) {
 		yout = (nyin - 1) - y + 1;
 		outbyte = yout * scanbytes;
 		if (outplace != outbyte) {
-		    if (bu_fseek(ofp, outbyte, SEEK_SET) < 0) {
+		    if (fseek(ofp, outbyte, SEEK_SET) < 0) {
 			ret = 3;
 			perror("fseek");
 			bu_log("ERROR: %s can't seek on output (ofp=%p, outbyte=%zd)\n", argv[0], (void *)ofp, outbyte);

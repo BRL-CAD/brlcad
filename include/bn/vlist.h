@@ -1,7 +1,7 @@
 /*                        V L I S T . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -48,10 +48,10 @@ __BEGIN_DECLS
  *
  * To visit all the elements in the vlist:
  *	for (BU_LIST_FOR(vp, bn_vlist, hp)) {
- *		register int	i;
- *		register int	nused = vp->nused;
- *		register int	*cmd = vp->cmd;
- *		register point_t *pt = vp->pt;
+ *		int	i;
+ *		int	nused = vp->nused;
+ *		int	*cmd = vp->cmd;
+ *		point_t *pt = vp->pt;
  *		for (i = 0; i < nused; i++, cmd++, pt++) {
  *			access(*cmd, *pt);
  *			access(vp->cmd[i], vp->pt[i]);
@@ -75,23 +75,24 @@ struct bn_vlist  {
 
 /* should these be enum? -Erik */
 /* Values for cmd[] */
-#define BN_VLIST_LINE_MOVE	0
-#define BN_VLIST_LINE_DRAW	1
-#define BN_VLIST_POLY_START	2	/**< @brief pt[] has surface normal */
-#define BN_VLIST_POLY_MOVE	3	/**< @brief move to first poly vertex */
-#define BN_VLIST_POLY_DRAW	4	/**< @brief subsequent poly vertex */
-#define BN_VLIST_POLY_END	5	/**< @brief last vert (repeats 1st), draw poly */
-#define BN_VLIST_POLY_VERTNORM	6	/**< @brief per-vertex normal, for interpolation */
-#define BN_VLIST_TRI_START	7	/**< @brief pt[] has surface normal */
-#define BN_VLIST_TRI_MOVE	8	/**< @brief move to first triangle vertex */
-#define BN_VLIST_TRI_DRAW	9	/**< @brief subsequent triangle vertex */
-#define BN_VLIST_TRI_END	10	/**< @brief last vert (repeats 1st), draw poly */
-#define BN_VLIST_TRI_VERTNORM	11	/**< @brief per-vertex normal, for interpolation */
-#define BN_VLIST_POINT_DRAW	12	/**< @brief Draw a single point */
-#define BN_VLIST_POINT_SIZE	13	/**< @brief specify point pixel size */
-#define BN_VLIST_LINE_WIDTH	14	/**< @brief specify line pixel width */
-#define BN_VLIST_CMD_MAX	14	/**< @brief Max command number */
-
+#define BN_VLIST_LINE_MOVE		0	/**< @brief specify new line */
+#define BN_VLIST_LINE_DRAW		1	/**< @brief subsequent line vertex */
+#define BN_VLIST_POLY_START		2	/**< @brief pt[] has surface normal */
+#define BN_VLIST_POLY_MOVE		3	/**< @brief move to first poly vertex */
+#define BN_VLIST_POLY_DRAW		4	/**< @brief subsequent poly vertex */
+#define BN_VLIST_POLY_END		5	/**< @brief last vert (repeats 1st), draw poly */
+#define BN_VLIST_POLY_VERTNORM		6	/**< @brief per-vertex normal, for interpolation */
+#define BN_VLIST_TRI_START		7	/**< @brief pt[] has surface normal */
+#define BN_VLIST_TRI_MOVE		8	/**< @brief move to first triangle vertex */
+#define BN_VLIST_TRI_DRAW		9	/**< @brief subsequent triangle vertex */
+#define BN_VLIST_TRI_END		10	/**< @brief last vert (repeats 1st), draw poly */
+#define BN_VLIST_TRI_VERTNORM		11	/**< @brief per-vertex normal, for interpolation */
+#define BN_VLIST_POINT_DRAW		12	/**< @brief Draw a single point */
+#define BN_VLIST_POINT_SIZE		13	/**< @brief specify point pixel size */
+#define BN_VLIST_LINE_WIDTH		14	/**< @brief specify line pixel width */
+#define BN_VLIST_DISPLAY_MAT		15	/**< @brief specify the model matrix */
+#define BN_VLIST_MODEL_MAT		16	/**< @brief specify the display matrix */
+#define BN_VLIST_CMD_MAX		16	/**< @brief Max command number */
 /**
  * Applications that are going to use BN_ADD_VLIST and BN_GET_VLIST
  * are required to execute this macro once, on their _free_hd:
@@ -117,7 +118,7 @@ struct bn_vlist  {
     }
 
 #define BN_ADD_VLIST(_free_hd, _dest_hd, pnt, draw) { \
-	register struct bn_vlist *_vp; \
+	struct bn_vlist *_vp; \
 	BU_CK_LIST_HEAD(_dest_hd); \
 	_vp = BU_LIST_LAST(bn_vlist, (_dest_hd)); \
 	if (BU_LIST_IS_HEAD(_vp, (_dest_hd)) || _vp->nused >= BN_VLIST_CHUNK) { \
@@ -127,6 +128,31 @@ struct bn_vlist  {
 	VMOVE(_vp->pt[_vp->nused], (pnt)); \
 	_vp->cmd[_vp->nused++] = (draw); \
     }
+
+/** Change the transformation matrix to display */
+#define BN_VLIST_SET_DISP_MAT(_free_hd, _dest_hd, _ref_pt) { \
+	struct bn_vlist *_vp; \
+	BU_CK_LIST_HEAD(_dest_hd); \
+	_vp = BU_LIST_LAST(bn_vlist, (_dest_hd)); \
+	if (BU_LIST_IS_HEAD(_vp, (_dest_hd)) || _vp->nused >= BN_VLIST_CHUNK) { \
+	    BN_GET_VLIST(_free_hd, _vp); \
+	    BU_LIST_INSERT((_dest_hd), &(_vp->l)); \
+	} \
+	VMOVE(_vp->pt[_vp->nused], (_ref_pt)); \
+	_vp->cmd[_vp->nused++] = BN_VLIST_DISPLAY_MAT; \
+}
+
+/** Change the transformation matrix to model */
+#define BN_VLIST_SET_MODEL_MAT(_free_hd, _dest_hd) { \
+	struct bn_vlist *_vp; \
+	BU_CK_LIST_HEAD(_dest_hd); \
+	_vp = BU_LIST_LAST(bn_vlist, (_dest_hd)); \
+	if (BU_LIST_IS_HEAD(_vp, (_dest_hd)) || _vp->nused >= BN_VLIST_CHUNK) { \
+	    BN_GET_VLIST(_free_hd, _vp); \
+	    BU_LIST_INSERT((_dest_hd), &(_vp->l)); \
+	} \
+	_vp->cmd[_vp->nused++] = BN_VLIST_MODEL_MAT; \
+}
 
 /** Set a point size to apply to the vlist elements that follow. */
 #define BN_VLIST_SET_POINT_SIZE(_free_hd, _dest_hd, _size) { \
@@ -239,8 +265,8 @@ BN_EXPORT extern int bn_ck_vlist(const struct bu_list *vhead);
  * densely packed than the source.
  */
 BN_EXPORT extern void bn_vlist_copy(struct bu_list *vlists,
-	                            struct bu_list *dest,
-                                    const struct bu_list *src);
+				    struct bu_list *dest,
+				    const struct bu_list *src);
 
 
 /**
@@ -251,8 +277,8 @@ BN_EXPORT extern void bn_vlist_copy(struct bu_list *vlists,
  * length are available conveniently.
  */
 BN_EXPORT extern void bn_vlist_export(struct bu_vls *vls,
-                                      struct bu_list *hp,
-                                      const char *name);
+				      struct bu_list *hp,
+				      const char *name);
 
 
 /**
@@ -260,21 +286,21 @@ BN_EXPORT extern void bn_vlist_export(struct bu_vls *vls,
  * vls_vlist() and received from another machine, into a vlist chain.
  */
 BN_EXPORT extern void bn_vlist_import(struct bu_list *vlists,
-                                      struct bu_list *hp,
-                                      struct bu_vls *namevls,
-                                      const unsigned char *buf);
+				      struct bu_list *hp,
+				      struct bu_vls *namevls,
+				      const unsigned char *buf);
 
 BN_EXPORT extern void bn_vlist_cleanup(struct bu_list *hd);
 
 BN_EXPORT extern struct bn_vlblock *bn_vlblock_init(struct bu_list *free_vlist_hd, /* where to get/put free vlists */
-                                                    int max_ent);
+						    int max_ent);
 
 BN_EXPORT extern void bn_vlblock_free(struct bn_vlblock *vbp);
 
 BN_EXPORT extern struct bu_list *bn_vlblock_find(struct bn_vlblock *vbp,
-                                                 int r,
-                                                 int g,
-                                                 int b);
+						 int r,
+						 int g,
+						 int b);
 
 
 BN_EXPORT void bn_vlist_rpp(struct bu_list *vlists, struct bu_list *hd, const point_t minn, const point_t maxx);
@@ -284,7 +310,7 @@ BN_EXPORT void bn_vlist_rpp(struct bu_list *vlists, struct bu_list *hd, const po
  * color.
  */
 BN_EXPORT extern void bn_plot_vlblock(FILE *fp,
-                                      const struct bn_vlblock *vbp);
+				      const struct bn_vlblock *vbp);
 
 /**
  * Output a vlist as an extended 3-D floating point UNIX-Plot file.
@@ -292,7 +318,7 @@ BN_EXPORT extern void bn_plot_vlblock(FILE *fp,
  * UNIX-Plot output.
  */
 BN_EXPORT extern void bn_vlist_to_uplot(FILE *fp,
-                                        const struct bu_list *vhead);
+					const struct bu_list *vhead);
 
 /** @} */
 

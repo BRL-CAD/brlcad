@@ -48,14 +48,6 @@ subbrep_is_torus(struct subbrep_object_data *data, fastf_t torus_tol)
 
     data->type = TORUS;
 
-#if 0
-    data->params->bool_op= 'u';  // TODO - not always union
-    VMOVE(data->params->origin, torus.Center());
-    VMOVE(data->params->hv, torus.Axis());
-    data->params->radius = torus.major_radius;
-    data->params->r2 = torus.minor_radius;
-#endif
-
     return 1;
 }
 
@@ -69,19 +61,6 @@ negative_torus(struct subbrep_object_data *data, int face_index, double torus_to
     ON_Surface *cs = surf->Duplicate();
     cs->IsTorus(&torus, torus_tol);
     delete cs;
-#if 0
-    ON_3dPoint pnt;
-    ON_3dVector normal;
-    double u = surf->Domain(0).Mid();
-    double v = surf->Domain(1).Mid();
-    if (!surf->EvNormal(u, v, pnt, normal)) return 0;
-
-    ON_3dVector vect = pnt - torus.Center();
-    double dotp = ON_DotProduct(vect, normal);
-
-    if (NEAR_ZERO(dotp, 0.000001)) return 0;
-    if (dotp < 0) return 1;
-#endif
     return -1;
 }
 

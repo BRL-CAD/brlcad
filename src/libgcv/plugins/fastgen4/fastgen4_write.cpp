@@ -1,7 +1,7 @@
 /*              F A S T G E N 4 _ W R I T E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2015-2016 United States Government as represented by
+ * Copyright (c) 2015-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,18 +27,25 @@
 #include "common.h"
 
 #include <cmath>
-#include <fstream>
+
 #include <iomanip>
 #include <map>
 #include <set>
 #include <sstream>
 #include <stdexcept>
+#include <cstdlib>
+
+#ifndef HAVE_DECL_FSEEKO
+extern "C" int fseeko(FILE *, off_t, int);
+extern "C" off_t ftello(FILE *);
+#endif
+#include <fstream>
 
 #include "raytrace.h"
 #include "gcv/api.h"
 #include "gcv/util.h"
 
-namespace
+namespace fastgen4_write
 {
 
 
@@ -1329,7 +1336,7 @@ apply_path_xform(db_i &db, const mat_t &matrix, rt_db_internal &internal)
     RT_CK_DBI(&db);
     RT_CK_DB_INTERNAL(&internal);
 
-    if (rt_obj_xform(&internal, matrix, &internal, 0, &db, &rt_uniresource))
+    if (rt_obj_xform(&internal, matrix, &internal, 0, &db))
 	throw std::runtime_error("rt_obj_xform() failed");
 }
 
@@ -2574,14 +2581,13 @@ fastgen4_write(struct gcv_context *context, const struct gcv_opts *gcv_options,
     return 1;
 }
 
-
 }
 
 
 extern "C"
 {
     struct gcv_filter gcv_conv_fastgen4_write =
-    {"FASTGEN4 Writer", GCV_FILTER_WRITE, BU_MIME_MODEL_VND_FASTGEN, NULL, NULL, fastgen4_write};
+    {"FASTGEN4 Writer", GCV_FILTER_WRITE, BU_MIME_MODEL_VND_FASTGEN, NULL, NULL, NULL, fastgen4_write::fastgen4_write};
 }
 
 

@@ -34,6 +34,7 @@ tclsdl		0x10B20000	0x00080000
 vqtcl		0x10C00000	0x00010000
 tdbc		0x10C40000	0x00010000
 thread		0x10C80000	0x00020000
+nsf		0x10ca0000	0x00080000
 ;
 ; insert new packages here
 ;

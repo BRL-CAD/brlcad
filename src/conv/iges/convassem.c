@@ -1,7 +1,7 @@
 /*                     C O N V A S S E M . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2016 United States Government as represented by
+ * Copyright (c) 1990-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -42,7 +42,11 @@ void
 Convassem()
 {
     size_t i;
-    int j, k, comblen, conv = 0, totass = 0;
+    int j = 0;
+    int k = 0;
+    int comblen = 0;
+    int conv = 0;
+    int totass = 0;
     struct solid_list *root, *ptr, *ptr_tmp;
     struct wmember head, *wmem;
     int no_of_assoc = 0;
@@ -75,7 +79,7 @@ Convassem()
 
 	Readint(&j, "");	/* read entity type */
 	if (j != 184) {
-	    bu_log("Incorrect entity type in Parameter section for entity %d\n", i);
+	    bu_log("Incorrect entity type in Parameter section for entity %zu\n", i);
 	    return;
 	}
 

@@ -1,7 +1,7 @@
 /*                        T I E N E T . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2016 United States Government as represented by
+ * Copyright (c) 2008-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,10 +23,8 @@
 
 #include "common.h"
 
-#include "tinycthread.h"
-
 #include "bu/malloc.h"
-
+#include "bu/tc.h"
 
 #define	TN_MASTER_PORT		1980
 #define	TN_SLAVE_PORT		1981
@@ -39,7 +37,6 @@
 #define	TN_OP_SHUTDOWN		0x0015
 #define TN_OP_OKAY		0x0016
 #define	TN_OP_MESSAGE		0x0017
-
 
 #define TIENET_BUFFER_INIT(_b) { \
 	_b.data = NULL; \
@@ -60,10 +57,11 @@ typedef struct tienet_buffer_s {
     uint32_t ind;
 } tienet_buffer_t;
 
+
 typedef struct tienet_sem_s {
     int val;
-    mtx_t mut;
-    cnd_t cond;
+    bu_mtx_t mut;
+    bu_cnd_t cond;
 } tienet_sem_t;
 
 

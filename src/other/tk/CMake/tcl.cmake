@@ -153,6 +153,20 @@ ENDMACRO(TCL_CHECK_STRUCT_HAS_MEMBER)
 # SC_ENABLE_THREADS
 #------------------------------------------------------------------------
 MACRO(SC_ENABLE_THREADS)
+
+  CHECK_INCLUDE_FILE(pthread.h PROBE_PTHREAD_H)
+   if (NOT PROBE_PTHREAD_H)
+     cmake_push_check_state(RESET)
+     # pthread.h on FreeBSD 10 and some older Linucies use non-c90 types
+     set(CMAKE_REQUIRED_DEFINITIONS "-Dclockid_t=clock_t")
+     set(CMAKE_REQUIRED_FLAGS "-pthread")
+     CHECK_INCLUDE_FILE(pthread.h PROBE_PTHREAD_H_CLOCKID_T)
+     if (PROBE_PTHREAD_H_CLOCKID_T)
+       set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Dclockid_t=clock_t -pthread")
+       set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+     endif (PROBE_PTHREAD_H_CLOCKID_T)
+   endif (NOT PROBE_PTHREAD_H)
+
    FIND_PACKAGE(Threads)
    IF(NOT ${CMAKE_THREAD_LIBS_INIT} STREQUAL "")
 		SET(TCL_FOUND_THREADS ON)
@@ -655,8 +669,8 @@ ENDMACRO(SC_TCL_CHECK_BROKEN_FUNC)
 # SC_TCL_GETHOSTBYADDR_R
 #--------------------------------------------------------------------
 MACRO(SC_TCL_GETHOSTBYADDR_R)
-	TCL_CHECK_FUNCTION_EXISTS(gethostbyaddr_r HAVE_GETHOSTBYADDR_R)
-	IF(HAVE_GETHOSTBYADDR_R)
+	TCL_CHECK_FUNCTION_EXISTS(gethostbyaddr_r TCL_HAVE_GETHOSTBYADDR_R)
+	IF(TCL_HAVE_GETHOSTBYADDR_R)
 		SET(HAVE_GETHOSTBYADDR_R_7_SRC "
 #include <netdb.h>
 int main(){
@@ -671,10 +685,10 @@ int h_errnop;
 (void) gethostbyaddr_r(addr, length, type, result, buffer, buflen, &h_errnop);
 return 0;}
 		")
-		CHECK_C_SOURCE_COMPILES("${HAVE_GETHOSTBYADDR_R_7_SRC}"  HAVE_GETHOSTBYADDR_R_7)
-		IF(HAVE_GETHOSTBYADDR_R_7)
+		CHECK_C_SOURCE_COMPILES("${HAVE_GETHOSTBYADDR_R_7_SRC}"  TCL_HAVE_GETHOSTBYADDR_R_7)
+		IF(TCL_HAVE_GETHOSTBYADDR_R_7)
 			ADD_TCL_CFLAG(HAVE_GETHOSTBYADDR_R_7)
-		ELSE(HAVE_GETHOSTBYADDR_R_7)
+		ELSE(TCL_HAVE_GETHOSTBYADDR_R_7)
 			SET(HAVE_GETHOSTBYADDR_R_8_SRC "
 #include <netdb.h>
 int main(){
@@ -689,12 +703,12 @@ int h_errnop;
 (void) gethostbyaddr_r(addr, length, type, result, buffer, buflen, &resultp, &h_errnop);
 return 0;}
 			")
-			CHECK_C_SOURCE_COMPILES("${HAVE_GETHOSTBYADDR_R_8_SRC}" HAVE_GETHOSTBYADDR_R_8)
-			IF(HAVE_GETHOSTBYADDR_R_8)
-			   ADD_TCL_CFLAG(HAVE_GETHOSTBYADDR_R_8)
-			ENDIF(HAVE_GETHOSTBYADDR_R_8)
-		ENDIF(HAVE_GETHOSTBYADDR_R_7)
-	ENDIF(HAVE_GETHOSTBYADDR_R)
+			CHECK_C_SOURCE_COMPILES("${HAVE_GETHOSTBYADDR_R_8_SRC}" TCL_HAVE_GETHOSTBYADDR_R_8)
+			IF(TCL_HAVE_GETHOSTBYADDR_R_8)
+				ADD_TCL_CFLAG(HAVE_GETHOSTBYADDR_R_8)
+			ENDIF(TCL_HAVE_GETHOSTBYADDR_R_8)
+		ENDIF(TCL_HAVE_GETHOSTBYADDR_R_7)
+	ENDIF(TCL_HAVE_GETHOSTBYADDR_R)
 ENDMACRO(SC_TCL_GETHOSTBYADDR_R)
 
 #--------------------------------------------------------------------

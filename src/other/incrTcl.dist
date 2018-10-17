@@ -1,0 +1,17 @@
+set(incrTcl_ignore_files
+CHANGES
+ChangeLog
+INCOMPATIBLE
+Makefile.am
+README
+TODO
+doc/Makefile.am
+doc/README
+license.terms
+makefile.vc
+rules.vc
+tclconfig/install-sh
+tclconfig/tcl.m4
+tools/Makefile.am
+tools/genStubs.tcl
+)

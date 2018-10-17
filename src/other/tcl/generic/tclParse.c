@@ -1193,6 +1193,8 @@ ParseTokens(
 	    numBytes--;
 	    nestedPtr = TclStackAlloc(parsePtr->interp, sizeof(Tcl_Parse));
 	    while (1) {
+		const char *curEnd;
+		
 		if (Tcl_ParseCommand(parsePtr->interp, src, numBytes, 1,
 			nestedPtr) != TCL_OK) {
 		    parsePtr->errorType = nestedPtr->errorType;
@@ -1201,8 +1203,9 @@ ParseTokens(
 		    TclStackFree(parsePtr->interp, nestedPtr);
 		    return TCL_ERROR;
 		}
+		curEnd = src + numBytes;
 		src = nestedPtr->commandStart + nestedPtr->commandSize;
-		numBytes = parsePtr->end - src;
+		numBytes = curEnd - src;
 		Tcl_FreeParse(nestedPtr);
 
 		/*

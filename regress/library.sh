@@ -2,7 +2,7 @@
 #                      L I B R A R Y . S H
 # BRL-CAD
 #
-# Copyright (c) 2010-2016 United States Government as represented by
+# Copyright (c) 2010-2018 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -48,7 +48,71 @@ LD_LIBRARY_PATH=../src/other/tcl/unix:../src/other/tk/unix:$LD_LIBRARY_PATH
 DYLD_LIBRARY_PATH=../src/other/tcl/unix:../src/other/tk/unix:$DYLD_LIBRARY_PATH
 export LD_LIBRARY_PATH DYLD_LIBRARY_PATH
 
+is_absolute() {
+    if test "x$1" = "x" ; then
+	return
+    fi
+    case "$1" in
+	/*)
+	    true;
+	    ;;
+	*)
+	    false;
+	    ;;
+    esac
+}
 
+# make sure if LOGFILE is specified externally that it refers to a
+# full path.  some tests change directories.
+if ! test "x$LOGFILE" = "x" && ! is_absolute "$LOGFILE" ; then
+    LOGFILE="`pwd`/$LOGFILE"
+fi
+
+
+###
+# log "string to print and log"
+#
+# prints a message to the current tty/output (unless QUIET variable is
+# set) as well as appending to a log (if LOGFILE variable is set).
+log ( ) {
+
+    if test ! "x$LOGFILE" = "x" ; then
+	echo "$*" >> "$LOGFILE"
+    fi
+    if test ! "x$QUIET" = "x1" ; then
+	echo "$*"
+    fi
+}
+
+
+###
+# run command [arg1] [arg2] [...]
+#
+# helper function runs a given command, logs it to a file, and stashes
+# the return status.  reads LOGFILE global, increments STATUS global.
+run ( ) {
+    log "... running $@"
+    "$@" >> $LOGFILE 2>&1
+    ret=$?
+    case "x$STATUS" in
+	'x'|*[!0-9]*)
+	    break;;
+	*)
+	    if test $ret -ne 0 ; then
+		STATUS="`expr $STATUS + 1`"
+	    fi
+	    ;;
+    esac
+    return $ret
+}
+
+
+###
+# ensearch {command_to_find}
+#
+# prints the path to a given application binary or script, typically
+# by looking in the bin or bench directory relative to this library
+# script's location
 ensearch ( ) {
     ensearch_file="$1"
     ensearch_dirs="$ARG1/bin ../bin \"$PATH_TO_THIS/../bin\" ../bench \"$PATH_TO_THIS/../bench\" "

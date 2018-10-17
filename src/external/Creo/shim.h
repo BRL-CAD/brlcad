@@ -4,6 +4,9 @@
  * either coincidental or necessary for compilation.
  */
 
+#include "common.h"
+
+#include <stdio.h> /* for size_t */
 #include "vmath.h"
 
 #define ACCESS_AVAILABLE			1
@@ -85,8 +88,8 @@
 #define PRO_VALUE_UNUSED			77
 #define uiProe2ndImmediate                      78
 
-typedef bool ProBool;
-typedef bool ProBoolean;
+typedef int ProBool;
+typedef int ProBoolean;
 typedef char* ProCharLine;
 typedef int ProContourTraversal;
 typedef int ProDimensiontype;
@@ -144,7 +147,7 @@ typedef int ProIdTable[2];
 typedef int __internal_facetset[3];
 typedef struct pf {int id;} ProFeature;
 typedef struct pmatp {double mass_density;} ProMaterialProps;
-typedef struct pmp {int density; int mass; int volume;} ProMassProperty;
+typedef struct pmp {double density; double mass; double volume;} ProMassProperty;
 typedef struct proparam {wchar_t *id;} ProParameter;
 typedef struct prouc {double scale;} ProUnitConversion;
 typedef struct psap {double color_rgb[3];double transparency;double shininess;double diffuse;double highlite;} ProSurfaceAppearanceProps;
@@ -164,10 +167,10 @@ extern "C" int ProAsmcompMdlGet(ProFeature*,void**);
 extern "C" int ProAsmcompMdlNameGet(ProFeature*,int*,wchar_t*);
 extern "C" int ProAsmcompMdlNameGet(ProFeature*,int*,wchar_t*);
 extern "C" int ProAsmcomppathInit(void*,ProIdTable,int,void**);
-extern "C" int ProAsmcomppathTrfGet(void**,bool,ProMatrix);
-extern "C" int ProAssemblyIsExploded(void*,bool*);
+extern "C" int ProAsmcomppathTrfGet(void**,int,ProMatrix);
+extern "C" int ProAssemblyIsExploded(void*,int*);
 extern "C" int ProBsplinesrfdataGet(void**,int[2],double**,double**,double**,ProVector**,int*,int*,int*);
-extern "C" int ProCmdActionAdd(const char*,int(*)(int,int*,void*),int,int(*)(int),bool,bool,int*);
+extern "C" int ProCmdActionAdd(const char*,int(*)(int,int*,void*),int,int(*)(int),int,int,int*);
 extern "C" int ProDimensionTypeGet(void**,int*);
 extern "C" int ProDimensionValueGet(void**,double *);
 extern "C" int ProElementFree(void**);
@@ -191,7 +194,7 @@ extern "C" int ProMdlToModelitem(void*,void**);
 extern "C" int ProMdlTypeGet(void*,int*);
 extern "C" int ProMdlVerstampGet(void*, void**);
 extern "C" int ProMdlnameInit(void*,int,void*);
-extern "C" int ProMenubarmenuPushbuttonAdd(const char*,const char*,const char*,const char*,const char*,bool,int,wchar_t*);
+extern "C" int ProMenubarmenuPushbuttonAdd(const char*,const char*,const char*,const char*,const char*,int,int,wchar_t*);
 extern "C" int ProMessageDisplay(wchar_t *,const char *,const char *);
 extern "C" int ProParameterInit(void *,wchar_t *,void *);
 extern "C" int ProParameterValueGet(ProParameter *,void *);
@@ -200,7 +203,7 @@ extern "C" int ProParamvalueTypeGet(void **,void *);
 extern "C" int ProParamvalueValueGet(void **,int,wchar_t *);
 extern "C" int ProPartMaterialNameGet(void*,wchar_t *);
 extern "C" int ProPartMaterialdataGet(void*,wchar_t*,ProMaterialProps*);
-extern "C" int ProPartTessellate(void*,double,double,bool,ProSurfaceTessellationData**);
+extern "C" int ProPartTessellate(void*,double,double,int,ProSurfaceTessellationData**);
 extern "C" int ProSolidFeatVisit(void*,int (*)(ProFeature*,int,void*),int (*)(ProFeature*,void*),void*);
 extern "C" int ProSolidMassPropertyGet(void*,void*,ProMassProperty*);
 extern "C" int ProSolidOutlineGet(void*, Pro3dPnt*);
@@ -208,7 +211,7 @@ extern "C" int ProStringVerstampGet(void*, void**);
 extern "C" int ProStringarrayFree(char**,int);
 extern "C" int ProSurfaceAppearancepropsGet(void**,ProSurfaceAppearanceProps*);
 extern "C" int ProUICheckbuttonActivateActionSet(const char*,const char*,void(*)(char*,char*,void*),void*);
-extern "C" int ProUICheckbuttonGetState(const char*,const char*,bool*);
+extern "C" int ProUICheckbuttonGetState(const char*,const char*,int*);
 extern "C" int ProUIDialogActivate(const char*,int*);
 extern "C" int ProUIDialogCreate(const char *,const char *);
 extern "C" int ProUIDialogDestroy(const char *);
@@ -232,7 +235,7 @@ extern "C" int ProWstringFree(wchar_t*);
 extern "C" void ProAssemblyUnexplode(void*);
 extern "C" void ProContourEdgeVisit(void*,void*,int(*)(void*,int,void*),int(*)(void*,void*),void*);
 extern "C" void ProContourTraversalGet(void*,int*);
-extern "C" void ProMdlIsSkeleton(void*, bool*);
+extern "C" void ProMdlIsSkeleton(void*, int*);
 extern "C" void ProMdlMdlnameGet(void*,wchar_t*);
 extern "C" void ProMessageClear();
 extern "C" void ProPartTessellationFree(ProSurfaceTessellationData**);

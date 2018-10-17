@@ -33,15 +33,10 @@
 # ***                libutahrle CMakeLists.txt                     ***
 # *******************************************************************
 
-if(COMMAND CMAKE_POLICY)
-  if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-    CMAKE_POLICY(SET CMP0026 OLD)
-  endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-endif(COMMAND CMAKE_POLICY)
+cmake_minimum_required(VERSION 3.1.3)
 
 project(UTAHRLE)
 
-cmake_minimum_required(VERSION 2.8)
 
 if(NOT DEFINED BUILD_SHARED_LIBS)
   set(BUILD_SHARED_LIBS ON)
@@ -83,8 +78,6 @@ if(UTAHRLE_HAVE_COMMON_H)
 endif(UTAHRLE_HAVE_COMMON_H)
 
 set(LIBUTAHRLE_PUBLIC_HDRS
-  ${CMAKE_CURRENT_SOURCE_DIR}/include/exit_status.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/include/pyramid.h
   ${CMAKE_CURRENT_SOURCE_DIR}/include/rle.h
   ${CMAKE_CURRENT_SOURCE_DIR}/include/rle_code.h
   ${CMAKE_CURRENT_SOURCE_DIR}/include/rle_config.h
@@ -127,7 +120,6 @@ set(LIBUTAHRLE_SOURCES
 
 if(MSVC)
   add_definitions(
-    -DRLE_DLL_EXPORTS
     -DNO_DECLARE_MALLOC
     -DNEED_BSTRING
     -DNO_OPEN_PIPES
@@ -136,6 +128,9 @@ endif(MSVC)
 
 if(BUILD_SHARED_LIBS)
   add_library(utahrle SHARED ${LIBUTAHRLE_SOURCES})
+  if(MSVC)
+    set_property(TARGET utahrle APPEND PROPERTY COMPILE_DEFINITIONS "RLE_DLL_EXPORTS")
+  endif(MSVC)
   target_link_libraries(utahrle ${M_LIBRARY})
   set_target_properties(utahrle PROPERTIES VERSION 19.0.1 SOVERSION 19)
   install(TARGETS utahrle
@@ -146,19 +141,22 @@ endif(BUILD_SHARED_LIBS)
 
 if(BUILD_STATIC_LIBS)
   add_library(utahrle-static STATIC ${LIBUTAHRLE_SOURCES})
+  if(MSVC)
+    # msvc does not append 'lib' - do it here to have consistent name
+    set_target_properties(utahrle-static PROPERTIES PREFIX "lib")
+  else(MSVC)
+    set_target_properties(utahrle-static PROPERTIES OUTPUT_NAME "utahrle")
+  endif(MSVC)
   target_link_libraries(utahrle-static ${M_LIBRARY})
   install(TARGETS utahrle-static
     RUNTIME DESTINATION ${BIN_DIR}
     LIBRARY DESTINATION ${LIB_DIR}
     ARCHIVE DESTINATION ${LIB_DIR})
-  if(NOT WIN32)
-    set_target_properties(utahrle-static PROPERTIES OUTPUT_NAME "utahrle")
-  endif(NOT WIN32)
 endif(BUILD_STATIC_LIBS)
 
 if(NOT SKIP_INSTALL_FILES AND NOT SKIP_INSTALL_ALL )
   install(FILES ${LIBUTAHRLE_PUBLIC_HDRS} DESTINATION include)
-endif()
+endif(NOT SKIP_INSTALL_FILES AND NOT SKIP_INSTALL_ALL )
 
 # Local Variables:
 # tab-width: 8

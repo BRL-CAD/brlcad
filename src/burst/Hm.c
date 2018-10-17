@@ -1,7 +1,7 @@
 /*                            H M . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,6 +36,10 @@
 #include "./Hm.h"
 #include "./Mm.h"
 #include "./extern.h"
+
+#if defined(HAVE_FDOPEN) && !defined(HAVE_DECL_FDOPEN)
+extern FILE *fdopen(int fd, const char *mode);
+#endif
 
 #define ErLog brst_log
 

@@ -1,7 +1,7 @@
 /*                    R E A D M A T R I X . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2016 United States Government as represented by
+ * Copyright (c) 1990-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,7 +33,8 @@
 void
 Readmatrix(int xform, mat_t rot)
 {
-    int i, j;
+    int i = 0;
+    int j = 0;
 
     /* read the actual transformation matrix and store */
 

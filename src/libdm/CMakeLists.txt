@@ -34,7 +34,7 @@ if(WIN32 AND BRLCAD_ENABLE_OPENGL)
 endif(WIN32 AND BRLCAD_ENABLE_OPENGL)
 
 if(BRLCAD_ENABLE_X11)
-  set(DM_X_LIBS ${X11_LIBRARIES} ${X11_Xi_LIB})
+  set(DM_X_LIBS ${X11_LIBRARIES})
 endif(BRLCAD_ENABLE_X11)
 
 if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK)
@@ -136,6 +136,7 @@ if(BRLCAD_ENABLE_OSG)
   add_dependencies(libdm profont_ProFont_ttf_cp)
 endif(BRLCAD_ENABLE_OSG)
 set(libdm_ignore_files
+  CMakeLists.txt
   README
   TODO
   dm-Null.h
@@ -158,7 +159,11 @@ set(libdm_ignore_files
   dm-wgl.c
   dm-wgl.h
   dm_private.h
-  fontstash
+  fontstash/LICENSE.fontstash
+  fontstash/README.md
+  fontstash/fontstash.h
+  fontstash/glfontstash.h
+  fontstash/stb_truetype.h
   osg-test.cpp
   osg_bob.cpp
   )

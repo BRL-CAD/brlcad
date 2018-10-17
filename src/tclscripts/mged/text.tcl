@@ -1,7 +1,7 @@
 #                        T E X T . T C L
 # BRL-CAD
 #
-# Copyright (c) 1995-2016 United States Government as represented by
+# Copyright (c) 1995-2018 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -2021,7 +2021,7 @@ proc set_text_key_bindings { id } {
 	break
     }
 
-    if {$tcl_platform(platform) == "windows"} {
+    if {$::tcl_platform(platform) == "windows"} {
 	bind $w <Control-c> "do_windows_copy $w; break"
     } else {
 	bind $w <Control-c> "\

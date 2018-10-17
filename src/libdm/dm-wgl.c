@@ -1,7 +1,7 @@
 /*                       D M - W G L . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2016 United States Government as represented by
+ * Copyright (c) 1988-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -51,6 +51,8 @@
 
 #include "./dm_private.h"
 
+#define ENABLE_POINT_SMOOTH 1
+
 #define VIEWFACTOR      (1.0/(*dmp->dm_vp))
 #define VIEWSIZE        (2.0*(*dmp->dm_vp))
 
@@ -61,7 +63,7 @@
 #define YOFFSET_LEFT	532	/* YSTEREO + YBLANK ? */
 
 static int wgl_actively_drawing;
-HIDDEN PIXELFORMATDESCRIPTOR *wgl_choose_visual();
+HIDDEN int wgl_choose_visual();
 
 /* Display Manager package interface */
 #define IRBOUND	4095.9	/* Max magnification in Rot matrix */
@@ -217,6 +219,7 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
     Tk_Window tkwin;
     HWND hwnd;
     HDC hdc;
+	int gotvisual;
 
     if ((tkwin = Tk_MainWindow(interp)) == NULL) {
 	return DM_NULL;
@@ -386,9 +389,8 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
     hdc = GetDC(hwnd);
     ((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc = hdc;
 
-    if ((((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip =
-	 wgl_choose_visual(dmp,
-			   ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin)) == NULL) {
+	gotvisual = wgl_choose_visual(dmp, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
+    if (!gotvisual) {
 	bu_log("wgl_open: Can't get an appropriate visual.\n");
 	(void)wgl_close(dmp);
 	return DM_NULL;
@@ -1114,6 +1116,7 @@ wgl_drawVList(dm *dmp, struct bn_vlist *vp)
     register int mflag = 1;
     float black[4] = {0.0, 0.0, 0.0, 0.0};
     GLfloat originalPointSize, originalLineWidth;
+    GLfloat m[16];
 
     glGetFloatv(GL_POINT_SIZE, &originalPointSize);
     glGetFloatv(GL_LINE_WIDTH, &originalLineWidth);
@@ -1157,6 +1160,17 @@ wgl_drawVList(dm *dmp, struct bn_vlist *vp)
 
 		    glBegin(GL_LINE_STRIP);
 		    glVertex3dv(glpt);
+		    break;
+		case BN_VLIST_MODEL_MAT:
+		    glMatrixMode(GL_PROJECTION);
+		    glLoadIdentity();
+		    glLoadMatrixf(m);
+		    break;
+		case BN_VLIST_DISPLAY_MAT:
+		    glMatrixMode(GL_PROJECTION);
+		    glGetFloatv (GL_PROJECTION_MATRIX, m);
+		    glPopMatrix();
+		    glLoadIdentity();
 		    break;
 		case BN_VLIST_POLY_START:
 		case BN_VLIST_TRI_START:
@@ -1386,7 +1400,9 @@ wgl_drawPoint2D(dm *dmp, fastf_t x, fastf_t y)
 	bu_log("\tdmp: %p\tx - %lf\ty - %lf\n", (void *)dmp, x, y);
     }
 
+#if ENABLE_POINT_SMOOTH
     glEnable(GL_POINT_SMOOTH);
+#endif
     glBegin(GL_POINTS);
     glVertex2f(x, y);
     glEnd();
@@ -1406,7 +1422,9 @@ wgl_drawPoint3D(dm *dmp, point_t point)
 	bu_log("\tdmp: %llu\tpt - %lf %lf %lf\n", (unsigned long long)dmp, V3ARGS(point));
     }
 
+#if ENABLE_POINT_SMOOTH
     glEnable(GL_POINT_SMOOTH);
+#endif
     glBegin(GL_POINTS);
     glVertex3dv(point);
     glEnd();
@@ -1427,7 +1445,9 @@ wgl_drawPoints3D(dm *dmp, int npoints, point_t *points)
 	bu_log("wgl_drawPoint3D():\n");
     }
 
+#if ENABLE_POINT_SMOOTH
     glEnable(GL_POINT_SMOOTH);
+#endif
     glBegin(GL_POINTS);
     for (i = 0; i < npoints; ++i)
 	glVertex3dv(points[i]);
@@ -1498,20 +1518,19 @@ wgl_setWinBounds(dm *dmp, fastf_t w[6])
 /* currently, get a double buffered rgba visual that works with Tk and
  * OpenGL
  */
-HIDDEN PIXELFORMATDESCRIPTOR *
+HIDDEN int
 wgl_choose_visual(dm *dmp,
 		  Tk_Window tkwin)
 {
     struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
     int iPixelFormat;
-    PIXELFORMATDESCRIPTOR *ppfd, pfd;
+    PIXELFORMATDESCRIPTOR pfd;
     BOOL good;
 
     /* Try to satisfy the above desires with a color visual of the
      * greatest depth */
 
-    ppfd = &pfd;
-    memset(ppfd, 0, sizeof(PIXELFORMATDESCRIPTOR));
+    memset(&pfd, 0, sizeof(PIXELFORMATDESCRIPTOR));
 
     iPixelFormat = GetPixelFormat(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc);
     if (iPixelFormat) {
@@ -1530,25 +1549,24 @@ wgl_choose_visual(dm *dmp,
 	bu_log("wgl_choose_visual: %s", buf);
 	LocalFree(buf);
 
-	return (PIXELFORMATDESCRIPTOR *)NULL;
+	return 0;
     }
 
-    ppfd->nSize = sizeof(PIXELFORMATDESCRIPTOR);
-    ppfd->nVersion = 1;
-    ppfd->dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
-    ppfd->iPixelType = PFD_TYPE_RGBA;
-    ppfd->cColorBits = 24;
-    ppfd->cDepthBits = 32;
-    ppfd->iLayerType = PFD_MAIN_PLANE;
+    pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
+    pfd.nVersion = 1;
+    pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+    pfd.iPixelType = PFD_TYPE_RGBA;
+    pfd.cColorBits = 24;
+    pfd.cDepthBits = 32;
+    pfd.iLayerType = PFD_MAIN_PLANE;
 
     mvars->zbuf = 1;
-    iPixelFormat = ChoosePixelFormat(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ppfd);
-    good = SetPixelFormat(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, iPixelFormat, ppfd);
+    iPixelFormat = ChoosePixelFormat(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, &pfd);
+    good = SetPixelFormat(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, iPixelFormat, &pfd);
 
     if (good)
-	return ppfd;
-
-    return (PIXELFORMATDESCRIPTOR *)NULL;
+	return 1;
+	return 0;
 }
 
 
@@ -1883,6 +1901,33 @@ wgl_configureWin_guts(dm *dmp,
 
 
 HIDDEN int
+wgl_getDisplayImage(struct dm_internal *dmp, unsigned char **image)
+{
+    if (dmp->dm_type == DM_TYPE_WGL || dmp->dm_type == DM_TYPE_OGL) {
+	unsigned char *idata;
+	int width;
+	int height;
+
+	width = dmp->dm_width;
+	height = dmp->dm_height;
+
+	idata = (unsigned char*)bu_calloc(height * width * 3, sizeof(unsigned char), "rgb data");
+
+	glReadBuffer(GL_FRONT);
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, idata);
+	*image = idata;
+	flip_display_image_vertically(*image, width, height);
+    } else {
+	bu_log("ogl_getDisplayImage: Display type not set as OGL or WGL\n");
+	return BRLCAD_ERROR;
+    }
+
+    return BRLCAD_OK; /* caller will need to bu_free(idata, "image data"); */
+}
+
+
+HIDDEN int
 wgl_reshape(dm *dmp, int width, int height)
 {
     GLint mm;
@@ -2142,7 +2187,7 @@ wgl_openFb(dm *dmp)
     return 0;
 }
 
-void
+int
 wgl_get_internal(struct dm_internal *dmp)
 {
     struct modifiable_ogl_vars *mvars = NULL;
@@ -2152,9 +2197,10 @@ wgl_get_internal(struct dm_internal *dmp)
 	mvars->this_dm = dmp;
 	bu_vls_init(&(mvars->log));
     }
+	return 0;
 }
 
-void
+int
 wgl_put_internal(struct dm_internal *dmp)
 {
     struct modifiable_ogl_vars *mvars = NULL;
@@ -2163,6 +2209,7 @@ wgl_put_internal(struct dm_internal *dmp)
 	bu_vls_free(&(mvars->log));
 	BU_PUT(dmp->m_vars, struct modifiable_ogl_vars);
     }
+	return 0;
 }
 
 void
@@ -2383,7 +2430,7 @@ dm dm_wgl = {
     wgl_freeDLists,
     wgl_genDLists,
     wgl_draw_obj,
-    null_getDisplayImage,	/* display to image function */
+    wgl_getDisplayImage,	/* display to image function */
     wgl_reshape,
     wgl_makeCurrent,
     wgl_openFb,

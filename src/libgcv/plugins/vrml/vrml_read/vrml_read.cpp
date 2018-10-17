@@ -1,7 +1,7 @@
 /*                         V R M L - G . C P P
  * BRL-CAD
  *
- * Copyright (c) 2015-2016 United States Government as represented by
+ * Copyright (c) 2015-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -271,9 +271,19 @@ vrml_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const
 }
 
 
+
+HIDDEN int
+vrml_can_read(const char *source_path)
+{
+    if (!source_path) return 0;
+    FileUtil infile(source_path);
+    if (infile.getFileType() == 2) return 1;
+    return 0;
+}
+
 extern "C" {
     struct gcv_filter gcv_conv_vrml_read =
-    {"VRML Reader", GCV_FILTER_READ, BU_MIME_MODEL_VRML, NULL, NULL, vrml_read};
+    {"VRML Reader", GCV_FILTER_READ, BU_MIME_MODEL_VRML, vrml_can_read, NULL, NULL, vrml_read};
 }
 
 

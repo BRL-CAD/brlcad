@@ -1,7 +1,7 @@
 /*                      B N E T W O R K . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2016 United States Government as represented by
+ * Copyright (c) 2011-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -53,6 +53,11 @@
 #  include <netinet/tcp.h> /* for TCP_NODELAY sockopt */
 #  include <arpa/inet.h> /* hton/ntoh, inet_addr functions */
 #  include <sys/socket.h> /* accept, connect, send, recv, ... */
+   /* for c90/c99 compatibility */
+#  if !defined(HAVE_DECL_HTONL) && !defined(htonl)
+      extern uint32_t htonl(uint32_t);
+      extern uint32_t ntohl(uint32_t);
+   #endif
 #endif
 
 #endif /* BNETWORK_H */

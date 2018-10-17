@@ -47,7 +47,6 @@ target_link_libraries(BrlcadCore
   libvds-static
   libwdb-static
   libnmg-static
-  y2038-static
   p2t-static
   zlib-static
   lz4-static
@@ -127,7 +126,6 @@ target_link_libraries(brlcad
   libvds-static
   libwdb-static
   libnmg-static
-  y2038-static
   p2t-static
   zlib-static
   lz4-static

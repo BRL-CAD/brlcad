@@ -1,7 +1,7 @@
 /*                    E N C O D E . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2016 United States Government as represented by
+ * Copyright (c) 2011-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -82,11 +82,12 @@ test_encode(const char *str)
 
 
 int
-encode_main(int ac, char *av[])
+main(int ac, char *av[])
 {
     int test_num = 0;
+
     if (ac != 2)
-	fprintf(stderr,"Usage: %s test_number\n", av[0]);
+	bu_exit(1, "Usage: %s {test_number}\n", av[0]);
 
     sscanf(av[1], "%d", &test_num);
 

@@ -1,7 +1,7 @@
 /*                          P L O T . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2016 United States Government as represented by
+ * Copyright (c) 1985-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,14 +31,18 @@
 #endif
 #include "bresource.h"
 
-#include "vmath.h"
+#include "bu/app.h"
 #include "bu/units.h"
+#include "vmath.h"
 #include "raytrace.h"
 #include "bn/plot3.h"
 
 #include "./mged.h"
 #include "./mged_dm.h"
 
+#if defined(HAVE_FDOPEN) && !defined(HAVE_DECL_FDOPEN)
+extern FILE *fdopen(int fd, const char *mode);
+#endif
 
 int
 f_area(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
