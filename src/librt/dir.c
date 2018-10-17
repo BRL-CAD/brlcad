@@ -1,7 +1,7 @@
 /*                           D I R . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2016 United States Government as represented by
+ * Copyright (c) 1985-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -146,7 +146,7 @@ rt_db_put_internal(
 
     if (db_version(dbip) > 4)
 	return rt_db_put_internal5(dp, dbip, ip, resp,
-				   DB5_MAJORTYPE_BRLCAD);
+				   ip->idb_major_type);
 
     BU_EXTERNAL_INIT(&ext);
 

@@ -1,7 +1,7 @@
 /*                     N A S T R A N - G . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2016 United States Government as represented by
+ * Copyright (c) 1997-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,8 +33,9 @@
 #include <errno.h>
 #include "bio.h"
 
-#include "vmath.h"
+#include "bu/app.h"
 #include "bu/getopt.h"
+#include "vmath.h"
 #include "nmg.h"
 #include "rt/geom.h"
 #include "raytrace.h"
@@ -160,7 +161,7 @@ reset_input(void)
     for (i=0; i < 20; i++)
 	prev_rec[i][0] = '\0';
 
-    bu_fseek(fpin, start_off, SEEK_SET);
+    fseek(fpin, start_off, SEEK_SET);
     line_count = bulk_data_start_line;
 
     tmp = bu_fgets(next_line, MAX_LINE_SIZE, fpin);
@@ -533,10 +534,9 @@ HIDDEN int
 convert_cs(struct coord_sys *cs)
 {
     struct coord_sys *cs2;
-    point_t tmp_orig, tmp_pt1, tmp_pt2;
-    VSETALL(tmp_orig, 0.0);
-    VSETALL(tmp_pt1, 0.0);
-    VSETALL(tmp_pt2, 0.0);
+    point_t tmp_orig = VINIT_ZERO;
+    point_t tmp_pt1 = VINIT_ZERO;
+    point_t tmp_pt2 = VINIT_ZERO;
 
     if (!cs->rid)
 	return 0;
@@ -624,9 +624,7 @@ HIDDEN int
 convert_grid(int idx)
 {
     struct coord_sys *cs;
-    point_t tmp_pt;
-    VSETALL(tmp_pt, 0.0);
-
+    point_t tmp_pt = VINIT_ZERO;
 
     if (!g_pts[idx].cid)
 	return 0;
@@ -1195,7 +1193,7 @@ main(int argc, char **argv)
 	if (bu_strncmp(line, "BEGIN BULK", 10))
 	    continue;
 
-	start_off = bu_ftell(fpin);
+	start_off = ftell(fpin);
 	break;
     }
 
@@ -1221,7 +1219,7 @@ main(int argc, char **argv)
     nmg_model = (struct model *)NULL;
 
     /* count grid points */
-    bu_fseek(fptmp, 0, SEEK_SET);
+    fseek(fptmp, 0, SEEK_SET);
     while (bu_fgets(line, MAX_LINE_SIZE, fptmp)) {
 	if (!bu_strncmp(line, "GRID", 4))
 	    grid_count++;
@@ -1231,7 +1229,7 @@ main(int argc, char **argv)
     }
 
     /* get default values and properties */
-    bu_fseek(fptmp, 0, SEEK_SET);
+    fseek(fptmp, 0, SEEK_SET);
     while (get_next_record(fptmp, 1, 0)) {
 	if (!bu_strncmp(curr_rec[0], "BAROR", 5)) {
 	    /* get BAR defaults */
@@ -1264,7 +1262,7 @@ main(int argc, char **argv)
     g_pts = (struct grid_point *)bu_calloc(grid_count, sizeof(struct grid_point), "grid points");
 
     /* get all grid points */
-    bu_fseek(fptmp, 0, SEEK_SET);
+    fseek(fptmp, 0, SEEK_SET);
     while (get_next_record(fptmp, 1, 0)) {
 	int gid;
 	int cid;
@@ -1289,7 +1287,7 @@ main(int argc, char **argv)
 
 
     /* find coordinate systems */
-    bu_fseek(fptmp, 0, SEEK_SET);
+    fseek(fptmp, 0, SEEK_SET);
     while (get_next_record(fptmp, 1, 0)) {
 	if (bu_strncmp(curr_rec[0], "CORD", 4))
 	    continue;
@@ -1308,7 +1306,7 @@ main(int argc, char **argv)
     mk_id(fpout, nastran_file);
 
     /* get elements */
-    bu_fseek(fptmp, 0, SEEK_SET);
+    fseek(fptmp, 0, SEEK_SET);
     while (get_next_record(fptmp, 1, 0)) {
 	if (!bu_strncmp(curr_rec[0], "CBAR", 4))
 	    get_cbar();

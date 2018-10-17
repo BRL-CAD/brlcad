@@ -1,7 +1,7 @@
 /*                         C O M B M E M . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2016 United States Government as represented by
+ * Copyright (c) 2008-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -447,6 +447,7 @@ combmem_get(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 		break; \
 	    default: \
 		bu_vls_printf((_gedp)->ged_result_str, "combmem_set: unrecognized relation %c (assuming UNION)\n", (_opstr)[0]); \
+	    /* fall through */ \
 	    case DB_OP_UNION: \
 		(_rt_tree_array_index).tl_op = OP_UNION; \
 		break; \

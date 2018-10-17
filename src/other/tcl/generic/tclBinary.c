@@ -1528,7 +1528,15 @@ GetFormatSpec(
 	(*formatPtr)++;
 	(*countPtr) = BINARY_ALL;
     } else if (isdigit(UCHAR(**formatPtr))) { /* INTL: digit */
-	(*countPtr) = strtoul(*formatPtr, formatPtr, 10);
+	unsigned long int count;
+
+	errno = 0;
+	count = strtoul(*formatPtr, formatPtr, 10);
+	if (errno || (count > (unsigned long) INT_MAX)) {
+	    (*countPtr) = INT_MAX;
+	} else {
+	    (*countPtr) = (int) count;
+	}
     } else {
 	(*countPtr) = BINARY_NOCOUNT;
     }

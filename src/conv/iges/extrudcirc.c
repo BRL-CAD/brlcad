@@ -1,7 +1,7 @@
 /*                    E X T R U D C I R C . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2016 United States Government as represented by
+ * Copyright (c) 1990-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,11 +28,13 @@ Extrudcirc(int entityno, int curve, vect_t evect)
     /* circular arc entity number */
     /* extrusion vector */
 {
-    point_t base;		/* center of cylinder base */
-    fastf_t radius;		/* radius of cylinder */
-    fastf_t x_1, y_1;		/* Start point */
-    fastf_t x_2, y_2;		/* Terminate point */
-    int sol_num;	/* Solid number */
+    point_t base = VINIT_ZERO;	/* center of cylinder base */
+    fastf_t radius = 0.0;	/* radius of cylinder */
+    fastf_t x_1 = 0.0;		/* Start point */
+    fastf_t y_1 = 0.0;		/* Start point */
+    fastf_t x_2 = 0.0;		/* Terminate point */
+    fastf_t y_2 = 0.0;		/* Terminate point */
+    int sol_num;		/* Solid number */
 
     /* Acquiring Data */
 

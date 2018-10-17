@@ -1,7 +1,7 @@
 #                     C O M M A N D . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2016 United States Government as represented by
+# Copyright (c) 1998-2018 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -1447,7 +1447,7 @@
     bind $w <Right> "[::itcl::code $this doRight]; break"
     bind $w <Control-a> "[::itcl::code $this doControl_a]; break"
     bind $w <Control-b> "[::itcl::code $this backward_char]; break"
-    if {$tcl_platform(platform) == "windows"} {
+    if {$::tcl_platform(platform) == "windows"} {
 	bind $w <Control-c> "[::itcl::code $this doCopy]; break"
     } else {
 	bind $w <Control-c> "[::itcl::code $this doControl_c]; break"

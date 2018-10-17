@@ -1,7 +1,7 @@
 /*                      B O O L W E A V E . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2016 United States Government as represented by
+ * Copyright (c) 1993-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -53,7 +53,7 @@ __BEGIN_DECLS
  * Weave a chain of segments into an existing set of partitions.  The
  * edge of each partition is an inhit or outhit of some solid (seg).
  *
- * NOTE: When the final partitions are completed, it is the users
+ * NOTE: When the final partitions are completed, it is the user's
  * responsibility to honor the inflip and outflip flags.  They can not
  * be flipped here because an outflip=1 edge and an inflip=0 edge
  * following it may in fact be the same edge.  This could be dealt

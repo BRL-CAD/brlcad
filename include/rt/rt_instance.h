@@ -1,7 +1,7 @@
 /*                    R T _ I N S T A N C E . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2016 United States Government as represented by
+ * Copyright (c) 1993-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -69,7 +69,6 @@ struct rt_i {
     int                 rti_prismtrace; /**< @brief  add support for pixel prism trace */
     char *              rti_region_fix_file; /**< @brief  rt_regionfix() file or NULL */
     int                 rti_space_partition;  /**< @brief  space partitioning method */
-    int                 rti_nugrid_dimlimit;  /**< @brief  limit on nugrid dimensions */
     struct bn_tol       rti_tol;        /**< @brief  Math tolerances for this model */
     struct rt_tess_tol  rti_ttol;       /**< @brief  Tessellation tolerance defaults */
     fastf_t             rti_max_beam_radius; /**< @brief  Max threat radius for FASTGEN cline solid */
@@ -97,7 +96,7 @@ struct rt_i {
     size_t              nmiss_tree;     /**< @brief  shots missed sub-tree RPP */
     size_t              nmiss_solid;    /**< @brief  shots missed solid RPP */
     size_t              ndup;           /**< @brief  duplicate shots at a given solid */
-    size_t              nempty_cells;   /**< @brief  number of empty NUgrid cells */
+    size_t              nempty_cells;   /**< @brief  number of empty spatial partition cells passed through */
     union cutter        rti_CutHead;    /**< @brief  Head of cut tree */
     union cutter        rti_inf_box;    /**< @brief  List of infinite solids */
     union cutter *      rti_CutFree;    /**< @brief  cut Freelist */
@@ -117,7 +116,6 @@ struct rt_i {
     struct soltab **    rti_Solids;     /**< @brief  ptrs to soltab [st_bit] */
     struct bu_list      rti_solidheads[RT_DBNHASH]; /**< @brief  active solid lists */
     struct bu_ptbl      rti_resources;  /**< @brief  list of 'struct resource's encountered */
-    double              rti_nu_gfactor; /**< @brief  constant in numcells computation */
     size_t              rti_cutlen;     /**< @brief  goal for # solids per boxnode */
     size_t              rti_cutdepth;   /**< @brief  goal for depth of NUBSPT cut tree */
     /* Parameters required for rt_submodel */
@@ -316,9 +314,6 @@ RT_EXPORT extern void rt_pr_pt(const struct rt_i *rtip,
                                const struct partition *pp);
 
 
-#define RT_NU_GFACTOR_DEFAULT   1.5      /**< @brief  see rt_cut_it() for a description
-                                            of this */
-
 /**
  * Go through all the solids in the model, given the model mins and
  * maxes, and generate a cutting tree.  A strategy better than
@@ -358,6 +353,12 @@ clt_db_store(size_t count, struct soltab *solids[]);
 
 RT_EXPORT extern void
 clt_db_store_bvh(size_t count, struct clt_linear_bvh_node *nodes);
+
+RT_EXPORT extern void
+clt_db_store_regions(size_t sz_btree_array, struct bit_tree *btp, size_t nregions, struct cl_bool_region *regions, struct cl_region *mtls);
+
+RT_EXPORT extern void
+clt_db_store_regions_table(cl_uint *regions_table, size_t regions_table_size);
 
 RT_EXPORT extern void clt_db_release(void);
 

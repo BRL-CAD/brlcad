@@ -1,7 +1,7 @@
 /*                  R H I N O _ R E A D . C P P
  * BRL-CAD
  *
- * Copyright (c) 2016 United States Government as represented by
+ * Copyright (c) 2016-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,7 +42,7 @@
 #include <stdexcept>
 
 
-namespace
+namespace rhino_read
 {
 
 
@@ -304,7 +304,8 @@ load_model(const gcv_opts &gcv_options, const std::string &path,
 HIDDEN void
 write_geometry(rt_wdb &wdb, const std::string &name, const ON_Brep &brep)
 {
-    if (mk_brep(&wdb, name.c_str(), const_cast<ON_Brep *>(&brep)))
+    ON_Brep *b = const_cast<ON_Brep *>(&brep);
+    if (mk_brep(&wdb, name.c_str(), (void *)b))
 	bu_bomb("mk_brep() failed");
 }
 
@@ -367,7 +368,7 @@ write_geometry(rt_wdb &wdb, const std::string &name, ON_Mesh mesh)
 	bot.num_faces = num_faces;
 	bot.vertices = &vertices.at(0);
 	bot.faces = &faces.at(0);
-	mode = bg_trimesh_solid(bot.num_vertices, bot.num_faces, bot.vertices, bot.faces, NULL) ? RT_BOT_PLATE : RT_BOT_SOLID;
+	mode = bg_trimesh_solid((int)bot.num_vertices, (int)bot.num_faces, bot.vertices, bot.faces, NULL) ? RT_BOT_PLATE : RT_BOT_SOLID;
     }
 
     std::vector<fastf_t> thicknesses;
@@ -704,7 +705,7 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
     if (0 > db_search(&found, DB_SEARCH_RETURN_UNIQ_DP,
 		      (std::string() +
 		       "-attr rhino::type=ON_Layer -or ( ( -attr rhino::type=ON_InstanceDefinition -or -attr rhino::type=ON_InstanceRef ) -not -name IDef* -not -name "
-		       + gcv_options.default_name + "* )").c_str(), 0, NULL, &db))
+		       + gcv_options.default_name + "* )").c_str(), 0, NULL, &db, NULL))
 	bu_bomb("db_search() failed");
 
     const char * const ignored_attributes[] = {"rhino::type", "rhino::uuid"};
@@ -716,7 +717,7 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
 
     if (0 > db_search(&found, DB_SEARCH_RETURN_UNIQ_DP,
 		      "-type comb -attr rgb -not -above -attr rgb -or -attr shader -not -above -attr shader",
-		      0, NULL, &db))
+		      0, NULL, &db, NULL))
 	bu_bomb("db_search() failed");
 
     if (BU_PTBL_LEN(&found)) {
@@ -745,7 +746,7 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
     BU_PTBL_INIT(&found);
     std::map<const directory *, std::string> renamed;
 
-    if (0 > db_search(&found, DB_SEARCH_TREE, "-type shape", 0, NULL, &db))
+    if (0 > db_search(&found, DB_SEARCH_TREE, "-type shape", 0, NULL, &db, NULL))
 	bu_bomb("db_search() failed");
 
     if (BU_PTBL_LEN(&found)) {
@@ -763,8 +764,8 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
 			bu_bomb("db5_get_attributes() failed");
 
 		    if (!bu_strcmp(bu_avs_get(&avs, "rhino::type"), "ON_Layer")
-			|| (bu_fnmatch(unnamed_pattern.c_str(), (*entry)->fp_names[i]->d_namep, 0)
-			    && bu_fnmatch("IDef*", (*entry)->fp_names[i]->d_namep, 0))) {
+			|| (bu_path_match(unnamed_pattern.c_str(), (*entry)->fp_names[i]->d_namep, 0)
+			    && bu_path_match("IDef*", (*entry)->fp_names[i]->d_namep, 0))) {
 			const std::string prefix = (*entry)->fp_names[i]->d_namep;
 			std::string suffix = ".s";
 			std::size_t num = 1;
@@ -800,7 +801,7 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
     BU_PTBL_INIT(&found);
 
     if (0 > db_search(&found, DB_SEARCH_TREE,
-		      "-type shape -not -below -type region", 0, NULL, &db))
+		      "-type shape -not -below -type region", 0, NULL, &db, NULL))
 	bu_bomb("db_search() failed");
 
     if (BU_PTBL_LEN(&found)) {
@@ -899,9 +900,24 @@ rhino_read(gcv_context *context, const gcv_opts *gcv_options,
     return 1;
 }
 
+HIDDEN int
+rhino_can_read(const char *source_path)
+{
+    int fv;
+    ON_String mSC;
+    ON_3dmProperties mprop;
+    if (!source_path) return 0;
+    FILE *fp = ON::OpenFile(source_path,"rb");
+    if (!fp) return 0;
+    ON_BinaryFile file(ON::read3dm,fp);
+    if (!file.Read3dmStartSection(&fv, mSC)) return 0;
+    if (!file.Read3dmProperties(mprop)) return 0;
+    return 1;
+}
+
 
 struct gcv_filter gcv_conv_rhino_read = {
-    "Rhino Reader", GCV_FILTER_READ, BU_MIME_MODEL_VND_RHINO,
+    "Rhino Reader", GCV_FILTER_READ, BU_MIME_MODEL_VND_RHINO, rhino_can_read,
     NULL, NULL, rhino_read
 };
 
@@ -913,7 +929,7 @@ static const gcv_filter * const filters[] = {&gcv_conv_rhino_read, NULL};
 
 extern "C"
 {
-    extern const gcv_plugin gcv_plugin_info_s = {filters};
+    extern const gcv_plugin gcv_plugin_info_s = {rhino_read::filters};
     GCV_EXPORT const struct gcv_plugin *
     gcv_plugin_info()
     {

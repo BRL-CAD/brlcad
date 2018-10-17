@@ -1,7 +1,7 @@
 /*                        B B N O D E . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -215,23 +215,23 @@ extern "C++" {
 	inline void
 	    BBNode::GetBBox(float *min, float *max) const
 	    {
-		min[0] = m_node.m_min[0];
-		min[1] = m_node.m_min[1];
-		min[2] = m_node.m_min[2];
-		max[0] = m_node.m_max[0];
-		max[1] = m_node.m_max[1];
-		max[2] = m_node.m_max[2];
+		min[0] = (float)m_node.m_min.x;
+		min[1] = (float)m_node.m_min.y;
+		min[2] = (float)m_node.m_min.z;
+		max[0] = (float)m_node.m_max.x;
+		max[1] = (float)m_node.m_max.y;
+		max[2] = (float)m_node.m_max.z;
 	    }
 
 	inline void
 	    BBNode::GetBBox(double *min, double *max) const
 	    {
-		min[0] = m_node.m_min[0];
-		min[1] = m_node.m_min[1];
-		min[2] = m_node.m_min[2];
-		max[0] = m_node.m_max[0];
-		max[1] = m_node.m_max[1];
-		max[2] = m_node.m_max[2];
+		min[0] = m_node.m_min.x;
+		min[1] = m_node.m_min.y;
+		min[2] = m_node.m_min.z;
+		max[0] = m_node.m_max.x;
+		max[1] = m_node.m_max.y;
+		max[2] = m_node.m_max.z;
 	    }
 
 

@@ -86,8 +86,7 @@ testing tool for TCP implementers via Network Working Group RFC 2398.
 This product does not yet exist but is a long term goal.  It's
 basically several of the core libraries form BRL-CAD's geometry
 modeling kernel including the present libbu, libbn, librt, libwdb,
-liboptical, libmultispectral, and the ray-trace interface application
-back-end.
+liboptical, and the ray-trace interface application back-end.
 
 This modeling kernel provides fundamental geometric representation,
 ray-trace analysis, and geometric processing capabilities via a

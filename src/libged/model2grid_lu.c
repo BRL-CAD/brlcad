@@ -1,7 +1,7 @@
 /*                         M O D E L 2 G R I D _ L U . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2016 United States Government as represented by
+ * Copyright (c) 2008-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,7 +37,7 @@ ged_model2grid_lu(struct ged *gedp, int argc, const char *argv[])
 {
     fastf_t f;
     point_t view_pt;
-    point_t model_pt;
+    point_t model_pt = VINIT_ZERO;
     point_t mo_view_pt;           /* model origin in view space */
     point_t diff;
     double scan[3];
@@ -53,7 +53,6 @@ ged_model2grid_lu(struct ged *gedp, int argc, const char *argv[])
     if (argc != 4)
 	goto bad;
 
-    VSETALL(model_pt, 0.0);
     MAT4X3PNT(mo_view_pt, gedp->ged_gvp->gv_model2view, model_pt);
 
     if (sscanf(argv[1], "%lf", &scan[X]) != 1 ||

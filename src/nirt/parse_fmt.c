@@ -1,7 +1,7 @@
 /*                     P A R S E _ F M T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,6 +34,14 @@
 #include "raytrace.h"
 #include "./nirt.h"
 #include "./usrfmt.h"
+
+#if defined(HAVE_POPEN) && !defined(HAVE_POPEN_DECL) && !defined(popen)
+extern FILE *popen(const char *, const char *);
+#endif
+
+#if defined(HAVE_POPEN) && !defined(HAVE_POPEN_DECL) && !defined(pclose)
+extern int pclose(FILE *);
+#endif
 
 
 /* The table of output values */
@@ -195,7 +203,7 @@ format_output (const char* buffer, com_table* ctp, struct rt_i *UNUSED(rtip))
 		break;
 	    }
 	    fprintf(stderr, "Error: Illegal format specification: '%s'\n", buffer);
-	    /* fall through here */
+	    /* fall through */
 	case '?':
 	    com_usage(ctp);
 	    return;
@@ -344,7 +352,7 @@ parse_fmt(const char *uoutspec, int outcom_type)
 	    }
 	}
 
-	if (vtp->name == '\0') {
+	if (!vtp->name || vtp->name[0] == '\0') {
 	    fprintf(stderr, "Error: Invalid output item '%s'\n", up);
 	    bu_free(mycopy, "Copy of user's output spec");
 	    return;
@@ -516,7 +524,7 @@ print_item (char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 	    }
 	}
 
-	if (vtp->name == '\0') {
+	if (!vtp->name || vtp->name[0] == '\0') {
 	    fprintf(stderr, "Error: Invalid output item '%s'\n", bp0);
 	    return;
 	}
@@ -643,14 +651,14 @@ direct_output(const char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
     size_t j = 0;      /* position of last non-whitespace char in the *buffer */
     FILE *newf;
     static char *new_dest;
-    static FILE *(*openfunc)() = 0;
+    static FILE *(*openfunc)(const char *, const char *) = 0;
 
     while (isspace((int)*(buffer+i)))
 	++i;
 
     if (*(buffer+i) == '\0') {
 	/* display current destination */
-#if defined(HAVE_POPEN) && !defined(STRICT_FLAGS)
+#ifdef HAVE_POPEN
 	printf("destination = %s%s'\n",
 	       (openfunc == popen) ? "'| " : "'", dest_string);
 #endif
@@ -668,7 +676,7 @@ direct_output(const char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 	openfunc = 0;
     } else {
 	if (*(buffer + i) == '|') {
-#if defined(HAVE_POPEN) && !defined(STRICT_FLAGS)
+#ifdef HAVE_POPEN
 	    openfunc=popen;
 	    ++i;
 #else
@@ -690,7 +698,7 @@ direct_output(const char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 	    return;
 	}
 	if ((newf = (*openfunc)(new_dest, "w")) == NULL) {
-#if defined(HAVE_POPEN) && !defined(STRICT_FLAGS)
+#ifdef HAVE_POPEN
 	    fprintf(stderr, "Cannot open %s '%s'\n",
 		    (openfunc == popen) ? "pipe" : "file", new_dest);
 #endif
@@ -704,8 +712,16 @@ direct_output(const char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
     }
 
     /* Clean up from previous output destination */
-    if (outf != (FILE *)NULL && outf != stdout)
+    if (outf != (FILE *)NULL && outf != stdout) {
+#ifdef HAVE_POPEN
+	if (openfunc == popen)
+	    pclose(outf);
+	else
+	    fclose(outf);
+#else
 	fclose(outf);
+#endif
+    }
 
     if (dest_string != def_dest_string)
 	bu_free(dest_string, "free dest_string");

@@ -1,7 +1,7 @@
 /*                       C O M P L E X . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2016 United States Government as represented by
+ * Copyright (c) 1985-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,6 +27,9 @@
 #include "vmath.h"
 #include "bn/complex.h"
 
+#if defined(HAVE_HYPOT) && !defined(HAVE_DECL_HYPOT) && !defined(__cplusplus)
+extern double hypot(double x, double y);
+#endif
 
 void
 bn_cx_div(register bn_complex_t *ap, register const bn_complex_t *bp)

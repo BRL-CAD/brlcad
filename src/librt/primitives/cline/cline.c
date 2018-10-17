@@ -1,7 +1,7 @@
 /*                         C L I N E . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2016 United States Government as represented by
+ * Copyright (c) 2000-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -424,18 +424,6 @@ rt_cline_free(register struct soltab *stp)
     if (stp) RT_CK_SOLTAB(stp);
 
     BU_PUT(cline, struct cline_specific);
-}
-
-
-int
-rt_cline_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, const struct bn_tol *tol)
-{
-    if (stp) RT_CK_SOLTAB(stp);
-    if (!min) return 0;
-    if (!max) return 0;
-    if (tol) BN_CK_TOL(tol);
-
-    return 0;
 }
 
 

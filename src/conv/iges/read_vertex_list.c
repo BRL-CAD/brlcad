@@ -1,7 +1,7 @@
 /*              R E A D _ V E R T E X _ L I S T . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2016 United States Government as represented by
+ * Copyright (c) 1993-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -26,7 +26,7 @@ Read_vertex_list(int vert_de)
 {
     struct iges_vertex_list *vertex_list;
     int entityno;
-    int sol_num;
+    int sol_num = 0;
     int i;
 
     entityno = (vert_de - 1)/2;

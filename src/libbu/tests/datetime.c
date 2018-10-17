@@ -1,7 +1,7 @@
 /*                    D A T E T I M E . C
  * BRL-CAD
  *
- * Copyright (c) 2014-2016 United States Government as represented by
+ * Copyright (c) 2014-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,14 +22,19 @@
 
 
 int
-datetime_main(int argc, char **argv)
+main(int argc, char *argv[])
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
     int64_t curr_time;
     int function_num;
-    if (argc != 2)
+
+    if (argc != 2) {
+	bu_log("Usage: %s {function_num}\n", argv[0]);
 	bu_exit(1, "ERROR: wrong number of parameters");
+    }
+
     sscanf(argv[1], "%d", &function_num);
+
     switch (function_num) {
 	case 0:	{
 	    int64_t time0, time1, time2;
@@ -37,7 +42,7 @@ datetime_main(int argc, char **argv)
 	    size_t counter = 1;
 
 	    time0 = bu_gettime();
-	    sleep(1);
+	    bu_snooze(BU_SEC2USEC(1));
 	    time1 = bu_gettime();
 
 	    if (time1 - time0 <= 0)

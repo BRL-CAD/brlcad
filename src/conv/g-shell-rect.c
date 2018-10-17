@@ -1,7 +1,7 @@
 /*                  G - S H E L L - R E C T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,6 +37,7 @@
 #include "bio.h"
 
 /* interface headers */
+#include "bu/app.h"
 #include "bu/debug.h"
 #include "bu/getopt.h"
 #include "vmath.h"
@@ -427,24 +428,7 @@ Get_extremes(struct shell *s, struct application *ap, struct hitmiss **hitmiss,
     rd.seghead = &seghead;
 
     /* Compute the inverse of the direction cosines */
-    if (!ZERO(rp->r_dir[X])) {
-	rd.rd_invdir[X]=1.0 / rp->r_dir[X];
-    } else {
-	rd.rd_invdir[X] = INFINITY;
-	rp->r_dir[X] = 0.0;
-    }
-    if (!ZERO(rp->r_dir[Y])) {
-	rd.rd_invdir[Y]=1.0/rp->r_dir[Y];
-    } else {
-	rd.rd_invdir[Y] = INFINITY;
-	rp->r_dir[Y] = 0.0;
-    }
-    if (!ZERO(rp->r_dir[Z])) {
-	rd.rd_invdir[Z]=1.0/rp->r_dir[Z];
-    } else {
-	rd.rd_invdir[Z] = INFINITY;
-	rp->r_dir[Z] = 0.0;
-    }
+    VINVDIR(rd.rd_invdir, rp->r_dir);
     rd.magic = NMG_RAY_DATA_MAGIC;
 
     nmg_isect_ray_model((struct nmg_ray_data *)&rd,&RTG.rtg_vlfree);
@@ -1045,12 +1029,11 @@ shrink_wrap(struct shell *s)
     for (vert_no = 0; vert_no < BU_PTBL_LEN(&extra_verts); vert_no++) {
 	struct vertex *v;
 	struct vertexuse *vu;
-	vect_t dir;
+	vect_t dir = VINIT_ZERO;
 	vect_t abs_dir;
 	int dir_index;
 
 	v = (struct vertex *)BU_PTBL_GET(&extra_verts, vert_no);
-	VSETALL(dir, 0.0);
 	for (BU_LIST_FOR(vu, vertexuse, &v->vu_hd)) {
 	    vect_t norm;
 
@@ -1458,7 +1441,7 @@ Make_shell(void)
 		    }
 
 		    if (debug > 3) {
-			bu_log("Making faces for y_index=%d, z_index=%d\n", y_index, z_index);
+			bu_log("Making faces for y_index=%zu, z_index=%zu\n", y_index, z_index);
 			for (i = 0; i < 4; i++) {
 			    bu_log("part #%d:\n", i);
 			    bu_log("\tray start is (%g %g %g)\n", V3ARGS(yz_rays[cell_no[i]].r_pt));
@@ -1492,7 +1475,7 @@ Make_shell(void)
 		    }
 
 		    if (debug > 3) {
-			bu_log("Making faces for x_index=%d, z_index=%d\n", x_index, z_index);
+			bu_log("Making faces for x_index=%zu, z_index=%zu\n", x_index, z_index);
 			for (i = 0; i < 4; i++) {
 			    bu_log("part #%d:\n", i);
 			    bu_log("\tray start is (%g %g %g)\n", V3ARGS(xz_rays[cell_no[i]].r_pt));
@@ -1526,7 +1509,7 @@ Make_shell(void)
 		    }
 
 		    if (debug > 3) {
-			bu_log("Making faces for x_index=%d, y_index=%d\n", x_index, y_index);
+			bu_log("Making faces for x_index=%zu, y_index=%zu\n", x_index, y_index);
 			for (i = 0; i < 4; i++) {
 			    bu_log("part #%d:\n", i);
 			    bu_log("\tray start is (%g %g %g)\n", V3ARGS(xy_rays[cell_no[i]].r_pt));
@@ -1839,7 +1822,7 @@ main(int argc, char **argv)
     cell_count[X] = (int)((rtip->mdl_max[X] - rtip->mdl_min[X])/cell_size) + 3;
     cell_count[Y] = (int)((rtip->mdl_max[Y] - rtip->mdl_min[Y])/cell_size) + 3;
     cell_count[Z] = (int)((rtip->mdl_max[Z] - rtip->mdl_min[Z])/cell_size) + 3;
-    bu_log("cell size is %gmm\n\t%d cells in X-direction\n\t%d cells in Y-direction\n\t%d cells in Z-direction\n",
+    bu_log("cell size is %gmm\n\t%zu cells in X-direction\n\t%zu cells in Y-direction\n\t%zu cells in Z-direction\n",
 	   cell_size, cell_count[X], cell_count[Y], cell_count[Z]);
 
     x_start = rtip->mdl_min[X] - ((double)cell_count[X] * cell_size - (rtip->mdl_max[X] - rtip->mdl_min[X]))/2.0;

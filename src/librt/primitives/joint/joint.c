@@ -1,7 +1,7 @@
 /*                          J O I N T . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2016 United States Government as represented by
+ * Copyright (c) 1985-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -119,8 +119,8 @@ rt_joint_print(const struct soltab *stp)
     VPRINT("Location", jointp->joint_location);
     VPRINT("Vector1", jointp->joint_vector1);
     VPRINT("Vector2", jointp->joint_vector2);
-    bu_log("reference_path_1 = %f\n", jointp->reference_path_1);
-    bu_log("reference_path_2 = %f\n", jointp->reference_path_1);
+    bu_log("reference_path_1 = %s\n", jointp->reference_path_1);
+    bu_log("reference_path_2 = %s\n", jointp->reference_path_1);
     bu_log("Value = %f\n", jointp->joint_value);
 }
 

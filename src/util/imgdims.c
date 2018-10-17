@@ -1,7 +1,7 @@
 /*                       I M G D I M S . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2016 United States Government as represented by
+ * Copyright (c) 1997-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -135,7 +135,7 @@ main (int argc, char **argv)
 	print_usage();
     }
 
-    argument = bu_realpath(argv[bu_optind], NULL);
+    argument = bu_file_realpath(argv[bu_optind], NULL);
     if (how != NONE && !bu_file_exists(argument, NULL)) {
 	bu_log("image file [%s] does not exist\n", argument);
 	bu_free(argument, "argument realpath");

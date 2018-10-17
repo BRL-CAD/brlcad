@@ -1,7 +1,7 @@
-/*                       B R L M A N  . C
+/*                       A R C H E R  . C
  * BRL-CAD
  *
- * Copyright (c) 2005-2016 United States Government as represented by
+ * Copyright (c) 2005-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,17 +17,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file brlman.c
- *
- *  Man page viewer for BRL-CAD man pages.
- *
- */
 
 #include "common.h"
 
 #include <string.h>
-#include "bresource.h"
 
+#include "bresource.h"
 #include "bnetwork.h"
 #include "bio.h"
 
@@ -38,6 +33,7 @@
 
 #include "bu.h"
 #include "tclcad.h"
+
 
 #ifdef HAVE_WINDOWS_H
 int APIENTRY
@@ -68,7 +64,7 @@ main(int argc, const char **argv)
     Tcl_DString temp;
     Tcl_Interp *interp = Tcl_CreateInterp();
 
-    /* Need progname set for bu_brlcad_root/bu_brlcad_data to work */
+    /* initialize progname for run-tim resource finding */
     bu_setprogname(argv[0]);
     bu_vls_sprintf(&tcl_cmd, "set argv0 %s", argv[0]);
     (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
@@ -99,7 +95,7 @@ main(int argc, const char **argv)
     }
     bu_vls_free(&tlog);
 
-    archer_tcl = bu_brlcad_data("tclscripts/archer/archer_launch.tcl", 1);
+    archer_tcl = bu_brlcad_root("share/tclscripts/archer/archer_launch.tcl", 1);
     Tcl_DStringInit(&temp);
     fullname = Tcl_TranslateFileName(interp, archer_tcl, &temp);
     status = Tcl_EvalFile(interp, fullname);

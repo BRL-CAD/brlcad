@@ -1,7 +1,7 @@
 /*                          I R - X . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -46,6 +46,7 @@
 #include "bu/getopt.h"
 #include "bu/malloc.h"
 #include "bu/log.h"
+#include "bu/snooze.h"
 #include "vmath.h"
 
 
@@ -122,7 +123,7 @@ main (int argc, char **argv)
     struct colstr *array = NULL;	/* Array for color information.  */
 
     fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
-    sleep(1);
+    bu_snooze(BU_SEC2USEC(1));
 
     bu_opterr = 0;
     while ((ch = bu_getopt(argc, argv, "h?")) != -1)

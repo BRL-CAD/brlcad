@@ -36,6 +36,7 @@ if(HAVE_TERMLIB)
 
 endif(HAVE_TERMLIB)
 set(lgt_ignore_files
+  CMakeLists.txt
   ascii.h
   cursors.h
   extern.h

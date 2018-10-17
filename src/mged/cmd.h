@@ -1,7 +1,7 @@
 /*                           C M D . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,6 +37,9 @@ struct cmdtab {
     tcl_func_ptr tcl_func;
     ged_func_ptr ged_func;
 };
+
+
+extern int mged_db_search_callback(int, const char **, void *);
 
 
 /* Commands */
@@ -135,7 +138,6 @@ extern int f_labelface(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_list(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_make(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_matpick(ClientData, Tcl_Interp *, int, const char *[]);
-extern int f_memprint(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_mirface(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_model2view(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_mouse(ClientData, Tcl_Interp *, int, const char *[]);

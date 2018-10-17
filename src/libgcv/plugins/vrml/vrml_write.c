@@ -1,7 +1,7 @@
 /*                    V R M L _ W R I T E . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2016 United States Government as represented by
+ * Copyright (c) 1995-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -93,9 +93,9 @@ const struct bu_structparse vrml_mat_parse[]={
 };
 
 
-extern union tree *do_region_end1(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
-extern union tree *do_region_end2(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
-extern union tree *nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
+HIDDEN union tree *do_region_end1(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
+HIDDEN union tree *do_region_end2(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
+HIDDEN union tree *nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 
 
 struct vrml_write_options
@@ -1178,7 +1178,7 @@ vrml_write_make_units_str(double scale_factor)
 	return bu_strdup(bu_units);
     else {
 	struct bu_vls temp = BU_VLS_INIT_ZERO;
-	bu_vls_printf(&temp, "%d units per mm", scale_factor);
+	bu_vls_printf(&temp, "%g units per mm", scale_factor);
 	return bu_vls_strgrab(&temp);
     }
 }
@@ -1376,12 +1376,10 @@ out:
     return 1;
 }
 
-
 static const struct gcv_filter gcv_conv_vrml_write = {
-    "VRML Writer", GCV_FILTER_WRITE, BU_MIME_MODEL_VRML,
+    "VRML Writer", GCV_FILTER_WRITE, BU_MIME_MODEL_VRML, NULL,
     vrml_write_create_opts, vrml_write_free_opts, vrml_write
 };
-
 
 extern const struct gcv_filter gcv_conv_vrml_read;
 static const struct gcv_filter * const filters[] = {&gcv_conv_vrml_read, &gcv_conv_vrml_write, NULL};

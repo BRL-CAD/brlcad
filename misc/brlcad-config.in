@@ -2,7 +2,7 @@
 #                B R L C A D - C O N F I G . I N
 # BRL-CAD
 #
-# Copyright (c) 2007-2016 United States Government as represented by
+# Copyright (c) 2007-2018 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -69,7 +69,6 @@ Libraries:
     fft
     gcv
     ged
-    multispectral
     optical
     pkg
     rt
@@ -161,9 +160,6 @@ while test $# -gt 0; do
 	    ;;
 	ged)
 	    libs="$libs -lged"
-	    ;;
-	multispectral)
-	    libs="$libs -lmultispectral"
 	    ;;
 	optical)
 	    libs="$libs -loptical"
@@ -267,7 +263,6 @@ FB="@FB@ @FB_LIBS@"
 FFT="@FFT@ @FFT_LIBS@"
 GCV="@GCV@ @GCV_LIBS@"
 GED="@GED@ @GED_LIBS@"
-MULTISPECTRAL="@MULTISPECTRAL@ @MULTISPECTRAL_LIBS@"
 OPTICAL="@OPTICAL@ @OPTICAL_LIBS@"
 PKG="@PKG@ @PKG_LIBS@"
 RT="@RT@ @RT_LIBS@"
@@ -338,13 +333,6 @@ for lib in $libs ; do
 		cadlibs="$cadlibs $GED"
 		cadlibs="`check \"$cadlibs\"`"
 		gedadded=yes
-	    fi
-	    ;;
-	-lmultispectral)
-	    if test "x$multispectraladded" = "x" ; then
-		cadlibs="$cadlibs $MULTISPECTRAL"
-		cadlibs="`check \"$cadlibs\"`"
-		multispectraladded=yes
 	    fi
 	    ;;
 	-loptical)

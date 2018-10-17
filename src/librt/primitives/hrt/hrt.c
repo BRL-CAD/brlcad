@@ -1,7 +1,7 @@
 /*                         H R T . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2016 United States Government as represented by
+ * Copyright (c) 2013-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -146,6 +146,30 @@ struct hrt_specific {
     mat_t hrt_invRSSR; /* invRot(Scale(Scale(vect))) */
     mat_t hrt_invR; /* transposed rotation matrix */
 };
+
+#ifdef USE_OPENCL
+/* largest data members first */
+struct clt_hrt_specific {
+    cl_double hrt_V[3];		/* Vector to center of heart */
+    cl_double hrt_SoR[16];	/* Scale(Rot(vect)) */
+};
+
+size_t
+clt_hrt_pack(struct bu_pool *pool, struct soltab *stp)
+{
+    struct hrt_specific *hrt =
+        (struct hrt_specific *)stp->st_specific;
+    struct clt_hrt_specific *args;
+
+    const size_t size = sizeof(*args);
+    args = (struct clt_hrt_specific*)bu_pool_alloc(pool, 1, size);
+
+    VMOVE(args->hrt_V, hrt->hrt_V);
+    MAT_COPY(args->hrt_SoR, hrt->hrt_SoR);
+    return size;
+}
+
+#endif /* USE_OPENCL */
 
 
 /**
@@ -941,7 +965,7 @@ rt_hrt_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
  * above equations by six here.
  */
 void
-rt_hrt_norm(register struct hit *hitp, register struct xray *rp)
+rt_hrt_norm(struct hit *hitp, struct soltab *UNUSED(stp), struct xray *rp)
 {
 
     fastf_t w, fx, fy, fz;
@@ -956,23 +980,6 @@ rt_hrt_norm(register struct hit *hitp, register struct xray *rp)
     fz = (w * w - 0.5 * hitp->hit_vpriv[Z] * (hitp->hit_vpriv[X] * hitp->hit_vpriv[X] + 9/80 * hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y])) * hitp->hit_vpriv[Z];
     VSET(work, fx, fy, fz);
     VMOVE(hitp->hit_normal, work);
-}
-
-
-/**
- * Return the curvature of the heart.
- */
-void
-rt_hrt_curve(void)
-{
-    bu_log("rt_hrt_curve: Not implemented yet!\n");
-}
-
-
-void
-rt_hrt_uv(void)
-{
-    bu_log("rt_hrt_uv: Not implemented yet!\n");
 }
 
 
@@ -1035,14 +1042,6 @@ rt_hrt_24pts(fastf_t *ov, fastf_t *V, fastf_t *A, fastf_t *B)
     VJOIN2(HRTOUT(22), V, e, A, -j, B);
     VJOIN2(HRTOUT(23), V, d, A, -i, B);
     VJOIN2(HRTOUT(24), V, c, A, -h, B);
-}
-
-
-int
-rt_hrt_adaptive_plot(void)
-{
-    bu_log("rt_adaptive_plot: Not implemented yet!\n");
-    return 0;
 }
 
 
@@ -1504,14 +1503,6 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct rt_tes
 }
 
 
-int
-rt_hrt_tess(void)
-{
-    bu_log("rt_hrt_tess: Not implemented yet!\n");
-    return 0;
-}
-
-
 /**
  * The external form is:
  * V point
@@ -1708,12 +1699,6 @@ rt_hrt_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     *area = 180 * M_PI * area_hrt_YZ_plane;
 }
 
-
-void
-rt_hrt_volume(void)
-{
-    bu_log("rt_hrt_volume: Not implemented yet!\n");
-}
 
 /**
  * Computes centroid of a heart

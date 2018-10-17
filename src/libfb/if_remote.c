@@ -1,7 +1,7 @@
 /*                     I F _ R E M O T E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2016 United States Government as represented by
+ * Copyright (c) 1986-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -45,15 +45,12 @@
 #ifdef HAVE_WRITEV
 #  include <sys/uio.h>		/* for struct iovec */
 #endif
-#ifdef HAVE_NETINET_IN_H
-#  include <netinet/in.h>		/* for htons(), etc. */
-#endif
-#ifdef HAVE_SYS_SOCKET_H
-#  include <sys/socket.h>
-#endif
+#include "bnetwork.h"
 
 #include "bu/color.h"
+#include "bu/log.h"
 #include "bu/str.h"
+#include "bu/log.h"
 #include "pkg.h"
 #include "fb_private.h"
 #include "fb.h"
@@ -64,6 +61,7 @@
 #define MAX_HOSTNAME 128
 #define PCP(ptr)	((struct pkg_conn *)((ptr)->u1.p))
 #define PCPL(ptr)	((ptr)->u1.p)	/* left hand side version */
+
 
 /* Package Handlers. */
 static void pkgerror(struct pkg_conn *pcpp, char *buf);	/* error message handler */
@@ -813,8 +811,8 @@ fb remote_interface = {
     rem_free,
     rem_help,
     "Remote Device Interface",	/* should be filled in */
-    32*1024,			/* " */
-    32*1024,			/* " */
+    FB_XMAXSCREEN,		/* max width */
+    FB_YMAXSCREEN,		/* max height */
     "host:[dev]",
     512,
     512,

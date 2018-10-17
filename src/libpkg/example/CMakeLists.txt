@@ -11,6 +11,7 @@ BRLCAD_ADDEXEC(pkg_test_server server.c "libbu;libpkg" NO_INSTALL)
 BRLCAD_ADDEXEC(pkg_test_client client.c "libbu;libpkg" NO_INSTALL)
 
 CMAKEFILES(ncp.h)
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

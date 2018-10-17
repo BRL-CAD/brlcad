@@ -1,7 +1,7 @@
 /*                       R E C S I Z E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2016 United States Government as represented by
+ * Copyright (c) 1990-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -68,7 +68,7 @@ Recsize()
     if (k == (-1))	/* We didn't encounter an early EOF */
 	k = NRECS;
 
-    if (bu_fseek(fd, 0, 0)) {
+    if (fseek(fd, 0, 0)) {
 	/* rewind file */
 	bu_log("Cannot rewind file\n");
 	perror("Recsize");

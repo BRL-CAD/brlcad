@@ -1,7 +1,7 @@
 /*                        C O M M O N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,12 +19,16 @@
  */
 
 /** @addtogroup common
- *  This header wraps the system-specific encapsulation of
- *  brlcad_config.h and removes need to conditionally include
- *  brlcad_config.h everywhere based on HAVE_CONFIG_H.  The common
- *  definitions are symbols common to the platform being built that
- *  are either detected via configure or hand crafted, as is the case
- *  for the win32 platform.
+ *
+ * This header wraps system and compilation-specific defines from
+ * brlcad_config.h and removes need to conditionally include
+ * brlcad_config.h everywhere based on HAVE_CONFIG_H.  The common
+ * definitions are symbols common to the platform being built that are
+ * either detected via configure or hand crafted, as is the case for
+ * the win32 platform.
+ *
+ * NOTE: In order to use compile-time API, applicaitons need to define
+ * BRLCADBUILD and HAVE_CONFIG_H before including this header.
  *
  */
 /** @{ */
@@ -53,20 +57,56 @@
 /* Simulates drand48() functionality using rand() which is assumed to
  * exist everywhere. The range is [0, 1).
  */
-#  ifndef HAVE_DRAND48
+#  if !defined(HAVE_DRAND48) && !defined(drand48)
 #    define drand48() ((double)rand() / (double)(RAND_MAX + 1))
 #    define HAVE_DRAND48 1
 #    define srand48(seed) (srand(seed))
+#    define HAVE_DECL_DRAND48 1
+#  elif !defined(HAVE_DECL_DRAND48) && !defined(__cplusplus)
+extern double drand48(void);
 #  endif
 
+#if !defined(__cplusplus) || defined(HAVE_SHARED_RINT_TEST)
 /* make sure lrint() is provided */
-#  if !defined(__cplusplus) && !defined(HAVE_LRINT) && defined(HAVE_WORKING_LRINT_MACRO)
-#    define lrint(_x) (((_x) < 0.0) ? (long int)ceil((_x)-0.5) : (long int)floor((_x)+0.5))
-#    define HAVE_LRINT 1
-#  elif !defined(__cplusplus) && defined(HAVE_LRINT) && !defined(HAVE_DECL_LRINT)
+#  if !defined(lrint)
+#    if !defined(HAVE_LRINT)
+#      define lrint(_x) (((_x) < 0.0) ? (long int)ceil((_x)-0.5) : (long int)floor((_x)+0.5))
+#    elif !defined(HAVE_WINDOWS_H) && !defined(HAVE_DECL_LRINT)
 long int lrint(double x);
+#      define HAVE_DECL_LRINT 1
+#    endif
+#  endif
+
+#  if !defined(HAVE_LRINT)
 #    define HAVE_LRINT 1
 #  endif
+
+/* make sure rint() is provided */
+#  if !defined(rint)
+#    if !defined(HAVE_RINT)
+#      define rint(_x) (((_x) < 0.0) ? ceil((_x)-0.5) : floor((_x)+0.5))
+#    elif !defined(HAVE_WINDOWS_H) && !defined(HAVE_DECL_RINT)
+double rint(double x);
+#      define HAVE_DECL_RINT 1
+#    endif
+#  endif
+
+#  if !defined(HAVE_RINT)
+#    define HAVE_RINT 1
+#  endif
+#endif
+
+/* strict c89 doesn't declare snprintf() */
+# if defined(HAVE_SNPRINTF) && !defined(HAVE_DECL_SNPRINTF) && !defined(snprintf) && !defined(__cplusplus)
+# include <stddef.h> /* for size_t */
+extern int snprintf(char *str, size_t size, const char *format, ...);
+# endif
+
+/* strict c89 doesn't declare fileno() */
+# if defined(HAVE_FILENO) && !defined(HAVE_DECL_FILENO) && !defined(fileno) && !defined(__cplusplus)
+# include <stdio.h> /* for FILE */
+extern int fileno(FILE *stream);
+# endif
 
 #endif  /* BRLCADBUILD & HAVE_CONFIG_H */
 
@@ -142,8 +182,12 @@ typedef ptrdiff_t ssize_t;
       * version (ugh.) */
 #    include "pstdint.h"
 #  elif defined(__STDC__) || defined(__STRICT_ANSI__) || defined(__SIZE_TYPE__) || defined(HAVE_STDINT_H)
-#    define __STDC_LIMIT_MACROS 1
-#    define __STDC_CONSTANT_MACROS 1
+#    if !defined(__STDC_LIMIT_MACROS)
+#      define __STDC_LIMIT_MACROS 1
+#    endif
+#    if !defined(__STDC_CONSTANT_MACROS)
+#      define __STDC_CONSTANT_MACROS 1
+#    endif
 #    include <stdint.h>
 #  else
 #    include "pstdint.h"

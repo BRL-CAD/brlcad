@@ -1,7 +1,7 @@
 /*                    B U _ H A S H . C P P
  * BRL-CAD
  *
- * Copyright (c) 2015-2016 United States Government as represented by
+ * Copyright (c) 2015-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -194,11 +194,13 @@ main(int argc, const char **argv)
 
     /* Sanity checks */
     if (argc < 2) {
-	bu_exit(1, "ERROR: wrong number of parameters - need test num");
+	bu_log("Usage: %s {test_number}\n", argv[0]);
+	bu_exit(1, "ERROR: missing test number\n");
     }
+
     test_num = strtol(argv[1], &endptr, 0);
     if (endptr && strlen(endptr) != 0) {
-	bu_exit(1, "Invalid test number: %s\n", argv[1]);
+	bu_exit(2, "Invalid test number: %s\n", argv[1]);
     }
 
     switch (test_num) {

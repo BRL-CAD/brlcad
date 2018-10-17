@@ -15,6 +15,66 @@ on-going issues.
 Recent Bugs
 -----------
 
+* rt -t (render from top to bottom) is broken
+
+* rtsil command works if do what usage says and redirect output to
+  file, but mentions .pix when data is actually .bw; and using the -o
+  option results in a black image.  it is also inconsistent, writing a
+  black silhouette on a white background, instead of black on white
+  and missing background color options.
+
+* make sph sph
+  clone -i 1 -t 1000 0 0 -n 100 sph
+  kill sph
+  g line sph*
+  clone -i 1 -t 0 1000 0 -n 100 line
+  kill line
+  g square line*
+  clone -i 1 -t 0 0 1000 -n 100 square
+  ... never returns ...
+
+  This should be merely 1M spheres, but something chokes.  Could be
+  somewhere in the Tk layer.  Maybe somewhere in the db layer.  Maybe
+  something is corrupted by clone when it
+
+* If we draw any form, then trace it using rt, then change of database
+  (by clicking file>open and selecting another database), badness
+  ensues.  One report has quitting the rt window causing a segfault.
+  Another (confirmed) hung mged (stuck/inf loop).
+
+* annotation bugs:
+  in sph1.s sph 0 0 0 10
+  in ann1.s annot 0 0 0 test1 10 10 3 1
+  in ann2.s annot 30 30 30 test2 40 40 3 1
+  # ann2.s's label looks wrong, points at origin?
+  in ann3.s annot 0 0 0 1 10 10 3 1
+  # using numbers for a label results in no label
+
+* make eto eto
+  tol norm 1
+  facetize eto.bot eto
+  [crashes due to excessive recursion]
+
+* crash in rt_bot_xform() due to a bot being marked as having face
+  normals, but didn't.  bot probably written wrong via conversion
+  to/from obj or asc.  found importing teapot.
+
+* rtedge with perspective is wrong.  it fills in nearly entire faces,
+  vertically in particular.  it's worse on small sized renders, and
+  gets better the larger the render size (indicating there's some
+  neighbor distance coming into play that is not affected by
+  max_dist).  eoes not happen in non-perspective ray-traces.
+
+* a character is (still) sometimes captured by the cursor box.  steps
+  to reproduce:
+    1) write a word on the mged command prompt ("e.g. hello")
+    2) select the word to end of line with mouse
+    3) paste the word (e.g., middle mouse) and press enter
+    4) type "hello" again and press enter
+
+  you should now see an "o" in the yellow cursor box.  sometimes
+  you'll see the "o" after step 3.  running "clear" resets the cursor.
+
 * get_regions tcl command doesn't respond well to situations where
   child object names in combs have dashes (the "-" character) in
   names.  It tries to interpret the dash as an argument delimiter.
@@ -251,9 +311,6 @@ Recent Bugs
   sub-1sec fps, Z/B after rotating wireframe but before update
   finishes drawing.
 
-* rtedge help shows redirection to a file working, but it does not
-  seem to work (zero-file results).
-
 * report of rt aborting randomly on 64-bit with camo shader.
 
 * mged raytrace fails with simple "raytrace failed" message when using
@@ -274,11 +331,11 @@ Recent Bugs
 
 * hyp tessellation routine creates bot that does not raytrace
 
+* hyp used in a boolean with other objects (even unions) does not
+  raytrace
+
 * if you attach a display manager in tk-mged, kill the window, then
   quit, mged crashes on exit.
-
-* CMD-b and CMD-f navigates the mged command window text widget on Mac
-  and trivially causes problems with the cursor and text injection.
 
 * mged segfaults when drawing lots of solids at once (e.g. draw *.s)
 
@@ -314,11 +371,6 @@ Recent Bugs
   Tk parent window) and the problem manifests when focus is on the
   display manager window.  mged classic mode, where there is no
   parent window, exhibits the bad rotate behavior immediately.
-
-* rtedge fills in nearly entire faces of an object when executing on a
-  model that is in perspective mode. Effects really bad on small sized
-  renders, and gets better the larger the render size. Does not happen
-  in non-perspective ray-traces.
 
 * infinite light sources close to objects result in unexpected/bad
   light behavior.  example is a 1m sph light about 5m from a box about
@@ -444,8 +496,6 @@ Recent Bugs
 * overlap tool in mged encourages very inefficient CSG operations
   (e.g. a simple bolt with an entire hull armor subtracted)
 
-* a character is (still) sometimes captured by the cursor box
-
 * permute (in mged) requires apply or save before 'new' vertex values
   will function properly as keypoints.
 
@@ -485,10 +535,6 @@ Recent Bugs
 
 * triangulation of some pipe in toyjeep.g fails (rather reliably) on
   some given bend.  fails in nmg_triangulate model().
-
-* rtedge is not respecting the -c"set" options.  needs to give some
-  indication that they were parsed too since it ignores unrecognized
-  values apparently.
 
 * fbhelp sends some of the output to stdout and some to stderr...
 

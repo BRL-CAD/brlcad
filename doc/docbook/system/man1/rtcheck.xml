@@ -174,14 +174,13 @@
   </refsection>
 
   <refsection xml:id="author"><title>AUTHORS</title>
-    <para>Michael John Muuss</para>
-    <para>Gary S. Moss</para>
+    <para><emphasis remap='B'>BRL-CAD Team</emphasis></para>
   </refsection>
 
   <refsection xml:id="copyright"><title>COPYRIGHT</title>
 
     <para>
-      This software is Copyright (c) 1988-2016 United States Government as
+      This software is Copyright (c) 1988-2018 United States Government as
       represented by the U.S. Army Research Laboratory.
     </para>
   </refsection>

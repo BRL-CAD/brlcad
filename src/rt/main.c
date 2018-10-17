@@ -1,7 +1,7 @@
 /*                          M A I N . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2016 United States Government as represented by
+ * Copyright (c) 1985-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -73,7 +73,6 @@ mat_t		model2view;
 
 /***** variables shared with worker() ******/
 struct application APP;
-vect_t		left_eye_delta;
 int		report_progress;	/* !0 = user wants progress report */
 extern int	incr_mode;		/* !0 for incremental resolution */
 extern size_t	incr_nlevel;		/* number of levels */
@@ -83,11 +82,9 @@ extern size_t	incr_nlevel;		/* number of levels */
 /***** variables shared with do.c *****/
 extern int	pix_start;		/* pixel to start at */
 extern int	pix_end;		/* pixel to end at */
-extern int	nobjs;			/* Number of cmd-line treetops */
-extern char	**objtab;		/* array of treetop strings */
-long		n_malloc;		/* Totals at last check */
-long		n_free;
-long		n_realloc;
+size_t		n_malloc;		/* Totals at last check */
+size_t		n_free;
+size_t		n_realloc;
 extern int	matflag;		/* read matrix from stdin */
 extern int	orientflag;		/* 1 means orientation has been set */
 extern int	desiredframe;		/* frame to start at */
@@ -120,20 +117,19 @@ siginfo_handler(int UNUSED(arg))
 
 
 void
-memory_summary(long num_free_calls)
+memory_summary(void)
 {
     if (rt_verbosity & VERBOSE_STATS)  {
-	long	mdelta = bu_n_malloc - n_malloc;
-	long	fdelta = num_free_calls - n_free;
-	fprintf(stderr,
-		"Additional #malloc=%ld, #free=%ld, #realloc=%ld (%ld retained)\n",
-		mdelta,
-		fdelta,
-		bu_n_realloc - n_realloc,
-		mdelta - fdelta);
+	size_t mdelta = bu_n_malloc - n_malloc;
+	size_t fdelta = bu_n_free - n_free;
+	bu_log("Additional #malloc=%zu, #free=%zu, #realloc=%zu (%zu retained)\n",
+	       mdelta,
+	       fdelta,
+	       bu_n_realloc - n_realloc,
+	       mdelta - fdelta);
     }
     n_malloc = bu_n_malloc;
-    n_free = num_free_calls;
+    n_free = bu_n_free;
     n_realloc = bu_n_realloc;
 }
 
@@ -144,7 +140,6 @@ int main(int argc, const char **argv)
     char idbuf[2048] = {0};			/* First ID record info */
     struct bu_vls times = BU_VLS_INIT_ZERO;
     int i;
-    long n_free_calls = 0;
 
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
@@ -169,10 +164,16 @@ int main(int argc, const char **argv)
     application_init();
 
     /* Process command line options */
-    if (!get_args(argc, argv))  {
-	usage(argv[0]);
+    i = get_args(argc, argv);
+    if (i < 0)  {
+	usage(argv[0], 0);
 	return 1;
+    } else if (i == 0) {
+	/* asking for help is ok */
+	usage(argv[0], 1);
+	return 0;
     }
+
     /* Identify the versions of the libraries we are using. */
     if (rt_verbosity & VERBOSE_LIBVERSIONS) {
 	fprintf(stderr, "%s%s%s%s\n",
@@ -198,7 +199,7 @@ int main(int argc, const char **argv)
 
     if (bu_optind >= argc) {
 	fprintf(stderr, "%s:  BRL-CAD geometry database not specified\n", argv[0]);
-	usage(argv[0]);
+	usage(argv[0], 0);
 	return 1;
     }
 
@@ -294,11 +295,12 @@ int main(int argc, const char **argv)
 
     title_file = argv[bu_optind];
     title_obj = argv[bu_optind+1];
-    nobjs = argc - bu_optind - 1;
-    objtab = (char **)&(argv[bu_optind+1]);
+    objc = argc - bu_optind - 1;
+    objv = (char **)&(argv[bu_optind+1]);
 
-    if (nobjs <= 0) {
+    if (objc <= 0) {
 	bu_log("%s: no objects specified -- raytrace aborted\n", argv[0]);
+	usage(argv[0], 0);
 	return 1;
     }
 
@@ -329,10 +331,14 @@ int main(int argc, const char **argv)
 	bu_vls_strcat(&str, "\nopendb ");
 	bu_vls_strcat(&str, title_file);
 	bu_vls_strcat(&str, ";\ntree ");
+
+	/* arbitrarily limit the number of command-line objects being
+	 * echo'd back for log printing, followed by ellipses.
+	 */
 	bu_vls_from_argv( &str,
-			  nobjs <= 16 ? nobjs : 16,
+			  objc <= 16 ? objc : 16,
 			  (const char **)argv+bu_optind+1);
-	if (nobjs > 16)
+	if (objc > 16)
 	    bu_vls_strcat(&str, " ...");
 	else
 	    bu_vls_putc(&str, ';');
@@ -353,12 +359,10 @@ int main(int argc, const char **argv)
     if (rt_verbosity & VERBOSE_STATS)
 	bu_log("DIRBUILD: %s\n", bu_vls_addr(&times));
     bu_vls_free(&times);
-    memory_summary(n_free_calls);
+    memory_summary();
 
     /* Copy values from command line options into rtip */
     rtip->rti_space_partition = space_partition;
-    rtip->rti_nugrid_dimlimit = nugrid_dimlimit;
-    rtip->rti_nu_gfactor = nu_gfactor;
     rtip->useair = use_air;
     rtip->rti_save_overlaps = save_overlaps;
     if (rt_dist_tol > 0)  {
@@ -421,7 +425,7 @@ int main(int argc, const char **argv)
 	bu_semaphore_release(BU_SEM_SYSCALL);
 
 #ifdef USE_OPENCL
-        clt_connect_fb(fbp);
+	clt_connect_fb(fbp);
 #endif
     }
     if ((outputfile == (char *)0) && (fbp == FB_NULL)) {
@@ -442,7 +446,7 @@ int main(int argc, const char **argv)
     for (i = 0; i < MAX_PSW; i++) {
 	rt_init_resource(&resource[i], i, rtip);
     }
-    memory_summary(n_free_calls);
+    memory_summary();
 
 #ifdef SIGUSR1
     (void)signal(SIGUSR1, siginfo_handler);
@@ -483,7 +487,6 @@ int main(int argc, const char **argv)
 		fprintf(stderr, "cmd: %s\n", buf);
 	    ret = rt_do_cmd( rtip, buf, rt_cmdtab);
 	    bu_free( buf, "rt_read_cmd command buffer");
-	    n_free_calls++;
 	    if (ret < 0)
 		break;
 	}

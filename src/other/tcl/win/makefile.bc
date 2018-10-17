@@ -556,7 +556,7 @@ $(GENERICDIR)\regcomp.c: \
 $(GENERICDIR)\regcustom.h: \
 	$(GENERICDIR)\tclInt.h \
 	$(GENERICDIR)\tclPort.h \
-	$(GENERICDIR)\regextcl.h
+	$(GENERICDIR)\regex.h
 
 $(GENERICDIR)\regexec.c: \
 	$(GENERICDIR)\rege_dfa.c \

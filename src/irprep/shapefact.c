@@ -1,7 +1,7 @@
 /*                     S H A P E F A C T . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2016 United States Government as represented by
+ * Copyright (c) 1990-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,6 +32,7 @@
 #include <math.h>
 
 /* Need the following for rt_shootray.  */
+#include "bu/snooze.h"
 #include "vmath.h"
 #include "raytrace.h"
 
@@ -130,7 +131,7 @@ int main(int argc, char **argv)
     struct bn_unif *msr = NULL;
 
     fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
-    sleep(1);
+    bu_snooze(BU_SEC2USEC(1));
 
     /* Check to see if arguments are implemented correctly.  */
     if ((argc < 3 || argv[1] == NULL) || (argv[2] == NULL)) {

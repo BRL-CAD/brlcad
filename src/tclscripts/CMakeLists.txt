@@ -115,6 +115,7 @@ tclIndex_BUILD(tclscripts)
 add_subdirectory(rtwizard)
 
 CMAKEFILES(README hv3_man_browser_test.tcl)
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

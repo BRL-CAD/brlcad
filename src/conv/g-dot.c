@@ -1,7 +1,7 @@
 /*                         G - D O T . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2016 United States Government as represented by
+ * Copyright (c) 2011-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,12 +35,14 @@
 #include <string.h>
 
 /* interface headers */
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/path.h"
 #include "bu/str.h"
 #include "brlcad_version.h"
 #include "raytrace.h"
 #include "ged.h"
+
 
 const char *usage = "[-o output.dot] input.g [object1 ...]\n";
 
@@ -335,7 +337,7 @@ main(int ac, char *av[])
 	bu_vls_printf(&vp, "%s\\n", bu_vls_addr(gp->ged_result_str));
 	if (!(av[0][0] == '-' && av[0][1] == '\0')) {
 	    char base[MAXPATHLEN] = {0};
-	    bu_basename(av[0], base);
+	    bu_path_basename(av[0], base);
 	    bu_vls_printf(&vp, "%s ", base);
 	}
 	bu_vls_printf(&vp, "BRL-CAD Geometry Database");

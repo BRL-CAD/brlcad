@@ -1,7 +1,7 @@
 #            T H I R D P A R T Y _ T C L . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2016 United States Government as represented by
+# Copyright (c) 2011-2018 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -122,6 +122,15 @@ macro(THIRD_PARTY_TCL_PACKAGE pkgname dir wishcmd depends required_vars NEEDS_LI
   set(${PKGNAME_UPPER}_DISABLED 0)
   set(${PKGNAME_UPPER}_DISABLE_TEST 0)
   set(${PKGNAME_UPPER}_MET_CONDITION 0)
+
+  # 0. Whether or not we're building the sources, we are tracking the files
+  # that are supposed to be in the directory
+  get_filename_component(DIR_NAME "${dir}" NAME)
+  if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${DIR_NAME}.dist")
+    message(FATAL_ERROR "Third party component ${dir} does not have a dist file at \"${CMAKE_CURRENT_SOURCE_DIR}/${DIR_NAME}.dist\"")
+  endif(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${DIR_NAME}.dist")
+  include("${CMAKE_CURRENT_SOURCE_DIR}/${DIR_NAME}.dist")
+  CMAKEFILES_IN_DIR(${DIR_NAME}_ignore_files ${dir})
 
   # 1. First up - If any of the required flags are off, not only is this extension
   # build a no-go but so is the test - BRL-CAD doesn't require it.
@@ -321,8 +330,6 @@ macro(THIRD_PARTY_TCL_PACKAGE pkgname dir wishcmd depends required_vars NEEDS_LI
   string(TOLOWER ${pkgname} PKGNAME_LOWER)
 
   # If testing was disabled, we only care what the _BUILD variable says.
-  # Even if DISABLED, we still need the distcheck ignore, so do the following
-  # for ALL situations.
   if(${PKGNAME_UPPER}_DISABLE_TEST)
     if(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD)
       add_subdirectory(${dir})
@@ -332,10 +339,6 @@ macro(THIRD_PARTY_TCL_PACKAGE pkgname dir wishcmd depends required_vars NEEDS_LI
 	  add_dependencies(${pkgname} ${dep})
 	endif(BRLCAD_BUILD_${DEP_UPPER})
       endforeach(dep ${depends})
-      include("${CMAKE_CURRENT_SOURCE_DIR}/${PKGNAME_LOWER}.dist")
-      CMAKEFILES_IN_DIR(${PKGNAME_LOWER}_ignore_files ${dir})
-    else(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD)
-      CMAKEFILES(${dir})
     endif(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD)
   endif(${PKGNAME_UPPER}_DISABLE_TEST)
 
@@ -383,18 +386,13 @@ macro(THIRD_PARTY_TCL_PACKAGE pkgname dir wishcmd depends required_vars NEEDS_LI
 	  add_dependencies(${pkgname} ${dep})
 	endif(BRLCAD_BUILD_${DEP_UPPER})
       endforeach(dep ${depends})
-      include("${CMAKE_CURRENT_SOURCE_DIR}/${PKGNAME_LOWER}.dist")
-      CMAKEFILES_IN_DIR(${PKGNAME_LOWER}_ignore_files ${dir})
-    else(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD)
-      CMAKEFILES(${dir})
     endif(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD)
   endif(NOT ${PKGNAME_UPPER}_MET_CONDITION)
 
-  OPTION_ALIASES("${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}" "${aliases}" "ABS")
-  OPTION_DESCRIPTION("${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}" "${aliases}" "${description}")
-
-  # For drop-down menus in CMake gui - set STRINGS property
-  set_property(CACHE ${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} PROPERTY STRINGS AUTO BUNDLED SYSTEM)
+  BRLCAD_OPTION("${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}" "${${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}}"
+    TYPE ABS
+    ALIASES ${${aliases}}
+    DESCRIPTION "${description}")
 
 endmacro(THIRD_PARTY_TCL_PACKAGE)
 

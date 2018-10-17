@@ -1,7 +1,7 @@
 /*                      R E A D T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2016 United States Government as represented by
+ * Copyright (c) 1990-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -24,7 +24,10 @@
 union tree *
 Readtree(mat_t *matp)
 {
-    int length, i, k, op;
+    int length = 0;
+    int i = 0;
+    int k = 0;
+    int op = 0;
     union tree *ptr, *Pop();
     mat_t *new_mat;
 

@@ -56,7 +56,6 @@ set(mged_TCLSCRIPTS
   mouse.tcl
   mview.tcl
   openw.tcl
-  overlap.tcl
   plot.tcl
   points.tcl
   prj_add.tcl
@@ -134,6 +133,7 @@ set(mged_tcl_DATA
 BRLCAD_ADDDATA(mged_tcl_DATA tclscripts/mged)
 
 CMAKEFILES(rrmb.tcl)
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

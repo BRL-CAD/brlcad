@@ -38,7 +38,7 @@
 # This file contains the top level CMakeLists.txt logic for the
 # SC software package.
 
-PROJECT(SC)
+project(SC)
 
 # SC version
 SET(SC_VERSION_MAJOR 0)
@@ -55,16 +55,7 @@ SET(SC_ABI_SOVERSION 2)
 SET(SC_ABI_VERSION ${SC_ABI_SOVERSION}.0.0)
 
 # Minimum required version of CMake
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8.8)
-IF(COMMAND CMAKE_POLICY)
-  CMAKE_POLICY(SET CMP0003 NEW)
-  if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-	  CMAKE_POLICY(SET CMP0026 OLD)
-  endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-  if ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
-	  CMAKE_POLICY(SET CMP0054 NEW)
-  endif ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
-ENDIF(COMMAND CMAKE_POLICY)
+cmake_minimum_required(VERSION 3.1.3)
 
 IF( NOT DEFINED INCLUDE_INSTALL_DIR )
   SET( INCLUDE_INSTALL_DIR include )
@@ -85,6 +76,10 @@ endif(NOT DEFINED BIN_DIR)
 if(NOT DEFINED LIB_DIR)
   set(LIB_DIR lib)
 endif(NOT DEFINED LIB_DIR)
+
+# Because the STEPcode headers are used in BRL-CAD, we have added some decl code
+# to the headers for strict c89/c++98.  Don't use it for the stepcode build itself
+add_definitions(-DHAVE_DECL_FSEEKO)
 
 IF( NOT DEFINED SC_BUILD_TYPE )
   SET( SC_BUILD_TYPE "Debug" CACHE STRING "Build type" ) # By default set debug build
@@ -430,9 +425,9 @@ ADD_SUBDIRECTORY(src/clstepcore)
 ADD_SUBDIRECTORY(src/cleditor)
 ADD_SUBDIRECTORY(src/cldai)
 ADD_SUBDIRECTORY(src/clutils)
-if( NOT WIN32 ) # don't build cllazyfile on windows until export/import macros are in place
-  ADD_SUBDIRECTORY( src/cllazyfile )
-endif( NOT WIN32 )
+#if( NOT WIN32 ) # don't build cllazyfile on windows until export/import macros are in place
+#  ADD_SUBDIRECTORY( src/cllazyfile )
+#endif( NOT WIN32 )
 ADD_SUBDIRECTORY(include)
 ADD_SUBDIRECTORY(data)
 IF(SC_ENABLE_TESTING)

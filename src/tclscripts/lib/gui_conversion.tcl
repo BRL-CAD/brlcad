@@ -1,7 +1,7 @@
 #              G U I _ C O N V E R S I O N . T C L
 # BRL-CAD
 #
-# Copyright (c) 2014-2016 United States Government as represented by
+# Copyright (c) 2014-2018 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -597,7 +597,7 @@ proc gui_conversion { cmd logfile } {
 
 #set ::info_id [open /home/cyapp/convdebug.log "w"]
 set ::exe_ext ""
-if {$tcl_platform(platform) == "windows"} {
+if {$::tcl_platform(platform) == "windows"} {
     set ::exe_ext ".exe"
 }
 

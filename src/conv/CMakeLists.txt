@@ -1,9 +1,3 @@
-if(MSVC)
-  add_definitions(
-    -DON_DLL_IMPORTS
-    )
-endif(MSVC)
-
 add_definitions(
   -D_CONSOLE
   -DBRLCAD_DLL
@@ -59,8 +53,6 @@ BRLCAD_ADDEXEC(conv-vg2g conv-vg2g.c "libbu")
 BRLCAD_ADDEXEC(cy-g cy-g.c "libwdb;${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(dbupgrade dbupgrade.c "libwdb;librt;libbu")
-
-BRLCAD_ADDEXEC(dem-g dem-g.c "libwdb;${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(k-g k-g.cpp "libwdb;librt;libbu;${M_LIBRARY}")
 
@@ -167,12 +159,12 @@ install(PROGRAMS intaval-g.py DESTINATION bin)
 
 
 set(conv_ignore_files
+  CMakeLists.txt
   Formats.csv
   comgeom/try.sh
   dbclean.sh
   dxf/dxf.h
   intaval-g.py
-  off
   patch/patch-g.h
   patch/pull_comp.sh
   patch/pull_solidsub.sh

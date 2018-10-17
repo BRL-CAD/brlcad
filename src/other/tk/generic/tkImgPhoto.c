@@ -1675,6 +1675,10 @@ ParseSubcommandOptions(
 	 */
 
 	if ((allowedOptions & bit) == 0) {
+	    if (optPtr->name == NULL) {
+		optPtr->name = objv[index];
+		continue;
+	    }
 	    Tcl_AppendResult(interp, "unrecognized option \"",
 	    	    Tcl_GetString(objv[index]),
 		    "\": must be ", NULL);
@@ -3004,6 +3008,10 @@ ImgPhotoSetSize(
 	height = masterPtr->userHeight;
     }
 
+    if (width > INT_MAX / 4) {
+	/* Pitch overflows int */
+	return TCL_ERROR;
+    }
     pitch = width * 4;
 
     /*
@@ -3018,6 +3026,10 @@ ImgPhotoSetSize(
 	 */
 
 	unsigned /*long*/ newPixSize = (unsigned /*long*/) (height * pitch);
+
+	if (pitch && height > (int)(UINT_MAX / pitch)) {
+	    return TCL_ERROR;
+	}
 
 	/*
 	 * Some mallocs() really hate allocating zero bytes. [Bug 619544]
@@ -3069,14 +3081,14 @@ ImgPhotoSetSize(
 	if ((masterPtr->pix32 != NULL)
 	    && ((width == masterPtr->width) || (width == validBox.width))) {
 	    if (validBox.y > 0) {
-		memset(newPix32, 0, (size_t) (validBox.y * pitch));
+		memset(newPix32, 0, ((size_t) validBox.y * pitch));
 	    }
 	    h = validBox.y + validBox.height;
 	    if (h < height) {
-		memset(newPix32 + h*pitch, 0, (size_t) ((height - h) * pitch));
+		memset(newPix32 + h*pitch, 0, ((size_t) (height - h) * pitch));
 	    }
 	} else {
-	    memset(newPix32, 0, (size_t) (height * pitch));
+	    memset(newPix32, 0, ((size_t) height * pitch));
 	}
 
 	if (masterPtr->pix32 != NULL) {
@@ -3093,7 +3105,7 @@ ImgPhotoSetSize(
 
 		offset = validBox.y * pitch;
 		memcpy(newPix32 + offset, masterPtr->pix32 + offset,
-			(size_t) (validBox.height * pitch));
+			((size_t) validBox.height * pitch));
 
 	    } else if ((validBox.width > 0) && (validBox.height > 0)) {
 		/*
@@ -3104,7 +3116,7 @@ ImgPhotoSetSize(
 		srcPtr = masterPtr->pix32 + (validBox.y * masterPtr->width
 			+ validBox.x) * 4;
 		for (h = validBox.height; h > 0; h--) {
-		    memcpy(destPtr, srcPtr, (size_t) (validBox.width * 4));
+		    memcpy(destPtr, srcPtr, ((size_t) validBox.width * 4));
 		    destPtr += width * 4;
 		    srcPtr += masterPtr->width * 4;
 		}
@@ -3262,7 +3274,7 @@ ImgPhotoInstanceSetSize(
 	    if (masterPtr->width == instancePtr->width) {
 		offset = validBox.y * masterPtr->width * 3;
 		memcpy(newError + offset, instancePtr->error + offset,
-			(size_t) (validBox.height
+			((size_t) validBox.height
 			* masterPtr->width * 3 * sizeof(schar)));
 
 	    } else if (validBox.width > 0 && validBox.height > 0) {
@@ -4415,7 +4427,7 @@ Tk_PhotoPutBlock(
 		&& (blockPtr->pitch == pitch)))
 	    && (compRule == TK_PHOTO_COMPOSITE_SET)) {
 	memmove(destLinePtr, blockPtr->pixelPtr + blockPtr->offset[0],
-		(size_t) (height * width * 4));
+		((size_t) height * width * 4));
 
 	/*
 	 * We know there's an alpha offset and we're setting the data, so skip
@@ -4447,7 +4459,7 @@ Tk_PhotoPutBlock(
 		    && (blueOffset == 2) && (alphaOffset == 3)
 		    && (width <= blockPtr->width)
 		    && compRuleSet) {
-		memcpy(destLinePtr, srcLinePtr, (size_t) (width * 4));
+		memcpy(destLinePtr, srcLinePtr, ((size_t) width * 4));
 		srcLinePtr += blockPtr->pitch;
 		destLinePtr += pitch;
 		continue;
@@ -5421,12 +5433,12 @@ Tk_PhotoBlank(
      */
 
     memset(masterPtr->pix32, 0,
-	    (size_t) (masterPtr->width * masterPtr->height * 4));
+	    ((size_t) masterPtr->width * masterPtr->height * 4));
     for (instancePtr = masterPtr->instancePtr; instancePtr != NULL;
 	    instancePtr = instancePtr->nextPtr) {
 	if (instancePtr->error) {
 	    memset(instancePtr->error, 0,
-		    (size_t) (masterPtr->width * masterPtr->height
+		    ((size_t) masterPtr->width * masterPtr->height
 		    * 3 * sizeof(schar)));
 	}
     }

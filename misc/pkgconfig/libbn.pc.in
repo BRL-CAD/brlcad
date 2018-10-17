@@ -9,5 +9,5 @@ Name: libbn
 Description: BRL-CAD Numerics Library
 Version: @BRLCAD_VERSION@
 Requires: libbu
-Libs: -L${libdir} -lbn -lbu @LIBTCL@ @LIBM@
+Libs: -L${libdir} -lbn -lbu @LIBM@
 Cflags: -I${includedir}/brlcad -I${includedir}

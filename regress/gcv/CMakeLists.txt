@@ -35,22 +35,28 @@ set_target_properties(regress-gcv PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
 set_target_properties(regress-gcv PROPERTIES FOLDER "BRL-CAD Regression Tests")
 
 Add_GCV_Test(fastgen "fast4-g;gdiff")
+
+# The dem test is a bit more one-off for now...
+add_subdirectory(dem)
+
+CMAKEFILES(
+  CMakeLists.txt
+  README
+  dem/CMakeLists.txt
+  dem/README
+  dem/hawaii-c.tar.bz2
+  dem/regress-dem.cmake.in
+  fastgen_box.fast4
+  fastgen_dos.fast4
+  regress-fastgen.cmake.in
+  )
+
 DISTCLEAN(
   "${CMAKE_CURRENT_BINARY_DIR}/fastgen.done"
   "${CMAKE_CURRENT_BINARY_DIR}/fastgen.log"
   "${CMAKE_CURRENT_BINARY_DIR}/fastgen_unix.g"
   "${CMAKE_CURRENT_BINARY_DIR}/fastgen_dos.g"
   )
-CMAKEFILES(
-  fastgen_dos.fast4 
-  fastgen_box.fast4 
-  )
-
-
-# The dem test is a bit more one-off for now...
-add_subdirectory(dem)
-
-
 
 # Local Variables:
 # tab-width: 8

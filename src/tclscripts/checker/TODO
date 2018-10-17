@@ -1,0 +1,341 @@
+					 # -*- mode: org; coding: utf-8; -*- #
+# This is an Emacs org-mode file.  Keybindings: http://orgmode.org/orgcard.txt
+
+* Overlap List Navigation
+** Change Auto-Scroll Behavior (Requested Three Times)
+   Marking something as complete (manually or after successful
+   subtraction) gets it sorted into its proper place (according to
+   current sort) in the sublist of grayed-out completed items at the
+   bottom of the overlap list. Currently when overlaps get marked you
+   are automatically scrolled to the bottom of the overlap list.
+
+   This behavior was added to help show progress, especially during a
+   mass subtraction.
+
+   Without auto-scrolling, pairs marked completed just appear to
+   disappear from the overlap list, when in fact they are available at
+   the bottom of the list so you can see what's been done and also
+   unmark anything that needs more work, at which point it jumps back
+   to its original location.
+
+   With auto-scrolling the current operation first shows up in the
+   status line ("Subtracting /a from /b"). Then on completion the a/b
+   pair appears at the bottom of the overlap list just above the
+   status line, so it appears to "move up" into the completed list,
+   and during a mass subtraction the overlap list essentially turns
+   into a log of the most recently completed subtractions.
+
+   However, if the overlap list is long, this behavior becomes very
+   annoying when you're resolving one overlap at a time and manually
+   marking the overlap as completed (by right-clicking the overlap and
+   selecting the menu option). After you see the overlap move to the
+   bottom of the overlap list, you have to slowly scroll back up to
+   where you were in the list.
+
+   Furthermore, the implementation is limited in that it scrolls you
+   to the absolute bottom of the list, rather than scrolling to make
+   the most recently marked item appear at the bottom. If you're not
+   strictly working top to bottom, you just end up scrolling to the
+   bottom to see some random completed overlap pairs.
+
+   One user suggested only auto-scrolling to the bottom on
+   multi-select.
+
+   That's only a partial solution. Auto-scrolling could just be
+   removed, but then another solution is needed then for making it
+   easy to see where resolved overlaps are listed. This could be
+   lumped into the larger issue of tagging and filtering displayed
+   overlaps. If you can filter the overlap list to just show specific
+   overlaps, then the issue of having a long list to scroll through
+   goes away.
+
+   It would also be nice to just jump to the top of the list again, or
+   to a specific overlap number. But, if you were at some prior
+   position and you don't remember what it was, it's better if you
+   just stay put.
+
+   Making home/end key bindings is a partial solution that will make
+   sense even with additional improvements.
+
+   Could also have nav buttons that just take you to the last
+   position.
+
+*** Solution
+
+    Have multiple lists in multiple tabs according to tag. Overlaps
+    can be tagged as unresolved (default), completed, or failed. They
+    then move to the matching tab.
+
+    More compact to just have a list-box to select a view, but more
+    clicks to switch.
+
+    Or, have headlining buttons, plus a "+" to launch a dialog to
+    manage custom tags. Then just press what you want to see.
+
+    Plus option to toggle union, intersection, or inverse of selected.
+
+** Add Ability to Jump to a Specific Overlap
+   Goto number, or just a search, or maybe a page up/down. It's very
+   hard to get to a specific overlap right now.
+
+** Shouldn't Have to Click Treeview In Order to Scroll it with Mouse
+* Drawing Behavior
+** Option to Draw Only First Unioned Solid (Requested Twice)
+
+   Some kind of option for toggling display of just the first solid
+   instead of the entire region. The reason they want this is for
+   regions where there are a lot of subtractions (e.g. to resolve
+   overlaps) that aren't really part of the overlap that they don't
+   want to see.
+
+   Ideally of course, we'd know what was overlapping and show just
+   that.
+
+** Draw Bug
+
+   If the user has drawn "/parent" and the GUI draws "/parent/child",
+   then erases "/parent/child" on selection change, the "/parent" draw
+   list gets split, and suddenly the child component disappears
+   altogether.
+
+** Toggle for Plot Overlay
+   Store plots in database.
+** Highlighted Overlap Pairs
+   Want overlap pairs to stand out in context. Would be nice to have
+   highlighted selection capability that the tool leverages.
+
+** Fix MGED's Drawing of the Cyclic Hierarchies
+
+   Do draw changes made by Cliff mitigate this problem?
+   
+* Overlap List Filtering
+** Path Filtering
+  
+   One user requested being able to list just overlaps matching a
+   specific component. So you could filter either the left path or
+   right path to to just those matching '/path/to/component/*' or
+   whatever.
+
+   Could be in GUI, could be an option to check command.
+
+** Tagging Overlaps, Filtering by Tag
+*** Hide/Show Completed (Requested Twice)
+
+    Maybe just have the first line in the table always be an expandable
+    ("N completed"...)?
+
+    This could tie into filtering of tags on items.
+
+*** Defer Flag on Items
+    One user requested to be able to mark things as deferred if you're
+    not completing them just yet, so you don't have to scroll past them
+    all the time.
+
+    Now, with path filtering, this might not be as much of an issue.
+
+    But you could very well implement a generic mechanism, "Tag selected
+    as X", where you define whatever tags you want. Then you could also
+    right-click and have a Hide/Show menu where you can check any of the
+    tags.
+
+** Thresholded Listing
+   Option to limit what's listed for manual inspection by volume
+   estimate. Want to automatically resolve small overlaps en masse.
+
+   Maybe you should be able to specify in the command invocation itself
+   what to filter before the GUI even comes up.
+
+* Faster check Command Load Time, w/ Progress Bar
+
+  Reports are it can take 18m 46s to load an overlap file of ~17,549
+  overlaps.
+
+  A couple of options here. An obvious one is to not bother
+  calculating the bboxes for pairs that are marked done. If they get
+  unmarked they can be recalculated.
+
+  You could also just defer until things are actually selected. That
+  spreads out the performance hit. If you did a multi-select and
+  canceled the draw though, you'd want the bbox calculation to get
+  canceled too.
+
+  Could also try to cache the results, so at least you'd only have to
+  wait once, and then loading the same file wouldn't have to take so
+  long. However, with the skip completed approach, it loads faster
+  each time anyway.
+
+  In any case, as long as it's ever going to take minutes to load the
+  overlaps file we need to show a real progress bar (currently
+  printing progress dots).
+
+* Matrices and ORCA Geometry
+
+  Putting matrices over some of the overlapping objects can hose the
+  resolution.
+
+  The long-term solution may be to introduce new path features into
+  the hierarchy.
+
+  Short-term, the tool can't properly subtract ORCA geometry because
+  the matrices aren't pushed. Have the tool check paths for matrices,
+  and refuse to do the subtraction if the matrices aren't pushed. Also
+  flag the overlap somehow so it's obvious what happened.
+
+* Better Feedback on Per-Overlap Results
+
+  One user was having the problem of overlaps surprisingly not going
+  away after a mass subtraction.
+
+  Part of the problem is some of them can't be resolved, and an error
+  is getting generated. When a whole bunch of them are being done at
+  once, this isn't obvious, especially when MGED is killed by an
+  automatic Windows restart.
+
+  We want something like an automatic error mark on overlaps that
+  can't be resolved automatically, with an associated error code so
+  that you can right-click the overlap and see an error message. Or
+  maybe this can just show up in the status text when you select it,
+  or maybe a dialog pops up on selection, or maybe the subtract
+  buttons get replaced.
+
+* Checker Window Should Close with MGED
+  Currently checker window can't be closed if you close MGED's windows
+  first.
+
+* Handle Kill Gracefully
+  User mentioned Windows machines are restarted nightly, and this may
+  interrupt the GUI as it's doing subtractions.
+
+* Allow Multi-Subtract to be Aborted
+
+  If you select many overlaps, you can cancel drawing them at any
+  time. Once you hit one of the subtract buttons though, you're locked
+  in.
+* -F Option
+  Default mode of check command is to not subtract recipes. You can
+  only subtract B from A if B reduces to a single solid. B is then
+  subtracted from every unioned solid in A (because we aren't testing
+  which ones are contributing to the overlap) to try and ensure the
+  overlap is actually resolved.
+
+  -F ignores everything past the first unioned solid, more or less
+  guaranteeing a subtraction will be made between A and B, no matter
+  their contents.
+
+  Target modelers are dealing with combs of a single solid. All other
+  modifications to that solid are to resolve overlaps and other minor
+  issues. Thus, they want to assume only the first solids create the
+  overlap, and so subtracting anything more complex than the first
+  solid in B from anything more than the first solid in A is needless
+  complexity from their perspective.
+
+** -F Option Warning Message Visability
+   The -F warning message is printed to the terminal and quickly
+   scrolls out of the mged command window due to other error messages
+   and the '.' progress output.
+
+   The behavior with -F is rather specific and made for the target
+   modeling team's specific needs. Don't want the message to be too
+   annoying, but want to avoid confusion as to exactly what the
+   implications are.
+
+** Suggest User Pass -F
+
+   In normal mode, if user tries to subtract a recipe, ask user if
+   they want to switch to -F mode (treat all combinations as if they
+   contained only their first unioned solid).
+
+   While awaiting a response from the user, queue problem overlaps and
+   keep processing unaffected overlaps.
+
+* Check Overlap Input versus Database
+  It's easy to change the database paths outside the check GUI and
+  invalidate the overlap file. Then you get a bunch of opaque path
+  errors when you try to load the overlap file.
+
+* Bot Overlaps Change with Orientation
+  Changing to right hand or left hand makes a difference for bots.
+
+* Segfault in gqa Running check.sh on truck.g
+* Safeguard Against Cycles
+
+  Cycles may hose the resolution. Should cycles be considered valid?
+  Should a separate tool be used to resolve them?
+
+* Other Criteria for Automatic Mass Resolution
+  Instead of subtract-left for all selected, subtract larger, or
+  subtract the more dense object from the less dense object.
+* Improving Automatic Resolution
+
+  Instead of just resolving by subtraction, are there alternatives
+  such as giving the option to translate one or both sides of the
+  overlap apart.
+
+** Resolve overlaps based on materials
+
+  User suggested subtracting smaller from bigger where material types
+  are the same, subtracting less dense items when they are not the
+  same.  May want to limit this to "small" overlaps and/or consider if
+  there are cases when it should not apply.
+
+* Better Overlap Detection
+  Currently there are a lot of false positive you get when a pipe or
+  box runs through a bot hull (CSM: this sounds like a bug! or perhaps
+  bad bot geometry...). The bboxes intersect, but the actual geometry
+  doesn't (CSM: then it shouldn't have resulted in an overlap
+  event...). Detect and group for mass review?
+
+  Two bot-specific issues:
+  1. Overlap detection sometimes dependent on face orientation.
+  1. Tight triangles leas to ray sneak-through.
+
+** Use montecarlo convergence
+
+  Shoot rays iteratively until we reach a particular sampling density.
+
+** Use spherical sampling
+
+  Quasirandom or importance sampling can be used for faster
+  convergence performance.
+
+* Convert Shell+Tcl Script to Tcl/libged/libanalyze
+
+  Make the capability an integrated feature available the same across
+  all platforms (including Windows) without requiring it be a
+  multistep process.  Ideally as a libged command that integrates with
+  the GUI.
+
+* Optimization (Facetization) of Small Bot Fixes
+
+  Can we do a post-process after automatic resolution to attempt to
+  re-facetize regions which contain a bot and a subtraction of some
+  other object(s), replacing the recipe with a region containing a
+  single new evaluated bot.
+
+  User said it's okay if this operation takes a week or a month
+  even. It might be nice to be able to take intermediate results,
+  abort it maybe and take what's done.
+
+* Minor GUI Improvements
+** Show Units for Volume Estimates
+
+   User asked what the volume unit was. It's mm^3. Sort
+   of. Potentially a very rough estimate. Don't want to be misleading.
+
+** Disable Subtract Buttons if Nothing is Selected
+** Checker Tk Window Shouldn't Display Until There's Something to See
+   Currently a default Tk Window flashes while widgets are
+   constructed. You also see a window even when no database open.
+
+** Display Material ID Next to Paths
+
+   One user said the material ID is actually more relevant than the
+   bounding box in making a subtraction determination, so maybe he'd
+   want to be able to sort on that as well.
+
+** List View Needs Horizontal Scroll When Paths Are Very Long
+* Check for other issues, separate report tabs
+** for geometry that was not hit
+** for air gaps
+** for invalid/non-volume geometry
+** for other glint issues

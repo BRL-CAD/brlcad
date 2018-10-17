@@ -1,7 +1,7 @@
 /*                       B W S C A L E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2016 United States Government as represented by
+ * Copyright (c) 1986-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -87,7 +87,7 @@ fill_buffer(int y)
     buf_start = y - buflines/2;
     if (buf_start < 0) buf_start = 0;
 
-    if (bu_fseek(buffp, buf_start * scanlen, 0) < 0) {
+    if (fseek(buffp, buf_start * scanlen, 0) < 0) {
 	fprintf(stderr, "bwscale: Can't seek to input pixel!\n");
 	/* bu_exit (3, NULL); */
     }

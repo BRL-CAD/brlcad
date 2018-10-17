@@ -1,7 +1,7 @@
 /*                         A S C I I . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@
 #define HT '\011'
 #define LF '\012'
 #define FF '\014'
-#define CR '\015'
+#define CRET '\015'
 #define DLE '\020'
 #define DC1 '\021'
 #define DC2 '\022'

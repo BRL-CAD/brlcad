@@ -1,7 +1,7 @@
 /*                       B R L M A N  . C
  * BRL-CAD
  *
- * Copyright (c) 2005-2016 United States Government as represented by
+ * Copyright (c) 2005-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -83,15 +83,19 @@ opt_lang(struct bu_vls *msg, int argc, const char **argv, void *l)
 {
     int i = 0;
     struct bu_vls *lang = (struct bu_vls *)l;
-    int ret = bu_opt_vls(msg, argc, argv, (void *)l);
-    if (ret == -1) return -1;
-    if (bu_vls_strlen(lang) != 2) return -1;
-    /* Only return valid if we've got one of the ISO639-1 lang codes */
-    while (iso639_1[i]) {
-	if (BU_STR_EQUAL(bu_vls_addr(lang), iso639_1[i])) return ret;
-	i++;
+    if (lang) {
+	int ret = bu_opt_vls(msg, argc, argv, (void *)l);
+	if (ret == -1) return -1;
+	if (bu_vls_strlen(lang) != 2) return -1;
+	/* Only return valid if we've got one of the ISO639-1 lang codes */
+	while (iso639_1[i]) {
+	    if (BU_STR_EQUAL(bu_vls_addr(lang), iso639_1[i])) return ret;
+	    i++;
+	}
+	return -1;
+    } else {
+	return -1;
     }
-    return -1;
 }
 
 
@@ -196,7 +200,7 @@ BRLMAN_MAIN(
     struct bu_opt_desc d[6];
 
 #ifdef HAVE_WINDOWS_H
-    char **argv;
+    const char **argv;
     int argc;
 
     /* Get our args from the c-runtime. Ignore lpszCmdLine. */
@@ -204,32 +208,32 @@ BRLMAN_MAIN(
     argv = __argv;
 #endif
 
-    /* Need progname set for bu_brlcad_root/bu_brlcad_data to work */
+    /* initialize progname for run-time resource finding */
     bu_setprogname(argv[0]);
 
     /* Handle options in C */
-    BU_OPT(d[0], "h", "help",        "",         NULL, (void *)&print_help,  "Print help and exit");
-    BU_OPT(d[1], "g", "gui",         "",         NULL, (void *)&enable_gui,  "Enable GUI");
-    BU_OPT(d[2], "",  "no-gui",      "",         NULL, (void *)&disable_gui, "Disable GUI");
-    BU_OPT(d[3], "L", "language",  "lg",    &opt_lang, (void *)&lang,        "Set language");
-    BU_OPT(d[4], "S", "section",    "#",  &opt_section, (void *)&man_section, "Set section");
+    BU_OPT(d[0], "h", "help",        "",         NULL, &print_help,  "Print help and exit");
+    BU_OPT(d[1], "g", "gui",         "",         NULL, &enable_gui,  "Enable GUI");
+    BU_OPT(d[2], "",  "no-gui",      "",         NULL, &disable_gui, "Disable GUI");
+    BU_OPT(d[3], "L", "language",  "lg",    &opt_lang, &lang,        "Set language");
+    BU_OPT(d[4], "S", "section",    "#", &opt_section, &man_section, "Set section");
     BU_OPT_NULL(d[5]);
 
     /* Skip first arg */
     argv++; argc--;
     uac = bu_opt_parse(&optparse_msg, argc, argv, d);
     if (uac == -1) {
-	bu_exit(EXIT_FAILURE, bu_vls_addr(&optparse_msg));
+	bu_exit(EXIT_FAILURE, "%s", bu_vls_addr(&optparse_msg));
     }
     bu_vls_free(&optparse_msg);
 
     /* If we want help, print help */
     if (print_help) {
-	const char *option_help = bu_opt_describe(d, NULL);
+	char *option_help = bu_opt_describe(d, NULL);
 	bu_log("Usage: brlman [options] [man_page]\n");
 	if (option_help) {
 	    bu_log("Options:\n%s\n", option_help);
-	    bu_free((char *)option_help, "help str");
+	    bu_free(option_help, "help str");
 	}
 	bu_exit(EXIT_SUCCESS, NULL);
     }
@@ -413,7 +417,7 @@ BRLMAN_MAIN(
 	    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
 	}
 
-	brlman_tcl = bu_brlcad_data("tclscripts/brlman/brlman.tcl", 1);
+	brlman_tcl = bu_brlcad_root("share/tclscripts/brlman/brlman.tcl", 1);
 	Tcl_DStringInit(&temp);
 	fullname = Tcl_TranslateFileName(interp, brlman_tcl, &temp);
 	status = Tcl_EvalFile(interp, fullname);

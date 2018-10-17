@@ -1,7 +1,7 @@
 /*                     W A L K _ E X A M P L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -102,7 +102,7 @@ int parse_args(int ac, char *av[])
 	    case '?':
 	    case 'h':
 	    default:
-		bu_basename(av[0], tmp_basename);
+		bu_path_basename(av[0], tmp_basename);
 		usage(tmp_basename, "Bad or help flag specified\n");
 		break;
 	}
@@ -251,7 +251,7 @@ int main(int ac, char *av[])
     arg_count = parse_args(ac, av);
 
     if ((ac - arg_count) < 1) {
-	bu_basename(av[0], tmp_basename);
+	bu_path_basename(av[0], tmp_basename);
 	usage(tmp_basename, "bad argument count");
     }
 

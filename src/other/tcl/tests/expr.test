@@ -910,6 +910,15 @@ test expr-22.9 {non-numeric floats: shared object equality and NaN} {
     set x NaN
     expr {$x == $x}
 } 0
+# Make sure [Bug d0f7ba56f0] stays fixed.
+test expr-22.10 {non-numeric arguments: equality and NaN} {
+    set x NaN
+    expr {$x > "Gran"}
+} 1
+test expr-22.11 {non-numeric arguments: equality and NaN} {
+    set x NaN
+    expr {"Gran" < $x}
+} 1
 
 # Tests for exponentiation handling
 test expr-23.1 {CompileExponentialExpr: just exponential expr} {expr 4**2} 16

@@ -1,7 +1,7 @@
 /*                  S E M A P H O R E . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2016 United States Government as represented by
+ * Copyright (c) 2013-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -131,7 +131,7 @@ parallel_test(size_t ncpu, size_t reps)
 
 
 int
-semaphore_main(int argc, char **argv)
+main(int argc, char *argv[])
 {
     const char * const USAGE = "Usage: %s [-P ncpu] [-n reps]\n";
 

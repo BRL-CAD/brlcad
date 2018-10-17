@@ -1,7 +1,7 @@
 /*                        D A T A B A S E . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2016 United States Government as represented by
+ * Copyright (c) 2008-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -245,9 +245,10 @@ GED_EXPORT extern int ged_prcolor(struct ged *gedp, int argc, const char *argv[]
  */
 GED_EXPORT extern int ged_set_output_script(struct ged *gedp, int argc, const char *argv[]);
 
-
-
-
+/**
+ * Check database objects for errors
+ */
+GED_EXPORT extern int ged_lint(struct ged *gedp, int argc, const char *argv[]);
 
 
 __END_DECLS

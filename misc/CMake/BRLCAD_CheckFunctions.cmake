@@ -1,7 +1,7 @@
 #     B R L C A D _ C H E C K F U N C T I O N S . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2016 United States Government as represented by
+# Copyright (c) 2011-2018 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -46,104 +46,180 @@ include(CheckLibraryExists)
 include(CheckStructHasMember)
 include(CheckCInline)
 
+set(standard_header_template
+"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+#include <ctype.h>
+#ifdef HAVE_GETOPT_H
+# include <getopt.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
+# include <netinet/in.h>
+#endif
+#ifdef HAVE_SIGNAL_H
+# include <signal.h>
+#endif
+#ifdef HAVE_SYS_RESOURCE_H
+# include <sys/resource.h>
+#endif
+#ifdef HAVE_SYS_SHM_H
+# include <sys/shm.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+# include <sys/stat.h>
+#endif
+#ifdef HAVE_SYS_SYSCTL_H
+# if defined(_XOPEN_SOURCE) && _XOPEN_SOURCE < 500
+typedef unsigned char u_char;
+typedef unsigned int u_int;
+typedef unsigned long u_long;
+typedef unsigned short u_short;
+# endif
+# include <sys/sysctl.h>
+#endif
+#ifdef HAVE_SYS_TYPES_H
+# include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_TIME_H
+# include <sys/time.h>
+#endif
+#ifdef HAVE_SYS_UIO_H
+# include <sys/uio.h>
+#endif
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+"
+)
+
+
+# Use this function to construct compile defines that uses the CMake
+# header tests results to properly support the above header includes
+function(standard_header_cppflags header_cppflags)
+  set(have_cppflags)
+  string(REPLACE "\n" ";" template_line "${standard_header_template}")
+  foreach(line ${template_line})
+    if("${line}" MATCHES ".* HAVE_.*_H" )
+      # extract the HAVE_* symbol from the #ifdef lines
+      string(REGEX REPLACE "^[ ]*#[ ]*if.*[ ]+" "" have_symbol "${line}")
+      if(NOT "${${have_symbol}}" MATCHES "^[\"]*$") # matches empty or ""
+	set(have_cppflags "${have_cppflags} -D${have_symbol}=${${have_symbol}}")
+      endif(NOT "${${have_symbol}}" MATCHES "^[\"]*$")
+    endif("${line}" MATCHES ".* HAVE_.*_H" )
+  endforeach(line ${template_line})
+  set(${header_cppflags} "${have_cppflags}" PARENT_SCOPE)
+endfunction(standard_header_cppflags)
+
+# The macros and functions below need C_STANDARD_FLAGS to be set for most
+# compilers - be sure it is in those cases
+if("${C_STANDARD_FLAGS}" STREQUAL "")
+  message(FATAL_ERROR "C_STANDARD_FLAGS is not set - should at least be defining the C standard")
+endif("${C_STANDARD_FLAGS}" STREQUAL "")
 
 ###
 # Check if a function exists (i.e., compiles to a valid symbol).  Adds
-# HAVE_* define to config header.
+# HAVE_* define to config header, and HAVE_DECL_* and HAVE_WORKING_* if
+# those tests are performed and successful.
 ###
-macro(BRLCAD_FUNCTION_EXISTS function var)
-  if(NOT DEFINED ${var})
+macro(BRLCAD_FUNCTION_EXISTS function)
+
+  # Use the upper case form of the function for variable names
+  string(TOUPPER "${function}" var)
+
+  # Only do the testing once per configure run
+  if(NOT DEFINED HAVE_${var})
+
+    # For this first test, be permissive.  For a number of cases, if
+    # the function exists AT ALL we want to know it, so don't let the
+    # flags get in the way
     set(CMAKE_C_FLAGS_TMP "${CMAKE_C_FLAGS}")
     set(CMAKE_C_FLAGS "")
+
+    # Clear our testing variables, unless something specifically requested
+    # is supplied as a command line argument
+    cmake_push_check_state(RESET)
     if(${ARGC} GREATER 2)
       # Parse extra arguments
-      CMAKE_PARSE_ARGUMENTS(${var} "" "" "COMPILE_TEST_SRCS;REQUIRED_LIBS;REQUIRED_DEFS;REQUIRED_FLAGS;REQUIRED_DIRS" ${ARGN})
-      if(NOT "${${var}_REQUIRED_LIBS}" STREQUAL "")
-	set(CMAKE_REQUIRED_LIBRARIES_BAK ${CMAKE_REQUIRED_LIBRARIES})
-	set(CMAKE_REQUIRED_LIBRARIES ${${var}_REQUIRED_LIBS})
-      endif(NOT "${${var}_REQUIRED_LIBS}" STREQUAL "")
-
-      if(NOT "${${var}_REQUIRED_FLAGS}" STREQUAL "")
-	set(CMAKE_REQUIRED_FLAGS_BAK ${CMAKE_REQUIRED_FLAGS})
-	set(CMAKE_REQUIRED_FLAGS ${${var}_REQUIRED_FLAGS})
-      endif(NOT "${${var}_REQUIRED_FLAGS}" STREQUAL "")
-
-      if(NOT "${${var}_REQUIRED_DIRS}" STREQUAL "")
-	set(CMAKE_REQUIRED_INCLUDES_BAK ${CMAKE_REQUIRED_INCLUDES})
-	set(CMAKE_REQUIRED_INCLUDES ${${var}_REQUIRED_DIRS})
-      endif(NOT "${${var}_REQUIRED_DIRS}" STREQUAL "")
-
-      if(NOT "${${var}_REQUIRED_DEFS}" STREQUAL "")
-	set(CMAKE_REQUIRED_DEFINITIONS_BAK ${CMAKE_REQUIRED_DEFINITIONS})
-	set(CMAKE_REQUIRED_DEFINITIONS ${${var}_REQUIRED_DEFS})
-      endif(NOT "${${var}_REQUIRED_DEFS}" STREQUAL "")
+      CMAKE_PARSE_ARGUMENTS(${var} "" "DECL_TEST_SRCS" "WORKING_TEST_SRCS;REQUIRED_LIBS;REQUIRED_DEFS;REQUIRED_FLAGS;REQUIRED_DIRS" ${ARGN})
+      set(CMAKE_REQUIRED_LIBRARIES ${${var}_REQUIRED_LIBS})
+      set(CMAKE_REQUIRED_FLAGS ${${var}_REQUIRED_FLAGS})
+      set(CMAKE_REQUIRED_INCLUDES ${${var}_REQUIRED_DIRS})
+      set(CMAKE_REQUIRED_DEFINITIONS ${${var}_REQUIRED_DEFS})
     endif(${ARGC} GREATER 2)
 
-    CHECK_FUNCTION_EXISTS(${function} ${var}_EXISTS)
+    # Set the compiler definitions for the standard headers
+    if("${have_header_cppflags}" STREQUAL "")
+      # get the cppflags once, the first time we test
+      standard_header_cppflags(have_header_cppflags)
+    endif("${have_header_cppflags}" STREQUAL "")
+    set(CMAKE_REQUIRED_DEFINITIONS "${have_header_cppflags} ${CMAKE_REQUIRED_DEFINITIONS}")
 
-    # Restore required vars - this is done before any possible compilation tests,
-    # since the presumption is that the function must succeed in the parent
-    # compilation environment, not just in isolated testing.  (In particular,
-    # if -Werror is active that needs to be a failure.
+    # First (permissive) test
+    CHECK_FUNCTION_EXISTS(${function} HAVE_${var})
 
-    # TODO - need to think about what to do when CMAKE_CONFIGURATION_TYPES is active,
-    # and we need to essentially run multiple cycles of these tests on a per config
-    # basis...
-    string(TOUPPER "${CMAKE_BUILD_TYPE}" BUILD_TYPE)
-    if(BUILD_TYPE)
-      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_TMP} ${CMAKE_C_FLAGS_${BUILD_TYPE}}")
-    else(BUILD_TYPE)
-      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_TMP}")
-    endif(BUILD_TYPE)
-
-    if(${var}_EXISTS)
-      if(NOT "${${var}_COMPILE_TEST_SRCS}" STREQUAL "")
-	set(${var}_COMPILE 1)
-	foreach(test_src ${${var}_COMPILE_TEST_SRCS})
-	  check_c_source_compiles("${${test_src}}" ${var}_${test_src}_COMPILE)
-	  if(NOT ${var}_${test_src}_COMPILE)
-	    set(${var}_COMPILE 0)
-	  endif(NOT ${var}_${test_src}_COMPILE)
-	endforeach(test_src ${${var}_COMPILE_TEST_SRCS})
-	if(${var}_COMPILE)
-	  set(${var} 1 CACHE INTERNAL "Have function ${function}")
-	else(${var}_COMPILE)
-	  set(${var} "" CACHE INTERNAL "Function ${function} found but did not build.")
-	endif(${var}_COMPILE)
-      else(NOT "${${var}_COMPILE_TEST_SRCS}" STREQUAL "")
-	set(${var} 1 CACHE INTERNAL "Have function ${function}")
-      endif(NOT "${${var}_COMPILE_TEST_SRCS}" STREQUAL "")
-    else(${var}_EXISTS)
-      set(${var} "" CACHE INTERNAL "Have function ${function}")
-    endif(${var}_EXISTS)
-
-    if(${ARGC} GREATER 2)
-      if (${${var}_REQUIRED_LIBS})
-	set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES_BAK})
-      endif (${${var}_REQUIRED_LIBS})
-
-      if (${${var}_REQUIRED_FLAGS})
-	set(CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS_BAK})
-      endif (${${var}_REQUIRED_FLAGS})
-
-      if (${${var}_REQUIRED_INCLUDES})
-	set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES_BAK})
-      endif (${${var}_REQUIRED_INCLUDES})
-    endif(${ARGC} GREATER 2)
-
-    # We used this variable for CHECK_FUNCTION_EXISTS to allow
-    # the additional specific src compile test as an option - ${var}
-    # is where the final result is cached.
-    unset(${var}_EXISTS CACHE)
-
-    # Put C_FLAGS back where we found it
+    # Now, restore the C flags - any subsequent tests will be done using the
+    # parent C_FLAGS environment.
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_TMP}")
 
-  endif(NOT DEFINED ${var})
+    if(HAVE_${var})
 
-  if(CONFIG_H_FILE AND ${var})
-    CONFIG_H_APPEND(BRLCAD "#cmakedefine ${var} 1\n")
-  endif(CONFIG_H_FILE AND ${var})
+      # Test if the function is declared.This will set the HAVE_DECL_${var}
+      # flag.  Unlike the HAVE_${var} results, this will not be automatically
+      # written to the CONFIG_H_FILE - the caller must do so if they want to
+      # capture the results.
+      if(NOT DEFINED HAVE_DECL_${var})
+	if(NOT MSVC)
+	  if(NOT "${${var}_DECL_TEST_SRCS}" STREQUAL "")
+	    check_c_source_compiles("${${${var}_DECL_TEST_SRCS}}" HAVE_DECL_${var})
+	  else(NOT "${${var}_DECL_TEST_SRCS}" STREQUAL "")
+	    check_c_source_compiles("${standard_header_template}\nint main() {(void)${function}; return 0;}" HAVE_DECL_${var})
+	  endif(NOT "${${var}_DECL_TEST_SRCS}" STREQUAL "")
+	else()
+	  # Note - config_win.h (and probably other issues) make the decl tests
+	  # a no-go with Visual Studio - punt until the larger issues are
+	  # sorted out.
+	  set(HAVE_DECL_${var} 1)
+	endif(NOT MSVC)
+	set(HAVE_DECL_${var} ${HAVE_DECL_${var}} CACHE BOOL "Cache decl test result")
+	mark_as_advanced(HAVE_DECL_${var})
+      endif(NOT DEFINED HAVE_DECL_${var})
+
+      # If we have sources supplied for the purpose, test if the function is working.
+      if(NOT "${${var}_COMPILE_TEST_SRCS}" STREQUAL "")
+	if(NOT DEFINED HAVE_WORKING_${var})
+	  set(HAVE_WORKING_${var} 1)
+	  foreach(test_src ${${var}_COMPILE_TEST_SRCS})
+	    check_c_source_compiles("${${test_src}}" ${var}_${test_src}_COMPILE)
+	    if(NOT ${var}_${test_src}_COMPILE)
+	      set(HAVE_WORKING_${var} 0)
+	    endif(NOT ${var}_${test_src}_COMPILE)
+	  endforeach(test_src ${${var}_COMPILE_TEST_SRCS})
+	  set(HAVE_WORKING_${var} ${HAVE_DECL_${var}} CACHE BOOL "Cache working test result")
+	  mark_as_advanced(HAVE_WORKING_${var})
+	endif(NOT DEFINED HAVE_WORKING_${var})
+      endif(NOT "${${var}_COMPILE_TEST_SRCS}" STREQUAL "")
+
+    endif(HAVE_${var})
+
+    cmake_pop_check_state()
+
+  endif(NOT DEFINED HAVE_${var})
+
+  # The config file is regenerated every time CMake is run, so we
+  # always need this bit even if the testing is already complete.
+  if(CONFIG_H_FILE AND HAVE_${var})
+    CONFIG_H_APPEND(BRLCAD "#define HAVE_${var} 1\n")
+  endif(CONFIG_H_FILE AND HAVE_${var})
+  if(CONFIG_H_FILE AND HAVE_DECL_${var})
+    CONFIG_H_APPEND(BRLCAD "#define HAVE_DECL_${var} 1\n")
+  endif(CONFIG_H_FILE AND HAVE_DECL_${var})
+  if(CONFIG_H_FILE AND HAVE_WORKING_${var})
+    CONFIG_H_APPEND(BRLCAD "#define HAVE_WORKING_${var} 1\n")
+  endif(CONFIG_H_FILE AND HAVE_WORKING_${var})
+
 endmacro(BRLCAD_FUNCTION_EXISTS)
 
 
@@ -153,38 +229,19 @@ endmacro(BRLCAD_FUNCTION_EXISTS)
 # semicolons.  Add HAVE_*_H define to config header.
 ###
 macro(BRLCAD_INCLUDE_FILE filelist var)
-  # check with no flags set
-  set(CMAKE_C_FLAGS_TMP "${CMAKE_C_FLAGS}")
-  set(CMAKE_C_FLAGS "")
 
-  # !!! why doesn't this work?
-  # if("${var}" STREQUAL "HAVE_X11_XLIB_H")
-  #  message("CMAKE_REQUIRED_INCLUDES for ${var} is ${CMAKE_REQUIRED_INCLUDES}")
-  # endif("${var}" STREQUAL "HAVE_X11_XLIB_H")
-
+  cmake_push_check_state()
+  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${C_STANDARD_FLAGS}")
   if(NOT "${ARGV2}" STREQUAL "")
-    set(CMAKE_REQUIRED_INCLUDES_BKUP ${CMAKE_REQUIRED_INCLUDES})
     set(CMAKE_REQUIRED_INCLUDES ${ARGV2} ${CMAKE_REQUIRED_INCLUDES})
   endif(NOT "${ARGV2}" STREQUAL "")
-
-  # search for the header
-  CHECK_INCLUDE_FILES("${filelist}" ${var})
-
-  # !!! curiously strequal matches true above for all the NOT ${var} cases
-  # if (NOT ${var})
-  #   message("--- ${var}")
-  # endif (NOT ${var})
+  check_include_files("${filelist}" ${var})
+  cmake_pop_check_state()
 
   if(CONFIG_H_FILE AND ${var})
     CONFIG_H_APPEND(BRLCAD "#cmakedefine ${var} 1\n")
   endif(CONFIG_H_FILE AND ${var})
 
-  if(NOT "${ARGV2}" STREQUAL "")
-    set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES_BKUP})
-  endif(NOT "${ARGV2}" STREQUAL "")
-
-  # restore flags
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_TMP}")
 endmacro(BRLCAD_INCLUDE_FILE)
 
 
@@ -192,44 +249,49 @@ endmacro(BRLCAD_INCLUDE_FILE)
 # Check if a C++ header exists.  Adds HAVE_* define to config header.
 ###
 macro(BRLCAD_INCLUDE_FILE_CXX filename var)
-  set(CMAKE_CXX_FLAGS_TMP "${CMAKE_CXX_FLAGS}")
-  set(CMAKE_CXX_FLAGS "")
-  CHECK_INCLUDE_FILE_CXX(${filename} ${var})
+
+  cmake_push_check_state()
+  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${CMAKE_CXX_STD_FLAG}")
+  check_include_file_cxx(${filename} ${var})
+  cmake_pop_check_state()
+
   if(CONFIG_H_FILE AND ${var})
     CONFIG_H_APPEND(BRLCAD "#cmakedefine ${var} 1\n")
   endif(CONFIG_H_FILE AND ${var})
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_TMP}")
+
 endmacro(BRLCAD_INCLUDE_FILE_CXX)
 
 
 ###
 # Check the size of a given typename, setting the size in the provided
-# variable.  If type has header prerequisites, a semicolon-separated
-# header list may be specified.  Adds HAVE_ and SIZEOF_ defines to
-# config header.
+# variable.  If type has header prerequisites, a semicolon-separated header
+# list may be specified.  Adds HAVE_ and SIZEOF_ defines to config header.
 ###
 macro(BRLCAD_TYPE_SIZE typename headers)
-  set(CMAKE_C_FLAGS_TMP "${CMAKE_C_FLAGS}")
-  set(CMAKE_C_FLAGS "")
-  set(CMAKE_EXTRA_INCLUDE_FILES_BAK "${CMAKE_EXTRA_INCLUDE_FILES}")
-  set(CMAKE_EXTRA_INCLUDE_FILES "${headers}")
-  # Generate a variable name from the type - need to make sure
-  # we end up with a valid variable string.
+  # Generate a variable name from the type - need to make sure we end up with a
+  # valid variable string.
   string(REGEX REPLACE "[^a-zA-Z0-9]" "_" var ${typename})
   string(TOUPPER "${var}" var)
-  # Proceed with type check.  To make sure checks are re-run when
-  # re-testing the same type with different headers, create a test
-  # variable incorporating both the typename and the headers string
+
+  # To make sure checks are re-run when re-testing the same type with different
+  # headers, create a test variable incorporating both the typename and the
+  # headers string
   string(REGEX REPLACE "[^a-zA-Z0-9]" "_" testvar "HAVE_${typename}${headers}")
   string(TOUPPER "${testvar}" testvar)
-  CHECK_TYPE_SIZE(${typename} ${testvar})
-  set(CMAKE_EXTRA_INCLUDE_FILES "${CMAKE_EXTRA_INCLUDE_FILES_BAK}")
+
+  # Proceed with type check.
+  cmake_push_check_state()
+  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${C_STANDARD_FLAGS}")
+  set(CMAKE_EXTRA_INCLUDE_FILES "${headers}")
+  check_type_size(${typename} ${testvar})
+  cmake_pop_check_state()
+
   # Produce config.h lines as appropriate
   if(CONFIG_H_FILE AND ${testvar})
     CONFIG_H_APPEND(BRLCAD "#define HAVE_${var} 1\n")
     CONFIG_H_APPEND(BRLCAD "#define SIZEOF_${var} ${${testvar}}\n")
   endif(CONFIG_H_FILE AND ${testvar})
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_TMP}")
+
 endmacro(BRLCAD_TYPE_SIZE)
 
 
@@ -239,117 +301,175 @@ endmacro(BRLCAD_TYPE_SIZE)
 # Adds HAVE_* to config header and sets VAR.
 ###
 macro(BRLCAD_STRUCT_MEMBER structname member headers var)
-  set(CMAKE_C_FLAGS_TMP "${CMAKE_C_FLAGS}")
-  set(CMAKE_C_FLAGS "")
-  CHECK_STRUCT_HAS_MEMBER(${structname} ${member} "${headers}" HAVE_${var})
+
+  cmake_push_check_state()
+  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${C_STANDARD_FLAGS}")
+
+  check_struct_has_member(${structname} ${member} "${headers}" HAVE_${var})
+
+  cmake_pop_check_state()
+
   if(CONFIG_H_FILE AND HAVE_${var})
     CONFIG_H_APPEND(BRLCAD "#define HAVE_${var} 1\n")
   endif(CONFIG_H_FILE AND HAVE_${var})
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_TMP}")
+
 endmacro(BRLCAD_STRUCT_MEMBER)
 
 
 ###
-# Check if a given function exists in the specified library.  Sets
-# targetname_LINKOPT variable as advanced if found.
+# Check if a given function exists in the specified library.
 ###
 macro(BRLCAD_CHECK_LIBRARY targetname lname func)
-  set(CMAKE_C_FLAGS_TMP "${CMAKE_C_FLAGS}")
-  set(CMAKE_C_FLAGS "")
+
+  cmake_push_check_state()
+  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${C_STANDARD_FLAGS}")
+
+  # Don't error out on the builtin conflict case
+  check_c_compiler_flag(-fno-builtin HAVE_NO_BUILTIN)
+  if(HAVE_NO_BUILTIN)
+    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -fno-builtin")
+  endif(HAVE_NO_BUILTIN)
 
   if(NOT ${targetname}_LIBRARY)
-    CHECK_LIBRARY_EXISTS(${lname} ${func} "" HAVE_${targetname}_${lname})
+    check_library_exists(${lname} ${func} "" HAVE_${targetname}_${lname})
   else(NOT ${targetname}_LIBRARY)
-    set(CMAKE_REQUIRED_LIBRARIES_TMP ${CMAKE_REQUIRED_LIBRARIES})
     set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} ${${targetname}_LIBRARY})
-    CHECK_FUNCTION_EXISTS(${func} HAVE_${targetname}_${lname})
-    set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES_TMP})
+    check_function_exists(${func} HAVE_${targetname}_${lname})
   endif(NOT ${targetname}_LIBRARY)
+  cmake_pop_check_state()
 
   if(HAVE_${targetname}_${lname})
     set(${targetname}_LIBRARY "${lname}")
   endif(HAVE_${targetname}_${lname})
 
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_TMP}")
 endmacro(BRLCAD_CHECK_LIBRARY lname func)
 
 
-# Special purpose macros
-
-# Load local variation on CHECK_C_SOURCE_RUNS that will accept a
-# C file as well as the actual C code - some tests are easier to
-# define in separate files.  This feature has been submitted back
-# to the CMake project, but as of CMake 2.8.7 is not part of the
-# default CHECK_C_SOURCE_RUNS functionality.
-include(CheckCSourceRuns)
+# Special purpose functions
 
 ###
 # Undocumented.
 ###
-macro(BRLCAD_CHECK_BASENAME)
-  set(CMAKE_C_FLAGS_TMP "${CMAKE_C_FLAGS}")
-  set(CMAKE_C_FLAGS "")
+function(BRLCAD_CHECK_BASENAME)
+
   set(BASENAME_SRC "
 #include <libgen.h>
 int main(int argc, char *argv[]) {
+if(!argc) return 1;
 (void)basename(argv[0]);
 return 0;
 }")
   if(NOT DEFINED HAVE_BASENAME)
-     CHECK_C_SOURCE_RUNS("${BASENAME_SRC}" HAVE_BASENAME)
+    cmake_push_check_state()
+    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${C_STANDARD_FLAGS}")
+    CHECK_C_SOURCE_RUNS("${BASENAME_SRC}" HAVE_BASENAME)
+    cmake_pop_check_state()
   endif(NOT DEFINED HAVE_BASENAME)
   if(HAVE_BASENAME)
     CONFIG_H_APPEND(BRLCAD "#define HAVE_BASENAME 1\n")
   endif(HAVE_BASENAME)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_TMP}")
-endmacro(BRLCAD_CHECK_BASENAME var)
+
+endfunction(BRLCAD_CHECK_BASENAME var)
 
 ###
 # Undocumented.
 ###
-macro(BRLCAD_CHECK_DIRNAME)
-  set(CMAKE_C_FLAGS_TMP "${CMAKE_C_FLAGS}")
-  set(CMAKE_C_FLAGS "")
+function(BRLCAD_CHECK_DIRNAME)
   set(DIRNAME_SRC "
 #include <libgen.h>
 int main(int argc, char *argv[]) {
+if(!argc) return 1;
 (void)dirname(argv[0]);
 return 0;
 }")
   if(NOT DEFINED HAVE_DIRNAME)
-     CHECK_C_SOURCE_RUNS("${DIRNAME_SRC}" HAVE_DIRNAME)
+    cmake_push_check_state()
+    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${C_STANDARD_FLAGS}")
+    CHECK_C_SOURCE_RUNS("${DIRNAME_SRC}" HAVE_DIRNAME)
+    cmake_pop_check_state()
   endif(NOT DEFINED HAVE_DIRNAME)
   if(HAVE_DIRNAME)
     CONFIG_H_APPEND(BRLCAD "#define HAVE_DIRNAME 1\n")
   endif(HAVE_DIRNAME)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_TMP}")
-endmacro(BRLCAD_CHECK_DIRNAME var)
+endfunction(BRLCAD_CHECK_DIRNAME var)
 
 ###
 # Undocumented.
 # Based on AC_HEADER_SYS_WAIT
 ###
-macro(BRLCAD_HEADER_SYS_WAIT)
-  set(CMAKE_C_FLAGS_TMP "${CMAKE_C_FLAGS}")
-  set(CMAKE_C_FLAGS "")
+function(BRLCAD_HEADER_SYS_WAIT)
+  set(SYS_WAIT_SRC "
+#include <sys/types.h>
+#include <sys/wait.h>
+#ifndef WEXITSTATUS
+# define WEXITSTATUS(stat_val) ((unsigned int) (stat_val) >> 8)
+#endif
+#ifndef WIFEXITED
+# define WIFEXITED(stat_val) (((stat_val) & 255) == 0)
+#endif
+int main() {
+  int s;
+  wait(&s);
+  s = WIFEXITED(s) ? WEXITSTATUS(s) : 1;
+  return 0;
+}")
   if(NOT DEFINED WORKING_SYS_WAIT)
-    CHECK_C_SOURCE_RUNS("${CMAKE_SOURCE_DIR}/misc/CMake/test_srcs/sys_wait_test.c" WORKING_SYS_WAIT)
+    cmake_push_check_state()
+    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${C_STANDARD_FLAGS}")
+    CHECK_C_SOURCE_RUNS("${SYS_WAIT_SRC}" WORKING_SYS_WAIT)
+    cmake_pop_check_state()
   endif(NOT DEFINED WORKING_SYS_WAIT)
   if(WORKING_SYS_WAIT)
     CONFIG_H_APPEND(BRLCAD "#define HAVE_SYS_WAIT_H 1\n")
   endif(WORKING_SYS_WAIT)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_TMP}")
-endmacro(BRLCAD_HEADER_SYS_WAIT)
+endfunction(BRLCAD_HEADER_SYS_WAIT)
 
 ###
 # Undocumented.
 # Based on AC_FUNC_ALLOCA
 ###
-macro(BRLCAD_ALLOCA)
-  set(CMAKE_C_FLAGS_TMP "${CMAKE_C_FLAGS}")
-  set(CMAKE_C_FLAGS "")
+function(BRLCAD_ALLOCA)
+  set(ALLOCA_HEADER_SRC "
+#include <alloca.h>
+int main() {
+   char *p = (char *) alloca (2 * sizeof (int));
+   if (p) return 0;
+   ;
+   return 0;
+}")
+  set(ALLOCA_TEST_SRC "
+#ifdef __GNUC__
+# define alloca __builtin_alloca
+#else
+# ifdef _MSC_VER
+#  include <malloc.h>
+#  define alloca _alloca
+# else
+#  ifdef HAVE_ALLOCA_H
+#   include <alloca.h>
+#  else
+#   ifdef _AIX
+ #pragma alloca
+#   else
+#    ifndef alloca /* predefined by HP cc +Olibcalls */
+char *alloca ();
+#    endif
+#   endif
+#  endif
+# endif
+#endif
+
+int main() {
+   char *p = (char *) alloca (1);
+   if (p) return 0;
+   ;
+   return 0;
+}")
   if(WORKING_ALLOC_H STREQUAL "")
-    CHECK_C_SOURCE_RUNS("${CMAKE_SOURCE_DIR}/misc/CMake/test_srcs/alloca_header_test.c" WORKING_ALLOCA_H)
+    cmake_push_check_state()
+    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${C_STANDARD_FLAGS}")
+    CHECK_C_SOURCE_RUNS("${ALLOCA_HEADER_SRC}" WORKING_ALLOCA_H)
+    cmake_pop_check_state()
     set(WORKING_ALLOCA_H ${WORKING_ALLOCA_H} CACHE INTERNAL "alloca_h test")
   endif(WORKING_ALLOC_H STREQUAL "")
   if(WORKING_ALLOCA_H)
@@ -357,55 +477,55 @@ macro(BRLCAD_ALLOCA)
     set(FILE_RUN_DEFINITIONS "-DHAVE_ALLOCA_H")
   endif(WORKING_ALLOCA_H)
   if(NOT DEFINED WORKING_ALLOCA)
-    CHECK_C_SOURCE_RUNS("${CMAKE_SOURCE_DIR}/misc/CMake/test_srcs/alloca_test.c" WORKING_ALLOCA)
+    cmake_push_check_state()
+    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${C_STANDARD_FLAGS}")
+    CHECK_C_SOURCE_RUNS("${ALLOCA_TEST_SRC}" WORKING_ALLOCA)
+    cmake_pop_check_state()
   endif(NOT DEFINED WORKING_ALLOCA)
   if(WORKING_ALLOCA)
     CONFIG_H_APPEND(BRLCAD "#define HAVE_ALLOCA 1\n")
   endif(WORKING_ALLOCA)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_TMP}")
-endmacro(BRLCAD_ALLOCA)
-
+endfunction(BRLCAD_ALLOCA)
 
 ###
 # See if the compiler supports the C99 %z print specifier for size_t.
 # Sets -DHAVE_STDINT_H=1 as global preprocessor flag if found.
 ###
-macro(BRLCAD_CHECK_C99_FORMAT_SPECIFIERS)
-  set(CMAKE_C_FLAGS_TMP "${CMAKE_C_FLAGS}")
-  set(CMAKE_C_FLAGS "")
-  set(CMAKE_REQUIRED_DEFINITIONS_BAK ${CMAKE_REQUIRED_DEFINITIONS})
-  CHECK_INCLUDE_FILE(stdint.h HAVE_STDINT_H)
-  if(HAVE_STDINT_H)
-    set(CMAKE_REQUIRED_DEFINITIONS "-DHAVE_STDINT_H=1")
-  endif(HAVE_STDINT_H)
-  set(CHECK_C99_FORMAT_SPECIFIERS_SRC "
+function(BRLCAD_CHECK_PERCENT_Z)
+
+  check_include_file(stdint.h HAVE_STDINT_H)
+
+  set(CHECK_PERCENT_Z_SRC "
 #ifdef HAVE_STDINT_H
 #  include <stdint.h>
 #endif
 #include <stdio.h>
-#include <string.h>
 int main(int ac, char *av[])
 {
   char buf[64] = {0};
-  if (sprintf(buf, \"%zu\", (size_t)1234) != 4)
+  if (sprintf(buf, \"%zu\", (size_t)1) != 1 || buf[0] != 1 || buf[1] != 0)
     return 1;
-  else if (strcmp(buf, \"1234\"))
-    return 2;
-  return 0;
+  return (ac < 0) ? (int)av[0][0] : 0;
 }
 ")
-  if(NOT DEFINED HAVE_C99_FORMAT_SPECIFIERS)
-    CHECK_C_SOURCE_RUNS("${CHECK_C99_FORMAT_SPECIFIERS_SRC}" HAVE_C99_FORMAT_SPECIFIERS)
-  endif(NOT DEFINED HAVE_C99_FORMAT_SPECIFIERS)
-  if(HAVE_C99_FORMAT_SPECIFIERS)
-    CONFIG_H_APPEND(BRLCAD "#define HAVE_C99_FORMAT_SPECIFIERS 1\n")
-  endif(HAVE_C99_FORMAT_SPECIFIERS)
-  set(CMAKE_REQUIRED_DEFINITIONS ${CMAKE_REQUIRED_DEFINITIONS_BAK})
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_TMP}")
-endmacro(BRLCAD_CHECK_C99_FORMAT_SPECIFIERS)
+
+  if(NOT DEFINED HAVE_PERCENT_Z)
+    cmake_push_check_state()
+    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${C_STANDARD_FLAGS}")
+    if(HAVE_STDINT_H)
+      set(CMAKE_REQUIRED_DEFINITIONS "-DHAVE_STDINT_H=1")
+    endif(HAVE_STDINT_H)
+    check_c_source_runs("${CHECK_PERCENT_Z_SRC}" HAVE_PERCENT_Z)
+    cmake_pop_check_state()
+  endif(NOT DEFINED HAVE_PERCENT_Z)
+
+  if(HAVE_PERCENT_Z)
+    CONFIG_H_APPEND(BRLCAD "#define HAVE_PERCENT_Z 1\n")
+  endif(HAVE_PERCENT_Z)
+endfunction(BRLCAD_CHECK_PERCENT_Z)
 
 
-macro(BRLCAD_CHECK_STATIC_ARRAYS)
+function(BRLCAD_CHECK_STATIC_ARRAYS)
   set(CHECK_STATIC_ARRAYS_SRC "
 #include <stdio.h>
 #include <string.h>
@@ -425,12 +545,15 @@ int main(int ac, char *av[])
 }
 ")
   if(NOT DEFINED HAVE_STATIC_ARRAYS)
+    cmake_push_check_state()
+    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${C_STANDARD_FLAGS}")
     CHECK_C_SOURCE_RUNS("${CHECK_STATIC_ARRAYS_SRC}" HAVE_STATIC_ARRAYS)
+    cmake_pop_check_state()
   endif(NOT DEFINED HAVE_STATIC_ARRAYS)
   if(HAVE_STATIC_ARRAYS)
     CONFIG_H_APPEND(BRLCAD "#define HAVE_STATIC_ARRAYS 1\n")
   endif(HAVE_STATIC_ARRAYS)
-endmacro(BRLCAD_CHECK_STATIC_ARRAYS)
+endfunction(BRLCAD_CHECK_STATIC_ARRAYS)
 
 # Local Variables:
 # tab-width: 8

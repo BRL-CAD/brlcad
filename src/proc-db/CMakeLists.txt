@@ -68,6 +68,7 @@ BRLCAD_ADDEXEC(wavy wavy.c "libwdb;libnmg" NO_INSTALL)
 
 
 set(proc-db_ignore_files
+  CMakeLists.txt
   twistedcube.h
   brepintersect.h
   metaballs.pl

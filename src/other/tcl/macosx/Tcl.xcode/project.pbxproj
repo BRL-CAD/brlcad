@@ -396,7 +396,7 @@
 		F96D3ED208F272A7004A47F5 /* rege_dfa.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = rege_dfa.c; sourceTree = "<group>"; };
 		F96D3ED308F272A7004A47F5 /* regerror.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = regerror.c; sourceTree = "<group>"; };
 		F96D3ED408F272A7004A47F5 /* regerrs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = regerrs.h; sourceTree = "<group>"; };
-		F96D3ED508F272A7004A47F5 /* regextcl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = regextcl.h; sourceTree = "<group>"; };
+		F96D3ED508F272A7004A47F5 /* regex.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = regex.h; sourceTree = "<group>"; };
 		F96D3ED608F272A7004A47F5 /* regexec.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = regexec.c; sourceTree = "<group>"; };
 		F96D3ED708F272A7004A47F5 /* regfree.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = regfree.c; sourceTree = "<group>"; };
 		F96D3ED808F272A7004A47F5 /* regfronts.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = regfronts.c; sourceTree = "<group>"; };
@@ -1202,7 +1202,7 @@
 				F96D3ED208F272A7004A47F5 /* rege_dfa.c */,
 				F96D3ED308F272A7004A47F5 /* regerror.c */,
 				F96D3ED408F272A7004A47F5 /* regerrs.h */,
-				F96D3ED508F272A7004A47F5 /* regextcl.h */,
+				F96D3ED508F272A7004A47F5 /* regex.h */,
 				F96D3ED608F272A7004A47F5 /* regexec.c */,
 				F96D3ED708F272A7004A47F5 /* regfree.c */,
 				F96D3ED808F272A7004A47F5 /* regfronts.c */,

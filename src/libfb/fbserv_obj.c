@@ -1,7 +1,7 @@
 /*                    F B S E R V _ O B J . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,15 +33,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-
-#ifdef HAVE_WINSOCK_H
-#  include <process.h>
-#  include <winsock.h>
-#else
-#  include <sys/socket.h>
-#  include <netinet/in.h>		/* For htonl(), etc. */
-#endif
 #include <tcl.h>
+#include "bnetwork.h"
 
 #include "raytrace.h"
 #include "dm.h"
@@ -932,8 +925,6 @@ new_client_handler(ClientData clientData,
 #else /* if defined(_WIN32) && !defined(__CYGWIN__) */
 HIDDEN void
 new_client_handler(ClientData clientData,
-		   Tcl_Channel UNUSED(chan),
-		   char *UNUSED(host),
 		   int UNUSED(port))
 {
     struct fbserv_listener *fbslp = (struct fbserv_listener *)clientData;

@@ -1,7 +1,7 @@
-/*                         G M . H
+/*                         B G . H
  * BRL-CAD
  *
- * Copyright (c) 2015-2016 United States Government as represented by
+ * Copyright (c) 2015-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,7 +40,7 @@
  * header or appropriate included files from the ./bg subdirectory.
  */
 /** @{ */
-/** @brief Header file for the BRL-CAD Geometry Library, LIBGM.*/
+/** @brief Header file for the BRL-CAD Geometry Library, LIBBG.*/
 /** @file bg.h */
 /** @} */
 

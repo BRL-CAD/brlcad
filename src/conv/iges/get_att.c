@@ -1,7 +1,7 @@
 /*                       G E T _ A T T . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2016 United States Government as represented by
+ * Copyright (c) 1993-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,7 +30,7 @@ void
 Get_att()
 {
     size_t i;
-    int j;
+    int j = 0;
     char *str;
 
     for (i = 0; i < totentities; i++) {
@@ -43,7 +43,7 @@ Get_att()
 	    Readrec(dir[i]->param);
 	    Readint(&j, "");
 	    if (j != 322) {
-		bu_log("Parameters at sequence %d are not for entity at DE%d\n", dir[i]->param, (2*i+1));
+		bu_log("Parameters at sequence %d are not for entity at DE%zu\n", dir[i]->param, (2*i+1));
 		continue;
 	    }
 

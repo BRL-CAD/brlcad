@@ -1,7 +1,7 @@
 /*                         B W R O T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2016 United States Government as represented by
+ * Copyright (c) 1986-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -43,8 +43,8 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/getopt.h"
-#include "bu/file.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
@@ -358,7 +358,7 @@ main(int argc, char **argv)
 		xout = (nyin - 1) - lasty;
 		outbyte = ((yout * nyin) + xout) * pixbytes;
 		if (outplace != outbyte) {
-		    if (bu_fseek(ofp, outbyte, SEEK_SET) < 0) {
+		    if (fseek(ofp, outbyte, SEEK_SET) < 0) {
 			ret = 3;
 			perror("fseek");
 			bu_log("ERROR: %s can't seek on output (ofp=%p, outbyte=%zd)\n", bu_getprogname(), (void *)ofp, outbyte);
@@ -384,7 +384,7 @@ main(int argc, char **argv)
 		xout = yin;
 		outbyte = ((yout * nyin) + xout) * pixbytes;
 		if (outplace != outbyte) {
-		    if (bu_fseek(ofp, outbyte, SEEK_SET) < 0) {
+		    if (fseek(ofp, outbyte, SEEK_SET) < 0) {
 			ret = 3;
 			perror("fseek");
 			bu_log("ERROR: %s can't seek on output (ofp=%p, outbyte=%zd)\n", bu_getprogname(), (void *)ofp, outbyte);
@@ -402,7 +402,7 @@ main(int argc, char **argv)
 		yout = (nyin - 1) - y + 1;
 		outbyte = yout * scanbytes;
 		if (outplace != outbyte) {
-		    if (bu_fseek(ofp, outbyte, SEEK_SET) < 0) {
+		    if (fseek(ofp, outbyte, SEEK_SET) < 0) {
 			ret = 3;
 			perror("fseek");
 			bu_log("ERROR: %s can't seek on output (ofp=%p, outbyte=%zd)\n", bu_getprogname(), (void *)ofp, outbyte);

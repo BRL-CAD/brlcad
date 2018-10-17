@@ -1,7 +1,7 @@
 /*                     S H _ T O Y O T A . C
  * BRL-CAD
  *
- * Copyright (c) 1992-2016 United States Government as represented by
+ * Copyright (c) 1992-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -2119,12 +2119,9 @@ background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fast
     fastf_t i_dot_n  = .9999;
     vect_t Ctr,
 	Horiz,
-	Sky_elmnt,
+	Sky_elmnt = VINIT_ZERO,
 	Xaxis, Yaxis,
 	work;
-
-     /* initialize Sky_elmnt for compiler */
-     VSETALL(Sky_elmnt, 0.0);
 
 /* Angular spread between vectors used in solid angle integration. */
 #define SPREAD (10*DEG2RAD)

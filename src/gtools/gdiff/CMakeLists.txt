@@ -17,7 +17,13 @@ set(gdiff_srcs
 
 BRLCAD_ADDEXEC(gdiff "${gdiff_srcs}" "librt")
 
-CMAKEFILES(gdiff.h tests)
+CMAKEFILES(
+  CMakeLists.txt
+  gdiff.h
+  tests/00_moss-control.asc
+  tests/01_moss-diff.asc
+  tests/02_moss-3diff.asc
+  )
 
 # Local Variables:
 # tab-width: 8

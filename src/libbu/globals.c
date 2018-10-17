@@ -1,7 +1,7 @@
 /*                       G L O B A L S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2016 United States Government as represented by
+ * Copyright (c) 2008-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,17 +37,25 @@
  * number of calls to bu_malloc()/bu_calloc()/bu_alloc().
  *
  * used by rt.
- * not semaphore-protected and is thus only an estimate.
+ * not necessarily thread-safe and is thus only an estimate.
  */
-long bu_n_malloc = 0;
+size_t bu_n_malloc = 0;
 
 /**
  * number of calls to bu_realloc().
  *
  * used by rt.
- * not semaphore-protected and is thus only an estimate.
+ * not necessarily thread-safe and is thus only an estimate.
  */
-long bu_n_realloc = 0;
+size_t bu_n_realloc = 0;
+
+/**
+ * number of calls to bu_free().
+ *
+ * used by rt.
+ * not necessarily thread-safe and is thus only an estimate.
+ */
+size_t bu_n_free = 0;
 
 /**
  * used by malloc and vls as the bu_malloc/bu_free debug string.

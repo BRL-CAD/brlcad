@@ -1,7 +1,7 @@
 /*                         C O L O R . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,6 +31,7 @@
 #ifdef HAVE_X11_XLIB_H
 #  include <X11/Xlib.h>
 #endif
+#include "vmath.h"
 
 #include "bu/malloc.h"
 #include "dm/dm_xvars.h"

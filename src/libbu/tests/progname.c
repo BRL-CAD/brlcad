@@ -1,7 +1,7 @@
 /*                 P R O G N A M E . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2016 United States Government as represented by
+ * Copyright (c) 2011-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,16 +34,18 @@ main(int ac, char *av[])
     const char *label;
     const char *ans;
     const char *res;
-    char *tbasename = (char *)bu_calloc(strlen(av[0]), sizeof(char), "bu_progname basename");
+    char *tbasename;
 
     if (ac > 1) {
-	fprintf(stderr,"Usage: %s\n", av[0]);
+	fprintf(stderr, "Usage: %s\n", av[0]);
 	return 1;
     }
 
+    tbasename = (char *)bu_calloc(strlen(av[0]), sizeof(char), "bu_progname basename");
+
     /* pre-define tests */
     printf("Performing pre-defined tests:\n");
-    bu_basename(av[0], tbasename);
+    bu_path_basename(av[0], tbasename);
 
     /* CASE 0: getting unset name */
     label = "CASE 0";
@@ -103,7 +105,7 @@ main(int ac, char *av[])
     res = bu_getprogname();
     ans = bu_argv0_full_path();
     tbasename = (char *)bu_calloc(strlen(bu_argv0_full_path()), sizeof(char), "bu_progname basename");
-    bu_basename(ans, tbasename);
+    bu_path_basename(ans, tbasename);
 
     if (BU_STR_EQUAL(res, ans ? ans : "") || BU_STR_EQUAL(res, tbasename)) {
 	printf("%s: %24s -> %24s [PASSED]\n", label, ans, res);
@@ -144,7 +146,7 @@ main(int ac, char *av[])
     label = "CASE 7";
     bu_setprogname(av[0]);
     res = bu_argv0_full_path();
-    bu_basename(res, tbasename);
+    bu_path_basename(res, tbasename);
 
     if (res[0] == BU_DIR_SEPARATOR || (strlen(res) > 3 && res[1] == ':' && (res[2] == BU_DIR_SEPARATOR || res[2] == '/'))) {
 	printf("%s: %24s -> %24s [PASSED]\n", label, tbasename, res);

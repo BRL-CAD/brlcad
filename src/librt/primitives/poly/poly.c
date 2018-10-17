@@ -1,7 +1,7 @@
 /*                            P O L Y . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2016 United States Government as represented by
+ * Copyright (c) 1985-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -756,7 +756,7 @@ rt_pg_export4(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 	}
 
 	rec[rno].q.q_id = ID_P_DATA;
-	rec[rno].q.q_count = pp->npts;
+	rec[rno].q.q_count = (char)pp->npts;
 	for (i=0; i < pp->npts; i++) {
 	    /* NOTE: type conversion to dbfloat_t */
 	    VSCALE(rec[rno].q.q_verts[i],

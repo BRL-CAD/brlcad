@@ -1,7 +1,7 @@
 /*                    P I P E _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2016 United States Government as represented by
+ * Copyright (c) 2008-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,6 +24,8 @@
  */
 
 #include "common.h"
+
+#include <cmath>
 
 #include "raytrace.h"
 #include "rt/geom.h"
@@ -126,9 +128,9 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
 {
     struct rt_pipe_internal *pip;
 
-    register struct wdb_pipept *prevp;
-    register struct wdb_pipept *curp;
-    register struct wdb_pipept *nextp;
+    struct wdb_pipept *prevp;
+    struct wdb_pipept *curp;
+    struct wdb_pipept *nextp;
     point_t current_point;
     vect_t x_dir, y_dir, pipe_dir;
 
@@ -248,7 +250,7 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
 	    angle = M_PI - acos(VDOT(n1, n2));
 	    dist_to_bend = curp->pp_bendradius * tan(angle/2.0);
 
-	    if (isnan(dist_to_bend) || VNEAR_ZERO(norm, SQRT_SMALL_FASTF) || NEAR_ZERO(dist_to_bend, SQRT_SMALL_FASTF)) {
+	    if (std::isnan(dist_to_bend) || VNEAR_ZERO(norm, SQRT_SMALL_FASTF) || NEAR_ZERO(dist_to_bend, SQRT_SMALL_FASTF)) {
 		// points are collinear, treat as linear segment
 		VSUB2(pipe_dir, current_point, curp->pp_coord);
 		bn_vec_ortho(x_dir, pipe_dir);

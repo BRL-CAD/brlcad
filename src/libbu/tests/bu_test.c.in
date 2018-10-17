@@ -1,7 +1,7 @@
 /*                    B U _ T E S T . C . I N
  * BRL-CAD
  *
- * Copyright (c) 2011-2016 United States Government as represented by
+ * Copyright (c) 2011-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,13 +25,18 @@
 
 #include "bu.h"
 
+#if defined(HAVE_ISINF) && !defined(HAVE_DECL_ISINF) && !defined(isinf)
+extern int isinf(double x);
+#endif
+
 /* test sources */
 @BU_TEST_SRC_INCLUDES@
 
 int
 main(int ac, char *av[])
 {
-    if (ac < 2)	bu_exit(1, "Usage: %s [test] options\n\nAvailable tests:\n@BU_TEST_LIST@", av[0]);
+    if (ac < 2)
+	bu_exit(1, "Usage: %s [test] [options]\n\nAvailable tests:\n@BU_TEST_LIST@", av[0]);
 
     ac--; av++;
 

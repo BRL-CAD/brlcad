@@ -1,7 +1,7 @@
 /*                         D A T E T I M E . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2016 United States Government as represented by
+ * Copyright (c) 2013-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,6 +41,11 @@
 #include "bu/vls.h"
 
 #include "y2038/time64.h"
+
+/* for strict c90 */
+#ifndef HAVE_DECL_GETTIMEOFDAY
+extern int gettimeofday(struct timeval *, void *);
+#endif
 
 
 void

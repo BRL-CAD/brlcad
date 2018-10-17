@@ -1,7 +1,7 @@
 /*                        T A B D A T A . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -78,6 +78,9 @@
 #define BN_TABDATA_H
 
 #include "common.h"
+
+#include "vmath.h"
+
 #include "bn/defines.h"
 #include "bu/magic.h"
 #include "bu/vls.h"

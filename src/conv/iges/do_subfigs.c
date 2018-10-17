@@ -1,7 +1,7 @@
 /*                    D O _ S U B F I G S . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2016 United States Government as represented by
+ * Copyright (c) 1995-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,9 +31,6 @@ Do_subfigs()
     struct wmember head1;
     struct wmember *wmem;
 
-    if (RT_G_DEBUG & DEBUG_MEM_FULL)
-	bu_mem_barriercheck();
-
     BU_LIST_INIT(&head1.l);
 
     for (i = 0; i < totentities; i++) {
@@ -48,9 +45,6 @@ Do_subfigs()
 
 	if (dir[i]->type != 408)
 	    continue;
-
-	if (RT_G_DEBUG & DEBUG_MEM_FULL)
-	    bu_mem_barriercheck();
 
 	if (dir[i]->param <= pstart) {
 	    bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,
@@ -70,7 +64,7 @@ Do_subfigs()
 	subfigdef_index = (subfigdef_de - 1)/2;
 	if (subfigdef_index >= totentities) {
 	    bu_log("Singular Subfigure Instance Entity gives Subfigure Definition");
-	    bu_log("\tEntity DE of %d, largest DE in file is %d\n",
+	    bu_log("\tEntity DE of %d, largest DE in file is %zu\n",
 		   subfigdef_de, (totentities * 2) - 1);
 	    continue;
 	}
@@ -140,7 +134,7 @@ Do_subfigs()
 
 	    if (idx >= totentities) {
 		bu_log("Subfigure Definition Entity gives Member Entity");
-		bu_log("\tDE of %d, largest DE in file is %d\n",
+		bu_log("\tDE of %d, largest DE in file is %zu\n",
 		       members[j], (totentities * 2) - 1);
 		continue;
 	    }
@@ -217,18 +211,11 @@ Do_subfigs()
 			   (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
     }
 
-    if (RT_G_DEBUG & DEBUG_MEM_FULL)
-	bu_mem_barriercheck();
-
     if (BU_LIST_IS_EMPTY(&head1.l))
 	return;
 
     (void) mk_lcomb(fdout, curr_file->obj_name, &head1, 0,
 		    (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
-
-    if (RT_G_DEBUG & DEBUG_MEM_FULL)
-	bu_mem_barriercheck();
-
 }
 
 

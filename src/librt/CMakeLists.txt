@@ -22,7 +22,6 @@ set(RT_LOCAL_INCLUDE_DIRS
   ${REGEX_INCLUDE_DIR}
   ${VDS_INCLUDE_DIR}
   ${GDIAM_INCLUDE_DIR}
-  ${TINYCTHREAD_INCLUDE_DIR}
   ${LZ4_INCLUDE_DIR}
   )
 
@@ -43,6 +42,7 @@ set(LIBRT_SOURCES
   comb/db_comb.c
   constraint.c
   cut.c
+  cut_hlbvh.c
   db5_alloc.c
   db5_attr.c
   db5_attr_registry.cpp
@@ -77,6 +77,7 @@ set(LIBRT_SOURCES
   op.c
   pr.c
   prep.c
+  primitives/annot/annot.c
   primitives/arb8/arb8.c
   primitives/arb8/arb8_brep.cpp
   primitives/arb8/arb8_mirror.c
@@ -94,16 +95,6 @@ set(LIBRT_SOURCES
   primitives/bot/bot_oriented_bbox.cpp
   primitives/bot/btg.c
   primitives/bot/btgf.c
-  primitives/bot/gct_decimation/auxiliary/mmbinsort.c
-  primitives/bot/gct_decimation/auxiliary/mmbitmap.c
-  primitives/bot/gct_decimation/auxiliary/mm.c
-  primitives/bot/gct_decimation/auxiliary/mmhash.c
-  primitives/bot/gct_decimation/meshoptimization.c
-  primitives/bot/gct_decimation/meshoptimizer.c
-  primitives/bot/gct_decimation/meshdecimation.c
-  primitives/bot/gct_decimation/meshdecimationSSE2.c
-  primitives/bot/gct_decimation/meshdecimationSSE3.c
-  primitives/bot/gct_decimation/meshdecimationSSE4p1.c
   primitives/bot/decimate.c
   primitives/brep/brep.cpp
   primitives/brep/brep_debug.cpp
@@ -198,6 +189,7 @@ set(LIBRT_SOURCES
   primitives/rpc/rpc.c
   primitives/rpc/rpc_brep.cpp
   primitives/rpc/rpc_mirror.c
+  primitives/script/script.c
   primitives/sketch/sketch.c
   primitives/sketch/sketch_brep.cpp
   primitives/sketch/sketch_tess.cpp
@@ -207,7 +199,7 @@ set(LIBRT_SOURCES
   primitives/superell/superell.c
   primitives/superell/superell_brep.cpp
   primitives/superell/superell_mirror.c
-  primitives/table.c
+  primitives/table.cpp
   primitives/tgc/tgc.c
   primitives/tgc/tgc_brep.cpp
   primitives/tgc/tgc_mirror.c
@@ -222,10 +214,8 @@ set(LIBRT_SOURCES
   reduce_db.cpp
   regionfix.c
   roots.c
-  screened_poisson.cpp
   search.c
   shoot.c
-  spectrum.c
   tol.c
   transform.c
   tree.c
@@ -234,15 +224,28 @@ set(LIBRT_SOURCES
   vshoot.c
   wdb.c
   )
+if(BRLCAD_ENABLE_GCT)
+  set(LIBRT_SOURCES
+    ${LIBRT_SOURCES}
+    primitives/bot/gct_decimation/auxiliary/mmbinsort.c
+    primitives/bot/gct_decimation/auxiliary/mmbitmap.c
+    primitives/bot/gct_decimation/auxiliary/mm.c
+    primitives/bot/gct_decimation/auxiliary/mmhash.c
+    primitives/bot/gct_decimation/meshoptimization.c
+    primitives/bot/gct_decimation/meshoptimizer.c
+    primitives/bot/gct_decimation/meshdecimation.c
+    primitives/bot/gct_decimation/meshdecimationSSE2.c
+    primitives/bot/gct_decimation/meshdecimationSSE3.c
+    primitives/bot/gct_decimation/meshdecimationSSE4p1.c
+    )
+endif(BRLCAD_ENABLE_GCT)
 
 set(librt_ignored_files
   cache.h
   columnparse.c
   librt_private.h
   prcomb.c
-  primitives/arb8/arb8_shot.cl
   primitives/bot/bot_edge.h
-  primitives/bot/bot_shot.cl
   primitives/bot/bot_wireframe.cpp
   primitives/bot/btg.h
   primitives/bot/g_bot_include.c
@@ -261,27 +264,35 @@ set(librt_ignored_files
   primitives/bot/tieprivate.h
   primitives/brep/brep_debug.h
   primitives/brep/brep_local.h
-  primitives/common.cl
   primitives/datum/datum.h
   primitives/dsp/dsp.h
+  primitives/fixpt.h
+  primitives/metaball/metaball.h
+  primitives/revolve/revolve.h
+  primitives/sph/benchmark.sh
+  primitives/xxx/xxx.h
+
+  primitives/bool.cl
+  primitives/common.cl
+  primitives/rt.cl
+  primitives/solver.cl
+
+  primitives/arb8/arb8_shot.cl
+  primitives/bot/bot_shot.cl
+  primitives/ebm/ebm_shot.cl
   primitives/ehy/ehy_shot.cl
   primitives/ell/ell_shot.cl
   primitives/epa/epa_shot.cl
   primitives/eto/eto_shot.cl
-  primitives/fixpt.h
-  primitives/metaball/metaball.h
+  primitives/hrt/hrt_shot.cl
   primitives/part/part_shot.cl
   primitives/rec/rec_shot.cl
-  primitives/revolve/revolve.h
-  primitives/rt.cl
-  primitives/solver.cl
-  primitives/sph/benchmark.sh
+  primitives/rhc/rhc_shot.cl
+  primitives/rpc/rpc_shot.cl
   primitives/sph/sph_shot.cl
   primitives/tgc/tgc_shot.cl
   primitives/tor/tor_shot.cl
-  primitives/rhc/rhc_shot.cl
-  primitives/rpc/rpc_shot.cl
-  primitives/xxx/xxx.h
+
   search.h
   subd_test_bot.asc
   test_bot2nurbs.cpp
@@ -289,30 +300,47 @@ set(librt_ignored_files
   test_nurbsfit.cpp
   test_root3-subd.cpp
   timer-nt.c
-  timerhep.c
   timerunix.c
   uvpoints.cpp
   )
+if(NOT BRLCAD_ENABLE_GCT)
+  set(librt_ignored_files
+    ${librt_ignored_files}
+    primitives/bot/gct_decimation/auxiliary/mmbinsort.c
+    primitives/bot/gct_decimation/auxiliary/mmbitmap.c
+    primitives/bot/gct_decimation/auxiliary/mm.c
+    primitives/bot/gct_decimation/auxiliary/mmhash.c
+    primitives/bot/gct_decimation/meshoptimization.c
+    primitives/bot/gct_decimation/meshoptimizer.c
+    primitives/bot/gct_decimation/meshdecimation.c
+    primitives/bot/gct_decimation/meshdecimationSSE2.c
+    primitives/bot/gct_decimation/meshdecimationSSE3.c
+    primitives/bot/gct_decimation/meshdecimationSSE4p1.c
+    )
+endif(NOT BRLCAD_ENABLE_GCT)
 CMAKEFILES(${librt_ignored_files})
 
 set(CL_FILES
+  primitives/bool.cl
   primitives/common.cl
   primitives/rt.cl
   primitives/solver.cl
 
   primitives/arb8/arb8_shot.cl
   primitives/bot/bot_shot.cl
+  primitives/ebm/ebm_shot.cl
   primitives/ehy/ehy_shot.cl
   primitives/ell/ell_shot.cl
   primitives/epa/epa_shot.cl
   primitives/eto/eto_shot.cl
-  primitives/sph/sph_shot.cl
+  primitives/hrt/hrt_shot.cl
   primitives/part/part_shot.cl
   primitives/rec/rec_shot.cl
-  primitives/tgc/tgc_shot.cl
-  primitives/tor/tor_shot.cl
   primitives/rhc/rhc_shot.cl
   primitives/rpc/rpc_shot.cl
+  primitives/sph/sph_shot.cl
+  primitives/tgc/tgc_shot.cl
+  primitives/tor/tor_shot.cl
   )
 
 BRLCAD_ADDDATA(nurb_example.c sample_applications)
@@ -333,7 +361,7 @@ if(BRLCAD_ENABLE_SPR)
   set(SPR_LIB libSPR)
 endif(BRLCAD_ENABLE_SPR)
 
-BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${OPENCL_LIBS};${GDIAM_LIBRARY};${VDS_LIBRARY};libbrep;libnmg;libbg;libbn;libbu;${OPENNURBS_LIBRARIES};${P2T_LIBRARY};${SPR_LIB};${REGEX_LIBRARY};${TINYCTHREAD_LIBRARY};${LZ4_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
+BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${OPENCL_LIBS};${GDIAM_LIBRARY};${VDS_LIBRARY};libbrep;libnmg;libbg;libbn;libbu;${OPENNURBS_LIBRARIES};${P2T_LIBRARY};${SPR_LIB};${REGEX_LIBRARY};${LZ4_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
 
 set_target_properties(librt PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if(CPP_DLL_DEFINES)
@@ -341,8 +369,6 @@ if(CPP_DLL_DEFINES)
   set_property(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "DB5_DLL_EXPORTS")
   set_property(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "VDS_DLL_IMPORTS")
   set_property(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "GDIAM_DLL_IMPORTS")
-  set_property(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "SPR_DLL_IMPORTS")
-  set_property(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "TINYCTHREAD_DLL_IMPORTS")
   set_property(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "LZ4_DLL_IMPORT=1")
 endif(CPP_DLL_DEFINES)
 
@@ -360,9 +386,10 @@ endif(CPP_DLL_DEFINES)
 #BRLCAD_ADDEXEC(test_root3-subd test_root3-subd.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
 #BRLCAD_ADDEXEC(test_surfacetree test_surfacetree.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
 
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
-  add_subdirectory(tests)
-endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
+add_subdirectory(tests)
+
+CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(db_fp.cxx)
 
 # Local Variables:
 # tab-width: 8

@@ -1216,8 +1216,12 @@ If \fIindex2\fR does not specify a position later in the text
 than \fIindex1\fR then no characters are deleted.
 If \fIindex2\fR is not specified then the single character at
 \fIindex1\fR is deleted.
-It is not allowable to delete characters in a way that would leave
-the text without a newline as the last character.
+Attempts to delete characters in a way that would leave
+the text without a newline as the last character will be tweaked by the
+text widget to avoid this. In particular, deletion of complete lines of
+text up to the end of the text will also delete the newline character just
+before the deleted block so that it is replaced by the new final newline
+of the text widget.
 The command returns an empty string.
 If more indices are given, multiple ranges of text will be deleted.
 All indices are first checked for validity before any deletions are made.

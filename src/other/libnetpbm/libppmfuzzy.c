@@ -5,8 +5,8 @@
   <kenan@unix.ba> in 2006.
 =============================================================================*/
 
+#include <string.h>
 #include "pm_c_util.h"
-#include "nstring.h"
 #include "ppm.h"
 
 typedef double fzLog;
@@ -414,7 +414,7 @@ ppm_bk_color_from_name(const char * const name) {
     bk_color i;
 
     for (i = 0; i < BKCOLOR_COUNT; ++i) {
-        if (STREQ(name, bkColorNameMap[i]))
+        if (!strcmp(name, bkColorNameMap[i]))
             return i;
     }
     pm_error("Invalid Berlin-Kay color name: '%s'", name);

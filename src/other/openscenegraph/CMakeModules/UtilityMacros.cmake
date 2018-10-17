@@ -102,23 +102,6 @@ MACRO(TARGET_LOCATIONS_SET_FILE FILE)
 ENDMACRO()
 
 #---------------------------------------------------
-# Macro: TARGET_LOCATIONS_ACCUM TARGET_NAME
-# 
-#---------------------------------------------------
-
-MACRO(TARGET_LOCATIONS_ACCUM TARGET_NAME)
-    IF(ACCUM_FILE_TARGETS)
-        IF(EXISTS ${ACCUM_FILE_TARGETS})
-            GET_TARGET_PROPERTY(_FILE_LOCATION ${TARGET_NAME} LOCATION)
-            FILE(APPEND ${ACCUM_FILE_TARGETS} "${_FILE_LOCATION};")
-            #SET(_TARGETS_LIST ${_TARGETS_LIST} "${_FILE_LOCATION}" CACHE INTERNAL "lista dll")
-            #MESSAGE("adding target -->${TARGET_NAME}<-- file -->${_FILE_LOCATION}<-- to list -->${_TARGETS_LIST}<--")
-            #SET(ACCUM_FILE_TARGETS ${ACCUM_FILE_TARGETS} ${_FILE_LOCATION})
-        ENDIF()
-    ENDIF()
-ENDMACRO()
-
-#---------------------------------------------------
 # Macro: TARGET_LOCATIONS_GET_LIST _VAR
 # 
 #---------------------------------------------------

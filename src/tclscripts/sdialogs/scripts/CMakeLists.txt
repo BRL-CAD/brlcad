@@ -1,10 +1,11 @@
 set(sdialogs_scripts_TCLSCRIPTS
-	entrydialog.itk
-	listdialog.itk
-	stddlgs.tcl
-)
+  entrydialog.itk
+  listdialog.itk
+  stddlgs.tcl
+  )
 BRLCAD_ADDDATA(sdialogs_scripts_TCLSCRIPTS tclscripts/sdialogs/scripts)
 tclIndex_BUILD(tclscripts/sdialogs/scripts)
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

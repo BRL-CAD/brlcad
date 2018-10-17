@@ -1,6 +1,6 @@
 #               C M A K E L I S T S . T X T
 #
-# This file is Copyright (c) 2010 United States Government as
+# This file is Copyright (c) 2010-2018 United States Government as
 # represented by the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -37,22 +37,10 @@
 
 
 # Minimum required version of CMake
-cmake_minimum_required(VERSION 2.8.8)
-if(COMMAND CMAKE_POLICY)
-  if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-    CMAKE_POLICY(SET CMP0026 OLD)
-    CMAKE_POLICY(SET CMP0042 NEW)
-  endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-
-  if ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
-    CMAKE_POLICY(SET CMP0046 NEW)
-    CMAKE_POLICY(SET CMP0053 NEW)
-    CMAKE_POLICY(SET CMP0054 NEW)
-  endif ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
-endif(COMMAND CMAKE_POLICY)
+cmake_minimum_required(VERSION 3.1.3)
 
 # set CMake project name
-PROJECT(WFOBJ)
+project(WFOBJ)
 
 #---------------------------------------------------------------------
 # CMake derives much of its functionality from modules, typically

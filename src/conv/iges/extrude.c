@@ -1,7 +1,7 @@
 /*                       E X T R U D E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2016 United States Government as represented by
+ * Copyright (c) 1990-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -26,11 +26,11 @@ int
 extrude(int entityno)
 {
 
-    fastf_t length;			/* extrusion length */
-    vect_t edir;			/* a unit vector (direction of extrusion */
-    vect_t evect;			/* Scaled vector for extrusion */
-    int sol_num;		/* IGES solid type number */
-    int curve;			/* pointer to directory entry for base curve */
+    fastf_t length = 0.0;		/* extrusion length */
+    vect_t edir = VINIT_ZERO;		/* a unit vector (direction of extrusion */
+    vect_t evect = VINIT_ZERO;		/* Scaled vector for extrusion */
+    int sol_num = 0;			/* IGES solid type number */
+    int curve = 0;			/* pointer to directory entry for base curve */
     struct ptlist *curv_pts;		/* List of points along curve */
     size_t i;
 

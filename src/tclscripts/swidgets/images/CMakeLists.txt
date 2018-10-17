@@ -8,6 +8,7 @@ set(swidgets_image_DATA
   )
 BRLCAD_ADDDATA(swidgets_image_DATA tclscripts/swidgets/images)
 
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

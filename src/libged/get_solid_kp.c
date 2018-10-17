@@ -1,7 +1,7 @@
 /*                    G E T _ S O L I D _ K P . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2016 United States Government as represented by
+ * Copyright (c) 2008-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -141,11 +141,10 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 	    {
 		struct rt_ebm_internal *ebm =
 		    (struct rt_ebm_internal *)ip->idb_ptr;
-		point_t pnt;
+		point_t pnt = VINIT_ZERO;
 
 		RT_EBM_CK_MAGIC(ebm);
 
-		VSETALL(pnt, 0.0);
 		MAT4X3PNT(mpt, ebm->mat, pnt);
 		break;
 	    }
@@ -161,11 +160,10 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 	    {
 		struct rt_dsp_internal *dsp =
 		    (struct rt_dsp_internal *)ip->idb_ptr;
-		point_t pnt;
+		point_t pnt = VINIT_ZERO;
 
 		RT_DSP_CK_MAGIC(dsp);
 
-		VSETALL(pnt, 0.0);
 		MAT4X3PNT(mpt, dsp->dsp_stom, pnt);
 		break;
 	    }
@@ -183,11 +181,10 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 	    {
 		struct rt_vol_internal *vol =
 		    (struct rt_vol_internal *)ip->idb_ptr;
-		point_t pnt;
+		point_t pnt = VINIT_ZERO;
 
 		RT_VOL_CK_MAGIC(vol);
 
-		VSETALL(pnt, 0.0);
 		MAT4X3PNT(mpt, vol->mat, pnt);
 		break;
 	    }
@@ -338,6 +335,15 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 		VMOVE(mpt, skt->V);
 		break;
 	    }
+	case ID_ANNOT:
+	    {
+		struct rt_annot_internal *ann =
+		    (struct rt_annot_internal *)ip->idb_ptr;
+		RT_ANNOT_CK_MAGIC(ann);
+
+		VMOVE(mpt, ann->V);
+		break;
+	    }
 	case ID_EXTRUDE:
 	    {
 		struct rt_extrude_internal *extr =
@@ -464,6 +470,9 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 		    break;
 		}
 	    }
+
+	    /* fall through */
+
 	default:
 	    VSETALL(mpt, 0.0);
 	    bu_vls_printf(gedp->ged_result_str,

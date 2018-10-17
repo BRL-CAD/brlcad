@@ -22,7 +22,6 @@
 
 #include "pm_c_util.h"
 #include "mallocvar.h"
-#include "nstring.h"
 #include "pam.h"
 #include "ppm.h"
 #include "libpbm.h"
@@ -429,13 +428,13 @@ parse_header_line(const char buffer[], char label[MAX_LABEL_LENGTH+1],
 
     buffer_curs = 0;
     /* Skip initial white space */
-    while (ISSPACE(buffer[buffer_curs])) buffer_curs++;
+    while (isspace(buffer[buffer_curs])) buffer_curs++;
 
     {
         /* Read off label, put as much as will fit into label[] */
         int label_curs;
         label_curs = 0;
-        while (!ISSPACE(buffer[buffer_curs]) && buffer[buffer_curs] != '\0') {
+        while (!isspace(buffer[buffer_curs]) && buffer[buffer_curs] != '\0') {
             if (label_curs < MAX_LABEL_LENGTH) 
                 label[label_curs++] = buffer[buffer_curs];
             buffer_curs++;
@@ -444,7 +443,7 @@ parse_header_line(const char buffer[], char label[MAX_LABEL_LENGTH+1],
     }    
 
     /* Skip white space between label and value */
-    while (ISSPACE(buffer[buffer_curs])) buffer_curs++;
+    while (isspace(buffer[buffer_curs])) buffer_curs++;
 
     /* copy value into value[] */
     strncpy(value, buffer+buffer_curs, MAX_VALUE_LENGTH+1);
@@ -453,7 +452,7 @@ parse_header_line(const char buffer[], char label[MAX_LABEL_LENGTH+1],
         /* Remove trailing white space from value[] */
         int value_curs;
         value_curs = strlen(value)-1;
-        while (value_curs >= 0 && ISSPACE(value[value_curs])) 
+        while (value_curs >= 0 && isspace(value[value_curs])) 
             value[value_curs--] = '\0';
     }
 }
@@ -580,10 +579,19 @@ disposeOfComments(const struct pam * const pamP,
     if (retP)
         *retP = comments;
     else
-        strfree(comments);
+        free((void*)comments);
 }
 
-
+/* per https://stackoverflow.com/questions/3981510/getline-check-if-line-is-whitespace */
+int all_whitespace(const char *buf)
+{
+  const char *lb = buf;
+  while (*lb != '\0') {
+    if (!isspace((unsigned char)*lb)) return 0;
+    lb++;
+  }
+  return 1;
+}
 
 static void
 readpaminitrest(struct pam * const pamP) {
@@ -623,7 +631,7 @@ readpaminitrest(struct pam * const pamP) {
             buffer[256-1-1] = '\n';  /* In case fgets() truncated */
             if (buffer[0] == '#')
                 appendComment(&comments, buffer);
-            else if (stripeq(buffer, ""));
+            else if (all_whitespace(buffer));
                 /* Ignore it; it's a blank line */
             else 
                 process_header_line(buffer, pamP, &headerSeen);
@@ -883,7 +891,7 @@ pnm_writepaminit(struct pam * const pamP) {
         fprintf(pamP->file, "HEIGHT %u\n",  (unsigned)pamP->height);
         fprintf(pamP->file, "DEPTH %u\n",   pamP->depth);
         fprintf(pamP->file, "MAXVAL %lu\n", pamP->maxval);
-        if (!stripeq(tupleType, ""))
+        if (!all_whitespace(tupleType))
             fprintf(pamP->file, "TUPLTYPE %s\n", pamP->tuple_type);
         fprintf(pamP->file, "ENDHDR\n");
         break;

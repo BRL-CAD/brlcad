@@ -1,7 +1,7 @@
 /*                         L O A D V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2016 United States Government as represented by
+ * Copyright (c) 2008-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -100,7 +100,8 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
     /* data pulled from script file */
     int perspective=-1;
 #define MAX_DBNAME 2048
-    char dbName[MAX_DBNAME] = {0};
+    char name[MAX_DBNAME] = {0};
+    char *dbName = name;
     char objects[10000] = {0};
     char *editArgv[3];
     static const char *usage = "filename";
@@ -183,7 +184,13 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
 	    }
 	    /* bu_log("dbName=%s\n", dbName); */
 
-	    if (!bu_same_file(gedp->ged_wdbp->dbip->dbi_filename, dbName)) {
+	    /* if the name was wrapped in quotes, remove them */
+	    if (dbName[0] == '\'' && *(dbName + strlen(dbName) - 1) == '\'') {
+		dbName++;
+		memset(dbName + strlen(dbName)-1, 0, 1);
+	    }
+    
+	    if (!bu_file_same(gedp->ged_wdbp->dbip->dbi_filename, dbName)) {
 		/* warn here if they are not the same file, otherwise,
 		 * proceed as expected, and try to load the objects.
 		 */
@@ -381,7 +388,7 @@ int
 _ged_cm_end(const int argc, const char **argv)
 {
     struct bu_vls eye = BU_VLS_INIT_ZERO;
-    char *eye_argv[4] = {"eye", NULL, NULL, NULL};
+    char *eye_argv[5] = {"eye", NULL, NULL, NULL, NULL};
 
     if (argc < 0 || argv == NULL)
 	return 1;

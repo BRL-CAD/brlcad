@@ -1,7 +1,7 @@
 /*                 BRLCADWrapper.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2016 United States Government as represented by
+ * Copyright (c) 1994-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -297,7 +297,7 @@ BRLCADWrapper::WriteBrep(std::string name, ON_Brep *brep, mat_t &mat)
     if (dry_run)
 	return true;
 
-    mk_brep(outfp, sol.c_str(), brep);
+    mk_brep(outfp, sol.c_str(), (void *)brep);
     unsigned char rgb[] = {200, 180, 180};
 
     BRLCADWrapper::getRandomColor(rgb);

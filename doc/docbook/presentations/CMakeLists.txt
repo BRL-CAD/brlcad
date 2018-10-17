@@ -29,9 +29,32 @@ set(XSL_HTML_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-
 set(XSL_PPT_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/presentation.xsl")
 set(XSL_FO_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-presentation-fo-stylesheet.xsl")
 
+set(presentations_EN
+  intro-to-tcltk.xml
+  brlcad-app-devel.xml
+  Introduction-to-tcltk.xml
+  Introduction-brlcad-app-devel.xml
+  )
 
-add_subdirectory(en)
+set(presentations_EN_IMAGES
+  images/copy-sph-part-left.png
+  images/brlcad_app_devel.png
+  images/intro_tcl_tk.png
+  images/copy-sph-part-right.png
+  images/mged-defaults.png
+  images/special-character-interpretation.png
+  images/tk-based-gui-for-mged.png
+  )
+if(BRLCAD_EXTRADOCS)
+  ADD_DOC(presentations_EN_IMAGES html/presentations/images)
+else(BRLCAD_EXTRADOCS)
+  CMAKEFILES(${presentations_EN_IMAGES})
+endif(BRLCAD_EXTRADOCS)
+
+ADD_DOCBOOK("HTML;PHP;PPT;PDF" presentations_EN presentations presentations_EN_IMAGES_cp)
+
 CMAKEFILES(README)
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

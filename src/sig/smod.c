@@ -1,7 +1,7 @@
 /*                          S M O D . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2016 United States Government as represented by
+ * Copyright (c) 1986-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -118,15 +118,15 @@ get_args(int argc, char *argv[])
     } else {
 	char *ifname;
 	file_name = argv[bu_optind];
-	ifname = bu_realpath(file_name, NULL);
+	ifname = bu_file_realpath(file_name, NULL);
 	if (freopen(ifname, "r", stdin) == NULL) {
 	    fprintf(stderr,
 		    "%s: cannot open \"%s(canonical %s)\" for reading\n",
 		    progname, file_name, ifname);
-	    bu_free(ifname, "ifname alloc from bu_realpath");
+	    bu_free(ifname, "ifname alloc from bu_file_realpath");
 	    return 0;
 	}
-	bu_free(ifname, "ifname alloc from bu_realpath");
+	bu_free(ifname, "ifname alloc from bu_file_realpath");
     }
 
     if (argc > ++bu_optind)

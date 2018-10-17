@@ -159,7 +159,7 @@ DEBUGFLAGS     = $(DEBUGFLAGS) -RTC1
 DEBUGFLAGS     = $(DEBUGFLAGS) -GZ
 !endif
 
-COMPILERFLAGS  =-W3
+COMPILERFLAGS  =-W3 /D_ATL_XP_TARGETING
 
 # In v13 -GL and -YX are incompatible.
 !if [nmakehlp -c -YX]

@@ -1,7 +1,7 @@
 /*                         S T R . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -310,7 +310,7 @@ BU_EXPORT extern int bu_argv_from_tcl_list(const char *list_str,
  * Deallocate all strings in a given argv array and the array itself
  *
  * This call presumes the array has been allocated with bu_argv_dup()
- * or bu_argv_from_path().
+ * or bu_path_to_argv().
  */
 BU_EXPORT extern void bu_argv_free(size_t argc, char *argv[]);
 

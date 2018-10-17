@@ -1,7 +1,7 @@
 /*                      P O L Y - B O T . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2016 United States Government as represented by
+ * Copyright (c) 2000-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,8 +33,9 @@
 #include "bnetwork.h"
 #include "bio.h"
 
+#include "bu/snooze.h"
 #include "vmath.h"
-#include "bu/file.h"
+#include "bu/app.h"
 #include "nmg.h"
 #include "rt/db4.h"
 #include "rt/geom.h"
@@ -68,7 +69,7 @@ main(int argc, char **argv)
     int first=1;
 
     bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
-    sleep(1);
+    bu_snooze(BU_SEC2USEC(1));
 
     bu_setprogname(argv[0]);
 

@@ -1,7 +1,7 @@
 /*                        P R C O M B . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2016 United States Government as represented by
+ * Copyright (c) 1996-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -61,8 +61,6 @@ main(int argc, char *argv[])
     mat_t identity_mat;
     int i;
 
-    bu_debug = BU_DEBUG_MEM_CHECK | BU_DEBUG_COREDUMP;
-
     if (argc < 3) {
 	fprintf(stderr, "Usage:\n\t%s db_file object1 object2 ...\n", argv[0]);
 	return 1;
@@ -94,7 +92,6 @@ main(int argc, char *argv[])
 	}
 
 	RT_CK_DB_INTERNAL(&ip);
-	bu_mem_barriercheck();
 
 	if (ip.idb_type != ID_COMBINATION) {
 	    bu_log("idb_type = %d\n", ip.idb_type);

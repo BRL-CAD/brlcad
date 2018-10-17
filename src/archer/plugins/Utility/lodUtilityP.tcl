@@ -1,7 +1,7 @@
 #                 L O D U T I L I T Y P . T C L
 # BRL-CAD
 #
-# Copyright (c) 2013-2016 United States Government as represented by
+# Copyright (c) 2013-2018 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -24,10 +24,10 @@
 #        configuration utility.
 #
 
-set filename [file join [bu_brlcad_data "plugins"] archer Utility lodUtilityP LODUtilityP.tcl]
+set filename [file join [bu_brlcad_root "share/plugins"] archer Utility lodUtilityP LODUtilityP.tcl]
 if { ![file exists $filename] } {
     # non-tclscript resource, look in the source invocation path
-    set filename [file join [bu_brlcad_data "src"] archer plugins Utility lodUtilityP LODUtilityP.tcl]
+    set filename [file join [bu_brlcad_root "src"] archer plugins Utility lodUtilityP LODUtilityP.tcl]
 }
 if { ![file exists $filename] } {
     puts "Could not load the LODUtilityP plugin, skipping $filename"

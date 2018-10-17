@@ -1,7 +1,7 @@
 /*                       W D B _ O B J . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2016 United States Government as represented by
+ * Copyright (c) 2000-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -317,7 +317,9 @@ wdb_add_operand(Tcl_Interp *interp, struct bu_list *hp, char *name)
     ptr_lparen = strchr(name, '(');
     ptr_rparen = strchr(name, ')');
 
-    RT_GET_TREE(node, &rt_uniresource);
+    BU_GET(node, union tree);
+    RT_TREE_INIT(node);
+
     node->tr_op = OP_DB_LEAF;
     node->tr_l.tl_mat = (matp_t)NULL;
     if (ptr_lparen || ptr_rparen) {
@@ -1036,7 +1038,7 @@ wdb_vls_long_dpp(struct rt_wdb *wdbp,
     const char *type=NULL;
     int max_nam_len = 0;
     int max_type_len = 0;
-    struct directory *dp;
+    struct directory *dp = NULL;
 
     bu_sort((void *)list_of_names,
 	    (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
@@ -1270,7 +1272,7 @@ wdb_do_list(struct db_i *dbip,
 	if (OBJ[id].ft_describe) {
 	    int ret;
 	    bu_vls_printf(outstrp, "%s:  ", dp->d_namep);
-	    ret = OBJ[id].ft_describe(outstrp, &intern, verbose, dbip->dbi_base2local, &rt_uniresource, dbip);
+	    ret = OBJ[id].ft_describe(outstrp, &intern, verbose, dbip->dbi_base2local);
 	    if (ret < 0)
 		bu_log("%s: describe error\n", dp->d_namep);
 	} else {
@@ -1353,7 +1355,10 @@ wdb_combadd(struct db_i *dbip,
 	} else {
 	    comb->region_flag = 0;
 	}
-	RT_GET_TREE(tp, &rt_uniresource);
+
+	BU_GET(tp, union tree);
+	RT_TREE_INIT(tp);
+
 	tp->tr_l.tl_op = OP_DB_LEAF;
 	tp->tr_l.tl_name = bu_strdup(objp->d_namep);
 	tp->tr_l.tl_mat = (matp_t)NULL;
@@ -1420,7 +1425,9 @@ wdb_combadd(struct db_i *dbip,
     }
 
     /* make new leaf node, and insert at end of list */
-    RT_GET_TREE(tp, &rt_uniresource);
+    BU_GET(tp, union tree);
+    RT_TREE_INIT(tp);
+
     tree_list[node_count-1].tl_tree = tp;
     tp->tr_l.tl_op = OP_DB_LEAF;
     tp->tr_l.tl_name = bu_strdup(objp->d_namep);
@@ -2287,7 +2294,7 @@ wdb_match_cmd(struct rt_wdb *wdbp,
 	register struct directory *dp;
 	for (i = num = 0; i < RT_DBNHASH; i++) {
 	    for (dp = wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-		if (bu_fnmatch(*argv, dp->d_namep, 0) != 0)
+		if (bu_path_match(*argv, dp->d_namep, 0) != 0)
 		    continue;
 		if (num == 0)
 		    bu_vls_strcat(&matches, dp->d_namep);
@@ -2533,6 +2540,9 @@ wdb_get_type_cmd(struct rt_wdb *wdbp,
 	    break;
 	case DB5_MINORTYPE_BRLCAD_SKETCH:
 	    Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, "sketch", (char *)NULL);
+	    break;
+	case DB5_MINORTYPE_BRLCAD_ANNOT:
+	    Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, "annot", (char *)NULL);
 	    break;
 	case DB5_MINORTYPE_BRLCAD_EXTRUDE:
 	    Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, "extrude", (char *)NULL);
@@ -3801,7 +3811,7 @@ wdb_list_cmd(struct rt_wdb *wdbp,
 
 	    bu_vls_printf(&str, "%s:  ", argv[arg]);
 
-	    if (!OBJ[id].ft_describe || OBJ[id].ft_describe(&str, &intern, 99, wdbp->dbip->dbi_base2local, &rt_uniresource, wdbp->dbip) < 0)
+	    if (!OBJ[id].ft_describe || OBJ[id].ft_describe(&str, &intern, 99, wdbp->dbip->dbi_base2local) < 0)
 		Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, dp->d_namep, ": describe error", (char *)NULL);
 
 	    rt_db_free_internal(&intern);
@@ -3916,7 +3926,7 @@ wdb_expand_cmd(struct rt_wdb *wdbp,
 	thismatch = 0;
 	for (i = 0; i < RT_DBNHASH; i++) {
 	    for (dp = wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-		if (bu_fnmatch(pattern, dp->d_namep, 0) != 0)
+		if (bu_path_match(pattern, dp->d_namep, 0) != 0)
 		    continue;
 		/* Successful match */
 		if (nummatch == 0)
@@ -5085,8 +5095,7 @@ wdb_copyeval_cmd(struct rt_wdb *wdbp,
 
     /* create the new solid */
     RT_DB_INTERNAL_INIT(&new_int);
-    if (rt_generic_xform(&new_int, gtd.gtd_xform,
-			 &internal, 0, wdbp->dbip, &rt_uniresource)) {
+    if (rt_generic_xform(&new_int, gtd.gtd_xform, &internal, 0, wdbp->dbip)) {
 	rt_db_free_internal(&internal);
 	Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, "wdb_copyeval_cmd: rt_generic_xform failed\n", (char *)NULL);
 
@@ -7291,7 +7300,8 @@ wdb_push_leaf(struct db_tree_state *tsp,
 	    }
 
 	    bu_semaphore_release(RT_SEM_WORKER);
-	    RT_GET_TREE(curtree, tsp->ts_resp);
+	    BU_GET(curtree, union tree);
+	    RT_TREE_INIT(curtree);
 	    curtree->tr_op = OP_NOP;
 	    return curtree;
 	}
@@ -7308,7 +7318,8 @@ wdb_push_leaf(struct db_tree_state *tsp,
     pip->forw = &wpdp->pi_head;
     pip->back->forw = pip;
     bu_semaphore_release(RT_SEM_WORKER);
-    RT_GET_TREE(curtree, tsp->ts_resp);
+    BU_GET(curtree, union tree);
+    RT_TREE_INIT(curtree);
     curtree->tr_op = OP_NOP;
     return curtree;
 }
@@ -10327,7 +10338,7 @@ wdb_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
     struct ged ged;
-    struct bu_hook_list save_hook_list;
+    struct bu_hook_list save_hook_list = BU_HOOK_LIST_INIT_ZERO;
     int ret;
 
     /* look for the new libged commands before trying one of the old ones */
@@ -10423,7 +10434,6 @@ wdb_init_obj(Tcl_Interp *interp,
     bu_vls_init(&wdbp->wdb_name);
     bu_vls_strcpy(&wdbp->wdb_name, oname);
 
-    BU_LIST_INIT(&wdbp->wdb_observers.l);
     wdbp->wdb_interp = (void *)interp;
 
     /* append to list of rt_wdb's */

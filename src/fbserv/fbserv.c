@@ -1,7 +1,7 @@
 /*                        F B S E R V . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -79,6 +79,7 @@
 #include "../libfb/fb_private.h" /* for _fb_disk_enable */
 #include "bu/getopt.h"
 #include "bu/exit.h"
+#include "bu/snooze.h"
 #include "vmath.h"
 #include "fb.h"
 #include "pkg.h"
@@ -194,20 +195,6 @@ is_socket(int fd)
 }
 
 
-#ifdef SIGALRM
-static void
-sigalarm(int UNUSED(code))
-{
-    printf("alarm %s\n", fb_server_fbp ? "FBP" : "NULL");
-    if (fb_server_fbp != FB_NULL) {
-	fb_poll(fb_server_fbp);
-    }
-    (void)signal(SIGALRM, sigalarm);	/* some systems remove handler */
-    alarm(1);
-}
-#endif
-
-
 static void
 setup_socket(int fd)
 {
@@ -318,6 +305,7 @@ main_loop(void)
 
     while (!fb_server_got_fb_free) {
 	long refresh_rate = 60000000; /* old default */
+	long usec_to_sec = 1000000;
 	fd_set infds;
 	struct timeval tv;
 	int i;
@@ -329,8 +317,8 @@ main_loop(void)
 
 	infds = select_list;	/* struct copy */
 
-	tv.tv_sec = 0L;
-	tv.tv_usec = refresh_rate;
+	tv.tv_sec = refresh_rate / usec_to_sec;
+	tv.tv_usec = refresh_rate % usec_to_sec;
 	if ((select(max_fd+1, &infds, (fd_set *)0, (fd_set *)0, (struct timeval *)&tv) == 0)) {
 	    /* Process fb events while waiting for client */
 	    /*printf("select timeout waiting for client\n");*/
@@ -410,10 +398,6 @@ main(int argc, char **argv)
 #ifdef SIGPIPE
     (void)signal(SIGPIPE, SIG_IGN);
 #endif
-#ifdef SIGALRM
-    (void)signal(SIGALRM, sigalarm);
-#endif
-    /*alarm(1)*/
 
     FD_ZERO(&select_list);
     fb_server_select_list = &select_list;
@@ -487,7 +471,7 @@ main(int argc, char **argv)
     init_syslog();
     while ((netfd = pkg_permserver(portname, 0, 0, comm_error)) < 0) {
 	static int error_count=0;
-	sleep(1);
+	bu_snooze(BU_SEC2USEC(1));
 	if (error_count++ < 60) {
 	    continue;
 	}

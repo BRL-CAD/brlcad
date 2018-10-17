@@ -1,7 +1,7 @@
 /*                        D M - O G L . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2016 United States Government as represented by
+ * Copyright (c) 1988-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,7 +41,9 @@
 #  undef X_NOT_POSIX
 #endif
 
-#include <X11/extensions/XInput.h>
+#ifdef HAVE_X11_EXTENSIONS_XINPUT_H
+#  include <X11/extensions/XInput.h>
+#endif /* HAVE_X11_XINPUT_H */
 
 /* glx.h on Mac OS X (and perhaps elsewhere) defines a slew of
  * parameter names that shadow system symbols.  protect the system
@@ -82,6 +84,8 @@
 #include "rt/solid.h"
 
 #include "./dm_private.h"
+
+#define ENABLE_POINT_SMOOTH 1
 
 #define VIEWFACTOR      (1.0/(*dmp->dm_vp))
 #define VIEWSIZE        (2.0*(*dmp->dm_vp))
@@ -638,8 +642,10 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
 {
     static int count = 0;
     GLfloat backgnd[4];
-    int j, k;
     int make_square = -1;
+
+#ifdef HAVE_X11_EXTENSIONS_XINPUT_H
+    int j, k;
     int ndevices;
     int nclass = 0;
     int unused;
@@ -647,6 +653,8 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
     XDevice *dev = NULL;
     XEventClass e_class[15];
     XInputClassInfo *cip;
+#endif
+
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_vls init_proc_vls = BU_VLS_INIT_ZERO;
     Display *tmp_dpy = (Display *)NULL;
@@ -874,6 +882,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
      */
     privvars->is_direct = (char) glXIsDirect(pubvars->dpy, privvars->glxc);
 
+#ifdef HAVE_X11_EXTENSIONS_XINPUT_H
     /*
      * Take a look at the available input devices. We're looking
      * for "dial+buttons".
@@ -926,6 +935,8 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
     }
 Done:
     XFreeDeviceList(olist);
+
+#endif /* HAVE_X11_EXTENSIONS_XINPUT_H */
 
     Tk_MapWindow(pubvars->xtkwin);
 
@@ -1653,6 +1664,7 @@ ogl_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
     register int mflag = 1;
     static float black[4] = {0.0, 0.0, 0.0, 0.0};
     GLfloat originalPointSize, originalLineWidth;
+    GLfloat m[16];
 
     glGetFloatv(GL_POINT_SIZE, &originalPointSize);
     glGetFloatv(GL_LINE_WIDTH, &originalLineWidth);
@@ -1694,6 +1706,17 @@ ogl_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
 
 		    glBegin(GL_LINE_STRIP);
 		    glVertex3dv(dpt);
+		    break;
+		case BN_VLIST_MODEL_MAT:
+		    glMatrixMode(GL_PROJECTION);
+		    glLoadIdentity();
+		    glLoadMatrixf(m);
+		    break;
+		case BN_VLIST_DISPLAY_MAT:
+		    glMatrixMode(GL_PROJECTION);
+		    glGetFloatv (GL_PROJECTION_MATRIX, m);
+		    glPopMatrix();
+		    glLoadIdentity();
 		    break;
 		case BN_VLIST_POLY_START:
 		case BN_VLIST_TRI_START:
@@ -1761,7 +1784,9 @@ ogl_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
 		    if (first == 0)
 			glEnd();
 		    first = 0;
+#if ENABLE_POINT_SMOOTH
 		    glEnable(GL_POINT_SMOOTH);
+#endif
 		    glBegin(GL_POINTS);
 		    glVertex3dv(dpt);
 		    break;
@@ -1922,7 +1947,9 @@ ogl_drawPoint2D(struct dm_internal *dmp, fastf_t x, fastf_t y)
 	bu_log("\tdmp: %p\tx - %lf\ty - %lf\n", (void *)dmp, x, y);
     }
 
+#if ENABLE_POINT_SMOOTH
     glEnable(GL_POINT_SMOOTH);
+#endif
     glBegin(GL_POINTS);
     glVertex2f(x, y);
     glEnd();
@@ -1947,7 +1974,9 @@ ogl_drawPoint3D(struct dm_internal *dmp, point_t point)
     /* fastf_t to double */
     VMOVE(dpt, point);
 
+#if ENABLE_POINT_SMOOTH
     glEnable(GL_POINT_SMOOTH);
+#endif
     glBegin(GL_POINTS);
     glVertex3dv(dpt);
     glEnd();
@@ -1969,7 +1998,9 @@ ogl_drawPoints3D(struct dm_internal *dmp, int npoints, point_t *points)
 	bu_log("ogl_drawPoint3D():\n");
     }
 
+#if ENABLE_POINT_SMOOTH
     glEnable(GL_POINT_SMOOTH);
+#endif
     glBegin(GL_POINTS);
     for (i = 0; i < npoints; ++i) {
 	/* fastf_t to double */

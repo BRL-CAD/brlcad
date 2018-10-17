@@ -1,7 +1,7 @@
 /*                       R E A L P A T H . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,8 +29,13 @@
 #include "bu/malloc.h"
 #include "bu/str.h"
 
+/* c89 strict doesn't declare realpath */
+#ifndef HAVE_DECL_REALPATH
+extern char *realpath(const char *, char *);
+#endif
+
 char *
-bu_realpath(const char *path, char *resolved_path)
+bu_file_realpath(const char *path, char *resolved_path)
 {
     if (!resolved_path)
 	resolved_path = (char *) bu_calloc(MAXPATHLEN, sizeof(char), "resolved_path alloc");

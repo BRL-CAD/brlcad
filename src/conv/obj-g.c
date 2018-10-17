@@ -1,7 +1,7 @@
 /*                     O B J - G . C
  * BRL-CAD
  *
- * Copyright (c) 2010-2016 United States Government as represented by
+ * Copyright (c) 2010-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -52,10 +52,11 @@
 #include <errno.h>
 #include <time.h>
 
-#include "vmath.h"
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/sort.h"
 #include "bu/units.h"
+#include "vmath.h"
 #include "nmg.h"
 #include "bn/plot3.h"
 #include "rt/geom.h"
@@ -1264,7 +1265,7 @@ populate_triangle_indexes(struct ga_t *ga,
     tri_arr_3D_t index_arr_tri_3D = NULL;
 
     double *facePoints;
-    int *triFaces;
+    int *triFaces = NULL;
     size_t i, numFacePoints;
     struct faceuse *fu;
     const int POINTS_PER_FACE = 3;
@@ -1431,7 +1432,8 @@ populate_triangle_indexes(struct ga_t *ga,
 	ti->num_tri++;
     }
 
-    bu_free(triFaces, "triFaces");
+    if (triFaces)
+	bu_free(triFaces, "triFaces");
 
     return;
 }

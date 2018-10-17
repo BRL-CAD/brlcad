@@ -1,7 +1,7 @@
 /*                        W O R K E R . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2016 United States Government as represented by
+ * Copyright (c) 1985-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -82,6 +82,9 @@ int cur_pixel;			/* current pixel number, 0..last_pixel */
 int last_pixel;			/* last pixel number */
 
 int stop_worker = 0;
+
+/* for stereo output */
+vect_t left_eye_delta = VINIT_ZERO;
 
 /**
  * For certain hypersample values there is a particular advantage to
@@ -464,8 +467,47 @@ worker(int cpu, void *UNUSED(arg))
     int pixelnum;
     int pat_num = -1;
 
-    /* The more CPUs at work, the bigger the bites we take */
-    if (per_processor_chunk <= 0) per_processor_chunk = npsw;
+    /* Figure out a reasonable chunk size that should keep most
+     * workers busy all the way to the end.  We divide up the image
+     * into chunks equating to tiles 1x1, 2x2, 4x4, 8x8 ... in size.
+     * Work is distributed so that all CPUs work on at least 8 chunks
+     * with the chunking adjusted from a maximum chunk size (512x512)
+     * all the way down to 1 pixel at a time, depending on the number
+     * of cores and the size of our rendering.
+     *
+     * TODO: actually work on image tiles instead of pixel spans.
+     */
+    if (per_processor_chunk <= 0) {
+	size_t chunk_size;
+	size_t one_eighth = (last_pixel - cur_pixel) * (hypersample + 1) / 8;
+	if (UNLIKELY(one_eighth < 1))
+	    one_eighth = 1;
+
+	if (one_eighth > npsw * 262144)
+	    chunk_size = 262144; /* 512x512 */
+	else if (one_eighth > npsw * 65536)
+	    chunk_size = 65536; /* 256x256 */
+	else if (one_eighth > npsw * 16384)
+	    chunk_size = 16384; /* 128x128 */
+	else if (one_eighth > npsw * 4096)
+	    chunk_size = 4096; /* 64x64 */
+	else if (one_eighth > npsw * 1024)
+	    chunk_size = 1024; /* 32x32 */
+	else if (one_eighth > npsw * 256)
+	    chunk_size = 256; /* 16x16 */
+	else if (one_eighth > npsw * 64)
+	    chunk_size = 64; /* 8x8 */
+	else if (one_eighth > npsw * 16)
+	    chunk_size = 16; /* 4x4 */
+	else if (one_eighth > npsw * 4)
+	    chunk_size = 4; /* 2x2 */
+	else
+	    chunk_size = 1; /* one pixel at a time */
+
+	bu_semaphore_acquire(RT_SEM_WORKER);
+	per_processor_chunk = chunk_size;
+	bu_semaphore_release(RT_SEM_WORKER);
+    }
 
     if (cpu >= MAX_PSW) {
 	bu_log("rt/worker() cpu %d > MAX_PSW %d, array overrun\n", cpu, MAX_PSW);
@@ -628,9 +670,7 @@ grid_setup(void)
     if (stereo) {
 	/* Move left 2.5 inches (63.5mm) */
 	VSET(temp, -63.5*2.0/viewsize, 0, 0);
-	bu_log("red eye: moving %f relative screen (left)\n", temp[X]);
 	MAT4X3VEC(left_eye_delta, view2model, temp);
-	VPRINT("left_eye_delta", left_eye_delta);
     }
 
     /* "Lower left" corner of viewing plane */
@@ -666,7 +706,7 @@ grid_setup(void)
 	fastf_t ang;	/* radians */
 	fastf_t dx, dy;
 
-	ang = curframe * frame_delta_t * M_2PI / 10;	/* 10 sec period */
+	ang = curframe * M_2PI / 100.0;	/* semi-abitrary 100 frame period */
 	dx = cos(ang) * 0.5;	/* +/- 1/4 pixel width in amplitude */
 	dy = sin(ang) * 0.5;
 	VJOIN2(viewbase_model, viewbase_model,
@@ -754,7 +794,7 @@ do_run(int a, int b)
 	    /* flush the pipe */
 	    if (close(p[1]) == -1) {
 		perror("Unable to close the communication pipe");
-		sleep(1); /* give the parent time to read */
+		bu_snooze(BU_SEC2USEC(1)); /* give the parent time to read */
 	    }
 	    bu_exit(0, NULL);
 	} else {
@@ -796,7 +836,7 @@ do_run(int a, int b)
     /* Tally up the statistics */
     for (cpu=0; cpu < npsw; cpu++) {
 	if (resource[cpu].re_magic != RESOURCE_MAGIC) {
-	    bu_log("ERROR: CPU %d resources corrupted, statistics bad\n", cpu);
+	    bu_log("ERROR: CPU %zu resources corrupted, statistics bad\n", cpu);
 	    continue;
 	}
 	rt_add_res_stats(APP.a_rt_i, &resource[cpu]);

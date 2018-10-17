@@ -1,7 +1,7 @@
 /*                            D B 4 . H
  * BRL-CAD
  *
- * Copyright (c) 1985-2016 United States Government as represented by
+ * Copyright (c) 1985-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -66,7 +66,7 @@
 
 #include "common.h"
 
-#include "bu/defines.h"  /* Needed only for the deprecated functions below using fastf_t */
+#include "vmath.h"  /* Needed only for the deprecated functions below using fastf_t */
 
 __BEGIN_DECLS
 
@@ -271,6 +271,7 @@ struct ars_rec {
     char	a_id;			/* ID_ARS_A */
     char	a_type;			/* primitive type */
     char	a_name[NAMESIZE];	/* unique name */
+    /* these cannot be size_t due to v4 compatibility */
     short	a_m;			/* # of curves */
     short	a_n;			/* # of points per curve */
     short	a_curlen;		/* # of granules per curve */
@@ -373,6 +374,22 @@ struct sketch_rec {
     unsigned char	skt_count[4];		/* number of additional granules */
 }; /* struct sketch_rec */
 
+struct annot_rec {
+    char	ant_id;			/*DBID_ANNOT */
+    char	ant_pad;
+    char	ant_name[NAMESIZE];
+    unsigned char	ant_V[8*3];		/* orgin map */
+    unsigned char       ant_vert_count[4];      /* number of vertices in annotation */
+    unsigned char       ant_seg_count[4];       /* number of segments in annotation */
+    unsigned char       ant_count[4];           /* number of additional granules */
+}; /* struct annot_rec */
+
+struct script_rec {
+    char    script_id;         /*DBID_SCRIPT */
+    char    script_pad;
+    char    script_name[NAMESIZE];
+}; /* struct script_rec */
+
 struct cline_rec {
     char	cli_id;			/* DBID_CLINE */
     char	cli_pad;
@@ -422,9 +439,11 @@ union record {
 #define DBID_PARTICLE	'p'	/* a particle (lozenge) */
 #define DBID_NMG	'N'	/* NMG solid */
 #define	DBID_SKETCH	'd'	/* 2D sketch */
+#define DBID_ANNOT	'a'	/* 2D annotations */
 #define	DBID_EXTR	'e'	/* solid of extrusion */
 #define DBID_CLINE	'c'	/* FASTGEN4 CLINE solid */
 #define	DBID_BOT	't'	/* Bag o' triangles */
+#define DBID_SCRIPT 'T' /* script */
 
     char	u_size[DB_MINREC];	/* Minimum record size */
 
@@ -462,6 +481,12 @@ union record {
 
     /* sketch */
     struct sketch_rec skt;
+
+    /* annotation */
+    struct annot_rec ant;
+
+    /* script */
+    struct script_rec scr;
 
     /* FASTGEN4 CLINE element */
     struct cline_rec cli;

@@ -1,7 +1,7 @@
 /*                          D M - X . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2016 United States Government as represented by
+ * Copyright (c) 1993-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,10 +37,14 @@
 struct x_vars {
     GC gc;
     Pixmap pix;
-    mat_t xmat;
+    fastf_t *xmat;
+    mat_t mod_mat;		/* default model transformation matrix */
+    mat_t disp_mat;		/* display transformation matrix */
     int is_trueColor;
     unsigned long bd, bg, fg;   /* color of border, background, foreground */
     unsigned long pixels[NUM_PIXELS];
+    fastf_t ppmm_x;		/* pixel per mm in x */
+    fastf_t ppmm_y;		/* pixel per mm in y */
 };
 
 #endif /* DM_X_H */

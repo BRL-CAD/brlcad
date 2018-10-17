@@ -65,6 +65,7 @@ if(MSVC)
 endif(MSVC)
 
 set(IGNORE_FILES
+  CMakeLists.txt
   AP214e3.h
   )
 CMAKEFILES(${IGNORE_FILES})

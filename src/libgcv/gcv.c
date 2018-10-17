@@ -1,7 +1,7 @@
 /*                           G C V . C
  * BRL-CAD
  *
- * Copyright (c) 2015-2016 United States Government as represented by
+ * Copyright (c) 2015-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,11 +28,15 @@
 #include <string.h>
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/debug.h"
+#include "bu/dylib.h"
 #include "bu/file.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
+#include "bu/mime.h"
 #include "bu/str.h"
+#include "rt/db4.h"
 #include "rt/db5.h"
 #include "rt/db_instance.h"
 #include "rt/db_io.h"
@@ -93,13 +97,32 @@ _gcv_brlcad_write(struct gcv_context *context,
     return 1;
 }
 
+int
+_gcv_brlcad_can_read(const char *data)
+{
+    union record record; /* GED database record */
+    FILE *ifp = fopen(data, "rb");
+    if (fread((char *)&record, sizeof record, 1, ifp) != 1) return 0;
+    fclose(ifp);
+    if (db5_header_is_valid((unsigned char *)&record)) return 1;
+    return 0;
+}
 
+int
+_gcv_brlcad_can_write(const char *data)
+{
+    int out_type = bu_file_mime_int(data);
+    if (out_type == (int)BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY) return 1;
+    return 0;
+}
+
+/* TODO - implement a BRL-CAD "valid file" test function...) */
 static const struct gcv_filter _gcv_filter_brlcad_read =
-{"BRL-CAD Reader", GCV_FILTER_READ, BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY, NULL, NULL, _gcv_brlcad_read};
+{"BRL-CAD Reader", GCV_FILTER_READ, BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY, _gcv_brlcad_can_read, NULL, NULL, _gcv_brlcad_read};
 
 
 static const struct gcv_filter _gcv_filter_brlcad_write =
-{"BRL-CAD Writer", GCV_FILTER_WRITE, BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY, NULL, NULL, _gcv_brlcad_write};
+{"BRL-CAD Writer", GCV_FILTER_WRITE, BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY, _gcv_brlcad_can_write, NULL, NULL, _gcv_brlcad_write};
 
 
 HIDDEN void
@@ -114,9 +137,6 @@ _gcv_filter_register(struct bu_ptbl *filter_table,
 
     switch (filter->filter_type) {
 	case GCV_FILTER_FILTER:
-	    if (filter->mime_type != BU_MIME_MODEL_UNKNOWN)
-		bu_bomb("invalid mime_type");
-
 	    break;
 
 	case GCV_FILTER_READ:
@@ -226,14 +246,14 @@ _gcv_filter_options_process(const struct gcv_filter *filter, size_t argc,
 	}
 
 	if (temp)
-	    bu_free(temp, "temp");
+	    bu_free((void *)temp, "temp");
 
 	_gcv_filter_options_free(filter, *options_data);
 	return 0;
     }
 
     if (temp)
-	bu_free(temp, "temp");
+	bu_free((void *)temp, "temp");
 
     return 1;
 }
@@ -287,8 +307,8 @@ _gcv_plugins_load(struct bu_ptbl *filter_table, const char *path)
 	if (error_msg)
 	    bu_log("%s\n", error_msg);
 
-	bu_log("bu_dlopen() failed for '%s'\n", path);
-	bu_bomb("bu_dlopen() failed");
+	bu_log("Unable to dynamically load '%s' (skipping)\n", path);
+	return;
     }
 
     info_val = bu_dlsym(dl_handle, "gcv_plugin_info");
@@ -300,15 +320,16 @@ _gcv_plugins_load(struct bu_ptbl *filter_table, const char *path)
 	if (error_msg)
 	    bu_log("%s\n", error_msg);
 
-	bu_log("bu_dlsym() failed for '%s'\n", path);
-	bu_bomb("could not find 'gcv_plugin_info' symbol in plugin");
+	bu_log("Unable to load symbols from '%s' (skipping)\n", path);
+	bu_log("Could not find 'gcv_plugin_info' symbol in plugin\n");
+	return;
     }
 
     plugin = plugin_info();
 
     if (!plugin || !plugin->filters) {
-	bu_log("invalid gcv_plugin in '%s'\n", path);
-	bu_bomb("invalid gcv_plugin");
+	bu_log("Invalid plugin encountered from '%s' (skipping)\n", path);
+	return;
     }
 
     for (current = plugin->filters; *current; ++current)

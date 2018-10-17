@@ -1,7 +1,7 @@
 /*                          B B O X . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2016 United States Government as represented by
+ * Copyright (c) 1995-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -117,20 +117,19 @@ HIDDEN struct region *
 _rt_getregion(struct rt_i *rtip, const char *reg_name)
 {
     struct region *regp;
-    char *reg_base = bu_basename(reg_name, NULL);
+    char *reg_base = bu_path_basename(reg_name, NULL);
 
     RT_CK_RTI(rtip);
     for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
 	char *cp;
 	/* First, check for a match of the full path */
-	if (*reg_base == regp->reg_name[0] &&
-	    BU_STR_EQUAL(reg_base, regp->reg_name)) {
+	if (BU_STR_EQUAL(reg_base, regp->reg_name)) {
 	    bu_free(reg_base, "reg_base free");
 	    return regp;
 	}
 	/* Second, check for a match of the database node name */
-	cp = bu_basename(regp->reg_name, NULL);
-	if (*cp == *reg_name && BU_STR_EQUAL(cp, reg_name)) {
+	cp = bu_path_basename(regp->reg_name, NULL);
+	if (BU_STR_EQUAL(cp, reg_name)) {
 	    bu_free(reg_base, "reg_base free");
 	    bu_free(cp, "cp free");
 	    return regp;
@@ -173,14 +172,14 @@ rt_in_rpp(struct xray *rp,
     /* Start with infinite ray, and trim it down */
 
     /* X axis */
-    if (*invdir < -SMALL_FASTF) {
+    if (*invdir < -SMALL_FASTF && *invdir > -INFINITY) {
 	/* Heading towards smaller numbers */
 	/* if (*min > *pt) miss */
 	if (rmax > (sv = (*min - *pt) * *invdir))
 	    rmax = sv;
 	if (rmin < (st = (*max - *pt) * *invdir))
 	    rmin = st;
-    }  else if (*invdir > SMALL_FASTF) {
+    }  else if (*invdir > SMALL_FASTF && *invdir < INFINITY) {
 	/* Heading towards larger numbers */
 	/* if (*max < *pt) miss */
 	if (rmax > (st = (*max - *pt) * *invdir))
@@ -199,12 +198,12 @@ rt_in_rpp(struct xray *rp,
 
     /* Y axis */
     pt++; invdir++; max++; min++;
-    if (*invdir < -SMALL_FASTF) {
+    if (*invdir < -SMALL_FASTF && *invdir > -INFINITY) {
 	if (rmax > (sv = (*min - *pt) * *invdir))
 	    rmax = sv;
 	if (rmin < (st = (*max - *pt) * *invdir))
 	    rmin = st;
-    }  else if (*invdir > SMALL_FASTF) {
+    }  else if (*invdir > SMALL_FASTF && *invdir < INFINITY) {
 	if (rmax > (st = (*max - *pt) * *invdir))
 	    rmax = st;
 	if (rmin < ((sv = (*min - *pt) * *invdir)))
@@ -216,12 +215,12 @@ rt_in_rpp(struct xray *rp,
 
     /* Z axis */
     pt++; invdir++; max++; min++;
-    if (*invdir < -SMALL_FASTF) {
+    if (*invdir < -SMALL_FASTF && *invdir > -INFINITY) {
 	if (rmax > (sv = (*min - *pt) * *invdir))
 	    rmax = sv;
 	if (rmin < (st = (*max - *pt) * *invdir))
 	    rmin = st;
-    }  else if (*invdir > SMALL_FASTF) {
+    }  else if (*invdir > SMALL_FASTF && *invdir < INFINITY) {
 	if (rmax > (st = (*max - *pt) * *invdir))
 	    rmax = st;
 	if (rmin < ((sv = (*min - *pt) * *invdir)))
@@ -443,7 +442,7 @@ rt_bound_internal(struct db_i *dbip, struct directory *dp,
 	RT_COMB_INTERNAL_INIT(combp);
 	combp->region_flag = 0;
 
-	RT_GET_TREE(tp, &rt_uniresource);
+	BU_GET(tp, union tree);
 	RT_TREE_INIT(tp);
 	tp->tr_l.tl_op = OP_SOLID;
 	tp->tr_l.tl_name = "dummy";

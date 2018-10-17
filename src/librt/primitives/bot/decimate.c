@@ -1,7 +1,7 @@
 /*                      D E C I M A T E . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2016 United States Government as represented by
+ * Copyright (c) 1999-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,8 +37,11 @@
 #include "rt/geom.h"
 #include "rt/primitives/bot.h"
 
-#include "./gct_decimation/meshdecimation.h"
-#include "./gct_decimation/meshoptimization.h"
+#if !defined(BRLCAD_DISABLE_GCT)
+#  include "./gct_decimation/meshdecimation.h"
+#  include "./gct_decimation/meshoptimization.h"
+#endif
+
 #include "./bot_edge.h"
 
 
@@ -465,15 +468,18 @@ edge_can_be_decimated(struct rt_bot_internal *bot,
     return 1;
 }
 
-
 /**
  * decimate a BOT using the new GCT decimator.
  * `feature_size` is the smallest feature size to keep undecimated.
  * returns the number of edges removed.
  */
 size_t
-rt_bot_decimate_gct(struct rt_bot_internal *bot, fastf_t feature_size)
-{
+#if defined(BRLCAD_DISABLE_GCT)
+rt_bot_decimate_gct(struct rt_bot_internal *UNUSED(bot), fastf_t UNUSED(feature_size)) {
+    bu_log("GCT decimation currently disabled - can not decimate.");
+    return 0;
+#else
+rt_bot_decimate_gct(struct rt_bot_internal *bot, fastf_t feature_size) {
     const int opt_level = 3; /* maximum */
     mdOperation mdop;
 
@@ -497,8 +503,8 @@ rt_bot_decimate_gct(struct rt_bot_internal *bot, fastf_t feature_size)
     mesh_optimization(bot->num_vertices, bot->num_faces, bot->faces, sizeof(bot->faces[0]), opt_level);
 
     return mdop.decimationcount;
+#endif
 }
-
 
 /**
  * routine to reduce the number of triangles in a BOT by edges

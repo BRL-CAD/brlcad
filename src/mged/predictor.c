@@ -1,7 +1,7 @@
 /*                     P R E D I C T O R . C
  * BRL-CAD
  *
- * Copyright (c) 1992-2016 United States Government as represented by
+ * Copyright (c) 1992-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -308,7 +308,7 @@ predictor_frame(void)
  * Called from set.c when the predictor variables are modified.
  */
 void
-predictor_hook(void)
+predictor_hook(const struct bu_structparse *UNUSED(sp), const char *UNUSED(c1), void *UNUSED(v1), const char *UNUSED(c2), void *UNUSED(v2))
 {
     if (mged_variables->mv_predictor > 0)
 	predictor_init();

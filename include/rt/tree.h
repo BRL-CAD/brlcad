@@ -1,7 +1,7 @@
 /*                          T R E E . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2016 United States Government as represented by
+ * Copyright (c) 1993-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -200,48 +200,26 @@ union tree {
     }
 
 /**
- * RT_GET_TREE returns a new initialized tree union pointer.  The
- * magic number is set to RT_TREE_MAGIC and all other members are
- * zero-initialized.
+ * RT_GET_TREE returns a union tree pointer with the magic number is
+ * set to RT_TREE_MAGIC.
  *
- * This is a malloc-efficient BU_ALLOC(tp, union tree) replacement.
- * Previously used tree nodes are stored in the provided resource
- * pointer (during RT_FREE_TREE) as a single-linked list using the
- * tb_left field.  Requests for new nodes are pulled first from that
- * list or allocated fresh if needed.
- *
- * DEPRECATED, use BU_GET()
+ * DEPRECATED, use BU_GET()+RT_TREE_INIT()
  */
 #define RT_GET_TREE(_tp, _res) { \
-        if (((_tp) = (_res)->re_tree_hd) != TREE_NULL) { \
-            (_res)->re_tree_hd = (_tp)->tr_b.tb_left;    \
-            (_tp)->tr_b.tb_left = TREE_NULL;             \
-            (_res)->re_tree_get++;                       \
-        } else {                                         \
-            BU_ALLOC(_tp, union tree);                   \
-            (_res)->re_tree_malloc++;                    \
-        }                                                \
+	BU_GET((_tp), union tree); \
         RT_TREE_INIT((_tp));                             \
     }
+
 
 /**
  * RT_FREE_TREE deinitializes a tree union pointer.
  *
- * This is a malloc-efficient replacement for bu_free(tp).  Instead of
- * actually freeing the nodes, they are added to a single-linked list
- * in rt_tree_hd down the tb_left field.  Requests for new nodes (via
- * RT_GET_TREE()) pull from this list instead of allocating new nodes.
- *
  * DEPRECATED, use BU_PUT()
  */
 #define RT_FREE_TREE(_tp, _res) { \
-        (_tp)->magic = 0;                         \
-        (_tp)->tr_b.tb_left = (_res)->re_tree_hd; \
-        (_tp)->tr_b.tb_right = TREE_NULL;         \
-        (_res)->re_tree_hd = (_tp);               \
-        (_tp)->tr_b.tb_op = OP_FREE;              \
-        (_res)->re_tree_free++;                   \
+	BU_PUT((_tp), union tree); \
     }
+
 
 /**
  * flattened version of the union tree
@@ -253,6 +231,49 @@ struct rt_tree_array
 };
 
 #define TREE_LIST_NULL  ((struct tree_list *)0)
+
+#ifdef USE_OPENCL
+/**
+ * Flattened version of the infix union tree.
+ */
+#define UOP_UNION        1         /**< @brief  Binary: L union R */
+#define UOP_INTERSECT    2         /**< @brief  Binary: L intersect R */
+#define UOP_SUBTRACT     3         /**< @brief  Binary: L subtract R */
+#define UOP_XOR          4         /**< @brief  Binary: L xor R, not both*/
+#define UOP_NOT          5         /**< @brief  Unary:  not L */
+#define UOP_GUARD        6         /**< @brief  Unary:  not L, or else! */
+#define UOP_XNOP         7         /**< @brief  Unary:  L, mark region */
+
+#define UOP_SOLID        0         /**< @brief  Leaf:  tr_stp -> solid */
+
+/**
+ * bit expr tree representation
+ *
+ * node:
+ *      uint uop : 3
+ *      uint right_child : 29
+ *
+ * leaf:
+ *      uint uop : 3
+ *      uint st_bit : 29
+ */
+struct bit_tree {
+    unsigned val;
+};
+
+struct cl_tree_bit {
+    cl_uint val;
+};
+
+/* Print a bit expr tree */
+RT_EXPORT extern void rt_pr_bit_tree(const struct bit_tree *btp,
+                                     int idx,
+                                     int lvl);
+
+RT_EXPORT extern void rt_bit_tree(struct bit_tree *btp,
+                                  const union tree *tp,
+                                  size_t *len);
+#endif
 
 /* Print an expr tree */
 RT_EXPORT extern void rt_pr_tree(const union tree *tp,

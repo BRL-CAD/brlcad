@@ -1,7 +1,7 @@
 /*                        B V I E W . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2016 United States Government as represented by
+ * Copyright (c) 1993-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -304,7 +304,7 @@ struct view_obj {
     mat_t               vo_pmodel2view;
     mat_t               vo_view2model;
     mat_t               vo_pmat;                /**< @brief  perspective matrix */
-    struct bu_observer  vo_observers;
+    struct bu_observer_list  vo_observers;
     void                (*vo_callback)();       /**< @brief  called in vo_update with vo_clientData and vop */
     void *              vo_clientData;          /**< @brief  passed to vo_callback */
     int                 vo_zclip;

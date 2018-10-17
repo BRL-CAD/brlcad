@@ -5,6 +5,7 @@ include_directories(
 
 BRLCAD_ADDEXEC(vdeck "cgarbs.c;match.c;parsarg.c;vdeck.c" "librt;${M_LIBRARY}")
 CMAKEFILES(std.h vextern.h)
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

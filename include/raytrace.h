@@ -1,7 +1,7 @@
 /*                      R A Y T R A C E . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2016 United States Government as represented by
+ * Copyright (c) 1993-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -154,6 +154,8 @@ __BEGIN_DECLS
 #include "./rt/primitives/ell.h"
 #include "./rt/primitives/tgc.h"
 #include "./rt/primitives/sketch.h"
+#include "./rt/primitives/annot.h"
+#include "./rt/primitives/script.h"
 #include "./rt/primitives/bot.h"
 #include "./rt/primitives/brep.h"
 #include "./rt/primitives/tor.h"

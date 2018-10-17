@@ -1,0 +1,108 @@
+set(debian_ignore_files
+  archer.desktop
+  brlcad-db.desktop
+  brlcad-doc-animation.desktop
+  brlcad-doc-mged.desktop
+  brlcad-doc.desktop
+  brlcad-doc.directory
+  brlcad.directory
+  brlcad.docs
+  brlcad.install
+  brlcad.menu
+  brlcad.postinst
+  brlcad.postrm
+  brlcad.sh
+  brlcad.xml
+  changelog
+  compat
+  control
+  copyright
+  icons/128x128/archer.png
+  icons/128x128/brlcad-db.png
+  icons/128x128/brlcad-doc.png
+  icons/128x128/brlcad-v4.png
+  icons/128x128/brlcad-v5.png
+  icons/128x128/brlcad-v6.png
+  icons/128x128/brlcad.png
+  icons/128x128/mged.png
+  icons/128x128/rtwizard.png
+  icons/16x16/archer.png
+  icons/16x16/brlcad-db.png
+  icons/16x16/brlcad-doc.png
+  icons/16x16/brlcad-v4.png
+  icons/16x16/brlcad-v5.png
+  icons/16x16/brlcad-v6.png
+  icons/16x16/brlcad.png
+  icons/16x16/mged.png
+  icons/16x16/rtwizard.png
+  icons/24x24/archer.png
+  icons/24x24/brlcad-db.png
+  icons/24x24/brlcad-doc.png
+  icons/24x24/brlcad-v4.png
+  icons/24x24/brlcad-v5.png
+  icons/24x24/brlcad-v6.png
+  icons/24x24/brlcad.png
+  icons/24x24/mged.png
+  icons/24x24/rtwizard.png
+  icons/256x256/archer.png
+  icons/256x256/brlcad-db.png
+  icons/256x256/brlcad-doc.png
+  icons/256x256/brlcad-v4.png
+  icons/256x256/brlcad-v5.png
+  icons/256x256/brlcad-v6.png
+  icons/256x256/brlcad.png
+  icons/256x256/mged.png
+  icons/256x256/rtwizard.png
+  icons/36x36/archer.png
+  icons/36x36/brlcad-db.png
+  icons/36x36/brlcad-doc.png
+  icons/36x36/brlcad-v4.png
+  icons/36x36/brlcad-v5.png
+  icons/36x36/brlcad-v6.png
+  icons/36x36/brlcad.png
+  icons/36x36/mged.png
+  icons/36x36/rtwizard.png
+  icons/48x48/archer.png
+  icons/48x48/brlcad-db.png
+  icons/48x48/brlcad-doc.png
+  icons/48x48/brlcad-v4.png
+  icons/48x48/brlcad-v5.png
+  icons/48x48/brlcad-v6.png
+  icons/48x48/brlcad.png
+  icons/48x48/mged.png
+  icons/48x48/rtwizard.png
+  icons/64x64/archer.png
+  icons/64x64/brlcad-db.png
+  icons/64x64/brlcad-doc.png
+  icons/64x64/brlcad-v4.png
+  icons/64x64/brlcad-v5.png
+  icons/64x64/brlcad-v6.png
+  icons/64x64/brlcad.png
+  icons/64x64/mged.png
+  icons/64x64/rtwizard.png
+  icons/96x96/archer.png
+  icons/96x96/brlcad-db.png
+  icons/96x96/brlcad-doc.png
+  icons/96x96/brlcad-v4.png
+  icons/96x96/brlcad-v5.png
+  icons/96x96/brlcad-v6.png
+  icons/96x96/brlcad.png
+  icons/96x96/mged.png
+  icons/96x96/rtwizard.png
+  mged.desktop
+  rtwizard.desktop
+  rules
+  source/format
+  source/include-binaries
+  )
+CMAKEFILES(${debian_ignore_files})
+CMAKEFILES(CMakeLists.txt)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8
+
+

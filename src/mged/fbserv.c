@@ -1,7 +1,7 @@
 /*                        F B S E R V . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2016 United States Government as represented by
+ * Copyright (c) 1995-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -233,7 +233,7 @@ fbserv_new_client_handler(ClientData clientData,
 
 
 void
-fbserv_set_port(void)
+fbserv_set_port(const struct bu_structparse *UNUSED(sp), const char *UNUSED(c1), void *UNUSED(v1), const char *UNUSED(c2), void *UNUSED(v2))
 {
     int i;
     int save_port;
@@ -409,7 +409,7 @@ fbserv_new_client_handler(ClientData clientData, int UNUSED(mask))
 
 
 void
-fbserv_set_port(void)
+fbserv_set_port(const struct bu_structparse *UNUSED(sp), const char *UNUSED(c1), void *UNUSED(v1), const char *UNUSED(c2), void *UNUSED(v2))
 {
     int i;
     int save_port;

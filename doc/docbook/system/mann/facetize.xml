@@ -1,71 +1,262 @@
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="facetize">
 
-<refmeta>
-  <refentrytitle>FACETIZE</refentrytitle>
-  <manvolnum>nged</manvolnum>
-  <refmiscinfo class="source">BRL-CAD</refmiscinfo>
-  <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
-</refmeta>
+  <refmeta>
+    <refentrytitle>FACETIZE</refentrytitle>
+    <manvolnum>nged</manvolnum>
+    <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+    <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
+  </refmeta>
 
-<refnamediv xml:id="name">
-  <refname>facetize</refname>
-  <refpurpose>Creates <emphasis>new_object</emphasis> as a BOT shape by tessellating all the
-	primitive shapes in <emphasis>old_object</emphasis> and then performing any Boolean operations specified
-	in <emphasis>old_object</emphasis>.
-   </refpurpose>
-</refnamediv>
+  <refnamediv xml:id="name">
+    <refname>facetize</refname>
+    <refpurpose>
+      Creates <emphasis>new_object</emphasis> using <emphasis>old_object</emphasis> as a
+      guide, creating an evaluated NMG or BoT planar approximation of the original shape.
+    </refpurpose>
+  </refnamediv>
 
-<!-- body begins here -->
-<refsynopsisdiv xml:id="synopsis">
-  <cmdsynopsis sepchar=" ">
-    <command>facetize</command>
-    <group choice="opt" rep="norepeat">
-     <arg choice="opt" rep="norepeat">-n</arg>
-     <arg choice="opt" rep="norepeat">-t</arg>
-     <arg choice="opt" rep="norepeat">-T</arg>
-    </group>
-    <group choice="opt" rep="norepeat">
-     <arg choice="opt" rep="norepeat">-P</arg>
-     <arg choice="opt" rep="norepeat"><replaceable>#</replaceable></arg>
-    </group>
-     <arg choice="req" rep="norepeat"><replaceable>new_object old_object</replaceable></arg>
-  </cmdsynopsis>
-</refsynopsisdiv>
+  <!-- body begins here -->
+  <refsynopsisdiv xml:id="synopsis">
+    <cmdsynopsis sepchar=" ">
+      <command>facetize</command>
+      <arg choice="opt" rep="norepeat">-h</arg>
+      <arg choice="opt" rep="norepeat">-v</arg>
+      <arg choice="opt" rep="norepeat">-q</arg>
+      <arg choice="opt" rep="norepeat">-r</arg>
+      <arg choice="opt" rep="norepeat">-n</arg>
+      <arg choice="opt" rep="norepeat">-T</arg>
+      <arg choice="opt" rep="norepeat">--NMG</arg>
+      <arg choice="opt" rep="norepeat">--CM</arg>
+      <arg choice="opt" rep="norepeat">--SPSR</arg>
+      <arg choice="req" rep="norepeat"><replaceable>old_object new_object</replaceable></arg>
+    </cmdsynopsis>
+    <cmdsynopsis sepchar=" ">
+      <command>facetize --CM</command>
+      <arg choice="opt" rep="norepeat">--feature-scale</arg>
+      <arg choice="opt" rep="norepeat">--feature-size</arg>
+      <arg choice="opt" rep="norepeat">--decimation-feature-size</arg>
+      <arg choice="opt" rep="norepeat">--max-time</arg>
+      <arg choice="opt" rep="norepeat">--max-pnts</arg>
+      <arg choice="req" rep="norepeat"><replaceable>old_object new_object</replaceable></arg>
+    </cmdsynopsis>
+    <cmdsynopsis sepchar=" ">
+      <command>facetize --SPSR</command>
+      <arg choice="opt" rep="norepeat">-d</arg>
+      <arg choice="opt" rep="norepeat">-w</arg>
+      <arg choice="opt" rep="norepeat">--samples-per-node</arg>
+      <arg choice="req" rep="norepeat"><replaceable>old_object new_object</replaceable></arg>
+    </cmdsynopsis>
+    <cmdsynopsis sepchar=" ">
+      <command>facetize -r</command>
+      <arg choice="opt" rep="norepeat">standard_options</arg>
+      <arg choice="opt" rep="norepeat">--resume</arg>
+      <arg choice="opt" rep="norepeat">--retry</arg>
+      <arg choice="opt" rep="norepeat">--in-place</arg>
+      <arg choice="req" rep="norepeat"><replaceable>output_hierarchy_obj</replaceable></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
 
-<refsection xml:id="description"><title>DESCRIPTION</title>
+  <refsection xml:id="description">
+    <title>DESCRIPTION</title>
+    <para>
+      Creates <emphasis>new_object</emphasis> as planar primitive shape (either an NMG or a BOT)
+      approximating the 3D volume bound by <emphasis>old_object</emphasis>.  The <emphasis>-r</emphasis>
+      option will operate per-region rather than on an entire object and produces a new hiearchy.
+    </para>
+    <para>
+      There are a number of different verbosity levels available for the facetize command.  One or mulitple specifications
+      of the <emphasis>-v</emphasis> flag will increase reporting detail about what the facetize command is doing in various
+      steps. To silence all output
+      specify the <emphasis>-q</emphasis> flag - this is generally not recommended as the messages produced by the
+      facetize command often contain important information about conversion failures in addition to reporting incremental
+      progress on large conversion tasks.
+    </para>
+  </refsection>
 
-  <para>Creates <emphasis>new_object</emphasis> as a BOT shape by tessellating all the
-	primitive shapes in <emphasis>old_object</emphasis> and then performing any Boolean operations specified
-	in <emphasis>old_object</emphasis>. The <emphasis>-T</emphasis> option indicates that all faces in the    	<emphasis>new_object</emphasis> should be triangulated. The <emphasis>-n</emphasis> option specifies that  	the resulting shape should be saved as an NMG shape. The <emphasis>-t</emphasis> option is to create TNURB 	faces rather than planar approximations (this option is still under development). The <emphasis>-P 	</emphasis> option is intended to allow the user to specify the number of CPUs to use for this command, 	but it is currently ignored.
-  </para>
-</refsection>
+  <refsection xml:id="regions">
+    <title>PER-REGION FACETIZATION AND PARTIAL CONVERSIONS</title>
+    <para>
+      Often, it is desirable to perform facetization on each region individually within a
+      geometry hierarchy, rather than trying for a single "all or nothing" shape.  This mode, available
+      with the <emphasis>-r</emphasis> flag, has the advantage of allowing for partial conversion of complex models even when
+      individual shapes within the model cannot be converted, as well as preserving all pre-existing
+      region attributes such as color and region ID.
+    </para>
+    <para>
+      Because multi-region hierarchy conversion is often a long process, the facetize command (when run in region mode) works
+      in a way that allows an incomplete conversion to resume work.  For example, if a large model is
+      to be converted it may be advantageous to attempt just the NMG conversion on the hierarchy first
+      to get a sense of the work to be done.  After the initial attempt, global facetize parameters can
+      be adjusted and a second NMG run attempted, perhaps this time with SPSR reconstruction also enabled.
+      Note that this works only for a hierarchy generated with the <command>facetize</command>.
+    </para>
+    <para>
+      By default the <command>facetize</command> command attempts to be non-destructive when operating on
+      objects - it will not rename or replace any existing geometry in normal operational modes.  However,
+      if a user needs to create a new version of an existing hierarchy which replaces geometry below regions
+      with BoT objects but leaves all upper level names intact, this may be accomplished by specifying the
+      <emphasis>--in-place</emphasis> option in combination with the <emphasis>-r</emphasis> option.
+    </para>
+  </refsection>
 
-<refsection xml:id="examples"><title>EXAMPLES</title>
+    <refsection xml:id="examples">
+    <title>EXAMPLES</title>
 
-  <para>The example shows the use of the <command>facetize</command> command to create a facetized BOT version 	of an existing object (<emphasis>old_object</emphasis>) and renaming that facetized object(<emphasis>	new_object</emphasis>).
-  </para>
-  <example><title>Create a facetized BOT version of an existing object.</title>
+    <example>
+      <title>Create a facetized BOT version of an existing object.</title>
+      <para>
+	The example shows the use of the <command>facetize</command> command to create a facetized
+	BOT version of an existing object (<emphasis>old_object</emphasis>) and renaming that facetized
+	object (<emphasis>new_object</emphasis>).  It will try first NMG conversion, and if that fails
+	attempts CM conversion.
+      </para>
+      <para>
+	<prompt>mged&gt;</prompt> <userinput>facetize region1.r region1.bot</userinput>
+      </para>
+    </example>
 
-    <variablelist>
-      <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>facetize region1.nmg region1.r</userinput></term>
-	   <listitem>
-	     <para>Creates a facetized BOT version of existing object <emphasis>region1.r</emphasis>.
-		     </para>
-	   </listitem>
-      </varlistentry>
-    </variablelist>
-  </example>
+    <example>
+      <title>Facetize all regions in a hierarchy.</title>
+      <para>
+	This runs the per region conversion on all regions under the "model" assembly and creates
+	a new conversion hierarchy under model_facetized.
+      </para>
+      <para>
+	<prompt>mged&gt;</prompt> <userinput>facetize -r model model.f</userinput>
+      </para>
+    </example>
 
- </refsection>
+    <example>
+      <title>Facetize all regions in a hierarchy, attempting only NMG conversion.</title>
+      <para>
+	This runs the per region conversion on all regions, but in the case of failure will not attempt
+	any fallback conversion methods.
+      </para>
+      <para>
+	<prompt>mged&gt;</prompt> <userinput>facetize -r --NMG model model.f</userinput>
+      </para>
+    </example>
 
-<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
+    <example>
+      <title>Retry failed conversion objects in a previous facetization attempt with new methodology.</title>
+      <para>
+	This retries the per region conversion on all regions that didn't originally succeed in the initial
+	conversion attempt, attempting only CM reconstruction without first retrying NMG conversion.
+      </para>
+      <para>
+	<prompt>mged&gt;</prompt> <userinput>facetize -r --resume model.f</userinput>
+      </para>
+    </example>
 
-<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
+  </refsection>
 
-  <para>
-    Reports of bugs or problems should be submitted via electronic
-    mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
-  </para>
-</refsection>
+  <refsection xml:id="methodology">
+    <title>METHODOLOGY</title>
+    <para>
+      Ideally users would not need to concern themselves with the details of how <command>facetize</command>
+      works, but unfortunately there are a significant number of real world geometries which will cause problems
+      for the current implementation.  In those cases, deeper understanding of what is happening can be
+      very important to maximizing the success of a conversion.
+    </para>
+    <para>
+      By default, conversions will first attempt a standard NMG facetization and boolean evaluation of
+      the existing geometry.  When it succeeds, NMG's output is generally the best quality output that
+      can be produced by any of BRL-CAD's available facetization methods.  If NMG booleans fail, a fall-back method based
+      on Bloomenthal's continuation method (CM) polygonalizer will be attempted by default.Note
+      that if any of the methodology flags (<emphasis>--NMG</emphasis>,<emphasis>--CM</emphasis>,
+      or <emphasis>--SPSR</emphasis>) are explicitly enabled, the other methodologies will be disabled unless they
+      too are explicitly enabled.
+    </para>
+    <para>
+      While the <command>facetize</command> command does not itself expose options to adjust the behavior of
+      the NMG boolean methodology, it will respect MGED's settings for absolute (<emphasis>abs</emphasis>),
+      relative (<emphasis>rel</emphasis>), and normal (<emphasis>norm</emphasis>) tolerances which are set with
+      the MGED <command>tol</command> command.  These settings may be changed between repeated runs of the
+      facetize command to attempt different NMG evaluations.
+    </para>
+    <para>
+      Bloomenthal's continuation method tends to be slower and exhibit artifacts around sharp corners - users
+      are advised to inspect the output from this method manually to ensure it will meet their needs. (All objects
+      created with this methodology in a multi-region hierarchical conversion are also included in a top level
+      combination with CONTINUATION in the name to allow users to more easily inspect them.)  By default, the
+      BRL-CAD raytracer is used to shoot pseudo-random rays at the object and accumulate an average observed
+      thickness of the model.  This thickness is then used as the basis for an initial guess at the appropriate
+      stepping size used by the CM walker (smaller means more triangles, and longer run times, but potentially
+      better preservation of small features.)  The initial thickness is multiplied by a scale factor, which
+      defaults to 0.15 but may be overridden by the user with the <emphasis>--feature-scale</emphasis> option.
+      Alternately, if the user has some specific knowledge of what feature size they are likely to want, they
+      may use the <emphasis>--feature-size</emphasis> option to directly set this parameter independent of the
+      observed average thickness.
+    </para>
+    <para>
+      Because CM tends to generate a very large number of triangles, it is necessary to post
+      process its initial mesh with a decimation routine to remove triangles which are not necessary to actual
+      feature representation.  This process is also feature-size based, and by default is set to 1.5x the feature size.
+      However, if the user wishes to preserve more triangles than the default behavior they may manually
+      override this parameter with the <emphasis>--decimation-feature-size</emphasis> option.
+    </para>
+    <para>
+      Both NMG and CM assume a geometry hierarchy containing only
+      valid solid objects.  Both methods will refuse to process any tree containing recognizably
+      non-solid objects, as these tend to cause run-time problems and generate invalid outputs.  For non-solid
+      objects, the "--SPSR" methodology may be enabled - it will apply the Kazhdan et. al. Screened Poisson Surface
+      Reconstruction (SPSR) process to a pseudo-randomly sampled point set generated from <emphasis>old_object</emphasis>.  This
+      methodology may not cope well with the type of points sets generated from CAD geometry and is off
+      by default in normal <command>facetize</command> processing, but it is also the only currently available
+      methodology in BRL-CAD which has a chance of generating a valid mesh from non-solid inputs.
+    </para>
+    <para>
+      There are three parameters available for the SPSR methodology specifically:  maximum reconstruction depth
+      (<emphasis>-d</emphasis>) will control the level of detail in the output mesh, point weight (<emphasis>-w</emphasis>)
+      which impacts how much the output will attempt to interpolate the original inputs, and samples per node
+      (see the Kazhdan et. al. paper for more information.)  For situations where the user wishes to experiment
+      with different point sampling schemes, they are referred to the <command>pnts</command> command which offers
+      more fine grained controls when it comes to generating point sets from BRL-CAD objects.
+    </para>
+  </refsection>
+
+  <refsection xml:id="util">
+    <title>USEFUL TRICKS</title>
+    <para>
+      These are some useful tricks for targeted manipulation of the facetization process.
+    </para>
+    <example>
+      <title>Reset CM state of a subset of objects.</title>
+      <para>
+	Use search -exec to reset just the continuation method flag (will result in resume
+	retrying CM on all missing objects, without triggering the full retry of all methods
+	entailed by the --retry option.)  More targeted searches can do this reset for more
+	narrow subsets of the .g database.
+      </para>
+      <para>
+	<prompt>mged&gt;</prompt> <userinput>search -attr facetize:CM -exec attr rm "{}" facetize:CM ";"</userinput>
+      </para>
+    </example>
+
+    <example>
+      <title>List invalid BoT objects below a comb</title>
+      <para>
+	Use lint -M to report on invalid objects below a comb.
+      </para>
+      <para>
+	<prompt>mged&gt;</prompt> <userinput> lint -M model.f</userinput>
+      </para>
+    </example>
+
+  </refsection>
+
+  <refsection xml:id="author">
+    <title>AUTHOR</title>
+    <para>BRL-CAD Team</para>
+  </refsection>
+
+  <refsection xml:id="bug_reports">
+    <title>BUG REPORTS</title>
+
+    <para>
+      Reports of bugs or problems should be submitted via electronic
+      mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
+    </para>
+  </refsection>
+
 </refentry>

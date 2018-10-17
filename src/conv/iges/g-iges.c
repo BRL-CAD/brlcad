@@ -1,7 +1,7 @@
 /*                        G - I G E S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -46,6 +46,7 @@
 #include "raytrace.h"
 #include "rt/geom.h"
 
+#include "bu/app.h"
 #include "bu/parallel.h"
 #include "bu/getopt.h"
 /* private */
@@ -79,7 +80,7 @@ extern void count_refs(struct db_i *dbip, struct directory *dp, void *ptr);
 extern int nmgregion_to_tsurf(char *name, struct nmgregion *r, FILE *fp_dir, FILE *fp_param);
 extern int write_solid_instance(int orig_de, mat_t mat, FILE *fp_dir, FILE *fp_param);
 extern void get_props(struct iges_properties *props, struct rt_comb_internal *comb);
-extern int comb_to_iges(struct rt_comb_internal *comb, int length, int dependent, struct iges_properties *props, int de_pointers[], FILE *fp_dir, FILE *fp_param);
+extern int comb_to_iges(struct rt_comb_internal *comb, size_t length, int dependent, struct iges_properties *props, int de_pointers[], FILE *fp_dir, FILE *fp_param);
 
 static void
 usage(const char *argv0)
@@ -401,7 +402,7 @@ main(int argc, char *argv[])
 
     if (!multi_file) {
 	/* Copy the parameter section from the temporary file to the output file */
-	if ((bu_fseek(fp_param, 0, 0))) {
+	if ((fseek(fp_param, 0, 0))) {
 	    perror("g-iges");
 	    bu_exit(1, "Cannot seek to start of temporary file\n");
 	}
@@ -577,7 +578,7 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 			bu_log("too many files with the same name (%s)\n", dp->d_namep);
 			bu_exit(1, "Cannot create a unique filename, \n");
 		    }
-		    snprintf(multi_name, len, "%s/%s%s.igs", output_file, dp->d_namep, suffix);
+		    snprintf(multi_name, len, "%s/%s%.6s.igs", output_file, dp->d_namep, suffix);
 		}
 		if ((fp_dir = fopen(multi_name, "wb")) == NULL) {
 		    perror("g-iges");
@@ -618,7 +619,7 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 	    char copy_buffer[CP_BUF_SIZE] = {0};
 
 	    /* Copy the parameter section from the temporary file to the output file */
-	    if ((bu_fseek(fp_param, 0, 0))) {
+	    if ((fseek(fp_param, 0, 0))) {
 		perror("g-iges");
 		bu_exit(1, "Cannot seek to start of temporary file\n");
 	    }
@@ -778,7 +779,7 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, void *UNUSED(ptr))
     props.color[2] = 0;
     get_props(&props, comb);
 
-    dp->d_uses = (-comb_to_iges(comb, (int)comb_len, dependent, &props, de_pointers, fp_dir, fp_param));
+    dp->d_uses = (-comb_to_iges(comb, comb_len, dependent, &props, de_pointers, fp_dir, fp_param));
 
     if (!dp->d_uses) {
 	comb_error++;

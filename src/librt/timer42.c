@@ -1,7 +1,7 @@
 /*                       T I M E R 4 2 . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2016 United States Government as represented by
+ * Copyright (c) 1985-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,6 +28,11 @@
 
 #include "vmath.h"
 #include "raytrace.h"
+
+#ifndef HAVE_DECL_GETTIMEOFDAY
+extern int gettimeofday(struct timeval *, void *);
+#endif
+
 
 static struct timeval time0;	/* Time at which timing started */
 static struct rusage ru0;	/* Resource utilization at the start */
@@ -93,9 +98,8 @@ static void
 prusage(register struct rusage *r0, register struct rusage *r1, struct timeval *e, struct timeval *b, struct bu_vls *vp)
 {
     struct timeval tdiff;
-    register time_t t;
-    register char *cp;
-    register int i;
+    time_t t;
+    char *cp;
     int ms;
 
     BU_CK_VLS(vp);
@@ -111,6 +115,13 @@ prusage(register struct rusage *r0, register struct rusage *r1, struct timeval *
 	if (*cp != '%')
 	    bu_vls_putc(vp, *cp);
 	else if (cp[1]) switch (*++cp) {
+		case 'E':
+		    psecs(ms / 100, vp);
+		    break;
+
+		case 'P':
+		    bu_vls_printf(vp, "%d%%", (int) (t*100 / ((ms ? ms : 1))));
+		    break;
 
 		case 'U':
 		    tvsub(&tdiff, &r1->ru_utime, &r0->ru_utime);
@@ -122,18 +133,14 @@ prusage(register struct rusage *r0, register struct rusage *r1, struct timeval *
 		    bu_vls_printf(vp, "%ld.%01ld", (long)tdiff.tv_sec, (long)(tdiff.tv_usec/100000));
 		    break;
 
-		case 'E':
-		    psecs(ms / 100, vp);
-		    break;
-
-		case 'P':
-		    bu_vls_printf(vp, "%d%%", (int) (t*100 / ((ms ? ms : 1))));
-		    break;
+#ifndef _POSIX_C_SOURCE
 
 		case 'W':
-		    i = r1->ru_nswap - r0->ru_nswap;
+		{
+		    int i = r1->ru_nswap - r0->ru_nswap;
 		    bu_vls_printf(vp, "%d", i);
 		    break;
+		}
 
 		case 'X':
 		    bu_vls_printf(vp, "%ld", (long)(t == 0 ? 0 : (r1->ru_ixrss-r0->ru_ixrss)/t));
@@ -166,9 +173,13 @@ prusage(register struct rusage *r0, register struct rusage *r1, struct timeval *
 		case 'O':
 		    bu_vls_printf(vp, "%ld", (long)(r1->ru_oublock-r0->ru_oublock));
 		    break;
+
 		case 'C':
 		    bu_vls_printf(vp, "%ld+%ld", (long)(r1->ru_nvcsw-r0->ru_nvcsw), (long)(r1->ru_nivcsw-r0->ru_nivcsw));
 		    break;
+
+#endif /* _POSIX_C_SOURCE */
+
 	    }
     }
 }

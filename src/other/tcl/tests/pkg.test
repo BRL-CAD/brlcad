@@ -518,6 +518,16 @@ test pkg-2.52 {Tcl_PkgRequire procedure, picking best stable version} {
     set x
 } {1.3}
 
+test pkg-2.53 {Tcl_PkgRequire procedure, picking best stable version} {
+    package forget t
+    foreach i {1.2b1 1.1} {
+	package ifneeded t $i "set x $i; package provide t $i"
+    }
+    set x xxx
+    package require t
+    set x
+} {1.1}
+
 
 
 test pkg-3.1 {Tcl_PackageCmd procedure} {

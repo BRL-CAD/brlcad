@@ -1,13 +1,7 @@
 
 if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   # Minimum required version of CMake
-  cmake_minimum_required(VERSION 2.8)
-  if(COMMAND CMAKE_POLICY)
-    CMAKE_POLICY(SET CMP0003 NEW)
-    if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-      CMAKE_POLICY(SET CMP0026 OLD)
-    endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-  endif(COMMAND CMAKE_POLICY)
+  cmake_minimum_required(VERSION 3.1.3)
 
   # Set CMake project name
   project(CREO2BRL)
@@ -44,7 +38,7 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   set(CREO_DEFS "-DPRO_MACHINE=36 -DPRO_OS=4 -DPRO_USE_VAR_ARGS -D_USING_V100_SDK71_")
 
   # BRL-CAD definitions
-  set(BRLCAD_DEFS "-DHAVE_CONFIG_H -DBRLCAD_DLL -DBRLCADBUILD -DBU_DLL_IMPORTS -DBN_DLL_IMPORTS -DNMG_DLL_IMPORTS -DBG_DLL_IMPORTS -DBREP_DLL_IMPORTS -DRT_DLL_IMPORTS -DWDB_DLL_IMPORTS -DTIE_DLL_IMPORTS -DDB5_DLL_IMPORTS -DVDS_DLL_IMPORTS -DGDIAM_DLL_IMPORTS -DTINYCTHREAD_DLL_IMPORTS -DON_DLL_IMPORTS -DLZ4_DLL_IMPORT=1")
+  set(BRLCAD_DEFS "-DHAVE_CONFIG_H -DBRLCAD_DLL -DBRLCADBUILD -DBU_DLL_IMPORTS -DBN_DLL_IMPORTS -DNMG_DLL_IMPORTS -DBG_DLL_IMPORTS -DBREP_DLL_IMPORTS -DRT_DLL_IMPORTS -DWDB_DLL_IMPORTS -DTIE_DLL_IMPORTS -DDB5_DLL_IMPORTS -DVDS_DLL_IMPORTS -DGDIAM_DLL_IMPORTS -DON_DLL_IMPORTS -DLZ4_DLL_IMPORT=1")
 
   # These settings are global to all the configs.
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CREO_DEFS} ${BRLCAD_DEFS}" CACHE STRING "" FORCE)
@@ -207,13 +201,12 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     libnmg
     libp2t
     librt
-    libtinycthread
     libvds
     libwdb
     openNURBS
     regex
-    y2038
     zlib1
+	libSPSR
     )
   set(BRLCAD_STATIC_LIBS)
   set(brlcadlibs_notinstalled)
@@ -293,6 +286,8 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
       set(DAT_TEXT_DIR "${CREO_ROOT_DIR}/${MDIR}/${CREO_MSG_DIR}")
       configure_file(creo-brl.dat.in ${CMAKE_CURRENT_BINARY_DIR}/${CFG_TYPE}/creo-brl-debug.dat @ONLY)
     endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+	set_property(TARGET creo-brl-exe APPEND PROPERTY COMPILE_DEFINITIONS "TINYCTHREAD_DLL_IMPORTS")
+	set_property(TARGET creo-brl-exe APPEND PROPERTY COMPILE_DEFINITIONS "SPSR_DLL_IMPORTS")
   endif(DEFINED CREO_EXEC_PLUGIN)
 
   # Install the resource files
@@ -350,6 +345,10 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     "${REGEX_INCLUDE_DIR}"
     )
 
+  # The build shims aren't so great at mocking the initialization
+  # behavior of the real code.
+  CHECK_CXX_FLAG("Wno-maybe-uninitialized")
+
   set(creo_brl_srcs ${creo_brl_srcs} shim.cpp)
   add_definitions(-DTEST_BUILD)
   add_library(creo-brl ${creo_brl_srcs})
@@ -368,12 +367,12 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "GDIAM_DLL_IMPORTS")
     set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "VDS_DLL_IMPORTS")
     set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "ON_DLL_IMPORTS")
-    set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "TINYCTHREAD_DLL_IMPORTS")
     set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "LZ4_DLL_IMPORT=1")
   endif(CPP_DLL_DEFINES)
 
   # Distcheck file list
   set(creo_dist_files
+    ${creo_brl_srcs}
     README.txt
     cmake_uninstall.cmake.in
     creo-brl.dat.in
@@ -383,6 +382,7 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     shim.h
     )
 CMAKEFILES(${creo_dist_files})
+CMAKEFILES(CMakeLists.txt)
 
 endif(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 

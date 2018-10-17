@@ -1,7 +1,7 @@
 /*                           R P C . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2016 United States Government as represented by
+ * Copyright (c) 1990-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -172,6 +172,10 @@
 #include "raytrace.h"
 
 #include "../../librt_private.h"
+
+#if defined(HAVE_ASINH) && !defined(HAVE_DECL_ASINH)
+extern double asinh(double x);
+#endif
 
 static int rpc_is_valid(struct rt_rpc_internal *rpc);
 

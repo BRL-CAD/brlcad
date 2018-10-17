@@ -1,7 +1,7 @@
 /*                        P I X C M P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -215,7 +215,7 @@ main(int argc, char *argv[])
     }
 
     /* skip requested pixels/bytes in FILE1 */
-    if (f1_skip && bu_fseek(f1, f1_skip, SEEK_SET)) {
+    if (f1_skip && fseek(f1, f1_skip, SEEK_SET)) {
 	bu_log("ERROR: Unable to seek %zd %s%s in FILE1\n",
 	       f1_skip,
 	       print_bytes?"byte":"pixel",
@@ -225,7 +225,7 @@ main(int argc, char *argv[])
     }
 
     /* skip requested pixels in FILE2 */
-    if (f2_skip && bu_fseek(f2, f2_skip, SEEK_SET)) {
+    if (f2_skip && fseek(f2, f2_skip, SEEK_SET)) {
 	bu_log("ERROR: Unable to seek %zd %s%s in FILE2\n",
 	       f1_skip,
 	       print_bytes?"byte":"pixel",

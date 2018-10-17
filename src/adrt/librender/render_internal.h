@@ -1,7 +1,7 @@
 /*               R E N D E R _ I N T E R N A L . H
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2016 United States Government as represented by
+ * Copyright (c) 2007-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,6 +29,8 @@
 #ifndef RENDER_EXPORT
 #  if defined(RENDER_DLL_EXPORTS) && defined(RENDER_DLL_IMPORTS)
 #    error "Only RENDER_DLL_EXPORTS or RENDER_DLL_IMPORTS can be defined, not both."
+#  elif defined(STATIC_BUILD)
+#    define RENDER_EXPORT
 #  elif defined(RENDER_DLL_EXPORTS)
 #    define RENDER_EXPORT __declspec(dllexport)
 #  elif defined(RENDER_DLL_IMPORTS)

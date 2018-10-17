@@ -1,7 +1,7 @@
 /*                         G - N M G . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2016 United States Government as represented by
+ * Copyright (c) 1993-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,8 +34,10 @@
 #include "bio.h"
 
 /* interface headers */
-#include "vmath.h"
+#include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/snooze.h"
+#include "vmath.h"
 #include "nmg.h"
 #include "rt/geom.h"
 #include "raytrace.h"
@@ -264,9 +266,6 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
      */
     db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
 
-    if (RT_G_DEBUG&DEBUG_MEM_FULL)
-	bu_prmem("At end of do_region_end()");
-
     BU_ALLOC(curtree, union tree);
     RT_TREE_INIT(curtree);
     curtree->tr_op = OP_NOP;
@@ -424,7 +423,7 @@ main(int argc, char **argv)
     double percent;
 
     bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
-    sleep(1);
+    bu_snooze(BU_SEC2USEC(1));
 
     bu_setprogname(argv[0]);
     bu_setlinebuf(stderr);

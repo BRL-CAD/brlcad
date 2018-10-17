@@ -1,7 +1,7 @@
 #                 Q U A D D I S P L A Y . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2016 United States Government as represented by
+# Copyright (c) 1998-2018 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -126,7 +126,7 @@ option add *QuadDisplay.height 400 widgetDefault
     public method zbuffer {args}
     public method zclip {args}
 
-    if {$tcl_platform(os) != "Windows NT"} {
+    if {$::tcl_platform(os) != "Windows NT"} {
     }
     public method fb_active {args}
     public method fb_observe {args}
@@ -969,7 +969,7 @@ option add *QuadDisplay.height 400 widgetDefault
     eval $itk_component(lr) bounds $args
 }
 
-if {$tcl_platform(os) != "Windows NT"} {
+if {$::tcl_platform(os) != "Windows NT"} {
 }
 ::itcl::body QuadDisplay::fb_active {args} {
     eval $itk_component($itk_option(-pane)) fb_active $args

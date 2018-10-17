@@ -137,7 +137,7 @@ static Tcl_ThreadDataKey dataKey;
 static void		GenerateXEvent(HWND hwnd, UINT message,
 			    WPARAM wParam, LPARAM lParam);
 static unsigned int	GetState(UINT message, WPARAM wParam, LPARAM lParam);
-static void 		GetTranslatedKey(XKeyEvent *xkey);
+static void 		GetTranslatedKey(XKeyEvent *xkey, UINT type);
 static void		UpdateInputLanguage(int charset);
 static int		HandleIMEComposition(HWND hwnd, LPARAM lParam);
 
@@ -1187,7 +1187,8 @@ GenerateXEvent(
 	    event.type = KeyPress;
 	    event.xany.send_event = -1;
 	    event.xkey.keycode = wParam;
-	    GetTranslatedKey(&event.xkey);
+	    GetTranslatedKey(&event.xkey, (message == WM_KEYDOWN) ? WM_CHAR :
+	            WM_SYSCHAR);
 	    break;
 
 	case WM_SYSKEYUP:
@@ -1243,9 +1244,10 @@ GenerateXEvent(
 	    if (IsDBCSLeadByte((BYTE) wParam)) {
 		MSG msg;
 
-		if ((PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE) != 0)
+		if ((PeekMessage(&msg, NULL, WM_CHAR, WM_CHAR,
+			PM_NOREMOVE) != 0)
 			&& (msg.message == WM_CHAR)) {
-		    GetMessage(&msg, NULL, 0, 0);
+		    GetMessage(&msg, NULL, WM_CHAR, WM_CHAR);
 		    event.xkey.nbytes = 2;
 		    event.xkey.trans_chars[1] = (char) msg.wParam;
 		}
@@ -1392,19 +1394,20 @@ GetState(
 
 static void
 GetTranslatedKey(
-    XKeyEvent *xkey)
+    XKeyEvent *xkey,
+    UINT type)
 {
     MSG msg;
 
     xkey->nbytes = 0;
 
     while ((xkey->nbytes < XMaxTransChars)
-	    && PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE)) {
-	if ((msg.message != WM_CHAR) && (msg.message != WM_SYSCHAR)) {
+	    && PeekMessage(&msg, NULL, type, type, PM_NOREMOVE)) {
+	if (msg.message != type) {
 	    break;
 	}
 
-	GetMessage(&msg, NULL, 0, 0);
+	GetMessage(&msg, NULL, type, type);
 
 	/*
 	 * If this is a normal character message, we may need to strip off the

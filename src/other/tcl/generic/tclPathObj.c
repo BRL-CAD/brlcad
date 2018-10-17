@@ -821,50 +821,47 @@ GetExtension(
  *---------------------------------------------------------------------------
  */
 
+Tcl_Obj * TclJoinPath(int elements, Tcl_Obj * const objv[]);
+
 Tcl_Obj *
 Tcl_FSJoinPath(
     Tcl_Obj *listObj,		/* Path elements to join, may have a zero
 				 * reference count. */
     int elements)		/* Number of elements to use (-1 = all) */
 {
-    Tcl_Obj *res;
+    Tcl_Obj *copy, *res;
+    int objc;
+    Tcl_Obj **objv;
+
+    if (Tcl_ListObjLength(NULL, listObj, &objc) != TCL_OK) {
+	return NULL;
+    }
+
+    elements = ((elements >= 0) && (elements <= objc)) ? elements : objc;
+    copy = TclListObjCopy(NULL, listObj);
+    Tcl_ListObjGetElements(NULL, listObj, &objc, &objv);
+    res = TclJoinPath(elements, objv);
+    Tcl_DecrRefCount(copy);
+    return res;
+}
+
+Tcl_Obj *
+TclJoinPath(
+    int elements,
+    Tcl_Obj * const objv[])
+{
+    Tcl_Obj *res = NULL;	/* Resulting path object (container of join) */
+    Tcl_Obj *elt;		/* Path part (result if returns part of path) */
     int i;
     Tcl_Filesystem *fsPtr = NULL;
 
-    if (elements < 0) {
-	if (Tcl_ListObjLength(NULL, listObj, &elements) != TCL_OK) {
-	    return NULL;
-	}
-    } else {
-	/*
-	 * Just make sure it is a valid list.
-	 */
-
-	int listTest;
-
-	if (Tcl_ListObjLength(NULL, listObj, &listTest) != TCL_OK) {
-	    return NULL;
-	}
-
-	/*
-	 * Correct this if it is too large, otherwise we will waste our time
-	 * joining null elements to the path.
-	 */
-
-	if (elements > listTest) {
-	    elements = listTest;
-	}
-    }
-
-    res = NULL;
-
     for (i = 0; i < elements; i++) {
-	Tcl_Obj *elt, *driveName = NULL;
 	int driveNameLength, strEltLen, length;
 	Tcl_PathType type;
 	char *strElt, *ptr;
-
-	Tcl_ListObjIndex(NULL, listObj, i, &elt);
+	Tcl_Obj *driveName = NULL;
+	
+	elt = objv[i];
 
 	/*
 	 * This is a special case where we can be much more efficient, where
@@ -873,19 +870,23 @@ Tcl_FSJoinPath(
 	 * object which can be normalized more efficiently. Currently we only
 	 * use the special case when we have exactly two elements, but we
 	 * could expand that in the future.
+         *
+         * Bugfix [a47641a0]. TclNewFSPathObj requires first argument
+         * to be an absolute path. Added a check for that elt is absolute.
 	 */
 
-	if ((i == (elements-2)) && (i == 0) && (elt->typePtr == &tclFsPathType)
-		&& !(elt->bytes != NULL && (elt->bytes[0] == '\0'))) {
-	    Tcl_Obj *tail;
+	if ((i == (elements-2)) && (i == 0)
+                && (elt->typePtr == &tclFsPathType)
+		&& !((elt->bytes != NULL) && (elt->bytes[0] == '\0'))
+                && TclGetPathType(elt, NULL, NULL, NULL) == TCL_PATH_ABSOLUTE) {
+            Tcl_Obj *tailObj = objv[i+1];
 
-	    Tcl_ListObjIndex(NULL, listObj, i+1, &tail);
-	    type = TclGetPathType(tail, NULL, NULL, NULL);
+	    type = TclGetPathType(tailObj, NULL, NULL, NULL);
 	    if (type == TCL_PATH_RELATIVE) {
 		const char *str;
 		int len;
 
-		str = Tcl_GetStringFromObj(tail, &len);
+		str = Tcl_GetStringFromObj(tailObj, &len);
 		if (len == 0) {
 		    /*
 		     * This happens if we try to handle the root volume '/'.
@@ -893,10 +894,7 @@ Tcl_FSJoinPath(
 		     * the base itself is just fine!
 		     */
 
-		    if (res != NULL) {
-			TclDecrRefCount(res);
-		    }
-		    return elt;
+		    goto partReturn; /* return elt; */
 		}
 
 		/*
@@ -917,11 +915,21 @@ Tcl_FSJoinPath(
 		     */
 
 		    if ((tclPlatform != TCL_PLATFORM_WINDOWS)
-			    || (strchr(Tcl_GetString(elt), '\\') == NULL)) {
-			if (res != NULL) {
-			    TclDecrRefCount(res);
+			    || (strchr(Tcl_GetString(elt), '\\') == NULL)
+		    ) {
+			if (PATHFLAGS(elt)) {
+			    elt = TclNewFSPathObj(elt, str, len);
+			    goto partReturn; /* return elt; */
 			}
-			return TclNewFSPathObj(elt, str, len);
+			if (TCL_PATH_ABSOLUTE != Tcl_FSGetPathType(elt)) {
+			    elt = TclNewFSPathObj(elt, str, len);
+			    goto partReturn; /* return elt; */
+			}
+			(void) Tcl_FSGetNormalizedPath(NULL, elt);
+			if (elt == PATHOBJ(elt)->normPathPtr) {
+			    elt = TclNewFSPathObj(elt, str, len);
+			    goto partReturn; /* return elt; */
+			}
 		    }
 		}
 
@@ -930,24 +938,21 @@ Tcl_FSJoinPath(
 		 * more general code below handle things.
 		 */
 	    } else if (tclPlatform == TCL_PLATFORM_UNIX) {
-		if (res != NULL) {
-		    TclDecrRefCount(res);
-		}
-		return tail;
+		elt = tailObj;
+		goto partReturn; /* return elt; */
 	    } else {
-		const char *str = TclGetString(tail);
+		const char *str = TclGetString(tailObj);
 
 		if (tclPlatform == TCL_PLATFORM_WINDOWS) {
 		    if (strchr(str, '\\') == NULL) {
-			if (res != NULL) {
-			    TclDecrRefCount(res);
-			}
-			return tail;
+			elt = tailObj;
+			goto partReturn; /* return elt; */
 		    }
 		}
 	    }
 	}
 	strElt = Tcl_GetStringFromObj(elt, &strEltLen);
+	driveNameLength = 0;
 	type = TclGetPathType(elt, &fsPtr, &driveNameLength, &driveName);
 	if (type != TCL_PATH_RELATIVE) {
 	    /*
@@ -1003,6 +1008,12 @@ Tcl_FSJoinPath(
 		}
 	    }
 	    ptr = strElt;
+	    /* [Bug f34cf83dd0] */
+	    if (driveNameLength > 0) {
+		if (ptr[0] == '/' && ptr[-1] == '/') {
+		    goto noQuickReturn;
+		}
+	    }
 	    while (*ptr != '\0') {
 		if (*ptr == '/' && (ptr[1] == '/' || ptr[1] == '\0')) {
 		    /*
@@ -1014,16 +1025,12 @@ Tcl_FSJoinPath(
 		}
 		ptr++;
 	    }
-	    if (res != NULL) {
-		TclDecrRefCount(res);
-	    }
-
 	    /*
-	     * This element is just what we want to return already - no
-	     * further manipulation is requred.
+	     * This element is just what we want to return already; no further
+	     * manipulation is requred.
 	     */
 
-	    return elt;
+	    goto partReturn; /* return elt; */
 	}
 
 	/*
@@ -1034,10 +1041,8 @@ Tcl_FSJoinPath(
     noQuickReturn:
 	if (res == NULL) {
 	    res = Tcl_NewObj();
-	    ptr = Tcl_GetStringFromObj(res, &length);
-	} else {
-	    ptr = Tcl_GetStringFromObj(res, &length);
 	}
+	ptr = Tcl_GetStringFromObj(res, &length);
 
 	/*
 	 * Strip off any './' before a tilde, unless this is the beginning of
@@ -1066,10 +1071,11 @@ Tcl_FSJoinPath(
 	    int needsSep = 0;
 
 	    if (fsPtr->filesystemSeparatorProc != NULL) {
-		Tcl_Obj *sep = (*fsPtr->filesystemSeparatorProc)(res);
+		Tcl_Obj *sep = fsPtr->filesystemSeparatorProc(res);
 
 		if (sep != NULL) {
 		    separator = TclGetString(sep)[0];
+		    TclDecrRefCount(sep);
 		}
 		/* Safety check in case the VFS driver caused sharing */
 		if (Tcl_IsShared(res)) {
@@ -1109,6 +1115,12 @@ Tcl_FSJoinPath(
 	res = Tcl_NewObj();
     }
     return res;
+
+partReturn:
+    if (res != NULL) {
+	TclDecrRefCount(res);
+    }
+    return elt;
 }
 
 /*
@@ -1857,7 +1869,6 @@ Tcl_FSGetNormalizedPath(
 	 */
 
 	(void) Tcl_GetStringFromObj(dir, &cwdLen);
-	cwdLen += (Tcl_GetString(copy)[cwdLen] == '/');
 
 	/* Normalize the combined string. */
 
@@ -1878,13 +1889,13 @@ Tcl_FSGetNormalizedPath(
 	     * to a normalized head, we can more efficiently normalize the
 	     * combined path by passing over only the unnormalized tail
 	     * portion.  When this is sufficient, prior developers claim
-	     * this should be much faster.  We use 'cwdLen-1' so that we are
+	     * this should be much faster.  We use 'cwdLen' so that we are
 	     * already pointing at the dir-separator that we know about.
 	     * The normalization code will actually start off directly
 	     * after that separator.
 	     */
 
-	    TclFSNormalizeToUniquePath(interp, copy, cwdLen-1);
+	    TclFSNormalizeToUniquePath(interp, copy, cwdLen);
 	}
 
 	/* Now we need to construct the new path object. */
@@ -2499,27 +2510,18 @@ SetFsPathFromAny(
 		}
 		TclDecrRefCount(parts);
 	    } else {
-		/*
-		 * Simple case. "rest" is relative path. Just join it. The
-		 * "rest" object will be freed when Tcl_FSJoinToPath returns
-		 * (unless something else claims a refCount on it).
-		 */
+		Tcl_Obj *pair[2];
 
-		Tcl_Obj *joined;
-		Tcl_Obj *rest = Tcl_NewStringObj(name+split+1, -1);
-
-		Tcl_IncrRefCount(transPtr);
-		joined = Tcl_FSJoinToPath(transPtr, 1, &rest);
-		TclDecrRefCount(transPtr);
-		transPtr = joined;
+		pair[0] = transPtr;
+		pair[1] = Tcl_NewStringObj(name+split+1, -1);
+		transPtr = TclJoinPath(2, pair);
+		TclDecrRefCount(pair[0]);
+		TclDecrRefCount(pair[1]);
 	    }
 	}
 	Tcl_DStringFree(&temp);
     } else {
-	/* Bug 3479689: protect 0-refcount pathPth from getting freed */
-	pathPtr->refCount++;
-	transPtr = Tcl_FSJoinToPath(pathPtr, 0, NULL);
-	pathPtr->refCount--;
+	transPtr = TclJoinPath(1, &pathPtr);
     }
 
     /*

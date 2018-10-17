@@ -1,7 +1,7 @@
 /*                       D B 5 _ B I N . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2016 United States Government as represented by
+ * Copyright (c) 2000-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -66,41 +66,6 @@ static const int binu_sizes[]={
 };
 
 
-/**
- * XXX these are the interface routines needed for table.c
- */
-int
-rt_bin_unif_export5(struct bu_external *UNUSED(ep),
-		    const struct rt_db_internal *UNUSED(ip),
-		    double UNUSED(local2mm),
-		    const struct db_i *UNUSED(dbip),
-		    struct resource *UNUSED(resp))
-{
-    bu_log("rt_bin_unif_export5() not implemented\n");
-    return -1;
-}
-
-int
-rt_bin_unif_import5(struct rt_db_internal *UNUSED(ip),
-		    const struct bu_external *UNUSED(ep),
-		    const mat_t UNUSED(mat),
-		    const struct db_i *UNUSED(dbip),
-		    struct resource *UNUSED(resp))
-{
-    bu_log("rt_bin_unif_import5() not implemented\n");
-    return -1;
-}
-
-int
-rt_bin_mime_import5(struct rt_db_internal * UNUSED(ip),
-		    const struct bu_external *UNUSED(ep),
-		    const mat_t UNUSED(mat),
-		    const struct db_i *UNUSED(dbip),
-		    struct resource *UNUSED(resp))
-{
-    bu_log("rt_bin_mime_import5() not implemented\n");
-    return -1;
-}
 
 /**
  * Import a uniform-array binary object from the database format to
@@ -211,7 +176,7 @@ rt_binunif_import5_minor_type(struct rt_db_internal *ip,
 void
 rt_binunif_dump(struct rt_binunif_internal *bip) {
     RT_CK_BINUNIF(bip);
-    bu_log("rt_bin_unif_internal <%p>...\n", (void *)bip);
+    bu_log("rt_binunif_internal <%p>...\n", (void *)bip);
     bu_log("  type = x%x = %d", bip->type, bip->type);
     bu_log("  count = %ld  first = 0x%02x", bip->count,
 	   bip->u.uint8[0] & 0x0ff);
@@ -318,14 +283,11 @@ rt_binunif_export5(struct bu_external		*ep,
  * tab, and give parameter values.
  */
 int
-rt_binunif_describe(struct bu_vls *str,
-		     const struct rt_db_internal *ip,
-		     int UNUSED(verbose),
-		     double UNUSED(mm2local))
+rt_binunif_describe(struct bu_vls *str, const struct rt_db_internal *ip, int UNUSED(verbose), double UNUSED(mm2local))
 {
-    register struct rt_binunif_internal	*bip;
-    char					buf[256];
-    unsigned short				wid;
+    register struct rt_binunif_internal *bip;
+    char buf[256];
+    unsigned short wid;
 
     bip = (struct rt_binunif_internal *) ip->idb_ptr;
     RT_CK_BINUNIF(bip);

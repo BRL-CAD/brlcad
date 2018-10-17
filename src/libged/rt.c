@@ -1,7 +1,7 @@
 /*                         R T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2016 United States Government as represented by
+ * Copyright (c) 2008-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,10 +34,14 @@
 #include "bresource.h"
 
 #include "tcl.h"
-#include "bu/cmd.h"
 
+#include "bu/app.h"
 
 #include "./ged_private.h"
+
+#if defined(HAVE_FDOPEN) && !defined(HAVE_DECL_FDOPEN)
+extern FILE *fdopen(int fd, const char *mode);
+#endif
 
 
 struct _ged_rt_client_data {

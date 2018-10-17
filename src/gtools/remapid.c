@@ -1,7 +1,7 @@
 /*                       R E M A P I D . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2016 United States Government as represented by
+ * Copyright (c) 1997-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -39,6 +39,7 @@
 #include "bu/getopt.h"
 #include "bu/redblack.h"
 #include "bu/vls.h"
+#include "bu/snooze.h"
 #include "bn.h"
 #include "rt/db4.h"
 #include "vmath.h"
@@ -487,10 +488,10 @@ free_remap_reg(struct remap_reg *rp)
  ************************************************************************/
 
 int
-compare_curr_ids(void *v1, void *v2)
+compare_curr_ids(const void *v1, const void *v2)
 {
-    struct curr_id *id1 = (struct curr_id *) v1;
-    struct curr_id *id2 = (struct curr_id *) v2;
+    const struct curr_id *id1 = (const struct curr_id *) v1;
+    const struct curr_id *id2 = (const struct curr_id *) v2;
 
     BU_CKMAG(id1, CURR_ID_MAGIC, "curr_id");
     BU_CKMAG(id2, CURR_ID_MAGIC, "curr_id");
@@ -798,11 +799,13 @@ main(int argc, char **argv)
     REMAPID_FILE *sfp = NULL;	/* Spec file */
     int ch;		/* Command-line character */
     int tankill = 0;	/* TANKILL format (vs. BRL-CAD)? */
+    bu_rb_cmp_t farray[1];
+    farray[0] = &compare_curr_ids;
 
     bu_stdin->file_ptr = stdin;		/* LINUX-required init */
 
     fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.  It is considered superseded by reid+remat\n\n");
-    sleep(1);
+    bu_snooze(BU_SEC2USEC(1));
 
     while ((ch = bu_getopt(argc, argv, "gth?")) != -1)
 	switch (ch) {
@@ -837,7 +840,7 @@ main(int argc, char **argv)
     /*
      * Initialize the assignment
      */
-    assignment = bu_rb_create1("Remapping assignment", BU_RB_COMPARE_FUNC_CAST_AS_FUNC_ARG(compare_curr_ids));
+    assignment = bu_rb_create("Remapping assignment", 1, farray);
     bu_rb_uniq_on1(assignment);
 
     /*

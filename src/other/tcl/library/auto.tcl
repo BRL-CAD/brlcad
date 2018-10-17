@@ -211,7 +211,7 @@ proc auto_mkindex {dir args} {
     }
 
     auto_mkindex_parser::init
-    foreach file [glob -- {*}$args] {
+    foreach file [lsort [glob -- {*}$args]] {
         if {[catch {auto_mkindex_parser::mkindex $file} msg opts] == 0} {
             append index $msg
         } else {
@@ -244,7 +244,7 @@ proc auto_mkindex_old {dir args} {
     if {[llength $args] == 0} {
 	set args *.tcl
     }
-    foreach file [glob -- {*}$args] {
+    foreach file [lsort [glob -- {*}$args]] {
 	set f ""
 	set error [catch {
 	    set f [open $file]

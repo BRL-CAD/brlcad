@@ -1,7 +1,7 @@
 /*                         S O L I D . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2016 United States Government as represented by
+ * Copyright (c) 1989-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -41,11 +41,11 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-
 /* defined in read.c */
 extern int get_line(char *cp, int buflen, char *title);
-extern int getint(char *cp, int start, int len);
 extern void namecvt(int n, char **cp, int c);
+extern int getint(char *cp, int start, size_t len);
+extern double getdouble(char *cp, int start, size_t len);
 
 /* defined in cvt.c */
 extern void col_pr(char *str);
@@ -57,7 +57,6 @@ extern struct rt_wdb *outfp;
 extern int version;
 extern int verbose;
 
-extern double getdouble(char *cp, int start, int len);
 extern int sol_total, sol_work;
 
 char scard[132];			/* Solid card buffer area */
@@ -251,7 +250,7 @@ getsolid(void)
 
 	cp = solid_type;
 	while ((c = *cp) != '\0') {
-	    if (!isascii(c)) {
+	    if (!isprint(c)) {
 		*cp++ = '?';
 	    } else if (isupper((int)c)) {
 		*cp++ = tolower((int)c);

@@ -1,7 +1,7 @@
 /*         M E S H C O N V E R S I O N _ B R L C A D . H
  * BRL-CAD
  *
- * Copyright (c) 2016 United States Government as represented by
+ * Copyright (c) 2016-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or

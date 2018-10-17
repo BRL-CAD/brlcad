@@ -1,7 +1,7 @@
 /*                        E N V . C
  * BRL-CAD
  *
- * Copyright (c) 2014-2016 United States Government as represented by
+ * Copyright (c) 2014-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,9 +40,17 @@
 #include <errno.h>
 #include "bio.h"
 
+#ifdef HAVE_SYS_SYSINFO_H
+#  include <sys/sysinfo.h>
+#endif
+
 #include "bu/env.h"
 #include "bu/malloc.h"
 
+/* strict c89 doesn't declare setenv() */
+#ifndef HAVE_DECL_SETENV
+extern int setenv(const char *, const char *, int);
+#endif
 
 int
 bu_setenv(const char *name, const char *value, int overwrite)
@@ -84,6 +92,26 @@ bu_setenv(const char *name, const char *value, int overwrite)
 #endif
 }
 
+long int
+bu_avail_mem()
+{
+#ifdef HAVE_SYS_SYSINFO_H
+    {
+	struct sysinfo s;
+	long int avail_ram;
+	long int used_swap;
+	sysinfo(&s);
+	avail_ram = s.freeram + s.bufferram + s.sharedram;
+	used_swap = s.totalswap - s.freeswap;
+	return (avail_ram - used_swap > 0) ? (avail_ram - used_swap) * s.mem_unit : 0;
+    }
+#endif
+    /* TODO - Use GlobalMemoryStatusEx on Windows, see
+     * https://msdn.microsoft.com/en-us/library/windows/desktop/aa366589 */
+
+    /* Don't know how to figure this out if the above haven't worked */
+    return -1;
+}
 
 /*
  * Local Variables:

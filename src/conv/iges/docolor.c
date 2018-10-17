@@ -1,7 +1,7 @@
 /*                       D O C O L O R . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2016 United States Government as represented by
+ * Copyright (c) 1990-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -59,7 +59,7 @@ Docolor()
 		Readrec(dir[-dir[i]->colorp]->param);
 		Readint(&j, "");
 		if (j != 314) {
-		    bu_log("Incorrect color parameters for entity %d\n", i);
+		    bu_log("Incorrect color parameters for entity %zu\n", i);
 		    bu_log("\tcolor entity is #%d\n", -dir[i]->colorp);
 		    continue;
 		}

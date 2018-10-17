@@ -1,7 +1,7 @@
 /*                     N M G _ I N T E R . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2016 United States Government as represented by
+ * Copyright (c) 1994-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -212,7 +212,7 @@ nmg_enlist_vu(struct nmg_inter_struct *is, const struct vertexuse *vu, struct ve
     }
 
     if (is->mag_len <= BU_PTBL_LEN(is->l1) || is->mag_len <= BU_PTBL_LEN(is->l2))
-	bu_log("Array for distances to vertexuses is too small (%d)\n", is->mag_len);
+	bu_log("Array for distances to vertexuses is too small (%zu)\n", is->mag_len);
 
     sv = nmg_find_s_of_vu(vu);
     fuv = nmg_find_fu_of_vu(vu);
@@ -223,14 +223,14 @@ nmg_enlist_vu(struct nmg_inter_struct *is, const struct vertexuse *vu, struct ve
 	if (is->mag_len <= BU_PTBL_LEN(is->l1)) {
 	    if (is->mag_len) {
 		is->mag_len *= 2;
-		is->mag1 = (fastf_t *)bu_realloc((char *)is->mag1, is->mag_len*sizeof(fastf_t),
+		is->mag1 = (fastf_t *)nmg_realloc((char *)is->mag1, is->mag_len*sizeof(fastf_t),
 						 "is->mag1");
-		is->mag2 = (fastf_t *)bu_realloc((char *)is->mag2, is->mag_len*sizeof(fastf_t),
+		is->mag2 = (fastf_t *)nmg_realloc((char *)is->mag2, is->mag_len*sizeof(fastf_t),
 						 "is->mag2");
 	    } else {
 		is->mag_len = 2*(BU_PTBL_LEN(is->l1) + BU_PTBL_LEN(is->l2));
-		is->mag1 = (fastf_t *)bu_calloc(is->mag_len, sizeof(fastf_t), "is->mag1");
-		is->mag2 = (fastf_t *)bu_calloc(is->mag_len, sizeof(fastf_t), "is->mag2");
+		is->mag1 = (fastf_t *)nmg_calloc(is->mag_len, sizeof(fastf_t), "is->mag1");
+		is->mag2 = (fastf_t *)nmg_calloc(is->mag_len, sizeof(fastf_t), "is->mag2");
 	    }
 
 	}
@@ -249,14 +249,14 @@ nmg_enlist_vu(struct nmg_inter_struct *is, const struct vertexuse *vu, struct ve
 	if (is->mag_len <= BU_PTBL_LEN(is->l2)) {
 	    if (is->mag_len) {
 		is->mag_len *= 2;
-		is->mag1 = (fastf_t *)bu_realloc((char *)is->mag1, is->mag_len*sizeof(fastf_t),
+		is->mag1 = (fastf_t *)nmg_realloc((char *)is->mag1, is->mag_len*sizeof(fastf_t),
 						 "is->mag1");
-		is->mag2 = (fastf_t *)bu_realloc((char *)is->mag2, is->mag_len*sizeof(fastf_t),
+		is->mag2 = (fastf_t *)nmg_realloc((char *)is->mag2, is->mag_len*sizeof(fastf_t),
 						 "is->mag2");
 	    } else {
 		is->mag_len = 2*(BU_PTBL_LEN(is->l1) + BU_PTBL_LEN(is->l2));
-		is->mag1 = (fastf_t *)bu_calloc(is->mag_len, sizeof(fastf_t), "is->mag1");
-		is->mag2 = (fastf_t *)bu_calloc(is->mag_len, sizeof(fastf_t), "is->mag2");
+		is->mag1 = (fastf_t *)nmg_calloc(is->mag_len, sizeof(fastf_t), "is->mag1");
+		is->mag2 = (fastf_t *)nmg_calloc(is->mag_len, sizeof(fastf_t), "is->mag2");
 	    }
 
 	}
@@ -324,14 +324,14 @@ nmg_enlist_vu(struct nmg_inter_struct *is, const struct vertexuse *vu, struct ve
 	if (is->mag_len <= BU_PTBL_LEN(is->l2)) {
 	    if (is->mag_len) {
 		is->mag_len *= 2;
-		is->mag1 = (fastf_t *)bu_realloc((char *)is->mag1, is->mag_len*sizeof(fastf_t),
+		is->mag1 = (fastf_t *)nmg_realloc((char *)is->mag1, is->mag_len*sizeof(fastf_t),
 						 "is->mag1");
-		is->mag2 = (fastf_t *)bu_realloc((char *)is->mag2, is->mag_len*sizeof(fastf_t),
+		is->mag2 = (fastf_t *)nmg_realloc((char *)is->mag2, is->mag_len*sizeof(fastf_t),
 						 "is->mag2");
 	    } else {
 		is->mag_len = 2*(BU_PTBL_LEN(is->l1) + BU_PTBL_LEN(is->l2));
-		is->mag1 = (fastf_t *)bu_calloc(is->mag_len, sizeof(fastf_t), "is->mag1");
-		is->mag2 = (fastf_t *)bu_calloc(is->mag_len, sizeof(fastf_t), "is->mag2");
+		is->mag1 = (fastf_t *)nmg_calloc(is->mag_len, sizeof(fastf_t), "is->mag1");
+		is->mag2 = (fastf_t *)nmg_calloc(is->mag_len, sizeof(fastf_t), "is->mag2");
 	    }
 
 	}
@@ -342,14 +342,14 @@ nmg_enlist_vu(struct nmg_inter_struct *is, const struct vertexuse *vu, struct ve
 	if (is->mag_len <= BU_PTBL_LEN(is->l1)) {
 	    if (is->mag_len) {
 		is->mag_len *= 2;
-		is->mag1 = (fastf_t *)bu_realloc((char *)is->mag1, is->mag_len*sizeof(fastf_t),
+		is->mag1 = (fastf_t *)nmg_realloc((char *)is->mag1, is->mag_len*sizeof(fastf_t),
 						 "is->mag1");
-		is->mag2 = (fastf_t *)bu_realloc((char *)is->mag2, is->mag_len*sizeof(fastf_t),
+		is->mag2 = (fastf_t *)nmg_realloc((char *)is->mag2, is->mag_len*sizeof(fastf_t),
 						 "is->mag2");
 	    } else {
 		is->mag_len = 2*(BU_PTBL_LEN(is->l1) + BU_PTBL_LEN(is->l2));
-		is->mag1 = (fastf_t *)bu_calloc(is->mag_len, sizeof(fastf_t), "is->mag1");
-		is->mag2 = (fastf_t *)bu_calloc(is->mag_len, sizeof(fastf_t), "is->mag2");
+		is->mag1 = (fastf_t *)nmg_calloc(is->mag_len, sizeof(fastf_t), "is->mag1");
+		is->mag2 = (fastf_t *)nmg_calloc(is->mag_len, sizeof(fastf_t), "is->mag2");
 	    }
 
 	}
@@ -444,7 +444,7 @@ nmg_get_2d_vertex(fastf_t *v2d, struct vertex *v, struct nmg_inter_struct *is, c
 	oldmax = is->maxindex;
 	m = nmg_find_model(&v->magic);
 	NMG_CK_MODEL(m);
-	bu_log("nmg_get_2d_vertex:  v=%p, v->index=%ld, is->maxindex=%d, m->maxindex=%ld\n",
+	bu_log("nmg_get_2d_vertex:  v=%p, v->index=%ld, is->maxindex=%zu, m->maxindex=%ld\n",
 	       (void *)v, v->index, is->maxindex, m->maxindex);
 	if (v->index >= m->maxindex) {
 	    /* Really off the end */
@@ -454,10 +454,10 @@ nmg_get_2d_vertex(fastf_t *v2d, struct vertex *v, struct nmg_inter_struct *is, c
 	/* Need to extend array, it's grown. */
 	is->maxindex = m->maxindex * 4;
 	if (nmg_debug & DEBUG_POLYSECT) {
-	    bu_log("nmg_get_2d_vertex() extending vert2d array from %d to %d points (m max=%ld)\n",
+	    bu_log("nmg_get_2d_vertex() extending vert2d array from %d to %zu points (m max=%ld)\n",
 		   oldmax, is->maxindex, m->maxindex);
 	}
-	is->vert2d = (fastf_t *)bu_realloc((char *)is->vert2d,
+	is->vert2d = (fastf_t *)nmg_realloc((char *)is->vert2d,
 					   is->maxindex * 3 * sizeof(fastf_t), "vert2d[]");
 
 	/* Clear out the new part of the 2D vertex array, setting flag in [2] to -1 */
@@ -551,7 +551,7 @@ nmg_isect2d_prep(struct nmg_inter_struct *is, const uint32_t *assoc_use)
     m = nmg_find_model(assoc_use);
 
     is->maxindex = (2 * m->maxindex);
-    is->vert2d = (fastf_t *)bu_malloc(is->maxindex * 3 * sizeof(fastf_t), "vert2d[]");
+    is->vert2d = (fastf_t *)nmg_malloc(is->maxindex * 3 * sizeof(fastf_t), "vert2d[]");
 
     if (*assoc_use == NMG_FACEUSE_MAGIC) {
 	struct faceuse *fu1 = (struct faceuse *)assoc_use;
@@ -630,7 +630,7 @@ nmg_isect2d_cleanup(struct nmg_inter_struct *is)
     nmg_hack_last_is = (struct nmg_inter_struct *)NULL;
 
     if (!is->vert2d) return;
-    bu_free((char *)is->vert2d, "vert2d");
+    nmg_free((char *)is->vert2d, "vert2d");
     is->vert2d = NULL;
     is->twod = NULL;
 }
@@ -892,10 +892,10 @@ nmg_break_3edge_at_plane(const fastf_t *hit_pt, struct faceuse *fu2, struct nmg_
 	 */
 	int nmg_class;
 	nmg_class = nmg_class_pt_fu_except(hit_pt, fu2,
-					   (struct loopuse *)NULL,
-					   (void (*)(struct edgeuse *, point_t, const char *))NULL,
-					   (void (*)(struct vertexuse *, point_t, const char *))NULL,
-					   (const char *)NULL, 0,
+					   NULL,
+					   NULL,
+					   NULL,
+					   NULL, 0,
 					   0, vlfree, &is->tol);
 
 	eu1forw = nmg_ebreaker((struct vertex *)NULL, eu1, &is->tol);
@@ -1181,7 +1181,8 @@ nmg_isect_2colinear_edge2p(struct edgeuse *eu1, struct edgeuse *eu2, struct face
 /* optional: list of new eu1 pieces */
 /* optional: list of new eu2 pieces */
 {
-    struct edgeuse *eu[10];
+#define MAX_EU 20 /* arbitrary number of max colinear edges */
+    struct edgeuse *eu[MAX_EU];
     struct vertexuse *vu[4];
     register int i;
     register int j;
@@ -1225,8 +1226,8 @@ nmg_isect_2colinear_edge2p(struct edgeuse *eu1, struct edgeuse *eu2, struct face
     /* Now join 'em up */
     /* This step should no longer be necessary, as nmg_ebreaker()
      * from nmg_break_eu_on_v() should have already handled this. */
-    for (i=0; i < neu-1; i++) {
-	for (j=i+1; j < neu; j++) {
+    for (i=0; i < neu-2; i++) {
+	for (j=i+1; j < neu-1 && j < MAX_EU; j++) {
 	    if (!NMG_ARE_EUS_ADJACENT(eu[i], eu[j])) continue;
 	    nmg_radial_join_eu(eu[i], eu[j], &(is->tol));
 	}
@@ -2000,11 +2001,13 @@ nmg_isect_wireloop3p_face3p(struct nmg_inter_struct *bs, struct loopuse *lu, str
     return discards;
 }
 
+
+/* FIXME: UGH, Bloody hell, another one. */
 int
 ray_in_rpp(struct nmg_ray *rp,
-          register const fastf_t *invdir,       /* inverses of rp->r_dir[] */
-          register const fastf_t *min,
-          register const fastf_t *max)
+          const fastf_t *invdir,       /* inverses of rp->r_dir[] */
+          const fastf_t *min,
+          const fastf_t *max)
 {
     register const fastf_t *pt = &rp->r_pt[0];
     register fastf_t sv;
@@ -2291,8 +2294,8 @@ nmg_isect_edge2p_face2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
     nmg_edgeuse_tabulate(&eu2_list, &fu2->l.magic, vlfree);
 
     is->mag_len = 2 * (BU_PTBL_LEN(&eu1_list) + BU_PTBL_LEN(&eu2_list));
-    mag1 = (fastf_t *)bu_calloc(is->mag_len, sizeof(fastf_t), "mag1");
-    mag2 = (fastf_t *)bu_calloc(is->mag_len, sizeof(fastf_t), "mag2");
+    mag1 = (fastf_t *)nmg_calloc(is->mag_len, sizeof(fastf_t), "mag1");
+    mag2 = (fastf_t *)nmg_calloc(is->mag_len, sizeof(fastf_t), "mag2");
 
     is->mag1 = mag1;
     is->mag2 = mag2;
@@ -2332,9 +2335,9 @@ out:
     (void)bu_ptbl_free(&eu1_list);
     (void)bu_ptbl_free(&eu2_list);
     if (mag1)
-	bu_free((char *)mag1, "nmg_isect_edge2p_face2p: mag1");
+	nmg_free((char *)mag1, "nmg_isect_edge2p_face2p: mag1");
     if (mag2)
-	bu_free((char *)mag2, "nmg_isect_edge2p_face2p: mag2");
+	nmg_free((char *)mag2, "nmg_isect_edge2p_face2p: mag2");
 
 do_ret:
     if (nmg_debug & DEBUG_POLYSECT) {
@@ -2357,7 +2360,7 @@ nmg_enlist_one_vu(struct nmg_inter_struct *is, const struct vertexuse *vu, fastf
     NMG_CK_VERTEXUSE(vu);
 
     if (is->mag_len <= BU_PTBL_LEN(is->l1) || is->mag_len <= BU_PTBL_LEN(is->l2))
-	bu_log("Array for distances to vertexuses is too small (%d)\n", is->mag_len);
+	bu_log("Array for distances to vertexuses is too small (%zu)\n", is->mag_len);
 
     sv = nmg_find_s_of_vu(vu);
 
@@ -2367,14 +2370,14 @@ nmg_enlist_one_vu(struct nmg_inter_struct *is, const struct vertexuse *vu, fastf
 	if (is->mag_len <= BU_PTBL_LEN(is->l1)) {
 	    if (is->mag_len) {
 		is->mag_len *= 2;
-		is->mag1 = (fastf_t *)bu_realloc((char *)is->mag1, is->mag_len*sizeof(fastf_t),
+		is->mag1 = (fastf_t *)nmg_realloc((char *)is->mag1, is->mag_len*sizeof(fastf_t),
 						 "is->mag1");
-		is->mag2 = (fastf_t *)bu_realloc((char *)is->mag2, is->mag_len*sizeof(fastf_t),
+		is->mag2 = (fastf_t *)nmg_realloc((char *)is->mag2, is->mag_len*sizeof(fastf_t),
 						 "is->mag2");
 	    } else {
 		is->mag_len = 2*(BU_PTBL_LEN(is->l1) + BU_PTBL_LEN(is->l2));
-		is->mag1 = (fastf_t *)bu_calloc(is->mag_len, sizeof(fastf_t), "is->mag1");
-		is->mag2 = (fastf_t *)bu_calloc(is->mag_len, sizeof(fastf_t), "is->mag2");
+		is->mag1 = (fastf_t *)nmg_calloc(is->mag_len, sizeof(fastf_t), "is->mag1");
+		is->mag2 = (fastf_t *)nmg_calloc(is->mag_len, sizeof(fastf_t), "is->mag2");
 	    }
 
 	}
@@ -2385,14 +2388,14 @@ nmg_enlist_one_vu(struct nmg_inter_struct *is, const struct vertexuse *vu, fastf
 	if (is->mag_len <= BU_PTBL_LEN(is->l2)) {
 	    if (is->mag_len) {
 		is->mag_len *= 2;
-		is->mag1 = (fastf_t *)bu_realloc((char *)is->mag1, is->mag_len*sizeof(fastf_t),
+		is->mag1 = (fastf_t *)nmg_realloc((char *)is->mag1, is->mag_len*sizeof(fastf_t),
 						 "is->mag1");
-		is->mag2 = (fastf_t *)bu_realloc((char *)is->mag2, is->mag_len*sizeof(fastf_t),
+		is->mag2 = (fastf_t *)nmg_realloc((char *)is->mag2, is->mag_len*sizeof(fastf_t),
 						 "is->mag2");
 	    } else {
 		is->mag_len = 2*(BU_PTBL_LEN(is->l1) + BU_PTBL_LEN(is->l2));
-		is->mag1 = (fastf_t *)bu_calloc(is->mag_len, sizeof(fastf_t), "is->mag1");
-		is->mag2 = (fastf_t *)bu_calloc(is->mag_len, sizeof(fastf_t), "is->mag2");
+		is->mag1 = (fastf_t *)nmg_calloc(is->mag_len, sizeof(fastf_t), "is->mag1");
+		is->mag2 = (fastf_t *)nmg_calloc(is->mag_len, sizeof(fastf_t), "is->mag2");
 	    }
 
 	}
@@ -2491,8 +2494,8 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
     nmg_edgeuse_tabulate(&eu2_list, &fu2->l.magic, vlfree);
 
     is->mag_len = 2 * (BU_PTBL_LEN(&eu1_list) + BU_PTBL_LEN(&eu2_list));
-    mag1 = (fastf_t *)bu_calloc(is->mag_len, sizeof(fastf_t), "mag1");
-    mag2 = (fastf_t *)bu_calloc(is->mag_len, sizeof(fastf_t), "mag2");
+    mag1 = (fastf_t *)nmg_calloc(is->mag_len, sizeof(fastf_t), "mag1");
+    mag2 = (fastf_t *)nmg_calloc(is->mag_len, sizeof(fastf_t), "mag2");
 
     for (i = 0; i < is->mag_len; i++) {
 	mag1[i] = MAX_FASTF;
@@ -2910,9 +2913,9 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 	}
     }
     if (mag1)
-	bu_free((char *)mag1, "mag1");
+	nmg_free((char *)mag1, "mag1");
     if (mag2)
-	bu_free((char *)mag2, "mag2");
+	nmg_free((char *)mag2, "mag2");
 
     bu_ptbl_free(is->l1);
     bu_ptbl_free(is->l2);
@@ -3516,16 +3519,16 @@ nmg_is_vertex_on_inter(struct vertex *v, struct faceuse *fu1, struct faceuse *fu
 
     /* check if it is within fu's */
     code = nmg_class_pt_fu_except(vg->coord, fu1, (struct loopuse *)NULL,
-				  (void (*)(struct edgeuse *, point_t, const char *))NULL,
-				  (void (*)(struct vertexuse *, point_t, const char *))NULL,
-				  (const char *)NULL, 0, 0, vlfree, &is->tol);
+				  NULL,
+				  NULL,
+				  NULL, 0, 0, vlfree, &is->tol);
     if (code != NMG_CLASS_AinB)
 	return 0;
 
-    code = nmg_class_pt_fu_except(vg->coord, fu2, (struct loopuse *)NULL,
-				  (void (*)(struct edgeuse *, point_t, const char *))NULL,
-				  (void (*)(struct vertexuse *, point_t, const char *))NULL,
-				  (const char *)NULL, 0, 0, vlfree, &is->tol);
+    code = nmg_class_pt_fu_except(vg->coord, fu2, NULL,
+				  NULL,
+				  NULL,
+				  NULL, 0, 0, vlfree, &is->tol);
     if (code != NMG_CLASS_AinB)
 	return 0;
 
@@ -3908,7 +3911,7 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
     }
 
     /* must do them in order from furthest to nearest */
-    inter_dist = (fastf_t *)bu_calloc(BU_PTBL_LEN(&inters), sizeof(fastf_t),
+    inter_dist = (fastf_t *)nmg_calloc(BU_PTBL_LEN(&inters), sizeof(fastf_t),
 				      "nmg_isect_eu_fu: inter_dist");
 
     if (UNLIKELY(nmg_debug & DEBUG_POLYSECT))
@@ -3934,7 +3937,7 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
     if (UNLIKELY(nmg_debug & DEBUG_POLYSECT)) {
 	bu_log("Intersect vertices along eu %p:\n", (void *)eu);
 	for (i = 0; i < BU_PTBL_LEN(&inters); i++)
-	    bu_log("%d %p %g\n", i+1, (void *)BU_PTBL_GET(&inters, i), inter_dist[i]);
+	    bu_log("%zu %p %g\n", i+1, (void *)BU_PTBL_GET(&inters, i), inter_dist[i]);
     }
 
     while (1) {
@@ -3960,7 +3963,7 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
 
 	if (v != eu->vu_p->v_p && v != eu->eumate_p->vu_p->v_p) {
 	    if (UNLIKELY(nmg_debug & DEBUG_POLYSECT))
-		bu_log("Breaking edges at vertex #%d, dist=%g, v=%p\n", i+1, inter_dist[i], (void *)v);
+		bu_log("Breaking edges at vertex #%zu, dist=%g, v=%p\n", i+1, inter_dist[i], (void *)v);
 	    (void)nmg_break_all_es_on_v(&fu->l.magic, v, vlfree, &is->tol);
 	    (void)nmg_break_all_es_on_v(&eu->l.magic, v, vlfree, &is->tol);
 	}
@@ -3968,7 +3971,7 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
 	inter_dist[index_at_max] = (-10.0);
     }
 
-    bu_free((char *)inter_dist, "nmg_isect_eu_fu: inter_dist");
+    nmg_free((char *)inter_dist, "nmg_isect_eu_fu: inter_dist");
 
 out:
     bu_ptbl_free(&inters);
@@ -5034,8 +5037,8 @@ nmg_isect_two_face3p(struct nmg_inter_struct *is, struct faceuse *fu1, struct fa
     nmg_edgeuse_tabulate(&eu2_list, &fu2->l.magic, vlfree);
 
     is->mag_len = 2 * (BU_PTBL_LEN(&eu1_list) + BU_PTBL_LEN(&eu2_list));
-    mag1 = (fastf_t *)bu_calloc(is->mag_len, sizeof(fastf_t), "mag1");
-    mag2 = (fastf_t *)bu_calloc(is->mag_len, sizeof(fastf_t), "mag2");
+    mag1 = (fastf_t *)nmg_calloc(is->mag_len, sizeof(fastf_t), "mag1");
+    mag2 = (fastf_t *)nmg_calloc(is->mag_len, sizeof(fastf_t), "mag2");
 
     for (i=0; i<is->mag_len; i++) {
 	mag1[i] = MAX_FASTF;
@@ -5112,9 +5115,9 @@ out:
     (void)bu_ptbl_free(&eu1_list);
     (void)bu_ptbl_free(&eu2_list);
     if (mag1)
-	bu_free((char *)mag1, "nmg_isect_two_face3p: mag1");
+	nmg_free((char *)mag1, "nmg_isect_two_face3p: mag1");
     if (mag2)
-	bu_free((char *)mag2, "nmg_isect_two_face3p: mag2");
+	nmg_free((char *)mag2, "nmg_isect_two_face3p: mag2");
 
 
     if (nmg_debug & DEBUG_VERIFY) {
@@ -5212,14 +5215,14 @@ nmg_cut_lu_into_coplanar_and_non(struct loopuse *lu, fastf_t *pl, struct nmg_int
 
     if (nmg_debug & DEBUG_POLYSECT) {
 	bu_log("\t pl=(%g %g %g %g)\n", V4ARGS(pl));
-	bu_log("\tcut_lists=%ld, on=%d, in=%d, out=%d\n", BU_PTBL_LEN(&cut_list), on, in, out);
+	bu_log("\tcut_lists=%ld, on=%zu, in=%zu, out=%zu\n", BU_PTBL_LEN(&cut_list), on, in, out);
 	if (BU_PTBL_LEN(&cut_list)) {
 	    bu_log("\tcut_lists:\n");
 	    for (i=0; i<BU_PTBL_LEN(&cut_list); i++) {
 		struct vertex *v;
 
 		v = (struct vertex *)BU_PTBL_GET(&cut_list, i);
-		bu_log("\t\t%d, %p\n", i+1, (void *)v);
+		bu_log("\t\t%zu, %p\n", i+1, (void *)v);
 	    }
 	}
     }
@@ -5348,7 +5351,7 @@ nmg_cut_lu_into_coplanar_and_non(struct loopuse *lu, fastf_t *pl, struct nmg_int
 	}
 
 	/* create array of distances (SQ) along the line from end1 to end2 */
-	dist_array = (fastf_t *)bu_calloc(sizeof(fastf_t), BU_PTBL_LEN(&cut_list), "distance array");
+	dist_array = (fastf_t *)nmg_calloc(sizeof(fastf_t), BU_PTBL_LEN(&cut_list), "distance array");
 	for (i=0; i<BU_PTBL_LEN(&cut_list); i++) {
 	    v1 = (struct vertex *)BU_PTBL_GET(&cut_list, i);
 	    if (v1 == end1) {
@@ -5395,7 +5398,7 @@ nmg_cut_lu_into_coplanar_and_non(struct loopuse *lu, fastf_t *pl, struct nmg_int
 		bu_log("v=%p, dist=%g\n", (void *)BU_PTBL_GET(&cut_list, i), dist_array[i]);
 	}
 
-	bu_free((char *)dist_array, "distance array");
+	nmg_free((char *)dist_array, "distance array");
     }
 
     for (i=0; i<BU_PTBL_LEN(&cut_list); i += 2) {
@@ -5595,7 +5598,7 @@ nmg_check_radial_angles(char *str, struct shell *s, struct bu_list *vlfree, cons
 	    fu = nmg_find_fu_of_eu(eu);
 	    if (fu) {
 		if (face_count >= MAX_FACES) {
-		    bu_log("Too many faces in nmg_check_radial_angles (%d)\n", face_count);
+		    bu_log("Too many faces in nmg_check_radial_angles (%zu)\n", face_count);
 		    bu_bomb("Too many faces in nmg_check_radial_angles\n");
 		}
 		angle[face_count] = nmg_measure_fu_angle(eu, xvec, yvec, zvec);
@@ -5978,6 +5981,7 @@ nmg_isect_two_generic_faces(struct faceuse *fu1, struct faceuse *fu2, struct bu_
 	    return;
 	case -3:
 	    bu_bomb("nmg_isect_two_generic_faces(): faceuse should have intersection but could not find it\n");
+	    break;
 	default:
 	    /* internal error */
 	    bu_bomb("nmg_isect_two_generic_faces(): invalid return code from function nmg_isect_2faceuse\n");

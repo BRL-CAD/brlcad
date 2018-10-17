@@ -50,16 +50,10 @@ set(libbrep_ignored_files
   )
 CMAKEFILES(${libbrep_ignored_files})
 
-# Initialize libbrep_DEFINES in case of reconfiguration
-set(libbrep_DEFINES "")
-
-# Set libbrep compile definitions
-get_property(libbrep_DEFINES GLOBAL PROPERTY libbrep_DEFINES)
+# Anyone who needs to import libbrep will also need to import openNURBS
 if(CPP_DLL_DEFINES)
-  list(APPEND libbrep_DLL_DEFINES "ON_DLL_IMPORTS")
-  set_property(GLOBAL PROPERTY libbrep_DLL_DEFINES "${libbrep_DLL_DEFINES}")
+  set_property(GLOBAL APPEND PROPERTY libbrep_DLL_DEFINES "ON_DLL_IMPORTS")
 endif(CPP_DLL_DEFINES)
-set_property(GLOBAL PROPERTY libbrep_DEFINES "${libbrep_DEFINES}")
 
 BRLCAD_ADDLIB(libbrep "${LIBBREP_SOURCES}" "libbg;libbn;libbu;${OPENNURBS_LIBRARIES};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
 
@@ -69,9 +63,9 @@ BRLCAD_ADDEXEC(test_point_intersect test_point_intersect.cpp "libbrep" NO_STRICT
 
 BRLCAD_ADDEXEC(test_curve_intersect test_curve_intersect.cpp "libbrep" NO_STRICT NO_INSTALL)
 
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
-  add_subdirectory(tests)
-endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
+add_subdirectory(tests)
+
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

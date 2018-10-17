@@ -1,7 +1,7 @@
 /*                          H A L F . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2016 United States Government as represented by
+ * Copyright (c) 1985-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -381,23 +381,6 @@ rt_hlf_free(struct soltab *stp)
 
 
 /**
- * Classify this halfspace against a bounding RPP.  Since this is an
- * infinite solid, it is very important that this function properly.
- *
- */
-int
-rt_hlf_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, const struct bn_tol *tol)
-{
-    if (stp) RT_CK_SOLTAB(stp);
-    if (tol) BN_CK_TOL(tol);
-    if (!min) return 0;
-    if (!max) return 0;
-
-    return 0;
-}
-
-
-/**
  * The representation of a halfspace is an OUTWARD pointing normal
  * vector, and the distance of the plane from the origin.
  *
@@ -466,8 +449,7 @@ rt_hlf_xform(
     const mat_t mat,
     struct rt_db_internal *ip,
     int release,
-    struct db_i *dbip,
-    struct resource *resp)
+    struct db_i *dbip)
 {
     struct rt_half_internal *hip, *hop;
     point_t orig_pt, pt;
@@ -476,7 +458,6 @@ rt_hlf_xform(
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    RT_CK_RESOURCE(resp);
     hip = (struct rt_half_internal *)ip->idb_ptr;
     RT_HALF_CK_MAGIC(hip);
     RT_CK_DB_INTERNAL(op);

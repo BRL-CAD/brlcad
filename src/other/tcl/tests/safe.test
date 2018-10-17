@@ -172,17 +172,17 @@ test safe-6.3 {test safe interpreters knowledge of the world} {
 # aren't leaking infos, but they still do...
 
 # high level general test
-test safe-7.1 {tests that everything works at high level} {
+test safe-7.1 {tests that everything works at high level} -body {
     set i [safe::interpCreate];
     # no error shall occur:
     # (because the default access_path shall include 1st level sub dirs
     #  so package require in a slave works like in the master)
-    set v [interp eval $i {package require http 1}]
+    set v [interp eval $i {package require http 2}]
     # no error shall occur:
-    interp eval $i {http_config};
+    interp eval $i {http::config}
     safe::interpDelete $i
     set v
-} 1.0
+} -match glob -result 2.*
 test safe-7.2 {tests specific path and interpFind/AddToAccessPath} -body {
     set i [safe::interpCreate -nostat -nested 1 -accessPath [list [info library]]];
     # should not add anything (p0)

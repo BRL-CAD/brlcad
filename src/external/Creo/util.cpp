@@ -1,7 +1,7 @@
 /*                    U T I L . C P P
  * BRL-CAD
  *
- * Copyright (c) 2017 United States Government as represented by
+ * Copyright (c) 2017-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -450,7 +450,7 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, const char *suffix,
 	bu_vls_sprintf(gname, "%s_1", bu_vls_addr(&gname_root));
 	if (suffix) {bu_vls_printf(gname, ".%s", suffix);}
 	while (nset->find(gname) != nset->end()) {
-	    (void)bu_namegen(gname, NULL, NULL);
+	    (void)bu_vls_incr(gname, NULL, "0:0:0:0:-", NULL, NULL);
 	    count++;
 	    creo_log(cinfo, MSG_DEBUG, "\t trying name : %s\n", bu_vls_addr(gname));
 	    if (count == LONG_MAX) {
@@ -493,7 +493,7 @@ ProError PopupMsg(const char *title, const char *msg)
 {
     wchar_t wtitle[CREO_NAME_MAX];
     wchar_t wmsg[CREO_MSG_MAX];
-    ProUIMessageButton* button;
+    ProUIMessageButton* button = NULL;
     ProUIMessageButton bresult;
 
     ProArrayAlloc(1, sizeof(ProUIMessageButton), 1, (ProArray*)&button);

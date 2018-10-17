@@ -41,6 +41,7 @@
 #include "auxiliary/mm.h"
 #include "auxiliary/mmhash.h"
 #include "auxiliary/mmbinsort.h"
+#include "bu/tc.h"
 
 #include "bu/malloc.h"
 #include "bu/parallel.h"
@@ -50,6 +51,10 @@
 
 #include <string.h>
 
+#if defined(HAVE_ISNAN) && !defined(HAVE_DECL_ISNAN) && !defined(isnan)
+extern int isnan(double x);
+#endif
+
 
 /* Define to use double floating point precision */
 #define MD_CONF_DOUBLE_PRECISION
@@ -58,7 +63,7 @@
 /* Define to use double precision just quadric maths. Very strongly recommended. */
 #define MD_CONF_QUADRICS_DOUBLE_PRECISION
 
-
+/* Define to call a status callback function. */
 #define MD_CONF_ENABLE_PROGRESS
 
 
@@ -155,9 +160,7 @@ typedef double mdf;
 #    define mdflog2(x) (log(x) / log(2))
 #  endif
 #  define mdfmin(x,y) FMIN((x),(y))
-/* or round() or nearbyint() or lrint() -- see lrint in common.h */
 #  define mdfround(x) rint(x)
-
 #else
 
 typedef float mdf;
@@ -412,8 +415,8 @@ static void mathQuadricMul(mathQuadric *qdst, mdf f)
 
 
 typedef struct {
-    mtx_t mutex;
-    cnd_t signal;
+    bu_mtx_t mutex;
+    bu_cnd_t signal;
     int resetcount;
     volatile int index;
     volatile int count[2];
@@ -421,11 +424,11 @@ typedef struct {
 
 static void mdBarrierInit(mdBarrier *barrier, int count)
 {
-    if (mtx_init(&barrier->mutex, mtx_plain) == thrd_error)
-	bu_bomb("mtx_init() failed");
+    if (bu_mtx_init(&barrier->mutex) == bu_thrd_error)
+	bu_bomb("bu_mtx_init() failed");
 
-    if (cnd_init(&barrier->signal) != thrd_success)
-	bu_bomb("cnd_init() failed");
+    if (bu_cnd_init(&barrier->signal) != bu_thrd_success)
+	bu_bomb("bu_cnd_init() failed");
 
     barrier->resetcount = count;
     barrier->index = 0;
@@ -435,16 +438,16 @@ static void mdBarrierInit(mdBarrier *barrier, int count)
 
 static void mdBarrierDestroy(mdBarrier *barrier)
 {
-    mtx_destroy(&barrier->mutex);
-    cnd_destroy(&barrier->signal);
+    bu_mtx_destroy(&barrier->mutex);
+    bu_cnd_destroy(&barrier->signal);
 }
 
 static int mdBarrierSync(mdBarrier *barrier)
 {
     int vindex, ret;
 
-    if (mtx_lock(&barrier->mutex) == thrd_error)
-	bu_bomb("mtx_lock() failed");
+    if (bu_mtx_lock(&barrier->mutex) == bu_thrd_error)
+	bu_bomb("bu_mtx_lock() failed");
 
     vindex = barrier->index;
     ret = 0;
@@ -452,30 +455,31 @@ static int mdBarrierSync(mdBarrier *barrier)
     if (!(--barrier->count[vindex])) {
 	ret = 1;
 
-	if (cnd_broadcast(&barrier->signal) == thrd_error)
-	    bu_bomb("cnd_broadcast() failed");
+	if (bu_cnd_broadcast(&barrier->signal) == bu_thrd_error)
+	    bu_bomb("bu_cnd_broadcast() failed");
 
 	vindex ^= 1;
 	barrier->index = vindex;
 	barrier->count[vindex] = barrier->resetcount;
     } else {
 	for (; barrier->count[vindex];)
-	    if (cnd_wait(&barrier->signal, &barrier->mutex) == thrd_error)
-		bu_bomb("cnd_wait() failed");
+	    if (bu_cnd_wait(&barrier->signal, &barrier->mutex) == bu_thrd_error)
+		bu_bomb("bu_cnd_wait() failed");
     }
 
-    if (mtx_unlock(&barrier->mutex) == thrd_error)
-	bu_bomb("mtx_unload() failed");
+    if (bu_mtx_unlock(&barrier->mutex) == bu_thrd_error)
+	bu_bomb("bu_mtx_unload() failed");
 
     return ret;
 }
 
+#if 0
 static int mdBarrierSyncTimeout(mdBarrier *barrier, long miliseconds)
 {
     int vindex, ret;
 
-    if (mtx_lock(&barrier->mutex) == thrd_error)
-	bu_bomb("mtx_lock() failed");
+    if (bu_mtx_lock(&barrier->mutex) == bu_thrd_error)
+	bu_bomb("bu_mtx_lock() failed");
 
     vindex = barrier->index;
     ret = 0;
@@ -483,8 +487,8 @@ static int mdBarrierSyncTimeout(mdBarrier *barrier, long miliseconds)
     if (!(--barrier->count[vindex])) {
 	ret = 1;
 
-	if (cnd_broadcast(&barrier->signal) == thrd_error)
-	    bu_bomb("cnd_broadcast() failed");
+	if (bu_cnd_broadcast(&barrier->signal) == bu_thrd_error)
+	    bu_bomb("bu_cnd_broadcast() failed");
 
 	vindex ^= 1;
 	barrier->index = vindex;
@@ -498,12 +502,12 @@ static int mdBarrierSyncTimeout(mdBarrier *barrier, long miliseconds)
 	    barrier->count[vindex]++;
     }
 
-    if (mtx_unlock(&barrier->mutex) == thrd_error)
-	bu_bomb("mtx_unlock() failed");
+    if (bu_mtx_unlock(&barrier->mutex) == bu_thrd_error)
+	bu_bomb("bu_mtx_unlock() failed");
 
     return ret;
 }
-
+#endif
 
 /****/
 
@@ -3709,13 +3713,12 @@ void mdOperationStatusCallback(mdOperation *op, void (*statuscallback)(void *opa
 int mdMeshDecimation(mdOperation *operation, int flags)
 {
     int threadid, threadcount;
-    long statuswait;
     mdMesh mesh;
-    thrd_t thread[MAX_PSW];
+    bu_thrd_t thread[MAX_PSW];
     mdThreadInit threadinit[MAX_PSW];
     mdThreadInit *tinit;
     mdStatus status;
-#ifdef MD_CONF_ENABLE_PROGRESS
+#if 0 /*ifdef MD_CONF_ENABLE_PROGRESS*/
     long deletioncount;
 #endif
 
@@ -3864,7 +3867,6 @@ int mdMeshDecimation(mdOperation *operation, int flags)
 
     mesh.updatestatusflag = 0;
     status.progress = 0.0;
-    statuswait = (operation->statusmiliseconds > 10 ? operation->statusmiliseconds : 10);
     status.trianglecount = 0;
 
     if (operation->statuscallback) {
@@ -3881,8 +3883,8 @@ int mdMeshDecimation(mdOperation *operation, int flags)
 	tinit->mesh = &mesh;
 	tinit->stage = MD_STATUS_STAGE_INIT;
 
-	if (thrd_create(&thread[threadid], mdThreadMain, tinit) == thrd_error)
-	    bu_bomb("thrd_create() failed");
+	if (bu_thrd_create(&thread[threadid], mdThreadMain, tinit) == bu_thrd_error)
+	    bu_bomb("bu_thrd_create() failed");
     }
 
     /* Wait until all threads have properly initialized */
@@ -3890,7 +3892,7 @@ int mdMeshDecimation(mdOperation *operation, int flags)
 	mdBarrierSync(&mesh.globalbarrier);
 
     /* Wait for all threads to reach step 3 */
-#ifdef MD_CONF_ENABLE_PROGRESS
+#if 0 /*ifdef MD_CONF_ENABLE_PROGRESS*/
 
     if (!(mesh.updatestatusflag))
 	mdBarrierSync(&mesh.globalbarrier);
@@ -3912,7 +3914,7 @@ int mdMeshDecimation(mdOperation *operation, int flags)
     mdBarrierSync(&mesh.globalbarrier);
 
     /* Wait for all threads to complete */
-#ifdef MD_CONF_ENABLE_PROGRESS
+#if 0 /*ifdef MD_CONF_ENABLE_PROGRESS*/
 
     if (!(mesh.updatestatusflag))
 	mdBarrierSync(&mesh.globalbarrier);
@@ -3928,17 +3930,18 @@ int mdMeshDecimation(mdOperation *operation, int flags)
     for (threadid = 0; threadid < threadcount; threadid++) {
 	deletioncount += threadinit[threadid].deletioncount;
 
-	if (thrd_join(thread[threadid], NULL) == thrd_error)
-	    bu_bomb("thrd_join() failed");
+	if (bu_thrd_join(thread[threadid], NULL) == bu_thrd_error)
+	    bu_bomb("bu_thrd_join() failed");
     }
 
     status.trianglecount = mesh.tricount - deletioncount;
 #else
     mdBarrierSync(&mesh.globalbarrier);
 
-    for (threadid = 0; threadid < threadcount; threadid++)
-	mtThreadJoin(&thread[threadid]);
-
+    for (threadid = 0; threadid < threadcount; threadid++) {
+	if (bu_thrd_join(thread[threadid], NULL) == bu_thrd_error)
+	    bu_bomb("bu_thrd_join() failed");
+    }
 #endif
 
     /* Count sums of all threads */

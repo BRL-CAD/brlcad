@@ -1,7 +1,7 @@
 /*                          B O M B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2018 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,6 +31,7 @@
 #include "bio.h"
 
 /* implementation headers */
+#include "bu/app.h"
 #include "bu/debug.h"
 #include "bu/file.h"
 #include "bu/parallel.h"
@@ -39,16 +40,7 @@
 /**
  * list of callbacks to call during bu_bomb.
  */
-struct bu_hook_list bomb_hook_list = {
-    {
-	BU_LIST_HEAD_MAGIC,
-	&bomb_hook_list.l,
-	&bomb_hook_list.l
-    },
-    NULL,
-    ((void *)0)
-};
-
+struct bu_hook_list bomb_hook_list = BU_HOOK_LIST_INIT_ZERO;
 
 /* failsafe storage to help ensure graceful shutdown */
 static char *bomb_failsafe = NULL;
@@ -91,6 +83,23 @@ bu_bomb_add_hook(bu_hook_t func, void *clientdata)
     bu_hook_add(&bomb_hook_list, func, clientdata);
 }
 
+void
+bu_bomb_save_all_hooks(struct bu_hook_list *save_hlp)
+{
+    bu_hook_save_all(&bomb_hook_list, save_hlp);
+}
+
+void
+bu_bomb_delete_all_hooks()
+{
+    bu_hook_delete_all(&bomb_hook_list);
+}
+
+void
+bu_bomb_restore_hooks(struct bu_hook_list *save_hlp)
+{
+    bu_hook_restore_all(&bomb_hook_list, save_hlp);
+}
 
 void
 bu_bomb(const char *str)
@@ -111,7 +120,7 @@ bu_bomb(const char *str)
     _freebomb_failsafe();
 
     /* MGED would like to be able to additional logging, do callbacks. */
-    if (BU_LIST_NON_EMPTY(&bomb_hook_list.l)) {
+    if (bomb_hook_list.size != 0) {
 	bu_hook_call(&bomb_hook_list, (void *)str);
     }
 

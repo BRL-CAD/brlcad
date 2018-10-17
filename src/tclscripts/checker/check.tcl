@@ -1,7 +1,7 @@
 #                     C H E C K E R . T C L
 # BRL-CAD
 #
-# Copyright (c) 2016 United States Government as represented by
+# Copyright (c) 2016-2018 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -33,6 +33,7 @@ package require Itk
 # go ahead and blow away the class if we are reloading
 catch {delete class GeometryChecker} error
 
+package provide GeometryChecker 1.0
 
 ::itcl::class GeometryChecker {
     inherit ::itk::Widget
@@ -58,6 +59,11 @@ catch {delete class GeometryChecker} error
 	method registerDrawCallbacks { left_callback right_callback } {}
 	method registerEraseCallback { callback } {}
 	method registerOverlapCallback { callback } {}
+
+	method handleHomeKey {} {}
+	method handleEndKey {} {}
+
+	method setMode {subFirst} {}
     }
 
     private {
@@ -91,6 +97,7 @@ catch {delete class GeometryChecker} error
 
 	variable _displayFinished
 	variable _drew
+	variable _drawFirstUnion 0
 
 	variable _whoCallback
 	variable _leftDrawCallback
@@ -120,6 +127,7 @@ catch {delete class GeometryChecker} error
 	method handleCheckListSelect {}
 
 	method updateDisplayFinished {}
+	method firstUnionedSolid {tree}
     }
 }
 
@@ -127,7 +135,6 @@ catch {delete class GeometryChecker} error
     set _progressButtonInvoked true
 
     while {$_commandText != "Stopped."} {
-	update
 	set _commandText "Stopped."
 	lappend _afterCommands [after 500 "[code set [scope _commandText] "Stopped."]"]
     }
@@ -233,13 +240,23 @@ body GeometryChecker::handleCheckListSelect {} {
 	ttk::scrollbar $itk_component(checkFrame).checkScroll -orient vertical -command [ code $itk_component(checkFrame).checkList yview ]
     } {}
 
-    itk_component add commandLabel {
-	ttk::label $itk_interior.commandLabel \
-	    -textvariable [scope _commandText] \
+    itk_component add checkFooterFrame {
+	ttk::frame $itk_interior.checkFooterFrame
+    } {}
+
+    itk_component add optionFrame {
+	ttk::labelframe $itk_component(checkFooterFrame).optionFrame -text "Draw" -padding {2 0}
+    } {}
+    itk_component add firstCheck {
+	ttk::checkbutton $itk_component(optionFrame).firstCheck -text "Only First Union" -variable [scope _drawFirstUnion] -command [code $this display]
     } {}
 
     itk_component add progressFrame {
-    	ttk::frame $itk_interior.progressFrame -padding 0
+    	ttk::frame $itk_component(checkFooterFrame).progressFrame -padding 0
+    } {}
+    itk_component add commandLabel {
+	ttk::label $itk_component(progressFrame).commandLabel \
+	    -textvariable [scope _commandText] \
     } {}
     itk_component add progressBar {
 	ttk::progressbar $itk_component(progressFrame).progressBar -variable [scope _progressValue]
@@ -248,6 +265,7 @@ body GeometryChecker::handleCheckListSelect {} {
 	ttk::button $itk_component(progressFrame).progressButton \
 	-text "X" \
 	-width 1 \
+	-padding {2 0} \
 	-command [code $this handleProgressButton]
     } {}
 
@@ -298,17 +316,21 @@ body GeometryChecker::handleCheckListSelect {} {
     $itk_component(checkMenu) add command -label "Unmark Selected" -command [code $this unmarkSelection]
 
     pack $itk_component(headerFrame) -side top -fill both
-    pack $itk_component(headerLabelStatus) -side top -anchor nw
+    pack $itk_component(headerLabelStatus) -side left -anchor w
 
     pack $itk_component(checkFrame) -expand true -fill both -anchor center
     pack $itk_component(checkFrame).checkScroll -side right -fill y 
     pack $itk_component(checkFrame).checkList -expand 1 -fill both -padx {16 0}
 
-    pack $itk_component(commandLabel) -side top -fill x -padx 2 -anchor nw
+    pack $itk_component(checkFooterFrame) -side top -fill x -padx 8
 
-    pack $itk_component(progressFrame) -side top -fill x
-    pack $itk_component(progressBar) -side left -expand true -fill x -padx {20 2}
-    pack $itk_component(progressButton) -side left -padx 2
+    pack $itk_component(optionFrame) -side left -fill y
+    pack $itk_component(firstCheck) -side top -anchor nw
+
+    pack $itk_component(progressFrame) -side left -expand true -fill both
+    pack $itk_component(commandLabel) -side top -fill x -anchor nw
+    pack $itk_component(progressBar) -side left -expand true -fill x -padx 4
+    pack $itk_component(progressButton) -side right
 
     pack $itk_component(checkButtonFrame) -side top -fill both
     pack $itk_component(buttonLeft) -side left -padx 4 -pady {16 0} -anchor e -expand true
@@ -335,7 +357,6 @@ body GeometryChecker::handleCheckListSelect {} {
 
     # resolve vwait
     set _commandText ""
-    update
 }
 
 ::itcl::body GeometryChecker::destructor {} {
@@ -379,7 +400,6 @@ body GeometryChecker::loadOverlaps {{filename ""}} {
     set _ol_dir [file dirname $filename]
 
     puts "Loading from $filename"
-    update
 
     set ovfile [open $filename "r"]
     fconfigure "$ovfile" -encoding utf-8
@@ -443,7 +463,6 @@ body GeometryChecker::loadOverlaps {{filename ""}} {
 	$_ck insert {} end -id $count -text $count -values [list $count $left $right [format %.2f $size]] -tags "$tag"
 	if {$count % 500 == 0} {
 	    puts "."
-	    update
 	}
     }
     set _count $count
@@ -495,6 +514,10 @@ body GeometryChecker::loadOverlaps {{filename ""}} {
     if {$_markedCount > 0} {
 	$_status configure -text "[$_status cget -text] ($_markedCount marked resolved)"
     }
+
+    # add key bindings
+    bind $_ck <Home> [code $this handleHomeKey]
+    bind $_ck <End> [code $this handleEndKey]
 }
 
 
@@ -759,11 +782,6 @@ body GeometryChecker::subtractSelectionRightFromLeft {{swap "false"}} {
     $itk_component(buttonLeft) state disabled
     $itk_component(buttonRight) state disabled
 
-    # scroll to end of checklist so we can see the successful
-    # subtractions as they move to the bottom of the list
-    $_ck see [lindex [$_ck children {}] end]
-    update
-
     set subCmd "subtractItemRightFromLeft"
     if {$swap} {
 	set subCmd "subtractItemLeftFromRight"
@@ -788,7 +806,6 @@ body GeometryChecker::subtractSelectionRightFromLeft {{swap "false"}} {
 	    }
 	    incr count
 	    set _progressValue [expr $count / [expr $total + 1.0] * 100]
-	    update
 	}
     }
     set _commandText ""
@@ -828,12 +845,15 @@ body GeometryChecker::updateDisplayFinished {} {
     return $_displayFinished
 }
 
+body GeometryChecker::firstUnionedSolid {tree} {
+    return [string trim [file tail [lindex [search $tree -type shape -bool u] 0]]]
+}
+
 # display
 #
 # draw the currently selected geometry
 #
 body GeometryChecker::display {} {
-
     set _displayFinished false
     set sset [$_ck selection]
 
@@ -841,7 +861,12 @@ body GeometryChecker::display {} {
     set drawing ""
     foreach item $sset {
 	foreach {id_lbl id left_lbl left right_lbl right size_lbl size} [$_ck set $item] {
-	    lappend drawing $left $right
+	    if {$_drawFirstUnion} {
+		lappend drawing [$this firstUnionedSolid $left]
+		lappend drawing [$this firstUnionedSolid $right]
+	    } else {
+		lappend drawing $left $right
+	    }
 	}
     }
 
@@ -853,6 +878,10 @@ body GeometryChecker::display {} {
     set _progressButtonInvoked false
     foreach item $sset {
 	foreach {id_lbl id left_lbl left right_lbl right size_lbl size} [$_ck set $item] {
+	    if {$_drawFirstUnion} {
+		set left [$this firstUnionedSolid $left]
+		set right [$this firstUnionedSolid $right]
+	    }
 	    set _commandText "Drawing $left"
 
 	    if {[$this updateDisplayFinished]} {
@@ -969,6 +998,20 @@ body GeometryChecker::registerOverlapCallback {callback} {
     set _overlapCallback $callback
 }
 
+body GeometryChecker::handleHomeKey {} {
+    $_ck see [lindex [$_ck children {}] 0]
+}
+
+body GeometryChecker::handleEndKey {} {
+    $_ck see [lindex [$_ck children {}] end]
+}
+
+body GeometryChecker::setMode {subFirst} {
+    set subtractFirst $subFirst
+    if {$subFirst} {
+	set _drawFirstUnion 1
+    }
+}
 
 ##########
 # end public methods
@@ -998,10 +1041,10 @@ proc subtractRightFromLeft {left right {subtractFirst false}} {
     if [ catch { opendb } dbname ] {
 	return -code error "no database seems to be open"
     }
-    if [ exists $left ] {
+    if {![ exists $left ]} {
 	return -code error "unable to find $left"
     }
-    if [ exists $right ] {
+    if {![ exists $right ]} {
 	return -code error "unable to find $right"
     }
     if { $left eq $right } {
@@ -1067,10 +1110,6 @@ proc drawLeft {path} {
     if [ catch { opendb } dbname ] {
 	return -code 1 "no database seems to be open"
     }
-    if [ exists $path ] {
-	puts ""
-	puts "WARNING: unable to find $path"
-    }
 
     if [catch {draw -C255/0/0 $path} path_error] {
 	puts "ERROR: $path_error"
@@ -1081,88 +1120,10 @@ proc drawRight {path} {
     if [ catch { opendb } dbname ] {
 	return -code error "no database seems to be open"
     }
-    if [ exists $path ] {
-	puts ""
-	puts "WARNING: unable to find $path"
-    }
 
     if [catch {draw -C0/0/255 $path} path_error] {
 	puts "ERROR: $path_error"
     }
-}
-
-
-# All GeometryChecker stuff is in the GeometryChecker namespace
-proc check {{args}} {
-    set parent ""
-    set filename ""
-
-    set usage false
-    set firstFlag false
-    if {[llength $args] == 1} {
-	if {[lindex $args 0] == "-F"} {
-	    set firstFlag true
-	} else {
-	    set filename $args
-	}
-    } elseif {[llength $args] == 2} {
-	if {[lindex $args 0] == "-F"} {
-	    set firstFlag true
-	    set filename [lindex $args 1]
-	} else {
-	    set usage true
-	}
-    } elseif {[llength $args] > 3} {
-	set usage true
-    }
-
-    if {$usage} {
-	return -code error {Usage: check [-F] [overlaps_file]}
-    }
-
-    if {[winfo exists $parent.checker]} {
-	destroy $parent.checker
-    }
-
-    if {[catch {opendb} db_path]} {
-	return -code 1 "no database seems to be open"
-    }
-
-    set checkerWindow [toplevel $parent.checker]
-    set checker [GeometryChecker $checkerWindow.ck]
-
-    $checker configure -subtractFirst $firstFlag
-    $checker registerWhoCallback [code who]
-    $checker registerDrawCallbacks [code drawLeft] [code drawRight]
-    $checker registerEraseCallback [code erase]
-    $checker registerOverlapCallback [code subtractRightFromLeft]
-
-    if {[catch {$checker loadOverlaps $filename} result]} {
-	wm withdraw $checkerWindow
-	update
-	destroy $checkerWindow
-	return -code error $result
-    }
-
-    if {$firstFlag} {
-	puts "WARNING: Running with -F means check will assume that only the first unioned"
-	puts "         solid in a region is responsible for any overlap. When subtracting"
-	puts "         region A from overlapping region B, the first unioned solid in A will"
-	puts "         be subtracted from the first unioned solid in B. This may cause the"
-	puts "         wrong volume to be subtracted, leaving the overlap unresolved."
-	puts ""
-    }
-
-    wm title $checkerWindow "Geometry Checker"
-    pack $checker -expand true -fill both
-
-    # ensure window isn't too narrow
-    update
-    set geom [split [wm geometry $checkerWindow] "=x+-"]
-    if {[lindex $geom 0] > [lindex $geom 1]} {
-	lreplace $geom 1 1 [lindex $geom 0]
-    }
-    wm geometry $checkerWindow "=[::tcl::mathfunc::round [expr 1.62 * [lindex $geom 1]]]x[lindex $geom 1]"
 }
 
 
