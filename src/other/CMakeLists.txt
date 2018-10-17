@@ -1036,21 +1036,6 @@ if(BRLCAD_ENABLE_GECODE)
   endif(BRLCAD_GECODE_BUILD)
 endif(BRLCAD_ENABLE_GECODE)
 
-# Clipper polygon clipping library - for now, we're going to use our copy
-include(${CMAKE_CURRENT_SOURCE_DIR}/clipper.dist)
-CMAKEFILES_IN_DIR(clipper_ignore_files clipper)
-if(BRLCAD_LEVEL2)
-  add_subdirectory(clipper)
-  DISTCLEAN("${CMAKE_CURRENT_SOURCE_DIR}/clipper/Makefile")
-  set(CLIPPER_LIBRARY "clipper" CACHE STRING "Clipper library" FORCE)
-  set(CLIPPER_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/clipper" CACHE STRING "Directory containing clipper header" FORCE)
-  mark_as_advanced(CLIPPER_LIBRARY)
-  mark_as_advanced(CLIPPER_INCLUDE_DIR)
-  SetTargetFolder(clipper "Third Party Libraries")
-  SetTargetFolder(clipper-static "Third Party Libraries")
-  BRLCAD_MANAGE_FILES(clipper/clipper.hpp ${INCLUDE_DIR})
-endif(BRLCAD_LEVEL2)
-
 # VDSlib - A View-Dependent Simplification and Rendering Library For
 # the moment, this is marked NOSYS - it's possible that some Debian
 # systems would have 0.9 of vdslib installed, but it's unmaintained
