@@ -18,17 +18,25 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* prep caching
-
-* clean up the rt options clusterfudge and use png as example
-
-* fix regions/idents table commands, broken on Windows
-
-* rtwizard unit test legitimately failing on mac/windows
-
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
+
+* finish implementation and testing of bu_dir. bu_brlcad_root and
+  bu_brlcad_data will need verbose deprecation process.  Also need
+  need matching tcl function.
+
+* Need to eliminate bu_argv0_full_path and rework the bu_brlcad_*
+  functions that currently rely on it to take that path as a
+  parameter from the calling application.  The library shouldn't be
+  responsible for managing that path - there are too many issues
+  with doing so.  The current approach fixes some concerns but
+  breaks if an application changes its notion of the current working
+  directory after initialization, for example.
+
+* tree command shouldn't infinite loop when encountering a cyclic
+  path - need to print a warning and stop walking.  Requries full
+  path awareness in tree command walk.
 
 * move the rt_*_timer timing facilities to libbu and rework to allow
   contexts, allowing for more than one timer to be active.  Make sure
@@ -50,12 +58,6 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   bu_vls_incr/bu_vls_simplify functions.
 
   user:hidden utility:later category:enhancement impacts:many days:2
-
-* explicitly list the CMakeLists.txt files rather than adding
-  them automatically in the add_subdirectory override, now that
-  we are listing all files explicitly - preserve the new simplicity
-
-  user:hidden utility:now category:enhancement impacts:some days:1
 
 * rename zlib and libpng when building bundled to avoid conflicting
   with system-installed libs.  e.g., default to ENABLE_Z_PREFIX=ON
@@ -146,7 +148,28 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
-* screengrab on windows
+* sort gqa/rtcheck/check/lint/analyze/g_lint functionality into
+  logical groupings (probably analyze - calculate properties and
+  lint - find problems). Come up with a command design that
+  lets us rationalize the features and reduce the command set.
+
+* rtwizard unit test legitimately failing on mac/windows
+
+* implement a bu_exec wrapper and investigate something like capnproto
+  to build up a process-isolated command execution system for libged.
+  Possibly useful resources:
+
+  - https://github.com/s-u/multicore/blob/master/src/forknt.c
+  - https://github.com/diacritic/BoxFort
+  - https://yuhui-lin.github.io/blog/2017/08/01/serialization
+
+* Implement a bu alarm(2)-style interface so we can abort library
+  routines gracefully from application code. A quick initial attempt
+  at this didn't succeed very well (r71644 has what was tried).
+
+* cppclean audit
+
+* add a multiview rt script to regression testing (e.g., see rtwalk output)
 
 * bot overlaps when unoriented, when clearly not overlapping
 
@@ -230,12 +253,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * afl on libged/mged/rt/...
 
 * moodycamel as libbu queue/list/ptbl implementation
-
-* update dem-g to not use full paths for dsp primitive data locations -
-  should default to embedding the data in the .g file as a binary object,
-  with an option for a relative path if the user explicitly requests
-  it.  Full paths make for non-portable .g files and should only exist 
-  if the user explicitly manipulates the dsp to create such a path.
 
 * define geometry URL and VFS behavior
 
@@ -332,32 +349,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * investigate updating our fnmatch code to use OpenBSD's non-recursive
   implementation, added starting at revision 1.16:
   http://cvsweb.openbsd.org/cgi-bin/cvsweb/src/lib/libc/gen/fnmatch.c
-
-* implement a function to consolidate bu_brlcad_root, bu_brlcad_data,
-  and bu_brlcad_dir.  Pass in a bu_locate_t enum, the relative path,
-  and the log/no-log flag.  Intent is to support flexibility implied
-  by presence of BIN_DIR, LIB_DIR, etc. build settings.  Will need
-  great care to ensure correct behavior is preserved - bu_brlcad_root
-  and bu_brlcad_data will need verbose deprecation process, once
-  bu_locate is implemented.  Also will need matching tcl function.
-
-  const char *
-  bu_dir(const char *path, int (log*)(const char *, ...));
-
-  Examples:
-  bu_dir(B_ROOT, NULL); /* returns application "root" */
-  bu_dir(B_CWD, NULL); /* returns current working directory */
-  bu_dir(B_SHARE, bu_log); /* returns app share dir, logs via bu_log */
-  bu_dir(B_TEMP, NULL); /* returns an mkdtemp directory?? */
-  bu_dir(B_CACHE, NULL); /* returns a read/write cache dir */
-  bu_dir(B_CONFIG, NULL); /* returns a read/write config dir, e.g., ~/.brlcad */
-
-* Need to eliminate bu_argv0_full_path and rework the bu_brlcad_* functions
-  that currently rely on it to take that path as a parameter from the
-  calling application.  The library shouldn't be responsible for managing
-  that path - there are too many issues with doing so.  The current approach
-  fixes some concerns but breaks if an application changes its notion of
-  the current working directory after initialization, for example.
 
 * start making use of the CMakePushCheckState macros - we are doing
   this manually in several places
@@ -1610,6 +1601,31 @@ ATTRIBUTES
 NEW OBJECTS
 -----------
 
+* view/camera objects.  non-geometry object type that encapsulates the
+  concepts handled by saveview/loadview including awareness of
+  orthogonal vs perspective, ambient lighting levels, and possibly
+  styling/render modes.
+
+  obviously need to be able to derive a homogenous transformation
+  matrix, but may want to encode/preserve scale, translate, rotate
+  with prescribed ordering separately for proper reversibility.
+
+  vect_t: eye point
+  vect_t: view center point
+  vect_t: up vector
+  float: perspective angle (-1 ortho?)
+  float: ambient intensity
+  color_t: background / ambient color
+  uint[2]: size / pixel dimensions
+
+  vect_t: rotation vector
+  vect_t: scale vector
+  vect_t: translation vector
+  derivable (or vice-versa):
+  float[2]: grid cell (ortho-only)
+  float[6]: view frustum (implies perspective matrix)
+  float[4]: perspective projection (fov angle, aspect ratio, znear, zfar)
+
 * datum objects.  implement support for datum points, axes, planes,
   and coordinate systems.  Nominal prioritized task decomposition with
   time estimates:
@@ -2147,31 +2163,6 @@ point cloud rendering, instead of hard-coding it.
   handling ray dispatch: https://github.com/cameron314/concurrentqueue
 
 
-LIBPC
------
-
-* BNF Parser for generation of constraint objects from expressions
-
-* Make better pc_pc_set, pc_param and pc_constraint structures
-instead of the current ugly ones.
-
-* Test constraint solution via Read->Generate->Solve->Update routine
-
-* Implement Non-deterministic solution techniques:  Backjumping,
-Backmarking
-
-* Implement Deterministic propagators: NC, AC1-7, PC1-5
-
-* Check STL structures in public API ; wrapping with bu_list
-
-* Boost constrained_value based functor integration for 'compiled'
-constraints
-
-* Implement Hypergraph representation system
-
-* Explore analytic and symbolic solution system
-
-
 INFRASTRUCTURE
 --------------
 
@@ -2409,7 +2400,6 @@ DOCUMENTATION
 * these eventually get put into gcv (hopefully not needing docs):
 
     3dm-g
-    dem-g
     g-dot
     g-jack
     g-off

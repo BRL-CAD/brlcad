@@ -35,12 +35,14 @@
 #include <string.h>
 
 /* interface headers */
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/path.h"
 #include "bu/str.h"
 #include "brlcad_version.h"
 #include "raytrace.h"
 #include "ged.h"
+
 
 const char *usage = "[-o output.dot] input.g [object1 ...]\n";
 

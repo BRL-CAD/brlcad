@@ -35,7 +35,7 @@ extern char *realpath(const char *, char *);
 #endif
 
 char *
-bu_realpath(const char *path, char *resolved_path)
+bu_file_realpath(const char *path, char *resolved_path)
 {
     if (!resolved_path)
 	resolved_path = (char *) bu_calloc(MAXPATHLEN, sizeof(char), "resolved_path alloc");

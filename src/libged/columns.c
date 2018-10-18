@@ -80,21 +80,6 @@ vls_col_eol(struct bu_vls *str)
 
 
 /*
- * Given two pointers to pointers to directory entries, do a string compare
- * on the respective names and return that value.
- */
-int
-cmpdirname(const void *a, const void *b)
-{
-    struct directory **dp1, **dp2;
-
-    dp1 = (struct directory **)a;
-    dp2 = (struct directory **)b;
-    return bu_strcmp((*dp1)->d_namep, (*dp2)->d_namep);
-}
-
-
-/*
  * Local Variables:
  * mode: C
  * tab-width: 8

@@ -8,6 +8,8 @@ BRLCAD_ADDEXEC(icv_size_down size_down.c "libicv;libbu" TEST)
 BRLCAD_ADDEXEC(icv_saturate saturate.c "libicv;libbu" TEST)
 BRLCAD_ADDEXEC(icv_operations operations.c "libicv;libbu" TEST)
 
+CMAKEFILES(CMakeLists.txt)
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

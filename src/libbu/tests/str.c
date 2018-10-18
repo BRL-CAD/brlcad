@@ -172,12 +172,12 @@ test_bu_strncmp_like_functions(int argc, char *argv[], int (*fun)(const char *, 
 }
 
 int
-str_main(int argc, char *argv[])
+main(int argc, char *argv[])
 {
     int function_num = 0;
 
     if (argc < 2) {
-	bu_exit(1, "ERROR: input format is function_num function_test_args [%s]\n", argv[0]);
+	bu_exit(1, "Usage: %s {function_num} {args...}\n", argv[0]);
     }
 
     sscanf(argv[1], "%d", &function_num);
@@ -200,6 +200,7 @@ str_main(int argc, char *argv[])
     }
 
     bu_log("ERROR: function_num %d is not valid [%s]\n", function_num, argv[0]);
+
     return 1;
 }
 

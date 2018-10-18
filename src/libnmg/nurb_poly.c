@@ -106,7 +106,7 @@ nmg_nurb_mk_poly(fastf_t *v1, fastf_t *v2, fastf_t *v3, fastf_t *uv1, fastf_t *u
 {
     struct nmg_nurb_poly *p;
 
-    BU_ALLOC(p, struct nmg_nurb_poly);
+    NMG_ALLOC(p, struct nmg_nurb_poly);
     p->next = (struct nmg_nurb_poly *) 0;
 
     VMOVE(p->ply[0], v1);

@@ -34,9 +34,11 @@
 #include "bio.h"
 
 /* interface headers */
+#include "bu/app.h"
 #include "bu/debug.h"
 #include "bu/getopt.h"
 #include "bu/parallel.h"
+#include "bu/snooze.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rt/geom.h"
@@ -403,7 +405,7 @@ main(int argc, char **argv)
     double		percent;
 
     bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
-    sleep(1);
+    bu_snooze(BU_SEC2USEC(1));
 
     bu_setprogname(argv[0]);
     bu_setlinebuf( stderr );

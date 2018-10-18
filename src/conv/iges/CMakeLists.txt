@@ -95,6 +95,7 @@ BRLCAD_ADDEXEC(g-iges "g-iges.c;iges.c" "librt;libnmg;libbu;${M_LIBRARY}")
 
 set(iges_ignore_files
   BrepHandler.cpp
+  CMakeLists.txt
   PullbackCurve.cpp
   PullbackCurve.h
   add_face.cpp

@@ -42,7 +42,7 @@
 #include <stdexcept>
 
 
-namespace
+namespace rhino_read
 {
 
 
@@ -705,7 +705,7 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
     if (0 > db_search(&found, DB_SEARCH_RETURN_UNIQ_DP,
 		      (std::string() +
 		       "-attr rhino::type=ON_Layer -or ( ( -attr rhino::type=ON_InstanceDefinition -or -attr rhino::type=ON_InstanceRef ) -not -name IDef* -not -name "
-		       + gcv_options.default_name + "* )").c_str(), 0, NULL, &db))
+		       + gcv_options.default_name + "* )").c_str(), 0, NULL, &db, NULL))
 	bu_bomb("db_search() failed");
 
     const char * const ignored_attributes[] = {"rhino::type", "rhino::uuid"};
@@ -717,7 +717,7 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
 
     if (0 > db_search(&found, DB_SEARCH_RETURN_UNIQ_DP,
 		      "-type comb -attr rgb -not -above -attr rgb -or -attr shader -not -above -attr shader",
-		      0, NULL, &db))
+		      0, NULL, &db, NULL))
 	bu_bomb("db_search() failed");
 
     if (BU_PTBL_LEN(&found)) {
@@ -746,7 +746,7 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
     BU_PTBL_INIT(&found);
     std::map<const directory *, std::string> renamed;
 
-    if (0 > db_search(&found, DB_SEARCH_TREE, "-type shape", 0, NULL, &db))
+    if (0 > db_search(&found, DB_SEARCH_TREE, "-type shape", 0, NULL, &db, NULL))
 	bu_bomb("db_search() failed");
 
     if (BU_PTBL_LEN(&found)) {
@@ -764,8 +764,8 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
 			bu_bomb("db5_get_attributes() failed");
 
 		    if (!bu_strcmp(bu_avs_get(&avs, "rhino::type"), "ON_Layer")
-			|| (bu_fnmatch(unnamed_pattern.c_str(), (*entry)->fp_names[i]->d_namep, 0)
-			    && bu_fnmatch("IDef*", (*entry)->fp_names[i]->d_namep, 0))) {
+			|| (bu_path_match(unnamed_pattern.c_str(), (*entry)->fp_names[i]->d_namep, 0)
+			    && bu_path_match("IDef*", (*entry)->fp_names[i]->d_namep, 0))) {
 			const std::string prefix = (*entry)->fp_names[i]->d_namep;
 			std::string suffix = ".s";
 			std::size_t num = 1;
@@ -801,7 +801,7 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
     BU_PTBL_INIT(&found);
 
     if (0 > db_search(&found, DB_SEARCH_TREE,
-		      "-type shape -not -below -type region", 0, NULL, &db))
+		      "-type shape -not -below -type region", 0, NULL, &db, NULL))
 	bu_bomb("db_search() failed");
 
     if (BU_PTBL_LEN(&found)) {
@@ -929,7 +929,7 @@ static const gcv_filter * const filters[] = {&gcv_conv_rhino_read, NULL};
 
 extern "C"
 {
-    extern const gcv_plugin gcv_plugin_info_s = {filters};
+    extern const gcv_plugin gcv_plugin_info_s = {rhino_read::filters};
     GCV_EXPORT const struct gcv_plugin *
     gcv_plugin_info()
     {

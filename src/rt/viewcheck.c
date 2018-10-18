@@ -44,6 +44,9 @@
 #include "raytrace.h"
 #include "bn/plot3.h"
 
+#include "./ext.h"
+
+
 #define OVLP_TOL 0.1
 
 extern int rpt_overlap;		/* report overlapping region names */
@@ -60,27 +63,6 @@ extern FILE *outfp;
 
 
 const char title[] = "RT Check";
-
-void
-usage(const char *argv0)
-{
-    bu_log("Usage:  %s [options] model.g objects...\n", argv0);
-    bu_log("Options:\n");
-    bu_log(" -s #           Square grid size in pixels (default 512)\n");
-    bu_log(" -w # -n #      Grid size width and height in pixels\n");
-    bu_log(" -V #           View (pixel) aspect ratio (width/height)\n");
-    bu_log(" -a #           Azimuth in degrees\n");
-    bu_log(" -e #           Elevation in degrees\n");
-    bu_log(" -g #           Grid cell width\n");
-    bu_log(" -G #           Grid cell height\n");
-    bu_log(" -M             Read matrix, cmds on stdin\n");
-    bu_log(" -N #	    Set NMG debug flags\n");
-    bu_log(" -o file.plot3  Specify UNIX-plot output file\n");
-    bu_log(" -x #           Set librt debug flags\n");
-    bu_log(" -X #           Set rt debug flags\n");
-    bu_log(" -r             Report only unique overlaps\n");
-    bu_log(" -P #           Set number of processors\n");
-}
 
 
 static size_t noverlaps;		/* Number of overlaps seen */
@@ -397,6 +379,21 @@ view_end(struct application *UNUSED(ap)) {
 }
 
 
+void
+application_init (void)
+{
+    option("", "-o file.plot3", "Specify a UNIX-plot output file", 0);
+    option("", "-r", "Report only unique overlaps", 0);
+
+    /* this reassignment hack ensures help is last in the first list */
+    option("dummy", "-? or -h", "Display help", 1);
+    option("", "-? or -h", "Display help", 1);
+
+    option(NULL, "-C", "Disabled, not implemented", 2);
+    option(NULL, "-W", "Disabled, non implemented", 2);
+}
+
+
 /*
  * Stubs
  */
@@ -404,7 +401,6 @@ void view_pixel(struct application *UNUSED(ap)) {}
 void view_eol(struct application *UNUSED(ap)) {}
 void view_setup(struct rt_i *UNUSED(rtip)) {}
 void view_cleanup(struct rt_i *UNUSED(rtip)) {}
-void application_init (void) {}
 
 /*
  * Local Variables:

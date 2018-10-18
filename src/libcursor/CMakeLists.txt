@@ -10,6 +10,8 @@ if(HAVE_TERMLIB)
   SET_TARGET_PROPERTIES(libcursor PROPERTIES VERSION 20.0.1 SOVERSION 20)
 endif(HAVE_TERMLIB)
 
+CMAKEFILES(CMakeLists.txt)
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

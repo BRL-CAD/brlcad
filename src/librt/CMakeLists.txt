@@ -42,6 +42,7 @@ set(LIBRT_SOURCES
   comb/db_comb.c
   constraint.c
   cut.c
+  cut_hlbvh.c
   db5_alloc.c
   db5_attr.c
   db5_attr_registry.cpp
@@ -213,7 +214,6 @@ set(LIBRT_SOURCES
   reduce_db.cpp
   regionfix.c
   roots.c
-  screened_poisson.cpp
   search.c
   shoot.c
   tol.c
@@ -369,7 +369,6 @@ if(CPP_DLL_DEFINES)
   set_property(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "DB5_DLL_EXPORTS")
   set_property(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "VDS_DLL_IMPORTS")
   set_property(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "GDIAM_DLL_IMPORTS")
-  set_property(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "SPR_DLL_IMPORTS")
   set_property(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "LZ4_DLL_IMPORT=1")
 endif(CPP_DLL_DEFINES)
 
@@ -388,6 +387,9 @@ endif(CPP_DLL_DEFINES)
 #BRLCAD_ADDEXEC(test_surfacetree test_surfacetree.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
 
 add_subdirectory(tests)
+
+CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(db_fp.cxx)
 
 # Local Variables:
 # tab-width: 8

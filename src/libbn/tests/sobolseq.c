@@ -27,9 +27,8 @@
 #include "bu.h"
 #include "bn.h"
 
-#define MAXDIM 1111
-
-extern double bn_sobol_urand(bn_soboldata, double a, double b);
+/* Not public libbn API, but needed to implement the Joe/Kuo integrand test */
+extern double _sobol_urand(struct bn_soboldata *, double a, double b);
 
 /* test integrand from Joe and Kuo paper ... integrates to 1 */
 static double testfunc(unsigned n, const double *x)
@@ -43,29 +42,24 @@ static double testfunc(unsigned n, const double *x)
     return f;
 }
 
-int main(int argc, char **argv)
+int sobolseq_main(int argc, char **argv)
 {
     unsigned n, j, i, sdim;
-    static double x[MAXDIM];
+    double *x;
     double testint_sobol = 0, testint_rand = 0;
-    bn_soboldata s;
+    struct bn_soboldata *s;
     if (argc < 3) {
-	fprintf(stderr, "Usage: %s <sdim> <ngen>\n", argv[0]);
+	fprintf(stderr, "Usage: bn_test sobol <sdim> <ngen>\n");
 	return 1;
     }
     sdim = atoi(argv[1]);
     s = bn_sobol_create(sdim, time(NULL));
     n = atoi(argv[2]);
-    bn_sobol_skip(s, n, x);
+    bn_sobol_skip(s, n);
     for (j = 1; j <= n; ++j) {
-	bn_sobol_next01(s, x);
+	x = bn_sobol_next(s, NULL, NULL);
 	testint_sobol += testfunc(sdim, x);
-	if (j < 100) {
-	    printf("x[%u]: %g", j, x[0]);
-	    for (i = 1; i < sdim; ++i) printf(", %g", x[i]);
-	    printf("\n");
-	}
-	for (i = 0; i < sdim; ++i) x[i] = bn_sobol_urand(s, 0.,1.);
+	for (i = 0; i < sdim; ++i) x[i] = _sobol_urand(s, 0.,1.);
 	testint_rand += testfunc(sdim, x);
     }
     bn_sobol_destroy(s);
@@ -73,7 +67,7 @@ int main(int argc, char **argv)
 	    testint_sobol / n, testint_rand / n);
     printf("        error = %g using Sobol, %g using pseudorandom.\n",
 	    testint_sobol / n - 1, testint_rand / n - 1);
-    return 0;
+    return ((testint_sobol / n - 1) > 0.001);
 }
 
 /*

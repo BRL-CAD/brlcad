@@ -62,7 +62,7 @@ Convtree()
 
 	if (dir[i]->param <= pstart) {
 	    /* Illegal parameter address */
-	    bu_log("Entity number %d (Boolean Tree) does not have a legal parameter pointer\n", i);
+	    bu_log("Entity number %zu (Boolean Tree) does not have a legal parameter pointer\n", i);
 	    continue;
 	}
 

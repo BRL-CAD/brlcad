@@ -59,8 +59,8 @@ package provide OverlapFileTool 1.0
 	variable _statusText
 	variable _progressValue
 
-	method runCheckOverlaps { obj } {}
-	method runGqa { obj } {}
+	method runCheckOverlapsAE { obj } {}
+	method runCheckOverlapsTriple { obj } {}
 
 	method sortPairs {} {}
 	method rmDupPairs {} {}
@@ -198,12 +198,11 @@ body OverlapFileTool::runTools { } {
     $itk_component(buttonGo) configure -state disabled
     $itk_component(objectsEntry) configure -state disabled
     $this configure -cursor watch
-    update
 
-    # run checkoverlaps and gqa for all the specified objects
+    # run checkoverlaps for all the specified objects
     if { [string length $_objs] > 0 } {
-	$this runCheckOverlaps $_objs
-	$this runGqa $_objs
+	$this runCheckOverlapsAE $_objs
+	$this runCheckOverlapsTriple $_objs
     }
     # check for the count of overlaps detected
     set ov_count [llength $pairsList]
@@ -214,7 +213,6 @@ body OverlapFileTool::runTools { } {
 	$this configure -cursor ""
 	set _progressValue 0
 	set _statusText "Ready"
-	update
 	return
     }
 
@@ -237,7 +235,7 @@ body OverlapFileTool::runTools { } {
     # write the overlaps file
     set fp [open $filename w+]
     foreach pair [lsort -decreasing -real -index 2 $overlapsList] {
-	puts $pair
+	#puts $pair
 	puts $fp $pair
     }
     close $fp
@@ -491,7 +489,6 @@ body OverlapFileTool::addToList { new_list } {
 #
 body OverlapFileTool::rmDupPairs { } {
     set _statusText "Removing duplicates from overlaps list"
-    update
     set new_list {}
 
     #take first pair
@@ -514,7 +511,6 @@ body OverlapFileTool::rmDupPairs { } {
     }
     set _progressValue 100
     set _statusText "Done"
-    update
 
     #take last pairlist
     $this addToList $new_list
@@ -528,24 +524,23 @@ body OverlapFileTool::rmDupPairs { } {
 body OverlapFileTool::sortPairs { } {
     set _progressValue 95
     set _statusText "Sorting overlaps list"
-    update
     set pairsList [lsort $pairsList]
 }
 
-# runGqa
+# runCheckOverlapsTriple
 #
-# runs the gqa command for the passed object
+# runs the check overlaps command for the passed object
+# in triple grid mode
 #
-body OverlapFileTool::runGqa { obj } {
-    set cmd "gqa -Ao -q -g1mm,1mm $obj"
+body OverlapFileTool::runCheckOverlapsTriple { obj } {
+    set cmd "check overlaps -g1mm,1mm -q $obj"
     set _statusText "Running $cmd"
-    update
-    if [ catch {set gqa_list [eval $cmd]} ] {
-	set gqa_list {}
+    if [ catch {set check_list [eval $cmd]} ] {
+	set check_list {}
     }
-    set lines [split $gqa_list \n]
+    set lines [split $check_list \n]
     foreach line $lines {
-	regexp {(.*) (.*) count:([0-9]*) dist:(.*)mm} $line full left right count depth
+	regexp {<(.*),.(.*)>: ([0-9]*).* (.*).mm} $line full left right count depth
 	if { [info exists full] == 0 } {
 	    continue
 	}
@@ -560,27 +555,26 @@ body OverlapFileTool::runGqa { obj } {
 	unset full
     }
     set _progressValue 90
-    update
 }
 
-# runCheckOverlaps
+# runCheckOverlapsAE
 #
-# runs the check_overlaps command for the passed object
+# runs the check overlaps command for the passed object
 # 16 times for different combinations of az/el values
+# in single grid mode
 #
-body OverlapFileTool::runCheckOverlaps { obj } {
+body OverlapFileTool::runCheckOverlapsAE { obj } {
     for { set az 0}  {$az < 180} {incr az 45} {
 	for { set el 0}  {$el < 180} {incr el 45} {
-	    set cmd "check_overlaps -s1024 -a$az -e$el $obj"
+	    set cmd "check overlaps -G1024 -a$az -e$el -q $obj"
 	    set _statusText "Running $cmd"
 	    incr _progressValue 4
-	    update
-	    if [catch {set chk_list [eval $cmd]}] {
-		set chk_list {}
+	    if [catch {set check_list [eval $cmd]}] {
+		set check_list {}
 	    }
-	    set lines [split $chk_list \n]
+	    set lines [split $check_list \n]
 	    foreach line $lines {
-		regexp {<(.*),.(.*)>: ([0-9]*).* (.*)mm} $line full left right count depth
+		regexp {<(.*),.(.*)>: ([0-9]*).* (.*).mm} $line full left right count depth
 		if { [info exists full] == 0 } {
 		    continue
 		}

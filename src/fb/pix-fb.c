@@ -42,6 +42,7 @@
 #include "bu/file.h"
 #include "bu/exit.h"
 #include "bu/log.h"
+#include "bu/snooze.h"
 #include "vmath.h"
 #include "fb.h"
 
@@ -160,16 +161,16 @@ get_args(int argc, char **argv)
     } else {
 	char *ifname;
 	file_name = argv[bu_optind];
-	ifname = bu_realpath(file_name, NULL);
+	ifname = bu_file_realpath(file_name, NULL);
 	if ((infd = open(ifname, 0)) < 0) {
 	    perror(ifname);
 	    fprintf(stderr,
 		    "pix-fb: cannot open \"%s(canonical %s)\" for reading\n",
 		    file_name, ifname);
-	    bu_free(ifname, "ifname alloc from bu_realpath");
+	    bu_free(ifname, "ifname alloc from bu_file_realpath");
 	    bu_exit(1, NULL);
 	}
-	bu_free(ifname, "ifname alloc from bu_realpath");
+	bu_free(ifname, "ifname alloc from bu_file_realpath");
 	setmode(infd, O_BINARY);
 	fileinput++;
     }
@@ -380,7 +381,7 @@ main(int argc, char **argv)
 		skipbytes(infd, (off_t)(file_width-file_xoff-xskip-scanpix)*sizeof(RGBpixel));
 	}
     }
-    sleep(pause_sec);
+    bu_snooze(BU_SEC2USEC(pause_sec));
     if (fb_close(fbp) < 0) {
 	fprintf(stderr, "pix-fb: Warning: fb_close() error\n");
     }

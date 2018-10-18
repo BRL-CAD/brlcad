@@ -38,7 +38,9 @@
 #include "bio.h"
 
 /* interface headers */
+#include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/snooze.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rt/geom.h"
@@ -94,7 +96,7 @@ main(int argc, char **argv)
     struct wmember reg_head;
 
     bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
-    sleep(1);
+    bu_snooze(BU_SEC2USEC(1));
 
     bu_setprogname(argv[0]);
 
@@ -193,7 +195,7 @@ main(int argc, char **argv)
 	if (number_scanned < 4)
 	    break;
 	if (i >= no_of_verts)
-	    bu_log("vertex number too high (%zu) only allowed for %d\n", i, no_of_verts);
+	    bu_log("vertex number too high (%zu) only allowed for %zu\n", i, no_of_verts);
 	VSET(verts[i].coord, x, y, z);
 
 	if (number_scanned == 7) {

@@ -26,7 +26,7 @@
 #include <time.h>
 #include "bio.h"
 
-#include "bu/file.h"
+#include "bu/app.h"
 #include "bu/log.h"
 #include "bu/parallel.h"
 #include "brlcad_ident.h"

@@ -157,7 +157,7 @@ rt_script_free(struct soltab *stp)
 
 
 int
-rt_script_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_script_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     struct rt_script_internal *script_ip;
 
@@ -178,7 +178,7 @@ rt_script_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn
  * Import a script from the database format to the internal format.
  */
 int
-rt_script_import4(struct rt_db_internal *ip, const struct bu_external *ep, const struct db_i *dbip)
+rt_script_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *UNUSED(mat), const struct db_i *dbip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);
     if (ep) BU_CK_EXTERNAL(ep);
@@ -192,7 +192,7 @@ rt_script_import4(struct rt_db_internal *ip, const struct bu_external *ep, const
  * The name is added by the caller, in the usual place.
  */
 int
-rt_script_export4(struct bu_external *ep, const struct rt_db_internal *ip, const struct db_i *dbip)
+rt_script_export4(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *dbip)
 {
     if (ep) BU_CK_EXTERNAL(ep);
     if (ip) RT_CK_DB_INTERNAL(ip);
@@ -206,34 +206,28 @@ rt_script_export4(struct bu_external *ep, const struct rt_db_internal *ip, const
  * Import a script from the database format to the internal format.
  */
 int
-rt_script_import5(struct rt_db_internal *ip, const struct bu_external *ep, const struct db_i *dbip)
+rt_script_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *UNUSED(mat), const struct db_i *UNUSED(dbip))
 {
     struct rt_script_internal *script_ip;
     unsigned char *ptr;
 
-    if (dbip) RT_CK_DBI(dbip);
     BU_CK_EXTERNAL(ep);
-
     RT_CK_DB_INTERNAL(ip);
+
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_SCRIPT;
     ip->idb_meth = &OBJ[ID_SCRIPT];
     BU_ALLOC(ip->idb_ptr, struct rt_script_internal);
 
     script_ip = (struct rt_script_internal *)ip->idb_ptr;
-    script_ip->magic = RT_SCRIPT_INTERNAL_MAGIC;
+    BU_VLS_INIT(&script_ip->s_type);
+    script_ip->script_magic = RT_SCRIPT_INTERNAL_MAGIC;
 
     ptr = ep->ext_buf;
 
     bu_vls_init(&script_ip->s_type);
-    script_ip->s_type.vls_str = bu_strdup((const char *)ptr);
-    ptr += strlen(script_ip->s_type.vls_str);
-    script_ip->s_type.vls_offset = ntohl(*(uint32_t *)ptr);
-    ptr += SIZEOF_NETWORK_LONG;
-    script_ip->s_type.vls_len = ntohl(*(uint32_t *)ptr);
-    ptr += SIZEOF_NETWORK_LONG;
-    script_ip->s_type.vls_max = ntohl(*(uint32_t *)ptr);
-    ptr += SIZEOF_NETWORK_LONG;
+    bu_vls_strncpy(&script_ip->s_type, (char *)ptr,
+           ep->ext_nbytes - (ptr - (unsigned char *)ep->ext_buf));
 
     return 0;			/* OK */
 }
@@ -243,11 +237,13 @@ rt_script_import5(struct rt_db_internal *ip, const struct bu_external *ep, const
  * The name is added by the caller, in the usual place.
  */
 int
-rt_script_export5(struct bu_external *ep, const struct rt_db_internal *ip, const struct db_i *dbip)
+rt_script_export5(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *dbip)
 {
     struct rt_script_internal *script_ip;
     unsigned char *cp;
+    size_t rem;
 
+    rem = ep->ext_nbytes;
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -259,7 +255,7 @@ rt_script_export5(struct bu_external *ep, const struct rt_db_internal *ip, const
     BU_CK_EXTERNAL(ep);
 
     /* tally up size of buffer needed */
-    ep->ext_nbytes = SIZEOF_NETWORK_LONG + sizeof(struct bu_vls);
+    ep->ext_nbytes = SIZEOF_NETWORK_LONG + bu_vls_strlen(&script_ip->s_type) + 1;
 
     ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "script external");
 
@@ -268,9 +264,9 @@ rt_script_export5(struct bu_external *ep, const struct rt_db_internal *ip, const
     *(uint32_t *)cp = htonl(RT_SCRIPT_INTERNAL_MAGIC);
     cp += SIZEOF_NETWORK_LONG;
 
-    bu_strlcpy((char *)cp, bu_vls_addr(&script_ip->s_type), bu_vls_strlen(&script_ip->s_type) + 1);
+    bu_strlcpy((char *)cp, bu_vls_addr(&script_ip->s_type), rem);
     cp += bu_vls_strlen(&script_ip->s_type) + 1;
-
+ 
     return 0;
 }
 
@@ -281,7 +277,7 @@ rt_script_export5(struct bu_external *ep, const struct rt_db_internal *ip, const
  * tab, and give parameter values.
  */
 int
-rt_script_describe(struct bu_vls *str, const struct rt_db_internal *ip)
+rt_script_describe(struct bu_vls *str, const struct rt_db_internal *ip, int UNUSED(verbose), double UNUSED(mm2local))
 {
     char buf[256];
     struct rt_script_internal *script_ip =
@@ -313,7 +309,7 @@ rt_script_ifree(struct rt_db_internal *ip)
 
     script_ip = (struct rt_script_internal *)ip->idb_ptr;
     RT_SCRIPT_CK_MAGIC(script_ip);
-    script_ip->magic = 0;			/* sanity */
+    script_ip->script_magic = 0;			/* sanity */
 
     if (BU_VLS_IS_INITIALIZED(&script_ip->s_type))
 	bu_vls_free(&script_ip->s_type);
@@ -356,7 +352,7 @@ rt_script_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const 
 
 
 int
-rt_script_adjust(struct rt_db_internal *intern)
+rt_script_adjust(struct bu_vls *UNUSED(logstr), struct rt_db_internal *intern, int UNUSED(argc), const char **UNUSED(argv))
 {
     struct rt_script_internal *script_ip;
 

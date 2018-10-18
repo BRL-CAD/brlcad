@@ -101,14 +101,13 @@ RT_EXPORT extern void rt_memfree(struct mem_map **pp,
 RT_EXPORT extern void rt_mempurge(struct mem_map **pp);
 
 /**
- * Print a memory chain.
- */
-RT_EXPORT extern void rt_memprint(struct mem_map **pp);
-
-/**
  * Return all the storage used by the rt_mem_freemap.
  */
 RT_EXPORT extern void rt_memclose(void);
+
+
+/* DEPRECATED */
+/*RT_EXPORT extern void rt_memprint(struct mem_map **pp);*/
 
 
 __END_DECLS

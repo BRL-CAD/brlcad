@@ -245,9 +245,10 @@ GED_EXPORT extern int ged_prcolor(struct ged *gedp, int argc, const char *argv[]
  */
 GED_EXPORT extern int ged_set_output_script(struct ged *gedp, int argc, const char *argv[]);
 
-
-
-
+/**
+ * Check database objects for errors
+ */
+GED_EXPORT extern int ged_lint(struct ged *gedp, int argc, const char *argv[]);
 
 
 __END_DECLS

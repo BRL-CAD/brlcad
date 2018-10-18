@@ -32,6 +32,8 @@
 
 #include "analyze.h"
 
+#define MAX_WIDTH (32*1024)
+
 
 HIDDEN void
 check_show_help(struct ged *gedp)
@@ -49,6 +51,7 @@ check_show_help(struct ged *gedp)
     bu_vls_printf(&str, "  moments - Computes the moments and products of inertia of the objects specified.\n");
     bu_vls_printf(&str, "  overlaps - This reports overlaps, when two regions occupy the same space.\n");
     bu_vls_printf(&str, "  surf_area - Computes the surface area of the objects specified.\n");
+    bu_vls_printf(&str, "  unconf_air - This reports when there are unconfined air regions.\n");
     bu_vls_printf(&str, "  volume - Computes the volume of the objects specified.\n");
 
     bu_vls_printf(&str, "\nOptions:\n\n");
@@ -57,6 +60,7 @@ check_show_help(struct ged *gedp)
     bu_vls_printf(&str, "  -e #[deg|rad] - Elevation angle.\n");
     bu_vls_printf(&str, "  -f filename - Specifies that density values should be taken from an external file instead of from the _DENSITIES object in the database.\n");
     bu_vls_printf(&str, "  -g [initial_grid_spacing-]grid_spacing_limit or [initial_grid_spacing,]grid_spacing_limit - Specifies a limit on how far the grid can be refined and optionally the initial spacing between rays in the grids.\n");
+    bu_vls_printf(&str, "  -G [grid_width,]grid_height - sets the grid size, if only grid width is mentioned then a square grid size is set\n");
     bu_vls_printf(&str, "  -i - gets 'view information' from the view to setup eye position.\n");
     bu_vls_printf(&str, "  -M # - Specifies a mass tolerance value.\n");
     bu_vls_printf(&str, "  -n # - Specifies that the grid be refined until each region has at least num_hits ray intersections.\n");
@@ -66,6 +70,7 @@ check_show_help(struct ged *gedp)
     bu_vls_printf(&str, "  -P # - Specifies that ncpu CPUs should be used for performing the calculation. By default, all local CPUs are utilized.\n");
     bu_vls_printf(&str, "  -q - Quiets (suppresses) the 'was not hit' reporting.\n");
     bu_vls_printf(&str, "  -r - Indicates to print per-region statistics for mass and volume as well as the values for the objects specified.\n");
+    bu_vls_printf(&str, "  -R - Disable reporting of overlaps.\n");
     bu_vls_printf(&str, "  -s # - Specifies surface area tolerance value.\n");
     bu_vls_printf(&str, "  -S # - Specifies that the grid spacing will be initially refined so that at least samples_per_axis_min will be shot along each axis of the bounding box of the model.\n");
     bu_vls_printf(&str, "  -t - Sets the tolerance for computing overlaps.\n");
@@ -134,7 +139,7 @@ parse_check_args(int ac, char *av[], struct check_parameters* options, struct cu
     double a;
     char *p;
 
-    char *options_str = "a:de:f:g:iM:n:N:opP:qrs:S:t:U:u:vV:h?";
+    char *options_str = "a:de:f:g:G:iM:n:N:opP:qrRs:S:t:U:u:vV:h?";
 
     /* Turn off getopt's error messages */
     bu_opterr = 0;
@@ -211,6 +216,36 @@ parse_check_args(int ac, char *av[], struct check_parameters* options, struct cu
 		    analyze_set_grid_spacing(state, options->gridSpacing, options->gridSpacingLimit);
 		    break;
 		}
+	    case 'G':
+		{
+		    double width, height;
+		    /* find out if we have two or one args; user can
+		     * separate them with , delimiter
+		     */
+		    p = strchr(bu_optarg, COMMA);
+		    if (p)
+			*p++ = '\0';
+		    width = atoi(bu_optarg);
+
+		    if (width < 1 || width > MAX_WIDTH) {
+			bu_vls_printf(_ged_current_gedp->ged_result_str,"mentioned grid size is out of range\n");
+			return -1;
+		    }
+
+		    if (p) {
+			/* widht and height mentioned */
+			height = atoi(p);
+			if (height < 1 || height > MAX_WIDTH) {
+			    bu_vls_printf(_ged_current_gedp->ged_result_str,"mentioned grid size is out of range\n");
+			    return -1;
+			}
+			analyze_set_grid_size(state, width, height);
+		    } else {
+			/* square grid */
+			analyze_set_grid_size(state, width, width);
+		    }
+		    break;
+		}
 	    case 'i':
 		options->getfromview = 1;
 		break;
@@ -250,6 +285,9 @@ parse_check_args(int ac, char *av[], struct check_parameters* options, struct cu
 	    case 'r':
 		options->print_per_region_stats = 1;
 		break;
+	    case 'R':
+		options->rpt_overlap_flag = 0;
+		break;
 	    case 's':
 		options->surf_area_tolerance = atof(bu_optarg);
 		analyze_set_surf_area_tolerance(state, options->surf_area_tolerance);
@@ -259,7 +297,8 @@ parse_check_args(int ac, char *av[], struct check_parameters* options, struct cu
 		    bu_vls_printf(_ged_current_gedp->ged_result_str, "error in specifying minimum samples per model axis: \"%s\"\n", bu_optarg);
 		    break;
 		}
-		options->Samples_per_model_axis = a + 1;
+		options->samples_per_model_axis = a + 1;
+		analyze_set_samples_per_model_axis(state, options->samples_per_model_axis);
 		break;
 	    case 't':
 		if (read_units_double(&(options->overlap_tolerance), bu_optarg, units_tab[0])) {
@@ -280,7 +319,6 @@ parse_check_args(int ac, char *av[], struct check_parameters* options, struct cu
 		}
 		analyze_set_volume_tolerance(state, options->volume_tolerance);
 		break;
-
 	    case 'U':
 		errno = 0;
 		options->use_air = strtol(bu_optarg, (char **)NULL, 10);
@@ -464,7 +502,7 @@ int ged_check(struct ged *gedp, int argc, const char *argv[])
     struct check_parameters options;
     const char *check_subcommands[] = {"adj_air", "centroid", "exp_air", "gap",
 				       "mass", "moments", "overlaps", "surf_area",
-				       "volume", NULL};
+				       "unconf_air", "volume", NULL};
     const struct cvt_tab *units[3] = {
 	&units_tab[0][0],	/* linear */
 	&units_tab[1][0],	/* volume */
@@ -512,12 +550,14 @@ int ged_check(struct ged *gedp, int argc, const char *argv[])
 	check_show_help(gedp);
 	return GED_HELP;
     }
+
     options.getfromview = 0;
     options.print_per_region_stats = 0;
     options.overlaps_overlay_flag = 0;
     options.plot_files = 0;
     options.debug = 0;
     options.verbose = 0;
+    options.rpt_overlap_flag = 1;
 
     /* shift to subcommand args */
     argc -= opt_argc;
@@ -602,8 +642,10 @@ int ged_check(struct ged *gedp, int argc, const char *argv[])
     } else if (bu_strncmp(sub, "overlaps", len) == 0) {
 	if (options.getfromview) {
 	    point_t eye_model;
+	    quat_t quat;
+	    quat_mat2quat(quat, gedp->ged_gvp->gv_rotation);
 	    _ged_rt_set_eye_model(gedp, eye_model);
-	    analyze_get_from_view(state, gedp->ged_gvp, &eye_model);
+	    analyze_set_view_information(state, gedp->ged_gvp->gv_size, &eye_model, &quat);
 	}
 	if (check_overlaps(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options)) {
 	    error = 1;
@@ -611,6 +653,11 @@ int ged_check(struct ged *gedp, int argc, const char *argv[])
 	}
     } else if (bu_strncmp(sub, "surf_area", len) == 0) {
 	if (check_surf_area(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options)) {
+	    error = 1;
+	    goto freemem;
+	}
+    } else if (bu_strncmp(sub, "unconf_air", len) == 0) {
+	if (check_unconf_air(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options)) {
 	    error = 1;
 	    goto freemem;
 	}

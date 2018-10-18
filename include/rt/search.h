@@ -32,9 +32,40 @@
 #include "bu/list.h"
 #include "bu/ptbl.h"
 
+#include "rt/db_instance.h"
 #include "rt/defines.h"
 
 __BEGIN_DECLS
+
+typedef int(*db_search_callback_t)(int, const char*[],void*);
+
+/**
+ * @brief Execution context for the -exec filter.
+ */
+struct db_search_context {
+	db_search_callback_t _e_callback; /**< @brief A function that evaluates an array of strings and returns a boolean. */
+	void *_e_userdata; /**< @brief A pointer that will be passed to the callback, usually a pointer to an interpreter. */
+};
+
+/**
+ * @brief Allocates a new context.
+ */
+RT_EXPORT extern struct db_search_context *db_search_context_create(void); /* FIXME: is this really needed? why not just use the struct directly from the stack or let the user handle allocation? */
+
+/**
+ * @brief Free a context created by db_search_context_create.
+ */
+RT_EXPORT extern void db_search_context_destroy(struct db_search_context *ctx);
+
+/**
+ * @brief Register a callback for -exec filters.
+ */
+RT_EXPORT extern void db_search_register_exec(struct db_search_context *, db_search_callback_t);
+
+/**
+ * @brief Register a userdata for the callback.
+ */
+RT_EXPORT extern void db_search_register_data(struct db_search_context *, void *);
 
 /**
  * @brief Search for objects in a geometry database using filters
@@ -66,6 +97,9 @@ __BEGIN_DECLS
  * @param dbip The database instance pointer corresponding to the
  * current geometry database.
  *
+ * @param ctx Context for -exec. Can be NULL if there are no -exec filters present.
+ *
+ *
  * @return Negative return values indicate a problem with the search,
  * and non-negative values indicate a successful search.  Non-negative
  * values correspond with the number of objects found.
@@ -82,7 +116,7 @@ __BEGIN_DECLS
   size_t i = 0;
   struct bu_ptbl results = BU_PTBL_INIT_ZERO;
   const char *plan = "-name *.s -or -below -type region";
-  int matches = db_search(&results, DB_SEARCH_HIDDEN | DB_SEARCH_QUIET , plan, 0, NULL, dbip);
+  int matches = db_search(&results, DB_SEARCH_HIDDEN | DB_SEARCH_QUIET , plan, 0, NULL, dbip, ctx);
   for (i = 0; matches > 0 && i < BU_PTBL_LEN(&results); i++) {
       char *path_str = db_path_to_string((struct db_full_path *)BU_PTBL_GET(&results, i));
       bu_log("%s\n", path_str);
@@ -104,7 +138,8 @@ RT_EXPORT extern int db_search(struct bu_ptbl *results,
                                const char *filter,
                                int path_c,
                                struct directory **path_v,
-                               struct db_i *dbip
+                               struct db_i *dbip,
+                               struct db_search_context *ctx
 );
 
 /* These are the possible search flags. */
@@ -126,9 +161,9 @@ RT_EXPORT extern void db_search_free(struct bu_ptbl *search_results);
 /**
  * db_ls takes a database instance pointer and assembles a directory
  * pointer array of objects in the database according to a set of
- * flags.  An optional pattern can be supplied for match filtering
- * via globbing rules (see bu_fnmatch).  If pattern is NULL, filtering
- * is performed using only the flags.
+ * flags.  An optional pattern can be supplied for match filtering via
+ * globbing rules (see bu_path_match()).  If pattern is NULL,
+ * filtering is performed using only the flags.
  *
  * The caller is responsible for freeing the array.
  *
@@ -167,8 +202,7 @@ struct db_full_path_list {
 };
 DEPRECATED RT_EXPORT extern int db_full_path_list_add(const char *path, int local, struct db_i *dbip, struct db_full_path_list *path_list);
 DEPRECATED RT_EXPORT extern void db_free_full_path_list(struct db_full_path_list *path_list);
-DEPRECATED RT_EXPORT extern void *db_search_formplan(char **argv,
-						     struct db_i *dbip);
+DEPRECATED RT_EXPORT extern void *db_search_formplan(char **argv, struct db_i *UNUSED(dbip), struct db_search_context *);
 DEPRECATED RT_EXPORT extern void db_search_freeplan(void **plan);
 DEPRECATED RT_EXPORT extern struct db_full_path_list *db_search_full_paths(void *searchplan,
 									   struct db_full_path_list *path_list,

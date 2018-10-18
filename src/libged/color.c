@@ -29,6 +29,8 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "bu/app.h"
+#include "bu/file.h"
 #include "bu/getopt.h"
 #include "ged.h"
 #include "rt/db4.h"

@@ -43,17 +43,19 @@ test_ext(const char *str, bu_mime_context_t context, int expected)
 
 
 int
-file_mime_main(int ac, char *av[])
+main(int ac, char *av[])
 {
     int context = 0;
     int expected = 0;
+
     if (ac != 4)
-	fprintf(stderr,"Usage: %s extension context expected\n", av[0]);
+	bu_exit(1, "Usage: %s {extension} {context} {expected}\n", av[0]);
 
     sscanf(av[2], "%d", &context);
     sscanf(av[3], "%d", &expected);
 
-    if (context >= BU_MIME_UNKNOWN) return -1;
+    if (context >= BU_MIME_UNKNOWN)
+	return -1;
 
     return test_ext(av[1], (bu_mime_context_t)context, expected);
 }

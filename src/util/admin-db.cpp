@@ -69,7 +69,7 @@ main(int argc, char** argv)
     arg_err = bu_opt_parse(&str, argc, (const char **)argv, d);
 
     if (arg_err < 0) {
-	bu_exit(EXIT_FAILURE, bu_vls_addr(&str));
+	bu_exit(EXIT_FAILURE, "%s", bu_vls_addr(&str));
     }
     bu_vls_free(&str);
 

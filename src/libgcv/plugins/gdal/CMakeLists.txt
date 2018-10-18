@@ -4,6 +4,7 @@ if(GDAL_LIBRARY AND GDAL_INCLUDE_DIR)
 endif(GDAL_LIBRARY AND GDAL_INCLUDE_DIR)
 
 CMAKEFILES(gdal.cpp)
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

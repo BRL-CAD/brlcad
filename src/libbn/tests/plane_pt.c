@@ -168,7 +168,7 @@ test_bn_mk_plane_3pts(int argc, char **argv)
 
     actual_return = bn_mk_plane_3pts(plane, a, b, c, &tol);
 
-    bu_log("return: %f\n", actual_return);
+    bu_log("return: %d\n", actual_return);
 
     return (expected_return != actual_return);
 }

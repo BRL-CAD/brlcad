@@ -36,6 +36,7 @@
 #include "bu/cv.h"
 #include "bu/log.h"
 #include "bu/str.h"
+#include "bu/snooze.h"
 
 #if defined(HAVE_GETHOSTNAME) && !defined(HAVE_DECL_GETHOSTNAME)
 extern int gethostname(char *name, size_t len);
@@ -349,7 +350,7 @@ main(int argc, char **argv)
     int waiting = 1;
 
     bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
-    sleep(1);
+    bu_snooze(BU_SEC2USEC(1));
 
     while (argc > 1) {
 	if (BU_STR_EQUAL(argv[1], "-v")) {

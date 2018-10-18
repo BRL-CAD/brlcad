@@ -512,7 +512,7 @@ _obj_brep_to_csg(struct ged *gedp, struct bu_vls *log, struct bu_attribute_value
 	    for (BU_LIST_FOR(olist, bu_list, &pcomb.l)) comb_objs++;
 	    if (comb_objs > 1) {
 		// We're not setting the region flag here in case there is a hierarchy above us that
-		// takes care of it.  TODO - support knowing whether that's true and doing the right thing. 
+		// takes care of it.  TODO - support knowing whether that's true and doing the right thing.
 		mk_lcomb(wdbp, bu_vls_addr(&comb_name), &pcomb, 0, NULL, NULL, NULL, 0);
 	    } else {
 		// TODO - Fix up name of first item in list to reflect top level naming to
@@ -871,7 +871,7 @@ _ged_brep_tikz(struct ged *gedp, const char *dp_name, const char *outfile)
     struct bu_ptbl breps = BU_PTBL_INIT_ZERO;
     const char *brep_search = "-type brep";
     db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
-    (void)db_search(&breps, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, brep_search, 1, &dp, gedp->ged_wdbp->dbip);
+    (void)db_search(&breps, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, brep_search, 1, &dp, gedp->ged_wdbp->dbip, NULL);
     for(size_t i = 0; i < BU_PTBL_LEN(&breps); i++) {
 	struct rt_db_internal bintern;
 	struct rt_brep_internal *b_ip = NULL;

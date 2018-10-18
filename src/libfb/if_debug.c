@@ -36,6 +36,7 @@
 #include "fb_private.h"
 #include "fb.h"
 
+
 HIDDEN int
 deb_open(fb *ifp, const char *file, int width, int height)
 {
@@ -389,14 +390,14 @@ fb debug_interface = {
     deb_free,
     deb_help,
     "Debugging Interface",
-    32*1024,		/* max width */
-    32*1024,		/* max height */
+    FB_XMAXSCREEN,	/* max width */
+    FB_YMAXSCREEN,	/* max height */
     "/dev/debug",
-    512,			/* current/default width */
-    512,			/* current/default height */
+    512,		/* current/default width */
+    512,		/* current/default height */
     -1,			/* select fd */
     -1,			/* file descriptor */
-    1, 1,			/* zoom */
+    1, 1,		/* zoom */
     256, 256,		/* window center */
     0, 0, 0,		/* cursor */
     PIXEL_NULL,		/* page_base */

@@ -93,5 +93,5 @@ stuff without bastardizing the help option?
   setup we would run the "generate syntax" help option for every command/subcommand
   in all of BRL-CAD (which just coincidentally would make the function of the
   help system for every command in the code a build time requirement/check)
-  and supply a pre-built validation database in a bu_brlcad_data location for libbu
+  and supply a pre-built validation database in a data_dir location for libbu
   to check.

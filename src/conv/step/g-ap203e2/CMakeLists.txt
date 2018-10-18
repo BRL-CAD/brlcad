@@ -61,6 +61,7 @@ if(MSVC)
 endif(MSVC)
 
 set(IGNORE_FILES
+  CMakeLists.txt
   AP203e2.h
   )
 CMAKEFILES(${IGNORE_FILES})

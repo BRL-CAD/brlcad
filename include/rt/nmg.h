@@ -161,6 +161,9 @@ RT_EXPORT extern int nmg_to_poly(const struct model *m,
 RT_EXPORT extern struct rt_bot_internal *nmg_bot(struct shell *s,
 						 struct bu_list *vlfree,
                                                  const struct bn_tol *tol);
+RT_EXPORT extern struct rt_bot_internal *nmg_mdl_to_bot(struct model *m,
+       	                                                struct bu_list *vlfree,
+       	                                                const struct bn_tol *tol);
 struct db_tree_state; /* forward declaration */
 RT_EXPORT extern union tree *nmg_booltree_leaf_tess(struct db_tree_state *tsp,
                                                     const struct db_full_path *pathp,

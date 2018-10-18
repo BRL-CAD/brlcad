@@ -70,7 +70,11 @@ struct mfuncs {
 #define MFI_HIT		0x08		/**< @brief  Need just hit point */
 
 /** for bu_printb() */
-#define MFI_FORMAT	"\020\4HIT\3LIGHT\2UV\1NORMAL"
+#define MFI_FORMAT	"\020" /* print hex */ \
+    "\4HIT" \
+    "\3LIGHT" \
+    "\2UV" \
+    "\1NORMAL"
 
 
 /* mf_flags lists important details about individual shaders */

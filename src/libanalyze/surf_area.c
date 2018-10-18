@@ -34,7 +34,8 @@ fastf_t
 analyze_surf_area(struct current_state *state, const char *name)
 {
     fastf_t area;
-    int i, view, obj = 0;
+    int i, view, obj = 0, mean_count = 0;
+    double limit = 0.0;
 
     for (i = 0; i < state->num_objects; i++) {
 	if(!(bu_strcmp(state->objs[i].o_name, name))) {
@@ -42,11 +43,71 @@ analyze_surf_area(struct current_state *state, const char *name)
 	    break;
 	}
     }
-
     area = 0.0;
+    /* find the maximum value of surface area */
     for (view = 0; view < state->num_views; view++)
-	area += state->objs[obj].o_surf_area[view];
-    return area;
+	V_MAX(limit, state->objs[obj].o_surf_area[view]);
+
+    /* take 80% of max value as a limit */
+    limit *= 0.8;
+
+    for (view = 0; view < state->num_views; view++) {
+	if (state->objs[obj].o_surf_area[view] >= limit) {
+	    area += state->objs[obj].o_surf_area[view];
+	    mean_count++;
+	}
+    }
+    /* return mean of acceptable surface areas */
+    return area/mean_count;
+}
+
+
+void
+analyze_surf_area_region(struct current_state *state, int i, char **name, double *surf_area, double *high, double *low)
+{
+    double val;
+    double lo = INFINITY;
+    double hi = -INFINITY;
+    double surf_a = 0.0;
+    double limit;
+    int view, mean_count = 0;
+
+    for (view=0; view < state->num_views; view++) {
+	val = state->reg_tbl[i].r_surf_area[view];
+	/* find limits of values */
+	V_MAX(hi, val);
+	V_MIN(lo, val);
+    }
+    /* take 80% of max value as a limit */
+    limit = hi * 0.8;
+    for (view = 0; view < state->num_views; view++) {
+	if (state->reg_tbl[i].r_surf_area[view] >= limit) {
+	    surf_a += state->reg_tbl[i].r_surf_area[view];
+	    mean_count++;
+	}
+    }
+
+    surf_a /= mean_count;
+
+    /* set values to the pointers */
+    *surf_area = surf_a;
+    *name = state->reg_tbl[i].r_name;
+    *high = hi - surf_a;
+    *low = surf_a - lo;
+}
+
+
+fastf_t
+analyze_total_surf_area(struct current_state *state)
+{
+    int i;
+    double total_surf_area = 0;
+
+    for (i = 0; i < state->num_objects; i++) {
+	total_surf_area += analyze_surf_area(state, state->objs[i].o_name);
+    }
+
+    return total_surf_area;
 }
 
 /*

@@ -466,12 +466,17 @@ found_interface:
     /* Mark OK by filling in magic number */
     ifp->if_magic = FB_MAGIC;
 
-    if ((i=(*ifp->if_open)(ifp, file, width, height)) <= -1) {
-	fb_log("fb_open: can't open device \"%s\", ret=%d.\n",
-	       file, i);
+    i=(*ifp->if_open)(ifp, file, width, height);
+    if (i != 0) {
 	ifp->if_magic = 0;		/* sanity */
 	free((void *) ifp->if_name);
 	free((void *) ifp);
+
+	if (i < 0)
+	    fb_log("fb_open: can't open device \"%s\", ret=%d.\n", file, i);
+	else
+	    bu_exit(0, "Terminating early by request\n"); /* e.g., zap memory */
+
 	return FB_NULL;
     }
     return ifp;

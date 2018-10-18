@@ -212,7 +212,7 @@ static struct modeflags {
     { 's',  MODE10_MASK, MODE10_SHARED,
       "Use shared memory backing store" },
     { 'z',	MODE11_MASK, MODE11_ZAP,
-      "Zap (free) shared memory" },
+      "Zap (free) shared memory and exit" },
     { 'D',	MODEV_MASK, FLG_VD24 << 1,
       "Select 24-bit DirectColor display if available" },
     { 'T',	MODEV_MASK, FLG_VT24 << 1,
@@ -1164,8 +1164,7 @@ X24_blit(fb *ifp, int x_1, int y_1, int w, int h, int flags /* BLIT_xxx flags */
 		 * Calculate the beginning of the line where we are going
 		 * to be outputting pixels.
 		 */
-		opix = &(xi->xi_pix[oy * xi->xi_image->bytes_per_line]);
-		/* + ox * (xi->xi_image->bits_per_pixel/8)]); */
+		opix = &(xi->xi_pix[oy * xi->xi_image->bytes_per_line + ox * (xi->xi_image->bits_per_pixel/8)]);
 
 		/*
 		 * Our source of pixels in packed RGB order
@@ -1994,7 +1993,7 @@ X24_getmem(fb *ifp)
     FB_CK_FB(ifp);
 
     pixsize = ifp->if_max_height * ifp->if_max_width * sizeof(RGBpixel);
-    size = pixsize + sizeof (*xi->xi_rgb_cmap);
+    size = pixsize + sizeof(ColorMap);
 
     /*
      * get shared mem segment, creating it if it does not exist
@@ -2012,9 +2011,11 @@ X24_getmem(fb *ifp)
 		    fb_log("X24_getmem: can't create fb file, using private memory instead, errno %d\n", errno);
 		else if (lseek(fd, size, SEEK_SET) < 0)
 		    fb_log("X24_getmem: can't seek fb file, using private memory instead, errno %d\n", errno);
+		else if (write(fd, &isnew, 1) < 0)
+		    fb_log("X24_getmem: can't zero fb file, using private memory instead, errno %d\n", errno);
 		else if (lseek(fd, 0, SEEK_SET) < 0)
 		    fb_log("X24_getmem: can't seek fb file, using private memory instead, errno %d\n", errno);
-		else if ((mem = (char *)mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0)) == (char *) -1)
+		else if ((mem = (char *)mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0)) == MAP_FAILED)
 		    fb_log("X24_getmem: can't mmap fb file, using private memory instead, errno %d\n", errno);
 		else {
 		    close(fd);
@@ -2066,7 +2067,7 @@ store\n  Run shell command 'limit datasize unlimited' and try again.\n", size);
     }
 
     xi->xi_rgb_cmap = (ColorMap *) mem;
-    xi->xi_mem = (unsigned char *) mem + sizeof (*xi->xi_rgb_cmap);
+    xi->xi_mem = (unsigned char *) mem + sizeof(ColorMap);
 
     /* Clear memory frame buffer to black */
     if (isnew) {
@@ -2472,7 +2473,7 @@ X24_open(fb *ifp, const char *file, int width, int height)
     if ((mode & MODE11_MASK) == MODE11_ZAP) {
 	/* Only task: Attempt to release shared memory segment */
 	X24_zapmem();
-	return -1;
+	return 1;
     }
 
     if (width <= 0)
@@ -3134,7 +3135,7 @@ X24_write(fb *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 
     /* Get the bits to the screen */
 
-    if (x + count <= (size_t)xi->xi_iwidth) {
+    if (x + count < (size_t)xi->xi_iwidth) {
 	X24_blit(ifp, x, y, count, 1, BLIT_DISP);
     } else {
 	size_t ylines;
@@ -3514,8 +3515,8 @@ fb X24_interface =  {
     X24_free,		/* free resources */
     X24_help,		/* help message */
     "24 bit X Window System (X11)",	/* device description */
-    2048,		/* max width */
-    2048,		/* max height */
+    FB_XMAXSCREEN,	/* max width */
+    FB_YMAXSCREEN,	/* max height */
     "/dev/X",		/* short device name */
     512,		/* default/current width */
     512,		/* default/current height */
@@ -3532,7 +3533,7 @@ fb X24_interface =  {
     0L,			/* page_curpos */
     0L,			/* page_pixels */
     0,			/* debug */
-    60000000,		/* refresh rate - from fbserv, which had 60 seconds as a default (not sure why) */
+    50000,		/* refresh rate */
     {0}, /* u1 */
     {0}, /* u2 */
     {0}, /* u3 */

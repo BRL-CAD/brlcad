@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file gtools/inirt/main.cxx
+/** @file nirt/main.cxx
  *
  * This program is Natalie's Interactive Ray-Tracer
  *
@@ -41,21 +41,25 @@ extern "C" off_t ftello(FILE *);
 #endif
 #include <fstream>
 
-
-extern "C" {
-#include "linenoise.h"
 #include "brlcad_ident.h"
+#include "bu/app.h"
 #include "bu/env.h"
 #include "bu/opt.h"
 #include "bu/path.h"
 #include "bu/units.h"
 #include "analyze.h"
 
+extern "C" {
+#include "linenoise.h"
+}
+
 #if defined(HAVE_POPEN) && !defined(HAVE_DECL_POPEN)
+extern "C" {
 extern FILE *popen(const char *command, const char *mode);
 extern int pclose(FILE *stream);
-#endif
 }
+#endif
+
 
 #define SILENT_UNSET    0
 #define SILENT_YES      1
@@ -114,7 +118,7 @@ _list_formats(struct nirt_io_data *io_data, char ***names)
     struct bu_vls fl = BU_VLS_INIT_ZERO;
 
     /* get a nirt directory listing */
-    bu_vls_printf(&nfp, "%s", bu_brlcad_data("nirt", 0));
+    bu_vls_printf(&nfp, "%s", bu_brlcad_root("share/nirt", 0));
     files = bu_file_list(bu_vls_addr(&nfp), suffix, &filearray);
     if (names) *names = filearray;
 
@@ -151,7 +155,9 @@ extern "C" int
 _dequeue_scripts(struct bu_vls *UNUSED(msg), int UNUSED(argc), const char **UNUSED(argv), void *set_var)
 {
     std::vector<std::string> *init_scripts = (std::vector<std::string> *)set_var;
-    init_scripts->clear();
+    if (set_var) {
+	init_scripts->clear();
+    }
     return 0;
 }
 
@@ -160,7 +166,9 @@ _enqueue_script(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 {
     std::vector<std::string> *init_scripts = (std::vector<std::string> *)set_var;
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "nirt script enqueue");
-    init_scripts->push_back(argv[0]);
+    if (set_var) {
+	init_scripts->push_back(argv[0]);
+    }
     return 1;
 }
 
@@ -169,7 +177,9 @@ _enqueue_attrs(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 {
     std::set<std::string> *attrs = (std::set<std::string> *)set_var;
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "nirt attr enqueue");
-    attrs->insert(argv[0]);
+    if (set_var) {
+	attrs->insert(argv[0]);
+    }
     return 1;
 }
 
@@ -190,21 +200,27 @@ _enqueue_file(struct bu_vls *msg, int argc, const char **argv, void *set_var)
     file.open(argv[0]);
     if (!file.is_open()) {
 	struct bu_vls str = BU_VLS_INIT_ZERO;
-	bu_vls_printf(&str, "%s/%s.nrt", bu_brlcad_data("nirt", 0), argv[0]);
+	bu_vls_printf(&str, "%s/%s.nrt", bu_brlcad_root("share/nirt", 0), argv[0]);
 	file.open(bu_vls_addr(&str));
 	bu_vls_free(&str);
 	if (!file.is_open()) return -1;
 	while (std::getline(file, s)) {
-	    sfd->init_scripts->push_back(s);
+	    if (sfd) {
+		sfd->init_scripts->push_back(s);
+	    }
 	}
     } else {
 	while (std::getline(file, s)) {
-	    sfd->init_scripts->push_back(s);
+	    if (sfd) {
+		sfd->init_scripts->push_back(s);
+	    }
 	}
     }
 
-    bu_vls_sprintf(sfd->filename, "%s", argv[0]);
-    sfd->file_cnt++;
+    if (sfd) {
+	bu_vls_sprintf(sfd->filename, "%s", argv[0]);
+	sfd->file_cnt++;
+    }
 
     return 1;
 }
@@ -215,13 +231,13 @@ _decode_overlap(struct bu_vls *msg, int argc, const char **argv, void *set_var)
     int *oval = (int *)set_var;
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "nirt overlap handle");
     if (BU_STR_EQUAL(argv[0], "resolve") || BU_STR_EQUAL(argv[0], "0")) {
-	(*oval) = OVLP_RESOLVE;
+	if (oval) (*oval) = OVLP_RESOLVE;
     } else if (BU_STR_EQUAL(argv[0], "rebuild_fastgen") || BU_STR_EQUAL(argv[0], "1")) {
-	(*oval) = OVLP_REBUILD_FASTGEN;
+	if (oval) (*oval) = OVLP_REBUILD_FASTGEN;
     } else if (BU_STR_EQUAL(argv[0], "rebuild_all") || BU_STR_EQUAL(argv[0], "2")) {
-	(*oval) = OVLP_REBUILD_ALL;
+	if (oval) (*oval) = OVLP_REBUILD_ALL;
     } else if (BU_STR_EQUAL(argv[0], "retain") || BU_STR_EQUAL(argv[0], "3")) {
-	(*oval) = OVLP_RETAIN;
+	if (oval) (*oval) = OVLP_RETAIN;
     } else {
 	bu_log("Illegal overlap_claims specification: '%s'\n", argv[0]);
 	return -1;
@@ -388,11 +404,11 @@ nirt_app_exec(struct nirt_state *ns, struct bu_vls *iline, struct bu_vls *state_
 
     /* A couple of the commands are application level, not
      * library level - handle them here. */
-    if (BU_STR_EQUAL(bu_vls_addr(iline), "dest") || !bu_fnmatch("dest *", bu_vls_addr(iline), 0)) {
+    if (BU_STR_EQUAL(bu_vls_addr(iline), "dest") || !bu_path_match("dest *", bu_vls_addr(iline), 0)) {
 	_nirt_dest_cmd(io_data, iline);
 	return 0;
     }
-    if (BU_STR_EQUAL(bu_vls_addr(iline), "dump") || !bu_fnmatch("dump *", bu_vls_addr(iline), 0)) {
+    if (BU_STR_EQUAL(bu_vls_addr(iline), "dump") || !bu_path_match("dump *", bu_vls_addr(iline), 0)) {
 	bu_vls_nibble(iline, 4);
 	bu_vls_trimspace(iline);
 	if (bu_vls_strlen(iline)) {
@@ -425,7 +441,7 @@ nirt_app_exec(struct nirt_state *ns, struct bu_vls *iline, struct bu_vls *state_
 	bu_vls_free(&dumpstr);
 	return 0;
     }
-    if (BU_STR_EQUAL(bu_vls_addr(iline), "load") || !bu_fnmatch("load *", bu_vls_addr(iline), 0)) {
+    if (BU_STR_EQUAL(bu_vls_addr(iline), "load") || !bu_path_match("load *", bu_vls_addr(iline), 0)) {
 	bu_vls_nibble(iline, 4);
 	bu_vls_trimspace(iline);
 	if (bu_vls_strlen(iline)) {
@@ -454,7 +470,7 @@ nirt_app_exec(struct nirt_state *ns, struct bu_vls *iline, struct bu_vls *state_
 	}
 	return 0;
     }
-    if (BU_STR_EQUAL(bu_vls_addr(iline), "statefile") || !bu_fnmatch("statefile *", bu_vls_addr(iline), 0)) {
+    if (BU_STR_EQUAL(bu_vls_addr(iline), "statefile") || !bu_path_match("statefile *", bu_vls_addr(iline), 0)) {
 	bu_vls_nibble(iline, 9);
 	bu_vls_trimspace(iline);
 	if (!bu_vls_strlen(iline)) {
@@ -529,7 +545,6 @@ main(int argc, const char **argv)
     int nret = 0;
     struct db_i *dbip;
     struct nirt_state *ns = NULL;
-    const char *help = NULL;
     const char *np = NULL;
     const char *units_str = NULL;
     char *dot = NULL;
@@ -539,7 +554,7 @@ main(int argc, const char **argv)
     struct bu_vls ncmd = BU_VLS_INIT_ZERO;
     struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
     double scan[16] = MAT_INIT_ZERO;
-    size_t prec = std::numeric_limits<fastf_t>::digits10 + 2; // TODO - once we enable C++ 11 switch this to (p > std::numeric_limits<fastf_t>::max_digits10)
+    size_t prec = std::numeric_limits<fastf_t>::max_digits10;
     char *buf = NULL;
     int  status = 0x0;
     mat_t m;
@@ -573,7 +588,7 @@ main(int argc, const char **argv)
 
     argv++; argc--;
     if ((ac = bu_opt_parse(&optparse_msg, argc, (const char **)argv, d)) == -1) {
-       	bu_exit(EXIT_FAILURE, bu_vls_addr(&optparse_msg));
+       	bu_exit(EXIT_FAILURE, "%s", bu_vls_addr(&optparse_msg));
     }
     bu_vls_free(&optparse_msg);
 
@@ -590,11 +605,11 @@ main(int argc, const char **argv)
     /* If we've been asked to print help or don't know what to do, print help
      * and exit */
     if (print_help || argc < 2 || (silent_mode == SILENT_YES && verbose_mode)) {
+	char *help = bu_opt_describe(d, &dopts);
 	ret = (argc < 2) ? EXIT_FAILURE : EXIT_SUCCESS;
-	help = bu_opt_describe(d, &dopts);
 	bu_vls_sprintf(&msg, "Usage: 'nirt [options] model.g objects...'\n\nNote: by default NIRT is using a new implementation which may have behavior changes.  During migration, old behavior can be enabled by adding the option \"--old\" as the first option to the nirt program.\n\nOptions:\n%s\n", help);
 	nirt_out(&io_data, bu_vls_addr(&msg));
-	if (help) bu_free((char *)help, "help str");
+	if (help) bu_free(help, "help str");
 	goto done;
     }
 
@@ -842,7 +857,7 @@ main(int argc, const char **argv)
 	}
 
 	// Now, construct a dir command line from the m matrix
-	bu_vls_sprintf(&ncmd, "dir %.*f %.*f %.*f", prec, -m[8], prec, -m[9], prec, -m[10]);
+	bu_vls_sprintf(&ncmd, "dir %.*f %.*f %.*f", (int)prec, -m[8], (int)prec, -m[9], (int)prec, -m[10]);
 	if (nirt_exec(ns, bu_vls_addr(&ncmd)) < 0) {
 	    nirt_err(&io_data, "nirt: read_mat(): Failed to set the view direction\n");
 	    ret = EXIT_FAILURE;

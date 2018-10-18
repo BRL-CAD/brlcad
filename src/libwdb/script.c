@@ -36,7 +36,7 @@ mk_script(struct rt_wdb *fp, const char *name, const struct rt_script_internal *
 {
     struct rt_script_internal *script_ip;
 
-    RT_ANNOT_CK_MAGIC(scr);
+    RT_SCRIPT_CK_MAGIC(scr);
 
     /* copy the caller's struct */
     script_ip = (struct rt_script_internal *)scr;

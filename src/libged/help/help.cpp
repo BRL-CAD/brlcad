@@ -23,7 +23,10 @@
 #include <ctype.h>
 #include <string>
 
+#include "bu/app.h"
+#include "bu/file.h"
 #include "ged.h"
+
 
 HIDDEN struct bu_list *help_cmd(void);
 

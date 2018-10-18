@@ -84,7 +84,7 @@ struct dm_obj {
 #ifdef USE_FBSERV
     struct fbserv_obj dmo_fbs;		/**< @brief fbserv object */
 #endif
-    struct bu_observer dmo_observers;		/**< @brief fbserv observers */
+    struct bu_observer_list dmo_observers;		/**< @brief fbserv observers */
     mat_t viewMat;
     int (*dmo_drawLabelsHook)(dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData);
     void *dmo_drawLabelsHookClientData;
@@ -3028,8 +3028,6 @@ dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
     dmop->dmo_fbs.fbs_interp = interp;
 #endif
     dmop->interp = interp;
-
-    BU_LIST_INIT(&dmop->dmo_observers.l);
 
     /* append to list of dm_obj's */
     BU_LIST_APPEND(&HeadDMObj.l, &dmop->l);

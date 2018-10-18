@@ -49,6 +49,7 @@
 
 #include "bu/getopt.h"
 #include "bu/log.h"
+#include "bu/snooze.h"
 #include "bn.h"
 #include "bn/anim.h"
 #include "vmath.h"
@@ -178,7 +179,7 @@ main (int argc, char *argv[])
     int one_time, read_cen1, read_cen2, read_rot1, read_rot2;
 
     fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
-    sleep(1);
+    bu_snooze(BU_SEC2USEC(1));
 
     if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))) {
 	usage();

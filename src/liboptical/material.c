@@ -39,6 +39,8 @@
 
 #include "bio.h"
 #include "vmath.h"
+#include "bu/app.h"
+#include "bu/dylib.h"
 #include "raytrace.h"
 #include "optical.h"
 

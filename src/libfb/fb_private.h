@@ -64,6 +64,13 @@ FB_EXPORT extern fb memory_interface, fb_null_interface;
 /* Shared memory (shmget et. al.) key common to multiple framebuffers */
 #define SHMEM_KEY 42
 
+/* XXX - arbitrary upper bound */
+#define FB_XMAXSCREEN 32*1024
+#define FB_YMAXSCREEN 32*1024
+
+/* setting to 1 turns on general intrface debugging for all fb types */
+#define FB_DEBUG 0
+
 
 __BEGIN_DECLS
 
@@ -138,6 +145,48 @@ struct fb_internal {
         char *p;
         size_t l;
     } u1, u2, u3, u4, u5, u6;
+};
+
+
+/*
+ * Structure of color map in shared memory region.  Has exactly the
+ * same format as the SGI hardware "gammaramp" map Note that only the
+ * lower 8 bits are significant.
+ */
+struct fb_cmap {
+    short cmr[256];
+    short cmg[256];
+    short cmb[256];
+};
+
+
+/*
+ * This defines the format of the in-memory framebuffer copy.  The
+ * alpha component and reverse order are maintained for compatibility
+ * with /dev/sgi
+ */
+struct fb_pixel {
+    unsigned char blue;
+    unsigned char green;
+    unsigned char red;
+    unsigned char alpha;
+};
+
+
+/* Clipping structure for zoom/pan operations */
+struct fb_clip {
+    int xpixmin;	/* view clipping planes clipped to pixel memory space*/
+    int xpixmax;
+    int ypixmin;
+    int ypixmax;
+    int xscrmin;	/* view clipping planes */
+    int xscrmax;
+    int yscrmin;
+    int yscrmax;
+    double oleft;	/* glOrtho parameters */
+    double oright;
+    double otop;
+    double obottom;
 };
 
 /*

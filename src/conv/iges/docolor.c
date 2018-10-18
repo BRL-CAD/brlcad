@@ -59,7 +59,7 @@ Docolor()
 		Readrec(dir[-dir[i]->colorp]->param);
 		Readint(&j, "");
 		if (j != 314) {
-		    bu_log("Incorrect color parameters for entity %d\n", i);
+		    bu_log("Incorrect color parameters for entity %zu\n", i);
 		    bu_log("\tcolor entity is #%d\n", -dir[i]->colorp);
 		    continue;
 		}

@@ -38,6 +38,7 @@
 #include "bio.h"
 
 /* interface headers */
+#include "bu/app.h"
 #include "bu/parallel.h"
 #include "bu/getopt.h"
 #include "vmath.h"
@@ -648,7 +649,7 @@ main(int argc, char **argv)
     /* Write out number of facet entities to .facet file */
 
     rewind(fp);
-    bu_fseek(fp, 46, 0); /* Re-position pointer to 2nd line */
+    fseek(fp, 46, 0); /* Re-position pointer to 2nd line */
     fprintf(fp, "%d\n", regions_written); /* Write out number of regions */
     fclose(fp);
 

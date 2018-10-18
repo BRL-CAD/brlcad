@@ -34,6 +34,7 @@
 #include <math.h>
 
 /* interface headers */
+#include "bu/app.h"
 #include "bu/endian.h"
 #include "bu/getopt.h"
 #include "wdb.h"

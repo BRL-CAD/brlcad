@@ -499,8 +499,8 @@ fb memory_interface =  {
     mem_close,		/* free */
     mem_help,		/* help message */
     "Memory Buffer",	/* device description */
-    8192,		/* max width */
-    8192,		/* max height */
+    FB_XMAXSCREEN,	/* max width */
+    FB_YMAXSCREEN,	/* max height */
     "/dev/mem",		/* short device name */
     512,		/* default/current width */
     512,		/* default/current height */

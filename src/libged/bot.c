@@ -42,13 +42,13 @@ HIDDEN void
 _bot_show_help(struct ged *gedp, struct bu_opt_desc *d)
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
-    const char *option_help;
+    char *option_help;
 
     bu_vls_sprintf(&str, "Usage: bot [options] [subcommand] [subcommand arguments]\n\n");
 
     if ((option_help = bu_opt_describe(d, NULL))) {
 	bu_vls_printf(&str, "Options:\n%s\n", option_help);
-	bu_free((char *)option_help, "help str");
+	bu_free(option_help, "help str");
     }
     bu_vls_printf(&str, "Subcommands:\n\n");
     bu_vls_printf(&str, "  get   (faces|minEdge|maxEdge|orientation|type|vertices) <bot>\n");
@@ -302,7 +302,15 @@ bot_check(struct ged *gedp, int argc, const char *argv[], struct bu_opt_desc *d,
 
     if (argc < 3 || BU_STR_EQUAL(check, "solid")) {
 	struct bg_trimesh_solid_errors errors = BG_TRIMESH_SOLID_ERRORS_INIT_NULL;
-	int not_solid = bg_trimesh_solid2(num_vertices, num_faces, bot->vertices, bot->faces, visualize_results ? &errors : NULL);
+	int not_solid;
+
+	if (bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_PLATE_NOCOS) {
+	    bu_vls_printf(gedp->ged_result_str, "1");
+	    rt_db_free_internal(ip);
+	    return GED_OK;
+	}
+
+	not_solid = bg_trimesh_solid2(num_vertices, num_faces, bot->vertices, bot->faces, visualize_results ? &errors : NULL);
 	bu_vls_printf(gedp->ged_result_str, not_solid ? "0" : "1");
 
 	if (not_solid && visualize_results) {
@@ -603,6 +611,9 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	retval = mk_bot(gedp->ged_wdbp, argv[2], RT_BOT_SOLID, RT_BOT_CCW, err, vc, fc, (fastf_t *)vert_array, faces, NULL, NULL);
+
+	bu_free(faces, "free faces");
+	bu_free(vert_array, "free verts");
 
 	if (retval) {
 	    rt_db_free_internal(&intern);

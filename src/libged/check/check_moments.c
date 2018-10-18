@@ -32,17 +32,21 @@ int check_moments(struct current_state *state,
 		  struct check_parameters *options)
 {
     int i;
+    mat_t moments;
+
     if (perform_raytracing(state, dbip, tobjtab, tnobjs, ANALYSIS_MASS|ANALYSIS_CENTROIDS|ANALYSIS_MOMENTS)) return GED_ERROR;
 
     print_verbose_debug(options);
 
     for (i=0; i < tnobjs; i++){
-	mat_t moments;
 	struct bu_vls title = BU_VLS_INIT_ZERO;
 	analyze_moments(state, tobjtab[i], moments);
 	bu_vls_printf(&title, "Moments and Products of Inertia For %s", tobjtab[i]);
 	bn_mat_print_vls(bu_vls_addr(&title), moments, _ged_current_gedp->ged_result_str);
     }
+    analyze_moments_total(state, moments);
+    bn_mat_print_vls("For the Moments and Products of Inertia For\n\tAll Specified Objects",
+		     moments, _ged_current_gedp->ged_result_str);
     return GED_OK;
 }
 

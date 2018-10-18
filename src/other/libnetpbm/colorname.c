@@ -21,21 +21,19 @@
 #include <stdlib.h>
 #include <errno.h>
 
-#include "nstring.h"
 #include "colorname.h"
 
 static int lineNo;
 
-void 
+void
 pm_canonstr(char * const str) {
 
     char * p;
     for (p = str; *p; ) {
-        if (ISSPACE(*p)) {
+        if (isspace(*p)) {
             strcpy(p, &(p[1]));
         } else {
-            if (ISUPPER(*p))
-                *p = tolower(*p);
+            *p = tolower(*p);
             ++p;
         }
     }

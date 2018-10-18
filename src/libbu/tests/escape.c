@@ -38,7 +38,7 @@ esc_compare(const char *input, const char *output, const char *correct)
 
 
 int
-escape_main(int ac, char *av[])
+main(int ac, char *av[])
 {
     int function_num = 0;
     int test_num = 0;
@@ -46,7 +46,7 @@ escape_main(int ac, char *av[])
     char buffer[32];
 
     if (ac < 3)
-	fprintf(stderr,"Usage: %s function_to_test test_number\n", av[0]);
+	bu_exit(1, "Usage: %s {function_number} {test_number}\n", av[0]);
 
     sscanf(av[1], "%d", &function_num);
     sscanf(av[2], "%d", &test_num);

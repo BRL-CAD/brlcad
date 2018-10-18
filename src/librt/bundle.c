@@ -71,7 +71,7 @@ struct shootrays_data {
  * XXX maybe parameter with NORM, UV, CURVE bits?
  */
 int
-rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays)
+rt_shootray_bundle(struct application *ap, struct xray *rays, int nrays)
 {
     struct rt_shootray_status ss;
     struct seg new_segs;	/* from solid intersections */

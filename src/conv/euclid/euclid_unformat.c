@@ -31,6 +31,7 @@
 #include <string.h>
 
 #include "bio.h"
+#include "bu/snooze.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rt/geom.h"
@@ -50,7 +51,7 @@ main(int argc, char *argv[])
     int old_id=(-1), e;
 
     bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
-    sleep(1);
+    bu_snooze(BU_SEC2USEC(1));
 
     printf("$03");
 

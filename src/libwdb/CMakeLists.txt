@@ -42,6 +42,8 @@ set(LIBWDB_SOURCES
 BRLCAD_ADDLIB(libwdb "${LIBWDB_SOURCES}" "librt;libnmg;libbn;libbu;${OPENNURBS_LIBRARIES};${REGEX_LIBRARY}")
 set_target_properties(libwdb PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
+CMAKEFILES(CMakeLists.txt)
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

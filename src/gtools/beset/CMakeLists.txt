@@ -19,6 +19,7 @@ set(beset_SRCS
 BRLCAD_ADDEXEC(beset "${beset_SRCS}"  "libbu;librt;libwdb" NO_INSTALL)
 
 set(beset_ignore_files
+  CMakeLists.txt
   beset.h
   fitness.h
   population.h

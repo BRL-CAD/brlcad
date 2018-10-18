@@ -64,7 +64,7 @@ bu_open_mapped_file(const char *name, const char *appl)
 /* non-null only when app. will use 'apbuf' */
 {
     struct bu_mapped_file *mp = (struct bu_mapped_file *)NULL;
-    char *real_path = bu_realpath(name, NULL);
+    char *real_path = bu_file_realpath(name, NULL);
 #ifdef HAVE_SYS_STAT_H
     struct stat sb;
     int fd = -1;	/* unix file descriptor */
@@ -321,7 +321,7 @@ bu_open_mapped_file(const char *name, const char *appl)
 	bu_pr_mapped_file("1st_open", mp);
     }
     if (real_path) {
-	bu_free(real_path, "real_path alloc from bu_realpath");
+	bu_free(real_path, "real_path alloc from bu_file_realpath");
     }
     return mp;
 
@@ -345,7 +345,7 @@ fail:
 	       real_path, appl ? appl: "(NIL)");
 
     if (real_path) {
-	bu_free(real_path, "real_path alloc from bu_realpath");
+	bu_free(real_path, "real_path alloc from bu_file_realpath");
     }
 
     return (struct bu_mapped_file *)NULL;

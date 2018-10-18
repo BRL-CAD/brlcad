@@ -40,19 +40,22 @@
 #define ANALYSIS_CENTROIDS 2
 #define ANALYSIS_SURF_AREA 4
 #define ANALYSIS_MASS 8
-#define ANALYSIS_GAP 16
-#define ANALYSIS_EXP_AIR 32 /* exposed air */
+#define ANALYSIS_OVERLAPS 16
+#define ANALYSIS_MOMENTS 32
 #define ANALYSIS_BOX 64
-#define ANALYSIS_INTERFACES 128
-#define ANALYSIS_ADJ_AIR 256
-#define ANALYSIS_OVERLAPS 512
-#define ANALYSIS_MOMENTS 1024
-#define ANALYSIS_PLOT_OVERLAPS 2048
+#define ANALYSIS_GAP 128
+#define ANALYSIS_EXP_AIR 256 /* exposed air */
+#define ANALYSIS_ADJ_AIR 512
+#define ANALYSIS_FIRST_AIR 1024
+#define ANALYSIS_LAST_AIR 2048
+#define ANALYSIS_UNCONF_AIR 4096
 
-static int default_den = 0;
-static int analysis_flags;
-static double Samples_per_model_axis = 2.0;
-static int aborted = 0;
+/*
+ * returns a random angle between 0 and 360 degrees
+ * used for when doing surface area analysis to shoot grids at
+ * random azimuth and elevation angles.
+ */
+#define RAND_ANGLE ((rand()/(fastf_t)RAND_MAX) * 360)
 
 /**
  * rt_shootray() was told to call this on a hit.  It passes the
@@ -89,6 +92,7 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 	/* inhit info */
 	dist = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
 	VJOIN1(pt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist, ap->a_ray.r_dir);
+	VJOIN1(opt, ap->a_ray.r_pt, pp->pt_outhit->hit_dist, ap->a_ray.r_dir);
 
 	if (state->debug) {
 	    bu_semaphore_acquire(ANALYZE_SEM_WORKER);
@@ -97,7 +101,7 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 	    bu_semaphore_release(ANALYZE_SEM_WORKER);
 	}
 
-	if (analysis_flags & ANALYSIS_EXP_AIR) {
+	if (state->analysis_flags & ANALYSIS_EXP_AIR) {
 
 	    gap_dist = (pp->pt_inhit->hit_dist - last_out_dist);
 
@@ -113,7 +117,7 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 	}
 
 	/* looking for voids in the model */
-	if (analysis_flags & ANALYSIS_GAP) {
+	if (state->analysis_flags & ANALYSIS_GAP) {
 	    if (pp->pt_back != PartHeadp) {
 		/* if this entry point is further than the previous
 		 * exit point then we have a void
@@ -127,7 +131,7 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 	}
 
 	/* computing the mass of the objects */
-	if (analysis_flags & ANALYSIS_MASS) {
+	if (state->analysis_flags & ANALYSIS_MASS) {
 	    if (state->debug) {
 		bu_semaphore_acquire(ANALYZE_SEM_WORKER);
 		bu_vls_printf(state->debug_str, "Hit %s doing mass\n", pp->pt_regionp->reg_name);
@@ -136,7 +140,7 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 
 	    /* make sure mater index is within range of densities */
 	    if (pp->pt_regionp->reg_gmater >= state->num_densities) {
-		if(default_den == 0) {
+		if(state->default_den == 0) {
 		    bu_semaphore_acquire(ANALYZE_SEM_WORKER);
 		    bu_vls_printf(state->log_str, "Density index %d on region %s is outside of range of table [1..%d]\nSet GIFTmater on region or add entry to density table\n",
 				  pp->pt_regionp->reg_gmater,
@@ -149,7 +153,7 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 
 	    /* make sure the density index has been set */
 	    bu_semaphore_acquire(ANALYZE_SEM_WORKER);
-	    if(default_den || state->densities[pp->pt_regionp->reg_gmater].magic != DENSITY_MAGIC) {
+	    if(state->default_den || state->densities[pp->pt_regionp->reg_gmater].magic != DENSITY_MAGIC) {
 		BU_GET(de, struct density_entry);		/* Aluminium 7xxx series as default material */
 		de->magic = DENSITY_MAGIC;
 		de->grams_per_cu_mm = 2.74;
@@ -220,7 +224,7 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 		/* accumulate the per-object per-view mass values */
 		prd->optr->o_lenDensity[state->i_axis] += val;
 
-		if (analysis_flags & ANALYSIS_CENTROIDS) {
+		if (state->analysis_flags & ANALYSIS_CENTROIDS) {
 		    /* calculate the center of mass for this partition */
 		    VJOIN1(cmass, pt, dist*0.5, ap->a_ray.r_dir);
 
@@ -233,9 +237,9 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 		    /* accumulate the total lenTorque */
 		    VADD2(&state->m_lenTorque[state->i_axis*3], &state->m_lenTorque[state->i_axis*3], lenTorque);
 
-		    if (analysis_flags & ANALYSIS_MOMENTS) {
+		    if (state->analysis_flags & ANALYSIS_MOMENTS) {
 			vectp_t moi;
-			vectp_t poi = &state->m_poi[state->i_axis*3];
+			vectp_t poi;
 			fastf_t dx_sq = cmass[X]*cmass[X];
 			fastf_t dy_sq = cmass[Y]*cmass[Y];
 			fastf_t dz_sq = cmass[Z]*cmass[Z];
@@ -271,18 +275,21 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 			      pp->pt_regionp->reg_gmater, pp->pt_regionp->reg_name);
 		bu_semaphore_release(ANALYZE_SEM_WORKER);
 
-		aborted = 1;
+		state->aborted = 1;
 		return ANALYZE_ERROR;
 	    }
 	}
 
 	/* compute the surface area of the object */
-	if(analysis_flags & ANALYSIS_SURF_AREA) {
+	if(state->analysis_flags & ANALYSIS_SURF_AREA) {
 	    struct per_region_data *prd = ((struct per_region_data *)pp->pt_regionp->reg_udata);
 	    fastf_t Lx = state->span[0] / state->steps[0];
 	    fastf_t Ly = state->span[1] / state->steps[1];
 	    fastf_t Lz = state->span[2] / state->steps[2];
 	    fastf_t cell_area;
+	    vect_t inormal = VINIT_ZERO;
+	    vect_t onormal = VINIT_ZERO;
+	    double icos, ocos;
 	    switch(state->i_axis) {
 		case 0:
 		    cell_area = Ly*Ly;
@@ -297,19 +304,29 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 
 	    {
 		bu_semaphore_acquire(ANALYZE_SEM_STATS);
+		/* factor in the normal vector to find how 'skew' the surface is */
+		RT_HIT_NORMAL(inormal, pp->pt_inhit, pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip);
+		VREVERSE(inormal, inormal);
+		RT_HIT_NORMAL(onormal, pp->pt_outhit, pp->pt_outseg->seg_stp, &(ap->a_ray), pp->pt_outflip);
+
+		/* find the cosine angle between the normal vector and ray_direction */
+		icos = VDOT(inormal, ap->a_ray.r_dir)/(MAGSQ(inormal)*MAGSQ(ap->a_ray.r_dir));
+		ocos = VDOT(onormal, ap->a_ray.r_dir)/(MAGSQ(onormal)*MAGSQ(ap->a_ray.r_dir));
 
 		/* add to region surface area */
-		prd->r_surf_area[state->curr_view] += (cell_area * 2);
+		prd->r_area[state->curr_view] += (cell_area/icos);
+		prd->r_area[state->curr_view] += (cell_area/ocos);
 
 		/* add to object surface area */
-		prd->optr->o_surf_area[state->curr_view] += (cell_area * 2);
+		prd->optr->o_area[state->curr_view] += (cell_area/icos);
+		prd->optr->o_area[state->curr_view] += (cell_area/ocos);
 
 		bu_semaphore_release(ANALYZE_SEM_STATS);
 	    }
 	}
 
 	/* compute the volume of the object */
-	if (analysis_flags & ANALYSIS_VOLUME) {
+	if (state->analysis_flags & ANALYSIS_VOLUME) {
 	    struct per_region_data *prd = ((struct per_region_data *)pp->pt_regionp->reg_udata);
 	    ap->A_LEN += dist; /* add to total volume */
 	    {
@@ -330,8 +347,6 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 		bu_semaphore_release(ANALYZE_SEM_WORKER);
 	    }
 	    if (state->plot_volume) {
-		VJOIN1(opt, ap->a_ray.r_pt, pp->pt_outhit->hit_dist, ap->a_ray.r_dir);
-
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
 		if (ap->a_user & 1) {
 		    pl_color(state->plot_volume, 128, 255, 192);  /* pale green */
@@ -345,10 +360,33 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 	}
 
 	/* look for two adjacent air regions */
-	if (analysis_flags & ANALYSIS_ADJ_AIR) {
+	if (state->analysis_flags & ANALYSIS_ADJ_AIR) {
 	    if (last_air && pp->pt_regionp->reg_aircode &&
 		pp->pt_regionp->reg_aircode != last_air) {
 		state->adj_air_callback(&ap->a_ray, pp, pt, state->adj_air_callback_data);
+	    }
+	}
+
+	if (pp->pt_regionp->reg_aircode) {
+	    /* look for air first on shotlines */	
+	    if (pp->pt_back == PartHeadp) {
+		if (state->analysis_flags & ANALYSIS_FIRST_AIR)
+		    state->first_air_callback(&ap->a_ray, pp, state->first_air_callback_data);
+	    } else {
+		/* else add to unconfined air regions list */
+		if (state->analysis_flags & ANALYSIS_UNCONF_AIR) {
+		    state->unconf_air_callback(&ap->a_ray, pp, pp->pt_back, state->unconf_air_callback_data);
+		}
+	    }
+	    /* look for air last on shotlines */
+	    if (pp->pt_forw == PartHeadp) {
+		if (state->analysis_flags & ANALYSIS_LAST_AIR)
+		    state->last_air_callback(&ap->a_ray, pp, state->last_air_callback_data);
+	    } else {
+		/* else add to unconfined air regions list */
+		if (state->analysis_flags & ANALYSIS_UNCONF_AIR) {
+		    state->unconf_air_callback(&ap->a_ray, pp->pt_forw, pp, state->unconf_air_callback_data);
+		}
 	    }
 	}
 
@@ -360,7 +398,7 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 	VJOIN1(last_out_point, ap->a_ray.r_pt, pp->pt_outhit->hit_dist, ap->a_ray.r_dir);
     }
 
-    if (analysis_flags & ANALYSIS_EXP_AIR && last_air) {
+    if (state->analysis_flags & ANALYSIS_EXP_AIR && last_air) {
 	/* the last thing we hit was air.  Make a note of that */
 	pp = PartHeadp->pt_back;
 	state->exp_air_callback(pp, last_out_point, pt, opt, state->exp_air_callback_data);
@@ -412,7 +450,6 @@ analyze_overlap(struct application *ap,
     struct hit *ihitp = pp->pt_inhit;
     struct hit *ohitp = pp->pt_outhit;
     vect_t ihit;
-    vect_t ohit;
     double depth;
 
     if (!hp) /* unexpected */
@@ -431,13 +468,12 @@ analyze_overlap(struct application *ap,
 	return 1;
 
     VJOIN1(ihit, rp->r_pt, ihitp->hit_dist, rp->r_dir);
-    VJOIN1(ohit, rp->r_pt, ohitp->hit_dist, rp->r_dir);
 
-    if (analysis_flags & ANALYSIS_OVERLAPS) {
+    if (state->analysis_flags & ANALYSIS_OVERLAPS) {
 	bu_semaphore_acquire(ANALYZE_SEM_LIST);
 	add_unique_pair(state->overlapList, reg1, reg2, depth, ihit);
 	bu_semaphore_release(ANALYZE_SEM_LIST);
-	state->overlaps_callback(reg1, reg2, depth, ihit, ohit, state->overlaps_callback_data);
+	state->overlaps_callback(&ap->a_ray, pp, reg1, reg2, depth, state->overlaps_callback_data);
     }  else {
 	bu_semaphore_acquire(ANALYZE_SEM_WORKER);
 	bu_vls_printf(state->log_str, "overlap %s %s\n", reg1->reg_name, reg2->reg_name);
@@ -564,7 +600,7 @@ mass_volume_surf_area_terminate_check(struct current_state *state)
 
     double low, hi, val, delta;
 
-    if (analysis_flags & ANALYSIS_MASS) {
+    if (state->analysis_flags & ANALYSIS_MASS) {
 	/* for each object, compute the mass for all views */
 	int obj;
 
@@ -610,7 +646,7 @@ mass_volume_surf_area_terminate_check(struct current_state *state)
 	}
     }
 
-    if (analysis_flags & ANALYSIS_VOLUME) {
+    if (state->analysis_flags & ANALYSIS_VOLUME) {
 	/* find the range of values for object volumes */
 	int obj;
 
@@ -647,18 +683,23 @@ mass_volume_surf_area_terminate_check(struct current_state *state)
 	}
     }
 
-    if(analysis_flags & ANALYSIS_SURF_AREA) {
-	int obj;
+    if (state->analysis_flags & ANALYSIS_SURF_AREA) {
+	/* find the range of values for surface area */
+	int obj, i;
+	struct region *regp;
 
-	for(obj = 0; obj < state->num_objects; obj++) {
+	/* for each object, compute the surface area for all views */
+	for (obj = 0; obj < state->num_objects; obj++) {
 	    int view;
 	    double tmp;
 
 	    low = INFINITY;
 	    hi = -INFINITY;
 	    tmp = 0.0;
-	    for(view = 0; view < state->num_views; view++) {
-		val = state->objs[obj].o_surf_area[view];
+	    for (view = 0; view < state->num_views; view++) {
+		val = state->objs[obj].o_surf_area[view] = state->objs[obj].o_area[view];
+		/* divide by 4 to prepare for next iteration of grid refinment */
+		state->objs[obj].o_area[view] /= 4;
 		V_MIN(low, val);
 		V_MAX(hi, val);
 		tmp += val;
@@ -668,11 +709,24 @@ mass_volume_surf_area_terminate_check(struct current_state *state)
 	    if (state->verbose)
 		bu_vls_printf(state->verbose_str, "\t%s running avg surface area %g mm^2 hi=(%g) low=(%g)\n", state->objs[obj].o_name, (tmp / state->num_views), hi, low);
 
-	    if(delta > state->sa_tolerance) {
+	    if (delta > state->sa_tolerance) {
+		/* this object differs too much in each view, so we
+		 * need to refine the grid.
+		 */
 		can_terminate = 0;
 		if (state->verbose)
 		    bu_vls_printf(state->verbose_str, "\tsurface area tol not met on %s.  Refine grid\n", state->objs[obj].o_name);
 		break;
+	    }
+	}
+
+	/* for each region, compute the surface area for all views */
+	for (i = 0, BU_LIST_FOR (regp, region, &(state->rtip->HeadRegion)), i++) {
+	    int view;
+	    for (view = 0; view < state->num_views; view++) {
+		state->reg_tbl[i].r_surf_area[view] = state->reg_tbl[i].r_area[view];
+		/* divide by 4 to prepare for next iteration of grid refinment */
+		state->reg_tbl[i].r_area[view] /= 4;
 	    }
 	}
     }
@@ -708,7 +762,7 @@ check_terminate(struct current_state *state)
 		state->gridSpacing, state->gridSpacingLimit);
 	return 0;
     }
-    if (analysis_flags & (ANALYSIS_MASS|ANALYSIS_VOLUME)) {
+    if (state->analysis_flags & (ANALYSIS_MASS|ANALYSIS_VOLUME|ANALYSIS_SURF_AREA)) {
 	if (wv_status == 0) {
 	    if (state->verbose)
 		bu_vls_printf(state->verbose_str, "%s: Volume/mass tolerance met. Terminate\n", CPP_FILELINE);
@@ -737,7 +791,7 @@ analyze_worker(int cpu, void *ptr)
     struct current_state *state = (struct current_state *)ptr;
     unsigned long shot_cnt;
 
-    if (aborted)
+    if (state->aborted)
 	return;
 
     RT_APPLICATION_INIT(&ap);
@@ -761,7 +815,7 @@ analyze_worker(int cpu, void *ptr)
 	ap.a_user = (int)(state->grid->current_point / (state->grid->x_points));
 	bu_semaphore_release(ANALYZE_SEM_WORKER);
 	(void)rt_shootray(&ap);
-	if (aborted)
+	if (state->aborted)
 	    return;
 	shot_cnt++;
     }
@@ -796,20 +850,20 @@ options_set(struct current_state *state)
     /* figure out where the density values are coming from and get
      * them.
      */
-    if (analysis_flags & ANALYSIS_MASS) {
+    if (state->analysis_flags & ANALYSIS_MASS) {
 	if (state->densityFileName) {
 	    if(state->debug)
 		bu_vls_printf(state->debug_str, "Density from file\n");
 	    if (densities_from_file(state, state->densityFileName) != ANALYZE_OK) {
 		bu_log("Couldn't load density table from file. Using default density.\n");
-		default_den = 1;
+		state->default_den = 1;
 	    }
 	} else {
 	    if(state->debug)
 		bu_vls_printf(state->debug_str, "Density from db\n");
 	    if (densities_from_database(state, rtip) != ANALYZE_OK) {
 		bu_log("Couldn't load density table from database. Using default density.\n");
-		default_den = 1;
+		state->default_den = 1;
 	    }
 	}
     }
@@ -817,22 +871,22 @@ options_set(struct current_state *state)
      * the number of rays per model axis
      */
     for (axis = 0; axis < 3; axis++) {
-	if (state->span[axis] < newGridSpacing * Samples_per_model_axis) {
+	if (state->span[axis] < newGridSpacing * state->samples_per_model_axis) {
 	    /* along this axis, the gridSpacing is larger than the
 	     * model span.  We need to refine.
 	     */
-	    newGridSpacing = state->span[axis] / Samples_per_model_axis;
+	    newGridSpacing = state->span[axis] / state->samples_per_model_axis;
 	}
     }
 
     if (!ZERO(newGridSpacing - state->gridSpacing)) {
-	bu_log("Initial grid spacing %g mm does not allow %g samples per axis.\n", state->gridSpacing, Samples_per_model_axis - 1);
-	bu_log("Adjusted initial grid spacing to %g mm to get %g samples per model axis.\n", newGridSpacing, Samples_per_model_axis);
+	bu_log("Initial grid spacing %g mm does not allow %g samples per axis.\n", state->gridSpacing, state->samples_per_model_axis - 1);
+	bu_log("Adjusted initial grid spacing to %g mm to get %g samples per model axis.\n", newGridSpacing, state->samples_per_model_axis);
 	state->gridSpacing = newGridSpacing;
     }
 
-    /* if the vol/mass tolerances are not set, pick something */
-    if (analysis_flags & ANALYSIS_VOLUME) {
+    /* if the vol/mass/surf_area tolerances are not set, pick something */
+    if (state->analysis_flags & ANALYSIS_VOLUME) {
 	if (state->volume_tolerance < 0.0) {
 	    /* using 1/1000th the volume as a default tolerance, no particular reason */
 	    state->volume_tolerance = state->span[X] * state->span[Y] * state->span[Z] * 0.001;
@@ -840,7 +894,7 @@ options_set(struct current_state *state)
 	} else
 	    bu_log("Using volume tolerance %g cu mm\n", state->volume_tolerance);
     }
-    if(analysis_flags & ANALYSIS_SURF_AREA) {
+    if(state->analysis_flags & ANALYSIS_SURF_AREA) {
 	if(state->sa_tolerance < 0.0) {
 	    state->sa_tolerance = INFINITY;
 	    V_MIN(state->sa_tolerance, state->span[0] * state->span[1]);
@@ -851,7 +905,7 @@ options_set(struct current_state *state)
 	} else
 	    bu_log("Using surface area tolerance %g mm^2\n", state->sa_tolerance);
     }
-    if (analysis_flags & ANALYSIS_MASS) {
+    if (state->analysis_flags & ANALYSIS_MASS) {
 	if (state->mass_tolerance < 0.0) {
 	    double max_den = 0.0;
 	    int i;
@@ -866,7 +920,7 @@ options_set(struct current_state *state)
 	}
     }
 
-    if (analysis_flags & ANALYSIS_OVERLAPS) {
+    if (state->analysis_flags & ANALYSIS_OVERLAPS) {
 	if (!ZERO(state->overlap_tolerance))
 	    bu_log("overlap tolerance to %g\n", state->overlap_tolerance);
 	if (state->overlaps_callback == NULL) {
@@ -875,32 +929,52 @@ options_set(struct current_state *state)
 	}
     }
 
-    if ((analysis_flags & (ANALYSIS_ADJ_AIR|ANALYSIS_EXP_AIR)) && ! state->use_air) {
+    if ((state->analysis_flags & (ANALYSIS_ADJ_AIR|ANALYSIS_EXP_AIR|ANALYSIS_FIRST_AIR|ANALYSIS_LAST_AIR|ANALYSIS_UNCONF_AIR)) && ! state->use_air) {
 	bu_log("\nError:  Air regions discarded but air analysis requested!\nSet use_air non-zero or eliminate air analysis\n");
 	return GED_ERROR;
     }
 
-    if (analysis_flags & ANALYSIS_EXP_AIR) {
+    if (state->analysis_flags & ANALYSIS_EXP_AIR) {
 	if (state->exp_air_callback == NULL) {
 	    bu_log("\nexp_air callback function not registered!");
 	    return ANALYZE_ERROR;
 	}
     }
 
-    if (analysis_flags & ANALYSIS_GAP) {
+    if (state->analysis_flags & ANALYSIS_GAP) {
 	if (state->gaps_callback == NULL) {
 	    bu_log("\ngaps callback function not registered!");
 	    return ANALYZE_ERROR;
 	}
     }
 
-    if (analysis_flags & ANALYSIS_ADJ_AIR) {
+    if (state->analysis_flags & ANALYSIS_ADJ_AIR) {
 	if (state->adj_air_callback == NULL) {
 	    bu_log("\nadj_air callback function not registered!");
 	    return ANALYZE_ERROR;
 	}
     }
 
+    if (state->analysis_flags & ANALYSIS_FIRST_AIR) {
+	if (state->first_air_callback == NULL) {
+	    bu_log("\nfirst_air callback function not registered!");
+	    return ANALYZE_ERROR;
+	}
+    }
+
+    if (state->analysis_flags & ANALYSIS_LAST_AIR) {
+	if (state->last_air_callback == NULL) {
+	    bu_log("\nlast_air callback function not registered!");
+	    return ANALYZE_ERROR;
+	}
+    }
+
+    if (state->analysis_flags & ANALYSIS_UNCONF_AIR) {
+	if (state->unconf_air_callback == NULL) {
+	    bu_log("\nunconf_air callback function not registered!");
+	    return ANALYZE_ERROR;
+	}
+    }
     return ANALYZE_OK;
 }
 
@@ -923,7 +997,8 @@ find_cmd_obj(struct current_state *state, struct per_obj_data *obj_rpt, const ch
 	}
     }
 
-    bu_log("%s Didn't find object named \"%s\" in %d entries\n", CPP_FILELINE, name, state->num_objects);
+    if(state->debug)
+	bu_vls_printf(state->debug_str, "%s Didn't find object named \"%s\" in %d entries\n", CPP_FILELINE, name, state->num_objects);
 
     return -1;
 }
@@ -958,11 +1033,8 @@ allocate_region_data(struct current_state *state, char *av[])
     }
 
     state->m_lenDensity = (double *)bu_calloc(state->num_views, sizeof(double), "densityLen");
-    state->m_len = (double *)bu_calloc(state->num_views, sizeof(double), "volume");
-    state->m_volume = (double *)bu_calloc(state->num_views, sizeof(double), "volume");
-    state->m_mass = (double *)bu_calloc(state->num_views, sizeof(double), "volume");
-    state->m_surf_area = (double *)bu_calloc(state->num_views, sizeof(double), "surface area");
-    state->shots = (unsigned long *)bu_calloc(state->num_views, sizeof(unsigned long), "volume");
+    state->m_len = (double *)bu_calloc(state->num_views, sizeof(double), "len");
+    state->shots = (unsigned long *)bu_calloc(state->num_views, sizeof(unsigned long), "shots");
     state->m_lenTorque = (fastf_t *)bu_calloc(state->num_views, sizeof(vect_t), "lenTorque");
     state->m_moi = (fastf_t *)bu_calloc(state->num_views, sizeof(vect_t), "moments of inertia");
     state->m_poi = (fastf_t *)bu_calloc(state->num_views, sizeof(vect_t), "products of inertia");
@@ -977,6 +1049,7 @@ allocate_region_data(struct current_state *state, char *av[])
 	state->objs[i].o_lenDensity = (double *)bu_calloc(state->num_views, sizeof(double), "o_lenDensity");
 	state->objs[i].o_volume = (double *)bu_calloc(state->num_views, sizeof(double), "o_volume");
 	state->objs[i].o_mass = (double *)bu_calloc(state->num_views, sizeof(double), "o_mass");
+	state->objs[i].o_area = (double *)bu_calloc(state->num_views, sizeof(double), "o_area");
 	state->objs[i].o_surf_area = (double *)bu_calloc(state->num_views, sizeof(double), "o_surf_area");
 	state->objs[i].o_lenTorque = (fastf_t *)bu_calloc(state->num_views, sizeof(vect_t), "lenTorque");
 	state->objs[i].o_moi = (fastf_t *)bu_calloc(state->num_views, sizeof(vect_t), "moments of inertia");
@@ -995,6 +1068,7 @@ allocate_region_data(struct current_state *state, char *av[])
 	state->reg_tbl[i].r_len = (double *)bu_calloc(state->num_views, sizeof(double), "r_len");
 	state->reg_tbl[i].r_volume = (double *)bu_calloc(state->num_views, sizeof(double), "len");
 	state->reg_tbl[i].r_mass = (double *)bu_calloc(state->num_views, sizeof(double), "len");
+	state->reg_tbl[i].r_area = (double *)bu_calloc(state->num_views, sizeof(double), "area");
 	state->reg_tbl[i].r_surf_area = (double *)bu_calloc(state->num_views, sizeof(double), "surface area");
 
 	index = find_cmd_obj(state, state->objs, &regp->reg_name[1]);
@@ -1016,6 +1090,8 @@ analyze_single_grid_setup(struct current_state *state)
     vect_t dx_unit;	 /* view delta-X as unit-len vect */
     vect_t dy_unit;	 /* view delta-Y as unit-len vect */
     mat_t view2model;
+    double cell_width, cell_height;
+    size_t width, height;
 
     state->curr_view = 0;
     state->i_axis = 0;
@@ -1027,6 +1103,7 @@ analyze_single_grid_setup(struct current_state *state)
 	bu_log("viewsize <= 0");
 	return ANALYZE_ERROR;
     }
+
     /* model2view takes us to eye_model location & orientation */
     MAT_IDN(toEye);
     MAT_DELTAS_VEC_NEG(toEye, state->eye_model);
@@ -1036,27 +1113,32 @@ analyze_single_grid_setup(struct current_state *state)
 
     state->area[0] = state->viewsize * state->viewsize;
 
-    state->grid->grid_spacing = state->gridSpacing;
-    state->grid->x_points = state->viewsize/state->gridSpacing;
-    state->grid->total_points = state->grid->x_points*state->grid->x_points;
-    bu_log("Processing with grid spacing %g mm %ld x %ld\n", state->grid->grid_spacing, state->grid->x_points, state->grid->x_points);
+    cell_width = state->gridSpacing;
+    cell_height = cell_width / state->gridRatio;
+    width = state->viewsize/cell_width + 0.99;
+    height = state->viewsize/(cell_height * state->aspect) + 0.99;
+
+    state->grid->grid_spacing = cell_width;
+    state->grid->x_points = width;
+    state->grid->total_points = width*height;
+    bu_log("Processing with grid: (%g, %g) mm, (%zu, %zu) pixels\n", cell_width, cell_height, width, height);
     state->grid->current_point=0;
 
     /* Create basis vectors dx and dy for emanation plane (grid) */
     VSET(temp, 1, 0, 0);
     MAT3X3VEC(dx_unit, view2model, temp);	/* rotate only */
-    VSCALE(state->grid->dx_grid, dx_unit, state->gridSpacing);
+    VSCALE(state->grid->dx_grid, dx_unit, cell_width);
 
     VSET(temp, 0, 1, 0);
     MAT3X3VEC(dy_unit, view2model, temp);	/* rotate only */
-    VSCALE(state->grid->dy_grid, dy_unit, state->gridSpacing);
+    VSCALE(state->grid->dy_grid, dy_unit, cell_height);
 
     /* all rays go this direction */
     VSET(temp, 0, 0, -1);
     MAT4X3VEC(state->grid->ray_direction, view2model, temp);
     VUNITIZE(state->grid->ray_direction);
 
-    VSET(temp, -1, -1, 0);	/* eye plane */
+    VSET(temp, -1, -1/state->aspect, 0);	/* eye plane */
     MAT4X3PNT(state->grid->start_coord, view2model, temp);
     return ANALYZE_OK;
 }
@@ -1097,55 +1179,18 @@ analyze_triple_grid_setup(int view, struct current_state *state)
 }
 
 
-HIDDEN void
-shoot_rays(struct current_state *state)
-{
-    /* compute */
-    double inv_spacing;
-    do {
-	inv_spacing = 1.0/state->gridSpacing;
-	VSCALE(state->steps, state->span, inv_spacing);
-	if (state->use_single_grid) {
-	    analyze_single_grid_setup(state);
-	    bu_parallel(analyze_worker, state->ncpu, (void *)state);
-	} else {
-	    int view;
-	    bu_log("Processing with grid spacing %g mm %ld x %ld x %ld\n",
-		    state->gridSpacing,
-		    state->steps[0]-1,
-		    state->steps[1]-1,
-		    state->steps[2]-1);
-	    for (view = 0; view < state->num_views; view++) {
-		analyze_triple_grid_setup(view, state);
-		bu_parallel(analyze_worker, state->ncpu, (void *)state);
-		if (aborted)
-		    break;
-	    }
-	}
-	state->grid->refine_flag = 1;
-	state->gridSpacing *= 0.5;
-
-    } while (check_terminate(state));
-}
-
-
 HIDDEN int
-analyze_setup_ae(double azim,
-		 double elev,
-		 struct rt_i *rtip,
-		 mat_t Viewrotscale,
-		 fastf_t *viewsize,
-		 mat_t model2view,
-		 point_t eye_model)
+analyze_setup_ae(struct current_state *state)
 {
     vect_t temp;
     vect_t diag;
     mat_t toEye;
     mat_t view2model;
     fastf_t eye_backoff = (fastf_t)M_SQRT2;
+    struct rt_i *rtip = (struct rt_i *) state->rtip;
 
     if (rtip == NULL) {
-	bu_log("analov_do_ae: ERROR: rtip is null");
+	bu_log("analyze_setup_ae: ERROR: rtip is null");
 	return ANALYZE_ERROR;
     }
 
@@ -1160,16 +1205,15 @@ analyze_setup_ae(double azim,
     }
 
     if (rtip->mdl_max[X] >= INFINITY) {
-	bu_log("do_ae: infinite model bounds? setting a unit minimum\n");
+	bu_log("analyze_setup_ae: infinite model bounds? setting a unit minimum\n");
 	VSETALL(rtip->mdl_min, -1);
     }
     if (rtip->mdl_max[X] <= -INFINITY) {
-	bu_log("do_ae: infinite model bounds? setting a unit maximum\n");
+	bu_log("analyze_setup_ae: infinite model bounds? setting a unit maximum\n");
 	VSETALL(rtip->mdl_max, 1);
     }
-
-    MAT_IDN(Viewrotscale);
-    bn_mat_angles(Viewrotscale, 270.0+elev, 0.0, 270.0-azim);
+    MAT_IDN(state->Viewrotscale);
+    bn_mat_angles(state->Viewrotscale, 270.0 + state->elevation_deg, 0.0, 270.0 - state->azimuth_deg);
 
     /* Look at the center of the model */
     MAT_IDN(toEye);
@@ -1177,22 +1221,78 @@ analyze_setup_ae(double azim,
     toEye[MDY] = -((rtip->mdl_max[Y]+rtip->mdl_min[Y])/2.0);
     toEye[MDZ] = -((rtip->mdl_max[Z]+rtip->mdl_min[Z])/2.0);
 
-    VSUB2(diag, rtip->mdl_max, rtip->mdl_min);
-    *viewsize = MAGNITUDE(diag);
+    if ((state->viewsize) <= 0) {
+	VSUB2(diag, rtip->mdl_max, rtip->mdl_min);
+	state->viewsize = MAGNITUDE(diag);
+	if (state->aspect > 1) {
+	    /* don't clip any of the image when autoscaling */
+	    state->viewsize *= state->aspect;
+	}
+    }
 
     /* sanity check: make sure viewsize still isn't zero in case
      * bounding box is empty, otherwise bn_mat_int() will bomb.
      */
-    if (*viewsize < 0 || ZERO(*viewsize)) {
-	*viewsize = 2.0; /* arbitrary so Viewrotscale is normal */
+    if (state->viewsize < 0 || ZERO(state->viewsize)) {
+	state->viewsize = 2.0; /* arbitrary so Viewrotscale is normal */
     }
 
-    Viewrotscale[15] = 0.5*(*viewsize);	/* Viewscale */
-    bn_mat_mul(model2view, Viewrotscale, toEye);
-    bn_mat_inv(view2model, model2view);
+    state->Viewrotscale[15] = 0.5*(state->viewsize);	/* Viewscale */
+    bn_mat_mul(state->model2view, state->Viewrotscale, toEye);
+    bn_mat_inv(view2model, state->model2view);
     VSET(temp, 0, 0, eye_backoff);
-    MAT4X3PNT(eye_model, view2model, temp);
+    MAT4X3PNT(state->eye_model, view2model, temp);
     return ANALYZE_OK;
+}
+
+
+HIDDEN void
+shoot_rays(struct current_state *state)
+{
+    /* compute */
+    double inv_spacing;
+    do {
+	inv_spacing = 1.0/state->gridSpacing;
+	VSCALE(state->steps, state->span, inv_spacing);
+	if (state->analysis_flags & ANALYSIS_SURF_AREA) {
+	    int view;
+	    for (view = 0; view < state->num_views; view++) {
+		if (state->verbose)
+		    bu_vls_printf(state->verbose_str, "  view %d\n", view);
+		/* fire rays at random azimuth and elevation angles */
+		state->azimuth_deg = RAND_ANGLE;
+		state->elevation_deg = RAND_ANGLE;
+		analyze_setup_ae(state);
+		analyze_single_grid_setup(state);
+		state->curr_view = view;
+		bu_parallel(analyze_worker, state->ncpu, (void *)state);
+	    }
+	} else if (state->use_single_grid) {
+	    state->num_views = 1;
+	    analyze_single_grid_setup(state);
+	    bu_parallel(analyze_worker, state->ncpu, (void *)state);
+	} else {
+	    int view;
+	    bu_log("Processing with grid spacing %g mm %ld x %ld x %ld\n",
+		    state->gridSpacing,
+		    state->steps[0]-1,
+		    state->steps[1]-1,
+		    state->steps[2]-1);
+	    for (view = 0; view < state->num_views; view++) {
+		if (state->verbose)
+		    bu_vls_printf(state->verbose_str, "  view %d\n", view);
+		analyze_triple_grid_setup(view, state);
+		bu_parallel(analyze_worker, state->ncpu, (void *)state);
+		if (state->aborted)
+		    break;
+	    }
+	}
+	state->grid->refine_flag = 1;
+	state->gridSpacing *= 0.5;
+
+    } while (check_terminate(state));
+    if (state->verbose)
+	bu_vls_printf(state->verbose_str, "Computation Done\n");
 }
 
 
@@ -1207,10 +1307,6 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
     struct rectangular_grid grid;
     struct region_pair overlapList;
 
-    /* TODO : Add a bu_vls struct / use bu_log() wherever
-     * possible.
-     */
-
     /* local copy for overlaps list to check later for hits */
     BU_LIST_INIT(&overlapList.l);
     state->overlapList = &overlapList;
@@ -1218,7 +1314,7 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
     state->grid = &grid;
     grid.single_grid = 0;
 
-    analysis_flags = flags;
+    state->analysis_flags = flags;
 
     /* Get raytracing instance */
     rtip = rt_new_rti(dbip);
@@ -1242,16 +1338,27 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
 	    return ANALYZE_ERROR;
 	}
     }
+
     rt_prep_parallel(rtip, state->ncpu);
 
-    if (state->use_single_grid) state->num_views = 1;
-
+    /* setup azimuth and elevation angles in case of single grid */
     if (state->use_single_grid && !state->use_view_information) {
-	if (analyze_setup_ae(state->azimuth_deg, state->elevation_deg, rtip, state->Viewrotscale, &state->viewsize, state->model2view, state->eye_model)) {
+	if (analyze_setup_ae(state)) {
 	    rt_free_rti(rtip);
 	    rtip = NULL;
 	    return ANALYZE_ERROR;
 	}
+    }
+
+    /* set the grid spacing from viewsize if the width and height are mentioned */
+    if (state->grid_size_flag && state->use_single_grid) {
+	double cell_height = 0.0;
+	double cell_width = 0.0;
+	cell_width = state->viewsize / state->grid_width;
+	cell_height = state->viewsize / (state->grid_height * state->aspect);
+	state->gridSpacing = cell_width;
+	state->gridSpacingLimit = cell_width;
+	state->gridRatio = cell_width/cell_height;
     }
 
     /* we now have to subdivide space */
@@ -1260,7 +1367,7 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
     state->area[1] = state->span[2] * state->span[0];
     state->area[2] = state->span[0] * state->span[1];
 
-    if (analysis_flags & ANALYSIS_BOX) {
+    if (state->analysis_flags & ANALYSIS_BOX) {
 	bu_log("Bounding Box: %g %g %g  %g %g %g\n",
 		V3ARGS(rtip->mdl_min), V3ARGS(rtip->mdl_max));
 
@@ -1318,7 +1425,7 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
 	if (hits < state->required_number_hits) {
 	    if (hits == 0 && !state->quiet_missed_report) {
 		is_overlap_only_hit = 0;
-		if (analysis_flags & ANALYSIS_OVERLAPS) {
+		if (state->analysis_flags & ANALYSIS_OVERLAPS) {
 		    /* If the region is in the overlap list, it has
 		     * been hit even though the hit count is zero.
 		     * Do not report zero hit regions if they are in
@@ -1345,17 +1452,9 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
 	}
     }
 
-    /* Free dynamically allocated state */
+    /* Free dynamically allocated memory */
     bu_vls_free(state->log_str);
     bu_list_free(&overlapList.l);
-
-    bu_free(state->m_lenDensity, "m_lenDensity");
-    bu_free(state->m_len, "m_len");
-    bu_free(state->m_volume, "m_volume");
-    bu_free(state->m_mass, "m_mass");
-    bu_free(state->m_lenTorque, "m_lenTorque");
-    bu_free(state->m_moi, "m_moi");
-    bu_free(state->m_poi, "m_poi");
 
     if (state->densities != NULL) {
 	bu_free(state->densities, "densities");

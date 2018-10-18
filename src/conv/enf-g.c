@@ -37,6 +37,7 @@
 
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "rt/db4.h"
 #include "vmath.h"

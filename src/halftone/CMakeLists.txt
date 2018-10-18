@@ -17,6 +17,7 @@ set(halftone_SOURCES
 
 BRLCAD_ADDEXEC(halftone "${halftone_SOURCES}" "librt;libfb")
 
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

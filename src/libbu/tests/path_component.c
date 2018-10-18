@@ -36,12 +36,12 @@ pc_compare(const char *input, const char *expected_str, bu_path_component_t type
     if (!expected_str && found) {
 	bu_log("no result expected, but result found: %s\n", bu_vls_addr(&component));
 	bu_vls_free(&component);
-	bu_exit(EXIT_FAILURE, "");
+	bu_exit(EXIT_FAILURE, "pc_compare: unexpected result");
     }
     if (expected_str && !found) {
 	bu_log("%24s -> %24s (should be: %s) [FAIL]\n", input, bu_vls_addr(&component), expected_str);
 	bu_vls_free(&component);
-	bu_exit(EXIT_FAILURE, "");
+	bu_exit(EXIT_FAILURE, "pc_compare: FAIL1");
 	return;
     }
     if (!expected_str && !found) {
@@ -57,13 +57,13 @@ pc_compare(const char *input, const char *expected_str, bu_path_component_t type
     } else {
 	bu_log("%24s -> %24s (should be: %s) [FAIL]\n", input, bu_vls_addr(&component), expected_str);
 	bu_vls_free(&component);
-	bu_exit(EXIT_FAILURE, "");
+	bu_exit(EXIT_FAILURE, "pc_compare: FAIL2");
     }
 }
 
 
 int
-path_component_main(int argc, char *argv[])
+main(int argc, char *argv[])
 {
     const char *control = NULL;
     int intarg = 0;
@@ -109,8 +109,7 @@ path_component_main(int argc, char *argv[])
 	    pc_compare(argv[1], control, BU_PATH_EXT);
 	    break;
 	default:
-	    bu_log("Error - unknown component\n");
-	    break;
+	    bu_exit(1, "ERROR: unknown component\n");
     }
 
     return 0;

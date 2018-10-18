@@ -35,6 +35,7 @@
 #  if !defined(OCRNL)
 #    define OCRNL 0000010
 #  endif
+
 #endif
 
 #include "bio.h"
@@ -345,12 +346,16 @@ clr_CRNL(int fd)
     (void) ioctl(fd, TIOCSETP, &curr_tio[fd]);
 #endif
 #ifdef SYSV
+#  if !defined(__FreeBSD__)
     curr_tio[fd].c_oflag &= ~(ONLCR|OCRNL);
+#  endif
     curr_tio[fd].c_iflag &= ~(ICRNL|INLCR);
     (void) ioctl(fd, TCSETA, &curr_tio[fd]);
 #endif
 #ifdef HAVE_TERMIOS_H
+#  if !defined(__FreeBSD__)
     curr_tio[fd].c_oflag &= ~(ONLCR|OCRNL);
+#  endif
     curr_tio[fd].c_iflag &= ~(ICRNL|INLCR);
     (void)tcsetattr(fd, TCSAFLUSH, &curr_tio[fd]);
 #endif

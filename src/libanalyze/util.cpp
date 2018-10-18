@@ -584,7 +584,7 @@ sp_overlap(struct application *ap,
 
 /* Will need the region flag set for this to work... */
 extern "C" int
-analyze_get_solid_partitions(struct bu_ptbl *results, struct rt_gen_worker_vars *pstate, const fastf_t *rays, int ray_cnt,
+analyze_get_solid_partitions(struct bu_ptbl *results, struct rt_gen_worker_vars *pstate, fastf_t *rays, int ray_cnt,
 	struct db_i *dbip, const char *obj, struct bn_tol *tol, int ncpus, int filter)
 {
     int i;

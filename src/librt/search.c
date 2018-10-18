@@ -118,6 +118,7 @@ static OPTION options[] = {
     { "-bl",        N_BELOW,        c_below,        O_ZERO },
     { "-bool",      N_BOOL,         c_bool,	    O_ARGV },
     { "-depth",     N_DEPTH,        c_depth,        O_ARGV },
+    { "-exec",      N_EXEC,         c_exec,         O_ARGVP},
     { "-iname",     N_INAME,        c_iname,        O_ARGV },
     { "-iregex",    N_IREGEX,       c_iregex,       O_ARGV },
     { "-maxdepth",  N_MAXDEPTH,     c_maxdepth,     O_ARGV },
@@ -195,7 +196,7 @@ db_fullpath_list_subtree(struct db_full_path *path, int curr_bool, union tree *t
 		    db_dup_full_path(newpath, path);
 		    /* Insert the path in the bu_ptbl collecting paths */
 		    bu_ptbl_ins(lcd->full_paths, (long *)newpath);
-		    if (!cyclic_path(path, NULL)) {
+		    if (!db_full_path_cyclic(path, NULL, 0)) {
 			/* Keep going */
 			traverse_func(path, client_data);
 		    } else {
@@ -285,7 +286,7 @@ f_expr(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
  * to a N_EXPR node containing the expression and the ')' node is discarded.
  */
 HIDDEN int
-c_openparen(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl)
+c_openparen(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct db_search_context *UNUSED(ctx))
 {
     (*resultplan) = (palloc(N_OPENPAREN, (int (*)(struct db_plan_t *, struct db_node_t *, struct db_i *, struct bu_ptbl *))-1, tbl));
     return BRLCAD_OK;
@@ -293,7 +294,7 @@ c_openparen(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), s
 
 
 HIDDEN int
-c_closeparen(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl)
+c_closeparen(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct db_search_context *UNUSED(ctx))
 {
     (*resultplan) = (palloc(N_CLOSEPAREN, (int (*)(struct db_plan_t *, struct db_node_t *, struct db_i *, struct bu_ptbl *))-1, tbl));
     return BRLCAD_OK;
@@ -320,7 +321,7 @@ f_not(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, stru
 
 
 HIDDEN int
-c_not(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl)
+c_not(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct db_search_context *UNUSED(ctx))
 {
     (*resultplan) =  (palloc(N_NOT, f_not, tbl));
     return BRLCAD_OK;
@@ -374,7 +375,7 @@ f_below(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, st
 
 
 HIDDEN int
-c_below(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl)
+c_below(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct db_search_context *UNUSED(ctx))
 {
     (*resultplan) =  (palloc(N_BELOW, f_below, tbl));
     return BRLCAD_OK;
@@ -422,7 +423,7 @@ f_above(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, st
 
 
 HIDDEN int
-c_above(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl)
+c_above(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct db_search_context *UNUSED(ctx))
 {
     (*resultplan) =  (palloc(N_ABOVE, f_above, tbl));
     return BRLCAD_OK;
@@ -456,7 +457,7 @@ f_or(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, struc
 
 
 HIDDEN int
-c_or(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl)
+c_or(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct db_search_context *UNUSED(ctx))
 {
     (*resultplan) = (palloc(N_OR, f_or, tbl));
     return BRLCAD_OK;
@@ -481,7 +482,7 @@ f_name(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(db
 	return 0;
     }
 
-    ret = !bu_fnmatch(plan->p_un._c_data, dp->d_namep, 0);
+    ret = !bu_path_match(plan->p_un._c_data, dp->d_namep, 0);
 
     if (!ret) db_node->matched_filters = 0;
     return ret;
@@ -489,7 +490,7 @@ f_name(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(db
 
 
 HIDDEN int
-c_name(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl)
+c_name(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct db_search_context *UNUSED(ctx))
 {
     struct db_plan_t *newplan;
 
@@ -519,14 +520,14 @@ f_iname(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(d
 	return 0;
     }
 
-    ret = !bu_fnmatch(plan->p_un._c_data, dp->d_namep, BU_FNMATCH_CASEFOLD);
+    ret = !bu_path_match(plan->p_un._c_data, dp->d_namep, BU_PATH_MATCH_CASEFOLD);
     if (!ret) db_node->matched_filters = 0;
     return ret;
 }
 
 
 HIDDEN int
-c_iname(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl)
+c_iname(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct db_search_context *UNUSED(ctx))
 {
     struct db_plan_t *newplan;
 
@@ -590,14 +591,14 @@ c_regex_common(enum db_search_ntype type, char *regexp, int icase, struct db_pla
 
 
 HIDDEN int
-c_regex(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl)
+c_regex(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct db_search_context *UNUSED(ctx))
 {
     return c_regex_common(N_REGEX, pattern, 0, resultplan, tbl);
 }
 
 
 HIDDEN int
-c_iregex(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl)
+c_iregex(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct db_search_context *UNUSED(ctx))
 {
     return c_regex_common(N_IREGEX, pattern, 1, resultplan, tbl);
 }
@@ -651,12 +652,12 @@ avs_check(const char *keystr, const char *value, int checkval, int strcomparison
     struct bu_attribute_value_pair *avpp;
 
     for (BU_AVS_FOR(avpp, avs)) {
-	if (!bu_fnmatch(keystr, avpp->name, 0)) {
+	if (!bu_path_match(keystr, avpp->name, 0)) {
 	    if (checkval >= 1) {
 
 		/* String based comparisons */
 		if ((checkval == 1) && (strcomparison == 1)) {
-		    if (!bu_fnmatch(value, avpp->value, 0)) {
+		    if (!bu_path_match(value, avpp->value, 0)) {
 			return 1;
 		    } else {
 			return 0;
@@ -677,14 +678,14 @@ avs_check(const char *keystr, const char *value, int checkval, int strcomparison
 		    }
 		}
 		if ((checkval == 4) && (strcomparison == 1)) {
-		    if ((!bu_fnmatch(value, avpp->value, 0)) || (bu_strcmp(value, avpp->value) < 0)) {
+		    if ((!bu_path_match(value, avpp->value, 0)) || (bu_strcmp(value, avpp->value) < 0)) {
 			return 1;
 		    } else {
 			return 0;
 		    }
 		}
 		if ((checkval == 5) && (strcomparison == 1)) {
-		    if ((!bu_fnmatch(value, avpp->value, 0)) || (bu_strcmp(value, avpp->value) > 0)) {
+		    if ((!bu_path_match(value, avpp->value, 0)) || (bu_strcmp(value, avpp->value) > 0)) {
 			return 1;
 		    } else {
 			return 0;
@@ -763,7 +764,8 @@ f_objparam(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip,
      * the attribute must satisfy the logical expression.  In the case
      * where a > or < is used with a string argument the behavior will
      * follow ASCII lexicographical order.  In the case of equality
-     * between strings, fnmatch is used to support pattern matching
+     * between strings, bu_path_match() is used to support pattern
+     * matching.
      */
 
     checkval = string_to_name_and_val(plan->p_un._attr_data, &paramname, &value);
@@ -819,7 +821,7 @@ f_objparam(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip,
 
 
 HIDDEN int
-c_objparam(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl)
+c_objparam(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct db_search_context *UNUSED(ctx))
 {
     struct db_plan_t *newplan;
 
@@ -853,7 +855,8 @@ f_attr(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
      * the attribute must satisfy the logical expression.  In the case
      * where a > or < is used with a string argument the behavior will
      * follow ASCII lexicographical order.  In the case of equality
-     * between strings, fnmatch is used to support pattern matching
+     * between strings, bu_path_match() is used to support pattern
+     * matching.
      */
 
     checkval = string_to_name_and_val(plan->p_un._attr_data, &attribname, &value);
@@ -893,7 +896,7 @@ f_attr(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
 
 
 HIDDEN int
-c_attr(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl)
+c_attr(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct db_search_context *UNUSED(ctx))
 {
     struct db_plan_t *newplan;
 
@@ -967,7 +970,7 @@ f_stdattr(struct db_plan_t *UNUSED(plan), struct db_node_t *db_node, struct db_i
 
 
 HIDDEN int
-c_stdattr(char *UNUSED(pattern), char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl)
+c_stdattr(char *UNUSED(pattern), char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct db_search_context *UNUSED(ctx))
 {
     struct db_plan_t *newplan;
 
@@ -1002,16 +1005,16 @@ f_type(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
      * to help performance. */
     if (dp->d_flags & RT_DIR_COMB) {
 	if (dp->d_flags & RT_DIR_REGION) {
-	    if ((!bu_fnmatch(plan->p_un._type_data, "r", 0)) || (!bu_fnmatch(plan->p_un._type_data, "reg", 0))  || (!bu_fnmatch(plan->p_un._type_data, "region", 0))) {
+	    if ((!bu_path_match(plan->p_un._type_data, "r", 0)) || (!bu_path_match(plan->p_un._type_data, "reg", 0))  || (!bu_path_match(plan->p_un._type_data, "region", 0))) {
 		type_match = 1;
 	    }
 	}
-	if ((!bu_fnmatch(plan->p_un._type_data, "c", 0)) || (!bu_fnmatch(plan->p_un._type_data, "comb", 0)) || (!bu_fnmatch(plan->p_un._type_data, "combination", 0))) {
+	if ((!bu_path_match(plan->p_un._type_data, "c", 0)) || (!bu_path_match(plan->p_un._type_data, "comb", 0)) || (!bu_path_match(plan->p_un._type_data, "combination", 0))) {
 	    type_match = 1;
 	}
 	goto return_label;
     } else {
-	if ((!bu_fnmatch(plan->p_un._type_data, "r", 0)) || (!bu_fnmatch(plan->p_un._type_data, "reg", 0))  || (!bu_fnmatch(plan->p_un._type_data, "region", 0)) || (!bu_fnmatch(plan->p_un._type_data, "c", 0)) || (!bu_fnmatch(plan->p_un._type_data, "comb", 0)) || (!bu_fnmatch(plan->p_un._type_data, "combination", 0))) {
+	if ((!bu_path_match(plan->p_un._type_data, "r", 0)) || (!bu_path_match(plan->p_un._type_data, "reg", 0))  || (!bu_path_match(plan->p_un._type_data, "region", 0)) || (!bu_path_match(plan->p_un._type_data, "c", 0)) || (!bu_path_match(plan->p_un._type_data, "comb", 0)) || (!bu_path_match(plan->p_un._type_data, "combination", 0))) {
 	    goto return_label;
 	}
 
@@ -1029,39 +1032,42 @@ f_type(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
 	    type = rt_arb_std_type(&intern, &arb_tol);
 	    switch (type) {
 		case 4:
-		    type_match = (!bu_fnmatch(plan->p_un._type_data, "arb4", 0));
+		    type_match = (!bu_path_match(plan->p_un._type_data, "arb4", 0));
 		    break;
 		case 5:
-		    type_match = (!bu_fnmatch(plan->p_un._type_data, "arb5", 0));
+		    type_match = (!bu_path_match(plan->p_un._type_data, "arb5", 0));
 		    break;
 		case 6:
-		    type_match = (!bu_fnmatch(plan->p_un._type_data, "arb6", 0));
+		    type_match = (!bu_path_match(plan->p_un._type_data, "arb6", 0));
 		    break;
 		case 7:
-		    type_match = (!bu_fnmatch(plan->p_un._type_data, "arb7", 0));
+		    type_match = (!bu_path_match(plan->p_un._type_data, "arb7", 0));
 		    break;
 		case 8:
-		    type_match = (!bu_fnmatch(plan->p_un._type_data, "arb8", 0));
+		    type_match = (!bu_path_match(plan->p_un._type_data, "arb8", 0));
 		    break;
 		default:
-		    type_match = (!bu_fnmatch(plan->p_un._type_data, "invalid", 0));
+		    type_match = (!bu_path_match(plan->p_un._type_data, "invalid", 0));
 		    break;
 	    }
 	    break;
 	case DB5_MINORTYPE_BRLCAD_METABALL:
-	    /* Because ft_label is only 8 characters, ft_label doesn't work in fnmatch for metaball*/
-	    type_match = (!bu_fnmatch(plan->p_un._type_data, "metaball", 0));
+	    /* Because ft_label is only 8 characters, ft_label doesn't
+	     * work in bu_path_match() for metaball.
+	     */
+	    type_match = (!bu_path_match(plan->p_un._type_data, "metaball", 0));
 	    break;
 	default:
-	    type_match = !bu_fnmatch(plan->p_un._type_data, intern.idb_meth->ft_label, 0);
+	    type_match = !bu_path_match(plan->p_un._type_data, intern.idb_meth->ft_label, 0);
 	    break;
     }
 
     /* Match anything that doesn't define a 2D or 3D shape - unfortunately, this list will have to
      * be updated manually unless/until some functionality is added to generate it */
-    if (!bu_fnmatch(plan->p_un._type_data, "shape", 0) &&
+    if (!bu_path_match(plan->p_un._type_data, "shape", 0) &&
 	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_COMBINATION &&
 	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_ANNOT &&
+	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_SCRIPT &&
 	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_CONSTRAINT &&
 	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_GRIP &&
 	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_JOINT
@@ -1079,7 +1085,7 @@ return_label:
 
 
 HIDDEN int
-c_type(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl)
+c_type(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct db_search_context *UNUSED(ctx))
 {
     struct db_plan_t *newplan;
 
@@ -1110,16 +1116,16 @@ f_bool(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(db
 
 
 HIDDEN int
-c_bool(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl)
+c_bool(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct db_search_context *UNUSED(ctx))
 {
     int bool_type = 0;
     struct db_plan_t *newplan;
 
     newplan = palloc(N_BOOL, f_bool, tbl);
 
-    if (!bu_fnmatch(pattern, "u", 0) || !bu_fnmatch(pattern, "U", 0)) bool_type = 2;
-    if (!bu_fnmatch(pattern, "+", 0)) bool_type = 3;
-    if (!bu_fnmatch(pattern, "-", 0)) bool_type = 4;
+    if (!bu_path_match(pattern, "u", 0) || !bu_path_match(pattern, "U", 0)) bool_type = 2;
+    if (!bu_path_match(pattern, "+", 0)) bool_type = 3;
+    if (!bu_path_match(pattern, "-", 0)) bool_type = 4;
 
     newplan->p_un._bool_data = bool_type;
     (*resultplan) = newplan;
@@ -1144,7 +1150,7 @@ f_maxdepth(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSE
 
 
 HIDDEN int
-c_maxdepth(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl)
+c_maxdepth(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct db_search_context *UNUSED(ctx))
 {
     struct db_plan_t *newplan;
 
@@ -1173,7 +1179,7 @@ f_mindepth(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSE
 
 
 HIDDEN int
-c_mindepth(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl)
+c_mindepth(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct db_search_context *UNUSED(ctx))
 {
     struct db_plan_t *newplan;
 
@@ -1204,7 +1210,8 @@ f_depth(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(d
      * the attribute must satisfy the logical expression.  In the case
      * where a > or < is used with a string argument the behavior will
      * follow ASCII lexicographical order.  In the case of equality
-     * between strings, fnmatch is used to support pattern matching
+     * between strings, bu_path_match() is used to support pattern
+     * matching.
      */
 
     checkval = string_to_name_and_val(plan->p_un._depth_data, &name, &value);
@@ -1243,8 +1250,158 @@ f_depth(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(d
 }
 
 
+/*
+ * -exec function --
+ *
+ * True if the expression returns true.
+ */
 HIDDEN int
-c_depth(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl)
+f_exec(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(dbip), struct bu_ptbl *UNUSED(results))
+{
+    /* TODO make this faster by storing the individual "subholes" so they don't have to be recalculated */
+    int ret, hole_i, char_i, plain_begin, plain_len;
+    char **originals = NULL;
+    char **filleds = NULL;
+    char *name;
+    size_t name_len, filled_len, old_filled_len;
+
+    if (0 < plan->p_un.ex._e_nholes) {
+	originals = (char **)bu_calloc(plan->p_un.ex._e_nholes, sizeof(char *), "f_exec originals");
+	filleds = (char **)bu_calloc(plan->p_un.ex._e_nholes, sizeof(char *), "f_exec filleds");
+    }
+
+    for (hole_i=0; hole_i<plan->p_un.ex._e_nholes; hole_i++) {
+	originals[hole_i] = plan->p_un.ex._e_argv[plan->p_un.ex._e_holes[hole_i]];
+    }
+
+    if (db_node->flags & DB_SEARCH_RETURN_UNIQ_DP) {
+	name = DB_FULL_PATH_CUR_DIR(db_node->path)->d_namep;
+    } else {
+	name = db_path_to_string(db_node->path);
+    }
+    name_len = strlen(name);
+
+    for (hole_i=0; hole_i<plan->p_un.ex._e_nholes; hole_i++) {
+	plain_begin = 0;
+	filled_len = 0;
+	plain_len = 0;
+	old_filled_len = 0;
+	for (char_i=0; originals[hole_i][char_i] != '\0'; char_i++) {
+	    if (originals[hole_i][char_i] == '{' && originals[hole_i][char_i+1] == '}') {
+		old_filled_len = filled_len;
+		filled_len += plain_len + name_len;
+		filleds[hole_i] = (char *)bu_realloc(filleds[hole_i],
+			sizeof(char *) * filled_len,
+			"f_exec filleds[hole_i]");
+		memcpy(filleds[hole_i] + old_filled_len, originals[hole_i] + plain_begin, plain_len);
+		memcpy(filleds[hole_i] + old_filled_len + plain_len, name, name_len);
+		plain_begin = char_i + 2;
+		plain_len = 0;
+		char_i++; /* skip closing brace */
+	    } else {
+		plain_len++;
+	    }
+	}
+	old_filled_len = filled_len;
+	filled_len += plain_len + 1 /* for the null byte */;
+	filleds[hole_i] = (char *)bu_realloc(filleds[hole_i],
+		sizeof(char *) * filled_len,
+		"f_exec filleds[hole_i]");
+	memcpy(filleds[hole_i] + old_filled_len, originals[hole_i] + plain_begin, plain_len);
+	filleds[hole_i][filled_len-1] = '\0';
+    }
+
+    for (hole_i=0; hole_i<plan->p_un.ex._e_nholes; hole_i++) {
+	plan->p_un.ex._e_argv[plan->p_un.ex._e_holes[hole_i]] = filleds[hole_i];
+    }
+
+    /* Only try to exec if we actually have a callback */
+    if (plan->p_un.ex._e_callback) {
+	ret = (*plan->p_un.ex._e_callback)(plan->p_un.ex._e_argc, (const char**)plan->p_un.ex._e_argv, plan->p_un.ex._e_userdata);
+    } else {
+	ret = 1;
+    }
+
+    if (!(db_node->flags & DB_SEARCH_RETURN_UNIQ_DP)) {
+	bu_free(name, "f_exec string");
+    }
+
+    for (hole_i=0; hole_i<plan->p_un.ex._e_nholes; hole_i++) {
+	plan->p_un.ex._e_argv[plan->p_un.ex._e_holes[hole_i]] = originals[hole_i];
+    }
+    if (originals)
+	bu_free(originals, "f_exec originals");
+    if (filleds)
+	bu_free(filleds, "f_exec filleds");
+
+    return ret;
+}
+
+HIDDEN int
+c_exec(char *UNUSED(ignore), char ***argvp, int UNUSED(is_ok), struct db_plan_t **resultplan, int *db_search_isoutput, struct bu_ptbl *tbl, struct db_search_context *ctx)
+{
+    struct db_plan_t *newplan;
+    char **e_argv = NULL;
+    int *holes = NULL;
+    int nholes = 0;
+    int scfound = 0;
+    int i = 0;
+    int l = 0; /* should this be unsigned? argc is an int, so this could lead to an overflow in many ways */
+    int holefound;
+
+    *db_search_isoutput = 1;
+
+    while (**argvp != NULL && !scfound) {
+	scfound = (**argvp)[0] == ';' && (**argvp)[1] == '\0'; /* is this a semicolon? */
+	if (!scfound) {
+	    e_argv = (char**)bu_realloc(e_argv, sizeof(char**) * (l+1), "e_argv");
+	    holefound = 0;
+	    for (i=0; !holefound && (**argvp)[i]!='\0'; i++) {
+		holefound = (**argvp)[i]=='{' && (**argvp)[i+1]=='}';
+	    }
+	    if (holefound) { /* is this a {}? (ie.: hole) */
+		nholes++;
+		holes = (int *)bu_realloc(holes, sizeof(int) * nholes, "e_holes");
+		holes[nholes - 1] = l;
+	    }
+	    e_argv[l] = bu_strdupm(**argvp, "e_argv arg");
+	    l++;
+	}
+	(*argvp)++;
+    }
+
+    if (!scfound) {
+	/* is this a good idea? */
+	for(i = 0; i < l; i++) {
+	    bu_free(e_argv[i], "e_argv arg");
+	}
+	bu_free(e_argv, "e_argv");
+
+	if (holes) {
+	    bu_free(holes, "e_holes");
+	}
+	bu_log("expected ; at the end of -exec's argument list\n");
+
+	return BRLCAD_ERROR;
+    }
+
+    newplan = palloc(N_EXEC, f_exec, tbl);
+
+    newplan->p_un.ex._e_argv = e_argv;
+    newplan->p_un.ex._e_argc = l;
+    newplan->p_un.ex._e_holes = holes;
+    newplan->p_un.ex._e_nholes = nholes;
+    newplan->p_un.ex._e_callback = ctx->_e_callback;
+    newplan->p_un.ex._e_userdata = ctx->_e_userdata;
+
+    (*resultplan) = newplan;
+
+    return BRLCAD_OK;
+}
+
+
+HIDDEN int
+c_depth(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct db_search_context *UNUSED(ctx))
 {
     struct db_plan_t *newplan;
 
@@ -1354,7 +1511,7 @@ f_nnodes(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, s
 
 
 HIDDEN int
-c_nnodes(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl)
+c_nnodes(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct db_search_context *UNUSED(ctx))
 {
     struct db_plan_t *newplan;
 
@@ -1375,14 +1532,14 @@ c_nnodes(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_p
 HIDDEN int
 f_path(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(dbip), struct bu_ptbl *UNUSED(results))
 {
-    int ret = !bu_fnmatch(plan->p_un._path_data, db_path_to_string(db_node->path), 0);
+    int ret = !bu_path_match(plan->p_un._path_data, db_path_to_string(db_node->path), 0);
     if (!ret) db_node->matched_filters = 0;
     return ret;
 }
 
 
 HIDDEN int
-c_path(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl)
+c_path(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct db_search_context *UNUSED(ctx))
 {
     struct db_plan_t *newplan;
 
@@ -1419,7 +1576,7 @@ f_print(struct db_plan_t *UNUSED(plan), struct db_node_t *db_node, struct db_i *
 
 
 HIDDEN int
-c_print(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *db_search_isoutput, struct bu_ptbl *tbl)
+c_print(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *db_search_isoutput, struct bu_ptbl *tbl, struct db_search_context *UNUSED(ctx))
 {
     *db_search_isoutput = 1;
 
@@ -1456,7 +1613,12 @@ option(char *name)
  * this switch stuff.
  */
 HIDDEN int
-find_create(char ***argvp, struct db_plan_t **resultplan, struct bu_ptbl *UNUSED(results), int *db_search_isoutput, int quiet, struct bu_ptbl *tbl)
+find_create(char ***argvp,
+		     struct db_plan_t **resultplan,
+		     struct bu_ptbl *UNUSED(results),
+		     int *db_search_isoutput,
+		     int quiet, struct bu_ptbl *tbl,
+		     struct db_search_context *ctx)
 {
     OPTION *p;
     struct db_plan_t *newplan = NULL;
@@ -1464,6 +1626,7 @@ find_create(char ***argvp, struct db_plan_t **resultplan, struct bu_ptbl *UNUSED
     int checkval;
     struct bu_vls name = BU_VLS_INIT_ZERO;
     struct bu_vls value = BU_VLS_INIT_ZERO;
+    int create_result = BRLCAD_OK;
 
     if (!argvp || !resultplan)
 	return BRLCAD_ERROR;
@@ -1490,17 +1653,20 @@ find_create(char ***argvp, struct db_plan_t **resultplan, struct bu_ptbl *UNUSED
 	case O_NONE:
 	    break;
 	case O_ZERO:
-	    (p->create)(NULL, NULL, 0, &newplan, db_search_isoutput, tbl);
+	    create_result = (p->create)(NULL, NULL, 0, &newplan, db_search_isoutput, tbl, ctx);
 	    break;
 	case O_ARGV:
-	    (p->create)(*argv++, NULL, 0, &newplan, db_search_isoutput, tbl);
+	    create_result = (p->create)(*argv++, NULL, 0, &newplan, db_search_isoutput, tbl, ctx);
 	    break;
 	case O_ARGVP:
-	    (p->create)(NULL, &argv, p->token == N_OK, &newplan, db_search_isoutput, tbl);
+	    create_result = (p->create)(NULL, &argv, p->token == N_OK, &newplan, db_search_isoutput, tbl, ctx);
 	    break;
 	default:
 	    return BRLCAD_OK;
     }
+
+    if (create_result != BRLCAD_OK)
+	return BRLCAD_ERROR;
 
     if (newplan) {
 	if (bu_vls_strlen(&value) > 0 && isdigit((int)bu_vls_addr(&value)[0])) {
@@ -1914,7 +2080,11 @@ or_squish(struct db_plan_t *plan, struct db_plan_t **resultplan)           /* pl
 
 
 HIDDEN struct db_plan_t *
-db_search_form_plan(char **argv, int quiet, struct bu_ptbl *tbl) {
+db_search_form_plan(char **argv,
+		    int quiet,
+		    struct bu_ptbl *tbl,
+		    struct db_search_context *ctx)
+{
     struct db_plan_t *plan = NULL;
     struct db_plan_t *tail = NULL;
     struct db_plan_t *newplan = NULL;
@@ -1938,7 +2108,7 @@ db_search_form_plan(char **argv, int quiet, struct bu_ptbl *tbl) {
      * plan->next pointer.
      */
     for (plan = tail = NULL; *argv;) {
-	if (find_create(&argv, &newplan, results, &db_search_isoutput, quiet, tbl) != BRLCAD_OK) return NULL;
+	if (find_create(&argv, &newplan, results, &db_search_isoutput, quiet, tbl, ctx) != BRLCAD_OK) return NULL;
 	if (!newplan)
 	    continue;
 	if (plan == NULL)
@@ -1956,16 +2126,16 @@ db_search_form_plan(char **argv, int quiet, struct bu_ptbl *tbl) {
      */
     if (!db_search_isoutput) {
 	if (plan == NULL) {
-	    c_print(NULL, NULL, 0, &newplan, &db_search_isoutput, tbl);
+	    c_print(NULL, NULL, 0, &newplan, &db_search_isoutput, tbl, NULL);
 	    tail = plan = newplan;
 	} else {
-	    c_openparen(NULL, NULL, 0, &newplan, &db_search_isoutput, tbl);
+	    c_openparen(NULL, NULL, 0, &newplan, &db_search_isoutput, tbl, NULL);
 	    newplan->next = plan;
 	    plan = newplan;
-	    c_closeparen(NULL, NULL, 0, &newplan, &db_search_isoutput, tbl);
+	    c_closeparen(NULL, NULL, 0, &newplan, &db_search_isoutput, tbl, NULL);
 	    tail->next = newplan;
 	    tail = newplan;
-	    c_print(NULL, NULL, 0, &newplan, &db_search_isoutput, tbl);
+	    c_print(NULL, NULL, 0, &newplan, &db_search_isoutput, tbl, NULL);
 	    tail->next = newplan;
 	    tail = newplan;
 	}
@@ -2012,6 +2182,27 @@ find_execute_plans(struct db_i *dbip, struct bu_ptbl *results, struct db_node_t 
 }
 
 HIDDEN void
+free_exec_plan(struct db_plan_t *splan)
+{
+    int i;
+
+    if (splan->p_un.ex._e_argv) {
+	for (i=0; i < (int)splan->p_un.ex._e_argc; i++) {
+	    if (splan->p_un.ex._e_argv[i]) {
+		bu_free(splan->p_un.ex._e_argv[i], "e_argv[i]");
+		splan->p_un.ex._e_argv[i] = NULL;
+	    }
+	}
+	bu_free(splan->p_un.ex._e_argv, "e_argv");
+	splan->p_un.ex._e_argv = NULL;
+    }
+    if (splan->p_un.ex._e_holes) {
+	bu_free(splan->p_un.ex._e_holes, "e_holes");
+	splan->p_un.ex._e_holes = NULL;
+    }
+}
+
+HIDDEN void
 db_search_free_plan(struct db_plan_t *splan)
 {
     size_t i = 0;
@@ -2020,12 +2211,18 @@ db_search_free_plan(struct db_plan_t *splan)
 	struct bu_ptbl *plans = splan->plans;
 	for (i = 0; i < BU_PTBL_LEN(plans); i++) {
 	    p = (struct db_plan_t *)BU_PTBL_GET(plans, i);
+	    if (N_EXEC == p->type) {
+		free_exec_plan(p);
+	    }
 	    BU_PUT(p, struct db_plan_t);
 	}
     } else {
 	struct db_plan_t *plan = splan;
 	for (p = plan; p;) {
 	    plan = p->next;
+	    if (N_EXEC == p->type) {
+		free_exec_plan(p);
+	    }
 	    BU_PUT(p, struct db_plan_t);
 	    p = plan;
 	}
@@ -2236,12 +2433,41 @@ db_search_unique_objects(void *searchplan,
 
 
 void *
-db_search_formplan(char **argv, struct db_i *UNUSED(dbip)) {
-    return (void *)db_search_form_plan(argv, 0, NULL);
+db_search_formplan(char **argv, struct db_i *UNUSED(dbip), struct db_search_context *ctx)
+{
+    return (void *)db_search_form_plan(argv, 0, NULL, ctx);
 }
 
 
 /*********** New search functionality ******************/
+struct db_search_context *
+db_search_context_create(void)
+{
+    struct db_search_context *ctx = (struct db_search_context *)bu_malloc(sizeof(struct db_search_context), "db_search ctx");
+    ctx->_e_callback = NULL;
+    ctx->_e_userdata = NULL;
+    return ctx;
+}
+
+
+void
+db_search_context_destroy(struct db_search_context *ctx)
+{
+    bu_free(ctx, "db_search ctx");
+}
+
+
+void db_search_register_exec(struct db_search_context *ctx, db_search_callback_t callback)
+{
+    ctx->_e_callback = callback;
+}
+
+
+void db_search_register_data(struct db_search_context *ctx, void *userdata)
+{
+    ctx->_e_userdata = userdata;
+}
+
 
 int
 db_search(struct bu_ptbl *search_results,
@@ -2249,7 +2475,8 @@ db_search(struct bu_ptbl *search_results,
 	  const char *plan_str,
 	  int input_path_cnt,
 	  struct directory **input_paths,
-	  struct db_i *dbip)
+	  struct db_i *dbip,
+	  struct db_search_context *ctx)
 {
     int i = 0;
     int result_cnt = 0;
@@ -2271,9 +2498,9 @@ db_search(struct bu_ptbl *search_results,
     /* get the plan string into an argv array */
     bu_argv_from_string(&plan_argv[0], strlen(plan_str), mutable_plan_str);
     if (!(search_flags & DB_SEARCH_QUIET)) {
-	dbplan = db_search_form_plan(plan_argv, 0, &dbplans);
+	dbplan = db_search_form_plan(plan_argv, 0, &dbplans, ctx);
     } else {
-	dbplan = db_search_form_plan(plan_argv, 1, &dbplans);
+	dbplan = db_search_form_plan(plan_argv, 1, &dbplans, ctx);
     }
     /* No plan, no search */
     if (!dbplan) {
@@ -2390,7 +2617,6 @@ db_search(struct bu_ptbl *search_results,
 
     return result_cnt;
 }
-
 
 /*
  * Local Variables:

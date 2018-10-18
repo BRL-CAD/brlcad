@@ -44,6 +44,7 @@
 #include "bio.h"
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/units.h"
 #include "nmg.h"

@@ -35,15 +35,7 @@
  *
  * NOT published in a public header.
  */
-static struct bu_hook_list log_hook_list = {
-    {
-	BU_LIST_HEAD_MAGIC,
-	&log_hook_list.l,
-	&log_hook_list.l
-    },
-    NULL,
-    ((void *)0)
-};
+static struct bu_hook_list log_hook_list = BU_HOOK_LIST_INIT_ZERO;
 
 static int log_first_time = 1;
 static int log_hooks_called = 0;
@@ -140,7 +132,7 @@ bu_putchar(int c)
 {
     int ret = EOF;
 
-    if (BU_LIST_IS_EMPTY(&(log_hook_list.l))) {
+    if (log_hook_list.size == 0) {
 
 	if (LIKELY(stderr != NULL)) {
 	    ret = fputc(c, stderr);
@@ -195,7 +187,7 @@ bu_log(const char *fmt, ...)
     }
     va_end(ap);
 
-    if (BU_LIST_IS_EMPTY(&(log_hook_list.l)) || log_hooks_called) {
+    if (log_hook_list.size == 0 || log_hooks_called) {
 	size_t ret = 0;
 	size_t len;
 
@@ -259,7 +251,7 @@ bu_flog(FILE *fp, const char *fmt, ...)
     }
     va_end(ap);
 
-    if (BU_LIST_IS_EMPTY(&(log_hook_list.l)) || log_hooks_called) {
+    if (log_hook_list.size == 0 || log_hooks_called) {
 	size_t ret;
 	size_t len;
 

@@ -304,7 +304,7 @@ struct view_obj {
     mat_t               vo_pmodel2view;
     mat_t               vo_view2model;
     mat_t               vo_pmat;                /**< @brief  perspective matrix */
-    struct bu_observer  vo_observers;
+    struct bu_observer_list  vo_observers;
     void                (*vo_callback)();       /**< @brief  called in vo_update with vo_clientData and vop */
     void *              vo_clientData;          /**< @brief  passed to vo_callback */
     int                 vo_zclip;

@@ -38,6 +38,7 @@
 #  include <sys/stat.h>
 #endif
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/debug.h"
 #include "bu/mime.h"
@@ -612,7 +613,7 @@ clt_run(int cur_pixel, int last_pixel)
     }
     if (outfp) {
         bu_semaphore_acquire(BU_SEM_SYSCALL);
-        if (bu_fseek(outfp, cur_pixel*clt_o[1], 0) != 0)
+        if (fseek(outfp, cur_pixel*clt_o[1], 0) != 0)
             fprintf(stderr, "fseek error\n");
         if (fwrite(pixelp, size, 1, outfp) != 1)
             bu_exit(EXIT_FAILURE, "pixel fwrite error");
@@ -1180,7 +1181,7 @@ res_pr(void)
     bu_log("\nResource use summary, by processor:\n");
     res = &resource[0];
     for (i = 0; i < npsw; i++, res++) {
-	bu_log("---CPU %d:\n", i);
+	bu_log("---CPU %zu:\n", i);
 	if (res->re_magic != RESOURCE_MAGIC) {
 	    bu_log("Bad magic number!\n");
 	    continue;

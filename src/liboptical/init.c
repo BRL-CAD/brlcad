@@ -35,7 +35,6 @@
 #include "raytrace.h"
 #include "optical.h"
 
-int rt_verbosity = -1;	/* blather incessantly by default */
 int rdebug;			/* RT program debugging */
 double AmbientIntensity = 0.4;	/* Ambient light intensity */
 

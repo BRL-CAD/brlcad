@@ -397,31 +397,39 @@ BU_EXPORT extern int bu_hexstr_to_binstr(const char *hexstr, struct bu_vls *b);
  */
 BU_EXPORT extern int bu_binstr_to_hexstr(const char *binstr, struct bu_vls *h);
 
+
 /** @brief Bit field printing implementation. */
 
-/**
- * Format a value a la the %b format of the kernel's printf
- *
- * @param   vls	variable length string to put output in
- * @param    s		title string
- * @param   v		the integer with the bits in it
- * @param   bits	a string which starts with the desired base (8 or 16)
- * as \\010 or \\020, followed by
- * words preceded with embedded low-value bytes indicating
- * bit number plus one,
- * in little-endian order, e.g.:
- * "\010\2Bit_one\1BIT_zero"
- */
-BU_EXPORT extern void bu_vls_printb(struct bu_vls *vls,
-				    const char *s, unsigned long v,
-				    const char *bits);
 
 /**
- * Format and print, like bu_vls_printb().
+ * Print a bit field according to a format specification via bu_log().
+ *
+ * Line printed is of the form "String Label: x1234 <FOO,BAR,RAB,OOF>"
+ * and is commonly used by debugging code to print which debug bits
+ * are enabled.
+ *
+ * @param label  string label
+ * @param bits   integer with the bits to print
+ * @param format format specification
+ *
+ * The 'format' begins with a desired printing base (8 or 16), i.e.,
+ * \\010 means print octal and \\020 for hex.  Remaining string is the
+ * little endian bit position (i.e., 1 to 32 encoded in octal format)
+ * followed by a label for that bit (e.g., "\010\2Bit_one\1BIT_zero")
+ *
+ * Note octal counting is used for the bit position label:
+ *   \01 -> ... \07 -> \10 -> \11 -> ... \17 -> \20 ... etc
  */
-BU_EXPORT extern void bu_printb(const char *s,
-				unsigned long v,
-				const char *bits);
+BU_EXPORT extern void bu_printb(const char *label,
+				unsigned long bits,
+				const char *format);
+
+/**
+ * Same as bu_printb() but with output going to a vls instead of stderr
+ */
+BU_EXPORT extern void bu_vls_printb(struct bu_vls *vls,
+				    const char *label, unsigned long bits,
+				    const char *format);
 
 /** @} */
 

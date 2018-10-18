@@ -90,7 +90,7 @@ main(int argc, char *argv[])
     stat(argv[2], &sf2);
 
     if (sf1.st_size != sf2.st_size) {
-	bu_exit(1, "Different file sizes found: %s(%d) and %s(%d).  Cannot perform pixdiff.\n", argv[1], sf1.st_size, argv[2], sf2.st_size);
+	bu_exit(1, "Different file sizes found: %s(%ld) and %s(%ld).  Cannot perform pixdiff.\n", argv[1], sf1.st_size, argv[2], sf2.st_size);
     }
 
     while (1) {

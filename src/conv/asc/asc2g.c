@@ -1049,7 +1049,7 @@ polyhbld(void)
     name = bu_strdup(cp);
 
     /* Count up the number of poly data lines which follow */
-    startpos = bu_ftell(ifp);
+    startpos = ftell(ifp);
     for (nlines = 0;; nlines++) {
 	if (bu_fgets(buf, BUFSIZE, ifp) == NULL) break;
 	if (buf[0] != ID_P_DATA) break;	/* 'Q' */
@@ -1065,7 +1065,7 @@ polyhbld(void)
     pg->max_npts = 0;
 
     /* Return to first 'Q' record */
-    bu_fseek(ifp, startpos, 0);
+    fseek(ifp, startpos, 0);
 
     for (nlines = 0; nlines < pg->npoly; nlines++) {
 	struct rt_pg_face_internal *fp = &pg->poly[nlines];

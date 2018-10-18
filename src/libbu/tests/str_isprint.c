@@ -47,12 +47,12 @@ test_str_isprint(const char *inp , int texp)
 
 
 int
-str_isprint_main(int argc, char **argv)
+main(int argc, char *argv[])
 {
     int test_num = 0;
 
     if (argc < 2) {
-       fprintf(stderr,"Usage: %s test_num\n", argv[0]);
+       fprintf(stderr, "Usage: %s {test_num}\n", argv[0]);
        return 1;
     }
 

@@ -8,6 +8,7 @@ pkgIndex_BUILD(tclscripts/checker)
 tclIndex_BUILD(tclscripts/checker)
 
 CMAKEFILES(check.sh test_checker.tcl TODO)
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

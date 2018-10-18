@@ -52,19 +52,19 @@
 
 
 /* bu_getopt() options */
-char *options = "A:a:de:f:g:Gn:N:pP:qrS:s:t:U:u:vV:W:h?";
-char *options_str = "[-A A|a|b|c|e|g|m|o|p|v|w] [-a az] [-d] [-e el] [-f densityFile] [-g spacing|upper,lower|upper-lower] [-G] [-n nhits] [-N nviews] [-p] [-P ncpus] [-q] [-r] [-S nsamples] [-t overlap_tol] [-U useair] [-u len_units vol_units wt_units] [-v] [-V volume_tol] [-W weight_tol]";
+char *options = "A:a:de:f:g:Gn:N:p:P:qrS:s:t:U:u:vV:W:h?";
+char *options_str = "[-A A|a|b|c|e|g|m|o|v|w] [-a az] [-d] [-e el] [-f densityFile] [-g spacing|upper,lower|upper-lower] [-G] [-n nhits] [-N nviews] [-p plotPrefix] [-P ncpus] [-q] [-r] [-S nsamples] [-t overlap_tol] [-U useair] [-u len_units vol_units wt_units] [-v] [-V volume_tol] [-W weight_tol]";
 
-#define ANALYSIS_VOLUME 1
-#define ANALYSIS_WEIGHT 2
-#define ANALYSIS_OVERLAPS 4
-#define ANALYSIS_ADJ_AIR 8
-#define ANALYSIS_GAP 16
-#define ANALYSIS_EXP_AIR 32 /* exposed air */
-#define ANALYSIS_BOX 64
-#define ANALYSIS_INTERFACES 128
-#define ANALYSIS_CENTROIDS 256
-#define ANALYSIS_MOMENTS 512
+#define ANALYSIS_VOLUMES          1
+#define ANALYSIS_WEIGHTS          2
+#define ANALYSIS_OVERLAPS         4
+#define ANALYSIS_ADJ_AIR          8 /* adjacent air */
+#define ANALYSIS_GAPS            16 /* space between regions */
+#define ANALYSIS_EXP_AIR         32 /* exposed air */
+#define ANALYSIS_BBOX            64 /* overall bounding box */
+#define ANALYSIS_INTERFACES     128
+#define ANALYSIS_CENTROIDS      256
+#define ANALYSIS_MOMENTS        512
 #define ANALYSIS_PLOT_OVERLAPS 1024
 
 /* Note: struct parsing requires no space after the commas.  take care
@@ -101,7 +101,7 @@ static int num_views;
 static int verbose;
 static int quiet_missed_report;
 
-static int plot_files;	/* Boolean: Should we produce plot files? */
+static const char *plot_prefix = NULL; /* non-NULL means produce plot files */
 static FILE *plot_weight;
 static FILE *plot_volume;
 static FILE *plot_overlaps;
@@ -472,10 +472,17 @@ parse_args(int ac, char *av[])
 		    for (p = bu_optarg; *p; p++) {
 			switch (*p) {
 			    case 'A' :
-				analysis_flags = ANALYSIS_VOLUME | ANALYSIS_WEIGHT | \
-				    ANALYSIS_OVERLAPS | ANALYSIS_ADJ_AIR | ANALYSIS_GAP | \
-				    ANALYSIS_EXP_AIR | ANALYSIS_CENTROIDS | ANALYSIS_MOMENTS;
 				multiple_analyses = 1;
+				analysis_flags = analysis_flags \
+				    | ANALYSIS_ADJ_AIR \
+				    | ANALYSIS_BBOX \
+				    | ANALYSIS_CENTROIDS \
+				    | ANALYSIS_EXP_AIR \
+				    | ANALYSIS_GAPS \
+				    | ANALYSIS_MOMENTS \
+				    | ANALYSIS_OVERLAPS \
+				    | ANALYSIS_VOLUMES \
+				    | ANALYSIS_WEIGHTS;
 				break;
 			    case 'a' :
 				if (analysis_flags)
@@ -488,14 +495,14 @@ parse_args(int ac, char *av[])
 				if (analysis_flags)
 				    multiple_analyses = 1;
 
-				analysis_flags |= ANALYSIS_BOX;
+				analysis_flags |= ANALYSIS_BBOX;
 
 				break;
 			    case 'c' :
 				if (analysis_flags)
 				    multiple_analyses = 1;
 
-				analysis_flags |= ANALYSIS_WEIGHT;
+				analysis_flags |= ANALYSIS_WEIGHTS;
 				analysis_flags |= ANALYSIS_CENTROIDS;
 
 				break;
@@ -509,13 +516,13 @@ parse_args(int ac, char *av[])
 				if (analysis_flags)
 				    multiple_analyses = 1;
 
-				analysis_flags |= ANALYSIS_GAP;
+				analysis_flags |= ANALYSIS_GAPS;
 				break;
 			    case 'm' :
 				if (analysis_flags)
 				    multiple_analyses = 1;
 
-				analysis_flags |= ANALYSIS_WEIGHT;
+				analysis_flags |= ANALYSIS_WEIGHTS;
 				analysis_flags |= ANALYSIS_CENTROIDS;
 				analysis_flags |= ANALYSIS_MOMENTS;
 
@@ -537,13 +544,13 @@ parse_args(int ac, char *av[])
 				if (analysis_flags)
 				    multiple_analyses = 1;
 
-				analysis_flags |= ANALYSIS_VOLUME;
+				analysis_flags |= ANALYSIS_VOLUMES;
 				break;
 			    case 'w' :
 				if (analysis_flags)
 				    multiple_analyses = 1;
 
-				analysis_flags |= ANALYSIS_WEIGHT;
+				analysis_flags |= ANALYSIS_WEIGHTS;
 				break;
 			    default:
 				bu_vls_printf(_ged_current_gedp->ged_result_str, "Unknown analysis type \"%c\" requested.\n", *p);
@@ -628,7 +635,7 @@ parse_args(int ac, char *av[])
 		num_views = atoi(bu_optarg);
 		break;
 	    case 'p':
-		plot_files = ! plot_files;
+		plot_prefix = bu_optarg;
 		break;
 	    case 'P':
 		/* cannot ask for more cpu's than the machine has */
@@ -1020,7 +1027,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 	}
 
 	/* looking for voids in the model */
-	if (analysis_flags & ANALYSIS_GAP) {
+	if (analysis_flags & ANALYSIS_GAPS) {
 	    if (pp->pt_back != PartHeadp) {
 		/* if this entry point is further than the previous
 		 * exit point then we have a void
@@ -1053,7 +1060,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 	}
 
 	/* computing the weight of the objects */
-	if (analysis_flags & ANALYSIS_WEIGHT) {
+	if (analysis_flags & ANALYSIS_WEIGHTS) {
 	    if (debug) {
 		bu_semaphore_acquire(GED_SEM_WORKER);
 		bu_vls_printf(_ged_current_gedp->ged_result_str, "Hit %s doing weight\n", pp->pt_regionp->reg_name);
@@ -1194,7 +1201,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 	}
 
 	/* compute the volume of the object */
-	if (analysis_flags & ANALYSIS_VOLUME) {
+	if (analysis_flags & ANALYSIS_VOLUMES) {
 	    struct per_region_data *prd = ((struct per_region_data *)pp->pt_regionp->reg_udata);
 	    ap->A_LEN += dist; /* add to total volume */
 	    {
@@ -1594,7 +1601,7 @@ options_prep(struct rt_i *rtip, vect_t span)
     /* figure out where the density values are coming from and get
      * them.
      */
-    if (analysis_flags & ANALYSIS_WEIGHT) {
+    if (analysis_flags & ANALYSIS_WEIGHTS) {
 	if (densityFileName) {
 	    DLOG(_ged_current_gedp->ged_result_str, "density from file\n");
 	    if (get_densities_from_file(densityFileName) != GED_OK) {
@@ -1630,22 +1637,25 @@ options_prep(struct rt_i *rtip, vect_t span)
     }
 
     /* if the vol/weight tolerances are not set, pick something */
-    if (analysis_flags & ANALYSIS_VOLUME) {
-	char *name = "volume.plot3";
+    if (analysis_flags & ANALYSIS_VOLUMES) {
 	if (volume_tolerance < 0.0) {
 	    /* using 1/1000th the volume as a default tolerance, no particular reason */
 	    volume_tolerance = span[X] * span[Y] * span[Z] * 0.001;
-	    bu_log("Using estimated volume tolerance %g %s\n",
-			  volume_tolerance / units[VOL]->val, units[VOL]->name);
+	    bu_log("Using estimated volume tolerance %g %s\n", volume_tolerance / units[VOL]->val, units[VOL]->name);
 	} else
-	    bu_log("Using volume tolerance %g %s\n",
-			  volume_tolerance / units[VOL]->val, units[VOL]->name);
-	if (plot_files)
-	    if ((plot_volume=fopen(name, "wb")) == (FILE *)NULL) {
-		bu_vls_printf(_ged_current_gedp->ged_result_str, "cannot open plot file %s\n", name);
+	    bu_log("Using volume tolerance %g %s\n", volume_tolerance / units[VOL]->val, units[VOL]->name);
+	if (plot_prefix) {
+	    struct bu_vls vp = BU_VLS_INIT_ZERO;
+	    bu_vls_printf(&vp, "%svolume.plot3", plot_prefix);
+	    bu_log("Plotting volumes to %s\n", bu_vls_cstr(&vp));
+	    if ((plot_volume = fopen(bu_vls_cstr(&vp), "wb")) == (FILE *)NULL) {
+		bu_vls_printf(_ged_current_gedp->ged_result_str, "cannot open plot file %s\n", bu_vls_cstr(&vp));
+		/* not a critical failure */
 	    }
+	    bu_vls_free(&vp);
+	}
     }
-    if (analysis_flags & ANALYSIS_WEIGHT) {
+    if (analysis_flags & ANALYSIS_WEIGHTS) {
 	if (weight_tolerance < 0.0) {
 	    double max_den = 0.0;
 	    int i;
@@ -1661,46 +1671,59 @@ options_prep(struct rt_i *rtip, vect_t span)
 	    bu_vls_printf(_ged_current_gedp->ged_result_str, "weight tolerance   %g\n", weight_tolerance);
 	}
     }
-    if (analysis_flags & ANALYSIS_GAP) {
-	char *name = "gaps.plot3";
-	if (plot_files)
-	    if ((plot_gaps=fopen(name, "wb")) == (FILE *)NULL) {
-		bu_vls_printf(_ged_current_gedp->ged_result_str, "cannot open plot file %s\n", name);
-		return GED_ERROR;
+    if (analysis_flags & ANALYSIS_GAPS) {
+	if (plot_prefix) {
+	    struct bu_vls vp = BU_VLS_INIT_ZERO;
+	    bu_vls_printf(&vp, "%sgaps.plot3", plot_prefix);
+	    bu_log("Plotting gaps to %s\n", bu_vls_cstr(&vp));
+	    if ((plot_gaps = fopen(bu_vls_cstr(&vp), "wb")) == (FILE *)NULL) {
+		bu_vls_printf(_ged_current_gedp->ged_result_str, "cannot open plot file %s\n", bu_vls_cstr(&vp));
+		/* not a critical failure */
 	    }
+	    bu_vls_free(&vp);
+	}
     }
     if (analysis_flags & ANALYSIS_OVERLAPS) {
 	if (!ZERO(overlap_tolerance))
 	    bu_vls_printf(_ged_current_gedp->ged_result_str, "overlap tolerance to %g\n", overlap_tolerance);
-	if (plot_files) {
-	    char *name = "overlaps.plot3";
-	    if ((plot_overlaps=fopen(name, "wb")) == (FILE *)NULL) {
-		bu_vls_printf(_ged_current_gedp->ged_result_str, "cannot open plot file %s\n", name);
-		return GED_ERROR;
+	if (plot_prefix) {
+	    struct bu_vls vp = BU_VLS_INIT_ZERO;
+	    bu_vls_printf(&vp, "%soverlaps.plot3", plot_prefix);
+	    bu_log("Plotting overlaps to %s\n", bu_vls_cstr(&vp));
+	    if ((plot_overlaps = fopen(bu_vls_cstr(&vp), "wb")) == (FILE *)NULL) {
+		bu_vls_printf(_ged_current_gedp->ged_result_str, "cannot open plot file %s\n", bu_vls_cstr(&vp));
+		/* not a critical failure */
 	    }
+	    bu_vls_free(&vp);
 	}
     }
 
     if (print_per_region_stats)
-	if ((analysis_flags & (ANALYSIS_VOLUME|ANALYSIS_WEIGHT)) == 0)
+	if ((analysis_flags & (ANALYSIS_VOLUMES|ANALYSIS_WEIGHTS)) == 0)
 	    bu_vls_printf(_ged_current_gedp->ged_result_str, "Note: -r option ignored: neither volume or weight options requested\n");
 
     if (analysis_flags & ANALYSIS_ADJ_AIR)
-	if (plot_files) {
-	    char *name = "adj_air.plot3";
-	    if ((plot_adjair=fopen(name, "wb")) == (FILE *)NULL) {
-		bu_vls_printf(_ged_current_gedp->ged_result_str, "cannot open plot file %s\n", name);
-		return GED_ERROR;
+	if (plot_prefix) {
+	    struct bu_vls vp = BU_VLS_INIT_ZERO;
+	    bu_vls_printf(&vp, "%sadj_air.plot3", plot_prefix);
+	    bu_log("Plotting adjacent air to %s\n", bu_vls_cstr(&vp));
+	    if ((plot_adjair = fopen(bu_vls_cstr(&vp), "wb")) == (FILE *)NULL) {
+		bu_vls_printf(_ged_current_gedp->ged_result_str, "cannot open plot file %s\n", bu_vls_cstr(&vp));
+		/* not a critical failure */
 	    }
+	    bu_vls_free(&vp);
 	}
 
     if (analysis_flags & ANALYSIS_EXP_AIR)
-	if (plot_files) {
-	    char *name = "exp_air.plot3";
-	    if ((plot_expair=fopen(name, "wb")) == (FILE *)NULL) {
-		bu_vls_printf(_ged_current_gedp->ged_result_str, "cannot open plot file %s\n", name);
-		return GED_ERROR;
+	if (plot_prefix) {
+	    struct bu_vls vp = BU_VLS_INIT_ZERO;
+	    bu_vls_printf(&vp, "%sexp_air.plot3", plot_prefix);
+	    bu_log("Plotting exposed air to %s\n", bu_vls_cstr(&vp));
+	    if ((plot_expair = fopen(bu_vls_cstr(&vp), "wb")) == (FILE *)NULL) {
+		bu_vls_printf(_ged_current_gedp->ged_result_str, "cannot open plot file %s\n", bu_vls_cstr(&vp));
+		/* not a critical failure */
 	    }
+	    bu_vls_free(&vp);
 	}
 
 
@@ -1716,7 +1739,7 @@ options_prep(struct rt_i *rtip, vect_t span)
 void
 view_reports(struct cstate *state)
 {
-    if (analysis_flags & ANALYSIS_VOLUME) {
+    if (analysis_flags & ANALYSIS_VOLUMES) {
 	int obj;
 	int view;
 
@@ -1740,7 +1763,7 @@ view_reports(struct cstate *state)
 	    }
 	}
     }
-    if (analysis_flags & ANALYSIS_WEIGHT) {
+    if (analysis_flags & ANALYSIS_WEIGHTS) {
 	int obj;
 	int view = state->curr_view;
 
@@ -1782,7 +1805,7 @@ weight_volume_terminate(struct cstate *state)
 
     double low, hi, val, delta;
 
-    if (analysis_flags & ANALYSIS_WEIGHT) {
+    if (analysis_flags & ANALYSIS_WEIGHTS) {
 	/* for each object, compute the weight for all views */
 	int obj;
 
@@ -1832,7 +1855,7 @@ weight_volume_terminate(struct cstate *state)
 	}
     }
 
-    if (analysis_flags & ANALYSIS_VOLUME) {
+    if (analysis_flags & ANALYSIS_VOLUMES) {
 	/* find the range of values for object volumes */
 	int obj;
 
@@ -1932,7 +1955,7 @@ terminate_check(struct cstate *state)
 	    bu_vls_printf(_ged_current_gedp->ged_result_str, "overlaps list at %gmm is empty\n", gridSpacing / GRIDSPACING_STEP);
 	}
     }
-    if ((analysis_flags & ANALYSIS_GAP)) {
+    if ((analysis_flags & ANALYSIS_GAPS)) {
 	if (BU_LIST_NON_EMPTY(&gapList.l)) {
 	    /* since we've found a gap, we can quit */
 	    return 0;
@@ -1952,11 +1975,11 @@ terminate_check(struct cstate *state)
     }
 
 
-    if (analysis_flags & (ANALYSIS_WEIGHT|ANALYSIS_VOLUME)) {
+    if (analysis_flags & (ANALYSIS_WEIGHTS|ANALYSIS_VOLUMES)) {
 	/* volume/weight checks only get to terminate processing if
 	 * there are no "error" check computations being done
 	 */
-	if (analysis_flags & (ANALYSIS_GAP|ANALYSIS_ADJ_AIR|ANALYSIS_OVERLAPS|ANALYSIS_EXP_AIR)) {
+	if (analysis_flags & (ANALYSIS_GAPS|ANALYSIS_ADJ_AIR|ANALYSIS_OVERLAPS|ANALYSIS_EXP_AIR)) {
 	    if (verbose)
 		bu_vls_printf(_ged_current_gedp->ged_result_str, "Volume/Weight tolerance met.  Cannot terminate calculation due to error computations\n");
 	} else {
@@ -2028,7 +2051,7 @@ summary_reports(struct cstate *state)
     else
 	bu_vls_printf(_ged_current_gedp->ged_result_str, "Summary (%gmm grid spacing):\n", gridSpacing / GRIDSPACING_STEP);
 
-    if (analysis_flags & ANALYSIS_WEIGHT) {
+    if (analysis_flags & ANALYSIS_WEIGHTS) {
 	bu_vls_printf(_ged_current_gedp->ged_result_str, "Weight:\n");
 	for (obj = 0; obj < num_objects; obj++) {
 	    avg_mass = 0.0;
@@ -2221,7 +2244,7 @@ summary_reports(struct cstate *state)
     }
 
 
-    if (analysis_flags & ANALYSIS_VOLUME) {
+    if (analysis_flags & ANALYSIS_VOLUMES) {
 	bu_vls_printf(_ged_current_gedp->ged_result_str, "Volume:\n");
 
 	/* print per-object */
@@ -2286,7 +2309,7 @@ summary_reports(struct cstate *state)
     }
     if (analysis_flags & ANALYSIS_OVERLAPS) list_report(&overlapList);
     if (analysis_flags & ANALYSIS_ADJ_AIR) list_report(&adjAirList);
-    if (analysis_flags & ANALYSIS_GAP) list_report(&gapList);
+    if (analysis_flags & ANALYSIS_GAPS) list_report(&gapList);
     if (analysis_flags & ANALYSIS_EXP_AIR) list_report(&exposedAirList);
 
     for (BU_LIST_FOR (regp, region, &(state->rtip->HeadRegion))) {
@@ -2356,8 +2379,8 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
 
     _ged_current_gedp = gedp;
 
-    analysis_flags = ANALYSIS_VOLUME | ANALYSIS_OVERLAPS | ANALYSIS_WEIGHT |
-	ANALYSIS_EXP_AIR | ANALYSIS_ADJ_AIR | ANALYSIS_GAP | ANALYSIS_CENTROIDS | ANALYSIS_MOMENTS;
+    analysis_flags = ANALYSIS_VOLUMES | ANALYSIS_OVERLAPS | ANALYSIS_WEIGHTS |
+	ANALYSIS_EXP_AIR | ANALYSIS_ADJ_AIR | ANALYSIS_GAPS | ANALYSIS_CENTROIDS | ANALYSIS_MOMENTS;
     multiple_analyses = 1;
     azimuth_deg = 0.0;
     elevation_deg = 0.0;
@@ -2389,7 +2412,7 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
     num_views = 3;
     verbose = 0;
     quiet_missed_report = 0;
-    plot_files = 0;
+    plot_prefix = NULL;
     plot_weight = (FILE *)0;
     plot_volume = (FILE *)0;
     plot_overlaps = (FILE *)0;
@@ -2447,7 +2470,7 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
     state.area[1] = state.span[2] * state.span[0];
     state.area[2] = state.span[0] * state.span[1];
 
-    if (analysis_flags & ANALYSIS_BOX) {
+    if (analysis_flags & ANALYSIS_BBOX) {
 	bu_vls_printf(gedp->ged_result_str, "bounding box: %g %g %g  %g %g %g\n",
 		      V3ARGS(rtip->mdl_min), V3ARGS(rtip->mdl_max));
 

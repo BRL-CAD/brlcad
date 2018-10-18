@@ -82,10 +82,10 @@ set_msg_str(struct bu_vls *msg, int ac, const char **av)
     set_msg_str(&parse_msgs, ac, av); \
     ret = bu_opt_parse(&parse_msgs, ac, av, d); \
     if (ret || _var != _exp) { \
-	bu_vls_printf(&parse_msgs, "\nError - expected value \"%d\" and got value %d\n", _exp, _var); \
+	bu_vls_printf(&parse_msgs, "\nError - expected value \"%ld\" and got value %ld\n", (long int)_exp, (long int)_var); \
 	val_ok = 0; \
     } else { \
-	bu_vls_printf(&parse_msgs, "  \nGot expected value: %s = %d\n", _name, _var); \
+	bu_vls_printf(&parse_msgs, "  \nGot expected value: %s = %ld\n", _name, (long int)_var); \
     } \
 }
 
@@ -816,28 +816,28 @@ int desc_3(int test_num)
 	    av[0] = "-V";
 	    av[1] = "2,10,30";
 	    ret = bu_opt_parse(&parse_msgs, 0, NULL, d);
-	    EXPECT_SUCCESS_VECT("vect_t", v, 2, 10, 30);
+	    EXPECT_SUCCESS_VECT("vect_t", v, 2.0, 10.0, 30.0);
 	    break;
 	case 1:
 	    ac = 2;
 	    av[0] = "-V";
 	    av[1] = "2/10/30";
 	    ret = bu_opt_parse(&parse_msgs, 0, NULL, d);
-	    EXPECT_SUCCESS_VECT("vect_t", v, 2, 10, 30);
+	    EXPECT_SUCCESS_VECT("vect_t", v, 2.0, 10.0, 30.0);
 	    break;
 	case 2:
 	    ac = 2;
 	    av[0] = "-V";
 	    av[1] = "30.3,2,-10.1";
 	    ret = bu_opt_parse(&parse_msgs, 0, NULL, d);
-	    EXPECT_SUCCESS_VECT("vect_t", v, 30.3, 2, -10.1);
+	    EXPECT_SUCCESS_VECT("vect_t", v, 30.3, 2.0, -10.1);
 	    break;
 	case 3:
 	    ac = 2;
 	    av[0] = "-V";
 	    av[1] = "30.3, 2, -10.1";
 	    ret = bu_opt_parse(&parse_msgs, 0, NULL, d);
-	    EXPECT_SUCCESS_VECT("vect_t", v, 30.3, 2, -10.1);
+	    EXPECT_SUCCESS_VECT("vect_t", v, 30.3, 2.0, -10.1);
 	    break;
 	case 4:
 	    ac = 4;
@@ -846,7 +846,7 @@ int desc_3(int test_num)
 	    av[2] = "2";
 	    av[3] = "-10.1";
 	    ret = bu_opt_parse(&parse_msgs, 0, NULL, d);
-	    EXPECT_SUCCESS_VECT("vect_t", v, 30.3, 2, -10.1);
+	    EXPECT_SUCCESS_VECT("vect_t", v, 30.3, 2.0, -10.1);
 	    break;
 
     }
@@ -872,7 +872,7 @@ int desc_3(int test_num)
 
 
 int
-opt_main(int argc, char **argv)
+main(int argc, char *argv[])
 {
     int ret = -1;
     long desc_num;
@@ -881,8 +881,10 @@ opt_main(int argc, char **argv)
     char *endptr = NULL;
 
     /* Sanity check */
-    if (argc < 4)
-	bu_exit(1, "ERROR: wrong number of parameters - need option desc num, category and test num");
+    if (argc < 4) {
+	bu_log("Usage: %s {desc_number} {category_num} {test_num}\n", argv[0]);
+	bu_exit(1, "ERROR: wrong number of parameters - need desc num, category and test num\n");
+    }
 
     /* Set the option description to used based on the input number */
     desc_num = strtol(argv[1], &endptr, 0);
@@ -894,7 +896,7 @@ opt_main(int argc, char **argv)
 
     test_num = strtol(argv[3], &endptr, 0);
     if (endptr && strlen(endptr) != 0) {
-	bu_exit(1, "Invalid test number: %s\n", argv[2]);
+	bu_exit(2, "Invalid test number: %s\n", argv[2]);
     }
 
     switch (desc_num) {

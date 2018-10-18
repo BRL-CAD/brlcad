@@ -1208,7 +1208,7 @@ nmg_find_e_nearest_pt2(uint32_t *magic_p, const fastf_t *pt2, const fastf_t *mat
     m = nmg_find_model(magic_p);
     NMG_CK_MODEL(m);
 
-    st.visited = (char *)bu_calloc(m->maxindex+1, sizeof(char), "visited[]");
+    st.visited = (char *)nmg_calloc(m->maxindex+1, sizeof(char), "visited[]");
     st.mindist = INFINITY;
     VMOVE(st.pt2, pt2);
     MAT_COPY(st.mat, mat);
@@ -1217,7 +1217,7 @@ nmg_find_e_nearest_pt2(uint32_t *magic_p, const fastf_t *pt2, const fastf_t *mat
 
     nmg_visit(magic_p, &htab, (void *)&st, vlfree);
 
-    bu_free((char *)st.visited, "visited[]");
+    nmg_free((char *)st.visited, "visited[]");
 
     if (st.ep) {
 	NMG_CK_EDGE(st.ep);
@@ -1999,14 +1999,14 @@ nmg_vertex_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p, struct bu_list
     m = nmg_find_model(magic_p);
     NMG_CK_MODEL(m);
 
-    st.visited = (char *)bu_calloc(m->maxindex+1, sizeof(char), "visited[]");
+    st.visited = (char *)nmg_calloc(m->maxindex+1, sizeof(char), "visited[]");
     st.tabl = tab;
 
     (void)bu_ptbl_init(tab, 64, " tab");
 
     nmg_visit(magic_p, &handlers, (void *)&st, vlfree);
 
-    bu_free((char *)st.visited, "visited[]");
+    nmg_free((char *)st.visited, "visited[]");
 }
 
 
@@ -2052,14 +2052,14 @@ nmg_vertexuse_normal_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p, stru
     m = nmg_find_model(magic_p);
     NMG_CK_MODEL(m);
 
-    st.visited = (char *)bu_calloc(m->maxindex+1, sizeof(char), "visited[]");
+    st.visited = (char *)nmg_calloc(m->maxindex+1, sizeof(char), "visited[]");
     st.tabl = tab;
 
     (void)bu_ptbl_init(tab, 64, " tab");
 
     nmg_visit(magic_p, &handlers, (void *)&st, vlfree);
 
-    bu_free((char *)st.visited, "visited[]");
+    nmg_free((char *)st.visited, "visited[]");
 }
 
 
@@ -2102,14 +2102,14 @@ nmg_edgeuse_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p, struct bu_lis
     m = nmg_find_model(magic_p);
     NMG_CK_MODEL(m);
 
-    st.visited = (char *)bu_calloc(m->maxindex+1, sizeof(char), "visited[]");
+    st.visited = (char *)nmg_calloc(m->maxindex+1, sizeof(char), "visited[]");
     st.tabl = tab;
 
     (void)bu_ptbl_init(tab, 64, " tab");
 
     nmg_visit(magic_p, &handlers, (void *)&st, vlfree);
 
-    bu_free((char *)st.visited, "visited[]");
+    nmg_free((char *)st.visited, "visited[]");
 }
 
 
@@ -2152,14 +2152,14 @@ nmg_edge_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p, struct bu_list *
     m = nmg_find_model(magic_p);
     NMG_CK_MODEL(m);
 
-    st.visited = (char *)bu_calloc(m->maxindex+1, sizeof(char), "visited[]");
+    st.visited = (char *)nmg_calloc(m->maxindex+1, sizeof(char), "visited[]");
     st.tabl = tab;
 
     (void)bu_ptbl_init(tab, 64, " tab");
 
     nmg_visit(magic_p, &handlers, (void *)&st, vlfree);
 
-    bu_free((char *)st.visited, "visited[]");
+    nmg_free((char *)st.visited, "visited[]");
 }
 
 
@@ -2211,14 +2211,14 @@ nmg_edge_g_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p, struct bu_list
     m = nmg_find_model(magic_p);
     NMG_CK_MODEL(m);
 
-    st.visited = (char *)bu_calloc(m->maxindex+1, sizeof(char), "visited[]");
+    st.visited = (char *)nmg_calloc(m->maxindex+1, sizeof(char), "visited[]");
     st.tabl = tab;
 
     (void)bu_ptbl_init(tab, 64, " tab");
 
     nmg_visit(magic_p, &handlers, (void *)&st, vlfree);
 
-    bu_free((char *)st.visited, "visited[]");
+    nmg_free((char *)st.visited, "visited[]");
 }
 
 
@@ -2261,14 +2261,14 @@ nmg_face_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p, struct bu_list *
     m = nmg_find_model(magic_p);
     NMG_CK_MODEL(m);
 
-    st.visited = (char *)bu_calloc(m->maxindex+1, sizeof(char), "visited[]");
+    st.visited = (char *)nmg_calloc(m->maxindex+1, sizeof(char), "visited[]");
     st.tabl = tab;
 
     (void)bu_ptbl_init(tab, 64, " tab");
 
     nmg_visit(magic_p, &handlers, (void *)&st, vlfree);
 
-    bu_free((char *)st.visited, "visited[]");
+    nmg_free((char *)st.visited, "visited[]");
 }
 
 
@@ -2375,7 +2375,7 @@ nmg_edgeuse_on_line_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p, const
     NMG_CK_MODEL(m);
     BN_CK_TOL(tol);
 
-    st.visited = (char *)bu_calloc(m->maxindex+1, sizeof(char), "visited[]");
+    st.visited = (char *)nmg_calloc(m->maxindex+1, sizeof(char), "visited[]");
     st.tabl = tab;
     VMOVE(st.pt, pt);
     VMOVE(st.dir, dir);
@@ -2386,7 +2386,7 @@ nmg_edgeuse_on_line_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p, const
 
     nmg_visit(magic_p, &handlers, (void *)&st, vlfree);
 
-    bu_free((char *)st.visited, "visited[]");
+    nmg_free((char *)st.visited, "visited[]");
 }
 
 
@@ -2457,7 +2457,7 @@ nmg_e_and_v_tabulate(struct bu_ptbl *eutab, struct bu_ptbl *vtab, const uint32_t
     m = nmg_find_model(magic_p);
     NMG_CK_MODEL(m);
 
-    st.visited = (char *)bu_calloc(m->maxindex+1, sizeof(char), "visited[]");
+    st.visited = (char *)nmg_calloc(m->maxindex+1, sizeof(char), "visited[]");
     st.edges = eutab;
     st.verts = vtab;
 
@@ -2466,7 +2466,7 @@ nmg_e_and_v_tabulate(struct bu_ptbl *eutab, struct bu_ptbl *vtab, const uint32_t
 
     nmg_visit(magic_p, &handlers, (void *)&st, vlfree);
 
-    bu_free((char *)st.visited, "visited[]");
+    nmg_free((char *)st.visited, "visited[]");
 }
 
 

@@ -35,7 +35,8 @@ extern int isinf(double x);
 int
 main(int ac, char *av[])
 {
-    if (ac < 2)	bu_exit(1, "Usage: %s [test] options\n\nAvailable tests:\n@BU_TEST_LIST@", av[0]);
+    if (ac < 2)
+	bu_exit(1, "Usage: %s [test] [options]\n\nAvailable tests:\n@BU_TEST_LIST@", av[0]);
 
     ac--; av++;
 

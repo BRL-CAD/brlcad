@@ -50,6 +50,7 @@
 
 #include "bu/list.h"
 #include "bu/str.h"
+#include "bu/snooze.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
@@ -95,7 +96,6 @@ int report_progress;	/* !0 = user wants progress report */
 extern fastf_t rt_dist_tol;	/* Value for rti_tol.dist */
 extern fastf_t rt_perp_tol;	/* Value for rti_tol.perp */
 extern int rdebug;		/* RT program debugging (not library) */
-extern int rt_verbosity;	/* from liboptical */
 static char idbuf[132];		/* First ID record info */
 
 /* State flags */
@@ -209,7 +209,7 @@ main(int argc, char **argv)
 	(void)pkg_send(MSG_CMD, argv[3], strlen(argv[3])+1, pcsrv);
 
 	/* Prevent chasing the package with an immediate TCP close */
-	sleep(1);
+	bu_snooze(BU_SEC2USEC(1));
 
 	pkg_close(pcsrv);
 	return 0;
@@ -320,7 +320,7 @@ main(int argc, char **argv)
 	RTG.rtg_parallel = 0;
     }
 
-    bu_log("using %d of %d cpus\n",
+    bu_log("using %zu of %d cpus\n",
 	   npsw, avail_cpus);
 
     /* Before option processing, do application-specific initialization */

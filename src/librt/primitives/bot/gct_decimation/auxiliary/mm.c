@@ -396,7 +396,7 @@ static void mmNodeRelayFree(void *UNUSED(head), void *v, size_t bytes)
 
 static void *mmAlloc(void *UNUSED(unused), size_t bytes)
 {
-    return bu_malloc(bytes, "mmAlloc()");
+    return bu_calloc(1, bytes, "mmAlloc()");
 }
 
 

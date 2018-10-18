@@ -52,19 +52,6 @@ struct bu_structparse view_parse[] = {
 
 const char title[] = "RT Volume Fractions";
 
-void
-usage(const char *argv0)
-{
-    bu_log("Usage:  %s [options] model.g objects... >file.frac\n", argv0);
-    bu_log("Options:\n");
-    bu_log(" -s #		Grid size in pixels, default 512\n");
-    bu_log(" -a Az		Azimuth in degrees\n");
-    bu_log(" -e Elev	Elevation in degrees\n");
-    bu_log(" -M		Read matrix, cmds on stdin\n");
-    bu_log(" -o file	Output file name, else stdout\n");
-    bu_log(" -x #		Set librt debug flags\n");
-}
-
 
 int	rayhit(register struct application *ap, struct partition *PartHeadp, struct seg *segp);
 int	raymiss(register struct application *ap);
@@ -194,6 +181,7 @@ rayhit(register struct application *ap, struct partition *PartHeadp, struct seg 
     return 1;	/* report hit to main routine */
 }
 
+
 /*
  *  Called via a_miss linkage from rt_shootray() when ray misses.
  */
@@ -203,7 +191,15 @@ raymiss(register struct application *UNUSED(ap))
     return 0;
 }
 
-void application_init (void) {}
+
+void
+application_init (void)
+{
+    option("", "-o file.frac", "Output file name, else stdout", 0);
+
+    option(NULL, "-C", "Disabled, not implemented", 2);
+    option(NULL, "-W", "Disabled, non implemented", 2);
+}
 
 /*
  * Local Variables:

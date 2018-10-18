@@ -21,11 +21,12 @@
 #include "common.h"
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/avs.h"
-#include "bu/file.h"
 #include "bu/malloc.h"
 #include "raytrace.h"
 #include "../librt_private.h"
+
 
 /* Note - initially, the thought was to use only librt API for this, without
  * pulling in libwdb.  Normally libwdb should be used to create objects of this
@@ -153,7 +154,7 @@ add_comb(struct db_i *dbip, const char *name, int obj_argc, const char **obj_arg
     }
     if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
 	rt_db_free_internal(&intern);
-	bu_log("%s error: Database write error, aborting\n");
+	bu_log("Error: Database write error, aborting\n");
 	return 1;
     }
 
@@ -489,7 +490,7 @@ main(int UNUSED(argc), char *argv[])
 
 
 
-    /*sleep(1000);*/
+    /*bu_snooze(BU_SEC2USEC(1000));*/
 
     db_close(dbip);
     /*bu_file_delete(tmpfile);*/

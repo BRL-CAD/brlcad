@@ -29,7 +29,7 @@
 
 #define TRIMESH_EDGE_EQUAL(e1, e2) ((e1).va == (e2).va && (e1).vb == (e2).vb)
 
-HIDDEN inline void
+static inline void
 _trimesh_set_edge(struct bg_trimesh_halfedge *edge, int va, int vb)
 {
     if (va < vb) {

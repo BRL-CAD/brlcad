@@ -23,12 +23,12 @@
 #	 This is a script for loading/registering the human wizard.
 #
 
-set brlcadDataPath [bu_brlcad_data "plugins"]
+set brlcadDataPath [bu_brlcad_root "share/plugins"]
 # puts "pwd is [pwd], path is $brlcadDataPath"
 set filename [file join $brlcadDataPath archer Wizards humanwizard HumanWizard.tcl]
 if { ![file exists $filename] } {
     # non-tclscript resource, look in the source invocation path
-    set brlcadDataPath [bu_brlcad_data "src"]
+    set brlcadDataPath [bu_brlcad_root "src"]
     set filename [file join $brlcadDataPath archer plugins Wizards humanwizard HumanWizard.tcl]
 }
 if { ![file exists $filename] } {

@@ -41,12 +41,12 @@ static const int VP_PRINT   = 1;
 typedef struct
 vprintf_flags
 {
-    int fieldlen;
+    ssize_t fieldlen;
     int flags;
     int have_digit;
     int have_dot;
     int left_justify;
-    int precision;
+    ssize_t precision;
 } vflags_t;
 
 /* private shared function decls */

@@ -35,7 +35,7 @@
 #include "bresource.h"
 
 #include "tcl.h"
-#include "bu/cmd.h"
+#include "bu/app.h"
 
 
 #include "./ged_private.h"

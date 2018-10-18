@@ -26,7 +26,6 @@
 #define DO_SUPPRESSIONS 0
 
 #include <stdlib.h>
-#include <signal.h>
 #include <time.h>
 #include <math.h>
 #include <string.h>
@@ -1067,7 +1066,7 @@ add_sketch_vert( double pt[3], struct rt_sketch_internal *skt, int *verts_alloce
 	skt->verts = (point2d_t *)bu_realloc( skt->verts, *verts_alloced*sizeof(point2d_t ), "skt->verts" );
     }
     V2MOVE( skt->verts[skt->vert_count], pt );
-    bu_log( "new vertex #%d is (%g %g)\n", skt->vert_count, V2ARGS( skt->verts[skt->vert_count] ) );
+    bu_log( "new vertex #%zu is (%g %g)\n", skt->vert_count, V2ARGS( skt->verts[skt->vert_count] ) );
     skt->vert_count++;
 
     return skt->vert_count - 1;
@@ -5413,8 +5412,6 @@ main(int ac, char *av[])
     /* start up UG interface */
     UF_initialize();
 
-    /*signal( SIGBUS, abort );*/
-
     /* process part listed on command line */
     printf("file %s\n", av[i]);
 
@@ -5500,7 +5497,7 @@ main(int ac, char *av[])
     bu_log( "\t\t%d of the facetized parts were BREP models\n", parts_brep );
 
     elapsed_time = time( &end_time ) - start_time;
-    bu_log( "Elapsed time: %02d:%02d:%02d\n", elapsed_time/3600, (elapsed_time%3600)/60, (elapsed_time%60) );
+    bu_log( "Elapsed time: %02ld:%02ld:%02ld\n", elapsed_time/3600, (elapsed_time%3600)/60, (elapsed_time%60) );
 
     return 0;
 

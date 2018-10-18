@@ -42,6 +42,7 @@ __BEGIN_DECLS
 #define RED 0
 #define GRN 1
 #define BLU 2
+#define ALP 3
 
 #define HUE 0
 #define SAT 1
@@ -49,39 +50,27 @@ __BEGIN_DECLS
 
 
 /**
- * a single color value, stored as a 0.0 to 1.0 triplet for RGB
+ * a single color value, stored as a 0.0 to 1.0 triplet for RGBA
  */
 struct bu_color
 {
-    uint32_t buc_magic;
-    fastf_t buc_rgb[3];
+    hvect_t buc_rgb;
 };
 typedef struct bu_color bu_color_t;
 #define BU_COLOR_NULL ((struct bu_color *) 0)
 
 /**
- * asserts the integrity of a bu_color struct.
- */
-#define BU_CK_COLOR(_c) BU_CKMAG(_c, BU_COLOR_MAGIC, "bu_color")
-
-/**
  * initializes a bu_color struct without allocating any memory.
  */
 #define BU_COLOR_INIT(_c) { \
-	(_c)->buc_magic = BU_COLOR_MAGIC; \
-	(_c)->buc_rgb[0] = (_c)->buc_rgb[1] = (_c)->buc_rgb[2] = 0; \
-    }
+    (_c)->buc_rgb[RED] = (_c)->buc_rgb[GRN] = (_c)->buc_rgb[BLU] = 0; (_c)->buc_rgb[ALP]; \
+}
 
 /**
  * macro suitable for declaration statement initialization of a bu_color
  * struct.  does not allocate memory.
  */
-#define BU_COLOR_INIT_ZERO { BU_COLOR_MAGIC, {0, 0, 0} }
-
-/**
- * returns truthfully whether a bu_color has been initialized
- */
-#define BU_COLOR_IS_INITIALIZED(_c) (((struct bu_color *)(_c) != BU_COLOR_NULL) && LIKELY((_c)->magic == BU_COLOR_MAGIC))
+#define BU_COLOR_INIT_ZERO {{0, 0, 0, 0}}
 
 
 /**

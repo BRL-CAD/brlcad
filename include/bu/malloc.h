@@ -86,11 +86,6 @@ BU_EXPORT extern void *bu_realloc(void *ptr,
 				     const char *str);
 
 /**
- * Print map of memory currently in use.
- */
-BU_EXPORT extern void bu_prmem(const char *str);
-
-/**
  * On systems with the CalTech malloc(), the amount of storage
  * ACTUALLY ALLOCATED is the amount requested rounded UP to the
  * nearest power of two.  For structures which are acquired and
@@ -106,16 +101,6 @@ BU_EXPORT extern void bu_prmem(const char *str);
  * unused memory will be consumed.
  */
 BU_EXPORT extern int bu_malloc_len_roundup(int nbytes);
-
-/**
- * DEPRECATED: use valgrind/memcheck, SGcheck
- */
-BU_EXPORT extern void bu_ck_malloc_ptr(void *ptr, const char *str);
-
-/**
- * DEPRECATED: use valgrind/memcheck, SGcheck
- */
-BU_EXPORT extern int bu_mem_barriercheck(void);
 
 /**
  * really fast heap-based memory allocation intended for "small"
@@ -228,8 +213,16 @@ BU_EXPORT extern int bu_shmget(int *shmid, char **shared_memory, int key, size_t
  */
 #define BU_FREE(_ptr, _type) do { bu_free(_ptr, #_type " (BU_FREE) " CPP_FILELINE); _ptr = (_type *)NULL; } while (0)
 
-
 /** @} */
+
+/* DEPRECATED */
+BU_EXPORT extern void bu_prmem(const char *str);
+
+/* DEPRECATED: use valgrind/memcheck, SGcheck */
+BU_EXPORT extern void bu_ck_malloc_ptr(void *ptr, const char *str);
+
+/* DEPRECATED: use valgrind/memcheck, SGcheck */
+BU_EXPORT extern int bu_mem_barriercheck(void);
 
 __END_DECLS
 

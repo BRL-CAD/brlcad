@@ -20,16 +20,13 @@
 
 #include "common.h"
 
-#ifdef HAVE_DLFCN_H
-# include <dlfcn.h>
-#endif
-
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
 #include "bio.h"
 #include "bu/parallel.h"
+#include "bu/dylib.h"
 #include "raytrace.h" /* for last RT_SEM_LAST */
 
 #include "camera.h"

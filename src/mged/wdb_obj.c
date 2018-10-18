@@ -2294,7 +2294,7 @@ wdb_match_cmd(struct rt_wdb *wdbp,
 	register struct directory *dp;
 	for (i = num = 0; i < RT_DBNHASH; i++) {
 	    for (dp = wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-		if (bu_fnmatch(*argv, dp->d_namep, 0) != 0)
+		if (bu_path_match(*argv, dp->d_namep, 0) != 0)
 		    continue;
 		if (num == 0)
 		    bu_vls_strcat(&matches, dp->d_namep);
@@ -3926,7 +3926,7 @@ wdb_expand_cmd(struct rt_wdb *wdbp,
 	thismatch = 0;
 	for (i = 0; i < RT_DBNHASH; i++) {
 	    for (dp = wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-		if (bu_fnmatch(pattern, dp->d_namep, 0) != 0)
+		if (bu_path_match(pattern, dp->d_namep, 0) != 0)
 		    continue;
 		/* Successful match */
 		if (nummatch == 0)
@@ -10338,7 +10338,7 @@ wdb_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
     struct ged ged;
-    struct bu_hook_list save_hook_list;
+    struct bu_hook_list save_hook_list = BU_HOOK_LIST_INIT_ZERO;
     int ret;
 
     /* look for the new libged commands before trying one of the old ones */
@@ -10434,7 +10434,6 @@ wdb_init_obj(Tcl_Interp *interp,
     bu_vls_init(&wdbp->wdb_name);
     bu_vls_strcpy(&wdbp->wdb_name, oname);
 
-    BU_LIST_INIT(&wdbp->wdb_observers.l);
     wdbp->wdb_interp = (void *)interp;
 
     /* append to list of rt_wdb's */

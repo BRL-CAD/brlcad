@@ -25,6 +25,7 @@
 
 #include "common.h"
 
+#include "bu/app.h"
 #include "bu/debug.h"
 #include "bu/getopt.h"
 /* private */

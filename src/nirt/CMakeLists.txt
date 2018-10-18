@@ -44,6 +44,7 @@ set(nirt_sfiles
 BRLCAD_ADDDATA(nirt_sfiles nirt)
 
 set(nirt_ignore_files
+  CMakeLists.txt
   nirt.h
   usrfmt.h
   )

@@ -32,9 +32,7 @@
 #include "rt/db4.h"
 #include "raytrace.h"
 
-#ifdef CACHE_ENABLED
-#  include "./cache.h"
-#endif
+#include "./cache.h"
 
 
 #define ACQUIRE_SEMAPHORE_TREE(_hash) switch ((_hash)&03) {	\
@@ -109,28 +107,26 @@ _rt_tree_region_assign(union tree *tp, const struct region *regionp)
 HIDDEN int
 _rt_gettree_region_start(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *combp, void *UNUSED(client_data))
 {
-  if (tsp) {
-    RT_CK_RTI(tsp->ts_rtip);
-    RT_CK_RESOURCE(tsp->ts_resp);
-    if (pathp) RT_CK_FULL_PATH(pathp);
-    if (combp) RT_CHECK_COMB(combp);
+    if (tsp) {
+	RT_CK_RTI(tsp->ts_rtip);
+	RT_CK_RESOURCE(tsp->ts_resp);
+	if (pathp) RT_CK_FULL_PATH(pathp);
+	if (combp) RT_CHECK_COMB(combp);
 
-    /* Ignore "air" regions unless wanted */
-    if (tsp->ts_rtip->useair == 0 &&  tsp->ts_aircode != 0) {
-      tsp->ts_rtip->rti_air_discards++;
-      return -1;	/* drop this region */
+	/* Ignore "air" regions unless wanted */
+	if (tsp->ts_rtip->useair == 0 &&  tsp->ts_aircode != 0) {
+	    tsp->ts_rtip->rti_air_discards++;
+	    return -1;	/* drop this region */
+	}
     }
-  }
-  return 0;
+    return 0;
 }
 
 
-struct rt_gettree_data
+struct gettree_data
 {
     struct bu_hash_tbl *tbl;
-#ifdef CACHE_ENABLED
     struct rt_cache *cache;
-#endif
 };
 
 
@@ -152,7 +148,7 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
     struct directory *dp = NULL;
     size_t shader_len=0;
     struct rt_i *rtip;
-    struct bu_hash_tbl *tbl = ((struct rt_gettree_data *)client_data)->tbl;
+    struct bu_hash_tbl *tbl = ((struct gettree_data *)client_data)->tbl;
     matp_t inv_mat;
     struct bu_attribute_value_set avs;
     struct bu_attribute_value_pair *avpp;
@@ -446,7 +442,7 @@ _rt_find_identical_solid(const matp_t mat, struct directory *dp, struct rt_i *rt
 HIDDEN union tree *
 _rt_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *client_data)
 {
-    struct rt_gettree_data *data;
+    struct gettree_data *data;
     struct soltab *stp;
     struct directory *dp;
     matp_t mat;
@@ -464,7 +460,7 @@ _rt_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, st
     RT_CK_RESOURCE(tsp->ts_resp);
     dp = DB_FULL_PATH_CUR_DIR(pathp);
 
-    data = (struct rt_gettree_data *)client_data;
+    data = (struct gettree_data *)client_data;
 
     if (!data)
 	bu_bomb("missing argument");
@@ -521,16 +517,15 @@ _rt_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, st
     VSETALL(stp->st_min,  INFINITY);
 
     /*
-     * If the ft_prep routine wants to keep the internal structure,
-     * that is OK, as long as idb_ptr is set to null.  Note that the
-     * prep routine may have changed st_id.
+     * If prep wants to keep the internal structure, that is OK, as
+     * long as idb_ptr is set to null.  Note that the prep routine may
+     * have changed st_id.
      */
-#ifdef CACHE_ENABLED
-    ret = rt_cache_prep(data->cache, stp, ip);
-#else
-    ret = rt_obj_prep(stp, ip, stp->st_rtip);
-#endif
-
+    if (rtip->rti_dbip->dbi_version > 4) {
+	ret = rt_cache_prep(data->cache, stp, ip);
+    } else {
+	ret = rt_obj_prep(stp, ip, stp->st_rtip);
+    }
     if (ret) {
 	int hash;
 	/* Error, solid no good */
@@ -736,7 +731,8 @@ rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **
 	return -1;		/* FAIL */
     }
 
-    if (argc <= 0) return -1;	/* FAIL */
+    if (argc <= 0)
+	return -1;	/* FAIL */
 
     tbl = bu_hash_create(64);
     rtip->Orca_hash_tbl = (void *)tbl;
@@ -744,14 +740,13 @@ rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **
     prev_sol_count = rtip->nsolids;
 
     {
-	struct rt_gettree_data data;
+	struct gettree_data data;
 	struct db_tree_state tree_state;
 
 	tree_state = rt_initial_tree_state;	/* struct copy */
 	tree_state.ts_dbip = rtip->rti_dbip;
 	tree_state.ts_rtip = rtip;
 	tree_state.ts_resp = NULL;	/* sanity.  Needs to be updated */
-
 
 	if (attrs) {
 	    if (db_version(rtip->rti_dbip) < 5) {
@@ -781,9 +776,9 @@ rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **
 	}
 
 	data.tbl = tbl;
-#ifdef CACHE_ENABLED
-	data.cache = rt_cache_open();
-#endif
+	if (rtip->rti_dbip->dbi_version > 4) {
+	    data.cache = rt_cache_open();
+	}
 
 	i = db_walk_tree(rtip->rti_dbip, argc, argv, ncpus,
 			 &tree_state,
@@ -792,9 +787,9 @@ rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **
 			 _rt_gettree_leaf, (void *)&data);
 	bu_avs_free(&tree_state.ts_attrs);
 
-#ifdef CACHE_ENABLED
-	rt_cache_close(data.cache);
-#endif
+	if (rtip->rti_dbip->dbi_version > 4) {
+	    rt_cache_close(data.cache);
+	}
     }
 
     /* DEBUG:  Ensure that all region trees are valid */
@@ -877,7 +872,8 @@ again:
 	db_ck_tree(regp->reg_treetop);
     }
 
-    if (i < 0) return i;
+    if (i < 0)
+	return i;
 
     if (rtip->nsolids <= prev_sol_count)
 	bu_log("rt_gettrees(%s) warning:  no primitives found\n", argv[0]);
@@ -1019,15 +1015,17 @@ rt_find_solid(const struct rt_i *rtip, const char *name)
     struct directory *dp;
 
     RT_CHECK_RTI(rtip);
-    if ((dp = db_lookup((struct db_i *)rtip->rti_dbip, (char *)name,
-			LOOKUP_QUIET)) == RT_DIR_NULL)
+    dp = db_lookup((struct db_i *)rtip->rti_dbip, (char *)name, LOOKUP_QUIET);
+    if (dp == RT_DIR_NULL)
 	return RT_SOLTAB_NULL;
 
     RT_VISIT_ALL_SOLTABS_START(stp, (struct rt_i *)rtip) {
-	if (stp->st_dp == dp)
+	if (stp->st_dp == dp) {
 	    return stp;
-    } RT_VISIT_ALL_SOLTABS_END
-	  return RT_SOLTAB_NULL;
+	}
+    } RT_VISIT_ALL_SOLTABS_END;
+
+    return RT_SOLTAB_NULL;
 }
 
 
@@ -1101,37 +1099,39 @@ rt_bit_tree(struct bit_tree *btp, const union tree *tp, size_t *len)
     unsigned st_bit, uop, rchild;
 
     if (tp == TREE_NULL)
-        return;
+	return;
 
     idx = (*len)++;
     switch (tp->tr_op) {
-        case OP_SOLID:
-            /* Tree Leaf */
-            st_bit = tp->tr_a.tu_stp->st_bit;
-            if (btp) btp[idx].val = (st_bit << 3) | UOP_SOLID;
-            return;
-        case OP_SUBTRACT:
-            uop = UOP_SUBTRACT;
-            break;
-        case OP_UNION:
-            uop = UOP_UNION;
-            break;
-        case OP_INTERSECT:
-            uop = UOP_INTERSECT;
-            break;
-        case OP_XOR:
-            uop = UOP_XOR;
-            break;
-        default:
-            bu_log("rt_bit_tree: bad op[%d]\n", tp->tr_op);
-            exit(1);
-            break;
+	case OP_SOLID:
+	    /* Tree Leaf */
+	    st_bit = tp->tr_a.tu_stp->st_bit;
+	    if (btp)
+		btp[idx].val = (st_bit << 3) | UOP_SOLID;
+	    return;
+	case OP_SUBTRACT:
+	    uop = UOP_SUBTRACT;
+	    break;
+	case OP_UNION:
+	    uop = UOP_UNION;
+	    break;
+	case OP_INTERSECT:
+	    uop = UOP_INTERSECT;
+	    break;
+	case OP_XOR:
+	    uop = UOP_XOR;
+	    break;
+	default:
+	    bu_log("rt_bit_tree: bad op[%d]\n", tp->tr_op);
+	    exit(1);
+	    break;
     }
 
     rt_bit_tree(btp, tp->tr_b.tb_left, len);
 
     rchild = *len;
-    if (btp) btp[idx].val = (rchild << 3) | uop;
+    if (btp)
+	btp[idx].val = (rchild << 3) | uop;
 
     rt_bit_tree(btp, tp->tr_b.tb_right, len);
 }

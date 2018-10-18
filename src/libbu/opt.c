@@ -117,7 +117,7 @@ opt_is_filtered(struct bu_opt_desc *d, int f_ac, char **f_av, int accept)
 }
 
 
-HIDDEN const char *
+HIDDEN char *
 bu_opt_describe_internal_ascii(struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings)
 {
     size_t i = 0;
@@ -136,7 +136,7 @@ bu_opt_describe_internal_ascii(struct bu_opt_desc *ds, struct bu_opt_desc_opts *
       bu_opt_desc_t desc_type = BU_OPT_FULL;
       bu_opt_format_t format_type = BU_OPT_ASCII;
     */
-    const char *finalized;
+    char *finalized;
     struct bu_vls description = BU_VLS_INIT_ZERO;
     int *status;
     if (!ds || opt_desc_is_null(&ds[0]))
@@ -406,13 +406,13 @@ docbook_print_long_opt(struct bu_vls *desc, struct bu_opt_desc *d, int opt_type,
 }
 
 
-HIDDEN const char *
+HIDDEN char *
 bu_opt_describe_internal_docbook(struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings)
 {
     int opt_cnt, j;
     int i = 0;
     int show_all_longopts = 0;
-    const char *finalized;
+    char *finalized;
     struct bu_vls description = BU_VLS_INIT_ZERO;
     int *status;
 
@@ -504,7 +504,7 @@ bu_opt_describe_internal_docbook(struct bu_opt_desc *ds, struct bu_opt_desc_opts
 }
 
 
-const char *
+char *
 bu_opt_describe(struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings)
 {
     if (!ds)
@@ -548,12 +548,12 @@ opt_is_flag(const char *opt, const struct bu_opt_desc *ds, const char *arg)
      * the option isn't a valid arg for this opt, opt can be a flag */
     if (desc && desc->arg_process) {
 	if (arg) {
-	    arg_offset = (*desc->arg_process)(NULL, 1, &arg, desc->set_var);
+	    arg_offset = (*desc->arg_process)(NULL, 1, &arg, NULL);
 	    if (!arg_offset) {
 		return 1;
 	    }
 	} else {
-	    arg_offset = (*desc->arg_process)(NULL, 0, NULL, desc->set_var);
+	    arg_offset = (*desc->arg_process)(NULL, 0, NULL, NULL);
 	    if (!arg_offset) {
 		return 1;
 	    }
@@ -1195,7 +1195,9 @@ bu_opt_vect_t(struct bu_vls *msg, int argc, const char **argv, void *vec)
 	bu_free(str1, "free tmp str");
 	/* If we got here, we do have three numbers */
 	if (have_three) {
-	    VSET(*v, v1, v2, v3);
+	    if (v) {
+		VSET(*v, v1, v2, v3);
+	    }
 	    return 1;
 	}
     } else {
@@ -1229,7 +1231,9 @@ bu_opt_vect_t(struct bu_vls *msg, int argc, const char **argv, void *vec)
 	    return -1;
 	}
 	/* If we got here, 3 did the job */
-	VSET(*v, v1, v2, v3);
+	if (v) {
+	    VSET(*v, v1, v2, v3);
+	}
 	return 3;
     } else {
 	/* Not valid with 1 and don't have 3 - we require at least one, so

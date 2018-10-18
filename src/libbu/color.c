@@ -107,11 +107,11 @@ bu_hsv_to_rgb(const fastf_t *hsv, unsigned char *rgb)
     long int hue_int;
 
     hue = FMAX(hsv[HUE], 0.0);
-    hue = FMIN(hsv[HUE], 360.0);
+    hue = FMIN(hue, 360.0);
     sat = FMAX(hsv[SAT], 0.0);
-    sat = FMIN(hsv[SAT], 1.0);
+    sat = FMIN(sat, 1.0);
     val = FMAX(hsv[VAL], 0.0);
-    val = FMIN(hsv[VAL], 1.0);
+    val = FMIN(val, 1.0);
 
     if (NEAR_ZERO(sat, SMALL_FASTF)) {
 	/* hue is achromatic, so just set constant value */
@@ -153,6 +153,8 @@ bu_color_to_rgb_chars(const struct bu_color *cp, unsigned char *rgb)
     if (UNLIKELY(!cp || !rgb)) {
 	return 0;
     }
+    BU_ASSERT(!(cp->buc_rgb[RED] < 0.0 || cp->buc_rgb[GRN] < 0.0 || cp->buc_rgb[BLU] < 0.0));
+    BU_ASSERT(!(cp->buc_rgb[RED] > 1.0 || cp->buc_rgb[GRN] > 1.0 || cp->buc_rgb[BLU] > 1.0));
 
     rgb[RED] = (unsigned char)lrint(cp->buc_rgb[RED] * 255.0);
     rgb[GRN] = (unsigned char)lrint(cp->buc_rgb[GRN] * 255.0);
@@ -183,10 +185,10 @@ bu_color_to_rgb_floats(const struct bu_color *cp, fastf_t *rgb)
     if (UNLIKELY(!cp || !rgb)) {
 	return 0;
     }
+    BU_ASSERT(!(cp->buc_rgb[RED] < 0.0 || cp->buc_rgb[GRN] < 0.0 || cp->buc_rgb[BLU] < 0.0));
+    BU_ASSERT(!(cp->buc_rgb[RED] > 1.0 || cp->buc_rgb[GRN] > 1.0 || cp->buc_rgb[BLU] > 1.0));
 
-    rgb[0] = cp->buc_rgb[RED];
-    rgb[1] = cp->buc_rgb[GRN];
-    rgb[2] = cp->buc_rgb[BLU];
+    VMOVE(rgb, cp->buc_rgb);
 
     return 1;
 }
@@ -198,10 +200,10 @@ bu_color_from_rgb_floats(struct bu_color *cp, const fastf_t *rgb)
     if (UNLIKELY(!cp || !rgb)) {
 	return 0;
     }
+    if (rgb[RED] > 1.0 || rgb[GRN] > 1.0 || rgb[BLU] > 1.0)
+	return 0;
 
-    cp->buc_rgb[RED] = rgb[0];
-    cp->buc_rgb[GRN] = rgb[1];
-    cp->buc_rgb[BLU] = rgb[2];
+    VMOVE(cp->buc_rgb, rgb);
 
     return 1;
 }
@@ -210,6 +212,7 @@ bu_color_from_rgb_floats(struct bu_color *cp, const fastf_t *rgb)
 int
 bu_color_from_str(struct bu_color *color, const char *str)
 {
+    struct bu_color newcolor = BU_COLOR_INIT_ZERO;
     size_t i;
     int mode = 0;
 
@@ -239,6 +242,9 @@ bu_color_from_str(struct bu_color *color, const char *str)
 	    ret = sscanf(str, "%02x%02x%02x", &rgb[RED], &rgb[GRN], &rgb[BLU]);
 	}
 	if (ret != 3) {
+	    return 0;
+	}
+	if (rgb[RED] > 255 || rgb[GRN] > 255 || rgb[BLU] > 255)	{
 	    return 0;
 	}
 
@@ -290,25 +296,28 @@ bu_color_from_str(struct bu_color *color, const char *str)
         /* 0 = RGB, 1 = FLOAT, 2 = UNKNOWN */
 	switch (mode) {
 	    case 0: /*RGB*/
-		color->buc_rgb[i] = strtol(str, (char **)&endptr, 10) / 255.0;
+		newcolor.buc_rgb[i] = strtol(str, (char **)&endptr, 10) / 255.0;
 		break;
 
 	    case 1: /*FLOAT*/
-		color->buc_rgb[i] = strtod(str, (char **)&endptr);
+		newcolor.buc_rgb[i] = strtod(str, (char **)&endptr);
 		break;
 
 	    default: /*UNKNOWN*/
 		bu_bomb("error");
 	}
 
-	if ((NEAR_ZERO(color->buc_rgb[i], 0.0) && errno) || endptr == str || (i != 2 && *endptr == '\0')
-	    || !(0.0 <= color->buc_rgb[i] && color->buc_rgb[i] <= 1.0)) {
-	    VSETALL(color->buc_rgb, 0.0);
+	if ((NEAR_ZERO(newcolor.buc_rgb[i], 0.0) && errno)
+	    || endptr == str
+	    || (i != 2 && *endptr == '\0')
+	    || !(newcolor.buc_rgb[i] >= 0.0 && newcolor.buc_rgb[i] <= 1.0))
+	{
 	    return 0;
 	}
 
 	str = endptr + 1;
     }
+    VMOVE(color->buc_rgb, newcolor.buc_rgb);
 
     return 1;
 }

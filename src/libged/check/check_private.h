@@ -30,14 +30,15 @@ __BEGIN_DECLS
 #define ANALYSIS_CENTROIDS 2
 #define ANALYSIS_SURF_AREA 4
 #define ANALYSIS_MASS 8
-#define ANALYSIS_GAP 16
-#define ANALYSIS_EXP_AIR 32
+#define ANALYSIS_OVERLAPS 16
+#define ANALYSIS_MOMENTS 32
 #define ANALYSIS_BOX 64
-#define ANALYSIS_INTERFACES 128
-#define ANALYSIS_ADJ_AIR 256
-#define ANALYSIS_OVERLAPS 512
-#define ANALYSIS_MOMENTS 1024
-#define ANALYSIS_PLOT_OVERLAPS 2048
+#define ANALYSIS_GAP 128
+#define ANALYSIS_EXP_AIR 256 /* exposed air */
+#define ANALYSIS_ADJ_AIR 512
+#define ANALYSIS_FIRST_AIR 1024
+#define ANALYSIS_LAST_AIR 2048
+#define ANALYSIS_UNCONF_AIR 4096
 
 /**
  * This structure holds the name of a unit value, and the conversion
@@ -175,13 +176,14 @@ struct check_parameters {
     int num_views;
     int getfromview;
     int overlaps_overlay_flag;
+    int rpt_overlap_flag;
     int plot_files;
     int verbose;
     int debug;
     char *densityFileName;
     fastf_t azimuth_deg, elevation_deg;
     fastf_t gridSpacing, gridSpacingLimit;
-    fastf_t Samples_per_model_axis;
+    fastf_t samples_per_model_axis;
     fastf_t overlap_tolerance;
     fastf_t volume_tolerance;
     fastf_t mass_tolerance;
@@ -238,6 +240,8 @@ extern check_functions_t check_moments;
 extern check_functions_t check_overlaps;
 
 extern check_functions_t check_surf_area;
+
+extern check_functions_t check_unconf_air;
 
 extern check_functions_t check_volume;
 __END_DECLS

@@ -65,7 +65,7 @@ comp_4(const void *num1, const void *num2, void *cmp)
 
 
 int
-sort_main(int argc, char **argv)
+main(int argc, char *argv[])
 {
     int arg_1[6] = {5, 2, 6, -15, 168, 3};
     int exp_1[6] = {-15, 2, 3, 5, 6, 168};
@@ -91,8 +91,11 @@ sort_main(int argc, char **argv)
     fastf_t exp_10[5] = {-INFINITY, 0, 5, 5.2, INFINITY};
     int i, function_num;
 
-    if (argc != 2)
+    if (argc != 2) {
+	bu_log("Usage: %s {function_num}\n", argv[0]);
 	bu_exit(1, "ERROR: wrong number of parameters");
+    }
+
     sscanf(argv[1], "%d", &function_num);
     switch (function_num) {
 	case 1:

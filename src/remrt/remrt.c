@@ -332,7 +332,6 @@ extern size_t height;
 /* variables shared with do.c */
 extern int matflag;
 extern int benchmark;
-extern int rt_verbosity;
 extern char *outputfile;		/* output file name */
 extern int desiredframe;
 extern int finalframe;
@@ -441,7 +440,7 @@ statechange(struct servers *sp, int newstate)
 static void
 remrt_log(const char *msg)
 {
-    bu_log(msg);
+    bu_log("%s", msg);
 }
 
 

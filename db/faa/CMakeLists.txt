@@ -9,6 +9,7 @@ endforeach(faa_input ${FAA_SAMPLE_MODELS})
 
 CMAKEFILES(
   ${FAA_SAMPLE_MODELS}
+  CMakeLists.txt
   README
   )
 

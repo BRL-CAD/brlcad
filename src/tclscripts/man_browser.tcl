@@ -150,7 +150,7 @@ package require cadwidgets::Accordian 1.0
 
     # Path to HTML man page directories
     if {![info exists path] || ![file isdirectory $path]} {
-	set path [file join [bu_brlcad_data "doc/html"]]
+	set path [file join [bu_brlcad_root "share/doc/html"]]
     }
 
     configure -title "BRL-CAD Manual Page Browser"

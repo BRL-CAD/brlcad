@@ -27,6 +27,7 @@ set(LIBBN_SOURCES
   randmt.c
   randsph.c
   scale.c
+  sobolseq.c
   sphmap.c
   str.c
   symbol.c
@@ -48,8 +49,8 @@ set_target_properties(libbn PROPERTIES VERSION 20.0.1 SOVERSION 20)
 add_subdirectory(tests)
 
 CMAKEFILES(
+  CMakeLists.txt
   README
-  sobolseq.c
   soboldata.h
   numgen.c
   )

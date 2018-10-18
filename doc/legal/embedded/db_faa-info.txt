@@ -1,0 +1,19 @@
+The generic aircraft models were developed in support of the Federal
+Aviation Administration's Aircraft Catastrophic Failure Prevention
+Program. The models are used to demonstrate the Uncontained Engine
+Debris Damage Assessment Model (UEDDAM) tool which evaluates the risk
+to the aircraft from uncontained engine failures.  This analysis
+supports certification to Title 14 Code of Federal Regulations,
+Part 25.903.  The models are for demonstration purposes and do not
+depict actual aircraft and /or Aircraft systems in service.  The models
+are available for public release.
+
+For example images of these models, see the report:
+
+Uncontained Engine Debris Analysis Using the Uncontained
+Engine Debris Damage Assessment Model
+DOT/FAA/AR-04/16
+Office of Aviation Research
+Washington, D.C. 20591
+http://www.tc.faa.gov/its/worldpac/techrpt/AR04-16.pdf
+

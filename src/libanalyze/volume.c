@@ -53,7 +53,8 @@ analyze_volume(struct current_state *state, const char *name)
 
 
 void
-analyze_volume_region(struct current_state *state, int i, char **name, double *volume, double *high, double *low) {
+analyze_volume_region(struct current_state *state, int i, char **name, double *volume, double *high, double *low)
+{
     double *vv;
     double lo = INFINITY;
     double hi = -INFINITY;
@@ -80,6 +81,19 @@ analyze_volume_region(struct current_state *state, int i, char **name, double *v
     *name = state->reg_tbl[i].r_name;
     *high = hi - avg_vol;
     *low = avg_vol - lo;
+}
+
+
+fastf_t
+analyze_total_volume(struct current_state *state)
+{
+    int view;
+    double avg_vol = 0.0;
+    for (view=0; view < state->num_views; view++) {
+	avg_vol += state->m_len[view] * (state->area[view] / state->shots[view]);
+    }
+    avg_vol /= state->num_views;
+    return avg_vol;
 }
 
 /*

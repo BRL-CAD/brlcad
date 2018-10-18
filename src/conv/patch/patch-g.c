@@ -605,7 +605,7 @@ Build_solid(size_t l, char *name, char *mirror_name, int plate_mode, fastf_t *ce
 	    /* Make sure we don't overrun our p_faces array */
 	    face_count++;
 	    if (face_count >= 2*l) {
-		bu_exit(1, "Face count = %d, only allowed for %d\n", face_count, 2*l);
+		bu_exit(1, "Face count = %zu, only allowed for %zu\n", face_count, 2*l);
 	    }
 
 	    /* Assign geometry */
@@ -646,7 +646,7 @@ Build_solid(size_t l, char *name, char *mirror_name, int plate_mode, fastf_t *ce
      */
     i = nmg_break_edges(&m->magic, &RTG.rtg_vlfree, tol);
     if (debug > 2)
-	bu_log("nmg_break_edges broke %d edges\n", i);
+	bu_log("nmg_break_edges broke %zu edges\n", i);
 
     /* glue all the faces together */
     nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_LEN(&faces), &RTG.rtg_vlfree, tol);
@@ -832,7 +832,7 @@ Build_solid(size_t l, char *name, char *mirror_name, int plate_mode, fastf_t *ce
 
 	fu = NMG_INDEX_GETP(faceuse, copy_tbl, p_faces[i].fu);
 	if (!fu) {
-	    bu_exit(1, "No fu in duplicate shell corresponding to fu #%d (%p) in original\n", i, (void *)p_faces[i].fu);
+	    bu_exit(1, "No fu in duplicate shell corresponding to fu #%zu (%p) in original\n", i, (void *)p_faces[i].fu);
 	}
 
 	NMG_CK_FACEUSE(fu);
@@ -1155,12 +1155,12 @@ proc_triangle(size_t cnt)
 	}
 
 	if (debug > 3)
-	    bu_log("k=%d l=%d %f %f %f flag=%d\n", k, l, list[k].x, list[k].y, list[k].z, list[k].flag);
+	    bu_log("k=%zu l=%zu %f %f %f flag=%d\n", k, l, list[k].x, list[k].y, list[k].z, list[k].flag);
     }
 
     if (debug > 2) {
 	for (k=1;(k<=l);k++)
-	    bu_log("%d %f %f %f\n", k, XVAL[k], YVAL[k], ZVAL[k]);
+	    bu_log("%zu %f %f %f\n", k, XVAL[k], YVAL[k], ZVAL[k]);
     }
 
     VSET(last, MAX_FASTF, MAX_FASTF, MAX_FASTF);
@@ -1453,7 +1453,7 @@ proc_plate(size_t cnt)
 	if (debug > 2) {
 	    for (k=1;k<l; k++)
 		bu_log("Compressed: %f %f %f\n", XVAL[k], YVAL[k], ZVAL[k]);
-	    bu_log("%d unique plate thicknesses:\n", nthicks);
+	    bu_log("%zu unique plate thicknesses:\n", nthicks);
 	    for (thick_no=0; thick_no < nthicks; thick_no++)
 		bu_log("\t%g inches\n", thicks[thick_no]*conv_mm2in);
 	}
@@ -3081,7 +3081,7 @@ proc_rod(size_t cnt)
 
 	    l= l+1;
 	    if (debug > 3)
-		bu_log("k=%d l=%d %f %f %f flag=%d %f mirror=%d\n",
+		bu_log("k=%zu l=%zu %f %f %f flag=%d %f mirror=%d\n",
 		       k, l, list[k].x, list[k].y, list[k].z,
 		       list[k].flag, list[k].radius, list[k].mirror);
 	}
@@ -3089,7 +3089,7 @@ proc_rod(size_t cnt)
 
     if (debug > 2) {
 	for (k=1;(k<=l);k++)
-	    bu_log("compressed: %d %f %f %f %f %d\n",
+	    bu_log("compressed: %zu %f %f %f %f %d\n",
 		   k, XVAL[k], YVAL[k], ZVAL[k], RADIUS[k], mirror[k]);
     }
 
@@ -3647,7 +3647,7 @@ main(int argc, char **argv)
 	    if (bu_sscanf(buf, "%6zu%*66c%3d%5d",
 			  &i, &eqlos, &matcode) != 3) {
 
-		bu_exit(1, "Incomplete line in materials file for component '%.4d'\n", i);
+		bu_exit(1, "Incomplete line in materials file for component '%.4zu'\n", i);
 	    }
 	    nm[i].matcode = matcode;
 	    nm[i].eqlos = eqlos;

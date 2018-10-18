@@ -33,6 +33,7 @@
 #include <stdlib.h>
 #include <math.h>
 
+#include "bu/snooze.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "bn/plot3.h"
@@ -61,21 +62,6 @@ struct bu_structparse view_parse[] = {
 
 const char title[] = "RT Range Plot";
 
-void
-usage(const char *argv0)
-{
-    bu_log("Usage:  %s [options] model.g objects... >file.ray\n", argv0);
-    bu_log("Options:\n");
-    bu_log(" -s #		Grid size in pixels, default 512\n");
-    bu_log(" -a Az		Azimuth in degrees	(conflicts with -M)\n");
-    bu_log(" -e Elev	Elevation in degrees	(conflicts with -M)\n");
-    bu_log(" -M		Read model2view matrix on stdin (conflicts with -a, -e)\n");
-    bu_log(" -o model.g	Specify output file (default=stdout)\n");
-    bu_log(" -U #		Set use_air boolean to # (default=0)\n");
-    bu_log(" -x #		Set librt debug flags\n");
-}
-
-
 int	rayhit(register struct application *ap, struct partition *PartHeadp, struct seg *segp);
 int	raymiss(register struct application *ap);
 
@@ -93,7 +79,7 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int UNU
 {
 
     bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
-    sleep(1);
+    bu_snooze(BU_SEC2USEC(1));
 
     ap->a_hit = rayhit;
     ap->a_miss = raymiss;
@@ -127,7 +113,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
      *  tree walking and database prepping to still be done in parallel.
      */
     if ( npsw >= 1 )  {
-	bu_log("Note: changing from %d cpus to 1 cpu\n", npsw );
+	bu_log("Note: changing from %zu cpus to 1 cpu\n", npsw );
 	npsw = 1;		/* Disable parallel processing */
     }
 
@@ -303,7 +289,11 @@ view_end(struct application *UNUSED(ap))
 }
 
 
-void application_init (void) {}
+void
+application_init (void)
+{
+    option("", "-o file.ray", "Specify output file (default=stdout)", 0);
+}
 
 /*
  * Local Variables:

@@ -37,6 +37,7 @@
 #include "bu/malloc.h"
 #include "bu/getopt.h"
 #include "bu/vls.h"
+#include "bu/snooze.h"
 #include "pkg.h"
 #include "ncp.h"
 
@@ -110,7 +111,7 @@ main() {
 	client = pkg_getclient(netfd, callbacks, NULL, 0);
 	if (client == PKC_NULL) {
 	    bu_log("Connection seems to be busy, waiting...\n");
-	    sleep(10);
+	    bu_snooze(BU_SEC2USEC(10));
 	    continue;
 	} else if (client == PKC_ERROR) {
 	    bu_log("Fatal error accepting client connection.\n");

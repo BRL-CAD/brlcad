@@ -1,4 +1,5 @@
 set(bu_headers
+  app.h
   avs.h
   bitv.h
   cmd.h
@@ -6,6 +7,7 @@ set(bu_headers
   cv.h
   debug.h
   defines.h
+  dylib.h
   endian.h
   env.h
   exit.h
@@ -15,11 +17,13 @@ set(bu_headers
   hash.h
   hist.h
   hook.h
+  interrupt.h
   list.h
   log.h
   magic.h
   malloc.h
   mapped_file.h
+  mime.h
   observer.h
   opt.h
   parallel.h
@@ -28,6 +32,7 @@ set(bu_headers
   ptbl.h
   redblack.h
   simd.h
+  snooze.h
   sort.h
   str.h
   tc.h
@@ -39,9 +44,9 @@ set(bu_headers
   vlb.h
   vls.h
   )
-install(FILES ${bu_headers} DESTINATION ${INCLUDE_DIR}/brlcad/bu)
-
-CMAKEFILES(${bu_headers})
+BRLCAD_MANAGE_FILES(bu_headers ${INCLUDE_DIR}/brlcad/bu)
+CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(column.h)
 
 # Local Variables:
 # tab-width: 8

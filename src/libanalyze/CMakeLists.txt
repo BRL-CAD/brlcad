@@ -16,7 +16,9 @@ set(LIBANALYZE_SOURCES
   mass.c
   moments.c
   nirt.cxx
+  obj_to_pnts.cxx
   overlaps.c
+  polygonizer.c
   raydiff.c
   #find_subtracted_shapes.cpp
   surf_area.c
@@ -29,7 +31,6 @@ set(LIBANALYZE_SOURCES
   MeshHealing/Geometry.cpp
   MeshHealing/Stitch.cpp
   heal_mesh.cpp
-  overlaps/analyze_overlaps.c
   GridGeneration/rectangular_grid.c
   )
 
@@ -48,7 +49,12 @@ set_target_properties(libanalyze PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 add_subdirectory(tests)
 
-CMAKEFILES(analyze_private.h find_subtracted_shapes.cpp)
+CMAKEFILES(
+  CMakeLists.txt
+  analyze_private.h
+  find_subtracted_shapes.cpp
+  wnsurface.cxx
+  )
 
 # Local Variables:
 # tab-width: 8

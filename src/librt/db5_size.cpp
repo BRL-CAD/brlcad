@@ -68,7 +68,7 @@ struct db5_sizecalc {
 #define DB5SIZE(_dp) ((struct db5_sizecalc *)_dp->u_data)
 
 HIDDEN int
-db_get_external_reuse(register struct bu_external *ep, const struct directory *dp, const struct db_i *dbip)
+db_get_external_reuse(struct bu_external *ep, const struct directory *dp, const struct db_i *dbip)
 {
     ep->ext_nbytes = dp->d_len;
 

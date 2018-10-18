@@ -50,7 +50,7 @@ extern void analyze_gen_worker(int cpu, void *ptr);
 ANALYZE_EXPORT extern int analyze_get_bbox_rays(fastf_t **rays, point_t min, point_t max, struct bn_tol *tol);
 ANALYZE_EXPORT extern int analyze_get_scaled_bbox_rays(fastf_t **rays, point_t min, point_t max, fastf_t ratio);
 
-ANALYZE_EXPORT extern int analyze_get_solid_partitions(struct bu_ptbl *results, struct rt_gen_worker_vars *pstate, const fastf_t *rays, int ray_cnt,
+ANALYZE_EXPORT extern int analyze_get_solid_partitions(struct bu_ptbl *results, struct rt_gen_worker_vars *pstate, fastf_t *rays, int ray_cnt,
 	struct db_i *dbip, const char *obj, struct bn_tol *tol, int ncpus, int filter);
 
 typedef struct xray * (*getray_t)(void *ptr);
@@ -65,6 +65,7 @@ struct per_obj_data {
     double *o_lenDensity;
     double *o_volume;
     double *o_mass;
+    double *o_area;
     double *o_surf_area;
     fastf_t *o_lenTorque; /* torque vector for each view */
     fastf_t *o_moi;       /* one vector per view for collecting the partial moments of inertia calculation */
@@ -81,6 +82,7 @@ struct per_region_data {
     double *r_len;        /* for per-region, per-view computation */
     double *r_mass;
     double *r_volume;
+    double *r_area;
     double *r_surf_area;
     struct per_obj_data *optr;
 };
@@ -104,9 +106,6 @@ struct current_state {
     /* ANALYZE_SEM_STATS protects this */
     double *m_lenDensity;
     double *m_len;
-    double *m_volume;
-    double *m_mass;
-    double *m_surf_area;
     unsigned long *shots;
 
     vect_t u_dir;  	/* direction of U vector for "current view" */
@@ -131,13 +130,19 @@ struct current_state {
     double mass_tolerance;
     double sa_tolerance;
     double azimuth_deg, elevation_deg;
-    double gridSpacing, gridSpacingLimit;
+    double gridSpacing, gridSpacingLimit, gridRatio, aspect;
+    size_t grid_width, grid_height;
+    double samples_per_model_axis;
     int ncpu;
     size_t required_number_hits;
     int use_air;
     int use_single_grid;
+    int grid_size_flag; 	/* flag that identifies when the grid-size is mentioned */
     int use_view_information;
     int quiet_missed_report;
+    int default_den;
+    int analysis_flags;
+    int aborted;
     char *densityFileName;
 
     FILE *plot_volume;
@@ -176,6 +181,15 @@ struct current_state {
 
     adj_air_callback_t adj_air_callback;
     void* adj_air_callback_data;
+
+    first_air_callback_t first_air_callback;
+    void* first_air_callback_data;
+
+    last_air_callback_t last_air_callback;
+    void* last_air_callback_data;
+
+    unconf_air_callback_t unconf_air_callback;
+    void* unconf_air_callback_data;
 };
 
 __END_DECLS

@@ -34,12 +34,14 @@ main(int ac, char *av[])
     const char *label;
     const char *ans;
     const char *res;
-    char *tbasename = (char *)bu_calloc(strlen(av[0]), sizeof(char), "bu_progname basename");
+    char *tbasename;
 
     if (ac > 1) {
-	fprintf(stderr,"Usage: %s\n", av[0]);
+	fprintf(stderr, "Usage: %s\n", av[0]);
 	return 1;
     }
+
+    tbasename = (char *)bu_calloc(strlen(av[0]), sizeof(char), "bu_progname basename");
 
     /* pre-define tests */
     printf("Performing pre-defined tests:\n");

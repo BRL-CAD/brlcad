@@ -335,7 +335,7 @@ struct bu_opt_desc_opts {
  * The generated help string.  Note that the string uses allocated memory - it is the responsibility of the
  * caller to free it with @link bu_free @endlink.
  */
-BU_EXPORT extern const char *bu_opt_describe(struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings);
+BU_EXPORT extern char *bu_opt_describe(struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings);
 
 
 /** @} */

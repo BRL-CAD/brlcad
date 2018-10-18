@@ -73,29 +73,29 @@ main(int argc, char **argv)
 	bu_exit (1, NULL);
     }
 
-    ifname = bu_realpath(argv[1], NULL);
+    ifname = bu_file_realpath(argv[1], NULL);
     if ((infd1 = open(ifname, 0)) < 0) {
 	perror(ifname);
-	bu_free(ifname, "ifname alloc from bu_realpath");
+	bu_free(ifname, "ifname alloc from bu_file_realpath");
 	bu_exit (3, NULL);
     }
-    bu_free(ifname, "ifname alloc from bu_realpath");
+    bu_free(ifname, "ifname alloc from bu_file_realpath");
 
-    ifname = bu_realpath(argv[2], NULL);
+    ifname = bu_file_realpath(argv[2], NULL);
     if ((infd2 = open(ifname, 0)) < 0) {
 	perror(ifname);
-	bu_free(ifname, "ifname alloc from bu_realpath");
+	bu_free(ifname, "ifname alloc from bu_file_realpath");
 	bu_exit (3, NULL);
     }
-    bu_free(ifname, "ifname alloc from bu_realpath");
+    bu_free(ifname, "ifname alloc from bu_file_realpath");
 
-    ifname = bu_realpath(argv[3], NULL);
+    ifname = bu_file_realpath(argv[3], NULL);
     if ((infd3 = open(ifname, 0)) < 0) {
 	perror(ifname);
-	bu_free(ifname, "ifname alloc from bu_realpath");
+	bu_free(ifname, "ifname alloc from bu_file_realpath");
 	bu_exit (3, NULL);
     }
-    bu_free(ifname, "ifname alloc from bu_realpath");
+    bu_free(ifname, "ifname alloc from bu_file_realpath");
 
     if (argc == 5) {
 	nlines = atoi(argv[4]);

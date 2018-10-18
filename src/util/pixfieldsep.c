@@ -30,6 +30,7 @@
 
 #include "bu/getopt.h"
 #include "bu/exit.h"
+#include "bu/snooze.h"
 
 
 FILE *out1;
@@ -102,7 +103,7 @@ main(int argc, char **argv)
     size_t ret;
 
     fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
-    sleep(1);
+    bu_snooze(BU_SEC2USEC(1));
 
     if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);

@@ -31,6 +31,7 @@
 #include "bu/color.h"
 #include "bu/str.h"
 #include "bu/exit.h"
+#include "bu/snooze.h"
 #include "fb.h"
 
 
@@ -194,7 +195,7 @@ main(int argc, char **argv)
 	else
 	    lineout(fbp, buf, n);
 	if (pause_time)
-	    sleep(pause_time);
+	    bu_snooze(BU_SEC2USEC(pause_time));
     }
     fb_close(fbp);
 

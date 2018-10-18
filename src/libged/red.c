@@ -35,6 +35,8 @@
 #define __restrict /* quell gcc 4.1.2 system regex.h -pedantic-errors */
 #include <regex.h>
 
+#include "bu/app.h"
+#include "bu/file.h"
 #include "bu/getopt.h"
 #include "rt/db4.h"
 #include "raytrace.h"
@@ -393,11 +395,10 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
     ret = regexec(&combtree_op_regex, currptr, combtree_op_regex.re_nsub, result_locations, 0);
     if (ret == 0) {
 	/* matched */
+	int cstart = result_locations[0].rm_so;
 
 	/* Check for non-whitespace garbage between first operator and start of comb tree definition */
-	result_locations[0].rm_eo = result_locations[0].rm_so;
-	result_locations[0].rm_so = 0;
-	if (regexec(&nonwhitespace_regex, currptr, nonwhitespace_regex.re_nsub, result_locations, 0) == 0) {
+	if ((regexec(&nonwhitespace_regex, currptr, nonwhitespace_regex.re_nsub, result_locations, 0) == 0) && result_locations[0].rm_so < cstart) {
 	    /* matched */
 
 	    bu_vls_printf(gedp->ged_result_str, "Saw something other than comb tree entries after comb tree tag - error!\n");

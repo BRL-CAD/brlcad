@@ -44,7 +44,7 @@ Readrec(int recno)
 
     currec = recno;
     offset = (recno - 1) * reclen;
-    if (bu_fseek(fd, offset, 0)) {
+    if (fseek(fd, offset, 0)) {
 	bu_log("Error in seek\n");
 	perror("Readrec");
 	bu_exit(1, NULL);

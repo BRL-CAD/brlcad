@@ -35,6 +35,7 @@
 #include "vmath.h"
 #include "bu/getopt.h"
 #include "bu/malloc.h"
+#include "bu/snooze.h"
 #include "bu/str.h"
 #include "bu/exit.h"
 #include "bu/log.h"
@@ -207,7 +208,7 @@ get_args(int argc, char **argv)
 		print_wheel = 1;
 		break;
 	    case 'l':
-		bu_sscanf(bu_optarg, "%zd", &num_links);
+		bu_sscanf(bu_optarg, "%zu", &num_links);
 		link_nindex = bu_optind;
 		bu_optind += 1;
 		print_link = 1;
@@ -356,7 +357,7 @@ main(int argc, char *argv[])
     MAT_IDN(m_rev_axes);
 
     fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
-    sleep(1);
+    bu_snooze(BU_SEC2USEC(1));
 
     if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))) {
 	usage();

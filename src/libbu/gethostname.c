@@ -20,12 +20,25 @@
 
 #include "common.h"
 
+#ifdef HAVE_SYS_TYPES_H
+#  define _DARWIN_C_SOURCE /* for sysctl method on Mac */
+#  include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_SYSCTL_H
+#  include <sys/sysctl.h>
+#endif
+#ifdef HAVE_SYS_UTSNAME_H
+#  include <sys/utsname.h>
+#endif
+#include <string.h>
+
 #include "bnetwork.h"
 #include "bio.h"
 
 #include "bu/log.h"
 #include "bu/str.h"
 #include "bu/endian.h"
+#include "bu/file.h"
 
 /* strict c89 doesn't declare gethostname() */
 #if !defined(HAVE_DECL_GETHOSTNAME) && !defined(_WINSOCKAPI_)
@@ -33,9 +46,9 @@ extern int gethostname(char *, size_t);
 #endif
 
 int
-bu_gethostname(char *hostname, size_t hostlen)
+bu_gethostname(char *result, size_t hostlen)
 {
-    int status;
+    char hostname[MAXPATHLEN] = {0};
 
 #ifdef HAVE_WINSOCK_H
     /**
@@ -47,21 +60,64 @@ bu_gethostname(char *hostname, size_t hostlen)
 	bu_log("ERROR: unable to initialize networking\n");
 #endif
 
+    /* METHOD 1: use gethostname() */
 #ifdef HAVE_GETHOSTNAME
-    status = gethostname(hostname, hostlen);
-#else
-
-    /* gethostname is POSIX but not a C99.  fallback to nothing. */
-    bu_strlcpy(hostname, "unknown", hostlen);
-    status = 0; /* no error */
-
+    if (BU_STR_EMPTY(hostname))
+	gethostname(hostname, MAXPATHLEN);
 #endif
+
+    /* METHOD 2: use uname() */
+#ifdef HAVE_UNAME
+    if (BU_STR_EMPTY(hostname)) {
+	struct utsname name;
+	if (uname(&name) == 0) {
+	    bu_strlcpy(hostname, name.nodename, MAXPATHLEN);
+	}
+    }
+#endif
+
+    /* METHOD 3: use sysctl() */
+#if defined(HAVE_SYSCTL) && defined(CTL_KERN) && defined(KERN_HOSTNAME)
+    if (BU_STR_EMPTY(hostname)) {
+	int mib[2] = { CTL_KERN, KERN_HOSTNAME };
+	size_t len = MAXPATHLEN;
+	sysctl(mib, 2, hostname, &len, NULL, 0);
+    }
+#endif /* HAVE_SYSCTL */
+
+    /* METHOD 4: try procfs, typically on Linux */
+    if (BU_STR_EMPTY(hostname) && bu_file_exists("/proc/sys/kernel/hostname", NULL)) {
+	FILE *fp = fopen("/proc/sys/kernel/hostname", "r");
+	bu_fgets(hostname, MAXPATHLEN, fp);
+	fclose(fp);
+    }
+
+    /* METHOD 5: try GetComputerName, typically on Windows.  it's not
+     * exactly what we're wanting, but close enough if gethostname()
+     * failed for some reason.
+     */
+#ifdef HAVE_WINSOCK_H
+    if (BU_STR_EMPTY(hostname)) {
+	TCHAR buffer[MAXPATHLEN] = {0};
+	if (GetComputerName(buffer, (LPDWORD)MAXPATHLEN) == 0) {
+	    bu_strlcpy(hostname, buffer, hostlen);
+	}
+    }
+#endif /* HAVE_WINSOCK_H */
+
+    if (BU_STR_EMPTY(hostname)) {
+	/* non-NULL fallback */
+	bu_strlcpy(hostname, "unknown", hostlen);
+    }
 
 #ifdef HAVE_WINSOCK_H
     WSACleanup();
 #endif
 
-    return status;
+    if (!BU_STR_EMPTY(hostname))
+	bu_strlcpy(result, hostname, hostlen);
+
+    return (strlen(hostname) == 0) ? -1 : 0;
 }
 
 /*

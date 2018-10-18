@@ -113,15 +113,15 @@ get_args(int argc, char *argv[])
 	char *ifname;
 	char *file_name = NULL;
 	file_name = argv[bu_optind];
-	ifname = bu_realpath(file_name, NULL);
+	ifname = bu_file_realpath(file_name, NULL);
 	if (freopen(ifname, "r", stdin) == NULL) {
 	    fprintf(stderr,
 		    "%s: cannot open \"%s(canonical %s)\" for reading\n",
 		    progname, file_name, ifname);
-	    bu_free(ifname, "ifname alloc from bu_realpath");
+	    bu_free(ifname, "ifname alloc from bu_file_realpath");
 	    return 0;
 	}
-	bu_free(ifname, "ifname alloc from bu_realpath");
+	bu_free(ifname, "ifname alloc from bu_file_realpath");
     }
 
     if (argc > ++bu_optind)

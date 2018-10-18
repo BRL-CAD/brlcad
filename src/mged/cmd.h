@@ -39,6 +39,9 @@ struct cmdtab {
 };
 
 
+extern int mged_db_search_callback(int, const char **, void *);
+
+
 /* Commands */
 
 extern int cmd_ged_edit_wrapper(ClientData, Tcl_Interp *, int, const char *[]);
@@ -135,7 +138,6 @@ extern int f_labelface(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_list(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_make(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_matpick(ClientData, Tcl_Interp *, int, const char *[]);
-extern int f_memprint(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_mirface(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_model2view(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_mouse(ClientData, Tcl_Interp *, int, const char *[]);

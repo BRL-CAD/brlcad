@@ -372,7 +372,7 @@ test_nmg_clone_model(struct model *m1, struct model *m2)
     /* Testing manifolds of model */
     if (m1->manifolds != (char *)NULL && m2->manifolds != (char *)NULL) {
 	if (*m1->manifolds != *m2->manifolds) {
-	    bu_log("Error manifolds of model. m1: %ld, m2: %ld\n", *m1->manifolds, *m2->manifolds);
+	    bu_log("Error manifolds of model. m1: %d, m2: %d\n", *m1->manifolds, *m2->manifolds);
 	    result = -1;
 	}
     } else {

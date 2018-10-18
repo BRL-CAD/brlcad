@@ -114,15 +114,17 @@ db5_decode_length(size_t *lenp, const unsigned char *cp, int format)
     return 0;
 }
 
-int
+size_t
 db5_decode_signed(size_t *lenp, const unsigned char *cp, int format)
 {
     switch (format) {
 	case DB5HDR_WIDTHCODE_8BIT:
-	    if ((*lenp = (*cp)) & 0x80) *lenp |= ((size_t)-1 ^ 0xFF);
+	    if ((*lenp = (*cp)) & 0x80)
+		*lenp |= ((size_t)-1 ^ 0xFF);
 	    return 1;
 	case DB5HDR_WIDTHCODE_16BIT:
-	    if ((*lenp = BU_GSHORT(cp)) & 0x8000)  *lenp |= ((size_t)-1 ^ 0xFFFF);
+	    if ((*lenp = BU_GSHORT(cp)) & 0x8000)
+		*lenp |= ((size_t)-1 ^ 0xFFFF);
 	    return 2;
 	case DB5HDR_WIDTHCODE_32BIT:
 	    if ((*lenp = BU_GLONG(cp)) & 0x80000000)
@@ -140,13 +142,6 @@ db5_decode_signed(size_t *lenp, const unsigned char *cp, int format)
 }
 
 
-/**
- * Given a value and a variable-width format spec, store it in network
- * order.
- *
- * Returns -
- * pointer to next available byte.
- */
 unsigned char *
 db5_encode_length(
     unsigned char *cp,
@@ -177,11 +172,11 @@ db5_encode_length(
  * 0 on success
  * -1 on error
  */
-int
-db5_crack_disk_header(struct db5_raw_internal *rip, const unsigned char *cp)
+HIDDEN int
+crack_disk_header(struct db5_raw_internal *rip, const unsigned char *cp)
 {
     if (cp[0] != DB5HDR_MAGIC1) {
-	bu_log("db5_crack_disk_header() bad magic1 -- database has become corrupted\n expected x%x, got x%x\n",
+	bu_log("crack_disk_header() bad magic1 -- database has become corrupted\n expected x%x, got x%x\n",
 	       DB5HDR_MAGIC1, cp[0]);
 	if (cp[0] == 'I') {
 	    bu_log ("Concatenation of different database versions detected.\n");
@@ -214,7 +209,7 @@ db5_crack_disk_header(struct db5_raw_internal *rip, const unsigned char *cp)
     rip->major_type = cp[4];
     rip->minor_type = cp[5];
 
-    if (RT_G_DEBUG&DEBUG_DB) bu_log("db5_crack_disk_header()\n\
+    if (RT_G_DEBUG&DEBUG_DB) bu_log("crack_disk_header()\n\
 	h_dli=%d, h_object_width=%d, h_name_present=%d, h_name_width=%d, \n\
 	a_width=%d, a_present=%d, a_zzz=%d, \n\
 	b_width=%d, b_present=%d, b_zzz=%d, major=%d, minor=%d\n",
@@ -235,17 +230,12 @@ db5_crack_disk_header(struct db5_raw_internal *rip, const unsigned char *cp)
 }
 
 
-/**
- * Returns -
- * on success, pointer to first unused byte
- * NULL, on error
- */
 const unsigned char *
 db5_get_raw_internal_ptr(struct db5_raw_internal *rip, const unsigned char *ip)
 {
     const unsigned char *cp = ip;
 
-    if (db5_crack_disk_header(rip, cp) < 0) return NULL;
+    if (crack_disk_header(rip, cp) < 0) return NULL;
     cp += sizeof(struct db5_ondisk_header);
 
     cp += db5_decode_length(&rip->object_length, cp, rip->h_object_width);
@@ -305,7 +295,7 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
 {
     struct db5_ondisk_header header;
     unsigned char lenbuf[8];
-    int count = 0;
+    size_t count = 0;
     size_t used;
     size_t want, got;
     size_t dlen;
@@ -316,7 +306,7 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
 	bu_log("db5_get_raw_internal_fp(): fread header error\n");
 	return -2;
     }
-    if (db5_crack_disk_header(rip, (unsigned char *)&header) < 0)
+    if (crack_disk_header(rip, (unsigned char *)&header) < 0)
 	return -2;
     used = sizeof(header);
 

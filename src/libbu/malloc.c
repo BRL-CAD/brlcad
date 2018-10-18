@@ -332,9 +332,9 @@ bu_shmget(int *UNUSED(shmid), char **UNUSED(shared_memory), int UNUSED(key), siz
 {
     int ret = 1;
 #ifdef HAVE_SYS_SHM_H
-    int shmsize;
-    long psize;
-    int flags = IPC_CREAT|0666;
+    size_t shmsize;
+    size_t psize;
+    int flags = IPC_CREAT | 0666;
 
 #ifdef _SC_PAGESIZE
     psize = sysconf(_SC_PAGESIZE);
@@ -350,12 +350,12 @@ bu_shmget(int *UNUSED(shmid), char **UNUSED(shared_memory), int UNUSED(key), siz
        shmsize = (size + getpagesize()-1) & ~(getpagesize()-1);
        */
     shmsize = (size + psize - 1) & ~(psize - 1);
-
     /* First try to attach to an existing one */
     if (((*shmid) = shmget(key, shmsize, 0)) < 0) {
 	/* No existing one, create a new one */
 	if (((*shmid) = shmget(key, shmsize, flags)) < 0) {
 	    printf("bu_shmget failed, errno=%d\n", errno);
+	    perror("bu_shmget");
 	    return 1;
 	}
 	ret = -1;
@@ -365,7 +365,8 @@ bu_shmget(int *UNUSED(shmid), char **UNUSED(shared_memory), int UNUSED(key), siz
     /* Open the segment Read/Write */
     /* This gets mapped to a high address on some platforms, so no problem. */
     if (((*shared_memory) = (char *)shmat((*shmid), 0, 0)) == (char *)(-1L)) {
-	printf("errno=%d\n", errno);
+	printf("bu_shmget failed, errno=%d\n", errno);
+	perror("shmat");
 	return 1;
     }
 

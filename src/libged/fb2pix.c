@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "fb.h"
 

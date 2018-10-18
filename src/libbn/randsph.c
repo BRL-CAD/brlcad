@@ -33,6 +33,7 @@
 #include "vmath.h"
 #include "bn/rand.h"
 #include "bn/randmt.h"
+#include "bn/sobol.h"
 
 HIDDEN void
 _bn_unit_sph_sample(point_t pnt)
@@ -82,14 +83,11 @@ _bn_unit_sph_sample(point_t pnt)
     pnt[2] = pz;
 }
 
-#if 0
-/* TODO - investigate implementation of http://www.dtic.mil/docs/citations/ADA510216
- * scrambling method to see if Sobol can actually work for this... Basic Sobol
- * sequences result in patterns. Also relevant: people.sc.fsu.edu/~hcc8471/ssobol.pdf */
+/* TODO - investigate http://www.dtic.mil/docs/citations/ADA510216 */
 HIDDEN void
-_bn_unit_sph_sample_sobol(point_t pnt, bn_soboldata s)
+_bn_unit_sph_sample_sobol(point_t pnt, struct bn_soboldata *s)
 {
-    double p[2];
+    double *p;
     double lb[2] = {-1, -1};
     double ub[2] = {1, 1};
     double px, py, pz;
@@ -103,7 +101,7 @@ _bn_unit_sph_sample_sobol(point_t pnt, bn_soboldata s)
 	success = 1;
 
 	/* Get our next two quasi-random numbers */
-	bn_sobol_next(s, (double *)p, (double *)lb, (double *)ub);
+	p = bn_sobol_next(s, (double *)lb, (double *)ub);
 
 	/* Check that p[0]^2+p[1]^2 < 1 */
 	S = p[0]*p[0] + p[1]*p[1];
@@ -120,12 +118,12 @@ _bn_unit_sph_sample_sobol(point_t pnt, bn_soboldata s)
     pnt[1] = py;
     pnt[2] = pz;
 }
-#endif
-
 
 void
 bn_rand_sph_sample(point_t sample, const point_t center, const fastf_t radius)
 {
+    if (!sample || !center || NEAR_ZERO(radius, SMALL_FASTF)) return;
+
     _bn_unit_sph_sample(sample);
 
     /* If we've got a non-unit sph radius, scale the point */
@@ -138,6 +136,26 @@ bn_rand_sph_sample(point_t sample, const point_t center, const fastf_t radius)
 	VADD2(sample, sample, center);
     }
 }
+
+
+void
+bn_sobol_sph_sample(point_t sample, const point_t center, const fastf_t radius, struct bn_soboldata *s)
+{
+    if (!s || !sample || !center || NEAR_ZERO(radius, SMALL_FASTF)) return;
+
+    _bn_unit_sph_sample_sobol(sample, s);
+
+    /* If we've got a non-unit sph radius, scale the point */
+    if (!NEAR_EQUAL(radius, 1.0, SMALL_FASTF)) {
+	VSCALE(sample, sample, radius);
+    }
+
+    /* If we've got a non-zero sph center, translate the point */
+    if (!VNEAR_ZERO(sample, SMALL_FASTF)) {
+	VADD2(sample, sample, center);
+    }
+}
+
 
 /** @} */
 /*

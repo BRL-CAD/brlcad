@@ -164,7 +164,6 @@ vo_open_cmd(const char *oname)
     vop->vo_coord = 'v';
     vop->vo_rotate_about = 'v';
     vo_update(vop, 0);
-    BU_LIST_INIT(&vop->vo_observers.l);
     vop->vo_callback = (void (*)())0;
 
     /* append to list of view_obj's */

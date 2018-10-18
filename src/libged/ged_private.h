@@ -30,6 +30,7 @@
 
 #include <time.h>
 
+#include "bu/opt.h"
 #include "rt/db4.h"
 #include "raytrace.h"
 #include "rt/geom.h"
@@ -74,6 +75,9 @@ __BEGIN_DECLS
 #define DG_GED_MAX 2047.0
 #define DG_GED_MIN -2048.0
 
+/* Default libged column width assumption */
+#define GED_TERMINAL_WIDTH 80
+
 struct _ged_funtab {
     char *ft_name;
     char *ft_parms;
@@ -110,6 +114,7 @@ struct _ged_client_data {
     int draw_normals;
     int draw_solid_lines_only;
     int draw_no_surfaces;
+    int draw_non_subtract_only;
     int shade_per_vertex_normals;
     int draw_edge_uses;
     int fastpath_count;			/* statistics */
@@ -167,7 +172,9 @@ extern int _ged_combadd2(struct ged *gedp,
 			 int region_flag,
 			 db_op_t relation,
 			 int ident,
-			 int air);
+			 int air,
+			 matp_t m,
+			 int validate);
 
 /* defined in display_list.c */
 extern void _dl_eraseAllNamesFromDisplay(struct bu_list *hdlp, struct db_i *dbip,
@@ -314,16 +321,6 @@ extern int _ged_cm_end(const int argc,
 		       const char **argv);
 extern int _ged_cm_null(const int argc,
 			const char **argv);
-
-
-/* defined in ls.c */
-extern void _ged_vls_col_pr4v(struct bu_vls *vls,
-			      struct directory **list_of_names,
-			      size_t num_in_list,
-			      int no_decorate,
-			      int ssflag);
-extern struct directory ** _ged_getspace(struct db_i *dbip,
-					 size_t num_entries);
 
 /* defined in preview.c */
 extern void _ged_setup_rt(struct ged *gedp,
@@ -531,6 +528,61 @@ extern int _ged_results_add(struct ged_results *results, const char *result_stri
 
 extern int _ged_brep_to_csg(struct ged *gedp, const char *obj_name, int verify);
 extern int _ged_brep_tikz(struct ged *gedp, const char *obj_name, const char *outfile);
+
+
+/* defined in ged_util.c */
+
+/**
+ * Given two pointers to pointers to directory entries, do a string
+ * compare on the respective names and return that value.
+ */
+extern int cmpdirname(const void *a, const void *b, void *arg);
+
+/**
+ * Given two pointers to pointers to directory entries, compare
+ * the dp->d_len sizes.
+ */
+extern int cmpdlen(const void *a, const void *b, void *arg);
+
+
+/**
+ * Given a pointer to a list of pointers to names and the number of
+ * names in that list, sort and print that list in column order over
+ * four columns.
+ */
+extern void _ged_vls_col_pr4v(struct bu_vls *vls,
+			      struct directory **list_of_names,
+			      size_t num_in_list,
+			      int no_decorate,
+			      int ssflag);
+
+/**
+ * This routine walks through the directory entry list and mallocs
+ * enough space for pointers to hold the number of entries specified
+ * by the argument if > 0.
+ *
+ */
+extern struct directory ** _ged_getspace(struct db_i *dbip,
+					 size_t num_entries);
+
+/**
+ * Routine for generic command help printing.
+ */
+extern void _ged_cmd_help(struct ged *gedp, const char *usage, struct bu_opt_desc *d);
+
+/* Option for verbosity variable setting */
+extern int _ged_vopt(struct bu_vls *msg, int argc, const char **argv, void *set_var);
+
+/**
+ * Routine for checking argc/argv list for existing objects and sorting anything
+ * that isn't a valid object to the end of the list.  Returns the number of
+ * argv entries where db_lookup failed.  Optionally takes a pointer to a directory
+ * pointer array and will stash found directory pointers there - caller must make
+ * sure the allocated array is large enough to hold up to argc pointers.
+ */
+extern int
+_ged_sort_existing_objs(struct ged *gedp, int argc, const char *argv[], struct directory **dpa);
+
 
 __END_DECLS
 

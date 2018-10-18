@@ -43,7 +43,7 @@ extern "C" {
 
 #define RT_DECLARE_INTERFACE(name) \
     extern int rt_##name##_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip); \
-    extern int rt_##name##_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead); \
+    extern int rt_##name##_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead); \
     extern int rt_##name##_piece_shot(struct rt_piecestate *psp, struct rt_piecelist *plp, double dist_corr, struct xray *rp, struct application *ap, struct seg *seghead); \
     extern void rt_##name##_piece_hitsegs(struct rt_piecestate *psp, struct seg *seghead, struct application *ap); \
     extern void rt_##name##_print(const struct soltab *stp); \
@@ -2097,7 +2097,7 @@ const struct rt_functab OBJ[] = {
 	/* 41 */
 	RT_FUNCTAB_MAGIC, "ID_PNTS", "pnts",
 	0,
-	NULL, /* prep */
+	RTFUNCTAB_FUNC_PREP_CAST(rt_pnts_prep),
 	NULL, /* shot */
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_pnts_print),
 	NULL, /* norm */
@@ -2309,11 +2309,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* parse */
 	sizeof(struct rt_script_internal),
 	RT_SCRIPT_INTERNAL_MAGIC,
-	RTFUNCTAB_FUNC_GET_CAST(rt_script_get),
-	RTFUNCTAB_FUNC_ADJUST_CAST(rt_script_adjust),
-	RTFUNCTAB_FUNC_FORM_CAST(rt_script_form),
+	RTFUNCTAB_FUNC_GET_CAST(rt_script_get), 
+	RTFUNCTAB_FUNC_ADJUST_CAST(rt_script_adjust), 
+	RTFUNCTAB_FUNC_FORM_CAST(rt_script_form), 
 	NULL, /* make */
-	RTFUNCTAB_FUNC_PARAMS_CAST(rt_script_params),
+	RTFUNCTAB_FUNC_PARAMS_CAST(rt_script_params), 
 	NULL, /* bbox */
 	NULL, /* volume */
 	NULL, /* surf_area */

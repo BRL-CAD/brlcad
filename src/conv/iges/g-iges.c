@@ -46,6 +46,7 @@
 #include "raytrace.h"
 #include "rt/geom.h"
 
+#include "bu/app.h"
 #include "bu/parallel.h"
 #include "bu/getopt.h"
 /* private */
@@ -401,7 +402,7 @@ main(int argc, char *argv[])
 
     if (!multi_file) {
 	/* Copy the parameter section from the temporary file to the output file */
-	if ((bu_fseek(fp_param, 0, 0))) {
+	if ((fseek(fp_param, 0, 0))) {
 	    perror("g-iges");
 	    bu_exit(1, "Cannot seek to start of temporary file\n");
 	}
@@ -618,7 +619,7 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 	    char copy_buffer[CP_BUF_SIZE] = {0};
 
 	    /* Copy the parameter section from the temporary file to the output file */
-	    if ((bu_fseek(fp_param, 0, 0))) {
+	    if ((fseek(fp_param, 0, 0))) {
 		perror("g-iges");
 		bu_exit(1, "Cannot seek to start of temporary file\n");
 	    }

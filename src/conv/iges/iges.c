@@ -848,7 +848,7 @@ verts_to_copious_data(point_t *pts,
     for (i = 0; i < 21; i++)
 	dir_entry[i] = DEFAULT;
 
-    bu_vls_printf(&str, "106,%d,%d", pt_size-1, vert_count+1);
+    bu_vls_printf(&str, "106,%zu,%zu", pt_size-1, vert_count+1);
     if (pt_size == 2) {
 	bu_vls_printf(&str, ",0.0");
 	for (i = 0; i < vert_count; i++)
@@ -1027,7 +1027,7 @@ nmg_fu_to_tsurf(struct faceuse *fu,
 	curve_de[++i] = nmg_loop_to_tcurve(lu, surf_de, u_dir, v_dir, u_max, v_max, base_pt, fp_dir, fp_param);
     }
 
-    bu_vls_printf(&str, "144,%d,0,%d", surf_de, loop_count-1);
+    bu_vls_printf(&str, "144,%d,0,%zu", surf_de, loop_count-1);
     for (i = 0; i < loop_count; i++)
 	bu_vls_printf(&str, ",%d", curve_de[i]);
     bu_vls_strcat(&str, ";");
@@ -1107,7 +1107,7 @@ write_vertex_list(struct nmgregion *r,
 	NMG_CK_VERTEX(v);
 	vg = v->vg_p;
 	if (!vg) {
-	    bu_log("No geometry for vertex %p #%d in table\n", (void *)v, i);
+	    bu_log("No geometry for vertex %p #%zu in table\n", (void *)v, i);
 	} else {
 	    NMG_CK_VERTEX_G(vg);
 	    bu_vls_printf(&str, ",%g,%g,%g",
@@ -1686,12 +1686,12 @@ write_shell_face_loop(char *name,
 		point_t base_pt;
 		fastf_t u_max, v_max;
 
-		bu_vls_printf(&str, "510,%d,%d,%d" ,
+		bu_vls_printf(&str, "510,%d,%zu,%d" ,
 			      write_planar_nurb(fu, u_dir, v_dir, &u_max, &v_max, base_pt, fp_dir, fp_param),
 			      loop_count,
 			      outer_loop_flag);
 	    } else
-		bu_vls_printf(&str, "510,%d,%d,%d" ,
+		bu_vls_printf(&str, "510,%d,%zu,%d" ,
 			      write_plane_entity(fu->f_p->g.plane_p->N, fp_dir, fp_param),
 			      loop_count,
 			      outer_loop_flag);
@@ -1719,7 +1719,7 @@ write_shell_face_loop(char *name,
 	}
 
 	/* write shell entity */
-	bu_vls_printf(&str, "514,%d", face_count);
+	bu_vls_printf(&str, "514,%zu", face_count);
 	for (i = 0; i < face_count; i++)
 	    bu_vls_printf(&str, ",%d,1", face_list[i]);
 	bu_vls_strcat(&str, ";");
@@ -1761,7 +1761,7 @@ write_shell_face_loop(char *name,
     }
 
     /* Put outer shell in BREP object first */
-    bu_vls_printf(&str, "186,%d,1,%d", shell_list[0], shell_count-1);
+    bu_vls_printf(&str, "186,%d,1,%zu", shell_list[0], shell_count-1);
 
     /* Add all other shells */
     for (i = 1; i < shell_count; i++) {
@@ -2336,7 +2336,7 @@ write_tree_of_unions(char *name,
     }
 
     /* write parameter data into a string */
-    bu_vls_printf(&str, "180,%d,%d", 2*length-1, -de_list[0]);
+    bu_vls_printf(&str, "180,%zu,%d", 2*length-1, -de_list[0]);
     for (i = 1; i < length; i++)
 	bu_vls_printf(&str, ",%d,1", -de_list[i]);
 
@@ -2409,7 +2409,7 @@ write_solid_assembly(char *name,
     }
 
     /* write parameter data into a string */
-    bu_vls_printf(&str, "184,%d", length);
+    bu_vls_printf(&str, "184,%zu", length);
     for (i = 0; i < length; i++)
 	bu_vls_printf(&str, ",%d", de_list[i]);
     for (i = 0; i < length; i++)
@@ -2885,7 +2885,7 @@ tree_to_iges(struct rt_comb_internal *comb,
 	/* write the combination as a solid assembly */
 	entity_type = 184;
 
-	bu_vls_printf(&str, "%d,%d", entity_type, length);
+	bu_vls_printf(&str, "%d,%zu", entity_type, length);
 	for (i = 0; i < length; i++)
 	    bu_vls_printf(&str, ",%d", de_pointers[i]);
 	for (i = 0; i < length; i++)

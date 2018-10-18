@@ -86,7 +86,7 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_BI
 execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/pm_config_new.h)
 
 set(NETPBM_SRCS
-  libpm.c
+  libpm.cxx
   fileio.c
   bitio.c
   colorname.c
@@ -115,7 +115,6 @@ set(NETPBM_SRCS
   libpamn.c
   libpammap.c
   libpamcolor.c
-  util/nstring.c
   )
 
 set(NETPBM_HEADERS
@@ -133,7 +132,6 @@ set(NETPBM_HEADERS
   ppm.h
   ppmcmap.h
   ppmfloyd.h
-  util/nstring.h
   )
 
 if(NOT DEFINED BUILD_SHARED_LIBS)

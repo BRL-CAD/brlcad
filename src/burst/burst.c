@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <signal.h>
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/file.h"
 #include "bu/str.h"
@@ -39,13 +40,6 @@
 #include "./extern.h"
 #include "./ascii.h"
 
-
-#ifndef SIGCLD
-#  define SIGCLD SIGCHLD
-#endif
-#ifndef SIGTSTP
-#  define SIGTSTP 18
-#endif
 
 #define DEBUG_BURST 0 /* 1 enables debugging for this module */
 

@@ -41,6 +41,7 @@
 #include "bu/str.h"
 #include "bu/exit.h"
 #include "bu/log.h"
+#include "bu/snooze.h"
 
 #include "fb_private.h"
 #include "fb.h"
@@ -379,7 +380,7 @@ tk_write(fb *ifp, int UNUSED(x), int y, const unsigned char *pixelp, size_t coun
     /* Send values and data to parent for display */
     if (write(p[1], tkwrite_buffer, 3 * ifp->if_width + 3*sizeof(uint32_t)) == -1) {
 	perror("Unable to write to pipe");
-	sleep(1);
+	bu_snooze(BU_SEC2USEC(1));
     }
 
     return (ssize_t)count;
@@ -606,14 +607,14 @@ fb tk_interface = {
     tk_free,
     tk_help,
     "Debugging Interface",
-    32*1024,		/* max width */
-    32*1024,		/* max height */
+    FB_XMAXSCREEN,	/* max width */
+    FB_YMAXSCREEN,	/* max height */
     "/dev/tk",
-    512,			/* current/default width */
-    512,			/* current/default height */
+    512,		/* current/default width */
+    512,		/* current/default height */
     -1,			/* select fd */
     -1,			/* file descriptor */
-    1, 1,			/* zoom */
+    1, 1,		/* zoom */
     256, 256,		/* window center */
     0, 0, 0,		/* cursor */
     PIXEL_NULL,		/* page_base */

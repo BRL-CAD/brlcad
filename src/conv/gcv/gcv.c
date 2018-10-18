@@ -56,6 +56,8 @@ gcv_fmt_fun(struct bu_vls *UNUSED(msgs), int argc, const char **argv, void *set_
     int args_used = 0;
     struct gcv_fmt_opts *gfo = (struct gcv_fmt_opts *)set_var;
 
+    if (!gfo) return -1;
+
     if (!argv || argc < 1 ) return 0;
 
     for (i = 0; i < argc; i++) {
@@ -504,9 +506,9 @@ main(int ac, const char **av)
     ac-=(ac>0); av+=(ac>0); /* skip program name argv[0] if present */
 
     if (ac == 0) {
-	const char *help = bu_opt_describe(gcv_opt_desc, NULL);
+	char *help = bu_opt_describe(gcv_opt_desc, NULL);
 	bu_log("%s\n", help);
-	if (help) bu_free((char *)help, "help str");
+	if (help) bu_free(help, "help str");
 	/* TODO - print some help */
 	goto cleanup;
     }
@@ -524,10 +526,10 @@ main(int ac, const char **av)
 	    /* TODO - generate some help based on format */
 	} else {
 	    { /* Test static help print  */
-		const char *help = bu_opt_describe(gcv_opt_desc, NULL);
+		char *help = bu_opt_describe(gcv_opt_desc, NULL);
 		bu_log("Options:\n");
 		bu_log("%s\n", help);
-		if (help) bu_free((char *)help, "help str");
+		if (help) bu_free(help, "help str");
 	    }
 
 #if 0

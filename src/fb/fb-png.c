@@ -31,10 +31,10 @@
 #include <sys/stat.h>
 #include <png.h>
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
-#include "bu/file.h"
 #include "vmath.h"
 #include "fb.h"
 

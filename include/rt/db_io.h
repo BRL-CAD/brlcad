@@ -289,17 +289,21 @@ RT_EXPORT extern void db5_make_free_object(struct bu_external *ep,
 
 
 /**
- * Given a variable-width length field in network order (XDR), store
- * it in *lenp.
+ * Given a variable-width length field character pointer (cp) in
+ * network order (XDR), store it in *lenp.
  *
- * This routine processes signed values.
+ * Format is typically expected to be one of:
+ *   DB5HDR_WIDTHCODE_8BIT
+ *   DB5HDR_WIDTHCODE_16BIT
+ *   DB5HDR_WIDTHCODE_32BIT
+ *   DB5HDR_WIDTHCODE_64BIT
  *
  * Returns -
  * The number of bytes of input that were decoded.
  */
-RT_EXPORT extern int db5_decode_signed(size_t			*lenp,
-				       const unsigned char	*cp,
-				       int			format);
+RT_EXPORT extern size_t db5_decode_signed(size_t *lenp,
+					  const unsigned char *cp,
+					  int format);
 
 /**
  * Given a variable-width length field in network order (XDR), store
@@ -720,12 +724,19 @@ RT_EXPORT extern int db_dircheck(struct db_i *dbip,
 /* convert name to directory ptr */
 
 /**
- * This routine takes a name and looks it up in the directory table.
- * If the name is present, a pointer to the directory struct element
- * is returned, otherwise NULL is returned.
+ * This routine takes a path or a name and returns the current directory
+ * pointer (if any) associated with the object.
  *
- * If noisy is non-zero, a print occurs, else only the return code
- * indicates failure.
+ * If given an object name, it will look up the object name in the directory
+ * table.  If the name is present, a pointer to the directory struct element is
+ * returned, otherwise NULL is returned.
+ *
+ * If given a path, it will validate that the path is a valid path in the
+ * current database.  If it is, a pointer to the current directory in the path
+ * (i.e. the leaf object on the path) is returned, otherwise NULL is returned.
+ *
+ * If noisy is non-zero, a print occurs, else only the return code indicates
+ * failure.
  *
  * Returns -
  * struct directory if name is found

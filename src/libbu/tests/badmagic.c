@@ -53,7 +53,7 @@ bomb_callback(const void *data, const char *str)
 }
 
 int
-badmagic_main(int argc, char *argv[])
+main(int argc, char *argv[])
 {
     unsigned char *misalign = (unsigned char *)bu_malloc(1, "bu_badmagic.c");
     uint32_t *ptr = (uint32_t *)bu_malloc(sizeof(uint32_t), "bu_badmagic.c");
@@ -64,7 +64,7 @@ badmagic_main(int argc, char *argv[])
     int line = 42, testnum;
 
     if (argc < 2) {
-	bu_exit(1, "Must specify a function number. [%s]\n", argv[0]);
+	bu_exit(1, "Usage: %s {number}\nMust specify a function number.\n", argv[0]);
     }
 
     bu_bomb_add_hook((bu_hook_t)&bomb_callback, (void *)expected_str);
@@ -86,7 +86,7 @@ badmagic_main(int argc, char *argv[])
 	return 0;
     case 3:
 	ptr = NULL;
-	magic = BU_COLOR_MAGIC;
+	magic = BU_VLS_MAGIC;
 	str = (char *)bu_identify_magic(magic);
 	sprintf(expected_str, "ERROR: NULL %s pointer, file %s, line %d\n",
 		str, file, line);

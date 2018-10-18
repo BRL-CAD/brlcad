@@ -223,7 +223,7 @@ nmg_class_pt_vu(struct fpi *fpi, struct vertexuse *vu)
      */
     VSUB2(delta, vu->v_p->vg_p->coord, fpi->pt);
 
-    BU_ALLOC(ved, struct ve_dist);
+    NMG_ALLOC(ved, struct ve_dist);
     ved->magic_p = &vu->v_p->magic;
     ved->dist = MAGNITUDE(delta);
     if (ved->dist < fpi->tol->dist_sq) {
@@ -576,7 +576,7 @@ nmg_class_pt_eu(struct fpi *fpi, struct edgeuse *eu, struct edge_info *edge_list
 	tmp_tol.dist_sq = 0.0;
     }
 
-    BU_ALLOC(ved, struct ve_dist);
+    NMG_ALLOC(ved, struct ve_dist);
     ved->magic_p = &eu->e_p->magic;
     ved->status = bn_distsq_pt3_lseg3(&ved->dist,
 				      eu->vu_p->v_p->vg_p->coord,
@@ -601,7 +601,7 @@ nmg_class_pt_eu(struct fpi *fpi, struct edgeuse *eu, struct edge_info *edge_list
     /* Add a struct for this edgeuse to the loop's list of dist-sorted
      * edgeuses.
      */
-    BU_ALLOC(ei, struct edge_info);
+    NMG_ALLOC(ei, struct edge_info);
     ei->ved_p = ved;
     ei->eu_p = eu;
     BU_LIST_MAGIC_SET(&ei->l, NMG_EDGE_INFO_MAGIC);
@@ -623,7 +623,7 @@ nmg_class_pt_eu(struct fpi *fpi, struct edgeuse *eu, struct edge_info *edge_list
 	     * other uses of this vertex will claim the point is within
 	     * tolerance without re-computing
 	     */
-	    BU_ALLOC(ed, struct ve_dist);
+	    NMG_ALLOC(ed, struct ve_dist);
 	    ed->magic_p = &ved->v1->magic;
 	    ed->status = ved->status;
 	    ed->v1 = ed->v2 = ved->v1;
@@ -647,7 +647,7 @@ nmg_class_pt_eu(struct fpi *fpi, struct edgeuse *eu, struct edge_info *edge_list
 	     * other uses of this vertex will claim the point is within
 	     * tolerance without re-computing
 	     */
-	    BU_ALLOC(ed, struct ve_dist);
+	    NMG_ALLOC(ed, struct ve_dist);
 	    ed->magic_p = &ved->v2->magic;
 	    ed->status = ved->status;
 	    ed->v1 = ed->v2 = ved->v2;
@@ -764,11 +764,11 @@ HIDDEN void make_near_list(struct edge_info *edge_list, struct bu_list *near1, c
 		tmp = ei_p;
 		ei_p = BU_LIST_PLAST(edge_info, &ei_p->l);
 		BU_LIST_DEQUEUE(&tmp->l);
-		bu_free((char *)tmp, "edge info struct");
+		nmg_free((char *)tmp, "edge info struct");
 		tmp = ei;
 		ei = BU_LIST_PLAST(edge_info, &ei->l);
 		BU_LIST_DEQUEUE(&tmp->l);
-		bu_free((char *)tmp, "edge info struct");
+		nmg_free((char *)tmp, "edge info struct");
 		break;
 	    }
 	    ei_p = BU_LIST_PNEXT(edge_info, &ei_p->l);
@@ -840,7 +840,7 @@ pl_pt_lu(struct fpi *fpi, const struct loopuse *lu, struct edge_info *ei, struct
     }
 
     bu_log("\toverlay %s\n", name);
-    b = (long *)bu_calloc(fpi->fu_p->s_p->r_p->m_p->maxindex,
+    b = (long *)nmg_calloc(fpi->fu_p->s_p->r_p->m_p->maxindex,
 			  sizeof(long), "bit vec");
 
 	pl_erase(fp);
@@ -877,7 +877,7 @@ pl_pt_lu(struct fpi *fpi, const struct loopuse *lu, struct edge_info *ei, struct
 	pdv_3line(fp, p1, p2);
     }
 
-    bu_free((char *)b, "bit vec");
+    nmg_free((char *)b, "bit vec");
     fclose(fp);
 }
 
@@ -979,7 +979,7 @@ compute_loop_class(struct fpi *fpi,
      */
     while (BU_LIST_WHILE(ei, edge_info, &near1)) {
 	BU_LIST_DEQUEUE(&ei->l);
-	bu_free((char *)ei, "edge_info struct");
+	nmg_free((char *)ei, "edge_info struct");
     }
 
     if (UNLIKELY(nmg_debug & DEBUG_PT_FU)) {
@@ -1103,7 +1103,7 @@ nmg_class_pt_lu(struct loopuse *lu, struct fpi *fpi, const int in_or_out_only, s
 	/* free up the edge_list elements */
 	while (BU_LIST_WHILE(ei, edge_info, &edge_list.l)) {
 	    BU_LIST_DEQUEUE(&ei->l);
-	    bu_free((char *)ei, "edge info struct");
+	    nmg_free((char *)ei, "edge info struct");
 	}
     } else if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
 	register struct vertexuse *vu;
@@ -1163,7 +1163,7 @@ plot_parity_error(const struct faceuse *fu, const fastf_t *pt, struct bu_list *v
 
     bu_log("overlay pt_fu_parity_error.plot3\n");
 
-    b = (long *)bu_calloc(fu->s_p->r_p->m_p->maxindex,
+    b = (long *)nmg_calloc(fu->s_p->r_p->m_p->maxindex,
 			  sizeof(long), "bit vec");
 
 	pl_erase(fp);
@@ -1187,7 +1187,7 @@ plot_parity_error(const struct faceuse *fu, const fastf_t *pt, struct bu_list *v
 	pdv_3line(fp, p1, p2);
     }
 
-    bu_free((char *)b, "plot table");
+    nmg_free((char *)b, "plot table");
     fclose(fp);
 
 }
@@ -1361,7 +1361,7 @@ nmg_class_pt_fu_except(const fastf_t *pt, const struct faceuse *fu, const struct
 
     while (BU_LIST_WHILE(ved_p, ve_dist, &fpi.ve_dh)) {
 	BU_LIST_DEQUEUE(&ved_p->l);
-	bu_free((char *)ved_p, "ve_dist struct");
+	nmg_free((char *)ved_p, "ve_dist struct");
     }
 
 
@@ -1474,12 +1474,12 @@ nmg_class_pt_lu_except(fastf_t *pt, const struct loopuse *lu, const struct edge 
     /* free up the edge_list elements */
     while (BU_LIST_WHILE(ei, edge_info, &edge_list.l)) {
 	BU_LIST_DEQUEUE(&ei->l);
-	bu_free((char *)ei, "edge info struct");
+	nmg_free((char *)ei, "edge info struct");
     }
 
     while (BU_LIST_WHILE(ved_p, ve_dist, &fpi.ve_dh)) {
 	BU_LIST_DEQUEUE(&ved_p->l);
-	bu_free((char *)ved_p, "ve_dist struct");
+	nmg_free((char *)ved_p, "ve_dist struct");
     }
 
     if (nmg_debug & DEBUG_PT_FU)

@@ -39,6 +39,11 @@ __BEGIN_DECLS
 
 BU_EXPORT extern int bu_setenv(const char *name, const char *value, int overwrite);
 
+/* Attempts to report available free RAM (not disk or swap space) on
+ * the current machine.  Returns -1 if this information is not
+ * available. */
+BU_EXPORT extern long int bu_avail_mem();
+
 /** @} */
 
 __END_DECLS

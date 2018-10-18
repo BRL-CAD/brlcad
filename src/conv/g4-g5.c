@@ -42,8 +42,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "vmath.h"
+#include "bu/app.h"
 #include "bu/debug.h"
+#include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
 #include "rt/geom.h"

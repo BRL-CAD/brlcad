@@ -32,6 +32,7 @@
 #include <math.h>
 #include <string.h>
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/parallel.h"
 #include "vmath.h"

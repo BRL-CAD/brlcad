@@ -19,13 +19,14 @@
  */
 /** @file brlcad_version.h
  *
- * PRIVATE container header for determining compile-time information
- * about BRL-CAD.
+ * Header for determining compile-time information about BRL-CAD.
  *
- * External applications should NOT use or include this file.  They
- * should use the library-specific LIBRARY_version() functions.
+ * External applications are discouraged from using compile-time API.
+ * They should use the library-specific LIBRARY_version() functions.
  * (e.g. bu_version())
  *
+ * NOTE: In order to use compile-time API, applicaitons need to define
+ * BRLCADBUILD and HAVE_CONFIG_H before including this header.
  */
 
 #ifndef BRLCAD_IDENT_H
@@ -63,6 +64,11 @@ static const char *BRLCAD_USER = "@BRLCAD_COMPILE_USER@";
  */
 static const int BRLCAD_COUNT = @BRLCAD_COMPILE_COUNT@;
 
+/**
+ * Configured installation root, sometimes not used.
+ */
+static const char *BRLCAD_ROOT = "@CMAKE_INSTALL_PREFIX@";
+
 
 /**
  * Provides the release identifier details along with basic
@@ -79,7 +85,11 @@ brlcad_ident(const char *title)
 
     /* optional title */
     isize = strlen(ident);
-    if (title)
+
+    /* TODO - BRLCAD_ROOT has nothing to do with printing the title.
+     * Ugly hack to quell a compiler warning about BRLCAD_ROOT sometimes being
+     * unused, until the proper fix is in place. */
+    if (title && BRLCAD_ROOT)
 	snprintf(ident + isize, 1024 - isize, "  %s\n", title);
 
     /* compile info */

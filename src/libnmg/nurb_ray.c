@@ -288,7 +288,7 @@ nmg_nurb_region_from_srf(const struct face_g_snurb *srf, int dir, fastf_t param1
 
     fastf_t *knot_vec = NULL;
     size_t maxorder = FMAX(srf->order[0], srf->order[1]);
-    knot_vec = (fastf_t *)bu_calloc(maxorder * 2, sizeof(fastf_t), "knot vector");
+    knot_vec = (fastf_t *)nmg_calloc(maxorder * 2, sizeof(fastf_t), "knot vector");
 
     /* Build the new knot vector in a local array, which gets copied
      * later in nmg_nurb_s_refine(). */
@@ -311,7 +311,7 @@ nmg_nurb_region_from_srf(const struct face_g_snurb *srf, int dir, fastf_t param1
     }
 
     region = nmg_nurb_s_refine(srf, dir, &new_knots);
-    bu_free(knot_vec, "knot vector");
+    nmg_free(knot_vec, "knot vector");
 
     return region;
 }
@@ -465,7 +465,7 @@ nmg_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *pla
 			   MAGNITUDE(diff), V3ARGS(p1), V3ARGS(p2));
 		}
 
-		hit = (struct nmg_nurb_uv_hit *) bu_malloc(
+		hit = (struct nmg_nurb_uv_hit *) nmg_malloc(
 		    sizeof(struct nmg_nurb_uv_hit),  "hit");
 
 		hit->next = (struct nmg_nurb_uv_hit *)0;

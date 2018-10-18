@@ -41,6 +41,7 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/parallel.h"
 #include "vmath.h"

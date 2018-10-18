@@ -79,7 +79,7 @@ Convassem()
 
 	Readint(&j, "");	/* read entity type */
 	if (j != 184) {
-	    bu_log("Incorrect entity type in Parameter section for entity %d\n", i);
+	    bu_log("Incorrect entity type in Parameter section for entity %zu\n", i);
 	    return;
 	}
 

@@ -64,7 +64,7 @@ main(int argc, const char **argv)
     Tcl_DString temp;
     Tcl_Interp *interp = Tcl_CreateInterp();
 
-    /* Need progname set for bu_brlcad_root/bu_brlcad_data to work */
+    /* initialize progname for run-tim resource finding */
     bu_setprogname(argv[0]);
     bu_vls_sprintf(&tcl_cmd, "set argv0 %s", argv[0]);
     (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
@@ -95,7 +95,7 @@ main(int argc, const char **argv)
     }
     bu_vls_free(&tlog);
 
-    archer_tcl = bu_brlcad_data("tclscripts/archer/archer_launch.tcl", 1);
+    archer_tcl = bu_brlcad_root("share/tclscripts/archer/archer_launch.tcl", 1);
     Tcl_DStringInit(&temp);
     fullname = Tcl_TranslateFileName(interp, archer_tcl, &temp);
     status = Tcl_EvalFile(interp, fullname);

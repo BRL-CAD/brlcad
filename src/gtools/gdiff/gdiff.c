@@ -47,8 +47,8 @@ do_diff(struct db_i *left_dbip, struct db_i *right_dbip, struct diff_state *stat
 	struct bu_ptbl right_dbip_filtered = BU_PTBL_INIT_ZERO;
 	s_flags |= DB_SEARCH_HIDDEN;
 	s_flags |= DB_SEARCH_RETURN_UNIQ_DP;
-	(void)db_search(&left_dbip_filtered, s_flags, (const char *)bu_vls_addr(state->search_filter), 0, NULL, left_dbip);
-	(void)db_search(&right_dbip_filtered, s_flags, (const char *)bu_vls_addr(state->search_filter), 0, NULL, right_dbip);
+	(void)db_search(&left_dbip_filtered, s_flags, (const char *)bu_vls_addr(state->search_filter), 0, NULL, left_dbip, NULL);
+	(void)db_search(&right_dbip_filtered, s_flags, (const char *)bu_vls_addr(state->search_filter), 0, NULL, right_dbip, NULL);
 
 	BU_PTBL_INIT(&results_filtered);
 	for (i = 0; i < (int)BU_PTBL_LEN(&results); i++) {
@@ -121,8 +121,8 @@ do_diff(struct db_i *left_dbip, struct db_i *right_dbip, struct diff_state *stat
 	    s_flags |= DB_SEARCH_HIDDEN;
 	    s_flags |= DB_SEARCH_RETURN_UNIQ_DP;
 
-	    (void)db_search(&left_dbip3_filtered, s_flags, (const char *)bu_vls_addr(state->search_filter), 0, NULL, left_dbip);
-	    (void)db_search(&right_dbip3_filtered, s_flags, (const char *)bu_vls_addr(state->search_filter), 0, NULL, right_dbip);
+	    (void)db_search(&left_dbip3_filtered, s_flags, (const char *)bu_vls_addr(state->search_filter), 0, NULL, left_dbip, NULL);
+	    (void)db_search(&right_dbip3_filtered, s_flags, (const char *)bu_vls_addr(state->search_filter), 0, NULL, right_dbip, NULL);
 
 	    BU_PTBL_INIT(&diff3_results_filtered);
 	    for (i = 0; i < (int)BU_PTBL_LEN(&diff3_results); i++) {
@@ -188,9 +188,9 @@ do_diff3(struct db_i *left_dbip, struct db_i *ancestor_dbip, struct db_i *right_
 	struct bu_ptbl right_dbip_filtered = BU_PTBL_INIT_ZERO;
 	s_flags |= DB_SEARCH_HIDDEN;
 	s_flags |= DB_SEARCH_RETURN_UNIQ_DP;
-	(void)db_search(&left_dbip_filtered, s_flags, (const char *)bu_vls_addr(state->search_filter), 0, NULL, left_dbip);
-	(void)db_search(&ancestor_dbip_filtered, s_flags, (const char *)bu_vls_addr(state->search_filter), 0, NULL, left_dbip);
-	(void)db_search(&right_dbip_filtered, s_flags, (const char *)bu_vls_addr(state->search_filter), 0, NULL, right_dbip);
+	(void)db_search(&left_dbip_filtered, s_flags, (const char *)bu_vls_addr(state->search_filter), 0, NULL, left_dbip, NULL);
+	(void)db_search(&ancestor_dbip_filtered, s_flags, (const char *)bu_vls_addr(state->search_filter), 0, NULL, left_dbip, NULL);
+	(void)db_search(&right_dbip_filtered, s_flags, (const char *)bu_vls_addr(state->search_filter), 0, NULL, right_dbip, NULL);
 
 	BU_PTBL_INIT(&results_filtered);
 	for (i = 0; i < (int)BU_PTBL_LEN(&results); i++) {
@@ -326,7 +326,7 @@ main(int argc, char **argv)
     /* diff case */
     if (argc == 2) {
 
-	if (bu_same_file(argv[0], argv[1])) {
+	if (bu_file_same(argv[0], argv[1])) {
 	    bu_exit(1, "Same database file specified as both left and right diff inputs: %s\n", argv[0]);
 	}
 
@@ -365,19 +365,19 @@ main(int argc, char **argv)
     /* diff3 case */
     if (argc == 3) {
 
-	if (bu_same_file(argv[0], argv[1]) && bu_same_file(argv[2], argv[1])) {
+	if (bu_file_same(argv[0], argv[1]) && bu_file_same(argv[2], argv[1])) {
 	    bu_exit(1, "Same database file specified for all three inputs: %s\n", argv[0]);
 	}
 
-	if (bu_same_file(argv[0], argv[1])) {
+	if (bu_file_same(argv[0], argv[1])) {
 	    bu_exit(1, "Same database file specified as both ancestor and left diff inputs: %s\n", argv[0]);
 	}
 
-	if (bu_same_file(argv[1], argv[2])) {
+	if (bu_file_same(argv[1], argv[2])) {
 	    bu_exit(1, "Same database file specified as both ancestor and right diff inputs: %s\n", argv[1]);
 	}
 
-	if (bu_same_file(argv[0], argv[2])) {
+	if (bu_file_same(argv[0], argv[2])) {
 	    bu_exit(1, "Same database file specified as both left and right diff inputs: %s\n", argv[0]);
 	}
 

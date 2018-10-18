@@ -46,6 +46,7 @@
 #include "bio.h"
 
 #include "bu/exit.h"
+#include "bu/snooze.h"
 #include "bn.h"
 #include "bn/anim.h"
 #include "vmath.h"
@@ -187,7 +188,7 @@ main(int argc, char *argv[])
     fastf_t temp[3], temp2[3], angle[3], quat[4], matrix[16];
 
     fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
-    sleep(1);
+    bu_snooze(BU_SEC2USEC(1));
 
     if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))) {
 	usage();

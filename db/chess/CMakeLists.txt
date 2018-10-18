@@ -12,7 +12,10 @@ foreach(piece ${CHESS_PARTS})
   ADD_G_TARGET(${piece} "BRL-CAD Geometry Models/Sample/Chess")
 endforeach(piece ${CHESS_PARTS})
 
-CMAKEFILES(${CHESS_PARTS})
+CMAKEFILES(
+  ${CHESS_PARTS}
+  CMakeLists.txt
+  )
 
 # Local Variables:
 # tab-width: 8

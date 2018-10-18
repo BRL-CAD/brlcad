@@ -67,6 +67,8 @@ BRLCAD_ADDEXEC(spm-fb spm-fb.c "libfb;libbn")
 
 add_subdirectory(tests)
 
+CMAKEFILES(CMakeLists.txt)
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

@@ -32,6 +32,7 @@
 #include "bresource.h"
 
 #include "bu/exit.h"
+#include "bu/snooze.h"
 #include "fb.h"
 
 #include "./std.h"
@@ -72,7 +73,7 @@ exec_Shell(char **args)
 		);
 	    return -1;
 	case  0 : /* Child process - execute. */
-	    sleep(2);
+	    bu_snooze(BU_SEC2USEC(2));
 	    (void)execvp(args[0], args);
 	    fb_log("%s : could not execute.\n", args[0]);
 	    bu_exit(1, NULL);
@@ -84,14 +85,14 @@ exec_Shell(char **args)
 	    void (*istat)(), (*qstat)(), (*cstat)();
 	    istat = signal(SIGINT, SIG_IGN);
 	    qstat = signal(SIGQUIT, SIG_IGN);
-	    cstat = signal(SIGCLD, SIG_DFL);
+	    cstat = signal(SIGCHLD, SIG_DFL);
 	    while (	(pid = wait(&stat_loc)) != -1
 			&& pid != child_pid
 		)
 		;
 	    (void)signal(SIGINT, istat);
 	    (void)signal(SIGQUIT, qstat);
-	    (void)signal(SIGCLD, cstat);
+	    (void)signal(SIGCHLD, cstat);
 	    if (pid == -1) {
 		fb_log("\"%s\" (%d) wait failed : no children.\n",
 			__FILE__, __LINE__

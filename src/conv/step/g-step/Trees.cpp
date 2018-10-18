@@ -52,7 +52,7 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
     const char *solid_search = "! -type comb";
     struct bu_ptbl breps = BU_PTBL_INIT_ZERO;
 
-    (void)db_search(&breps, DB_SEARCH_RETURN_UNIQ_DP, solid_search, 1, &dp, wdbp->dbip);
+    (void)db_search(&breps, DB_SEARCH_RETURN_UNIQ_DP, solid_search, 1, &dp, wdbp->dbip, NULL);
     for (int j = (int)BU_PTBL_LEN(&breps) - 1; j >= 0; j--) {
 	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(&breps, j);
 	struct rt_db_internal solid_intern;
@@ -74,7 +74,7 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
     const char *comb_search = "-type comb";
     struct bu_ptbl combs = BU_PTBL_INIT_ZERO;
 
-    (void)db_search(&combs, DB_SEARCH_RETURN_UNIQ_DP, comb_search, 1, &dp, wdbp->dbip);
+    (void)db_search(&combs, DB_SEARCH_RETURN_UNIQ_DP, comb_search, 1, &dp, wdbp->dbip, NULL);
     for (int j = (int)BU_PTBL_LEN(&combs) - 1; j >= 0; j--) {
 	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(&combs, j);
 	int is_wrapper = !Comb_Is_Wrapper(curr_dp, wdbp);
@@ -126,7 +126,7 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
 	struct bu_ptbl comb_children = BU_PTBL_INIT_ZERO;
 	struct directory *ccs_dp = (*it);
 
-       	(void)db_search(&comb_children, DB_SEARCH_RETURN_UNIQ_DP, comb_children_search, 1, &ccs_dp, wdbp->dbip);
+       	(void)db_search(&comb_children, DB_SEARCH_RETURN_UNIQ_DP, comb_children_search, 1, &ccs_dp, wdbp->dbip, NULL);
 	Add_Assembly_Product((*it), wdbp->dbip, &comb_children, sc);
 	db_search_free(&comb_children);
     }

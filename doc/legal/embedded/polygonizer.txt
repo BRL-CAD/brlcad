@@ -1,0 +1,7 @@
+http://www.unchainedgeometry.com/jbloom/misc/polygonizer.c
+
+Authored by Jules Bloomenthal, Xerox PARC.
+Copyright (c) Xerox Corporation, 1991.  All rights reserved.
+Permission is granted to reproduce, use and distribute this code for
+any and all purposes, provided that this notice appears in all copies.
+

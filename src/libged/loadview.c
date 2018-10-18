@@ -190,7 +190,7 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
 		memset(dbName + strlen(dbName)-1, 0, 1);
 	    }
     
-	    if (!bu_same_file(gedp->ged_wdbp->dbip->dbi_filename, dbName)) {
+	    if (!bu_file_same(gedp->ged_wdbp->dbip->dbi_filename, dbName)) {
 		/* warn here if they are not the same file, otherwise,
 		 * proceed as expected, and try to load the objects.
 		 */

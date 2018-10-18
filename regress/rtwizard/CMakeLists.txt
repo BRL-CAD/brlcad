@@ -119,6 +119,7 @@ Add_RtWiz_Test(rtwiz_m35_edge_only_color "${DATA_DIR}/db/m35.g" "-l component --
   )
 
 CMAKEFILES(
+  CMakeLists.txt
   m35_rtwiz.tar.bz2
   )
 

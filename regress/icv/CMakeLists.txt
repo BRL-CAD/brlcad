@@ -138,6 +138,7 @@ Add_Image_Test(png_bw EXPORT ""
   )
 
 CMAKEFILES(
+  CMakeLists.txt
   m35.png
   m35_bw.png
   m35_bw.pix.tbz2

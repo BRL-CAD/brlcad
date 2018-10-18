@@ -9,11 +9,13 @@ set(bu_test_srcs
   booleanize.c
   color.c
   datetime.c
+  dir.c
   dirname.c
   encode.c
   escape.c
   file_mime.c
   heap.c
+  hook.c
   humanize_number.c
   vls_incr.c
   vls_simplify.c
@@ -37,7 +39,7 @@ set(BU_TEST_SRC_SWITCHES)
 set(BU_TEST_LIST)
 foreach(srcfile ${bu_test_srcs})
   get_filename_component(NAME_ROOT ${srcfile} NAME_WE)
-  set(BU_TEST_SRC_INCLUDES "${BU_TEST_SRC_INCLUDES}\n#include \"libbu/tests/${srcfile}\"")
+  set(BU_TEST_SRC_INCLUDES "${BU_TEST_SRC_INCLUDES}\n#define main ${NAME_ROOT}_main\n#include \"libbu/tests/${srcfile}\"\n#undef main\n")
   set(BU_TEST_SRC_SWITCHES "${BU_TEST_SRC_SWITCHES}\n	if (BU_STR_EQUAL(av[0], \"${NAME_ROOT}\")) return ${NAME_ROOT}_main(ac,av);")
   set(BU_TEST_LIST "${BU_TEST_LIST}\\n	${NAME_ROOT}")
 endforeach(srcfile ${bu_test_srcs})
@@ -679,11 +681,20 @@ add_test(NAME bu_ptbl_cat_uniq COMMAND bu_test ptbl cat uniq)
 
 add_test(NAME bu_ptbl_trunc COMMAND bu_test ptbl trunc)
 
+#
+#  *********** hook.c tests ************
+#
+
+add_test(NAME bu_hook_basic COMMAND bu_test hook basic)
+add_test(NAME bu_hook_multiadd COMMAND bu_test hook multiadd)
+add_test(NAME bu_hook_saverestore COMMAND bu_test hook saverestore)
+
 CMAKEFILES(
   tests_bitv.cmake
   tests_vls.cmake
 )
 
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

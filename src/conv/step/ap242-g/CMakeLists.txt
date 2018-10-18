@@ -252,6 +252,8 @@ if(MSVC)
   set_target_properties(step-g PROPERTIES COMPILE_DEFINITIONS "${ap242g_IMPORTS}")
 endif(MSVC)
 
+CMAKEFILES(CMakeLists.txt)
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

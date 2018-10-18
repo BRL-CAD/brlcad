@@ -59,7 +59,6 @@ set(LIBGED_SOURCES
   cat.c
   cc.c
   center.c
-  check_overlaps.c
   check/check.c
   check/check_adj_air.c
   check/check_centroid.c
@@ -69,6 +68,7 @@ set(LIBGED_SOURCES
   check/check_moments.c
   check/check_overlaps.c
   check/check_surf_area.c
+  check/check_unconf_air.c
   check/check_volume.c
   clone.c
   coil.c
@@ -89,7 +89,6 @@ set(LIBGED_SOURCES
   debugbu.c
   debugdir.c
   debuglib.c
-  debugmem.c
   debugnmg.c
   decompose.c
   delay.c
@@ -161,6 +160,7 @@ set(LIBGED_SOURCES
   killtree.c
   label.c
   lc.c
+  lint.cpp
   list.c
   loadview.c
   lod.c
@@ -171,7 +171,6 @@ set(LIBGED_SOURCES
   m2v_point.c
   make.c
   make_name.c
-  make_pnts.c
   match.c
   mater.c
   mirror.c
@@ -211,7 +210,8 @@ set(LIBGED_SOURCES
   pmodel2view.c
   png.c
   png2fb.c
-  pnts.c
+  pnts_util.c
+  pnts.cpp
   polyclip.cpp
   prcolor.c
   prefix.c
@@ -374,7 +374,9 @@ add_subdirectory(tests)
 add_subdirectory(simulate/tests)
 
 set(ged_ignore_files
+  CMakeLists.txt
   TODO
+  pnts_util.h
   ged_private.h
   check/check_private.h
   joint.h

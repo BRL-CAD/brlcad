@@ -115,17 +115,17 @@ test_bu_color_to_rgb_floats(int argc, char *argv[])
 
     sscanf(argv[2], "%lf,%lf,%lf", &expected_rgb_color[RED], &expected_rgb_color[GRN], &expected_rgb_color[BLU]);
 
-    color.buc_rgb[RED] = expected_rgb_color[RED];
-    color.buc_rgb[GRN] = expected_rgb_color[GRN];
-    color.buc_rgb[BLU] = expected_rgb_color[BLU];
+    color.buc_rgb[RED] = expected_rgb_color[RED] / 255.0;
+    color.buc_rgb[GRN] = expected_rgb_color[GRN] / 255.0;
+    color.buc_rgb[BLU] = expected_rgb_color[BLU] / 255.0;
 
     bu_color_to_rgb_floats(&color, actual_rgb_color);
 
     printf("Result: %f,%f,%f", actual_rgb_color[RED], actual_rgb_color[GRN], actual_rgb_color[BLU]);
 
-    return !(EQUAL(expected_rgb_color[RED], actual_rgb_color[RED])
-	     && EQUAL(expected_rgb_color[GRN], actual_rgb_color[GRN])
-	     && EQUAL(expected_rgb_color[BLU], actual_rgb_color[BLU]));
+    return !(EQUAL(expected_rgb_color[RED], actual_rgb_color[RED] * 255.0)
+	     && EQUAL(expected_rgb_color[GRN], actual_rgb_color[GRN] * 255.0)
+	     && EQUAL(expected_rgb_color[BLU], actual_rgb_color[BLU] * 255.0));
 }
 
 static int
@@ -143,9 +143,9 @@ test_bu_color_from_rgb_floats(int argc, char *argv[])
 
     bu_color_from_rgb_floats(&color, expected_rgb_color);
 
-    actual_rgb_color[RED] = color.buc_rgb[RED];
-    actual_rgb_color[GRN] = color.buc_rgb[GRN];
-    actual_rgb_color[BLU] = color.buc_rgb[BLU];
+    actual_rgb_color[RED] = color.buc_rgb[RED] * 255.0;
+    actual_rgb_color[GRN] = color.buc_rgb[GRN] * 255.0;
+    actual_rgb_color[BLU] = color.buc_rgb[BLU] * 255.0;
 
     printf("Result: %f,%f,%f", actual_rgb_color[RED], actual_rgb_color[GRN], actual_rgb_color[BLU]);
 
@@ -211,12 +211,13 @@ test_bu_color_from_rgb_chars(int argc, char *argv[])
 
 
 int
-color_main(int argc, char *argv[])
+main(int argc, char *argv[])
 {
     int function_num = 0;
 
     if (argc < 2) {
-	bu_exit(1, "ERROR: input format is function_num function_test_args [%s]\n", argv[0]);
+	bu_log("Usage: %s {function_num} {function_test_arg0} {...}", argv[0]);
+	bu_exit(1, "ERROR: missing function number\n");
     }
 
     sscanf(argv[1], "%d", &function_num);

@@ -54,6 +54,8 @@ endfunction(GET_LIBGCV_PLUGINS)
 
 GET_LIBGCV_PLUGINS()
 
+CMAKEFILES(CMakeLists.txt)
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

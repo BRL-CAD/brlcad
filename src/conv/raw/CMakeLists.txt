@@ -18,6 +18,7 @@ add_dependencies(g-raw libgcv_plugins)
 
 set(RAW_IGNORE_FILES
   Bot.h
+  CMakeLists.txt
   RegionList.h
   )
 CMAKEFILES(${RAW_IGNORE_FILES})

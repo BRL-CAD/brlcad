@@ -53,6 +53,8 @@ int check_volume(struct current_state *state,
 	bu_vls_printf(_ged_current_gedp->ged_result_str, "\t%s %g %s\n", tobjtab[i], volume / options->units[VOL]->val, options->units[VOL]->name);
     }
 
+    bu_vls_printf(_ged_current_gedp->ged_result_str, "\n  Average total volume: %g %s\n", analyze_total_volume(state) / options->units[VOL]->val, options->units[VOL]->name);
+
     if (options->print_per_region_stats) {
 	int num_regions = analyze_get_num_regions(state);
 	bu_vls_printf(_ged_current_gedp->ged_result_str, "\tregions:\n");

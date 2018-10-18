@@ -44,6 +44,8 @@ int check_mass(struct current_state *state,
 	bu_vls_printf(_ged_current_gedp->ged_result_str, "\t%s %g %s\n", tobjtab[i], mass / options->units[MASS]->val, options->units[MASS]->name);
     }
 
+    bu_vls_printf(_ged_current_gedp->ged_result_str, "\n  Average total mass: %g %s\n", analyze_total_mass(state) / options->units[MASS]->val, options->units[MASS]->name);
+
     if (options->print_per_region_stats) {
 	int num_regions = analyze_get_num_regions(state);
 	bu_vls_printf(_ged_current_gedp->ged_result_str, "\tregions:\n");

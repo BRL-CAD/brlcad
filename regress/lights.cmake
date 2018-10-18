@@ -38,7 +38,6 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/BRLCAD_Regress_Util.cmake")
 
 ensearch(rt      RT      REQUIRED)
 ensearch(asc2g   A2G     REQUIRED)
-ensearch(asc2pix A2P     REQUIRED)
 ensearch(pixdiff PIXDIFF REQUIRED)
 
 execute_process(COMMAND ${CMAKE_COMMAND} -E remove -f lights.pix)
@@ -81,8 +80,7 @@ file(WRITE vmat.in "${vmat}")
 execute_process(COMMAND ${RT} -M -B -p30 -o lights.pix lights.g all.g INPUT_FILE vmat.in ERROR_FILE lights.log)
 execute_process(COMMAND ${CMAKE_COMMAND} -E remove -f vmat.in)
 
-execute_process(COMMAND ${A2P} INPUT_FILE lights_ref.asc OUTPUT_FILE lights_ref.pix)
-execute_process(COMMAND ${PIXDIFF} lights.pix lights_ref.pix OUTPUT_FILE lights_diff.pix ERROR_FILE lights_diff.log)
+execute_process(COMMAND ${PIXDIFF} lights.pix INPUT_FILE lights.pix OUTPUT_FILE lights_diff.pix ERROR_FILE lights_diff.log)
 
 file(READ lights_diff.log llog)
 file(APPEND lights.log "${llog}")

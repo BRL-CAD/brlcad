@@ -25,7 +25,7 @@
 #==============================================================================
 
 # This command causes helplib.tcl to get read in.
-source [file join [bu_brlcad_data "tclscripts"] "helplib.tcl"]
+source [file join [bu_brlcad_root "share/tclscripts"] "helplib.tcl"]
 helplib
 
 set mged_help_data(?)		{{}	{summary of available mged commands}}
@@ -100,7 +100,7 @@ set mged_help_data(c)		$helplib_data(wdb_comb_std)
 set mged_help_data(cat)		$helplib_data(wdb_cat)
 set mged_help_data(cc)		{{name constraint_expression} {create a constraint based on the expression}}
 set mged_help_data(center)	$helplib_data(vo_center)
-set mged_help_data(check_overlaps)	$helplib_data(dgo_check_overlaps)
+set mged_help_data(check)	$helplib_data(dgo_check)
 set mged_help_data(closedb)	{{}	{close any open database}}
 set mged_help_data(clone)	{{[-abhimnprtv] <object>}	{clone allows user to quickly create copies of objects
 
@@ -138,7 +138,6 @@ set mged_help_data(dbversion)	{{}	{return the database version}}
 set mged_help_data(debugbu)	{{[hex_code]}	{show/set debugging bit vector for libbu}}
 set mged_help_data(debugdir)	{{}	{Print in-memory directory, for debugging}}
 set mged_help_data(debuglib)	{{[hex_code]}	{show/set debugging bit vector for librt}}
-set mged_help_data(debugmem)	{{}	{Print librt memory use map}}
 set mged_help_data(debugnmg)	{{[hex code]}	{show/set debugging bit vector for NMG}}
 set mged_help_data(decompose)	{{nmg_solid [prefix]}	{decompose nmg_solid into maximally connected shells}}
 set mged_help_data(delay)	{{sec usec}	{delay for the specified amount of time}}
@@ -217,7 +216,6 @@ set mged_help_data(make_pnts)	{{object_name path_and_filename file_format units_
 set mged_help_data(match)	$helplib_data(wdb_match)
 set mged_help_data(mater)	{{comb [material]}	{assign/delete material to combination}}
 set mged_help_data(matpick)	{{# | a/b}	{select arc which has matrix to be edited, in O_PATH state}}
-set mged_help_data(memprint)	{{}	{print memory maps}}
 set mged_help_data(mirface)	{{#### of axis}	{mirror an ARB face}}
 set mged_help_data(mirror)	{{[-p point] [-d dir] [-x] [-y] [-z] [-o offset] old new}	{mirror primitive or combination along the specified axis}}
 set mged_help_data(mrot)	$helplib_data(vo_mrot)

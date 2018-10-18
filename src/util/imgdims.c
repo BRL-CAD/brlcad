@@ -135,7 +135,7 @@ main (int argc, char **argv)
 	print_usage();
     }
 
-    argument = bu_realpath(argv[bu_optind], NULL);
+    argument = bu_file_realpath(argv[bu_optind], NULL);
     if (how != NONE && !bu_file_exists(argument, NULL)) {
 	bu_log("image file [%s] does not exist\n", argument);
 	bu_free(argument, "argument realpath");

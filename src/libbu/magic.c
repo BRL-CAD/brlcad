@@ -34,8 +34,6 @@ bu_identify_magic(register uint32_t magic)
 	    return "bu_attribute_value_set";
 	case BU_BITV_MAGIC:
 	    return "bu_bitv";
-	case BU_COLOR_MAGIC:
-	    return "bu_color";
 	case BU_EXTERNAL_MAGIC:
 	    return "bu_external";
 	case BU_HASH_ENTRY_MAGIC:

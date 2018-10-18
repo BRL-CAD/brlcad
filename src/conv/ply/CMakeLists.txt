@@ -14,6 +14,8 @@ if(CPP_DLL_DEFINES)
   SET_PROPERTY(TARGET g-ply APPEND PROPERTY COMPILE_DEFINITIONS "RPLY_DLL_IMPORTS")
 endif(CPP_DLL_DEFINES)
 
+CMAKEFILES(CMakeLists.txt)
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

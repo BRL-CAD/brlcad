@@ -12,7 +12,9 @@ macro(Add_Regression_Test testname depends_list)
       add_dependencies(check ${depends_list})
     endif(TARGET check)
   endif(NOT "${depends_list}" STREQUAL "")
-  set_tests_properties(regress-${testname} PROPERTIES TIMEOUT 60)
+  if(NOT BRLCAD_DISABLE_REGRESS_TIMEOUT)
+    set_tests_properties(regress-${testname} PROPERTIES TIMEOUT 60)
+  endif(NOT BRLCAD_DISABLE_REGRESS_TIMEOUT)
 endmacro(Add_Regression_Test)
 
 # Define the toplevel regression target - unless specifically excluded
@@ -59,14 +61,16 @@ if(SH_EXEC)
 	add_dependencies(check ${depends_list})
       endif(TARGET check)
     endif(NOT "${depends_list}" STREQUAL "")
-    set_tests_properties(regress-${testname} PROPERTIES TIMEOUT 60)
+    if(NOT BRLCAD_DISABLE_REGRESS_TIMEOUT)
+      set_tests_properties(regress-${testname} PROPERTIES TIMEOUT 60)
+    endif(NOT BRLCAD_DISABLE_REGRESS_TIMEOUT)
   endmacro(Sh_Regression_Test)
 
-  Sh_Regression_Test(moss "rt;asc2g;pixdiff;asc2pix;pix-png;png-pix")
-  Sh_Regression_Test(lights "rt;asc2g;pixdiff;asc2pix")
+  Sh_Regression_Test(moss "rt;asc2g;pixdiff;pix-png;png-pix")
+  Sh_Regression_Test(lights "rt;asc2g;pixdiff")
   Sh_Regression_Test(solids "rt;mged;pixdiff;asc2pix;gencolor")
-  Sh_Regression_Test(shaders "rt;mged;pixdiff;asc2pix;gencolor")
-  Sh_Regression_Test(spdi "rt;mged;pixdiff;asc2pix")
+  Sh_Regression_Test(shaders "rt;mged;pixdiff;gencolor")
+  Sh_Regression_Test(spdi "rt;mged;pixdiff")
   Sh_Regression_Test(iges "iges-g;g-iges;mged;asc2g")
   Sh_Regression_Test(weight "rtweight;mged")
   Sh_Regression_Test(gqa "gqa;mged")
@@ -78,10 +82,11 @@ if(SH_EXEC)
   # violates this as it spends considerable time scanning the entire
   # source tree, then scanning different sets of files for properties.
   Sh_Regression_Test(repository "")
-  set_tests_properties(regress-repository PROPERTIES TIMEOUT 600)
-  Sh_Regression_Test(mged mged)
-  set_tests_properties(regress-mged PROPERTIES TIMEOUT 600)
+  if(NOT BRLCAD_DISABLE_REGRESS_TIMEOUT)
+    set_tests_properties(regress-repository PROPERTIES TIMEOUT 600)
+  endif(NOT BRLCAD_DISABLE_REGRESS_TIMEOUT)
 
+  Sh_Regression_Test(mged mged)
   Sh_Regression_Test(red mged)
   Sh_Regression_Test(nirt "mged;nirt")
   Sh_Regression_Test(comgeom "mged;asc2g;vdeck;comgeom-g")
@@ -94,10 +99,10 @@ CMAKEFILES(
   analyze.asc
   asc2dsp.sh
   bots.sh
-  burst/ktank_crit.ids
   burst/ktank.b
-  burst/ktank_armor.ids
   burst/ktank_air.ids
+  burst/ktank_armor.ids
+  burst/ktank_crit.ids
   comgeom.sh
   dsp.sh
   dsp/asc2dsp-new.asc
@@ -128,35 +133,33 @@ CMAKEFILES(
   gqa.sh
   iges.sh
   library.sh
+  lights.ref.pix
   lights.cmake
   lights.sh
-  lights_ref.asc
-  master_fetch.sh
-  master_prep.sh
   mged.sh
   mged_test.sh
+  moss.ref.pix
   moss.sh
-  mosspix.asc
   nirt.sh
   nurbs/brep-3dm.tar.bz2
   red.sh
   repository.sh
+  shaders.eagleCAD-512x438.pix
+  shaders.ref.pix
   shaders.sh
-  shaderspix.asc
-  slave_build.sh
+  solids.ref.pix
   solids.sh
-  solids-simplepix.asc
-  solidspix.asc
+  solids.simple.ref.pix
+  spdi.ref.pix
   spdi.sh
-  spdipix.asc
-  tgms/cgtest.cg
-  tgms/comgeom-tgt-1-v4-documented.cg
-  tgms/comgeom-tgt-1-v4.cg
-  tgms/dsp.dat
+  tgms/comgeom.cg
+  tgms/comgeom.tgt-1-v4-documented.cg
+  tgms/comgeom.tgt-1-v4.cg
   tgms/m35.asc.gz
   tgms/m35.cg.gz
-  tgms/solids-simple.mged
+  tgms/solids.dsp.dat
   tgms/solids.mged
+  tgms/solids.simple.mged
   usage.sh
   weight.sh
   )
@@ -164,12 +167,11 @@ CMAKEFILES(
 # list of temporary files
 set(regress_outfiles
   .density
-  adj_air.plot3
-  asc2dsp-new.dsp
-  asc2dsp-old.bw
-  asc2dsp-old.dsp
-  asc2dsp-old.pix
+  .density.weight1
   asc2dsp.log
+  asc2dsp.new.dsp
+  asc2dsp.old.bw
+  asc2dsp.old.dsp
   bots.diff.log
   bots.diff.pix
   bots.g
@@ -182,145 +184,72 @@ set(regress_outfiles
   bots.rs.diff.pix
   bots.sph.pix
   bots.sync.pix
-  comgeom-g.log
-  comgeom.m35.asc
+  comgeom.log
   comgeom.m35-baseline.cg
+  comgeom.m35.asc
   comgeom.m35.cg
   comgeom.m35.g
   comgeom.t-v4.g
   comgeom.t-v5.g
-  core
   density_table.txt
-  dsp.pix
-  dsp-2-1.bw
-  dsp-2-1.dsp
-  dsp-2-1.g
-  dsp-2-1.log
-  dsp-2-1.pix
-  dsp-2-1.rt.pix
-  dsp-2-2.bw
-  dsp-2-2.dsp
-  dsp-2-2.g
-  dsp-2-2.log
-  dsp-2-2.pix
-  dsp-2-2.rt.pix
-  dsp-2-3.bw
-  dsp-2-3.dsp
-  dsp-2-3.g
-  dsp-2-3.log
-  dsp-2-3.pix
-  dsp-2-3.rt.pix
-  dsp-2-4.bw
-  dsp-2-4.dsp
-  dsp-2-4.g
-  dsp-2-4.log
-  dsp-2-4.pix
-  dsp-2-4.rt.pix
-  dsp-2-5.bw
-  dsp-2-5.dsp
-  dsp-2-5.g
-  dsp-2-5.log
-  dsp-2-5.pix
-  dsp-2-5.rt.pix
-  dsp-3-1.bw
-  dsp-3-1.dsp
-  dsp-3-1.g
-  dsp-3-1.log
-  dsp-3-1.pix
-  dsp-3-1.rt.pix
-  dsp-3-2.bw
-  dsp-3-2.dsp
-  dsp-3-2.g
-  dsp-3-2.log
-  dsp-3-2.pix
-  dsp-3-2.rt.pix
-  dsp-3-3.bw
-  dsp-3-3.dsp
-  dsp-3-3.g
-  dsp-3-3.log
-  dsp-3-3.pix
-  dsp-3-3.rt.pix
-  dsp-3-4.bw
-  dsp-3-4.dsp
-  dsp-3-4.g
-  dsp-3-4.log
-  dsp-3-4.pix
-  dsp-3-4.rt.pix
-  dsp-3-5.bw
-  dsp-3-5.dsp
-  dsp-3-5.g
-  dsp-3-5.log
-  dsp-3-5.pix
-  dsp-3-5.rt.pix
-  dsp-3-6.bw
-  dsp-3-6.dsp
-  dsp-3-6.g
-  dsp-3-6.log
-  dsp-3-6.pix
-  dsp-3-6.rt.pix
-  dsp-3-7.bw
-  dsp-3-7.dsp
-  dsp-3-7.g
-  dsp-3-7.log
-  dsp-3-7.pix
-  dsp-3-7.rt.pix
-  dsp-3-8.bw
-  dsp-3-8.dsp
-  dsp-3-8.g
-  dsp-3-8.log
-  dsp-3-8.pix
-  dsp-3-8.rt.pix
-  eagleCAD-512x438.pix
-  ebm.bw
-  exp_air.plot3
-  g-dot.dot
-  g-dot.g
-  g-dot.log
-  g-nff.err
-  g-nff.log
-  g-nff.m35.asc
-  g-nff.m35.g
-  g-nff.m35.nff
-  gaps.plot3
+  dsp.2-1.bw
+  dsp.2-1.dsp
+  dsp.2-1.g
+  dsp.2-1.log
+  dsp.2-2.bw
+  dsp.2-2.dsp
+  dsp.2-2.g
+  dsp.2-2.log
+  dsp.2-3.bw
+  dsp.2-3.dsp
+  dsp.2-3.g
+  dsp.2-3.log
+  dsp.2-4.bw
+  dsp.2-4.dsp
+  dsp.2-4.g
+  dsp.2-4.log
+  dsp.2-5.bw
+  dsp.2-5.dsp
+  dsp.2-5.g
+  dsp.2-5.log
+  dsp.log
+  gqa.adj_air.plot3
+  gqa.exp_air.plot3
   gqa.g
+  gqa.gaps.plot3
   gqa.log
   gqa.mged
-  gqa_mged.log
+  gqa.overlaps.plot3
+  gqa.volume.plot3
+  iges.export.iges
+  iges.export2.iges
   iges.g
+  iges.import.g
   iges.log
-  iges_file.iges
-  iges_file2.iges
-  iges_file3.iges
-  iges_new.g
-  iges_stdout.iges
-  iges_stdout2.iges
-  iges_stdout_new.g
   iges.m35.asc
   iges.m35.g
+  iges_file3.iges
+  iges_stdout_new.g
+  lights.asc
+  lights.diff.pix
   lights.g
   lights.log
   lights.pix
-  lights_diff.pix
-  lights_ref.pix
+  mged.g
   mged.log
-  moss-diff.log
-  moss-png.log
   moss.asc
   moss.g
   moss.log
   moss.pix
   moss.pix.diff
-  moss.png
-  moss2.pix
-  moss_png.diff
-  moss_ref.pix
+  moss.pix.png
+  moss.pix.png.pix
+  moss.roundtrip.diff
   nirt.g
   nirt.log
   nirt.mged
   nirt.out
   nirt.ref
-  nirt_g.log
-  overlaps.plot3
   red.air.empty.out
   red.air.empty.out.new
   red.air.safe.out
@@ -339,7 +268,6 @@ set(regress_outfiles
   red.color.safe.out.test
   red.color.unsafe.out
   red.color.unsafe.out.new
-  red.color.unsafe.out.test
   red.edit.sh
   red.g
   red.hps.r.out
@@ -362,7 +290,6 @@ set(regress_outfiles
   red.material_id.unsafe.out.test
   red.matrix.noop.out
   red.matrix.noop.out.new
-  red.sph_rot.c.out
   red.name.empty.out
   red.name.empty.out.new
   red.name.emptyedit.out
@@ -373,10 +300,10 @@ set(regress_outfiles
   red.name.unsafe.out
   red.name.unsafe.out.new
   red.name.unsafe.out.test
-  red.region.edit-comb.out.test2
-  red.region.edit-comb.out.new
   red.region.edit-comb.out
+  red.region.edit-comb.out.new
   red.region.edit-comb.out.test
+  red.region.edit-comb.out.test2
   red.region.empty.out
   red.region.empty.out.new
   red.region.no.out
@@ -404,6 +331,7 @@ set(regress_outfiles
   red.shader.unsafe.out.new
   red.shader.unsafe.out.test
   red.sph.r.out
+  red.sph_rot.c.out
   red.tree.empty.out
   red.tree.empty.out.new
   red.tree.safe.out
@@ -415,45 +343,49 @@ set(regress_outfiles
   red.virgin.out.new
   region_ids
   regions
-  shaders.dat
+  repository.log
+  shaders.ebm.bw
+  shaders.ell_2.prj
   shaders.g
+  shaders.half.prj
   shaders.log
   shaders.mged
   shaders.rt
   shaders.rt.diff.pix
   shaders.rt.log
   shaders.rt.pix
-  shaders.rt.pixdiff.log
-  shaders.txt
-  shaders_ref.pix
   solids
-  solids-diff.log
-  solids-simple-diff.log
-  solids-simple.g
-  solids-simple.log
-  solids-simple.pix.diff
-  solids-simple.rt
-  solids-simple.rt.log
-  solids-simple.rt.pix
-  solids-simple_ref.pix
+  solids.dsp.pix
+  solids.ebm.bw
   solids.g
   solids.log
-  solids.mged
   solids.pix.diff
   solids.rt
   solids.rt.log
   solids.rt.pix
-  solids_ref.pix
+  solids.simple.g
+  solids.simple.pix.diff
+  solids.simple.rt
+  solids.simple.rt.log
+  solids.simple.rt.pix
+  spdi.diff.pix
   spdi.g
   spdi.log
   spdi.mged
   spdi.pix
-  spdi_diff.pix
-  spdi_mged.log
-  spdi_ref.pix
-  t.g
-  vdeck.log
-  volume.plot3
+  weight.g
+  weight.log
+  weight.mged
+  weight.out
+  weight.out_ns
+  weight.ref
+  weight.ref_ns
+  weight.test2.g
+  weight.test2.mged
+  weight.test2.out
+  weight.test2.out_ns
+  weight.test2.ref
+  weight.test2.ref_ns
   )
 
 foreach(outfile ${regress_outfiles})
@@ -463,6 +395,8 @@ set(regress_outfiles_fullpaths ${regress_outfiles_fullpaths} "${CMAKE_BINARY_DIR
 
 set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${regress_outfiles_fullpaths}")
 DISTCLEAN(${regress_outfiles_fullpaths})
+
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

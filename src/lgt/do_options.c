@@ -34,6 +34,7 @@
 #  include <unistd.h>
 #endif
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/log.h"
 #include "bu/file.h"

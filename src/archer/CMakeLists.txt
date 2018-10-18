@@ -61,6 +61,7 @@ BRLCAD_ADDDATA(plugins/Wizards/tankwizard/images/tank.png plugins/archer/Wizards
 BRLCAD_ADDDATA(plugins/Wizards/tirewizard/TireWizard.tcl plugins/archer/Wizards/tirewizard)
 
 set(archer_ignore_files
+  CMakeLists.txt
   TODO
   archer.c
   )

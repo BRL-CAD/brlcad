@@ -60,12 +60,14 @@
 #  include "tk.h"
 #endif
 
-#include "vmath.h"
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/debug.h"
 #include "bu/units.h"
 #include "bu/version.h"
 #include "bu/time.h"
+#include "bu/snooze.h"
+#include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
 #include "libtermio.h"
@@ -773,7 +775,7 @@ mged_process_char(char ch)
 	    if (input_str_index == bu_vls_strlen(&input_str))
 		break;
 	    pr_prompt(interactive);
-	    bu_log("%*V", input_str_index, &input_str);
+	    bu_log("%*s", (int)input_str_index, bu_vls_addr(&input_str));
 	    escaped = bracketed = 0;
 	    break;
 	case CTRL_B:                   /* Back one character */
@@ -1246,7 +1248,7 @@ main(int argc, char *argv[])
 
 	    } else {
 		/* no pipe, so just wait a little while */
-		sleep(3);
+		bu_snooze(BU_SEC2USEC(3));
 	    }
 
 	    /* exit instead of mged_finish as this is the parent
@@ -1477,7 +1479,7 @@ main(int argc, char *argv[])
 		status = Tcl_Eval(INTERP, bu_vls_addr(&vls));
 	    } else {
 		Tcl_DString temp;
-		const char *archer = bu_brlcad_data("tclscripts/archer/archer_launch.tcl", 1);
+		const char *archer = bu_brlcad_root("share/tclscripts/archer/archer_launch.tcl", 1);
 		const char *archer_trans;
 		Tcl_DStringInit(&temp);
 		archer_trans = Tcl_TranslateFileName(INTERP, archer, &temp);
@@ -2822,7 +2824,6 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     bu_vls_init(&wdbp->wdb_name);
     bu_vls_strcpy(&wdbp->wdb_name, MGED_DB_NAME);
 
-    BU_LIST_INIT(&wdbp->wdb_observers.l);
     wdbp->wdb_interp = interpreter;
 
     /* append to list of rt_wdb's */

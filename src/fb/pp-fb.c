@@ -67,6 +67,7 @@
 #include "bu/color.h"
 #include "bu/str.h"
 #include "bu/log.h"
+#include "bu/snooze.h"
 #include "fb.h"
 #include "libtermio.h"
 
@@ -130,7 +131,7 @@ main(int argc, char **argv)
     int ret;
 
     bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
-    sleep(1);
+    bu_snooze(BU_SEC2USEC(1));
 
     printf("GIFT-PRETTY File painted on Generic Framebuffer\n");
 

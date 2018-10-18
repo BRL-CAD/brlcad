@@ -17,6 +17,7 @@ set(bn_headers
   randmt.h
   spm.h
   tabdata.h
+  sobol.h
   str.h
   tol.h
   vectfont.h
@@ -27,12 +28,10 @@ set(bn_headers
   vlist.h
   wavelet.h
   )
-
-install(FILES ${bn_headers} DESTINATION ${INCLUDE_DIR}/brlcad/bn)
-
-CMAKEFILES(${bn_headers})
+BRLCAD_MANAGE_FILES(bn_headers ${INCLUDE_DIR}/brlcad/bn)
 
 CMAKEFILES(numgen.h)
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

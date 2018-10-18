@@ -3102,6 +3102,8 @@ parse_grouping_option(struct bu_vls *error_msg, int argc, const char **argv, voi
 
     BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "parse_grouping_option");
 
+    if (!value) return -1;
+
     if (!bu_strcmp(argv[0], "group"))
 	*value = 'g';
     else if (!bu_strcmp(argv[0], "material"))
@@ -3128,6 +3130,8 @@ parse_mode_option(struct bu_vls *error_msg, int argc, const char **argv, void *s
 
     BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "parse_mode_option");
 
+    if (!options) return -1;
+
     if (!bu_strcmp(argv[0], "bot")) {
 	options->mode_option = 'b';
     } else if (!bu_strcmp(argv[0], "nmg")) {
@@ -3152,6 +3156,8 @@ parse_bot_thickness_option(struct bu_vls *error_msg, int argc, const char **argv
 
     BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "parse_bot_thickness_option");
 
+    if (!options) return -1;
+
     if (bu_opt_fastf_t(error_msg, argc, argv, &options->bot_thickness) != 1)
 	return -1;
 
@@ -3171,7 +3177,9 @@ parse_normal_mode_option(struct bu_vls *UNUSED(error_msg), int UNUSED(argc), con
 {
     int * const value = (int *)set_var;
 
-    *value = IGNR_NORM;
+    if (value) {
+	*value = IGNR_NORM;
+    }
     return 0;
 }
 
@@ -3182,6 +3190,8 @@ parse_open_bot_output_mode_option(struct bu_vls *error_msg, int argc, const char
     int * const value = (int *)set_var;
 
     BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "parse_open_bot_output_mode_option");
+
+    if (!value ) return -1;
 
     if (!bu_strcmp(argv[0], "nocos"))
 	*value = RT_BOT_PLATE_NOCOS;
@@ -3203,7 +3213,9 @@ parse_plot_mode_option(struct bu_vls *UNUSED(error_msg), int UNUSED(argc), const
 {
     int * const value = (int *)set_var;
 
-    *value = PLOT_ON;
+    if (value) {
+	*value = PLOT_ON;
+    }
     return 0;
 }
 
@@ -3211,17 +3223,24 @@ parse_plot_mode_option(struct bu_vls *UNUSED(error_msg), int UNUSED(argc), const
 HIDDEN int
 parse_bot_orientation_option(struct bu_vls *error_msg, int argc, const char **argv, void *set_var)
 {
+    int have_orientation = 0;
     int * const value = (int *)set_var;
 
     BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "parse_bot_orientation_option");
 
-    if (!bu_strcmp(argv[0], "unoriented"))
+    if (!bu_strcmp(argv[0], "unoriented")) {
 	*value = RT_BOT_UNORIENTED;
-    else if (!bu_strcmp(argv[0], "ccw"))
+	have_orientation = 1;
+    }
+    if (!bu_strcmp(argv[0], "ccw")) {
 	*value = RT_BOT_CCW;
-    else if (!bu_strcmp(argv[0], "cw"))
+	have_orientation = 1;
+    }
+    if (!bu_strcmp(argv[0], "cw")) {
 	*value = RT_BOT_CW;
-    else {
+	have_orientation = 1;
+    }
+    if (!have_orientation) {
 	bu_vls_printf(error_msg, "invalid BoT orientation mode\n");
 	return -1;
     }
