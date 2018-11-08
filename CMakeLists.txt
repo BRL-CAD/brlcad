@@ -2545,10 +2545,15 @@ BRLCAD_TYPE_SIZE("uint64_t" "")
 BRLCAD_TYPE_SIZE("uintptr_t" "")
 BRLCAD_TYPE_SIZE("sig_t" "signal.h")
 
-# If we have an off_t that's too small, we've got a problem
+# If we have an off_t that's too small, we'll need to deal with that in order to
+# support large files successfully.
 if (CMAKE_SIZEOF_VOID_P AND HAVE_OFF_T)
   if (${CMAKE_SIZEOF_VOID_P} GREATER ${HAVE_OFF_T})
-    message(WARNING "Platform void pointer size is ${CMAKE_SIZEOF_VOID_P}, but off_t size is ${HAVE_OFF_T}!")
+    if (NOT DEFINED OFF_T_SIZE_MISMATCH)
+      message("Note: platform void pointer size (${CMAKE_SIZEOF_VOID_P}) is greater than off_t size (${HAVE_OFF_T})")
+    endif (NOT DEFINED OFF_T_SIZE_MISMATCH)
+    CONFIG_H_APPEND(BRLCAD "#define OFF_T_SIZE_MISMATCH 1\n")
+    set(OFF_T_SIZE_MISMATCH  1 CACHE INTERNAL "Have off_t that is too small for platform.")
   endif (${CMAKE_SIZEOF_VOID_P} GREATER ${HAVE_OFF_T})
 endif (CMAKE_SIZEOF_VOID_P AND HAVE_OFF_T)
 

@@ -227,8 +227,6 @@ typedef void (*sig_t)(int);
  * types
  */
 
-#define off_t ptrdiff_t
-
 typedef int pid_t;
 typedef int socklen_t;
 typedef unsigned int gid_t;
