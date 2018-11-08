@@ -1138,6 +1138,10 @@ main(int argc, char *argv[])
 	/* if there is more than a file name remaining, mged is not interactive */
 	interactive = 0;
     } else {
+#if defined(_WIN32) && !defined(CYGWIN)
+		if(!isatty(fileno(stdin)) || !isatty(fileno(stdout)))
+			interactive = 0;
+#else
 	struct timeval timeout;
 
 	/* wait 1/10sec for input, in case we're piped */
@@ -1196,7 +1200,7 @@ main(int argc, char *argv[])
 	    }
 
 	} /* read_set */
-
+#endif
     } /* argc > 1 */
 
     if (bu_debug > 0)
