@@ -212,6 +212,13 @@
 #   define lseek _lseek
 #endif
 
+/* set up fseek */
+#if defined(SIZEOF_VOID_P) && SIZEOF_VOID_P == 8
+#   define fseek _fseeki64
+#else
+#   define fseek _fseek
+#endif
+
 #cmakedefine fmax __max
 #define ioctl ioctlsocket
 

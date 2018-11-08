@@ -1065,7 +1065,7 @@ polyhbld(void)
     pg->max_npts = 0;
 
     /* Return to first 'Q' record */
-    bu_fseek(ifp, startpos, 0);
+    fseek(ifp, startpos, 0);
 
     for (nlines = 0; nlines < pg->npoly; nlines++) {
 	struct rt_pg_face_internal *fp = &pg->poly[nlines];

@@ -1272,7 +1272,7 @@ deck(char *prefix)
 
     /* Go back, and add number of solids and regions on second card. */
     if (savsol >= 0)
-	bu_fseek(solfp, savsol, 0);
+	fseek(solfp, savsol, 0);
 
     itoa(nns, buff, 5);
     ewrite(solfp, buff, 5);

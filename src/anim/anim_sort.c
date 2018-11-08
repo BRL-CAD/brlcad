@@ -134,9 +134,9 @@ main(int argc, char *argv[])
 	number = -1;
 	success = 0; /* tells whether or not any frames have been found which have the current frame number*/
 	if (incremental) {
-	    bu_fseek(stdin, 0, 0);
+	    fseek(stdin, 0, 0);
 	} else {
-	    bu_fseek(stdin, last_pos, 0);
+	    fseek(stdin, last_pos, 0);
 	}
 
 	reserve = MAXLEN*MAXLINES;

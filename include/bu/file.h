@@ -171,9 +171,12 @@ BU_EXPORT extern size_t bu_file_list(const char *path, const char *pattern, char
 BU_EXPORT extern char *bu_file_realpath(const char *path, char *resolved_path);
 
 
-/** NEW: Do not use. */
-BU_EXPORT extern int bu_fseek(FILE *stream, off_t offset, int origin);
-/** NEW: Do not use. */
+/**
+ * This wrapper appears to be necessary (at least on Visual Studio) to handle
+ * situations where 32 and 64 bit versions of this function have different
+ * function signatures (a simple define of the 32 bit version to the 64 bit
+ * version will produce compile errors.)
+ */
 BU_EXPORT extern off_t bu_ftell(FILE *stream);
 
 /** @} */
