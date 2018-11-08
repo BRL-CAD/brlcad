@@ -337,7 +337,7 @@ write_Octree(Octree *parentp, FILE *fp)
     }
     if (hdr_ptlist.f_length > 0) {
 	/* Go back and fudge point count.			*/
-	if (fseek(fp, addr, 0)) {
+	if (bu_fseek(fp, addr, 0)) {
 	    bu_log("\"%s\"(%d) Fseek failed.\n", __FILE__, __LINE__);
 	    return 0;
 	}
@@ -349,7 +349,7 @@ write_Octree(Octree *parentp, FILE *fp)
 	    return 0;
 	}
 	/* Re-position write pointer to end-of-file.		*/
-	if (fseek(fp, 0, 2)) {
+	if (bu_fseek(fp, 0, 2)) {
 	    bu_log("\"%s\"(%d) Fseek failed.\n", __FILE__, __LINE__);
 	    return 0;
 	}

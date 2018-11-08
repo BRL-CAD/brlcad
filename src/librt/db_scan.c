@@ -108,7 +108,7 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
     totrec = 0;
     while (1) {
 	nrec = 0;
-	if (fseek(dbip->dbi_fp, next, 0) != 0) {
+	if (bu_fseek(dbip->dbi_fp, next, 0) != 0) {
 	    bu_log("db_scan:  fseek(offset=%zd) failure\n", next);
 	    return -1;
 	}
@@ -149,7 +149,7 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
 			break;
 		    DEBUG_PR(here, rec2);
 		    if (rec2.u_id != ID_ARS_B) {
-			fseek(dbip->dbi_fp, here, 0);
+			bu_fseek(dbip->dbi_fp, here, 0);
 			break;
 		    }
 		    nrec++;
@@ -194,7 +194,7 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
 			break;
 		    DEBUG_PR(here, rec2);
 		    if (rec2.u_id != ID_P_DATA) {
-			fseek(dbip->dbi_fp, here, 0);
+			bu_fseek(dbip->dbi_fp, here, 0);
 			break;
 		    }
 		    nrec++;
@@ -213,7 +213,7 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
 			break;
 		    DEBUG_PR(here, rec2);
 		    if (rec2.u_id != ID_BSURF) {
-			fseek(dbip->dbi_fp, here, 0);
+			bu_fseek(dbip->dbi_fp, here, 0);
 			break;
 		    }
 
@@ -315,7 +315,7 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
 			break;
 		    DEBUG_PR(here, rec2);
 		    if (rec2.u_id != ID_MEMB) {
-			fseek(dbip->dbi_fp, here, 0);
+			bu_fseek(dbip->dbi_fp, here, 0);
 			break;
 		    }
 		    nrec++;

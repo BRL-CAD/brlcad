@@ -2189,7 +2189,7 @@ skip_section(struct conversion_state *pstate)
 	}
     }
     /* seek to start of the section */
-    fseek(pstate->fpin, section_start, SEEK_SET);
+    bu_fseek(pstate->fpin, section_start, SEEK_SET);
 }
 
 

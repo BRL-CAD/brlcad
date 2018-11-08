@@ -63,7 +63,7 @@ dump(FILE *fd)
 
     if (offset != 0) {
 	/* skip over "offset" bytes first */
-	if (fseek(fd, offset, 0)) {
+	if (bu_fseek(fd, offset, 0)) {
 
 	    /* If fseek fails, try reading our way to the desired offset.
 	     * The fseek will fail if we're reading from a pipe.

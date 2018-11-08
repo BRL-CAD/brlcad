@@ -1109,7 +1109,7 @@ process_entities_unknown_code(int code)
 		    break;
 		}
 		bu_free((char *)tmp_state, "curr_state");
-		fseek(dxf, curr_state->file_offset, SEEK_SET);
+		bu_fseek(dxf, curr_state->file_offset, SEEK_SET);
 		curr_state->sub_state = UNKNOWN_ENTITY_STATE;
 		if (verbose) {
 		    bu_log("Popped state at end of inserted block (seeked to %ld)\n", curr_state->file_offset);
@@ -1223,7 +1223,7 @@ process_insert_entities_code(int code)
 		BU_LIST_PUSH(&state_stack, &(curr_state->l));
 		curr_state = new_state;
 		new_state = NULL;
-		fseek(dxf, curr_state->curr_block->offset, SEEK_SET);
+		bu_fseek(dxf, curr_state->curr_block->offset, SEEK_SET);
 		curr_state->state = ENTITIES_SECTION;
 		curr_state->sub_state = UNKNOWN_ENTITY_STATE;
 		if (verbose) {
@@ -2504,7 +2504,7 @@ process_dimension_entities_code(int code)
 		    BU_LIST_PUSH(&state_stack, &(curr_state->l));
 		    curr_state = new_state;
 		    new_state = NULL;
-		    fseek(dxf, curr_state->curr_block->offset, SEEK_SET);
+		    bu_fseek(dxf, curr_state->curr_block->offset, SEEK_SET);
 		    curr_state->state = ENTITIES_SECTION;
 		    curr_state->sub_state = UNKNOWN_ENTITY_STATE;
 		    if (verbose) {

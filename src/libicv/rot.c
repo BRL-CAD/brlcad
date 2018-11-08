@@ -351,7 +351,7 @@ icv_rot(size_t argc, const char *argv[])
 		xout = (nyin - 1) - lasty;
 		outbyte = ((yout * nyin) + xout) * pixbytes;
 		if (outplace != outbyte) {
-		    if (fseek(ofp, outbyte, SEEK_SET) < 0) {
+		    if (bu_fseek(ofp, outbyte, SEEK_SET) < 0) {
 			ret = 3;
 			perror("fseek");
 			bu_log("ERROR: %s can't seek on output (ofp=%p, outbyte=%zd)\n", argv[0], (void *)ofp, outbyte);
@@ -381,7 +381,7 @@ icv_rot(size_t argc, const char *argv[])
 		xout = yin;
 		outbyte = ((yout * nyin) + xout) * pixbytes;
 		if (outplace != outbyte) {
-		    if (fseek(ofp, outbyte, SEEK_SET) < 0) {
+		    if (bu_fseek(ofp, outbyte, SEEK_SET) < 0) {
 			ret = 3;
 			perror("fseek");
 			bu_log("ERROR: %s can't seek on output (ofp=%p, outbyte=%zd)\n", argv[0], (void *)ofp, outbyte);
@@ -403,7 +403,7 @@ icv_rot(size_t argc, const char *argv[])
 		yout = (nyin - 1) - y + 1;
 		outbyte = yout * scanbytes;
 		if (outplace != outbyte) {
-		    if (fseek(ofp, outbyte, SEEK_SET) < 0) {
+		    if (bu_fseek(ofp, outbyte, SEEK_SET) < 0) {
 			ret = 3;
 			perror("fseek");
 			bu_log("ERROR: %s can't seek on output (ofp=%p, outbyte=%zd)\n", argv[0], (void *)ofp, outbyte);

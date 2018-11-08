@@ -2095,7 +2095,7 @@ skip_section(void)
 	}
     }
     /* seek to start of the section */
-    fseek(fpin, section_start, SEEK_SET);
+    bu_fseek(fpin, section_start, SEEK_SET);
 }
 
 

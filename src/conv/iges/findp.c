@@ -44,7 +44,7 @@ Findp()
 
     saverec = currec;	/* save current record number */
 
-    if (fseek(fd, 0, 2)) {
+    if (bu_fseek(fd, 0, 2)) {
 	/* go to end of file */
 	bu_log("Cannot seek to end of file\n");
 	perror("Findp");
