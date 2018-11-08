@@ -2545,6 +2545,13 @@ BRLCAD_TYPE_SIZE("uint64_t" "")
 BRLCAD_TYPE_SIZE("uintptr_t" "")
 BRLCAD_TYPE_SIZE("sig_t" "signal.h")
 
+# If we have an off_t that's too small, we've got a problem
+if (CMAKE_SIZEOF_VOID_P AND HAVE_OFF_T)
+  if (${CMAKE_SIZEOF_VOID_P} GREATER ${HAVE_OFF_T})
+    message(WARNING "Platform void pointer size is ${CMAKE_SIZEOF_VOID_P}, but off_t size is ${HAVE_OFF_T}!")
+  endif (${CMAKE_SIZEOF_VOID_P} GREATER ${HAVE_OFF_T})
+endif (CMAKE_SIZEOF_VOID_P AND HAVE_OFF_T)
+
 # see if we have a TLS intrinsic, first check C++11 compliance
 check_cxx_source_compiles("static thread_local int i = 0; int main() { return i; }" HAVE_THREAD_LOCAL)
 if (HAVE_THREAD_LOCAL)
