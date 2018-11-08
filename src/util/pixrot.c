@@ -190,7 +190,7 @@ main(int argc, char **argv)
 		xout = (nyin - 1) - lasty;
 		outbyte = ((yout * nyin) + xout) * pixbytes;
 		if (outplace != outbyte) {
-		    if (fseek(ofp, outbyte, 0) < 0) {
+		    if (bu_fseek(ofp, outbyte, 0) < 0) {
 			bu_exit(3, "pixrot: Can't seek on output, yet I need to!\n");
 		    }
 		    outplace = outbyte;
@@ -215,7 +215,7 @@ main(int argc, char **argv)
 		xout = yin;
 		outbyte = ((yout * nyin) + xout) * pixbytes;
 		if (outplace != outbyte) {
-		    if (fseek(ofp, outbyte, 0) < 0) {
+		    if (bu_fseek(ofp, outbyte, 0) < 0) {
 			bu_exit(3, "pixrot: Can't seek on output, yet I need to!\n");
 		    }
 		    outplace = outbyte;
@@ -232,7 +232,7 @@ main(int argc, char **argv)
 		yout = (nyin - 1) - y;
 		outbyte = yout * scanbytes;
 		if (outplace != outbyte) {
-		    if (fseek(ofp, outbyte, 0) < 0) {
+		    if (bu_fseek(ofp, outbyte, 0) < 0) {
 			bu_exit(3, "pixrot: Can't seek on output, yet I need to!\n");
 		    }
 		    outplace = outbyte;

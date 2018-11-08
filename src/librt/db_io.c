@@ -78,7 +78,7 @@ db_read(const struct db_i *dbip, void *addr, size_t count, off_t offset)
     }
     bu_semaphore_acquire(BU_SEM_SYSCALL);
 
-    ret = fseek(dbip->dbi_fp, offset, 0);
+    ret = bu_fseek(dbip->dbi_fp, offset, 0);
     if (ret)
 	bu_bomb("db_read: fseek error\n");
     got = (size_t)fread(addr, 1, count, dbip->dbi_fp);
@@ -192,7 +192,7 @@ db_write(struct db_i *dbip, const void *addr, size_t count, off_t offset)
     bu_semaphore_acquire(BU_SEM_SYSCALL);
     bu_interrupt_suspend();
 
-    (void)fseek(dbip->dbi_fp, offset, 0);
+    (void)bu_fseek(dbip->dbi_fp, offset, 0);
     got = fwrite(addr, 1, count, dbip->dbi_fp);
     fflush(dbip->dbi_fp);
 

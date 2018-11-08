@@ -171,6 +171,11 @@ BU_EXPORT extern size_t bu_file_list(const char *path, const char *pattern, char
 BU_EXPORT extern char *bu_file_realpath(const char *path, char *resolved_path);
 
 
+/** NEW: Do not use. */
+BU_EXPORT extern int bu_fseek(FILE *stream, off_t offset, int origin);
+/** NEW: Do not use. */
+BU_EXPORT extern off_t bu_ftell(FILE *stream);
+
 /** @} */
 
 __END_DECLS
