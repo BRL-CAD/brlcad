@@ -1468,7 +1468,7 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 	}
 
 	/* If we've got an odd number of hits, try tossing out a near-miss hit.  Try the last and first
-	 * hits. */
+	 * hits first, and if neither of those qualify see if there's an interior hit. */
 
 	if (!hits.empty() && ((hits.size() % 2) != 0)) {
 	    const brep_hit &curr_hit = hits.back();
@@ -1478,9 +1478,12 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 	}
 
 	if (!hits.empty() && ((hits.size() % 2) != 0)) {
-	    const brep_hit &curr_hit = hits.front();
-	    if (curr_hit.hit == brep_hit::NEAR_MISS) {
-		hits.pop_front();
+	    for (std::list<brep_hit>::iterator i = hits.begin(); i != hits.end(); ++i) {
+		const brep_hit &h = *i;
+		if (h.hit == brep_hit::NEAR_MISS) {
+		    hits.erase(i);
+		    break;
+		}
 	    }
 	}
 
