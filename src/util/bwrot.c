@@ -297,7 +297,7 @@ main(int argc, char **argv)
     ssize_t x, y;
     size_t j;
     int ret = 0;
-    off_t outbyte, outplace;
+    size_t outbyte, outplace;
     FILE *ifp, *ofp;
     unsigned char *obuf;
     unsigned char *buffer;

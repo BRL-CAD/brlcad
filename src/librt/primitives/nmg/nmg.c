@@ -3998,13 +3998,13 @@ rt_nmg_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 
 			    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
 				vu = BU_LIST_FIRST(vertexuse, &lu->down_hd);
-				bu_vls_printf(logstr, " %d",
+				bu_vls_printf(logstr, " %jd",
 					      bu_ptbl_locate(&verts, (long *)vu->v_p));
 			    } else {
 				bu_vls_strcat(logstr, " {");
 				for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd)) {
 				    vu = eu->vu_p;
-				    bu_vls_printf(logstr, " %d",
+				    bu_vls_printf(logstr, " %jd",
 						  bu_ptbl_locate(&verts, (long *)vu->v_p));
 				}
 				/* end of this loop */

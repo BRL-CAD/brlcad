@@ -762,7 +762,7 @@ nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct model *m, struct m
 
 			    v = eu->vu_p->v_p;
 			    NMG_CK_VERTEX(v);
-			    fprintf(fp, " %d, ", bu_ptbl_locate(&verts, (long *)v));
+			    fprintf(fp, " %jd, ", bu_ptbl_locate(&verts, (long *)v));
 			}
 			fprintf(fp, "-1");
 		    }

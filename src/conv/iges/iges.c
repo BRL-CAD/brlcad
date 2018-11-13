@@ -1277,7 +1277,7 @@ write_edge_list(struct nmgregion *r,
 	    line_de = write_linear_bspline(start_vg, end_vg, fp_dir, fp_param);
 	else
 	    line_de = write_line_entity(start_vg, end_vg, fp_dir, fp_param);
-	bu_vls_printf(&str, ",%d,%d,%d,%d,%d",
+	bu_vls_printf(&str, ",%d,%d,%jd,%d,%jd",
 		      line_de,
 		      vert_de, bu_ptbl_locate(vtab, (long *)start_v) + 1,
 		      vert_de, bu_ptbl_locate(vtab, (long *)end_v) + 1);
@@ -1629,7 +1629,7 @@ write_shell_face_loop(char *name,
 			else
 			    orientation = 0;
 
-			bu_vls_printf(&str, ",0,%d,%d,%d,0",
+			bu_vls_printf(&str, ",0,%d,%jd,%d,0",
 				      edge_de ,
 				      bu_ptbl_locate(etab, (long *)(e)) + 1,
 				      orientation);
@@ -1638,7 +1638,7 @@ write_shell_face_loop(char *name,
 		    }
 		} else if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
 		    v = BU_LIST_PNEXT(vertexuse, &lu->down_hd)->v_p;
-		    bu_vls_printf(&str, ",1,%d,%d,1,0",
+		    bu_vls_printf(&str, ",1,%d,%jd,1,0",
 				  vert_de,
 				  bu_ptbl_locate(vtab, (long *)v)+1);
 		} else

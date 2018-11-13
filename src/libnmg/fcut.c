@@ -238,7 +238,7 @@ ptbl_vsort(struct bu_ptbl *b, fastf_t *pt, fastf_t *dir, fastf_t *mag, fastf_t d
 
 {
     register struct vertexuse **vu;
-    register int i, j;
+    register size_t i, j;
 
     vu = (struct vertexuse **)b->buffer;
 
@@ -303,10 +303,10 @@ ptbl_vsort(struct bu_ptbl *b, fastf_t *pt, fastf_t *dir, fastf_t *mag, fastf_t d
 		if (vu[i]->v_p == vu[j]->v_p) {
 		    if (vu[i] < vu[j]) continue;
 		    if (vu[i] == vu[j]) {
-			int last = b->end - 1;
+			ssize_t last = b->end - 1;
 			/* vu duplication, eliminate! */
 			bu_log("ptbl_vsort: vu duplication eliminated\n");
-			if (j >= last) {
+			if ((ssize_t)j >= last) {
 			    /* j is last element */
 			    b->end--;
 			    break;
@@ -3098,7 +3098,7 @@ nmg_face_cutjoin(struct bu_ptbl *b1, struct bu_ptbl *b2, fastf_t *mag1, fastf_t 
 
     /* Perhaps this should only happen when debugging is on? */
     if (nmg_debug&DEBUG_FCUT && (b1->end <= 0 || b2->end <= 0)) {
-	bu_log("nmg_face_cutjoin(fu1=%p, fu2=%p): WARNING empty list %ld %ld\n",
+	bu_log("nmg_face_cutjoin(fu1=%p, fu2=%p): WARNING empty list %zu %zu\n",
 	       (void *)fu1, (void *)fu2, b1->end, b2->end);
     }
 
@@ -3116,11 +3116,11 @@ top:
     /* Print list of intersections */
     if (nmg_debug&DEBUG_FCUT) {
 	bu_log("Ray vu intersection list:\n");
-	for (i = 0; (off_t)i < b1->end; i++) {
+	for (i = 0; i < b1->end; i++) {
 	    bu_log(" %zu %e ", i, mag1[i]);
 	    nmg_pr_vu_briefly(vu1[i], (char *)0);
 	}
-	for (i = 0; (off_t)i < b2->end; i++) {
+	for (i = 0; i < b2->end; i++) {
 	    bu_log(" %zu %e ", i, mag2[i]);
 	    nmg_pr_vu_briefly(vu2[i], (char *)0);
 	}

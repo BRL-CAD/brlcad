@@ -40,9 +40,12 @@
 #include "./librt_private.h"
 
 
-#define DEBUG_PR(aaa, rrr) {\
-	if (RT_G_DEBUG&DEBUG_DB) bu_log("db_scan %ld %c (0%o)\n", \
-					aaa, rrr.u_id, rrr.u_id); }
+#define DEBUG_PR(aaa, rrr) { \
+	if (RT_G_DEBUG&DEBUG_DB) { \
+	    bu_log("db_scan %jd %c (0%o)\n", \
+		   (intmax_t)aaa, rrr.u_id, rrr.u_id); \
+	} \
+    }
 
 /**
  * This routine sequentially reads through the model database file and
@@ -109,7 +112,7 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
     while (1) {
 	nrec = 0;
 	if (bu_fseek(dbip->dbi_fp, next, 0) != 0) {
-	    bu_log("db_scan:  fseek(offset=%zd) failure\n", next);
+	    bu_log("db_scan:  fseek(offset=%jd) failure\n", (intmax_t)next);
 	    return -1;
 	}
 	addr = next;
@@ -335,8 +338,8 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
 		handler(dbip, record.c.c_name, addr, nrec, j, client_data);
 		break;
 	    default:
-		bu_log("db_scan ERROR:  bad record %c (0%o), addr=%ld\n",
-		       record.u_id, record.u_id, addr);
+		bu_log("db_scan ERROR:  bad record %c (0%o), addr=%jd\n",
+		       record.u_id, record.u_id, (intmax_t)addr);
 		/* skip this record */
 		break;
 	}

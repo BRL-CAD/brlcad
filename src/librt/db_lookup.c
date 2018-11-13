@@ -237,8 +237,8 @@ db_diradd(struct db_i *dbip, const char *name, off_t laddr, size_t len, int flag
     RT_CK_DBI(dbip);
 
     if (RT_G_DEBUG&DEBUG_DB) {
-	bu_log("db_diradd(dbip=%p, name='%s', addr=%ld, len=%zu, flags=0x%x, ptr=%p)\n",
-	       (void *)dbip, name, laddr, len, flags, ptr);
+	bu_log("db_diradd(dbip=%p, name='%s', addr=%jd, len=%zu, flags=0x%x, ptr=%p)\n",
+	       (void *)dbip, name, (intmax_t)laddr, len, flags, ptr);
     }
 
     if ((tmp_ptr = strchr(name, '/')) != NULL) {
@@ -404,11 +404,11 @@ db_pr_dir(const struct db_i *dbip)
 		flags = "COM";
 	    else
 		flags = "Bad";
-	    bu_log("%p %s %s=%ld len=%.5ld use=%.2ld nref=%.2ld %s",
+	    bu_log("%p %s %s=%jd len=%.5ld use=%.2ld nref=%.2ld %s",
 		   (void *)dp,
 		   flags,
 		   dp->d_flags & RT_DIR_INMEM ? "  ptr " : "d_addr",
-		   dp->d_addr,
+		   (intmax_t)dp->d_addr,
 		   dp->d_len,
 		   dp->d_uses,
 		   dp->d_nref,

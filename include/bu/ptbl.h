@@ -53,7 +53,7 @@ __BEGIN_DECLS
  */
 struct bu_ptbl {
     struct bu_list l; /**< linked list for caller's use */
-    off_t end;        /**< index into buffer of first available location */
+    size_t end;        /**< index into buffer of first available location */
     size_t blen;      /**< # of (long *)'s worth of storage at *buffer */
     long **buffer;    /**< data storage area */
 };
@@ -93,7 +93,7 @@ typedef struct bu_ptbl bu_ptbl_t;
 /*
  * For those routines that have to "peek" into the ptbl a little bit.
  */
-#define BU_PTBL_LEN(ptbl)		(((uintptr_t)(ptbl) != (uintptr_t)NULL)?(size_t)(ptbl)->end:0)
+#define BU_PTBL_LEN(ptbl)		(((uintptr_t)(ptbl) != (uintptr_t)NULL)?(ptbl)->end:0)
 #define BU_PTBL_TEST(ptbl)		(((uintptr_t)(ptbl) != (uintptr_t)NULL)?(ptbl)->l.magic == BU_PTBL_MAGIC:0)
 #define BU_PTBL_GET(ptbl, i)		((ptbl)->buffer[(i)])
 #define BU_PTBL_SET(ptbl, i, val)	((ptbl)->buffer[(i)] = (long*)(val))
@@ -150,8 +150,7 @@ BU_EXPORT extern void bu_ptbl_reset(struct bu_ptbl *b);
 /**
  * Append/Insert a (long *) item to/into the table.
  */
-BU_EXPORT extern int bu_ptbl_ins(struct bu_ptbl *b,
-				 long *p);
+BU_EXPORT extern size_t bu_ptbl_ins(struct bu_ptbl *b, long *p);
 
 /**
  * locate a (long *) in an existing table
@@ -164,8 +163,7 @@ BU_EXPORT extern int bu_ptbl_ins(struct bu_ptbl *b,
  * is the biggest argument I can make for changing to an ordered list.
  * Someday....
  */
-BU_EXPORT extern int bu_ptbl_locate(const struct bu_ptbl *b,
-				    const long *p);
+BU_EXPORT extern intmax_t bu_ptbl_locate(const struct bu_ptbl *b, const long *p);
 
 /**
  * Set all occurrences of "p" in the table to zero.  This is different
@@ -184,7 +182,7 @@ BU_EXPORT extern void bu_ptbl_zero(struct bu_ptbl *b,
  * is the biggest argument I can make for changing to an ordered list.
  * Someday....
  */
-BU_EXPORT extern int bu_ptbl_ins_unique(struct bu_ptbl *b, long *p);
+BU_EXPORT extern intmax_t bu_ptbl_ins_unique(struct bu_ptbl *b, long *p);
 
 /**
  * Remove all occurrences of an item from a table
@@ -197,8 +195,7 @@ BU_EXPORT extern int bu_ptbl_ins_unique(struct bu_ptbl *b, long *p);
  * there is more than one occurrence of p in the table.  A pittance
  * savings, unless you're doing a lot of it.
  */
-BU_EXPORT extern int bu_ptbl_rm(struct bu_ptbl *b,
-				const long *p);
+BU_EXPORT extern size_t bu_ptbl_rm(struct bu_ptbl *b, const long *p);
 
 /**
  * Catenate one table onto end of another.  There is no checking for

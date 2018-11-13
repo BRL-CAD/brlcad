@@ -71,8 +71,8 @@ do_line(int xpos, int ypos, const char* line, RGBpixel (*menu_border))
 
 	/* locate the bitmap for the character in the file */
 	if (bu_fseek(font.ffdes, SWABV(font.dir[char_id].addr) + font.offset, 0) == EOF) {
-	    fb_log("fseek() to %zd failed.\n",
-		   (SWABV(font.dir[char_id].addr) + font.offset));
+	    fb_log("fseek() to %jd failed.\n",
+		   (intmax_t)(SWABV(font.dir[char_id].addr) + font.offset));
 	    return;
 	}
 

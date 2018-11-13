@@ -879,7 +879,7 @@ nmg_2_vrml(const struct conversion_state *pstate, struct db_tree_state *tsp, con
 			    NMG_CK_EDGEUSE(eu);
 			    v = eu->vu_p->v_p;
 			    NMG_CK_VERTEX(v);
-			    fprintf(pstate->fp_out, " %d, ", bu_ptbl_locate(&verts, (long *)v));
+			    fprintf(pstate->fp_out, " %jd, ", bu_ptbl_locate(&verts, (long *)v));
 			}
 			fprintf(pstate->fp_out, "-1");
 		    }

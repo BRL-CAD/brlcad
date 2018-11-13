@@ -122,7 +122,7 @@ bu_open_mapped_file(const char *name, const char *appl)
 		}
 		if ((size_t)sb.st_size != mp->buflen) {
 		    if (UNLIKELY(bu_debug&BU_DEBUG_MAPPED_FILE)) {
-			bu_log("bu_open_mapped_file(%s) WARNING: File size changed from %ld to %ld, opening new version.\n", real_path, mp->buflen, sb.st_size);
+			bu_log("bu_open_mapped_file(%s) WARNING: File size changed from %ld to %jd, opening new version.\n", real_path, mp->buflen, (intmax_t)sb.st_size);
 		    }
 		    /* mp doesn't reflect the file any longer.  Invalidate. */
 		    mp->appl = bu_strdup("__STALE__");

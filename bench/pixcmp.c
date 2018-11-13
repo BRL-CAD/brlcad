@@ -76,7 +76,7 @@ usage(const char *name)
 
 
 HIDDEN void
-handle_i_opt(const char *arg, off_t *skip1, off_t *skip2)
+handle_i_opt(const char *arg, size_t *skip1, size_t *skip2)
 {
     const char *endptr = arg;
     if ((arg == NULL) || ((skip1 == NULL) && (skip2 == NULL))) {
@@ -122,18 +122,17 @@ main(int argc, char *argv[])
     FILE *f2 = NULL;
     struct stat sf1, sf2;
 
-    long matching = 0;
-    long off1 = 0;
-    long offmany = 0;
+    size_t matching = 0;
+    size_t off1 = 0;
+    size_t offmany = 0;
 
     int c;
     int list_pixel_values = 0;
     int print_bytes = 0;
     int silent = 0;
-    off_t f1_skip = 0;
-    off_t f2_skip = 0;
-
-    long int bytes = 0;
+    size_t f1_skip = 0;
+    size_t f2_skip = 0;
+    size_t bytes = 0;
 
     /* process opts */
     while ((c = bu_getopt(argc, argv, "lbi:s")) != -1) {
@@ -301,7 +300,7 @@ main(int argc, char *argv[])
 
     /* print summary */
     if (!silent) {
-	printf("pixcmp %s: %8ld matching, %8ld off by 1, %8ld off by many\n",
+	printf("pixcmp %s: %8zd matching, %8zd off by 1, %8zd off by many\n",
 	       print_bytes?"bytes":"pixels",
 	       matching, off1, offmany);
     }

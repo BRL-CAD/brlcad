@@ -287,8 +287,8 @@ db5_diradd_handler(
     if (rip->name.ext_buf == NULL) return;
 
     if (RT_G_DEBUG&DEBUG_DB) {
-	bu_log("db5_diradd_handler(dbip=%p, name='%s', addr=%ld, len=%zu)\n",
-	       (void *)dbip, rip->name.ext_buf, laddr, rip->object_length);
+	bu_log("db5_diradd_handler(dbip=%p, name='%s', addr=%jd, len=%zu)\n",
+	       (void *)dbip, rip->name.ext_buf, (intmax_t)laddr, rip->object_length);
     }
 
     db5_diradd(dbip, rip, laddr, client_data);

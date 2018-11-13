@@ -1907,8 +1907,8 @@ nmg_model_area(const struct model *m)
 void
 nmg_purge_unwanted_intersection_points(struct bu_ptbl *vert_list, fastf_t *mag_list, const struct faceuse *fu, const struct bn_tol *tol)
 {
-    int i;
-    int j;
+    size_t i;
+    size_t j;
     struct vertexuse *vu;
     struct loopuse *lu;
     const struct loop_g *lg;
@@ -1921,15 +1921,15 @@ nmg_purge_unwanted_intersection_points(struct bu_ptbl *vert_list, fastf_t *mag_l
 
     if (nmg_debug & DEBUG_POLYSECT) {
 	bu_log("nmg_purge_unwanted_intersection_points(%p, %p)\n", (void *)vert_list, (void *)fu);
-	bu_log("\t%ld vertexuses in list\n", vert_list->end);
+	bu_log("\t%zu vertexuses in list\n", vert_list->end);
     }
 
-    for (i = 0; i < vert_list->end; i++) {
+    for (i = 0; i < (size_t)vert_list->end; i++) {
 	vu = (struct vertexuse *)vert_list->buffer[i];
 	if (vu->l.magic != NMG_VERTEXUSE_MAGIC) {
 	    /* vertexuse probably killed by nmg_repair_v_near_v() */
 	    /* delete the entry from the vertex list */
-	    for (j=i; j < vert_list->end; j++) {
+	    for (j=i; j < (size_t)vert_list->end; j++) {
 		vert_list->buffer[j] = vert_list->buffer[j+1];
 		mag_list[j] = mag_list[j+1];
 	    }
@@ -1947,7 +1947,7 @@ nmg_purge_unwanted_intersection_points(struct bu_ptbl *vert_list, fastf_t *mag_l
 	NMG_CK_LOOP_G(lg);
 
 	if (nmg_debug & DEBUG_POLYSECT) {
-	    bu_log("vu[%d]: %p (%g %g %g) lu: %p %s\n",
+	    bu_log("vu[%zd]: %p (%g %g %g) lu: %p %s\n",
 		   i,
 		   (void *)vu, V3ARGS(vu->v_p->vg_p->coord),
 		   (void *)lu, nmg_orientation(lu->orientation));
@@ -2021,7 +2021,7 @@ nmg_purge_unwanted_intersection_points(struct bu_ptbl *vert_list, fastf_t *mag_l
 	    }
 
 	    /* delete the entry from the vertex list */
-	    for (j=i; j < vert_list->end; j++) {
+	    for (j=i; j < (size_t)vert_list->end; j++) {
 		vert_list->buffer[j] = vert_list->buffer[j+1];
 		mag_list[j] = mag_list[j+1];
 	    }
@@ -2033,8 +2033,7 @@ nmg_purge_unwanted_intersection_points(struct bu_ptbl *vert_list, fastf_t *mag_l
 	}
     }
     if (nmg_debug & DEBUG_POLYSECT)
-	bu_log("\tAt end of nmg_purge_unwanted_intersection_points, %ld vertexuses in list\n",
-	       vert_list->end);
+	bu_log("\tAt end of nmg_purge_unwanted_intersection_points, %zu vertexuses in list\n", vert_list->end);
 }
 
 
@@ -2050,10 +2049,10 @@ nmg_in_or_ref(struct vertexuse *vu, struct bu_ptbl *b)
 	struct vertexuse **vu;
 	uint32_t **magic_p;
     } p;
-    int i;
+    size_t i;
 
     p.magic_p = (uint32_t **)b->buffer;
-    for (i=0; i < b->end; ++i) {
+    for (i=0; i < (size_t)b->end; ++i) {
 	if (p.vu[i] && *p.magic_p[i] == NMG_VERTEXUSE_MAGIC &&
 	    (p.vu[i] == vu || p.vu[i]->v_p == vu->v_p))
 	    return 1;

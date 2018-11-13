@@ -166,7 +166,7 @@ get_args(size_t argc, const char **argv, FILE **ifp, FILE **ofp, double *angle)
 static void
 fill_buffer(FILE *ifp, unsigned char *buf)
 {
-    buflines = fread(buf, scanbytes, buflines, ifp);
+    buflines = fread(buf, scanbytes, (size_t)buflines, ifp);
 
     firsty = lasty + 1;
     lasty = firsty + (buflines - 1);
@@ -234,7 +234,8 @@ arbrot(double a, FILE *ifp, unsigned char *buf)
 	fprintf(stderr, "Sorry but I can't do an arbitrary rotate of an image this large\n");
 	bu_exit (1, NULL);
     }
-    if (buflines > nyin) buflines = nyin;
+    if (buflines > nyin)
+	buflines = nyin;
     fill_buffer(ifp, buf);
 
     /*
@@ -310,8 +311,9 @@ icv_rot(size_t argc, const char *argv[])
     if (buflines <= 0) {
 	bu_exit(1, "ERROR: %s is not compiled to handle a scanline that long!\n", argv[0]);
     }
-    if (buflines > nyin) buflines = nyin;
-    buffer = (unsigned char *)bu_malloc(buflines * scanbytes, "buffer");
+    if (buflines > nyin)
+	buflines = nyin;
+    buffer = (unsigned char *)bu_malloc((size_t)buflines * scanbytes, "buffer");
     obuf = (unsigned char *)bu_malloc((nyin > nxin) ? nyin*pixbytes : nxin*pixbytes, "obuf");
 
     /*
@@ -354,19 +356,19 @@ icv_rot(size_t argc, const char *argv[])
 		    if (bu_fseek(ofp, outbyte, SEEK_SET) < 0) {
 			ret = 3;
 			perror("fseek");
-			bu_log("ERROR: %s can't seek on output (ofp=%p, outbyte=%zd)\n", argv[0], (void *)ofp, outbyte);
+			bu_log("ERROR: %s can't seek on output (ofp=%p, outbyte=%jd)\n", argv[0], (void *)ofp, (intmax_t)outbyte);
 			goto done;
 		    }
 		    outplace = outbyte;
 		}
-		wrote = fwrite(obuf, pixbytes, buflines, ofp);
+		wrote = fwrite(obuf, pixbytes, (size_t)buflines, ofp);
 		if (wrote != buflines) {
 		    ret = 4;
 		    perror("fwrite");
 		    bu_log("ERROR: %s can't out write image data (wrote %zd of %zd)\n", argv[0], wrote, buflines);
 		    goto done;
 		}
-		outplace += buflines*pixbytes;
+		outplace += buflines * pixbytes;
 	    }
 	} else if (minus90) {
 	    for (x = nxin; x > 0; x--) {
@@ -384,19 +386,19 @@ icv_rot(size_t argc, const char *argv[])
 		    if (bu_fseek(ofp, outbyte, SEEK_SET) < 0) {
 			ret = 3;
 			perror("fseek");
-			bu_log("ERROR: %s can't seek on output (ofp=%p, outbyte=%zd)\n", argv[0], (void *)ofp, outbyte);
+			bu_log("ERROR: %s can't seek on output (ofp=%p, outbyte=%jd)\n", argv[0], (void *)ofp, (intmax_t)outbyte);
 			goto done;
 		    }
 		    outplace = outbyte;
 		}
-		wrote = fwrite(obuf, pixbytes, buflines, ofp);
+		wrote = fwrite(obuf, pixbytes, (size_t)buflines, ofp);
 		if (wrote != buflines) {
 		    ret = 4;
 		    perror("fwrite");
 		    bu_log("ERROR: %s can't out write image data (wrote %zd of %zd)\n", argv[0], wrote, buflines);
 		    goto done;
 		}
-		outplace += buflines*pixbytes;
+		outplace += buflines * pixbytes;
 	    }
 	} else if (rot_invert) {
 	    for (y = lasty+1; (ssize_t)y > firsty; y--) {
@@ -406,7 +408,7 @@ icv_rot(size_t argc, const char *argv[])
 		    if (bu_fseek(ofp, outbyte, SEEK_SET) < 0) {
 			ret = 3;
 			perror("fseek");
-			bu_log("ERROR: %s can't seek on output (ofp=%p, outbyte=%zd)\n", argv[0], (void *)ofp, outbyte);
+			bu_log("ERROR: %s can't seek on output (ofp=%p, outbyte=%jd)\n", argv[0], (void *)ofp, (intmax_t)outbyte);
 			goto done;
 		    }
 		    outplace = outbyte;

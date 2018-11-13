@@ -667,7 +667,6 @@ add_test(NAME bu_ptbl_init_0 COMMAND bu_test ptbl init 0)
 add_test(NAME bu_ptbl_init_10000 COMMAND bu_test ptbl init 10000)
 
 add_test(NAME bu_ptbl_reset COMMAND bu_test ptbl reset)
-add_test(NAME bu_ptbl_zero COMMAND bu_test ptbl zero)
 
 add_test(NAME bu_ptbl_ins COMMAND bu_test ptbl ins)
 add_test(NAME bu_ptbl_ins_uniq COMMAND bu_test ptbl ins uniq)

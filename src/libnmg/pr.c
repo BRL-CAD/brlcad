@@ -816,7 +816,7 @@ nmg_pr_ptbl(const char *title, const struct bu_ptbl *tbl, int verbose)
 void
 nmg_pr_ptbl_vert_list(const char *str, const struct bu_ptbl *tbl, const fastf_t *mag)
 {
-    int i;
+    size_t i;
     const struct vertexuse **vup;
     const struct vertexuse *vu;
     const struct vertex *v;
@@ -825,10 +825,10 @@ nmg_pr_ptbl_vert_list(const char *str, const struct bu_ptbl *tbl, const fastf_t 
     bu_log("nmg_pr_ptbl_vert_list(%s):\n", str);
 
     vup = (const struct vertexuse **)tbl->buffer;
-    for (i = 0; i < tbl->end; ++i) {
+    for (i = 0; i < (size_t)tbl->end; ++i) {
 	vu = vup[i];
 	if (vu->l.magic != NMG_VERTEXUSE_MAGIC) {
-	    bu_log("\tWARNING: vertexuse #%d has bad MAGIC (%u)\n",
+	    bu_log("\tWARNING: vertexuse #%zd has bad MAGIC (%u)\n",
 		   i, vu->l.magic);
 	    continue;
 	}
@@ -837,7 +837,7 @@ nmg_pr_ptbl_vert_list(const char *str, const struct bu_ptbl *tbl, const fastf_t 
 	NMG_CK_VERTEX(v);
 	vg = v->vg_p;
 	NMG_CK_VERTEX_G(vg);
-	bu_log("%d\t%g, %g, %g\t", i, V3ARGS(vg->coord));
+	bu_log("%zd\t%g, %g, %g\t", i, V3ARGS(vg->coord));
 	if (*vu->up.magic_p == NMG_EDGEUSE_MAGIC) {
 	    bu_log("EDGEUSE");
 	} else if (*vu->up.magic_p == NMG_LOOPUSE_MAGIC) {

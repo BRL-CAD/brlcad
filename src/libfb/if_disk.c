@@ -35,8 +35,7 @@
 #include "fb.h"
 
 
-#define FILE_CMAP_ADDR ((off_t) ifp->if_width*ifp->if_height	\
-			*sizeof(RGBpixel))
+#define FILE_CMAP_SIZE ((size_t)ifp->if_width * ifp->if_height * sizeof(RGBpixel))
 
 /* Ensure integer number of pixels per DMA */
 #define DISK_DMA_BYTES ((size_t)16*(size_t)1024/sizeof(RGBpixel)*sizeof(RGBpixel))
@@ -259,12 +258,12 @@ dsk_write(fb *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 {
     register ssize_t bytes = count * sizeof(RGBpixel);
     ssize_t todo;
-    off_t dest;
+    size_t dest;
 
     dest = (y * ifp->if_width + x) * sizeof(RGBpixel);
-    if (dest != (off_t)ifp->if_seekpos) {
-	if (lseek(ifp->if_fd, dest, 0) == -1) {
-	    fb_log("disk_buffer_write : seek to %ld failed.\n", dest);
+    if (dest != ifp->if_seekpos) {
+	if (lseek(ifp->if_fd, (off_t)dest, 0) == -1) {
+	    fb_log("disk_buffer_write : seek to %zd failed.\n", dest);
 	    return -1;
 	}
 	ifp->if_seekpos = dest;
@@ -293,10 +292,9 @@ dsk_rmap(fb *ifp, ColorMap *cmap)
     /* Reads on stdout make no sense.  Take reads from stdin. */
     if (fd == 1) fd = 0;
 
-    if (ifp->if_seekpos != FILE_CMAP_ADDR &&
-	lseek(fd, FILE_CMAP_ADDR, 0) == -1) {
-	fb_log("disk_colormap_read : seek to %ld failed.\n",
-	       FILE_CMAP_ADDR);
+    if (ifp->if_seekpos != FILE_CMAP_SIZE &&
+	lseek(fd, (off_t)FILE_CMAP_SIZE, 0) == -1) {
+	fb_log("disk_colormap_read : seek to %zd failed.\n", FILE_CMAP_SIZE);
 	return -1;
     }
     if (read(fd, (char *) cmap, sizeof(ColorMap)) != sizeof(ColorMap)) {
@@ -318,12 +316,11 @@ dsk_wmap(fb *ifp, const ColorMap *cmap)
 	return 0;
     if (fb_is_linear_cmap(cmap))
 	return 0;
-    if (lseek(ifp->if_fd, FILE_CMAP_ADDR, 0) == -1) {
-	fb_log("disk_colormap_write : seek to %ld failed.\n",
-	       FILE_CMAP_ADDR);
+    if (lseek(ifp->if_fd, (off_t)FILE_CMAP_SIZE, 0) == -1) {
+	fb_log("disk_colormap_write : seek to %zd failed.\n", FILE_CMAP_SIZE);
 	return -1;
     }
-    if (write(ifp->if_fd, (char *) cmap, sizeof(ColorMap))
+    if (write(ifp->if_fd, (char *)cmap, sizeof(ColorMap))
 	!= sizeof(ColorMap)) {
 	fb_log("disk_colormap_write : write failed.\n");
 	return -1;

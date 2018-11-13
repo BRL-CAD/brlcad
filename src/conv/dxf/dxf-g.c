@@ -638,9 +638,9 @@ process_blocks_code(int code)
 	    if (curr_block && curr_block->block_name == NULL) {
 		curr_block->block_name = bu_strdup(line);
 		if (verbose) {
-		    bu_log("BLOCK %s begins at %ld\n",
+		    bu_log("BLOCK %s begins at %jd\n",
 			   curr_block->block_name,
-			   curr_block->offset);
+			   (intmax_t)curr_block->offset);
 		}
 	    }
 	    break;
@@ -1112,7 +1112,7 @@ process_entities_unknown_code(int code)
 		bu_fseek(dxf, curr_state->file_offset, SEEK_SET);
 		curr_state->sub_state = UNKNOWN_ENTITY_STATE;
 		if (verbose) {
-		    bu_log("Popped state at end of inserted block (seeked to %ld)\n", curr_state->file_offset);
+		    bu_log("Popped state at end of inserted block (seeked to %jd)\n", (intmax_t)curr_state->file_offset);
 		}
 		break;
 	    } else {
@@ -1228,7 +1228,7 @@ process_insert_entities_code(int code)
 		curr_state->sub_state = UNKNOWN_ENTITY_STATE;
 		if (verbose) {
 		    bu_log("Changing state for INSERT\n");
-		    bu_log("seeked to %zd\n", curr_state->curr_block->offset);
+		    bu_log("seeked to %jd\n", (intmax_t)curr_state->curr_block->offset);
 		    bn_mat_print("state xform", curr_state->xform);
 		}
 	    }
@@ -2509,7 +2509,7 @@ process_dimension_entities_code(int code)
 		    curr_state->sub_state = UNKNOWN_ENTITY_STATE;
 		    if (verbose) {
 			bu_log("Changing state for INSERT\n");
-			bu_log("seeked to %zd\n", curr_state->curr_block->offset);
+			bu_log("seeked to %jd\n", (intmax_t)curr_state->curr_block->offset);
 		    }
 		    layers[curr_layer]->dimension_count++;
 		}

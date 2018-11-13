@@ -24,11 +24,11 @@
 
 static int DEFAULT_HOW_MANY = 32;
 
-static int
+static size_t
 test_bu_ptbl_init(size_t blen)
 {
     struct bu_ptbl b;
-    int result;
+    size_t result;
 
     bu_ptbl_init(&b, blen, "test_bu_ptbl_init");
 
@@ -45,12 +45,13 @@ test_bu_ptbl_init(size_t blen)
     return result;
 }
 
-static int
+static size_t
 test_bu_ptbl_reset(void)
 {
     struct bu_ptbl b;
     long p;
-    int locate_before, locate_after, result;
+    intmax_t locate_before, locate_after;
+    size_t result;
 
     bu_ptbl_init(&b, 0, "test_bu_ptbl_reset");
 
@@ -72,12 +73,12 @@ test_bu_ptbl_reset(void)
     return result;
 }
 
-static int
+static intmax_t
 test_bu_ptbl_ins(int uniq)
 {
     struct bu_ptbl b;
     long p;
-    int locate, result, added = -1;
+    intmax_t locate, result, added = -1;
 
     bu_ptbl_init(&b, 0, "test_bu_ptbl_ins");
 
@@ -105,12 +106,14 @@ test_bu_ptbl_ins(int uniq)
  * inserted on consecutive positions (i.e., ...A A A...).
  * If `type` is "mix", they are interspersed (i.e., ...A B A C A...).
  */
-static int
+static size_t
 test_bu_ptbl_rm(const char *type)
 {
     struct bu_ptbl b;
     long p, q;
-    int i, how_many = DEFAULT_HOW_MANY, result;
+    size_t i;
+    size_t how_many = DEFAULT_HOW_MANY;
+    size_t result;
 
     bu_ptbl_init(&b, 0, "test_bu_ptbl_rm");
 
@@ -139,12 +142,14 @@ test_bu_ptbl_rm(const char *type)
  * was done, only one deletion should take place.
  * Otherwise, as many elements as there were in src.
  */
-static int
+static size_t
 test_bu_ptbl_cat(int uniq)
 {
     struct bu_ptbl src, dst;
     long p, q;
-    int i, how_many = DEFAULT_HOW_MANY, result = BRLCAD_OK;
+    size_t i;
+    size_t how_many = DEFAULT_HOW_MANY;
+    size_t result = BRLCAD_OK;
 
     bu_ptbl_init(&src, 0, "test_bu_ptbl_cat src");
     bu_ptbl_init(&dst, 0, "test_bu_ptbl_cat dst");
@@ -173,12 +178,12 @@ test_bu_ptbl_cat(int uniq)
     return result;
 }
 
-static int
+static size_t
 test_bu_ptbl_trunc(void)
 {
     struct bu_ptbl b;
     long p;
-    int i, how_many = DEFAULT_HOW_MANY, result;
+    size_t i, how_many = DEFAULT_HOW_MANY, result;
 
     bu_ptbl_init(&b, 0, "test_bu_ptbl_trunc");
 
@@ -201,10 +206,11 @@ test_bu_ptbl_trunc(void)
 int
 main(int argc, char *argv[])
 {
+    int ret = BRLCAD_ERROR;
     size_t ptbl_size;
 
     if (argc < 2) {
-	bu_exit(1, "Usage: %s test_name [test_args...]\n", argv[0]);
+	bu_exit(1, "Usage: %s (init|reset|ins|locate|rm|cat|trunc) [test_args...]\n", argv[0]);
     }
 
     if (BU_STR_EQUAL(argv[1], "init")) {
@@ -215,25 +221,22 @@ main(int argc, char *argv[])
 	    }
 	}
 
-	return test_bu_ptbl_init(ptbl_size);
+	ret = test_bu_ptbl_init(ptbl_size);
     } else if (BU_STR_EQUAL(argv[1], "reset")) {
-	return test_bu_ptbl_reset();
-    } else if (BU_STR_EQUAL(argv[1], "zero")) {
-	return test_bu_ptbl_reset();
+	ret = test_bu_ptbl_reset();
     } else if (BU_STR_EQUAL(argv[1], "ins")) {
-	return test_bu_ptbl_ins(argc > 2 ? BU_STR_EQUAL(argv[2], "uniq") : 0);
+	ret = test_bu_ptbl_ins(argc > 2 ? BU_STR_EQUAL(argv[2], "uniq") : 0);
     } else if (BU_STR_EQUAL(argv[1], "locate")) {
-	return test_bu_ptbl_ins(0);
+	ret = test_bu_ptbl_ins(0);
     } else if (BU_STR_EQUAL(argv[1], "rm")) {
-	return test_bu_ptbl_rm(argv[2]);
+	ret = test_bu_ptbl_rm(argv[2]);
     } else if (BU_STR_EQUAL(argv[1], "cat")) {
-	return test_bu_ptbl_cat(argc > 2 ? BU_STR_EQUAL(argv[2], "uniq") : 0);
+	ret = test_bu_ptbl_cat(argc > 2 ? BU_STR_EQUAL(argv[2], "uniq") : 0);
     } else if (BU_STR_EQUAL(argv[1], "trunc")) {
-	return test_bu_ptbl_trunc();
+	ret = test_bu_ptbl_trunc();
     }
 
-    bu_log("\nERROR: Unknown ptbl test '%s'", argv[1]);
-    return BRLCAD_ERROR;
+    return ret;
 }
 
 /*
