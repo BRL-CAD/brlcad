@@ -1189,7 +1189,7 @@ utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface
 		_pt = ray.m_origin + (ray.m_dir * t[i]);
 		VMOVE(vpt, _pt);
 		if (face->m_bRev) {
-		    bu_log("Reversing normal for Face:%d\n", face->m_face_index);
+		    //bu_log("Reversing normal for Face:%d\n", face->m_face_index);
 		    _norm.Reverse();
 		}
 		VMOVE(vnorm, _norm);
@@ -1455,6 +1455,23 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 			    if (debug_output > 2) {
 				bu_log("Not adjacent faces, removing only previous hit(face %d)\n", prev_hit.face.m_face_index);
 			    }
+			}
+		    }
+		} else {
+		    prev = curr;
+		    prev--;
+		    brep_hit &prev_hit = (*prev);
+		    if ((curr_hit.hit == brep_hit::CLEAN_HIT || curr_hit.hit == brep_hit::NEAR_HIT) && prev_hit.hit == brep_hit::NEAR_MISS) {
+			if (curr_hit.direction == brep_hit::ENTERING) {
+			    if (debug_output > 2) {
+				bu_log("Removing only remaining near miss (face %d)\n", prev_hit.face.m_face_index);
+			    }
+			    (void)hits.erase(prev);
+			} else {
+			    if (debug_output) {
+				bu_log("Clean hit is an exit, but we have an unculled near miss behind it - promote to a crack hit\n");
+			    }
+			    prev_hit.hit = brep_hit::CRACK_HIT;
 			}
 		    }
 		}
