@@ -27,6 +27,7 @@
 #include "common.h"
 #include "vmath.h"
 #include "bu/list.h"
+#include "bu/vls.h"
 #include "bn/tol.h"
 #include "rt/defines.h"
 
@@ -45,7 +46,14 @@ RT_EXPORT extern int rt_brep_plot_poly(struct bu_list           *vhead,
                                       const struct bn_tol       *tol,
                                       const struct rt_view_info *info);
 /* BREP validity test */
-RT_EXPORT extern int rt_brep_valid(struct rt_db_internal *ip, struct bu_vls *log);
+#define RT_BREP_OPENNURBS    0x1    /**< @brief OpenNURBS tests (default)*/
+#define RT_BREP_UV_PARAM     0x2    /**< @brief sanity checks for UV parameterization bounds */
+RT_EXPORT extern int rt_brep_valid(struct bu_vls *log, struct rt_db_internal *ip, int flags);
+
+/* BREP function to make sure all curve and surface parameterizations range
+ * from either 0 to their 3D length or from 0 to pmax (if pmax is nonzero.)
+ */
+RT_EXPORT extern int rt_brep_normalize(struct rt_db_internal *ip, double pmax);
 
 /** @} */
 

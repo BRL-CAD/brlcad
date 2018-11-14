@@ -96,7 +96,7 @@ int rt_brep_params(struct pc_pc_set *, const struct rt_db_internal *ip);
 RT_EXPORT extern int rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, db_op_t operation);
 struct rt_selection_set *rt_brep_find_selections(const struct rt_db_internal *ip, const struct rt_selection_query *query);
 int rt_brep_process_selection(struct rt_db_internal *ip, struct db_i *dbip, const struct rt_selection *selection, const struct rt_selection_operation *op);
-int rt_brep_valid(struct rt_db_internal *ip, struct bu_vls *log);
+int rt_brep_valid(struct bu_vls *log, struct rt_db_internal *ip, int flags);
 int rt_brep_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, struct bu_external *external, size_t *version);
 #ifdef __cplusplus
 }
@@ -5158,29 +5158,78 @@ rt_brep_process_selection(struct rt_db_internal *ip, struct db_i *UNUSED(dbip), 
     return 0;
 }
 
-int rt_brep_valid(struct rt_db_internal *ip, struct bu_vls *log)
+static void brep_log(struct bu_vls *log, const char *fmt, ...)
 {
+    va_list ap;
+    if (log) {
+	BU_CK_VLS(log);
+	va_start(ap, fmt);
+	bu_vls_vprintf(log, fmt, ap);
+    }
+    va_end(ap);
+}
+
+
+int rt_brep_valid(struct bu_vls *log, struct rt_db_internal *ip, int flags)
+{
+    int ret = 1; /* Start assuming it is valid - we need to prove it isn't */
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_BREP) {
-	if (log) bu_vls_printf(log, "Object is not a brep.\n");
+	brep_log(log, "Object is not a brep.\n");
 	return 0;
     }
     struct rt_brep_internal *bi = (struct rt_brep_internal *)ip->idb_ptr;
-    ON_wString s;
-    ON_TextLog dump(s);
+    ON_Brep *brep = NULL;
     if (bi == NULL || bi->brep == NULL) {
-	if (log) bu_vls_printf(log, "Error: No ON_Brep object present.\n");
+	brep_log(log, "Error: No ON_Brep object present.\n");
 	return 0;
     }
-    if (!bi->brep->IsValid(&dump)) {
-	ON_String ss = s;
-	if (log) bu_vls_printf(log, "%s\nbrep NOT valid\n", ss.Array());
-	return 0;
-    } else {
-	if (log) bu_vls_printf(log, "\nbrep is valid\n");
-	return 1;
+    brep = bi->brep;
+
+    /* OpenNURBS IsValid test */
+    if (!flags || flags & RT_BREP_OPENNURBS) {
+	ON_wString s;
+	ON_TextLog dump(s);
+	if (!brep->IsValid(&dump)) {
+	    ON_String ss = s;
+	    brep_log(log, "%s\nbrep NOT valid\n", ss.Array());
+	    ret = 0;
+	    goto brep_valid_done;
+	}
     }
-    return 0;
+
+#if 0
+    /* UV domain sanity checks - this doesn't trigger on bad face of test case, so
+     * apparently not issue??? or are we having the issue lots of places due
+     * to the fixed edge tol and just not seeing it much due to the NM/NH logic? */
+    if (!flags || flags & RT_BREP_UV_PARAM) {
+	double delta_threshold = BREP_EDGE_MISS_TOLERANCE * 100;
+	for (int index = 0; index < brep->m_F.Count(); index++) {
+	    ON_BrepFace *face = brep->Face(index);
+	    const ON_Surface *s = face->SurfaceOf();
+	    if (s) {
+		double umin, umax, vmin, vmax;
+		s->GetDomain(0, &umin, &umax);
+		s->GetDomain(1, &vmin, &vmax);
+		if (fabs(umax - umin) < delta_threshold) {
+		    brep_log(log, "Face %d: small delta in U parameterization domain: %g -> %g (%g < %g)\n", index, umin, umax, fabs(umax - umin), delta_threshold);
+		    ret = 0;
+		}
+		if (fabs(vmax - vmin) < delta_threshold) {
+		    brep_log(log, "Face %d: small delta in V parameterization domain: %g -> %g (%g)\n", index, vmin, vmax, fabs(vmax - vmin));
+		    ret = 0;
+		}
+	    }
+	}
+	if (!ret) {
+	    goto brep_valid_done;
+	}
+    }
+#endif
+
+brep_valid_done:
+    if (log && ret) bu_vls_printf(log, "\nbrep is valid\n");
+    return ret;
 }
 
 

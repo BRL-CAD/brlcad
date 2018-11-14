@@ -407,7 +407,7 @@ _ged_invalid_prim_check(struct _ged_invalid_data *idata, struct ged *gedp, struc
 	    rt_db_free_internal(&intern);
 	    break;
 	case DB5_MINORTYPE_BRLCAD_BREP:
-	    not_valid = !rt_brep_valid(&intern, &vlog);
+	    not_valid = !rt_brep_valid(&vlog, &intern, 0);
 	    if (not_valid) {
 		obj.name = std::string(dp->d_namep);
 		obj.type= std::string("brep");

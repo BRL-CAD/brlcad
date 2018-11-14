@@ -253,7 +253,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
     bi = (struct rt_brep_internal*)intern.idb_ptr;
 
     if (BU_STR_EQUAL(argv[2], "valid")) {
-	int valid = rt_brep_valid(&intern, gedp->ged_result_str);
+	int valid = rt_brep_valid(gedp->ged_result_str, &intern, 0);
 	return (valid) ? GED_OK : GED_ERROR;
     }
 
