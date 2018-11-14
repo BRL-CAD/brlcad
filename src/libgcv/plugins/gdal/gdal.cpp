@@ -51,7 +51,9 @@
 #include <ogr_spatialref.h>
 #include "vrtdataset.h"
 
+#include "bu/app.h"
 #include "bu/cv.h"
+#include "bu/env.h"
 #include "bu/path.h"
 #include "bu/units.h"
 #include "raytrace.h"
@@ -249,6 +251,15 @@ gdal_read(struct gcv_context *context, const struct gcv_opts *gcv_options,
     state->ops = (struct gdal_read_options *)options_data;
     state->input_file = source_path;
     state->wdbp = context->dbip->dbi_wdbp;
+
+    /* If the environment is identifying a PROJ_LIB directory use it,
+     * else set it to the correct one for BRL-CAD */
+    if (!getenv("PROJ_LIB")) {
+	const char *pjenv = NULL;
+	bu_setenv("PROJ_LIB", bu_dir(NULL, 0, BU_DIR_DATA, "proj", NULL), 1);
+	pjenv = getenv("PROJ_LIB");
+	bu_log("Setting PROJ_LIB to %s\n", pjenv);
+    }
 
     GDALAllRegister();
 
