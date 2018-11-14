@@ -40,38 +40,36 @@ if(NOT BIN_DIR)
   set(BIN_DIR bin)
 endif(NOT BIN_DIR)
 
-# The location in which to install BRL-CAD header files.
-if(NOT INCLUDE_DIR)
-  set(INCLUDE_DIR include)
-endif(NOT INCLUDE_DIR)
-
 # The location in which to install BRL-CAD libraries.
 if(NOT LIB_DIR)
   set(LIB_DIR lib)
 endif(NOT LIB_DIR)
+if(NOT LIBEXEC_DIR)
+  set(LIBEXEC_DIR libexec)
+endif(NOT LIBEXEC_DIR)
 
-# The location in which to install BRL-CAD configuration files.
-if(NOT CONF_DIR)
-  set(CONF_DIR etc)
-endif(NOT CONF_DIR)
+# The location in which to install BRL-CAD header files.
+if(NOT INCLUDE_DIR)
+  set(INCLUDE_DIR include)
+endif(NOT INCLUDE_DIR)
 
 # The location in which to install BRL-CAD data files
 if(NOT DATA_DIR)
   set(DATA_DIR share)
 endif(NOT DATA_DIR)
 
-# The location in which to install BRL-CAD Manual pages
-if(NOT MAN_DIR)
-  set(MAN_DIR ${DATA_DIR}/man)
-endif(NOT MAN_DIR)
-
 # The location in which to install BRL-CAD documentation files
 if(NOT DOC_DIR)
   set(DOC_DIR ${DATA_DIR}/doc)
 endif(NOT DOC_DIR)
 
+# The location in which to install BRL-CAD Manual pages
+if(NOT MAN_DIR)
+  set(MAN_DIR ${DATA_DIR}/man)
+endif(NOT MAN_DIR)
+
 # Make sure no absolute paths have been supplied to these variables
-set(INSTALL_DIRS BIN INCLUDE LIB CONF DATA MAN DOC)
+set(INSTALL_DIRS BIN INCLUDE LIB LIBEXEC DATA MAN DOC)
 foreach(instdir ${INSTALL_DIRS})
   get_filename_component(instdir_full ${${instdir}_DIR} ABSOLUTE)
   if("${${instdir}_DIR}" STREQUAL "${instdir_full}")
