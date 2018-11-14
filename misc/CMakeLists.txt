@@ -77,6 +77,7 @@ set(misc_ignore_files
   check/gap.sh
   clang-static-analyzer-run.sh
   flawfinder
+  hawaii_islands.sh
   jove.emacs
   macosx/README
   macosx/Resources/License.rtf
