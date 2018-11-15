@@ -253,7 +253,7 @@ void log_hits(std::list<brep_hit> &hits, int UNUSED(verbosity))
     bu_vls_printf(&logstr,  "      [1] = face reversed (m_bRev true); [0] = face not reversed (m_bRev false)\n");
     bu_vls_printf(&logstr,  "      <#> = distance from previous point to next hit point\n\n");
     for (std::list<brep_hit>::iterator i = hits.begin(); i != hits.end(); ++i) {
-	point_t prev;
+	point_t prev = VINIT_ZERO;
 
 	const brep_hit &out = *i;
 
