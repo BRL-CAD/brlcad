@@ -404,33 +404,6 @@ bu_backtrace(FILE *fp)
 }
 
 
-#ifdef TEST_BACKTRACE
-int bar(char **argv)
-{
-    int moo = 5;
-    bu_backtrace(NULL);
-    return 0;
-}
-
-
-int foo(char **argv)
-{
-    return bar(argv);
-}
-
-
-int
-main(int argc, char *argv[])
-{
-    if (argc > 1) {
-	bu_bomb("this is a test\n");
-    } else {
-	(void)foo(argv);
-    }
-    return 0;
-}
-#endif  /* TEST_BACKTRACE */
-
 /*
  * Local Variables:
  * mode: C
