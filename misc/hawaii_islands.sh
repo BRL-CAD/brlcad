@@ -1,5 +1,13 @@
 #!/bin/sh
-
+#
+# This script is in the public domain.
+#
+# Example script showing the combination of gcv/gdal and mged being
+# used to make a .g file of the Hawaii islands chain from the
+# University of Washington's Geomorphological Research Group terrain
+# data files.  Illustrates warping and downsampling with gdalwarp and
+# concating multiple terrain data sets into a single .g file.
+#
 # Data from http://gis.ess.washington.edu/data/raster/tenmeter/hawaii/index.html
 
 # Cleanup
