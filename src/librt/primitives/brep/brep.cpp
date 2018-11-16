@@ -5198,12 +5198,10 @@ int rt_brep_valid(struct bu_vls *log, struct rt_db_internal *ip, int flags)
 	}
     }
 
-#if 0
-    /* UV domain sanity checks - this doesn't trigger on bad face of test case, so
-     * apparently not issue??? or are we having the issue lots of places due
-     * to the fixed edge tol and just not seeing it much due to the NM/NH logic? */
+    /* UV domain sanity checks - if these get too small they're a concern for
+     * numerical stability... */
     if (!flags || flags & RT_BREP_UV_PARAM) {
-	double delta_threshold = BREP_EDGE_MISS_TOLERANCE * 100;
+	double delta_threshold = VUNITIZE_TOL;
 	for (int index = 0; index < brep->m_F.Count(); index++) {
 	    ON_BrepFace *face = brep->Face(index);
 	    const ON_Surface *s = face->SurfaceOf();
@@ -5225,7 +5223,67 @@ int rt_brep_valid(struct bu_vls *log, struct rt_db_internal *ip, int flags)
 	    goto brep_valid_done;
 	}
     }
-#endif
+
+    /* Edge cracks - openNURBS will do some of these checks, but we don't want
+     * large cracks regardless of whether or not the edge says it's OK because
+     * the raytracer may slip through them.  Validate the start and end points
+     * of the trims associated with an edge are close to each other.  TODO -
+     * this implementation obviously doesn't check along the length of complex
+     * trims for divergences, but it is a start. Currently catchs some cases
+     * involving linear trims and planar faces (which appear to be
+     * the ones most likely to be unable to benefit from the near hit/miss
+     * logic.) */
+    if (!flags || flags & RT_BREP_EDGE_CRACK) {
+	double edist = BN_TOL_DIST;
+	for (int index = 0; index < brep->m_E.Count(); index++) {
+	    const ON_BrepEdge *e = brep->Edge(index);
+	    if (e->TrimCount() == 2) {
+		const ON_BrepTrim *t1 = e->Trim(0);
+		const ON_BrepTrim *t2 = e->Trim(1);
+		if (t1 && t2 && t1->SurfaceOf() && t2->SurfaceOf()) {
+		    if (t1->IsLinear(BN_TOL_DIST) && t2->IsLinear(BN_TOL_DIST) &&
+			    (t1->SurfaceOf()->IsPlanar() || t2->SurfaceOf()->IsPlanar())) {
+			double d1, d2;
+			ON_3dPoint t1_start = t1->SurfaceOf()->PointAt(t1->PointAtStart().x,t1->PointAtStart().y);
+			ON_3dPoint t1_end = t1->SurfaceOf()->PointAt(t1->PointAtEnd().x,t1->PointAtEnd().y);
+			ON_3dPoint t2_start = t2->SurfaceOf()->PointAt(t2->PointAtStart().x,t2->PointAtStart().y);
+			ON_3dPoint t2_end = t2->SurfaceOf()->PointAt(t2->PointAtEnd().x,t2->PointAtEnd().y);
+			if (t1->m_bRev3d) {
+			    ON_3dPoint tmp = t1_start;
+			    t1_start = t1_end;
+			    t1_end = tmp;
+			}
+			if (t2->m_bRev3d) {
+			    ON_3dPoint tmp = t2_start;
+			    t2_start = t2_end;
+			    t2_end = tmp;
+			}
+			d1 = t1_start.DistanceTo(t2_start);
+			d2 = t1_end.DistanceTo(t2_end);
+			if (d1 > edist && d2 <= edist) {
+			    brep_log(log, "Edge %d: disjoint start points:\n", index);
+			    brep_log(log, "   trim %d point %g, %g %g and trim %d point %g %g %g (distance %g > %g)\n", t1->m_trim_index, t1_start.x, t1_start.y, t1_start.z, t2->m_trim_index, t2_start.x, t2_start.y, t2_start.z, d1, edist);
+			    ret = 0;
+			}
+			if (d2 > edist && d1 <= edist) {
+			    brep_log(log, "Edge %d: disjoint end points:\n", index);
+			    brep_log(log, "   trim %d point %g, %g %g and trim %d point %g %g %g (distance %g > %g)\n", t1->m_trim_index, t1_end.x, t1_end.y, t1_end.z, t2->m_trim_index, t2_end.x, t2_end.y, t2_end.z, d2, edist);
+			    ret = 0;
+			}
+			if (d1 > edist && d2 > edist) {
+			    brep_log(log, "Edge %d: disjoint start and end points:\n", index);
+			    brep_log(log, "   P1: trim %d point %g, %g %g and trim %d point %g %g %g (distance %g > %g)\n", t1->m_trim_index, t1_start.x, t1_start.y, t1_start.z, t2->m_trim_index, t2_start.x, t2_start.y, t2_start.z, d1, edist);
+			    brep_log(log, "   P2: trim %d point %g, %g %g and trim %d point %g %g %g (distance %g > %g)\n", t1->m_trim_index, t1_end.x, t1_end.y, t1_end.z, t2->m_trim_index, t2_end.x, t2_end.y, t2_end.z, d2, edist);
+			    ret = 0;
+			}
+		    }
+		}
+	    }
+	}
+	if (!ret) {
+	    goto brep_valid_done;
+	}
+    }
 
 brep_valid_done:
     if (log && ret) bu_vls_printf(log, "\nbrep is valid\n");
