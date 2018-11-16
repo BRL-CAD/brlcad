@@ -69,6 +69,9 @@ extern "C++" {
 		void getLeavesAbove(std::list<const BRNode *> &out_leaves, const ON_2dPoint &pt, fastf_t tol) const;
 		void getLeavesRight(std::list<const BRNode *> &out_leaves, const ON_2dPoint &pt, fastf_t tol) const;
 
+		/* Tolerance to use for trimming in this CurveTree's associated m_face */
+		double uv_edge_miss_tol;
+
 	    private:
 		friend class BBNode;
 
@@ -96,8 +99,11 @@ extern "C++" {
 		static ON_BoundingBox initialLoopBBox(const ON_BrepFace &face);
 
 		const ON_BrepFace * const m_face;
-		BRNode *m_root;
+		/* m_face->SurfaceOf() width and height in UV domain */
+		double width_3d;
+		double height_3d;
 
+		BRNode *m_root;
 
 		struct Stl : public PooledObject<Stl> {
 		    Stl() : m_sortedX() {}

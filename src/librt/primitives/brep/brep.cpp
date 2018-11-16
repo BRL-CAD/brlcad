@@ -1180,7 +1180,7 @@ utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface
 	for (int i = 0; i < numhits; i++) {
 	    double closesttrim;
 	    const BRNode* trimBR = NULL;
-	    int trim_status = sbv->isTrimmed(ouv[i], &trimBR, closesttrim,BREP_EDGE_MISS_TOLERANCE);
+	    int trim_status = sbv->isTrimmed(ouv[i], &trimBR, closesttrim, sbv->m_ctree->uv_edge_miss_tol);
 	    if (trim_status != 1) {
 		ON_3dPoint _pt;
 		ON_3dVector _norm(N[i]);
@@ -1202,7 +1202,7 @@ utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface
 		} else {
 		    bh.m_adj_face_index = -99;
 		}
-		if (fabs(closesttrim) < BREP_EDGE_MISS_TOLERANCE) {
+		if (fabs(closesttrim) < sbv->m_ctree->uv_edge_miss_tol) {
 		    bh.closeToEdge = true;
 		    bh.hit = brep_hit::NEAR_HIT;
 		} else {
@@ -1216,7 +1216,7 @@ utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface
 		bh.sbv = sbv;
 		hits.push_back(bh);
 		found = BREP_INTERSECT_FOUND;
-	    } else if (fabs(closesttrim) < BREP_EDGE_MISS_TOLERANCE) {
+	    } else if (fabs(closesttrim) < sbv->m_ctree->uv_edge_miss_tol) {
 		ON_3dPoint _pt;
 		ON_3dVector _norm(N[i]);
 		vect_t vpt;

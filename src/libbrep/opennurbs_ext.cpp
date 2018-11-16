@@ -139,6 +139,19 @@ CurveTree::CurveTree(const ON_BrepFace* face) :
     m_stl(new Stl),
     m_sortedX_indices(NULL)
 {
+    face->SurfaceOf()->GetSurfaceSize(&width_3d, &height_3d);
+    double diag_len_3d = sqrt(width_3d*width_3d + height_3d*height_3d);
+    ON_Interval udom = face->SurfaceOf()->Domain(0);
+    ON_Interval vdom = face->SurfaceOf()->Domain(1);
+    double diag_len_uv = sqrt((udom[1]-udom[0])*(udom[1]-udom[0]) + (vdom[1]-vdom[0])*(vdom[1]-vdom[0]));
+    uv_edge_miss_tol = (diag_len_uv * BREP_3D_EDGE_MISS_TOLERANCE) / diag_len_3d;
+
+#if 0
+    bu_log("Face %d 3D diag. len:     %g\n", face->m_face_index, diag_len_3d);
+    bu_log("Face %d UV diag. len:     %g\n", face->m_face_index, diag_len_uv);
+    bu_log("Face %d uv_edge_miss_tol: %g\n", face->m_face_index, uv_edge_miss_tol);
+#endif
+
     for (int li = 0; li < face->LoopCount(); li++) {
 	bool innerLoop = (li > 0) ? true : false;
 	const ON_BrepLoop* loop = face->Loop(li);
