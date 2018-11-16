@@ -29,8 +29,13 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 * attribute normalization is drastically slowing down
   region creation - need to fix or back out
 
+* g-ply not writing geometry
+
+
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
+
+* g-obj not exporting colors
 
 * finish implementation and testing of bu_dir. bu_brlcad_root and
   bu_brlcad_data will need verbose deprecation process.  Also need
@@ -157,6 +162,11 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* go_open inmem to db command
+
+* optimize mged interactive loop command processing.  creating 10k
+  objects: 40 sec, via inmem: 2 sec
 
 * sort gqa/rtcheck/check/lint/analyze/g_lint functionality into
   logical groupings (probably analyze - calculate properties and
