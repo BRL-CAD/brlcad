@@ -1520,6 +1520,11 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 	    log_hits(hits, debug_output);
 	}
 
+	// TODO - if we have a near_hit exit not led by any sort of entrance
+	// followed by a near_miss entrance, we probably have an inside out hit
+	// pair near a trim - reject such pairs
+
+
 	/* If we've got an odd number of hits, try tossing out a first or last near-miss hit */
 
 	if (!hits.empty() && ((hits.size() % 2) != 0)) {
