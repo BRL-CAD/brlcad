@@ -131,7 +131,9 @@ extern "C++" {
 		} * const m_stl;
 
 		const ON_BrepFace *m_face;
+	    public:
 		ON_Interval m_u;
+	    private:
 		const ON_Curve *m_trim;
 		int m_trim_index;
 		ON_Interval m_t;

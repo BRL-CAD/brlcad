@@ -381,7 +381,7 @@ BBNode::isTrimmed(const ON_2dPoint &uv, const BRNode **closest, double &closestt
 
 		if (br->m_Vertical) {
 		    if ((br->m_v[0] <= uv[Y]) && (br->m_v[1] >= uv[Y])) {
-			double dist = fabs(uv[X] - br->m_v[0]);
+			double dist = fabs(uv[X] - br->m_u[0]);
 			if (!verticalTrim) { /* haven't seen vertical trim yet */
 			    verticalTrim = true;
 			    vdist = dist;
@@ -396,7 +396,8 @@ BBNode::isTrimmed(const ON_2dPoint &uv, const BRNode **closest, double &closestt
 		    }
 		    continue;
 		}
-		double v;
+
+		double v = -1;
 		bool trimstatus = br->isTrimmed(uv, v);
 		if (v >= 0.0) {
 		    if (closest && *closest == NULL) {
@@ -413,7 +414,13 @@ BBNode::isTrimmed(const ON_2dPoint &uv, const BRNode **closest, double &closestt
 			}
 		    }
 		} else {
-		    double dist = fabs(v);
+		    /* We still may need the distance to this trim if we are in a near-miss situation */
+		    point_t tbmin, tbmax;
+		    br->GetBBox(tbmin, tbmax);
+		    double dist = (fabs(tbmin[X] - uv[X]) > fabs(tbmax[X] - uv[X])) ? fabs(tbmax[X] - uv[X]) : fabs(tbmin[X] - uv[X]);
+		    if (dist > m_ctree->u_edge_miss_tol) {
+			dist = fabs(v);
+		    }
 		    if (!underTrim) {
 			underTrim = true;
 			udist = dist;
@@ -473,7 +480,8 @@ BBNode::getTrimsAbove(const ON_2dPoint &uv, std::list<const BRNode *> &out_leave
     for (std::list<const BRNode *>::const_iterator i = m_stl->m_trims_above.begin(); i != m_stl->m_trims_above.end(); i++) {
 	const BRNode *br = *i;
 	br->GetBBox(bmin, bmax);
-	dist = 0.000001; /* 0.03*DIST_PT_PT(bmin, bmax); */
+	//dist = 0.000001; /* 0.03*DIST_PT_PT(bmin, bmax); */
+	dist = m_ctree->u_edge_miss_tol;
 	if ((uv[X] > bmin[X] - dist) && (uv[X] < bmax[X] + dist)) {
 	    out_leaves.push_back(br);
 	}

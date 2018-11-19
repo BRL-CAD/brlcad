@@ -70,6 +70,8 @@ extern "C++" {
 		void getLeavesRight(std::list<const BRNode *> &out_leaves, const ON_2dPoint &pt, fastf_t tol) const;
 
 		/* Tolerance to use for trimming in this CurveTree's associated m_face */
+		double u_edge_miss_tol;
+		double v_edge_miss_tol;
 		double uv_edge_miss_tol;
 
 	    private:
