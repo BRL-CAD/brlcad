@@ -1412,11 +1412,6 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 	if (debug_output > 1) {
 	    bu_log("\nrt_brep_shot (%s): running Pass 2 - checking for crack hits between adjacent faces\n", stp->st_dp->d_namep);
 	}
-
-	// TODO - it looks like there is a problem in this pass - when we have an even number of NM hits inside CH hits, the first
-	// NM hits are getting culled out but the last one isn't (because at that point it's no longer part of a pair of NM hits.
-	// Need to handle that case locally here - sweeping up the stray NM due to odd hit count works in the current test case,
-	// but wouldn't if we get two similar situations in isolation along the same ray (overall hit count would be even.)
 	curr = hits.begin();
 	while (curr != hits.end()) {
 	    const brep_hit &curr_hit = *curr;
@@ -1520,10 +1515,47 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 	    log_hits(hits, debug_output);
 	}
 
-	// TODO - if we have a near_hit exit not led by any sort of entrance
-	// followed by a near_miss entrance, we probably have an inside out hit
-	// pair near a trim - reject such pairs
+	// If we have a near_hit or near_miss exit not led by any sort of entrance followed
+	// by a near_miss or near_hit entrance, we probably have an inside out hit pair
+	// near a trim - reject such pairs
+	curr = hits.begin();
+	while (curr != hits.end()) {
+	    const brep_hit &curr_hit = *curr;
+	    if (curr != hits.begin()) {
+		if ((curr_hit.hit == brep_hit::NEAR_MISS || curr_hit.hit == brep_hit::NEAR_HIT) && curr_hit.direction == brep_hit::ENTERING) {
+		    prev = curr;
+		    prev--;
+		    brep_hit &prev_hit = (*prev);
+		    if ((prev_hit.hit == brep_hit::NEAR_MISS || prev_hit.hit == brep_hit::NEAR_HIT) && prev_hit.direction == brep_hit::LEAVING) {
+			int unmatched_leaving = 0;
+			if (prev == hits.begin()) {
+			    unmatched_leaving = 1;
+			} else {
+			    // There's something in back of the prev hit - check it.  If it's entering
+			    // the near_hit stays.
+			    const brep_hit &pprev_hit = *prev;
+			    if (pprev_hit.direction == brep_hit::LEAVING) {
+				unmatched_leaving = 1;
+			    }
+			}
+			if (unmatched_leaving) {
+			    if (debug_output > 2) {
+				bu_log("Face %d: %s leaving paired with %s entering, culling\n", curr_hit.face.m_face_index, brep_hit_type_str(prev_hit.hit), brep_hit_type_str(curr_hit.hit));
+			    }
+			    (void)hits.erase(prev);
+			    curr = hits.erase(curr);
+			    continue;
+			}
+		    }
+		}
+	    }
+	    curr++;
+	}
 
+	if (debug_output > 1) {
+	    bu_log("\nrt_brep_shot (%s): after Pass 4 Hits: %zu\n", stp->st_dp->d_namep, hits.size());
+	    log_hits(hits, debug_output);
+	}
 
 	/* If we've got an odd number of hits, try tossing out a first or last near-miss hit */
 
@@ -1595,6 +1627,41 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 	    }
 	    curr++;
 	}
+
+	// If we have a near_hit exit not led by any sort of entrance
+	// immediately ahead of a solid entrance hit, we probably have an
+	// inside out hit near a trim - reject it
+	curr = hits.begin();
+	while (curr != hits.end()) {
+	    const brep_hit &curr_hit = *curr;
+	    if (curr != hits.begin()) {
+		prev = curr;
+		prev--;
+		brep_hit &prev_hit = (*prev);
+		if (curr_hit.direction == brep_hit::ENTERING && curr_hit.hit == brep_hit::CLEAN_HIT && prev_hit.hit == brep_hit::NEAR_HIT && prev_hit.direction == brep_hit::LEAVING) {
+		    int unmatched_leaving = 0;
+		    if (prev == hits.begin()) {
+			unmatched_leaving = 1;
+		    } else {
+			// There's something in back of the prev hit - check it.  If it's entering
+			// the near_hit stays as the exit.
+			const brep_hit &pprev_hit = *prev;
+			if (pprev_hit.direction == brep_hit::LEAVING) {
+			    unmatched_leaving = 1;
+			}
+		    }
+		    if (unmatched_leaving) {
+			if (debug_output > 2) {
+			    bu_log("Face %d: unpaired near_hit leaving, culling\n", prev_hit.face.m_face_index);
+			}
+			(void)hits.erase(prev);
+			continue;
+		    }
+		}
+	    }
+	    curr++;
+	}
+
     }
 
     all_hits.clear();
