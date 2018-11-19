@@ -349,7 +349,7 @@ BBNode::getLeavesBoundingPoint(const ON_3dPoint &pt, std::list<const BBNode *> &
 
 
 bool
-BBNode::isTrimmed(const ON_2dPoint &uv, const BRNode **closest, double &closesttrim, double within_distance_tol) const
+BBNode::isTrimmed(const ON_2dPoint &uv, const BRNode **closest, double &closesttrim) const
 {
     const BRNode *br;
     std::list<const BRNode *> trims;
@@ -375,7 +375,7 @@ BBNode::isTrimmed(const ON_2dPoint &uv, const BRNode **closest, double &closestt
 		br = *i;
 
 		/* skip if trim below */
-		if (br->m_node.m_max[1] + within_distance_tol < uv[Y]) {
+		if (br->m_node.m_max[1] + m_ctree->v_edge_miss_tol < uv[Y]) {
 		    continue;
 		}
 

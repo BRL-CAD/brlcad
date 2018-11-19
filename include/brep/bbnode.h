@@ -118,7 +118,7 @@ extern "C++" {
 		ON_2dPoint getClosestPointEstimate(const ON_3dPoint &pt) const;
 		ON_2dPoint getClosestPointEstimate(const ON_3dPoint &pt, ON_Interval &u, ON_Interval &v) const;
 		int getLeavesBoundingPoint(const ON_3dPoint &pt, std::list<const BBNode *> &out) const;
-		bool isTrimmed(const ON_2dPoint &uv, const BRNode **closest, double &closesttrim, double within_distance_tol) const;
+		bool isTrimmed(const ON_2dPoint &uv, const BRNode **closest, double &closesttrim) const;
 
 		void BuildBBox();
 		bool prepTrims();

@@ -822,17 +822,17 @@ utah_pushBack(const BBNode* sbv, ON_2dPoint &uv)
 
     t0 = sbv->m_u.m_t[i];
     t1 = sbv->m_u.m_t[1 - i];
-    if (uv.x < (t0 - sbv->m_ctree->uv_edge_miss_tol)) {
+    if (uv.x < (t0 - sbv->m_ctree->u_edge_miss_tol)) {
 	uv.x = t0;
-    } else if (uv.x > (t1 + sbv->m_ctree->uv_edge_miss_tol)) {
+    } else if (uv.x > (t1 + sbv->m_ctree->u_edge_miss_tol)) {
 	uv.x = t1;
     }
     i = sbv->m_v.m_t[0] < sbv->m_v.m_t[1] ? 0 : 1;
     t0 = sbv->m_v.m_t[i];
     t1 = sbv->m_v.m_t[1 - i];
-    if (uv.y < (t0 - sbv->m_ctree->uv_edge_miss_tol)) {
+    if (uv.y < (t0 - sbv->m_ctree->v_edge_miss_tol)) {
 	uv.y = t0;
-    } else if (uv.y > (t1 + sbv->m_ctree->uv_edge_miss_tol)) {
+    } else if (uv.y > (t1 + sbv->m_ctree->v_edge_miss_tol)) {
 	uv.y = t1;
     }
 }
@@ -977,10 +977,10 @@ utah_newton_solver(const BBNode* sbv, const ON_Surface* surf, const ON_Ray& r, O
 	if (rootdist < ROOT_TOL) {
 	    int ulow = (sbv->m_u.m_t[0] <= sbv->m_u.m_t[1]) ? 0 : 1;
 	    int vlow = (sbv->m_v.m_t[0] <= sbv->m_v.m_t[1]) ? 0 : 1;
-	    if ((sbv->m_u.m_t[ulow] - sbv->m_ctree->uv_edge_miss_tol < uv.x) &&
-		    (uv.x < sbv->m_u.m_t[1 - ulow] + sbv->m_ctree->uv_edge_miss_tol) &&
-		    (sbv->m_v.m_t[vlow] - sbv->m_ctree->uv_edge_miss_tol < uv.y) &&
-		    (uv.y < sbv->m_v.m_t[1 - vlow] + sbv->m_ctree->uv_edge_miss_tol)) {
+	    if ((sbv->m_u.m_t[ulow] - sbv->m_ctree->u_edge_miss_tol < uv.x) &&
+		    (uv.x < sbv->m_u.m_t[1 - ulow] + sbv->m_ctree->u_edge_miss_tol) &&
+		    (sbv->m_v.m_t[vlow] - sbv->m_ctree->v_edge_miss_tol < uv.y) &&
+		    (uv.y < sbv->m_v.m_t[1 - vlow] + sbv->m_ctree->v_edge_miss_tol)) {
 		bool new_point = true;
 		for (int j = 0; j < count; j++) {
 		    if (NEAR_EQUAL(uv.x, ouv[j].x, VUNITIZE_TOL) && NEAR_EQUAL(uv.y, ouv[j].y, VUNITIZE_TOL)) {
@@ -1182,7 +1182,7 @@ utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface
 	for (int i = 0; i < numhits; i++) {
 	    double closesttrim;
 	    const BRNode* trimBR = NULL;
-	    int trim_status = sbv->isTrimmed(ouv[i], &trimBR, closesttrim, sbv->m_ctree->uv_edge_miss_tol);
+	    int trim_status = sbv->isTrimmed(ouv[i], &trimBR, closesttrim);
 	    if (trim_status != 1) {
 		ON_3dPoint _pt;
 		ON_3dVector _norm(N[i]);
