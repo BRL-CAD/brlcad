@@ -1533,8 +1533,9 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 			} else {
 			    // There's something in back of the prev hit - check it.  If it's entering
 			    // the near_hit stays.
-			    const brep_hit &pprev_hit = *prev;
-			    if (pprev_hit.direction == brep_hit::LEAVING) {
+			    std::list<brep_hit>::iterator pprev = prev;
+			    pprev--;
+			    if (pprev->direction == brep_hit::LEAVING) {
 				unmatched_leaving = 1;
 			    }
 			}
