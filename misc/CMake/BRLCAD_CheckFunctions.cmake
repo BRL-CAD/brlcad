@@ -81,6 +81,9 @@ typedef unsigned long u_long;
 typedef unsigned short u_short;
 # include <sys/sysctl.h>
 #endif
+#ifdef HAVE_SYS_WAIT_H
+# include <sys/wait.h>
+#endif
 #ifdef HAVE_SYS_TIME_H
 # include <sys/time.h>
 #endif
@@ -233,7 +236,7 @@ macro(BRLCAD_INCLUDE_FILE filelist var)
   if(NOT "${ARGV2}" STREQUAL "")
     set(CMAKE_REQUIRED_INCLUDES ${ARGV2} ${CMAKE_REQUIRED_INCLUDES})
   endif(NOT "${ARGV2}" STREQUAL "")
-  check_include_files("${filelist}" ${var})
+  check_include_files("${filelist}" "${var}")
   cmake_pop_check_state()
 
   if(CONFIG_H_FILE AND ${var})
