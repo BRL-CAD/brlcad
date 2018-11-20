@@ -49,6 +49,7 @@
 #include "bu/parallel.h"
 #include "bu/snooze.h"
 #include "bu/str.h"
+#include "bu/time.h"
 
 /* strict c99 doesn't declare kill() (but POSIX does) */
 #ifndef HAVE_DECL_KILL
@@ -62,19 +63,15 @@ extern int kill(pid_t, int);
 extern int fileno(FILE*);
 #endif
 
-/* strict c90 doesn't provide basics */
-#ifndef HAVE_DECL_GETTIMEOFDAY
-extern int gettimeofday(struct timeval *, void *);
-#endif
-
 
 /* so we don't have to worry as much about stack stomping */
 #define BT_BUFSIZE 4096
 static char buffer[BT_BUFSIZE] = {0};
 
+static pid_t process = (pid_t)0;
 static pid_t pid = (pid_t)0;
-static int backtrace_done = 0;
-static int interrupt_wait = 0;
+static pid_t pid2 = (pid_t)0;
+static volatile sig_atomic_t backtrace_done = 0;
 
 /* avoid stack variables for backtrace() */
 static int input[2] = {0, 0};
@@ -88,48 +85,29 @@ static int processing_bt;
 static char c = 0;
 static int warned;
 
-/* avoid stack variables for bu_backtrace() */
-static char *debugger_args[4] = { NULL, NULL, NULL, NULL };
-static const char *locate_gdb = NULL;
+/* no stack variables in bu_backtrace() */
+static char debugger_args[3][MAXPATHLEN] = { {0}, {0}, {0} };
+static const char *locate_debugger = NULL;
+static int have_gdb = 0, have_lldb = 0;
 
 
-/* SIGCHLD handler for backtrace() */
+/* SIGINT+SIGCHLD handler for backtrace() */
 HIDDEN void
-backtrace_sigchld(int signum)
+backtrace_interrupt(int UNUSED(signum))
 {
-    if (LIKELY(signum)) {
-	backtrace_done = 1;
-	interrupt_wait = 1;
-    }
+    backtrace_done = 1;
 }
 
 
-/* SIGINT handler for bu_backtrace() */
-HIDDEN void
-backtrace_sigint(int signum)
-{
-    if (LIKELY(signum)) {
-	interrupt_wait = 1;
-    }
-}
-
-
-/* actual guts to bu_backtrace() used to invoke gdb and parse out the
- * backtrace from gdb's output.
+/* actual guts to bu_backtrace() used to invoke debugger and parse out
+ * backtrace from the output.
  */
 HIDDEN void
-backtrace(char * const *args, int fd)
+backtrace(int processid, char args[][MAXPATHLEN], int fd)
 {
-    /* receiving a SIGCHLD signal indicates something happened to a
-     * child process, which should be this backtrace since it is
-     * invoked after a fork() call as the child.
-     */
-#ifdef SIGCHLD
-    signal(SIGCHLD, backtrace_sigchld);
-#endif
-#ifdef SIGINT
-    signal(SIGINT, backtrace_sigint);
-#endif
+    if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
+	bu_log("[BACKTRACE] Invoking debugger: %s %s %s\n\n", args[0], args[1], args[2]);
+    }
 
     if (UNLIKELY((pipe(input) == -1) || (pipe(output) == -1))) {
 	perror("unable to open pipe");
@@ -138,8 +116,8 @@ backtrace(char * const *args, int fd)
 	return;
     }
 
-    pid = fork();
-    if (pid == 0) {
+    pid2 = fork();
+    if (pid2 == 0) {
 	int ret;
 
 	close(0);
@@ -157,45 +135,96 @@ backtrace(char * const *args, int fd)
 	if (ret == -1)
 	    perror("dup");
 
-	execvp(args[0], args); /* invoke debugger */
+	/* invoke debugger */
+	execl(args[0], /* binary to run */
+	      args[0], /* name to report */
+	      (args[1][0] != '\0') ? args[1] : NULL, /* unused */
+	      (args[2][0] != '\0') ? args[2] : NULL, /* unused */
+	      NULL);
 	perror("exec failed");
 	fflush(stderr);
 	/* can't call bu_bomb()/bu_exit(), recursive */
 	exit(1);
-    } else if (pid == (pid_t) -1) {
-	perror("unable to fork");
+    } else if (pid2 == (pid_t) -1) {
+	perror("unable to fork for debugger execl");
 	fflush(stderr);
 	/* can't call bu_bomb()/bu_exit(), recursive */
 	exit(1);
     }
 
+    /* getting a CHLD means our child is done. getting an INT means
+     * our parent is done.  either way, that's our cue to stop.
+     */
+#ifdef SIGCHLD
+    signal(SIGCHLD, backtrace_interrupt);
+#endif
+#ifdef SIGINT
+    signal(SIGINT, backtrace_interrupt);
+#endif
+
     FD_ZERO(&fdset);
     FD_SET(output[0], &fdset);
 
-    if (write(input[1], "set prompt\n", 12) != 12) {
-	perror("write [set prompt] failed");
-    } else if (write(input[1], "set confirm off\n", 16) != 16) {
-	perror("write [set confirm off] failed");
-    } else if (write(input[1], "set backtrace past-main on\n", 27) != 27) {
-	perror("write [set backtrace past-main on] failed");
-    } else if (write(input[1], "bt full\n", 8) != 8) {
-	perror("write [bt full] failed");
-    } else if (write(input[1], "thread apply all bt full\n", 25) != 25) {
-	perror("write [thread apply all bt full] failed");
+    /* give debugger process time to start up */
+    bu_snooze(BU_SEC2USEC(1));
+
+    if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
+	bu_log("[BACKTRACE] backtrace() sending debugger commands\n");
     }
 
-    /* Can add additional gdb commands above here.  Output will
-     * contain everything up to the "Detaching from process" statement
-     * from the quit command below.
+    {
+	char attach_msg[64] = {0};
+	snprintf(attach_msg, sizeof(attach_msg), "attach %d\n", processid);
+
+	if (have_gdb) {
+	    if (write(input[1], "set prompt\n", 12) != 12) {
+		perror("write [set prompt] failed");
+	    } else if (write(input[1], "set confirm off\n", 16) != 16) {
+		perror("write [set confirm off] failed");
+	    } else if (write(input[1], "set backtrace past-main on\n", 27) != 27) {
+		perror("write [set backtrace past-main on] failed");
+	    } else if (write(input[1], attach_msg, strlen(attach_msg)) != (ssize_t)strlen(attach_msg)) {
+		perror("write [attach {pid}] failed");
+	    } else if (write(input[1], "bt full\n", 8) != 8) {
+		perror("write [bt full] failed");
+	    } else if (write(input[1], "thread apply all bt full\n", 25) != 25) {
+		perror("write [thread apply all bt full] failed");
+	    }
+	} else if (have_lldb) {
+	    if (write(input[1], "settings set prompt \"# \"\n", 25) != 25) {
+		perror("write [settings set prompt \"\"]");
+	    } else if (write(input[1], "settings set auto-confirm 1\n", 28) != 28) {
+		perror("write [settings set auto-confirm 1]");
+	    } else if (write(input[1], "settings set stop-disassembly-display never\n", 44) != 44) {
+		perror("write [settings set stop-disassembly-display never]");
+	    } else if (write(input[1], attach_msg, strlen(attach_msg)) != (ssize_t)strlen(attach_msg)) {
+		perror("write [attach {pid}] failed");
+	    } else if (write(input[1], "bt all\n", 7) != 7) {
+		perror("write [bt all] failed");
+	    } else if (write(input[1], "thread backtrace all\n", 21) != 21) {
+		perror("write [thread backtrace all] failed");
+	    }
+	}
+
+	/* quit unless we want to allow more to attach too */
+	if (!UNLIKELY(bu_debug & BU_DEBUG_ATTACH)) {
+	    if (write(input[1], "quit\n", 5) != 5) {
+		perror("write [quit] failed");
+	    }
+	}
+    }
+
+    /* Output (for gdb) will contain everything up to the "Detaching
+     * from process" statement to the quit command.
      */
-
-    if (write(input[1], "quit\n", 5) != 5) {
-	perror("write [quit] failed");
-    }
 
     position = 0;
     processing_bt = 0;
     memset(buffer, 0, BT_BUFSIZE);
+
+    if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
+	bu_log("[BACKTRACE] Reading debugger output\n");
+    }
 
     /* get/print the trace */
     warned = 0;
@@ -213,9 +242,25 @@ backtrace(char * const *args, int fd)
 	if ((result > 0) && (FD_ISSET(output[0], &readset))) {
 	    if (read(output[0], &c, 1)) {
 		switch (c) {
+		    case '#':
+		    case '*':
+			/* once we find a # or * on the beginning of a
+			 * line, begin keeping track of the output.
+			 * the first #0 backtrace frame (i.e. that for
+			 * the bu_backtrace() call) is not included in
+			 * the output intentionally (because of the
+			 * gdb prompt).  ignore most everything else.
+			 */
+			if (position == 0) {
+			    processing_bt = 1;
+			}
+			break;
 		    case '\n':
+			/* once we get to the end of a line, decide
+			 * whether to ignore or write to file.
+			 */
 			if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
-			    bu_log("BACKTRACE DEBUG: [%s]\n", buffer);
+			    bu_log("[BACKTRACE] Output: %s\n", buffer);
 			}
 			if (position+1 < BT_BUFSIZE) {
 			    buffer[position++] = c;
@@ -226,6 +271,10 @@ backtrace(char * const *args, int fd)
 			if (bu_strncmp(buffer, "No locals", 9) == 0) {
 			    /* skip it */
 			} else if (bu_strncmp(buffer, "No symbol table", 15) == 0) {
+			    /* skip it */
+			} else if (bu_strncmp(buffer, "Target 0:", 9) == 0) {
+			    /* skip it */
+			} else if (bu_strncmp(buffer, "# settings set", 14) == 0) {
 			    /* skip it */
 			} else if (bu_strncmp(buffer, "Detaching", 9) == 0) {
 			    /* done processing backtrace output */
@@ -244,18 +293,6 @@ backtrace(char * const *args, int fd)
 			}
 			position = 0;
 			continue;
-		    case '#':
-			/* once we find a # on the beginning of a
-			 * line, begin keeping track of the output.
-			 * the first #0 backtrace frame (i.e. that for
-			 * the bu_backtrace() call) is not included in
-			 * the output intentionally (because of the
-			 * gdb prompt).
-			 */
-			if (position == 0) {
-			    processing_bt = 1;
-			}
-			break;
 		    default:
 			break;
 		}
@@ -264,7 +301,7 @@ backtrace(char * const *args, int fd)
 		    buffer[position] = '\0';
 		} else {
 		    if (UNLIKELY(!warned && (bu_debug & BU_DEBUG_ATTACH))) {
-			bu_log("Warning: debugger output overflow\n");
+			bu_log("[BACKTRACE] Warning: output overflow\n");
 			warned = 1;
 		    }
 		    position++;
@@ -273,6 +310,10 @@ backtrace(char * const *args, int fd)
 	} else if (backtrace_done) {
 	    break;
 	}
+    }
+
+    if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
+	bu_log("[BACKTRACE] Done reading debugger output\n");
     }
 
     fflush(stdout);
@@ -285,19 +326,46 @@ backtrace(char * const *args, int fd)
 
     if (UNLIKELY(bu_debug & BU_DEBUG_ATTACH)) {
 	bu_log("\nBacktrace complete.\nAttach debugger or interrupt to continue...\n");
+	bu_snooze(BU_SEC2USEC(15));
     } else {
+
 #  ifdef HAVE_KILL
-	/* not attaching, so let the parent continue */
-#    ifdef SIGINT
-	kill(getppid(), SIGINT);
+
+#    ifdef SIGKILL
+	/* kill the debugger forcibly */
+	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
+	    bu_log("[BACKTRACE] backtrace() sending KILL to debugger %d\n", pid2);
+	}
+	kill(pid2, SIGKILL);
+	bu_snooze(BU_SEC2USEC(1));
 #    endif
+
 #    ifdef SIGCHLD
+	/* premptively send a SIGCHLD to parent */
+	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
+	    bu_log("[BACKTRACE] backtrace() sending CHLD to parent %d\n", getppid());
+	}
 	kill(getppid(), SIGCHLD);
+#    endif
+#    ifdef SIGINT
+	/* for good measure */
+	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
+	    bu_log("[BACKTRACE] backtrace() sending INT to parent %d\n", getppid());
+	}
+	kill(getppid(), SIGINT);
 #    endif
 #  endif
 	bu_snooze(BU_SEC2USEC(2));
     }
 
+    if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
+	bu_log("[BACKTRACE] backtrace() waiting for debugger %d to exit\n", pid2);
+    }
+    wait(NULL);
+
+    if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
+	bu_log("[BACKTRACE] backtrace() complete\n");
+    }
     exit(0);
 }
 
@@ -308,39 +376,53 @@ bu_backtrace(FILE *fp)
     if (!fp) {
 	fp = stdout;
     }
+    fflush(fp); /* sanity */
 
     /* make sure the debugger exists */
-    if ((locate_gdb = bu_which("gdb"))) {
-	debugger_args[0] = bu_strdup(locate_gdb);
+    if ((locate_debugger = bu_which("lldb"))) {
+	bu_strlcpy(debugger_args[0], locate_debugger, MAXPATHLEN);
 	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
-	    bu_log("Found gdb in USER path: %s\n", locate_gdb);
+	    bu_log("[BACKTRACE] Found lldb in USER path: %s\n", locate_debugger);
 	}
-    } else if ((locate_gdb = bu_whereis("gdb"))) {
-	debugger_args[0] = bu_strdup(locate_gdb);
+	have_lldb = 1;
+    } else if ((locate_debugger = bu_whereis("lldb"))) {
+	bu_strlcpy(debugger_args[0], locate_debugger, MAXPATHLEN);
 	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
-	    bu_log("Found gdb in SYSTEM path: %s\n", locate_gdb);
-	} else {
-	    if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
-		bu_log("gdb was NOT found, no backtrace available\n");
-	    }
-	    return 0;
+	    bu_log("[BACKTRACE] Found lldb in SYSTEM path: %s\n", locate_debugger);
 	}
+	have_lldb = 1;
+    } else if ((locate_debugger = bu_which("gdb"))) {
+	bu_strlcpy(debugger_args[0], locate_debugger, MAXPATHLEN);
+	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
+	    bu_log("[BACKTRACE] Found gdb in USER path: %s\n", locate_debugger);
+	}
+	have_gdb = 1;
+    } else if ((locate_debugger = bu_whereis("gdb"))) {
+	bu_strlcpy(debugger_args[0], locate_debugger, MAXPATHLEN);
+	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
+	    bu_log("[BACKTRACE] Found gdb in SYSTEM path: %s\n", locate_debugger);
+	}
+	have_gdb = 1;
     }
-    locate_gdb = NULL;
+    locate_debugger = NULL; /* made a copy */
 
+    /* if we don't have a debugger, don't proceed */
+    if (debugger_args[0][0] == '\0') {
+	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
+	    bu_log("[BACKTRACE] A debugger was NOT found, no backtrace available\n");
+	}
+	return 0;
+    }
+
+#ifdef SIGCHLD
+    signal(SIGCHLD, backtrace_interrupt);
+#endif
 #ifdef SIGINT
-    signal(SIGINT, backtrace_sigint);
+    signal(SIGINT, backtrace_interrupt);
 #endif
 
-    snprintf(buffer, BT_BUFSIZE, "%d", bu_process_id());
-
-    debugger_args[1] = (char*) bu_argv0_full_path();
-    debugger_args[2] = buffer;
-
-    if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
-	bu_log("CALL STACK BACKTRACE REQUESTED\n");
-	bu_log("Invoking Debugger: %s %s %s\n\n", debugger_args[0], debugger_args[1], debugger_args[2]);
-    }
+    /* capture our main process PID pre-fork */
+    process = bu_process_id();
 
     /* fork so that trace symbols stop _here_ instead of in some libc
      * routine (e.g., in wait(2)).
@@ -348,47 +430,48 @@ bu_backtrace(FILE *fp)
     pid = fork();
     if (pid == 0) {
 	/* child */
-	backtrace(debugger_args, fileno(fp));
-	bu_free(debugger_args[0], "gdb strdup");
-	debugger_args[0] = NULL;
+	backtrace(process, debugger_args, fileno(fp));
 	exit(0);
     } else if (pid == (pid_t) -1) {
 	/* failure */
-	bu_free(debugger_args[0], "gdb strdup");
-	debugger_args[0] = NULL;
-	perror("unable to fork for gdb");
+	perror("unable to fork for backtrace");
 	return 0;
     }
+
     /* parent */
-    if (debugger_args[0]) {
-	bu_free(debugger_args[0], "gdb strdup");
-	debugger_args[0] = NULL;
-    }
     fflush(fp);
 
     /* Could probably do something better than this to avoid hanging
      * indefinitely. Keeps the trace clean, though, and allows for a
      * debugger to be attached interactively if needed.
      */
-    interrupt_wait = 0;
-#ifdef HAVE_KILL
+    backtrace_done = 0;
     {
-	struct timeval start, end;
-	gettimeofday(&start, NULL);
-	gettimeofday(&end, NULL);
-	while ((interrupt_wait == 0) && (end.tv_sec - start.tv_sec < 45 /* seconds */)) {
-	    /* do nothing, wait for debugger to attach but don't wait too long */;
-	    gettimeofday(&end, NULL);
+	int cnt = 0;
+	int64_t timer = bu_gettime();
+	while (!backtrace_done && ((bu_gettime() - timer) / 1000000.0 < 30.0 /* seconds */)) {
+	    if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
+		bu_log("[BACKTRACE] bu_backtrace() waiting 1 second (of %d)\n", cnt);
+	    }
 	    bu_snooze(BU_SEC2USEC(1));
+            cnt++;
 	}
-    }
-#else
-    /* FIXME: need something better here for win32 */
-    bu_snooze(BU_SEC2USEC(10));
+#ifdef HAVE_KILL
+	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
+	    bu_log("[BACKTRACE] bu_backtrace() sending INT to child %d\n", pid);
+	}
+	kill(pid, SIGINT);
+	bu_snooze(BU_SEC2USEC(1));
 #endif
 
+	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
+	    bu_log("[BACKTRACE] bu_backtrace() waiting for child %d to exit\n", pid);
+	}
+	wait(NULL);
+    }
+
     if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
-	bu_log("\nContinuing.\n");
+	bu_log("[BACKTRACE] Done.\n");
     }
 
 #ifdef SIGINT
