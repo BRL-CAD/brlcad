@@ -55,7 +55,7 @@
 #include "bu/time.h"
 
 /* strict c99 doesn't declare kill() (but POSIX does) */
-#ifndef HAVE_DECL_KILL
+#if !defined(HAVE_DECL_KILL) && !defined(kill)
 extern int kill(pid_t, int);
 #endif
 
@@ -123,6 +123,11 @@ backtrace(int processid, char args[][MAXPATHLEN], int fd)
 	return;
     }
 
+    /* capture our sub process PID pre-fork */
+    if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
+	bu_log("[BACKTRACE] backtrace() parent is %d\n", bu_process_id());
+    }
+
     pid2 = fork();
     if (pid2 == 0) {
 	int ret;
@@ -184,9 +189,9 @@ backtrace(int processid, char args[][MAXPATHLEN], int fd)
 	snprintf(attach_msg, sizeof(attach_msg), "attach %d\n", processid);
 
 	if (have_gdb) {
-	    if (write(input[1], "set prompt\n", 12) != 12) {
+	    /*    if (write(input[1], "set prompt\n", 12) != 12) {
 		perror("write [set prompt] failed");
-	    } else if (write(input[1], "set confirm off\n", 16) != 16) {
+		} else */if (write(input[1], "set confirm off\n", 16) != 16) {
 		perror("write [set confirm off] failed");
 	    } else if (write(input[1], "set backtrace past-main on\n", 27) != 27) {
 		perror("write [set backtrace past-main on] failed");
@@ -242,12 +247,16 @@ backtrace(int processid, char args[][MAXPATHLEN], int fd)
 	tv.tv_usec = 42;
 
 	result = select(FD_SETSIZE, &readset, NULL, NULL, &tv);
+
+/*	bu_log("[BACKTRACE] select result=%d fdisset=%d\n", result, FD_ISSET(output[0], &readset)); */
+
 	if (result == -1) {
 	    break;
 	}
 
 	if ((result > 0) && (FD_ISSET(output[0], &readset))) {
-	    if (read(output[0], &c, 1)) {
+	    int ret = read(output[0], &c, 1);
+	    if (ret) {
 		switch (c) {
 		    case '#':
 		    case '*':
@@ -314,6 +323,9 @@ backtrace(int processid, char args[][MAXPATHLEN], int fd)
 		    position++;
 		}
 	    }
+
+	    /* !!! bu_log("[BACKTRACE] read ret=%d\n", ret); */
+
 	} else if (backtrace_done) {
 	    break;
 	}
@@ -333,7 +345,7 @@ backtrace(int processid, char args[][MAXPATHLEN], int fd)
 
     if (UNLIKELY(bu_debug & BU_DEBUG_ATTACH)) {
 	bu_log("\nBacktrace complete.\nAttach debugger or interrupt to continue...\n");
-	bu_snooze(BU_SEC2USEC(15));
+	bu_snooze(BU_SEC2USEC(30));
     } else {
 
 #  ifdef HAVE_KILL
@@ -361,6 +373,7 @@ backtrace(int processid, char args[][MAXPATHLEN], int fd)
 	}
 	kill(getppid(), SIGINT);
 #    endif
+
 #  endif
 	bu_snooze(BU_SEC2USEC(2));
     }
@@ -373,6 +386,7 @@ backtrace(int processid, char args[][MAXPATHLEN], int fd)
     if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
 	bu_log("[BACKTRACE] backtrace() complete\n");
     }
+
     exit(0);
 }
 
@@ -386,19 +400,7 @@ bu_backtrace(FILE *fp)
     fflush(fp); /* sanity */
 
     /* make sure the debugger exists */
-    if ((locate_debugger = bu_which("lldb"))) {
-	bu_strlcpy(debugger_args[0], locate_debugger, MAXPATHLEN);
-	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
-	    bu_log("[BACKTRACE] Found lldb in USER path: %s\n", locate_debugger);
-	}
-	have_lldb = 1;
-    } else if ((locate_debugger = bu_whereis("lldb"))) {
-	bu_strlcpy(debugger_args[0], locate_debugger, MAXPATHLEN);
-	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
-	    bu_log("[BACKTRACE] Found lldb in SYSTEM path: %s\n", locate_debugger);
-	}
-	have_lldb = 1;
-    } else if ((locate_debugger = bu_which("gdb"))) {
+    if ((locate_debugger = bu_which("gdb"))) {
 	bu_strlcpy(debugger_args[0], locate_debugger, MAXPATHLEN);
 	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
 	    bu_log("[BACKTRACE] Found gdb in USER path: %s\n", locate_debugger);
@@ -410,8 +412,27 @@ bu_backtrace(FILE *fp)
 	    bu_log("[BACKTRACE] Found gdb in SYSTEM path: %s\n", locate_debugger);
 	}
 	have_gdb = 1;
+    } else if ((locate_debugger = bu_which("lldb"))) {
+	bu_strlcpy(debugger_args[0], locate_debugger, MAXPATHLEN);
+	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
+	    bu_log("[BACKTRACE] Found lldb in USER path: %s\n", locate_debugger);
+	}
+	have_lldb = 1;
+    } else if ((locate_debugger = bu_whereis("lldb"))) {
+	bu_strlcpy(debugger_args[0], locate_debugger, MAXPATHLEN);
+	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
+	    bu_log("[BACKTRACE] Found lldb in SYSTEM path: %s\n", locate_debugger);
+	}
+	have_lldb = 1;
     }
     locate_debugger = NULL; /* made a copy */
+
+    if (have_gdb) {
+	/* MUST give gdb path to binary, otherwise attach bug causes
+	 * process kill on some platforms (e.g., FreeBSD9+AMD64)
+	 */
+	bu_strlcpy(debugger_args[1], bu_argv0_full_path(), MAXPATHLEN);
+    }
 
     /* if we don't have a debugger, don't proceed */
     if (debugger_args[0][0] == '\0') {
@@ -430,6 +451,9 @@ bu_backtrace(FILE *fp)
 
     /* capture our main process PID pre-fork */
     process = bu_process_id();
+    if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
+	bu_log("[BACKTRACE] bu_backtrace() parent is %d\n", process);
+    }
 
     /* fork so that trace symbols stop _here_ instead of in some libc
      * routine (e.g., in wait(2)).
