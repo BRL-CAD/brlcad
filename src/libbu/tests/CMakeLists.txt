@@ -3,6 +3,7 @@
 
 set(bu_test_srcs
   b64.c
+  backtrace.c
   badmagic.c
   basename.c
   bitv.c
