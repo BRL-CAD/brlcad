@@ -2653,6 +2653,7 @@ BRLCAD_FUNCTION_EXISTS(nextafter REQUIRED_LIBS ${M_LIBRARY})
 BRLCAD_FUNCTION_EXISTS(nextafterf REQUIRED_LIBS ${M_LIBRARY})
 BRLCAD_FUNCTION_EXISTS(ntohll)
 BRLCAD_FUNCTION_EXISTS(proc_pidpath) # Mac OS X
+BRLCAD_FUNCTION_EXISTS(program_invocation_name)
 BRLCAD_FUNCTION_EXISTS(pipe)
 BRLCAD_FUNCTION_EXISTS(popen) # implies pclose
 BRLCAD_FUNCTION_EXISTS(posix_memalign) # IEEE Std 1003.1-2001
@@ -2741,14 +2742,6 @@ return 0;
 if(HAVE_GETFULLPATHNAME)
   CONFIG_H_APPEND(BRLCAD "#define HAVE_GETFULLPATHNAME 1\n")
 endif(HAVE_GETFULLPATHNAME)
-
-# test for program_invocation_name global variable
-if("${HAVE_PROGRAM_INVOCATION_NAME}" MATCHES "^${HAVE_PROGRAM_INVOCATION_NAME}$")
-  check_c_source_compiles("#define _GNU_SOURCE\n#include <errno.h>\nint main() { return (program_invocation_name)?0:1; }" HAVE_PROGRAM_INVOCATION_NAME)
-  if(HAVE_PROGRAM_INVOCATION_NAME)
-    CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_PROGRAM_INVOCATION_NAME 1\n")
-  endif(HAVE_PROGRAM_INVOCATION_NAME)
-endif("${HAVE_PROGRAM_INVOCATION_NAME}" MATCHES "^${HAVE_PROGRAM_INVOCATION_NAME}$")
 
 # functionality tests for lrint
 set(lrint_test "long int lrint(double); int main() {return lrint(3.14);}")
