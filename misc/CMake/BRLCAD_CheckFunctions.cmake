@@ -53,6 +53,9 @@ set(standard_header_template
 #include <string.h>
 #include <math.h>
 #include <ctype.h>
+#ifdef HAVE_SYS_TYPES_H
+# include <sys/types.h>
+#endif
 #ifdef HAVE_GETOPT_H
 # include <getopt.h>
 #endif
@@ -72,16 +75,11 @@ set(standard_header_template
 # include <sys/stat.h>
 #endif
 #ifdef HAVE_SYS_SYSCTL_H
-# if defined(_XOPEN_SOURCE) && _XOPEN_SOURCE < 500
 typedef unsigned char u_char;
 typedef unsigned int u_int;
 typedef unsigned long u_long;
 typedef unsigned short u_short;
-# endif
 # include <sys/sysctl.h>
-#endif
-#ifdef HAVE_SYS_TYPES_H
-# include <sys/types.h>
 #endif
 #ifdef HAVE_SYS_TIME_H
 # include <sys/time.h>
