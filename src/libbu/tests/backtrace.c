@@ -20,7 +20,15 @@
 
 #include "common.h"
 
+#ifdef HAVE_SYS_STAT_H
+#  include <sys/stat.h>
+#endif
+
 #include "bu.h"
+
+
+/* should be at least a few lines with some words */
+#define BACKTRACE_MINIMUM 64
 
 
 static int
@@ -43,12 +51,14 @@ go_deep(int depth, FILE *fp)
 int
 main(int argc, char *argv[])
 {
+    char *buffer = NULL;
     const char *output = NULL;
     FILE *fp = NULL;
     int result;
+    size_t size = 0;
 
-    if (argc != 2) {
-	fprintf(stderr, "Usage: %s {file}\n", argv[0]);
+    if (argc > 2) {
+	fprintf(stderr, "Usage: %s [file]\n", argv[0]);
 	return 1;
     }
 
@@ -57,7 +67,15 @@ main(int argc, char *argv[])
     bu_file_delete(output);
     if (bu_file_exists(output, NULL))
 	bu_exit(1, "ERROR: backtrace output [%s] already exists and couldn't be deleted\n", output);
-    fp = fopen(output, "w");
+    if (!output) {
+	buffer = (char *)bu_calloc(MAXPATHLEN, MAXPATHLEN, "memory buffer");
+	fp = fmemopen(buffer, MAXPATHLEN * MAXPATHLEN, "w");
+	output = "IN_MEMORY_BUFFER";
+	fprintf(fp, "this is a test\n");
+    } else {
+	fp = fopen(output, "w");
+    }
+
     if (!fp)
 	bu_exit(2, "ERROR: Unable to open backtrace output [%s]\n", output);
 
@@ -66,14 +84,43 @@ main(int argc, char *argv[])
     result = go_deep(3, fp);
     fclose(fp);
 
-    /* FIXME: need to make sure backtrace has some content */
-    if (result != 1 || !bu_file_exists(output, NULL)) {
-	printf("bu_backtrace: [FAILED]\n");
+    /* display the backtrace */
+    printf("BEGIN Backtrace {\n");
+    if (buffer) {
+	printf("%s\n", buffer);
+	size = strlen(buffer);
+    } else {
+	char fgetsbuf[MAXPATHLEN] = {0};
+	fp = fopen(output, "r");
+	while(bu_fgets(fgetsbuf, MAXPATHLEN, fp)) {
+	    printf("%s", fgetsbuf);
+	    size += strlen(fgetsbuf);
+	}
+	fclose(fp);
+    }
+    printf("} END Backtrace\n");
+
+    /* check the backtrace */
+    if (result != 1) {
+	printf("bu_backtrace: [FAILED] returned error [%d]\n", result);
 	return 1;
     }
+    if (!buffer) {
+	if (!bu_file_exists(output, NULL)) {
+	    printf("bu_backtrace: [FAILED] expecting file\n");
+	    return 2;
+	}
+    }
 
+    if (size < (size_t)BACKTRACE_MINIMUM) {
+	printf("bu_backtrace: [FAILED] short trace (%zu < %zu bytes)\n", size, (size_t)BACKTRACE_MINIMUM);
+	return 4;
+    }
+    /* TODO: check trace for main+go_deep+go_deeper */
+
+    bu_free(buffer, "memory buffer");
     printf("bu_backtrace: [PASSED]\n");
-    bu_file_delete(output);
+
     return 0;
 }
 
