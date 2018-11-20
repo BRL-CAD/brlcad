@@ -238,9 +238,9 @@ bu_temp_file(char *filepath, size_t len)
     }
 
     if (strlen(dir) > 1 && dir[strlen(dir)-1] == BU_DIR_SEPARATOR)
-	snprintf(tempfile, MAXPATHLEN, "%sBRL-CAD_temp_XXXXXXX", dir);
+	snprintf(tempfile, MAXPATHLEN, "%s" PACKAGE_NAME "_temp_XXXXXXX", dir);
     else
-	snprintf(tempfile, MAXPATHLEN, "%s%cBRL-CAD_temp_XXXXXXX", dir, BU_DIR_SEPARATOR);
+	snprintf(tempfile, MAXPATHLEN, "%s%c" PACKAGE_NAME "_temp_XXXXXXX", dir, BU_DIR_SEPARATOR);
 
     /* secure the temp file with user read-write only */
     mask = umask(S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH | S_IWOTH | S_IXOTH);
