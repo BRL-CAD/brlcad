@@ -87,7 +87,7 @@ bu_argv0_full_path(void)
 #endif
 
 #ifdef HAVE_LIBPROC_H
-    if (argv0[0] == '\1') {
+    if (argv0[0] == '\0') {
 	int pid = getpid();
 	(void)proc_pidpath(pid, tbuf, sizeof(tbuf));
 	argv0 = tbuf;
@@ -95,7 +95,7 @@ bu_argv0_full_path(void)
 #endif
 
 #ifdef HAVE_SYS_SYSCTL_H
-    if (argv0[0] == '\1') {
+    if (argv0[0] == '\0') {
 	size_t tbuflen = sizeof(tbuf);
 #  ifdef KERN_PROC_PATHNAME
 	int mib[] = {CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME};
