@@ -27,20 +27,11 @@
 #include <signal.h>
 
 #ifdef HAVE_SYS_TYPES_H
+typedef unsigned char u_char;
+typedef unsigned int u_int;
+typedef unsigned long u_long;
+typedef unsigned short u_short;
 #  include <sys/types.h>
-/* sys/sysctl.h may need help with c90-era BSD/XOPEN API */
-#  ifndef _U_LONG
-#    define u_long unsigned long
-#  endif
-#  ifndef _U_INT
-#    define u_int unsigned int
-#  endif
-#  ifndef _U_SHORT
-#    define u_short unsigned short
-#  endif
-#  ifndef _U_CHAR
-#    define u_char unsigned char
-#  endif
 #endif
 
 #ifdef HAVE_SYS_TIME_H
