@@ -66,7 +66,8 @@ main(int argc, char *argv[])
     result = go_deep(3, fp);
     fclose(fp);
 
-    if (result != 0 || !bu_file_exists(output, NULL)) {
+    /* FIXME: need to make sure backtrace has some content */
+    if (result != 1 || !bu_file_exists(output, NULL)) {
 	printf("bu_backtrace: [FAILED]\n");
 	return 1;
     }
