@@ -115,7 +115,7 @@ BU_EXPORT extern char *bu_path_dirname(const char *path);
  * It is the caller's responsibility to provide a basename buffer with
  * enough memory for a string with length at least strlen(path) + 1
  * (for terminating nul) characters as that is the maximum possible
- * basename size.  If the basename output argument is NULL, then a
+ * basename size.  If the basename output argument is NULL, then
  * dynamic memory will be returned and the caller is responsible for
  * releasing memory (via bu_free()), otherwise the caller-provided
  * basename pointer is returned and managed by the caller accordingly.
