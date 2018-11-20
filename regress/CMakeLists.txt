@@ -13,7 +13,7 @@ macro(Add_Regression_Test testname depends_list)
     endif(TARGET check)
   endif(NOT "${depends_list}" STREQUAL "")
   if(NOT BRLCAD_DISABLE_REGRESS_TIMEOUT)
-    set_tests_properties(regress-${testname} PROPERTIES TIMEOUT 60)
+    set_tests_properties(regress-${testname} PROPERTIES TIMEOUT 300) # FIXME: want <60
   endif(NOT BRLCAD_DISABLE_REGRESS_TIMEOUT)
 endmacro(Add_Regression_Test)
 
@@ -62,7 +62,7 @@ if(SH_EXEC)
       endif(TARGET check)
     endif(NOT "${depends_list}" STREQUAL "")
     if(NOT BRLCAD_DISABLE_REGRESS_TIMEOUT)
-      set_tests_properties(regress-${testname} PROPERTIES TIMEOUT 60)
+      set_tests_properties(regress-${testname} PROPERTIES TIMEOUT 300) # FIXME: want <60
     endif(NOT BRLCAD_DISABLE_REGRESS_TIMEOUT)
   endmacro(Sh_Regression_Test)
 
@@ -78,9 +78,10 @@ if(SH_EXEC)
   Sh_Regression_Test(usage "rt" EXCLUDE_FROM_REGRESS)
   Sh_Regression_Test(flawfinder "" EXCLUDE_FROM_REGRESS)
 
-  # TODO - keep all tests short.  right now, regress repository
-  # violates this as it spends considerable time scanning the entire
-  # source tree, then scanning different sets of files for properties.
+  # TODO - keep all tests short, GOAL < 1MIN.  right now, regress
+  # repository violates this as it spends considerable time scanning
+  # the entire source tree, then scanning different sets of files for
+  # properties.
   Sh_Regression_Test(repository "")
   if(NOT BRLCAD_DISABLE_REGRESS_TIMEOUT)
     set_tests_properties(regress-repository PROPERTIES TIMEOUT 600)
