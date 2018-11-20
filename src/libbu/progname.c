@@ -18,19 +18,30 @@
  * information.
  */
 
-#ifndef _GNU_SOURCE
-#  define _GNU_SOURCE /* must come before common.h */
-#endif
-
 #include "common.h"
 
+#ifdef HAVE_SYS_TYPES_H
+#  include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_SYSCTL_H
+typedef unsigned char u_char;
+typedef unsigned int u_int;
+typedef unsigned long u_long;
+typedef unsigned short u_short;
+#  include <sys/sysctl.h> /* for sysctl */
+#endif
 #ifdef HAVE_SYS_PARAM_H /* for MAXPATHLEN */
 #  include <sys/param.h>
+#endif
+#ifdef HAVE_LIBPROC_H
+typedef void *rusage_info_t; /* BSD hack for POSIX-mode */
+#  define SOCK_MAXADDRLEN 255 /* BSD hack for POSIX-mode */
+#  include <libproc.h> /* for proc_pidpath */
 #endif
 
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
+#include <errno.h> /* for program_invocation_name */
 #include "bio.h"
 
 #include "bu/app.h"
@@ -40,6 +51,7 @@
 #include "bu/path.h"
 #include "bu/str.h"
 
+
 #if !defined(HAVE_DECL_GETPROGNAME) && !defined(getprogname)
 const char *getprogname(void);
 #endif
@@ -47,26 +59,63 @@ const char *getprogname(void);
 
 /* internal storage for bu_getprogname/bu_setprogname */
 static char bu_progname[MAXPATHLEN] = {0};
-const char *DEFAULT_PROGNAME = "(BRL-CAD)";
+const char *DEFAULT_PROGNAME = "(" PACKAGE_NAME ")";
 
 
 const char *
 bu_argv0_full_path(void)
 {
     static char buffer[MAXPATHLEN] = {0};
-
+    char tbuf[MAXPATHLEN] = {0};
     const char *argv0 = bu_progname;
     const char *which;
 
 #ifdef HAVE_PROGRAM_INVOCATION_NAME
     /* GLIBC provides a way */
-    if (argv0[0] == '\0' && program_invocation_name)
+    if (argv0[0] == '\0' && program_invocation_name) {
 	argv0 = program_invocation_name;
+    }
 #endif
+
+#ifdef HAVE_WINDOWS_H
+    if (argv0[0] == '\0') {
+	TCHAR exeFileName[MAXPATHLEN] = {0};
+	GetModuleFileName(NULL, exeFileName, MAXPATHLEN);
+	wcstombs(tbuf, exeFileName, sizeof(tbuf));
+	argv0 = tbuf;
+    }
+#endif
+
+#ifdef HAVE_LIBPROC_H
+    if (argv0[0] == '\1') {
+	int pid = getpid();
+	(void)proc_pidpath(pid, tbuf, sizeof(tbuf));
+	argv0 = tbuf;
+    }
+#endif
+
+#ifdef HAVE_SYS_SYSCTL_H
+    if (argv0[0] == '\1') {
+	size_t tbuflen = sizeof(tbuf);
+#  ifdef KERN_PROC_PATHNAME
+	int mib[] = {CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME};
+#  else
+	int mib[] = {CTL_KERN, KERN_PROCNAME};
+#  endif
+	sysctl(mib, sizeof(mib)/sizeof(mib[0]), tbuf, &tbuflen, NULL, 0);
+	argv0 = tbuf;
+    }
+#endif
+
+    /* still don't have a name? */
+    if (argv0[0] == '\0') {
+	bu_strlcat(tbuf, "(" PACKAGE_NAME ")", sizeof(tbuf));
+	argv0 = tbuf;
+    }
 
     if (argv0[0] == BU_DIR_SEPARATOR) {
 	/* seems to already be a full path */
-	snprintf(buffer, MAXPATHLEN, "%s", argv0);
+	snprintf(buffer, sizeof(buffer), "%s", argv0);
 	return buffer;
     }
 
@@ -86,14 +135,14 @@ bu_argv0_full_path(void)
     /* FIXME: this is technically wrong.  if the current working
      * directory is changed, we'll get the wrong path for argv0.
      */
-    bu_getcwd(buffer, MAXPATHLEN);
-    snprintf(buffer+strlen(buffer), MAXPATHLEN-strlen(buffer), "%c%s", BU_DIR_SEPARATOR, argv0);
+    bu_getcwd(buffer, sizeof(buffer));
+    snprintf(buffer+strlen(buffer), sizeof(buffer)-strlen(buffer), "%c%s", BU_DIR_SEPARATOR, argv0);
     if (bu_file_exists(buffer, NULL)) {
 	return buffer;
     }
 
     /* give up */
-    snprintf(buffer, MAXPATHLEN, "%s", argv0);
+    snprintf(buffer, sizeof(buffer), "%s", argv0);
     return buffer;
 }
 
