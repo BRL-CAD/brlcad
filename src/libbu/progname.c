@@ -33,7 +33,10 @@ typedef unsigned short u_short;
 #ifdef HAVE_SYS_PARAM_H /* for MAXPATHLEN */
 #  include <sys/param.h>
 #endif
-#ifdef HAVE_LIBPROC_H
+#ifdef HAVE_SYS_WAIT_H /* for wait */
+#  include <sys/wait.h>
+#endif
+#if defined(HAVE_LIBPROC_H) && defined(HAVE_PROC_PIDPATH)
 typedef void *rusage_info_t; /* BSD hack for POSIX-mode */
 #  define SOCK_MAXADDRLEN 255 /* BSD hack for POSIX-mode */
 #  include <libproc.h> /* for proc_pidpath */
@@ -53,7 +56,11 @@ typedef void *rusage_info_t; /* BSD hack for POSIX-mode */
 
 
 #if !defined(HAVE_DECL_GETPROGNAME) && !defined(getprogname)
-const char *getprogname(void);
+extern const char *getprogname(void);
+#endif
+
+#if !defined(HAVE_DECL_WAIT) && !defined(wait)
+extern pid_t wait(int *);
 #endif
 
 
@@ -86,7 +93,7 @@ bu_argv0_full_path(void)
     }
 #endif
 
-#ifdef HAVE_LIBPROC_H
+#if defined(HAVE_LIBPROC_H) && defined(HAVE_PROC_PIDPATH)
     if (argv0[0] == '\0') {
 	int pid = getpid();
 	(void)proc_pidpath(pid, tbuf, sizeof(tbuf));
