@@ -1290,6 +1290,28 @@ containsNearHit(const std::list<brep_hit> *hits)
     return false;
 }
 
+bool hit_is_dup(const brep_hit &a, const brep_hit &b)
+{
+    if (a.face.m_face_index != b.face.m_face_index) return false;
+    if (!NEAR_EQUAL(a.dist, b.dist, BN_TOL_DIST)) return false;
+    if (a.direction != b.direction) return false;
+    return true;
+}
+
+int hit_dup_cnt(std::list<brep_hit>::iterator curr, const std::list<brep_hit> *hits)
+{
+    int dup_cnt = -1;
+    brep_hit &curr_hit = *curr;
+    for (std::list<brep_hit>::const_iterator i = curr; i != hits->end(); ++i) {
+	const brep_hit &h = *i;
+	if (hit_is_dup(curr_hit, h)) {
+	    dup_cnt++;
+	} else {
+	    return dup_cnt;
+	}
+    }
+    return 0;
+}
 
 /**
  * Intersect a ray with a brep.  If an intersection occurs, a struct
@@ -1365,14 +1387,59 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 ////////////////////////
     if ((hits.size() > 1) && containsNearMiss(&hits)) { //&& ((hits.size() % 2) != 0)) {
 
+	std::list<brep_hit>::iterator prev;
+	std::list<brep_hit>::const_iterator next;
+	std::list<brep_hit>::iterator curr = hits.begin();
+
+#if 0
+	// TODO - seeing an odd grazing hit behavior that is returning many
+	// multiples of the same or very similar hit points along a surface.
+	// This isn't a crack_hit situation, so the usual near hit/near miss
+	// logic isn't going to handle it well, but I'm not sure yet what else
+	// to do.  May need to add a GRAZING_HIT hit type to the hit_type enums
+	// for tagging these when we're doing the solve so we can process them
+	// as special cases.
+
+	if (debug_output) {
+	    bu_log("\nrt_brep_shot (%s): before hit consolidation: %zu\n", stp->st_dp->d_namep, hits.size());
+	    log_hits(hits, debug_output);
+	}
+
+	curr = hits.begin();
+	while (curr != hits.end()) {
+	    brep_hit &prev_hit = *curr;
+	    if (curr != hits.end()) {
+		int dup_cnt = hit_dup_cnt(curr, &hits);
+		if (dup_cnt ) {
+
+		    // TODO - check somehow to see if we are in a weird grazing multi-hit situation...
+
+		    if (debug_output > 1) {
+			bu_log("\nrt_brep_shot (%s): removing %d excess duplicate hits on face %d at distance %g\n", stp->st_dp->d_namep, dup_cnt, prev_hit.face.m_face_index, prev_hit.dist);
+		    }
+		    curr++;
+		    while (curr != hits.end()) {
+			const brep_hit &nc = *curr;
+			prev_hit.hit = (nc.hit < prev_hit.hit) ? prev_hit.hit : nc.hit;
+			if (hit_is_dup(prev_hit, nc)) {
+			    hits.erase(curr++);
+			} else {
+			    break;
+			}
+		    }
+		    curr = hits.begin();
+		}
+	    }
+	    curr++;
+	}
+#endif
+
 	if (debug_output) {
 	    bu_log("\nrt_brep_shot (%s): before Pass 1 Hits: %zu\n", stp->st_dp->d_namep, hits.size());
 	    log_hits(hits, debug_output);
 	}
 
-	std::list<brep_hit>::iterator prev;
-	std::list<brep_hit>::const_iterator next;
-	std::list<brep_hit>::iterator curr = hits.begin();
+	curr = hits.begin();
 	while (curr != hits.end()) {
 	    const brep_hit &curr_hit = *curr;
 	    if (curr_hit.hit == brep_hit::NEAR_MISS) {
