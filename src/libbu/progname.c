@@ -55,6 +55,10 @@ typedef void *rusage_info_t; /* BSD hack for POSIX-mode */
 #include "bu/str.h"
 
 
+#if !defined(HAVE_DECL_PROGRAM_INVOCATION_NAME)
+extern char *program_invocation_name;
+#endif
+
 #if !defined(HAVE_DECL_GETPROGNAME) && !defined(getprogname)
 extern const char *getprogname(void);
 #endif
