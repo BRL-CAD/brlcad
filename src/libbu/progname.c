@@ -110,8 +110,8 @@ bu_argv0_full_path(void)
     if (argv0[0] == '\0') {
 	size_t tbuflen = sizeof(tbuf);
 #  ifdef KERN_PROC_PATHNAME /* BSD */
-	int mib[] = {CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME};
-#  else /* Mac OS X */
+	int mib[] = {CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1};
+#  else /* Mac OS X and older BSD */
 	int mib[] = {CTL_KERN, KERN_PROCNAME};
 #  endif
 	sysctl(mib, sizeof(mib)/sizeof(mib[0]), tbuf, &tbuflen, NULL, 0);
