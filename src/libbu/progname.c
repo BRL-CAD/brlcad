@@ -105,12 +105,13 @@ bu_argv0_full_path(void)
     }
 #endif
 
-#ifdef HAVE_SYS_SYSCTL_H
+    /* both BSD and Mac OS X have KERN_PROC */
+#if defined(HAVE_SYS_SYSCTL_H) && defined(KERN_PROC)
     if (argv0[0] == '\0') {
 	size_t tbuflen = sizeof(tbuf);
-#  ifdef KERN_PROC_PATHNAME
+#  ifdef KERN_PROC_PATHNAME /* BSD */
 	int mib[] = {CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME};
-#  else
+#  else /* Mac OS X */
 	int mib[] = {CTL_KERN, KERN_PROCNAME};
 #  endif
 	sysctl(mib, sizeof(mib)/sizeof(mib[0]), tbuf, &tbuflen, NULL, 0);
