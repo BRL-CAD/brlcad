@@ -167,6 +167,7 @@ public:
     int m_adj_face_index;
     // XXX - calculate the dot of the dir with the normal here!
     const BBNode *sbv;
+    double grazing;
 
     brep_hit(const ON_BrepFace& f, const ON_Ray& ray, const point_t p, const vect_t n, const pt2d_t _uv)
 	: face(f), trimmed(false), closeToEdge(false), oob(false), hit(CLEAN_HIT), direction(ENTERING), m_adj_face_index(0), sbv(NULL)
@@ -178,6 +179,7 @@ public:
 	VSUB2(dir, point, origin);
 	dist = VDOT(ray.m_dir, dir);
 	move(uv, _uv);
+	grazing = fabs(ON_3dVector(n[X],n[Y],n[Z]) * ray.m_dir);
     }
 
     brep_hit(const ON_BrepFace& f, fastf_t d, const ON_Ray& ray, const point_t p, const vect_t n, const pt2d_t _uv)
@@ -187,10 +189,11 @@ public:
 	VMOVE(point, p);
 	VMOVE(normal, n);
 	move(uv, _uv);
+	grazing = fabs(ON_3dVector(n[X],n[Y],n[Z])  * ray.m_dir);
     }
 
     brep_hit(const brep_hit& h)
-	: face(h.face), dist(h.dist), trimmed(h.trimmed), closeToEdge(h.closeToEdge), oob(h.oob), hit(h.hit), direction(h.direction), m_adj_face_index(h.m_adj_face_index), sbv(h.sbv)
+	: face(h.face), dist(h.dist), trimmed(h.trimmed), closeToEdge(h.closeToEdge), oob(h.oob), hit(h.hit), direction(h.direction), m_adj_face_index(h.m_adj_face_index), sbv(h.sbv), grazing(h.grazing)
     {
 	VMOVE(origin, h.origin);
 	VMOVE(point, h.point);
@@ -214,6 +217,7 @@ public:
 	hit = h.hit;
 	direction = h.direction;
 	m_adj_face_index = h.m_adj_face_index;
+	grazing = h.grazing;
 
 	return *this;
     }
@@ -245,15 +249,6 @@ const char *brep_hit_type_str(int hit)
     return terr;
 }
 
-void log_hit(const brep_hit &h)
-{
-    bu_log("dist: %g\n", h.dist);
-    bu_log("%s(%d)\n", brep_hit_type_str((int)h.hit), h.face.m_face_index);
-    if (h.direction == brep_hit::ENTERING) bu_log("ENTERING\n");
-    if (h.direction == brep_hit::LEAVING) bu_log("LEAVING\n");
-    bu_log("\n");
-}
-
 void log_hits(std::list<brep_hit> &hits, int UNUSED(verbosity))
 {
     struct bu_vls logstr = BU_VLS_INIT_ZERO;
@@ -271,6 +266,7 @@ void log_hits(std::list<brep_hit> &hits, int UNUSED(verbosity))
 	bu_vls_printf(&logstr,"%s(%d)", brep_hit_type_str((int)out.hit), out.face.m_face_index);
 	if (out.direction == brep_hit::ENTERING) bu_vls_printf(&logstr,"+");
 	if (out.direction == brep_hit::LEAVING) bu_vls_printf(&logstr,"-");
+	if (out.grazing <= 0.2) bu_vls_printf(&logstr,"%g", out.grazing);
 	bu_vls_printf(&logstr,"[%d]", out.sbv->get_face().m_bRev);
 	bu_vls_printf(&logstr,"}");
     }
@@ -1308,19 +1304,28 @@ int hit_dup_cnt_with_clean(std::list<brep_hit>::iterator curr, const std::list<b
 {
     int dup_cnt = -1;
     brep_hit &curr_hit = *curr;
-    int has_clean_hit = (curr_hit.hit == brep_hit::CLEAN_HIT) ? 1 : 0;
+    int clean_hit_cnt = (curr_hit.hit == brep_hit::CLEAN_HIT) ? 1 : 0;
+    int near_miss_cnt = (curr_hit.hit == brep_hit::NEAR_MISS) ? 1 : 0;
     for (std::list<brep_hit>::const_iterator i = curr; i != hits->end(); ++i) {
 	const brep_hit &h = *i;
 	if (hit_is_dup(curr_hit, h)) {
 	    dup_cnt++;
 	    if (h.hit == brep_hit::CLEAN_HIT) {
-		has_clean_hit = 1;
+		clean_hit_cnt++;
+	    }
+	    if (h.hit == brep_hit::NEAR_MISS) {
+		near_miss_cnt++;
 	    }
 	} else {
 	    break;
 	}
     }
-    return (has_clean_hit) ? dup_cnt : 0;
+    if (near_miss_cnt > 2 && near_miss_cnt > 2 * clean_hit_cnt) {
+	/* Something strange - got a couple clean hits but more near misses
+	 * for what should nominally be the same point. Point is suspect. */
+	return -1;
+    }
+    return (clean_hit_cnt) ? dup_cnt : 0;
 }
 
 /**
@@ -1401,38 +1406,36 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 	std::list<brep_hit>::const_iterator next;
 	std::list<brep_hit>::iterator curr = hits.begin();
 
-#if 0
-	// TODO - seeing an odd grazing hit behavior that is returning many
-	// multiples of the same or very similar hit points along a surface.
-	// This isn't a crack_hit situation, so the usual near hit/near miss
-	// logic isn't going to handle it well, but I'm not sure yet what else
-	// to do.  May need to add a GRAZING_HIT hit type to the hit_type enums
-	// for tagging these when we're doing the solve so we can process them
-	// as special cases.
-
 	if (debug_output) {
 	    bu_log("\nrt_brep_shot (%s): before hit consolidation: %zu\n", stp->st_dp->d_namep, hits.size());
 	    log_hits(hits, debug_output);
 	}
 
+	int suspect_pnt = 0;
 	curr = hits.begin();
 	while (curr != hits.end()) {
-	    //bu_log("hits.size(): %zu\n", hits.size());
 	    brep_hit &prev_hit = *curr;
-	    //log_hit(prev_hit);
 	    if (curr != hits.end()) {
 		int dup_cnt = hit_dup_cnt_with_clean(curr, &hits);
-		if (dup_cnt ) {
+		if (dup_cnt) {
 		    if (debug_output > 1) {
 			bu_log("\nrt_brep_shot (%s): removing duplicate hit on face %d at distance %g\n", stp->st_dp->d_namep, prev_hit.face.m_face_index, prev_hit.dist);
+		    }
+		    if (dup_cnt < 0) {
+			suspect_pnt = 1;
 		    }
 		    std::list<brep_hit>::iterator hnext = curr;
 		    hnext++;
 		    brep_hit &next_hit = (*hnext);
-		    next_hit.hit = brep_hit::CLEAN_HIT;
+		    // Propagate clean grazing hit status
+		    if (prev_hit.grazing <= 0.2 && prev_hit.hit == brep_hit::CLEAN_HIT) {
+			next_hit.grazing = prev_hit.grazing;
+		    }
+		    next_hit.hit = (suspect_pnt) ? brep_hit::NEAR_MISS : brep_hit::CLEAN_HIT;
 		    if (prev_hit.m_adj_face_index > 0) {
 			next_hit.m_adj_face_index = prev_hit.m_adj_face_index;
 		    }
+		    // TODO - average normals?
 		    curr = hits.erase(curr);
 		    curr = hits.begin();
 		    continue;
@@ -1440,7 +1443,6 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 	    }
 	    curr++;
 	}
-#endif
 
 	if (debug_output) {
 	    bu_log("\nrt_brep_shot (%s): before Pass 1 Hits: %zu\n", stp->st_dp->d_namep, hits.size());
@@ -1631,6 +1633,38 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 	if (debug_output > 1) {
 	    bu_log("\nrt_brep_shot (%s): after Pass 4 Hits: %zu\n", stp->st_dp->d_namep, hits.size());
 	    log_hits(hits, debug_output);
+	}
+
+	/* If we've got an odd number of hits, try tossing out the closest-to-zero grazing hit (if any) */
+	if (!hits.empty() && ((hits.size() % 2) != 0)) {
+	    double grazing_min = DBL_MAX;
+	    curr = hits.begin();
+	    while (curr != hits.end()) {
+		const brep_hit &curr_hit = *curr;
+		if (curr_hit.grazing < grazing_min) {
+		    grazing_min = curr_hit.grazing;
+		}
+		curr++;
+	    }
+	    if (grazing_min < 0.2) {
+		curr = hits.begin();
+		while (curr != hits.end()) {
+		    const brep_hit &curr_hit = *curr;
+		    if (curr_hit.grazing <= grazing_min) {
+			if (debug_output) {
+			    bu_log("\nrt_brep_shot (%s): removing grazing hit (%g)\n", stp->st_dp->d_namep, curr_hit.grazing);
+			}
+			hits.erase(curr);
+			break;
+		    }
+		    curr++;
+		}
+
+		if (debug_output) {
+		    bu_log("\nrt_brep_shot (%s): after final GRAZING CULL removal : %zu\n", stp->st_dp->d_namep, hits.size());
+		    log_hits(hits, debug_output);
+		}
+	    }
 	}
 
 	/* If we've got an odd number of hits, try tossing out a first or last near-miss hit */
