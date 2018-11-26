@@ -139,31 +139,6 @@ CurveTree::CurveTree(const ON_BrepFace* face) :
     m_stl(new Stl),
     m_sortedX_indices(NULL)
 {
-    face->SurfaceOf()->GetSurfaceSize(&width_3d, &height_3d);
-    double diag_len_3d = sqrt(width_3d*width_3d + height_3d*height_3d);
-    point_t obmin, obmax;
-    face->OuterLoop()->GetBBox(obmin, obmax);
-    double obudelta = fabs(obmax[X]-obmin[X]);
-    double obvdelta = fabs(obmax[Y]-obmin[Y]);
-    ON_Interval udom = face->SurfaceOf()->Domain(0);
-    ON_Interval vdom = face->SurfaceOf()->Domain(1);
-    double u_stol_ratio = obudelta/fabs(udom[1]-udom[0]);
-    double v_stol_ratio = obvdelta/fabs(vdom[1]-vdom[0]);
-    u_edge_miss_tol = (obudelta * BREP_3D_EDGE_MISS_TOLERANCE) / (width_3d * u_stol_ratio);
-    v_edge_miss_tol = (obvdelta * BREP_3D_EDGE_MISS_TOLERANCE) / (height_3d * v_stol_ratio);
-    double diag_len_uvbox = sqrt(obudelta*obudelta + obvdelta*obvdelta);
-    double diag_len_uv_ratio = diag_len_uvbox/sqrt((udom[1]-udom[0])*(udom[1]-udom[0]) + (vdom[1]-vdom[0])*(vdom[1]-vdom[0]));
-    uv_edge_miss_tol = (diag_len_uvbox * BREP_3D_EDGE_MISS_TOLERANCE) / (diag_len_3d * diag_len_uv_ratio);
-
-#if 0
-    bu_log("Face %d 3D diag. len:     %g\n", face->m_face_index, diag_len_3d);
-    bu_log("Face %d UV diag. len:     %g\n", face->m_face_index, diag_len_uv);
-    bu_log("Face %d UV box diag. len:     %g\n", face->m_face_index, diag_len_uvbox);
-    bu_log("Face %d u_edge_miss_tol: %g\n", face->m_face_index, u_edge_miss_tol);
-    bu_log("Face %d v_edge_miss_tol: %g\n", face->m_face_index, v_edge_miss_tol);
-    bu_log("Face %d uv_edge_miss_tol: %g\n", face->m_face_index, uv_edge_miss_tol);
-#endif
-
     for (int li = 0; li < face->LoopCount(); li++) {
 	bool innerLoop = (li > 0) ? true : false;
 	const ON_BrepLoop* loop = face->Loop(li);

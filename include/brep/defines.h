@@ -28,7 +28,6 @@
 #define BREP_DEFINES_H
 
 #include "common.h"
-#include "bn/tol.h"
 
 /** @{ */
 /** @file brep/defines.h */
@@ -103,20 +102,11 @@ typedef struct _on_brep_placeholder {
  * The EDGE_MISS_TOLERANCE setting is critical in a couple of ways -
  * too small and the allowed uncertainty region near edges will be
  * smaller than the actual uncertainty needed for accurate solid
- * raytracing, too large and trimming will not be adequate. In order
- * to adapt this to UV space, the ratio of the Brep surface's
- * diagonal length and the tolerance is used to solve for a
- * corresponding UV space tolerance, given the 2D UV space diagonal
- * length of the surface in question.  Hence, the latter value
- * (BREP_2D_UV_EDGE_MISS_TOL) is not a constant but is adjusted to
- * fit the given surface's UV space.
- *
- *   surface 3D diagonal length      surface 2D diagonal length
- *   ---------------------------  =  --------------------------
- *   BREP_3D_EDGE_MISS_TOLERANCE         uv_edge_miss_tol
- *
+ * raytracing, too large and trimming will not be adequate.  May need
+ * to adapt this to the scale of the model, perhaps using bounding box
+ * size to key off of.
  */
-#define BREP_3D_EDGE_MISS_TOLERANCE 0.1
+/* #define BREP_EDGE_MISS_TOLERANCE 5e-2 */
 #define BREP_EDGE_MISS_TOLERANCE 5e-3
 
 #define BREP_SAME_POINT_TOLERANCE 1e-6
