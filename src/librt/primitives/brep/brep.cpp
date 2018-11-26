@@ -245,20 +245,27 @@ const char *brep_hit_type_str(int hit)
     return terr;
 }
 
+void log_hit(const brep_hit &h)
+{
+    bu_log("dist: %g\n", h.dist);
+    bu_log("%s(%d)\n", brep_hit_type_str((int)h.hit), h.face.m_face_index);
+    if (h.direction == brep_hit::ENTERING) bu_log("ENTERING\n");
+    if (h.direction == brep_hit::LEAVING) bu_log("LEAVING\n");
+    bu_log("\n");
+}
+
 void log_hits(std::list<brep_hit> &hits, int UNUSED(verbosity))
 {
     struct bu_vls logstr = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&logstr, "\nKey: _CRACK_ = CRACK_HIT; _CH_ = CLEAN_HIT; _NH_ = NEAR_HIT; _NM_ = NEAR_MISS\n");
     bu_vls_printf(&logstr,  "      {...} = data for 1 hit pnt; + = ENTERING; - = LEAVING; (#) = m_face_index\n");
     bu_vls_printf(&logstr,  "      [1] = face reversed (m_bRev true); [0] = face not reversed (m_bRev false)\n");
-    bu_vls_printf(&logstr,  "      <#> = distance from previous point to next hit point\n\n");
+    bu_vls_printf(&logstr,  "      <#> = hit.dist\n\n");
     for (std::list<brep_hit>::iterator i = hits.begin(); i != hits.end(); ++i) {
-	point_t prev = VINIT_ZERO;
-
 	const brep_hit &out = *i;
 
 	if (i != hits.begin()) {
-	    bu_vls_printf(&logstr, "<%g>", DIST_PT_PT(out.point, prev));
+	    bu_vls_printf(&logstr, "<%g>", (*i).dist);
 	}
 	bu_vls_printf(&logstr,"{");
 	bu_vls_printf(&logstr,"%s(%d)", brep_hit_type_str((int)out.hit), out.face.m_face_index);
@@ -266,7 +273,6 @@ void log_hits(std::list<brep_hit> &hits, int UNUSED(verbosity))
 	if (out.direction == brep_hit::LEAVING) bu_vls_printf(&logstr,"-");
 	bu_vls_printf(&logstr,"[%d]", out.sbv->get_face().m_bRev);
 	bu_vls_printf(&logstr,"}");
-	VMOVE(prev, out.point);
     }
     bu_log("%s\n", bu_vls_addr(&logstr));
     bu_vls_free(&logstr);
@@ -1298,19 +1304,23 @@ bool hit_is_dup(const brep_hit &a, const brep_hit &b)
     return true;
 }
 
-int hit_dup_cnt(std::list<brep_hit>::iterator curr, const std::list<brep_hit> *hits)
+int hit_dup_cnt_with_clean(std::list<brep_hit>::iterator curr, const std::list<brep_hit> *hits)
 {
     int dup_cnt = -1;
     brep_hit &curr_hit = *curr;
+    int has_clean_hit = (curr_hit.hit == brep_hit::CLEAN_HIT) ? 1 : 0;
     for (std::list<brep_hit>::const_iterator i = curr; i != hits->end(); ++i) {
 	const brep_hit &h = *i;
 	if (hit_is_dup(curr_hit, h)) {
 	    dup_cnt++;
+	    if (h.hit == brep_hit::CLEAN_HIT) {
+		has_clean_hit = 1;
+	    }
 	} else {
-	    return dup_cnt;
+	    break;
 	}
     }
-    return 0;
+    return (has_clean_hit) ? dup_cnt : 0;
 }
 
 /**
@@ -1407,27 +1417,25 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 
 	curr = hits.begin();
 	while (curr != hits.end()) {
+	    //bu_log("hits.size(): %zu\n", hits.size());
 	    brep_hit &prev_hit = *curr;
+	    //log_hit(prev_hit);
 	    if (curr != hits.end()) {
-		int dup_cnt = hit_dup_cnt(curr, &hits);
+		int dup_cnt = hit_dup_cnt_with_clean(curr, &hits);
 		if (dup_cnt ) {
-
-		    // TODO - check somehow to see if we are in a weird grazing multi-hit situation...
-
 		    if (debug_output > 1) {
-			bu_log("\nrt_brep_shot (%s): removing %d excess duplicate hits on face %d at distance %g\n", stp->st_dp->d_namep, dup_cnt, prev_hit.face.m_face_index, prev_hit.dist);
+			bu_log("\nrt_brep_shot (%s): removing duplicate hit on face %d at distance %g\n", stp->st_dp->d_namep, prev_hit.face.m_face_index, prev_hit.dist);
 		    }
-		    curr++;
-		    while (curr != hits.end()) {
-			const brep_hit &nc = *curr;
-			prev_hit.hit = (nc.hit < prev_hit.hit) ? prev_hit.hit : nc.hit;
-			if (hit_is_dup(prev_hit, nc)) {
-			    hits.erase(curr++);
-			} else {
-			    break;
-			}
+		    std::list<brep_hit>::iterator hnext = curr;
+		    hnext++;
+		    brep_hit &next_hit = (*hnext);
+		    next_hit.hit = brep_hit::CLEAN_HIT;
+		    if (prev_hit.m_adj_face_index > 0) {
+			next_hit.m_adj_face_index = prev_hit.m_adj_face_index;
 		    }
+		    curr = hits.erase(curr);
 		    curr = hits.begin();
+		    continue;
 		}
 	    }
 	    curr++;
