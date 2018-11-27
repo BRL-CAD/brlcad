@@ -474,6 +474,7 @@ BBNode::getTrimsAbove(const ON_2dPoint &uv, std::list<const BRNode *> &out_leave
 	const BRNode *br = *i;
 	br->GetBBox(bmin, bmax);
 	dist = 0.000001; /* 0.03*DIST_PT_PT(bmin, bmax); */
+	//dist = m_ctree->u_tol;
 	if ((uv[X] > bmin[X] - dist) && (uv[X] < bmax[X] + dist)) {
 	    out_leaves.push_back(br);
 	}

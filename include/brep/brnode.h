@@ -56,6 +56,7 @@ extern "C++" {
 		BRNode(const ON_Curve *curve,
 			int trim_index,
 			int adj_face_index,
+			double edge_tol,
 			const ON_BoundingBox &node,
 			const ON_BrepFace *face,
 			const ON_Interval &t,
@@ -105,6 +106,9 @@ extern "C++" {
 
 		/** Trim Curve Information */
 		int m_adj_face_index;
+
+		/** Tolerance of associated 3D edge */
+		double m_edge_tol;
 
 		/** Trimming Flags */
 		bool m_XIncreasing;
