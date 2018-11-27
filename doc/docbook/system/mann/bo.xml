@@ -17,27 +17,32 @@
     <cmdsynopsis sepchar=" ">
       <command>bo</command>
       <group choice="req" rep="norepeat">
-	<arg choice="opt" rep="norepeat">-i u</arg>
+	<arg choice="opt" rep="norepeat">-i {type}</arg>
 	<arg choice="opt" rep="norepeat">-o</arg>
       </group>
-      <arg choice="req" rep="norepeat"><replaceable>type dest source</replaceable></arg>
-      <arg choice="req" rep="norepeat"><replaceable>type dest source</replaceable></arg>
+      <arg choice="req" rep="norepeat"><replaceable>{destination} {source}</replaceable></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
   <refsection xml:id="description"><title>DESCRIPTION</title>
 
     <para>
-      Used to create or retrieve binary opaque objects. Currently, only uniform binary
-      objects (arrays of values) are supported. One of <emphasis>-i</emphasis> or
-      <emphasis>-o</emphasis> must be specified. The <emphasis>-i</emphasis> is for "input,"
-      or creating a binary object, and the <emphasis>-o</emphasis> option is used for "output,"
-      or retrieving a binary object. The <emphasis>u</emphasis> type argument must be supplied
-      when <emphasis>-i</emphasis> is used, to indicate the type of uniform binary object to be
-      created. On input, the <emphasis>dest</emphasis> is the name of the object to be created,
-      and the source is the path to a file containing the values in the local host format. On
-      output, <emphasis>dest</emphasis> is the path to a file to receive the contents of the
-      binary object whose name appears in <emphasis>source</emphasis>. The
+      Used to create or retrieve binary opaque objects. Currently,
+      only uniform binary objects (arrays of values) are
+      supported. One of <emphasis>-i</emphasis> or
+      <emphasis>-o</emphasis> must be
+      specified. The <emphasis>-i</emphasis> is for "input," or
+      creating a binary object, and the <emphasis>-o</emphasis> option
+      is used for "output," or retrieving a binary
+      object. The <emphasis>type</emphasis> argument must be supplied
+      when <emphasis>-i</emphasis> is used, to indicate the type of
+      uniform binary object to be created. On input,
+      the <emphasis>destination</emphasis> is the name of the object
+      to be created, and the source is the path to a file containing
+      the values in the local host format. On
+      output, <emphasis>destination</emphasis> is the path to a file
+      to receive the contents of the binary object whose name appears
+      in <emphasis>source</emphasis>. The
     <emphasis>type</emphasis> may be one of:
 
     <simplelist type="vert">
