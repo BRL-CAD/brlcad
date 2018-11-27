@@ -114,6 +114,15 @@ main(int argc, char **argv)
     out_cookie = bu_cv_cookie(out_pat);
     iitem = bu_cv_itemlen(in_cookie);
     oitem = bu_cv_itemlen(out_cookie);
+
+    if (iitem == 0) {
+	fprintf(stderr, "cv: unrecognized input format [%s]\n", in_pat);
+	return 6;
+    } else if (oitem == 0) {
+	fprintf(stderr, "cv: unrecognized output format [%s]\n", out_pat);
+	return 6;
+    }
+
 #define NITEMS (64*1024)
     inbytes = NITEMS*iitem;
     outbytes = NITEMS*oitem;
