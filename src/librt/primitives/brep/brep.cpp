@@ -1521,16 +1521,17 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 	/* If we've got an odd number of hits, try tossing out a first or last near-miss hit */
 
 	if (!hits.empty() && ((hits.size() % 2) != 0)) {
-	    const brep_hit &curr_hit = hits.back();
-	    if (curr_hit.hit == brep_hit::NEAR_MISS) {
-		hits.pop_back();
-	    }
-	}
-
-	if (!hits.empty() && ((hits.size() % 2) != 0)) {
 	    const brep_hit &curr_hit = hits.front();
 	    if (curr_hit.hit == brep_hit::NEAR_MISS) {
 		hits.pop_front();
+	    }
+	}
+
+
+	if (!hits.empty() && ((hits.size() % 2) != 0)) {
+	    const brep_hit &curr_hit = hits.back();
+	    if (curr_hit.hit == brep_hit::NEAR_MISS) {
+		hits.pop_back();
 	    }
 	}
 
