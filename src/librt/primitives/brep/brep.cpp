@@ -1535,10 +1535,11 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 	    }
 	}
 
-	if (debug_output) {
-	    bu_log("\nrt_brep_shot (%s): after final NEAR_MISS removal : %zu\n", stp->st_dp->d_namep, hits.size());
+	if (debug_output > 1) {
+	    bu_log("\nrt_brep_shot (%s): after NEAR_MISS odd hit cleanup: %zu\n", stp->st_dp->d_namep, hits.size());
 	    log_hits(hits, debug_output);
 	}
+
     }
     ///////////// handle near hit
     if ((hits.size() > 1) && containsNearHit(&hits)) { //&& ((hits.size() % 2) != 0)) {
