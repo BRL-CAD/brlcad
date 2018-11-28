@@ -568,7 +568,7 @@ BRNode::getCurveEstimateOfU(fastf_t v, fastf_t tol) const
 	cnt++;
     }
     if (cnt > 999) {
-	bu_log("getCurveEstimateOfV(): estimate of 'u' given a trim curve and "
+	bu_log("getCurveEstimateOfU(): estimate of 'u' given a trim curve and "
 	       "'v' did not converge within iteration bound(%d).\n", cnt);
     }
     return p[X];
