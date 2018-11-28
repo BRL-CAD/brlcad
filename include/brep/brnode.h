@@ -57,6 +57,8 @@ extern "C++" {
 			int trim_index,
 			int adj_face_index,
 			double edge_tol,
+			double loop_u_tol,
+			double loop_v_tol,
 			const ON_BoundingBox &node,
 			const ON_BrepFace *face,
 			const ON_Interval &t,
@@ -109,6 +111,10 @@ extern "C++" {
 
 		/** Tolerance of associated 3D edge */
 		double m_edge_tol;
+
+		/** Parent loop's UV tolerances */
+		double m_u_tol;
+		double m_v_tol;
 
 		/** Trimming Flags */
 		bool m_XIncreasing;
