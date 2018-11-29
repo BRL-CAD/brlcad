@@ -700,18 +700,38 @@ SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed, int depthL
     ON_Interval u = surf->Domain(0);
     ON_Interval v = surf->Domain(1);
 
-#ifndef _OLD_SUBDIVISION_
 #ifdef LOOSEN_UV
-    min[0] -= within_distance_tol;
-    max[0] += within_distance_tol;
-    min[1] -= within_distance_tol;
-    max[1] += within_distance_tol;
-#endif
-    if ((min != ON_3dPoint::UnsetPoint) && (max != ON_3dPoint::UnsetPoint)) {
+    double max_edge_tol = 0;
+    for (int li = 0; li < face->LoopCount(); li++) {
+	const ON_BrepLoop* loop = face->Loop(li);
+	for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
+	    const ON_BrepTrim& trim = face->Brep()->m_T[loop->m_ti[ti]];
+	    if (trim.m_ei != -1) {
+		const ON_BrepEdge& edge = face->Brep()->m_E[trim.m_ei];
+		if (edge.m_tolerance > max_edge_tol) {
+		    bu_log("Edge %d tol: %g\n", trim.m_ei, edge.m_tolerance);
+		    max_edge_tol = edge.m_tolerance;
+		}
+	    }
+	}
+    }
+    if (max_edge_tol > 0) {
+	double utol = (fabs(u[1]-u[0]) * max_edge_tol) / m_ctree->width_3d;
+	double vtol = (fabs(v[1]-v[0]) * max_edge_tol) / m_ctree->height_3d;
+	min[0] -= utol;
+	max[0] += utol;
+	min[1] -= vtol;
+	max[1] += vtol;
 	u.Set(min[0], max[0]);
 	v.Set(min[1], max[1]);
     }
 #endif
+
+    if ((min != ON_3dPoint::UnsetPoint) && (max != ON_3dPoint::UnsetPoint)) {
+	u.Set(min[0], max[0]);
+	v.Set(min[1], max[1]);
+    }
+
 
     double uq = u.Length()*0.25;
     double vq = v.Length()*0.25;
