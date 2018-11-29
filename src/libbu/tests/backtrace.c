@@ -27,6 +27,128 @@
 #include "bu.h"
 
 
+#undef HAVE_FMEMOPEN
+#define HAVE_FUNOPEN 1
+
+
+#if !defined(HAVE_FMEMOPEN) && defined(HAVE_FUNOPEN)
+
+struct memory {
+    size_t size;
+    size_t used;
+    uint8_t *data;
+};
+
+
+static int
+reader(void *buf, char *data, int size)
+{
+    struct memory *mem = (struct memory *)buf;
+    bu_log("reader\n");
+
+    while (mem->size - mem->used < (size_t)size) {
+	bu_log("reallocating to %zu\n", mem->size * mem->size);
+	mem->data = bu_realloc(mem->data, mem->size * 2, "fmemopen");
+	memset(mem->data + mem->size, 0, mem->size);
+	mem->size *= 2;
+    }
+    memcpy(data, mem->data + mem->used, size);
+    mem->used += size;
+
+    return size;
+}
+
+
+static int
+writer(void *buf, const char *data, int size)
+{
+    struct memory *mem = buf;
+    bu_log("writer\n");
+
+    while (mem->size - mem->used < (size_t)size) {
+	bu_log("reallocating to %zu\n", mem->size * mem->size);
+	mem->data = bu_realloc(mem->data, mem->size * 2, "realloc");
+	memset(mem->data + mem->size, 0, mem->size);
+	mem->size *= 2;
+    }
+    memcpy(mem->data + mem->used, data, size);
+    mem->used += size;
+
+    return size;
+}
+
+
+static fpos_t
+seeker(void *buf, fpos_t offset, int whence)
+{
+    size_t pos = 0;
+    struct memory *mem = buf;
+    bu_log("seeking to %zd\n", (ssize_t)offset);
+
+    switch (whence) {
+	case SEEK_SET: {
+	    if (offset > 0) {
+		pos = (size_t)offset;
+	    }
+	    break;
+	}
+	case SEEK_CUR:
+	case SEEK_END: {
+	    if (offset > 0) {
+		pos = mem->used + (size_t)offset;
+	    } else if (offset < 0) {
+		pos = mem->used - (ssize_t)offset;
+	    }
+	    break;
+	}
+	default:
+	    return -1;
+    }
+
+    if (pos > mem->size) {
+	return -1;
+    }
+
+    mem->used = pos;
+    return (fpos_t)pos;
+}
+
+
+static int
+closer(void *buf)
+{
+    bu_free(buf, "fmemopen");
+    return 0;
+}
+
+
+FILE *
+fmemopen(void *data, size_t size, const char *UNUSED(mode))
+{
+    struct memory* mem = (struct memory *)bu_malloc(sizeof(struct memory), "fmemopen");
+
+#  ifndef HAVE_DECL_FUNOPEN
+    extern FILE *funopen(const void *cookie,
+			 int (*reader)(void *, char *, int),
+			 int (*writer)(void *, const char *, int),
+			 fpos_t (*seeker)(void *, fpos_t, int),
+			 int (*closer)(void *));
+#  endif
+
+    mem->size = size;
+    mem->used = 0;
+    mem->data = data;
+
+    return funopen(mem, reader, writer, seeker, closer);
+}
+#  define HAVE_DECL_FMEMOPEN 1
+#endif
+
+#if defined(HAVE_FMEMOPEN) && !defined(HAVE_DECL_FMEMOPEN)
+extern FILE *fmemopen(void *, size_t, const char *);
+#endif
+
+
 /* should be at least a few lines with some words */
 #define BACKTRACE_MINIMUM 64
 
@@ -68,6 +190,7 @@ main(int argc, char *argv[])
     if (bu_file_exists(output, NULL))
 	bu_exit(1, "ERROR: backtrace output [%s] already exists and couldn't be deleted\n", output);
     if (!output) {
+	bu_log("Using a memory buffer\n");
 	buffer = (char *)bu_calloc(MAXPATHLEN, MAXPATHLEN, "memory buffer");
 	fp = fmemopen(buffer, MAXPATHLEN * MAXPATHLEN, "w");
 	output = "IN_MEMORY_BUFFER";
