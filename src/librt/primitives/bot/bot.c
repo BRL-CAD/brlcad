@@ -4783,8 +4783,6 @@ rt_bot_volume(fastf_t *volume, const struct rt_db_internal *ip)
 
     for (face.npts = 0, i = 0; i < bot->num_faces; face.npts = 0, i++) {
 	int a, b, c;
-	vect_t tmp;
-
 
 	/* find indices of the 3 vertices that make up this face */
 	a = bot->faces[i * ELEMENTS_PER_POINT + 0];
@@ -4809,17 +4807,14 @@ rt_bot_volume(fastf_t *volume, const struct rt_db_internal *ip)
 	bg_3d_polygon_sort_ccw(face.npts, face.pts, face.plane_eqn);
 	bg_3d_polygon_area(&face.area, face.npts, (const point_t *)face.pts);
 
-	/* VOLUME */
-	VSCALE(tmp, face.plane_eqn, face.area);
-	*volume += fabs(VDOT(face.pts[0], tmp));
 	if (bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_PLATE_NOCOS) {
-	    if (BU_BITTEST(bot->face_mode, i))
-		*volume += face.area * bot->thickness[i];
-	    else
-		*volume += face.area * 0.5 * bot->thickness[i];
+	    *volume += face.area * bot->thickness[i];
+	} else {
+	    /* VOLUME */
+	    *volume += VDOT(face.pts[0], face.plane_eqn)*face.area;
 	}
     }
-    *volume /= 3.0;
+    *volume = fabs(*volume)/3.0;
     bu_free((char *)face.pts, "rt_bot_volume: pts");
 }
 
