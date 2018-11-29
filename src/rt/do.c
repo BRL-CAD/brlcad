@@ -613,7 +613,7 @@ clt_run(int cur_pixel, int last_pixel)
     }
     if (outfp) {
         bu_semaphore_acquire(BU_SEM_SYSCALL);
-        if (fseek(outfp, cur_pixel*clt_o[1], 0) != 0)
+        if (bu_fseek(outfp, cur_pixel*clt_o[1], 0) != 0)
             fprintf(stderr, "fseek error\n");
         if (fwrite(pixelp, size, 1, outfp) != 1)
             bu_exit(EXIT_FAILURE, "pixel fwrite error");

@@ -525,7 +525,7 @@ dofile(FILE *fp)
 		bu_log("plot3rot: unrecognized command '%c' (0x%x)\n",
 		       (isprint(c)) ? c : '?',
 		       c);
-		bu_log("plot3rot: ftell = %ld\n", ftell(fp));
+		bu_log("plot3rot: ftell = %ld\n", bu_ftell(fp));
 		putchar(c);
 		break;
 	}

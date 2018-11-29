@@ -25,6 +25,8 @@
 #ifndef LIBGCV_WFOBJ_OBJ_PARSER_H
 #define LIBGCV_WFOBJ_OBJ_PARSER_H
 
+#include "common.h"
+
 #include <sys/types.h>
 #include <stdio.h>
 #include "obj_util.h"
