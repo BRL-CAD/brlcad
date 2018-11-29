@@ -1160,6 +1160,7 @@ utah_isTrimmed(ON_2dPoint uv, const ON_BrepFace *face)
 int
 utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface* surf, pt2d_t& uv, const ON_Ray& ray, std::list<brep_hit>& hits)
 {
+    int debug_output = brep_debug(NULL);
     ON_3dVector N[MAX_BREP_SUBDIVISION_INTERSECTS];
     double t[MAX_BREP_SUBDIVISION_INTERSECTS];
     ON_2dPoint ouv[MAX_BREP_SUBDIVISION_INTERSECTS];
@@ -1176,6 +1177,18 @@ utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface
     }
 
     if (converged) {
+
+	if (debug_output > 1) {
+	    bu_log("Face %d raw hit count: %d\n", sbv->get_face().m_face_index, numhits);
+
+	    if (debug_output > 2) {
+		for (int i = 0; i < numhits; i++) {
+		    ON_3dPoint _pt;
+		    _pt = ray.m_origin + (ray.m_dir * t[i]);
+		    bu_log("   uv(%g,%g,0) -> %g %g %g\n", ouv[i][X], ouv[i][Y], _pt[X], _pt[Y], _pt[Z]);
+		}
+	    }
+	}
 
 	for (int i = 0; i < numhits; i++) {
 	    double closesttrim;
@@ -1235,8 +1248,14 @@ utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface
 		bh.closeToEdge = true;
 		if (trimBR != NULL) {
 		    bh.m_adj_face_index = trimBR->m_adj_face_index;
+		    if (debug_output > 1) {
+			bu_log("Face %d hit %g,%g,0 trimmed by trim %d\n", sbv->get_face().m_face_index, ouv[i][X], ouv[i][Y], trimBR->m_trim_index);
+		    }
 		} else {
 		    bh.m_adj_face_index = -99;
+		    if (debug_output > 1) {
+			bu_log("Face %d hit %g,%g,0 trimmed (no trims above, but has closesttrim(?))\n", sbv->get_face().m_face_index, ouv[i][X], ouv[i][Y]);
+		    }
 		}
 		bh.hit = brep_hit::NEAR_MISS;
 		if (VDOT(ray.m_dir, vnorm) < 0.0)
@@ -1246,6 +1265,14 @@ utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface
 		bh.sbv = sbv;
 		hits.push_back(bh);
 		found = BREP_INTERSECT_FOUND;
+	    } else {
+		if (debug_output > 1) {
+		    if (trimBR != NULL) {
+			bu_log("Face %d hit %g,%g,0 trimmed by trim %d\n", sbv->get_face().m_face_index, ouv[i][X], ouv[i][Y], trimBR->m_trim_index);
+		    } else {
+			bu_log("Face %d hit %g,%g,0 trimmed (no trims above)\n", sbv->get_face().m_face_index, ouv[i][X], ouv[i][Y]);
+		    }
+		}
 	    }
 	}
     }
