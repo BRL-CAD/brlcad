@@ -47,6 +47,7 @@ BRNode::BRNode(
     m_u_tol(loop_u_tol),
     m_v_tol(loop_v_tol),
     m_XIncreasing(false),
+    m_YIncreasing(false),
     m_Horizontal(false),
     m_Vertical(false),
     m_innerTrim(innerTrim),
@@ -111,6 +112,21 @@ BRNode::BRNode(
 	}
 	m_slope = (m_end[Y] - m_start[Y]) / (m_end[X] - m_start[X]);
     }
+
+    if (NEAR_EQUAL(m_end[Y], m_start[Y], BREP_UV_DIST_FUZZ)) {
+	if (m_innerTrim) {
+	    m_YIncreasing = false;
+	} else {
+	    m_YIncreasing = true;
+	}
+    } else {
+	if ((m_end[Y] - m_start[Y]) > 0.0) {
+	    m_YIncreasing = true;
+	} else {
+	    m_YIncreasing = false;
+	}
+    }
+
     m_bb_diag = DIST_PT_PT(m_start, m_end);
 }
 
@@ -120,6 +136,7 @@ BRNode::BRNode(const ON_BoundingBox &node) :
     m_v(),
     m_adj_face_index(-1),
     m_XIncreasing(false),
+    m_YIncreasing(false),
     m_Horizontal(false),
     m_Vertical(false),
     m_innerTrim(false),

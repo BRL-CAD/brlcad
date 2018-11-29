@@ -118,6 +118,7 @@ extern "C++" {
 
 		/** Trimming Flags */
 		bool m_XIncreasing;
+		bool m_YIncreasing;
 		bool m_Horizontal;
 		bool m_Vertical;
 		bool m_innerTrim;
