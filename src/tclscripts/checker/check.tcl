@@ -135,7 +135,6 @@ package provide GeometryChecker 1.0
     set _progressButtonInvoked true
 
     while {$_commandText != "Stopped."} {
-	update
 	set _commandText "Stopped."
 	lappend _afterCommands [after 500 "[code set [scope _commandText] "Stopped."]"]
     }
@@ -358,7 +357,6 @@ body GeometryChecker::handleCheckListSelect {} {
 
     # resolve vwait
     set _commandText ""
-    update
 }
 
 ::itcl::body GeometryChecker::destructor {} {
@@ -402,7 +400,6 @@ body GeometryChecker::loadOverlaps {{filename ""}} {
     set _ol_dir [file dirname $filename]
 
     puts "Loading from $filename"
-    update
 
     set ovfile [open $filename "r"]
     fconfigure "$ovfile" -encoding utf-8
@@ -466,7 +463,6 @@ body GeometryChecker::loadOverlaps {{filename ""}} {
 	$_ck insert {} end -id $count -text $count -values [list $count $left $right [format %.2f $size]] -tags "$tag"
 	if {$count % 500 == 0} {
 	    puts "."
-	    update
 	}
     }
     set _count $count
@@ -810,7 +806,6 @@ body GeometryChecker::subtractSelectionRightFromLeft {{swap "false"}} {
 	    }
 	    incr count
 	    set _progressValue [expr $count / [expr $total + 1.0] * 100]
-	    update
 	}
     }
     set _commandText ""
