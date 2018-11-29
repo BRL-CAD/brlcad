@@ -144,7 +144,9 @@ extern "C++" {
 		const ON_BrepFace *m_face;
 		ON_Interval m_u;
 		const ON_Curve *m_trim;
+	    public:
 		int m_trim_index;
+	    private:
 		ON_Interval m_t;
 		bool m_checkTrim;
 		bool m_trimmed;
