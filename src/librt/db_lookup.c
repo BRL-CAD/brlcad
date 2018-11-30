@@ -167,6 +167,9 @@ db_lookup(const struct db_i *dbip, const char *name, int noisy)
 	}
 	return RT_DIR_NULL;
     }
+    if (UNLIKELY(!dbip)) {
+	return RT_DIR_NULL;
+    }
 
     /* Anything with a forward slash is only valid as a path.  The
      * full path lookup is potentially more expensive, so only do
