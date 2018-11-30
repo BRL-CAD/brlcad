@@ -274,7 +274,7 @@ rt_cache_close(struct rt_cache *cache)
 
     entry = bu_hash_next(cache->dbip_hash, NULL);
     while (entry) {
-	struct db_i *dbip = bu_hash_value(entry, NULL);
+	struct db_i *dbip = (struct db_i *)bu_hash_value(entry, NULL);
 	db_close(dbip);
 	entry = bu_hash_next(cache->dbip_hash, entry);
     }
