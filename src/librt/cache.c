@@ -51,21 +51,15 @@
 #include "rt/func.h"
 
 
+#define CACHE_FORMAT 1
+
 static const char * const cache_mime_type = "brlcad/cache";
 
 
 struct rt_cache {
-    struct db_i *dbip;
+    char dir[MAXPATHLEN];
+    struct bu_hash_tbl *dbip_hash;
 };
-
-
-HIDDEN void
-cache_check(const struct rt_cache *cache)
-{
-    if (!cache)
-	return;
-    RT_CK_DBI(cache->dbip);
-}
 
 
 HIDDEN int
@@ -74,10 +68,13 @@ cache_create_path(const char *path, int is_file)
     char *dir;
 
     if (bu_file_exists(path, NULL)) {
-	if (is_file && !bu_file_directory(path))
+	int is_dir = bu_file_directory(path);
+	if (is_file && !is_dir)
 	    return 1;
-	/* file in the way! */
-	return -1;
+	if (!is_file && is_dir)
+	    return 1;
+	/* something in the way! */
+	return 0;
     }
 
     if (!path /* empty or root path (recursive base case) */
@@ -112,7 +109,7 @@ cache_create_path(const char *path, int is_file)
 HIDDEN int
 cache_format(const char *librt_cache)
 {
-    int format = 0;
+    int format = CACHE_FORMAT;
     struct bu_vls path = BU_VLS_INIT_ZERO;
     const char *cpath = NULL;
     struct bu_vls fmt_str = BU_VLS_INIT_ZERO;
@@ -151,7 +148,7 @@ cache_format(const char *librt_cache)
 }
 
 
-HIDDEN void
+HIDDEN int
 cache_generate_name(char name[STATIC_ARRAY(37)], const struct soltab *stp)
 {
     struct bu_external raw_external;
@@ -168,92 +165,101 @@ cache_generate_name(char name[STATIC_ARRAY(37)], const struct soltab *stp)
     bu_cv_htond((unsigned char *)mat_buffer, (unsigned char *)matp, ELEMENTS_PER_MAT);
 
     if (bu_uuid_create(namespace_uuid, sizeof(mat_buffer), mat_buffer, base_namespace_uuid) != 5)
-	bu_bomb("bu_uuid_create() failed");
+	return 0; /*bu_bomb("bu_uuid_create() failed");*/
 
     if (db_get_external(&raw_external, stp->st_dp, stp->st_rtip->rti_dbip))
-	bu_bomb("db_get_external() failed");
+	return 0; /*bu_bomb("db_get_external() failed");*/
 
     if (db5_get_raw_internal_ptr(&raw_internal, raw_external.ext_buf) == NULL)
-	bu_bomb("rt_db_external5_to_internal5() failed");
+	return 0; /*bu_bomb("rt_db_external5_to_internal5() failed");*/
 
     if (bu_uuid_create(uuid, raw_internal.body.ext_nbytes, raw_internal.body.ext_buf, namespace_uuid) != 5)
-	bu_bomb("bu_uuid_create() failed");
+	return 0; /*bu_bomb("bu_uuid_create() failed");*/
 
     if (bu_uuid_encode(uuid, (uint8_t *)name))
-	bu_bomb("bu_uuid_encode() failed");
+	return 0; /*bu_bomb("bu_uuid_encode() failed");*/
 
     bu_free_external(&raw_external);
+    return 1;
 }
 
 
 struct rt_cache *
 rt_cache_open(void)
 {
-    const char *librt_cache = NULL;
-    struct bu_vls rtdb = BU_VLS_INIT_ZERO;
+    const char *dir = NULL;
     char cache[MAXPATHLEN] = {0};
-    int format = 0;
-    int create;
+    int format;
     struct rt_cache *result;
 
-    librt_cache = getenv("LIBRT_CACHE");
-    if (!BU_STR_EMPTY(librt_cache)) {
+    dir = getenv("LIBRT_CACHE");
+    if (!BU_STR_EMPTY(dir)) {
 	int disabled = 0;
 
 	/* default unset is on, so do nothing if explicitly off */
-	if (bu_str_false(librt_cache))
+	if (bu_str_false(dir))
 	    return NULL;
 
-	librt_cache = bu_file_realpath(librt_cache, cache);
+	dir = bu_file_realpath(dir, cache);
 
-	if (!bu_file_directory(librt_cache)) {
-	    bu_log("WARNING: Caching disabled. Specified directory does not exist.\n");
+	if (!bu_file_directory(dir)) {
+	    bu_log("NOTE: Caching disabled. Specified directory does not exist.\n");
 	    disabled = 1;
-	} else if (!bu_file_writable(librt_cache)) {
-	    bu_log("WARNING: Caching disabled. Specified directory is not writable.\n");
+	} else if (!bu_file_writable(dir)) {
+	    bu_log("NOTE: Caching disabled. Specified directory is not writable.\n");
 	    disabled = 1;
 	}
 	if (disabled) {
 	    bu_log("         Specified: LIBRT_CACHE=%s\n"
 		   "         To enable, specify a writable directory that exists.\n"
 		   "         Unsetting LIBRT_CACHE will use system default.\n"
-		   , librt_cache);
+		   , dir);
 	    return NULL;
 	}
     } else {
 	/* LIBRT_CACHE is either set-and-empty or unset.  Default is on. */
-	librt_cache = bu_dir(cache, MAXPATHLEN, BU_DIR_CACHE, ".rt", NULL);
-	if (!bu_file_exists(librt_cache, NULL)) {
-	    cache_create_path(librt_cache, 0);
+	dir = bu_dir(cache, MAXPATHLEN, BU_DIR_CACHE, ".rt", NULL);
+	if (!bu_file_exists(dir, NULL)) {
+	    cache_create_path(dir, 0);
 	}
     }
 
     /* cache dir should exist by now */
-    if (!bu_file_exists(librt_cache, NULL) || !bu_file_directory(librt_cache))
+    if (!bu_file_exists(dir, NULL) || !bu_file_directory(dir))
 	return NULL;
 
-    format = cache_format(librt_cache);
+    format = cache_format(dir);
     if (format < 0)
 	return NULL;
+    else if (format == 0) {
+	struct bu_vls path = BU_VLS_INIT_ZERO;
 
-    /* actual v0 cache is just a single file for now */
-    bu_vls_printf(&rtdb, "%s%c%s", librt_cache, BU_DIR_SEPARATOR, "rt.db");
-    create = !bu_file_exists(bu_vls_addr(&rtdb), NULL);
+	/* v0 cache is just a single file, delete so we can start fresh */
+	bu_vls_printf(&path, "%s%c%s", dir, BU_DIR_SEPARATOR, "rt.db");
+	(void)bu_file_delete(bu_vls_addr(&path));
 
-    BU_GET(result, struct rt_cache);
-    if (create)
-	result->dbip = db_create(bu_vls_addr(&rtdb), 5);
-    else
-	result->dbip = db_open(bu_vls_addr(&rtdb), DB_OPEN_READWRITE);
+	bu_vls_trunc(&path, 0);
+	bu_vls_printf(&path, "%s%c%s", dir, BU_DIR_SEPARATOR, "format");
+	(void)bu_file_delete(bu_vls_addr(&path));
 
-    bu_vls_free(&rtdb);
+	bu_vls_free(&path);
 
-    if (!result->dbip || (!create && db_dirbuild(result->dbip))) {
-	db_close(result->dbip);
-	BU_PUT(result, struct rt_cache);
-	return NULL;
+	/* reinit */
+	format = cache_format(dir);
     }
 
+    if (format != CACHE_FORMAT)
+	return NULL;
+
+    /* v1 cache is a directory of directories of .g files */
+    dir = bu_dir(cache, MAXPATHLEN, BU_DIR_CACHE, ".rt", "objects", NULL);
+    if (!bu_file_exists(dir, NULL)) {
+	cache_create_path(dir, 0);
+    }
+
+    BU_GET(result, struct rt_cache);
+    bu_strlcpy(result->dir, dir, MAXPATHLEN);
+    result->dbip_hash = bu_hash_create(1024);
     return result;
 }
 
@@ -261,13 +267,19 @@ rt_cache_open(void)
 void
 rt_cache_close(struct rt_cache *cache)
 {
+    struct bu_hash_entry *entry;
+
     if (!cache)
 	return;
 
-    cache_check(cache);
+    entry = bu_hash_next(cache->dbip_hash, NULL);
+    while (entry) {
+	struct db_i *dbip = bu_hash_value(entry, NULL);
+	db_close(dbip);
+	entry = bu_hash_next(cache->dbip_hash, entry);
+    }
+    bu_hash_destroy(cache->dbip_hash);
 
-    db_close(cache->dbip);
-    cache->dbip = NULL; /* sanity */
     BU_PUT(cache, struct rt_cache);
 }
 
@@ -334,55 +346,97 @@ uncompress_external(const struct bu_external *external,
 }
 
 
+HIDDEN struct db_i *
+cache_dbip(const struct rt_cache *cache, const char *name, int create)
+{
+    struct db_i *dbip = NULL;
+    const char *db = NULL;
+    char path[MAXPATHLEN] = {0};
+    char idx[3] = {0};
+
+    if (!cache || !name)
+	return NULL;
+
+    dbip = (struct db_i *)bu_hash_get(cache->dbip_hash, (const uint8_t *)name, strlen(name));
+    if (dbip)
+	return dbip;
+
+    idx[0] = name[0];
+    idx[1] = name[1];
+    db = bu_dir(path, MAXPATHLEN, cache->dir, idx, name, NULL);
+
+    if (create && !bu_file_exists(db, NULL)) {
+	cache_create_path(db, 1);
+	dbip = db_create(db, 5);
+    } else {
+	dbip = db_open(db, DB_OPEN_READWRITE);
+    }
+    if (!dbip)
+	return NULL;
+
+    if (db_dirbuild(dbip)) {
+	db_close(dbip);
+	return NULL;
+    }
+
+    bu_hash_set(cache->dbip_hash, (const uint8_t *)name, strlen(name), dbip);
+    return dbip;
+}
+
+
 HIDDEN int
-cache_try_load(const struct rt_cache *cache,
-	       const struct directory *cache_dir, struct soltab *stp,
-	       const struct rt_db_internal *internal)
+cache_try_load(const struct rt_cache *cache, const char *name, const struct rt_db_internal *internal, struct soltab *stp)
 {
     struct bu_external data_external = BU_EXTERNAL_INIT_ZERO;
     size_t version = (size_t)-1;
     struct bu_external raw_external;
     struct db5_raw_internal raw_internal;
+    struct directory *dp;
+    struct db_i *dbip;
 
-    cache_check(cache);
-    RT_CK_DIR(cache_dir);
+    RT_CK_DB_INTERNAL(internal);
     RT_CK_SOLTAB(stp);
 
     if (stp->st_specific)
-	bu_bomb("already prepped");
+	return 1; /* already prepped */
 
-    if (cache_dir->d_major_type != DB5_MAJORTYPE_BINARY_MIME || cache_dir->d_minor_type != 0)
+    dbip = cache_dbip(cache, name, 0);
+    if (!dbip)
+	return 0; /* no storage */
+
+    dp = db_lookup(dbip, name, 0);
+    if (!dp)
+	return 0; /* not in cache */
+
+    if (dp->d_major_type != DB5_MAJORTYPE_BINARY_MIME || dp->d_minor_type != 0)
 	bu_bomb("invalid object type");
 
-    if (db_get_external(&raw_external, cache_dir, cache->dbip))
-	bu_bomb("db_get_external() failed");
+    if (db_get_external(&raw_external, dp, dbip))
+	return 0;
 
     if (db5_get_raw_internal_ptr(&raw_internal, raw_external.ext_buf) == NULL)
-	bu_bomb("rt_db_external5_to_internal5() failed");
+	return 0;
 
     {
 	struct bu_attribute_value_set attributes;
 	const char *version_str;
+	const char *endptr;
 
 	if (db5_import_attributes(&attributes, &raw_internal.attributes) < 0)
-	    bu_bomb("db5_import_attributes() failed");
+	    return 0;
 
 	if (bu_strcmp(cache_mime_type, bu_avs_get(&attributes, "mime_type")))
-	    bu_bomb("invalid MIME type");
+	    return 0;
 
 	version_str = bu_avs_get(&attributes, "rt_cache::version");
 	if (!version_str)
-	    bu_bomb("missing version");
+	    return 0; /* unversioned?? */
 
-	{
-	    const char *endptr;
+	errno = 0;
+	version = strtol(version_str, (char **)&endptr, 10);
 
-	    errno = 0;
-	    version = strtol(version_str, (char **)&endptr, 10);
-
-	    if ((version == 0 && errno) || endptr == version_str || *endptr)
-		bu_bomb("invalid version");
-	}
+	if ((version == 0 && errno) || endptr == version_str || *endptr)
+	    return 0; /* invalid version */
 
 	bu_avs_free(&attributes);
     }
@@ -397,30 +451,25 @@ cache_try_load(const struct rt_cache *cache,
     }
 
     bu_free_external(&data_external);
-    return 1;
+    return 1; /* success! */
 }
 
 
-HIDDEN void
-cache_try_store(struct rt_cache *cache, struct directory *cache_dir,
-		struct soltab *stp, const struct rt_db_internal *internal)
+HIDDEN int
+cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_internal *internal, struct soltab *stp)
 {
     struct bu_external attributes_external;
     struct bu_external data_external = BU_EXTERNAL_INIT_ZERO;
     size_t version = (size_t)-1;
+    struct directory *dp;
+    struct db_i *dbip;
+    char type = 0;
 
-    cache_check(cache);
-    RT_CK_DIR(cache_dir);
+    RT_CK_DB_INTERNAL(internal);
     RT_CK_SOLTAB(stp);
 
-    if (!stp->st_specific)
-	bu_bomb("not prepped");
-
-    cache_dir->d_major_type = DB5_MAJORTYPE_BINARY_MIME;
-    cache_dir->d_minor_type = 0;
-
     if (rt_obj_prep_serialize(stp, internal, &data_external, &version) || version == (size_t)-1)
-	bu_bomb("rt_obj_prep_serialize() failed");
+	return 0; /* can't serialize */
 
     compress_external(&data_external);
 
@@ -436,55 +485,55 @@ cache_try_store(struct rt_cache *cache, struct directory *cache_dir,
 	bu_avs_free(&attributes);
     }
 
+    dbip = cache_dbip(cache, name, 1);
+    if (!dbip)
+	return 0; /* no storage */
+
+    dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_NON_GEOM, (void *)&type);
+    if (!dp)
+	return 0; /* bad db */
+    RT_CK_DIR(dp);
+
+    dp->d_major_type = DB5_MAJORTYPE_BINARY_MIME;
+    dp->d_minor_type = 0;
+
     {
 	struct bu_external db_external;
-	db5_export_object3(&db_external, 0, cache_dir->d_namep, 0, &attributes_external,
-			   &data_external, cache_dir->d_major_type, cache_dir->d_minor_type,
+	db5_export_object3(&db_external, 0, dp->d_namep, 0, &attributes_external,
+			   &data_external, dp->d_major_type, dp->d_minor_type,
 			   DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED);
 
-	if (db_put_external(&db_external, cache_dir, cache->dbip))
-	    bu_bomb("db_put_external() failed");
+	if (db_put_external(&db_external, dp, dbip))
+	    return 0; /* can't stash */
     }
 
     bu_free_external(&attributes_external);
     bu_free_external(&data_external);
+
+    return 1;
 }
 
 
 int
-rt_cache_prep(struct rt_cache *cache, struct soltab *stp,
-	      struct rt_db_internal *internal)
+rt_cache_prep(struct rt_cache *cache, struct soltab *stp, struct rt_db_internal *internal)
 {
     int ret = 0; /* success */
     char name[37] = {0};
-    struct directory *dir = RT_DIR_NULL;
 
-    cache_check(cache);
     RT_CK_SOLTAB(stp);
     RT_CK_DB_INTERNAL(internal);
 
-    if (!cache)
+    if (!cache || !cache_generate_name(name, stp))
 	return rt_obj_prep(stp, internal, stp->st_rtip);
 
-    cache_generate_name(name, stp);
-    dir = db_lookup(cache->dbip, name, 0);
+    if (cache_try_load(cache, name, internal, stp))
+	return ret; /* found in cache */
 
-    if (!dir || cache_try_load(cache, dir, stp, internal) == 0) {
-	char type = 0;
+    /* not in cache yet */
 
-	/* not in cache so run prep and, if successful, cache it */
-
-	ret = rt_obj_prep(stp, internal, stp->st_rtip);
-
-	if (ret == 0 && OBJ[stp->st_id].ft_prep_serialize) {
-	    dir = db_diradd(cache->dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_NON_GEOM, (void *)&type);
-	    if (!dir) {
-		bu_bomb("db_diradd() failed");
-	    }
-
-	    cache_try_store(cache, dir, stp, internal);
-	}
-    }
+    ret = rt_obj_prep(stp, internal, stp->st_rtip);
+    if (ret == 0)
+	cache_try_store(cache, name, internal, stp);
 
     return ret;
 }
