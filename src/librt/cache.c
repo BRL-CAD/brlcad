@@ -290,27 +290,28 @@ compress_external(struct bu_external *external)
     int ret;
     int compressed = 0;
     uint8_t *buffer;
-    size_t compressed_size;
+    int compressed_size;
 
     BU_CK_EXTERNAL(external);
 
-    compressed_size = LZ4_compressBound(external->ext_nbytes);
+    BU_ASSERT(external->ext_nbytes < INT_MAX);
+    compressed_size = LZ4_compressBound((int)external->ext_nbytes);
 
     /* buffer is uncompsize + maxcompsize + compressed_data */
-    buffer = (uint8_t *)bu_malloc(compressed_size + SIZEOF_NETWORK_LONG, "buffer");
+    buffer = (uint8_t *)bu_malloc((size_t)compressed_size + SIZEOF_NETWORK_LONG, "buffer");
 
-    *(uint32_t *)buffer = htonl(external->ext_nbytes);
+    *(uint32_t *)buffer = htonl((uint32_t)external->ext_nbytes);
 
     ret = LZ4_compress_default((const char *)external->ext_buf, (char *)(buffer + SIZEOF_NETWORK_LONG), external->ext_nbytes, compressed_size);
     if (ret != 0)
 	compressed = 1;
 
     if (!compressed) {
-	bu_log("compression failed (ret %d, %zu bytes @ %p to %zu bytes max)\n", ret, external->ext_nbytes, (void *) external->ext_buf, compressed_size);
+	bu_log("compression failed (ret %d, %zu bytes @ %p to %d bytes max)\n", ret, external->ext_nbytes, (void *) external->ext_buf, compressed_size);
 	return;
     }
 
-    *(uint32_t *)buffer = htonl(external->ext_nbytes);
+    *(uint32_t *)buffer = htonl((uint32_t)external->ext_nbytes);
 
     bu_free(external->ext_buf, "ext_buf");
     external->ext_nbytes = compressed_size + SIZEOF_NETWORK_LONG;
@@ -333,7 +334,8 @@ uncompress_external(const struct bu_external *external,
     dest->ext_nbytes = ntohl(*(uint32_t *)external->ext_buf);
     buffer = (uint8_t *)bu_malloc(dest->ext_nbytes, "buffer");
 
-    ret = LZ4_decompress_fast((const char *)(external->ext_buf + SIZEOF_NETWORK_LONG), (char *)buffer, dest->ext_nbytes);
+    BU_ASSERT(dest->ext_nbytes < INT_MAX);
+    ret = LZ4_decompress_fast((const char *)(external->ext_buf + SIZEOF_NETWORK_LONG), (char *)buffer, (int)dest->ext_nbytes);
     if (ret > 0)
 	uncompressed = 1;
 
