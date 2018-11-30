@@ -431,8 +431,8 @@ db_lookup_by_attr(struct db_i *dbip, int dir_flags, struct bu_attribute_value_se
     struct bu_attribute_value_set obj_avs;
     struct directory *dp;
     struct bu_ptbl *tbl;
-    int match_count = 0;
-    int attr_count;
+    size_t match_count = 0;
+    size_t attr_count;
     int i, j;
     int draw;
 
