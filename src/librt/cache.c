@@ -246,6 +246,9 @@ rt_cache_open(void)
 
 	/* reinit */
 	format = cache_format(dir);
+    } else if (format > CACHE_FORMAT) {
+	bu_log("NOTE: Cache at %s was created with a newer version of %s\n", dir, PACKAGE_NAME);
+	bu_log("      Delete or move folder to enable caching with this version.\n");
     }
 
     if (format != CACHE_FORMAT)
