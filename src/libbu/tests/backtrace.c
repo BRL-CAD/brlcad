@@ -26,7 +26,8 @@
 
 #include "bu.h"
 
-
+// TODO - not portable to linux yet
+#if 0
 #undef HAVE_FMEMOPEN
 #define HAVE_FUNOPEN 1
 
@@ -169,10 +170,12 @@ go_deep(int depth, FILE *fp)
     return go_deeper(depth, fp);
 }
 
+#endif
 
 int
-main(int argc, char *argv[])
+main(int UNUSED(argc), char *UNUSED(argv[]))
 {
+#if 0
     char *buffer = NULL;
     const char *output = NULL;
     FILE *fp = NULL;
@@ -245,8 +248,9 @@ main(int argc, char *argv[])
     printf("bu_backtrace: [PASSED]\n");
 
     return 0;
+#endif
+    return -1;
 }
-
 
 /*
  * Local Variables:
