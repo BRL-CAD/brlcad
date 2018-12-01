@@ -48,7 +48,7 @@ reader(void *buf, char *data, int size)
 
     while (mem->size - mem->used < (size_t)size) {
 	bu_log("reallocating to %zu\n", mem->size * mem->size);
-	mem->data = bu_realloc(mem->data, mem->size * 2, "fmemopen");
+	mem->data = (uint8_t *)bu_realloc(mem->data, mem->size * 2, "fmemopen");
 	memset(mem->data + mem->size, 0, mem->size);
 	mem->size *= 2;
     }
@@ -62,12 +62,12 @@ reader(void *buf, char *data, int size)
 static int
 writer(void *buf, const char *data, int size)
 {
-    struct memory *mem = buf;
+    struct memory *mem = (struct memory *)buf;
     bu_log("writer\n");
 
     while (mem->size - mem->used < (size_t)size) {
 	bu_log("reallocating to %zu\n", mem->size * mem->size);
-	mem->data = bu_realloc(mem->data, mem->size * 2, "realloc");
+	mem->data = (uint8_t *)bu_realloc(mem->data, mem->size * 2, "realloc");
 	memset(mem->data + mem->size, 0, mem->size);
 	mem->size *= 2;
     }
@@ -82,7 +82,7 @@ static fpos_t
 seeker(void *buf, fpos_t offset, int whence)
 {
     size_t pos = 0;
-    struct memory *mem = buf;
+    struct memory *mem = (struct memory *)buf;
     bu_log("seeking to %zd\n", (ssize_t)offset);
 
     switch (whence) {
@@ -137,7 +137,7 @@ fmemopen(void *data, size_t size, const char *UNUSED(mode))
 
     mem->size = size;
     mem->used = 0;
-    mem->data = data;
+    mem->data = (uint8_t *)data;
 
     return funopen(mem, reader, writer, seeker, closer);
 }
