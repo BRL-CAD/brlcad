@@ -375,14 +375,14 @@ cache_dbip(const struct rt_cache *cache, const char *name, int create)
 	dbip = db_create(db, 5);
     } else {
 	dbip = db_open(db, DB_OPEN_READWRITE);
+	if (dbip && db_dirbuild(dbip)) {
+	    db_close(dbip);
+	    return NULL;
+	}
     }
+
     if (!dbip)
 	return NULL;
-
-    if (db_dirbuild(dbip)) {
-	db_close(dbip);
-	return NULL;
-    }
 
     bu_hash_set(cache->dbip_hash, (const uint8_t *)name, strlen(name), dbip);
     return dbip;
