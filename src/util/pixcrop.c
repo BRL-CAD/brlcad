@@ -102,7 +102,7 @@ fill_buffer(int y)
     buf_start = y - buflines/2;
     if (buf_start < 0) buf_start = 0;
 
-    fseek(ifp, 0, 0);
+    bu_fseek(ifp, 0, 0);
     ret = fread(buffer, scanlen, 3*buflines, ifp);
     if (ret == 0)
 	perror("fread");

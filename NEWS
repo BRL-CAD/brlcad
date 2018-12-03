@@ -10,6 +10,21 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
+--- 2018-11-30  Release 7.28.2                                     ---
+----------------------------------------------------------------------
+
+This is a patch release, applying several logic fixes and build system
+corrections.
+
+* fixed incorrect handling of NURBS near-miss points near edges
+	- Cliff Yapp, Keith Bowman
+* fixed support for large files on 64-bit Windows - Cliff Yapp
+* fixed analyze command calculation of BoT volume - Keith Bowman
+* fixed problem merging .g files containing dsp data - Cliff Yapp
+* fixed infinite loop in OverlapTools GUI - Cliff Yapp
+
+
+----------------------------------------------------------------------
 --- 2018-10-01  Release 7.28.0                                     ---
 ----------------------------------------------------------------------
 

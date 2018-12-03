@@ -139,7 +139,6 @@ body OverlapMenu::runCheckerTool { } {
 
     if {[catch {$checker loadOverlaps $ovfile} result]} {
 	wm withdraw $checkerWindow
-	update
 	destroy $checkerWindow
 	return -code error $result
     }
@@ -157,7 +156,6 @@ body OverlapMenu::runCheckerTool { } {
     pack $checker -expand true -fill both
 
     # ensure window isn't too narrow
-    update
     set geom [split [wm geometry $checkerWindow] "=x+-"]
     if {[lindex $geom 0] > [lindex $geom 1]} {
 	lreplace $geom 1 1 [lindex $geom 0]
@@ -229,7 +227,6 @@ body OverlapMenu::handleHintText { text } {
     } else {
 	set _hintText $text
     }
-    update
 }
 
 # validateOvFile

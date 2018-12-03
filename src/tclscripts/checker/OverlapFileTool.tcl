@@ -198,7 +198,6 @@ body OverlapFileTool::runTools { } {
     $itk_component(buttonGo) configure -state disabled
     $itk_component(objectsEntry) configure -state disabled
     $this configure -cursor watch
-    update
 
     # run checkoverlaps for all the specified objects
     if { [string length $_objs] > 0 } {
@@ -214,7 +213,6 @@ body OverlapFileTool::runTools { } {
 	$this configure -cursor ""
 	set _progressValue 0
 	set _statusText "Ready"
-	update
 	return
     }
 
@@ -237,7 +235,7 @@ body OverlapFileTool::runTools { } {
     # write the overlaps file
     set fp [open $filename w+]
     foreach pair [lsort -decreasing -real -index 2 $overlapsList] {
-	puts $pair
+	#puts $pair
 	puts $fp $pair
     }
     close $fp
@@ -491,7 +489,6 @@ body OverlapFileTool::addToList { new_list } {
 #
 body OverlapFileTool::rmDupPairs { } {
     set _statusText "Removing duplicates from overlaps list"
-    update
     set new_list {}
 
     #take first pair
@@ -514,7 +511,6 @@ body OverlapFileTool::rmDupPairs { } {
     }
     set _progressValue 100
     set _statusText "Done"
-    update
 
     #take last pairlist
     $this addToList $new_list
@@ -528,7 +524,6 @@ body OverlapFileTool::rmDupPairs { } {
 body OverlapFileTool::sortPairs { } {
     set _progressValue 95
     set _statusText "Sorting overlaps list"
-    update
     set pairsList [lsort $pairsList]
 }
 
@@ -540,7 +535,6 @@ body OverlapFileTool::sortPairs { } {
 body OverlapFileTool::runCheckOverlapsTriple { obj } {
     set cmd "check overlaps -g1mm,1mm -q $obj"
     set _statusText "Running $cmd"
-    update
     if [ catch {set check_list [eval $cmd]} ] {
 	set check_list {}
     }
@@ -561,7 +555,6 @@ body OverlapFileTool::runCheckOverlapsTriple { obj } {
 	unset full
     }
     set _progressValue 90
-    update
 }
 
 # runCheckOverlapsAE
@@ -576,7 +569,6 @@ body OverlapFileTool::runCheckOverlapsAE { obj } {
 	    set cmd "check overlaps -G1024 -a$az -e$el -q $obj"
 	    set _statusText "Running $cmd"
 	    incr _progressValue 4
-	    update
 	    if [catch {set check_list [eval $cmd]}] {
 		set check_list {}
 	    }

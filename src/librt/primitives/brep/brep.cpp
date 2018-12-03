@@ -1314,6 +1314,17 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 			    (void)hits.erase(prev);
 			}
 		    }
+		} else {
+		    prev = curr;
+		    prev--;
+		    brep_hit &prev_hit = (*prev);
+		    if ((curr_hit.hit == brep_hit::CLEAN_HIT || curr_hit.hit == brep_hit::NEAR_HIT) && prev_hit.hit == brep_hit::NEAR_MISS) {
+			if (curr_hit.direction == brep_hit::ENTERING) {
+			    (void)hits.erase(prev);
+			} else {
+			    prev_hit.hit = brep_hit::CRACK_HIT;
+			}
+		    }
 		}
 	    }
 	    curr++;
