@@ -1,3 +1,50 @@
+2018-12-03 13:59  starseeker
+
+	* [r72099] include/conf/PATCH:
+	  OK, if all tests pass, this is 7.28.2
+
+2018-12-03 13:54  starseeker
+
+	* [r72098] ., CHANGES, NEWS, bench, db, doc, doc/STRATEGY,
+	  doc/docbook/articles, doc/docbook/books, doc/docbook/lessons,
+	  include, regress, regress/repository.sh, src/libged/polyclip.cpp,
+	  src/librt/cache.c, src/other:
+	  Cherrypick r72097 into Release - avoid repeated db_dirbuild call
+	  when using db_create to make a new file - db_create already calls
+	  db_dirbuild.
+
+2018-11-30 21:38  starseeker
+
+	* [r72093] ., CHANGES, NEWS, bench, db, doc, doc/STRATEGY,
+	  doc/docbook/articles, doc/docbook/books, doc/docbook/lessons,
+	  include, regress, regress/repository.sh, src/libged/polyclip.cpp,
+	  src/librt/cache.c, src/librt/db_lookup.c, src/other:
+	  Cherrypick r72091-r72902 into Release - type fixes, quellage
+
+2018-11-30 18:17  starseeker
+
+	* [r72090] ., CHANGES, NEWS, bench, db, doc, doc/STRATEGY,
+	  doc/docbook/articles, doc/docbook/books, doc/docbook/lessons,
+	  include, regress, regress/repository.sh, src/libged/polyclip.cpp,
+	  src/librt/cache.c, src/other:
+	  Cherrypick r72089 into Release - C++ compat build fix
+
+2018-11-30 18:12  starseeker
+
+	* [r72088] ., CHANGES, NEWS, bench, db, doc, doc/STRATEGY,
+	  doc/docbook/articles, doc/docbook/books, doc/docbook/lessons,
+	  include, include/conf/PATCH, regress, regress/repository.sh,
+	  src/libged/polyclip.cpp, src/librt/cache.c,
+	  src/librt/db_lookup.c, src/other:
+	  Cherrypick r72087 into Release - rewrite cache management
+	  structure so cache objects are spread out across individual
+	  files.
+
+2018-11-30 14:13  starseeker
+
+	* [r72086] ChangeLog:
+	  Update ChangeLog
+
 2018-11-29 23:30  starseeker
 
 	* [r72085] README, include/conf/PATCH, misc/debian/changelog,
