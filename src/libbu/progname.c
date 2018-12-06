@@ -24,10 +24,6 @@
 #  include <sys/types.h>
 #endif
 #ifdef HAVE_SYS_SYSCTL_H
-typedef unsigned char u_char;
-typedef unsigned int u_int;
-typedef unsigned long u_long;
-typedef unsigned short u_short;
 #  include <sys/sysctl.h> /* for sysctl */
 #endif
 #ifdef HAVE_SYS_PARAM_H /* for MAXPATHLEN */
