@@ -22,8 +22,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   - needs to double-check graceful fallback when cache has any issue
   - db layer needs to not say "database has become corrupted"
   - debug means to set env vars
-  - ray tracing should proceed regardless of any cache issue (reportedly halts)
-  - db file needs to be split up
   - large db tests need to be enabled
 
 * attribute normalization is drastically slowing down
