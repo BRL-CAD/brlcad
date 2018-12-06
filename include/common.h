@@ -171,6 +171,15 @@ typedef ptrdiff_t _off_t;
 #  define _OFF_T_DEFINED
 #endif
 
+/* make sure the old bsd types are defined for portability */
+#if !defined(HAVE_U_TYPES)
+typedef unsigned char u_char;
+typedef unsigned int u_int;
+typedef unsigned long u_long;
+typedef unsigned short u_short;
+#  define HAVE_U_TYPES 1
+#endif
+
 /**
  * C99 does not provide a ssize_t even though it is provided by SUS97.
  * regardless, we use it so make sure it's declared by using the
