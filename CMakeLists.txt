@@ -1933,6 +1933,10 @@ if(NOT MSVC)
 
   if(BRLCAD_PGO AND NOT EXISTS "${BRLCAD_PGO_PATH}")
 
+    if("${CMAKE_C_FLAGS}" MATCHES ".*fprofile-use.*")
+      message(FATAL_ERROR "PGO path ${BRLCAD_PGO_PATH} does not exist, but C flags contain the -fprofile-use flag.  This probably means you need to remove a stale CMakeCache.txt file to clear the build flags before performing the first pass of the PGO compilation.\n")
+    endif("${CMAKE_C_FLAGS}" MATCHES ".*fprofile-use.*")
+
     # gcc-style GEN
     if("${pgo_flags_found}" STREQUAL "")
       cmake_push_check_state()
@@ -1958,6 +1962,12 @@ if(NOT MSVC)
     endif(NOT "${pgo_flags_found}" STREQUAL "")
 
   elseif(BRLCAD_PGO AND EXISTS "${BRLCAD_PGO_PATH}")
+
+    if(CMAKE_C_FLAGS)
+      if("${CMAKE_C_FLAGS}" MATCHES ".*fprofile-generate.*")
+	message(FATAL_ERROR "PGO path ${BRLCAD_PGO_PATH} exists, but C flags contain the -fprofile-generate flag.  This probably means you need to remove a stale CMakeCache.txt file to clear the build flags before performing the second pass of the PGO compilation.\n")
+      endif("${CMAKE_C_FLAGS}" MATCHES ".*fprofile-generate.*")
+    endif(CMAKE_C_FLAGS)
 
     # gcc-style USE
     if("${pgo_flags_found}" STREQUAL "")
