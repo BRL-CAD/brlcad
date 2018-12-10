@@ -352,7 +352,8 @@ bot_check(struct ged *gedp, int argc, const char *argv[], struct bu_opt_desc *d,
 
     /* check for one of the individual tests */
     found = 0;
-    for (sub = subcommands; sub != NULL; ++sub) {
+    sub = subcommands;
+    for (; *sub != NULL; ++sub) {
 	if (BU_STR_EQUAL(check, *sub)) {
 	    found = 1;
 	    break;
