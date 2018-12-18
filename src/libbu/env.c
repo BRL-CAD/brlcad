@@ -96,7 +96,7 @@ long int
 bu_avail_mem()
 {
 #ifdef HAVE_SYS_SYSINFO_H
-    {
+    if (!getenv("BU_AVAILABLE_MEM_NOCHECK")) {
 	struct sysinfo s;
 	long int avail_ram;
 	long int used_swap;
@@ -109,7 +109,8 @@ bu_avail_mem()
     /* TODO - Use GlobalMemoryStatusEx on Windows, see
      * https://msdn.microsoft.com/en-us/library/windows/desktop/aa366589 */
 
-    /* Don't know how to figure this out if the above haven't worked */
+    /* Don't know how to figure this out if the above haven't worked, and/or
+     * checking is suppressed by the environment variable. */
     return -1;
 }
 
