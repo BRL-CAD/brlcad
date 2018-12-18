@@ -56,7 +56,7 @@ include(CMakeParseArguments)
 function(THIRD_PARTY dir varname_root build_target description)
 
   # Parse extra arguments
-  CMAKE_PARSE_ARGUMENTS(TP "UNDOCUMENTED" "FIND_NAME;FIND_VERSION" "FIND_COMPONENTS;REQUIRED_VARS;RESET_VARS;ALIASES;FLAGS" ${ARGN})
+  CMAKE_PARSE_ARGUMENTS(TP "UNDOCUMENTED;NOSYS" "FIND_NAME;FIND_VERSION" "FIND_COMPONENTS;REQUIRED_VARS;RESET_VARS;ALIASES;FLAGS" ${ARGN})
 
   # If the library variable has been explicitly set, get
   # a normalized version of it for easier matching
@@ -119,12 +119,9 @@ function(THIRD_PARTY dir varname_root build_target description)
       set(${CMAKE_PROJECT_NAME}_${varname_root}_BUILD OFF)
       set(${CMAKE_PROJECT_NAME}_${varname_root} "SYSTEM" CACHE STRING "User forced to SYSTEM" FORCE)
       set(TP_MET_CONDITION 2)
-      foreach(extraarg ${TP_FLAGS})
-	if(extraarg STREQUAL "NOSYS")
-	  message(WARNING "Compilation of ${build_target} was disabled, but local copy is modified - using a system version of ${build_target} may introduce problems or even fail to work!")
-
-	endif(extraarg STREQUAL "NOSYS")
-      endforeach(extraarg ${TP_FLAGS})
+      if(TP_NOSYS)
+	message(WARNING "Compilation of ${build_target} was disabled, but local copy is modified - using a system version of ${build_target} may introduce problems or even fail to work!")
+      endif(TP_NOSYS)
     endif("${local_opt}" STREQUAL "SYSTEM")
   endif(local_opt)
 
@@ -133,16 +130,12 @@ function(THIRD_PARTY dir varname_root build_target description)
   # version of a library or tool that are not likely to be present in a system version.  These flags
   # should be periodically reviewed to determine if they can be removed (i.e. system packages have
   # appeared in modern OS distributions with the fixes needed by BRL-CAD...)
-  if(NOT TP_MET_CONDITION)
-    foreach(extraarg ${TP_FLAGS})
-      if(extraarg STREQUAL "NOSYS")
-	set(${CMAKE_PROJECT_NAME}_${varname_root} "BUNDLED" CACHE STRING "NOSYS passed, using bundled ${build_target}" FORCE)
-	set(${CMAKE_PROJECT_NAME}_${varname_root}_BUILD ON)
-	set(TP_MET_CONDITION 3)
-	set(TP_DISABLE_TEST 1)
-      endif(extraarg STREQUAL "NOSYS")
-    endforeach(extraarg ${TP_FLAGS})
-  endif(NOT TP_MET_CONDITION)
+  if(NOT TP_MET_CONDITION AND TP_NOSYS)
+    set(${CMAKE_PROJECT_NAME}_${varname_root} "BUNDLED" CACHE STRING "NOSYS passed, using bundled ${build_target}" FORCE)
+    set(${CMAKE_PROJECT_NAME}_${varname_root}_BUILD ON)
+    set(TP_MET_CONDITION 3)
+    set(TP_DISABLE_TEST 1)
+  endif(NOT TP_MET_CONDITION AND TP_NOSYS)
 
   # 4. If we have an explicit BUNDLE request for this particular library,  honor it as long as
   # features are satisfied.  No point in testing if we know we're turning it on - set vars accordingly.
