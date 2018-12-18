@@ -596,6 +596,21 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * rework fbcolor, fbzoom, and fbpoint to not use termlib, instead just
   using regular printing and input reading in a loop.
 
+* See if it is possible to simplify btclsh/bwish code when it comes
+  to relying on libtermio - linenoise can do the basics, and for fancier
+  keybinding/word based navigation see if launching in Emacs can suffice:
+
+  ;; per https://emacs.stackexchange.com/q/18672
+  (defun btclsh ()
+    (interactive)
+    (require 'term)
+    (let* ((cmd "btclsh")
+           (termbuf (apply 'make-term "btclsh console" cmd nil nil)))
+      (set-buffer termbuf)
+      (term-mode)
+      (term-line-mode)
+      (switch-to-buffer termbuf))) 
+
 * Need to mark or otherwise disambiguate grazing hit segments so we
   can consistently retain or remove hits without introducing overlaps.
   Consider the case of a tgc stacked on top of an arb8, perfectly
