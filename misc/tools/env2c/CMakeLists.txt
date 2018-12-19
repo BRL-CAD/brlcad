@@ -46,7 +46,9 @@ include_directories(
 
 # We don't want to go hunting in the build directory if it is
 # located inside the source tree, so tell the tool which path
-# to skip walking
+# to skip walking.  (In-src-dir builds are a different story
+# and are handled separately in libged.)
+set(SKIP_BINARY_DIR "${CMAKE_BINARY_DIR}")
 configure_file(env2c.cxx.in ${CMAKE_CURRENT_BINARY_DIR}/env2c.cxx @ONLY)
 
 add_executable(env2c ${CMAKE_CURRENT_BINARY_DIR}/env2c.cxx)

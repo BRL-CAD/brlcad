@@ -24,12 +24,40 @@ if(ADAPTAGRAMS_FOUND)
 endif(ADAPTAGRAMS_FOUND)
 
 set(ENV_VARS_C "${CMAKE_CURRENT_BINARY_DIR}/env_vars.c")
-add_custom_command(OUTPUT ${ENV_VARS_C}
-  COMMAND env2c ${CMAKE_SOURCE_DIR} ${ENV_VARS_C}
-  DEPENDS env2c
-  COMMENT "[ENV2C] Scanning for environment variable usage"
-  )
-set_source_files_properties(env.c PROPERTIES OBJECT_DEPENDS ${ENV_VARS_C})
+
+if("${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
+  # We're in-src-dir - the environment variable scan becomes
+  # very problematic at build time.  Do it during configure.
+
+  set(SKIP_BINARY_DIR "")
+  configure_file(${CMAKE_SOURCE_DIR}/misc/tools/env2c/env2c.cxx.in
+    ${CMAKE_CURRENT_BINARY_DIR}/env2c.cxx @ONLY)
+
+  try_compile(ENV2C_BLD ${CMAKE_CURRENT_BINARY_DIR}
+    ${CMAKE_CURRENT_BINARY_DIR}/env2c.cxx
+    OUTPUT_VARIABLE ENV2C_BUILD_OUT
+    COPY_FILE ${CMAKE_CURRENT_BINARY_DIR}/env2c${EXE_EXT})
+
+  if(NOT ENV2C_BLD)
+    message(FATAL_ERROR "Could not build env2c tool")
+  endif(NOT ENV2C_BLD)
+
+  message("[ENV2C] Scanning for environment variable usage...")
+  execute_process(COMMAND
+    ${CMAKE_CURRENT_BINARY_DIR}/env2c${EXE_EXT}
+    ${CMAKE_SOURCE_DIR} ${ENV_VARS_C})
+
+  execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/env2c${EXE_EXT})
+  execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/env2c.cxx)
+
+else("${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
+  add_custom_command(OUTPUT ${ENV_VARS_C}
+    COMMAND env2c ${CMAKE_SOURCE_DIR} ${ENV_VARS_C}
+    DEPENDS env2c
+    COMMENT "[ENV2C] Scanning for environment variable usage"
+    )
+  set_source_files_properties(env.c PROPERTIES OBJECT_DEPENDS ${ENV_VARS_C})
+endif("${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
 
 set(LIBGED_SOURCES
   ${LIBGED_SOURCES}

@@ -94,7 +94,7 @@ process_files(tinydir_dir *dir, std::set<std::string> &evars, int verbose)
 	// will cause breakage.  Need to have a more nuanced filter that keeps output
 	// paths out of the search (bin, lib, CMake*, etc.) to preserve in-src-dir
 	// capability.
-	if (f.is_dir && std::string(f.path) != std::string("@CMAKE_BINARY_DIR@")) {
+	if (f.is_dir && std::string(f.path) != std::string("@SKIP_BINARY_DIR@")) {
 	    std::regex skip_regex("(other|tests|tools|bullet)");
 	    std::string dname(f.name);
 	    if (dname != std::string(".") && dname != std::string("..") && dname != std::string(".svn") && dname != std::string(".git") && !std::regex_match(dname, skip_regex)) {
