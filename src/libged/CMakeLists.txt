@@ -25,45 +25,12 @@ endif(ADAPTAGRAMS_FOUND)
 
 set(ENV_VARS_C "${CMAKE_CURRENT_BINARY_DIR}/env_vars.c")
 
-if("${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
-  # We're in-src-dir - the environment variable scan becomes
-  # very problematic at build time.  Do it during configure.
-
-  # We can't wait for misc/tools to build the scanner - do
-  # it now.  Also need to not skip the binary directory,
-  # since it is the same as the source directory.
-  set(SKIP_BINARY_DIR "")
-  configure_file(${CMAKE_SOURCE_DIR}/misc/tools/env2c/env2c.cxx.in
-    ${CMAKE_CURRENT_BINARY_DIR}/env2c.cxx @ONLY)
-  configure_file(${CMAKE_SOURCE_DIR}/misc/tools/env2c/tinydir.h
-    ${CMAKE_CURRENT_BINARY_DIR}/tinydir.h COPYONLY)
-
-  try_compile(ENV2C_BLD ${CMAKE_CURRENT_BINARY_DIR}
-    ${CMAKE_CURRENT_BINARY_DIR}/env2c.cxx
-    OUTPUT_VARIABLE ENV2C_BUILD_OUT
-    COPY_FILE ${CMAKE_CURRENT_BINARY_DIR}/env2c${EXE_EXT})
-
-  if(NOT ENV2C_BLD)
-    message(FATAL_ERROR "Could not build env2c tool: ${ENV2C_BUILD_OUT}")
-  endif(NOT ENV2C_BLD)
-
-  message("[ENV2C] Scanning for environment variable usage...")
-  execute_process(COMMAND
-    ${CMAKE_CURRENT_BINARY_DIR}/env2c${EXE_EXT}
-    ${CMAKE_SOURCE_DIR} ${ENV_VARS_C})
-
-  execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/env2c${EXE_EXT})
-  execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/env2c.cxx)
-  execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/tinydir.h)
-
-else("${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
-  add_custom_command(OUTPUT ${ENV_VARS_C}
-    COMMAND env2c ${CMAKE_SOURCE_DIR} ${ENV_VARS_C}
-    DEPENDS env2c
-    COMMENT "[ENV2C] Scanning for environment variable usage"
-    )
-  set_source_files_properties(env.c PROPERTIES OBJECT_DEPENDS ${ENV_VARS_C})
-endif("${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
+add_custom_command(OUTPUT ${ENV_VARS_C}
+  COMMAND env2c ${CMAKE_BINARY_DIR}/cmakefiles.cmake ${ENV_VARS_C}
+  DEPENDS env2c
+  COMMENT "[ENV2C] Scanning for environment variable usage"
+  )
+set_source_files_properties(env.c PROPERTIES OBJECT_DEPENDS ${ENV_VARS_C})
 DISTCLEAN(${ENV_VARS_C})
 
 set(LIBGED_SOURCES

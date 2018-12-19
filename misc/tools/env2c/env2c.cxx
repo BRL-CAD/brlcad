@@ -47,75 +47,35 @@
 #include <sstream>
 #include <string>
 
-#include "./tinydir.h"
-
-int
-process_file(tinydir_file *f, std::set<std::string> &evars, int verbose)
+void
+process_file(std::string f, std::set<std::string> &evars, int verbose)
 {
     std::regex srcfile_regex(".*[.](cxx|c|cpp|h|hpp|hxx)(\\.in)*$");
-    if (std::regex_match(std::string(f->name), srcfile_regex)) {
+    if (std::regex_match(std::string(f), srcfile_regex)) {
 	std::regex getenv_regex(".*getenv\\(\\\".*");
 	std::string sline;
-	std::string fpath = std::string(f->path);
 	std::ifstream fs;
-	fs.open(fpath);
+	fs.open(f);
 	if (!fs.is_open()) {
-	    return -1;
+	    std::cerr << "Unable to open " << f << " for reading, skipping\n";
+	    return;
 	}
 	while (std::getline(fs, sline)) {
 	    if (std::regex_match(sline, getenv_regex)) {
 		std::regex evar_regex(".*getenv\\(\\\"([^\\\"]+)\\\"\\).*");
 		std::smatch envvar;
 		if (!std::regex_search(sline, envvar, evar_regex)) {
-		    std::cerr << "Error, could not find environment variable in line!\n" << sline << "\n";
-		    return -1;
+		    std::cerr << "Error, could not find environment variable in file " << f << " line:\n" << sline << "\n";
 		} else {
 		    evars.insert(std::string(envvar[1]));
 		    if (verbose) {
-			std::cout << f->path << ": " << envvar[1] << "\n";
+			std::cout << f << ": " << envvar[1] << "\n";
 		    }
 		}
 	    }
 	}
+	fs.close();
     }
-    return 0;
-}
-
-int
-process_files(tinydir_dir *dir, std::set<std::string> &evars, int verbose)
-{
-    while (dir->has_next) {
-	tinydir_file f;
-	if (tinydir_readfile(dir, &f) == -1) {
-	    std::cerr << "Error reading file " << f.path << "/" << f.name << "\n";
-	    return -1;
-	}
-	// TODO - this is necessary but not sufficient.  If src dir = bin dir, this
-	// will cause breakage.  Need to have a more nuanced filter that keeps output
-	// paths out of the search (bin, lib, CMake*, etc.) to preserve in-src-dir
-	// capability.
-	if (f.is_dir && std::string(f.path) != std::string("@SKIP_BINARY_DIR@")) {
-	    std::regex skip_regex("(other|tests|tools|bullet)");
-	    std::string dname(f.name);
-	    if (dname != std::string(".") && dname != std::string("..") && dname != std::string(".svn") && dname != std::string(".git") && !std::regex_match(dname, skip_regex)) {
-		tinydir_dir fdir;
-		if (tinydir_open(&fdir, f.path) == -1) {
-		    std::cerr << "Error opening directory " << f.path << "\n";
-		    return -1;
-		}
-		process_files(&fdir, evars, verbose);
-		tinydir_close(&fdir);
-	    }
-	} else {
-	    process_file(&f, evars, verbose);
-	}
-
-	if (tinydir_next(dir) == -1) {
-	    std::cerr << "Error getting next file in directory " << dir->path << "\n";
-	    return -1;
-	}
-    }
-    return 0;
 }
 
 int
@@ -124,10 +84,9 @@ main(int argc, const char *argv[])
     int verbose = 0;
     std::set<std::string> evars;
     std::set<std::string>::iterator e_it;
-    tinydir_dir rdir;
 
     if (argc < 3) {
-	std::cerr << "Usage: env2c [-v] root_dir output_file\n";
+	std::cerr << "Usage: env2c [-v] file_list output_file\n";
 	return -1;
     }
 
@@ -137,27 +96,31 @@ main(int argc, const char *argv[])
 	    argv++;
 	    verbose = 1;
 	} else {
-	    std::cerr << "Usage: env2c [-v] root_dir output_file\n";
+	    std::cerr << "Usage: env2c [-v] file_list output_file\n";
 	    return -1;
 	}
     }
 
-
-    if (tinydir_open(&rdir, argv[1]) == -1) {
-	return -1;
+    std::regex skip_regex(".*/(other|tests|tools|bullet|docbook)/.*");
+    std::string sfile;
+    std::ifstream fs;
+    fs.open(argv[1]);
+    if (!fs.is_open()) {
+	std::cerr << "Unable to open file list " << argv[1] << "\n";
     }
+    while (std::getline(fs, sfile)) {
+	if (!std::regex_match(sfile, skip_regex)) {
+	    process_file(sfile, evars, verbose);
+	}
+    }
+    fs.close();
 
     std::ofstream ofile;
     ofile.open(argv[2], std::fstream::trunc);
     if (!ofile.is_open()) {
 	std::cerr << "Unable to open output file " << argv[2] << " for writing!\n";
-	tinydir_close(&rdir);
 	return -1;
     }
-
-
-    process_files(&rdir, evars, verbose);
-    tinydir_close(&rdir);
 
     ofile << "static const char * const env_vars[] = {\n";
     for (e_it = evars.begin(); e_it != evars.end(); e_it++) {
