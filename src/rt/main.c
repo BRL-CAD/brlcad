@@ -140,6 +140,7 @@ int main(int argc, const char **argv)
     char idbuf[2048] = {0};			/* First ID record info */
     struct bu_vls times = BU_VLS_INIT_ZERO;
     int i;
+    int objs_free_argv = 0;
 
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
@@ -295,8 +296,12 @@ int main(int argc, const char **argv)
 
     title_file = argv[bu_optind];
     title_obj = argv[bu_optind+1];
-    objc = argc - bu_optind - 1;
-    objv = (char **)&(argv[bu_optind+1]);
+    if (!objv) {
+	objc = argc - bu_optind - 1;
+	objv = (char **)&(argv[bu_optind+1]);
+    } else {
+	objs_free_argv = 1;
+    }
 
     if (objc <= 0) {
 	bu_log("%s: no objects specified -- raytrace aborted\n", argv[0]);
@@ -500,6 +505,14 @@ int main(int argc, const char **argv)
     /* Release the framebuffer, if any */
     if (fbp != FB_NULL) {
 	fb_close(fbp);
+    }
+
+    /* Clean up objv memory, if necessary */
+    if (objs_free_argv) {
+	for (i = 0; i < objc; i++) {
+	    bu_free(objv[i], "objv entry");
+	}
+	bu_free(objv, "objv array");
     }
 
     /* Release the ray-tracer instance */

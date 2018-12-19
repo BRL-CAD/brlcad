@@ -199,12 +199,14 @@ get_args(int argc, const char *argv[])
     register int c;
     register int i;
     char *env_str;
-
+    FILE *objsfile = NULL;
+    struct bu_vls oline = BU_VLS_INIT_ZERO;
+    int oid = 0;
     bu_optind = 1;		/* restart */
 
 
 #define GETOPT_STR	\
-    ".:, :@:a:b:c:d:e:f:g:m:ij:k:l:n:o:p:q:rs:tu:v::w:x:z:A:BC:D:E:F:G:H:IJ:K:MN:O:P:Q:RST:U:V:WX:!:+:h?"
+    ".:, :@:a:b:c:d:e:f:g:m:ij:k:l:n:o:p:q:rs:tu:v::w:x:z:A:BC:D:E:F:G:H:I:J:K:MN:O:P:Q:RST:U:V:WX:!:+:h?"
 
     while ((c=bu_getopt(argc, (char * const *)argv, GETOPT_STR)) != -1) {
 	if (bu_optopt == '?')
@@ -327,6 +329,33 @@ get_args(int argc, const char *argv[])
 		break;
 	    case 'S':
 		stereo = 1;
+		break;
+	    case 'I':
+		if (!bu_file_exists(bu_optarg, NULL)) {
+		    bu_exit(1, "Object list file %s not found, aborting\n", bu_optarg);
+		}
+		if ((objsfile = fopen(bu_optarg, "r")) == NULL) {
+		    bu_exit(1, "Unable to open object list file %s, aborting\n", bu_optarg);
+		}
+		objc = 0;
+		while (bu_vls_gets(&oline, objsfile) >= 0) {
+		    objc++;
+		    bu_vls_trunc(&oline, 0);
+		}
+		fclose(objsfile);
+		if (objc) {
+		    objv = (char **)bu_calloc(objc+1, sizeof(char *), "obj array");
+		    objsfile = fopen(bu_optarg, "r");
+		    oid = 0;
+		    bu_vls_trunc(&oline, 0);
+		    while (bu_vls_gets(&oline, objsfile) >= 0) {
+			objv[oid] = bu_strdup(bu_vls_addr(&oline));
+			bu_vls_trunc(&oline, 0);
+			oid++;
+		    }
+		    fclose(objsfile);
+		}
+		bu_vls_free(&oline);
 		break;
 	    case 'J':
 		sscanf(bu_optarg, "%x", &jitter);
