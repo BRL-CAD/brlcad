@@ -306,16 +306,13 @@ db_close(register struct db_i *dbip)
 
     /* free up any mapped files */
     if (dbip->dbi_mf) {
-	/*
-	 * We're using an instance of a memory mapped file.
-	 * We have two choices:
-	 * Either dissociate from the memory mapped file
-	 * by clearing dbi_mf->apbuf, or
-	 * keeping our already-scanned dbip ready for
-	 * further use, with our dbi_uses counter at 0.
-	 * For speed of re-open, at the price of some address space,
-	 * the second choice is taken.
-	 */
+
+	/* Clear dbi_mf->apbuf - db_open is storing the dbip here, and the dbip
+	 * will be cleared by free at the end of db_close.  If this file is
+	 * opened again and apbuf isn't NULL, db_open will try to reuse it and
+	 * RT_CK_DBI will fail. */
+	dbip->dbi_mf->apbuf = NULL;
+
 	bu_close_mapped_file(dbip->dbi_mf);
 	bu_free_mapped_files(0);
 	dbip->dbi_mf = (struct bu_mapped_file *)NULL;
