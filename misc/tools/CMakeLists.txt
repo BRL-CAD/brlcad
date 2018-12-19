@@ -66,14 +66,13 @@ endforeach(ITEM ${dlists})
 # usually hardcoded in LEMON itself - but to let FindLEMON.cmake know
 # there is a working LEMON installation.
 set(LEMON_SKIP_INSTALL 1)
-set(lemon_ALIASES ENABLE_LEMON)
 set(lemon_DESCRIPTION "
 Option for enabling and disabling compilation of the lemon parser
 provided with BRL-CAD's source distribution.  Default is AUTO,
 responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
 first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
-THIRD_PARTY_EXECUTABLE(lemon lemon "BRLCAD_LEVEL2" lemon_ALIASES lemon_DESCRIPTION)
+THIRD_PARTY_EXECUTABLE(lemon LEMON lemon REQUIRED "BRLCAD_LEVEL2" ALIASES "ENABLE_LEMON" DESCRIPTION lemon_DESCRIPTION)
 if("${BRLCAD_BUNDLED_LIBS}" STREQUAL "BUNDLED" OR "${BRLCAD_LEMON}" MATCHES "BUNDLED")
   set(LEMON_TEMPLATE "${BRLCAD_SOURCE_DIR}/misc/tools/lemon/lempar.c" CACHE STRING "Lemon template file" FORCE)
   set(LEMON_EXECUTABLE_TARGET "lemon" CACHE STRING "lemon target" FORCE)
@@ -85,14 +84,13 @@ SetTargetFolder(lemon "Compilation Utilities")
 SetTargetFolder(lempar_cp "Compilation Utilities")
 
 set(RE2C_SKIP_INSTALL 1)
-set(re2c_ALIASES ENABLE_RE2C)
 set(re2c_DESCRIPTION "
 Option for enabling and disabling compilation of the re2c scanner
 utility provided with BRL-CAD's source distribution.  Default is AUTO,
 responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
 first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
-THIRD_PARTY_EXECUTABLE(re2c re2c "BRLCAD_LEVEL2" re2c_ALIASES re2c_DESCRIPTION)
+THIRD_PARTY_EXECUTABLE(re2c RE2C re2c REQUIRED "BRLCAD_LEVEL2" ALIASES "ENABLE_RE2C" DESCRIPTION re2c_DESCRIPTION)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/re2c/Makefile)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/re2c/re2cParse_parser/parser.yy)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/re2c/re2cParse_bootstrap_parser/parser.yy)
@@ -111,7 +109,6 @@ set(PERPLEX_TEMPLATE "${CMAKE_CURRENT_SOURCE_DIR}/perplex/perplex_template.c" CA
 mark_as_advanced(PERPLEX_TEMPLATE)
 
 set(PERPLEX_SKIP_INSTALL 1)
-set(perplex_ALIASES ENABLE_PERPLEX)
 set(perplex_DESCRIPTION "
 Option for enabling and disabling compilation of the perplex scanner
 generator provided with BRL-CAD's source distribution.  Default is
@@ -119,7 +116,7 @@ AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
 testing first for a system version if BRLCAD_BUNDLED_LIBS is also
 AUTO.  perplex requires a working re2c.
 ")
-THIRD_PARTY_EXECUTABLE(perplex perplex "BRLCAD_LEVEL2" perplex_ALIASES perplex_DESCRIPTION NOSYS)
+THIRD_PARTY_EXECUTABLE(perplex PERPLEX perplex REQUIRED "BRLCAD_LEVEL2" ALIASES "ENABLE_PERPLEX" DESCRIPTION perplex_DESCRIPTION NOSYS)
 # Make sure we load FindPERPLEX.cmake to be able to define PERPLEX targets.
 include(${BRLCAD_CMAKE_DIR}/FindPERPLEX.cmake)
 
@@ -134,7 +131,6 @@ SetTargetFolder(perplex_template_cp "Compilation Utilities")
 # and its code can *not* be used in BRL-CAD itself - it
 # is present striclty and only to be used as a tool in the
 # compilation process.
-set(astyle_ALIASES ENABLE_ASTYLE)
 set(astyle_DESCRIPTION "
 Option for enabling and disabling compilation of the Artistic Style
 (astyle) utility provided with BRL-CAD's source distribution.  Default is
@@ -142,7 +138,7 @@ AUTO,
 responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
 first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
-THIRD_PARTY_EXECUTABLE(astyle astyle "BRLCAD_LEVEL2" astyle_ALIASES astyle_DESCRIPTION)
+THIRD_PARTY_EXECUTABLE(astyle ASTYLE astyle REQUIRED "BRLCAD_LEVEL2" ALIASES "ENABLE_ASTYLE" DESCRIPTION astyle_DESCRIPTION)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/astyle/Makefile)
 
 # dom2dox - Doc-O-Matic to Doxygen C++ source converter
@@ -151,7 +147,6 @@ CMAKEFILES_IN_DIR(dom2dox_ignore_files dom2dox)
 
 # libxml and libxslt tools for DocBook processing.  We build just
 # enough library support to get these two tools working.
-set(xsltproc_ALIASES ENABLE_XSLTPROC)
 set(xsltproc_DESCRIPTION "
 Option for enabling and disabling compilation of the xsltproc XML
 transformation utility provided with BRL-CAD's source distribution.
@@ -160,13 +155,12 @@ responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
 first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 Depends on BRLCAD_EXTRADOCS.
 ")
-THIRD_PARTY_EXECUTABLE(xsltproc xmltools "BRLCAD_EXTRADOCS;BRLCAD_LEVEL3" xsltproc_ALIASES xsltproc_DESCRIPTION)
+THIRD_PARTY_EXECUTABLE(xmltools XSLTPROC xsltproc REQUIRED "BRLCAD_EXTRADOCS;BRLCAD_LEVEL3" ALIASES "ENABLE_XSLTPROC" DESCRIPTION xsltproc_DESCRIPTION)
 SetTargetFolder(xsltproc "Compilation Utilities")
 
 # Used only when validating XML for schema compliance
 # (BRLCAD_EXTRADOCS_VALIDATE must be on to use this, although it is compiled
 # regardless if the xmltools subdirectory build is added.)
-set(xmllint_ALIASES ENABLE_XMLLINT)
 set(xmllint_DESCRIPTION "
 Option for enabling and disabling compilation of the xmllint XML
 validation utility provided with BRL-CAD's source distribution.  Used
@@ -174,7 +168,7 @@ for DocBook documentation validation.  Default is AUTO, responsive to
 the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
 version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
-THIRD_PARTY_EXECUTABLE(xmllint xmltools "BRLCAD_EXTRADOCS_VALIDATE;BRLCAD_LEVEL3" xmllint_ALIASES xmllint_DESCRIPTION)
+THIRD_PARTY_EXECUTABLE(xmltools XMLLINT xmllint REQUIRED "BRLCAD_EXTRADOCS_VALIDATE;BRLCAD_LEVEL3" ALIASES "ENABLE_XMLLINT" DESCRIPTION xmllint_DESCRIPTION)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/xmltools/include)
 SetTargetFolder(xmllint "Compilation Utilities")
 
