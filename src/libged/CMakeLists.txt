@@ -29,6 +29,9 @@ if("${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
   # We're in-src-dir - the environment variable scan becomes
   # very problematic at build time.  Do it during configure.
 
+  # We can't wait for misc/tools to build the scanner - do
+  # it now.  Also need to not skip the binary directory,
+  # since it is the same as the source directory.
   set(SKIP_BINARY_DIR "")
   configure_file(${CMAKE_SOURCE_DIR}/misc/tools/env2c/env2c.cxx.in
     ${CMAKE_CURRENT_BINARY_DIR}/env2c.cxx @ONLY)
@@ -61,6 +64,7 @@ else("${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
     )
   set_source_files_properties(env.c PROPERTIES OBJECT_DEPENDS ${ENV_VARS_C})
 endif("${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
+DISTCLEAN(${ENV_VARS_C})
 
 set(LIBGED_SOURCES
   ${LIBGED_SOURCES}
