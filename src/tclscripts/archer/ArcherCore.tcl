@@ -226,6 +226,7 @@ namespace eval ArcherCore {
 	method edcolor             {args}
 	method edcomb              {args}
 	method edmater             {args}
+	method env                 {args}
 	method d                   {args}
 	method dsp                 {args}
 	method erase               {args}
@@ -585,7 +586,7 @@ namespace eval ArcherCore {
 	    bot_merge bot_smooth bot_split bot_sync bot_vertex_fuse \
 	    brep brlman c cd clear clone closedb color comb comb_color combmem \
 	    copy copyeval copymat cp cpi dbconcat dbExpand decompose \
-	    delete draw dsp e E edarb edcodes edcolor edcomb edit edmater d erase ev exists \
+	    delete draw dsp e E edarb edcodes edcolor edcomb edit edmater env d erase ev exists \
 	    exit facetize fracture freezeGUI g get graph group hide human i igraph \
 	    importFg4Section in inside item kill killall killrefs \
 	    killtree l lc ls make make_name make_pnts man mater mirror move \
@@ -6426,6 +6427,10 @@ namespace eval ArcherCore {
 
 ::itcl::body ArcherCore::edmater {args} {
     eval gedWrapper edmater 0 0 1 0 $args
+}
+
+::itcl::body ArcherCore::env {args} {
+    eval gedWrapper env 1 0 0 0 $args
 }
 
 ::itcl::body ArcherCore::d {args} {

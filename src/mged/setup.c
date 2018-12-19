@@ -142,6 +142,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"edcomb", cmd_ged_plain_wrapper, ged_edcomb},
     {"edgedir", f_edgedir, GED_FUNC_PTR_NULL},
     {"edmater", f_edmater, GED_FUNC_PTR_NULL},
+    {"env", cmd_ged_plain_wrapper, ged_env},
     {"em", cmd_emuves, GED_FUNC_PTR_NULL},
     {"erase", cmd_ged_erase_wrapper, ged_erase},
     {"ev", cmd_ev, GED_FUNC_PTR_NULL},

@@ -176,6 +176,12 @@ SetTargetFolder(xml "Third Party Libraries")
 SetTargetFolder(xslt "Third Party Libraries")
 SetTargetFolder(exslt "Third Party Libraries")
 
+# env2c - Scanner to generate a list of environment variables used by
+# source code
+THIRD_PARTY_EXECUTABLE(env2c ENV2C env2c REQUIRED "BRLCAD_LEVEL2" NOSYS)
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/env2c/Makefile)
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/env2c/env2c.cxx)
+
 CMAKEFILES(README)
 CMAKEFILES(CMakeLists.txt)
 

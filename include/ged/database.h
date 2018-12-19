@@ -250,6 +250,11 @@ GED_EXPORT extern int ged_set_output_script(struct ged *gedp, int argc, const ch
  */
 GED_EXPORT extern int ged_lint(struct ged *gedp, int argc, const char *argv[]);
 
+/**
+ * Interface to environment variables
+ */
+GED_EXPORT extern int ged_env(struct ged *gedp, int argc, const char *argv[]);
+
 
 __END_DECLS
 

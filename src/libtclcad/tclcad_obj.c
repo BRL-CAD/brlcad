@@ -1098,6 +1098,7 @@ static struct to_cmdtab to_cmds[] = {
     {"edcomb",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_edcomb},
     {"edit",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_edit},
     {"edmater",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_edmater},
+    {"env",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_env},
     {"erase",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_erase},
     {"ev",	(char *)0, TO_UNLIMITED, to_autoview_func, ged_ev},
     {"expand",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_expand},

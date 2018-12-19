@@ -23,6 +23,14 @@ if(ADAPTAGRAMS_FOUND)
   set(LIBGED_CMD_INCLUDE_DIRS ${LIBGED_CMD_INCLUDE_DIRS} ${AVOID_INCLUDE_DIR})
 endif(ADAPTAGRAMS_FOUND)
 
+set(ENV_VARS_C "${CMAKE_CURRENT_BINARY_DIR}/env_vars.c")
+add_custom_command(OUTPUT ${ENV_VARS_C}
+  COMMAND env2c ${CMAKE_SOURCE_DIR} ${ENV_VARS_C}
+  DEPENDS env2c
+  COMMENT "[ENV2C] Scanning for environment variable usage"
+  )
+set_source_files_properties(env.c PROPERTIES OBJECT_DEPENDS ${ENV_VARS_C})
+
 set(LIBGED_SOURCES
   ${LIBGED_SOURCES}
   3ptarb.c
@@ -110,6 +118,7 @@ set(LIBGED_SOURCES
   editit.c
   edmater.c
   edpipe.c
+  env.c
   erase.c
   exists.c
   expand.c
@@ -355,6 +364,7 @@ set(GED_LOCAL_INCLUDE_DIRS
   ${REGEX_INCLUDE_DIR}
   ${LIBGED_CMD_INCLUDE_DIRS}
   ${CMAKE_CURRENT_SOURCE_DIR}/../libbg
+  ${CMAKE_CURRENT_BINARY_DIR}
   )
 
 BRLCAD_LIB_INCLUDE_DIRS(ged GED_INCLUDE_DIRS GED_LOCAL_INCLUDE_DIRS)
