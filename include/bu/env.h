@@ -44,6 +44,12 @@ BU_EXPORT extern int bu_setenv(const char *name, const char *value, int overwrit
  * available. */
 BU_EXPORT extern long int bu_avail_mem();
 
+/* Report (if known) the maximum length of an allowable command line
+ * in the current operating system environment. Returns -1 if this
+ * number cannot be determined. This wraps OS specific mechanisms for
+ * determining this information, such as sysconf(_SC_ARG_MAX).*/
+BU_EXPORT extern long int bu_cmdline_arg_max();
+
 /** @} */
 
 __END_DECLS

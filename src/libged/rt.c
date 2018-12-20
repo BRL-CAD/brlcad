@@ -36,6 +36,7 @@
 #include "tcl.h"
 
 #include "bu/app.h"
+#include "bu/env.h"
 
 #include "./ged_private.h"
 
@@ -47,6 +48,7 @@ extern FILE *fdopen(int fd, const char *mode);
 struct _ged_rt_client_data {
     struct ged_run_rt *rrtp;
     struct ged *gedp;
+    char *tmpfil;
 };
 
 
@@ -223,6 +225,10 @@ _ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
 	/* free run_rtp */
 	BU_LIST_DEQUEUE(&run_rtp->l);
 	BU_PUT(run_rtp, struct ged_run_rt);
+	if (drcdp->tmpfil) {
+	    bu_file_delete(drcdp->tmpfil);
+	    bu_free(drcdp->tmpfil, "rt temp file");
+	}
 	BU_PUT(drcdp, struct _ged_rt_client_data);
 
 	return;
@@ -240,7 +246,7 @@ _ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
 
 
 int
-_ged_run_rt(struct ged *gedp)
+_ged_run_rt(struct ged *gedp, char *tmpfil)
 {
     int i;
     FILE *fp_in;
@@ -317,6 +323,9 @@ _ged_run_rt(struct ged *gedp)
     BU_GET(drcdp, struct _ged_rt_client_data);
     drcdp->gedp = gedp;
     drcdp->rrtp = run_rtp;
+    if (tmpfil) {
+	drcdp->tmpfil = bu_strdup(tmpfil);
+    }
 
     Tcl_CreateFileHandler(run_rtp->fd,
 			  TCL_READABLE,
@@ -453,6 +462,8 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
     int units_supplied = 0;
     char pstring[32];
     int args;
+    char tmpfil[MAXPATHLEN];
+    FILE *objfp = NULL;
 
     const char *bin;
     char rt[256] = {0};
@@ -465,9 +476,21 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    args = argc + 7 + 2 + ged_count_tops(gedp);
+    /* see if we can get a tmp file - if so, use that to feed rt the object
+     * list to avoid any potential problems with long command lines - see
+     * https://support.microsoft.com/en-us/help/830473/command-prompt-cmd-exe-command-line-string-limitation */
+    objfp = bu_temp_file(tmpfil, MAXPATHLEN);
+
+    /* Make argv array for command definition (used for execvp - for
+     * other platforms a string will be built up from the array) */
+    if (objfp) {
+	args = argc + 9 + 2;
+    } else {
+	args = argc + 7 + 2 + ged_count_tops(gedp);
+    }
     gedp->ged_gdp->gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
 
+    /* Get full path to the correct rt executable */
     bin = bu_brlcad_root("bin", 1);
     if (bin) {
 #ifdef _WIN32
@@ -476,9 +499,16 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
 	snprintf(rt, 256, "%s/%s", bin, argv[0]);
 #endif
     }
-
     vp = &gedp->ged_gdp->gd_rt_cmd[0];
     *vp++ = rt;
+
+    /* If we're using an obj file, let rt know */
+    if (objfp) {
+	*vp++ = "-I";
+	*vp++ = bu_strdup(tmpfil);
+    }
+
+    /* View matrix and perspective related options */
     *vp++ = "-M";
 
     if (gedp->ged_gvp->gv_perspective > 0) {
@@ -486,6 +516,7 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
 	*vp++ = pstring;
     }
 
+    /* Units */
     for (i = 1; i < argc; i++) {
 	if (argv[i][0] == '-' && argv[i][1] == 'u' &&
 	    BU_STR_EQUAL(argv[1], "-u")) {
@@ -497,13 +528,14 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
 	}
 	*vp++ = (char *)argv[i];
     }
-
     /* default to local units when not specified on command line */
     if (!units_supplied) {
 	*vp++ = "-u";
 	*vp++ = "model";
     }
 
+
+    /* Add database filename */
     /* XXX why is this different for win32 only? */
 #ifdef _WIN32
     {
@@ -518,23 +550,64 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
 
     /*
      * Now that we've grabbed all the options, if no args remain,
-     * append the names of all stuff currently displayed.
+     * append the names of all objects currently displayed.
      * Otherwise, simply append the remaining args.
+     *
+     * Once we have the object list, do the run.
      */
-    if (i == argc) {
+    if (objfp) {
 	gedp->ged_gdp->gd_rt_cmd_len = vp - gedp->ged_gdp->gd_rt_cmd;
-	gedp->ged_gdp->gd_rt_cmd_len += ged_build_tops(gedp, vp, &gedp->ged_gdp->gd_rt_cmd[args]);
+	if (i == argc) {
+	    struct display_list *gdlp;
+	    for (BU_LIST_FOR(gdlp, display_list, gedp->ged_gdp->gd_headDisplay)) {
+		if (((struct directory *)gdlp->dl_dp)->d_addr == RT_DIR_PHONY_ADDR) {
+		    continue;
+		}
+		fprintf(objfp, "%s", bu_vls_addr(&gdlp->dl_path));
+		fprintf(objfp, "\n");
+	    }
+	} else {
+	    while (i < argc) {
+		fprintf(objfp, "%s", argv[i++]);
+		fprintf(objfp, "\n");
+	    }
+	}
+	(void)fclose(objfp);
+	(void)_ged_run_rt(gedp, tmpfil);
     } else {
-	while (i < argc)
-	    *vp++ = (char *)argv[i++];
-	*vp = 0;
-	vp = &gedp->ged_gdp->gd_rt_cmd[0];
-	while (*vp)
-	    bu_vls_printf(gedp->ged_result_str, "%s ", *vp++);
+	if (i == argc) {
+	    gedp->ged_gdp->gd_rt_cmd_len = vp - gedp->ged_gdp->gd_rt_cmd;
+	    gedp->ged_gdp->gd_rt_cmd_len += ged_build_tops(gedp, vp, &gedp->ged_gdp->gd_rt_cmd[args]);
+	} else {
+	    while (i < argc) {
+		*vp++ = (char *)argv[i++];
+	    }
+	    *vp = 0;
+	    vp = &gedp->ged_gdp->gd_rt_cmd[0];
+	    while (*vp) {
+		bu_vls_printf(gedp->ged_result_str, "%s ", *vp++);
+	    }
 
-	bu_vls_printf(gedp->ged_result_str, "\n");
+	    bu_vls_printf(gedp->ged_result_str, "\n");
+	}
+	/* Check the command length if we're listing objects on the command
+	 * line and we know what the OS specific limit is - too long and we
+	 * need to abort with an informative error message rather than silently
+	 * attempting (and failing) to run. */
+	if (bu_cmdline_arg_max() > 0) {
+	    struct bu_vls test_cmd_line = BU_VLS_INIT_ZERO;
+	    for (i = 0; i < gedp->ged_gdp->gd_rt_cmd_len; i++) {
+		bu_vls_printf(&test_cmd_line, "%s ", gedp->ged_gdp->gd_rt_cmd[i]);
+	    }
+	    if (bu_vls_strlen(&test_cmd_line) > (unsigned long int)bu_cmdline_arg_max()) {
+		bu_vls_printf(gedp->ged_result_str, "generated rt command line is longer than allowed platform maximum (%ld)\n", sysconf(_SC_ARG_MAX));
+		bu_vls_free(&test_cmd_line);
+		return GED_ERROR;
+	    }
+	    bu_vls_free(&test_cmd_line);
+	}
+	(void)_ged_run_rt(gedp, NULL);
     }
-    (void)_ged_run_rt(gedp);
     bu_free(gedp->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
     gedp->ged_gdp->gd_rt_cmd = NULL;
 
