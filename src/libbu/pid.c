@@ -44,7 +44,7 @@ bu_pid()
     DWORD cpid = GetCurrentProcessId();
     return (unsigned long int)cpid;
 #endif
-#ifdef HAVE_GETPID
+#if !defined(HAVE_GETCURRENTPROCESSID) && defined(HAVE_GETPID)
     pid_t cpid = getpid();
     return (unsigned long int)cpid;
 #endif
