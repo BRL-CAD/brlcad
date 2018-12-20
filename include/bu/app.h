@@ -120,15 +120,20 @@ BU_EXPORT extern const char *bu_whereis(const char *cmd);
  * directories followed by default system temp directories and
  * ultimately trying the current directory.
  *
- * This routine is guaranteed to return a new unique file or return
- * NULL on failure.  The temporary file will be automatically unlinked
- * on application exit.  It is the caller's responsibility to set file
- * access settings, preserve file contents, or destroy file contents
- * if the default behavior is non-optimal.
- *
  * The name of the temporary file will be copied into a user-provided
  * (filepath) buffer if it is a non-NULL pointer and of a sufficient
  * (len) length to contain the filename.
+ *
+ * This routine is guaranteed to return a new unique file or return
+ * NULL on failure.  The file should be closed via fclose() when it is
+ * no longer needed.  The temporary file will be automatically
+ * unlinked on application exit.  It is the caller's responsibility to
+ * set file access settings, preserve file contents, or destroy file
+ * contents if the default behavior is non-optimal.
+ *
+ * The temporary file may no longer exist after a call to fclose(), so
+ * do not close a handle until you are are done accessing it.  Calling
+ * fileno()+dup()+fdopen() can obtain a second handle on an open file.
  *
  * This routine is NOT thread-safe.
  *
@@ -137,11 +142,11 @@ BU_EXPORT extern const char *bu_whereis(const char *cmd);
  * @code
  * FILE *fp;
  * char filename[MAXPATHLEN];
- * fp = bu_temp_file(&filename, MAXPATHLEN); // get file name
+ * fp = bu_temp_file(&filename, MAXPATHLEN); // get a named temp file
  * ...
  * fclose(fp); // close the file when you're done
  * ...
- * fp = bu_temp_file(NULL, 0); // don't need file name
+ * fp = bu_temp_file(NULL, 0); // get an anonymous temp file
  * bu_fchmod(fileno(fp), 0777);
  * ...
  * rewind(fp);
