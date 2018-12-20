@@ -179,6 +179,7 @@ SetTargetFolder(exslt "Third Party Libraries")
 # env2c - Scanner to generate a list of environment variables used by
 # source code
 THIRD_PARTY_EXECUTABLE(env2c ENV2C env2c REQUIRED "BRLCAD_LEVEL2" NOSYS)
+SetTargetFolder(env2c "Compilation Utilities")
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/env2c/Makefile)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/env2c/env2c.cxx)
 
