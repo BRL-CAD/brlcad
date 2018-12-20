@@ -59,7 +59,7 @@
 extern int kill(pid_t, int);
 #endif
 
-#if !defined(HAVE_DECL_WAIT) && !defined(wait)
+#if !defined(HAVE_DECL_WAIT) && !defined(wait) && !defined(_WINSOCKAPI_)
 extern pid_t wait(int *);
 #endif
 
@@ -381,7 +381,9 @@ backtrace(int processid, char args[][MAXPATHLEN], int fd)
     if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
 	bu_log("[BACKTRACE] backtrace() waiting for debugger %d to exit\n", pid2);
     }
+#ifndef _WINSOCKAPI_
     wait(NULL);
+#endif
 
     if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
 	bu_log("[BACKTRACE] backtrace() complete\n");
@@ -498,7 +500,10 @@ bu_backtrace(FILE *fp)
 	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
 	    bu_log("[BACKTRACE] bu_backtrace() waiting for child %d to exit\n", pid);
 	}
+
+#ifndef _WINSOCKAPI_
 	wait(NULL);
+#endif
     }
 
     if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
