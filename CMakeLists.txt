@@ -2724,6 +2724,9 @@ BRLCAD_FUNCTION_EXISTS(fileno)
 BRLCAD_FUNCTION_EXISTS(daemon)
 if (HAVE_DAEMON)
   check_c_source_compiles("#include <stdlib.h>\nint main() { (void)daemon; return 0; }" HAVE_WORKING_DAEMON_FUNCTION)
+  if (HAVE_WORKING_DAEMON_FUNCTION)
+    CONFIG_H_APPEND(BRLCAD "#define HAVE_WORKING_DAEMON_FUNCTION 1\n")
+  endif (HAVE_WORKING_DAEMON_FUNCTION)
 endif (HAVE_DAEMON)
 
 # ntohll and htonll may be harder to spot - do some extra tests
