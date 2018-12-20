@@ -600,7 +600,7 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(&test_cmd_line, "%s ", gedp->ged_gdp->gd_rt_cmd[i]);
 	    }
 	    if (bu_vls_strlen(&test_cmd_line) > (unsigned long int)bu_cmdline_arg_max()) {
-		bu_vls_printf(gedp->ged_result_str, "generated rt command line is longer than allowed platform maximum (%ld)\n", sysconf(_SC_ARG_MAX));
+		bu_vls_printf(gedp->ged_result_str, "generated rt command line is longer than allowed platform maximum (%ld)\n", bu_cmdline_arg_max());
 		bu_vls_free(&test_cmd_line);
 		return GED_ERROR;
 	    }
