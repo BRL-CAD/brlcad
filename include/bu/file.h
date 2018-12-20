@@ -115,36 +115,34 @@ BU_EXPORT extern int bu_file_symbolic(const char *path);
 BU_EXPORT extern int bu_file_delete(const char *path);
 
 
-#if 0
 /**
- * TODO - currently unimplemented
+ * Matches a filepath pattern to filesystem directory entries.
  *
- * matches a filepath pattern to directory entries.  if non-NULL,
- * matching paths are dynamically allocated, stored into the provided
- * 'matches' array, and followed by a terminating NULL entry.
+ * If 'matches' is non-NULL, matching paths are dynamically allocated
+ * and stored into the provided 'matches' array followed by a
+ * terminating NULL entry.  If 'matches' is NULL, no entries will be
+ * allocated or stored, but the number of matches will still be
+ * returned.
  *
  * If '*matches' is NULL, the caller is expected to free the matches
- * array with bu_argv_free() If '*matches' is non-NULL (i.e., string
+ * array with bu_argv_free().  If '*matches' is non-NULL (i.e., string
  * array is already allocated or on the stack), the caller is expected
- * to ensure adequate entries are allocated and call bu_free_array()
- * to clean up.  If 'matches' is NULL, no entries will be allocated or
- * stored, but the number of matches will still be returned.
+ * to ensure adequate entries are preallocated and to free th match
+ * strings with bu_free_array().
  *
  * Example:
+ @code
+   # This allocates an array for storing glob matches, filling in the
+   # array with all directory paths starting with 'a' through 'e' and
+   # ending with a '.c' in the src/libbu directory.
+
+   char **my_matches = NULL;
+   bu_file_glob("src/libbu/[a-e]*.c", &my_matches);
+ @endcode
  *
- * char **my_matches = NULL;
- * bu_file_glob("src/libbu/[a-e]*.c", &my_matches);
- *
- * This will allocate an array for storing glob matches, filling in
- * the array with all of the directory entries starting with 'a'
- * through 'e' and ending with a '.c' suffix in the src/libbu
- * directory.
- *
- * returns the number of matches
+ * @return the number of matches
  */
 BU_EXPORT extern size_t bu_file_glob(const char *pattern, char ***matches);
-
-#endif
 
 
 /**
