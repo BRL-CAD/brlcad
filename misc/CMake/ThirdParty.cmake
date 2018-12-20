@@ -131,10 +131,11 @@ function(THIRD_PARTY dir varname_root build_target description)
   # should be periodically reviewed to determine if they can be removed (i.e. system packages have
   # appeared in modern OS distributions with the fixes needed by BRL-CAD...)
   if(NOT TP_MET_CONDITION AND TP_NOSYS)
-	set(${CMAKE_PROJECT_NAME}_${varname_root} "BUNDLED" CACHE STRING "NOSYS passed, using bundled ${build_target}" FORCE)
-	set(${CMAKE_PROJECT_NAME}_${varname_root}_BUILD ON)
-	set(TP_MET_CONDITION 3)
-	set(TP_DISABLE_TEST 1)
+    set(${CMAKE_PROJECT_NAME}_${varname_root} "BUNDLED" CACHE STRING "NOSYS passed, using bundled ${build_target}" FORCE)
+    mark_as_advanced(${CMAKE_PROJECT_NAME}_${varname_root})
+    set(${CMAKE_PROJECT_NAME}_${varname_root}_BUILD ON)
+    set(TP_MET_CONDITION 3)
+    set(TP_DISABLE_TEST 1)
   endif(NOT TP_MET_CONDITION AND TP_NOSYS)
 
   # 4. If we have an explicit BUNDLE request for this particular library,  honor it as long as
@@ -373,8 +374,9 @@ function(THIRD_PARTY_EXECUTABLE dir varname_root build_target)
   # flag, since that's a likely scenario for testing, but that shouldn't be done except for testing
   # purposes with a NOSYS target.
   if(NOT TP_MET_CONDITION AND TP_NOSYS)
-	set(${CMAKE_PROJECT_NAME}_${varname_root} "BUNDLED" CACHE STRING "NOSYS passed, using bundled ${build_target}" FORCE)
-	set(${CMAKE_PROJECT_NAME}_${varname_root}_BUILD ON)
+    set(${CMAKE_PROJECT_NAME}_${varname_root} "BUNDLED" CACHE STRING "NOSYS passed, using bundled ${build_target}" FORCE)
+    mark_as_advanced(${CMAKE_PROJECT_NAME}_${varname_root})
+    set(${CMAKE_PROJECT_NAME}_${varname_root}_BUILD ON)
     set(TP_MET_CONDITION 3)
     set(TP_DISABLE_TEST 1)
   endif(NOT TP_MET_CONDITION AND TP_NOSYS)
