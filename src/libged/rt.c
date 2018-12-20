@@ -480,10 +480,6 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
      * list to avoid any potential problems with long command lines - see
      * https://support.microsoft.com/en-us/help/830473/command-prompt-cmd-exe-command-line-string-limitation */
     objfp = bu_temp_file(tmpfil, MAXPATHLEN);
-	if (objfp) {
-		(void)fclose(objfp);
-		objfp = fopen(tmpfil, "w");
-	}
 
     /* Make argv array for command definition (used for execvp - for
      * other platforms a string will be built up from the array) */
