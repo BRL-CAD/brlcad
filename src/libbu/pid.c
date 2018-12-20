@@ -35,6 +35,7 @@
 
 #include "common.h"
 #include "bio.h"
+#include "bu/app.h"
 
 unsigned long int
 bu_pid()
