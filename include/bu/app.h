@@ -280,6 +280,10 @@ typedef enum {
  */
 BU_EXPORT extern const char *bu_dir(char *result, size_t len, .../*, NULL */);
 
+/**
+ * Return the id of the current process.
+ */
+BU_EXPORT extern unsigned long int bu_pid();
 
 /** @} */
 

@@ -2675,6 +2675,7 @@ BRLCAD_FUNCTION_EXISTS(nextafterf REQUIRED_LIBS ${M_LIBRARY})
 BRLCAD_FUNCTION_EXISTS(ntohll)
 BRLCAD_FUNCTION_EXISTS(proc_pidpath) # Mac OS X
 BRLCAD_FUNCTION_EXISTS(program_invocation_name)
+BRLCAD_FUNCTION_EXISTS(getpid)
 BRLCAD_FUNCTION_EXISTS(pipe)
 BRLCAD_FUNCTION_EXISTS(popen) # implies pclose
 BRLCAD_FUNCTION_EXISTS(posix_memalign) # IEEE Std 1003.1-2001
@@ -2766,6 +2767,18 @@ return 0;
 if(HAVE_GETFULLPATHNAME)
   CONFIG_H_APPEND(BRLCAD "#define HAVE_GETFULLPATHNAME 1\n")
 endif(HAVE_GETFULLPATHNAME)
+
+# GetCurrentProcessId
+check_c_source_compiles("
+#include <windows.h>
+int main() {
+DWORD cpid = GetCurrentProcessId();
+return 0;
+}
+" HAVE_GETCURRENTPROCESSID)
+if(HAVE_GETCURRENTPROCESSID)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_GETCURRENTPROCESSID 1\n")
+endif(HAVE_GETCURRENTPROCESSID)
 
 # functionality tests for lrint
 set(lrint_test "long int lrint(double); int main() {return lrint(3.14);}")

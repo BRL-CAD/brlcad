@@ -37,6 +37,7 @@
 
 #include "bu/app.h"
 #include "bu/env.h"
+#include "bu/vls.h"
 
 #include "./ged_private.h"
 
@@ -453,6 +454,29 @@ ged_build_tops(struct ged *gedp, char **start, char **end)
     return vp-start;
 }
 
+int
+_ged_rt_tmpfile_uniq(struct bu_vls *f, void *UNUSED(data))
+{
+    if (!f || bu_file_exists(bu_vls_addr(f), NULL)) {
+	return 0;
+    }
+    return 1;
+}
+
+int
+_ged_rt_tmpfile(struct bu_vls *rstr)
+{
+    const char *tmpf = NULL;
+    struct bu_vls pidstr = BU_VLS_INIT_ZERO;
+    unsigned long int cpid = bu_pid();
+    if (!rstr) {
+	return -1;
+    }
+    bu_vls_sprintf(&pidstr, "BRL-CAD_ged_rt_%ld-0", cpid);
+    tmpf = bu_dir(NULL, 0, BU_DIR_TEMP, bu_vls_addr(&pidstr), NULL);
+    bu_vls_sprintf(rstr, "%s", tmpf);
+    return bu_vls_incr(rstr, NULL, "0:0:0:0", &_ged_rt_tmpfile_uniq, NULL);
+}
 
 int
 ged_rt(struct ged *gedp, int argc, const char *argv[])
@@ -462,7 +486,7 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
     int units_supplied = 0;
     char pstring[32];
     int args;
-    char tmpfil[MAXPATHLEN];
+    struct bu_vls tmpfil = BU_VLS_INIT_ZERO;
     FILE *objfp = NULL;
 
     const char *bin;
@@ -479,7 +503,9 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
     /* see if we can get a tmp file - if so, use that to feed rt the object
      * list to avoid any potential problems with long command lines - see
      * https://support.microsoft.com/en-us/help/830473/command-prompt-cmd-exe-command-line-string-limitation */
-    objfp = bu_temp_file(tmpfil, MAXPATHLEN);
+    if (!_ged_rt_tmpfile(&tmpfil)) {
+	objfp = fopen(bu_vls_addr(&tmpfil), "w");
+    }
 
     /* Make argv array for command definition (used for execvp - for
      * other platforms a string will be built up from the array) */
@@ -505,7 +531,7 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
     /* If we're using an obj file, let rt know */
     if (objfp) {
 	*vp++ = "-I";
-	*vp++ = bu_strdup(tmpfil);
+	*vp++ = bu_strdup(bu_vls_addr(&tmpfil));
     }
 
     /* View matrix and perspective related options */
@@ -573,7 +599,7 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
 	    }
 	}
 	(void)fclose(objfp);
-	(void)_ged_run_rt(gedp, tmpfil);
+	(void)_ged_run_rt(gedp, bu_vls_addr(&tmpfil));
     } else {
 	if (i == argc) {
 	    gedp->ged_gdp->gd_rt_cmd_len = vp - gedp->ged_gdp->gd_rt_cmd;
@@ -608,6 +634,7 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
 	}
 	(void)_ged_run_rt(gedp, NULL);
     }
+    bu_vls_free(&tmpfil);
     bu_free(gedp->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
     gedp->ged_gdp->gd_rt_cmd = NULL;
 
