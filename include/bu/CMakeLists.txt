@@ -29,6 +29,7 @@ set(bu_headers
   parallel.h
   parse.h
   path.h
+  process.h
   ptbl.h
   redblack.h
   simd.h

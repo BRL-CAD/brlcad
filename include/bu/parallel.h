@@ -94,11 +94,6 @@ BU_EXPORT extern int bu_terminate(int process);
  */
 
 /**
- * returns the process ID of the calling process
- */
-BU_EXPORT extern int bu_process_id(void);
-
-/**
  * @brief
  * routines for parallel processing
  *

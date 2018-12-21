@@ -35,6 +35,7 @@
 #include "bu/debug.h"
 #include "bu/file.h"
 #include "bu/parallel.h"
+#include "bu/process.h"
 
 
 /**

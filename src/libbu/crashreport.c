@@ -29,6 +29,7 @@
 #include "bu/app.h"
 #include "bu/log.h"
 #include "bu/parallel.h"
+#include "bu/process.h"
 #include "brlcad_ident.h"
 
 #if defined(HAVE_POPEN) && !defined(HAVE_POPEN_DECL) && !defined(popen)

@@ -49,7 +49,7 @@
 #include "bu/debug.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
-#include "bu/parallel.h"
+#include "bu/process.h"
 #include "bu/snooze.h"
 #include "bu/str.h"
 #include "bu/time.h"

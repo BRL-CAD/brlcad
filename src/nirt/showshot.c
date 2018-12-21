@@ -32,7 +32,7 @@
 #include "bio.h"
 
 #include "bu/getopt.h"
-#include "bu/parallel.h"
+#include "bu/process.h"
 #include "bu/str.h"
 #include "bu/exit.h"
 #include "bu/log.h"

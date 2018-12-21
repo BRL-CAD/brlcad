@@ -33,7 +33,7 @@
 
 #include "vmath.h"
 #include "bu/getopt.h"
-#include "bu/parallel.h"
+#include "bu/process.h"
 #include "bu/log.h"
 #include "bn.h"
 
