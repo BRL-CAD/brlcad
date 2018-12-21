@@ -503,7 +503,7 @@ int main(int argc, const char **argv)
 	 * called by rt_do_cmd().
 	 */
 
-	if (isatty(fileno(stdin))) {
+	if (!matflag && isatty(fileno(stdin))) {
 	    fprintf(stderr, "Additional commands needed - cannot complete raytrace\n");
 	    ret = 1;
 	    goto rt_cleanup;
