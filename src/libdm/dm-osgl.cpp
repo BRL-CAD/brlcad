@@ -1322,11 +1322,10 @@ osgl_drawVListHiddenLine(struct dm_internal *dmp, register struct bn_vlist *vp)
 		    glNormal3dv(dpt);
 		    break;
 		case BN_VLIST_TRI_START:
-		    if (first)
+		    if (first == 1) {
 			glBegin(GL_TRIANGLES);
-
 			first = 0;
-
+		    }
 		    /* Set surface normal (vl_pnt points outward) */
 		    glNormal3dv(dpt);
 

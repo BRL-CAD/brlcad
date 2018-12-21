@@ -41,6 +41,7 @@
 
 #include <osg/GLExtensions>
 
+#include "bu/app.h"
 
 #include "fb/fb_osgl.h"
 extern "C" {
@@ -299,7 +300,6 @@ osgl_cminit(register fb *ifp)
 HIDDEN int
 osgl_getmem(fb *ifp)
 {
-    int shm_result;
     int pixsize;
     int size;
     int i;
@@ -501,7 +501,7 @@ fb_osgl_open(fb *ifp, const char *UNUSED(file), int width, int height)
     /* TODO - The OpenSceneGraph logic for handling plugins isn't multi-config
      * aware - we're going to have to add that to make this mechanism work on Windows */
     {
-	std::string rel_path = std::string(bu_brlcad_dir("lib", 0)) + std::string("/osgPlugins");
+	std::string rel_path = std::string(bu_dir(NULL, 0, BU_DIR_LIB)) + std::string("/osgPlugins");
 	const char *root_path = bu_brlcad_root(rel_path.c_str(), 0);
 	osgDB::FilePathList paths = osgDB::Registry::instance()->getLibraryFilePathList();
 	if (root_path) {
@@ -1480,8 +1480,8 @@ fb osgl_interface =
     osgl_free,		/* free resources */
     osgl_help,		/* help message */
     bu_strdup("OpenSceneGraph OpenGL"),	/* device description */
-    XMAXSCREEN,		/* max width */
-    YMAXSCREEN,		/* max height */
+    FB_XMAXSCREEN,		/* max width */
+    FB_YMAXSCREEN,		/* max height */
     bu_strdup("/dev/osgl"),		/* short device name */
     512,		/* default/current width */
     512,		/* default/current height */
