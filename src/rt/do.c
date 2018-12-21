@@ -150,6 +150,11 @@ old_way(FILE *fp)
     }
     bu_log("Interpreting command stream in old format\n");
 
+    /* Committing to old way - better have objv ready */
+    if (!objv) {
+	return -1;
+    }
+
     def_tree(APP.a_rt_i);	/* Load the default trees */
 
     curframe = 0;

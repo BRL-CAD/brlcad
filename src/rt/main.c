@@ -45,6 +45,7 @@
 #include "bu/malloc.h"
 #include "bu/log.h"
 #include "bu/parallel.h"
+#include "bu/ptbl.h"
 #include "bu/vls.h"
 #include "bu/version.h"
 #include "vmath.h"
@@ -135,11 +136,13 @@ memory_summary(void)
 
 int main(int argc, const char **argv)
 {
+    int ret = 0;
     struct rt_i *rtip = NULL;
     const char *title_file = NULL, *title_obj = NULL;	/* name of file and first object */
     char idbuf[2048] = {0};			/* First ID record info */
     struct bu_vls times = BU_VLS_INIT_ZERO;
     int i;
+    struct bu_ptbl *cmd_objs = NULL;
     int objs_free_argv = 0;
 
     setmode(fileno(stdin), O_BINARY);
@@ -298,15 +301,16 @@ int main(int argc, const char **argv)
     title_obj = argv[bu_optind+1];
     if (!objv) {
 	objc = argc - bu_optind - 1;
-	objv = (char **)&(argv[bu_optind+1]);
+	if (objc) {
+	    objv = (char **)&(argv[bu_optind+1]);
+	} else {
+	    /* No objects in either input file or argv - try getting objs from
+	     * command processing.  Initialize the table. */
+	    BU_GET(cmd_objs, struct bu_ptbl);
+	    bu_ptbl_init(cmd_objs, 8, "initialize cmdobjs table");
+	}
     } else {
 	objs_free_argv = 1;
-    }
-
-    if (objc <= 0) {
-	bu_log("%s: no objects specified -- raytrace aborted\n", argv[0]);
-	usage(argv[0], 0);
-	return 1;
     }
 
 #ifdef USE_OPENCL
@@ -460,7 +464,21 @@ int main(int argc, const char **argv)
     (void)signal(SIGINFO, siginfo_handler);
 #endif
 
-    if (!matflag) {
+    /* First, see if we're handling old style processing of the -M flag. */
+    if (matflag && !isatty(fileno(stdin))) {
+	int oret = old_way(stdin);
+	if (oret < 0) {
+	    bu_log("%s: no objects specified -- raytrace aborted\n", argv[0]);
+	    usage(argv[0], 0);
+	    ret = 1;	
+	}
+	/* If oret, old way either worked or failed.  Either way, we're done. */
+	if (oret) {
+	    goto rt_cleanup;
+	}
+    }
+
+    if (objv && !matflag) {
 	int frame_retval;
 
 	def_tree(rtip);		/* Load the default trees */
@@ -473,26 +491,31 @@ int main(int argc, const char **argv)
 	    if (fbp != FB_NULL) {
 		fb_close(fbp);
 	    }
-
-	    return 1;
+	    ret = 1;
+	    goto rt_cleanup;
 	}
-    } else if (!isatty(fileno(stdin)) && old_way(stdin)) {
-	; /* All is done */
     } else {
 	register char	*buf;
-	register int	ret;
+	register int	nret;
 	/*
 	 * New way - command driven.
 	 * Process sequence of input commands.
 	 * All the work happens in the functions
 	 * called by rt_do_cmd().
 	 */
+
+	if (isatty(fileno(stdin))) {
+	    fprintf(stderr, "Additional commands needed - cannot complete raytrace\n");
+	    ret = 1;
+	    goto rt_cleanup;
+	}
+
 	while ((buf = rt_read_cmd( stdin )) != (char *)0) {
 	    if (R_DEBUG&RDEBUG_PARSE)
 		fprintf(stderr, "cmd: %s\n", buf);
-	    ret = rt_do_cmd( rtip, buf, rt_cmdtab);
+	    nret = rt_do_cmd( rtip, buf, rt_cmdtab);
 	    bu_free( buf, "rt_read_cmd command buffer");
-	    if (ret < 0)
+	    if (nret < 0)
 		break;
 	}
 	if (curframe < desiredframe) {
@@ -507,6 +530,7 @@ int main(int argc, const char **argv)
 	fb_close(fbp);
     }
 
+rt_cleanup:
     /* Clean up objv memory, if necessary */
     if (objs_free_argv) {
 	for (i = 0; i < objc; i++) {
@@ -515,11 +539,16 @@ int main(int argc, const char **argv)
 	bu_free(objv, "objv array");
     }
 
+    if (cmd_objs) {
+	bu_ptbl_free(cmd_objs);
+	BU_PUT(cmd_objs, struct bu_ptbl);
+    }
+
     /* Release the ray-tracer instance */
     rt_free_rti(rtip);
     rtip = NULL;
 
-    return 0;
+    return ret;
 }
 
 /*
