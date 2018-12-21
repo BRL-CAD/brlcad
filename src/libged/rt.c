@@ -53,7 +53,9 @@ struct _ged_rt_client_data {
 void
 _ged_rt_write(struct ged *gedp,
 	      FILE *fp,
-	      vect_t eye_model)
+	      vect_t eye_model,
+	      int argc,
+	      const char **argv)
 {
     quat_t quat;
 
@@ -73,6 +75,31 @@ _ged_rt_write(struct ged *gedp,
 		  eye_model[X], eye_model[Y], eye_model[Z]);
 
     fprintf(fp, "start 0; clean;\n");
+
+    /* If no objects were specified, activate all objects currently displayed.
+     * Otherwise, simply draw the specified objects. If the caller passed
+     * -1 in argc it means the objects are specified on the command line.
+     * (TODO - we shouldn't be doing that anywhere for this; long command
+     * strings make Windows unhappy.  Once all the callers have been
+     * adjusted to pass the object lists for itemization via pipes below,
+     * remove the -1 case.) */
+    if (argc >= 0) {
+	if (!argc) {
+	    struct display_list *gdlp;
+	    for (BU_LIST_FOR(gdlp, display_list, gedp->ged_gdp->gd_headDisplay)) {
+		if (((struct directory *)gdlp->dl_dp)->d_addr == RT_DIR_PHONY_ADDR)
+		    continue;
+		fprintf(fp, "draw %s;\n", bu_vls_addr(&gdlp->dl_path));
+	    }
+	} else {
+	    int i = 0;
+	    while (i < argc) {
+		fprintf(fp, "draw %s;\n", argv[i++]);
+	    }
+	}
+
+	fprintf(fp, "prep;\n");
+    }
 
     dl_bitwise_and_fullpath(gedp->ged_gdp->gd_headDisplay, ~RT_DIR_USED);
 
@@ -240,7 +267,7 @@ _ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
 
 
 int
-_ged_run_rt(struct ged *gedp)
+_ged_run_rt(struct ged *gedp, int argc, const char **argv)
 {
     int i;
     FILE *fp_in;
@@ -304,7 +331,7 @@ _ged_run_rt(struct ged *gedp)
     (void)close(pipe_err[1]);
 
     _ged_rt_set_eye_model(gedp, eye_model);
-    _ged_rt_write(gedp, fp_in, eye_model);
+    _ged_rt_write(gedp, fp_in, eye_model, argc, argv);
     (void)fclose(fp_in);
 
     BU_GET(run_rtp, struct ged_run_rt);
@@ -377,7 +404,7 @@ _ged_run_rt(struct ged *gedp)
     fp_in = _fdopen(_open_osfhandle((intptr_t)pipe_inDup, _O_TEXT), "wb");
 
     _ged_rt_set_eye_model(gedp, eye_model);
-    _ged_rt_write(gedp, fp_in, eye_model);
+    _ged_rt_write(gedp, fp_in, eye_model, argc, argv);
     (void)fclose(fp_in);
 
     BU_GET(run_rtp, struct ged_run_rt);
@@ -516,25 +543,7 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
     *vp++ = gedp->ged_wdbp->dbip->dbi_filename;
 #endif
 
-    /*
-     * Now that we've grabbed all the options, if no args remain,
-     * append the names of all stuff currently displayed.
-     * Otherwise, simply append the remaining args.
-     */
-    if (i == argc) {
-	gedp->ged_gdp->gd_rt_cmd_len = vp - gedp->ged_gdp->gd_rt_cmd;
-	gedp->ged_gdp->gd_rt_cmd_len += ged_build_tops(gedp, vp, &gedp->ged_gdp->gd_rt_cmd[args]);
-    } else {
-	while (i < argc)
-	    *vp++ = (char *)argv[i++];
-	*vp = 0;
-	vp = &gedp->ged_gdp->gd_rt_cmd[0];
-	while (*vp)
-	    bu_vls_printf(gedp->ged_result_str, "%s ", *vp++);
-
-	bu_vls_printf(gedp->ged_result_str, "\n");
-    }
-    (void)_ged_run_rt(gedp);
+    (void)_ged_run_rt(gedp, (argc - i), &(argv[i]));
     bu_free(gedp->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
     gedp->ged_gdp->gd_rt_cmd = NULL;
 

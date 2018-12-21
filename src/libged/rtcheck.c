@@ -382,7 +382,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     fp = fdopen(o_pipe[1], "w");
 
     _ged_rt_set_eye_model(gedp, eye_model);
-    _ged_rt_write(gedp, fp, eye_model);
+    _ged_rt_write(gedp, fp, eye_model, -1, NULL);
     (void)fclose(fp);
 
     /* close write end of pipes */
@@ -489,7 +489,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     setmode(_fileno(fp), O_BINARY);
 
     _ged_rt_set_eye_model(gedp, eye_model);
-    _ged_rt_write(gedp, fp, eye_model);
+    _ged_rt_write(gedp, fp, eye_model, -1, NULL);
     (void)fclose(fp);
 
     BU_GET(rtcp, struct ged_rtcheck);
