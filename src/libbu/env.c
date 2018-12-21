@@ -38,7 +38,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include <limits.h>
 #include "bio.h"
 
 #ifdef HAVE_SYS_SYSINFO_H
@@ -113,33 +112,6 @@ bu_avail_mem()
     /* Don't know how to figure this out if the above haven't worked, and/or
      * checking is suppressed by the environment variable. */
     return -1;
-}
-
-long int
-bu_cmdline_arg_max()
-{
-    long int amax = -1;
-#if defined(HAVE_SYSCONF) && defined(_SC_ARG_MAX)
-    if (amax < 0) {
-	amax = sysconf(_SC_ARG_MAX);
-    }
-#endif
-#ifdef ARG_MAX
-    if (amax < 0) {
-	amax = ARG_MAX;
-    }
-#endif
-#ifdef _POSIX_ARG_MAX
-    if (amax < 0) {
-	amax = _POSIX_ARG_MAX;
-    }
-#endif
-#ifdef NCARGS
-    if (amax < 0) {
-	amax = NCARGS
-    }
-#endif
-    return amax;
 }
 
 /*

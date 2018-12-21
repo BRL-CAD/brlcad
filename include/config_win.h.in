@@ -62,13 +62,6 @@
 #  define EXPAND_IN_STRING_INTERN(x) #x
 #endif
 
-/* Define ARG_MAX for the Windows limit (Windows XP and greater) per
- * https://support.microsoft.com/en-us/help/830473/command-prompt-cmd-exe-command-line-string-limitation
- */
-#ifndef ARG_MAX
-#  define ARG_MAX 8191
-#endif
-
 /*
  * declare results of configure tests
  */

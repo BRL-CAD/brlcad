@@ -107,7 +107,6 @@ set(LIBBU_SOURCES
   parse.c
   path.c
   path_normalize.c
-  pid.c
   printb.c
   process.c
   progname.c
