@@ -543,6 +543,7 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
     *vp++ = gedp->ged_wdbp->dbip->dbi_filename;
 #endif
 
+	gedp->ged_gdp->gd_rt_cmd_len = vp - gedp->ged_gdp->gd_rt_cmd;
     (void)_ged_run_rt(gedp, (argc - i), &(argv[i]));
     bu_free(gedp->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
     gedp->ged_gdp->gd_rt_cmd = NULL;
