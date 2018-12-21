@@ -302,6 +302,11 @@ int main(int argc, const char **argv)
 	objc = argc - bu_optind - 1;
 	if (objc) {
 	    objv = (char **)&(argv[bu_optind+1]);
+	} else {
+	    /* No objects in either input file or argv - try getting objs from
+	     * command processing.  Initialize the table. */
+	    BU_GET(cmd_objs, struct bu_ptbl);
+	    bu_ptbl_init(cmd_objs, 8, "initialize cmdobjs table");
 	}
     } else {
 	objs_free_argv = 1;
@@ -531,6 +536,15 @@ rt_cleanup:
 	    bu_free(objv[i], "objv entry");
 	}
 	bu_free(objv, "objv array");
+    }
+
+    if (cmd_objs) {
+	for (i = 0; i < (int)BU_PTBL_LEN(cmd_objs); i++) {
+	    char *ostr = (char *)BU_PTBL_GET(cmd_objs, i);
+	    bu_free(ostr, "object string");
+	}
+	bu_ptbl_free(cmd_objs);
+	BU_PUT(cmd_objs, struct bu_ptbl);
     }
 
     /* Release the ray-tracer instance */
