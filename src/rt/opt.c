@@ -112,6 +112,7 @@ char pmfile[255];
 /***** variables shared with do.c *****/
 int objc = 0;		/* Number of cmd-line treetops */
 char **objv = (char **)NULL;	/* array of treetop strings */
+struct bu_ptbl *cmd_objs = NULL; /* container for command specified objects */
 char *string_pix_start = (char *)NULL;	/* string spec of starting pixel */
 char *string_pix_end = (char *)NULL;	/* string spec of ending pixel */
 int pix_start = -1;		/* pixel to start at */

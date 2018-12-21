@@ -142,7 +142,6 @@ int main(int argc, const char **argv)
     char idbuf[2048] = {0};			/* First ID record info */
     struct bu_vls times = BU_VLS_INIT_ZERO;
     int i;
-    struct bu_ptbl *cmd_objs = NULL;
     int objs_free_argv = 0;
 
     setmode(fileno(stdin), O_BINARY);
@@ -540,6 +539,10 @@ rt_cleanup:
     }
 
     if (cmd_objs) {
+	for (i = 0; i < (int)BU_PTBL_LEN(cmd_objs); i++) {
+	    char *ostr = (char *)BU_PTBL_GET(cmd_objs, i);
+	    bu_free(ostr, "object string");
+	}
 	bu_ptbl_free(cmd_objs);
 	BU_PUT(cmd_objs, struct bu_ptbl);
     }
