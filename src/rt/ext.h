@@ -29,7 +29,6 @@
 #include "optical.h"
 #include "fb.h"
 #include "bu/parallel.h" /* for MAX_PSW */
-#include "bu/ptbl.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -148,7 +147,6 @@ extern double pmargs[9];
 /***** variables shared with do.c *****/
 extern int objc;			/* Number of cmd-line treetops */
 extern char **objv;			/* array of treetop strings */
-extern struct bu_ptbl *cmd_objs;               /* container to hold cmd specified objects */
 extern char *outputfile;		/* name of base of output file */
 extern int benchmark;			/* No random numbers:  benchmark */
 extern int curframe;			/* current frame number */
