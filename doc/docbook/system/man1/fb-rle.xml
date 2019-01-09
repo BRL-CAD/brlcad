@@ -192,17 +192,16 @@
   </refsection>
 
   <refsection xml:id="author"><title>AUTHOR</title>
-    <para>BRL-CAD Team</para>
+  <para>BRL-CAD Team</para>
   </refsection>
 
   <refsection xml:id="copyright"><title>COPYRIGHT</title>
-    <para>This software is Copyright (c) 1988-2013 by the United
-      States Government as represented by U.S. Army Research
-      Laboratory.</para>
+  <para>This software is Copyright (c) 1984-2019 United States Government as
+  represented by the U.S. Army Research Laboratory.</para>
   </refsection>
 
   <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
-    <para>Reports of bugs or problems should be submitted via
-      electronic mail to &lt;devs@brlcad.org&gt;.</para>
+  <para>Reports of bugs or problems should be submitted via electronic
+  mail to devs@brlcad.org</para>
   </refsection>
 </refentry>

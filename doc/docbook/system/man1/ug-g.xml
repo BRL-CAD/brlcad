@@ -35,7 +35,7 @@
 </refsynopsisdiv>
 
 
-<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<refsection xml:id='description'><title>DESCRIPTION</title>
 <para><command>ug-g</command>
 converts the specified
 <emphasis remap='I'>part_filename</emphasis>
@@ -88,23 +88,26 @@ are converted.</para>
 <para>Note that this converter requires the Unigraphics
 <emphasis remap='I'>ugopen</emphasis>
 module. This may be obtained from Unigraphics.</para>
-</refsect1>
+</refsection>
 
-<refsect1 xml:id='example'><title>EXAMPLE</title>
+<refsection xml:id='example'><title>EXAMPLE</title>
 <literallayout remap='RS'>
 $ \fuug-g -o sample.g sample.prt
 </literallayout> <!-- remap='RE' -->
-</refsect1>
+</refsection>
 
-<refsect1 xml:id='authors'><title>AUTHORS</title>
-<para>John Anderson ,
-<!-- .br -->
-Lee Butler</para>
-</refsect1>
+  <refsection xml:id="author"><title>AUTHOR</title>
+  <para>BRL-CAD Team</para>
+  </refsection>
 
-<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
-<para>Reports of bugs or problems should be submitted via electronic
-mail to &lt;bugs@brlcad.org&gt;.</para>
-</refsect1>
+  <refsection xml:id="copyright"><title>COPYRIGHT</title>
+  <para>This software is Copyright (c) 1984-2019 United States Government as
+  represented by the U.S. Army Research Laboratory.</para>
+  </refsection>
+
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
+  <para>Reports of bugs or problems should be submitted via electronic
+  mail to devs@brlcad.org</para>
+  </refsection>
 </refentry>
 

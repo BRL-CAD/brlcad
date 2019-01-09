@@ -1078,17 +1078,17 @@
   </para>
 </refsection>
 
-<refsection xml:id="bugs"><title>BUGS</title>
+  <refsection xml:id="author"><title>AUTHOR</title>
+  <para>BRL-CAD Team</para>
+  </refsection>
 
-  <para>
-    The program sometimes complains about "previously unreported overlaps".  To the best of our knowledge, this
-    complaint may be safely ignored. We hope to fix this soon.
-  </para>
-</refsection>
+  <refsection xml:id="copyright"><title>COPYRIGHT</title>
+  <para>This software is Copyright (c) 1984-2019 United States Government as
+  represented by the U.S. Army Research Laboratory.</para>
+  </refsection>
 
-<refsection xml:id="author"><title>AUTHORS</title>
-    <para>Natalie Eberius</para>
-    <para>Paul Tanenbaum</para>
-</refsection>
-
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
+  <para>Reports of bugs or problems should be submitted via electronic
+  mail to devs@brlcad.org</para>
+  </refsection>
 </refentry>
