@@ -107,7 +107,7 @@ $ g-tankill -o <emphasis remap='I'>sample.tankill sample.g sample_object</emphas
 
 	<refsection xml:id='bug_reports'><title>BUG REPORTS</title>
 		<para>Reports of bugs or problems should be submitted via electronic
-			mail to &lt;devs@brlcad.org&gt;.</para>
+			mail to <email>devs@brlcad.org</email></para>
 	</refsection>
 </refentry>
 

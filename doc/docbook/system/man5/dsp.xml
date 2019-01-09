@@ -63,7 +63,7 @@ their dimensions can be automatically determined by using programs.</para>
 
   <refsect1 xml:id="bug_reports"><title>BUG REPORTS</title>
   <para>Reports of bugs or problems should be submitted via electronic
-  mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.</para>
+  mail to <email>devs@brlcad.org</email></para>
   </refsect1>
 
 

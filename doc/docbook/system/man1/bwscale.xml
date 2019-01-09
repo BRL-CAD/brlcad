@@ -107,6 +107,6 @@ Optional cubic interpolation would be nice.</para>
 
   <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
   <para>Reports of bugs or problems should be submitted via electronic
-  mail to devs@brlcad.org</para>
+  mail to <email>devs@brlcad.org</email></para>
   </refsection>
 </refentry>

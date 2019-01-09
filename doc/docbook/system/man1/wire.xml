@@ -105,7 +105,7 @@ Segment # 3:  (0.000000, 10.000000, -3.000000) 0.250000
 
   <para>
     Reports of bugs or problems should be submitted via electronic
-    mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
+    mail to <email>devs@brlcad.org</email>
   </para>
 </refsection>
 </refentry>

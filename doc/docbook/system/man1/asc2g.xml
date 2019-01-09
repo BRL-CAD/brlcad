@@ -77,7 +77,7 @@
 
 
 <refsect1 xml:id='bugs'><title>BUGS</title>
-<para>Reports of bugs or problems should be submitted via e-mail to <emphasis remap='I'>&lt;devs@brlcad.org&gt;</emphasis>.</para>
+<para>Reports of bugs or problems should be submitted via e-mail to <emphasis remap='I'><email>devs@brlcad.org</email></emphasis>.</para>
 
 </refsect1>
 

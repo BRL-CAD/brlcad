@@ -179,7 +179,7 @@
   <refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
     <para>
       Reports of inaccuracies should be submitted via electronic
-      mail to &lt;devs@brlcad.org&gt;.
+      mail to <email>devs@brlcad.org</email>
     </para>
   </refsect1>
 </refentry>

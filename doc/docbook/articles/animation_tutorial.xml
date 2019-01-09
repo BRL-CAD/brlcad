@@ -1322,7 +1322,7 @@ Aberdeen Proving Ground, Maryland  21005
 <section xml:id="BUG_REPORTS">
 <title>BUG REPORTS</title>
 <para>
-Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
+Reports of bugs or problems should be submitted via electronic mail to <email>devs@brlcad.org</email>
 </para>
 </section>
 </section>
@@ -1605,7 +1605,7 @@ Aberdeen Proving Ground, Maryland  21005
 <section xml:id="BUG_REPORTS2">
 <title>BUG REPORTS</title>
 <para>
-Reports of bugs or problems should be submitted via electronic mail to devs@brlcad.org
+Reports of bugs or problems should be submitted via electronic mail to <email>devs@brlcad.org</email>
 </para>
 </section>
 </section>

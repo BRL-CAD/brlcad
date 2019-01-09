@@ -144,7 +144,7 @@ command.  If the object argument is supplied, only those objects are listed.
 
   <para>
     Reports of bugs or problems should be submitted via electronic
-    mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
+    mail to <email>devs@brlcad.org</email>
   </para>
 </refsection>
 </refentry>

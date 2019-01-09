@@ -455,7 +455,7 @@ We may pay for this later.</para>
 
 <refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
 <para>Reports of bugs or problems should be submitted via electronic
-mail to &lt;devs@brlcad.org&gt;.</para>
+mail to <email>devs@brlcad.org</email></para>
 </refsect1>
 </refentry>
 
