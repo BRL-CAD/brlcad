@@ -761,22 +761,14 @@ mk_binunif (
 	    from_file = 1;
 	    /* fall through */
 	case WDB_BINUNIF_LONGLONG:
-#if defined(_WIN32) && !defined(__CYGWIN__)
-	    bytes = sizeof(__int64);
-#else
-	    bytes = sizeof(long long);
-#endif
+	    bytes = sizeof(int64_t);
 	    break;
 	case WDB_BINUNIF_FILE_ULONGLONG:
 	    from_file = 1;
 	    /* fall through */
 	case WDB_BINUNIF_ULONGLONG:
 	    nosign = 1;
-#if defined(_WIN32) && !defined(__CYGWIN__)
-	    bytes = sizeof(unsigned __int64);
-#else
-	    bytes = sizeof(unsigned long long);
-#endif
+	    bytes = sizeof(uint64_t);
 	    break;
 	default:
 	    bu_log("Unknown binunif data source type: %d", data_type);
