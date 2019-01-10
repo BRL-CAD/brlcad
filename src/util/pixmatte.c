@@ -122,11 +122,7 @@ open_file(int i, char *name)
 	if (isatty(fileno(stdin)))
 	    return -1;	/* FAIL */
 	/* XXX No checking for multiple uses of stdin */
-#if defined(_WIN32) && !defined(__CYGWIN__)
     } else if ((fp[i] = fopen(name, "rb")) == NULL) {
-#else
-    } else if ((fp[i] = fopen(name, "r")) == NULL) {
-#endif
 	perror(name);
 	bu_log("pixmatte: cannot open \"%s\" for reading\n", name);
 	return -1;		/* FAIL */
