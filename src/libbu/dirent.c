@@ -50,7 +50,7 @@ bu_file_list(const char *path, const char *pattern, char ***files)
 
     /* calculate file count */
     dir = opendir(path);
-    while ((dp = readdir(dir)) != NULL) {
+    while (dir && (dp = readdir(dir)) != NULL) {
 	if (!pattern
 	    || (strlen(pattern) == 0)
 	    || (bu_path_match(pattern, dp->d_name, 0) == 0))
@@ -58,7 +58,8 @@ bu_file_list(const char *path, const char *pattern, char ***files)
 	    filecount++;
 	}
     }
-    (void)closedir(dir);
+    if (dir)
+	(void)closedir(dir);
 
     /* bail now if there's no files array pointer to fill in */
     if (!files) {
@@ -69,7 +70,7 @@ bu_file_list(const char *path, const char *pattern, char ***files)
     *files = (char **)bu_calloc(filecount+1, sizeof(char *), "files alloc");
 
     dir = opendir(path);
-    while ((dp = readdir(dir)) != NULL) {
+    while (dir && (dp = readdir(dir)) != NULL) {
 	if (!pattern
 	    || (strlen(pattern) == 0)
 	    || (bu_path_match(pattern, dp->d_name, 0) == 0))
@@ -77,7 +78,8 @@ bu_file_list(const char *path, const char *pattern, char ***files)
 	    (*files)[i++] = bu_strdup(dp->d_name);
 	}
     }
-    (void)closedir(dir);
+    if (dir)
+	(void)closedir(dir);
 
     bu_sort(*files, filecount, sizeof(char *), cmpdir, NULL);
 
