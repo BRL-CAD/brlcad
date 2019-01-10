@@ -543,20 +543,14 @@ view_eol(struct application *UNUSED(ap))
 void
 view_end(struct application *ap)
 {
-    /* FIXME: this should work on windows after the bu_timer() is
-     * created to replace the librt timing mechanism.
-     */
-#if !defined(_WIN32) || defined(__CYGWIN__)
     /* If the heat graph is on, render it after all pixels completed */
     if (lightmodel == 8) {
-
 	fastf_t **timeTable;
 	timeTable = timeTable_init(0, 0);
 	bu_log("Building Heat-Graph!\n");
 	bu_log("X:%d Y:%d W:%zu H%zu\n", ap->a_x, ap->a_y, width, height);
 	timeTable_process(timeTable, ap, fbp);
     }
-#endif
 
     if (fullfloat_mode) {
 	struct floatpixel *tmp;

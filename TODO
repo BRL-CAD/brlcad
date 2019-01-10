@@ -161,6 +161,8 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* use bu_gettime() in rt -l8 heatgraph visualization mode
+
 * go_open inmem to db command
 
 * optimize mged interactive loop command processing.  creating 10k
