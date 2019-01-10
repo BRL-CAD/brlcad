@@ -89,7 +89,7 @@ dir_temp(char *buf, size_t len)
     }
 
     /* method 2a: platform standard (macosx) */
-#ifdef _CS_DARWIN_USER_DIR
+#if defined(HAVE_CONFSTR) && defined(_CS_DARWIN_USER_TEMP_DIR)
     if (BU_STR_EMPTY(path)) {
 	confstr(_CS_DARWIN_USER_TEMP_DIR, path, len);
     }
@@ -163,7 +163,7 @@ dir_home(char *buf, size_t len)
 #endif
 
     /* method #2b: platform standard (macosx) */
-#ifdef _CS_DARWIN_USER_DIR
+#if defined(HAVE_CONFSTR) && defined(_CS_DARWIN_USER_DIR)
     if (BU_STR_EMPTY(path)) {
 	confstr(_CS_DARWIN_USER_DIR, path, len);
     }
@@ -219,7 +219,14 @@ dir_cache(char *buf, size_t len)
     }
 #endif
 
-    /* method #1c: platform standard (windows) */
+    /* method #1c: platform standard (macosx) */
+#if defined(HAVE_CONFSTR) && defined(_CS_DARWIN_CACHE_DIR)
+    if (BU_STR_EMPTY(path)) {
+	confstr(_CS_DARWIN_CACHE_DIR, path, len);
+    }
+#endif
+
+    /* method #1d: platform standard (windows) */
 #ifdef HAVE_WINDOWS_H
     if (BU_STR_EMPTY(path)) {
 	PWSTR wpath;
