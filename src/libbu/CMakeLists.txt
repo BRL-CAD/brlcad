@@ -157,7 +157,6 @@ set(bu_ignore_files
   CMakeLists.txt
   bitv.h
   charclass.h
-  glob.c # need windows support
   mime.cmake
   parallel.h
   sha1.h
