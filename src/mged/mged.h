@@ -234,7 +234,7 @@ extern void state_err(char *str);
 extern int invoke_db_wrapper(Tcl_Interp *interpreter, int argc, const char *argv[]);
 
 /* history.c */
-void history_record(struct bu_vls *cmdp, struct timeval *start, struct timeval *finish, int status); /* Either CMD_OK or CMD_BAD */
+void history_record(struct bu_vls *cmdp, int64_t start, int64_t finish, int status); /* Either CMD_OK or CMD_BAD */
 void history_setup(void);
 
 /* defined in usepen.c */
@@ -402,8 +402,8 @@ struct funtab {
 struct mged_hist {
     struct bu_list l;
     struct bu_vls mh_command;
-    struct timeval mh_start;
-    struct timeval mh_finish;
+    int64_t mh_start;
+    int64_t mh_finish;
     int mh_status;
 };
 

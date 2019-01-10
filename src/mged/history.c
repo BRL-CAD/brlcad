@@ -54,8 +54,8 @@ void history_journalize(struct mged_hist *hptr);
 void
 history_record(
     struct bu_vls *cmdp,
-    struct timeval *start,
-    struct timeval *finish,
+    int64_t start,
+    int64_t finish,
     int status)			   /* Either CMD_OK or CMD_BAD */
 {
     struct mged_hist *new_hist;
@@ -67,8 +67,8 @@ history_record(
 
     bu_vls_init(&(new_hist->mh_command));
     bu_vls_vlscat(&(new_hist->mh_command), cmdp);
-    new_hist->mh_start = *start;
-    new_hist->mh_finish = *finish;
+    new_hist->mh_start = start;
+    new_hist->mh_finish = finish;
     new_hist->mh_status = status;
     BU_LIST_INSERT(&(mged_hist_head.l), &(new_hist->l));
 
@@ -84,35 +84,14 @@ history_record(
 }
 
 
-HIDDEN int
-timediff(struct timeval *tvdiff, struct timeval *start, struct timeval *finish)
-{
-    if (finish->tv_sec == 0 && finish->tv_usec == 0)
-	return -1;
-    if (start->tv_sec == 0 && start->tv_usec == 0)
-	return -1;
-
-    tvdiff->tv_sec = finish->tv_sec - start->tv_sec;
-    tvdiff->tv_usec = finish->tv_usec - start->tv_usec;
-    if (tvdiff->tv_usec < 0) {
-	--tvdiff->tv_sec;
-	tvdiff->tv_usec += 1000000L;
-    }
-
-    return 0;
-}
-
-
 void
 history_journalize(struct mged_hist *hptr)
 {
-    struct timeval tvdiff;
     struct mged_hist *lasthptr;
 
     lasthptr = BU_LIST_PREV(mged_hist, &(hptr->l));
 
-    if (journal_delay && timediff(&tvdiff, &(lasthptr->mh_finish), &(hptr->mh_start)) >= 0)
-	fprintf(journalfp, "delay %ld %ld\n", (long)tvdiff.tv_sec, (long)tvdiff.tv_usec);
+    fprintf(journalfp, "delay %.4f sec\n", (lasthptr->mh_finish - hptr->mh_start) / 1000000.0);
 
     if (hptr->mh_status == CMD_BAD)
 	fprintf(journalfp, "# ");
@@ -189,7 +168,6 @@ f_history(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     int with_delays = 0;
     struct mged_hist *hp, *hp_prev;
     struct bu_vls str = BU_VLS_INIT_ZERO;
-    struct timeval tvdiff;
 
     if (argc < 1 || 4 < argc) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -234,9 +212,7 @@ f_history(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 	bu_vls_trunc(&str, 0);
 	hp_prev = BU_LIST_PREV(mged_hist, &(hp->l));
 	if (with_delays && BU_LIST_NOT_HEAD(hp_prev, &(mged_hist_head.l))) {
-	    if (timediff(&tvdiff, &(hp_prev->mh_finish), &(hp->mh_start)) >= 0)
-		bu_vls_printf(&str, "delay %ld %ld\n", (long)tvdiff.tv_sec,
-			      (long)tvdiff.tv_usec);
+	    bu_vls_printf(&str, "delay %.4f sec\n", (hp_prev->mh_finish - hp->mh_start) / 1000000.0);
 	}
 
 	if (hp->mh_status == CMD_BAD)
@@ -327,8 +303,6 @@ cmd_hist(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
     }
 
     if (BU_STR_EQUAL(argv[1], "add")) {
-	struct timeval zero;
-
 	if (argc != 3) {
 	    bu_vls_printf(&vls, "helpdevel hist");
 	    Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -343,8 +317,7 @@ cmd_hist(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 	if (argv[2][strlen(argv[2])-1] != '\n')
 	    bu_vls_putc(&vls, '\n');
 
-	zero.tv_sec = zero.tv_usec = 0L;
-	history_record(&vls, &zero, &zero, CMD_OK);
+	history_record(&vls, 0LL, 0LL, CMD_OK);
 
 	bu_vls_free(&vls);
 	return TCL_OK;
@@ -423,8 +396,7 @@ history_setup(void)
     BU_LIST_INIT(&(mged_hist_head.l));
     curr_cmd_list->cl_cur_hist = &mged_hist_head;
     bu_vls_init(&(mged_hist_head.mh_command));
-    mged_hist_head.mh_start.tv_sec = mged_hist_head.mh_start.tv_usec =
-	mged_hist_head.mh_finish.tv_sec = mged_hist_head.mh_finish.tv_usec = 0L;
+    mged_hist_head.mh_start = mged_hist_head.mh_finish = 0LL;
     mged_hist_head.mh_status = CMD_OK;
     journalfp = NULL;
 }

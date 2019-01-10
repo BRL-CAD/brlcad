@@ -46,6 +46,7 @@
 #include "vmath.h"
 #include "bu/getopt.h"
 #include "bu/path.h"
+#include "bu/time.h"
 #include "bn.h"
 #include "rt/geom.h"
 #include "ged.h"
@@ -55,27 +56,6 @@
 #include "./cmd.h"
 #include "./mged_dm.h"
 #include "./sedit.h"
-
-#ifdef _WIN32
-/* limited to seconds only */
-void gettimeofday(struct timeval *tp, struct timezone *tzp)
-{
-
-	time_t ltime;
-
-	time(&ltime);
-
-	tp->tv_sec = ltime;
-	tp->tv_usec = 0;
-
-}
-#else
-   /* for strict c90 */
-#  if !defined(HAVE_DECL_GETTIMEOFDAY) && !defined(gettimeofday)
-      extern int gettimeofday(struct timeval *, void *);
-#  endif
-#endif
-
 
 
 extern void update_grids(fastf_t sf);		/* in grid.c */
@@ -1026,7 +1006,8 @@ cmdline(struct bu_vls *vp, int record)
     struct bu_vls globbed = BU_VLS_INIT_ZERO;
     struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
     struct bu_vls save_vp = BU_VLS_INIT_ZERO;
-    struct timeval start, finish;
+    int64_t start;
+    int64_t finish;
     size_t len;
     extern struct bu_vls mged_prompt;
     char *cp;
@@ -1088,9 +1069,9 @@ cmdline(struct bu_vls *vp, int record)
 	bu_vls_vlscat(&globbed, vp);
     }
 
-    gettimeofday(&start, (struct timezone *)NULL);
+    start = bu_gettime();
     status = Tcl_Eval(INTERP, bu_vls_addr(&globbed));
-    gettimeofday(&finish, (struct timezone *)NULL);
+    finish = bu_gettime();
     result = Tcl_GetStringResult(INTERP);
 
     /* Contemplate the result reported by the Tcl interpreter. */
@@ -1122,7 +1103,7 @@ cmdline(struct bu_vls *vp, int record)
 		}
 
 		if (record)
-		    history_record(&save_vp, &start, &finish, CMD_OK);
+		    history_record(&save_vp, start, finish, CMD_OK);
 
 	    } else {
 		/* XXXXXX */
@@ -1168,7 +1149,7 @@ cmdline(struct bu_vls *vp, int record)
 				result[len-1] == '\n' ? "" : "\n");
 
 	    if (record)
-		history_record(&save_vp, &start, &finish, CMD_BAD);
+		history_record(&save_vp, start, finish, CMD_BAD);
 
 	    bu_vls_strcpy(&mged_prompt, MGED_PROMPT);
 	    status = CMD_BAD;
