@@ -347,6 +347,10 @@ WDB_EXPORT extern int mk_ars(struct rt_wdb *fp, const char *name, size_t ncurves
 WDB_EXPORT extern int mk_constraint(struct rt_wdb *wdbp, const char *name, const char *expr);
 
 
+/* FIXME: are the variable-sized types actually necessary?  should be
+ * able to rely on stdint types.  the file+nonfile duplication seems
+ * silly too.
+ */
 typedef enum {
     WDB_BINUNIF_FLOAT,
     WDB_BINUNIF_DOUBLE,
