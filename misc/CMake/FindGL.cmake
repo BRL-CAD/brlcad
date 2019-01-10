@@ -206,6 +206,7 @@ else (WIN32)
     find_path(OPENGL_INCLUDE_DIR_GLX GL/glx.h      ${OPENGL_INC_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
     find_path(OPENGL_xmesa_INCLUDE_DIR GL/xmesa.h  ${OPENGL_INC_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
     find_library(OPENGL_gl_LIBRARY NAMES GL MesaGL PATHS ${OPENGL_LIB_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
+    find_library(OPENGL_gldispatch_LIBRARY NAMES GLdispatch PATHS ${OPENGL_LIB_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
 
     # On Unix OpenGL most certainly always requires X11.
     # Feel free to tighten up these conditions if you don't
@@ -261,6 +262,10 @@ if(OPENGL_FOUND)
   else(OPENGL_glu_LIBRARY)
     set( OPENGL_GLU_FOUND "NO" )
   endif(OPENGL_glu_LIBRARY)
+
+  if(OPENGL_gldispatch_LIBRARY)
+    set(OPENGL_LIBRARIES ${OPENGL_LIBRARIES} ${OPENGL_gldispatch_LIBRARY})
+  endif(OPENGL_gldispatch_LIBRARY)
 
   # This deprecated setting is for backward compatibility with CMake1.4
   set(OPENGL_LIBRARY ${OPENGL_LIBRARIES})
