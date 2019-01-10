@@ -277,31 +277,31 @@ fi
 
 log "... running platform symbol usage check"
 PLATFORMS="
-AIX
-APPLE
-CYGWIN
-DARWIN
-FREEBSD
-HAIKU
-HPUX
-LINUX
-MINGW
-MSDOS
-QNX
-SGI
-SOLARIS
-SUN
-SUNOS
-SVR4
-SYSV
-ULTRIX
-UNIX
-VMS
-WIN16
-WIN32
-WIN64
-WINE
-WINNT
+aix
+apple
+cygwin
+darwin
+freebsd
+haiku
+hpux
+linux
+mingw
+msdos
+qnx
+sgi
+solaris
+sun
+sunos
+svr4
+sysv
+ultrix
+unix
+vms
+win16
+win32
+win64
+wine
+winnt
 "
 # build up a single regex that matches all platforms.
 # looks for cpp-style lines like "#if defined(PLATFORM)" or cmake-style "IF(PLATFORM)"
@@ -309,9 +309,9 @@ regex=
 for platform in $PLATFORMS ; do
     platformupper="`echo $platform | tr 'a-z' 'A-Z'`"
     if test "x$regex" = "x" ; then
-	regex="^[[:space:]#]*\(if\|IF\).*[^A-Z]\($platform\|$platformupper\)\([^A-Z]\|\$\)"
+	regex="^[[:space:]#]*\(if\|IF\).*[[:space:]\(]_*\($platform\|$platformupper\)_*\([[:space:]\)]\|\$\)"
     else
-	regex="$regex\|^[[:space:]#]*\(if\|IF\).*[^A-Z]\($platform\|$platformupper\)\([^A-Z]\|\$\)"
+	regex="$regex\|^[[:space:]#]*\(if\|IF\).*[[:space:]\(]_*\($platform\|$platformupper\)_*\([[:space:]\)]\|\$\)"
     fi
 done
 
@@ -375,7 +375,7 @@ fi
 # make sure no more platform-specific defines are introduced than
 # existed previously.  for cases where it "seems" necessary, find and
 # fix some other case before adding more.  lets not increase this.
-NEED_FIXING=176
+NEED_FIXING=178
 if test $FOUND -lt `expr $NEED_FIXING + 1` ; then
     if test $FOUND -ne $NEED_FIXING ; then
 	log "********************************************************"
