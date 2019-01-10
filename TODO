@@ -1838,7 +1838,32 @@ NEW OBJECTS
   persist.  there is an issue of whether aliases show as top-level
   objects or even display by default without a listing option.
 
-* support for fillets and chamfers as object/combination operations
+* edge feature edit objects: highly related to feature edits, object
+  modifiers that add to or subtract from edges (e.g., smooth corners
+  or representing a weld):
+
+    ext    int      ext  ext           ext      int
+    rounds/fillets, cuts/chamfers, and scallops/beads  (original)
+      ------_        ------.           -----.          ----------
+             \              \               /                  /
+              |              \             |                  /
+             /                \             \                /
+            /                 /             /               /
+           /                 /             /               /
+
+* feature edits: support for adding holes (diameter+parameters),
+  hollowing out objects (specify thickness), and (maybe) bending or
+  twisting objects.
+
+* CSG blending: smooth union, smooth subtract, smooth intersect.
+  specify a k parameter that defines a blending radius between two
+  objects as an additive operation.
+
+* clone/grid/pattern/repetition objects: similar to aliases and the
+  existing clone command which creates actual copies of objects, this
+  entity represents copies of objects implicitly.  it maintains the
+  grid pattern as a parameterization allowing it to be easily changed
+  and more efficiently processed.
 
 * image objects (tbd objects) for v5 geometry files.  not only the
   ability to have images in the 3D space, but to view-align them for
@@ -2250,9 +2275,6 @@ THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
 * remove the poly primitive
 
 * remove the hf primitive
-
-* support for features either as primitives or operations or both,
-  e.g., chamfer, fillet, round, cut, etc.
 
 * a cut feature edit.  implementation could be represented as the cube
   that bounds a geometry object.  eight points somewhere on the edges
