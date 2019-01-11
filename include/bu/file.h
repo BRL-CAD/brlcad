@@ -116,44 +116,32 @@ BU_EXPORT extern int bu_file_delete(const char *path);
 
 
 /**
- * Matches a filepath pattern to filesystem directory entries.
+ * Get a listing of files in a directory, optionally matching a pattern.
  *
- * If 'matches' is non-NULL, matching paths are dynamically allocated
- * and stored into the provided 'matches' array followed by a
- * terminating NULL entry.  If 'matches' is NULL, no entries will be
- * allocated or stored, but the number of matches will still be
- * returned.
+ * If the caller provides a pointer to an argv-style 'files' array,
+ * this function will dynamically allocate an array of strings, filled
+ * with the sorted listing of matching file(s).  It is the caller's
+ * responsibility to free a non-NULL array with bu_argv_free().
  *
- * If '*matches' is NULL, the caller is expected to free the matches
- * array with bu_argv_free().  If '*matches' is non-NULL (i.e., string
+
+ * If '*files' is NULL, the caller is expected to free the matches
+ * array with bu_argv_free().  If '*files' is non-NULL (i.e., string
  * array is already allocated or on the stack), the caller is expected
- * to ensure adequate entries are preallocated and to free th match
- * strings with bu_free_array().
+ * to ensure adequate entries are preallocated and to free all strings
+ * with bu_free_array() or as otherwise necessary.
  *
  * Example:
  @code
-   # This allocates an array for storing glob matches, filling in the
-   # array with all directory paths starting with 'a' through 'e' and
-   # ending with a '.c' in the src/libbu directory.
+   // This allocates an array for storing matches, filling in the
+   // array with all directory paths starting with 'a' through 'e' and
+   // ending with a '.c' in the src/libbu directory.
 
    char **my_matches = NULL;
-   bu_file_glob("src/libbu/[a-e]*.c", &my_matches);
+   size_t count = bu_file_list("src/libbu", "[a-e]*.c", &my_matches);
  @endcode
  *
- * @return the number of matches
- */
-BU_EXPORT extern size_t bu_file_glob(const char *pattern, char ***matches);
-
-
-/**
- * Returns the number of directory entries for a given path matching
- * an optional glob pattern.  If the caller provides a pointer to an
- * argv-style 'files' array, this function will dynamically allocate
- * an array of strings, filled with the sorted listing of matching
- * file(s).
- *
- * It is the caller's responsibility to free a non-NULL array with
- * bu_argv_free().
+ * @return the number of directory entries matching the provided
+ * pattern.
  */
 BU_EXPORT extern size_t bu_file_list(const char *path, const char *pattern, char ***files);
 
