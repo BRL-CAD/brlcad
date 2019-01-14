@@ -20,9 +20,21 @@
 
 #include "common.h"
 
+#ifdef HAVE_SYS_WAIT_H
+#  include <sys/wait.h>
+#endif
+
+#include <stdlib.h> /* exit */
 #include <sys/types.h>
 #include "bio.h"
+#include "bu/list.h"
+#include "bu/malloc.h"
 #include "bu/process.h"
+#include "bu/str.h"
+
+#if !defined(HAVE_DECL_WAIT) && !defined(wait) && !defined(_WINSOCKAPI_)
+extern pid_t wait(int *);
+#endif
 
 int
 bu_process_id()
@@ -34,93 +46,94 @@ bu_process_id()
 #endif
 }
 
+
 #if 0
 
-struct bu_pipe {
-#ifndef _WIN32
-    int pipe[2];
-#else
-    HANDLE p[2];
-    HANDLE pipeDup;
-    SECURITY_ATTRIBUTES sa = {0};
-#endif
-};
 
-int
-#ifndef _WIN32
-bu_pipe_create(struct bu_pipe **, int UNUSED(ninherit))
-#else
-bu_pipe_create(struct bu_pipe **, int ninherit)
-#endif
-{
-    struct bu_pipe *p = NULL;
-    BU_GET(p, struct bu_pipe);
-#ifndef _WIN32
-    int ret = 0;
-    ret = pipe(p->pipe);
-    if (ret < 0) {
-	perror("failed to create pipe");
-	return ret;
-    }
-#else
-    p->sa.nLength = sizeof(sa);
-    p->sa.bInheritHandle = TRUE;
-    p->sa.lpSecurityDescriptor = NULL;
-    CreatePipe(&p->pipe[0], &p->pipe[1], &sa, 0);
-    if (ninherit == 0 || ninherit == 1) {
-	/* Create noninheritable handle and close the inheritable handle. */
-	DuplicateHandle(GetCurrentProcess(), p->pipe[ninherit],
-		GetCurrentProcess(),  &pipe_Dup ,
-		0,  FALSE,
-		DUPLICATE_SAME_ACCESS);
-	CloseHandle(p->pipe[ninherit]);
-    }
-    return 0;
-#endif
-}
-
-void
-bu_pipe_destroy(struct bu_pipe *p)
-{
-    if (!p) return;
-    BU_PUT(p, struct bu_pipe);
-}
-
-void
-bu_pipe_close(struct bu_pipe *p, int id)
-{
-    if (!p || (id != 0 && id != 1)) return;
-#ifdef _WIN32
-    CloseHandle(p->pipe[id]);
-#else
-    (void)close(p->pipe[id]);
-#endif
-}
-
-struct bu_process_info {
+struct bu_process {
     struct bu_list l;
+    FILE *fp;
 #if defined(_WIN32) && !defined(__CYGWIN__)
+    HANDLE fd_in;
     HANDLE fd;
     HANDLE hProcess;
     DWORD pid;
-    void *chan; /* FIXME: uses communication channel instead of file
-		 * descriptor to get output */
 #else
+    int fd_in;
     int fd;
     int pid;
 #endif
     int aborted;
 };
 
+
 void
-bu_exec(const char *cmd, int argc, const char **argv, struct bu_pipe *pin, struct bu_pipe *perr)
+bu_process_input_close(struct bu_process *pinfo)
 {
-    if (!cmd || !argc || !argv) {
+    if (!pinfo || !pinfo->fp) return;
+    (void)fclose(pinfo->fp);
+    pinfo->fp = NULL;
+}
+
+FILE *
+bu_process_input_open(struct bu_process *pinfo)
+{
+    if (!pinfo) return NULL;
+
+    bu_process_input_close(pinfo);
+
+#ifndef _WIN32
+    pinfo->fp = fdopen(pinfo->fd_in, "wb");
+#else
+    pinfo->fp = _fdopen(_open_osfhandle((intptr_t)pinfo->fd_in, _O_TEXT), "wb");
+#endif
+    return pinfo->fp;
+}
+
+int
+bu_process_read(char *buff, int *count, struct bu_process *pinfo, int n)
+{
+    int ret = 0;
+    if (!pinfo || !buff || !n || !count) return -1;
+#ifndef _WIN32
+    (*count) = read((int)pinfo->fd, buff, n);
+    ret = ((*count) <= 0) ? -1 : 0;
+#else
+    DWORD dcount;
+    if (!ReadFile(pinfo->fd, buff, n, &dcount, 0)) {
+	ret = -1;
+    }
+    (*count) = (int)dcount;
+#endif
+
+    /* sanity clamping */
+    if ((*count) < 0) {
+	perror("READ ERROR");
+	(*count) = 0;
+    } else if ((*count) > n) {
+	(*count) = n;
+    }
+
+    return ret;
+}
+
+
+void
+bu_process_exec(struct bu_process **p, const char *cmd, int argc, const char **argv)
+{
+    int pid;
+    int pret = 0;
+#ifdef HAVE_UNISTD_H
+    int pipe_in[2];
+    int pipe_err[2];
+    const char **av = NULL;
+    if (!p || !cmd || !argc || !argv) {
 	return;
     }
-#ifdef HAVE_UNISTD_H
-    int ac = 0;
-    const char **av = NULL;
+
+    BU_GET(*p, struct bu_process);
+    (*p)->fp = NULL;
+
     av = (const char **)bu_calloc(argc+2, sizeof(char *), "argv array");
     if (!BU_STR_EQUAL(cmd, argv[0])) {
 	/* By convention the first argument to execvp should match the
@@ -137,10 +150,156 @@ bu_exec(const char *cmd, int argc, const char **argv, struct bu_pipe *pin, struc
 	}
 	av[argc] = (char *)NULL;
     }
-    (void)execvp(cmd, av);
+
+    pret = pipe(pipe_in);
+    if (pret < 0) {
+	perror("pipe");
+    }
+    pret = pipe(pipe_err);
+    if (pret < 0) {
+	perror("pipe");
+    }
+
+    /* fork + exec */
+    if ((pid = fork()) == 0) {
+	/* make this a process group leader */
+	setpgid(0, 0);
+
+	/* Redirect stdin and stderr */
+	(void)close(0);
+	pret = dup(pipe_in[0]);
+	if (pret < 0) {
+	    perror("dup");
+	}
+	(void)close(2);
+	pret = dup(pipe_err[1]);
+	if (pret < 0) {
+	    perror("dup");
+	}
+
+	/* close pipes */
+	(void)close(pipe_in[0]);
+	(void)close(pipe_in[1]);
+	(void)close(pipe_err[0]);
+	(void)close(pipe_err[1]);
+
+	for (int i = 3; i < 20; i++) {
+	    (void)close(i);
+	}
+
+	(void)execvp(cmd, (char * const*)av);
+	perror(cmd);
+	exit(16);
+    }
+
+    (void)close(pipe_in[0]);
+    (void)close(pipe_err[1]);
+
+    /* Save necessary prmation for parental process manipulation */
+    (*p)->fd_in = pipe_in[1];
+    (*p)->fd = pipe_err[0];
+    (*p)->pid = pid;
+
 #else
+    struct bu_vls cp_cmd = BU_VLS_INIT_ZERO;
+    HANDLE pipe_in[2], pipe_inDup;
+    HANDLE pipe_err[2], pipe_errDup;
     STARTUPINFO si = {0};
+    PROCESS_INFORMATION pi = {0};
+    SECURITY_ATTRIBUTES sa = {0};
+    if (!cmd || !argc || !argv) {
+	return;
+    }
+
+    sa.nLength = sizeof(sa);
+    sa.bInheritHandle = TRUE;
+    sa.lpSecurityDescriptor = NULL;
+
+    /* Create a pipe for the child process's STDOUT. */
+    CreatePipe(&pipe_err[0], &pipe_err[1], &sa, 0);
+
+    /* Create noninheritable read handle and close the inheritable read handle. */
+    DuplicateHandle(GetCurrentProcess(), pipe_err[0],
+	    GetCurrentProcess(),  &pipe_errDup ,
+	    0,  FALSE,
+	    DUPLICATE_SAME_ACCESS);
+    CloseHandle(pipe_err[0]);
+
+    /* Create a pipe for the child process's STDIN. */
+    CreatePipe(&pipe_in[0], &pipe_in[1], &sa, 0);
+
+    /* Duplicate the write handle to the pipe so it is not inherited. */
+    DuplicateHandle(GetCurrentProcess(), pipe_in[1],
+	    GetCurrentProcess(), &pipe_inDup,
+	    0, FALSE,                  /* not inherited */
+	    DUPLICATE_SAME_ACCESS);
+    CloseHandle(pipe_in[1]);
+
+    si.cb = sizeof(STARTUPINFO);
+    si.lpReserved = NULL;
+    si.lpReserved2 = NULL;
+    si.cbReserved2 = 0;
+    si.lpDesktop = NULL;
+    si.dwFlags = STARTF_USESTDHANDLES;
+    si.hStdInput   = pipe_in[0];
+    si.hStdOutput  = pipe_err[1];
+    si.hStdError   = pipe_err[1];
+
+    /* Create_Process uses a string, not a char array */
+    for (i = 0; i < argc; i++) {
+	bu_vls_printf(&cp_cmd, "%s ", argv[i]);
+    }
+
+    CreateProcess(NULL, bu_vls_addr(&cp_cmd), NULL, NULL, TRUE,
+	    DETACHED_PROCESS, NULL, NULL,
+	    &si, &pi);
+    bu_vls_free(&cp_cmd);
+
+    CloseHandle(pipe_in[0]);
+    CloseHandle(pipe_err[1]);
+
+    /* Save necessary information for parental process manipulation */
+    (*p)->fd_in = pipe_inDup;
+    (*p)->fd = pipe_errDup;
+    (*p)->hProcess = pi.hProcess;
+    (*p)->pid = pi.dwProcessId;
+    (*p)->aborted = 0;
+
 #endif
+}
+
+int
+bu_process_wait(struct bu_process *pinfo)
+{
+    int aborted = 0;
+#ifndef _WIN32
+    int rpid;
+    int retcode = 0;
+    if (!pinfo) return -1;
+    close(pinfo->fd);
+    while ((rpid = wait(&retcode)) != pinfo->pid && rpid != -1);
+#else
+    DWORD retcode = 0;
+    if (!pinfo) return -1;
+    /* wait for the forked process
+     * either EOF has been sent or there was a read error.
+     * there is no need to block indefinitely
+     */
+    WaitForSingleObject(pinfo->hProcess, 120);
+    if (GetLastError() == ERROR_PROCESS_ABORTED) {
+	pinfo->aborted = 1;
+    }
+
+    GetExitCodeProcess(pinfo->hProcess, &retcode);
+    /* may be useful to try pr_wait_status() here */
+#endif
+    aborted = pinfo->aborted;
+
+    /* Clean up */
+    bu_process_input_close(pinfo);
+    BU_GET(pinfo, struct bu_process);
+
+    return aborted;
 }
 
 #endif

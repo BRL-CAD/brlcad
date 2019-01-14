@@ -27,6 +27,7 @@
 
 #include "common.h"
 
+#include <stdio.h> /* FILE */
 #include "bu/defines.h"
 
 __BEGIN_DECLS
@@ -36,24 +37,27 @@ __BEGIN_DECLS
  */
 BU_EXPORT extern int bu_process_id(void);
 
+
 #if 0
-/** @brief Wrappers for pipe communication mechanisms */
-struct bu_pipe;
+/* Wrappers for using subprocess execution */
+struct bu_process;
 
-BU_EXPORT extern int bu_pipe_create(struct bu_pipe **p, int ninherit);
+/* Open and return FILE pointer associated with process input fd.  Caller should
+ * not close this FILE pointer directly - call bu_process_close_input instead. */
+BU_EXPORT extern FILE *bu_process_open_input(struct bu_process *pinfo);
 
-/* Frees memory associated with struct bu_pipe - does NOT close pipes */
-BU_EXPORT extern void bu_pipe_destroy(struct bu_pipe *p);
+/* Close input FILE pointer and manage internal state */
+BU_EXPORT extern void bu_process_close_input(struct bu_process *pinfo);
 
-/* Close file id 0 or 1 in the specified pipe.  id values other than
- * 0 or 1 are ignored. */
-BU_EXPORT void bu_pipe_close(struct bu_pipe *p, int id);
-
-/* TODO - ged_run_rt info should be generic - turn into a container */
-struct bu_process_info;
+/* Read n bytes from output channel associated with process. */
+BU_EXPORT extern int bu_process_read(char *buff, int *count, struct bu_process *pinfo, int n);
 
 /** @brief Wrapper for executing a sub-process (execvp and CreateProcess) */
-BU_EXPORT void bu_exec(struct bu_process_info **i, const char *cmd, int argc, const char **argv, struct bu_pipe *pin, struct bu_pipe *perr);
+BU_EXPORT extern void bu_process_exec(struct bu_process **info, const char *cmd, int argc, const char **argv);
+
+/** @brief Wrapper for waiting on a sub-process to complete (wait or WaitForSingleObject) and
+ * cleaning up pinfo.  After this call completes, pinfo will be freed. */
+BU_EXPORT extern int bu_process_wait(struct bu_process *pinfo);
 #endif
 
 /** @} */
