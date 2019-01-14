@@ -48,8 +48,6 @@ bu_process_id()
 
 
 #if 0
-
-
 struct bu_process {
     struct bu_list l;
     FILE *fp;
@@ -71,7 +69,9 @@ void
 bu_process_input_close(struct bu_process *pinfo)
 {
     if (!pinfo || !pinfo->fp) return;
-    (void)fclose(pinfo->fp);
+    if (pinfo->fp) {
+	(void)fclose(pinfo->fp);
+    }
     pinfo->fp = NULL;
 }
 
@@ -88,6 +88,20 @@ bu_process_input_open(struct bu_process *pinfo)
     pinfo->fp = _fdopen(_open_osfhandle((intptr_t)pinfo->fd_in, _O_TEXT), "wb");
 #endif
     return pinfo->fp;
+}
+
+
+void *
+bu_process_fd(struct bu_process *pinfo, int fd)
+{
+    if (!pinfo || (fd != 0 && fd != 1)) return NULL;
+    if (fd == 0) {
+	return (void *)(&(pinfo->fd_in));
+    }
+    if (fd == 1) {
+	return (void *)(&(pinfo->fd));
+    }
+    return NULL;
 }
 
 int
@@ -127,7 +141,7 @@ bu_process_exec(struct bu_process **p, const char *cmd, int argc, const char **a
     int pipe_in[2];
     int pipe_err[2];
     const char **av = NULL;
-    if (!p || !cmd || !argc || !argv) {
+    if (!p || !cmd) {
 	return;
     }
 
@@ -135,7 +149,7 @@ bu_process_exec(struct bu_process **p, const char *cmd, int argc, const char **a
     (*p)->fp = NULL;
 
     av = (const char **)bu_calloc(argc+2, sizeof(char *), "argv array");
-    if (!BU_STR_EQUAL(cmd, argv[0])) {
+    if (!argc || !BU_STR_EQUAL(cmd, argv[0])) {
 	/* By convention the first argument to execvp should match the
 	 * cmd string - if it doesn't we can handle it in av, but it
 	 * means the actual exec av array will be longer by one. */
@@ -301,7 +315,6 @@ bu_process_wait(struct bu_process *pinfo)
 
     return aborted;
 }
-
 #endif
 
 /*

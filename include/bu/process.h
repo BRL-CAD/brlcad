@@ -37,17 +37,21 @@ __BEGIN_DECLS
  */
 BU_EXPORT extern int bu_process_id(void);
 
-
 #if 0
 /* Wrappers for using subprocess execution */
 struct bu_process;
 
 /* Open and return FILE pointer associated with process input fd.  Caller should
  * not close this FILE pointer directly - call bu_process_close_input instead. */
-BU_EXPORT extern FILE *bu_process_open_input(struct bu_process *pinfo);
+BU_EXPORT extern FILE *bu_process_input_open(struct bu_process *pinfo);
 
 /* Close input FILE pointer and manage internal state */
-BU_EXPORT extern void bu_process_close_input(struct bu_process *pinfo);
+BU_EXPORT extern void bu_process_input_close(struct bu_process *pinfo);
+
+/* Retrieve the pointer to the input (0) or output (1) file descriptor associated with the process.
+ * To use this in calling code, the caller must cast it according to the specific platform currently
+ * begin used. */
+BU_EXPORT void *bu_process_fd(struct bu_process *pinfo, int fd);
 
 /* Read n bytes from output channel associated with process. */
 BU_EXPORT extern int bu_process_read(char *buff, int *count, struct bu_process *pinfo, int n);
@@ -59,7 +63,6 @@ BU_EXPORT extern void bu_process_exec(struct bu_process **info, const char *cmd,
  * cleaning up pinfo.  After this call completes, pinfo will be freed. */
 BU_EXPORT extern int bu_process_wait(struct bu_process *pinfo);
 #endif
-
 /** @} */
 
 __END_DECLS
