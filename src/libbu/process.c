@@ -220,7 +220,7 @@ bu_process_exec(struct bu_process **p, const char *cmd, int argc, const char **a
     (void)close(pipe_in[0]);
     (void)close(pipe_err[1]);
 
-    /* Save necessary prmation for parental process manipulation */
+    /* Save necessary information for parental process manipulation */
     (*p)->fd_in = pipe_in[1];
     (*p)->fd = pipe_err[0];
     (*p)->pid = pid;
