@@ -54,7 +54,11 @@
 #include "rt/db5.h"
 #include "raytrace.h"
 
-#define ENCODE_LEN(len) (1<<len)
+/**
+ * Number of bytes used for each value of DB5HDR_WIDTHCODE_*
+ */
+#define ENCODE_LEN(len) (1 << len)
+
 
 struct db_tree_counter_state {
     uint32_t magic;
