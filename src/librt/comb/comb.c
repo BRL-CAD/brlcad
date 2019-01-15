@@ -54,6 +54,7 @@
 #include "rt/db5.h"
 #include "raytrace.h"
 
+#define ENCODE_LEN(len) (1<<len)
 
 struct db_tree_counter_state {
     uint32_t magic;
@@ -78,7 +79,7 @@ struct db_tree_counter_state {
  * holding the matrix subscripts.  The caller is responsible for
  * correcting by saying:
  *
- * tcsp->leafbytes -= tcsp->n_leaf * (8 - DB5_ENC_LEN(wid));
+ * tcsp->leafbytes -= tcsp->n_leaf * (8 - ENCODE_LEN(wid));
  */
 size_t
 db_tree_counter(const union tree *tp, struct db_tree_counter_state *tcsp)
@@ -303,15 +304,15 @@ rt_comb_export5(
      * 'wid'.  Ignore the slight chance that a smaller 'wid' might now
      * be possible.
      */
-    tcs.leafbytes -= tcs.n_leaf * (8 - DB5_ENC_LEN(wid));
+    tcs.leafbytes -= tcs.n_leaf * (8 - ENCODE_LEN(wid));
 
     /* Second pass -- determine amount of on-disk storage needed */
     need =  1 +			/* width code */
-	DB5_ENC_LEN(wid) + 	/* size for nmatrices */
-	DB5_ENC_LEN(wid) +	/* size for nleaves */
-	DB5_ENC_LEN(wid) +	/* size for leafbytes */
-	DB5_ENC_LEN(wid) +	/* size for len of RPN */
-	DB5_ENC_LEN(wid) +	/* size for max_stack_depth */
+	ENCODE_LEN(wid) + 	/* size for nmatrices */
+	ENCODE_LEN(wid) +	/* size for nleaves */
+	ENCODE_LEN(wid) +	/* size for leafbytes */
+	ENCODE_LEN(wid) +	/* size for len of RPN */
+	ENCODE_LEN(wid) +	/* size for max_stack_depth */
 	tcs.n_mat * (ELEMENTS_PER_MAT * SIZEOF_NETWORK_DOUBLE) +	/* sizeof matrix array */
 	tcs.leafbytes +		/* size for leaf nodes */
 	rpn_len;		/* storage for RPN expression */
