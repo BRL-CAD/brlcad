@@ -340,11 +340,7 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
 
     bin = bu_brlcad_root("bin", 1);
     if (bin) {
-#ifdef _WIN32
-	snprintf(rt, 256, "\"%s/%s\"", bin, argv[0]);
-#else
 	snprintf(rt, 256, "%s/%s", bin, argv[0]);
-#endif
     }
 
     vp = &gedp->ged_gdp->gd_rt_cmd[0];
@@ -374,19 +370,8 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
 	*vp++ = "model";
     }
 
-    /* XXX why is this different for win32 only? */
-#ifdef _WIN32
-    {
-	char buf[512];
-
-	snprintf(buf, 512, "\"%s\"", gedp->ged_wdbp->dbip->dbi_filename);
-	*vp++ = buf;
-    }
-#else
     *vp++ = gedp->ged_wdbp->dbip->dbi_filename;
-#endif
-
-	gedp->ged_gdp->gd_rt_cmd_len = vp - gedp->ged_gdp->gd_rt_cmd;
+    gedp->ged_gdp->gd_rt_cmd_len = vp - gedp->ged_gdp->gd_rt_cmd;
     (void)_ged_run_rt(gedp, (argc - i), &(argv[i]));
     bu_free(gedp->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
     gedp->ged_gdp->gd_rt_cmd = NULL;

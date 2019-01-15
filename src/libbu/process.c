@@ -270,7 +270,12 @@ bu_process_exec(struct bu_process **p, const char *cmd, int argc, const char **a
 
     /* Create_Process uses a string, not a char array */
     for (i = 0; i < argc; i++) {
-	bu_vls_printf(&cp_cmd, "%s ", argv[i]);
+	/* Quote all path names for CreateProcess */
+	if (bu_file_exists(argv[i], NULL)) {
+	    bu_vls_printf(&cp_cmd, "\"%s\" ", argv[i]);
+	} else {
+	    bu_vls_printf(&cp_cmd, "%s ", argv[i]);
+	}
     }
 
     CreateProcess(NULL, bu_vls_addr(&cp_cmd), NULL, NULL, TRUE,
