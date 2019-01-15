@@ -78,16 +78,19 @@ bu_process_close(struct bu_process *pinfo, int fd)
 	if (!pinfo->fp_in) return;
 	(void)fclose(pinfo->fp_in);
 	pinfo->fp_in = NULL;
+	return;
     }
     if (fd == 1) {
 	if (!pinfo->fp_out) return;
 	(void)fclose(pinfo->fp_out);
 	pinfo->fp_out = NULL;
+	return;
     }
     if (fd == 2) {
 	if (!pinfo->fp_err) return;
 	(void)fclose(pinfo->fp_err);
 	pinfo->fp_err = NULL;
+	return;
     }
 }
 
@@ -198,7 +201,11 @@ bu_process_read(char *buff, int *count, struct bu_process *pinfo, int fd, int n)
 
 
 void
-bu_process_exec(struct bu_process **p, const char *cmd, int argc, const char **argv, int out_eql_err)
+#ifdef _WIN32
+bu_process_exec(struct bu_process **p, const char *cmd, int argc, const char **argv, int out_eql_err, int hide_window)
+#else
+bu_process_exec(struct bu_process **p, const char *cmd, int argc, const char **argv, int out_eql_err, int UNUSED(hide_window))
+#endif
 {
     int pret = 0;
 #ifdef HAVE_UNISTD_H
@@ -357,7 +364,12 @@ bu_process_exec(struct bu_process **p, const char *cmd, int argc, const char **a
     si.lpReserved2 = NULL;
     si.cbReserved2 = 0;
     si.lpDesktop = NULL;
-    si.dwFlags = STARTF_USESTDHANDLES;
+    if (hide_window) {
+	si.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
+	si.wShowWindow = SW_HIDE;
+    } else {
+	si.dwFlags = STARTF_USESTDHANDLES;
+    }
     si.hStdInput   = pipe_in[0];
     if (out_eql_err) {
 	si.hStdOutput  = pipe_err[1];

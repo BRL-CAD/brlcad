@@ -65,7 +65,7 @@ BU_EXPORT int bu_process_pid(struct bu_process *pinfo);
 BU_EXPORT extern int bu_process_read(char *buff, int *count, struct bu_process *pinfo, int fd, int n);
 
 /** @brief Wrapper for executing a sub-process (execvp and CreateProcess) */
-BU_EXPORT extern void bu_process_exec(struct bu_process **info, const char *cmd, int argc, const char **argv, int out_eql_err);
+BU_EXPORT extern void bu_process_exec(struct bu_process **info, const char *cmd, int argc, const char **argv, int out_eql_err, int hide_window);
 
 /** @brief Wrapper for waiting on a sub-process to complete (wait or WaitForSingleObject) and
  * cleaning up pinfo.  After this call completes, pinfo will be freed. */
