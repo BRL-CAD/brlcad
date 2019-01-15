@@ -47,7 +47,6 @@ bu_process_id()
 }
 
 
-#if 0
 struct bu_process {
     struct bu_list l;
     FILE *fp;
@@ -105,13 +104,20 @@ bu_process_fd(struct bu_process *pinfo, int fd)
 }
 
 int
+bu_process_pid(struct bu_process *pinfo)
+{
+    if (!pinfo) return -1;
+    return (int)pinfo->pid;
+}
+
+int
 bu_process_read(char *buff, int *count, struct bu_process *pinfo, int n)
 {
-    int ret = 0;
+    int ret = 1;
     if (!pinfo || !buff || !n || !count) return -1;
 #ifndef _WIN32
     (*count) = read((int)pinfo->fd, buff, n);
-    ret = ((*count) <= 0) ? -1 : 0;
+    ret = ((*count) <= 0) ? -1 : 1;
 #else
     DWORD dcount;
     if (!ReadFile(pinfo->fd, buff, n, &dcount, 0)) {
@@ -315,7 +321,7 @@ bu_process_wait(struct bu_process *pinfo)
 
     return aborted;
 }
-#endif
+
 
 /*
  * Local Variables:
