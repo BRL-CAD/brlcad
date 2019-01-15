@@ -45,15 +45,11 @@
 #include "bu/app.h"
 #include "bu/cmd.h"
 #include "bu/file.h"
+#include "bu/process.h"
 #include "vmath.h"
 
 #include "./qray.h"
 #include "./ged_private.h"
-
-#if defined(HAVE_FDOPEN) && !defined(HAVE_DECL_FDOPEN)
-extern FILE *fdopen(int fd, const char *mode);
-#endif
-
 
 /**
  * Invoke nirt with the current view & stuff
@@ -68,29 +64,17 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     FILE *fp_in = NULL;
     FILE *fp_out = NULL;
     FILE *fp_err = NULL;
+    struct bu_process *p = NULL;
+    char **av = NULL;
     int ret;
-#ifndef _WIN32
-    int pid = 0;
-    int rpid = 0;
-    int retcode = 0;
-    int pipe_in[2] = {0, 0};
-    int pipe_out[2] = {0, 0};
-    int pipe_err[2] = {0, 0};
-#else
-    HANDLE pipe_in[2], pipe_inDup;
-    HANDLE pipe_out[2], pipe_outDup;
-    HANDLE pipe_err[2], pipe_errDup;
-    STARTUPINFO si;
-    PROCESS_INFORMATION pi;
-    SECURITY_ATTRIBUTES sa;
-    struct bu_vls line1 = BU_VLS_INIT_ZERO;
-#endif
+    int retcode;
     int use_input_orig = 0;
     vect_t center_model;
     vect_t dir;
     vect_t cml;
     double scan[4]; /* holds sscanf values */
     int i = 9;
+    int j = 1;
     char line[RT_MAXLINE] = {0};
     char *val = NULL;
     struct bu_vls o_vls = BU_VLS_INIT_ZERO;
@@ -120,14 +104,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 
     bin = bu_brlcad_root("bin", 1);
     if (bin) {
-#ifdef _WIN32
-	/* FIXME: is this really necessary? can we wrap command in
-	 * quotes for all platforms?
-	 */
-	snprintf(nirt, 256, "\"%s/%s\"", bin, argv[0]);
-#else
 	snprintf(nirt, 256, "%s/%s", bin, argv[0]);
-#endif
     }
 
     vp = &gedp->ged_gdp->gd_rt_cmd[0];
@@ -271,167 +248,44 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     if (use_input_orig) {
 	bu_vls_printf(gedp->ged_result_str, "\nFiring from (%lf, %lf, %lf)...\n",
 		      center_model[X], center_model[Y], center_model[Z]);
-    } else
+    } else {
 	bu_vls_printf(gedp->ged_result_str, "\nFiring from view center...\n");
-
-#ifndef _WIN32
-    ret = pipe(pipe_in);
-    if (ret < 0)
-	perror("pipe");
-    ret = pipe(pipe_out);
-    if (ret < 0)
-	perror("pipe");
-    ret = pipe(pipe_err);
-    if (ret < 0)
-	perror("pipe");
-
-    (void)signal(SIGINT, SIG_IGN);
-    if ((pid = fork()) == 0) {
-	/* Redirect stdin, stdout, stderr */
-	(void)close(0);
-	ret = dup(pipe_in[0]);
-	if (ret < 0)
-	    perror("dup");
-	(void)close(1);
-	ret = dup(pipe_out[1]);
-	if (ret < 0)
-	    perror("dup");
-	(void)close(2);
-	ret = dup (pipe_err[1]);
-	if (ret < 0)
-	    perror("dup");
-
-	/* close pipes */
-	(void)close(pipe_in[0]);
-	(void)close(pipe_in[1]);
-	(void)close(pipe_out[0]);
-	(void)close(pipe_out[1]);
-	(void)close(pipe_err[0]);
-	(void)close(pipe_err[1]);
-	for (i = 3; i < 20; i++)
-	    (void)close(i);
-	(void)signal(SIGINT, SIG_DFL);
-	(void)execvp(gedp->ged_gdp->gd_rt_cmd[0], gedp->ged_gdp->gd_rt_cmd);
-	perror (gedp->ged_gdp->gd_rt_cmd[0]);
-	exit(16);
     }
 
-    /* use fp_in to feed view info to nirt */
-    (void)close(pipe_in[0]);
-    fp_in = fdopen(pipe_in[1], "w");
-
-    /* use fp_out to read back the result */
-    (void)close(pipe_out[1]);
-    fp_out = fdopen(pipe_out[0], "r");
-
-    /* use fp_err to read any error messages */
-    (void)close(pipe_err[1]);
-    fp_err = fdopen(pipe_err[0], "r");
-
-    /* send quit command to nirt */
-    ret = fwrite("q\n", 1, 2, fp_in);
-    if (ret != 2)
-	perror("fwrite");
-    (void)fclose(fp_in);
-
-#else
-    memset((void *)&si, 0, sizeof(STARTUPINFO));
-    memset((void *)&pi, 0, sizeof(PROCESS_INFORMATION));
-    memset((void *)&sa, 0, sizeof(SECURITY_ATTRIBUTES));
-
-    sa.nLength = sizeof(sa);
-    sa.bInheritHandle = TRUE;
-    sa.lpSecurityDescriptor = NULL;
-
-    /* Create a pipe for the child process's STDOUT. */
-    CreatePipe(&pipe_out[0], &pipe_out[1], &sa, 0);
-
-    /* Create noninheritable read handle and close the inheritable read handle. */
-    DuplicateHandle(GetCurrentProcess(), pipe_out[0],
-		    GetCurrentProcess(),  &pipe_outDup ,
-		    0,  FALSE,
-		    DUPLICATE_SAME_ACCESS);
-    CloseHandle(pipe_out[0]);
-
-    /* Create a pipe for the child process's STDERR. */
-    CreatePipe(&pipe_err[0], &pipe_err[1], &sa, 0);
-
-    /* Create noninheritable read handle and close the inheritable read handle. */
-    DuplicateHandle(GetCurrentProcess(), pipe_err[0],
-		    GetCurrentProcess(),  &pipe_errDup ,
-		    0,  FALSE,
-		    DUPLICATE_SAME_ACCESS);
-    CloseHandle(pipe_err[0]);
-
-    /* The steps for redirecting child process's STDIN:
-     * 1.  Save current STDIN, to be restored later.
-     * 2.  Create anonymous pipe to be STDIN for child process.
-     * 3.  Set STDIN of the parent to be the read handle to the
-     *     pipe, so it is inherited by the child process.
-     * 4.  Create a noninheritable duplicate of the write handle,
-     *     and close the inheritable write handle.
-     */
-
-    /* Create a pipe for the child process's STDIN. */
-    CreatePipe(&pipe_in[0], &pipe_in[1], &sa, 0);
-
-    /* Duplicate the write handle to the pipe so it is not inherited. */
-    DuplicateHandle(GetCurrentProcess(), pipe_in[1],
-		    GetCurrentProcess(), &pipe_inDup,
-		    0, FALSE,                  /* not inherited */
-		    DUPLICATE_SAME_ACCESS);
-    CloseHandle(pipe_in[1]);
-
-    si.cb = sizeof(STARTUPINFO);
-    si.lpReserved = NULL;
-    si.lpReserved2 = NULL;
-    si.cbReserved2 = 0;
-    si.lpDesktop = NULL;
-    si.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
-    si.hStdInput   = pipe_in[0];
-    si.hStdOutput  = pipe_out[1];
-    si.hStdError   = pipe_err[1];
-    si.wShowWindow = SW_HIDE;
-
-    bu_vls_strcat(&line1, gedp->ged_gdp->gd_rt_cmd[0]);
-    bu_vls_strcat(&line1, " ");
-
+    j = 1;
+    av = (char **)bu_calloc(gedp->ged_gdp->gd_rt_cmd_len + 1, sizeof(char *), "av");
+    av[0] = gedp->ged_gdp->gd_rt_cmd[0];
     for (i = 1; i < gedp->ged_gdp->gd_rt_cmd_len; i++) {
 	/* skip commands */
 	if (BU_STR_EQUAL(gedp->ged_gdp->gd_rt_cmd[i], "-e")) {
-	    ++i;
+	    i++;
 	} else {
-	    /* append other arguments (i.e. options, file and obj(s)) */
-	    bu_vls_printf(&line1, "\"%s\" ", gedp->ged_gdp->gd_rt_cmd[i]);
+	    av[j] = gedp->ged_gdp->gd_rt_cmd[i];
+	    j++;
 	}
     }
 
-    CreateProcess(NULL, bu_vls_addr(&line1), NULL, NULL, TRUE,
-		  DETACHED_PROCESS, NULL, NULL,
-		  &si, &pi);
+    bu_process_exec(&p, gedp->ged_gdp->gd_rt_cmd[0], j, (const char **)av, 0, 1);
+    bu_free(av, "av");
 
-    /* use fp_in to feed view info to nirt */
-    CloseHandle(pipe_in[0]);
-    fp_in = _fdopen(_open_osfhandle((intptr_t)pipe_inDup, _O_TEXT), "w");
+    fp_in = bu_process_open(p, 0);
 
     /* send commands down the pipe */
-    for (i = 1; i < gedp->ged_gdp->gd_rt_cmd_len - 2; i++)
-	if (strstr(gedp->ged_gdp->gd_rt_cmd[i], "-e") != NULL)
+    for (i = 1; i < gedp->ged_gdp->gd_rt_cmd_len - 2; i++) {
+	if (strstr(gedp->ged_gdp->gd_rt_cmd[i], "-e") != NULL) {
 	    fprintf(fp_in, "%s\n", gedp->ged_gdp->gd_rt_cmd[++i]);
+	}
+    }
 
     /* use fp_out to read back the result */
-    CloseHandle(pipe_out[1]);
-    fp_out = _fdopen(_open_osfhandle((intptr_t)pipe_outDup, _O_TEXT), "r");
+    fp_out = bu_process_open(p, 1);
 
     /* use fp_err to read any error messages */
-    CloseHandle(pipe_err[1]);
-    fp_err = _fdopen(_open_osfhandle((intptr_t)pipe_errDup, _O_TEXT), "r");
+    fp_err = bu_process_open(p, 2);
 
     /* send quit command to nirt */
     fwrite("q\n", 1, 2, fp_in);
     (void)fclose(fp_in);
-
-#endif
 
     bu_vls_free(&p_vls);   /* use to form "partition" part of nirt command above */
     if (DG_QRAY_GRAPHICS(gedp->ged_gdp)) {
@@ -512,31 +366,19 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    (void)fclose(fp_out);
-
     while (bu_fgets(line, RT_MAXLINE, fp_err) != (char *)NULL) {
 	bu_vls_strcpy(&v, line);
 	bu_vls_trimspace(&v);
 	bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&v));
     }
-    (void)fclose(fp_err);
 
     bu_vls_free(&v);
 
-#ifndef _WIN32
+    retcode = bu_process_wait(NULL, p, 0);
 
-    /* Wait for program to finish */
-    while ((rpid = wait(&retcode)) != pid && rpid != -1)
-	;	/* NULL */
-
-    if (retcode != 0)
+    if (retcode != 0) {
 	_ged_wait_status(gedp->ged_result_str, retcode);
-#else
-    /* Wait for program to finish */
-    WaitForSingleObject(pi.hProcess, INFINITE);
-
-    bu_vls_free(&line1);
-#endif
+    }
 
     dl_set_wflag(gedp->ged_gdp->gd_headDisplay, DOWN);
 

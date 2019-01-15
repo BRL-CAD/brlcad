@@ -236,7 +236,7 @@ _ged_run_rt(struct ged *gedp, int argc, const char **argv)
     struct _ged_rt_client_data *drcdp;
     struct bu_process *p = NULL;
 
-    bu_process_exec(&p, gedp->ged_gdp->gd_rt_cmd[0], gedp->ged_gdp->gd_rt_cmd_len, (const char **)gedp->ged_gdp->gd_rt_cmd, 0);
+    bu_process_exec(&p, gedp->ged_gdp->gd_rt_cmd[0], gedp->ged_gdp->gd_rt_cmd_len, (const char **)gedp->ged_gdp->gd_rt_cmd, 0, 0);
     fp_in = bu_process_open(p, 0);
 
     _ged_rt_set_eye_model(gedp, eye_model);
