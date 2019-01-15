@@ -33,6 +33,7 @@ set(bu_test_srcs
   vls.c
   vls_vprintf.c
   )
+#  file_glob.c
 
 # Generate and assemble the necessary per-test-type source code
 set(BU_TEST_SRC_INCLUDES)
@@ -108,9 +109,10 @@ add_test(NAME bu_path_component_sl_usr_sl_dir_sl_file_dir_core     COMMAND bu_te
 add_test(NAME bu_path_component_c_sl_usr_sl_dir_sl_file_dir_core   COMMAND bu_test path_component "C:/usr/dir/file.ext" "C:/usr/dir/file" 1)
 
 
-################################
-#      bu_file_mime testing    #
-################################
+#############################
+#      bu_file_* testing    #
+#############################
+#add_test(NAME bu_file_glob   COMMAND bu_test file_glob) # runs a series of built-in unit tests
 
 # NOTE: these test numbers correspond with the bu_mime_t enum values in include/bu/mime.h
 add_test(NAME bu_file_mime_dxf   COMMAND bu_test file_mime dxf 5 1) # tests dxf extension in model context
@@ -580,6 +582,8 @@ add_test(NAME bu_opt_1_b_04  COMMAND bu_test opt 1 b 4)
 # String option testing
 add_test(NAME bu_opt_1_s_01  COMMAND bu_test opt 1 s 1)
 add_test(NAME bu_opt_1_s_02  COMMAND bu_test opt 1 s 2)
+add_test(NAME bu_opt_1_s_03  COMMAND bu_test opt 1 s 3)
+add_test(NAME bu_opt_1_s_04  COMMAND bu_test opt 1 s 4)
 
 # Integer option testing
 add_test(NAME bu_opt_1_i_01  COMMAND bu_test opt 1 i 1)
