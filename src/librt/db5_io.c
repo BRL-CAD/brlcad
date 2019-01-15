@@ -176,8 +176,7 @@ HIDDEN int
 crack_disk_header(struct db5_raw_internal *rip, const unsigned char *cp)
 {
     if (cp[0] != DB5HDR_MAGIC1) {
-	bu_log("crack_disk_header() bad magic1 -- database has become corrupted\n expected x%x, got x%x\n",
-	       DB5HDR_MAGIC1, cp[0]);
+	bu_log("crack_disk_header() bad magic1: expected x%x, got x%x\n", DB5HDR_MAGIC1, cp[0]);
 	if (cp[0] == 'I') {
 	    bu_log ("Concatenation of different database versions detected.\n");
 	    bu_log ("Run 'dbupgrade' on all databases before concatenation (cat command).\n");
@@ -242,15 +241,14 @@ db5_get_raw_internal_ptr(struct db5_raw_internal *rip, const unsigned char *ip)
     rip->object_length <<= 3;	/* cvt 8-byte chunks to byte count */
 
     if ((size_t)rip->object_length < sizeof(struct db5_ondisk_header)) {
-	bu_log("db5_get_raw_internal_ptr(): object_length=%ld is too short, database is corrupted\n",
+	bu_log("db5_get_raw_internal_ptr(): object_length=%ld is too short, database possibly corrupted\n",
 	       rip->object_length);
 	return NULL;
     }
 
     /* Verify trailing magic number */
     if (ip[rip->object_length-1] != DB5HDR_MAGIC2) {
-	bu_log("db5_get_raw_internal_ptr() bad magic2 -- database has become corrupted.\n expected x%x, got x%x\n",
-	       DB5HDR_MAGIC2, ip[rip->object_length-1]);
+	bu_log("db5_get_raw_internal_ptr() bad magic2: expected x%x, got x%x\n", DB5HDR_MAGIC2, ip[rip->object_length-1]);
 	return NULL;
     }
 
@@ -344,7 +342,7 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
     rip->object_length <<= 3;	/* cvt 8-byte chunks to byte count */
 
     if (rip->object_length < sizeof(struct db5_ondisk_header) || rip->object_length < used) {
-	bu_log("db5_get_raw_internal_fp(): object_length=%ld is too short, database is corrupted\n",
+	bu_log("db5_get_raw_internal_fp(): object_length=%ld is too short, database possibly corrupted\n",
 	       rip->object_length);
 	return -1;
     }
@@ -359,15 +357,13 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
     want = rip->object_length - used;
 
     if ((got = fread(cp, 1, want, fp)) != want) {
-	bu_log("db5_get_raw_internal_fp(): Database is too short, want=%ld, got=%ld\n",
-	       want, got);
+	bu_log("db5_get_raw_internal_fp(): database is too short, want=%ld, got=%ld\n", want, got);
 	return -2;
     }
 
     /* Verify trailing magic number */
     if (rip->buf[rip->object_length-1] != DB5HDR_MAGIC2) {
-	bu_log("db5_get_raw_internal_fp(): bad magic2 -- database has become corrupted.\n expected x%x, got x%x\n",
-	       DB5HDR_MAGIC2, rip->buf[rip->object_length-1]);
+	bu_log("db5_get_raw_internal_fp() bad magic2: expected x%x, got x%x\n", DB5HDR_MAGIC2, rip->buf[rip->object_length-1]);
 	return -2;
     }
 
