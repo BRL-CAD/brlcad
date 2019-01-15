@@ -292,15 +292,16 @@ bu_process_exec(struct bu_process **p, const char *cmd, int argc, const char **a
 }
 
 int
-bu_process_wait(struct bu_process *pinfo)
+bu_process_wait(struct bu_process *pinfo, int *aborted)
 {
-    int aborted = 0;
+    int rc = 0;
 #ifndef _WIN32
     int rpid;
     int retcode = 0;
     if (!pinfo) return -1;
     close(pinfo->fd);
     while ((rpid = wait(&retcode)) != pinfo->pid && rpid != -1);
+    rc = retcode;
 #else
     DWORD retcode = 0;
     if (!pinfo) return -1;
@@ -315,14 +316,17 @@ bu_process_wait(struct bu_process *pinfo)
 
     GetExitCodeProcess(pinfo->hProcess, &retcode);
     /* may be useful to try pr_wait_status() here */
+    rc = (int)retcode;
 #endif
-    aborted = pinfo->aborted;
+    if (aborted) {
+	(*aborted) = pinfo->aborted;
+    }
 
     /* Clean up */
     bu_process_input_close(pinfo);
     BU_GET(pinfo, struct bu_process);
 
-    return aborted;
+    return rc;
 }
 
 

@@ -163,6 +163,7 @@ _ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
     struct ged_run_rt *run_rtp;
     int count = 0;
     int *fdp;
+    int retcode = 0;
     int read_failed = 0;
     char line[RT_MAXLINE+1] = {0};
 
@@ -174,66 +175,27 @@ _ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
     run_rtp = drcdp->rrtp;
 
     /* Get data from rt */
-#ifndef _WIN32
     if (bu_process_read((char *)line, &count, run_rtp->p, RT_MAXLINE) <= 0) {
 	read_failed = 1;
-    }
-#else
-    if (Tcl_Eof((Tcl_Channel)run_rtp->chan) ||
-	(!ReadFile(run_rtp->fd, line, RT_MAXLINE, &count, 0))) {
-	read_failed = 1;
-    }
-#endif
-
-    /* sanity clamping */
-    if (count < 0) {
-	perror("READ ERROR");
-	count = 0;
-    } else if (count > RT_MAXLINE) {
-	count = RT_MAXLINE;
     }
 
     if (read_failed) {
 	int aborted;
 
-	/* was it aborted? */
+	/* Done watching for output, undo Tcl hooks.  TODO - need to have a
+	 * callback here and push the Tcl specific aspects of this up stack... */
 #ifndef _WIN32
-	int rpid;
-	int retcode = 0;
-
 	fdp = (int *)bu_process_fd(run_rtp->p, 1);
 	Tcl_DeleteFileHandler(*fdp);
 	close(*fdp);
-
-	/* wait for the forked process */
-	while ((rpid = wait(&retcode)) != run_rtp->pid && rpid != -1);
-
-	aborted = run_rtp->aborted;
 #else
-	DWORD retcode = 0;
 	Tcl_DeleteChannelHandler((Tcl_Channel)run_rtp->chan,
 				 _ged_rt_output_handler,
 				 (ClientData)drcdp);
 	Tcl_Close((Tcl_Interp *)drcdp->gedp->ged_interp, (Tcl_Channel)run_rtp->chan);
-
-	/* wait for the forked process
-	 * either EOF has been sent or there was a read error.
-	 * there is no need to block indefinitely
-	 */
-	WaitForSingleObject(run_rtp->hProcess, 120);
-	/* !!! need to observe implications of being non-infinite
-	 * WaitForSingleObject(run_rtp->hProcess, INFINITE);
-	 */
-
-	if (GetLastError() == ERROR_PROCESS_ABORTED) {
-	    run_rtp->aborted = 1;
-	}
-
-	GetExitCodeProcess(run_rtp->hProcess, &retcode);
-	/* may be useful to try pr_wait_status() here */
-
-	aborted = run_rtp->aborted;
 #endif
+
+	retcode = bu_process_wait(run_rtp->p, &aborted);
 
 	if (aborted)
 	    bu_log("Raytrace aborted.\n");
@@ -291,6 +253,9 @@ _ged_run_rt(struct ged *gedp, int argc, const char **argv)
     drcdp->gedp = gedp;
     drcdp->rrtp = run_rtp;
 
+    /* Set up Tcl hooks so the parent Tcl process knows to watch for output.
+     * TODO - need to have a callback here and push the Tcl specific aspects
+     * of this up stack... */
 #ifndef _WIN32
     {
     int *fdp = (int *)bu_process_fd(p, 1);

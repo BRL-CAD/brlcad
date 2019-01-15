@@ -118,14 +118,11 @@ __BEGIN_DECLS
 struct ged_run_rt {
     struct bu_list l;
     struct bu_process *p;
-#if defined(_WIN32) && !defined(__CYGWIN__)
     void *chan; /* FIXME: uses communication channel instead of file
 		 * descriptor to get output from rt.
 		 */
-#else
     int fd;
     int pid;
-#endif
     int aborted;
 };
 
