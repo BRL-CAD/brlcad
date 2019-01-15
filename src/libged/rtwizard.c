@@ -32,17 +32,12 @@
 #  include <sys/types.h>
 #endif
 
-#include "bresource.h"
-
 #include "tcl.h"
 #include "bu/app.h"
+#include "bu/process.h"
 
 
 #include "./ged_private.h"
-
-#if defined(HAVE_FDOPEN) && !defined(HAVE_DECL_FDOPEN)
-extern FILE *fdopen(int fd, const char *mode);
-#endif
 
 struct _ged_rt_client_data {
     struct ged_run_rt *rrtp;
@@ -53,164 +48,40 @@ struct _ged_rt_client_data {
 int
 _ged_run_rtwizard(struct ged *gedp)
 {
-    int i;
-    FILE *fp_in;
-#ifndef _WIN32
-    int pipe_in[2];
-    int pipe_err[2];
-#else
-    HANDLE pipe_in[2], pipe_inDup;
-    HANDLE pipe_err[2], pipe_errDup;
-    STARTUPINFO si = {0};
-    PROCESS_INFORMATION pi = {0};
-    SECURITY_ATTRIBUTES sa = {0};
-    struct bu_vls line = BU_VLS_INIT_ZERO;
-#endif
     struct ged_run_rt *run_rtp;
     struct _ged_rt_client_data *drcdp;
-#ifndef _WIN32
-    int pid;
-    int ret;
+    struct bu_process *p;
 
-    ret = pipe(pipe_in);
-    if (ret < 0)
-	perror("pipe");
-    ret = pipe(pipe_err);
-    if (ret < 0)
-	perror("pipe");
+    bu_process_exec(&p, gedp->ged_gdp->gd_rt_cmd[0], gedp->ged_gdp->gd_rt_cmd_len, (const char **)gedp->ged_gdp->gd_rt_cmd, 0, 0);
 
-    if ((pid = fork()) == 0) {
-	/* make this a process group leader */
-	setpgid(0, 0);
-
-	/* Redirect stdin and stderr */
-	(void)close(0);
-	ret = dup(pipe_in[0]);
-	if (ret < 0)
-	    perror("dup");
-	(void)close(2);
-	ret = dup(pipe_err[1]);
-	if (ret < 0)
-	    perror("dup");
-
-	/* close pipes */
-	(void)close(pipe_in[0]);
-	(void)close(pipe_in[1]);
-	(void)close(pipe_err[0]);
-	(void)close(pipe_err[1]);
-
-	for (i = 3; i < 20; i++)
-	    (void)close(i);
-
-	(void)execvp(gedp->ged_gdp->gd_rt_cmd[0], gedp->ged_gdp->gd_rt_cmd);
-	perror(gedp->ged_gdp->gd_rt_cmd[0]);
-	exit(16);
-    }
-
-    /* As parent, send view information down pipe */
-    (void)close(pipe_in[0]);
-    fp_in = fdopen(pipe_in[1], "w");
-
-    (void)close(pipe_err[1]);
-
-    (void)fclose(fp_in);
-
-    /* must be BU_GET() to match release in _ged_rt_output_handler */
     BU_GET(run_rtp, struct ged_run_rt);
     BU_LIST_INIT(&run_rtp->l);
     BU_LIST_APPEND(&gedp->ged_gdp->gd_headRunRt.l, &run_rtp->l);
 
-    run_rtp->fd = pipe_err[0];
-    run_rtp->pid = pid;
+    run_rtp->p = p;
 
     /* must be BU_GET() to match release in _ged_rt_output_handler */
     BU_GET(drcdp, struct _ged_rt_client_data);
     drcdp->gedp = gedp;
     drcdp->rrtp = run_rtp;
 
-    Tcl_CreateFileHandler(run_rtp->fd,
+#ifndef _WIN32
+    {
+    int *fdp = (int *)bu_process_fd(p, 2);
+    Tcl_CreateFileHandler(*fdp,
 			  TCL_READABLE,
 			  _ged_rt_output_handler,
 			  (ClientData)drcdp);
-
-    return 0;
-
-#else
-    sa.nLength = sizeof(sa);
-    sa.bInheritHandle = TRUE;
-    sa.lpSecurityDescriptor = NULL;
-
-    /* Create a pipe for the child process's STDOUT. */
-    CreatePipe(&pipe_err[0], &pipe_err[1], &sa, 0);
-
-    /* Create noninheritable read handle and close the inheritable read handle. */
-    DuplicateHandle(GetCurrentProcess(), pipe_err[0],
-		    GetCurrentProcess(),  &pipe_errDup ,
-		    0,  FALSE,
-		    DUPLICATE_SAME_ACCESS);
-    CloseHandle(pipe_err[0]);
-
-    /* Create a pipe for the child process's STDIN. */
-    CreatePipe(&pipe_in[0], &pipe_in[1], &sa, 0);
-
-    /* Duplicate the write handle to the pipe so it is not inherited. */
-    DuplicateHandle(GetCurrentProcess(), pipe_in[1],
-		    GetCurrentProcess(), &pipe_inDup,
-		    0, FALSE,                  /* not inherited */
-		    DUPLICATE_SAME_ACCESS);
-    CloseHandle(pipe_in[1]);
-
-
-    si.cb = sizeof(STARTUPINFO);
-    si.lpReserved = NULL;
-    si.lpReserved2 = NULL;
-    si.cbReserved2 = 0;
-    si.lpDesktop = NULL;
-    si.dwFlags = STARTF_USESTDHANDLES;
-    si.hStdInput   = pipe_in[0];
-    si.hStdOutput  = pipe_err[1];
-    si.hStdError   = pipe_err[1];
-
-    for (i = 0; i < gedp->ged_gdp->gd_rt_cmd_len; i++) {
-	bu_vls_printf(&line, "\"%s\" ", gedp->ged_gdp->gd_rt_cmd[i]);
     }
-
-    CreateProcess(NULL, bu_vls_addr(&line), NULL, NULL, TRUE,
-		  DETACHED_PROCESS, NULL, NULL,
-		  &si, &pi);
-    bu_vls_free(&line);
-
-    CloseHandle(pipe_in[0]);
-    CloseHandle(pipe_err[1]);
-
-    /* As parent, send view information down pipe */
-    fp_in = _fdopen(_open_osfhandle((intptr_t)pipe_inDup, _O_TEXT), "wb");
-
-    (void)fclose(fp_in);
-
-    /* must be BU_GET() to match release in _ged_rt_output_handler */
-    BU_GET(run_rtp, struct ged_run_rt);
-    BU_LIST_INIT(&run_rtp->l);
-    BU_LIST_APPEND(&gedp->ged_gdp->gd_headRunRt.l, &run_rtp->l);
-
-    run_rtp->fd = pipe_errDup;
-    run_rtp->hProcess = pi.hProcess;
-    run_rtp->pid = pi.dwProcessId;
-    run_rtp->aborted=0;
-    run_rtp->chan = (void *)Tcl_MakeFileChannel(run_rtp->fd, TCL_READABLE);
-
-    /* must be BU_GET() to match release in _ged_rt_output_handler */
-    BU_GET(drcdp, struct _ged_rt_client_data);
-    drcdp->gedp = gedp;
-    drcdp->rrtp = run_rtp;
-
+#else
+    HANDLE *fdp = (HANDLE *)bu_process_fd(p, 2);
+    run_rtp->chan = Tcl_MakeFileChannel(*fdp, TCL_READABLE);
     Tcl_CreateChannelHandler((Tcl_Channel)run_rtp->chan,
 			     TCL_READABLE,
 			     _ged_rt_output_handler,
 			     (ClientData)drcdp);
-
-    return 0;
 #endif
+    return 0;
 }
 
 
