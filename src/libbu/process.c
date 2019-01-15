@@ -236,6 +236,9 @@ bu_process_exec(struct bu_process **p, const char *cmd, int argc, const char **a
 	return;
     }
 
+    BU_GET(*p, struct bu_process);
+    (*p)->fp = NULL;
+
     sa.nLength = sizeof(sa);
     sa.bInheritHandle = TRUE;
     sa.lpSecurityDescriptor = NULL;
@@ -331,7 +334,7 @@ bu_process_wait(struct bu_process *pinfo, int *aborted)
 
     /* Clean up */
     bu_process_input_close(pinfo);
-    BU_GET(pinfo, struct bu_process);
+    BU_PUT(pinfo, struct bu_process);
 
     return rc;
 }
