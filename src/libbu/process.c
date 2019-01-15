@@ -117,10 +117,13 @@ bu_process_read(char *buff, int *count, struct bu_process *pinfo, int n)
     if (!pinfo || !buff || !n || !count) return -1;
 #ifndef _WIN32
     (*count) = read((int)pinfo->fd, buff, n);
-    ret = ((*count) <= 0) ? -1 : 1;
+    if ((*count) <= 0) {
+	ret = -1;
+    }
 #else
     DWORD dcount;
-    if (!ReadFile(pinfo->fd, buff, n, &dcount, 0)) {
+    BOOL rf = ReadFile(pinfo->fd, buff, n, &dcount, 0);
+    if (!rf || (rf && dcount == 0)) {
 	ret = -1;
     }
     (*count) = (int)dcount;
