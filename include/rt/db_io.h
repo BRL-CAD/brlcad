@@ -334,7 +334,24 @@ RT_EXPORT extern int db5_select_length_encoding(size_t len);
 
 RT_EXPORT extern void db5_import_color_table(char *cp);
 
+/**
+ * Given a value and a variable-width format spec, store it in network
+ * order.
+ *
+ * Returns -
+ * pointer to next available byte.
+ */
+RT_EXPORT extern unsigned char *db5_encode_length(unsigned char *cp,
+						  size_t val,
+						  int format);
 
+/**
+ * Returns -
+ * on success, pointer to first unused byte
+ * NULL, on error
+ */
+RT_EXPORT extern const unsigned char *db5_get_raw_internal_ptr(struct db5_raw_internal *rip,
+								const unsigned char *ip);
 /**
  * Returns -
  * 0 on success

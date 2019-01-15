@@ -221,25 +221,6 @@ struct db5_raw_internal {
 };
 #define RT_CK_RIP(_ptr)		BU_CKMAG( _ptr, DB5_RAW_INTERNAL_MAGIC, "db5_raw_internal" )
 
-/**
- * Given a value and a variable-width format spec, store it in network
- * order.
- *
- * Returns -
- * pointer to next available byte.
- */
-RT_EXPORT extern unsigned char *db5_encode_length(unsigned char *cp,
-						  size_t val,
-						  int format);
-
-/**
- * Returns -
- * on success, pointer to first unused byte
- * NULL, on error
- */
-RT_EXPORT extern const unsigned char *db5_get_raw_internal_ptr(struct db5_raw_internal *rip,
-								const unsigned char *ip);
-
 
 __END_DECLS
 
