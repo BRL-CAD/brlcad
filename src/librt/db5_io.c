@@ -41,6 +41,13 @@
 #include "raytrace.h"
 #include "librt_private.h"
 
+
+/**
+ * Number of bytes used for each value of DB5HDR_WIDTHCODE_*
+ */
+#define DB5_ENC_LEN(len) (1 << len)
+
+
 int
 db5_header_is_valid(const unsigned char *hp)
 {
