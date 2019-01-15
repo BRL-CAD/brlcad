@@ -222,12 +222,6 @@ struct db5_raw_internal {
 #define RT_CK_RIP(_ptr)		BU_CKMAG( _ptr, DB5_RAW_INTERNAL_MAGIC, "db5_raw_internal" )
 
 /**
- * Number of bytes used for each value of DB5HDR_WIDTHCODE_*
- */
-#define DB5_ENC_LEN(len) (1 << len)
-
-
-/**
  * Given a value and a variable-width format spec, store it in network
  * order.
  *
