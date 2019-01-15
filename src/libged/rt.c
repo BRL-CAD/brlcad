@@ -195,7 +195,9 @@ _ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
 	Tcl_Close((Tcl_Interp *)drcdp->gedp->ged_interp, (Tcl_Channel)run_rtp->chan);
 #endif
 
-	retcode = bu_process_wait(run_rtp->p, &aborted);
+	/* Either EOF has been sent or there was a read error.
+	 * there is no need to block indefinitely */
+	retcode = bu_process_wait(&aborted, run_rtp->p, 120);
 
 	if (aborted)
 	    bu_log("Raytrace aborted.\n");

@@ -65,7 +65,7 @@ BU_EXPORT extern void bu_process_exec(struct bu_process **info, const char *cmd,
 
 /** @brief Wrapper for waiting on a sub-process to complete (wait or WaitForSingleObject) and
  * cleaning up pinfo.  After this call completes, pinfo will be freed. */
-BU_EXPORT extern int bu_process_wait(struct bu_process *pinfo, int *aborted);
+BU_EXPORT extern int bu_process_wait(int *aborted, struct bu_process *pinfo, int wtime);
 
 /** @} */
 

@@ -302,7 +302,11 @@ bu_process_exec(struct bu_process **p, const char *cmd, int argc, const char **a
 }
 
 int
-bu_process_wait(struct bu_process *pinfo, int *aborted)
+#ifndef _WIN32
+bu_process_wait(int *aborted, struct bu_process *pinfo, int UNUSED(wtime))
+#else
+bu_process_wait(int *aborted, struct bu_process *pinfo, int wtime)
+#endif
 {
     int rc = 0;
 #ifndef _WIN32
@@ -315,11 +319,14 @@ bu_process_wait(struct bu_process *pinfo, int *aborted)
 #else
     DWORD retcode = 0;
     if (!pinfo) return -1;
-    /* wait for the forked process
-     * either EOF has been sent or there was a read error.
-     * there is no need to block indefinitely
-     */
-    WaitForSingleObject(pinfo->hProcess, 120);
+
+    /* wait for the forked process */
+    if (wtime > 0) {
+	WaitForSingleObject(pinfo->hProcess, wtime);
+    } else {
+	WaitForSingleObject(pinfo->hProcess, INFINITE);
+    }
+
     if (GetLastError() == ERROR_PROCESS_ABORTED) {
 	pinfo->aborted = 1;
     }
