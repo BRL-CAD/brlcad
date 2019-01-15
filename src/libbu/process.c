@@ -314,7 +314,9 @@ bu_process_exec(struct bu_process **p, const char *cmd, int argc, const char **a
     }
 
     BU_GET(*p, struct bu_process);
-    (*p)->fp = NULL;
+    (*p)->fp_in = NULL;
+    (*p)->fp_out = NULL;
+    (*p)->fp_err = NULL;
 
     sa.nLength = sizeof(sa);
     sa.bInheritHandle = TRUE;
