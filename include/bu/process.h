@@ -42,26 +42,30 @@ BU_EXPORT extern int bu_process_id(void);
 /* Wrappers for using subprocess execution */
 struct bu_process;
 
-/* Open and return FILE pointer associated with process input fd.  Caller should
- * not close this FILE pointer directly - call bu_process_input_close instead. */
-BU_EXPORT extern FILE *bu_process_input_open(struct bu_process *pinfo);
+/* Open and return FILE pointer associated with process input (0), output (1),
+ * or error (2) fd.  Caller should not close these FILE pointers directly -
+ * call bu_process_input_close instead. Input will be opened write, output
+ * and error will be opened read. */
+BU_EXPORT extern FILE *bu_process_open(struct bu_process *pinfo, int fd);
 
 /* Close input FILE pointer and manage internal state */
-BU_EXPORT extern void bu_process_input_close(struct bu_process *pinfo);
+BU_EXPORT extern void bu_process_close(struct bu_process *pinfo, int fd);
 
-/* Retrieve the pointer to the input (0) or output (1) file descriptor associated with the process.
- * To use this in calling code, the caller must cast it according to the specific platform currently
- * begin used. */
+/* Retrieve the pointer to the input (0), output (1), or error (2) file
+ * descriptor associated with the process.  To use this in calling code, the
+ * caller must cast the supplied pointer to the file handle type of the
+ * calling code's specific platform.
+ */
 BU_EXPORT void *bu_process_fd(struct bu_process *pinfo, int fd);
 
 /* Return the pid of the subprocess. */
 BU_EXPORT int bu_process_pid(struct bu_process *pinfo);
 
-/* Read n bytes from output channel associated with process. */
-BU_EXPORT extern int bu_process_read(char *buff, int *count, struct bu_process *pinfo, int n);
+/* Read n bytes from specified output channel associated with process (fd == 1 for output, fd == 2 for err). */
+BU_EXPORT extern int bu_process_read(char *buff, int *count, struct bu_process *pinfo, int fd, int n);
 
 /** @brief Wrapper for executing a sub-process (execvp and CreateProcess) */
-BU_EXPORT extern void bu_process_exec(struct bu_process **info, const char *cmd, int argc, const char **argv);
+BU_EXPORT extern void bu_process_exec(struct bu_process **info, const char *cmd, int argc, const char **argv, int out_eql_err);
 
 /** @brief Wrapper for waiting on a sub-process to complete (wait or WaitForSingleObject) and
  * cleaning up pinfo.  After this call completes, pinfo will be freed. */
