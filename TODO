@@ -18,9 +18,10 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* fix admin-db (vls bu_opt parsing is not working)
+
 * prep caching actions
   - needs to double-check graceful fallback when cache has any issue
-  - db layer needs to not say "database has become corrupted"
   - debug means to set env vars
   - large db tests need to be enabled
 
