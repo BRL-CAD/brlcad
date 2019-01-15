@@ -27,10 +27,12 @@
 #include <stdlib.h> /* exit */
 #include <sys/types.h>
 #include "bio.h"
+#include "bu/file.h"
 #include "bu/list.h"
 #include "bu/malloc.h"
 #include "bu/process.h"
 #include "bu/str.h"
+#include "bu/vls.h"
 
 #if !defined(HAVE_DECL_WAIT) && !defined(wait) && !defined(_WINSOCKAPI_)
 extern pid_t wait(int *);
@@ -144,9 +146,9 @@ bu_process_read(char *buff, int *count, struct bu_process *pinfo, int n)
 void
 bu_process_exec(struct bu_process **p, const char *cmd, int argc, const char **argv)
 {
-    int pid;
     int pret = 0;
 #ifdef HAVE_UNISTD_H
+    int pid;
     int pipe_in[2];
     int pipe_err[2];
     const char **av = NULL;
@@ -269,7 +271,7 @@ bu_process_exec(struct bu_process **p, const char *cmd, int argc, const char **a
     si.hStdError   = pipe_err[1];
 
     /* Create_Process uses a string, not a char array */
-    for (i = 0; i < argc; i++) {
+    for (int i = 0; i < argc; i++) {
 	/* Quote all path names for CreateProcess */
 	if (bu_file_exists(argv[i], NULL)) {
 	    bu_vls_printf(&cp_cmd, "\"%s\" ", argv[i]);
