@@ -329,9 +329,9 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     /* initialize the rtcheck struct */
     rtcp->p = p;
     rtcp->fp = bu_process_open(p, BU_PROCESS_OSTD);
-#if _WIN32
-	/* Needed on Windows for successful rtcheck drawing data communication */
-	setmode(_fileno(rtcp->fp), O_BINARY);
+#ifdef _WIN32
+    /* Needed on Windows for successful rtcheck drawing data communication */
+    setmode(_fileno(rtcp->fp), O_BINARY);
 #endif
     rtcp->pid = bu_process_pid(p);
     rtcp->vbp = rt_vlblock_init();
