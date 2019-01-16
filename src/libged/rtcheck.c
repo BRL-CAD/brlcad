@@ -324,10 +324,8 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
 
     bu_process_close(p, BU_PROCESS_IN);
 
-
-        BU_GET(rtcp, struct ged_rtcheck);
-
-    /* initialize the rtcheck struct */
+    /* initialize the rtcheck structs */
+    BU_GET(rtcp, struct ged_rtcheck);
     rtcp->p = p;
     rtcp->fp = bu_process_open(p, BU_PROCESS_OSTD);
     /* Needed on Windows for successful rtcheck drawing data communication */
@@ -339,40 +337,34 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     rtcp->gedp = gedp;
     rtcp->interp = (Tcl_Interp *)gedp->ged_interp;
 
-#ifndef _WIN32
-    /* file handlers */
-    {
-    int *fdp = (int *)bu_process_fd(p, BU_PROCESS_OSTD);
-    Tcl_CreateFileHandler(*fdp, TCL_READABLE,
-			  rtcheck_vector_handler, (ClientData)rtcp);
-    }
-#else
-    HANDLE *fdp = (HANDLE *)bu_process_fd(p, BU_PROCESS_OSTD);
-    rtcp->chan = (void *)Tcl_MakeFileChannel(*fdp, TCL_READABLE);
-    Tcl_CreateChannelHandler((Tcl_Channel)rtcp->chan, TCL_READABLE,
-			     rtcheck_vector_handler,
-			     (ClientData)rtcp);
-#endif
-
     BU_GET(rtcop, struct rtcheck_output);
     rtcop->p = p;
     rtcop->gedp = gedp;
     rtcop->interp = (Tcl_Interp *)gedp->ged_interp;
+
+    /* file handlers */
 #ifndef _WIN32
     {
-    int *fdp = (int *)bu_process_fd(p, BU_PROCESS_OERR);
-    Tcl_CreateFileHandler(*fdp,
-			  TCL_READABLE,
-			  rtcheck_output_handler,
-			  (ClientData)rtcop);
+	int *fdp;
+	fdp = (int *)bu_process_fd(p, BU_PROCESS_OSTD);
+	Tcl_CreateFileHandler(*fdp, TCL_READABLE,
+		rtcheck_vector_handler, (ClientData)rtcp);
+	fdp = (int *)bu_process_fd(p, BU_PROCESS_OERR);
+	Tcl_CreateFileHandler(*fdp, TCL_READABLE,
+		rtcheck_output_handler,	(ClientData)rtcop);
     }
 #else
-    fdp = (HANDLE *)bu_process_fd(p, BU_PROCESS_OERR);
-    rtcop->chan = (void *)Tcl_MakeFileChannel(*fdp, TCL_READABLE);
-    Tcl_CreateChannelHandler((Tcl_Channel)rtcop->chan,
-			     TCL_READABLE,
-			     rtcheck_output_handler,
-			     (ClientData)rtcop);
+    {
+	HANDLE *fdp;
+	fdp = (HANDLE *)bu_process_fd(p, BU_PROCESS_OSTD);
+	rtcp->chan = (void *)Tcl_MakeFileChannel(*fdp, TCL_READABLE);
+	Tcl_CreateChannelHandler((Tcl_Channel)rtcp->chan, TCL_READABLE,
+		rtcheck_vector_handler,	(ClientData)rtcp);
+	fdp = (HANDLE *)bu_process_fd(p, BU_PROCESS_OERR);
+	rtcop->chan = (void *)Tcl_MakeFileChannel(*fdp, TCL_READABLE);
+	Tcl_CreateChannelHandler((Tcl_Channel)rtcop->chan, TCL_READABLE,
+		rtcheck_output_handler,	(ClientData)rtcop);
+    }
 #endif
 
     bu_free(gedp->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
