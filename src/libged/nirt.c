@@ -268,7 +268,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     bu_process_exec(&p, gedp->ged_gdp->gd_rt_cmd[0], j, (const char **)av, 0, 1);
     bu_free(av, "av");
 
-    fp_in = bu_process_open(p, 0);
+    fp_in = bu_process_open(p, BU_PROCESS_IN);
 
     /* send commands down the pipe */
     for (i = 1; i < gedp->ged_gdp->gd_rt_cmd_len - 2; i++) {
@@ -278,14 +278,14 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* use fp_out to read back the result */
-    fp_out = bu_process_open(p, 1);
+    fp_out = bu_process_open(p, BU_PROCESS_OSTD);
 
     /* use fp_err to read any error messages */
-    fp_err = bu_process_open(p, 2);
+    fp_err = bu_process_open(p, BU_PROCESS_OERR);
 
     /* send quit command to nirt */
     fwrite("q\n", 1, 2, fp_in);
-    (void)fclose(fp_in);
+    bu_process_close(p, BU_PROCESS_IN);
 
     bu_vls_free(&p_vls);   /* use to form "partition" part of nirt command above */
     if (DG_QRAY_GRAPHICS(gedp->ged_gdp)) {
@@ -373,6 +373,9 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     }
 
     bu_vls_free(&v);
+
+    bu_process_close(p, BU_PROCESS_OSTD);
+    bu_process_close(p, BU_PROCESS_OERR);
 
     retcode = bu_process_wait(NULL, p, 0);
 
