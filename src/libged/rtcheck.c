@@ -87,18 +87,18 @@ rtcheck_vector_handler(ClientData clientData, int UNUSED(mask))
     struct ged_rtcheck *rtcp = (struct ged_rtcheck *)clientData;
 
     /* Get vector output from rtcheck */
-    if (feof(rtcp->fp) || ((value = getc(rtcp->fp)) == EOF)) {
 #ifndef _WIN32
+    if ((value = getc(rtcp->fp)) == EOF) {
 	int *fdp = (int *)bu_process_fd(rtcp->p, 1);
 	bu_process_close(rtcp->p, 1);
 	Tcl_DeleteFileHandler(*fdp);
 #else
+    if (feof(rtcp->fp)) {
 	Tcl_DeleteChannelHandler((Tcl_Channel)rtcp->chan,
 				 rtcheck_vector_handler,
 				 (ClientData)rtcp);
 	Tcl_Close(rtcp->interp, (Tcl_Channel)rtcp->chan);
 #endif
-	bu_process_close(rtcp->p, 1);
 
 	dl_set_flag(rtcp->gedp->ged_gdp->gd_headDisplay, DOWN);
 
@@ -113,6 +113,10 @@ rtcheck_vector_handler(ClientData clientData, int UNUSED(mask))
 
 	return;
     }
+
+#ifdef _WIN32
+    value = getc(rtcp->fp);
+#endif
 
     (void)rt_process_uplot_value(&rtcp->vhead,
 				 rtcp->vbp,
