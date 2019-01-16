@@ -146,7 +146,7 @@ rtcheck_output_handler(ClientData clientData, int UNUSED(mask))
 	Tcl_Close(rtcop->interp, (Tcl_Channel)rtcop->chan);
 #endif
 
-	if (rtcop->gedp->ged_gdp->gd_rtCmdNotify != (void (*)())0)
+	if (rtcop->gedp->ged_gdp->gd_rtCmdNotify != (void (*)(int))0)
 	    rtcop->gedp->ged_gdp->gd_rtCmdNotify(0);
 
 	BU_PUT(rtcop, struct rtcheck_output);
@@ -154,7 +154,7 @@ rtcheck_output_handler(ClientData clientData, int UNUSED(mask))
     }
 
     line[count] = '\0';
-    if (rtcop->gedp->ged_output_handler != (void (*)())0)
+    if (rtcop->gedp->ged_output_handler != (void (*)(struct ged *, char *))0)
 	rtcop->gedp->ged_output_handler(rtcop->gedp, line);
     else
 	bu_vls_printf(rtcop->gedp->ged_result_str, "%s", line);
