@@ -103,20 +103,27 @@ _ged_wait_status(struct bu_vls *logstr,
 }
 
 
-#ifndef _WIN32
 static void
 rtcheck_vector_handler(ClientData clientData, int UNUSED(mask))
 {
+    int retcode;
     int value;
     struct ged_rtcheck *rtcp = (struct ged_rtcheck *)clientData;
+    int *fdp = (int *)bu_process_fd(rtcp->p, BU_PROCESS_OSTD);
 
     /* Get vector output from rtcheck */
+#ifndef _WIN32
     if ((value = getc(rtcp->fp)) == EOF) {
-	int retcode;
-	int rpid;
-	int *fdp = (int *)bu_process_fd(rtcp->p, BU_PROCESS_OSTD);
 	Tcl_DeleteFileHandler(*fdp);
 	bu_process_close(rtcp->p, BU_PROCESS_OSTD);
+
+#else
+    if (feof(rtcp->fp)) {
+	Tcl_DeleteChannelHandler((Tcl_Channel)rtcp->chan,
+				 rtcheck_vector_handler,
+				 (ClientData)rtcp);
+	Tcl_Close(rtcp->interp, (Tcl_Channel)rtcp->chan);
+#endif
 
 	dl_set_flag(rtcp->gedp->ged_gdp->gd_headDisplay, DOWN);
 
@@ -125,8 +132,8 @@ rtcheck_vector_handler(ClientData clientData, int UNUSED(mask))
 	bn_vlblock_free(rtcp->vbp);
 
 	/* wait for the forked process */
-	while ((rpid = wait(&retcode)) != rtcp->pid && rpid != -1) {
-
+	retcode = bu_process_wait(NULL, rtcp->p, 0);
+	if (retcode != 0) {
 	    _ged_wait_status(rtcp->gedp->ged_result_str, retcode);
 	}
 
@@ -135,6 +142,9 @@ rtcheck_vector_handler(ClientData clientData, int UNUSED(mask))
 	return;
     }
 
+#ifdef _WIN32
+    value = getc(rtcp->fp);
+#endif
     (void)rt_process_uplot_value(&rtcp->vhead,
 				 rtcp->vbp,
 				 rtcp->fp,
@@ -143,6 +153,7 @@ rtcheck_vector_handler(ClientData clientData, int UNUSED(mask))
 				 rtcp->gedp->ged_gdp->gd_uplotOutputMode);
 }
 
+#ifndef _WIN32
 static void
 rtcheck_output_handler(ClientData clientData, int UNUSED(mask))
 {
@@ -176,42 +187,6 @@ rtcheck_output_handler(ClientData clientData, int UNUSED(mask))
 }
 
 #else
-
-void
-rtcheck_vector_handler(ClientData clientData, int mask)
-{
-    int value;
-    struct ged_rtcheck *rtcp = (struct ged_rtcheck *)clientData;
-
-    /* Get vector output from rtcheck */
-    if (feof(rtcp->fp)) {
-	Tcl_DeleteChannelHandler((Tcl_Channel)rtcp->chan,
-				 rtcheck_vector_handler,
-				 (ClientData)rtcp);
-	Tcl_Close(rtcp->interp, (Tcl_Channel)rtcp->chan);
-
-	dl_set_flag(rtcp->gedp->ged_gdp->gd_headDisplay, DOWN);
-
-	/* Add overlay */
-	_ged_cvt_vlblock_to_solids(rtcp->gedp, rtcp->vbp, "OVERLAPS", 0);
-	bn_vlblock_free(rtcp->vbp);
-
-	/* wait for the forked process */
-	WaitForSingleObject( rtcp->hProcess, INFINITE );
-
-	BU_PUT(rtcp, struct ged_rtcheck);
-
-	return;
-    }
-
-    value = getc(rtcp->fp);
-    (void)rt_process_uplot_value(&rtcp->vhead,
-				 rtcp->vbp,
-				 rtcp->fp,
-				 value,
-				 rtcp->csize,
-				 rtcp->gedp->ged_gdp->gd_uplotOutputMode);
-}
 
 void
 rtcheck_output_handler(ClientData clientData, int mask)
