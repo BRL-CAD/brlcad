@@ -56,7 +56,6 @@ struct ged_rtcheck {
     int pid;
 #endif
     FILE *fp;
-    struct bu_process *p;
     struct bn_vlblock *vbp;
     struct bu_list *vhead;
     double csize;
@@ -72,7 +71,6 @@ struct rtcheck_output {
     int fd;
 #endif
     struct ged *gedp;
-    struct bu_process *p;
     Tcl_Interp *interp;
 };
 
@@ -113,9 +111,9 @@ rtcheck_vector_handler(ClientData clientData, int UNUSED(mask))
     if ((value = getc(rtcp->fp)) == EOF) {
 	int retcode;
 	int rpid;
-	int *fdp = (int *)bu_process_fd(rtcp->p, BU_PROCESS_OSTD);
-	Tcl_DeleteFileHandler(*fdp);
-	bu_process_close(rtcp->p, BU_PROCESS_OSTD);
+
+	Tcl_DeleteFileHandler(rtcp->fd);
+	fclose(rtcp->fp);
 
 	dl_set_flag(rtcp->gedp->ged_gdp->gd_headDisplay, DOWN);
 
@@ -148,17 +146,15 @@ rtcheck_output_handler(ClientData clientData, int UNUSED(mask))
     int count;
     char line[RT_MAXLINE] = {0};
     struct rtcheck_output *rtcop = (struct rtcheck_output *)clientData;
-    int *fdp = (int *)bu_process_fd(rtcop->p, BU_PROCESS_OERR);
 
     /* Get textual output from rtcheck */
-    count = read(*fdp, line, RT_MAXLINE);
+    count = read((int)rtcop->fd, line, RT_MAXLINE);
     if (count <= 0) {
-
 	if (count < 0) {
 	    perror("READ ERROR");
 	}
-	Tcl_DeleteFileHandler(*fdp);
-	close(*fdp);
+	Tcl_DeleteFileHandler(rtcop->fd);
+	close(rtcop->fd);
 
 	if (rtcop->gedp->ged_gdp->gd_rtCmdNotify != (void (*)())0)
 	    rtcop->gedp->ged_gdp->gd_rtCmdNotify(0);
@@ -218,11 +214,10 @@ rtcheck_output_handler(ClientData clientData, int mask)
     DWORD count;
     char line[RT_MAXLINE];
     struct rtcheck_output *rtcop = (struct rtcheck_output *)clientData;
-    HANDLE *fdp = (HANDLE *)bu_process_fd(p, BU_PROCESS_OERR);
 
     /* Get textual output from rtcheck */
     if (Tcl_Eof((Tcl_Channel)rtcop->chan) ||
-	(!ReadFile(*fdp, line, RT_MAXLINE, &count, 0))) {
+	(!ReadFile(rtcop->fd, line, RT_MAXLINE, &count, 0))) {
 
 	Tcl_DeleteChannelHandler((Tcl_Channel)rtcop->chan,
 				 rtcheck_output_handler,
@@ -259,11 +254,25 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
 {
     char **vp;
     int i;
+#ifndef _WIN32
+    int ret;
+    int pid;
+    int stdout_pipe[2];	/* object reads results for building vectors */
+    int stdin_pipe[2];	/* object writes view parameters */
+    int stderr_pipe[2];	/* object reads textual results */
+#else
+    HANDLE stdout_pipe[2], pipe_stdoutDup;	/* READS results for building vectors */
+    HANDLE stdin_pipe[2], pipe_stdinDup;	/* WRITES view parameters */
+    HANDLE stderr_pipe[2], pipe_eDup;	/* READS textual results */
+    STARTUPINFO si;
+    PROCESS_INFORMATION pi;
+    SECURITY_ATTRIBUTES sa;
+    char line[2048];
+    char name[256];
+#endif
     FILE *fp;
     struct ged_rtcheck *rtcp;
     struct rtcheck_output *rtcop;
-    struct bu_process *p = NULL;
-
     vect_t eye_model;
 
     const char *bin;
@@ -280,7 +289,11 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
 
     bin = bu_brlcad_root("bin", 1);
     if (bin) {
+#ifdef _WIN32
+	snprintf(rtcheck, 256, "\"%s/%s\"", bin, argv[0]);
+#else
 	snprintf(rtcheck, 256, "%s/%s", bin, argv[0]);
+#endif
     }
 
     args = argc + 7 + 2 + ged_count_tops(gedp);
@@ -292,7 +305,15 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     for (i = 1; i < argc; i++)
 	*vp++ = (char *)argv[i];
 
+#ifndef _WIN32
     *vp++ = gedp->ged_wdbp->dbip->dbi_filename;
+#else
+    {
+	char buf[512];
+	snprintf(buf, 512, "\"%s\"", gedp->ged_wdbp->dbip->dbi_filename);
+	*vp++ = buf;
+    }
+#endif
 
     /*
      * Now that we've grabbed all the options, if no args remain,
@@ -313,59 +334,188 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
 	Tcl_AppendResult((Tcl_Interp *)gedp->ged_interp, "\n", (char *)NULL);
     }
 
+#ifndef _WIN32
 
-    bu_process_exec(&p, gedp->ged_gdp->gd_rt_cmd[0], gedp->ged_gdp->gd_rt_cmd_len, (const char **)gedp->ged_gdp->gd_rt_cmd, 0, 0);
+    ret = pipe(stdout_pipe);
+    if (ret < 0)
+	perror("pipe");
+    ret = pipe(stdin_pipe);
+    if (ret < 0)
+	perror("pipe");
+    ret = pipe(stderr_pipe);
+    if (ret < 0)
+	perror("pipe");
 
-    fp = bu_process_open(p, BU_PROCESS_IN);
+    if ((pid = fork()) == 0) {
+	/* Redirect stdin, stdout and stderr */
+	(void)close(0);
+	ret = dup(stdin_pipe[0]);
+	if (ret < 0)
+	    perror("dup");
+	(void)close(1);
+	ret = dup(stdout_pipe[1]);
+	if (ret < 0)
+	    perror("dup");
+	(void)close(2);
+	ret = dup(stderr_pipe[1]);
+	if (ret < 0)
+	    perror("dup");
+
+	/* close pipes */
+	(void)close(stdout_pipe[0]);
+	(void)close(stdout_pipe[1]);
+	(void)close(stdin_pipe[0]);
+	(void)close(stdin_pipe[1]);
+	(void)close(stderr_pipe[0]);
+	(void)close(stderr_pipe[1]);
+
+	for (i = 3; i < 20; i++)
+	    (void)close(i);
+
+	(void)execvp(gedp->ged_gdp->gd_rt_cmd[0], gedp->ged_gdp->gd_rt_cmd);
+	perror(gedp->ged_gdp->gd_rt_cmd[0]);
+	exit(16);
+    }
+
+    /* As parent, send view information down pipe */
+    (void)close(stdin_pipe[0]);
+    fp = fdopen(stdin_pipe[1], "w");
 
     _ged_rt_set_eye_model(gedp, eye_model);
     _ged_rt_write(gedp, fp, eye_model, -1, NULL);
+    (void)fclose(fp);
 
-    bu_process_close(p, BU_PROCESS_IN);
+    /* close write end of pipes */
+    (void)close(stdout_pipe[1]);
+    (void)close(stderr_pipe[1]);
 
-
-        BU_GET(rtcp, struct ged_rtcheck);
+    BU_GET(rtcp, struct ged_rtcheck);
 
     /* initialize the rtcheck struct */
-    rtcp->p = p;
-    rtcp->fp = bu_process_open(p, BU_PROCESS_OSTD);
-    rtcp->pid = bu_process_pid(p);
+    rtcp->fd = stdout_pipe[0];
+    rtcp->fp = fdopen(stdout_pipe[0], "r");
+    rtcp->pid = pid;
     rtcp->vbp = rt_vlblock_init();
     rtcp->vhead = bn_vlblock_find(rtcp->vbp, 0xFF, 0xFF, 0x00);
     rtcp->csize = gedp->ged_gvp->gv_scale * 0.01;
     rtcp->gedp = gedp;
     rtcp->interp = (Tcl_Interp *)gedp->ged_interp;
 
-#ifndef _WIN32
     /* file handlers */
-    {
-    int *fdp = (int *)bu_process_fd(p, BU_PROCESS_OSTD);
-    Tcl_CreateFileHandler(*fdp, TCL_READABLE,
+    Tcl_CreateFileHandler(stdout_pipe[0], TCL_READABLE,
 			  rtcheck_vector_handler, (ClientData)rtcp);
-    }
-#else
-    HANDLE *fdp = (HANDLE *)bu_process_fd(p, BU_PROCESS_OSTD);
-    rtcp->chan = (void *)Tcl_MakeFileChannel(*fdp, TCL_READABLE);
-    Tcl_CreateChannelHandler((Tcl_Channel)rtcp->chan, TCL_READABLE,
-			     rtcheck_vector_handler,
-			     (ClientData)rtcp);
-#endif
 
     BU_GET(rtcop, struct rtcheck_output);
-    rtcop->p = p;
+    rtcop->fd = stderr_pipe[0];
     rtcop->gedp = gedp;
     rtcop->interp = (Tcl_Interp *)gedp->ged_interp;
-#ifndef _WIN32
-    {
-    int *fdp = (int *)bu_process_fd(p, BU_PROCESS_OERR);
-    Tcl_CreateFileHandler(*fdp,
+    Tcl_CreateFileHandler(rtcop->fd,
 			  TCL_READABLE,
 			  rtcheck_output_handler,
 			  (ClientData)rtcop);
-    }
+
 #else
-    HANDLE *fdp = (HANDLE *)bu_process_fd(p, BU_PROCESS_OERR);
-    rtcop->chan = (void *)Tcl_MakeFileChannel(*fdp, TCL_READABLE);
+    /* _WIN32 */
+
+    memset((void *)&si, 0, sizeof(STARTUPINFO));
+    memset((void *)&pi, 0, sizeof(PROCESS_INFORMATION));
+    memset((void *)&sa, 0, sizeof(SECURITY_ATTRIBUTES));
+
+    sa.nLength = sizeof(SECURITY_ATTRIBUTES);
+    sa.bInheritHandle = TRUE;
+    sa.lpSecurityDescriptor = NULL;
+
+    /* Create a pipe for the child process's STDERR. */
+    CreatePipe( &stderr_pipe[0], &stderr_pipe[1], &sa, 0);
+
+    /* Create noninheritable read handle and close the inheritable read handle. */
+    DuplicateHandle( GetCurrentProcess(), stderr_pipe[0],
+		     GetCurrentProcess(),  &pipe_eDup,
+		     0,  FALSE,
+		     DUPLICATE_SAME_ACCESS );
+    CloseHandle( stderr_pipe[0]);
+
+    /* Create a pipe for the child process's STDOUT. */
+    CreatePipe( &stdin_pipe[0], &stdin_pipe[1], &sa, 0);
+
+    /* Create noninheritable write handle and close the inheritable writehandle. */
+    DuplicateHandle( GetCurrentProcess(), stdin_pipe[1],
+		     GetCurrentProcess(),  &pipe_stdinDup ,
+		     0,  FALSE,
+		     DUPLICATE_SAME_ACCESS );
+    CloseHandle( stdin_pipe[1]);
+
+    /* Create a pipe for the child process's STDIN. */
+    CreatePipe(&stdout_pipe[0], &stdout_pipe[1], &sa, 0);
+
+    /* Duplicate the read handle to the pipe so it is not inherited. */
+    DuplicateHandle(GetCurrentProcess(), stdout_pipe[0],
+		    GetCurrentProcess(), &pipe_stdoutDup,
+		    0, FALSE,                  /* not inherited */
+		    DUPLICATE_SAME_ACCESS );
+    CloseHandle(stdout_pipe[0]);
+
+
+    si.cb = sizeof(STARTUPINFO);
+    si.lpReserved = NULL;
+    si.lpReserved2 = NULL;
+    si.cbReserved2 = 0;
+    si.lpDesktop = NULL;
+    si.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
+    si.hStdInput   = stdin_pipe[0];
+    si.hStdOutput  = stdout_pipe[1];
+    si.hStdError   = stderr_pipe[1];
+    si.wShowWindow = SW_HIDE;
+
+    snprintf(line, sizeof(line), "%s ", gedp->ged_gdp->gd_rt_cmd[0]);
+    for (i = 1; i < gedp->ged_gdp->gd_rt_cmd_len; i++) {
+	snprintf(name, sizeof(name), "%s ", gedp->ged_gdp->gd_rt_cmd[i]);
+	bu_strlcat(line, name, sizeof(line));
+    }
+
+    CreateProcess(NULL, line, NULL, NULL, TRUE,
+		  DETACHED_PROCESS, NULL, NULL,
+		  &si, &pi);
+
+    /* close read end of pipe */
+    CloseHandle(stdin_pipe[0]);
+
+    /* close write end of pipes */
+    (void)CloseHandle(stdout_pipe[1]);
+    (void)CloseHandle(stderr_pipe[1]);
+
+    /* As parent, send view information down pipe */
+    fp = _fdopen(_open_osfhandle((intptr_t)pipe_stdinDup, _O_TEXT), "wb");
+    setmode(_fileno(fp), O_BINARY);
+
+    _ged_rt_set_eye_model(gedp, eye_model);
+    _ged_rt_write(gedp, fp, eye_model, -1, NULL);
+    (void)fclose(fp);
+
+    BU_GET(rtcp, struct ged_rtcheck);
+
+    /* initialize the rtcheck struct */
+    rtcp->fd = pipe_stdoutDup;
+    rtcp->fp = _fdopen( _open_osfhandle((intptr_t)pipe_stdoutDup, _O_TEXT), "rb" );
+    setmode(_fileno(rtcp->fp), O_BINARY);
+    rtcp->hProcess = pi.hProcess;
+    rtcp->pid = pi.dwProcessId;
+    rtcp->vbp = rt_vlblock_init();
+    rtcp->vhead = bn_vlblock_find(rtcp->vbp, 0xFF, 0xFF, 0x00);
+    rtcp->csize = gedp->ged_gvp->gv_scale * 0.01;
+    rtcp->gedp = gedp;
+    rtcp->interp = (Tcl_Interp *)gedp->ged_interp;
+
+    rtcp->chan = (void *)Tcl_MakeFileChannel(pipe_stdoutDup, TCL_READABLE);
+    Tcl_CreateChannelHandler((Tcl_Channel)rtcp->chan, TCL_READABLE,
+			     rtcheck_vector_handler,
+			     (ClientData)rtcp);
+
+    BU_GET(rtcop, struct rtcheck_output);
+    rtcop->fd = pipe_eDup;
+    rtcop->chan = (void *)Tcl_MakeFileChannel(pipe_eDup, TCL_READABLE);
+    rtcop->gedp = gedp;
+    rtcop->interp = (Tcl_Interp *)gedp->ged_interp;
     Tcl_CreateChannelHandler((Tcl_Channel)rtcop->chan,
 			     TCL_READABLE,
 			     rtcheck_output_handler,
