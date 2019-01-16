@@ -153,58 +153,31 @@ rtcheck_vector_handler(ClientData clientData, int UNUSED(mask))
 				 rtcp->gedp->ged_gdp->gd_uplotOutputMode);
 }
 
-#ifndef _WIN32
 static void
 rtcheck_output_handler(ClientData clientData, int UNUSED(mask))
 {
     int count;
+    int read_failed = 0;
     char line[RT_MAXLINE] = {0};
     struct rtcheck_output *rtcop = (struct rtcheck_output *)clientData;
-    int *fdp = (int *)bu_process_fd(rtcop->p, BU_PROCESS_OERR);
 
     /* Get textual output from rtcheck */
-    count = read(*fdp, line, RT_MAXLINE);
-    if (count <= 0) {
-
-	if (count < 0) {
-	    perror("READ ERROR");
-	}
-	Tcl_DeleteFileHandler(*fdp);
-	close(*fdp);
-
-	if (rtcop->gedp->ged_gdp->gd_rtCmdNotify != (void (*)())0)
-	    rtcop->gedp->ged_gdp->gd_rtCmdNotify(0);
-
-	BU_PUT(rtcop, struct rtcheck_output);
-	return;
+    if (bu_process_read((char *)line, &count, rtcop->p, BU_PROCESS_OERR, RT_MAXLINE) <= 0) {
+	read_failed = 1;
     }
 
-    line[count] = '\0';
-    if (rtcop->gedp->ged_output_handler != (void (*)())0)
-	rtcop->gedp->ged_output_handler(rtcop->gedp, line);
-    else
-	bu_vls_printf(rtcop->gedp->ged_result_str, "%s", line);
-}
-
+    if (read_failed) {
+#ifndef _WIN32
+	int *fdp = (int *)bu_process_fd(rtcop->p, BU_PROCESS_OERR);
+	Tcl_DeleteFileHandler(*fdp);
+	close(*fdp);
 #else
-
-void
-rtcheck_output_handler(ClientData clientData, int mask)
-{
-    DWORD count;
-    char line[RT_MAXLINE];
-    struct rtcheck_output *rtcop = (struct rtcheck_output *)clientData;
-    HANDLE *fdp = (HANDLE *)bu_process_fd(rtcop->p, BU_PROCESS_OERR);
-
-    /* Get textual output from rtcheck */
-    if (Tcl_Eof((Tcl_Channel)rtcop->chan) ||
-	(!ReadFile(*fdp, line, RT_MAXLINE, &count, 0))) {
-
+	HANDLE *fdp = (HANDLE *)bu_process_fd(rtcop->p, BU_PROCESS_OERR);
 	Tcl_DeleteChannelHandler((Tcl_Channel)rtcop->chan,
 				 rtcheck_output_handler,
 				 (ClientData)rtcop);
 	Tcl_Close(rtcop->interp, (Tcl_Channel)rtcop->chan);
-
+#endif
 	if (rtcop->gedp->ged_gdp->gd_rtCmdNotify != (void (*)(int))0)
 	    rtcop->gedp->ged_gdp->gd_rtCmdNotify(0);
 
@@ -219,9 +192,6 @@ rtcheck_output_handler(ClientData clientData, int mask)
     else
 	bu_vls_printf(rtcop->gedp->ged_result_str, "%s", line);
 }
-
-#endif
-
 
 /*
  * Check for overlaps in the current view.
