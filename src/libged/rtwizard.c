@@ -67,14 +67,14 @@ _ged_run_rtwizard(struct ged *gedp)
 
 #ifndef _WIN32
     {
-    int *fdp = (int *)bu_process_fd(p, BU_PROCESS_OERR);
+    int *fdp = (int *)bu_process_fd(p, BU_PROCESS_STDERR);
     Tcl_CreateFileHandler(*fdp,
 			  TCL_READABLE,
 			  _ged_rt_output_handler,
 			  (ClientData)drcdp);
     }
 #else
-    HANDLE *fdp = (HANDLE *)bu_process_fd(p, BU_PROCESS_OERR);
+    HANDLE *fdp = (HANDLE *)bu_process_fd(p, BU_PROCESS_STDERR);
     run_rtp->chan = Tcl_MakeFileChannel(*fdp, TCL_READABLE);
     Tcl_CreateChannelHandler((Tcl_Channel)run_rtp->chan,
 			     TCL_READABLE,

@@ -42,9 +42,9 @@ BU_EXPORT extern int bu_process_id(void);
 /* Wrappers for using subprocess execution */
 struct bu_process;
 
-#define BU_PROCESS_IN 0
-#define BU_PROCESS_OSTD 1
-#define BU_PROCESS_OERR 2
+#define BU_PROCESS_STDIN 0
+#define BU_PROCESS_STDOUT 1
+#define BU_PROCESS_STDERR 2
 
 /* Open and return FILE pointer associated with process input (0), output (1),
  * or error (2) fd.  Caller should not close these FILE pointers directly -

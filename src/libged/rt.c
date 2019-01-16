@@ -40,10 +40,6 @@
 
 #include "./ged_private.h"
 
-#if defined(HAVE_FDOPEN) && !defined(HAVE_DECL_FDOPEN)
-extern FILE *fdopen(int fd, const char *mode);
-#endif
-
 
 struct _ged_rt_client_data {
     struct ged_run_rt *rrtp;
@@ -175,7 +171,7 @@ _ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
     run_rtp = drcdp->rrtp;
 
     /* Get data from rt */
-    if (bu_process_read((char *)line, &count, run_rtp->p, 2, RT_MAXLINE) <= 0) {
+    if (bu_process_read((char *)line, &count, run_rtp->p, BU_PROCESS_STDERR, RT_MAXLINE) <= 0) {
 	read_failed = 1;
     }
 
@@ -185,7 +181,7 @@ _ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
 	/* Done watching for output, undo Tcl hooks.  TODO - need to have a
 	 * callback here and push the Tcl specific aspects of this up stack... */
 #ifndef _WIN32
-	fdp = (int *)bu_process_fd(run_rtp->p, BU_PROCESS_OERR);
+	fdp = (int *)bu_process_fd(run_rtp->p, BU_PROCESS_STDERR);
 	Tcl_DeleteFileHandler(*fdp);
 	close(*fdp);
 #else
@@ -237,12 +233,12 @@ _ged_run_rt(struct ged *gedp, int argc, const char **argv)
     struct bu_process *p = NULL;
 
     bu_process_exec(&p, gedp->ged_gdp->gd_rt_cmd[0], gedp->ged_gdp->gd_rt_cmd_len, (const char **)gedp->ged_gdp->gd_rt_cmd, 0, 0);
-    fp_in = bu_process_open(p, BU_PROCESS_IN);
+    fp_in = bu_process_open(p, BU_PROCESS_STDIN);
 
     _ged_rt_set_eye_model(gedp, eye_model);
     _ged_rt_write(gedp, fp_in, eye_model, argc, argv);
 
-    bu_process_close(p, BU_PROCESS_IN);
+    bu_process_close(p, BU_PROCESS_STDIN);
 
     BU_GET(run_rtp, struct ged_run_rt);
     BU_LIST_INIT(&run_rtp->l);
@@ -260,13 +256,13 @@ _ged_run_rt(struct ged *gedp, int argc, const char **argv)
      * of this up stack... */
 #ifndef _WIN32
     {
-    int *fdp = (int *)bu_process_fd(p, BU_PROCESS_OERR);
+    int *fdp = (int *)bu_process_fd(p, BU_PROCESS_STDERR);
     Tcl_CreateFileHandler(*fdp, TCL_READABLE,
 			  _ged_rt_output_handler,
 			  (ClientData)drcdp);
     }
 #else
-    HANDLE *fdp = (HANDLE *)bu_process_fd(p, BU_PROCESS_OERR);
+    HANDLE *fdp = (HANDLE *)bu_process_fd(p, BU_PROCESS_STDERR);
     run_rtp->chan = Tcl_MakeFileChannel(*fdp, TCL_READABLE);
     Tcl_CreateChannelHandler((Tcl_Channel)run_rtp->chan,
 			     TCL_READABLE,

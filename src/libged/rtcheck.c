@@ -109,13 +109,13 @@ rtcheck_vector_handler(ClientData clientData, int UNUSED(mask))
     int retcode;
     int value;
     struct ged_rtcheck *rtcp = (struct ged_rtcheck *)clientData;
-    int *fdp = (int *)bu_process_fd(rtcp->p, BU_PROCESS_OSTD);
+    int *fdp = (int *)bu_process_fd(rtcp->p, BU_PROCESS_STDOUT);
 
     /* Get vector output from rtcheck */
 #ifndef _WIN32
     if ((value = getc(rtcp->fp)) == EOF) {
 	Tcl_DeleteFileHandler(*fdp);
-	bu_process_close(rtcp->p, BU_PROCESS_OSTD);
+	bu_process_close(rtcp->p, BU_PROCESS_STDOUT);
 
 #else
     if (feof(rtcp->fp)) {
@@ -162,17 +162,17 @@ rtcheck_output_handler(ClientData clientData, int UNUSED(mask))
     struct rtcheck_output *rtcop = (struct rtcheck_output *)clientData;
 
     /* Get textual output from rtcheck */
-    if (bu_process_read((char *)line, &count, rtcop->p, BU_PROCESS_OERR, RT_MAXLINE) <= 0) {
+    if (bu_process_read((char *)line, &count, rtcop->p, BU_PROCESS_STDERR, RT_MAXLINE) <= 0) {
 	read_failed = 1;
     }
 
     if (read_failed) {
 #ifndef _WIN32
-	int *fdp = (int *)bu_process_fd(rtcop->p, BU_PROCESS_OERR);
+	int *fdp = (int *)bu_process_fd(rtcop->p, BU_PROCESS_STDERR);
 	Tcl_DeleteFileHandler(*fdp);
 	close(*fdp);
 #else
-	HANDLE *fdp = (HANDLE *)bu_process_fd(rtcop->p, BU_PROCESS_OERR);
+	HANDLE *fdp = (HANDLE *)bu_process_fd(rtcop->p, BU_PROCESS_STDERR);
 	Tcl_DeleteChannelHandler((Tcl_Channel)rtcop->chan,
 				 rtcheck_output_handler,
 				 (ClientData)rtcop);
@@ -262,17 +262,17 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
 
     bu_process_exec(&p, gedp->ged_gdp->gd_rt_cmd[0], gedp->ged_gdp->gd_rt_cmd_len, (const char **)gedp->ged_gdp->gd_rt_cmd, 0, 0);
 
-    fp = bu_process_open(p, BU_PROCESS_IN);
+    fp = bu_process_open(p, BU_PROCESS_STDIN);
 
     _ged_rt_set_eye_model(gedp, eye_model);
     _ged_rt_write(gedp, fp, eye_model, -1, NULL);
 
-    bu_process_close(p, BU_PROCESS_IN);
+    bu_process_close(p, BU_PROCESS_STDIN);
 
     /* initialize the rtcheck structs */
     BU_GET(rtcp, struct ged_rtcheck);
     rtcp->p = p;
-    rtcp->fp = bu_process_open(p, BU_PROCESS_OSTD);
+    rtcp->fp = bu_process_open(p, BU_PROCESS_STDOUT);
     /* Needed on Windows for successful rtcheck drawing data communication */
     setmode(_fileno(rtcp->fp), O_BINARY);
     rtcp->pid = bu_process_pid(p);
@@ -291,21 +291,21 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
 #ifndef _WIN32
     {
 	int *fdp;
-	fdp = (int *)bu_process_fd(p, BU_PROCESS_OSTD);
+	fdp = (int *)bu_process_fd(p, BU_PROCESS_STDOUT);
 	Tcl_CreateFileHandler(*fdp, TCL_READABLE,
 		rtcheck_vector_handler, (ClientData)rtcp);
-	fdp = (int *)bu_process_fd(p, BU_PROCESS_OERR);
+	fdp = (int *)bu_process_fd(p, BU_PROCESS_STDERR);
 	Tcl_CreateFileHandler(*fdp, TCL_READABLE,
 		rtcheck_output_handler,	(ClientData)rtcop);
     }
 #else
     {
 	HANDLE *fdp;
-	fdp = (HANDLE *)bu_process_fd(p, BU_PROCESS_OSTD);
+	fdp = (HANDLE *)bu_process_fd(p, BU_PROCESS_STDOUT);
 	rtcp->chan = (void *)Tcl_MakeFileChannel(*fdp, TCL_READABLE);
 	Tcl_CreateChannelHandler((Tcl_Channel)rtcp->chan, TCL_READABLE,
 		rtcheck_vector_handler,	(ClientData)rtcp);
-	fdp = (HANDLE *)bu_process_fd(p, BU_PROCESS_OERR);
+	fdp = (HANDLE *)bu_process_fd(p, BU_PROCESS_STDERR);
 	rtcop->chan = (void *)Tcl_MakeFileChannel(*fdp, TCL_READABLE);
 	Tcl_CreateChannelHandler((Tcl_Channel)rtcop->chan, TCL_READABLE,
 		rtcheck_output_handler,	(ClientData)rtcop);
