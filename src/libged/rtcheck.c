@@ -30,6 +30,7 @@
 #ifdef HAVE_SYS_TYPES_H
 #   include <sys/types.h>
 #endif
+#include "bio.h"
 #include "bresource.h"
 
 #include "bu/app.h"
@@ -329,10 +330,8 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     /* initialize the rtcheck struct */
     rtcp->p = p;
     rtcp->fp = bu_process_open(p, BU_PROCESS_OSTD);
-#ifdef _WIN32
     /* Needed on Windows for successful rtcheck drawing data communication */
     setmode(_fileno(rtcp->fp), O_BINARY);
-#endif
     rtcp->pid = bu_process_pid(p);
     rtcp->vbp = rt_vlblock_init();
     rtcp->vhead = bn_vlblock_find(rtcp->vbp, 0xFF, 0xFF, 0x00);
