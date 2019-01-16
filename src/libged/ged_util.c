@@ -350,7 +350,7 @@ _ged_create_io_handler(void **chan, struct bu_process *p, int fd, int mode, void
     if (!chan || !p) return;
     fdp = (HANDLE *)bu_process_fd(p, fd);
     (*chan) = (void *)Tcl_MakeFileChannel(*fdp, mode);
-    Tcl_CreateChannelHandler((Tcl_Channel)rtcp->chan, mode, callback, (ClientData)data);
+    Tcl_CreateChannelHandler((Tcl_Channel)(*chan), mode, callback, (ClientData)data);
 }
 
 void
@@ -362,7 +362,7 @@ _ged_delete_io_handler(void *interp, void *chan, struct bu_process *p, int fd, v
     tcl_interp = (Tcl_Interp *)interp;
     fdp = (HANDLE *)bu_process_fd(p, fd);
     Tcl_DeleteChannelHandler((Tcl_Channel)chan, callback, (ClientData)data);
-    Tcl_Close(tcl_interp, (Tcl_Channel)*chan);
+    Tcl_Close(tcl_interp, (Tcl_Channel)chan);
 }
 #endif
 
