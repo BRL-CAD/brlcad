@@ -150,17 +150,10 @@ rtcheck_output_handler(ClientData clientData, int UNUSED(mask))
     }
 
     if (read_failed) {
-#ifndef _WIN32
-	int *fdp = (int *)bu_process_fd(rtcop->p, BU_PROCESS_STDERR);
-	Tcl_DeleteFileHandler(*fdp);
-	close(*fdp);
-#else
-	HANDLE *fdp = (HANDLE *)bu_process_fd(rtcop->p, BU_PROCESS_STDERR);
-	Tcl_DeleteChannelHandler((Tcl_Channel)rtcop->chan,
-				 rtcheck_output_handler,
-				 (ClientData)rtcop);
-	Tcl_Close(rtcop->interp, (Tcl_Channel)rtcop->chan);
-#endif
+	_ged_delete_io_handler((void *)rtcop->interp, rtcop->chan,
+		rtcop->p, BU_PROCESS_STDERR, (void *)rtcop,
+		rtcheck_output_handler);
+
 	if (rtcop->gedp->ged_gdp->gd_rtCmdNotify != (void (*)(int))0)
 	    rtcop->gedp->ged_gdp->gd_rtCmdNotify(0);
 
@@ -270,29 +263,8 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     rtcop->interp = (Tcl_Interp *)gedp->ged_interp;
 
     /* file handlers */
-#ifndef _WIN32
-    {
-	int *fdp;
-	fdp = (int *)bu_process_fd(p, BU_PROCESS_STDOUT);
-	Tcl_CreateFileHandler(*fdp, TCL_READABLE,
-		rtcheck_vector_handler, (ClientData)rtcp);
-	fdp = (int *)bu_process_fd(p, BU_PROCESS_STDERR);
-	Tcl_CreateFileHandler(*fdp, TCL_READABLE,
-		rtcheck_output_handler,	(ClientData)rtcop);
-    }
-#else
-    {
-	HANDLE *fdp;
-	fdp = (HANDLE *)bu_process_fd(p, BU_PROCESS_STDOUT);
-	rtcp->chan = (void *)Tcl_MakeFileChannel(*fdp, TCL_READABLE);
-	Tcl_CreateChannelHandler((Tcl_Channel)rtcp->chan, TCL_READABLE,
-		rtcheck_vector_handler,	(ClientData)rtcp);
-	fdp = (HANDLE *)bu_process_fd(p, BU_PROCESS_STDERR);
-	rtcop->chan = (void *)Tcl_MakeFileChannel(*fdp, TCL_READABLE);
-	Tcl_CreateChannelHandler((Tcl_Channel)rtcop->chan, TCL_READABLE,
-		rtcheck_output_handler,	(ClientData)rtcop);
-    }
-#endif
+    _ged_create_io_handler(&(rtcp->chan), p, BU_PROCESS_STDOUT, TCL_READABLE, (void *)rtcp, rtcheck_vector_handler);
+    _ged_create_io_handler(&(rtcop->chan), p, BU_PROCESS_STDERR, TCL_READABLE, (void *)rtcop, rtcheck_output_handler);
 
     bu_free(gedp->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
     gedp->ged_gdp->gd_rt_cmd = NULL;
