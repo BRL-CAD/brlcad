@@ -122,13 +122,13 @@ struct ged_run_rt {
     HANDLE fd;
     HANDLE hProcess;
     DWORD pid;
-    void *chan; /* FIXME: uses communication channel instead of file
-		 * descriptor to get output from rt.
-		 */
 #else
     int fd;
     int pid;
 #endif
+    void *chan; /* FIXME: uses communication channel instead of file
+		 * descriptor to get output from rt.
+		 */
     int aborted;
 };
 

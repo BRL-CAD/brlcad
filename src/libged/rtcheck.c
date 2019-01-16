@@ -43,19 +43,7 @@ extern FILE *fdopen(int fd, const char *mode);
 
 
 struct ged_rtcheck {
-#ifdef _WIN32
-    HANDLE fd;
-    HANDLE hProcess;
-    DWORD pid;
-#ifdef TCL_OK
-    Tcl_Channel chan;
-#else
     void *chan;
-#endif
-#else
-    int fd;
-    int pid;
-#endif
     FILE *fp;
     struct bu_process *p;
     struct bn_vlblock *vbp;
@@ -66,12 +54,7 @@ struct ged_rtcheck {
 };
 
 struct rtcheck_output {
-#ifdef _WIN32
-    HANDLE fd;
-    Tcl_Channel chan;
-#else
-    int fd;
-#endif
+    void *chan;
     struct ged *gedp;
     struct bu_process *p;
     Tcl_Interp *interp;
@@ -275,7 +258,6 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     rtcp->fp = bu_process_open(p, BU_PROCESS_STDOUT);
     /* Needed on Windows for successful rtcheck drawing data communication */
     setmode(_fileno(rtcp->fp), O_BINARY);
-    rtcp->pid = bu_process_pid(p);
     rtcp->vbp = rt_vlblock_init();
     rtcp->vhead = bn_vlblock_find(rtcp->vbp, 0xFF, 0xFF, 0x00);
     rtcp->csize = gedp->ged_gvp->gv_scale * 0.01;

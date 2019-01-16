@@ -158,7 +158,6 @@ _ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
     struct _ged_rt_client_data *drcdp = (struct _ged_rt_client_data *)clientData;
     struct ged_run_rt *run_rtp;
     int count = 0;
-    int *fdp;
     int retcode = 0;
     int read_failed = 0;
     char line[RT_MAXLINE+1] = {0};
@@ -178,18 +177,11 @@ _ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
     if (read_failed) {
 	int aborted;
 
-	/* Done watching for output, undo Tcl hooks.  TODO - need to have a
-	 * callback here and push the Tcl specific aspects of this up stack... */
-#ifndef _WIN32
-	fdp = (int *)bu_process_fd(run_rtp->p, BU_PROCESS_STDERR);
-	Tcl_DeleteFileHandler(*fdp);
-	close(*fdp);
-#else
-	Tcl_DeleteChannelHandler((Tcl_Channel)run_rtp->chan,
-				 _ged_rt_output_handler,
-				 (ClientData)drcdp);
-	Tcl_Close((Tcl_Interp *)drcdp->gedp->ged_interp, (Tcl_Channel)run_rtp->chan);
-#endif
+	/* Done watching for output, undo Tcl hooks.  TODO - need to  push the
+	 * Tcl specific aspects of this up stack... */
+	_ged_delete_io_handler(drcdp->gedp->ged_interp, run_rtp->chan,
+		run_rtp->p, BU_PROCESS_STDERR, (void *)drcdp,
+		_ged_rt_output_handler);
 
 	/* Either EOF has been sent or there was a read error.
 	 * there is no need to block indefinitely */
@@ -252,23 +244,8 @@ _ged_run_rt(struct ged *gedp, int argc, const char **argv)
     drcdp->rrtp = run_rtp;
 
     /* Set up Tcl hooks so the parent Tcl process knows to watch for output.
-     * TODO - need to have a callback here and push the Tcl specific aspects
-     * of this up stack... */
-#ifndef _WIN32
-    {
-    int *fdp = (int *)bu_process_fd(p, BU_PROCESS_STDERR);
-    Tcl_CreateFileHandler(*fdp, TCL_READABLE,
-			  _ged_rt_output_handler,
-			  (ClientData)drcdp);
-    }
-#else
-    HANDLE *fdp = (HANDLE *)bu_process_fd(p, BU_PROCESS_STDERR);
-    run_rtp->chan = Tcl_MakeFileChannel(*fdp, TCL_READABLE);
-    Tcl_CreateChannelHandler((Tcl_Channel)run_rtp->chan,
-			     TCL_READABLE,
-			     _ged_rt_output_handler,
-			     (ClientData)drcdp);
-#endif
+     * TODO - need to push the Tcl specific aspects of this up stack... */
+    _ged_create_io_handler(&(run_rtp->chan), p, BU_PROCESS_STDERR, TCL_READABLE, (void *)drcdp, _ged_rt_output_handler);
     return 0;
 }
 

@@ -586,6 +586,12 @@ extern int
 _ged_sort_existing_objs(struct ged *gedp, int argc, const char *argv[], struct directory **dpa);
 
 
+typedef void (*io_handler_callback_t)(void *, int);
+extern void
+_ged_create_io_handler(void **chan, struct bu_process *p, int fd, int mode, void *data, io_handler_callback_t callback);
+extern void
+_ged_delete_io_handler(void *interp, void *chan, struct bu_process *p, int fd, void *data, io_handler_callback_t callback);
+
 __END_DECLS
 
 #endif /* LIBGED_GED_PRIVATE_H */
