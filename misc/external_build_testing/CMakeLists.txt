@@ -80,6 +80,10 @@ ExternalProject_Target(zlib ZLIB_BLD
   SYMLINKS "libz${CMAKE_SHARED_LIBRARY_SUFFIX};libz${CMAKE_SHARED_LIBRARY_SUFFIX}.1"
   LINK_TARGET "libz${CMAKE_SHARED_LIBRARY_SUFFIX}"
   )
+ExternalProject_ByProducts(ZLIB_BLD ${INCLUDE_DIR}
+  zconf.h
+  zlib.h
+  )
 
 # Temporarily stub in the library variable setting here - normally this will be
 # defined by the ThirdParty logic but we need to test that the import library
@@ -110,6 +114,14 @@ ExternalProject_Target(png PNG_BLD
   STATIC_LINK_TARGET "libpng${CMAKE_STATIC_LIBRARY_SUFFIX}"
   RPATH
   )
+ExternalProject_ByProducts(PNG_BLD ${INCLUDE_DIR}
+  png.h
+  pngconf.h
+  pnglibconf.h
+  libpng16/png.h
+  libpng16/pngconf.h
+  libpng16/pnglibconf.h
+  )
 
 # Temporarily stub in the library variable setting here
 set(PNG_LIBRARY png)
@@ -133,6 +145,57 @@ ExternalProject_Target(freetype FREETYPE_BLD
   SYMLINKS "libfreetype${CMAKE_SHARED_LIBRARY_SUFFIX};libfreetype${CMAKE_SHARED_LIBRARY_SUFFIX}.2.9"
   LINK_TARGET "libfreetype${CMAKE_SHARED_LIBRARY_SUFFIX}"
   RPATH
+  )
+ExternalProject_ByProducts(FREETYPE_BLD ${INCLUDE_DIR}
+  freetype2/ft2build.h
+  freetype2/freetype/config/ftheader.h
+  freetype2/freetype/config/ftmodule.h
+  freetype2/freetype/config/ftstdlib.h
+  freetype2/freetype/ftlcdfil.h
+  freetype2/freetype/ftsynth.h
+  freetype2/freetype/ftmm.h
+  freetype2/freetype/ftsizes.h
+  freetype2/freetype/freetype.h
+  freetype2/freetype/tttables.h
+  freetype2/freetype/ftotval.h
+  freetype2/freetype/ftcache.h
+  freetype2/freetype/tttags.h
+  freetype2/freetype/ftbbox.h
+  freetype2/freetype/fterrors.h
+  freetype2/freetype/ftfntfmt.h
+  freetype2/freetype/ftsystem.h
+  freetype2/freetype/ftbdf.h
+  freetype2/freetype/ftmoderr.h
+  freetype2/freetype/ftimage.h
+  freetype2/freetype/ftoutln.h
+  freetype2/freetype/ftmodapi.h
+  freetype2/freetype/fttrigon.h
+  freetype2/freetype/ftrender.h
+  freetype2/freetype/ftwinfnt.h
+  freetype2/freetype/ftadvanc.h
+  freetype2/freetype/ftchapters.h
+  freetype2/freetype/ftcid.h
+  freetype2/freetype/ftpfr.h
+  freetype2/freetype/ftparams.h
+  freetype2/freetype/fterrdef.h
+  freetype2/freetype/ttnameid.h
+  freetype2/freetype/ftstroke.h
+  freetype2/freetype/ftbzip2.h
+  freetype2/freetype/ftgxval.h
+  freetype2/freetype/ftsnames.h
+  freetype2/freetype/ftglyph.h
+  freetype2/freetype/ftlist.h
+  freetype2/freetype/ftdriver.h
+  freetype2/freetype/fttypes.h
+  freetype2/freetype/ftgasp.h
+  freetype2/freetype/ftlzw.h
+  freetype2/freetype/t1tables.h
+  freetype2/freetype/ftincrem.h
+  freetype2/freetype/ftgzip.h
+  freetype2/freetype/ftbitmap.h
+  freetype2/freetype/ftmac.h
+  freetype2/freetype/config/ftconfig.h
+  freetype2/freetype/config/ftoption.h
   )
 
 ###############################################################################
@@ -224,6 +287,15 @@ ExternalProject_ByProducts(TCL_BLD ${LIB_DIR} FIXPATH
   tclConfig.sh
   tclooConfig.sh
   )
+ExternalProject_ByProducts(TCL_BLD ${INCLUDE_DIR}
+  tclDecls.h
+  tcl.h
+  tclOODecls.h
+  tclOO.h
+  tclPlatDecls.h
+  tclTomMathDecls.h
+  tclTomMath.h
+  )
 
 include(${CMAKE_SOURCE_DIR}/external/tcl_lib_byproducts.cmake)
 ExternalProject_ByProducts(TCL_BLD ${LIB_DIR} ${TCL_LIB_BYPRODUCTS})
@@ -258,6 +330,12 @@ ExternalProject_ByProducts(TK_BLD ${LIB_DIR} FIXPATH
   tkConfig.sh
   )
 
+ExternalProject_ByProducts(TK_BLD ${INCLUDE_DIR}
+  tkDecls.h
+  tk.h
+  tkPlatDecls.h
+  )
+
 include(${CMAKE_SOURCE_DIR}/external/tk_lib_byproducts.cmake)
 ExternalProject_ByProducts(TK_BLD ${LIB_DIR} ${TK_LIB_BYPRODUCTS})
 
@@ -279,6 +357,16 @@ ExternalProject_Target(itcl ITCL_BLD
   IMPORT_PREFIX itcl4.1.1
   OUTPUT_FILE libitcl4.1.1${CMAKE_SHARED_LIBRARY_SUFFIX}
   STATIC_OUTPUT_FILE libitclstub4.1.1${CMAKE_STATIC_LIBRARY_SUFFIX}
+  )
+
+ExternalProject_ByProducts(ITCL_BLD ${INCLUDE_DIR}
+  itcl2TclOO.h
+  itclDecls.h
+  itcl.h
+  itclIntDecls.h
+  itclInt.h
+  itclMigrate2TclCore.h
+  itclTclIntStubsFcn.h
   )
 
 ExternalProject_ByProducts(ITCL_BLD ${LIB_DIR} FIXPATH
@@ -309,6 +397,11 @@ ExternalProject_Add(ITK_BLD
 ExternalProject_Target(itk ITK_BLD
   IMPORT_PREFIX itk4.1.0
   OUTPUT_FILE libitk4.1.0${CMAKE_SHARED_LIBRARY_SUFFIX}
+  )
+
+ExternalProject_ByProducts(ITK_BLD ${INCLUDE_DIR}
+  itk.h
+  itkInt.h
   )
 
 ExternalProject_ByProducts(ITK_BLD ${LIB_DIR}
@@ -402,6 +495,8 @@ ExternalProject_Target(gdiam GDIAM_BLD
   RPATH
   )
 
+# TODO - update gdiam build to install header
+
 ###############################################################################
 #                                 NETPBM
 ###############################################################################
@@ -414,6 +509,8 @@ ExternalProject_Target(netpbm NETPBM_BLD
   OUTPUT_FILE libnetpbm${CMAKE_SHARED_LIBRARY_SUFFIX}
   RPATH
   )
+
+# TODO - update netpbm build to install headers
 
 ###############################################################################
 #                                 libregex
@@ -430,6 +527,8 @@ ExternalProject_Target(regex REGEX_BLD
   RPATH
   )
 
+# TODO - update libregex build to install headers
+
 ###############################################################################
 #                 Screened Poisson Surface Reconstruction
 ###############################################################################
@@ -442,6 +541,8 @@ ExternalProject_Target(spsr SPSR_BLD
   OUTPUT_FILE libSPSR${CMAKE_SHARED_LIBRARY_SUFFIX}
   RPATH
   )
+
+# TODO - update SPSR build to install headers
 
 ###############################################################################
 #                                 libtermlib
@@ -458,6 +559,8 @@ ExternalProject_Target(termlib TERMLIB_BLD
   RPATH
   )
 
+# TODO - update termlib build to install headers
+
 ###############################################################################
 #                                 libutahrle
 ###############################################################################
@@ -472,6 +575,13 @@ ExternalProject_Target(utahrle UTAHRLE_BLD
   SYMLINKS "libutahrle${CMAKE_SHARED_LIBRARY_SUFFIX};libutahrle${CMAKE_SHARED_LIBRARY_SUFFIX}.19"
   LINK_TARGET "libutahrle${CMAKE_SHARED_LIBRARY_SUFFIX}"
   RPATH
+  )
+ExternalProject_ByProducts(UTAHRLE_BLD ${INCLUDE_DIR}
+  rle.h
+  rle_code.h
+  rle_config.h
+  rle_put.h
+  rle_raw.h
   )
 
 ###############################################################################
@@ -488,6 +598,9 @@ ExternalProject_Target(vds VDS_BLD
   LINK_TARGET "libvds${CMAKE_SHARED_LIBRARY_SUFFIX}"
   RPATH
   )
+ExternalProject_ByProducts(VDS_BLD ${INCLUDE_DIR}
+  vds.h
+  )
 
 ###############################################################################
 #                                 LZ4
@@ -500,6 +613,11 @@ ExternalProject_Add(LZ4_BLD
 ExternalProject_Target(lz4 LZ4_BLD
   OUTPUT_FILE liblz4${CMAKE_SHARED_LIBRARY_SUFFIX}
   RPATH
+  )
+ExternalProject_ByProducts(LZ4_BLD ${INCLUDE_DIR}
+  lz4.h
+  lz4hc.h
+  lz4frame.h
   )
 
 ###############################################################################
@@ -516,6 +634,112 @@ ExternalProject_Target(openNURBS OPENNURBS_BLD
   LINK_TARGET "libopenNURBS${CMAKE_SHARED_LIBRARY_SUFFIX}"
   RPATH
   )
+ExternalProject_ByProducts(OPENNURBS_BLD ${INCLUDE_DIR}
+  openNURBS/opennurbs.h
+  openNURBS/opennurbs_3dm.h
+  openNURBS/opennurbs_3dm_attributes.h
+  openNURBS/opennurbs_3dm_properties.h
+  openNURBS/opennurbs_3dm_settings.h
+  openNURBS/opennurbs_annotation.h
+  openNURBS/opennurbs_annotation2.h
+  openNURBS/opennurbs_arc.h
+  openNURBS/opennurbs_arccurve.h
+  openNURBS/opennurbs_archive.h
+  openNURBS/opennurbs_array.h
+  openNURBS/opennurbs_array_defs.h
+  openNURBS/opennurbs_base32.h
+  openNURBS/opennurbs_base64.h
+  openNURBS/opennurbs_beam.h
+  openNURBS/opennurbs_bezier.h
+  openNURBS/opennurbs_bitmap.h
+  openNURBS/opennurbs_bounding_box.h
+  openNURBS/opennurbs_box.h
+  openNURBS/opennurbs_brep.h
+  openNURBS/opennurbs_circle.h
+  openNURBS/opennurbs_color.h
+  openNURBS/opennurbs_compress.h
+  openNURBS/opennurbs_cone.h
+  openNURBS/opennurbs_crc.h
+  openNURBS/opennurbs_curve.h
+  openNURBS/opennurbs_curveonsurface.h
+  openNURBS/opennurbs_curveproxy.h
+  openNURBS/opennurbs_cylinder.h
+  openNURBS/opennurbs_defines.h
+  openNURBS/opennurbs_detail.h
+  openNURBS/opennurbs_dimstyle.h
+  openNURBS/opennurbs_dll_resource.h
+  openNURBS/opennurbs_ellipse.h
+  openNURBS/opennurbs_error.h
+  openNURBS/opennurbs_evaluate_nurbs.h
+  openNURBS/opennurbs_extensions.h
+  openNURBS/opennurbs_font.h
+  openNURBS/opennurbs_fpoint.h
+  openNURBS/opennurbs_fsp.h
+  openNURBS/opennurbs_fsp_defs.h
+  openNURBS/opennurbs_geometry.h
+  openNURBS/opennurbs_group.h
+  openNURBS/opennurbs_hatch.h
+  openNURBS/opennurbs_hsort_template.h
+  openNURBS/opennurbs_instance.h
+  openNURBS/opennurbs_intersect.h
+  openNURBS/opennurbs_knot.h
+  openNURBS/opennurbs_layer.h
+  openNURBS/opennurbs_light.h
+  openNURBS/opennurbs_line.h
+  openNURBS/opennurbs_linecurve.h
+  openNURBS/opennurbs_linestyle.h
+  openNURBS/opennurbs_linetype.h
+  openNURBS/opennurbs_lookup.h
+  openNURBS/opennurbs_mapchan.h
+  openNURBS/opennurbs_massprop.h
+  openNURBS/opennurbs_material.h
+  openNURBS/opennurbs_math.h
+  openNURBS/opennurbs_matrix.h
+  openNURBS/opennurbs_memory.h
+  openNURBS/opennurbs_mesh.h
+  openNURBS/opennurbs_nurbscurve.h
+  openNURBS/opennurbs_nurbssurface.h
+  openNURBS/opennurbs_object.h
+  openNURBS/opennurbs_object_history.h
+  openNURBS/opennurbs_objref.h
+  openNURBS/opennurbs_offsetsurface.h
+  openNURBS/opennurbs_optimize.h
+  openNURBS/opennurbs_plane.h
+  openNURBS/opennurbs_planesurface.h
+  openNURBS/opennurbs_pluginlist.h
+  openNURBS/opennurbs_point.h
+  openNURBS/opennurbs_pointcloud.h
+  openNURBS/opennurbs_pointgeometry.h
+  openNURBS/opennurbs_pointgrid.h
+  openNURBS/opennurbs_polycurve.h
+  openNURBS/opennurbs_polyedgecurve.h
+  openNURBS/opennurbs_polyline.h
+  openNURBS/opennurbs_polylinecurve.h
+  openNURBS/opennurbs_qsort_template.h
+  openNURBS/opennurbs_rand.h
+  openNURBS/opennurbs_rendering.h
+  openNURBS/opennurbs_revsurface.h
+  openNURBS/opennurbs_rtree.h
+  openNURBS/opennurbs_sphere.h
+  openNURBS/opennurbs_string.h
+  openNURBS/opennurbs_sumsurface.h
+  openNURBS/opennurbs_surface.h
+  openNURBS/opennurbs_surfaceproxy.h
+  openNURBS/opennurbs_system.h
+  openNURBS/opennurbs_textlog.h
+  openNURBS/opennurbs_texture.h
+  openNURBS/opennurbs_texture_mapping.h
+  openNURBS/opennurbs_torus.h
+  openNURBS/opennurbs_unicode.h
+  openNURBS/opennurbs_userdata.h
+  openNURBS/opennurbs_uuid.h
+  openNURBS/opennurbs_version.h
+  openNURBS/opennurbs_viewport.h
+  openNURBS/opennurbs_workspace.h
+  openNURBS/opennurbs_x.h
+  openNURBS/opennurbs_xform.h
+  openNURBS/opennurbs_zlib.h
+  )
 
 ###############################################################################
 #                                 Poly2Tri
@@ -531,6 +755,11 @@ ExternalProject_Target(poly2tri POLY2TRI_BLD
   LINK_TARGET "libp2t${CMAKE_SHARED_LIBRARY_SUFFIX}"
   RPATH
   )
+ExternalProject_ByProducts(POLY2TRI_BLD ${INCLUDE_DIR}
+  poly2tri/poly2tri.h
+  poly2tri/common/shapes.h
+  poly2tri/sweep/cdt.h
+  )
 
 ###############################################################################
 #                                 RPly
@@ -544,6 +773,8 @@ ExternalProject_Target(rply RPLY_BLD
   OUTPUT_FILE librply${CMAKE_SHARED_LIBRARY_SUFFIX}
   RPATH
   )
+
+#TODO - update rply build to install header
 
 ###############################################################################
 #                                PROJ-4
