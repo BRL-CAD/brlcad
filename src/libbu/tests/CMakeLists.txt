@@ -584,6 +584,7 @@ add_test(NAME bu_opt_1_s_01  COMMAND bu_test opt 1 s 1)
 add_test(NAME bu_opt_1_s_02  COMMAND bu_test opt 1 s 2)
 add_test(NAME bu_opt_1_s_03  COMMAND bu_test opt 1 s 3)
 add_test(NAME bu_opt_1_s_04  COMMAND bu_test opt 1 s 4)
+add_test(NAME bu_opt_1_s_05  COMMAND bu_test opt 1 s 5)
 
 # Integer option testing
 add_test(NAME bu_opt_1_i_01  COMMAND bu_test opt 1 i 1)

@@ -218,8 +218,8 @@ int desc_1(const char *cgy, int test_num)
 	{"f", "fastf_t", "#",      &bu_opt_fastf_t, (void *)&f,          "Read float"},
 	{"m", "mflag",   "flag",   NULL,            (void *)&m,          "Set boolean flag"},
 	{"F", "Fflag",   "flag",   NULL,            (void *)&F,          "Set boolean flag"},
-	{"", "vls", "variable-length string", &bu_opt_vls, (void *)&vls, "Set variable length string"},
-	{"a", "vls", "variable-length string", &bu_opt_vls, (void *)&vls2, "Set variable length string with flag"},
+	{"",  "vls1", "variable-length string", &bu_opt_vls, (void *)&vls, "Set variable length string"},
+	{"a", "vls2", "variable-length string", &bu_opt_vls, (void *)&vls2, "Set variable length string with flag"},
 	BU_OPT_DESC_NULL
     };
 
@@ -427,13 +427,20 @@ int desc_1(const char *cgy, int test_num)
 		EXPECT_SUCCESS_STRING("string", str, "test_str");
 		break;
 	    case 3:
-		ac = 1;
-		av[0] = "vls_str";
+		ac = 2;
+		av[0] = "--vls1";
+		av[1] = "vls_str";
 		EXPECT_SUCCESS_STRING("vls", bu_vls_cstr(&vls), "vls_str");
 		break;
 	    case 4:
 		ac = 2;
 		av[0] = "-a";
+		av[1] = "vls_str2";
+		EXPECT_SUCCESS_STRING("vls", bu_vls_cstr(&vls2), "vls_str2");
+		break;
+	    case 5:
+		ac = 2;
+		av[0] = "--vls2";
 		av[1] = "vls_str2";
 		EXPECT_SUCCESS_STRING("vls", bu_vls_cstr(&vls2), "vls_str2");
 		break;
