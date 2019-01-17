@@ -284,7 +284,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     fp_err = bu_process_open(p, BU_PROCESS_STDERR);
 
     /* send quit command to nirt */
-    fwrite("q\n", 1, 2, fp_in);
+    fprintf(fp_in, "q\n");
     bu_process_close(p, BU_PROCESS_STDIN);
 
     bu_vls_free(&p_vls);   /* use to form "partition" part of nirt command above */
