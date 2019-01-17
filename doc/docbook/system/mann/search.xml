@@ -461,24 +461,32 @@
 		    <entry>arbn</entry>
 		  </row>
 		  <row>
-		    <entry>ars</entry>
+		    <entry>annot</entry>
+                    <entry>ars</entry>
+		    <entry>binunif</entry>
 		    <entry>bot</entry>
 		    <entry>brep</entry>
-		    <entry>cline</entry>
-		    <entry>dsp</entry>
-		    <entry>ebm</entry>
+		    <entry>bspline</entry>
 		  </row>
 		  <row>
+		    <entry>cline</entry>
+		    <entry>constrnt</entry>
+		    <entry>datum</entry>
+		    <entry>dsp</entry>
+		    <entry>ebm</entry>
 		    <entry>ehy</entry>
+		  </row>
+		  <row>
 		    <entry>ell</entry>
 		    <entry>epa</entry>
 		    <entry>eto</entry>
 		    <entry>extrude</entry>
 		    <entry>grip</entry>
+		    <entry>half</entry>
 		  </row>
 		  <row>
-		    <entry>half</entry>
 		    <entry>hf</entry>
+		    <entry>hrt</entry>
 		    <entry>hyp</entry>
 		    <entry>joint</entry>
 		    <entry>metaball</entry>
@@ -487,23 +495,23 @@
 		  <row>
 		    <entry>part</entry>
 		    <entry>pipe</entry>
+		    <entry>pnts</entry>
 		    <entry>poly</entry>
 		    <entry>rec</entry>
 		    <entry>rhc</entry>
-		    <entry>rpc</entry>
 		  </row>
 		  <row>
+		    <entry>rpc</entry>
+		    <entry>script</entry>
 		    <entry>sketch</entry>
 		    <entry>sph</entry>
-		    <entry>spline</entry>
 		    <entry>submodel</entry>
-		    <entry>tgc</entry>
-		    <entry>tor</entry>
+		    <entry>superell</entry>
 		  </row>
 		  <row>
+		    <entry>tgc</entry>
+		    <entry>tor</entry>
 		    <entry>vol</entry>
-		    <entry></entry>
-		    <entry></entry>
 		    <entry></entry>
 		    <entry></entry>
 		    <entry></entry>
