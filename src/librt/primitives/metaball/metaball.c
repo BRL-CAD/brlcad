@@ -902,7 +902,10 @@ rt_metaball_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int arg
     double thresh;
 
     if (argc % 2) {
+	int i;
 	bu_vls_printf(logstr, "Invalid number of arguments: %d (see 'form metaball')\n", argc);
+	for (i=0; i<argc; i++)
+	    bu_vls_printf(logstr, "  argv[%d] = [%s]\n", i, argv[i]);
 	return BRLCAD_ERROR;
     }
 
