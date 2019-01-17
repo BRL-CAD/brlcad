@@ -150,13 +150,14 @@ extern int rt_comb_form(struct bu_vls *logstr, const struct rt_functab *ftp);
 extern void rt_comb_make(const struct rt_functab *ftp, struct rt_db_internal *intern);
 extern void rt_comb_ifree(struct rt_db_internal *ip);
 
-extern int rt_ebm_form(struct bu_vls *logstr, const struct rt_functab *ftp);
-extern int rt_bot_form(struct bu_vls *logstr, const struct rt_functab *ftp);
-extern int rt_sketch_form(struct bu_vls *logstr, const struct rt_functab *ftp);
 extern int rt_annot_form(struct bu_vls *logstr, const struct rt_functab *ftp);
-extern int rt_script_form(struct bu_vls *logstr, const struct rt_functab *ftp);
+extern int rt_bot_form(struct bu_vls *logstr, const struct rt_functab *ftp);
 extern int rt_cline_form(struct bu_vls *logstr, const struct rt_functab *ftp);
+extern int rt_ebm_form(struct bu_vls *logstr, const struct rt_functab *ftp);
 extern int rt_extrude_form(struct bu_vls *logstr, const struct rt_functab *ftp);
+extern int rt_metaball_form(struct bu_vls *logstr, const struct rt_functab *ftp);
+extern int rt_script_form(struct bu_vls *logstr, const struct rt_functab *ftp);
+extern int rt_sketch_form(struct bu_vls *logstr, const struct rt_functab *ftp);
 
 
 const struct rt_functab OBJ[] = {
@@ -1895,7 +1896,7 @@ const struct rt_functab OBJ[] = {
 	RT_METABALL_INTERNAL_MAGIC,
 	RTFUNCTAB_FUNC_GET_CAST(rt_metaball_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_metaball_adjust),
-	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
+	RTFUNCTAB_FUNC_FORM_CAST(rt_metaball_form),
 	NULL, /* make */
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_metaball_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_metaball_bbox),

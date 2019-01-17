@@ -147,8 +147,8 @@
 #
 ::itcl::body MetaballEditFrame::initGeometry {gdata} {
     set mInitGeometry 1
-    set mMethod [lindex $gdata 0]
-    set mThreshold [format "%.6f" [lindex $gdata 1]]
+    set mMethod [lindex $gdata 1]
+    set mThreshold [format "%.6f" [lindex $gdata 3]]
 
     unset mDetail
     set mDetail(active) ""
@@ -160,7 +160,7 @@
     }
 
     set row 1
-    foreach item [lindex $gdata 2] {
+    foreach item [lindex $gdata 5] {
 	set mDetail($row,$SELECT_COL) ""
 
 	set mDetail($row,$X_COL) [format "%.6f" [lindex $item 0]]
@@ -206,7 +206,7 @@
 	incr row
     }
 
-    $itk_option(-mged) adjust $itk_option(-geometryObject) $mMethod $mThreshold $pdata
+    $itk_option(-mged) adjust $itk_option(-geometryObject) method $mMethod thresh $mThreshold PL $pdata
 
     GeometryEditFrame::updateGeometry
 }
@@ -233,13 +233,13 @@
 	return
     }
 
-    $itk_option(-mged) put $obj metaball 1 1 {{-1 0 0 1 1} {1 0 0 1 1}}
+    $itk_option(-mged) put $obj metaball method 1 thresh 1 PL {{-1 0 0 1 1} {1 0 0 1 1}}
 }
 
 
 ::itcl::body MetaballEditFrame::moveElement {_dm _obj _vx _vy _ocenter} {
     set mb_i [expr {$mCurrentPoint - 1}]
-    set pdata [lindex [$itk_option(-mged) get $itk_option(-geometryObjectPath)] 3]
+    set pdata [lindex [$itk_option(-mged) get $itk_option(-geometryObjectPath)] 6]
     set pt [lrange [lindex $pdata $mb_i] 0 2]
 
     set vpt [$itk_option(-mged) pane_m2v_point $_dm $pt]
@@ -439,7 +439,7 @@
 	    set mEditClass ""
 	    set mEditParam1 ""
 	    $::ArcherCore::application initAddMetaballPoint $itk_option(-geometryObjectPath) 1 [::itcl::code $this metaballPointAddCallback]
-	    set pdata [lindex [$itk_option(-mged) get $itk_option(-geometryObject)] 3]
+	    set pdata [lindex [$itk_option(-mged) get $itk_option(-geometryObject)] 6]
 	    metaballPointSelectCallback [expr {[llength $pdata] - 1}]
 	} \
 	$deletePoint {
@@ -511,7 +511,7 @@
     $itk_option(-mged) refresh_on
 
     set mb_i [expr {$mCurrentPoint - 1}]
-    set pdata [lindex [$itk_option(-mged) get $itk_option(-geometryObjectPath)] 3]
+    set pdata [lindex [$itk_option(-mged) get $itk_option(-geometryObjectPath)] 6]
     set pt [lrange [lindex $pdata $mb_i] 0 2]
 
     $itk_option(-mged) data_axes points [list $pt]
@@ -523,7 +523,7 @@
     initGeometry $odata
     $::ArcherCore::application setSave
 
-    set pdata [lindex $odata 2]
+    set pdata [lindex $odata 5]
     metaballPointSelectCallback [expr {[llength $pdata] - 1}]
 }
 
@@ -539,7 +539,7 @@
     eval $itk_option(-mged) redraw $itk_option(-geometryObjectPath)
     set odata [lrange [$itk_option(-mged) get $itk_option(-geometryObject)] 1 end]
 
-    set pdata [lindex $odata 2]
+    set pdata [lindex $odata 5]
     set plen [llength $pdata]
 
     if {$plen && ($mCurrentPoint < 1 || $mCurrentPoint > $plen)} {
