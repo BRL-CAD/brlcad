@@ -1095,7 +1095,7 @@ f_type(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
 	    }
 	    break;
 	case DB5_MINORTYPE_BRLCAD_METABALL:
-	    /* Because ft_label is only 8 characters, ft_label doesn't
+	    /* FIXME: Because ft_label is only 8 characters, ft_label doesn't
 	     * work in bu_path_match() for metaball.
 	     */
 	    type_match = (!bu_path_match(plan->p_un._type_data, "metaball", 0));
