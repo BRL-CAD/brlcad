@@ -81,7 +81,6 @@ struct ged_clone_state {
     hvect_t rpnt;		/* Point to rotate about (default 0 0 0) */
     int miraxis;		/* Axis to mirror copy */
     fastf_t mirpos;		/* Point on axis to mirror copy */
-    int autoview;		/* Execute autoview after drawing all objects */
     int updpos;			/* Position of number to update (for -c) */
     struct bu_vls olist;        /* List of cloned object names */
 };
@@ -831,12 +830,10 @@ deep_copy_object(struct resource *resp, struct ged_clone_state *state)
 static void
 print_usage(struct bu_vls *str)
 {
-    bu_vls_printf(str, "Usage: clone [-abhimnprtv] <object>\n\n");
+    bu_vls_printf(str, "Usage: clone [-abchimnprtv] <object>\n\n");
     bu_vls_printf(str, "-a <n> <x> <y> <z>\t- Specifies a translation split between n copies.\n");
     bu_vls_printf(str, "-b <n> <x> <y> <z>\t- Specifies a rotation around x, y, and z axes \n\t\t\t  split between n copies.\n");
     bu_vls_printf(str, "-c\t\t\t- Increment the second number in object names.\n");
-    bu_vls_printf(str, "-f\t\t\t- Don't draw the new object.\n");
-    bu_vls_printf(str, "-g\t\t\t- Don't resize the view after drawing new objects.\n");
     bu_vls_printf(str, "-h\t\t\t- Prints this message.\n");
     bu_vls_printf(str, "-i <n>\t\t\t- Specifies the increment between each copy.\n");
     bu_vls_printf(str, "-m <axis> <pos>\t\t- Specifies the axis and point to mirror the group.\n");
@@ -863,7 +860,6 @@ get_args(struct ged *gedp, int argc, char **argv, struct ged_clone_state *state)
     state->gedp = gedp;
     state->incr = 100;
     state->n_copies = 1;
-    state->autoview = 1;
     state->rot[W] = 0;
     state->rpnt[W] = 0;
     state->trans[W] = 0;
@@ -894,9 +890,6 @@ get_args(struct ged *gedp, int argc, char **argv, struct ged_clone_state *state)
 		 * operation, so it SHOULD be functionally equivalent for a user
 		 * who's dealt with this before. */
 		state->updpos++;
-		break;
-	    case 'g':
-		state->autoview = 0;
 		break;
 	    case 'i':
 		state->incr = atoi(bu_optarg);
