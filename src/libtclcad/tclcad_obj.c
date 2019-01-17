@@ -14313,7 +14313,7 @@ to_create_vlist_callback_solid(struct solid *sp)
     struct ged_dm_view *gdvp;
     register int first = 1;
 
-	for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
 	if (current_top->to_gop->go_dlist_on && to_is_viewable(gdvp)) {
 
 	    (void)dm_make_current(gdvp->gdv_dmp);
