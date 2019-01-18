@@ -1,3 +1,46 @@
+/*                         G E X . C P P
+ * BRL-CAD
+ *
+ * Copyright (c) 2019 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file gex.cpp
+ *
+ * purpose: manage various aspects of a BRL-CAD database
+ *
+ * description: Enables the user to perform various tasks on a BRL-CAD
+ * database (DB) file including reporting statistics and shortening
+ * the DB file by removing unused free space.  The original DB file is
+ * opened read-only and is not modified in any way.
+ *
+ * The only option at the moment is to compress the input DB by
+ * removing unused free space which accumulates during the
+ * construction of a BRL-CAD model.  The shortened copy of the input
+ * DB is written to a new file which may be named by the user,
+ * otherwise the new file is name "<input file name>.compressed".
+ *
+ * As an example of how much a DB can grow during construction,
+ * creating a model consisting of 1,000 spheres and killing all of
+ * them, and doing that 10 times, creates a 45 Mb file.  Then
+ * converting it to ASCII and back reduces the file size to 250 Kb.
+ * (Note the use of g2asc and asc2g may allow mathematical errors to
+ * creep in so their use is not recommended for production models.)
+ *
+ */
+
 #include "common.h"
 
 #include <cstdlib>
@@ -10,26 +53,7 @@
 
 using namespace std;
 
-static const char usage[] = "Example: admin-db [...options] input.g [output.g]\n";
-
-/* purpose: manage various aspects of a BRL-CAD database
- *
- * description: Enables the user to perform various tasks on a BRL-CAD
- * database (DB) file including reporting statistics and shortening
- * the DB file by removing unused free space.  The original DB file
- * is opened read-only and is not modified in any way.
- *
- * The only option at the moment is to compress the input DB by removing
- * unused free space which accumulates during the construction of a BRL-CAD model.
- * The shortened copy of the input DB is written to a new file which may be named
- * by the user, otherwise the new file is name "<input file name>.compressed".
- *
- * As an example of how much a DB can grow during construction, creating a model
- * consisting of 1,000 spheres and killing all of them, and doing that 10 times,
- * creates a 45 Mb file.  Then converting it to ASCII and back reduces
- * the file size to 250 Kb.  (Note the use of g2asc and asc2g may allow mathematical
- * errors to creep in so their use is not recommended for production models.)
- */
+static const char usage[] = "Example: %s [...options] input.g [output.g]\n";
 
 string get_dli_type_name(const int typ);
 string get_minor_type_name(const int typ);
@@ -44,6 +68,7 @@ main(int argc, char** argv)
     int fd;
     int res = 0; // for function returns
 
+    const char *argv0 = argv[0];
     const char DBSUF[] = ".compressed.g";
     struct bu_vls str = BU_VLS_INIT_ZERO;
 
@@ -74,7 +99,7 @@ main(int argc, char** argv)
      * from the bu_opt leftovers */
     if (!argc) {
 	bu_log("ERROR: input geometry file not specified\n");
-	bu_exit(EXIT_FAILURE, usage);
+	bu_exit(EXIT_FAILURE, usage, argv0);
     }
     bu_vls_sprintf(&db_fname, "%s", argv[0]);
     argv++; argc--;
@@ -92,7 +117,7 @@ main(int argc, char** argv)
     if (has_help) {
 	bu_vls_free(&db_fname);
 	bu_vls_free(&db2_fname);
-        bu_exit(EXIT_SUCCESS, usage);
+        bu_exit(EXIT_SUCCESS, usage, argv0);
     }
 
     if (has_compress && bu_vls_strlen(&db2_fname) == 0) {
@@ -477,4 +502,3 @@ get_minor_type_name(const int typ)
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-
