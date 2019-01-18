@@ -116,26 +116,26 @@ set(misc_ignore_files
   repoconv/sphflake.pix,v
   repoconv/svn_logmsg.xsl
   repoconv/svn_moved_and_edited.cxx
-  repoconv/svn2git/CMake/FindAPR.cmake
-  repoconv/svn2git/CMake/FindSubversionLibrary.cmake
-  repoconv/svn2git/CMakeLists.txt
-  repoconv/svn2git/LICENSE
-  repoconv/svn2git/CommandLineParser.cpp
-  repoconv/svn2git/CommandLineParser.h
-  repoconv/svn2git/README.md
-  repoconv/svn2git/main.cpp
-  repoconv/svn2git/repository.cpp
-  repoconv/svn2git/repository.h
-  repoconv/svn2git/ruleparser.cpp
-  repoconv/svn2git/ruleparser.h
-  repoconv/svn2git/samples/ignore-branch.rules
-  repoconv/svn2git/samples/merged-branches-tags.rules
-  repoconv/svn2git/samples/min-max-revision.rules
-  repoconv/svn2git/samples/recurse.rules
-  repoconv/svn2git/samples/standardlayout.rules
-  repoconv/svn2git/samples/two-projects.rules
-  repoconv/svn2git/svn.cpp
-  repoconv/svn2git/svn.h
+  repoconv/svn-fast-export/CMake/FindAPR.cmake
+  repoconv/svn-fast-export/CMake/FindSubversionLibrary.cmake
+  repoconv/svn-fast-export/CMakeLists.txt
+  repoconv/svn-fast-export/LICENSE
+  repoconv/svn-fast-export/CommandLineParser.cpp
+  repoconv/svn-fast-export/CommandLineParser.h
+  repoconv/svn-fast-export/README.md
+  repoconv/svn-fast-export/main.cpp
+  repoconv/svn-fast-export/repository.cpp
+  repoconv/svn-fast-export/repository.h
+  repoconv/svn-fast-export/ruleparser.cpp
+  repoconv/svn-fast-export/ruleparser.h
+  repoconv/svn-fast-export/samples/ignore-branch.rules
+  repoconv/svn-fast-export/samples/merged-branches-tags.rules
+  repoconv/svn-fast-export/samples/min-max-revision.rules
+  repoconv/svn-fast-export/samples/recurse.rules
+  repoconv/svn-fast-export/samples/standardlayout.rules
+  repoconv/svn-fast-export/samples/two-projects.rules
+  repoconv/svn-fast-export/svn.cpp
+  repoconv/svn-fast-export/svn.h
   repoconv/svnlog2csv
   uncpowerplant2g.sh
   win32-msvc/CMakeLists.txt
