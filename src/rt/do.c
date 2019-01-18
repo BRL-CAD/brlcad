@@ -1,7 +1,7 @@
 /*                            D O . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2018 United States Government as represented by
+ * Copyright (c) 1987-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -149,6 +149,11 @@ old_way(FILE *fp)
 	return 0;		/* Not old way */
     }
     bu_log("Interpreting command stream in old format\n");
+
+    /* Committing to old way - better have objv ready */
+    if (!objv) {
+	return -1;
+    }
 
     def_tree(APP.a_rt_i);	/* Load the default trees */
 
@@ -308,19 +313,70 @@ int cm_end(const int UNUSED(argc), const char **UNUSED(argv))
 }
 
 
-int cm_tree(const int argc, const char **argv)
+
+
+int cm_draw(const int argc, const char **argv)
+{
+    int i = 0;
+    size_t j = 0;
+    if (!cmd_objs || argc < 2) {
+	return 0;
+    }
+    for (i = 1; i < argc; i++) {
+	int is_drawn = 0;
+	for (j = 0; j < BU_PTBL_LEN(cmd_objs); j++) {
+	    const char *dobj = (const char *)BU_PTBL_GET(cmd_objs, j);
+	    if (BU_STR_EQUAL(dobj, argv[1])) {
+		is_drawn = 1;
+		break;
+	    }
+	}
+	if (!is_drawn) {
+	    const char *ndraw = bu_strdup(argv[1]);
+	    bu_ptbl_ins(cmd_objs, (long *)ndraw);
+	}
+    }
+    return 0;
+}
+
+int cm_erase(const int argc, const char **argv)
+{
+    int i = 0;
+    size_t j = 0;
+    if (!cmd_objs) {
+	return 0;
+    }
+    for (i = 1; i < argc; i++) {
+	for (j = 0; j < BU_PTBL_LEN(cmd_objs); j++) {
+	    char *dobj = (char *)BU_PTBL_GET(cmd_objs, j);
+	    if (BU_STR_EQUAL(dobj, argv[1])) {
+		bu_ptbl_rm(cmd_objs, (long *)dobj);
+		bu_free(dobj, "free name");
+	    }
+	}
+    }
+    return 0;
+}
+
+
+int cm_prep(const int UNUSED(argc), const char **UNUSED(argv))
 {
     register struct rt_i *rtip = APP.a_rt_i;
     struct bu_vls times = BU_VLS_INIT_ZERO;
-
-    if (argc <= 1) {
-	def_tree(rtip);		/* Load the default trees */
+    int objcnt = 0;
+    const char **objargv = NULL;
+    if (!cmd_objs) {
 	return 0;
     }
+    objcnt = (int)BU_PTBL_LEN(cmd_objs);
+    if (objcnt <= 0) {
+	return 0;
+    }
+    objargv = (const char **)cmd_objs->buffer;
 
     rt_prep_timer();
-    if (rt_gettrees(rtip, argc-1, &argv[1], npsw) < 0)
-	bu_log("rt_gettrees(%s) FAILED\n", argv[0]);
+    if (rt_gettrees(rtip, objcnt, objargv, npsw) < 0)
+	bu_log("rt_gettrees() FAILED\n");
     (void)rt_get_timer(&times, NULL);
 
     if (rt_verbosity & VERBOSE_STATS)
@@ -329,6 +385,27 @@ int cm_tree(const int argc, const char **argv)
     return 0;
 }
 
+int cm_tree(const int argc, const char **argv)
+{
+    int i = 0;
+    size_t j = 0;
+
+    if (argc <= 1) {
+	return 0;
+    }
+
+    for (j = 0; j < BU_PTBL_LEN(cmd_objs); i++) {
+	char *dobj = (char *)BU_PTBL_GET(cmd_objs, i);
+	bu_free(dobj, "free object name");
+    }
+    bu_ptbl_reset(cmd_objs);
+    for (i = 1; i < argc; i++) {
+	const char *ndraw = bu_strdup(argv[i]);
+	bu_ptbl_ins(cmd_objs, (long *)ndraw);
+    }
+
+    return cm_prep(0,NULL);
+}
 
 int cm_multiview(const int UNUSED(argc), const char **UNUSED(argv))
 {
@@ -613,7 +690,7 @@ clt_run(int cur_pixel, int last_pixel)
     }
     if (outfp) {
         bu_semaphore_acquire(BU_SEM_SYSCALL);
-        if (fseek(outfp, cur_pixel*clt_o[1], 0) != 0)
+        if (bu_fseek(outfp, cur_pixel*clt_o[1], 0) != 0)
             fprintf(stderr, "fseek error\n");
         if (fwrite(pixelp, size, 1, outfp) != 1)
             bu_exit(EXIT_FAILURE, "pixel fwrite error");
@@ -1217,6 +1294,12 @@ struct command_tab rt_cmdtab[] = {
      cm_anim,	4, 999},
     {"tree", 	"treetop(s)", "specify alternate list of tree tops",
      cm_tree,	1, 999},
+    {"draw", 	"obj", "add an object to the active list",
+     cm_draw,	2, 999},
+    {"erase", 	"obj", "remove an object from the active list",
+     cm_erase,	2, 999},
+    {"prep", 	"", "(re)prep for raytrace with the current obj list",
+     cm_prep,	1, 1},
     {"clean", "", "clean articulation from previous frame",
      cm_clean,	1, 1},
     {"_closedb", "", "Close .g database, (for memory debugging)",

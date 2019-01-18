@@ -11,6 +11,7 @@ set(LIBBG_SOURCES
   chull.c
   QuickHull.cxx
   chull3d.cxx
+  clipper.cxx
   obr.c
   polygon.c
   polygon_ear_clipping.c
@@ -32,6 +33,7 @@ add_subdirectory(tests)
 
 set(bg_ignore
   QuickHull.hpp
+  clipper.hpp
   bg_private.h
   pointgen.c
   )

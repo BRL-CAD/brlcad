@@ -1,7 +1,7 @@
 /*                      M E M A L L O C . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -259,14 +259,14 @@ rt_memfree(struct mem_map **pp, size_t size, off_t addr)
     }
 
     if (type & (M_TOVFL|M_BOVFL)) {
-	bu_log("rt_memfree(addr=%ld, size=%zu) ERROR type=0%o\n",
-	       addr, size, type);
+	bu_log("rt_memfree(addr=%jd, size=%zu) ERROR type=0%o\n",
+	       (intmax_t)addr, size, type);
 	if (prevp)
-	    bu_log("prevp: m_addr=%ld, m_size=%zu\n",
-		   prevp->m_addr, prevp->m_size);
+	    bu_log("prevp: m_addr=%jd, m_size=%zu\n",
+		   (intmax_t)prevp->m_addr, prevp->m_size);
 	if (curp)
-	    bu_log("curp: m_addr=%ld, m_size=%zu\n",
-		   curp->m_addr, curp->m_size);
+	    bu_log("curp: m_addr=%jd, m_size=%zu\n",
+		   (intmax_t)curp->m_addr, curp->m_size);
 	return;
     }
 

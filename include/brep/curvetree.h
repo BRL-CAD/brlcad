@@ -1,7 +1,7 @@
 /*                        C U R V E T R E E . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -69,6 +69,11 @@ extern "C++" {
 		void getLeavesAbove(std::list<const BRNode *> &out_leaves, const ON_2dPoint &pt, fastf_t tol) const;
 		void getLeavesRight(std::list<const BRNode *> &out_leaves, const ON_2dPoint &pt, fastf_t tol) const;
 
+		double width_3d;
+		double height_3d;
+		double u_tol;
+		double v_tol;
+
 	    private:
 		friend class BBNode;
 
@@ -91,8 +96,8 @@ extern "C++" {
 
 		bool getHVTangents(const ON_Curve *curve, const ON_Interval &t, std::list<fastf_t> &list) const;
 		bool isLinear(const ON_Curve *curve, double min, double max) const;
-		BRNode *subdivideCurve(const ON_Curve *curve, int trim_index, int adj_face_index, double min, double max, bool innerTrim, int depth) const;
-		BRNode *curveBBox(const ON_Curve *curve, int trim_index, int adj_face_index, const ON_Interval &t, bool isLeaf, bool innerTrim, const ON_BoundingBox &bb) const;
+		BRNode *subdivideCurve(const ON_Curve *curve, int trim_index, int adj_face_index, double edge_tol, double loop_u_tol, double loop_v_tol, double min, double max, bool innerTrim, int depth) const;
+		BRNode *curveBBox(const ON_Curve *curve, int trim_index, int adj_face_index, double edge_tol, double loop_u_tol, double loop_v_tol, const ON_Interval &t, bool isLeaf, bool innerTrim, const ON_BoundingBox &bb) const;
 		static ON_BoundingBox initialLoopBBox(const ON_BrepFace &face);
 
 		const ON_BrepFace * const m_face;

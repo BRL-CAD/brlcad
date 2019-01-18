@@ -1,5 +1,5 @@
 /*                   O B J _ R U L E S . R E
- * Copyright (c) 2010-2018 United States Government as represented by
+ * Copyright (c) 2010-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -15,6 +15,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+#include "common.h"
 
 #include <errno.h>
 #include <limits.h>

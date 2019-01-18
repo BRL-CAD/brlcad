@@ -1,7 +1,7 @@
 /*                         F I N D P . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2018 United States Government as represented by
+ * Copyright (c) 1990-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -44,13 +44,13 @@ Findp()
 
     saverec = currec;	/* save current record number */
 
-    if (fseek(fd, 0, 2)) {
+    if (bu_fseek(fd, 0, 2)) {
 	/* go to end of file */
 	bu_log("Cannot seek to end of file\n");
 	perror("Findp");
 	bu_exit(1, NULL);
     }
-    offset = ftell(fd);	/* get file length */
+    offset = bu_ftell(fd);	/* get file length */
     rec2 = offset/reclen;	/* calculate record number for last record */
     Readrec(rec2);	/* read last record into "card" buffer */
     dstart = 0;

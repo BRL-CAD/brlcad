@@ -1,7 +1,7 @@
 /*                    D B _ C O R R U P T . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2018 United States Government as represented by
+ * Copyright (c) 2011-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -54,7 +54,7 @@ db_corrupt_handler(struct db_i *dbip, const char *name, off_t offset, size_t siz
     RT_CK_DBI(dbip);
 
     /* get into position */
-    ret = fseek(dbip->dbi_fp, offset, 0);
+    ret = bu_fseek(dbip->dbi_fp, offset, 0);
     if (ret) {
 	bu_log("Database seek failure, unable to seek [%s]\n", name);
 	return 0;

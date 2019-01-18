@@ -1,7 +1,7 @@
 /*                      P A R A L L E L . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -92,11 +92,6 @@ BU_EXPORT extern int bu_terminate(int process);
  * @brief
  * process management routines
  */
-
-/**
- * returns the process ID of the calling process
- */
-BU_EXPORT extern int bu_process_id(void);
 
 /**
  * @brief

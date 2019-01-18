@@ -1,7 +1,7 @@
 /*                  O B J _ G R A M M A R . Y Y
  * BRL-CAD
  *
- * Copyright (c) 2010-2018 United States Government as represented by
+ * Copyright (c) 2010-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@
 /*                  O B J _ G R A M M A R . Y Y
  * BRL-CAD
  *
- * Copyright (c) 2010-2018 United States Government as represented by
+ * Copyright (c) 2010-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,6 +37,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+#include "common.h"
 
 #include "obj_util.h"
 #include "obj_parser.h"

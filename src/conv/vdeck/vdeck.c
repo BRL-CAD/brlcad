@@ -1,7 +1,7 @@
 /*                         V D E C K . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2018 United States Government as represented by
+ * Copyright (c) 1990-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -1218,7 +1218,7 @@ deck(char *prefix)
     ewrite(solfp, LF, 1);
 
     /* Save space for number of solids and regions.			*/
-    savsol = ftell(solfp);
+    savsol = bu_ftell(solfp);
     if (savsol < 0) {
 	perror("ftell");
     }
@@ -1272,7 +1272,7 @@ deck(char *prefix)
 
     /* Go back, and add number of solids and regions on second card. */
     if (savsol >= 0)
-	fseek(solfp, savsol, 0);
+	bu_fseek(solfp, savsol, 0);
 
     itoa(nns, buff, 5);
     ewrite(solfp, buff, 5);

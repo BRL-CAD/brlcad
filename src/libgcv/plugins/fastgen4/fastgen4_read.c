@@ -1,7 +1,7 @@
 /*                 F A S T G E N 4 _ R E A D . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2018 United States Government as represented by
+ * Copyright (c) 1994-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -2169,7 +2169,7 @@ skip_section(struct conversion_state *pstate)
     off_t section_start;
 
     /* skip to start of next section */
-    section_start = ftell(pstate->fpin);
+    section_start = bu_ftell(pstate->fpin);
     if (section_start < 0) {
 	bu_bomb("Error: couldn't get input file's current file position.");
     }
@@ -2180,7 +2180,7 @@ skip_section(struct conversion_state *pstate)
 	       bu_strncmp(pstate->line, "WALL", 4) &&
 	       bu_strncmp(pstate->line, "vehicle", 7))
 	{
-	    section_start = ftell(pstate->fpin);
+	    section_start = bu_ftell(pstate->fpin);
 	    if (section_start < 0) {
 		bu_bomb("Error: couldn't get input file's current file position.");
 	    }
@@ -2189,7 +2189,7 @@ skip_section(struct conversion_state *pstate)
 	}
     }
     /* seek to start of the section */
-    fseek(pstate->fpin, section_start, SEEK_SET);
+    bu_fseek(pstate->fpin, section_start, SEEK_SET);
 }
 
 

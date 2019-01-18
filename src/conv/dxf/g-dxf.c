@@ -1,7 +1,7 @@
 /*                         G - D X F . C
  * BRL-CAD
  *
- * Copyright (c) 2003-2018 United States Government as represented by
+ * Copyright (c) 2003-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -277,7 +277,7 @@ nmg_to_dxf(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 		    NMG_CK_VERTEX(v);
 
 		    if (polyface_mesh) {
-			fprintf(fp, "%d\n%d\n",
+			fprintf(fp, "%d\n%jd\n",
 				 vert_count+70, bu_ptbl_locate(&verts, (long *)v) + 1);
 		    } else {
 			if (inches) {

@@ -1,7 +1,7 @@
 /*                         V F O N T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -99,7 +99,7 @@ get_font(const char* fontname, void (*vfont_log)(const char *fmt, ...))
     /* Addresses of characters in the file are relative to point in
      * the file after the directory, so grab the current position.
      */
-    font.offset = ftell(font.ffdes);
+    font.offset = bu_ftell(font.ffdes);
 
     return font;
 }

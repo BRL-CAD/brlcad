@@ -1,7 +1,7 @@
 /*                         D X F - G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -629,7 +629,7 @@ process_blocks_code(int code)
 	    } else if (!bu_strncmp(line, "BLOCK", 5)) {
 		/* start of a new block */
 		BU_ALLOC(curr_block, struct block_list);
-		curr_block->offset = ftell(dxf);
+		curr_block->offset = bu_ftell(dxf);
 		BU_LIST_INSERT(&(block_head), &(curr_block->l));
 		break;
 	    }
@@ -638,9 +638,9 @@ process_blocks_code(int code)
 	    if (curr_block && curr_block->block_name == NULL) {
 		curr_block->block_name = bu_strdup(line);
 		if (verbose) {
-		    bu_log("BLOCK %s begins at %ld\n",
+		    bu_log("BLOCK %s begins at %jd\n",
 			   curr_block->block_name,
-			   curr_block->offset);
+			   (intmax_t)curr_block->offset);
 		}
 	    }
 	    break;
@@ -1109,10 +1109,10 @@ process_entities_unknown_code(int code)
 		    break;
 		}
 		bu_free((char *)tmp_state, "curr_state");
-		fseek(dxf, curr_state->file_offset, SEEK_SET);
+		bu_fseek(dxf, curr_state->file_offset, SEEK_SET);
 		curr_state->sub_state = UNKNOWN_ENTITY_STATE;
 		if (verbose) {
-		    bu_log("Popped state at end of inserted block (seeked to %ld)\n", curr_state->file_offset);
+		    bu_log("Popped state at end of inserted block (seeked to %jd)\n", (intmax_t)curr_state->file_offset);
 		}
 		break;
 	    } else {
@@ -1223,12 +1223,12 @@ process_insert_entities_code(int code)
 		BU_LIST_PUSH(&state_stack, &(curr_state->l));
 		curr_state = new_state;
 		new_state = NULL;
-		fseek(dxf, curr_state->curr_block->offset, SEEK_SET);
+		bu_fseek(dxf, curr_state->curr_block->offset, SEEK_SET);
 		curr_state->state = ENTITIES_SECTION;
 		curr_state->sub_state = UNKNOWN_ENTITY_STATE;
 		if (verbose) {
 		    bu_log("Changing state for INSERT\n");
-		    bu_log("seeked to %zd\n", curr_state->curr_block->offset);
+		    bu_log("seeked to %jd\n", (intmax_t)curr_state->curr_block->offset);
 		    bn_mat_print("state xform", curr_state->xform);
 		}
 	    }
@@ -2504,12 +2504,12 @@ process_dimension_entities_code(int code)
 		    BU_LIST_PUSH(&state_stack, &(curr_state->l));
 		    curr_state = new_state;
 		    new_state = NULL;
-		    fseek(dxf, curr_state->curr_block->offset, SEEK_SET);
+		    bu_fseek(dxf, curr_state->curr_block->offset, SEEK_SET);
 		    curr_state->state = ENTITIES_SECTION;
 		    curr_state->sub_state = UNKNOWN_ENTITY_STATE;
 		    if (verbose) {
 			bu_log("Changing state for INSERT\n");
-			bu_log("seeked to %zd\n", curr_state->curr_block->offset);
+			bu_log("seeked to %jd\n", (intmax_t)curr_state->curr_block->offset);
 		    }
 		    layers[curr_layer]->dimension_count++;
 		}
@@ -3083,7 +3083,7 @@ readcodes()
     size_t line_len;
     static int line_num = 0;
 
-    curr_state->file_offset = ftell(dxf);
+    curr_state->file_offset = bu_ftell(dxf);
 
     if (bu_fgets(line, MAX_LINE_SIZE, dxf) == NULL) {
 	return ERROR_FLAG;

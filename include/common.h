@@ -1,7 +1,7 @@
 /*                        C O M M O N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -153,6 +153,31 @@ extern int fileno(FILE *stream);
 /** Find and return the minimum value */
 #ifndef FMIN
 #  define FMIN(a, b)	(((a)<(b))?(a):(b))
+#endif
+
+/* If we've got the wrong off_t size, do something about it (*before*
+   we include sys/types.h, which can hold the incorrect definition.)
+   Also set any other related defines that might be needed. */
+#if defined(OFF_T_SIZE_MISMATCH)
+/*#  pragma message("Fixing off_t definition")*/
+#  ifdef off_t
+#    undef off_t
+#  endif
+typedef ptrdiff_t off_t;
+#  ifdef _off_t
+#    undef _off_t
+#  endif
+typedef ptrdiff_t _off_t;
+#  define _OFF_T_DEFINED
+#endif
+
+/* make sure the old bsd types are defined for portability */
+#if !defined(HAVE_U_TYPES)
+typedef unsigned char u_char;
+typedef unsigned int u_int;
+typedef unsigned long u_long;
+typedef unsigned short u_short;
+#  define HAVE_U_TYPES 1
 #endif
 
 /**

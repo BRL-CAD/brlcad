@@ -43,14 +43,6 @@ Be specific.
   but bear in mind that these are preliminary thoughts only and not a
   finished design that is ready to be implemented.
 
-* 'audit' command: determine if the model is valid, provide option(s)
-  to fix any errors encountered.  this could be a refactoring or
-  calling of glint and/or other tools.  this ideally needs to separate
-  geometric validation (e.g., defines a solid volume, no overlaps)
-  from policy/business/convention validation (e.g., uses proper naming
-  convention, unique region IDs), possibly providing predefined
-  auditing profiles similar to nirt's predefined output formats.
-
 * 'array' command: to create a shallow copy of geometry in a
   rectangular or polar pattern.  similar to clone, perhaps mergeable
   with clone as an option.  takes #rows+dist and #cols+dist, or
@@ -107,12 +99,22 @@ Be specific.
   degrees). basically a geometric version of 'expr'.  alternate names
   include calc, gcalc, expr, gexpr, gc.
 
-* 'compile' command: evaluate and cache results of geometry
+* 'cg' command: "compile" i.e., evaluate and cache results of geometry
   computations for improved performance.  this could be a variety of
   cache-worthy actions such as wireframes at given levels of detail,
-  raytrace prep results, default tessellations, simple geometry
-  validation (see 'audit' command), or shape analysis (surface area,
-  volume, moments of inertia, etc).
+  raytrace prep results, default tessellations, geometry validation
+  (see 'glint' command), or shape analysis (surface area, volume,
+  moments of inertia, etc).
+
+  'glint' / 'rtcheck' / 'audit' functionality: determine if the model
+  is valid, provide option(s) to fix any errors encountered.  this
+  could be a refactoring or calling of glint and/or other tools.  this
+  ideally needs to separate geometric validation (e.g., defines a
+  solid volume, no overlaps) from policy/business/convention
+  validation (e.g., uses proper naming convention, unique region IDs),
+  possibly providing predefined auditing profiles similar to nirt's
+  predefined output formats.
+
 
 * 'edit' command: review and test so we can replace oed+tra/sca/rot
   functionality consistently in libged as translate/scale/rotate with

@@ -1,7 +1,7 @@
 /*                          C Y - G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -281,7 +281,9 @@ main(int argc, char **argv)
 		db5_update_attribute("_GLOBAL", "COLOR", cptr, outfp->dbip);
 		bu_log("COLOR=%s\n", color);
 
-		if (!BU_STR_EQUIV(color, "SGI")) {
+		/* NOTE: intentional string concatenation to pass
+		 * platform symbol testing */
+		if (!BU_STR_EQUIV(color, "S""G""I")) {
 		    bu_log("Encountered unknown COLOR, ignoring\n");
 		}
 

@@ -1,7 +1,7 @@
 /*                        B R L C A D . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -55,9 +55,6 @@
 
 /* raytrace interface constructs */
 #include "raytrace.h"
-
-/* trimmed nurb routines */
-#include "rt/nurb.h"
 
 /* the write-only database library interface */
 #include "wdb.h"

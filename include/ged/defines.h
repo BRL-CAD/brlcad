@@ -1,7 +1,7 @@
 /*                        D E F I N E S . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2018 United States Government as represented by
+ * Copyright (c) 2008-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,6 +32,7 @@
 #include "bio.h"
 #include "bu/hash.h"
 #include "bu/list.h"
+#include "bu/process.h"
 #include "bu/vls.h"
 #include "dm/bview.h"
 #include "rt/search.h"
@@ -116,17 +117,18 @@ __BEGIN_DECLS
 
 struct ged_run_rt {
     struct bu_list l;
+    struct bu_process *p;
 #if defined(_WIN32) && !defined(__CYGWIN__)
     HANDLE fd;
     HANDLE hProcess;
     DWORD pid;
-    void *chan; /* FIXME: uses communication channel instead of file
-		 * descriptor to get output from rt.
-		 */
 #else
     int fd;
     int pid;
 #endif
+    void *chan; /* FIXME: uses communication channel instead of file
+		 * descriptor to get output from rt.
+		 */
     int aborted;
 };
 

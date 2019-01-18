@@ -1,7 +1,7 @@
 /*                       F A S T 4 - G . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2018 United States Government as represented by
+ * Copyright (c) 1994-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -2075,7 +2075,7 @@ skip_section(void)
     off_t section_start;
 
     /* skip to start of next section */
-    section_start = ftell(fpin);
+    section_start = bu_ftell(fpin);
     if (section_start < 0) {
 	bu_exit(1, "Error: couldn't get input file's current file position.\n");
     }
@@ -2086,7 +2086,7 @@ skip_section(void)
 	       bu_strncmp(line, "WALL", 4) &&
 	       bu_strncmp(line, "VEHICLE", 7))
 	{
-	    section_start = ftell(fpin);
+	    section_start = bu_ftell(fpin);
 	    if (section_start < 0) {
 		bu_exit(1, "Error: couldn't get input file's current file position.\n");
 	    }
@@ -2095,7 +2095,7 @@ skip_section(void)
 	}
     }
     /* seek to start of the section */
-    fseek(fpin, section_start, SEEK_SET);
+    bu_fseek(fpin, section_start, SEEK_SET);
 }
 
 

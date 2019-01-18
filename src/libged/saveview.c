@@ -1,7 +1,7 @@
 /*                         S A V E V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2018 United States Government as represented by
+ * Copyright (c) 2008-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -183,7 +183,7 @@ ged_saveview(struct ged *gedp, int argc, const char *argv[])
 	vect_t eye_model;
 
 	_ged_rt_set_eye_model(gedp, eye_model);
-	_ged_rt_write(gedp, fp, eye_model);
+	_ged_rt_write(gedp, fp, eye_model, -1, NULL);
     }
 
     fprintf(fp, "\nEOF\n");

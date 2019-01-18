@@ -1,7 +1,7 @@
 /*                           M G E D . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2018 United States Government as represented by
+ * Copyright (c) 1993-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -140,7 +140,6 @@ struct rt_wdb *wdbp = RT_WDB_NULL;
  */
 int update_views = 0;
 
-int (*cmdline_hook)() = NULL;
 jmp_buf jmp_env;		/* For non-local gotos */
 double frametime;		/* time needed to draw last frame */
 
@@ -644,41 +643,27 @@ mged_process_char(char ch)
 		curr_cmd_list = &head_cmd_list;
 		if (curr_cmd_list->cl_tie)
 		    curr_dm_list = curr_cmd_list->cl_tie;
-		if (cmdline_hook) {
-		    /* Command-line hooks don't do CMD_MORE */
-		    reset_Tty(fileno(stdin));
 
-		    if ((*cmdline_hook)(&input_str_prefix))
-			pr_prompt(interactive);
-
-		    set_Cbreak(fileno(stdin));
-		    clr_Echo(fileno(stdin));
-
+		reset_Tty(fileno(stdin)); /* Backwards compatibility */
+		(void)signal(SIGINT, SIG_IGN);
+		if (cmdline(&input_str_prefix, TRUE) == CMD_MORE) {
+		    /* Remove newline */
+		    bu_vls_trunc(&input_str_prefix,
+				 bu_vls_strlen(&input_str_prefix)-1);
 		    bu_vls_trunc(&input_str, 0);
-		    bu_vls_trunc(&input_str_prefix, 0);
-		    (void)signal(SIGINT, SIG_IGN);
+		    (void)signal(SIGINT, sig2);
+		    /*
+		   *** The mged_prompt vls now contains prompt for
+		   *** more input.
+		   */
 		} else {
-		    reset_Tty(fileno(stdin)); /* Backwards compatibility */
+		    /* All done; clear all strings. */
+		    bu_vls_trunc(&input_str_prefix, 0);
+		    bu_vls_trunc(&input_str, 0);
 		    (void)signal(SIGINT, SIG_IGN);
-		    if (cmdline(&input_str_prefix, TRUE) == CMD_MORE) {
-			/* Remove newline */
-			bu_vls_trunc(&input_str_prefix,
-				     bu_vls_strlen(&input_str_prefix)-1);
-			bu_vls_trunc(&input_str, 0);
-			(void)signal(SIGINT, sig2);
-			/*
-		       *** The mged_prompt vls now contains prompt for
-		       *** more input.
-		       */
-		    } else {
-			/* All done; clear all strings. */
-			bu_vls_trunc(&input_str_prefix, 0);
-			bu_vls_trunc(&input_str, 0);
-			(void)signal(SIGINT, SIG_IGN);
-		    }
-		    set_Cbreak(fileno(stdin)); /* Back to single-character mode */
-		    clr_Echo(fileno(stdin));
 		}
+		set_Cbreak(fileno(stdin)); /* Back to single-character mode */
+		clr_Echo(fileno(stdin));
 	    } else {
 		bu_vls_trunc(&input_str, 0);
 		bu_vls_strcpy(&mged_prompt, "\r? ");
@@ -1055,8 +1040,6 @@ main(int argc, char *argv[])
     int run_in_foreground=1;
 
     Tcl_Channel chan;
-    struct timeval timeout;
-
 #if !defined(_WIN32) || defined(__CYGWIN__)
     fd_set read_set;
     fd_set exception_set;
@@ -1068,9 +1051,6 @@ main(int argc, char *argv[])
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
     setmode(fileno(stderr), O_BINARY);
-
-    timeout.tv_sec = 0;
-    timeout.tv_usec = 1;
 
     (void)_set_invalid_parameter_handler(mgedInvalidParameterHandler);
 
@@ -1143,22 +1123,37 @@ main(int argc, char *argv[])
 	/* if there is more than a file name remaining, mged is not interactive */
 	interactive = 0;
     } else {
-#if defined(_WIN32) && !defined(__CYGWIN__)
-	if (!isatty(fileno(stdin)) || !isatty(fileno(stdout)))
+#if defined(_WIN32) && !defined(CYGWIN)
+	if(!isatty(fileno(stdin)) || !isatty(fileno(stdout)))
 	    interactive = 0;
 #else
-	/* check if there is data on stdin (better than checking if isatty()) */
+	struct timeval timeout;
+
+	/* wait 1/10sec for input, in case we're piped */
+	timeout.tv_sec = 0;
+	timeout.tv_usec = 100000;
+
+	/* check if there is data on stdin, first relying on whether
+	 * there is standard input pending, second on whether there's
+	 * a controlling terminal (isatty).
+	 */
 	FD_ZERO(&read_set);
 	FD_SET(fileno(stdin), &read_set);
 	result = select(fileno(stdin)+1, &read_set, NULL, NULL, &timeout);
 	if (bu_debug > 0)
 	    fprintf(stdout, "DEBUG: select result: %d, stdin read: %d\n", result, FD_ISSET(fileno(stdin), &read_set));
 
-	if (result > 0 && FD_ISSET(fileno(stdin), &read_set)) {
+	if (result == 0) {
+	    if (!isatty(fileno(stdin)) || !isatty(fileno(stdout))) {
+		interactive = 0;
+	    }
+	} else if (result > 0 && FD_ISSET(fileno(stdin), &read_set)) {
 	    /* stdin pending, probably not interactive */
 	    interactive = 0;
 
-	    /* check if there is an out-of-bounds exception set on stdin */
+	    /* check if there's an out-of-bounds exception.  sometimes
+	     * the case if mged -c is started via desktop GUI.
+	     */
 	    FD_ZERO(&exception_set);
 	    FD_SET(fileno(stdin), &exception_set);
 	    result = select(fileno(stdin)+1, NULL, NULL, &exception_set, &timeout);
@@ -1180,18 +1175,17 @@ main(int argc, char *argv[])
 		if (pfd.revents & POLLNVAL) {
 		    interactive = 1;
 		}
-#else /* !HAVE_POLL_H */
-		interactive = 1;
+#else
+		/* just in case we get input too quickly, see if it's coming from a tty */
+		if (isatty(fileno(stdin))) {
+		    interactive = 1;
+		}
 #endif /* HAVE_POLL_H */
+
 	    }
 
-	    /* just in case we get input too quickly, see if it's coming from a tty */
-	    if (isatty(fileno(stdin))) {
-		interactive = 1;
-	    }
 	} /* read_set */
 #endif
-
     } /* argc > 1 */
 
     if (bu_debug > 0)
@@ -1231,6 +1225,7 @@ main(int argc, char *argv[])
 	     * (child sends us a byte after the window is displayed).
 	     */
 	    if (use_pipe) {
+		struct timeval timeout;
 
 		FD_ZERO(&read_set);
 		FD_SET(parent_pipe[0], &read_set);
@@ -1792,27 +1787,20 @@ stdin_input(ClientData clientData, int UNUSED(mask))
 	    curr_cmd_list = &head_cmd_list;
 	    if (curr_cmd_list->cl_tie)
 		curr_dm_list = curr_cmd_list->cl_tie;
-	    if (cmdline_hook != NULL) {
-		if ((*cmdline_hook)(&input_str))
-		    pr_prompt(interactive);
-		bu_vls_trunc(&input_str, 0);
-		bu_vls_trunc(&input_str_prefix, 0);
-		(void)signal(SIGINT, SIG_IGN);
-	    } else {
-		if (cmdline(&input_str_prefix, TRUE) == CMD_MORE) {
-		    /* Remove newline */
-		    bu_vls_trunc(&input_str_prefix,
-				 bu_vls_strlen(&input_str_prefix)-1);
-		    bu_vls_trunc(&input_str, 0);
 
-		    (void)signal(SIGINT, sig2);
-		} else {
-		    bu_vls_trunc(&input_str_prefix, 0);
-		    bu_vls_trunc(&input_str, 0);
-		    (void)signal(SIGINT, SIG_IGN);
-		}
-		pr_prompt(interactive);
+	    if (cmdline(&input_str_prefix, TRUE) == CMD_MORE) {
+		/* Remove newline */
+		bu_vls_trunc(&input_str_prefix,
+			     bu_vls_strlen(&input_str_prefix)-1);
+		bu_vls_trunc(&input_str, 0);
+
+		(void)signal(SIGINT, sig2);
+	    } else {
+		bu_vls_trunc(&input_str_prefix, 0);
+		bu_vls_trunc(&input_str, 0);
+		(void)signal(SIGINT, SIG_IGN);
 	    }
+	    pr_prompt(interactive);
 	    input_str_index = 0;
 	} else {
 	    bu_vls_trunc(&input_str, 0);
@@ -2430,9 +2418,9 @@ refresh(void)
 		mged_variables->mv_fb_overlay != 2) {
 		/* Draw center dot */
 		dm_set_fg(dmp,
-			       color_scheme->cs_center_dot[0],
-			       color_scheme->cs_center_dot[1],
-			       color_scheme->cs_center_dot[2], 1, 1.0);
+			  color_scheme->cs_center_dot[0],
+			  color_scheme->cs_center_dot[1],
+			  color_scheme->cs_center_dot[2], 1, 1.0);
 		dm_draw_point_2d(dmp, 0.0, 0.0);
 	    }
 
@@ -2550,6 +2538,7 @@ mged_refresh_handler(void *UNUSED(clientdata))
     view_state->vs_flag = 1;
     refresh();
 }
+
 
 /**
  * Close the current database, if open, and then open a new database.

@@ -1,7 +1,7 @@
 /*                      P I X S C A L E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2018 United States Government as represented by
+ * Copyright (c) 1986-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -90,7 +90,7 @@ fill_buffer(int y)
     if (buf_start < 0) buf_start = 0;
 
     if (file_pos != buf_start * scanlen) {
-	if (fseek(buffp, buf_start * scanlen, 0) < 0) {
+	if (bu_fseek(buffp, buf_start * scanlen, 0) < 0) {
 	    bu_exit(3, "pixscale: Can't seek to input pixel! y=%d\n", y);
 	}
 	file_pos = buf_start * scanlen;

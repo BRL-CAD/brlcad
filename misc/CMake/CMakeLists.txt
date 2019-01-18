@@ -53,6 +53,7 @@ set(cmake_ignore_files
   FindXSLTPROC.cmake
   Fink_MacPorts.cmake
   NSIS.template.in
+  NSIS_silent.template.in
   Path_Setup.cmake
   RPath_Setup.cmake
   ResetCache.cmake

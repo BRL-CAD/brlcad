@@ -1,7 +1,7 @@
 /*                   G E D _ P R I V A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2018 United States Government as represented by
+ * Copyright (c) 2008-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -335,10 +335,12 @@ extern char _ged_tmpfil[];
 /* defined in rt.c */
 extern void _ged_rt_set_eye_model(struct ged *gedp,
 				  vect_t eye_model);
-extern int _ged_run_rt(struct ged *gdp);
+extern int _ged_run_rt(struct ged *gdp, int argc, const char **argv);
 extern void _ged_rt_write(struct ged *gedp,
 			  FILE *fp,
-			  vect_t eye_model);
+			  vect_t eye_model,
+			  int argc,
+			  const char **argv);
 extern void _ged_rt_output_handler(ClientData clientData,
 				   int mask);
 
@@ -583,6 +585,12 @@ extern int _ged_vopt(struct bu_vls *msg, int argc, const char **argv, void *set_
 extern int
 _ged_sort_existing_objs(struct ged *gedp, int argc, const char *argv[], struct directory **dpa);
 
+
+typedef void (*io_handler_callback_t)(void *, int);
+extern void
+_ged_create_io_handler(void **chan, struct bu_process *p, int fd, int mode, void *data, io_handler_callback_t callback);
+extern void
+_ged_delete_io_handler(void *interp, void *chan, struct bu_process *p, int fd, void *data, io_handler_callback_t callback);
 
 __END_DECLS
 

@@ -1,7 +1,7 @@
 /*                        G - A C A D . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2018 United States Government as represented by
+ * Copyright (c) 1996-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -649,7 +649,7 @@ main(int argc, char **argv)
     /* Write out number of facet entities to .facet file */
 
     rewind(fp);
-    fseek(fp, 46, 0); /* Re-position pointer to 2nd line */
+    bu_fseek(fp, 46, 0); /* Re-position pointer to 2nd line */
     fprintf(fp, "%d\n", regions_written); /* Write out number of regions */
     fclose(fp);
 

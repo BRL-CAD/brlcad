@@ -1,7 +1,7 @@
 /*                    O B J _ P A R S E R . H
  * BRL-CAD
  *
- * Copyright (c) 1995-2018 United States Government as represented by
+ * Copyright (c) 1995-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,6 +24,8 @@
  */
 #ifndef LIBGCV_WFOBJ_OBJ_PARSER_H
 #define LIBGCV_WFOBJ_OBJ_PARSER_H
+
+#include "common.h"
 
 #include <sys/types.h>
 #include <stdio.h>

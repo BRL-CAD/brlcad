@@ -76,7 +76,14 @@ set(misc_ignore_files
   check/volume.sh
   check/gap.sh
   clang-static-analyzer-run.sh
+  external_build_testing/CMakeLists.txt
+  external_build_testing/CMake/buildpath_replace.cxx.in
+  external_build_testing/CMake/Path_Setup.cmake
+  external_build_testing/CMake/rpath_replace.cxx.in
+  external_build_testing/CMake/RPath_Setup.cmake
+  external_build_testing/CMake/ExternalProject_Target.cmake
   flawfinder
+  hawaii_islands.sh
   jove.emacs
   macosx/README
   macosx/Resources/License.rtf
@@ -99,37 +106,39 @@ set(misc_ignore_files
   profont/profont-IIx-charmap.png
   profont/profont_IIx_readme.pdf
   profont/readme.txt
-  svn2git/README
-  svn2git/account-map
-  svn2git/archive_branches.sh
-  svn2git/manual_replay.sh
-  svn2git/md5_process_lines.cxx
-  svn2git/pstream.h
-  svn2git/rules
-  svn2git/sphflake.pix,v
-  svn2git/svn_logmsg.xsl
-  svn2git/svn_moved_and_edited.cxx
-  svn2git/svn2git/CMake/FindAPR.cmake
-  svn2git/svn2git/CMake/FindSubversionLibrary.cmake
-  svn2git/svn2git/CMakeLists.txt
-  svn2git/svn2git/LICENSE
-  svn2git/svn2git/CommandLineParser.cpp
-  svn2git/svn2git/CommandLineParser.h
-  svn2git/svn2git/README.md
-  svn2git/svn2git/main.cpp
-  svn2git/svn2git/repository.cpp
-  svn2git/svn2git/repository.h
-  svn2git/svn2git/ruleparser.cpp
-  svn2git/svn2git/ruleparser.h
-  svn2git/svn2git/samples/ignore-branch.rules
-  svn2git/svn2git/samples/merged-branches-tags.rules
-  svn2git/svn2git/samples/min-max-revision.rules
-  svn2git/svn2git/samples/recurse.rules
-  svn2git/svn2git/samples/standardlayout.rules
-  svn2git/svn2git/samples/two-projects.rules
-  svn2git/svn2git/svn.cpp
-  svn2git/svn2git/svn.h
-  svn2git/svnlog2csv
+  repoconv/cvs2git/authormap
+  repoconv/cvs2git/README.sh
+  repoconv/cvs2git/repaired/sphflake.pix,v
+  repoconv/svn-replay/manual_replay.sh
+  repoconv/svn-replay/md5_process_lines.cxx
+  repoconv/svn-replay/pstream.h
+  repoconv/svn-replay/svn_logmsg.xsl
+  repoconv/svn-replay/svn_moved_and_edited.cxx
+  repoconv/svn-replay/svnlog2csv
+  repoconv/svn2git/README
+  repoconv/svn2git/account-map
+  repoconv/svn2git/archive_branches.sh
+  repoconv/svn2git/rules
+  repoconv/svn2git/svn-fast-export/CMake/FindAPR.cmake
+  repoconv/svn2git/svn-fast-export/CMake/FindSubversionLibrary.cmake
+  repoconv/svn2git/svn-fast-export/CMakeLists.txt
+  repoconv/svn2git/svn-fast-export/CommandLineParser.cpp
+  repoconv/svn2git/svn-fast-export/CommandLineParser.h
+  repoconv/svn2git/svn-fast-export/LICENSE
+  repoconv/svn2git/svn-fast-export/README.md
+  repoconv/svn2git/svn-fast-export/main.cpp
+  repoconv/svn2git/svn-fast-export/repository.cpp
+  repoconv/svn2git/svn-fast-export/repository.h
+  repoconv/svn2git/svn-fast-export/ruleparser.cpp
+  repoconv/svn2git/svn-fast-export/ruleparser.h
+  repoconv/svn2git/svn-fast-export/samples/ignore-branch.rules
+  repoconv/svn2git/svn-fast-export/samples/merged-branches-tags.rules
+  repoconv/svn2git/svn-fast-export/samples/min-max-revision.rules
+  repoconv/svn2git/svn-fast-export/samples/recurse.rules
+  repoconv/svn2git/svn-fast-export/samples/standardlayout.rules
+  repoconv/svn2git/svn-fast-export/samples/two-projects.rules
+  repoconv/svn2git/svn-fast-export/svn.cpp
+  repoconv/svn2git/svn-fast-export/svn.h
   uncpowerplant2g.sh
   win32-msvc/CMakeLists.txt
   win32-msvc/Dll/BrlcadCore.def

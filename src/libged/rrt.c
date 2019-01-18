@@ -1,7 +1,7 @@
 /*                         R R T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2018 United States Government as represented by
+ * Copyright (c) 2008-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -59,7 +59,7 @@ ged_rrt(struct ged *gedp, int argc, const char *argv[])
     _ged_current_gedp = gedp;
     _ged_current_gedp->ged_gdp->gd_rt_cmd_len = ged_build_tops(gedp, vp, &_ged_current_gedp->ged_gdp->gd_rt_cmd[args]);
 
-    (void)_ged_run_rt(gedp);
+    (void)_ged_run_rt(gedp, -1, NULL);
 
     bu_free(gedp->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
 

@@ -1,7 +1,7 @@
 /*                          V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2018 United States Government as represented by
+ * Copyright (c) 1985-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -306,7 +306,7 @@ view_pixel(struct application *ap)
 		    icv_writepixel(bif, ap->a_x, ap->a_y, ap->a_color);
 		} else if (outfp != NULL) {
 		    bu_semaphore_acquire(BU_SEM_SYSCALL);
-		    if (fseek(outfp, (ap->a_y*width*pwidth) + (ap->a_x*pwidth), 0) != 0)
+		    if (bu_fseek(outfp, (ap->a_y*width*pwidth) + (ap->a_x*pwidth), 0) != 0)
 			fprintf(stderr, "fseek error\n");
 		    if (fwrite(p, 3, 1, outfp) != 1)
 			bu_exit(EXIT_FAILURE, "pixel fwrite error");
@@ -512,7 +512,7 @@ view_pixel(struct application *ap)
 		size_t count;
 
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
-		if (fseek(outfp, ap->a_y*width*pwidth, 0) != 0)
+		if (bu_fseek(outfp, ap->a_y*width*pwidth, 0) != 0)
 		    fprintf(stderr, "fseek error\n");
 		count = fwrite(scanline[ap->a_y].sl_buf,
 			       sizeof(char), width*pwidth, outfp);
@@ -543,20 +543,14 @@ view_eol(struct application *UNUSED(ap))
 void
 view_end(struct application *ap)
 {
-    /* FIXME: this should work on windows after the bu_timer() is
-     * created to replace the librt timing mechanism.
-     */
-#if !defined(_WIN32) || defined(__CYGWIN__)
     /* If the heat graph is on, render it after all pixels completed */
     if (lightmodel == 8) {
-
 	fastf_t **timeTable;
 	timeTable = timeTable_init(0, 0);
 	bu_log("Building Heat-Graph!\n");
 	bu_log("X:%d Y:%d W:%zu H%zu\n", ap->a_x, ap->a_y, width, height);
 	timeTable_process(timeTable, ap, fbp);
     }
-#endif
 
     if (fullfloat_mode) {
 	struct floatpixel *tmp;

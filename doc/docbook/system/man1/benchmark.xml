@@ -154,7 +154,7 @@ file must always be manually deleted.</para>
 
 <refsect1 xml:id='reporting_results'><title>REPORTING RESULTS</title>
 <para>Please send your BRL-CAD Benchmark results to the developers along with
-detailed system information to &lt;devs@brlcad.org&gt;.  Include at least:</para>
+detailed system information to <email>devs@brlcad.org</email>  Include at least:</para>
 
 <para>   0) Compiler name and version (e.g. gcc --version)
    1) CPU configuration (e.g. cat /proc/cpuinfo or hinv or sysctl -a)
@@ -199,13 +199,13 @@ benchmark analysis, leaving only the summary file and any
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 2006-2018 United States Government as
+<para>This software is Copyright (c) 2006-2019 United States Government as
 represented by the U.S. Army Research Laboratory.</para>
 </refsect1>
 
 <refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
 <para>Reports of bugs or problems should be submitted via electronic
-mail to &lt;devs@brlcad.org&gt;.</para>
+mail to <email>devs@brlcad.org</email></para>
 </refsect1>
 </refentry>
 

@@ -73,6 +73,17 @@ main(int argc, char** argv)
     }
     bu_vls_free(&str);
 
+    /* If the input and output files weren't specified from args, get them
+     * from the bu_opt leftovers */
+    if (argc) {
+	bu_vls_sprintf(&db_fname, "%s", argv[0]);
+	argv++; argc--;
+    }
+    if (argc) {
+	bu_vls_sprintf(&db2_fname, "%s", argv[0]);
+	argv++; argc--;
+    }
+
     // take appropriate action...
 
     // note this exit is SUCCESS because it is expected

@@ -1,7 +1,7 @@
 /*                       G E D _ U T I L . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2018 United States Government as represented by
+ * Copyright (c) 2000-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -320,6 +320,51 @@ _ged_sort_existing_objs(struct ged *gedp, int argc, const char *argv[], struct d
 
     return nonexist_cnt;
 }
+
+/* Wrappers for setting up/tearing down IO handler */
+#ifndef _WIN32
+void
+_ged_create_io_handler(void **UNUSED(chan), struct bu_process *p, int fd, int mode, void *data, io_handler_callback_t callback)
+{
+    int *fdp;
+    if (!p) return;
+    fdp = (int *)bu_process_fd(p, fd);
+    Tcl_CreateFileHandler(*fdp, mode, callback, (ClientData)data);
+}
+
+void
+_ged_delete_io_handler(void *UNUSED(interp), void *UNUSED(chan), struct bu_process *p, int fd, void *UNUSED(data), io_handler_callback_t UNUSED(callback))
+{
+    int *fdp;
+    if (!p) return;
+    fdp = (int *)bu_process_fd(p, fd);
+    Tcl_DeleteFileHandler(*fdp);
+    close(*fdp);
+}
+
+#else
+void
+_ged_create_io_handler(void **chan, struct bu_process *p, int fd, int mode, void *data, io_handler_callback_t callback)
+{
+    HANDLE *fdp;
+    if (!chan || !p) return;
+    fdp = (HANDLE *)bu_process_fd(p, fd);
+    (*chan) = (void *)Tcl_MakeFileChannel(*fdp, mode);
+    Tcl_CreateChannelHandler((Tcl_Channel)(*chan), mode, callback, (ClientData)data);
+}
+
+void
+_ged_delete_io_handler(void *interp, void *chan, struct bu_process *p, int fd, void *data, io_handler_callback_t callback)
+{
+    HANDLE *fdp;
+    Tcl_Interp *tcl_interp;
+    if (!chan || !p) return;
+    tcl_interp = (Tcl_Interp *)interp;
+    fdp = (HANDLE *)bu_process_fd(p, fd);
+    Tcl_DeleteChannelHandler((Tcl_Channel)chan, callback, (ClientData)data);
+    Tcl_Close(tcl_interp, (Tcl_Channel)chan);
+}
+#endif
 
 /*
  * Local Variables:

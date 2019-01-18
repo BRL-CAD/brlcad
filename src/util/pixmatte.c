@@ -1,7 +1,7 @@
 /*                      P I X M A T T E . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2018 United States Government as represented by
+ * Copyright (c) 1989-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -122,11 +122,7 @@ open_file(int i, char *name)
 	if (isatty(fileno(stdin)))
 	    return -1;	/* FAIL */
 	/* XXX No checking for multiple uses of stdin */
-#if defined(_WIN32) && !defined(__CYGWIN__)
     } else if ((fp[i] = fopen(name, "rb")) == NULL) {
-#else
-    } else if ((fp[i] = fopen(name, "r")) == NULL) {
-#endif
 	perror(name);
 	bu_log("pixmatte: cannot open \"%s\" for reading\n", name);
 	return -1;		/* FAIL */

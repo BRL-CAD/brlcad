@@ -1,7 +1,7 @@
 #                          G E D . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2018 United States Government as represented by
+# Copyright (c) 1998-2019 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -224,6 +224,7 @@ package provide cadwidgets::Ged 1.0
 	method edcomb {args}
 	method edit {args}
 	method edmater {args}
+	method env {args}
 	method erase {args}
 	method erase_ray {}
 	method ev {args}
@@ -1746,6 +1747,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::edmater {args} {
     eval $mGed edmater $args
+}
+
+::itcl::body cadwidgets::Ged::env {args} {
+    eval $mGed env $args
 }
 
 ::itcl::body cadwidgets::Ged::erase {args} {
