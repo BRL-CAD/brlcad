@@ -106,7 +106,7 @@ set(misc_ignore_files
   profont/profont-IIx-charmap.png
   profont/profont_IIx_readme.pdf
   profont/readme.txt
-  repoconv/sphflake.pix,v
+  repoconv/cvs2git/repaired/sphflake.pix,v
   repoconv/svn-replay/manual_replay.sh
   repoconv/svn-replay/md5_process_lines.cxx
   repoconv/svn-replay/pstream.h
