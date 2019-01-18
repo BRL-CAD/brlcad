@@ -106,37 +106,37 @@ set(misc_ignore_files
   profont/profont-IIx-charmap.png
   profont/profont_IIx_readme.pdf
   profont/readme.txt
-  svn2git/README
-  svn2git/account-map
-  svn2git/archive_branches.sh
-  svn2git/manual_replay.sh
-  svn2git/md5_process_lines.cxx
-  svn2git/pstream.h
-  svn2git/rules
-  svn2git/sphflake.pix,v
-  svn2git/svn_logmsg.xsl
-  svn2git/svn_moved_and_edited.cxx
-  svn2git/svn2git/CMake/FindAPR.cmake
-  svn2git/svn2git/CMake/FindSubversionLibrary.cmake
-  svn2git/svn2git/CMakeLists.txt
-  svn2git/svn2git/LICENSE
-  svn2git/svn2git/CommandLineParser.cpp
-  svn2git/svn2git/CommandLineParser.h
-  svn2git/svn2git/README.md
-  svn2git/svn2git/main.cpp
-  svn2git/svn2git/repository.cpp
-  svn2git/svn2git/repository.h
-  svn2git/svn2git/ruleparser.cpp
-  svn2git/svn2git/ruleparser.h
-  svn2git/svn2git/samples/ignore-branch.rules
-  svn2git/svn2git/samples/merged-branches-tags.rules
-  svn2git/svn2git/samples/min-max-revision.rules
-  svn2git/svn2git/samples/recurse.rules
-  svn2git/svn2git/samples/standardlayout.rules
-  svn2git/svn2git/samples/two-projects.rules
-  svn2git/svn2git/svn.cpp
-  svn2git/svn2git/svn.h
-  svn2git/svnlog2csv
+  repoconv/README
+  repoconv/account-map
+  repoconv/archive_branches.sh
+  repoconv/manual_replay.sh
+  repoconv/md5_process_lines.cxx
+  repoconv/pstream.h
+  repoconv/rules
+  repoconv/sphflake.pix,v
+  repoconv/svn_logmsg.xsl
+  repoconv/svn_moved_and_edited.cxx
+  repoconv/svn2git/CMake/FindAPR.cmake
+  repoconv/svn2git/CMake/FindSubversionLibrary.cmake
+  repoconv/svn2git/CMakeLists.txt
+  repoconv/svn2git/LICENSE
+  repoconv/svn2git/CommandLineParser.cpp
+  repoconv/svn2git/CommandLineParser.h
+  repoconv/svn2git/README.md
+  repoconv/svn2git/main.cpp
+  repoconv/svn2git/repository.cpp
+  repoconv/svn2git/repository.h
+  repoconv/svn2git/ruleparser.cpp
+  repoconv/svn2git/ruleparser.h
+  repoconv/svn2git/samples/ignore-branch.rules
+  repoconv/svn2git/samples/merged-branches-tags.rules
+  repoconv/svn2git/samples/min-max-revision.rules
+  repoconv/svn2git/samples/recurse.rules
+  repoconv/svn2git/samples/standardlayout.rules
+  repoconv/svn2git/samples/two-projects.rules
+  repoconv/svn2git/svn.cpp
+  repoconv/svn2git/svn.h
+  repoconv/svnlog2csv
   uncpowerplant2g.sh
   win32-msvc/CMakeLists.txt
   win32-msvc/Dll/BrlcadCore.def
