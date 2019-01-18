@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 201X-XX-XX  Release 7.30.0                                     ---
 ----------------------------------------------------------------------
 
+* new 'gex' tool for low-level .g file exploration - Tom Browder
 * added support for command-line editing of metaballs - Sean Morrison
 * added manual page for the 'get' command - Cliff Yapp
 * fixed analyze command calculation for BoT volumes - Keith Bowman
