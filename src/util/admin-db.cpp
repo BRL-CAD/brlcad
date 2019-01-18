@@ -1,9 +1,8 @@
 #include "common.h"
 
+#include <cstdlib>
 #include <string>
 #include <map>
-#include <stdlib.h>
-#include <sys/stat.h>
 #include "bio.h"
 
 #include "bu/opt.h"
@@ -42,10 +41,10 @@ main(int argc, char** argv)
     // db pointers
     FILE *in = NULL;
     FILE *out = NULL;
+    int fd;
     int res = 0; // for function returns
 
-    struct stat sb;
-    const char DBSUF[] = ".compressed";
+    const char DBSUF[] = ".compressed.g";
     struct bu_vls str = BU_VLS_INIT_ZERO;
 
     // vars expected from cmd line parsing
@@ -60,8 +59,6 @@ main(int argc, char** argv)
     BU_OPT(d[0],  "h", "help",       "",         NULL,         &has_help,     "Print help and exit");
     BU_OPT(d[1],  "f", "force",      "bool",     &bu_opt_bool, &has_force,    "Allow overwriting existing files.");
     BU_OPT(d[2],  "c", "compress",   "bool",     &bu_opt_bool, &has_compress, "Create a copy with no free space.");
-    BU_OPT(d[3],  "",  "DB_infile",  "filename", &bu_opt_vls,  &db_fname,     "DB input file name");
-    BU_OPT(d[4],  "",  "DB_outfile", "filename", &bu_opt_vls,  &db2_fname,    "DB output file name");
     BU_OPT_NULL(d[5]);
 
     /* Skip first arg */
@@ -75,10 +72,14 @@ main(int argc, char** argv)
 
     /* If the input and output files weren't specified from args, get them
      * from the bu_opt leftovers */
-    if (argc) {
-	bu_vls_sprintf(&db_fname, "%s", argv[0]);
-	argv++; argc--;
+    if (!argc) {
+	bu_log("ERROR: input geometry file not specified\n");
+	bu_exit(EXIT_FAILURE, usage);
     }
+    bu_vls_sprintf(&db_fname, "%s", argv[0]);
+    argv++; argc--;
+
+    /* output filename is optional */
     if (argc) {
 	bu_vls_sprintf(&db2_fname, "%s", argv[0]);
 	argv++; argc--;
@@ -99,32 +100,32 @@ main(int argc, char** argv)
     }
 
     // open the db file read-only
-    if (stat(bu_vls_addr(&db_fname), &sb)) {
-        bu_exit(EXIT_FAILURE, "non-existent input file '%s'\n", bu_vls_addr(&db_fname));
+    if (!bu_file_exists(bu_vls_cstr(&db_fname), &fd)) {
+        bu_exit(EXIT_FAILURE, "ERROR: non-existent input file '%s'\n", bu_vls_addr(&db_fname));
     }
-    in = fopen(bu_vls_addr(&db_fname), "r");
+    in = fdopen(fd, "r");
     if (!in) {
         perror(bu_vls_addr(&db_fname));
-        bu_exit(EXIT_FAILURE, "ERROR: input file open failure\n");
+        bu_exit(EXIT_FAILURE, "ERROR: input file [%s] open failure\n", bu_vls_addr(&db_fname));
     }
 
     if (has_compress) {
         if (BU_STR_EQUAL(bu_vls_addr(&db_fname), bu_vls_addr(&db2_fname))) {
-            bu_exit(EXIT_FAILURE, "overwriting an input file\n");
+            bu_exit(EXIT_FAILURE, "ERROR: output file cannot be same as input file\n");
         }
         // check for existing file
-        if (!stat(bu_vls_addr(&db2_fname), &sb)) {
+	if (bu_file_exists(bu_vls_cstr(&db2_fname), NULL)) {
             if (has_force) {
-                printf("WARNING: overwriting an existing file...\n");
+                printf("WARNING: overwriting existing file [%s]...\n", bu_vls_addr(&db2_fname));
                 bu_file_delete(bu_vls_addr(&db2_fname));
             } else {
-                bu_exit(EXIT_FAILURE, "overwriting an existing file (use the '-f' option to continue)\n");
+                bu_exit(EXIT_FAILURE, "ERROR: output file [%s] already exists (use the '-f' option to overwrite)\n", bu_vls_addr(&db2_fname));
             }
         }
         out = fopen(bu_vls_addr(&db2_fname), "w");
         if (!out) {
             perror(bu_vls_addr(&db2_fname));
-            bu_exit(EXIT_FAILURE, "ERROR: output file open failure\n");
+            bu_exit(EXIT_FAILURE, "ERROR: unable to open output file [%s]\n", bu_vls_addr(&db2_fname));
         }
     }
 
