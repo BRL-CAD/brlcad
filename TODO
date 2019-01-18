@@ -18,8 +18,6 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* rename admin-db
-
 * fix pipe subtractions shaded display issue in archer
 
 * prep caching actions
