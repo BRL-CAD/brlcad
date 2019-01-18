@@ -10,7 +10,7 @@
 
 using namespace std;
 
-static const char usage[] = "Example: admin-db [...options] db.g [db2.g]\n";
+static const char usage[] = "Example: admin-db [...options] input.g [output.g]\n";
 
 /* purpose: manage various aspects of a BRL-CAD database
  *
