@@ -6,6 +6,9 @@
 
 # To run the conversion (need to use cvs-fast-export rather than cvsconvert
 # for the actual conversion to support the authors file):
+if [ ! -e "brlcad_cvs.tar.gz" ]; then
+	curl -o brlcad_cvs.tar.gz https://brlcad.org/brlcad_cvs.tar.gz
+fi
 tar -xf brlcad_cvs.tar.gz
 cd brlcad_cvs/brlcad
 rm src/librt/Attic/parse.c,v
@@ -24,10 +27,11 @@ sed -i 's/$Author:[^$]*/$Author:/' sh/Attic/cvs2cl.pl,v
 sed -i 's/$Locker:[^$]*/$Locker:/' src/other/URToolkit/tools/mallocNd.c,v
 find . | cvs-fast-export -A ../../authormap > ../../brlcad_cvs_git.fi
 cd ../
+rm -f ../cvs_all_fast_export_audit.txt
 cvsconvert -n brlcad 2> ../cvs_all_fast_export_audit.txt
 cd ../
-mkdir brlcad_cvs_git-20180420
-cd brlcad_cvs_git-20180420
+mkdir brlcad_cvs_git-$(date +"%Y%m%d")
+cd brlcad_cvs_git-$(date +"%Y%m%d")
 git init
 cat ../brlcad_cvs_git.fi | git fast-import
 rm ../brlcad_cvs_git.fi
@@ -56,6 +60,13 @@ rm -rf brlcad_svn-r29886/.svn
 # for these purposes and hence the reported diff of terra.dsp is expected.
 # (After fixing the mime-type in SVN trunk, the CVS and SVN files match.)
 diff -qrw -I '\$Id' -I '\$Revision' -I'\$Header' -I'$Source' -I'$Date' -I'$Log' -I'$Locker' brlcad_cvs-r29886 brlcad_svn-r29886
+
+
+# cleanup
+rm -rf brlcad_cvs
+rm -rf brlcad_cvs-r29886
+rm -rf brlcad_svn-r29886
+rm brlcad_cvs-r29886.tar.gz
 
 # Other useful commands:
 
