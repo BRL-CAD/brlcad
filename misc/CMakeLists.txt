@@ -106,37 +106,37 @@ set(misc_ignore_files
   profont/profont-IIx-charmap.png
   profont/profont_IIx_readme.pdf
   profont/readme.txt
-  repoconv/README
-  repoconv/account-map
-  repoconv/archive_branches.sh
-  repoconv/manual_replay.sh
-  repoconv/md5_process_lines.cxx
-  repoconv/pstream.h
-  repoconv/rules
   repoconv/sphflake.pix,v
-  repoconv/svn_logmsg.xsl
-  repoconv/svn_moved_and_edited.cxx
-  repoconv/svn-fast-export/CMake/FindAPR.cmake
-  repoconv/svn-fast-export/CMake/FindSubversionLibrary.cmake
-  repoconv/svn-fast-export/CMakeLists.txt
-  repoconv/svn-fast-export/LICENSE
-  repoconv/svn-fast-export/CommandLineParser.cpp
-  repoconv/svn-fast-export/CommandLineParser.h
-  repoconv/svn-fast-export/README.md
-  repoconv/svn-fast-export/main.cpp
-  repoconv/svn-fast-export/repository.cpp
-  repoconv/svn-fast-export/repository.h
-  repoconv/svn-fast-export/ruleparser.cpp
-  repoconv/svn-fast-export/ruleparser.h
-  repoconv/svn-fast-export/samples/ignore-branch.rules
-  repoconv/svn-fast-export/samples/merged-branches-tags.rules
-  repoconv/svn-fast-export/samples/min-max-revision.rules
-  repoconv/svn-fast-export/samples/recurse.rules
-  repoconv/svn-fast-export/samples/standardlayout.rules
-  repoconv/svn-fast-export/samples/two-projects.rules
-  repoconv/svn-fast-export/svn.cpp
-  repoconv/svn-fast-export/svn.h
-  repoconv/svnlog2csv
+  repoconv/svn-replay/manual_replay.sh
+  repoconv/svn-replay/md5_process_lines.cxx
+  repoconv/svn-replay/pstream.h
+  repoconv/svn-replay/svn_logmsg.xsl
+  repoconv/svn-replay/svn_moved_and_edited.cxx
+  repoconv/svn-replay/svnlog2csv
+  repoconv/svn2git/README
+  repoconv/svn2git/account-map
+  repoconv/svn2git/archive_branches.sh
+  repoconv/svn2git/rules
+  repoconv/svn2git/svn-fast-export/CMake/FindAPR.cmake
+  repoconv/svn2git/svn-fast-export/CMake/FindSubversionLibrary.cmake
+  repoconv/svn2git/svn-fast-export/CMakeLists.txt
+  repoconv/svn2git/svn-fast-export/CommandLineParser.cpp
+  repoconv/svn2git/svn-fast-export/CommandLineParser.h
+  repoconv/svn2git/svn-fast-export/LICENSE
+  repoconv/svn2git/svn-fast-export/README.md
+  repoconv/svn2git/svn-fast-export/main.cpp
+  repoconv/svn2git/svn-fast-export/repository.cpp
+  repoconv/svn2git/svn-fast-export/repository.h
+  repoconv/svn2git/svn-fast-export/ruleparser.cpp
+  repoconv/svn2git/svn-fast-export/ruleparser.h
+  repoconv/svn2git/svn-fast-export/samples/ignore-branch.rules
+  repoconv/svn2git/svn-fast-export/samples/merged-branches-tags.rules
+  repoconv/svn2git/svn-fast-export/samples/min-max-revision.rules
+  repoconv/svn2git/svn-fast-export/samples/recurse.rules
+  repoconv/svn2git/svn-fast-export/samples/standardlayout.rules
+  repoconv/svn2git/svn-fast-export/samples/two-projects.rules
+  repoconv/svn2git/svn-fast-export/svn.cpp
+  repoconv/svn2git/svn-fast-export/svn.h
   uncpowerplant2g.sh
   win32-msvc/CMakeLists.txt
   win32-msvc/Dll/BrlcadCore.def
