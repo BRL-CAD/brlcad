@@ -109,6 +109,9 @@ set(misc_ignore_files
   repoconv/cvs2git/authormap
   repoconv/cvs2git/README.sh
   repoconv/cvs2git/repaired/sphflake.pix,v
+  repoconv/dercs/md5.hpp
+  repoconv/dercs/sha1.hpp
+  repoconv/dercs/svn_de-rcs.cxx
   repoconv/svn-replay/manual_replay.sh
   repoconv/svn-replay/md5_process_lines.cxx
   repoconv/svn-replay/pstream.h
