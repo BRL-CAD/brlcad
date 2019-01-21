@@ -38,14 +38,14 @@ bool is_binary(const char *cstr, int len, std::string &npath)
 
 std::string de_rcs(const char *cstr, int len)
 {
-    std::regex rcs_date("\\$Date:[^\\$\n]*");
-    std::regex rcs_header("\\$Header:[^\\$\n]*");
-    std::regex rcs_id("\\$Id:[^\\$\n]*");
-    std::regex rcs_log("\\$Log:[^\\$\n]*");
-    std::regex rcs_revision("\\$Revision:[^\\$\n]*");
-    std::regex rcs_source("\\$Source:[^\\$\n]*");
-    std::regex rcs_author("\\$Author:[^\\$\n]*");
-    std::regex rcs_locker("\\$Locker:[^\\$\n]*");
+    std::regex rcs_date("\\$Date:[^\\$\n\r]*");
+    std::regex rcs_header("\\$Header:[^\\$\n\r]*");
+    std::regex rcs_id("\\$Id:[^\\$\n\r]*");
+    std::regex rcs_log("\\$Log:[^\\$\n\r]*");
+    std::regex rcs_revision("\\$Revision:[^\\$\n\r]*");
+    std::regex rcs_source("\\$Source:[^\\$\n\r]*");
+    std::regex rcs_author("\\$Author:[^\\$\n\r]*");
+    std::regex rcs_locker("\\$Locker:[^\\$\n\r]*");
 
     std::string buff01;
     buff01.assign(cstr, len);
@@ -243,6 +243,7 @@ process_node(std::ifstream &infile, std::ofstream &outfile)
     // for possible RCS edits, set up the new values for md5 and sha1,
     // and jump the seek beyond the old content.
     char *buffer = NULL;
+    std::string new_content("");
     size_t oldpos;
     size_t after_content;
     if (text_content_length > 0) {
@@ -271,7 +272,7 @@ process_node(std::ifstream &infile, std::ofstream &outfile)
 		}
 		*/
 	    }
-	    std::string new_content = de_rcs(buffer, text_content_length);
+	    new_content = de_rcs(buffer, text_content_length);
 	    std::string new_md5 = md5_hash_hex(new_content.c_str(), new_content.length());
 	    std::string new_sha1 = sha1_hash_hex(new_content.c_str(), new_content.length());
 	    if (text_content_md5 != new_md5 || text_content_sha1 != new_sha1) {
@@ -280,6 +281,10 @@ process_node(std::ifstream &infile, std::ofstream &outfile)
 		std::cout << "Calculated md5 : " << new_md5 << "\n";
 		std::cout << "Original sha1  : " << text_content_sha1 << "\n";
 		std::cout << "Calculated sha1: " << new_sha1 << "\n";
+		md5_map.insert(std::pair<std::string,std::string>(text_content_md5, new_md5));
+		sha1_map.insert(std::pair<std::string,std::string>(text_content_sha1, new_sha1));
+	    } else {
+		new_content = std::string("");
 	    }
 
 	    // TODO - build maps from old hashes to new, write out new hashes in dump
@@ -289,12 +294,89 @@ process_node(std::ifstream &infile, std::ofstream &outfile)
     }
 
     // Write out the node lines and content.
+    std::map<std::string, std::string>::iterator m_it;
     for (nl_it = node_lines.begin(); nl_it != node_lines.end(); nl_it++) {
+	line = *nl_it;
+	// Text-copy-source-md5
+	if (!sfcmp(line, tcsmkey))  {
+	    std::string old_md5 = svn_str(line, tcsmkey);
+	    m_it = md5_map.find(old_md5);
+	    if (m_it != md5_map.end()) {
+		outfile << "Text-copy-source-md5: " << m_it->second << "\n";
+	    } else {
+		outfile << *nl_it << "\n";
+	    }
+	    outfile.flush();
+	    continue;
+	}
+	// Text-copy-source-sha1
+	if (!sfcmp(line, tcsskey))  {
+	    std::string old_sha1 = svn_str(line, tcsskey);
+	    m_it = sha1_map.find(old_sha1);
+	    if (m_it != sha1_map.end()) {
+		outfile << "Text-copy-source-sha1: " << m_it->second << "\n";
+	    } else {
+		outfile << *nl_it << "\n";
+	    }
+	    outfile.flush();
+	    continue;
+	}
+
+	// Text-content-md5
+	if (!sfcmp(line, tcmkey))  {
+	    std::string old_md5 = svn_str(line, tcmkey);
+	    m_it = md5_map.find(old_md5);
+	    if (m_it != md5_map.end()) {
+		outfile << "Text-content-md5: " << m_it->second << "\n";
+	    } else {
+		outfile << *nl_it << "\n";
+	    }
+	    outfile.flush();
+	    continue;
+	}
+
+	// Text-content-sha1
+	if (!sfcmp(line, tcskey))  {
+	    std::string old_sha1 = svn_str(line, tcskey);
+	    m_it = sha1_map.find(old_sha1);
+	    if (m_it != sha1_map.end()) {
+		outfile << "Text-content-sha1: " << m_it->second << "\n";
+	    } else {
+		outfile << *nl_it << "\n";
+	    }
+	    outfile.flush();
+	    continue;
+	}
+	// Text-content-length
+	if (!sfcmp(line, tclkey))  {
+	    if (new_content.length()) {
+		outfile << "Text-content-length: " << new_content.length() << "\n";
+	    } else {
+		outfile << *nl_it << "\n";
+	    }
+	    outfile.flush();
+	    continue;
+	}
+	// Content-length
+	if (!sfcmp(line, clkey))  {
+	    if (new_content.length()) {
+		outfile << "Content-length: " << new_content.length() + prop_content_length << "\n";
+	    } else {
+		outfile << *nl_it << "\n";
+	    }
+	    outfile.flush();
+	    continue;
+	}
+
 	outfile << *nl_it << "\n";
 	outfile.flush();
     }
     if (buffer) {
-	outfile.write(buffer, text_content_length);
+	if (new_content.length()) {
+	    outfile << new_content;
+	} else {
+	    outfile.write(buffer, text_content_length);
+	}
 	outfile << "\n";
 	outfile.flush();
 	delete buffer;
@@ -400,4 +482,3 @@ main(int argc, const char **argv)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-
