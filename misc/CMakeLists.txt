@@ -106,6 +106,7 @@ set(misc_ignore_files
   profont/profont-IIx-charmap.png
   profont/profont_IIx_readme.pdf
   profont/readme.txt
+  repoconv/README
   repoconv/cvs2git/authormap
   repoconv/cvs2git/README.sh
   repoconv/cvs2git/repaired/sphflake.pix,v

@@ -1,0 +1,23 @@
+Notes concerning joining of cvs and svn histories in git:
+
+In order to define a fast import stream git can append to the cvs conversion,
+the svn export should use the marks for various objects and commits used by the
+cvs history.  This list can be generated via git fast-export --all of the cvs
+conversion while specifying a file in which to record the map:
+
+cd brlcad_cvs_git
+git fast-export --all --export-marks=../marks_file > ../export.fi
+cd ..
+mkdir repo_dir && cd repo_dir
+git init
+cat ../export.fi | git fast-import
+
+A quick experiment using a manually adjusted incremenal output from
+https://github.com/satori/git-svn-fast-import indicates the from property will
+have to be defined in the new commits respecting the above marks, and new mark
+ids should increment starting from the maximum mark in the marks_file
+
+cat ../29887.fi | git fast-import --import-marks=../marks_file
+
+Consequently, the svn fast-export code will have to be aware of the marks_file
+contents when it generates its output.
