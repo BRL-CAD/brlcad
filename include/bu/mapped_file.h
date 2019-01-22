@@ -27,6 +27,8 @@
 #include <stddef.h> /* for size_t */
 
 #include "bu/defines.h"
+#include "bu/list.h"
+
 
 __BEGIN_DECLS
 
@@ -95,7 +97,7 @@ typedef struct bu_mapped_file bu_mapped_file_t;
  * macro suitable for declaration statement initialization of a
  * bu_mapped_file struct.  does not allocate memory.
  */
-#define BU_MAPPED_FILE_INIT_ZERO { {BU_LIST_NULL, BU_LIST_NULL}, NULL, NULL, 0, 0, NULL, NULL, 0, 0, 0, 0 }
+#define BU_MAPPED_FILE_INIT_ZERO { NULL, NULL, 0, 0, NULL, NULL, 0, 0, 0, 0 }
 
 /**
  * Provides a standardized interface for acquiring the entire contents
