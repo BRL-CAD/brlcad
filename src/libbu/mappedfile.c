@@ -55,7 +55,7 @@ static struct bu_mapped_file initial_mapped_files[NUM_INITIAL_MAPPED_FILES];
 static struct bu_mapped_file_list {
     size_t size, capacity;
     struct bu_mapped_file *mapped_files;
-} all_mapped_files;
+} all_mapped_files = { 0, 0, NULL };
 
 
 struct bu_mapped_file *
@@ -198,12 +198,16 @@ bu_open_mapped_file(const char *name, const char *appl)
 	all_mapped_files.capacity = NUM_INITIAL_MAPPED_FILES;
 	all_mapped_files.size = 0;
 	all_mapped_files.mapped_files = initial_mapped_files;
+	memset(initial_mapped_files, 0, sizeof(initial_mapped_files));
     } else if (all_mapped_files.size == NUM_INITIAL_MAPPED_FILES) {
 	all_mapped_files.capacity *= 2;
 	all_mapped_files.mapped_files = (struct bu_mapped_file *)bu_malloc(all_mapped_files.capacity * sizeof(struct bu_mapped_file), "initial resize of mapped file list");
+	memcpy(all_mapped_files.mapped_files, initial_mapped_files, sizeof(initial_mapped_files));
+	memset(all_mapped_files.mapped_files + all_mapped_files.size, 0, (all_mapped_files.capacity - all_mapped_files.size) * sizeof(struct bu_mapped_file));
     } else if (all_mapped_files.size == all_mapped_files.capacity) {
 	all_mapped_files.capacity *= 2;
 	all_mapped_files.mapped_files = (struct bu_mapped_file *)bu_realloc(all_mapped_files.mapped_files, all_mapped_files.capacity * sizeof(struct bu_mapped_file), "additional resize of mapped file list");
+	memset(all_mapped_files.mapped_files + all_mapped_files.size, 0, (all_mapped_files.capacity - all_mapped_files.size) * sizeof(struct bu_mapped_file));
     }
 
     mp = &all_mapped_files.mapped_files[all_mapped_files.size];
