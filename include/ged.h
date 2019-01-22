@@ -63,6 +63,10 @@ GED_EXPORT extern int ged_echo(struct ged *gedp, int argc, const char *argv[]);
  */
 GED_EXPORT extern int ged_graph(struct ged *gedp, int argc, const char *argv[]);
 
+/**
+ * Echo the specified arguments.
+ */
+GED_EXPORT extern int ged_help(struct ged *gedp, int argc, const char *argv[]);
 
 
 /***************************************
