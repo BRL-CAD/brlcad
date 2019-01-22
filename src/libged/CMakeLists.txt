@@ -381,6 +381,8 @@ SET_TARGET_PROPERTIES(libged PROPERTIES VERSION 20.0.1 SOVERSION 20)
 add_subdirectory(tests)
 add_subdirectory(simulate/tests)
 
+BRLCAD_ADDEXEC(test_help help/test_help.c libged TEST)
+
 set(ged_ignore_files
   CMakeLists.txt
   TODO
