@@ -69,9 +69,10 @@ struct bu_stat {
  */
 struct bu_glob_context {
 
-#define BU_GLOB_APPEND   0x0001  /* Append to output from previous call. */
-#define BU_GLOB_NOSORT   0x0002  /* Don't sort. */
-#define BU_GLOB_NOESCAPE 0x0004  /* Disable backslash escaping. */
+#define BU_GLOB_APPEND     0x0001  /* Append to output from previous call. */
+#define BU_GLOB_NOSORT     0x0020  /* Don't sort. */
+#define BU_GLOB_NOESCAPE   0x2000  /* Disable backslash escaping. */
+#define BU_GLOB_ALTDIRFUNC 0x0040  /* use alternate functions. */
     int gl_flags;                /**< flags customizing globbing behavior */
 
     /* Return values */
@@ -107,7 +108,7 @@ typedef struct bu_glob_context bu_glob_t;
 /**
  * declaration statement initialization of a bu_glob struct
  */
-#define BU_GLOB_INIT_ZERO(_gp) {0, 0, 0, NULL, (int)(*)(const char *)NULL, (int)(*)(struct bu_dirent *, struct bu_glob_context *)NULL, (void)(*)(struct bu_glob_context *)NULL, (int)(*)(const char *, struct bu_stat *, struct bu_glob_context *)NULL, (int)(*)(const char *, struct bu_stat *, struct bu_glob_context *)NULL, NULL, NULL}
+#define BU_GLOB_INIT_ZERO {0, 0, 0, NULL, (struct bu_glob_context *(*)(const char *))NULL, (int(*)(struct bu_dirent *, struct bu_glob_context *))NULL, (void(*)(struct bu_glob_context *))NULL, (int(*)(const char *, struct bu_stat *, struct bu_glob_context *))NULL, (int(*)(const char *, struct bu_stat *, struct bu_glob_context *))NULL, (int(*)(const char *, int, struct bu_glob_context *))NULL, NULL, NULL}
 
 
 /**
