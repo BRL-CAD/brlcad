@@ -47,9 +47,6 @@
 /// grows 3D BBox along each axis by this factor
 #define BBOX_GROW_3D 0.1
 
-/// arbitrary calculation tolerance (need to try VDIVIDE_TOL or VUNITIZE_TOL to tighten the bounds)
-#define TOL 0.000001
-
 /// another arbitrary calculation tolerance (need to try VDIVIDE_TOL or VUNITIZE_TOL to tighten the bounds)
 #define TOL2 0.00001
 
@@ -213,12 +210,12 @@ CurveTree::CurveTree(const ON_BrepFace* face) :
 		for (int knot_index = 1; knot_index <= knotcnt; knot_index++) {
 		    ON_Interval range(knots[knot_index - 1], knots[knot_index]);
 
-		    if (range.Length() > TOL)
+		    if (range.Length() > BREP_UV_DIST_FUZZ)
 			getHVTangents(trimCurve, range, splitlist);
 		}
 		for (std::list<fastf_t>::const_iterator l = splitlist.begin(); l != splitlist.end(); l++) {
 		    double xmax = *l;
-		    if (!NEAR_EQUAL(xmax, min, TOL)) {
+		    if (!NEAR_EQUAL(xmax, min, BREP_UV_DIST_FUZZ)) {
 			m_root->addChild(subdivideCurve(trimCurve, trim_index, adj_face_index, min, xmax, innerLoop, 0));
 		    }
 		    min = xmax;
@@ -231,7 +228,7 @@ CurveTree::CurveTree(const ON_BrepFace* face) :
 		trimCurve->GetSpanVector(knots);
 		for (int knot_index = 1; knot_index <= knotcnt; knot_index++) {
 		    double xmax = knots[knot_index];
-		    if (!NEAR_EQUAL(xmax, min, TOL)) {
+		    if (!NEAR_EQUAL(xmax, min, BREP_UV_DIST_FUZZ)) {
 			m_root->addChild(subdivideCurve(trimCurve, trim_index, adj_face_index, min, xmax, innerLoop, 0));
 		    }
 		    min = xmax;
@@ -239,7 +236,7 @@ CurveTree::CurveTree(const ON_BrepFace* face) :
 		delete [] knots;
 	    }
 
-	    if (!NEAR_EQUAL(max, min, TOL)) {
+	    if (!NEAR_EQUAL(max, min, BREP_UV_DIST_FUZZ)) {
 		m_root->addChild(subdivideCurve(trimCurve, trim_index, adj_face_index, min, max, innerLoop, 0));
 	    }
 	}
@@ -368,7 +365,7 @@ CurveTree::getLeavesAbove(std::list<const BRNode*>& out_leaves, const ON_Interva
 	const BRNode* br = *i;
 	br->GetBBox(bmin, bmax);
 
-	dist = TOL;//0.03*DIST_PT_PT(bmin, bmax);
+	dist = BREP_UV_DIST_FUZZ;//0.03*DIST_PT_PT(bmin, bmax);
 	if (bmax[X]+dist < u[0])
 	    continue;
 	if (bmin[X]-dist < u[1]) {
@@ -408,7 +405,7 @@ CurveTree::getLeavesRight(std::list<const BRNode*>& out_leaves, const ON_Interva
 	const BRNode* br = *i;
 	br->GetBBox(bmin, bmax);
 
-	dist = TOL;//0.03*DIST_PT_PT(bmin, bmax);
+	dist = BREP_UV_DIST_FUZZ;//0.03*DIST_PT_PT(bmin, bmax);
 	if (bmax[Y]+dist < v[0])
 	    continue;
 	if (bmin[Y]-dist < v[1]) {
@@ -446,7 +443,7 @@ CurveTree::getHVTangents(const ON_Curve* curve, const ON_Interval& t, std::list<
     double midpoint = (t[1]+t[0])/2.0;
     ON_Interval left(t[0], midpoint);
     ON_Interval right(midpoint, t[1]);
-    int status = ON_Curve_Has_Tangent(curve, t[0], t[1], TOL);
+    int status = ON_Curve_Has_Tangent(curve, t[0], t[1], BREP_UV_DIST_FUZZ);
 
     switch (status) {
 
@@ -461,9 +458,9 @@ CurveTree::getHVTangents(const ON_Curve* curve, const ON_Interval& t, std::list<
 	    return true;
 
 	case 3: /* Horizontal and vertical tangents present - Simple midpoint split */
-	    if (left.Length() > TOL)
+	    if (left.Length() > BREP_UV_DIST_FUZZ)
 		getHVTangents(curve, left, list);
-	    if (right.Length() > TOL)
+	    if (right.Length() > BREP_UV_DIST_FUZZ)
 		getHVTangents(curve, right, list);
 	    return true;
 

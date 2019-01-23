@@ -111,6 +111,9 @@ typedef struct _on_brep_placeholder {
 
 #define BREP_SAME_POINT_TOLERANCE 1e-6
 
+/* arbitrary calculation tolerance */
+#define BREP_UV_DIST_FUZZ 0.000001
+
 /* @todo: debugging crapola (clean up later) */
 #define ON_PRINT4(p) "[" << (p)[0] << ", " << (p)[1] << ", " << (p)[2] << ", " << (p)[3] << "]"
 #define ON_PRINT3(p) "(" << (p)[0] << ", " << (p)[1] << ", " << (p)[2] << ")"

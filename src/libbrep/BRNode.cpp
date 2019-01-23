@@ -82,14 +82,14 @@ BRNode::BRNode(
 	m_v[1] = m_end[Y];
     }
 
-    if (NEAR_EQUAL(m_end[X], m_start[X], 0.000001)) {
+    if (NEAR_EQUAL(m_end[X], m_start[X], BREP_UV_DIST_FUZZ)) {
 	m_Vertical = true;
 	if (m_innerTrim) {
 	    m_XIncreasing = false;
 	} else {
 	    m_XIncreasing = true;
 	}
-    } else if (NEAR_EQUAL(m_end[Y], m_start[Y], 0.000001)) {
+    } else if (NEAR_EQUAL(m_end[Y], m_start[Y], BREP_UV_DIST_FUZZ)) {
 	m_Horizontal = true;
 	if ((m_end[X] - m_start[X]) > 0.0) {
 	    m_XIncreasing = true;
