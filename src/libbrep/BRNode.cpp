@@ -31,9 +31,6 @@ BRNode::BRNode(
     const ON_Curve *curve,
     int trim_index,
     int adj_face_index,
-    double edge_tol,
-    double loop_u_tol,
-    double loop_v_tol,
     const ON_BoundingBox &node,
     const ON_BrepFace *face,
     const ON_Interval &t,
@@ -43,11 +40,7 @@ BRNode::BRNode(
     m_node(node),
     m_v(),
     m_adj_face_index(adj_face_index),
-    m_edge_tol(edge_tol),
-    m_u_tol(loop_u_tol),
-    m_v_tol(loop_v_tol),
     m_XIncreasing(false),
-    m_YIncreasing(false),
     m_Horizontal(false),
     m_Vertical(false),
     m_innerTrim(innerTrim),
@@ -89,14 +82,14 @@ BRNode::BRNode(
 	m_v[1] = m_end[Y];
     }
 
-    if (NEAR_EQUAL(m_end[X], m_start[X], BREP_UV_DIST_FUZZ)) {
+    if (NEAR_EQUAL(m_end[X], m_start[X], 0.000001)) {
 	m_Vertical = true;
 	if (m_innerTrim) {
 	    m_XIncreasing = false;
 	} else {
 	    m_XIncreasing = true;
 	}
-    } else if (NEAR_EQUAL(m_end[Y], m_start[Y], BREP_UV_DIST_FUZZ)) {
+    } else if (NEAR_EQUAL(m_end[Y], m_start[Y], 0.000001)) {
 	m_Horizontal = true;
 	if ((m_end[X] - m_start[X]) > 0.0) {
 	    m_XIncreasing = true;
@@ -112,21 +105,6 @@ BRNode::BRNode(
 	}
 	m_slope = (m_end[Y] - m_start[Y]) / (m_end[X] - m_start[X]);
     }
-
-    if (NEAR_EQUAL(m_end[Y], m_start[Y], BREP_UV_DIST_FUZZ)) {
-	if (m_innerTrim) {
-	    m_YIncreasing = false;
-	} else {
-	    m_YIncreasing = true;
-	}
-    } else {
-	if ((m_end[Y] - m_start[Y]) > 0.0) {
-	    m_YIncreasing = true;
-	} else {
-	    m_YIncreasing = false;
-	}
-    }
-
     m_bb_diag = DIST_PT_PT(m_start, m_end);
 }
 
@@ -136,7 +114,6 @@ BRNode::BRNode(const ON_BoundingBox &node) :
     m_v(),
     m_adj_face_index(-1),
     m_XIncreasing(false),
-    m_YIncreasing(false),
     m_Horizontal(false),
     m_Vertical(false),
     m_innerTrim(false),
@@ -585,7 +562,7 @@ BRNode::getCurveEstimateOfU(fastf_t v, fastf_t tol) const
 	cnt++;
     }
     if (cnt > 999) {
-	bu_log("getCurveEstimateOfU(): estimate of 'u' given a trim curve and "
+	bu_log("getCurveEstimateOfV(): estimate of 'u' given a trim curve and "
 	       "'v' did not converge within iteration bound(%d).\n", cnt);
     }
     return p[X];

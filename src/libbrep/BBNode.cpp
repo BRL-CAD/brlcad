@@ -473,8 +473,7 @@ BBNode::getTrimsAbove(const ON_2dPoint &uv, std::list<const BRNode *> &out_leave
     for (std::list<const BRNode *>::const_iterator i = m_stl->m_trims_above.begin(); i != m_stl->m_trims_above.end(); i++) {
 	const BRNode *br = *i;
 	br->GetBBox(bmin, bmax);
-	dist = BREP_UV_DIST_FUZZ; /* 0.03*DIST_PT_PT(bmin, bmax); */
-	//dist = m_ctree->u_tol;
+	dist = 0.000001; /* 0.03*DIST_PT_PT(bmin, bmax); */
 	if ((uv[X] > bmin[X] - dist) && (uv[X] < bmax[X] + dist)) {
 	    out_leaves.push_back(br);
 	}
@@ -509,7 +508,7 @@ BBNode::prepTrims()
     std::list<const BRNode *>::iterator i;
     const BRNode *br;
     point_t curvemin, curvemax;
-    double dist = BREP_UV_DIST_FUZZ;
+    double dist = 0.000001;
     bool trim_already_assigned = false;
 
     m_stl->m_trims_above.clear();
@@ -549,7 +548,7 @@ BBNode::prepTrims()
 	    i = m_stl->m_trims_above.begin();
 	    br = *i;
 	    br->GetBBox(curvemin, curvemax);
-	    dist = BREP_UV_DIST_FUZZ; /* 0.03*DIST_PT_PT(curvemin, curvemax); */
+	    dist = 0.000001; /* 0.03*DIST_PT_PT(curvemin, curvemax); */
 	    if (curvemin[Y] - dist > m_v[1]) {
 		i++;
 

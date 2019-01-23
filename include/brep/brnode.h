@@ -56,9 +56,6 @@ extern "C++" {
 		BRNode(const ON_Curve *curve,
 			int trim_index,
 			int adj_face_index,
-			double edge_tol,
-			double loop_u_tol,
-			double loop_v_tol,
 			const ON_BoundingBox &node,
 			const ON_BrepFace *face,
 			const ON_Interval &t,
@@ -109,16 +106,8 @@ extern "C++" {
 		/** Trim Curve Information */
 		int m_adj_face_index;
 
-		/** Tolerance of associated 3D edge */
-		double m_edge_tol;
-
-		/** Parent loop's UV tolerances */
-		double m_u_tol;
-		double m_v_tol;
-
 		/** Trimming Flags */
 		bool m_XIncreasing;
-		bool m_YIncreasing;
 		bool m_Horizontal;
 		bool m_Vertical;
 		bool m_innerTrim;
@@ -144,9 +133,7 @@ extern "C++" {
 		const ON_BrepFace *m_face;
 		ON_Interval m_u;
 		const ON_Curve *m_trim;
-	    public:
 		int m_trim_index;
-	    private:
 		ON_Interval m_t;
 		bool m_checkTrim;
 		bool m_trimmed;
