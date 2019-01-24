@@ -38,14 +38,14 @@ bool is_binary(const char *cstr, int len, std::string &npath)
 
 std::string de_rcs(const char *cstr, int len)
 {
-    std::regex rcs_date("\\$Date:[^\\$\n\r]*");
-    std::regex rcs_header("\\$Header:[^\\$\n\r]*");
-    std::regex rcs_id("\\$Id:[^\\$\n\r]*");
-    std::regex rcs_log("\\$Log:[^\\$\n\r]*");
-    std::regex rcs_revision("\\$Revision:[^\\$\n\r]*");
-    std::regex rcs_source("\\$Source:[^\\$\n\r]*");
-    std::regex rcs_author("\\$Author:[^\\$\n\r]*");
-    std::regex rcs_locker("\\$Locker:[^\\$\n\r]*");
+    std::regex rcs_date("\\$Date:[^\\$;\"\n\r]*");
+    std::regex rcs_header("\\$Header:[^\\$;\"\n\r]*");
+    std::regex rcs_id("\\$Id:[^\\$;\"\n\r]*");
+    std::regex rcs_log("\\$Log:[^\\$;\"\n\r]*");
+    std::regex rcs_revision("\\$Revision:[^\\$;\"\n\r]*");
+    std::regex rcs_source("\\$Source:[^\\$;\"\n\r]*");
+    std::regex rcs_author("\\$Author:[^\\$;\"\n\r]*");
+    std::regex rcs_locker("\\$Locker:[^\\$;\"\n\r]*");
 
     std::string buff01;
     buff01.assign(cstr, len);
@@ -141,9 +141,9 @@ process_node(std::ifstream &infile, std::ofstream &outfile)
     std::string text_copy_source_sha1;
     std::string text_content_md5;
     std::string text_content_sha1;
-    long int text_content_length = -1;
-    long int prop_content_length = -1;
-    long int content_length = -1;
+    long int text_content_length = 0;
+    long int prop_content_length = 0;
+    long int content_length = 0;
     std::string npath;
     std::string rkey("Revision-number: ");
     std::string npkey("Node-path: ");

@@ -16,15 +16,15 @@ rm pix/sphflake.pix,v
 cp ../../repaired/sphflake.pix,v pix/
 # RCS headers introduce unnecessary file differences, which are poison pills
 # for git log --follow
-find . -type f -exec sed -i 's/$Date:[^$]*/$Date:/' {} \;
-find . -type f -exec sed -i 's/$Header:[^$]*/$Header:/' {} \;
-find . -type f -exec sed -i 's/$Id:[^$]*/$Id:/' {} \;
-find . -type f -exec sed -i 's/$Log:[^$]*/$Log:/' {} \;
-find . -type f -exec sed -i 's/$Revision:[^$]*/$Revision:/' {} \;
-find . -type f -exec sed -i 's/$Source:[^$]*/$Source:/' {} \;
-sed -i 's/$Author:[^$]*/$Author:/' misc/Attic/cvs2cl.pl,v
-sed -i 's/$Author:[^$]*/$Author:/' sh/Attic/cvs2cl.pl,v
-sed -i 's/$Locker:[^$]*/$Locker:/' src/other/URToolkit/tools/mallocNd.c,v
+find . -type f -exec sed -i 's/$Date:[^$;"]*/$Date:/' {} \;
+find . -type f -exec sed -i 's/$Header:[^$;"]*/$Header:/' {} \;
+find . -type f -exec sed -i 's/$Id:[^$;"]*/$Id:/' {} \;
+find . -type f -exec sed -i 's/$Log:[^$;"]*/$Log:/' {} \;
+find . -type f -exec sed -i 's/$Revision:[^$;"]*/$Revision:/' {} \;
+find . -type f -exec sed -i 's/$Source:[^$;"]*/$Source:/' {} \;
+sed -i 's/$Author:[^$;"]*/$Author:/' misc/Attic/cvs2cl.pl,v
+sed -i 's/$Author:[^$;"]*/$Author:/' sh/Attic/cvs2cl.pl,v
+sed -i 's/$Locker:[^$;"]*/$Locker:/' src/other/URToolkit/tools/mallocNd.c,v
 find . | cvs-fast-export -A ../../authormap > ../../brlcad_cvs_git.fi
 cd ../
 rm -f ../cvs_all_fast_export_audit.txt
