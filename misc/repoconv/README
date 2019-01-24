@@ -21,3 +21,14 @@ cat ../29887.fi | git fast-import --import-marks=../marks_file
 
 Consequently, the svn fast-export code will have to be aware of the marks_file
 contents when it generates its output.
+
+
+When needing to extract subsets of a large svn dump for inspection, this is a
+useful trick from stackoverflow to zero in on the subset of the dump in question:
+
+head -n 150000000 brlcad_dercs.dump |tail -n 1000000|grep Revision-number
+
+Once the range with the commit needed is identified, dump the results to a file
+that can be inspected in an editor:
+
+head -n 127200000 brlcad_dercs.dump |tail -n 500000 > subset.dump
