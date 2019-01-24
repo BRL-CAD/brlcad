@@ -134,9 +134,56 @@ memory_summary(void)
     n_realloc = bu_n_realloc;
 }
 
+int fb_setup() {
+    /* Framebuffer is desired */
+    size_t xx, yy;
+    int	zoom;
+
+    /* Ask for a fb big enough to hold the image, at least 512. */
+    /* This is so MGED-invoked "postage stamps" get zoomed up big enough to see */
+    xx = yy = 512;
+    if (width > xx || height > yy) {
+	xx = width;
+	yy = height;
+    }
+    bu_semaphore_acquire(BU_SEM_SYSCALL);
+    fbp = fb_open(framebuffer, xx, yy);
+    bu_semaphore_release(BU_SEM_SYSCALL);
+    if (fbp == FB_NULL) {
+	fprintf(stderr, "rt:  can't open frame buffer\n");
+	return 12;
+    }
+
+    bu_semaphore_acquire(BU_SEM_SYSCALL);
+    /* If fb came out smaller than requested, do less work */
+    if ((size_t)fb_getwidth(fbp) < width)
+	width = fb_getwidth(fbp);
+    if ((size_t)fb_getheight(fbp) < height)
+	height = fb_getheight(fbp);
+
+    /* If the fb is lots bigger (>= 2X), zoom up & center */
+    if (width > 0 && height > 0) {
+	zoom = fb_getwidth(fbp)/width;
+	if ((size_t)fb_getheight(fbp)/height < (size_t)zoom)
+	    zoom = fb_getheight(fbp)/height;
+    } else {
+	zoom = 1;
+    }
+    (void)fb_view(fbp, width/2, height/2,
+	    zoom, zoom);
+    bu_semaphore_release(BU_SEM_SYSCALL);
+
+#ifdef USE_OPENCL
+    clt_connect_fb(fbp);
+#endif
+    return 0;
+}
+
+
 int main(int argc, const char **argv)
 {
     int ret = 0;
+    int need_fb = 0;
     struct rt_i *rtip = NULL;
     const char *title_file = NULL, *title_obj = NULL;	/* name of file and first object */
     char idbuf[2048] = {0};			/* First ID record info */
@@ -393,50 +440,8 @@ int main(int argc, const char **argv)
      *  Note that width & height may not have been set yet,
      *  since they may change from frame to frame.
      */
-    if (view_init(&APP, (char *)title_file, (char *)title_obj, outputfile != (char *)0, framebuffer != (char *)0) != 0)  {
-	/* Framebuffer is desired */
-	size_t xx, yy;
-	int	zoom;
-
-	/* Ask for a fb big enough to hold the image, at least 512. */
-	/* This is so MGED-invoked "postage stamps" get zoomed up big enough to see */
-	xx = yy = 512;
-	if (width > xx || height > yy) {
-	    xx = width;
-	    yy = height;
-	}
-	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	fbp = fb_open(framebuffer, xx, yy);
-	bu_semaphore_release(BU_SEM_SYSCALL);
-	if (fbp == FB_NULL) {
-	    fprintf(stderr, "rt:  can't open frame buffer\n");
-	    return 12;
-	}
-
-	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	/* If fb came out smaller than requested, do less work */
-	if ((size_t)fb_getwidth(fbp) < width)
-	    width = fb_getwidth(fbp);
-	if ((size_t)fb_getheight(fbp) < height)
-	    height = fb_getheight(fbp);
-
-	/* If the fb is lots bigger (>= 2X), zoom up & center */
-	if (width > 0 && height > 0) {
-	    zoom = fb_getwidth(fbp)/width;
-	    if ((size_t)fb_getheight(fbp)/height < (size_t)zoom)
-		zoom = fb_getheight(fbp)/height;
-	} else {
-	    zoom = 1;
-	}
-	(void)fb_view(fbp, width/2, height/2,
-		      zoom, zoom);
-	bu_semaphore_release(BU_SEM_SYSCALL);
-
-#ifdef USE_OPENCL
-	clt_connect_fb(fbp);
-#endif
-    }
-    if ((outputfile == (char *)0) && (fbp == FB_NULL)) {
+    need_fb = view_init(&APP, (char *)title_file, (char *)title_obj, outputfile != (char *)0, framebuffer != (char *)0);
+    if ((outputfile == (char *)0) && !need_fb) {
 	/* If not going to framebuffer, or to a file, then use stdout */
 	if (outfp == NULL) outfp = stdout;
 	/* output_is_binary is changed by view_init, as appropriate */
@@ -480,6 +485,13 @@ int main(int argc, const char **argv)
     if (objv && !matflag) {
 	int frame_retval;
 
+	if (need_fb != 0 && !fbp)  {
+	    int fb_status = fb_setup();
+	    if (fb_status) {
+		return fb_status;
+	    }
+	}
+
 	def_tree(rtip);		/* Load the default trees */
 	/* orientation command has not been used */
 	if (!orientflag)
@@ -510,8 +522,27 @@ int main(int argc, const char **argv)
 	}
 
 	while ((buf = rt_read_cmd( stdin )) != (char *)0) {
-	    if (R_DEBUG&RDEBUG_PARSE)
+	    if (R_DEBUG&RDEBUG_PARSE) {
 		fprintf(stderr, "cmd: %s\n", buf);
+	    }
+
+	    /* Right now, the framebuffer setup blocks processing of stdin.
+	     * Consequently when rt is being run as a subprocess by libged the
+	     * stdin pipe can get full on some platforms, which in turn results
+	     * in everything hanging while the calling program waits for rt to
+	     * process stdin before continuing to write down the pipe and rt
+	     * waits for fbserv info along the libpkg channel before getting to
+	     * the logic for processing stdin.  Postpone fb setup until we're
+	     * ready to render something to avoid backing up stdin's pipe. */
+	    if (!bu_strncmp(buf, "end", 3) || !bu_strncmp(buf, "multiview", 8)) {
+		if (need_fb != 0 && !fbp)  {
+		    int fb_status = fb_setup();
+		    if (fb_status) {
+			return fb_status;
+		    }
+		}
+	    }
+
 	    nret = rt_do_cmd( rtip, buf, rt_cmdtab);
 	    bu_free( buf, "rt_read_cmd command buffer");
 	    if (nret < 0)
