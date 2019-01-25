@@ -100,7 +100,7 @@ ExternalProject_ByProducts(ZLIB_BLD ${INCLUDE_DIR}
 # itself is not a build target, but has to require that the ZLIB_BLD target
 # execute before anything that needs it is built.
 set(ZLIB_LIBRARY zlib)
-
+set(ZLIB_INCLUDE_DIR ${CMAKE_BINARY_DIR}/${INCLUDE_DIR})
 
 ###############################################################################
 #                                 libpng 
@@ -695,7 +695,7 @@ ExternalProject_ByProducts(LZ4_BLD ${INCLUDE_DIR}
 ExternalProject_Add(OPENNURBS_BLD
   URL ${CMAKE_SOURCE_DIR}/external/openNURBS.tar.gz
   URL_HASH MD5=9e839833037a98a26d41d79f56e290a5
-  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR} -DCMAKE_PREFIX_PATH=${CMAKE_BINARY_DIR}/${LIB_DIR} -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH}
+  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR} -DCMAKE_PREFIX_PATH=${CMAKE_BINARY_DIR}/${LIB_DIR} -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DZLIB_INCLUDE_DIR=${ZLIB_INCLUDE_DIR}
   )
 ExternalProject_Target(openNURBS OPENNURBS_BLD
   OUTPUT_FILE libopenNURBS${CMAKE_SHARED_LIBRARY_SUFFIX}.2012.10.245
