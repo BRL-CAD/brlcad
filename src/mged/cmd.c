@@ -1794,87 +1794,6 @@ cmd_search(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, con
 
 }
 
-
-/**
- * List regions based on values of their MUVES_Component attribute
- */
-int
-cmd_lm(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
-{
-    struct bu_attribute_value_set avs;
-    struct bu_vls vls = BU_VLS_INIT_ZERO;
-    struct bu_ptbl *tbl;
-    struct directory *dp;
-    size_t i;
-    int last_opt=0;
-    int new_arg_count=1;
-    int new_argc;
-    int ret;
-    char **new_argv;
-
-    bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n");
-
-    bu_vls_strcat(&vls, argv[0]);
-    for (i=1; i<(size_t)argc; i++) {
-	if (*argv[i] == '-') {
-	    bu_vls_putc(&vls, ' ');
-	    bu_vls_strcat(&vls, argv[i]);
-	    last_opt = i;
-	    new_arg_count++;
-	} else {
-	    break;
-	}
-    }
-
-    bu_avs_init(&avs, argc - last_opt, "cmd_lm avs");
-    for (i=last_opt+1; i<(size_t)argc; i++) {
-	bu_avs_add_nonunique(&avs, "MUVES_Component", argv[i]);
-    }
-
-    tbl = db_lookup_by_attr(dbip, RT_DIR_REGION, &avs, 2);
-    if (!tbl) {
-	Tcl_AppendResult(interpreter, "ERROR: db_lookup_by_attr() failed!\n", (char *)NULL);
-	bu_vls_free(&vls);
-	bu_avs_free(&avs);
-	return TCL_ERROR;
-    }
-
-    if (BU_PTBL_LEN(tbl) == 0) {
-	/* no matches */
-	bu_vls_free(&vls);
-	bu_avs_free(&avs);
-	bu_ptbl_free(tbl);
-	bu_free((char *)tbl, "cmd_lm ptbl");
-	return TCL_OK;
-    }
-
-    for (i=0; i<BU_PTBL_LEN(tbl); i++) {
-	dp = (struct directory *)BU_PTBL_GET(tbl, i);
-	bu_vls_putc(&vls, ' ');
-	bu_vls_strcat(&vls, dp->d_namep);
-	new_arg_count++;
-    }
-
-    bu_ptbl_free(tbl);
-    bu_free((char *)tbl, "cmd_lm ptbl");
-
-    /* create a new argc and argv to pass to the cmd_ls routine */
-    new_argv = (char **)bu_calloc(new_arg_count+1, sizeof(char *), "cmd_lm new_argv");
-    new_argc = bu_argv_from_string(new_argv, new_arg_count, bu_vls_addr(&vls));
-
-    ret = ged_ls(gedp, new_argc, (const char **)new_argv);
-    bu_vls_free(&vls);
-    bu_free((char *)new_argv, "cmd_lm new_argv");
-
-    Tcl_AppendResult(interpreter, bu_vls_addr(gedp->ged_result_str), NULL);
-
-    if (!ret)
-	return TCL_OK;
-
-    return TCL_ERROR;
-}
-
-
 /**
  * "tol" displays current settings
  * "tol abs #" sets absolute tolerance.  # > 0.0
@@ -1956,23 +1875,6 @@ cmd_draw(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int arg
 
     return edit_com(argc, argv, 1);
 }
-
-
-extern int emuves_com(int argc, const char *argv[]);	/* from chgview.c */
-
-/**
- * Add regions with attribute MUVES_Component having the specified values
- * Format: em value [value value ...]
- */
-int
-cmd_emuves(ClientData UNUSED(clientData),
-	   Tcl_Interp *UNUSED(interpreter),
-	   int argc,
-	   const char *argv[])
-{
-    return emuves_com(argc, argv);
-}
-
 
 /**
  * Format: ev objects

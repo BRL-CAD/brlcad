@@ -276,8 +276,6 @@ include/raytrace.h librt
 	RT_FREE_TREE -> BU_PUT [deprecation 7.22]
 include/bu.h
 	bu_parse_mm() [deprecated 7.22]
-mged
-	em, e_muves, l_muves, lm, read_muves, and t_muves MUVES-specific commands [deprecated 7.22]
 
 7.20
 ----
@@ -399,6 +397,8 @@ include/raytrace librt
 	db_search_unique_objects(), struct db_full_path_list [deprecated 7.24]
 	db_regexp_match() -> !bu_fnmatch() [deprecated 7.20]
 	db_regexp_match_all() -> db_ls() [deprecated 7.26]
+mged
+	em, e_muves, l_muves, lm, read_muves, and t_muves MUVES-specific commands [deprecated 7.22]
 
 7.28.0
 ------

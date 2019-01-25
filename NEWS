@@ -14,6 +14,8 @@ changes made.  See document footer for additional details.
 --- 201X-XX-XX  Release 7.30.0                                     ---
 ----------------------------------------------------------------------
 
+* removed MGED commands em, e_muves, l_muves, lm, read_muves, t_muves
+	- Cliff Yapp
 * removed deprecated irprep tools - Cliff Yapp
 * removed deprecated fbed and pp-fb framebuffer tools - Cliff Yapp
 * fixed rt support for specifying large object lists - Cliff Yapp
