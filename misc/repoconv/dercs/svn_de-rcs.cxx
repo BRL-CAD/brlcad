@@ -154,7 +154,7 @@ process_node(std::ifstream &infile, std::ofstream &outfile)
     long int text_content_length = 0;
     long int prop_content_length = 0;
     long int content_length = 0;
-    std::string npath;
+    std::string npath("");
     std::string rkey("Revision-number: ");
     std::string npkey("Node-path: ");
     std::string pclkey("Prop-content-length: ");
@@ -282,23 +282,26 @@ process_node(std::ifstream &infile, std::ofstream &outfile)
 		}
 		*/
 	    }
-	    new_content = de_rcs(buffer, text_content_length);
-	    std::string new_md5 = md5_hash_hex(new_content.c_str(), new_content.length());
-	    std::string new_sha1 = sha1_hash_hex(new_content.c_str(), new_content.length());
-	    if (text_content_md5 != new_md5 || text_content_sha1 != new_sha1) {
-		std::cout << "Altered: " << npath << "\n";
-		std::cout << "Original md5   : " << text_content_md5 << "\n";
-		std::cout << "Calculated md5 : " << new_md5 << "\n";
-		std::cout << "Original sha1  : " << text_content_sha1 << "\n";
-		std::cout << "Calculated sha1: " << new_sha1 << "\n";
-		md5_map.insert(std::pair<std::string,std::string>(text_content_md5, new_md5));
-		sha1_map.insert(std::pair<std::string,std::string>(text_content_sha1, new_sha1));
+	    if (npath.find("src/other/step") == std::string::npos) {
+		new_content = de_rcs(buffer, text_content_length);
+		std::string new_md5 = md5_hash_hex(new_content.c_str(), new_content.length());
+		std::string new_sha1 = sha1_hash_hex(new_content.c_str(), new_content.length());
+		if (text_content_md5 != new_md5 || text_content_sha1 != new_sha1) {
+		    std::cout << "Altered: " << npath << "\n";
+		    std::cout << "Original md5   : " << text_content_md5 << "\n";
+		    std::cout << "Calculated md5 : " << new_md5 << "\n";
+		    std::cout << "Original sha1  : " << text_content_sha1 << "\n";
+		    std::cout << "Calculated sha1: " << new_sha1 << "\n";
+		    md5_map.insert(std::pair<std::string,std::string>(text_content_md5, new_md5));
+		    sha1_map.insert(std::pair<std::string,std::string>(text_content_sha1, new_sha1));
+		} else {
+		    std::cout << "Unaltered: " << npath << "\n";
+		    new_content = std::string("");
+		}
 	    } else {
-		std::cout << "Unaltered: " << npath << "\n";
+		std::cout << "skipping stepcode path: " << npath << "\n";
 		new_content = std::string("");
 	    }
-
-	    // TODO - build maps from old hashes to new, write out new hashes in dump
 	} else {
 	    std::cout << "Binary: " << npath << "\n";
 	}
