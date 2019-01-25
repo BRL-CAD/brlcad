@@ -189,18 +189,6 @@ RT_EXPORT extern size_t db_ls(const struct db_i *dbip,
                                               globbing rules (default) */
 
 
-/***************************************************************
- * DEPRECATED - all structures and functions below this notice
- * are replaced by functionality above.  Remove after 7.27.0
- * development starts.
- ***************************************************************/
-
-/* DEPRECATED: Use db_ls() instead of this function. */
-DEPRECATED RT_EXPORT extern int db_regexp_match_all(struct bu_vls *dest,
-                                         struct db_i *dbip,
-                                         const char *pattern);
-
-
 __END_DECLS
 
 #endif /* RT_SEARCH_H*/

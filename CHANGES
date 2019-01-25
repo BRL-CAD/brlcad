@@ -233,7 +233,6 @@ include/raytrace.h
 	tcl_obj_to_fastf_array tcl_list_to_int_array
 	tcl_list_to_fastf_array *_tcl_*, removal of all tcl-specific
 	API functions [deprecated 7.26]
-	db_regexp_match_all() -> db_ls() [deprecated 7.26]
 include/rt/solid.h
 	shouldn't be public API - this level of detail belongs inside the display
         manager [deprecated 7.26]
@@ -294,7 +293,6 @@ GNU Autotools configure compatibility script
 	./configure -> cmake . [deprecated 7.20]
 include/raytrace.h
 	rt_load_attrs() -> rt_gettrees_and_attrs() or db5_import_attributs() [deprecated 7.20]
-	db_regexp_match() -> !bu_fnmatch() [deprecated 7.20]
 
 7.18
 ----
@@ -399,6 +397,8 @@ include/raytrace librt
 	db_full_path_list_add(), db_free_full_path_list() [deprecated 7.24]
 	db_search_formplan(), db_search_freeplan(), db_search_full_paths() [deprecated 7.24]
 	db_search_unique_objects(), struct db_full_path_list [deprecated 7.24]
+	db_regexp_match() -> !bu_fnmatch() [deprecated 7.20]
+	db_regexp_match_all() -> db_ls() [deprecated 7.26]
 
 7.28.0
 ------
