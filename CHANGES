@@ -95,7 +95,7 @@ header, and is published via the 7.50.4 release.
 
 The soonest that function could be removed / obsoleted would be in
 7.54.0 during 7.53.* development provided more than 90 days had passed
-since the intiial announcement.  It could NOT be removed in 7.54.2 as
+since the initial announcement.  It could NOT be removed in 7.54.2 as
 that's a patch version, prior to 7.54, nor during 7.54.0 if less than
 90 days had passed since 7.50.6 was posted.
 
@@ -266,10 +266,6 @@ burst
 
 7.24
 ----
-include/raytrace librt
-	db_full_path_list_add(), db_free_full_path_list() [deprecated 7.24]
-	db_search_formplan(), db_search_freeplan(), db_search_full_paths() [deprecated 7.24]
-	db_search_unique_objects(), struct db_full_path_list [deprecated 7.24]
 src/irprep
 	all_sf, firpass, ir-X, irdisp, pictx, secpass, shapefact, showterm [deprecated 7.24]
 include/raytrace.h librt
@@ -399,6 +395,10 @@ include/raytrace.h
 ------
 fbed, pp-fb
 	removes termcap use, no known users [deprecated 7.24]
+include/raytrace librt
+	db_full_path_list_add(), db_free_full_path_list() [deprecated 7.24]
+	db_search_formplan(), db_search_freeplan(), db_search_full_paths() [deprecated 7.24]
+	db_search_unique_objects(), struct db_full_path_list [deprecated 7.24]
 
 7.28.0
 ------
