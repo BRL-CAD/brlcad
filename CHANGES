@@ -127,6 +127,11 @@ generally listed for reference.
 Items marked with a "'" (single quote) are undocumented and may be
 removed at any time.
 
+7.30
+----
+	Emacs key binding emulation in btclsh/bwish
+	achieved by running btclsh in Emacs [deprecated 7.30]
+
 7.28
 ----
 include/bu/malloc.h
