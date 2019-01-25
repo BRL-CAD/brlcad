@@ -174,7 +174,7 @@ converter tools
 image tools
 	cmap-fb, fb-cmap, fbcmrot : colormap support obsolete
 	fbed, cell-fb : outside scope
-	fbscanplot, polar-fb, pp-fb, bw-imp, pixinfo.sh : obsolete
+	fbscanplot, polar-fb, bw-imp, pixinfo.sh : obsolete
 	png_info : incorporating into icv
 	pixpaste : outside scope, license
 	alias-pix' : incorporating into icv
@@ -266,8 +266,6 @@ burst
 
 7.24
 ----
-fbed, pp-fb
-	removes termcap use, no known users [deprecated 7.24]
 include/raytrace librt
 	db_full_path_list_add(), db_free_full_path_list() [deprecated 7.24]
 	db_search_formplan(), db_search_freeplan(), db_search_full_paths() [deprecated 7.24]
@@ -396,6 +394,11 @@ include/raytrace.h
 ***                       OBSOLETED CHANGES                        ***
 **********************************************************************
                     (reverse chronological order)
+
+7.30.0
+------
+fbed, pp-fb
+	removes termcap use, no known users [deprecated 7.24]
 
 7.28.0
 ------
