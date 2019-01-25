@@ -64,7 +64,16 @@ include(ExternalProject)
 # Note- make sure CMAKE_BINARY_DIR and CMAKE_INSTALL_PREFIX are set before including this file
 include(${CMAKE_SOURCE_DIR}/CMake/ExternalProject_Target.cmake)
 
-
+# With MSVC, some of the subbuilds are going to need the vcvars bat file
+# to set up the environment.
+if(MSVC)
+  get_filename_component(COMPILER_DIR "${CMAKE_C_COMPILER}" DIRECTORY)
+  get_filename_component(COMPILER_ROOT "${COMPILER_DIR}" NAME)
+  set(VCVARS_BAT "${COMPILER_DIR}/vcvars${COMPILER_ROOT}.bat")
+  if(NOT EXISTS "${VCVARS_BAT}")
+    message(FATAL_ERROR "Could not find vcvars${COMPILER_ROOT}.bat file in ${COMPILER_DIR}")
+  endif(NOT EXISTS "${VCVARS_BAT}")
+endif(MSVC)
 
 ###############################################################################
 #                                 Zlib
@@ -276,12 +285,6 @@ if(NOT MSVC)
     INSTALL_COMMAND make install
     )
 else(NOT MSVC)
-  get_filename_component(COMPILER_DIR "${CMAKE_C_COMPILER}" DIRECTORY)
-  get_filename_component(COMPILER_ROOT "${COMPILER_DIR}" NAME)
-  set(VCVARS_BAT "${COMPILER_DIR}/vcvars${COMPILER_ROOT}.bat")
-  if(NOT EXISTS "${VCVARS_BAT}")
-    message(FATAL_ERROR "Could not find vcvars${COMPILER_ROOT}.bat file in ${COMPILER_DIR}")
-  endif(NOT EXISTS "${VCVARS_BAT}")
   ExternalProject_Add(TCL_BLD
     URL ${CMAKE_SOURCE_DIR}/external/tcl8.7a1-src.tar.gz
     URL_HASH MD5=27efa8d3d37efa3f06fc92f122f58f6f
@@ -322,8 +325,8 @@ ExternalProject_ByProducts(TCL_BLD ${LIB_DIR} ${TCL_LIB_BYPRODUCTS})
 #                                 Tk
 ###############################################################################
 set(TK_SRC_DIR "${CMAKE_BINARY_DIR}/TK_BLD-prefix/src/TK_BLD")
+if(NOT MSVC)
 set(TK_PATCH_FILES "${TK_SRC_DIR}/unix/configure" "${TK_SRC_DIR}/macosx/configure" "${TK_SRC_DIR}/unix/tcl.m4")
-
 ExternalProject_Add(TK_BLD
   URL ${CMAKE_SOURCE_DIR}/external/tk8.7a1-src.tar.gz
   URL_HASH MD5=099eb5571f4789194fa53d5590e7e623
@@ -333,6 +336,17 @@ ExternalProject_Add(TK_BLD
   INSTALL_COMMAND make install
   DEPENDS TCL_BLD ${FONTCONFIG_LIBRARY}
   )
+else(NOT MSVC)
+  ExternalProject_Add(TK_BLD
+    URL ${CMAKE_SOURCE_DIR}/external/tk8.7a1-src.tar.gz
+    URL_HASH MD5=099eb5571f4789194fa53d5590e7e623
+    CONFIGURE_COMMAND ""
+    BINARY_DIR ${TK_SRC_DIR}/win
+    BUILD_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc INSTALLDIR=${CMAKE_BINARY_DIR} TCLDIR=${TCL_SRC_DIR}
+    INSTALL_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc install INSTALLDIR=${CMAKE_BINARY_DIR} TCLDIR=${TCL_SRC_DIR}
+    DEPENDS TCL_BLD
+    )
+endif(NOT MSVC)
 ExternalProject_Target(tk TK_BLD
   OUTPUT_FILE libtk8.7${CMAKE_SHARED_LIBRARY_SUFFIX}
   STATIC_OUTPUT_FILE libtkstub8.7${CMAKE_STATIC_LIBRARY_SUFFIX}
