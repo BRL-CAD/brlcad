@@ -79,6 +79,8 @@ long int svn_lint(std::string s1, std::string s2)
     return std::stol(svn_str(s1, s2));
 }
 
+/* Newer subversion doesn't like non-LF line endings in properties,
+ * so strip them out */
 void
 skip_rev_props(std::ifstream &infile, std::ofstream &outfile)
 {
@@ -89,14 +91,17 @@ skip_rev_props(std::ifstream &infile, std::ofstream &outfile)
     // Go until we hit PROPS-END
     while (std::getline(infile, line) && line.compare(pend)) {
 	// K <N> line is the trigger
+	std::replace(line.begin(), line.end(), '\r', '\n');
 	outfile << line << "\n";
 	std::string key = svn_str(line, kkey);
 	if (!key.length()) continue;
 
 	// Key associated with K line and value
 	std::getline(infile, key);
+	std::replace(key.begin(), key.end(), '\r', '\n');
 	outfile << key << "\n";
 	std::getline(infile, line);
+	std::replace(line.begin(), line.end(), '\r', '\n');
 	outfile << line << "\n";
     }
     outfile << "PROPS-END\n";
@@ -104,6 +109,8 @@ skip_rev_props(std::ifstream &infile, std::ofstream &outfile)
 }
 
 
+/* Newer subversion doesn't like non-LF line endings in properties,
+ * so strip them out */
 void
 skip_node_props(std::ifstream &infile, std::vector<std::string> &node_lines)
 {
@@ -113,6 +120,7 @@ skip_node_props(std::ifstream &infile, std::vector<std::string> &node_lines)
 
     // Go until we hit PROPS-END
     while (std::getline(infile, line)) {
+	std::replace(line.begin(), line.end(), '\r', '\n');
 	node_lines.push_back(line);
 
 	// If we get PROPS-END, we're done
@@ -126,8 +134,10 @@ skip_node_props(std::ifstream &infile, std::vector<std::string> &node_lines)
 
 	// Key and value line associated with K line
 	std::getline(infile, key);
+	std::replace(key.begin(), key.end(), '\r', '\n');
 	node_lines.push_back(key);
 	std::getline(infile, line);
+	std::replace(line.begin(), line.end(), '\r', '\n');
 	node_lines.push_back(line);
     }
 }
