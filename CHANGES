@@ -266,8 +266,6 @@ burst
 
 7.24
 ----
-src/irprep
-	all_sf, firpass, ir-X, irdisp, pictx, secpass, shapefact, showterm [deprecated 7.24]
 include/raytrace.h librt
 	RT_DBHASH and RT_DBNHASH [deprecated 7.24]
 
@@ -395,6 +393,8 @@ include/raytrace.h
 ------
 fbed, pp-fb
 	removes termcap use, no known users [deprecated 7.24]
+src/irprep
+	all_sf, firpass, ir-X, irdisp, pictx, secpass, shapefact, showterm [deprecated 7.24]
 include/raytrace librt
 	db_full_path_list_add(), db_free_full_path_list() [deprecated 7.24]
 	db_search_formplan(), db_search_freeplan(), db_search_full_paths() [deprecated 7.24]
