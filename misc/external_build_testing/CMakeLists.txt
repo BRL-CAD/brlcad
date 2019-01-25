@@ -265,15 +265,32 @@ endif(NOT MSVC)
 #                                 Tcl
 ###############################################################################
 set(TCL_SRC_DIR "${CMAKE_BINARY_DIR}/TCL_BLD-prefix/src/TCL_BLD")
-set(TCL_PATCH_FILES "${TCL_SRC_DIR}/unix/configure" "${TCL_SRC_DIR}/macosx/configure" "${TCL_SRC_DIR}/unix/tcl.m4")
-ExternalProject_Add(TCL_BLD
-  URL ${CMAKE_SOURCE_DIR}/external/tcl8.7a1-src.tar.gz
-  URL_HASH MD5=27efa8d3d37efa3f06fc92f122f58f6f
-  PATCH_COMMAND rpath_replace "${CMAKE_BUILD_RPATH}" ${TCL_PATCH_FILES}
-  CONFIGURE_COMMAND ${TCL_SRC_DIR}/unix/configure --prefix=${CMAKE_BINARY_DIR}
-  BUILD_COMMAND make -j9
-  INSTALL_COMMAND make install
-  )
+if(NOT MSVC)
+  set(TCL_PATCH_FILES "${TCL_SRC_DIR}/unix/configure" "${TCL_SRC_DIR}/macosx/configure" "${TCL_SRC_DIR}/unix/tcl.m4")
+  ExternalProject_Add(TCL_BLD
+    URL ${CMAKE_SOURCE_DIR}/external/tcl8.7a1-src.tar.gz
+    URL_HASH MD5=27efa8d3d37efa3f06fc92f122f58f6f
+    PATCH_COMMAND rpath_replace "${CMAKE_BUILD_RPATH}" ${TCL_PATCH_FILES}
+    CONFIGURE_COMMAND ${TCL_SRC_DIR}/unix/configure --prefix=${CMAKE_BINARY_DIR}
+    BUILD_COMMAND make -j9
+    INSTALL_COMMAND make install
+    )
+else(NOT MSVC)
+  get_filename_component(COMPILER_DIR "${CMAKE_C_COMPILER}" DIRECTORY)
+  get_filename_component(COMPILER_ROOT "${COMPILER_DIR}" NAME)
+  set(VCVARS_BAT "${COMPILER_DIR}/vcvars${COMPILER_ROOT}.bat")
+  if(NOT EXISTS "${VCVARS_BAT}")
+    message(FATAL_ERROR "Could not find vcvars${COMPILER_ROOT}.bat file in ${COMPILER_DIR}")
+  endif(NOT EXISTS "${VCVARS_BAT}")
+  ExternalProject_Add(TCL_BLD
+    URL ${CMAKE_SOURCE_DIR}/external/tcl8.7a1-src.tar.gz
+    URL_HASH MD5=27efa8d3d37efa3f06fc92f122f58f6f
+    CONFIGURE_COMMAND ""
+    BINARY_DIR ${TCL_SRC_DIR}/win
+    BUILD_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc INSTALLDIR=${CMAKE_BINARY_DIR}
+    INSTALL_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc install INSTALLDIR=${CMAKE_BINARY_DIR}
+    )
+endif(NOT MSVC)
 ExternalProject_Target(tcl TCL_BLD
   OUTPUT_FILE libtcl8.7${CMAKE_SHARED_LIBRARY_SUFFIX}
   STATIC_OUTPUT_FILE libtclstub8.7${CMAKE_STATIC_LIBRARY_SUFFIX}
