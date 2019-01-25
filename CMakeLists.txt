@@ -149,7 +149,7 @@ record_cmdline_args()
 # Set up the necessary support for timing of the configuration and
 # build processes
 set_config_time()
-generate_timer_exes()
+generate_sstamp()
 
 #---------------------------------------------------------------------
 # Mark the time at which the configuration process began.
@@ -816,6 +816,11 @@ endif("${CMAKE_BUILD_TYPE}" MATCHES "Release" AND "${CMAKE_INSTALL_PREFIX}" STRE
 if("${CMAKE_BUILD_TYPE}" MATCHES "Debug" AND "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/brlcad/rel-${BRLCAD_VERSION}")
   message(FATAL_ERROR "\nInstallation directory (CMAKE_INSTALL_PREFIX) is set to /usr/brlcad/rel-${BRLCAD_VERSION}, but build type is set to Debug!\n")
 endif("${CMAKE_BUILD_TYPE}" MATCHES "Debug" AND "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/brlcad/rel-${BRLCAD_VERSION}")
+
+#------------------------------------------------------------------------------
+# Now that we know the install prefix, generate the binary for calculating
+# and reporting time deltas
+generate_dreport()
 
 #---------------------------------------------------------------------
 # The following logic is what allows binaries to run successfully in

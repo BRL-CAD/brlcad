@@ -571,7 +571,7 @@ endfunction(set_config_time)
 # Code for timing configuration and building of BRL-CAD.  These executables
 # are used to define build targets for cross-platform reporting.  Run after
 # set_config_time.
-function(generate_timer_exes)
+function(generate_sstamp)
 
   #########################################################################
   # Print a basic time stamp
@@ -635,6 +635,11 @@ int main(int argc, const char **argv) {
   if(COMMAND distclean)
     distclean("${CMAKE_BINARY_DIR}/CMakeTmp/sstamp")
   endif(COMMAND distclean)
+
+endfunction(generate_sstamp)
+
+
+function(generate_dreport)
 
   #########################################################################
   # To report at the end what the actual deltas are, we need to read in the
@@ -716,7 +721,7 @@ int main(int argc, const char **argv) {
     distclean("${CMAKE_BINARY_DIR}/CMakeTmp/dreport")
   endif(COMMAND distclean)
 
-endfunction(generate_timer_exes)
+endfunction(generate_dreport)
 
 # Local Variables:
 # tab-width: 8
