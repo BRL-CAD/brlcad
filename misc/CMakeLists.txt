@@ -123,6 +123,7 @@ set(misc_ignore_files
   repoconv/svn2git/account-map
   repoconv/svn2git/archive_branches.sh
   repoconv/svn2git/rules
+  repoconv/svn2git/rules-geomcore
   repoconv/svn2git/svn-fast-export/CMake/FindAPR.cmake
   repoconv/svn2git/svn-fast-export/CMake/FindSubversionLibrary.cmake
   repoconv/svn2git/svn-fast-export/CMakeLists.txt

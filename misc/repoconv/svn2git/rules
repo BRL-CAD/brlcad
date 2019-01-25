@@ -8,9 +8,6 @@ end repository
 create repository rt_3
 end repository
 
-create repository geomcore
-end repository
-
 create repository iBME
 end repository
 
@@ -81,9 +78,21 @@ end match
 # these it's not worth bothering
 # with branches and tags - at least,
 # not yet.
+match /osl/branches/([^/]+)/
+   repository osl
+   branch \1
+end match
+match /osl/tags/([^/]+)/
+   repository osl
+   branch tag--\1
+end match
+match /osl/trunk/
+   repository osl
+   branch master
+end match
 match /osl/
    repository osl
-   branch osl
+   branch master
 end match
 
 match /rt\^3/branches/([^/]+)/
@@ -96,48 +105,131 @@ match /rt\^3/tags/([^/]+)/
    branch tag--\1
    substitute branch s/\^/_/
 end match
+match /rt\^3/trunk/
+   repository rt_3
+   branch master
+end match
 match /rt\^3/
    repository rt_3
    branch master
 end match
 
+match /ova/branches/([^/]+)/
+   repository ova
+   branch \1
+end match
+match /ova/tags/([^/]+)/
+   repository ova
+   branch tag--\1
+end match
+match /ova/trunk/
+   repository ova
+   branch master
+end match
 match /ova/
    repository ova
    branch master
 end match
 
+match /iBME/branches/([^/]+)/
+   repository iBME
+   branch \1
+end match
+match /iBME/tags/([^/]+)/
+   repository iBME
+   branch tag--\1
+end match
+match /iBME/trunk/
+   repository iBME
+   branch master
+end match
 match /iBME/
    repository iBME
    branch master
 end match
 
+match /isst/branches/([^/]+)/
+   repository isst
+   branch \1
+end match
+match /isst/tags/([^/]+)/
+   repository isst
+   branch tag--\1
+end match
+match /isst/trunk/
+   repository isst
+   branch master
+end match
 match /isst/
    repository isst
    branch master
 end match
 
+match /jbrlcad/branches/([^/]+)/
+   repository jbrlcad
+   branch \1
+end match
+match /jbrlcad/tags/([^/]+)/
+   repository jbrlcad
+   branch tag--\1
+end match
+match /jbrlcad/trunk/
+   repository jbrlcad
+   branch master
+end match
 match /jbrlcad/
    repository jbrlcad
    branch master
 end match
 
+match /web/branches/([^/]+)/
+   repository web
+   branch \1
+end match
+match /web/tags/([^/]+)/
+   repository web
+   branch tag--\1
+end match
+match /web/trunk/
+   repository web
+   branch master
+end match
 match /web/
    repository web
    branch master
 end match
 
+match /webcad/branches/([^/]+)/
+   repository webcad
+   branch \1
+end match
+match /webcad/tags/([^/]+)/
+   repository webcad
+   branch tag--\1
+end match
+match /webcad/trunk/
+   repository webcad
+   branch master
+end match
 match /webcad/
    repository webcad
    branch master
 end match
 
-match /rtcmp/
+match /rtcmp/branches/([^/]+)/
+   repository rtcmp
+   branch \1
+end match
+match /rtcmp/tags/([^/]+)/
+   repository rtcmp
+   branch tag--\1
+end match
+match /rtcmp/trunk/
    repository rtcmp
    branch master
 end match
-
-match /geomcore/
-   repository geomcore
+match /rtcmp/
+   repository rtcmp
    branch master
 end match
 
