@@ -74,10 +74,7 @@ match /brlcad/tags/([^/]+)/
 end match
 
 
-# Non BRL-CAD repos - for most of
-# these it's not worth bothering
-# with branches and tags - at least,
-# not yet.
+# Non BRL-CAD repos
 match /osl/branches/([^/]+)/
    repository osl
    branch \1
