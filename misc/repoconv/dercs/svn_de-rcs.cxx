@@ -36,6 +36,15 @@ bool is_binary(const char *cstr, int len, std::string &npath)
     return false;
 }
 
+bool skip_dercs(std::string &npath) {
+    if (npath.find("/re2c/") != std::string::npos) return false;
+    if (npath.find("/misc/") != std::string::npos) return true;
+    if (npath.find("/src/other/step") != std::string::npos) return true;
+    if (npath.find("/src/conv/step") != std::string::npos) return true;
+    if (npath.find("/ap242.exp") != std::string::npos) return true;
+    return false;
+}
+
 std::string de_rcs(const char *cstr, int len)
 {
     std::regex rcs_date("\\$Date:[^\\$;\"\n\r]*");
@@ -105,7 +114,6 @@ skip_rev_props(std::ifstream &infile, std::ofstream &outfile)
 	outfile << line << "\n";
     }
     outfile << "PROPS-END\n";
-    outfile.flush();
 }
 
 
@@ -264,52 +272,46 @@ process_node(std::ifstream &infile, std::ofstream &outfile)
 	infile.seekg(after_content);
     }
 
-    if (buffer) {
+    if (buffer && !skip_dercs(npath)) {
 	if (!is_binary(buffer, text_content_length, npath)) {
 	    std::string calc_md5 = md5_hash_hex(buffer, text_content_length);
 	    std::string calc_sha1 = sha1_hash_hex(buffer, text_content_length);
 	    if (text_content_md5 != calc_md5 || text_content_sha1 != calc_sha1) {
-		std::cout << "path: " << npath << "\n";
+		std::cout << "Stored vs. calculated mismatch: " << npath << "\n";
 		std::cout << "Read md5       : " << text_content_md5 << "\n";
 		std::cout << "Calculated md5 : " << calc_md5 << "\n";
 		std::cout << "Read sha1      : " << text_content_sha1 << "\n";
 		std::cout << "Calculated sha1: " << calc_sha1 << "\n";
 		/*
-		if (npath == std::string("brlcad/trunk/misc/vfont/fix.6r")) {
+		   if (npath == std::string("brlcad/trunk/misc/vfont/fix.6r")) {
 		   std::ofstream cfile("fix-extracted.6r", std::ios::out | std::ios::binary);
 		   cfile.write(buffer, text_content_length);
 		   cfile.close();
-		}
-		*/
+		   }
+		   */
 	    }
-	    if (npath.find("src/other/step") == std::string::npos) {
-		new_content = de_rcs(buffer, text_content_length);
-		std::string new_md5 = md5_hash_hex(new_content.c_str(), new_content.length());
-		std::string new_sha1 = sha1_hash_hex(new_content.c_str(), new_content.length());
-		if (text_content_md5 != new_md5 || text_content_sha1 != new_sha1) {
-		    std::cout << "Altered: " << npath << "\n";
-		    std::cout << "Original md5   : " << text_content_md5 << "\n";
-		    std::cout << "Calculated md5 : " << new_md5 << "\n";
-		    std::cout << "Original sha1  : " << text_content_sha1 << "\n";
-		    std::cout << "Calculated sha1: " << new_sha1 << "\n";
-		    md5_map.insert(std::pair<std::string,std::string>(text_content_md5, new_md5));
-		    sha1_map.insert(std::pair<std::string,std::string>(text_content_sha1, new_sha1));
-		} else {
-		    std::cout << "Unaltered: " << npath << "\n";
-		    new_content = std::string("");
-		}
-	    } else {
-		std::cout << "skipping stepcode path: " << npath << "\n";
-		new_content = std::string("");
+	    new_content = de_rcs(buffer, text_content_length);
+	    std::string new_md5 = md5_hash_hex(new_content.c_str(), new_content.length());
+	    std::string new_sha1 = sha1_hash_hex(new_content.c_str(), new_content.length());
+	    if (text_content_md5 != new_md5 || text_content_sha1 != new_sha1) {
+		std::cout << "Altered: " << npath << "\n";
+		std::cout << "Original md5   : " << text_content_md5 << "\n";
+		std::cout << "Calculated md5 : " << new_md5 << "\n";
+		std::cout << "Original sha1  : " << text_content_sha1 << "\n";
+		std::cout << "Calculated sha1: " << new_sha1 << "\n";
+		md5_map.insert(std::pair<std::string,std::string>(text_content_md5, new_md5));
+		sha1_map.insert(std::pair<std::string,std::string>(text_content_sha1, new_sha1));
 	    }
-	} else {
-	    std::cout << "Binary: " << npath << "\n";
 	}
     }
 
     // Write out the node lines and content.
     std::map<std::string, std::string>::iterator m_it;
     for (nl_it = node_lines.begin(); nl_it != node_lines.end(); nl_it++) {
+	if (skip_dercs(npath)) {
+	    outfile << *nl_it << "\n";
+	    continue;
+	}
 	line = *nl_it;
 	// Text-copy-source-md5
 	if (!sfcmp(line, tcsmkey))  {
@@ -320,7 +322,6 @@ process_node(std::ifstream &infile, std::ofstream &outfile)
 	    } else {
 		outfile << *nl_it << "\n";
 	    }
-	    outfile.flush();
 	    continue;
 	}
 	// Text-copy-source-sha1
@@ -332,7 +333,6 @@ process_node(std::ifstream &infile, std::ofstream &outfile)
 	    } else {
 		outfile << *nl_it << "\n";
 	    }
-	    outfile.flush();
 	    continue;
 	}
 
@@ -345,7 +345,6 @@ process_node(std::ifstream &infile, std::ofstream &outfile)
 	    } else {
 		outfile << *nl_it << "\n";
 	    }
-	    outfile.flush();
 	    continue;
 	}
 
@@ -358,7 +357,6 @@ process_node(std::ifstream &infile, std::ofstream &outfile)
 	    } else {
 		outfile << *nl_it << "\n";
 	    }
-	    outfile.flush();
 	    continue;
 	}
 	// Text-content-length
@@ -368,7 +366,6 @@ process_node(std::ifstream &infile, std::ofstream &outfile)
 	    } else {
 		outfile << *nl_it << "\n";
 	    }
-	    outfile.flush();
 	    continue;
 	}
 	// Content-length
@@ -378,12 +375,10 @@ process_node(std::ifstream &infile, std::ofstream &outfile)
 	    } else {
 		outfile << *nl_it << "\n";
 	    }
-	    outfile.flush();
 	    continue;
 	}
 
 	outfile << *nl_it << "\n";
-	outfile.flush();
     }
     if (buffer) {
 	if (new_content.length()) {
@@ -392,7 +387,6 @@ process_node(std::ifstream &infile, std::ofstream &outfile)
 	    outfile.write(buffer, text_content_length);
 	}
 	outfile << "\n";
-	outfile.flush();
 	delete buffer;
     }
 
@@ -438,6 +432,9 @@ process_revision(std::ifstream &infile, std::ofstream &outfile)
     while (node_ret != -1 && infile.peek() != EOF) {
 	node_ret = process_node(infile, outfile);
     }
+
+    outfile.flush();
+    std::cout << "Processed r" << revision_number << "\n";
 
     return success;
 }
