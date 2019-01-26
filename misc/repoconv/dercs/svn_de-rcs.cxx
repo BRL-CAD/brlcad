@@ -305,88 +305,99 @@ process_node(std::ifstream &infile, std::ofstream &outfile)
 	}
     }
 
-    // Write out the node lines and content.
-    std::map<std::string, std::string>::iterator m_it;
-    for (nl_it = node_lines.begin(); nl_it != node_lines.end(); nl_it++) {
-	if (skip_dercs(npath)) {
+
+    std::regex cvsignore(".*cvsignore$");
+
+    if (!std::regex_match(npath, cvsignore)) {
+
+	// Write out the node lines and content.
+	std::map<std::string, std::string>::iterator m_it;
+	for (nl_it = node_lines.begin(); nl_it != node_lines.end(); nl_it++) {
+	    if (skip_dercs(npath)) {
+		outfile << *nl_it << "\n";
+		continue;
+	    }
+	    line = *nl_it;
+	    // Text-copy-source-md5
+	    if (!sfcmp(line, tcsmkey))  {
+		std::string old_md5 = svn_str(line, tcsmkey);
+		m_it = md5_map.find(old_md5);
+		if (m_it != md5_map.end()) {
+		    outfile << "Text-copy-source-md5: " << m_it->second << "\n";
+		} else {
+		    outfile << *nl_it << "\n";
+		}
+		continue;
+	    }
+	    // Text-copy-source-sha1
+	    if (!sfcmp(line, tcsskey))  {
+		std::string old_sha1 = svn_str(line, tcsskey);
+		m_it = sha1_map.find(old_sha1);
+		if (m_it != sha1_map.end()) {
+		    outfile << "Text-copy-source-sha1: " << m_it->second << "\n";
+		} else {
+		    outfile << *nl_it << "\n";
+		}
+		continue;
+	    }
+
+	    // Text-content-md5
+	    if (!sfcmp(line, tcmkey))  {
+		std::string old_md5 = svn_str(line, tcmkey);
+		m_it = md5_map.find(old_md5);
+		if (m_it != md5_map.end()) {
+		    outfile << "Text-content-md5: " << m_it->second << "\n";
+		} else {
+		    outfile << *nl_it << "\n";
+		}
+		continue;
+	    }
+
+	    // Text-content-sha1
+	    if (!sfcmp(line, tcskey))  {
+		std::string old_sha1 = svn_str(line, tcskey);
+		m_it = sha1_map.find(old_sha1);
+		if (m_it != sha1_map.end()) {
+		    outfile << "Text-content-sha1: " << m_it->second << "\n";
+		} else {
+		    outfile << *nl_it << "\n";
+		}
+		continue;
+	    }
+	    // Text-content-length
+	    if (!sfcmp(line, tclkey))  {
+		if (new_content.length()) {
+		    outfile << "Text-content-length: " << new_content.length() << "\n";
+		} else {
+		    outfile << *nl_it << "\n";
+		}
+		continue;
+	    }
+	    // Content-length
+	    if (!sfcmp(line, clkey))  {
+		if (new_content.length()) {
+		    outfile << "Content-length: " << new_content.length() + prop_content_length << "\n";
+		} else {
+		    outfile << *nl_it << "\n";
+		}
+		continue;
+	    }
+
 	    outfile << *nl_it << "\n";
-	    continue;
 	}
-	line = *nl_it;
-	// Text-copy-source-md5
-	if (!sfcmp(line, tcsmkey))  {
-	    std::string old_md5 = svn_str(line, tcsmkey);
-	    m_it = md5_map.find(old_md5);
-	    if (m_it != md5_map.end()) {
-		outfile << "Text-copy-source-md5: " << m_it->second << "\n";
-	    } else {
-		outfile << *nl_it << "\n";
-	    }
-	    continue;
-	}
-	// Text-copy-source-sha1
-	if (!sfcmp(line, tcsskey))  {
-	    std::string old_sha1 = svn_str(line, tcsskey);
-	    m_it = sha1_map.find(old_sha1);
-	    if (m_it != sha1_map.end()) {
-		outfile << "Text-copy-source-sha1: " << m_it->second << "\n";
-	    } else {
-		outfile << *nl_it << "\n";
-	    }
-	    continue;
-	}
-
-	// Text-content-md5
-	if (!sfcmp(line, tcmkey))  {
-	    std::string old_md5 = svn_str(line, tcmkey);
-	    m_it = md5_map.find(old_md5);
-	    if (m_it != md5_map.end()) {
-		outfile << "Text-content-md5: " << m_it->second << "\n";
-	    } else {
-		outfile << *nl_it << "\n";
-	    }
-	    continue;
-	}
-
-	// Text-content-sha1
-	if (!sfcmp(line, tcskey))  {
-	    std::string old_sha1 = svn_str(line, tcskey);
-	    m_it = sha1_map.find(old_sha1);
-	    if (m_it != sha1_map.end()) {
-		outfile << "Text-content-sha1: " << m_it->second << "\n";
-	    } else {
-		outfile << *nl_it << "\n";
-	    }
-	    continue;
-	}
-	// Text-content-length
-	if (!sfcmp(line, tclkey))  {
+	if (buffer) {
 	    if (new_content.length()) {
-		outfile << "Text-content-length: " << new_content.length() << "\n";
+		outfile << new_content;
 	    } else {
-		outfile << *nl_it << "\n";
+		outfile.write(buffer, text_content_length);
 	    }
-	    continue;
+	    outfile << "\n";
 	}
-	// Content-length
-	if (!sfcmp(line, clkey))  {
-	    if (new_content.length()) {
-		outfile << "Content-length: " << new_content.length() + prop_content_length << "\n";
-	    } else {
-		outfile << *nl_it << "\n";
-	    }
-	    continue;
-	}
-
-	outfile << *nl_it << "\n";
+    } else {
+	std::cout << "Skipping " << npath << "\n";
     }
+
     if (buffer) {
-	if (new_content.length()) {
-	    outfile << new_content;
-	} else {
-	    outfile.write(buffer, text_content_length);
-	}
-	outfile << "\n";
 	delete buffer;
     }
 
