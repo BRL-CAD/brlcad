@@ -172,7 +172,6 @@ process_node(std::ifstream &infile, std::ofstream &outfile)
     std::string tcskey("Text-content-sha1: ");
     std::string tclkey("Text-content-length: ");
     std::string clkey("Content-length: ");
-    size_t offset = infile.tellg();
     std::string line;
     std::vector<std::string> node_lines;
     std::vector<std::string>::iterator nl_it;
@@ -180,7 +179,6 @@ process_node(std::ifstream &infile, std::ofstream &outfile)
     // Find node path, or bail if we hit a new revision first
     while (!npath.length() && std::getline(infile, line)) {
 	if (!sfcmp(line, rkey)) {
-	    infile.seekg(offset);  // We found another rev line, reset
 	    return -1;  // Done with revision
 	}
 	node_lines.push_back(line);
@@ -200,11 +198,9 @@ process_node(std::ifstream &infile, std::ofstream &outfile)
 	if (!line.length()) break;
 
 	if (!sfcmp(line, rkey)) {
-	    infile.seekg(offset);  // reset
 	    return -1;  // Done with revision
 	}
 	if (!sfcmp(line, npkey)) {
-	    infile.seekg(offset);  // reset
 	    return 1; // Done with node
 	}
 
@@ -218,28 +214,28 @@ process_node(std::ifstream &infile, std::ofstream &outfile)
 	    text_copy_source_sha1 = svn_str(line, tcsskey);
 	    node_lines.push_back(line);
 	    continue;
-       	}
+	}
 	if (!sfcmp(line, tcmkey))  {
 	    text_content_md5 = svn_str(line, tcmkey);
 	    node_lines.push_back(line);
 	    continue;
-       	}
+	}
 	if (!sfcmp(line, tcskey))  {
 	    text_content_sha1 = svn_str(line, tcskey);
 	    node_lines.push_back(line);
 	    continue;
-       	}
+	}
 	if (!sfcmp(line, tclkey))  {
 	    text_content_length = svn_lint(line, tclkey);
 	    node_lines.push_back(line);
 	    continue;
-       	}
+	}
 	if (!sfcmp(line, clkey))  {
 	    content_length = svn_lint(line, clkey);
 	    node_lines.push_back(line);
 	    node_lines.push_back(std::string(""));
 	    continue;
-       	}
+	}
 	if (!sfcmp(line, pclkey))  {
 	    prop_content_length = svn_lint(line, pclkey);
 	    node_lines.push_back(line);
@@ -247,9 +243,6 @@ process_node(std::ifstream &infile, std::ofstream &outfile)
        	}
 
 	node_lines.push_back(line);
-
-	// Successfully processed a line as part of the current node
-	offset = infile.tellg();
     }
 
     // If we have properties, skip beyond them
