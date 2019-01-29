@@ -257,6 +257,15 @@ process_node(std::ifstream &infile, std::ofstream &outfile)
 	skip_node_props(infile, node_lines);
     }
 
+    // If we have neither properties nor content, we're done
+    if (!prop_content_length && !text_content_length) {
+	for (nl_it = node_lines.begin(); nl_it != node_lines.end(); nl_it++) {
+	    outfile << *nl_it << "\n";
+	}
+	outfile << "\n";
+	return 1;
+    }
+
     // If we have content, store the file offset, process the content
     // for possible RCS edits, set up the new values for md5 and sha1,
     // and jump the seek beyond the old content.
