@@ -167,6 +167,7 @@ public:
     int m_adj_face_index;
     // XXX - calculate the dot of the dir with the normal here!
     const BBNode *sbv;
+    int active;
 
     brep_hit(const ON_BrepFace& f, const ON_Ray& ray, const point_t p, const vect_t n, const pt2d_t _uv)
 	: face(f), trimmed(false), closeToEdge(false), oob(false), hit(CLEAN_HIT), direction(ENTERING), m_adj_face_index(0), sbv(NULL)
@@ -245,13 +246,18 @@ const char *brep_hit_type_str(int hit)
     return terr;
 }
 
+void log_key(struct bu_vls *logstr)
+{
+    bu_vls_printf(logstr, "\nKey: _CRACK_ = CRACK_HIT; _CH_ = CLEAN_HIT; _NH_ = NEAR_HIT; _NM_ = NEAR_MISS\n");
+    bu_vls_printf(logstr,  "      {...} = data for 1 hit pnt; + = ENTERING; - = LEAVING; (#) = m_face_index\n");
+    bu_vls_printf(logstr,  "      [1] = face reversed (m_bRev true); [0] = face not reversed (m_bRev false)\n");
+    bu_vls_printf(logstr,  "      <#> = distance from previous point to next hit point\n\n");
+}
+
 void log_hits(std::list<brep_hit> &hits, int UNUSED(verbosity))
 {
     struct bu_vls logstr = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&logstr, "\nKey: _CRACK_ = CRACK_HIT; _CH_ = CLEAN_HIT; _NH_ = NEAR_HIT; _NM_ = NEAR_MISS\n");
-    bu_vls_printf(&logstr,  "      {...} = data for 1 hit pnt; + = ENTERING; - = LEAVING; (#) = m_face_index\n");
-    bu_vls_printf(&logstr,  "      [1] = face reversed (m_bRev true); [0] = face not reversed (m_bRev false)\n");
-    bu_vls_printf(&logstr,  "      <#> = distance from previous point to next hit point\n\n");
+    log_key(&logstr);
     for (std::list<brep_hit>::iterator i = hits.begin(); i != hits.end(); ++i) {
 	point_t prev = VINIT_ZERO;
 
@@ -271,6 +277,61 @@ void log_hits(std::list<brep_hit> &hits, int UNUSED(verbosity))
     bu_log("%s\n", bu_vls_addr(&logstr));
     bu_vls_free(&logstr);
 }
+
+#if 0
+void log_subset(std::vector<brep_hit*> &hits, size_t min, size_t max, brep_hit *pprev)
+{
+    struct bu_vls logstr = BU_VLS_INIT_ZERO;
+    brep_hit *prev = pprev;
+    for (size_t i = min; i < max; i++) {
+	if (!hits[i]->active) continue;
+	if (prev) {
+	    bu_vls_printf(&logstr, "<%g>", DIST_PT_PT(hits[i]->point, prev->point));
+	}
+	bu_vls_printf(&logstr,"{");
+	bu_vls_printf(&logstr,"%s(%d)", brep_hit_type_str((int)hits[i]->hit), hits[i]->face.m_face_index);
+	if (hits[i]->direction == brep_hit::ENTERING) bu_vls_printf(&logstr,"+");
+	if (hits[i]->direction == brep_hit::LEAVING) bu_vls_printf(&logstr,"-");
+	bu_vls_printf(&logstr,"[%d]", hits[i]->sbv->get_face().m_bRev);
+	bu_vls_printf(&logstr,"}");
+	prev = hits[i];
+    }
+    if (bu_vls_strlen(&logstr) > 0) {
+	bu_log("%s\n", bu_vls_addr(&logstr));
+    }
+    bu_vls_free(&logstr);
+}
+
+void log_subsets(std::vector<brep_hit*> &hits, std::vector<std::pair<long int, long int>> &hp)
+{
+    struct bu_vls logstr = BU_VLS_INIT_ZERO;
+    log_key(&logstr);
+    bu_log("%s\n", bu_vls_addr(&logstr));
+
+    if (!hp.size()) {
+	log_subset(hits, 0, hits.size(), NULL);
+	bu_vls_free(&logstr);
+	return;
+    }
+
+    size_t lstart = 0;
+    size_t lend = 0;
+    brep_hit *prev = NULL;
+    for (size_t i = 0; i <= hp.size(); i++) {
+	if (i == hp.size()) {
+	    log_subset(hits, lstart, hits.size(), prev);
+	} else {
+	    lend = hp[i].first;
+	    log_subset(hits, lstart, lend, prev);
+	    if (lstart != lend) {
+		prev = hits[lend - 1];
+	    }
+	    log_subset(hits, hp[i].first, hp[i].second + 1, prev);
+	    lstart = hp[i].second + 1;
+	}
+    }
+}
+#endif
 
 ON_Ray toXRay(const struct xray* rp)
 {
@@ -1288,6 +1349,153 @@ containsNearHit(const std::list<brep_hit> *hits)
     return false;
 }
 
+#if 0
+bool
+rcontainsNearMiss(const std::list<brep_hit> *hits, size_t rmin, size_t rmax)
+{
+    for (size_t i = rmin; i <= rmax; i++) {
+	if (hits[i]->active && hits[i]->hit == brep_hit::NEAR_MISS) {
+	    return true;
+	}
+    }
+    return false;
+}
+
+
+bool
+rcontainsNearHit(const std::list<brep_hit> *hits, size_t rmin, size_t rmax)
+{
+    for (size_t i = rmin; i <= rmax; i++) {
+	if (hits[i]->active && hits[i]->hit == brep_hit::NEAR_HIT) {
+	    return true;
+	}
+    }
+    return false;
+}
+
+long int next_active(std::vector<brep_hit *> &hits, long int rmin, long int rmax)
+{
+    if (rmin < 0 || rmax < 0) return -1;
+    for (long int i = rmin + 1; i <= rmax; i++) {
+	if (hits[i]->active) return (long int)i;
+    }
+    return -1;
+}
+
+long int prev_active(std::vector<brep_hit *> &hits, long int rmin, long int rmax)
+{
+    if (rmin < 0 || rmax < 0) return -1;
+    for (long int i = rmax - 1; i >= rmin; i--) {
+	if (hits[i]->active) return (long int)i;
+    }
+    return -1;
+}
+
+
+/* For each near miss, if the hit behind or the hit ahead of it in the
+ * partition order is going in the same direction and is not a near miss,
+ * cull the near miss in favor of the other hit */
+void deactivate_same_dir_near_miss(std::vector<brep_hit *> &hits, long int rmin, long int rmax)
+{
+    long int p_act = next_active(hits, rmin, rmax);
+    long int c_act = next_active(hits, p_act; rmax);
+    long int n_act = next_active(hits, c_act; rmax);
+    if (p_act < 0 || c_act < 0) return;
+    while (c_act > 0) {
+	if (hits[c_act]->hit == brep_hit::NEAR_MISS) {
+	    if ((hits[p_act]->hit != brep_hit::NEAR_MISS) &&
+		    (hits[p_act]->direction == hits[c_act]->direction)) {
+		hits[c_act]->active = 0;
+		// rewind and start again
+		p_act = next_active(hits, rmin, rmax);
+		c_act = next_active(hits, p_act; rmax);
+		n_act = next_active(hits, c_act; rmax);
+		continue;
+	    }
+	    if (n_act > 0 && (hits[n_act]->hit != brep_hit::NEAR_MISS) &&
+		    (hits[n_act]->direction == hits[c_act]->direction)) {
+		hits[c_act]->active = 0;
+		// rewind and start again
+		p_act = next_active(hits, rmin, rmax);
+		c_act = next_active(hits, p_act; rmax);
+		n_act = next_active(hits, c_act; rmax);
+		continue;
+	    }
+	}
+	p_act = c_act;
+	c_act = next_active(hits, p_act; rmax);
+	n_act = next_active(hits, c_act; rmax);
+    }
+}
+
+void check_for_face_cracks(std::vector<brep_hit *> &hits, long int rmin, long int rmax)
+{
+    long int p_act = next_active(hits, rmin, rmax);
+    long int c_act = next_active(hits, p_act; rmax);
+    if (p_act < 0 || c_act < 0) return;
+    while (c_act > 0) {
+	if (hits[c_act]->hit == brep_hit::NEAR_MISS) {
+	    p_act = prev_active(hits, rmin, c_act);
+	    if (p_act > 0 && hits[p_act]->hit == brep_hit::NEAR_MISS) {
+		// Two near misses in a row - check for face adjacency
+		if (hits[p_act]->m_adj_face_index == hits[c_act]->m_adj_face_index) {
+		    // Adjacent, check for shared direction
+		    if (hits[p_act]->direction == hits[c_act]->direction) {
+			// Matching direction - promote prev, remove curr
+			hits[p_act]->hit = brep_hit::CRACK_HIT;
+			hits[c_act]->active = 0;
+		    } else {
+			// Mismatched directions, remove both near misses
+			hits[c_act]->active = 0;
+			hits[p_act]->active = 0;
+		    }
+		} else {
+		    // Not adjacent faces so remove first miss
+		    hits[p_act]->active = 0;
+		}
+	    }
+	} else {
+	    if ((hits[c_act]->hit == brep_hit::CLEAN_HIT || hits[c_act]->hit == brep_hit::NEAR_HIT) &&
+		    hits[p_act]->hit == brep_hit::NEAR_MISS) {
+		if (hits[c_act]->direction == brep_hit::ENTERING) {
+		    // Remove only remaining near miss
+		    hits[p_act]->active = 0;
+		} else {
+		    // hit is an exit, but we have an unculled near miss behind it - promote to a crack hit
+		    hits[p_act]->hit = brep_hit::CRACK_HIT;
+		}
+	    }
+	}
+	c_act = next_active(hits, c_act; rmax);
+    }
+}
+
+void brep_hits_process_subset(std::vector<brep_hit *> &hits, long int rmin, long int rmax)
+{
+    bool have_nm = rcontainsNearMiss(hits, rmin, rmax);
+    bool have_nh = rcontainsNearHit(hits, rmin, rmax);
+
+    if (rmin >= rmax) {
+	return;
+    }
+
+    bu_log("\nrt_brep_shot (%s), subset %zu-%zu initial state:\n", stp->st_dp->d_namep, rmin, rmax);
+    log_subset(hits, rmin, rmax, NULL);
+
+
+    if (have_nm) {
+	deactivate_same_dir_near_miss(std::vector<brep_hit *> &hits, rmin, rmax);
+	bu_log("\nrt_brep_shot (%s), subset %zu-%zu after NM Pass 1:\n", stp->st_dp->d_namep, rmin, rmax);
+	log_subset(hits, rmin, rmax, NULL);
+	check_for_face_cracks(std::vector<brep_hit *> &hits, rmin, rmax);
+	bu_log("\nrt_brep_shot (%s), subset %zu-%zu after NM Pass 2:\n", stp->st_dp->d_namep, rmin, rmax);
+	log_subset(hits, rmin, rmax, NULL);
+
+    }
+
+}
+#endif
+
 
 /**
  * Intersect a ray with a brep.  If an intersection occurs, a struct
@@ -1353,12 +1561,75 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
     //(void)fclose(_plot_file());
     //	plot = NULL;
 #endif
+
     std::list<brep_hit> hits = all_hits;
 
     // sort the hits
     hits.sort();
     std::list<brep_hit> orig = hits;
 
+#if 0
+    // transition to std::vector
+    if (hits.size()) {
+	std::vector<brep_hit *> hits_v;
+	for (std::list<brep_hit>::const_iterator i = hits.begin(); i != hits.end(); i++) {
+	    const brep_hit &curr_hit = *i;
+	    hits_v.push_back((brep_hit *)&curr_hit);
+	}
+	for (size_t i = 0; i < hits_v.size(); i++) {
+	    hits_v[i]->active = 1;
+	}
+
+	// Find clean CH+/CH- parings with no points between them - they constitute
+	// "hard" dividers along the ray, and all subsequent operations take place in
+	// the sub-sections of the partition list they define. In essence, we think
+	// of each subset of hits divided by a clean in/out pair as its own mini
+	// cleanup problem.
+	std::vector<std::pair<long int, long int>> hard_pairs;
+	long int p1 = -1;
+	for (long int i = 0; i < (long int)hits_v.size(); i++) {
+	    if (p1 == -1 && hits_v[i]->hit == brep_hit::CLEAN_HIT && hits_v[i]->direction == brep_hit::ENTERING) {
+		// Clean entrance - may be the beginning of a pair
+		p1 = i;
+		continue;
+	    }
+	    if (p1 != -1) {
+		if (hits_v[i]->hit == brep_hit::CLEAN_HIT && hits_v[i]->direction == brep_hit::LEAVING) {
+		    // Have pair, stash and continue
+		    hard_pairs.push_back(std::pair<long int, long int>(p1, (long int)i));
+		    p1 = -1;
+		    continue;
+		} else {
+		    // Next point doesn't satisfy pair criteria, reset
+		    p1 = -1;
+		    continue;
+		} 
+	    }
+	}
+
+	if (debug_output) {
+	    log_subsets(hits_v, hard_pairs);
+
+	    // Process in vector form
+	    if (!hard_pairs.size()) {
+		brep_hits_process_subset(hits, 0, hits_v.size()-1);
+	    } else {
+		size_t lstart = 0;
+		size_t lend = 0;
+		for (size_t i = 0; i <= hard_pairs.size(); i++) {
+		    if (i == hard_pairs.size()) {
+			// Clean up anything after the last pair
+			brep_hits_process_subset(hits, lstart, hits_v.size()-1);
+		    } else {
+			lend = hard_pairs[i].first - 1;
+			brep_hits_process_subset(hits, lstart, lend);
+			lstart = hard_pairs[i].second + 1;
+		    }
+		}
+	    }
+	}
+    }
+#endif
 
 ////////////////////////
     if ((hits.size() > 1) && containsNearMiss(&hits)) { //&& ((hits.size() % 2) != 0)) {
