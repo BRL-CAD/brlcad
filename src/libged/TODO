@@ -233,12 +233,26 @@ Be specific.
   argv processing will be handled.
 
 * 'rm' command: replace most or all of the kill* commands with a
-  UNIX style rm command.  Needs the URI/filesystem model to be fleshed
-  out before we can fully work this through - we need an equivalent to
-  the UNIX ability to do glob matching on .g paths.  OpenBSD glob code
-  offers a possible starting point.
+  UNIX style rm command.  Before we can complete this, we need:
 
-  - existing work is reverted in commit r67394
+  - URI/filesystem model method for addressing non-uniquely named
+    instances in object combs.  For example, if comb.c has three
+    different instances of obj.s, could address them by number:
+
+     comb.c
+	|
+	u obj.s -> comb.c/obj.s@1
+	|
+	u obj.s -> comb.c/obj.s@2
+	|
+	u obj.s -> comb.c/obj.s@3
+
+   - An equivalent to the UNIX ability to do glob matching on .g
+     paths.  OpenBSD glob code offers a possible starting point -
+     libbu repo history has commits with some work on this, e.g
+     r72153.
+
+  Existing rm command work is reverted in commit r67394
 
   Notes from Sean:
 
