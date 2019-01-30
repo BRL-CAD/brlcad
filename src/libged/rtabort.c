@@ -55,7 +55,7 @@ ged_rtabort(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(rrp, ged_subprocess, &gedp->ged_gdp->gd_headRunRt.l)) {
+    for (BU_LIST_FOR(rrp, ged_subprocess, &gedp->ged_gdp->gd_headSubprocess.l)) {
 	bu_terminate(rrp->pid);
 	rrp->aborted = 1;
     }

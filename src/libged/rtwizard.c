@@ -56,7 +56,7 @@ _ged_run_rtwizard(struct ged *gedp)
 
     BU_GET(run_rtp, struct ged_subprocess);
     BU_LIST_INIT(&run_rtp->l);
-    BU_LIST_APPEND(&gedp->ged_gdp->gd_headRunRt.l, &run_rtp->l);
+    BU_LIST_APPEND(&gedp->gd_headSubprocess.l, &run_rtp->l);
 
     run_rtp->p = p;
     run_rtp->pid = bu_process_pid(p);

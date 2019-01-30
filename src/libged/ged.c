@@ -239,6 +239,8 @@ ged_init(struct ged *gedp)
     BU_GET(gedp->ged_results, struct ged_results);
     (void)_ged_results_init(gedp->ged_results);
 
+    BU_LIST_INIT(&gedp->gd_headSubprocess.l);
+
     /* For now, we're keeping the string... will go once no one uses it */
     BU_GET(gedp->ged_result_str, struct bu_vls);
     bu_vls_init(gedp->ged_result_str);
@@ -248,7 +250,6 @@ ged_init(struct ged *gedp)
     BU_LIST_INIT(gedp->ged_gdp->gd_headDisplay);
     BU_GET(gedp->ged_gdp->gd_headVDraw, struct bu_list);
     BU_LIST_INIT(gedp->ged_gdp->gd_headVDraw);
-    BU_LIST_INIT(&gedp->ged_gdp->gd_headRunRt.l);
 
     gedp->ged_gdp->gd_uplotOutputMode = PL_OUTPUT_MODE_BINARY;
     qray_init(gedp->ged_gdp);

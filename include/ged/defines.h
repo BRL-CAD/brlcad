@@ -161,7 +161,6 @@ struct ged_drawable {
 
     char			**gd_rt_cmd;
     int				gd_rt_cmd_len;
-    struct ged_subprocess	gd_headRunRt;		/**< @brief  head of forked rt processes */
 
     void			(*gd_rtCmdNotify)(int aborted);	/**< @brief  function called when rt command completes */
 
@@ -230,8 +229,11 @@ struct ged {
     int (*del)(struct ged *gedp, const char *name);
     int (*run)(struct ged *gedp, int ac, char *av[]);
 
+    struct ged_subprocess	gd_headSubprocess; /**< @brief  head of forked processes */
+
     void *ged_interp; /* Temporary - do not rely on when designing new functionality */
     db_search_callback_t ged_interp_eval; /* FIXME: broke the rule written on the previous line */
+
 
     /* Interface to LIBDM */
     int ged_dm_width;
