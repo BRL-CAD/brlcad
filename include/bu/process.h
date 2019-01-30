@@ -65,6 +65,12 @@ BU_EXPORT void *bu_process_fd(struct bu_process *pinfo, int fd);
 /* Return the pid of the subprocess. */
 BU_EXPORT int bu_process_pid(struct bu_process *pinfo);
 
+/* Returns argc and argv used to exec the subprocess - argc is returned as the
+ * return integer, a pointer to the specified command in the first pointer, and
+ * a pointer to the argv array in the second argument. If either cmd or argv are
+ * NULL they will be skipped. */
+BU_EXPORT int bu_process_args(const char **cmd, const char * const **argv, struct bu_process *pinfo);
+
 /* Read n bytes from specified output channel associated with process (fd == 1 for output, fd == 2 for err). */
 BU_EXPORT extern int bu_process_read(char *buff, int *count, struct bu_process *pinfo, int fd, int n);
 

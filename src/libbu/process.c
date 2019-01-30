@@ -51,6 +51,9 @@ bu_process_id()
 
 struct bu_process {
     struct bu_list l;
+    const char *cmd;
+    int argc;
+    const char **argv;
     FILE *fp_in;
     FILE *fp_out;
     FILE *fp_err;
@@ -154,6 +157,19 @@ bu_process_pid(struct bu_process *pinfo)
 }
 
 int
+bu_process_argv(const char **cmd, const char * const **argv, struct bu_process *pinfo)
+{
+    if (!pinfo) return 0;
+    if (cmd) {
+	*cmd = pinfo->cmd;
+    }
+    if (argv) {
+	*argv = (const char * const *)&(pinfo->argv);
+    }
+    return pinfo->argc;
+}
+
+int
 bu_process_read(char *buff, int *count, struct bu_process *pinfo, int fd, int n)
 {
     int ret = 1;
@@ -209,6 +225,7 @@ bu_process_exec(struct bu_process **p, const char *cmd, int argc, const char **a
 {
     int pret = 0;
 #ifdef HAVE_UNISTD_H
+    int ac = argc;
     int pid;
     int pipe_in[2];
     int pipe_out[2];
@@ -233,12 +250,22 @@ bu_process_exec(struct bu_process **p, const char *cmd, int argc, const char **a
 	    av[i] = argv[i-1];
 	}
 	av[argc+1] = (char *)NULL;
+	ac++;
     } else {
 	for (int i = 0; i < argc; i++) {
 	    av[i] = argv[i];
 	}
 	av[argc] = (char *)NULL;
     }
+
+    /* Make a copy of the final execvp args */
+    (*p)->cmd = bu_strdup(cmd);
+    (*p)->argc = ac;
+    (*p)->argv = (const char **)bu_calloc(ac+1, sizeof(char *), "bu_process argv cpy");
+    for (int i = 0; i < ac; i++) {
+	(*p)->argv[i] = bu_strdup(av[i]);
+    }
+    (*p)->argv[ac] = (char *)NULL;
 
     pret = pipe(pipe_in);
     if (pret < 0) {
@@ -324,6 +351,16 @@ bu_process_exec(struct bu_process **p, const char *cmd, int argc, const char **a
     (*p)->fp_in = NULL;
     (*p)->fp_out = NULL;
     (*p)->fp_err = NULL;
+
+    (*p)->cmd = bu_strdup(cmd);
+    (*p)->argc = argc;
+    (*p)->argv = (const char **)bu_calloc(argc+1, sizeof(char *), "bu_process argv cpy");
+    for (int i = 0; i < argc; i++) {
+	(*p)->argv[i] = bu_strdup(argv[i]);
+    }
+    (*p)->argv[ac] = (char *)NULL;
+
+
 
     sa.nLength = sizeof(sa);
     sa.bInheritHandle = TRUE;
@@ -454,6 +491,19 @@ bu_process_wait(int *aborted, struct bu_process *pinfo, int wtime)
     /* Clean up */
     bu_process_close(pinfo, 1);
     bu_process_close(pinfo, 2);
+
+    /* Free copy of exec args */
+    if (pinfo->cmd) {
+	bu_free((void *)pinfo->cmd, "pinfo cmd copy");
+    }
+    if (pinfo->argv) {
+	for (int i = 0; i < pinfo->argc; i++) {
+	    if (pinfo->argv[i]) {
+		bu_free((void *)pinfo->argv[i], "pinfo argv member");
+	    }
+	}
+	bu_free((void *)pinfo->argv, "pinfo argv array");
+    }
     BU_PUT(pinfo, struct bu_process);
 
     return rc;
