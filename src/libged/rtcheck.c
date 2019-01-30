@@ -50,6 +50,7 @@ struct ged_rtcheck {
     struct bu_list *vhead;
     double csize;
     struct ged *gedp;
+    int pid;
     Tcl_Interp *interp;
 };
 
@@ -239,6 +240,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     /* initialize the rtcheck structs */
     BU_GET(rtcp, struct ged_rtcheck);
     rtcp->p = p;
+    rtcp->pid = bu_process_pid(p);
     rtcp->fp = bu_process_open(p, BU_PROCESS_STDOUT);
     /* Needed on Windows for successful rtcheck drawing data communication */
     setmode(_fileno(rtcp->fp), O_BINARY);

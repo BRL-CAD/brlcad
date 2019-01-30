@@ -238,6 +238,7 @@ _ged_run_rt(struct ged *gedp, int argc, const char **argv)
 
     run_rtp->p = p;
     run_rtp->aborted = 0;
+    run_rtp->pid = bu_process_pid(p);
 
     BU_GET(drcdp, struct _ged_rt_client_data);
     drcdp->gedp = gedp;
