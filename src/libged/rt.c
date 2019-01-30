@@ -42,7 +42,7 @@
 
 
 struct _ged_rt_client_data {
-    struct ged_run_rt *rrtp;
+    struct ged_subprocess *rrtp;
     struct ged *gedp;
 };
 
@@ -156,7 +156,7 @@ void
 _ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
 {
     struct _ged_rt_client_data *drcdp = (struct _ged_rt_client_data *)clientData;
-    struct ged_run_rt *run_rtp;
+    struct ged_subprocess *run_rtp;
     int count = 0;
     int retcode = 0;
     int read_failed = 0;
@@ -164,7 +164,7 @@ _ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
 
     if (drcdp == (struct _ged_rt_client_data *)NULL ||
 	drcdp->gedp == (struct ged *)NULL ||
-	drcdp->rrtp == (struct ged_run_rt *)NULL)
+	drcdp->rrtp == (struct ged_subprocess *)NULL)
 	return;
 
     run_rtp = drcdp->rrtp;
@@ -199,7 +199,7 @@ _ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
 
 	/* free run_rtp */
 	BU_LIST_DEQUEUE(&run_rtp->l);
-	BU_PUT(run_rtp, struct ged_run_rt);
+	BU_PUT(run_rtp, struct ged_subprocess);
 	BU_PUT(drcdp, struct _ged_rt_client_data);
 
 	return;
@@ -220,7 +220,7 @@ _ged_run_rt(struct ged *gedp, int argc, const char **argv)
 {
     FILE *fp_in;
     vect_t eye_model;
-    struct ged_run_rt *run_rtp;
+    struct ged_subprocess *run_rtp;
     struct _ged_rt_client_data *drcdp;
     struct bu_process *p = NULL;
 
@@ -232,7 +232,7 @@ _ged_run_rt(struct ged *gedp, int argc, const char **argv)
 
     bu_process_close(p, BU_PROCESS_STDIN);
 
-    BU_GET(run_rtp, struct ged_run_rt);
+    BU_GET(run_rtp, struct ged_subprocess);
     BU_LIST_INIT(&run_rtp->l);
     BU_LIST_APPEND(&gedp->ged_gdp->gd_headRunRt.l, &run_rtp->l);
 

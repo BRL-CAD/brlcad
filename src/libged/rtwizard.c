@@ -40,7 +40,7 @@
 #include "./ged_private.h"
 
 struct _ged_rt_client_data {
-    struct ged_run_rt *rrtp;
+    struct ged_subprocess *rrtp;
     struct ged *gedp;
 };
 
@@ -48,13 +48,13 @@ struct _ged_rt_client_data {
 int
 _ged_run_rtwizard(struct ged *gedp)
 {
-    struct ged_run_rt *run_rtp;
+    struct ged_subprocess *run_rtp;
     struct _ged_rt_client_data *drcdp;
     struct bu_process *p;
 
     bu_process_exec(&p, gedp->ged_gdp->gd_rt_cmd[0], gedp->ged_gdp->gd_rt_cmd_len, (const char **)gedp->ged_gdp->gd_rt_cmd, 0, 0);
 
-    BU_GET(run_rtp, struct ged_run_rt);
+    BU_GET(run_rtp, struct ged_subprocess);
     BU_LIST_INIT(&run_rtp->l);
     BU_LIST_APPEND(&gedp->ged_gdp->gd_headRunRt.l, &run_rtp->l);
 

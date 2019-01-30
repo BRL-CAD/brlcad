@@ -115,7 +115,7 @@ __BEGIN_DECLS
 #define RT_VDRW_DEF_COLOR       0xffff00
 
 
-struct ged_run_rt {
+struct ged_subprocess {
     struct bu_list l;
     struct bu_process *p;
 #if defined(_WIN32) && !defined(__CYGWIN__)
@@ -126,9 +126,7 @@ struct ged_run_rt {
     int fd;
     int pid;
 #endif
-    void *chan; /* FIXME: uses communication channel instead of file
-		 * descriptor to get output from rt.
-		 */
+    void *chan;
     int aborted;
 };
 
@@ -163,7 +161,7 @@ struct ged_drawable {
 
     char			**gd_rt_cmd;
     int				gd_rt_cmd_len;
-    struct ged_run_rt		gd_headRunRt;		/**< @brief  head of forked rt processes */
+    struct ged_subprocess	gd_headRunRt;		/**< @brief  head of forked rt processes */
 
     void			(*gd_rtCmdNotify)(int aborted);	/**< @brief  function called when rt command completes */
 

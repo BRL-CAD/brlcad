@@ -1383,6 +1383,7 @@ s/bu_restore_interrupts/bu_interrupt_restore/g
         renamed for API consistency [7.27]
 s/bu_brlcad_data[[:space:]]*\(/bu_brlcad_root("share/"/g
         replaced by new BU API
+s/struct[[:space:]]*ged_run_rt/struct ged_subprocess/g
 
 # tentative
 s/bu_getprogname\([[:space:]]*\)/bu_app_name\(NULL\)/g

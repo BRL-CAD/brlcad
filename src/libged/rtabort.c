@@ -41,7 +41,7 @@
 int
 ged_rtabort(struct ged *gedp, int argc, const char *argv[])
 {
-    struct ged_run_rt *rrp;
+    struct ged_subprocess *rrp;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
@@ -55,7 +55,7 @@ ged_rtabort(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(rrp, ged_run_rt, &gedp->ged_gdp->gd_headRunRt.l)) {
+    for (BU_LIST_FOR(rrp, ged_subprocess, &gedp->ged_gdp->gd_headRunRt.l)) {
 	bu_terminate(rrp->pid);
 	rrp->aborted = 1;
     }
