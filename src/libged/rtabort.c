@@ -27,7 +27,7 @@
 
 #include <stdlib.h>
 
-#include "bu/parallel.h"
+#include "bu/process.h"
 #include "./ged_private.h"
 
 

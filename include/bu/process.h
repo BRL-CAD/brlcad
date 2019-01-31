@@ -37,6 +37,13 @@ __BEGIN_DECLS
  */
 BU_EXPORT extern int bu_process_id(void);
 
+/**
+ * @brief terminate a given process and any children.
+ *
+ * returns truthfully whether the process could be killed.
+ */
+BU_EXPORT extern int bu_terminate(int process);
+
 
 
 /* Wrappers for using subprocess execution */
@@ -80,6 +87,11 @@ BU_EXPORT extern void bu_process_exec(struct bu_process **info, const char *cmd,
 /** @brief Wrapper for waiting on a sub-process to complete (wait or WaitForSingleObject) and
  * cleaning up pinfo.  After this call completes, pinfo will be freed. */
 BU_EXPORT extern int bu_process_wait(int *aborted, struct bu_process *pinfo, int wtime);
+
+/** @brief Terminate a sub-process and clean up pinfo.  After this call
+ * completes, pinfo will be freed. */
+BU_EXPORT extern void bu_process_terminate(struct bu_process *pinfo);
+
 
 /** @} */
 

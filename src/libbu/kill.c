@@ -28,7 +28,7 @@
 #endif
 
 /* bu headers */
-#include "bu/parallel.h"
+#include "bu/process.h"
 
 /* c99 doesn't declare these */
 #if defined(HAVE_KILL) && !defined(__cplusplus)

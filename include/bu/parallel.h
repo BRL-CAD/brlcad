@@ -78,18 +78,6 @@ BU_EXPORT extern int bu_parallel_id(void);
 
 /**
  * @brief
- * terminate a given process.
- */
-
-/**
- * terminate a given process and any children.
- *
- * returns truthfully whether the process could be killed.
- */
-BU_EXPORT extern int bu_terminate(int process);
-
-/**
- * @brief
  * process management routines
  */
 

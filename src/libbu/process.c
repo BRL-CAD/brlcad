@@ -509,6 +509,33 @@ bu_process_wait(int *aborted, struct bu_process *pinfo, int wtime)
     return rc;
 }
 
+void
+bu_process_terminate(struct bu_process *pinfo)
+{
+   if (!pinfo) return;
+
+   /* Clean up */
+   bu_process_close(pinfo, 1);
+   bu_process_close(pinfo, 2);
+
+   bu_terminate(pinfo->pid);
+
+   /* Free copy of exec args */
+    if (pinfo->cmd) {
+	bu_free((void *)pinfo->cmd, "pinfo cmd copy");
+    }
+    if (pinfo->argv) {
+	for (int i = 0; i < pinfo->argc; i++) {
+	    if (pinfo->argv[i]) {
+		bu_free((void *)pinfo->argv[i], "pinfo argv member");
+	    }
+	}
+	bu_free((void *)pinfo->argv, "pinfo argv array");
+    }
+
+    BU_PUT(pinfo, struct bu_process);
+}
+
 
 /*
  * Local Variables:
