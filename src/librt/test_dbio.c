@@ -44,7 +44,7 @@
 void
 print_elapsed(const char *label, int64_t elapsed)
 {
-    bu_log("%s elapsed: %.6llf\n", label, (double)elapsed / 1000000LL);
+    bu_log("%s elapsed: %.6f\n", label, (double)elapsed / 1000000LL);
 }
 
 
