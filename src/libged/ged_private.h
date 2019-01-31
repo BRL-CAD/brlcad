@@ -226,7 +226,7 @@ enum otype {
     OTYPE_SAT,
     OTYPE_STL
 };
-void _ged_bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int fd, const char *file_ext, const char *db_name);
+void _ged_bot_dump(struct directory *dp, const struct db_full_path *pathp, struct rt_bot_internal *bot, FILE *fp, int fd, const char *file_ext, const char *db_name);
 void dl_botdump(struct bu_list *hdlp, struct db_i *dbip, FILE *fp, int fd, char *file_ext, int output_type, int *red, int *green, int *blue, fastf_t *alpha);
 
 

@@ -2538,7 +2538,7 @@ dl_botdump(struct bu_list *hdlp, struct db_i *dbip, FILE *fp, int fd, char *file
 	    }
 
 	    bot = (struct rt_bot_internal *)intern.idb_ptr;
-	    _ged_bot_dump(dp, bot, fp, fd, file_ext, dbip->dbi_filename);
+	    _ged_bot_dump(dp, NULL, bot, fp, fd, file_ext, dbip->dbi_filename);
 	    rt_db_free_internal(&intern);
 	}
     }

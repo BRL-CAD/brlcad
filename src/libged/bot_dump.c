@@ -592,7 +592,7 @@ stl_write_bot_binary(struct rt_bot_internal *bot, int fd, char *UNUSED(name))
 
 
 void
-_ged_bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int fd, const char *file_ext, const char *db_g_name)
+_ged_bot_dump(struct directory *dp, const struct db_full_path *pathp, struct rt_bot_internal *bot, FILE *fp, int fd, const char *file_ext, const char *db_g_name)
 {
     int ret;
 
@@ -674,7 +674,13 @@ _ged_bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int f
 		case OTYPE_OBJ:
 		    v_offset = 1;
 		    fprintf(fp, "mtllib %s\n", bu_vls_addr(&obj_materials_file));
-		    obj_write_bot(bot, fp, dp->d_namep);
+		    if (!pathp) {
+			obj_write_bot(bot, fp, dp->d_namep);
+		    } else {
+			char *pathstr = db_path_to_string(pathp);
+			obj_write_bot(bot, fp, pathstr);
+			bu_free(pathstr, "free path");
+		    }
 		    break;
 		case OTYPE_SAT:
 		    curr_line_num = 0;
@@ -704,12 +710,19 @@ _ged_bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int f
       } else {
 	/* If we get to this point, we need fp - check for it */
 	if (fp) {
+	    char *pathstr;
 	switch (output_type) {
 	  case OTYPE_DXF:
 	    dxf_write_bot(bot, fp, dp->d_namep);
 	    break;
 	  case OTYPE_OBJ:
-	    obj_write_bot(bot, fp, dp->d_namep);
+	    if (!pathp) {
+		obj_write_bot(bot, fp, dp->d_namep);
+	    } else {
+		pathstr = db_path_to_string(pathp);
+		obj_write_bot(bot, fp, pathstr);
+		bu_free(pathstr, "free path");
+	    }
 	    break;
 	  case OTYPE_SAT:
 	    sat_write_bot(bot, fp, dp->d_namep);
@@ -769,7 +782,7 @@ bot_dump_leaf(struct db_tree_state *UNUSED(tsp),
     }
 
     bot = (struct rt_bot_internal *)intern.idb_ptr;
-    _ged_bot_dump(dp, bot, gbdcdp->fp, gbdcdp->fd, gbdcdp->file_ext, gbdcdp->gedp->ged_wdbp->dbip->dbi_filename);
+    _ged_bot_dump(dp, pathp, bot, gbdcdp->fp, gbdcdp->fd, gbdcdp->file_ext, gbdcdp->gedp->ged_wdbp->dbip->dbi_filename);
     rt_db_free_internal(&intern);
 
     return curtree;
@@ -987,7 +1000,7 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
 	    }
 
 	    bot = (struct rt_bot_internal *)intern.idb_ptr;
-	    _ged_bot_dump(dp, bot, fp, fd, file_ext, gedp->ged_wdbp->dbip->dbi_filename);
+	    _ged_bot_dump(dp, NULL, bot, fp, fd, file_ext, gedp->ged_wdbp->dbip->dbi_filename);
 	    rt_db_free_internal(&intern);
 
 	} FOR_ALL_DIRECTORY_END;
