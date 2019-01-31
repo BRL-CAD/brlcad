@@ -27,6 +27,7 @@
 
 #include <stdlib.h>
 
+#include "bu/path.h"
 #include "bu/process.h"
 #include "./ged_private.h"
 
@@ -42,6 +43,7 @@ int
 ged_rtabort(struct ged *gedp, int argc, const char *argv[])
 {
     struct ged_subprocess *rrp;
+    struct bu_vls cmdroot = BU_VLS_INIT_ZERO;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
@@ -56,10 +58,18 @@ ged_rtabort(struct ged *gedp, int argc, const char *argv[])
     }
 
     for (BU_LIST_FOR(rrp, ged_subprocess, &gedp->gd_headSubprocess.l)) {
-	bu_terminate(rrp->pid);
-	rrp->aborted = 1;
+	const char *cmd;
+	int argcnt = bu_process_args(&cmd, NULL, rrp->p);
+	bu_vls_trunc(&cmdroot, 0);
+	if (argcnt > 0 && bu_path_component(&cmdroot, cmd, BU_PATH_BASENAME_EXTLESS)) {
+	    if (BU_STR_EQUAL(bu_vls_cstr(&cmdroot), "rt")) {
+		bu_terminate(bu_process_pid(rrp->p));
+		rrp->aborted = 1;
+	    }
+	}
     }
 
+    bu_vls_free(&cmdroot);
     return GED_OK;
 }
 

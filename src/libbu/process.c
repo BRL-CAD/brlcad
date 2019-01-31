@@ -157,7 +157,7 @@ bu_process_pid(struct bu_process *pinfo)
 }
 
 int
-bu_process_argv(const char **cmd, const char * const **argv, struct bu_process *pinfo)
+bu_process_args(const char **cmd, const char * const **argv, struct bu_process *pinfo)
 {
     if (!pinfo) return 0;
     if (cmd) {
@@ -507,33 +507,6 @@ bu_process_wait(int *aborted, struct bu_process *pinfo, int wtime)
     BU_PUT(pinfo, struct bu_process);
 
     return rc;
-}
-
-void
-bu_process_terminate(struct bu_process *pinfo)
-{
-   if (!pinfo) return;
-
-   /* Clean up */
-   bu_process_close(pinfo, 1);
-   bu_process_close(pinfo, 2);
-
-   bu_terminate(pinfo->pid);
-
-   /* Free copy of exec args */
-    if (pinfo->cmd) {
-	bu_free((void *)pinfo->cmd, "pinfo cmd copy");
-    }
-    if (pinfo->argv) {
-	for (int i = 0; i < pinfo->argc; i++) {
-	    if (pinfo->argv[i]) {
-		bu_free((void *)pinfo->argv[i], "pinfo argv member");
-	    }
-	}
-	bu_free((void *)pinfo->argv, "pinfo argv array");
-    }
-
-    BU_PUT(pinfo, struct bu_process);
 }
 
 

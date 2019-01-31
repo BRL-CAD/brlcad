@@ -88,11 +88,6 @@ BU_EXPORT extern void bu_process_exec(struct bu_process **info, const char *cmd,
  * cleaning up pinfo.  After this call completes, pinfo will be freed. */
 BU_EXPORT extern int bu_process_wait(int *aborted, struct bu_process *pinfo, int wtime);
 
-/** @brief Terminate a sub-process and clean up pinfo.  After this call
- * completes, pinfo will be freed. */
-BU_EXPORT extern void bu_process_terminate(struct bu_process *pinfo);
-
-
 /** @} */
 
 __END_DECLS
