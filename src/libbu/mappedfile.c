@@ -407,11 +407,9 @@ bu_free_mapped_files(int verbose)
 	if (UNLIKELY(verbose || (bu_debug&BU_DEBUG_MAPPED_FILE)))
 	    bu_pr_mapped_file("freeing", mp);
 
-	/* If application pointed mp->apbuf at mp->buf, break that
-	 * association so we don't double-free the buffer.
-	 */
-	if (mp->apbuf == mp->buf)
-	    mp->apbuf = (void *)NULL;
+
+	mp->apbuf = (void *)NULL;
+
 
 #ifdef HAVE_SYS_MMAN_H
 	if (mp->is_mapped) {
