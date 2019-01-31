@@ -98,7 +98,7 @@ help_files(const char *dir, char ***files)
 }
 
 
-HIDDEN void
+HIDDEN size_t
 help_tokenize(size_t count, const char **files)
 {
     size_t bytes;
@@ -113,7 +113,7 @@ help_tokenize(size_t count, const char **files)
     struct bu_hash_tbl *hash;
 #endif
     size_t cnt[MAX_WORDS] = {0};
-    size_t indexed = 0;
+    size_t words = 0;
 
 #if !USE_ARRAY
     hash = bu_hash_create(2048);
@@ -124,7 +124,7 @@ help_tokenize(size_t count, const char **files)
 
 #if USE_ARRAY
 	/* lotta words? leave an empty spot */
-	if (indexed+1 > MAX_WORDS-1) {
+	if (words+1 > MAX_WORDS-1) {
 	    continue;
 	}
 #endif
@@ -151,7 +151,7 @@ help_tokenize(size_t count, const char **files)
 	}
 
 	/* tokenize one file */
-	/* && indexed+1 <= MAX_WORDS-1 */
+	/* && words+1 <= MAX_WORDS-1 */
 	for (bytes = 0; bytes < data->buflen; bytes++) {
 	    const uint8_t *wordbytes;
 	    size_t wordbyteslen;
@@ -163,26 +163,26 @@ help_tokenize(size_t count, const char **files)
 	    } else if (bu_vls_strlen(&word) > 0) {
 		wordbytes = (const uint8_t *)bu_vls_cstr(&word);
 		wordbyteslen = bu_vls_strlen(&word);
-		bu_log("WORD: %s\n", (const char *)wordbytes);
+		/* bu_log("WORD: %s\n", (const char *)wordbytes); */
 
 #if USE_ARRAY
 		size_t i;
-		for (i = 0; i < indexed; i++) {
+		for (i = 0; i < words; i++) {
 		    if (BU_STR_EQUIV(bu_vls_cstr(&words[i]), bu_vls_cstr(&word))) {
 			bu_vls_trunc(&word, 0);
 			cnt[i]++;
 			break;
 		    }
 		}
-		if (i == indexed) {
+		if (i == words) {
 		    /* found a new word */
-		    /* bu_log("%zu WORD: %s\n", indexed, bu_vls_cstr(&word)); */
+		    /* bu_log("%zu WORD: %s\n", words, bu_vls_cstr(&word)); */
 
-		    bu_vls_init(&words[indexed]);
-		    bu_vls_strcpy(&words[indexed], bu_vls_cstr(&word));
+		    bu_vls_init(&words[words]);
+		    bu_vls_strcpy(&words[words], bu_vls_cstr(&word));
 		    bu_vls_trunc(&word, 0);
-		    cnt[indexed]++;
-		    indexed++;
+		    cnt[words]++;
+		    words++;
 		}
 #else
 		cntptr = (int *)bu_hash_get(hash, wordbytes, wordbyteslen);
@@ -190,12 +190,12 @@ help_tokenize(size_t count, const char **files)
 /*		    bu_log("found existing %s\n", (char *)wordbytes); */
 		    (*cntptr)++;
 		} else {
-		    int ret = bu_hash_set(hash, wordbytes, wordbyteslen, &cnt[indexed]);
+		    int ret = bu_hash_set(hash, wordbytes, wordbyteslen, &cnt[words]);
 /*		    bu_log("adding %s\n", (char *)wordbytes); */
 		    if (ret != 1)
  			bu_bomb("totally expected a new entry\n");
-		    cnt[indexed]++;
-		    indexed++;
+		    cnt[words]++;
+		    words++;
 
 		}
 #endif
@@ -203,18 +203,18 @@ help_tokenize(size_t count, const char **files)
   	    }
 	}
 
-	bu_log("FILE: %s (%zu bytes, %zu words)\n", files[count], data->buflen, indexed);
+	/* bu_log("FILE: %s (%zu bytes, %zu words)\n", files[count], data->buflen, words); */
 
 	bu_close_mapped_file(data);
     }
 
-    bu_log("FOUND:\n");
+    /* bu_log("FOUND:\n"); */
 
 #if USE_ARRAY
     {
 	size_t i;
-	for (i = 0; i < indexed; i++) {
-	    bu_log("%s => %zu\n", (const char *)bu_vls_cstr(&words[i]), cnt[i]);
+	for (i = 0; i < words; i++) {
+	    /* bu_log("%s => %zu\n", (const char *)bu_vls_cstr(&words[i]), cnt[i]); */
 	}
     }
 #else
@@ -225,12 +225,14 @@ help_tokenize(size_t count, const char **files)
 	    uint8_t *found;
 	    size_t foundlen;
 	    bu_hash_key(e, &found, &foundlen);
-	    bu_log("%s => %zu\n", (char *)found, *(size_t *)bu_hash_value(e, NULL));
+	    /* bu_log("%s => %zu\n", (char *)found, *(size_t *)bu_hash_value(e, NULL)); */
 	    e = bu_hash_next(hash, e);
 	}
     }
     bu_hash_destroy(hash);
 #endif
+
+    return words;
 }
 
 
@@ -240,6 +242,7 @@ ged_help(struct ged *gedp, int argc, const char *argv[])
     char *dir;
     char **entries = NULL;
     size_t count;
+    size_t words;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -255,7 +258,7 @@ ged_help(struct ged *gedp, int argc, const char *argv[])
     bu_log("Found %zu files\n", count);
 
     /* condense the file into searchable tokens */
-    help_tokenize(count, (const char **)entries);
+    words = help_tokenize(count, (const char **)entries);
 
     bu_free(dir, "free doc dir");
     bu_argv_free(count, entries);
