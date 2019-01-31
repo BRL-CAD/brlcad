@@ -1068,7 +1068,7 @@ proc subtractRightFromLeft {left right {subtractFirst false}} {
 	if {$nsolids > 1} {
 	    puts ""
 	    puts "ERROR: $right"
-	    puts "       This regions isn't reducible to a single solid. Refusing to subtract a"
+	    puts "       This region isn't reducible to a single solid. Refusing to subtract a"
 	    puts "       comb. Run check command with -F option to override."
 	    return -code error
 	}
