@@ -46,13 +46,13 @@ struct _ged_rt_client_data {
 
 
 int
-_ged_run_rtwizard(struct ged *gedp)
+_ged_run_rtwizard(struct ged *gedp, int cmd_len, const char **gd_rt_cmd)
 {
     struct ged_subprocess *run_rtp;
     struct _ged_rt_client_data *drcdp;
     struct bu_process *p;
 
-    bu_process_exec(&p, gedp->ged_gdp->gd_rt_cmd[0], gedp->ged_gdp->gd_rt_cmd_len, (const char **)gedp->ged_gdp->gd_rt_cmd, 0, 0);
+    bu_process_exec(&p, gd_rt_cmd[0], cmd_len, (const char **)gd_rt_cmd, 0, 0);
 
     BU_GET(run_rtp, struct ged_subprocess);
     BU_LIST_INIT(&run_rtp->l);
@@ -85,6 +85,8 @@ ged_rtwizard(struct ged *gedp, int argc, const char *argv[])
     struct bu_vls size_vls = BU_VLS_INIT_ZERO;
     struct bu_vls orient_vls = BU_VLS_INIT_ZERO;
     struct bu_vls eye_vls = BU_VLS_INIT_ZERO;
+    char **gd_rt_cmd = NULL;
+    int gd_rt_cmd_len = 0;
 
     const char *bin;
     char rtscript[256] = {0};
@@ -104,7 +106,7 @@ ged_rtwizard(struct ged *gedp, int argc, const char *argv[])
 	/* rtwizard --no_gui -i db.g --viewsize size --orientation "A B C D} --eye_pt "X Y Z" */
 	args = argc + 1 + 1 + 1 + 2 + 2 + 2 + 2;
 
-    gedp->ged_gdp->gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
+    gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
 
     bin = bu_brlcad_root("bin", 1);
     if (bin) {
@@ -120,7 +122,7 @@ ged_rtwizard(struct ged *gedp, int argc, const char *argv[])
     bu_vls_printf(&orient_vls, "%.15e %.15e %.15e %.15e", V4ARGS(quat));
     bu_vls_printf(&eye_vls, "%.15e %.15e %.15e", V3ARGS(eye_model));
 
-    vp = &gedp->ged_gdp->gd_rt_cmd[0];
+    vp = &gd_rt_cmd[0];
     *vp++ = rtscript;
     *vp++ = "--no-gui";
     *vp++ = "--viewsize";
@@ -147,15 +149,14 @@ ged_rtwizard(struct ged *gedp, int argc, const char *argv[])
     /*
      * Accumulate the command string.
      */
-    vp = &gedp->ged_gdp->gd_rt_cmd[0];
+    vp = &gd_rt_cmd[0];
     while (*vp)
 	bu_vls_printf(gedp->ged_result_str, "%s ", *vp++);
     bu_vls_printf(gedp->ged_result_str, "\n");
 
-    gedp->ged_gdp->gd_rt_cmd_len = vp - gedp->ged_gdp->gd_rt_cmd;
-    (void)_ged_run_rtwizard(gedp);
-    bu_free(gedp->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
-    gedp->ged_gdp->gd_rt_cmd = NULL;
+    gd_rt_cmd_len = vp - gd_rt_cmd;
+    (void)_ged_run_rtwizard(gedp, gd_rt_cmd_len, (const char **)gd_rt_cmd);
+    bu_free(gd_rt_cmd, "free gd_rt_cmd");
 
     bu_vls_free(&perspective_vls);
     bu_vls_free(&size_vls);

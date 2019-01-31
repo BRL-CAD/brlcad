@@ -39,6 +39,8 @@ ged_rrt(struct ged *gedp, int argc, const char *argv[])
     char **vp;
     int i;
     size_t args;
+    char **gd_rt_cmd = NULL;
+    int gd_rt_cmd_len = 0;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
@@ -49,19 +51,18 @@ ged_rrt(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     args = argc + 2 + ged_count_tops(gedp);
-    gedp->ged_gdp->gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
+    gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
 
-    vp = &gedp->ged_gdp->gd_rt_cmd[0];
+    vp = &gd_rt_cmd[0];
     for (i = 1; i < argc; i++)
 	*vp++ = (char *)argv[i];
     *vp++ = gedp->ged_wdbp->dbip->dbi_filename;
 
-    _ged_current_gedp = gedp;
-    _ged_current_gedp->ged_gdp->gd_rt_cmd_len = ged_build_tops(gedp, vp, &_ged_current_gedp->ged_gdp->gd_rt_cmd[args]);
+    gd_rt_cmd_len = ged_build_tops(gedp, vp, &gd_rt_cmd[args]);
 
-    (void)_ged_run_rt(gedp, -1, NULL);
+    (void)_ged_run_rt(gedp, gd_rt_cmd_len, (const char **)gd_rt_cmd, -1, NULL);
 
-    bu_free(gedp->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
+    bu_free(gd_rt_cmd, "free gd_rt_cmd");
 
     return GED_OK;
 }

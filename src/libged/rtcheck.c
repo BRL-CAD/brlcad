@@ -177,6 +177,8 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     struct ged_rtcheck *rtcp;
     struct rtcheck_output *rtcop;
     struct bu_process *p = NULL;
+    char ** gd_rt_cmd = NULL;
+    int gd_rt_cmd_len = 0;
 
     vect_t eye_model;
 
@@ -198,9 +200,9 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     }
 
     args = argc + 7 + 2 + ged_count_tops(gedp);
-    gedp->ged_gdp->gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
+    gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
 
-    vp = &gedp->ged_gdp->gd_rt_cmd[0];
+    vp = &gd_rt_cmd[0];
     *vp++ = rtcheck;
     *vp++ = "-M";
     for (i = 1; i < argc; i++)
@@ -214,13 +216,13 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
      * Otherwise, simply append the remaining args.
      */
     if (i == argc) {
-	gedp->ged_gdp->gd_rt_cmd_len = vp - gedp->ged_gdp->gd_rt_cmd;
-	gedp->ged_gdp->gd_rt_cmd_len += ged_build_tops(gedp, vp, &gedp->ged_gdp->gd_rt_cmd[args]);
+	gd_rt_cmd_len = vp - gd_rt_cmd;
+	gd_rt_cmd_len += ged_build_tops(gedp, vp, &gd_rt_cmd[args]);
     } else {
 	while (i < argc)
 	    *vp++ = (char *)argv[i++];
 	*vp = 0;
-	vp = &gedp->ged_gdp->gd_rt_cmd[0];
+	vp = &gd_rt_cmd[0];
 	while (*vp)
 	    Tcl_AppendResult((Tcl_Interp *)gedp->ged_interp, *vp++, " ", (char *)NULL);
 
@@ -228,7 +230,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     }
 
 
-    bu_process_exec(&p, gedp->ged_gdp->gd_rt_cmd[0], gedp->ged_gdp->gd_rt_cmd_len, (const char **)gedp->ged_gdp->gd_rt_cmd, 0, 0);
+    bu_process_exec(&p, gd_rt_cmd[0], gd_rt_cmd_len, (const char **)gd_rt_cmd, 0, 0);
 
     fp = bu_process_open(p, BU_PROCESS_STDIN);
 
@@ -259,8 +261,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     _ged_create_io_handler(&(rtcp->chan), p, BU_PROCESS_STDOUT, TCL_READABLE, (void *)rtcp, rtcheck_vector_handler);
     _ged_create_io_handler(&(rtcop->chan), p, BU_PROCESS_STDERR, TCL_READABLE, (void *)rtcop, rtcheck_output_handler);
 
-    bu_free(gedp->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
-    gedp->ged_gdp->gd_rt_cmd = NULL;
+    bu_free(gd_rt_cmd, "free gd_rt_cmd");
 
     return GED_OK;
 }

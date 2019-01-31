@@ -216,7 +216,7 @@ _ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
 }
 
 int
-_ged_run_rt(struct ged *gedp, int argc, const char **argv)
+_ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, const char **argv)
 {
     FILE *fp_in;
     vect_t eye_model;
@@ -224,7 +224,7 @@ _ged_run_rt(struct ged *gedp, int argc, const char **argv)
     struct _ged_rt_client_data *drcdp;
     struct bu_process *p = NULL;
 
-    bu_process_exec(&p, gedp->ged_gdp->gd_rt_cmd[0], gedp->ged_gdp->gd_rt_cmd_len, (const char **)gedp->ged_gdp->gd_rt_cmd, 0, 0);
+    bu_process_exec(&p, gd_rt_cmd[0], cmd_len, gd_rt_cmd, 0, 0);
     fp_in = bu_process_open(p, BU_PROCESS_STDIN);
 
     _ged_rt_set_eye_model(gedp, eye_model);
@@ -299,6 +299,8 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
     int units_supplied = 0;
     char pstring[32];
     int args;
+    char **gd_rt_cmd = NULL;
+    int gd_rt_cmd_len = 0;
 
     const char *bin;
     char rt[256] = {0};
@@ -312,14 +314,14 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     args = argc + 7 + 2 + ged_count_tops(gedp);
-    gedp->ged_gdp->gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
+    gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
 
     bin = bu_brlcad_root("bin", 1);
     if (bin) {
 	snprintf(rt, 256, "%s/%s", bin, argv[0]);
     }
 
-    vp = &gedp->ged_gdp->gd_rt_cmd[0];
+    vp = &gd_rt_cmd[0];
     *vp++ = rt;
     *vp++ = "-M";
 
@@ -347,10 +349,9 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
     }
 
     *vp++ = gedp->ged_wdbp->dbip->dbi_filename;
-    gedp->ged_gdp->gd_rt_cmd_len = vp - gedp->ged_gdp->gd_rt_cmd;
-    (void)_ged_run_rt(gedp, (argc - i), &(argv[i]));
-    bu_free(gedp->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
-    gedp->ged_gdp->gd_rt_cmd = NULL;
+    gd_rt_cmd_len = vp - gd_rt_cmd;
+    (void)_ged_run_rt(gedp, gd_rt_cmd_len, (const char **)gd_rt_cmd, (argc - i), &(argv[i]));
+    bu_free(gd_rt_cmd, "free gd_rt_cmd");
 
     return GED_OK;
 }

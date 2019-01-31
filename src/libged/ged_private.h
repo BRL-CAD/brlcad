@@ -335,7 +335,7 @@ extern char _ged_tmpfil[];
 /* defined in rt.c */
 extern void _ged_rt_set_eye_model(struct ged *gedp,
 				  vect_t eye_model);
-extern int _ged_run_rt(struct ged *gdp, int argc, const char **argv);
+extern int _ged_run_rt(struct ged *gdp, int cmd_len, const char **gd_rt_cmd, int argc, const char **argv);
 extern void _ged_rt_write(struct ged *gedp,
 			  FILE *fp,
 			  vect_t eye_model,

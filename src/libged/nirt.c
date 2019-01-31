@@ -83,6 +83,8 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     struct bn_vlblock *vbp = NULL;
     struct qray_dataList *ndlp = NULL;
     struct qray_dataList HeadQRayData;
+    char **gd_rt_cmd = NULL;
+    int gd_rt_cmd_len = 0;
 
     const char *bin = NULL;
     char nirt[256] = {0};
@@ -100,14 +102,14 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     args = argc + 20 + 2 + ged_count_tops(gedp);
-    gedp->ged_gdp->gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
+    gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
 
     bin = bu_brlcad_root("bin", 1);
     if (bin) {
 	snprintf(nirt, 256, "%s/%s", bin, argv[0]);
     }
 
-    vp = &gedp->ged_gdp->gd_rt_cmd[0];
+    vp = &gd_rt_cmd[0];
     *vp++ = nirt;
 
     /* swipe x, y, z off the end if present */
@@ -230,14 +232,14 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	*vp++ = (char *)argv[i];
     *vp++ = gedp->ged_wdbp->dbip->dbi_filename;
 
-    gedp->ged_gdp->gd_rt_cmd_len = vp - gedp->ged_gdp->gd_rt_cmd;
+    gd_rt_cmd_len = vp - gd_rt_cmd;
 
     /* Note - ged_build_tops sets the last vp to (char *)0 */
-    gedp->ged_gdp->gd_rt_cmd_len += ged_build_tops(gedp, vp, &gedp->ged_gdp->gd_rt_cmd[args]);
+    gd_rt_cmd_len += ged_build_tops(gedp, vp, &gd_rt_cmd[args]);
 
     if (gedp->ged_gdp->gd_qray_cmd_echo) {
 	/* Print out the command we are about to run */
-	vp = &gedp->ged_gdp->gd_rt_cmd[0];
+	vp = &gd_rt_cmd[0];
 
 	while (*vp)
 	    bu_vls_printf(gedp->ged_result_str, "%s ", *vp++);
@@ -253,27 +255,27 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     }
 
     j = 1;
-    av = (char **)bu_calloc(gedp->ged_gdp->gd_rt_cmd_len + 1, sizeof(char *), "av");
-    av[0] = gedp->ged_gdp->gd_rt_cmd[0];
-    for (i = 1; i < gedp->ged_gdp->gd_rt_cmd_len; i++) {
+    av = (char **)bu_calloc(gd_rt_cmd_len + 1, sizeof(char *), "av");
+    av[0] = gd_rt_cmd[0];
+    for (i = 1; i < gd_rt_cmd_len; i++) {
 	/* skip commands */
-	if (BU_STR_EQUAL(gedp->ged_gdp->gd_rt_cmd[i], "-e")) {
+	if (BU_STR_EQUAL(gd_rt_cmd[i], "-e")) {
 	    i++;
 	} else {
-	    av[j] = gedp->ged_gdp->gd_rt_cmd[i];
+	    av[j] = gd_rt_cmd[i];
 	    j++;
 	}
     }
 
-    bu_process_exec(&p, gedp->ged_gdp->gd_rt_cmd[0], j, (const char **)av, 0, 1);
+    bu_process_exec(&p, gd_rt_cmd[0], j, (const char **)av, 0, 1);
     bu_free(av, "av");
 
     fp_in = bu_process_open(p, BU_PROCESS_STDIN);
 
     /* send commands down the pipe */
-    for (i = 1; i < gedp->ged_gdp->gd_rt_cmd_len - 2; i++) {
-	if (strstr(gedp->ged_gdp->gd_rt_cmd[i], "-e") != NULL) {
-	    fprintf(fp_in, "%s\n", gedp->ged_gdp->gd_rt_cmd[++i]);
+    for (i = 1; i < gd_rt_cmd_len - 2; i++) {
+	if (strstr(gd_rt_cmd[i], "-e") != NULL) {
+	    fprintf(fp_in, "%s\n", gd_rt_cmd[++i]);
 	}
     }
 
@@ -385,8 +387,8 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 
     dl_set_wflag(gedp->ged_gdp->gd_headDisplay, DOWN);
 
-    bu_free(gedp->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
-    gedp->ged_gdp->gd_rt_cmd = NULL;
+    bu_free(gd_rt_cmd, "free gd_rt_cmd");
+    gd_rt_cmd = NULL;
 
     return GED_OK;
 }
