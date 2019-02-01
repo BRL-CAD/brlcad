@@ -152,7 +152,7 @@ set(mann_EN
   press.xml
   preview.xml
   prj_add.xml
-  ps.xml
+  postscript.xml
   pull.xml
   push.xml
   put_comb.xml
