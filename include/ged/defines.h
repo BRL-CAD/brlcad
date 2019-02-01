@@ -121,13 +121,12 @@ struct ged_subprocess {
 #if defined(_WIN32) && !defined(__CYGWIN__)
     HANDLE fd;
     HANDLE hProcess;
-    DWORD pid;
 #else
     int fd;
-    int pid;
 #endif
     void *chan;
     int aborted;
+    void *data;
 };
 
 /* FIXME: should be private */

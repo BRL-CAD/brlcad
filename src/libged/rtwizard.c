@@ -59,7 +59,6 @@ _ged_run_rtwizard(struct ged *gedp, int cmd_len, const char **gd_rt_cmd)
     BU_LIST_APPEND(&gedp->gd_headSubprocess.l, &run_rtp->l);
 
     run_rtp->p = p;
-    run_rtp->pid = bu_process_pid(p);
 
     /* must be BU_GET() to match release in _ged_rt_output_handler */
     BU_GET(drcdp, struct _ged_rt_client_data);
