@@ -22,7 +22,7 @@
 #	Tool for producing PostScript files of MGED's current view.
 #
 
-check_externs "_mged_opendb _mged_ps"
+check_externs "_mged_opendb _mged_postscript"
 
 proc init_psTool { id } {
     global mged_gui
@@ -85,25 +85,25 @@ proc init_psTool { id } {
 
     set tmp_hoc_data {{summary "Enter a filename specifying where
 to put the generated postscript
-description of the current view."} {see_also "ps"}}
+description of the current view."} {see_also "postscript"}}
     label $top.fileL -text "File Name" -anchor w
     hoc_register_data $top.fileL "File Name" $tmp_hoc_data
     entry $top.fileE -relief flat -width 10 -textvar ps_control($id,file)
     hoc_register_data $top.fileE "File Name" $tmp_hoc_data
 
-    set tmp_hoc_data {{summary "Enter a title for the postscript file."} {see_also "ps"}}
+    set tmp_hoc_data {{summary "Enter a title for the postscript file."} {see_also "postscript"}}
     label $top.titleL -text "Title" -anchor w
     hoc_register_data $top.titleL "Title" $tmp_hoc_data
     entry $top.titleE -relief flat -width 10 -textvar ps_control($id,title)
     hoc_register_data $top.titleE "Title" $tmp_hoc_data
 
-    set tmp_hoc_data {{summary "Enter the creator of the postscript file."} {see_also "ps"}}
+    set tmp_hoc_data {{summary "Enter the creator of the postscript file."} {see_also "postscript"}}
     label $top.creatorL -text "Creator" -anchor w
     hoc_register_data $top.creatorL "Creator" $tmp_hoc_data
     entry $top.creatorE -relief flat -width 10 -textvar ps_control($id,creator)
     hoc_register_data $top.creatorE "Creator" $tmp_hoc_data
 
-    set tmp_hoc_data {{summary "Enter the desired text font."} {see_also "ps"}}
+    set tmp_hoc_data {{summary "Enter the desired text font."} {see_also "postscript"}}
     label $top.fontL -text "Font" -anchor w
     hoc_register_data $top.fontL "Font" $tmp_hoc_data
     entry $top.fontE -relief flat -width 17 -textvar ps_control($id,font)
@@ -151,14 +151,14 @@ postscript fonts."}}
     $top.fontMB.fontM.timesM add command -label "BoldItalic"\
 	    -command "set ps_control($id,font) Times-BoldItalic"
 
-    set tmp_hoc_data {{summary "Enter the image size."} {see_also "ps"}}
+    set tmp_hoc_data {{summary "Enter the image size."} {see_also "postscript"}}
     label $top.sizeL -text "Size" -anchor w
     hoc_register_data $top.sizeL "Size" $tmp_hoc_data
     entry $top.sizeE -relief flat -width 10 -textvar ps_control($id,size)
     hoc_register_data $top.sizeE "Size" $tmp_hoc_data
 
     set tmp_hoc_data {{summary "Enter the line width used when
-drawing lines."} {see_also "ps"}}
+drawing lines."} {see_also "postscript"}}
     label $top.linewidthL -text "Line Width" -anchor w
     hoc_register_data $top.linewidthL "Line Width" $tmp_hoc_data
     entry $top.linewidthE -relief flat -width 10 -textvar ps_control($id,linewidth)
@@ -168,21 +168,21 @@ drawing lines."} {see_also "ps"}}
 	    -variable ps_control($id,zclip)
     hoc_register_data $top.zclipCB "Z Clipping"\
 	    {{summary "If checked, clip to the viewing cube."}
-	    {see_also "ps"}}
+	    {see_also "postscript"}}
 
     button $top.okB -relief raised -text "OK"\
 	    -command "do_ps $id; catch {destroy $top}"
     hoc_register_data $top.okB "Create"\
 	    {{summary "Create the postscript file. The
-postscript dialog is then dismissed."} {see_also "ps"}}
+postscript dialog is then dismissed."} {see_also "postscript"}}
     button $top.createB -relief raised -text "Create"\
 	    -command "do_ps $id"
     hoc_register_data $top.createB "Create"\
-	    {{summary "Create the postscript file."} {see_also "ps"}}
+	    {{summary "Create the postscript file."} {see_also "postscript"}}
     button $top.dismissB -relief raised -text "Dismiss"\
 	    -command "catch { destroy $top }"
     hoc_register_data $top.dismissB "Dismiss"\
-	    {{summary "Dismiss the postscript tool."} {see_also "ps"}}
+	    {{summary "Dismiss the postscript tool."} {see_also "postscript"}}
 
     grid $top.fileE -sticky "ew" -in $top.fileF
     grid $top.fileF  $top.fileL -sticky "ew" -in $top.elF -pady 4
@@ -222,7 +222,7 @@ proc do_ps { id } {
     global ::tk::Priv
 
     cmd_win set $id
-    set ps_cmd "_mged_ps"
+    set ps_cmd "_mged_postscript"
 
     if {$ps_control($id,file) != ""} {
 	if {[file exists $ps_control($id,file)]} {

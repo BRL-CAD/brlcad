@@ -1455,7 +1455,7 @@ f_tie(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
 
 
 int
-f_ps(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
+f_postscript(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
 {
     int status;
     const char *av[2];
@@ -1465,7 +1465,7 @@ f_ps(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[
     if (argc < 2) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&vls, "help ps");
+	bu_vls_printf(&vls, "help postscript");
 	Tcl_Eval(interpreter, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -1482,7 +1482,7 @@ f_ps(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[
 
     vsp = view_state;  /* save state info pointer */
 
-    bu_free((void *)menu_state, "f_ps: menu_state");
+    bu_free((void *)menu_state, "f_postscript: menu_state");
     menu_state = dml->dml_menu_state;
 
     scroll_top = dml->dml_scroll_top;

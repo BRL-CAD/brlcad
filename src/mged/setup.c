@@ -260,7 +260,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"press", f_press, GED_FUNC_PTR_NULL},
     {"preview", cmd_ged_dm_wrapper, ged_preview},
     {"process", cmd_ged_plain_wrapper, ged_process},
-    {"ps", f_ps, GED_FUNC_PTR_NULL},
+    {"postscript", f_postscript, GED_FUNC_PTR_NULL},
     {"pull", cmd_ged_plain_wrapper, ged_pull},
     {"push", cmd_ged_plain_wrapper, ged_push},
     {"put", cmd_ged_plain_wrapper, ged_put},

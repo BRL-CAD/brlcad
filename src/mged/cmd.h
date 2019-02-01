@@ -147,7 +147,7 @@ extern int f_permute(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_plot(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_prefix(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_press(ClientData, Tcl_Interp *, int, const char *[]);
-extern int f_ps(ClientData, Tcl_Interp *, int, const char *[]);
+extern int f_postscript(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_put_sedit(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_qorot(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_qray(ClientData, Tcl_Interp *, int, const char *[]);
