@@ -49,6 +49,11 @@ git notes add -m "svn:revision:29886"
 # for subsequent fast-imports that will reference them as parents:
 git show-ref --heads --tags > ../brlcad_cvs_git-sha1.txt
 
+# List all blob SHA1 hashes, so we can detect in subsequent processing if SVN is
+# referencing an object we don't have from the git conversion.
+# (This line from https://stackoverflow.com/a/25954360/2037687)
+git rev-list --objects --all | git cat-file --batch-check='%(objectname) %(objecttype) %(rest)' | grep '^[^ ]* blob' | cut -d" " -f1,3- > ../brlcad_cvs_git_all_blob_sha1.txt
+
 # Comparing this to the svn checkout:
 git archive --format=tar --prefix=brlcad_cvs-r29886/ HEAD | gzip > ../brlcad_cvs-r29886.tar.gz
 # (assuming a local brlcad rsynced svn copy)
