@@ -227,6 +227,7 @@ set(LIBGED_SOURCES
   prcolor.c
   prefix.c
   preview.c
+  process.c
   protate.c
   ps.c
   pscale.c

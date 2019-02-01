@@ -164,7 +164,7 @@ bu_process_args(const char **cmd, const char * const **argv, struct bu_process *
 	*cmd = pinfo->cmd;
     }
     if (argv) {
-	*argv = (const char * const *)&(pinfo->argv);
+	*argv = (const char * const *)(pinfo->argv);
     }
     return pinfo->argc;
 }

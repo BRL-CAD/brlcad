@@ -255,6 +255,12 @@ GED_EXPORT extern int ged_lint(struct ged *gedp, int argc, const char *argv[]);
  */
 GED_EXPORT extern int ged_env(struct ged *gedp, int argc, const char *argv[]);
 
+/**
+ * List and abort subprocesses
+ */
+GED_EXPORT extern int ged_process(struct ged *gedp, int argc, const char *argv[]);
+
+
 
 __END_DECLS
 
