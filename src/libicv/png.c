@@ -36,12 +36,6 @@
 extern double *uchar2double(unsigned char *data, size_t size);
 extern unsigned char *data2uchar(const icv_image_t *bif);
 
-/* c99 doesn't declare these, but C++ does */
-#if (!defined(_WIN32) || defined(__CYGWIN__)) && !defined(__cplusplus)
-extern FILE *fdopen(int, const char *);
-#endif
-
-
 int
 png_write(icv_image_t *bif, const char *filename)
 {
@@ -62,7 +56,7 @@ png_write(icv_image_t *bif, const char *filename)
 
     fh = fopen(filename, "wb");
     if (UNLIKELY(fh==NULL)) {
-	perror("fdopen");
+	perror("fopen");
 	bu_log("ERROR: png_write failed to get a FILE pointer\n");
 	return 0;
     }
