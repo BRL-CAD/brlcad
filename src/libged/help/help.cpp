@@ -239,10 +239,10 @@ help_tokenize(size_t count, const char **files)
 int
 ged_help(struct ged *gedp, int argc, const char *argv[])
 {
-    char *dir;
+    char *dir = NULL;
     char **entries = NULL;
-    size_t count;
-    size_t words;
+    size_t count = 0;
+    size_t words = 0;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -259,6 +259,10 @@ ged_help(struct ged *gedp, int argc, const char *argv[])
 
     /* condense the file into searchable tokens */
     words = help_tokenize(count, (const char **)entries);
+
+    if (words == 0) {
+	return GED_ERROR;
+    }
 
     bu_free(dir, "free doc dir");
     bu_argv_free(count, entries);
