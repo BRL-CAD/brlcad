@@ -138,10 +138,6 @@ extern struct hostent *gethostbyname(const char *);
 #  define DMSG(s) /**/
 #endif
 
-#if !defined(_WIN32) || defined(__CYGWIN__)
-#include <errno.h>
-#endif
-
 int pkg_nochecking = 0;	/* set to disable extra checking for input */
 int pkg_permport = 0;	/* TCP port that pkg_permserver() is listening on XXX */
 
