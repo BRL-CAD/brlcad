@@ -80,6 +80,17 @@ ged_close(struct ged *gedp)
 	gedp->ged_wdbp = RT_WDB_NULL;
     }
 
+    /* Terminate any ged subprocesses */
+    if (gedp != GED_NULL) {
+	struct ged_subprocess *rrp;
+	for (BU_LIST_FOR(rrp, ged_subprocess, &gedp->gd_headSubprocess.l)) {
+	    if (!rrp->aborted) {
+		bu_terminate(bu_process_pid(rrp->p));
+		rrp->aborted = 1;
+	    }
+	}
+    }
+
     ged_free(gedp);
 }
 
