@@ -1950,6 +1950,23 @@ cmd_has_embedded_fb(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int 
     return TCL_OK;
 }
 
+int
+cmd_ps(ClientData UNUSED(clientData),
+	Tcl_Interp *interpreter,
+	int UNUSED(argc),
+	const char **UNUSED(argv))
+{
+    int ret = 0;
+    const char *av[3];
+    av[0] = "process";
+    av[1] = "list";
+    av[2] = '\0';
+    ret = ged_process(gedp, 2, (const char **)av);
+    /* For the next couple releases, print a rename notice */
+    Tcl_AppendResult(interpreter, "(Note: former 'ps' command has been renamed to 'postscript')\n", NULL);
+    Tcl_AppendResult(interpreter, bu_vls_addr(gedp->ged_result_str), NULL);
+    return (ret) ? TCL_ERROR : TCL_OK;
+}
 
 int
 cmd_stub(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int argc, const char *argv[])

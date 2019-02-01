@@ -77,6 +77,7 @@ extern int cmd_nop(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_oed(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_output_hook(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_overlay(ClientData, Tcl_Interp *, int, const char *[]);
+extern int cmd_ps(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_put(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_rot(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_rrt(ClientData, Tcl_Interp *, int, const char *[]);
