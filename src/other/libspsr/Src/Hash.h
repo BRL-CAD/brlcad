@@ -1,8 +1,9 @@
 #ifndef HASH_INCLUDED
 #define HASH_INCLUDED
 #ifdef WIN32
-#include <hash_map>
-using stdext::hash_map;
+#include <unordered_map>
+#define hash_map unordered_map
+using std::unordered_map;
 #else // !WIN32
 #include <ext/hash_map>
 using namespace __gnu_cxx;
