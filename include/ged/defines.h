@@ -118,15 +118,8 @@ __BEGIN_DECLS
 struct ged_subprocess {
     struct bu_list l;
     struct bu_process *p;
-#if defined(_WIN32) && !defined(__CYGWIN__)
-    HANDLE fd;
-    HANDLE hProcess;
-#else
-    int fd;
-#endif
     void *chan;
     int aborted;
-    void *data;
 };
 
 /* FIXME: should be private */
