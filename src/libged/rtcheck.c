@@ -43,22 +43,18 @@ extern FILE *fdopen(int fd, const char *mode);
 
 
 struct ged_rtcheck {
-    void *chan;
+    struct ged_subprocess *rrtp;
+    struct ged *gedp;
     FILE *fp;
-    struct bu_process *p;
     struct bn_vlblock *vbp;
     struct bu_list *vhead;
     double csize;
-    struct ged *gedp;
-    int pid;
-    Tcl_Interp *interp;
 };
 
 struct rtcheck_output {
     void *chan;
     struct ged *gedp;
     struct bu_process *p;
-    Tcl_Interp *interp;
 };
 
 
@@ -97,11 +93,11 @@ rtcheck_vector_handler(ClientData clientData, int UNUSED(mask))
     /* Get vector output from rtcheck */
     if (feof(rtcp->fp) || (value = getc(rtcp->fp)) == EOF) {
 
-	_ged_delete_io_handler((void *)rtcp->interp, rtcp->chan,
-		rtcp->p, BU_PROCESS_STDOUT, (void *)rtcp,
+	_ged_delete_io_handler(rtcp->gedp->ged_interp, rtcp->rrtp->chan,
+		rtcp->rrtp->p, BU_PROCESS_STDOUT, (void *)rtcp,
 		rtcheck_vector_handler);
 
-	bu_process_close(rtcp->p, BU_PROCESS_STDOUT);
+	bu_process_close(rtcp->rrtp->p, BU_PROCESS_STDOUT);
 
 	dl_set_flag(rtcp->gedp->ged_gdp->gd_headDisplay, DOWN);
 
@@ -110,11 +106,13 @@ rtcheck_vector_handler(ClientData clientData, int UNUSED(mask))
 	bn_vlblock_free(rtcp->vbp);
 
 	/* wait for the forked process */
-	retcode = bu_process_wait(NULL, rtcp->p, 0);
+	retcode = bu_process_wait(NULL, rtcp->rrtp->p, 0);
 	if (retcode != 0) {
 	    _ged_wait_status(rtcp->gedp->ged_result_str, retcode);
 	}
 
+	BU_LIST_DEQUEUE(&rtcp->rrtp->l);
+	BU_PUT(rtcp->rrtp, struct ged_subprocess);
 	BU_PUT(rtcp, struct ged_rtcheck);
 
 	return;
@@ -142,7 +140,7 @@ rtcheck_output_handler(ClientData clientData, int UNUSED(mask))
     }
 
     if (read_failed) {
-	_ged_delete_io_handler((void *)rtcop->interp, rtcop->chan,
+	_ged_delete_io_handler(rtcop->gedp->ged_interp, rtcop->chan,
 		rtcop->p, BU_PROCESS_STDERR, (void *)rtcop,
 		rtcheck_output_handler);
 
@@ -239,26 +237,28 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
 
     bu_process_close(p, BU_PROCESS_STDIN);
 
-    /* initialize the rtcheck structs */
+    /* create the rtcheck struct */
     BU_GET(rtcp, struct ged_rtcheck);
-    rtcp->p = p;
-    rtcp->pid = bu_process_pid(p);
+    rtcp->gedp = gedp;
     rtcp->fp = bu_process_open(p, BU_PROCESS_STDOUT);
     /* Needed on Windows for successful rtcheck drawing data communication */
     setmode(_fileno(rtcp->fp), O_BINARY);
     rtcp->vbp = rt_vlblock_init();
     rtcp->vhead = bn_vlblock_find(rtcp->vbp, 0xFF, 0xFF, 0x00);
     rtcp->csize = gedp->ged_gvp->gv_scale * 0.01;
-    rtcp->gedp = gedp;
-    rtcp->interp = (Tcl_Interp *)gedp->ged_interp;
 
+    /* create the ged_subprocess container */
+    BU_GET(rtcp->rrtp, struct ged_subprocess);
+    rtcp->rrtp->p = p;
+    rtcp->rrtp->aborted = 0;
+    _ged_create_io_handler(&(rtcp->rrtp->chan), p, BU_PROCESS_STDOUT, TCL_READABLE, (void *)rtcp, rtcheck_vector_handler);
+    BU_LIST_INIT(&rtcp->rrtp->l);
+    BU_LIST_APPEND(&gedp->gd_headSubprocess.l, &rtcp->rrtp->l);
+
+    /* create the rtcheck_output container */
     BU_GET(rtcop, struct rtcheck_output);
     rtcop->p = p;
     rtcop->gedp = gedp;
-    rtcop->interp = (Tcl_Interp *)gedp->ged_interp;
-
-    /* file handlers */
-    _ged_create_io_handler(&(rtcp->chan), p, BU_PROCESS_STDOUT, TCL_READABLE, (void *)rtcp, rtcheck_vector_handler);
     _ged_create_io_handler(&(rtcop->chan), p, BU_PROCESS_STDERR, TCL_READABLE, (void *)rtcop, rtcheck_output_handler);
 
     bu_free(gd_rt_cmd, "free gd_rt_cmd");
