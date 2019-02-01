@@ -224,8 +224,8 @@ bu_process_exec(struct bu_process **p, const char *cmd, int argc, const char **a
 #endif
 {
     int pret = 0;
-#ifdef HAVE_UNISTD_H
     int ac = argc;
+#ifdef HAVE_UNISTD_H
     int pid;
     int pipe_in[2];
     int pipe_out[2];
