@@ -47,7 +47,7 @@ git notes add -m "svn:revision:29886"
 
 # Prepare a list of the SHA1 commits corresponding the the heads and tags, to allow
 # for subsequent fast-imports that will reference them as parents:
-git show-ref --heads --tags > ../brlcad_cvs_git-sha1.txt
+git show-ref --heads --tags > ../brlcad_cvs_git_heads_sha1.txt
 
 # List all blob SHA1 hashes, so we can detect in subsequent processing if SVN is
 # referencing an object we don't have from the git conversion.
