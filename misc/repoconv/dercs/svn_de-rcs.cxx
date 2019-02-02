@@ -58,14 +58,14 @@ std::string de_rcs(const char *cstr, int len)
 
     std::string buff01;
     buff01.assign(cstr, len);
-    std::string buff02 = std::regex_replace(buff01, rcs_date, "$Date:");
-    std::string buff03 = std::regex_replace(buff02, rcs_header, "$Header:");
-    std::string buff04 = std::regex_replace(buff03, rcs_id, "$Id:");
-    std::string buff05 = std::regex_replace(buff04, rcs_log, "$Log:");
-    std::string buff06 = std::regex_replace(buff05, rcs_revision, "$Revision:");
-    std::string buff07 = std::regex_replace(buff06, rcs_source, "$Source:");
-    std::string buff08 = std::regex_replace(buff07, rcs_author, "$Author:");
-    std::string buff09 = std::regex_replace(buff08, rcs_locker, "$Locker:");
+    std::string buff02 = std::regex_replace(buff01, rcs_date, "$Date");
+    std::string buff03 = std::regex_replace(buff02, rcs_header, "$Header");
+    std::string buff04 = std::regex_replace(buff03, rcs_id, "$Id");
+    std::string buff05 = std::regex_replace(buff04, rcs_log, "$Log");
+    std::string buff06 = std::regex_replace(buff05, rcs_revision, "$Revision");
+    std::string buff07 = std::regex_replace(buff06, rcs_source, "$Source");
+    std::string buff08 = std::regex_replace(buff07, rcs_author, "$Author");
+    std::string buff09 = std::regex_replace(buff08, rcs_locker, "$Locker");
 
 #if 0
     if (buff01 != buff09) {
