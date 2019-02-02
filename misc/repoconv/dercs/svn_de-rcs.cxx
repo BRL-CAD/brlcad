@@ -177,8 +177,10 @@ process_node(std::ifstream &infile, std::ofstream &outfile)
     std::vector<std::string>::iterator nl_it;
 
     // Find node path, or bail if we hit a new revision first
+    size_t line_start = infile.tellg();
     while (!npath.length() && std::getline(infile, line)) {
 	if (!sfcmp(line, rkey)) {
+	    infile.seekg(line_start);
 	    return -1;  // Done with revision
 	}
 	node_lines.push_back(line);
