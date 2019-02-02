@@ -144,6 +144,8 @@ set(misc_ignore_files
   repoconv/svn2git/svn-fast-export/samples/two-projects.rules
   repoconv/svn2git/svn-fast-export/svn.cpp
   repoconv/svn2git/svn-fast-export/svn.h
+  repoconv/svnfexport/sha1.hpp
+  repoconv/svnfexport/svnfexport.cxx
   uncpowerplant2g.sh
   win32-msvc/CMakeLists.txt
   win32-msvc/Dll/BrlcadCore.def
