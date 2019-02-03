@@ -5,7 +5,10 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <locale>
+#include <iomanip>
 #include "sha1.hpp"
+#include "svn_date.h"
 
 enum svn_node_kind_t { nkerr, nfile, ndir };
 enum svn_node_action_t { naerr, nchange, nadd, ndelete, nreplace };
@@ -64,6 +67,7 @@ std::map<std::string,std::string> branch_head_ids;
 std::map<std::string,std::string> svn_sha1_to_git_sha1;
 
 std::set<std::string> blob_sha1;
+std::map<std::string,std::string> author_map;
 
 /* Branches */
 std::set<std::string> branches;
@@ -162,8 +166,9 @@ get_rev_props(std::ifstream &infile, struct svn_revision *rev)
 	long int v = std::stol(value);
 
 	// Value associated with V line
-	char vbuff[v+1] = {'\0'};
+	char vbuff[v+1];
 	infile.read(vbuff, v);
+	vbuff[v] = '\0';
 	value = std::string(vbuff);
 
 	// Have key value
@@ -220,8 +225,9 @@ get_node_props(std::ifstream &infile, struct svn_node *n)
 	long int v = std::stol(value);
 
 	// Value associated with V line
-	char vbuff[v+1] = {'\0'};
+	char vbuff[v+1];
 	infile.read(vbuff, v);
+	vbuff[v] = '\0';
 	value = std::string(vbuff);
 
 	// Have key value
@@ -335,7 +341,7 @@ process_node(std::ifstream &infile, struct svn_revision *rev)
 	go_buff.append(cbuffer, n.text_content_length);
 	std::string git_sha1 = sha1_hash_hex(go_buff.c_str(), go_buff.length());
 	svn_sha1_to_git_sha1[n.text_content_sha1] = git_sha1;
-	delete cbuffer;
+	delete[] cbuffer;
 	/* Stash information on how to read the blob */
 	sha1_blobs.insert(std::pair<std::string,std::pair<size_t, long int>>(n.text_content_sha1, std::pair<size_t, long int>(n.content_start, n.text_content_length)));
 	/* Jump over the content and continue */
@@ -647,7 +653,7 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile,  long int re
 
 	    outfile << "commit " << rev.nodes[0].branch << "\n";
 	    outfile << "mark :" << rev.revision_number << "\n";
-	    outfile << "committer " << "unknown <brlcad@unknown> 1200077647 -0500" << "\n";
+	    outfile << "committer " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
 	    outfile << "data " << rev.commit_msg.length() << "\n";
 	    outfile << rev.commit_msg << "\n";
 	    outfile << "from " << branch_head_ids[rev.nodes[0].branch] << "\n";
@@ -730,19 +736,35 @@ void
 load_blob_sha1s(const char *f)
 {
 
-    std::ifstream hfile(f);
+    std::ifstream bfile(f);
     std::string line;
-    while (std::getline(hfile, line)) {
+    while (std::getline(bfile, line)) {
 	size_t spos = line.find_first_of(" ");
 	std::string hsha1 = line.substr(0, spos);
 	blob_sha1.insert(hsha1);
     }
 }
 
+
+void
+load_author_map(const char *f)
+{
+
+    std::ifstream afile(f);
+    std::string line;
+    while (std::getline(afile, line)) {
+	size_t spos = line.find_first_of(" ");
+	std::string svnauthor = line.substr(0, spos);
+	std::string gitauthor = line.substr(spos+1, std::string::npos);
+	std::cout << svnauthor << " -> " << gitauthor << "\n";
+	author_map[svnauthor] = gitauthor;
+    }
+}
+
 int main(int argc, const char **argv)
 {
     if (argc < 4) {
-	std::cerr << "svnfexport dumpfile head_sha1s blob_sha1s\n";
+	std::cerr << "svnfexport dumpfile author_map head_sha1s blob_sha1s\n";
 	return 1;
     }
 
@@ -764,10 +786,13 @@ int main(int argc, const char **argv)
     branch_mappings[std::string("framebuffer-experiment")] = std::string("framebuffer-experiment");
 
     /* Read in pre-existing branch sha1 heads from git */
-    load_branch_head_sha1s(argv[2]);
+    load_author_map(argv[2]);
+
+    /* Read in pre-existing branch sha1 heads from git */
+    load_branch_head_sha1s(argv[3]);
 
     /* Read in pre-existing blob sha1s from git */
-    load_blob_sha1s(argv[3]);
+    load_blob_sha1s(argv[4]);
 
     int rev_cnt = load_dump_file(argv[1]);
     if (rev_cnt > 0) {
