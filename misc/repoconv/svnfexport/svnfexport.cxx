@@ -63,6 +63,8 @@ std::map<std::string,std::string> current_sha1;
 std::map<std::string,std::string> branch_head_ids;
 std::map<std::string,std::string> svn_sha1_to_git_sha1;
 
+std::set<std::string> blob_sha1;
+
 /* Branches */
 std::set<std::string> branches;
 /* Tags */
@@ -648,7 +650,9 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile,  long int re
 	    outfile << "committer " << "unknown <brlcad@unknown> 1200077647 -0500" << "\n";
 	    outfile << "data " << rev.commit_msg.length() << "\n";
 	    outfile << rev.commit_msg << "\n";
-	    outfile << "from :" << rev.revision_number - 1 << "\n";
+	    outfile << "from " << branch_head_ids[rev.nodes[0].branch] << "\n";
+	    std::string new_mark = std::string(":") + std::to_string(rev.revision_number);
+	    branch_head_ids[rev.nodes[0].branch] = new_mark;
 
 	    for (size_t n = 0; n != rev.nodes.size(); n++) {
 		struct svn_node &node = rev.nodes[n];
@@ -708,9 +712,39 @@ load_dump_file(const char *f)
     return rev_cnt;
 }
 
+void
+load_branch_head_sha1s(const char *f)
+{
+    std::ifstream hfile(f);
+    std::string line;
+    while (std::getline(hfile, line)) {
+	size_t spos = line.find_first_of(" ");
+	std::string hsha1 = line.substr(0, spos);
+	std::string hbranch = line.substr(spos+1, std::string::npos);
+	std::cout << hbranch << ": " << hsha1 << "\n";
+	branch_head_ids[hbranch] = hsha1;
+    }
+}
+
+void
+load_blob_sha1s(const char *f)
+{
+
+    std::ifstream hfile(f);
+    std::string line;
+    while (std::getline(hfile, line)) {
+	size_t spos = line.find_first_of(" ");
+	std::string hsha1 = line.substr(0, spos);
+	blob_sha1.insert(hsha1);
+    }
+}
+
 int main(int argc, const char **argv)
 {
-    if (argc == 1) return 1;
+    if (argc < 4) {
+	std::cerr << "svnfexport dumpfile head_sha1s blob_sha1s\n";
+	return 1;
+    }
 
     /* Populate valid_projects */
     valid_projects.insert(std::string("brlcad"));
@@ -729,6 +763,11 @@ int main(int argc, const char **argv)
     /* Branch/tag name mappings */
     branch_mappings[std::string("framebuffer-experiment")] = std::string("framebuffer-experiment");
 
+    /* Read in pre-existing branch sha1 heads from git */
+    load_branch_head_sha1s(argv[2]);
+
+    /* Read in pre-existing blob sha1s from git */
+    load_blob_sha1s(argv[3]);
 
     int rev_cnt = load_dump_file(argv[1]);
     if (rev_cnt > 0) {
