@@ -663,7 +663,21 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile,  long int re
 	    for (size_t n = 0; n != rev.nodes.size(); n++) {
 		struct svn_node &node = rev.nodes[n];
 		std::cout << "	Processing node " << print_node_action(node.action) << " " << node.local_path << " into branch " << node.branch << "\n";
-		outfile << "M 100755 " << svn_sha1_to_git_sha1[current_sha1[node.path]] << " \"" << node.local_path << "\"\n";
+
+		switch (node.action) {
+		    case nchange:
+			outfile << "M ";
+			break;
+		    default:
+			std::cerr << "Unhandled node action type " << print_node_action(node.action) << "\n";
+			outfile << "? ";
+		}
+		if (exec_paths.find(node.path) != exec_paths.end()) {
+		    outfile << "100755 ";
+		} else {
+		    outfile << "100644 ";
+		}
+		outfile << svn_sha1_to_git_sha1[current_sha1[node.path]] << " \"" << node.local_path << "\"\n";
 	    }
 	}
     }
