@@ -25,6 +25,39 @@ find . -type f -exec sed -i 's/$Source:[^$;"]*/$Source/' {} \;
 sed -i 's/$Author:[^$;"]*/$Author/' misc/Attic/cvs2cl.pl,v
 sed -i 's/$Author:[^$;"]*/$Author/' sh/Attic/cvs2cl.pl,v
 sed -i 's/$Locker:[^$;"]*/$Locker/' src/other/URToolkit/tools/mallocNd.c,v
+
+# Note - it is possible (with a mode to cvs-fast-export source code) to completely
+# skip the .cvsignore -> .gitignore conversion.  This might be something we want
+# to do if we're not going to try and preserve svn's ignore properties...
+
+#--- cvs-fast-export-1.45/export.c       2018-07-12 06:15:39.000000000 -0400
+#+++ cvs-fast-export-1.45-new/export.c   2019-02-03 12:18:14.166917182 -0500
+#@@ -139,6 +139,10 @@
+#     export_stats.snapsize += len;
+# 
+#     if (strcmp(node->commit->master->name, ".cvsignore") == 0) {
+#+       return;
+#+    }
+#+
+#+    if (strcmp(node->commit->master->name, ".cvsignore") == 0) {
+#        extralen = sizeof(CVS_IGNORES) - 1;
+#     }
+# 
+#@@ -451,7 +455,7 @@
+#     if (report)
+#        printf("mark :%d\n", (int)mark);
+#     if (report) {
+#-       static bool need_ignores = true;
+#+       static bool need_ignores = false;
+#        const char *ts;
+#        ct = display_date(commit, mark, opts->force_dates);
+#        ts = utc_offset_timestamp(&ct, timezone);
+#
+#
+# find . -name \*cvsignore\* |xargs rm
+# cat CVSROOT/history | grep -v cvsignore > history_rewrite
+# mv history_rewrite CVSROOT/history
+
 find . | cvs-fast-export -A ../../authormap > ../../brlcad_cvs_git.fi
 cd ../
 rm -f ../cvs_all_fast_export_audit.txt
