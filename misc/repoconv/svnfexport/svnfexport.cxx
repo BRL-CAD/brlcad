@@ -10,11 +10,6 @@
 enum svn_node_kind_t { nkerr, nfile, ndir };
 enum svn_node_action_t { naerr, nchange, nadd, ndelete, nreplace };
 
-std::map<std::string,std::pair<size_t, long int>> sha1_blobs;
-
-std::set<std::string> exec_paths;
-std::map<std::string,std::string> current_sha1;
-
 struct svn_node {
     /* Dump file contents */
     long int revision_number;
@@ -48,6 +43,7 @@ struct svn_node {
 struct svn_revision {
     /* Dump file contents */
     long int revision_number;
+    std::string project;
     std::string author;
     std::string timestamp;
     std::string commit_msg;
@@ -60,77 +56,34 @@ struct svn_revision {
     std::string merged_from;
 };
 
-struct svn_repo_data {
-    /* Commits not associated with any project/branch */
-    std::set<long int> unaffiliated;
 
-    /* Branches */
-    std::set<std::string> branches;
-    /* Tags */
-    std::set<std::string> tags;
+std::map<std::string,std::pair<size_t, long int>> sha1_blobs;
+std::set<std::string> exec_paths;
+std::map<std::string,std::string> current_sha1;
+std::map<std::string,std::string> branch_head_ids;
+std::map<std::string,std::string> svn_sha1_to_git_sha1;
 
-    /* Subversion allows as a technical matter the editing of tags, since
-     * they are just more paths copied into specific directories.  Build
-     * up some sets with relevant information */
-    std::set<std::string> edited_tags;
-    /* The last subversion revision that makes a change to the tag */
-    std::map<std::string, long int> edited_tag_max_rev;
-};
+/* Branches */
+std::set<std::string> branches;
+/* Tags */
+std::set<std::string> tags;
 
-struct svn_repo {
-    std::string dump_file;
-    int dump_format_version;
-    std::string uuid;
-    std::map<long int, struct svn_revision> revs;
-    std::map<std::string, std::string> pp;
-    std::map<std::string, std::string> bp;
-    std::map<std::string, std::string> tp;
-    std::set<std::string> active_projects;
-    struct svn_repo_data *rd;
-};
+/* Subversion allows as a technical matter the editing of tags, since
+ * they are just more paths copied into specific directories.  Build
+ * up some sets with relevant information */
+std::set<std::string> edited_tags;
+/* The last subversion revision that makes a change to the tag */
+std::map<std::string, long int> edited_tag_max_rev;
 
-/**
- * Parses a dump file and returns a repository information
- * structure, or NULL on failure.
- *
- * Assumes dump file format as documented here:
- * http://svn.apache.org/repos/asf/subversion/trunk/notes/dump-load-format.txt
- */
-int load_dump(const char *f, struct svn_repo *r, std::string *llog);
+std::map<long int, struct svn_revision> revs;
 
 
-/**
- * Given a populated svn_repo structure, performs a variety of analysis
- * operations to build up useful data sets.
- *
- * Some information is stored in the svn_repo containers for ease of access,
- * and some sets are built up in the svn_repo_data container.
- *
- * Analyze uses the maps in svn_repo, if populated, to identify specific
- * substrings of the subversion paths as special case rules.  Generally, the
- * flow is as follow:
- *
- *  1. If the first element of the path matches a project_path key, the commit
- *  and path are noted as being part of that project and the rest of the path
- *  is processed as follows.
- *
- *  2. If the path's first element matches trunk, branches or tags it is so
- *  categorized.  For trunk, the remainder of the path is the local file system
- *  path.  For branches and tags, the next element in the path is the associated
- *  branch or tag.
- *
- *  3. If no match to trunk, branches, or tags is found for the second element,
- *  the branch_path and tag_path maps are checked for any special case mappings.
- *  If any are found, the second element is mapped to the branch/tag and the
- *  remainder of the path is considered the local file system path.
- *
- *  A node will always map uniquely to at most one project and branch.  A
- *  revision may map (technically speaking) to more than one of either, since
- *  the groupings are implicit in paths.
- *
- */
-int analyze_dump(struct svn_repo *r, const char *default_project);
+/* Holds strings identifying all known projects in the svn repo */
+std::set<std::string> valid_projects;
 
+
+std::map<std::string, std::string> branch_mappings;
+std::map<std::string, std::string> tag_mappings;
 
 #define sfcmp(_s1, _s2) _s1.compare(0, _s2.size(), _s2) && _s1.size() >= _s2.size()
 #define svn_str(_s1, _s2) (!sfcmp(_s1, _s2)) ? _s1.substr(_s2.size(), _s1.size()-_s2.size()) : std::string()
@@ -285,46 +238,6 @@ get_node_props(std::ifstream &infile, struct svn_node *n)
 }
 
 
-void
-print_revision(struct svn_revision &rev)
-{
-    std::cout << "Revision: " << rev.revision_number << std::endl;
-    std::cout << "svn-author: " << rev.author << std::endl;
-    std::cout << "svn-date: " << rev.timestamp << std::endl;
-    std::cout << "svn-log: " << rev.commit_msg << std::endl;
-    if (rev.nodes.size() > 0) {
-	std::cout << "Node paths: " << std::endl;
-	for (size_t n = 0; n < rev.nodes.size(); n++) {
-	    std::cout << "     " << rev.nodes[n].path << std::endl;
-	}
-    }
-}
-
-void
-print_node(struct svn_node &n)
-{
-    std::cout << "Revision: " << n.revision_number << std::endl;
-    std::cout << "Node-path: " << n.path << std::endl;
-    std::cout << "Node-kind: " << n.kind << std::endl;
-    std::cout << "Node-action: " << n.action << std::endl;
-    std::cout << "Node-copyfrom-rev: " << n.copyfrom_rev << std::endl;
-    std::cout << "Node-copyfrom-path: " << n.copyfrom_path << std::endl;
-    std::cout << "Text-copy-source-md5: " << n.text_copy_source_md5 << std::endl;
-    std::cout << "Text-copy-source-sha1: " << n.text_copy_source_sha1  << std::endl;
-    std::cout << "Text-content-md5: " << n.text_content_md5 << std::endl;
-    std::cout << "Text-content-sha1: " << n.text_content_sha1 << std::endl;
-    std::cout << "Text-content-length: " << n.text_content_length << std::endl;
-    std::cout << "Prop-content-length: " << n.prop_content_length << std::endl;
-    std::cout << "Content-length: " << n.content_length << std::endl;
-    if (n.node_props.size() > 0) {
-	std::cout << "Properies (" << n.node_props.size() << "): " << n.content_length << std::endl;
-	std::map<std::string, std::string>::iterator m_it;
-	for (m_it = n.node_props.begin(); m_it != n.node_props.end(); m_it++) {
-	    std::cout << "   " << m_it->first << " -> " << m_it->second << std::endl;
-	}
-    }
-}
-
 /* Return 1 if we successfully processed a node, else 0 */
 int
 process_node(std::ifstream &infile, struct svn_revision *rev)
@@ -409,19 +322,21 @@ process_node(std::ifstream &infile, struct svn_revision *rev)
 
     // If we have content, store the file offset and jump the seek beyond it
     if (n.text_content_length > 0) {
-	// TODO - maybe as an option, check the md5 and sha1 of the found
-	// content against the stored properties as a data integrity and
-	// accuracy guarantee
+	/* Figure out how Git will label this blob */
 	n.content_start = infile.tellg();
-	if (n.path == "brlcad/trunk/autogen.sh" && rev->revision_number == 28910) {
-	    std::cout << rev->revision_number << ": " << n.text_content_sha1 << "\n";
-	    std::ofstream outfile2("autogen.sh", std::ios::out | std::ios::binary);
-	    char *buffer = new char [n.text_content_length];;
-	    infile.read(buffer, n.text_content_length);
-	    outfile2.write(buffer, n.text_content_length);
-	    outfile2.close();
-	}
+	char *cbuffer = new char [n.text_content_length];;
+	infile.read(cbuffer, n.text_content_length);
+	std::string go_buff;
+	go_buff.append("blob ");
+	go_buff.append(std::to_string(n.text_content_length));
+	go_buff.append(1, '\0');
+	go_buff.append(cbuffer, n.text_content_length);
+	std::string git_sha1 = sha1_hash_hex(go_buff.c_str(), go_buff.length());
+	svn_sha1_to_git_sha1[n.text_content_sha1] = git_sha1;
+	delete cbuffer;
+	/* Stash information on how to read the blob */
 	sha1_blobs.insert(std::pair<std::string,std::pair<size_t, long int>>(n.text_content_sha1, std::pair<size_t, long int>(n.content_start, n.text_content_length)));
+	/* Jump over the content and continue */
 	size_t after_content = n.content_start + n.text_content_length + 1;
 	infile.seekg(after_content);
     }
@@ -435,7 +350,7 @@ process_node(std::ifstream &infile, struct svn_revision *rev)
 
 /* Return 1 if we successfully processed a revision, else 0 */
 int
-process_revision(std::ifstream &infile, struct svn_repo *r)
+process_revision(std::ifstream &infile)
 {
     std::string rkey("Revision-number: ");
     std::string ckey("Content-length: ");
@@ -475,66 +390,46 @@ process_revision(std::ifstream &infile, struct svn_repo *r)
 	node_ret = process_node(infile, &rev);
     }
 
-    r->revs.insert(std::pair<long int, struct svn_revision>(rev.revision_number, rev));
+    // While it is techically possible to have multi-project commits (and there
+    // are some in BRL-CAD's early history) the commit range we are concerned with
+    // for appending onto the CVS git conversion does not have any such commits.
+    // Accordingly, can use the project from the first node path for the whole
+    // revision.
+    if (rev.nodes.size() > 0) {
+	rev.project = rev.nodes[0].project; 
+    }
+
+    revs.insert(std::pair<long int, struct svn_revision>(rev.revision_number, rev));
     return success;
 }
 
-// TODO - support verbose option that will do timed reporting (every n seconds,
-// print out current processing revision)
-int
-load_dump(const char *f, struct svn_repo *r, std::string *llog)
-{
-    int revs = 0;
-    r->dump_file = std::string(f);
-    std::ifstream infile(f);
-    if (!infile.good()) return -1;
-    std::string line;
-    std::string fmtkey("SVN-fs-dump-format-version: ");
-    int dump_format_version = -1;
-    // The first non-empty line has to be the format version, or we're done.
-    while (std::getline(infile, line) && !line.length());
-    if (line.compare(0, fmtkey.length(), fmtkey)) {
-	if (llog) (*llog).append("SVN: load_dump error, no format found\n");
-	return -1;
-    }
 
-    // Grab the format number
-    r->dump_format_version = svn_lint(line, fmtkey);
-
-    while (!r->uuid.length() && std::getline(infile, line)) {
-	r->uuid = svn_str(line, std::string("UUID: "));
-    }
-
-    /* As long as we're not done, read revisions */
-    while (infile.peek() != EOF) {
-	revs += process_revision(infile, r);
-    }
-
-    infile.close();
-
-    return revs;
-}
-
-std::string
-node_project(const char *d, std::map<std::string, std::string> &pp, std::string &wpath)
+void
+node_path_split(std::string &node_path, std::string &project, std::string &branch, std::string &local_path, int *is_tag)
 {
     std::string t("trunk");
     std::string b("branches");
     std::string tag("tags");
-    std::string proj;
+    std::string wpath = node_path;
+    std::string bs, rp;
+
+    /* First, find the project */
     size_t spos = wpath.find_first_of("/");
     if (spos != std::string::npos) {
+	/* If we need to split the path, do so */
 	std::string ps = wpath.substr(0, spos);
-	if (pp.find(ps) != pp.end()) {
-	    proj = pp[ps];
+	if (valid_projects.find(ps) != valid_projects.end()) {
+	    project = ps;
 	    if (wpath.length() > spos + 1 && spos != std::string::npos) {
 		wpath = wpath.substr(spos + 1, std::string::npos);
 	    } else {
 		wpath = std::string();
 	    }
 	} else {
+	    // If we don't have an explicit project string, but we do have
+	    // one of the trunk/branches/tags paths, it's brlcad
 	    if (!ps.compare(t) || !ps.compare(b) || !ps.compare(tag)) {
-		proj = std::string(d);
+		project = std::string("brlcad");
 		if (wpath.length() > spos + 1 && spos != std::string::npos) {
 		    wpath = wpath.substr(spos + 1, std::string::npos);
 		} else {
@@ -543,23 +438,13 @@ node_project(const char *d, std::map<std::string, std::string> &pp, std::string 
 	    }
 	}
     } else {
-	if (pp.find(wpath) != pp.end()) {
-	    proj = pp[wpath];
+	/* No subpaths - if we know a project, it's the string itself... */
+	if (valid_projects.find(wpath) != valid_projects.end()) {
+	    project = wpath;
 	    wpath = std::string();
 	}
     }
-    return proj;
-}
-
-
-std::string
-node_branch(std::map<std::string, std::string> &bp, std::map<std::string, std::string> &tp, std::string &wpath, int *is_tag)
-{
-    size_t spos;
-    std::string bs, rp;
-    std::string t("trunk");
-    std::string b("branches");
-    std::string tag("tags");
+    /* Next, find the branch */
     *is_tag = 0;
 
     // Is it trunk?
@@ -569,7 +454,7 @@ node_branch(std::map<std::string, std::string> &bp, std::map<std::string, std::s
 	} else {
 	    wpath = std::string();
 	}
-	return std::string("refs/heads/master");
+	branch = std::string("refs/heads/master");
     }
 
     // Is it a branch?
@@ -578,7 +463,7 @@ node_branch(std::map<std::string, std::string> &bp, std::map<std::string, std::s
 	    wpath = wpath.substr(b.length() + 1, std::string::npos);
 	} else {
 	    // Huh?? branches with nothing after it??
-	    return std::string();
+	    std::cerr << "Warning - branch path with nothing after branch dir: " << node_path << "\n";
 	}
 	spos = wpath.find_first_of("/");
 	if (spos != std::string::npos) {
@@ -588,7 +473,7 @@ node_branch(std::map<std::string, std::string> &bp, std::map<std::string, std::s
 	    bs = wpath;
 	    wpath = std::string();
 	}
-	return std::string("refs/heads/") + bs;
+	branch = std::string("refs/heads/") + bs;
     }
 
     // Is it a tag?
@@ -598,7 +483,7 @@ node_branch(std::map<std::string, std::string> &bp, std::map<std::string, std::s
 	    wpath = wpath.substr(tag.length() + 1, std::string::npos);
 	} else {
 	    // Huh?? tags with nothing after it??
-	    return std::string();
+	    std::cerr << "Warning - tag path with nothing after tag dir: " << node_path << "\n";
 	}
 	spos = wpath.find_first_of("/");
 	if (spos != std::string::npos) {
@@ -608,44 +493,64 @@ node_branch(std::map<std::string, std::string> &bp, std::map<std::string, std::s
 	    bs = wpath;
 	    wpath = std::string();
 	}
-	return bs;
+	branch = bs;
     }
 
     // Not one of the standards, see if it's called out in the maps
     spos = wpath.find_first_of("/");
     bs = (spos != std::string::npos) ? wpath.substr(0, spos) : wpath;
-    if (bp.find(bs) != bp.end() || tp.find(bs) != tp.end()) {
+    if (branch_mappings.find(bs) != branch_mappings.end() || tag_mappings.find(bs) != tag_mappings.end()) {
 	wpath = (spos == std::string::npos) ? std::string() : wpath.substr(bs.length() + 1, std::string::npos);
-	if (tp.find(bs) != tp.end()) {
+	if (tag_mappings.find(bs) != tag_mappings.end()) {
 	    *is_tag = 1;
-	    return tp[bs];
+	    branch = tag_mappings[bs];
 	}
-     	return bp[bs];
+     	branch = branch_mappings[bs];
     }
 
-    return std::string();
+    local_path = wpath;
 }
 
-
-int
-analyze_dump(struct svn_repo *rp, const char *default_project)
+/**
+ * Performs a variety of analysis operations to build up useful data sets.
+ *
+ * Generally, the flow is as follow:
+ *
+ *  1. If the first element of the path matches a project_path key, the commit
+ *  and path are noted as being part of that project and the rest of the path
+ *  is processed as follows.
+ *
+ *  2. If the path's first element matches trunk, branches or tags it is so
+ *  categorized.  For trunk, the remainder of the path is the local file system
+ *  path.  For branches and tags, the next element in the path is the associated
+ *  branch or tag.
+ *
+ *  3. If no match to trunk, branches, or tags is found for the second element,
+ *  the branch_path and tag_path maps are checked for any special case mappings.
+ *  If any are found, the second element is mapped to the branch/tag and the
+ *  remainder of the path is considered the local file system path.
+ *
+ *  A node will always map uniquely to at most one project and branch.  A
+ *  revision may map (technically speaking) to more than one of either, since
+ *  the groupings are implicit in paths.
+ *
+ */
+void
+analyze_dump()
 {
     std::map<long int, struct svn_revision>::iterator r_it;
-    for (r_it = rp->revs.begin(); r_it != rp->revs.end(); r_it++) {
+    for (r_it = revs.begin(); r_it != revs.end(); r_it++) {
 	long int maxrev = 0;
 	struct svn_revision &rev = r_it->second;
 	for (size_t n = 0; n != rev.nodes.size(); n++) {
 	    struct svn_node &node = rev.nodes[n];
 	    // Break up paths and build tag/branch lists
-	    std::string wpath = node.path;
-	    node.project = node_project(default_project, rp->pp, wpath);
-	    node.branch = node_branch(rp->bp, rp->tp, wpath, &(node.tag_path));
-	    node.local_path = wpath;
+	    node_path_split(node.path, node.project, node.branch, node.local_path, &(node.tag_path));
 	    if (node.branch.length()) {
 		if (node.tag_path) {
-		    rp->rd->tags.insert(node.branch);
+		    tags.insert(node.branch);
 		} else {
-		    rp->rd->branches.insert(node.branch);
+		    branches.insert(node.branch);
 		}
 	    }
 	    // Find move + edit operations
@@ -656,8 +561,8 @@ analyze_dump(struct svn_repo *rp, const char *default_project)
 	    // Spot tag edits
 	    if (node.text_content_length > 0 && node.tag_path) {
 		node.tag_edit = 1;
-		rp->rd->edited_tags.insert(node.branch);
-		rp->rd->edited_tag_max_rev[node.branch] = rev.revision_number;
+		edited_tags.insert(node.branch);
+		edited_tag_max_rev[node.branch] = rev.revision_number;
 	    }
 	    // Branch add
 	    if (node.kind == ndir && node.action == nadd && node.branch.length() && !node.local_path.length() && !node.tag_path) {
@@ -688,9 +593,9 @@ analyze_dump(struct svn_repo *rp, const char *default_project)
 			int is_tag = 0;
 			size_t cpos = pline.find_first_of(":");
 			std::string mpath = pline.substr(1, cpos - 1);
-			std::string project = node_project(default_project, rp->pp, mpath);
+			std::string mproject, cbranch, mlocal_path;
+			node_path_split(mpath, mproject, cbranch, mlocal_path, &is_tag);
 			std::string revs = pline.substr(cpos+1, std::string::npos);
-			std::string cbranch = node_branch(rp->bp, rp->tp, mpath, &is_tag);
 			size_t nspos = revs.find_last_of(",-");
 			std::string hrev = (nspos == std::string::npos) ? revs : revs.substr(nspos+1, std::string::npos);
 			long int crev = std::stol(hrev);
@@ -705,28 +610,11 @@ analyze_dump(struct svn_repo *rp, const char *default_project)
     }
 }
 
-void analyze_svn(struct svn_repo *r) {
-    r->pp["brlcad"] = "brlcad";
-    r->pp["gct"] = "gct";
-    r->pp["geomcore"] = "geomcore";
-    r->pp["iBME"] = "iBME";
-    r->pp["isst"] = "isst";
-    r->pp["jbrlcad"] = "jbrlcad";
-    r->pp["osl"] = "osl";
-    r->pp["ova"] = "ova";
-    r->pp["rt^3"] = "rt_3";
-    r->pp["rtcmp"] = "rtcmp";
-    r->pp["web"] = "web";
-    r->pp["webcad"] = "webcad";
-    r->bp["framebuffer-experiment"] = "framebuffer-experiment";
-    analyze_dump(r, "brlcad");
-}
 
-
-void rev_fast_export(std::ifstream &infile, std::ofstream &outfile,  struct svn_repo *rp, long int rev_num)
+void rev_fast_export(std::ifstream &infile, std::ofstream &outfile,  long int rev_num)
 {
     std::map<long int, struct svn_revision>::iterator r_it;
-    for (r_it = rp->revs.begin(); r_it != rp->revs.end(); r_it++) {
+    for (r_it = revs.begin(); r_it != revs.end(); r_it++) {
 	struct svn_revision &rev = r_it->second;
 
 	// If we have a text content sha1, update the map
@@ -740,30 +628,19 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile,  struct svn_
 	    }
 	}
 
-	std::map<struct svn_node *, std::string> git_sha1_map;
 	if (rev_num == rev.revision_number) {
 	    std::cout << "Processing revision " << rev.revision_number << "\n";
 	    for (size_t n = 0; n != rev.nodes.size(); n++) {
 		struct svn_node &node = rev.nodes[n];
-		std::pair<size_t, long int> sha1_info = sha1_blobs[current_sha1[node.path]];
-		char *buffer = new char [sha1_info.second];
-		infile.seekg(sha1_info.first);
-		infile.read(buffer, sha1_info.second);
 		if (node.text_content_length > 0) {
 		    std::cout << "	Adding node object for " << node.local_path << "\n";
 		    outfile << "blob\n";
-		    outfile << "data " << sha1_info.second << "\n";
-		    outfile.write(buffer, sha1_info.second);
+		    outfile << "data " << node.text_content_length << "\n";
+		    char *buffer = new char [node.text_content_length];
+		    infile.seekg(node.content_start);
+		    infile.read(buffer, node.text_content_length);
+		    outfile.write(buffer, node.text_content_length);
 		}
-		/* get SHA1 for git - see https://stackoverflow.com/a/7225329/2037687 */
-		std::string go_buff;
-		go_buff.append("blob ");
-		go_buff.append(std::to_string(sha1_info.second));
-		go_buff.append(1, '\0');
-		go_buff.append(buffer, sha1_info.second);
-		std::string git_sha1 = sha1_hash_hex(go_buff.c_str(), go_buff.length());
-		git_sha1_map[&node] = git_sha1;
-		delete buffer;
 	    }
 
 	    outfile << "commit " << rev.nodes[0].branch << "\n";
@@ -776,23 +653,87 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile,  struct svn_
 	    for (size_t n = 0; n != rev.nodes.size(); n++) {
 		struct svn_node &node = rev.nodes[n];
 		std::cout << "	Processing node " << print_node_action(node.action) << " " << node.local_path << " into branch " << node.branch << "\n";
-		outfile << "M 100755 " << git_sha1_map[&node] << " \"" << node.local_path << "\"\n";
+		outfile << "M 100755 " << svn_sha1_to_git_sha1[current_sha1[node.path]] << " \"" << node.local_path << "\"\n";
 	    }
 	}
     }
 }
 
+
+/**
+ * Parses a dump file and returns a repository information
+ * structure, or NULL on failure.
+ *
+ * Assumes dump file format as documented here:
+ * http://svn.apache.org/repos/asf/subversion/trunk/notes/dump-load-format.txt
+ */
+int
+load_dump_file(const char *f)
+{
+    std::string line;
+    std::string uuid;
+    int rev_cnt = 0;
+    int dump_format_version = -1;
+    std::string fmtkey("SVN-fs-dump-format-version: ");
+
+    std::ifstream infile(f);
+    if (!infile.good()) return -1;
+
+    // The first non-empty line has to be the format version, or we're done.
+    while (std::getline(infile, line) && !line.length());
+    if (line.compare(0, fmtkey.length(), fmtkey)) {
+	std::cerr << "SVN: load_dump error, no format found\n";
+	return -1;
+    }
+
+    // Grab and check the format number
+    dump_format_version = svn_lint(line, fmtkey);
+    if (dump_format_version != 2) {
+	std::cerr << "SVN: need dump format 2, but have " << dump_format_version << "\n";
+	return -1;
+    }
+
+    // Get past the uuid
+    while (!uuid.length() && std::getline(infile, line)) {
+	uuid = svn_str(line, std::string("UUID: "));
+    }
+
+    /* As long as we're not done, read revisions */
+    while (infile.peek() != EOF) {
+	rev_cnt += process_revision(infile);
+    }
+
+    infile.close();
+
+    return rev_cnt;
+}
+
 int main(int argc, const char **argv)
 {
-    std::string msgs;
-    struct svn_repo r = {}; // Initialize to empty
-    struct svn_repo_data d = {}; // Initialize to empty
-    r.rd = &d;
     if (argc == 1) return 1;
-    int rev_cnt = load_dump(argv[1], &r, &msgs);
+
+    /* Populate valid_projects */
+    valid_projects.insert(std::string("brlcad"));
+    valid_projects.insert(std::string("gct"));
+    valid_projects.insert(std::string("geomcore"));
+    valid_projects.insert(std::string("iBME"));
+    valid_projects.insert(std::string("isst"));
+    valid_projects.insert(std::string("jbrlcad"));
+    valid_projects.insert(std::string("osl"));
+    valid_projects.insert(std::string("ova"));
+    valid_projects.insert(std::string("rt^3"));
+    valid_projects.insert(std::string("rtcmp"));
+    valid_projects.insert(std::string("web"));
+    valid_projects.insert(std::string("webcad"));
+
+    /* Branch/tag name mappings */
+    branch_mappings[std::string("framebuffer-experiment")] = std::string("framebuffer-experiment");
+
+
+    int rev_cnt = load_dump_file(argv[1]);
     if (rev_cnt > 0) {
 	std::cout << "Dump file " << argv[1] << " loaded - found " << rev_cnt << " revisions\n";
-	analyze_svn(&r);
+	analyze_dump();
     } else {
 	std::cerr << "No revision found - quitting\n";
 	return -1;
@@ -801,7 +742,7 @@ int main(int argc, const char **argv)
     std::ifstream infile(argv[1]);
     std::ofstream outfile("29887.fi", std::ios::out | std::ios::binary);
     if (!outfile.good()) return -1;
-    rev_fast_export(infile, outfile,  &r, 29887);
+    rev_fast_export(infile, outfile, 29887);
     outfile.close();
 
     return 0;
