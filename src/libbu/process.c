@@ -479,11 +479,12 @@ bu_process_wait(int *aborted, struct bu_process *pinfo, int wtime)
 	WaitForSingleObject(pinfo->hProcess, INFINITE);
     }
 
-    if (GetLastError() == ERROR_PROCESS_ABORTED) {
+    GetExitCodeProcess(pinfo->hProcess, &retcode);
+
+    if (GetLastError() == ERROR_PROCESS_ABORTED || retcode == 1) {
 	pinfo->aborted = 1;
     }
 
-    GetExitCodeProcess(pinfo->hProcess, &retcode);
     /* may be useful to try pr_wait_status() here */
     rc = (int)retcode;
 #endif

@@ -90,7 +90,7 @@ terminate(int process)
     /* Finally, kill the parent */
     hProcess = OpenProcess(PROCESS_ALL_ACCESS, TRUE, (DWORD)process);
     if (hProcess != NULL) {
-	successful = TerminateProcess(hProcess, 0);
+	successful = TerminateProcess(hProcess, 1);
 	CloseHandle(hProcess);
     }
 
