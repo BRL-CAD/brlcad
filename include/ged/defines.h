@@ -151,8 +151,8 @@ struct ged_drawable {
     struct vd_curve		*gd_currVHead;		/**< @brief  current vdraw head */
     struct solid                *gd_freeSolids;         /**< @brief  ptr to head of free solid list */
 
-    char			**gd_rt_cmd;
-    int				gd_rt_cmd_len;
+    char			**gd_rt_cmd;    /* DEPRECATED - will be removed, do not use */
+    int				gd_rt_cmd_len;  /* DEPRECATED - will be removed, do not use */
 
     void			(*gd_rtCmdNotify)(int aborted);	/**< @brief  function called when rt command completes */
 
