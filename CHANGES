@@ -120,7 +120,7 @@ under MINIMALLY IMPACTING CHANGES.
 
 The interfaces announced below are scheduled to significantly change
 or be removed.  They are categorized by the release in which
-deprecation was first announced.  If the inteface change involved a
+deprecation was first announced.  If the interface change involved a
 removal or transition, both the original and new interface names are
 generally listed for reference.
 
