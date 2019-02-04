@@ -29,6 +29,7 @@
 
 /* bu headers */
 #include "bu/process.h"
+#include "./process.h"
 
 /* c99 doesn't declare these */
 #if defined(HAVE_KILL) && !defined(__cplusplus)
@@ -90,7 +91,7 @@ terminate(int process)
     /* Finally, kill the parent */
     hProcess = OpenProcess(PROCESS_ALL_ACCESS, TRUE, (DWORD)process);
     if (hProcess != NULL) {
-	successful = TerminateProcess(hProcess, 1);
+	successful = TerminateProcess(hProcess, BU_MSVC_ABORT_EXIT);
 	CloseHandle(hProcess);
     }
 

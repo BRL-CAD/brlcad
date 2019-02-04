@@ -33,6 +33,7 @@
 #include "bu/process.h"
 #include "bu/str.h"
 #include "bu/vls.h"
+#include "./process.h"
 
 #if !defined(HAVE_DECL_WAIT) && !defined(wait) && !defined(_WINSOCKAPI_)
 extern pid_t wait(int *);
@@ -481,7 +482,7 @@ bu_process_wait(int *aborted, struct bu_process *pinfo, int wtime)
 
     GetExitCodeProcess(pinfo->hProcess, &retcode);
 
-    if (GetLastError() == ERROR_PROCESS_ABORTED || retcode == 1) {
+    if (GetLastError() == ERROR_PROCESS_ABORTED || retcode == BU_MSVC_ABORT_EXIT) {
 	pinfo->aborted = 1;
     }
 
