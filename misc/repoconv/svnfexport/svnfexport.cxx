@@ -31,6 +31,7 @@ struct svn_node {
     std::map<std::string, std::string> node_props;
     size_t content_start; // offset position in dump file
     /* Information from analysis */
+    int crlf_content;
     int move_edit;
     int tag_edit;
     int branch_add;
@@ -133,6 +134,67 @@ std::string print_node_action(svn_node_action_t nat)
     return std::string("unknown");
 }
 
+std::string git_sha1(std::ifstream &infile, struct svn_node *n)
+{
+    std::string git_sha1;
+    std::string go_buff;
+    char *cbuffer = new char [n->text_content_length];;
+    infile.read(cbuffer, n->text_content_length);
+    go_buff.append("blob ");
+
+    if (!n->crlf_content) {
+	go_buff.append(std::to_string(n->text_content_length));
+	go_buff.append(1, '\0');
+	go_buff.append(cbuffer, n->text_content_length);
+	git_sha1 = sha1_hash_hex(go_buff.c_str(), go_buff.length());
+    } else {
+	std::string crlf_buff;
+	std::ostringstream cf(crlf_buff);
+	for (int i = 0; i < n->text_content_length; i++) {
+	    if (cbuffer[i] == '\n') {
+		cf << '\r' << '\n';
+	    } else {
+		cf << cbuffer[i];
+	    }
+	}
+	std::string crlf_file = cf.str();
+	go_buff.append(std::to_string(crlf_file.length()));
+	go_buff.append(1, '\0');
+	go_buff.append(crlf_file.c_str(), crlf_file.length());
+	git_sha1 = sha1_hash_hex(go_buff.c_str(), go_buff.length());
+    }
+    delete[] cbuffer;
+    return git_sha1;
+}
+
+//Need to write blobs with CRLF if that's the mode we're in...
+void
+write_blob(std::ifstream &infile, std::ofstream &outfile, struct svn_node &node)
+{
+    char *buffer = new char [node.text_content_length];
+    infile.seekg(node.content_start);
+    infile.read(buffer, node.text_content_length);
+    outfile << "blob\n";
+    //std::cout << "	Adding node object for " << node.local_path << "\n";
+    if (!node.crlf_content) {
+	outfile << "data " << node.text_content_length << "\n";
+	outfile.write(buffer, node.text_content_length);
+    } else {
+	std::string crlf_buff;
+	std::ostringstream cf(crlf_buff);
+	for (int i = 0; i < node.text_content_length; i++) {
+	    if (buffer[i] == '\n') {
+		cf << '\r' << '\n';
+	    } else {
+		cf << buffer[i];
+	    }
+	}
+	std::string crlf_file = cf.str();
+	outfile << "data " << crlf_file.length() << "\n";
+	outfile.write(crlf_file.c_str(), crlf_file.length());
+    }
+}
+
 /* Read revision properties.  Technically these are optional,
  * so don't bother with a return code - just get what we can. */
 void
@@ -196,7 +258,7 @@ get_node_props(std::ifstream &infile, struct svn_node *n)
     std::string pend("PROPS-END");
     std::string line;
     int set_exec = 0;
-
+    n->crlf_content = 0;
     // Go until we hit PROPS-END
     while (std::getline(infile, line)) {
 
@@ -232,7 +294,8 @@ get_node_props(std::ifstream &infile, struct svn_node *n)
 
 
 	if (!key.compare(std::string("svn:eol-style")) && value.compare(std::string("native"))) {
-	    std::cerr << "Warning (r" << n->revision_number << " node " << n->path << ") - key " << " has line ending style " << value << std::endl;
+	    n->crlf_content = 1;
+	    //std::cerr << "Warning (r" << n->revision_number << " node " << n->path << ") - key " << " has line ending style " << value << std::endl;
 	}
 
 	// Have key value
@@ -333,16 +396,8 @@ process_node(std::ifstream &infile, struct svn_revision *rev)
     if (n.text_content_length > 0) {
 	/* Figure out how Git will label this blob */
 	n.content_start = infile.tellg();
-	char *cbuffer = new char [n.text_content_length];;
-	infile.read(cbuffer, n.text_content_length);
-	std::string go_buff;
-	go_buff.append("blob ");
-	go_buff.append(std::to_string(n.text_content_length));
-	go_buff.append(1, '\0');
-	go_buff.append(cbuffer, n.text_content_length);
-	std::string git_sha1 = sha1_hash_hex(go_buff.c_str(), go_buff.length());
-	svn_sha1_to_git_sha1[n.text_content_sha1] = git_sha1;
-	delete[] cbuffer;
+	std::string gsha1 = git_sha1(infile, &n);
+	svn_sha1_to_git_sha1[n.text_content_sha1] = gsha1;
 	/* Stash information on how to read the blob */
 	sha1_blobs.insert(std::pair<std::string,std::pair<size_t, long int>>(n.text_content_sha1, std::pair<size_t, long int>(n.content_start, n.text_content_length)));
 	/* Jump over the content and continue */
@@ -350,15 +405,31 @@ process_node(std::ifstream &infile, struct svn_revision *rev)
 	infile.seekg(after_content);
     }
 
-    if (n.path == "brlcad/trunk/src/archer/archer.bat") {
+    if (n.path == "brlcad/trunk/src/other/libpng/contrib/pngminus/png2pnm.bat" && n.crlf_content) {
 	std::cout << rev->revision_number << ": " << svn_sha1_to_git_sha1[n.text_content_sha1] << "\n";
-	if (rev->revision_number == 29490) {
-	    std::ofstream loutfile("archer.bat", std::ios::out | std::ios::binary);
+	if (rev->revision_number == 27468) {
+	    std::ofstream loutfile("png2pnm.bat", std::ios::out | std::ios::binary);
 	    char *buffer = new char [n.text_content_length];
 	    infile.seekg(n.content_start);
 	    infile.read(buffer, n.text_content_length);
 	    loutfile.write(buffer, n.text_content_length);
 	    loutfile.close();
+	    std::ofstream coutfile("png2pnm_crlf.bat", std::ios::out | std::ios::binary);
+	    std::string crlf_buff;
+	    std::ostringstream cf(crlf_buff);
+	    for (int i = 0; i < n.text_content_length; i++) {
+		if (buffer[i] == '\n') {
+		    cf << '\r' << '\n';
+		} else {
+		    cf << buffer[i];
+		}
+	    }
+	    std::string crlf_file = cf.str();
+	    std::string git_crlf_sha1 = sha1_hash_hex(crlf_file.c_str(), crlf_file.length());
+	    std::cerr << "archer.bat CRLF sha1: " << git_crlf_sha1 << "\n";
+	    coutfile << crlf_file;
+	    coutfile.close();
+	    delete[] buffer;
 	}
     }
 
@@ -650,12 +721,7 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 		struct svn_node &node = rev.nodes[n];
 		if (node.text_content_length > 0) {
 		    //std::cout << "	Adding node object for " << node.local_path << "\n";
-		    outfile << "blob\n";
-		    outfile << "data " << node.text_content_length << "\n";
-		    char *buffer = new char [node.text_content_length];
-		    infile.seekg(node.content_start);
-		    infile.read(buffer, node.text_content_length);
-		    outfile.write(buffer, node.text_content_length);
+		    write_blob(infile, outfile, node);
 		}
 	    }
 
