@@ -701,8 +701,8 @@ add_test(NAME bu_hook_saverestore COMMAND bu_test hook saverestore)
 
 # Make a binary to launch as a subprocess
 BRLCAD_ADDEXEC(bu_subprocess subprocess.cxx libbu TEST)
-add_test(NAME bu_process_basic COMMAND bu_test process "${CMAKE_CURRENT_BINARY_DIR}/bu_subprocess${CMAKE_EXECUTABLE_SUFFIX}" basic)
-add_test(NAME bu_process_abort COMMAND bu_test process "${CMAKE_CURRENT_BINARY_DIR}/bu_subprocess${CMAKE_EXECUTABLE_SUFFIX}" abort)
+add_test(NAME bu_process_basic COMMAND bu_test process "$<TARGET_FILE:bu_subprocess>" basic)
+add_test(NAME bu_process_abort COMMAND bu_test process "$<TARGET_FILE:bu_subprocess>" abort)
 
 CMAKEFILES(
   tests_bitv.cmake
