@@ -25,7 +25,6 @@ changes made.  See document footer for additional details.
 * new 'gex' tool for low-level .g file exploration - Tom Browder
 * added support for command-line editing of metaballs - Sean Morrison
 * added manual page for the 'get' command - Cliff Yapp
-* fixed dbconcat behavior for binary database objects - Cliff Yapp
 * improved speed of "bot chull" convex hull generation - Cliff Yapp
 
 
