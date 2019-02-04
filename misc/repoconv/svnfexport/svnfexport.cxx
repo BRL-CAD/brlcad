@@ -67,7 +67,7 @@ std::map<std::string,std::string> current_sha1;
 std::map<std::string,std::string> branch_head_ids;
 std::map<std::string,std::string> svn_sha1_to_git_sha1;
 
-std::set<std::string> blob_sha1;
+std::set<std::string> cvs_blob_sha1;
 std::map<std::string,std::string> author_map;
 
 /* Branches */
@@ -695,6 +695,21 @@ analyze_dump()
     }
 }
 
+void cvs_svn_sync(std::ifstream &infile, std::ofstream &outfile)
+{
+    struct svn_revision &rev = revs[29886];
+    for (size_t n = 0; n != rev.nodes.size(); n++) {
+	struct svn_node &node = rev.nodes[n];
+	if (node.branch.length() && !node.branch.compare("refs/heads/master")) {
+	    if (node.local_path.length() && node.text_content_sha1.length()) {
+		std::string gsha1 = svn_sha1_to_git_sha1[node.text_content_sha1];
+		if (cvs_blob_sha1.find(gsha1) == cvs_blob_sha1.end()) {
+		    std::cout << "	Git blob not found: " << node.local_path << ", content sha1: " << node.text_content_sha1 << " , git sha1: " << svn_sha1_to_git_sha1[node.text_content_sha1] << "\n";
+		}
+	    }
+	}
+    }
+}
 
 void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev_num_min, long int rev_num_max)
 {
@@ -840,7 +855,7 @@ load_blob_sha1s(const char *f)
     while (std::getline(bfile, line)) {
 	size_t spos = line.find_first_of(" ");
 	std::string hsha1 = line.substr(0, spos);
-	blob_sha1.insert(hsha1);
+	cvs_blob_sha1.insert(hsha1);
     }
 }
 
@@ -868,6 +883,7 @@ int main(int argc, const char **argv)
 
     /* Populate valid_projects */
     valid_projects.insert(std::string("brlcad"));
+    /*
     valid_projects.insert(std::string("gct"));
     valid_projects.insert(std::string("geomcore"));
     valid_projects.insert(std::string("iBME"));
@@ -879,6 +895,7 @@ int main(int argc, const char **argv)
     valid_projects.insert(std::string("rtcmp"));
     valid_projects.insert(std::string("web"));
     valid_projects.insert(std::string("webcad"));
+    */
 
     /* Branch/tag name mappings */
     branch_mappings[std::string("framebuffer-experiment")] = std::string("framebuffer-experiment");
@@ -904,7 +921,8 @@ int main(int argc, const char **argv)
     std::ifstream infile(argv[1]);
     std::ofstream outfile("export.fi", std::ios::out | std::ios::binary);
     if (!outfile.good()) return -1;
-    rev_fast_export(infile, outfile, 29887, 30000);
+    cvs_svn_sync(infile, outfile);
+    //rev_fast_export(infile, outfile, 29887, 30000);
     outfile.close();
 
     return 0;
