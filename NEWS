@@ -26,6 +26,7 @@ changes made.  See document footer for additional details.
 * added support for command-line editing of metaballs - Sean Morrison
 * added manual page for the 'get' command - Cliff Yapp
 * fixed dbconcat behavior for binary database objects - Cliff Yapp
+* improved speed of "bot chull" convex hull generation - Cliff Yapp
 
 
 ----------------------------------------------------------------------
