@@ -14,6 +14,19 @@ changes made.  See document footer for additional details.
 --- 201X-XX-XX  Release 7.30.0                                     ---
 ----------------------------------------------------------------------
 
+This major release of BRL-CAD is the first release requiring
+compiler support for the C++11 language standard when building.
+(This change is not user visible, but will be significant to those
+using BRL-CAD in their own software development efforts.)
+
+Also present in this release are a fix for commands that work with
+multiple .g files and support for raytracing MGED scenes with large
+numbers of active objects.
+
+A number of commands and tools previously listed as deprecated are
+removed in this release, including in particular MGED commands
+specific to MUVES.
+
 * use full paths for OBJ objects in "bot dump" command - Cliff Yapp
 * added -v high precision option to MGED 'center' command - Cliff Yapp
 * fixed crash when using dbconcat and dup together in MGED
