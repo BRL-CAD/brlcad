@@ -32,3 +32,18 @@ Once the range with the commit needed is identified, dump the results to a file
 that can be inspected in an editor:
 
 head -n 127200000 brlcad_dercs.dump |tail -n 500000 > subset.dump
+
+
+SVN prep:
+
+The cvs repo stops at r29886 - it's looking like the best plan of action is
+to start the svn dump at the same commit, check for and resolve any differences,
+and then process on with the svn history. To prepare the appropriate svn dump:
+
+svnadmin dump -r29886:HEAD code > brlcad_r29886-r72316.dump
+
+Per svnadmin's docs, this will create an r29886 commit in the dump
+that describes every path present in the SVN tree as of that commit.  In
+principle (to be tested) this should mean we can look for any missing blobs
+not present in the git blob set and identify paths that need to be synced
+up before we can proceed.
