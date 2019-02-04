@@ -25,14 +25,14 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   - debug means to set env vars
   - large db tests need to be enabled
 
-* attribute normalization is drastically slowing down
-  region creation - need to fix or back out
-
 * g-ply not writing geometry
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
+
+* attribute normalization is drastically slowing down
+  region creation - need to fix or back out
 
 * manual test
 
