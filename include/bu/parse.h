@@ -365,15 +365,6 @@ BU_EXPORT extern int bu_vls_struct_item_named(struct bu_vls *vp,
 					      const char *base,
 					      int sep_char);
 
-/**
- * This allows us to specify the "size" parameter as values like ".5m"
- * or "27in" rather than using mm all the time.
- */
-BU_EXPORT extern void bu_parse_mm(const struct bu_structparse *sdp,
-				  const char *name,
-				  char *base,
-				  const char *value);
-
 BU_EXPORT extern int bu_key_eq_to_key_val(const char *in,
 					  const char **next,
 					  struct bu_vls *vls);
