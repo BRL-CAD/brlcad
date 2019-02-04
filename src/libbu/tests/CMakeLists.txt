@@ -23,6 +23,7 @@ set(bu_test_srcs
   opt.c
   parallel.c
   path_component.c
+  process.c
   ptbl.c
   redblack.c
   semaphore.c
@@ -693,6 +694,15 @@ add_test(NAME bu_ptbl_trunc COMMAND bu_test ptbl trunc)
 add_test(NAME bu_hook_basic COMMAND bu_test hook basic)
 add_test(NAME bu_hook_multiadd COMMAND bu_test hook multiadd)
 add_test(NAME bu_hook_saverestore COMMAND bu_test hook saverestore)
+
+#
+#  *********** process.c tests ************
+#
+
+# Make a binary to launch as a subprocess
+BRLCAD_ADDEXEC(bu_subprocess subprocess.cxx libbu TEST)
+add_test(NAME bu_process_basic COMMAND bu_test process "${CMAKE_CURRENT_BINARY_DIR}/bu_subprocess${CMAKE_EXECUTABLE_SUFFIX}" basic)
+add_test(NAME bu_process_abort COMMAND bu_test process "${CMAKE_CURRENT_BINARY_DIR}/bu_subprocess${CMAKE_EXECUTABLE_SUFFIX}" abort)
 
 CMAKEFILES(
   tests_bitv.cmake

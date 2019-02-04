@@ -465,6 +465,9 @@ bu_process_wait(int *aborted, struct bu_process *pinfo, int wtime)
     close(pinfo->fd_err);
     while ((rpid = wait(&retcode)) != pinfo->pid && rpid != -1);
     rc = retcode;
+    if (rc) {
+	pinfo->aborted = 1;
+    }
 #else
     DWORD retcode = 0;
     if (!pinfo) return -1;
