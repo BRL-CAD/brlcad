@@ -68,7 +68,7 @@ set(LIBGED_SOURCES
   brep.c
   cat.c
   cc.c
-  center.c
+  center.cxx
   check/check.c
   check/check_adj_air.c
   check/check_centroid.c
