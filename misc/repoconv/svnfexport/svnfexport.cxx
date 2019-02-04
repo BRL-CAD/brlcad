@@ -230,6 +230,11 @@ get_node_props(std::ifstream &infile, struct svn_node *n)
 	vbuff[v] = '\0';
 	value = std::string(vbuff);
 
+
+	if (!key.compare(std::string("svn:eol-style")) && value.compare(std::string("native"))) {
+	    std::cerr << "Warning (r" << n->revision_number << " node " << n->path << ") - key " << " has line ending style " << value << std::endl;
+	}
+
 	// Have key value
 	n->node_props[key] = value;
     }
@@ -323,10 +328,6 @@ process_node(std::ifstream &infile, struct svn_revision *rev)
     }
 
 
-    if (n.path == "brlcad/trunk/autogen.sh") {
-	std::cout << rev->revision_number << ": " << n.text_content_sha1 << "\n";
-    }
-
 
     // If we have content, store the file offset and jump the seek beyond it
     if (n.text_content_length > 0) {
@@ -349,7 +350,17 @@ process_node(std::ifstream &infile, struct svn_revision *rev)
 	infile.seekg(after_content);
     }
 
-    //print_node(n);
+    if (n.path == "brlcad/trunk/src/archer/archer.bat") {
+	std::cout << rev->revision_number << ": " << svn_sha1_to_git_sha1[n.text_content_sha1] << "\n";
+	if (rev->revision_number == 29490) {
+	    std::ofstream loutfile("archer.bat", std::ios::out | std::ios::binary);
+	    char *buffer = new char [n.text_content_length];
+	    infile.seekg(n.content_start);
+	    infile.read(buffer, n.text_content_length);
+	    loutfile.write(buffer, n.text_content_length);
+	    loutfile.close();
+	}
+    }
 
     // Have at least some node contents (last node in file?), return
     rev->nodes.push_back(n);
@@ -373,11 +384,6 @@ process_revision(std::ifstream &infile)
 	if (!sfcmp(line, rkey)) rev.revision_number = svn_lint(line, rkey);
     }
     success = 1; // For the moment, finding the revision is enough to qualify as success...
-
-    if (rev.revision_number == 29887) {
-	std::cout << "At rev " << rev.revision_number << "\n";
-    }
-
 
     // "Usually" a revision will have properties, but they are apparently not
     // technically required.  For revision properties Content-length and
@@ -619,7 +625,7 @@ analyze_dump()
 }
 
 
-void rev_fast_export(std::ifstream &infile, std::ofstream &outfile,  long int rev_num)
+void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev_num_min, long int rev_num_max)
 {
     std::map<long int, struct svn_revision>::iterator r_it;
     for (r_it = revs.begin(); r_it != revs.end(); r_it++) {
@@ -636,12 +642,14 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile,  long int re
 	    }
 	}
 
-	if (rev_num == rev.revision_number) {
+	if (rev.revision_number > rev_num_max) return;
+
+	if (rev.revision_number >= rev_num_min) {
 	    std::cout << "Processing revision " << rev.revision_number << "\n";
 	    for (size_t n = 0; n != rev.nodes.size(); n++) {
 		struct svn_node &node = rev.nodes[n];
 		if (node.text_content_length > 0) {
-		    std::cout << "	Adding node object for " << node.local_path << "\n";
+		    //std::cout << "	Adding node object for " << node.local_path << "\n";
 		    outfile << "blob\n";
 		    outfile << "data " << node.text_content_length << "\n";
 		    char *buffer = new char [node.text_content_length];
@@ -662,22 +670,34 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile,  long int re
 
 	    for (size_t n = 0; n != rev.nodes.size(); n++) {
 		struct svn_node &node = rev.nodes[n];
-		std::cout << "	Processing node " << print_node_action(node.action) << " " << node.local_path << " into branch " << node.branch << "\n";
+		//std::cout << "	Processing node " << print_node_action(node.action) << " " << node.local_path << " into branch " << node.branch << "\n";
 
 		switch (node.action) {
 		    case nchange:
 			outfile << "M ";
 			break;
+		    case nadd:
+			outfile << "M ";
+			break;
+		    case ndelete:
+			outfile << "D ";
+			break;
 		    default:
 			std::cerr << "Unhandled node action type " << print_node_action(node.action) << "\n";
 			outfile << "? ";
+			outfile << "\"" << node.local_path << "\"\n";
 		}
 		if (exec_paths.find(node.path) != exec_paths.end()) {
 		    outfile << "100755 ";
 		} else {
 		    outfile << "100644 ";
 		}
-		outfile << svn_sha1_to_git_sha1[current_sha1[node.path]] << " \"" << node.local_path << "\"\n";
+		if (node.action == nchange || node.action == nadd) {
+		    outfile << svn_sha1_to_git_sha1[current_sha1[node.path]] << " \"" << node.local_path << "\"\n";
+		}
+		if (node.action == ndelete) {
+		    outfile << "\"" << node.local_path << "\"\n";
+		}
 	    }
 	}
     }
@@ -741,7 +761,6 @@ load_branch_head_sha1s(const char *f)
 	size_t spos = line.find_first_of(" ");
 	std::string hsha1 = line.substr(0, spos);
 	std::string hbranch = line.substr(spos+1, std::string::npos);
-	std::cout << hbranch << ": " << hsha1 << "\n";
 	branch_head_ids[hbranch] = hsha1;
     }
 }
@@ -770,7 +789,6 @@ load_author_map(const char *f)
 	size_t spos = line.find_first_of(" ");
 	std::string svnauthor = line.substr(0, spos);
 	std::string gitauthor = line.substr(spos+1, std::string::npos);
-	std::cout << svnauthor << " -> " << gitauthor << "\n";
 	author_map[svnauthor] = gitauthor;
     }
 }
@@ -818,9 +836,9 @@ int main(int argc, const char **argv)
     }
 
     std::ifstream infile(argv[1]);
-    std::ofstream outfile("29887.fi", std::ios::out | std::ios::binary);
+    std::ofstream outfile("export.fi", std::ios::out | std::ios::binary);
     if (!outfile.good()) return -1;
-    rev_fast_export(infile, outfile, 29887);
+    rev_fast_export(infile, outfile, 29887, 30000);
     outfile.close();
 
     return 0;
