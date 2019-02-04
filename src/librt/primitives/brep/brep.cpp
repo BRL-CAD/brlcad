@@ -367,20 +367,8 @@ brep_specific_delete(struct brep_specific* bs)
 bool
 brep_pt_trimmed(pt2d_t pt, const ON_BrepFace& face)
 {
-    int debug_output = 0;
     bool retVal = false;
-
-    /* If we've got debugging set in the environment, grab the value */
-    if (getenv("LIBRT_BREP_DEBUG")) {
-	char *envstr = getenv("LIBRT_BREP_DEBUG");
-	if (bu_opt_int(NULL, 1, (const char **)&envstr, (void *)&debug_output) == -1) {
-	    debug_output = 0;
-	}
-    }
-
-    if (debug_output > 1) {
-	std::cerr << "brep_pt_trimmed: " << PT2(pt) << std::endl;
-    }
+    TRACE1("brep_pt_trimmed: " << PT2(pt));
 
     // for each loop
     const ON_Surface* surf = face.SurfaceOf();
@@ -691,21 +679,9 @@ rt_brep_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct
 int
 rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
 {
-    int debug_output = 0;
-    int64_t start = 0;
+    //int64_t start;
 
-    /* If we've got debugging set in the environment, grab the value */
-    if (getenv("LIBRT_BREP_DEBUG")) {
-	char *envstr = getenv("LIBRT_BREP_DEBUG");
-	if (bu_opt_int(NULL, 1, (const char **)&envstr, (void *)&debug_output) == -1) {
-	    debug_output = 0;
-	}
-    }
-
-    if (debug_output > 1) {
-	std::cerr << "rt_brep_prep" << std::endl;
-    }
-
+    TRACE1("rt_brep_prep");
     /* This prepares the NURBS specific data structures to be used
      * during intersection... i.e. acceleration data structures and
      * whatever else is needed.
@@ -727,16 +703,11 @@ rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
 
     /* The workhorse routines of BREP prep are called by brep_build_bvh
      */
-    if (debug_output > 1) {
-	start = bu_gettime();
-    }
+    //start = bu_gettime();
     if (brep_build_bvh(bs) < 0) {
 	return -1;
     }
-
-    if (debug_output > 1) {
-	bu_log("rt_brep_prep BVH BUILD: %.2f sec\n", (bu_gettime() - start) / 1000000.0);
-    }
+    //bu_log("!!! BUILD BVH: %.2f sec\n", (bu_gettime() - start) / 1000000.0);
 
     /* Once a proper SurfaceTree is built, finalize the bounding
      * volumes.  This takes no time. */
@@ -1101,17 +1072,6 @@ utah_isTrimmed(ON_2dPoint uv, const ON_BrepFace *face)
     ON_wString curveinfo;
     ON_TextLog log(curveinfo);
 
-    /* If we've got debugging set in the environment, grab the value */
-    int debug_output = 0;
-    if (getenv("LIBRT_BREP_DEBUG")) {
-	char *envstr = getenv("LIBRT_BREP_DEBUG");
-	if (bu_opt_int(NULL, 1, (const char **)&envstr, (void *)&debug_output) == -1) {
-	    debug_output = 0;
-	}
-    }
-
-
-
     if (!approximationsInit) {
 	approximationsInit = true;
 	for (int i = 0; i < MAX_CURVES; i++) {
@@ -1126,9 +1086,7 @@ utah_isTrimmed(ON_2dPoint uv, const ON_BrepFace *face)
     if (surf == NULL) {
 	return false;
     }
-    if (debug_output > 1) {
-	std::cerr << "utah_isTrimmed: " << uv << std::endl;
-    }
+    TRACE1("utah_isTrimmed: " << uv);
     // for each loop
     for (int li = 0; li < face->LoopCount(); li++) {
 	ON_BrepLoop* loop = face->Loop(li);
@@ -1237,11 +1195,10 @@ utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface
     }
 
     if (converged) {
-
 	for (int i = 0; i < numhits; i++) {
 	    double closesttrim;
 	    const BRNode* trimBR = NULL;
-	    int trim_status = sbv->isTrimmed(ouv[i], &trimBR, closesttrim, BREP_EDGE_MISS_TOLERANCE);
+	    int trim_status = sbv->isTrimmed(ouv[i], &trimBR, closesttrim,BREP_EDGE_MISS_TOLERANCE);
 	    if (trim_status != 1) {
 		ON_3dPoint _pt;
 		ON_3dVector _norm(N[i]);
@@ -1508,7 +1465,6 @@ void brep_hits_process_subset(std::vector<brep_hit *> &hits, long int rmin, long
 int
 rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
-    int debug_output = brep_debug(stp->st_dp->d_namep);
     struct brep_specific* bs;
 
     if (!stp)
@@ -1518,16 +1474,6 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
     if (!bs)
 	return 0;
 
-    if (debug_output) {
-	bu_log("\nrt_brep_shot: %s", stp->st_dp->d_namep);
-	if (debug_output > 2) {
-	    bu_log("\nxyz %.15g %.15g %.15g", rp->r_pt[0], rp->r_pt[1], rp->r_pt[2]);
-	    bu_log("\ndir %.15g %.15g %.15g\n", rp->r_dir[0], rp->r_dir[1], rp->r_dir[2]);
-	} else {
-	    bu_log("\n");
-	}
-    }
-
     /* First, test for intersections between the Surface Tree
      * hierarchy and the ray - if one or more leaf nodes are
      * intersected, there is potentially a hit and more evaluation is
@@ -1536,12 +1482,7 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
     std::list<const BBNode*> inters;
     ON_Ray r = toXRay(rp);
     bs->bvh->intersectsHierarchy(r, inters);
-    if (inters.empty()) {
-	if (debug_output > 1) {
-	    bu_log("rt_brep_shot: ray missed surface tree hierarchy\n");
-	}
-	return 0; // MISS
-    }
+    if (inters.empty()) return 0; // MISS
 
     // find all the hits (XXX very inefficient right now!)
     std::list<brep_hit> all_hits; // record all hits
@@ -1624,8 +1565,8 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 			lend = hard_pairs[i].first - 1;
 			brep_hits_process_subset(hits, lstart, lend);
 			lstart = hard_pairs[i].second + 1;
-		    }
-		}
+	  }
+	  }
 	    }
 	}
     }
@@ -1633,11 +1574,6 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 
 ////////////////////////
     if ((hits.size() > 1) && containsNearMiss(&hits)) { //&& ((hits.size() % 2) != 0)) {
-
-	if (debug_output) {
-	    bu_log("\nrt_brep_shot (%s): before Pass 1 Hits: %zu\n", stp->st_dp->d_namep, hits.size());
-	    log_hits(hits, debug_output);
-	}
 
 	std::list<brep_hit>::iterator prev;
 	std::list<brep_hit>::const_iterator next;
@@ -1671,21 +1607,7 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 	    curr++;
 	}
 
-	if (debug_output > 1) {
-	    bu_log("\nrt_brep_shot (%s): after Pass 1 Hits: %zu\n", stp->st_dp->d_namep, hits.size());
-	    log_hits(hits, debug_output);
-	}
-
 	// check for crack hits between adjacent faces
-
-	if (debug_output > 1) {
-	    bu_log("\nrt_brep_shot (%s): running Pass 2 - checking for crack hits between adjacent faces\n", stp->st_dp->d_namep);
-	}
-
-	// TODO - it looks like there is a problem in this pass - when we have an even number of NM hits inside CH hits, the first
-	// NM hits are getting culled out but the last one isn't (because at that point it's no longer part of a pair of NM hits.
-	// Need to handle that case locally here - sweeping up the stray NM due to odd hit count works in the current test case,
-	// but wouldn't if we get two similar situations in isolation along the same ray (overall hit count would be even.)
 	curr = hits.begin();
 	while (curr != hits.end()) {
 	    const brep_hit &curr_hit = *curr;
@@ -1694,28 +1616,15 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 		    prev = curr;
 		    prev--;
 		    brep_hit &prev_hit = (*prev);
-		    if (debug_output > 2) {
-			bu_log("Previous hit(face %d): %s\n", prev_hit.face.m_face_index, brep_hit_type_str((int)prev_hit.hit));
-			bu_log("Current  hit(face %d): %s\n", curr_hit.face.m_face_index, brep_hit_type_str((int)curr_hit.hit));
-		    }
 		    if (prev_hit.hit == brep_hit::NEAR_MISS) { // two near misses in a row
-			if (debug_output > 2) {
-			    bu_log("Previous hit adj face index: %d\n", prev_hit.m_adj_face_index);
-			}
 			if (prev_hit.m_adj_face_index == curr_hit.face.m_face_index) {
 			    if (prev_hit.direction == curr_hit.direction) {
-				if (debug_output > 2) {
-				    bu_log("Matching hit directions, removing only current hit(face %d)\n", curr_hit.face.m_face_index);
-				}
 				//remove current miss
 				prev_hit.hit = brep_hit::CRACK_HIT;
 				curr = hits.erase(curr);
 				continue;
 			    } else {
 				//remove both edge near misses
-				if (debug_output > 2) {
-				    bu_log("Non-matching hit directions, removing both hits\n");
-				}
 				(void)hits.erase(prev);
 				curr = hits.erase(curr);
 				continue;
@@ -1723,9 +1632,6 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 			} else {
 			    // not adjacent faces so remove first miss
 			    (void)hits.erase(prev);
-			    if (debug_output > 2) {
-				bu_log("Not adjacent faces, removing only previous hit(face %d)\n", prev_hit.face.m_face_index);
-			    }
 			}
 		    }
 		} else {
@@ -1734,14 +1640,8 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 		    brep_hit &prev_hit = (*prev);
 		    if ((curr_hit.hit == brep_hit::CLEAN_HIT || curr_hit.hit == brep_hit::NEAR_HIT) && prev_hit.hit == brep_hit::NEAR_MISS) {
 			if (curr_hit.direction == brep_hit::ENTERING) {
-			    if (debug_output > 2) {
-				bu_log("Removing only remaining near miss (face %d)\n", prev_hit.face.m_face_index);
-			    }
 			    (void)hits.erase(prev);
 			} else {
-			    if (debug_output) {
-				bu_log("Clean hit is an exit, but we have an unculled near miss behind it - promote to a crack hit\n");
-			    }
 			    prev_hit.hit = brep_hit::CRACK_HIT;
 			}
 		    }
@@ -1749,12 +1649,6 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 	    }
 	    curr++;
 	}
-
-	if (debug_output > 1) {
-	    bu_log("\nrt_brep_shot (%s): after Pass 2 Hits: %zu\n", stp->st_dp->d_namep, hits.size());
-	    log_hits(hits, debug_output);
-	}
-
 	// check for CH double enter or double leave between adjacent faces(represents overlapping faces)
 	curr = hits.begin();
 	while (curr != hits.end()) {
@@ -1784,13 +1678,6 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 	    curr++;
 	}
 
-	if (debug_output > 1) {
-	    bu_log("\nrt_brep_shot (%s): after Pass 3 Hits: %zu\n", stp->st_dp->d_namep, hits.size());
-	    log_hits(hits, debug_output);
-	}
-
-	/* If we've got an odd number of hits, try tossing out a first or last near-miss hit */
-
 	if (!hits.empty() && ((hits.size() % 2) != 0)) {
 	    const brep_hit &curr_hit = hits.back();
 	    if (curr_hit.hit == brep_hit::NEAR_MISS) {
@@ -1805,10 +1692,6 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 	    }
 	}
 
-	if (debug_output) {
-	    bu_log("\nrt_brep_shot (%s): after final NEAR_MISS removal : %zu\n", stp->st_dp->d_namep, hits.size());
-	    log_hits(hits, debug_output);
-	}
     }
     ///////////// handle near hit
     if ((hits.size() > 1) && containsNearHit(&hits)) { //&& ((hits.size() % 2) != 0)) {
@@ -1868,32 +1751,24 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 
     if (!hits.empty()) {
 	// remove grazing hits with with normal to ray dot less than BREP_GRAZING_DOT_TOL (>= 89.999 degrees obliq)
-	if (debug_output) {
-	    bu_log("\nrt_brep_shot (%s): %zu hits before grazing hit removal:\n", stp->st_dp->d_namep, hits.size());
-	    log_hits(hits, debug_output);
-	}
-
+	TRACE("-- Remove grazing hits --");
 	int num = 0;
 	for (std::list<brep_hit>::iterator i = hits.begin(); i != hits.end(); ++i) {
 	    const brep_hit &curr_hit = *i;
 	    if ((curr_hit.trimmed && !curr_hit.closeToEdge) || curr_hit.oob || NEAR_ZERO(VDOT(curr_hit.normal, rp->r_dir), BREP_GRAZING_DOT_TOL)) {
 		// remove what we were removing earlier
 		if (curr_hit.oob) {
-		    if (debug_output) {
-			std::cerr << "\toob u: " << curr_hit.uv[0] << ", " << IVAL(curr_hit.sbv->m_u) << std::endl;
-			std::cerr << "\toob v: " << curr_hit.uv[1] << ", " << IVAL(curr_hit.sbv->m_v) << std::endl;
-		    }
+		    TRACE("\toob u: " << i->uv[0] << ", " << IVAL(i->sbv->m_u));
+		    TRACE("\toob v: " << i->uv[1] << ", " << IVAL(i->sbv->m_v));
 		}
 		i = hits.erase(i);
-		if (debug_output) {
-		    bu_log("\nrt_brep_shot(%d): removing grazing hit at %.15g %.15g %.15g with normal to ray dot less than BREP_GRAZING_DOT_TOL (>= 89.999 degrees obliq)[%g]\n", curr_hit.face.m_face_index, curr_hit.point[X], curr_hit.point[Y], curr_hit.point[Z], VDOT(curr_hit.normal, rp->r_dir));
-		}
 
 		if (i != hits.begin())
 		    --i;
 
 		continue;
 	    }
+	    TRACE("hit " << num << ": " << PT(i->point) << " [" << VDOT(i->normal, rp->r_dir) << "]");
 	    ++num;
 	}
     }
@@ -2018,19 +1893,17 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 	    }
 	    hit = true;
 	} else {
-	    if (debug_output > 2) {
-		std::cerr << "screen xy: " << ap->a_x << ", " << ap->a_y << std::endl;
-	    }
+	    //TRACE2("screen xy: " << ap->a_x << ", " << ap->a_y);
 	    bu_log("**** ERROR odd number of hits: %lu\n", static_cast<unsigned long>(hits.size()));
 	    bu_log("xyz %g %g %g \n", rp->r_pt[0], rp->r_pt[1], rp->r_pt[2]);
 	    bu_log("dir %g %g %g \n", rp->r_dir[0], rp->r_dir[1], rp->r_dir[2]);
 	    bu_log("**** Current Hits: %lu\n", static_cast<unsigned long>(hits.size()));
 
-	    log_hits(hits, debug_output);
+	    //log_hits(hits, debug_output);
 
 	    bu_log("\n**** Orig Hits: %lu\n", static_cast<unsigned long>(orig.size()));
 
-	    log_hits(orig, debug_output);
+	    //log_hits(orig, debug_output);
 
 	    bu_log("\n**********************\n");
 	}
@@ -2105,12 +1978,7 @@ rt_brep_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct 
 void
 rt_brep_free(struct soltab *stp)
 {
-    /* If we've got debugging set in the environment, grab the value */
-    int debug_output = brep_debug(NULL);
-
-    if (debug_output > 1) {
-	std::cerr << "rt_brep_free" << std::endl;
-    }
+    TRACE1("rt_brep_free");
 
     struct brep_specific* bs;
 
@@ -4496,12 +4364,7 @@ plot_face_trim(struct bu_list *vhead, const ON_BrepFace &face, int plotres, bool
 int
 rt_brep_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 {
-    /* If we've got debugging set in the environment, grab the value */
-    int debug_output = brep_debug(NULL);
-
-    if (debug_output > 1) {
-	std::cerr << "rt_brep_adaptive_plot" << std::endl;
-    }
+    TRACE1("rt_brep_adaptive_plot");
     struct rt_brep_internal* bi;
     point_t pt1 = VINIT_ZERO;
     point_t pt2 = VINIT_ZERO;
@@ -4617,12 +4480,7 @@ rt_brep_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info
 int
 rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *tol, const struct rt_view_info *UNUSED(info))
 {
-    /* If we've got debugging set in the environment, grab the value */
-    int debug_output = brep_debug(NULL);
-
-    if (debug_output > 1) {
-	std::cerr << "rt_brep_plot" << std::endl;
-    }
+    TRACE1("rt_brep_plot");
     struct rt_brep_internal* bi;
     int i;
 
@@ -4689,12 +4547,7 @@ int rt_brep_plot_poly(struct bu_list *vhead, const struct db_full_path *pathp, s
 		      const struct rt_tess_tol *ttol, const struct bn_tol *tol,
 		      const struct rt_view_info *info)
 {
-    /* If we've got debugging set in the environment, grab the value */
-    int debug_output = brep_debug(NULL);
-
-    if (debug_output > 1) {
-	std::cerr << "rt_brep_plot" << std::endl;
-    }
+    TRACE1("rt_brep_plot");
     struct rt_brep_internal* bi;
     const char *solid_name =  DB_FULL_PATH_CUR_DIR(pathp)->d_namep;
     ON_wString wstr;
@@ -5045,12 +4898,7 @@ rt_brep_adjust(struct bu_vls *logstr, const struct rt_db_internal *intern, int a
 int
 rt_brep_export5(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *dbip)
 {
-    /* If we've got debugging set in the environment, grab the value */
-    int debug_output = brep_debug(NULL);
-
-    if (debug_output > 1) {
-	std::cerr << "rt_brep_export5" << std::endl;
-    }
+    TRACE1("rt_brep_export5");
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_BREP)
@@ -5080,12 +4928,7 @@ int
 rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     ON::Begin();
-    /* If we've got debugging set in the environment, grab the value */
-    int debug_output = brep_debug(NULL);
-
-    if (debug_output > 1) {
-	std::cerr << "rt_brep_import5" << std::endl;
-    }
+    TRACE1("rt_brep_import5");
 
     struct rt_brep_internal* bi;
     if (dbip) RT_CK_DBI(dbip);
@@ -5130,12 +4973,7 @@ rt_brep_ifree(struct rt_db_internal *ip)
     struct rt_brep_internal* bi;
     RT_CK_DB_INTERNAL(ip);
 
-    /* If we've got debugging set in the environment, grab the value */
-    int debug_output = brep_debug(NULL);
-
-    if (debug_output > 1) {
-	std::cerr  << "rt_brep_ifree" << std::endl;
-    }
+    TRACE1("rt_brep_ifree");
 
     bi = (struct rt_brep_internal*)ip->idb_ptr;
     RT_BREP_CK_MAGIC(bi);
