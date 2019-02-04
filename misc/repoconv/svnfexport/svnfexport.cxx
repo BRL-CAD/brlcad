@@ -195,6 +195,17 @@ write_blob(std::ifstream &infile, std::ofstream &outfile, struct svn_node &node)
     }
 }
 
+std::string
+branch_head_id(std::string branch){
+    // If strlen of current head == 40, it's a sha1 and just return it.
+    //
+    // else, it's a mark and return the string with a colon in front.
+    std::string curr_head = branch_head_ids[branch];
+    if (curr_head.length() == 40) return curr_head;
+    std::string head_mark = std::string(":") + curr_head;
+    return head_mark;
+}
+
 /* Read revision properties.  Technically these are optional,
  * so don't bother with a return code - just get what we can. */
 void
@@ -701,7 +712,7 @@ void cvs_svn_sync(std::ifstream &infile, std::ofstream &outfile)
     for (size_t n = 0; n != rev.nodes.size(); n++) {
 	struct svn_node &node = rev.nodes[n];
 	if (node.branch.length() && !node.branch.compare("refs/heads/master")) {
-	    if (node.local_path.length() && node.text_content_sha1.length()) {
+	    if (node.local_path.length() && node.text_content_sha1.length() && node.local_path.compare("db/terra.dsp")) {
 		std::string gsha1 = svn_sha1_to_git_sha1[node.text_content_sha1];
 		if (cvs_blob_sha1.find(gsha1) == cvs_blob_sha1.end()) {
 		    std::cout << "	Git blob not found: " << node.local_path << ", content sha1: " << node.text_content_sha1 << " , git sha1: " << svn_sha1_to_git_sha1[node.text_content_sha1] << "\n";
@@ -709,6 +720,16 @@ void cvs_svn_sync(std::ifstream &infile, std::ofstream &outfile)
 	    }
 	}
     }
+
+    // TODO - write out syncing commit
+    outfile << "commit " << rev.nodes[0].branch << "\n";
+    outfile << "mark :" << rev.revision_number << "\n";
+    outfile << "committer " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
+    outfile << "data " << rev.commit_msg.length() << "\n";
+    outfile << rev.commit_msg << "\n";
+    outfile << "from " << branch_head_id(rev.nodes[0].branch) << "\n";
+    std::string new_mark = rev.nodes[0].branch + std::to_string(rev.revision_number);
+    branch_head_ids[rev.nodes[0].branch] = new_mark;
 }
 
 void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev_num_min, long int rev_num_max)
@@ -745,9 +766,8 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 	    outfile << "committer " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
 	    outfile << "data " << rev.commit_msg.length() << "\n";
 	    outfile << rev.commit_msg << "\n";
-	    outfile << "from " << branch_head_ids[rev.nodes[0].branch] << "\n";
-	    std::string new_mark = std::string(":") + std::to_string(rev.revision_number);
-	    branch_head_ids[rev.nodes[0].branch] = new_mark;
+	    outfile << "from " << branch_head_id(rev.nodes[0].branch) << "\n";
+	    branch_head_ids[rev.nodes[0].branch] = std::to_string(rev.revision_number);
 
 	    for (size_t n = 0; n != rev.nodes.size(); n++) {
 		struct svn_node &node = rev.nodes[n];
