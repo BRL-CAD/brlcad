@@ -25,6 +25,11 @@
 
 #include "common.h"
 
+#include <iomanip>
+#include <limits>
+#include <sstream>
+#include <string>
+
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
@@ -36,7 +41,7 @@ int
 ged_center(struct ged *gedp, int argc, const char *argv[])
 {
     point_t center;
-    static const char *usage = "[x y z]";
+    static const char *usage = "[-v] | [x y z]";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_VIEW(gedp, GED_ERROR);
@@ -49,8 +54,21 @@ ged_center(struct ged *gedp, int argc, const char *argv[])
     if (argc == 1) {
 	MAT_DELTAS_GET_NEG(center, gedp->ged_gvp->gv_center);
 	VSCALE(center, center, gedp->ged_wdbp->dbip->dbi_base2local);
-	bn_encode_vect(gedp->ged_result_str, center, 0);
+	bn_encode_vect(gedp->ged_result_str, center, 1);
 
+	return GED_OK;
+    }
+
+    if (argc == 2 && BU_STR_EQUAL(argv[1], "-v")) {
+	std::ostringstream ss;
+	MAT_DELTAS_GET_NEG(center, gedp->ged_gvp->gv_center);
+	VSCALE(center, center, gedp->ged_wdbp->dbip->dbi_base2local);
+	ss << std::fixed << std::setprecision(std::numeric_limits<fastf_t>::max_digits10) << center[X];
+	ss << " ";
+	ss << std::fixed << std::setprecision(std::numeric_limits<fastf_t>::max_digits10) << center[Y];
+	ss << " ";
+	ss << std::fixed << std::setprecision(std::numeric_limits<fastf_t>::max_digits10) << center[Z];
+	bu_vls_printf(gedp->ged_result_str, "%s", ss.str().c_str());
 	return GED_OK;
     }
 
