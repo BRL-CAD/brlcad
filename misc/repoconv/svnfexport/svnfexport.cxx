@@ -825,6 +825,8 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 			std::cerr << "Unhandled node action type " << print_node_action(node.action) << "\n";
 			outfile << "? ";
 			outfile << "\"" << node.local_path << "\"\n";
+			std::cout << "Fatal - unhandled node action at r" << rev.revision_number << ", node: " << node.path << "\n";
+			exit(1);
 		}
 		if (node.exec_path) {
 		    outfile << "100755 ";
@@ -832,7 +834,12 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 		    outfile << "100644 ";
 		}
 		if (node.action == nchange || node.action == nadd) {
-		    outfile << svn_sha1_to_git_sha1[current_sha1[node.path]] << " \"" << node.local_path << "\"\n";
+		    std::string gsha1 = svn_sha1_to_git_sha1[current_sha1[node.path]];
+		    if (gsha1.length() < 40) {
+			std::cout << "Fatal - could not find git sha1 - r" << rev.revision_number << ", node: " << node.path << "\n";
+			exit(1);
+		    }
+		    outfile << gsha1 << " \"" << node.local_path << "\"\n";
 		}
 		if (node.action == ndelete) {
 		    outfile << "\"" << node.local_path << "\"\n";
@@ -983,7 +990,7 @@ int main(int argc, const char **argv)
     std::ofstream outfile("export.fi", std::ios::out | std::ios::binary);
     if (!outfile.good()) return -1;
     cvs_svn_sync(infile, outfile);
-    rev_fast_export(infile, outfile, 29887, 29895);
+    rev_fast_export(infile, outfile, 29887, 30119);
     outfile.close();
 
     return 0;
