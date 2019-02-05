@@ -203,7 +203,7 @@ look_for(void (*verbose)(const char *, ...), look_for_type_t type, const char *l
 
 	    if (!failed) {
 		verbose("...found %s %s\n", TYPE2STR(type), *paths);
-		setenv(var, *paths, 1);
+		bu_setenv(var, *paths, 1);
 		break;
 	    }
 
@@ -230,7 +230,7 @@ set_if_unset(void (*echo)(const char *, ...), void (*verbose)(const char *, ...)
 
     if (!setval || (strlen(setval) == 0)) {
 	verbose("%s=\"%s\"\n", var, val);
-	setenv(var, val, 1);
+	bu_setenv(var, val, 1);
     }
 
     setval = getenv(var);
@@ -286,39 +286,39 @@ main(int ac, char *av[])
     /* process the argument list for commands */
     for (arg=1; arg<ac; arg++) {
 	if (BU_STR_EQUAL(av[arg], "clean")) {
-	    setenv("CLEAN", "1", 1);
+	    bu_setenv("CLEAN", "1", 1);
 	    continue;
 	}
 	if (BU_STR_EQUAL(av[arg], "clobber")) {
-	    setenv("CLEAN", "1", 1);
-	    setenv("CLOBBER", "1", 1);
+	    bu_setenv("CLEAN", "1", 1);
+	    bu_setenv("CLOBBER", "1", 1);
 	    continue;
 	}
 	if (BU_STR_EQUAL(av[arg], "h")) {
-	    setenv("HELP", "1", 1);
+	    bu_setenv("HELP", "1", 1);
 	    continue;
 	}
 	if (BU_STR_EQUAL(av[arg], "help")) {
-	    setenv("HELP", "1", 1);
+	    bu_setenv("HELP", "1", 1);
 	    continue;
 	}
 	if (bu_strncasecmp(av[arg], "instruct", 8)) {
-	    setenv("INSTRUCTIONS", "1", 1);
+	    bu_setenv("INSTRUCTIONS", "1", 1);
 	    continue;
 	}
 	if (BU_STR_EQUAL(av[arg], "start")) {
 	    continue;
 	}
 	if (BU_STR_EQUAL(av[arg], "quiet")) {
-	    setenv("QUIET", "1", 1);
+	    bu_setenv("QUIET", "1", 1);
 	    continue;
 	}
 	if (BU_STR_EQUAL(av[arg], "verbose")) {
-	    setenv("VERBOSE", "1", 1);
+	    bu_setenv("VERBOSE", "1", 1);
 	    continue;
 	}
 	if (BU_STR_EQUAL(av[arg], "run")) {
-	    setenv("RUN", "1", 1);
+	    bu_setenv("RUN", "1", 1);
 	    continue;
 	}
 	if (strchr(av[arg], '=')) {
@@ -326,7 +326,7 @@ main(int ac, char *av[])
 	    char *var = bu_strdup(av[arg]);
 	    char *val = strtok(var, "=");
 	    if (var && val) {
-		setenv(var, val, 1);
+		bu_setenv(var, val, 1);
 	    }
 	    bu_free(var, "strdup av[arg]");
 	    continue;
@@ -554,14 +554,14 @@ main(int ac, char *av[])
 	const char *logfile;
 	bu_vls_printf(&str, "run-%d-benchmark.log", bu_process_id());
 	logfile = bu_vls_addr(&str);
-	setenv("LOGFILE", logfile, 1);
+	bu_setenv("LOGFILE", logfile, 1);
 	fd = open(logfile, O_WRONLY|O_CREAT, S_IRUSR | S_IWUSR);
 	if (fd < 0 || !bu_file_writable(logfile)) {
 	    if (!BU_STR_EQUAL(logfile, "/dev/null")) {
 		bu_log("ERROR: Unable to log to %s\n", logfile);
 	    }
 	    /* FIXME: not valid logfile on windows, use 'nul' */
-	    setenv("LOGFILE", "/dev/null", 1);
+	    bu_setenv("LOGFILE", "/dev/null", 1);
 	}
     }
 
@@ -578,10 +578,9 @@ main(int ac, char *av[])
 
     {
 	struct bu_vls v = BU_VLS_INIT_ZERO;
+	char rfc2822[1024] = {0};
 #ifdef HAVE_SYS_UTSNAME_H
 	struct utsname n;
-
-	char rfc2822[1024];
 	time_t t = time(NULL);
 	strftime(rfc2822, sizeof(rfc2822), "%a, %d %b %Y %H:%M:%S %Z", localtime(&t));
 
@@ -625,7 +624,7 @@ main(int ac, char *av[])
     look_for(verbose_echo, file, "a benchmark geometry directory", "DB", (const char **)argv);
     bu_vls_trunc(&vp, 0);
     if (getenv("DB") && !bu_file_directory(getenv("DB"))) {
-	setenv("DB", bu_path_dirname(getenv("DB")), 1);
+	bu_setenv("DB", bu_path_dirname(getenv("DB")), 1);
     }
 
     bu_vls_printf(&vp,
@@ -641,7 +640,7 @@ main(int ac, char *av[])
     look_for(verbose_echo, file, "a benchmark reference image directory", "PIX", (const char **)argv);
     bu_vls_trunc(&vp, 0);
     if (getenv("PIX") && !bu_file_directory(getenv("PIX"))) {
-	setenv("PIX", bu_path_dirname(getenv("PIX")), 1);
+	bu_setenv("PIX", bu_path_dirname(getenv("PIX")), 1);
     }
 
     bu_vls_printf(&vp,
