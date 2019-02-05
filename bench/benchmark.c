@@ -52,7 +52,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <sys/utsname.h>
+#include <sys/stat.h>
+/* TODO - fall back on https://github.com/sandsmark/winuname for Windows? */
+#ifdef HAVE_SYS_UTSNAME_H
+#  include <sys/utsname.h>
+#endif
 
 #include "bio.h"
 
@@ -573,8 +577,9 @@ main(int ac, char *av[])
     }
 
     {
-	struct utsname n;
 	struct bu_vls v = BU_VLS_INIT_ZERO;
+#ifdef HAVE_SYS_UTSNAME_H
+	struct utsname n;
 
 	char rfc2822[1024];
 	time_t t = time(NULL);
@@ -585,6 +590,7 @@ main(int ac, char *av[])
 	} else {
 	    bu_vls_strcat(&v, "unknown");
 	}
+#endif
 
 	echo("B R L - C A D   B E N C H M A R K\n");
 	echo("=================================\n");
