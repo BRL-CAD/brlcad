@@ -31,6 +31,8 @@ struct svn_node {
     std::map<std::string, std::string> node_props;
     size_t content_start; // offset position in dump file
     /* Information from analysis */
+    int exec_path;
+    int exec_change;
     int crlf_content;
     int move_edit;
     int tag_edit;
@@ -268,7 +270,8 @@ get_node_props(std::ifstream &infile, struct svn_node *n)
     std::string vkey("V ");
     std::string pend("PROPS-END");
     std::string line;
-    int set_exec = 0;
+    n->exec_path = 0;
+    n->exec_change = 0;
     n->crlf_content = 0;
     // Go until we hit PROPS-END
     while (std::getline(infile, line)) {
@@ -284,7 +287,7 @@ get_node_props(std::ifstream &infile, struct svn_node *n)
 	std::getline(infile, key);
 
 	if (!key.compare(std::string("svn:executable"))) {
-	    set_exec = 1;
+	    n->exec_path = 1;
 	}
 
 	// Now we need a value - bail if we suddenly get PROPS-END
@@ -314,13 +317,14 @@ get_node_props(std::ifstream &infile, struct svn_node *n)
     }
 
     // Make the exec_paths set match the path's current prop state.
-    if (set_exec) {
+    std::set<std::string>::iterator e_it = exec_paths.find(n->path);
+    if ((n->exec_path && e_it == exec_paths.end()) || (!n->exec_path && e_it != exec_paths.end())) {
+	n->exec_change = 1;
+    }
+    if (n->exec_path) {
 	exec_paths.insert(n->path);
     } else {
-	std::set<std::string>::iterator e_it = exec_paths.find(n->path);
-	if (e_it != exec_paths.end()) {
-	    exec_paths.erase(n->path);
-	}
+	exec_paths.erase(n->path);
     }
 }
 
@@ -733,7 +737,7 @@ void cvs_svn_sync(std::ifstream &infile, std::ofstream &outfile)
     std::string commit_msg = std::string("Sync CVS repo contents for r29886 to match the SVN contents at that revision.");
     outfile << "commit " << "refs/heads/master" << "\n";
     outfile << "mark :" << new_mark << "\n";
-    outfile << "committer " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
+    outfile << "committer " << author_map[std::string("starseeker")] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
     outfile << "data " << commit_msg.length() << "\n";
     outfile << commit_msg << "\n";
     outfile << "from " << branch_head_id(branch) << "\n";
@@ -747,7 +751,7 @@ void cvs_svn_sync(std::ifstream &infile, std::ofstream &outfile)
 		if (cvs_blob_sha1.find(gsha1) == cvs_blob_sha1.end()) {
 		    std::cout << "	Git blob not found: " << node.local_path << ", content sha1: " << node.text_content_sha1 << " , git sha1: " << svn_sha1_to_git_sha1[node.text_content_sha1] << "\n";
 		    outfile << "M ";
-		    if (exec_paths.find(node.path) != exec_paths.end()) {
+		    if (node.exec_path) {
 			outfile << "100755 ";
 		    } else {
 			outfile << "100644 ";
@@ -771,7 +775,7 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 	if (rev.nodes.size() > 0) {
 	    for (size_t n = 0; n != rev.nodes.size(); n++) {
 		struct svn_node &node = rev.nodes[n];
-		if (node.text_content_sha1.length()) {
+		if (node.text_content_sha1.length() && node.text_content_length) {
 		    current_sha1[node.path] = node.text_content_sha1;
 		}
 	    }
@@ -781,14 +785,20 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 
 	if (rev.revision_number >= rev_num_min) {
 	    std::cout << "Processing revision " << rev.revision_number << "\n";
+	    int git_changes = 0;
 	    for (size_t n = 0; n != rev.nodes.size(); n++) {
 		struct svn_node &node = rev.nodes[n];
 		if (node.text_content_length > 0) {
 		    //std::cout << "	Adding node object for " << node.local_path << "\n";
 		    write_blob(infile, outfile, node);
+		    git_changes = 1;
+		}
+		if (node.exec_change) {
+		    git_changes = 1;
 		}
 	    }
 
+	    if (git_changes) {
 	    outfile << "commit " << rev.nodes[0].branch << "\n";
 	    outfile << "mark :" << rev.revision_number << "\n";
 	    outfile << "committer " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
@@ -816,7 +826,7 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 			outfile << "? ";
 			outfile << "\"" << node.local_path << "\"\n";
 		}
-		if (exec_paths.find(node.path) != exec_paths.end()) {
+		if (node.exec_path) {
 		    outfile << "100755 ";
 		} else {
 		    outfile << "100644 ";
@@ -827,6 +837,9 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 		if (node.action == ndelete) {
 		    outfile << "\"" << node.local_path << "\"\n";
 		}
+	    }
+	    } else {
+		std::cout << "Skipping SVN commit r" << rev.revision_number << " - no git applicable changes\n";
 	    }
 	}
     }
@@ -970,7 +983,7 @@ int main(int argc, const char **argv)
     std::ofstream outfile("export.fi", std::ios::out | std::ios::binary);
     if (!outfile.good()) return -1;
     cvs_svn_sync(infile, outfile);
-    rev_fast_export(infile, outfile, 29887, 30000);
+    rev_fast_export(infile, outfile, 29887, 29895);
     outfile.close();
 
     return 0;
