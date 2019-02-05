@@ -151,7 +151,7 @@ std::string git_sha1(std::ifstream &infile, struct svn_node *n)
 	std::string crlf_buff;
 	std::ostringstream cf(crlf_buff);
 	for (int i = 0; i < n->text_content_length; i++) {
-	    if (cbuffer[i] == '\n') {
+	    if (cbuffer[i] == '\n' && (i == 0 || cbuffer[i-1] != '\r')) {
 		cf << '\r' << '\n';
 	    } else {
 		cf << cbuffer[i];
@@ -970,7 +970,7 @@ int main(int argc, const char **argv)
     std::ofstream outfile("export.fi", std::ios::out | std::ios::binary);
     if (!outfile.good()) return -1;
     cvs_svn_sync(infile, outfile);
-    //rev_fast_export(infile, outfile, 29887, 30000);
+    rev_fast_export(infile, outfile, 29887, 30000);
     outfile.close();
 
     return 0;
