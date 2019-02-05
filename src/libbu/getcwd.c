@@ -36,6 +36,7 @@
 #endif
 #include <string.h>
 
+#include "bu/app.h"
 #include "bu/file.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
