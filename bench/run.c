@@ -63,6 +63,7 @@ extern int bu_exec(const char *);
 int
 run(int ac, char *av[])
 {
+    int retval;
     const char *run_geomname = av[0];
     const char *run_geometry = av[1];
     long int hypersample = strtod(av[2], NULL);
@@ -74,7 +75,7 @@ run(int ac, char *av[])
     echo("DEBUG: Running %s -B -M -s512 -H%ld -J0 %s -o %s.pix %s/%s.g %s\n", av[0], hypersample, args, run_geomname, run_geomname, run_geometry);
 
     /* pipe(stdin_for_bu_exec); */
-    int retval = bu_exec("...");
+    retval = bu_exec("...");
     echo("DEBUG: Running %s returned %d\n", av[0], retval);
 
     return retval;

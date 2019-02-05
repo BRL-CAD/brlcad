@@ -264,7 +264,7 @@ main(int ac, char *av[])
     char root[MAXPATHLEN] = {0};
     char db[MAXPATHLEN] = {0};
     char pix[MAXPATHLEN] = {0};
-    char this[MAXPATHLEN] = {0};
+    char thisp[MAXPATHLEN] = {0};
     char *argv[MAXPATHLEN] = {NULL};
     struct bu_vls vp = BU_VLS_INIT_ZERO;
 
@@ -597,13 +597,13 @@ main(int ac, char *av[])
     bu_dir(root, MAXPATHLEN, BU_DIR_BIN, NULL);
     bu_dir(db, MAXPATHLEN, BU_DIR_DATA, "db", NULL);
     bu_dir(pix, MAXPATHLEN, BU_DIR_DATA, "pix" , NULL);
-    bu_dir(this, MAXPATHLEN, BU_DIR_CURR, NULL);
+    bu_dir(thisp, MAXPATHLEN, BU_DIR_CURR, NULL);
 
     bu_vls_printf(&vp,
 		  "%s/rt "
 		  "%s/rt "
 		  "./rt",
-		  root, this);
+		  root, thisp);
     bu_argv_from_string(argv, 32, bu_vls_addr(&vp));
     look_for(verbose_echo, executable, "the BRL-CAD raytracer", "RT", (const char **)argv);
     bu_vls_trunc(&vp, 0);
@@ -614,7 +614,7 @@ main(int ac, char *av[])
 		  "%s/../db/moss.g "
 		  "./db/moss.g "
 		  "./moss.g",
-		  db, this, this);
+		  db, thisp, thisp);
     bu_argv_from_string(argv, 32, bu_vls_addr(&vp));
     look_for(verbose_echo, file, "a benchmark geometry directory", "DB", (const char **)argv);
     bu_vls_trunc(&vp, 0);
@@ -630,7 +630,7 @@ main(int ac, char *av[])
 		  "%s/../../../pix/moss.pix "
 		  "./pix/moss.pix "
 		  "./moss.pix",
-		  pix, this, this, this, this);
+		  pix, thisp, thisp, thisp, thisp);
     bu_argv_from_string(argv, 32, bu_vls_addr(&vp));
     look_for(verbose_echo, file, "a benchmark reference image directory", "PIX", (const char **)argv);
     bu_vls_trunc(&vp, 0);
@@ -646,7 +646,7 @@ main(int ac, char *av[])
 		  "%s/../../pix "
 		  "%s/../../../pix "
 		  "./pix",
-		  getenv("PIX"), pix, this, this, this, this);
+		  getenv("PIX"), pix, thisp, thisp, thisp, thisp);
     bu_argv_from_string(argv, 32, bu_vls_addr(&vp));
     look_for(verbose_echo, directory, "a benchmark reference log directory", "LOG", (const char **)argv);
     bu_vls_trunc(&vp, 0);
@@ -657,7 +657,7 @@ main(int ac, char *av[])
 		  "%s/bench/pixcmp "
 		  "%s/../bench/pixcmp "
 		  "./pixcmp",
-		  root, this, this, this);
+		  root, thisp, thisp, thisp);
     bu_argv_from_string(argv, 32, bu_vls_addr(&vp));
     look_for(verbose_echo, executable, "a pixel comparison utility", "CMP", (const char **)argv);
     bu_vls_trunc(&vp, 0);
@@ -671,7 +671,7 @@ main(int ac, char *av[])
 		  "%s/../../sh/elapsed.sh "
 		  "%s/../../../sh/elapsed.sh "
 		  "./elapsed.sh",
-		  root, this, this, this, this, this);
+		  root, thisp, thisp, thisp, thisp, thisp);
     bu_argv_from_string(argv, 32, bu_vls_addr(&vp));
     look_for(verbose_echo, script, "a time elapsed utility", "ELP", (const char **)argv);
     bu_vls_trunc(&vp, 0);
@@ -679,7 +679,6 @@ main(int ac, char *av[])
     bu_free(root, "strdup root");
     bu_free(db, "strdup db");
     bu_free(pix, "strdup pix");
-    bu_free(this, "dirname this");
 
 
     /*********************
@@ -783,18 +782,19 @@ main(int ac, char *av[])
     {
 	struct bu_vls elapsed = BU_VLS_INIT_ZERO;
 	double mintime = 6.0 * TIMEFRAME;
+	double maxtime = 6.0 * MAXTIME;
+	double estimate = 3.0 * mintime;
+
 	if (mintime < 1.0)
 	    mintime = 0; /* zero is okay */
 	bu_vls_sprintf(&elapsed, "%s", format_elapsed(mintime));
 	echo("Minimum run time is %s\n", bu_vls_cstr(&elapsed));
 
-	double maxtime = 6.0 * MAXTIME;
 	if (maxtime < 1.0)
 	    maxtime = 1.0; /* zero would be misleading */
 	bu_vls_sprintf(&elapsed, "%s", format_elapsed(maxtime));
 	echo("Maximum run time is %s\n", bu_vls_cstr(&elapsed));
 
-	double estimate = 3.0 * mintime;
 	if (estimate > maxtime)
 	    estimate = maxtime;
 
@@ -837,52 +837,55 @@ main(int ac, char *av[])
     /******************************
      * compute and output results *
      ******************************/
+    {
+	struct bu_vls performance = BU_VLS_INIT_ZERO;
+	ret = perf(&performance, /*...!!!...*/"moss world star bldg391 m35 sphflake", (const char **)argv);
 
-    struct bu_vls performance = BU_VLS_INIT_ZERO;
-    ret = perf(&performance, /*...!!!...*/"moss world star bldg391 m35 sphflake", (const char **)argv);
+	if (ret == 0) {
+	    /* !!! write performance to summary */
+	}
 
-    if (ret == 0) {
-	/* !!! write performance to summary */
-    }
-
-    echo("\n");
-    echo("The following files have been generated and/or modified:\n");
-    echo("  *.log ..... final log files for each individual raytrace test\n");
-    echo("  *.pix ..... final pix image files for each individual raytrace test\n");
-    echo("  *.log.* ... log files for previous frames and raytrace tests\n");
-    echo("  *.pix.* ... pix image files for previous frames and raytrace tests\n");
-    echo("  summary ... performance results summary, 2 lines per run\n");
-    echo("\n");
-    echo("Run '%s clean' to remove generated pix files.\n", av[0]);
-    echo("\n");
-
-    echo("Summary:\n");
-    echo("%s\n", bu_vls_cstr(&performance));
-
-    double vgr = calculate_vgr(&performance);
-
-    if (vgr > 0.0) {
 	echo("\n");
-	echo("#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#\n");
-	echo("Benchmark results indicate an approximate VGR performance metric of %ld\n", (long int)vgr);
-	echo("Logarithmic VGR metric is %.2lf  (natural logarithm is %.2lf)\n", log10(vgr), log(vgr));
-	echo("#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#\n");
+	echo("The following files have been generated and/or modified:\n");
+	echo("  *.log ..... final log files for each individual raytrace test\n");
+	echo("  *.pix ..... final pix image files for each individual raytrace test\n");
+	echo("  *.log.* ... log files for previous frames and raytrace tests\n");
+	echo("  *.pix.* ... pix image files for previous frames and raytrace tests\n");
+	echo("  summary ... performance results summary, 2 lines per run\n");
 	echo("\n");
-	echo("These numbers seem to indicate that this machine is approximately %ld times", (long int)vgr);
-	echo("faster than the reference machine being used for comparison, a VAX 11/780\n");
-	echo("running 4.3 BSD named VGR.  These results are in fact approximately %.2lf", log10(vgr));
-	echo("orders of magnitude faster than the reference.\n");
+	echo("Run '%s clean' to remove generated pix files.\n", av[0]);
 	echo("\n");
 
-	echo("Here are some other approximated VGR results for perspective:\n");
-	echo("    120 on a 200MHz R5000 running IRIX 6.5\n");
-	echo("    250 on a 500 MHz Pentium III running RedHat 7.1\n");
-	echo("    550 on a dual 450 MHz UltraSPARC II running SunOS 5.8\n");
-	echo("   1000 on a dual 500 MHz G4 PowerPC running Mac OS X 10.2\n");
-	echo("   1500 on a dual 1.66 GHz Athlon MP 2000+ running RedHat 7.3\n");
-	echo("  52000 on a 4x4 CPU 2.93 GHz Xeon running RHEL Server 5.4\n");
-	echo("  65000 on a 512 CPU 400 MHz R12000 Running IRIX 6.5\n");
-	echo("\n");
+	echo("Summary:\n");
+	echo("%s\n", bu_vls_cstr(&performance));
+
+	{
+	    double vgr = calculate_vgr(&performance);
+
+	    if (vgr > 0.0) {
+		echo("\n");
+		echo("#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#\n");
+		echo("Benchmark results indicate an approximate VGR performance metric of %ld\n", (long int)vgr);
+		echo("Logarithmic VGR metric is %.2lf  (natural logarithm is %.2lf)\n", log10(vgr), log(vgr));
+		echo("#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#\n");
+		echo("\n");
+		echo("These numbers seem to indicate that this machine is approximately %ld times", (long int)vgr);
+		echo("faster than the reference machine being used for comparison, a VAX 11/780\n");
+		echo("running 4.3 BSD named VGR.  These results are in fact approximately %.2lf", log10(vgr));
+		echo("orders of magnitude faster than the reference.\n");
+		echo("\n");
+
+		echo("Here are some other approximated VGR results for perspective:\n");
+		echo("    120 on a 200MHz R5000 running IRIX 6.5\n");
+		echo("    250 on a 500 MHz Pentium III running RedHat 7.1\n");
+		echo("    550 on a dual 450 MHz UltraSPARC II running SunOS 5.8\n");
+		echo("   1000 on a dual 500 MHz G4 PowerPC running Mac OS X 10.2\n");
+		echo("   1500 on a dual 1.66 GHz Athlon MP 2000+ running RedHat 7.3\n");
+		echo("  52000 on a 4x4 CPU 2.93 GHz Xeon running RHEL Server 5.4\n");
+		echo("  65000 on a 512 CPU 400 MHz R12000 Running IRIX 6.5\n");
+		echo("\n");
+	    }
+	}
     }
 
     {
@@ -910,8 +913,10 @@ main(int ac, char *av[])
 		  "%s/doc/benchmark.tr "
 		  "%s/../doc/benchmark.tr "
 		  "./benchmark.tr",
-		  this, this, this, this, this, this);
+		  thisp, thisp, thisp, thisp, thisp, thisp);
     bu_argv_from_string(argv, 32, bu_vls_addr(&vp));
+
+    bu_free(thisp, "dirname this");
 
     look_for(NULL, file, "BENCHMARK_TR", "benchmark", (const char **)argv);
     bu_vls_trunc(&vp, 0);
