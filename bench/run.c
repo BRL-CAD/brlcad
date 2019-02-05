@@ -48,7 +48,7 @@
 /* TODO: !!! obviously */
 struct bu_vls bu_argv_to_string(int ac, const char *av[]) {struct bu_vls v = BU_VLS_INIT_ZERO; if (ac) {bu_vls_printf(&v, "%s", av[0]);} return v;}
 void (*echo)(const char *, ...) = bu_log;
-extern int bu_exec(const char *);
+extern int bu_exec(const char *program, void *data, struct bu_vls *out, struct bu_vls *err) {if (!program || !out || !err || !data) return 1; return 0;}
 
 
 /**
@@ -75,7 +75,7 @@ run(int ac, char *av[])
     echo("DEBUG: Running %s -B -M -s512 -H%ld -J0 %s -o %s.pix %s/%s.g %s\n", av[0], hypersample, args, run_geomname, run_geomname, run_geometry);
 
     /* pipe(stdin_for_bu_exec); */
-    retval = bu_exec("...");
+    retval = bu_exec(RT, NULL, NULL, NULL);
     echo("DEBUG: Running %s returned %d\n", av[0], retval);
 
     return retval;
