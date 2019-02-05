@@ -709,27 +709,55 @@ analyze_dump()
 void cvs_svn_sync(std::ifstream &infile, std::ofstream &outfile)
 {
     struct svn_revision &rev = revs[29886];
+
     for (size_t n = 0; n != rev.nodes.size(); n++) {
 	struct svn_node &node = rev.nodes[n];
+	if (node.text_content_sha1.length()) {
+	    current_sha1[node.path] = node.text_content_sha1;
+	}
 	if (node.branch.length() && !node.branch.compare("refs/heads/master")) {
-	    if (node.local_path.length() && node.text_content_sha1.length() && node.local_path.compare("db/terra.dsp")) {
+	    if (node.local_path.length() && node.text_content_length && node.text_content_sha1.length() && node.local_path.compare("db/terra.dsp")) {
 		std::string gsha1 = svn_sha1_to_git_sha1[node.text_content_sha1];
 		if (cvs_blob_sha1.find(gsha1) == cvs_blob_sha1.end()) {
 		    std::cout << "	Git blob not found: " << node.local_path << ", content sha1: " << node.text_content_sha1 << " , git sha1: " << svn_sha1_to_git_sha1[node.text_content_sha1] << "\n";
+		    write_blob(infile, outfile, node);
+		    svn_sha1_to_git_sha1[node.text_content_sha1] = gsha1;
 		}
 	    }
 	}
     }
 
-    // TODO - write out syncing commit
-    outfile << "commit " << rev.nodes[0].branch << "\n";
-    outfile << "mark :" << rev.revision_number << "\n";
+    // write out syncing commit
+    std::string branch = std::string("refs/heads/master");
+    std::string new_mark = std::string("11111") + std::to_string(rev.revision_number);
+    std::string commit_msg = std::string("Sync CVS repo contents for r29886 to match the SVN contents at that revision.");
+    outfile << "commit " << "refs/heads/master" << "\n";
+    outfile << "mark :" << new_mark << "\n";
     outfile << "committer " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
-    outfile << "data " << rev.commit_msg.length() << "\n";
-    outfile << rev.commit_msg << "\n";
-    outfile << "from " << branch_head_id(rev.nodes[0].branch) << "\n";
-    std::string new_mark = rev.nodes[0].branch + std::to_string(rev.revision_number);
-    branch_head_ids[rev.nodes[0].branch] = new_mark;
+    outfile << "data " << commit_msg.length() << "\n";
+    outfile << commit_msg << "\n";
+    outfile << "from " << branch_head_id(branch) << "\n";
+    branch_head_ids[branch] = new_mark;
+
+    for (size_t n = 0; n != rev.nodes.size(); n++) {
+	struct svn_node &node = rev.nodes[n];
+	if (node.branch.length() && !node.branch.compare("refs/heads/master")) {
+	    if (node.local_path.length() && node.text_content_length && node.text_content_sha1.length() && node.local_path.compare("db/terra.dsp")) {
+		std::string gsha1 = svn_sha1_to_git_sha1[node.text_content_sha1];
+		if (cvs_blob_sha1.find(gsha1) == cvs_blob_sha1.end()) {
+		    std::cout << "	Git blob not found: " << node.local_path << ", content sha1: " << node.text_content_sha1 << " , git sha1: " << svn_sha1_to_git_sha1[node.text_content_sha1] << "\n";
+		    outfile << "M ";
+		    if (exec_paths.find(node.path) != exec_paths.end()) {
+			outfile << "100755 ";
+		    } else {
+			outfile << "100644 ";
+		    }
+		    outfile << svn_sha1_to_git_sha1[current_sha1[node.path]] << " \"" << node.local_path << "\"\n";
+		}
+	    }
+	}
+    }
+
 }
 
 void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev_num_min, long int rev_num_max)

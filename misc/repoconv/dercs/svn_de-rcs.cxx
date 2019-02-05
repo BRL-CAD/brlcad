@@ -38,6 +38,10 @@ bool is_binary(const char *cstr, int len, std::string &npath)
 
 bool skip_dercs(std::string &npath) {
     if (npath.find("/re2c/") != std::string::npos) return false;
+    if (npath.find("/misc/Cakefile.defs") != std::string::npos) return false;
+    if (npath.find("/misc/win32-msvc8") != std::string::npos) return false;
+    if (npath.find("/misc/rcs2log") != std::string::npos) return false;
+    if (npath.find("/misc/win32-msvc") != std::string::npos) return false;
     if (npath.find("/misc/") != std::string::npos) return true;
     if (npath.find("/src/other/step") != std::string::npos) return true;
     if (npath.find("/src/conv/step") != std::string::npos) return true;
