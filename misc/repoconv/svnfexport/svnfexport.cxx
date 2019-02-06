@@ -809,6 +809,13 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 
 	    for (size_t n = 0; n != rev.nodes.size(); n++) {
 		struct svn_node &node = rev.nodes[n];
+		/* Don't add directory nodes themselves - git works on files */
+		if (node.kind == ndir && node.action == nadd) continue;
+		if (node.kind == ndir && node.action == ndelete) {
+		    std::cerr << "deleting " << node.path << "\n";
+		    std::cerr << "TODO - do we get individual file deletes, or do we need to figure out what was in the directory?  If the latter, we're going to have to walk the currently active paths and delete any that match this node path...\n";
+		}
+
 		//std::cout << "	Processing node " << print_node_action(node.action) << " " << node.local_path << " into branch " << node.branch << "\n";
 
 		switch (node.action) {
@@ -990,7 +997,7 @@ int main(int argc, const char **argv)
     std::ofstream outfile("export.fi", std::ios::out | std::ios::binary);
     if (!outfile.good()) return -1;
     cvs_svn_sync(infile, outfile);
-    rev_fast_export(infile, outfile, 29887, 30119);
+    rev_fast_export(infile, outfile, 29887, 30200);
     outfile.close();
 
     return 0;
