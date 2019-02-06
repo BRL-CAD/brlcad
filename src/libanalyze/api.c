@@ -522,7 +522,7 @@ densities_from_file(struct current_state *state, char *name)
     sret = fread(buf, sb.st_size, 1, fp);
     if (sret != 1)
 	perror("fread");
-    ret = parse_densities_buffer(buf, (unsigned long)sb.st_size, state->densities, NULL, &state->num_densities);
+    ret = parse_densities_buffer(buf, (unsigned long)sb.st_size, &(state->densities), NULL, &state->num_densities);
     bu_free(buf, "density buffer");
     fclose(fp);
 
@@ -570,7 +570,7 @@ densities_from_database(struct current_state *state, struct rt_i *rtip)
      */
     buf = (char *)bu_malloc(bu->count+1, "density buffer");
     memcpy(buf, bu->u.int8, bu->count);
-    ret = parse_densities_buffer(buf, bu->count, state->densities, NULL, &state->num_densities);
+    ret = parse_densities_buffer(buf, bu->count, &(state->densities), NULL, &state->num_densities);
     bu_free((void *)buf, "density buffer");
 
     return ret;

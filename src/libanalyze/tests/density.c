@@ -60,7 +60,7 @@ main(int argc, char **argv)
 
   densities = (struct density_entry *)bu_calloc(num_densities, sizeof(struct density_entry), "density entries");
 
-  ret = parse_densities_buffer(buf, (unsigned long)sb.st_size, densities, NULL, &num_densities);
+  ret = parse_densities_buffer(buf, (unsigned long)sb.st_size, &densities, NULL, &num_densities);
 
   for (i = 0; i < num_densities; i++) {
       if (densities[i].name)

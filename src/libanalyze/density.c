@@ -25,11 +25,13 @@
 #include "analyze.h"
 
 int
-parse_densities_buffer(char *buf, size_t len, struct density_entry *densities, struct bu_vls *result_str, int *num_densities)
+parse_densities_buffer(char *obuf, size_t len, struct density_entry **densities, struct bu_vls *result_str, int *num_densities)
 {
     char *p, *q, *last;
     long idx;
     double density;
+    char *buf = (char *)bu_malloc(sizeof(char)*len+1, "buffer copy");
+    memcpy(buf, obuf, len);
 
     buf[len] = '\0';
     last = &buf[len];
@@ -62,22 +64,26 @@ parse_densities_buffer(char *buf, size_t len, struct density_entry *densities, s
 
 	idx = strtol(p, &q, 10);
 	if (q == (char *)NULL) {
+	    bu_free(buf, "free buf copy");
 	    bu_vls_printf(result_str, "could not convert idx\n");
 	    return ANALYZE_ERROR;
 	}
 
 	if (idx < 0) {
+	    bu_free(buf, "free buf copy");
 	    bu_vls_printf(result_str, "bad density index (%ld < 0)\n", idx);
 	    return ANALYZE_ERROR;
 	}
 
 	density = strtod(q, &p);
 	if (q == p) {
+	    bu_free(buf, "free buf copy");
 	    bu_vls_printf(result_str, "could not convert density\n");
 	    return ANALYZE_ERROR;
 	}
 
 	if (density < 0.0) {
+	    bu_free(buf, "free buf copy");
 	    bu_vls_printf(result_str, "bad density (%lf < 0)\n", density);
 	    return ANALYZE_ERROR;
 	}
@@ -94,17 +100,17 @@ parse_densities_buffer(char *buf, size_t len, struct density_entry *densities, s
 	    q = last;
 
 	while (idx >= *num_densities) {
-	    densities = (struct density_entry *)bu_realloc(densities, sizeof(struct density_entry)*(*num_densities)*2,
+	    *densities = (struct density_entry *)bu_realloc(*densities, sizeof(struct density_entry)*(*num_densities)*2,
 							   "density entries");
 	    *num_densities *= 2;
 	}
 
-	densities[idx].magic = DENSITY_MAGIC;
+	(*densities)[idx].magic = DENSITY_MAGIC;
 	/* since BRL-CAD does computation in mm, but the table is in
 	 * grams / (cm^3) we convert the table on input
 	 */
-	densities[idx].grams_per_cu_mm = density / 1000.0;
-	densities[idx].name = bu_strdup(p);
+	(*densities)[idx].grams_per_cu_mm = density / 1000.0;
+	(*densities)[idx].name = bu_strdup(p);
 
 	p = q;
 
@@ -114,13 +120,14 @@ parse_densities_buffer(char *buf, size_t len, struct density_entry *densities, s
 
 #ifdef PRINT_DENSITIES
     for (idx = 0; idx < *num_densities; idx++)
-	if (densities[idx].magic == DENSITY_MAGIC)
+	if ((*densities)[idx].magic == DENSITY_MAGIC)
 	    bu_vls_printf(&_ged_current_gedp->ged_result_str, "%4d %6g %s\n",
 			  idx,
-			  densities[idx].grams_per_cu_mm,
-			  densities[idx].name);
+			  (*densities)[idx].grams_per_cu_mm,
+			  (*densities)[idx].name);
 #endif
 
+    bu_free(buf, "free buf copy");
     return ANALYZE_OK;
 }
 
