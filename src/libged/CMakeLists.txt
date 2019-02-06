@@ -183,7 +183,7 @@ set(LIBGED_SOURCES
   make.c
   make_name.c
   match.c
-  mater.c
+  mater.cxx
   mirror.c
   model2grid_lu.c
   model2view.c
