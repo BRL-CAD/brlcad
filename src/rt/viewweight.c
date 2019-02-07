@@ -35,10 +35,12 @@
 #include <string.h>
 #include <time.h>
 
+#include "bu/app.h"
 #include "bu/parallel.h"
 #include "bu/str.h"
 #include "bu/sort.h"
 #include "bu/units.h"
+#include "bu/vls.h"
 #include "vmath.h"
 #include "raytrace.h"
 
@@ -61,7 +63,7 @@ const char title[] = "RT Weight";
 
 int noverlaps = 0;
 FILE *densityfp;
-char *densityfile;
+struct bu_vls *densityfile;
 #define DENSITY_FILE ".density"
 
 /* FIXME: use a bu_avs instead of a hard-coded limit so that materials
@@ -182,15 +184,9 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int min
     register size_t i;
     char buf[BUFSIZ+1];
     char linebuf[BUFSIZ+1];
-    const char *curdir = getenv("PWD");
-    const char *homedir = getenv("HOME");
+    const char *curdir = bu_strdup(bu_dir(NULL, 0, BU_DIR_CURR, NULL));
+    const char *homedir = bu_strdup(bu_dir(NULL, 0, BU_DIR_HOME, NULL));
     int line;
-
-    /* make sure they're not NULL */
-    if (!curdir)
-	curdir = "."; /* current dir */
-    if (!homedir)
-	homedir = ""; /* drop to root */
 
     if (!minus_o) {
 	outfp = stdout;
@@ -209,25 +205,27 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int min
 	dens_name[i] = NULL;
     }
 
-#define maxm(a, b) (a>b?a:b)
-
-    i = maxm(strlen(curdir), strlen(homedir)) + strlen(DENSITY_FILE) + 2;
     /* densityfile is global to this file and will be used later (and then freed) */
-    densityfile = (char *)bu_calloc((unsigned int)i, sizeof(char), "densityfile");
+    BU_GET(densityfile, struct bu_vls);
+    bu_vls_init(densityfile);
 
-    snprintf(densityfile, i, "%s%c%s", curdir, BU_DIR_SEPARATOR, DENSITY_FILE);
+    bu_vls_sprintf(densityfile, "%s%c%s", curdir, BU_DIR_SEPARATOR, DENSITY_FILE);
 
-    if ((densityfp = fopen(densityfile, "r")) == (FILE *)0) {
-	snprintf(densityfile, i, "%s%c%s", homedir, BU_DIR_SEPARATOR, DENSITY_FILE);
-	if ((densityfp = fopen(densityfile, "r")) == (FILE *)0) {
-	    bu_log("Unable to load density file \"%s\" for reading\n", densityfile);
-	    perror(densityfile);
+    if ((densityfp = fopen(bu_vls_cstr(densityfile), "r")) == NULL) {
+	bu_vls_sprintf(densityfile, "%s%c%s", homedir, BU_DIR_SEPARATOR, DENSITY_FILE);
+	if ((densityfp = fopen(bu_vls_cstr(densityfile), "r")) == NULL) {
+	    bu_log("Unable to load density file \"%s\" for reading\n", bu_vls_cstr(densityfile));
+	    perror(bu_vls_cstr(densityfile));
+	    bu_vls_free(densityfile);
+	    BU_PUT(densityfile, struct bu_vls);
 	    if (minus_o) {
 		fclose(outfp);
 	    }
 	    bu_exit(-1, NULL);
 	}
     }
+    fprintf(outfp, "Using density file: %s\n", bu_vls_cstr(densityfile));
+
 
     /* Read in density in terms of grams/cm^3 */
 
@@ -261,7 +259,7 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int min
 	    dens_name[idx] = bu_strdup(buf);
 	} else {
 	    bu_log("Material index %d in '%s' is out of range.\n",
-		   idx, densityfile);
+		   idx, bu_vls_cstr(densityfile));
 	}
     }
 
@@ -390,7 +388,7 @@ view_end(struct application *ap)
 
     fprintf(outfp, "RT Weight Program Output:\n");
     fprintf(outfp, "\nDatabase Title: \"%s\"\n", dbp->dbi_title);
-    fprintf(outfp, "Time Stamp: %s\n\nDensity Table Used:%s\n\n", timeptr, densityfile);
+    fprintf(outfp, "Time Stamp: %s\n\nDensity Table Used:%s\n\n", timeptr, bu_vls_cstr(densityfile));
     fprintf(outfp, "Material  Density(g/cm^3) Name\n");
     {
 	register int i;
@@ -568,8 +566,8 @@ view_end(struct application *ap)
     fprintf(outfp, "\nTotal mass = %g %s\n\n", total_weight, units);
 
     /* now finished with density file name*/
-    bu_free(densityfile, "density file name");
-
+    bu_vls_free(densityfile);
+    BU_PUT(densityfile, struct bu_vls);
 }
 
 
