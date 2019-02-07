@@ -184,8 +184,6 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int min
     register size_t i;
     char buf[BUFSIZ+1];
     char linebuf[BUFSIZ+1];
-    const char *curdir = bu_strdup(bu_dir(NULL, 0, BU_DIR_CURR, NULL));
-    const char *homedir = bu_strdup(bu_dir(NULL, 0, BU_DIR_HOME, NULL));
     int line;
 
     if (!minus_o) {
@@ -209,10 +207,10 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int min
     BU_GET(densityfile, struct bu_vls);
     bu_vls_init(densityfile);
 
-    bu_vls_sprintf(densityfile, "%s%c%s", curdir, BU_DIR_SEPARATOR, DENSITY_FILE);
+    bu_vls_sprintf(densityfile, "%s%c%s", bu_dir(NULL, 0, BU_DIR_CURR, NULL), BU_DIR_SEPARATOR, DENSITY_FILE);
 
     if ((densityfp = fopen(bu_vls_cstr(densityfile), "r")) == NULL) {
-	bu_vls_sprintf(densityfile, "%s%c%s", homedir, BU_DIR_SEPARATOR, DENSITY_FILE);
+	bu_vls_sprintf(densityfile, "%s%c%s", bu_dir(NULL, 0, BU_DIR_HOME, NULL), BU_DIR_SEPARATOR, DENSITY_FILE);
 	if ((densityfp = fopen(bu_vls_cstr(densityfile), "r")) == NULL) {
 	    bu_log("Unable to load density file \"%s\" for reading\n", bu_vls_cstr(densityfile));
 	    perror(bu_vls_cstr(densityfile));
