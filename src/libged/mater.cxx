@@ -342,7 +342,7 @@ _ged_mater_mat_id(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "Warning - only the density file is used mapping from material ids to names, ignoring %s", argv[2]);
     }
     if (argc == 3 && !names_from_ids && !bu_file_exists(argv[2], NULL)) {
-	bu_vls_printf(gedp->ged_result_str, "material simplification mapping file %s not found", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "material simplification mapping file %s not found", argv[2]);
 	return GED_ERROR;
     }
 
@@ -413,24 +413,24 @@ _ged_mater_mat_id(struct ged *gedp, int argc, const char *argv[])
     struct bu_ptbl id_objs = BU_PTBL_INIT_ZERO;
     std::set<struct directory *> mns, ids;
     db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
-    (void)db_search(&mn_objs, DB_SEARCH_FLAT|DB_SEARCH_RETURN_UNIQ_DP, mname_search, 0, NULL, gedp->ged_wdbp->dbip, NULL);
-    (void)db_search(&id_objs, DB_SEARCH_FLAT|DB_SEARCH_RETURN_UNIQ_DP, mid_search, 0, NULL, gedp->ged_wdbp->dbip, NULL);
+    (void)db_search(&mn_objs, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, mname_search, 0, NULL, gedp->ged_wdbp->dbip, NULL);
+    (void)db_search(&id_objs, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, mid_search, 0, NULL, gedp->ged_wdbp->dbip, NULL);
     for(size_t i = 0; i < BU_PTBL_LEN(&mn_objs); i++) {
 	struct directory *d = (struct directory *)BU_PTBL_GET(&mn_objs, i);
 	mns.insert(d);
     }
     for(size_t i = 0; i < BU_PTBL_LEN(&id_objs); i++) {
-	struct directory *d = (struct directory *)BU_PTBL_GET(&mn_objs, i);
+	struct directory *d = (struct directory *)BU_PTBL_GET(&id_objs, i);
 	ids.insert(d);
     }
-    db_search_free(&mn_objs); 
-    db_search_free(&id_objs); 
+    db_search_free(&mn_objs);
+    db_search_free(&id_objs);
 
 
     if (names_from_ids) {
 	std::set<struct directory *>::iterator d_it;
 	for (d_it = ids.begin(); d_it != ids.end(); d_it++) {
-	    struct directory *dp = *d_it; 
+	    struct directory *dp = *d_it;
 	    struct bu_attribute_value_set avs;
 	    bu_avs_init_empty(&avs);
 	    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
@@ -439,8 +439,21 @@ _ged_mater_mat_id(struct ged *gedp, int argc, const char *argv[])
 	    }
 	    const char *mat_id = bu_avs_get(&avs, "material_id");
 	    const char *oname = bu_avs_get(&avs, "material_name");
+	    if (d2n.find(std::stoi(mat_id)) == d2n.end()) {
+		bu_vls_printf(gedp->ged_result_str, "Warning: no name found in density file for material_id %s on object %s, skipping\n", mat_id, dp->d_namep);
+		if (oname) {
+		    if (n2d.find(std::string(oname)) != n2d.end()) {
+			bu_vls_printf(gedp->ged_result_str, "Material id collision: object %s has material_name \"%s\" and material_id %s, but the specified density file defines \"%s\" as material_id %s.\n", dp->d_namep, oname, mat_id, oname, std::to_string(n2d.find(std::string(oname))->second).c_str());
+		    }  else {
+			bu_vls_printf(gedp->ged_result_str, "Unknown material: object %s has material_name %s, which is not a material defined in the specified density file.\n", dp->d_namep, oname);
+		    }
+		}
+		bu_avs_free(&avs);
+		continue;
+	    }
+	    // Found a name, assign it if it doesn't match
 	    std::string nname = d2n[std::stoi(mat_id)];
-	    if (oname && nname.compare(std::string(oname))) {
+	    if (!oname || nname.compare(std::string(oname))) {
 		(void)bu_avs_add(&avs, "material_name", nname.c_str());
 		if (db5_update_attributes(dp, &avs, gedp->ged_wdbp->dbip)) {
 		    bu_vls_printf(gedp->ged_result_str, "Error: failed to update object %s attributes\n", dp->d_namep);
@@ -471,7 +484,7 @@ _ged_mater_mat_id(struct ged *gedp, int argc, const char *argv[])
 
     std::set<struct directory *>::iterator dp_it;
     for (dp_it = mns.begin(); dp_it != mns.end(); dp_it++) {
-	struct directory *dp = *dp_it; 
+	struct directory *dp = *dp_it;
 	struct bu_attribute_value_set avs;
 	bu_avs_init_empty(&avs);
 	if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
@@ -486,7 +499,7 @@ _ged_mater_mat_id(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	int nid = n2d[listed_to_defined[std::string(oname)]];
-	if (std::stoi(mat_id) != nid) {
+	if (!mat_id || std::stoi(mat_id) != nid) {
 	    (void)bu_avs_add(&avs, "material_id", std::to_string(nid).c_str());
 	    if (db5_update_attributes(dp, &avs, gedp->ged_wdbp->dbip)) {
 		bu_vls_printf(gedp->ged_result_str, "Error: failed to update object %s attributes\n", dp->d_namep);
