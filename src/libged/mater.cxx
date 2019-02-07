@@ -33,7 +33,9 @@
 
 #include <string.h>
 
-static const char *usage = "mater [-s] object_name shader r [g b] inherit\n              -m  density_file [map_file]";
+static const char *usage = "Usage: mater [-s] object_name shader r [g b] inherit\n"
+                           "              -m  density_file [map_file]\n"
+                           "              -m  --names-from-ids density_file\n";
 
 int
 _ged_mater_shader(struct ged *gedp, int argc, const char *argv[])
@@ -57,7 +59,7 @@ _ged_mater_shader(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s", usage);
+	bu_vls_printf(gedp->ged_result_str, "%s", usage);
 	return GED_HELP;
     }
 
@@ -111,7 +113,7 @@ _ged_mater_shader(struct ged *gedp, int argc, const char *argv[])
 
     /* too much */
     if ((!offset && argc > 7) || (offset && argc > 5)) {
-	bu_vls_printf(gedp->ged_result_str, "Too many arguments.\nUsage: %s", usage);
+	bu_vls_printf(gedp->ged_result_str, "Too many arguments.\n%s", usage);
 	return GED_ERROR;
     }
 
@@ -239,7 +241,7 @@ _ged_mater_shader(struct ged *gedp, int argc, const char *argv[])
 }
 
 int
-_ged_read_msmap(struct ged *gedp, const char *mbuff, std::set<std::string> &known_materials, std::map<std::string,std::string> &complex_to_known)
+_ged_read_msmap(struct ged *gedp, const char *mbuff, std::set<std::string> &defined_materials, std::map<std::string,std::string> &listed_to_defined)
 {
     int ret = GED_OK;
     std::string mb(mbuff);
@@ -289,17 +291,15 @@ _ged_read_msmap(struct ged *gedp, const char *mbuff, std::set<std::string> &know
 	    ret = GED_ERROR;
 	} else {
 	    // Have names, process
-	    bu_log("m1: %s", m1.c_str());
-	    bu_log("m2: %s", m2.c_str());
-	    if (complex_to_known.find(m1) != complex_to_known.end()) {
+	    if (listed_to_defined.find(m1) != listed_to_defined.end()) {
 		bu_vls_printf(gedp->ged_result_str, "%s is multiply defined in the mapping file", m1.c_str());
 		ret = GED_ERROR;
 	    }
-	    if (known_materials.find(m2) == known_materials.end()) {
+	    if (defined_materials.find(m2) == defined_materials.end()) {
 		bu_vls_printf(gedp->ged_result_str, "%s is not known in the density file", m2.c_str());
 		ret = GED_ERROR;
 	    }
-	    complex_to_known.insert(std::pair<std::string, std::string>(m1, m2));
+	    listed_to_defined.insert(std::pair<std::string, std::string>(m1, m2));
 	}
     }
     return ret;
@@ -308,6 +308,7 @@ _ged_read_msmap(struct ged *gedp, const char *mbuff, std::set<std::string> &know
 int
 _ged_mater_mat_id(struct ged *gedp, int argc, const char *argv[])
 {
+    int names_from_ids = 0;
     int num_densities = 128;
     struct density_entry *densities = (struct density_entry *)bu_calloc(num_densities, sizeof(struct density_entry), "density entries");
     struct bu_mapped_file *dfile = NULL;
@@ -315,21 +316,35 @@ _ged_mater_mat_id(struct ged *gedp, int argc, const char *argv[])
     struct bu_mapped_file *mfile = NULL;
     char *mbuff = NULL;
     std::map<std::string, int> n2d;
-    std::set<std::string> known_materials;
-    std::map<std::string,std::string> complex_to_known;
+    std::map<int, std::string> d2n;
+    std::set<std::string> listed_materials;
+    std::set<std::string> defined_materials;
+    std::set<std::string> g_materials;
+    std::map<std::string,std::string> listed_to_defined;
+
+    if (BU_STR_EQUAL(argv[1], "--names-from-ids")) {
+	argv[1] = argv[0];
+	argc--; argv++;
+	names_from_ids = 1;
+    }
 
     if (argc < 2 || argc > 3) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s", usage);
+	bu_vls_printf(gedp->ged_result_str, "%s", usage);
 	return GED_OK;
     }
     if (!bu_file_exists(argv[1], NULL)) {
 	bu_vls_printf(gedp->ged_result_str, "density file %s not found", argv[1]);
 	return GED_ERROR;
     }
-    if (argc == 3 && !bu_file_exists(argv[2], NULL)) {
+    if (argc == 3 && names_from_ids) {
+	bu_vls_printf(gedp->ged_result_str, "Warning - only the density file is used mapping from material ids to names, ignoring %s", argv[2]);
+    }
+    if (argc == 3 && !names_from_ids && !bu_file_exists(argv[2], NULL)) {
 	bu_vls_printf(gedp->ged_result_str, "material simplification mapping file %s not found", argv[1]);
 	return GED_ERROR;
     }
+
+    /* OK, we know what we're doing - start reading inputs */
 
     dfile = bu_open_mapped_file(argv[1], "densities file");
     if (!dfile) {
@@ -352,9 +367,13 @@ _ged_mater_mat_id(struct ged *gedp, int argc, const char *argv[])
 		    bu_vls_printf(gedp->ged_result_str, "density file contains multiple densities for %s", densities[idx].name);
 		}
 		n2d[std::string(densities[idx].name)] = idx;
-		known_materials.insert(std::string(densities[idx].name));
+		defined_materials.insert(std::string(densities[idx].name));
 		bu_free(densities[idx].name, "free density name");
 	    }
+	}
+	std::map<std::string, int>::iterator n2d_it;
+	for (n2d_it = n2d.begin(); n2d_it != n2d.end(); n2d_it++) {
+	    d2n[n2d_it->second] = n2d_it->first;
 	}
 	bu_free(densities, "density_entry array");
 	bu_close_mapped_file(dfile);
@@ -363,7 +382,13 @@ _ged_mater_mat_id(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    if (argc == 3) {
+    // For simplicity, let the complex -> simple map know to map known materials to themselves
+    std::set<std::string>::iterator s_it;
+    for (s_it = defined_materials.begin(); s_it != defined_materials.end(); s_it++) {
+	listed_to_defined.insert(std::pair<std::string, std::string>(*s_it, *s_it));
+    }
+
+    if (argc == 3 && !names_from_ids) {
 	mfile = bu_open_mapped_file(argv[2], "material simplification mapping file");
 	if (!mfile) {
 	    bu_vls_printf(gedp->ged_result_str, "could not open material simplification mapping file %s", argv[2]);
@@ -371,10 +396,104 @@ _ged_mater_mat_id(struct ged *gedp, int argc, const char *argv[])
 	}
     }
     if (mfile) {
+	/* Populate the complex name -> simple name map from the mapping file, if we have one. */
 	mbuff = (char *)(mfile->buf);
-	if (_ged_read_msmap(gedp, mbuff, known_materials, complex_to_known) !=  GED_OK) {
+	if (_ged_read_msmap(gedp, mbuff, defined_materials, listed_to_defined) !=  GED_OK) {
 	    bu_vls_printf(gedp->ged_result_str, "error reading material simplification mapping file %s", argv[2]);
 	    return GED_ERROR;
+	}
+    }
+
+    // Find the objects we need to work with (if any)
+    const char *mname_search = "-attr material_name";
+    const char *mid_search = "-attr material_id";
+    struct bu_ptbl mn_objs = BU_PTBL_INIT_ZERO;
+    struct bu_ptbl id_objs = BU_PTBL_INIT_ZERO;
+    std::set<struct directory *> mns, ids;
+    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
+    (void)db_search(&mn_objs, DB_SEARCH_FLAT|DB_SEARCH_RETURN_UNIQ_DP, mname_search, 0, NULL, gedp->ged_wdbp->dbip, NULL);
+    (void)db_search(&id_objs, DB_SEARCH_FLAT|DB_SEARCH_RETURN_UNIQ_DP, mid_search, 0, NULL, gedp->ged_wdbp->dbip, NULL);
+    for(size_t i = 0; i < BU_PTBL_LEN(&mn_objs); i++) {
+	struct directory *d = (struct directory *)BU_PTBL_GET(&mn_objs, i);
+	mns.insert(d);
+    }
+    for(size_t i = 0; i < BU_PTBL_LEN(&id_objs); i++) {
+	struct directory *d = (struct directory *)BU_PTBL_GET(&mn_objs, i);
+	ids.insert(d);
+    }
+    db_search_free(&mn_objs); 
+    db_search_free(&id_objs); 
+
+
+    if (names_from_ids) {
+	std::set<struct directory *>::iterator d_it;
+	for (d_it = ids.begin(); d_it != ids.end(); d_it++) {
+	    struct directory *dp = *d_it; 
+	    struct bu_attribute_value_set avs;
+	    bu_avs_init_empty(&avs);
+	    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+		bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
+		return GED_ERROR;
+	    }
+	    const char *mat_id = bu_avs_get(&avs, "material_id");
+	    const char *oname = bu_avs_get(&avs, "material_name");
+	    std::string nname = d2n[std::stoi(mat_id)];
+	    if (oname && nname.compare(std::string(oname))) {
+		(void)bu_avs_add(&avs, "material_name", nname.c_str());
+		if (db5_update_attributes(dp, &avs, gedp->ged_wdbp->dbip)) {
+		    bu_vls_printf(gedp->ged_result_str, "Error: failed to update object %s attributes\n", dp->d_namep);
+		    bu_avs_free(&avs);
+		    return GED_ERROR;
+		}
+	    } else {
+		// Already has correct name, no need to update
+		bu_avs_free(&avs);
+	    }
+	}
+	return GED_OK;
+    } else {
+	std::set<struct directory *> ids_wo_names;
+	std::set<struct directory *>::iterator d_it;
+	for (d_it = ids.begin(); d_it != ids.end(); d_it++) {
+	    if (mns.find(*d_it) == mns.end()) {
+		ids_wo_names.insert(*d_it);
+	    }
+	}
+	if (ids_wo_names.size()) {
+	    bu_vls_printf(gedp->ged_result_str, "Warning - the following object(s) have a material_id attribute but no material_name attribute (use the \"--names_from_ids\" option to assign them names using a density file):\n");
+	    for (d_it = ids.begin(); d_it != ids.end(); d_it++) {
+		bu_vls_printf(gedp->ged_result_str, "%s\n", (*d_it)->d_namep);
+	    }
+	}
+    }
+
+    std::set<struct directory *>::iterator dp_it;
+    for (dp_it = mns.begin(); dp_it != mns.end(); dp_it++) {
+	struct directory *dp = *dp_it; 
+	struct bu_attribute_value_set avs;
+	bu_avs_init_empty(&avs);
+	if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+	    bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
+	    return GED_ERROR;
+	}
+	const char *mat_id = bu_avs_get(&avs, "material_id");
+	const char *oname = bu_avs_get(&avs, "material_name");
+	if (listed_to_defined.find(std::string(oname)) == listed_to_defined.end()) {
+	    bu_vls_printf(gedp->ged_result_str, "Warning - unknown material %s found on object %s\n", oname, dp->d_namep);
+	    continue;
+	}
+
+	int nid = n2d[listed_to_defined[std::string(oname)]];
+	if (std::stoi(mat_id) != nid) {
+	    (void)bu_avs_add(&avs, "material_id", std::to_string(nid).c_str());
+	    if (db5_update_attributes(dp, &avs, gedp->ged_wdbp->dbip)) {
+		bu_vls_printf(gedp->ged_result_str, "Error: failed to update object %s attributes\n", dp->d_namep);
+		bu_avs_free(&avs);
+		return GED_ERROR;
+	    }
+	} else {
+	    // Already has correct name, no need to update
+	    bu_avs_free(&avs);
 	}
     }
 
@@ -393,7 +512,7 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s", usage);
+	bu_vls_printf(gedp->ged_result_str, "%s", usage);
 	return GED_HELP;
     }
 
