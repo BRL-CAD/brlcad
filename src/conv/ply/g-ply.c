@@ -62,7 +62,6 @@ static struct rt_tess_tol	ttol;	/* tessellation tolerance in mm */
 static struct bn_tol		tol;	/* calculation tolerance */
 static struct model		*the_model;
 static char *ply_file = NULL;
-static p_ply ply_fp = NULL;
 static int storage_type = 0;
 static int merge_all = 1;
 static long ***f_regs = NULL;
@@ -84,7 +83,7 @@ static long		tot_polygons = 0;
 static long		tot_vertices = 0;
 
 static struct bu_hash_entry *
-write_verts(struct bu_hash_tbl *t)
+write_verts(p_ply fp, struct bu_hash_tbl *t)
 {
     struct bu_hash_entry *v_entry = bu_hash_next(t, NULL);
     while (v_entry) {
@@ -93,9 +92,9 @@ write_verts(struct bu_hash_tbl *t)
 	if (!coords) return v_entry;
 
 	/* PLY files are usually in meters */
-	ply_write(ply_fp, coords[0] / 1000);
-	ply_write(ply_fp, coords[1] / 1000);
-	ply_write(ply_fp, coords[2] / 1000);
+	ply_write(fp, coords[0] / 1000);
+	ply_write(fp, coords[1] / 1000);
+	ply_write(fp, coords[2] / 1000);
 
 	/* keeping track of the order in which the vertices are input, to write the faces */
 	coords[3] = v_order;
@@ -118,6 +117,7 @@ nmg_to_ply(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
     long nfaces = 0;
     int color[3];
     int reg_faces_pos = 0;
+    p_ply ply_fp = NULL;
 
     VSCALE(color, tsp->ts_mater.ma_color, 255);
     if (merge_all) {
@@ -310,7 +310,7 @@ nmg_to_ply(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 	}
 	ply_write_header(ply_fp);
 
-	if (write_verts(v_tbl_regs[cur_region])) {
+	if (write_verts(ply_fp, v_tbl_regs[cur_region])) {
 	    bu_hash_destroy(v_tbl_regs[cur_region]);
 	    bu_log("ERROR: No coordinates found for vertex!\n");
 	    goto free_nmg;
@@ -587,6 +587,7 @@ main(int argc, char **argv)
 {
     int	c, j;
     double percent;
+    p_ply ply_fp = NULL;
 
     bu_setprogname(argv[0]);
     bu_setlinebuf(stderr);
@@ -792,7 +793,7 @@ main(int argc, char **argv)
         ply_write_header(ply_fp);
 
 	for (ri = 0; ri < cur_region; ri++)
-	    if (write_verts(v_tbl_regs[ri])) {
+	    if (write_verts(ply_fp, v_tbl_regs[ri])) {
 		bu_log("ERROR: No coordinates found for vertex!\n");
 		ply_close(ply_fp);
 		goto free_all;
