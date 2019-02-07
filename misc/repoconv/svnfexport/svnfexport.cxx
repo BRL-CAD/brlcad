@@ -420,31 +420,9 @@ process_node(std::ifstream &infile, struct svn_revision *rev)
 	infile.seekg(after_content);
     }
 
-    if (n.path == "brlcad/trunk/src/other/libpng/contrib/pngminus/png2pnm.bat" && n.crlf_content) {
-	std::cout << rev->revision_number << ": " << svn_sha1_to_git_sha1[n.text_content_sha1] << "\n";
-	if (rev->revision_number == 27468) {
-	    std::ofstream loutfile("png2pnm.bat", std::ios::out | std::ios::binary);
-	    char *buffer = new char [n.text_content_length];
-	    infile.seekg(n.content_start);
-	    infile.read(buffer, n.text_content_length);
-	    loutfile.write(buffer, n.text_content_length);
-	    loutfile.close();
-	    std::ofstream coutfile("png2pnm_crlf.bat", std::ios::out | std::ios::binary);
-	    std::string crlf_buff;
-	    std::ostringstream cf(crlf_buff);
-	    for (int i = 0; i < n.text_content_length; i++) {
-		if (buffer[i] == '\n') {
-		    cf << '\r' << '\n';
-		} else {
-		    cf << buffer[i];
-		}
-	    }
-	    std::string crlf_file = cf.str();
-	    std::string git_crlf_sha1 = sha1_hash_hex(crlf_file.c_str(), crlf_file.length());
-	    std::cerr << "archer.bat CRLF sha1: " << git_crlf_sha1 << "\n";
-	    coutfile << crlf_file;
-	    coutfile.close();
-	    delete[] buffer;
+    if (n.path == "brlcad/trunk/src/vfont/font.h") {
+	if (rev->revision_number == 30333) {
+	    std::cout << rev->revision_number << ": " << svn_sha1_to_git_sha1[n.text_content_sha1] << "\n";
 	}
     }
 
@@ -799,59 +777,61 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 	    }
 
 	    if (git_changes) {
-	    outfile << "commit " << rev.nodes[0].branch << "\n";
-	    outfile << "mark :" << rev.revision_number << "\n";
-	    outfile << "committer " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
-	    outfile << "data " << rev.commit_msg.length() << "\n";
-	    outfile << rev.commit_msg << "\n";
-	    outfile << "from " << branch_head_id(rev.nodes[0].branch) << "\n";
-	    branch_head_ids[rev.nodes[0].branch] = std::to_string(rev.revision_number);
+		outfile << "commit " << rev.nodes[0].branch << "\n";
+		outfile << "mark :" << rev.revision_number << "\n";
+		outfile << "committer " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
+		outfile << "data " << rev.commit_msg.length() << "\n";
+		outfile << rev.commit_msg << "\n";
+		outfile << "from " << branch_head_id(rev.nodes[0].branch) << "\n";
+		branch_head_ids[rev.nodes[0].branch] = std::to_string(rev.revision_number);
 
-	    for (size_t n = 0; n != rev.nodes.size(); n++) {
-		struct svn_node &node = rev.nodes[n];
-		/* Don't add directory nodes themselves - git works on files */
-		if (node.kind == ndir && node.action == nadd) continue;
-		if (node.kind == ndir && node.action == ndelete) {
-		    std::cerr << "deleting " << node.path << "\n";
-		    std::cerr << "TODO - do we get individual file deletes, or do we need to figure out what was in the directory?  If the latter, we're going to have to walk the currently active paths and delete any that match this node path...\n";
-		}
-
-		//std::cout << "	Processing node " << print_node_action(node.action) << " " << node.local_path << " into branch " << node.branch << "\n";
-
-		switch (node.action) {
-		    case nchange:
-			outfile << "M ";
-			break;
-		    case nadd:
-			outfile << "M ";
-			break;
-		    case ndelete:
-			outfile << "D ";
-			break;
-		    default:
-			std::cerr << "Unhandled node action type " << print_node_action(node.action) << "\n";
-			outfile << "? ";
-			outfile << "\"" << node.local_path << "\"\n";
-			std::cout << "Fatal - unhandled node action at r" << rev.revision_number << ", node: " << node.path << "\n";
-			exit(1);
-		}
-		if (node.exec_path) {
-		    outfile << "100755 ";
-		} else {
-		    outfile << "100644 ";
-		}
-		if (node.action == nchange || node.action == nadd) {
-		    std::string gsha1 = svn_sha1_to_git_sha1[current_sha1[node.path]];
-		    if (gsha1.length() < 40) {
-			std::cout << "Fatal - could not find git sha1 - r" << rev.revision_number << ", node: " << node.path << "\n";
-			exit(1);
+		for (size_t n = 0; n != rev.nodes.size(); n++) {
+		    struct svn_node &node = rev.nodes[n];
+		    /* Don't add directory nodes themselves - git works on files */
+		    if (node.kind == ndir && node.action == nadd) continue;
+		    if (node.kind == ndir && node.action == ndelete) {
+			std::cerr << "deleting " << node.path << "\n";
+			std::cerr << "TODO - do we get individual file deletes, or do we need to figure out what was in the directory?  If the latter, we're going to have to walk the currently active paths and delete any that match this node path...\n";
 		    }
-		    outfile << gsha1 << " \"" << node.local_path << "\"\n";
+
+		    //std::cout << "	Processing node " << print_node_action(node.action) << " " << node.local_path << " into branch " << node.branch << "\n";
+
+		    switch (node.action) {
+			case nchange:
+			    outfile << "M ";
+			    break;
+			case nadd:
+			    outfile << "M ";
+			    break;
+			case ndelete:
+			    outfile << "D ";
+			    break;
+			default:
+			    std::cerr << "Unhandled node action type " << print_node_action(node.action) << "\n";
+			    outfile << "? ";
+			    outfile << "\"" << node.local_path << "\"\n";
+			    std::cout << "Fatal - unhandled node action at r" << rev.revision_number << ", node: " << node.path << "\n";
+			    exit(1);
+		    }
+		    if (node.exec_path) {
+			outfile << "100755 ";
+		    } else {
+			outfile << "100644 ";
+		    }
+		    if (node.action == nchange || node.action == nadd) {
+			std::string gsha1 = svn_sha1_to_git_sha1[current_sha1[node.path]];
+			if (gsha1.length() < 40) {
+			    //TODO - next up is copyfrom_rev - probably means we need to go back to the full dump
+			    //so we can reference earlier versions, and track all sha1 content locations not just current...
+			    std::cout << "Fatal - could not find git sha1 - r" << rev.revision_number << ", node: " << node.path << "\n";
+			    exit(1);
+			}
+			outfile << gsha1 << " \"" << node.local_path << "\"\n";
+		    }
+		    if (node.action == ndelete) {
+			outfile << "\"" << node.local_path << "\"\n";
+		    }
 		}
-		if (node.action == ndelete) {
-		    outfile << "\"" << node.local_path << "\"\n";
-		}
-	    }
 	    } else {
 		std::cout << "Skipping SVN commit r" << rev.revision_number << " - no git applicable changes\n";
 	    }
@@ -997,7 +977,7 @@ int main(int argc, const char **argv)
     std::ofstream outfile("export.fi", std::ios::out | std::ios::binary);
     if (!outfile.good()) return -1;
     cvs_svn_sync(infile, outfile);
-    rev_fast_export(infile, outfile, 29887, 30200);
+    rev_fast_export(infile, outfile, 29887, 32000);
     outfile.close();
 
     return 0;
