@@ -70,6 +70,7 @@ fi
 STATUS=0
 
 log "... running mged to create facetized geometry (iges.g)"
+rm -f iges.g
 $MGED -c >> $LOGFILE 2>&1 <<EOF
 opendb iges.g y
 

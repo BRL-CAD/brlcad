@@ -61,7 +61,7 @@ fi
 
 # FIRST TEST =================================
 
-rm -f weight.mged
+rm -f weight.mged weight.g
 cat > weight.mged <<EOF
 opendb weight.g y
 units cm
@@ -139,8 +139,7 @@ fi
 # Need to do a slightly more elaborate test
 # save first density file in case we fail here
 
-rm -f weight.test2.g
-rm -f weight.test2.mged
+rm -f weight.test2.mged weight.test2.g
 cat > weight.test2.mged <<EOF
 opendb weight.test2.g y
 units cm
