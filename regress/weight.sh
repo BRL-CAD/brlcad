@@ -139,6 +139,7 @@ fi
 # Need to do a slightly more elaborate test
 # save first density file in case we fail here
 
+rm -f weight.test2.g
 rm -f weight.test2.mged
 cat > weight.test2.mged <<EOF
 opendb weight.test2.g y
