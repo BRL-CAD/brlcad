@@ -222,8 +222,6 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int min
 	    bu_exit(-1, NULL);
 	}
     }
-    fprintf(outfp, "Using density file: %s\n", bu_vls_cstr(densityfile));
-
 
     /* Read in density in terms of grams/cm^3 */
 
