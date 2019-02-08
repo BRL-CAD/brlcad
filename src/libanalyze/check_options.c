@@ -101,14 +101,8 @@ analyze_free_current_state(struct current_state *state)
     bu_vls_free(state->log_str);
 
     if (state->densities != NULL) {
-	for (i = 0; i < state->num_densities; ++i) {
-	    if (state->densities[i].name != 0)
-		bu_free(state->densities[i].name, "density name");
-	}
-
-	bu_free(state->densities, "densities");
+	analyze_densities_destroy(state->densities);	
 	state->densities = NULL;
-	state->num_densities = 0;
     }
 
     if (state->m_lenTorque != NULL)

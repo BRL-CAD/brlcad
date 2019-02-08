@@ -311,17 +311,13 @@ int
 _ged_mater_mat_id(struct ged *gedp, int argc, const char *argv[])
 {
     int names_from_ids = 0;
-    int num_densities = 128;
-    struct density_entry *densities = (struct density_entry *)bu_calloc(num_densities, sizeof(struct density_entry), "density entries");
+    struct analyze_densities *densities;
     struct bu_mapped_file *dfile = NULL;
     char *dbuff = NULL;
     struct bu_mapped_file *mfile = NULL;
     char *mbuff = NULL;
-    std::map<std::string, int> n2d;
-    std::map<int, std::string> d2n;
     std::set<std::string> listed_materials;
     std::set<std::string> defined_materials;
-    std::set<std::string> g_materials;
     std::map<std::string,std::string> listed_to_defined;
 
     if (BU_STR_EQUAL(argv[1], "--names-from-ids")) {
@@ -348,6 +344,8 @@ _ged_mater_mat_id(struct ged *gedp, int argc, const char *argv[])
 
     /* OK, we know what we're doing - start reading inputs */
 
+    analyze_densities_create(&densities);
+
     dfile = bu_open_mapped_file(argv[1], "densities file");
     if (!dfile) {
 	bu_vls_printf(gedp->ged_result_str, "could not open density file %s", argv[1]);
@@ -355,39 +353,23 @@ _ged_mater_mat_id(struct ged *gedp, int argc, const char *argv[])
     }
 
     dbuff = (char *)(dfile->buf);
-    if (parse_densities_buffer(dbuff, dfile->buflen, &densities, NULL, &num_densities) !=  ANALYZE_OK) {
-	bu_vls_printf(gedp->ged_result_str, "could not parse density file %s", argv[1]);
+    struct bu_vls pbuff_msgs = BU_VLS_INIT_ZERO;
+    if (analyze_densities_load(densities, dbuff, &pbuff_msgs) ==  0) {
+	bu_vls_printf(gedp->ged_result_str, "could not parse density file %s: %s", argv[1], bu_vls_cstr(&pbuff_msgs));
 	bu_close_mapped_file(dfile);
+	bu_vls_free(&pbuff_msgs);
 	return GED_ERROR;
-    } else {
-	/* Populate the name->material_id map from the density file */
-	int found_duplicate = 0;
-	for (int idx = 0; idx < num_densities; idx++) {
-	    if (densities[idx].magic == DENSITY_MAGIC) {
-		if (n2d.find(std::string(densities[idx].name)) != n2d.end()) {
-		    found_duplicate = 1;
-		    bu_vls_printf(gedp->ged_result_str, "density file contains multiple densities for %s", densities[idx].name);
-		}
-		n2d[std::string(densities[idx].name)] = idx;
-		defined_materials.insert(std::string(densities[idx].name));
-		bu_free(densities[idx].name, "free density name");
-	    }
-	}
-	std::map<std::string, int>::iterator n2d_it;
-	for (n2d_it = n2d.begin(); n2d_it != n2d.end(); n2d_it++) {
-	    d2n[n2d_it->second] = n2d_it->first;
-	}
-	bu_free(densities, "density_entry array");
-	bu_close_mapped_file(dfile);
-	if (found_duplicate) {
-	    return GED_ERROR;
-	}
     }
 
     // For simplicity, let the complex -> simple map know to map known materials to themselves
-    std::set<std::string>::iterator s_it;
-    for (s_it = defined_materials.begin(); s_it != defined_materials.end(); s_it++) {
-	listed_to_defined.insert(std::pair<std::string, std::string>(*s_it, *s_it));
+    long int curr_id = -1;
+    long int id_cnt = 0;
+    while ((curr_id = analyze_densities_next(densities, curr_id)) != -1) {
+	id_cnt++;
+	char *cname = analyze_densities_name(densities, curr_id);
+	listed_to_defined.insert(std::pair<std::string, std::string>(std::string(cname), std::string(cname)));
+	defined_materials.insert(std::string(cname));
+	bu_free(cname, "free name copy");
     }
 
     if (argc == 3 && !names_from_ids) {
@@ -439,11 +421,12 @@ _ged_mater_mat_id(struct ged *gedp, int argc, const char *argv[])
 	    }
 	    const char *mat_id = bu_avs_get(&avs, "material_id");
 	    const char *oname = bu_avs_get(&avs, "material_name");
-	    if (d2n.find(std::stoi(mat_id)) == d2n.end()) {
+	    if (analyze_densities_density(densities, std::stol(mat_id)) < 0) {
 		bu_vls_printf(gedp->ged_result_str, "Warning: no name found in density file for material_id %s on object %s, skipping\n", mat_id, dp->d_namep);
 		if (oname) {
-		    if (n2d.find(std::string(oname)) != n2d.end()) {
-			bu_vls_printf(gedp->ged_result_str, "Material id collision: object %s has material_name \"%s\" and material_id %s, but the specified density file defines \"%s\" as material_id %s.\n", dp->d_namep, oname, mat_id, oname, std::to_string(n2d.find(std::string(oname))->second).c_str());
+		    long int found_id_cnt = analyze_densities_id(NULL, 0, densities, oname);
+		    if (found_id_cnt) {
+			bu_vls_printf(gedp->ged_result_str, "Material id collision: object %s has material_name \"%s\" and material_id %s, but the specified density file defines \"%s\" as a different material id.\n", dp->d_namep, oname, mat_id, oname);
 		    }  else {
 			bu_vls_printf(gedp->ged_result_str, "Unknown material: object %s has material_name %s, which is not a material defined in the specified density file.\n", dp->d_namep, oname);
 		    }
@@ -452,9 +435,9 @@ _ged_mater_mat_id(struct ged *gedp, int argc, const char *argv[])
 		continue;
 	    }
 	    // Found a name, assign it if it doesn't match
-	    std::string nname = d2n[std::stoi(mat_id)];
-	    if (!oname || nname.compare(std::string(oname))) {
-		(void)bu_avs_add(&avs, "material_name", nname.c_str());
+	    char *nname = analyze_densities_name(densities, std::stol(mat_id));
+	    if (!oname || !BU_STR_EQUAL(nname,oname)) {
+		(void)bu_avs_add(&avs, "material_name", nname);
 		if (db5_update_attributes(dp, &avs, gedp->ged_wdbp->dbip)) {
 		    bu_vls_printf(gedp->ged_result_str, "Error: failed to update object %s attributes\n", dp->d_namep);
 		    bu_avs_free(&avs);
@@ -464,6 +447,7 @@ _ged_mater_mat_id(struct ged *gedp, int argc, const char *argv[])
 		// Already has correct name, no need to update
 		bu_avs_free(&avs);
 	    }
+	    bu_free(nname, "free name");
 	}
 	return GED_OK;
     } else {
@@ -498,7 +482,13 @@ _ged_mater_mat_id(struct ged *gedp, int argc, const char *argv[])
 	    continue;
 	}
 
-	int nid = n2d[listed_to_defined[std::string(oname)]];
+	long int wids[1];
+	int id_found_cnt = analyze_densities_id((long int *)wids, 1, densities, listed_to_defined[std::string(oname)].c_str());
+	if (!id_found_cnt) {
+	    bu_vls_printf(gedp->ged_result_str, "Error: failed to find ID for %s\n", oname);
+	    return GED_ERROR;
+	}
+	int nid = wids[0];
 	if (!mat_id || std::stoi(mat_id) != nid) {
 	    (void)bu_avs_add(&avs, "material_id", std::to_string(nid).c_str());
 	    if (db5_update_attributes(dp, &avs, gedp->ged_wdbp->dbip)) {

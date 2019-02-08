@@ -120,8 +120,7 @@ struct current_state {
     struct per_obj_data *objs;
     struct per_region_data *reg_tbl;
 
-    struct density_entry *densities;
-    int num_densities;
+    struct analyze_densities *densities;
 
     /* the parameters */
     int num_views;

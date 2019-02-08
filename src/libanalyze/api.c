@@ -87,7 +87,19 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 
     /* examine each partition until we get back to the head */
     for (pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
-	struct density_entry *de;
+
+	fastf_t grams_per_cu_mm;
+	long int material_id = pp->pt_regionp->reg_gmater;
+
+	if (state->default_den) {
+	    /* Aluminium 7xxx series as default material */
+	    fastf_t default_density = 2.74; /* Aluminium, 7079-T6 */
+	    material_id = -1;
+	    grams_per_cu_mm = default_density;
+	} else {
+	    grams_per_cu_mm = analyze_densities_density(state->densities, material_id);
+	}
+
 
 	/* inhit info */
 	dist = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
@@ -139,30 +151,16 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 	    }
 
 	    /* make sure mater index is within range of densities */
-	    if (pp->pt_regionp->reg_gmater >= state->num_densities) {
-		if(state->default_den == 0) {
-		    bu_semaphore_acquire(ANALYZE_SEM_WORKER);
-		    bu_vls_printf(state->log_str, "Density index %d on region %s is outside of range of table [1..%d]\nSet GIFTmater on region or add entry to density table\n",
-				  pp->pt_regionp->reg_gmater,
-				  pp->pt_regionp->reg_name,
-				  state->num_densities); /* XXX this should do something else */
-		    bu_semaphore_release(ANALYZE_SEM_WORKER);
-		    return ANALYZE_ERROR;
-		}
+	    if (material_id < 0 && state->default_den == 0) {
+		bu_semaphore_acquire(ANALYZE_SEM_WORKER);
+		bu_vls_printf(state->log_str, "Density index %d on region %s is not in density table.\nSet GIFTmater on region or add entry to density table\n",
+			pp->pt_regionp->reg_gmater,
+			pp->pt_regionp->reg_name); /* XXX this should do something else */
+		bu_semaphore_release(ANALYZE_SEM_WORKER);
+		return ANALYZE_ERROR;
 	    }
 
-	    /* make sure the density index has been set */
-	    bu_semaphore_acquire(ANALYZE_SEM_WORKER);
-	    if(state->default_den || state->densities[pp->pt_regionp->reg_gmater].magic != DENSITY_MAGIC) {
-		BU_GET(de, struct density_entry);		/* Aluminium 7xxx series as default material */
-		de->magic = DENSITY_MAGIC;
-		de->grams_per_cu_mm = 2.74;
-		de->name = "Aluminium, 7079-T6";
-	    } else {
-		de = state->densities + pp->pt_regionp->reg_gmater;
-	    }
-	    bu_semaphore_release(ANALYZE_SEM_WORKER);
-	    if (de->magic == DENSITY_MAGIC) {
+	    {
 		struct per_region_data *prd;
 		vect_t cmass;
 		vect_t lenTorque;
@@ -213,7 +211,7 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 		}
 
 		/* accumulate the total mass values */
-		val = de->grams_per_cu_mm * dist * (pp->pt_regionp->reg_los * 0.01);
+		val = grams_per_cu_mm * dist * (pp->pt_regionp->reg_los * 0.01);
 		ap->A_LENDEN += val;
 
 		prd = ((struct per_region_data *)pp->pt_regionp->reg_udata);
@@ -269,14 +267,6 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 		}
 		bu_semaphore_release(ANALYZE_SEM_STATS);
 
-	    } else {
-		bu_semaphore_acquire(ANALYZE_SEM_WORKER);
-		bu_vls_printf(state->log_str, "Density index %d from region %s is not set.\nAdd entry to density table\n",
-			      pp->pt_regionp->reg_gmater, pp->pt_regionp->reg_name);
-		bu_semaphore_release(ANALYZE_SEM_WORKER);
-
-		state->aborted = 1;
-		return ANALYZE_ERROR;
 	    }
 	}
 
@@ -495,38 +485,36 @@ analyze_overlap(struct application *ap,
 HIDDEN int
 densities_from_file(struct current_state *state, char *name)
 {
-    struct stat sb;
-
-    FILE *fp = (FILE *)NULL;
+    struct bu_vls msgs = BU_VLS_INIT_ZERO;
+    struct bu_mapped_file *dfile = NULL;
     char *buf = NULL;
     int ret = 0;
-    size_t sret = 0;
 
-    fp = fopen(name, "rb");
-    if (fp == (FILE *)NULL) {
-	bu_log("Could not open file - %s\n", name);
+    if (!bu_file_exists(name, NULL)) {
+	bu_log("Could not find density file - %s\n", name);
 	return ANALYZE_ERROR;
     }
 
-    if (stat(name, &sb)) {
-	bu_log("Could not read file - %s\n", name);
-	fclose(fp);
+    dfile = bu_open_mapped_file(name, "densities file");
+    if (!dfile) {
+	bu_log("Could not open density file - %s\n", name);
 	return ANALYZE_ERROR;
     }
 
-    state->densities = (struct density_entry *)bu_calloc(128, sizeof(struct density_entry), "density entries");
-    state->num_densities = 128;
+    buf = (char *)(dfile->buf);
 
-    /* a mapped file would make more sense here */
-    buf = (char *)bu_malloc(sb.st_size+1, "density buffer");
-    sret = fread(buf, sb.st_size, 1, fp);
-    if (sret != 1)
-	perror("fread");
-    ret = parse_densities_buffer(buf, (unsigned long)sb.st_size, &(state->densities), NULL, &state->num_densities);
-    bu_free(buf, "density buffer");
-    fclose(fp);
+    (void)analyze_densities_create(&(state->densities));
 
-    return ret;
+    ret = analyze_densities_load(state->densities, buf, &msgs);
+
+    if (bu_vls_strlen(&msgs)) {
+	bu_log("Problem reading densities file:\n%s\n", bu_vls_cstr(&msgs));
+    }
+    bu_vls_free(&msgs);
+
+    bu_close_mapped_file(dfile);
+
+    return (ret <= 0) ? -1 : 0;
 }
 
 
@@ -538,6 +526,7 @@ densities_from_file(struct current_state *state, char *name)
 HIDDEN int
 densities_from_database(struct current_state *state, struct rt_i *rtip)
 {
+    struct bu_vls msgs = BU_VLS_INIT_ZERO;
     struct directory *dp;
     struct rt_db_internal intern;
     struct rt_binunif_internal *bu;
@@ -562,15 +551,18 @@ densities_from_database(struct current_state *state, struct rt_i *rtip)
 
     RT_CHECK_BINUNIF (bu);
 
-    state->densities = (struct density_entry *)bu_calloc(128, sizeof(struct density_entry), "density entries");
-    state->num_densities = 128;
+    (void)analyze_densities_create(&(state->densities));
 
-    /* Acquire one extra byte to accommodate parse_densities_buffer()
-     * (i.e. it wants to write an EOS in buf[bu->count]).
-     */
-    buf = (char *)bu_malloc(bu->count+1, "density buffer");
+    buf = (char *)bu_calloc(bu->count+1, sizeof(char), "density buffer");
     memcpy(buf, bu->u.int8, bu->count);
-    ret = parse_densities_buffer(buf, bu->count, &(state->densities), NULL, &state->num_densities);
+
+    ret = analyze_densities_load(state->densities, buf, &msgs);
+
+    if (bu_vls_strlen(&msgs)) {
+	bu_log("Problem reading densities file:\n%s\n", bu_vls_cstr(&msgs));
+    }
+    bu_vls_free(&msgs);
+
     bu_free((void *)buf, "density buffer");
 
     return ret;
@@ -908,10 +900,10 @@ options_set(struct current_state *state)
     if (state->analysis_flags & ANALYSIS_MASS) {
 	if (state->mass_tolerance < 0.0) {
 	    double max_den = 0.0;
-	    int i;
-	    for (i = 0; i < state->num_densities; i++) {
-		if (state->densities[i].grams_per_cu_mm > max_den)
-		    max_den = state->densities[i].grams_per_cu_mm;
+	    long int curr_id = -1;
+	    while ((curr_id = analyze_densities_next(state->densities, curr_id)) != -1) {
+		if (analyze_densities_density(state->densities, curr_id) > max_den)
+		    max_den = analyze_densities_density(state->densities, curr_id);
 	    }
 	    state->mass_tolerance = state->span[X] * state->span[Y] * state->span[Z] * 0.1 * max_den;
 	    bu_log("Setting mass tolerance to %g gram\n", state->mass_tolerance);
