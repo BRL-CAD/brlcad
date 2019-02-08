@@ -43,6 +43,7 @@
 #include "bu/vls.h"
 #include "vmath.h"
 #include "raytrace.h"
+#include "analyze.h"
 
 #include "rt/db4.h"  /* FIXME: Yes, I know I shouldn't be peeking, put I
 		    am only looking to see what units we prefer... */
@@ -66,14 +67,7 @@ FILE *densityfp;
 struct bu_vls *densityfile;
 #define DENSITY_FILE ".density"
 
-/* FIXME: use a bu_avs instead of a hard-coded limit so that materials
- * are looked up by the key in the density file, not assuming it's an
- * integer index into a fixed-size array.  gqa does it better by using
- * dynamic memory.
- */
-#define MAXMATLS 32768
-fastf_t density[MAXMATLS];
-char *dens_name[MAXMATLS];
+struct analyze_densities *density = NULL;
 
 struct datapoint {
     struct datapoint *next;
@@ -105,6 +99,8 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp
 	register struct hit *ohitp = pp->pt_outhit;
 	register fastf_t depth;
 	register struct datapoint *dp;
+	long int material_id = reg->reg_gmater;
+	fastf_t density_factor = analyze_densities_density(density, material_id);
 
 	if (reg->reg_aircode)
 	    continue;
@@ -125,10 +121,11 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp
 	bu_semaphore_release(BU_SEM_SYSCALL);
 
 	/* if we don't have a valid material density to work with, use a default material */
-	if (density[reg->reg_gmater] < 0) {
+	if (density_factor < 0) {
 	    bu_log("Material type %d used, but has no density file entry.\n", reg->reg_gmater);
 	    bu_log("  (region %s)\n", reg->reg_name);
 	    bu_log("  Mass is undefined.\n");
+	    density_factor = analyze_densities_density(density, 0);
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
 	    reg->reg_gmater = 0;
 	    bu_semaphore_release(BU_SEM_SYSCALL);
@@ -144,10 +141,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp
 	    dp->volume = partition_volume;
 	    VBLEND2(dp->centroid, 0.5, ihitp->hit_point, 0.5, ohitp->hit_point);
 
-	    if (density[reg->reg_gmater] >= 0) {
-		/* density needs to be converted from g/cm^3 to g/mm^3 */
-		const fastf_t density_factor = density[reg->reg_gmater] * 0.001;
-
+	    if (density_factor >= 0) {
 		/* Compute mass in terms of grams */
 		dp->weight = partition_volume * los_factor * density_factor;
 	    }
@@ -181,10 +175,9 @@ overlap(struct application *UNUSED(ap), struct partition *UNUSED(pp), struct reg
 int
 view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int minus_o, int UNUSED(minus_F))
 {
-    register size_t i;
-    char buf[BUFSIZ+1];
-    char linebuf[BUFSIZ+1];
-    int line;
+    struct bu_vls pbuff_msgs = BU_VLS_INIT_ZERO;
+    struct bu_mapped_file *dfile = NULL;
+    char *dbuff = NULL;
 
     if (!minus_o) {
 	outfp = stdout;
@@ -194,14 +187,12 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int min
 	    outfp = fopen(outputfile, "w");
     }
 
-    /* initialize all possible material types to a negative value.
-     * (Do this even for density[0], which is used for material types
-     * for which we have no density information.)
-     */
-    for (i = 0; i < MAXMATLS; i++) {
-	density[i] = -1.0;
-	dens_name[i] = NULL;
+    if (outfp == NULL && outputfile != NULL && strlen(outputfile) > 0) {
+	bu_log("Unable to open output file \"%s\" for writing\n", outputfile);
+	goto view_init_rtweight_fail;
     }
+
+    analyze_densities_create(&density);
 
     /* densityfile is global to this file and will be used later (and then freed) */
     BU_GET(densityfile, struct bu_vls);
@@ -209,65 +200,55 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int min
 
     bu_vls_sprintf(densityfile, "%s%c%s", bu_dir(NULL, 0, BU_DIR_CURR, NULL), BU_DIR_SEPARATOR, DENSITY_FILE);
 
-    if ((densityfp = fopen(bu_vls_cstr(densityfile), "r")) == NULL) {
+    if (!bu_file_exists(bu_vls_cstr(densityfile), NULL)) {
 	bu_vls_sprintf(densityfile, "%s%c%s", bu_dir(NULL, 0, BU_DIR_HOME, NULL), BU_DIR_SEPARATOR, DENSITY_FILE);
-	if ((densityfp = fopen(bu_vls_cstr(densityfile), "r")) == NULL) {
+	if (!bu_file_exists(bu_vls_cstr(densityfile), NULL)) {
 	    bu_log("Unable to load density file \"%s\" for reading\n", bu_vls_cstr(densityfile));
-	    perror(bu_vls_cstr(densityfile));
-	    bu_vls_free(densityfile);
-	    BU_PUT(densityfile, struct bu_vls);
-	    if (minus_o) {
-		fclose(outfp);
-	    }
-	    bu_exit(-1, NULL);
+	    goto view_init_rtweight_fail;
 	}
     }
 
-    /* Read in density in terms of grams/cm^3 */
-
-    /* need to use bu_fgets instead of fscanf because fscanf stops
-       scanning at first failure or error and we get an infinite loop */
-    line = 0;
-    while (bu_fgets(linebuf, BUFSIZ+1, densityfp)) {
-	const int cmt = '#';
-	int idx;
-	float dens;
-	char* c;
-
-	++line;
-
-	/* delete comments before processing */
-	if ((c = strchr(linebuf, cmt)) != NULL) {
-	    /* close linebuf with a newline and a null char */
-	    *c++ = '\n';
-	    *c   = '\0';
-	}
-	i = sscanf(linebuf, "%d %f %[^\n]", &idx, &dens, buf);
-	if (i != 3) {
-	    bu_log("error parsing line %d of density file.\n  %zu args recognized instead of 3\n",
-		   line, i);
-	    bu_log("  line buffer reads : %s\n", linebuf);
-	    continue;
-	}
-
-	if (idx > 0 && idx < MAXMATLS) {
-	    density[idx] = dens;
-	    dens_name[idx] = bu_strdup(buf);
-	} else {
-	    bu_log("Material index %d in '%s' is out of range.\n",
-		   idx, bu_vls_cstr(densityfile));
-	}
+    dfile = bu_open_mapped_file(bu_vls_cstr(densityfile), "densities file");
+    if (!dfile) {
+	bu_log("Unable to open density file \"%s\" for reading\n", bu_vls_cstr(densityfile));
+	goto view_init_rtweight_fail;
     }
+
+    dbuff = (char *)(dfile->buf);
+
+
+    /* Read in density */
+    if (analyze_densities_load(density, dbuff, &pbuff_msgs) ==  0) {
+	bu_log("Unable to parse density file \"%s\":%s\n", bu_vls_cstr(densityfile), bu_vls_cstr(&pbuff_msgs));
+	bu_close_mapped_file(dfile);
+	goto view_init_rtweight_fail;
+    }
+    bu_close_mapped_file(dfile);
 
     ap->a_hit = hit;
     ap->a_miss = miss;
     ap->a_overlap = overlap;
     ap->a_onehit = 0;
+
+    bu_vls_free(&pbuff_msgs);
     if (minus_o) {
 	fclose(outfp);
     }
 
     return 0;		/* no framebuffer needed */
+
+view_init_rtweight_fail:
+    if (densityfile) {
+	bu_vls_free(densityfile);
+	BU_PUT(densityfile, struct bu_vls);
+    }
+    bu_vls_free(&pbuff_msgs);
+    analyze_densities_destroy(density);
+    if (minus_o && outfp) {
+	fclose(outfp);
+    }
+
+    bu_exit(-1, NULL);
 }
 
 
@@ -387,11 +368,12 @@ view_end(struct application *ap)
     fprintf(outfp, "Time Stamp: %s\n\nDensity Table Used:%s\n\n", timeptr, bu_vls_cstr(densityfile));
     fprintf(outfp, "Material  Density(g/cm^3) Name\n");
     {
-	register int i;
-	for (i = 1; i < MAXMATLS; i++) {
-	    if (density[i] >= 0)
-		fprintf(outfp, "%5d     %10.4f       %s\n",
-			i, density[i], dens_name[i]);
+	long int curr_id = -1;
+	while ((curr_id = analyze_densities_next(density, curr_id)) != -1) {
+	    char *cname = analyze_densities_name(density, curr_id);
+	    fastf_t cdensity = analyze_densities_density(density, curr_id);
+	    fprintf(outfp, "%5ld     %10.4f       %s\n", curr_id, cdensity*1000, cname);
+	    bu_free(cname, "free name copy");
 	}
     }
 
@@ -481,15 +463,20 @@ view_end(struct application *ap)
 	    for (ridx = start_ridx; ridx < nregions; ++ridx) {
 		struct region *r = rp_array[ridx];
 		if (r->reg_regionid == id) {
+		    char *cname = analyze_densities_name(density, r->reg_gmater);
+		    fastf_t cdensity = analyze_densities_density(density, r->reg_gmater);
 		    fastf_t weight = *(fastf_t *)r->reg_udata;
 		    register size_t len = strlen(r->reg_name);
 		    len = len > (size_t)flen ? len - (size_t)flen : 0;
 		    fprintf(outfp, "%8.3f %5d  %3d %-15.15s %7.4f %-*.*s\n",
 			    weight,
 			    r->reg_gmater, r->reg_los,
-			    dens_name[r->reg_gmater],
-			    density[r->reg_gmater],
+			    cname,
+			    cdensity*1000,
 			    flen, flen, &r->reg_name[len]);
+		    if (cname) {
+			bu_free(cname, "free name copy");
+		    }
 		} else if (r->reg_regionid > id) {
 		    /* FIXME: an "else" alone should be good enough
 		       because the test should not be necessary if we
@@ -564,6 +551,8 @@ view_end(struct application *ap)
     /* now finished with density file name*/
     bu_vls_free(densityfile);
     BU_PUT(densityfile, struct bu_vls);
+
+    analyze_densities_destroy(density);
 }
 
 

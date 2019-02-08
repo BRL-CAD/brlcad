@@ -360,6 +360,7 @@ _ged_mater_mat_id(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_free(&pbuff_msgs);
 	return GED_ERROR;
     }
+    bu_close_mapped_file(dfile);
 
     // For simplicity, let the complex -> simple map know to map known materials to themselves
     long int curr_id = -1;
@@ -386,6 +387,7 @@ _ged_mater_mat_id(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(gedp->ged_result_str, "error reading material simplification mapping file %s", argv[2]);
 	    return GED_ERROR;
 	}
+	bu_close_mapped_file(mfile);
     }
 
     // Find the objects we need to work with (if any)
