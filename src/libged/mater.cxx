@@ -456,13 +456,14 @@ _ged_mater_mat_id(struct ged *gedp, int argc, const char *argv[])
 	std::set<struct directory *> ids_wo_names;
 	std::set<struct directory *>::iterator d_it;
 	for (d_it = ids.begin(); d_it != ids.end(); d_it++) {
-	    if (mns.find(*d_it) == mns.end()) {
-		ids_wo_names.insert(*d_it);
+	    struct directory *dp = *d_it;
+	    if (mns.find(dp) == mns.end()) {
+		ids_wo_names.insert(dp);
 	    }
 	}
 	if (ids_wo_names.size()) {
 	    bu_vls_printf(gedp->ged_result_str, "Warning - the following object(s) have a material_id attribute but no material_name attribute (use the \"--names_from_ids\" option to assign them names using a density file):\n");
-	    for (d_it = ids.begin(); d_it != ids.end(); d_it++) {
+	    for (d_it = ids_wo_names.begin(); d_it != ids_wo_names.end(); d_it++) {
 		bu_vls_printf(gedp->ged_result_str, "%s\n", (*d_it)->d_namep);
 	    }
 	}
