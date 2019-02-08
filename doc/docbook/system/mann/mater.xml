@@ -24,13 +24,56 @@
     </cmdsynopsis>
     <cmdsynopsis sepchar=" ">
       <command>mater</command>
-      <arg choice="req" rep="norepeat">-m</arg>
+      <arg choice="req" rep="norepeat">-d</arg>
+      <arg choice="req" rep="norepeat">list</arg>
+    </cmdsynopsis>
+    <cmdsynopsis sepchar=" ">
+      <command>mater</command>
+      <arg choice="req" rep="norepeat">-d</arg>
+      <arg choice="req" rep="norepeat">load</arg>
+      <arg choice="req" rep="norepeat">file.density</arg>
+    </cmdsynopsis>
+    <cmdsynopsis sepchar=" ">
+      <command>mater</command>
+      <arg choice="req" rep="norepeat">-d</arg>
+      <arg choice="req" rep="norepeat">write</arg>
+      <arg choice="opt" rep="norepeat">--units=&lt;mass_unit/vol_unit&gt;</arg>
+      <arg choice="req" rep="norepeat">file.density</arg>
+    </cmdsynopsis>
+    <cmdsynopsis sepchar=" ">
+      <command>mater</command>
+      <arg choice="req" rep="norepeat">-d</arg>
+      <arg choice="req" rep="norepeat">get</arg>
+      <arg choice="opt" rep="norepeat">--id|--density|--name</arg>
+      <arg choice="opt" rep="norepeat">--tol &lt;tolerance&gt;</arg>
+      <arg choice="opt" rep="norepeat">--tcl</arg>
+      <arg choice="req" rep="norepeat">id|density|name</arg>
+    </cmdsynopsis>
+    <cmdsynopsis sepchar=" ">
+      <command>mater</command>
+      <arg choice="req" rep="norepeat">-d</arg>
+      <arg choice="req" rep="norepeat">set</arg>
+      <arg choice="opt" rep="norepeat">--tcl</arg>
+      <arg choice="req" rep="norepeat">id,density,name</arg>
+    </cmdsynopsis>
+    <cmdsynopsis sepchar=" ">
+      <command>mater</command>
+      <arg choice="req" rep="norepeat">-d</arg>
+      <arg choice="req" rep="norepeat">clear</arg>
+    </cmdsynopsis>
+
+
+    <cmdsynopsis sepchar=" ">
+      <command>mater</command>
+      <arg choice="req" rep="norepeat">-d</arg>
+      <arg choice="req" rep="norepeat">map</arg>
       <arg choice="req" rep="norepeat"><replaceable>density_file</replaceable></arg>
       <arg choice="opt" rep="norepeat">map_file</arg>
     </cmdsynopsis>
     <cmdsynopsis sepchar=" ">
       <command>mater</command>
-      <arg choice="req" rep="norepeat">-m</arg>
+      <arg choice="req" rep="norepeat">-d</arg>
+      <arg choice="req" rep="norepeat">map</arg>
       <arg choice="req" rep="norepeat">--names-from-ids</arg>
       <arg choice="req" rep="norepeat"><replaceable>density_file</replaceable></arg>
     </cmdsynopsis>
@@ -146,6 +189,29 @@
   </itemizedlist>
   </refsection>
 
+  <refsection xml:id="materdensitydesc"><title>DENSITY DATABASE MANIPULATION</title>
+  <para>
+    In the event the .g file has an internal density database defined (or the
+    user wishes to define such a database) the <command>mater</command> command
+    provides a number of options.
+  </para>
+  <para>
+    To import a density file into the .g file, use the "load" subcommand.  By
+    default this will update and append to an existing database if present.
+    To completely replace any pre-existing definitions in the database, first
+    run the "clear" command.  To write out the current density definitions to
+    a file use the "write" command.
+  </para>
+  <para>
+    For manipulation of subsets of the data, the "get" and "set" commands are
+    provided.  get will return either one or a set of tuples matching the provided
+    key.  Without a type option the key will be checked against all entries
+    in all density information - to specify what type of key to use provide one
+    of the type options. For id and density keys, a matching tolerance may also
+    be specified - for names, glob pattern matching is supported.
+  </para>
+  </refsection>
+
   <refsection xml:id="matermappingdesc"><title>MAPPING MODE</title>
   <para>
     The <option>-m</option> mode of operation accepts a density file in the style of the <command>gqa</command> command
@@ -193,18 +259,18 @@
   <example><title>Names from IDs</title>
   <variablelist>
     <varlistentry>
-       <term><prompt>mged&gt;</prompt> <userinput>mater -m --names-from-ids /home/user/.density</userinput></term>
-       <listitem>
-	 <para>
-	   Assigns <emphasis remap="B" role="bold">material_name</emphasis> names from a density file assuming existing <emphasis remap="B" role="bold">material_id</emphasis> attributes.
-	 </para>
+      <term><prompt>mged&gt;</prompt> <userinput>mater -m --names-from-ids /home/user/.density</userinput></term>
+      <listitem>
+	<para>
+	  Assigns <emphasis remap="B" role="bold">material_name</emphasis> names from a density file assuming existing <emphasis remap="B" role="bold">material_id</emphasis> attributes.
+	</para>
       </listitem>
     </varlistentry>
   </variablelist>
   </example>
   
   <example><title>IDs from Names</title>
-   <variablelist>
+  <variablelist>
     <varlistentry>
       <term><prompt>mged&gt;</prompt> <userinput>mater -m /home/user/.density /home/user/mapping_file </userinput></term>
       <listitem>
