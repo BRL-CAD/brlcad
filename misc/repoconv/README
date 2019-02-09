@@ -65,6 +65,14 @@ generates this specific file:
 It will generate a r29886_sync.fi file which should be applied to the git repo
 before starting to append actual SVN only commits.
 
+cd brlcad_cvs_git-<date>
+cat ../r29886_sync.fi | git fast-import
+git reset --hard
+
+Having made that update, we now need to update the sha1 files:
+
+git show-ref --heads --tags > ../brlcad_cvs_git_heads_sha1.txt
+git rev-list --objects --all | git cat-file --batch-check='%(objectname) %(objecttype) %(rest)' | grep '^[^ ]* blob' | cut -d" " -f1,3- > ../brlcad_cvs_git_all_blob_sha1.txt
 
 
 svnfexport:
