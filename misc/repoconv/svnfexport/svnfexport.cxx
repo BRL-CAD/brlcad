@@ -464,7 +464,7 @@ process_node(std::ifstream &infile, struct svn_revision *rev)
     // r29887 is where we will be starting our fast-export generation - until that point,
     // keep current_sha1 up to date on a rolling basis
     if (rev->revision_number <= 29886) {
-	if (n.text_content_sha1.length() && n.text_content_length) {
+	if (n.text_content_sha1.length()) {
 	    current_sha1[n.path] = n.text_content_sha1;
 	}
     }
@@ -747,6 +747,7 @@ analyze_dump()
 
 void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev_num_min, long int rev_num_max)
 {
+    std::string empty_sha1("da39a3ee5e6b4b0d3255bfef95601890afd80709");
     std::map<long int, struct svn_revision>::iterator r_it;
     for (r_it = revs.begin(); r_it != revs.end(); r_it++) {
 	struct svn_revision &rev = r_it->second;
@@ -761,7 +762,7 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 	if (rev.nodes.size() > 0) {
 	    for (size_t n = 0; n != rev.nodes.size(); n++) {
 		struct svn_node &node = rev.nodes[n];
-		if (node.text_content_sha1.length() && node.text_content_length) {
+		if (node.text_content_sha1.length()) {
 		    current_sha1[node.path] = node.text_content_sha1;
 		}
 	    }
@@ -780,6 +781,12 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 		if (node.text_content_length > 0) {
 		    //std::cout << "	Adding node object for " << node.local_path << "\n";
 		    write_blob(infile, outfile, node);
+		    git_changes = 1;
+		}
+		if (node.text_content_sha1.length()) {
+		    git_changes = 1;
+		}
+		if (node.text_copy_source_sha1.length()) {
 		    git_changes = 1;
 		}
 		if (node.exec_change) {
@@ -814,6 +821,9 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 			case nadd:
 			    outfile << "M ";
 			    break;
+			case nreplace:
+			    outfile << "M ";
+			    break;
 			case ndelete:
 			    outfile << "D ";
 			    break;
@@ -830,28 +840,19 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 			outfile << "100644 ";
 		    }
 		    if (node.action == nchange || node.action == nadd) {
-			if (node.exec_change || node.copyfrom_path.length() || node.text_content_length) {
+			if (node.exec_change || node.copyfrom_path.length() || node.text_content_length || node.text_content_sha1.length()) {
+			    std::string tpath = std::string("brlcad/trunk/") + node.local_path;
 			    std::string gsha1 = svn_sha1_to_git_sha1[current_sha1[node.path]];
 			    if (gsha1.length() < 40) {
 				if (node.copyfrom_rev) {
 				    gsha1 = svn_sha1_to_git_sha1[node.text_copy_source_sha1];
-				    if (gsha1.length() < 40) {
-					//TODO - next up is copyfrom_rev - probably means we need to go back to the full dump
-					//so we can reference earlier versions, and track all sha1 content locations not just current...
-					std::cout << "Fatal - could not find git sha1 - r" << rev.revision_number << ", node: " << node.path << "\n";
-					std::cout << "current sha1: " << current_sha1[node.path] << "\n";
-					std::cout << "Revision merged from: " << rev.merged_from << "\n";
-					print_node(node);
-					exit(1);
-				    }
-				} else {
-				    std::string tpath = std::string("brlcad/trunk/") + node.local_path;
+				}
+				if (gsha1.length() < 40) {
 				    gsha1 = svn_sha1_to_git_sha1[current_sha1[tpath]];
 				    if (gsha1.length() < 40) {
-					//TODO - next up is copyfrom_rev - probably means we need to go back to the full dump
-					//so we can reference earlier versions, and track all sha1 content locations not just current...
 					std::cout << "Fatal - could not find git sha1 - r" << rev.revision_number << ", node: " << node.path << "\n";
 					std::cout << "current sha1: " << current_sha1[node.path] << "\n";
+					std::cout << "trunk sha1: " << current_sha1[tpath] << "\n";
 					std::cout << "Revision merged from: " << rev.merged_from << "\n";
 					print_node(node);
 					exit(1);
@@ -1013,7 +1014,7 @@ int main(int argc, const char **argv)
     std::ifstream infile(argv[1]);
     std::ofstream outfile("export.fi", std::ios::out | std::ios::binary);
     if (!outfile.good()) return -1;
-    rev_fast_export(infile, outfile, 29887, 32000);
+    rev_fast_export(infile, outfile, 29887, 42000);
     outfile.close();
 
     return 0;
