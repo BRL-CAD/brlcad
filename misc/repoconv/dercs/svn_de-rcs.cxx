@@ -154,6 +154,92 @@ skip_node_props(std::ifstream &infile, std::vector<std::string> &node_lines)
     }
 }
 
+int curr_md5_line(std::string line, std::string key, std::ofstream &outfile)
+{
+    if (!sfcmp(line, key))  {
+	std::map<std::string, std::string>::iterator m_it;
+	std::string old_md5 = svn_str(line, key);
+	m_it = md5_map.find(old_md5);
+	if (m_it != md5_map.end()) {
+	    outfile << key << m_it->second << "\n";
+	} else {
+	    outfile << line << "\n";
+	}
+	return 1;
+    }
+    return 0;
+}
+
+
+int curr_sha1_line(std::string line, std::string key, std::ofstream &outfile)
+{
+    if (!sfcmp(line, key))  {
+	std::map<std::string, std::string>::iterator m_it;
+	std::string old_sha1 = svn_str(line, key);
+	m_it = sha1_map.find(old_sha1);
+	if (m_it != sha1_map.end()) {
+	    outfile << key << m_it->second << "\n";
+	} else {
+	    outfile << line << "\n";
+	}
+	return 1;
+    }
+    return 0;
+}
+
+
+
+int curr_md5_line2(std::string line, std::string key, std::string &oval, std::vector<std::string> &node_lines)
+{
+    if (!sfcmp(line, key))  {
+	std::map<std::string, std::string>::iterator m_it;
+	std::string old_md5 = svn_str(line, key);
+	if (old_md5.length()) {
+	    m_it = md5_map.find(old_md5);
+	    if (m_it != md5_map.end()) {
+		std::string nline = key + m_it->second;
+		node_lines.push_back(nline);
+		oval = m_it->second;
+	    } else {
+		oval = old_md5;
+		node_lines.push_back(line);
+	    }
+	} else {
+	    oval = old_md5;
+	    node_lines.push_back(line);
+	}
+	return 1;
+    }
+    return 0;
+}
+
+
+int curr_sha1_line2(std::string line, std::string key, std::string &oval, std::vector<std::string> &node_lines)
+{
+    if (!sfcmp(line, key))  {
+	std::map<std::string, std::string>::iterator m_it;
+	std::string old_sha1 = svn_str(line, key);
+	m_it = sha1_map.find(old_sha1);
+	if (old_sha1.length()) {
+	    if (m_it != sha1_map.end()) {
+		std::string nline = key + m_it->second;
+		node_lines.push_back(nline);
+		oval = m_it->second;
+	    } else {
+		oval = old_sha1;
+		node_lines.push_back(line);
+	    }
+	} else {
+	    oval = old_sha1;
+	    node_lines.push_back(line);
+	}
+	return 1;
+    }
+    return 0;
+}
+
+
+
 
 /* Return 1 if we successfully processed a node, else 0 */
 int
@@ -211,24 +297,16 @@ process_node(std::ifstream &infile, std::ofstream &outfile)
 	}
 
 	// Have path, get guts.
-	if (!sfcmp(line, tcsmkey))  {
-	    text_copy_source_md5 = svn_str(line, tcsmkey);
-	    node_lines.push_back(line);
+	if (curr_md5_line2(line, tcsmkey, text_copy_source_md5, node_lines)) {
 	    continue;
 	}
-	if (!sfcmp(line, tcsskey))  {
-	    text_copy_source_sha1 = svn_str(line, tcsskey);
-	    node_lines.push_back(line);
+	if (curr_sha1_line2(line, tcsskey, text_copy_source_sha1, node_lines)) {
 	    continue;
 	}
-	if (!sfcmp(line, tcmkey))  {
-	    text_content_md5 = svn_str(line, tcmkey);
-	    node_lines.push_back(line);
+	if (curr_md5_line2(line, tcmkey, text_content_md5, node_lines)) {
 	    continue;
 	}
-	if (!sfcmp(line, tcskey))  {
-	    text_content_sha1 = svn_str(line, tcskey);
-	    node_lines.push_back(line);
+	if (curr_sha1_line2(line, tcskey, text_content_sha1, node_lines)) {
 	    continue;
 	}
 	if (!sfcmp(line, tclkey))  {
@@ -282,6 +360,7 @@ process_node(std::ifstream &infile, std::ofstream &outfile)
 
     if (buffer && !skip_dercs(npath)) {
 	if (!is_binary(buffer, text_content_length, npath)) {
+	    int svcm = 0;
 	    std::string calc_md5 = md5_hash_hex(buffer, text_content_length);
 	    std::string calc_sha1 = sha1_hash_hex(buffer, text_content_length);
 	    if (text_content_md5 != calc_md5 || text_content_sha1 != calc_sha1) {
@@ -290,6 +369,7 @@ process_node(std::ifstream &infile, std::ofstream &outfile)
 		std::cout << "Calculated md5 : " << calc_md5 << "\n";
 		std::cout << "Read sha1      : " << text_content_sha1 << "\n";
 		std::cout << "Calculated sha1: " << calc_sha1 << "\n";
+		svcm = 1;
 		/*
 		   if (npath == std::string("brlcad/trunk/misc/vfont/fix.6r")) {
 		   std::ofstream cfile("fix-extracted.6r", std::ios::out | std::ios::binary);
@@ -301,7 +381,7 @@ process_node(std::ifstream &infile, std::ofstream &outfile)
 	    new_content = de_rcs(buffer, text_content_length);
 	    std::string new_md5 = md5_hash_hex(new_content.c_str(), new_content.length());
 	    std::string new_sha1 = sha1_hash_hex(new_content.c_str(), new_content.length());
-	    if (text_content_md5 != new_md5 || text_content_sha1 != new_sha1) {
+	    if (svcm || text_content_md5 != new_md5 || text_content_sha1 != new_sha1) {
 		std::cout << "Altered: " << npath << "\n";
 		std::cout << "Original md5   : " << text_content_md5 << "\n";
 		std::cout << "Calculated md5 : " << new_md5 << "\n";
@@ -327,51 +407,24 @@ process_node(std::ifstream &infile, std::ofstream &outfile)
 	    }
 	    line = *nl_it;
 	    // Text-copy-source-md5
-	    if (!sfcmp(line, tcsmkey))  {
-		std::string old_md5 = svn_str(line, tcsmkey);
-		m_it = md5_map.find(old_md5);
-		if (m_it != md5_map.end()) {
-		    outfile << "Text-copy-source-md5: " << m_it->second << "\n";
-		} else {
-		    outfile << *nl_it << "\n";
-		}
+	    if (curr_md5_line(line, tcsmkey, outfile)) {
 		continue;
 	    }
 	    // Text-copy-source-sha1
-	    if (!sfcmp(line, tcsskey))  {
-		std::string old_sha1 = svn_str(line, tcsskey);
-		m_it = sha1_map.find(old_sha1);
-		if (m_it != sha1_map.end()) {
-		    outfile << "Text-copy-source-sha1: " << m_it->second << "\n";
-		} else {
-		    outfile << *nl_it << "\n";
-		}
+	    if (curr_sha1_line(line, tcsskey, outfile)) {
 		continue;
 	    }
 
 	    // Text-content-md5
-	    if (!sfcmp(line, tcmkey))  {
-		std::string old_md5 = svn_str(line, tcmkey);
-		m_it = md5_map.find(old_md5);
-		if (m_it != md5_map.end()) {
-		    outfile << "Text-content-md5: " << m_it->second << "\n";
-		} else {
-		    outfile << *nl_it << "\n";
-		}
+	    if (curr_md5_line(line, tcmkey, outfile)) {
 		continue;
 	    }
 
 	    // Text-content-sha1
-	    if (!sfcmp(line, tcskey))  {
-		std::string old_sha1 = svn_str(line, tcskey);
-		m_it = sha1_map.find(old_sha1);
-		if (m_it != sha1_map.end()) {
-		    outfile << "Text-content-sha1: " << m_it->second << "\n";
-		} else {
-		    outfile << *nl_it << "\n";
-		}
+	    if (curr_sha1_line(line, tcskey, outfile)) {
 		continue;
 	    }
+
 	    // Text-content-length
 	    if (!sfcmp(line, tclkey))  {
 		if (new_content.length()) {
@@ -381,6 +434,7 @@ process_node(std::ifstream &infile, std::ofstream &outfile)
 		}
 		continue;
 	    }
+
 	    // Content-length
 	    if (!sfcmp(line, clkey))  {
 		if (new_content.length()) {
@@ -445,7 +499,16 @@ process_revision(std::ifstream &infile, std::ofstream &outfile)
     }
     if (rev_prop_length) skip_rev_props(infile, outfile);
 
-    //std::cerr << "Revision-number: " << rev.revision_number << ", prop length " << rev_prop_length << std::endl;
+    //std::cerr << "Revision-number: " << revision_number << ", prop length " << rev_prop_length << std::endl;
+
+    if (revision_number == 14651) {
+	std::cerr << "14651\n";
+    }
+
+    if (revision_number == 15814) {
+	std::cerr << "15814\n";
+    }
+
 
     /* Have revision number - grab nodes until we spot another one */
     while (node_ret != -1 && infile.peek() != EOF) {
