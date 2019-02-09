@@ -34,21 +34,6 @@ that can be inspected in an editor:
 head -n 127200000 brlcad_dercs.dump |tail -n 500000 > subset.dump
 
 
-SVN prep:
-
-The cvs repo stops at r29886 - it's looking like the best plan of action is
-to start the svn dump at the same commit, check for and resolve any differences,
-and then process on with the svn history. To prepare the appropriate svn dump:
-
-svnadmin dump -r29886:HEAD code > brlcad_r29886-r72316.dump
-
-Per svnadmin's docs, this will create an r29886 commit in the dump
-that describes every path present in the SVN tree as of that commit.  In
-principle (to be tested) this should mean we can look for any missing blobs
-not present in the git blob set and identify paths that need to be synced
-up before we can proceed.
-
-
 dercs processing:
 
 svnadmin dump code > brlcad_full.dump
@@ -57,3 +42,31 @@ svnadmin create repo_dercs
 # We re-load after doing the dercs step to make sure that SVN
 # agrees we still have a valid repository.
 svnadmin load repo_dercs < brlcad_full_dercs.dump
+
+
+
+CVS -> SVN sync:
+
+The cvs repo stops at r29886, but the CVS conversion and the SVN repo
+at that revision differ (apparently in line endings.)  To resolve this,
+we generate a single revision dump file from the dercs repo:
+
+svnadmin dump -r29886 repo_dercs > brlcad_r29886.dump
+
+Per svnadmin's docs, this will create an r29886 commit in the dump
+that describes every path present in the SVN tree as of that commit.  In
+principle (to be tested) this should mean we can look for any missing blobs
+not present in the git blob set and identify paths that need to be synced
+up before we can proceed.  A specialized version of the svnfexport binary
+generates this specific file:
+
+./cvssvnsync brlcad_r29886.dump authormap brlcad_cvs_git_heads_sha1.txt brlcad_cvs_git_all_blob_sha1.txt
+
+It will generate a r29886_sync.fi file which should be applied to the git repo
+before starting to append actual SVN only commits.
+
+
+
+svnfexport:
+
+./svnfexport brlcad_full_dercs.dump authormap brlcad_cvs_git_heads_sha1.txt brlcad_cvs_git_all_blob_sha1.txt
