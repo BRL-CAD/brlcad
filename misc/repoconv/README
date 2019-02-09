@@ -47,3 +47,13 @@ that describes every path present in the SVN tree as of that commit.  In
 principle (to be tested) this should mean we can look for any missing blobs
 not present in the git blob set and identify paths that need to be synced
 up before we can proceed.
+
+
+dercs processing:
+
+svnadmin dump code > brlcad_full.dump
+svnadmin create repo_dercs
+./svn_de-rcs brlcad_full.dump brlcad_full_dercs.dump
+# We re-load after doing the dercs step to make sure that SVN
+# agrees we still have a valid repository.
+svnadmin load repo_dercs < brlcad_full_dercs.dump
