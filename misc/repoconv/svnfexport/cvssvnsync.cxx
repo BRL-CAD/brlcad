@@ -715,7 +715,7 @@ void cvs_svn_sync(std::ifstream &infile, std::ofstream &outfile)
     std::string commit_msg = std::string("Sync CVS repo contents for r29886 to match the SVN contents at that revision.");
     outfile << "commit " << "refs/heads/master" << "\n";
     outfile << "mark :" << new_mark << "\n";
-    outfile << "committer " << author_map[std::string("starseeker")] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
+    outfile << "committer " << "CVS SVN Sync <cvs_svn_sync@brlcad.org>" << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
     outfile << "data " << commit_msg.length() << "\n";
     outfile << commit_msg << "\n";
     outfile << "from " << branch_head_id(branch) << "\n";
@@ -816,25 +816,10 @@ load_blob_sha1s(const char *f)
     }
 }
 
-
-void
-load_author_map(const char *f)
-{
-
-    std::ifstream afile(f);
-    std::string line;
-    while (std::getline(afile, line)) {
-	size_t spos = line.find_first_of(" ");
-	std::string svnauthor = line.substr(0, spos);
-	std::string gitauthor = line.substr(spos+1, std::string::npos);
-	author_map[svnauthor] = gitauthor;
-    }
-}
-
 int main(int argc, const char **argv)
 {
     if (argc < 4) {
-	std::cerr << "svnfexport dumpfile author_map head_sha1s blob_sha1s\n";
+	std::cerr << "svnfexport dumpfile head_sha1s blob_sha1s\n";
 	return 1;
     }
 
@@ -858,13 +843,10 @@ int main(int argc, const char **argv)
     branch_mappings[std::string("framebuffer-experiment")] = std::string("framebuffer-experiment");
 
     /* Read in pre-existing branch sha1 heads from git */
-    load_author_map(argv[2]);
-
-    /* Read in pre-existing branch sha1 heads from git */
-    load_branch_head_sha1s(argv[3]);
+    load_branch_head_sha1s(argv[2]);
 
     /* Read in pre-existing blob sha1s from git */
-    load_blob_sha1s(argv[4]);
+    load_blob_sha1s(argv[3]);
 
     int rev_cnt = load_dump_file(argv[1]);
     if (rev_cnt > 0) {
