@@ -107,6 +107,13 @@ svn_node_kind_t svn_node_kind(std::string nk)
     return nkerr;
 }
 
+std::string print_node_kind(svn_node_kind_t nt)
+{
+    if (nt == nfile) return std::string("file");
+    if (nt == ndir) return std::string("dir");
+    std::cerr << "Error - unknown node kind: " << nt << std::endl;
+    return std::string("");
+}
 long int svn_lint(std::string s1, std::string s2)
 {
     if (!s1.length() || !s2.length()) return -1;
@@ -135,6 +142,39 @@ std::string print_node_action(svn_node_action_t nat)
     if (nat == nreplace) return std::string("replace");
     return std::string("unknown");
 }
+
+
+void
+print_node(struct svn_node &n)
+{
+    std::cout << "Revision: " << n.revision_number << std::endl;
+    std::cout << "Node-path: " << n.path << std::endl;
+    std::cout << "Node-kind: " << print_node_kind(n.kind) << std::endl;
+    std::cout << "Node-action: " << print_node_action(n.action) << std::endl;
+    std::cout << "Node-copyfrom-rev: " << n.copyfrom_rev << std::endl;
+    std::cout << "Node-copyfrom-path: " << n.copyfrom_path << std::endl;
+    std::cout << "Text-copy-source-md5: " << n.text_copy_source_md5 << std::endl;
+    std::cout << "Text-copy-source-sha1: " << n.text_copy_source_sha1  << std::endl;
+    std::cout << "Text-content-md5: " << n.text_content_md5 << std::endl;
+    std::cout << "Text-content-sha1: " << n.text_content_sha1 << std::endl;
+    std::cout << "Text-content-length: " << n.text_content_length << std::endl;
+    std::cout << "Prop-content-length: " << n.prop_content_length << std::endl;
+    std::cout << "Content-length: " << n.content_length << std::endl;
+    if (n.node_props.size() > 0) {
+	std::cout << "Properies (" << n.node_props.size() << "): " << n.content_length << std::endl;
+	std::map<std::string, std::string>::iterator m_it;
+	for (m_it = n.node_props.begin(); m_it != n.node_props.end(); m_it++) {
+	    std::cout << "   " << m_it->first << " -> " << m_it->second << std::endl;
+	}
+    }
+    std::cout << "exec_path: " << n.exec_path << std::endl;
+    std::cout << "exec_change: " << n.exec_change << std::endl;
+    std::cout << "crlf_content: " << n.crlf_content << std::endl;
+    std::cout << "project: " << n.project << std::endl;
+    std::cout << "branch: " << n.branch << std::endl;
+    std::cout << "local_path: " << n.local_path << std::endl;
+}
+
 
 std::string git_sha1(std::ifstream &infile, struct svn_node *n)
 {
@@ -420,10 +460,24 @@ process_node(std::ifstream &infile, struct svn_revision *rev)
 	infile.seekg(after_content);
     }
 
-    if (n.path == "brlcad/trunk/src/vfont/font.h") {
-	if (rev->revision_number == 30333) {
-	    std::cout << rev->revision_number << ": " << svn_sha1_to_git_sha1[n.text_content_sha1] << "\n";
+
+    // r29887 is where we will be starting our fast-export generation - until that point,
+    // keep current_sha1 up to date on a rolling basis
+    if (rev->revision_number <= 29886) {
+	if (n.text_content_sha1.length() && n.text_content_length) {
+	    current_sha1[n.path] = n.text_content_sha1;
 	}
+    }
+
+
+    if (n.path == "brlcad/trunk/autogen.sh") {
+	std::cout << n.path << " " << rev->revision_number << ": " << svn_sha1_to_git_sha1[n.text_content_sha1] << "\n";
+	std::cout << "curr sha1: " << n.path << " " << rev->revision_number << ": " << current_sha1[n.path] << "\n";
+    }
+
+    if (n.path == "brlcad/branches/STABLE/autogen.sh") {
+	std::cout << n.path << " " << rev->revision_number << ": " << svn_sha1_to_git_sha1[n.text_content_sha1] << "\n";
+	std::cout << "curr sha1: " << n.path << " " << rev->revision_number << ": " << current_sha1[n.path] << "\n";
     }
 
     // Have at least some node contents (last node in file?), return
@@ -449,6 +503,10 @@ process_revision(std::ifstream &infile)
     }
     success = 1; // For the moment, finding the revision is enough to qualify as success...
 
+    if (rev.revision_number == 29982) {
+	std::cout << "r29982\n";
+    }
+
     // "Usually" a revision will have properties, but they are apparently not
     // technically required.  For revision properties Content-length and
     // Prop-content-length will always match if non-zero, and Content-length
@@ -466,15 +524,6 @@ process_revision(std::ifstream &infile)
     /* Have revision number - grab nodes until we spot another one */
     while (node_ret != -1 && infile.peek() != EOF) {
 	node_ret = process_node(infile, &rev);
-    }
-
-    // While it is techically possible to have multi-project commits (and there
-    // are some in BRL-CAD's early history) the commit range we are concerned with
-    // for appending onto the CVS git conversion does not have any such commits.
-    // Accordingly, can use the project from the first node path for the whole
-    // revision.
-    if (rev.nodes.size() > 0) {
-	rev.project = rev.nodes[0].project; 
     }
 
     revs.insert(std::pair<long int, struct svn_revision>(rev.revision_number, rev));
@@ -685,6 +734,14 @@ analyze_dump()
 		}
 	    }
 	}
+	// While it is techically possible to have multi-project commits (and there
+	// are some in BRL-CAD's early history) the commit range we are concerned with
+	// for appending onto the CVS git conversion does not have any such commits.
+	// Accordingly, can use the project from the first node path for the whole
+	// revision.
+	if (rev.nodes.size() > 0) {
+	    rev.project = rev.nodes[0].project; 
+	}
     }
 }
 
@@ -693,6 +750,11 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
     std::map<long int, struct svn_revision>::iterator r_it;
     for (r_it = revs.begin(); r_it != revs.end(); r_it++) {
 	struct svn_revision &rev = r_it->second;
+
+	if (rev.project != std::string("brlcad")) {
+	    std::cout << "Revision " << rev.revision_number << " is not part of brlcad, skipping\n";
+	    continue;
+	}
 
 	// If we have a text content sha1, update the map
 	// to the current path state
@@ -709,6 +771,9 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 
 	if (rev.revision_number >= rev_num_min) {
 	    std::cout << "Processing revision " << rev.revision_number << "\n";
+	    if (rev.merged_from.length()) {
+		std::cout << "Note: merged from " << rev.merged_from << "\n";
+	    }
 	    int git_changes = 0;
 	    for (size_t n = 0; n != rev.nodes.size(); n++) {
 		struct svn_node &node = rev.nodes[n];
@@ -765,14 +830,40 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 			outfile << "100644 ";
 		    }
 		    if (node.action == nchange || node.action == nadd) {
-			std::string gsha1 = svn_sha1_to_git_sha1[current_sha1[node.path]];
-			if (gsha1.length() < 40) {
-			    //TODO - next up is copyfrom_rev - probably means we need to go back to the full dump
-			    //so we can reference earlier versions, and track all sha1 content locations not just current...
-			    std::cout << "Fatal - could not find git sha1 - r" << rev.revision_number << ", node: " << node.path << "\n";
-			    exit(1);
+			if (node.exec_change || node.copyfrom_path.length() || node.text_content_length) {
+			    std::string gsha1 = svn_sha1_to_git_sha1[current_sha1[node.path]];
+			    if (gsha1.length() < 40) {
+				if (node.copyfrom_rev) {
+				    gsha1 = svn_sha1_to_git_sha1[node.text_copy_source_sha1];
+				    if (gsha1.length() < 40) {
+					//TODO - next up is copyfrom_rev - probably means we need to go back to the full dump
+					//so we can reference earlier versions, and track all sha1 content locations not just current...
+					std::cout << "Fatal - could not find git sha1 - r" << rev.revision_number << ", node: " << node.path << "\n";
+					std::cout << "current sha1: " << current_sha1[node.path] << "\n";
+					std::cout << "Revision merged from: " << rev.merged_from << "\n";
+					print_node(node);
+					exit(1);
+				    }
+				} else {
+				    std::string tpath = std::string("brlcad/trunk/") + node.local_path;
+				    gsha1 = svn_sha1_to_git_sha1[current_sha1[tpath]];
+				    if (gsha1.length() < 40) {
+					//TODO - next up is copyfrom_rev - probably means we need to go back to the full dump
+					//so we can reference earlier versions, and track all sha1 content locations not just current...
+					std::cout << "Fatal - could not find git sha1 - r" << rev.revision_number << ", node: " << node.path << "\n";
+					std::cout << "current sha1: " << current_sha1[node.path] << "\n";
+					std::cout << "Revision merged from: " << rev.merged_from << "\n";
+					print_node(node);
+					exit(1);
+				    } else {
+					std::cout << "Warning - couldn't find SHA1 for " << node.path << ", using node from " << tpath << "\n";
+				    }
+				}
+			    }
+			    outfile << gsha1 << " \"" << node.local_path << "\"\n";
+			} else {
+			    std::cout << "Warning skipping " << node.path << " - r" << rev.revision_number << " - no git applicable change found.\n";
 			}
-			outfile << gsha1 << " \"" << node.local_path << "\"\n";
 		    }
 		    if (node.action == ndelete) {
 			outfile << "\"" << node.local_path << "\"\n";
