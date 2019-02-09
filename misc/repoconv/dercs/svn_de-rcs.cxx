@@ -303,10 +303,14 @@ process_node(std::ifstream &infile, std::ofstream &outfile)
 	if (curr_sha1_line2(line, tcsskey, text_copy_source_sha1, node_lines)) {
 	    continue;
 	}
-	if (curr_md5_line2(line, tcmkey, text_content_md5, node_lines)) {
+	if (!sfcmp(line, tcmkey))  {
+	    text_content_md5 = svn_str(line, tcmkey);
+	    node_lines.push_back(line);
 	    continue;
 	}
-	if (curr_sha1_line2(line, tcskey, text_content_sha1, node_lines)) {
+	if (!sfcmp(line, tcskey))  {
+	    text_content_sha1 = svn_str(line, tcskey);
+	    node_lines.push_back(line);
 	    continue;
 	}
 	if (!sfcmp(line, tclkey))  {
