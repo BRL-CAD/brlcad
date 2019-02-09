@@ -87,6 +87,14 @@ main(int argc, const char **argv)
 	bu_exit(EXIT_FAILURE, "ERROR, could not load libged: %s\n", bu_dlerror());
     }
 
+    /* If we hope to do any drawing, for the moment we need to initialize the LIBRT global */
+    BU_LIST_INIT(&RTG.rtg_vlfree);
+
+    /* Need a view for commands that expect a view */
+    struct bview *gsh_view;
+    BU_GET(gsh_view, struct bview);
+    ged_view_init(gsh_view);
+
     /* See if we've been told to pre-load a specific .g file. */
     if (argc) {
 	if (!bu_file_exists(argv[0], NULL)) {
@@ -100,6 +108,7 @@ main(int argc, const char **argv)
 	    bu_dlclose(libged);
 	    bu_exit(EXIT_FAILURE, "Could not open %s as a .g file\n", argv[0]) ;
 	} else {
+	    gedp->ged_gvp = gsh_view;
 	    bu_vls_sprintf(&open_gfile, "%s", argv[0]);
 	}
     }
@@ -145,8 +154,15 @@ main(int argc, const char **argv)
 	    if (ac > 1) {
 		if (gedp) ged_close(gedp);
 		gedp = ged_open("db", av[1], 0);
-		bu_vls_sprintf(&open_gfile, "%s", av[1]);
-		printf("Opened file %s\n", bu_vls_addr(&open_gfile));
+		if (!gedp) {
+		    bu_vls_free(&msg);
+		    bu_dlclose(libged);
+		    bu_exit(EXIT_FAILURE, "Could not open %s as a .g file\n", av[1]) ;
+		} else {
+		    gedp->ged_gvp = gsh_view;
+		    bu_vls_sprintf(&open_gfile, "%s", av[1]);
+		    printf("Opened file %s\n", bu_vls_addr(&open_gfile));
+		}
 	    } else {
 		printf("Error: invalid ged_open call\n");
 	    }
@@ -192,6 +208,7 @@ main(int argc, const char **argv)
     }
 
 done:
+    BU_PUT(gsh_view, struct bview);
     bu_dlclose(libged);
     if (gedp) ged_close(gedp);
     linenoiseHistoryFree();
