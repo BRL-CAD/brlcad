@@ -360,7 +360,6 @@ process_node(std::ifstream &infile, std::ofstream &outfile)
 
     if (buffer && !skip_dercs(npath)) {
 	if (!is_binary(buffer, text_content_length, npath)) {
-	    int svcm = 0;
 	    std::string calc_md5 = md5_hash_hex(buffer, text_content_length);
 	    std::string calc_sha1 = sha1_hash_hex(buffer, text_content_length);
 	    if (text_content_md5 != calc_md5 || text_content_sha1 != calc_sha1) {
@@ -369,7 +368,6 @@ process_node(std::ifstream &infile, std::ofstream &outfile)
 		std::cout << "Calculated md5 : " << calc_md5 << "\n";
 		std::cout << "Read sha1      : " << text_content_sha1 << "\n";
 		std::cout << "Calculated sha1: " << calc_sha1 << "\n";
-		svcm = 1;
 		/*
 		   if (npath == std::string("brlcad/trunk/misc/vfont/fix.6r")) {
 		   std::ofstream cfile("fix-extracted.6r", std::ios::out | std::ios::binary);
@@ -381,7 +379,7 @@ process_node(std::ifstream &infile, std::ofstream &outfile)
 	    new_content = de_rcs(buffer, text_content_length);
 	    std::string new_md5 = md5_hash_hex(new_content.c_str(), new_content.length());
 	    std::string new_sha1 = sha1_hash_hex(new_content.c_str(), new_content.length());
-	    if (svcm || text_content_md5 != new_md5 || text_content_sha1 != new_sha1) {
+	    if (text_content_md5 != new_md5 || text_content_sha1 != new_sha1) {
 		std::cout << "Altered: " << npath << "\n";
 		std::cout << "Original md5   : " << text_content_md5 << "\n";
 		std::cout << "Calculated md5 : " << new_md5 << "\n";
@@ -393,11 +391,11 @@ process_node(std::ifstream &infile, std::ofstream &outfile)
 	}
     }
 
-
+#if 0
     std::regex cvsignore(".*cvsignore$");
 
     if (!std::regex_match(npath, cvsignore)) {
-
+#endif
 	// Write out the node lines and content.
 	std::map<std::string, std::string>::iterator m_it;
 	for (nl_it = node_lines.begin(); nl_it != node_lines.end(); nl_it++) {
@@ -455,9 +453,11 @@ process_node(std::ifstream &infile, std::ofstream &outfile)
 	    }
 	    outfile << "\n";
 	}
+#if 0
     } else {
 	std::cout << "Skipping " << npath << "\n";
     }
+#endif
 
     if (buffer) {
 	delete buffer;
@@ -500,15 +500,6 @@ process_revision(std::ifstream &infile, std::ofstream &outfile)
     if (rev_prop_length) skip_rev_props(infile, outfile);
 
     //std::cerr << "Revision-number: " << revision_number << ", prop length " << rev_prop_length << std::endl;
-
-    if (revision_number == 14651) {
-	std::cerr << "14651\n";
-    }
-
-    if (revision_number == 15814) {
-	std::cerr << "15814\n";
-    }
-
 
     /* Have revision number - grab nodes until we spot another one */
     while (node_ret != -1 && infile.peek() != EOF) {
