@@ -990,6 +990,10 @@ int main(int argc, const char **argv)
     valid_projects.insert(std::string("webcad"));
     */
 
+    /* SVN has some empty files - tell our setup how to handle them */
+    svn_sha1_to_git_sha1[std::string("da39a3ee5e6b4b0d3255bfef95601890afd80709")] = std::string("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391");
+
+
     /* Branch/tag name mappings */
     branch_mappings[std::string("framebuffer-experiment")] = std::string("framebuffer-experiment");
 
