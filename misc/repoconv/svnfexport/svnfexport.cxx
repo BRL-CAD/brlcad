@@ -795,6 +795,9 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 	    }
 
 	    if (git_changes) {
+		if (author_map.find(rev.author) == author_map.end()) {
+		    std::cout << "Error - couldn't find author map for author " << rev.author << " on revision " << rev.revision_number << "\n";
+		}
 		outfile << "commit " << rev.nodes[0].branch << "\n";
 		outfile << "mark :" << rev.revision_number << "\n";
 		outfile << "committer " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
@@ -1018,7 +1021,7 @@ int main(int argc, const char **argv)
     std::ifstream infile(argv[1]);
     std::ofstream outfile("export.fi", std::ios::out | std::ios::binary);
     if (!outfile.good()) return -1;
-    rev_fast_export(infile, outfile, 29887, 42000);
+    rev_fast_export(infile, outfile, 29887, 73000);
     outfile.close();
 
     return 0;
