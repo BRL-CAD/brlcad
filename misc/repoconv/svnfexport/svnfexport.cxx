@@ -243,6 +243,10 @@ branch_head_id(std::string branch){
     //
     // else, it's a mark and return the string with a colon in front.
     std::string curr_head = branch_head_ids[branch];
+    if (!curr_head.length()) {
+	std::cout << "Error - unknown branch " << branch << "\n";
+	exit(1);
+    }
     if (curr_head.length() == 40) return curr_head;
     std::string head_mark = std::string(":") + curr_head;
     return head_mark;
@@ -797,6 +801,7 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 	    if (git_changes) {
 		if (author_map.find(rev.author) == author_map.end()) {
 		    std::cout << "Error - couldn't find author map for author " << rev.author << " on revision " << rev.revision_number << "\n";
+		    exit(1);
 		}
 		outfile << "commit " << rev.nodes[0].branch << "\n";
 		outfile << "mark :" << rev.revision_number << "\n";
@@ -816,6 +821,34 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 		    }
 
 		    //std::cout << "	Processing node " << print_node_action(node.action) << " " << node.local_path << " into branch " << node.branch << "\n";
+		    std::string gsha1;
+		    if (node.action == nchange || node.action == nadd || node.action == nreplace) {
+			if (node.exec_change || node.copyfrom_path.length() || node.text_content_length || node.text_content_sha1.length()) {
+			    std::string tpath = std::string("brlcad/trunk/") + node.local_path;
+			    gsha1 = svn_sha1_to_git_sha1[current_sha1[node.path]];
+			    if (gsha1.length() < 40) {
+				if (node.copyfrom_rev) {
+				    gsha1 = svn_sha1_to_git_sha1[node.text_copy_source_sha1];
+				}
+				if (gsha1.length() < 40) {
+				    gsha1 = svn_sha1_to_git_sha1[current_sha1[tpath]];
+				    if (gsha1.length() < 40) {
+					std::cout << "Fatal - could not find git sha1 - r" << rev.revision_number << ", node: " << node.path << "\n";
+					std::cout << "current sha1: " << current_sha1[node.path] << "\n";
+					std::cout << "trunk sha1: " << current_sha1[tpath] << "\n";
+					std::cout << "Revision merged from: " << rev.merged_from << "\n";
+					print_node(node);
+					exit(1);
+				    } else {
+					std::cout << "Warning - couldn't find SHA1 for " << node.path << ", using node from " << tpath << "\n";
+				    }
+				}
+			    }
+			} else {
+			    std::cout << "Warning skipping " << node.path << " - r" << rev.revision_number << " - no git applicable change found.\n";
+			}
+			continue;
+		    }
 
 		    switch (node.action) {
 			case nchange:
@@ -842,36 +875,18 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 		    } else {
 			outfile << "100644 ";
 		    }
-		    if (node.action == nchange || node.action == nadd) {
-			if (node.exec_change || node.copyfrom_path.length() || node.text_content_length || node.text_content_sha1.length()) {
-			    std::string tpath = std::string("brlcad/trunk/") + node.local_path;
-			    std::string gsha1 = svn_sha1_to_git_sha1[current_sha1[node.path]];
-			    if (gsha1.length() < 40) {
-				if (node.copyfrom_rev) {
-				    gsha1 = svn_sha1_to_git_sha1[node.text_copy_source_sha1];
-				}
-				if (gsha1.length() < 40) {
-				    gsha1 = svn_sha1_to_git_sha1[current_sha1[tpath]];
-				    if (gsha1.length() < 40) {
-					std::cout << "Fatal - could not find git sha1 - r" << rev.revision_number << ", node: " << node.path << "\n";
-					std::cout << "current sha1: " << current_sha1[node.path] << "\n";
-					std::cout << "trunk sha1: " << current_sha1[tpath] << "\n";
-					std::cout << "Revision merged from: " << rev.merged_from << "\n";
-					print_node(node);
-					exit(1);
-				    } else {
-					std::cout << "Warning - couldn't find SHA1 for " << node.path << ", using node from " << tpath << "\n";
-				    }
-				}
-			    }
-			    outfile << gsha1 << " \"" << node.local_path << "\"\n";
-			} else {
-			    std::cout << "Warning skipping " << node.path << " - r" << rev.revision_number << " - no git applicable change found.\n";
-			}
-		    }
+
 		    if (node.action == ndelete) {
 			outfile << "\"" << node.local_path << "\"\n";
+			continue;
 		    }
+		    if (node.action == nchange || node.action == nadd || node.action == nreplace) { 
+			outfile << gsha1 << " \"" << node.local_path << "\"\n";
+			continue;
+		    }
+
+		    std::cout << "Error - unhandled node action: " << print_node_action(node.action) << "\n";
+		    exit(1);
 		}
 	    } else {
 		std::cout << "Skipping SVN commit r" << rev.revision_number << " - no git applicable changes\n";
