@@ -81,6 +81,50 @@ git hash-object -w --stdin < /dev/null
 cat "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 src/other/tkhtml3/AUTHORS" >> ../brlcad_cvs_git_all_blob_sha1.txt
 
 
+############################
+
+There are a number of branch adds/deletes which will require special attention:
+
+Processing revision 31020
+Delete branch instruction: refs/heads/STABLE - deferring.
+Processing revision 31039
+Adding branch refs/heads/STABLE from rel-7-12-2
+Processing revision 32017
+Adding branch refs/heads/pre-7-12-6 from refs/heads/STABLE
+Processing revision 32313
+Delete branch instruction: refs/heads/STABLE - deferring.
+Processing revision 32314
+Adding branch refs/heads/STABLE from rel-7-12-6
+Processing revision 36842
+Delete branch instruction: refs/heads/STABLE - deferring.
+Processing revision 36843
+Adding branch refs/heads/STABLE from refs/heads/master
+
+
+There appear to be some specific instructions in git's fast-import for deleting all contents
+of a branch and starting over.  To do that rebuilding, it might be simpler to write some
+special case fi parsers to operate on specific revision dumps to get the full branch file
+sets for those commits - the main svnfexport exectable isn't really tracking that directly.
+
+Also needing special awareness will be the dmtogl branches:
+
+Processing revision 36472
+Adding branch refs/heads/dmtogl from refs/heads/dmtogl-branch
+Processing revision 36472
+Delete branch instruction: refs/heads/dmtogl-branch - deferring.
+Processing revision 36632
+Delete branch instruction: refs/heads/dmtogl - deferring.
+Processing revision 36633
+Adding branch refs/heads/dmtogl from refs/heads/master
+Processing revision 39464
+Delete branch instruction: refs/heads/dmtogl - deferring.
+Processing revision 39465
+Adding branch refs/heads/dmtogl from refs/heads/master
+
+
+
+############################
+
 svnfexport:
 
 ./svnfexport brlcad_full_dercs.dump authormap brlcad_cvs_git_heads_sha1.txt brlcad_cvs_git_all_blob_sha1.txt
