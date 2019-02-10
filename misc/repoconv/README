@@ -74,6 +74,12 @@ Having made that update, we now need to update the sha1 files:
 git show-ref --heads --tags > ../brlcad_cvs_git_heads_sha1.txt
 git rev-list --objects --all | git cat-file --batch-check='%(objectname) %(objecttype) %(rest)' | grep '^[^ ]* blob' | cut -d" " -f1,3- > ../brlcad_cvs_git_all_blob_sha1.txt
 
+Make a null object in the database to be sure we have it:
+
+(There may be a better way to do this...)
+git hash-object -w --stdin < /dev/null
+cat "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 src/other/tkhtml3/AUTHORS" >> ../brlcad_cvs_git_all_blob_sha1.txt
+
 
 svnfexport:
 
