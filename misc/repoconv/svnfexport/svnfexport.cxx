@@ -473,7 +473,7 @@ process_node(std::ifstream &infile, struct svn_revision *rev)
 	}
     }
 
-
+#if 0
     if (n.path == "brlcad/trunk/autogen.sh") {
 	std::cout << n.path << " " << rev->revision_number << ": " << svn_sha1_to_git_sha1[n.text_content_sha1] << "\n";
 	std::cout << "curr sha1: " << n.path << " " << rev->revision_number << ": " << current_sha1[n.path] << "\n";
@@ -483,6 +483,7 @@ process_node(std::ifstream &infile, struct svn_revision *rev)
 	std::cout << n.path << " " << rev->revision_number << ": " << svn_sha1_to_git_sha1[n.text_content_sha1] << "\n";
 	std::cout << "curr sha1: " << n.path << " " << rev->revision_number << ": " << current_sha1[n.path] << "\n";
     }
+#endif
 
     // Have at least some node contents (last node in file?), return
     rev->nodes.push_back(n);
@@ -757,7 +758,7 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 	struct svn_revision &rev = r_it->second;
 
 	if (rev.project != std::string("brlcad")) {
-	    std::cout << "Revision " << rev.revision_number << " is not part of brlcad, skipping\n";
+	    //std::cout << "Revision " << rev.revision_number << " is not part of brlcad, skipping\n";
 	    continue;
 	}
 
@@ -775,13 +776,29 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 	if (rev.revision_number > rev_num_max) return;
 
 	if (rev.revision_number >= rev_num_min) {
+#if 0
 	    std::cout << "Processing revision " << rev.revision_number << "\n";
 	    if (rev.merged_from.length()) {
 		std::cout << "Note: merged from " << rev.merged_from << "\n";
 	    }
+#endif
 	    int git_changes = 0;
 	    for (size_t n = 0; n != rev.nodes.size(); n++) {
 		struct svn_node &node = rev.nodes[n];
+
+		if (node.branch_add) {
+		    std::cout << "Processing revision " << rev.revision_number << "\n";
+		    std::string ppath, bbpath, llpath;
+		    int is_tag;
+		    node_path_split(node.copyfrom_path, ppath, bbpath, llpath, &is_tag);
+		    std::cout << "Adding branch " << node.branch << " from " << bbpath << "\n";
+		}
+
+		if (node.branch_delete) {
+		    std::cout << "Processing revision " << rev.revision_number << "\n";
+		    std::cout << "Delete branch instruction: " << node.branch << " - deferring.\n";
+		    continue;
+		}
 		if (node.text_content_length > 0) {
 		    //std::cout << "	Adding node object for " << node.local_path << "\n";
 		    write_blob(infile, outfile, node);
@@ -798,6 +815,7 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 		}
 	    }
 
+		continue;
 	    if (git_changes) {
 		if (author_map.find(rev.author) == author_map.end()) {
 		    std::cout << "Error - couldn't find author map for author " << rev.author << " on revision " << rev.revision_number << "\n";
@@ -831,6 +849,9 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 				    gsha1 = svn_sha1_to_git_sha1[node.text_copy_source_sha1];
 				}
 				if (gsha1.length() < 40) {
+				    // TODO - this isn't (necessarily) right - need to do this by looking up the copyfrom_path of the current branch
+				    // and going the path lookup using the origin branch.  If the source branch isn't trunk, this could be flat
+				    // out wrong.
 				    gsha1 = svn_sha1_to_git_sha1[current_sha1[tpath]];
 				    if (gsha1.length() < 40) {
 					std::cout << "Fatal - could not find git sha1 - r" << rev.revision_number << ", node: " << node.path << "\n";
