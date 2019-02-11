@@ -70,10 +70,11 @@ extern int mged_db_warn;
 extern int mged_db_upgrade;
 extern int mged_db_version;
 
-int glob_compat_mode = 1;
-int output_as_return = 1;
+static int glob_compat_mode = 1;
+static int output_as_return = 1;
 
 Tk_Window tkwin = NULL;
+
 
 /* The following is for GUI output hooks: contains name of function to
  * run with output.
@@ -231,10 +232,10 @@ cmd_ged_simulate_wrapper(ClientData clientData, Tcl_Interp *interpreter, int arg
     Tcl_AppendResult(interpreter, bu_vls_addr(gedp->ged_result_str), NULL);
 
     if (ret & GED_HELP)
-    return TCL_OK;
+	return TCL_OK;
 
     if (ret)
-    return TCL_ERROR;
+	return TCL_ERROR;
 
     av[0] = "draw";
     av[1] = argv[1];
@@ -596,16 +597,16 @@ cmd_ged_plain_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, 
 /* This code is for debugging/testing the new ged return mechanism */
 #if 0
     {
-    int r_loop = 0;
-    size_t result_cnt = 0;
+	int r_loop = 0;
+	size_t result_cnt = 0;
 
-    result_cnt = ged_results_count(gedp->ged_results);
-    if (result_cnt > 0) {
-	bu_log("Results container holds results(%d):\n", result_cnt);
-	for (r_loop = 0; r_loop < (int)result_cnt; r_loop++) {
-	    bu_log("%s\n", ged_results_get(gedp->ged_results, r_loop));
+	result_cnt = ged_results_count(gedp->ged_results);
+	if (result_cnt > 0) {
+	    bu_log("Results container holds results(%d):\n", result_cnt);
+	    for (r_loop = 0; r_loop < (int)result_cnt; r_loop++) {
+		bu_log("%s\n", ged_results_get(gedp->ged_results, r_loop));
+	    }
 	}
-    }
     }
 #endif
 
@@ -691,6 +692,7 @@ cmd_ged_view_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, c
 
     return TCL_OK;
 }
+
 
 int
 cmd_ged_dm_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
@@ -985,9 +987,6 @@ cmd_set_more_default(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int
     bu_vls_strcpy(&curr_cmd_list->cl_more_default, argv[1]);
     return TCL_OK;
 }
-
-
-
 
 
 /**
@@ -1348,7 +1347,7 @@ f_tie(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
 	    if (clp->cl_tie) {
 		if (dm_get_pathname(dmp)) {
 		    bu_vls_printf(&vls, "%s %s", bu_vls_addr(&clp->cl_name),
-			    bu_vls_addr(dm_get_pathname(clp->cl_tie->dml_dmp)));
+				  bu_vls_addr(dm_get_pathname(clp->cl_tie->dml_dmp)));
 		    Tcl_AppendElement(interpreter, bu_vls_addr(&vls));
 		}
 	    } else {
@@ -1361,7 +1360,7 @@ f_tie(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
 	if (clp->cl_tie) {
 	    if (dm_get_pathname(dmp)) {
 		bu_vls_printf(&vls, "%s %s", bu_vls_addr(&clp->cl_name),
-			bu_vls_addr(dm_get_pathname(clp->cl_tie->dml_dmp)));
+			      bu_vls_addr(dm_get_pathname(clp->cl_tie->dml_dmp)));
 		Tcl_AppendElement(interpreter, bu_vls_addr(&vls));
 	    }
 	} else {
@@ -1560,6 +1559,10 @@ mged_global_variable_setup(Tcl_Interp *interpreter)
     Tcl_LinkVar(interpreter, "edit_class", (char *)&es_edclass, TCL_LINK_INT);
     Tcl_LinkVar(interpreter, "edit_solid_flag", (char *)&es_edflag, TCL_LINK_INT);
     Tcl_LinkVar(interpreter, "edit_object_flag", (char *)&edobj, TCL_LINK_INT);
+
+    /* link some tcl variables to these corresponding globals */
+    Tcl_LinkVar(INTERP, "glob_compat_mode", (char *)&glob_compat_mode, TCL_LINK_BOOLEAN);
+    Tcl_LinkVar(INTERP, "output_as_return", (char *)&output_as_return, TCL_LINK_BOOLEAN);
 }
 
 
@@ -1574,6 +1577,9 @@ mged_global_variable_teardown(Tcl_Interp *interpreter)
     Tcl_UnlinkVar(interpreter, "edit_class");
     Tcl_UnlinkVar(interpreter, "edit_solid_flag");
     Tcl_UnlinkVar(interpreter, "edit_object_flag");
+
+    Tcl_UnlinkVar(interpreter, "glob_compat_mode");
+    Tcl_UnlinkVar(interpreter, "output_as_return");
 }
 
 
@@ -1598,6 +1604,7 @@ f_bomb(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int argc,
     return TCL_OK;
 }
 
+
 /**
  *@brief
  * Called when the named proc created by rt_gettrees() is destroyed.
@@ -1617,6 +1624,7 @@ wdb_deleteProc_rt(void *clientData)
 
     bu_free((void *)ap, "struct application");
 }
+
 
 int
 cmd_rt_gettrees(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int argc, const char *argv[])
@@ -1794,6 +1802,7 @@ cmd_search(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, con
 
 }
 
+
 /**
  * "tol" displays current settings
  * "tol abs #" sets absolute tolerance.  # > 0.0
@@ -1876,6 +1885,7 @@ cmd_draw(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int arg
     return edit_com(argc, argv, 1);
 }
 
+
 /**
  * Format: ev objects
  */
@@ -1950,11 +1960,12 @@ cmd_has_embedded_fb(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int 
     return TCL_OK;
 }
 
+
 int
 cmd_ps(ClientData UNUSED(clientData),
-	Tcl_Interp *interpreter,
-	int UNUSED(argc),
-	const char **UNUSED(argv))
+       Tcl_Interp *interpreter,
+       int UNUSED(argc),
+       const char **UNUSED(argv))
 {
     int ret = 0;
     const char *av[3];
@@ -1967,6 +1978,7 @@ cmd_ps(ClientData UNUSED(clientData),
     Tcl_AppendResult(interpreter, bu_vls_addr(gedp->ged_result_str), NULL);
     return (ret) ? TCL_ERROR : TCL_OK;
 }
+
 
 int
 cmd_stub(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int argc, const char *argv[])
@@ -1985,6 +1997,7 @@ cmd_stub(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int arg
     Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, "%s: no database is currently opened!", argv[0], (char *)NULL);
     return TCL_ERROR;
 }
+
 
 /*
  * Local Variables:

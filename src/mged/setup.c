@@ -393,10 +393,6 @@ cmd_setup(void)
     struct cmdtab *ctp;
     struct bu_vls temp = BU_VLS_INIT_ZERO;
 
-    /* from cmd.c */
-    extern int glob_compat_mode;
-    extern int output_as_return;
-
     for (ctp = mged_cmdtab; ctp->name != NULL; ctp++) {
 	bu_vls_strcpy(&temp, "_mged_");
 	bu_vls_strcat(&temp, ctp->name);
@@ -406,10 +402,6 @@ cmd_setup(void)
 	(void)Tcl_CreateCommand(INTERP, bu_vls_addr(&temp), ctp->tcl_func,
 				(ClientData)ctp, (Tcl_CmdDeleteProc *)NULL);
     }
-
-    /* link some tcl variables to these corresponding globals */
-    Tcl_LinkVar(INTERP, "glob_compat_mode", (char *)&glob_compat_mode, TCL_LINK_BOOLEAN);
-    Tcl_LinkVar(INTERP, "output_as_return", (char *)&output_as_return, TCL_LINK_BOOLEAN);
 
     /* Init mged's Tcl interface to libwdb */
     Wdb_Init(INTERP);
