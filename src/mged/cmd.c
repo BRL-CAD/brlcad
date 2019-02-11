@@ -1960,7 +1960,7 @@ cmd_ps(ClientData UNUSED(clientData),
     const char *av[3];
     av[0] = "process";
     av[1] = "list";
-    av[2] = '\0';
+    av[2] = NULL;
     ret = ged_process(gedp, 2, (const char **)av);
     /* For the next couple releases, print a rename notice */
     Tcl_AppendResult(interpreter, "(Note: former 'ps' command has been renamed to 'postscript')\n", NULL);
