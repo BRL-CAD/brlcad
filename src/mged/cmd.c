@@ -82,34 +82,34 @@ Tk_Window tkwin = NULL;
 static struct bu_vls tcl_output_hook = BU_VLS_INIT_ZERO;
 
 static int
-mged_dm_width(struct ged *gedp)
+mged_dm_width(struct ged *gedpp)
 {
-    dm *dmp = (dm *)gedp->ged_dmp;
-    return dm_get_width(dmp);
+    dm *dmpp = (dm *)gedpp->ged_dmp;
+    return dm_get_width(dmpp);
 }
 
 
 static int
-mged_dm_height(struct ged *gedp)
+mged_dm_height(struct ged *gedpp)
 {
-    dm *dmp = (dm *)gedp->ged_dmp;
-    return dm_get_height(dmp);
+    dm *dmpp = (dm *)gedpp->ged_dmp;
+    return dm_get_height(dmpp);
 }
 
 
 static int
-mged_dmp_is_null(struct ged *gedp)
+mged_dmp_is_null(struct ged *gedpp)
 {
-    dm *dmp = (dm *)gedp->ged_dmp;
-    return dmp == NULL;
+    dm *dmpp = (dm *)gedpp->ged_dmp;
+    return dmpp == NULL;
 }
 
 
 static void
-mged_dm_get_display_image(struct ged *gedp, unsigned char **idata)
+mged_dm_get_display_image(struct ged *gedpp, unsigned char **idata)
 {
-    dm *dmp = (dm *)gedp->ged_dmp;
-    dm_get_display_image(dmp, idata);
+    dm *dmpp = (dm *)gedpp->ged_dmp;
+    dm_get_display_image(dmpp, idata);
 }
 
 
