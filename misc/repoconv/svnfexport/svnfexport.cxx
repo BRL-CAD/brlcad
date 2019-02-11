@@ -776,12 +776,12 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 	if (rev.revision_number > rev_num_max) return;
 
 	if (rev.revision_number >= rev_num_min) {
-#if 0
+
 	    std::cout << "Processing revision " << rev.revision_number << "\n";
 	    if (rev.merged_from.length()) {
 		std::cout << "Note: merged from " << rev.merged_from << "\n";
 	    }
-#endif
+
 	    int git_changes = 0;
 	    for (size_t n = 0; n != rev.nodes.size(); n++) {
 		struct svn_node &node = rev.nodes[n];
@@ -791,7 +791,7 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 		    std::string ppath, bbpath, llpath;
 		    int is_tag;
 		    node_path_split(node.copyfrom_path, ppath, bbpath, llpath, &is_tag);
-		    std::cout << "Adding branch " << node.branch << " from " << bbpath << "\n";
+		    std::cout << "[TODO] Adding branch " << node.branch << " from " << bbpath << "\n";
 		}
 
 		if (node.branch_delete) {
@@ -1055,10 +1055,66 @@ int main(int argc, const char **argv)
     }
 
     std::ifstream infile(argv[1]);
-    std::ofstream outfile("export.fi", std::ios::out | std::ios::binary);
-    if (!outfile.good()) return -1;
-    rev_fast_export(infile, outfile, 29887, 73000);
-    outfile.close();
+    std::ofstream outfile1("r29887-r31038.fi", std::ios::out | std::ios::binary);
+    if (!outfile1.good()) return -1;
+    rev_fast_export(infile, outfile1, 29887, 31038);
+    outfile1.close();
+
+    // r31039 needs special handling
+
+    infile.seekg(0);
+
+    std::ofstream outfile2("r31040-r32313.fi", std::ios::out | std::ios::binary);
+    if (!outfile2.good()) return -1;
+    rev_fast_export(infile, outfile2, 31040, 32313);
+    outfile2.close();
+
+
+    // r32314 needs special handling
+
+    infile.seekg(0);
+
+    std::ofstream outfile3("r32315-r36471.fi", std::ios::out | std::ios::binary);
+    if (!outfile3.good()) return -1;
+    rev_fast_export(infile, outfile3, 32315, 36471);
+    outfile3.close();
+
+     // r36472 needs special handling
+
+   infile.seekg(0);
+
+    std::ofstream outfile4("r36473-r36632.fi", std::ios::out | std::ios::binary);
+    if (!outfile4.good()) return -1;
+    rev_fast_export(infile, outfile4, 36473, 36632);
+    outfile4.close();
+
+    // r36633 needs special handling
+
+  infile.seekg(0);
+
+    std::ofstream outfile5("r36634-r36842.fi", std::ios::out | std::ios::binary);
+    if (!outfile5.good()) return -1;
+    rev_fast_export(infile, outfile5, 36634, 36842);
+    outfile5.close();
+
+    // r36843 needs special handling
+
+    infile.seekg(0);
+
+    std::ofstream outfile6("r36844-r39464.fi", std::ios::out | std::ios::binary);
+    if (!outfile6.good()) return -1;
+    rev_fast_export(infile, outfile6, 36844, 39464);
+    outfile6.close();
+
+    // r39465 needs special handling
+
+    infile.seekg(0);
+
+    std::ofstream outfile7("r39466-r73000.fi", std::ios::out | std::ios::binary);
+    if (!outfile7.good()) return -1;
+    rev_fast_export(infile, outfile7, 39466, 73000);
+    outfile7.close();
+
 
     return 0;
 }
