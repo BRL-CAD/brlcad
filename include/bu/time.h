@@ -48,7 +48,7 @@ __BEGIN_DECLS
 int64_t start = bu_gettime();
 do_some_work_here();
 double elapsed = bu_gettime() - start;
-double seconds = elapsed / 1000000LL;
+double seconds = elapsed / 1000000.0;
 printf("time: %.2f\n", seconds);
 @endcode
  *
