@@ -188,17 +188,6 @@ ged_free(struct ged *gedp)
 
     free_object_selections(gedp->ged_selections);
     bu_hash_destroy(gedp->ged_selections);
-
-
-    if (gedp->gd_densities) {
-	analyze_densities_destroy(gedp->gd_densities);
-    }
-    gedp->gd_densities = NULL;
-    if (gedp->gd_source) {
-	bu_free(gedp->gd_source, "free density source path");
-    }
-    gedp->gd_source = NULL;
-
 }
 
 
@@ -277,9 +266,6 @@ ged_init(struct ged *gedp)
     qray_init(gedp->ged_gdp);
 
     gedp->ged_selections = bu_hash_create(32);
-
-    gedp->gd_densities = NULL;
-    gedp->gd_source = NULL;
 
     /* init the solid list */
     BU_GET(freesolid, struct solid);

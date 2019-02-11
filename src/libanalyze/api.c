@@ -923,7 +923,7 @@ options_set(struct current_state *state)
 
     if ((state->analysis_flags & (ANALYSIS_ADJ_AIR|ANALYSIS_EXP_AIR|ANALYSIS_FIRST_AIR|ANALYSIS_LAST_AIR|ANALYSIS_UNCONF_AIR)) && ! state->use_air) {
 	bu_log("\nError:  Air regions discarded but air analysis requested!\nSet use_air non-zero or eliminate air analysis\n");
-	return GED_ERROR;
+	return ANALYZE_ERROR;
     }
 
     if (state->analysis_flags & ANALYSIS_EXP_AIR) {
