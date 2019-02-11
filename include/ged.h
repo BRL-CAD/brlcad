@@ -39,6 +39,7 @@
 #include "analyze.h"
 #include "ged/defines.h"
 #include "ged/database.h"
+#include "ged/commands.h"
 #include "ged/objects.h"
 #include "ged/framebuffer.h"
 #include "ged/view.h"
