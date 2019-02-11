@@ -223,6 +223,9 @@ struct ged {
 
     struct ged_subprocess	gd_headSubprocess; /**< @brief  head of forked processes */
 
+    struct analyze_densities *gd_densities; /** @brief current densities */
+    char                     *gd_densities_source;
+
     void *ged_interp; /* Temporary - do not rely on when designing new functionality */
     db_search_callback_t ged_interp_eval; /* FIXME: broke the rule written on the previous line */
 
