@@ -36,6 +36,7 @@
 #include "bu/vls.h"
 #include "dm/bview.h"
 #include "rt/search.h"
+#include "analyze.h"
 
 __BEGIN_DECLS
 
@@ -87,7 +88,7 @@ __BEGIN_DECLS
  * Definition of global parallel-processing semaphores.
  *
  */
-#define GED_SEM_WORKER RT_SEM_LAST
+#define GED_SEM_WORKER ANALYZE_SEM_LAST
 #define GED_SEM_STATS GED_SEM_WORKER+1
 #define GED_SEM_LIST GED_SEM_STATS+1
 #define GED_SEM_LAST GED_SEM_LIST+1
@@ -220,6 +221,9 @@ struct ged {
     int (*add)(struct ged *gedp, const struct ged_cmd *cmd);
     int (*del)(struct ged *gedp, const char *name);
     int (*run)(struct ged *gedp, int ac, char *av[]);
+
+    struct analyze_densities	*gd_densities; /**< @brief active density definitions */
+    const char                  *gd_source;    /**< @brief source of density definitions */
 
     struct ged_subprocess	gd_headSubprocess; /**< @brief  head of forked processes */
 
