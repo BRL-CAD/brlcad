@@ -124,9 +124,9 @@ int
 main(int argc, char **argv)
 {
     struct bu_vls msgs = BU_VLS_INIT_ZERO;
-    struct analyze_densities *a;
+    struct analyze_densities *a = NULL;
 
-    if (!argc || !argv) {
+    if (argc < 1 || !argv) {
 	return -1;
     }
 
