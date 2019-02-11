@@ -321,6 +321,161 @@ _ged_sort_existing_objs(struct ged *gedp, int argc, const char *argv[], struct d
     return nonexist_cnt;
 }
 
+
+
+/**
+ * Returns
+ * 0 on success
+ * !0 on failure
+ */
+static int
+_ged_densities_from_file(struct ged *gedp, char *name, int fault_tolerant)
+{
+    struct bu_mapped_file *dfile = NULL;
+    struct bu_vls msgs = BU_VLS_INIT_ZERO;
+    char *buf = NULL;
+    int ret = 0;
+
+    if (!bu_file_exists(name, NULL)) {
+	bu_vls_printf(gedp->ged_result_str, "Could not find density file - %s\n", name);
+	return GED_ERROR;
+    }
+
+    dfile = bu_open_mapped_file(name, "densities file");
+    if (!dfile) {
+	bu_vls_printf(gedp->ged_result_str, "Could not open density file - %s\n", name);
+	return GED_ERROR;
+    }
+
+    buf = (char *)(dfile->buf);
+
+    if (gedp->gd_densities) {
+	analyze_densities_destroy(gedp->gd_densities);
+    }
+
+    if (gedp->gd_densities_source) {
+	bu_free(gedp->gd_densities_source, "free densities source string");
+    }
+
+    (void)analyze_densities_create(&(gedp->gd_densities));
+
+    ret = analyze_densities_load(gedp->gd_densities, buf, &msgs);
+
+    if (!fault_tolerant && ret <= 0) {
+	if (bu_vls_strlen(&msgs)) {
+	    bu_vls_printf(gedp->ged_result_str, "Problem reading densities file %s:\n%s\n", name, bu_vls_cstr(&msgs));
+	}
+	if (gedp->gd_densities) {
+	    analyze_densities_destroy(gedp->gd_densities);
+	}
+	bu_vls_free(&msgs);
+	bu_close_mapped_file(dfile);
+	return GED_ERROR;
+    }
+
+    bu_vls_free(&msgs);
+    bu_close_mapped_file(dfile);
+
+    if (ret > 0) {
+	gedp->gd_densities_source = bu_strdup(name);
+    }
+
+    return (ret == 0) ? GED_ERROR : GED_OK;
+}
+
+/**
+ * Load density information into the GED structure.
+ *
+ * Returns
+ * 0 on success
+ * !0 on failure
+ */
+int
+_ged_read_densities(struct ged *gedp, char *filename, int fault_tolerant)
+{
+    if (gedp == GED_NULL || gedp->ged_wdbp == RT_WDB_NULL) {
+	return GED_ERROR;
+    }
+
+    /* If we've explicitly been given a file, read that */
+    if (filename) {
+	return _ged_densities_from_file(gedp, filename, fault_tolerant);
+    }
+
+    /* If we don't have an explicitly specified file, see if we have definitions in
+     * the database itself. */
+    if (gedp->ged_wdbp->dbip != DBI_NULL) {
+	int ret = 0;
+	struct bu_vls msgs = BU_VLS_INIT_ZERO;
+	struct directory *dp;
+	struct rt_db_internal intern;
+	struct rt_binunif_internal *bu;
+	char *buf;
+
+	dp = db_lookup(gedp->ged_wdbp->dbip, "_DENSITIES", LOOKUP_QUIET);
+	if (dp == (struct directory *)NULL) {
+	    bu_vls_printf(_ged_current_gedp->ged_result_str, "No \"_DENSITIES\" density table object in database.");
+	    bu_vls_printf(_ged_current_gedp->ged_result_str, " If you do not have density data you can still get adjacent air, bounding box, exposed air, gaps, volume or overlaps by using the -Aa, -Ab, -Ae, -Ag, -Av, or -Ao options respectively.\n");
+	    return GED_ERROR;
+	}
+
+	if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, NULL, &rt_uniresource) < 0) {
+	    bu_vls_printf(_ged_current_gedp->ged_result_str, "could not import %s\n", dp->d_namep);
+	    return GED_ERROR;
+	}
+
+	if ((intern.idb_major_type & DB5_MAJORTYPE_BINARY_MASK) == 0)
+	    return GED_ERROR;
+
+	bu = (struct rt_binunif_internal *)intern.idb_ptr;
+
+	RT_CHECK_BINUNIF (bu);
+
+
+	if (gedp->gd_densities) {
+	    analyze_densities_destroy(gedp->gd_densities);
+	}
+
+	if (gedp->gd_densities_source) {
+	    bu_free(gedp->gd_densities_source, "free densities source string");
+	}
+
+	(void)analyze_densities_create(&gedp->gd_densities);
+
+	buf = (char *)bu_malloc(bu->count+1, "density buffer");
+	memcpy(buf, bu->u.int8, bu->count);
+
+	ret = analyze_densities_load(gedp->gd_densities, buf, &msgs);
+
+	if (!fault_tolerant && ret <= 0) {
+	    if (bu_vls_strlen(&msgs)) {
+		bu_vls_printf(gedp->ged_result_str, "Problem reading densities from .g file:\n%s\n", bu_vls_cstr(&msgs));
+	    }
+	    if (gedp->gd_densities) {
+		analyze_densities_destroy(gedp->gd_densities);
+	    }
+	    bu_vls_free(&msgs);
+	    return GED_ERROR;
+	}
+
+	bu_vls_free(&msgs);
+	bu_free((void *)buf, "density buffer");
+
+	if (ret > 0) {
+	    gedp->gd_densities_source = bu_strdup(gedp->ged_wdbp->dbip->dbi_filename);
+	}
+
+	return (ret == 0) ? GED_ERROR : GED_OK;
+    }
+
+    /* TODO - fall back on current dir and HOME dir .density files, if neither of the above work. */
+
+
+    return GED_ERROR;
+}
+
+
+
 /* Wrappers for setting up/tearing down IO handler */
 #ifndef _WIN32
 void
