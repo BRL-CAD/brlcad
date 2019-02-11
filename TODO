@@ -25,8 +25,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   - debug means to set env vars
   - large db tests need to be enabled
 
-* g-ply not writing geometry
-
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
