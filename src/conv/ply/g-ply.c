@@ -43,51 +43,43 @@
 #include "raytrace.h"
 #include "rply.h"
 
-#define V3ARGSIN(a)       (a)[X]/25.4, (a)[Y]/25.4, (a)[Z]/25.4
-#define VSETIN(a, b)	{\
-	(a)[X] = (b)[X]/25.4; \
-	(a)[Y] = (b)[Y]/25.4; \
-	(a)[Z] = (b)[Z]/25.4; \
-    }
 
-static char	usage[] = "\
-Usage: %s [-v][-xX lvl][-a abs_tess_tol (default: 0.0)][-r rel_tess_tol (default: 0.01)]\n\
-  [-n norm_tess_tol (default: 0.0)][-t type (asc: ascii), (le: little endian), (be: big endian)]\n\
-  [-s separate file per object][-D dist_calc_tol (default: 0.0005)] -o output_file_name brlcad_db.g object(s)\n";
-
-static int	NMG_debug;	/* saved arg of -X, for longjmp handling */
-static int	verbose;
-static struct db_i		*dbip;
-static struct rt_tess_tol	ttol;	/* tessellation tolerance in mm */
-static struct bn_tol		tol;	/* calculation tolerance */
-static struct model		*the_model;
+static int NMG_debug = 0; /* saved arg of -X, for longjmp handling */
+static int verbose = 0;
+static struct db_i *dbip = NULL;
+static struct rt_tess_tol ttol = RT_TESS_TOL_INIT_ZERO; /* tessellation tolerance in mm */
+static struct bn_tol tol = BN_TOL_INIT_ZERO;            /* calculation tolerance */
+static struct model *the_model = NULL;
 static char *ply_file = NULL;
-static int storage_type = 0;
-static int merge_all = 1;
+
 static long ***f_regs = NULL;
 static double ***v_regs = NULL;
 static struct bu_hash_tbl **v_tbl_regs = NULL;
 static int *f_sizes = NULL;
+
 static int v_order = 0;
-static int all_colors[3];
+static int merge_all = 1;
+static int storage_type = 0;
+static int all_colors[3] = {0, 0, 0};
 static int color_info = 0; /* 0: not checked yet, 1: all same so far, 2: no color information, 3: not same color */
 
-static struct db_tree_state	tree_state;	/* includes tol & model */
+static struct db_tree_state tree_state;	/* includes tol & model */
 
-static int		regions_tried = 0;
-static int		regions_converted = 0;
-static int		regions_written = 0;
-static int		cur_region = 0;
-static int		tot_regions = 0;
-static long		tot_polygons = 0;
-static long		tot_vertices = 0;
+static int regions_tried = 0;
+static int regions_converted = 0;
+static int regions_written = 0;
+static int cur_region = 0;
+static int tot_regions = 0;
+static long tot_polygons = 0;
+static long tot_vertices = 0;
+
 
 static struct bu_hash_entry *
 write_verts(p_ply fp, struct bu_hash_tbl *t)
 {
     struct bu_hash_entry *v_entry = bu_hash_next(t, NULL);
     while (v_entry) {
-	/* TODO - this shouldn't be possible now with new libbu hash API? */
+	/* TODO: determine if possible with new libbu hash API? */
 	double *coords = (double *)(bu_hash_value(v_entry, NULL));
 	if (!coords) return v_entry;
 
@@ -96,7 +88,9 @@ write_verts(p_ply fp, struct bu_hash_tbl *t)
 	ply_write(fp, coords[1] / 1000);
 	ply_write(fp, coords[2] / 1000);
 
-	/* keeping track of the order in which the vertices are input, to write the faces */
+	/* keeping track of the order in which the vertices are input,
+	 * to write the faces
+	 */
 	coords[3] = v_order;
 	v_order++;
 
@@ -105,7 +99,10 @@ write_verts(p_ply fp, struct bu_hash_tbl *t)
     return NULL;
 }
 
-/* routine to output the faceted NMG representation of a BRL-CAD region */
+
+/* routine to output the faceted NMG representation of a BRL-CAD
+ * region
+ */
 static void
 nmg_to_ply(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int UNUSED(material_id), struct db_tree_state *tsp)
 {
@@ -121,16 +118,16 @@ nmg_to_ply(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 
     VSCALE(color, tsp->ts_mater.ma_color, 255);
     if (merge_all) {
-	if (!tsp->ts_mater.ma_color_valid)
+	if (!tsp->ts_mater.ma_color_valid) {
 	    color_info = 2;
-	else if (color_info == 0) {
+	} else if (color_info == 0) {
 	    all_colors[0] = color[0];
 	    all_colors[1] = color[1];
 	    all_colors[2] = color[2];
 	    color_info = 1;
-	}
-	else if (color_info == 1 && (all_colors[0] != color [0] || all_colors[1] != color [1] || all_colors[2] != color [2]))
+	} else if (color_info == 1 && (all_colors[0] != color [0] || all_colors[1] != color [1] || all_colors[2] != color [2])) {
 	    color_info = 3;
+	}
     }
     NMG_CK_REGION(r);
     RT_CK_FULL_PATH(pathp);
@@ -219,7 +216,9 @@ nmg_to_ply(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 	}
     }
 
-    /* RPly library cannot handle faces and vertices greater than the integer limit */
+    /* RPly library cannot handle faces and vertices greater than the
+     * integer limit
+     */
     if (nfaces >= INT_MAX) {
 	bu_hash_destroy(v_tbl_regs[cur_region]);
 	bu_log("ERROR: Number of faces (%ld) exceeds integer limit!\n", nfaces);
@@ -367,6 +366,7 @@ free_nmg:
     bu_exit(1, NULL);
 }
 
+
 static void
 process_triangulation(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree_state *tsp)
 {
@@ -385,8 +385,8 @@ process_triangulation(struct nmgregion *r, const struct db_full_path *pathp, str
 	bu_log("FAILED in triangulator: %s\n", sofar);
 	bu_free((char *)sofar, "sofar");
 
-	/* Sometimes the NMG library adds debugging bits when
-	 * it detects an internal error, before bombing out.
+	/* Sometimes the NMG library adds debugging bits when it
+	 * detects an internal error, before bombing out.
 	 */
 	nmg_debug = NMG_debug;	/* restore mode */
 
@@ -418,15 +418,15 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 	(void)nmg_model_fuse(*tsp->ts_m, &RTG.rtg_vlfree, tsp->ts_tol);
 	ret_tree = nmg_booltree_evaluate(curtree, &RTG.rtg_vlfree, tsp->ts_tol, &rt_uniresource);
 
-    } else  {
+    } else {
 	/* catch */
 	char *name = db_path_to_string(pathp);
 
 	/* Error, bail out */
 	bu_log("conversion of %s FAILED!\n", name);
 
-	/* Sometimes the NMG library adds debugging bits when
-	 * it detects an internal error, before before bombing out.
+	/* Sometimes the NMG library adds debugging bits when it
+	 * detects an internal error, before before bombing out.
 	 */
 	nmg_debug = NMG_debug;/* restore mode */
 
@@ -453,27 +453,26 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 
 
 /*
- *  Called from db_walk_tree().
+ * Called from db_walk_tree().
  *
- *  This routine must be prepared to run in parallel.
+ * This routine must be prepared to run in parallel.
  */
 static union tree *
 do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *UNUSED(client_data))
 {
-    union tree		*ret_tree;
-    struct bu_list		vhead;
-    struct nmgregion	*r;
+    union tree *ret_tree;
+    struct bu_list vhead;
+    struct nmgregion *r;
 
     RT_CK_FULL_PATH(pathp);
     RT_CK_TREE(curtree);
-    RT_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
     NMG_CK_MODEL(*tsp->ts_m);
 
     BU_LIST_INIT(&vhead);
 
     {
-	char	*sofar = db_path_to_string(pathp);
+	char *sofar = db_path_to_string(pathp);
 	bu_log("\ndo_region_end(%d %d%%) %s\n",
 	       regions_tried,
 	       regions_tried>0 ? (regions_converted * 100) / regions_tried : 0,
@@ -543,15 +542,15 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
     }
 
     /*
-     *  Dispose of original tree, so that all associated dynamic
-     *  memory is released now, not at the end of all regions.
-     *  A return of TREE_NULL from this routine signals an error,
-     *  and there is no point to adding _another_ message to our output,
-     *  so we need to cons up an OP_NOP node to return.
+     * Dispose of original tree, so that all associated dynamic memory
+     * is released now, not at the end of all regions.  A return of
+     * TREE_NULL from this routine signals an error, and there is no
+     * point to adding _another_ message to our output, so we need to
+     * cons up an OP_NOP node to return.
      */
 
 
-    db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
+    db_free_tree(curtree, &rt_uniresource); /* Does an nmg_kr() */
 
     BU_ALLOC(curtree, union tree);
     RT_TREE_INIT(curtree);
@@ -559,12 +558,14 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
     return curtree;
 }
 
+
 static int
 count_regions(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(pathp), const struct rt_comb_internal *UNUSED(combp), void *UNUSED(client_data))
 {
     tot_regions++;
     return -1;
 }
+
 
 /* taken from g-tankill.c */
 static union tree *
@@ -574,6 +575,7 @@ region_stub(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED
     return (union tree *)NULL; /* just to keep the compilers happy */
 }
 
+
 /* taken from g-tankill.c */
 static union tree *
 leaf_stub(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(pathp), struct rt_db_internal *UNUSED(ip), void *UNUSED(client_data))
@@ -582,10 +584,16 @@ leaf_stub(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(p
     return (union tree *)NULL; /* just to keep the compilers happy */
 }
 
+
 int
 main(int argc, char **argv)
 {
-    int	c, j;
+    static char usage[] = "\
+Usage: %s [-v][-xX lvl][-a abs_tess_tol (default: 0.0)][-r rel_tess_tol (default: 0.01)]\n\
+  [-n norm_tess_tol (default: 0.0)][-t type (asc: ascii), (le: little endian), (be: big endian)]\n\
+  [-s separate file per object][-D dist_calc_tol (default: 0.0005)] -o output_file_name brlcad_db.g object(s)\n";
+
+    int c, j;
     double percent;
     p_ply ply_fp = NULL;
 
@@ -674,19 +682,19 @@ main(int argc, char **argv)
     if (merge_all) {
 	/* Open output file */
 	switch (storage_type) {
-		case 0:
-		    ply_fp = ply_create(ply_file, PLY_ASCII, NULL, 0, NULL);
-		    break;
-		case 1:
-		    ply_fp = ply_create(ply_file, PLY_LITTLE_ENDIAN, NULL, 0, NULL);
-		    break;
-		case 2:
-		    ply_fp = ply_create(ply_file, PLY_BIG_ENDIAN, NULL, 0, NULL);
-		    break;
-		case 3:
-		    ply_fp = ply_create(ply_file, PLY_DEFAULT, NULL, 0, NULL);
-		    break;
-	    }
+	    case 0:
+		ply_fp = ply_create(ply_file, PLY_ASCII, NULL, 0, NULL);
+		break;
+	    case 1:
+		ply_fp = ply_create(ply_file, PLY_LITTLE_ENDIAN, NULL, 0, NULL);
+		break;
+	    case 2:
+		ply_fp = ply_create(ply_file, PLY_BIG_ENDIAN, NULL, 0, NULL);
+		break;
+	    case 3:
+		ply_fp = ply_create(ply_file, PLY_DEFAULT, NULL, 0, NULL);
+		break;
+	}
 
 	if (!ply_fp) {
 	    ply_close(ply_fp);
@@ -733,12 +741,14 @@ main(int argc, char **argv)
 	for (i = 1; i < argc; i++)
 	    bu_log(" %s", argv[i]);
 	bu_log("\nTessellation tolerances:\n\tabs = %g mm\n\trel = %g\n\tnorm = %g\n",
-		tree_state.ts_ttol->abs, tree_state.ts_ttol->rel, tree_state.ts_ttol->norm);
+	       tree_state.ts_ttol->abs, tree_state.ts_ttol->rel, tree_state.ts_ttol->norm);
 	bu_log("Calculational tolerances:\n\tdist = %g mm perp = %g\n",
-		tree_state.ts_tol->dist, tree_state.ts_tol->perp);
+	       tree_state.ts_tol->dist, tree_state.ts_tol->perp);
     }
 
-    /* Verify that all the specified objects are valid - if one or more of them are not, bail */
+    /* Verify that all the specified objects are valid - if one or
+     * more of them are not, bail
+     */
     for (j = 0; j < argc - 1; j++) {
 	struct directory *dp = db_lookup(dbip, argv[1+j], LOOKUP_NOISY);
 	if (dp == RT_DIR_NULL) {
@@ -746,9 +756,11 @@ main(int argc, char **argv)
 	}
     }
 
-    /* Quickly get number of regions. I did this over dynamically allocating the memory, but that may be wrong */
+    /* Quickly get number of regions. I did this over dynamically
+     * allocating the memory, but that may be wrong
+     */
     (void) db_walk_tree(dbip, argc-1, (const char **)(argv+1),
-			1,			/* ncpu */
+			1,		/* ncpu */
 			&tree_state,
 			count_regions,
 			region_stub,
@@ -764,9 +776,9 @@ main(int argc, char **argv)
 
     /* Walk indicated tree(s).  Each region will be output separately */
     (void) db_walk_tree(dbip, argc-1, (const char **)(argv+1),
-			1,			/* ncpu */
+			1,		/* ncpu */
 			&tree_state,
-			0,			/* take all regions */
+			0,		/* take all regions */
 			do_region_end,
 			nmg_booltree_leaf_tess,
 			(void *)NULL);	/* in librt/nmg_bool.c */
@@ -797,7 +809,7 @@ main(int argc, char **argv)
 		bu_log("ERROR: No coordinates found for vertex!\n");
 		ply_close(ply_fp);
 		goto free_all;
-	}
+	    }
 	for (ri = 0; ri < cur_region; ri++) {
 	    for (fi = 0; fi < f_sizes[ri]; fi++) {
 		ply_write(ply_fp, 3);
@@ -845,7 +857,7 @@ main(int argc, char **argv)
     if (regions_tried > 0) {
 	percent = ((double)regions_written * 100) / regions_tried;
 	bu_log("                  %d triangulated successfully. %g%%\n",
-		regions_written, percent);
+	       regions_written, percent);
     }
 
     bu_log("%zd triangles written\n", tot_polygons);
@@ -872,6 +884,7 @@ free_all:
 
     return 0;
 }
+
 
 /*
  * Local Variables:
