@@ -23,6 +23,7 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 * prep caching actions
   - needs to double-check graceful fallback when cache has any issue
   - debug means to set env vars
+  - large db tests need to be enabled
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS

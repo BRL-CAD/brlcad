@@ -87,7 +87,7 @@ __BEGIN_DECLS
  * Definition of global parallel-processing semaphores.
  *
  */
-#define GED_SEM_WORKER RT_SEM_LAST
+#define GED_SEM_WORKER ANALYZE_SEM_LAST
 #define GED_SEM_STATS GED_SEM_WORKER+1
 #define GED_SEM_LIST GED_SEM_STATS+1
 #define GED_SEM_LAST GED_SEM_LIST+1

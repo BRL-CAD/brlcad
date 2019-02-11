@@ -36,6 +36,7 @@
 #include "dm/bview.h"
 #include "raytrace.h"
 #include "rt/solid.h"
+#include "analyze.h"
 #include "ged/defines.h"
 #include "ged/database.h"
 #include "ged/commands.h"
