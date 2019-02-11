@@ -63,14 +63,18 @@ main(int argc, char **argv)
 
     dp = db_lookup(dbip, argv[2], LOOKUP_QUIET);
 
-    if (dp == RT_DIR_NULL) return 1;
+    if (dp == RT_DIR_NULL)
+	return 1;
 
-    /* TODO - should get bbox without doing this - does the API allow it without libged? */
+    /* TODO: call rt_bound_internal instead of prep directly to get
+     * the bounding box.
+     */
     rtip = rt_new_rti(dbip);
     state.rtip = rtip;
     state.resp = &resp;
     rt_init_resource(state.resp, 0, rtip);
-    if (rt_gettree(rtip, argv[2]) < 0) return -1;
+    if (rt_gettree(rtip, argv[2]) < 0)
+	return -1;
     rt_prep_parallel(rtip, 1);
 
     count = analyze_get_bbox_rays(&rays, rtip->mdl_min, rtip->mdl_max, &rtol);
