@@ -24,43 +24,44 @@
 
 #include "analyze.h"
 
-const char *simple_buff = "1 7.8295        steel";
 
+const char *simple_buff = "1 7.8295        steel";
 const char *test_buff =
-"#  Test density file with comments and bad input\n"
-"2    7.82      Carbon Tool Steel\n"
-"3    2.7       Aluminum, 6061-T6\n"
-"4    2.74      Aluminum, 7079-T6\n"
-"#  Incomplete line following\n"
-"               Copper, pure\n"
-"               6    19.32     Gold, pure\n"
-"               7    8.03      Stainless, 18Cr-8Ni\n"
-"#  Comment\n"
-"               8    7.47      Stainless 27Cr\n"
-"\n"
-"               9    7.715     Steel, tool\n"
-"\n"
-"#  Blank line above\n"
-"#  Comment following valid data on the line below\n"
-"               10   7.84      Carbon Steel # used for widgets\n"
-"               12   3.00      Gunner\n"
-"               14   10.00     Fuel\n"
-"#  Material ID too high \n"
-"99999999999 70.84    Kryptonite\n";
+    "#  Test density file with comments and bad input\n"
+    "2    7.82      Carbon Tool Steel\n"
+    "3    2.7       Aluminum, 6061-T6\n"
+    "4    2.74      Aluminum, 7079-T6\n"
+    "#  Incomplete line following\n"
+    "               Copper, pure\n"
+    "               6    19.32     Gold, pure\n"
+    "               7    8.03      Stainless, 18Cr-8Ni\n"
+    "#  Comment\n"
+    "               8    7.47      Stainless 27Cr\n"
+    "\n"
+    "               9    7.715     Steel, tool\n"
+    "\n"
+    "#  Blank line above\n"
+    "#  Comment following valid data on the line below\n"
+    "               10   7.84      Carbon Steel # used for widgets\n"
+    "               12   3.00      Gunner\n"
+    "               14   10.00     Fuel\n"
+    "#  Material ID too high \n"
+    "99999999999 70.84    Kryptonite\n";
 
 const char *tbuff_out_ctrl =
-"2	7.82	Carbon Tool Steel\n"
-"3	2.7	Aluminum, 6061-T6\n"
-"4	2.74	Aluminum, 7079-T6\n"
-"6	19.32	Gold, pure\n"
-"7	8.03	Stainless, 18Cr-8Ni\n"
-"8	7.47	Stainless 27Cr\n"
-"9	7.715	Steel, tool\n"
-"10	7.84	Carbon Steel\n"
-"12	3	Gunner\n"
-"14	10	Fuel\n";
+    "2	7.82	Carbon Tool Steel\n"
+    "3	2.7	Aluminum, 6061-T6\n"
+    "4	2.74	Aluminum, 7079-T6\n"
+    "6	19.32	Gold, pure\n"
+    "7	8.03	Stainless, 18Cr-8Ni\n"
+    "8	7.47	Stainless 27Cr\n"
+    "9	7.715	Steel, tool\n"
+    "10	7.84	Carbon Steel\n"
+    "12	3	Gunner\n"
+    "14	10	Fuel\n";
 
-int
+
+static int
 dtest_validate(struct analyze_densities *a, long int id, fastf_t density, const char *name)
 {
     char *db_name = analyze_densities_name(a, id);
@@ -74,7 +75,7 @@ dtest_validate(struct analyze_densities *a, long int id, fastf_t density, const 
 	return -1;
     }
     bu_free(db_name, "free name");
-    
+
     fastf_t db_density = analyze_densities_density(a, id);
     if (db_density < 0) {
 	bu_log("Error - could not find density for id %ld\n", id);
@@ -92,6 +93,7 @@ dtest_validate(struct analyze_densities *a, long int id, fastf_t density, const 
 	bu_log("Error - could not find any ids associated with name %s\n", name);
 	return -1;
     }
+
     int have_correct_id = 0;
     for (long int i = 0; i < max_ids; i++) {
 	if (ids[i] >= 0 && ids[i] == id) {
@@ -107,7 +109,8 @@ dtest_validate(struct analyze_densities *a, long int id, fastf_t density, const 
     return 0;
 }
 
-int
+
+static int
 dtest_insert(struct analyze_densities *a, long int id, fastf_t density, const char *name, struct bu_vls *msgs)
 {
     if (analyze_densities_set(a, id, density, name, msgs)) {
@@ -119,6 +122,7 @@ dtest_insert(struct analyze_densities *a, long int id, fastf_t density, const ch
     }
     return 0;
 }
+
 
 int
 main(int argc, char **argv)
@@ -173,7 +177,7 @@ main(int argc, char **argv)
 
     if (BU_STR_EQUAL(argv[1], "std")) {
 
-	std::set<long int> valid_ids = {0,2,15,4,31};
+	std::set<long int> valid_ids = {0, 2, 15, 4, 31};
 
 	analyze_densities_create(&a);
 
@@ -216,7 +220,7 @@ main(int argc, char **argv)
 	    bu_log("Error - could not find both ids for Carbon Tool Steel\n");
 	    goto analyze_density_fail;
 	}
-	std::set<long int> exp_cts = {2,31};
+	std::set<long int> exp_cts = {2, 31};
 	std::set<long int> found_cts;
 	for (long int i = 0; i < 2; i++) {
 	    found_cts.insert(ids[i]);
@@ -311,6 +315,7 @@ analyze_density_fail:
     bu_vls_free(&msgs);
     return -1;
 }
+
 
 /*
  * Local Variables:

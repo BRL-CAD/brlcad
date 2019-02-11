@@ -26,6 +26,7 @@
 #include "../analyze_private.h"
 #include "analyze.h"
 
+
 int
 main(int argc, char **argv)
 {
@@ -79,6 +80,7 @@ main(int argc, char **argv)
     db_close(dbip);
     return 0;
 }
+
 
 /*
  * Local Variables:
