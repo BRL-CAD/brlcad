@@ -575,6 +575,23 @@ extern void _ged_cmd_help(struct ged *gedp, const char *usage, struct bu_opt_des
 /* Option for verbosity variable setting */
 extern int _ged_vopt(struct bu_vls *msg, int argc, const char **argv, void *set_var);
 
+/* Function to read in density information, either from a file or from the
+ * database itself. Implements the following priority order:
+ *
+ * 1. filename explicitly supplied to function.
+ * 2. Density information stored in the .g database.
+ * 3. A .density file in the same directory as the .g file
+ * 4. A .density file in the user's HOME directory
+ *
+ * Note that this function does *not* store the density information in the
+ * current .g once read.  To store density information in a .g file, use
+ * the "mater -d load" command.
+ *
+ */
+extern int _ged_read_densities(struct ged *gedp, const char *filename, int fault_tolerant);
+
+#define GED_DB_DENSITY_OBJECT "_DENSITIES" 
+
 /**
  * Routine for checking argc/argv list for existing objects and sorting anything
  * that isn't a valid object to the end of the list.  Returns the number of

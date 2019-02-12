@@ -417,7 +417,7 @@ _ged_read_densities(struct ged *gedp, const char *filename, int fault_tolerant)
 	struct rt_binunif_internal *bu;
 	char *buf;
 
-	dp = db_lookup(gedp->ged_wdbp->dbip, "_DENSITIES", LOOKUP_QUIET);
+	dp = db_lookup(gedp->ged_wdbp->dbip, GED_DB_DENSITY_OBJECT, LOOKUP_QUIET);
 
 	if (dp != (struct directory *)NULL) {
 

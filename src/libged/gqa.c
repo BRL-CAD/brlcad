@@ -742,99 +742,6 @@ parse_args(int ac, char *av[])
     return bu_optind;
 }
 
-
-/**
- * Returns
- * 0 on success
- * !0 on failure
- */
-HIDDEN int
-get_densities_from_file(char *name)
-{
-    struct bu_vls msgs = BU_VLS_INIT_ZERO;
-    struct bu_mapped_file *dfile = NULL;
-    char *buf = NULL;
-    int ret = 0;
-
-    if (!bu_file_exists(name, NULL)) {
-	bu_vls_printf(_ged_current_gedp->ged_result_str, "Could not find density file - %s\n", name);
-	return GED_ERROR;
-    }
-
-    dfile = bu_open_mapped_file(name, "densities file");
-    if (!dfile) {
-	bu_vls_printf(_ged_current_gedp->ged_result_str, "Could not open density file - %s\n", name);
-	return GED_ERROR;
-    }
-
-    buf = (char *)(dfile->buf);
-
-    (void)analyze_densities_create(&densities);
-
-    ret = analyze_densities_load(densities, buf, &msgs, NULL);
-
-    if (bu_vls_strlen(&msgs)) {
-	bu_vls_printf(_ged_current_gedp->ged_result_str, "Problem reading densities file:\n%s\n", bu_vls_cstr(&msgs));
-    }
-    bu_vls_free(&msgs);
-
-    bu_close_mapped_file(dfile);
-
-    return (ret <= 0) ? GED_ERROR : GED_OK;
-}
-
-/**
- * Returns
- * 0 on success
- * !0 on failure
- */
-int
-get_densities_from_database(struct rt_i *rtip)
-{
-    struct bu_vls msgs = BU_VLS_INIT_ZERO;
-    struct directory *dp;
-    struct rt_db_internal intern;
-    struct rt_binunif_internal *bu;
-    int ret;
-    char *buf;
-
-    dp = db_lookup(rtip->rti_dbip, "_DENSITIES", LOOKUP_QUIET);
-    if (dp == (struct directory *)NULL) {
-	bu_vls_printf(_ged_current_gedp->ged_result_str, "No \"_DENSITIES\" density table object in database.");
-	bu_vls_printf(_ged_current_gedp->ged_result_str, " If you do not have density data you can still get adjacent air, bounding box, exposed air, gaps, volume or overlaps by using the -Aa, -Ab, -Ae, -Ag, -Av, or -Ao options respectively.\n");
-	return GED_ERROR;
-    }
-
-    if (rt_db_get_internal(&intern, dp, rtip->rti_dbip, NULL, &rt_uniresource) < 0) {
-	bu_vls_printf(_ged_current_gedp->ged_result_str, "could not import %s\n", dp->d_namep);
-	return GED_ERROR;
-    }
-
-    if ((intern.idb_major_type & DB5_MAJORTYPE_BINARY_MASK) == 0)
-	return GED_ERROR;
-
-    bu = (struct rt_binunif_internal *)intern.idb_ptr;
-
-    RT_CHECK_BINUNIF (bu);
-
-    (void)analyze_densities_create(&densities);
-
-    buf = (char *)bu_malloc(bu->count+1, "density buffer");
-    memcpy(buf, bu->u.int8, bu->count);
-
-    ret = analyze_densities_load(densities, buf, &msgs, NULL);
-
-    if (bu_vls_strlen(&msgs)) {
-	bu_vls_printf(_ged_current_gedp->ged_result_str, "Problem reading densities file:\n%s\n", bu_vls_cstr(&msgs));
-    }
-    bu_vls_free(&msgs);
-
-    bu_free((void *)buf, "density buffer");
-
-    return ret;
-}
-
-
 /**
  * Write end points of partition to the standard output.  If this
  * routine return !0, this partition will be dropped from the boolean
@@ -1581,7 +1488,7 @@ list_report(struct region_pair *list)
  * !0 error encountered, terminate processing
  */
 int
-options_prep(struct rt_i *rtip, vect_t span)
+options_prep(struct rt_i *UNUSED(rtip), vect_t span)
 {
     double newGridSpacing = gridSpacing;
     int axis;
@@ -1592,12 +1499,12 @@ options_prep(struct rt_i *rtip, vect_t span)
     if (analysis_flags & ANALYSIS_WEIGHTS) {
 	if (densityFileName) {
 	    DLOG(_ged_current_gedp->ged_result_str, "density from file\n");
-	    if (get_densities_from_file(densityFileName) != GED_OK) {
+	    if (_ged_read_densities(_ged_current_gedp, densityFileName, 0) != GED_OK) {
 		return GED_ERROR;
 	    }
 	} else {
 	    DLOG(_ged_current_gedp->ged_result_str, "density from db\n");
-	    if (get_densities_from_database(rtip) != GED_OK) {
+	    if (_ged_read_densities(_ged_current_gedp, NULL, 0) != GED_OK) {
 		return GED_ERROR;
 	    }
 	}

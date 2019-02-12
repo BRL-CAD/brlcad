@@ -32,12 +32,19 @@
 
 #include "analyze.h"
 #include "ged.h"
+#include "./ged_private.h"
 
 #include <string.h>
 
 static const char *usage = "Usage: mater [-s] object_name shader r [g b] inherit\n"
-                           "              -m  density_file [map_file]\n"
-                           "              -m  --names-from-ids density_file\n";
+                           "              -d  source\n"
+                           "              -d  [--stored] clear\n"
+                           "              -d  load file.density\n"
+                           "              -d  write [file.density]\n"
+                           "              -d  get [--id|--density|--name] [--tol <tolerance>] [--tcl] [key]\n"
+                           "              -d  set [--tcl] id,density,name\n"
+                           "              -d  map density_file [map_file]\n"
+                           "              -d  map --names-from-ids density_file\n";
 
 int
 _ged_mater_shader(struct ged *gedp, int argc, const char *argv[])
@@ -241,6 +248,65 @@ _ged_mater_shader(struct ged *gedp, int argc, const char *argv[])
 
     return GED_OK;
 }
+
+int
+_ged_mater_source(struct ged *gedp)
+{
+    if (gedp->gd_densities && gedp->gd_densities_source) {
+	bu_vls_printf(gedp->ged_result_str, "%s\n", gedp->gd_densities_source);
+    }
+    return GED_OK;
+}
+
+int
+_ged_mater_clear(struct ged *gedp, int argc, const char *argv[])
+{
+    if (argc > 1) {
+	struct directory *dp;
+	if (!BU_STR_EQUAL(argv[1], "--stored")) {
+	    bu_vls_printf(gedp->ged_result_str, "%s", usage);
+	    return GED_ERROR;
+	}
+	if ((dp = db_lookup(gedp->ged_wdbp->dbip, GED_DB_DENSITY_OBJECT, LOOKUP_QUIET)) != RT_DIR_NULL) {
+	    if (db_delete(gedp->ged_wdbp->dbip, dp) != 0 || db_dirdelete(gedp->ged_wdbp->dbip, dp) != 0) {
+		bu_vls_printf(gedp->ged_result_str, "Error removing density information from database.");
+		return GED_ERROR;
+	    }
+	    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
+	}
+    }
+    if (gedp->gd_densities) {
+	analyze_densities_destroy(gedp->gd_densities);
+	gedp->gd_densities = NULL;
+    }
+    if (gedp->gd_densities) {
+	bu_free(gedp->gd_densities_source, "free density source path");
+    }
+    return GED_OK;
+}
+
+#if 0
+int
+_ged_mater_load(struct ged *gedp, int argc, const char *argv[])
+{
+}
+
+int
+_ged_mater_write(struct ged *gedp, int argc, const char *argv[])
+{
+}
+
+int
+_ged_mater_get(struct ged *gedp, int argc, const char *argv[])
+{
+}
+
+int
+_ged_mater_set(struct ged *gedp, int argc, const char *argv[])
+{
+}
+
+#endif
 
 int
 _ged_read_msmap(struct ged *gedp, const char *mbuff, std::set<std::string> &defined_materials, std::map<std::string,std::string> &listed_to_defined)
@@ -514,6 +580,24 @@ _ged_mater_mat_id(struct ged *gedp, int argc, const char *argv[])
 }
 
 int
+_ged_mater_density(struct ged *gedp, int argc, const char *argv[])
+{
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "%s", usage);
+	return GED_HELP;
+    }
+
+    if (BU_STR_EQUAL(argv[1], "map")) {
+	argv[1] = argv[0];
+	argc--; argv++;
+	return _ged_mater_mat_id(gedp, argc, argv);
+    }
+    return GED_ERROR;
+}
+
+int
 ged_mater(struct ged *gedp, int argc, const char *argv[])
 {
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -529,18 +613,18 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    /* The -s option allows us to do mater on an object even in the unlikely
-     * even the object is named "-m" */
+    /* The -s option allows us to do mater on an object even if the
+     * object has a name matching a subcommand or option */
     if (BU_STR_EQUAL(argv[1], "-s")) {
 	argv[1] = argv[0];
 	argc--; argv++;
 	return _ged_mater_shader(gedp, argc, argv);
     }
 
-    if (BU_STR_EQUAL(argv[1], "-m")) {
+    if (BU_STR_EQUAL(argv[1], "-d")) {
 	argv[1] = argv[0];
 	argc--; argv++;
-	return _ged_mater_mat_id(gedp, argc, argv);
+	return _ged_mater_density(gedp, argc, argv);
     }
 
     /* If we aren't instructed to do a mapping, proceed with normal behavior */
