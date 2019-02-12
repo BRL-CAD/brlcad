@@ -489,6 +489,7 @@ densities_from_file(struct current_state *state, char *name)
     struct bu_mapped_file *dfile = NULL;
     char *buf = NULL;
     int ret = 0;
+    int ecnt = 0;
 
     if (!bu_file_exists(name, NULL)) {
 	bu_log("Could not find density file - %s\n", name);
@@ -505,9 +506,9 @@ densities_from_file(struct current_state *state, char *name)
 
     (void)analyze_densities_create(&(state->densities));
 
-    ret = analyze_densities_load(state->densities, buf, &msgs);
+    ret = analyze_densities_load(state->densities, buf, &msgs, &ecnt);
 
-    if (bu_vls_strlen(&msgs)) {
+    if (ecnt && bu_vls_strlen(&msgs)) {
 	bu_log("Problem reading densities file:\n%s\n", bu_vls_cstr(&msgs));
     }
     bu_vls_free(&msgs);
@@ -531,6 +532,7 @@ densities_from_database(struct current_state *state, struct rt_i *rtip)
     struct rt_db_internal intern;
     struct rt_binunif_internal *bu;
     int ret;
+    int ecnt = 0;
     char *buf;
 
     dp = db_lookup(rtip->rti_dbip, "_DENSITIES", LOOKUP_QUIET);
@@ -556,9 +558,9 @@ densities_from_database(struct current_state *state, struct rt_i *rtip)
     buf = (char *)bu_calloc(bu->count+1, sizeof(char), "density buffer");
     memcpy(buf, bu->u.int8, bu->count);
 
-    ret = analyze_densities_load(state->densities, buf, &msgs);
+    ret = analyze_densities_load(state->densities, buf, &msgs, &ecnt);
 
-    if (bu_vls_strlen(&msgs)) {
+    if (ecnt && bu_vls_strlen(&msgs)) {
 	bu_log("Problem reading densities file:\n%s\n", bu_vls_cstr(&msgs));
     }
     bu_vls_free(&msgs);

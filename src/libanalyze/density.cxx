@@ -217,6 +217,12 @@ parse_densities_line(struct analyze_densities *a, const char *obuf, size_t len, 
 	while (*p && (*p == '\t' || *p == ' ' || *p == '\n')) p++;
     }
 
+    /* If the whole thing was a comment or empty, return 0 */
+    if (!name &&  material_id == -1 && density < 0) {
+	return 0;
+    }
+
+
     /* Whatever we saw, if it wasn't a valid definition bail now */
     if (!name || material_id == -1 || density < 0) {
 	return -1;
@@ -235,11 +241,11 @@ parse_densities_line(struct analyze_densities *a, const char *obuf, size_t len, 
 
     bu_free(name, "free name copy");
     bu_free(buf, "free buf copy");
-    return 0;
+    return 1;
 }
 
 extern "C" int
-analyze_densities_load(struct analyze_densities *a, const char *buff, struct bu_vls *msgs)
+analyze_densities_load(struct analyze_densities *a, const char *buff, struct bu_vls *msgs, int *ecnt)
 {
     if (!a || !a->i || !buff) return 0;
     std::string dbuff(buff);
@@ -249,9 +255,13 @@ analyze_densities_load(struct analyze_densities *a, const char *buff, struct bu_
     while (std::getline(ss, line)) {
 	struct bu_vls lmsg = BU_VLS_INIT_ZERO;
 	int ret = parse_densities_line(a, line.c_str(), line.length(), &lmsg);
+	if (!ret) continue;
 	if (ret < 0) {
 	   if (msgs && bu_vls_strlen(&lmsg)) {
 	    bu_vls_printf(msgs, "%s", bu_vls_cstr(&lmsg));
+	   }
+	   if (ecnt) {
+	       (*ecnt)++;
 	   }
 	} else {
 	    dcnt++;

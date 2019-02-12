@@ -771,7 +771,7 @@ get_densities_from_file(char *name)
 
     (void)analyze_densities_create(&densities);
 
-    ret = analyze_densities_load(densities, buf, &msgs);
+    ret = analyze_densities_load(densities, buf, &msgs, NULL);
 
     if (bu_vls_strlen(&msgs)) {
 	bu_vls_printf(_ged_current_gedp->ged_result_str, "Problem reading densities file:\n%s\n", bu_vls_cstr(&msgs));
@@ -822,7 +822,7 @@ get_densities_from_database(struct rt_i *rtip)
     buf = (char *)bu_malloc(bu->count+1, "density buffer");
     memcpy(buf, bu->u.int8, bu->count);
 
-    ret = analyze_densities_load(densities, buf, &msgs);
+    ret = analyze_densities_load(densities, buf, &msgs, NULL);
 
     if (bu_vls_strlen(&msgs)) {
 	bu_vls_printf(_ged_current_gedp->ged_result_str, "Problem reading densities file:\n%s\n", bu_vls_cstr(&msgs));

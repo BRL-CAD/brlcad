@@ -354,8 +354,13 @@ _ged_mater_mat_id(struct ged *gedp, int argc, const char *argv[])
 
     dbuff = (char *)(dfile->buf);
     struct bu_vls pbuff_msgs = BU_VLS_INIT_ZERO;
-    if (analyze_densities_load(densities, dbuff, &pbuff_msgs) ==  0) {
-	bu_vls_printf(gedp->ged_result_str, "could not parse density file %s: %s", argv[1], bu_vls_cstr(&pbuff_msgs));
+    int ecnt = 0;
+    if (analyze_densities_load(densities, dbuff, &pbuff_msgs, &ecnt) ==  0) {
+	if (ecnt > 0) {
+	    bu_vls_printf(gedp->ged_result_str, "problem parsing density file %s: %s", argv[1], bu_vls_cstr(&pbuff_msgs));
+	} else {
+	    bu_vls_printf(gedp->ged_result_str, "no density definitions found in file %s: %s", argv[1], bu_vls_cstr(&pbuff_msgs));
+	}
 	bu_close_mapped_file(dfile);
 	bu_vls_free(&pbuff_msgs);
 	return GED_ERROR;

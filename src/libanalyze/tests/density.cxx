@@ -153,11 +153,11 @@ main(int argc, char **argv)
 	    bu_log("Error - empty database returned a density on id lookup??\n");
 	    goto analyze_density_fail;
 	}
-	if (analyze_densities_load(a, NULL, &msgs) != 0) {
+	if (analyze_densities_load(a, NULL, &msgs, NULL) != 0) {
 	    bu_log("Error - loading NULL buffer returned a non-zero density count??\nMsg: %s", bu_vls_cstr(&msgs));
 	    goto analyze_density_fail;
 	}
-	if (analyze_densities_load(a, "", &msgs) != 0) {
+	if (analyze_densities_load(a, "", &msgs, NULL) != 0) {
 	    bu_log("Error - loading empty buffer returned a non-zero density count??Msg: %s\n", bu_vls_cstr(&msgs));
 	    goto analyze_density_fail;
 	}
@@ -176,6 +176,8 @@ main(int argc, char **argv)
     }
 
     if (BU_STR_EQUAL(argv[1], "std")) {
+
+	int ecnt = 0;
 
 	std::set<long int> valid_ids = {0, 2, 15, 4, 31};
 
@@ -267,9 +269,14 @@ main(int argc, char **argv)
 	}
 
 	/* Test loading from buffers */
-	long int sb_cnt = analyze_densities_load(a, simple_buff, &msgs);
+	ecnt = 0;
+	long int sb_cnt = analyze_densities_load(a, simple_buff, &msgs, &ecnt);
 	if (!sb_cnt) {
 	    bu_log("Error - could not find id in simple test buffer: %s\n", bu_vls_cstr(&msgs));
+	    goto analyze_density_fail;
+	}
+	if (ecnt) {
+	    bu_log("Error - invalid line found parsing simple test buffer: %s\n", bu_vls_cstr(&msgs));
 	    goto analyze_density_fail;
 	}
 	if (sb_cnt != 1) {
@@ -280,13 +287,18 @@ main(int argc, char **argv)
 	analyze_densities_clear(a);
 	analyze_densities_init(a);
 
-	long int tb_cnt = analyze_densities_load(a, test_buff, &msgs);
+	ecnt = 0;
+	long int tb_cnt = analyze_densities_load(a, test_buff, &msgs, &ecnt);
 	if (!tb_cnt) {
 	    bu_log("Error - could not find ids in test buffer: %s\n", bu_vls_cstr(&msgs));
 	    goto analyze_density_fail;
 	}
 	if (tb_cnt != 10) {
 	    bu_log("Error - found %ld ids in test buffer, but expected 10\n", tb_cnt);
+	    goto analyze_density_fail;
+	}
+	if (ecnt != 2) {
+	    bu_log("Error - found %d lines with parsing errors in test buffer, but expected 2:\n%s\n", ecnt, bu_vls_cstr(&msgs));
 	    goto analyze_density_fail;
 	}
 

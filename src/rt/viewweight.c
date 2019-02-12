@@ -218,7 +218,7 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int min
 
 
     /* Read in density */
-    if (analyze_densities_load(density, dbuff, &pbuff_msgs) ==  0) {
+    if (analyze_densities_load(density, dbuff, &pbuff_msgs, NULL) ==  0) {
 	bu_log("Unable to parse density file \"%s\":%s\n", bu_vls_cstr(densityfile), bu_vls_cstr(&pbuff_msgs));
 	bu_close_mapped_file(dfile);
 	goto view_init_rtweight_fail;

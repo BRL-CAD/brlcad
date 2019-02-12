@@ -169,8 +169,13 @@ ANALYZE_EXPORT extern int analyze_densities_set(struct analyze_densities *a, lon
 
 /* Accepts a buffer, typically read from a .density file.  Expects units of g/cm^3.
  * (TODO - Ugh - need to come up with a way to define the units in the file so we aren't
- * tied to that forever...) */
-ANALYZE_EXPORT extern int analyze_densities_load(struct analyze_densities *a, const char *buff, struct bu_vls *msgs);
+ * tied to that forever...)
+ *
+ * Returns the number of valid density entries loaded. The optional ecnt variable, if
+ * supplied, will count the number of lines where the parser failed to recognize either
+ * a commented line or a valid density.  Calling codes may then decide if they want to
+ * accept the partial result or fail hard based on the ecnt. */
+ANALYZE_EXPORT extern int analyze_densities_load(struct analyze_densities *a, const char *buff, struct bu_vls *msgs, int *ecnt);
 
 /* Creates a .density buffer from a, writing units of g/cm^3.  Returns length of buff
  * (TODO - Ugh - need to come up with a way to define the units so we aren't
