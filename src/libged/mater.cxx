@@ -30,6 +30,8 @@
 #include <string>
 #include <sstream>
 
+#include "bu/app.h"
+#include "bu/path.h"
 #include "analyze.h"
 #include "ged.h"
 #include "./ged_private.h"
@@ -38,9 +40,9 @@
 
 static const char *usage = "Usage: mater [-s] object_name shader r [g b] inherit\n"
                            "              -d  source\n"
-                           "              -d  [--stored] clear\n"
+                           "              -d  clear\n"
                            "              -d  load file.density\n"
-                           "              -d  write [file.density]\n"
+                           "              -d  write file.density\n"
                            "              -d  get [--id|--density|--name] [--tol <tolerance>] [--tcl] [key]\n"
                            "              -d  set [--tcl] id,density,name\n"
                            "              -d  map density_file [map_file]\n"
@@ -252,28 +254,55 @@ _ged_mater_shader(struct ged *gedp, int argc, const char *argv[])
 int
 _ged_mater_source(struct ged *gedp)
 {
+    struct bu_vls d_path_dir = BU_VLS_INIT_ZERO;
+
     if (gedp->gd_densities && gedp->gd_densities_source) {
 	bu_vls_printf(gedp->ged_result_str, "%s\n", gedp->gd_densities_source);
+	return GED_OK;
     }
+    /* If nothing is already defined, check in priority order */
+    if (db_lookup(gedp->ged_wdbp->dbip, GED_DB_DENSITY_OBJECT, LOOKUP_QUIET) != RT_DIR_NULL) {
+	bu_vls_printf(gedp->ged_result_str, "%s\n", gedp->ged_wdbp->dbip->dbi_filename);
+	return GED_OK;
+    }
+
+    /* Try .density file in database path first */
+    if (bu_path_component(&d_path_dir, gedp->ged_wdbp->dbip->dbi_filename, BU_PATH_DIRNAME)) {
+
+	bu_vls_printf(&d_path_dir, "/.density");
+
+	if (bu_file_exists(bu_vls_cstr(&d_path_dir), NULL)) {
+	    bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_cstr(&d_path_dir));
+	    bu_vls_free(&d_path_dir);
+	    return GED_OK;
+	}
+    }
+
+    /* Try HOME */
+    if (bu_dir(NULL, 0, BU_DIR_HOME, NULL)) {
+
+	bu_vls_sprintf(&d_path_dir, "%s/.density", bu_dir(NULL, 0, BU_DIR_HOME, NULL));
+
+	if (bu_file_exists(bu_vls_cstr(&d_path_dir), NULL)) {
+	    bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_cstr(&d_path_dir));
+	    bu_vls_free(&d_path_dir);
+	    return GED_OK;
+	}
+    }
+
     return GED_OK;
 }
 
 int
-_ged_mater_clear(struct ged *gedp, int argc, const char *argv[])
+_ged_mater_clear(struct ged *gedp)
 {
-    if (argc > 1) {
-	struct directory *dp;
-	if (!BU_STR_EQUAL(argv[1], "--stored")) {
-	    bu_vls_printf(gedp->ged_result_str, "%s", usage);
+    struct directory *dp;
+    if ((dp = db_lookup(gedp->ged_wdbp->dbip, GED_DB_DENSITY_OBJECT, LOOKUP_QUIET)) != RT_DIR_NULL) {
+	if (db_delete(gedp->ged_wdbp->dbip, dp) != 0 || db_dirdelete(gedp->ged_wdbp->dbip, dp) != 0) {
+	    bu_vls_printf(gedp->ged_result_str, "Error removing density information from database.");
 	    return GED_ERROR;
 	}
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, GED_DB_DENSITY_OBJECT, LOOKUP_QUIET)) != RT_DIR_NULL) {
-	    if (db_delete(gedp->ged_wdbp->dbip, dp) != 0 || db_dirdelete(gedp->ged_wdbp->dbip, dp) != 0) {
-		bu_vls_printf(gedp->ged_result_str, "Error removing density information from database.");
-		return GED_ERROR;
-	    }
-	    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
-	}
+	db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
     }
     if (gedp->gd_densities) {
 	analyze_densities_destroy(gedp->gd_densities);

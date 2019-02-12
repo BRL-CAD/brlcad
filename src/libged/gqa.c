@@ -162,9 +162,6 @@ struct ged_gqa_plot {
     struct bu_list *vhead;
 } ged_gqa_plot;
 
-/* the entries in the density table */
-struct analyze_densities *densities = NULL;
-
 /* summary data structure for objects specified on command line */
 static struct per_obj_data {
     char *o_name;
@@ -902,7 +899,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
     for (pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
 
 	long int material_id = pp->pt_regionp->reg_gmater;
-	fastf_t grams_per_cu_mm = analyze_densities_density(densities, material_id);
+	fastf_t grams_per_cu_mm = analyze_densities_density(_ged_current_gedp->gd_densities, material_id);
 
 	/* inhit info */
 	dist = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
@@ -1554,9 +1551,9 @@ options_prep(struct rt_i *UNUSED(rtip), vect_t span)
 	if (weight_tolerance < 0.0) {
 	    double max_den = 0.0;
 	    long int curr_id = -1;
-	    while ((curr_id = analyze_densities_next(densities, curr_id)) != -1) {
-		if (analyze_densities_density(densities, curr_id) > max_den)
-		    max_den = analyze_densities_density(densities, curr_id);
+	    while ((curr_id = analyze_densities_next(_ged_current_gedp->gd_densities, curr_id)) != -1) {
+		if (analyze_densities_density(_ged_current_gedp->gd_densities, curr_id) > max_den)
+		    max_den = analyze_densities_density(_ged_current_gedp->gd_densities, curr_id);
 	    }
 	    weight_tolerance = span[X] * span[Y] * span[Z] * 0.1 * max_den;
 	    bu_vls_printf(_ged_current_gedp->ged_result_str, "setting weight tolerance to %g %s\n",
@@ -2532,9 +2529,12 @@ aborted:
     bu_free(reg_tbl, "object table");
     reg_tbl = NULL;
 
-    if (densities != NULL) {
-	bu_free(densities, "densities");
-	densities = NULL;
+    if (gedp->gd_densities) {
+	analyze_densities_destroy(gedp->gd_densities);
+    }
+
+    if (gedp->gd_densities_source) {
+	bu_free(gedp->gd_densities_source, "free densities source string");
     }
 
     rt_free_rti(rtip);
