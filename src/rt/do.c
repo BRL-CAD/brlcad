@@ -1077,10 +1077,6 @@ do_frame(int framenumber)
      */
     view_end(&APP);
 
-    /* Stop memory debug printing until next frame, leave full checking on */
-    if (R_DEBUG&RDEBUG_RTMEM)
-	bu_debug &= ~BU_DEBUG_MEM_LOG;
-
     /* These results need to be normalized.  Otherwise, all we would
      * know is that a given workload takes about the same amount of
      * CPU time, regardless of the number of CPUs.
