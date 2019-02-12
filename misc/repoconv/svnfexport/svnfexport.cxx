@@ -176,6 +176,21 @@ print_node(struct svn_node &n)
     std::cout << "local_path: " << n.local_path << std::endl;
 }
 
+// Don't care about deletes on old tags...
+bool reject_branch(std::string rbranch)
+{
+    if (rbranch == std::string("rel-4-5")) return true;
+    if (rbranch == std::string("ctj-4-5-post")) return true;
+    if (rbranch == std::string("ctj-4-5-pre")) return true;
+    if (rbranch == std::string("rel-5-0")) return true;
+    if (rbranch == std::string("rel-5-0-beta")) return true;
+    if (rbranch == std::string("rel-5-1")) return true;
+    if (rbranch == std::string("rel-5-2")) return true;
+    if (rbranch == std::string("offsite-5-3-pre")) return true;
+    if (rbranch == std::string("rel-5-3")) return true;
+    if (rbranch == std::string("rel-5-4")) return true;
+    return false;
+}
 
 std::string git_sha1(std::ifstream &infile, struct svn_node *n)
 {
@@ -239,13 +254,13 @@ write_blob(std::ifstream &infile, std::ofstream &outfile, struct svn_node &node)
 }
 
 std::string
-branch_head_id(std::string branch){
+branch_head_id(std::string branch, int rev){
     // If strlen of current head == 40, it's a sha1 and just return it.
     //
     // else, it's a mark and return the string with a colon in front.
     std::string curr_head = branch_head_ids[branch];
     if (!curr_head.length()) {
-	std::cout << "Error - unknown branch " << branch << "\n";
+	std::cout << "Error - unknown branch " << branch << ", " << rev << "\n";
 	exit(1);
     }
     if (curr_head.length() == 40) return curr_head;
@@ -799,8 +814,8 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 	    int tag_after_commit = 0;
 	    int branch_delete = 0;
 	    std::string rbranch = rev.nodes[0].branch;
-	    if (rev.revision_number == 66223) {
-		std::cout << "at 66223\n";
+	    if (rev.revision_number == 30544) {
+		std::cout << "at 30544\n";
 	    }
 
 	    for (size_t n = 0; n != rev.nodes.size(); n++) {
@@ -827,7 +842,7 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 			    std::cout << "Adding tag branch " << tbstr << " from " << bbpath << ", r" << rev.revision_number <<"\n";
 			    std::cout << rev.commit_msg << "\n";
 			    outfile << "reset " << tbstr << "\n";
-			    outfile << "from " << branch_head_id(bbpath) << "\n";
+			    outfile << "from " << branch_head_id(bbpath, rev.revision_number) << "\n";
 			    branch_head_ids[tbstr] = branch_head_ids[bbpath];
 			    have_commit = 1;
 			    continue;
@@ -853,6 +868,13 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 
 		}
 
+		if (node.tag_delete) {
+		    branch_delete = 1;
+		    std::cout << "processing revision " << rev.revision_number << "\n";
+		    std::cout << "TODO - delete tag: " << node.branch << "\n";
+		    continue;
+		}
+
 		if (node.branch_add) {
 		    std::cout << "Processing revision " << rev.revision_number << "\n";
 		    std::string ppath, bbpath, llpath;
@@ -861,14 +883,14 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 		    std::cout << "Adding branch " << node.branch << " from " << bbpath << ", r" << rev.revision_number <<"\n";
 		    std::cout << rev.commit_msg << "\n";
 		    outfile << "reset " << node.branch << "\n";
-		    outfile << "from " << branch_head_id(bbpath) << "\n";
+		    outfile << "from " << branch_head_id(bbpath, rev.revision_number) << "\n";
 		    branch_head_ids[node.branch] = branch_head_ids[bbpath];
 		    have_commit = 1;
 		    continue;
 		}
 
 		if (node.branch_delete) {
-		    //std::cout << "Processing revision " << rev.revision_number << "\n";
+		    //std::cout << "processing revision " << rev.revision_number << "\n";
 		    //std::cout << "Delete branch instruction: " << node.branch << " - deferring.\n";
 		    branch_delete = 1;
 		    continue;
@@ -887,7 +909,7 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 		if (node.exec_change) {
 		    git_changes = 1;
 		}
-		if (node.action == ndelete) {
+		if (node.action == ndelete && !reject_branch(rbranch)) {
 		    git_changes = 1;
 		}
 	    }
@@ -905,7 +927,7 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 		outfile << "committer " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
 		outfile << "data " << rev.commit_msg.length() << "\n";
 		outfile << rev.commit_msg << "\n";
-		outfile << "from " << branch_head_id(rbranch) << "\n";
+		outfile << "from " << branch_head_id(rbranch, rev.revision_number) << "\n";
 		branch_head_ids[rbranch] = std::to_string(rev.revision_number);
 
 		for (size_t n = 0; n != rev.nodes.size(); n++) {
