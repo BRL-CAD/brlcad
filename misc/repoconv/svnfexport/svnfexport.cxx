@@ -798,6 +798,7 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 	    int have_commit = 0;
 	    int tag_after_commit = 0;
 	    int branch_delete = 0;
+	    std::string rbranch = rev.nodes[0].branch;
 	    for (size_t n = 0; n != rev.nodes.size(); n++) {
 		struct svn_node &node = rev.nodes[n];
 
@@ -834,11 +835,13 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 				tag_after_commit = 1;
 				std::string tbstr = std::string("refs/heads/") +  node.branch;
 				node.branch = tbstr;
+				rbranch = tbstr;
 				continue;
 			    } else {
 				std::cout << "Non-final tag edit, processing normally: " << node.branch << ", r" << rev.revision_number<< "\n";
 				std::string tbstr = std::string("refs/heads/") +  node.branch;
 				node.branch = tbstr;
+				rbranch = tbstr;
 			    }
 			}
 		    } else {
@@ -893,13 +896,13 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 		    std::cout << "Error - couldn't find author map for author " << rev.author << " on revision " << rev.revision_number << "\n";
 		    exit(1);
 		}
-		outfile << "commit " << rev.nodes[0].branch << "\n";
+		outfile << "commit " << rbranch << "\n";
 		outfile << "mark :" << rev.revision_number << "\n";
 		outfile << "committer " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
 		outfile << "data " << rev.commit_msg.length() << "\n";
 		outfile << rev.commit_msg << "\n";
-		outfile << "from " << branch_head_id(rev.nodes[0].branch) << "\n";
-		branch_head_ids[rev.nodes[0].branch] = std::to_string(rev.revision_number);
+		outfile << "from " << branch_head_id(rbranch) << "\n";
+		branch_head_ids[rbranch] = std::to_string(rev.revision_number);
 
 		for (size_t n = 0; n != rev.nodes.size(); n++) {
 		    struct svn_node &node = rev.nodes[n];
@@ -984,11 +987,11 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 		if (tag_after_commit) {
 		    // Note - in this situation, we need to both build a commit and do a tag.  Will probably
 		    // take some refactoring.  Merge information will also be a factor.
-		    std::cout << "[TODO] Adding final commit and tag " << rev.nodes[0].branch << ", r" << rev.revision_number<< "\n";
+		    std::cout << "[TODO] Adding final commit and tag " << rbranch << ", r" << rev.revision_number<< "\n";
 		}
 
 	    } else {
-		if (!branch_delete) {
+		if (!branch_delete && !have_commit) {
 		    std::cout << "Skipping SVN commit r" << rev.revision_number << " - no git applicable changes\n";
 		    std::cout << rev.commit_msg << "\n";
 		}
