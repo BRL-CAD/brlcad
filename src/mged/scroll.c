@@ -180,7 +180,7 @@ sl_atol(struct scroll_item *mptr, double val)
 {
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-    if (dbip == DBI_NULL)
+    if (DBIP == DBI_NULL)
 	return;
 
     if (val < -SL_TOL) {
@@ -297,7 +297,7 @@ scroll_display(int y_top)
     scroll_top = y_top;
     y = y_top;
 
-    dm_set_line_attr(dmp, mged_variables->mv_linewidth, 0);
+    dm_set_line_attr(DMP, mged_variables->mv_linewidth, 0);
 
     for (m = &scroll_array[0]; *m != SCROLL_NULL; m++) {
 	++second_menu;
@@ -309,7 +309,7 @@ scroll_display(int y_top)
 		    if (second_menu) {
 			f = (double)adc_state->adc_dv_x * INV_GED;
 
-			dm_set_fg(dmp,
+			dm_set_fg(DMP,
 				       color_scheme->cs_slider_text2[0],
 				       color_scheme->cs_slider_text2[1],
 				       color_scheme->cs_slider_text2[2], 1, 1.0);
@@ -332,7 +332,7 @@ scroll_display(int y_top)
 				    break;
 			    }
 
-			    dm_set_fg(dmp,
+			    dm_set_fg(DMP,
 					   color_scheme->cs_slider_text1[0],
 					   color_scheme->cs_slider_text1[1],
 					   color_scheme->cs_slider_text1[2], 1, 1.0);
@@ -349,7 +349,7 @@ scroll_display(int y_top)
 				    f = view_state->vs_absolute_tran[X];
 			    }
 
-			    dm_set_fg(dmp,
+			    dm_set_fg(DMP,
 					   color_scheme->cs_slider_text2[0],
 					   color_scheme->cs_slider_text2[1],
 					   color_scheme->cs_slider_text2[2], 1, 1.0);
@@ -360,7 +360,7 @@ scroll_display(int y_top)
 		    if (second_menu) {
 			f = (double)adc_state->adc_dv_y * INV_GED;
 
-			dm_set_fg(dmp,
+			dm_set_fg(DMP,
 				       color_scheme->cs_slider_text2[0],
 				       color_scheme->cs_slider_text2[1],
 				       color_scheme->cs_slider_text2[2], 1, 1.0);
@@ -382,7 +382,7 @@ scroll_display(int y_top)
 				    break;
 			    }
 
-			    dm_set_fg(dmp,
+			    dm_set_fg(DMP,
 					   color_scheme->cs_slider_text1[0],
 					   color_scheme->cs_slider_text1[1],
 					   color_scheme->cs_slider_text1[2], 1, 1.0);
@@ -399,7 +399,7 @@ scroll_display(int y_top)
 				    f = view_state->vs_absolute_tran[Y];
 			    }
 
-			    dm_set_fg(dmp,
+			    dm_set_fg(DMP,
 					   color_scheme->cs_slider_text2[0],
 					   color_scheme->cs_slider_text2[1],
 					   color_scheme->cs_slider_text2[2], 1, 1.0);
@@ -410,7 +410,7 @@ scroll_display(int y_top)
 		    if (second_menu) {
 			f = (double)adc_state->adc_dv_a1 * INV_GED;
 
-			dm_set_fg(dmp,
+			dm_set_fg(DMP,
 				       color_scheme->cs_slider_text2[0],
 				       color_scheme->cs_slider_text2[1],
 				       color_scheme->cs_slider_text2[2], 1, 1.0);
@@ -432,7 +432,7 @@ scroll_display(int y_top)
 				    break;
 			    }
 
-			    dm_set_fg(dmp,
+			    dm_set_fg(DMP,
 					   color_scheme->cs_slider_text1[0],
 					   color_scheme->cs_slider_text1[1],
 					   color_scheme->cs_slider_text1[2], 1, 1.0);
@@ -449,7 +449,7 @@ scroll_display(int y_top)
 				    f = view_state->vs_absolute_tran[Z];
 			    }
 
-			    dm_set_fg(dmp,
+			    dm_set_fg(DMP,
 					   color_scheme->cs_slider_text2[0],
 					   color_scheme->cs_slider_text2[1],
 					   color_scheme->cs_slider_text2[2], 1, 1.0);
@@ -460,7 +460,7 @@ scroll_display(int y_top)
 		    if (second_menu) {
 			f = (double)adc_state->adc_dv_a2 * INV_GED;
 
-			dm_set_fg(dmp,
+			dm_set_fg(DMP,
 				       color_scheme->cs_slider_text2[0],
 				       color_scheme->cs_slider_text2[1],
 				       color_scheme->cs_slider_text2[2], 1, 1.0);
@@ -471,7 +471,7 @@ scroll_display(int y_top)
 			    else
 				f = edit_absolute_scale;
 
-			    dm_set_fg(dmp,
+			    dm_set_fg(DMP,
 					   color_scheme->cs_slider_text1[0],
 					   color_scheme->cs_slider_text1[1],
 					   color_scheme->cs_slider_text1[2], 1, 1.0);
@@ -481,7 +481,7 @@ scroll_display(int y_top)
 			    else
 				f = view_state->vs_absolute_scale;
 
-			    dm_set_fg(dmp,
+			    dm_set_fg(DMP,
 					   color_scheme->cs_slider_text2[0],
 					   color_scheme->cs_slider_text2[1],
 					   color_scheme->cs_slider_text2[2], 1, 1.0);
@@ -492,7 +492,7 @@ scroll_display(int y_top)
 		    if (second_menu) {
 			f = (double)adc_state->adc_dv_dist * INV_GED;
 
-			dm_set_fg(dmp,
+			dm_set_fg(DMP,
 				       color_scheme->cs_slider_text2[0],
 				       color_scheme->cs_slider_text2[1],
 				       color_scheme->cs_slider_text2[2], 1, 1.0);
@@ -520,7 +520,7 @@ scroll_display(int y_top)
 				    break;
 			    }
 
-			    dm_set_fg(dmp,
+			    dm_set_fg(DMP,
 					   color_scheme->cs_slider_text1[0],
 					   color_scheme->cs_slider_text1[1],
 					   color_scheme->cs_slider_text1[2], 1, 1.0);
@@ -537,7 +537,7 @@ scroll_display(int y_top)
 				    f = view_state->vs_absolute_rotate[X] / ABS_ROT_FACTOR;
 			    }
 
-			    dm_set_fg(dmp,
+			    dm_set_fg(DMP,
 					   color_scheme->cs_slider_text2[0],
 					   color_scheme->cs_slider_text2[1],
 					   color_scheme->cs_slider_text2[2], 1, 1.0);
@@ -572,7 +572,7 @@ scroll_display(int y_top)
 				    break;
 			    }
 
-			    dm_set_fg(dmp,
+			    dm_set_fg(DMP,
 					   color_scheme->cs_slider_text1[0],
 					   color_scheme->cs_slider_text1[1],
 					   color_scheme->cs_slider_text1[2], 1, 1.0);
@@ -589,7 +589,7 @@ scroll_display(int y_top)
 				    f = view_state->vs_absolute_rotate[Y] / ABS_ROT_FACTOR;
 			    }
 
-			    dm_set_fg(dmp,
+			    dm_set_fg(DMP,
 					   color_scheme->cs_slider_text2[0],
 					   color_scheme->cs_slider_text2[1],
 					   color_scheme->cs_slider_text2[2], 1, 1.0);
@@ -624,7 +624,7 @@ scroll_display(int y_top)
 				    break;
 			    }
 
-			    dm_set_fg(dmp,
+			    dm_set_fg(DMP,
 					   color_scheme->cs_slider_text1[0],
 					   color_scheme->cs_slider_text1[1],
 					   color_scheme->cs_slider_text1[2], 1, 1.0);
@@ -641,7 +641,7 @@ scroll_display(int y_top)
 				    f = view_state->vs_absolute_rotate[Z] / ABS_ROT_FACTOR;
 			    }
 
-			    dm_set_fg(dmp,
+			    dm_set_fg(DMP,
 					   color_scheme->cs_slider_text2[0],
 					   color_scheme->cs_slider_text2[1],
 					   color_scheme->cs_slider_text2[2], 1, 1.0);
@@ -664,13 +664,13 @@ scroll_display(int y_top)
 	    else
 		xpos = 0;
 
-	    dm_draw_string_2d(dmp, mptr->scroll_string,
+	    dm_draw_string_2d(DMP, mptr->scroll_string,
 			      GED2PM1(xpos), GED2PM1(y-SCROLL_DY/2), 0, 0);
-	    dm_set_fg(dmp,
+	    dm_set_fg(DMP,
 			   color_scheme->cs_slider_line[0],
 			   color_scheme->cs_slider_line[1],
 			   color_scheme->cs_slider_line[2], 1, 1.0);
-	    dm_draw_line_2d(dmp,
+	    dm_draw_line_2d(DMP,
 			    GED2PM1(XMAX), GED2PM1(y),
 			    GED2PM1(MENUXLIM), GED2PM1(y));
 	}
@@ -678,11 +678,11 @@ scroll_display(int y_top)
 
     if (y != y_top) {
 	/* Sliders were drawn, so make left vert edge */
-	dm_set_fg(dmp,
+	dm_set_fg(DMP,
 		       color_scheme->cs_slider_line[0],
 		       color_scheme->cs_slider_line[1],
 		       color_scheme->cs_slider_line[2], 1, 1.0);
-	dm_draw_line_2d(dmp,
+	dm_draw_line_2d(DMP,
 			GED2PM1(MENUXLIM), GED2PM1(scroll_top-1),
 			GED2PM1(MENUXLIM), GED2PM1(y));
     }

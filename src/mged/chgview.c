@@ -123,13 +123,13 @@ cmd_center(ClientData UNUSED(clientData),
     int ret;
     Tcl_DString ds;
 
-    if (gedp == GED_NULL) {
+    if (GEDP == GED_NULL) {
 	return TCL_OK;
     }
 
-    ret = ged_center(gedp, argc, (const char **)argv);
+    ret = ged_center(GEDP, argc, (const char **)argv);
     Tcl_DStringInit(&ds);
-    Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
+    Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
     if (ret != GED_OK) {
@@ -153,7 +153,7 @@ mged_center(point_t center)
     char ybuf[32];
     char zbuf[32];
 
-    if (gedp == GED_NULL) {
+    if (GEDP == GED_NULL) {
 	return;
     }
 
@@ -166,7 +166,7 @@ mged_center(point_t center)
     av[2] = ybuf;
     av[3] = zbuf;
     av[4] = (char *)0;
-    ged_center(gedp, 4, (const char **)av);
+    ged_center(GEDP, 4, (const char **)av);
     (void)mged_svbase();
     view_state->vs_flag = 1;
 }
@@ -180,13 +180,13 @@ cmd_size(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
     int ret;
     Tcl_DString ds;
 
-    if (gedp == GED_NULL) {
+    if (GEDP == GED_NULL) {
 	return TCL_OK;
     }
 
-    ret = ged_size(gedp, argc, (const char **)argv);
+    ret = ged_size(GEDP, argc, (const char **)argv);
     Tcl_DStringInit(&ds);
-    Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
+    Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
     if (ret == GED_OK) {
@@ -224,13 +224,13 @@ size_reset(void)
 {
     char *av[2];
 
-    if (gedp == GED_NULL) {
+    if (GEDP == GED_NULL) {
 	return;
     }
 
     av[0] = "autoview";
     av[1] = (char *)0;
-    ged_autoview(gedp, 1, (const char **)av);
+    ged_autoview(GEDP, 1, (const char **)av);
     view_state->vs_i_Viewscale = view_state->vs_gvp->gv_scale;
     view_state->vs_flag = 1;
 }
@@ -263,9 +263,9 @@ edit_com(int argc,
     CHECK_DBI_NULL;
 
     /* Common part of illumination */
-    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
 
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
+    while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	if (BU_LIST_NON_EMPTY(&gdlp->dl_headSolid)) {
@@ -363,7 +363,7 @@ edit_com(int argc,
 	    i += 2;
 	}
 
-	tbl = db_lookup_by_attr(dbip, RT_DIR_REGION | RT_DIR_SOLID | RT_DIR_COMB, &avs, flag_o_nonunique);
+	tbl = db_lookup_by_attr(DBIP, RT_DIR_REGION | RT_DIR_SOLID | RT_DIR_COMB, &avs, flag_o_nonunique);
 	bu_avs_free(&avs);
 
 	if (!tbl) {
@@ -392,15 +392,15 @@ edit_com(int argc,
 	new_argv = (char **)bu_calloc(max_count + 1, sizeof(char *), "edit_com new_argv");
 	new_argc = bu_argv_from_string(new_argv, max_count, bu_vls_addr(&vls));
 
-	ret = ged_draw(gedp, new_argc, (const char **)new_argv);
+	ret = ged_draw(GEDP, new_argc, (const char **)new_argv);
 
 	if (ret == GED_ERROR) {
-	    bu_log("ERROR: %s\n", bu_vls_addr(gedp->ged_result_str));
+	    bu_log("ERROR: %s\n", bu_vls_addr(GEDP->ged_result_str));
 	    bu_vls_free(&vls);
 	    bu_free((char *)new_argv, "edit_com new_argv");
 	    return ret;
 	} else if (ret == GED_HELP) {
-	    bu_log("%s\n", bu_vls_addr(gedp->ged_result_str));
+	    bu_log("%s\n", bu_vls_addr(GEDP->ged_result_str));
 	    bu_vls_free(&vls);
 	    bu_free((char *)new_argv, "edit_com new_argv");
 	    return ret;
@@ -414,21 +414,21 @@ edit_com(int argc,
 	switch (kind) {
 	    default:
 	    case 1:
-		ret = ged_draw(gedp, argc, (const char **)argv);
+		ret = ged_draw(GEDP, argc, (const char **)argv);
 		break;
 	    case 2:
-		ret = ged_E(gedp, argc, (const char **)argv);
+		ret = ged_E(GEDP, argc, (const char **)argv);
 		break;
 	    case 3:
-		ret = ged_ev(gedp, argc, (const char **)argv);
+		ret = ged_ev(GEDP, argc, (const char **)argv);
 		break;
 	}
 
 	if (ret == GED_ERROR) {
-	    bu_log("ERROR: %s\n", bu_vls_addr(gedp->ged_result_str));
+	    bu_log("ERROR: %s\n", bu_vls_addr(GEDP->ged_result_str));
 	    return TCL_ERROR;
 	} else if (ret == GED_HELP) {
-	    bu_log("%s\n", bu_vls_addr(gedp->ged_result_str));
+	    bu_log("%s\n", bu_vls_addr(GEDP->ged_result_str));
 	    return TCL_OK;
 	}
     }
@@ -455,11 +455,11 @@ edit_com(int argc,
 	    curr_cmd_list = &head_cmd_list;
 	}
 
-	gedp->ged_gvp = view_state->vs_gvp;
+	GEDP->ged_gvp = view_state->vs_gvp;
 
-	gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
+	gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
 
-	while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
+	while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	    if (BU_LIST_NON_EMPTY(&gdlp->dl_headSolid)) {
@@ -477,7 +477,7 @@ edit_com(int argc,
 
 	    av[0] = "autoview";
 	    av[1] = (char *)0;
-	    ged_autoview(gedp, 1, (const char **)av);
+	    ged_autoview(GEDP, 1, (const char **)av);
 
 	    (void)mged_svbase();
 
@@ -489,7 +489,7 @@ edit_com(int argc,
 
     curr_dm_list = save_dmlp;
     curr_cmd_list = save_cmd_list;
-    gedp->ged_gvp = view_state->vs_gvp;
+    GEDP->ged_gvp = view_state->vs_gvp;
 
     return TCL_OK;
 }
@@ -533,7 +533,7 @@ emuves_com(int argc, const char *argv[])
 	bu_avs_add_nonunique(&avs, "MUVES_Component", argv[i]);
     }
 
-    tbl = db_lookup_by_attr(dbip, RT_DIR_REGION, &avs, 2);
+    tbl = db_lookup_by_attr(DBIP, RT_DIR_REGION, &avs, 2);
 
     bu_avs_free(&avs);
 
@@ -585,7 +585,7 @@ cmd_autoview(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 	return TCL_ERROR;
     }
 
-    if (gedp == GED_NULL) {
+    if (GEDP == GED_NULL) {
 	return TCL_OK;
     }
 
@@ -602,7 +602,7 @@ cmd_autoview(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 	    curr_cmd_list = &head_cmd_list;
 	}
 
-	gedp->ged_gvp = view_state->vs_gvp;
+	GEDP->ged_gvp = view_state->vs_gvp;
 
 	{
 	    int ac = 1;
@@ -617,7 +617,7 @@ cmd_autoview(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 		ac = 2;
 	    }
 
-	    ged_autoview(gedp, ac, (const char **)av);
+	    ged_autoview(GEDP, ac, (const char **)av);
 	    view_state->vs_flag = 1;
 	}
 	(void)mged_svbase();
@@ -628,7 +628,7 @@ cmd_autoview(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
     }
     curr_dm_list = save_dmlp;
     curr_cmd_list = save_cmd_list;
-    gedp->ged_gvp = view_state->vs_gvp;
+    GEDP->ged_gvp = view_state->vs_gvp;
 
     return TCL_OK;
 }
@@ -683,7 +683,7 @@ f_regdebug(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const ch
 
     Tcl_AppendResult(interp, "regdebug=", debug_str, "\n", (char *)NULL);
 
-    dm_debug(dmp, regdebug);
+    dm_debug(DMP, regdebug);
 
     return TCL_OK;
 }
@@ -694,25 +694,25 @@ f_regdebug(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const ch
 int
 cmd_zap(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), const char *UNUSED(argv[]))
 {
-    void (*tmp_callback)(unsigned int, int) = gedp->ged_free_vlist_callback;
+    void (*tmp_callback)(unsigned int, int) = GEDP->ged_free_vlist_callback;
     char *av[2] = {"zap", (char *)0};
 
     CHECK_DBI_NULL;
 
     update_views = 1;
-    gedp->ged_free_vlist_callback = freeDListsAll;
+    GEDP->ged_free_vlist_callback = freeDListsAll;
 
     /* FIRST, reject any editing in progress */
     if (STATE != ST_VIEW) {
 	button(BE_REJECT);
     }
 
-    ged_zap(gedp, 1, (const char **)av);
+    ged_zap(GEDP, 1, (const char **)av);
 
     (void)chg_state(STATE, STATE, "zap");
     solid_list_callback();
 
-    gedp->ged_free_vlist_callback = tmp_callback;
+    GEDP->ged_free_vlist_callback = tmp_callback;
 
     return TCL_OK;
 }
@@ -965,7 +965,7 @@ f_ill(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 
     mged_basename = path_piece[nm_pieces - 1];
 
-    if ((dp = db_lookup(dbip,  mged_basename, LOOKUP_NOISY)) == RT_DIR_NULL) {
+    if ((dp = db_lookup(DBIP,  mged_basename, LOOKUP_NOISY)) == RT_DIR_NULL) {
 	Tcl_AppendResult(interp, "db_lookup failed for '", mged_basename, "'\n", (char *)NULL);
 	goto bail_out;
     }
@@ -977,9 +977,9 @@ f_ill(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 	goto bail_out;
     }
 
-    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
 
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
+    while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
@@ -1119,9 +1119,9 @@ f_sed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     }
 
     /* Common part of illumination */
-    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
 
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
+    while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	if (BU_LIST_NON_EMPTY(&gdlp->dl_headSolid)) {
@@ -2563,7 +2563,7 @@ abs_zoom(void)
     av[0] = "zoom";
     av[1] = "1.0";
     av[2] = (char *)0;
-    ged_zoom(gedp, 2, (const char **)av);
+    ged_zoom(GEDP, 2, (const char **)av);
 
     if (!ZERO(view_state->vs_absolute_tran[X])
 	|| !ZERO(view_state->vs_absolute_tran[Y])
@@ -2582,7 +2582,7 @@ mged_zoom(double val)
     char buf[32];
     Tcl_DString ds;
 
-    if (gedp == GED_NULL) {
+    if (GEDP == GED_NULL) {
 	return TCL_OK;
     }
 
@@ -2595,9 +2595,9 @@ mged_zoom(double val)
     av[1] = buf;
     av[2] = (char *)0;
 
-    ret = ged_zoom(gedp, 2, (const char **)av);
+    ret = ged_zoom(GEDP, 2, (const char **)av);
     Tcl_DStringInit(&ds);
-    Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
+    Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
     Tcl_DStringResult(INTERP, &ds);
 
     if (ret != GED_OK) {
@@ -2618,8 +2618,8 @@ mged_zoom(double val)
     }
 
     ret = TCL_OK;
-    if (gedp->ged_gvp && gedp->ged_gvp->gv_adaptive_plot &&
-	gedp->ged_gvp->gv_redraw_on_zoom)
+    if (GEDP->ged_gvp && GEDP->ged_gvp->gv_adaptive_plot &&
+	GEDP->ged_gvp->gv_redraw_on_zoom)
     {
 	ret = redraw_visible_objects();
     }
@@ -2718,13 +2718,13 @@ cmd_setview(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
     int ret;
     Tcl_DString ds;
 
-    if (gedp == GED_NULL) {
+    if (GEDP == GED_NULL) {
 	return TCL_OK;
     }
 
-    ret = ged_setview(gedp, argc, (const char **)argv);
+    ret = ged_setview(GEDP, argc, (const char **)argv);
     Tcl_DStringInit(&ds);
-    Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
+    Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
     if (ret != GED_OK) {
@@ -2754,7 +2754,7 @@ f_slewview(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const ch
     vect_t diff;
     mat_t delta;
 
-    if (gedp == GED_NULL) {
+    if (GEDP == GED_NULL) {
 	return TCL_OK;
     }
 
@@ -2763,8 +2763,8 @@ f_slewview(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const ch
 
     Tcl_DStringInit(&ds);
 
-    ret = ged_slew(gedp, argc, (const char **)argv);
-    Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
+    ret = ged_slew(GEDP, argc, (const char **)argv);
+    Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
     if (ret != GED_OK) {
@@ -2891,7 +2891,7 @@ setview(double a1,
     char ybuf[32];
     char zbuf[32];
 
-    if (gedp == GED_NULL) {
+    if (GEDP == GED_NULL) {
 	return;
     }
 
@@ -2904,7 +2904,7 @@ setview(double a1,
     av[2] = ybuf;
     av[3] = zbuf;
     av[4] = (char *)0;
-    ged_setview(gedp, 4, (const char **)av);
+    ged_setview(GEDP, 4, (const char **)av);
 
     if (!ZERO(view_state->vs_absolute_tran[X])
 	|| !ZERO(view_state->vs_absolute_tran[Y])
@@ -2933,7 +2933,7 @@ slewview(vect_t view_pos)
     char ybuf[32];
     char zbuf[32];
 
-    if (gedp == GED_NULL) {
+    if (GEDP == GED_NULL) {
 	return;
     }
 
@@ -2949,7 +2949,7 @@ slewview(vect_t view_pos)
     av[2] = ybuf;
     av[3] = zbuf;
     av[4] = (char *)0;
-    ged_slew(gedp, 4, (const char **)av);
+    ged_slew(GEDP, 4, (const char **)av);
 
     /* all this for ModelDelta */
     MAT_DELTAS_GET_NEG(new_model_center, view_state->vs_gvp->gv_center);
@@ -3430,7 +3430,7 @@ cmd_mrot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 {
     Tcl_DString ds;
 
-    if (gedp == GED_NULL) {
+    if (GEDP == GED_NULL) {
 	return TCL_OK;
     }
 
@@ -3450,9 +3450,9 @@ cmd_mrot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 	}
 
 	/* We're only interested in getting rmat set */
-	if (ged_rot_args(gedp, argc, (const char **)argv, &coord, rmat) != GED_OK) {
+	if (ged_rot_args(GEDP, argc, (const char **)argv, &coord, rmat) != GED_OK) {
 	    Tcl_DStringInit(&ds);
-	    Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
+	    Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
 	    Tcl_DStringResult(interp, &ds);
 
 	    return TCL_ERROR;
@@ -3464,8 +3464,8 @@ cmd_mrot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 
 	Tcl_DStringInit(&ds);
 
-	ret = ged_mrot(gedp, argc, (const char **)argv);
-	Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
+	ret = ged_mrot(GEDP, argc, (const char **)argv);
+	Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
 	Tcl_DStringResult(interp, &ds);
 
 	if (ret != GED_OK) {
@@ -3576,14 +3576,14 @@ cmd_vrot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
     int ret;
     Tcl_DString ds;
 
-    if (gedp == GED_NULL) {
+    if (GEDP == GED_NULL) {
 	return TCL_OK;
     }
 
     Tcl_DStringInit(&ds);
 
-    ret = ged_vrot(gedp, argc, (const char **)argv);
-    Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
+    ret = ged_vrot(GEDP, argc, (const char **)argv);
+    Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
     if (ret != GED_OK) {
@@ -3602,7 +3602,7 @@ cmd_rot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 {
     Tcl_DString ds;
 
-    if (gedp == GED_NULL) {
+    if (GEDP == GED_NULL) {
 	return TCL_OK;
     }
 
@@ -3611,9 +3611,9 @@ cmd_rot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 	char coord;
 	mat_t rmat;
 
-	if (ged_rot_args(gedp, argc, (const char **)argv, &coord, rmat) != GED_OK) {
+	if (ged_rot_args(GEDP, argc, (const char **)argv, &coord, rmat) != GED_OK) {
 	    Tcl_DStringInit(&ds);
-	    Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
+	    Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
 	    Tcl_DStringResult(interp, &ds);
 
 	    return TCL_ERROR;
@@ -3625,8 +3625,8 @@ cmd_rot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 
 	Tcl_DStringInit(&ds);
 
-	ret = ged_rot(gedp, argc, (const char **)argv);
-	Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
+	ret = ged_rot(GEDP, argc, (const char **)argv);
+	Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
 	Tcl_DStringResult(interp, &ds);
 
 	if (ret != GED_OK) {
@@ -3646,7 +3646,7 @@ cmd_arot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
     Tcl_DString ds;
     /* static const char *usage = "x y z angle"; */
 
-    if (gedp == GED_NULL) {
+    if (GEDP == GED_NULL) {
 	return TCL_OK;
     }
 
@@ -3654,9 +3654,9 @@ cmd_arot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 	mged_variables->mv_transform == 'e') {
 	mat_t rmat;
 
-	if (ged_arot_args(gedp, argc, (const char **)argv, rmat) != GED_OK) {
+	if (ged_arot_args(GEDP, argc, (const char **)argv, rmat) != GED_OK) {
 	    Tcl_DStringInit(&ds);
-	    Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
+	    Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
 	    Tcl_DStringResult(interp, &ds);
 
 	    return TCL_ERROR;
@@ -3668,8 +3668,8 @@ cmd_arot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 
 	Tcl_DStringInit(&ds);
 
-	ret = ged_arot(gedp, argc, (const char **)argv);
-	Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
+	ret = ged_arot(GEDP, argc, (const char **)argv);
+	Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
 	Tcl_DStringResult(interp, &ds);
 
 	if (ret != GED_OK) {
@@ -3802,7 +3802,7 @@ cmd_tra(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 {
     Tcl_DString ds;
 
-    if (gedp == GED_NULL) {
+    if (GEDP == GED_NULL) {
 	return TCL_OK;
     }
 
@@ -3811,9 +3811,9 @@ cmd_tra(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 	char coord;
 	vect_t tvec;
 
-	if (ged_tra_args(gedp, argc, (const char **)argv, &coord, tvec) != GED_OK) {
+	if (ged_tra_args(GEDP, argc, (const char **)argv, &coord, tvec) != GED_OK) {
 	    Tcl_DStringInit(&ds);
-	    Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
+	    Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
 	    Tcl_DStringResult(interp, &ds);
 
 	    return TCL_ERROR;
@@ -3825,8 +3825,8 @@ cmd_tra(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 
 	Tcl_DStringInit(&ds);
 
-	ret = ged_tra(gedp, argc, (const char **)argv);
-	Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
+	ret = ged_tra(GEDP, argc, (const char **)argv);
+	Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
 	Tcl_DStringResult(interp, &ds);
 
 	if (ret != GED_OK) {
@@ -3981,7 +3981,7 @@ cmd_sca(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 {
     Tcl_DString ds;
 
-    if (gedp == GED_NULL) {
+    if (GEDP == GED_NULL) {
 	return TCL_OK;
     }
 
@@ -3992,9 +3992,9 @@ cmd_sca(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 	int save_edobj;
 	int ret;
 
-	if (ged_scale_args(gedp, argc, (const char **)argv, &sf1, &sf2, &sf3) != GED_OK) {
+	if (ged_scale_args(GEDP, argc, (const char **)argv, &sf1, &sf2, &sf3) != GED_OK) {
 	    Tcl_DStringInit(&ds);
-	    Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
+	    Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
 	    Tcl_DStringResult(interp, &ds);
 	    return TCL_ERROR;
 	}
@@ -4045,8 +4045,8 @@ cmd_sca(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 	fastf_t f;
 
 	Tcl_DStringInit(&ds);
-	ret = ged_scale(gedp, argc, (const char **)argv);
-	Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
+	ret = ged_scale(GEDP, argc, (const char **)argv);
+	Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
 	Tcl_DStringResult(interp, &ds);
 
 	if (ret != GED_OK) {

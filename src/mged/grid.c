@@ -93,7 +93,7 @@ set_grid_draw(const struct bu_structparse *sdp,
 {
     struct dm_list *dlp;
 
-    if (dbip == DBI_NULL) {
+    if (DBIP == DBI_NULL) {
 	grid_state->gr_draw = 0;
 	return;
     }
@@ -150,7 +150,7 @@ draw_grid(void)
     fastf_t inv_grid_res_v;
     fastf_t inv_aspect;
 
-    if (dbip == DBI_NULL ||
+    if (DBIP == DBI_NULL ||
 	ZERO(grid_state->gr_res_h) ||
 	ZERO(grid_state->gr_res_v))
 	return;
@@ -162,7 +162,7 @@ draw_grid(void)
 
     /* sanity - don't draw the grid if it would fill the screen */
     {
-	int width = dm_get_width(dmp);
+	int width = dm_get_width(DMP);
 	fastf_t pixel_size = 2.0 * sf / (fastf_t)width;
 
 	if (grid_state->gr_res_h < pixel_size || grid_state->gr_res_v < pixel_size)
@@ -170,7 +170,7 @@ draw_grid(void)
     }
 
     inv_sf = 1.0 / sf;
-    inv_aspect = 1.0 / dm_get_aspect(dmp);
+    inv_aspect = 1.0 / dm_get_aspect(DMP);
 
     nv_dots = 2.0 * inv_aspect * sf * inv_grid_res_v + (2 * grid_state->gr_res_major_v);
     nh_dots = 2.0 * sf * inv_grid_res_h + (2 * grid_state->gr_res_major_h);
@@ -195,11 +195,11 @@ draw_grid(void)
 	     0.0);
     }
 
-    dm_set_fg(dmp,
+    dm_set_fg(DMP,
 		   color_scheme->cs_grid[0],
 		   color_scheme->cs_grid[1],
 		   color_scheme->cs_grid[2], 1, 1.0);
-    dm_set_line_attr(dmp, 1, 0);		/* solid lines */
+    dm_set_line_attr(DMP, 1, 0);		/* solid lines */
 
     /* draw horizontal dots */
     for (i = 0; i < nv_dots; i += grid_state->gr_res_major_v) {
@@ -207,7 +207,7 @@ draw_grid(void)
 
 	for (j = 0; j < nh_dots; ++j) {
 	    fx = (view_grid_start_pt_local[X] + (j * grid_state->gr_res_h)) * inv_sf;
-	    dm_draw_point_2d(dmp, fx, fy * dm_get_aspect(dmp));
+	    dm_draw_point_2d(DMP, fx, fy * dm_get_aspect(DMP));
 	}
     }
 
@@ -218,7 +218,7 @@ draw_grid(void)
 
 	    for (j = 0; j < nv_dots; ++j) {
 		fy = (view_grid_start_pt_local[Y] + (j * grid_state->gr_res_v)) * inv_sf;
-		dm_draw_point_2d(dmp, fx, fy * dm_get_aspect(dmp));
+		dm_draw_point_2d(DMP, fx, fy * dm_get_aspect(DMP));
 	    }
 	}
     }
@@ -239,7 +239,7 @@ snap_to_grid(
     fastf_t sf;
     fastf_t inv_sf;
 
-    if (dbip == DBI_NULL ||
+    if (DBIP == DBI_NULL ||
 	ZERO(grid_state->gr_res_h) ||
 	ZERO(grid_state->gr_res_v))
 	return;
@@ -288,7 +288,7 @@ snap_keypoint_to_grid(void)
     point_t model_pt;
     struct bu_vls cmd = BU_VLS_INIT_ZERO;
 
-    if (dbip == DBI_NULL)
+    if (DBIP == DBI_NULL)
 	return;
 
     if (STATE != ST_S_EDIT && STATE != ST_O_EDIT) {
@@ -324,7 +324,7 @@ snap_view_center_to_grid(void)
 {
     point_t view_pt, model_pt;
 
-    if (dbip == DBI_NULL)
+    if (DBIP == DBI_NULL)
 	return;
 
     MAT_DELTAS_GET_NEG(model_pt, view_state->vs_gvp->gv_center);
@@ -354,7 +354,7 @@ round_to_grid(fastf_t *view_dx, fastf_t *view_dy)
     fastf_t sf, inv_sf;
     int nh, nv;
 
-    if (dbip == DBI_NULL ||
+    if (DBIP == DBI_NULL ||
 	ZERO(grid_state->gr_res_h) ||
 	ZERO(grid_state->gr_res_v))
 	return;
@@ -395,7 +395,7 @@ snap_view_to_grid(fastf_t view_dx, fastf_t view_dy)
     point_t model_pt, view_pt;
     point_t vcenter, diff;
 
-    if (dbip == DBI_NULL ||
+    if (DBIP == DBI_NULL ||
 	ZERO(grid_state->gr_res_h) ||
 	ZERO(grid_state->gr_res_v))
 	return;

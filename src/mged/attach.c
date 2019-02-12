@@ -133,7 +133,7 @@ ogl_doevent(void *UNUSED(vclientData), void *veventPtr)
     /*ClientData clientData = (ClientData)vclientData;*/
     XEvent *eventPtr= (XEvent *)veventPtr;
     if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
-	(void)dm_make_current(dmp);
+	(void)dm_make_current(DMP);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	dirty = 1;
 	return TCL_OK;
@@ -270,12 +270,12 @@ mged_dm_init(struct dm_list *o_dm_list,
     Tk_DeleteGenericHandler(doEvent, (ClientData)NULL);
 #endif
 
-    if ((dmp = dm_open(INTERP, dm_type, argc-1, argv)) == DM_NULL)
+    if ((DMP = dm_open(INTERP, dm_type, argc-1, argv)) == DM_NULL)
 	return TCL_ERROR;
 
     /*XXXX this eventually needs to move into Ogl's private structure */
-    dm_set_vp(dmp, &view_state->vs_gvp->gv_scale);
-    dm_set_perspective(dmp, mged_variables->mv_perspective_mode);
+    dm_set_vp(DMP, &view_state->vs_gvp->gv_scale);
+    dm_set_perspective(DMP, mged_variables->mv_perspective_mode);
 
     /* TODO - look up event handler based on dm_type */
     eventHandler = dm_doevent(dm_type);
@@ -283,10 +283,10 @@ mged_dm_init(struct dm_list *o_dm_list,
 #ifdef HAVE_TK
     Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
 #endif
-    (void)dm_configure_win(dmp, 0);
+    (void)dm_configure_win(DMP, 0);
 
-    if (dm_get_pathname(dmp)) {
-	bu_vls_printf(&vls, "mged_bind_dm %s", bu_vls_addr(dm_get_pathname(dmp)));
+    if (dm_get_pathname(DMP)) {
+	bu_vls_printf(&vls, "mged_bind_dm %s", bu_vls_addr(dm_get_pathname(DMP)));
 	Tcl_Eval(INTERP, bu_vls_addr(&vls));
     }
     bu_vls_free(&vls);
@@ -299,7 +299,7 @@ mged_dm_init(struct dm_list *o_dm_list,
 void
 mged_fb_open(void)
 {
-    fbp = dm_get_fb(dmp);
+    fbp = dm_get_fb(DMP);
 }
 
 
@@ -357,7 +357,7 @@ release(char *name, int need_close)
 			     " not found\n", (char *)NULL);
 	    return TCL_ERROR;
 	}
-    } else if (dmp && dm_get_pathname(dmp) && BU_STR_EQUAL("nu", bu_vls_addr(dm_get_pathname(dmp))))
+    } else if (DMP && dm_get_pathname(DMP) && BU_STR_EQUAL("nu", bu_vls_addr(dm_get_pathname(DMP))))
 	return TCL_OK;  /* Ignore */
 
     if (fbp) {
@@ -388,7 +388,7 @@ release(char *name, int need_close)
 	curr_dm_list->dml_tie->cl_tie = (struct dm_list *)NULL;
 
     if (need_close)
-	dm_close(dmp);
+	dm_close(DMP);
 
     RT_FREE_VLIST(&curr_dm_list->dml_p_vlist);
     BU_LIST_DEQUEUE(&curr_dm_list->l);
@@ -669,20 +669,20 @@ mged_attach(struct w_dm *wp, int argc, const char *argv[])
     mged_link_vars(curr_dm_list);
 
     Tcl_ResetResult(INTERP);
-    if (dm_get_dm_name(dmp) && dm_get_dm_lname(dmp)) {
-	Tcl_AppendResult(INTERP, "ATTACHING ", dm_get_dm_name(dmp), " (", dm_get_dm_lname(dmp),
+    if (dm_get_dm_name(DMP) && dm_get_dm_lname(DMP)) {
+	Tcl_AppendResult(INTERP, "ATTACHING ", dm_get_dm_name(DMP), " (", dm_get_dm_lname(DMP),
 		")\n", (char *)NULL);
     }
 
     share_dlist(curr_dm_list);
 
-    if (dm_get_displaylist(dmp) && mged_variables->mv_dlist && !dlist_state->dl_active) {
-	createDLists(gedp->ged_gdp->gd_headDisplay);
+    if (dm_get_displaylist(DMP) && mged_variables->mv_dlist && !dlist_state->dl_active) {
+	createDLists(GEDP->ged_gdp->gd_headDisplay);
 	dlist_state->dl_active = 1;
     }
 
-    (void)dm_make_current(dmp);
-    (void)dm_set_win_bounds(dmp, windowbounds);
+    (void)dm_make_current(DMP);
+    (void)dm_set_win_bounds(DMP, windowbounds);
     mged_fb_open();
 
     return TCL_OK;
@@ -690,7 +690,7 @@ mged_attach(struct w_dm *wp, int argc, const char *argv[])
  Bad:
     Tcl_AppendResult(INTERP, "attach(", argv[argc - 1], "): BAD\n", (char *)NULL);
 
-    if (dmp != (dm *)0)
+    if (DMP != (dm *)0)
 	release((char *)NULL, 1);  /* release() will call dm_close */
     else
 	release((char *)NULL, 0);  /* release() will not call dm_close */
@@ -841,8 +841,8 @@ f_dm(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const cha
     }
 
     if (!cmd_hook) {
-	if (dm_get_dm_name(dmp)) {
-	    Tcl_AppendResult(interpreter, "The '", dm_get_dm_name(dmp),
+	if (dm_get_dm_name(DMP)) {
+	    Tcl_AppendResult(interpreter, "The '", dm_get_dm_name(DMP),
 		    "' display manager does not support local commands.\n",
 		    (char *)NULL);
 	}

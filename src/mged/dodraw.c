@@ -44,17 +44,17 @@ cvt_vlblock_to_solids(struct bn_vlblock *vbp, const char *name, int copy)
     bu_strlcpy(shortname, name, sizeof(shortname));
 
     /* Remove any residue colors from a previous overlay w/same name */
-    if (dbip->dbi_read_only) {
+    if (DBIP->dbi_read_only) {
 	av[0] = "erase";
 	av[1] = shortname;
 	av[2] = NULL;
-	(void)ged_erase(gedp, 2, (const char **)av);
+	(void)ged_erase(GEDP, 2, (const char **)av);
     } else {
 	av[0] = "kill";
 	av[1] = "-f";
 	av[2] = shortname;
 	av[3] = NULL;
-	(void)ged_kill(gedp, 3, (const char **)av);
+	(void)ged_kill(GEDP, 3, (const char **)av);
     }
 
     for (i=0; i < vbp->nused; i++) {
@@ -62,7 +62,7 @@ cvt_vlblock_to_solids(struct bn_vlblock *vbp, const char *name, int copy)
 
 	snprintf(namebuf, 32, "%s%lx",	shortname, vbp->rgb[i]);
 	/*invent_solid(namebuf, &vbp->head[i], vbp->rgb[i], copy);*/
-	invent_solid(gedp->ged_gdp->gd_headDisplay, dbip, createDListSolid, gedp->ged_free_vlist_callback, namebuf, &vbp->head[i], vbp->rgb[i], copy, 0.0,0, gedp->freesolid, 0);
+	invent_solid(GEDP->ged_gdp->gd_headDisplay, DBIP, createDListSolid, GEDP->ged_free_vlist_callback, namebuf, &vbp->head[i], vbp->rgb[i], copy, 0.0,0, GEDP->freesolid, 0);
     }
 }
 
@@ -120,8 +120,8 @@ drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *path
 
     if (!existing_sp) {
 	/* Handling a new solid */
-	GET_SOLID(sp, &gedp->freesolid->l);
-	BU_LIST_APPEND(&gedp->freesolid->l, &((sp)->l) );
+	GET_SOLID(sp, &GEDP->freesolid->l);
+	BU_LIST_APPEND(&GEDP->freesolid->l, &((sp)->l) );
 	sp->s_dlist = 0;
     } else {
 	/* Just updating an existing solid.
@@ -171,7 +171,7 @@ drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *path
 	bu_semaphore_acquire(RT_SEM_MODEL);
 
 	/* Grab the last display list */
-	gdlp = BU_LIST_PREV(display_list, gedp->ged_gdp->gd_headDisplay);
+	gdlp = BU_LIST_PREV(display_list, GEDP->ged_gdp->gd_headDisplay);
 	BU_LIST_APPEND(gdlp->dl_headSolid.back, &sp->l);
 
 	bu_semaphore_release(RT_SEM_MODEL);
@@ -197,7 +197,7 @@ replot_original_solid(struct solid *sp)
     struct directory *dp;
     mat_t mat;
 
-    if (dbip == DBI_NULL)
+    if (DBIP == DBI_NULL)
 	return 0;
 
     dp = LAST_SOLID(sp);
@@ -206,9 +206,9 @@ replot_original_solid(struct solid *sp)
 			 "): Unable to plot evaluated regions, skipping\n", (char *)NULL);
 	return -1;
     }
-    (void)db_path_to_mat(dbip, &sp->s_fullpath, mat, sp->s_fullpath.fp_len-1, &rt_uniresource);
+    (void)db_path_to_mat(DBIP, &sp->s_fullpath, mat, sp->s_fullpath.fp_len-1, &rt_uniresource);
 
-    if (rt_db_get_internal(&intern, dp, dbip, mat, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, DBIP, mat, &rt_uniresource) < 0) {
 	Tcl_AppendResult(INTERP, dp->d_namep, ":  solid import failure\n", (char *)NULL);
 	return -1;		/* ERROR */
     }
@@ -299,7 +299,7 @@ redraw_visible_objects(void)
     char *av[] = {NULL, NULL};
 
     av[0] = "redraw";
-    ret = ged_redraw(gedp, ac, (const char **)av);
+    ret = ged_redraw(GEDP, ac, (const char **)av);
 
     if (ret == GED_ERROR) {
 	return TCL_ERROR;

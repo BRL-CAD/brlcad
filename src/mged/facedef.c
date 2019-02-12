@@ -326,7 +326,7 @@ get_pleqn(fastf_t *plane, const char *argv[])
 {
     int i;
 
-    if (dbip == DBI_NULL)
+    if (DBIP == DBI_NULL)
 	return;
 
     for (i=0; i<4; i++)
@@ -382,7 +382,7 @@ get_rotfb(fastf_t *plane, const char *argv[], const struct rt_arb_internal *arb)
     short int i, temp;
     point_t pt;
 
-    if (dbip == DBI_NULL)
+    if (DBIP == DBI_NULL)
 	return;
 
     rota= atof(argv[0]) * DEG2RAD;
@@ -418,7 +418,7 @@ get_nupnt(fastf_t *plane, const char *argv[])
     int i;
     point_t pt;
 
-    if (dbip == DBI_NULL)
+    if (DBIP == DBI_NULL)
 	return;
 
     for (i=0; i<3; i++)

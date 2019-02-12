@@ -237,9 +237,9 @@ draw_ticks(fastf_t angle)
     x2 = adc_state->adc_dv_x + d1 -t1;
     y2 = adc_state->adc_dv_y + d2 + t2;
     if (clip(&x1, &Y1, &x2, &y2) == 0) {
-	dm_draw_line_2d(dmp,
-			GED2PM1(x1), GED2PM1(Y1) * dm_get_aspect(dmp),
-			GED2PM1(x2), GED2PM1(y2) * dm_get_aspect(dmp));
+	dm_draw_line_2d(DMP,
+			GED2PM1(x1), GED2PM1(Y1) * dm_get_aspect(DMP),
+			GED2PM1(x2), GED2PM1(y2) * dm_get_aspect(DMP));
     }
 
     /* Quadrant 2 */
@@ -248,9 +248,9 @@ draw_ticks(fastf_t angle)
     x2 = adc_state->adc_dv_x - d2 - t2;
     y2 = adc_state->adc_dv_y + d1 - t1;
     if (clip (&x1, &Y1, &x2, &y2) == 0) {
-	dm_draw_line_2d(dmp,
-			GED2PM1(x1), GED2PM1(Y1) * dm_get_aspect(dmp),
-			GED2PM1(x2), GED2PM1(y2) * dm_get_aspect(dmp));
+	dm_draw_line_2d(DMP,
+			GED2PM1(x1), GED2PM1(Y1) * dm_get_aspect(DMP),
+			GED2PM1(x2), GED2PM1(y2) * dm_get_aspect(DMP));
     }
 
     /* Quadrant 3 */
@@ -259,9 +259,9 @@ draw_ticks(fastf_t angle)
     x2 = adc_state->adc_dv_x - d1 + t1;
     y2 = adc_state->adc_dv_y - d2 - t2;
     if (clip (&x1, &Y1, &x2, &y2) == 0) {
-	dm_draw_line_2d(dmp,
-			GED2PM1(x1), GED2PM1(Y1) * dm_get_aspect(dmp),
-			GED2PM1(x2), GED2PM1(y2) * dm_get_aspect(dmp));
+	dm_draw_line_2d(DMP,
+			GED2PM1(x1), GED2PM1(Y1) * dm_get_aspect(DMP),
+			GED2PM1(x2), GED2PM1(y2) * dm_get_aspect(DMP));
     }
 
     /* Quadrant 4 */
@@ -270,9 +270,9 @@ draw_ticks(fastf_t angle)
     x2 = adc_state->adc_dv_x + d2 + t2;
     y2 = adc_state->adc_dv_y - d1 + t1;
     if (clip (&x1, &Y1, &x2, &y2) == 0) {
-	dm_draw_line_2d(dmp,
-			GED2PM1(x1), GED2PM1(Y1) * dm_get_aspect(dmp),
-			GED2PM1(x2), GED2PM1(y2) * dm_get_aspect(dmp));
+	dm_draw_line_2d(DMP,
+			GED2PM1(x1), GED2PM1(Y1) * dm_get_aspect(DMP),
+			GED2PM1(x2), GED2PM1(y2) * dm_get_aspect(DMP));
     }
 }
 
@@ -295,19 +295,19 @@ adcursor(void)
     calc_adc_a2();
     calc_adc_dst();
 
-    dm_set_fg(dmp,
+    dm_set_fg(DMP,
 		   color_scheme->cs_adc_line[0],
 		   color_scheme->cs_adc_line[1],
 		   color_scheme->cs_adc_line[2], 1, 1.0);
-    dm_set_line_attr(dmp, mged_variables->mv_linewidth, 0);
+    dm_set_line_attr(DMP, mged_variables->mv_linewidth, 0);
 
     /* Horizontal */
-    dm_draw_line_2d(dmp,
-		    GED2PM1(GED_MIN), GED2PM1(adc_state->adc_dv_y) * dm_get_aspect(dmp),
-		    GED2PM1(GED_MAX), GED2PM1(adc_state->adc_dv_y) * dm_get_aspect(dmp));
+    dm_draw_line_2d(DMP,
+		    GED2PM1(GED_MIN), GED2PM1(adc_state->adc_dv_y) * dm_get_aspect(DMP),
+		    GED2PM1(GED_MAX), GED2PM1(adc_state->adc_dv_y) * dm_get_aspect(DMP));
 
     /* Vertical */
-    dm_draw_line_2d(dmp,
+    dm_draw_line_2d(DMP,
 		    GED2PM1(adc_state->adc_dv_x), GED2PM1(GED_MAX),
 		    GED2PM1(adc_state->adc_dv_x), GED2PM1(GED_MIN));
 
@@ -327,12 +327,12 @@ adcursor(void)
     x4 = adc_state->adc_dv_x - d2;
     y4 = adc_state->adc_dv_y + d1;
 
-    dm_draw_line_2d(dmp,
-		    GED2PM1(x1), GED2PM1(Y1) * dm_get_aspect(dmp),
-		    GED2PM1(x2), GED2PM1(y2) * dm_get_aspect(dmp));
-    dm_draw_line_2d(dmp,
-		    GED2PM1(x3), GED2PM1(y3) * dm_get_aspect(dmp),
-		    GED2PM1(x4), GED2PM1(y4) * dm_get_aspect(dmp));
+    dm_draw_line_2d(DMP,
+		    GED2PM1(x1), GED2PM1(Y1) * dm_get_aspect(DMP),
+		    GED2PM1(x2), GED2PM1(y2) * dm_get_aspect(DMP));
+    dm_draw_line_2d(DMP,
+		    GED2PM1(x3), GED2PM1(y3) * dm_get_aspect(DMP),
+		    GED2PM1(x4), GED2PM1(y4) * dm_get_aspect(DMP));
 
     d1 = cos(angle2) * 8000.0;
     d2 = sin(angle2) * 8000.0;
@@ -346,16 +346,16 @@ adcursor(void)
     x4 = adc_state->adc_dv_x - d2;
     y4 = adc_state->adc_dv_y + d1;
 
-    dm_set_line_attr(dmp, mged_variables->mv_linewidth, 1);
-    dm_draw_line_2d(dmp,
-		    GED2PM1(x1), GED2PM1(Y1) * dm_get_aspect(dmp),
-		    GED2PM1(x2), GED2PM1(y2) * dm_get_aspect(dmp));
-    dm_draw_line_2d(dmp,
-		    GED2PM1(x3), GED2PM1(y3) * dm_get_aspect(dmp),
-		    GED2PM1(x4), GED2PM1(y4) * dm_get_aspect(dmp));
-    dm_set_line_attr(dmp, mged_variables->mv_linewidth, 0);
+    dm_set_line_attr(DMP, mged_variables->mv_linewidth, 1);
+    dm_draw_line_2d(DMP,
+		    GED2PM1(x1), GED2PM1(Y1) * dm_get_aspect(DMP),
+		    GED2PM1(x2), GED2PM1(y2) * dm_get_aspect(DMP));
+    dm_draw_line_2d(DMP,
+		    GED2PM1(x3), GED2PM1(y3) * dm_get_aspect(DMP),
+		    GED2PM1(x4), GED2PM1(y4) * dm_get_aspect(DMP));
+    dm_set_line_attr(DMP, mged_variables->mv_linewidth, 0);
 
-    dm_set_fg(dmp,
+    dm_set_fg(DMP,
 		   color_scheme->cs_adc_tick[0],
 		   color_scheme->cs_adc_tick[1],
 		   color_scheme->cs_adc_tick[2], 1, 1.0);

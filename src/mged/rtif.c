@@ -78,11 +78,11 @@ cmd_rt(ClientData UNUSED(clientData),
     Tcl_DStringInit(&ds);
 
     if (doRtcheck)
-	ret = ged_rtcheck(gedp, argc, (const char **)argv);
+	ret = ged_rtcheck(GEDP, argc, (const char **)argv);
     else
-	ret = ged_rt(gedp, argc, (const char **)argv);
+	ret = ged_rt(GEDP, argc, (const char **)argv);
 
-    Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
+    Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
     if (ret == GED_OK)
@@ -119,8 +119,8 @@ cmd_rrt(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 
     Tcl_DStringInit(&ds);
 
-    ret = ged_rrt(gedp, argc, (const char **)argv);
-    Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
+    ret = ged_rrt(GEDP, argc, (const char **)argv);
+    Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
     if (ret == GED_OK)
@@ -209,13 +209,13 @@ f_rmats(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 	mode = atoi(argv[2]);
     switch (mode) {
 	case 1:
-	    if ((dp = db_lookup(dbip, "EYE", LOOKUP_NOISY)) == RT_DIR_NULL) {
+	    if ((dp = db_lookup(DBIP, "EYE", LOOKUP_NOISY)) == RT_DIR_NULL) {
 		mode = -1;
 		break;
 	    }
 
-	    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
-	    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
+	    gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
+	    while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 		next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 		FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
@@ -377,13 +377,13 @@ f_nirt(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
 	insertArgv[2] = (char *)0;
 	newArgv = bu_argv_dupinsert(1, insertArgc, (const char **)insertArgv, argc, (const char **)argv);
 	newArgc = argc + insertArgc;
-	ret = ged_nirt(gedp, newArgc, (const char **)newArgv);
+	ret = ged_nirt(GEDP, newArgc, (const char **)newArgv);
 	bu_argv_free(newArgc, newArgv);
     } else {
-	ret = ged_nirt(gedp, argc, (const char **)argv);
+	ret = ged_nirt(GEDP, argc, (const char **)argv);
     }
 
-    Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
+    Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
     if (ret == GED_OK)
@@ -408,9 +408,9 @@ f_vnirt(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 
     Tcl_DStringInit(&ds);
 
-    ret = ged_vnirt(gedp, argc, (const char **)argv);
+    ret = ged_vnirt(GEDP, argc, (const char **)argv);
 
-    Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
+    Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
     if (ret == GED_OK)

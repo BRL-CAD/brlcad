@@ -513,8 +513,8 @@ ill_common(void) {
     int is_empty = 1;
 
     /* Common part of illumination */
-    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	if (BU_LIST_NON_EMPTY(&gdlp->dl_headSolid)) {
@@ -715,7 +715,7 @@ be_accept()
 	mmenu_set_all(MENU_L1, MENU_NULL);
 	mmenu_set_all(MENU_L2, MENU_NULL);
 
-	dl_set_iflag(gedp->ged_gdp->gd_headDisplay, DOWN);
+	dl_set_iflag(GEDP->ged_gdp->gd_headDisplay, DOWN);
 
 	illum_gdlp = GED_DISPLAY_LIST_NULL;
 	illump = SOLID_NULL;
@@ -799,7 +799,7 @@ be_reject()
     illump = SOLID_NULL;		/* None selected */
 
     /* Clear illumination flags */
-    dl_set_iflag(gedp->ged_gdp->gd_headDisplay, DOWN);
+    dl_set_iflag(GEDP->ged_gdp->gd_headDisplay, DOWN);
 
     mged_color_soltab();
     (void)chg_state(STATE, ST_VIEW, "Edit Reject");

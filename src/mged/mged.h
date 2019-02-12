@@ -83,17 +83,19 @@
 #define MGED_INMEM_NAME ".inmem"
 
 
+/* global state */
+extern struct ged *GEDP;    /* defined in mged.c */
+extern struct db_i *DBIP;   /* defined in mged.c */
+extern struct rt_wdb *WDBP; /* defined in mged.c */
+
+
 /*
  * All GED files are stored in a fixed base unit (MM).  These factors
  * convert database unit to local (or working) units.
  */
-extern struct ged *gedp;		/* defined in mged.c */
-extern struct db_i *dbip;		/* defined in mged.c */
-extern int dbih;		/* defined in mged.c */
-extern struct rt_wdb *wdbp;		/* defined in mged.c */
-#define base2local (dbip->dbi_base2local)
-#define local2base (dbip->dbi_local2base)
-#define cur_title (dbip->dbi_title)      /* current model title */
+#define base2local (DBIP->dbi_base2local)
+#define local2base (DBIP->dbi_local2base)
+#define cur_title (DBIP->dbi_title)      /* current model title */
 
 
 /* Some useful constants, if they haven't been defined elsewhere. */
@@ -373,14 +375,14 @@ you should exit MGED now, and resolve the I/O problem, before continuing.\n")
 
 /* Check if database pointer is NULL */
 #define CHECK_DBI_NULL \
-    if (dbip == DBI_NULL) { \
+    if (DBIP == DBI_NULL) { \
 	Tcl_AppendResult(INTERP, "A database is not open!\n", (char *)NULL); \
 	return TCL_ERROR; \
     }
 
 /* Check if the database is read only, and if so return TCL_ERROR */
 #define CHECK_READ_ONLY	\
-    if (dbip->dbi_read_only) { \
+    if (DBIP->dbi_read_only) { \
 	Tcl_AppendResult(INTERP, "Sorry, this database is READ-ONLY\n", (char *)NULL); \
 	return TCL_ERROR; \
     }

@@ -418,41 +418,41 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 	bu_vls_strcpy(&obj_list.names[idx].dest[i], bu_vls_addr(name));
 
 	/* actually copy the primitive to the new name */
-	if ((proto2 = db_lookup(wdbp->dbip,  proto->d_namep, LOOKUP_NOISY)) == RT_DIR_NULL)
+	if ((proto2 = db_lookup(WDBP->dbip,  proto->d_namep, LOOKUP_NOISY)) == RT_DIR_NULL)
 	    return;
 
-	if (db_lookup(wdbp->dbip, bu_vls_addr(name), LOOKUP_QUIET) != RT_DIR_NULL) {
-	    if (wdbp->wdb_interp) {
-		Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, bu_vls_addr(name), ":  already exists", (char *)NULL);
+	if (db_lookup(WDBP->dbip, bu_vls_addr(name), LOOKUP_QUIET) != RT_DIR_NULL) {
+	    if (WDBP->wdb_interp) {
+		Tcl_AppendResult((Tcl_Interp *)WDBP->wdb_interp, bu_vls_addr(name), ":  already exists", (char *)NULL);
 	    } else {
 		bu_log("%s: already exists\n", bu_vls_addr(name));
 	    }
 	    return;
 	}
 
-	if (db_get_external(&external, proto2, wdbp->dbip)) {
-	    if (wdbp->wdb_interp) {
-		Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, "Database read error, aborting", (char *)NULL);
+	if (db_get_external(&external, proto2, WDBP->dbip)) {
+	    if (WDBP->wdb_interp) {
+		Tcl_AppendResult((Tcl_Interp *)WDBP->wdb_interp, "Database read error, aborting", (char *)NULL);
 	    } else {
 		bu_log("Database read error, aborting\n");
 	    }
 	    return;
 	}
 
-	dp = db_diradd(wdbp->dbip, bu_vls_addr(name), RT_DIR_PHONY_ADDR, 0, proto2->d_flags, (void *)&proto2->d_minor_type);
+	dp = db_diradd(WDBP->dbip, bu_vls_addr(name), RT_DIR_PHONY_ADDR, 0, proto2->d_flags, (void *)&proto2->d_minor_type);
 	if (dp == RT_DIR_NULL) {
-	    if (wdbp->wdb_interp) {
-		Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, "An error has occurred while adding a new object to the database.", (char *)NULL);
+	    if (WDBP->wdb_interp) {
+		Tcl_AppendResult((Tcl_Interp *)WDBP->wdb_interp, "An error has occurred while adding a new object to the database.", (char *)NULL);
 	    } else {
 		bu_log("An error has occurred while adding a new object to the database.");
 	    }
 	    return;
 	}
 
-	if (db_put_external(&external, dp, wdbp->dbip) < 0) {
+	if (db_put_external(&external, dp, WDBP->dbip) < 0) {
 	    bu_free_external(&external);
-	    if (wdbp->wdb_interp) {
-		Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, "Database write error, aborting", (char *)NULL);
+	    if (WDBP->wdb_interp) {
+		Tcl_AppendResult((Tcl_Interp *)WDBP->wdb_interp, "Database write error, aborting", (char *)NULL);
 	    } else {
 		bu_log("Database write error, aborting\n");
 	    }
@@ -476,7 +476,7 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 	}
 
 	/* write the new matrix to the new object */
-	if (rt_db_put_internal(dp, wdbp->dbip, &intern, &rt_uniresource) < 0)
+	if (rt_db_put_internal(dp, WDBP->dbip, &intern, &rt_uniresource) < 0)
 	    bu_log("ERROR: clone internal error copying %s\n", proto->d_namep);
 	rt_db_free_internal(&intern);
     } /* end iteration over each copy */
@@ -668,7 +668,7 @@ copy_v5_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 		return NULL;
 	    }
 
-	    if ((dp=db_diradd(wdbp->dbip, bu_vls_addr(name), -1, 0, proto->d_flags, (void *)&proto->d_minor_type)) == RT_DIR_NULL) {
+	    if ((dp=db_diradd(WDBP->dbip, bu_vls_addr(name), -1, 0, proto->d_flags, (void *)&proto->d_minor_type)) == RT_DIR_NULL) {
 		bu_log("An error has occurred while adding a new object to the database.");
 		return NULL;
 	    }
@@ -681,7 +681,7 @@ copy_v5_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 	    /* recursively update the tree */
 	    copy_v5_comb_tree(comb->tree, i);
 
-	    if (rt_db_put_internal(dp, wdbp->dbip, &dbintern, &rt_uniresource) < 0) {
+	    if (rt_db_put_internal(dp, WDBP->dbip, &dbintern, &rt_uniresource) < 0) {
 		bu_log("ERROR: clone internal error copying %s\n", proto->d_namep);
 		bu_vls_free(name);
 		return NULL;
@@ -1114,7 +1114,7 @@ f_tracker(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 	/* rots = (vect_t *)bu_malloc(sizeof(vect_t)*n_links, "alloc rots");*/
 	for (i = 0; i < n_links; i++) {
 	    /* global dbip */
-	    dps[i] = db_lookup(dbip, bu_vls_addr(&links[i].name), LOOKUP_QUIET);
+	    dps[i] = db_lookup(DBIP, bu_vls_addr(&links[i].name), LOOKUP_QUIET);
 	    /* VSET(rots[i], 0, 0, 0);*/
 	}
 
@@ -1137,7 +1137,7 @@ f_tracker(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 
 		state.src = dps[j];
 		/* global dbip */
-		dps[j] = copy_object(dbip, &rt_uniresource, &state);
+		dps[j] = copy_object(DBIP, &rt_uniresource, &state);
 
 		if (!no_draw || !is_dm_null()) {
 		    redraw_visible_objects();

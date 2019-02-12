@@ -1102,7 +1102,7 @@ pipe_ed(int arg)
     struct wdb_pipept *next;
     struct wdb_pipept *prev;
 
-    if (dbip == DBI_NULL)
+    if (DBIP == DBI_NULL)
 	return;
 
     switch (arg) {
@@ -1477,7 +1477,7 @@ metaball_ed(int arg)
 {
     struct wdb_metaballpt *next, *prev;
 
-    if (dbip == DBI_NULL)
+    if (DBIP == DBI_NULL)
 	return;
 
     switch (arg) {
@@ -2511,7 +2511,7 @@ init_sedit(void)
     int type;
     int id;
 
-    if (dbip == DBI_NULL || !illump)
+    if (DBIP == DBI_NULL || !illump)
 	return;
 
     /*
@@ -2525,7 +2525,7 @@ init_sedit(void)
 
     /* Read solid description into es_int */
     if (rt_db_get_internal(&es_int, LAST_SOLID(illump),
-			   dbip, NULL, &rt_uniresource) < 0) {
+			   DBIP, NULL, &rt_uniresource) < 0) {
 	Tcl_AppendResult(INTERP, "init_sedit(",
 			 LAST_SOLID(illump)->d_namep,
 			 "):  solid import failure\n", (char *)NULL);
@@ -2568,7 +2568,7 @@ init_sedit(void)
     }
 
     /* Save aggregate path matrix */
-    (void)db_path_to_mat(dbip, &illump->s_fullpath, es_mat, illump->s_fullpath.fp_len-1, &rt_uniresource);
+    (void)db_path_to_mat(DBIP, &illump->s_fullpath, es_mat, illump->s_fullpath.fp_len-1, &rt_uniresource);
 
     /* get the inverse matrix */
     bn_mat_inv(es_invmat, es_mat);
@@ -2655,13 +2655,13 @@ replot_editing_solid(void)
 
     illdp = LAST_SOLID(illump);
 
-    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
 	    if (LAST_SOLID(sp) == illdp) {
-		(void)db_path_to_mat(dbip, &sp->s_fullpath, mat, sp->s_fullpath.fp_len-1, &rt_uniresource);
+		(void)db_path_to_mat(DBIP, &sp->s_fullpath, mat, sp->s_fullpath.fp_len-1, &rt_uniresource);
 		(void)replot_modified_solid(sp, &es_int, mat);
 	    }
 	}
@@ -2678,7 +2678,7 @@ transform_editing_solid(
     struct rt_db_internal *is,		/* input solid */
     int freeflag)
 {
-    if (rt_matrix_transform(os, mat, is, freeflag, dbip, &rt_uniresource) < 0)
+    if (rt_matrix_transform(os, mat, is, freeflag, DBIP, &rt_uniresource) < 0)
 	bu_exit(EXIT_FAILURE, "transform_editing_solid failed to apply a matrix transform, aborting");
 }
 
@@ -2838,10 +2838,10 @@ get_file_name(char *str)
 	bu_free((void *)dir, "get_file_name: directory string");
     }
 
-    if (dm_get_pathname(dmp)) {
+    if (dm_get_pathname(DMP)) {
 	bu_vls_printf(&cmd,
 		"getFile %s %s {{{All Files} {*}}} {Get File}",
-		bu_vls_addr(dm_get_pathname(dmp)),
+		bu_vls_addr(dm_get_pathname(DMP)),
 		bu_vls_addr(&varname_vls));
     }
     bu_vls_free(&varname_vls);
@@ -3938,7 +3938,7 @@ sedit(void)
     mat_t edit;
     point_t rot_point;
 
-    if (dbip == DBI_NULL)
+    if (DBIP == DBI_NULL)
 	return;
 
     sedraw = 0;
@@ -4237,9 +4237,9 @@ sedit(void)
 		RT_BOT_CK_MAGIC(bot);
 		old_mode = bot->mode;
 		sprintf(mode, " %d", old_mode - 1);
-		if (dm_get_pathname(dmp)) {
+		if (dm_get_pathname(DMP)) {
 		    ret_tcl = Tcl_VarEval(INTERP, "cad_radio", " .bot_mode_radio ",
-			    bu_vls_addr(dm_get_pathname(dmp)), " _bot_mode_result",
+			    bu_vls_addr(dm_get_pathname(DMP)), " _bot_mode_result",
 			    " \"BOT Mode\"", "  \"Select the desired mode\"", mode,
 			    " { surface volume plate plate/nocosine }",
 			    " { \"In surface mode, each triangle represents part of a zero thickness surface and no volume is enclosed\" \"In volume mode, the triangles are expected to enclose a volume and that volume becomes the solid\" \"In plate mode, each triangle represents a plate with a specified thickness\" \"In plate/nocosine mode, each triangle represents a plate with a specified thickness, but the LOS thickness reported by the raytracer is independent of obliquity angle\" } ", (char *)NULL);
@@ -4277,9 +4277,9 @@ sedit(void)
 
 		RT_BOT_CK_MAGIC(bot);
 		sprintf(orient, " %d", bot->orientation - 1);
-		if (dm_get_pathname(dmp)) {
+		if (dm_get_pathname(DMP)) {
 		    ret_tcl = Tcl_VarEval(INTERP, "cad_radio", " .bot_orient_radio ",
-			    bu_vls_addr(dm_get_pathname(dmp)), " _bot_orient_result",
+			    bu_vls_addr(dm_get_pathname(DMP)), " _bot_orient_result",
 			    " \"BOT Face Orientation\"", "  \"Select the desired orientation\"", orient,
 			    " { none right-hand-rule left-hand-rule }",
 			    " { \"No orientation means that there is no particular order for the vertices of the triangles\" \"right-hand-rule means that the vertices of each triangle are ordered such that the right-hand-rule produces an outward pointing normal\"  \"left-hand-rule means that the vertices of each triangle are ordered such that the left-hand-rule produces an outward pointing normal\" } ", (char *)NULL);
@@ -4370,11 +4370,11 @@ sedit(void)
 		    cur_settings[5] = '1';
 		}
 
-		if (dm_get_pathname(dmp)) {
+		if (dm_get_pathname(DMP)) {
 		    ret_tcl = Tcl_VarEval(INTERP,
 			    "cad_list_buts",
 			    " .bot_list_flags ",
-			    bu_vls_addr(dm_get_pathname(dmp)),
+			    bu_vls_addr(dm_get_pathname(DMP)),
 			    " _bot_flags_result ",
 			    cur_settings,
 			    " \"BOT Flags\"",
@@ -4455,8 +4455,8 @@ sedit(void)
 		else
 		    sprintf(fmode, " %d", BU_BITTEST(bot->face_mode, 0)?1:0);
 
-		if (dm_get_pathname(dmp)) {
-		    ret_tcl = Tcl_VarEval(INTERP, "cad_radio", " .bot_fmode_radio ", bu_vls_addr(dm_get_pathname(dmp)),
+		if (dm_get_pathname(DMP)) {
+		    ret_tcl = Tcl_VarEval(INTERP, "cad_radio", " .bot_fmode_radio ", bu_vls_addr(dm_get_pathname(DMP)),
 			    " _bot_fmode_result ", "\"BOT Face Mode\"",
 			    " \"Select the desired face mode\"", fmode,
 			    " { {Thickness centered about hit point} {Thickness appended to hit point} }",
@@ -4583,14 +4583,14 @@ sedit(void)
 		    rt_db_free_internal(&tmp_ip);
 		}
 
-		if ((dp = db_lookup(dbip, sketch_name, 0)) == RT_DIR_NULL) {
+		if ((dp = db_lookup(DBIP, sketch_name, 0)) == RT_DIR_NULL) {
 		    bu_log("Warning: %s does not exist!\n",
 			   sketch_name);
 		    extr->skt = (struct rt_sketch_internal *)NULL;
 		} else {
 		    /* import the new sketch */
 
-		    if (rt_db_get_internal(&tmp_ip, dp, dbip, bn_mat_identity, &rt_uniresource) != ID_SKETCH) {
+		    if (rt_db_get_internal(&tmp_ip, dp, DBIP, bn_mat_identity, &rt_uniresource) != ID_SKETCH) {
 			bu_log("rt_extrude_import: ERROR: Cannot import sketch (%.16s) for extrusion\n",
 			       sketch_name);
 			extr->skt = (struct rt_sketch_internal *)NULL;
@@ -7303,7 +7303,7 @@ vls_solid(struct bu_vls *vp, struct rt_db_internal *ip, const mat_t mat)
 
     RT_DB_INTERNAL_INIT(&intern);
 
-    if (dbip == DBI_NULL)
+    if (DBIP == DBI_NULL)
 	return;
 
     BU_CK_VLS(vp);
@@ -7353,7 +7353,7 @@ init_oedit_guts(void)
     es_edflag = -1;
     MAT_IDN(es_mat);
 
-    if (dbip == DBI_NULL || !illump) {
+    if (DBIP == DBI_NULL || !illump) {
 	return;
     }
 
@@ -7371,7 +7371,7 @@ init_oedit_guts(void)
 
     /* Not an evaluated region - just a regular path ending in a solid */
     if (rt_db_get_internal(&es_int, LAST_SOLID(illump),
-			   dbip, NULL, &rt_uniresource) < 0) {
+			   DBIP, NULL, &rt_uniresource) < 0) {
 	Tcl_AppendResult(INTERP, "init_oedit(",
 			 LAST_SOLID(illump)->d_namep,
 			 "):  solid import failure\n", (char *)NULL);
@@ -7392,7 +7392,7 @@ init_oedit_guts(void)
     }
 
     /* Save aggregate path matrix */
-    (void)db_path_to_mat(dbip, &illump->s_fullpath, es_mat, illump->s_fullpath.fp_len-1, &rt_uniresource);
+    (void)db_path_to_mat(DBIP, &illump->s_fullpath, es_mat, illump->s_fullpath.fp_len-1, &rt_uniresource);
 
     /* get the inverse matrix */
     bn_mat_inv(es_invmat, es_mat);
@@ -7482,7 +7482,7 @@ oedit_apply(int continue_editing)
 	    MAT_IDN(deltam);
 	    MAT_IDN(tempm);
 
-	    (void)db_path_to_mat(dbip, &illump->s_fullpath, topm, ipathpos-1, &rt_uniresource);
+	    (void)db_path_to_mat(DBIP, &illump->s_fullpath, topm, ipathpos-1, &rt_uniresource);
 
 	    bn_mat_inv(inv_topm, topm);
 
@@ -7504,8 +7504,8 @@ oedit_apply(int continue_editing)
     modelchanges[15] = 1000000000;	/* => small ratio */
 
     /* Now, recompute new chunks of displaylist */
-    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
@@ -7530,14 +7530,14 @@ oedit_accept(void)
     struct display_list *next_gdlp;
     struct solid *sp;
 
-    if (dbip == DBI_NULL)
+    if (DBIP == DBI_NULL)
 	return;
 
-    if (dbip->dbi_read_only) {
+    if (DBIP->dbi_read_only) {
 	oedit_reject();
 
-	gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
+	gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
+	while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	    FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
@@ -7696,7 +7696,7 @@ sedit_apply(int accept_flag)
     }
 
     /* Scale change on export is 1.0 -- no change */
-    if (rt_db_put_internal(dp, dbip, &es_int, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, DBIP, &es_int, &rt_uniresource) < 0) {
 	Tcl_AppendResult(INTERP, "sedit_apply(", dp->d_namep,
 			 "):  solid export failure\n", (char *)NULL);
 	if (accept_flag) {
@@ -7716,7 +7716,7 @@ sedit_apply(int accept_flag)
 	/* XXX hack to restore es_int after rt_db_put_internal blows it away */
 	/* Read solid description into es_int again! Gaak! */
 	if (rt_db_get_internal(&es_int, LAST_SOLID(illump),
-			       dbip, NULL, &rt_uniresource) < 0) {
+			       DBIP, NULL, &rt_uniresource) < 0) {
 	    Tcl_AppendResult(INTERP, "sedit_apply(",
 			     LAST_SOLID(illump)->d_namep,
 			     "):  solid reimport failure\n", (char *)NULL);
@@ -7733,13 +7733,13 @@ sedit_apply(int accept_flag)
 void
 sedit_accept(void)
 {
-    if (dbip == DBI_NULL)
+    if (DBIP == DBI_NULL)
 	return;
 
     if (not_state(ST_S_EDIT, "Solid edit accept"))
 	return;
 
-    if (dbip->dbi_read_only) {
+    if (DBIP->dbi_read_only) {
 	sedit_reject();
 	bu_log("Sorry, this database is READ-ONLY\n");
 	pr_prompt(interactive);
@@ -7785,8 +7785,8 @@ sedit_reject(void)
 	struct display_list *next_gdlp;
 	struct solid *sp;
 
-	gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
+	gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
+	while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	    FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
@@ -9042,7 +9042,7 @@ f_sedit_reset(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const
 
     /* read in a fresh copy */
     if (rt_db_get_internal(&es_int, LAST_SOLID(illump),
-			   dbip, NULL, &rt_uniresource) < 0) {
+			   DBIP, NULL, &rt_uniresource) < 0) {
 	Tcl_AppendResult(interp, "sedit_reset(",
 			 LAST_SOLID(illump)->d_namep,
 			 "):  solid import failure\n", (char *)NULL);
@@ -9154,7 +9154,7 @@ f_oedit_apply(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(argc
 
     /* Save aggregate path matrix */
     MAT_IDN(es_mat);
-    (void)db_path_to_mat(dbip, &illump->s_fullpath, es_mat, illump->s_fullpath.fp_len-1, &rt_uniresource);
+    (void)db_path_to_mat(DBIP, &illump->s_fullpath, es_mat, illump->s_fullpath.fp_len-1, &rt_uniresource);
 
     /* get the inverse matrix */
     bn_mat_inv(es_invmat, es_mat);

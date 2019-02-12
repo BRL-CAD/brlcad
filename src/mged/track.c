@@ -307,8 +307,8 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     for (i=0; i<11; i++) {
 	crname(solname, i, sizeof(solname));
 	crname(regname, i, sizeof(regname));
-	if ((db_lookup(dbip, solname, LOOKUP_QUIET) != RT_DIR_NULL)	||
-	    (db_lookup(dbip, regname, LOOKUP_QUIET) != RT_DIR_NULL)) {
+	if ((db_lookup(DBIP, solname, LOOKUP_QUIET) != RT_DIR_NULL)	||
+	    (db_lookup(DBIP, regname, LOOKUP_QUIET) != RT_DIR_NULL)) {
 	    /* name already exists */
 	    solname[8] = regname[8] = '\0';
 	    if ((Trackpos += 10) > 500) {
@@ -502,7 +502,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 	    continue;
 	regname[8] = '\0';
 	crname(regname, i, sizeof(regname));
-	if (db_lookup(dbip, regname, LOOKUP_QUIET) == RT_DIR_NULL) {
+	if (db_lookup(DBIP, regname, LOOKUP_QUIET) == RT_DIR_NULL) {
 	    Tcl_AppendResult(interp, "group: ", grpname, " will skip member: ",
 			     regname, "\n", (char *)NULL);
 	    continue;
@@ -511,7 +511,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     }
 
     /* Add them all at once */
-    if (mk_comb(wdbp, grpname, &head,
+    if (mk_comb(WDBP, grpname, &head,
 		0, NULL, NULL, NULL,
 		0, 0, 0, 0,
 		0, 1, 1) < 0)
@@ -569,10 +569,10 @@ wrobj(char name[], int flags)
     struct rt_db_internal intern;
     int i;
 
-    if (dbip == DBI_NULL)
+    if (DBIP == DBI_NULL)
 	return 0;
 
-    if (db_lookup(dbip, name, LOOKUP_QUIET) != RT_DIR_NULL) {
+    if (db_lookup(DBIP, name, LOOKUP_QUIET) != RT_DIR_NULL) {
 	Tcl_AppendResult(INTERP, "track naming error: ", name,
 			 " already exists\n", (char *)NULL);
 	return -1;
@@ -629,13 +629,13 @@ wrobj(char name[], int flags)
 	    return -1;
     }
 
-    if ((tdp = db_diradd(dbip, name, -1L, 0, flags, (void *)&intern.idb_type)) == RT_DIR_NULL) {
+    if ((tdp = db_diradd(DBIP, name, -1L, 0, flags, (void *)&intern.idb_type)) == RT_DIR_NULL) {
 	rt_db_free_internal(&intern);
 	Tcl_AppendResult(INTERP, "Cannot add '", name, "' to directory, aborting\n", (char *)NULL);
 	return -1;
     }
 
-    if (rt_db_put_internal(tdp, dbip, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(tdp, DBIP, &intern, &rt_uniresource) < 0) {
 	rt_db_free_internal(&intern);
 	Tcl_AppendResult(INTERP, "wrobj(", name, "):  write error\n", (char *)NULL);
 	TCL_ERROR_RECOVERY_SUGGESTION;
@@ -872,7 +872,7 @@ crregion(char *region, char *op, int *members, int number, char *solidname, int 
     int i;
     struct bu_list head;
 
-    if (dbip == DBI_NULL)
+    if (DBIP == DBI_NULL)
 	return;
 
     BU_LIST_INIT(&head);
@@ -880,14 +880,14 @@ crregion(char *region, char *op, int *members, int number, char *solidname, int 
     for (i=0; i<number; i++) {
 	solidname[8] = '\0';
 	crname(solidname, members[i], maxlen);
-	if (db_lookup(dbip, solidname, LOOKUP_QUIET) == RT_DIR_NULL) {
+	if (db_lookup(DBIP, solidname, LOOKUP_QUIET) == RT_DIR_NULL) {
 	    Tcl_AppendResult(INTERP, "region: ", region, " will skip member: ",
 			     solidname, "\n", (char *)NULL);
 	    continue;
 	}
 	mk_addmember(solidname, &head, NULL, op[i]);
     }
-    (void)mk_comb(wdbp, region, &head,
+    (void)mk_comb(WDBP, region, &head,
 		  1, NULL, NULL, NULL,
 		  500+Trackpos+i, 0, mat_default, los_default,
 		  0, 1, 1);

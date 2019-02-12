@@ -147,17 +147,17 @@ dozoom(int which_eye)
 	mat = newmat;
     }
 
-    dm_loadmatrix(dmp, mat, which_eye);
+    dm_loadmatrix(DMP, mat, which_eye);
 
 #ifdef DM_RTGL
     /* dm rtgl has its own way of drawing */
-    if (IS_DM_TYPE_RTGL(dm_get_type(dmp))) {
+    if (IS_DM_TYPE_RTGL(dm_get_type(DMP))) {
 
 	/* dm-rtgl needs database info for ray tracing */
-	RTGL_GEDP = gedp;
+	RTGL_GEDP = GEDP;
 
 	/* will ray trace visible objects and draw the intersection points */
-	dm_draw_vlist(dmp, (struct bn_vlist *)NULL);
+	dm_draw_vlist(DMP, (struct bn_vlist *)NULL);
 	/* force update if needed */
 	dirty = RTGL_DIRTY;
 
@@ -165,10 +165,10 @@ dozoom(int which_eye)
     }
 #endif
 
-    if (dm_get_transparency(dmp)) {
+    if (dm_get_transparency(DMP)) {
 	/* First, draw opaque stuff */
 
-	ndrawn = dm_draw_display_list(dmp, gedp->ged_gdp->gd_headDisplay, 1.0, inv_viewsize,
+	ndrawn = dm_draw_display_list(DMP, GEDP->ged_gdp->gd_headDisplay, 1.0, inv_viewsize,
 	       	r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 0,
 	       	geometry_default_color, 1, mged_variables->mv_dlist);
 
@@ -178,20 +178,20 @@ dozoom(int which_eye)
 	curr_dm_list->dml_ndrawn += ndrawn;
 
 	/* disable write to depth buffer */
-	dm_set_depth_mask(dmp, 0);
+	dm_set_depth_mask(DMP, 0);
 
 	/* Second, draw transparent stuff */
 
-	ndrawn = dm_draw_display_list(dmp, gedp->ged_gdp->gd_headDisplay, nextafter(1.0, 0.0), inv_viewsize,
+	ndrawn = dm_draw_display_list(DMP, GEDP->ged_gdp->gd_headDisplay, nextafter(1.0, 0.0), inv_viewsize,
 	       	r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 0,
 	       	geometry_default_color, 0, mged_variables->mv_dlist);
 
 	/* re-enable write of depth buffer */
-	dm_set_depth_mask(dmp, 1);
+	dm_set_depth_mask(DMP, 1);
 
     } else {
 
-	ndrawn = dm_draw_display_list(dmp, gedp->ged_gdp->gd_headDisplay, 0.0, inv_viewsize,
+	ndrawn = dm_draw_display_list(DMP, GEDP->ged_gdp->gd_headDisplay, 0.0, inv_viewsize,
 	       	r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 0,
 	       	geometry_default_color, 1, mged_variables->mv_dlist);
 
@@ -205,11 +205,11 @@ dozoom(int which_eye)
 
     /* draw predictor vlist */
     if (mged_variables->mv_predictor) {
-	dm_set_fg(dmp,
+	dm_set_fg(DMP,
 		       color_scheme->cs_predictor[0],
 		       color_scheme->cs_predictor[1],
 		       color_scheme->cs_predictor[2], 1, 1.0);
-	dm_draw_vlist(dmp, (struct bn_vlist *)&curr_dm_list->dml_p_vlist);
+	dm_draw_vlist(DMP, (struct bn_vlist *)&curr_dm_list->dml_p_vlist);
     }
 
     /*
@@ -225,15 +225,15 @@ dozoom(int which_eye)
 	bn_mat_mul(newmat, perspective_mat, view_state->vs_model2objview);
 	mat = newmat;
     }
-    dm_loadmatrix(dmp, mat, which_eye);
+    dm_loadmatrix(DMP, mat, which_eye);
     inv_viewsize /= modelchanges[15];
-    dm_set_fg(dmp,
+    dm_set_fg(DMP,
 		   color_scheme->cs_geo_hl[0],
 		   color_scheme->cs_geo_hl[1],
 		   color_scheme->cs_geo_hl[2], 1, 1.0);
 
 
-    ndrawn = dm_draw_display_list(dmp, gedp->ged_gdp->gd_headDisplay, -1.0, inv_viewsize,
+    ndrawn = dm_draw_display_list(DMP, GEDP->ged_gdp->gd_headDisplay, -1.0, inv_viewsize,
 	    r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 1,
 	    geometry_default_color, 0, mged_variables->mv_dlist);
 
@@ -256,7 +256,7 @@ createDLists(struct bu_list *hdlp)
     while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	dm_draw_obj(dmp, gdlp);
+	dm_draw_obj(DMP, gdlp);
 
 	gdlp = next_gdlp;
     }
@@ -283,19 +283,19 @@ createDListSolid(struct solid *sp)
 		dm_get_displaylist(dlp->dml_dmp) &&
 		dlp->dml_mged_variables->mv_dlist) {
 	    if (sp->s_dlist == 0)
-		sp->s_dlist = dm_gen_dlists(dmp, 1);
+		sp->s_dlist = dm_gen_dlists(DMP, 1);
 
-	    (void)dm_make_current(dmp);
-	    (void)dm_begin_dlist(dmp, sp->s_dlist);
+	    (void)dm_make_current(DMP);
+	    (void)dm_begin_dlist(DMP, sp->s_dlist);
 	    if (sp->s_iflag == UP)
-		(void)dm_set_fg(dmp, 255, 255, 255, 0, sp->s_transparency);
+		(void)dm_set_fg(DMP, 255, 255, 255, 0, sp->s_transparency);
 	    else
-		(void)dm_set_fg(dmp,
+		(void)dm_set_fg(DMP,
 			(unsigned char)sp->s_color[0],
 			(unsigned char)sp->s_color[1],
 			(unsigned char)sp->s_color[2], 0, sp->s_transparency);
-	    (void)dm_draw_vlist(dmp, (struct bn_vlist *)&sp->s_vlist);
-	    (void)dm_end_dlist(dmp);
+	    (void)dm_draw_vlist(DMP, (struct bn_vlist *)&sp->s_vlist);
+	    (void)dm_end_dlist(DMP);
 	}
 
 	dlp->dml_dirty = 1;
@@ -334,7 +334,7 @@ freeDListsAll(unsigned int dlist, int range)
     FOR_ALL_DISPLAYS(dlp, &head_dm_list.l) {
 	if (dm_get_displaylist(dlp->dml_dmp) &&
 	    dlp->dml_mged_variables->mv_dlist) {
-	    (void)dm_make_current(dmp);
+	    (void)dm_make_current(DMP);
 	    (void)dm_free_dlists(dlp->dml_dmp, dlist, range);
 	}
 

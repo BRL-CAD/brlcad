@@ -71,15 +71,15 @@ f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
 	return TCL_ERROR;
     }
 
-    if ((proto = db_lookup(dbip,  argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
+    if ((proto = db_lookup(DBIP,  argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
 	return TCL_ERROR;
 
-    if (db_lookup(dbip,  argv[2], LOOKUP_QUIET) != RT_DIR_NULL) {
+    if (db_lookup(DBIP,  argv[2], LOOKUP_QUIET) != RT_DIR_NULL) {
 	aexists(argv[2]);
 	return TCL_ERROR;
     }
 
-    if ((id = rt_db_get_internal(&internal, proto, dbip, (fastf_t *)NULL, &rt_uniresource)) < 0) {
+    if ((id = rt_db_get_internal(&internal, proto, DBIP, (fastf_t *)NULL, &rt_uniresource)) < 0) {
 	TCL_READ_ERR_return;
     }
     /* make sure it is a TGC */
@@ -97,11 +97,11 @@ f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
     /* no interrupts */
     (void)signal(SIGINT, SIG_IGN);
 
-    if ((dp = db_diradd(dbip, argv[2], -1L, 0, proto->d_flags, &proto->d_minor_type)) == RT_DIR_NULL) {
+    if ((dp = db_diradd(DBIP, argv[2], -1L, 0, proto->d_flags, &proto->d_minor_type)) == RT_DIR_NULL) {
 	TCL_ALLOC_ERR_return;
     }
 
-    if (rt_db_put_internal(dp, dbip, &internal, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, DBIP, &internal, &rt_uniresource) < 0) {
 	TCL_WRITE_ERR_return;
     }
 
@@ -142,8 +142,8 @@ find_solid_with_path(struct db_full_path *pathp)
 
     RT_CK_FULL_PATH(pathp);
 
-    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
@@ -208,8 +208,8 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     }
 
     /* Common part of illumination */
-    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	if (BU_LIST_NON_EMPTY(&gdlp->dl_headSolid)) {
@@ -225,11 +225,11 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	return TCL_ERROR;
     }
 
-    if (db_string_to_path(&lhs, dbip, argv[1]) < 0) {
+    if (db_string_to_path(&lhs, DBIP, argv[1]) < 0) {
 	Tcl_AppendResult(interp, "bad lhs path", (char *)NULL);
 	return TCL_ERROR;
     }
-    if (db_string_to_path(&rhs, dbip, argv[2]) < 0) {
+    if (db_string_to_path(&rhs, DBIP, argv[2]) < 0) {
 	db_free_full_path(&lhs);
 	Tcl_AppendResult(interp, "bad rhs path", (char *)NULL);
 	return TCL_ERROR;

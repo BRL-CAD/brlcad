@@ -454,13 +454,13 @@ mged_setup(Tcl_Interp **interpreter)
     view_state->vs_gvp->gv_clientData = (void *)view_state;
     MAT_DELTAS_GET_NEG(view_state->vs_orig_pos, view_state->vs_gvp->gv_center);
 
-    if (gedp) {
+    if (GEDP) {
 	/* release any allocated memory */
-	ged_free(gedp);
+	ged_free(GEDP);
     } else {
-	BU_ALLOC(gedp, struct ged);
+	BU_ALLOC(GEDP, struct ged);
     }
-    GED_INIT(gedp, NULL);
+    GED_INIT(GEDP, NULL);
 
     /* register commands */
     cmd_setup();
@@ -468,8 +468,8 @@ mged_setup(Tcl_Interp **interpreter)
     history_setup();
     mged_global_variable_setup(*interpreter);
     mged_variable_setup(*interpreter);
-    gedp->ged_interp = (void *)*interpreter;
-    gedp->ged_interp_eval = &mged_db_search_callback;
+    GEDP->ged_interp = (void *)*interpreter;
+    GEDP->ged_interp_eval = &mged_db_search_callback;
 
     /* Tcl needs to write nulls onto subscripted variable names */
     bu_vls_printf(&str, "%s(state)", MGED_DISPLAY_VAR);

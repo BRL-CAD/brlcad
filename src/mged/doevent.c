@@ -148,7 +148,7 @@ doEvent(ClientData clientData, XEvent *eventPtr)
     if (eventPtr->type == ConfigureNotify) {
 	XConfigureEvent *conf = (XConfigureEvent *)eventPtr;
 
-	dm_configure_win(dmp, 0);
+	dm_configure_win(DMP, 0);
 	rect_image2view();
 	dirty = 1;
 
@@ -174,7 +174,7 @@ doEvent(ClientData clientData, XEvent *eventPtr)
 	status = TCL_RETURN;
     }
 #ifdef IR_KNOBS
-    else if (dm_get_xvars(dmp) != NULL && eventPtr->type == ((struct dm_xvars *)dm_get_xvars(dmp))->devmotionnotify) {
+    else if (dm_get_xvars(DMP) != NULL && eventPtr->type == ((struct dm_xvars *)dm_get_xvars(DMP))->devmotionnotify) {
 	dials_event_handler((XDeviceMotionEvent *)eventPtr);
 
 	/* no further processing of this event */
@@ -182,12 +182,12 @@ doEvent(ClientData clientData, XEvent *eventPtr)
     }
 #endif
 #ifdef IR_BUTTONS
-    else if (dm_get_xvars(dmp) != NULL && eventPtr->type == ((struct dm_xvars *)dm_get_xvars(dmp))->devbuttonpress) {
+    else if (dm_get_xvars(DMP) != NULL && eventPtr->type == ((struct dm_xvars *)dm_get_xvars(DMP))->devbuttonpress) {
 	buttons_event_handler((XDeviceButtonEvent *)eventPtr, 1);
 
 	/* no further processing of this event */
 	status = TCL_RETURN;
-    } else if (dm_get_xvars(dmp) != NULL && eventPtr->type == ((struct dm_xvars *)dm_get_xvars(dmp))->devbuttonrelease) {
+    } else if (dm_get_xvars(DMP) != NULL && eventPtr->type == ((struct dm_xvars *)dm_get_xvars(DMP))->devbuttonrelease) {
 	buttons_event_handler((XDeviceButtonEvent *)eventPtr, 0);
 
 	/* no further processing of this event */
@@ -243,11 +243,11 @@ motion_event_handler(XMotionEvent *xmotion)
     fastf_t fx, fy;
     fastf_t td;
 
-    if (dbip == DBI_NULL)
+    if (DBIP == DBI_NULL)
 	return;
 
-    width = dm_get_width(dmp);
-    height = dm_get_height(dmp);
+    width = dm_get_width(DMP);
+    height = dm_get_height(DMP);
     mx = xmotion->x;
     my = xmotion->y;
     dx = mx - dml_omx;
@@ -257,11 +257,11 @@ motion_event_handler(XMotionEvent *xmotion)
 	case AMM_IDLE:
 	    if (scroll_active)
 		bu_vls_printf(&cmd, "M 1 %d %d\n",
-			      (int)(dm_Xx2Normal(dmp, mx) * GED_MAX),
-			      (int)(dm_Xy2Normal(dmp, my, 0) * GED_MAX));
+			      (int)(dm_Xx2Normal(DMP, mx) * GED_MAX),
+			      (int)(dm_Xy2Normal(DMP, my, 0) * GED_MAX));
 	    else if (rubber_band->rb_active) {
-		fastf_t x = dm_Xx2Normal(dmp, mx);
-		fastf_t y = dm_Xy2Normal(dmp, my, 1);
+		fastf_t x = dm_Xx2Normal(DMP, mx);
+		fastf_t y = dm_Xy2Normal(DMP, my, 1);
 
 		if (grid_state->gr_snap)
 		    snap_to_grid(&x, &y);
@@ -290,8 +290,8 @@ motion_event_handler(XMotionEvent *xmotion)
 		/* do the regular thing */
 		/* Constant tracking (e.g. illuminate mode) bound to M mouse */
 		bu_vls_printf(&cmd, "M 0 %d %d\n",
-			      (int)(dm_Xx2Normal(dmp, mx) * GED_MAX),
-			      (int)(dm_Xy2Normal(dmp, my, 0) * GED_MAX));
+			      (int)(dm_Xx2Normal(DMP, mx) * GED_MAX),
+			      (int)(dm_Xy2Normal(DMP, my, 0) * GED_MAX));
 	    else /* not doing motion */
 		goto handled;
 
@@ -345,7 +345,7 @@ motion_event_handler(XMotionEvent *xmotion)
 		mged_variables->mv_coords = 'v';
 
 		fx = dx / (fastf_t)width * 2.0;
-		fy = -dy / (fastf_t)height / dm_get_aspect(dmp) * 2.0;
+		fy = -dy / (fastf_t)height / dm_get_aspect(DMP) * 2.0;
 
 		if ((STATE == ST_S_EDIT || STATE == ST_O_EDIT) &&
 		    mged_variables->mv_transform == 'e') {
@@ -371,7 +371,7 @@ motion_event_handler(XMotionEvent *xmotion)
 			dml_mouse_dy += dy;
 
 			view_pt[X] = dml_mouse_dx / (fastf_t)width * 2.0;
-			view_pt[Y] = -dml_mouse_dy / (fastf_t)height / dm_get_aspect(dmp) * 2.0;
+			view_pt[Y] = -dml_mouse_dy / (fastf_t)height / dm_get_aspect(DMP) * 2.0;
 			view_pt[Z] = 0.0;
 			round_to_grid(&view_pt[X], &view_pt[Y]);
 
@@ -397,7 +397,7 @@ motion_event_handler(XMotionEvent *xmotion)
 			    dml_mouse_dy += dy;
 
 			    snap_view_to_grid(dml_mouse_dx / (fastf_t)width * 2.0,
-					      -dml_mouse_dy / (fastf_t)height / dm_get_aspect(dmp) * 2.0);
+					      -dml_mouse_dy / (fastf_t)height / dm_get_aspect(DMP) * 2.0);
 
 			    mged_variables->mv_coords = save_coords;
 			    goto handled;
@@ -436,14 +436,14 @@ motion_event_handler(XMotionEvent *xmotion)
 
 	    break;
 	case AMM_ADC_ANG1:
-	    fx = dm_Xx2Normal(dmp, mx) * GED_MAX - adc_state->adc_dv_x;
-	    fy = dm_Xy2Normal(dmp, my, 1) * GED_MAX - adc_state->adc_dv_y;
+	    fx = dm_Xx2Normal(DMP, mx) * GED_MAX - adc_state->adc_dv_x;
+	    fy = dm_Xy2Normal(DMP, my, 1) * GED_MAX - adc_state->adc_dv_y;
 	    bu_vls_printf(&cmd, "adc a1 %lf\n", RAD2DEG*atan2(fy, fx));
 
 	    break;
 	case AMM_ADC_ANG2:
-	    fx = dm_Xx2Normal(dmp, mx) * GED_MAX - adc_state->adc_dv_x;
-	    fy = dm_Xy2Normal(dmp, my, 1) * GED_MAX - adc_state->adc_dv_y;
+	    fx = dm_Xx2Normal(DMP, mx) * GED_MAX - adc_state->adc_dv_x;
+	    fy = dm_Xy2Normal(DMP, my, 1) * GED_MAX - adc_state->adc_dv_y;
 	    bu_vls_printf(&cmd, "adc a2 %lf\n", RAD2DEG*atan2(fy, fx));
 
 	    break;
@@ -452,7 +452,7 @@ motion_event_handler(XMotionEvent *xmotion)
 		point_t model_pt;
 		point_t view_pt;
 
-		VSET(view_pt, dm_Xx2Normal(dmp, mx), dm_Xy2Normal(dmp, my, 1), 0.0);
+		VSET(view_pt, dm_Xx2Normal(DMP, mx), dm_Xy2Normal(DMP, my, 1), 0.0);
 
 		if (grid_state->gr_snap)
 		    snap_to_grid(&view_pt[X], &view_pt[Y]);
@@ -464,8 +464,8 @@ motion_event_handler(XMotionEvent *xmotion)
 
 	    break;
 	case AMM_ADC_DIST:
-	    fx = (dm_Xx2Normal(dmp, mx) * GED_MAX - adc_state->adc_dv_x) * view_state->vs_gvp->gv_scale * base2local * INV_GED;
-	    fy = (dm_Xy2Normal(dmp, my, 1) * GED_MAX - adc_state->adc_dv_y) * view_state->vs_gvp->gv_scale * base2local * INV_GED;
+	    fx = (dm_Xx2Normal(DMP, mx) * GED_MAX - adc_state->adc_dv_x) * view_state->vs_gvp->gv_scale * base2local * INV_GED;
+	    fy = (dm_Xy2Normal(DMP, my, 1) * GED_MAX - adc_state->adc_dv_y) * view_state->vs_gvp->gv_scale * base2local * INV_GED;
 	    td = sqrt(fx * fx + fy * fy);
 	    bu_vls_printf(&cmd, "adc dst %lf\n", td);
 
@@ -561,7 +561,7 @@ motion_event_handler(XMotionEvent *xmotion)
 	    if (abs(dx) >= abs(dy))
 		f = dx / (fastf_t)width * 2.0;
 	    else
-		f = -dy / (fastf_t)height / dm_get_aspect(dmp) * 2.0;
+		f = -dy / (fastf_t)height / dm_get_aspect(DMP) * 2.0;
 
 	    if (mged_variables->mv_rateknobs)
 		bu_vls_printf(&cmd, "knob -i X %f\n", f);
@@ -585,7 +585,7 @@ motion_event_handler(XMotionEvent *xmotion)
 	    if (abs(dx) >= abs(dy))
 		f = dx / (fastf_t)width * 2.0;
 	    else
-		f = -dy / (fastf_t)height / dm_get_aspect(dmp) * 2.0;
+		f = -dy / (fastf_t)height / dm_get_aspect(DMP) * 2.0;
 
 	    if (mged_variables->mv_rateknobs)
 		bu_vls_printf(&cmd, "knob -i Y %f\n", f);
@@ -609,7 +609,7 @@ motion_event_handler(XMotionEvent *xmotion)
 	    if (abs(dx) >= abs(dy))
 		f = dx / (fastf_t)width * 2.0;
 	    else
-		f = -dy / height / dm_get_aspect(dmp) * 2.0;
+		f = -dy / height / dm_get_aspect(DMP) * 2.0;
 
 	    if (mged_variables->mv_rateknobs)
 		bu_vls_printf(&cmd, "knob -i Z %f\n", f);
@@ -764,7 +764,7 @@ dials_event_handler(XDeviceMotionEvent *dmep)
     int setting;
     fastf_t f;
 
-    if (dbip == DBI_NULL)
+    if (DBIP == DBI_NULL)
 	return;
 
     if (button0) {

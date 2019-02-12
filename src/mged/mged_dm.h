@@ -453,15 +453,15 @@ struct dm_list {
 
 
 #define DM_LIST_NULL ((struct dm_list *)NULL)
-#define dmp curr_dm_list->dml_dmp
+#define DMP curr_dm_list->dml_dmp
 #define fbp curr_dm_list->dml_fbp
 #define netfd curr_dm_list->dml_netfd
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #define netchan curr_dm_list->dml_netchan
 #endif
 #define clients curr_dm_list->dml_clients
-#define tkName dm_get_tkname(dmp)
-#define dName dm_get_dname(dmp)
+#define tkName dm_get_tkname(curr_dm_list->dml_dmp)
+#define dName dm_get_dname(curr_dm_list->dml_dmp)
 #define dirty curr_dm_list->dml_dirty
 #define mapped curr_dm_list->dml_mapped
 #define owner curr_dm_list->dml_owner

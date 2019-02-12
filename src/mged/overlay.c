@@ -43,7 +43,7 @@ cmd_overlay(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
     const char *av[5];
     struct bu_vls char_size = BU_VLS_INIT_ZERO;
 
-    if (gedp == GED_NULL)
+    if (GEDP == GED_NULL)
 	return TCL_OK;
 
     Tcl_DStringInit(&ds);
@@ -66,8 +66,8 @@ cmd_overlay(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
     } else
 	av[3] = (char *)0;
 
-    ret = ged_overlay(gedp, ac, (const char **)av);
-    Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
+    ret = ged_overlay(GEDP, ac, (const char **)av);
+    Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
     if (ret != GED_OK)
@@ -110,11 +110,11 @@ f_labelvert(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 
     for (i=1; i<argc; i++) {
 	struct solid *s;
-	if ((dp = db_lookup(dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL)
+	if ((dp = db_lookup(DBIP, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL)
 	    continue;
 	/* Find uses of this solid in the solid table */
-	gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
+	gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
+	while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	    FOR_ALL_SOLIDS(s, &gdlp->dl_headSolid) {
@@ -221,20 +221,20 @@ f_labelface(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
     /* attempt to resolve and verify */
     name = argv[1];
 
-    if ( (dp=db_lookup(gedp->ged_wdbp->dbip, name, LOOKUP_QUIET))
+    if ( (dp=db_lookup(GEDP->ged_wdbp->dbip, name, LOOKUP_QUIET))
         == RT_DIR_NULL ) {
-        bu_vls_printf(gedp->ged_result_str, "%s does not exist\n", name);
+        bu_vls_printf(GEDP->ged_result_str, "%s does not exist\n", name);
         return GED_ERROR;
     }
 
-    if (rt_db_get_internal(&internal, dp, gedp->ged_wdbp->dbip,
+    if (rt_db_get_internal(&internal, dp, GEDP->ged_wdbp->dbip,
         bn_mat_identity, &rt_uniresource) < 0) {
-        bu_vls_printf(gedp->ged_result_str, "rt_db_get_internal() error\n");
+        bu_vls_printf(GEDP->ged_result_str, "rt_db_get_internal() error\n");
         return GED_ERROR;
     }
 
     if (internal.idb_type != ID_NMG) {
-        bu_vls_printf(gedp->ged_result_str, "%s is not an NMG solid\n", name);
+        bu_vls_printf(GEDP->ged_result_str, "%s is not an NMG solid\n", name);
         rt_db_free_internal(&internal);
         return GED_ERROR;
     }
@@ -249,12 +249,12 @@ f_labelface(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 
     for (i=1; i<argc; i++) {
         struct solid *s;
-        if ((dp = db_lookup(dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL)
+        if ((dp = db_lookup(DBIP, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL)
             continue;
 
         /* Find uses of this solid in the solid table */
-        gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
-        while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
+        gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
+        while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
             next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
             FOR_ALL_SOLIDS(s, &gdlp->dl_headSolid) {
                 if (db_full_path_search(&s->s_fullpath, dp)) {

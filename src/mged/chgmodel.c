@@ -95,12 +95,12 @@ f_make(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
 	av[6] = argv[2];
 	av[7] = (char *)0;
 
-	ret = ged_make(gedp, 7, (const char **)av);
+	ret = ged_make(GEDP, 7, (const char **)av);
     } else
-	ret = ged_make(gedp, argc, (const char **)argv);
+	ret = ged_make(GEDP, argc, (const char **)argv);
 
     Tcl_DStringInit(&ds);
-    Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
+    Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
     if (ret == GED_OK) {
@@ -383,7 +383,7 @@ f_qorot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 	movedir = ROTARROW;
     }
     VSET(specified_pt, atof(argv[1]), atof(argv[2]), atof(argv[3]));
-    VSCALE(specified_pt, specified_pt, dbip->dbi_local2base);
+    VSCALE(specified_pt, specified_pt, DBIP->dbi_local2base);
     VSET(direc, atof(argv[4]), atof(argv[5]), atof(argv[6]));
 
     if (NEAR_ZERO(direc[0], SQRT_SMALL_FASTF) &&
@@ -415,14 +415,14 @@ set_localunit_TclVar(void)
     struct bu_vls units_vls = BU_VLS_INIT_ZERO;
     const char *str = NULL;
 
-    if (dbip == DBI_NULL)
+    if (DBIP == DBI_NULL)
 	return;
 
-    str = bu_units_string(dbip->dbi_local2base);
+    str = bu_units_string(DBIP->dbi_local2base);
     if (str)
 	bu_vls_strcpy(&units_vls, str);
     else
-	bu_vls_printf(&units_vls, "%gmm", dbip->dbi_local2base);
+	bu_vls_printf(&units_vls, "%gmm", DBIP->dbi_local2base);
 
     bu_vls_strcpy(&vls, "localunit");
     Tcl_SetVar(INTERP, bu_vls_addr(&vls), bu_vls_addr(&units_vls), TCL_GLOBAL_ONLY);

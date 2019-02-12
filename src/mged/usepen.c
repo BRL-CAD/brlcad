@@ -61,8 +61,8 @@ illuminate(int y) {
      */
     count = ((fastf_t)y + GED_MAX) * curr_dm_list->dml_ndrawn / GED_RANGE;
 
-    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
@@ -130,8 +130,8 @@ f_aip(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 	if (argc == 1 || *argv[1] == 'f') {
 	    if (BU_LIST_NEXT_IS_HEAD(sp, &gdlp->dl_headSolid)) {
 		/* Advance the gdlp (i.e. display list) */
-		if (BU_LIST_NEXT_IS_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay))
-		    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
+		if (BU_LIST_NEXT_IS_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay))
+		    gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
 		else
 		    gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
@@ -142,8 +142,8 @@ f_aip(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 	} else if (*argv[1] == 'b') {
 	    if (BU_LIST_PREV_IS_HEAD(sp, &gdlp->dl_headSolid)) {
 		/* Advance the gdlp (i.e. display list) */
-		if (BU_LIST_PREV_IS_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay))
-		    gdlp = BU_LIST_PREV(display_list, gedp->ged_gdp->gd_headDisplay);
+		if (BU_LIST_PREV_IS_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay))
+		    gdlp = BU_LIST_PREV(display_list, GEDP->ged_gdp->gd_headDisplay);
 		else
 		    gdlp = BU_LIST_PLAST(display_list, gdlp);
 
@@ -251,10 +251,10 @@ f_matpick(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 
     if ((cp = strchr(argv[1], '/')) != NULL) {
 	struct directory *d0, *d1;
-	if ((d1 = db_lookup(dbip, cp+1, LOOKUP_NOISY)) == RT_DIR_NULL)
+	if ((d1 = db_lookup(DBIP, cp+1, LOOKUP_NOISY)) == RT_DIR_NULL)
 	    return TCL_ERROR;
 	*cp = '\0';		/* modifies argv[1] */
-	if ((d0 = db_lookup(dbip, argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
+	if ((d0 = db_lookup(DBIP, argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
 	    return TCL_ERROR;
 	/* Find arc on illump path which runs from d0 to d1 */
 	for (j=1; j < illump->s_fullpath.fp_len; j++) {
@@ -275,8 +275,8 @@ f_matpick(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     }
  got:
     /* Include all solids with same tree top */
-    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {

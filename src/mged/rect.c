@@ -87,9 +87,9 @@ void
 rect_view2image(void)
 {
     int width;
-    width = dm_get_width(dmp);
-    rubber_band->rb_pos[X] = dm_Normal2Xx(dmp, rubber_band->rb_x);
-    rubber_band->rb_pos[Y] = dm_get_height(dmp) - dm_Normal2Xy(dmp, rubber_band->rb_y, 1);
+    width = dm_get_width(DMP);
+    rubber_band->rb_pos[X] = dm_Normal2Xx(DMP, rubber_band->rb_x);
+    rubber_band->rb_pos[Y] = dm_get_height(DMP) - dm_Normal2Xy(DMP, rubber_band->rb_y, 1);
     rubber_band->rb_dim[X] = rubber_band->rb_width * (fastf_t)width * 0.5;
     rubber_band->rb_dim[Y] = rubber_band->rb_height * (fastf_t)width * 0.5;
 }
@@ -102,9 +102,9 @@ rect_view2image(void)
 void
 rect_image2view(void)
 {
-    int width = dm_get_width(dmp);
-    rubber_band->rb_x = dm_Xx2Normal(dmp, rubber_band->rb_pos[X]);
-    rubber_band->rb_y = dm_Xy2Normal(dmp, dm_get_height(dmp) - rubber_band->rb_pos[Y], 1);
+    int width = dm_get_width(DMP);
+    rubber_band->rb_x = dm_Xx2Normal(DMP, rubber_band->rb_pos[X]);
+    rubber_band->rb_y = dm_Xy2Normal(DMP, dm_get_height(DMP) - rubber_band->rb_pos[Y], 1);
     rubber_band->rb_width = rubber_band->rb_dim[X] * 2.0 / (fastf_t)width;
     rubber_band->rb_height = rubber_band->rb_dim[Y] * 2.0 / (fastf_t)width;
 }
@@ -142,14 +142,14 @@ adjust_rect_for_zoom(void)
 
     if (width >= height) {
 	if (rubber_band->rb_height >= 0.0)
-	    rubber_band->rb_height = width / dm_get_aspect(dmp);
+	    rubber_band->rb_height = width / dm_get_aspect(DMP);
 	else
-	    rubber_band->rb_height = -width / dm_get_aspect(dmp);
+	    rubber_band->rb_height = -width / dm_get_aspect(DMP);
     } else {
 	if (rubber_band->rb_width >= 0.0)
-	    rubber_band->rb_width = height * dm_get_aspect(dmp);
+	    rubber_band->rb_width = height * dm_get_aspect(DMP);
 	else
-	    rubber_band->rb_width = -height * dm_get_aspect(dmp);
+	    rubber_band->rb_width = -height * dm_get_aspect(DMP);
     }
 }
 
@@ -172,32 +172,32 @@ draw_rect(void)
 	adjust_rect_for_zoom();
 
     /* draw rectangle */
-    dm_set_fg(dmp,
+    dm_set_fg(DMP,
 		   color_scheme->cs_rubber_band[0],
 		   color_scheme->cs_rubber_band[1],
 		   color_scheme->cs_rubber_band[2], 1, 1.0);
-    dm_set_line_attr(dmp, rubber_band->rb_linewidth, line_style);
+    dm_set_line_attr(DMP, rubber_band->rb_linewidth, line_style);
 
-    dm_draw_line_2d(dmp,
+    dm_draw_line_2d(DMP,
 		    rubber_band->rb_x,
-		    rubber_band->rb_y * dm_get_aspect(dmp),
+		    rubber_band->rb_y * dm_get_aspect(DMP),
 		    rubber_band->rb_x,
-		    (rubber_band->rb_y + rubber_band->rb_height) * dm_get_aspect(dmp));
-    dm_draw_line_2d(dmp,
+		    (rubber_band->rb_y + rubber_band->rb_height) * dm_get_aspect(DMP));
+    dm_draw_line_2d(DMP,
 		    rubber_band->rb_x,
-		    (rubber_band->rb_y + rubber_band->rb_height) * dm_get_aspect(dmp),
+		    (rubber_band->rb_y + rubber_band->rb_height) * dm_get_aspect(DMP),
 		    rubber_band->rb_x + rubber_band->rb_width,
-		    (rubber_band->rb_y + rubber_band->rb_height) * dm_get_aspect(dmp));
-    dm_draw_line_2d(dmp,
+		    (rubber_band->rb_y + rubber_band->rb_height) * dm_get_aspect(DMP));
+    dm_draw_line_2d(DMP,
 		    rubber_band->rb_x + rubber_band->rb_width,
-		    (rubber_band->rb_y + rubber_band->rb_height) * dm_get_aspect(dmp),
+		    (rubber_band->rb_y + rubber_band->rb_height) * dm_get_aspect(DMP),
 		    rubber_band->rb_x + rubber_band->rb_width,
-		    rubber_band->rb_y * dm_get_aspect(dmp));
-    dm_draw_line_2d(dmp,
+		    rubber_band->rb_y * dm_get_aspect(DMP));
+    dm_draw_line_2d(DMP,
 		    rubber_band->rb_x + rubber_band->rb_width,
-		    rubber_band->rb_y * dm_get_aspect(dmp),
+		    rubber_band->rb_y * dm_get_aspect(DMP),
 		    rubber_band->rb_x,
-		    rubber_band->rb_y * dm_get_aspect(dmp));
+		    rubber_band->rb_y * dm_get_aspect(DMP));
 }
 
 
@@ -252,7 +252,7 @@ rt_rect_area(void)
     }
 
     bu_vls_printf(&vls, "rt -w %d -n %d -V %lf -F %d -j %d,%d,%d,%d -C%d/%d/%d",
-		  dm_get_width(dmp), dm_get_height(dmp), dm_get_aspect(dmp),
+		  dm_get_width(DMP), dm_get_height(DMP), dm_get_aspect(DMP),
 		  mged_variables->mv_port, xmin, ymin, xmax, ymax,
 		  color_scheme->cs_bg[0], color_scheme->cs_bg[1], color_scheme->cs_bg[2]);
     (void)Tcl_Eval(INTERP, bu_vls_addr(&vls));
@@ -305,14 +305,14 @@ zoom_rect_area(void)
     if (width >= height)
 	sf = width / 2.0;
     else
-	sf = height / 2.0 * dm_get_aspect(dmp);
+	sf = height / 2.0 * dm_get_aspect(DMP);
 
     mged_vscale(sf);
 
     rubber_band->rb_x = -1.0;
-    rubber_band->rb_y = -1.0 / dm_get_aspect(dmp);
+    rubber_band->rb_y = -1.0 / dm_get_aspect(DMP);
     rubber_band->rb_width = 2.0;
-    rubber_band->rb_height = 2.0 / dm_get_aspect(dmp);
+    rubber_band->rb_height = 2.0 / dm_get_aspect(DMP);
 
     rect_view2image();
 

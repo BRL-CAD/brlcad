@@ -131,9 +131,9 @@ Tcl_Interp *ged_interp = (Tcl_Interp *)NULL;
 static int stdfd[2] = {1, 2};
 
 /* FIXME: these are problematic globals */
-struct ged *gedp = GED_NULL;
-struct db_i *dbip = DBI_NULL;	/* database instance pointer */
-struct rt_wdb *wdbp = RT_WDB_NULL;
+struct ged *GEDP = GED_NULL;
+struct db_i *DBIP = DBI_NULL;	/* database instance pointer */
+struct rt_wdb *WDBP = RT_WDB_NULL;
 
 /* called by numerous functions to indicate truthfully whether the
  * views need to be redrawn.
@@ -478,7 +478,7 @@ do_rc(void)
 
     /* No telling what the commands may have done to the result string -
      * make sure we start with a clean slate */
-    bu_vls_trunc(gedp->ged_result_str, 0);
+    bu_vls_trunc(GEDP->ged_result_str, 0);
     return 0;
 }
 
@@ -1276,12 +1276,12 @@ main(int argc, char *argv[])
     BU_LIST_INIT(&curr_dm_list->dml_p_vlist);
     predictor_init();
 
-    dmp = dm_get();
-    dm_set_null(dmp);
+    DMP = dm_get();
+    dm_set_null(DMP);
     bu_vls_init(tkName);
     bu_vls_init(dName);
-    if (dm_get_pathname(dmp)) {
-	bu_vls_strcpy(dm_get_pathname(dmp), "nu");
+    if (dm_get_pathname(DMP)) {
+	bu_vls_strcpy(dm_get_pathname(DMP), "nu");
     }
     bu_vls_strcpy(tkName, "nu");
 
@@ -1430,14 +1430,14 @@ main(int argc, char *argv[])
 	}
     }
 
-    if (dbip != DBI_NULL && (read_only_flag || dbip->dbi_read_only)) {
-	dbip->dbi_read_only = 1;
+    if (DBIP != DBI_NULL && (read_only_flag || DBIP->dbi_read_only)) {
+	DBIP->dbi_read_only = 1;
 	bu_log("Opened in READ ONLY mode\n");
     }
 
-    if (dbip != DBI_NULL) {
+    if (DBIP != DBI_NULL) {
 	setview(0.0, 0.0, 0.0);
-	gedp->ged_gdp->gd_rtCmdNotify = mged_notify;
+	GEDP->ged_gdp->gd_rtCmdNotify = mged_notify;
     }
 
     /* --- Now safe to process commands. --- */
@@ -1543,11 +1543,11 @@ main(int argc, char *argv[])
      * dm first opens filled with garbage.
      */
     {
-	unsigned char *dm_bg = dm_get_bg(dmp);
+	unsigned char *dm_bg = dm_get_bg(DMP);
 	if (dm_bg) {
-	    dm_set_bg(dmp, dm_bg[0], dm_bg[1], dm_bg[2]);
+	    dm_set_bg(DMP, dm_bg[0], dm_bg[1], dm_bg[2]);
 	} else {
-	    dm_set_bg(dmp, 0, 0, 0);
+	    dm_set_bg(DMP, 0, 0, 0);
 	}
     }
 
@@ -1983,7 +1983,7 @@ event_check(int non_blocking)
 
     non_blocking = 0;
 
-    if (dbip == DBI_NULL)
+    if (DBIP == DBI_NULL)
 	return non_blocking;
 
     /*********************************
@@ -2309,17 +2309,17 @@ refresh(void)
 	    int restore_zbuffer = 0;
 
 	    if (mged_variables->mv_fb &&
-		dm_get_zbuffer(dmp)) {
+		dm_get_zbuffer(DMP)) {
 		restore_zbuffer = 1;
-		(void)dm_make_current(dmp);
-		(void)dm_set_zbuffer(dmp, 0);
+		(void)dm_make_current(DMP);
+		(void)dm_set_zbuffer(DMP, 0);
 	    }
 
 	    dirty = 0;
 	    do_time = 1;
 	    VMOVE(geometry_default_color, color_scheme->cs_geo_def);
 
-	    if (dbip != DBI_NULL) {
+	    if (DBIP != DBI_NULL) {
 		if (do_overlay) {
 		    bu_vls_trunc(&overlay_vls, 0);
 		    create_text_overlay(&overlay_vls);
@@ -2333,13 +2333,13 @@ refresh(void)
 	    if (mged_variables->mv_predictor)
 		predictor_frame();
 
-	    dm_draw_begin(dmp);	/* update displaylist prolog */
+	    dm_draw_begin(DMP);	/* update displaylist prolog */
 
-	    if (dbip != DBI_NULL) {
+	    if (DBIP != DBI_NULL) {
 		/* do framebuffer underlay */
 		if (mged_variables->mv_fb && !mged_variables->mv_fb_overlay) {
 		    if (mged_variables->mv_fb_all)
-			fb_refresh(fbp, 0, 0, dm_get_width(dmp), dm_get_height(dmp));
+			fb_refresh(fbp, 0, 0, dm_get_width(DMP), dm_get_height(DMP));
 		    else if (mged_variables->mv_mouse_behavior != 'z')
 			paint_rect_area();
 		}
@@ -2348,13 +2348,13 @@ refresh(void)
 		if (mged_variables->mv_fb &&
 		    mged_variables->mv_fb_overlay &&
 		    mged_variables->mv_fb_all) {
-		    fb_refresh(fbp, 0, 0, dm_get_width(dmp), dm_get_height(dmp));
+		    fb_refresh(fbp, 0, 0, dm_get_width(DMP), dm_get_height(DMP));
 
 		    if (restore_zbuffer)
-			dm_set_zbuffer(dmp, 1);
+			dm_set_zbuffer(DMP, 1);
 		} else {
 		    if (restore_zbuffer)
-			dm_set_zbuffer(dmp, 1);
+			dm_set_zbuffer(DMP, 1);
 
 		    /* Draw each solid in its proper place on the
 		     * screen by applying zoom, rotation, &
@@ -2362,7 +2362,7 @@ refresh(void)
 		     * dm_draw_vlist().
 		     */
 
-		    if (dm_get_stereo(dmp) == 0 ||
+		    if (dm_get_stereo(DMP) == 0 ||
 			mged_variables->mv_eye_sep_dist <= 0) {
 			/* Normal viewing */
 			dozoom(0);
@@ -2381,7 +2381,7 @@ refresh(void)
 
 
 		/* Restore to non-rotated, full brightness */
-		dm_normal(dmp);
+		dm_normal(DMP);
 
 		/* only if not doing overlay */
 		if (!mged_variables->mv_fb ||
@@ -2417,14 +2417,14 @@ refresh(void)
 	    if (!mged_variables->mv_fb ||
 		mged_variables->mv_fb_overlay != 2) {
 		/* Draw center dot */
-		dm_set_fg(dmp,
+		dm_set_fg(DMP,
 			  color_scheme->cs_center_dot[0],
 			  color_scheme->cs_center_dot[1],
 			  color_scheme->cs_center_dot[2], 1, 1.0);
-		dm_draw_point_2d(dmp, 0.0, 0.0);
+		dm_draw_point_2d(DMP, 0.0, 0.0);
 	    }
 
-	    dm_draw_end(dmp);
+	    dm_draw_end(DMP);
 	}
     }
 
@@ -2500,12 +2500,12 @@ mged_finish(int exitcode)
     Tcl_Eval(INTERP, "rename " MGED_DB_NAME " \"\"; rename .inmem \"\"");
     Tcl_Release((ClientData)INTERP);
 
-    ged_close(gedp);
-    if (gedp)
-	BU_PUT(gedp, struct ged);
+    ged_close(GEDP);
+    if (GEDP)
+	BU_PUT(GEDP, struct ged);
 
-    wdbp = RT_WDB_NULL;
-    dbip = DBI_NULL;
+    WDBP = RT_WDB_NULL;
+    DBIP = DBI_NULL;
 
     /* XXX should deallocate libbu semaphores */
 
@@ -2568,8 +2568,8 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     if (argc <= 1) {
 	/* Invoked without args, return name of current database */
 
-	if (dbip != DBI_NULL) {
-	    Tcl_AppendResult(interpreter, dbip->dbi_filename, (char *)NULL);
+	if (DBIP != DBI_NULL) {
+	    Tcl_AppendResult(interpreter, DBIP->dbi_filename, (char *)NULL);
 	    return TCL_OK;
 	}
 
@@ -2603,15 +2603,15 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	return TCL_ERROR;
     }
 
-    save_gedp = gedp;
-    save_dbip = dbip;
-    dbip = DBI_NULL;
+    save_gedp = GEDP;
+    save_dbip = DBIP;
+    DBIP = DBI_NULL;
     save_materp = rt_material_head();
     rt_new_material_head(MATER_NULL);
 
     /* Get input file */
-    if (((dbip = db_open(argv[1], DB_OPEN_READWRITE)) == DBI_NULL) &&
-	((dbip = db_open(argv[1], DB_OPEN_READONLY)) == DBI_NULL)) {
+    if (((DBIP = db_open(argv[1], DB_OPEN_READWRITE)) == DBI_NULL) &&
+	((DBIP = db_open(argv[1], DB_OPEN_READONLY)) == DBI_NULL)) {
 	char line[128];
 
 	/*
@@ -2619,8 +2619,8 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	 */
 	if (bu_file_exists(argv[1], NULL)) {
 	    /* need to reset things before returning */
-	    gedp = save_gedp;
-	    dbip = save_dbip;
+	    GEDP = save_gedp;
+	    DBIP = save_dbip;
 	    rt_new_material_head(save_materp);
 
 	    if (!bu_file_readable(argv[1])) {
@@ -2675,8 +2675,8 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 		/* not initializing mged */
 		if (argc == 2) {
 		    /* need to reset this before returning */
-		    gedp = save_gedp;
-		    dbip = save_dbip;
+		    GEDP = save_gedp;
+		    DBIP = save_dbip;
 		    rt_new_material_head(save_materp);
 		    Tcl_AppendResult(interpreter, MORE_ARGS_STR, "Create new database (y|n)[n]? ",
 				     (char *)NULL);
@@ -2690,17 +2690,17 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 
 	/* did the caller specify not creating a new database? */
 	if (argc >= 3 && bu_str_false(argv[2])) {
-	    gedp = save_gedp;
-	    dbip = save_dbip; /* restore previous database */
+	    GEDP = save_gedp;
+	    DBIP = save_dbip; /* restore previous database */
 	    rt_new_material_head(save_materp);
 	    bu_vls_free(&msg);
 	    return TCL_OK;
 	}
 
 	/* File does not exist, and should be created */
-	if ((dbip = db_create(argv[1], mged_db_version)) == DBI_NULL) {
-	    gedp = save_gedp;
-	    dbip = save_dbip; /* restore previous database */
+	if ((DBIP = db_create(argv[1], mged_db_version)) == DBI_NULL) {
+	    GEDP = save_gedp;
+	    DBIP = save_dbip; /* restore previous database */
 	    rt_new_material_head(save_materp);
 	    bu_vls_free(&msg);
 
@@ -2712,7 +2712,7 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	    }
 
 	    Tcl_AppendResult(interpreter, "opendb: failed to create ", argv[1], "\n", (char *)NULL);
-	    if (dbip == DBI_NULL)
+	    if (DBIP == DBI_NULL)
 		Tcl_AppendResult(interpreter, "opendb: no database is currently opened!", (char *)NULL);
 
 	    return TCL_ERROR;
@@ -2725,7 +2725,7 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	/* Opened existing database file */
 
 	/* Scan geometry database and build in-memory directory */
-	(void)db_dirbuild(dbip);
+	(void)db_dirbuild(DBIP);
     }
 
     /* close out the old dbip */
@@ -2733,98 +2733,98 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	struct db_i *new_dbip;
 	struct mater *new_materp;
 
-	new_dbip = dbip;
+	new_dbip = DBIP;
 	new_materp = rt_material_head();
 
 	/* activate the 'saved' values so we can cleanly close the previous db */
-	gedp = save_gedp;
-	dbip = save_dbip;
+	GEDP = save_gedp;
+	DBIP = save_dbip;
 	rt_new_material_head(save_materp);
 
 	/* bye bye db */
 	f_closedb(clientData, interpreter, 1, NULL);
 
 	/* restore to the new db just opened */
-	dbip = new_dbip;
+	DBIP = new_dbip;
 	rt_new_material_head(new_materp);
     }
 
     if (flip_v4) {
-	if (db_version(dbip) != 4) {
-	    bu_log("WARNING: [%s] is not a v4 database.  The -f option will be ignored.\n", dbip->dbi_filename);
+	if (db_version(DBIP) != 4) {
+	    bu_log("WARNING: [%s] is not a v4 database.  The -f option will be ignored.\n", DBIP->dbi_filename);
 	} else {
-	    if (dbip->dbi_version < 0) {
-		bu_log("Database [%s] was already (perhaps automatically) flipped, -f is redundant.\n", dbip->dbi_filename);
+	    if (DBIP->dbi_version < 0) {
+		bu_log("Database [%s] was already (perhaps automatically) flipped, -f is redundant.\n", DBIP->dbi_filename);
 	    } else {
-		bu_log("Treating [%s] as a binary-incompatible v4 geometry database.\n", dbip->dbi_filename);
+		bu_log("Treating [%s] as a binary-incompatible v4 geometry database.\n", DBIP->dbi_filename);
 		bu_log("Endianness flipped.  Converting to READ ONLY.\n");
 
 		/* flip the version number to indicate a flipped database. */
-		dbip->dbi_version *= -1;
+		DBIP->dbi_version *= -1;
 
 		/* do NOT write to a flipped database */
-		dbip->dbi_read_only = 1;
+		DBIP->dbi_read_only = 1;
 	    }
 	}
     }
 
-    if (dbip->dbi_read_only) {
-	bu_vls_printf(&msg, "%s: READ ONLY\n", dbip->dbi_filename);
+    if (DBIP->dbi_read_only) {
+	bu_vls_printf(&msg, "%s: READ ONLY\n", DBIP->dbi_filename);
     }
 
     /* associate the gedp with a wdbp as well, but separate from the
      * one we fed tcl.  must occur before the call to [get_dbip] since
      * that hooks into a libged callback.
      */
-    if (!gedp) {
-	BU_ALLOC(gedp, struct ged);
+    if (!GEDP) {
+	BU_ALLOC(GEDP, struct ged);
     }
 
     /* initialize a separate wdbp for libged to manage */
-    ged_wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
-    GED_INIT(gedp, ged_wdbp);
-    gedp->ged_output_handler = mged_output_handler;
-    gedp->ged_refresh_handler = mged_refresh_handler;
-    gedp->ged_create_vlist_solid_callback = createDListSolid;
-    gedp->ged_create_vlist_callback = createDListAll;
-    gedp->ged_free_vlist_callback = freeDListsAll;
+    ged_wdbp = wdb_dbopen(DBIP, RT_WDB_TYPE_DB_DISK);
+    GED_INIT(GEDP, ged_wdbp);
+    GEDP->ged_output_handler = mged_output_handler;
+    GEDP->ged_refresh_handler = mged_refresh_handler;
+    GEDP->ged_create_vlist_solid_callback = createDListSolid;
+    GEDP->ged_create_vlist_callback = createDListAll;
+    GEDP->ged_free_vlist_callback = freeDListsAll;
 
     /* increment use count for gedp db instance */
-    (void)db_clone_dbi(dbip, NULL);
+    (void)db_clone_dbi(DBIP, NULL);
 
     /* Provide LIBWDB C access to the on-disk database */
-    if ((wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK)) == RT_WDB_NULL) {
+    if ((WDBP = wdb_dbopen(DBIP, RT_WDB_TYPE_DB_DISK)) == RT_WDB_NULL) {
 	Tcl_AppendResult(interpreter, "wdb_dbopen() failed?\n", (char *)NULL);
 
 	/* release any allocated memory */
-	ged_free(gedp);
-	bu_free((void *)gedp, "struct ged");
-	gedp = NULL;
+	ged_free(GEDP);
+	bu_free((void *)GEDP, "struct ged");
+	GEDP = NULL;
 
 	return TCL_ERROR;
     }
 
     /* increment use count for tcl db instance */
-    (void)db_clone_dbi(dbip, NULL);
+    (void)db_clone_dbi(DBIP, NULL);
 
     /* Establish LIBWDB TCL access to both disk and in-memory databases */
 
     /* initialize rt_wdb */
-    bu_vls_init(&wdbp->wdb_name);
-    bu_vls_strcpy(&wdbp->wdb_name, MGED_DB_NAME);
+    bu_vls_init(&WDBP->wdb_name);
+    bu_vls_strcpy(&WDBP->wdb_name, MGED_DB_NAME);
 
-    wdbp->wdb_interp = interpreter;
+    WDBP->wdb_interp = interpreter;
 
     /* append to list of rt_wdb's */
-    BU_LIST_APPEND(&RTG.rtg_headwdb.l, &wdbp->l);
+    BU_LIST_APPEND(&RTG.rtg_headwdb.l, &WDBP->l);
 
     /* This creates a "db" command object */
 
     /* Beware, returns a "token", not TCL_OK. */
-    (void)Tcl_CreateCommand((Tcl_Interp *)wdbp->wdb_interp, MGED_DB_NAME, (Tcl_CmdProc *)wdb_cmd, (ClientData)wdbp, wdb_deleteProc);
+    (void)Tcl_CreateCommand((Tcl_Interp *)WDBP->wdb_interp, MGED_DB_NAME, (Tcl_CmdProc *)wdb_cmd, (ClientData)WDBP, wdb_deleteProc);
 
     /* Return new function name as result */
-    Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, MGED_DB_NAME, (char *)NULL);
+    Tcl_AppendResult((Tcl_Interp *)WDBP->wdb_interp, MGED_DB_NAME, (char *)NULL);
 
     /* This creates the ".inmem" in-memory geometry container and sets
      * up the GUI.
@@ -2840,16 +2840,16 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	    bu_vls_free(&cmd);
 
 	    /* release any allocated memory */
-	    ged_free(gedp);
-	    bu_free((void *)gedp, "struct ged");
-	    gedp = NULL;
+	    ged_free(GEDP);
+	    bu_free((void *)GEDP, "struct ged");
+	    GEDP = NULL;
 
 	    return TCL_ERROR;
 	}
 
 	/* Perhaps do something special with the GUI */
 	bu_vls_trunc(&cmd, 0);
-	bu_vls_printf(&cmd, "opendb_callback %s", dbip->dbi_filename);
+	bu_vls_printf(&cmd, "opendb_callback %s", DBIP->dbi_filename);
 	(void)Tcl_Eval(interpreter, bu_vls_addr(&cmd));
 
 	bu_vls_strcpy(&cmd, "local2base");
@@ -2867,15 +2867,15 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 
     /* Print title/units information */
     if (interactive) {
-	bu_vls_printf(&msg, "%s (units=%s)\n", dbip->dbi_title,
-		      bu_units_string(dbip->dbi_local2base));
+	bu_vls_printf(&msg, "%s (units=%s)\n", DBIP->dbi_title,
+		      bu_units_string(DBIP->dbi_local2base));
     }
 
     /*
      * We have an old database version AND we're not in the process of
      * creating a new database.
      */
-    if (db_version(dbip) < 5 && !created_new_db) {
+    if (db_version(DBIP) < 5 && !created_new_db) {
 	if (mged_db_upgrade) {
 	    if (mged_db_warn)
 		bu_vls_printf(&msg, "Warning:\n\tDatabase version is old.\n\tConverting to the new format.\n");
@@ -2916,7 +2916,7 @@ f_closedb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
 	return TCL_ERROR;
     }
 
-    if (dbip == DBI_NULL) {
+    if (DBIP == DBI_NULL) {
 	Tcl_AppendResult(interpreter, "No database is open\n", NULL);
 	return TCL_OK;
     }
@@ -2930,11 +2930,11 @@ f_closedb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
     Tcl_Eval(interpreter, "rename " MGED_DB_NAME " \"\"; rename .inmem \"\"");
 
     /* close the geometry instance */
-    ged_close(gedp);
-    BU_PUT(gedp, struct ged);
+    ged_close(GEDP);
+    BU_PUT(GEDP, struct ged);
 
-    wdbp = RT_WDB_NULL;
-    dbip = DBI_NULL;
+    WDBP = RT_WDB_NULL;
+    DBIP = DBI_NULL;
 
     /* wipe out the material list */
     rt_new_material_head(MATER_NULL);

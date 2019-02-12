@@ -156,30 +156,30 @@ mged_highlight_menu_item(struct menu_item *mptr, int y)
     switch (mptr->menu_arg) {
 	case BV_RATE_TOGGLE:
 	    if (mged_variables->mv_rateknobs) {
-		dm_set_fg(dmp,
+		dm_set_fg(DMP,
 			       color_scheme->cs_menu_text1[0],
 			       color_scheme->cs_menu_text1[1],
 			       color_scheme->cs_menu_text1[2], 1, 1.0);
-		dm_draw_string_2d(dmp, "Rate",
+		dm_draw_string_2d(DMP, "Rate",
 				  GED2PM1(MENUX), GED2PM1(y-15), 0, 0);
-		dm_set_fg(dmp,
+		dm_set_fg(DMP,
 			       color_scheme->cs_menu_text2[0],
 			       color_scheme->cs_menu_text2[1],
 			       color_scheme->cs_menu_text2[2], 1, 1.0);
-		dm_draw_string_2d(dmp, "/Abs",
+		dm_draw_string_2d(DMP, "/Abs",
 				  GED2PM1(MENUX+4*40), GED2PM1(y-15), 0, 0);
 	    } else {
-		dm_set_fg(dmp,
+		dm_set_fg(DMP,
 			       color_scheme->cs_menu_text2[0],
 			       color_scheme->cs_menu_text2[1],
 			       color_scheme->cs_menu_text2[2], 1, 1.0);
-		dm_draw_string_2d(dmp, "Rate/",
+		dm_draw_string_2d(DMP, "Rate/",
 				  GED2PM1(MENUX), GED2PM1(y-15), 0, 0);
-		dm_set_fg(dmp,
+		dm_set_fg(DMP,
 			       color_scheme->cs_menu_text1[0],
 			       color_scheme->cs_menu_text1[1],
 			       color_scheme->cs_menu_text1[2], 1, 1.0);
-		dm_draw_string_2d(dmp, "Abs",
+		dm_draw_string_2d(DMP, "Abs",
 				  GED2PM1(MENUX+5*40), GED2PM1(y-15), 0, 0);
 	    }
 	    break;
@@ -203,14 +203,14 @@ mmenu_display(int y_top)
     int y = y_top;
 
     menu_state->ms_top = y - MENU_DY / 2;
-    dm_set_fg(dmp,
+    dm_set_fg(DMP,
 		   color_scheme->cs_menu_line[0],
 		   color_scheme->cs_menu_line[1],
 		   color_scheme->cs_menu_line[2], 1, 1.0);
 
-    dm_set_line_attr(dmp, mged_variables->mv_linewidth, 0);
+    dm_set_line_attr(DMP, mged_variables->mv_linewidth, 0);
 
-    dm_draw_line_2d(dmp,
+    dm_draw_line_2d(DMP,
 		    GED2PM1(MENUXLIM), GED2PM1(menu_state->ms_top),
 		    GED2PM1(XMIN), GED2PM1(menu_state->ms_top));
 
@@ -224,32 +224,32 @@ mmenu_display(int y_top)
 		mged_highlight_menu_item(mptr, y);
 	    else {
 		if (mptr == *m)
-		    dm_set_fg(dmp,
+		    dm_set_fg(DMP,
 				   color_scheme->cs_menu_title[0],
 				   color_scheme->cs_menu_title[1],
 				   color_scheme->cs_menu_title[2], 1, 1.0);
 		else
-		    dm_set_fg(dmp,
+		    dm_set_fg(DMP,
 				   color_scheme->cs_menu_text2[0],
 				   color_scheme->cs_menu_text2[1],
 				   color_scheme->cs_menu_text2[2], 1, 1.0);
-		dm_draw_string_2d(dmp, mptr->menu_string,
+		dm_draw_string_2d(DMP, mptr->menu_string,
 				  GED2PM1(MENUX), GED2PM1(y-15), 0, 0);
 	    }
-	    dm_set_fg(dmp,
+	    dm_set_fg(DMP,
 			   color_scheme->cs_menu_line[0],
 			   color_scheme->cs_menu_line[1],
 			   color_scheme->cs_menu_line[2], 1, 1.0);
-	    dm_draw_line_2d(dmp,
+	    dm_draw_line_2d(DMP,
 			    GED2PM1(MENUXLIM), GED2PM1(y+(MENU_DY/2)),
 			    GED2PM1(XMIN), GED2PM1(y+(MENU_DY/2)));
 	    if (menu_state->ms_cur_item == item && menu_state->ms_cur_menu == menu && menu_state->ms_flag) {
 		/* prefix item selected with "==>" */
-		dm_set_fg(dmp,
+		dm_set_fg(DMP,
 			       color_scheme->cs_menu_arrow[0],
 			       color_scheme->cs_menu_arrow[1],
 			       color_scheme->cs_menu_arrow[2], 1, 1.0);
-		dm_draw_string_2d(dmp, "==>",
+		dm_draw_string_2d(DMP, "==>",
 				  GED2PM1(XMIN), GED2PM1(y-15), 0, 0);
 	    }
 	}
@@ -258,14 +258,14 @@ mmenu_display(int y_top)
     if (y == y_top)
 	return;	/* no active menus */
 
-    dm_set_fg(dmp,
+    dm_set_fg(DMP,
 		   color_scheme->cs_menu_line[0],
 		   color_scheme->cs_menu_line[1],
 		   color_scheme->cs_menu_line[2], 1, 1.0);
 
-    dm_set_line_attr(dmp, mged_variables->mv_linewidth, 0);
+    dm_set_line_attr(DMP, mged_variables->mv_linewidth, 0);
 
-    dm_draw_line_2d(dmp,
+    dm_draw_line_2d(DMP,
 		    GED2PM1(MENUXLIM), GED2PM1(menu_state->ms_top-1),
 		    GED2PM1(MENUXLIM), GED2PM1(y-(MENU_DY/2)));
 }
