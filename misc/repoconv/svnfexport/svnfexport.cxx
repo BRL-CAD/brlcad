@@ -755,16 +755,6 @@ analyze_dump()
     }
 }
 
-void add_branch(struct svn_revision &rev,  std::ofstream &outfile, std::string &branch, std::string &bbpath) {
-    outfile << "commit " << branch << "\n";
-    outfile << "mark :" << rev.revision_number << "\n";
-    outfile << "committer " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
-    outfile << "data " << rev.commit_msg.length() << "\n";
-    outfile << rev.commit_msg << "\n";
-    outfile << "from " << branch_head_id(bbpath) << "\n";
-    branch_head_ids[branch] = std::to_string(rev.revision_number);
-}
-
 void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev_num_min, long int rev_num_max)
 {
     std::string empty_sha1("da39a3ee5e6b4b0d3255bfef95601890afd80709");
@@ -824,13 +814,16 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 			if (rev.revision_number < edited_tag_minr) {
 			    std::string tbstr = std::string("refs/heads/") +  node.branch;
 			    std::cout << "Adding tag branch " << tbstr << " from " << bbpath << ", r" << rev.revision_number <<"\n";
-			    add_branch(rev, outfile, tbstr, bbpath);
+			    std::cout << rev.commit_msg << "\n";
+			    outfile << "reset " << tbstr << "\n";
+			    outfile << "from " << branch_head_id(bbpath) << "\n";
+			    branch_head_ids[tbstr] = branch_head_ids[bbpath];
 			    have_commit = 1;
 			    continue;
 			} else {
 			    if (rev.revision_number == edited_tag_maxr) {
 				// Note - in this situation, we need to both build a commit and do a tag.  Will probably
-				// take some refactoring
+				// take some refactoring.  Merge information will also be a factor.
 				std::cout << "[TODO] Adding final commit and tag " << node.branch << ", r" << rev.revision_number<< "\n";
 				have_commit = 1;
 				continue;
@@ -852,7 +845,10 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 		    int is_tag;
 		    node_path_split(node.copyfrom_path, ppath, bbpath, llpath, &is_tag);
 		    std::cout << "Adding branch " << node.branch << " from " << bbpath << ", r" << rev.revision_number <<"\n";
-		    add_branch(rev, outfile, node.branch, bbpath);
+		    std::cout << rev.commit_msg << "\n";
+		    outfile << "reset " << node.branch << "\n";
+		    outfile << "from " << branch_head_id(bbpath) << "\n";
+		    branch_head_ids[node.branch] = branch_head_ids[bbpath];
 		    have_commit = 1;
 		    continue;
 		}
