@@ -146,6 +146,7 @@ set(misc_ignore_files
   repoconv/svn2git/svn-fast-export/svn.h
   repoconv/svnfexport/sha1.hpp
   repoconv/svnfexport/svn_date.h
+  repoconv/svnfexport/cvssvnsync.cxx
   repoconv/svnfexport/svnfexport.cxx
   uncpowerplant2g.sh
   win32-msvc/CMakeLists.txt

@@ -799,14 +799,15 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 	    int tag_after_commit = 0;
 	    int branch_delete = 0;
 	    std::string rbranch = rev.nodes[0].branch;
+	    if (rev.revision_number == 66223) {
+		std::cout << "at 66223\n";
+	    }
+
 	    for (size_t n = 0; n != rev.nodes.size(); n++) {
 		struct svn_node &node = rev.nodes[n];
 
 		if (node.tag_add || node.tag_edit) {
 		    std::cout << "Processing revision " << rev.revision_number << "\n";
-		    if (rev.revision_number == 66171) {
-			std::cout << "at 66171\n";
-		    }
 		    std::string ppath, bbpath, llpath;
 		    int is_tag;
 		    node_path_split(node.copyfrom_path, ppath, bbpath, llpath, &is_tag);
@@ -884,6 +885,9 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 		    git_changes = 1;
 		}
 		if (node.exec_change) {
+		    git_changes = 1;
+		}
+		if (node.action == ndelete) {
 		    git_changes = 1;
 		}
 	    }
