@@ -176,13 +176,10 @@ main(int argc, char **argv)
 
     RTG.debug |= DEBUG_ALLRAYS;	/* Cause core dumps on bu_bomb(), but no extra messages */
 
-    while ((i=bu_getopt(argc, argv, "dh?")) != -1) {
+    while ((i=bu_getopt(argc, argv, "h?")) != -1) {
 	switch (i) {
-	    case 'd':
-		RTG.debug |= DEBUG_MEM;
-		 break;
 	    default:
-		fprintf(stderr,"Usage: %s [-d]\n", *argv);
+		fprintf(stderr,"Usage: %s\n", *argv);
 		return -1;
 	}
     }

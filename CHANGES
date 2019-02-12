@@ -1385,7 +1385,7 @@ s/bu_brlcad_data[[:space:]]*\(/bu_brlcad_root("share/"/g
         replaced by new BU API
 s/struct[[:space:]]*ged_run_rt/struct ged_subprocess/g
 
-# tentative
-s/bu_getprogname\([[:space:]]*\)/bu_app_name\(NULL\)/g
-s/bu_setprogname/bu_app_name/g
-s/bu_argv0_full_path\([[:space:]]*\)/bu_file_realpath\(bu_app_name\(NULL\)\)/g
+7.30
+----
+s/BU_DEBUG_MEM_LOG/0/g
+	bu memory debugging API removed [7.29]

@@ -85,6 +85,9 @@ main(int ac, char *av[])
 
     /* bu_log("using %s temp file\n", filename); */
 
+    title = (char *)bu_malloc(sz * 2, "test allocation");
+    bu_free(title, "test allocation");
+    
     title = (char *)bu_malloc(sz, "title");
     memset(title, ' ', sz);
     title[0] = '3';

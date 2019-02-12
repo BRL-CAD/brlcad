@@ -66,8 +66,8 @@ __BEGIN_DECLS
 #define DEBUG_CUT	0x00004000	/**< @brief 15 Print space cutting statistics */
 #define DEBUG_BOXING	0x00008000	/**< @brief 16 Object/box checking details */
 
-#define DEBUG_MEM	0x00010000	/**< @brief 17 -->> BU_DEBUG_MEM_LOG */
-#define DEBUG_UNUSED_0	0x00020000	/**< @brief 18 Unassigned */
+#define DEBUG_UNUSED_0	0x00010000	/**< @brief 17 -->> BU_DEBUG_MEM_LOG */
+#define DEBUG_UNUSED_1	0x00020000	/**< @brief 18 Unassigned */
 #define DEBUG_FDIFF	0x00040000	/**< @brief 19 bool/fdiff debugging */
 #define DEBUG_PARALLEL	0x00080000	/**< @brief 20 -->> BU_DEBUG_PARALLEL */
 
@@ -82,9 +82,9 @@ __BEGIN_DECLS
 #define DEBUG_EBM	0x02000000	/**< @brief 26 Extruded bit-map solids */
 #define DEBUG_HF	0x04000000	/**< @brief 27 Height Field solids */
 
-#define DEBUG_UNUSED_1	0x08000000	/**< @brief 28 Unassigned */
-#define DEBUG_UNUSED_2	0x10000000	/**< @brief 29 Unassigned */
-#define DEBUG_UNUSED_3	0x20000000	/**< @brief 30 Unassigned */
+#define DEBUG_UNUSED_2	0x08000000	/**< @brief 28 Unassigned */
+#define DEBUG_UNUSED_3	0x10000000	/**< @brief 29 Unassigned */
+#define DEBUG_UNUSED_4	0x20000000	/**< @brief 30 Unassigned */
 
 /* Options which will cause the library to write binary debugging output */
 #define DEBUG_PL_SOLIDS 0x40000000	/**< @brief 31 plot all solids */
@@ -94,9 +94,9 @@ __BEGIN_DECLS
 #define DEBUG_FORMAT	"\020" /* print hex */ \
     "\040PL_BOX" \
     "\037PL_SOLIDS" \
-    "\036UNUSED_3" \
-    "\035UNUSED_2" \
-    "\034UNUSED_1" \
+    "\036UNUSED_4" \
+    "\035UNUSED_3" \
+    "\034UNUSED_2" \
     "\033HF" \
     "\032EBM" \
     "\031MATH" \
@@ -106,8 +106,8 @@ __BEGIN_DECLS
     "\025CUTDETAIL" \
     "\024PARALLEL" \
     "\023FDIFF" \
-    "\022UNUSED_0" \
-    "\021MEM" \
+    "\022UNUSED_1" \
+    "\021UNUSED_0" \
     "\020BOXING" \
     "\017CUT" \
     "\016PARTITION" \

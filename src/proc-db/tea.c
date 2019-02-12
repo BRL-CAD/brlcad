@@ -98,13 +98,10 @@ main(int argc, char **argv)
     struct rt_wdb *outfp;
     struct face_g_snurb **surfaces;
 
-    while ((i=bu_getopt(argc, argv, "dh?")) != -1) {
+    while ((i=bu_getopt(argc, argv, "h?")) != -1) {
 	switch (i) {
-	    case 'd':
-		RTG.debug |= DEBUG_MEM;
-		break;
 	    default:
-		bu_log("Usage: %s [-d]\n", *argv);
+		bu_log("Usage: %s\n", *argv);
 		bu_exit(-1, NULL);
 	}
     }
