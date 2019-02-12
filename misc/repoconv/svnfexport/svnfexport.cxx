@@ -83,6 +83,7 @@ std::set<std::string> tags;
 std::set<std::string> edited_tags;
 /* The last subversion revision that makes a change to the tag */
 std::map<std::string, long int> edited_tag_max_rev;
+std::map<std::string, long int> edited_tag_first_rev;
 
 std::map<long int, struct svn_revision> revs;
 
@@ -693,7 +694,11 @@ analyze_dump()
 	    // Spot tag edits
 	    if (node.text_content_length > 0 && node.tag_path) {
 		node.tag_edit = 1;
+		if (edited_tags.find(node.branch) == edited_tags.end()) {
+		    edited_tag_first_rev[node.branch] = rev.revision_number;
+		}
 		edited_tags.insert(node.branch);
+		std::cout << "Edited tag(" << rev.revision_number << "): " << node.branch << "\n";
 		edited_tag_max_rev[node.branch] = rev.revision_number;
 	    }
 	    // Branch add
@@ -750,6 +755,16 @@ analyze_dump()
     }
 }
 
+void add_branch(struct svn_revision &rev,  std::ofstream &outfile, std::string &branch, std::string &bbpath) {
+    outfile << "commit " << branch << "\n";
+    outfile << "mark :" << rev.revision_number << "\n";
+    outfile << "committer " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
+    outfile << "data " << rev.commit_msg.length() << "\n";
+    outfile << rev.commit_msg << "\n";
+    outfile << "from " << branch_head_id(bbpath) << "\n";
+    branch_head_ids[branch] = std::to_string(rev.revision_number);
+}
+
 void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev_num_min, long int rev_num_max)
 {
     std::string empty_sha1("da39a3ee5e6b4b0d3255bfef95601890afd80709");
@@ -776,27 +791,75 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 	if (rev.revision_number > rev_num_max) return;
 
 	if (rev.revision_number >= rev_num_min) {
-
+#if 0
 	    std::cout << "Processing revision " << rev.revision_number << "\n";
 	    if (rev.merged_from.length()) {
 		std::cout << "Note: merged from " << rev.merged_from << "\n";
 	    }
-
+#endif
 	    int git_changes = 0;
+	    int have_commit = 0;
 	    for (size_t n = 0; n != rev.nodes.size(); n++) {
 		struct svn_node &node = rev.nodes[n];
+
+		if (node.tag_add || node.tag_edit) {
+		    std::cout << "Processing revision " << rev.revision_number << "\n";
+		    if (rev.revision_number == 66171) {
+			std::cout << "at 66171\n";
+		    }
+		    std::string ppath, bbpath, llpath;
+		    int is_tag;
+		    node_path_split(node.copyfrom_path, ppath, bbpath, llpath, &is_tag);
+
+		    int edited_tag_minr = -1;
+		    int edited_tag_maxr = -1;
+
+		    // For edited tags - first tag create branch, final tag is "real" tag,
+		    // else just branch commits
+		    if (edited_tags.find(node.branch) != edited_tags.end()) {
+			edited_tag_minr = edited_tag_first_rev[node.branch];
+			edited_tag_maxr = edited_tag_max_rev[node.branch];
+			std::cout << node.branch << ": " << edited_tag_minr << " " << edited_tag_maxr << "\n";
+
+			if (rev.revision_number < edited_tag_minr) {
+			    std::string tbstr = std::string("refs/heads/") +  node.branch;
+			    std::cout << "Adding tag branch " << tbstr << " from " << bbpath << ", r" << rev.revision_number <<"\n";
+			    add_branch(rev, outfile, tbstr, bbpath);
+			    have_commit = 1;
+			    continue;
+			} else {
+			    if (rev.revision_number == edited_tag_maxr) {
+				// Note - in this situation, we need to both build a commit and do a tag.  Will probably
+				// take some refactoring
+				std::cout << "[TODO] Adding final commit and tag " << node.branch << ", r" << rev.revision_number<< "\n";
+				have_commit = 1;
+				continue;
+			    } else {
+				std::cout << "Non-final tag edit, processing normally: " << node.branch << ", r" << rev.revision_number<< "\n";
+			    }
+			}
+		    } else {
+			std::cout << "[TODO] Adding tag " << node.branch << " from " << bbpath << ", r" << rev.revision_number << "\n";
+			have_commit = 1;
+			continue;
+		    }
+
+		}
 
 		if (node.branch_add) {
 		    std::cout << "Processing revision " << rev.revision_number << "\n";
 		    std::string ppath, bbpath, llpath;
 		    int is_tag;
 		    node_path_split(node.copyfrom_path, ppath, bbpath, llpath, &is_tag);
-		    std::cout << "[TODO] Adding branch " << node.branch << " from " << bbpath << "\n";
+		    std::cout << "Adding branch " << node.branch << " from " << bbpath << ", r" << rev.revision_number <<"\n";
+		    add_branch(rev, outfile, node.branch, bbpath);
+		    have_commit = 1;
+		    continue;
 		}
 
 		if (node.branch_delete) {
-		    std::cout << "Processing revision " << rev.revision_number << "\n";
-		    std::cout << "Delete branch instruction: " << node.branch << " - deferring.\n";
+		    //std::cout << "Processing revision " << rev.revision_number << "\n";
+		    //std::cout << "Delete branch instruction: " << node.branch << " - deferring.\n";
 		    continue;
 		}
 		if (node.text_content_length > 0) {
@@ -817,6 +880,9 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 
 		continue;
 	    if (git_changes) {
+		if (have_commit) {
+		    std::cout << "Error - more than one commit generated for revision " << rev.revision_number << "\n";
+		}
 		if (author_map.find(rev.author) == author_map.end()) {
 		    std::cout << "Error - couldn't find author map for author " << rev.author << " on revision " << rev.revision_number << "\n";
 		    exit(1);

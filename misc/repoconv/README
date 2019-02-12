@@ -108,6 +108,8 @@ sets for those commits - the main svnfexport exectable isn't really tracking tha
 
 Also needing special awareness will be the dmtogl branches:
 
+Processing revision 36185
+Adding branch refs/heads/dmtogl-branch from refs/heads/master
 Processing revision 36472
 Adding branch refs/heads/dmtogl from refs/heads/dmtogl-branch
 Processing revision 36472
