@@ -814,8 +814,8 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 	    int tag_after_commit = 0;
 	    int branch_delete = 0;
 	    std::string rbranch = rev.nodes[0].branch;
-	    if (rev.revision_number == 30544) {
-		std::cout << "at 30544\n";
+	    if (rev.revision_number == 34022) {
+		std::cout << "at 34022\n";
 	    }
 
 	    for (size_t n = 0; n != rev.nodes.size(); n++) {
