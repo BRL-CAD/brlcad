@@ -672,6 +672,7 @@ void
 analyze_dump()
 {
     std::map<long int, struct svn_revision>::iterator r_it;
+
     for (r_it = revs.begin(); r_it != revs.end(); r_it++) {
 	long int maxrev = 0;
 	struct svn_revision &rev = r_it->second;
@@ -680,6 +681,11 @@ analyze_dump()
 	    // Break up paths and build tag/branch lists
 	    node_path_split(node.path, node.project, node.branch, node.local_path, &(node.tag_path));
 	    if (node.branch.length()) {
+		// Map dmtogl-branch names to dmtogl
+		if (node.branch == std::string("refs/heads/dmtogl-branch")) {
+		    node.branch = std::string("refs/heads/dmtogl");
+		    std::cout << "Updating rev " << rev.revision_number << "\n";
+		}
 		if (node.tag_path) {
 		    tags.insert(node.branch);
 		} else {
@@ -692,7 +698,7 @@ analyze_dump()
 		rev.move_edit = 1;
 	    }
 	    // Spot tag edits
-	    if (node.text_content_length > 0 && node.tag_path) {
+	    if ((node.text_content_length > 0 || node.text_copy_source_sha1.length()) && node.tag_path) {
 		node.tag_edit = 1;
 		if (edited_tags.find(node.branch) == edited_tags.end()) {
 		    edited_tag_first_rev[node.branch] = rev.revision_number;
@@ -753,6 +759,7 @@ analyze_dump()
 	    rev.project = rev.nodes[0].project; 
 	}
     }
+
 }
 
 void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev_num_min, long int rev_num_max)
@@ -789,6 +796,8 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 #endif
 	    int git_changes = 0;
 	    int have_commit = 0;
+	    int tag_after_commit = 0;
+	    int branch_delete = 0;
 	    for (size_t n = 0; n != rev.nodes.size(); n++) {
 		struct svn_node &node = rev.nodes[n];
 
@@ -822,13 +831,14 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 			    continue;
 			} else {
 			    if (rev.revision_number == edited_tag_maxr) {
-				// Note - in this situation, we need to both build a commit and do a tag.  Will probably
-				// take some refactoring.  Merge information will also be a factor.
-				std::cout << "[TODO] Adding final commit and tag " << node.branch << ", r" << rev.revision_number<< "\n";
-				have_commit = 1;
+				tag_after_commit = 1;
+				std::string tbstr = std::string("refs/heads/") +  node.branch;
+				node.branch = tbstr;
 				continue;
 			    } else {
 				std::cout << "Non-final tag edit, processing normally: " << node.branch << ", r" << rev.revision_number<< "\n";
+				std::string tbstr = std::string("refs/heads/") +  node.branch;
+				node.branch = tbstr;
 			    }
 			}
 		    } else {
@@ -856,6 +866,7 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 		if (node.branch_delete) {
 		    //std::cout << "Processing revision " << rev.revision_number << "\n";
 		    //std::cout << "Delete branch instruction: " << node.branch << " - deferring.\n";
+		    branch_delete = 1;
 		    continue;
 		}
 		if (node.text_content_length > 0) {
@@ -874,7 +885,6 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 		}
 	    }
 
-		continue;
 	    if (git_changes) {
 		if (have_commit) {
 		    std::cout << "Error - more than one commit generated for revision " << rev.revision_number << "\n";
@@ -971,8 +981,17 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 		    std::cout << "Error - unhandled node action: " << print_node_action(node.action) << "\n";
 		    exit(1);
 		}
+		if (tag_after_commit) {
+		    // Note - in this situation, we need to both build a commit and do a tag.  Will probably
+		    // take some refactoring.  Merge information will also be a factor.
+		    std::cout << "[TODO] Adding final commit and tag " << rev.nodes[0].branch << ", r" << rev.revision_number<< "\n";
+		}
+
 	    } else {
-		std::cout << "Skipping SVN commit r" << rev.revision_number << " - no git applicable changes\n";
+		if (!branch_delete) {
+		    std::cout << "Skipping SVN commit r" << rev.revision_number << " - no git applicable changes\n";
+		    std::cout << rev.commit_msg << "\n";
+		}
 	    }
 	}
     }
