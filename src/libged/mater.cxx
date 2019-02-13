@@ -320,6 +320,13 @@ _ged_mater_clear(struct ged *gedp)
 int
 _ged_mater_validate(struct ged *gedp, int argc, const char *argv[])
 {
+    int ecnt = 0;
+    struct analyze_densities *a = NULL;
+    long int tb_cnt = 0;
+    struct bu_vls msgs = BU_VLS_INIT_ZERO;
+    struct bu_mapped_file *dfile = NULL;
+    char *buf = NULL;
+
     if (argc != 2) {
 	bu_vls_printf(gedp->ged_result_str, "%s", usage);
 	return GED_OK;
@@ -330,8 +337,33 @@ _ged_mater_validate(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    // TODO - validate file
+    dfile = bu_open_mapped_file(argv[1], "densities file");
+    if (!dfile) {
+	bu_vls_printf(gedp->ged_result_str, "Could not open density file - %s\n", argv[1]);
+	return GED_ERROR;
+    }
 
+    buf = (char *)(dfile->buf);
+
+    analyze_densities_create(&a);
+    tb_cnt = analyze_densities_load(a, buf, &msgs, &ecnt);
+    bu_close_mapped_file(dfile);
+
+    if (!tb_cnt) {
+	bu_vls_printf(gedp->ged_result_str, "no density information found in %s:\n%s", argv[1], bu_vls_cstr(&msgs));
+	bu_vls_free(&msgs);
+	analyze_densities_destroy(a);
+	return GED_ERROR;
+    }
+    if (ecnt) {
+	bu_vls_printf(gedp->ged_result_str, "errors parsing density file %s:\n%s", argv[1], bu_vls_cstr(&msgs));
+	analyze_densities_destroy(a);
+	bu_vls_free(&msgs);
+	return GED_ERROR;
+    }
+
+    bu_vls_free(&msgs);
+    analyze_densities_destroy(a);
     return GED_OK;
 }
 
@@ -360,7 +392,9 @@ _ged_mater_load(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (validate_input) {
-	// TODO - run through a load sequence to make sure there aren't any errors
+	if (_ged_mater_validate(gedp, 2, argv) != GED_OK) {
+	    return GED_ERROR;
+	}
     }
 
     if (rt_mk_binunif (gedp->ged_wdbp, GED_DB_DENSITY_OBJECT, argv[1], DB5_MINORTYPE_BINU_8BITINT, 0)) {
@@ -429,12 +463,51 @@ _ged_mater_write(struct ged *gedp, int argc, const char *argv[])
     return GED_OK;
 }
 
-#if 0
+/* TODO - should this take a --file option to support reading info from
+ * a specific .density file? */
 int
 _ged_mater_get(struct ged *gedp, int argc, const char *argv[])
 {
+    int id_search = 0;
+    int den_search = 0;
+    int name_search = 0;
+    int report_tcl = 0;
+    double dtol = SMALL_FASTF;
+    struct bu_vls msgs = BU_VLS_INIT_ZERO;
+    struct bu_opt_desc d[6];
+    int ac;
+    BU_OPT(d[0], "", "id",  "",      NULL,  &id_search,   "Search using a material id number key");
+    BU_OPT(d[1], "", "density",  "", NULL,  &den_search,  "Search using a density value");
+    BU_OPT(d[2], "", "name",  "",    NULL,  &name_search, "Search using a material name");
+    BU_OPT(d[3], "", "tol",  "<tolerance>", &bu_opt_fastf_t,  &dtol, "Search for density matches with the specified tolerance.");
+    BU_OPT(d[4], "", "tcl",  "",     NULL,  &report_tcl, "Report output in a Tcl formatted list");
+    BU_OPT_NULL(d[5]);
+
+    argc--; argv++;
+
+    if (argc < 2) {
+	bu_vls_printf(gedp->ged_result_str, "%s", usage);
+	return GED_ERROR;
+    }
+
+    ac = bu_opt_parse(&msgs, argc, argv, d);
+    if (ac < 0) {
+	bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_cstr(&msgs));
+	bu_vls_free(&msgs);
+	return GED_ERROR;
+    }
+
+    // TODO - read density data per ged rules, query it per options, and
+    // construct result string to return to caller.
+
+    return GED_OK;
 }
 
+#if 0
+/* TODO - if this is going to support updating .density files on the
+ * file system in addition the in-database version, need to upgrade
+ * the libanalyze logic to preserve after-density-definition comments
+ * and associate them with that density in memory. */
 int
 _ged_mater_set(struct ged *gedp, int argc, const char *argv[])
 {
