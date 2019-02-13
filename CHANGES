@@ -129,7 +129,12 @@ removed at any time.
 
 7.30
 ----
-	Emacs key binding emulation in btclsh/bwish
+~/.density
+        automatic reading of .density file in home directory
+        materials need to be specified or imported [deprecated 7.28]
+
+btclsh, bwish
+	Emacs key binding emulation
 	achieved by running btclsh in Emacs [deprecated 7.30]
 
 7.28
