@@ -41,8 +41,9 @@
 static const char *usage = "Usage: mater [-s] object_name shader r [g b] inherit\n"
                            "              -d  source\n"
                            "              -d  clear\n"
-                           "              -d  load file.density\n"
+                           "              -d  load [-v] file.density\n"
                            "              -d  write file.density\n"
+                           "              -d  validate file.density\n"
                            "              -d  get [--id|--density|--name] [--tol <tolerance>] [--tcl] [key]\n"
                            "              -d  set [--tcl] id,density,name\n"
                            "              -d  map density_file [map_file]\n"
@@ -260,6 +261,7 @@ _ged_mater_source(struct ged *gedp)
 	bu_vls_printf(gedp->ged_result_str, "%s\n", gedp->gd_densities_source);
 	return GED_OK;
     }
+
     /* If nothing is already defined, check in priority order */
     if (db_lookup(gedp->ged_wdbp->dbip, GED_DB_DENSITY_OBJECT, LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s\n", gedp->ged_wdbp->dbip->dbi_filename);
@@ -308,23 +310,126 @@ _ged_mater_clear(struct ged *gedp)
 	analyze_densities_destroy(gedp->gd_densities);
 	gedp->gd_densities = NULL;
     }
-    if (gedp->gd_densities) {
+    if (gedp->gd_densities_source) {
 	bu_free(gedp->gd_densities_source, "free density source path");
+	gedp->gd_densities_source = NULL;
     }
     return GED_OK;
 }
 
-#if 0
+int
+_ged_mater_validate(struct ged *gedp, int argc, const char *argv[])
+{
+    if (argc != 2) {
+	bu_vls_printf(gedp->ged_result_str, "%s", usage);
+	return GED_OK;
+    }
+
+    if (!bu_file_exists(argv[1], NULL)) {
+	bu_vls_printf(gedp->ged_result_str, "Specified density file %s not found", argv[1]);
+	return GED_ERROR;
+    }
+
+    // TODO - validate file
+
+    return GED_OK;
+}
+
 int
 _ged_mater_load(struct ged *gedp, int argc, const char *argv[])
 {
+    int validate_input = 0;
+    if (argc < 2 || argc > 3) {
+	bu_vls_printf(gedp->ged_result_str, "%s", usage);
+	return GED_OK;
+    }
+
+    if (BU_STR_EQUAL(argv[1], "-v")) {
+	argv[1] = argv[0];
+	argc--; argv++;
+	validate_input = 1;
+    }
+
+    if (!bu_file_exists(argv[1], NULL)) {
+	bu_vls_printf(gedp->ged_result_str, "Specified density file %s not found", argv[1]);
+	return GED_ERROR;
+    }
+
+    if (_ged_mater_clear(gedp) != GED_OK) {
+	return GED_ERROR;
+    }
+
+    if (validate_input) {
+	// TODO - run through a load sequence to make sure there aren't any errors
+    }
+
+    if (rt_mk_binunif (gedp->ged_wdbp, GED_DB_DENSITY_OBJECT, argv[1], DB5_MINORTYPE_BINU_8BITINT, 0)) {
+	bu_vls_printf(gedp->ged_result_str, "Error reading density file %s", argv[1]);
+	return GED_ERROR;
+    }
+
+    return GED_OK;
 }
 
 int
 _ged_mater_write(struct ged *gedp, int argc, const char *argv[])
 {
+    FILE *fp;
+    struct rt_binunif_internal *bip;
+    struct rt_db_internal intern;
+    struct directory *dp;
+
+    if (argc != 2) {
+	bu_vls_printf(gedp->ged_result_str, "%s", usage);
+	return GED_OK;
+    }
+
+    if ((dp = db_lookup(gedp->ged_wdbp->dbip, GED_DB_DENSITY_OBJECT, LOOKUP_QUIET)) == RT_DIR_NULL) {
+	bu_vls_printf(gedp->ged_result_str, "no density information found in database\n");
+	return GED_ERROR;
+    }
+
+    if (bu_file_exists(argv[1], NULL)) {
+	bu_vls_printf(gedp->ged_result_str, "specified output density file %s already exists", argv[1]);
+	return GED_ERROR;
+    }
+
+    fp = fopen(argv[1], "w+b");
+
+    if (fp == NULL) {
+	bu_vls_printf(gedp->ged_result_str, "cannot open file %s for writing", argv[1]);
+	return GED_ERROR;
+    }
+
+    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, NULL, &rt_uniresource) < 0) {
+	bu_vls_printf(gedp->ged_result_str, "error reading %s from database", dp->d_namep);
+	fclose(fp);
+	return GED_ERROR;
+    }
+
+    RT_CK_DB_INTERNAL(&intern);
+
+    bip = (struct rt_binunif_internal *)intern.idb_ptr;
+    if (bip->count < 1) {
+	bu_vls_printf(gedp->ged_result_str, "%s has no contents", GED_DB_DENSITY_OBJECT);
+	fclose(fp);
+	rt_db_free_internal(&intern);
+	return GED_ERROR;
+    }
+
+    if (fwrite(bip->u.int8, bip->count * db5_type_sizeof_h_binu(bip->type), 1, fp) != 1) {
+	bu_vls_printf(gedp->ged_result_str, "Error writing contents to file");
+	fclose(fp);
+	rt_db_free_internal(&intern);
+	return GED_ERROR;
+    }
+
+    fclose(fp);
+    rt_db_free_internal(&intern);
+    return GED_OK;
 }
 
+#if 0
 int
 _ged_mater_get(struct ged *gedp, int argc, const char *argv[])
 {
