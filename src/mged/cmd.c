@@ -160,8 +160,8 @@ mged_db_search_callback(int argc, const char *argv[], void *userdata)
      * fine for now */
     int ret;
     int i;
-    int len;
-    char *result = NULL;
+    size_t len;
+    const char *result = NULL;
 
     Tcl_DString script;
     Tcl_DStringInit(&script);
@@ -172,12 +172,13 @@ mged_db_search_callback(int argc, const char *argv[], void *userdata)
     for (i = 1; i < argc; ++i)
 	Tcl_DStringAppendElement(&script, argv[i]);
 
-    ret =Tcl_Eval((Tcl_Interp *)userdata, Tcl_DStringValue(&script));
+    ret = Tcl_Eval((Tcl_Interp *)userdata, Tcl_DStringValue(&script));
     Tcl_DStringFree(&script);
 
-    result = Tcl_GetStringFromObj(Tcl_GetObjResult((Tcl_Interp *)userdata), &len);
-
-    bu_log("%s", result);
+    result = Tcl_GetStringResult((Tcl_Interp *)userdata);
+    len = strlen(result);
+    if (len > 0)
+	bu_log("%s%s", result, result[len-1] == '\n' ? "" : "\n");
 
     Tcl_ResetResult((Tcl_Interp *)userdata);
 
