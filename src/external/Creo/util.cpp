@@ -293,8 +293,7 @@ creo_attribute_val(char **val, const char *key, ProMdl m)
 	    break;
 	case PRO_PARAM_BOOLEAN:
 	    ProParamvalueValueGet(&pval, ptype, (void *)&b_val);
-	    bu_vls_sprintf(&cpval, "%d", b_val);
-	    if (bu_vls_strlen(&cpval) > 0) fval = bu_strdup(bu_vls_cstr(&cpval));
+	    fval = (b_val) ? bu_strdup("YES") : bu_strdup("NO");
 	    break;
 	default:
 	    break;

@@ -898,6 +898,19 @@ have_part:
 	bu_vls_free(&vstr);
     }
 
+    /* If we have a user supplied list of attributes to save, do it */
+    if (cinfo->attrs->size() > 0) {
+	for (unsigned int i = 0; i < cinfo->attrs->size(); i++) {
+	    char *attr_val = NULL;
+	    const char *arg = cinfo->attrs->at(i);
+	    creo_attribute_val(&attr_val, arg, model);
+	    if (attr_val) {
+		bu_avs_add(&r_avs, arg, attr_val);
+		bu_free(attr_val, "value string");
+	    }
+	}
+    }
+
     /* Update attributes stored on disk */
     db5_standardize_avs(&r_avs);
     db5_update_attributes(rdp, &r_avs, cinfo->wdbp->dbip);
