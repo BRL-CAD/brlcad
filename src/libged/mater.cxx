@@ -27,6 +27,7 @@
 
 #include <map>
 #include <set>
+#include <regex>
 #include <string>
 #include <sstream>
 
@@ -41,11 +42,11 @@
 static const char *usage = "Usage: mater [-s] object_name shader r [g b] inherit\n"
                            "              -d  source\n"
                            "              -d  clear\n"
-                           "              -d  load [-v] file.density\n"
-                           "              -d  write file.density\n"
+                           "              -d  import [-v] file.density\n"
+                           "              -d  export file.density\n"
                            "              -d  validate file.density\n"
-                           "              -d  get [--id|--density|--name] [--tol <tolerance>] [--tcl] [key]\n"
-                           "              -d  set [--tcl] id,density,name\n"
+                           "              -d  get [--id|--density|--name] [--tol <tolerance>] [key]\n"
+                           "              -d  set <id,density,name> [<id,density,name>] ...\n"
                            "              -d  map density_file [map_file]\n"
                            "              -d  map --names-from-ids density_file\n";
 
@@ -368,7 +369,7 @@ _ged_mater_validate(struct ged *gedp, int argc, const char *argv[])
 }
 
 int
-_ged_mater_load(struct ged *gedp, int argc, const char *argv[])
+_ged_mater_import(struct ged *gedp, int argc, const char *argv[])
 {
     int validate_input = 0;
     if (argc < 2 || argc > 3) {
@@ -406,7 +407,7 @@ _ged_mater_load(struct ged *gedp, int argc, const char *argv[])
 }
 
 int
-_ged_mater_write(struct ged *gedp, int argc, const char *argv[])
+_ged_mater_export(struct ged *gedp, int argc, const char *argv[])
 {
     FILE *fp;
     struct rt_binunif_internal *bip;
@@ -463,11 +464,10 @@ _ged_mater_write(struct ged *gedp, int argc, const char *argv[])
     return GED_OK;
 }
 
-/* TODO - should this take a --file option to support reading info from
- * a specific .density file? */
 int
 _ged_mater_get(struct ged *gedp, int argc, const char *argv[])
 {
+    struct directory *dp;
     int id_search = 0;
     int den_search = 0;
     int name_search = 0;
@@ -497,20 +497,75 @@ _ged_mater_get(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    // TODO - read density data per ged rules, query it per options, and
-    // construct result string to return to caller.
+    if ((dp = db_lookup(gedp->ged_wdbp->dbip, GED_DB_DENSITY_OBJECT, LOOKUP_QUIET)) == RT_DIR_NULL) {
+	bu_vls_printf(gedp->ged_result_str, "no density information found in database.  To insert density information, use the mater -d set and/or mater -d import commands.\n");
+	return GED_ERROR;
+    }
+ 
+
 
     return GED_OK;
 }
 
 #if 0
-/* TODO - if this is going to support updating .density files on the
- * file system in addition the in-database version, need to upgrade
- * the libanalyze logic to preserve after-density-definition comments
- * and associate them with that density in memory. */
 int
 _ged_mater_set(struct ged *gedp, int argc, const char *argv[])
 {
+    struct directory *dp;
+    struct analyze_densities *a = NULL;
+
+    if ((dp = db_lookup(gedp->ged_wdbp->dbip, GED_DB_DENSITY_OBJECT, LOOKUP_QUIET)) != RT_DIR_NULL) {
+	if (_ged_read_densities(gedp, NULL, 0) != GED_OK) {
+	    return GED_ERROR;
+	}
+	/* Take control of the analyze database away from the GED struct */
+	a = gedp->gd_densities;
+	bu_free(gedp->gd_densities_source, "density path name");
+	gedp->gd_densities = NULL;
+    } else {
+	/* Starting from scratch */
+	analyze_densities_create(&a);
+    }
+
+    /* TODO - parse argv density arguments */
+    std::regex d_reg("([0-9]+)[\\s,]+([-+]?[0-9]*\.?[0-9eE+-]?)[\\s,](.*)");
+    for (int i = 1; i < argc; i++) {
+	long int id;
+	fastf_t density;
+	const char *mname;
+	std::smatch sm;
+	std::string dstr(argv[i]);
+	if (std::regex_search(dstr, sm, d_reg)) { 
+	    if (sm.size() != 4) {
+		bu_vls_printf(gedp->ged_result_str, "Error parsing density specifier: %s\n", argv[i]);
+		analyze_densities_destroy(a);
+		return GED_ERROR;
+	    } else {
+		int parse_error = 0;
+		if (bu_opt_long(NULL, 1, (const char **)&(sm[1].str().c_str()), &id) <= 0) {
+		    bu_vls_printf(gedp->ged_result_str, "Error parsing material id: %s\n", sm[1].str().c_str());
+		    parse_error = 1;
+		}
+		if (bu_opt_fastf_t(NULL, 1, (const char **)&(sm[2].str().c_str()), &density) <= 0) {
+		    bu_vls_printf(gedp->ged_result_str, "Error parsing density: %s\n", sm[2].str().c_str());
+		    parse_error = 1;
+		}
+		if (!parse_error) {
+		    analyze_densities_set(a, id, density, sm[3].str().c_str(), NULL);
+		} else {
+		    bu_vls_printf(gedp->ged_result_str, "Error parsing density specifier: %s\n", argv[i]);
+		    analyze_densities_destroy(a);
+		    return GED_ERROR;
+		}
+	    } else {
+		bu_vls_printf(gedp->ged_result_str, "Error parsing density specifier: %s\n", argv[i]);
+		analyze_densities_destroy(a);
+		return GED_ERROR;
+	    }
+	}
+    }
+
+    return GED_OK;
 }
 
 #endif
