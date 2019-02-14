@@ -32,8 +32,6 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 * attribute normalization is drastically slowing down
   region creation - need to fix or back out
 
-* manual test
-
 * g-obj not exporting colors
 
 * finish implementation and testing of bu_dir. bu_brlcad_root and
@@ -95,8 +93,12 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
   user:hidden utility:now category:corrective impacts:some days:1
 
-* add regression test for BoT ray tracing.  test whether TIE and RT
-  can raytrace all of the various BoT modes.
+* add coverage test geometry, e.g., scene with all object types plus a
+  lookup check to ensure no new ones are missing.
+
+	- likely need comprehensive parameter testing for each type
+	- add regression test for all geometric object types
+	- test whether RT+-TIE can render all BoT modes
 
   user:hidden utility:later category:corrective impacts:some days:1
 
@@ -1073,7 +1075,8 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * make Mac OS X universal binaries actually work.
 
-* fully implement analyze for all primitives
+* fully implement analyze for all primitives, add unit tests for
+  underlying callback routines (e.g., bbox).
 
 * implement general analyze estimate (perhaps just raytrace it) for
   primitives where values like surface area or volume are very
@@ -2020,8 +2023,8 @@ CONVERTERS
 
 * implement support for exporting sketch objects via g-iges
 
-* validate primitives during export so that it is guaranteed that
-  illegal primitives will not be written to file
+* by default, only export valid (manifold, solid if 3d, etc) objects.
+  have option to override and export invalid entities.
 
 * add csv, xml, nff, bzw, pov, blend geometry import and export
   support
@@ -2514,6 +2517,16 @@ DOCUMENTATION
 
 * BRL-CAD Industry Diagram
 	Completed, but not integrated
+
+* BRL-CAD Architecture Diagram
+
+* Technical Papers
+	- Fast Malloc
+	- STEP Conversion
+	- GCV
+	- Solid Modeling
+	- Representation Methodology / Sensitivity
+	- NURBS Ray Tracing
 
 * BRL-CAD Commands Quick Reference
 	Partial
