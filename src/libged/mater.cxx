@@ -467,15 +467,22 @@ _ged_mater_export(struct ged *gedp, int argc, const char *argv[])
 int
 _ged_mater_get(struct ged *gedp, int argc, const char *argv[])
 {
-    struct directory *dp;
     int id_search = 0;
     int den_search = 0;
     int name_search = 0;
     int report_tcl = 0;
     double dtol = SMALL_FASTF;
     struct bu_vls msgs = BU_VLS_INIT_ZERO;
-    struct bu_opt_desc d[6];
+    struct directory *dp;
+    struct rt_binunif_internal *bip;
+    struct rt_db_internal intern;
+    char *buf;
     int ac;
+    struct analyze_densities *a;
+    int ret = 0;
+    int ecnt = 0;
+
+    struct bu_opt_desc d[6];
     BU_OPT(d[0], "", "id",  "",      NULL,  &id_search,   "Search using a material id number key");
     BU_OPT(d[1], "", "density",  "", NULL,  &den_search,  "Search using a density value");
     BU_OPT(d[2], "", "name",  "",    NULL,  &name_search, "Search using a material name");
@@ -501,13 +508,113 @@ _ged_mater_get(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "no density information found in database.  To insert density information, use the mater -d set and/or mater -d import commands.\n");
 	return GED_ERROR;
     }
- 
 
+    if (ac != 1) {
+	bu_vls_printf(gedp->ged_result_str, "%s", usage);
+	return GED_ERROR;
+    }
 
+    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, NULL, &rt_uniresource) < 0) {
+	bu_vls_printf(gedp->ged_result_str, "error reading %s from database", dp->d_namep);
+	return GED_ERROR;
+    }
+
+    RT_CK_DB_INTERNAL(&intern);
+
+    bip = (struct rt_binunif_internal *)intern.idb_ptr;
+    if (bip->count < 1) {
+	bu_vls_printf(gedp->ged_result_str, "%s has no contents", GED_DB_DENSITY_OBJECT);
+	rt_db_free_internal(&intern);
+	return GED_ERROR;
+    }
+
+    analyze_densities_create(&a);
+    buf = (char *)bu_malloc(bip->count+1, "density buffer");
+    memcpy(buf, bip->u.int8, bip->count);
+    ret = analyze_densities_load(a, buf, &msgs, &ecnt);
+    bu_free(buf, "free density buffer");
+    if (!ret) {
+	bu_vls_printf(gedp->ged_result_str, "no density information found when reading database:\n%s\nTo insert density information, use the mater -d set and/or mater -d import commands.\n", bu_vls_cstr(&msgs));
+	bu_vls_free(&msgs);
+	analyze_densities_destroy(a);
+	return GED_ERROR;
+    }
+    if (ecnt) {
+	bu_vls_printf(gedp->ged_result_str, "errors found when reading database:\n%s\n", bu_vls_cstr(&msgs));
+	bu_vls_free(&msgs);
+	analyze_densities_destroy(a);
+	return GED_ERROR;
+    }
+
+    // Have data, start looking
+
+    if (!id_search && !den_search && !name_search) {
+	// Don't know what we've been given as key, check everything
+	id_search = 1;
+	den_search = 1;
+	name_search = 1;
+    }
+
+    const char *str_key = argv[0];
+
+    if (id_search) {
+	long int li_key = -1;
+	if (bu_opt_long(NULL, 1, (const char **)&str_key, &li_key) <= 0) {
+	    id_search = 2;
+	}
+	// Numerical id is the simple one - it's either there or it isn't
+	if (id_search == 1) {
+	    fastf_t li_d = analyze_densities_density(a, li_key);
+	    if (li_d >= 0) {
+		char *li_n = analyze_densities_name(a, li_key);
+		bu_vls_printf(gedp->ged_result_str, "%ld\t%g\t%s\n", li_key, li_d, li_n);
+		bu_free(li_n, "name copy");
+	    }
+
+	    if (!den_search && !name_search) {
+		return GED_OK;
+	    }
+	}
+    }
+
+    fastf_t den_key = -1;
+    if (den_search) {
+	// See if we have a number we can use for a density.  If not, disable
+	// the density search - this key will always return empty.
+	if (bu_opt_fastf_t(NULL, 1, (const char **)&str_key, &den_key) <= 0) {
+	    den_search = 0;
+	}
+    }
+
+    // If we're into anything else, report all matches
+    long int curr_id = -1;
+    while ((curr_id = analyze_densities_next(a, curr_id)) != -1) {
+	int have_match = 0;
+	fastf_t curr_d = analyze_densities_density(a, curr_id);
+	char *curr_n = analyze_densities_name(a, curr_id);
+	struct bu_vls curr_id_str = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&curr_id_str, "%ld", curr_id);
+	if (id_search && !bu_path_match(str_key, bu_vls_cstr(&curr_id_str), 0)) {
+	    have_match = 1;
+	}
+	if (!have_match && den_search && NEAR_EQUAL(curr_d, den_key, dtol)) {
+	    have_match = 1;
+	}
+	if (!have_match && name_search && !bu_path_match(str_key, curr_n, 0)) {
+	    have_match = 1;
+	}
+	if (have_match) {
+	    bu_vls_printf(gedp->ged_result_str, "%ld\t%g\t%s\n", curr_id, curr_d, curr_n);
+	}
+	bu_free(curr_n, "name copy");
+	bu_vls_free(&curr_id_str);
+    }
+
+    bu_vls_free(&msgs);
+    analyze_densities_destroy(a);
     return GED_OK;
 }
 
-#if 0
 int
 _ged_mater_set(struct ged *gedp, int argc, const char *argv[])
 {
@@ -528,30 +635,28 @@ _ged_mater_set(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* TODO - parse argv density arguments */
-    std::regex d_reg("([0-9]+)[\\s,]+([-+]?[0-9]*\.?[0-9eE+-]?)[\\s,](.*)");
+    std::regex d_reg("([0-9]+)[\\s,]+([-+]?[0-9]*\\.?[0-9eE+-]?)[\\s,](.*)");
     for (int i = 1; i < argc; i++) {
 	long int id;
 	fastf_t density;
-	const char *mname;
 	std::smatch sm;
 	std::string dstr(argv[i]);
-	if (std::regex_search(dstr, sm, d_reg)) { 
-	    if (sm.size() != 4) {
-		bu_vls_printf(gedp->ged_result_str, "Error parsing density specifier: %s\n", argv[i]);
-		analyze_densities_destroy(a);
-		return GED_ERROR;
-	    } else {
+	if (std::regex_search(dstr, sm, d_reg)) {
+	    if (sm.size() == 4) {
 		int parse_error = 0;
-		if (bu_opt_long(NULL, 1, (const char **)&(sm[1].str().c_str()), &id) <= 0) {
-		    bu_vls_printf(gedp->ged_result_str, "Error parsing material id: %s\n", sm[1].str().c_str());
+		const char *id_str = sm[1].str().c_str();
+		if (bu_opt_long(NULL, 1, (const char **)&id_str, &id) <= 0) {
+		    bu_vls_printf(gedp->ged_result_str, "Error parsing material id: %s\n", id_str);
 		    parse_error = 1;
 		}
-		if (bu_opt_fastf_t(NULL, 1, (const char **)&(sm[2].str().c_str()), &density) <= 0) {
-		    bu_vls_printf(gedp->ged_result_str, "Error parsing density: %s\n", sm[2].str().c_str());
+		const char *den_str = sm[2].str().c_str();
+		if (bu_opt_fastf_t(NULL, 1, (const char **)&den_str, &density) <= 0) {
+		    bu_vls_printf(gedp->ged_result_str, "Error parsing density: %s\n", den_str);
 		    parse_error = 1;
 		}
+		const char *name_str = sm[3].str().c_str();
 		if (!parse_error) {
-		    analyze_densities_set(a, id, density, sm[3].str().c_str(), NULL);
+		    analyze_densities_set(a, id, density, name_str, NULL);
 		} else {
 		    bu_vls_printf(gedp->ged_result_str, "Error parsing density specifier: %s\n", argv[i]);
 		    analyze_densities_destroy(a);
@@ -562,13 +667,86 @@ _ged_mater_set(struct ged *gedp, int argc, const char *argv[])
 		analyze_densities_destroy(a);
 		return GED_ERROR;
 	    }
+	} else {
+	    bu_vls_printf(gedp->ged_result_str, "Error parsing density specifier: %s\n", argv[i]);
+	    analyze_densities_destroy(a);
+	    return GED_ERROR;
 	}
     }
 
+    // Got through parsing, make a buffer and replace the existing density object
+    if (!_ged_mater_clear(gedp) == GED_OK) {
+	return GED_ERROR;
+    }
+
+    char *new_buf;
+    long int buf_len = analyze_densities_write(&new_buf, a);
+
+    struct rt_binunif_internal *bip = NULL;
+    BU_ALLOC(bip, struct rt_binunif_internal);
+    bip->magic = RT_BINUNIF_INTERNAL_MAGIC;
+    bip->type = DB5_MINORTYPE_BINU_8BITINT;
+    bip->count = buf_len;
+    bip->u.int8 = (char *)bu_malloc(buf_len, "binary uniform object");
+    memcpy(bip->u.int8, new_buf, buf_len);
+    /* create the rt_internal form */
+
+    struct rt_db_internal intern;
+    RT_DB_INTERNAL_INIT(&intern);
+    intern.idb_major_type = DB5_MAJORTYPE_BINARY_UNIF;
+    intern.idb_minor_type = DB5_MINORTYPE_BINU_8BITINT;
+    intern.idb_ptr = (void *)bip;
+    intern.idb_meth = &OBJ[ID_BINUNIF];
+
+    /* create body portion of external form */
+    struct bu_external body;
+    struct bu_external bin_ext;
+    int ret = -1;
+    if (intern.idb_meth->ft_export5) {
+	ret = intern.idb_meth->ft_export5(&body, &intern, 1.0, gedp->ged_wdbp->dbip, gedp->ged_wdbp->wdb_resp);
+    }
+    if (ret != 0) {
+	bu_log("Error while attempting to export %s\n", GED_DB_DENSITY_OBJECT);
+	rt_db_free_internal(&intern);
+	return GED_ERROR;
+    }
+
+    /* create entire external form */
+    db5_export_object3(&bin_ext, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
+	    GED_DB_DENSITY_OBJECT, 0, NULL, &body,
+	    intern.idb_major_type, intern.idb_minor_type,
+	    DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED);
+
+    rt_db_free_internal(&intern);
+    bu_free_external(&body);
+
+    /* make sure the database directory is initialized */
+    if (gedp->ged_wdbp->dbip->dbi_eof == RT_DIR_PHONY_ADDR) {
+	ret = db_dirbuild(gedp->ged_wdbp->dbip);
+	if (ret) {
+	    return GED_ERROR;
+	}
+    }
+
+    /* add this (phony until written) object to the directory */
+    if ((dp=db_diradd5(gedp->ged_wdbp->dbip, GED_DB_DENSITY_OBJECT, RT_DIR_PHONY_ADDR, intern.idb_major_type,
+		    intern.idb_minor_type, 0, 0, NULL)) == RT_DIR_NULL) {
+	bu_log("Error while attempting to add new name (%s) to the database", GED_DB_DENSITY_OBJECT);
+	bu_free_external(&bin_ext);
+	return GED_ERROR;
+    }
+
+    /* and write it to the database */
+    if (db_put_external5(&bin_ext, dp, gedp->ged_wdbp->dbip)) {
+	bu_log("Error while adding new binary object (%s) to the database", GED_DB_DENSITY_OBJECT);
+	bu_free_external(&bin_ext);
+	return GED_ERROR;
+    }
+
+    bu_free_external(&bin_ext);
+
     return GED_OK;
 }
-
-#endif
 
 int
 _ged_read_msmap(struct ged *gedp, const char *mbuff, std::set<std::string> &defined_materials, std::map<std::string,std::string> &listed_to_defined)
