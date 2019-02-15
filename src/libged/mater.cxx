@@ -586,7 +586,8 @@ _ged_mater_get(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    // If we're into anything else, report all matches
+    // If we're into anything other than a simple id lookup, report all matches
+    // according to patterns
     long int curr_id = -1;
     while ((curr_id = analyze_densities_next(a, curr_id)) != -1) {
 	int have_match = 0;
@@ -634,7 +635,7 @@ _ged_mater_set(struct ged *gedp, int argc, const char *argv[])
 	analyze_densities_create(&a);
     }
 
-    /* TODO - parse argv density arguments */
+    /* Parse argv density arguments */
     std::regex d_reg("([0-9]+)[\\s,]+([-+]?[0-9]*\\.?[0-9eE+-]?)[\\s,](.*)");
     for (int i = 1; i < argc; i++) {
 	long int id;
@@ -674,13 +675,20 @@ _ged_mater_set(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    // Got through parsing, make a buffer and replace the existing density object
-    if (!_ged_mater_clear(gedp) == GED_OK) {
+    char *new_buf = NULL;
+    long int buf_len = analyze_densities_write(&new_buf, a);
+    analyze_densities_destroy(a);
+
+    if (buf_len <= 0 || !new_buf) {
+	bu_vls_printf(gedp->ged_result_str, "Error generating density buffer\n");
 	return GED_ERROR;
     }
 
-    char *new_buf;
-    long int buf_len = analyze_densities_write(&new_buf, a);
+    // Got through parsing, make a buffer and replace the existing density object
+    if (!_ged_mater_clear(gedp) == GED_OK) {
+	analyze_densities_destroy(a);
+	return GED_ERROR;
+    }
 
     struct rt_binunif_internal *bip = NULL;
     BU_ALLOC(bip, struct rt_binunif_internal);
@@ -689,8 +697,8 @@ _ged_mater_set(struct ged *gedp, int argc, const char *argv[])
     bip->count = buf_len;
     bip->u.int8 = (char *)bu_malloc(buf_len, "binary uniform object");
     memcpy(bip->u.int8, new_buf, buf_len);
-    /* create the rt_internal form */
 
+    /* create the rt_internal form */
     struct rt_db_internal intern;
     RT_DB_INTERNAL_INIT(&intern);
     intern.idb_major_type = DB5_MAJORTYPE_BINARY_UNIF;
@@ -706,7 +714,7 @@ _ged_mater_set(struct ged *gedp, int argc, const char *argv[])
 	ret = intern.idb_meth->ft_export5(&body, &intern, 1.0, gedp->ged_wdbp->dbip, gedp->ged_wdbp->wdb_resp);
     }
     if (ret != 0) {
-	bu_log("Error while attempting to export %s\n", GED_DB_DENSITY_OBJECT);
+	bu_vls_printf(gedp->ged_result_str, "Error while attempting to export %s\n", GED_DB_DENSITY_OBJECT);
 	rt_db_free_internal(&intern);
 	return GED_ERROR;
     }
@@ -722,8 +730,7 @@ _ged_mater_set(struct ged *gedp, int argc, const char *argv[])
 
     /* make sure the database directory is initialized */
     if (gedp->ged_wdbp->dbip->dbi_eof == RT_DIR_PHONY_ADDR) {
-	ret = db_dirbuild(gedp->ged_wdbp->dbip);
-	if (ret) {
+	if (db_dirbuild(gedp->ged_wdbp->dbip)) {
 	    return GED_ERROR;
 	}
     }
@@ -731,18 +738,17 @@ _ged_mater_set(struct ged *gedp, int argc, const char *argv[])
     /* add this (phony until written) object to the directory */
     if ((dp=db_diradd5(gedp->ged_wdbp->dbip, GED_DB_DENSITY_OBJECT, RT_DIR_PHONY_ADDR, intern.idb_major_type,
 		    intern.idb_minor_type, 0, 0, NULL)) == RT_DIR_NULL) {
-	bu_log("Error while attempting to add new name (%s) to the database", GED_DB_DENSITY_OBJECT);
+	bu_vls_printf(gedp->ged_result_str, "Error while attempting to add new name (%s) to the database", GED_DB_DENSITY_OBJECT);
 	bu_free_external(&bin_ext);
 	return GED_ERROR;
     }
 
     /* and write it to the database */
     if (db_put_external5(&bin_ext, dp, gedp->ged_wdbp->dbip)) {
-	bu_log("Error while adding new binary object (%s) to the database", GED_DB_DENSITY_OBJECT);
+	bu_vls_printf(gedp->ged_result_str, "Error while adding new binary object (%s) to the database", GED_DB_DENSITY_OBJECT);
 	bu_free_external(&bin_ext);
 	return GED_ERROR;
     }
-
     bu_free_external(&bin_ext);
 
     return GED_OK;
