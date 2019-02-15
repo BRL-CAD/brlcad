@@ -54,6 +54,15 @@ _ged_run_rtwizard(struct ged *gedp, int cmd_len, const char **gd_rt_cmd)
 
     bu_process_exec(&p, gd_rt_cmd[0], cmd_len, (const char **)gd_rt_cmd, 0, 0);
 
+    if (bu_process_pid(p) == -1) {
+	bu_vls_printf(gedp->ged_result_str, "\nunable to successfully launch subprocess: ");
+	for (int i = 0; i < cmd_len; i++) {
+	    bu_vls_printf(gedp->ged_result_str, "%s ", gd_rt_cmd[i]);
+	}
+	bu_vls_printf(gedp->ged_result_str, "\n");
+	return GED_ERROR;
+    }
+
     BU_GET(run_rtp, struct ged_subprocess);
     BU_LIST_INIT(&run_rtp->l);
     BU_LIST_APPEND(&gedp->gd_headSubprocess.l, &run_rtp->l);
@@ -67,7 +76,7 @@ _ged_run_rtwizard(struct ged *gedp, int cmd_len, const char **gd_rt_cmd)
 
     _ged_create_io_handler(&(run_rtp->chan), p, BU_PROCESS_STDERR, TCL_READABLE, (void *)drcdp, _ged_rt_output_handler);
 
-    return 0;
+    return GED_OK;
 }
 
 
@@ -86,6 +95,7 @@ ged_rtwizard(struct ged *gedp, int argc, const char *argv[])
     struct bu_vls eye_vls = BU_VLS_INIT_ZERO;
     char **gd_rt_cmd = NULL;
     int gd_rt_cmd_len = 0;
+    int ret = GED_OK;
 
     const char *bin;
     char rtscript[256] = {0};
@@ -154,7 +164,9 @@ ged_rtwizard(struct ged *gedp, int argc, const char *argv[])
     bu_vls_printf(gedp->ged_result_str, "\n");
 
     gd_rt_cmd_len = vp - gd_rt_cmd;
-    (void)_ged_run_rtwizard(gedp, gd_rt_cmd_len, (const char **)gd_rt_cmd);
+
+    ret = _ged_run_rtwizard(gedp, gd_rt_cmd_len, (const char **)gd_rt_cmd);
+
     bu_free(gd_rt_cmd, "free gd_rt_cmd");
 
     bu_vls_free(&perspective_vls);
@@ -162,7 +174,7 @@ ged_rtwizard(struct ged *gedp, int argc, const char *argv[])
     bu_vls_free(&orient_vls);
     bu_vls_free(&eye_vls);
 
-    return GED_OK;
+    return ret;
 }
 
 

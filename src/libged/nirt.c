@@ -270,6 +270,17 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     bu_process_exec(&p, gd_rt_cmd[0], j, (const char **)av, 0, 1);
     bu_free(av, "av");
 
+
+    if (bu_process_pid(p) == -1) {
+	bu_vls_printf(gedp->ged_result_str, "\nunable to successfully launch subprocess: ");
+	for (int pi = 0; pi < gd_rt_cmd_len; pi++) {
+	    bu_vls_printf(gedp->ged_result_str, "%s ", gd_rt_cmd[pi]);
+	}
+	bu_vls_printf(gedp->ged_result_str, "\n");
+	bu_free(gd_rt_cmd, "free gd_rt_cmd");
+	return GED_ERROR;
+    }
+
     fp_in = bu_process_open(p, BU_PROCESS_STDIN);
 
     /* send commands down the pipe */

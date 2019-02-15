@@ -227,6 +227,15 @@ _ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, con
     bu_process_exec(&p, gd_rt_cmd[0], cmd_len, gd_rt_cmd, 0, 0);
     fp_in = bu_process_open(p, BU_PROCESS_STDIN);
 
+    if (bu_process_pid(p) == -1) {
+	bu_vls_printf(gedp->ged_result_str, "\nunable to successfully launch subprocess: ");
+	for (int i = 0; i < cmd_len; i++) {
+	    bu_vls_printf(gedp->ged_result_str, "%s ", gd_rt_cmd[i]);
+	}
+	bu_vls_printf(gedp->ged_result_str, "\n");
+	return GED_ERROR;
+    }
+
     _ged_rt_set_eye_model(gedp, eye_model);
     _ged_rt_write(gedp, fp_in, eye_model, argc, argv);
 
@@ -246,7 +255,8 @@ _ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, con
     /* Set up Tcl hooks so the parent Tcl process knows to watch for output.
      * TODO - need to push the Tcl specific aspects of this up stack... */
     _ged_create_io_handler(&(run_rtp->chan), p, BU_PROCESS_STDERR, TCL_READABLE, (void *)drcdp, _ged_rt_output_handler);
-    return 0;
+
+    return GED_OK;
 }
 
 size_t
@@ -300,6 +310,7 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
     int args;
     char **gd_rt_cmd = NULL;
     int gd_rt_cmd_len = 0;
+    int ret = GED_OK;
 
     const char *bin;
     char rt[256] = {0};
@@ -349,10 +360,12 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
 
     *vp++ = gedp->ged_wdbp->dbip->dbi_filename;
     gd_rt_cmd_len = vp - gd_rt_cmd;
-    (void)_ged_run_rt(gedp, gd_rt_cmd_len, (const char **)gd_rt_cmd, (argc - i), &(argv[i]));
+
+    ret = _ged_run_rt(gedp, gd_rt_cmd_len, (const char **)gd_rt_cmd, (argc - i), &(argv[i]));
+
     bu_free(gd_rt_cmd, "free gd_rt_cmd");
 
-    return GED_OK;
+    return ret;
 }
 
 
