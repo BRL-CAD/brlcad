@@ -18,6 +18,9 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* Archer's rtabort command and button no longer work -
+  fix tohandle new libged rtwizard command process...
+
 * fix pipe subtractions shaded display issue in archer
 
 * prep caching actions
