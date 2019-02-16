@@ -42,7 +42,8 @@ struct svn_node {
     int tag_delete;
     int tag_path;
     std::string project;
-    std::string branch; // For tags, the "branch" is the tag
+    std::string branch;
+    std::string tag;
     std::string local_path;
 };
 
@@ -177,18 +178,18 @@ print_node(struct svn_node &n)
 }
 
 // Don't care about deletes on old tags...
-bool reject_branch(std::string rbranch)
+bool reject_tag(std::string rtag)
 {
-    if (rbranch == std::string("rel-4-5")) return true;
-    if (rbranch == std::string("ctj-4-5-post")) return true;
-    if (rbranch == std::string("ctj-4-5-pre")) return true;
-    if (rbranch == std::string("rel-5-0")) return true;
-    if (rbranch == std::string("rel-5-0-beta")) return true;
-    if (rbranch == std::string("rel-5-1")) return true;
-    if (rbranch == std::string("rel-5-2")) return true;
-    if (rbranch == std::string("offsite-5-3-pre")) return true;
-    if (rbranch == std::string("rel-5-3")) return true;
-    if (rbranch == std::string("rel-5-4")) return true;
+    if (rtag == std::string("rel-4-5")) return true;
+    if (rtag == std::string("ctj-4-5-post")) return true;
+    if (rtag == std::string("ctj-4-5-pre")) return true;
+    if (rtag == std::string("rel-5-0")) return true;
+    if (rtag == std::string("rel-5-0-beta")) return true;
+    if (rtag == std::string("rel-5-1")) return true;
+    if (rtag == std::string("rel-5-2")) return true;
+    if (rtag == std::string("offsite-5-3-pre")) return true;
+    if (rtag == std::string("rel-5-3")) return true;
+    if (rtag == std::string("rel-5-4")) return true;
     return false;
 }
 
@@ -553,7 +554,7 @@ process_revision(std::ifstream &infile)
 
 
 void
-node_path_split(std::string &node_path, std::string &project, std::string &branch, std::string &local_path, int *is_tag)
+node_path_split(std::string &node_path, std::string &project, std::string &branch, std::string &etag, std::string &local_path, int *is_tag)
 {
     std::string t("trunk");
     std::string b("branches");
@@ -641,7 +642,7 @@ node_path_split(std::string &node_path, std::string &project, std::string &branc
 	    bs = wpath;
 	    wpath = std::string();
 	}
-	branch = bs;
+	etag = bs;
     }
 
     // Not one of the standards, see if it's called out in the maps
@@ -651,7 +652,7 @@ node_path_split(std::string &node_path, std::string &project, std::string &branc
 	wpath = (spos == std::string::npos) ? std::string() : wpath.substr(bs.length() + 1, std::string::npos);
 	if (tag_mappings.find(bs) != tag_mappings.end()) {
 	    *is_tag = 1;
-	    branch = tag_mappings[bs];
+	    tag = tag_mappings[bs];
 	}
      	branch = branch_mappings[bs];
     }
@@ -694,7 +695,7 @@ analyze_dump()
 	for (size_t n = 0; n != rev.nodes.size(); n++) {
 	    struct svn_node &node = rev.nodes[n];
 	    // Break up paths and build tag/branch lists
-	    node_path_split(node.path, node.project, node.branch, node.local_path, &(node.tag_path));
+	    node_path_split(node.path, node.project, node.branch, node.tag, node.local_path, &(node.tag_path));
 	    if (node.branch.length()) {
 		// Map dmtogl-branch names to dmtogl
 		if (node.branch == std::string("refs/heads/dmtogl-branch")) {
@@ -713,14 +714,17 @@ analyze_dump()
 		rev.move_edit = 1;
 	    }
 	    // Spot tag edits
-	    if ((node.text_content_length > 0 || node.text_copy_source_sha1.length()) && node.tag_path) {
-		node.tag_edit = 1;
-		if (edited_tags.find(node.branch) == edited_tags.end()) {
-		    edited_tag_first_rev[node.branch] = rev.revision_number;
+	    if (node.tag_path) {
+		if (node.text_content_length > 0 || node.text_copy_source_sha1.length() || node.action == ndelete || (edited_tags.find(node.tag) != edited_tags.end() && node.action == nadd)) {
+		    node.tag_edit = 1;
+		    if (edited_tags.find(node.tag) == edited_tags.end()) {
+			edited_tag_first_rev[node.tag] = rev.revision_number;
+		    }
+		    edited_tags.insert(node.tag);
+		    std::cout << "Edited tag(" << rev.revision_number << "): " << node.tag << "\n";
+		    edited_tag_max_rev[node.tag] = rev.revision_number;
+		    node.branch = std::string("refs/heads/") + node.tag;
 		}
-		edited_tags.insert(node.branch);
-		std::cout << "Edited tag(" << rev.revision_number << "): " << node.branch << "\n";
-		edited_tag_max_rev[node.branch] = rev.revision_number;
 	    }
 	    // Branch add
 	    if (node.kind == ndir && node.action == nadd && node.branch.length() && !node.local_path.length() && !node.tag_path) {
@@ -731,11 +735,11 @@ analyze_dump()
 		node.branch_delete = 1;
 	    }
 	    // Tag add
-	    if (node.kind == ndir && node.action == nadd && node.branch.length() && !node.local_path.length() && node.tag_path) {
+	    if (node.kind == ndir && node.action == nadd && node.tag.length() && !node.local_path.length() && node.tag_path) {
 		node.tag_add = 1;
 	    }
 	    // Tag delete
-	    if (node.action == ndelete && node.branch.length() && !node.local_path.length() && node.tag_path) {
+	    if (node.action == ndelete && node.tag.length() && !node.local_path.length() && node.tag_path) {
 		node.tag_delete = 1;
 	    }
 	    // Deal with merges
@@ -751,8 +755,8 @@ analyze_dump()
 			int is_tag = 0;
 			size_t cpos = pline.find_first_of(":");
 			std::string mpath = pline.substr(1, cpos - 1);
-			std::string mproject, cbranch, mlocal_path;
-			node_path_split(mpath, mproject, cbranch, mlocal_path, &is_tag);
+			std::string mproject, cbranch, mlocal_path, ctag;
+			node_path_split(mpath, mproject, cbranch, ctag, mlocal_path, &is_tag);
 			std::string revs = pline.substr(cpos+1, std::string::npos);
 			size_t nspos = revs.find_last_of(",-");
 			std::string hrev = (nspos == std::string::npos) ? revs : revs.substr(nspos+1, std::string::npos);
@@ -814,8 +818,14 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 	    int tag_after_commit = 0;
 	    int branch_delete = 0;
 	    std::string rbranch = rev.nodes[0].branch;
-	    if (rev.revision_number == 34022) {
-		std::cout << "at 34022\n";
+
+	    if (reject_tag(rev.nodes[0].tag)) {
+		std::cout << "Skipping " << rev.revision_number << " - edit to old tag:\n" << rev.commit_msg << "\n";
+		continue;
+	    }
+
+	    if (rev.revision_number == 30792) {
+		std::cout << "at 30792\n";
 	    }
 
 	    for (size_t n = 0; n != rev.nodes.size(); n++) {
@@ -823,45 +833,39 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 
 		if (node.tag_add || node.tag_edit) {
 		    std::cout << "Processing revision " << rev.revision_number << "\n";
-		    std::string ppath, bbpath, llpath;
+		    std::string ppath, bbpath, llpath, tpath;
 		    int is_tag;
-		    node_path_split(node.copyfrom_path, ppath, bbpath, llpath, &is_tag);
+		    node_path_split(node.copyfrom_path, ppath, bbpath, tpath, llpath, &is_tag);
 
 		    int edited_tag_minr = -1;
 		    int edited_tag_maxr = -1;
 
 		    // For edited tags - first tag create branch, final tag is "real" tag,
 		    // else just branch commits
-		    if (edited_tags.find(node.branch) != edited_tags.end()) {
-			edited_tag_minr = edited_tag_first_rev[node.branch];
-			edited_tag_maxr = edited_tag_max_rev[node.branch];
-			std::cout << node.branch << ": " << edited_tag_minr << " " << edited_tag_maxr << "\n";
+		    if (edited_tags.find(node.tag) != edited_tags.end()) {
+			edited_tag_minr = edited_tag_first_rev[node.tag];
+			edited_tag_maxr = edited_tag_max_rev[node.tag];
+			std::cout << node.tag << ": " << edited_tag_minr << " " << edited_tag_maxr << "\n";
 
 			if (rev.revision_number < edited_tag_minr) {
-			    std::string tbstr = std::string("refs/heads/") +  node.branch;
-			    std::cout << "Adding tag branch " << tbstr << " from " << bbpath << ", r" << rev.revision_number <<"\n";
+			    std::string nbranch = std::string("refs/heads/") + node.tag;
+			    std::cout << "Adding tag branch " << nbranch << " from " << bbpath << ", r" << rev.revision_number <<"\n";
 			    std::cout << rev.commit_msg << "\n";
-			    outfile << "reset " << tbstr << "\n";
+			    outfile << "reset " << nbranch << "\n";
 			    outfile << "from " << branch_head_id(bbpath, rev.revision_number) << "\n";
-			    branch_head_ids[tbstr] = branch_head_ids[bbpath];
-			    have_commit = 1;
+			    branch_head_ids[nbranch] = branch_head_ids[bbpath];
 			    continue;
-			} else {
-			    if (rev.revision_number == edited_tag_maxr) {
-				tag_after_commit = 1;
-				std::string tbstr = std::string("refs/heads/") +  node.branch;
-				node.branch = tbstr;
-				rbranch = tbstr;
-				continue;
-			    } else {
-				std::cout << "Non-final tag edit, processing normally: " << node.branch << ", r" << rev.revision_number<< "\n";
-				std::string tbstr = std::string("refs/heads/") +  node.branch;
-				node.branch = tbstr;
-				rbranch = tbstr;
-			    }
 			}
+			if (rev.revision_number == edited_tag_maxr) {
+			    tag_after_commit = 1;
+			    rbranch = node.branch;
+			    continue;
+			}
+			std::cout << "Non-final tag edit, processing normally: " << node.branch << ", r" << rev.revision_number<< "\n";
+			rbranch = node.branch;
+			git_changes = 1;
 		    } else {
-			std::cout << "[TODO] Adding tag " << node.branch << " from " << bbpath << ", r" << rev.revision_number << "\n";
+			std::cout << "[TODO] Adding tag " << node.tag << " from " << bbpath << ", r" << rev.revision_number << "\n";
 			have_commit = 1;
 			continue;
 		    }
@@ -871,15 +875,15 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 		if (node.tag_delete) {
 		    branch_delete = 1;
 		    std::cout << "processing revision " << rev.revision_number << "\n";
-		    std::cout << "TODO - delete tag: " << node.branch << "\n";
+		    std::cout << "TODO - delete tag: " << node.tag << "\n";
 		    continue;
 		}
 
 		if (node.branch_add) {
 		    std::cout << "Processing revision " << rev.revision_number << "\n";
-		    std::string ppath, bbpath, llpath;
+		    std::string ppath, bbpath, llpath, tpath;
 		    int is_tag;
-		    node_path_split(node.copyfrom_path, ppath, bbpath, llpath, &is_tag);
+		    node_path_split(node.copyfrom_path, ppath, bbpath, tpath, llpath, &is_tag);
 		    std::cout << "Adding branch " << node.branch << " from " << bbpath << ", r" << rev.revision_number <<"\n";
 		    std::cout << rev.commit_msg << "\n";
 		    outfile << "reset " << node.branch << "\n";
@@ -909,7 +913,7 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 		if (node.exec_change) {
 		    git_changes = 1;
 		}
-		if (node.action == ndelete && !reject_branch(rbranch)) {
+		if (node.action == ndelete) {
 		    git_changes = 1;
 		}
 	    }
