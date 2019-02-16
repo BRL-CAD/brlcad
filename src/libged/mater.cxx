@@ -685,7 +685,7 @@ _ged_mater_set(struct ged *gedp, int argc, const char *argv[])
     }
 
     // Got through parsing, make a buffer and replace the existing density object
-    if (!_ged_mater_clear(gedp) == GED_OK) {
+    if (_ged_mater_clear(gedp) != GED_OK) {
 	analyze_densities_destroy(a);
 	return GED_ERROR;
     }
