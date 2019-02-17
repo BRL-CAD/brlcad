@@ -939,7 +939,7 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 		    /* Don't add directory nodes themselves - git works on files */
 		    if (node.kind == ndir && node.action == nadd) continue;
 		    if (node.kind == ndir && node.action == ndelete) {
-			std::cerr << "deleting " << node.path << "\n";
+			std::cerr << "DIR delete " << node.path << "\n";
 			std::cerr << "TODO - do we get individual file deletes, or do we need to figure out what was in the directory?  If the latter, we're going to have to walk the currently active paths and delete any that match this node path...\n";
 		    }
 
@@ -947,16 +947,18 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 		    std::string gsha1;
 		    if (node.action == nchange || node.action == nadd || node.action == nreplace) {
 			if (node.exec_change || node.copyfrom_path.length() || node.text_content_length || node.text_content_sha1.length()) {
-			    std::string tpath = std::string("brlcad/trunk/") + node.local_path;
 			    gsha1 = svn_sha1_to_git_sha1[current_sha1[node.path]];
 			    if (gsha1.length() < 40) {
 				if (node.copyfrom_rev) {
 				    gsha1 = svn_sha1_to_git_sha1[node.text_copy_source_sha1];
 				}
 				if (gsha1.length() < 40) {
-				    // TODO - this isn't (necessarily) right - need to do this by looking up the copyfrom_path of the current branch
-				    // and going the path lookup using the origin branch.  If the source branch isn't trunk, this could be flat
-				    // out wrong.
+				    std::string tpath;
+				    if (node.copyfrom_path.length()) {
+					tpath = node.copyfrom_path;
+				    } else {
+					tpath = std::string("brlcad/trunk/") + node.local_path;
+				    }
 				    gsha1 = svn_sha1_to_git_sha1[current_sha1[tpath]];
 				    if (gsha1.length() < 40) {
 					std::cout << "Fatal - could not find git sha1 - r" << rev.revision_number << ", node: " << node.path << "\n";
