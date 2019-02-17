@@ -781,10 +781,46 @@ analyze_dump()
 
 }
 
+void full_sync_commit(std::ofstream &outfile, struct svn_revision &rev, std::string &bsrc, std::string &bdest)
+{
+    outfile << "commit " << bdest << "\n";
+    outfile << "mark :" << rev.revision_number << "\n";
+    outfile << "committer " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
+    outfile << "data " << rev.commit_msg.length() << "\n";
+    outfile << rev.commit_msg << "\n";
+    outfile << "from " << branch_head_id(bdest, rev.revision_number) << "\n";
+    // TODO - merge info
+    branch_head_ids[bdest] = std::to_string(rev.revision_number);
+
+    std::string line;
+    std::string ifile = std::to_string(rev.revision_number) + std::string(".txt");
+    std::ifstream infile(ifile);
+    if (!infile.good()) {
+	std::cerr << "Fatal error: could not open file " << ifile << " for special commit handling, exiting\n";
+	exit(1);
+    }
+    while (std::getline(infile, line)) {
+	outfile << line << "\n";
+    }
+    outfile << "\n";
+}
+
 void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev_num_min, long int rev_num_max)
 {
+    std::set<int> special_revs;
     std::string empty_sha1("da39a3ee5e6b4b0d3255bfef95601890afd80709");
     std::map<long int, struct svn_revision>::iterator r_it;
+
+
+    // particular revisions that will have to be special cased:
+    special_revs.insert(31039);
+    special_revs.insert(32314);
+    special_revs.insert(36472);
+    special_revs.insert(36633);
+    special_revs.insert(36843);
+    special_revs.insert(39465);
+
+
     for (r_it = revs.begin(); r_it != revs.end(); r_it++) {
 	struct svn_revision &rev = r_it->second;
 
@@ -823,6 +859,14 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 	    if (reject_tag(rev.nodes[0].tag)) {
 		std::cout << "Skipping " << rev.revision_number << " - edit to old tag:\n" << rev.commit_msg << "\n";
 		continue;
+	    }
+
+	    if (special_revs.find(rev.revision_number) != special_revs.end()) {
+		std::cout << "Revision " << rev.revision_number << " requires special handling\n";
+		std::string bsrc("refs/heads/rel-7-12-2");
+		std::string bdest("refs/heads/STABLE");
+		full_sync_commit(outfile, rev, bsrc, bdest);
+		exit(1);
 	    }
 
 	    if (rev.revision_number == 30792) {
@@ -1183,6 +1227,14 @@ int main(int argc, const char **argv)
     }
 
     std::ifstream infile(argv[1]);
+
+    std::ofstream outfile("r29887-rHEAD.fi", std::ios::out | std::ios::binary);
+    if (!outfile.good()) return -1;
+    rev_fast_export(infile, outfile, 29887, 73000);
+    outfile.close();
+
+#if 0
+
     std::ofstream outfile1("r29887-r31038.fi", std::ios::out | std::ios::binary);
     if (!outfile1.good()) return -1;
     rev_fast_export(infile, outfile1, 29887, 31038);
@@ -1242,7 +1294,7 @@ int main(int argc, const char **argv)
     if (!outfile7.good()) return -1;
     rev_fast_export(infile, outfile7, 39466, 73000);
     outfile7.close();
-
+#endif
 
     return 0;
 }
