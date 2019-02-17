@@ -123,6 +123,23 @@ Delete branch instruction: refs/heads/dmtogl - deferring.
 Processing revision 39465
 Adding branch refs/heads/dmtogl from refs/heads/master
 
+That works out to needing the following commits:
+
+Need to make a deleteall + full update commit to make STABLE match rel-7-12-2
+svnadmin dump -r31039 repo_dercs > brlcad_r31039.dump
+
+Need to make a deleteall + full update commit to make STABLE match rel-7-12-6
+svnadmin dump -r32314 repo_dercs > brlcad_r32314.dump
+
+Need to make a deleteall + full update commit to make dmtogl match trunk
+svnadmin dump -r36633 repo_dercs > brlcad_r36633.dump
+
+Need to make a deleteall + full update commit to make STABLE match rel-7-12-6
+svnadmin dump -r36843 repo_dercs > brlcad_r36843.dump
+
+Need to make a deleteall + full update commit to make dmtogl match trunk
+svnadmin dump -r39465 repo_dercs > brlcad_r39465.dump
+
 
 
 ############################
