@@ -713,9 +713,17 @@ analyze_dump()
 		node.move_edit = 1;
 		rev.move_edit = 1;
 	    }
+	    // Tag add
+	    if (node.kind == ndir && node.action == nadd && node.tag.length() && !node.local_path.length() && node.tag_path) {
+		node.tag_add = 1;
+	    }
+	    // Tag delete
+	    if (node.action == ndelete && node.tag.length() && !node.local_path.length() && node.tag_path) {
+		node.tag_delete = 1;
+	    }
 	    // Spot tag edits
 	    if (node.tag_path) {
-		if (node.text_content_length > 0 || node.text_copy_source_sha1.length() || node.action == ndelete || (edited_tags.find(node.tag) != edited_tags.end() && node.action == nadd)) {
+		if (node.text_content_length > 0 || node.text_copy_source_sha1.length() || (node.action == ndelete && !node.tag_delete) || (edited_tags.find(node.tag) != edited_tags.end() && node.action == nadd)) {
 		    node.tag_edit = 1;
 		    if (edited_tags.find(node.tag) == edited_tags.end()) {
 			edited_tag_first_rev[node.tag] = rev.revision_number;
@@ -733,14 +741,6 @@ analyze_dump()
 	    // Branch delete
 	    if (node.action == ndelete && node.branch.length() && !node.local_path.length() && !node.tag_path) {
 		node.branch_delete = 1;
-	    }
-	    // Tag add
-	    if (node.kind == ndir && node.action == nadd && node.tag.length() && !node.local_path.length() && node.tag_path) {
-		node.tag_add = 1;
-	    }
-	    // Tag delete
-	    if (node.action == ndelete && node.tag.length() && !node.local_path.length() && node.tag_path) {
-		node.tag_delete = 1;
 	    }
 	    // Deal with merges
 	    if (node.node_props.find("svn:mergeinfo") != node.node_props.end()) {
