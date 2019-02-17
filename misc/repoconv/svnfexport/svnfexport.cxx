@@ -700,7 +700,7 @@ analyze_dump()
 		// Map dmtogl-branch names to dmtogl
 		if (node.branch == std::string("refs/heads/dmtogl-branch")) {
 		    node.branch = std::string("refs/heads/dmtogl");
-		    std::cout << "Updating rev " << rev.revision_number << "\n";
+		    std::cout << "Mapping dmtogl-branch rev " << rev.revision_number << " to dmtogl\n";
 		}
 		if (node.tag_path) {
 		    tags.insert(node.branch);
@@ -817,6 +817,7 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 	    int have_commit = 0;
 	    int tag_after_commit = 0;
 	    int branch_delete = 0;
+	    std::string ctag, cfrom;
 	    std::string rbranch = rev.nodes[0].branch;
 
 	    if (reject_tag(rev.nodes[0].tag)) {
@@ -859,14 +860,20 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 			if (rev.revision_number == edited_tag_maxr) {
 			    tag_after_commit = 1;
 			    rbranch = node.branch;
-			    continue;
+			    ctag = node.tag;
+			    cfrom = node.branch;
 			}
 			std::cout << "Non-final tag edit, processing normally: " << node.branch << ", r" << rev.revision_number<< "\n";
 			rbranch = node.branch;
-			git_changes = 1;
+			//git_changes = 1;
 		    } else {
-			std::cout << "[TODO] Adding tag " << node.tag << " from " << bbpath << ", r" << rev.revision_number << "\n";
+			std::cout << "Adding tag " << node.tag << " from " << bbpath << ", r" << rev.revision_number << "\n";
 			have_commit = 1;
+			outfile << "tag " << node.tag << "\n";
+			outfile << "from " << branch_head_id(bbpath, rev.revision_number) << "\n";
+			outfile << "tagger " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
+			outfile << "data " << rev.commit_msg.length() << "\n";
+			outfile << rev.commit_msg << "\n";
 			continue;
 		    }
 
@@ -968,12 +975,12 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 					print_node(node);
 					exit(1);
 				    } else {
-					std::cout << "Warning - couldn't find SHA1 for " << node.path << ", using node from " << tpath << "\n";
+					std::cout << "Warning(r" << rev.revision_number << ") - couldn't find SHA1 for " << node.path << ", using node from " << tpath << "\n";
 				    }
 				}
 			    }
 			} else {
-			    std::cout << "Warning skipping " << node.path << " - r" << rev.revision_number << " - no git applicable change found.\n";
+			    std::cout << "Warning(r" << rev.revision_number << ") - skipping " << node.path << " - no git applicable change found.\n";
 			}
 			continue;
 		    }
@@ -1008,23 +1015,28 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 			outfile << "\"" << node.local_path << "\"\n";
 			continue;
 		    }
-		    if (node.action == nchange || node.action == nadd || node.action == nreplace) { 
+		    if (node.action == nchange || node.action == nadd || node.action == nreplace) {
 			outfile << gsha1 << " \"" << node.local_path << "\"\n";
 			continue;
 		    }
 
-		    std::cout << "Error - unhandled node action: " << print_node_action(node.action) << "\n";
+		    std::cout << "Error(r" << rev.revision_number << ") - unhandled node action: " << print_node_action(node.action) << "\n";
+		    print_node(node);
 		    exit(1);
 		}
 		if (tag_after_commit) {
 		    // Note - in this situation, we need to both build a commit and do a tag.  Will probably
 		    // take some refactoring.  Merge information will also be a factor.
-		    std::cout << "[TODO] Adding final commit and tag " << rbranch << ", r" << rev.revision_number<< "\n";
+		    std::cout << "Adding tag after final tag branch commit: " << ctag << " from " << cfrom << ", r" << rev.revision_number << "\n";
+		    outfile << "tag " << ctag << "\n";
+		    outfile << "from " << branch_head_id(cfrom, rev.revision_number) << "\n";
+		    outfile << "tagger " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
+		    outfile << "data " << rev.commit_msg.length() << "\n";
+		    outfile << rev.commit_msg << "\n";
 		}
-
 	    } else {
 		if (!branch_delete && !have_commit) {
-		    std::cout << "Skipping SVN commit r" << rev.revision_number << " - no git applicable changes\n";
+		    std::cout << "Warning(r" << rev.revision_number << ") - skipping SVN commit, no git applicable changes found\n";
 		    std::cout << rev.commit_msg << "\n";
 		}
 	    }
