@@ -254,6 +254,7 @@ write_blob(std::ifstream &infile, std::ofstream &outfile, struct svn_node &node)
 	outfile << "data " << crlf_file.length() << "\n";
 	outfile.write(crlf_file.c_str(), crlf_file.length());
     }
+    delete[] buffer;
 }
 
 std::string
@@ -889,7 +890,7 @@ void standard_commit(std::ofstream &outfile, struct svn_revision &rev, std::stri
 	outfile << "merge :" << rev.merged_rev << "\n";
     }
 
-    std::string ddeletes;
+    std::string ndeletes;
     for (size_t n = 0; n != rev.nodes.size(); n++) {
 	struct svn_node &node = rev.nodes[n];
 	/* Don't add directory nodes themselves - git works on files.
