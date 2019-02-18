@@ -809,6 +809,174 @@ void full_sync_commit(std::ofstream &outfile, struct svn_revision &rev, std::str
     outfile << "\n";
 }
 
+void move_only_commit(std::ofstream &outfile, struct svn_revision &rev, std::string &rbranch)
+{
+    if (author_map.find(rev.author) == author_map.end()) {
+	std::cout << "Error - couldn't find author map for author " << rev.author << " on revision " << rev.revision_number << "\n";
+	exit(1);
+    }
+
+    // first, check if we truly have path changes between the copyfrom and dest local paths
+    int have_real_rename = 0;
+    for (size_t n = 0; n != rev.nodes.size(); n++) {
+	struct svn_node &node = rev.nodes[n];
+	/* Don't add directory nodes themselves - git works on files */
+	if (node.kind == ndir) continue;
+	if (node.copyfrom_path.length() > 0) {
+	    int is_tag;
+	    std::string mproject, cbranch, mlocal_path, ctag;
+	    node_path_split(node.copyfrom_path, mproject, cbranch, ctag, mlocal_path, &is_tag);
+	    if (mlocal_path != node.local_path) {
+		have_real_rename = 1;
+	    }
+	}
+    }
+
+    if (!have_real_rename) {
+	return;
+    }
+
+    std::string ncmsg = rev.commit_msg + std::string("(preliminiary file move commit)");
+
+    std::string mvmark = std::string("1111") + std::to_string(rev.revision_number);
+
+    outfile << "commit " << rbranch << "\n";
+    outfile << "mark :" << mvmark << "\n";
+    outfile << "committer " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
+    outfile << "data " << ncmsg.length() << "\n";
+    outfile << ncmsg << "\n";
+    outfile << "from " << branch_head_id(rbranch, rev.revision_number) << "\n";
+    branch_head_ids[rbranch] = mvmark;
+
+    if (rev.merged_from.length()) {
+	std::cout << "Revision " << rev.revision_number << " merged from: " << rev.merged_from << "(" << rev.merged_rev << "), id " << branch_head_id(rev.merged_from, rev.merged_rev) << "\n";
+	std::cout << "Revision " << rev.revision_number << "        from: " << rbranch << "\n";
+	outfile << "merge :" << rev.merged_rev << "\n";
+    }
+
+    for (size_t n = 0; n != rev.nodes.size(); n++) {
+	struct svn_node &node = rev.nodes[n];
+	/* Don't add directory nodes themselves - git works on files */
+	if (node.kind == ndir) continue;
+	if (node.copyfrom_path.length() > 0) {
+	    int is_tag;
+	    std::string mproject, cbranch, mlocal_path, ctag;
+	    node_path_split(node.copyfrom_path, mproject, cbranch, ctag, mlocal_path, &is_tag);
+	    if (mlocal_path != node.local_path) {
+		std::cout << "(r" << rev.revision_number << ") - renaming " << mlocal_path << " to " << node.local_path << "\n";
+		outfile << "R " << mlocal_path << " " << node.local_path << "\n";
+	    }
+	}
+    }
+
+}
+
+void standard_commit(std::ofstream &outfile, struct svn_revision &rev, std::string &rbranch)
+{
+    if (author_map.find(rev.author) == author_map.end()) {
+	std::cout << "Error - couldn't find author map for author " << rev.author << " on revision " << rev.revision_number << "\n";
+	exit(1);
+    }
+    outfile << "commit " << rbranch << "\n";
+    outfile << "mark :" << rev.revision_number << "\n";
+    outfile << "committer " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
+    outfile << "data " << rev.commit_msg.length() << "\n";
+    outfile << rev.commit_msg << "\n";
+    outfile << "from " << branch_head_id(rbranch, rev.revision_number) << "\n";
+    branch_head_ids[rbranch] = std::to_string(rev.revision_number);
+
+    if (rev.merged_from.length()) {
+	std::cout << "Revision " << rev.revision_number << " merged from: " << rev.merged_from << "(" << rev.merged_rev << "), id " << branch_head_id(rev.merged_from, rev.merged_rev) << "\n";
+	std::cout << "Revision " << rev.revision_number << "        from: " << rbranch << "\n";
+	outfile << "merge :" << rev.merged_rev << "\n";
+    }
+
+    for (size_t n = 0; n != rev.nodes.size(); n++) {
+	struct svn_node &node = rev.nodes[n];
+	/* Don't add directory nodes themselves - git works on files */
+	if (node.kind == ndir && node.action == nadd) continue;
+	if (node.kind == ndir && node.action == ndelete) {
+	    std::cerr << "DIR delete " << node.path << "\n";
+	    std::cerr << "TODO - do we get individual file deletes, or do we need to figure out what was in the directory?  If the latter, we're going to have to walk the currently active paths and delete any that match this node path...\n";
+	}
+
+	//std::cout << "	Processing node " << print_node_action(node.action) << " " << node.local_path << " into branch " << node.branch << "\n";
+	std::string gsha1;
+	if (node.action == nchange || node.action == nadd || node.action == nreplace) {
+	    if (node.exec_change || node.copyfrom_path.length() || node.text_content_length || node.text_content_sha1.length()) {
+		gsha1 = svn_sha1_to_git_sha1[current_sha1[node.path]];
+		if (gsha1.length() < 40) {
+		    if (node.copyfrom_rev) {
+			gsha1 = svn_sha1_to_git_sha1[node.text_copy_source_sha1];
+		    }
+		    if (gsha1.length() < 40) {
+			std::string tpath;
+			if (node.copyfrom_path.length()) {
+			    tpath = node.copyfrom_path;
+			} else {
+			    tpath = std::string("brlcad/trunk/") + node.local_path;
+			}
+			gsha1 = svn_sha1_to_git_sha1[current_sha1[tpath]];
+			if (gsha1.length() < 40) {
+			    std::cout << "Fatal - could not find git sha1 - r" << rev.revision_number << ", node: " << node.path << "\n";
+			    std::cout << "current sha1: " << current_sha1[node.path] << "\n";
+			    std::cout << "trunk sha1: " << current_sha1[tpath] << "\n";
+			    std::cout << "Revision merged from: " << rev.merged_from << "\n";
+			    print_node(node);
+			    exit(1);
+			} else {
+			    std::cout << "Warning(r" << rev.revision_number << ") - couldn't find SHA1 for " << node.path << ", using node from " << tpath << "\n";
+			}
+		    }
+		}
+	    } else {
+		std::cout << "Warning(r" << rev.revision_number << ") - skipping " << node.path << " - no git applicable change found.\n";
+	    }
+	    continue;
+	}
+
+	switch (node.action) {
+	    case nchange:
+		outfile << "M ";
+		break;
+	    case nadd:
+		outfile << "M ";
+		break;
+	    case nreplace:
+		outfile << "M ";
+		break;
+	    case ndelete:
+		outfile << "D ";
+		break;
+	    default:
+		std::cerr << "Unhandled node action type " << print_node_action(node.action) << "\n";
+		outfile << "? ";
+		outfile << "\"" << node.local_path << "\"\n";
+		std::cout << "Fatal - unhandled node action at r" << rev.revision_number << ", node: " << node.path << "\n";
+		exit(1);
+	}
+	if (node.exec_path) {
+	    outfile << "100755 ";
+	} else {
+	    outfile << "100644 ";
+	}
+
+	if (node.action == ndelete) {
+	    outfile << "\"" << node.local_path << "\"\n";
+	    continue;
+	}
+	if (node.action == nchange || node.action == nadd || node.action == nreplace) {
+	    outfile << gsha1 << " \"" << node.local_path << "\"\n";
+	    continue;
+	}
+
+	std::cout << "Error(r" << rev.revision_number << ") - unhandled node action: " << print_node_action(node.action) << "\n";
+	print_node(node);
+	exit(1);
+    }
+
+}
+
 void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev_num_min, long int rev_num_max)
 {
     std::set<int> special_revs;
@@ -993,107 +1161,13 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 		if (have_commit) {
 		    std::cout << "Error - more than one commit generated for revision " << rev.revision_number << "\n";
 		}
-		if (author_map.find(rev.author) == author_map.end()) {
-		    std::cout << "Error - couldn't find author map for author " << rev.author << " on revision " << rev.revision_number << "\n";
-		    exit(1);
-		}
-		outfile << "commit " << rbranch << "\n";
-		outfile << "mark :" << rev.revision_number << "\n";
-		outfile << "committer " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
-		outfile << "data " << rev.commit_msg.length() << "\n";
-		outfile << rev.commit_msg << "\n";
-		outfile << "from " << branch_head_id(rbranch, rev.revision_number) << "\n";
-		branch_head_ids[rbranch] = std::to_string(rev.revision_number);
 
-		if (rev.merged_from.length()) {
-		    std::cout << "Revision " << rev.revision_number << " merged from: " << rev.merged_from << "(" << rev.merged_rev << "), id " << branch_head_id(rev.merged_from, rev.merged_rev) << "\n";
-		    std::cout << "Revision " << rev.revision_number << "        from: " << rbranch << "\n";
-		    outfile << "merge :" << rev.merged_rev << "\n";
+		if (rev.move_edit) {
+		    move_only_commit(outfile, rev, rbranch);
 		}
 
-		for (size_t n = 0; n != rev.nodes.size(); n++) {
-		    struct svn_node &node = rev.nodes[n];
-		    /* Don't add directory nodes themselves - git works on files */
-		    if (node.kind == ndir && node.action == nadd) continue;
-		    if (node.kind == ndir && node.action == ndelete) {
-			std::cerr << "DIR delete " << node.path << "\n";
-			std::cerr << "TODO - do we get individual file deletes, or do we need to figure out what was in the directory?  If the latter, we're going to have to walk the currently active paths and delete any that match this node path...\n";
-		    }
+		standard_commit(outfile, rev, rbranch);
 
-		    //std::cout << "	Processing node " << print_node_action(node.action) << " " << node.local_path << " into branch " << node.branch << "\n";
-		    std::string gsha1;
-		    if (node.action == nchange || node.action == nadd || node.action == nreplace) {
-			if (node.exec_change || node.copyfrom_path.length() || node.text_content_length || node.text_content_sha1.length()) {
-			    gsha1 = svn_sha1_to_git_sha1[current_sha1[node.path]];
-			    if (gsha1.length() < 40) {
-				if (node.copyfrom_rev) {
-				    gsha1 = svn_sha1_to_git_sha1[node.text_copy_source_sha1];
-				}
-				if (gsha1.length() < 40) {
-				    std::string tpath;
-				    if (node.copyfrom_path.length()) {
-					tpath = node.copyfrom_path;
-				    } else {
-					tpath = std::string("brlcad/trunk/") + node.local_path;
-				    }
-				    gsha1 = svn_sha1_to_git_sha1[current_sha1[tpath]];
-				    if (gsha1.length() < 40) {
-					std::cout << "Fatal - could not find git sha1 - r" << rev.revision_number << ", node: " << node.path << "\n";
-					std::cout << "current sha1: " << current_sha1[node.path] << "\n";
-					std::cout << "trunk sha1: " << current_sha1[tpath] << "\n";
-					std::cout << "Revision merged from: " << rev.merged_from << "\n";
-					print_node(node);
-					exit(1);
-				    } else {
-					std::cout << "Warning(r" << rev.revision_number << ") - couldn't find SHA1 for " << node.path << ", using node from " << tpath << "\n";
-				    }
-				}
-			    }
-			} else {
-			    std::cout << "Warning(r" << rev.revision_number << ") - skipping " << node.path << " - no git applicable change found.\n";
-			}
-			continue;
-		    }
-
-		    switch (node.action) {
-			case nchange:
-			    outfile << "M ";
-			    break;
-			case nadd:
-			    outfile << "M ";
-			    break;
-			case nreplace:
-			    outfile << "M ";
-			    break;
-			case ndelete:
-			    outfile << "D ";
-			    break;
-			default:
-			    std::cerr << "Unhandled node action type " << print_node_action(node.action) << "\n";
-			    outfile << "? ";
-			    outfile << "\"" << node.local_path << "\"\n";
-			    std::cout << "Fatal - unhandled node action at r" << rev.revision_number << ", node: " << node.path << "\n";
-			    exit(1);
-		    }
-		    if (node.exec_path) {
-			outfile << "100755 ";
-		    } else {
-			outfile << "100644 ";
-		    }
-
-		    if (node.action == ndelete) {
-			outfile << "\"" << node.local_path << "\"\n";
-			continue;
-		    }
-		    if (node.action == nchange || node.action == nadd || node.action == nreplace) {
-			outfile << gsha1 << " \"" << node.local_path << "\"\n";
-			continue;
-		    }
-
-		    std::cout << "Error(r" << rev.revision_number << ") - unhandled node action: " << print_node_action(node.action) << "\n";
-		    print_node(node);
-		    exit(1);
-		}
 		if (tag_after_commit) {
 		    // Note - in this situation, we need to both build a commit and do a tag.  Will probably
 		    // take some refactoring.  Merge information will also be a factor.
