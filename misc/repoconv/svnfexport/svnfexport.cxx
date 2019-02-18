@@ -711,7 +711,7 @@ analyze_dump()
 		}
 	    }
 	    // Find move + edit operations
-	    if (node.copyfrom_path.length() > 0 && node.text_content_length > 0) {
+	    if (node.copyfrom_path.length() > 0 && node.text_content_length > 0 && node.copyfrom_rev == rev.revision_number) {
 		node.move_edit = 1;
 		rev.move_edit = 1;
 	    }
@@ -820,8 +820,6 @@ void move_only_commit(std::ofstream &outfile, struct svn_revision &rev, std::str
     int have_real_rename = 0;
     for (size_t n = 0; n != rev.nodes.size(); n++) {
 	struct svn_node &node = rev.nodes[n];
-	/* Don't add directory nodes themselves - git works on files */
-	if (node.kind == ndir) continue;
 	if (node.copyfrom_path.length() > 0) {
 	    int is_tag;
 	    std::string mproject, cbranch, mlocal_path, ctag;
@@ -891,13 +889,28 @@ void standard_commit(std::ofstream &outfile, struct svn_revision &rev, std::stri
 	outfile << "merge :" << rev.merged_rev << "\n";
     }
 
+    std::string ndeletes;
     for (size_t n = 0; n != rev.nodes.size(); n++) {
 	struct svn_node &node = rev.nodes[n];
-	/* Don't add directory nodes themselves - git works on files */
+	/* Don't add directory nodes themselves - git works on files.
+	 *
+	 * However, there is an important exception here for directory copies and deletes!
+	 * */
+	if (node.kind == ndir && node.action == nadd && node.copyfrom_path.length()) {
+	    int is_tag;
+	    std::string mproject, cbranch, mlocal_path, ctag;
+	    node_path_split(node.copyfrom_path, mproject, cbranch, ctag, mlocal_path, &is_tag);
+	    if (mlocal_path != node.local_path) {
+		std::cout << "(r" << rev.revision_number << ") - renaming " << mlocal_path << " to " << node.local_path << "\n";
+		outfile << "C " << mlocal_path << " " << node.local_path << "\n";
+	    }
+	    continue;
+	}
 	if (node.kind == ndir && node.action == nadd) continue;
 	if (node.kind == ndir && node.action == ndelete) {
-	    std::cerr << "DIR delete " << node.path << "\n";
-	    std::cerr << "TODO - do we get individual file deletes, or do we need to figure out what was in the directory?  If the latter, we're going to have to walk the currently active paths and delete any that match this node path...\n";
+	    std::cerr << "Revision " << rev.revision_number << "DIR delete: " << node.local_path << "\n";
+	    outfile << "D " << node.local_path << "\n";
+	    continue;
 	}
 
 	//std::cout << "	Processing node " << print_node_action(node.action) << " " << node.local_path << " into branch " << node.branch << "\n";
@@ -946,7 +959,6 @@ void standard_commit(std::ofstream &outfile, struct svn_revision &rev, std::stri
 		outfile << "M ";
 		break;
 	    case ndelete:
-		outfile << "D ";
 		break;
 	    default:
 		std::cerr << "Unhandled node action type " << print_node_action(node.action) << "\n";
@@ -955,14 +967,18 @@ void standard_commit(std::ofstream &outfile, struct svn_revision &rev, std::stri
 		std::cout << "Fatal - unhandled node action at r" << rev.revision_number << ", node: " << node.path << "\n";
 		exit(1);
 	}
-	if (node.exec_path) {
-	    outfile << "100755 ";
-	} else {
-	    outfile << "100644 ";
+
+	if (node.action != ndelete) {
+	    if (node.exec_path) {
+		outfile << "100755 ";
+	    } else {
+		outfile << "100644 ";
+	    }
 	}
 
 	if (node.action == ndelete) {
-	    outfile << "\"" << node.local_path << "\"\n";
+	    std::string nd = std::string("D \"") + node.local_path + std::string("\"\n");
+	    ndeletes.append(nd);
 	    continue;
 	}
 	if (node.action == nchange || node.action == nadd || node.action == nreplace) {
@@ -975,6 +991,9 @@ void standard_commit(std::ofstream &outfile, struct svn_revision &rev, std::stri
 	exit(1);
     }
 
+    if (ndeletes.length()) {
+	outfile << ndeletes;
+    }
 }
 
 void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev_num_min, long int rev_num_max)
@@ -1062,8 +1081,8 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 		continue;
 	    }
 
-	    if (rev.revision_number == 30792) {
-		std::cout << "at 30792\n";
+	    if (rev.revision_number == 30995) {
+		std::cout << "at 30995\n";
 	    }
 
 	    for (size_t n = 0; n != rev.nodes.size(); n++) {
@@ -1340,7 +1359,7 @@ int main(int argc, const char **argv)
     std::ofstream outfile("brlcad-svn-export.fi", std::ios::out | std::ios::binary);
     if (!outfile.good()) return -1;
     //rev_fast_export(infile, outfile, 29887, 30854);
-    rev_fast_export(infile, outfile, 29887, 30856);
+    rev_fast_export(infile, outfile, 29887, 30995);
     outfile.close();
 
 #if 0
