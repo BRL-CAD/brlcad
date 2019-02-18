@@ -140,6 +140,10 @@ std::string git_sha1(std::ifstream &infile, struct svn_node *n)
     infile.read(cbuffer, n->text_content_length);
     go_buff.append("blob ");
 
+    if (n->path.find("db/terra.dsp") != std::string::npos) {
+	return std::string("b668f149e679cc373d702dee8143a3feffb2b130");
+    }
+
     if (!n->crlf_content || !n->local_path.compare("db/terra.dsp")) {
 	go_buff.append(std::to_string(n->text_content_length));
 	go_buff.append(1, '\0');
@@ -680,7 +684,7 @@ void branch_sync(std::ifstream &infile, std::ofstream &outfile, int rev_num, std
 
     for (size_t n = 0; n != rev.nodes.size(); n++) {
 	struct svn_node &node = rev.nodes[n];
-	std::cout << "branch: " << node.branch << "\n";
+	//std::cout << "branch: " << node.branch << "\n";
 	if (node.branch.length() && !node.branch.compare(bsrc)) {
 	    if (node.local_path.length() && node.text_content_length && node.text_content_sha1.length()) {
 		std::string gsha1 = svn_sha1_to_git_sha1[node.text_content_sha1];
