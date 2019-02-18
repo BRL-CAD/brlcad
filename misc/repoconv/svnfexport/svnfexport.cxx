@@ -1129,6 +1129,9 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 		    outfile << "from " << branch_head_id(bbpath, rev.revision_number) << "\n";
 		    branch_head_ids[node.branch] = branch_head_ids[bbpath];
 		    have_commit = 1;
+
+		    // TODO - make an empty commit on the new branch with the commit message from SVN, but no changes
+
 		    continue;
 		}
 
