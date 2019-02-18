@@ -889,7 +889,7 @@ void standard_commit(std::ofstream &outfile, struct svn_revision &rev, std::stri
 	outfile << "merge :" << rev.merged_rev << "\n";
     }
 
-    std::string ndeletes;
+    std::string ddeletes;
     for (size_t n = 0; n != rev.nodes.size(); n++) {
 	struct svn_node &node = rev.nodes[n];
 	/* Don't add directory nodes themselves - git works on files.
@@ -900,7 +900,7 @@ void standard_commit(std::ofstream &outfile, struct svn_revision &rev, std::stri
 	    int is_tag;
 	    std::string mproject, cbranch, mlocal_path, ctag;
 	    node_path_split(node.copyfrom_path, mproject, cbranch, ctag, mlocal_path, &is_tag);
-	    if (mlocal_path != node.local_path && node.copyfrom_rev == rev.revision_number) {
+	    if (mlocal_path != node.local_path) {
 		std::cout << "(r" << rev.revision_number << ") - renaming " << mlocal_path << " to " << node.local_path << "\n";
 		outfile << "C " << mlocal_path << " " << node.local_path << "\n";
 	    }
@@ -977,6 +977,8 @@ void standard_commit(std::ofstream &outfile, struct svn_revision &rev, std::stri
 	}
 
 	if (node.action == ndelete) {
+	    // TODO - r33147 indicates we can just delete willy-nilly at the end - we've got mixed deletes and mods
+	    // in the same commit that are intended to leave the file intact at the end.
 	    std::string nd = std::string("D \"") + node.local_path + std::string("\"\n");
 	    ndeletes.append(nd);
 	    continue;
@@ -1359,7 +1361,7 @@ int main(int argc, const char **argv)
     std::ofstream outfile("brlcad-svn-export.fi", std::ios::out | std::ios::binary);
     if (!outfile.good()) return -1;
     //rev_fast_export(infile, outfile, 29887, 30854);
-    rev_fast_export(infile, outfile, 29887, 34110);
+    rev_fast_export(infile, outfile, 29887, 33147);
     outfile.close();
 
 #if 0
