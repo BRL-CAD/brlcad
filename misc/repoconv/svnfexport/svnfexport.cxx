@@ -68,6 +68,7 @@ std::map<std::string,std::pair<size_t, long int>> sha1_blobs;
 std::set<std::string> exec_paths;
 std::map<std::string,std::string> current_sha1;
 std::map<std::string,std::string> branch_head_ids;
+std::map<std::string,std::string> tag_ids;
 std::map<std::string,std::string> svn_sha1_to_git_sha1;
 
 std::set<std::string> cvs_blob_sha1;
@@ -789,6 +790,7 @@ void full_sync_commit(std::ofstream &outfile, struct svn_revision &rev, std::str
     outfile << "data " << rev.commit_msg.length() << "\n";
     outfile << rev.commit_msg << "\n";
     outfile << "from " << branch_head_id(bdest, rev.revision_number) << "\n";
+    outfile << "deleteall\n";
     // TODO - merge info
     branch_head_ids[bdest] = std::to_string(rev.revision_number);
 
@@ -815,7 +817,6 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
     // particular revisions that will have to be special cased:
     special_revs.insert(31039);
     special_revs.insert(32314);
-    special_revs.insert(36472);
     special_revs.insert(36633);
     special_revs.insert(36843);
     special_revs.insert(39465);
@@ -842,6 +843,11 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 
 	if (rev.revision_number > rev_num_max) return;
 
+	if (rev.revision_number == 36472) {
+	    std::cout << "Skipping r36472 - branch rename, handled by mapping the original name in the original commit (dmtogl-branch) to the desired branch name (dmtogl)\n";
+	    continue;
+	}
+
 	if (rev.revision_number >= rev_num_min) {
 #if 0
 	    std::cout << "Processing revision " << rev.revision_number << "\n";
@@ -862,11 +868,22 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 	    }
 
 	    if (special_revs.find(rev.revision_number) != special_revs.end()) {
+		std::string bsrc, bdest;
 		std::cout << "Revision " << rev.revision_number << " requires special handling\n";
-		std::string bsrc("refs/heads/rel-7-12-2");
-		std::string bdest("refs/heads/STABLE");
+		if (rev.revision_number == 36633 || rev.revision_number == 39465) {
+		    bdest = std::string("refs/heads/dmtogl");
+		    bsrc = branch_head_id(std::string("refs/heads/master"), rev.revision_number);
+		} else {
+		    bdest = std::string("refs/heads/STABLE");
+		}
+		if (rev.revision_number == 31039) {
+		    bsrc = tag_ids[std::string("rel-7-12-2")];
+		}
+		if (rev.revision_number == 32314 || rev.revision_number == 36843) {
+		    bsrc = tag_ids[std::string("rel-7-12-6")];
+		}
 		full_sync_commit(outfile, rev, bsrc, bdest);
-		exit(1);
+		continue;
 	    }
 
 	    if (rev.revision_number == 30792) {
@@ -918,6 +935,7 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 			outfile << "tagger " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
 			outfile << "data " << rev.commit_msg.length() << "\n";
 			outfile << rev.commit_msg << "\n";
+			tag_ids[node.tag] = branch_head_id(bbpath, rev.revision_number);
 			continue;
 		    }
 

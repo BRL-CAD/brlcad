@@ -66,11 +66,7 @@ struct svn_revision {
 std::map<std::string,std::pair<size_t, long int>> sha1_blobs;
 std::set<std::string> exec_paths;
 std::map<std::string,std::string> current_sha1;
-std::map<std::string,std::string> branch_head_ids;
 std::map<std::string,std::string> svn_sha1_to_git_sha1;
-
-std::set<std::string> cvs_blob_sha1;
-std::map<std::string,std::string> author_map;
 
 /* Branches */
 std::set<std::string> branches;
@@ -197,16 +193,6 @@ write_blob(std::ifstream &infile, std::ofstream &outfile, struct svn_node &node)
     }
 }
 
-std::string
-branch_head_id(std::string branch){
-    // If strlen of current head == 40, it's a sha1 and just return it.
-    //
-    // else, it's a mark and return the string with a colon in front.
-    std::string curr_head = branch_head_ids[branch];
-    if (curr_head.length() == 40) return curr_head;
-    std::string head_mark = std::string(":") + curr_head;
-    return head_mark;
-}
 
 /* Read revision properties.  Technically these are optional,
  * so don't bother with a return code - just get what we can. */
@@ -762,78 +748,47 @@ load_dump_file(const char *f)
     return rev_cnt;
 }
 
-void
-load_branch_head_sha1s(const char *f)
-{
-    std::ifstream hfile(f);
-    std::string line;
-    while (std::getline(hfile, line)) {
-	size_t spos = line.find_first_of(" ");
-	std::string hsha1 = line.substr(0, spos);
-	std::string hbranch = line.substr(spos+1, std::string::npos);
-	branch_head_ids[hbranch] = hsha1;
-    }
-}
-
-void
-load_blob_sha1s(const char *f)
-{
-
-    std::ifstream bfile(f);
-    std::string line;
-    while (std::getline(bfile, line)) {
-	size_t spos = line.find_first_of(" ");
-	std::string hsha1 = line.substr(0, spos);
-	cvs_blob_sha1.insert(hsha1);
-    }
-}
-
 int main(int argc, const char **argv)
 {
-    if (argc < 4) {
-	std::cerr << "svnfexport dumpfile head_sha1s blob_sha1s\n";
-	return 1;
-    }
-
     /* Populate valid_projects */
     valid_projects.insert(std::string("brlcad"));
-    /*
-    valid_projects.insert(std::string("gct"));
-    valid_projects.insert(std::string("geomcore"));
-    valid_projects.insert(std::string("iBME"));
-    valid_projects.insert(std::string("isst"));
-    valid_projects.insert(std::string("jbrlcad"));
-    valid_projects.insert(std::string("osl"));
-    valid_projects.insert(std::string("ova"));
-    valid_projects.insert(std::string("rt^3"));
-    valid_projects.insert(std::string("rtcmp"));
-    valid_projects.insert(std::string("web"));
-    valid_projects.insert(std::string("webcad"));
-    */
 
     /* Branch/tag name mappings */
     branch_mappings[std::string("framebuffer-experiment")] = std::string("framebuffer-experiment");
 
-    /* Read in pre-existing branch sha1 heads from git */
-    load_branch_head_sha1s(argv[2]);
+    std::string dfile = std::string("brlcad_r") + std::string(argv[1]) + std::string(".dump");
 
-    /* Read in pre-existing blob sha1s from git */
-    load_blob_sha1s(argv[3]);
-
-    int rev_cnt = load_dump_file(argv[1]);
+    int rev_cnt = load_dump_file(dfile.c_str());
     if (rev_cnt > 0) {
-	std::cout << "Dump file " << argv[1] << " loaded - found " << rev_cnt << " revisions\n";
+	std::cout << "Dump file " << dfile << " loaded - found " << rev_cnt << " revisions\n";
 	analyze_dump();
     } else {
 	std::cerr << "No revision found - quitting\n";
 	return -1;
     }
 
-    std::ifstream infile(argv[1]);
-    std::ofstream outfile("39039.txt", std::ios::out | std::ios::binary);
+    std::string tbranch;
+
+    std::string ofile = std::string(argv[1]) + std::string(".txt");
+    std::ifstream infile(dfile);
+    std::ofstream outfile(ofile, std::ios::out | std::ios::binary);
     if (!outfile.good()) return -1;
-    std::string tbranch("rel-7-12-2");
-    branch_sync(infile, outfile, 31039, tbranch);
+    if (std::string(argv[1]) == std::string("31039")) {
+	tbranch = std::string("rel-7-12-2");
+    }
+    if (std::string(argv[1]) == std::string("32314")) {
+	tbranch = std::string("rel-7-12-6");
+    }
+     if (std::string(argv[1]) == std::string("36633")) {
+	tbranch = std::string("refs/heads/master");
+    }
+     if (std::string(argv[1]) == std::string("36843")) {
+	tbranch = std::string("rel-7-12-2");
+    }
+     if (std::string(argv[1]) == std::string("39465")) {
+	tbranch = std::string("refs/heads/master");
+    }
+    branch_sync(infile, outfile, std::stol(argv[1]), tbranch);
     outfile.close();
 
     return 0;
