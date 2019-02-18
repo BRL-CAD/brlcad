@@ -244,7 +244,7 @@ write_blob(std::ifstream &infile, std::ofstream &outfile, struct svn_node &node)
 	std::string crlf_buff;
 	std::ostringstream cf(crlf_buff);
 	for (int i = 0; i < node.text_content_length; i++) {
-	    if (buffer[i] == '\n') {
+	    if (buffer[i] == '\n' && (i == 0 || buffer[i-1] != '\r')) {
 		cf << '\r' << '\n';
 	    } else {
 		cf << buffer[i];
@@ -826,7 +826,7 @@ void move_only_commit(std::ofstream &outfile, struct svn_revision &rev, std::str
 	    int is_tag;
 	    std::string mproject, cbranch, mlocal_path, ctag;
 	    node_path_split(node.copyfrom_path, mproject, cbranch, ctag, mlocal_path, &is_tag);
-	    if (mlocal_path != node.local_path) {
+	    if ((mlocal_path != node.local_path) && (cbranch == node.branch)) {
 		have_real_rename = 1;
 	    }
 	}
@@ -931,8 +931,8 @@ void standard_commit(std::ofstream &outfile, struct svn_revision &rev, std::stri
 		}
 	    } else {
 		std::cout << "Warning(r" << rev.revision_number << ") - skipping " << node.path << " - no git applicable change found.\n";
+		continue;
 	    }
-	    continue;
 	}
 
 	switch (node.action) {
@@ -1013,10 +1013,16 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 
 	if (rev.revision_number > rev_num_max) return;
 
+	if (rev.revision_number == 30760) {
+	    std::cout << "Skipping r30760 - premature tagging of rel-7-12-2.  Will be tagged by 30792\n";
+	    continue;
+	}
+
 	if (rev.revision_number == 36472) {
 	    std::cout << "Skipping r36472 - branch rename, handled by mapping the original name in the original commit (dmtogl-branch) to the desired branch name (dmtogl)\n";
 	    continue;
 	}
+
 
 	if (rev.revision_number >= rev_num_min) {
 #if 0
@@ -1331,9 +1337,10 @@ int main(int argc, const char **argv)
 
     std::ifstream infile(argv[1]);
 
-    std::ofstream outfile("r29887-rHEAD.fi", std::ios::out | std::ios::binary);
+    std::ofstream outfile("brlcad-svn-export.fi", std::ios::out | std::ios::binary);
     if (!outfile.good()) return -1;
-    rev_fast_export(infile, outfile, 29887, 73000);
+    //rev_fast_export(infile, outfile, 29887, 30854);
+    rev_fast_export(infile, outfile, 29887, 30856);
     outfile.close();
 
 #if 0
