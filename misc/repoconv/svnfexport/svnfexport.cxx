@@ -61,6 +61,7 @@ struct svn_revision {
     int tag_edit; // Has revision level implications - set if any child nodes are set
     int merge;
     std::string merged_from;
+    long int merged_rev;
 };
 
 
@@ -765,6 +766,7 @@ analyze_dump()
 			if (crev > maxrev && node.branch.compare(cbranch)) {
 			    rev.merged_from = cbranch;
 			    maxrev = crev;
+			    rev.merged_rev = maxrev;
 			}
 		    }
 		}
@@ -1002,6 +1004,12 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 		outfile << rev.commit_msg << "\n";
 		outfile << "from " << branch_head_id(rbranch, rev.revision_number) << "\n";
 		branch_head_ids[rbranch] = std::to_string(rev.revision_number);
+
+		if (rev.merged_from.length()) {
+		    std::cout << "Revision " << rev.revision_number << " merged from: " << rev.merged_from << "(" << rev.merged_rev << "), id " << branch_head_id(rev.merged_from, rev.merged_rev) << "\n";
+		    std::cout << "Revision " << rev.revision_number << "        from: " << rbranch << "\n";
+		    outfile << "merge :" << rev.merged_rev << "\n";
+		}
 
 		for (size_t n = 0; n != rev.nodes.size(); n++) {
 		    struct svn_node &node = rev.nodes[n];
