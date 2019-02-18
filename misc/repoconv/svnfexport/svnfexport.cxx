@@ -900,7 +900,7 @@ void standard_commit(std::ofstream &outfile, struct svn_revision &rev, std::stri
 	    int is_tag;
 	    std::string mproject, cbranch, mlocal_path, ctag;
 	    node_path_split(node.copyfrom_path, mproject, cbranch, ctag, mlocal_path, &is_tag);
-	    if (mlocal_path != node.local_path) {
+	    if (mlocal_path != node.local_path && node.copyfrom_rev == rev.revision_number) {
 		std::cout << "(r" << rev.revision_number << ") - renaming " << mlocal_path << " to " << node.local_path << "\n";
 		outfile << "C " << mlocal_path << " " << node.local_path << "\n";
 	    }
@@ -1081,8 +1081,8 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 		continue;
 	    }
 
-	    if (rev.revision_number == 30995) {
-		std::cout << "at 30995\n";
+	    if (rev.revision_number == 34110) {
+		std::cout << "at 34110\n";
 	    }
 
 	    for (size_t n = 0; n != rev.nodes.size(); n++) {
@@ -1359,7 +1359,7 @@ int main(int argc, const char **argv)
     std::ofstream outfile("brlcad-svn-export.fi", std::ios::out | std::ios::binary);
     if (!outfile.good()) return -1;
     //rev_fast_export(infile, outfile, 29887, 30854);
-    rev_fast_export(infile, outfile, 29887, 30995);
+    rev_fast_export(infile, outfile, 29887, 34110);
     outfile.close();
 
 #if 0
