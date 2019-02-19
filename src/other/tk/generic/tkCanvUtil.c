@@ -1099,7 +1099,7 @@ Tk_ConfigOutlineGC(
 	if (outline->activeColor!=NULL) {
 	    color = outline->activeColor;
 	}
-	if (outline->activeStipple!=None) {
+	if (outline->activeStipple!=TkNone) {
 	    stipple = outline->activeStipple;
 	}
     } else if (state == TK_STATE_DISABLED) {
@@ -1112,7 +1112,7 @@ Tk_ConfigOutlineGC(
 	if (outline->disabledColor!=NULL) {
 	    color = outline->disabledColor;
 	}
-	if (outline->disabledStipple!=None) {
+	if (outline->disabledStipple!=TkNone) {
 	    stipple = outline->disabledStipple;
 	}
     }
@@ -1236,7 +1236,7 @@ Tk_ChangeOutlineGC(
 	XSetDashes(((TkCanvas *)canvas)->display, outline->gc,
 		outline->offset, p, dash->number);
     }
-    if (stipple!=None) {
+    if (stipple!=TkNone) {
 	int w=0; int h=0;
 	Tk_TSOffset *tsoffset = &outline->tsoffset;
 	int flags = tsoffset->flags;
@@ -1316,7 +1316,7 @@ Tk_ResetOutlineGC(
 	if (outline->activeColor!=NULL) {
 	    color = outline->activeColor;
 	}
-	if (outline->activeStipple!=None) {
+	if (outline->activeStipple!=TkNone) {
 	    stipple = outline->activeStipple;
 	}
     } else if (state == TK_STATE_DISABLED) {
@@ -1329,7 +1329,7 @@ Tk_ResetOutlineGC(
 	if (outline->disabledColor!=NULL) {
 	    color = outline->disabledColor;
 	}
-	if (outline->disabledStipple!=None) {
+	if (outline->disabledStipple!=TkNone) {
 	    stipple = outline->disabledStipple;
 	}
     }

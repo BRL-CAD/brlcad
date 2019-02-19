@@ -430,14 +430,14 @@ ConfigureText(
 	if (textPtr->activeColor!=NULL) {
 	    color = textPtr->activeColor;
 	}
-	if (textPtr->activeStipple!=None) {
+	if (textPtr->activeStipple!=TkNone) {
 	    stipple = textPtr->activeStipple;
 	}
     } else if (state==TK_STATE_DISABLED) {
 	if (textPtr->disabledColor!=NULL) {
 	    color = textPtr->disabledColor;
 	}
-	if (textPtr->disabledStipple!=None) {
+	if (textPtr->disabledStipple!=TkNone) {
 	    stipple = textPtr->disabledStipple;
 	}
     }
@@ -731,11 +731,11 @@ DisplayCanvText(
     }
     stipple = textPtr->stipple;
     if (((TkCanvas *)canvas)->currentItemPtr == itemPtr) {
-	if (textPtr->activeStipple!=None) {
+	if (textPtr->activeStipple!=TkNone) {
 	    stipple = textPtr->activeStipple;
 	}
     } else if (state==TK_STATE_DISABLED) {
-	if (textPtr->disabledStipple!=None) {
+	if (textPtr->disabledStipple!=TkNone) {
 	    stipple = textPtr->disabledStipple;
 	}
     }
@@ -1447,14 +1447,14 @@ TextToPostscript(
 	if (textPtr->activeColor!=NULL) {
 	    color = textPtr->activeColor;
 	}
-	if (textPtr->activeStipple!=None) {
+	if (textPtr->activeStipple!=TkNone) {
 	    stipple = textPtr->activeStipple;
 	}
     } else if (state==TK_STATE_DISABLED) {
 	if (textPtr->disabledColor!=NULL) {
 	    color = textPtr->disabledColor;
 	}
-	if (textPtr->disabledStipple!=None) {
+	if (textPtr->disabledStipple!=TkNone) {
 	    stipple = textPtr->disabledStipple;
 	}
     }

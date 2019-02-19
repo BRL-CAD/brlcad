@@ -494,14 +494,14 @@ ConfigureRectOval(
 	if (rectOvalPtr->activeFillColor!=NULL) {
 	    color = rectOvalPtr->activeFillColor;
 	}
-	if (rectOvalPtr->activeFillStipple!=None) {
+	if (rectOvalPtr->activeFillStipple!=TkNone) {
 	    stipple = rectOvalPtr->activeFillStipple;
 	}
     } else if (state == TK_STATE_DISABLED) {
 	if (rectOvalPtr->disabledFillColor!=NULL) {
 	    color = rectOvalPtr->disabledFillColor;
 	}
-	if (rectOvalPtr->disabledFillStipple!=None) {
+	if (rectOvalPtr->disabledFillStipple!=TkNone) {
 	    stipple = rectOvalPtr->disabledFillStipple;
 	}
     }
@@ -1338,7 +1338,7 @@ RectOvalToPostscript(
 	if (rectOvalPtr->activeFillColor!=NULL) {
 	    fillColor = rectOvalPtr->activeFillColor;
 	}
-	if (rectOvalPtr->activeFillStipple!=None) {
+	if (rectOvalPtr->activeFillStipple!=TkNone) {
 	    fillStipple = rectOvalPtr->activeFillStipple;
 	}
     } else if (state == TK_STATE_DISABLED) {
@@ -1348,7 +1348,7 @@ RectOvalToPostscript(
 	if (rectOvalPtr->disabledFillColor!=NULL) {
 	    fillColor = rectOvalPtr->disabledFillColor;
 	}
-	if (rectOvalPtr->disabledFillStipple!=None) {
+	if (rectOvalPtr->disabledFillStipple!=TkNone) {
 	    fillStipple = rectOvalPtr->disabledFillStipple;
 	}
     }

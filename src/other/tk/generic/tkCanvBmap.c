@@ -338,7 +338,7 @@ ConfigureBitmap(
 
     if (bmapPtr->activeFgColor!=NULL ||
 	    bmapPtr->activeBgColor!=NULL ||
-	    bmapPtr->activeBitmap!=None) {
+	    bmapPtr->activeBitmap!=TkNone) {
 	itemPtr->redraw_flags |= TK_ITEM_STATE_DEPENDANT;
     } else {
 	itemPtr->redraw_flags &= ~TK_ITEM_STATE_DEPENDANT;
@@ -361,7 +361,7 @@ ConfigureBitmap(
 	if (bmapPtr->activeBgColor!=NULL) {
 	    bgColor = bmapPtr->activeBgColor;
 	}
-	if (bmapPtr->activeBitmap!=None) {
+	if (bmapPtr->activeBitmap!=TkNone) {
 	    bitmap = bmapPtr->activeBitmap;
 	}
     } else if (state == TK_STATE_DISABLED) {
@@ -371,7 +371,7 @@ ConfigureBitmap(
 	if (bmapPtr->disabledBgColor!=NULL) {
 	    bgColor = bmapPtr->disabledBgColor;
 	}
-	if (bmapPtr->disabledBitmap!=None) {
+	if (bmapPtr->disabledBitmap!=TkNone) {
 	    bitmap = bmapPtr->disabledBitmap;
 	}
     }
@@ -490,11 +490,11 @@ ComputeBitmapBbox(
     }
     bitmap = bmapPtr->bitmap;
     if (((TkCanvas *)canvas)->currentItemPtr == (Tk_Item *)bmapPtr) {
-	if (bmapPtr->activeBitmap!=None) {
+	if (bmapPtr->activeBitmap!=TkNone) {
 	    bitmap = bmapPtr->activeBitmap;
 	}
     } else if (state==TK_STATE_DISABLED) {
-	if (bmapPtr->disabledBitmap!=None) {
+	if (bmapPtr->disabledBitmap!=TkNone) {
 	    bitmap = bmapPtr->disabledBitmap;
 	}
     }
@@ -600,11 +600,11 @@ DisplayBitmap(
     }
     bitmap = bmapPtr->bitmap;
     if (((TkCanvas *)canvas)->currentItemPtr == itemPtr) {
-	if (bmapPtr->activeBitmap!=None) {
+	if (bmapPtr->activeBitmap!=TkNone) {
 	    bitmap = bmapPtr->activeBitmap;
 	}
     } else if (state == TK_STATE_DISABLED) {
-	if (bmapPtr->disabledBitmap!=None) {
+	if (bmapPtr->disabledBitmap!=TkNone) {
 	    bitmap = bmapPtr->disabledBitmap;
 	}
     }
@@ -874,7 +874,7 @@ BitmapToPostscript(
 	if (bmapPtr->activeBgColor!=NULL) {
 	    bgColor = bmapPtr->activeBgColor;
 	}
-	if (bmapPtr->activeBitmap!=None) {
+	if (bmapPtr->activeBitmap!=TkNone) {
 	    bitmap = bmapPtr->activeBitmap;
 	}
     } else if (state == TK_STATE_DISABLED) {
@@ -884,7 +884,7 @@ BitmapToPostscript(
 	if (bmapPtr->disabledBgColor!=NULL) {
 	    bgColor = bmapPtr->disabledBgColor;
 	}
-	if (bmapPtr->disabledBitmap!=None) {
+	if (bmapPtr->disabledBitmap!=TkNone) {
 	    bitmap = bmapPtr->disabledBitmap;
 	}
     }

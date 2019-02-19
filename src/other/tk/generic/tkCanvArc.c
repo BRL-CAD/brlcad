@@ -514,14 +514,14 @@ ConfigureArc(
 	if (arcPtr->activeFillColor!=NULL) {
 	    color = arcPtr->activeFillColor;
 	}
-	if (arcPtr->activeFillStipple!=None) {
+	if (arcPtr->activeFillStipple!=TkNone) {
 	    stipple = arcPtr->activeFillStipple;
 	}
     } else if (state==TK_STATE_DISABLED) {
 	if (arcPtr->disabledFillColor!=NULL) {
 	    color = arcPtr->disabledFillColor;
 	}
-	if (arcPtr->disabledFillStipple!=None) {
+	if (arcPtr->disabledFillStipple!=TkNone) {
 	    stipple = arcPtr->disabledFillStipple;
 	}
       }
@@ -1862,26 +1862,26 @@ ArcToPostscript(
 	if (arcPtr->outline.activeColor!=NULL) {
 	    color = arcPtr->outline.activeColor;
 	}
-	if (arcPtr->outline.activeStipple!=None) {
+	if (arcPtr->outline.activeStipple!=TkNone) {
 	    stipple = arcPtr->outline.activeStipple;
 	}
 	if (arcPtr->activeFillColor!=NULL) {
 	    fillColor = arcPtr->activeFillColor;
 	}
-	if (arcPtr->activeFillStipple!=None) {
+	if (arcPtr->activeFillStipple!=TkNone) {
 	    fillStipple = arcPtr->activeFillStipple;
 	}
     } else if (state == TK_STATE_DISABLED) {
 	if (arcPtr->outline.disabledColor!=NULL) {
 	    color = arcPtr->outline.disabledColor;
 	}
-	if (arcPtr->outline.disabledStipple!=None) {
+	if (arcPtr->outline.disabledStipple!=TkNone) {
 	    stipple = arcPtr->outline.disabledStipple;
 	}
 	if (arcPtr->disabledFillColor!=NULL) {
 	    fillColor = arcPtr->disabledFillColor;
 	}
-	if (arcPtr->disabledFillStipple!=None) {
+	if (arcPtr->disabledFillStipple!=TkNone) {
 	    fillStipple = arcPtr->disabledFillStipple;
 	}
     }

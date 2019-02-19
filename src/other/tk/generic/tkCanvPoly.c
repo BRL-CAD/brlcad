@@ -497,14 +497,14 @@ ConfigurePolygon(
 	if (polyPtr->activeFillColor!=NULL) {
 	    color = polyPtr->activeFillColor;
 	}
-	if (polyPtr->activeFillStipple!=None) {
+	if (polyPtr->activeFillStipple!=TkNone) {
 	    stipple = polyPtr->activeFillStipple;
 	}
     } else if (state==TK_STATE_DISABLED) {
 	if (polyPtr->disabledFillColor!=NULL) {
 	    color = polyPtr->disabledFillColor;
 	}
-	if (polyPtr->disabledFillStipple!=None) {
+	if (polyPtr->disabledFillStipple!=TkNone) {
 	    stipple = polyPtr->disabledFillStipple;
 	}
     }
@@ -1833,13 +1833,13 @@ PolygonToPostscript(
 	if (polyPtr->outline.activeColor!=NULL) {
 	    color = polyPtr->outline.activeColor;
 	}
-	if (polyPtr->outline.activeStipple!=None) {
+	if (polyPtr->outline.activeStipple!=TkNone) {
 	    stipple = polyPtr->outline.activeStipple;
 	}
 	if (polyPtr->activeFillColor!=NULL) {
 	    fillColor = polyPtr->activeFillColor;
 	}
-	if (polyPtr->activeFillStipple!=None) {
+	if (polyPtr->activeFillStipple!=TkNone) {
 	    fillStipple = polyPtr->activeFillStipple;
 	}
     } else if (state==TK_STATE_DISABLED) {
@@ -1849,13 +1849,13 @@ PolygonToPostscript(
 	if (polyPtr->outline.disabledColor!=NULL) {
 	    color = polyPtr->outline.disabledColor;
 	}
-	if (polyPtr->outline.disabledStipple!=None) {
+	if (polyPtr->outline.disabledStipple!=TkNone) {
 	    stipple = polyPtr->outline.disabledStipple;
 	}
 	if (polyPtr->disabledFillColor!=NULL) {
 	    fillColor = polyPtr->disabledFillColor;
 	}
-	if (polyPtr->disabledFillStipple!=None) {
+	if (polyPtr->disabledFillStipple!=TkNone) {
 	    fillStipple = polyPtr->disabledFillStipple;
 	}
     }

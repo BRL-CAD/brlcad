@@ -846,7 +846,7 @@ DisplayLine(
     int numPoints;
     Tk_State state = itemPtr->state;
 
-    if ((!linePtr->numPoints)||(linePtr->outline.gc==None)) {
+    if ((!linePtr->numPoints)||(linePtr->outline.gc==TkNone)) {
 	return;
     }
 
@@ -2273,7 +2273,7 @@ LineToPostscript(
 	if (linePtr->outline.activeColor!=NULL) {
 	    color = linePtr->outline.activeColor;
 	}
-	if (linePtr->outline.activeStipple!=None) {
+	if (linePtr->outline.activeStipple!=TkNone) {
 	    stipple = linePtr->outline.activeStipple;
 	}
     } else if (state==TK_STATE_DISABLED) {
@@ -2283,7 +2283,7 @@ LineToPostscript(
 	if (linePtr->outline.disabledColor!=NULL) {
 	    color = linePtr->outline.disabledColor;
 	}
-	if (linePtr->outline.disabledStipple!=None) {
+	if (linePtr->outline.disabledStipple!=TkNone) {
 	    stipple = linePtr->outline.disabledStipple;
 	}
     }
@@ -2438,11 +2438,11 @@ ArrowheadPostscript(
 
     stipple = linePtr->outline.stipple;
     if (((TkCanvas *)canvas)->currentItemPtr == (Tk_Item *)linePtr) {
-	if (linePtr->outline.activeStipple!=None) {
+	if (linePtr->outline.activeStipple!=TkNone) {
 	    stipple = linePtr->outline.activeStipple;
 	}
     } else if (state==TK_STATE_DISABLED) {
-	if (linePtr->outline.activeStipple!=None) {
+	if (linePtr->outline.activeStipple!=TkNone) {
 	    stipple = linePtr->outline.disabledStipple;
 	}
     }
