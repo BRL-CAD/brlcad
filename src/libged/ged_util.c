@@ -414,7 +414,7 @@ _ged_read_densities(struct ged *gedp, const char *filename, int fault_tolerant)
 	struct bu_vls msgs = BU_VLS_INIT_ZERO;
 	struct directory *dp;
 	struct rt_db_internal intern;
-	struct rt_binunif_internal *bu;
+	struct rt_binunif_internal *bip;
 	char *buf;
 
 	dp = db_lookup(gedp->ged_wdbp->dbip, GED_DB_DENSITY_OBJECT, LOOKUP_QUIET);
@@ -429,9 +429,9 @@ _ged_read_densities(struct ged *gedp, const char *filename, int fault_tolerant)
 	    if ((intern.idb_major_type & DB5_MAJORTYPE_BINARY_MASK) == 0)
 		return GED_ERROR;
 
-	    bu = (struct rt_binunif_internal *)intern.idb_ptr;
+	    bip = (struct rt_binunif_internal *)intern.idb_ptr;
 
-	    RT_CHECK_BINUNIF (bu);
+	    RT_CHECK_BINUNIF (bip);
 
 
 	    if (gedp->gd_densities) {
@@ -444,10 +444,13 @@ _ged_read_densities(struct ged *gedp, const char *filename, int fault_tolerant)
 
 	    (void)analyze_densities_create(&gedp->gd_densities);
 
-	    buf = (char *)bu_malloc(bu->count+1, "density buffer");
-	    memcpy(buf, bu->u.int8, bu->count);
+	    buf = (char *)bu_calloc(bip->count+1, sizeof(char), "density buffer");
+	    memcpy(buf, bip->u.int8, bip->count);
+	    rt_db_free_internal(&intern);
 
 	    ret = analyze_densities_load(gedp->gd_densities, buf, &msgs, &ecnt);
+
+	    bu_free((void *)buf, "density buffer");
 
 	    if (!fault_tolerant && ecnt > 0) {
 		bu_vls_printf(gedp->ged_result_str, "Problem reading densities from .g file:\n%s\n", bu_vls_cstr(&msgs));
@@ -459,7 +462,6 @@ _ged_read_densities(struct ged *gedp, const char *filename, int fault_tolerant)
 	    }
 
 	    bu_vls_free(&msgs);
-	    bu_free((void *)buf, "density buffer");
 
 	    if (ret > 0) {
 		gedp->gd_densities_source = bu_strdup(gedp->ged_wdbp->dbip->dbi_filename);

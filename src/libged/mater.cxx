@@ -652,6 +652,11 @@ _ged_mater_set(struct ged *gedp, int argc, const char *argv[])
     struct directory *dp;
     struct analyze_densities *a = NULL;
 
+    if (argc < 2) {
+	bu_vls_printf(gedp->ged_result_str, "%s", usage);
+	return GED_ERROR;
+    }
+
     if ((dp = db_lookup(gedp->ged_wdbp->dbip, GED_DB_DENSITY_OBJECT, LOOKUP_QUIET)) != RT_DIR_NULL) {
 	if (_ged_read_densities(gedp, NULL, 0) != GED_OK) {
 	    return GED_ERROR;
@@ -659,6 +664,7 @@ _ged_mater_set(struct ged *gedp, int argc, const char *argv[])
 	/* Take control of the analyze database away from the GED struct */
 	a = gedp->gd_densities;
 	bu_free(gedp->gd_densities_source, "density path name");
+	gedp->gd_densities_source = NULL;
 	gedp->gd_densities = NULL;
     } else {
 	/* Starting from scratch */
@@ -666,7 +672,7 @@ _ged_mater_set(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* Parse argv density arguments */
-    std::regex d_reg("([0-9]+)[\\s,]+([-+]?[0-9]*\\.?[0-9eE+-]?)[\\s,](.*)");
+    std::regex d_reg("([0-9]+)[\\s,]+([-+]?[0-9]*[\\.]?[0-9eE+-]*)[\\s,]+(.*)");
     for (int i = 1; i < argc; i++) {
 	long int id;
 	fastf_t density;
