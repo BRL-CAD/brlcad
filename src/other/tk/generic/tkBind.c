@@ -405,6 +405,10 @@ typedef struct {
 #define QUADRUPLE	4
 #define MULT_CLICKS	7
 
+#ifndef TkControlMask
+#  define TkControlMask		(1<<2)
+#endif
+
 static ModInfo modArray[] = {
     {"Control",		TkControlMask,	0},
     {"Shift",		ShiftMask,	0},
