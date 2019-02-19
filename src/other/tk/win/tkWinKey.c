@@ -412,7 +412,7 @@ TkpGetKeySym(
      */
 
     if ((sym == NoSymbol) && ((state & TkControlMask) || (state & Mod2Mask))) {
-	state &= ~(ControlMask | Mod2Mask);
+	state &= ~(TkControlMask | Mod2Mask);
 	sym = KeycodeToKeysym(eventPtr->xkey.keycode, state, 0);
     }
     if ((sym == NoSymbol) && (state & ShiftMask)) {
