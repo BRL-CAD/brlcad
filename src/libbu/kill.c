@@ -40,7 +40,7 @@ extern int kill(pid_t, int);
 #ifdef HAVE_KILL
 
 HIDDEN int
-terminate(int process)
+_bu_terminate(int process)
 {
     int successful = 0;
 
@@ -55,7 +55,7 @@ terminate(int process)
 #else /* !HAVE_KILL */
 
 HIDDEN int
-terminate(int process)
+_bu_terminate(int process)
 {
     int successful = 0;
     HANDLE hProcessSnap;
@@ -77,7 +77,7 @@ terminate(int process)
     do {
 	if (pe32.th32ParentProcessID == (DWORD)process) {
 #if 1
-	    terminate((int)pe32.th32ProcessID);
+	    _bu_terminate((int)pe32.th32ProcessID);
 #else
 	    hProcess = OpenProcess(PROCESS_ALL_ACCESS, TRUE, pe32.th32ProcessID);
 	    if (hProcess != NULL) {
@@ -105,7 +105,7 @@ terminate(int process)
 int
 bu_terminate(int process)
 {
-    return terminate(process);
+    return _bu_terminate(process);
 }
 
 /*
