@@ -45,7 +45,7 @@ static const char *usage = "Usage: mater [-s] object_name shader r [g b] inherit
                            "              -d  import [-v] file.density\n"
                            "              -d  export file.density\n"
                            "              -d  validate file.density\n"
-                           "              -d  get [--id|--density|--name] [--tol <tolerance>] [key]\n"
+                           "              -d  get [--tol <tolerance>] [[--id <pattern>] [--density <val>] [--name <pattern>] ...] [key]\n"
                            "              -d  set <id,density,name> [<id,density,name>] ...\n"
                            "              -d  map density_file [map_file]\n"
                            "              -d  map --names-from-ids density_file\n";
@@ -464,12 +464,43 @@ _ged_mater_export(struct ged *gedp, int argc, const char *argv[])
     return GED_OK;
 }
 
+
+extern "C"
+int _ged_id_opt(struct bu_vls *msg, int argc, const char **argv, void *set_var)
+{
+    std::set<std::string> *id_patterns = (std::set<std::string> *)set_var;
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "bu_opt_str");
+    id_patterns->insert(std::string(argv[0]));
+    return 1;
+}
+
+extern "C"
+int _ged_density_opt(struct bu_vls *msg, int argc, const char **argv, void *set_var)
+{
+    fastf_t den;
+    std::set<fastf_t> *densities = (std::set<fastf_t> *)set_var;
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "bu_opt_str");
+
+    if (bu_opt_fastf_t(msg, argc, argv, (void *)&den) < 0) {
+	return -1;
+    }
+
+    densities->insert(den);
+    return 1;
+}
+
+extern "C"
+int _ged_name_opt(struct bu_vls *msg, int argc, const char **argv, void *set_var)
+{
+    std::set<std::string> *name_patterns = (std::set<std::string> *)set_var;
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "bu_opt_str");
+    name_patterns->insert(std::string(argv[0]));
+    return 1;
+}
+
 int
 _ged_mater_get(struct ged *gedp, int argc, const char *argv[])
 {
-    int id_search = 0;
-    int den_search = 0;
-    int name_search = 0;
     int report_tcl = 0;
     double dtol = SMALL_FASTF;
     struct bu_vls msgs = BU_VLS_INIT_ZERO;
@@ -481,12 +512,18 @@ _ged_mater_get(struct ged *gedp, int argc, const char *argv[])
     struct analyze_densities *a;
     int ret = 0;
     int ecnt = 0;
+    std::set<std::string> *id_patterns = new std::set<std::string>;
+    std::set<fastf_t> *densities = new std::set<fastf_t>;
+    std::set<std::string> *name_patterns = new std::set<std::string>;
+    std::set<std::string>::iterator i_it, n_it;
+    std::set<fastf_t>::iterator f_it;
+    long int curr_id = -1;
 
     struct bu_opt_desc d[6];
-    BU_OPT(d[0], "", "id",  "",      NULL,  &id_search,   "Search using a material id number key");
-    BU_OPT(d[1], "", "density",  "", NULL,  &den_search,  "Search using a density value");
-    BU_OPT(d[2], "", "name",  "",    NULL,  &name_search, "Search using a material name");
-    BU_OPT(d[3], "", "tol",  "<tolerance>", &bu_opt_fastf_t,  &dtol, "Search for density matches with the specified tolerance.");
+    BU_OPT(d[0], "", "id",       "<id pattern>",   &_ged_id_opt,       id_patterns,   "Search using a material id number key");
+    BU_OPT(d[1], "", "density",  "<value>",        &_ged_density_opt,  densities,     "Search using a density value");
+    BU_OPT(d[2], "", "name",     "<name pattern>", &_ged_name_opt,     name_patterns, "Search using a material name");
+    BU_OPT(d[3], "", "tol",      "<tolerance>",    &bu_opt_fastf_t,    &dtol,         "Search for density matches with the specified tolerance.");
     BU_OPT(d[4], "", "tcl",  "",     NULL,  &report_tcl, "Report output in a Tcl formatted list");
     BU_OPT_NULL(d[5]);
 
@@ -494,29 +531,35 @@ _ged_mater_get(struct ged *gedp, int argc, const char *argv[])
 
     if (argc < 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s", usage);
-	return GED_ERROR;
+	goto ged_mater_get_fail;
     }
 
     ac = bu_opt_parse(&msgs, argc, argv, d);
     if (ac < 0) {
 	bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_cstr(&msgs));
 	bu_vls_free(&msgs);
-	return GED_ERROR;
+	goto ged_mater_get_fail;
     }
 
     if ((dp = db_lookup(gedp->ged_wdbp->dbip, GED_DB_DENSITY_OBJECT, LOOKUP_QUIET)) == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "no density information found in database.  To insert density information, use the mater -d set and/or mater -d import commands.\n");
-	return GED_ERROR;
+	goto ged_mater_get_fail;
     }
 
-    if (ac != 1) {
-	bu_vls_printf(gedp->ged_result_str, "%s", usage);
-	return GED_ERROR;
+    if (ac > 0) {
+	for (int i = 0; i < ac; i++) {
+	    fastf_t dcandidate;
+	    id_patterns->insert(std::string(argv[i]));
+	    name_patterns->insert(std::string(argv[i]));
+	    if (bu_opt_fastf_t(NULL, 1, (const char **)&(argv[i]), (void *)&dcandidate) > 0) {
+		densities->insert(dcandidate);
+	    }
+	}
     }
 
     if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, NULL, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "error reading %s from database", dp->d_namep);
-	return GED_ERROR;
+	goto ged_mater_get_fail;
     }
 
     RT_CK_DB_INTERNAL(&intern);
@@ -525,7 +568,7 @@ _ged_mater_get(struct ged *gedp, int argc, const char *argv[])
     if (bip->count < 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s has no contents", GED_DB_DENSITY_OBJECT);
 	rt_db_free_internal(&intern);
-	return GED_ERROR;
+	goto ged_mater_get_fail;
     }
 
     analyze_densities_create(&a);
@@ -538,74 +581,47 @@ _ged_mater_get(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "no density information found when reading database:\n%s\nTo insert density information, use the mater -d set and/or mater -d import commands.\n", bu_vls_cstr(&msgs));
 	bu_vls_free(&msgs);
 	analyze_densities_destroy(a);
-	return GED_ERROR;
+	goto ged_mater_get_fail;
     }
     if (ecnt) {
 	bu_vls_printf(gedp->ged_result_str, "errors found when reading database:\n%s\n", bu_vls_cstr(&msgs));
 	bu_vls_free(&msgs);
 	analyze_densities_destroy(a);
-	return GED_ERROR;
+	goto ged_mater_get_fail;
     }
 
     // Have data, start looking
-
-    if (!id_search && !den_search && !name_search) {
-	// Don't know what we've been given as key, check everything
-	id_search = 1;
-	den_search = 1;
-	name_search = 1;
-    }
-
-    const char *str_key = argv[0];
-
-    if (id_search) {
-	long int li_key = -1;
-	if (bu_opt_long(NULL, 1, (const char **)&str_key, &li_key) <= 0) {
-	    id_search = 2;
-	}
-	// Numerical id is the simple one - it's either there or it isn't
-	if (id_search == 1) {
-	    fastf_t li_d = analyze_densities_density(a, li_key);
-	    if (li_d >= 0) {
-		char *li_n = analyze_densities_name(a, li_key);
-		bu_vls_printf(gedp->ged_result_str, "%ld\t%g\t%s\n", li_key, li_d, li_n);
-		bu_free(li_n, "name copy");
-	    }
-
-	    if (!den_search && !name_search) {
-		return GED_OK;
-	    }
-	}
-    }
-
-    fastf_t den_key = -1;
-    if (den_search) {
-	// See if we have a number we can use for a density.  If not, disable
-	// the density search - this key will always return empty.
-	if (bu_opt_fastf_t(NULL, 1, (const char **)&str_key, &den_key) <= 0) {
-	    den_search = 0;
-	}
-    }
-
-    // If we're into anything other than a simple id lookup, report all matches
-    // according to patterns
-    long int curr_id = -1;
     while ((curr_id = analyze_densities_next(a, curr_id)) != -1) {
-	int have_match = 0;
+	int have_id_match = -1;
+	int have_den_match = -1;
+	int have_name_match = -1;
 	fastf_t curr_d = analyze_densities_density(a, curr_id);
 	char *curr_n = analyze_densities_name(a, curr_id);
 	struct bu_vls curr_id_str = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&curr_id_str, "%ld", curr_id);
-	if (id_search && !bu_path_match(str_key, bu_vls_cstr(&curr_id_str), 0)) {
-	    have_match = 1;
+
+	for (i_it = id_patterns->begin(); i_it != id_patterns->end(); i_it++) {
+	    have_id_match = 0;
+	    if (!bu_path_match(i_it->c_str(), bu_vls_cstr(&curr_id_str), 0)) {
+		have_id_match = 1;
+		break;
+	    }
 	}
-	if (!have_match && den_search && NEAR_EQUAL(curr_d, den_key, dtol)) {
-	    have_match = 1;
+	for (f_it = densities->begin(); f_it != densities->end(); f_it++) {
+	    have_den_match = 0;
+	    if (NEAR_EQUAL(*f_it, curr_d, dtol)) {
+		have_den_match = 1;
+		break;
+	    }
 	}
-	if (!have_match && name_search && !bu_path_match(str_key, curr_n, 0)) {
-	    have_match = 1;
+	for (n_it = name_patterns->begin(); n_it != name_patterns->end(); n_it++) {
+	    have_name_match = 0;
+	    if (!bu_path_match(n_it->c_str(), curr_n, 0)) {
+		have_name_match = 1;
+		break;
+	    }
 	}
-	if (have_match) {
+	if (have_id_match && have_den_match && have_name_match) {
 	    bu_vls_printf(gedp->ged_result_str, "%ld\t%g\t%s\n", curr_id, curr_d, curr_n);
 	}
 	bu_free(curr_n, "name copy");
@@ -614,7 +630,18 @@ _ged_mater_get(struct ged *gedp, int argc, const char *argv[])
 
     bu_vls_free(&msgs);
     analyze_densities_destroy(a);
+
+    delete id_patterns;
+    delete densities;
+    delete name_patterns;
+
     return GED_OK;
+
+ged_mater_get_fail:
+    delete id_patterns;
+    delete densities;
+    delete name_patterns;
+    return GED_ERROR;
 }
 
 int
