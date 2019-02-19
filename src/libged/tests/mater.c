@@ -26,13 +26,35 @@
 #include "common.h"
 
 #include <stdio.h>
+#include <string.h>
 #include <bu.h>
 #include <ged.h>
+
+int
+check_for_data(const char *filename, const char *key)
+{
+    struct bu_mapped_file *efile = bu_open_mapped_file(filename, "exported densities data");
+    if (!strstr((char *)efile->buf, key)) {
+	bu_log("Error: 'mater -d export' file %s does not contain all expected data\n", filename);
+	bu_close_mapped_file(efile);
+	return -1;
+    }
+    bu_close_mapped_file(efile);
+    if (!bu_file_delete(filename)) {
+	bu_log("Error deleting %s\n", filename);
+	return -1;
+    }
+    return 0;
+}
+
+
 
 int
 main(int ac, char *av[]) {
     struct ged *gedp;
     const char *gname = "ged_mater_test.g";
+    const char *exp_data = "ged_mater_density_export.txt";
+    char mdata[MAXPATHLEN];
     const char *mater_cmd[10] = {"mater", "-d", NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 
     if (ac != 2) {
@@ -45,11 +67,69 @@ main(int ac, char *av[]) {
 	return 2;
     }
 
+
     gedp = ged_open("db", gname, 0);
 
-    if (ged_mater(gedp, 2, (const char **)mater_cmd) != GED_HELP) {
-	bu_log("Basic argv doesn't return GED_HELP\n");
-	goto ged_test_fail;
+    if (BU_STR_EQUAL(av[1], "dnull")) {
+	if (ged_mater(gedp, 2, (const char **)mater_cmd) != GED_HELP) {
+	    bu_log("Error: bare 'mater -d' doesn't return GED_HELP\n");
+	    goto ged_test_fail;
+	}
+    }
+
+    if (BU_STR_EQUAL(av[1], "dstd")) {
+
+	if (bu_file_exists(exp_data, NULL)) {
+	    printf("ERROR: %s already exists, aborting\n", exp_data);
+	    return 2;
+	}
+
+       	(void)bu_dir(mdata, MAXPATHLEN, BU_DIR_DATA, "data", "NIST_DENSITIES", NULL);
+	if (!bu_file_exists(mdata, NULL)) {
+	    bu_log("Error: density file %s not found.\n", mdata);
+	    goto ged_test_fail;
+	}
+
+	mater_cmd[1] = "-d";
+	mater_cmd[2] = "validate";
+	mater_cmd[3] = mdata;
+	if (ged_mater(gedp, 4, (const char **)mater_cmd) != GED_OK) {
+	    bu_log("Error: 'mater -d import' failed to validate %s\n", mdata);
+	    goto ged_test_fail;
+	}
+
+	mater_cmd[1] = "-d";
+	mater_cmd[2] = "import";
+	mater_cmd[3] = "-v";
+	mater_cmd[4] = mdata;
+	if (ged_mater(gedp, 5, (const char **)mater_cmd) != GED_OK) {
+	    bu_log("Error: 'mater -d import' failed to load %s\n", mdata);
+	    goto ged_test_fail;
+	}
+
+	mater_cmd[1] = "-d";
+	mater_cmd[2] = "source";
+	mater_cmd[3] = NULL;
+	if (ged_mater(gedp, 4, (const char **)mater_cmd) != GED_OK) {
+	    bu_log("Error: 'mater -d source' failed to run correctly\n");
+	    goto ged_test_fail;
+	} else {
+	    if (bu_strncmp(bu_vls_cstr(gedp->ged_result_str), gedp->ged_wdbp->dbip->dbi_filename, strlen(gedp->ged_wdbp->dbip->dbi_filename))) {
+		bu_log("Error: 'mater -d source' reports a location of %s instead of %s\n", bu_vls_cstr(gedp->ged_result_str), gedp->ged_wdbp->dbip->dbi_filename);
+		goto ged_test_fail;
+	    }
+	}
+
+	mater_cmd[1] = "-d";
+	mater_cmd[2] = "export";
+	mater_cmd[3] = exp_data;
+	if (ged_mater(gedp, 4, (const char **)mater_cmd) != GED_OK || !bu_file_exists(exp_data, NULL)) {
+	    bu_log("Error: 'mater -d export' failed to export to %s\n", exp_data);
+	    goto ged_test_fail;
+	}
+	if (check_for_data(exp_data, "Xylene")) {
+	    goto ged_test_fail;
+	}
     }
 
     ged_close(gedp);

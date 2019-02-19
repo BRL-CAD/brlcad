@@ -1035,6 +1035,18 @@ _ged_mater_density(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
+    if (BU_STR_EQUAL(argv[1], "get")) {
+	argv[1] = argv[0];
+	argc--; argv++;
+	return _ged_mater_get(gedp, argc, argv);
+    }
+
+    if (BU_STR_EQUAL(argv[1], "set")) {
+	argv[1] = argv[0];
+	argc--; argv++;
+	return _ged_mater_set(gedp, argc, argv);
+    }
+
     if (BU_STR_EQUAL(argv[1], "import")) {
 	argv[1] = argv[0];
 	argc--; argv++;
@@ -1045,6 +1057,20 @@ _ged_mater_density(struct ged *gedp, int argc, const char *argv[])
 	argv[1] = argv[0];
 	argc--; argv++;
 	return _ged_mater_export(gedp, argc, argv);
+    }
+
+    if (BU_STR_EQUAL(argv[1], "validate")) {
+	argv[1] = argv[0];
+	argc--; argv++;
+	return _ged_mater_validate(gedp, argc, argv);
+    }
+
+    if (BU_STR_EQUAL(argv[1], "source")) {
+	return _ged_mater_source(gedp);
+    }
+
+    if (BU_STR_EQUAL(argv[1], "clear")) {
+	return _ged_mater_clear(gedp);
     }
 
     if (BU_STR_EQUAL(argv[1], "map")) {
