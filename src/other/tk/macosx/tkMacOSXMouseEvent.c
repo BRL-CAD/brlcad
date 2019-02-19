@@ -172,7 +172,7 @@ enum {
 	state |= ShiftMask;
     }
     if (modifiers & NSControlKeyMask) {
-	state |= ControlMask;
+	state |= TkControlMask;
     }
     if (modifiers & NSCommandKeyMask) {
 	state |= Mod1Mask;		/* command key */
@@ -268,7 +268,7 @@ TkMacOSXModifierState(void)
  *
  * Results:
  *	A bitwise inclusive OR of a subset of the following: Button1Mask,
- *	ShiftMask, LockMask, ControlMask, Mod*Mask.
+ *	ShiftMask, LockMask, TkControlMask, Mod*Mask.
  *
  * Side effects:
  *	None.
@@ -327,7 +327,7 @@ ButtonModifiers2State(
 	state |= ShiftMask;
     }
     if (keyModifiers & controlKey) {
-	state |= ControlMask;
+	state |= TkControlMask;
     }
     if (keyModifiers & cmdKey) {
 	state |= Mod1Mask;		/* command key */

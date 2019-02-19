@@ -103,7 +103,7 @@ static unsigned isFunctionKey(unsigned int code);
           state |= ShiftMask;
         }
         if (modifiers & NSControlKeyMask) {
-          state |= ControlMask;
+          state |= TkControlMask;
         }
         if (modifiers & NSCommandKeyMask) {
           state |= Mod1Mask;		/* command key */

@@ -1333,7 +1333,7 @@ GetState(
 	    mask = ShiftMask;
 	    break;
 	case VK_CONTROL:
-	    mask = ControlMask;
+	    mask = TkControlMask;
 	    break;
 	case VK_MENU:
 	    mask = ALT_MASK;
@@ -1767,7 +1767,7 @@ TkWinResendEvent(
     if (eventPtr->xbutton.state & ShiftMask) {
 	wparam |= MK_SHIFT;
     }
-    if (eventPtr->xbutton.state & ControlMask) {
+    if (eventPtr->xbutton.state & TkControlMask) {
 	wparam |= MK_CONTROL;
     }
     lparam = MAKELPARAM((short) eventPtr->xbutton.x,
