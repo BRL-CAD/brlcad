@@ -403,6 +403,14 @@ _ged_mater_import(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
+    /* Mark it hidden */
+    {
+	const char *av[2];
+	av[0] = "hide";
+	av[1] = GED_DB_DENSITY_OBJECT;
+	(void)ged_hide(gedp, 2, (const char **)av);
+    }
+
     return GED_OK;
 }
 
@@ -786,6 +794,14 @@ _ged_mater_set(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
     bu_free_external(&bin_ext);
+
+    /* Mark it hidden */
+    {
+	const char *av[2];
+	av[0] = "hide";
+	av[1] = GED_DB_DENSITY_OBJECT;
+	(void)ged_hide(gedp, 2, (const char **)av);
+    }
 
     return GED_OK;
 }
