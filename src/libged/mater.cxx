@@ -502,7 +502,9 @@ int
 _ged_mater_get(struct ged *gedp, int argc, const char *argv[])
 {
     int report_tcl = 0;
-    double dtol = SMALL_FASTF;
+    /* BN_TOL_DIST doesn't really make sense here, but SMALL_FASTF is too small
+     * to be a useful density tolerance for searching purposes. */
+    double dtol = BN_TOL_DIST;
     struct bu_vls msgs = BU_VLS_INIT_ZERO;
     struct directory *dp;
     struct rt_binunif_internal *bip;
