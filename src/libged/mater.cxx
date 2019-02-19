@@ -492,7 +492,7 @@ _ged_mater_get(struct ged *gedp, int argc, const char *argv[])
 
     argc--; argv++;
 
-    if (argc < 2) {
+    if (argc < 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s", usage);
 	return GED_ERROR;
     }
@@ -529,8 +529,9 @@ _ged_mater_get(struct ged *gedp, int argc, const char *argv[])
     }
 
     analyze_densities_create(&a);
-    buf = (char *)bu_malloc(bip->count+1, "density buffer");
+    buf = (char *)bu_calloc(bip->count+1, sizeof(char), "density buffer");
     memcpy(buf, bip->u.int8, bip->count);
+    rt_db_free_internal(&intern);
     ret = analyze_densities_load(a, buf, &msgs, &ecnt);
     bu_free(buf, "free density buffer");
     if (!ret) {
