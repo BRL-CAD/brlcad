@@ -55,7 +55,7 @@ typedef struct {
 				 * NULL. */
     char *menuName;		/* Textual description of menu to use for
 				 * menubar. Malloc-ed, may be NULL. */
-    Colormap colormap;		/* If not None, identifies a colormap
+    Colormap colormap;		/* If not TkNone, identifies a colormap
 				 * allocated for this window, which must be
 				 * freed when the window is deleted. */
     Tk_3DBorder border;		/* Structure used to draw 3-D border and
@@ -74,7 +74,7 @@ typedef struct {
 				 * don't request any size. */
     int height;			/* Height to request for window. <= 0 means
 				 * don't request any size. */
-    Tk_Cursor cursor;		/* Current cursor for window, or None. */
+    Tk_Cursor cursor;		/* Current cursor for window, or TkNone. */
     char *takeFocus;		/* Value of -takefocus option; not used in the
 				 * C code, but used by keyboard traversal
 				 * scripts. Malloc'ed, but may be NULL. */
@@ -487,7 +487,7 @@ CreateFrame(
      */
 
     className = colormapName = screenName = visualName = useOption = NULL;
-    colormap = None;
+    colormap = TkNone;
     for (i = 2; i < objc; i += 2) {
 	arg = Tcl_GetStringFromObj(objv[i], &length);
 	if (length < 2) {
@@ -598,7 +598,7 @@ CreateFrame(
     }
     if (colormapName != NULL) {
 	colormap = Tk_GetColormap(interp, newWin, colormapName);
-	if (colormap == None) {
+	if (colormap == TkNone) {
 	    goto error;
 	}
 	Tk_SetWindowColormap(newWin, colormap);
@@ -637,12 +637,12 @@ CreateFrame(
     framePtr->type = type;
     framePtr->colormap = colormap;
     framePtr->relief = TK_RELIEF_FLAT;
-    framePtr->cursor = None;
+    framePtr->cursor = TkNone;
 
     if (framePtr->type == TYPE_LABELFRAME) {
 	Labelframe *labelframePtr = (Labelframe *) framePtr;
 	labelframePtr->labelAnchor = LABELANCHOR_NW;
-	labelframePtr->textGC = None;
+	labelframePtr->textGC = TkNone;
     }
 
     /*
@@ -840,11 +840,11 @@ DestroyFrame(
 
     if (framePtr->type == TYPE_LABELFRAME) {
 	Tk_FreeTextLayout(labelframePtr->textLayout);
-	if (labelframePtr->textGC != None) {
+	if (labelframePtr->textGC != TkNone) {
 	    Tk_FreeGC(framePtr->display, labelframePtr->textGC);
 	}
     }
-    if (framePtr->colormap != None) {
+    if (framePtr->colormap != TkNone) {
 	Tk_FreeColormap(framePtr->display, framePtr->colormap);
     }
     ckfree((char *) framePtr);
@@ -967,7 +967,7 @@ ConfigureFrame(
     if (framePtr->border != NULL) {
 	Tk_SetBackgroundFromBorder(framePtr->tkwin, framePtr->border);
     } else {
-	Tk_SetWindowBackgroundPixmap(framePtr->tkwin, None);
+	Tk_SetWindowBackgroundPixmap(framePtr->tkwin, TkNone);
     }
 
     if (framePtr->highlightWidth < 0) {
@@ -1096,7 +1096,7 @@ FrameWorldChanged(
 	gcValues.graphics_exposures = False;
 	gc = Tk_GetGC(tkwin, GCForeground | GCFont | GCGraphicsExposures,
 		&gcValues);
-	if (labelframePtr->textGC != None) {
+	if (labelframePtr->textGC != TkNone) {
 	    Tk_FreeGC(framePtr->display, labelframePtr->textGC);
 	}
 	labelframePtr->textGC = gc;
@@ -1529,7 +1529,7 @@ DisplayFrame(
 		    labelframePtr->labelTextY + LABELSPACING, 0, -1);
 
 	    if (clipRegion != NULL) {
-		XSetClipMask(framePtr->display, labelframePtr->textGC, None);
+		XSetClipMask(framePtr->display, labelframePtr->textGC, TkNone);
 		TkDestroyRegion(clipRegion);
 	    }
 	} else {

@@ -606,7 +606,7 @@ TkpConfigureMenuEntry(
     	Tk_SizeOfImage(mePtr->image, &imageWidth, &imageHeight);
 	image = TkMacOSXGetNSImageWithTkImage(mePtr->menuPtr->display,
 		mePtr->image, imageWidth, imageHeight);
-    } else if (mePtr->bitmapPtr != None) {
+    } else if (mePtr->bitmapPtr != TkNone) {
 	Pixmap bitmap = Tk_GetBitmapFromObj(mePtr->menuPtr->tkwin,
 		mePtr->bitmapPtr);
 
@@ -1328,9 +1328,9 @@ MenuSelectEvent(
     event.display = menuPtr->display;
     event.event = Tk_WindowId(menuPtr->tkwin);
     event.root = XRootWindow(menuPtr->display, 0);
-    event.subwindow = None;
+    event.subwindow = TkNone;
     event.time = TkpGetMS();
-    XQueryPointer(NULL, None, NULL, NULL, &event.x_root, &event.y_root, NULL,
+    XQueryPointer(NULL, TkNone, NULL, NULL, &event.x_root, &event.y_root, NULL,
 	    NULL, &event.state);
     event.same_screen = true;
     event.name = Tk_GetUid("MenuSelect");
@@ -1636,7 +1636,7 @@ TkpDrawMenuEntry(
  *    Handle preprocessing of menubar if it exists.
  *
  * Results:
- *    None.
+ *    TkNone.
  *
  * Side effects:
  *    All post commands for the current menubar get executed.

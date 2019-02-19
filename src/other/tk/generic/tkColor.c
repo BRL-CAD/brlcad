@@ -242,7 +242,7 @@ Tk_GetColor(
      */
 
     tkColPtr->magic = COLOR_MAGIC;
-    tkColPtr->gc = None;
+    tkColPtr->gc = TkNone;
     tkColPtr->screen = Tk_Screen(tkwin);
     tkColPtr->colormap = Tk_Colormap(tkwin);
     tkColPtr->visual = Tk_Visual(tkwin);
@@ -323,7 +323,7 @@ Tk_GetColorByValue(
 
     tkColPtr = TkpGetColorByValue(tkwin, colorPtr);
     tkColPtr->magic = COLOR_MAGIC;
-    tkColPtr->gc = None;
+    tkColPtr->gc = TkNone;
     tkColPtr->screen = Tk_Screen(tkwin);
     tkColPtr->colormap = valueKey.colormap;
     tkColPtr->visual = Tk_Visual(tkwin);
@@ -414,7 +414,7 @@ Tk_GCForColor(
 	Tcl_Panic("Tk_GCForColor called with bogus color");
     }
 
-    if (tkColPtr->gc == None) {
+    if (tkColPtr->gc == TkNone) {
 	gcValues.foreground = tkColPtr->color.pixel;
 	tkColPtr->gc = XCreateGC(DisplayOfScreen(tkColPtr->screen), drawable,
 		GCForeground, &gcValues);
@@ -469,9 +469,9 @@ Tk_FreeColor(
      * longer any objects referencing it.
      */
 
-    if (tkColPtr->gc != None) {
+    if (tkColPtr->gc != TkNone) {
 	XFreeGC(DisplayOfScreen(screen), tkColPtr->gc);
-	tkColPtr->gc = None;
+	tkColPtr->gc = TkNone;
     }
     TkpFreeColor(tkColPtr);
 

@@ -640,7 +640,7 @@ PaletteSize(
  * Results:
  *	pointer to the image bits
  *
- * Side effects: None
+ * Side effects: TkNone
  *
  *
  *----------------------------------------------------------------------
@@ -1035,7 +1035,7 @@ WinSetIcon(
 		"\" isn't a top-level window", NULL);
 	return TCL_ERROR;
     }
-    if (Tk_WindowId(tkw) == None) {
+    if (Tk_WindowId(tkw) == TkNone) {
 	Tk_MakeWindowExist(tkw);
     }
 
@@ -1198,7 +1198,7 @@ TkWinGetIcon(
 	}
     }
 
-    if (Tk_WindowId(tkwin) == None) {
+    if (Tk_WindowId(tkwin) == TkNone) {
 	Tk_MakeWindowExist(tkwin);
     }
 
@@ -1977,11 +1977,11 @@ TkWmNewWindow(
     wmPtr->hints.flags = InputHint | StateHint;
     wmPtr->hints.input = True;
     wmPtr->hints.initial_state = NormalState;
-    wmPtr->hints.icon_pixmap = None;
-    wmPtr->hints.icon_window = None;
+    wmPtr->hints.icon_pixmap = TkNone;
+    wmPtr->hints.icon_window = TkNone;
     wmPtr->hints.icon_x = wmPtr->hints.icon_y = 0;
-    wmPtr->hints.icon_mask = None;
-    wmPtr->hints.window_group = None;
+    wmPtr->hints.icon_mask = TkNone;
+    wmPtr->hints.window_group = TkNone;
 
     /*
      * Default the maximum dimensions to the size of the display.
@@ -2062,7 +2062,7 @@ UpdateWrapper(
     ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
-    if (winPtr->window == None) {
+    if (winPtr->window == TkNone) {
 	/*
 	 * Ensure existence of the window to update the wrapper for.
 	 */
@@ -2683,7 +2683,7 @@ TkWmDeadWindow(
 		    VisibilityChangeMask|StructureNotifyMask,
 		    WmWaitVisibilityOrMapProc, (ClientData) wmPtr2->winPtr);
 	    wmPtr2->masterPtr = NULL;
-	    if ((wmPtr2->wrapper != None)
+	    if ((wmPtr2->wrapper != TkNone)
 		    && !(wmPtr2->flags & (WM_NEVER_MAPPED))) {
 		UpdateWrapper(wmPtr2->winPtr);
 	    }
@@ -3474,7 +3474,7 @@ WmColormapwindowsCmd(
 	if (winPtr2 == winPtr) {
 	    gotToplevel = 1;
 	}
-	if (winPtr2->window == None) {
+	if (winPtr2->window == TkNone) {
 	    Tk_MakeWindowExist((Tk_Window) winPtr2);
 	}
 	cmapList[i] = winPtr2;
@@ -3750,7 +3750,7 @@ WmFrameCmd(
 	Tcl_WrongNumArgs(interp, 2, objv, "window");
 	return TCL_ERROR;
     }
-    if (Tk_WindowId((Tk_Window) winPtr) == None) {
+    if (Tk_WindowId((Tk_Window) winPtr) == TkNone) {
 	Tk_MakeWindowExist((Tk_Window) winPtr);
     }
     hwnd = wmPtr->wrapper;
@@ -4044,9 +4044,9 @@ WmIconbitmapCmd(
 
     string = Tcl_GetString(objv[objc-1]);
     if (*string == '\0') {
-	if (wmPtr->hints.icon_pixmap != None) {
+	if (wmPtr->hints.icon_pixmap != TkNone) {
 	    Tk_FreeBitmap(winPtr->display, wmPtr->hints.icon_pixmap);
-	    wmPtr->hints.icon_pixmap = None;
+	    wmPtr->hints.icon_pixmap = TkNone;
 	}
 	wmPtr->hints.flags &= ~IconPixmapHint;
 	if (WinSetIcon(interp, NULL, (Tk_Window) useWinPtr) != TCL_OK) {
@@ -4098,7 +4098,7 @@ WmIconbitmapCmd(
 	    Pixmap pixmap;
 	    Tcl_ResetResult(interp);
 	    pixmap = Tk_GetBitmap(interp, (Tk_Window) winPtr, string);
-	    if (pixmap == None) {
+	    if (pixmap == TkNone) {
 		return TCL_ERROR;
 	    }
 	    wmPtr->hints.icon_pixmap = pixmap;
@@ -4217,13 +4217,13 @@ WmIconmaskCmd(
     }
     argv3 = Tcl_GetString(objv[3]);
     if (*argv3 == '\0') {
-	if (wmPtr->hints.icon_mask != None) {
+	if (wmPtr->hints.icon_mask != TkNone) {
 	    Tk_FreeBitmap(winPtr->display, wmPtr->hints.icon_mask);
 	}
 	wmPtr->hints.flags &= ~IconMaskHint;
     } else {
 	pixmap = Tk_GetBitmap(interp, tkwin, argv3);
-	if (pixmap == None) {
+	if (pixmap == TkNone) {
 	    return TCL_ERROR;
 	}
 	wmPtr->hints.icon_mask = pixmap;
@@ -6388,7 +6388,7 @@ Tk_GetRootCoords(
      * If the window is mapped, let Windows figure out the translation.
      */
 
-    if (winPtr->window != None) {
+    if (winPtr->window != TkNone) {
 	HWND hwnd = Tk_GetHWND(winPtr->window);
 	POINT point;
 
@@ -6816,7 +6816,7 @@ TkWmRestackToplevel(
      * (mapping it may give it a reparent window).
      */
 
-    if (winPtr->window == None) {
+    if (winPtr->window == TkNone) {
 	Tk_MakeWindowExist((Tk_Window) winPtr);
     }
     if (winPtr->wmInfoPtr->flags & WM_NEVER_MAPPED) {
@@ -6826,7 +6826,7 @@ TkWmRestackToplevel(
 	? winPtr->wmInfoPtr->wrapper : Tk_GetHWND(winPtr->window);
 
     if (otherPtr != NULL) {
-	if (otherPtr->window == None) {
+	if (otherPtr->window == TkNone) {
 	    Tk_MakeWindowExist((Tk_Window) otherPtr);
 	}
 	if (otherPtr->wmInfoPtr->flags & WM_NEVER_MAPPED) {
@@ -6877,7 +6877,7 @@ TkWmAddToColormapWindows(
     TkWindow **oldPtr, **newPtr;
     int count, i;
 
-    if (winPtr->window == None) {
+    if (winPtr->window == TkNone) {
 	return;
     }
 
@@ -7312,7 +7312,7 @@ GenerateConfigureNotify(
     event.xconfigure.y = winPtr->changes.y;
     event.xconfigure.width = winPtr->changes.width;
     event.xconfigure.height = winPtr->changes.height;
-    event.xconfigure.above = None;
+    event.xconfigure.above = TkNone;
     Tk_QueueWindowEvent(&event, TCL_QUEUE_TAIL);
 }
 
@@ -8586,7 +8586,7 @@ TkpWinToplevelDetachWindow(
 	SendMessage(wmPtr->wrapper, TK_DETACHWINDOW, 0, 0);
 	winPtr->flags &= ~TK_EMBEDDED;
 	winPtr->privatePtr = NULL;
-	wmPtr->wrapper = None;
+	wmPtr->wrapper = TkNone;
 	if (state >= 0 && state <= 3) {
 	    wmPtr->hints.initial_state = state;
 	}

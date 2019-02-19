@@ -156,7 +156,7 @@ typedef struct TkScale {
      */
 
     int fontHeight;		/* Height of scale font. */
-    Tk_Cursor cursor;		/* Current cursor for window, or None. */
+    Tk_Cursor cursor;		/* Current cursor for window, or TkNone. */
     Tcl_Obj *takeFocusPtr;	/* Value of -takefocus option; not used in the
 				 * C code, but used by keyboard traversal
 				 * scripts. May be NULL. */

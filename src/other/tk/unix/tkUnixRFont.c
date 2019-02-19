@@ -40,7 +40,7 @@ typedef struct {
  */
 
 typedef struct ThreadSpecificData {
-    Region clipRegion;		/* The clipping region, or None. */
+    Region clipRegion;		/* The clipping region, or TkNone. */
 } ThreadSpecificData;
 static Tcl_ThreadDataKey dataKey;
 
@@ -750,7 +750,7 @@ Tk_DrawChars(
 	fontPtr->color.color.alpha = 0xffff;
 	fontPtr->color.pixel = values.foreground;
     }
-    if (tsdPtr->clipRegion != None) {
+    if (tsdPtr->clipRegion != TkNone) {
 	XftDrawSetClip(fontPtr->ftDraw, tsdPtr->clipRegion);
     }
     nspec = 0;
@@ -790,8 +790,8 @@ Tk_DrawChars(
     if (nspec) {
 	XftDrawGlyphFontSpec(fontPtr->ftDraw, &fontPtr->color, specs, nspec);
     }
-    if (tsdPtr->clipRegion != None) {
-	XftDrawSetClip(fontPtr->ftDraw, None);
+    if (tsdPtr->clipRegion != TkNone) {
+	XftDrawSetClip(fontPtr->ftDraw, TkNone);
     }
 
   doUnderlineStrikeout:

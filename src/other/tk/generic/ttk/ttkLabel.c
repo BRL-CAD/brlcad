@@ -185,8 +185,8 @@ static void TextDraw(TextElement *text, Tk_Window tkwin, Drawable d, Ttk_Box b)
 #ifdef HAVE_XFT
 	TkUnixSetXftClipRegion(None);
 #endif
-	XSetClipMask(Tk_Display(tkwin), gc1, None);
-	XSetClipMask(Tk_Display(tkwin), gc2, None);
+	XSetClipMask(Tk_Display(tkwin), gc1, TkNone);
+	XSetClipMask(Tk_Display(tkwin), gc2, TkNone);
 	TkDestroyRegion(clipRegion);
     }
     Tk_FreeGC(Tk_Display(tkwin), gc1);
@@ -305,7 +305,7 @@ static void StippleOver(
     Pixmap stipple = Tk_AllocBitmapFromObj(NULL, tkwin, image->stippleObj);
     XColor *color = Tk_GetColorFromObj(tkwin, image->backgroundObj);
 
-    if (stipple != None) {
+    if (stipple != TkNone) {
 	unsigned long mask = GCFillStyle | GCStipple | GCForeground;
 	XGCValues gcvalues;
 	GC gc;

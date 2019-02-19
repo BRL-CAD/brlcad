@@ -255,7 +255,7 @@ typedef struct {
  * Data structure for setting window attributes.
  */
 typedef struct {
-    Pixmap background_pixmap;	/* background or None or ParentRelative */
+    Pixmap background_pixmap;	/* background or TkNone or ParentRelative */
     unsigned long background_pixel;	/* background pixel */
     Pixmap border_pixmap;	/* border of the window */
     unsigned long border_pixel;	/* border pixel value */
@@ -269,7 +269,7 @@ typedef struct {
     long do_not_propagate_mask;	/* set of events that should not propagate */
     Bool override_redirect;	/* boolean value for override-redirect */
     Colormap colormap;		/* color map to be associated with window */
-    Cursor cursor;		/* cursor to be displayed (or None) */
+    Cursor cursor;		/* cursor to be displayed (or TkNone) */
 } XSetWindowAttributes;
 
 typedef struct {
@@ -855,7 +855,7 @@ typedef struct {
 	Window requestor;
 	Atom selection;
 	Atom target;
-	Atom property;		/* ATOM or None */
+	Atom property;		/* ATOM or TkNone */
 	Time time;
 } XSelectionEvent;
 
@@ -865,7 +865,7 @@ typedef struct {
 	Bool send_event;	/* true if this came from a SendEvent request */
 	Display *display;	/* Display the event was read from */
 	Window window;
-	Colormap colormap;	/* COLORMAP or None */
+	Colormap colormap;	/* COLORMAP or TkNone */
 #if defined(__cplusplus) || defined(c_plusplus)
 	Bool c_new;		/* C++ */
 #else
@@ -1009,7 +1009,7 @@ typedef struct {
     char *chars;		/* pointer to string */
     int nchars;			/* number of characters */
     int delta;			/* delta between strings */
-    Font font;			/* font to print it in, None don't change */
+    Font font;			/* font to print it in, TkNone don't change */
 } XTextItem;
 
 typedef struct {		/* normal 16 bit characters are two bytes */
@@ -1021,7 +1021,7 @@ typedef struct {
     XChar2b *chars;		/* two byte characters */
     int nchars;			/* number of characters */
     int delta;			/* delta between strings */
-    Font font;			/* font to print it in, None don't change */
+    Font font;			/* font to print it in, TkNone don't change */
 } XTextItem16;
 
 

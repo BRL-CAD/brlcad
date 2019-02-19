@@ -195,8 +195,8 @@
  */
 
 #define TkpDefineNativeBitmaps()
-#define TkpCreateNativeBitmap(display, source) None
-#define TkpGetNativeAppBitmap(display, name, w, h) None
+#define TkpCreateNativeBitmap(display, source) TkNone
+#define TkpGetNativeAppBitmap(display, name, w, h) TkNone
 
 /*
  * This macro stores a representation of the window handle in a string.

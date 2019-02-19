@@ -209,7 +209,7 @@ TkGetCursorByName(
 				 * details on legal syntax. */
 {
     TkUnixCursor *cursorPtr = NULL;
-    Cursor cursor = None;
+    Cursor cursor = TkNone;
     int argc;
     CONST char **argv = NULL;
     Display *display = Tk_Display(tkwin);
@@ -290,9 +290,9 @@ TkGetCursorByName(
 	    }
 	}
 	dispPtr = ((TkWindow *) tkwin)->dispPtr;
-	if (dispPtr->cursorFont == None) {
+	if (dispPtr->cursorFont == TkNone) {
 	    dispPtr->cursorFont = XLoadFont(display, CURSORFONT);
-	    if (dispPtr->cursorFont == None) {
+	    if (dispPtr->cursorFont == TkNone) {
 		Tcl_SetResult(interp, "couldn't load cursor font", TCL_STATIC);
 		goto cleanup;
 	    }
@@ -331,7 +331,7 @@ TkGetCursorByName(
 		tkCursorPtr);
     }
 
-    if (cursor != None) {
+    if (cursor != TkNone) {
 	cursorPtr = (TkUnixCursor *) ckalloc(sizeof(TkUnixCursor));
 	cursorPtr->info.cursor = (Tk_Cursor) cursor;
 	cursorPtr->display = display;
@@ -362,7 +362,7 @@ TkGetCursorByName(
  *	already.
  *
  * Results:
- *	Returns a new cursor, or None on error.
+ *	Returns a new cursor, or TkNone on error.
  *
  * Side effects:
  *	Allocates a new X cursor.
@@ -380,7 +380,7 @@ CreateCursorFromTableOrFile(
 				/* Non-NULL when cursor is defined in Tk
 				 * table. */
 {
-    Cursor cursor = None;
+    Cursor cursor = TkNone;
 
     int width, height, maskWidth, maskHeight;
     int xHot = -1, yHot = -1;
@@ -393,8 +393,8 @@ CreateCursorFromTableOrFile(
     Display *display = Tk_Display(tkwin);
     Drawable drawable = RootWindowOfScreen(Tk_Screen(tkwin));
 
-    Pixmap source = None;
-    Pixmap mask = None;
+    Pixmap source = TkNone;
+    Pixmap mask = TkNone;
 
     /*
      * A cursor defined in a file accepts either 2 or 4 arguments.
@@ -540,10 +540,10 @@ CreateCursorFromTableOrFile(
 	    &fg, &bg, (unsigned) xHot, (unsigned) yHot);
 
   cleanup:
-    if (source != None) {
+    if (source != TkNone) {
 	Tk_FreePixmap(display, source);
     }
-    if (mask != None) {
+    if (mask != TkNone) {
 	Tk_FreePixmap(display, mask);
     }
     return cursor;
@@ -591,7 +591,7 @@ TkCreateCursorFromData(
     Tk_FreePixmap(display, sourcePixmap);
     Tk_FreePixmap(display, maskPixmap);
 
-    if (cursor != None) {
+    if (cursor != TkNone) {
 	cursorPtr = (TkUnixCursor *) ckalloc(sizeof(TkUnixCursor));
 	cursorPtr->info.cursor = (Tk_Cursor) cursor;
 	cursorPtr->display = display;

@@ -47,9 +47,9 @@ typedef struct TextItem {
     XColor *disabledColor;	/* Color for text. */
     Tk_Font tkfont;		/* Font for drawing text. */
     Tk_Justify justify;		/* Justification mode for text. */
-    Pixmap stipple;		/* Stipple bitmap for text, or None. */
-    Pixmap activeStipple;	/* Stipple bitmap for text, or None. */
-    Pixmap disabledStipple;	/* Stipple bitmap for text, or None. */
+    Pixmap stipple;		/* Stipple bitmap for text, or TkNone. */
+    Pixmap activeStipple;	/* Stipple bitmap for text, or TkNone. */
+    Pixmap disabledStipple;	/* Stipple bitmap for text, or TkNone. */
     char *text;			/* Text for item (malloc-ed). */
     int width;			/* Width of lines for word-wrap, pixels. Zero
 				 * means no word-wrap. */
@@ -72,7 +72,7 @@ typedef struct TextItem {
 				 * of line. */
     GC gc;			/* Graphics context for drawing text. */
     GC selTextGC;		/* Graphics context for selected text. */
-    GC cursorOffGC;		/* If not None, this gives a graphics context
+    GC cursorOffGC;		/* If not TkNone, this gives a graphics context
 				 * to use to draw the insertion cursor when
 				 * it's off. Used if the selection and
 				 * insertion cursor colors are the same. */
@@ -253,9 +253,9 @@ CreateText(
     textPtr->disabledColor = NULL;
     textPtr->tkfont	= NULL;
     textPtr->justify	= TK_JUSTIFY_LEFT;
-    textPtr->stipple	= None;
-    textPtr->activeStipple = None;
-    textPtr->disabledStipple = None;
+    textPtr->stipple	= TkNone;
+    textPtr->activeStipple = TkNone;
+    textPtr->disabledStipple = TkNone;
     textPtr->text	= NULL;
     textPtr->width	= 0;
     textPtr->underline	= -1;
@@ -265,9 +265,9 @@ CreateText(
     textPtr->textLayout = NULL;
     textPtr->leftEdge	= 0;
     textPtr->rightEdge	= 0;
-    textPtr->gc		= None;
-    textPtr->selTextGC	= None;
-    textPtr->cursorOffGC = None;
+    textPtr->gc		= TkNone;
+    textPtr->selTextGC	= TkNone;
+    textPtr->cursorOffGC = TkNone;
 
     /*
      * Process the arguments to fill in the item record. Only 1 (list) or 2 (x
@@ -414,7 +414,7 @@ ConfigureText(
 
     state = itemPtr->state;
 
-    if (textPtr->activeColor != NULL || textPtr->activeStipple != None) {
+    if (textPtr->activeColor != NULL || textPtr->activeStipple != TkNone) {
 	itemPtr->redraw_flags |= TK_ITEM_STATE_DEPENDANT;
     } else {
 	itemPtr->redraw_flags &= ~TK_ITEM_STATE_DEPENDANT;
@@ -442,14 +442,14 @@ ConfigureText(
 	}
     }
 
-    newGC = newSelGC = None;
+    newGC = newSelGC = TkNone;
     if (textPtr->tkfont != NULL) {
 	gcValues.font = Tk_FontId(textPtr->tkfont);
 	mask = GCFont;
 	if (color != NULL) {
 	    gcValues.foreground = color->pixel;
 	    mask |= GCForeground;
-	    if (stipple != None) {
+	    if (stipple != TkNone) {
 		gcValues.stipple = stipple;
 		gcValues.fill_style = FillStippled;
 		mask |= GCStipple|GCFillStyle;
@@ -457,7 +457,7 @@ ConfigureText(
 	    newGC = Tk_GetGC(tkwin, mask, &gcValues);
 	}
 	mask &= ~(GCTile|GCFillStyle|GCStipple);
-	if (stipple != None) {
+	if (stipple != TkNone) {
 	    gcValues.stipple = stipple;
 	    gcValues.fill_style = FillStippled;
 	    mask |= GCStipple|GCFillStyle;
@@ -467,11 +467,11 @@ ConfigureText(
 	}
 	newSelGC = Tk_GetGC(tkwin, mask|GCForeground, &gcValues);
     }
-    if (textPtr->gc != None) {
+    if (textPtr->gc != TkNone) {
 	Tk_FreeGC(Tk_Display(tkwin), textPtr->gc);
     }
     textPtr->gc = newGC;
-    if (textPtr->selTextGC != None) {
+    if (textPtr->selTextGC != TkNone) {
 	Tk_FreeGC(Tk_Display(tkwin), textPtr->selTextGC);
     }
     textPtr->selTextGC = newSelGC;
@@ -486,9 +486,9 @@ ConfigureText(
 	}
 	newGC = Tk_GetGC(tkwin, GCForeground, &gcValues);
     } else {
-	newGC = None;
+	newGC = TkNone;
     }
-    if (textPtr->cursorOffGC != None) {
+    if (textPtr->cursorOffGC != TkNone) {
 	Tk_FreeGC(Tk_Display(tkwin), textPtr->cursorOffGC);
     }
     textPtr->cursorOffGC = newGC;
@@ -558,13 +558,13 @@ DeleteText(
 	Tk_FreeColor(textPtr->disabledColor);
     }
     Tk_FreeFont(textPtr->tkfont);
-    if (textPtr->stipple != None) {
+    if (textPtr->stipple != TkNone) {
 	Tk_FreeBitmap(display, textPtr->stipple);
     }
-    if (textPtr->activeStipple != None) {
+    if (textPtr->activeStipple != TkNone) {
 	Tk_FreeBitmap(display, textPtr->activeStipple);
     }
-    if (textPtr->disabledStipple != None) {
+    if (textPtr->disabledStipple != TkNone) {
 	Tk_FreeBitmap(display, textPtr->disabledStipple);
     }
     if (textPtr->text != NULL) {
@@ -572,13 +572,13 @@ DeleteText(
     }
 
     Tk_FreeTextLayout(textPtr->textLayout);
-    if (textPtr->gc != None) {
+    if (textPtr->gc != TkNone) {
 	Tk_FreeGC(display, textPtr->gc);
     }
-    if (textPtr->selTextGC != None) {
+    if (textPtr->selTextGC != TkNone) {
 	Tk_FreeGC(display, textPtr->selTextGC);
     }
-    if (textPtr->cursorOffGC != None) {
+    if (textPtr->cursorOffGC != TkNone) {
 	Tk_FreeGC(display, textPtr->cursorOffGC);
     }
 }
@@ -740,7 +740,7 @@ DisplayCanvText(
 	}
     }
 
-    if (textPtr->gc == None) {
+    if (textPtr->gc == TkNone) {
 	return;
     }
 
@@ -750,7 +750,7 @@ DisplayCanvText(
      * read-only.
      */
 
-    if (stipple != None) {
+    if (stipple != TkNone) {
 	Tk_CanvasSetOffset(canvas, textPtr->gc, &textPtr->tsoffset);
     }
 
@@ -830,7 +830,7 @@ DisplayCanvText(
 			drawableX, drawableY,
 			textInfoPtr->insertWidth, height,
 			textInfoPtr->insertBorderWidth, TK_RELIEF_RAISED);
-	    } else if (textPtr->cursorOffGC != None) {
+	    } else if (textPtr->cursorOffGC != TkNone) {
 		/*
 		 * Redraw the background over the area of the cursor, even
 		 * though the cursor is turned off. This guarantees that the
@@ -874,7 +874,7 @@ DisplayCanvText(
     Tk_UnderlineTextLayout(display, drawable, textPtr->gc, textPtr->textLayout,
 	    drawableX, drawableY, textPtr->underline);
 
-    if (stipple != None) {
+    if (stipple != TkNone) {
 	XSetTSOrigin(display, textPtr->gc, 0, 0);
     }
 }
@@ -1468,7 +1468,7 @@ TextToPostscript(
     if (Tk_CanvasPsColor(interp, canvas, color) != TCL_OK) {
 	return TCL_ERROR;
     }
-    if (stipple != None) {
+    if (stipple != TkNone) {
 	Tcl_AppendResult(interp, "/StippleText {\n    ", NULL);
 	Tk_CanvasPsStipple(interp, canvas, stipple);
 	Tcl_AppendResult(interp, "} bind def\n", NULL);
@@ -1506,7 +1506,7 @@ TextToPostscript(
     Tcl_PrintDouble(NULL, y / 2.0, buffer);
     Tcl_AppendResult(interp, " ", buffer, NULL);
     sprintf(buffer, " %s %s DrawText\n",
-	    justify, ((stipple == None) ? "false" : "true"));
+	    justify, ((stipple == TkNone) ? "false" : "true"));
     Tcl_AppendResult(interp, buffer, NULL);
 
     return TCL_OK;

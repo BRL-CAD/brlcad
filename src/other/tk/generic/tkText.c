@@ -568,7 +568,7 @@ CreateWidget(
 
     textPtr->state = TK_TEXT_STATE_NORMAL;
     textPtr->relief = TK_RELIEF_FLAT;
-    textPtr->cursor = None;
+    textPtr->cursor = TkNone;
     textPtr->charWidth = 1;
     textPtr->charHeight = 10;
     textPtr->wrapMode = TEXT_WRAPMODE_CHAR;
@@ -2187,7 +2187,7 @@ ConfigureText(
     textPtr->selTagPtr->affectsDisplay = 0;
     textPtr->selTagPtr->affectsDisplayGeometry = 0;
     if ((textPtr->selTagPtr->elideString != NULL)
-	    || (textPtr->selTagPtr->tkfont != None)
+	    || (textPtr->selTagPtr->tkfont != TkNone)
 	    || (textPtr->selTagPtr->justifyString != NULL)
 	    || (textPtr->selTagPtr->lMargin1String != NULL)
 	    || (textPtr->selTagPtr->lMargin2String != NULL)
@@ -2203,9 +2203,9 @@ ConfigureText(
     }
     if ((textPtr->selTagPtr->border != NULL)
 	    || (textPtr->selTagPtr->reliefString != NULL)
-	    || (textPtr->selTagPtr->bgStipple != None)
+	    || (textPtr->selTagPtr->bgStipple != TkNone)
 	    || (textPtr->selTagPtr->fgColor != NULL)
-	    || (textPtr->selTagPtr->fgStipple != None)
+	    || (textPtr->selTagPtr->fgStipple != TkNone)
 	    || (textPtr->selTagPtr->overstrikeString != NULL)
 	    || (textPtr->selTagPtr->underlineString != NULL)) {
 	textPtr->selTagPtr->affectsDisplay = 1;

@@ -377,7 +377,7 @@ XQueryPointer(
     unsigned int *mask_return)
 {
     int getGlobal = (root_x_return && root_y_return);
-    int getLocal = (win_x_return && win_y_return && w != None);
+    int getLocal = (win_x_return && win_y_return && w != TkNone);
 
     if (getGlobal || getLocal) {
 	NSPoint global = [NSEvent mouseLocation];

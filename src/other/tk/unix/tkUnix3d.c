@@ -47,7 +47,7 @@ TkBorder *
 TkpGetBorder(void)
 {
     UnixBorder *borderPtr = (UnixBorder *) ckalloc(sizeof(UnixBorder));
-    borderPtr->solidGC = None;
+    borderPtr->solidGC = TkNone;
     return (TkBorder *) borderPtr;
 }
 
@@ -75,7 +75,7 @@ TkpFreeBorder(
     UnixBorder *unixBorderPtr = (UnixBorder *) borderPtr;
     Display *display = DisplayOfScreen(borderPtr->screen);
 
-    if (unixBorderPtr->solidGC != None) {
+    if (unixBorderPtr->solidGC != TkNone) {
 	Tk_FreeGC(display, unixBorderPtr->solidGC);
     }
 }
@@ -123,7 +123,7 @@ Tk_3DVerticalBevel(
     GC left, right;
     Display *display = Tk_Display(tkwin);
 
-    if ((borderPtr->lightGC == None) && (relief != TK_RELIEF_FLAT)) {
+    if ((borderPtr->lightGC == TkNone) && (relief != TK_RELIEF_FLAT)) {
 	TkpGetShadows(borderPtr, tkwin);
     }
 
@@ -158,7 +158,7 @@ Tk_3DVerticalBevel(
 		(unsigned) width, (unsigned) height);
     } else if (relief == TK_RELIEF_SOLID) {
 	UnixBorder *unixBorderPtr = (UnixBorder *) borderPtr;
-	if (unixBorderPtr->solidGC == None) {
+	if (unixBorderPtr->solidGC == TkNone) {
 	    XGCValues gcValues;
 
 	    gcValues.foreground = BlackPixelOfScreen(borderPtr->screen);
@@ -215,11 +215,11 @@ Tk_3DHorizontalBevel(
     Display *display = Tk_Display(tkwin);
     int bottom, halfway, x1, x2, x1Delta, x2Delta;
     UnixBorder *unixBorderPtr = (UnixBorder *) borderPtr;
-    GC topGC = None, bottomGC = None;
+    GC topGC = TkNone, bottomGC = TkNone;
 				/* Initializations needed only to prevent
 				 * compiler warnings. */
 
-    if ((borderPtr->lightGC == None) && (relief != TK_RELIEF_FLAT) &&
+    if ((borderPtr->lightGC == TkNone) && (relief != TK_RELIEF_FLAT) &&
 	    (relief != TK_RELIEF_SOLID)) {
 	TkpGetShadows(borderPtr, tkwin);
     }
@@ -245,7 +245,7 @@ Tk_3DHorizontalBevel(
 	bottomGC = borderPtr->darkGC;
 	break;
     case TK_RELIEF_SOLID:
-	if (unixBorderPtr->solidGC == None) {
+	if (unixBorderPtr->solidGC == TkNone) {
 	    XGCValues gcValues;
 
 	    gcValues.foreground = BlackPixelOfScreen(borderPtr->screen);
@@ -343,7 +343,7 @@ TkpGetShadows(
     int r, g, b;
     XGCValues gcValues;
 
-    if (borderPtr->lightGC != None) {
+    if (borderPtr->lightGC != TkNone) {
 	return;
     }
     stressed = TkpCmapStressed(tkwin, borderPtr->colormap);
@@ -441,10 +441,10 @@ TkpGetShadows(
 	return;
     }
 
-    if (borderPtr->shadow == None) {
+    if (borderPtr->shadow == TkNone) {
 	borderPtr->shadow = Tk_GetBitmap((Tcl_Interp *) NULL, tkwin,
 		Tk_GetUid("gray50"));
-	if (borderPtr->shadow == None) {
+	if (borderPtr->shadow == TkNone) {
 	    Tcl_Panic("TkpGetShadows couldn't allocate bitmap for border");
 	}
     }

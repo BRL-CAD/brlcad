@@ -468,8 +468,8 @@ Tk_Grab(
 	for (numTries = 0; numTries < 10; numTries++) {
 	    grabResult = XGrabPointer(dispPtr->display, winPtr->window,
 		    True, ButtonPressMask|ButtonReleaseMask|ButtonMotionMask
-		    |PointerMotionMask, GrabModeAsync, GrabModeAsync, None,
-		    None, CurrentTime);
+		    |PointerMotionMask, GrabModeAsync, GrabModeAsync, TkNone,
+		    TkNone, CurrentTime);
 	    if (grabResult != AlreadyGrabbed) {
 		break;
 	    }
@@ -854,7 +854,7 @@ TkPointerEvent(
 		    if (XGrabPointer(dispPtr->display,
 			    dispPtr->grabWinPtr->window, True,
 			    ButtonPressMask|ButtonReleaseMask|ButtonMotionMask,
-			    GrabModeAsync, GrabModeAsync, None, None,
+			    GrabModeAsync, GrabModeAsync, TkNone, TkNone,
 			    CurrentTime) == 0) {
 			EatGrabEvents(dispPtr, serial);
 			if (XGrabKeyboard(dispPtr->display, winPtr->window,
@@ -921,7 +921,7 @@ TkChangeEventWindow(
 	Tk_GetRootCoords((Tk_Window) winPtr, &x, &y);
 	eventPtr->xmotion.x = eventPtr->xmotion.x_root - x;
 	eventPtr->xmotion.y = eventPtr->xmotion.y_root - y;
-	eventPtr->xmotion.subwindow = None;
+	eventPtr->xmotion.subwindow = TkNone;
 	for (childPtr = winPtr->childList; childPtr != NULL;
 		childPtr = childPtr->nextPtr) {
 	    if (childPtr->flags & TK_TOP_HIERARCHY) {
@@ -940,7 +940,7 @@ TkChangeEventWindow(
     } else {
 	eventPtr->xmotion.x = 0;
 	eventPtr->xmotion.y = 0;
-	eventPtr->xmotion.subwindow = None;
+	eventPtr->xmotion.subwindow = TkNone;
 	sameScreen = 0;
     }
     if (eventPtr->type == MotionNotify) {
@@ -1029,7 +1029,7 @@ TkInOutEvents(
      */
 
 #define QUEUE(w, t, d)					\
-    if (w->window != None) {				\
+    if (w->window != TkNone) {				\
 	eventPtr->type = t;				\
 	if (focus) {					\
 	    eventPtr->xfocus.window = w->window;	\
@@ -1145,9 +1145,9 @@ MovePointer2(
     TkWindow *winPtr;
 
     winPtr = sourcePtr;
-    if ((winPtr == NULL) || (winPtr->window == None)) {
+    if ((winPtr == NULL) || (winPtr->window == TkNone)) {
 	winPtr = destPtr;
-	if ((winPtr == NULL) || (winPtr->window == None)) {
+	if ((winPtr == NULL) || (winPtr->window == TkNone)) {
 	    return;
 	}
     }
@@ -1338,7 +1338,7 @@ QueueGrabWindowChange(
     grabEvPtr->header.proc = GrabWinEventProc;
     grabEvPtr->dispPtr = dispPtr;
     if (grabWinPtr == NULL) {
-	grabEvPtr->grabWindow = None;
+	grabEvPtr->grabWindow = TkNone;
     } else {
 	grabEvPtr->grabWindow = grabWinPtr->window;
     }

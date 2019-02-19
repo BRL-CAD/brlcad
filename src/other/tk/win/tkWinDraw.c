@@ -631,7 +631,7 @@ XFillRectangles(
     TkWinDCState state;
     HBRUSH brush, oldBrush;
 
-    if (d == None) {
+    if (d == TkNone) {
 	return BadDrawable;
     }
 
@@ -641,7 +641,7 @@ XFillRectangles(
 
     if ((gc->fill_style == FillStippled
 	    || gc->fill_style == FillOpaqueStippled)
-	    && gc->stipple != None) {
+	    && gc->stipple != TkNone) {
 	TkWinDrawable *twdPtr = (TkWinDrawable *)gc->stipple;
 	HBRUSH stipple;
 	HBITMAP oldBitmap, bitmap;
@@ -756,7 +756,7 @@ RenderObject(
 
     if ((gc->fill_style == FillStippled
 	    || gc->fill_style == FillOpaqueStippled)
-	    && gc->stipple != None) {
+	    && gc->stipple != TkNone) {
 
 	TkWinDrawable *twdPtr = (TkWinDrawable *)gc->stipple;
 	HDC dcMem;
@@ -882,7 +882,7 @@ XDrawLines(
     TkWinDCState state;
     HDC dc;
 
-    if (d == None) {
+    if (d == TkNone) {
 	return BadDrawable;
     }
 
@@ -927,7 +927,7 @@ XFillPolygon(
     TkWinDCState state;
     HDC dc;
 
-    if (d == None) {
+    if (d == TkNone) {
 	return BadDrawable;
     }
 
@@ -969,7 +969,7 @@ XDrawRectangle(
     HBRUSH oldBrush;
     HDC dc;
 
-    if (d == None) {
+    if (d == TkNone) {
 	return BadDrawable;
     }
 
@@ -1085,7 +1085,7 @@ DrawOrFillArc(
     int xstart, ystart, xend, yend;
     double radian_start, radian_end, xr, yr;
 
-    if (d == None) {
+    if (d == TkNone) {
 	return BadDrawable;
     }
 

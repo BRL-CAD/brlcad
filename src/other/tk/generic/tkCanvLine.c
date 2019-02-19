@@ -303,7 +303,7 @@ CreateLine(
     linePtr->coordPtr = NULL;
     linePtr->capStyle = CapButt;
     linePtr->joinStyle = JoinRound;
-    linePtr->arrowGC = None;
+    linePtr->arrowGC = TkNone;
     linePtr->arrow = ARROWS_NONE;
     linePtr->arrowShapeA = (float)8.0;
     linePtr->arrowShapeB = (float)10.0;
@@ -505,7 +505,7 @@ ConfigureLine(
     if (linePtr->outline.activeWidth > linePtr->outline.width ||
 	    linePtr->outline.activeDash.number != 0 ||
 	    linePtr->outline.activeColor != NULL ||
-	    linePtr->outline.activeStipple != None) {
+	    linePtr->outline.activeStipple != TkNone) {
 	itemPtr->redraw_flags |= TK_ITEM_STATE_DEPENDANT;
     } else {
 	itemPtr->redraw_flags &= ~TK_ITEM_STATE_DEPENDANT;
@@ -531,12 +531,12 @@ ConfigureLine(
 #endif
 	arrowGC = Tk_GetGC(tkwin, mask, &gcValues);
     } else {
-	newGC = arrowGC = None;
+	newGC = arrowGC = TkNone;
     }
-    if (linePtr->outline.gc != None) {
+    if (linePtr->outline.gc != TkNone) {
 	Tk_FreeGC(Tk_Display(tkwin), linePtr->outline.gc);
     }
-    if (linePtr->arrowGC != None) {
+    if (linePtr->arrowGC != TkNone) {
 	Tk_FreeGC(Tk_Display(tkwin), linePtr->arrowGC);
     }
     linePtr->outline.gc = newGC;
@@ -621,7 +621,7 @@ DeleteLine(
     if (linePtr->coordPtr != NULL) {
 	ckfree((char *) linePtr->coordPtr);
     }
-    if (linePtr->arrowGC != None) {
+    if (linePtr->arrowGC != TkNone) {
 	Tk_FreeGC(display, linePtr->arrowGC);
     }
     if (linePtr->firstArrowPtr != NULL) {
@@ -2301,7 +2301,7 @@ LineToPostscript(
 	if (Tk_CanvasPsColor(interp, canvas, color) != TCL_OK) {
 	    return TCL_ERROR;
 	}
-	if (stipple != None) {
+	if (stipple != TkNone) {
 	    Tcl_AppendResult(interp, "clip ", NULL);
 	    if (Tk_CanvasPsStipple(interp, canvas, stipple) != TCL_OK) {
 		return TCL_ERROR;
@@ -2319,7 +2319,7 @@ LineToPostscript(
     if ((!linePtr->smooth) || (linePtr->numPoints < 3)) {
 	Tk_CanvasPsPath(interp, canvas, linePtr->coordPtr, linePtr->numPoints);
     } else {
-	if ((stipple == None) && linePtr->smooth->postscriptProc) {
+	if ((stipple == TkNone) && linePtr->smooth->postscriptProc) {
 	    linePtr->smooth->postscriptProc(interp, canvas,
 		    linePtr->coordPtr, linePtr->numPoints, linePtr->splineSteps);
 	} else {
@@ -2380,7 +2380,7 @@ LineToPostscript(
      */
 
     if (linePtr->firstArrowPtr != NULL) {
-	if (stipple != None) {
+	if (stipple != TkNone) {
 	    Tcl_AppendResult(interp, "grestore gsave\n", NULL);
 	}
 	if (ArrowheadPostscript(interp, canvas, linePtr,
@@ -2389,7 +2389,7 @@ LineToPostscript(
 	}
     }
     if (linePtr->lastArrowPtr != NULL) {
-	if (stipple != None) {
+	if (stipple != TkNone) {
 	    Tcl_AppendResult(interp, "grestore gsave\n", NULL);
 	}
 	if (ArrowheadPostscript(interp, canvas, linePtr,
@@ -2448,7 +2448,7 @@ ArrowheadPostscript(
     }
 
     Tk_CanvasPsPath(interp, canvas, arrowPtr, PTS_IN_ARROW);
-    if (stipple != None) {
+    if (stipple != TkNone) {
 	Tcl_AppendResult(interp, "clip ", NULL);
 	if (Tk_CanvasPsStipple(interp, canvas, stipple) != TCL_OK) {
 	    return TCL_ERROR;

@@ -73,7 +73,9 @@ typedef unsigned long KeyCode;	/* In order to use IME, the Macintosh needs
  * RESERVED RESOURCE AND CONSTANT DEFINITIONS
  *****************************************************************/
 
-#define None                 0L	/* universal null resource or null atom */
+#ifndef TkNone
+#  define TkNone             0L	/* universal null resource or null atom */
+#endif
 
 #define ParentRelative       1L	/* background pixmap in CreateWindow
 				    and ChangeWindowAttributes */

@@ -959,7 +959,7 @@ void
 Tk_CreateOutline(
     Tk_Outline *outline)	/* Outline structure to be filled in. */
 {
-    outline->gc = None;
+    outline->gc = TkNone;
     outline->width = 1.0;
     outline->activeWidth = 0.0;
     outline->disabledWidth = 0.0;
@@ -973,9 +973,9 @@ Tk_CreateOutline(
     outline->color = NULL;
     outline->activeColor = NULL;
     outline->disabledColor = NULL;
-    outline->stipple = None;
-    outline->activeStipple = None;
-    outline->disabledStipple = None;
+    outline->stipple = TkNone;
+    outline->activeStipple = TkNone;
+    outline->disabledStipple = TkNone;
 }
 
 /*
@@ -1000,7 +1000,7 @@ Tk_DeleteOutline(
     Display *display,		/* Display containing window. */
     Tk_Outline *outline)
 {
-    if (outline->gc != None) {
+    if (outline->gc != TkNone) {
 	Tk_FreeGC(display, outline->gc);
     }
     if ((unsigned int)ABS(outline->dash.number) > sizeof(char *)) {
@@ -1021,13 +1021,13 @@ Tk_DeleteOutline(
     if (outline->disabledColor != NULL) {
 	Tk_FreeColor(outline->disabledColor);
     }
-    if (outline->stipple != None) {
+    if (outline->stipple != TkNone) {
 	Tk_FreeBitmap(display, outline->stipple);
     }
-    if (outline->activeStipple != None) {
+    if (outline->activeStipple != TkNone) {
 	Tk_FreeBitmap(display, outline->activeStipple);
     }
-    if (outline->disabledStipple != None) {
+    if (outline->disabledStipple != TkNone) {
 	Tk_FreeBitmap(display, outline->disabledStipple);
     }
 }
@@ -1125,7 +1125,7 @@ Tk_ConfigOutlineGC(
     if (color != NULL) {
 	gcValues->foreground = color->pixel;
 	mask = GCForeground|GCLineWidth;
-	if (stipple != None) {
+	if (stipple != TkNone) {
 	    gcValues->stipple = stipple;
 	    gcValues->fill_style = FillStippled;
 	    mask |= GCStipple|GCFillStyle;
@@ -1197,7 +1197,7 @@ Tk_ChangeOutlineGC(
 	if (outline->activeColor != NULL) {
 	    color = outline->activeColor;
 	}
-	if (outline->activeStipple != None) {
+	if (outline->activeStipple != TkNone) {
 	    stipple = outline->activeStipple;
 	}
     } else if (state == TK_STATE_DISABLED) {
@@ -1210,7 +1210,7 @@ Tk_ChangeOutlineGC(
 	if (outline->disabledColor != NULL) {
 	    color = outline->disabledColor;
 	}
-	if (outline->disabledStipple != None) {
+	if (outline->disabledStipple != TkNone) {
 	    stipple = outline->disabledStipple;
 	}
     }
@@ -1350,7 +1350,7 @@ Tk_ResetOutlineGC(
 	XSetDashes(((TkCanvas *)canvas)->display, outline->gc,
 		outline->offset, &dashList , 1);
     }
-    if (stipple != None) {
+    if (stipple != TkNone) {
 	XSetTSOrigin(((TkCanvas *)canvas)->display, outline->gc, 0, 0);
 	return 1;
     }
@@ -1412,7 +1412,7 @@ Tk_CanvasPsOutline(
 	if (outline->activeColor != NULL) {
 	    color = outline->activeColor;
 	}
-	if (outline->activeStipple != None) {
+	if (outline->activeStipple != TkNone) {
 	    stipple = outline->activeStipple;
 	}
     } else if (state == TK_STATE_DISABLED) {
@@ -1425,7 +1425,7 @@ Tk_CanvasPsOutline(
 	if (outline->disabledColor != NULL) {
 	    color = outline->disabledColor;
 	}
-	if (outline->disabledStipple != None) {
+	if (outline->disabledStipple != TkNone) {
 	    stipple = outline->disabledStipple;
 	}
     }
@@ -1482,7 +1482,7 @@ Tk_CanvasPsOutline(
     if (Tk_CanvasPsColor(interp, canvas, color) != TCL_OK) {
 	return TCL_ERROR;
     }
-    if (stipple != None) {
+    if (stipple != TkNone) {
 	Tcl_AppendResult(interp, "StrokeClip ", NULL);
 	if (Tk_CanvasPsStipple(interp, canvas, stipple) != TCL_OK) {
 	    return TCL_ERROR;

@@ -14,6 +14,10 @@
 
 #include "tkPort.h"
 
+#ifndef TkNone
+#  define TkNone             0L /* universal null resource or null atom */
+#endif
+
 /*
  * Values for "flags" field of Tk_ConfigSpec structures. Be sure to coordinate
  * these values with those defined in tk.h (TK_CONFIG_COLOR_ONLY, etc.) There
@@ -431,16 +435,16 @@ DoConfig(
 	    Pixmap newBmp, oldBmp;
 
 	    if (nullValue) {
-		newBmp = None;
+		newBmp = TkNone;
 	    } else {
 		uid = valueIsUid ? (Tk_Uid) value : Tk_GetUid(value);
 		newBmp = Tk_GetBitmap(interp, tkwin, uid);
-		if (newBmp == None) {
+		if (newBmp == TkNone) {
 		    return TCL_ERROR;
 		}
 	    }
 	    oldBmp = *((Pixmap *) ptr);
-	    if (oldBmp != None) {
+	    if (oldBmp != TkNone) {
 		Tk_FreeBitmap(Tk_Display(tkwin), oldBmp);
 	    }
 	    *((Pixmap *) ptr) = newBmp;
@@ -476,16 +480,16 @@ DoConfig(
 	    Tk_Cursor newCursor, oldCursor;
 
 	    if (nullValue) {
-		newCursor = None;
+		newCursor = TkNone;
 	    } else {
 		uid = valueIsUid ? (Tk_Uid) value : Tk_GetUid(value);
 		newCursor = Tk_GetCursor(interp, tkwin, uid);
-		if (newCursor == None) {
+		if (newCursor == TkNone) {
 		    return TCL_ERROR;
 		}
 	    }
 	    oldCursor = *((Tk_Cursor *) ptr);
-	    if (oldCursor != None) {
+	    if (oldCursor != TkNone) {
 		Tk_FreeCursor(Tk_Display(tkwin), oldCursor);
 	    }
 	    *((Tk_Cursor *) ptr) = newCursor;
@@ -818,7 +822,7 @@ FormatConfigValue(
     case TK_CONFIG_BITMAP: {
 	Pixmap pixmap = *((Pixmap *) ptr);
 
-	if (pixmap != None) {
+	if (pixmap != TkNone) {
 	    result = Tk_NameOfBitmap(Tk_Display(tkwin), pixmap);
 	}
 	break;
@@ -838,7 +842,7 @@ FormatConfigValue(
     case TK_CONFIG_ACTIVE_CURSOR: {
 	Tk_Cursor cursor = *((Tk_Cursor *) ptr);
 
-	if (cursor != None) {
+	if (cursor != TkNone) {
 	    result = Tk_NameOfCursor(Tk_Display(tkwin), cursor);
 	}
 	break;
@@ -1011,9 +1015,9 @@ Tk_FreeOptions(
 	    *((Tk_Font *) ptr) = NULL;
 	    break;
 	case TK_CONFIG_BITMAP:
-	    if (*((Pixmap *) ptr) != None) {
+	    if (*((Pixmap *) ptr) != TkNone) {
 		Tk_FreeBitmap(display, *((Pixmap *) ptr));
-		*((Pixmap *) ptr) = None;
+		*((Pixmap *) ptr) = TkNone;
 	    }
 	    break;
 	case TK_CONFIG_BORDER:
@@ -1024,9 +1028,9 @@ Tk_FreeOptions(
 	    break;
 	case TK_CONFIG_CURSOR:
 	case TK_CONFIG_ACTIVE_CURSOR:
-	    if (*((Tk_Cursor *) ptr) != None) {
+	    if (*((Tk_Cursor *) ptr) != TkNone) {
 		Tk_FreeCursor(display, *((Tk_Cursor *) ptr));
-		*((Tk_Cursor *) ptr) = None;
+		*((Tk_Cursor *) ptr) = TkNone;
 	    }
 	}
     }

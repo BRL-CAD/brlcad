@@ -151,7 +151,7 @@ typedef struct {
      * Miscellaneous information:
      */
 
-    Tk_Cursor cursor;		/* Current cursor for window, or None. */
+    Tk_Cursor cursor;		/* Current cursor for window, or TkNone. */
     char *takeFocus;		/* Value of -takefocus option; not used in the
 				 * C code, but used by keyboard traversal
 				 * scripts. Malloc'ed, but may be NULL. */
@@ -534,15 +534,15 @@ Tk_ListboxObjCmd(
 	    ckalloc(sizeof(Tcl_HashTable));
     Tcl_InitHashTable(listPtr->itemAttrTable, TCL_ONE_WORD_KEYS);
     listPtr->relief		 = TK_RELIEF_RAISED;
-    listPtr->textGC		 = None;
-    listPtr->selFgColorPtr	 = None;
-    listPtr->selTextGC		 = None;
+    listPtr->textGC		 = TkNone;
+    listPtr->selFgColorPtr	 = TkNone;
+    listPtr->selTextGC		 = TkNone;
     listPtr->fullLines		 = 1;
     listPtr->xScrollUnit	 = 1;
     listPtr->exportSelection	 = 1;
-    listPtr->cursor		 = None;
+    listPtr->cursor		 = TkNone;
     listPtr->state		 = STATE_NORMAL;
-    listPtr->gray		 = None;
+    listPtr->gray		 = TkNone;
 
     /*
      * Keep a hold of the associated tkwin until we destroy the listbox,
@@ -1474,13 +1474,13 @@ DestroyListbox(
      * Tk_FreeOptions handle all the standard option-related stuff.
      */
 
-    if (listPtr->textGC != None) {
+    if (listPtr->textGC != TkNone) {
 	Tk_FreeGC(listPtr->display, listPtr->textGC);
     }
-    if (listPtr->selTextGC != None) {
+    if (listPtr->selTextGC != TkNone) {
 	Tk_FreeGC(listPtr->display, listPtr->selTextGC);
     }
-    if (listPtr->gray != None) {
+    if (listPtr->gray != TkNone) {
 	Tk_FreeBitmap(Tk_Display(listPtr->tkwin), listPtr->gray);
     }
 
@@ -1765,10 +1765,10 @@ ListboxWorldChanged(
     } else {
 	gcValues.foreground = listPtr->fgColorPtr->pixel;
 	mask = GCForeground | GCFont;
-	if (listPtr->gray == None) {
+	if (listPtr->gray == TkNone) {
 	    listPtr->gray = Tk_GetBitmap(NULL, listPtr->tkwin, "gray50");
 	}
-	if (listPtr->gray != None) {
+	if (listPtr->gray != TkNone) {
 	    gcValues.fill_style = FillStippled;
 	    gcValues.stipple = listPtr->gray;
 	    mask |= GCFillStyle | GCStipple;
@@ -1777,7 +1777,7 @@ ListboxWorldChanged(
 
     gcValues.font = Tk_FontId(listPtr->tkfont);
     gc = Tk_GetGC(listPtr->tkwin, mask, &gcValues);
-    if (listPtr->textGC != None) {
+    if (listPtr->textGC != TkNone) {
 	Tk_FreeGC(listPtr->display, listPtr->textGC);
     }
     listPtr->textGC = gc;
@@ -1788,7 +1788,7 @@ ListboxWorldChanged(
     gcValues.font = Tk_FontId(listPtr->tkfont);
     mask = GCForeground | GCFont;
     gc = Tk_GetGC(listPtr->tkwin, mask, &gcValues);
-    if (listPtr->selTextGC != None) {
+    if (listPtr->selTextGC != TkNone) {
 	Tk_FreeGC(listPtr->display, listPtr->selTextGC);
     }
     listPtr->selTextGC = gc;

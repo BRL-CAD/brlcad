@@ -453,7 +453,7 @@ InitElementData(ElementData *elementData, Tk_Window tkwin, Drawable d)
 {
     Window win = Tk_WindowId(tkwin);
 
-    if (win != None) {
+    if (win != TkNone) {
 	elementData->hwnd = Tk_GetHWND(win);
     } else  {
 	elementData->hwnd = elementData->procs->stubWindow;

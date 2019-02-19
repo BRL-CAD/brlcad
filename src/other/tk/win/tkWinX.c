@@ -573,10 +573,10 @@ TkWinDisplayChanged(
     screen->root_visual->bits_per_rgb = screen->root_depth;
     ReleaseDC(NULL, dc);
 
-    if (screen->cmap != None) {
+    if (screen->cmap != TkNone) {
 	XFreeColormap(display, screen->cmap);
     }
-    screen->cmap = XCreateColormap(display, None, screen->root_visual,
+    screen->cmap = XCreateColormap(display, TkNone, screen->root_visual,
 	    AllocNone);
 }
 
@@ -636,7 +636,7 @@ TkpOpenDisplay(
 
     twdPtr = (TkWinDrawable*) ckalloc(sizeof(TkWinDrawable));
     if (twdPtr == NULL) {
-	return None;
+	return TkNone;
     }
     twdPtr->type = TWD_WINDOW;
     twdPtr->window.winPtr = NULL;
@@ -649,7 +649,7 @@ TkpOpenDisplay(
 
     screen->white_pixel = RGB(255, 255, 255);
     screen->black_pixel = RGB(0, 0, 0);
-    screen->cmap = None;
+    screen->cmap = TkNone;
 
     display->screens		= screen;
     display->nscreens		= 1;
@@ -704,10 +704,10 @@ TkpCloseDisplay(
 	if (display->screens->root_visual != NULL) {
 	    ckfree((char *) display->screens->root_visual);
 	}
-	if (display->screens->root != None) {
+	if (display->screens->root != TkNone) {
 	    ckfree((char *) display->screens->root);
 	}
-	if (display->screens->cmap != None) {
+	if (display->screens->cmap != TkNone) {
 	    XFreeColormap(display, display->screens->cmap);
 	}
 	ckfree((char *) display->screens);
@@ -1018,7 +1018,7 @@ GenerateXEvent(
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     winPtr = (TkWindow *)Tk_HWNDToWindow(hwnd);
-    if (!winPtr || winPtr->window == None) {
+    if (!winPtr || winPtr->window == TkNone) {
 	return;
     }
 
@@ -1146,7 +1146,7 @@ GenerateXEvent(
 	 */
 
 	event.xbutton.root = RootWindow(winPtr->display, winPtr->screenNum);
-	event.xbutton.subwindow = None;
+	event.xbutton.subwindow = TkNone;
 	event.xbutton.x = clientPoint.x;
 	event.xbutton.y = clientPoint.y;
 	event.xbutton.x_root = root.point.x;
@@ -1654,7 +1654,7 @@ HandleIMEComposition(
 	event.xkey.display = winPtr->display;
 	event.xkey.window = winPtr->window;
 	event.xkey.root = RootWindow(winPtr->display, winPtr->screenNum);
-	event.xkey.subwindow = None;
+	event.xkey.subwindow = TkNone;
 	event.xkey.state = TkWinGetModifierState();
 	event.xkey.time = TkpGetMS();
 	event.xkey.same_screen = True;

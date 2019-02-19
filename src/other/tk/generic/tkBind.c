@@ -3870,7 +3870,7 @@ DoWarp(
 {
     TkDisplay *dispPtr = (TkDisplay *) clientData;
 
-    XWarpPointer(dispPtr->display, (Window) None, (Window) dispPtr->warpWindow,
+    XWarpPointer(dispPtr->display, (Window) TkNone, (Window) dispPtr->warpWindow,
 	    0, 0, 0, 0, (int) dispPtr->warpX, (int) dispPtr->warpY);
     XForceScreenSaver(dispPtr->display, ScreenSaverReset);
     dispPtr->flags &= ~TK_DISPLAY_IN_WARP;

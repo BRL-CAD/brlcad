@@ -171,7 +171,7 @@ TkpDrawCheckIndicator(
      * Sanity check.
      */
 
-    if (tkwin == NULL || display == None || d == None || bgBorder == NULL
+    if (tkwin == NULL || display == TkNone || d == TkNone || bgBorder == NULL
 	    || indicatorColor == NULL) {
 	return;
     }
@@ -234,7 +234,7 @@ TkpDrawCheckIndicator(
      */
 
     pixmap = Tk_GetPixmap(display, d, dim, dim, depth);
-    if (pixmap == None) {
+    if (pixmap == TkNone) {
 	return;
     }
 
@@ -450,7 +450,7 @@ TkpDisplayButton(
     if (butPtr->image != NULL) {
 	Tk_SizeOfImage(butPtr->image, &width, &height);
 	haveImage = 1;
-    } else if (butPtr->bitmap != None) {
+    } else if (butPtr->bitmap != TkNone) {
 	Tk_SizeOfBitmap(butPtr->display, butPtr->bitmap, &width, &height);
 	haveImage = 1;
     }
@@ -876,7 +876,7 @@ TkpComputeButtonGeometry(
     if (butPtr->image != NULL) {
 	Tk_SizeOfImage(butPtr->image, &width, &height);
 	haveImage = 1;
-    } else if (butPtr->bitmap != None) {
+    } else if (butPtr->bitmap != TkNone) {
 	Tk_SizeOfBitmap(butPtr->display, butPtr->bitmap, &width, &height);
 	haveImage = 1;
     }
@@ -996,7 +996,7 @@ TkpComputeButtonGeometry(
      * lowered effect.
      */
 
-    if ((butPtr->image == NULL) && (butPtr->bitmap == None)) {
+    if ((butPtr->image == NULL) && (butPtr->bitmap == TkNone)) {
 	width += 2*butPtr->padX;
 	height += 2*butPtr->padY;
     }

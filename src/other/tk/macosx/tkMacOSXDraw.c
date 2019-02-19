@@ -121,7 +121,7 @@ TkMacOSXInitCGDrawing(
  *      left as used by NSView.
  *
  * Side effects:
- *     None
+ *     TkNone
  *
  *----------------------------------------------------------------------
  */
@@ -589,7 +589,7 @@ TkMacOSXGetNSImageWithTkImage(
     int width,
     int height)
 {
-    Pixmap pixmap = Tk_GetPixmap(display, None, width, height, 0);
+    Pixmap pixmap = Tk_GetPixmap(display, TkNone, width, height, 0);
     NSImage *nsImage;
 
     Tk_RedrawImage(image, 0, 0, width, height, pixmap, 0, 0);
@@ -623,7 +623,7 @@ TkMacOSXGetNSImageWithBitmap(
     int width,
     int height)
 {
-    Pixmap pixmap = Tk_GetPixmap(display, None, width, height, 0);
+    Pixmap pixmap = Tk_GetPixmap(display, TkNone, width, height, 0);
     NSImage *nsImage;
 
     unsigned long origBackground = gc->background;

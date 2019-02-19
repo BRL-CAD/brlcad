@@ -85,7 +85,7 @@ TkpChangeFocus(
 	    if ((winPtr2 != NULL) && (winPtr2->mainPtr == winPtr->mainPtr)) {
 		break;
 	    }
-	    if ((window == PointerRoot) || (window == None)) {
+	    if ((window == PointerRoot) || (window == TkNone)) {
 		goto done;
 	    }
 	    XQueryTree(dispPtr->display, window, &root, &parent, &children,
@@ -107,7 +107,7 @@ TkpChangeFocus(
      */
 
     errHandler = Tk_CreateErrorHandler(dispPtr->display, -1,-1,-1, NULL,NULL);
-    if (winPtr->window == None) {
+    if (winPtr->window == TkNone) {
 	Tcl_Panic("ChangeXFocus got null X window");
     }
     XSetInputFocus(dispPtr->display, winPtr->window, RevertToParent,

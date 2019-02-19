@@ -437,7 +437,7 @@ setupXEvent(XEvent *xEvent, NSWindow *w, unsigned int state)
     xEvent->xany.window = Tk_WindowId(tkwin);
 
     xEvent->xkey.root = XRootWindow(Tk_Display(tkwin), 0);
-    xEvent->xkey.subwindow = None;
+    xEvent->xkey.subwindow = TkNone;
     xEvent->xkey.time = TkpGetMS();
     xEvent->xkey.state = state;
     xEvent->xkey.same_screen = true;

@@ -232,7 +232,7 @@ TkpFreeCursor(
  *
  * TkpSetCursor --
  *
- *	Set the global cursor. If the cursor is None, then use the default Tk
+ *	Set the global cursor. If the cursor is TkNone, then use the default Tk
  *	cursor.
  *
  * Results:
