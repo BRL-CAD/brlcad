@@ -100,8 +100,8 @@ fbserv_drop_client(int sub)
 				 clients[sub].c_handler,
 				 (ClientData)clients[sub].c_fd);
 
-	if (dm_interp(dmp) != NULL) {
-	    Tcl_Close((Tcl_Interp *)dm_interp(dmp), clients[sub].c_chan);
+	if (dm_interp(DMP) != NULL) {
+	    Tcl_Close((Tcl_Interp *)dm_interp(DMP), clients[sub].c_chan);
 	}
 	clients[sub].c_chan = NULL;
 #else
@@ -251,8 +251,8 @@ fbserv_set_port(const struct bu_structparse *UNUSED(sp), const char *UNUSED(c1),
 	fd = (ClientData)netfd;
 	Tcl_DeleteChannelHandler(netchan, (Tcl_ChannelProc *)fbserv_new_client_handler, fd);
 
-	if (dm_interp(dmp) != NULL) {
-	    Tcl_Close((Tcl_Interp *)dm_interp(dmp), netchan);
+	if (dm_interp(DMP) != NULL) {
+	    Tcl_Close((Tcl_Interp *)dm_interp(DMP), netchan);
 	}
 	netchan = NULL;
 
@@ -288,8 +288,8 @@ fbserv_set_port(const struct bu_structparse *UNUSED(sp), const char *UNUSED(c1),
 	 * Hang an unending listen for PKG connections
 	 */
 
-	if (dm_interp(dmp) != NULL) {
-	    netchan = Tcl_OpenTcpServer((Tcl_Interp *)dm_interp(dmp), port, hostname, fbserv_new_client_handler, (ClientData)curr_dm_list);
+	if (dm_interp(DMP) != NULL) {
+	    netchan = Tcl_OpenTcpServer((Tcl_Interp *)dm_interp(DMP), port, hostname, fbserv_new_client_handler, (ClientData)curr_dm_list);
 	}
 
 	if (netchan == NULL)

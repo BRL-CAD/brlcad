@@ -150,7 +150,7 @@ osgl_doevent(void *UNUSED(vclientData), void *veventPtr)
     /*ClientData clientData = (ClientData)vclientData;*/
     XEvent *eventPtr= (XEvent *)veventPtr;
     if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
-	(void)dm_make_current(dmp);
+	(void)dm_make_current(DMP);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	dirty = 1;
 	return TCL_OK;
@@ -168,7 +168,7 @@ wgl_doevent(void *UNUSED(vclientData), void *veventPtr)
 {
     /*ClientData clientData = (ClientData)vclientData;*/
     XEvent *eventPtr= (XEvent *)veventPtr;
-    if (!dm_make_current(dmp))
+    if (!dm_make_current(DMP))
 	/* allow further processing of this event */
 	return TCL_OK;
 
