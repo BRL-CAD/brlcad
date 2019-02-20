@@ -958,8 +958,158 @@ void move_only_commit(std::ofstream &outfile, struct svn_revision &rev, std::str
 
 }
 
+void write_git_node(std::ofstream &outfile, struct svn_revision &rev, struct svn_node &node)
+{
+    /* Don't add directory nodes themselves - git works on files.
+     *
+     * However, there is an important exception here for directory copies and deletes!
+     * */
+    if (rev.revision_number == 30333) {
+	std::cout << "at 30333\n";
+    }
+
+    if (node.kind == ndir && node.action == nadd && node.copyfrom_path.length()) {
+	int is_tag;
+	std::string mproject, cbranch, mlocal_path, ctag;
+	node_path_split(node.copyfrom_path, mproject, cbranch, ctag, mlocal_path, &is_tag);
+	if (mlocal_path != node.local_path) {
+	    std::cout << "(r" << rev.revision_number << ") - renaming " << mlocal_path << " to " << node.local_path << "\n";
+	    outfile << "C " << mlocal_path << " " << node.local_path << "\n";
+	}
+	return;
+    }
+    if (node.kind == ndir && node.action == nadd) return;
+
+    // If it's a straight-up path delete, do it and return
+    if (node.kind == nkerr && node.action == ndelete) {
+	std::cerr << "Revision r" << rev.revision_number << " delete: " << node.local_path << "\n";
+	outfile << "D \"" << node.local_path << "\"\n";
+	return;
+    }
+
+    //std::cout << "	Processing node " << print_node_action(node.action) << " " << node.local_path << " into branch " << node.branch << "\n";
+    std::string gsha1;
+    if (node.action == nchange || node.action == nadd || node.action == nreplace) {
+	if (node.exec_change || node.copyfrom_path.length() || node.text_content_length || node.text_content_sha1.length()) {
+	    gsha1 = svn_sha1_to_git_sha1[current_sha1[node.path]];
+	    if (gsha1.length() < 40) {
+		if (node.copyfrom_rev) {
+		    gsha1 = svn_sha1_to_git_sha1[node.text_copy_source_sha1];
+		}
+		if (gsha1.length() < 40) {
+		    std::string tpath;
+		    if (node.copyfrom_path.length()) {
+			tpath = node.copyfrom_path;
+		    } else {
+			tpath = std::string("brlcad/trunk/") + node.local_path;
+		    }
+		    gsha1 = svn_sha1_to_git_sha1[current_sha1[tpath]];
+		    if (gsha1.length() < 40) {
+			std::cout << "Fatal - could not find git sha1 - r" << rev.revision_number << ", node: " << node.path << "\n";
+			std::cout << "current sha1: " << current_sha1[node.path] << "\n";
+			std::cout << "trunk sha1: " << current_sha1[tpath] << "\n";
+			std::cout << "Revision merged from: " << rev.merged_from << "\n";
+			print_node(node);
+			exit(1);
+		    } else {
+			std::cout << "Warning(r" << rev.revision_number << ") - couldn't find SHA1 for " << node.path << ", using node from " << tpath << "\n";
+		    }
+		}
+	    }
+	} else {
+	    std::cout << "Warning(r" << rev.revision_number << ") - skipping " << node.path << " - no git applicable change found.\n";
+	    return;
+	}
+    }
+
+    switch (node.action) {
+	case nchange:
+	    outfile << "M ";
+	    break;
+	case nadd:
+	    outfile << "M ";
+	    break;
+	case nreplace:
+	    outfile << "M ";
+	    break;
+	case ndelete:
+	    outfile << "D ";
+	    break;
+	default:
+	    std::cerr << "Unhandled node action type " << print_node_action(node.action) << "\n";
+	    outfile << "? ";
+	    outfile << "\"" << node.local_path << "\"\n";
+	    std::cout << "Fatal - unhandled node action at r" << rev.revision_number << ", node: " << node.path << "\n";
+	    exit(1);
+    }
+
+    if (node.action != ndelete) {
+	if (node.exec_path) {
+	    outfile << "100755 ";
+	} else {
+	    outfile << "100644 ";
+	}
+    }
+
+    if (node.action == nchange || node.action == nadd || node.action == nreplace) {
+	outfile << gsha1 << " \"" << node.local_path << "\"\n";
+	return;
+    }
+
+    if (node.action == ndelete) {
+	outfile << "\"" << node.local_path << "\"\n";
+	return;
+    }
+
+    std::cout << "Error(r" << rev.revision_number << ") - unhandled node action: " << print_node_action(node.action) << "\n";
+    print_node(node);
+    exit(1);
+}
+
+
 void old_references_commit(std::ofstream &outfile, struct svn_revision &rev, std::string &rbranch)
 {
+    if (author_map.find(rev.author) == author_map.end()) {
+	std::cout << "Error - couldn't find author map for author " << rev.author << " on revision " << rev.revision_number << "\n";
+	exit(1);
+    }
+    outfile << "commit " << rbranch << "\n";
+    outfile << "mark :" << rev.revision_number << "\n";
+    outfile << "committer " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
+    outfile << "data " << rev.commit_msg.length() << "\n";
+    outfile << rev.commit_msg << "\n";
+    outfile << "from " << branch_head_id(rbranch, rev.revision_number) << "\n";
+    branch_head_ids[rbranch] = std::to_string(rev.revision_number);
+
+    if (rev.merged_from.length()) {
+	std::cout << "Revision " << rev.revision_number << " merged from: " << rev.merged_from << "(" << rev.merged_rev << "), id " << branch_head_id(rev.merged_from, rev.merged_rev) << "\n";
+	std::cout << "Revision " << rev.revision_number << "        from: " << rbranch << "\n";
+	outfile << "merge :" << rev.merged_rev << "\n";
+    }
+    for (size_t n = 0; n != rev.nodes.size(); n++) {
+	struct svn_node &node = rev.nodes[n];
+
+	if (node.kind == ndir && node.action == nadd && node.copyfrom_path.length() && node.copyfrom_rev < rev.revision_number - 1) {
+	    std::cout << "Non-standard handling needed: " << node.path << "\n";
+	    std::set<struct svn_node *>::iterator n_it;
+	    std::set<struct svn_node *> *node_set = path_states[node.copyfrom_path][node.copyfrom_rev];
+	    for (n_it = node_set->begin(); n_it != node_set->end(); n_it++) {
+		if ((*n_it)->kind == ndir) {
+		    std::cout << "Stashed dir node: " << (*n_it)->path << "\n";
+		    exit(1);
+		}
+		std::cout << "Stashed file node: " << (*n_it)->path << "\n";
+		std::string gsha1 = svn_sha1_to_git_sha1[(*n_it)->text_content_sha1];
+		std::string exestr = ((*n_it)->exec_path) ? std::string("100755 ") : std::string("100644 ");
+		outfile << "M " << exestr << gsha1 << " \"" << (*n_it)->local_path << "\"\n";
+	    }
+	    continue;
+	}
+
+	// Not one of the special cases, handle normally
+	write_git_node(outfile, rev, node);
+
+    }
 }
 
 void standard_commit(std::ofstream &outfile, struct svn_revision &rev, std::string &rbranch)
@@ -982,113 +1132,43 @@ void standard_commit(std::ofstream &outfile, struct svn_revision &rev, std::stri
 	outfile << "merge :" << rev.merged_rev << "\n";
     }
 
-    std::string ndeletes;
+
+    // Check for directory deletes and copyfrom in the same node set.  If this happens,
+    // we need to defer the delete of the old dir until after the copy is made.  This is
+    // related to the problem of pulling old dir contents, but if we're in this function
+    // the assumption is that the working dir's contents are what we need here.
+    std::set<struct svn_node *> deferred_deletes;
+    std::set<struct svn_node *> deletes;
+    std::set<struct svn_node *>::iterator d_it;
     for (size_t n = 0; n != rev.nodes.size(); n++) {
 	struct svn_node &node = rev.nodes[n];
-	/* Don't add directory nodes themselves - git works on files.
-	 *
-	 * However, there is an important exception here for directory copies and deletes!
-	 * */
-	if (node.kind == ndir && node.action == nadd && node.copyfrom_path.length()) {
-	    int is_tag;
-	    std::string mproject, cbranch, mlocal_path, ctag;
-	    node_path_split(node.copyfrom_path, mproject, cbranch, ctag, mlocal_path, &is_tag);
-	    if (mlocal_path != node.local_path) {
-		std::cout << "(r" << rev.revision_number << ") - renaming " << mlocal_path << " to " << node.local_path << "\n";
-		outfile << "C " << mlocal_path << " " << node.local_path << "\n";
-	    }
-	    continue;
-	}
-	if (node.kind == ndir && node.action == nadd) continue;
-	if (node.kind == ndir && node.action == ndelete) {
-	    std::cerr << "Revision " << rev.revision_number << "DIR delete: " << node.local_path << "\n";
-	    outfile << "D " << node.local_path << "\n";
-	    continue;
-	}
-
-	//std::cout << "	Processing node " << print_node_action(node.action) << " " << node.local_path << " into branch " << node.branch << "\n";
-	std::string gsha1;
-	if (node.action == nchange || node.action == nadd || node.action == nreplace) {
-	    if (node.exec_change || node.copyfrom_path.length() || node.text_content_length || node.text_content_sha1.length()) {
-		gsha1 = svn_sha1_to_git_sha1[current_sha1[node.path]];
-		if (gsha1.length() < 40) {
-		    if (node.copyfrom_rev) {
-			gsha1 = svn_sha1_to_git_sha1[node.text_copy_source_sha1];
-		    }
-		    if (gsha1.length() < 40) {
-			std::string tpath;
-			if (node.copyfrom_path.length()) {
-			    tpath = node.copyfrom_path;
-			} else {
-			    tpath = std::string("brlcad/trunk/") + node.local_path;
-			}
-			gsha1 = svn_sha1_to_git_sha1[current_sha1[tpath]];
-			if (gsha1.length() < 40) {
-			    std::cout << "Fatal - could not find git sha1 - r" << rev.revision_number << ", node: " << node.path << "\n";
-			    std::cout << "current sha1: " << current_sha1[node.path] << "\n";
-			    std::cout << "trunk sha1: " << current_sha1[tpath] << "\n";
-			    std::cout << "Revision merged from: " << rev.merged_from << "\n";
-			    print_node(node);
-			    exit(1);
-			} else {
-			    std::cout << "Warning(r" << rev.revision_number << ") - couldn't find SHA1 for " << node.path << ", using node from " << tpath << "\n";
-			}
-		    }
-		}
-	    } else {
-		std::cout << "Warning(r" << rev.revision_number << ") - skipping " << node.path << " - no git applicable change found.\n";
-		continue;
-	    }
-	}
-
-	switch (node.action) {
-	    case nchange:
-		outfile << "M ";
-		break;
-	    case nadd:
-		outfile << "M ";
-		break;
-	    case nreplace:
-		outfile << "M ";
-		break;
-	    case ndelete:
-		break;
-	    default:
-		std::cerr << "Unhandled node action type " << print_node_action(node.action) << "\n";
-		outfile << "? ";
-		outfile << "\"" << node.local_path << "\"\n";
-		std::cout << "Fatal - unhandled node action at r" << rev.revision_number << ", node: " << node.path << "\n";
-		exit(1);
-	}
-
-	if (node.action != ndelete) {
-	    if (node.exec_path) {
-		outfile << "100755 ";
-	    } else {
-		outfile << "100644 ";
-	    }
-	}
-
 	if (node.action == ndelete) {
-	    // TODO - r33147 indicates we can just delete willy-nilly at the end - we've got mixed deletes and mods
-	    // in the same commit that are intended to leave the file intact at the end.
-	    std::string nd = std::string("D \"") + node.local_path + std::string("\"\n");
-	    ndeletes.append(nd);
-	    continue;
+	    deletes.insert(&node);
 	}
-	if (node.action == nchange || node.action == nadd || node.action == nreplace) {
-	    outfile << gsha1 << " \"" << node.local_path << "\"\n";
-	    continue;
+    }
+    for (size_t n = 0; n != rev.nodes.size(); n++) {
+	struct svn_node &node = rev.nodes[n];
+	if (node.kind != nfile && node.copyfrom_path.length()) {
+	    for (d_it = deletes.begin(); d_it != deletes.end(); d_it++) {
+		if (node.copyfrom_path == (*d_it)->path) {
+		    std::cout << "Deferring delete of " << node.copyfrom_path << "\n";
+		    deferred_deletes.insert(*d_it);
+		}
+	    }
 	}
-
-	std::cout << "Error(r" << rev.revision_number << ") - unhandled node action: " << print_node_action(node.action) << "\n";
-	print_node(node);
-	exit(1);
     }
 
-    if (ndeletes.length()) {
-	outfile << ndeletes;
+    for (size_t n = 0; n != rev.nodes.size(); n++) {
+	struct svn_node &node = rev.nodes[n];
+	if (node.action != ndelete || deferred_deletes.find(&node) == deferred_deletes.end()) {
+	    write_git_node(outfile, rev, node);
+	}
     }
+
+    for (d_it = deferred_deletes.begin(); d_it != deferred_deletes.end(); d_it++) {
+	write_git_node(outfile, rev, **d_it);
+    }
+
 }
 
 void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev_num_min, long int rev_num_max)
@@ -1175,16 +1255,15 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 		full_sync_commit(outfile, rev, bsrc, bdest);
 		continue;
 	    }
-
+#if 0
 	    if (rebuild_revs.find(rev.revision_number) != rebuild_revs.end()) {
 		std::cout << "Revision " << rev.revision_number << " references non-current SVN info, needs special handling\n";
 		old_references_commit(outfile, rev, rbranch);
-		exit(1);
 		continue;
 	    }
-
-	    if (rev.revision_number == 33147) {
-		std::cout << "at 33147\n";
+#endif
+	    if (rev.revision_number == 30332) {
+		std::cout << "at 30332\n";
 	    }
 
 	    for (size_t n = 0; n != rev.nodes.size(); n++) {
@@ -1447,7 +1526,7 @@ int main(int argc, const char **argv)
     std::ofstream outfile("brlcad-svn-export.fi", std::ios::out | std::ios::binary);
     if (!outfile.good()) return -1;
     //rev_fast_export(infile, outfile, 29887, 30854);
-    rev_fast_export(infile, outfile, 29887, 33148);
+    rev_fast_export(infile, outfile, 29887, 30333);
     outfile.close();
 
     return 0;
