@@ -77,6 +77,7 @@ std::map<std::string,std::string> author_map;
 
 std::map<std::string, std::map<long int, std::set<struct svn_node *> *>> path_states;
 std::map<std::string, std::map<long int, std::set<struct svn_node *> *>>::iterator ps_it;
+std::set<long int> rebuild_revs;
 
 
 /* Branches */
@@ -748,6 +749,7 @@ analyze_dump()
 	for (d_it = dnodes.begin(); d_it != dnodes.end(); d_it++) {
 	    std::cout << "(r" << rev.revision_number << "): copying directory " << d_it->first << " at revision " << d_it->second << "\n";
 	    path_states[d_it->first][d_it->second] = new std::set<struct svn_node *>;
+	    rebuild_revs.insert(rev.revision_number);
 	}
     }
 
@@ -772,7 +774,7 @@ analyze_dump()
 	    }
 	}
     }
-#if 0
+
     for (r_it = revs.begin(); r_it != revs.end(); r_it++) {
 	long int maxrev = 0;
 	struct svn_revision &rev = r_it->second;
@@ -869,7 +871,6 @@ analyze_dump()
 	    rev.project = rev.nodes[0].project; 
 	}
     }
-#endif
 }
 
 void full_sync_commit(std::ofstream &outfile, struct svn_revision &rev, std::string &bsrc, std::string &bdest)
@@ -955,6 +956,10 @@ void move_only_commit(std::ofstream &outfile, struct svn_revision &rev, std::str
 	}
     }
 
+}
+
+void old_references_commit(std::ofstream &outfile, struct svn_revision &rev, std::string &rbranch)
+{
 }
 
 void standard_commit(std::ofstream &outfile, struct svn_revision &rev, std::string &rbranch)
@@ -1168,6 +1173,13 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 		    bsrc = tag_ids[std::string("rel-7-12-6")];
 		}
 		full_sync_commit(outfile, rev, bsrc, bdest);
+		continue;
+	    }
+
+	    if (rebuild_revs.find(rev.revision_number) != rebuild_revs.end()) {
+		std::cout << "Revision " << rev.revision_number << " references non-current SVN info, needs special handling\n";
+		old_references_commit(outfile, rev, rbranch);
+		exit(1);
 		continue;
 	    }
 
@@ -1429,15 +1441,15 @@ int main(int argc, const char **argv)
 	std::cerr << "No revision found - quitting\n";
 	return -1;
     }
-#if 0
+
     std::ifstream infile(argv[1]);
 
     std::ofstream outfile("brlcad-svn-export.fi", std::ios::out | std::ios::binary);
     if (!outfile.good()) return -1;
     //rev_fast_export(infile, outfile, 29887, 30854);
-    rev_fast_export(infile, outfile, 29887, 33147);
+    rev_fast_export(infile, outfile, 29887, 33148);
     outfile.close();
-#endif
+
     return 0;
 }
 
