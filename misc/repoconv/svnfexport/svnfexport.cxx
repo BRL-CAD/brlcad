@@ -75,6 +75,10 @@ std::map<std::string,std::string> svn_sha1_to_git_sha1;
 std::set<std::string> cvs_blob_sha1;
 std::map<std::string,std::string> author_map;
 
+std::map<std::string, std::map<long int, std::set<struct svn_node> *>> path_states;
+std::map<std::string, std::map<long int, std::set<struct svn_node> *>>::iterator ps_it;
+
+
 /* Branches */
 std::set<std::string> branches;
 /* Tags */
@@ -100,6 +104,7 @@ std::map<std::string, std::string> tag_mappings;
 
 #define sfcmp(_s1, _s2) _s1.compare(0, _s2.size(), _s2) && _s1.size() >= _s2.size()
 #define svn_str(_s1, _s2) (!sfcmp(_s1, _s2)) ? _s1.substr(_s2.size(), _s1.size()-_s2.size()) : std::string()
+#define dir_is_root(_dir, _fpath) !_fpath.compare(0, _dir.size(), _dir) && _fpath.size() > _dir.size() && _fpath.c_str()[_dir.size()] == '/'
 
 svn_node_kind_t svn_node_kind(std::string nk)
 {
@@ -690,8 +695,66 @@ node_path_split(std::string &node_path, std::string &project, std::string &branc
 void
 analyze_dump()
 {
+    std::map<std::string, long int> path_last_commit;
     std::map<long int, struct svn_revision>::iterator r_it;
 
+    // First pass - find all copyfrom_path instances where we are going to need to track
+    // the contents at one or more specific revisions
+    for (r_it = revs.begin(); r_it != revs.end(); r_it++) {
+	struct svn_revision &rev = r_it->second;
+	std::set<std::pair<std::string, long int>> dnodes;
+	std::set<std::pair<std::string, long int>>::iterator d_it;
+	for (size_t n = 0; n != rev.nodes.size(); n++) {
+	    struct svn_node &node = rev.nodes[n];
+	    if (node.copyfrom_path.length() && !node.text_copy_source_sha1.length()) {
+		//std::cout << "(r" << rev.revision_number << "): copying directory " << node.path << " from " << node.copyfrom_path << " at revision " << node.copyfrom_rev << "\n";
+
+		// If the copy is from the immediately previous commit, we haven't had time
+		// to make any changes that would invalidate a straight-up "C" operation in
+		// git.  If it's from an older state, "C" won't work and we need to explicitly
+		// reassemble the older directory state.
+		if (node.copyfrom_rev < path_last_commit[node.copyfrom_path]) {
+		    dnodes.insert(std::pair<std::string, long int>(node.copyfrom_path, node.copyfrom_rev));
+		}
+	    }
+	}
+	// For every path we touched, update its last commit number
+	for (size_t n = 0; n != rev.nodes.size(); n++) {
+	    struct svn_node &node = rev.nodes[n];
+	    path_last_commit[node.path] = rev.revision_number;
+	}
+
+	for (d_it = dnodes.begin(); d_it != dnodes.end(); d_it++) {
+	    std::cout << "(r" << rev.revision_number << "): copying directory " << d_it->first << " at revision " << d_it->second << "\n";
+	    path_states[d_it->first][d_it->second] = new std::set<struct svn_node>;
+	}
+    }
+
+    for (ps_it = path_states.begin(); ps_it != path_states.end(); ps_it++) {
+	std::string psp = ps_it->first;
+	std::cout << "have " << psp << "\n";
+    }
+    // Second pass - assemble node sets for the paths and revisions we will need to know
+    for (r_it = revs.begin(); r_it != revs.end(); r_it++) {
+	struct svn_revision &rev = r_it->second;
+	for (size_t n = 0; n != rev.nodes.size(); n++) {
+	    struct svn_node &node = rev.nodes[n];
+	    for (ps_it = path_states.begin(); ps_it != path_states.end(); ps_it++) {
+		std::string psp = ps_it->first;
+		if (dir_is_root(psp, node.path)) {
+		    std::map<long int, std::set<struct svn_node> *>::iterator r_it;
+		    for (r_it = ps_it->second.begin(); r_it != ps_it->second.end(); r_it++) {
+			if (psp != std::string("brlcad/trunk")) {
+			if (rev.revision_number <= r_it->first) {
+			    std::cout << "Path " << node.path << ", r" << rev.revision_number << " is relevant for " << psp << ",r" << r_it->first << "\n";
+			}
+			}
+		    }
+		}
+	    }
+	}
+    }
+#if 0
     for (r_it = revs.begin(); r_it != revs.end(); r_it++) {
 	long int maxrev = 0;
 	struct svn_revision &rev = r_it->second;
@@ -699,6 +762,12 @@ analyze_dump()
 	    struct svn_node &node = rev.nodes[n];
 	    // Break up paths and build tag/branch lists
 	    node_path_split(node.path, node.project, node.branch, node.tag, node.local_path, &(node.tag_path));
+
+	    if (node.copyfrom_path.length() && node.kind == ndir && node.action == nadd) {
+		std::cout << "(r" << rev.revision_number << "): copying directory " << node.path << " from " << node.copyfrom_path << " at revision " << node.copyfrom_rev << "\n";
+	    }
+
+
 	    if (node.branch.length()) {
 		// Map dmtogl-branch names to dmtogl
 		if (node.branch == std::string("refs/heads/dmtogl-branch")) {
@@ -782,7 +851,7 @@ analyze_dump()
 	    rev.project = rev.nodes[0].project; 
 	}
     }
-
+#endif
 }
 
 void full_sync_commit(std::ofstream &outfile, struct svn_revision &rev, std::string &bsrc, std::string &bdest)
@@ -1084,8 +1153,8 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 		continue;
 	    }
 
-	    if (rev.revision_number == 34110) {
-		std::cout << "at 34110\n";
+	    if (rev.revision_number == 33147) {
+		std::cout << "at 33147\n";
 	    }
 
 	    for (size_t n = 0; n != rev.nodes.size(); n++) {
@@ -1318,23 +1387,9 @@ int main(int argc, const char **argv)
 
     /* Populate valid_projects */
     valid_projects.insert(std::string("brlcad"));
-    /*
-    valid_projects.insert(std::string("gct"));
-    valid_projects.insert(std::string("geomcore"));
-    valid_projects.insert(std::string("iBME"));
-    valid_projects.insert(std::string("isst"));
-    valid_projects.insert(std::string("jbrlcad"));
-    valid_projects.insert(std::string("osl"));
-    valid_projects.insert(std::string("ova"));
-    valid_projects.insert(std::string("rt^3"));
-    valid_projects.insert(std::string("rtcmp"));
-    valid_projects.insert(std::string("web"));
-    valid_projects.insert(std::string("webcad"));
-    */
 
     /* SVN has some empty files - tell our setup how to handle them */
     svn_sha1_to_git_sha1[std::string("da39a3ee5e6b4b0d3255bfef95601890afd80709")] = std::string("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391");
-
 
     /* Branch/tag name mappings */
     branch_mappings[std::string("framebuffer-experiment")] = std::string("framebuffer-experiment");
@@ -1356,7 +1411,7 @@ int main(int argc, const char **argv)
 	std::cerr << "No revision found - quitting\n";
 	return -1;
     }
-
+#if 0
     std::ifstream infile(argv[1]);
 
     std::ofstream outfile("brlcad-svn-export.fi", std::ios::out | std::ios::binary);
@@ -1364,70 +1419,7 @@ int main(int argc, const char **argv)
     //rev_fast_export(infile, outfile, 29887, 30854);
     rev_fast_export(infile, outfile, 29887, 33147);
     outfile.close();
-
-#if 0
-
-    std::ofstream outfile1("r29887-r31038.fi", std::ios::out | std::ios::binary);
-    if (!outfile1.good()) return -1;
-    rev_fast_export(infile, outfile1, 29887, 31038);
-    outfile1.close();
-
-    // r31039 needs special handling
-
-    infile.seekg(0);
-
-    std::ofstream outfile2("r31040-r32313.fi", std::ios::out | std::ios::binary);
-    if (!outfile2.good()) return -1;
-    rev_fast_export(infile, outfile2, 31040, 32313);
-    outfile2.close();
-
-
-    // r32314 needs special handling
-
-    infile.seekg(0);
-
-    std::ofstream outfile3("r32315-r36471.fi", std::ios::out | std::ios::binary);
-    if (!outfile3.good()) return -1;
-    rev_fast_export(infile, outfile3, 32315, 36471);
-    outfile3.close();
-
-     // r36472 needs special handling
-
-   infile.seekg(0);
-
-    std::ofstream outfile4("r36473-r36632.fi", std::ios::out | std::ios::binary);
-    if (!outfile4.good()) return -1;
-    rev_fast_export(infile, outfile4, 36473, 36632);
-    outfile4.close();
-
-    // r36633 needs special handling
-
-  infile.seekg(0);
-
-    std::ofstream outfile5("r36634-r36842.fi", std::ios::out | std::ios::binary);
-    if (!outfile5.good()) return -1;
-    rev_fast_export(infile, outfile5, 36634, 36842);
-    outfile5.close();
-
-    // r36843 needs special handling
-
-    infile.seekg(0);
-
-    std::ofstream outfile6("r36844-r39464.fi", std::ios::out | std::ios::binary);
-    if (!outfile6.good()) return -1;
-    rev_fast_export(infile, outfile6, 36844, 39464);
-    outfile6.close();
-
-    // r39465 needs special handling
-
-    infile.seekg(0);
-
-    std::ofstream outfile7("r39466-r73000.fi", std::ios::out | std::ios::binary);
-    if (!outfile7.good()) return -1;
-    rev_fast_export(infile, outfile7, 39466, 73000);
-    outfile7.close();
 #endif
-
     return 0;
 }
 
