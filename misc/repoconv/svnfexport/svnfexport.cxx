@@ -75,8 +75,8 @@ std::map<std::string,std::string> svn_sha1_to_git_sha1;
 std::set<std::string> cvs_blob_sha1;
 std::map<std::string,std::string> author_map;
 
-std::map<std::string, std::map<long int, std::set<struct svn_node> *>> path_states;
-std::map<std::string, std::map<long int, std::set<struct svn_node> *>>::iterator ps_it;
+std::map<std::string, std::map<long int, std::set<struct svn_node *> *>> path_states;
+std::map<std::string, std::map<long int, std::set<struct svn_node *> *>>::iterator ps_it;
 
 
 /* Branches */
@@ -668,6 +668,27 @@ node_path_split(std::string &node_path, std::string &project, std::string &branc
     local_path = wpath;
 }
 
+void
+update_node(std::set<struct svn_node *> *nstate, struct svn_node *nnode)
+{
+    std::set<struct svn_node *>::iterator n_it;
+    // Any old nodes with the same path are out.  If the new one is an
+    // add or mod it's in, but regardless all old matches are out
+    for (n_it = nstate->begin(); n_it != nstate->end(); ) {
+	struct svn_node *onode = *n_it;
+	if (onode->path == nnode->path) {
+	    //std::cout << "Erasing old node: " << nnode->path << "\n";
+	    n_it = nstate->erase(n_it);
+	} else {
+	    n_it++;
+	}
+    }
+
+    if (nnode->action != ndelete) {
+	nstate->insert(nnode);
+    }
+}
+
 /**
  * Performs a variety of analysis operations to build up useful data sets.
  *
@@ -726,14 +747,10 @@ analyze_dump()
 
 	for (d_it = dnodes.begin(); d_it != dnodes.end(); d_it++) {
 	    std::cout << "(r" << rev.revision_number << "): copying directory " << d_it->first << " at revision " << d_it->second << "\n";
-	    path_states[d_it->first][d_it->second] = new std::set<struct svn_node>;
+	    path_states[d_it->first][d_it->second] = new std::set<struct svn_node *>;
 	}
     }
 
-    for (ps_it = path_states.begin(); ps_it != path_states.end(); ps_it++) {
-	std::string psp = ps_it->first;
-	std::cout << "have " << psp << "\n";
-    }
     // Second pass - assemble node sets for the paths and revisions we will need to know
     for (r_it = revs.begin(); r_it != revs.end(); r_it++) {
 	struct svn_revision &rev = r_it->second;
@@ -742,12 +759,13 @@ analyze_dump()
 	    for (ps_it = path_states.begin(); ps_it != path_states.end(); ps_it++) {
 		std::string psp = ps_it->first;
 		if (dir_is_root(psp, node.path)) {
-		    std::map<long int, std::set<struct svn_node> *>::iterator r_it;
+		    std::map<long int, std::set<struct svn_node *> *>::iterator r_it;
 		    for (r_it = ps_it->second.begin(); r_it != ps_it->second.end(); r_it++) {
-			if (psp != std::string("brlcad/trunk")) {
 			if (rev.revision_number <= r_it->first) {
-			    std::cout << "Path " << node.path << ", r" << rev.revision_number << " is relevant for " << psp << ",r" << r_it->first << "\n";
-			}
+			    /*if (psp != std::string("brlcad/trunk")) {
+				std::cout << "Path " << node.path << ", r" << rev.revision_number << " is relevant for " << psp << ",r" << r_it->first << "\n";
+			    }*/
+			    update_node(r_it->second, &node);
 			}
 		    }
 		}
