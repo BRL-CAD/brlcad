@@ -436,10 +436,12 @@ _ged_read_densities(struct ged *gedp, const char *filename, int fault_tolerant)
 
 	    if (gedp->gd_densities) {
 		analyze_densities_destroy(gedp->gd_densities);
+		gedp->gd_densities = NULL;
 	    }
 
 	    if (gedp->gd_densities_source) {
 		bu_free(gedp->gd_densities_source, "free densities source string");
+		gedp->gd_densities_source = NULL;
 	    }
 
 	    (void)analyze_densities_create(&gedp->gd_densities);
@@ -456,6 +458,7 @@ _ged_read_densities(struct ged *gedp, const char *filename, int fault_tolerant)
 		bu_vls_printf(gedp->ged_result_str, "Problem reading densities from .g file:\n%s\n", bu_vls_cstr(&msgs));
 		if (gedp->gd_densities) {
 		    analyze_densities_destroy(gedp->gd_densities);
+		    gedp->gd_densities = NULL;
 		}
 		bu_vls_free(&msgs);
 		return GED_ERROR;
