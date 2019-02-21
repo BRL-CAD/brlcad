@@ -30,6 +30,18 @@
 #include <bu.h>
 #include <ged.h>
 
+const char *basic_density =
+"15   0.920000        Rubber\n"
+"16   1.230000        Rubber, Neoprene\n";
+
+const char *nist_to_basic =
+"\"Rubber, Butyl\" Rubber\n"
+"\"Rubber, Natural\" Rubber\n";
+
+const char *basic_to_nist =
+"\"Rubber\" \"Rubber, Natural\"\n";
+
+
 int
 check_for_data_exported(const char *filename, const char *key)
 {
@@ -86,14 +98,37 @@ check_for_data_not_present(struct ged *gedp, const char *key)
     return 0;
 }
 
+int
+attr_val_check(struct ged *gedp, const char *obj, const char *key, const char *expected)
+{
+    const char *attr_cmd[5] = {"attr", "get", NULL, NULL, NULL};
+    attr_cmd[2] = obj;
+    attr_cmd[3] = key;
+    if (ged_attr(gedp, 4, (const char **)attr_cmd) != GED_OK) {
+	bu_log("Error: 'attr get %s %s' failed\n", obj, key);
+	return -1;
+    }
+    if (!BU_STR_EQUAL(bu_vls_cstr(gedp->ged_result_str), expected)) {
+	bu_log("Error: expected '%s', got: '%s'\n", expected, bu_vls_cstr(gedp->ged_result_str));
+	return -1;
+    }
+    return 0;
+}
+
 
 int
 main(int ac, char *av[]) {
     struct ged *gedp;
     const char *gname = "ged_mater_test.g";
     const char *exp_data = "ged_mater_density_export.txt";
+    const char *d_data = "ged_mater_density_data.txt";
+    const char *m_data = "ged_mater_density_map.txt";
+    const char *b_data = "ged_mater_density_reverse_map.txt";
     char mdata[MAXPATHLEN];
     const char *mater_cmd[10] = {"mater", "-d", NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+    const char *make_cmd[10] = {"make", NULL, "sph", NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+    const char *reg_cmd[10] = {"r", NULL, "u", NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+    const char *attr_cmd[10] = {"attr", "set", NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
     const char *mat1 = "1,0.0001,Material01";
     const char *mat2 = "2,1.1e-1,Material02";
     const char *mat1_reassign = "1,2.0,Material 03";
@@ -227,11 +262,245 @@ main(int ac, char *av[]) {
 	    goto ged_test_fail;
 	}
 
+	// Now, test the mapping logic
+
+	mater_cmd[1] = "-d";
+	mater_cmd[2] = "clear";
+	if (ged_mater(gedp, 3, (const char **)mater_cmd) != GED_OK) {
+	    bu_log("Error: 'mater -d clear' failed\n");
+	    goto ged_test_fail;
+	}
+
+	mater_cmd[1] = "-d";
+	mater_cmd[2] = "import";
+	mater_cmd[3] = "-v";
+	mater_cmd[4] = mdata;
+	if (ged_mater(gedp, 5, (const char **)mater_cmd) != GED_OK) {
+	    bu_log("Error: 'mater -d import' failed to load %s\n", mdata);
+	    goto ged_test_fail;
+	}
+
+	// Make the initial geometry objects on which the mappings will
+	// operate.
+	make_cmd[1] = "sph1.s";
+	if (ged_make(gedp, 3, (const char **)make_cmd) != GED_OK) {
+	    bu_log("Error: failed to make object\n");
+	    goto ged_test_fail;
+	}
+	make_cmd[1] = "sph2.s";
+	if (ged_make(gedp, 3, (const char **)make_cmd) != GED_OK) {
+	    bu_log("Error: failed to make object\n");
+	    goto ged_test_fail;
+	}
+	make_cmd[1] = "sph3.s";
+	if (ged_make(gedp, 3, (const char **)make_cmd) != GED_OK) {
+	    bu_log("Error: failed to make object\n");
+	    goto ged_test_fail;
+	}
+	reg_cmd[1] = "reg1.r";
+	reg_cmd[3] = "sph1.s";
+	if (ged_region(gedp, 4, (const char **)reg_cmd) != GED_OK) {
+	    bu_log("Error: failed to make region\n");
+	    goto ged_test_fail;
+	}
+	reg_cmd[1] = "reg2.r";
+	reg_cmd[3] = "sph2.s";
+	if (ged_region(gedp, 4, (const char **)reg_cmd) != GED_OK) {
+	    bu_log("Error: failed to make region\n");
+	    goto ged_test_fail;
+	}
+	reg_cmd[1] = "reg3.r";
+	reg_cmd[3] = "sph3.s";
+	if (ged_region(gedp, 4, (const char **)reg_cmd) != GED_OK) {
+	    bu_log("Error: failed to make region\n");
+	    goto ged_test_fail;
+	}
+
+	// Set the seed attributes.
+	attr_cmd[2] = "reg1.r";
+	attr_cmd[3] = "material_id";
+	attr_cmd[4] = "12242";
+	if (ged_attr(gedp, 5, (const char **)attr_cmd) != GED_OK) {
+	    bu_log("Error: failed to set attribute\n");
+	    goto ged_test_fail;
+	}
+	attr_cmd[2] = "reg2.r";
+	attr_cmd[3] = "material_name";
+	attr_cmd[4] = "Rubber, Natural";
+	if (ged_attr(gedp, 5, (const char **)attr_cmd) != GED_OK) {
+	    bu_log("Error: failed to set attribute\n");
+	    goto ged_test_fail;
+	}
+	attr_cmd[2] = "reg3.r";
+	attr_cmd[3] = "material_id";
+	attr_cmd[4] = "12244";
+	if (ged_attr(gedp, 5, (const char **)attr_cmd) != GED_OK) {
+	    bu_log("Error: failed to set attribute\n");
+	    goto ged_test_fail;
+	}
+
+	// In-memory name updates.
+	mater_cmd[1] = "-d";
+	mater_cmd[2] = "map";
+	mater_cmd[3] = "--names-from-ids";
+	if (ged_mater(gedp, 4, (const char **)mater_cmd) != GED_OK) {
+	    bu_log("Error: 'mater -d map --names-from-ids' failed to run\n");
+	    goto ged_test_fail;
+	}
+	if (attr_val_check(gedp, "reg1.r", "material_name", "Rubber, Butyl")) {
+	    goto ged_test_fail;
+	}
+	if (attr_val_check(gedp, "reg2.r", "material_name", "Rubber, Natural")) {
+	    goto ged_test_fail;
+	}
+	if (attr_val_check(gedp, "reg3.r", "material_name", "Rubber, Neoprene")) {
+	    goto ged_test_fail;
+	}
+
+	// In-memory id updates.
+	mater_cmd[1] = "-d";
+	mater_cmd[2] = "map";
+	mater_cmd[3] = "--ids-from-names";
+	if (ged_mater(gedp, 4, (const char **)mater_cmd) != GED_OK) {
+	    bu_log("Error: 'mater -d map --ids-from-names' failed to run\n");
+	    goto ged_test_fail;
+	}
+	if (attr_val_check(gedp, "reg1.r", "material_id", "12242")) {
+	    goto ged_test_fail;
+	}
+	if (attr_val_check(gedp, "reg2.r", "material_id", "12243")) {
+	    goto ged_test_fail;
+	}
+	if (attr_val_check(gedp, "reg3.r", "material_id", "12244")) {
+	    goto ged_test_fail;
+	}
+
+	// Create files to use for mapping inputs
+	{
+	    FILE *dd, *dm, *db;
+	    if (((dd = fopen(d_data, "wb")) == NULL) ||
+		    ((dm = fopen(m_data, "wb")) == NULL) || 
+		    ((db = fopen(b_data, "wb")) == NULL)) {
+		bu_log("Error: could not open mapping input files for writing\n");
+		goto ged_test_fail;
+	    }
+	    fprintf(dd, "%s", basic_density);
+	    fprintf(dm, "%s", nist_to_basic);
+	    fprintf(db, "%s", basic_to_nist);
+	    (void)fclose(dd);
+	    (void)fclose(dm);
+	    (void)fclose(db);
+	}
+
+	// File-based id updates.
+	mater_cmd[1] = "-d";
+	mater_cmd[2] = "map";
+	mater_cmd[3] = "--ids-from-names";
+	mater_cmd[4] = d_data;
+	if (ged_mater(gedp, 5, (const char **)mater_cmd) != GED_OK) {
+	    bu_log("Error: 'mater -d map --ids-from-names %s' failed to run\n", d_data);
+	    goto ged_test_fail;
+	}
+	if (attr_val_check(gedp, "reg1.r", "material_id", "12242")) {
+	    goto ged_test_fail;
+	}
+	if (attr_val_check(gedp, "reg2.r", "material_id", "12243")) {
+	    goto ged_test_fail;
+	}
+	if (attr_val_check(gedp, "reg3.r", "material_id", "16")) {
+	    goto ged_test_fail;
+	}
+
+
+	// File-based id updates, with map file.
+	mater_cmd[1] = "-d";
+	mater_cmd[2] = "map";
+	mater_cmd[3] = "--ids-from-names";
+	mater_cmd[4] = d_data;
+	mater_cmd[5] = m_data;
+	if (ged_mater(gedp, 6, (const char **)mater_cmd) != GED_OK) {
+	    bu_log("Error: 'mater -d map --ids-from-names %s %s' failed to run\n", d_data, m_data);
+	    goto ged_test_fail;
+	}
+	if (attr_val_check(gedp, "reg1.r", "material_id", "15")) {
+	    goto ged_test_fail;
+	}
+	if (attr_val_check(gedp, "reg2.r", "material_id", "15")) {
+	    goto ged_test_fail;
+	}
+	if (attr_val_check(gedp, "reg3.r", "material_id", "16")) {
+	    goto ged_test_fail;
+	}
+
+	// File-based name updates.
+	mater_cmd[1] = "-d";
+	mater_cmd[2] = "map";
+	mater_cmd[3] = "--names-from-ids";
+	mater_cmd[4] = d_data;
+	if (ged_mater(gedp, 5, (const char **)mater_cmd) != GED_OK) {
+	    bu_log("Error: 'mater -d map --names-from-ids %s' failed to run\n", d_data);
+	    goto ged_test_fail;
+	}
+	if (attr_val_check(gedp, "reg1.r", "material_name", "Rubber")) {
+	    goto ged_test_fail;
+	}
+	if (attr_val_check(gedp, "reg2.r", "material_name", "Rubber")) {
+	    goto ged_test_fail;
+	}
+	if (attr_val_check(gedp, "reg3.r", "material_name", "Rubber, Neoprene")) {
+	    goto ged_test_fail;
+	}
+
+
+	// File-based id updates, with map file, after name update.
+	mater_cmd[1] = "-d";
+	mater_cmd[2] = "map";
+	mater_cmd[3] = "--ids-from-names";
+	mater_cmd[4] = d_data;
+	mater_cmd[5] = m_data;
+	if (ged_mater(gedp, 5, (const char **)mater_cmd) != GED_OK) {
+	    bu_log("Error: 'mater -d map --ids-from-names %s %s' failed to run\n", d_data, m_data);
+	    goto ged_test_fail;
+	}
+	if (attr_val_check(gedp, "reg1.r", "material_id", "15")) {
+	    goto ged_test_fail;
+	}
+	if (attr_val_check(gedp, "reg2.r", "material_id", "15")) {
+	    goto ged_test_fail;
+	}
+	if (attr_val_check(gedp, "reg3.r", "material_id", "16")) {
+	    goto ged_test_fail;
+	}
+
+
+	// Map file only id updates.
+	mater_cmd[1] = "-d";
+	mater_cmd[2] = "map";
+	mater_cmd[3] = "--ids-from-names";
+	mater_cmd[4] = b_data;
+	if (ged_mater(gedp, 5, (const char **)mater_cmd) != GED_OK) {
+	    bu_log("Error: 'mater -d map --ids-from-names %s' failed to run\n", b_data);
+	    goto ged_test_fail;
+	}
+	if (attr_val_check(gedp, "reg1.r", "material_id", "12243")) {
+	    goto ged_test_fail;
+	}
+	if (attr_val_check(gedp, "reg2.r", "material_id", "12243")) {
+	    goto ged_test_fail;
+	}
+	if (attr_val_check(gedp, "reg3.r", "material_id", "12244")) {
+	    goto ged_test_fail;
+	}
+
+
     }
 
     ged_close(gedp);
     BU_PUT(gedp, struct ged);
     bu_file_delete(gname);
+    bu_file_delete(d_data);
+    bu_file_delete(m_data);
+    bu_file_delete(b_data);
 
     return 0;
 
@@ -239,6 +508,9 @@ ged_test_fail:
     ged_close(gedp);
     BU_PUT(gedp, struct ged);
     bu_file_delete(gname);
+    bu_file_delete(d_data);
+    bu_file_delete(m_data);
+    bu_file_delete(b_data);
     return 1;
 }
 

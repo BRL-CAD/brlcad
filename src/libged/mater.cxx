@@ -918,6 +918,15 @@ _ged_mater_mat_id(struct ged *gedp, int argc, const char *argv[])
 	    gedp->gd_densities_source = NULL;
 	    gedp->gd_densities = NULL;
 
+	    long int curr_id = -1;
+	    long int id_cnt = 0;
+	    while ((curr_id = analyze_densities_next(a, curr_id)) != -1) {
+		id_cnt++;
+		char *cname = analyze_densities_name(a, curr_id);
+		listed_to_defined.insert(std::pair<std::string, std::string>(std::string(cname), std::string(cname)));
+		defined_materials.insert(std::string(cname));
+		bu_free(cname, "free name copy");
+	    }
 	}
     }
 
@@ -950,15 +959,7 @@ _ged_mater_mat_id(struct ged *gedp, int argc, const char *argv[])
 	    if (!dcnt) {
 		// No densities found, try it as a mapping file
 		analyze_densities_destroy(densities);
-		if (_ged_read_msmap(gedp, ibuff, defined_materials, listed_to_defined) !=  GED_OK) {
-		    bu_vls_printf(gedp->ged_result_str, "file %s is not a valid density file or mapping file, aborting", argv[1]);
-		    bu_close_mapped_file(ifile);
-		    bu_vls_free(&pbuff_msgs);
-		    return GED_ERROR;
-		} else {
-		    bu_close_mapped_file(ifile);
-		    bu_vls_free(&pbuff_msgs);
-		}
+
 		// If we don't have a density file, we can't proceed
 		// unless the database has density information.
 		if ((dp = db_lookup(gedp->ged_wdbp->dbip, GED_DB_DENSITY_OBJECT, LOOKUP_QUIET)) != RT_DIR_NULL) {
@@ -972,8 +973,39 @@ _ged_mater_mat_id(struct ged *gedp, int argc, const char *argv[])
 		    gedp->gd_densities_source = NULL;
 		    gedp->gd_densities = NULL;
 		}
+
+		long int curr_id = -1;
+		long int id_cnt = 0;
+		while ((curr_id = analyze_densities_next(a, curr_id)) != -1) {
+		    id_cnt++;
+		    char *cname = analyze_densities_name(a, curr_id);
+		    listed_to_defined.insert(std::pair<std::string, std::string>(std::string(cname), std::string(cname)));
+		    defined_materials.insert(std::string(cname));
+		    bu_free(cname, "free name copy");
+		}
+
+		if (_ged_read_msmap(gedp, ibuff, defined_materials, listed_to_defined) !=  GED_OK) {
+		    bu_vls_printf(gedp->ged_result_str, "file %s is not a valid density file or mapping file, aborting", argv[1]);
+		    bu_close_mapped_file(ifile);
+		    bu_vls_free(&pbuff_msgs);
+		    return GED_ERROR;
+		} else {
+		    bu_close_mapped_file(ifile);
+		    bu_vls_free(&pbuff_msgs);
+		}
 	    } else {
 		a = densities;
+
+		long int curr_id = -1;
+		long int id_cnt = 0;
+		while ((curr_id = analyze_densities_next(a, curr_id)) != -1) {
+		    id_cnt++;
+		    char *cname = analyze_densities_name(a, curr_id);
+		    listed_to_defined.insert(std::pair<std::string, std::string>(std::string(cname), std::string(cname)));
+		    defined_materials.insert(std::string(cname));
+		    bu_free(cname, "free name copy");
+		}
+
 		bu_close_mapped_file(ifile);
 		bu_vls_free(&pbuff_msgs);
 	    }
@@ -987,6 +1019,17 @@ _ged_mater_mat_id(struct ged *gedp, int argc, const char *argv[])
 	    }
 	    /* Take control of the analyze database away from the GED struct */
 	    a = gedp->gd_densities;
+
+	    long int curr_id = -1;
+	    long int id_cnt = 0;
+	    while ((curr_id = analyze_densities_next(a, curr_id)) != -1) {
+		id_cnt++;
+		char *cname = analyze_densities_name(a, curr_id);
+		listed_to_defined.insert(std::pair<std::string, std::string>(std::string(cname), std::string(cname)));
+		defined_materials.insert(std::string(cname));
+		bu_free(cname, "free name copy");
+	    }
+
 	    bu_free(gedp->gd_densities_source, "density path name");
 	    gedp->gd_densities_source = NULL;
 	    gedp->gd_densities = NULL;
@@ -1035,6 +1078,16 @@ _ged_mater_mat_id(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
 	}
 
+	long int curr_id = -1;
+	long int id_cnt = 0;
+	while ((curr_id = analyze_densities_next(a, curr_id)) != -1) {
+	    id_cnt++;
+	    char *cname = analyze_densities_name(a, curr_id);
+	    listed_to_defined.insert(std::pair<std::string, std::string>(std::string(cname), std::string(cname)));
+	    defined_materials.insert(std::string(cname));
+	    bu_free(cname, "free name copy");
+	}
+
 	mfile = bu_open_mapped_file(argv[2], "mapping file");
 	if (!mfile) {
 	    bu_vls_printf(gedp->ged_result_str, "could not open mapping file %s", argv[2]);
@@ -1055,17 +1108,6 @@ _ged_mater_mat_id(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	bu_vls_free(&pbuff_msgs);
-    }
-
-    // For simplicity, let the complex -> simple map know to map known materials to themselves
-    long int curr_id = -1;
-    long int id_cnt = 0;
-    while ((curr_id = analyze_densities_next(a, curr_id)) != -1) {
-	id_cnt++;
-	char *cname = analyze_densities_name(a, curr_id);
-	listed_to_defined.insert(std::pair<std::string, std::string>(std::string(cname), std::string(cname)));
-	defined_materials.insert(std::string(cname));
-	bu_free(cname, "free name copy");
     }
 
     // Find the objects we need to work with (if any)
