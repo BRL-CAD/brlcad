@@ -137,12 +137,10 @@ main(int ac, char *av[]) {
 	return 1;
     }
 
-    /* Clear out any stale files */
-    bu_file_delete(gname);
-    bu_file_delete(exp_data);
-    bu_file_delete(d_data);
-    bu_file_delete(m_data);
-    bu_file_delete(b_data);
+    if (bu_file_exists(gname, NULL)) {
+	printf("Error: %s already exists\n", gname);
+	return 1;
+    }
 
     gedp = ged_open("db", gname, 0);
 
@@ -494,22 +492,11 @@ main(int ac, char *av[]) {
 
     ged_close(gedp);
     BU_PUT(gedp, struct ged);
-    bu_file_delete(exp_data);
-    bu_file_delete(gname);
-    bu_file_delete(d_data);
-    bu_file_delete(m_data);
-    bu_file_delete(b_data);
-
     return 0;
 
 ged_test_fail:
     ged_close(gedp);
     BU_PUT(gedp, struct ged);
-    bu_file_delete(exp_data);
-    bu_file_delete(gname);
-    bu_file_delete(d_data);
-    bu_file_delete(m_data);
-    bu_file_delete(b_data);
     return 1;
 }
 

@@ -1,0 +1,55 @@
+set(CBDIR "@CMAKE_CURRENT_BINARY_DIR@")
+set(CSDIR "@CMAKE_CURRENT_SOURCE_DIR@")
+
+set(SBDIR "@CMAKE_RUNTIME_OUTPUT_DIRECTORY@")
+set(DBDIR "@CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG@")
+set(RBDIR "@CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE@")
+# Use the mechanism created to allow multiconfig builds to
+# know what the current build type is.
+if(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")
+  set(BDIR "${RBDIR}")
+  set(test_suffix "-Release")
+elseif(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Debug")
+  set(BDIR "${DBDIR}")
+  set(test_suffix "-Debug")
+else(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")
+  set(BDIR "${SBDIR}")
+  set(test_suffix)
+endif(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")
+
+get_filename_component(EXE "@CMAKE_COMMAND@" EXT)
+set(GED_TEST_MATER "${BDIR}/ged_test_mater${EXE}")
+
+# Clean up in case we've run before
+execute_process(COMMAND "@CMAKE_COMMAND@" -E remove "${CBDIR}/ged_mater_test.g")
+execute_process(COMMAND "@CMAKE_COMMAND@" -E remove "${CBDIR}/ged_mater_density_export.txt")
+execute_process(COMMAND "@CMAKE_COMMAND@" -E remove "${CBDIR}/ged_mater_density_data.txt")
+execute_process(COMMAND "@CMAKE_COMMAND@" -E remove "${CBDIR}/ged_mater_density_map.txt")
+execute_process(COMMAND "@CMAKE_COMMAND@" -E remove "${CBDIR}/ged_mater_density_reverse_map.txt")
+
+execute_process(
+  COMMAND "${GED_TEST_MATER}" "dstd" RESULT_VARIABLE ged_mater_result
+  OUTPUT_VARIABLE ged_mater_log ERROR_VARIABLE ged_mater_log
+  )
+file(APPEND "${CBDIR}/regress_ged_mater.log" "${ged_mater_log}")
+
+# Clean up
+execute_process(COMMAND "@CMAKE_COMMAND@" -E remove "${CBDIR}/ged_mater_test.g")
+execute_process(COMMAND "@CMAKE_COMMAND@" -E remove "${CBDIR}/ged_mater_density_export.txt")
+execute_process(COMMAND "@CMAKE_COMMAND@" -E remove "${CBDIR}/ged_mater_density_data.txt")
+execute_process(COMMAND "@CMAKE_COMMAND@" -E remove "${CBDIR}/ged_mater_density_map.txt")
+execute_process(COMMAND "@CMAKE_COMMAND@" -E remove "${CBDIR}/ged_mater_density_reverse_map.txt")
+
+if(ged_mater_result)
+  message(FATAL_ERROR "[regress-ged-mater] Failure, see ${CBDIR}/regress_ged_mater.log for more info.\n")
+else(ged_mater_result)
+  execute_process(COMMAND "@CMAKE_COMMAND@" -E touch "@CMAKE_CURRENT_BINARY_DIR@/regress_ged_mater${test_suffix}.done")
+endif(ged_mater_result)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8
+

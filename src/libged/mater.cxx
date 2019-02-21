@@ -689,22 +689,26 @@ _ged_mater_set(struct ged *gedp, int argc, const char *argv[])
 	if (std::regex_search(dstr, sm, d_reg)) {
 	    if (sm.size() == 4) {
 		int parse_error = 0;
-		const char *id_str = sm[1].str().c_str();
+		const char *id_str = bu_strdup(sm[1].str().c_str());
 		if (bu_opt_long(NULL, 1, (const char **)&id_str, &id) <= 0) {
 		    bu_vls_printf(gedp->ged_result_str, "Error parsing material id: %s\n", id_str);
 		    parse_error = 1;
 		}
-		const char *den_str = sm[2].str().c_str();
+		bu_free((void *)id_str, "str cpy");
+		const char *den_str = bu_strdup(sm[2].str().c_str());
 		if (bu_opt_fastf_t(NULL, 1, (const char **)&den_str, &density) <= 0) {
 		    bu_vls_printf(gedp->ged_result_str, "Error parsing density: %s\n", den_str);
 		    parse_error = 1;
 		}
-		const char *name_str = sm[3].str().c_str();
+		bu_free((void *)den_str, "str cpy");
+		const char *name_str = bu_strdup(sm[3].str().c_str());
 		if (!parse_error) {
 		    analyze_densities_set(a, id, density, name_str, NULL);
+		    bu_free((void *)name_str, "str cpy");
 		} else {
 		    bu_vls_printf(gedp->ged_result_str, "Error parsing density specifier: %s\n", argv[i]);
 		    analyze_densities_destroy(a);
+		    bu_free((void *)name_str, "str cpy");
 		    return GED_ERROR;
 		}
 	    } else {
