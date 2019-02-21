@@ -31,7 +31,7 @@
 #include <ged.h>
 
 int
-check_for_data(const char *filename, const char *key)
+check_for_data_exported(const char *filename, const char *key)
 {
     struct bu_mapped_file *efile = bu_open_mapped_file(filename, "exported densities data");
     if (!strstr((char *)efile->buf, key)) {
@@ -47,6 +47,44 @@ check_for_data(const char *filename, const char *key)
     return 0;
 }
 
+int
+check_for_data_present(struct ged *gedp, const char *key, const char *expected)
+{
+    const char *mater_cmd[10] = {"mater", "-d", NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+    mater_cmd[1] = "-d";
+    mater_cmd[2] = "get";
+    mater_cmd[3] = "--name";
+    mater_cmd[4] = key;
+    if (ged_mater(gedp, 5, (const char **)mater_cmd) != GED_OK) {
+	bu_log("Error: 'mater -d get --name %s' failed\n", key);
+	return -1;
+    }
+    if (!BU_STR_EQUAL(bu_vls_cstr(gedp->ged_result_str), expected)) {
+	bu_log("Error: expected '%s', got: '%s'\n", expected, bu_vls_cstr(gedp->ged_result_str));
+	return -1;
+    }
+    return 0;
+}
+
+
+int
+check_for_data_not_present(struct ged *gedp, const char *key)
+{
+    const char *mater_cmd[10] = {"mater", "-d", NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+    mater_cmd[1] = "-d";
+    mater_cmd[2] = "get";
+    mater_cmd[3] = "--name";
+    mater_cmd[4] = key;
+    if (ged_mater(gedp, 5, (const char **)mater_cmd) != GED_OK) {
+	bu_log("Error: 'mater -d get --name %s' failed\n", key);
+	return -1;
+    }
+    if (bu_vls_strlen(gedp->ged_result_str)) {
+	bu_log("Error: unexpected result found for key %s: '%s'\n", key, bu_vls_cstr(gedp->ged_result_str));
+	return -1;
+    }
+    return 0;
+}
 
 
 int
@@ -56,6 +94,9 @@ main(int ac, char *av[]) {
     const char *exp_data = "ged_mater_density_export.txt";
     char mdata[MAXPATHLEN];
     const char *mater_cmd[10] = {"mater", "-d", NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+    const char *mat1 = "1,0.0001,Material01";
+    const char *mat2 = "2,1.1e-1,Material02";
+    const char *mat1_reassign = "1,2.0,Material 03";
 
     if (ac != 2) {
 	printf("Usage: %s test_name\n", av[0]);
@@ -127,9 +168,62 @@ main(int ac, char *av[]) {
 	    bu_log("Error: 'mater -d export' failed to export to %s\n", exp_data);
 	    goto ged_test_fail;
 	}
-	if (check_for_data(exp_data, "Xylene")) {
+	if (check_for_data_exported(exp_data, "Xylene")) {
 	    goto ged_test_fail;
 	}
+
+	mater_cmd[1] = "-d";
+	mater_cmd[2] = "clear";
+	if (ged_mater(gedp, 3, (const char **)mater_cmd) != GED_OK) {
+	    bu_log("Error: 'mater -d clear' failed\n");
+	    goto ged_test_fail;
+	}
+
+	mater_cmd[1] = "-d";
+	mater_cmd[2] = "set";
+	mater_cmd[3] = mat1;
+	if (ged_mater(gedp, 4, (const char **)mater_cmd) != GED_OK) {
+	    bu_log("Error: 'mater -d set %s' failed\n", mat1);
+	    goto ged_test_fail;
+	}
+	if (check_for_data_present(gedp, "Material01", "1	0.0001	Material01\n")) {
+	    goto ged_test_fail;
+	}
+	if (check_for_data_not_present(gedp, "Xylene")) {
+	    goto ged_test_fail;
+	}
+
+	mater_cmd[1] = "-d";
+	mater_cmd[2] = "set";
+	mater_cmd[3] = mat2;
+	if (ged_mater(gedp, 4, (const char **)mater_cmd) != GED_OK) {
+	    bu_log("Error: 'mater -d set %s' failed\n", mat2);
+	    goto ged_test_fail;
+	}
+	if (check_for_data_present(gedp, "Material01", "1	0.0001	Material01\n")) {
+	    goto ged_test_fail;
+	}
+	if (check_for_data_present(gedp, "Material02", "2	0.11	Material02\n")) {
+	    goto ged_test_fail;
+	}
+
+	mater_cmd[1] = "-d";
+	mater_cmd[2] = "set";
+	mater_cmd[3] = mat1_reassign;
+	if (ged_mater(gedp, 4, (const char **)mater_cmd) != GED_OK) {
+	    bu_log("Error: 'mater -d set %s' failed\n", mat1_reassign);
+	    goto ged_test_fail;
+	}
+	if (check_for_data_present(gedp, "Material02", "2	0.11	Material02\n")) {
+	    goto ged_test_fail;
+	}
+	if (check_for_data_present(gedp, "Material 03", "1	2	Material 03\n")) {
+	    goto ged_test_fail;
+	}
+	if (check_for_data_not_present(gedp, "Material01")) {
+	    goto ged_test_fail;
+	}
+
     }
 
     ged_close(gedp);
