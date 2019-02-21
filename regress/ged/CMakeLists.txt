@@ -39,6 +39,7 @@ set_target_properties(regress-ged PROPERTIES FOLDER "BRL-CAD Regression Tests")
 Add_GED_Test(mater "regress_ged_mater")
 
 CMAKEFILES(
+  CMakeLists.txt
   regress-mater.cmake.in
   )
 
