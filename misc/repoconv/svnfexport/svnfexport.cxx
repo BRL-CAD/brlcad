@@ -99,6 +99,7 @@ std::map<long int, struct svn_revision> revs;
 /* Holds strings identifying all known projects in the svn repo */
 std::set<std::string> valid_projects;
 
+std::set<long int> brlcad_revs;
 
 std::map<std::string, std::string> branch_mappings;
 std::map<std::string, std::string> tag_mappings;
@@ -741,6 +742,7 @@ analyze_dump()
 	    }
 	}
 	// For every path we touched, update its last commit number
+	// TODO - for rigor, this should probably be at least every path and its parent directory...
 	for (size_t n = 0; n != rev.nodes.size(); n++) {
 	    struct svn_node &node = rev.nodes[n];
 	    path_last_commit[node.path] = rev.revision_number;
@@ -936,9 +938,13 @@ void move_only_commit(std::ofstream &outfile, struct svn_revision &rev, std::str
     branch_head_ids[rbranch] = mvmark;
 
     if (rev.merged_from.length()) {
-	std::cout << "Revision " << rev.revision_number << " merged from: " << rev.merged_from << "(" << rev.merged_rev << "), id " << branch_head_id(rev.merged_from, rev.merged_rev) << "\n";
-	std::cout << "Revision " << rev.revision_number << "        from: " << rbranch << "\n";
-	outfile << "merge :" << rev.merged_rev << "\n";
+	if (brlcad_revs.find(rev.merged_rev) != brlcad_revs.end()) {
+	    std::cout << "Revision " << rev.revision_number << " merged from: " << rev.merged_from << "(" << rev.merged_rev << "), id " << branch_head_id(rev.merged_from, rev.merged_rev) << "\n";
+	    std::cout << "Revision " << rev.revision_number << "        from: " << rbranch << "\n";
+	    outfile << "merge :" << rev.merged_rev << "\n";
+	} else {
+	    std::cout << "Warning: r" << rev.revision_number << " is referencing a commit id (" << rev.merged_rev << ") that is not a BRL-CAD commit\n";
+	}
     }
 
     for (size_t n = 0; n != rev.nodes.size(); n++) {
@@ -964,10 +970,6 @@ void write_git_node(std::ofstream &outfile, struct svn_revision &rev, struct svn
      *
      * However, there is an important exception here for directory copies and deletes!
      * */
-    if (rev.revision_number == 30333) {
-	std::cout << "at 30333\n";
-    }
-
     if (node.kind == ndir && node.action == nadd && node.copyfrom_path.length()) {
 	int is_tag;
 	std::string mproject, cbranch, mlocal_path, ctag;
@@ -1082,10 +1084,17 @@ void old_references_commit(std::ofstream &outfile, struct svn_revision &rev, std
     branch_head_ids[rbranch] = std::to_string(rev.revision_number);
 
     if (rev.merged_from.length()) {
-	std::cout << "Revision " << rev.revision_number << " merged from: " << rev.merged_from << "(" << rev.merged_rev << "), id " << branch_head_id(rev.merged_from, rev.merged_rev) << "\n";
-	std::cout << "Revision " << rev.revision_number << "        from: " << rbranch << "\n";
-	outfile << "merge :" << rev.merged_rev << "\n";
+	if (brlcad_revs.find(rev.merged_rev) != brlcad_revs.end()) {
+	    std::cout << "Revision " << rev.revision_number << " merged from: " << rev.merged_from << "(" << rev.merged_rev << "), id " << branch_head_id(rev.merged_from, rev.merged_rev) << "\n";
+	    std::cout << "Revision " << rev.revision_number << "        from: " << rbranch << "\n";
+	    outfile << "merge :" << rev.merged_rev << "\n";
+	} else {
+	    std::cout << "Warning: r" << rev.revision_number << " is referencing a commit id (" << rev.merged_rev << ") that is not a BRL-CAD commit\n";
+	}
     }
+
+    brlcad_revs.insert(rev.revision_number);
+
     for (size_t n = 0; n != rev.nodes.size(); n++) {
 	struct svn_node &node = rev.nodes[n];
 
@@ -1118,6 +1127,9 @@ void standard_commit(std::ofstream &outfile, struct svn_revision &rev, std::stri
 	std::cout << "Error - couldn't find author map for author " << rev.author << " on revision " << rev.revision_number << "\n";
 	exit(1);
     }
+
+    brlcad_revs.insert(rev.revision_number);
+
     outfile << "commit " << rbranch << "\n";
     outfile << "mark :" << rev.revision_number << "\n";
     outfile << "committer " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
@@ -1127,9 +1139,13 @@ void standard_commit(std::ofstream &outfile, struct svn_revision &rev, std::stri
     branch_head_ids[rbranch] = std::to_string(rev.revision_number);
 
     if (rev.merged_from.length()) {
-	std::cout << "Revision " << rev.revision_number << " merged from: " << rev.merged_from << "(" << rev.merged_rev << "), id " << branch_head_id(rev.merged_from, rev.merged_rev) << "\n";
-	std::cout << "Revision " << rev.revision_number << "        from: " << rbranch << "\n";
-	outfile << "merge :" << rev.merged_rev << "\n";
+	if (brlcad_revs.find(rev.merged_rev) != brlcad_revs.end()) {
+	    std::cout << "Revision " << rev.revision_number << " merged from: " << rev.merged_from << "(" << rev.merged_rev << "), id " << branch_head_id(rev.merged_from, rev.merged_rev) << "\n";
+	    std::cout << "Revision " << rev.revision_number << "        from: " << rbranch << "\n";
+	    outfile << "merge :" << rev.merged_rev << "\n";
+	} else {
+	    std::cout << "Warning: r" << rev.revision_number << " is referencing a commit id (" << rev.merged_rev << ") that is not a BRL-CAD commit\n";
+	}
     }
 
 
@@ -1189,6 +1205,10 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
     for (r_it = revs.begin(); r_it != revs.end(); r_it++) {
 	struct svn_revision &rev = r_it->second;
 
+	if (rev.revision_number == 40098) {
+	    std::cout << "at 40098\n";
+	}
+
 	if (rev.project != std::string("brlcad")) {
 	    //std::cout << "Revision " << rev.revision_number << " is not part of brlcad, skipping\n";
 	    continue;
@@ -1217,7 +1237,6 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 	    continue;
 	}
 
-
 	if (rev.revision_number >= rev_num_min) {
 #if 0
 	    std::cout << "Processing revision " << rev.revision_number << "\n";
@@ -1239,6 +1258,7 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 
 	    if (special_revs.find(rev.revision_number) != special_revs.end()) {
 		std::string bsrc, bdest;
+		brlcad_revs.insert(rev.revision_number);
 		std::cout << "Revision " << rev.revision_number << " requires special handling\n";
 		if (rev.revision_number == 36633 || rev.revision_number == 39465) {
 		    bdest = std::string("refs/heads/dmtogl");
@@ -1284,6 +1304,7 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 			edited_tag_minr = edited_tag_first_rev[node.tag];
 			edited_tag_maxr = edited_tag_max_rev[node.tag];
 			std::cout << node.tag << ": " << edited_tag_minr << " " << edited_tag_maxr << "\n";
+			brlcad_revs.insert(rev.revision_number);
 
 			if (rev.revision_number < edited_tag_minr) {
 			    std::string nbranch = std::string("refs/heads/") + node.tag;
@@ -1304,6 +1325,7 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 			rbranch = node.branch;
 			//git_changes = 1;
 		    } else {
+			brlcad_revs.insert(rev.revision_number);
 			std::cout << "Adding tag " << node.tag << " from " << bbpath << ", r" << rev.revision_number << "\n";
 			have_commit = 1;
 			outfile << "tag " << node.tag << "\n";
@@ -1325,6 +1347,7 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 		}
 
 		if (node.branch_add) {
+		    brlcad_revs.insert(rev.revision_number);
 		    std::cout << "Processing revision " << rev.revision_number << "\n";
 		    std::string ppath, bbpath, llpath, tpath;
 		    int is_tag;
@@ -1526,7 +1549,7 @@ int main(int argc, const char **argv)
     std::ofstream outfile("brlcad-svn-export.fi", std::ios::out | std::ios::binary);
     if (!outfile.good()) return -1;
     //rev_fast_export(infile, outfile, 29887, 30854);
-    rev_fast_export(infile, outfile, 29887, 30333);
+    rev_fast_export(infile, outfile, 29887, 65499);
     outfile.close();
 
     return 0;
