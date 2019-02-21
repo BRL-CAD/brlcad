@@ -33,7 +33,7 @@
 
 
 /*
- * Abort the current raytrace processes.
+ * Abort the current raytrace processes (rt, rtwizard, rtcheck).
  *
  * Usage:
  * rtabort
@@ -62,7 +62,9 @@ ged_rtabort(struct ged *gedp, int argc, const char *argv[])
 	int argcnt = bu_process_args(&cmd, NULL, rrp->p);
 	bu_vls_trunc(&cmdroot, 0);
 	if (argcnt > 0 && bu_path_component(&cmdroot, cmd, BU_PATH_BASENAME_EXTLESS)) {
-	    if (BU_STR_EQUAL(bu_vls_cstr(&cmdroot), "rt")) {
+	    if (BU_STR_EQUAL(bu_vls_cstr(&cmdroot), "rt") ||
+		    BU_STR_EQUAL(bu_vls_cstr(&cmdroot), "rtwizard") ||
+		    BU_STR_EQUAL(bu_vls_cstr(&cmdroot), "rtcheck")) {
 		bu_terminate(bu_process_pid(rrp->p));
 		rrp->aborted = 1;
 	    }
