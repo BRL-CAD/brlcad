@@ -52,10 +52,6 @@ check_for_data_exported(const char *filename, const char *key)
 	return -1;
     }
     bu_close_mapped_file(efile);
-    if (!bu_file_delete(filename)) {
-	bu_log("Error deleting %s\n", filename);
-	return -1;
-    }
     return 0;
 }
 
@@ -141,11 +137,12 @@ main(int ac, char *av[]) {
 	return 1;
     }
 
-    if (bu_file_exists(gname, NULL)) {
-	printf("ERROR: %s already exists, aborting\n", gname);
-	return 2;
-    }
-
+    /* Clear out any stale files */
+    bu_file_delete(gname);
+    bu_file_delete(exp_data);
+    bu_file_delete(d_data);
+    bu_file_delete(m_data);
+    bu_file_delete(b_data);
 
     gedp = ged_open("db", gname, 0);
 
@@ -497,6 +494,7 @@ main(int ac, char *av[]) {
 
     ged_close(gedp);
     BU_PUT(gedp, struct ged);
+    bu_file_delete(exp_data);
     bu_file_delete(gname);
     bu_file_delete(d_data);
     bu_file_delete(m_data);
@@ -507,6 +505,7 @@ main(int ac, char *av[]) {
 ged_test_fail:
     ged_close(gedp);
     BU_PUT(gedp, struct ged);
+    bu_file_delete(exp_data);
     bu_file_delete(gname);
     bu_file_delete(d_data);
     bu_file_delete(m_data);
