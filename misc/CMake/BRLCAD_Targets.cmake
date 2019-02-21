@@ -351,7 +351,7 @@ endfunction(SET_FLAGS_AND_DEFINITIONS)
 # install lists of CMake
 function(BRLCAD_ADDEXEC execname srcslist libslist)
 
-  cmake_parse_arguments(E "TEST;NO_INSTALL;NO_STRICT;NO_STRICT_CXX;GUI" "FOLDER" "" ${ARGN})
+  cmake_parse_arguments(E "TEST;TEST_USESDATA;NO_INSTALL;NO_STRICT;NO_STRICT_CXX;GUI" "FOLDER" "" ${ARGN})
 
   # Go all C++ if the settings request it
   SET_LANG_CXX("${srcslist}")
@@ -404,7 +404,9 @@ function(BRLCAD_ADDEXEC execname srcslist libslist)
       endif(NOT CMAKE_CONFIGURATION_TYPES)
     endif(NOT WIN32)
   else(E_NO_INSTALL OR E_TEST)
-    install(TARGETS ${execname} DESTINATION ${BIN_DIR})
+    if (NOT E_TEST_USESDATA)
+      install(TARGETS ${execname} DESTINATION ${BIN_DIR})
+    endif (NOT E_TEST_USESDATA)
   endif(E_NO_INSTALL OR E_TEST)
 
 
@@ -416,6 +418,9 @@ function(BRLCAD_ADDEXEC execname srcslist libslist)
   if(E_TEST AND NOT E_FOLDER AND NOT SUBFOLDER)
     set(SUBFOLDER "/Test Programs")
   endif(E_TEST AND NOT E_FOLDER AND NOT SUBFOLDER)
+  if(E_TEST_USESDATA AND NOT E_FOLDER AND NOT SUBFOLDER)
+    set(SUBFOLDER "/Test Programs")
+  endif(E_TEST_USESDATA AND NOT E_FOLDER AND NOT SUBFOLDER)
   if(E_FOLDER)
     set(SUBFOLDER "/${E_FOLDER}")
   endif(E_FOLDER)

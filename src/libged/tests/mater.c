@@ -98,6 +98,9 @@ main(int ac, char *av[]) {
     const char *mat2 = "2,1.1e-1,Material02";
     const char *mat1_reassign = "1,2.0,Material 03";
 
+    /* Need this for bu_dir to work correctly */
+    bu_setprogname(av[0]);
+
     if (ac != 2) {
 	printf("Usage: %s test_name\n", av[0]);
 	return 1;
