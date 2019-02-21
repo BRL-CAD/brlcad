@@ -117,7 +117,7 @@ parse_densities_line(struct analyze_densities *a, const char *obuf, size_t len, 
     p = buf;
 
     /* Skip initial whitespace */
-    while (*p && (*p == '\t' || *p == ' ' || *p == '\n')) p++;
+    while (*p && (*p == '\t' || *p == ' ' || *p == '\n' || *p == '\r')) p++;
 
     /* Skip initial comments */
     while (*p == '#') {
@@ -126,7 +126,7 @@ parse_densities_line(struct analyze_densities *a, const char *obuf, size_t len, 
     }
 
     /* Skip whitespace */
-    while (*p && (*p == '\t' || *p == ' ' || *p == '\n')) p++;
+    while (*p && (*p == '\t' || *p == ' ' || *p == '\n' || *p == '\r')) p++;
 
     while (*p) {
 	/* Skip comments */
@@ -135,7 +135,7 @@ parse_densities_line(struct analyze_densities *a, const char *obuf, size_t len, 
 	    while (*p && *p != '\n') p++;
 
 	    /* Skip whitespace */
-	    while (*p && (*p == '\t' || *p == ' ' || *p == '\n')) p++;
+	    while (*p && (*p == '\t' || *p == ' ' || *p == '\n' || *p == '\r')) p++;
 
 	    continue;
 	}
@@ -215,7 +215,7 @@ parse_densities_line(struct analyze_densities *a, const char *obuf, size_t len, 
 	p = q;
 
 	/* Skip whitespace */
-	while (*p && (*p == '\t' || *p == ' ' || *p == '\n')) p++;
+	while (*p && (*p == '\t' || *p == ' ' || *p == '\n' || *p == '\r')) p++;
     }
 
     /* If the whole thing was a comment or empty, return 0 */
