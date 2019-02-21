@@ -2,6 +2,7 @@ add_subdirectory(view)
 
 set(ged_headers
   analyze.h
+  commands.h
   database.h
   debug.h
   defines.h
