@@ -28,6 +28,12 @@ execute_process(COMMAND "@CMAKE_COMMAND@" -E remove "${CBDIR}/ged_mater_density_
 execute_process(COMMAND "@CMAKE_COMMAND@" -E remove "${CBDIR}/ged_mater_density_reverse_map.txt")
 
 execute_process(
+  COMMAND "${GED_TEST_MATER}" "dnull" RESULT_VARIABLE ged_mater_result
+  OUTPUT_VARIABLE ged_mater_log ERROR_VARIABLE ged_mater_log
+  )
+file(APPEND "${CBDIR}/regress_ged_mater.log" "${ged_mater_log}")
+
+execute_process(
   COMMAND "${GED_TEST_MATER}" "dstd" RESULT_VARIABLE ged_mater_result
   OUTPUT_VARIABLE ged_mater_log ERROR_VARIABLE ged_mater_log
   )
