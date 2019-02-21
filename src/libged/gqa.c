@@ -2531,10 +2531,12 @@ aborted:
 
     if (gedp->gd_densities) {
 	analyze_densities_destroy(gedp->gd_densities);
+	gedp->gd_densities = NULL;
     }
 
     if (gedp->gd_densities_source) {
 	bu_free(gedp->gd_densities_source, "free densities source string");
+	gedp->gd_densities_source = NULL;
     }
 
     rt_free_rti(rtip);
