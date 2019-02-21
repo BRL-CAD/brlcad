@@ -22,14 +22,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <climits>
 #include <map>
 #include <string>
 #include <sstream>
 
 #include "analyze.h"
 
-#define MAX_MATERIAL_ID   9999999999
-#define MAX_MATERIAL_CNT 10000000000
+#define MAX_MATERIAL_ID  32768
+#define MAX_MATERIAL_CNT 1000000
 
 struct analyze_densities_impl {
     std::map<long int,std::string> id2name;
@@ -79,14 +80,14 @@ analyze_densities_set(struct analyze_densities *a, long int id, fastf_t density,
 
     if (id > MAX_MATERIAL_ID) {
 	if (msgs) {
-	    bu_vls_printf(msgs, "Error: material id %ld is large than MAX_MATERIAL_ID (%ld)\n", id, MAX_MATERIAL_ID);
+	    bu_vls_printf(msgs, "Error: material id %ld is large than MAX_MATERIAL_ID (%d)\n", id, MAX_MATERIAL_ID);
 	}
 	return -1;
     }
 
     if (a->i->id2density.size() == MAX_MATERIAL_CNT) {
 	if (msgs) {
-	    bu_vls_printf(msgs, "Error: analyze densities database is full - maximum density count of %ld has been reached\n", MAX_MATERIAL_CNT);
+	    bu_vls_printf(msgs, "Error: analyze densities database is full - maximum density count of %d has been reached\n", MAX_MATERIAL_CNT);
 	}
 	return -1;
     }

@@ -46,7 +46,7 @@ const char *test_buff =
     "               12   3.00      Gunner\n"
     "               14   10.00     Fuel\n"
     "#  Material ID too high \n"
-    "99999999999 70.84    Kryptonite\n";
+    "99999 70.84    Kryptonite\n";
 
 const char *tbuff_out_ctrl =
     "2	7.82	Carbon Tool Steel\n"
