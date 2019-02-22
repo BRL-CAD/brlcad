@@ -36,7 +36,7 @@ add_custom_target(regress-ged)
 set_target_properties(regress-ged PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
 set_target_properties(regress-ged PROPERTIES FOLDER "BRL-CAD Regression Tests")
 
-Add_GED_Test(mater "regress_ged_mater")
+Add_GED_Test(mater "regress_ged_mater;density_DATAFILES_cp")
 
 CMAKEFILES(
   CMakeLists.txt
