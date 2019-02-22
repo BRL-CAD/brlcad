@@ -294,6 +294,8 @@ ged_init(struct ged *gedp)
     gedp->ged_output_handler = NULL;
     gedp->ged_output_script = NULL;
     gedp->ged_internal_call = 0;
+    gedp->gd_densities = NULL;
+    gedp->gd_densities_source = NULL;
 
     /* set up our command registration container */
     BU_GET(gedp->cmds, struct ged_cmd);

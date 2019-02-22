@@ -369,6 +369,8 @@ _ged_densities_from_file(struct ged *gedp, const char *name, int fault_tolerant)
 	bu_vls_printf(gedp->ged_result_str, "Problem reading densities file %s:\n%s\n", name, bu_vls_cstr(&msgs));
 	if (gedp->gd_densities) {
 	    analyze_densities_destroy(gedp->gd_densities);
+	    gedp->gd_densities = NULL;
+	    gedp->gd_densities_source = NULL;
 	}
 	bu_vls_free(&msgs);
 	bu_close_mapped_file(dfile);
@@ -380,6 +382,16 @@ _ged_densities_from_file(struct ged *gedp, const char *name, int fault_tolerant)
 
     if (ret > 0) {
 	gedp->gd_densities_source = bu_strdup(name);
+    } else {
+	if (gedp->gd_densities) {
+	    analyze_densities_destroy(gedp->gd_densities);
+	}
+
+	if (gedp->gd_densities_source) {
+	    bu_free(gedp->gd_densities_source, "free densities source string");
+	}
+	gedp->gd_densities = NULL;
+	gedp->gd_densities_source = NULL;
     }
 
     return (ret == 0) ? GED_ERROR : GED_OK;
@@ -459,6 +471,7 @@ _ged_read_densities(struct ged *gedp, const char *filename, int fault_tolerant)
 		if (gedp->gd_densities) {
 		    analyze_densities_destroy(gedp->gd_densities);
 		    gedp->gd_densities = NULL;
+		    gedp->gd_densities_source = NULL;
 		}
 		bu_vls_free(&msgs);
 		return GED_ERROR;
@@ -468,6 +481,15 @@ _ged_read_densities(struct ged *gedp, const char *filename, int fault_tolerant)
 
 	    if (ret > 0) {
 		gedp->gd_densities_source = bu_strdup(gedp->ged_wdbp->dbip->dbi_filename);
+	    } else {
+		if (gedp->gd_densities) {
+		    analyze_densities_destroy(gedp->gd_densities);
+		    gedp->gd_densities = NULL;
+		}
+		if (gedp->gd_densities_source) {
+		    bu_free(gedp->gd_densities_source, "free densities source string");
+		    gedp->gd_densities_source = NULL;
+		}
 	    }
 
 	    return (ret == 0) ? GED_ERROR : GED_OK;
