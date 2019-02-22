@@ -187,7 +187,7 @@ cat > .density <<EOF
 12   3.00      Gunner
 14   10.00     Fuel
 #  Material ID too high (MAXMTLS = 32768)
-99999999999 70.84    Kryptonite
+99999 70.84    Kryptonite
 EOF
 
 run $RTWEIGHT -a 25 -e 35 -s128 -o weight.test2.out weight.test2.g boxes
