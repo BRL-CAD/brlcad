@@ -583,16 +583,11 @@ void
 application_init(void)
 {
     option("", "-o file.out", "Weights and Moments output file", 0);
+    option("", "-d density.txt", "Density definitions input file", 0);
     option("", "-r", "Report verbosely mass of each region", 0);
     /* this reassignment hack ensures help is last in the first list */
     option("dummy", "-? or -h", "Display help", 1);
     option("", "-? or -h", "Display help", 1);
-
-    option(NULL, "", NULL, 0);
-    option(NULL, "Files:", NULL, 0);
-    option(NULL, "  .density, OR", NULL, 0);
-    option(NULL, "  $HOME/.density", NULL, 0);
-
     option(NULL, "-C", "Disabled, not implemented", 2);
     option(NULL, "-W", "Disabled, non implemented", 2);
 }
