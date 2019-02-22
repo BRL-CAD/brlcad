@@ -27,7 +27,7 @@ A number of commands and tools previously listed as deprecated are
 removed in this release, including in particular MGED commands
 specific to MUVES.
 
-* added material mapping support to "mater" command - Cliff Yapp
+* added material density management to "mater" command - Cliff Yapp
 * use full paths for OBJ objects in "bot dump" command - Cliff Yapp
 * added -v high precision option to MGED 'center' command - Cliff Yapp
 * fixed crash when using dbconcat and dup together in MGED
