@@ -18,7 +18,7 @@ else(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")
 endif(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")
 
 get_filename_component(EXE "@CMAKE_COMMAND@" EXT)
-set(GED_TEST_MATER "${BDIR}/ged_test_mater${EXE}")
+set(GED_TEST_MATER "${BDIR}/regress_ged_mater${EXE}")
 
 # Clean up in case we've run before
 execute_process(COMMAND "@CMAKE_COMMAND@" -E remove "${CBDIR}/ged_mater_test.g")
@@ -33,6 +33,8 @@ execute_process(
   WORKING_DIRECTORY ${CBDIR}
   )
 file(APPEND "${CBDIR}/regress_ged_mater.log" "${ged_mater_log}")
+
+execute_process(COMMAND "@CMAKE_COMMAND@" -E remove "${CBDIR}/ged_mater_test.g")
 
 execute_process(
   COMMAND "${GED_TEST_MATER}" "dstd" RESULT_VARIABLE ged_mater_result
