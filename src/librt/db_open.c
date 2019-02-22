@@ -1,7 +1,7 @@
 /*                       D B _ O P E N . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2018 United States Government as represented by
+ * Copyright (c) 1988-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -306,16 +306,6 @@ db_close(register struct db_i *dbip)
 
     /* free up any mapped files */
     if (dbip->dbi_mf) {
-	/*
-	 * We're using an instance of a memory mapped file.
-	 * We have two choices:
-	 * Either dissociate from the memory mapped file
-	 * by clearing dbi_mf->apbuf, or
-	 * keeping our already-scanned dbip ready for
-	 * further use, with our dbi_uses counter at 0.
-	 * For speed of re-open, at the price of some address space,
-	 * the second choice is taken.
-	 */
 	bu_close_mapped_file(dbip->dbi_mf);
 	bu_free_mapped_files(0);
 	dbip->dbi_mf = (struct bu_mapped_file *)NULL;
@@ -446,11 +436,11 @@ db_sync(struct db_i *dbip)
     /* flush the file */
     (void)fflush(dbip->dbi_fp);
 
-#if defined(HAVE_FSYNC) && !defined(STRICT_FLAGS)
+#if defined(HAVE_FSYNC)
     /* make sure it's written out */
     (void)fsync(fileno(dbip->dbi_fp));
 #else
-#  if defined(HAVE_SYNC) && !defined(STRICT_FLAGS)
+#  if defined(HAVE_SYNC)
     /* try the whole filesystem if sans fsync() */
     sync();
 #  endif

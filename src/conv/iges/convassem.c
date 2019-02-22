@@ -1,7 +1,7 @@
 /*                     C O N V A S S E M . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2018 United States Government as represented by
+ * Copyright (c) 1990-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -79,7 +79,7 @@ Convassem()
 
 	Readint(&j, "");	/* read entity type */
 	if (j != 184) {
-	    bu_log("Incorrect entity type in Parameter section for entity %d\n", i);
+	    bu_log("Incorrect entity type in Parameter section for entity %zu\n", i);
 	    return;
 	}
 

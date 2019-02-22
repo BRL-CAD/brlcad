@@ -1,7 +1,7 @@
 /*                          C H A R . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -71,8 +71,8 @@ do_line(int xpos, int ypos, char *line)
 
 	/* locate the bitmap for the character in the file */
 	if (bu_fseek(font.ffdes, SWABV(font.dir[char_id].addr)+font.offset, 0) == EOF) {
-	    bu_log("fseek() to %zd failed.\n",
-		   (SWABV(font.dir[char_id].addr) + font.offset)
+	    bu_log("fseek() to %jd failed.\n",
+		   (intmax_t)(SWABV(font.dir[char_id].addr) + font.offset)
 		);
 	    return;
 	}

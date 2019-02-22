@@ -580,10 +580,10 @@ DisplayWinItem(
     }
 
     /*
-     * A drawable of None is used by the canvas UnmapNotify handler
+     * A drawable of TkNone is used by the canvas UnmapNotify handler
      * to indicate that we should no longer display ourselves.
      */
-    if (state == TK_STATE_HIDDEN || drawable == None) {
+    if (state == TK_STATE_HIDDEN || drawable == TkNone) {
 	if (canvasTkwin == Tk_Parent(winItemPtr->tkwin)) {
 	    Tk_UnmapWindow(winItemPtr->tkwin);
 	} else {
@@ -1035,7 +1035,7 @@ WinItemRequestProc(
     ComputeWindowBbox(winItemPtr->canvas, winItemPtr);
 
     /*
-     * A drawable argument of None to DisplayWinItem is used by the canvas
+     * A drawable argument of TkNone to DisplayWinItem is used by the canvas
      * UnmapNotify handler to indicate that we should no longer display
      * ourselves, so need to pass a (bogus) non-zero drawable value here.
      */

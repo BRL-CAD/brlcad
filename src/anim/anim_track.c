@@ -1,7 +1,7 @@
 /*                    A N I M _ T R A C K . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2018 United States Government as represented by
+ * Copyright (c) 1993-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -231,7 +231,7 @@ get_args(int argc, char **argv)
 		one_radius = 1;
 		break;
 	    case 'p':
-		bu_sscanf(bu_optarg, "%zd", &num_links);
+		bu_sscanf(bu_optarg, "%zu", &num_links);
 		link_nindex = bu_optind;
 		bu_optind += 1;
 		print_link = 1;

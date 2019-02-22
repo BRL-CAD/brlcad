@@ -1,7 +1,7 @@
 /*                    R A Y D I F F . C
  * BRL-CAD
  *
- * Copyright (c) 2015-2018 United States Government as represented by
+ * Copyright (c) 2015-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,6 +24,7 @@
 
 #include "raytrace.h"
 #include "analyze.h"
+
 
 int
 main(int argc, char **argv)
@@ -80,6 +81,7 @@ main(int argc, char **argv)
     db_close(dbip);
     return 0;
 }
+
 
 /*
  * Local Variables:

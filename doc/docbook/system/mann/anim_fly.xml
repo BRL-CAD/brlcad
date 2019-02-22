@@ -127,7 +127,7 @@
   <refsection xml:id="copyright"><title>COPYRIGHT</title>
 
     <para>
-      This software is Copyright (c) 1993-2018 by the United States
+      This software is Copyright (c) 1993-2019 by the United States
       Government as represented by U.S. Army Research Laboratory.
     </para>
   </refsection>
@@ -136,6 +136,6 @@
 
     <para>
       Reports of bugs or problems should be submitted via electronic
-      mail to &lt;devs@brlcad.org&gt;.</para>
+      mail to <email>devs@brlcad.org</email></para>
 </refsection>
 </refentry>

@@ -166,7 +166,7 @@ SquareObjCmd(
     squarePtr->widgetCmd = Tcl_CreateObjCommand(interp,
 	    Tk_PathName(squarePtr->tkwin), SquareWidgetObjCmd,
 	    (ClientData) squarePtr, SquareDeletedProc);
-    squarePtr->gc = None;
+    squarePtr->gc = TkNone;
     squarePtr->optionTable = optionTable;
 
     if (Tk_InitOptions(interp, (char *) squarePtr, optionTable, tkwin)
@@ -332,7 +332,7 @@ SquareConfigure(
     Tk_SetWindowBackground(squarePtr->tkwin,
 	    Tk_3DBorderColor(bgBorder)->pixel);
     Tcl_GetBooleanFromObj(NULL, squarePtr->doubleBufferPtr, &doubleBuffer);
-    if ((squarePtr->gc == None) && (doubleBuffer)) {
+    if ((squarePtr->gc == TkNone) && (doubleBuffer)) {
 	XGCValues gcValues;
 	gcValues.function = GXcopy;
 	gcValues.graphics_exposures = False;
@@ -397,7 +397,7 @@ SquareObjEventProc(
 	if (squarePtr->tkwin != NULL) {
 	    Tk_FreeConfigOptions((char *) squarePtr, squarePtr->optionTable,
 		    squarePtr->tkwin);
-	    if (squarePtr->gc != None) {
+	    if (squarePtr->gc != TkNone) {
 		Tk_FreeGC(squarePtr->display, squarePtr->gc);
 	    }
 	    squarePtr->tkwin = NULL;
@@ -472,7 +472,7 @@ SquareDisplay(
 {
     Square *squarePtr = (Square *) clientData;
     Tk_Window tkwin = squarePtr->tkwin;
-    Pixmap pm = None;
+    Pixmap pm = TkNone;
     Drawable d;
     int borderWidth, size, relief;
     Tk_3DBorder bgBorder, fgBorder;

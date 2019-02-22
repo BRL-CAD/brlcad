@@ -1,7 +1,7 @@
 /*                      V I E W E D G E . C
  * BRL-CAD
  *
- * Copyright (c) 2001-2018 United States Government as represented by
+ * Copyright (c) 2001-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -428,7 +428,7 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
 	nObjs = split_argc;
 
 	for (i=0; i<nObjs; ++i) {
-	    bu_log("rtedge: occlusion object %d = %s\n", i, objs[i]);
+	    bu_log("rtedge: occlusion object %zu = %s\n", i, objs[i]);
 	}
 
 
@@ -459,7 +459,7 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
 	    if (rt_gettree(occlusion_rtip, objs[i]) < 0)
 		bu_log("rtedge: gettree failed for %s\n", objs[i]);
 	    else
-		bu_log("rtedge: got tree for object %d = %s\n", i, objs[i]);
+		bu_log("rtedge: got tree for object %zu = %s\n", i, objs[i]);
 
 	bu_free((char *)objs, "free occlusion objs array");
 

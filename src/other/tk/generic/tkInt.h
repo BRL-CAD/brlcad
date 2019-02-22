@@ -25,6 +25,10 @@
 #include "tkPort.h"
 #endif
 
+#ifndef TkNone
+#  define TkNone               0L	/* universal null resource or null atom */
+#endif
+
 /*
  * Ensure WORDS_BIGENDIAN is defined correcly:
  * Needs to happen here in addition to configure to work with fat compiles on
@@ -267,7 +271,7 @@ typedef struct TkDisplay {
 				/* Maps from a cursor id to the TkCursor
 				 * structure for the cursor. */
     char cursorString[20];	/* Used to store a cursor id string. */
-    Font cursorFont;		/* Font to use for standard cursors. None
+    Font cursorFont;		/* Font to use for standard cursors. TkNone
 				 * means font not loaded yet. */
 
     /*
@@ -428,7 +432,7 @@ typedef struct TkDisplay {
 				 * records. Each entry contains information
 				 * about the current owner of a particular
 				 * selection on this display. */
-    Atom multipleAtom;		/* Atom for MULTIPLE. None means selection
+    Atom multipleAtom;		/* Atom for MULTIPLE. TkNone means selection
 				 * stuff isn't initialized. */
     Atom incrAtom;		/* Atom for INCR. */
     Atom targetsAtom;		/* Atom for TARGETS. */

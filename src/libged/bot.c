@@ -1,7 +1,7 @@
 /*                         B O T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2018 United States Government as represented by
+ * Copyright (c) 2008-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -352,7 +352,8 @@ bot_check(struct ged *gedp, int argc, const char *argv[], struct bu_opt_desc *d,
 
     /* check for one of the individual tests */
     found = 0;
-    for (sub = subcommands; sub != NULL; ++sub) {
+    sub = subcommands;
+    for (; *sub != NULL; ++sub) {
 	if (BU_STR_EQUAL(check, *sub)) {
 	    found = 1;
 	    break;
@@ -611,6 +612,9 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	retval = mk_bot(gedp->ged_wdbp, argv[2], RT_BOT_SOLID, RT_BOT_CCW, err, vc, fc, (fastf_t *)vert_array, faces, NULL, NULL);
+
+	bu_free(faces, "free faces");
+	bu_free(vert_array, "free verts");
 
 	if (retval) {
 	    rt_db_free_internal(&intern);

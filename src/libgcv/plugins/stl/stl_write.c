@@ -1,7 +1,7 @@
 /*                     S T L _ W R I T E . C
  * BRL-CAD
  *
- * Copyright (c) 2003-2018 United States Government as represented by
+ * Copyright (c) 2003-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -95,7 +95,7 @@ stl_write_make_units_str(double scale_factor)
 	return bu_strdup(bu_units);
     else {
 	struct bu_vls temp = BU_VLS_INIT_ZERO;
-	bu_vls_printf(&temp, "%zu units per mm", scale_factor);
+	bu_vls_printf(&temp, "%g units per mm", scale_factor);
 	return bu_vls_strgrab(&temp);
     }
 }

@@ -1,7 +1,7 @@
 /*                  C O M B . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2018 United States Government as represented by
+ * Copyright (c) 2008-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -509,7 +509,7 @@ comb_decimate(struct ged *gedp, struct directory *dp)
 	edges_removed = rt_bot_decimate_gct(bot, fs);
 	if (edges_removed >= 0) {
 	    not_solid = bg_trimesh_solid2((int)bot->num_vertices, (int)bot->num_faces, bot->vertices, bot->faces, NULL);
-	    bu_log("%s: %d edges removed, %d faces removed, valid: %d\n", bot_dp->d_namep, edges_removed, old_face_cnt - bot->num_faces, !not_solid);
+	    bu_log("%s: %d edges removed, %zu faces removed, valid: %d\n", bot_dp->d_namep, edges_removed, old_face_cnt - bot->num_faces, !not_solid);
 	} else {
 	    bu_log("%s: decimation failure\n", bot_dp->d_namep);
 	}
@@ -521,7 +521,7 @@ comb_decimate(struct ged *gedp, struct directory *dp)
 		edges_removed = rt_bot_decimate_gct(bot, fs);
 		if (edges_removed >= 0) {
 		    not_solid = bg_trimesh_solid2((int)bot->num_vertices, (int)bot->num_faces, bot->vertices, bot->faces, NULL);
-		    bu_log("%s(%d): %d edges removed, %d faces removed, valid: %d\n", bot_dp->d_namep, scnt, edges_removed, old_face_cnt - bot->num_faces, !not_solid);
+		    bu_log("%s(%d): %d edges removed, %zu faces removed, valid: %d\n", bot_dp->d_namep, scnt, edges_removed, old_face_cnt - bot->num_faces, !not_solid);
 		} else {
 		    bu_log("%s(%d): decimation failure\n", bot_dp->d_namep, scnt);
 		}

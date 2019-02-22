@@ -87,6 +87,9 @@
 #define PRO_UNITTYPE_LENGTH			76
 #define PRO_VALUE_UNUSED			77
 #define uiProe2ndImmediate                      78
+#define PRO_PARAM_INTEGER			79
+#define PRO_PARAM_BOOLEAN			80
+#define PRO_PARAM_DOUBLE			81
 
 typedef int ProBool;
 typedef int ProBoolean;
@@ -147,7 +150,7 @@ typedef int ProIdTable[2];
 typedef int __internal_facetset[3];
 typedef struct pf {int id;} ProFeature;
 typedef struct pmatp {double mass_density;} ProMaterialProps;
-typedef struct pmp {int density; int mass; int volume;} ProMassProperty;
+typedef struct pmp {double density; double mass; double volume;} ProMassProperty;
 typedef struct proparam {wchar_t *id;} ProParameter;
 typedef struct prouc {double scale;} ProUnitConversion;
 typedef struct psap {double color_rgb[3];double transparency;double shininess;double diffuse;double highlite;} ProSurfaceAppearanceProps;
@@ -200,7 +203,7 @@ extern "C" int ProParameterInit(void *,wchar_t *,void *);
 extern "C" int ProParameterValueGet(ProParameter *,void *);
 extern "C" int ProParameterVisit (void **,	void*,int (*)(ProParameter*,int,void*),void *);
 extern "C" int ProParamvalueTypeGet(void **,void *);
-extern "C" int ProParamvalueValueGet(void **,int,wchar_t *);
+extern "C" int ProParamvalueValueGet(void **,int,void *);
 extern "C" int ProPartMaterialNameGet(void*,wchar_t *);
 extern "C" int ProPartMaterialdataGet(void*,wchar_t*,ProMaterialProps*);
 extern "C" int ProPartTessellate(void*,double,double,int,ProSurfaceTessellationData**);

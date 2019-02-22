@@ -1,7 +1,7 @@
 /*                          K I L L . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2018 United States Government as represented by
+ * Copyright (c) 2007-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,8 @@
 #endif
 
 /* bu headers */
-#include "bu/parallel.h"
+#include "bu/process.h"
+#include "./process.h"
 
 /* c99 doesn't declare these */
 #if defined(HAVE_KILL) && !defined(__cplusplus)
@@ -39,7 +40,7 @@ extern int kill(pid_t, int);
 #ifdef HAVE_KILL
 
 HIDDEN int
-terminate(int process)
+_bu_terminate(int process)
 {
     int successful = 0;
 
@@ -54,7 +55,7 @@ terminate(int process)
 #else /* !HAVE_KILL */
 
 HIDDEN int
-terminate(int process)
+_bu_terminate(int process)
 {
     int successful = 0;
     HANDLE hProcessSnap;
@@ -76,7 +77,7 @@ terminate(int process)
     do {
 	if (pe32.th32ParentProcessID == (DWORD)process) {
 #if 1
-	    terminate((int)pe32.th32ProcessID);
+	    _bu_terminate((int)pe32.th32ProcessID);
 #else
 	    hProcess = OpenProcess(PROCESS_ALL_ACCESS, TRUE, pe32.th32ProcessID);
 	    if (hProcess != NULL) {
@@ -90,7 +91,7 @@ terminate(int process)
     /* Finally, kill the parent */
     hProcess = OpenProcess(PROCESS_ALL_ACCESS, TRUE, (DWORD)process);
     if (hProcess != NULL) {
-	successful = TerminateProcess(hProcess, 0);
+	successful = TerminateProcess(hProcess, BU_MSVC_ABORT_EXIT);
 	CloseHandle(hProcess);
     }
 
@@ -104,7 +105,7 @@ terminate(int process)
 int
 bu_terminate(int process)
 {
-    return terminate(process);
+    return _bu_terminate(process);
 }
 
 /*

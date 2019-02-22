@@ -1,7 +1,7 @@
 /*                      D E F I N E S . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -110,6 +110,9 @@ typedef struct _on_brep_placeholder {
 #define BREP_EDGE_MISS_TOLERANCE 5e-3
 
 #define BREP_SAME_POINT_TOLERANCE 1e-6
+
+/* arbitrary calculation tolerance */
+#define BREP_UV_DIST_FUZZ 0.000001
 
 /* @todo: debugging crapola (clean up later) */
 #define ON_PRINT4(p) "[" << (p)[0] << ", " << (p)[1] << ", " << (p)[2] << ", " << (p)[3] << "]"

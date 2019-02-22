@@ -1,7 +1,7 @@
 /*                       T C L C A D _ O B J . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2018 United States Government as represented by
+ * Copyright (c) 2000-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1098,6 +1098,7 @@ static struct to_cmdtab to_cmds[] = {
     {"edcomb",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_edcomb},
     {"edit",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_edit},
     {"edmater",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_edmater},
+    {"env",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_env},
     {"erase",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_erase},
     {"ev",	(char *)0, TO_UNLIMITED, to_autoview_func, ged_ev},
     {"expand",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_expand},
@@ -4345,12 +4346,12 @@ to_data_polygons(struct ged *gedp,
 	    goto bad;
 
 	if (bu_sscanf(argv[4], "%lf %lf", &vdir[X], &vdir[Y]) != 2) {
-	    bu_vls_printf(gedp->ged_result_str, "%s: bad dir", argv[0], argv[4]);
+	    bu_vls_printf(gedp->ged_result_str, "%s: bad dir: %s", argv[0], argv[4]);
 	    goto bad;
 	}
 
 	if (bu_sscanf(argv[5], "%lf", &vdelta) != 1) {
-	    bu_vls_printf(gedp->ged_result_str, "%s: bad delta", argv[0], argv[5]);
+	    bu_vls_printf(gedp->ged_result_str, "%s: bad delta: %s", argv[0], argv[5]);
 	    goto bad;
 	}
 
@@ -14312,7 +14313,7 @@ to_create_vlist_callback_solid(struct solid *sp)
     struct ged_dm_view *gdvp;
     register int first = 1;
 
-	for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
 	if (current_top->to_gop->go_dlist_on && to_is_viewable(gdvp)) {
 
 	    (void)dm_make_current(gdvp->gdv_dmp);

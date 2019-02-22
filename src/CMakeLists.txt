@@ -78,11 +78,9 @@ set(level_3_dirs
   bwish
   conv
   fb
-  fbed
   fbserv
   gtools
   halftone
-  irprep
   lgt
   nirt
   proc-db

@@ -104,8 +104,8 @@ TkpCreateScrollbar(
 
     MacScrollbar *scrollPtr = (MacScrollbar *)ckalloc(sizeof(MacScrollbar));
 
-    scrollPtr->troughGC = None;
-    scrollPtr->copyGC = None;
+    scrollPtr->troughGC = TkNone;
+    scrollPtr->copyGC = TkNone;
 
     Tk_CreateEventHandler(tkwin,ExposureMask|StructureNotifyMask|FocusChangeMask|ButtonPressMask|VisibilityChangeMask, ScrollbarEventProc, scrollPtr);
     
@@ -303,10 +303,10 @@ TkpDestroyScrollbar(
 {
     MacScrollbar *macScrollPtr = (MacScrollbar *)scrollPtr;
 
-    if (macScrollPtr->troughGC != None) {
+    if (macScrollPtr->troughGC != TkNone) {
 	Tk_FreeGC(scrollPtr->display, macScrollPtr->troughGC);
     }
-    if (macScrollPtr->copyGC != None) {
+    if (macScrollPtr->copyGC != TkNone) {
 	Tk_FreeGC(scrollPtr->display, macScrollPtr->copyGC);
     }
 

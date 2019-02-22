@@ -307,7 +307,7 @@ TkpComputeButtonGeometry(
     if (butPtr->image != NULL) {
 	Tk_SizeOfImage(butPtr->image, &width, &height);
 	haveImage = 1;
-    } else if (butPtr->bitmap != None) {
+    } else if (butPtr->bitmap != TkNone) {
 	Tk_SizeOfBitmap(butPtr->display, butPtr->bitmap, &width, &height);
 	haveImage = 1;
     }
@@ -436,7 +436,7 @@ TkpComputeButtonGeometry(
  *        Draws the image and text associated with a button or label.
  *
  * Results:
- *        None.
+ *        TkNone.
  *
  * Side effects:
  *        The image and text are drawn.
@@ -473,10 +473,10 @@ DrawButtonImageAndText(
     DrawParams* dpPtr = &mbPtr->drawParams;
     pixmap = (Pixmap)Tk_WindowId(tkwin);
 
-    if (butPtr->image != None) {
+    if (butPtr->image != TkNone) {
         Tk_SizeOfImage(butPtr->image, &width, &height);
         haveImage = 1;
-    } else if (butPtr->bitmap != None) {
+    } else if (butPtr->bitmap != TkNone) {
         Tk_SizeOfBitmap(butPtr->display, butPtr->bitmap, &width, &height);
         haveImage = 1;
     }
@@ -740,7 +740,7 @@ TkpDestroyButton(
  *        in the TkButton.
  *
  * Results:
- *        None.
+ *        TkNone.
  *
  * Side effects:
  *      The control is created, or reinitialised as needed
@@ -833,7 +833,7 @@ TkMacOSXDrawButton(
  *        lies under checkboxes and radiobuttons.
  *
  * Results:
- *        None.
+ *        TkNone.
  *
  * Side effects:
  *        The background gets updated to the current color.
@@ -885,7 +885,7 @@ ButtonBackgroundDrawCB (
  *        This function draws the label and image for the button.
  *
  * Results:
- *        None.
+ *        TkNone.
  *
  * Side effects:
  *        The content of the button gets updated.
@@ -990,7 +990,7 @@ TkMacOSXComputeButtonParams(
         *btnkind = kThemePushButton;
     }
 
-    if ((butPtr->image == None) && (butPtr->bitmap == None)) {
+    if ((butPtr->image == TkNone) && (butPtr->bitmap == TkNone)) {
         switch (butPtr->type) {
             case TYPE_BUTTON:
                 *btnkind = kThemePushButton;
@@ -1113,7 +1113,7 @@ TkMacOSXComputeButtonDrawParams(
     MacButton *mbPtr = (MacButton *)butPtr;
 
     dpPtr->hasImageOrBitmap = ((butPtr->image != NULL)
-	    || (butPtr->bitmap != None));
+	    || (butPtr->bitmap != TkNone));
 
     if (butPtr->type != TYPE_LABEL) {
         dpPtr->offset = 0;
@@ -1195,7 +1195,7 @@ TkMacOSXComputeButtonDrawParams(
  *     default buttons.
  *
  * Results:
- *     None.
+ *     TkNone.
  *
  * Side effects:
  *     Sets a timer to run itself again.

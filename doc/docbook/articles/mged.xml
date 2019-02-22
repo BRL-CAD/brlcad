@@ -5239,9 +5239,6 @@ x 					delete character
     <link linkend="eqn">eqn</link>
   </entry>
   <entry>
-    <link linkend="em">em</link>
-  </entry>
-  <entry>
     <link linkend="erase">erase</link>
   </entry>
   <entry>
@@ -5265,9 +5262,6 @@ x 					delete character
 <row>
   <entry>
     <link linkend="eye_pt">eye_pt</link>
-  </entry>
-  <entry>
-    <link linkend="e_muves">e_muves</link>
   </entry>
   <entry>
     <link linkend="facedef">facedef</link>
@@ -5376,9 +5370,6 @@ x 					delete character
   </entry>
   <entry>
     <link linkend="ls">ls</link>
-  </entry>
-  <entry>
-    <link linkend="l_muves">l_muves</link>
   </entry>
   </row>
 <row>
@@ -5530,9 +5521,6 @@ x 					delete character
     <link linkend="rcctor">rcc-tor</link>
   </entry>
   <entry>
-    <link linkend="read_muves">read_muves</link>
-  </entry>
-  <entry>
     <link linkend="red">red</link>
   </entry>
   <entry>
@@ -5676,9 +5664,6 @@ x 					delete character
   </entry>
   </row>
 <row>
-  <entry>
-    <link linkend="t_muves">t_muves</link>
-  </entry>
   <entry xml:id="units3">
     <link linkend="units">units</link>
   </entry>
@@ -9426,62 +9411,7 @@ x 					delete character
   <para>
     <emphasis role="strong"></emphasis>
   </para>
-  <variablelist xml:id="em">
-    <varlistentry>
-      <term>
-        em [ -C#/#/#] value [value value . . .]
-      </term>
-      <listitem>
-        <para>
-          The <quote>em</quote> command displays all regions that a
-          MUVES_Component attribute that is set to any of the specified
-          value arguments. The <emphasis> C</emphasis> option specifies
-          a color to draw the regions.
-        </para>
-      </listitem>
-    </varlistentry>
-    <varlistentry>
-      <term>
-        Examples:
-      </term>
-      <listitem>
-      	<para>
-       Examples:
-       </para>
-      </listitem>
-    </varlistentry>
-    <varlistentry>
-      <term>
-         <literal>mged&gt;</literal> em engine pilot
-      </term>
-      <listitem>
-        <para>
-          – Display all regions that have_muves_Component attributes
-          equal to engine or pilot.
-        </para>
-      </listitem>
-    </varlistentry>
-    <varlistentry>
-      <term>
-      </term>
-      <listitem>
-        <para>
-          mged&gt; em  C0/255/0 hydraulics
-        </para>
-      </listitem>
-    </varlistentry>
-    <varlistentry>
-      <term>
-        – Display all regions that have_muves_Component attributes equal
-        to hydraulics in green.
-      </term>
-      <listitem>
-      	<para>
-      		        – Display all regions that have_muves_Component attributes equal
-        to hydraulics in green.
-      	</para>
-      </listitem>
-    </varlistentry>
+  <variablelist xml:id="eraselist">
     <varlistentry xml:id="erase">
       <term>
         erase <emphasis>&lt;objects</emphasis>&gt;
@@ -9815,44 +9745,6 @@ foo.r_xpand/R
   </variablelist>
   <para>
     – Position the eye at 100 mm along the <emphasis>x</emphasis>axis.
-  </para>
-  <para>
-    <emphasis role="strong"></emphasis>
-  </para>
-  <variablelist xml:id="e_muves">
-    <varlistentry>
-      <term>
-        e_muves MUVES_component1 MUVES_component2 …
-      </term>
-      <listitem>
-        <para>
-          The <quote>e_muves</quote> command displays the
-          <emphasis>BRL-CAD</emphasis>
-          <link linkend="REGION">regions</link> that are part of the
-          indicated MUVES components. The internal list of MUVES
-          components must have been created earlier by the
-          <link linkend="read_muves">read_muves</link> command. The
-          MUVES components listed on the command line must not use any
-          wildcards (the expansion will result in
-          <emphasis>BRL-CAD</emphasis> objects, not_muves components).
-        </para>
-      </listitem>
-    </varlistentry>
-    <varlistentry>
-      <term>
-        Examples:
-      </term>
-      <listitem>
-        <para>
-          mged&gt; e_muves fuel transmission
-        </para>
-      </listitem>
-    </varlistentry>
-  </variablelist>
-  <para>
-    – Display the <emphasis>BRL-CAD</emphasis> regions that make up the
-    MUVES components named <quote>fuel</quote> and
-    <quote>transmission</quote>
   </para>
   <para>
     <emphasis role="strong"></emphasis>
@@ -11428,68 +11320,8 @@ foo.r_xpand/R
   <para>
     <emphasis role="strong"></emphasis>
   </para>
-  <variablelist xml:id="lm">
+  <variablelist xml:id="loadtk">
     <varlistentry>
-      <term>
-        lm [-l] [values]
-      </term>
-      <listitem>
-        <para>
-          The <quote>lm</quote> command with no values argument lists
-          the name of every region in the database (in alphabetical
-          order), except for those marked as hidden with the hide
-          command. If the values argument is supplied, only those
-          regions with a <quote>MUVES_Component</quote> attribute having
-          one of the values are listed. The  l option specifies to use a
-          long format showing object name, object type, major type,
-          minor type, and length.
-        </para>
-      </listitem>
-    </varlistentry>
-    <varlistentry>
-      <term>
-        Examples:
-      </term>
-      <listitem>
-      	<para>
-      	-
-      </para>
-      </listitem>
-    </varlistentry>
-    <varlistentry>
-      <term>
-         mged&gt; lm engine
-      </term>
-      <listitem>
-        <para>
-          –List all regions with <quote>MUVES_Component</quote>
-          attribute having a value of <quote>engine</quote>.
-        </para>
-      </listitem>
-    </varlistentry>
-    <varlistentry>
-  		<term>
-  			-
-  		</term>
-      <listitem>
-        <para>
-          mged&gt; lm  1 engine pilot
-        </para>
-      </listitem>
-    </varlistentry>
-    <varlistentry>
-      <term>
-        –List all regions with <quote>MUVES_Component</quote> attribute
-        having a value of <quote>engine</quote> or <quote>pilot,</quote>
-        and use the long format.
-      </term>
-      <listitem>
-      	<para>
-      		-
-      	</para>
-      </listitem>
-    </varlistentry>
-    <varlistentry xml:id="loadtk">
       <term>
         loadtk
       </term>
@@ -11671,44 +11503,6 @@ foo.r_xpand/R
     – List all regions that have a <quote>Comment</quote> attribute that
     is set to either <quote>First comment</quote> or <quote>Second
     comment.</quote>
-  </para>
-  <para>
-    <emphasis role="strong"></emphasis>
-  </para>
-  <variablelist xml:id="l_muves">
-    <varlistentry>
-      <term>
-        l_muves MUVES_component1 MUVES_component2 …
-      </term>
-      <listitem>
-        <para>
-          The <quote>l_muves</quote> command lists the
-          <emphasis>BRL-CAD</emphasis>
-          <link linkend="REGION">regions</link> that are part of the
-          indicated MUVES components. The internal list of MUVES
-          components must have been created earlier by the
-          <link linkend="read_muves">read_muves</link> command. The
-          MUVES components listed on the command line must not use any
-          wildcards (the expansion will result in
-          <emphasis>BRL-CAD</emphasis> objects, not_muves components).
-        </para>
-      </listitem>
-    </varlistentry>
-    <varlistentry>
-      <term>
-        Examples:
-      </term>
-      <listitem>
-        <para>
-          mged&gt; l_muves fuel transmission
-        </para>
-      </listitem>
-    </varlistentry>
-  </variablelist>
-  <para>
-    – List the <emphasis>BRL-CAD</emphasis> regions that make up the
-    MUVES components named <quote>fuel</quote> and
-    <quote>transmission</quote>
   </para>
   <para>
     <emphasis role="strong"></emphasis>
@@ -13985,43 +13779,6 @@ foo.r_xpand/R
   <para>
     <emphasis role="strong"></emphasis>
   </para>
-  <variablelist xml:id="rea_muves">
-    <varlistentry>
-      <term xml:id="read_muves">
-        read_muves MUVES_regionmap_file
-      </term>
-      <listitem>
-        <para>
-          The <quote>read_muves</quote> command reads the indicated
-          <quote>MUVES_regionmap_file</quote> and creates an internal
-          list of all the_muves components defined in the file along
-          with the corresponding <emphasis>BRL-CAD</emphasis>
-          <link linkend="REGION">regions</link>. This list can then be
-          used to display the <emphasis>regions</emphasis> in terms of
-          the_muves component names. See the
-          <link linkend="e_muves">e_muves</link>,
-          <link linkend="t_muves">t_muves</link>, and
-          <link linkend="l_muves">l_muves</link> commands.
-        </para>
-      </listitem>
-    </varlistentry>
-    <varlistentry>
-      <term>
-        Examples:
-      </term>
-      <listitem>
-        <para>
-          mged&gt; read_muves region_map
-        </para>
-      </listitem>
-    </varlistentry>
-  </variablelist>
-  <para>
-    – Read the_muves file named <emphasis>region_map</emphasis>.
-  </para>
-  <para>
-    <emphasis role="strong"></emphasis>
-  </para>
   <variablelist xml:id="red">
     <varlistentry>
       <term>
@@ -15968,36 +15725,6 @@ EOF
   <para>
  <literal>mged&gt;</literal>
     <emphasis role="strong">tree -c group1</emphasis>  – No shapes are printed.
-  </para>
-  <para>
-    <emphasis role="strong"></emphasis>
-  </para>
-  <variablelist>
-    <varlistentry>
-      <term>
-        t_muves
-      </term>
-      <listitem>
-        <para xml:id="t_muves">
-          The <quote>t_muves</quote> command lists all the_muves
-          components that are known as a result of a prior
-          <link linkend="read_muves">read_muves</link> command.
-        </para>
-      </listitem>
-    </varlistentry>
-    <varlistentry>
-      <term>
-        Examples:
-      </term>
-      <listitem>
-        <para>
-          mged&gt; t_muves
-        </para>
-      </listitem>
-    </varlistentry>
-  </variablelist>
-  <para>
-    – List all the known MUVES components.
   </para>
   <para>
     <emphasis role="strong"></emphasis>

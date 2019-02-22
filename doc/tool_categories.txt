@@ -398,7 +398,6 @@ bombardier
 brlcad-config
 brlman
 btclsh
-cadbug.sh
 cray.sh
 elapsed.sh
 indent.sh

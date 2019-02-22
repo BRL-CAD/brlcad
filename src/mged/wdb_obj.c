@@ -1,7 +1,7 @@
 /*                       W D B _ O B J . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2018 United States Government as represented by
+ * Copyright (c) 2000-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -10150,6 +10150,7 @@ wdb_importFg4Section_tcl(void *clientData,
 
 
 static struct bu_cmdtab wdb_newcmds[] = {
+    {"adjust",		(int (*)(void *, int, const char **))ged_adjust},
     {"arced",		(int (*)(void *, int, const char **))ged_arced},
     {"cc",		(int (*)(void *, int, const char **))ged_cc},
     {"color",		(int (*)(void *, int, const char **))ged_color},

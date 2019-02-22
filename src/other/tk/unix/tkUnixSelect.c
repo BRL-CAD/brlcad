@@ -285,7 +285,7 @@ TkSelPropProc(
 		     * No handlers match, so mark the conversion as done.
 		     */
 
-		    incrPtr->multAtoms[2*i + 1] = None;
+		    incrPtr->multAtoms[2*i + 1] = TkNone;
 		    incrPtr->converts[i].offset = -1;
 		    incrPtr->numIncrs --;
 		    return;
@@ -551,7 +551,7 @@ TkSelEventProc(
 		if (retrPtr->property == eventPtr->xselection.property) {
 		    break;
 		}
-		if (eventPtr->xselection.property == None) {
+		if (eventPtr->xselection.property == TkNone) {
 		    Tcl_SetResult(retrPtr->interp, NULL, TCL_STATIC);
 		    Tcl_AppendResult(retrPtr->interp,
 			    Tk_GetAtomName(tkwin, retrPtr->selection),
@@ -570,7 +570,7 @@ TkSelEventProc(
 		0, MAX_PROP_WORDS, False, (Atom) AnyPropertyType,
 		&type, &format, &numItems, &bytesAfter,
 		(unsigned char **) propInfoPtr);
-	if ((result != Success) || (type == None)) {
+	if ((result != Success) || (type == TkNone)) {
 	    return;
 	}
 	if (bytesAfter != 0) {
@@ -820,7 +820,7 @@ ConvertSelection(
     reply.selection = eventPtr->selection;
     reply.target = eventPtr->target;
     reply.property = eventPtr->property;
-    if (reply.property == None) {
+    if (reply.property == TkNone) {
 	reply.property = reply.target;
     }
     reply.time = eventPtr->time;
@@ -857,7 +857,7 @@ ConvertSelection(
 
 	multiple = 1;
 	incr.multAtoms = NULL;
-	if (eventPtr->property == None) {
+	if (eventPtr->property == TkNone) {
 	    goto refuse;
 	}
 	result = XGetWindowProperty(eventPtr->display, eventPtr->requestor,
@@ -865,7 +865,7 @@ ConvertSelection(
 		&type, &format, &incr.numConversions, &bytesAfter,
 		(unsigned char **) multAtomsPtr);
 	if ((result != Success) || (bytesAfter != 0) || (format != 32)
-		|| (type == None)) {
+		|| (type == TkNone)) {
 	    if (incr.multAtoms != NULL) {
 		XFree((char *) incr.multAtoms);
 	    }
@@ -914,7 +914,7 @@ ConvertSelection(
 	    numItems = TkSelDefaultSelection(infoPtr, target, (char *) buffer,
 		    TK_SEL_BYTES_AT_ONCE, &type);
 	    if (numItems < 0) {
-		incr.multAtoms[2*i + 1] = None;
+		incr.multAtoms[2*i + 1] = TkNone;
 		continue;
 	    }
 	} else {
@@ -926,7 +926,7 @@ ConvertSelection(
 		    (char *) buffer, TK_SEL_BYTES_AT_ONCE);
 	    TkSelSetInProgress(ip.nextPtr);
 	    if ((ip.selPtr == NULL) || (numItems < 0)) {
-		incr.multAtoms[2*i + 1] = None;
+		incr.multAtoms[2*i + 1] = TkNone;
 		continue;
 	    }
 	    if (numItems > TK_SEL_BYTES_AT_ONCE) {
@@ -949,7 +949,7 @@ ConvertSelection(
 	    type = winPtr->dispPtr->incrAtom;
 	    buffer[0] = SelectionSize(selPtr);
 	    if (buffer[0] == 0) {
-		incr.multAtoms[2*i + 1] = None;
+		incr.multAtoms[2*i + 1] = TkNone;
 		continue;
 	    }
 	    numItems = 1;
@@ -1029,7 +1029,7 @@ ConvertSelection(
     } else {
 	/*
 	 * Not a MULTIPLE request. The first property in "multAtoms" got set
-	 * to None if there was an error in conversion.
+	 * to TkNone if there was an error in conversion.
 	 */
 
 	reply.property = incr.multAtoms[1];
@@ -1082,7 +1082,7 @@ ConvertSelection(
      */
 
   refuse:
-    reply.property = None;
+    reply.property = TkNone;
     XSendEvent(reply.display, reply.requestor, False, 0, (XEvent *) &reply);
     Tk_DeleteErrorHandler(errorHandler);
     return;
@@ -1130,7 +1130,7 @@ SelRcvIncrProc(
 	    eventPtr->xproperty.window, retrPtr->property, 0, MAX_PROP_WORDS,
 	    True, (Atom) AnyPropertyType, &type, &format, &numItems,
 	    &bytesAfter, (unsigned char **) propInfoPtr);
-    if ((result != Success) || (type == None)) {
+    if ((result != Success) || (type == TkNone)) {
 	return;
     }
     if (bytesAfter != 0) {

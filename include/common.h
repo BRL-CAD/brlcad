@@ -1,7 +1,7 @@
 /*                        C O M M O N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -171,6 +171,15 @@ typedef ptrdiff_t _off_t;
 #  define _OFF_T_DEFINED
 #endif
 
+/* make sure the old bsd types are defined for portability */
+#if !defined(HAVE_U_TYPES)
+typedef unsigned char u_char;
+typedef unsigned int u_int;
+typedef unsigned long u_long;
+typedef unsigned short u_short;
+#  define HAVE_U_TYPES 1
+#endif
+
 /**
  * C99 does not provide a ssize_t even though it is provided by SUS97.
  * regardless, we use it so make sure it's declared by using the
@@ -198,8 +207,12 @@ typedef ptrdiff_t ssize_t;
       * version (ugh.) */
 #    include "pstdint.h"
 #  elif defined(__STDC__) || defined(__STRICT_ANSI__) || defined(__SIZE_TYPE__) || defined(HAVE_STDINT_H)
-#    define __STDC_LIMIT_MACROS 1
-#    define __STDC_CONSTANT_MACROS 1
+#    if !defined(__STDC_LIMIT_MACROS)
+#      define __STDC_LIMIT_MACROS 1
+#    endif
+#    if !defined(__STDC_CONSTANT_MACROS)
+#      define __STDC_CONSTANT_MACROS 1
+#    endif
 #    include <stdint.h>
 #  else
 #    include "pstdint.h"

@@ -598,18 +598,18 @@ TkWmNewWindow(
     WmInfo *wmPtr = (WmInfo *) ckalloc(sizeof(WmInfo));
 
     wmPtr->winPtr = winPtr;
-    wmPtr->reparent = None;
+    wmPtr->reparent = TkNone;
     wmPtr->titleUid = NULL;
     wmPtr->iconName = NULL;
-    wmPtr->master = None;
+    wmPtr->master = TkNone;
     wmPtr->hints.flags = InputHint | StateHint;
     wmPtr->hints.input = True;
     wmPtr->hints.initial_state = NormalState;
-    wmPtr->hints.icon_pixmap = None;
-    wmPtr->hints.icon_window = None;
+    wmPtr->hints.icon_pixmap = TkNone;
+    wmPtr->hints.icon_window = TkNone;
     wmPtr->hints.icon_x = wmPtr->hints.icon_y = 0;
-    wmPtr->hints.icon_mask = None;
-    wmPtr->hints.window_group = None;
+    wmPtr->hints.icon_mask = TkNone;
+    wmPtr->hints.window_group = TkNone;
     wmPtr->leaderName = NULL;
     wmPtr->masterWindowName = NULL;
     wmPtr->icon = NULL;
@@ -640,7 +640,7 @@ TkWmNewWindow(
     wmPtr->configY = 0;
     wmPtr->configWidth = -1;
     wmPtr->configHeight = -1;
-    wmPtr->vRoot = None;
+    wmPtr->vRoot = TkNone;
     wmPtr->protPtr = NULL;
     wmPtr->cmdArgv = NULL;
     wmPtr->clientMachine = NULL;
@@ -1389,7 +1389,7 @@ WmAttributesCmd(
     int attribute = 0;
     NSWindow *macWindow;
 
-    if (winPtr->window == None) {
+    if (winPtr->window == TkNone) {
 	Tk_MakeWindowExist((Tk_Window) winPtr);
     }
     if (!TkMacOSXHostToplevelExists(winPtr)) {
@@ -1548,7 +1548,7 @@ WmColormapwindowsCmd(
 	if (winPtr2 == winPtr) {
 	    gotToplevel = 1;
 	}
-	if (winPtr2->window == None) {
+	if (winPtr2->window == TkNone) {
 	    Tk_MakeWindowExist((Tk_Window) winPtr2);
 	}
 	cmapList[i] = winPtr2;
@@ -1831,7 +1831,7 @@ WmFrameCmd(
 	return TCL_ERROR;
     }
     window = wmPtr->reparent;
-    if (window == None) {
+    if (window == TkNone) {
 	window = Tk_WindowId((Tk_Window) winPtr);
     }
     sprintf(buf, "0x%x", (unsigned) window);
@@ -2097,7 +2097,7 @@ WmIconbitmapCmd(
 	return TCL_OK;
     }
     str = Tcl_GetStringFromObj(objv[3], &len);
-    if (winPtr->window == None) {
+    if (winPtr->window == TkNone) {
 	Tk_MakeWindowExist((Tk_Window) winPtr);
     }
     if (!TkMacOSXHostToplevelExists(winPtr)) {
@@ -2106,15 +2106,15 @@ WmIconbitmapCmd(
     if (WmSetAttribute(winPtr, TkMacOSXDrawableWindow(winPtr->window), interp,
 	    WMATT_TITLEPATH, objv[3]) == TCL_OK) {
 	if (!len) {
-	    if (wmPtr->hints.icon_pixmap != None) {
+	    if (wmPtr->hints.icon_pixmap != TkNone) {
 		Tk_FreeBitmap(winPtr->display, wmPtr->hints.icon_pixmap);
-		wmPtr->hints.icon_pixmap = None;
+		wmPtr->hints.icon_pixmap = TkNone;
 	    }
 	    wmPtr->hints.flags &= ~IconPixmapHint;
 	}
     } else {
 	pixmap = Tk_GetBitmap(interp, (Tk_Window) winPtr, Tk_GetUid(str));
-	if (pixmap == None) {
+	if (pixmap == TkNone) {
 	    return TCL_ERROR;
 	}
 	wmPtr->hints.icon_pixmap = pixmap;
@@ -2158,7 +2158,7 @@ WmIconifyCmd(
 		"\": override-redirect flag is set", NULL);
 	return TCL_ERROR;
     }
-    if (wmPtr->master != None) {
+    if (wmPtr->master != TkNone) {
 	Tcl_AppendResult(interp, "can't iconify \"", winPtr->pathName,
 		"\": it is a transient", NULL);
 	return TCL_ERROR;
@@ -2219,13 +2219,13 @@ WmIconmaskCmd(
     }
     argv3 = Tcl_GetString(objv[3]);
     if (*argv3 == '\0') {
-	if (wmPtr->hints.icon_mask != None) {
+	if (wmPtr->hints.icon_mask != TkNone) {
 	    Tk_FreeBitmap(winPtr->display, wmPtr->hints.icon_mask);
 	}
 	wmPtr->hints.flags &= ~IconMaskHint;
     } else {
 	pixmap = Tk_GetBitmap(interp, tkwin, argv3);
-	if (pixmap == None) {
+	if (pixmap == TkNone) {
 	    return TCL_ERROR;
 	}
 	wmPtr->hints.icon_mask = pixmap;
@@ -2533,7 +2533,7 @@ WmManageCmd(
 	Tk_UnmapWindow(frameWin);
 	if (wmPtr == NULL) {
 	    TkWmNewWindow(winPtr);
-	    if (winPtr->window == None) {
+	    if (winPtr->window == TkNone) {
 		Tk_MakeWindowExist((Tk_Window) winPtr);
 		macWin = (MacDrawable *) winPtr->window;
 	    }
@@ -3185,7 +3185,7 @@ WmStateCmd(
 			"\": override-redirect flag is set", NULL);
 		return TCL_ERROR;
 	    }
-	    if (wmPtr->master != None) {
+	    if (wmPtr->master != TkNone) {
 		Tcl_AppendResult(interp, "can't iconify \"", winPtr->pathName,
 			"\": it is a transient", NULL);
 		return TCL_ERROR;
@@ -3304,13 +3304,13 @@ WmTransientCmd(
 	return TCL_ERROR;
     }
     if (objc == 3) {
-	if (wmPtr->master != None) {
+	if (wmPtr->master != TkNone) {
 	    Tcl_SetResult(interp, wmPtr->masterWindowName, TCL_STATIC);
 	}
 	return TCL_OK;
     }
     if (Tcl_GetString(objv[3])[0] == '\0') {
-	wmPtr->master = None;
+	wmPtr->master = TkNone;
 	if (wmPtr->masterWindowName != NULL) {
 	    ckfree(wmPtr->masterWindowName);
 	}
@@ -4380,7 +4380,7 @@ UpdateVRootGeometry(
      */
 
     wmPtr->flags &= ~WM_VROOT_OFFSET_STALE;
-    if (wmPtr->vRoot == None) {
+    if (wmPtr->vRoot == TkNone) {
 	noVRoot:
 	wmPtr->vRootX = wmPtr->vRootY = 0;
 	wmPtr->vRootWidth = DisplayWidth(winPtr->display, winPtr->screenNum);
@@ -4407,7 +4407,7 @@ UpdateVRootGeometry(
 	 * The virtual root is gone! Pretend that it never existed.
 	 */
 
-	wmPtr->vRoot = None;
+	wmPtr->vRoot = TkNone;
 	goto noVRoot;
     }
 }
@@ -4557,7 +4557,7 @@ TkWmRestackToplevel(
      * Get the mac window. Make sure it exists & is mapped.
      */
 
-    if (winPtr->window == None) {
+    if (winPtr->window == TkNone) {
 	Tk_MakeWindowExist((Tk_Window) winPtr);
     }
     if (winPtr->wmInfoPtr->flags & WM_NEVER_MAPPED) {
@@ -4576,7 +4576,7 @@ TkWmRestackToplevel(
      */
 
     if (otherPtr != NULL) {
-	if (otherPtr->window == None) {
+	if (otherPtr->window == TkNone) {
 	    Tk_MakeWindowExist((Tk_Window) otherPtr);
 	}
 	if (otherPtr->wmInfoPtr->flags & WM_NEVER_MAPPED) {
@@ -4622,7 +4622,7 @@ TkWmAddToColormapWindows(
     TkWindow **oldPtr, **newPtr;
     int count, i;
 
-    if (winPtr->window == None) {
+    if (winPtr->window == TkNone) {
 	return;
     }
 
@@ -4776,7 +4776,7 @@ TkGetPointerCoords(
 				 * which lookup is to be done. */
     int *xPtr, int *yPtr)	/* Store pointer coordinates here. */
 {
-    XQueryPointer(NULL, None, NULL, NULL, xPtr, yPtr, NULL, NULL, NULL);
+    XQueryPointer(NULL, TkNone, NULL, NULL, xPtr, yPtr, NULL, NULL, NULL);
 }
 
 /*
@@ -4923,10 +4923,10 @@ TkSetWMName(
  * TkGetTransientMaster --
  *
  *	If the passed window has the TRANSIENT_FOR property set this will
- *	return the master window. Otherwise it will return None.
+ *	return the master window. Otherwise it will return TkNone.
  *
  * Results:
- *	The master window or None.
+ *	The master window or TkNone.
  *
  * Side effects:
  *	None.
@@ -4941,7 +4941,7 @@ TkGetTransientMaster(
     if (winPtr->wmInfoPtr != NULL) {
 	return winPtr->wmInfoPtr->master;
     }
-    return None;
+    return TkNone;
 }
 
 /*
@@ -4952,7 +4952,7 @@ TkGetTransientMaster(
  *	Returns the X window Id associated with the given NSWindow*.
  *
  * Results:
- *	The window id is returned. None is returned if not a Tk window.
+ *	The window id is returned. TkNone is returned if not a Tk window.
  *
  * Side effects:
  *	None.
@@ -4967,11 +4967,11 @@ TkMacOSXGetXWindow(
     Tcl_HashEntry *hPtr;
 
     if (!macWinPtr || !windowHashInit) {
-	return None;
+	return TkNone;
     }
     hPtr = Tcl_FindHashEntry(&windowTable, macWinPtr);
     if (hPtr == NULL) {
-	return None;
+	return TkNone;
     }
     return (Window) Tcl_GetHashValue(hPtr);
 }
@@ -4999,7 +4999,7 @@ TkMacOSXGetTkWindow(
     Window window = TkMacOSXGetXWindow(w);
     TkDisplay *dispPtr = TkGetDisplayList();
 
-    return (window != None ?
+    return (window != TkNone ?
 	    (TkWindow *)Tk_IdToWindow(dispPtr->display, window) : NULL);
 }
 
@@ -6121,7 +6121,7 @@ TkMacOSXApplyWindowAttributes(
 {
     WmInfo *wmPtr = winPtr->wmInfoPtr;
     ApplyWindowAttributeFlagChanges(winPtr, macWindow, 0, 0, 0, 1);
-    if (wmPtr->master != None || winPtr->atts.override_redirect) {
+    if (wmPtr->master != TkNone || winPtr->atts.override_redirect) {
 	ApplyMasterOverrideChanges(winPtr, macWindow);
     }
 }
@@ -6158,7 +6158,7 @@ ApplyWindowAttributeFlagChanges(
 
     if (changedAttributes || wmPtr->flags != oldFlags || initial) {
 	if (!macWindow) {
-	    if (winPtr->window == None) {
+	    if (winPtr->window == TkNone) {
 		if (create) {
 		    Tk_MakeWindowExist((Tk_Window) winPtr);
 		} else {
@@ -6325,23 +6325,23 @@ ApplyMasterOverrideChanges(
 	}
 	wmPtr->attributes &= ~kWindowNoActivatesAttribute;
     }
-    if (!macWindow && winPtr->window != None &&
+    if (!macWindow && winPtr->window != TkNone &&
 	    TkMacOSXHostToplevelExists(winPtr)) {
 	macWindow = TkMacOSXDrawableWindow(winPtr->window);
     }
     if (macWindow) {
-	if (winPtr->atts.override_redirect && wmPtr->master != None) {
+	if (winPtr->atts.override_redirect && wmPtr->master != TkNone) {
 	    wmPtr->flags |= WM_TOPMOST;
 	} else {
 	    wmPtr->flags &= ~WM_TOPMOST;
 	}
 	NSWindow *parentWindow = [macWindow parentWindow];
-	if (wmPtr->master != None) {
+	if (wmPtr->master != TkNone) {
 	    TkDisplay *dispPtr = TkGetDisplayList();
 	    TkWindow *masterWinPtr = (TkWindow *)
 		    Tk_IdToWindow(dispPtr->display, wmPtr->master);
 
-	    if (masterWinPtr && masterWinPtr->window != None &&
+	    if (masterWinPtr && masterWinPtr->window != TkNone &&
 		    TkMacOSXHostToplevelExists(masterWinPtr)) {
 		NSWindow *masterMacWin =
 			TkMacOSXDrawableWindow(masterWinPtr->window);
@@ -6657,7 +6657,7 @@ RemapWindows(
      * Mapped.
      */
 
-    if (winPtr->window != None) {
+    if (winPtr->window != TkNone) {
 	MacDrawable *macWin = (MacDrawable *) winPtr->window;
 
 	macWin->toplevel->referenceCount--;

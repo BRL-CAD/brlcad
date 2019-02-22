@@ -1,7 +1,7 @@
 /*                        D B 5 _ I O . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,6 +40,13 @@
 #include "rt/db5.h"
 #include "raytrace.h"
 #include "librt_private.h"
+
+
+/**
+ * Number of bytes used for each value of DB5HDR_WIDTHCODE_*
+ */
+#define ENCODE_LEN(len) (1 << len)
+
 
 int
 db5_header_is_valid(const unsigned char *hp)
@@ -176,8 +183,7 @@ HIDDEN int
 crack_disk_header(struct db5_raw_internal *rip, const unsigned char *cp)
 {
     if (cp[0] != DB5HDR_MAGIC1) {
-	bu_log("crack_disk_header() bad magic1 -- database has become corrupted\n expected x%x, got x%x\n",
-	       DB5HDR_MAGIC1, cp[0]);
+	bu_log("crack_disk_header() bad magic1: expected x%x, got x%x\n", DB5HDR_MAGIC1, cp[0]);
 	if (cp[0] == 'I') {
 	    bu_log ("Concatenation of different database versions detected.\n");
 	    bu_log ("Run 'dbupgrade' on all databases before concatenation (cat command).\n");
@@ -242,15 +248,14 @@ db5_get_raw_internal_ptr(struct db5_raw_internal *rip, const unsigned char *ip)
     rip->object_length <<= 3;	/* cvt 8-byte chunks to byte count */
 
     if ((size_t)rip->object_length < sizeof(struct db5_ondisk_header)) {
-	bu_log("db5_get_raw_internal_ptr(): object_length=%ld is too short, database is corrupted\n",
+	bu_log("db5_get_raw_internal_ptr(): object_length=%ld is too short, database possibly corrupted\n",
 	       rip->object_length);
 	return NULL;
     }
 
     /* Verify trailing magic number */
     if (ip[rip->object_length-1] != DB5HDR_MAGIC2) {
-	bu_log("db5_get_raw_internal_ptr() bad magic2 -- database has become corrupted.\n expected x%x, got x%x\n",
-	       DB5HDR_MAGIC2, ip[rip->object_length-1]);
+	bu_log("db5_get_raw_internal_ptr() bad magic2: expected x%x, got x%x\n", DB5HDR_MAGIC2, ip[rip->object_length-1]);
 	return NULL;
     }
 
@@ -344,7 +349,7 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
     rip->object_length <<= 3;	/* cvt 8-byte chunks to byte count */
 
     if (rip->object_length < sizeof(struct db5_ondisk_header) || rip->object_length < used) {
-	bu_log("db5_get_raw_internal_fp(): object_length=%ld is too short, database is corrupted\n",
+	bu_log("db5_get_raw_internal_fp(): object_length=%ld is too short, database possibly corrupted\n",
 	       rip->object_length);
 	return -1;
     }
@@ -359,15 +364,13 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
     want = rip->object_length - used;
 
     if ((got = fread(cp, 1, want, fp)) != want) {
-	bu_log("db5_get_raw_internal_fp(): Database is too short, want=%ld, got=%ld\n",
-	       want, got);
+	bu_log("db5_get_raw_internal_fp(): database is too short, want=%ld, got=%ld\n", want, got);
 	return -2;
     }
 
     /* Verify trailing magic number */
     if (rip->buf[rip->object_length-1] != DB5HDR_MAGIC2) {
-	bu_log("db5_get_raw_internal_fp(): bad magic2 -- database has become corrupted.\n expected x%x, got x%x\n",
-	       DB5HDR_MAGIC2, rip->buf[rip->object_length-1]);
+	bu_log("db5_get_raw_internal_fp() bad magic2: expected x%x, got x%x\n", DB5HDR_MAGIC2, rip->buf[rip->object_length-1]);
 	return -2;
     }
 
@@ -435,7 +438,7 @@ db5_export_object3(
 	namelen = (long)strlen(name) + 1;	/* includes null */
 	if (namelen > 1) {
 	    n_width = db5_select_length_encoding(namelen);
-	    need += namelen + DB5_ENC_LEN(n_width);
+	    need += namelen + ENCODE_LEN(n_width);
 	} else {
 	    name = NULL;
 	    namelen = 0;
@@ -448,7 +451,7 @@ db5_export_object3(
 	BU_CK_EXTERNAL(attrib);
 	if (attrib->ext_nbytes > 0) {
 	    a_width = db5_select_length_encoding(attrib->ext_nbytes);
-	    need += attrib->ext_nbytes + DB5_ENC_LEN(a_width);
+	    need += attrib->ext_nbytes + ENCODE_LEN(a_width);
 	} else {
 	    attrib = NULL;
 	    a_width = 0;
@@ -460,7 +463,7 @@ db5_export_object3(
 	BU_CK_EXTERNAL(body);
 	if (body->ext_nbytes > 0) {
 	    b_width = db5_select_length_encoding(body->ext_nbytes);
-	    need += body->ext_nbytes + DB5_ENC_LEN(b_width);
+	    need += body->ext_nbytes + ENCODE_LEN(b_width);
 	} else {
 	    body = NULL;
 	    b_width = 0;

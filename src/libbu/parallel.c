@@ -1,7 +1,7 @@
 /*                      P A R A L L E L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,19 +28,6 @@
 
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
-/* sys/sysctl.h may need help with c90-era BSD/XOPEN API */
-#  ifndef _U_LONG
-#    define u_long unsigned long
-#  endif
-#  ifndef _U_INT
-#    define u_int unsigned int
-#  endif
-#  ifndef _U_SHORT
-#    define u_short unsigned short
-#  endif
-#  ifndef _U_CHAR
-#    define u_char unsigned char
-#  endif
 #endif
 
 #ifdef HAVE_SYS_TIME_H

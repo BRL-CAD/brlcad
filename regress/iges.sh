@@ -2,7 +2,7 @@
 #                         I G E S . S H
 # BRL-CAD
 #
-# Copyright (c) 2010-2018 United States Government as represented by
+# Copyright (c) 2010-2019 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -70,6 +70,7 @@ fi
 STATUS=0
 
 log "... running mged to create facetized geometry (iges.g)"
+rm -f iges.g
 $MGED -c >> $LOGFILE 2>&1 <<EOF
 opendb iges.g y
 

@@ -1,7 +1,7 @@
 /*                          D M - T K . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2018 United States Government as represented by
+ * Copyright (c) 1988-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -221,7 +221,7 @@ tk_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
 
     if (dmp->dm_debugLevel) {
 	bu_log("tk_drawVList()\n");
-	bu_log("vp - %lu, perspective - %d\n", vp, dmp->dm_perspective);
+	bu_log("vp - %p, perspective - %d\n", (void *)vp, dmp->dm_perspective);
     }
 
     /* delta is used in clipping to insure clipped endpoint is slightly

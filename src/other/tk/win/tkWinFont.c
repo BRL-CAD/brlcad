@@ -519,7 +519,7 @@ TkpGetFontFromAttributes(
 
     tkwin = (Tk_Window) ((TkWindow *) tkwin)->mainPtr->winPtr;
     window = Tk_WindowId(tkwin);
-    hwnd = (window == None) ? NULL : TkWinGetHWND(window);
+    hwnd = (window == TkNone) ? NULL : TkWinGetHWND(window);
     hdc = GetDC(hwnd);
 
     /*
@@ -631,7 +631,7 @@ TkpGetFontFamilies(
     Window window;
 
     window = Tk_WindowId(tkwin);
-    hwnd = (window == None) ? NULL : TkWinGetHWND(window);
+    hwnd = (window == TkNone) ? NULL : TkWinGetHWND(window);
     hdc = GetDC(hwnd);
 
     /*
@@ -1095,7 +1095,7 @@ Tk_DrawChars(
     fontPtr = (WinFont *) gc->font;
     display->request++;
 
-    if (drawable == None) {
+    if (drawable == TkNone) {
 	return;
     }
 
@@ -1103,14 +1103,14 @@ Tk_DrawChars(
 
     SetROP2(dc, tkpWinRopModes[gc->function]);
 
-    if ((gc->clip_mask != None) &&
+    if ((gc->clip_mask != TkNone) &&
 	    ((TkpClipMask*)gc->clip_mask)->type == TKP_CLIP_REGION) {
 	SelectClipRgn(dc, (HRGN)((TkpClipMask*)gc->clip_mask)->value.region);
     }
 
     if ((gc->fill_style == FillStippled
 	    || gc->fill_style == FillOpaqueStippled)
-	    && gc->stipple != None) {
+	    && gc->stipple != TkNone) {
 	TkWinDrawable *twdPtr = (TkWinDrawable *)gc->stipple;
 	HBRUSH oldBrush, stipple;
 	HBITMAP oldBitmap, bitmap;
@@ -1395,7 +1395,7 @@ InitFont(
     char buf[LF_FACESIZE * sizeof(WCHAR)];
 
     window = Tk_WindowId(tkwin);
-    hwnd = (window == None) ? NULL : TkWinGetHWND(window);
+    hwnd = (window == TkNone) ? NULL : TkWinGetHWND(window);
     hdc = GetDC(hwnd);
     oldFont = SelectObject(hdc, hFont);
 

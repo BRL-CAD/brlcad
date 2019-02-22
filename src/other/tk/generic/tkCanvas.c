@@ -88,11 +88,11 @@ typedef struct TagSearch {
  * Values for the TagSearch type field.
  */
 
-#define SEARCH_TYPE_EMPTY	0	/* Looking for empty tag */
-#define SEARCH_TYPE_ID		1	/* Looking for an item by id */
-#define SEARCH_TYPE_ALL		2	/* Looking for all items */
-#define SEARCH_TYPE_TAG		3	/* Looking for an item by simple tag */
-#define SEARCH_TYPE_EXPR	4	/* Compound search */
+#define TK_SEARCH_TYPE_EMPTY	0	/* Looking for empty tag */
+#define TK_SEARCH_TYPE_ID		1	/* Looking for an item by id */
+#define TK_SEARCH_TYPE_ALL		2	/* Looking for all items */
+#define TK_SEARCH_TYPE_TAG		3	/* Looking for an item by simple tag */
+#define TK_SEARCH_TYPE_EXPR	4	/* Compound search */
 
 #endif /* USE_OLD_TAG_SEARCH */
 
@@ -417,9 +417,9 @@ Tk_CanvasObjCmd(
     canvasPtr->highlightBgColorPtr = NULL;
     canvasPtr->highlightColorPtr = NULL;
     canvasPtr->inset = 0;
-    canvasPtr->pixmapGC = None;
-    canvasPtr->width = None;
-    canvasPtr->height = None;
+    canvasPtr->pixmapGC = TkNone;
+    canvasPtr->width = TkNone;
+    canvasPtr->height = TkNone;
     canvasPtr->confine = 0;
     canvasPtr->textInfo.selBorder = NULL;
     canvasPtr->textInfo.selBorderWidth = 0;
@@ -463,7 +463,7 @@ Tk_CanvasObjCmd(
     canvasPtr->scanYOrigin = 0;
     canvasPtr->hotPtr = NULL;
     canvasPtr->hotPrevPtr = NULL;
-    canvasPtr->cursor = None;
+    canvasPtr->cursor = TkNone;
     canvasPtr->takeFocus = NULL;
     canvasPtr->pixelsPerMM = WidthOfScreen(Tk_Screen(newWin));
     canvasPtr->pixelsPerMM /= WidthMMOfScreen(Tk_Screen(newWin));
@@ -680,7 +680,7 @@ CanvasWidgetCmd(
 	if (result != TCL_OK) {
 	    goto done;
 	}
-	if (searchPtr->type == SEARCH_TYPE_ID) {
+	if (searchPtr->type == TK_SEARCH_TYPE_ID) {
 	    Tcl_HashEntry *entryPtr;
 
 	    entryPtr = Tcl_FindHashEntry(&canvasPtr->idTable,
@@ -720,7 +720,7 @@ CanvasWidgetCmd(
 		goto done;
 	    }
 #ifndef USE_OLD_TAG_SEARCH
-	    if (searchPtr->type == SEARCH_TYPE_EXPR) {
+	    if (searchPtr->type == TK_SEARCH_TYPE_EXPR) {
 		/*
 		 * If new tag expression, then insert in linked list.
 		 */
@@ -1834,7 +1834,7 @@ DestroyCanvas(
      */
 
     Tcl_DeleteHashTable(&canvasPtr->idTable);
-    if (canvasPtr->pixmapGC != None) {
+    if (canvasPtr->pixmapGC != TkNone) {
 	Tk_FreeGC(canvasPtr->display, canvasPtr->pixmapGC);
     }
 #ifndef USE_OLD_TAG_SEARCH
@@ -1910,7 +1910,7 @@ ConfigureCanvas(
     gcValues.foreground = Tk_3DBorderColor(canvasPtr->bgBorder)->pixel;
     newGC = Tk_GetGC(canvasPtr->tkwin,
 	    GCFunction|GCGraphicsExposures|GCForeground, &gcValues);
-    if (canvasPtr->pixmapGC != None) {
+    if (canvasPtr->pixmapGC != TkNone) {
 	Tk_FreeGC(canvasPtr->display, canvasPtr->pixmapGC);
     }
     canvasPtr->pixmapGC = newGC;
@@ -2405,7 +2405,7 @@ CanvasEventProc(
 		itemPtr = itemPtr->nextPtr) {
 	    if (itemPtr->typePtr->alwaysRedraw & 1) {
 		(*itemPtr->typePtr->displayProc)((Tk_Canvas) canvasPtr,
-			itemPtr, canvasPtr->display, None, 0, 0, 0, 0);
+			itemPtr, canvasPtr->display, TkNone, 0, 0, 0, 0);
 	    }
 	}
     }
@@ -2796,7 +2796,7 @@ StartTagSearch(
     }
 
     /*
-     * None of the above. Search for an item with a matching tag.
+     * TkNone of the above. Search for an item with a matching tag.
      */
 
     for (lastPtr = NULL, itemPtr = canvasPtr->firstItemPtr; itemPtr != NULL;
@@ -3081,7 +3081,7 @@ TagSearchScan(
 
     searchPtr->canvasPtr = canvasPtr;
     searchPtr->searchOver = 0;
-    searchPtr->type = SEARCH_TYPE_EMPTY;
+    searchPtr->type = TK_SEARCH_TYPE_EMPTY;
 
     /*
      * Find the first matching item in one of several ways. If the tag is a
@@ -3095,7 +3095,7 @@ TagSearchScan(
 
 	searchPtr->id = strtoul(tag, &end, 0);
 	if (*end == 0) {
-	    searchPtr->type = SEARCH_TYPE_ID;
+	    searchPtr->type = TK_SEARCH_TYPE_ID;
 	    return TCL_OK;
 	}
     }
@@ -3136,14 +3136,14 @@ TagSearchScan(
 		|| (tag[i] == '|' && tag[i+1] == '|')
 		|| (tag[i] == '^')
 		|| (tag[i] == '!')) {
-	    searchPtr->type = SEARCH_TYPE_EXPR;
+	    searchPtr->type = TK_SEARCH_TYPE_EXPR;
 	    break;
 	}
     }
 
     searchPtr->string = tag;
     searchPtr->stringIndex = 0;
-    if (searchPtr->type == SEARCH_TYPE_EXPR) {
+    if (searchPtr->type == TK_SEARCH_TYPE_EXPR) {
 	/*
 	 * An operator was found in the prescan, so now compile the tag
 	 * expression into array of Tk_Uid flagging any syntax errors found.
@@ -3164,13 +3164,13 @@ TagSearchScan(
 	 * All items match.
 	 */
 
-	searchPtr->type = SEARCH_TYPE_ALL;
+	searchPtr->type = TK_SEARCH_TYPE_ALL;
     } else {
 	/*
 	 * Optimized single-tag search
 	 */
 
-	searchPtr->type = SEARCH_TYPE_TAG;
+	searchPtr->type = TK_SEARCH_TYPE_TAG;
     }
     return TCL_OK;
 }
@@ -3657,7 +3657,7 @@ TagSearchFirst(
      * case the search can be skipped.
      */
 
-    if (searchPtr->type == SEARCH_TYPE_ID) {
+    if (searchPtr->type == TK_SEARCH_TYPE_ID) {
 	Tcl_HashEntry *entryPtr;
 
 	itemPtr = searchPtr->canvasPtr->hotPtr;
@@ -3680,7 +3680,7 @@ TagSearchFirst(
 	return itemPtr;
     }
 
-    if (searchPtr->type == SEARCH_TYPE_ALL) {
+    if (searchPtr->type == TK_SEARCH_TYPE_ALL) {
 	/*
 	 * All items match.
 	 */
@@ -3690,7 +3690,7 @@ TagSearchFirst(
 	return searchPtr->canvasPtr->firstItemPtr;
     }
 
-    if (searchPtr->type == SEARCH_TYPE_TAG) {
+    if (searchPtr->type == TK_SEARCH_TYPE_TAG) {
 	/*
 	 * Optimized single-tag search
 	 */
@@ -3710,7 +3710,7 @@ TagSearchFirst(
     } else {
 
 	/*
-	 * None of the above. Search for an item matching the tag expression.
+	 * TkNone of the above. Search for an item matching the tag expression.
 	 */
 
 	for (lastPtr = NULL, itemPtr = searchPtr->canvasPtr->firstItemPtr;
@@ -3784,7 +3784,7 @@ TagSearchNext(
 	itemPtr = lastPtr->nextPtr;
     }
 
-    if (searchPtr->type == SEARCH_TYPE_ALL) {
+    if (searchPtr->type == TK_SEARCH_TYPE_ALL) {
 	/*
 	 * All items match.
 	 */
@@ -3794,7 +3794,7 @@ TagSearchNext(
 	return itemPtr;
     }
 
-    if (searchPtr->type == SEARCH_TYPE_TAG) {
+    if (searchPtr->type == TK_SEARCH_TYPE_TAG) {
 	/*
 	 * Optimized single-tag search
 	 */
@@ -4545,7 +4545,7 @@ PickCurrentItem(
 	    canvasPtr->pickEvent.xcrossing.display = eventPtr->xmotion.display;
 	    canvasPtr->pickEvent.xcrossing.window = eventPtr->xmotion.window;
 	    canvasPtr->pickEvent.xcrossing.root = eventPtr->xmotion.root;
-	    canvasPtr->pickEvent.xcrossing.subwindow = None;
+	    canvasPtr->pickEvent.xcrossing.subwindow = TkNone;
 	    canvasPtr->pickEvent.xcrossing.time = eventPtr->xmotion.time;
 	    canvasPtr->pickEvent.xcrossing.x = eventPtr->xmotion.x;
 	    canvasPtr->pickEvent.xcrossing.y = eventPtr->xmotion.y;

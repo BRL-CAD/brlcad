@@ -1,7 +1,7 @@
 /*                      D E F I N E S . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -146,22 +146,6 @@
 #  define _BU_ATTR_ALWAYS_INLINE
 #endif
 
-/**
- *  If we're compiling strict, turn off "format string vs arguments"
- *  checks. As long as we are using C89, the proper printf support
- *  for size_t is not available in the standard and we will get
- *  warnings about using extensions.
- */
-#if defined(STRICT_FLAGS)
-#  undef _BU_ATTR_PRINTF12
-#  undef _BU_ATTR_PRINTF23
-#  undef _BU_ATTR_SCANF23
-#  undef _BU_ATTR_NORETURN
-#  define _BU_ATTR_PRINTF12
-#  define _BU_ATTR_PRINTF23
-#  define _BU_ATTR_SCANF23
-#  define _BU_ATTR_NORETURN
-#endif
 
 /**
  * This macro is used to take the 'C' function name, and convert it at

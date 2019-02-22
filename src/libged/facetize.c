@@ -1,7 +1,7 @@
 /*                         F A C E T I Z E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2018 United States Government as represented by
+ * Copyright (c) 2008-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1340,6 +1340,11 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
 		    feature_size, pn->v, objname, gedp->ged_wdbp->dbip, &params);
 	delta = (int)((bu_gettime() - timestamp)/1e6);
 	if (polygonize_failure || bot->num_faces < successful_bot_count || delta < 2) {
+	    if (polygonize_failure == 3) {
+		bu_log("CM: Too little available memory to continue, aborting\n");
+		ret = GED_FACETIZE_FAILURE;
+		goto ged_facetize_continuation_memfree;
+	    } 
 	    if (polygonize_failure == 2) {
 		if (!opts->quiet) {
 		    bu_log("CM: timed out after %d seconds with size %g\n", opts->max_time, feature_size);
@@ -2465,7 +2470,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	cdp = (struct directory *)BU_PTBL_GET(pc, i);
 	nparent = bu_avs_get(opts->c_map, cdp->d_namep);
 	if (!opts->quiet) {
-	    bu_log("Duplicating assembly (%d of %d) %s -> %s\n", i+1, BU_PTBL_LEN(pc), cdp->d_namep, nparent);
+	    bu_log("Duplicating assembly (%d of %ld) %s -> %s\n", i+1, BU_PTBL_LEN(pc), cdp->d_namep, nparent);
 	}
 	if (_ged_facetize_add_children(gedp, cdp, opts) != GED_OK) {
 	    if (!opts->quiet) {

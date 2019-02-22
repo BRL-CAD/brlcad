@@ -28,7 +28,7 @@
 
 typedef struct InProgress {
     XEvent *eventPtr;		/* Event currently being handled. */
-    TkWindow *winPtr;		/* Window for event. Gets set to None if
+    TkWindow *winPtr;		/* Window for event. Gets set to TkNone if
 				 * window is deleted while event is being
 				 * handled. */
     TkEventHandler *nextHandler;/* Next handler in search. */
@@ -421,7 +421,7 @@ GetTkWindowFromXEvent(
 	}
 	TkSelPropProc(eventPtr);
 	parentXId = ParentXId(eventPtr->xany.display, handlerWindow);
-	if (parentXId == None) {
+	if (parentXId == TkNone) {
 	    return NULL;
 	}
 	winPtr = (TkWindow *) Tk_IdToWindow(eventPtr->xany.display, parentXId);
@@ -601,7 +601,7 @@ UpdateButtonEventState(
 
     case ButtonRelease:
 	dispPtr = TkGetDisplay(eventPtr->xbutton.display);
-	dispPtr->mouseButtonWindow = None;
+	dispPtr->mouseButtonWindow = TkNone;
 	dispPtr->mouseButtonState &= ~GetButtonMask(eventPtr->xbutton.button);
 	eventPtr->xbutton.state |= dispPtr->mouseButtonState;
 	break;
@@ -617,7 +617,7 @@ UpdateButtonEventState(
 		 */
 
 		dispPtr->mouseButtonState &= ~allButtonsMask;
-		dispPtr->mouseButtonWindow = None;
+		dispPtr->mouseButtonWindow = TkNone;
 	    } else {
 		eventPtr->xmotion.state |= dispPtr->mouseButtonState;
 	    }
@@ -1192,7 +1192,7 @@ ParentXId(
 	XFree(childList);
     }
     if (status == 0) {
-	parent = None;
+	parent = TkNone;
     }
 
     return parent;
@@ -1365,7 +1365,7 @@ Tk_HandleEvent(
 	 * handle CreateNotify events, so we gotta pass 'em through.
 	 */
 
-	if ((ip.winPtr != None)
+	if ((ip.winPtr != TkNone)
 		&& ((mask != SubstructureNotifyMask)
 		|| (eventPtr->type == CreateNotify))) {
 	    TkBindEventProc(winPtr, eventPtr);
@@ -1436,7 +1436,7 @@ TkEventDeadWindow(
 		ipPtr->nextHandler = NULL;
 	    }
 	    if (ipPtr->winPtr == winPtr) {
-		ipPtr->winPtr = None;
+		ipPtr->winPtr = TkNone;
 	    }
 	}
 	ckfree((char *) handlerPtr);

@@ -556,8 +556,8 @@ TkpGetColor(
     Tk_Uid name)		/* Name of color to allocated (in form
 				 * suitable for passing to XParseColor). */
 {
-    Display *display = tkwin != None ? Tk_Display(tkwin) : NULL;
-    Colormap colormap = tkwin!= None ? Tk_Colormap(tkwin) : None;
+    Display *display = tkwin != TkNone ? Tk_Display(tkwin) : NULL;
+    Colormap colormap = tkwin!= TkNone ? Tk_Colormap(tkwin) : TkNone;
     TkColor *tkColPtr;
     XColor color;
 

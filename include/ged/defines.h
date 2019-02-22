@@ -1,7 +1,7 @@
 /*                        D E F I N E S . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2018 United States Government as represented by
+ * Copyright (c) 2008-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,6 +32,7 @@
 #include "bio.h"
 #include "bu/hash.h"
 #include "bu/list.h"
+#include "bu/process.h"
 #include "bu/vls.h"
 #include "dm/bview.h"
 #include "rt/search.h"
@@ -86,7 +87,7 @@ __BEGIN_DECLS
  * Definition of global parallel-processing semaphores.
  *
  */
-#define GED_SEM_WORKER RT_SEM_LAST
+#define GED_SEM_WORKER ANALYZE_SEM_LAST
 #define GED_SEM_STATS GED_SEM_WORKER+1
 #define GED_SEM_LIST GED_SEM_STATS+1
 #define GED_SEM_LAST GED_SEM_LIST+1
@@ -114,19 +115,10 @@ __BEGIN_DECLS
 #define RT_VDRW_DEF_COLOR       0xffff00
 
 
-struct ged_run_rt {
+struct ged_subprocess {
     struct bu_list l;
-#if defined(_WIN32) && !defined(__CYGWIN__)
-    HANDLE fd;
-    HANDLE hProcess;
-    DWORD pid;
-    void *chan; /* FIXME: uses communication channel instead of file
-		 * descriptor to get output from rt.
-		 */
-#else
-    int fd;
-    int pid;
-#endif
+    struct bu_process *p;
+    void *chan;
     int aborted;
 };
 
@@ -159,9 +151,8 @@ struct ged_drawable {
     struct vd_curve		*gd_currVHead;		/**< @brief  current vdraw head */
     struct solid                *gd_freeSolids;         /**< @brief  ptr to head of free solid list */
 
-    char			**gd_rt_cmd;
-    int				gd_rt_cmd_len;
-    struct ged_run_rt		gd_headRunRt;		/**< @brief  head of forked rt processes */
+    char			**gd_rt_cmd;    /* DEPRECATED - will be removed, do not use */
+    int				gd_rt_cmd_len;  /* DEPRECATED - will be removed, do not use */
 
     void			(*gd_rtCmdNotify)(int aborted);	/**< @brief  function called when rt command completes */
 
@@ -230,8 +221,14 @@ struct ged {
     int (*del)(struct ged *gedp, const char *name);
     int (*run)(struct ged *gedp, int ac, char *av[]);
 
+    struct ged_subprocess	gd_headSubprocess; /**< @brief  head of forked processes */
+
+    struct analyze_densities *gd_densities; /** @brief current densities */
+    char                     *gd_densities_source;
+
     void *ged_interp; /* Temporary - do not rely on when designing new functionality */
     db_search_callback_t ged_interp_eval; /* FIXME: broke the rule written on the previous line */
+
 
     /* Interface to LIBDM */
     int ged_dm_width;

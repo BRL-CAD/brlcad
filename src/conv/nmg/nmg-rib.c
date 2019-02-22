@@ -1,7 +1,7 @@
 /*                       N M G - R I B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -50,7 +50,7 @@ void
 usage(char *s)
 {
     if (s) {
-	bu_log(s);
+	bu_log("%s", s);
     }
 
     (void) bu_exit(1, "Usage: %s [-t] file.g nmg_solid [ nmg_solid ... ]\n",

@@ -1,7 +1,7 @@
 /*                         T I M E . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -47,9 +47,9 @@ __BEGIN_DECLS
 @code
 int64_t start = bu_gettime();
 do_some_work_here();
-int64_t elapsed = bu_gettime() - start;
-int seconds = elapsed / 1000000LL;
-printf("time: %02d\n", seconds);
+double elapsed = bu_gettime() - start;
+double seconds = elapsed / 1000000.0;
+printf("time: %.2f\n", seconds);
 @endcode
  *
  */

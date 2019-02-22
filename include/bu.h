@@ -1,7 +1,7 @@
 /*                            B U . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -89,6 +89,8 @@
 #include "./bu/opt.h"
 #include "./bu/parallel.h"
 #include "./bu/parse.h"
+#include "./bu/path.h"
+#include "./bu/process.h"
 #include "./bu/ptbl.h"
 #include "./bu/redblack.h"
 #include "./bu/simd.h"
@@ -100,7 +102,6 @@
 #include "./bu/vfont.h"
 #include "./bu/vlb.h"
 #include "./bu/vls.h"
-
 
 #endif  /* BU_H */
 

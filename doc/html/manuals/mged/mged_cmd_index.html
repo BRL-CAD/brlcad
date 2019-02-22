@@ -159,8 +159,6 @@
 </TR>
 <TR><TD WIDTH="18%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#eqn"><FONT SIZE=2>eqn</FONT></A></TD>
-<TD WIDTH="19%" VALIGN="MIDDLE">
-<FONT SIZE=2><P></FONT><A HREF="#em"><FONT SIZE=2>em</FONT></A></TD>
 <TD WIDTH="20%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#erase"><FONT SIZE=2>erase</FONT></A></TD>
 <TD WIDTH="21%" VALIGN="MIDDLE">
@@ -177,8 +175,7 @@
 <TD WIDTH="21%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#eye_pt"><FONT SIZE=2>eye_pt</FONT></A></TD>
 </TR>
-<TR><TD WIDTH="18%" VALIGN="MIDDLE">
-<FONT SIZE=2><P></FONT><A HREF="#e_muves"><FONT SIZE=2>e_muves</FONT></A></TD>
+<TR>
 <TD WIDTH="19%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#facedef"><FONT SIZE=2>facedef</FONT></A></TD>
 <TD WIDTH="20%" VALIGN="MIDDLE">
@@ -251,8 +248,6 @@
 <FONT SIZE=2><P></FONT><A HREF="#lookat"><FONT SIZE=2>lookat</FONT></A></TD>
 <TD WIDTH="20%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#ls"><FONT SIZE=2>ls</FONT></A></TD>
-<TD WIDTH="22%" VALIGN="MIDDLE">
-<FONT SIZE=2><P></FONT><A HREF="#l_muves"><FONT SIZE=2>l_muves</FONT></A></TD>
 <TD WIDTH="21%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#make"><FONT SIZE=2>make</FONT></A></TD>
 </TR>
@@ -349,8 +344,6 @@
 </TR>
 <TR><TD WIDTH="18%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#rcctor"><FONT SIZE=2>rcc-tor</FONT></A></TD>
-<TD WIDTH="19%" VALIGN="MIDDLE">
-<FONT SIZE=2><P></FONT><A HREF="#read_muves"><FONT SIZE=2>read_muves</FONT></A></TD>
 <TD WIDTH="20%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#red"><FONT SIZE=2>red</FONT></A></TD>
 <TD WIDTH="21%" VALIGN="MIDDLE">
@@ -444,8 +437,6 @@
 <TD WIDTH="21%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#tree"><FONT SIZE=2>tree</FONT></A></TD>
 </TR>
-<TR><TD WIDTH="18%" VALIGN="MIDDLE">
-<FONT SIZE=2><P></FONT><A HREF="#t_muves"><FONT SIZE=2>t_muves</FONT></A></TD>
 <TD WIDTH="19%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#units"><FONT SIZE=2>units</FONT></A></TD>
 <TD WIDTH="20%" VALIGN="MIDDLE">
@@ -1483,20 +1474,7 @@ l r230 r231 r232 r233 r234 r235 r236 r237 r238 r239 <BR>
 </B><FONT SIZE=2><P>-- Rotate the face of the <I>ARB</I> being edited to be parallel to the <I>xy</I> plane. </P>
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
-<DT><A NAME="erase"><A NAME="em"></A></A>em </B><I>[ -C#/#/#] value [value value . . .]</DT>
-</I><DD>The &quot;em&quot; command displays all regions that a MUVES_Component attribute that is set to any of the specified value arguments.  The <I>�C</I> option specifies a color to draw the regions.</DD>
-<DD></DD>
-<FONT SIZE=4><DT>Examples:  </DT>
-</FONT><DD></DD>
-<DT>&#9;<TT>mged&gt;</TT> <B>em engine pilot</DT>
-</B><DD>-- Display all regions that have MUVES_Component attributes equal to engine or pilot.</DD>
-<DT></DT>
-<FONT FACE="Courier" SIZE=2><DD>mged&gt; </FONT><B>em �C0/255/0 hydraulics</DD><DIR>
-
-</B><DT>-- Display all regions that have MUVES_Component attributes equal to hydraulics in green.</DT>
-<DD><HR ALIGN="RIGHT"></DD></DIR>
-
-<B><DT>erase</B> <I>&lt;objects</I>&gt;</DT>
+<DT><A NAME="erase"><B><DT>erase</B> <I>&lt;objects</I>&gt;</DT>
 <DD>The &quot;erase&quot; command deletes the specified list of objects from the MGED<I> </I>display.  This is a synonym for the <A HREF="#d">d</A> command.  Only objects that have been explicitly displayed may be deleted with the &quot;erase&quot; command (use the <A HREF="#who">who</A> command to see a list of explicitly displayed objects).  Objects that are displayed as members of explicitly displayed combinations cannot be deleted from the display with this command (see <A HREF="#erase">erase -r</A>).  Note that this has no effect on the <I>BRL-CAD</I> database itself.  To actually remove objects from the database, use the <A HREF="#kill">kill</A> command.</DD>
 <FONT SIZE=4><DT>Examples:</DT>
 </FONT><TT><DD>mged&gt;</TT> <B>erase region1 shapea</DD>
@@ -1619,17 +1597,6 @@ foo.r_xpand/R
 </FONT><TT><DD>mged&gt;</TT> <B>eye_pt 100 0 0</DD>
 </DL>
 </B><FONT SIZE=2><P>-- Position the eye at 100 mm along the <I>x </I>axis. </P>
-
-<P><HR ALIGN="RIGHT"></P>
-</FONT><B><DL>
-<DT><A NAME="e_muves"></A>e_muves</B> <I>MUVES_component1 MUVES_component2 ...</DT>
-</I><DD>The &quot;e_muves&quot; command displays the <I>BRL-CAD</I> <A HREF="#REGION">regions</A> that are part of the indicated MUVES components.  The internal list of MUVES components must have been created earlier by the <A HREF="#read_muves">read_muves</A> command.  The MUVES components listed on the command line must not use any wildcards (the expansion will result in <I>BRL-CAD</I> objects, not MUVES components).</DD>
-<FONT SIZE=4><DT>Examples:</DT>
-</FONT><TT><DD>mged&gt;</TT> <B>e_muves fuel transmission</DD>
-</DL><DIR>
-
-</B><FONT SIZE=2><P>-- Display the <I>BRL-CAD</I> regions that make up the MUVES components named &quot;fuel&quot; and &quot;transmission&quot; </P>
-</DIR>
 
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
@@ -2125,16 +2092,6 @@ foo.r_xpand/R
 
 </FONT><FONT FACE="Courier" SIZE=2><P>mged&gt;</FONT><FONT SIZE=2> <B>ls -A -o -r Comment {First comment} Comment {Second comment}</P>
 </B><P>-- List all regions that have a &quot;Comment&quot; attribute that is set to either &quot;First comment&quot; or &quot;Second comment.&quot;</P></DIR>
-
-<P><HR ALIGN="RIGHT"></P>
-</FONT><B><DL>
-<DT><A NAME="l_muves"></A>l_muves</B> <I>MUVES_component1 MUVES_component2 ...</DT>
-</I><DD>The &quot;l_muves&quot; command lists the <I>BRL-CAD</I> <A HREF="#REGION">regions</A> that are part of the indicated MUVES components.  The internal list of MUVES components must have been created earlier by the <A HREF="#read_muves">read_muves</A> command.  The MUVES components listed on the command line must not use any wildcards (the expansion will result in <I>BRL-CAD</I> objects, not MUVES components).</DD>
-<FONT SIZE=4><DT>Examples:</DT>
-</FONT><TT><DD>mged&gt;</TT> <B>l_muves fuel transmission</DD>
-</DL><DIR>
-
-</B><FONT SIZE=2><P>-- List the <I>BRL-CAD</I> regions that make up the MUVES components named &quot;fuel&quot; and &quot;transmission&quot; </P></DIR>
 
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
@@ -2680,14 +2637,6 @@ foo.r_xpand/R
 
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
-<DT><A NAME="read_muves"></A>read_muves</B> <I>MUVES_regionmap_file</DT>
-</I><DD>The &quot;read_muves&quot; command reads the indicated &quot;MUVES_regionmap_file&quot; and creates an internal list of all the MUVES components defined in the file along with the corresponding <I>BRL-CAD</I> <A HREF="#REGION">regions</A>.  This list can then be used to display the <I>regions</I> in terms of the MUVES component names.  See the <A HREF="#e_muves">e_muves</A>, <A HREF="#t_muves">t_muves</A>, and <A HREF="#l_muves">l_muves</A> commands.</DD>
-<FONT SIZE=4><DT>Examples:</DT>
-</FONT><TT><DD>mged&gt;</TT> <B>read_muves region_map</DD>
-</DL>
-</B><FONT SIZE=2><P>-- Read the MUVES file named <I>region_map</I>. </P>
-<P><HR ALIGN="RIGHT"></P>
-</FONT><B><DL>
 <DT><A NAME="red"></A>red</B> <I>combination</DT>
 </I><DD>The &quot;red&quot; command creates a file describing the specified combination and starts an editor for the user to modify the combination.  The environment <I>EDITOR</I> variable will be used to select the editor.  If <I>EDITOR</I> is not set, then <I>/bin/ed</I> will be used.  All the attributes of <I>BRL-CAD </I><A HREF="#REGION">regions</A> and <I>combinations</I> may be edited in this way.  The <I>region</I> specific attributes will be ignored if the <I>combination</I> is not a <I>region</I> and is not set to be a <I>region</I> during editing.  It is not necessary to be in an editing mode to run this command.  The <A HREF="#rm">rm</A>, <A HREF="#r">r</A>, <A HREF="#comb">comb</A>, <A HREF="#c">c</A>, and <A HREF="#g">g</A> commands provide some basic <I>combination</I> editing capabilities.</DD>
 <FONT SIZE=4><DT>Examples:</DT>
@@ -3226,14 +3175,6 @@ The calculational tolerances are used in evaluating the </FONT><A HREF="#BOOLEAN
 </FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>tree -c group1</B> <BR>
 -- No shapes are printed. </P></DIR>
 
-<P><HR ALIGN="RIGHT"></P>
-</FONT><B><DL>
-<DT><A NAME="t_muves"></A>t_muves</DT>
-</B><DD>The &quot;t_muves&quot; command lists all the MUVES components that are known as a result of a prior <A HREF="#read_muves">read_muves</A> command.</DD>
-<FONT SIZE=4><DT>Examples:</DT>
-</FONT><TT><DD>mged&gt;</TT> <B>t_muves</DD>
-</DL>
-</B><FONT SIZE=2><P>-- List all the known MUVES components. </P>
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
 <DT><A NAME="units"></A>units</B> [<I>units_type</I>]</DT>

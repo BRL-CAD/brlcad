@@ -1,7 +1,7 @@
 /*                       P I X D I F F . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2018 United States Government as represented by
+ * Copyright (c) 1985-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -90,7 +90,7 @@ main(int argc, char *argv[])
     stat(argv[2], &sf2);
 
     if (sf1.st_size != sf2.st_size) {
-	bu_exit(1, "Different file sizes found: %s(%d) and %s(%d).  Cannot perform pixdiff.\n", argv[1], sf1.st_size, argv[2], sf2.st_size);
+	bu_exit(1, "Different file sizes found: %s(%jd) and %s(%jd).  Cannot perform pixdiff.\n", argv[1], (intmax_t)sf1.st_size, argv[2], (intmax_t)sf2.st_size);
     }
 
     while (1) {

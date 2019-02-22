@@ -1,7 +1,7 @@
 /*                 P A T H _ C O M P O N E N T . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2018 United States Government as represented by
+ * Copyright (c) 2011-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,12 +36,12 @@ pc_compare(const char *input, const char *expected_str, bu_path_component_t type
     if (!expected_str && found) {
 	bu_log("no result expected, but result found: %s\n", bu_vls_addr(&component));
 	bu_vls_free(&component);
-	bu_exit(EXIT_FAILURE, "");
+	bu_exit(EXIT_FAILURE, "pc_compare: unexpected result");
     }
     if (expected_str && !found) {
 	bu_log("%24s -> %24s (should be: %s) [FAIL]\n", input, bu_vls_addr(&component), expected_str);
 	bu_vls_free(&component);
-	bu_exit(EXIT_FAILURE, "");
+	bu_exit(EXIT_FAILURE, "pc_compare: FAIL1");
 	return;
     }
     if (!expected_str && !found) {
@@ -57,7 +57,7 @@ pc_compare(const char *input, const char *expected_str, bu_path_component_t type
     } else {
 	bu_log("%24s -> %24s (should be: %s) [FAIL]\n", input, bu_vls_addr(&component), expected_str);
 	bu_vls_free(&component);
-	bu_exit(EXIT_FAILURE, "");
+	bu_exit(EXIT_FAILURE, "pc_compare: FAIL2");
     }
 }
 

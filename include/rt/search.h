@@ -1,7 +1,7 @@
 /*                        S E A R C H . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2018 United States Government as represented by
+ * Copyright (c) 2008-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -187,33 +187,6 @@ RT_EXPORT extern size_t db_ls(const struct db_i *dbip,
 /* TODO - implement this flag
 #define DB_LS_REGEX        0x40*/ /* interpret pattern using regex rules, instead of
                                               globbing rules (default) */
-
-
-/***************************************************************
- * DEPRECATED - all structures and functions below this notice
- * are replaced by functionality above.  Remove after 7.27.0
- * development starts.
- ***************************************************************/
-
-struct db_full_path_list {
-    struct bu_list l;
-    struct db_full_path *path;
-    int local;
-};
-DEPRECATED RT_EXPORT extern int db_full_path_list_add(const char *path, int local, struct db_i *dbip, struct db_full_path_list *path_list);
-DEPRECATED RT_EXPORT extern void db_free_full_path_list(struct db_full_path_list *path_list);
-DEPRECATED RT_EXPORT extern void *db_search_formplan(char **argv, struct db_i *dbip, struct db_search_context *);
-DEPRECATED RT_EXPORT extern void db_search_freeplan(void **plan);
-DEPRECATED RT_EXPORT extern struct db_full_path_list *db_search_full_paths(void *searchplan,
-									   struct db_full_path_list *path_list,
-									   struct db_i *dbip);
-DEPRECATED RT_EXPORT extern struct bu_ptbl *db_search_unique_objects(void *searchplan,
-								     struct db_full_path_list *path_list,
-								     struct db_i *dbip);
-/* DEPRECATED: Use db_ls() instead of this function. */
-DEPRECATED RT_EXPORT extern int db_regexp_match_all(struct bu_vls *dest,
-                                         struct db_i *dbip,
-                                         const char *pattern);
 
 
 __END_DECLS

@@ -264,11 +264,11 @@ Tk_ScaleObjCmd(
     scalePtr->activeBorder	= NULL;
     scalePtr->sliderRelief	= TK_RELIEF_RAISED;
     scalePtr->troughColorPtr	= NULL;
-    scalePtr->troughGC		= None;
-    scalePtr->copyGC		= None;
+    scalePtr->troughGC		= TkNone;
+    scalePtr->copyGC		= TkNone;
     scalePtr->tkfont		= NULL;
     scalePtr->textColorPtr	= NULL;
-    scalePtr->textGC		= None;
+    scalePtr->textGC		= TkNone;
     scalePtr->relief		= TK_RELIEF_FLAT;
     scalePtr->highlightWidth	= 0;
     scalePtr->highlightBorder	= NULL;
@@ -285,7 +285,7 @@ Tk_ScaleObjCmd(
     scalePtr->vertTroughX	= 0;
     scalePtr->vertLabelX	= 0;
     scalePtr->fontHeight	= 0;
-    scalePtr->cursor		= None;
+    scalePtr->cursor		= TkNone;
     scalePtr->takeFocusPtr	= NULL;
     scalePtr->flags		= NEVER_SET;
 
@@ -514,13 +514,13 @@ DestroyScale(
 		TCL_GLOBAL_ONLY|TCL_TRACE_WRITES|TCL_TRACE_UNSETS,
 		ScaleVarProc, (ClientData) scalePtr);
     }
-    if (scalePtr->troughGC != None) {
+    if (scalePtr->troughGC != TkNone) {
 	Tk_FreeGC(scalePtr->display, scalePtr->troughGC);
     }
-    if (scalePtr->copyGC != None) {
+    if (scalePtr->copyGC != TkNone) {
 	Tk_FreeGC(scalePtr->display, scalePtr->copyGC);
     }
-    if (scalePtr->textGC != None) {
+    if (scalePtr->textGC != TkNone) {
 	Tk_FreeGC(scalePtr->display, scalePtr->textGC);
     }
     Tk_FreeConfigOptions((char *) scalePtr, scalePtr->optionTable,
@@ -727,7 +727,7 @@ ScaleWorldChanged(
 
     gcValues.foreground = scalePtr->troughColorPtr->pixel;
     gc = Tk_GetGC(scalePtr->tkwin, GCForeground, &gcValues);
-    if (scalePtr->troughGC != None) {
+    if (scalePtr->troughGC != TkNone) {
 	Tk_FreeGC(scalePtr->display, scalePtr->troughGC);
     }
     scalePtr->troughGC = gc;
@@ -735,12 +735,12 @@ ScaleWorldChanged(
     gcValues.font = Tk_FontId(scalePtr->tkfont);
     gcValues.foreground = scalePtr->textColorPtr->pixel;
     gc = Tk_GetGC(scalePtr->tkwin, GCForeground | GCFont, &gcValues);
-    if (scalePtr->textGC != None) {
+    if (scalePtr->textGC != TkNone) {
 	Tk_FreeGC(scalePtr->display, scalePtr->textGC);
     }
     scalePtr->textGC = gc;
 
-    if (scalePtr->copyGC == None) {
+    if (scalePtr->copyGC == TkNone) {
 	gcValues.graphics_exposures = False;
 	scalePtr->copyGC = Tk_GetGC(scalePtr->tkwin, GCGraphicsExposures,
 		&gcValues);

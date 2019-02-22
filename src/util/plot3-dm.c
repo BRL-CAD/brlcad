@@ -1,7 +1,7 @@
 /*                      P L O T 3 - D M . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2018 United States Government as represented by
+ * Copyright (c) 1999-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -837,9 +837,9 @@ cmd_list(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **UNU
 
 	linelen += len;
 	if (linelen > 80)
-	    bu_log("\n%-*V", len, &plp->pl_name);
+	    bu_log("\n%-*s", len, bu_vls_addr(&plp->pl_name));
 	else
-	    bu_log("%-*V", len, &plp->pl_name);
+	    bu_log("%-*s", len, bu_vls_addr(&plp->pl_name));
     }
 
     bu_log("\n");

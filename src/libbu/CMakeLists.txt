@@ -159,6 +159,7 @@ set(bu_ignore_files
   charclass.h
   mime.cmake
   parallel.h
+  process.h
   sha1.h
   vfont.h
   vls_vprintf.h

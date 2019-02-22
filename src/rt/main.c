@@ -1,7 +1,7 @@
 /*                          M A I N . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2018 United States Government as represented by
+ * Copyright (c) 1985-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -45,6 +45,7 @@
 #include "bu/malloc.h"
 #include "bu/log.h"
 #include "bu/parallel.h"
+#include "bu/ptbl.h"
 #include "bu/vls.h"
 #include "bu/version.h"
 #include "vmath.h"
@@ -133,13 +134,62 @@ memory_summary(void)
     n_realloc = bu_n_realloc;
 }
 
+int fb_setup() {
+    /* Framebuffer is desired */
+    size_t xx, yy;
+    int	zoom;
+
+    /* Ask for a fb big enough to hold the image, at least 512. */
+    /* This is so MGED-invoked "postage stamps" get zoomed up big enough to see */
+    xx = yy = 512;
+    if (width > xx || height > yy) {
+	xx = width;
+	yy = height;
+    }
+    bu_semaphore_acquire(BU_SEM_SYSCALL);
+    fbp = fb_open(framebuffer, xx, yy);
+    bu_semaphore_release(BU_SEM_SYSCALL);
+    if (fbp == FB_NULL) {
+	fprintf(stderr, "rt:  can't open frame buffer\n");
+	return 12;
+    }
+
+    bu_semaphore_acquire(BU_SEM_SYSCALL);
+    /* If fb came out smaller than requested, do less work */
+    if ((size_t)fb_getwidth(fbp) < width)
+	width = fb_getwidth(fbp);
+    if ((size_t)fb_getheight(fbp) < height)
+	height = fb_getheight(fbp);
+
+    /* If the fb is lots bigger (>= 2X), zoom up & center */
+    if (width > 0 && height > 0) {
+	zoom = fb_getwidth(fbp)/width;
+	if ((size_t)fb_getheight(fbp)/height < (size_t)zoom)
+	    zoom = fb_getheight(fbp)/height;
+    } else {
+	zoom = 1;
+    }
+    (void)fb_view(fbp, width/2, height/2,
+	    zoom, zoom);
+    bu_semaphore_release(BU_SEM_SYSCALL);
+
+#ifdef USE_OPENCL
+    clt_connect_fb(fbp);
+#endif
+    return 0;
+}
+
+
 int main(int argc, const char **argv)
 {
+    int ret = 0;
+    int need_fb = 0;
     struct rt_i *rtip = NULL;
     const char *title_file = NULL, *title_obj = NULL;	/* name of file and first object */
     char idbuf[2048] = {0};			/* First ID record info */
     struct bu_vls times = BU_VLS_INIT_ZERO;
     int i;
+    int objs_free_argv = 0;
 
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
@@ -295,13 +345,18 @@ int main(int argc, const char **argv)
 
     title_file = argv[bu_optind];
     title_obj = argv[bu_optind+1];
-    objc = argc - bu_optind - 1;
-    objv = (char **)&(argv[bu_optind+1]);
-
-    if (objc <= 0) {
-	bu_log("%s: no objects specified -- raytrace aborted\n", argv[0]);
-	usage(argv[0], 0);
-	return 1;
+    if (!objv) {
+	objc = argc - bu_optind - 1;
+	if (objc) {
+	    objv = (char **)&(argv[bu_optind+1]);
+	} else {
+	    /* No objects in either input file or argv - try getting objs from
+	     * command processing.  Initialize the table. */
+	    BU_GET(cmd_objs, struct bu_ptbl);
+	    bu_ptbl_init(cmd_objs, 8, "initialize cmdobjs table");
+	}
+    } else {
+	objs_free_argv = 1;
     }
 
 #ifdef USE_OPENCL
@@ -385,50 +440,8 @@ int main(int argc, const char **argv)
      *  Note that width & height may not have been set yet,
      *  since they may change from frame to frame.
      */
-    if (view_init(&APP, (char *)title_file, (char *)title_obj, outputfile != (char *)0, framebuffer != (char *)0) != 0)  {
-	/* Framebuffer is desired */
-	size_t xx, yy;
-	int	zoom;
-
-	/* Ask for a fb big enough to hold the image, at least 512. */
-	/* This is so MGED-invoked "postage stamps" get zoomed up big enough to see */
-	xx = yy = 512;
-	if (width > xx || height > yy) {
-	    xx = width;
-	    yy = height;
-	}
-	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	fbp = fb_open(framebuffer, xx, yy);
-	bu_semaphore_release(BU_SEM_SYSCALL);
-	if (fbp == FB_NULL) {
-	    fprintf(stderr, "rt:  can't open frame buffer\n");
-	    return 12;
-	}
-
-	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	/* If fb came out smaller than requested, do less work */
-	if ((size_t)fb_getwidth(fbp) < width)
-	    width = fb_getwidth(fbp);
-	if ((size_t)fb_getheight(fbp) < height)
-	    height = fb_getheight(fbp);
-
-	/* If the fb is lots bigger (>= 2X), zoom up & center */
-	if (width > 0 && height > 0) {
-	    zoom = fb_getwidth(fbp)/width;
-	    if ((size_t)fb_getheight(fbp)/height < (size_t)zoom)
-		zoom = fb_getheight(fbp)/height;
-	} else {
-	    zoom = 1;
-	}
-	(void)fb_view(fbp, width/2, height/2,
-		      zoom, zoom);
-	bu_semaphore_release(BU_SEM_SYSCALL);
-
-#ifdef USE_OPENCL
-	clt_connect_fb(fbp);
-#endif
-    }
-    if ((outputfile == (char *)0) && (fbp == FB_NULL)) {
+    need_fb = view_init(&APP, (char *)title_file, (char *)title_obj, outputfile != (char *)0, framebuffer != (char *)0);
+    if ((outputfile == (char *)0) && !need_fb) {
 	/* If not going to framebuffer, or to a file, then use stdout */
 	if (outfp == NULL) outfp = stdout;
 	/* output_is_binary is changed by view_init, as appropriate */
@@ -455,8 +468,29 @@ int main(int argc, const char **argv)
     (void)signal(SIGINFO, siginfo_handler);
 #endif
 
-    if (!matflag) {
+    /* First, see if we're handling old style processing of the -M flag. */
+    if (matflag && !isatty(fileno(stdin))) {
+	int oret = old_way(stdin);
+	if (oret < 0) {
+	    bu_log("%s: no objects specified -- raytrace aborted\n", argv[0]);
+	    usage(argv[0], 0);
+	    ret = 1;	
+	}
+	/* If oret, old way either worked or failed.  Either way, we're done. */
+	if (oret) {
+	    goto rt_cleanup;
+	}
+    }
+
+    if (objv && !matflag) {
 	int frame_retval;
+
+	if (need_fb != 0 && !fbp)  {
+	    int fb_status = fb_setup();
+	    if (fb_status) {
+		return fb_status;
+	    }
+	}
 
 	def_tree(rtip);		/* Load the default trees */
 	/* orientation command has not been used */
@@ -468,26 +502,50 @@ int main(int argc, const char **argv)
 	    if (fbp != FB_NULL) {
 		fb_close(fbp);
 	    }
-
-	    return 1;
+	    ret = 1;
+	    goto rt_cleanup;
 	}
-    } else if (!isatty(fileno(stdin)) && old_way(stdin)) {
-	; /* All is done */
     } else {
 	register char	*buf;
-	register int	ret;
+	register int	nret;
 	/*
 	 * New way - command driven.
 	 * Process sequence of input commands.
 	 * All the work happens in the functions
 	 * called by rt_do_cmd().
 	 */
+
+	if (!matflag && isatty(fileno(stdin))) {
+	    fprintf(stderr, "Additional commands needed - cannot complete raytrace\n");
+	    ret = 1;
+	    goto rt_cleanup;
+	}
+
 	while ((buf = rt_read_cmd( stdin )) != (char *)0) {
-	    if (R_DEBUG&RDEBUG_PARSE)
+	    if (R_DEBUG&RDEBUG_PARSE) {
 		fprintf(stderr, "cmd: %s\n", buf);
-	    ret = rt_do_cmd( rtip, buf, rt_cmdtab);
+	    }
+
+	    /* Right now, the framebuffer setup blocks processing of stdin.
+	     * Consequently when rt is being run as a subprocess by libged the
+	     * stdin pipe can get full on some platforms, which in turn results
+	     * in everything hanging while the calling program waits for rt to
+	     * process stdin before continuing to write down the pipe and rt
+	     * waits for fbserv info along the libpkg channel before getting to
+	     * the logic for processing stdin.  Postpone fb setup until we're
+	     * ready to render something to avoid backing up stdin's pipe. */
+	    if (!bu_strncmp(buf, "end", 3) || !bu_strncmp(buf, "multiview", 8)) {
+		if (need_fb != 0 && !fbp)  {
+		    int fb_status = fb_setup();
+		    if (fb_status) {
+			return fb_status;
+		    }
+		}
+	    }
+
+	    nret = rt_do_cmd( rtip, buf, rt_cmdtab);
 	    bu_free( buf, "rt_read_cmd command buffer");
-	    if (ret < 0)
+	    if (nret < 0)
 		break;
 	}
 	if (curframe < desiredframe) {
@@ -502,11 +560,29 @@ int main(int argc, const char **argv)
 	fb_close(fbp);
     }
 
+rt_cleanup:
+    /* Clean up objv memory, if necessary */
+    if (objs_free_argv) {
+	for (i = 0; i < objc; i++) {
+	    bu_free(objv[i], "objv entry");
+	}
+	bu_free(objv, "objv array");
+    }
+
+    if (cmd_objs) {
+	for (i = 0; i < (int)BU_PTBL_LEN(cmd_objs); i++) {
+	    char *ostr = (char *)BU_PTBL_GET(cmd_objs, i);
+	    bu_free(ostr, "object string");
+	}
+	bu_ptbl_free(cmd_objs);
+	BU_PUT(cmd_objs, struct bu_ptbl);
+    }
+
     /* Release the ray-tracer instance */
     rt_free_rti(rtip);
     rtip = NULL;
 
-    return 0;
+    return ret;
 }
 
 /*

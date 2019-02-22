@@ -1,7 +1,7 @@
 /*                         R E M R T . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2018 United States Government as represented by
+ * Copyright (c) 1989-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -440,7 +440,7 @@ statechange(struct servers *sp, int newstate)
 static void
 remrt_log(const char *msg)
 {
-    bu_log(msg);
+    bu_log("%s", msg);
 }
 
 

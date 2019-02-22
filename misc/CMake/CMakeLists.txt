@@ -9,6 +9,9 @@ set(cmake_ignore_files
   CMakeLists.txt
   CheckCInline.cmake
   CheckCSourceRuns.cmake
+  CheckCXX11Features.cmake
+  CheckCXX11Features/cxx11-test-nullptr.cpp
+  CheckCXX11Features/cxx11-test-nullptr_fail_compile.cpp
   CompilerFlags.cmake
   Distcheck.cmake
   DocBook.cmake
@@ -50,6 +53,7 @@ set(cmake_ignore_files
   FindXSLTPROC.cmake
   Fink_MacPorts.cmake
   NSIS.template.in
+  NSIS_silent.template.in
   Path_Setup.cmake
   RPath_Setup.cmake
   ResetCache.cmake

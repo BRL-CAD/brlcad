@@ -1,7 +1,7 @@
 /*                   G E D _ P R I V A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2018 United States Government as represented by
+ * Copyright (c) 2008-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -226,7 +226,7 @@ enum otype {
     OTYPE_SAT,
     OTYPE_STL
 };
-void _ged_bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int fd, const char *file_ext, const char *db_name);
+void _ged_bot_dump(struct directory *dp, const struct db_full_path *pathp, struct rt_bot_internal *bot, FILE *fp, int fd, const char *file_ext, const char *db_name);
 void dl_botdump(struct bu_list *hdlp, struct db_i *dbip, FILE *fp, int fd, char *file_ext, int output_type, int *red, int *green, int *blue, fastf_t *alpha);
 
 
@@ -335,10 +335,12 @@ extern char _ged_tmpfil[];
 /* defined in rt.c */
 extern void _ged_rt_set_eye_model(struct ged *gedp,
 				  vect_t eye_model);
-extern int _ged_run_rt(struct ged *gdp);
+extern int _ged_run_rt(struct ged *gdp, int cmd_len, const char **gd_rt_cmd, int argc, const char **argv);
 extern void _ged_rt_write(struct ged *gedp,
 			  FILE *fp,
-			  vect_t eye_model);
+			  vect_t eye_model,
+			  int argc,
+			  const char **argv);
 extern void _ged_rt_output_handler(ClientData clientData,
 				   int mask);
 
@@ -573,6 +575,23 @@ extern void _ged_cmd_help(struct ged *gedp, const char *usage, struct bu_opt_des
 /* Option for verbosity variable setting */
 extern int _ged_vopt(struct bu_vls *msg, int argc, const char **argv, void *set_var);
 
+/* Function to read in density information, either from a file or from the
+ * database itself. Implements the following priority order:
+ *
+ * 1. filename explicitly supplied to function.
+ * 2. Density information stored in the .g database.
+ * 3. A .density file in the same directory as the .g file
+ * 4. A .density file in the user's HOME directory
+ *
+ * Note that this function does *not* store the density information in the
+ * current .g once read.  To store density information in a .g file, use
+ * the "mater -d load" command.
+ *
+ */
+extern int _ged_read_densities(struct ged *gedp, const char *filename, int fault_tolerant);
+
+#define GED_DB_DENSITY_OBJECT "_DENSITIES" 
+
 /**
  * Routine for checking argc/argv list for existing objects and sorting anything
  * that isn't a valid object to the end of the list.  Returns the number of
@@ -583,6 +602,12 @@ extern int _ged_vopt(struct bu_vls *msg, int argc, const char **argv, void *set_
 extern int
 _ged_sort_existing_objs(struct ged *gedp, int argc, const char *argv[], struct directory **dpa);
 
+
+typedef void (*io_handler_callback_t)(void *, int);
+extern void
+_ged_create_io_handler(void **chan, struct bu_process *p, int fd, int mode, void *data, io_handler_callback_t callback);
+extern void
+_ged_delete_io_handler(void *interp, void *chan, struct bu_process *p, int fd, void *data, io_handler_callback_t callback);
 
 __END_DECLS
 

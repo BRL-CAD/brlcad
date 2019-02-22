@@ -25,7 +25,7 @@ execute_process(COMMAND "${DEMG}" "${CBDIR}/hawaii-c" "${CBDIR}/hawaii-c.g" OUTP
 file(WRITE "${CBDIR}/regress-dem.log" "${dem_g_log}")
 
 # Known "good" md5sum of output for comparison
-set(EXPECTED_MD5 "80f98f409514586e0be12884e2118230")
+set(EXPECTED_MD5 "0ef24b4e9569d038055dcabad3157776")
 
 # get and clean up md5sum from generated output
 execute_process(COMMAND "@CMAKE_COMMAND@" -E md5sum "${CBDIR}/hawaii-c.g" OUTPUT_VARIABLE genmd5)

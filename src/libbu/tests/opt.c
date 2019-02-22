@@ -1,7 +1,7 @@
 /*                       O P T . C
  * BRL-CAD
  *
- * Copyright (c) 2015-2018 United States Government as represented by
+ * Copyright (c) 2015-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -82,10 +82,10 @@ set_msg_str(struct bu_vls *msg, int ac, const char **av)
     set_msg_str(&parse_msgs, ac, av); \
     ret = bu_opt_parse(&parse_msgs, ac, av, d); \
     if (ret || _var != _exp) { \
-	bu_vls_printf(&parse_msgs, "\nError - expected value \"%d\" and got value %d\n", _exp, _var); \
+	bu_vls_printf(&parse_msgs, "\nError - expected value \"%ld\" and got value %ld\n", (long int)_exp, (long int)_var); \
 	val_ok = 0; \
     } else { \
-	bu_vls_printf(&parse_msgs, "  \nGot expected value: %s = %d\n", _name, _var); \
+	bu_vls_printf(&parse_msgs, "  \nGot expected value: %s = %ld\n", _name, (long int)_var); \
     } \
 }
 
@@ -200,6 +200,8 @@ int desc_1(const char *cgy, int test_num)
     static int m = 0;
     static int F = 0;
     static const char *str = NULL;
+    static struct bu_vls vls = BU_VLS_INIT_ZERO;
+    static struct bu_vls vls2 = BU_VLS_INIT_ZERO;
     static int i = 0;
     static long l = 0;
     static fastf_t f = 0;
@@ -216,6 +218,8 @@ int desc_1(const char *cgy, int test_num)
 	{"f", "fastf_t", "#",      &bu_opt_fastf_t, (void *)&f,          "Read float"},
 	{"m", "mflag",   "flag",   NULL,            (void *)&m,          "Set boolean flag"},
 	{"F", "Fflag",   "flag",   NULL,            (void *)&F,          "Set boolean flag"},
+	{"",  "vls1", "variable-length string", &bu_opt_vls, (void *)&vls, "Set variable length string"},
+	{"a", "vls2", "variable-length string", &bu_opt_vls, (void *)&vls2, "Set variable length string with flag"},
 	BU_OPT_DESC_NULL
     };
 
@@ -421,6 +425,24 @@ int desc_1(const char *cgy, int test_num)
 		av[0] = "-s";
 		av[1] = "test_str";
 		EXPECT_SUCCESS_STRING("string", str, "test_str");
+		break;
+	    case 3:
+		ac = 2;
+		av[0] = "--vls1";
+		av[1] = "vls_str";
+		EXPECT_SUCCESS_STRING("vls", bu_vls_cstr(&vls), "vls_str");
+		break;
+	    case 4:
+		ac = 2;
+		av[0] = "-a";
+		av[1] = "vls_str2";
+		EXPECT_SUCCESS_STRING("vls", bu_vls_cstr(&vls2), "vls_str2");
+		break;
+	    case 5:
+		ac = 2;
+		av[0] = "--vls2";
+		av[1] = "vls_str2";
+		EXPECT_SUCCESS_STRING("vls", bu_vls_cstr(&vls2), "vls_str2");
 		break;
 	    default:
 		bu_vls_printf(&parse_msgs, "unknown test: %d\n", test_num);
@@ -816,28 +838,28 @@ int desc_3(int test_num)
 	    av[0] = "-V";
 	    av[1] = "2,10,30";
 	    ret = bu_opt_parse(&parse_msgs, 0, NULL, d);
-	    EXPECT_SUCCESS_VECT("vect_t", v, 2, 10, 30);
+	    EXPECT_SUCCESS_VECT("vect_t", v, 2.0, 10.0, 30.0);
 	    break;
 	case 1:
 	    ac = 2;
 	    av[0] = "-V";
 	    av[1] = "2/10/30";
 	    ret = bu_opt_parse(&parse_msgs, 0, NULL, d);
-	    EXPECT_SUCCESS_VECT("vect_t", v, 2, 10, 30);
+	    EXPECT_SUCCESS_VECT("vect_t", v, 2.0, 10.0, 30.0);
 	    break;
 	case 2:
 	    ac = 2;
 	    av[0] = "-V";
 	    av[1] = "30.3,2,-10.1";
 	    ret = bu_opt_parse(&parse_msgs, 0, NULL, d);
-	    EXPECT_SUCCESS_VECT("vect_t", v, 30.3, 2, -10.1);
+	    EXPECT_SUCCESS_VECT("vect_t", v, 30.3, 2.0, -10.1);
 	    break;
 	case 3:
 	    ac = 2;
 	    av[0] = "-V";
 	    av[1] = "30.3, 2, -10.1";
 	    ret = bu_opt_parse(&parse_msgs, 0, NULL, d);
-	    EXPECT_SUCCESS_VECT("vect_t", v, 30.3, 2, -10.1);
+	    EXPECT_SUCCESS_VECT("vect_t", v, 30.3, 2.0, -10.1);
 	    break;
 	case 4:
 	    ac = 4;
@@ -846,7 +868,7 @@ int desc_3(int test_num)
 	    av[2] = "2";
 	    av[3] = "-10.1";
 	    ret = bu_opt_parse(&parse_msgs, 0, NULL, d);
-	    EXPECT_SUCCESS_VECT("vect_t", v, 30.3, 2, -10.1);
+	    EXPECT_SUCCESS_VECT("vect_t", v, 30.3, 2.0, -10.1);
 	    break;
 
     }

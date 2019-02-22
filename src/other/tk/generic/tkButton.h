@@ -73,7 +73,7 @@ typedef struct {
 				 * name of variable or NULL. If non-NULL,
 				 * button displays the contents of this
 				 * variable. */
-    Pixmap bitmap;		/* Value of -bitmap option. If not None,
+    Pixmap bitmap;		/* Value of -bitmap option. If not TkNone,
 				 * specifies bitmap to display and text and
 				 * textVar are ignored. */
     Tcl_Obj *imagePtr;		/* Value of -image option: specifies image to
@@ -235,7 +235,7 @@ typedef struct {
      * Miscellaneous information:
      */
 
-    Tk_Cursor cursor;		/* Value of -cursor option: if not None,
+    Tk_Cursor cursor;		/* Value of -cursor option: if not TkNone,
 				 * specifies current cursor for window. */
     Tcl_Obj *takeFocusPtr;	/* Value of -takefocus option; not used in the
 				 * C code, but used by keyboard traversal

@@ -1,7 +1,7 @@
 /*                     D B 5 _ S I Z E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -68,7 +68,7 @@ struct db5_sizecalc {
 #define DB5SIZE(_dp) ((struct db5_sizecalc *)_dp->u_data)
 
 HIDDEN int
-db_get_external_reuse(register struct bu_external *ep, const struct directory *dp, const struct db_i *dbip)
+db_get_external_reuse(struct bu_external *ep, const struct directory *dp, const struct db_i *dbip)
 {
     ep->ext_nbytes = dp->d_len;
 

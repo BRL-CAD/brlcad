@@ -1,7 +1,7 @@
 /*                        D A T A B A S E . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2018 United States Government as represented by
+ * Copyright (c) 2008-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -249,6 +249,17 @@ GED_EXPORT extern int ged_set_output_script(struct ged *gedp, int argc, const ch
  * Check database objects for errors
  */
 GED_EXPORT extern int ged_lint(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Interface to environment variables
+ */
+GED_EXPORT extern int ged_env(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * List and abort subprocesses
+ */
+GED_EXPORT extern int ged_process(struct ged *gedp, int argc, const char *argv[]);
+
 
 
 __END_DECLS

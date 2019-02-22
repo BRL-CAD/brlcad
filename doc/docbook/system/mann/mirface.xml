@@ -59,7 +59,7 @@ the mirror image of face 1234 across the <emphasis>yz</emphasis> plane.
 
   <para>
     Reports of bugs or problems should be submitted via electronic
-    mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
+    mail to <email>devs@brlcad.org</email>
   </para>
 </refsection>
 </refentry>

@@ -1,7 +1,7 @@
 /*                      E U C L I D - G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -627,7 +627,7 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
     }
 
     if (debug)
-	bu_log("%d vertices out of tolerance after fixing out of tolerance faces\n", nmg_ck_geometry(m, &RTG.rtg_vlfree, &tol));
+	bu_log("%zu vertices out of tolerance after fixing out of tolerance faces\n", nmg_ck_geometry(m, &RTG.rtg_vlfree, &tol));
 
     nmg_s_join_touchingloops(s, &tol);
     nmg_s_split_touchingloops(s, &tol);
