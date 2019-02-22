@@ -525,6 +525,7 @@ _ged_mater_get(struct ged *gedp, int argc, const char *argv[])
     std::set<std::string> *id_patterns = new std::set<std::string>;
     std::set<fastf_t> *densities = new std::set<fastf_t>;
     std::set<std::string> *name_patterns = new std::set<std::string>;
+    std::set<std::string> *greedy_patterns = new std::set<std::string>;
     std::set<std::string>::iterator i_it, n_it;
     std::set<fastf_t>::iterator f_it;
     long int curr_id = -1;
@@ -558,12 +559,7 @@ _ged_mater_get(struct ged *gedp, int argc, const char *argv[])
 
     if (ac > 0) {
 	for (int i = 0; i < ac; i++) {
-	    fastf_t dcandidate;
-	    id_patterns->insert(std::string(argv[i]));
-	    name_patterns->insert(std::string(argv[i]));
-	    if (bu_opt_fastf_t(NULL, 1, (const char **)&(argv[i]), (void *)&dcandidate) > 0) {
-		densities->insert(dcandidate);
-	    }
+	    greedy_patterns->insert(std::string(argv[i]));
 	}
     }
 
@@ -605,10 +601,22 @@ _ged_mater_get(struct ged *gedp, int argc, const char *argv[])
 	int have_id_match = -1;
 	int have_den_match = -1;
 	int have_name_match = -1;
+	int have_greedy_match = 0;
 	fastf_t curr_d = analyze_densities_density(a, curr_id);
 	char *curr_n = analyze_densities_name(a, curr_id);
 	struct bu_vls curr_id_str = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&curr_id_str, "%ld", curr_id);
+
+	for (i_it = greedy_patterns->begin(); i_it != greedy_patterns->end(); i_it++) {
+	    if (!bu_path_match(i_it->c_str(), bu_vls_cstr(&curr_id_str), 0)) {
+		have_greedy_match = 1;
+		break;
+	    }
+	    if (!bu_path_match(i_it->c_str(), curr_n, 0)) {
+		have_greedy_match = 1;
+		break;
+	    }
+	}
 
 	for (i_it = id_patterns->begin(); i_it != id_patterns->end(); i_it++) {
 	    have_id_match = 0;
@@ -631,7 +639,8 @@ _ged_mater_get(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    }
 	}
-	if (have_id_match && have_den_match && have_name_match) {
+	if (((have_id_match && have_den_match && have_name_match) && (have_id_match > 0 || have_den_match > 0 || have_name_match > 0))
+	       	|| have_greedy_match) {
 	    bu_vls_printf(gedp->ged_result_str, "%ld\t%g\t%s\n", curr_id, curr_d, curr_n);
 	}
 	bu_free(curr_n, "name copy");
@@ -644,6 +653,7 @@ _ged_mater_get(struct ged *gedp, int argc, const char *argv[])
     delete id_patterns;
     delete densities;
     delete name_patterns;
+    delete greedy_patterns;
 
     return GED_OK;
 
@@ -651,6 +661,7 @@ ged_mater_get_fail:
     delete id_patterns;
     delete densities;
     delete name_patterns;
+    delete greedy_patterns;
     return GED_ERROR;
 }
 
