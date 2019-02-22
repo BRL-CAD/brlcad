@@ -640,7 +640,7 @@ _ged_mater_get(struct ged *gedp, int argc, const char *argv[])
 	    }
 	}
 	if (((have_id_match && have_den_match && have_name_match) && (have_id_match > 0 || have_den_match > 0 || have_name_match > 0))
-	       	|| have_greedy_match) {
+	       	|| (have_greedy_match && (have_id_match != 0 && have_den_match != 0 && have_name_match != 0))) {
 	    bu_vls_printf(gedp->ged_result_str, "%ld\t%g\t%s\n", curr_id, curr_d, curr_n);
 	}
 	bu_free(curr_n, "name copy");
