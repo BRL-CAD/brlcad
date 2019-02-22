@@ -43,6 +43,10 @@ CMAKEFILES(
   regress-mater.cmake.in
   )
 
+DISTCLEAN(
+  "${CMAKE_CURRENT_BINARY_DIR}/regress_ged_mater.done"
+  "${CMAKE_CURRENT_BINARY_DIR}/regress_ged_mater.log"
+  )
 # Local Variables:
 # tab-width: 8
 # mode: cmake
