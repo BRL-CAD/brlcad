@@ -19,6 +19,10 @@ compiler support for the C++11 language standard when building.
 (This change is not user visible, but will be significant to those
 using BRL-CAD in their own software development efforts.)
 
+This release introduces a new "-d" option to the mater command,
+supporting direct embedding of .density file information in a 
+.g database for use by commands such as gqa and rtweight.
+
 Also present in this release are a fix for commands that work with
 multiple .g files and support for raytracing MGED scenes with large
 numbers of active objects.
