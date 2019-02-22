@@ -155,6 +155,8 @@ int model_units = 0;
 
 /***** end variables shared with view.c *****/
 
+char *densityfile = (char *)NULL;	/* name of density file */
+
 /* temporary kludge to get rt to use a tighter tolerance for raytracing */
 fastf_t rt_dist_tol = (fastf_t)0.0005;	/* Value for rti_tol.dist */
 
@@ -287,6 +289,9 @@ get_args(int argc, const char *argv[])
 		break;
 	    case 'c':
 		(void)rt_do_cmd((struct rt_i *)0, bu_optarg, rt_cmdtab);
+		break;
+	    case 'd':
+		densityfile = bu_optarg;
 		break;
 	    case 'C':
 		{
