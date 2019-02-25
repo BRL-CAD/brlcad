@@ -742,22 +742,25 @@ analyze_dump()
 	    struct svn_node &node = rev.nodes[n];
 	    if (node.copyfrom_path.length() && !node.text_copy_source_sha1.length()) {
 		//std::cout << "(r" << rev.revision_number << "): copying directory " << node.path << " from " << node.copyfrom_path << " at revision " << node.copyfrom_rev << "\n";
+		int cp_is_tag, tp_is_tag;
+		std::string cpproject, cpbranch, cplocal_path, cptag;
+		std::string tpproject, tpbranch, tplocal_path, tptag;
+		node_path_split(node.copyfrom_path, cpproject, cpbranch, cptag, cplocal_path, &cp_is_tag);
+		node_path_split(node.copyfrom_path, tpproject, tpbranch, tptag, tplocal_path, &tp_is_tag);
 
-		// If the copy is from the immediately previous commit, we haven't had time
-		// to make any changes that would invalidate a straight-up "C" operation in
-		// git.  If it's from an older state, "C" won't work and we need to explicitly
-		// reassemble the older directory state.
 
-		// TODO - if we're copying from a different branch, we probably can't do the "C" trick either...
-		// probably need to split paths, compare branches, and insert into dnodes if the copyfrom
-		// branch is different than the target branch...
-		if (node.copyfrom_rev < path_last_commit[node.copyfrom_path]) {
+		// If the copy is from the immediately previous commit in the
+		// same branch, we haven't had time to make any changes that
+		// would invalidate a straight-up "C" operation in git.  If
+		// it's from an older state, "C" won't work and we need to
+		// explicitly reassemble the older directory state.
+
+		if (cpbranch != tpbranch || node.copyfrom_rev < path_last_commit[node.copyfrom_path]) {
 		    dnodes.insert(std::pair<std::string, long int>(node.copyfrom_path, node.copyfrom_rev));
 		}
 	    }
 	}
 	// For every path we touched, update its last commit number
-	// TODO - for rigor, this should probably be at least every path and its parent directory...
 	for (size_t n = 0; n != rev.nodes.size(); n++) {
 	    struct svn_node &node = rev.nodes[n];
 	    path_last_commit[node.path] = rev.revision_number;
