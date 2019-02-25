@@ -34,6 +34,7 @@
 
 typedef enum {
     ATTR_APPEND,
+    ATTR_COPY,
     ATTR_GET,
     ATTR_RM,
     ATTR_SET,
@@ -117,6 +118,7 @@ attr_cmd(const char* arg)
 {
     /* sub-commands */
     const char APPEND[] = "append";
+    const char COPY[]   = "copy";
     const char GET[]    = "get";
     const char LIST[]   = "list";
     const char RM[]     = "rm";
@@ -139,6 +141,8 @@ attr_cmd(const char* arg)
 	return ATTR_GET;
     else if (BU_STR_EQUIV(LIST, arg))
 	return ATTR_LIST;
+    else if (BU_STR_EQUIV(COPY, arg))
+	return ATTR_COPY;
     else
 	return ATTR_UNKNOWN;
 }
@@ -199,7 +203,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
     size_t i;
     struct directory *dp;
     struct bu_attribute_value_pair *avpp;
-    static const char *usage = "{[-c sep_char] set|get|show|rm|append|sort|list} object [key [value] ... ]";
+    static const char *usage = "{[-c sep_char] set|get|show|rm|append|sort|list|copy} object [key [value] ... ]";
     attr_cmd_t scmd;
     struct directory **paths = NULL;
     size_t path_cnt = 0;
@@ -455,6 +459,43 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(gedp->ged_result_str, "%s\n", avpp->name);
 	}
 	bu_avs_free(&avs);
+    } else if (scmd == ATTR_COPY) {
+	const char *oattr, *nattr;
+
+	if (argc != 5) {
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
+	    return GED_ERROR;
+	}
+	oattr = argv[3];
+	nattr = argv[4];
+
+	for (i = 0; i < path_cnt; i++) {
+	    const char *val;
+	    struct bu_attribute_value_set lavs;
+	    bu_avs_init_empty(&lavs);
+	    dp = paths[i];
+	    if (db5_get_attributes(gedp->ged_wdbp->dbip, &lavs, dp)) {
+		bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
+		ret = GED_ERROR;
+		goto ged_attr_memfree;
+	    }
+	    val = bu_avs_get(&lavs, oattr);
+	    if (val) {
+		(void)bu_avs_add(&lavs, nattr, val);
+		db5_standardize_avs(&lavs);
+		if (db5_update_attributes(dp, &lavs, gedp->ged_wdbp->dbip)) {
+		    bu_vls_printf(gedp->ged_result_str,
+			    "Error: failed to update attributes\n");
+		    bu_avs_free(&lavs);
+		    ret = GED_ERROR;
+		    goto ged_attr_memfree;
+		}
+		/* lavs is freed by db5_update_attributes() */
+	    } else {
+		bu_avs_free(&lavs);
+	    }
+	}
+
     } else if (scmd == ATTR_SET) {
 	GED_CHECK_READ_ONLY(gedp, GED_ERROR);
 	/* setting attribute/value pairs */
