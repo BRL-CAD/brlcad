@@ -480,7 +480,7 @@ package provide cadwidgets::Ged 1.0
 	method pane_pngwf {_pane args}
 	method pane_preview {_pane args}
 	method pane_protate_mode {_pane args}
-	method pane_ps {_pane args}
+	method pane_postscript {_pane args}
 	method pane_pscale_mode {_pane args}
 	method pane_ptranslate_mode {_pane args}
 	method pane_quat {_pane args}
@@ -546,7 +546,7 @@ package provide cadwidgets::Ged 1.0
 	method prefix {args}
 	method preview {args}
 	method prim_label {args}
-	method ps {args}
+	method postscript {args}
 	method pull {args}
 	method push {args}
 	method put {args}
@@ -3133,8 +3133,8 @@ package provide cadwidgets::Ged 1.0
     eval $mGed protate_mode $itk_component($_pane) $args
 }
 
-::itcl::body cadwidgets::Ged::pane_ps {_pane args} {
-    eval $mGed ps $itk_component($_pane) $args
+::itcl::body cadwidgets::Ged::pane_postscript {_pane args} {
+    eval $mGed postscript $itk_component($_pane) $args
 }
 
 ::itcl::body cadwidgets::Ged::pane_pscale_mode {_pane args} {
@@ -3422,8 +3422,8 @@ package provide cadwidgets::Ged 1.0
     }
 }
 
-::itcl::body cadwidgets::Ged::ps {args} {
-    eval $mGed ps $itk_component($itk_option(-pane)) $args
+::itcl::body cadwidgets::Ged::postscript {args} {
+    eval $mGed postscript $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::push {args} {
@@ -6368,7 +6368,7 @@ package provide cadwidgets::Ged 1.0
     $help add prcolor		{{} {print color and material table}}
     $help add prefix		{{new_prefix object(s)} {prefix each occurrence of object name(s)}}
     $help add preview		{{[-v] [-d sec_delay] [-D start frame] [-K last frame] rt_script_file} {preview new style RT animation script}}
-    $help add ps		{{[-f font] [-t title] [-c creator] [-s size in inches] [-l linewidth] file} {creates a postscript file of the current view}}
+    $help add postscript	{{[-f font] [-t title] [-c creator] [-s size in inches] [-l linewidth] file} {creates a postscript file of the current view}}
     $help add push		{{object[s]} {pushes object's path transformations to solids}}
     $help add put		{{object data} {creates an object}}
     $help add put_comb		{{comb_name is_Region id air material los color shader inherit boolean_expr} {create a combination}}
