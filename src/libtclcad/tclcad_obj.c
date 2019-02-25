@@ -1277,7 +1277,7 @@ static struct to_cmdtab to_cmds[] = {
     {"prim_label",	"[prim_1 prim_2 ... prim_N]", TO_UNLIMITED, to_prim_label, GED_FUNC_PTR_NULL},
     {"protate",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_protate},
     {"protate_mode",	"obj attribute x y", TO_UNLIMITED, to_protate_mode, GED_FUNC_PTR_NULL},
-    {"ps",	"[options] file.ps", 16, to_view_func, ged_ps},
+    {"postscript", "[options] file.ps", 16, to_view_func, ged_ps},
     {"pscale",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_pscale},
     {"pscale_mode",	"obj attribute x y", TO_UNLIMITED, to_pscale_mode, GED_FUNC_PTR_NULL},
     {"pset",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_pset},
