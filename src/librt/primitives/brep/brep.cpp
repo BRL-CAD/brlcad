@@ -1207,7 +1207,7 @@ utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface
 		_pt = ray.m_origin + (ray.m_dir * t[i]);
 		VMOVE(vpt, _pt);
 		if (face->m_bRev) {
-		    bu_log("Reversing normal for Face:%d\n", face->m_face_index);
+		    //bu_log("Reversing normal for Face:%d\n", face->m_face_index);
 		    _norm.Reverse();
 		}
 		VMOVE(vnorm, _norm);
