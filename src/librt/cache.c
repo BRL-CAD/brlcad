@@ -1,7 +1,7 @@
 /*                         C A C H E . C
  * BRL-CAD
  *
- * Copyright (c) 2016-2018 United States Government as represented by
+ * Copyright (c) 2016-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -246,6 +246,9 @@ rt_cache_open(void)
 
 	/* reinit */
 	format = cache_format(dir);
+    } else if (format > CACHE_FORMAT) {
+	bu_log("NOTE: Cache at %s was created with a newer version of %s\n", dir, PACKAGE_NAME);
+	bu_log("      Delete or move folder to enable caching with this version.\n");
     }
 
     if (format != CACHE_FORMAT)

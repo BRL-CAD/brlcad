@@ -1,7 +1,7 @@
 /*                      D B _ M A T C H . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2018 United States Government as represented by
+ * Copyright (c) 1994-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,31 +34,6 @@
 #include "rt/db4.h"
 #include "rt/geom.h"
 #include "raytrace.h"
-
-/* Deprecated - use db_ls */
-int
-db_regexp_match_all(struct bu_vls *dest, struct db_i *dbip, const char *pattern)
-{
-    register int i, num;
-    register struct directory *dp;
-
-    for (i = num = 0; i < RT_DBNHASH; i++) {
-	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    if (bu_path_match(pattern, dp->d_namep, 0) != 0)
-		continue;
-	    if (num == 0)
-		bu_vls_strcat(dest, dp->d_namep);
-	    else {
-		bu_vls_strcat(dest, " ");
-		bu_vls_strcat(dest, dp->d_namep);
-	    }
-	    ++num;
-	}
-    }
-
-    return num;
-}
-
 
 HIDDEN void
 db_count_refs(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, void *UNUSED(dummy1), void *UNUSED(dummy2), void *UNUSED(dummy3), void *UNUSED(dummy4))

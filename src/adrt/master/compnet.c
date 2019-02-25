@@ -1,7 +1,7 @@
 /*                       C O M P N E T . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2018 United States Government as represented by
+ * Copyright (c) 2007-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,6 +35,10 @@
 #include "rt/tie.h"
 #include "adrt.h"
 #include "tienet.h"
+
+#if defined(HAVE_GETHOSTBYNAME) && !defined(HAVE_DECL_GETHOSTBYNAME) && !defined(_WINSOCKAPI_)
+extern struct hostent *gethostbyname(const char *);
+#endif
 
 int master_compserv_socket;
 int master_compserv_active;

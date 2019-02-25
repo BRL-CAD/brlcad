@@ -182,16 +182,16 @@ TkcCreateBitmap(
      */
 
     bmapPtr->anchor = TK_ANCHOR_CENTER;
-    bmapPtr->bitmap = None;
-    bmapPtr->activeBitmap = None;
-    bmapPtr->disabledBitmap = None;
+    bmapPtr->bitmap = TkNone;
+    bmapPtr->activeBitmap = TkNone;
+    bmapPtr->disabledBitmap = TkNone;
     bmapPtr->fgColor = NULL;
     bmapPtr->activeFgColor = NULL;
     bmapPtr->disabledFgColor = NULL;
     bmapPtr->bgColor = NULL;
     bmapPtr->activeBgColor = NULL;
     bmapPtr->disabledBgColor = NULL;
-    bmapPtr->gc = None;
+    bmapPtr->gc = TkNone;
 
     /*
      * Process the arguments to fill in the item record. Only 1 (list) or 2 (x
@@ -338,7 +338,7 @@ ConfigureBitmap(
 
     if (bmapPtr->activeFgColor!=NULL ||
 	    bmapPtr->activeBgColor!=NULL ||
-	    bmapPtr->activeBitmap!=None) {
+	    bmapPtr->activeBitmap!=TkNone) {
 	itemPtr->redraw_flags |= TK_ITEM_STATE_DEPENDANT;
     } else {
 	itemPtr->redraw_flags &= ~TK_ITEM_STATE_DEPENDANT;
@@ -361,7 +361,7 @@ ConfigureBitmap(
 	if (bmapPtr->activeBgColor!=NULL) {
 	    bgColor = bmapPtr->activeBgColor;
 	}
-	if (bmapPtr->activeBitmap!=None) {
+	if (bmapPtr->activeBitmap!=TkNone) {
 	    bitmap = bmapPtr->activeBitmap;
 	}
     } else if (state == TK_STATE_DISABLED) {
@@ -371,13 +371,13 @@ ConfigureBitmap(
 	if (bmapPtr->disabledBgColor!=NULL) {
 	    bgColor = bmapPtr->disabledBgColor;
 	}
-	if (bmapPtr->disabledBitmap!=None) {
+	if (bmapPtr->disabledBitmap!=TkNone) {
 	    bitmap = bmapPtr->disabledBitmap;
 	}
     }
 
-    if (bitmap == None) {
-	newGC = None;
+    if (bitmap == TkNone) {
+	newGC = TkNone;
     } else {
 	gcValues.foreground = fgColor->pixel;
 	mask = GCForeground;
@@ -390,7 +390,7 @@ ConfigureBitmap(
 	}
 	newGC = Tk_GetGC(tkwin, mask, &gcValues);
     }
-    if (bmapPtr->gc != None) {
+    if (bmapPtr->gc != TkNone) {
 	Tk_FreeGC(Tk_Display(tkwin), bmapPtr->gc);
     }
     bmapPtr->gc = newGC;
@@ -424,13 +424,13 @@ DeleteBitmap(
 {
     BitmapItem *bmapPtr = (BitmapItem *) itemPtr;
 
-    if (bmapPtr->bitmap != None) {
+    if (bmapPtr->bitmap != TkNone) {
 	Tk_FreeBitmap(display, bmapPtr->bitmap);
     }
-    if (bmapPtr->activeBitmap != None) {
+    if (bmapPtr->activeBitmap != TkNone) {
 	Tk_FreeBitmap(display, bmapPtr->activeBitmap);
     }
-    if (bmapPtr->disabledBitmap != None) {
+    if (bmapPtr->disabledBitmap != TkNone) {
 	Tk_FreeBitmap(display, bmapPtr->disabledBitmap);
     }
     if (bmapPtr->fgColor != NULL) {
@@ -490,11 +490,11 @@ ComputeBitmapBbox(
     }
     bitmap = bmapPtr->bitmap;
     if (((TkCanvas *)canvas)->currentItemPtr == (Tk_Item *)bmapPtr) {
-	if (bmapPtr->activeBitmap!=None) {
+	if (bmapPtr->activeBitmap!=TkNone) {
 	    bitmap = bmapPtr->activeBitmap;
 	}
     } else if (state==TK_STATE_DISABLED) {
-	if (bmapPtr->disabledBitmap!=None) {
+	if (bmapPtr->disabledBitmap!=TkNone) {
 	    bitmap = bmapPtr->disabledBitmap;
 	}
     }
@@ -502,7 +502,7 @@ ComputeBitmapBbox(
     x = (int) (bmapPtr->x + ((bmapPtr->x >= 0) ? 0.5 : - 0.5));
     y = (int) (bmapPtr->y + ((bmapPtr->y >= 0) ? 0.5 : - 0.5));
 
-    if (state==TK_STATE_HIDDEN || bitmap == None) {
+    if (state==TK_STATE_HIDDEN || bitmap == TkNone) {
 	bmapPtr->header.x1 = bmapPtr->header.x2 = x;
 	bmapPtr->header.y1 = bmapPtr->header.y2 = y;
 	return;
@@ -600,16 +600,16 @@ DisplayBitmap(
     }
     bitmap = bmapPtr->bitmap;
     if (((TkCanvas *)canvas)->currentItemPtr == itemPtr) {
-	if (bmapPtr->activeBitmap!=None) {
+	if (bmapPtr->activeBitmap!=TkNone) {
 	    bitmap = bmapPtr->activeBitmap;
 	}
     } else if (state == TK_STATE_DISABLED) {
-	if (bmapPtr->disabledBitmap!=None) {
+	if (bmapPtr->disabledBitmap!=TkNone) {
 	    bitmap = bmapPtr->disabledBitmap;
 	}
     }
 
-    if (bitmap != None) {
+    if (bitmap != TkNone) {
 	if (x > bmapPtr->header.x1) {
 	    bmapX = x - bmapPtr->header.x1;
 	    bmapWidth = bmapPtr->header.x2 - x;
@@ -874,7 +874,7 @@ BitmapToPostscript(
 	if (bmapPtr->activeBgColor!=NULL) {
 	    bgColor = bmapPtr->activeBgColor;
 	}
-	if (bmapPtr->activeBitmap!=None) {
+	if (bmapPtr->activeBitmap!=TkNone) {
 	    bitmap = bmapPtr->activeBitmap;
 	}
     } else if (state == TK_STATE_DISABLED) {
@@ -884,12 +884,12 @@ BitmapToPostscript(
 	if (bmapPtr->disabledBgColor!=NULL) {
 	    bgColor = bmapPtr->disabledBgColor;
 	}
-	if (bmapPtr->disabledBitmap!=None) {
+	if (bmapPtr->disabledBitmap!=TkNone) {
 	    bitmap = bmapPtr->disabledBitmap;
 	}
     }
 
-    if (bitmap == None) {
+    if (bitmap == TkNone) {
 	return TCL_OK;
     }
 

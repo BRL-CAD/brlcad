@@ -1,7 +1,7 @@
 /*                        G - V R M L . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2018 United States Government as represented by
+ * Copyright (c) 1995-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -1114,7 +1114,7 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 			    NMG_CK_EDGEUSE(eu);
 			    v = eu->vu_p->v_p;
 			    NMG_CK_VERTEX(v);
-			    fprintf(fp_out, " %d, ", bu_ptbl_locate(&verts, (long *)v));
+			    fprintf(fp_out, " %jd, ", bu_ptbl_locate(&verts, (long *)v));
 			}
 			fprintf(fp_out, "-1");
 		    }

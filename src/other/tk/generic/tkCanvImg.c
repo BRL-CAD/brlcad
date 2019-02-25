@@ -453,7 +453,7 @@ ComputeImageBbox(
     x = (int) (imgPtr->x + ((imgPtr->x >= 0) ? 0.5 : - 0.5));
     y = (int) (imgPtr->y + ((imgPtr->y >= 0) ? 0.5 : - 0.5));
 
-    if ((state == TK_STATE_HIDDEN) || (image == None)) {
+    if ((state == TK_STATE_HIDDEN) || (image == TkNone)) {
 	imgPtr->header.x1 = imgPtr->header.x2 = x;
 	imgPtr->header.y1 = imgPtr->header.y2 = y;
 	return;

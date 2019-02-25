@@ -1,7 +1,7 @@
 /*                        W O R K E R . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2018 United States Government as represented by
+ * Copyright (c) 1985-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -424,23 +424,19 @@ do_pixel(int cpu, int pat_num, int pixelnum)
 
     /* bu_log("2: [%d, %d] : [%.2f, %.2f, %.2f]\n", pixelnum%width, pixelnum/width, a.a_color[0], a.a_color[1], a.a_color[2]); */
 
-    /* FIXME: this should work on windows after the bu_timer() is
-     * created to replace the librt timing mechanism.
-     */
-#if !defined(_WIN32) || defined(__CYGWIN__)
     /* Add get_pixel_timer here to get total time taken to get pixel, when asked */
     if (lightmodel == 8) {
 	fastf_t pixelTime;
 	fastf_t **timeTable;
 
-	pixelTime = rt_get_timer(NULL,NULL);
+	pixelTime = rt_get_timer(NULL,NULL); /* FIXME: needs to use bu_gettime() */
 	/* bu_log("PixelTime = %lf X:%d Y:%d\n", pixelTime, a.a_x, a.a_y); */
 	bu_semaphore_acquire(RT_SEM_LAST-2);
 	timeTable = timeTable_init(width, height);
 	timeTable_input(a.a_x, a.a_y, pixelTime, timeTable);
 	bu_semaphore_release(RT_SEM_LAST-2);
     }
-#endif
+
     /* we're done */
     view_pixel(&a);
     if ((size_t)a.a_x == width-1) {
@@ -836,7 +832,7 @@ do_run(int a, int b)
     /* Tally up the statistics */
     for (cpu=0; cpu < npsw; cpu++) {
 	if (resource[cpu].re_magic != RESOURCE_MAGIC) {
-	    bu_log("ERROR: CPU %d resources corrupted, statistics bad\n", cpu);
+	    bu_log("ERROR: CPU %zu resources corrupted, statistics bad\n", cpu);
 	    continue;
 	}
 	rt_add_res_stats(APP.a_rt_i, &resource[cpu]);

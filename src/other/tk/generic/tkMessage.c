@@ -80,7 +80,7 @@ typedef struct {
      * Miscellaneous information:
      */
 
-    Tk_Cursor cursor;		/* Current cursor for window, or None. */
+    Tk_Cursor cursor;		/* Current cursor for window, or TkNone. */
     char *takeFocus;		/* Value of -takefocus option; not used in the
 				 * C code, but used by keyboard traversal
 				 * scripts. Malloc'ed, but may be NULL. */
@@ -254,11 +254,11 @@ Tk_MessageObjCmd(
 	    (ClientData) msgPtr, MessageCmdDeletedProc);
     msgPtr->optionTable = optionTable;
     msgPtr->relief = TK_RELIEF_FLAT;
-    msgPtr->textGC = None;
+    msgPtr->textGC = TkNone;
     msgPtr->anchor = TK_ANCHOR_CENTER;
     msgPtr->aspect = 150;
     msgPtr->justify = TK_JUSTIFY_LEFT;
-    msgPtr->cursor = None;
+    msgPtr->cursor = TkNone;
 
     Tk_SetClass(msgPtr->tkwin, "Message");
     Tk_SetClassProcs(msgPtr->tkwin, &messageClass, (ClientData) msgPtr);
@@ -396,7 +396,7 @@ DestroyMessage(
      * Tk_FreeConfigOptions handle all the standard option-related stuff.
      */
 
-    if (msgPtr->textGC != None) {
+    if (msgPtr->textGC != TkNone) {
 	Tk_FreeGC(msgPtr->display, msgPtr->textGC);
     }
     if (msgPtr->textLayout != NULL) {
@@ -523,7 +523,7 @@ MessageWorldChanged(
     ClientData instanceData)	/* Information about widget. */
 {
     XGCValues gcValues;
-    GC gc = None;
+    GC gc = TkNone;
     Tk_FontMetrics fm;
     Message *msgPtr;
 
@@ -536,7 +536,7 @@ MessageWorldChanged(
     gcValues.font = Tk_FontId(msgPtr->tkfont);
     gcValues.foreground = msgPtr->fgColorPtr->pixel;
     gc = Tk_GetGC(msgPtr->tkwin, GCForeground | GCFont, &gcValues);
-    if (msgPtr->textGC != None) {
+    if (msgPtr->textGC != TkNone) {
 	Tk_FreeGC(msgPtr->display, msgPtr->textGC);
     }
     msgPtr->textGC = gc;

@@ -523,16 +523,16 @@ Tk_EntryObjCmd(
     entryPtr->selectFirst	= -1;
     entryPtr->selectLast	= -1;
 
-    entryPtr->cursor		= None;
+    entryPtr->cursor		= TkNone;
     entryPtr->exportSelection	= 1;
     entryPtr->justify		= TK_JUSTIFY_LEFT;
     entryPtr->relief		= TK_RELIEF_FLAT;
     entryPtr->state		= STATE_NORMAL;
     entryPtr->displayString	= entryPtr->string;
     entryPtr->inset		= XPAD;
-    entryPtr->textGC		= None;
-    entryPtr->selTextGC		= None;
-    entryPtr->highlightGC	= None;
+    entryPtr->textGC		= TkNone;
+    entryPtr->selTextGC		= TkNone;
+    entryPtr->highlightGC	= TkNone;
     entryPtr->avgWidth		= 1;
     entryPtr->validate		= VALIDATE_NONE;
 
@@ -1030,10 +1030,10 @@ DestroyEntry(
 		EntryTextVarProc, (ClientData) entryPtr);
 	entryPtr->flags &= ~ENTRY_VAR_TRACED;
     }
-    if (entryPtr->textGC != None) {
+    if (entryPtr->textGC != TkNone) {
 	Tk_FreeGC(entryPtr->display, entryPtr->textGC);
     }
-    if (entryPtr->selTextGC != None) {
+    if (entryPtr->selTextGC != TkNone) {
 	Tk_FreeGC(entryPtr->display, entryPtr->selTextGC);
     }
     Tcl_DeleteTimerHandler(entryPtr->insertBlinkHandler);
@@ -1423,7 +1423,7 @@ EntryWorldChanged(
     ClientData instanceData)	/* Information about widget. */
 {
     XGCValues gcValues;
-    GC gc = None;
+    GC gc = TkNone;
     unsigned long mask;
     Tk_3DBorder border;
     XColor *colorPtr;
@@ -1475,7 +1475,7 @@ EntryWorldChanged(
     gcValues.graphics_exposures = False;
     mask = GCForeground | GCFont | GCGraphicsExposures;
     gc = Tk_GetGC(entryPtr->tkwin, mask, &gcValues);
-    if (entryPtr->textGC != None) {
+    if (entryPtr->textGC != TkNone) {
 	Tk_FreeGC(entryPtr->display, entryPtr->textGC);
     }
     entryPtr->textGC = gc;
@@ -1486,7 +1486,7 @@ EntryWorldChanged(
     gcValues.font = Tk_FontId(entryPtr->tkfont);
     mask = GCForeground | GCFont;
     gc = Tk_GetGC(entryPtr->tkwin, mask, &gcValues);
-    if (entryPtr->selTextGC != None) {
+    if (entryPtr->selTextGC != TkNone) {
 	Tk_FreeGC(entryPtr->display, entryPtr->selTextGC);
     }
     entryPtr->selTextGC = gc;
@@ -2451,9 +2451,9 @@ EntryEventProc(
 	    } else if ((elem == SEL_BUTTONDOWN) || (elem == SEL_BUTTONUP)) {
 		cursor = sbPtr->bCursor;
 	    } else {
-		cursor = None;
+		cursor = TkNone;
 	    }
-	    if (cursor != None) {
+	    if (cursor != TkNone) {
 		Tk_DefineCursor(entryPtr->tkwin, cursor);
 	    } else {
 		Tk_UndefineCursor(entryPtr->tkwin);
@@ -3591,22 +3591,22 @@ Tk_SpinboxObjCmd(
     entryPtr->selectFirst	= -1;
     entryPtr->selectLast	= -1;
 
-    entryPtr->cursor		= None;
+    entryPtr->cursor		= TkNone;
     entryPtr->exportSelection	= 1;
     entryPtr->justify		= TK_JUSTIFY_LEFT;
     entryPtr->relief		= TK_RELIEF_FLAT;
     entryPtr->state		= STATE_NORMAL;
     entryPtr->displayString	= entryPtr->string;
     entryPtr->inset		= XPAD;
-    entryPtr->textGC		= None;
-    entryPtr->selTextGC		= None;
-    entryPtr->highlightGC	= None;
+    entryPtr->textGC		= TkNone;
+    entryPtr->selTextGC		= TkNone;
+    entryPtr->highlightGC	= TkNone;
     entryPtr->avgWidth		= 1;
     entryPtr->validate		= VALIDATE_NONE;
 
     sbPtr->selElement		= SEL_NONE;
     sbPtr->curElement		= SEL_NONE;
-    sbPtr->bCursor		= None;
+    sbPtr->bCursor		= TkNone;
     sbPtr->repeatDelay		= 400;
     sbPtr->repeatInterval	= 100;
     sbPtr->fromValue		= 0.0;

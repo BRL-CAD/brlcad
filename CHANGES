@@ -95,7 +95,7 @@ header, and is published via the 7.50.4 release.
 
 The soonest that function could be removed / obsoleted would be in
 7.54.0 during 7.53.* development provided more than 90 days had passed
-since the intiial announcement.  It could NOT be removed in 7.54.2 as
+since the initial announcement.  It could NOT be removed in 7.54.2 as
 that's a patch version, prior to 7.54, nor during 7.54.0 if less than
 90 days had passed since 7.50.6 was posted.
 
@@ -120,12 +120,22 @@ under MINIMALLY IMPACTING CHANGES.
 
 The interfaces announced below are scheduled to significantly change
 or be removed.  They are categorized by the release in which
-deprecation was first announced.  If the inteface change involved a
+deprecation was first announced.  If the interface change involved a
 removal or transition, both the original and new interface names are
 generally listed for reference.
 
 Items marked with a "'" (single quote) are undocumented and may be
 removed at any time.
+
+7.30
+----
+~/.density
+        automatic reading of .density file in home directory
+        materials need to be specified or imported [deprecated 7.28]
+
+btclsh, bwish
+	Emacs key binding emulation
+	achieved by running btclsh in Emacs [deprecated 7.30]
 
 7.28
 ----
@@ -169,7 +179,7 @@ converter tools
 image tools
 	cmap-fb, fb-cmap, fbcmrot : colormap support obsolete
 	fbed, cell-fb : outside scope
-	fbscanplot, polar-fb, pp-fb, bw-imp, pixinfo.sh : obsolete
+	fbscanplot, polar-fb, bw-imp, pixinfo.sh : obsolete
 	png_info : incorporating into icv
 	pixpaste : outside scope, license
 	alias-pix' : incorporating into icv
@@ -228,7 +238,6 @@ include/raytrace.h
 	tcl_obj_to_fastf_array tcl_list_to_int_array
 	tcl_list_to_fastf_array *_tcl_*, removal of all tcl-specific
 	API functions [deprecated 7.26]
-	db_regexp_match_all() -> db_ls() [deprecated 7.26]
 include/rt/solid.h
 	shouldn't be public API - this level of detail belongs inside the display
         manager [deprecated 7.26]
@@ -261,14 +270,6 @@ burst
 
 7.24
 ----
-fbed, pp-fb
-	removes termcap use, no known users [deprecated 7.24]
-include/raytrace librt
-	db_full_path_list_add(), db_free_full_path_list() [deprecated 7.24]
-	db_search_formplan(), db_search_freeplan(), db_search_full_paths() [deprecated 7.24]
-	db_search_unique_objects(), struct db_full_path_list [deprecated 7.24]
-src/irprep
-	all_sf, firpass, ir-X, irdisp, pictx, secpass, shapefact, showterm [deprecated 7.24]
 include/raytrace.h librt
 	RT_DBHASH and RT_DBNHASH [deprecated 7.24]
 
@@ -278,10 +279,6 @@ include/raytrace.h librt
 	nmg_model_break_e_on_v -> nmg_break_e_on_v [deprecation 7.22]
 	RT_GET_TREE -> BU_GET [deprecation 7.22]
 	RT_FREE_TREE -> BU_PUT [deprecation 7.22]
-include/bu.h
-	bu_parse_mm() [deprecated 7.22]
-mged
-	em, e_muves, l_muves, lm, read_muves, and t_muves MUVES-specific commands [deprecated 7.22]
 
 7.20
 ----
@@ -297,7 +294,6 @@ GNU Autotools configure compatibility script
 	./configure -> cmake . [deprecated 7.20]
 include/raytrace.h
 	rt_load_attrs() -> rt_gettrees_and_attrs() or db5_import_attributs() [deprecated 7.20]
-	db_regexp_match() -> !bu_fnmatch() [deprecated 7.20]
 
 7.18
 ----
@@ -391,6 +387,23 @@ include/raytrace.h
 ***                       OBSOLETED CHANGES                        ***
 **********************************************************************
                     (reverse chronological order)
+
+7.30.0
+------
+fbed, pp-fb
+	removes termcap use, no known users [deprecated 7.24]
+src/irprep
+	all_sf, firpass, ir-X, irdisp, pictx, secpass, shapefact, showterm [deprecated 7.24]
+include/raytrace librt
+	db_full_path_list_add(), db_free_full_path_list() [deprecated 7.24]
+	db_search_formplan(), db_search_freeplan(), db_search_full_paths() [deprecated 7.24]
+	db_search_unique_objects(), struct db_full_path_list [deprecated 7.24]
+	db_regexp_match() -> !bu_fnmatch() [deprecated 7.20]
+	db_regexp_match_all() -> db_ls() [deprecated 7.26]
+mged
+	em, e_muves, l_muves, lm, read_muves, and t_muves MUVES-specific commands [deprecated 7.22]
+include/bu.h
+	bu_parse_mm() [deprecated 7.22]
 
 7.28.0
 ------
@@ -1375,8 +1388,9 @@ s/bu_restore_interrupts/bu_interrupt_restore/g
         renamed for API consistency [7.27]
 s/bu_brlcad_data[[:space:]]*\(/bu_brlcad_root("share/"/g
         replaced by new BU API
+s/struct[[:space:]]*ged_run_rt/struct ged_subprocess/g
 
-# tentative
-s/bu_getprogname\([[:space:]]*\)/bu_app_name\(NULL\)/g
-s/bu_setprogname/bu_app_name/g
-s/bu_argv0_full_path\([[:space:]]*\)/bu_file_realpath\(bu_app_name\(NULL\)\)/g
+7.30
+----
+s/BU_DEBUG_MEM_LOG/0/g
+	bu memory debugging API removed [7.29]

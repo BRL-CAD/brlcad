@@ -407,27 +407,24 @@ should be POSIX-compliant Bourne Shell Script.  The build system uses
 the CMake build tool.  An initial implementation of a BRL-CAD Geometry
 Server is written in PHP.
 
-With release 7.0, BRL-CAD has moved forward and worked toward making
-all of BRL-CAD C code conform strictly with the ANSI/ISO standard for
-C language compilation (ISO/IEC 9899:1990, i.e. c89).  Support for
-older compilers and older K&R-based system facilities is being
-migrated to build system declarations, preprocessor defines, or being
-removed outright.  It's okay to make modifications that assume
-compiler conformance with the ANSI C standard (c89).
+With release 7.28, BRL-CAD intends to conform strictly with the 2011
+ANSI/ISO standards for C and C++ language compilation
+(ISO/IEC 9899:2011, i.e. C11 and ISO/IEC 14882:2011, i.e. C++11).
+Support for use of necessary non-standard system facilities is
+handled by build system declarations and preprocessor defines driven
+by build configuration tests.  The working feature set for normal
+development should be widely supported C++11 features and the subset
+of C11 that is also valid (and widely supported) C++11.
 
-There is currently no C++ interface to the core BRL-CAD libraries.
-There are a few tools and enhancements to libraries that are
-implemented in C++ (the new BREP object type in librt, for example),
-and C++ is used underneath quite a number of libraries, but there is
-presently no public C++ API in use outside of OpenNURBS.
+C++ is used as an implementation language within libraries, but there
+are no public C++ APIs in use outside of OpenNURBS.  For new work,
+public library APIs should expose only C function calls and data
+except in very specific cases (should be discussed with the
+development team ahead of time to get consensus on the necessity.)
 
-While C++ as an implementation language of new tools and new library
-interfaces is not prohibited, the mixing of C++ semantics and C++ code
-(including simple // style comments) in the existing C files is not
-allowed.  As new interfaces are developed, new contributors become
-involved, and C++ code integration becomes more prevalent, the
-contributor guidelines will become reinforced with more details.
-
+There is currently no C++ interface to the core BRL-CAD libraries. If
+such an interface is eventually developed, it will be done separately
+rather than mixing C++ semantics into existing APIs.
 
 CODING STYLE & STANDARDS
 ------------------------
@@ -512,11 +509,15 @@ system headers.
 
 Language Compliance:
 
-Features of C that conform to the ISO/IEC 9899-1990 C standard (C90)
-are generally the baseline for strict language conformance.  As
-BRL-CAD used to be K&R syntax conformant, there remains an on-going
-effort to ensure a full conversion to a standards compliant ISO C
-implementation.
+Features of C that conform to the ISO/IEC 9899:2011 C standard (C11)
+and the ISO/IEC 14882:2011 C++ standard (C++11) are generally the
+baseline for strict language conformance, with the caveat that
+features deprecated in subsequent standards or not widely/reliably
+implemented on OS/compiler platforms targeted by BRL-CAD should be
+avoided.  When writing in C coders should keep their code within the
+subset of C shared by the C and C++ standards - while not currently
+strictly enforced, full C++ only build support is a long term project
+goal.
 
 Code Conventions:
 

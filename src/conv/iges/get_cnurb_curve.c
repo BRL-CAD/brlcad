@@ -1,7 +1,7 @@
 /*               G E T _ C N U R B _ C U R V E . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2018 United States Government as represented by
+ * Copyright (c) 1995-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,7 +32,7 @@ Get_cnurb_curve(int curve_de, int *linear)
 
     curve = (curve_de - 1)/2;
     if (curve >= dirarraylen) {
-	bu_log("Get_cnurb_curve: DE=%zu is too large, dirarraylen = %zu\n", curve_de, dirarraylen);
+	bu_log("Get_cnurb_curve: DE=%d is too large, dirarraylen = %zu\n", curve_de, dirarraylen);
 	return (struct edge_g_cnurb *)NULL;
     }
 

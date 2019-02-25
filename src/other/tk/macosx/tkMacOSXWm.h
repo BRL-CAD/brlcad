@@ -54,12 +54,12 @@ typedef struct TkWmInfo {
 				 * that is a child of the root window (may
 				 * not be window's immediate parent). If
 				 * the window isn't reparented, this has the
-				 * value None. */
+				 * value TkNone. */
     Tk_Uid titleUid;		/* Title to display in window caption. If
 				 * NULL, use name of widget. */
     char *iconName;		/* Name to display in icon. */
     Window master;		/* Master window for TRANSIENT_FOR property,
-				 * or None. */
+				 * or TkNone. */
     XWMHints hints;		/* Various pieces of information for
 				 * window manager. */
     char *leaderName;		/* Path name of leader of window group
@@ -149,17 +149,17 @@ typedef struct TkWmInfo {
      */
 
     Window vRoot;		/* Virtual root window for this top-level,
-				 * or None if there is no virtual root
+				 * or TkNone if there is no virtual root
 				 * window (i.e. just use the screen's root). */
     int vRootX, vRootY;		/* Position of the virtual root inside the
 				 * root window. If the WM_VROOT_OFFSET_STALE
 				 * flag is set then this information may be
 				 * incorrect and needs to be refreshed from
-				 * the X server. If vRoot is None then these
+				 * the X server. If vRoot is TkNone then these
 				 * values are both 0. */
     unsigned int vRootWidth, vRootHeight;
 				/* Dimensions of the virtual root window.
-				 * If vRoot is None, gives the dimensions
+				 * If vRoot is TkNone, gives the dimensions
 				 * of the containing screen. This information
 				 * is never stale, even though vRootX and
 				 * vRootY can be. */

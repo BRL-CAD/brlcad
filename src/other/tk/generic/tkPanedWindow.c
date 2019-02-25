@@ -129,7 +129,7 @@ typedef struct PanedWindow {
     Tcl_Obj *heightPtr;		/* Tcl_Obj rep for height. */
     int width, height;		/* Width and height of the widget. */
     enum orient orient;		/* Orientation of the widget. */
-    Tk_Cursor cursor;		/* Current cursor for window, or None. */
+    Tk_Cursor cursor;		/* Current cursor for window, or TkNone. */
     int resizeOpaque;		/* Boolean indicating whether resize should be
 				 * opaque or rubberband style. */
     int sashRelief;		/* Relief used to draw sash. */
@@ -448,9 +448,9 @@ Tk_PanedWindowObjCmd(
     pwPtr->optionTable = pwOpts->pwOptions;
     pwPtr->slaveOpts = pwOpts->slaveOpts;
     pwPtr->relief = TK_RELIEF_RAISED;
-    pwPtr->gc = None;
-    pwPtr->cursor = None;
-    pwPtr->sashCursor = None;
+    pwPtr->gc = TkNone;
+    pwPtr->cursor = TkNone;
+    pwPtr->sashCursor = TkNone;
 
     /*
      * Keep a hold of the associated tkwin until we destroy the widget,
@@ -859,7 +859,7 @@ ConfigureSlaves(
 
     index = -1;
     haveLoc = 0;
-    if (options.after != None) {
+    if (options.after != TkNone) {
 	tkwin = options.after;
 	haveLoc = 1;
 	for (i = 0; i < pwPtr->numSlaves; i++) {
@@ -868,7 +868,7 @@ ConfigureSlaves(
 		break;
 	    }
 	}
-    } else if (options.before != None) {
+    } else if (options.before != TkNone) {
 	tkwin = options.before;
 	haveLoc = 1;
 	for (i = 0; i < pwPtr->numSlaves; i++) {
@@ -1299,7 +1299,7 @@ PanedWindowWorldChanged(
 
     gcValues.background = Tk_3DBorderColor(pwPtr->background)->pixel;
     newGC = Tk_GetGC(pwPtr->tkwin, GCBackground, &gcValues);
-    if (pwPtr->gc != None) {
+    if (pwPtr->gc != TkNone) {
 	Tk_FreeGC(pwPtr->display, pwPtr->gc);
     }
     pwPtr->gc = newGC;
@@ -2018,10 +2018,10 @@ Unlink(
 
     for (i = 0; i < masterPtr->numSlaves; i++) {
 	if (masterPtr->slaves[i]->before == slavePtr->tkwin) {
-	    masterPtr->slaves[i]->before = None;
+	    masterPtr->slaves[i]->before = TkNone;
 	}
 	if (masterPtr->slaves[i]->after == slavePtr->tkwin) {
-	    masterPtr->slaves[i]->after = None;
+	    masterPtr->slaves[i]->after = TkNone;
 	}
     }
 

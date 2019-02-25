@@ -1,7 +1,7 @@
 /*               A N A L Y Z E _ P R I V A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2015-2018 United States Government as represented by
+ * Copyright (c) 2015-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -120,8 +120,7 @@ struct current_state {
     struct per_obj_data *objs;
     struct per_region_data *reg_tbl;
 
-    struct density_entry *densities;
-    int num_densities;
+    struct analyze_densities *densities;
 
     /* the parameters */
     int num_views;

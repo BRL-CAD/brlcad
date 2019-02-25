@@ -1,7 +1,7 @@
 /*                        B U N D L E . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2018 United States Government as represented by
+ * Copyright (c) 1985-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -71,7 +71,7 @@ struct shootrays_data {
  * XXX maybe parameter with NORM, UV, CURVE bits?
  */
 int
-rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays)
+rt_shootray_bundle(struct application *ap, struct xray *rays, int nrays)
 {
     struct rt_shootray_status ss;
     struct seg new_segs;	/* from solid intersections */

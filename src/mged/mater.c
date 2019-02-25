@@ -1,7 +1,7 @@
 /*                         M A T E R . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2018 United States Government as represented by
+ * Copyright (c) 1985-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -49,7 +49,7 @@
 void
 mged_color_soltab(void)
 {
-    dl_color_soltab(gedp->ged_gdp->gd_headDisplay);
+    dl_color_soltab(GEDP->ged_gdp->gd_headDisplay);
     update_views = 1;		/* re-write control list with new colors */
 }
 

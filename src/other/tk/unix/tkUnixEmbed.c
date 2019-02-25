@@ -29,7 +29,7 @@ typedef struct Container {
 				 * NULL if the container isn't in this
 				 * process. */
     Window wrapper;		/* X's window id for the wrapper window for
-				 * the embedded window. Starts off as None,
+				 * the embedded window. Starts off as TkNone,
 				 * but gets filled in when the window is
 				 * eventually created. */
     TkWindow *embeddedPtr;	/* Tk's information about the embedded window,
@@ -108,7 +108,7 @@ TkpUseWindow(
     ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
             Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
-    if (winPtr->window != None) {
+    if (winPtr->window != TkNone) {
 	Tcl_AppendResult(interp,
 		"can't modify container after widget is created", NULL);
 	return TCL_ERROR;
@@ -179,7 +179,7 @@ TkpUseWindow(
 	containerPtr->parent = parent;
 	containerPtr->parentRoot = parentAtts.root;
 	containerPtr->parentPtr = NULL;
-	containerPtr->wrapper = None;
+	containerPtr->wrapper = TkNone;
 	containerPtr->nextPtr = tsdPtr->firstContainerPtr;
 	tsdPtr->firstContainerPtr = containerPtr;
     }
@@ -197,7 +197,7 @@ TkpUseWindow(
  *	attributes of the specified TkWindow.
  *
  * Results:
- *	Returns the handle to the new window, or None on failure.
+ *	Returns the handle to the new window, or TkNone on failure.
  *
  * Side effects:
  *	Creates a new X window.
@@ -282,7 +282,7 @@ TkpMakeContainer(
     containerPtr->parent = Tk_WindowId(tkwin);
     containerPtr->parentRoot = RootWindowOfScreen(Tk_Screen(tkwin));
     containerPtr->parentPtr = winPtr;
-    containerPtr->wrapper = None;
+    containerPtr->wrapper = TkNone;
     containerPtr->embeddedPtr = NULL;
     containerPtr->nextPtr = tsdPtr->firstContainerPtr;
     tsdPtr->firstContainerPtr = containerPtr;
@@ -500,7 +500,7 @@ EmbedStructureProc(
     Tk_ErrorHandler errHandler;
 
     if (eventPtr->type == ConfigureNotify) {
-	if (containerPtr->wrapper != None) {
+	if (containerPtr->wrapper != TkNone) {
 	    /*
 	     * Ignore errors, since the embedded application could have
 	     * deleted its window.
@@ -556,7 +556,7 @@ EmbedFocusProc(
 	 * window isn't mapped).
 	 */
 
-	if (containerPtr->wrapper != None) {
+	if (containerPtr->wrapper != TkNone) {
 	    errHandler = Tk_CreateErrorHandler(eventPtr->xfocus.display, -1,
 		    -1, -1, NULL, (ClientData) NULL);
 	    XSetInputFocus(display, containerPtr->wrapper, RevertToParent,
@@ -652,7 +652,7 @@ EmbedSendConfigure(
     event.xconfigure.y = 0;
     event.xconfigure.width = winPtr->changes.width;
     event.xconfigure.height = winPtr->changes.height;
-    event.xconfigure.above = None;
+    event.xconfigure.above = TkNone;
     event.xconfigure.override_redirect = False;
 
     /*
@@ -882,7 +882,7 @@ TkpTestembedCmd(
     for (containerPtr = tsdPtr->firstContainerPtr; containerPtr != NULL;
 	    containerPtr = containerPtr->nextPtr) {
 	Tcl_DStringStartSublist(&dString);
-	if (containerPtr->parent == None) {
+	if (containerPtr->parent == TkNone) {
 	    Tcl_DStringAppendElement(&dString, "");
 	} else if (all) {
 	    sprintf(buffer, "0x%x", (int) containerPtr->parent);
@@ -896,7 +896,7 @@ TkpTestembedCmd(
 	    Tcl_DStringAppendElement(&dString,
 		    containerPtr->parentPtr->pathName);
 	}
-	if (containerPtr->wrapper == None) {
+	if (containerPtr->wrapper == TkNone) {
 	    Tcl_DStringAppendElement(&dString, "");
 	} else if (all) {
 	    sprintf(buffer, "0x%x", (int) containerPtr->wrapper);
@@ -953,7 +953,7 @@ EmbedWindowDeleted(
     containerPtr = tsdPtr->firstContainerPtr;
     while (1) {
 	if (containerPtr->embeddedPtr == winPtr) {
-	    containerPtr->wrapper = None;
+	    containerPtr->wrapper = TkNone;
 	    containerPtr->embeddedPtr = NULL;
 	    break;
 	}
@@ -1008,7 +1008,7 @@ TkUnixContainerId(
 	}
     }
     Tcl_Panic("TkUnixContainerId couldn't find window");
-    return None;
+    return TkNone;
 }
 
 /*

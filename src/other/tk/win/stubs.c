@@ -397,7 +397,7 @@ XGetWindowProperty(
     unsigned long *bytes_after_return,
     unsigned char **prop_return)
 {
-    *actual_type_return = None;
+    *actual_type_return = TkNone;
     *actual_format_return = 0;
     *nitems_return = 0;
     *bytes_after_return = 0;

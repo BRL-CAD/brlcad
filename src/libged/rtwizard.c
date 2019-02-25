@@ -1,7 +1,7 @@
 /*                         R T W I Z A R D . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2018 United States Government as represented by
+ * Copyright (c) 2008-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,185 +32,51 @@
 #  include <sys/types.h>
 #endif
 
-#include "bresource.h"
-
 #include "tcl.h"
 #include "bu/app.h"
+#include "bu/process.h"
 
 
 #include "./ged_private.h"
 
-#if defined(HAVE_FDOPEN) && !defined(HAVE_DECL_FDOPEN)
-extern FILE *fdopen(int fd, const char *mode);
-#endif
-
 struct _ged_rt_client_data {
-    struct ged_run_rt *rrtp;
+    struct ged_subprocess *rrtp;
     struct ged *gedp;
 };
 
 
 int
-_ged_run_rtwizard(struct ged *gedp)
+_ged_run_rtwizard(struct ged *gedp, int cmd_len, const char **gd_rt_cmd)
 {
-    int i;
-    FILE *fp_in;
-#ifndef _WIN32
-    int pipe_in[2];
-    int pipe_err[2];
-#else
-    HANDLE pipe_in[2], pipe_inDup;
-    HANDLE pipe_err[2], pipe_errDup;
-    STARTUPINFO si = {0};
-    PROCESS_INFORMATION pi = {0};
-    SECURITY_ATTRIBUTES sa = {0};
-    struct bu_vls line = BU_VLS_INIT_ZERO;
-#endif
-    struct ged_run_rt *run_rtp;
+    struct ged_subprocess *run_rtp;
     struct _ged_rt_client_data *drcdp;
-#ifndef _WIN32
-    int pid;
-    int ret;
+    struct bu_process *p;
 
-    ret = pipe(pipe_in);
-    if (ret < 0)
-	perror("pipe");
-    ret = pipe(pipe_err);
-    if (ret < 0)
-	perror("pipe");
+    bu_process_exec(&p, gd_rt_cmd[0], cmd_len, (const char **)gd_rt_cmd, 0, 0);
 
-    if ((pid = fork()) == 0) {
-	/* make this a process group leader */
-	setpgid(0, 0);
-
-	/* Redirect stdin and stderr */
-	(void)close(0);
-	ret = dup(pipe_in[0]);
-	if (ret < 0)
-	    perror("dup");
-	(void)close(2);
-	ret = dup(pipe_err[1]);
-	if (ret < 0)
-	    perror("dup");
-
-	/* close pipes */
-	(void)close(pipe_in[0]);
-	(void)close(pipe_in[1]);
-	(void)close(pipe_err[0]);
-	(void)close(pipe_err[1]);
-
-	for (i = 3; i < 20; i++)
-	    (void)close(i);
-
-	(void)execvp(gedp->ged_gdp->gd_rt_cmd[0], gedp->ged_gdp->gd_rt_cmd);
-	perror(gedp->ged_gdp->gd_rt_cmd[0]);
-	exit(16);
+    if (bu_process_pid(p) == -1) {
+	bu_vls_printf(gedp->ged_result_str, "\nunable to successfully launch subprocess: ");
+	for (int i = 0; i < cmd_len; i++) {
+	    bu_vls_printf(gedp->ged_result_str, "%s ", gd_rt_cmd[i]);
+	}
+	bu_vls_printf(gedp->ged_result_str, "\n");
+	return GED_ERROR;
     }
 
-    /* As parent, send view information down pipe */
-    (void)close(pipe_in[0]);
-    fp_in = fdopen(pipe_in[1], "w");
-
-    (void)close(pipe_err[1]);
-
-    (void)fclose(fp_in);
-
-    /* must be BU_GET() to match release in _ged_rt_output_handler */
-    BU_GET(run_rtp, struct ged_run_rt);
+    BU_GET(run_rtp, struct ged_subprocess);
     BU_LIST_INIT(&run_rtp->l);
-    BU_LIST_APPEND(&gedp->ged_gdp->gd_headRunRt.l, &run_rtp->l);
+    BU_LIST_APPEND(&gedp->gd_headSubprocess.l, &run_rtp->l);
 
-    run_rtp->fd = pipe_err[0];
-    run_rtp->pid = pid;
+    run_rtp->p = p;
 
     /* must be BU_GET() to match release in _ged_rt_output_handler */
     BU_GET(drcdp, struct _ged_rt_client_data);
     drcdp->gedp = gedp;
     drcdp->rrtp = run_rtp;
 
-    Tcl_CreateFileHandler(run_rtp->fd,
-			  TCL_READABLE,
-			  _ged_rt_output_handler,
-			  (ClientData)drcdp);
+    _ged_create_io_handler(&(run_rtp->chan), p, BU_PROCESS_STDERR, TCL_READABLE, (void *)drcdp, _ged_rt_output_handler);
 
-    return 0;
-
-#else
-    sa.nLength = sizeof(sa);
-    sa.bInheritHandle = TRUE;
-    sa.lpSecurityDescriptor = NULL;
-
-    /* Create a pipe for the child process's STDOUT. */
-    CreatePipe(&pipe_err[0], &pipe_err[1], &sa, 0);
-
-    /* Create noninheritable read handle and close the inheritable read handle. */
-    DuplicateHandle(GetCurrentProcess(), pipe_err[0],
-		    GetCurrentProcess(),  &pipe_errDup ,
-		    0,  FALSE,
-		    DUPLICATE_SAME_ACCESS);
-    CloseHandle(pipe_err[0]);
-
-    /* Create a pipe for the child process's STDIN. */
-    CreatePipe(&pipe_in[0], &pipe_in[1], &sa, 0);
-
-    /* Duplicate the write handle to the pipe so it is not inherited. */
-    DuplicateHandle(GetCurrentProcess(), pipe_in[1],
-		    GetCurrentProcess(), &pipe_inDup,
-		    0, FALSE,                  /* not inherited */
-		    DUPLICATE_SAME_ACCESS);
-    CloseHandle(pipe_in[1]);
-
-
-    si.cb = sizeof(STARTUPINFO);
-    si.lpReserved = NULL;
-    si.lpReserved2 = NULL;
-    si.cbReserved2 = 0;
-    si.lpDesktop = NULL;
-    si.dwFlags = STARTF_USESTDHANDLES;
-    si.hStdInput   = pipe_in[0];
-    si.hStdOutput  = pipe_err[1];
-    si.hStdError   = pipe_err[1];
-
-    for (i = 0; i < gedp->ged_gdp->gd_rt_cmd_len; i++) {
-	bu_vls_printf(&line, "\"%s\" ", gedp->ged_gdp->gd_rt_cmd[i]);
-    }
-
-    CreateProcess(NULL, bu_vls_addr(&line), NULL, NULL, TRUE,
-		  DETACHED_PROCESS, NULL, NULL,
-		  &si, &pi);
-    bu_vls_free(&line);
-
-    CloseHandle(pipe_in[0]);
-    CloseHandle(pipe_err[1]);
-
-    /* As parent, send view information down pipe */
-    fp_in = _fdopen(_open_osfhandle((intptr_t)pipe_inDup, _O_TEXT), "wb");
-
-    (void)fclose(fp_in);
-
-    /* must be BU_GET() to match release in _ged_rt_output_handler */
-    BU_GET(run_rtp, struct ged_run_rt);
-    BU_LIST_INIT(&run_rtp->l);
-    BU_LIST_APPEND(&gedp->ged_gdp->gd_headRunRt.l, &run_rtp->l);
-
-    run_rtp->fd = pipe_errDup;
-    run_rtp->hProcess = pi.hProcess;
-    run_rtp->pid = pi.dwProcessId;
-    run_rtp->aborted=0;
-    run_rtp->chan = (void *)Tcl_MakeFileChannel(run_rtp->fd, TCL_READABLE);
-
-    /* must be BU_GET() to match release in _ged_rt_output_handler */
-    BU_GET(drcdp, struct _ged_rt_client_data);
-    drcdp->gedp = gedp;
-    drcdp->rrtp = run_rtp;
-
-    Tcl_CreateChannelHandler((Tcl_Channel)run_rtp->chan,
-			     TCL_READABLE,
-			     _ged_rt_output_handler,
-			     (ClientData)drcdp);
-
-    return 0;
-#endif
+    return GED_OK;
 }
 
 
@@ -227,6 +93,9 @@ ged_rtwizard(struct ged *gedp, int argc, const char *argv[])
     struct bu_vls size_vls = BU_VLS_INIT_ZERO;
     struct bu_vls orient_vls = BU_VLS_INIT_ZERO;
     struct bu_vls eye_vls = BU_VLS_INIT_ZERO;
+    char **gd_rt_cmd = NULL;
+    int gd_rt_cmd_len = 0;
+    int ret = GED_OK;
 
     const char *bin;
     char rtscript[256] = {0};
@@ -240,13 +109,13 @@ ged_rtwizard(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (gedp->ged_gvp->gv_perspective > 0)
-	/* rtwizard --no_gui -perspective p -i db.g --viewsize size --orientation "A B C D} --eye_pt "X Y Z" */
+	/* rtwizard --no_gui -perspective p -i db.g --viewsize size --orientation "A B C D" --eye_pt "X Y Z" */
 	args = argc + 1 + 1 + 1 + 2 + 2 + 2 + 2 + 2;
     else
-	/* rtwizard --no_gui -i db.g --viewsize size --orientation "A B C D} --eye_pt "X Y Z" */
+	/* rtwizard --no_gui -i db.g --viewsize size --orientation "A B C D" --eye_pt "X Y Z" */
 	args = argc + 1 + 1 + 1 + 2 + 2 + 2 + 2;
 
-    gedp->ged_gdp->gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
+    gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
 
     bin = bu_brlcad_root("bin", 1);
     if (bin) {
@@ -262,7 +131,7 @@ ged_rtwizard(struct ged *gedp, int argc, const char *argv[])
     bu_vls_printf(&orient_vls, "%.15e %.15e %.15e %.15e", V4ARGS(quat));
     bu_vls_printf(&eye_vls, "%.15e %.15e %.15e", V3ARGS(eye_model));
 
-    vp = &gedp->ged_gdp->gd_rt_cmd[0];
+    vp = &gd_rt_cmd[0];
     *vp++ = rtscript;
     *vp++ = "--no-gui";
     *vp++ = "--viewsize";
@@ -289,22 +158,23 @@ ged_rtwizard(struct ged *gedp, int argc, const char *argv[])
     /*
      * Accumulate the command string.
      */
-    vp = &gedp->ged_gdp->gd_rt_cmd[0];
+    vp = &gd_rt_cmd[0];
     while (*vp)
 	bu_vls_printf(gedp->ged_result_str, "%s ", *vp++);
     bu_vls_printf(gedp->ged_result_str, "\n");
 
-    gedp->ged_gdp->gd_rt_cmd_len = vp - gedp->ged_gdp->gd_rt_cmd;
-    (void)_ged_run_rtwizard(gedp);
-    bu_free(gedp->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
-    gedp->ged_gdp->gd_rt_cmd = NULL;
+    gd_rt_cmd_len = vp - gd_rt_cmd;
+
+    ret = _ged_run_rtwizard(gedp, gd_rt_cmd_len, (const char **)gd_rt_cmd);
+
+    bu_free(gd_rt_cmd, "free gd_rt_cmd");
 
     bu_vls_free(&perspective_vls);
     bu_vls_free(&size_vls);
     bu_vls_free(&orient_vls);
     bu_vls_free(&eye_vls);
 
-    return GED_OK;
+    return ret;
 }
 
 

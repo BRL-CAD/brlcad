@@ -1,7 +1,7 @@
 /*                      D B 5 _ S C A N . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -287,8 +287,8 @@ db5_diradd_handler(
     if (rip->name.ext_buf == NULL) return;
 
     if (RT_G_DEBUG&DEBUG_DB) {
-	bu_log("db5_diradd_handler(dbip=%p, name='%s', addr=%ld, len=%zu)\n",
-	       (void *)dbip, rip->name.ext_buf, laddr, rip->object_length);
+	bu_log("db5_diradd_handler(dbip=%p, name='%s', addr=%jd, len=%zu)\n",
+	       (void *)dbip, rip->name.ext_buf, (intmax_t)laddr, rip->object_length);
     }
 
     db5_diradd(dbip, rip, laddr, client_data);

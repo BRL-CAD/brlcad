@@ -226,7 +226,7 @@ TkpComputeMenuButtonGeometry(butPtr)
     if (butPtr->image != NULL) {
         Tk_SizeOfImage(butPtr->image, &width, &height);
         haveImage = 1;
-    } else if (butPtr->bitmap != None) {
+    } else if (butPtr->bitmap != TkNone) {
         Tk_SizeOfBitmap(butPtr->display, butPtr->bitmap, &width, &height);
         haveImage = 1;
     }
@@ -375,7 +375,7 @@ TkpComputeMenuButtonGeometry(butPtr)
  *        Draws the image and text associated witha button or label.
  *
  * Results:
- *        None.
+ *        TkNone.
  *
  * Side effects:
  *        The image and text are drawn.
@@ -411,10 +411,10 @@ DrawMenuButtonImageAndText(
     pixmap = (Pixmap)Tk_WindowId(tkwin);
 
 
-    if (butPtr->image != None) {
+    if (butPtr->image != TkNone) {
         Tk_SizeOfImage(butPtr->image, &width, &height);
         haveImage = 1;
-    } else if (butPtr->bitmap != None) {
+    } else if (butPtr->bitmap != TkNone) {
         Tk_SizeOfBitmap(butPtr->display, butPtr->bitmap, &width, &height);
         haveImage = 1;
     }
@@ -564,10 +564,10 @@ DrawMenuButtonImageAndText(
  *        in the TkMenubutton.
  *
  * Results:
- *        None.
+ *        TkNone.
  *
  * Side effects:
- *        None.
+ *        TkNone.
  *
  *--------------------------------------------------------------
  */
@@ -642,7 +642,7 @@ TkMacOSXDrawMenuButton(
  *        lies under checkboxes and radiobuttons.
  *
  * Results:
- *        None.
+ *        TkNone.
  *
  * Side effects:
  *        The background gets updated to the current color.
@@ -675,7 +675,7 @@ MenuButtonBackgroundDrawCB (
  *        This function draws the label and image for the button.
  *
  * Results:
- *        None.
+ *        TkNone.
  *
  * Side effects:
  *        The content of the button gets updated.
@@ -752,7 +752,7 @@ MenuButtonEventProc(
  *      These are determined by the various tk button parameters
  *
  * Results:
- *        None.
+ *        TkNone.
  *
  * Side effects:
  *        Sets the btnkind and drawinfo parameters
@@ -829,7 +829,7 @@ static int
 TkMacOSXComputeMenuButtonDrawParams(TkMenuButton * butPtr, DrawParams * dpPtr)
 {
     dpPtr->hasImageOrBitmap = ((butPtr->image != NULL) 
-            || (butPtr->bitmap != None));
+            || (butPtr->bitmap != TkNone));
     dpPtr->border = butPtr->normalBorder;
     if ((butPtr->state == STATE_DISABLED) && (butPtr->disabledFg != NULL)) {
         dpPtr->gc = butPtr->disabledGC;

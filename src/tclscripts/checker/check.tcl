@@ -1,7 +1,7 @@
 #                     C H E C K E R . T C L
 # BRL-CAD
 #
-# Copyright (c) 2016-2018 United States Government as represented by
+# Copyright (c) 2016-2019 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -1068,7 +1068,7 @@ proc subtractRightFromLeft {left right {subtractFirst false}} {
 	if {$nsolids > 1} {
 	    puts ""
 	    puts "ERROR: $right"
-	    puts "       This regions isn't reducible to a single solid. Refusing to subtract a"
+	    puts "       This region isn't reducible to a single solid. Refusing to subtract a"
 	    puts "       comb. Run check command with -F option to override."
 	    return -code error
 	}

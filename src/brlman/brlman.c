@@ -1,7 +1,7 @@
 /*                       B R L M A N  . C
  * BRL-CAD
  *
- * Copyright (c) 2005-2018 United States Government as represented by
+ * Copyright (c) 2005-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -223,7 +223,7 @@ BRLMAN_MAIN(
     argv++; argc--;
     uac = bu_opt_parse(&optparse_msg, argc, argv, d);
     if (uac == -1) {
-	bu_exit(EXIT_FAILURE, bu_vls_addr(&optparse_msg));
+	bu_exit(EXIT_FAILURE, "%s", bu_vls_addr(&optparse_msg));
     }
     bu_vls_free(&optparse_msg);
 

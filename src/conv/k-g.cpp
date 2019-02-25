@@ -1,7 +1,7 @@
 /*                       K - G . C P P
  * BRL-CAD
  *
- * Copyright (c) 2010-2018 United States Government as represented by
+ * Copyright (c) 2010-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -434,9 +434,9 @@ add_element_shell_set(std::map<long,long> &EIDSHELLS_to_world, std::set<long> EI
 	if (print_map) {
 	    bu_vls_printf(&face_map, "%ld,%ld\n", (long)eind, *eit);
 	    if (es->nodal_pnts[3] != -1) {
-		bu_vls_printf(&elem_node_map, "%ld:%d,%d,%d,%d\n", es->EID, es->nodal_pnts[0], es->nodal_pnts[1], es->nodal_pnts[2], es->nodal_pnts[3]);
+		bu_vls_printf(&elem_node_map, "%ld:%ld,%ld,%ld,%ld\n", es->EID, es->nodal_pnts[0], es->nodal_pnts[1], es->nodal_pnts[2], es->nodal_pnts[3]);
 	    } else {
-		bu_vls_printf(&elem_node_map, "%ld:%d,%d,%d\n", es->EID, es->nodal_pnts[0], es->nodal_pnts[1], es->nodal_pnts[2]);
+		bu_vls_printf(&elem_node_map, "%ld:%ld,%ld,%ld\n", es->EID, es->nodal_pnts[0], es->nodal_pnts[1], es->nodal_pnts[2]);
 	    }
 	}
 	eind++;
@@ -597,7 +597,7 @@ main(int argc, char **argv)
     uac = bu_opt_parse(&optparse_msg, argc, (const char **)argv, d);
 
     if (uac == -1) {
-	bu_exit(EXIT_FAILURE, bu_vls_addr(&optparse_msg));
+	bu_exit(EXIT_FAILURE, "%s", bu_vls_addr(&optparse_msg));
     }
     bu_vls_free(&optparse_msg);
 
@@ -797,7 +797,7 @@ main(int argc, char **argv)
 
     /* Collect any leftover shells that didn't have parent parts */
     if (EIDSHELLS.size() > 0 && !all_elements_one_bot) {
-	bu_log("Warning - %d unorganized ELEMENT_SHELL objects.  This may be an indication that this file uses features of the dyna keyword format we don't support yet.\n", EIDSHELLS.size());
+	bu_log("Warning - %zu unorganized ELEMENT_SHELL objects.  This may be an indication that this file uses features of the dyna keyword format we don't support yet.\n", EIDSHELLS.size());
     }
     if (EIDSHELLS.size() > 0) {
 	add_element_shell_set(EIDSHELLS_to_world, EIDSHELLS, NID_to_world, &all_head, world, fd_out, all_elements_one_bot);

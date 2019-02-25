@@ -1,7 +1,7 @@
 /*                    M A P P E D F I L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -55,7 +55,7 @@ static struct bu_mapped_file initial_mapped_files[NUM_INITIAL_MAPPED_FILES];
 static struct bu_mapped_file_list {
     size_t size, capacity;
     struct bu_mapped_file *mapped_files;
-} all_mapped_files;
+} all_mapped_files = { 0, 0, NULL };
 
 
 struct bu_mapped_file *
@@ -122,7 +122,7 @@ bu_open_mapped_file(const char *name, const char *appl)
 		}
 		if ((size_t)sb.st_size != mp->buflen) {
 		    if (UNLIKELY(bu_debug&BU_DEBUG_MAPPED_FILE)) {
-			bu_log("bu_open_mapped_file(%s) WARNING: File size changed from %ld to %ld, opening new version.\n", real_path, mp->buflen, sb.st_size);
+			bu_log("bu_open_mapped_file(%s) WARNING: File size changed from %ld to %jd, opening new version.\n", real_path, mp->buflen, (intmax_t)sb.st_size);
 		    }
 		    /* mp doesn't reflect the file any longer.  Invalidate. */
 		    mp->appl = bu_strdup("__STALE__");
@@ -198,12 +198,16 @@ bu_open_mapped_file(const char *name, const char *appl)
 	all_mapped_files.capacity = NUM_INITIAL_MAPPED_FILES;
 	all_mapped_files.size = 0;
 	all_mapped_files.mapped_files = initial_mapped_files;
+	memset(initial_mapped_files, 0, sizeof(initial_mapped_files));
     } else if (all_mapped_files.size == NUM_INITIAL_MAPPED_FILES) {
 	all_mapped_files.capacity *= 2;
 	all_mapped_files.mapped_files = (struct bu_mapped_file *)bu_malloc(all_mapped_files.capacity * sizeof(struct bu_mapped_file), "initial resize of mapped file list");
+	memcpy(all_mapped_files.mapped_files, initial_mapped_files, sizeof(initial_mapped_files));
+	memset(all_mapped_files.mapped_files + all_mapped_files.size, 0, (all_mapped_files.capacity - all_mapped_files.size) * sizeof(struct bu_mapped_file));
     } else if (all_mapped_files.size == all_mapped_files.capacity) {
 	all_mapped_files.capacity *= 2;
 	all_mapped_files.mapped_files = (struct bu_mapped_file *)bu_realloc(all_mapped_files.mapped_files, all_mapped_files.capacity * sizeof(struct bu_mapped_file), "additional resize of mapped file list");
+	memset(all_mapped_files.mapped_files + all_mapped_files.size, 0, (all_mapped_files.capacity - all_mapped_files.size) * sizeof(struct bu_mapped_file));
     }
 
     mp = &all_mapped_files.mapped_files[all_mapped_files.size];
@@ -403,11 +407,9 @@ bu_free_mapped_files(int verbose)
 	if (UNLIKELY(verbose || (bu_debug&BU_DEBUG_MAPPED_FILE)))
 	    bu_pr_mapped_file("freeing", mp);
 
-	/* If application pointed mp->apbuf at mp->buf, break that
-	 * association so we don't double-free the buffer.
-	 */
-	if (mp->apbuf == mp->buf)
-	    mp->apbuf = (void *)NULL;
+
+	mp->apbuf = (void *)NULL;
+
 
 #ifdef HAVE_SYS_MMAN_H
 	if (mp->is_mapped) {

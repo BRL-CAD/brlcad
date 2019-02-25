@@ -1,7 +1,7 @@
 /*                    V L S _ V P R I N T F . H
  * BRL-CAD
  *
- * Copyright (c) 1998-2018 United States Government as represented by
+ * Copyright (c) 1998-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or

@@ -1,7 +1,7 @@
 /*                    P L A N E _ P T . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2018 United States Government as represented by
+ * Copyright (c) 2013-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -168,7 +168,7 @@ test_bn_mk_plane_3pts(int argc, char **argv)
 
     actual_return = bn_mk_plane_3pts(plane, a, b, c, &tol);
 
-    bu_log("return: %f\n", actual_return);
+    bu_log("return: %d\n", actual_return);
 
     return (expected_return != actual_return);
 }

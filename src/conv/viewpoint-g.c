@@ -1,7 +1,7 @@
 /*                   V I E W P O I N T - G . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2018 United States Government as represented by
+ * Copyright (c) 1993-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -195,7 +195,7 @@ main(int argc, char **argv)
 	if (number_scanned < 4)
 	    break;
 	if (i >= no_of_verts)
-	    bu_log("vertex number too high (%zu) only allowed for %d\n", i, no_of_verts);
+	    bu_log("vertex number too high (%zu) only allowed for %zu\n", i, no_of_verts);
 	VSET(verts[i].coord, x, y, z);
 
 	if (number_scanned == 7) {

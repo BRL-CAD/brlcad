@@ -1,7 +1,7 @@
 /*                         P A R S E . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2018 United States Government as represented by
+ * Copyright (c) 1989-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1778,29 +1778,6 @@ bu_vls_struct_print2(struct bu_vls *vls_out,
 	}
     }
 }
-
-
-void
-bu_parse_mm(const struct bu_structparse *sdp, const char *name, char *base, const char *value)
-/* structure description */
-/* struct member name */
-/* beginning of structure */
-/* string containing value */
-{
-    double *p;
-
-    if (UNLIKELY(!sdp || !base || !value))
-	return;
-
-    p = (double *)(base+sdp->sp_offset);
-
-    /* reconvert with optional units, name if-statement just to quell unused warning */
-    if (name)
-	*p = bu_mm_value(value);
-    else
-	*p = bu_mm_value(value);
-}
-
 
 #define STATE_UNKNOWN 0
 #define STATE_IN_KEYWORD 1

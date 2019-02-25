@@ -1,7 +1,7 @@
 /*                         S E T U P . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2018 United States Government as represented by
+ * Copyright (c) 1985-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -142,10 +142,9 @@ static struct cmdtab mged_cmdtab[] = {
     {"edcomb", cmd_ged_plain_wrapper, ged_edcomb},
     {"edgedir", f_edgedir, GED_FUNC_PTR_NULL},
     {"edmater", f_edmater, GED_FUNC_PTR_NULL},
-    {"em", cmd_emuves, GED_FUNC_PTR_NULL},
+    {"env", cmd_ged_plain_wrapper, ged_env},
     {"erase", cmd_ged_erase_wrapper, ged_erase},
     {"ev", cmd_ev, GED_FUNC_PTR_NULL},
-    {"e_muves", f_e_muves, GED_FUNC_PTR_NULL},
     {"eqn", f_eqn, GED_FUNC_PTR_NULL},
     {"exit", f_quit, GED_FUNC_PTR_NULL},
     {"expand", cmd_ged_plain_wrapper, ged_expand},
@@ -194,14 +193,12 @@ static struct cmdtab mged_cmdtab[] = {
     {"killtree", cmd_ged_erase_wrapper, ged_killtree},
     {"knob", f_knob, GED_FUNC_PTR_NULL},
     {"l", cmd_ged_info_wrapper, ged_list},
-    {"l_muves", f_l_muves, GED_FUNC_PTR_NULL},
     {"labelvert", f_labelvert, GED_FUNC_PTR_NULL},
     {"labelface", f_labelface, GED_FUNC_PTR_NULL},
     {"lc", cmd_ged_plain_wrapper, ged_lc},
     {"left", f_bv_left, GED_FUNC_PTR_NULL},
     {"lint", cmd_ged_plain_wrapper, ged_lint},
     {"listeval", cmd_ged_plain_wrapper, ged_pathsum},
-    {"lm", cmd_lm, GED_FUNC_PTR_NULL},
     {"loadtk", cmd_tk, GED_FUNC_PTR_NULL},
     {"loadview", cmd_ged_view_wrapper, ged_loadview},
     {"lod", cmd_ged_plain_wrapper, ged_lod},
@@ -262,7 +259,9 @@ static struct cmdtab mged_cmdtab[] = {
     {"prefix", cmd_ged_plain_wrapper, ged_prefix},
     {"press", f_press, GED_FUNC_PTR_NULL},
     {"preview", cmd_ged_dm_wrapper, ged_preview},
-    {"ps", f_ps, GED_FUNC_PTR_NULL},
+    {"process", cmd_ged_plain_wrapper, ged_process},
+    {"postscript", f_postscript, GED_FUNC_PTR_NULL},
+    {"ps", cmd_ps, GED_FUNC_PTR_NULL},
     {"pull", cmd_ged_plain_wrapper, ged_pull},
     {"push", cmd_ged_plain_wrapper, ged_push},
     {"put", cmd_ged_plain_wrapper, ged_put},
@@ -278,7 +277,6 @@ static struct cmdtab mged_cmdtab[] = {
     {"r", cmd_ged_plain_wrapper, ged_region},
     {"rate", f_bv_rate_toggle, GED_FUNC_PTR_NULL},
     {"rcodes", cmd_ged_plain_wrapper, ged_rcodes},
-    {"read_muves", f_read_muves, GED_FUNC_PTR_NULL},
     {"rear", f_bv_rear, GED_FUNC_PTR_NULL},
     {"red", f_red, GED_FUNC_PTR_NULL},
     {"refresh", f_refresh, GED_FUNC_PTR_NULL},
@@ -339,7 +337,6 @@ static struct cmdtab mged_cmdtab[] = {
     {"sxy", f_be_s_trans, GED_FUNC_PTR_NULL},
     {"sync", cmd_ged_plain_wrapper, ged_sync},
     {"t", cmd_ged_plain_wrapper, ged_ls},
-    {"t_muves", f_t_muves, GED_FUNC_PTR_NULL},
     {"ted", f_tedit, GED_FUNC_PTR_NULL},
     {"tie", f_tie, GED_FUNC_PTR_NULL},
     {"tire", cmd_ged_plain_wrapper, ged_tire},
@@ -396,10 +393,6 @@ cmd_setup(void)
     struct cmdtab *ctp;
     struct bu_vls temp = BU_VLS_INIT_ZERO;
 
-    /* from cmd.c */
-    extern int glob_compat_mode;
-    extern int output_as_return;
-
     for (ctp = mged_cmdtab; ctp->name != NULL; ctp++) {
 	bu_vls_strcpy(&temp, "_mged_");
 	bu_vls_strcat(&temp, ctp->name);
@@ -409,10 +402,6 @@ cmd_setup(void)
 	(void)Tcl_CreateCommand(INTERP, bu_vls_addr(&temp), ctp->tcl_func,
 				(ClientData)ctp, (Tcl_CmdDeleteProc *)NULL);
     }
-
-    /* link some tcl variables to these corresponding globals */
-    Tcl_LinkVar(INTERP, "glob_compat_mode", (char *)&glob_compat_mode, TCL_LINK_BOOLEAN);
-    Tcl_LinkVar(INTERP, "output_as_return", (char *)&output_as_return, TCL_LINK_BOOLEAN);
 
     /* Init mged's Tcl interface to libwdb */
     Wdb_Init(INTERP);
@@ -465,13 +454,13 @@ mged_setup(Tcl_Interp **interpreter)
     view_state->vs_gvp->gv_clientData = (void *)view_state;
     MAT_DELTAS_GET_NEG(view_state->vs_orig_pos, view_state->vs_gvp->gv_center);
 
-    if (gedp) {
+    if (GEDP) {
 	/* release any allocated memory */
-	ged_free(gedp);
+	ged_free(GEDP);
     } else {
-	BU_ALLOC(gedp, struct ged);
+	BU_ALLOC(GEDP, struct ged);
     }
-    GED_INIT(gedp, NULL);
+    GED_INIT(GEDP, NULL);
 
     /* register commands */
     cmd_setup();
@@ -479,8 +468,8 @@ mged_setup(Tcl_Interp **interpreter)
     history_setup();
     mged_global_variable_setup(*interpreter);
     mged_variable_setup(*interpreter);
-    gedp->ged_interp = (void *)*interpreter;
-    gedp->ged_interp_eval = &mged_db_search_callback;
+    GEDP->ged_interp = (void *)*interpreter;
+    GEDP->ged_interp_eval = &mged_db_search_callback;
 
     /* Tcl needs to write nulls onto subscripted variable names */
     bu_vls_printf(&str, "%s(state)", MGED_DISPLAY_VAR);

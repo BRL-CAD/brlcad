@@ -1,7 +1,7 @@
 /*                      P L O T 3 - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2018 United States Government as represented by
+ * Copyright (c) 1986-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -80,7 +80,7 @@
 #include "bu/color.h"
 #include "bu/cv.h"
 #include "bu/getopt.h"
-#include "bu/parallel.h"
+#include "bu/process.h"
 #include "bu/exit.h"
 #include "fb.h"
 #include "bn/plot3.h"

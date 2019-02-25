@@ -131,7 +131,7 @@ GetBitmapForIcon(
     TkMacOSXDrawingContext dc;
     Pixmap pixmap;
 
-    pixmap = Tk_GetPixmap(display, None, size.width, size.height, 0);
+    pixmap = Tk_GetPixmap(display, TkNone, size.width, size.height, 0);
     if (TkMacOSXSetupDrawingContext(pixmap, NULL, 1, &dc)) {
 	if (dc.context) {
 	    const CGAffineTransform t = { .a = 1, .b = 0, .c = 0, .d = -1,
@@ -179,7 +179,7 @@ TkpCreateNativeBitmap(
 		builtInIconSize));
 	ReleaseIconRef(icon);
     } else {
-	pixmap = Tk_GetPixmap(display, None, builtInIconSize,
+	pixmap = Tk_GetPixmap(display, TkNone, builtInIconSize,
 		builtInIconSize, 0);
     }
     return pixmap;
@@ -234,7 +234,7 @@ OSTypeFromString(const char *s, OSType *t) {
  *	    - 4-char OSType of IconServices icon
  *
  * Results:
- *	Native bitmap or None.
+ *	Native bitmap or TkNone.
  *
  * Side effects:
  *	None.
@@ -250,7 +250,7 @@ TkpGetNativeAppBitmap(
     int *height)
 {
     Tcl_HashEntry *hPtr;
-    Pixmap pixmap = None;
+    Pixmap pixmap = TkNone;
     NSString *string;
     NSImage *image = nil;
     NSSize size = { .width = builtInIconSize, .height = builtInIconSize };
@@ -323,7 +323,7 @@ TkpGetNativeAppBitmap(
 	    /* TODO: convert BW NSImage to CGImageMask */
 	}
 #endif
-	pixmap = Tk_GetPixmap(display, None, size.width, size.height, depth);
+	pixmap = Tk_GetPixmap(display, TkNone, size.width, size.height, depth);
 	*width = size.width;
 	*height = size.height;
 	if (TkMacOSXSetupDrawingContext(pixmap, NULL, 1, &dc)) {

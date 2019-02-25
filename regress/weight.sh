@@ -2,7 +2,7 @@
 #                       W E I G H T . S H
 # BRL-CAD
 #
-# Copyright (c) 2010-2018 United States Government as represented by
+# Copyright (c) 2010-2019 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -61,7 +61,7 @@ fi
 
 # FIRST TEST =================================
 
-rm -f weight.mged
+rm -f weight.mged weight.g
 cat > weight.mged <<EOF
 opendb weight.g y
 units cm
@@ -139,7 +139,7 @@ fi
 # Need to do a slightly more elaborate test
 # save first density file in case we fail here
 
-rm -f weight.test2.mged
+rm -f weight.test2.mged weight.test2.g
 cat > weight.test2.mged <<EOF
 opendb weight.test2.g y
 units cm

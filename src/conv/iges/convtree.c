@@ -1,7 +1,7 @@
 /*                      C O N V T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2018 United States Government as represented by
+ * Copyright (c) 1990-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -62,7 +62,7 @@ Convtree()
 
 	if (dir[i]->param <= pstart) {
 	    /* Illegal parameter address */
-	    bu_log("Entity number %d (Boolean Tree) does not have a legal parameter pointer\n", i);
+	    bu_log("Entity number %zu (Boolean Tree) does not have a legal parameter pointer\n", i);
 	    continue;
 	}
 

@@ -1,7 +1,7 @@
 /*                      I C V _ C R O P . C
  * BRL-CAD
  *
- * Copyright (c) 2016-2018 United States Government as represented by
+ * Copyright (c) 2016-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or

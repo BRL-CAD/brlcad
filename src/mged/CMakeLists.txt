@@ -44,7 +44,6 @@ set(MGED_SOURCES
   menu.c
   mged.c
   mover.c
-  muves.c
   overlay.c
   plot.c
   predictor.c

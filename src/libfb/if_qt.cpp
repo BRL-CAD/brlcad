@@ -1,7 +1,7 @@
 /*                       I F _ Q T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2014-2018 United States Government as represented by
+ * Copyright (c) 2014-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -798,7 +798,7 @@ qt_open(fb *ifp, const char *file, int width, int height)
     /* allocate backing store */
     size = ifp->if_max_height * ifp->if_max_width * sizeof(RGBpixel) + sizeof (*qi->qi_rgb_cmap);;
     if ((mem = (unsigned char *)malloc(size)) == 0) {
-	fb_log("if_qt: Unable to allocate %d bytes of backing \
+	fb_log("if_qt: Unable to allocate %zu bytes of backing \
 		store\n  Run shell command 'limit datasize unlimited' and try again.\n", size);
 	return -1;
     }
@@ -899,7 +899,7 @@ _qt_open_existing(fb *ifp, int width, int height, void *qapp, void *qwin, void *
     /* allocate backing store */
     size = ifp->if_max_height * ifp->if_max_width * sizeof(RGBpixel) + sizeof (*qi->qi_rgb_cmap);;
     if ((mem = (unsigned char *)malloc(size)) == 0) {
-	fb_log("if_qt: Unable to allocate %d bytes of backing \
+	fb_log("if_qt: Unable to allocate %zu bytes of backing \
 		store\n  Run shell command 'limit datasize unlimited' and try again.\n", size);
 	return -1;
     }

@@ -405,8 +405,12 @@ typedef struct {
 #define QUADRUPLE	4
 #define MULT_CLICKS	7
 
+#ifndef TkControlMask
+#  define TkControlMask		(1<<2)
+#endif
+
 static ModInfo modArray[] = {
-    {"Control",		ControlMask,	0},
+    {"Control",		TkControlMask,	0},
     {"Shift",		ShiftMask,	0},
     {"Lock",		LockMask,	0},
     {"Meta",		META_MASK,	0},
@@ -631,7 +635,7 @@ static const TkStateMap visNotify[] = {
 };
 
 static const TkStateMap configureRequestDetail[] = {
-    {None,		"None"},
+    {TkNone,		"None"},
     {Above,		"Above"},
     {Below,		"Below"},
     {BottomIf,		"BottomIf"},
@@ -3870,7 +3874,7 @@ DoWarp(
 {
     TkDisplay *dispPtr = (TkDisplay *) clientData;
 
-    XWarpPointer(dispPtr->display, (Window) None, (Window) dispPtr->warpWindow,
+    XWarpPointer(dispPtr->display, (Window) TkNone, (Window) dispPtr->warpWindow,
 	    0, 0, 0, 0, (int) dispPtr->warpX, (int) dispPtr->warpY);
     XForceScreenSaver(dispPtr->display, ScreenSaverReset);
     dispPtr->flags &= ~TK_DISPLAY_IN_WARP;

@@ -23,6 +23,16 @@ if(ADAPTAGRAMS_FOUND)
   set(LIBGED_CMD_INCLUDE_DIRS ${LIBGED_CMD_INCLUDE_DIRS} ${AVOID_INCLUDE_DIR})
 endif(ADAPTAGRAMS_FOUND)
 
+set(ENV_VARS_C "${CMAKE_CURRENT_BINARY_DIR}/env_vars.c")
+
+add_custom_command(OUTPUT ${ENV_VARS_C}
+  COMMAND env2c ${CMAKE_BINARY_DIR}/cmakefiles.cmake ${ENV_VARS_C}
+  DEPENDS env2c
+  COMMENT "[ENV2C] Scanning for environment variable usage"
+  )
+set_source_files_properties(env.c PROPERTIES OBJECT_DEPENDS ${ENV_VARS_C})
+DISTCLEAN(${ENV_VARS_C})
+
 set(LIBGED_SOURCES
   ${LIBGED_SOURCES}
   3ptarb.c
@@ -58,7 +68,7 @@ set(LIBGED_SOURCES
   brep.c
   cat.c
   cc.c
-  center.c
+  center.cxx
   check/check.c
   check/check_adj_air.c
   check/check_centroid.c
@@ -110,6 +120,7 @@ set(LIBGED_SOURCES
   editit.c
   edmater.c
   edpipe.c
+  env.c
   erase.c
   exists.c
   expand.c
@@ -172,7 +183,7 @@ set(LIBGED_SOURCES
   make.c
   make_name.c
   match.c
-  mater.c
+  mater.cxx
   mirror.c
   model2grid_lu.c
   model2view.c
@@ -216,6 +227,7 @@ set(LIBGED_SOURCES
   prcolor.c
   prefix.c
   preview.c
+  process.c
   protate.c
   ps.c
   pscale.c
@@ -353,8 +365,9 @@ set(GED_INCLUDE_DIRS
 set(GED_LOCAL_INCLUDE_DIRS
   ${PNG_INCLUDE_DIR}
   ${REGEX_INCLUDE_DIR}
-  ${CLIPPER_INCLUDE_DIR}
   ${LIBGED_CMD_INCLUDE_DIRS}
+  ${CMAKE_CURRENT_SOURCE_DIR}/../libbg
+  ${CMAKE_CURRENT_BINARY_DIR}
   )
 
 BRLCAD_LIB_INCLUDE_DIRS(ged GED_INCLUDE_DIRS GED_LOCAL_INCLUDE_DIRS)
@@ -363,15 +376,13 @@ if(BRLCAD_ENABLE_BULLET)
   set(CADBULLET_LIBRARY cadbullet)
 endif(BRLCAD_ENABLE_BULLET)
 
-BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;librt;libnmg;libfb;libbg;libbn;libbu;libicv;libanalyze;${LIBGED_CMD_LIBS_LIST};${CADBULLET_LIBRARY};${REGEX_LIBRARY};${WINSOCK_LIB};${CLIPPER_LIBRARY};${M_LIBRARY}")
+BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;librt;libnmg;libfb;libbg;libbn;libbu;libicv;libanalyze;${LIBGED_CMD_LIBS_LIST};${CADBULLET_LIBRARY};${REGEX_LIBRARY};${WINSOCK_LIB};${M_LIBRARY}")
 SET_TARGET_PROPERTIES(libged PROPERTIES VERSION 20.0.1 SOVERSION 20)
-
-if(CPP_DLL_DEFINES)
-  set_property(TARGET libged APPEND PROPERTY COMPILE_DEFINITIONS "CLIPPER_DLL_IMPORTS")
-endif(CPP_DLL_DEFINES)
 
 add_subdirectory(tests)
 add_subdirectory(simulate/tests)
+
+BRLCAD_ADDEXEC(test_help help/test_help.c libged TEST)
 
 set(ged_ignore_files
   CMakeLists.txt

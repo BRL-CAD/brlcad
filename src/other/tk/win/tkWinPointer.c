@@ -58,7 +58,7 @@ TkWinGetModifierState(void)
 	state |= ShiftMask;
     }
     if (GetKeyState(VK_CONTROL) & 0x8000) {
-	state |= ControlMask;
+	state |= TkControlMask;
     }
     if (GetKeyState(VK_MENU) & 0x8000) {
 	state |= ALT_MASK;
@@ -243,7 +243,7 @@ MouseTimerProc(
  *    If the mouse timer is set, cancel it.
  *
  * Results:
- *    None.
+ *    TkNone.
  *
  * Side effects:
  *    May cancel the mouse timer.
@@ -387,7 +387,7 @@ XGetInputFocus(
 {
     Tk_Window tkwin = Tk_HWNDToWindow(GetFocus());
 
-    *focus_return = tkwin ? Tk_WindowId(tkwin) : None;
+    *focus_return = tkwin ? Tk_WindowId(tkwin) : TkNone;
     *revert_to_return = RevertToParent;
     display->request++;
     return Success;
@@ -418,7 +418,7 @@ XSetInputFocus(
     Time time)
 {
     display->request++;
-    if (focus != None) {
+    if (focus != TkNone) {
 	SetFocus(Tk_GetHWND(focus));
     }
     return Success;
@@ -465,7 +465,7 @@ TkpChangeFocus(
 	}
     }
 
-    if (winPtr->window == None) {
+    if (winPtr->window == TkNone) {
 	Tcl_Panic("ChangeXFocus got null X window");
     }
 

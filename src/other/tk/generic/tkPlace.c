@@ -397,7 +397,7 @@ CreateSlave(
     slavePtr = (Slave *) ckalloc(sizeof(Slave));
     memset(slavePtr, 0, sizeof(Slave));
     slavePtr->tkwin = tkwin;
-    slavePtr->inTkwin = None;
+    slavePtr->inTkwin = TkNone;
     slavePtr->anchor = TK_ANCHOR_NW;
     slavePtr->borderMode = BM_INSIDE;
     slavePtr->optionTable = table;

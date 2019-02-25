@@ -1,7 +1,7 @@
 /*                       B N T E S T E R . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -232,7 +232,7 @@ main(int argc, char **argv)
 	    case 'i': /* input file name */
 		string_length = strlen(bu_optarg);
 		if (string_length >= BUFSIZ) {
-		    bu_log("Input file name too long, length was %d but must be less than %d\n",
+		    bu_log("Input file name too long, length was %zu but must be less than %d\n",
 			   string_length, BUFSIZ);
 		    bu_exit(EXIT_FAILURE, USAGE);
 		}
@@ -242,7 +242,7 @@ main(int argc, char **argv)
 	    case 'o': /* output file name */
 		string_length = strlen(bu_optarg);
 		if (string_length >= BUFSIZ) {
-		    bu_log("Output file name too long, length was %d but must be less than %d\n",
+		    bu_log("Output file name too long, length was %zu but must be less than %d\n",
 			   string_length, BUFSIZ);
 		    bu_exit(EXIT_FAILURE, USAGE);
 		}

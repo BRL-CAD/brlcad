@@ -1,7 +1,7 @@
 /*                      V I E W C E L L . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2018 United States Government as represented by
+ * Copyright (c) 1989-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -105,7 +105,7 @@ view_2init(struct application *UNUSED(ap), char *UNUSED(framename))
      *  tree walking and database prepping to still be done in parallel.
      */
     if ( npsw >= 1 )  {
-	bu_log("Note: changing from %d cpus to 1 cpu\n", npsw );
+	bu_log("Note: changing from %zu cpus to 1 cpu\n", npsw );
 	npsw = 1;		/* Disable parallel processing */
     }
 

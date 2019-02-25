@@ -1,7 +1,7 @@
 /*                           G E D . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2018 United States Government as represented by
+ * Copyright (c) 2008-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,8 +36,10 @@
 #include "dm/bview.h"
 #include "raytrace.h"
 #include "rt/solid.h"
+#include "analyze.h"
 #include "ged/defines.h"
 #include "ged/database.h"
+#include "ged/commands.h"
 #include "ged/objects.h"
 #include "ged/framebuffer.h"
 #include "ged/view.h"
@@ -63,6 +65,10 @@ GED_EXPORT extern int ged_echo(struct ged *gedp, int argc, const char *argv[]);
  */
 GED_EXPORT extern int ged_graph(struct ged *gedp, int argc, const char *argv[]);
 
+/**
+ * Echo the specified arguments.
+ */
+GED_EXPORT extern int ged_help(struct ged *gedp, int argc, const char *argv[]);
 
 
 /***************************************

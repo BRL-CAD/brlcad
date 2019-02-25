@@ -549,7 +549,7 @@ TkGenWMConfigureEvent(
     if (winPtr->changes.stack_mode == Above) {
 	event.xconfigure.above = winPtr->changes.sibling;
     } else {
-	event.xconfigure.above = None;
+	event.xconfigure.above = TkNone;
     }
 
     if (!(flags & TK_LOCATION_CHANGED)) {
@@ -972,7 +972,7 @@ ConfigureRestrictProc(
     event.display = Tk_Display(tkwin);
     event.event = Tk_WindowId(tkwin);
     event.root = XRootWindow(Tk_Display(tkwin), 0);
-    event.subwindow = None;
+    event.subwindow = TkNone;
     event.time = TkpGetMS();
     XQueryPointer(NULL, winPtr->window, NULL, NULL,
 	    &event.x_root, &event.y_root, &x, &y, &event.state);

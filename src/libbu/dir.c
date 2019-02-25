@@ -1,7 +1,7 @@
 /*                           D I R . C
  * BRL-CAD
  *
- * Copyright (c) 2018 United States Government as represented by
+ * Copyright (c) 2018-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -89,7 +89,7 @@ dir_temp(char *buf, size_t len)
     }
 
     /* method 2a: platform standard (macosx) */
-#ifdef _CS_DARWIN_USER_DIR
+#if defined(HAVE_CONFSTR) && defined(_CS_DARWIN_USER_TEMP_DIR)
     if (BU_STR_EMPTY(path)) {
 	confstr(_CS_DARWIN_USER_TEMP_DIR, path, len);
     }
@@ -163,7 +163,7 @@ dir_home(char *buf, size_t len)
 #endif
 
     /* method #2b: platform standard (macosx) */
-#ifdef _CS_DARWIN_USER_DIR
+#if defined(HAVE_CONFSTR) && defined(_CS_DARWIN_USER_DIR)
     if (BU_STR_EMPTY(path)) {
 	confstr(_CS_DARWIN_USER_DIR, path, len);
     }
@@ -219,7 +219,14 @@ dir_cache(char *buf, size_t len)
     }
 #endif
 
-    /* method #1c: platform standard (windows) */
+    /* method #1c: platform standard (macosx) */
+#if defined(HAVE_CONFSTR) && defined(_CS_DARWIN_CACHE_DIR)
+    if (BU_STR_EMPTY(path)) {
+	confstr(_CS_DARWIN_CACHE_DIR, path, len);
+    }
+#endif
+
+    /* method #1d: platform standard (windows) */
 #ifdef HAVE_WINDOWS_H
     if (BU_STR_EMPTY(path)) {
 	PWSTR wpath;
@@ -288,11 +295,13 @@ static const char *
 vdir(char *result, size_t len, va_list args)
 {
     struct bu_vls vls = BU_VLS_INIT_ZERO;
-    char buf[MAXPATHLEN] = {0};
+    static char buf[MAXPATHLEN] = {0};
     const char *cpath;
     uintptr_t arg;
 
     arg = va_arg(args, uintptr_t);
+
+    memset(buf, 0, MAXPATHLEN);
 
     while (arg != (uintptr_t)NULL) {
 	switch ((bu_dir_t)arg) {
@@ -304,31 +313,31 @@ vdir(char *result, size_t len, va_list args)
 		bu_log("UNIMPLEMENTED\n");
 		break;
 	    case BU_DIR_BIN:
-		cpath = bu_brlcad_root("bin", 1);
+		cpath = bu_brlcad_root(BRLCAD_BIN_DIR, 1);
 		append(&vls, cpath);
 		break;
 	    case BU_DIR_LIB:
-		cpath = bu_brlcad_root("lib", 1);
+		cpath = bu_brlcad_root(BRLCAD_LIB_DIR, 1);
 		append(&vls, cpath);
 		break;
 	    case BU_DIR_LIBEXEC:
-		cpath = bu_brlcad_root("libexec", 1);
+		cpath = bu_brlcad_root(BRLCAD_LIBEXEC_DIR, 1);
 		append(&vls, cpath);
 		break;
 	    case BU_DIR_INCLUDE:
-		cpath = bu_brlcad_root("include", 1);
+		cpath = bu_brlcad_root(BRLCAD_INCLUDE_DIR, 1);
 		append(&vls, cpath);
 		break;
 	    case BU_DIR_DATA:
-		cpath = bu_brlcad_root("data", 1);
+		cpath = bu_brlcad_root(BRLCAD_DATA_DIR, 1);
 		append(&vls, cpath);
 		break;
 	    case BU_DIR_DOC:
-		cpath = bu_brlcad_root("doc", 1);
+		cpath = bu_brlcad_root(BRLCAD_DOC_DIR, 1);
 		append(&vls, cpath);
 		break;
 	    case BU_DIR_MAN:
-		cpath = bu_brlcad_root("man", 1);
+		cpath = bu_brlcad_root(BRLCAD_MAN_DIR, 1);
 		append(&vls, cpath);
 		break;
 	    case BU_DIR_TEMP:
@@ -364,9 +373,12 @@ vdir(char *result, size_t len, va_list args)
 	bu_strlcpy(result, bu_vls_cstr(&vls), len);
 	bu_vls_free(&vls);
 	return result;
+    } else {
+	memset(buf, 0, MAXPATHLEN);
+	bu_strlcpy(buf, bu_vls_cstr(&vls), MAXPATHLEN);
     }
     bu_vls_free(&vls);
-    return NULL;
+    return buf;
 }
 
 

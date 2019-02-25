@@ -1,7 +1,7 @@
 /*                      M A I N . C X X
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -554,7 +554,7 @@ main(int argc, const char **argv)
     struct bu_vls ncmd = BU_VLS_INIT_ZERO;
     struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
     double scan[16] = MAT_INIT_ZERO;
-    size_t prec = std::numeric_limits<fastf_t>::digits10 + 2; // TODO - once we enable C++ 11 switch this to (p > std::numeric_limits<fastf_t>::max_digits10)
+    size_t prec = std::numeric_limits<fastf_t>::max_digits10;
     char *buf = NULL;
     int  status = 0x0;
     mat_t m;
@@ -588,7 +588,7 @@ main(int argc, const char **argv)
 
     argv++; argc--;
     if ((ac = bu_opt_parse(&optparse_msg, argc, (const char **)argv, d)) == -1) {
-       	bu_exit(EXIT_FAILURE, bu_vls_addr(&optparse_msg));
+       	bu_exit(EXIT_FAILURE, "%s", bu_vls_addr(&optparse_msg));
     }
     bu_vls_free(&optparse_msg);
 
@@ -857,7 +857,7 @@ main(int argc, const char **argv)
 	}
 
 	// Now, construct a dir command line from the m matrix
-	bu_vls_sprintf(&ncmd, "dir %.*f %.*f %.*f", prec, -m[8], prec, -m[9], prec, -m[10]);
+	bu_vls_sprintf(&ncmd, "dir %.*f %.*f %.*f", (int)prec, -m[8], (int)prec, -m[9], (int)prec, -m[10]);
 	if (nirt_exec(ns, bu_vls_addr(&ncmd)) < 0) {
 	    nirt_err(&io_data, "nirt: read_mat(): Failed to set the view direction\n");
 	    ret = EXIT_FAILURE;

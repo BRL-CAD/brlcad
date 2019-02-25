@@ -3,6 +3,7 @@ set(embedded_licenses
   bullet.txt
   chull2d.txt
   chull3d.txt
+  clipper.txt
   db_faa-info.txt
   db_nist-info.txt
   dehumanize.txt

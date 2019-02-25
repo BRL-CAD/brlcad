@@ -1,7 +1,7 @@
 /*                       T R I M E S H . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@
 
 #define TRIMESH_EDGE_EQUAL(e1, e2) ((e1).va == (e2).va && (e1).vb == (e2).vb)
 
-HIDDEN inline void
+static inline void
 _trimesh_set_edge(struct bg_trimesh_halfedge *edge, int va, int vb)
 {
     if (va < vb) {

@@ -1,7 +1,7 @@
 /*                       G E D . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2018 United States Government as represented by
+ * Copyright (c) 2000-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -78,6 +78,17 @@ ged_close(struct ged *gedp)
     if (gedp->ged_wdbp) {
 	wdb_close(gedp->ged_wdbp);
 	gedp->ged_wdbp = RT_WDB_NULL;
+    }
+
+    /* Terminate any ged subprocesses */
+    if (gedp != GED_NULL) {
+	struct ged_subprocess *rrp;
+	for (BU_LIST_FOR(rrp, ged_subprocess, &gedp->gd_headSubprocess.l)) {
+	    if (!rrp->aborted) {
+		bu_terminate(bu_process_pid(rrp->p));
+		rrp->aborted = 1;
+	    }
+	}
     }
 
     ged_free(gedp);
@@ -177,6 +188,15 @@ ged_free(struct ged *gedp)
 
     free_object_selections(gedp->ged_selections);
     bu_hash_destroy(gedp->ged_selections);
+
+    if (gedp->gd_densities) {
+	analyze_densities_destroy(gedp->gd_densities);
+	gedp->gd_densities = NULL;
+    }
+    if (gedp->gd_densities_source) {
+	bu_free((void *)gedp->gd_densities_source, "free densities source path");
+	gedp->gd_densities_source = NULL;
+    }
 }
 
 
@@ -239,6 +259,8 @@ ged_init(struct ged *gedp)
     BU_GET(gedp->ged_results, struct ged_results);
     (void)_ged_results_init(gedp->ged_results);
 
+    BU_LIST_INIT(&gedp->gd_headSubprocess.l);
+
     /* For now, we're keeping the string... will go once no one uses it */
     BU_GET(gedp->ged_result_str, struct bu_vls);
     bu_vls_init(gedp->ged_result_str);
@@ -248,12 +270,14 @@ ged_init(struct ged *gedp)
     BU_LIST_INIT(gedp->ged_gdp->gd_headDisplay);
     BU_GET(gedp->ged_gdp->gd_headVDraw, struct bu_list);
     BU_LIST_INIT(gedp->ged_gdp->gd_headVDraw);
-    BU_LIST_INIT(&gedp->ged_gdp->gd_headRunRt.l);
 
     gedp->ged_gdp->gd_uplotOutputMode = PL_OUTPUT_MODE_BINARY;
     qray_init(gedp->ged_gdp);
 
     gedp->ged_selections = bu_hash_create(32);
+
+    gedp->gd_densities = NULL;
+    gedp->gd_densities_source = NULL;
 
     /* init the solid list */
     BU_GET(freesolid, struct solid);
@@ -270,6 +294,8 @@ ged_init(struct ged *gedp)
     gedp->ged_output_handler = NULL;
     gedp->ged_output_script = NULL;
     gedp->ged_internal_call = 0;
+    gedp->gd_densities = NULL;
+    gedp->gd_densities_source = NULL;
 
     /* set up our command registration container */
     BU_GET(gedp->cmds, struct ged_cmd);

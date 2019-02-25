@@ -474,13 +474,13 @@ $  cell-fb -F fictitious.brlcad.org: -gek -p 20 30 inputs
 </refsection>
 
 <refsection xml:id="copyright"><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1991-2018 by the United States
+<para>This software is Copyright (c) 1991-2019 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 
 </refsection>
 
 <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 <para>Reports of bugs or problems should be submitted via electronic
-mail to &lt;devs@brlcad.org&gt;.</para>
+mail to <email>devs@brlcad.org</email></para>
 </refsection>
 </refentry>

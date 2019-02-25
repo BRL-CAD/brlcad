@@ -1,7 +1,7 @@
 /*                          A R B 8 . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2018 United States Government as represented by
+ * Copyright (c) 1985-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -232,8 +232,8 @@ rt_arb_get_cgtype(
     int *cgtype,
     struct rt_arb_internal *arb,
     const struct bn_tol *tol,
-    register int *uvec, /* array of indexes to unique points in arb->pt[] */
-    register int *svec) /* array of indexes to like points in arb->pt[] */
+    int *uvec, /* array of indexes to unique points in arb->pt[] */
+    int *svec) /* array of indexes to like points in arb->pt[] */
 {
     register int i, j;
     int numuvec, unique;

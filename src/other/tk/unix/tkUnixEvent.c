@@ -329,7 +329,7 @@ TransferXEventsToTcl(
 
     while (QLength(display) > 0) {
 	XNextEvent(display, &event.x);
-	w = None;
+	w = TkNone;
 	if (event.type == KeyPress || event.type == KeyRelease) {
 	    for (dispPtr = TkGetDisplayList(); ; dispPtr = dispPtr->nextPtr) {
 		if (dispPtr == NULL) {

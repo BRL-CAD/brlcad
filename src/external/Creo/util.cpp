@@ -1,7 +1,7 @@
 /*                    U T I L . C P P
  * BRL-CAD
  *
- * Copyright (c) 2017-2018 United States Government as represented by
+ * Copyright (c) 2017-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -251,8 +251,8 @@ extern "C" ProError regex_key(ProParameter *param, ProError UNUSED(status), ProA
 extern "C" ProError
 creo_attribute_val(char **val, const char *key, ProMdl m)
 {
+    struct bu_vls cpval = BU_VLS_INIT_ZERO;
     wchar_t wkey[CREO_NAME_MAX];
-    wchar_t wval[CREO_NAME_MAX];
     char cval[CREO_NAME_MAX];
     char *fval = NULL;
     ProError pstatus;
@@ -260,6 +260,10 @@ creo_attribute_val(char **val, const char *key, ProMdl m)
     ProParameter param;
     ProParamvalueType ptype;
     ProParamvalue pval;
+    wchar_t w_val[CREO_NAME_MAX];
+    short b_val;
+    int i_val;
+    double d_val;
 
     ProStringToWstring(wkey, (char *)key);
     ProMdlToModelitem(m, &mitm);
@@ -273,15 +277,30 @@ creo_attribute_val(char **val, const char *key, ProMdl m)
     ProParamvalueTypeGet(&pval, &ptype);
     switch (ptype) {
 	case PRO_PARAM_STRING:
-	    ProParamvalueValueGet(&pval, ptype, wval);
-	    ProWstringToString(cval, wval);
+	    ProParamvalueValueGet(&pval, ptype, (void *)w_val);
+	    ProWstringToString(cval, w_val);
 	    if (strlen(cval) > 0) fval = bu_strdup(cval);
+	    break;
+	case PRO_PARAM_INTEGER:
+	    ProParamvalueValueGet(&pval, ptype, (void *)&i_val);
+	    bu_vls_sprintf(&cpval, "%d", i_val);
+	    if (bu_vls_strlen(&cpval) > 0) fval = bu_strdup(bu_vls_cstr(&cpval));
+	    break;
+	case PRO_PARAM_DOUBLE:
+	    ProParamvalueValueGet(&pval, ptype, (void *)&d_val);
+	    bu_vls_sprintf(&cpval, "%g", d_val);
+	    if (bu_vls_strlen(&cpval) > 0) fval = bu_strdup(bu_vls_cstr(&cpval));
+	    break;
+	case PRO_PARAM_BOOLEAN:
+	    ProParamvalueValueGet(&pval, ptype, (void *)&b_val);
+	    fval = (b_val) ? bu_strdup("YES") : bu_strdup("NO");
 	    break;
 	default:
 	    break;
     }
 
     *val = fval;
+    bu_vls_free(&cpval);
     return PRO_TK_NO_ERROR;
 }
 

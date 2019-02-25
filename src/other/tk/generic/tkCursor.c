@@ -72,7 +72,7 @@ Tcl_ObjType tkCursorObjType = {
  *
  * Results:
  *	The return value is the X identifer for the desired cursor, unless
- *	objPtr couldn't be parsed correctly. In this case, None is returned
+ *	objPtr couldn't be parsed correctly. In this case, TkNone is returned
  *	and an error message is left in the interp's result. The caller should
  *	never modify the cursor that is returned, and should eventually call
  *	Tk_FreeCursorFromObj when the cursor is no longer needed.
@@ -149,7 +149,7 @@ Tk_AllocCursorFromObj(
     cursorPtr = TkcGetCursor(interp, tkwin, Tcl_GetString(objPtr));
     objPtr->internalRep.twoPtrValue.ptr1 = (void *) cursorPtr;
     if (cursorPtr == NULL) {
-	return None;
+	return TkNone;
     }
     cursorPtr->objRefCount++;
     return cursorPtr->cursor;
@@ -165,7 +165,7 @@ Tk_AllocCursorFromObj(
  *
  * Results:
  *	The return value is the X identifer for the desired cursor, unless
- *	string couldn't be parsed correctly. In this case, None is returned
+ *	string couldn't be parsed correctly. In this case, TkNone is returned
  *	and an error message is left in the interp's result. The caller should
  *	never modify the cursor that is returned, and should eventually call
  *	Tk_FreeCursor when the cursor is no longer needed.
@@ -188,7 +188,7 @@ Tk_GetCursor(
 {
     TkCursor *cursorPtr = TkcGetCursor(interp, tkwin, string);
     if (cursorPtr == NULL) {
-	return None;
+	return TkNone;
     }
     return cursorPtr->cursor;
 }
@@ -291,7 +291,7 @@ TkcGetCursor(
  *
  * Results:
  *	The return value is the X identifer for the desired cursor, unless it
- *	couldn't be created properly. In this case, None is returned and an
+ *	couldn't be created properly. In this case, TkNone is returned and an
  *	error message is left in the interp's result. The caller should never
  *	modify the cursor that is returned, and should eventually call
  *	Tk_FreeCursor when the cursor is no longer needed.
@@ -382,7 +382,7 @@ Tk_GetCursorFromData(
 
   error:
     Tcl_DeleteHashEntry(dataHashPtr);
-    return None;
+    return TkNone;
 }
 
 /*

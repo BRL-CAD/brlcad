@@ -1,7 +1,7 @@
 /*                         G Q A . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2018 United States Government as represented by
+ * Copyright (c) 2008-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -161,10 +161,6 @@ struct ged_gqa_plot {
     struct bn_vlblock *vbp;
     struct bu_list *vhead;
 } ged_gqa_plot;
-
-/* the entries in the density table */
-struct density_entry *densities = NULL;
-static int num_densities;
 
 /* summary data structure for objects specified on command line */
 static struct per_obj_data {
@@ -743,98 +739,6 @@ parse_args(int ac, char *av[])
     return bu_optind;
 }
 
-
-/**
- * Returns
- * 0 on success
- * !0 on failure
- */
-int
-get_densities_from_file(char *name)
-{
-    struct stat sb;
-
-    FILE *fp = (FILE *)NULL;
-    char *buf = NULL;
-    int ret = 0;
-    size_t sret = 0;
-
-    fp = fopen(name, "rb");
-    if (fp == (FILE *)NULL) {
-	bu_vls_printf(_ged_current_gedp->ged_result_str, "Could not open file - %s\n", name);
-	return GED_ERROR;
-    }
-
-    if (stat(name, &sb)) {
-	bu_vls_printf(_ged_current_gedp->ged_result_str, "Could not read file - %s\n", name);
-	fclose(fp);
-	return GED_ERROR;
-    }
-
-    densities = (struct density_entry *)bu_calloc(128, sizeof(struct density_entry), "density entries");
-    num_densities = 128;
-
-    /* a mapped file would make more sense here */
-    buf = (char *)bu_malloc(sb.st_size+1, "density buffer");
-    sret = fread(buf, sb.st_size, 1, fp);
-    if (sret != 1)
-	perror("fread");
-    ret = parse_densities_buffer(buf, (unsigned long)sb.st_size, densities, _ged_current_gedp->ged_result_str, &num_densities);
-    bu_free(buf, "density buffer");
-    fclose(fp);
-
-    return ret;
-}
-
-
-/**
- * Returns
- * 0 on success
- * !0 on failure
- */
-int
-get_densities_from_database(struct rt_i *rtip)
-{
-    struct directory *dp;
-    struct rt_db_internal intern;
-    struct rt_binunif_internal *bu;
-    int ret;
-    char *buf;
-
-    dp = db_lookup(rtip->rti_dbip, "_DENSITIES", LOOKUP_QUIET);
-    if (dp == (struct directory *)NULL) {
-	bu_vls_printf(_ged_current_gedp->ged_result_str, "No \"_DENSITIES\" density table object in database.");
-	bu_vls_printf(_ged_current_gedp->ged_result_str, " If you do not have density data you can still get adjacent air, bounding box, exposed air, gaps, volume or overlaps by using the -Aa, -Ab, -Ae, -Ag, -Av, or -Ao options respectively.\n");
-	return GED_ERROR;
-    }
-
-    if (rt_db_get_internal(&intern, dp, rtip->rti_dbip, NULL, &rt_uniresource) < 0) {
-	bu_vls_printf(_ged_current_gedp->ged_result_str, "could not import %s\n", dp->d_namep);
-	return GED_ERROR;
-    }
-
-    if ((intern.idb_major_type & DB5_MAJORTYPE_BINARY_MASK) == 0)
-	return GED_ERROR;
-
-    bu = (struct rt_binunif_internal *)intern.idb_ptr;
-
-    RT_CHECK_BINUNIF (bu);
-
-    densities = (struct density_entry *)bu_calloc(128, sizeof(struct density_entry), "density entries");
-    num_densities = 128;
-
-    /* Acquire one extra byte to accommodate parse_densities_buffer()
-     * (i.e. it wants to write an EOS in buf[bu->count]).
-     */
-    buf = (char *)bu_malloc(bu->count+1, "density buffer");
-    memcpy(buf, bu->u.int8, bu->count);
-    ret = parse_densities_buffer(buf, bu->count, densities, _ged_current_gedp->ged_result_str, &num_densities);
-    bu_free((void *)buf, "density buffer");
-
-    return ret;
-}
-
-
 /**
  * Write end points of partition to the standard output.  If this
  * routine return !0, this partition will be dropped from the boolean
@@ -993,7 +897,9 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 
     /* examine each partition until we get back to the head */
     for (pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
-	struct density_entry *de;
+
+	long int material_id = pp->pt_regionp->reg_gmater;
+	fastf_t grams_per_cu_mm = analyze_densities_density(_ged_current_gedp->gd_densities, material_id);
 
 	/* inhit info */
 	dist = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
@@ -1068,135 +974,121 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 	    }
 
 	    /* make sure mater index is within range of densities */
-	    if (pp->pt_regionp->reg_gmater >= num_densities) {
+	    if (pp->pt_regionp->reg_gmater < 0) {
 		bu_semaphore_acquire(GED_SEM_WORKER);
-		bu_vls_printf(_ged_current_gedp->ged_result_str, "density index %d on region %s is outside of range of table [1..%d]\nSet GIFTmater on region or add entry to density table\n",
+		bu_vls_printf(_ged_current_gedp->ged_result_str, "density index %d on region %s is outside of range\nSet GIFTmater on region or add entry to density table\n",
 			      pp->pt_regionp->reg_gmater,
-			      pp->pt_regionp->reg_name,
-			      num_densities); /* XXX this should do something else */
+			      pp->pt_regionp->reg_name);
 		bu_semaphore_release(GED_SEM_WORKER);
 		return GED_ERROR;
 	    } else {
 
-		/* make sure the density index has been set */
-		de = &densities[pp->pt_regionp->reg_gmater];
-		if (de->magic == DENSITY_MAGIC) {
-		    struct per_region_data *prd;
-		    vect_t cmass;
-		    vect_t lenTorque;
-		    fastf_t Lx = state->span[0]/state->steps[0];
-		    fastf_t Ly = state->span[1]/state->steps[1];
-		    fastf_t Lz = state->span[2]/state->steps[2];
-		    fastf_t Lx_sq;
-		    fastf_t Ly_sq;
-		    fastf_t Lz_sq;
-		    fastf_t cell_area;
-		    int los;
+		struct per_region_data *prd;
+		vect_t cmass;
+		vect_t lenTorque;
+		fastf_t Lx = state->span[0]/state->steps[0];
+		fastf_t Ly = state->span[1]/state->steps[1];
+		fastf_t Lz = state->span[2]/state->steps[2];
+		fastf_t Lx_sq;
+		fastf_t Ly_sq;
+		fastf_t Lz_sq;
+		fastf_t cell_area;
+		int los;
 
-		    switch (state->i_axis) {
-			case 0:
-			    Lx_sq = dist*pp->pt_regionp->reg_los*0.01;
-			    Lx_sq *= Lx_sq;
-			    Ly_sq = Ly*Ly;
-			    Lz_sq = Lz*Lz;
-			    cell_area = Ly_sq;
-			    break;
-			case 1:
-			    Lx_sq = Lx*Lx;
-			    Ly_sq = dist*pp->pt_regionp->reg_los*0.01;
-			    Ly_sq *= Ly_sq;
-			    Lz_sq = Lz*Lz;
-			    cell_area = Lx_sq;
-			    break;
-			case 2:
-			default:
-			    Lx_sq = Lx*Lx;
-			    Ly_sq = Ly*Ly;
-			    Lz_sq = dist*pp->pt_regionp->reg_los*0.01;
-			    Lz_sq *= Lz_sq;
-			    cell_area = Lx_sq;
-			    break;
-		    }
-
-		    /* factor in the density of this object weight
-		     * computation, factoring in the LOS percentage
-		     * material of the object
-		     */
-		    los = pp->pt_regionp->reg_los;
-
-		    if (los < 1) {
-			bu_semaphore_acquire(GED_SEM_WORKER);
-			bu_vls_printf(_ged_current_gedp->ged_result_str, "bad LOS (%d) on %s\n", los, pp->pt_regionp->reg_name);
-			bu_semaphore_release(GED_SEM_WORKER);
-		    }
-
-		    /* accumulate the total weight values */
-		    val = de->grams_per_cu_mm * dist * (pp->pt_regionp->reg_los * 0.01);
-		    ap->A_LENDEN += val;
-
-		    prd = ((struct per_region_data *)pp->pt_regionp->reg_udata);
-		    /* accumulate the per-region per-view weight values */
-		    bu_semaphore_acquire(GED_SEM_STATS);
-		    prd->r_lenDensity[state->i_axis] += val;
-
-		    /* accumulate the per-object per-view weight values */
-		    prd->optr->o_lenDensity[state->i_axis] += val;
-
-		    if (analysis_flags & ANALYSIS_CENTROIDS) {
-			/* calculate the center of mass for this partition */
-			VJOIN1(cmass, pt, dist*0.5, ap->a_ray.r_dir);
-
-			/* calculate the lenTorque for this partition (i.e. centerOfMass * lenDensity) */
-			VSCALE(lenTorque, cmass, val);
-
-			/* accumulate per-object per-view torque values */
-			VADD2(&prd->optr->o_lenTorque[state->i_axis*3], &prd->optr->o_lenTorque[state->i_axis*3], lenTorque);
-
-			/* accumulate the total lenTorque */
-			VADD2(&state->m_lenTorque[state->i_axis*3], &state->m_lenTorque[state->i_axis*3], lenTorque);
-
-			if (analysis_flags & ANALYSIS_MOMENTS) {
-			    vectp_t moi;
-			    vectp_t poi = &state->m_poi[state->i_axis*3];
-			    fastf_t dx_sq = cmass[X]*cmass[X];
-			    fastf_t dy_sq = cmass[Y]*cmass[Y];
-			    fastf_t dz_sq = cmass[Z]*cmass[Z];
-			    fastf_t mass = val * cell_area;
-			    static const fastf_t ONE_TWELFTH = 1.0 / 12.0;
-
-			    /* Collect moments and products of inertia for the current object */
-			    moi = &prd->optr->o_moi[state->i_axis*3];
-			    moi[X] += ONE_TWELFTH*mass*(Ly_sq + Lz_sq) + mass*(dy_sq + dz_sq);
-			    moi[Y] += ONE_TWELFTH*mass*(Lx_sq + Lz_sq) + mass*(dx_sq + dz_sq);
-			    moi[Z] += ONE_TWELFTH*mass*(Lx_sq + Ly_sq) + mass*(dx_sq + dy_sq);
-			    poi = &prd->optr->o_poi[state->i_axis*3];
-			    poi[X] -= mass*cmass[X]*cmass[Y];
-			    poi[Y] -= mass*cmass[X]*cmass[Z];
-			    poi[Z] -= mass*cmass[Y]*cmass[Z];
-
-			    /* Collect moments and products of inertia for all objects */
-			    moi = &state->m_moi[state->i_axis*3];
-			    moi[X] += ONE_TWELFTH*mass*(Ly_sq + Lz_sq) + mass*(dy_sq + dz_sq);
-			    moi[Y] += ONE_TWELFTH*mass*(Lx_sq + Lz_sq) + mass*(dx_sq + dz_sq);
-			    moi[Z] += ONE_TWELFTH*mass*(Lx_sq + Ly_sq) + mass*(dx_sq + dy_sq);
-			    poi = &state->m_poi[state->i_axis*3];
-			    poi[X] -= mass*cmass[X]*cmass[Y];
-			    poi[Y] -= mass*cmass[X]*cmass[Z];
-			    poi[Z] -= mass*cmass[Y]*cmass[Z];
-			}
-		    }
-
-		    bu_semaphore_release(GED_SEM_STATS);
-
-		} else {
-		    bu_semaphore_acquire(GED_SEM_WORKER);
-		    bu_vls_printf(_ged_current_gedp->ged_result_str, "density index %d from region %s is not set.\nAdd entry to density table\n",
-				  pp->pt_regionp->reg_gmater, pp->pt_regionp->reg_name);
-		    bu_semaphore_release(GED_SEM_WORKER);
-
-		    aborted = 1;
-		    return GED_ERROR;
+		switch (state->i_axis) {
+		    case 0:
+			Lx_sq = dist*pp->pt_regionp->reg_los*0.01;
+			Lx_sq *= Lx_sq;
+			Ly_sq = Ly*Ly;
+			Lz_sq = Lz*Lz;
+			cell_area = Ly_sq;
+			break;
+		    case 1:
+			Lx_sq = Lx*Lx;
+			Ly_sq = dist*pp->pt_regionp->reg_los*0.01;
+			Ly_sq *= Ly_sq;
+			Lz_sq = Lz*Lz;
+			cell_area = Lx_sq;
+			break;
+		    case 2:
+		    default:
+			Lx_sq = Lx*Lx;
+			Ly_sq = Ly*Ly;
+			Lz_sq = dist*pp->pt_regionp->reg_los*0.01;
+			Lz_sq *= Lz_sq;
+			cell_area = Lx_sq;
+			break;
 		}
+
+		/* factor in the density of this object weight
+		 * computation, factoring in the LOS percentage
+		 * material of the object
+		 */
+		los = pp->pt_regionp->reg_los;
+
+		if (los < 1) {
+		    bu_semaphore_acquire(GED_SEM_WORKER);
+		    bu_vls_printf(_ged_current_gedp->ged_result_str, "bad LOS (%d) on %s\n", los, pp->pt_regionp->reg_name);
+		    bu_semaphore_release(GED_SEM_WORKER);
+		}
+
+		/* accumulate the total weight values */
+		val = grams_per_cu_mm * dist * (pp->pt_regionp->reg_los * 0.01);
+		ap->A_LENDEN += val;
+
+		prd = ((struct per_region_data *)pp->pt_regionp->reg_udata);
+		/* accumulate the per-region per-view weight values */
+		bu_semaphore_acquire(GED_SEM_STATS);
+		prd->r_lenDensity[state->i_axis] += val;
+
+		/* accumulate the per-object per-view weight values */
+		prd->optr->o_lenDensity[state->i_axis] += val;
+
+		if (analysis_flags & ANALYSIS_CENTROIDS) {
+		    /* calculate the center of mass for this partition */
+		    VJOIN1(cmass, pt, dist*0.5, ap->a_ray.r_dir);
+
+		    /* calculate the lenTorque for this partition (i.e. centerOfMass * lenDensity) */
+		    VSCALE(lenTorque, cmass, val);
+
+		    /* accumulate per-object per-view torque values */
+		    VADD2(&prd->optr->o_lenTorque[state->i_axis*3], &prd->optr->o_lenTorque[state->i_axis*3], lenTorque);
+
+		    /* accumulate the total lenTorque */
+		    VADD2(&state->m_lenTorque[state->i_axis*3], &state->m_lenTorque[state->i_axis*3], lenTorque);
+
+		    if (analysis_flags & ANALYSIS_MOMENTS) {
+			vectp_t moi;
+			vectp_t poi = &state->m_poi[state->i_axis*3];
+			fastf_t dx_sq = cmass[X]*cmass[X];
+			fastf_t dy_sq = cmass[Y]*cmass[Y];
+			fastf_t dz_sq = cmass[Z]*cmass[Z];
+			fastf_t mass = val * cell_area;
+			static const fastf_t ONE_TWELFTH = 1.0 / 12.0;
+
+			/* Collect moments and products of inertia for the current object */
+			moi = &prd->optr->o_moi[state->i_axis*3];
+			moi[X] += ONE_TWELFTH*mass*(Ly_sq + Lz_sq) + mass*(dy_sq + dz_sq);
+			moi[Y] += ONE_TWELFTH*mass*(Lx_sq + Lz_sq) + mass*(dx_sq + dz_sq);
+			moi[Z] += ONE_TWELFTH*mass*(Lx_sq + Ly_sq) + mass*(dx_sq + dy_sq);
+			poi = &prd->optr->o_poi[state->i_axis*3];
+			poi[X] -= mass*cmass[X]*cmass[Y];
+			poi[Y] -= mass*cmass[X]*cmass[Z];
+			poi[Z] -= mass*cmass[Y]*cmass[Z];
+
+			/* Collect moments and products of inertia for all objects */
+			moi = &state->m_moi[state->i_axis*3];
+			moi[X] += ONE_TWELFTH*mass*(Ly_sq + Lz_sq) + mass*(dy_sq + dz_sq);
+			moi[Y] += ONE_TWELFTH*mass*(Lx_sq + Lz_sq) + mass*(dx_sq + dz_sq);
+			moi[Z] += ONE_TWELFTH*mass*(Lx_sq + Ly_sq) + mass*(dx_sq + dy_sq);
+			poi = &state->m_poi[state->i_axis*3];
+			poi[X] -= mass*cmass[X]*cmass[Y];
+			poi[Y] -= mass*cmass[X]*cmass[Z];
+			poi[Z] -= mass*cmass[Y]*cmass[Z];
+		    }
+		}
+
+		bu_semaphore_release(GED_SEM_STATS);
 	    }
 	}
 
@@ -1593,7 +1485,7 @@ list_report(struct region_pair *list)
  * !0 error encountered, terminate processing
  */
 int
-options_prep(struct rt_i *rtip, vect_t span)
+options_prep(struct rt_i *UNUSED(rtip), vect_t span)
 {
     double newGridSpacing = gridSpacing;
     int axis;
@@ -1604,12 +1496,12 @@ options_prep(struct rt_i *rtip, vect_t span)
     if (analysis_flags & ANALYSIS_WEIGHTS) {
 	if (densityFileName) {
 	    DLOG(_ged_current_gedp->ged_result_str, "density from file\n");
-	    if (get_densities_from_file(densityFileName) != GED_OK) {
+	    if (_ged_read_densities(_ged_current_gedp, densityFileName, 0) != GED_OK) {
 		return GED_ERROR;
 	    }
 	} else {
 	    DLOG(_ged_current_gedp->ged_result_str, "density from db\n");
-	    if (get_densities_from_database(rtip) != GED_OK) {
+	    if (_ged_read_densities(_ged_current_gedp, NULL, 0) != GED_OK) {
 		return GED_ERROR;
 	    }
 	}
@@ -1658,10 +1550,10 @@ options_prep(struct rt_i *rtip, vect_t span)
     if (analysis_flags & ANALYSIS_WEIGHTS) {
 	if (weight_tolerance < 0.0) {
 	    double max_den = 0.0;
-	    int i;
-	    for (i = 0; i < num_densities; i++) {
-		if (densities[i].grams_per_cu_mm > max_den)
-		    max_den = densities[i].grams_per_cu_mm;
+	    long int curr_id = -1;
+	    while ((curr_id = analyze_densities_next(_ged_current_gedp->gd_densities, curr_id)) != -1) {
+		if (analyze_densities_density(_ged_current_gedp->gd_densities, curr_id) > max_den)
+		    max_den = analyze_densities_density(_ged_current_gedp->gd_densities, curr_id);
 	    }
 	    weight_tolerance = span[X] * span[Y] * span[Z] * 0.1 * max_den;
 	    bu_vls_printf(_ged_current_gedp->ged_result_str, "setting weight tolerance to %g %s\n",
@@ -2637,9 +2529,14 @@ aborted:
     bu_free(reg_tbl, "object table");
     reg_tbl = NULL;
 
-    if (densities != NULL) {
-	bu_free(densities, "densities");
-	densities = NULL;
+    if (gedp->gd_densities) {
+	analyze_densities_destroy(gedp->gd_densities);
+	gedp->gd_densities = NULL;
+    }
+
+    if (gedp->gd_densities_source) {
+	bu_free(gedp->gd_densities_source, "free densities source string");
+	gedp->gd_densities_source = NULL;
     }
 
     rt_free_rti(rtip);

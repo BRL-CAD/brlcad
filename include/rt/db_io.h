@@ -1,7 +1,7 @@
 /*                      D B _ I O . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2018 United States Government as represented by
+ * Copyright (c) 1993-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -334,8 +334,33 @@ RT_EXPORT extern int db5_select_length_encoding(size_t len);
 
 RT_EXPORT extern void db5_import_color_table(char *cp);
 
+/**
+ * Given a value and a variable-width format spec, store it in network
+ * order.
+ *
+ * Returns -
+ * pointer to next available byte.
+ */
+RT_EXPORT extern unsigned char *db5_encode_length(unsigned char *cp,
+						  size_t val,
+						  int format);
 
 /**
+ * Given a pointer to the memory for a serialized database object, get
+ * a raw internal representation.
+ *
+ * Returns -
+ * on success, pointer to next unused byte in 'ip' after object got;
+ * NULL, on error.
+ */
+RT_EXPORT extern const unsigned char *db5_get_raw_internal_ptr(struct db5_raw_internal *rip,
+								const unsigned char *ip);
+
+
+/**
+ * Given a file pointer to an open geometry database positioned on a
+ * serialized object, get a raw internal representation.
+ *
  * Returns -
  * 0 on success
  * -1 on EOF
@@ -343,6 +368,7 @@ RT_EXPORT extern void db5_import_color_table(char *cp);
  */
 RT_EXPORT extern int db5_get_raw_internal_fp(struct db5_raw_internal	*rip,
 					     FILE			*fp);
+
 
 /**
  * Verify that this is a valid header for a BRL-CAD v5 database.
@@ -353,6 +379,15 @@ RT_EXPORT extern int db5_get_raw_internal_fp(struct db5_raw_internal	*rip,
  */
 RT_EXPORT extern int db5_header_is_valid(const unsigned char *hp);
 
+
+/**
+ * write an ident header (title and units) to the provided file
+ * pointer.
+ *
+ * Returns -
+ * 0 Success
+ * -1 Error
+ */
 RT_EXPORT extern int db5_fwrite_ident(FILE *,
 				      const char *,
 				      double);

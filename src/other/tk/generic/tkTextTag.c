@@ -490,7 +490,7 @@ TkTextTagCmd(
 	    tagPtr->affectsDisplay = 0;
 	    tagPtr->affectsDisplayGeometry = 0;
 	    if ((tagPtr->elideString != NULL)
-		    || (tagPtr->tkfont != None)
+		    || (tagPtr->tkfont != TkNone)
 		    || (tagPtr->justifyString != NULL)
 		    || (tagPtr->lMargin1String != NULL)
 		    || (tagPtr->lMargin2String != NULL)
@@ -507,9 +507,9 @@ TkTextTagCmd(
 	    }
 	    if ((tagPtr->border != NULL)
 		    || (tagPtr->reliefString != NULL)
-		    || (tagPtr->bgStipple != None)
+		    || (tagPtr->bgStipple != TkNone)
 		    || (tagPtr->fgColor != NULL)
-		    || (tagPtr->fgStipple != None)
+		    || (tagPtr->fgStipple != TkNone)
 		    || (tagPtr->overstrikeString != NULL)
 		    || (tagPtr->underlineString != NULL)) {
 		tagPtr->affectsDisplay = 1;
@@ -987,10 +987,10 @@ TkTextCreateTag(
     tagPtr->borderWidthPtr = NULL;
     tagPtr->reliefString = NULL;
     tagPtr->relief = TK_RELIEF_FLAT;
-    tagPtr->bgStipple = None;
+    tagPtr->bgStipple = TkNone;
     tagPtr->fgColor = NULL;
     tagPtr->tkfont = NULL;
-    tagPtr->fgStipple = None;
+    tagPtr->fgStipple = TkNone;
     tagPtr->justifyString = NULL;
     tagPtr->justify = TK_JUSTIFY_LEFT;
     tagPtr->lMargin1String = NULL;
@@ -1556,7 +1556,7 @@ TkTextPickCurrent(
 	    textPtr->pickEvent.xcrossing.display = eventPtr->xmotion.display;
 	    textPtr->pickEvent.xcrossing.window = eventPtr->xmotion.window;
 	    textPtr->pickEvent.xcrossing.root = eventPtr->xmotion.root;
-	    textPtr->pickEvent.xcrossing.subwindow = None;
+	    textPtr->pickEvent.xcrossing.subwindow = TkNone;
 	    textPtr->pickEvent.xcrossing.time = eventPtr->xmotion.time;
 	    textPtr->pickEvent.xcrossing.x = eventPtr->xmotion.x;
 	    textPtr->pickEvent.xcrossing.y = eventPtr->xmotion.y;

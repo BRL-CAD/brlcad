@@ -9,6 +9,46 @@ first and are grouped by release.  Each release also includes optional
 descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
+
+----------------------------------------------------------------------
+--- 2019-02-25  Release 7.30.0                                     ---
+----------------------------------------------------------------------
+
+This major release of BRL-CAD is the first release requiring
+compiler support for the C++11 language standard when building.
+(This change is not user visible, but will be significant to those
+using BRL-CAD in their own software development efforts.)
+
+This release introduces a new "-d" option to the mater command,
+supporting direct embedding of .density file information in a 
+.g database for use by commands such as gqa and rtweight.
+
+Also present in this release are a fix for commands that work with
+multiple .g files and support for raytracing MGED scenes with large
+numbers of active objects.
+
+A number of commands and tools previously listed as deprecated are
+removed in this release, including in particular MGED commands
+specific to MUVES.
+
+* added rtweight -d option for specifying density file - Cliff Yapp
+* added material density management to "mater" command - Cliff Yapp
+* use full paths for OBJ objects in "bot dump" command - Cliff Yapp
+* added -v high precision option to MGED 'center' command - Cliff Yapp
+* fixed crash when using dbconcat and dup together in MGED
+        - Cliff Yapp, Sean Morrison
+* renamed MGED "ps" command to "postscript" - Cliff Yapp
+* removed MGED commands em, e_muves, l_muves, lm, read_muves, t_muves
+	- Cliff Yapp
+* removed deprecated irprep tools - Cliff Yapp
+* removed deprecated fbed and pp-fb framebuffer tools - Cliff Yapp
+* fixed rt support for specifying large object lists - Cliff Yapp
+* new 'gex' tool for low-level .g file exploration - Tom Browder
+* added support for command-line editing of metaballs - Sean Morrison
+* added manual page for the 'get' command - Cliff Yapp
+* improved speed of "bot chull" convex hull generation - Cliff Yapp
+
+
 ----------------------------------------------------------------------
 --- 2018-11-30  Release 7.28.2                                     ---
 ----------------------------------------------------------------------

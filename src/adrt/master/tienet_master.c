@@ -1,7 +1,7 @@
 /*                 T I E N E T _ M A S T E R . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2018 United States Government as represented by
+ * Copyright (c) 2002-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -56,6 +56,9 @@
 #include "bu/log.h"
 #include "master.h"
 
+#if defined(HAVE_GETHOSTBYNAME) && !defined(HAVE_DECL_GETHOSTBYNAME) && !defined(_WINSOCKAPI_)
+extern struct hostent *gethostbyname(const char *);
+#endif
 
 typedef struct tienet_master_data_s {
     void *data;

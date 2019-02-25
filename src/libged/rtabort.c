@@ -1,7 +1,7 @@
 /*                         R T A B O R T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2018 United States Government as represented by
+ * Copyright (c) 2008-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,12 +27,13 @@
 
 #include <stdlib.h>
 
-#include "bu/parallel.h"
+#include "bu/path.h"
+#include "bu/process.h"
 #include "./ged_private.h"
 
 
 /*
- * Abort the current raytrace processes.
+ * Abort the current raytrace processes (rt, rtwizard, rtcheck).
  *
  * Usage:
  * rtabort
@@ -41,7 +42,8 @@
 int
 ged_rtabort(struct ged *gedp, int argc, const char *argv[])
 {
-    struct ged_run_rt *rrp;
+    struct ged_subprocess *rrp;
+    struct bu_vls cmdroot = BU_VLS_INIT_ZERO;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
@@ -55,11 +57,21 @@ ged_rtabort(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    for (BU_LIST_FOR(rrp, ged_run_rt, &gedp->ged_gdp->gd_headRunRt.l)) {
-	bu_terminate(rrp->pid);
-	rrp->aborted = 1;
+    for (BU_LIST_FOR(rrp, ged_subprocess, &gedp->gd_headSubprocess.l)) {
+	const char *cmd;
+	int argcnt = bu_process_args(&cmd, NULL, rrp->p);
+	bu_vls_trunc(&cmdroot, 0);
+	if (argcnt > 0 && bu_path_component(&cmdroot, cmd, BU_PATH_BASENAME_EXTLESS)) {
+	    if (BU_STR_EQUAL(bu_vls_cstr(&cmdroot), "rt") ||
+		    BU_STR_EQUAL(bu_vls_cstr(&cmdroot), "rtwizard") ||
+		    BU_STR_EQUAL(bu_vls_cstr(&cmdroot), "rtcheck")) {
+		bu_terminate(bu_process_pid(rrp->p));
+		rrp->aborted = 1;
+	    }
+	}
     }
 
+    bu_vls_free(&cmdroot);
     return GED_OK;
 }
 

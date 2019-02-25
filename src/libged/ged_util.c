@@ -1,7 +1,7 @@
 /*                       G E D _ U T I L . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2018 United States Government as represented by
+ * Copyright (c) 2000-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,8 +31,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "bu/app.h"
+#include "bu/path.h"
 #include "bu/sort.h"
 #include "bu/str.h"
+#include "bu/vls.h"
 
 #include "ged.h"
 #include "./ged_private.h"
@@ -320,6 +323,257 @@ _ged_sort_existing_objs(struct ged *gedp, int argc, const char *argv[], struct d
 
     return nonexist_cnt;
 }
+
+
+
+/**
+ * Returns
+ * 0 on success
+ * !0 on failure
+ */
+static int
+_ged_densities_from_file(struct ged *gedp, const char *name, int fault_tolerant)
+{
+    struct bu_mapped_file *dfile = NULL;
+    struct bu_vls msgs = BU_VLS_INIT_ZERO;
+    char *buf = NULL;
+    int ret = 0;
+    int ecnt = 0;
+
+    if (!bu_file_exists(name, NULL)) {
+	bu_vls_printf(gedp->ged_result_str, "Could not find density file - %s\n", name);
+	return GED_ERROR;
+    }
+
+    dfile = bu_open_mapped_file(name, "densities file");
+    if (!dfile) {
+	bu_vls_printf(gedp->ged_result_str, "Could not open density file - %s\n", name);
+	return GED_ERROR;
+    }
+
+    buf = (char *)(dfile->buf);
+
+    if (gedp->gd_densities) {
+	analyze_densities_destroy(gedp->gd_densities);
+    }
+
+    if (gedp->gd_densities_source) {
+	bu_free(gedp->gd_densities_source, "free densities source string");
+    }
+
+    (void)analyze_densities_create(&(gedp->gd_densities));
+
+    ret = analyze_densities_load(gedp->gd_densities, buf, &msgs, &ecnt);
+
+    if (!fault_tolerant && ecnt > 0) {
+	bu_vls_printf(gedp->ged_result_str, "Problem reading densities file %s:\n%s\n", name, bu_vls_cstr(&msgs));
+	if (gedp->gd_densities) {
+	    analyze_densities_destroy(gedp->gd_densities);
+	    gedp->gd_densities = NULL;
+	    gedp->gd_densities_source = NULL;
+	}
+	bu_vls_free(&msgs);
+	bu_close_mapped_file(dfile);
+	return GED_ERROR;
+    }
+
+    bu_vls_free(&msgs);
+    bu_close_mapped_file(dfile);
+
+    if (ret > 0) {
+	gedp->gd_densities_source = bu_strdup(name);
+    } else {
+	if (gedp->gd_densities) {
+	    analyze_densities_destroy(gedp->gd_densities);
+	}
+
+	if (gedp->gd_densities_source) {
+	    bu_free(gedp->gd_densities_source, "free densities source string");
+	}
+	gedp->gd_densities = NULL;
+	gedp->gd_densities_source = NULL;
+    }
+
+    return (ret == 0) ? GED_ERROR : GED_OK;
+}
+
+/**
+ * Load density information into the GED structure.
+ *
+ * Returns
+ * 0 on success
+ * !0 on failure
+ */
+int
+_ged_read_densities(struct ged *gedp, const char *filename, int fault_tolerant)
+{
+    struct bu_vls d_path_dir = BU_VLS_INIT_ZERO;
+
+    if (gedp == GED_NULL || gedp->ged_wdbp == RT_WDB_NULL) {
+	return GED_ERROR;
+    }
+
+    /* If we've explicitly been given a file, read that */
+    if (filename) {
+	return _ged_densities_from_file(gedp, filename, fault_tolerant);
+    }
+
+    /* If we don't have an explicitly specified file, see if we have definitions in
+     * the database itself. */
+    if (gedp->ged_wdbp->dbip != DBI_NULL) {
+	int ret = 0;
+	int ecnt = 0;
+	struct bu_vls msgs = BU_VLS_INIT_ZERO;
+	struct directory *dp;
+	struct rt_db_internal intern;
+	struct rt_binunif_internal *bip;
+	char *buf;
+
+	dp = db_lookup(gedp->ged_wdbp->dbip, GED_DB_DENSITY_OBJECT, LOOKUP_QUIET);
+
+	if (dp != (struct directory *)NULL) {
+
+	    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, NULL, &rt_uniresource) < 0) {
+		bu_vls_printf(_ged_current_gedp->ged_result_str, "could not import %s\n", dp->d_namep);
+		return GED_ERROR;
+	    }
+
+	    if ((intern.idb_major_type & DB5_MAJORTYPE_BINARY_MASK) == 0)
+		return GED_ERROR;
+
+	    bip = (struct rt_binunif_internal *)intern.idb_ptr;
+
+	    RT_CHECK_BINUNIF (bip);
+
+
+	    if (gedp->gd_densities) {
+		analyze_densities_destroy(gedp->gd_densities);
+		gedp->gd_densities = NULL;
+	    }
+
+	    if (gedp->gd_densities_source) {
+		bu_free(gedp->gd_densities_source, "free densities source string");
+		gedp->gd_densities_source = NULL;
+	    }
+
+	    (void)analyze_densities_create(&gedp->gd_densities);
+
+	    buf = (char *)bu_calloc(bip->count+1, sizeof(char), "density buffer");
+	    memcpy(buf, bip->u.int8, bip->count);
+	    rt_db_free_internal(&intern);
+
+	    ret = analyze_densities_load(gedp->gd_densities, buf, &msgs, &ecnt);
+
+	    bu_free((void *)buf, "density buffer");
+
+	    if (!fault_tolerant && ecnt > 0) {
+		bu_vls_printf(gedp->ged_result_str, "Problem reading densities from .g file:\n%s\n", bu_vls_cstr(&msgs));
+		if (gedp->gd_densities) {
+		    analyze_densities_destroy(gedp->gd_densities);
+		    gedp->gd_densities = NULL;
+		    gedp->gd_densities_source = NULL;
+		}
+		bu_vls_free(&msgs);
+		return GED_ERROR;
+	    }
+
+	    bu_vls_free(&msgs);
+
+	    if (ret > 0) {
+		gedp->gd_densities_source = bu_strdup(gedp->ged_wdbp->dbip->dbi_filename);
+	    } else {
+		if (gedp->gd_densities) {
+		    analyze_densities_destroy(gedp->gd_densities);
+		    gedp->gd_densities = NULL;
+		}
+		if (gedp->gd_densities_source) {
+		    bu_free(gedp->gd_densities_source, "free densities source string");
+		    gedp->gd_densities_source = NULL;
+		}
+	    }
+
+	    return (ret == 0) ? GED_ERROR : GED_OK;
+	}
+    }
+
+    /* If we don't have an explicitly specified file and the database doesn't have any information, see if we
+     * have .density files in either the current database directory or HOME. */
+
+    /* Try .g path first */
+    if (bu_path_component(&d_path_dir, gedp->ged_wdbp->dbip->dbi_filename, BU_PATH_DIRNAME)) {
+
+	bu_vls_printf(&d_path_dir, "/.density");
+
+	if (bu_file_exists(bu_vls_cstr(&d_path_dir), NULL)) {
+	    int ret = _ged_densities_from_file(gedp, bu_vls_cstr(&d_path_dir), fault_tolerant);
+	    bu_vls_free(&d_path_dir);
+	    return ret;
+	}
+    }
+
+    /* Try HOME */
+    if (bu_dir(NULL, 0, BU_DIR_HOME, NULL)) {
+
+	bu_vls_sprintf(&d_path_dir, "%s/.density", bu_dir(NULL, 0, BU_DIR_HOME, NULL));
+
+	if (bu_file_exists(bu_vls_cstr(&d_path_dir), NULL)) {
+	    int ret = _ged_densities_from_file(gedp, bu_vls_cstr(&d_path_dir), fault_tolerant);
+	    bu_vls_free(&d_path_dir);
+	    return ret;
+	}
+    }
+
+
+
+    return GED_ERROR;
+}
+
+
+
+/* Wrappers for setting up/tearing down IO handler */
+#ifndef _WIN32
+void
+_ged_create_io_handler(void **UNUSED(chan), struct bu_process *p, int fd, int mode, void *data, io_handler_callback_t callback)
+{
+    int *fdp;
+    if (!p) return;
+    fdp = (int *)bu_process_fd(p, fd);
+    Tcl_CreateFileHandler(*fdp, mode, callback, (ClientData)data);
+}
+
+void
+_ged_delete_io_handler(void *UNUSED(interp), void *UNUSED(chan), struct bu_process *p, int fd, void *UNUSED(data), io_handler_callback_t UNUSED(callback))
+{
+    int *fdp;
+    if (!p) return;
+    fdp = (int *)bu_process_fd(p, fd);
+    Tcl_DeleteFileHandler(*fdp);
+    close(*fdp);
+}
+
+#else
+void
+_ged_create_io_handler(void **chan, struct bu_process *p, int fd, int mode, void *data, io_handler_callback_t callback)
+{
+    HANDLE *fdp;
+    if (!chan || !p) return;
+    fdp = (HANDLE *)bu_process_fd(p, fd);
+    (*chan) = (void *)Tcl_MakeFileChannel(*fdp, mode);
+    Tcl_CreateChannelHandler((Tcl_Channel)(*chan), mode, callback, (ClientData)data);
+}
+
+void
+_ged_delete_io_handler(void *interp, void *chan, struct bu_process *p, int fd, void *data, io_handler_callback_t callback)
+{
+    HANDLE *fdp;
+    Tcl_Interp *tcl_interp;
+    if (!chan || !p) return;
+    tcl_interp = (Tcl_Interp *)interp;
+    fdp = (HANDLE *)bu_process_fd(p, fd);
+    Tcl_DeleteChannelHandler((Tcl_Channel)chan, callback, (ClientData)data);
+    Tcl_Close(tcl_interp, (Tcl_Channel)chan);
+}
+#endif
 
 /*
  * Local Variables:

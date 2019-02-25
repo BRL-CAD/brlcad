@@ -1,7 +1,7 @@
 /*                       D M - Q T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013-2018 United States Government as represented by
+ * Copyright (c) 2013-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1215,7 +1215,7 @@ char* qt_keyPress(QEvent *event) {
     if (event->type() ==  6 /* QEvent::KeyPress */) {
 	QKeyEvent *keyEv = (QKeyEvent *)event;
 	struct bu_vls str = BU_VLS_INIT_ZERO;
-	bu_vls_printf(&str, "<KeyPress-%s>", keyEv->text().data());
+	bu_vls_printf(&str, "<KeyPress-%c>", keyEv->text().data()->toLatin1());
 	return bu_vls_addr(&str);
     }
     return NULL;
@@ -1226,7 +1226,7 @@ char* qt_keyRelease(QEvent *event) {
     if (event->type() ==  7 /* QEvent::KeyRelease */) {
 	QKeyEvent *keyEv = (QKeyEvent *)event;
 	struct bu_vls str = BU_VLS_INIT_ZERO;
-	bu_vls_printf(&str, "<KeyRelease-%s>", keyEv->text().data());
+	bu_vls_printf(&str, "<KeyRelease-%c>", keyEv->text().data()->toLatin1());
 	return bu_vls_addr(&str);
     }
     return NULL;

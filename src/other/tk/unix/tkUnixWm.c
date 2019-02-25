@@ -71,7 +71,7 @@ typedef struct TkWmInfo {
 				 * that is a child of the root window (may not
 				 * be window's immediate parent). If the
 				 * window isn't reparented, this has the value
-				 * None. */
+				 * TkNone. */
     char *title;		/* Title to display in window caption. If
 				 * NULL, use name of widget. Malloced. */
     char *iconName;		/* Name to display in icon. Malloced. */
@@ -182,16 +182,16 @@ typedef struct TkWmInfo {
      */
 
     Window vRoot;		/* Virtual root window for this top-level, or
-				 * None if there is no virtual root window
+				 * TkNone if there is no virtual root window
 				 * (i.e. just use the screen's root). */
     int vRootX, vRootY;		/* Position of the virtual root inside the
 				 * root window. If the WM_VROOT_OFFSET_STALE
 				 * flag is set then this information may be
 				 * incorrect and needs to be refreshed from
-				 * the X server. If vRoot is None then these
+				 * the X server. If vRoot is TkNone then these
 				 * values are both 0. */
     int vRootWidth, vRootHeight;/* Dimensions of the virtual root window. If
-				 * vRoot is None, gives the dimensions of the
+				 * vRoot is TkNone, gives the dimensions of the
 				 * containing screen. This information is
 				 * never stale, even though vRootX and vRootY
 				 * can be. */
@@ -554,17 +554,17 @@ TkWmNewWindow(
     wmPtr = (WmInfo *) ckalloc(sizeof(WmInfo));
     memset(wmPtr, 0, sizeof(WmInfo));
     wmPtr->winPtr = winPtr;
-    wmPtr->reparent = None;
+    wmPtr->reparent = TkNone;
     wmPtr->masterPtr = NULL;
     wmPtr->numTransients = 0;
     wmPtr->hints.flags = InputHint | StateHint;
     wmPtr->hints.input = True;
     wmPtr->hints.initial_state = NormalState;
-    wmPtr->hints.icon_pixmap = None;
-    wmPtr->hints.icon_window = None;
+    wmPtr->hints.icon_pixmap = TkNone;
+    wmPtr->hints.icon_window = TkNone;
     wmPtr->hints.icon_x = wmPtr->hints.icon_y = 0;
-    wmPtr->hints.icon_mask = None;
-    wmPtr->hints.window_group = None;
+    wmPtr->hints.icon_mask = TkNone;
+    wmPtr->hints.window_group = TkNone;
 
     /*
      * Initialize attributes.
@@ -598,7 +598,7 @@ TkWmNewWindow(
 	    + 2*winPtr->changes.border_width;
     wmPtr->configWidth = -1;
     wmPtr->configHeight = -1;
-    wmPtr->vRoot = None;
+    wmPtr->vRoot = TkNone;
     wmPtr->flags = WM_NEVER_MAPPED;
     wmPtr->nextPtr = (WmInfo *) dispPtr->firstWmPtr;
     dispPtr->firstWmPtr = wmPtr;
@@ -1586,7 +1586,7 @@ WmColormapwindowsCmd(
 	if (winPtr2 == winPtr) {
 	    gotToplevel = 1;
 	}
-	if (winPtr2->window == None) {
+	if (winPtr2->window == TkNone) {
 	    Tk_MakeWindowExist((Tk_Window) winPtr2);
 	}
 	cmapList[i] = winPtr2->window;
@@ -1850,7 +1850,7 @@ WmFrameCmd(
 	return TCL_ERROR;
     }
     window = wmPtr->reparent;
-    if (window == None) {
+    if (window == TkNone) {
 	window = Tk_WindowId((Tk_Window) winPtr);
     }
     sprintf(buf, "0x%x", (unsigned int) window);
@@ -2130,14 +2130,14 @@ WmIconbitmapCmd(
     }
     argv3 = Tcl_GetString(objv[3]);
     if (*argv3 == '\0') {
-	if (wmPtr->hints.icon_pixmap != None) {
+	if (wmPtr->hints.icon_pixmap != TkNone) {
 	    Tk_FreeBitmap(winPtr->display, wmPtr->hints.icon_pixmap);
-	    wmPtr->hints.icon_pixmap = None;
+	    wmPtr->hints.icon_pixmap = TkNone;
 	}
 	wmPtr->hints.flags &= ~IconPixmapHint;
     } else {
 	pixmap = Tk_GetBitmap(interp, (Tk_Window) winPtr, argv3);
-	if (pixmap == None) {
+	if (pixmap == TkNone) {
 	    return TCL_ERROR;
 	}
 	wmPtr->hints.icon_pixmap = pixmap;
@@ -2249,13 +2249,13 @@ WmIconmaskCmd(
     }
     argv3 = Tcl_GetString(objv[3]);
     if (*argv3 == '\0') {
-	if (wmPtr->hints.icon_mask != None) {
+	if (wmPtr->hints.icon_mask != TkNone) {
 	    Tk_FreeBitmap(winPtr->display, wmPtr->hints.icon_mask);
 	}
 	wmPtr->hints.flags &= ~IconMaskHint;
     } else {
 	pixmap = Tk_GetBitmap(interp, tkwin, argv3);
-	if (pixmap == None) {
+	if (pixmap == TkNone) {
 	    return TCL_ERROR;
 	}
 	wmPtr->hints.icon_mask = pixmap;
@@ -3967,7 +3967,7 @@ ConfigureEvent(
 		(void *) configEventPtr->above);
     }
 
-    if ((wmPtr->reparent == None) || !ComputeReparentGeometry(wmPtr)) {
+    if ((wmPtr->reparent == TkNone) || !ComputeReparentGeometry(wmPtr)) {
 	wmPtr->parentWidth = configEventPtr->width
 		+ 2*configEventPtr->border_width;
 	wmPtr->parentHeight = configEventPtr->height
@@ -4056,7 +4056,7 @@ ReparentEvent(
      */
 
     vRoot = RootWindow(wrapperPtr->display, wrapperPtr->screenNum);
-    wmPtr->vRoot = None;
+    wmPtr->vRoot = TkNone;
     handler = Tk_CreateErrorHandler(wrapperPtr->display, -1,-1,-1, NULL,NULL);
     vrPtrPtr = &virtualRootPtr;		/* Silence GCC warning */
     if (((XGetWindowProperty(wrapperPtr->display, wrapperPtr->window,
@@ -4099,7 +4099,7 @@ ReparentEvent(
 
     if (reparentEventPtr->parent == vRoot) {
     noReparent:
-	wmPtr->reparent = None;
+	wmPtr->reparent = TkNone;
 	wmPtr->parentWidth = wrapperPtr->changes.width;
 	wmPtr->parentHeight = wrapperPtr->changes.height;
 	wmPtr->xInParent = wmPtr->yInParent = 0;
@@ -4190,7 +4190,7 @@ ComputeReparentGeometry(
 	 * Reset the window to indicate that it's not reparented.
 	 */
 
-	wmPtr->reparent = None;
+	wmPtr->reparent = TkNone;
 	wmPtr->xInParent = wmPtr->yInParent = 0;
 	return 0;
     }
@@ -5662,7 +5662,7 @@ Tk_GetRootCoords(
 		int rootX, rootY;
 
 		root = winPtr->wmInfoPtr->vRoot;
-		if (root == None) {
+		if (root == TkNone) {
 		    root = RootWindowOfScreen(Tk_Screen((Tk_Window) winPtr));
 		}
 		XTranslateCoordinates(winPtr->display, winPtr->window,
@@ -5739,7 +5739,7 @@ Tk_CoordsToWindow(
 	if (Tk_Screen(wmPtr->winPtr) != Tk_Screen(tkwin)) {
 	    continue;
 	}
-	if (wmPtr->vRoot == None) {
+	if (wmPtr->vRoot == TkNone) {
 	    continue;
 	}
 	UpdateVRootGeometry(wmPtr);
@@ -5773,7 +5773,7 @@ Tk_CoordsToWindow(
 	    Tk_DeleteErrorHandler(handler);
 	    return NULL;
 	}
-	if (child == None) {
+	if (child == TkNone) {
 	    Tk_DeleteErrorHandler(handler);
 	    return NULL;
 	}
@@ -5927,7 +5927,7 @@ UpdateVRootGeometry(
      */
 
     wmPtr->flags &= ~WM_VROOT_OFFSET_STALE;
-    if (wmPtr->vRoot == None) {
+    if (wmPtr->vRoot == TkNone) {
     noVRoot:
 	wmPtr->vRootX = wmPtr->vRootY = 0;
 	wmPtr->vRootWidth = DisplayWidth(winPtr->display, winPtr->screenNum);
@@ -5956,7 +5956,7 @@ UpdateVRootGeometry(
 	 * The virtual root is gone! Pretend that it never existed.
 	 */
 
-	wmPtr->vRoot = None;
+	wmPtr->vRoot = TkNone;
 	goto noVRoot;
     }
 }
@@ -6261,7 +6261,7 @@ TkWmStackorderToplevelWrapperMap(
 
     if (Tk_IsMapped(winPtr) && Tk_IsTopLevel(winPtr) &&
 	    !Tk_IsEmbedded(winPtr) && (winPtr->display == display)) {
-	Window wrapper = (winPtr->wmInfoPtr->reparent != None)
+	Window wrapper = (winPtr->wmInfoPtr->reparent != TkNone)
 		? winPtr->wmInfoPtr->reparent
 		: winPtr->wmInfoPtr->wrapperPtr->window;
 	Tcl_HashEntry *hPtr;
@@ -6333,7 +6333,7 @@ TkWmStackorderToplevel(
     }
 
     vRoot = parentPtr->wmInfoPtr->vRoot;
-    if (vRoot == None) {
+    if (vRoot == TkNone) {
 	vRoot = RootWindowOfScreen(Tk_Screen((Tk_Window) parentPtr));
     }
 
@@ -6462,7 +6462,7 @@ TkWmAddToColormapWindows(
     Window *oldPtr, *newPtr;
     int count, i;
 
-    if (winPtr->window == None) {
+    if (winPtr->window == TkNone) {
 	return;
     }
 
@@ -6564,7 +6564,7 @@ TkWmRemoveFromColormapWindows(
     Window *oldPtr;
     int count, i, j;
 
-    if (winPtr->window == None) {
+    if (winPtr->window == TkNone) {
 	return;
     }
 
@@ -6661,7 +6661,7 @@ TkGetPointerCoords(
     wmPtr = winPtr->wmInfoPtr;
 
     w = wmPtr->vRoot;
-    if (w == None) {
+    if (w == TkNone) {
 	w = RootWindow(winPtr->display, winPtr->screenNum);
     }
     if (XQueryPointer(winPtr->display, w, &root, &child, &rootX, &rootY,
@@ -6742,7 +6742,7 @@ GetMaxSize(
  * TkSetTransientFor --
  *
  *	Set a Tk window to be transient with reference to a specified
- *	parent or the toplevel ancestor if None is passed as parent.
+ *	parent or the toplevel ancestor if TkNone is passed as parent.
  *
  *----------------------------------------------------------------------
  */
@@ -6750,7 +6750,7 @@ GetMaxSize(
 static void
 TkSetTransientFor(Tk_Window tkwin, Tk_Window parent)
 {
-    if (parent == None) {
+    if (parent == TkNone) {
 	parent = Tk_Parent(tkwin);
 	while (!Tk_IsTopLevel(parent))
 	    parent = Tk_Parent(parent);
@@ -6814,7 +6814,7 @@ TkpMakeMenuWindow(
 	atts.override_redirect = False;
 	atts.save_under = False;
 	typeObj = Tcl_NewStringObj("menu", -1);
-	TkSetTransientFor(tkwin, None);
+	TkSetTransientFor(tkwin, TkNone);
     }
     SetNetWmType((TkWindow *)tkwin, typeObj);
 
@@ -6864,7 +6864,7 @@ CreateWrapper(
     int new;
 
     winPtr = wmPtr->winPtr;
-    if (winPtr->window == None) {
+    if (winPtr->window == TkNone) {
 	Tk_MakeWindowExist((Tk_Window) winPtr);
     }
 

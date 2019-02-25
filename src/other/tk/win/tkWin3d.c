@@ -127,7 +127,7 @@ Tk_3DVerticalBevel(
     HDC dc = TkWinGetDrawableDC(display, drawable, &state);
     int half;
 
-    if ((borderPtr->lightGC == None) && (relief != TK_RELIEF_FLAT)) {
+    if ((borderPtr->lightGC == TkNone) && (relief != TK_RELIEF_FLAT)) {
 	TkpGetShadows(borderPtr, tkwin);
     }
 
@@ -222,7 +222,7 @@ Tk_3DHorizontalBevel(
     HDC dc = TkWinGetDrawableDC(display, drawable, &state);
     int topColor, bottomColor;
 
-    if ((borderPtr->lightGC == None) && (relief != TK_RELIEF_FLAT)) {
+    if ((borderPtr->lightGC == TkNone) && (relief != TK_RELIEF_FLAT)) {
 	TkpGetShadows(borderPtr, tkwin);
     }
 
@@ -339,7 +339,7 @@ TkpGetShadows(
     int r, g, b;
     XGCValues gcValues;
 
-    if (borderPtr->lightGC != None) {
+    if (borderPtr->lightGC != TkNone) {
 	return;
     }
 
@@ -465,10 +465,10 @@ TkpGetShadows(
 	return;
     }
 
-    if (borderPtr->shadow == None) {
+    if (borderPtr->shadow == TkNone) {
 	borderPtr->shadow = Tk_GetBitmap((Tcl_Interp *) NULL, tkwin,
 		Tk_GetUid("gray50"));
-	if (borderPtr->shadow == None) {
+	if (borderPtr->shadow == TkNone) {
 	    Tcl_Panic("TkpGetShadows couldn't allocate bitmap for border");
 	}
     }
@@ -540,7 +540,7 @@ TkWinGetBorderPixels(
 {
     WinBorder *borderPtr = (WinBorder *) border;
 
-    if (borderPtr->info.lightGC == None) {
+    if (borderPtr->info.lightGC == TkNone) {
 	TkpGetShadows(&borderPtr->info, tkwin);
     }
     switch (which) {

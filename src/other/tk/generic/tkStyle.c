@@ -869,7 +869,7 @@ GetStyledElement(
 	} while (enginePtr2 != NULL);
 
 	/*
-	 * None found, try with the generic element.
+	 * TkNone found, try with the generic element.
 	 */
 
 	elementId = tsdPtr->elements[elementId].genericId;

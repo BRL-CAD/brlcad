@@ -242,7 +242,7 @@ TkpUseWindow(
 */
 
 /*
-    if (winPtr->window != None) {
+    if (winPtr->window != TkNone) {
 	Tcl_AppendResult(interp,
 		"can't modify container after widget is created", NULL);
 	return TCL_ERROR;

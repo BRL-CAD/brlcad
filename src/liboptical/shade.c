@@ -1,7 +1,7 @@
 /*                         S H A D E . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2018 United States Government as represented by
+ * Copyright (c) 1989-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -148,6 +148,8 @@ shade_inputs(struct application *ap, const struct partition *pp, struct shadewor
 			   ap->a_x, ap->a_y,
 			   OBJ[pp->pt_inseg->seg_stp->st_id].ft_name,
 			   swp->sw_hit.hit_surfno, f);
+		    bu_log("center: %0.17g %0.17g %0.17g\n", V3ARGS(ap->a_ray.r_pt));
+		    bu_log("dir: %0.17g %0.17g %0.17g\n", V3ARGS(ap->a_ray.r_dir));
 		} else if (reported == 100) {
 		    bu_log("Too many flipped normals.  Suppressing further reporting.\n");
 		}

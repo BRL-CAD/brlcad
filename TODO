@@ -22,6 +22,16 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
+* fix pipe subtractions shaded display issue in archer
+
+* prep caching actions
+  - debug means to set env vars
+
+* attribute normalization is drastically slowing down
+  region creation - need to fix or back out
+
+* g-obj not exporting colors
+
 * finish implementation and testing of bu_dir. bu_brlcad_root and
   bu_brlcad_data will need verbose deprecation process.  Also need
   need matching tcl function.
@@ -81,8 +91,12 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
   user:hidden utility:now category:corrective impacts:some days:1
 
-* add regression test for BoT ray tracing.  test whether TIE and RT
-  can raytrace all of the various BoT modes.
+* add coverage test geometry, e.g., scene with all object types plus a
+  lookup check to ensure no new ones are missing.
+
+	- likely need comprehensive parameter testing for each type
+	- add regression test for all geometric object types
+	- test whether RT+-TIE can render all BoT modes
 
   user:hidden utility:later category:corrective impacts:some days:1
 
@@ -148,6 +162,13 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* use bu_gettime() in rt -l8 heatgraph visualization mode
+
+* go_open inmem to db command
+
+* optimize mged interactive loop command processing.  creating 10k
+  objects: 40 sec, via inmem: 2 sec
+
 * sort gqa/rtcheck/check/lint/analyze/g_lint functionality into
   logical groupings (probably analyze - calculate properties and
   lint - find problems). Come up with a command design that
@@ -170,8 +191,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * cppclean audit
 
 * add a multiview rt script to regression testing (e.g., see rtwalk output)
-
-* screengrab on windows
 
 * bot overlaps when unoriented, when clearly not overlapping
 
@@ -579,6 +598,21 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * rework fbcolor, fbzoom, and fbpoint to not use termlib, instead just
   using regular printing and input reading in a loop.
+
+* See if it is possible to simplify btclsh/bwish code when it comes
+  to relying on libtermio - linenoise can do the basics, and for fancier
+  keybinding/word based navigation see if launching in Emacs can suffice:
+
+  ;; per https://emacs.stackexchange.com/q/18672
+  (defun btclsh ()
+    (interactive)
+    (require 'term)
+    (let* ((cmd "btclsh")
+           (termbuf (apply 'make-term "btclsh console" cmd nil nil)))
+      (set-buffer termbuf)
+      (term-mode)
+      (term-line-mode)
+      (switch-to-buffer termbuf))) 
 
 * Need to mark or otherwise disambiguate grazing hit segments so we
   can consistently retain or remove hits without introducing overlaps.
@@ -1039,7 +1073,8 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * make Mac OS X universal binaries actually work.
 
-* fully implement analyze for all primitives
+* fully implement analyze for all primitives, add unit tests for
+  underlying callback routines (e.g., bbox).
 
 * implement general analyze estimate (perhaps just raytrace it) for
   primitives where values like surface area or volume are very
@@ -1805,7 +1840,32 @@ NEW OBJECTS
   persist.  there is an issue of whether aliases show as top-level
   objects or even display by default without a listing option.
 
-* support for fillets and chamfers as object/combination operations
+* edge feature edit objects: highly related to feature edits, object
+  modifiers that add to or subtract from edges (e.g., smooth corners
+  or representing a weld):
+
+    ext    int      ext  ext           ext      int
+    rounds/fillets, cuts/chamfers, and scallops/beads  (original)
+      ------_        ------.           -----.          ----------
+             \              \               /                  /
+              |              \             |                  /
+             /                \             \                /
+            /                 /             /               /
+           /                 /             /               /
+
+* feature edits: support for adding holes (diameter+parameters),
+  hollowing out objects (specify thickness), and (maybe) bending or
+  twisting objects.
+
+* CSG blending: smooth union, smooth subtract, smooth intersect.
+  specify a k parameter that defines a blending radius between two
+  objects as an additive operation.
+
+* clone/grid/pattern/repetition objects: similar to aliases and the
+  existing clone command which creates actual copies of objects, this
+  entity represents copies of objects implicitly.  it maintains the
+  grid pattern as a parameterization allowing it to be easily changed
+  and more efficiently processed.
 
 * image objects (tbd objects) for v5 geometry files.  not only the
   ability to have images in the 3D space, but to view-align them for
@@ -1961,8 +2021,8 @@ CONVERTERS
 
 * implement support for exporting sketch objects via g-iges
 
-* validate primitives during export so that it is guaranteed that
-  illegal primitives will not be written to file
+* by default, only export valid (manifold, solid if 3d, etc) objects.
+  have option to override and export invalid entities.
 
 * add csv, xml, nff, bzw, pov, blend geometry import and export
   support
@@ -2218,9 +2278,6 @@ THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
 
 * remove the hf primitive
 
-* support for features either as primitives or operations or both,
-  e.g., chamfer, fillet, round, cut, etc.
-
 * a cut feature edit.  implementation could be represented as the cube
   that bounds a geometry object.  eight points somewhere on the edges
   of the cube define an intersection volume on the object.  by
@@ -2458,6 +2515,16 @@ DOCUMENTATION
 
 * BRL-CAD Industry Diagram
 	Completed, but not integrated
+
+* BRL-CAD Architecture Diagram
+
+* Technical Papers
+	- Fast Malloc
+	- STEP Conversion
+	- GCV
+	- Solid Modeling
+	- Representation Methodology / Sensitivity
+	- NURBS Ray Tracing
 
 * BRL-CAD Commands Quick Reference
 	Partial

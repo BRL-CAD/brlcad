@@ -11,7 +11,7 @@ set(LIBANALYZE_SOURCES
   api.c
   centroid.c
   check_options.c
-  density.c
+  density.cxx
   inside.c
   mass.c
   moments.c

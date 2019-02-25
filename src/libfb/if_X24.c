@@ -1987,7 +1987,7 @@ X24_getmem(fb *ifp)
 
     char *mem = NULL;
     size_t pixsize;
-    off_t size;
+    size_t size;
     int isnew = 0;
 
     FB_CK_FB(ifp);
@@ -2009,7 +2009,7 @@ X24_getmem(fb *ifp)
 		fd = open(BS_NAME, O_RDWR | O_CREAT | O_BINARY, 0666);
 		if (fd < 0)
 		    fb_log("X24_getmem: can't create fb file, using private memory instead, errno %d\n", errno);
-		else if (lseek(fd, size, SEEK_SET) < 0)
+		else if (lseek(fd, (off_t)size, SEEK_SET) < 0)
 		    fb_log("X24_getmem: can't seek fb file, using private memory instead, errno %d\n", errno);
 		else if (write(fd, &isnew, 1) < 0)
 		    fb_log("X24_getmem: can't zero fb file, using private memory instead, errno %d\n", errno);

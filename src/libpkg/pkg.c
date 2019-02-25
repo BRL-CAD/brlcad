@@ -1,7 +1,7 @@
 /*                           P K G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2019 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -88,6 +88,9 @@
 #include <errno.h>
 #include "pkg.h"
 
+#if defined(HAVE_GETHOSTBYNAME) && !defined(HAVE_DECL_GETHOSTBYNAME) && !defined(_WINSOCKAPI_)
+extern struct hostent *gethostbyname(const char *);
+#endif
 
 /* compatibility for pedantic bug/limitation in gcc 4.6.2, need to
  * mark macros as extensions else they may emit "ISO C forbids
@@ -133,10 +136,6 @@
 #  define DMSG(s) if (_pkg_debug) { _pkg_timestamp(); fprintf(_pkg_debug, "%s", s); fflush(_pkg_debug); }
 #else
 #  define DMSG(s) /**/
-#endif
-
-#if !defined(_WIN32) || defined(__CYGWIN__)
-#include <errno.h>
 #endif
 
 int pkg_nochecking = 0;	/* set to disable extra checking for input */

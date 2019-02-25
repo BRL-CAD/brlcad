@@ -30,7 +30,7 @@ typedef struct Container {
 				 * NULL if the container isn't in this
 				 * process. */
     Window embedded;		/* The MacDrawable for the embedded window.
-				 * Starts off as None, but gets filled in when
+				 * Starts off as TkNone, but gets filled in when
 				 * the window is eventually created. */
     TkWindow *embeddedPtr;	/* Tk's information about the embedded window,
 				 * or NULL if the embedded application isn't
@@ -137,7 +137,7 @@ TkpMakeWindow(
 	macWin = (MacDrawable *) ckalloc(sizeof(MacDrawable));
 	if (macWin == NULL) {
 	    winPtr->privatePtr = NULL;
-	    return None;
+	    return TkNone;
 	}
 	macWin->winPtr = winPtr;
 	winPtr->privatePtr = macWin;
@@ -185,7 +185,7 @@ TkpMakeWindow(
  *      the interp's result.
  *
  * Side effects:
- *      None.
+ *      TkNone.
  *
  *----------------------------------------------------------------------
  */
@@ -251,7 +251,7 @@ TkpUseWindow(
     MacDrawable *parent, *macWin;
     Container *containerPtr;
 
-    if (winPtr->window != None) {
+    if (winPtr->window != TkNone) {
 	Tcl_AppendResult(interp, "can't modify container after widget is "
 		"created", NULL);
 	return TCL_ERROR;
@@ -436,7 +436,7 @@ TkpMakeContainer(
     containerPtr = (Container *) ckalloc(sizeof(Container));
     containerPtr->parent = Tk_WindowId(tkwin);
     containerPtr->parentPtr = winPtr;
-    containerPtr->embedded = None;
+    containerPtr->embedded = TkNone;
     containerPtr->embeddedPtr = NULL;
     containerPtr->nextPtr = firstContainerPtr;
     firstContainerPtr = containerPtr;
@@ -491,7 +491,7 @@ TkMacOSXContainerId(
 	}
     }
     Tcl_Panic("TkMacOSXContainerId couldn't find window");
-    return None;
+    return TkNone;
 }
 
 /*
@@ -528,7 +528,7 @@ TkMacOSXGetHostToplevel(
      */
 
     if (contWinPtr == NULL) {
-	return None;
+	return TkNone;
     }
     return TkMacOSXGetHostToplevel(contWinPtr);
 }
@@ -621,7 +621,7 @@ TkpTestembedCmd(
     for (containerPtr = firstContainerPtr; containerPtr != NULL;
 	    containerPtr = containerPtr->nextPtr) {
 	Tcl_DStringStartSublist(&dString);
-	if (containerPtr->parent == None) {
+	if (containerPtr->parent == TkNone) {
 	    Tcl_DStringAppendElement(&dString, "");
 	} else if (all) {
 	    sprintf(buffer, "0x%x", (int) containerPtr->parent);
@@ -635,7 +635,7 @@ TkpTestembedCmd(
 	    Tcl_DStringAppendElement(&dString,
 		    containerPtr->parentPtr->pathName);
 	}
-	if (containerPtr->embedded == None) {
+	if (containerPtr->embedded == TkNone) {
 	    Tcl_DStringAppendElement(&dString, "");
 	} else if (all) {
 	    sprintf(buffer, "0x%x", (int) containerPtr->embedded);
@@ -894,7 +894,7 @@ EmbedStructureProc(
     Tk_ErrorHandler errHandler;
 
     if (eventPtr->type == ConfigureNotify) {
-	if (containerPtr->embedded != None) {
+	if (containerPtr->embedded != TkNone) {
 	    /*
 	     * Ignore errors, since the embedded application could have
 	     * deleted its window.
@@ -1140,7 +1140,7 @@ EmbedWindowDeleted(
 		Tk_QueueWindowEvent(&event, TCL_QUEUE_HEAD);
 	    }
 
-	    containerPtr->embedded = None;
+	    containerPtr->embedded = TkNone;
 	    containerPtr->embeddedPtr = NULL;
 	    break;
 	}

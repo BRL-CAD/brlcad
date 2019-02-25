@@ -73,7 +73,7 @@ typedef struct {
     char *textVarName;		/* Name of variable (malloc'ed) or NULL. If
 				 * non-NULL, button displays the contents of
 				 * this variable. */
-    Pixmap bitmap;		/* Bitmap to display or None. If not None then
+    Pixmap bitmap;		/* Bitmap to display or TkNone. If not TkNone then
 				 * text and textVar and underline are
 				 * ignored. */
     char *imageString;		/* Name of image to display (malloc'ed), or
@@ -175,7 +175,7 @@ typedef struct {
     				 * "left" and "right" will pop the menu left
     				 * or right, and the active item will be next
     				 * to the button. */
-    Tk_Cursor cursor;		/* Current cursor for window, or None. */
+    Tk_Cursor cursor;		/* Current cursor for window, or TkNone. */
     char *takeFocus;		/* Value of -takefocus option; not used in the
 				 * C code, but used by keyboard traversal
 				 * scripts. Malloc'ed, but may be NULL. */
