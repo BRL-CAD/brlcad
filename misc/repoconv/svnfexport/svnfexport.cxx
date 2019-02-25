@@ -108,6 +108,17 @@ std::map<std::string, std::string> tag_mappings;
 #define svn_str(_s1, _s2) (!sfcmp(_s1, _s2)) ? _s1.substr(_s2.size(), _s1.size()-_s2.size()) : std::string()
 #define dir_is_root(_dir, _fpath) !_fpath.compare(0, _dir.size(), _dir) && _fpath.size() > _dir.size() && _fpath.c_str()[_dir.size()] == '/'
 
+std::string dir_parent(std::string curr_path)
+{
+    size_t spos = curr_path.find_last_of("/");
+    if (spos != std::string::npos) {
+	return curr_path.substr(0, spos);
+    } else {
+	return std::string("");
+    }
+}
+
+
 svn_node_kind_t svn_node_kind(std::string nk)
 {
     std::string nf("file");
@@ -736,6 +747,10 @@ analyze_dump()
 		// to make any changes that would invalidate a straight-up "C" operation in
 		// git.  If it's from an older state, "C" won't work and we need to explicitly
 		// reassemble the older directory state.
+
+		// TODO - if we're copying from a different branch, we probably can't do the "C" trick either...
+		// probably need to split paths, compare branches, and insert into dnodes if the copyfrom
+		// branch is different than the target branch...
 		if (node.copyfrom_rev < path_last_commit[node.copyfrom_path]) {
 		    dnodes.insert(std::pair<std::string, long int>(node.copyfrom_path, node.copyfrom_rev));
 		}
@@ -746,6 +761,11 @@ analyze_dump()
 	for (size_t n = 0; n != rev.nodes.size(); n++) {
 	    struct svn_node &node = rev.nodes[n];
 	    path_last_commit[node.path] = rev.revision_number;
+	    std::string npath = dir_parent(node.path);
+	    while (npath.length()) {
+		path_last_commit[npath] = rev.revision_number;
+		npath = dir_parent(npath);
+	    }
 	}
 
 	for (d_it = dnodes.begin(); d_it != dnodes.end(); d_it++) {
