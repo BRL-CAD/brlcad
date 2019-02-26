@@ -1057,9 +1057,9 @@ ExternalProject_ByProducts(STEPCODE_BLD ${INCLUDE_DIR}
 
 # Simple "parent" build that tests the use of the imported library defined by ExternalProject_Target
 include_directories(${CMAKE_BINARY_DIR}/include)
-add_executable(gzjoin gzjoin.c)
-target_link_libraries(gzjoin ${ZLIB_LIBRARY})
-install(TARGETS gzjoin
+add_executable(zpipe zpipe.c)
+target_link_libraries(zpipe ${ZLIB_LIBRARY})
+install(TARGETS zpipe
   RUNTIME DESTINATION ${BIN_DIR}
   LIBRARY DESTINATION ${LIB_DIR}
   ARCHIVE DESTINATION ${LIB_DIR})
