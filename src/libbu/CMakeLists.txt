@@ -101,6 +101,7 @@ set(LIBBU_SOURCES
   mappedfile.c
   ${BU_MIME_C_FILE}
   mread.c
+  num.c
   observer.c
   opt.c
   parallel.c
