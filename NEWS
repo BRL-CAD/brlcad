@@ -31,6 +31,7 @@ A number of commands and tools previously listed as deprecated are
 removed in this release, including in particular MGED commands
 specific to MUVES.
 
+* improved usability of vol primitives w/ missing data - Sean Morrison
 * added rtweight -d option for specifying density file - Cliff Yapp
 * added material density management to "mater" command - Cliff Yapp
 * use full paths for OBJ objects in "bot dump" command - Cliff Yapp

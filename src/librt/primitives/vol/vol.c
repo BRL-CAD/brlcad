@@ -102,10 +102,14 @@ extern void rt_vol_plate(point_t a, point_t b, point_t c, point_t d,
 #define VOL_XWIDEN 2
 #define VOL_YWIDEN 2
 #define VOL_ZWIDEN 2
-#define VOL(_vip, _xx, _yy, _zz)	(_vip)->map[ \
-	(((_zz)+VOL_ZWIDEN) * ((_vip)->ydim + VOL_YWIDEN*2)+ \
-	 ((_yy)+VOL_YWIDEN))* ((_vip)->xdim + VOL_XWIDEN*2)+ \
-	(_xx)+VOL_XWIDEN ]
+#define VOLIDX(_xdim, _ydim, _xx, _yy, _zz) \
+	(((_zz)+VOL_ZWIDEN) \
+	 * ((_ydim) + VOL_YWIDEN*2) \
+	 + ((_yy)+VOL_YWIDEN)) \
+	* ((_xdim) + VOL_XWIDEN*2) \
+	+ (_xx)+VOL_XWIDEN
+#define VOLMAP(_map, _xdim, _ydim, _xx, _yy, _zz) (_map)[ VOLIDX(_xdim, _ydim, _xx, _yy, _zz) ]
+#define VOL(_vip, _xx, _yy, _zz) VOLMAP((_vip)->map, (_vip)->xdim, (_vip)->ydim, _xx, _yy, _zz)
 
 #define OK(_vip, _v)	((_v) >= (_vip)->lo && (_v) <= (_vip)->hi)
 
@@ -476,8 +480,9 @@ rt_vol_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     /* Because of in-memory padding, read each scanline separately */
     for (z = 0; z < vip->zdim; z++) {
 	for (y = 0; y < vip->ydim; y++) {
+	    void *data = &VOLMAP(vip->map, vip->xdim, vip->ydim, 0, y, z);
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
-	    ret = fread(&VOL(vip, 0, y, z), vip->xdim, 1, fp); /* res_syscall */
+	    ret = fread(data, vip->xdim, 1, fp); /* res_syscall */
 	    bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
 	    if (ret < 1) {
 		bu_log("rt_vol_import4(%s): Unable to read whole VOL, y=%zu, z=%zu\n",
@@ -534,6 +539,54 @@ rt_vol_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 }
 
 
+size_t
+vol_from_file(const char *file, size_t xdim, size_t ydim, size_t zdim, unsigned char *map)
+{
+    size_t y;
+    size_t z;
+    size_t nbytes;
+    FILE *fp;
+
+    /* Get bit map from .bw(5) file */
+    nbytes = (xdim+VOL_XWIDEN*2)*
+	(ydim+VOL_YWIDEN*2)*
+	(zdim+VOL_ZWIDEN*2);
+    map = (unsigned char *)bu_calloc(1, nbytes, "vol_import4 bitmap");
+
+    bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
+    if ((fp = fopen(file, "rb")) == NULL) {
+	perror(file);
+	bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
+	return 0;
+    }
+    bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
+
+    /* Because of in-memory padding, read each scanline separately */
+    for (z = 0; z < zdim; z++) {
+	for (y = 0; y < ydim; y++) {
+	    size_t ret;
+	    void *data = &VOLMAP(map, xdim, ydim, 0, y, z);
+
+	    bu_semaphore_acquire(BU_SEM_SYSCALL);	/* lock */
+	    ret = fread(data, xdim, 1, fp);		/* res_syscall */
+	    bu_semaphore_release(BU_SEM_SYSCALL);	/* unlock */
+	    if (ret < 1) {
+		bu_log("rt_vol_import4(%s): Unable to read whole VOL, y=%zu, z=%zu\n", file, y, z);
+		bu_semaphore_acquire(BU_SEM_SYSCALL);	/* lock */
+		fclose(fp);
+		bu_semaphore_release(BU_SEM_SYSCALL);	/* unlock */
+		return 0;
+	    }
+	}
+    }
+    bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
+    fclose(fp);
+    bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
+
+    return nbytes;
+}
+
+
 /**
  * Read in the information from the string solid record.
  * Then, as a service to the application, read in the bitmap
@@ -544,12 +597,8 @@ rt_vol_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 {
     register struct rt_vol_internal *vip;
     struct bu_vls str = BU_VLS_INIT_ZERO;
-    FILE *fp;
-    int nbytes;
-    size_t y;
-    size_t z;
+    size_t nbytes;
     mat_t tmat;
-    size_t ret;
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -580,52 +629,31 @@ rt_vol_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     bu_vls_free(&str);
 
     /* Check for reasonable values */
-    if (vip->file[0] == '\0' || vip->xdim < 1 ||
-	vip->ydim < 1 || vip->zdim < 1 || vip->mat[15] <= 0.0 ||
-	vip->hi > 255) {
-	bu_struct_print("Unreasonable VOL parameters", rt_vol_parse,
-			(char *)vip);
+    if (vip->file[0] == '\0'
+	|| vip->xdim < 1 || vip->ydim < 1 || vip->zdim < 1
+	|| vip->mat[15] <= 0.0 || vip->hi > 255)
+    {
+	bu_struct_print("Unreasonable VOL parameters", rt_vol_parse, (char *)vip);
 	return -1;
     }
 
+    if (!mat)
+	mat = bn_mat_identity;
+
     /* Apply any modeling transforms to get final matrix */
-    if (mat == NULL) mat = bn_mat_identity;
     bn_mat_mul(tmat, mat, vip->mat);
     MAT_COPY(vip->mat, tmat);
 
-    /* Get bit map from .bw(5) file */
-    nbytes = (vip->xdim+VOL_XWIDEN*2)*
-	(vip->ydim+VOL_YWIDEN*2)*
-	(vip->zdim+VOL_ZWIDEN*2);
-    vip->map = (unsigned char *)bu_calloc(1, nbytes, "vol_import4 bitmap");
-
-    bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
-    if ((fp = fopen(vip->file, "rb")) == NULL) {
-	perror(vip->file);
-	bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
-	return -1;
-    }
-    bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
-
-    /* Because of in-memory padding, read each scanline separately */
-    for (z = 0; z < vip->zdim; z++) {
-	for (y = 0; y < vip->ydim; y++) {
-	    bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
-	    ret = fread(&VOL(vip, 0, y, z), vip->xdim, 1, fp); /* res_syscall */
-	    bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
-	    if (ret < 1) {
-		bu_log("rt_vol_import4(%s): Unable to read whole VOL, y=%zu, z=%zu\n",
-		       vip->file, y, z);
-		bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
-		fclose(fp);
-		bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
-		return -1;
-	    }
+    if (bu_file_exists(vip->file, NULL)) {
+	size_t bytes = vip->xdim * vip->ydim * vip->zdim;
+	nbytes = vol_from_file(vip->file, vip->xdim, vip->ydim, vip->zdim, vip->map);
+	if (nbytes != bytes) {
+	    bu_log("WARNING: unexpected VOL bytes (read %zu, expected %zu) in %s\n", nbytes, bytes, vip->file);
 	}
+    } else {
+	bu_log("WARNING: VOL data file missing [%s]\n", vip->file);
     }
-    bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
-    fclose(fp);
-    bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
+
     return 0;
 }
 
@@ -670,7 +698,7 @@ rt_vol_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
  * Additional lines are indented one tab, and give parameter values.
  */
 int
-rt_vol_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
+rt_vol_describe(struct bu_vls *str, const struct rt_db_internal *ip, int UNUSED(verbose), double mm2local)
 {
     struct rt_vol_internal *vip = (struct rt_vol_internal *)ip->idb_ptr;
     register int i;
@@ -679,20 +707,17 @@ rt_vol_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 
     RT_VOL_CK_MAGIC(vip);
 
+    bu_vls_strcat(str, "thresholded volumetric solid (VOL)\n");
+
+    /* pretty-print dimensions in local, not storage (mm) units */
     VSCALE(local, vip->cellsize, mm2local);
-    bu_vls_strcat(str, "thresholded volumetric solid (VOL)\n\t");
-
-    if (!verbose)
-	return 0;
-
-/* bu_vls_struct_print(str, rt_vol_parse, (char *)vip);
-   bu_vls_strcat(str, "\n"); */
-
-    bu_vls_printf(&substr, "  file=\"%s\" w=%u n=%u d=%u lo=%u hi=%u size=%g %g %g\n   mat=",
+    bu_vls_printf(&substr, "\tfile=\"%s\"\n\tw=%u n=%u d=%u\n\tlo=%u hi=%u\n\tsize=%g,%g,%g\n",
 		  vip->file,
 		  vip->xdim, vip->ydim, vip->zdim, vip->lo, vip->hi,
 		  V3INTCLAMPARGS(local));
     bu_vls_vlscat(str, &substr);
+
+    bu_vls_cat(str, "\tmat=");
     for (i = 0; i < 15; i++) {
 	bu_vls_trunc(&substr, 0);
 	bu_vls_printf(&substr, "%g, ", INTCLAMP(vip->mat[i]));
