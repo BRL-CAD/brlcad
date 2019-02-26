@@ -196,9 +196,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * bot overlaps when unoriented, when clearly not overlapping
 
-* improve rtweight .density file handling on Windows, can't find it.
-  needs better search and override logic.
-
 * finish implementing pnts:
   - ray trace pnts
   - make color and vectors on pnts work
@@ -1426,11 +1423,6 @@ LIBGED
   libged/mged.  be sure to revive or at least check out the previous
   effort in src/mged/comb_bool_parse.y that already has support that
   recognizes the classical infix notation.
-
-* refactor .density file and density database reading code in files
-  src/rt/viewweight.c, src/libged/analyze.c and src/libged/gqa.c into
-  common code in src/libanalyze (there may be more candidates around
-  the tree)
 
 * Extract bounding box code from both autoview.c and get_autoview.c
   into a general bounding rpp function in librt and use accordingly
