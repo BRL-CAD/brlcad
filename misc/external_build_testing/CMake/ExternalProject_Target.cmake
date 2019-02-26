@@ -62,9 +62,9 @@ function(ExternalProject_ByProducts extproj E_IMPORT_PREFIX)
 endfunction(ExternalProject_ByProducts)
 
 
-function(ET_target_props etarg E_IMPORT_PREFIX)
+function(ET_target_props etarg E_IMPORT_PREFIX LINK_TARGET)
 
-  cmake_parse_arguments(ET "STATIC;EXEC" "LINK_TARGET;LINK_TARGET_DEBUG;OUTPUT_FILE" "" ${ARGN})
+  cmake_parse_arguments(ET "STATIC;EXEC" "LINK_TARGET_DEBUG" "" ${ARGN})
 
   if(NOT CMAKE_CONFIGURATION_TYPES)
 
@@ -80,17 +80,10 @@ function(ET_target_props etarg E_IMPORT_PREFIX)
     endif(E_IMPORT_PREFIX)
 
     set_property(TARGET ${etarg} APPEND PROPERTY IMPORTED_CONFIGURATIONS NOCONFIG)
-    if (ET_LINK_TARGET)
-      set_target_properties(${etarg} PROPERTIES
-	IMPORTED_LOCATION_NOCONFIG "${IMPORT_PREFIX}/${ET_LINK_TARGET}"
-	IMPORTED_SONAME_NOCONFIG "${ET_LINK_TARGET}"
-	)
-    else (ET_LINK_TARGET)
-      set_target_properties(${etarg} PROPERTIES
-	IMPORTED_LOCATION_NOCONFIG "${IMPORT_PREFIX}/${ET_OUTPUT_FILE}"
-	IMPORTED_SONAME_NOCONFIG "${ET_OUTPUT_FILE}"
-	)
-    endif (ET_LINK_TARGET)
+    set_target_properties(${etarg} PROPERTIES
+      IMPORTED_LOCATION_NOCONFIG "${IMPORT_PREFIX}/${LINK_TARGET}"
+      IMPORTED_SONAME_NOCONFIG "${LINK_TARGET}"
+      )
 
   else(NOT CMAKE_CONFIGURATION_TYPES)
 
@@ -109,26 +102,16 @@ function(ET_target_props etarg E_IMPORT_PREFIX)
 	set(IMPORT_PREFIX "${IMPORT_PREFIX}/${E_IMPORT_PREFIX}")
       endif(E_IMPORT_PREFIX)
 
-      if (ET_LINK_TARGET OR ET_LINK_TARGET_DEBUG)
-	if("${CFG_TYPE_UPPER}" STREQUAL "DEBUG")
-	  set(E_LINK_TARGET ${ET_LINK_TARGET_DEBUG})
-	else("${CFG_TYPE_UPPER}" STREQUAL "DEBUG")
-	  set(E_LINK_TARGET ${ET_LINK_TARGET})
-	endif("${CFG_TYPE_UPPER}" STREQUAL "DEBUG")
+      if("${CFG_TYPE_UPPER}" STREQUAL "DEBUG")
+	set(E_LINK_TARGET ${ET_LINK_TARGET_DEBUG})
+      else("${CFG_TYPE_UPPER}" STREQUAL "DEBUG")
+	set(E_LINK_TARGET ${ET_LINK_TARGET})
+      endif("${CFG_TYPE_UPPER}" STREQUAL "DEBUG")
 
-	set_target_properties(${etarg} PROPERTIES
-	  IMPORTED_LOCATION_${CFG_TYPE_UPPER} "${IMPORT_PREFIX}/${E_LINK_TARGET}"
-	  IMPORTED_SONAME_${CFG_TYPE_UPPER} "${E_LINK_TARGET}"
-	  )
-      endif(ET_LINK_TARGET OR ET_LINK_TARGET_DEBUG)
-
-      if(ET_OUTPUT_FILE)
-	set_target_properties(${etarg} PROPERTIES
-	  IMPORTED_LOCATION_${CFG_TYPE_UPPER} "${IMPORT_PREFIX}/${ET_OUTPUT_FILE}"
-	  IMPORTED_SONAME_${CFG_TYPE_UPPER} "${ET_OUTPUT_FILE}"
-	  )
-      endif(ET_OUTPUT_FILE)
-
+      set_target_properties(${etarg} PROPERTIES
+	IMPORTED_LOCATION_${CFG_TYPE_UPPER} "${IMPORT_PREFIX}/${E_LINK_TARGET}"
+	IMPORTED_SONAME_${CFG_TYPE_UPPER} "${E_LINK_TARGET}"
+	)
     endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
 
     # For everything except Debug, use the Release version
@@ -168,7 +151,7 @@ endfunction(ET_RPath)
 
 function(ExternalProject_Target etarg extproj)
 
-  cmake_parse_arguments(E "RPATH;EXEC" "IMPORT_PREFIX;OUTPUT_FILE;LINK_TARGET;LINK_TARGET_DEBUG;STATIC_OUTPUT_FILE;STATIC_LINK_TARGET" "SYMLINKS;DEPS" ${ARGN})
+  cmake_parse_arguments(E "RPATH;EXEC" "IMPORT_PREFIX;OUTPUT_FILE;LINK_TARGET;LINK_TARGET_DEBUG;STATIC_OUTPUT_FILE;STATIC_LINK_TARGET;STATIC_LINK_TARGET_DEBUG" "SYMLINKS;DEPS" ${ARGN})
 
   if(NOT TARGET ${extproj})
     message(FATAL_ERROR "${extprog} is not a target")
@@ -194,6 +177,14 @@ function(ExternalProject_Target etarg extproj)
     set(E_SHARED 1)
   endif (E_OUTPUT_FILE AND NOT E_EXEC)
 
+  if (E_LINK_TARGET_DEBUG)
+    set(LINK_TARGET_DEBUG "${E_LINK_TARGET_DEBUG}")
+  endif (E_LINK_TARGET_DEBUG)
+
+  if (E_STATIC_LINK_TARGET_DEBUG)
+    set(STATIC LINK_TARGET_DEBUG "${E_STATIC_LINK_TARGET_DEBUG}")
+  endif (E_STATIC_LINK_TARGET_DEBUG)
+
   # Create imported target - need to both make the target itself
   # and set the necessary properties.  See also
   # https://gitlab.kitware.com/cmake/community/wikis/doc/tutorials/Exporting-and-Importing-Targets
@@ -211,9 +202,9 @@ function(ExternalProject_Target etarg extproj)
     if (E_SHARED)
       add_library(${etarg} SHARED IMPORTED GLOBAL)
       if (E_LINK_TARGET)
-	ET_target_props(${etarg} "${E_IMPORT_PREFIX}" LINK_TARGET ${E_LINK_TARGET})
+	ET_target_props(${etarg} "${E_IMPORT_PREFIX}" ${E_LINK_TARGET} LINK_TARGET_DEBUG "${LINK_TARGET_DEBUG}")
       else (E_LINK_TARGET)
-	ET_target_props(${etarg} "${E_IMPORT_PREFIX}" OUTPUT_FILE_TARGET ${E_OUTPUT_FILE})
+	ET_target_props(${etarg} "${E_IMPORT_PREFIX}" ${E_OUTPUT_FILE} LINK_TARGET_DEBUG "${LINK_TARGET_DEBUG}")
       endif (E_LINK_TARGET)
       install(FILES "${IMPORT_PREFIX}/${E_OUTPUT_FILE}" DESTINATION ${LIB_DIR})
       if (E_RPATH AND NOT MSVC)
@@ -225,9 +216,9 @@ function(ExternalProject_Target etarg extproj)
     if (E_STATIC)
       add_library(${etarg}-static STATIC IMPORTED GLOBAL)
       if (E_STATIC_LINK_TARGET)
-	ET_target_props(${etarg}-static "${E_IMPORT_PREFIX}" STATIC LINK_TARGET ${E_STATIC_LINK_TARGET})
+	ET_target_props(${etarg}-static "${E_IMPORT_PREFIX}" ${E_STATIC_LINK_TARGET} STATIC_LINK_TARGET_DEBUG "${STATIC_LINK_TARGET_DEBUG}" STATIC)
       else (E_STATIC_LINK_TARGET)
-	ET_target_props(${etarg}-static "${E_IMPORT_PREFIX}" STATIC OUTPUT_FILE ${E_STATIC_OUTPUT_FILE})
+	ET_target_props(${etarg}-static "${E_IMPORT_PREFIX}" ${E_STATIC_OUTPUT_FILE} STATIC_LINK_TARGET_DEBUG "${STATIC_LINK_TARGET_DEBUG}" STATIC)
       endif (E_STATIC_LINK_TARGET)
       install(FILES "${IMPORT_PREFIX}/${E_STATIC_OUTPUT_FILE}" DESTINATION ${LIB_DIR})
     endif (E_STATIC)
@@ -235,7 +226,7 @@ function(ExternalProject_Target etarg extproj)
   else (NOT E_EXEC)
 
     add_executable(${etarg} IMPORTED GLOBAL)
-    ET_target_props(${etarg} "${E_IMPORT_PREFIX}" EXEC OUTPUT_FILE ${E_OUTPUT_FILE})
+    ET_target_props(${etarg} "${E_IMPORT_PREFIX}" ${E_OUTPUT_FILE} EXEC)
     install(PROGRAMS "${IMPORT_PREFIX}/${E_OUTPUT_FILE}" DESTINATION ${BIN_DIR})
     if (E_RPATH AND NOT MSVC)
       ET_RPath(${BIN_DIR} ${LIB_DIR} ${E_OUTPUT_FILE})
