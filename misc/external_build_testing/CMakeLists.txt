@@ -287,11 +287,14 @@ endif(NOT MSVC)
 #                                 Tcl
 ###############################################################################
 set(TCL_SRC_DIR "${CMAKE_BINARY_DIR}/TCL_BLD-prefix/src/TCL_BLD")
+set(TCL_SRC "${CMAKE_SOURCE_DIR}/external/tcl8.6.9-src.tar.gz")
+set(TCL_MD5 "aa0a121d95a0e7b73a036f26028538d4")
+set(TCL_MINOR_VERSION 6)
 if(NOT MSVC)
   set(TCL_PATCH_FILES "${TCL_SRC_DIR}/unix/configure" "${TCL_SRC_DIR}/macosx/configure" "${TCL_SRC_DIR}/unix/tcl.m4")
   ExternalProject_Add(TCL_BLD
-    URL ${CMAKE_SOURCE_DIR}/external/tcl8.7a1-src.tar.gz
-    URL_HASH MD5=27efa8d3d37efa3f06fc92f122f58f6f
+    URL ${TCL_SRC}
+    URL_HASH MD5=${TCL_MD5}
     PATCH_COMMAND rpath_replace "${CMAKE_BUILD_RPATH}" ${TCL_PATCH_FILES}
     CONFIGURE_COMMAND ${TCL_SRC_DIR}/unix/configure --prefix=${CMAKE_BINARY_DIR}
     BUILD_COMMAND make -j9
@@ -299,8 +302,8 @@ if(NOT MSVC)
     )
 else(NOT MSVC)
   ExternalProject_Add(TCL_BLD
-    URL ${CMAKE_SOURCE_DIR}/external/tcl8.7a1-src.tar.gz
-    URL_HASH MD5=27efa8d3d37efa3f06fc92f122f58f6f
+    URL ${TCL_SRC}
+    URL_HASH MD5=${TCL_MD5}
     CONFIGURE_COMMAND ""
     BINARY_DIR ${TCL_SRC_DIR}/win
     BUILD_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc INSTALLDIR=${CMAKE_BINARY_DIR}
@@ -308,12 +311,12 @@ else(NOT MSVC)
     )
 endif(NOT MSVC)
 ExternalProject_Target(tcl TCL_BLD
-  OUTPUT_FILE libtcl8.7${CMAKE_SHARED_LIBRARY_SUFFIX}
-  STATIC_OUTPUT_FILE libtclstub8.7${CMAKE_STATIC_LIBRARY_SUFFIX}
+  OUTPUT_FILE libtcl8.${TCL_MINOR_VERSION}${CMAKE_SHARED_LIBRARY_SUFFIX}
+  STATIC_OUTPUT_FILE libtclstub8.${TCL_MINOR_VERSION}${CMAKE_STATIC_LIBRARY_SUFFIX}
   RPATH
   )
 ExternalProject_Target(tclsh TCL_BLD
-  OUTPUT_FILE tclsh8.7${CMAKE_EXECUTABLE_SUFFIX}
+  OUTPUT_FILE tclsh8.${TK_MINOR_VERSION}${CMAKE_EXECUTABLE_SUFFIX}
   RPATH EXEC
   )
 ExternalProject_ByProducts(TCL_BLD ${LIB_DIR} FIXPATH
@@ -338,11 +341,14 @@ ExternalProject_ByProducts(TCL_BLD ${LIB_DIR} ${TCL_LIB_BYPRODUCTS})
 #                                 Tk
 ###############################################################################
 set(TK_SRC_DIR "${CMAKE_BINARY_DIR}/TK_BLD-prefix/src/TK_BLD")
+set(TK_SRC "${CMAKE_SOURCE_DIR}/external/tk8.6.9.1-src.tar.gz")
+set(TK_MD5 "9efe3976468352dc894dae0c4e785a8e")
+set(TK_MINOR_VERSION 6)
 if(NOT MSVC)
   set(TK_PATCH_FILES "${TK_SRC_DIR}/unix/configure" "${TK_SRC_DIR}/macosx/configure" "${TK_SRC_DIR}/unix/tcl.m4")
   ExternalProject_Add(TK_BLD
-    URL ${CMAKE_SOURCE_DIR}/external/tk8.7a1-src.tar.gz
-    URL_HASH MD5=099eb5571f4789194fa53d5590e7e623
+    URL ${TK_SRC}
+    URL_HASH MD5=${TK_MD5}
     PATCH_COMMAND rpath_replace "${CMAKE_BUILD_RPATH}" ${TK_PATCH_FILES}
     CONFIGURE_COMMAND ${TK_SRC_DIR}/unix/configure --prefix=${CMAKE_BINARY_DIR} --with-tcl=${CMAKE_BINARY_DIR}/${LIB_DIR}
     BUILD_COMMAND make -j9
@@ -351,8 +357,8 @@ if(NOT MSVC)
     )
 else(NOT MSVC)
   ExternalProject_Add(TK_BLD
-    URL ${CMAKE_SOURCE_DIR}/external/tk8.7a1-src.tar.gz
-    URL_HASH MD5=099eb5571f4789194fa53d5590e7e623
+    URL ${TK_SRC}
+    URL_HASH MD5=${TK_MD5}
     CONFIGURE_COMMAND ""
     BINARY_DIR ${TK_SRC_DIR}/win
     BUILD_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc INSTALLDIR=${CMAKE_BINARY_DIR} TCLDIR=${TCL_SRC_DIR}
@@ -361,12 +367,12 @@ else(NOT MSVC)
     )
 endif(NOT MSVC)
 ExternalProject_Target(tk TK_BLD
-  OUTPUT_FILE libtk8.7${CMAKE_SHARED_LIBRARY_SUFFIX}
-  STATIC_OUTPUT_FILE libtkstub8.7${CMAKE_STATIC_LIBRARY_SUFFIX}
+  OUTPUT_FILE libtk8.${TK_MINOR_VERSION}${CMAKE_SHARED_LIBRARY_SUFFIX}
+  STATIC_OUTPUT_FILE libtkstub8.${TK_MINOR_VERSION}${CMAKE_STATIC_LIBRARY_SUFFIX}
   RPATH
   )
 ExternalProject_Target(wish TK_BLD
-  OUTPUT_FILE wish8.7${CMAKE_EXECUTABLE_SUFFIX}
+  OUTPUT_FILE wish8.${TK_MINOR_VERSION}${CMAKE_EXECUTABLE_SUFFIX}
   RPATH EXEC
   )
 
