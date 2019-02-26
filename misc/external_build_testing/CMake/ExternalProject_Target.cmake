@@ -62,22 +62,82 @@ function(ExternalProject_ByProducts extproj E_IMPORT_PREFIX)
 endfunction(ExternalProject_ByProducts)
 
 
-function(ET_target_props etarg IMPORT_PREFIX)
+function(ET_target_props etarg E_IMPORT_PREFIX)
 
-  cmake_parse_arguments(ET "" "LINK_TARGET;OUTPUT_FILE" "" ${ARGN})
+  cmake_parse_arguments(ET "STATIC;EXEC" "LINK_TARGET;LINK_TARGET_DEBUG;OUTPUT_FILE" "" ${ARGN})
 
-  set_property(TARGET ${etarg} APPEND PROPERTY IMPORTED_CONFIGURATIONS NOCONFIG)
-  if (ET_LINK_TARGET)
-    set_target_properties(${etarg} PROPERTIES
-      IMPORTED_LOCATION_NOCONFIG "${IMPORT_PREFIX}/${ET_LINK_TARGET}"
-      IMPORTED_SONAME_NOCONFIG "${ET_LINK_TARGET}"
-      )
-  else (ET_LINK_TARGET)
-    set_target_properties(${etarg} PROPERTIES
-      IMPORTED_LOCATION_NOCONFIG "${IMPORT_PREFIX}/${ET_OUTPUT_FILE}"
-      IMPORTED_SONAME_NOCONFIG "${ET_OUTPUT_FILE}"
-      )
-  endif (ET_LINK_TARGET)
+  if(NOT CMAKE_CONFIGURATION_TYPES)
+
+    if(E_STATIC)
+      set(IMPORT_PREFIX "${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}")
+    elseif(E_EXEC)
+      set(IMPORT_PREFIX "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+    else()
+      set(IMPORT_PREFIX "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
+    endif(E_STATIC)
+    if(E_IMPORT_PREFIX)
+      set(IMPORT_PREFIX "${IMPORT_PREFIX}/${E_IMPORT_PREFIX}")
+    endif(E_IMPORT_PREFIX)
+
+    set_property(TARGET ${etarg} APPEND PROPERTY IMPORTED_CONFIGURATIONS NOCONFIG)
+    if (ET_LINK_TARGET)
+      set_target_properties(${etarg} PROPERTIES
+	IMPORTED_LOCATION_NOCONFIG "${IMPORT_PREFIX}/${ET_LINK_TARGET}"
+	IMPORTED_SONAME_NOCONFIG "${ET_LINK_TARGET}"
+	)
+    else (ET_LINK_TARGET)
+      set_target_properties(${etarg} PROPERTIES
+	IMPORTED_LOCATION_NOCONFIG "${IMPORT_PREFIX}/${ET_OUTPUT_FILE}"
+	IMPORTED_SONAME_NOCONFIG "${ET_OUTPUT_FILE}"
+	)
+    endif (ET_LINK_TARGET)
+
+  else(NOT CMAKE_CONFIGURATION_TYPES)
+
+    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+      string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+
+      if(E_STATIC)
+	set(IMPORT_PREFIX "${CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}}")
+      elseif(E_EXEC)
+	set(IMPORT_PREFIX "${CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}}")
+      else()
+	set(IMPORT_PREFIX "${CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}}")
+      endif(E_STATIC)
+
+      if(E_IMPORT_PREFIX)
+	set(IMPORT_PREFIX "${IMPORT_PREFIX}/${E_IMPORT_PREFIX}")
+      endif(E_IMPORT_PREFIX)
+
+      if (ET_LINK_TARGET OR ET_LINK_TARGET_DEBUG)
+	if("${CFG_TYPE_UPPER}" STREQUAL "DEBUG")
+	  set(E_LINK_TARGET ${ET_LINK_TARGET_DEBUG})
+	else("${CFG_TYPE_UPPER}" STREQUAL "DEBUG")
+	  set(E_LINK_TARGET ${ET_LINK_TARGET})
+	endif("${CFG_TYPE_UPPER}" STREQUAL "DEBUG")
+
+	set_target_properties(${etarg} PROPERTIES
+	  IMPORTED_LOCATION_${CFG_TYPE_UPPER} "${IMPORT_PREFIX}/${E_LINK_TARGET}"
+	  IMPORTED_SONAME_${CFG_TYPE_UPPER} "${E_LINK_TARGET}"
+	  )
+      endif(ET_LINK_TARGET OR ET_LINK_TARGET_DEBUG)
+
+      if(ET_OUTPUT_FILE)
+	set_target_properties(${etarg} PROPERTIES
+	  IMPORTED_LOCATION_${CFG_TYPE_UPPER} "${IMPORT_PREFIX}/${ET_OUTPUT_FILE}"
+	  IMPORTED_SONAME_${CFG_TYPE_UPPER} "${ET_OUTPUT_FILE}"
+	  )
+      endif(ET_OUTPUT_FILE)
+
+    endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+
+    # For everything except Debug, use the Release version
+    #set_target_properties(TARGET ${etarg} PROPERTIES
+    #  MAP_IMPORTED_CONFIG_MINSIZEREL Release
+    #  MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
+    #  )
+
+    endif(NOT CMAKE_CONFIGURATION_TYPES)
 
 endfunction(ET_target_props)
 
@@ -108,7 +168,7 @@ endfunction(ET_RPath)
 
 function(ExternalProject_Target etarg extproj)
 
-  cmake_parse_arguments(E "RPATH;EXEC" "IMPORT_PREFIX;OUTPUT_FILE;LINK_TARGET;STATIC_OUTPUT_FILE;STATIC_LINK_TARGET" "SYMLINKS;DEPS" ${ARGN})
+  cmake_parse_arguments(E "RPATH;EXEC" "IMPORT_PREFIX;OUTPUT_FILE;LINK_TARGET;LINK_TARGET_DEBUG;STATIC_OUTPUT_FILE;STATIC_LINK_TARGET" "SYMLINKS;DEPS" ${ARGN})
 
   if(NOT TARGET ${extproj})
     message(FATAL_ERROR "${extprog} is not a target")
@@ -150,14 +210,10 @@ function(ExternalProject_Target etarg extproj)
     # Handle shared library
     if (E_SHARED)
       add_library(${etarg} SHARED IMPORTED GLOBAL)
-      set(IMPORT_PREFIX "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
-      if(E_IMPORT_PREFIX)
-	set(IMPORT_PREFIX "${IMPORT_PREFIX}/${E_IMPORT_PREFIX}")
-      endif(E_IMPORT_PREFIX)
       if (E_LINK_TARGET)
-	ET_target_props(${etarg} "${IMPORT_PREFIX}" LINK_TARGET ${E_LINK_TARGET})
+	ET_target_props(${etarg} "${E_IMPORT_PREFIX}" LINK_TARGET ${E_LINK_TARGET})
       else (E_LINK_TARGET)
-	ET_target_props(${etarg} "${IMPORT_PREFIX}" OUTPUT_FILE_TARGET ${E_OUTPUT_FILE})
+	ET_target_props(${etarg} "${E_IMPORT_PREFIX}" OUTPUT_FILE_TARGET ${E_OUTPUT_FILE})
       endif (E_LINK_TARGET)
       install(FILES "${IMPORT_PREFIX}/${E_OUTPUT_FILE}" DESTINATION ${LIB_DIR})
       if (E_RPATH AND NOT MSVC)
@@ -168,14 +224,10 @@ function(ExternalProject_Target etarg extproj)
     # If we do have a static lib as well, handle that
     if (E_STATIC)
       add_library(${etarg}-static STATIC IMPORTED GLOBAL)
-      set(IMPORT_PREFIX "${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}")
-      if(E_IMPORT_PREFIX)
-	set(IMPORT_PREFIX "${IMPORT_PREFIX}/${E_IMPORT_PREFIX}")
-      endif(E_IMPORT_PREFIX)
       if (E_STATIC_LINK_TARGET)
-	ET_target_props(${etarg}-static "${INPORT_PREFIX}" LINK_TARGET ${E_STATIC_LINK_TARGET})
+	ET_target_props(${etarg}-static "${E_IMPORT_PREFIX}" STATIC LINK_TARGET ${E_STATIC_LINK_TARGET})
       else (E_STATIC_LINK_TARGET)
-	ET_target_props(${etarg}-static "${IMPORT_PREFIX}" OUTPUT_FILE ${E_STATIC_OUTPUT_FILE})
+	ET_target_props(${etarg}-static "${E_IMPORT_PREFIX}" STATIC OUTPUT_FILE ${E_STATIC_OUTPUT_FILE})
       endif (E_STATIC_LINK_TARGET)
       install(FILES "${IMPORT_PREFIX}/${E_STATIC_OUTPUT_FILE}" DESTINATION ${LIB_DIR})
     endif (E_STATIC)
@@ -183,11 +235,7 @@ function(ExternalProject_Target etarg extproj)
   else (NOT E_EXEC)
 
     add_executable(${etarg} IMPORTED GLOBAL)
-    set(IMPORT_PREFIX "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
-    if(E_IMPORT_PREFIX)
-      set(IMPORT_PREFIX "${IMPORT_PREFIX}/${E_IMPORT_PREFIX}")
-    endif(E_IMPORT_PREFIX)
-    ET_target_props(${etarg} "${IMPORT_PREFIX}" OUTPUT_FILE ${E_OUTPUT_FILE})
+    ET_target_props(${etarg} "${E_IMPORT_PREFIX}" EXEC OUTPUT_FILE ${E_OUTPUT_FILE})
     install(PROGRAMS "${IMPORT_PREFIX}/${E_OUTPUT_FILE}" DESTINATION ${BIN_DIR})
     if (E_RPATH AND NOT MSVC)
       ET_RPath(${BIN_DIR} ${LIB_DIR} ${E_OUTPUT_FILE})
