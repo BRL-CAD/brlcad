@@ -11,7 +11,14 @@ changes made.  See document footer for additional details.
 
 
 ----------------------------------------------------------------------
---- 201X-XX-XX  Release 7.30.0                                     ---
+--- 20XX-XX-XX  Release 7.30.2                                     ---
+----------------------------------------------------------------------
+
+* improved usability of vol primitives w/ missing data - Sean Morrison
+
+
+----------------------------------------------------------------------
+--- 2019-02-25  Release 7.30.0                                     ---
 ----------------------------------------------------------------------
 
 This major release of BRL-CAD is the first release requiring
@@ -20,7 +27,7 @@ compiler support for the C++11 language standard when building.
 using BRL-CAD in their own software development efforts.)
 
 This release introduces a new "-d" option to the mater command,
-supporting direct embedding of .density file information in a 
+supporting direct embedding of .density file information in a
 .g database for use by commands such as gqa and rtweight.
 
 Also present in this release are a fix for commands that work with
@@ -31,7 +38,6 @@ A number of commands and tools previously listed as deprecated are
 removed in this release, including in particular MGED commands
 specific to MUVES.
 
-* improved usability of vol primitives w/ missing data - Sean Morrison
 * added rtweight -d option for specifying density file - Cliff Yapp
 * added material density management to "mater" command - Cliff Yapp
 * use full paths for OBJ objects in "bot dump" command - Cliff Yapp
