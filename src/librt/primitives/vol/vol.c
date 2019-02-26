@@ -717,7 +717,7 @@ rt_vol_describe(struct bu_vls *str, const struct rt_db_internal *ip, int UNUSED(
 		  V3INTCLAMPARGS(local));
     bu_vls_vlscat(str, &substr);
 
-    bu_vls_cat(str, "\tmat=");
+    bu_vls_strcat(str, "\tmat=");
     for (i = 0; i < 15; i++) {
 	bu_vls_trunc(&substr, 0);
 	bu_vls_printf(&substr, "%g, ", INTCLAMP(vip->mat[i]));
