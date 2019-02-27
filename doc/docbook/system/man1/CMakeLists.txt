@@ -171,15 +171,11 @@ set(man1_EN
   pixsubst.xml
   pixtile.xml
   pixuntile.xml
-  plot3-X.xml
   plot3-asc.xml
   plot3-fb.xml
-  plot3-hpgl.xml
   plot3-plot3.xml
   plot3-ps.xml
-  plot3-tek.xml
   plot3color.xml
-  plot3debug.xml
   plot3getframe.xml
   plot3line2.xml
   plot3rot.xml
