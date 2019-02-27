@@ -62,27 +62,27 @@ function(ExternalProject_ByProducts extproj E_IMPORT_PREFIX)
 endfunction(ExternalProject_ByProducts)
 
 
-function(ET_target_props etarg E_IMPORT_PREFIX LINK_TARGET)
+function(ET_target_props etarg IN_IMPORT_PREFIX IN_LINK_TARGET)
 
   cmake_parse_arguments(ET "STATIC;EXEC" "LINK_TARGET_DEBUG" "" ${ARGN})
 
   if(NOT CMAKE_CONFIGURATION_TYPES)
 
-    if(E_STATIC)
+    if(ET_STATIC)
       set(IMPORT_PREFIX "${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}")
-    elseif(E_EXEC)
+    elseif(ET_EXEC)
       set(IMPORT_PREFIX "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
     else()
       set(IMPORT_PREFIX "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
-    endif(E_STATIC)
-    if(E_IMPORT_PREFIX)
-      set(IMPORT_PREFIX "${IMPORT_PREFIX}/${E_IMPORT_PREFIX}")
-    endif(E_IMPORT_PREFIX)
+    endif(ET_STATIC)
+    if(IN_IMPORT_PREFIX)
+      set(IMPORT_PREFIX "${IMPORT_PREFIX}/${IN_IMPORT_PREFIX}")
+    endif(IN_IMPORT_PREFIX)
 
     set_property(TARGET ${etarg} APPEND PROPERTY IMPORTED_CONFIGURATIONS NOCONFIG)
     set_target_properties(${etarg} PROPERTIES
-      IMPORTED_LOCATION_NOCONFIG "${IMPORT_PREFIX}/${LINK_TARGET}"
-      IMPORTED_SONAME_NOCONFIG "${LINK_TARGET}"
+      IMPORTED_LOCATION_NOCONFIG "${IMPORT_PREFIX}/${IN_LINK_TARGET}"
+      IMPORTED_SONAME_NOCONFIG "${IN_LINK_TARGET}"
       )
 
   else(NOT CMAKE_CONFIGURATION_TYPES)
@@ -90,31 +90,41 @@ function(ET_target_props etarg E_IMPORT_PREFIX LINK_TARGET)
     foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
       string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
 
-      if(E_STATIC)
-	set(IMPORT_PREFIX "${CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}}")
-      elseif(E_EXEC)
-	set(IMPORT_PREFIX "${CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}}")
+      # The config variables are the ones set in this mode, but everything is being targeted to
+      # one consistent top-level layout.  Adjust accordingly.
+      if(ET_STATIC)
+	set(IMPORT_PREFIX "${CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}}/../../${LIB_DIR}")
+      elseif(ET_EXEC)
+	set(IMPORT_PREFIX "${CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}}/../../${BIN_DIR}")
       else()
-	set(IMPORT_PREFIX "${CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}}")
-      endif(E_STATIC)
+	set(IMPORT_PREFIX "${CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}}/../../${LIB_DIR}")
+      endif(ET_STATIC)
 
-      if(E_IMPORT_PREFIX)
-	set(IMPORT_PREFIX "${IMPORT_PREFIX}/${E_IMPORT_PREFIX}")
-      endif(E_IMPORT_PREFIX)
+      if(IN_IMPORT_PREFIX)
+	set(IMPORT_PREFIX "${IMPORT_PREFIX}/${IN_IMPORT_PREFIX}")
+      endif(IN_IMPORT_PREFIX)
 
       if("${CFG_TYPE_UPPER}" STREQUAL "DEBUG")
-	set(E_LINK_TARGET ${ET_LINK_TARGET_DEBUG})
+	set(LINK_TARGET ${ET_LINK_TARGET_DEBUG})
       else("${CFG_TYPE_UPPER}" STREQUAL "DEBUG")
-	set(E_LINK_TARGET ${ET_LINK_TARGET})
+	set(LINK_TARGET ${IN_LINK_TARGET})
       endif("${CFG_TYPE_UPPER}" STREQUAL "DEBUG")
 
-      # TODO - for Windows, IMPORTED_IMPLIB is important for shared libraries.
-      # It is that property that will tell a toplevel target what to link against
-      # when building - pointing out the dll isn't enough by itself.
       set_target_properties(${etarg} PROPERTIES
-	IMPORTED_LOCATION_${CFG_TYPE_UPPER} "${IMPORT_PREFIX}/${E_LINK_TARGET}"
-	IMPORTED_SONAME_${CFG_TYPE_UPPER} "${E_LINK_TARGET}"
+	IMPORTED_LOCATION_${CFG_TYPE_UPPER} "${IMPORT_PREFIX}/${LINK_TARGET}"
+	IMPORTED_SONAME_${CFG_TYPE_UPPER} "${LINK_TARGET}"
 	)
+
+      if(NOT ET_STATIC AND NOT ET_EXEC AND MSVC)
+	# For Windows, IMPORTED_IMPLIB is important for shared libraries.
+	# It is that property that will tell a toplevel target what to link against
+	# when building - pointing out the dll isn't enough by itself.
+	string(REPLACE "${CMAKE_SHARED_LIBRARY_SUFFIX}" ".lib" IMPLIB_FILE "${LINK_TARGET}")
+	set_target_properties(${etarg} PROPERTIES
+	  IMPORTED_IMPLIB_${CFG_TYPE_UPPER} "${IMPORT_PREFIX}/${IMPLIB_FILE}"
+	  )
+      endif(NOT ET_STATIC AND NOT ET_EXEC AND MSVC)
+
     endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
 
     # For everything except Debug, use the Release version
