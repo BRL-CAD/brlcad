@@ -108,6 +108,9 @@ function(ET_target_props etarg E_IMPORT_PREFIX LINK_TARGET)
 	set(E_LINK_TARGET ${ET_LINK_TARGET})
       endif("${CFG_TYPE_UPPER}" STREQUAL "DEBUG")
 
+      # TODO - for Windows, IMPORTED_IMPLIB is important for shared libraries.
+      # It is that property that will tell a toplevel target what to link against
+      # when building - pointing out the dll isn't enough by itself.
       set_target_properties(${etarg} PROPERTIES
 	IMPORTED_LOCATION_${CFG_TYPE_UPPER} "${IMPORT_PREFIX}/${E_LINK_TARGET}"
 	IMPORTED_SONAME_${CFG_TYPE_UPPER} "${E_LINK_TARGET}"
