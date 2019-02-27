@@ -31,11 +31,7 @@ BRLCAD_INCLUDE_DIRS(CONV_INCLUDE_DIRS)
 
 BRLCAD_ADDEXEC(asc-nmg nmg/asc-nmg.c "libwdb;${M_LIBRARY}")
 
-BRLCAD_ADDEXEC(bot-bldxf dxf/bot-bldxf.c "librt;libbu;${M_LIBRARY}")
-
 BRLCAD_ADDEXEC(bot_dump bot_dump.c "libged;librt")
-
-BRLCAD_ADDEXEC(bot_shell-vtk bot_shell-vtk.c librt)
 
 set(comgeom-g_SRCS
   comgeom/cvt.c
@@ -67,8 +63,6 @@ BRLCAD_ADDEXEC(g-egg g-egg.c "libwdb;libgcv;libnmg")
 add_dependencies(g-egg libgcv_plugins)
 
 BRLCAD_ADDEXEC(g-nff g-nff.c "libwdb;libnmg;${M_LIBRARY}")
-
-BRLCAD_ADDEXEC(g-nmg nmg/g-nmg.c libwdb)
 
 BRLCAD_ADDEXEC(fast4-g fast4-g.c "libwdb;librt;libnmg;libbu;${M_LIBRARY}")
 
@@ -115,14 +109,6 @@ BRLCAD_ADDEXEC(g-vrml g-vrml.c "librt;libnmg;libbu;${M_LIBRARY}")
 BRLCAD_ADDEXEC(g-x3d g-x3d.c "librt;libnmg;libbu;${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(nastran-g nastran-g.c "libwdb;librt;libnmg;libbu;${M_LIBRARY}")
-
-BRLCAD_ADDEXEC(nmg-bot nmg/nmg-bot.c "libwdb;libnmg")
-
-BRLCAD_ADDEXEC(nmg-rib nmg/nmg-rib.c "libwdb;libnmg")
-
-BRLCAD_ADDEXEC(nmg-sgp nmg/nmg-sgp.c "libwdb;libnmg")
-
-BRLCAD_ADDEXEC(poly-bot poly-bot.c "libwdb;${WINSOCK_LIB}")
 
 BRLCAD_ADDEXEC(proe-g proe-g.c "libwdb;librt;libbu;${M_LIBRARY}")
 

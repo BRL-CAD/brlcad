@@ -15,7 +15,6 @@ set(man1_EN
   benchmark.xml
   brlman.xml
   bot_dump.xml
-  bot_shell-vtk.xml
   brep_simple.xml
   brlcad-config.xml
   brlcad.xml
@@ -92,7 +91,6 @@ set(man1_EN
   g-egg.xml
   g-iges.xml
   g-nff.xml
-  g-nmg.xml
   g-obj.xml
   g-ply.xml
   g-raw.xml
@@ -125,8 +123,6 @@ set(man1_EN
   morphedit.xml
   nastran-g.xml
   nirt.xml
-  nmg-bot.xml
-  nmg-rib.xml
   obj-g.xml
   patch-g.xml
   pictx.xml
@@ -185,7 +181,6 @@ set(man1_EN
   png-pix.xml
   png_info.xml
   polar-fb.xml
-  poly-bot.xml
   pp-fb.xml
   proe-g.xml
   random.xml
@@ -196,7 +191,6 @@ set(man1_EN
   rle-pix.xml
   rpatch.xml
   rt.xml
-  rt_bot_faces.xml
   rtarea.xml
   rtcheck.xml
   rtedge.xml
