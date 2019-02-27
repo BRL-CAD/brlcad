@@ -225,7 +225,7 @@ static struct bu_vls *
 get_name(struct db_i *_dbip, struct directory *dp, struct clone_state *state, int iter)
 {
     struct bu_vls *newname;
-    char prefix[CLONE_BUFSIZE] = {0}, suffix[CLONE_BUFSIZE] = {0}, buf[CLONE_BUFSIZE] = {0}, suffix2[CLONE_BUFSIZE] = {0};
+    char prefix[CLONE_BUFSIZE] = {0}, suffix[CLONE_BUFSIZE] = {0}, buf[CLONE_BUFSIZE + 1] = {0}, suffix2[CLONE_BUFSIZE] = {0};
     int num = 0, i = 1, j = 0;
 
     newname = bu_vls_vlsinit();
@@ -254,7 +254,7 @@ get_name(struct db_i *_dbip, struct directory *dp, struct clone_state *state, in
 	    if (suffix[0] != 0)
 		if ((i == 1) && is_in_list(obj_list, buf)) {
 		    j = index_in_list(obj_list, buf);
-		    snprintf(buf, CLONE_BUFSIZE, "%s%d", prefix, num);	/* save the name for the next pass */
+		    snprintf(buf, sizeof(buf), "%s%d", prefix, num);	/* save the name for the next pass */
 		    /* clear and set the name */
 		    bu_vls_trunc(newname, 0);
 		    bu_vls_printf(newname, "%s%s", bu_vls_addr(&obj_list.names[j].dest[iter]), suffix);

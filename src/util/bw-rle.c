@@ -50,7 +50,7 @@ static rle_hdr outrle;
 
 static char comment[128];
 #if HAVE_GETHOSTNAME
-static char host[128];
+static char host[113];
 #endif
 static rle_pixel **rows;
 static time_t now;

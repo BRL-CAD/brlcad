@@ -838,18 +838,18 @@ read_matrix(FILE *fp, struct frame *fr)
 {
     int i;
     char number[128];
-    char cmd[128];
+    char cmd[146];
 
     CHECK_FRAME(fr);
 
     /* Visible part is from -1 to +1 in view space */
     if (fscanf(fp, "%128s", number) != 1) goto eof;
-    snprintf(cmd, 128, "viewsize %s; eye_pt ", number);
+    snprintf(cmd, sizeof(cmd), "viewsize %s; eye_pt ", number);
     bu_vls_strcat(&(fr->fr_cmd), cmd);
 
     for (i = 0; i < 3; i++) {
 	if (fscanf(fp, "%128s", number) != 1) goto out;
-	snprintf(cmd, 128, "%s ", number);
+	snprintf(cmd, sizeof(cmd), "%s ", number);
 	bu_vls_strcat(&fr->fr_cmd, cmd);
     }
 
@@ -858,7 +858,7 @@ read_matrix(FILE *fp, struct frame *fr)
 
     for (i = 0; i < 16; i++) {
 	if (fscanf(fp, "%128s", number) != 1) goto out;
-	snprintf(cmd, 128, "%s ", number);
+	snprintf(cmd, sizeof(cmd), "%s ", number);
 	bu_vls_strcat(&fr->fr_cmd, cmd);
     }
     bu_vls_strcat(&fr->fr_cmd, "; ");
@@ -3346,7 +3346,7 @@ static void
 host_helper(FILE *fp)
 {
     char line[512];
-    char cmd[128];
+    char cmd[553];
     char host[128];
     char loc_db[128];
     char rem_db[128];
@@ -3372,7 +3372,7 @@ host_helper(FILE *fp)
 	}
 
 	if (cnt == 3) {
-	    snprintf(cmd, 128,
+	    snprintf(cmd, sizeof(cmd),
 		     "cd %s; rtsrv %s %d",
 		     rem_dir, our_hostname, port);
 	    if (rem_debug) {
@@ -3403,7 +3403,7 @@ host_helper(FILE *fp)
 		(void)wait(0);
 	    }
 	} else {
-	    snprintf(cmd, 128,
+	    snprintf(cmd, sizeof(cmd),
 		     "g2asc<%s|%s %s \"cd %s; asc2g>%s; rtsrv %s %d\"",
 		     loc_db,
 		     RSH, host,

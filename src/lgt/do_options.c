@@ -63,7 +63,7 @@ fastf_t epsilon = 0.000001;
 
 static char *prog_id;
 static char **objects;
-static char svkey_file[MAX_LN] = { 0 };
+static char svkey_file[MAX_LN - 28] = { 0 };
 static char scratchbuf[TEMPLATE_COLS+1];
 
 /* The strings in this array will be modified as the program runs,
@@ -1360,15 +1360,15 @@ static int
 f_Wrt_Fb(char **args)
 {
     int y;
-    static char save_fb_file[MAX_LN] = { 0 };
+    static char save_fb_file[MAX_LN - 31] = { 0 };
     fb *save_fbiop;
     if (args != NULL && args[1] != NULL)
-	bu_strlcpy(save_fb_file, args[1], MAX_LN);
+	bu_strlcpy(save_fb_file, args[1], sizeof(save_fb_file));
     else
 	if (tty) {
 	    snprintf(prompt, MAX_LN, "File name for saved image ? (%s) ", save_fb_file);
 	    if (get_Input(input_ln, MAX_LN, prompt) != NULL)
-		bu_strlcpy(save_fb_file, input_ln, MAX_LN);
+		bu_strlcpy(save_fb_file, input_ln, sizeof(save_fb_file));
 	} else {
 	    return -1;
 	}
@@ -1422,15 +1422,15 @@ static int
 f_Rd_Fb(char **args)
 {
     int y;
-    static char save_fb_file[MAX_LN] = { 0 };
+    static char save_fb_file[MAX_LN - 24] = { 0 };
     fb *save_fbiop;
     if (args != NULL && args[1] != NULL)
-	bu_strlcpy(save_fb_file, args[1], MAX_LN);
+	bu_strlcpy(save_fb_file, args[1], sizeof(save_fb_file));
     else
 	if (tty) {
 	    snprintf(prompt, MAX_LN, "File name of image ? (%s) ", save_fb_file);
 	    if (get_Input(input_ln, MAX_LN, prompt) != NULL)
-		bu_strlcpy(save_fb_file, input_ln, MAX_LN);
+		bu_strlcpy(save_fb_file, input_ln, sizeof(save_fb_file));
 	} else
 	    return -1;
     if (save_fb_file[0] == '\0') {
@@ -1719,7 +1719,7 @@ f_Movie()
 			svkey_file[0] == '\0' ? "STDIN" : svkey_file
 	    );
 	if (get_Input(input_ln, MAX_LN, prompt) != NULL)
-	    bu_strlcpy(svkey_file, input_ln, MAX_LN);
+	    bu_strlcpy(svkey_file, input_ln, sizeof(svkey_file));
 	if (svkey_file[0] == '\0')
 	    movie.m_keys_fp = NULL; /* Will use STDIN. */
 	else
@@ -2501,7 +2501,7 @@ f_Key_Frame(char **args)
     fastf_t model2view[16], to_eye[16];
     FILE *svkey_fp=NULL;
     if (args != NULL && args[1] != NULL) {
-	bu_strlcpy(svkey_file, args[1], MAX_LN);
+	bu_strlcpy(svkey_file, args[1], sizeof(svkey_file));
 	if ((svkey_fp = fopen(svkey_file, "rb")) == NULL) {
 	    bu_log("Can't open \"%s\" for reading.", svkey_file);
 	    return -1;
@@ -2525,7 +2525,7 @@ f_Key_Frame(char **args)
 			    svkey_file
 		);
 	    if (get_Input(input_ln, MAX_LN, prompt) != NULL)
-		bu_strlcpy(svkey_file, input_ln, MAX_LN);
+		bu_strlcpy(svkey_file, input_ln, sizeof(svkey_file));
 	    if (svkey_file[0] == '\0') {
 		bu_log("No default, must specify file name!\n");
 		return -1;

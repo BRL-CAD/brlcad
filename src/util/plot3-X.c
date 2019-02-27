@@ -255,7 +255,7 @@ label(double x, double y, char *str)
 void
 xsetup(int argc, char **argv)
 {
-    char hostname[81];
+    char hostname[79];
     char display[81];
     char *envp;
     unsigned long bd, bg, fg, bw;
@@ -267,7 +267,7 @@ xsetup(int argc, char **argv)
 
     if ((envp = getenv("DISPLAY")) == NULL) {
 	/* Env not set, use local host */
-	if (gethostname(hostname, 80) != 0) {
+	if (gethostname(hostname, sizeof(hostname)) != 0) {
 	    bu_exit(2, "plot3-X: Can't get hostname.\n");
 	}
 	snprintf(display, 81, "%s:0", hostname);

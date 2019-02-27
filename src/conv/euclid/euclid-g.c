@@ -207,6 +207,7 @@ add_nmg_to_db(struct rt_wdb *fpout, struct model *m, int reg_id)
     struct nmgregion *r;
     struct shell *s;
     struct wmember head;
+    int name_size = sizeof(id) + 3;
 
     BU_LIST_INIT(&head.l);
 
@@ -214,10 +215,10 @@ add_nmg_to_db(struct rt_wdb *fpout, struct model *m, int reg_id)
     s = BU_LIST_FIRST(shell, &r->s_hd);
 
     sprintf(id, "%d", reg_id);
-    rname = (char *)bu_malloc(sizeof(id) + 3, "rname");	/* Region name. */
-    sname = (char *)bu_malloc(sizeof(id) + 3, "sname");	/* Solid name. */
+    rname = (char *)bu_malloc(name_size, "rname");	/* Region name. */
+    sname = (char *)bu_malloc(name_size, "sname");	/* Solid name. */
 
-    snprintf(sname, 80, "%s.s", id);
+    snprintf(sname, name_size, "%s.s", id);
     if (polysolids)
 	mk_bot_from_nmg(fpout, sname, s);
     else {
@@ -244,7 +245,7 @@ add_nmg_to_db(struct rt_wdb *fpout, struct model *m, int reg_id)
     group_id = gift_ident/1000;
     V_MIN(group_id, 10);
 
-    snprintf(rname, 80, "%s.r", id);
+    snprintf(rname, name_size, "%s.r", id);
 
     if (mk_addmember(sname, &head.l, NULL, WMOP_UNION) == WMEMBER_NULL) {
 	bu_exit(1, "add_nmg_to_db: mk_addmember failed for solid %s\n", sname);

@@ -152,7 +152,7 @@ int read_faces(struct model *m, FILE *fgeom)
 int off2nmg(FILE *fpin, struct rt_wdb *fpout)
 {
 #define SZ 64
-    char title[SZ+1], geom_fname[SZ+1];
+    char title[SZ-1], geom_fname[SZ+1];
     char rname[SZ+1], sname[SZ+1];
 
 #define BUF_SZ 200

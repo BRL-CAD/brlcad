@@ -47,7 +47,7 @@ static rle_hdr outrle;
 static char comment[COMMENT_SIZE];
 
 #ifdef HAVE_GETHOSTNAME
-static char host[COMMENT_SIZE];
+static char host[COMMENT_SIZE - 13];
 #endif
 
 static rle_pixel **rows;

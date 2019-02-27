@@ -187,7 +187,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
     struct soltab *stp;
     struct bu_color color = BU_COLOR_INIT_ZERO;
     char commtag[64];
-    char namebuf[64];
+    char namebuf[65];
     int i, j, real_flag, valid_command, ret;
     const char *commands[] = {"info", "plot", "translate", "intersect", "csg", "u", "i", "-"};
     int num_commands = (int)(sizeof(commands) / sizeof(const char *));
@@ -522,7 +522,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	GED_DB_PUT_INTERNAL(gedp, ndp, &intern, &rt_uniresource, GED_ERROR);
     }
 
-    snprintf(namebuf, 64, "%s%s_", commtag, solid_name);
+    snprintf(namebuf, sizeof(namebuf), "%s%s_", commtag, solid_name);
     _ged_cvt_vlblock_to_solids(gedp, vbp, namebuf, 0);
     bn_vlblock_free(vbp);
     vbp = (struct bn_vlblock *)NULL;
