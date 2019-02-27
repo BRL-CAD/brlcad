@@ -21,7 +21,6 @@ set(man1_EN
   buffer.xml
   burst.xml
   bw-fb.xml
-  bw-imp.xml
   bw-pix.xml
   bw-png.xml
   bw-ps.xml
@@ -41,10 +40,8 @@ set(man1_EN
   cad_boundp.xml
   cad_parea.xml
   canonize.xml
-  cell-fb.xml
   chan_mult.xml
   chan_permute.xml
-  cmap-fb.xml
   coil.xml
   comgeom-g.xml
   conv-vg2g.xml
@@ -59,7 +56,6 @@ set(man1_EN
   enf-g.xml
   fast4-g.xml
   fb-bw.xml
-  fb-cmap.xml
   fb-fb.xml
   fb-pix.xml
   fb-png.xml
@@ -68,7 +64,6 @@ set(man1_EN
   fbcbars.xml
   fbclear.xml
   fbcmap.xml
-  fbcmrot.xml
   fbcolor.xml
   fbed.xml
   fbfade.xml
@@ -80,7 +75,6 @@ set(man1_EN
   fblabel.xml
   fbline.xml
   fbpoint.xml
-  fbscanplot.xml
   fbserv.xml
   fbstretch.xml
   fbzoom.xml
@@ -180,7 +174,6 @@ set(man1_EN
   png-fb.xml
   png-pix.xml
   png_info.xml
-  polar-fb.xml
   pp-fb.xml
   proe-g.xml
   random.xml

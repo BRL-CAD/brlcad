@@ -165,9 +165,6 @@ libtermio, libcursor
 7.26
 ----
 image tools
-	cmap-fb, fb-cmap, fbcmrot : colormap support obsolete
-	fbed, cell-fb : outside scope
-	fbscanplot, polar-fb, bw-imp, pixinfo.sh : obsolete
 	png_info : incorporating into icv
 	pixpaste : outside scope, license
 	alias-pix' : incorporating into icv
@@ -389,6 +386,10 @@ converter tools
 	bot-bldxf', bot_shell-vtk, g-nmg, nmg-bot, nmg-rib, nmg-sgp',
 	poly-bot, rt_bot_faces, : primitive-specific converters
 	Removed as part of distillation effort [deprecated 7.26]
+image tools
+	cmap-fb, fb-cmap, fbcmrot : colormap support obsolete
+	fbed, cell-fb : outside scope
+	fbscanplot, polar-fb, bw-imp, pixinfo.sh : obsolete
 
 7.30.0
 ------

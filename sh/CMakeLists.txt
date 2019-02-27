@@ -5,7 +5,6 @@ set(sh_SCRIPTS
   conversion.sh
   facetall.sh
   orbit.sh
-  pixinfo.sh
   show.sh
   )
 foreach(script ${sh_SCRIPTS})
