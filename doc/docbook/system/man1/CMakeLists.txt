@@ -50,7 +50,6 @@ set(man1_EN
   comgeom-g.xml
   conv-vg2g.xml
   cv.xml
-  cy-g.xml
   db.xml
   dbclean.xml
   dbcp.xml
@@ -59,7 +58,6 @@ set(man1_EN
   dpix-pix.xml
   dxf-g.xml
   enf-g.xml
-  euclid-g.xml
   fast4-g.xml
   fb-bw.xml
   fb-cmap.xml
@@ -92,7 +90,6 @@ set(man1_EN
   g-dot.xml
   g-dxf.xml
   g-egg.xml
-  g-euclid.xml
   g-iges.xml
   g-nff.xml
   g-nmg.xml
@@ -102,7 +99,6 @@ set(man1_EN
   g-shell-rect.xml
   g-step.xml
   g-stl.xml
-  g-tankill.xml
   g-var.xml
   g-voxel.xml
   g-vrml.xml
@@ -123,7 +119,6 @@ set(man1_EN
   imgdims.xml
   ir-X.xml
   irdisp.xml
-  lgt.xml
   loop.xml
   mac-pix.xml
   mged.xml
@@ -212,10 +207,6 @@ set(man1_EN
   rtexample.xml
   rtg3.xml
   rthide.xml
-  rtpp.xml
-  rtrange.xml
-  rtray.xml
-  rtregis.xml
   rtscale.xml
   rtshot.xml
   rtwalk.xml
@@ -236,7 +227,6 @@ set(man1_EN
   tire.xml
   ug-g.xml
   vdeck.xml
-  viewpoint-g.xml
   wavelet.xml
   window.xml
   window_frame.xml
