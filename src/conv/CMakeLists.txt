@@ -50,8 +50,6 @@ BRLCAD_ADDEXEC(comgeom-g "${comgeom-g_SRCS}" "libwdb;libbn;libbu;${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(conv-vg2g conv-vg2g.c "libbu")
 
-BRLCAD_ADDEXEC(cy-g cy-g.c "libwdb;${M_LIBRARY}")
-
 BRLCAD_ADDEXEC(dbupgrade dbupgrade.c "libwdb;librt;libbu")
 
 BRLCAD_ADDEXEC(k-g k-g.cpp "libwdb;librt;libbu;${M_LIBRARY}")
@@ -60,12 +58,6 @@ BRLCAD_ADDEXEC(dxf-g dxf/dxf-g.c "libwdb;librt;libnmg;libbn;libbu;${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(enf-g enf-g.c "libwdb;${TCL_LIBRARY};${M_LIBRARY}")
 
-BRLCAD_ADDEXEC(euclid_format euclid/euclid_format.c librt)
-
-BRLCAD_ADDEXEC(euclid_unformat euclid/euclid_unformat.c "libbn;libbu")
-
-BRLCAD_ADDEXEC(euclid-g euclid/euclid-g.c "libwdb;libnmg")
-
 BRLCAD_ADDEXEC(g-dot g-dot.c "libged;libbu")
 
 BRLCAD_ADDEXEC(g-dxf dxf/g-dxf.c "librt;libgcv;libnmg;libbu")
@@ -73,10 +65,6 @@ add_dependencies(g-dxf libgcv_plugins)
 
 BRLCAD_ADDEXEC(g-egg g-egg.c "libwdb;libgcv;libnmg")
 add_dependencies(g-egg libgcv_plugins)
-
-BRLCAD_ADDEXEC(g-euclid euclid/g-euclid.c "librt;libnmg")
-
-BRLCAD_ADDEXEC(g-euclid1 euclid/g-euclid1.c "librt;libnmg")
 
 BRLCAD_ADDEXEC(g-nff g-nff.c "libwdb;libnmg;${M_LIBRARY}")
 
@@ -118,8 +106,6 @@ BRLCAD_ADDEXEC(patch-g patch/patch-g.c "libwdb;librt;libnmg;libbu;${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(rpatch patch/rpatch.c "librt;libbu")
 
-BRLCAD_ADDEXEC(g-tankill tankill/g-tankill.c "librt;libnmg;libbu")
-
 BRLCAD_ADDEXEC(tankill-g tankill/tankill-g.c "libwdb;librt;libnmg;libbu")
 
 BRLCAD_ADDEXEC(g-var g-var.c "librt;libbu;${M_LIBRARY}")
@@ -142,8 +128,6 @@ BRLCAD_ADDEXEC(proe-g proe-g.c "libwdb;librt;libbu;${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(shp-g "shp/shp-g.c;shp/shapelib/safileio.c;shp/shapelib/shpopen.c" "libwdb;librt;libbu")
 
-BRLCAD_ADDEXEC(viewpoint-g viewpoint-g.c "libwdb;librt;libnmg;libbu")
-
 BRLCAD_ADDEXEC(g-shell-rect g-shell-rect.c "libwdb;librt;libnmg;libbu;${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(g-xxx g-xxx.c "librt;libnmg;libbu" NO_INSTALL)
@@ -155,16 +139,12 @@ BRLCAD_ADDDATA(g-xxx_facets.c sample_applications)
 BRLCAD_ADDEXEC(walk_example walk_example.c "libbu;librt" NO_INSTALL)
 BRLCAD_ADDDATA(walk_example.c sample_applications)
 
-install(PROGRAMS intaval-g.py DESTINATION bin)
-
-
 set(conv_ignore_files
   CMakeLists.txt
   Formats.csv
   comgeom/try.sh
   dbclean.sh
   dxf/dxf.h
-  intaval-g.py
   patch/patch-g.h
   patch/pull_comp.sh
   patch/pull_solidsub.sh
