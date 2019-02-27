@@ -165,12 +165,8 @@ libtermio, libcursor
 7.26
 ----
 image tools
-	png_info : incorporating into icv
-	pixpaste : outside scope, license
 	alias-pix' : incorporating into icv
 	asc2pix' : incorporating into icv
-	pix-yuv', yuv-pix' : obsolete non-standard format
-	texturescale : obsolete implementation
 	Removed as part of distillation effort [deprecated 7.26]
 video & animation tools
 	anim_*', fbanim, chan_add', chan_mult, chan_permute,
@@ -390,6 +386,11 @@ image tools
 	cmap-fb, fb-cmap, fbcmrot : colormap support obsolete
 	fbed, cell-fb : outside scope
 	fbscanplot, polar-fb, bw-imp, pixinfo.sh : obsolete
+	png_info : incorporating into icv
+	pixpaste : outside scope, license
+	pix-yuv', yuv-pix' : obsolete non-standard format
+	texturescale : obsolete implementation
+	Removed as part of distillation effort [deprecated 7.26]
 
 7.30.0
 ------

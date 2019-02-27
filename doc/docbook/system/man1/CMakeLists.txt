@@ -173,7 +173,6 @@ set(man1_EN
   png-bw.xml
   png-fb.xml
   png-pix.xml
-  png_info.xml
   pp-fb.xml
   proe-g.xml
   random.xml
