@@ -164,9 +164,6 @@ libtermio, libcursor
 
 7.26
 ----
-ray tracing tools
-	rtcell', rtfrac', rtpp, rtrad', rtrange, rtray, rtregis
-	Removed as part of distillation effort [deprecated 7.26]
 converter tools
 	cy-g, euclid-g, euclid_format', euclid_unformat', g-euclid,
 	g-euclid1', g-tankill, intaval-g.py, viewpoint-g : obsolete formats
@@ -389,7 +386,9 @@ include/raytrace.h
 7.30.2
 ------
 ray tracing tools
-	lgt : functionally replaced by nirt [deprecated 7.26]
+	lgt : functionally replaced by nirt
+	rtcell', rtfrac', rtpp, rtrad', rtrange, rtray, rtregis
+	Removed as part of distillation effort [deprecated 7.26]
 
 7.30.0
 ------
