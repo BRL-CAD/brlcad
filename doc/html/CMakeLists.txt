@@ -4,51 +4,6 @@ set(toplevel_HTML
   )
 ADD_DOC(toplevel_HTML html)
 
-set(anim_tutorial_HTML
-  manuals/Anim_Tutorial/Lee_tux.gif
-  manuals/Anim_Tutorial/animtbl.gif
-  manuals/Anim_Tutorial/chans.html
-  manuals/Anim_Tutorial/chapt0.html
-  manuals/Anim_Tutorial/chapt1.html
-  manuals/Anim_Tutorial/chapt2.html
-  manuals/Anim_Tutorial/chapt3.html
-  manuals/Anim_Tutorial/chapt4.html
-  manuals/Anim_Tutorial/chapt5.html
-  manuals/Anim_Tutorial/chapt6.html
-  manuals/Anim_Tutorial/chapt7.html
-  manuals/Anim_Tutorial/chapt8.html
-  manuals/Anim_Tutorial/chapt9.html
-  manuals/Anim_Tutorial/dagtbl.gif
-  manuals/Anim_Tutorial/ell.mpg
-  manuals/Anim_Tutorial/ell_sm.gif
-  manuals/Anim_Tutorial/ell_ssm.gif
-  manuals/Anim_Tutorial/equation.gif
-  manuals/Anim_Tutorial/film.gif
-  manuals/Anim_Tutorial/fn.gif
-  manuals/Anim_Tutorial/foot_Deitz89.html
-  manuals/Anim_Tutorial/foot_Muuss88a.html
-  manuals/Anim_Tutorial/foot_Muuss90a.html
-  manuals/Anim_Tutorial/foot_Shoemake85.html
-  manuals/Anim_Tutorial/foot_frames.html
-  manuals/Anim_Tutorial/foot_gamma.html
-  manuals/Anim_Tutorial/foot_graphics.html
-  manuals/Anim_Tutorial/foot_hdtv.html
-  manuals/Anim_Tutorial/foot_libfb.html
-  manuals/Anim_Tutorial/foot_ntsc.html
-  manuals/Anim_Tutorial/foot_size.html
-  manuals/Anim_Tutorial/index.html
-  manuals/Anim_Tutorial/matrix.gif
-  manuals/Anim_Tutorial/moss.mpg
-  manuals/Anim_Tutorial/moss_sm.gif
-  manuals/Anim_Tutorial/moss_ssm.gif
-  manuals/Anim_Tutorial/trans.gif
-  manuals/Anim_Tutorial/transboth.gif
-  manuals/Anim_Tutorial/transboth_sm.gif
-  manuals/Anim_Tutorial/v_eqn1.gif
-  manuals/Anim_Tutorial/v_eqn2.gif
-  )
-ADD_DOC(anim_tutorial_HTML html/manuals/Anim_Tutorial)
-
 set(cadwidgets_HTML
   manuals/cadwidgets/Command.html
   manuals/cadwidgets/Database.html
@@ -103,74 +58,6 @@ set(manuals_HTML
   manuals/small-eagleCAD.gif
   )
 ADD_DOC(manuals_HTML html/manuals)
-
-set(manuals_mged_animmate_HTML
-  manuals/mged/animmate/anim_cascade.html
-  manuals/mged/animmate/anim_doc.html
-  manuals/mged/animmate/anim_fly.html
-  manuals/mged/animmate/anim_hardtrack.html
-  manuals/mged/animmate/anim_keyread.html
-  manuals/mged/animmate/anim_lookat.html
-  manuals/mged/animmate/anim_man_pages.html
-  manuals/mged/animmate/anim_offset.html
-  manuals/mged/animmate/anim_orient.html
-  manuals/mged/animmate/anim_script.html
-  manuals/mged/animmate/anim_sort.html
-  manuals/mged/animmate/anim_time.html
-  manuals/mged/animmate/anim_track.html
-  manuals/mged/animmate/anim_turn.html
-  manuals/mged/animmate/anim_tut.html
-  manuals/mged/animmate/animate.html
-  manuals/mged/animmate/ceditor.gif
-  manuals/mged/animmate/chan_mult.html
-  manuals/mged/animmate/chan_permute.html
-  manuals/mged/animmate/combine_doc.html
-  manuals/mged/animmate/cscripts.gif
-  manuals/mged/animmate/curve_doc.html
-  manuals/mged/animmate/end_tut.html
-  manuals/mged/animmate/etime.gif
-  manuals/mged/animmate/fbanim.html
-  manuals/mged/animmate/left.tcl
-  manuals/mged/animmate/left_wheels.txt
-  manuals/mged/animmate/mmenu.gif
-  manuals/mged/animmate/object_tut.html
-  manuals/mged/animmate/oscript.gif
-  manuals/mged/animmate/oscript_doc.html
-  manuals/mged/animmate/pixtile.html
-  manuals/mged/animmate/prep_tut.html
-  manuals/mged/animmate/right.tcl
-  manuals/mged/animmate/right_wheels.txt
-  manuals/mged/animmate/rt.html
-  manuals/mged/animmate/rt_tut.html
-  manuals/mged/animmate/scriptsort.html
-  manuals/mged/animmate/show_doc.html
-  manuals/mged/animmate/sscripts.gif
-  manuals/mged/animmate/tabinterp.html
-  manuals/mged/animmate/table_doc.html
-  manuals/mged/animmate/tabsub.html
-  manuals/mged/animmate/tank_path.txt
-  manuals/mged/animmate/teditor.gif
-  manuals/mged/animmate/track.txt
-  manuals/mged/animmate/track_tut.html
-  manuals/mged/animmate/tscript.gif
-  manuals/mged/animmate/tscript_doc.html
-  manuals/mged/animmate/tut.html
-  manuals/mged/animmate/tut1.png
-  manuals/mged/animmate/tut2.png
-  manuals/mged/animmate/tut4.gif
-  manuals/mged/animmate/tut5.gif
-  manuals/mged/animmate/tut6.png
-  manuals/mged/animmate/tut7.png
-  manuals/mged/animmate/tut8.png
-  manuals/mged/animmate/vcdwidget.gif
-  manuals/mged/animmate/vceditor.gif
-  manuals/mged/animmate/vcurve_doc.html
-  manuals/mged/animmate/vdraw.html
-  manuals/mged/animmate/view_tut.html
-  manuals/mged/animmate/viewget.html
-  manuals/mged/animmate/vscript_doc.html
-  )
-ADD_DOC(manuals_mged_animmate_HTML html/manuals/mged/animmate)
 
 set(manuals_mged_HTML
   manuals/mged/az_el.gif
@@ -335,8 +222,6 @@ set(relnotes_5_summary_HTML
 ADD_DOC(relnotes_5_summary_HTML html/ReleaseNotes/Rel5.0/Summary)
 
 ADD_DOC(ReleaseNotes/Rel6.0/index.html html/ReleaseNotes/Rel6.0)
-
-add_subdirectory(manuals/mged/animmate)
 
 set(html_ignore_files
   CMakeLists.txt

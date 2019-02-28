@@ -1,17 +1,10 @@
 set(man1_EN
-  anim_script.xml
-  anim_sort.xml
-  anim_time.xml
-  anim_track.xml
-  anim_turn.xml
   ap-pix.xml
   alias-pix.xml
   asc-nmg.xml
   asc-plot3.xml
   asc2dsp.xml
   asc2g.xml
-  azel.xml
-  bary.xml
   benchmark.xml
   brlman.xml
   bot_dump.xml
@@ -40,8 +33,6 @@ set(man1_EN
   cad_boundp.xml
   cad_parea.xml
   canonize.xml
-  chan_mult.xml
-  chan_permute.xml
   coil.xml
   comgeom-g.xml
   conv-vg2g.xml
@@ -60,7 +51,6 @@ set(man1_EN
   fb-pix.xml
   fb-png.xml
   fb-rle.xml
-  fbanim.xml
   fbcbars.xml
   fbclear.xml
   fbcmap.xml
@@ -190,19 +180,15 @@ set(man1_EN
   rthide.xml
   rtscale.xml
   rtshot.xml
-  rtwalk.xml
   rtweight.xml
   rtwizard.xml
   rtxray.xml
-  scriptsort.xml
   secpass.xml
   shapefact.xml
   showshot.xml
   showtherm.xml
   stl-g.xml
   sun-pix.xml
-  tabinterp.xml
-  tabsub.xml
   tankill-g.xml
   terrain.xml
   tire.xml
@@ -220,7 +206,6 @@ set(man1_EN
 # handling, since the CMake logic has no way to know about the
 # extra outputs without being told.
 set_source_files_properties(pix2asc.xml PROPERTIES EXTRA_MAN1_OUTPUTS "asc2pix.1")
-set_source_files_properties(chan_mult.xml PROPERTIES EXTRA_MAN1_OUTPUTS "chan_add.1")
 
 ADD_DOCBOOK("HTML;PHP;MAN1;PDF" man1_EN man1 "")
 

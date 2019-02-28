@@ -4,7 +4,6 @@ set(sh_SCRIPTS
   cmp.sh
   conversion.sh
   facetall.sh
-  orbit.sh
   show.sh
   )
 foreach(script ${sh_SCRIPTS})

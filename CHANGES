@@ -168,13 +168,6 @@ image tools
 	alias-pix' : incorporating into icv
 	asc2pix' : incorporating into icv
 	Removed as part of distillation effort [deprecated 7.26]
-video & animation tools
-	anim_*', fbanim, chan_add', chan_mult, chan_permute,
-	pixflip-fb' : outside scope
-	pixfields', pixfieldsep' : outside scope
-	orbit.sh, rtwalk, scriptsort, script-tab', tabinterp, tabsup,
-	azel, bary
-	Removed as part of distillation effort [deprecated 7.26]
 signal analysis tools
 	a-d', d-a', bw-a', i-a', u-a' : incorporating into cv
 	d-a', d-bw', d-f', d-i', d-u' : incorporating into cv
@@ -390,6 +383,13 @@ image tools
 	pixpaste : outside scope, license
 	pix-yuv', yuv-pix' : obsolete non-standard format
 	texturescale : obsolete implementation
+	Removed as part of distillation effort [deprecated 7.26]
+video & animation tools
+	anim_*', fbanim, chan_add', chan_mult, chan_permute,
+	pixflip-fb' : outside scope
+	pixfields', pixfieldsep' : outside scope
+	orbit.sh, rtwalk, scriptsort, script-tab', tabinterp, tabsup,
+	azel, bary
 	Removed as part of distillation effort [deprecated 7.26]
 
 7.30.0
