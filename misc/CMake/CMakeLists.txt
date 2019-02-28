@@ -27,7 +27,6 @@ set(cmake_ignore_files
   FindGECODE.cmake
   FindGL.cmake
   FindLEMON.cmake
-  FindLEX.cmake
   FindLZ4.cmake
   FindNETPBM.cmake
   FindOIIO.cmake

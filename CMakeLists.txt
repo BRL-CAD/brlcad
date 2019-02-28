@@ -1616,11 +1616,6 @@ endif(BRLCAD_PRINT_MSGS)
 # a Bourne shell and other commands - check for them.
 include(FindShellDeps)
 
-# CMake can detect flex, but apparently not generic lex.
-# Solution is to make our own generic lex Find routine that looks
-# first for flex, but will take whatever's available.
-include(FindLEX)
-
 # If using dtrace, we will need to find it
 if(BRLCAD_ENABLE_DTRACE)
   find_program(DTRACE_EXEC NAMES dtrace DOC "path to dtrace executable")
