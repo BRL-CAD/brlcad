@@ -214,8 +214,6 @@ include/tclcad.h
 	tclcad_bn_mat_print tclcad_rt_parse_ray tclcad_rt_pr_cutter
 	tclcad_rt_pr_hit tclcad_rt_rt tclcad_rt_import_from_path, removal of all
 	tcl-specific API functions [deprecated 7.26]
-pixcut, pixpaste
-	copyright cleanup [deprecated 7.26]
 librt, fast4-g
 	removal of CLINE entity support [deprecated 7.26]
 mged
@@ -228,8 +226,6 @@ mged
 	expand was regex were wrong - uses bu_fnmatch.) [deprecated 7.26]
 
 	pathlist, paths -> replaced by search [deprecated 7.26]
-burst
-	remove termlib-based interactive menu interface [deprecated 7.26]
 
 7.24
 ----
@@ -391,6 +387,10 @@ misc tools
 	Removed as part of distillation effort [deprecated 7.26]
 fb-rle, rle-fb, bw-rle, pix-rle, rle-pix
 	All tools focused specifically on the RLE image format. [deprecated 7.26]
+pixcut, pixpaste
+	copyright cleanup [deprecated 7.26]
+burst
+	remove termlib-based interactive menu interface [deprecated 7.26]
 
 7.30.0
 ------

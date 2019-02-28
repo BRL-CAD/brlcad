@@ -37,12 +37,6 @@
 #include "./trie.h"
 #include "./Hm.h"
 
-/* External variables from termlib. */
-#ifdef HAVE_TERMLIB
-extern char *CS, *DL;
-extern int CO, LI;
-#endif
-
 /* External functions from application. */
 extern Colors *findColors();
 extern Func *getTrie();

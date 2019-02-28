@@ -37,51 +37,12 @@
 #  endif
 #endif
 
-#ifdef HAVE_TERMLIB
-/* Externals from termlib(3). */
-#ifdef HAVE_TERMLIB_H
-#  include <termlib.h>
-#else
-#  ifdef HAVE_NCURSES_H
-#    include <ncurses.h>
-#  else
-#    ifdef HAVE_CURSES_H
-#      include <curses.h>
-#    else
-#      ifdef HAVE_TERMCAP_H
-#        include <termcap.h>
-#      else
-#        ifdef HAVE_TERMINFO_H
-#          include <terminfo.h>
-#        else
-#          ifdef HAVE_TINFO_H
-#            include <tinfo.h>
-#          endif
-#        endif
-#      endif
-#    endif
-#  endif
-#  ifdef HAVE_TERM_H
-#    include <term.h>
-#  endif
-#endif
-#endif
-
-/* termios.h might define this and conflict with vmath's */
-#ifdef VMIN
-#  undef VMIN
-#endif
-
 #include "bu/str.h"
 
 #include "./Sc.h"
 
 
 static FILE *out_fp;		/* Output stream.	*/
-#ifdef HAVE_TERMLIB
-static char tstrings[ScTCAPSIZ];    /* Individual TCS.	*/
-static char *tstr_addr = tstrings;	/* Used by tgetstr().	*/
-#endif
 static int fd_stdout = 1;
 
 /* This is a global buffer for the terminal capabilities entry.	*/
@@ -110,57 +71,6 @@ char *ScBC, /* Backspace character.			*/
 /* Individual terminal parameters.				*/
 int ScLI, /* Number of lines on screen.		*/
     ScCO; /* Number of columns on screen.		*/
-
-
-/*
-  Get the terminal parameters.
-*/
-#ifdef HAVE_TERMLIB
-static void
-ScLoadTP(void) {
-#ifdef TIOCGWINSZ
-    /* Get window size for DMD layers support.			*/
-    struct _winsize window;
-
-    if (ioctl(fd_stdout, TIOCGWINSZ, &window) == 0
-	&&	window.ws_row != 0 && window.ws_col != 0
-	) {
-	ScLI = (int) window.ws_row;
-	ScCO = (int) window.ws_col;
-    } else
-#endif
-    {
-	ScLI = tgetnum("li");
-	ScCO = tgetnum("co");
-    }
-    return;
-}
-#endif
-
-/*
-  Get the terminal control strings.
-*/
-#ifdef HAVE_TERMLIB
-static void
-ScLoadTCS(void) {
-    ScCS = tgetstr("cs", &tstr_addr);
-    ScSE = tgetstr("se", &tstr_addr);
-    ScSO = tgetstr("so", &tstr_addr);
-    ScCE = tgetstr("ce", &tstr_addr);
-    ScCL = tgetstr("cl", &tstr_addr);
-    ScHO = tgetstr("ho", &tstr_addr);
-    ScCM = tgetstr("cm", &tstr_addr);
-    ScBC = tgetstr("bc", &tstr_addr);
-    ScPC = tgetstr("pc", &tstr_addr);
-    ScUP = tgetstr("up", &tstr_addr);
-    ScTI = tgetstr("ti", &tstr_addr);
-    ScAL = tgetstr("al", &tstr_addr);
-    ScDL = tgetstr("dl", &tstr_addr);
-    ScSR = tgetstr("sr", &tstr_addr);
-    ScSF = tgetstr("sf", &tstr_addr);
-    return;
-}
-#endif
 
 
 /*
@@ -201,25 +111,6 @@ ScInit(FILE *fp) {
     }
     bu_strlcpy(ScTermname, term, ScTERMSIZ);
 
-#ifdef HAVE_TERMLIB
-    /* Get terminal entry.						*/
-    switch (tgetent(ScTermcap, term)) {
-	case -1 :
-	    (void) fprintf(stderr, "Can't open termcap file!\n");
-	    return 0;
-	case 0 :
-	    (void) fprintf(stderr,
-			   "Terminal type not in termcap file!\n"
-		);
-	    return 0;
-    }
-
-    /* Get individual terminal parameters and control strings.	*/
-    ScLoadTP();
-    ScLoadTCS();
-
-    tputs(ScTI, 1, PutChr);	/* Initialize terminal.			*/
-#endif
     return 1;		/* All is well.				*/
 }
 
@@ -231,9 +122,6 @@ int
 ScClrEOL(void) {
     if (ScCE == NULL)
 	return 0;
-#ifdef HAVE_TERMLIB
-    tputs(ScCE, 1, PutChr);
-#endif
     return 1;
 }
 
@@ -245,9 +133,6 @@ int
 ScClrScrlReg(void) {
     if (ScCS == NULL)
 	return 0;
-#ifdef HAVE_TERMLIB
-    tputs(tgoto(ScCS, ScLI-1, 0), 1, PutChr);
-#endif
     return 1;
 }
 
@@ -259,9 +144,6 @@ int
 ScClrStandout(void) {
     if (ScSE == NULL)
 	return 0;
-#ifdef HAVE_TERMLIB
-    tputs(ScSE, 1, PutChr);
-#endif
     return 1;
 }
 
@@ -273,9 +155,6 @@ int
 ScClrText(void) {
     if (ScCL == NULL)
 	return 0;
-#ifdef HAVE_TERMLIB
-    tputs(ScCL, ScLI, PutChr);
-#endif
     return 1;
 }
 
@@ -287,9 +166,6 @@ int
 ScInsertLn(void) {
     if (ScAL == NULL)
 	return 0;
-#ifdef HAVE_TERMLIB
-    tputs(ScAL, 1, PutChr);
-#endif
     return 1;
 }
 
@@ -301,9 +177,6 @@ int
 ScDeleteLn(void) {
     if (ScDL == NULL)
 	return 0;
-#ifdef HAVE_TERMLIB
-    tputs(ScDL, 1, PutChr);
-#endif
     return 1;
 }
 
@@ -315,9 +188,6 @@ int
 ScDnScroll(void) {
     if (ScSR == NULL)
 	return 0;
-#ifdef HAVE_TERMLIB
-    tputs(ScSR, 1, PutChr);
-#endif
     return 1;
 }
 
@@ -329,9 +199,6 @@ int
 ScHmCursor(void) {
     if (ScHO == NULL)
 	return 0;
-#ifdef HAVE_TERMLIB
-    tputs(ScHO, 1, PutChr);
-#endif
     return 1;
 }
 
@@ -341,18 +208,9 @@ ScHmCursor(void) {
   respectively).
 */
 int
-#ifdef HAVE_TERMLIB
-ScMvCursor(int x, int y) {
-#else
 ScMvCursor(int UNUSED(x), int UNUSED(y)) {
-#endif
     if (ScCM == NULL)
 	return 0;
-
-#ifdef HAVE_TERMLIB
-    --x; --y; /* Tgoto() adds 1 to each coordinate!? */
-    tputs(tgoto(ScCM, x, y), 1, PutChr);
-#endif
     return 1;
 }
 
@@ -362,16 +220,9 @@ ScMvCursor(int UNUSED(x), int UNUSED(y)) {
   inclusive.
 */
 int
-#ifdef HAVE_TERMLIB
-ScSetScrlReg(int top, int btm) {
-#else
 ScSetScrlReg(int UNUSED(top), int UNUSED(btm)) {
-#endif
     if (ScCS == NULL)
 	return 0;
-#ifdef HAVE_TERMLIB
-    tputs(tgoto(ScCS, btm-1, top-1), 1, PutChr);
-#endif
     return 1;
 }
 
@@ -383,9 +234,6 @@ int
 ScSetStandout(void) {
     if (ScSO == NULL)
 	return 0;
-#ifdef HAVE_TERMLIB
-    tputs(ScSO, 1, PutChr);
-#endif
     return 1;
 }
 
@@ -397,9 +245,6 @@ int
 ScUpScroll(void) {
     if (ScSF == NULL)
 	return 0;
-#ifdef HAVE_TERMLIB
-    tputs(ScSF, 1, PutChr);
-#endif
     return 1;
 }
 
