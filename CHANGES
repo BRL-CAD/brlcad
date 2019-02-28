@@ -175,15 +175,6 @@ signal analysis tools
 	f-d', f-i', d-f', i-f', u-f', u-bw' : incorporating into cv
 	d2-c', double-asc' : incorporating into cv
 	Removed as part of distillation effort [deprecated 7.26]
-infrared & shapefactor tools
-	all_sf', if-X, ifdisp, pictx, showterm, firpass, secpass, shapefact
-	Removed as part of distillation effort [deprecated 7.26]
-misc tools
-	fix_polysolids' : obsolete primitive
-	remapid : superseded by reid+remat
-	buffer : unnecessary network/stream buffering tool
-	hex : superseded by hexdump
-	Removed as part of distillation effort [deprecated 7.26]
 include/bu/ptbl.h
         BU_PTBL_BASEADDR, BU_PTBL_LASTADDR, BU_PTBL_END
         Removed as private implementation detail [deprecated 7.26
@@ -197,8 +188,6 @@ include/bu/cmd.h
 	remove struct bu_cmdhist and struct bu_cmdhist_obj [deprecated 7.26]
 	BU_CMDHIST_NULL, BU_CMDHIST_OBJ_NULL, bu_cmdhist_histor, bu_cmdhist_add,
 	bu_cmdhist_curr, bu_cmdhist_nest, bu_cmdhist_prev [deprecated 7.26]
-fb-rle, rle-fb, bw-rle, pix-rle, rle-pix
-	All tools focused specifically on the RLE image format. [deprecated 7.26]
 nirt
 	-T - use LIBRT_BOT_MINTIE environment variable instead [deprecated 7.26]
 all global variables
@@ -391,6 +380,17 @@ video & animation tools
 	orbit.sh, rtwalk, scriptsort, script-tab', tabinterp, tabsup,
 	azel, bary
 	Removed as part of distillation effort [deprecated 7.26]
+infrared & shapefactor tools
+	all_sf', if-X, ifdisp, pictx, showterm, firpass, secpass, shapefact
+	Removed as part of distillation effort [deprecated 7.26]
+misc tools
+	fix_polysolids' : obsolete primitive
+	remapid : superseded by reid+remat
+	buffer : unnecessary network/stream buffering tool
+	hex : superseded by hexdump
+	Removed as part of distillation effort [deprecated 7.26]
+fb-rle, rle-fb, bw-rle, pix-rle, rle-pix
+	All tools focused specifically on the RLE image format. [deprecated 7.26]
 
 7.30.0
 ------

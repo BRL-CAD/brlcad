@@ -11,13 +11,11 @@ set(man1_EN
   brep_simple.xml
   brlcad-config.xml
   brlcad.xml
-  buffer.xml
   burst.xml
   bw-fb.xml
   bw-pix.xml
   bw-png.xml
   bw-ps.xml
-  bw-rle.xml
   bwcrop.xml
   bwdiff.xml
   bwfilter.xml
@@ -50,7 +48,6 @@ set(man1_EN
   fb-fb.xml
   fb-pix.xml
   fb-png.xml
-  fb-rle.xml
   fbcbars.xml
   fbclear.xml
   fbcmap.xml
@@ -68,7 +65,6 @@ set(man1_EN
   fbserv.xml
   fbstretch.xml
   fbzoom.xml
-  firpass.xml
   g-acad.xml
   g-dot.xml
   g-dxf.xml
@@ -95,7 +91,6 @@ set(man1_EN
   gqa.xml
   halftone.xml
   handle.xml
-  hex.xml
   icv.xml
   iges-g.xml
   imgdims.xml
@@ -109,7 +104,6 @@ set(man1_EN
   nirt.xml
   obj-g.xml
   patch-g.xml
-  pictx.xml
   picket_fence.xml
   pix-alias.xml
   pix-bw.xml
@@ -117,7 +111,6 @@ set(man1_EN
   pix-png.xml
   pix-ppm.xml
   pix-ps.xml
-  pix-rle.xml
   pix-sun.xml
   pix2asc.xml
   pixautosize.xml
@@ -165,11 +158,8 @@ set(man1_EN
   pp-fb.xml
   proe-g.xml
   random.xml
-  remapid.xml
   remrt.xml
   reshoot.xml
-  rle-fb.xml
-  rle-pix.xml
   rpatch.xml
   rt.xml
   rtarea.xml
@@ -183,10 +173,7 @@ set(man1_EN
   rtweight.xml
   rtwizard.xml
   rtxray.xml
-  secpass.xml
-  shapefact.xml
   showshot.xml
-  showtherm.xml
   stl-g.xml
   sun-pix.xml
   tankill-g.xml
@@ -209,7 +196,6 @@ set_source_files_properties(pix2asc.xml PROPERTIES EXTRA_MAN1_OUTPUTS "asc2pix.1
 
 ADD_DOCBOOK("HTML;PHP;MAN1;PDF" man1_EN man1 "")
 
-CMAKEFILES(pictx.xml)
 CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
