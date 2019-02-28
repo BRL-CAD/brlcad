@@ -140,7 +140,6 @@ set(man1_EN
   pixcmp.xml
   pixcolors.xml
   pixcrop.xml
-  pixcut.xml
   pixdiff.xml
   pixfade.xml
   pixfilter.xml

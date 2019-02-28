@@ -254,7 +254,6 @@ pixclump
 pixcmp
 pixcolors
 pixcount
-pixcut
 pixdiff
 pixelswap
 pixembed
@@ -271,7 +270,6 @@ pixinterp2x
 pixmatte
 pixmerge
 pixmorph
-pixpaste
 pixread.sh
 pixrect
 pixrot
