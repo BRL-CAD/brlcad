@@ -193,47 +193,104 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int min
 	goto view_init_rtweight_fail;
     }
 
-    analyze_densities_create(&density);
 
     /* densityfile is global to this file and will be used later (and then freed) */
     BU_GET(densityfile_vls, struct bu_vls);
     bu_vls_init(densityfile_vls);
 
     if (densityfile) {
+	analyze_densities_create(&density);
 	bu_vls_sprintf(densityfile_vls, "%s", densityfile);
 	if (!bu_file_exists(bu_vls_cstr(densityfile_vls), NULL)) {
 	    bu_log("Unable to load density file \"%s\" for reading\n", bu_vls_cstr(densityfile_vls));
 	    goto view_init_rtweight_fail;
 	}
+
+	dfile = bu_open_mapped_file(bu_vls_cstr(densityfile_vls), "densities file");
+	if (!dfile) {
+	    bu_log("Unable to open density file \"%s\" for reading\n", bu_vls_cstr(densityfile_vls));
+	    goto view_init_rtweight_fail;
+	}
+
+	dbuff = (char *)(dfile->buf);
+
+
+	/* Read in density */
+	if (analyze_densities_load(density, dbuff, &pbuff_msgs, NULL) ==  0) {
+	    bu_log("Unable to parse density file \"%s\":%s\n", bu_vls_cstr(densityfile_vls), bu_vls_cstr(&pbuff_msgs));
+	    bu_close_mapped_file(dfile);
+	    goto view_init_rtweight_fail;
+	}
+	bu_close_mapped_file(dfile);
+
+
     } else {
 
-	bu_vls_sprintf(densityfile_vls, "%s%c%s", bu_dir(NULL, 0, BU_DIR_CURR, NULL), BU_DIR_SEPARATOR, DENSITY_FILE);
-
-	if (!bu_file_exists(bu_vls_cstr(densityfile_vls), NULL)) {
-	    bu_vls_sprintf(densityfile_vls, "%s%c%s", bu_dir(NULL, 0, BU_DIR_HOME, NULL), BU_DIR_SEPARATOR, DENSITY_FILE);
-	    if (!bu_file_exists(bu_vls_cstr(densityfile_vls), NULL)) {
-		bu_log("Unable to load density file \"%s\" for reading\n", bu_vls_cstr(densityfile_vls));
+	/* If we don't have a density file, first try the .g itself */
+	struct directory *dp;
+	dp = db_lookup(ap->a_rt_i->rti_dbip, "_DENSITIES", LOOKUP_QUIET);
+	if (dp != (struct directory *)NULL) {
+	    int ret, ecnt;
+	    char *buf;
+	    struct rt_db_internal intern;
+	    struct rt_binunif_internal *bip;
+	    struct bu_vls msgs = BU_VLS_INIT_ZERO;
+	    if (rt_db_get_internal(&intern, dp, ap->a_rt_i->rti_dbip, NULL, &rt_uniresource) < 0) {
+		bu_log("Could not import %s\n", dp->d_namep);
 		goto view_init_rtweight_fail;
 	    }
+	    if ((intern.idb_major_type & DB5_MAJORTYPE_BINARY_MASK) == 0)
+		goto view_init_rtweight_fail;
+
+	    bip = (struct rt_binunif_internal *)intern.idb_ptr;
+	    RT_CHECK_BINUNIF (bip);
+
+	    analyze_densities_create(&density);
+	    buf = (char *)bu_calloc(bip->count+1, sizeof(char), "density buffer");
+	    memcpy(buf, bip->u.int8, bip->count);
+	    rt_db_free_internal(&intern);
+
+	    ret = analyze_densities_load(density, buf, &msgs, &ecnt);
+
+	    bu_free((void *)buf, "density buffer");
+
+	    if (ret <= 0) {
+		bu_log("Problem reading densities from .g file:\n%s\n", bu_vls_cstr(&msgs));
+		bu_vls_free(&msgs);
+		goto view_init_rtweight_fail;
+	    }
+
+	} else {
+
+	    /* If we still don't have density information, fall back on the pre-defined defaults */
+	    analyze_densities_create(&density);
+	    bu_vls_sprintf(densityfile_vls, "%s%c%s", bu_dir(NULL, 0, BU_DIR_CURR, NULL), BU_DIR_SEPARATOR, DENSITY_FILE);
+
+	    if (!bu_file_exists(bu_vls_cstr(densityfile_vls), NULL)) {
+		bu_vls_sprintf(densityfile_vls, "%s%c%s", bu_dir(NULL, 0, BU_DIR_HOME, NULL), BU_DIR_SEPARATOR, DENSITY_FILE);
+		if (!bu_file_exists(bu_vls_cstr(densityfile_vls), NULL)) {
+		    bu_log("Unable to load density file \"%s\" for reading\n", bu_vls_cstr(densityfile_vls));
+		    goto view_init_rtweight_fail;
+		}
+	    }
+	    dfile = bu_open_mapped_file(bu_vls_cstr(densityfile_vls), "densities file");
+	    if (!dfile) {
+		bu_log("Unable to open density file \"%s\" for reading\n", bu_vls_cstr(densityfile_vls));
+		goto view_init_rtweight_fail;
+	    }
+
+	    dbuff = (char *)(dfile->buf);
+
+
+	    /* Read in density */
+	    if (analyze_densities_load(density, dbuff, &pbuff_msgs, NULL) ==  0) {
+		bu_log("Unable to parse density file \"%s\":%s\n", bu_vls_cstr(densityfile_vls), bu_vls_cstr(&pbuff_msgs));
+		bu_close_mapped_file(dfile);
+		goto view_init_rtweight_fail;
+	    }
+	    bu_close_mapped_file(dfile);
 	}
     }
-
-    dfile = bu_open_mapped_file(bu_vls_cstr(densityfile_vls), "densities file");
-    if (!dfile) {
-	bu_log("Unable to open density file \"%s\" for reading\n", bu_vls_cstr(densityfile_vls));
-	goto view_init_rtweight_fail;
-    }
-
-    dbuff = (char *)(dfile->buf);
-
-
-    /* Read in density */
-    if (analyze_densities_load(density, dbuff, &pbuff_msgs, NULL) ==  0) {
-	bu_log("Unable to parse density file \"%s\":%s\n", bu_vls_cstr(densityfile_vls), bu_vls_cstr(&pbuff_msgs));
-	bu_close_mapped_file(dfile);
-	goto view_init_rtweight_fail;
-    }
-    bu_close_mapped_file(dfile);
 
     ap->a_hit = hit;
     ap->a_miss = miss;
