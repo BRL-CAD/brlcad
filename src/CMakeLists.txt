@@ -80,7 +80,6 @@ set(level_3_dirs
   fbserv
   gtools
   halftone
-  lgt
   nirt
   proc-db
   rt
