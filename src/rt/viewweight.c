@@ -260,6 +260,8 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int min
 		goto view_init_rtweight_fail;
 	    }
 
+	    bu_vls_sprintf(densityfile_vls, "%s", ap->a_rt_i->rti_dbip->dbi_filename);
+
 	} else {
 
 	    /* If we still don't have density information, fall back on the pre-defined defaults */
