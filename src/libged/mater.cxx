@@ -258,12 +258,7 @@ _ged_mater_source(struct ged *gedp)
 {
     struct bu_vls d_path_dir = BU_VLS_INIT_ZERO;
 
-    if (gedp->gd_densities && gedp->gd_densities_source) {
-	bu_vls_printf(gedp->ged_result_str, "%s\n", gedp->gd_densities_source);
-	return GED_OK;
-    }
-
-    /* If nothing is already defined, check in priority order */
+    /* Check in priority order */
     if (db_lookup(gedp->ged_wdbp->dbip, GED_DB_DENSITY_OBJECT, LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s\n", gedp->ged_wdbp->dbip->dbi_filename);
 	return GED_OK;
@@ -306,14 +301,6 @@ _ged_mater_clear(struct ged *gedp)
 	    return GED_ERROR;
 	}
 	db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
-    }
-    if (gedp->gd_densities) {
-	analyze_densities_destroy(gedp->gd_densities);
-	gedp->gd_densities = NULL;
-    }
-    if (gedp->gd_densities_source) {
-	bu_free(gedp->gd_densities_source, "free density source path");
-	gedp->gd_densities_source = NULL;
     }
     return GED_OK;
 }
@@ -677,14 +664,9 @@ _ged_mater_set(struct ged *gedp, int argc, const char *argv[])
     }
 
     if ((dp = db_lookup(gedp->ged_wdbp->dbip, GED_DB_DENSITY_OBJECT, LOOKUP_QUIET)) != RT_DIR_NULL) {
-	if (_ged_read_densities(gedp, NULL, 0) != GED_OK) {
+	if (_ged_read_densities(&a, NULL, gedp, NULL, 0) != GED_OK) {
 	    return GED_ERROR;
 	}
-	/* Take control of the analyze database away from the GED struct */
-	a = gedp->gd_densities;
-	bu_free(gedp->gd_densities_source, "density path name");
-	gedp->gd_densities_source = NULL;
-	gedp->gd_densities = NULL;
     } else {
 	/* Starting from scratch */
 	analyze_densities_create(&a);
@@ -1047,15 +1029,10 @@ _ged_mater_mat_id(struct ged *gedp, int argc, const char *argv[])
 	// If we don't have a density file, we can't proceed
 	// unless the database has density information.
 	if ((dp = db_lookup(gedp->ged_wdbp->dbip, GED_DB_DENSITY_OBJECT, LOOKUP_QUIET)) != RT_DIR_NULL) {
-	    if (_ged_read_densities(gedp, NULL, 0) != GED_OK) {
+	    if (_ged_read_densities(&a, NULL, gedp, NULL, 0) != GED_OK) {
 		bu_vls_printf(gedp->ged_result_str, "No density information found and no density file specified, cannot proceed.");
 		goto ged_mater_mat_id_fail;
 	    }
-	    /* Take control of the analyze database away from the GED struct */
-	    a = gedp->gd_densities;
-	    bu_free(gedp->gd_densities_source, "density path name");
-	    gedp->gd_densities_source = NULL;
-	    gedp->gd_densities = NULL;
 
 	    curr_id = -1;
 	    id_cnt = 0;
