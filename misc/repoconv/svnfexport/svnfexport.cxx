@@ -80,6 +80,33 @@ std::map<std::string, std::map<long int, std::set<struct svn_node *> *>>::iterat
 std::set<long int> rebuild_revs;
 
 
+int verify_repos(long int rev, std::string branch_svn, std::string branch_git)
+{
+    std::string cleanup_cmd = std::string("rm -rf brlcad_svn_checkout cvs_git_working brlcad_git_checkout");
+    std::string svn_cmd = std::string("svn co -q -r") + std::to_string(rev) + std::string(" file:///home/user/repo_dercs/brlcad/") + branch_svn + std::string(" brlcad_svn_checkout");
+    std::string git_setup = std::string("rm -rf cvs_git_working && cp -r cvs_git cvs_git_working");
+    std::string git_fi = std::string("cd cvs_git_working && cat ../brlcad-svn-export.fi | git fast-import && git reset --hard HEAD && cd ..");
+    std::string git_clone = std::string("git clone --single-branch --branch ") + branch_git + std::string(" ./cvs_git_working/.git brlcad_git_checkout");
+    std::string repo_diff = std::string("diff -qrw -I '\\$Id' -I '\\$Revision' -I'\\$Header' -I'$Source' -I'$Date' -I'$Log' -I'$Locker' --exclude \".cvsignore\" --exclude \".gitignore\" --exclude \"terra.dsp\" --exclude \".git\" --exclude \".svn\" brlcad_svn_checkout brlcad_git_checkout");
+    std::cout << "Verifying r" << rev << ", branch " << branch_svn << "\n";
+    std::system(cleanup_cmd.c_str());
+    std::system(svn_cmd.c_str());
+    std::system(git_setup.c_str());
+    if (rev > 29886) {
+	std::system(git_fi.c_str());
+    }
+    std::system(git_clone.c_str());
+    int diff_ret = std::system(repo_diff.c_str());
+    if (diff_ret) {
+	std::cout << "diff test failed, r" << rev << ", branch " << branch_svn << "\n";
+	exit(1);
+    }
+    std::system(cleanup_cmd.c_str());
+    return 0;
+}
+
+
+
 /* Branches */
 std::set<std::string> branches;
 /* Tags */
@@ -1439,6 +1466,11 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 		    std::cout << rev.commit_msg << "\n";
 		}
 	    }
+
+	    // Check trunk after every commit - this will eventually expand to branch specific checks as well, but for now we
+	    // need to get trunk building correctly
+	    outfile.flush();
+	    verify_repos(rev.revision_number, std::string("trunk"), std::string("master"));
 	}
     }
 }
@@ -1492,6 +1524,7 @@ load_dump_file(const char *f)
     return rev_cnt;
 }
 
+// TODO run system command to generate these at time of run, rather than using static file
 void
 load_branch_head_sha1s(const char *f)
 {
@@ -1505,6 +1538,7 @@ load_branch_head_sha1s(const char *f)
     }
 }
 
+// TODO run system command to generate these at time of run, rather than using static file
 void
 load_blob_sha1s(const char *f)
 {
@@ -1540,6 +1574,9 @@ int main(int argc, const char **argv)
 	return 1;
     }
 
+    // Make sure our starting point is sound
+    verify_repos(29886, std::string("trunk"), std::string("master"));
+
     /* Populate valid_projects */
     valid_projects.insert(std::string("brlcad"));
 
@@ -1572,7 +1609,7 @@ int main(int argc, const char **argv)
     std::ofstream outfile("brlcad-svn-export.fi", std::ios::out | std::ios::binary);
     if (!outfile.good()) return -1;
     //rev_fast_export(infile, outfile, 29887, 30854);
-    rev_fast_export(infile, outfile, 29887, 65499);
+    rev_fast_export(infile, outfile, 29887, 30000);
     outfile.close();
 
     return 0;
