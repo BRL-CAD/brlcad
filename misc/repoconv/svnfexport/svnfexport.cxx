@@ -600,6 +600,17 @@ process_revision(std::ifstream &infile)
     return success;
 }
 
+std::string path_subpath(std::string &root_path, std::string &long_path)
+{
+    size_t spos = long_path.find(root_path);
+    if (spos != std::string::npos) {
+	std::string lp = long_path.substr(spos + root_path.length(), std::string::npos);
+	std::cout << "local path of " << long_path << " is " << lp << "\n";
+	return lp;
+    }
+    std::cout << "Warning: root path " << root_path << " is not a subpath of " << long_path << "\n";
+    return std::string("");
+}
 
 void
 node_path_split(std::string &node_path, std::string &project, std::string &branch, std::string &etag, std::string &local_path, int *is_tag)
@@ -1150,6 +1161,9 @@ void old_references_commit(std::ofstream &outfile, struct svn_revision &rev, std
 
 	if (node.kind == ndir && node.action == nadd && node.copyfrom_path.length() && node.copyfrom_rev < rev.revision_number - 1) {
 	    std::cout << "Non-standard DIR handling needed: " << node.path << "\n";
+	    std::string ppath, bbpath, llpath, tpath;
+	    int is_tag;
+	    node_path_split(node.copyfrom_path, ppath, bbpath, tpath, llpath, &is_tag);
 	    std::set<struct svn_node *>::iterator n_it;
 	    std::set<struct svn_node *> *node_set = path_states[node.copyfrom_path][node.copyfrom_rev];
 	    for (n_it = node_set->begin(); n_it != node_set->end(); n_it++) {
@@ -1158,9 +1172,10 @@ void old_references_commit(std::ofstream &outfile, struct svn_revision &rev, std
 		    exit(1);
 		}
 		std::cout << "Stashed file node: " << (*n_it)->path << "\n";
+		std::string rp = path_subpath(llpath, (*n_it)->local_path);
 		std::string gsha1 = svn_sha1_to_git_sha1[(*n_it)->text_content_sha1];
 		std::string exestr = ((*n_it)->exec_path) ? std::string("100755 ") : std::string("100644 ");
-		outfile << "M " << exestr << gsha1 << " \"" << (*n_it)->local_path << "\"\n";
+		outfile << "M " << exestr << gsha1 << " \"" << node.local_path << rp << "\"\n";
 	    }
 	    continue;
 	}
@@ -1323,12 +1338,25 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 		    bsrc = tag_ids[std::string("rel-7-12-6")];
 		}
 		full_sync_commit(outfile, rev, bsrc, bdest);
+
+		// Check trunk after every commit - this will eventually expand to branch specific checks as well, but for now we
+		// need to get trunk building correctly
+		outfile.flush();
+		verify_repos(rev.revision_number, std::string("trunk"), std::string("master"));
+
 		continue;
 	    }
 
 	    if (rebuild_revs.find(rev.revision_number) != rebuild_revs.end()) {
 		std::cout << "Revision " << rev.revision_number << " references non-current SVN info, needs special handling\n";
 		old_references_commit(outfile, rev, rbranch);
+
+		// Check trunk after every commit - this will eventually expand to branch specific checks as well, but for now we
+		// need to get trunk building correctly
+		outfile.flush();
+		verify_repos(rev.revision_number, std::string("trunk"), std::string("master"));
+
+
 		continue;
 	    }
 
@@ -1470,7 +1498,7 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 	    // Check trunk after every commit - this will eventually expand to branch specific checks as well, but for now we
 	    // need to get trunk building correctly
 	    outfile.flush();
-	    verify_repos(rev.revision_number, std::string("trunk"), std::string("master"));
+	    //verify_repos(rev.revision_number, std::string("trunk"), std::string("master"));
 	}
     }
 }
@@ -1526,9 +1554,12 @@ load_dump_file(const char *f)
 
 // TODO run system command to generate these at time of run, rather than using static file
 void
-load_branch_head_sha1s(const char *f)
+load_branch_head_sha1s()
 {
-    std::ifstream hfile(f);
+    std::string git_sha1_heads_cmd = std::string("rm -f brlcad_cvs_git_heads_sha1.txt && cd cvs_git && git show-ref --heads --tags > ../brlcad_cvs_git_heads_sha1.txt && cd ..");
+    std::system(git_sha1_heads_cmd.c_str());
+    std::ifstream hfile("brlcad_cvs_git_heads_sha1.txt");
+    if (!hfile.good()) exit(-1);
     std::string line;
     while (std::getline(hfile, line)) {
 	size_t spos = line.find_first_of(" ");
@@ -1536,20 +1567,26 @@ load_branch_head_sha1s(const char *f)
 	std::string hbranch = line.substr(spos+1, std::string::npos);
 	branch_head_ids[hbranch] = hsha1;
     }
+    hfile.close();
+    //remove("brlcad_cvs_git_heads_sha1.txt");
 }
 
 // TODO run system command to generate these at time of run, rather than using static file
 void
-load_blob_sha1s(const char *f)
+load_blob_sha1s()
 {
-
-    std::ifstream bfile(f);
+    std::string git_sha1_heads_cmd = std::string("rm -f brlcad_cvs_git_all_blob_sha1.txt && cd cvs_git && git rev-list --objects --all | git cat-file --batch-check='%(objectname) %(objecttype) %(rest)' | grep '^[^ ]* blob' | cut -d\" \" -f1,3- > ../brlcad_cvs_git_all_blob_sha1.txt && echo \"e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 src/other/tkhtml3/AUTHORS\n\" >> ../brlcad_cvs_git_heads_sha1.txt && cd ..");
+    std::system(git_sha1_heads_cmd.c_str());
+    std::ifstream bfile("brlcad_cvs_git_all_blob_sha1.txt");
+    if (!bfile.good()) exit(-1);
     std::string line;
     while (std::getline(bfile, line)) {
 	size_t spos = line.find_first_of(" ");
 	std::string hsha1 = line.substr(0, spos);
 	cvs_blob_sha1.insert(hsha1);
     }
+    bfile.close();
+    //remove("brlcad_cvs_git_all_blob_sha1.txt");
 }
 
 
@@ -1569,8 +1606,8 @@ load_author_map(const char *f)
 
 int main(int argc, const char **argv)
 {
-    if (argc < 4) {
-	std::cerr << "svnfexport dumpfile author_map head_sha1s blob_sha1s\n";
+    if (argc < 3) {
+	std::cerr << "svnfexport dumpfile author_map\n";
 	return 1;
     }
 
@@ -1590,10 +1627,10 @@ int main(int argc, const char **argv)
     load_author_map(argv[2]);
 
     /* Read in pre-existing branch sha1 heads from git */
-    load_branch_head_sha1s(argv[3]);
+    load_branch_head_sha1s();
 
     /* Read in pre-existing blob sha1s from git */
-    load_blob_sha1s(argv[4]);
+    load_blob_sha1s();
 
     int rev_cnt = load_dump_file(argv[1]);
     if (rev_cnt > 0) {
