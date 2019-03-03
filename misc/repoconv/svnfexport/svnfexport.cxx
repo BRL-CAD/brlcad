@@ -10,6 +10,8 @@
 #include "sha1.hpp"
 #include "svn_date.h"
 
+long int starting_rev;
+
 enum svn_node_kind_t { nkerr, nfile, ndir };
 enum svn_node_action_t { naerr, nchange, nadd, ndelete, nreplace };
 
@@ -84,6 +86,7 @@ int verify_repos(long int rev, std::string branch_svn, std::string branch_git)
 {
     std::string cleanup_cmd = std::string("rm -rf brlcad_svn_checkout cvs_git_working brlcad_git_checkout");
     std::string svn_cmd = std::string("svn co -q -r") + std::to_string(rev) + std::string(" file:///home/cyapp/brlcad_repo/repo_dercs/brlcad/") + branch_svn + std::string(" brlcad_svn_checkout");
+    std::string svn_emptydir_rm = std::string("cd brlcad_svn_checkout && find . -type d -empty -print0 |xargs -0 rmdir && cd ..");
     std::string git_setup = std::string("rm -rf cvs_git_working && cp -r cvs_git cvs_git_working");
     std::string git_fi = std::string("cd cvs_git_working && cat ../brlcad-svn-export.fi | git fast-import && git reset --hard HEAD && cd ..");
     std::string git_clone = std::string("git clone --single-branch --branch ") + branch_git + std::string(" ./cvs_git_working/.git brlcad_git_checkout");
@@ -91,8 +94,9 @@ int verify_repos(long int rev, std::string branch_svn, std::string branch_git)
     std::cout << "Verifying r" << rev << ", branch " << branch_svn << "\n";
     std::system(cleanup_cmd.c_str());
     std::system(svn_cmd.c_str());
+    std::system(svn_emptydir_rm.c_str());
     std::system(git_setup.c_str());
-    if (rev > 29886) {
+    if (rev > starting_rev) {
 	std::system(git_fi.c_str());
     }
     std::system(git_clone.c_str());
@@ -246,6 +250,9 @@ std::string git_sha1(std::ifstream &infile, struct svn_node *n)
     std::string go_buff;
     char *cbuffer = new char [n->text_content_length];;
     infile.read(cbuffer, n->text_content_length);
+    if (n->text_content_sha1 == std::string("71fc76a4374348f844c480a375d594cd10835ab9")) {
+	std::cout << "working " << n->path << ", rev " << n->revision_number << "\n";
+    }
     go_buff.append("blob ");
 
     if (!n->crlf_content) {
@@ -530,9 +537,9 @@ process_node(std::ifstream &infile, struct svn_revision *rev)
     }
 
 
-    // r29887 is where we will be starting our fast-export generation - until that point,
+    // the commit after the starting_rev is where we will be starting our fast-export generation - until that point,
     // keep current_sha1 up to date on a rolling basis
-    if (rev->revision_number <= 29886) {
+    if (rev->revision_number <= starting_rev) {
 	if (n.text_content_sha1.length()) {
 	    current_sha1[n.path] = n.text_content_sha1;
 	}
@@ -1054,29 +1061,28 @@ void write_git_node(std::ofstream &outfile, struct svn_revision &rev, struct svn
     std::string gsha1;
     if (node.action == nchange || node.action == nadd || node.action == nreplace) {
 	if (node.exec_change || node.copyfrom_path.length() || node.text_content_length || node.text_content_sha1.length()) {
-	    gsha1 = svn_sha1_to_git_sha1[current_sha1[node.path]];
+	    if (node.text_copy_source_sha1.length()) {
+		gsha1 = svn_sha1_to_git_sha1[node.text_copy_source_sha1];
+	    } else {
+		gsha1 = svn_sha1_to_git_sha1[current_sha1[node.path]];
+	    }
 	    if (gsha1.length() < 40) {
-		if (node.copyfrom_rev) {
-		    gsha1 = svn_sha1_to_git_sha1[node.text_copy_source_sha1];
+		std::string tpath;
+		if (node.copyfrom_path.length()) {
+		    tpath = node.copyfrom_path;
+		} else {
+		    tpath = std::string("brlcad/trunk/") + node.local_path;
 		}
+		gsha1 = svn_sha1_to_git_sha1[current_sha1[tpath]];
 		if (gsha1.length() < 40) {
-		    std::string tpath;
-		    if (node.copyfrom_path.length()) {
-			tpath = node.copyfrom_path;
-		    } else {
-			tpath = std::string("brlcad/trunk/") + node.local_path;
-		    }
-		    gsha1 = svn_sha1_to_git_sha1[current_sha1[tpath]];
-		    if (gsha1.length() < 40) {
-			std::cout << "Fatal - could not find git sha1 - r" << rev.revision_number << ", node: " << node.path << "\n";
-			std::cout << "current sha1: " << current_sha1[node.path] << "\n";
-			std::cout << "trunk sha1: " << current_sha1[tpath] << "\n";
-			std::cout << "Revision merged from: " << rev.merged_from << "\n";
-			print_node(node);
-			exit(1);
-		    } else {
-			std::cout << "Warning(r" << rev.revision_number << ") - couldn't find SHA1 for " << node.path << ", using node from " << tpath << "\n";
-		    }
+		    std::cout << "Fatal - could not find git sha1 - r" << rev.revision_number << ", node: " << node.path << "\n";
+		    std::cout << "current sha1: " << current_sha1[node.path] << "\n";
+		    std::cout << "trunk sha1: " << current_sha1[tpath] << "\n";
+		    std::cout << "Revision merged from: " << rev.merged_from << "\n";
+		    print_node(node);
+		    exit(1);
+		} else {
+		    std::cout << "Warning(r" << rev.revision_number << ") - couldn't find SHA1 for " << node.path << ", using node from " << tpath << "\n";
 		}
 	    }
 	} else {
@@ -1498,7 +1504,7 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 	    // Check trunk after every commit - this will eventually expand to branch specific checks as well, but for now we
 	    // need to get trunk building correctly
 	    outfile.flush();
-	    //verify_repos(rev.revision_number, std::string("trunk"), std::string("master"));
+	    verify_repos(rev.revision_number, std::string("trunk"), std::string("master"));
 	}
     }
 }
@@ -1611,8 +1617,11 @@ int main(int argc, const char **argv)
 	return 1;
     }
 
+    //starting_rev = 29886;
+    starting_rev = 29939;
+
     // Make sure our starting point is sound
-    verify_repos(29886, std::string("trunk"), std::string("master"));
+    verify_repos(starting_rev, std::string("trunk"), std::string("master"));
 
     /* Populate valid_projects */
     valid_projects.insert(std::string("brlcad"));
@@ -1646,7 +1655,7 @@ int main(int argc, const char **argv)
     std::ofstream outfile("brlcad-svn-export.fi", std::ios::out | std::ios::binary);
     if (!outfile.good()) return -1;
     //rev_fast_export(infile, outfile, 29887, 30854);
-    rev_fast_export(infile, outfile, 29887, 30000);
+    rev_fast_export(infile, outfile, starting_rev + 1, 40000);
     outfile.close();
 
     return 0;
