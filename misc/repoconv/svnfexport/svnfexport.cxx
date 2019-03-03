@@ -83,7 +83,7 @@ std::set<long int> rebuild_revs;
 int verify_repos(long int rev, std::string branch_svn, std::string branch_git)
 {
     std::string cleanup_cmd = std::string("rm -rf brlcad_svn_checkout cvs_git_working brlcad_git_checkout");
-    std::string svn_cmd = std::string("svn co -q -r") + std::to_string(rev) + std::string(" file:///home/user/repo_dercs/brlcad/") + branch_svn + std::string(" brlcad_svn_checkout");
+    std::string svn_cmd = std::string("svn co -q -r") + std::to_string(rev) + std::string(" file:///home/cyapp/brlcad_repo/repo_dercs/brlcad/") + branch_svn + std::string(" brlcad_svn_checkout");
     std::string git_setup = std::string("rm -rf cvs_git_working && cp -r cvs_git cvs_git_working");
     std::string git_fi = std::string("cd cvs_git_working && cat ../brlcad-svn-export.fi | git fast-import && git reset --hard HEAD && cd ..");
     std::string git_clone = std::string("git clone --single-branch --branch ") + branch_git + std::string(" ./cvs_git_working/.git brlcad_git_checkout");
@@ -1149,7 +1149,7 @@ void old_references_commit(std::ofstream &outfile, struct svn_revision &rev, std
 	struct svn_node &node = rev.nodes[n];
 
 	if (node.kind == ndir && node.action == nadd && node.copyfrom_path.length() && node.copyfrom_rev < rev.revision_number - 1) {
-	    std::cout << "Non-standard handling needed: " << node.path << "\n";
+	    std::cout << "Non-standard DIR handling needed: " << node.path << "\n";
 	    std::set<struct svn_node *>::iterator n_it;
 	    std::set<struct svn_node *> *node_set = path_states[node.copyfrom_path][node.copyfrom_rev];
 	    for (n_it = node_set->begin(); n_it != node_set->end(); n_it++) {
@@ -1325,13 +1325,13 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 		full_sync_commit(outfile, rev, bsrc, bdest);
 		continue;
 	    }
-#if 0
+
 	    if (rebuild_revs.find(rev.revision_number) != rebuild_revs.end()) {
 		std::cout << "Revision " << rev.revision_number << " references non-current SVN info, needs special handling\n";
 		old_references_commit(outfile, rev, rbranch);
 		continue;
 	    }
-#endif
+
 	    if (rev.revision_number == 30332) {
 		std::cout << "at 30332\n";
 	    }
