@@ -1061,7 +1061,8 @@ void write_git_node(std::ofstream &outfile, struct svn_revision &rev, struct svn
     std::string gsha1;
     if (node.action == nchange || node.action == nadd || node.action == nreplace) {
 	if (node.exec_change || node.copyfrom_path.length() || node.text_content_length || node.text_content_sha1.length()) {
-	    if (node.text_copy_source_sha1.length()) {
+	    // TODO - if we have both of these, shouldn't the node be a move+edit?  confirm this, doesn't look like logic is doing that for r30495
+	    if (node.text_copy_source_sha1.length() && !node.text_content_sha1.length()) {
 		gsha1 = svn_sha1_to_git_sha1[node.text_copy_source_sha1];
 	    } else {
 		gsha1 = svn_sha1_to_git_sha1[current_sha1[node.path]];
@@ -1504,7 +1505,9 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 	    // Check trunk after every commit - this will eventually expand to branch specific checks as well, but for now we
 	    // need to get trunk building correctly
 	    outfile.flush();
-	    verify_repos(rev.revision_number, std::string("trunk"), std::string("master"));
+	    //if (rev.revision_number % 100 == 0) {
+		verify_repos(rev.revision_number, std::string("trunk"), std::string("master"));
+	    //}
 	}
     }
 }
@@ -1618,7 +1621,7 @@ int main(int argc, const char **argv)
     }
 
     //starting_rev = 29886;
-    starting_rev = 29939;
+    starting_rev = 30400;
 
     // Make sure our starting point is sound
     verify_repos(starting_rev, std::string("trunk"), std::string("master"));
@@ -1655,7 +1658,7 @@ int main(int argc, const char **argv)
     std::ofstream outfile("brlcad-svn-export.fi", std::ios::out | std::ios::binary);
     if (!outfile.good()) return -1;
     //rev_fast_export(infile, outfile, 29887, 30854);
-    rev_fast_export(infile, outfile, starting_rev + 1, 40000);
+    rev_fast_export(infile, outfile, starting_rev + 1, 30500);
     outfile.close();
 
     return 0;
