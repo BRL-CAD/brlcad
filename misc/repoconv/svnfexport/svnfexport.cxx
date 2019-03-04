@@ -1136,6 +1136,26 @@ void write_git_node(std::ofstream &outfile, struct svn_revision &rev, struct svn
     exit(1);
 }
 
+void old_ref_process_dir(std::ofstream &outfile, struct svn_revision &rev, struct svn_node *node)
+{
+    std::cout << "Non-standard DIR handling needed: " << node->path << "\n";
+    std::string ppath, bbpath, llpath, tpath;
+    int is_tag;
+    node_path_split(node->copyfrom_path, ppath, bbpath, tpath, llpath, &is_tag);
+    std::set<struct svn_node *>::iterator n_it;
+    std::set<struct svn_node *> *node_set = path_states[node->copyfrom_path][node->copyfrom_rev];
+    for (n_it = node_set->begin(); n_it != node_set->end(); n_it++) {
+	if ((*n_it)->kind == ndir) {
+	    std::cout << "Stashed dir node: " << (*n_it)->path << "\n";
+	    old_ref_process_dir(outfile, rev, *n_it);
+	}
+	std::cout << "Stashed file node: " << (*n_it)->path << "\n";
+	std::string rp = path_subpath(llpath, (*n_it)->local_path);
+	std::string gsha1 = svn_sha1_to_git_sha1[(*n_it)->text_content_sha1];
+	std::string exestr = ((*n_it)->exec_path) ? std::string("100755 ") : std::string("100644 ");
+	outfile << "M " << exestr << gsha1 << " \"" << node->local_path << rp << "\"\n";
+    }
+}
 
 void old_references_commit(std::ofstream &outfile, struct svn_revision &rev, std::string &rbranch)
 {
@@ -1167,23 +1187,7 @@ void old_references_commit(std::ofstream &outfile, struct svn_revision &rev, std
 	struct svn_node &node = rev.nodes[n];
 
 	if (node.kind == ndir && node.action == nadd && node.copyfrom_path.length() && node.copyfrom_rev < rev.revision_number - 1) {
-	    std::cout << "Non-standard DIR handling needed: " << node.path << "\n";
-	    std::string ppath, bbpath, llpath, tpath;
-	    int is_tag;
-	    node_path_split(node.copyfrom_path, ppath, bbpath, tpath, llpath, &is_tag);
-	    std::set<struct svn_node *>::iterator n_it;
-	    std::set<struct svn_node *> *node_set = path_states[node.copyfrom_path][node.copyfrom_rev];
-	    for (n_it = node_set->begin(); n_it != node_set->end(); n_it++) {
-		if ((*n_it)->kind == ndir) {
-		    std::cout << "Stashed dir node: " << (*n_it)->path << "\n";
-		    exit(1);
-		}
-		std::cout << "Stashed file node: " << (*n_it)->path << "\n";
-		std::string rp = path_subpath(llpath, (*n_it)->local_path);
-		std::string gsha1 = svn_sha1_to_git_sha1[(*n_it)->text_content_sha1];
-		std::string exestr = ((*n_it)->exec_path) ? std::string("100755 ") : std::string("100644 ");
-		outfile << "M " << exestr << gsha1 << " \"" << node.local_path << rp << "\"\n";
-	    }
+	    old_ref_process_dir(outfile, rev, &node);
 	    continue;
 	}
 
@@ -1511,9 +1515,9 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 	    // Check trunk after every commit - this will eventually expand to branch specific checks as well, but for now we
 	    // need to get trunk building correctly
 	    outfile.flush();
-	    //if (rev.revision_number % 100 == 0) {
+	    if (rev.revision_number % 10 == 0) {
 		verify_repos(rev.revision_number, std::string("trunk"), std::string("master"));
-	    //}
+	    }
 	}
     }
 }
@@ -1627,7 +1631,7 @@ int main(int argc, const char **argv)
     }
 
     //starting_rev = 29886;
-    starting_rev = 31280;
+    starting_rev = 32000;
 
     // Make sure our starting point is sound
     verify_repos(starting_rev, std::string("trunk"), std::string("master"));
@@ -1664,7 +1668,7 @@ int main(int argc, const char **argv)
     std::ofstream outfile("brlcad-svn-export.fi", std::ios::out | std::ios::binary);
     if (!outfile.good()) return -1;
     //rev_fast_export(infile, outfile, 29887, 30854);
-    rev_fast_export(infile, outfile, starting_rev + 1, 31300);
+    rev_fast_export(infile, outfile, starting_rev + 1, 32100);
     outfile.close();
 
     return 0;
