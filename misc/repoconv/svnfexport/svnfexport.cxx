@@ -803,10 +803,8 @@ analyze_dump()
 		// it's from an older state, "C" won't work and we need to
 		// explicitly reassemble the older directory state.
 
-		if (cpbranch != tpbranch || node.copyfrom_rev < path_last_commit[node.copyfrom_path]) {
-		    if (node.local_path.length()) {
-			dnodes.insert(std::pair<std::string, long int>(node.copyfrom_path, node.copyfrom_rev));
-		    }
+		if ((cpbranch != tpbranch &&  node.local_path.length())|| node.copyfrom_rev < path_last_commit[node.copyfrom_path]) {
+		    dnodes.insert(std::pair<std::string, long int>(node.copyfrom_path, node.copyfrom_rev));
 		}
 	    }
 	}
@@ -822,7 +820,7 @@ analyze_dump()
 	}
 
 	for (d_it = dnodes.begin(); d_it != dnodes.end(); d_it++) {
-	    std::cout << "(r" << rev.revision_number << "): copying directory " << d_it->first << " at revision " << d_it->second << "\n";
+	    std::cout << "(r" << rev.revision_number << "): copying subsequently edited directory " << d_it->first << " at revision " << d_it->second << "\n";
 	    path_states[d_it->first][d_it->second] = new std::set<struct svn_node *>;
 	    rebuild_revs.insert(rev.revision_number);
 	}
@@ -831,6 +829,7 @@ analyze_dump()
     // Second pass - assemble node sets for the paths and revisions we will need to know
     for (r_it = revs.begin(); r_it != revs.end(); r_it++) {
 	struct svn_revision &rev = r_it->second;
+	std::cout << "Pass 2: " << rev.revision_number << "\n";
 	for (size_t n = 0; n != rev.nodes.size(); n++) {
 	    struct svn_node &node = rev.nodes[n];
 	    for (ps_it = path_states.begin(); ps_it != path_states.end(); ps_it++) {
@@ -1162,12 +1161,21 @@ void old_ref_process_dir(std::ofstream &outfile, struct svn_revision &rev, struc
     }
 }
 
-void old_references_commit(std::ofstream &outfile, struct svn_revision &rev, std::string &rbranch)
+void old_references_commit(std::ifstream &infile, std::ofstream &outfile, struct svn_revision &rev, std::string &rbranch)
 {
     if (author_map.find(rev.author) == author_map.end()) {
 	std::cout << "Error - couldn't find author map for author " << rev.author << " on revision " << rev.revision_number << "\n";
 	exit(1);
     }
+
+    // If we need to write any blobs, take care of it now - old_references_commit short-circuits the "main" logic that handles this
+    for (size_t n = 0; n != rev.nodes.size(); n++) {
+	struct svn_node &node = rev.nodes[n];
+	if (node.text_content_length > 0) {
+	    write_blob(infile, outfile, node);
+	}	
+    }
+
     outfile << "commit " << rbranch << "\n";
     outfile << "mark :" << rev.revision_number << "\n";
     outfile << "committer " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
@@ -1365,7 +1373,7 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 
 	    if (rebuild_revs.find(rev.revision_number) != rebuild_revs.end()) {
 		std::cout << "Revision " << rev.revision_number << " references non-current SVN info, needs special handling\n";
-		old_references_commit(outfile, rev, rbranch);
+		old_references_commit(infile, outfile, rev, rbranch);
 
 		// Check trunk after every commit - this will eventually expand to branch specific checks as well, but for now we
 		// need to get trunk building correctly
@@ -1520,9 +1528,9 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 	    // Check trunk after every commit - this will eventually expand to branch specific checks as well, but for now we
 	    // need to get trunk building correctly
 	    outfile.flush();
-	    if (rev.revision_number % 10 == 0) {
+	    //if (rev.revision_number % 100 == 0) {
 		verify_repos(rev.revision_number, std::string("trunk"), std::string("master"));
-	    }
+	    //}
 	}
     }
 }
@@ -1636,7 +1644,7 @@ int main(int argc, const char **argv)
     }
 
     //starting_rev = 29886;
-    starting_rev = 32000;
+    starting_rev = 32400;
 
     // Make sure our starting point is sound
     verify_repos(starting_rev, std::string("trunk"), std::string("master"));
@@ -1673,7 +1681,7 @@ int main(int argc, const char **argv)
     std::ofstream outfile("brlcad-svn-export.fi", std::ios::out | std::ios::binary);
     if (!outfile.good()) return -1;
     //rev_fast_export(infile, outfile, 29887, 30854);
-    rev_fast_export(infile, outfile, starting_rev + 1, 32100);
+    rev_fast_export(infile, outfile, starting_rev + 1, 32500);
     outfile.close();
 
     return 0;
