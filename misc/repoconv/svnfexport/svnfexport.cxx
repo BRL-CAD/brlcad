@@ -1455,6 +1455,12 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 		    branch_delete = 1;
 		    continue;
 		}
+
+
+		if (node.kind == ndir && node.action == nadd && node.copyfrom_path.length()) {
+		    git_changes = 1;
+		}
+
 		if (node.text_content_length > 0) {
 		    //std::cout << "	Adding node object for " << node.local_path << "\n";
 		    write_blob(infile, outfile, node);
@@ -1621,7 +1627,7 @@ int main(int argc, const char **argv)
     }
 
     //starting_rev = 29886;
-    starting_rev = 30400;
+    starting_rev = 31280;
 
     // Make sure our starting point is sound
     verify_repos(starting_rev, std::string("trunk"), std::string("master"));
@@ -1658,7 +1664,7 @@ int main(int argc, const char **argv)
     std::ofstream outfile("brlcad-svn-export.fi", std::ios::out | std::ios::binary);
     if (!outfile.good()) return -1;
     //rev_fast_export(infile, outfile, 29887, 30854);
-    rev_fast_export(infile, outfile, starting_rev + 1, 30500);
+    rev_fast_export(infile, outfile, starting_rev + 1, 31300);
     outfile.close();
 
     return 0;
