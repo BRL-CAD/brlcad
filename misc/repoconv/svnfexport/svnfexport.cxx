@@ -1457,6 +1457,8 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 		    std::cout << "Adding branch " << node.branch << " from " << bbpath << ", r" << rev.revision_number <<"\n";
 		    std::cout << rev.commit_msg << "\n";
 		    outfile << "reset " << node.branch << "\n";
+		    // TODO - This isn't enough - r36053 branches from an older rev.  We need to build a revision number to
+		    // commit sha1 map...
 		    outfile << "from " << branch_head_id(bbpath, rev.revision_number) << "\n";
 		    branch_head_ids[node.branch] = branch_head_ids[bbpath];
 		    have_commit = 1;
@@ -1528,9 +1530,9 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 	    // Check trunk after every commit - this will eventually expand to branch specific checks as well, but for now we
 	    // need to get trunk building correctly
 	    outfile.flush();
-	    //if (rev.revision_number % 100 == 0) {
+	    if (rev.revision_number % 100 == 0) {
 		verify_repos(rev.revision_number, std::string("trunk"), std::string("master"));
-	    //}
+	    }
 	}
     }
 }
@@ -1644,7 +1646,7 @@ int main(int argc, const char **argv)
     }
 
     //starting_rev = 29886;
-    starting_rev = 32400;
+    starting_rev = 36000;
 
     // Make sure our starting point is sound
     verify_repos(starting_rev, std::string("trunk"), std::string("master"));
@@ -1681,7 +1683,7 @@ int main(int argc, const char **argv)
     std::ofstream outfile("brlcad-svn-export.fi", std::ios::out | std::ios::binary);
     if (!outfile.good()) return -1;
     //rev_fast_export(infile, outfile, 29887, 30854);
-    rev_fast_export(infile, outfile, starting_rev + 1, 32500);
+    rev_fast_export(infile, outfile, starting_rev + 1, 40000);
     outfile.close();
 
     return 0;
