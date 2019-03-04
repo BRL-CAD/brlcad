@@ -781,6 +781,9 @@ analyze_dump()
     // the contents at one or more specific revisions
     for (r_it = revs.begin(); r_it != revs.end(); r_it++) {
 	struct svn_revision &rev = r_it->second;
+	if (rev.revision_number == 32046) {
+	    std::cout << "32046\n";
+	}
 	std::set<std::pair<std::string, long int>> dnodes;
 	std::set<std::pair<std::string, long int>>::iterator d_it;
 	for (size_t n = 0; n != rev.nodes.size(); n++) {
@@ -790,7 +793,7 @@ analyze_dump()
 		int cp_is_tag, tp_is_tag;
 		std::string cpproject, cpbranch, cplocal_path, cptag;
 		std::string tpproject, tpbranch, tplocal_path, tptag;
-		node_path_split(node.copyfrom_path, cpproject, cpbranch, cptag, cplocal_path, &cp_is_tag);
+		node_path_split(node.path, cpproject, cpbranch, cptag, cplocal_path, &cp_is_tag);
 		node_path_split(node.copyfrom_path, tpproject, tpbranch, tptag, tplocal_path, &tp_is_tag);
 
 
@@ -801,7 +804,9 @@ analyze_dump()
 		// explicitly reassemble the older directory state.
 
 		if (cpbranch != tpbranch || node.copyfrom_rev < path_last_commit[node.copyfrom_path]) {
-		    dnodes.insert(std::pair<std::string, long int>(node.copyfrom_path, node.copyfrom_rev));
+		    if (node.local_path.length()) {
+			dnodes.insert(std::pair<std::string, long int>(node.copyfrom_path, node.copyfrom_rev));
+		    }
 		}
 	    }
 	}
