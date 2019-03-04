@@ -365,9 +365,9 @@ image tools
 	fbed, cell-fb : outside scope
 	fbscanplot, polar-fb, bw-imp, pixinfo.sh : obsolete
 	png_info : incorporating into icv
-	pixpaste : outside scope, license
 	pix-yuv', yuv-pix' : obsolete non-standard format
 	texturescale : obsolete implementation
+        pixcut, pixpaste : license, copyright cleanup
 	Removed as part of distillation effort [deprecated 7.26]
 video & animation tools
 	anim_*', fbanim, chan_add', chan_mult, chan_permute,
@@ -387,8 +387,6 @@ misc tools
 	Removed as part of distillation effort [deprecated 7.26]
 fb-rle, rle-fb, bw-rle, pix-rle, rle-pix
 	All tools focused specifically on the RLE image format. [deprecated 7.26]
-pixcut, pixpaste
-	copyright cleanup [deprecated 7.26]
 burst
 	remove termlib-based interactive menu interface [deprecated 7.26]
 
