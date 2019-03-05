@@ -48,7 +48,7 @@
  * when formatting this file.  if the compile breaks here, it means
  * that spaces got inserted incorrectly.
  */
-#define COMMA ', '
+#define COMMA ','
 
 int rt_verbosity = -1;        /* blather incessantly by default */
 
