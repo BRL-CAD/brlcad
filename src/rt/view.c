@@ -63,44 +63,49 @@
 #include "./ext.h"
 
 
-const char title[] = "The BRL-CAD Raytracer RT";
-
-/*
-    " -+ t                Specify that output is NOT binary (default is that it is -+ is otherwise not\n"
-    "                implemented\n"
-*/
-
 extern fb *fbp;			/* Framebuffer handle */
 
 extern int curframe;		/* from main.c */
-extern double airdensity;		/* from opt.c */
+extern double airdensity;	/* from opt.c */
 extern double haze[3];		/* from opt.c */
-extern int do_kut_plane;           /* from opt.c */
-extern plane_t kut_plane;              /* from opt.c */
-vect_t kut_norm;
-struct soltab *kut_soltab = NULL;
+extern int do_kut_plane;        /* from opt.c */
+extern plane_t kut_plane;       /* from opt.c */
 extern struct icv_image *bif;
-
 extern struct floatpixel *curr_float_frame;	/* buffer of full frame */
-
-int ambSlow = 0;
-int ambSamples = 0;
-double ambRadius = 0.0;
-double ambOffset = 0.0;
-vect_t ambient_color = { 1, 1, 1 };	/* Ambient white light */
-
-int ibackground[3] = {0};		/* integer 0..255 version */
-int inonbackground[3] = {0};	/* integer non-background */
+extern fastf_t** timeTable_init(int x, int y);  /* from heatgraph.c */
+extern void timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), fb *efbp); /* from heatgraph.c */
+extern void free_scanlines(int, struct scanline *);
+extern struct scanline* alloc_scanlines(int);
 
 #ifdef RTSRV
 extern int srv_startpix;	/* offset for view_pixel */
 extern int srv_scanlen;		/* BUFMODE_RTSRV buffer length */
 #endif
 
-void free_scanlines(int, struct scanline *);
-struct scanline* alloc_scanlines(int);
-extern fastf_t** timeTable_init(int x, int y);
-extern void timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), fb *efbp);
+
+const char title[] = "The BRL-CAD Raytracer RT";
+
+static struct scanline* scanline = NULL;
+static fastf_t* psum_buffer;            /* Buffer that keeps partial sums for multi-samples modes */
+static size_t pwidth = 0;		/* Width of each pixel (in bytes) */
+struct mfuncs *mfHead = MF_NULL;	/* Head of list of shaders */
+
+/**
+ * Overlay
+ *
+ * If in overlay mode, and writing to a framebuffer, only write
+ * non-background pixels.
+ */
+static int overlay = 0;
+
+/**
+ * Called when the reprojected value lies on the current screen.
+ * Write the reprojected value into the screen, checking *screen* Z
+ * values if the new location is already occupied.
+ *
+ * May be run in parallel.
+ */
+static int scr_lim_dist_sq = 100;	/* dist**2 pixels allowed to move */
 
 static int buf_mode=0;
 #define BUFMODE_UNBUF     1	/* No output buffering */
@@ -113,14 +118,17 @@ static int buf_mode=0;
 				   always have the average of the
 				   colors sampled for each pixel */
 
-static struct scanline* scanline;
-static fastf_t* psum_buffer;              /* Buffer that keeps partial sums for multi-samples modes */
+vect_t kut_norm = VINIT_ZERO;
+struct soltab *kut_soltab = NULL;
 
-static size_t pwidth;		/* Width of each pixel (in bytes) */
-struct mfuncs *mfHead = MF_NULL;	/* Head of list of shaders */
-
+int ambSlow = 0;
+int ambSamples = 0;
+double ambRadius = 0.0;
+double ambOffset = 0.0;
+vect_t ambient_color = { 1, 1, 1 };	/* Ambient white light */
+int ibackground[3] = {0};		/* integer 0..255 version */
+int inonbackground[3] = {0};		/* integer non-background */
 fastf_t gamma_corr = 0.0;		/* gamma correction if !0 */
-
 
 /**
  * The default a_onehit = -1 requires at least one non-air hit, (stop
@@ -134,15 +142,6 @@ int a_onehit = -1;
  * Set to 1 to turn off boolean evaluation with -c 'set a_no_booleans=1'
  */
 int a_no_booleans = -1;
-
-/**
- * Overlay
- *
- * If in overlay mode, and writing to a framebuffer, only write
- * non-background pixels.
- */
-static int overlay = 0;
-
 
 /* Viewing module specific "set" variables:
  *
@@ -181,6 +180,7 @@ view_pixel(struct application *ap)
     struct scanline *slp;
     int do_eol = 0;
 
+#define DRAW_INDICATOR_LINE 1
 #ifdef DRAW_INDICATOR_LINE
     /* this draws a nice indicator line to let you know where you are
      * currently rendering into the frame, but testing demonstrated
@@ -671,7 +671,8 @@ view_re_setup(struct rt_i *rtip)
 /**
  * Called before rt_clean() in do.c
  */
-void view_cleanup(struct rt_i *rtip)
+void
+view_cleanup(struct rt_i *rtip)
 {
     struct region *regp;
 
@@ -694,7 +695,8 @@ void view_cleanup(struct rt_i *rtip)
  * Background texture mapping could be done here.  For now, return a
  * pleasant dark blue.
  */
-static int hit_nothing(struct application *ap)
+static int
+hit_nothing(struct application *ap)
 {
     if (R_DEBUG&RDEBUG_MISSPLOT) {
 	vect_t out;
@@ -1176,9 +1178,8 @@ out:
 /**
  * a_hit() routine for simple lighting model.
  */
-int viewit(struct application *ap,
-	   struct partition *PartHeadp,
-	   struct seg *UNUSED(segHeadp))
+int
+viewit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segHeadp))
 {
     struct partition *pp;
     struct hit *hitp;
@@ -1382,16 +1383,6 @@ view_init(struct application *UNUSED(ap), char *UNUSED(file), char *UNUSED(obj),
 }
 
 
-/**
- * Called when the reprojected value lies on the current screen.
- * Write the reprojected value into the screen, checking *screen* Z
- * values if the new location is already occupied.
- *
- * May be run in parallel.
- */
-int rt_scr_lim_dist_sq = 100;	/* dist**2 pixels allowed to move */
-
-
 int
 reproject_splat(int ix, int iy, struct floatpixel *ip, const fastf_t *new_view_pt)
 {
@@ -1473,7 +1464,7 @@ reproject_worker(int UNUSED(cpu), void *UNUSED(arg))
 		/* Don't reproject if too pixel moved too far on the screen */
 		dx = ix - ip->ff_x;
 		dy = iy - ip->ff_y;
-		if (dx*dx + dy*dy > rt_scr_lim_dist_sq)
+		if (dx*dx + dy*dy > scr_lim_dist_sq)
 		    continue;	/* moved too far */
 
 				/* Don't reproject for too many frame-times */
@@ -1575,8 +1566,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
 	buf_mode = BUFMODE_INCR;
     } else if (full_incr_mode) {
 	buf_mode = BUFMODE_ACC;
-    }
-    else if (width <= 96 || random_mode) {
+    } else if (width <= 96 || random_mode) {
 	buf_mode = BUFMODE_UNBUF;
     } else if ((size_t)npsw <= (size_t)height/4) {
 	/* Have each CPU do a whole scanline.  Saves lots of semaphore
@@ -1861,7 +1851,7 @@ application_init(void)
     option("Raytrace", "-i", "Enable incremental (progressive-style) rendering", 1);
     option("Raytrace", "-t", "Render from top to bottom (default: from bottom up)", 1);
     option("Advanced", "-O file.dpix", "Render to .dpix format file, double precision image data", 1);
-    option("Advanced", "-m density,r,g,b", "Render hazy air (e.g., 0.0002,0.8,0.9,1 for sky-blue haze)", 1);
+    option("Advanced", "-m density, r, g, b", "Render hazy air (e.g., 0.0002, 0.8, 0.9, 1 for sky-blue haze)", 1);
     option("Developer", "-l #", "Select lighting model (default is 0)", 1);
 
     /* this reassignment hack ensures help is last in the first list */
