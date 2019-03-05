@@ -180,6 +180,7 @@ view_pixel(struct application *ap)
     struct scanline *slp;
     int do_eol = 0;
 
+/* #define DRAW_INDICATOR_LINE 1 */
 #ifdef DRAW_INDICATOR_LINE
     /* this draws a nice indicator line to let you know where you are
      * currently rendering into the frame, but testing demonstrated
