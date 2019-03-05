@@ -244,6 +244,28 @@ bool reject_tag(std::string rtag)
     return false;
 }
 
+std::map<long int, std::string> rev_to_gsha1;
+
+void get_rev_sha1(long int rev, std::string &branch)
+{
+    std::string line;
+    std::string git_sha1_cmd = std::string("cd cvs_git && git show-ref ") + branch + std::string(" > ../sha1.txt && cd ..");
+    std::system(git_sha1_cmd.c_str());
+    std::ifstream hfile("sha1.txt");
+    if (!hfile.good()) exit(-1);
+    std::getline(hfile, line);
+    size_t spos = line.find_first_of(" ");
+    std::string hsha1 = line.substr(0, spos);
+    rev_to_gsha1[rev] = hsha1;
+
+    std::cout << rev << " -> " << rev_to_gsha1[rev] << "\n";
+
+    hfile.close();
+    remove("sha1.txt");
+}
+
+
+
 std::string git_sha1(std::ifstream &infile, struct svn_node *n)
 {
     std::string git_sha1;
@@ -1366,7 +1388,13 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 		// Check trunk after every commit - this will eventually expand to branch specific checks as well, but for now we
 		// need to get trunk building correctly
 		outfile.flush();
+
+		// TODO - verify_repos needs to morph into an "update cvs_git" step and a subsequent check step, writing out
+		// the current revisions fi stream and applying it rather than building up a multi-revision stream
+
 		verify_repos(rev.revision_number, std::string("trunk"), std::string("master"));
+
+		get_rev_sha1(rev.revision_number, rbranch);
 
 		continue;
 	    }
@@ -1380,6 +1408,7 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 		outfile.flush();
 		verify_repos(rev.revision_number, std::string("trunk"), std::string("master"));
 
+		get_rev_sha1(rev.revision_number, rbranch);
 
 		continue;
 	    }
@@ -1520,18 +1549,22 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 		    outfile << "data " << rev.commit_msg.length() << "\n";
 		    outfile << rev.commit_msg << "\n";
 		}
+
+
+		// Check trunk after every commit - this will eventually expand to branch specific checks as well, but for now we
+		// need to get trunk building correctly
+		outfile.flush();
+		//if (rev.revision_number % 100 == 0) {
+		    verify_repos(rev.revision_number, std::string("trunk"), std::string("master"));
+		//}
+
+		get_rev_sha1(rev.revision_number, rbranch);
+
 	    } else {
 		if (!branch_delete && !have_commit) {
 		    std::cout << "Warning(r" << rev.revision_number << ") - skipping SVN commit, no git applicable changes found\n";
 		    std::cout << rev.commit_msg << "\n";
 		}
-	    }
-
-	    // Check trunk after every commit - this will eventually expand to branch specific checks as well, but for now we
-	    // need to get trunk building correctly
-	    outfile.flush();
-	    if (rev.revision_number % 100 == 0) {
-		verify_repos(rev.revision_number, std::string("trunk"), std::string("master"));
 	    }
 	}
     }
@@ -1665,6 +1698,9 @@ int main(int argc, const char **argv)
 
     /* Read in pre-existing branch sha1 heads from git */
     load_branch_head_sha1s();
+
+    /* TODO: Read in previously defined rev -> sha1 map, if any */
+    //load_rev_sha1_map();
 
     /* Read in pre-existing blob sha1s from git */
     load_blob_sha1s();
