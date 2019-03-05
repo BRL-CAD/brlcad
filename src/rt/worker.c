@@ -78,8 +78,8 @@ int reproj_cur;	/* number of pixels reprojected this frame */
 int reproj_max;	/* out of total number of pixels */
 
 /* Local communication with worker() */
-int cur_pixel;			/* current pixel number, 0..last_pixel */
-int last_pixel;			/* last pixel number */
+int cur_pixel = 0;			/* current pixel number, 0..last_pixel */
+int last_pixel = 0;			/* last pixel number */
 
 int stop_worker = 0;
 
