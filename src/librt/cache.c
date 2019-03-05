@@ -499,6 +499,12 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
 	bu_vls_sprintf(&version_vls, "%zu", version);
 	bu_avs_add(&attributes, "mime_type", cache_mime_type);
 	bu_avs_add(&attributes, "rt_cache::version", bu_vls_addr(&version_vls));
+	if (stp->st_dp && stp->st_dp->d_namep) {
+	    bu_avs_add(&attributes, "rt_cache::source_obj", stp->st_dp->d_namep);
+	}
+	if (stp->st_rtip && stp->st_rtip->rti_dbip->dbi_filename) {
+	    bu_avs_add(&attributes, "rt_cache::source_g", stp->st_rtip->rti_dbip->dbi_filename);
+	}
 	db5_export_attributes(&attributes_external, &attributes);
 	bu_vls_free(&version_vls);
 	bu_avs_free(&attributes);
