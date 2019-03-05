@@ -87,7 +87,11 @@ cache_create_path(const char *path, int is_file)
 	return 1;
     }
     dir = bu_path_dirname(path);
-    cache_create_path(dir, 0);
+    if (!cache_create_path(dir, 0)) {
+	bu_log("Cache error: could not create directory %s.\n", dir);
+	bu_free(dir, "dirname");
+	return 0;
+    }
     bu_free(dir, "dirname");
 
     if (!is_file && !bu_file_directory(path)) {
@@ -119,6 +123,7 @@ cache_format(const char *librt_cache)
     bu_vls_printf(&path, "%s%c%s", librt_cache, BU_DIR_SEPARATOR, "format");
     cpath = bu_vls_cstr(&path);
     if (!cache_create_path(cpath, 1) || !bu_file_exists(cpath, NULL)) {
+	bu_log("Cache error: could create or find format file %s.\n", cpath);
 	bu_vls_free(&path);
 	return -1;
     }
@@ -225,8 +230,10 @@ rt_cache_open(void)
     }
 
     /* cache dir should exist by now */
-    if (!bu_file_exists(dir, NULL) || !bu_file_directory(dir))
+    if (!bu_file_exists(dir, NULL) || !bu_file_directory(dir)) {
+	bu_log("Cache error: could not find or create directory %s.\n", dir);
 	return NULL;
+    }
 
     format = cache_format(dir);
     if (format < 0)
@@ -258,6 +265,10 @@ rt_cache_open(void)
     dir = bu_dir(cache, MAXPATHLEN, BU_DIR_CACHE, ".rt", "objects", NULL);
     if (!bu_file_exists(dir, NULL)) {
 	cache_create_path(dir, 0);
+    }
+    if (!bu_file_exists(dir, NULL) || !bu_file_directory(dir)) {
+	bu_log("Cache error: could not find or create directory %s.\n", dir);
+	return NULL;
     }
 
     BU_GET(result, struct rt_cache);
@@ -371,7 +382,10 @@ cache_dbip(const struct rt_cache *cache, const char *name, int create)
     db = bu_dir(path, MAXPATHLEN, cache->dir, idx, name, NULL);
 
     if (create && !bu_file_exists(db, NULL)) {
-	cache_create_path(db, 1);
+	if (!cache_create_path(db, 1)) {
+	    bu_log("Cache error: could create %s.\n", db);
+	    return NULL;
+	}
 	dbip = db_create(db, 5);
     } else {
 	dbip = db_open(db, DB_OPEN_READWRITE);
