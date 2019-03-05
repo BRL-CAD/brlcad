@@ -233,7 +233,7 @@ get_args(int argc, const char *argv[])
 		}
 		break;
 	    case 't':
-		transpose_grid = 1;
+		top_down = 1;
 		break;
 	    case 'j':
 		{

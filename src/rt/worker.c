@@ -525,7 +525,7 @@ worker(int cpu, void *UNUSED(arg))
     }
 pat_found:
 
-    if (transpose_grid) {
+    if (top_down) {
 	int tmp;
 
 	/* switch cur_pixel and last_pixel */

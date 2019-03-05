@@ -84,7 +84,7 @@ extern int sub_xmax;			/* upper right of sub rectangle */
 extern int sub_xmin;			/* lower left of sub rectangle */
 extern int sub_ymax;
 extern int sub_ymin;
-extern int transpose_grid;		/* reverse the order of grid traversal */
+extern int top_down;			/* reverse the order of grid traversal */
 extern int use_air;			/* Handling of air in librt */
 extern int random_mode;                 /* Mode to shoot rays at random directions */
 extern int opencl_mode;			/* enable/disable OpenCL */
