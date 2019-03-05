@@ -48,21 +48,21 @@
  * when formatting this file.  if the compile breaks here, it means
  * that spaces got inserted incorrectly.
  */
-#define COMMA ','
+#define COMMA ', '
 
-int rt_verbosity = -1;	/* blather incessantly by default */
+int rt_verbosity = -1;        /* blather incessantly by default */
 
-size_t width = 0;		/* # of pixels in X */
-size_t height = 0;		/* # of lines in Y */
+size_t width = 0;                /* # of pixels in X */
+size_t height = 0;                /* # of lines in Y */
 
 
 /***** Variables shared with viewing model *** */
-int doubles_out = 0;	/* u_char or double .pix output file */
+int doubles_out = 0;        /* u_char or double .pix output file */
 fastf_t azimuth = 0.0, elevation = 0.0;
-int lightmodel = 0;		/* Select lighting model */
-int rpt_overlap = 1;	/* report overlapping region names */
+int lightmodel = 0;                /* Select lighting model */
+int rpt_overlap = 1;        /* report overlapping region names */
 int default_background = 1; /* Default is black */
-int output_is_binary = 1;	/* !0 means output file is binary */
+int output_is_binary = 1;        /* !0 means output file is binary */
 
 /***** end of sharing with viewing model *****/
 
@@ -72,36 +72,36 @@ int query_y = 0;
 int Query_one_pixel = 0;
 int query_rdebug  = 0;
 int query_debug = 0;
-int stereo = 0;		/* stereo viewing */
-int hypersample = 0;		/* number of extra rays to fire */
-unsigned int jitter = 0;		/* ray jitter control variable */
-fastf_t rt_perspective = (fastf_t)0.0;	/* presp (degrees X) 0 => ortho */
-fastf_t aspect = (fastf_t)1.0;	/* view aspect ratio X/Y (needs to be 1.0 for g/G options) */
-vect_t dx_model;		/* view delta-X as model-space vect */
-vect_t dy_model;		/* view delta-Y as model-space vect */
-vect_t dx_unit;		/* view delta-X as unit-len vect */
-vect_t dy_unit;		/* view delta-Y as unit-len vect */
-fastf_t cell_width = (fastf_t)0.0;		/* model space grid cell width */
-fastf_t cell_height = (fastf_t)0.0;	/* model space grid cell height */
-int cell_newsize = 0;		/* new grid cell size */
-point_t eye_model = {(fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0};		/* model-space location of eye */
-fastf_t eye_backoff = (fastf_t)M_SQRT2;	/* dist from eye to center */
+int stereo = 0;                         /* stereo viewing */
+int hypersample = 0;                    /* number of extra rays to fire */
+unsigned int jitter = 0;                /* ray jitter control variable */
+fastf_t rt_perspective = (fastf_t)0.0;  /* presp (degrees X) 0 => ortho */
+fastf_t aspect = (fastf_t)1.0;          /* view aspect ratio X/Y (needs to be 1.0 for g/G options) */
+vect_t dx_model;                        /* view delta-X as model-space vect */
+vect_t dy_model;                        /* view delta-Y as model-space vect */
+vect_t dx_unit;                         /* view delta-X as unit-len vect */
+vect_t dy_unit;                         /* view delta-Y as unit-len vect */
+fastf_t cell_width = (fastf_t)0.0;      /* model space grid cell width */
+fastf_t cell_height = (fastf_t)0.0;     /* model space grid cell height */
+int cell_newsize = 0;                   /* new grid cell size */
+point_t eye_model = {(fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0}; /* model-space location of eye */
+fastf_t eye_backoff = (fastf_t)M_SQRT2; /* dist from eye to center */
 mat_t Viewrotscale = { (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0,
 		       (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0,
 		       (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0,
 		       (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0};
 fastf_t viewsize = (fastf_t)0.0;
-int incr_mode = 0;		/* !0 for incremental resolution */
-int full_incr_mode = 0;     /* !0 for fully incremental resolution */
-size_t incr_level = 0;		/* current incremental level */
-size_t incr_nlevel = 0;	/* number of levels */
-size_t full_incr_sample = 0;    /* current fully incremental sample */
-size_t full_incr_nsamples = 0;  /* number of samples in the fully incremental mode */
-size_t npsw = 1;		/* number of worker PSWs to run */
-struct resource resource[MAX_PSW];	/* memory resources */
-int transpose_grid = 0;     /* reverse the order of grid traversal */
-int random_mode = 0;        /* Mode to shoot rays at random directions */
-int opencl_mode = 0;	/* enable/disable OpenCL */
+int incr_mode = 0;                      /* !0 for incremental resolution */
+int full_incr_mode = 0;                 /* !0 for fully incremental resolution */
+size_t incr_level = 0;                  /* current incremental level */
+size_t incr_nlevel = 0;                 /* number of levels */
+size_t full_incr_sample = 0;            /* current fully incremental sample */
+size_t full_incr_nsamples = 0;          /* number of samples in the fully incremental mode */
+size_t npsw = 1;                        /* number of worker PSWs to run */
+struct resource resource[MAX_PSW];      /* memory resources */
+int top_down = 0;                       /* render image top-down or bottom-up (default) */
+int random_mode = 0;                    /* Mode to shoot rays at random directions */
+int opencl_mode = 0;                    /* enable/disable OpenCL */
 /***** end variables shared with worker() *****/
 
 /***** Photon Mapping Variables *****/
@@ -110,26 +110,26 @@ char pmfile[255];
 /***** ************************ *****/
 
 /***** variables shared with do.c *****/
-int objc = 0;		/* Number of cmd-line treetops */
-char **objv = (char **)NULL;	/* array of treetop strings */
-struct bu_ptbl *cmd_objs = NULL; /* container for command specified objects */
-char *string_pix_start = (char *)NULL;	/* string spec of starting pixel */
-char *string_pix_end = (char *)NULL;	/* string spec of ending pixel */
-int pix_start = -1;		/* pixel to start at */
-int pix_end = 0;		/* pixel to end at */
-int matflag = 0;		/* read matrix from stdin */
-int orientflag = 0;		/* 1 means orientation has been set */
-int desiredframe = 0;	/* frame to start at */
-int finalframe = -1;	/* frame to halt at */
-int curframe = 0;		/* current frame number,
-				 * also shared with view.c */
-char *outputfile = (char *)NULL;	/* name of base of output file */
-int benchmark = 0;		/* No random numbers:  benchmark */
+int objc = 0;                           /* Number of cmd-line treetops */
+char **objv = (char **)NULL;            /* array of treetop strings */
+struct bu_ptbl *cmd_objs = NULL;        /* container for command specified objects */
+char *string_pix_start = (char *)NULL;  /* string spec of starting pixel */
+char *string_pix_end = (char *)NULL;    /* string spec of ending pixel */
+int pix_start = -1;                     /* pixel to start at */
+int pix_end = 0;                        /* pixel to end at */
+int matflag = 0;                        /* read matrix from stdin */
+int orientflag = 0;                     /* 1 means orientation has been set */
+int desiredframe = 0;                   /* frame to start at */
+int finalframe = -1;                    /* frame to halt at */
+int curframe = 0;                       /* current frame number,
+					 * also shared with view.c */
+char *outputfile = (char *)NULL;        /* name of base of output file */
+int benchmark = 0;                      /* No random numbers:  benchmark */
 
-int sub_grid_mode = 0;	/* mode to raytrace a rectangular portion of view */
-int sub_xmin = 0;		/* lower left of sub rectangle */
+int sub_grid_mode = 0;                  /* mode to raytrace a rectangular portion of view */
+int sub_xmin = 0;                       /* lower left of sub rectangle */
 int sub_ymin = 0;
-int sub_xmax = 0;		/* upper right of sub rectangle */
+int sub_xmax = 0;                       /* upper right of sub rectangle */
 int sub_ymax = 0;
 
 /**
@@ -138,14 +138,14 @@ int sub_ymax = 0;
  * If this variable is set non-zero, then "air" solids will be
  * retained, and can be expected to show up in the partition lists.
  */
-int use_air = 0;		/* whether librt should handle air */
+int use_air = 0;                        /* whether librt should handle air */
 
 /***** end variables shared with do.c *****/
 
 
 /***** variables shared with view.c *****/
-double airdensity = 0.0;    /* is the scene hazy (we shade the void space) */
-double haze[3] = { 0.8, 0.9, 0.99 };	      /* color of the haze */
+double airdensity = 0.0;                /* is the scene hazy (we shade the void space) */
+double haze[3] = { 0.8, 0.9, 0.99 };    /* color of the haze */
 int do_kut_plane = 0;
 plane_t kut_plane;
 
@@ -155,13 +155,13 @@ int model_units = 0;
 
 /***** end variables shared with view.c *****/
 
-char *densityfile = (char *)NULL;	/* name of density file */
+char *densityfile = (char *)NULL;       /* name of density file */
 
 /* temporary kludge to get rt to use a tighter tolerance for raytracing */
-fastf_t rt_dist_tol = (fastf_t)0.0005;	/* Value for rti_tol.dist */
+fastf_t rt_dist_tol = (fastf_t)0.0005;  /* Value for rti_tol.dist */
 
-fastf_t rt_perp_tol = (fastf_t)0.0;	/* Value for rti_tol.perp */
-char *framebuffer = (char *)NULL;		/* desired framebuffer */
+fastf_t rt_perp_tol = (fastf_t)0.0;     /* Value for rti_tol.perp */
+char *framebuffer = (char *)NULL;       /* desired framebuffer */
 
 /**
  * space partitioning algorithm to use.  previously had experimental
@@ -205,7 +205,7 @@ get_args(int argc, const char *argv[])
     FILE *objsfile = NULL;
     struct bu_vls oline = BU_VLS_INIT_ZERO;
     int oid = 0;
-    bu_optind = 1;		/* restart */
+    bu_optind = 1;                /* restart */
 
 
 #define GETOPT_STR	\
