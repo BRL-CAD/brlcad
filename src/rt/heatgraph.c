@@ -55,6 +55,8 @@
 fastf_t**
 timeTable_init(int x, int y)
 {
+    bu_log("Initializing heatgraph timers\n");
+
     /*
      * Time table will be initialized to the size of the current
      * framebuffer by using a malloc.
@@ -68,10 +70,7 @@ timeTable_init(int x, int y)
 	int w=0;
 
 	/* Semaphore Acquire goes here */
-
 	if (timeTable == NULL) {
-	    bu_log("X is %d, Y is %d\n", x, y);
-	    bu_log("Making time Table\n");
 	    timeTable = (fastf_t **)bu_malloc(x * sizeof(fastf_t *), "timeTable");
 	    for (i = 0; i < x; i++) {
 		timeTable[i] = (fastf_t *)bu_malloc(y * sizeof(fastf_t), "timeTable[i]");
@@ -81,7 +80,7 @@ timeTable_init(int x, int y)
 		    timeTable[i][w] = -1;
 		}
 	    }
-	    bu_log("Initialized timetable\n");
+
 	}
 	/* Semaphore release goes here */
     }
@@ -222,7 +221,7 @@ timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), fb *fbp)
     }
     meanTime = totalTime / pixels;
     range = maxTime - minTime;
-    bu_log("Time:%lf Max = %lf Min = %lf Mean = %lf Range = %lf\n", totalTime, maxTime, minTime, meanTime, range);
+    bu_log("Time: %lf\n  Max = %lf\n  Min = %lf\n  Mean = %lf\n  Range = %lf\n", totalTime, maxTime, minTime, meanTime, range);
 
     /* Now fill out the framebuffer with the Heat Graph information */
 
