@@ -55,6 +55,8 @@
 fastf_t**
 timeTable_init(int x, int y)
 {
+    static fastf_t **timeTable = NULL;
+
     bu_log("Initializing heatgraph timers\n");
 
     /*
@@ -64,7 +66,6 @@ timeTable_init(int x, int y)
      * height and width and use that as the starting point.
      */
 
-    static fastf_t **timeTable = NULL;
     if (x && y) {
 	int i=0;
 	int w=0;
