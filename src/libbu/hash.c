@@ -27,6 +27,7 @@
 
 #include "bu/magic.h"
 #include "bu/hash.h"
+#include "bu/parallel.h"
 
 struct bu_hash_entry {
     uint32_t magic;
@@ -168,11 +169,14 @@ bu_hash_get(const struct bu_hash_tbl *hsh_tbl, const uint8_t *key, size_t key_le
 
     BU_CK_HASH_TBL(hsh_tbl);
 
+    bu_semaphore_acquire(BU_SEM_HASH);
+
     /* calculate the index into the bin array */
     idx = _bu_hash(key, key_len) & hsh_tbl->mask;
     if (idx >= hsh_tbl->num_lists) {
 	fprintf(stderr, "hash function returned too large value (%ld), only have %ld lists\n",
 		idx, hsh_tbl->num_lists);
+	bu_semaphore_release(BU_SEM_HASH);
 	return NULL;
     }
 
@@ -199,9 +203,11 @@ bu_hash_get(const struct bu_hash_tbl *hsh_tbl, const uint8_t *key, size_t key_le
 
     if (found) {
 	/* return the found entry */
+	bu_semaphore_release(BU_SEM_HASH);
 	return hsh_entry->value;
     } else {
 	/* did not find the entry, return NULL */
+	bu_semaphore_release(BU_SEM_HASH);
 	return NULL;
     }
 }
@@ -219,6 +225,8 @@ bu_hash_set(struct bu_hash_tbl *hsh_tbl, const uint8_t *key, size_t key_len, voi
     /* must have a key */
     if (!key || key_len == 0)
 	return -1;
+
+    bu_semaphore_acquire(BU_SEM_HASH);
 
     /* Use key hash to get bin, add entry to bin list */
     idx = _bu_hash(key, key_len) & hsh_tbl->mask;
@@ -267,6 +275,8 @@ bu_hash_set(struct bu_hash_tbl *hsh_tbl, const uint8_t *key, size_t key_len, voi
     /* finally do as asked, set the value */
     hsh_entry->value = val;
 
+    bu_semaphore_release(BU_SEM_HASH);
+
     return ret;
 }
 
@@ -280,14 +290,22 @@ bu_hash_rm(struct bu_hash_tbl *hsh_tbl, const uint8_t *key, size_t key_len)
 
     BU_CK_HASH_TBL(hsh_tbl);
 
+    bu_semaphore_acquire(BU_SEM_HASH);
+
     /* If we don't have a key, no-op */
-    if (!key || key_len == 0) return;
+    if (!key || key_len == 0) {
+	bu_semaphore_release(BU_SEM_HASH);
+	return;
+    }
 
     /* Use key hash to get bin, add entry to bin list */
     idx = _bu_hash(key, key_len) & hsh_tbl->mask;
 
     /* Nothing in bin, we're done */
-    if (!hsh_tbl->lists[idx]) return;
+    if (!hsh_tbl->lists[idx]) {
+	bu_semaphore_release(BU_SEM_HASH);
+	return;
+    }
 
     hsh_entry = hsh_tbl->lists[idx];
     prev_entry = NULL;
@@ -311,43 +329,66 @@ bu_hash_rm(struct bu_hash_tbl *hsh_tbl, const uint8_t *key, size_t key_len)
 	    free(hsh_entry);
 	}
     }
+
+    bu_semaphore_release(BU_SEM_HASH);
 }
 
 
 struct bu_hash_entry *
 bu_hash_next(struct bu_hash_tbl *hsh_tbl, struct bu_hash_entry *e)
 {
+    struct bu_hash_entry *ec = e;
     unsigned long idx, l;
+
     BU_CK_HASH_TBL(hsh_tbl);
+
+    bu_semaphore_acquire(BU_SEM_HASH);
 
     if (hsh_tbl->num_entries == 0) {
 	/* this table is empty */
+	bu_semaphore_release(BU_SEM_HASH);
 	return (struct bu_hash_entry *)NULL;
+    }
+
+    if (e && e->next && !bu_hash_get(hsh_tbl, e->key, e->key_len)) {
+	/* e has a next, but it's no longer valid (??)*/
+	ec = NULL;
     }
 
     /* If we don't have an entry, find loop through all the bins in this hash
      * table to find the first non-null entry
      */
-    if (!e) {
+    if (!ec) {
 	for (l = 0; l < hsh_tbl->num_lists; l++) {
-	    if (hsh_tbl->lists[l]) return hsh_tbl->lists[l];
+	    if (hsh_tbl->lists[l]) {
+		bu_semaphore_release(BU_SEM_HASH);
+		return hsh_tbl->lists[l];
+	    }
 	}
 	/* if we've got nothing (empty bins) we're "done" iterating - return
 	 * NULL */
+	bu_semaphore_release(BU_SEM_HASH);
 	return (struct bu_hash_entry *)NULL;
     }
 
-    if (e && e->next) return e->next;
+    if (e && e->next) {
+	bu_semaphore_release(BU_SEM_HASH);
+	return e->next;
+    }
 
     /* If we've got the last entry in a bin, we need to find the next bin.
      * Use the key hash to get the "current" bin, and proceed from there. */
     idx = _bu_hash(e->key, e->key_len) & hsh_tbl->mask;
     idx++;
     for (l = idx; l < hsh_tbl->num_lists; l++) {
-	if (hsh_tbl->lists[l]) return hsh_tbl->lists[l];
+	if (hsh_tbl->lists[l]) {
+	    bu_semaphore_release(BU_SEM_HASH);
+	    return hsh_tbl->lists[l];
+	}
 	idx++;
     }
     /* if we've got nothing by this point we've reached the end */
+    bu_semaphore_release(BU_SEM_HASH);
     return (struct bu_hash_entry *)NULL;
 }
 
