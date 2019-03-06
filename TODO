@@ -22,6 +22,8 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * prep caching actions
   - debug means to set env vars
+  - use a file lock for concurrent access
+  - double-check failure code (on Windows)
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
