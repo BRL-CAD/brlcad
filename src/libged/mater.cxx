@@ -356,21 +356,15 @@ _ged_mater_validate(struct ged *gedp, int argc, const char *argv[])
     return GED_OK;
 }
 
-#if 0
-TODO - need --json option to this to get information in machine readable form - don't
+/*TODO - need --json option to this to get information in machine readable form - don't
 want anyone parsing the textual output...  Probably some specific options too, like
-report just all material names without ids or vice versa.
+report just all material names without ids or vice versa. */
 int
 _ged_mater_audit(struct ged *gedp, int argc, const char *argv[])
 {
-    int ecnt = 0;
-    char *dsource;
+    char *dsource = NULL;
     struct analyze_densities *a = NULL;
-    long int tb_cnt = 0;
-    struct bu_vls msgs = BU_VLS_INIT_ZERO;
-    struct bu_mapped_file *dfile = NULL;
     struct directory *dp, *gddp;
-    char *buf = NULL;
     const char *densities_filename = NULL;
 
     if (argc == 2) {
@@ -386,7 +380,7 @@ _ged_mater_audit(struct ged *gedp, int argc, const char *argv[])
     if (densities_filename && gddp != RT_DIR_NULL) {
 	// This is OK, but let the user know if we are doing a file based run but there is a
 	// density database present.
-	bu_vls_printf(gedp->ged_result_str, "\nNote: using specified density file %s for audit, but database contains imported density information - the latter will be the default for most tools unless a density file is explicitly specified.\n\n");
+	bu_vls_printf(gedp->ged_result_str, "\nNote: using specified density file %s for audit, but database contains imported density information.\nThe imported data will be the default for most tools unless a density file is explicitly specified.\n\n", densities_filename);
     }
 
     // As a first cut, do a fault intolerant read - if there are any problems we want to know
@@ -397,7 +391,7 @@ _ged_mater_audit(struct ged *gedp, int argc, const char *argv[])
     if (!a) {
 	// If that didn't work, do a fault tolerant read so we can proceed with the evaluation
 	if (_ged_read_densities(&a, &dsource, gedp, densities_filename, 1) == GED_ERROR) {
-	    bu_vls_printf(gedp->ged_result_str, "Fault tolerant reading of densities data failed.\n");
+	    bu_vls_printf(gedp->ged_result_str, "Failed to locate density data.\n");
 	    a = NULL;
 	}
     }
@@ -413,6 +407,8 @@ _ged_mater_audit(struct ged *gedp, int argc, const char *argv[])
     std::set<struct directory *> mns, ids;
     std::set<struct directory *>::iterator dp_it;
     db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
+    const char *mname_search = "-attr material_name";
+    const char *mid_search = "-attr material_id";
     (void)db_search(&mn_objs, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, mname_search, 0, NULL, gedp->ged_wdbp->dbip, NULL);
     (void)db_search(&id_objs, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, mid_search, 0, NULL, gedp->ged_wdbp->dbip, NULL);
     for(size_t i = 0; i < BU_PTBL_LEN(&mn_objs); i++) {
@@ -439,19 +435,110 @@ _ged_mater_audit(struct ged *gedp, int argc, const char *argv[])
 	return GED_OK;
     }
 
-    // If the database has material_name or material_id information but we don't have any density info, we've got a problem.
-    // Report information about what is set in the database
-    if ((mns.size() || ids.size()) && !a) {
-	if (mns.size()) {
-	/* Unique Material Names: m1, m2, m3, ... \n */
+    // Collect information about what is set in the database
+    std::set<std::string> mat_names;
+    std::set<long int> mat_ids;
+    std::map<long int, std::set<std::string>> ids_to_mats;
+
+    for (dp_it = ids.begin(); dp_it != ids.end(); dp_it++) {
+	const char *mat_id = NULL;
+	const char *oname = NULL;
+	long int curr_id = -1;
+	struct bu_vls msg = BU_VLS_INIT_ZERO;
+	struct bu_attribute_value_set avs = BU_AVS_INIT_ZERO;
+	dp = *dp_it;
+	if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+	    bu_vls_printf(gedp->ged_result_str, "Warning: cannot get attributes for object %s\n", dp->d_namep);
+	    continue;
+	}
+	mat_id = bu_avs_get(&avs, "material_id");
+	oname = bu_avs_get(&avs, "material_name");
+	if (oname) {
+	    mat_names.insert(std::string(oname));
+	}
+	if (mat_id) {
+	    if (bu_opt_long(&msg, 1, (const char **)(&mat_id), (void *)&curr_id) < 0 || curr_id < 0) {
+		bu_vls_printf(gedp->ged_result_str, "Object %s has an invalid value set for it's material_id attribute: %s\n", dp->d_namep, mat_id);
+		bu_vls_free(&msg);
+		bu_avs_free(&avs);
+		continue;
+	    }
+	    bu_vls_free(&msg);
+	    mat_ids.insert(curr_id);
+	}
+	if (oname && mat_id) {
+	    ids_to_mats[curr_id].insert(std::string(oname));
+	}
+	bu_avs_free(&avs);
+    }
+
+    // If the database has material_name or material_id information but we don't have any density info, we
+    // are pretty limited in what we can validate.
+    if (!a) {
+	if (mat_names.size()) {
+	    std::set<std::string>::iterator n_it;
+	    /* Unique Material Names: m1, m2, m3, ... \n */
+	    bu_vls_printf(gedp->ged_result_str, "Unique Material Names:");
+	    for (n_it = mat_names.begin(); n_it != mat_names.end(); n_it++) {
+		if (n_it == mat_names.begin()) {
+		    bu_vls_printf(gedp->ged_result_str, " %s", n_it->c_str());
+		} else {
+		    bu_vls_printf(gedp->ged_result_str, ", %s", n_it->c_str());
+		}
+	    }
+	    bu_vls_printf(gedp->ged_result_str, "\n");
 	}
 	if (ids.size()) {
-	/* Unique Material Ids: id1, id2, id3, ... \n */
+	    /* Unique Material Ids: id1, id2, id3, ... \n */
+	    std::set<long int>::iterator l_it;
+	    bu_vls_printf(gedp->ged_result_str, "Unique Material Ids:");
+	    for (l_it = mat_ids.begin(); l_it != mat_ids.end(); l_it++) {
+		if (l_it == mat_ids.begin()) {
+		    bu_vls_printf(gedp->ged_result_str, " %ld", *l_it);
+		} else {
+		    bu_vls_printf(gedp->ged_result_str, ", %ld", *l_it);
+		}
+	    }
+	    bu_vls_printf(gedp->ged_result_str, "\n");
 	}
 
-	if (mns.size() && ids.size()) {
+	if (ids_to_mats.size()) {
+	    std::set<long int>::iterator l_it;
+	    std::set<std::string>::iterator s_it;
 	    // If we have id numbers and names matched up, we can at least audit to be sure the
 	    // database is internally consistent - report any collisions
+	    for (l_it = mat_ids.begin(); l_it != mat_ids.end(); l_it++) {
+		if (ids_to_mats.find(*l_it) != ids_to_mats.end() && ids_to_mats[*l_it].size() > 1) {
+		    // For each pair type, report the pair and which objects have it assigned.
+		    long int active_id = *l_it;
+		    bu_vls_printf(gedp->ged_result_str, "Material ID %ld has multiple associated material_name attributes:\n", active_id);
+		    for (s_it = ids_to_mats[*l_it].begin(); s_it != ids_to_mats[*l_it].end(); s_it++) {
+			const char *active_name = (*s_it).c_str();
+			std::set<std::string> objs;
+			std::set<std::string>::iterator objs_it;
+			bu_vls_printf(gedp->ged_result_str, "  %s:", active_name);
+			for (dp_it = ids.begin(); dp_it != ids.end(); dp_it++) {
+			    const char *mat_id = NULL;
+			    const char *oname = NULL;
+			    struct bu_attribute_value_set avs = BU_AVS_INIT_ZERO;
+			    dp = *dp_it;
+			    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+				continue;
+			    }
+			    mat_id = bu_avs_get(&avs, "material_id");
+			    oname = bu_avs_get(&avs, "material_name");
+			    if (std::stol(mat_id) == active_id && BU_STR_EQUAL(active_name, oname)) {
+				objs.insert(std::string(dp->d_namep));
+			    }
+			    bu_avs_free(&avs);
+			}
+			for (objs_it = objs.begin(); objs_it != objs.end(); objs_it++) {
+			    bu_vls_printf(gedp->ged_result_str, " %s", (*objs_it).c_str());
+			}
+			bu_vls_printf(gedp->ged_result_str, "\n");
+		    }
+		}
+	    }
 	}
 	return GED_OK;
     }
@@ -461,17 +548,93 @@ _ged_mater_audit(struct ged *gedp, int argc, const char *argv[])
     if (mns.size()) {
 	// Check for any names that aren't present in the database and report.  If there is an associated
 	// material id with object that corresponds to a known name, report that as well.
+	for (dp_it = mns.begin(); dp_it != mns.end(); dp_it++) {
+	    struct bu_vls msg = BU_VLS_INIT_ZERO;
+	    const char *mat_id = NULL;
+	    char *id_name = NULL;
+	    long int curr_id = -1;
+	    int id_found_cnt;
+	    long int wids[1];
+	    const char *oname = NULL;
+	    struct bu_attribute_value_set avs = BU_AVS_INIT_ZERO;
+	    dp = *dp_it;
+	    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+		continue;
+	    }
+	    oname = bu_avs_get(&avs, "material_name");
+	    id_found_cnt = analyze_densities_id((long int *)wids, 1, a, oname);
+	    if (!id_found_cnt) {
+		bu_vls_printf(gedp->ged_result_str, "%s[material_name:%s] unknown material", (*dp_it)->d_namep, oname);
+
+		mat_id = bu_avs_get(&avs, "material_id");
+		if (mat_id) {
+		    if (bu_opt_long(&msg, 1, (const char **)(&mat_id), (void *)&curr_id) < 0 || curr_id < 0) {
+			bu_avs_free(&avs);
+			bu_vls_free(&msg);
+			continue;
+		    }
+		    bu_vls_free(&msg);
+		    id_name = analyze_densities_name(a, curr_id);
+		    if (id_name) {
+			bu_vls_printf(gedp->ged_result_str, " (material_id:%ld -> %s)\n", curr_id, id_name);
+			bu_free(id_name, "id name");
+		    } else {
+			bu_vls_printf(gedp->ged_result_str, "\n");
+		    }
+		} else {
+		    bu_vls_printf(gedp->ged_result_str, "\n");
+		}
+
+	    }
+
+	}
     }
 
     if (ids.size()) {
 	// Check for any material ids that aren't present in the database and report.  If there is an associated
 	// material name that corresponds to a known id, report that as well.
+	for (dp_it = ids.begin(); dp_it != ids.end(); dp_it++) {
+	    struct bu_vls msg = BU_VLS_INIT_ZERO;
+	    const char *mat_id = NULL;
+	    char *id_name = NULL;
+	    long int curr_id = -1;
+	    int id_found_cnt;
+	    long int wids[1];
+	    const char *oname = NULL;
+	    struct bu_attribute_value_set avs = BU_AVS_INIT_ZERO;
+	    dp = *dp_it;
+	    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+		continue;
+	    }
+
+	    mat_id = bu_avs_get(&avs, "material_id");
+	    if (bu_opt_long(&msg, 1, (const char **)(&mat_id), (void *)&curr_id) < 0 || curr_id < 0) {
+		bu_avs_free(&avs);
+		bu_vls_free(&msg);
+		continue;
+	    }
+	    bu_vls_free(&msg);
+	    id_name = analyze_densities_name(a, curr_id);
+	    if (!id_name) {
+		bu_vls_printf(gedp->ged_result_str, "%s[material_id:%ld] unknown material_id", (*dp_it)->d_namep, curr_id);
+		oname = bu_avs_get(&avs, "material_name");
+		if (oname) {
+		    id_found_cnt = analyze_densities_id((long int *)wids, 1, a, oname);
+		    if (id_found_cnt) {
+			bu_vls_printf(gedp->ged_result_str, " (material_name:%s -> %ld)\n", oname, wids[0]);
+		    } else {
+			bu_vls_printf(gedp->ged_result_str, "\n");
+		    }
+		} else {
+		    bu_vls_printf(gedp->ged_result_str, "\n");
+		}
+	    }
+	}
     }
 
     analyze_densities_destroy(a);
     return GED_OK;
 }
-#endif
 
 int
 _ged_mater_import(struct ged *gedp, int argc, const char *argv[])
@@ -706,8 +869,14 @@ _ged_mater_get(struct ged *gedp, int argc, const char *argv[])
     std::set<long int>::iterator ln_it;
     long int curr_id = -1;
     struct _density_opt_info dens_opt;
+    dens_opt.lflag = 0;
+    dens_opt.gflag = 0;
+    dens_opt.eflag = 0;
     dens_opt.densities = new std::set<fastf_t>;
     struct _id_opt_info id_opt;
+    id_opt.lflag = 0;
+    id_opt.gflag = 0;
+    id_opt.eflag = 0;
     id_opt.id_numbers = new std::set<long int>;
     id_opt.id_patterns = new std::set<std::string>;
 
@@ -1455,6 +1624,12 @@ _ged_mater_density(struct ged *gedp, int argc, const char *argv[])
 	argv[1] = argv[0];
 	argc--; argv++;
 	return _ged_mater_export(gedp, argc, argv);
+    }
+
+    if (BU_STR_EQUAL(argv[1], "audit")) {
+	argv[1] = argv[0];
+	argc--; argv++;
+	return _ged_mater_audit(gedp, argc, argv);
     }
 
     if (BU_STR_EQUAL(argv[1], "validate")) {
