@@ -169,14 +169,11 @@ bu_hash_get(const struct bu_hash_tbl *hsh_tbl, const uint8_t *key, size_t key_le
 
     BU_CK_HASH_TBL(hsh_tbl);
 
-    bu_semaphore_acquire(BU_SEM_HASH);
-
     /* calculate the index into the bin array */
     idx = _bu_hash(key, key_len) & hsh_tbl->mask;
     if (idx >= hsh_tbl->num_lists) {
 	fprintf(stderr, "hash function returned too large value (%ld), only have %ld lists\n",
 		idx, hsh_tbl->num_lists);
-	bu_semaphore_release(BU_SEM_HASH);
 	return NULL;
     }
 
@@ -203,11 +200,9 @@ bu_hash_get(const struct bu_hash_tbl *hsh_tbl, const uint8_t *key, size_t key_le
 
     if (found) {
 	/* return the found entry */
-	bu_semaphore_release(BU_SEM_HASH);
 	return hsh_entry->value;
     } else {
 	/* did not find the entry, return NULL */
-	bu_semaphore_release(BU_SEM_HASH);
 	return NULL;
     }
 }
