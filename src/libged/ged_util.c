@@ -390,7 +390,7 @@ _ged_densities_from_file(struct analyze_densities **dens, char **den_src, struct
 }
 
 /**
- * Load density information into the GED structure.
+ * Load density information.
  *
  * Returns
  * 0 on success

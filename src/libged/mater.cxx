@@ -356,6 +356,123 @@ _ged_mater_validate(struct ged *gedp, int argc, const char *argv[])
     return GED_OK;
 }
 
+#if 0
+TODO - need --json option to this to get information in machine readable form - don't
+want anyone parsing the textual output...  Probably some specific options too, like
+report just all material names without ids or vice versa.
+int
+_ged_mater_audit(struct ged *gedp, int argc, const char *argv[])
+{
+    int ecnt = 0;
+    char *dsource;
+    struct analyze_densities *a = NULL;
+    long int tb_cnt = 0;
+    struct bu_vls msgs = BU_VLS_INIT_ZERO;
+    struct bu_mapped_file *dfile = NULL;
+    struct directory *dp, *gddp;
+    char *buf = NULL;
+    const char *densities_filename = NULL;
+
+    if (argc == 2) {
+	if (!bu_file_exists(argv[1], NULL)) {
+	    bu_vls_printf(gedp->ged_result_str, "Specified density file %s not found", argv[1]);
+	    return GED_ERROR;
+	} else {
+	    densities_filename = argv[1];
+	}
+    }
+    gddp = db_lookup(gedp->ged_wdbp->dbip, GED_DB_DENSITY_OBJECT, LOOKUP_QUIET);
+
+    if (densities_filename && gddp != RT_DIR_NULL) {
+	// This is OK, but let the user know if we are doing a file based run but there is a
+	// density database present.
+	bu_vls_printf(gedp->ged_result_str, "\nNote: using specified density file %s for audit, but database contains imported density information - the latter will be the default for most tools unless a density file is explicitly specified.\n\n");
+    }
+
+    // As a first cut, do a fault intolerant read - if there are any problems we want to know
+    if (_ged_read_densities(&a, &dsource, gedp, densities_filename, 0) == GED_ERROR) {
+	a = NULL;
+    }
+
+    if (!a) {
+	// If that didn't work, do a fault tolerant read so we can proceed with the evaluation
+	if (_ged_read_densities(&a, &dsource, gedp, densities_filename, 1) == GED_ERROR) {
+	    bu_vls_printf(gedp->ged_result_str, "Fault tolerant reading of densities data failed.\n");
+	    a = NULL;
+	}
+    }
+
+    if (dsource) {
+	bu_vls_printf(gedp->ged_result_str, " *** Using density data from %s ***\n", dsource);
+	bu_free(dsource, "free dsource");
+    }
+
+    // Now, find out if anything in the database is interested in material information
+    struct bu_ptbl mn_objs = BU_PTBL_INIT_ZERO;
+    struct bu_ptbl id_objs = BU_PTBL_INIT_ZERO;
+    std::set<struct directory *> mns, ids;
+    std::set<struct directory *>::iterator dp_it;
+    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
+    (void)db_search(&mn_objs, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, mname_search, 0, NULL, gedp->ged_wdbp->dbip, NULL);
+    (void)db_search(&id_objs, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, mid_search, 0, NULL, gedp->ged_wdbp->dbip, NULL);
+    for(size_t i = 0; i < BU_PTBL_LEN(&mn_objs); i++) {
+	dp = (struct directory *)BU_PTBL_GET(&mn_objs, i);
+	mns.insert(dp);
+    }
+    for(size_t i = 0; i < BU_PTBL_LEN(&id_objs); i++) {
+	dp = (struct directory *)BU_PTBL_GET(&id_objs, i);
+	ids.insert(dp);
+    }
+    db_search_free(&mn_objs);
+    db_search_free(&id_objs);
+
+    // If nothing in the database cares, we're done
+    if (!mns.size() && !ids.size()) {
+	if (gddp != RT_DIR_NULL) {
+	    bu_vls_printf(gedp->ged_result_str, "\n*** Density data present in database, but no material_id or material_name attributes set. ***\n");
+	} else {
+	    bu_vls_printf(gedp->ged_result_str, "\n*** No material_id or material_name attributes set in database. ***\n");
+	}
+	if (a) {
+	    analyze_densities_destroy(a);
+	}
+	return GED_OK;
+    }
+
+    // If the database has material_name or material_id information but we don't have any density info, we've got a problem.
+    // Report information about what is set in the database
+    if ((mns.size() || ids.size()) && !a) {
+	if (mns.size()) {
+	/* Unique Material Names: m1, m2, m3, ... \n */
+	}
+	if (ids.size()) {
+	/* Unique Material Ids: id1, id2, id3, ... \n */
+	}
+
+	if (mns.size() && ids.size()) {
+	    // If we have id numbers and names matched up, we can at least audit to be sure the
+	    // database is internally consistent - report any collisions
+	}
+	return GED_OK;
+    }
+
+    // We've got some combination of density information and material attributes.  Now things get interesting.
+
+    if (mns.size()) {
+	// Check for any names that aren't present in the database and report.  If there is an associated
+	// material id with object that corresponds to a known name, report that as well.
+    }
+
+    if (ids.size()) {
+	// Check for any material ids that aren't present in the database and report.  If there is an associated
+	// material name that corresponds to a known id, report that as well.
+    }
+
+    analyze_densities_destroy(a);
+    return GED_OK;
+}
+#endif
+
 int
 _ged_mater_import(struct ged *gedp, int argc, const char *argv[])
 {
