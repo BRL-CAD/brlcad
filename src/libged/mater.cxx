@@ -44,6 +44,7 @@ static const char *usage = "Usage: mater [-s] object_name shader r [g b] inherit
                            "              -d  clear\n"
                            "              -d  import [-v] file.density\n"
                            "              -d  export file.density\n"
+                           "              -d  audit [file.density]\n"
                            "              -d  validate file.density\n"
                            "              -d  get [--tol <tolerance>] [[--id <pattern>] [--density <val>] [--name <pattern>] ...] [key]\n"
                            "              -d  set <id,density,name> [<id,density,name>] ...\n"
@@ -459,28 +460,100 @@ _ged_mater_export(struct ged *gedp, int argc, const char *argv[])
     return GED_OK;
 }
 
+struct _id_opt_info {
+    int lflag;
+    int gflag;
+    int eflag;
+    std::set<long int> *id_numbers;
+    std::set<std::string> *id_patterns;
+};
 
 extern "C"
 int _ged_id_opt(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 {
-    std::set<std::string> *id_patterns = (std::set<std::string> *)set_var;
+    struct _id_opt_info *id_info = (struct _id_opt_info *)set_var;
+    const char *av0 = argv[0];
+    std::string av_orig(argv[0]);
+    long int id_number = 0;
+
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "bu_opt_str");
-    id_patterns->insert(std::string(argv[0]));
+
+    id_info->lflag = 0;
+    id_info->gflag = 0;
+    id_info->eflag = 0;
+
+    if (av0[0] == '<') {
+	id_info->lflag = 1;
+	av0++;
+    } else if (av0[0] == '>') {
+	id_info->gflag = 1;
+	av0++;
+    }
+    if (av0[0] == '=') {
+	id_info->eflag = 1;
+	av0++;
+    }
+    argv[0] = av0;
+
+    if (bu_opt_long(msg, argc, argv, (void *)&id_number) < 0) {
+	// Not a number or range - just go with the original string
+	id_info->lflag = 0;
+	id_info->gflag = 0;
+	id_info->eflag = 0;
+	id_info->id_patterns->insert(av_orig);
+	return 1;
+    }
+
+    if (!id_info->lflag && !id_info->gflag) {
+	id_info->eflag = 1;
+    }
+
+    id_info->id_numbers->insert(id_number);
+
     return 1;
 }
+
+struct _density_opt_info {
+    int lflag;
+    int gflag;
+    int eflag;
+    std::set<fastf_t> *densities;
+};
 
 extern "C"
 int _ged_density_opt(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 {
+    const char *av0 = argv[0];
     fastf_t den;
-    std::set<fastf_t> *densities = (std::set<fastf_t> *)set_var;
+    struct _density_opt_info *dens_opt = (struct _density_opt_info *)set_var;
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "bu_opt_str");
+
+    dens_opt->lflag = 0;
+    dens_opt->gflag = 0;
+    dens_opt->eflag = 0;
+
+    if (av0[0] == '<') {
+	dens_opt->lflag = 1;
+	av0++;
+    } else if (av0[0] == '>') {
+	dens_opt->gflag = 1;
+	av0++;
+    }
+    if (av0[0] == '=') {
+	dens_opt->eflag = 1;
+	av0++;
+    }
+    argv[0] = av0;
+
+    if (!dens_opt->lflag && !dens_opt->gflag) {
+	dens_opt->eflag = 1;
+    }
 
     if (bu_opt_fastf_t(msg, argc, argv, (void *)&den) < 0) {
 	return -1;
     }
 
-    densities->insert(den);
+    dens_opt->densities->insert(den);
     return 1;
 }
 
@@ -496,11 +569,11 @@ int _ged_name_opt(struct bu_vls *msg, int argc, const char **argv, void *set_var
 int
 _ged_mater_get(struct ged *gedp, int argc, const char *argv[])
 {
-    int report_tcl = 0;
     /* BN_TOL_DIST doesn't really make sense here, but SMALL_FASTF is too small
      * to be a useful density tolerance for searching purposes. */
     double dtol = BN_TOL_DIST;
     struct bu_vls msgs = BU_VLS_INIT_ZERO;
+    struct bu_vls tolhelp = BU_VLS_INIT_ZERO;
     struct directory *dp;
     struct rt_binunif_internal *bip;
     struct rt_db_internal intern;
@@ -509,21 +582,26 @@ _ged_mater_get(struct ged *gedp, int argc, const char *argv[])
     struct analyze_densities *a;
     int ret = 0;
     int ecnt = 0;
-    std::set<std::string> *id_patterns = new std::set<std::string>;
-    std::set<fastf_t> *densities = new std::set<fastf_t>;
     std::set<std::string> *name_patterns = new std::set<std::string>;
     std::set<std::string> *greedy_patterns = new std::set<std::string>;
     std::set<std::string>::iterator i_it, n_it;
     std::set<fastf_t>::iterator f_it;
+    std::set<long int>::iterator ln_it;
     long int curr_id = -1;
+    struct _density_opt_info dens_opt;
+    dens_opt.densities = new std::set<fastf_t>;
+    struct _id_opt_info id_opt;
+    id_opt.id_numbers = new std::set<long int>;
+    id_opt.id_patterns = new std::set<std::string>;
 
-    struct bu_opt_desc d[6];
-    BU_OPT(d[0], "", "id",       "<id pattern>",   &_ged_id_opt,       id_patterns,   "Search using a material id number key");
-    BU_OPT(d[1], "", "density",  "<value>",        &_ged_density_opt,  densities,     "Search using a density value");
+    bu_vls_sprintf(&tolhelp, "Search for density matches with the specified matching tolerance (unspecified default is %g)", BN_TOL_DIST);
+
+    struct bu_opt_desc d[5];
+    BU_OPT(d[0], "", "id",       "<[[>|<][=]id]|[id pattern]>",   &_ged_id_opt,       &id_opt,   "Search using a material id number key or range");
+    BU_OPT(d[1], "", "density",  "<[>|<][=]value>",   &_ged_density_opt,  &dens_opt,     "Search using a density value (above/below with prefix modifiers, else matches within tolerance)");
     BU_OPT(d[2], "", "name",     "<name pattern>", &_ged_name_opt,     name_patterns, "Search using a material name");
-    BU_OPT(d[3], "", "tol",      "<tolerance>",    &bu_opt_fastf_t,    &dtol,         "Search for density matches with the specified tolerance.");
-    BU_OPT(d[4], "", "tcl",  "",     NULL,  &report_tcl, "Report output in a Tcl formatted list");
-    BU_OPT_NULL(d[5]);
+    BU_OPT(d[3], "", "tol",      "<tolerance>",    &bu_opt_fastf_t,    &dtol,         bu_vls_cstr(&tolhelp));
+    BU_OPT_NULL(d[4]);
 
     argc--; argv++;
 
@@ -605,16 +683,29 @@ _ged_mater_get(struct ged *gedp, int argc, const char *argv[])
 	    }
 	}
 
-	for (i_it = id_patterns->begin(); i_it != id_patterns->end(); i_it++) {
+	if (id_opt.lflag || id_opt.gflag || id_opt.eflag) {
 	    have_id_match = 0;
-	    if (!bu_path_match(i_it->c_str(), bu_vls_cstr(&curr_id_str), 0)) {
-		have_id_match = 1;
-		break;
+	    for (ln_it = id_opt.id_numbers->begin(); ln_it != id_opt.id_numbers->end(); ln_it++) {
+		if ((id_opt.lflag && (curr_id < *ln_it)) || (id_opt.gflag && (curr_id > *ln_it)) ||
+			(id_opt.eflag && (*ln_it == curr_id))) {
+		    have_id_match = 1;
+		    break;
+		}
 	    }
 	}
-	for (f_it = densities->begin(); f_it != densities->end(); f_it++) {
+	if (have_id_match <= 0) {
+	    for (i_it = id_opt.id_patterns->begin(); i_it != id_opt.id_patterns->end(); i_it++) {
+		have_id_match = 0;
+		if (!bu_path_match(i_it->c_str(), bu_vls_cstr(&curr_id_str), 0)) {
+		    have_id_match = 1;
+		    break;
+		}
+	    }
+	}
+	for (f_it = dens_opt.densities->begin(); f_it != dens_opt.densities->end(); f_it++) {
 	    have_den_match = 0;
-	    if (NEAR_EQUAL(*f_it, curr_d, dtol)) {
+	    if ((dens_opt.lflag && (curr_d < *f_it)) || (dens_opt.gflag && (curr_d > *f_it)) ||
+	       	(dens_opt.eflag && NEAR_EQUAL(*f_it, curr_d, dtol))) {
 		have_den_match = 1;
 		break;
 	    }
@@ -635,18 +726,22 @@ _ged_mater_get(struct ged *gedp, int argc, const char *argv[])
     }
 
     bu_vls_free(&msgs);
+    bu_vls_free(&tolhelp);
     analyze_densities_destroy(a);
 
-    delete id_patterns;
-    delete densities;
+    delete id_opt.id_numbers;
+    delete id_opt.id_patterns;
+    delete dens_opt.densities;
     delete name_patterns;
     delete greedy_patterns;
 
     return GED_OK;
 
 ged_mater_get_fail:
-    delete id_patterns;
-    delete densities;
+    bu_vls_free(&tolhelp);
+    delete id_opt.id_numbers;
+    delete id_opt.id_patterns;
+    delete dens_opt.densities;
     delete name_patterns;
     delete greedy_patterns;
     return GED_ERROR;

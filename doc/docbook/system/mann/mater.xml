@@ -56,8 +56,8 @@
       <arg choice="req" rep="norepeat">-d</arg>
       <arg choice="req" rep="norepeat">get</arg>
       <arg choice="opt" rep="norepeat">--tol &lt;tolerance&gt;</arg>
-      <arg choice="opt">--id <replaceable>pattern</replaceable></arg>
-      <arg choice="opt">--density <replaceable>val</replaceable></arg>
+      <arg choice="opt">--id <replaceable>[[&gt;|&lt;][=]id]|[id pattern]</replaceable></arg>
+      <arg choice="opt">--density <replaceable>[[&gt;|&lt;][=]val</replaceable></arg>
       <arg choice="opt">--name <replaceable>pattern</replaceable></arg>
       <arg choice="opt"><replaceable>pattern</replaceable></arg>
     </cmdsynopsis>
