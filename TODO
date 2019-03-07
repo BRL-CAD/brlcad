@@ -168,6 +168,42 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * use bu_gettime() in rt -l8 heatgraph visualization mode
 
+* g-shell-rect appears to be the only command that will give a
+  raytraced AABB.  we need to refactor that feature into either the
+  gqa -Ab (which merely reports the prep box) or the analyze command
+  (or both).
+
+* implement a faster raytraced AABB function that calls ft_plot(),
+  shoots a ray through each point, and computes the resulting box.
+
+* implement prep optimzation to the default fast bbox approximation
+  specifically for arb8/rpp since we know the exact extent of their
+  bounds and can chop away at a box with a box.
+
+* make gqa -Ab use sample points for reporting an evaluated AABB.
+
+* make bb report an evaluated AABB by default.
+
+* fully implement analyze for all geometry objects
+
+* add unit tests for primitive callback routines (e.g., bbox).
+
+* implement general analyze estimate (perhaps just raytrace it) for
+  primitives where values like surface area, volume, or bb are very
+  difficult to calculate.
+
+* move analyze logic into libanalyze (with respective primitive logic
+  into src/librt/primitives/*).
+
+* extend analyze output formatting to user-specified formats ala nirt
+
+* calculate products of inertia in 'analyze' and/or gqa output
+
+* calculate radii of gyration in 'analyze' and/or gqa output
+
+* implement make, ted, edsol, mirror, and analyze for revolve
+  primitive.  implement tess() too.
+
 * go_open inmem to db command
 
 * optimize mged interactive loop command processing.  creating 10k
@@ -410,10 +446,11 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   geometry constructs.  their spec is freely available online.  no
   existing libs are known.
 
-* analyze output that can characterize how much error or any other
-  issues identified in a given object.  this is primarily intended for
-  bot, nmg, and brep nurbs models, to report the amount of spatial
-  error (gaps) detected for non-solid geometry.
+* implement gdiff support for reporting the amount of spatial
+  difference between two objects.  primarily for calculating amount of
+  error introduced via bot, nmg, and brep nurbs format
+  conversion. also useful for knowing relative difference between two
+  versions (e.g., which is bigger).
 
 * air regions (aircode > 0) are removed/skipped during prep, but there
   is no message to the user that this has occurred.  this can result
@@ -1073,27 +1110,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   interrupt long-running commands
 
 * make Mac OS X universal binaries actually work.
-
-* fully implement analyze for all primitives, add unit tests for
-  underlying callback routines (e.g., bbox).
-
-* implement general analyze estimate (perhaps just raytrace it) for
-  primitives where values like surface area or volume are very
-  difficult to calculate.
-
-* move analyze logic into librt (with their respective primitives).
-
-* fix analyze output formatting, columns are pooched.
-    (for arbs, it should be fixed as of revision 48900)
-
-* extend analyze output formatting to user-specified formats ala nirt
-
-* calculate products of inertia in 'analyze' and/or gqa output
-
-* calculate radii of gyration in 'analyze' and/or gqa output
-
-* implement make, ted, edsol, mirror, and analyze for revolve
-  primitive.  implement tess() too.
 
 * fix/change naming convention for presented/exposed area
 
