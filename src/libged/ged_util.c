@@ -279,7 +279,7 @@ _ged_cmd_help(struct ged *gedp, const char *usage, struct bu_opt_desc *d)
 }
 
 int
-_ged_vopt(struct bu_vls *UNUSED(msg), int UNUSED(argc), const char **UNUSED(argv), void *set_var)
+_ged_vopt(struct bu_vls *UNUSED(msg), size_t UNUSED(argc), const char **UNUSED(argv), void *set_var)
 {
     int *v_set = (int *)set_var;
     if (v_set) {

@@ -227,7 +227,7 @@ bu_color_from_str(struct bu_color *color, const char *str)
     /* hexadecimal color in #FFF or #FFFFFF form */
     if (*str == '#') {
 	int ret = 0;
-	int len;
+	size_t len;
 	unsigned int rgb[3] = {0, 0, 0};
 
 	str++;

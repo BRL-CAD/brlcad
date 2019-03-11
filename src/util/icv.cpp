@@ -33,7 +33,7 @@
 #include "icv.h"
 
 int
-file_stat(struct bu_vls *msg, int argc, const char **argv, void *set_var)
+file_stat(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 {
     char **file_set = (char **)set_var;
 
@@ -50,7 +50,7 @@ file_stat(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 }
 
 int
-file_null(struct bu_vls *msg, int argc, const char **argv, void *set_var)
+file_null(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 {
     char **file_set = (char **)set_var;
 
@@ -67,7 +67,7 @@ file_null(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 }
 
 int
-image_mime(struct bu_vls *msg, int argc, const char **argv, void *set_mime)
+image_mime(struct bu_vls *msg, size_t argc, const char **argv, void *set_mime)
 {
     int type_int;
     bu_mime_image_t type = BU_MIME_IMAGE_UNKNOWN;

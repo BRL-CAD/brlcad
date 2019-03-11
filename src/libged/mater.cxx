@@ -39,20 +39,22 @@
 
 #include <string.h>
 
-static const char *usage = "Usage: mater [-s] object_name shader r [g b] inherit\n"
-                           "              -d  source\n"
-                           "              -d  clear\n"
-                           "              -d  import [-v] file.density\n"
-                           "              -d  export file.density\n"
-                           "              -d  audit [file.density]\n"
-                           "              -d  validate file.density\n"
-                           "              -d  get [--tol <tolerance>] [[--id <pattern>] [--density <val>] [--name <pattern>] ...] [key]\n"
-                           "              -d  set <id,density,name> [<id,density,name>] ...\n"
-                           "              -d  map --ids-from-names [-d density_file] [-m map_file] [density_file] [map_file]\n"
-                           "              -d  map --names-from-ids [density_file]\n";
 
-int
-_ged_mater_shader(struct ged *gedp, int argc, const char *argv[])
+static const char *usage = "Usage: mater [-s] object_name shader r [g b] inherit\n"
+    "              -d  source\n"
+    "              -d  clear\n"
+    "              -d  import [-v] file.density\n"
+    "              -d  export file.density\n"
+    "              -d  audit [file.density]\n"
+    "              -d  validate file.density\n"
+    "              -d  get [--tol <tolerance>] [[--id <pattern>] [--density <val>] [--name <pattern>] ...] [key]\n"
+    "              -d  set <id, density, name> [<id, density, name>] ...\n"
+    "              -d  map --ids-from-names [-d density_file] [-m map_file] [density_file] [map_file]\n"
+    "              -d  map --names-from-ids [density_file]\n";
+
+
+static int
+mater_shader(struct ged *gedp, size_t argc, const char *argv[])
 {
     struct bu_attribute_value_set avs;
     static const char *prompt[] = {
@@ -254,8 +256,9 @@ _ged_mater_shader(struct ged *gedp, int argc, const char *argv[])
     return GED_OK;
 }
 
-int
-_ged_mater_source(struct ged *gedp)
+
+static int
+mater_source(struct ged *gedp)
 {
     struct bu_vls d_path_dir = BU_VLS_INIT_ZERO;
 
@@ -292,8 +295,9 @@ _ged_mater_source(struct ged *gedp)
     return GED_OK;
 }
 
-int
-_ged_mater_clear(struct ged *gedp)
+
+static int
+mater_clear(struct ged *gedp)
 {
     struct directory *dp;
     if ((dp = db_lookup(gedp->ged_wdbp->dbip, GED_DB_DENSITY_OBJECT, LOOKUP_QUIET)) != RT_DIR_NULL) {
@@ -306,8 +310,9 @@ _ged_mater_clear(struct ged *gedp)
     return GED_OK;
 }
 
-int
-_ged_mater_validate(struct ged *gedp, int argc, const char *argv[])
+
+static int
+mater_validate(struct ged *gedp, size_t argc, const char *argv[])
 {
     int ecnt = 0;
     struct analyze_densities *a = NULL;
@@ -356,11 +361,12 @@ _ged_mater_validate(struct ged *gedp, int argc, const char *argv[])
     return GED_OK;
 }
 
+
 /*TODO - need --json option to this to get information in machine readable form - don't
-want anyone parsing the textual output...  Probably some specific options too, like
-report just all material names without ids or vice versa. */
-int
-_ged_mater_audit(struct ged *gedp, int argc, const char *argv[])
+  want anyone parsing the textual output...  Probably some specific options too, like
+  report just all material names without ids or vice versa. */
+static int
+mater_audit(struct ged *gedp, size_t argc, const char *argv[])
 {
     char *dsource = NULL;
     struct analyze_densities *a = NULL;
@@ -636,8 +642,9 @@ _ged_mater_audit(struct ged *gedp, int argc, const char *argv[])
     return GED_OK;
 }
 
-int
-_ged_mater_import(struct ged *gedp, int argc, const char *argv[])
+
+static int
+mater_import(struct ged *gedp, size_t argc, const char *argv[])
 {
     int validate_input = 0;
     if (argc < 2 || argc > 3) {
@@ -656,12 +663,12 @@ _ged_mater_import(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (_ged_mater_clear(gedp) != GED_OK) {
+    if (mater_clear(gedp) != GED_OK) {
 	return GED_ERROR;
     }
 
     if (validate_input) {
-	if (_ged_mater_validate(gedp, 2, argv) != GED_OK) {
+	if (mater_validate(gedp, 2, argv) != GED_OK) {
 	    return GED_ERROR;
 	}
     }
@@ -682,8 +689,9 @@ _ged_mater_import(struct ged *gedp, int argc, const char *argv[])
     return GED_OK;
 }
 
-int
-_ged_mater_export(struct ged *gedp, int argc, const char *argv[])
+
+static int
+mater_export(struct ged *gedp, size_t argc, const char *argv[])
 {
     FILE *fp;
     struct rt_binunif_internal *bip;
@@ -740,6 +748,7 @@ _ged_mater_export(struct ged *gedp, int argc, const char *argv[])
     return GED_OK;
 }
 
+
 struct _id_opt_info {
     int lflag;
     int gflag;
@@ -748,8 +757,9 @@ struct _id_opt_info {
     std::set<std::string> *id_patterns;
 };
 
-extern "C"
-int _ged_id_opt(struct bu_vls *msg, int argc, const char **argv, void *set_var)
+
+static int
+_ged_id_opt(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 {
     struct _id_opt_info *id_info = (struct _id_opt_info *)set_var;
     const char *av0 = argv[0];
@@ -793,6 +803,7 @@ int _ged_id_opt(struct bu_vls *msg, int argc, const char **argv, void *set_var)
     return 1;
 }
 
+
 struct _density_opt_info {
     int lflag;
     int gflag;
@@ -800,8 +811,9 @@ struct _density_opt_info {
     std::set<fastf_t> *densities;
 };
 
-extern "C"
-int _ged_density_opt(struct bu_vls *msg, int argc, const char **argv, void *set_var)
+
+static int
+_ged_density_opt(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 {
     const char *av0 = argv[0];
     fastf_t den;
@@ -837,8 +849,9 @@ int _ged_density_opt(struct bu_vls *msg, int argc, const char **argv, void *set_
     return 1;
 }
 
-extern "C"
-int _ged_name_opt(struct bu_vls *msg, int argc, const char **argv, void *set_var)
+
+static int
+_ged_name_opt(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 {
     std::set<std::string> *name_patterns = (std::set<std::string> *)set_var;
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "bu_opt_str");
@@ -846,8 +859,9 @@ int _ged_name_opt(struct bu_vls *msg, int argc, const char **argv, void *set_var
     return 1;
 }
 
-int
-_ged_mater_get(struct ged *gedp, int argc, const char *argv[])
+
+static int
+mater_get(struct ged *gedp, size_t argc, const char *argv[])
 {
     /* BN_TOL_DIST doesn't really make sense here, but SMALL_FASTF is too small
      * to be a useful density tolerance for searching purposes. */
@@ -973,7 +987,7 @@ _ged_mater_get(struct ged *gedp, int argc, const char *argv[])
 	    have_id_match = 0;
 	    for (ln_it = id_opt.id_numbers->begin(); ln_it != id_opt.id_numbers->end(); ln_it++) {
 		if ((id_opt.lflag && (curr_id < *ln_it)) || (id_opt.gflag && (curr_id > *ln_it)) ||
-			(id_opt.eflag && (*ln_it == curr_id))) {
+		    (id_opt.eflag && (*ln_it == curr_id))) {
 		    have_id_match = 1;
 		    break;
 		}
@@ -1004,7 +1018,7 @@ _ged_mater_get(struct ged *gedp, int argc, const char *argv[])
 	    }
 	}
 	if (((have_id_match && have_den_match && have_name_match) && (have_id_match > 0 || have_den_match > 0 || have_name_match > 0))
-	       	|| (have_greedy_match && (have_id_match != 0 && have_den_match != 0 && have_name_match != 0))) {
+	    || (have_greedy_match && (have_id_match != 0 && have_den_match != 0 && have_name_match != 0))) {
 	    bu_vls_printf(gedp->ged_result_str, "%ld\t%g\t%s\n", curr_id, curr_d, curr_n);
 	}
 	bu_free(curr_n, "name copy");
@@ -1033,8 +1047,9 @@ ged_mater_get_fail:
     return GED_ERROR;
 }
 
-int
-_ged_mater_set(struct ged *gedp, int argc, const char *argv[])
+
+static int
+mater_set(struct ged *gedp, size_t argc, const char *argv[])
 {
     struct directory *dp;
     struct analyze_densities *a = NULL;
@@ -1054,8 +1069,8 @@ _ged_mater_set(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* Parse argv density arguments */
-    std::regex d_reg("([0-9]+)[\\s,]+([-+]?[0-9]*[\\.]?[0-9eE+-]*)[\\s,]+(.*)");
-    for (int i = 1; i < argc; i++) {
+    std::regex d_reg("([0-9]+)[\\s, ]+([-+]?[0-9]*[\\.]?[0-9eE+-]*)[\\s, ]+(.*)");
+    for (size_t i = 1; i < argc; i++) {
 	long int id;
 	fastf_t density;
 	std::smatch sm;
@@ -1107,7 +1122,7 @@ _ged_mater_set(struct ged *gedp, int argc, const char *argv[])
     }
 
     // Got through parsing, make a buffer and replace the existing density object
-    if (_ged_mater_clear(gedp) != GED_OK) {
+    if (mater_clear(gedp) != GED_OK) {
 	analyze_densities_destroy(a);
 	return GED_ERROR;
     }
@@ -1143,9 +1158,9 @@ _ged_mater_set(struct ged *gedp, int argc, const char *argv[])
 
     /* create entire external form */
     db5_export_object3(&bin_ext, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
-	    GED_DB_DENSITY_OBJECT, 0, NULL, &body,
-	    intern.idb_major_type, intern.idb_minor_type,
-	    DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED);
+		       GED_DB_DENSITY_OBJECT, 0, NULL, &body,
+		       intern.idb_major_type, intern.idb_minor_type,
+		       DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED);
 
     rt_db_free_internal(&intern);
     bu_free_external(&body);
@@ -1159,7 +1174,7 @@ _ged_mater_set(struct ged *gedp, int argc, const char *argv[])
 
     /* add this (phony until written) object to the directory */
     if ((dp=db_diradd5(gedp->ged_wdbp->dbip, GED_DB_DENSITY_OBJECT, RT_DIR_PHONY_ADDR, intern.idb_major_type,
-		    intern.idb_minor_type, 0, 0, NULL)) == RT_DIR_NULL) {
+		       intern.idb_minor_type, 0, 0, NULL)) == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "Error while attempting to add new name (%s) to the database", GED_DB_DENSITY_OBJECT);
 	bu_free_external(&bin_ext);
 	return GED_ERROR;
@@ -1184,8 +1199,9 @@ _ged_mater_set(struct ged *gedp, int argc, const char *argv[])
     return GED_OK;
 }
 
-int
-_ged_read_msmap(struct ged *gedp, const char *mbuff, std::set<std::string> &defined_materials, std::map<std::string,std::string> &listed_to_defined)
+
+static int
+_ged_read_msmap(struct ged *gedp, const char *mbuff, std::set<std::string> &defined_materials, std::map<std::string, std::string> &listed_to_defined)
 {
     int ret = GED_OK;
     std::string mb(mbuff);
@@ -1194,7 +1210,7 @@ _ged_read_msmap(struct ged *gedp, const char *mbuff, std::set<std::string> &defi
     std::string ws("\t ");
     std::string ws2("\t \"");
     std::string tc("\"");
-    std::string sep("\t ,;:\"=");
+    std::string sep("\t , ;:\"=");
     while (std::getline(ss, line)) {
 	size_t curr_char = 0;
 	std::string m1, m2;
@@ -1249,9 +1265,10 @@ _ged_read_msmap(struct ged *gedp, const char *mbuff, std::set<std::string> &defi
     return ret;
 }
 
-int
-_ged_mater_try_densities_load(struct ged *gedp, struct analyze_densities **pa, std::set<std::string> &defined_materials,
-    std::map<std::string,std::string> &listed_to_defined, const char *fname)
+
+static int
+mater_try_densities_load(struct ged *gedp, struct analyze_densities **pa, std::set<std::string> &defined_materials,
+			      std::map<std::string, std::string> &listed_to_defined, const char *fname)
 {
     long int curr_id = -1;
     long int id_cnt = 0;
@@ -1294,8 +1311,8 @@ _ged_mater_try_densities_load(struct ged *gedp, struct analyze_densities **pa, s
 }
 
 
-int
-_ged_mater_mat_id(struct ged *gedp, int argc, const char *argv[])
+static int
+mater_mat_id(struct ged *gedp, size_t argc, const char *argv[])
 {
     struct bu_vls msgs = BU_VLS_INIT_ZERO;
     struct bu_vls dfilename = BU_VLS_INIT_ZERO;
@@ -1307,7 +1324,7 @@ _ged_mater_mat_id(struct ged *gedp, int argc, const char *argv[])
     struct analyze_densities *a = NULL;
     std::set<std::string> listed_materials;
     std::set<std::string> defined_materials;
-    std::map<std::string,std::string> listed_to_defined;
+    std::map<std::string, std::string> listed_to_defined;
     const char *mname_search = "-attr material_name";
     const char *mid_search = "-attr material_id";
     struct bu_ptbl mn_objs = BU_PTBL_INIT_ZERO;
@@ -1385,7 +1402,7 @@ _ged_mater_mat_id(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (ac && !bu_vls_strlen(&dfilename)) {
-	if (!_ged_mater_try_densities_load(gedp, &a, defined_materials, listed_to_defined, argv[0])) {
+	if (!mater_try_densities_load(gedp, &a, defined_materials, listed_to_defined, argv[0])) {
 	    if (ac == 2 || names_from_ids) {
 		bu_vls_printf(gedp->ged_result_str, "density file %s did not load successfully", argv[0]);
 		goto ged_mater_mat_id_fail;
@@ -1399,7 +1416,7 @@ _ged_mater_mat_id(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (bu_vls_strlen(&dfilename) && !a) {
-	if (!_ged_mater_try_densities_load(gedp, &a, defined_materials, listed_to_defined, bu_vls_cstr(&dfilename))) {
+	if (!mater_try_densities_load(gedp, &a, defined_materials, listed_to_defined, bu_vls_cstr(&dfilename))) {
 	    bu_vls_printf(gedp->ged_result_str, "density file %s did not load successfully", bu_vls_cstr(&dfilename));
 	    goto ged_mater_mat_id_fail;
 
@@ -1489,7 +1506,7 @@ _ged_mater_mat_id(struct ged *gedp, int argc, const char *argv[])
 		    long int found_id_cnt = analyze_densities_id(NULL, 0, a, oname);
 		    if (found_id_cnt) {
 			bu_vls_printf(gedp->ged_result_str, "Material id collision: object %s has material_name \"%s\" and material_id %s, but the specified density file defines \"%s\" as a different material id.\n", dp->d_namep, oname, mat_id, oname);
-		    }  else {
+		    } else {
 			bu_vls_printf(gedp->ged_result_str, "Unknown material: object %s has material_name %s, which is not a material defined in the specified density file.\n", dp->d_namep, oname);
 		    }
 		}
@@ -1499,7 +1516,7 @@ _ged_mater_mat_id(struct ged *gedp, int argc, const char *argv[])
 	    }
 	    // Found a name, assign it if it doesn't match
 	    char *nname = analyze_densities_name(a, std::stol(mat_id));
-	    if (!oname || !BU_STR_EQUAL(nname,oname)) {
+	    if (!oname || !BU_STR_EQUAL(nname, oname)) {
 		(void)bu_avs_add(avs, "material_name", nname);
 		if (db5_update_attributes(dp, avs, gedp->ged_wdbp->dbip)) {
 		    bu_vls_printf(gedp->ged_result_str, "Error: failed to update object %s attributes\n", dp->d_namep);
@@ -1592,8 +1609,9 @@ ged_mater_mat_id_fail:
     return GED_OK;
 }
 
-int
-_ged_mater_density(struct ged *gedp, int argc, const char *argv[])
+
+static int
+mater_density(struct ged *gedp, size_t argc, const char *argv[])
 {
 
     /* must be wanting help */
@@ -1605,54 +1623,55 @@ _ged_mater_density(struct ged *gedp, int argc, const char *argv[])
     if (BU_STR_EQUAL(argv[1], "get")) {
 	argv[1] = argv[0];
 	argc--; argv++;
-	return _ged_mater_get(gedp, argc, argv);
+	return mater_get(gedp, argc, argv);
     }
 
     if (BU_STR_EQUAL(argv[1], "set")) {
 	argv[1] = argv[0];
 	argc--; argv++;
-	return _ged_mater_set(gedp, argc, argv);
+	return mater_set(gedp, argc, argv);
     }
 
     if (BU_STR_EQUAL(argv[1], "import")) {
 	argv[1] = argv[0];
 	argc--; argv++;
-	return _ged_mater_import(gedp, argc, argv);
+	return mater_import(gedp, argc, argv);
     }
 
     if (BU_STR_EQUAL(argv[1], "export")) {
 	argv[1] = argv[0];
 	argc--; argv++;
-	return _ged_mater_export(gedp, argc, argv);
+	return mater_export(gedp, argc, argv);
     }
 
     if (BU_STR_EQUAL(argv[1], "audit")) {
 	argv[1] = argv[0];
 	argc--; argv++;
-	return _ged_mater_audit(gedp, argc, argv);
+	return mater_audit(gedp, argc, argv);
     }
 
     if (BU_STR_EQUAL(argv[1], "validate")) {
 	argv[1] = argv[0];
 	argc--; argv++;
-	return _ged_mater_validate(gedp, argc, argv);
+	return mater_validate(gedp, argc, argv);
     }
 
     if (BU_STR_EQUAL(argv[1], "source")) {
-	return _ged_mater_source(gedp);
+	return mater_source(gedp);
     }
 
     if (BU_STR_EQUAL(argv[1], "clear")) {
-	return _ged_mater_clear(gedp);
+	return mater_clear(gedp);
     }
 
     if (BU_STR_EQUAL(argv[1], "map")) {
 	argv[1] = argv[0];
 	argc--; argv++;
-	return _ged_mater_mat_id(gedp, argc, argv);
+	return mater_mat_id(gedp, argc, argv);
     }
     return GED_ERROR;
 }
+
 
 int
 ged_mater(struct ged *gedp, int argc, const char *argv[])
@@ -1675,18 +1694,19 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
     if (BU_STR_EQUAL(argv[1], "-s")) {
 	argv[1] = argv[0];
 	argc--; argv++;
-	return _ged_mater_shader(gedp, argc, argv);
+	return mater_shader(gedp, argc, argv);
     }
 
     if (BU_STR_EQUAL(argv[1], "-d")) {
 	argv[1] = argv[0];
 	argc--; argv++;
-	return _ged_mater_density(gedp, argc, argv);
+	return mater_density(gedp, argc, argv);
     }
 
     /* If we aren't instructed to do a mapping, proceed with normal behavior */
-    return _ged_mater_shader(gedp, argc, argv);
+    return mater_shader(gedp, argc, argv);
 }
+
 
 // Local Variables:
 // tab-width: 8

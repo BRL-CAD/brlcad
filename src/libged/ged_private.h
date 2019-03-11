@@ -581,7 +581,7 @@ extern struct directory ** _ged_getspace(struct db_i *dbip,
 extern void _ged_cmd_help(struct ged *gedp, const char *usage, struct bu_opt_desc *d);
 
 /* Option for verbosity variable setting */
-extern int _ged_vopt(struct bu_vls *msg, int argc, const char **argv, void *set_var);
+extern int _ged_vopt(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 
 /* Function to read in density information, either from a file or from the
  * database itself. Implements the following priority order:

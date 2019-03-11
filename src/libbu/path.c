@@ -177,7 +177,7 @@ bu_path_component(struct bu_vls *component, const char *path, bu_path_component_
 		period_pos = strrchr(path, '.');
 		bu_vls_sprintf(component, "%s", path);
 		if (period_pos && strlen(period_pos) > 0)
-		    bu_vls_trunc(component, -1 * strlen(period_pos));
+		    bu_vls_trunc(component, -1 * (int)strlen(period_pos));
 	    }
 	    break;
 	case BU_PATH_BASENAME:
@@ -199,7 +199,7 @@ bu_path_component(struct bu_vls *component, const char *path, bu_path_component_
 		period_pos = strrchr(basename, '.');
 		bu_vls_sprintf(component, "%s", basename);
 		    if (period_pos) {
-		bu_vls_trunc(component, -1 * strlen(period_pos));
+		bu_vls_trunc(component, -1 * (int)strlen(period_pos));
 	    }
 		}
 	    }

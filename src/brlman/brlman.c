@@ -79,17 +79,20 @@ const char *iso639_1[] = {"ab", "aa", "af", "ak", "sq", "am", "ar", "an",
 			  "fy", "wo", "xh", "yi", "yo", "za", "zu", NULL};
 
 HIDDEN int
-opt_lang(struct bu_vls *msg, int argc, const char **argv, void *l)
+opt_lang(struct bu_vls *msg, size_t argc, const char **argv, void *l)
 {
-    int i = 0;
+    size_t i = 0;
     struct bu_vls *lang = (struct bu_vls *)l;
     if (lang) {
 	int ret = bu_opt_vls(msg, argc, argv, (void *)l);
-	if (ret == -1) return -1;
-	if (bu_vls_strlen(lang) != 2) return -1;
+	if (ret == -1)
+	    return -1;
+	if (bu_vls_strlen(lang) != 2)
+	    return -1;
 	/* Only return valid if we've got one of the ISO639-1 lang codes */
 	while (iso639_1[i]) {
-	    if (BU_STR_EQUAL(bu_vls_addr(lang), iso639_1[i])) return ret;
+	    if (BU_STR_EQUAL(bu_vls_addr(lang), iso639_1[i]))
+		return ret;
 	    i++;
 	}
 	return -1;
@@ -100,19 +103,21 @@ opt_lang(struct bu_vls *msg, int argc, const char **argv, void *l)
 
 
 HIDDEN int
-opt_section(struct bu_vls *msg, int argc, const char **argv, void *set_var)
+opt_section(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 {
-    int i = 0;
+    size_t i = 0;
     char *s_set = (char *)set_var;
 
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "bu_opt_str");
 
     /* One char only */
-    if (strlen(argv[0]) != 1) return -1;
+    if (strlen(argv[0]) != 1)
+	return -1;
 
     while(sections[i]) {
 	if (sections[i] == argv[0][0]) {
-	    if (s_set) (*s_set) = argv[0][0];
+	    if (s_set)
+		(*s_set) = argv[0][0];
 	    return 1;
 	}
 	i++;

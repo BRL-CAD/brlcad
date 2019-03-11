@@ -120,7 +120,7 @@ __BEGIN_DECLS
  * An example user-defined argument processing function:
  * @code
  * static int
- * parse_opt_mode(struct bu_vls *msg, int argc, const char **argv, void *set_var)
+ * parse_opt_mode(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
  * {
  *     int ret, mode;
  *
@@ -139,7 +139,7 @@ __BEGIN_DECLS
  * }
  * @endcode
  */
-typedef int (*bu_opt_arg_process_t)(struct bu_vls *msg, int argc, const char **argv, void *set_var);
+typedef int (*bu_opt_arg_process_t)(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 
 /**
  * A common task when writing bu_opt_arg_process_t validators is to check the
@@ -213,7 +213,7 @@ struct bu_opt_desc {
  *                     unused args to the beginning of the array
  * @param[in] ds       option structure
  */
-BU_EXPORT extern int bu_opt_parse(struct bu_vls *msgs, int ac, const char **argv, const struct bu_opt_desc *ds);
+BU_EXPORT extern int bu_opt_parse(struct bu_vls *msgs, size_t ac, const char **argv, const struct bu_opt_desc *ds);
 
 
 /** Output format options for bu_opt documentation generation */
@@ -352,23 +352,23 @@ BU_EXPORT extern char *bu_opt_describe(struct bu_opt_desc *ds, struct bu_opt_des
  */
 /** @{ */
 /** Process 1 argument to set a boolean type */
-BU_EXPORT extern int bu_opt_bool(struct bu_vls *msg, int argc, const char **argv, void *set_var);
+BU_EXPORT extern int bu_opt_bool(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 /** Process 1 argument to set an integer */
-BU_EXPORT extern int bu_opt_int(struct bu_vls *msg, int argc, const char **argv, void *set_var);
+BU_EXPORT extern int bu_opt_int(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 /** Process 1 argument to set a long */
-BU_EXPORT extern int bu_opt_long(struct bu_vls *msg, int argc, const char **argv, void *set_var);
+BU_EXPORT extern int bu_opt_long(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 /** Process 1 argument (hex style) to set a long */
-BU_EXPORT extern int bu_opt_long_hex(struct bu_vls *msg, int argc, const char **argv, void *set_var);
+BU_EXPORT extern int bu_opt_long_hex(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 /** Process 1 argument to set a @link fastf_t @endlink (either a float or a double, depending on how BRL-CAD was compiled) */
-BU_EXPORT extern int bu_opt_fastf_t(struct bu_vls *msg, int argc, const char **argv, void *set_var);
+BU_EXPORT extern int bu_opt_fastf_t(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 /** Process 1 argument to set a char pointer (uses the original argv string, does not make a copy) */
-BU_EXPORT extern int bu_opt_str(struct bu_vls *msg, int argc, const char **argv, void *set_var);
+BU_EXPORT extern int bu_opt_str(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 /** Process 1 argument to append to a vls (places a space before the new entry if the target vls is not empty) */
-BU_EXPORT extern int bu_opt_vls(struct bu_vls *msg, int argc, const char **argv, void *set_var);
+BU_EXPORT extern int bu_opt_vls(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 /** Process 1 or 3 arguments to set a bu_color */
-BU_EXPORT extern int bu_opt_color(struct bu_vls *msg, int argc, const char **argv, void *set_var);
+BU_EXPORT extern int bu_opt_color(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 /** Process 1 or 3 arguments to set a vect_t */
-BU_EXPORT extern int bu_opt_vect_t(struct bu_vls *msg, int argc, const char **argv, void *set_var);
+BU_EXPORT extern int bu_opt_vect_t(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 /** @} */
 
 
