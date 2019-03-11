@@ -170,7 +170,7 @@
 #   define isinf(x) (!_finite(x))
 #endif
 #cmakedefine asinh(x) (log(x + sqrt(x * x + 1)))
-#define execvp _execl
+#define execl _execl
 #define execvp _execvp
 #define fdopen _fdopen
 #define fileno _fileno
