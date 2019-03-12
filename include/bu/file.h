@@ -125,10 +125,10 @@ BU_EXPORT extern int bu_file_delete(const char *path);
  *
 
  * If '*files' is NULL, the caller is expected to free the matches
- * array with bu_argv_free().  If '*files' is non-NULL (i.e., string
- * array is already allocated or on the stack), the caller is expected
- * to ensure adequate entries are preallocated and to free all strings
- * with bu_free_array() or as otherwise necessary.
+ * array with bu_argv_free().  If '*files' is non-NULL (i.e., array of
+ * string pointers is already allocated or on the stack), the caller
+ * is expected to ensure adequate entries are preallocated and to free
+ * all strings with bu_free_array() or as otherwise necessary.
  *
  * Example:
  @code
