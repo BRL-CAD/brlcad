@@ -629,7 +629,7 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
     }
 
     /* get a somewhat random temporary name */
-    snprintf(tmpname, MAXPATHLEN, "%s.%d.%lld", name, bu_process_id(), bu_gettime());
+    snprintf(tmpname, MAXPATHLEN, "%s.%d.%lld", name, bu_process_id(), (long long int)bu_gettime());
 
     idx[0] = name[0];
     idx[1] = name[1];
