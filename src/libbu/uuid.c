@@ -80,7 +80,7 @@ bu_uuid_create(uint8_t uuid[STATIC_ARRAY(16)], size_t nbytes, const uint8_t *byt
 
 	    SHA1Init(&context);
 	    SHA1Update(&context, (const unsigned char *)namespace_uuid, 16);
-	    SHA1Update(&context, (const unsigned char *)bytes, nbytes);
+	    SHA1Update(&context, (const unsigned char *)bytes, (uint32_t)nbytes);
 	    SHA1Final(buffer, &context);
 
 	    memcpy(uuid, buffer, 16);

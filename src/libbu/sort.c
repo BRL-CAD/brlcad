@@ -41,7 +41,7 @@
  */
 #define SWAPCODE(TYPE, parmi, parmj, n)     \
     {                                       \
-	long i = (n) / sizeof (TYPE); 		\
+	size_t i = (n) / sizeof (TYPE); 		\
 	TYPE *pi = (TYPE *) (parmi); 		\
 	TYPE *pj = (TYPE *) (parmj); 		\
 	do {                                \
@@ -56,7 +56,7 @@
 
 
 static void
-swapfunc(char *a, char *b, int n, int swaptype)
+swapfunc(char *a, char *b, size_t n, int swaptype)
 {
     if (swaptype <= 1)
 	SWAPCODE(long, a, b, n)

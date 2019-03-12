@@ -498,7 +498,7 @@ bn_table_find_x(const struct bn_table *tabp, double xval)
     /* Search for proper interval in input spectrum */
     for (i = tabp->nx-2; i > 0; i--)  {
 	if (xval >= tabp->x[i])
-	    return i;
+	    return (long)i;
     }
     if (xval >= tabp->x[0])
 	return 0;

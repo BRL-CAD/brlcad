@@ -66,9 +66,9 @@ typedef enum YYCONDTYPE {
 
 struct Buf {
     void   *elts;	/* elements. */
-    int     nelts;	/* number of elements. */
-    size_t  elt_size;	/* in bytes. */
-    int     nmax;	/* max capacity of elements. */
+    size_t nelts;	/* number of elements. */
+    size_t elt_size;	/* in bytes. */
+    size_t nmax;	/* max capacity of elements. */
 };
 
 typedef struct appData_t {
