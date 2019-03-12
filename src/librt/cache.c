@@ -44,6 +44,8 @@
 #include "bu/file.h"
 #include "bu/cv.h"
 #include "bu/path.h"
+#include "bu/process.h"
+#include "bu/time.h"
 #include "bu/str.h"
 #include "bu/uuid.h"
 #include "rt/db_attr.h"
@@ -51,7 +53,7 @@
 #include "rt/func.h"
 
 
-#define CACHE_FORMAT 1
+#define CACHE_FORMAT 2
 
 static const char * const cache_mime_type = "brlcad/cache";
 
@@ -60,6 +62,21 @@ struct rt_cache {
     char dir[MAXPATHLEN];
     struct bu_hash_tbl *dbip_hash;
 };
+
+
+#if 0
+HIDDEN int
+is_cached()
+{
+    return 0;
+}
+
+HIDDEN int
+cache_it()
+{
+    return 0;
+}
+#endif
 
 
 HIDDEN int
@@ -197,6 +214,9 @@ rt_cache_open(void)
     int format;
     struct rt_cache *result;
 
+    /* !!! DISABLED, TESTING IN PROGRESS */
+    /* return NULL; */
+
     dir = getenv("LIBRT_CACHE");
     if (!BU_STR_EMPTY(dir)) {
 	int disabled = 0;
@@ -253,6 +273,65 @@ rt_cache_open(void)
 
 	/* reinit */
 	format = cache_format(dir);
+    } else if (format == 1) {
+	struct bu_vls path = BU_VLS_INIT_ZERO;
+	char **matches = NULL;
+	size_t count;
+	size_t i;
+
+	/* V1 cache may have corruption, delete it */
+
+	bu_vls_printf(&path, "%s%c%s", dir, BU_DIR_SEPARATOR, "objects");
+
+	count = bu_file_list(bu_vls_cstr(&path), "[A-Z0-9][A-Z0-9]", &matches);
+	/* bu_log("%zu entries for %s\n", count, bu_vls_cstr(&path)); */
+	for (i = 0; i < count; i++) {
+	    struct bu_vls subpath = BU_VLS_INIT_ZERO;
+	    const char *pattern =  /* 8-4-4-4-12 */
+		"[A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9]"
+		"-"
+		"[A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9]"
+		"-"
+		"[A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9]"
+		"-"
+		"[A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9]"
+		"-"
+		"[A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9]";
+	    char **submatches = NULL;
+	    size_t subcount;
+	    size_t j;
+
+	    bu_vls_printf(&subpath, "%s%c%s", bu_vls_cstr(&path), BU_DIR_SEPARATOR, matches[i]);
+
+	    subcount = bu_file_list(bu_vls_cstr(&subpath), pattern, &submatches);
+
+	    for (j = 0; j < subcount; j++) {
+		bu_vls_trunc(&subpath, 0);
+		bu_vls_printf(&subpath, "%s%cobjects%c%s%c%s", dir, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, matches[i], BU_DIR_SEPARATOR, submatches[j]);
+		bu_file_delete(bu_vls_cstr(&subpath));
+		/* bu_log("bu_file_delete(%s)\n", bu_vls_cstr(&subpath)); */
+	    }
+	    bu_argv_free(subcount, submatches);
+
+	    bu_vls_trunc(&subpath, 0);
+	    bu_vls_printf(&subpath, "%s%cobjects%c%s", dir, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, matches[i]);
+	    bu_file_delete(bu_vls_cstr(&subpath));
+	    /* bu_log("bu_file_delete(%s)\n", bu_vls_cstr(&subpath)); */
+
+	    bu_vls_free(&subpath);
+	}
+	bu_argv_free(count, matches);
+
+	bu_file_delete(bu_vls_cstr(&path));
+	/* bu_log("bu_file_delete(%s)\n", bu_vls_cstr(&path)); */
+
+	bu_vls_trunc(&path, 0);
+	bu_vls_printf(&path, "%s%c%s", dir, BU_DIR_SEPARATOR, "format");
+	(void)bu_file_delete(bu_vls_addr(&path));
+	bu_vls_free(&path);
+
+	/* reinit */
+	format = cache_format(dir);
     } else if (format > CACHE_FORMAT) {
 	bu_log("NOTE: Cache at %s was created with a newer version of %s\n", dir, PACKAGE_NAME);
 	bu_log("      Delete or move folder to enable caching with this version.\n");
@@ -261,7 +340,11 @@ rt_cache_open(void)
     if (format != CACHE_FORMAT)
 	return NULL;
 
-    /* v1 cache is a directory of directories of .g files */
+    /* v1+ cache is a directory of directories of .g files using
+     * 2-letter directory names containing 1-object per directory and
+     * file, e.g.:
+     * [CACHE_DIR]/.rt/objects/A8/A8D460B2-194F-5FA7-8FED-286A6C994B89
+     */
     dir = bu_dir(cache, MAXPATHLEN, BU_DIR_CACHE, ".rt", "objects", NULL);
     if (!bu_file_exists(dir, NULL)) {
 	cache_create_path(dir, 0);
@@ -363,7 +446,7 @@ uncompress_external(const struct bu_external *external,
 
 
 HIDDEN struct db_i *
-cache_dbip(const struct rt_cache *cache, const char *name, int create)
+cache_get_dbip(const struct rt_cache *cache, const char *name)
 {
     struct db_i *dbip = NULL;
     const char *db = NULL;
@@ -377,28 +460,61 @@ cache_dbip(const struct rt_cache *cache, const char *name, int create)
     if (dbip)
 	return dbip;
 
+    /* FIXME: shouldn't have version-specific structure here */
     idx[0] = name[0];
     idx[1] = name[1];
     db = bu_dir(path, MAXPATHLEN, cache->dir, idx, name, NULL);
+    if (!bu_file_exists(db, NULL))
+	return NULL;
 
-    if (create && !bu_file_exists(db, NULL)) {
-	if (!cache_create_path(db, 1)) {
-	    bu_log("Cache error: could create %s.\n", db);
-	    return NULL;
-	}
-	dbip = db_create(db, 5);
-    } else {
-	dbip = db_open(db, DB_OPEN_READWRITE);
-	if (dbip && db_dirbuild(dbip)) {
-	    db_close(dbip);
-	    return NULL;
-	}
+    dbip = db_open(db, DB_OPEN_READWRITE);
+    if  (!dbip) {
+	return NULL;
     }
 
+    if (db_dirbuild(dbip)) {
+	/* failed to build directory */
+	db_close(dbip);
+	return NULL;
+    }
+
+    bu_hash_set(cache->dbip_hash, (const uint8_t *)name, strlen(name), dbip);
+    return dbip;
+}
+
+
+HIDDEN struct db_i *
+cache_create_dbip(const struct rt_cache *cache, const char *name)
+{
+    struct db_i *dbip = NULL;
+    const char *db = NULL;
+    char path[MAXPATHLEN] = {0};
+    char idx[3] = {0};
+
+    if (!cache || !name)
+	return NULL;
+
+    dbip = (struct db_i *)bu_hash_get(cache->dbip_hash, (const uint8_t *)name, strlen(name));
+    if (dbip)
+	return dbip;
+
+    /* FIXME: shouldn't have version-specific structure here */
+    idx[0] = name[0];
+    idx[1] = name[1];
+    db = bu_dir(path, MAXPATHLEN, cache->dir, idx, name, NULL);
+    /* see if another processed finished before us */
+    if (bu_file_exists(db, NULL)) {
+	return cache_get_dbip(cache, name);
+    }
+
+    if (!cache_create_path(db, 1)) {
+	bu_log("ERROR: failure creating cache file %s\n", db);
+	return NULL;
+    }
+    dbip = db_create(db, 5);
     if (!dbip)
 	return NULL;
 
-    bu_hash_set(cache->dbip_hash, (const uint8_t *)name, strlen(name), dbip);
     return dbip;
 }
 
@@ -416,10 +532,7 @@ cache_try_load(const struct rt_cache *cache, const char *name, const struct rt_d
     RT_CK_DB_INTERNAL(internal);
     RT_CK_SOLTAB(stp);
 
-    if (stp->st_specific)
-	return 1; /* already prepped */
-
-    dbip = cache_dbip(cache, name, 0);
+    dbip = cache_get_dbip(cache, name);
     if (!dbip)
 	return 0; /* no storage */
 
@@ -464,7 +577,7 @@ cache_try_load(const struct rt_cache *cache, const char *name, const struct rt_d
     bu_free_external(&raw_external);
 
     if (rt_obj_prep_serialize(stp, internal, &data_external, &version)) {
-	/* failed to serialize */
+	/* failed to deserialize */
 	bu_free_external(&data_external);
 	return 0;
     }
@@ -483,6 +596,11 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
     struct directory *dp;
     struct db_i *dbip;
     char type = 0;
+    char path[MAXPATHLEN] = {0};
+    char tmpname[MAXPATHLEN] = {0};
+    char tmppath[MAXPATHLEN] = {0};
+    char idx[3] = {0};
+    int ret;
 
     RT_CK_DB_INTERNAL(internal);
     RT_CK_SOLTAB(stp);
@@ -510,13 +628,25 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
 	bu_avs_free(&attributes);
     }
 
-    dbip = cache_dbip(cache, name, 1);
-    if (!dbip)
+    /* get a somewhat random temporary name */
+    snprintf(tmpname, MAXPATHLEN, "%s.%d.%lld", name, bu_process_id(), bu_gettime());
+
+    idx[0] = name[0];
+    idx[1] = name[1];
+    bu_dir(tmppath, MAXPATHLEN, cache->dir, idx, tmpname, NULL);
+    bu_file_delete(tmppath);
+
+    dbip = cache_create_dbip(cache, tmpname);
+    if (!dbip) {
+	bu_file_delete(tmppath);
 	return 0; /* no storage */
+    }
 
     dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_NON_GEOM, (void *)&type);
-    if (!dp)
+    if (!dp) {
+	bu_file_delete(tmppath);
 	return 0; /* bad db */
+    }
     RT_CK_DIR(dp);
 
     dp->d_major_type = DB5_MAJORTYPE_BINARY_MIME;
@@ -528,14 +658,39 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
 			   &data_external, dp->d_major_type, dp->d_minor_type,
 			   DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED);
 
-	if (db_put_external(&db_external, dp, dbip))
+	if (db_put_external(&db_external, dp, dbip)) {
+	    bu_file_delete(tmppath);
 	    return 0; /* can't stash */
+	}
     }
+    db_sync(dbip);
 
     bu_free_external(&attributes_external);
     bu_free_external(&data_external);
 
-    return 1;
+    bu_dir(path, MAXPATHLEN, cache->dir, idx, name, NULL);
+
+    /* last check, did someone beat us to the cache? */
+    if (bu_file_exists(path, NULL)) {
+	if (cache_get_dbip(cache, name) != NULL) {
+	    bu_file_delete(tmppath);
+	    return 1;
+	}
+	return 0;
+    }
+
+    /* atomically flip it into place */
+    ret = rename(tmppath, path);
+    if (!ret) {
+	bu_file_delete(tmppath);
+	return 0; /* wtf */
+    }
+    /* TODO: need to ifdef the windows way */
+
+    if (cache_get_dbip(cache, name) != NULL) {
+	return 1;
+    }
+    return 0;
 }
 
 
