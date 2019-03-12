@@ -121,7 +121,8 @@ cache_create_path(const char *path, int is_file)
     } else if (is_file && !bu_file_exists(path, NULL)) {
 	/* touch file */
 	FILE *fp = fopen(path, "w");
-	fclose(fp);
+	if (fp)
+	    fclose(fp);
     }
     return bu_file_exists(path, NULL);
 }
@@ -152,7 +153,8 @@ cache_format(const char *librt_cache)
     }
 
     bu_vls_gets(&fmt_str, fp);
-    fclose(fp);
+    if (fp)
+	fclose(fp);
 
     ret = bu_sscanf(bu_vls_cstr(&fmt_str), "%d", &format);
     if (ret != 1) {
@@ -160,8 +162,8 @@ cache_format(const char *librt_cache)
 	bu_vls_sprintf(&fmt_str, "%d\n", format);
 	if (fp) {
 	    ret = fwrite(bu_vls_cstr(&fmt_str), bu_vls_strlen(&fmt_str), 1, fp);
+	    fclose(fp);
 	}
-	fclose(fp);
     }
     bu_vls_free(&fmt_str);
     bu_vls_free(&path);
@@ -446,7 +448,7 @@ uncompress_external(const struct bu_external *external,
 
 
 HIDDEN struct db_i *
-cache_get_dbip(const struct rt_cache *cache, const char *name)
+cache_get_dbip(const struct rt_cache *cache, const char *name, int readonly)
 {
     struct db_i *dbip = NULL;
     const char *db = NULL;
@@ -467,7 +469,10 @@ cache_get_dbip(const struct rt_cache *cache, const char *name)
     if (!bu_file_exists(db, NULL))
 	return NULL;
 
-    dbip = db_open(db, DB_OPEN_READWRITE);
+    if (readonly)
+	dbip = db_open(db, DB_OPEN_READONLY);
+    else
+	dbip = db_open(db, DB_OPEN_READWRITE);
     if  (!dbip) {
 	return NULL;
     }
@@ -504,7 +509,7 @@ cache_create_dbip(const struct rt_cache *cache, const char *name)
     db = bu_dir(path, MAXPATHLEN, cache->dir, idx, name, NULL);
     /* see if another processed finished before us */
     if (bu_file_exists(db, NULL)) {
-	return cache_get_dbip(cache, name);
+	return cache_get_dbip(cache, name, 0);
     }
 
     if (!cache_create_path(db, 1)) {
@@ -532,7 +537,7 @@ cache_try_load(const struct rt_cache *cache, const char *name, const struct rt_d
     RT_CK_DB_INTERNAL(internal);
     RT_CK_SOLTAB(stp);
 
-    dbip = cache_get_dbip(cache, name);
+    dbip = cache_get_dbip(cache, name, 1);
     if (!dbip)
 	return 0; /* no storage */
 
@@ -672,7 +677,7 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
 
     /* last check, did someone beat us to the cache? */
     if (bu_file_exists(path, NULL)) {
-	if (cache_get_dbip(cache, name) != NULL) {
+	if (cache_get_dbip(cache, name, 1) != NULL) {
 	    bu_file_delete(tmppath);
 	    return 1;
 	}
@@ -687,7 +692,7 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
     }
     /* TODO: need to ifdef the windows way */
 
-    if (cache_get_dbip(cache, name) != NULL) {
+    if (cache_get_dbip(cache, name, 1) != NULL) {
 	return 1;
     }
     return 0;
