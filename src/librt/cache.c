@@ -615,7 +615,6 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
     char path[MAXPATHLEN] = {0};
     char tmpname[MAXPATHLEN] = {0};
     char tmppath[MAXPATHLEN] = {0};
-    char idx[3] = {0};
     int ret = 0;
 
     RT_CK_DB_INTERNAL(internal);
@@ -697,7 +696,7 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
     bu_free_external(&attributes_external);
     bu_free_external(&data_external);
 
-    bu_dir(path, MAXPATHLEN, cache->dir, idx, name, NULL);
+    cache_get_objfile(path, MAXPATHLEN, cache->dir, name);
 
     /* anyone beat us to creating the cache? */
     if (bu_file_exists(path, NULL)) {
