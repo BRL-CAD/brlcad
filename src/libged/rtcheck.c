@@ -80,12 +80,37 @@ _ged_wait_status(struct bu_vls *logstr,
 }
 
 static void rtcheck_output_handler(ClientData clientData, int mask);
+static void rtcheck_vector_handler(ClientData clientData, int mask);
 
+static void
+rtcheck_handler_cleanup(struct ged_rtcheck *rtcp)
+{
+    int retcode;
+
+    _ged_delete_io_handler(rtcp->gedp->ged_interp, rtcp->rrtp->chan,
+	    rtcp->rrtp->p, BU_PROCESS_STDOUT, (void *)rtcp,
+	    rtcheck_vector_handler);
+
+    _ged_delete_io_handler(rtcp->gedp->ged_interp, rtcp->chan,
+	    rtcp->p, BU_PROCESS_STDERR, (void *)rtcp,
+	    rtcheck_output_handler);
+
+    bu_process_close(rtcp->rrtp->p, BU_PROCESS_STDOUT);
+
+    /* wait for the forked process */
+    retcode = bu_process_wait(NULL, rtcp->rrtp->p, 0);
+    if (retcode != 0) {
+	_ged_wait_status(rtcp->gedp->ged_result_str, retcode);
+    }
+
+    BU_LIST_DEQUEUE(&rtcp->rrtp->l);
+    BU_PUT(rtcp->rrtp, struct ged_subprocess);
+    BU_PUT(rtcp, struct ged_rtcheck);
+}
 
 static void
 rtcheck_vector_handler(ClientData clientData, int UNUSED(mask))
 {
-    int retcode;
     int value;
     struct ged_rtcheck *rtcp = (struct ged_rtcheck *)clientData;
 
@@ -130,27 +155,7 @@ rtcheck_vector_handler(ClientData clientData, int UNUSED(mask))
     }
 
     if (rtcp->read_failed && rtcp->draw_read_failed) {
-  	_ged_delete_io_handler(rtcp->gedp->ged_interp, rtcp->rrtp->chan,
-		rtcp->rrtp->p, BU_PROCESS_STDOUT, (void *)rtcp,
-		rtcheck_vector_handler);
-
-	_ged_delete_io_handler(rtcp->gedp->ged_interp, rtcp->chan,
-		rtcp->p, BU_PROCESS_STDERR, (void *)rtcp,
-		rtcheck_output_handler);
-
-
-	bu_process_close(rtcp->rrtp->p, BU_PROCESS_STDOUT);
-
-	/* wait for the forked process */
-	retcode = bu_process_wait(NULL, rtcp->rrtp->p, 0);
-	if (retcode != 0) {
-	    _ged_wait_status(rtcp->gedp->ged_result_str, retcode);
-	}
-
-	BU_LIST_DEQUEUE(&rtcp->rrtp->l);
-	BU_PUT(rtcp->rrtp, struct ged_subprocess);
-	BU_PUT(rtcp, struct ged_rtcheck);
-
+	rtcheck_handler_cleanup(rtcp);
 	return;
     }
 
@@ -167,7 +172,6 @@ rtcheck_vector_handler(ClientData clientData, int UNUSED(mask))
 static void
 rtcheck_output_handler(ClientData clientData, int UNUSED(mask))
 {
-    int retcode;
     int count;
     char line[RT_MAXLINE] = {0};
     struct ged_rtcheck *rtcp = (struct ged_rtcheck *)clientData;
@@ -181,27 +185,7 @@ rtcheck_output_handler(ClientData clientData, int UNUSED(mask))
 
 
     if (rtcp->read_failed && rtcp->draw_read_failed) {
-  	_ged_delete_io_handler(rtcp->gedp->ged_interp, rtcp->rrtp->chan,
-		rtcp->rrtp->p, BU_PROCESS_STDOUT, (void *)rtcp,
-		rtcheck_vector_handler);
-
-	_ged_delete_io_handler(rtcp->gedp->ged_interp, rtcp->chan,
-		rtcp->p, BU_PROCESS_STDERR, (void *)rtcp,
-		rtcheck_output_handler);
-
-
-	bu_process_close(rtcp->rrtp->p, BU_PROCESS_STDOUT);
-
-	/* wait for the forked process */
-	retcode = bu_process_wait(NULL, rtcp->rrtp->p, 0);
-	if (retcode != 0) {
-	    _ged_wait_status(rtcp->gedp->ged_result_str, retcode);
-	}
-
-	BU_LIST_DEQUEUE(&rtcp->rrtp->l);
-	BU_PUT(rtcp->rrtp, struct ged_subprocess);
-	BU_PUT(rtcp, struct ged_rtcheck);
-
+	rtcheck_handler_cleanup(rtcp);
 	return;
     }
 
