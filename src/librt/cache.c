@@ -71,12 +71,32 @@ is_cached()
     return 0;
 }
 
+
 HIDDEN int
 cache_it()
 {
     return 0;
 }
 #endif
+
+
+HIDDEN void
+cache_get_objdir(char *buffer, size_t len, const char *cachedir, const char *filename)
+{
+    char idx[3] = {0};
+    idx[0] = filename[0];
+    idx[1] = filename[1];
+    bu_dir(buffer, len, cachedir, idx, NULL);
+}
+
+
+HIDDEN void
+cache_get_objfile(char *buffer, size_t len, const char *cachedir, const char *filename)
+{
+    char dir[MAXPATHLEN] = {0};
+    cache_get_objdir(dir, MAXPATHLEN, cachedir, filename);
+    bu_dir(buffer, len, dir, filename, NULL);
+}
 
 
 HIDDEN int
@@ -121,8 +141,11 @@ cache_create_path(const char *path, int is_file)
     } else if (is_file && !bu_file_exists(path, NULL)) {
 	/* touch file */
 	FILE *fp = fopen(path, "w");
-	if (fp)
+	if (!fp) {
+	    bu_log("WARNING: unable to create %s\n", path);
+	    perror("fopen");
 	    fclose(fp);
+	}
     }
     return bu_file_exists(path, NULL);
 }
@@ -153,8 +176,7 @@ cache_format(const char *librt_cache)
     }
 
     bu_vls_gets(&fmt_str, fp);
-    if (fp)
-	fclose(fp);
+    fclose(fp);
 
     ret = bu_sscanf(bu_vls_cstr(&fmt_str), "%d", &format);
     if (ret != 1) {
@@ -448,12 +470,10 @@ uncompress_external(const struct bu_external *external,
 
 
 HIDDEN struct db_i *
-cache_get_dbip(const struct rt_cache *cache, const char *name, int readonly)
+cache_read_dbip(const struct rt_cache *cache, const char *name)
 {
     struct db_i *dbip = NULL;
-    const char *db = NULL;
     char path[MAXPATHLEN] = {0};
-    char idx[3] = {0};
 
     if (!cache || !name)
 	return NULL;
@@ -462,18 +482,12 @@ cache_get_dbip(const struct rt_cache *cache, const char *name, int readonly)
     if (dbip)
 	return dbip;
 
-    /* FIXME: shouldn't have version-specific structure here */
-    idx[0] = name[0];
-    idx[1] = name[1];
-    db = bu_dir(path, MAXPATHLEN, cache->dir, idx, name, NULL);
-    if (!bu_file_exists(db, NULL))
+    cache_get_objfile(path, MAXPATHLEN, cache->dir, name);
+    if (!bu_file_exists(path, NULL))
 	return NULL;
 
-    if (readonly)
-	dbip = db_open(db, DB_OPEN_READONLY);
-    else
-	dbip = db_open(db, DB_OPEN_READWRITE);
-    if  (!dbip) {
+    dbip = db_open(path, DB_OPEN_READONLY);
+    if (!dbip) {
 	return NULL;
     }
 
@@ -492,9 +506,7 @@ HIDDEN struct db_i *
 cache_create_dbip(const struct rt_cache *cache, const char *name)
 {
     struct db_i *dbip = NULL;
-    const char *db = NULL;
     char path[MAXPATHLEN] = {0};
-    char idx[3] = {0};
 
     if (!cache || !name)
 	return NULL;
@@ -503,20 +515,19 @@ cache_create_dbip(const struct rt_cache *cache, const char *name)
     if (dbip)
 	return dbip;
 
-    /* FIXME: shouldn't have version-specific structure here */
-    idx[0] = name[0];
-    idx[1] = name[1];
-    db = bu_dir(path, MAXPATHLEN, cache->dir, idx, name, NULL);
-    /* see if another processed finished before us */
-    if (bu_file_exists(db, NULL)) {
-	return cache_get_dbip(cache, name, 0);
+    cache_get_objfile(path, MAXPATHLEN, cache->dir, name);
+
+    /* something in the way? clobber time. */
+    if (bu_file_exists(path, NULL)) {
+	bu_file_delete(path);
     }
 
-    if (!cache_create_path(db, 1)) {
-	bu_log("ERROR: failure creating cache file %s\n", db);
+    if (!cache_create_path(path, 1)) {
+	bu_log("ERROR: failure creating cache file %s\n", path);
 	return NULL;
     }
-    dbip = db_create(db, 5);
+
+    dbip = db_create(path, 5);
     if (!dbip)
 	return NULL;
 
@@ -537,7 +548,7 @@ cache_try_load(const struct rt_cache *cache, const char *name, const struct rt_d
     RT_CK_DB_INTERNAL(internal);
     RT_CK_SOLTAB(stp);
 
-    dbip = cache_get_dbip(cache, name, 1);
+    dbip = cache_read_dbip(cache, name);
     if (!dbip)
 	return 0; /* no storage */
 
@@ -605,7 +616,7 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
     char tmpname[MAXPATHLEN] = {0};
     char tmppath[MAXPATHLEN] = {0};
     char idx[3] = {0};
-    int ret;
+    int ret = 0;
 
     RT_CK_DB_INTERNAL(internal);
     RT_CK_SOLTAB(stp);
@@ -633,13 +644,26 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
 	bu_avs_free(&attributes);
     }
 
+    /* make sure we can write to the cache dir */
+    if (!bu_file_writable(cache->dir) || !bu_file_executable(cache->dir)) {
+	bu_log("  CACHE: %s\n", cache->dir);
+	bu_log("WARNING: directory is not writable, caching disabled\n");
+	return 0;
+    }
+    cache_get_objdir(tmppath, MAXPATHLEN, cache->dir, name);
+    if (bu_file_exists(tmppath, NULL) && (!bu_file_writable(tmppath) || !bu_file_executable(tmppath))) {
+	char objdir[MAXPATHLEN] = {0};
+	bu_path_basename(tmppath, objdir);
+	bu_log("  CACHE: %s\n", cache->dir);
+	bu_log("WARNING: subdirectory %s is not writable, caching disabled\n", objdir);
+	return 0;
+    }
+
     /* get a somewhat random temporary name */
     snprintf(tmpname, MAXPATHLEN, "%s.%d.%lld", name, bu_process_id(), (long long int)bu_gettime());
 
-    idx[0] = name[0];
-    idx[1] = name[1];
-    bu_dir(tmppath, MAXPATHLEN, cache->dir, idx, tmpname, NULL);
-    bu_file_delete(tmppath);
+    cache_get_objfile(tmppath, MAXPATHLEN, cache->dir, tmpname);
+    bu_file_delete(tmppath); /* okay if it doesn't exist */
 
     dbip = cache_create_dbip(cache, tmpname);
     if (!dbip) {
@@ -675,9 +699,9 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
 
     bu_dir(path, MAXPATHLEN, cache->dir, idx, name, NULL);
 
-    /* last check, did someone beat us to the cache? */
+    /* anyone beat us to creating the cache? */
     if (bu_file_exists(path, NULL)) {
-	if (cache_get_dbip(cache, name, 1) != NULL) {
+	if (cache_read_dbip(cache, name) != NULL) {
 	    bu_file_delete(tmppath);
 	    return 1;
 	}
@@ -688,11 +712,10 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
     ret = rename(tmppath, path);
     if (!ret) {
 	bu_file_delete(tmppath);
-	return 0; /* wtf */
+	return 0; /* someone probably beat us to it */
     }
-    /* TODO: need to ifdef the windows way */
 
-    if (cache_get_dbip(cache, name, 1) != NULL) {
+    if (cache_read_dbip(cache, name) != NULL) {
 	return 1;
     }
     return 0;
