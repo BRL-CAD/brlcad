@@ -238,33 +238,14 @@ rt_cache_open(void)
     int format;
     struct rt_cache *result;
 
-    /* !!! DISABLED, TESTING IN PROGRESS */
-    /* return NULL; */
-
     dir = getenv("LIBRT_CACHE");
     if (!BU_STR_EMPTY(dir)) {
-	int disabled = 0;
 
 	/* default unset is on, so do nothing if explicitly off */
 	if (bu_str_false(dir))
 	    return NULL;
 
 	dir = bu_file_realpath(dir, cache);
-
-	if (!bu_file_directory(dir)) {
-	    bu_log("NOTE: Caching disabled. Specified directory does not exist.\n");
-	    disabled = 1;
-	} else if (!bu_file_writable(dir)) {
-	    bu_log("NOTE: Caching disabled. Specified directory is not writable.\n");
-	    disabled = 1;
-	}
-	if (disabled) {
-	    bu_log("         Specified: LIBRT_CACHE=%s\n"
-		   "         To enable, specify a writable directory that exists.\n"
-		   "         Unsetting LIBRT_CACHE will use system default.\n"
-		   , dir);
-	    return NULL;
-	}
     } else {
 	/* LIBRT_CACHE is either set-and-empty or unset.  Default is on. */
 	dir = bu_dir(cache, MAXPATHLEN, BU_DIR_CACHE, ".rt", NULL);
@@ -273,15 +254,20 @@ rt_cache_open(void)
 	}
     }
 
-    /* cache dir should exist by now */
+    /* make sure it's a usable location */
     if (!bu_file_exists(dir, NULL)) {
-	bu_log("  CACHE: %s\n", dir);
-	bu_log("WARNING: Directory does not exist, caching disabled.\n");
+	bu_log("  CACHE  %s\n", dir);
+	bu_log("WARNING: ^ Directory does not exist.  Caching disabled.\n");
 	return NULL;
     }
     if (!bu_file_directory(dir)) {
-	bu_log("  CACHE: %s\n", dir);
-	bu_log("WARNING: Location must be a directory, caching disabled.\n");
+	bu_log("  CACHE  %s\n", dir);
+	bu_log("WARNING: ^ Location must be a directory.  Caching disabled.\n");
+	return NULL;
+    }
+    if (!bu_file_writable(dir)) {
+	bu_log("  CACHE  %s\n", dir);
+	bu_log("WARNING: ^ Location must be writable.  Caching disabled.\n");
 	return NULL;
     }
 
