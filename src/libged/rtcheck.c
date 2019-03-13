@@ -37,11 +37,6 @@
 
 #include "./ged_private.h"
 
-#if defined(HAVE_FDOPEN) && !defined(HAVE_DECL_FDOPEN)
-extern FILE *fdopen(int fd, const char *mode);
-#endif
-
-
 struct ged_rtcheck {
     struct ged_subprocess *rrtp;
     struct ged *gedp;
