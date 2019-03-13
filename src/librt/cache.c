@@ -276,12 +276,12 @@ rt_cache_open(void)
     /* cache dir should exist by now */
     if (!bu_file_exists(dir, NULL)) {
 	bu_log("  CACHE: %s\n", dir);
-	bu_log("WARNING: Directory does not exist, caching disabled.\n",);
+	bu_log("WARNING: Directory does not exist, caching disabled.\n");
 	return NULL;
     }
     if (!bu_file_directory(dir)) {
 	bu_log("  CACHE: %s\n", dir);
-	bu_log("WARNING: Location must be a directory, caching disabled.\n",);
+	bu_log("WARNING: Location must be a directory, caching disabled.\n");
 	return NULL;
     }
 
