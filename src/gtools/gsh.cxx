@@ -114,7 +114,12 @@ main(int argc, const char **argv)
     }
 
     /* TODO - can probably fold geval into this - if we have more than 1 argc, do a geval
-     * and exit, else go interactive */
+     * and exit, else go interactive.
+     *
+     * TODO - also add non-tty mode - could make gsh a 'generic' subprocess
+     * execution mechanism for libged commands that want to do subprocess but
+     * don't have their own (1) executable.  The simplicity gsh's bare bones
+     * argc/argv processing would be an asset in that scenario. */
 
     /* Start the interactive loop */
     while ((line = linenoise(gpmpt)) != NULL) {
