@@ -113,9 +113,41 @@ main(int argc, const char **argv)
 	}
     }
 
-    /* TODO - can probably fold geval into this - if we have more than 1 argc, do a geval
-     * and exit, else go interactive.
-     *
+    /* Do the old geval bit - if we have more than 1 argc, eval and exit. */
+    if (argc > 1) {
+	int (*func)(struct ged *, int, char *[]);
+	char gedfunc[MAXPATHLEN] = {0};
+
+	/* If we got this far, argv[0] was a .g file */
+	argv++; argc--;
+	bu_strlcat(gedfunc, "ged_", MAXPATHLEN);
+	bu_strlcat(gedfunc, argv[0], MAXPATHLEN - strlen(gedfunc));
+	if (strlen(gedfunc) < 1 || gedfunc[0] != 'g') {
+	    bu_vls_free(&msg);
+	    bu_dlclose(libged);
+	    bu_exit(EXIT_FAILURE, "Couldn't get GED command name from [%s]\n", argv[0]);
+	}
+
+	*(void **)(&func) = bu_dlsym(libged, gedfunc);
+	if (!func) {
+	    bu_exit(EXIT_FAILURE, "Unrecognized command [%s]\n", argv[0]);
+	}
+	/* TODO - is it ever unsafe to do this cast?  Does ged mess with argv somehow? */
+	ret = func(gedp, argc, (char **)argv);
+
+	bu_dlclose(libged);
+
+	fprintf(stdout, "%s", bu_vls_addr(gedp->ged_result_str));
+
+	ged_close(gedp);
+
+	BU_PUT(gedp, struct ged);
+
+	return ret;
+    }
+
+
+    /*
      * TODO - also add non-tty mode - could make gsh a 'generic' subprocess
      * execution mechanism for libged commands that want to do subprocess but
      * don't have their own (1) executable.  The simplicity gsh's bare bones

@@ -24,7 +24,6 @@ set(GSH_SRCS
   )
 BRLCAD_ADDEXEC(gsh "${GSH_SRCS}"  "libged;libbu" NO_INSTALL)
 BRLCAD_ADDEXEC(gtransfer gtransfer.c "librt;libpkg" NO_INSTALL)
-BRLCAD_ADDEXEC(geval geval.c "libged;libbu" NO_INSTALL)
 
 set(GANALYZE_SRCS
   ganalyze.cxx
