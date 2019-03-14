@@ -60,24 +60,11 @@ static const char * const cache_mime_type = "brlcad/cache";
 
 struct rt_cache {
     char dir[MAXPATHLEN];
+    int read_only;
+    int (*log)(const char *format, ...);
     struct bu_hash_tbl *dbip_hash;
 };
-
-
-#if 0
-HIDDEN int
-is_cached()
-{
-    return 0;
-}
-
-
-HIDDEN int
-cache_it()
-{
-    return 0;
-}
-#endif
+#define CACHE_INIT {{0}, 0, bu_log, NULL}
 
 
 HIDDEN void
@@ -160,11 +147,13 @@ cache_warn(const char *path, const char *msg)
 
 
 HIDDEN int
-cache_format(const char *librt_cache)
+cache_format(const struct rt_cache *cache)
 {
+    const char *librt_cache = cache->dir;
+    const char *cpath = NULL;
+
     int format = CACHE_FORMAT;
     struct bu_vls path = BU_VLS_INIT_ZERO;
-    const char *cpath = NULL;
     struct bu_vls fmt_str = BU_VLS_INIT_ZERO;
     size_t ret;
     FILE *fp;
@@ -245,8 +234,9 @@ cache_generate_name(char name[STATIC_ARRAY(37)], const struct soltab *stp)
  * creating and initializing the location if necessary.
  */
 HIDDEN int
-cache_init(const char *dir)
+cache_init(struct rt_cache *cache)
 {
+    const char *dir = cache->dir;
     char path[MAXPATHLEN] = {0};
 
     if (!bu_file_exists(dir, NULL)) {
@@ -255,22 +245,24 @@ cache_init(const char *dir)
 	    cache_warn(dir, "Cannot create cache directory.  Caching disabled.");
 	    return 0;
 	}
-    } else {
-
-	/* verify usability */
-
-	if (!bu_file_directory(dir)) {
-	    cache_warn(dir, "Location must be a directory.  Caching disabled.");
-	    return 0;
-	}
-	if (!bu_file_readable(dir)) {
-	    cache_warn(dir, "Location must be readable.  Caching disabled.");
-	    return 0;
-	}
-	if (!bu_file_writable(dir)) {
-	    cache_warn(dir, "Location is READ-ONLY.");
-	}
     }
+
+    /* verify usability */
+
+    if (!bu_file_directory(dir)) {
+	cache_warn(dir, "Location must be a directory.  Caching disabled.");
+	return 0;
+    }
+    if (!bu_file_readable(dir)) {
+	cache_warn(dir, "Location must be readable.  Caching disabled.");
+	return 0;
+    }
+    if (!cache->read_only && !bu_file_writable(dir)) {
+	cache_warn(dir, "Location is READ-ONLY.");
+	cache->read_only = 1;
+    }
+
+    /* make sure there's a format file */
 
     snprintf(path, MAXPATHLEN, "%s%c%s", dir, BU_DIR_SEPARATOR, "format");
     if (!bu_file_exists(path, NULL)) {
@@ -294,162 +286,40 @@ cache_init(const char *dir)
 	    }
 	}
     }
-
-    return 1;
-}
-
-
-struct rt_cache *
-rt_cache_open(void)
-{
-    const char *dir = NULL;
-    char cache[MAXPATHLEN] = {0};
-    int format;
-    struct rt_cache *result;
-
-    dir = getenv("LIBRT_CACHE");
-    if (!BU_STR_EMPTY(dir)) {
-
-	/* default unset is on, so do nothing if explicitly off */
-	if (bu_str_false(dir))
-	    return NULL;
-
-	dir = bu_file_realpath(dir, cache);
-    } else {
-	/* LIBRT_CACHE is either set-and-empty or unset.  Default is on. */
-	dir = bu_dir(cache, MAXPATHLEN, BU_DIR_CACHE, ".rt", NULL);
+    if (bu_file_directory(path)) {
+	cache_warn(path, "Directory blocking format file creation.  Caching disabled.");
+	return 0;
     }
-
-    if (!cache_init(dir))
-	return NULL;
-
-    format = cache_format(dir);
-    if (format < 0)
-	return NULL;
-    else if (format == 0) {
-	struct bu_vls path = BU_VLS_INIT_ZERO;
-	int ret;
-
-	/* v0 cache is just a single file, delete so we can start fresh */
-	bu_vls_printf(&path, "%s%c%s", dir, BU_DIR_SEPARATOR, "rt.db");
-	(void)bu_file_delete(bu_vls_cstr(&path));
-
-	bu_vls_trunc(&path, 0);
-	bu_vls_printf(&path, "%s%c%s", dir, BU_DIR_SEPARATOR, "format");
-	ret = bu_file_delete(bu_vls_cstr(&path));
-
-	bu_vls_free(&path);
-
-	/* reinit */
-	if (ret) {
-	    cache_init(dir);
-	    format = cache_format(dir);
-	}
-    } else if (format == 1) {
-	struct bu_vls path = BU_VLS_INIT_ZERO;
-	char **matches = NULL;
-	size_t count;
-	size_t i;
-
-	/* V1 cache may have corruption, delete it */
-
-	bu_vls_printf(&path, "%s%c%s", dir, BU_DIR_SEPARATOR, "objects");
-
-	count = bu_file_list(bu_vls_cstr(&path), "[A-Z0-9][A-Z0-9]", &matches);
-	/* bu_log("%zu entries for %s\n", count, bu_vls_cstr(&path)); */
-	for (i = 0; i < count; i++) {
-	    struct bu_vls subpath = BU_VLS_INIT_ZERO;
-	    const char *pattern =  /* 8-4-4-4-12 */
-		"[A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9]"
-		"-"
-		"[A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9]"
-		"-"
-		"[A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9]"
-		"-"
-		"[A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9]"
-		"-"
-		"[A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9]";
-	    char **submatches = NULL;
-	    size_t subcount;
-	    size_t j;
-
-	    bu_vls_printf(&subpath, "%s%c%s", bu_vls_cstr(&path), BU_DIR_SEPARATOR, matches[i]);
-
-	    subcount = bu_file_list(bu_vls_cstr(&subpath), pattern, &submatches);
-
-	    for (j = 0; j < subcount; j++) {
-		bu_vls_trunc(&subpath, 0);
-		bu_vls_printf(&subpath, "%s%cobjects%c%s%c%s", dir, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, matches[i], BU_DIR_SEPARATOR, submatches[j]);
-		bu_file_delete(bu_vls_cstr(&subpath));
-		/* bu_log("bu_file_delete(%s)\n", bu_vls_cstr(&subpath)); */
-	    }
-	    bu_argv_free(subcount, submatches);
-
-	    bu_vls_trunc(&subpath, 0);
-	    bu_vls_printf(&subpath, "%s%cobjects%c%s", dir, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, matches[i]);
-	    bu_file_delete(bu_vls_cstr(&subpath));
-	    /* bu_log("bu_file_delete(%s)\n", bu_vls_cstr(&subpath)); */
-
-	    bu_vls_free(&subpath);
-	}
-	bu_argv_free(count, matches);
-
-	bu_file_delete(bu_vls_cstr(&path));
-	/* bu_log("bu_file_delete(%s)\n", bu_vls_cstr(&path)); */
-
-	bu_vls_trunc(&path, 0);
-	bu_vls_printf(&path, "%s%c%s", dir, BU_DIR_SEPARATOR, "format");
-	(void)bu_file_delete(bu_vls_addr(&path));
-	bu_vls_free(&path);
-
-	/* reinit */
-	format = cache_format(dir);
-    } else if (format > CACHE_FORMAT) {
-	bu_log("NOTE: Cache at %s was created with a newer version of %s\n", dir, PACKAGE_NAME);
-	bu_log("      Delete or move folder to enable caching with this version.\n");
+    if (!cache->read_only && !bu_file_writable(path)) {
+	cache_warn(path, "Location is READ-ONLY.");
+	cache->read_only = 1;
     }
-
-    if (format != CACHE_FORMAT)
-	return NULL;
 
     /* v1+ cache is a directory of directories of .g files using
      * 2-letter directory names containing 1-object per directory and
      * file, e.g.:
      * [CACHE_DIR]/.rt/objects/A8/A8D460B2-194F-5FA7-8FED-286A6C994B89
      */
-    dir = bu_dir(cache, MAXPATHLEN, BU_DIR_CACHE, ".rt", "objects", NULL);
-    if (!bu_file_exists(dir, NULL)) {
-	cache_ensure_path(dir, 0);
+    snprintf(path, MAXPATHLEN, "%s%c%s", dir, BU_DIR_SEPARATOR, "objects");
+    if (!bu_file_exists(path, NULL)) {
+	if (!cache_ensure_path(path, 0)) {
+	    cache_warn(path, "Cannot create objects directory.  Caching disabled.");
+	    return 0;
+	}
     }
-    if (!bu_file_exists(dir, NULL) || !bu_file_directory(dir)) {
-	cache_warn(dir, "Could not find or create directory.  Caching disabled.");
-	return NULL;
+    if (!bu_file_directory(path)) {
+	cache_warn(path, "Cannot initialize objects directory.  Caching disabled.");
+	return 0;
+    }
+    if (!cache->read_only && !bu_file_writable(path)) {
+	cache_warn(path, "Location is READ-ONLY.");
+	cache->read_only = 1;
     }
 
-    BU_GET(result, struct rt_cache);
-    bu_strlcpy(result->dir, dir, MAXPATHLEN);
-    result->dbip_hash = bu_hash_create(1024);
-    return result;
-}
+    /* initialize database instance pointer storage */
+    cache->dbip_hash = bu_hash_create(1024);
 
-
-void
-rt_cache_close(struct rt_cache *cache)
-{
-    struct bu_hash_entry *entry;
-
-    if (!cache)
-	return;
-
-    entry = bu_hash_next(cache->dbip_hash, NULL);
-    while (entry) {
-	struct db_i *dbip = (struct db_i *)bu_hash_value(entry, NULL);
-	db_close(dbip);
-	entry = bu_hash_next(cache->dbip_hash, entry);
-    }
-    bu_hash_destroy(cache->dbip_hash);
-
-    BU_PUT(cache, struct rt_cache);
+    return 1;
 }
 
 
@@ -691,18 +561,16 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
 	bu_avs_free(&attributes);
     }
 
-    /* make sure we can write to the cache dir */
+    /* [FIXME: redundant] make sure we can write to the cache dir */
     if (!bu_file_writable(cache->dir) || !bu_file_executable(cache->dir)) {
-	bu_log("  CACHE: %s\n", cache->dir);
-	bu_log("WARNING: directory is not writable, caching disabled\n");
+	cache_warn(cache->dir, "Directory is not writable.  Caching disabled.");
 	return 0;
     }
     cache_get_objdir(tmppath, MAXPATHLEN, cache->dir, name);
     if (bu_file_exists(tmppath, NULL) && (!bu_file_writable(tmppath) || !bu_file_executable(tmppath))) {
 	char objdir[MAXPATHLEN] = {0};
 	bu_path_basename(tmppath, objdir);
-	bu_log("  CACHE: %s\n", cache->dir);
-	bu_log("WARNING: subdirectory %s is not writable, caching disabled\n", objdir);
+	cache_warn(objdir, "Subdirectory is not writable.  Caching disabled.");
 	return 0;
     }
 
@@ -787,10 +655,155 @@ rt_cache_prep(struct rt_cache *cache, struct soltab *stp, struct rt_db_internal 
     /* not in cache yet */
 
     ret = rt_obj_prep(stp, internal, stp->st_rtip);
-    if (ret == 0)
+    if (ret == 0 && !cache->read_only)
 	cache_try_store(cache, name, internal, stp);
 
     return ret;
+}
+
+
+void
+rt_cache_close(struct rt_cache *cache)
+{
+    struct bu_hash_entry *entry;
+
+    if (!cache)
+	return;
+
+    entry = bu_hash_next(cache->dbip_hash, NULL);
+    while (entry) {
+	struct db_i *dbip = (struct db_i *)bu_hash_value(entry, NULL);
+	db_close(dbip);
+	dbip->dbi_magic = 0; /* zap it */
+	entry = bu_hash_next(cache->dbip_hash, entry);
+    }
+    bu_hash_destroy(cache->dbip_hash);
+
+    cache->log = NULL;
+    cache->read_only = -1;
+    memset(cache->dir, 0, MAXPATHLEN);
+
+    BU_PUT(cache, struct rt_cache);
+}
+
+
+struct rt_cache *
+rt_cache_open(void)
+{
+    const char *dir = NULL;
+    int format;
+    struct rt_cache *result;
+    struct rt_cache cache = CACHE_INIT;
+
+    dir = getenv("LIBRT_CACHE");
+    if (!BU_STR_EMPTY(dir)) {
+
+	/* default unset is on, so do nothing if explicitly off */
+	if (bu_str_false(dir))
+	    return NULL;
+
+	dir = bu_file_realpath(dir, cache.dir);
+    } else {
+	/* LIBRT_CACHE is either set-and-empty or unset.  Default is on. */
+	dir = bu_dir(cache.dir, MAXPATHLEN, BU_DIR_CACHE, ".rt", NULL);
+    }
+
+    if (!cache_init(&cache))
+	return NULL;
+
+    format = cache_format(&cache);
+    if (format < 0)
+	return NULL;
+    else if (format == 0) {
+	struct bu_vls path = BU_VLS_INIT_ZERO;
+	int ret;
+
+	/* v0 cache is just a single file, delete so we can start fresh */
+	bu_vls_printf(&path, "%s%c%s", dir, BU_DIR_SEPARATOR, "rt.db");
+	(void)bu_file_delete(bu_vls_cstr(&path));
+
+	bu_vls_trunc(&path, 0);
+	bu_vls_printf(&path, "%s%c%s", dir, BU_DIR_SEPARATOR, "format");
+	ret = bu_file_delete(bu_vls_cstr(&path));
+
+	bu_vls_free(&path);
+
+	/* reinit */
+	if (ret) {
+	    cache_init(&cache);
+	    format = cache_format(&cache);
+	}
+    } else if (format == 1) {
+	struct bu_vls path = BU_VLS_INIT_ZERO;
+	char **matches = NULL;
+	size_t count;
+	size_t i;
+
+	/* V1 cache may have corruption, delete it */
+
+	bu_vls_printf(&path, "%s%c%s", dir, BU_DIR_SEPARATOR, "objects");
+
+	count = bu_file_list(bu_vls_cstr(&path), "[A-Z0-9][A-Z0-9]", &matches);
+	/* bu_log("%zu entries for %s\n", count, bu_vls_cstr(&path)); */
+	for (i = 0; i < count; i++) {
+	    struct bu_vls subpath = BU_VLS_INIT_ZERO;
+	    const char *pattern =  /* 8-4-4-4-12 */
+		"[A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9]"
+		"-"
+		"[A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9]"
+		"-"
+		"[A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9]"
+		"-"
+		"[A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9]"
+		"-"
+		"[A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9]";
+	    char **submatches = NULL;
+	    size_t subcount;
+	    size_t j;
+
+	    bu_vls_printf(&subpath, "%s%c%s", bu_vls_cstr(&path), BU_DIR_SEPARATOR, matches[i]);
+
+	    subcount = bu_file_list(bu_vls_cstr(&subpath), pattern, &submatches);
+
+	    for (j = 0; j < subcount; j++) {
+		bu_vls_trunc(&subpath, 0);
+		bu_vls_printf(&subpath, "%s%cobjects%c%s%c%s", dir, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, matches[i], BU_DIR_SEPARATOR, submatches[j]);
+		bu_file_delete(bu_vls_cstr(&subpath));
+		/* bu_log("bu_file_delete(%s)\n", bu_vls_cstr(&subpath)); */
+	    }
+	    bu_argv_free(subcount, submatches);
+
+	    bu_vls_trunc(&subpath, 0);
+	    bu_vls_printf(&subpath, "%s%cobjects%c%s", dir, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, matches[i]);
+	    bu_file_delete(bu_vls_cstr(&subpath));
+	    /* bu_log("bu_file_delete(%s)\n", bu_vls_cstr(&subpath)); */
+
+	    bu_vls_free(&subpath);
+	}
+	bu_argv_free(count, matches);
+
+	bu_file_delete(bu_vls_cstr(&path));
+	/* bu_log("bu_file_delete(%s)\n", bu_vls_cstr(&path)); */
+
+	bu_vls_trunc(&path, 0);
+	bu_vls_printf(&path, "%s%c%s", dir, BU_DIR_SEPARATOR, "format");
+	(void)bu_file_delete(bu_vls_addr(&path));
+	bu_vls_free(&path);
+
+	/* reinit */
+	format = cache_format(&cache);
+    } else if (format > CACHE_FORMAT) {
+	bu_log("NOTE: Cache at %s was created with a newer version of %s\n", dir, PACKAGE_NAME);
+	bu_log("      Delete or move folder to enable caching with this version.\n");
+    }
+
+    if (format != CACHE_FORMAT)
+	return NULL;
+
+    BU_GET(result, struct rt_cache);
+    *result = cache; /* struct copy */
+
+    return result;
 }
 
 
