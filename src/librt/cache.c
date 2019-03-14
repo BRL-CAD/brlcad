@@ -99,6 +99,7 @@ cache_get_objfile(char *buffer, size_t len, const char *cachedir, const char *fi
 }
 
 
+/* returns truthfully if a path exists, creating it if necessary. */
 HIDDEN int
 cache_create_path(const char *path, int is_file)
 {
@@ -125,7 +126,6 @@ cache_create_path(const char *path, int is_file)
     }
     dir = bu_path_dirname(path);
     if (!cache_create_path(dir, 0)) {
-	bu_log("Cache error: could not create directory %s.\n", dir);
 	bu_free(dir, "dirname");
 	return 0;
     }
@@ -142,8 +142,8 @@ cache_create_path(const char *path, int is_file)
 	/* touch file */
 	FILE *fp = fopen(path, "w");
 	if (!fp) {
-	    bu_log("WARNING: unable to create %s\n", path);
 	    perror("fopen");
+	} else {
 	    fclose(fp);
 	}
     }
@@ -163,14 +163,18 @@ cache_format(const char *librt_cache)
 
     bu_vls_printf(&path, "%s%c%s", librt_cache, BU_DIR_SEPARATOR, "format");
     cpath = bu_vls_cstr(&path);
-    if (!cache_create_path(cpath, 1) || !bu_file_exists(cpath, NULL)) {
-	bu_log("Cache error: could create or find format file %s.\n", cpath);
+    if (!bu_file_readable(cpath)) {
+	bu_log("  CACHE  %s\n", cpath);
+	bu_log("WARNING: ^ Cannot read caching format file.  Caching disabled.\n");
 	bu_vls_free(&path);
 	return -1;
     }
 
     fp = fopen(cpath, "r");
     if (!fp) {
+	perror("fopen");
+	bu_log("  CACHE  %s\n", cpath);
+	bu_log("WARNING: ^ Cannot open caching format file.  Caching disabled.\n");
 	bu_vls_free(&path);
 	return -2;
     }
@@ -230,6 +234,55 @@ cache_generate_name(char name[STATIC_ARRAY(37)], const struct soltab *stp)
 }
 
 
+HIDDEN void
+cache_warn(const char *path, const char *msg)
+{
+    bu_log("  CACHE  %s\n", path);
+    bu_log("WARNING: ^ %s\n", msg);
+}
+
+
+/* returns truthfully if a cache location is exists and is usable,
+ * creating and initializing the location if necessary.
+ */
+HIDDEN int
+cache_init(const char *dir)
+{
+    char path[MAXPATHLEN] = {0};
+
+    if (!bu_file_exists(dir, NULL)) {
+	cache_warn(dir, "Directory does not exist.  Initializing.");
+	if (!cache_create_path(dir, 0)) {
+	    cache_warn(dir, "Cannot create cache directory.  Caching disabled.");
+	    return 0;
+	}
+    } else {
+
+	/* verify usability */
+
+	if (!bu_file_directory(dir)) {
+	    cache_warn(dir, "Location must be a directory.  Caching disabled.");
+	    return 0;
+	}
+	if (!bu_file_readable(dir)) {
+	    cache_warn(dir, "Location must be readable.  Caching disabled.");
+	    return 0;
+	}
+	if (!bu_file_writable(dir)) {
+	    cache_warn(dir, "Location is READ-ONLY.");
+	}
+    }
+
+    snprintf(path, MAXPATHLEN, "%s%c%s", dir, BU_DIR_SEPARATOR, "format");
+    if (!cache_create_path(path, 1)) {
+	cache_warn(path, "Cannot create caching format file.  Caching disabled.");
+	return 0;
+    }
+
+    return 1;
+}
+
+
 struct rt_cache *
 rt_cache_open(void)
 {
@@ -249,27 +302,10 @@ rt_cache_open(void)
     } else {
 	/* LIBRT_CACHE is either set-and-empty or unset.  Default is on. */
 	dir = bu_dir(cache, MAXPATHLEN, BU_DIR_CACHE, ".rt", NULL);
-	if (!bu_file_exists(dir, NULL)) {
-	    cache_create_path(dir, 0);
-	}
     }
 
-    /* make sure it's a usable location */
-    if (!bu_file_exists(dir, NULL)) {
-	bu_log("  CACHE  %s\n", dir);
-	bu_log("WARNING: ^ Directory does not exist.  Caching disabled.\n");
+    if (!cache_init(dir))
 	return NULL;
-    }
-    if (!bu_file_directory(dir)) {
-	bu_log("  CACHE  %s\n", dir);
-	bu_log("WARNING: ^ Location must be a directory.  Caching disabled.\n");
-	return NULL;
-    }
-    if (!bu_file_writable(dir)) {
-	bu_log("  CACHE  %s\n", dir);
-	bu_log("WARNING: ^ Location must be writable.  Caching disabled.\n");
-	return NULL;
-    }
 
     format = cache_format(dir);
     if (format < 0)
