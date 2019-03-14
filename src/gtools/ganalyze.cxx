@@ -178,26 +178,34 @@ int main(int UNUSED(argc), const char **UNUSED(argv))
 	    }
 
 	    nret = analyze_do_cmd(bu_vls_cstr(&iline), analyze_commands, (void *)acs);
-	    if (nret < -1 && nret != ANALYZE_DO_QUIT) {
-		ret = ANALYZE_FATAL_ERROR;
-		goto analyze_cleanup;
-	    }
+
+	    bu_vls_trunc(&iline, 0);
+
 	    if (nret == ANALYZE_DO_QUIT) {
 		goto analyze_cleanup;
 	    }
-	    bu_vls_trunc(&iline, 0);
+
+	    if (nret < -1) {
+		ret = ANALYZE_FATAL_ERROR;
+		goto analyze_cleanup;
+	    }
+
 	}
     } else {
 	char *buf;
 	while ((buf = rt_read_cmd( stdin )) != (char *)0) {
 	    fprintf(stderr, "cmd: %s\n", buf);
+
 	    nret = analyze_do_cmd(buf, analyze_commands, (void *)acs);
+
 	    bu_free(buf, "analyze command buffer");
-	    if (nret < -1 && nret != ANALYZE_DO_QUIT) {
-		ret = ANALYZE_FATAL_ERROR;
+
+	    if (nret == ANALYZE_DO_QUIT) {
 		break;
 	    }
-	    if (nret == ANALYZE_DO_QUIT) {
+
+	    if (nret < -1) {
+		ret = ANALYZE_FATAL_ERROR;
 		break;
 	    }
 	}
