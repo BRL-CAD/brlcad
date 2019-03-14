@@ -822,7 +822,7 @@ bu_log_indent_vls(struct bu_vls *v)
  * Log an error.  This version buffers a full line, to save network
  * traffic.
  */
-void
+int
 bu_log(const char *fmt, ...)
 {
     va_list vap;
@@ -830,7 +830,7 @@ bu_log(const char *fmt, ...)
     int ret;
 
     if (print_on == 0)
-	return;
+	return 0;
 
     bu_semaphore_acquire(BU_SEM_SYSCALL);
     va_start(vap, fmt);
@@ -852,6 +852,8 @@ bu_log(const char *fmt, ...)
     }
 out:
     bu_semaphore_release(BU_SEM_SYSCALL);
+
+    return ret;
 }
 
 
