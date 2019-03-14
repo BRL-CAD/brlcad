@@ -101,7 +101,7 @@ cache_get_objfile(char *buffer, size_t len, const char *cachedir, const char *fi
 
 /* returns truthfully if a path exists, creating it if necessary. */
 HIDDEN int
-cache_create_path(const char *path, int is_file)
+cache_ensure_path(const char *path, int is_file)
 {
     char *dir;
 
@@ -125,7 +125,7 @@ cache_create_path(const char *path, int is_file)
 	return 1;
     }
     dir = bu_path_dirname(path);
-    if (!cache_create_path(dir, 0)) {
+    if (!cache_ensure_path(dir, 0)) {
 	bu_free(dir, "dirname");
 	return 0;
     }
@@ -151,6 +151,14 @@ cache_create_path(const char *path, int is_file)
 }
 
 
+HIDDEN void
+cache_warn(const char *path, const char *msg)
+{
+    bu_log("  CACHE  %s\n", path);
+    bu_log("WARNING: ^ %s\n", msg);
+}
+
+
 HIDDEN int
 cache_format(const char *librt_cache)
 {
@@ -164,8 +172,7 @@ cache_format(const char *librt_cache)
     bu_vls_printf(&path, "%s%c%s", librt_cache, BU_DIR_SEPARATOR, "format");
     cpath = bu_vls_cstr(&path);
     if (!bu_file_readable(cpath)) {
-	bu_log("  CACHE  %s\n", cpath);
-	bu_log("WARNING: ^ Cannot read caching format file.  Caching disabled.\n");
+	cache_warn(cpath, "Cannot read format file.  Caching disabled.");
 	bu_vls_free(&path);
 	return -1;
     }
@@ -173,8 +180,7 @@ cache_format(const char *librt_cache)
     fp = fopen(cpath, "r");
     if (!fp) {
 	perror("fopen");
-	bu_log("  CACHE  %s\n", cpath);
-	bu_log("WARNING: ^ Cannot open caching format file.  Caching disabled.\n");
+	cache_warn(cpath, "Cannot open format file.  Caching disabled.");
 	bu_vls_free(&path);
 	return -2;
     }
@@ -182,14 +188,15 @@ cache_format(const char *librt_cache)
     bu_vls_gets(&fmt_str, fp);
     fclose(fp);
 
+    if (!bu_vls_strlen(&fmt_str)) {
+	cache_warn(cpath, "Cannot read format file.  Caching disabled.");
+	return -3;
+    }
+
     ret = bu_sscanf(bu_vls_cstr(&fmt_str), "%d", &format);
     if (ret != 1) {
-	fp = fopen(cpath, "w");
-	bu_vls_sprintf(&fmt_str, "%d\n", format);
-	if (fp) {
-	    ret = fwrite(bu_vls_cstr(&fmt_str), bu_vls_strlen(&fmt_str), 1, fp);
-	    fclose(fp);
-	}
+	cache_warn(cpath, "Cannot get version from format file.  Caching disabled.");
+	return -4;
     }
     bu_vls_free(&fmt_str);
     bu_vls_free(&path);
@@ -234,14 +241,6 @@ cache_generate_name(char name[STATIC_ARRAY(37)], const struct soltab *stp)
 }
 
 
-HIDDEN void
-cache_warn(const char *path, const char *msg)
-{
-    bu_log("  CACHE  %s\n", path);
-    bu_log("WARNING: ^ %s\n", msg);
-}
-
-
 /* returns truthfully if a cache location is exists and is usable,
  * creating and initializing the location if necessary.
  */
@@ -252,7 +251,7 @@ cache_init(const char *dir)
 
     if (!bu_file_exists(dir, NULL)) {
 	cache_warn(dir, "Directory does not exist.  Initializing.");
-	if (!cache_create_path(dir, 0)) {
+	if (!cache_ensure_path(dir, 0)) {
 	    cache_warn(dir, "Cannot create cache directory.  Caching disabled.");
 	    return 0;
 	}
@@ -274,9 +273,26 @@ cache_init(const char *dir)
     }
 
     snprintf(path, MAXPATHLEN, "%s%c%s", dir, BU_DIR_SEPARATOR, "format");
-    if (!cache_create_path(path, 1)) {
-	cache_warn(path, "Cannot create caching format file.  Caching disabled.");
-	return 0;
+    if (!bu_file_exists(path, NULL)) {
+	if (!cache_ensure_path(path, 1)) {
+	    cache_warn(path, "Cannot create format file.  Caching disabled.");
+	    return 0;
+	}
+	if (bu_file_writable(path)) {
+	    FILE *fp = fopen(path, "w");
+	    int ret;
+	    if (!fp) {
+		perror("fopen");
+		cache_warn(path, "Cannot initialize format file.  Caching disabled.");
+		return 0;
+	    }
+	    ret = fprintf(fp, "%d\n", CACHE_FORMAT);
+	    fclose(fp);
+	    if (ret <= 0) {
+		cache_warn(path, "Cannot set version in format file.  Caching disabled.");
+		return 0;
+	    }
+	}
     }
 
     return 1;
@@ -312,19 +328,23 @@ rt_cache_open(void)
 	return NULL;
     else if (format == 0) {
 	struct bu_vls path = BU_VLS_INIT_ZERO;
+	int ret;
 
 	/* v0 cache is just a single file, delete so we can start fresh */
 	bu_vls_printf(&path, "%s%c%s", dir, BU_DIR_SEPARATOR, "rt.db");
-	(void)bu_file_delete(bu_vls_addr(&path));
+	(void)bu_file_delete(bu_vls_cstr(&path));
 
 	bu_vls_trunc(&path, 0);
 	bu_vls_printf(&path, "%s%c%s", dir, BU_DIR_SEPARATOR, "format");
-	(void)bu_file_delete(bu_vls_addr(&path));
+	ret = bu_file_delete(bu_vls_cstr(&path));
 
 	bu_vls_free(&path);
 
 	/* reinit */
-	format = cache_format(dir);
+	if (ret) {
+	    cache_init(dir);
+	    format = cache_format(dir);
+	}
     } else if (format == 1) {
 	struct bu_vls path = BU_VLS_INIT_ZERO;
 	char **matches = NULL;
@@ -399,10 +419,10 @@ rt_cache_open(void)
      */
     dir = bu_dir(cache, MAXPATHLEN, BU_DIR_CACHE, ".rt", "objects", NULL);
     if (!bu_file_exists(dir, NULL)) {
-	cache_create_path(dir, 0);
+	cache_ensure_path(dir, 0);
     }
     if (!bu_file_exists(dir, NULL) || !bu_file_directory(dir)) {
-	bu_log("Cache error: could not find or create directory %s.\n", dir);
+	cache_warn(dir, "Could not find or create directory.  Caching disabled.");
 	return NULL;
     }
 
@@ -550,8 +570,8 @@ cache_create_dbip(const struct rt_cache *cache, const char *name)
 	bu_file_delete(path);
     }
 
-    if (!cache_create_path(path, 1)) {
-	bu_log("ERROR: failure creating cache file %s\n", path);
+    if (!cache_ensure_path(path, 1)) {
+	cache_warn(path, "Cache object failure.  Continuing.");
 	return NULL;
     }
 
