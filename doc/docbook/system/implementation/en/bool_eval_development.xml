@@ -955,8 +955,8 @@ brep->m_L[*brep->m_F[0]->m_li.Last()].m_type; // ON_BrepLoop::inner
             </mediaobject>
             <caption>
               <para>
-                Two curves (red and blue) overlap over a portion
-                of their domains (white).
+                Two curves (blue on the left and red on the right)
+                overlap over a portion of their domains (white).
               </para>
             </caption>
           </figure>
@@ -978,8 +978,8 @@ brep->m_L[*brep->m_F[0]->m_li.Last()].m_type; // ON_BrepLoop::inner
           </mediaobject>
           <caption>
             <para>
-              Two surfaces (red and blue) overlap over a region
-              of their domains (green).
+              Two surfaces (blue on the left and red on the right)
+              overlap over a region of their domains (green).
             </para>
           </caption>
         </figure>
