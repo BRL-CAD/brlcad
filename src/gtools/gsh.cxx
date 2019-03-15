@@ -150,7 +150,7 @@ main(int argc, const char **argv)
     /*
      * TODO - also add non-tty mode - could make gsh a 'generic' subprocess
      * execution mechanism for libged commands that want to do subprocess but
-     * don't have their own (1) executable.  The simplicity gsh's bare bones
+     * don't have their own (1) executable.  The simplicity of gsh's bare bones
      * argc/argv processing would be an asset in that scenario.
      *
      * Note that for such a scheme to work, we would also have to figure out
@@ -160,7 +160,12 @@ main(int argc, const char **argv)
      * and if the output is delayed the script execution (anything from
      * assigning search results to a variable on up) must also be delayed
      * and know to act on the 'final' result rather than the return from
-     * the 'kicking off the process' initialization. */
+     * the 'kicking off the process' initialization.
+     *
+     * Talk a look at what rt_read_cmd is doing - use that to guide an
+     * "arg reassembly" function to avoid a super-long argv entry filling
+     * up a pipe.
+     * */
 
     /* Start the interactive loop */
     while ((line = linenoise(gpmpt)) != NULL) {
