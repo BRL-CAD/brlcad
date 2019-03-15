@@ -149,7 +149,7 @@ int main(int UNUSED(argc), const char **UNUSED(argv))
     setmode(fileno(stdout), O_BINARY);
     setmode(fileno(stderr), O_BINARY);
 
-    /* Provide data in per-line chunks (commands are one line each, for example) */
+    /* Provide data in per-line chunks (TODO - why exactly does rt do this?  performance?) */
     bu_setlinebuf(stdout);
     bu_setlinebuf(stderr);
 

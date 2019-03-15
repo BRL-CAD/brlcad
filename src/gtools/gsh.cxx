@@ -151,7 +151,16 @@ main(int argc, const char **argv)
      * TODO - also add non-tty mode - could make gsh a 'generic' subprocess
      * execution mechanism for libged commands that want to do subprocess but
      * don't have their own (1) executable.  The simplicity gsh's bare bones
-     * argc/argv processing would be an asset in that scenario. */
+     * argc/argv processing would be an asset in that scenario.
+     *
+     * Note that for such a scheme to work, we would also have to figure out
+     * how to have MGED et. al. deal with async return of command results
+     * when it comes to things like executing Tcl scripts on results - the
+     * full MGED Tcl prompt acts on command results as part of Tcl scripts,
+     * and if the output is delayed the script execution (anything from
+     * assigning search results to a variable on up) must also be delayed
+     * and know to act on the 'final' result rather than the return from
+     * the 'kicking off the process' initialization. */
 
     /* Start the interactive loop */
     while ((line = linenoise(gpmpt)) != NULL) {
