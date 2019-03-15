@@ -68,20 +68,20 @@ struct rt_cache {
 
 
 HIDDEN void
-cache_get_objdir(char *buffer, size_t len, const char *cachedir, const char *filename)
+cache_get_objdir(const struct rt_cache *cache, const char *filename, char *buffer, size_t len)
 {
     char idx[3] = {0};
     idx[0] = filename[0];
     idx[1] = filename[1];
-    bu_dir(buffer, len, cachedir, idx, NULL);
+    bu_dir(buffer, len, cache->dir, "objects", idx, NULL);
 }
 
 
 HIDDEN void
-cache_get_objfile(char *buffer, size_t len, const char *cachedir, const char *filename)
+cache_get_objfile(const struct rt_cache *cache, const char *filename, char *buffer, size_t len)
 {
     char dir[MAXPATHLEN] = {0};
-    cache_get_objdir(dir, MAXPATHLEN, cachedir, filename);
+    cache_get_objdir(cache, filename, dir, MAXPATHLEN);
     bu_dir(buffer, len, dir, filename, NULL);
 }
 
@@ -139,10 +139,13 @@ cache_ensure_path(const char *path, int is_file)
 
 
 HIDDEN void
-cache_warn(const char *path, const char *msg)
+cache_warn(const struct rt_cache *cache, const char *path, const char *msg)
 {
-    bu_log("  CACHE  %s\n", path);
-    bu_log("WARNING: ^ %s\n", msg);
+    if (!cache->log)
+	return;
+
+    cache->log("  CACHE  %s\n", path);
+    cache->log("WARNING: ^ %s\n", msg);
 }
 
 
@@ -161,7 +164,7 @@ cache_format(const struct rt_cache *cache)
     bu_vls_printf(&path, "%s%c%s", librt_cache, BU_DIR_SEPARATOR, "format");
     cpath = bu_vls_cstr(&path);
     if (!bu_file_readable(cpath)) {
-	cache_warn(cpath, "Cannot read format file.  Caching disabled.");
+	cache_warn(cache, cpath, "Cannot read format file.  Caching disabled.");
 	bu_vls_free(&path);
 	return -1;
     }
@@ -169,7 +172,7 @@ cache_format(const struct rt_cache *cache)
     fp = fopen(cpath, "r");
     if (!fp) {
 	perror("fopen");
-	cache_warn(cpath, "Cannot open format file.  Caching disabled.");
+	cache_warn(cache, cpath, "Cannot open format file.  Caching disabled.");
 	bu_vls_free(&path);
 	return -2;
     }
@@ -178,13 +181,13 @@ cache_format(const struct rt_cache *cache)
     fclose(fp);
 
     if (!bu_vls_strlen(&fmt_str)) {
-	cache_warn(cpath, "Cannot read format file.  Caching disabled.");
+	cache_warn(cache, cpath, "Cannot read format file.  Caching disabled.");
 	return -3;
     }
 
     ret = bu_sscanf(bu_vls_cstr(&fmt_str), "%d", &format);
     if (ret != 1) {
-	cache_warn(cpath, "Cannot get version from format file.  Caching disabled.");
+	cache_warn(cache, cpath, "Cannot get version from format file.  Caching disabled.");
 	return -4;
     }
     bu_vls_free(&fmt_str);
@@ -240,9 +243,9 @@ cache_init(struct rt_cache *cache)
     char path[MAXPATHLEN] = {0};
 
     if (!bu_file_exists(dir, NULL)) {
-	cache_warn(dir, "Directory does not exist.  Initializing.");
+	cache_warn(cache, dir, "Directory does not exist.  Initializing.");
 	if (!cache_ensure_path(dir, 0)) {
-	    cache_warn(dir, "Cannot create cache directory.  Caching disabled.");
+	    cache_warn(cache, dir, "Cannot create cache directory.  Caching disabled.");
 	    return 0;
 	}
     }
@@ -250,15 +253,15 @@ cache_init(struct rt_cache *cache)
     /* verify usability */
 
     if (!bu_file_directory(dir)) {
-	cache_warn(dir, "Location must be a directory.  Caching disabled.");
+	cache_warn(cache, dir, "Location must be a directory.  Caching disabled.");
 	return 0;
     }
     if (!bu_file_readable(dir)) {
-	cache_warn(dir, "Location must be readable.  Caching disabled.");
+	cache_warn(cache, dir, "Location must be readable.  Caching disabled.");
 	return 0;
     }
     if (!cache->read_only && !bu_file_writable(dir)) {
-	cache_warn(dir, "Location is READ-ONLY.");
+	cache_warn(cache, dir, "Location is READ-ONLY.");
 	cache->read_only = 1;
     }
 
@@ -267,7 +270,7 @@ cache_init(struct rt_cache *cache)
     snprintf(path, MAXPATHLEN, "%s%c%s", dir, BU_DIR_SEPARATOR, "format");
     if (!bu_file_exists(path, NULL)) {
 	if (!cache_ensure_path(path, 1)) {
-	    cache_warn(path, "Cannot create format file.  Caching disabled.");
+	    cache_warn(cache, path, "Cannot create format file.  Caching disabled.");
 	    return 0;
 	}
 	if (bu_file_writable(path)) {
@@ -275,23 +278,23 @@ cache_init(struct rt_cache *cache)
 	    int ret;
 	    if (!fp) {
 		perror("fopen");
-		cache_warn(path, "Cannot initialize format file.  Caching disabled.");
+		cache_warn(cache, path, "Cannot initialize format file.  Caching disabled.");
 		return 0;
 	    }
 	    ret = fprintf(fp, "%d\n", CACHE_FORMAT);
 	    fclose(fp);
 	    if (ret <= 0) {
-		cache_warn(path, "Cannot set version in format file.  Caching disabled.");
+		cache_warn(cache, path, "Cannot set version in format file.  Caching disabled.");
 		return 0;
 	    }
 	}
     }
     if (bu_file_directory(path)) {
-	cache_warn(path, "Directory blocking format file creation.  Caching disabled.");
+	cache_warn(cache, path, "Directory blocking format file creation.  Caching disabled.");
 	return 0;
     }
     if (!cache->read_only && !bu_file_writable(path)) {
-	cache_warn(path, "Location is READ-ONLY.");
+	cache_warn(cache, path, "Location is READ-ONLY.");
 	cache->read_only = 1;
     }
 
@@ -303,16 +306,16 @@ cache_init(struct rt_cache *cache)
     snprintf(path, MAXPATHLEN, "%s%c%s", dir, BU_DIR_SEPARATOR, "objects");
     if (!bu_file_exists(path, NULL)) {
 	if (!cache_ensure_path(path, 0)) {
-	    cache_warn(path, "Cannot create objects directory.  Caching disabled.");
+	    cache_warn(cache, path, "Cannot create objects directory.  Caching disabled.");
 	    return 0;
 	}
     }
     if (!bu_file_directory(path)) {
-	cache_warn(path, "Cannot initialize objects directory.  Caching disabled.");
+	cache_warn(cache, path, "Cannot initialize objects directory.  Caching disabled.");
 	return 0;
     }
     if (!cache->read_only && !bu_file_writable(path)) {
-	cache_warn(path, "Location is READ-ONLY.");
+	cache_warn(cache, path, "Location is READ-ONLY.");
 	cache->read_only = 1;
     }
 
@@ -324,7 +327,7 @@ cache_init(struct rt_cache *cache)
 
 
 HIDDEN void
-compress_external(struct bu_external *external)
+compress_external(const struct rt_cache *cache, struct bu_external *external)
 {
     int ret;
     int compressed = 0;
@@ -345,8 +348,8 @@ compress_external(struct bu_external *external)
     if (ret != 0)
 	compressed = 1;
 
-    if (!compressed) {
-	bu_log("compression failed (ret %d, %zu bytes @ %p to %d bytes max)\n", ret, external->ext_nbytes, (void *) external->ext_buf, compressed_size);
+    if (!compressed && cache && cache->log) {
+	cache->log("compression failed (ret %d, %zu bytes @ %p to %d bytes max)\n", ret, external->ext_nbytes, (void *) external->ext_buf, compressed_size);
 	return;
     }
 
@@ -359,8 +362,7 @@ compress_external(struct bu_external *external)
 
 
 HIDDEN void
-uncompress_external(const struct bu_external *external,
-		    struct bu_external *dest)
+uncompress_external(const struct rt_cache *cache, const struct bu_external *external, struct bu_external *dest)
 {
     int ret;
     int uncompressed = 0;
@@ -378,8 +380,8 @@ uncompress_external(const struct bu_external *external,
     if (ret > 0)
 	uncompressed = 1;
 
-    if (!uncompressed) {
-	bu_log("decompression failed (ret %d, %zu bytes @ %p to %zu bytes max)\n", ret, external->ext_nbytes, (void *) external->ext_buf, dest->ext_nbytes);
+    if (!uncompressed && cache && cache->log) {
+	cache->log("decompression failed (ret %d, %zu bytes @ %p to %zu bytes max)\n", ret, external->ext_nbytes, (void *) external->ext_buf, dest->ext_nbytes);
 	return;
     }
 
@@ -400,7 +402,7 @@ cache_read_dbip(const struct rt_cache *cache, const char *name)
     if (dbip)
 	return dbip;
 
-    cache_get_objfile(path, MAXPATHLEN, cache->dir, name);
+    cache_get_objfile(cache, name, path, MAXPATHLEN);
     if (!bu_file_exists(path, NULL))
 	return NULL;
 
@@ -433,7 +435,7 @@ cache_create_dbip(const struct rt_cache *cache, const char *name)
     if (dbip)
 	return dbip;
 
-    cache_get_objfile(path, MAXPATHLEN, cache->dir, name);
+    cache_get_objfile(cache, name, path, MAXPATHLEN);
 
     /* something in the way? clobber time. */
     if (bu_file_exists(path, NULL)) {
@@ -441,7 +443,7 @@ cache_create_dbip(const struct rt_cache *cache, const char *name)
     }
 
     if (!cache_ensure_path(path, 1)) {
-	cache_warn(path, "Cache object failure.  Continuing.");
+	cache_warn(cache, path, "Cache object failure.  Continuing.");
 	return NULL;
     }
 
@@ -507,7 +509,7 @@ cache_try_load(const struct rt_cache *cache, const char *name, const struct rt_d
 	bu_avs_free(&attributes);
     }
 
-    uncompress_external(&raw_internal.body, &data_external);
+    uncompress_external(cache, &raw_internal.body, &data_external);
     bu_free_external(&raw_external);
 
     if (rt_obj_prep_serialize(stp, internal, &data_external, &version)) {
@@ -541,7 +543,7 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
     if (rt_obj_prep_serialize(stp, internal, &data_external, &version) || version == (size_t)-1)
 	return 0; /* can't serialize */
 
-    compress_external(&data_external);
+    compress_external(cache, &data_external);
 
     {
 	struct bu_attribute_value_set attributes = BU_AVS_INIT_ZERO;
@@ -563,21 +565,21 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
 
     /* [FIXME: redundant] make sure we can write to the cache dir */
     if (!bu_file_writable(cache->dir) || !bu_file_executable(cache->dir)) {
-	cache_warn(cache->dir, "Directory is not writable.  Caching disabled.");
+	cache_warn(cache, cache->dir, "Directory is not writable.  Caching disabled.");
 	return 0;
     }
-    cache_get_objdir(tmppath, MAXPATHLEN, cache->dir, name);
+    cache_get_objdir(cache, name, tmppath, MAXPATHLEN);
     if (bu_file_exists(tmppath, NULL) && (!bu_file_writable(tmppath) || !bu_file_executable(tmppath))) {
 	char objdir[MAXPATHLEN] = {0};
 	bu_path_basename(tmppath, objdir);
-	cache_warn(objdir, "Subdirectory is not writable.  Caching disabled.");
+	cache_warn(cache, objdir, "Subdirectory is not writable.  Caching disabled.");
 	return 0;
     }
 
     /* get a somewhat random temporary name */
     snprintf(tmpname, MAXPATHLEN, "%s.%d.%lld", name, bu_process_id(), (long long int)bu_gettime());
 
-    cache_get_objfile(tmppath, MAXPATHLEN, cache->dir, tmpname);
+    cache_get_objfile(cache, tmpname, tmppath, MAXPATHLEN);
     bu_file_delete(tmppath); /* okay if it doesn't exist */
 
     dbip = cache_create_dbip(cache, tmpname);
@@ -612,7 +614,7 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
     bu_free_external(&attributes_external);
     bu_free_external(&data_external);
 
-    cache_get_objfile(path, MAXPATHLEN, cache->dir, name);
+    cache_get_objfile(cache, name, path, MAXPATHLEN);
 
     /* anyone beat us to creating the cache? */
     if (bu_file_exists(path, NULL)) {
@@ -793,8 +795,10 @@ rt_cache_open(void)
 	/* reinit */
 	format = cache_format(&cache);
     } else if (format > CACHE_FORMAT) {
-	bu_log("NOTE: Cache at %s was created with a newer version of %s\n", dir, PACKAGE_NAME);
-	bu_log("      Delete or move folder to enable caching with this version.\n");
+	if (cache.log) {
+	    cache.log("NOTE: Cache at %s was created with a newer version of %s\n", dir, PACKAGE_NAME);
+	    cache.log("      Delete or move folder to enable caching with this version.\n");
+	}
     }
 
     if (format != CACHE_FORMAT)
