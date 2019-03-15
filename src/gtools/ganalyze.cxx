@@ -145,9 +145,9 @@ int main(int UNUSED(argc), const char **UNUSED(argv))
     struct bu_vls iline = BU_VLS_INIT_ZERO;
 
     /* For Windows */
-    setmode(_fileno(stdin), O_BINARY);
-    setmode(_fileno(stdout), O_BINARY);
-    setmode(_fileno(stderr), O_BINARY);
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+    setmode(fileno(stderr), O_BINARY);
 
     /* Provide data in per-line chunks (commands are one line each, for example) */
     bu_setlinebuf(stdout);
