@@ -827,7 +827,7 @@ bu_log(const char *fmt, ...)
 {
     va_list vap;
     char buf[512];		/* a generous output line.  Must be AUTO, else non-PARALLEL. */
-    int ret;
+    int ret = 0;
 
     if (print_on == 0)
 	return 0;
