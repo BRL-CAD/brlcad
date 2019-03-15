@@ -58,13 +58,18 @@
 static const char * const cache_mime_type = "brlcad/cache";
 
 
+#define CACHE_LOG(...) if (cache && cache->log) cache->log(__VA_ARGS__);
+#define CACHE_DEBUG(...) if (cache && cache->debug) cache->debug(__VA_ARGS__);
+
+
 struct rt_cache {
     char dir[MAXPATHLEN];
     int read_only;
     int (*log)(const char *format, ...);
+    int (*debug)(const char *format, ...);
     struct bu_hash_tbl *dbip_hash;
 };
-#define CACHE_INIT {{0}, 0, bu_log, NULL}
+#define CACHE_INIT {{0}, 0, bu_log, bu_log, NULL}
 
 
 HIDDEN void
@@ -141,11 +146,8 @@ cache_ensure_path(const char *path, int is_file)
 HIDDEN void
 cache_warn(const struct rt_cache *cache, const char *path, const char *msg)
 {
-    if (!cache->log)
-	return;
-
-    cache->log("  CACHE  %s\n", path);
-    cache->log("WARNING: ^ %s\n", msg);
+    CACHE_LOG("  CACHE  %s\n", path);
+    CACHE_LOG("WARNING: ^ %s\n", msg);
 }
 
 
@@ -348,8 +350,8 @@ compress_external(const struct rt_cache *cache, struct bu_external *external)
     if (ret != 0)
 	compressed = 1;
 
-    if (!compressed && cache && cache->log) {
-	cache->log("compression failed (ret %d, %zu bytes @ %p to %d bytes max)\n", ret, external->ext_nbytes, (void *) external->ext_buf, compressed_size);
+    if (!compressed) {
+	CACHE_LOG("compression failed (ret %d, %zu bytes @ %p to %d bytes max)\n", ret, external->ext_nbytes, (void *) external->ext_buf, compressed_size);
 	return;
     }
 
@@ -380,8 +382,8 @@ uncompress_external(const struct rt_cache *cache, const struct bu_external *exte
     if (ret > 0)
 	uncompressed = 1;
 
-    if (!uncompressed && cache && cache->log) {
-	cache->log("decompression failed (ret %d, %zu bytes @ %p to %zu bytes max)\n", ret, external->ext_nbytes, (void *) external->ext_buf, dest->ext_nbytes);
+    if (!uncompressed) {
+	CACHE_LOG("decompression failed (ret %d, %zu bytes @ %p to %zu bytes max)\n", ret, external->ext_nbytes, (void *) external->ext_buf, dest->ext_nbytes);
 	return;
     }
 
@@ -672,6 +674,8 @@ rt_cache_close(struct rt_cache *cache)
     if (!cache)
 	return;
 
+    CACHE_DEBUG("+++ Closing cache at %s\n", cache->dir);
+
     entry = bu_hash_next(cache->dbip_hash, NULL);
     while (entry) {
 	struct db_i *dbip = (struct db_i *)bu_hash_value(entry, NULL);
@@ -681,6 +685,7 @@ rt_cache_close(struct rt_cache *cache)
     }
     bu_hash_destroy(cache->dbip_hash);
 
+    cache->debug = NULL;
     cache->log = NULL;
     cache->read_only = -1;
     memset(cache->dir, 0, MAXPATHLEN);
@@ -695,7 +700,8 @@ rt_cache_open(void)
     const char *dir = NULL;
     int format;
     struct rt_cache *result;
-    struct rt_cache cache = CACHE_INIT;
+    struct rt_cache CACHE = CACHE_INIT;
+    struct rt_cache *cache = &CACHE;
 
     dir = getenv("LIBRT_CACHE");
     if (!BU_STR_EMPTY(dir)) {
@@ -704,16 +710,18 @@ rt_cache_open(void)
 	if (bu_str_false(dir))
 	    return NULL;
 
-	dir = bu_file_realpath(dir, cache.dir);
+	dir = bu_file_realpath(dir, cache->dir);
     } else {
 	/* LIBRT_CACHE is either set-and-empty or unset.  Default is on. */
-	dir = bu_dir(cache.dir, MAXPATHLEN, BU_DIR_CACHE, ".rt", NULL);
+	dir = bu_dir(cache->dir, MAXPATHLEN, BU_DIR_CACHE, ".rt", NULL);
     }
 
-    if (!cache_init(&cache))
+    if (!cache_init(cache))
 	return NULL;
 
-    format = cache_format(&cache);
+    CACHE_DEBUG("+++ Opening cache at %s\n", dir);
+
+    format = cache_format(cache);
     if (format < 0)
 	return NULL;
     else if (format == 0) {
@@ -732,8 +740,8 @@ rt_cache_open(void)
 
 	/* reinit */
 	if (ret) {
-	    cache_init(&cache);
-	    format = cache_format(&cache);
+	    cache_init(cache);
+	    format = cache_format(cache);
 	}
     } else if (format == 1) {
 	struct bu_vls path = BU_VLS_INIT_ZERO;
@@ -793,19 +801,17 @@ rt_cache_open(void)
 	bu_vls_free(&path);
 
 	/* reinit */
-	format = cache_format(&cache);
+	format = cache_format(cache);
     } else if (format > CACHE_FORMAT) {
-	if (cache.log) {
-	    cache.log("NOTE: Cache at %s was created with a newer version of %s\n", dir, PACKAGE_NAME);
-	    cache.log("      Delete or move folder to enable caching with this version.\n");
-	}
+	CACHE_LOG("NOTE: Cache at %s was created with a newer version of %s\n", dir, PACKAGE_NAME);
+	CACHE_LOG("      Delete or move folder to enable caching with this version.\n");
     }
 
     if (format != CACHE_FORMAT)
 	return NULL;
 
     BU_GET(result, struct rt_cache);
-    *result = cache; /* struct copy */
+    *result = CACHE; /* struct copy */
 
     return result;
 }
