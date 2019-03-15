@@ -834,12 +834,13 @@ bu_log(const char *fmt, ...)
 
     bu_semaphore_acquire(BU_SEM_SYSCALL);
     va_start(vap, fmt);
-    (void)vsprintf(buf, fmt, vap);
+    ret = vsprintf(buf, fmt, vap);
     va_end(vap);
 
     if (pcsrv == PKC_NULL || pcsrv == PKC_ERROR) {
 	fprintf(stderr, "%s", buf);
-	goto out;
+	bu_semaphore_release(BU_SEM_SYSCALL);
+	return ret;
     }
 
     if (debug)
@@ -850,9 +851,8 @@ bu_log(const char *fmt, ...)
 	fprintf(stderr, "pkg_send MSG_PRINT failed\n");
 	bu_exit(12, NULL);
     }
-out:
-    bu_semaphore_release(BU_SEM_SYSCALL);
 
+    bu_semaphore_release(BU_SEM_SYSCALL);
     return ret;
 }
 
