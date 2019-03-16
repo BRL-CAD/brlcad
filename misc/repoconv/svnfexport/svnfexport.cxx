@@ -244,26 +244,66 @@ bool reject_tag(std::string rtag)
     return false;
 }
 
-std::map<long int, std::string> rev_to_gsha1;
+std::map<std::pair<std::string,long int>, std::string> rev_to_gsha1;
 
-void get_rev_sha1(long int rev, std::string &branch)
+void read_cached_rev_sha1s()
 {
+    std::ifstream infile("rev_gsha1s.txt");
+    if (!infile.good()) return;
     std::string line;
-    std::string git_sha1_cmd = std::string("cd cvs_git && git show-ref ") + branch + std::string(" > ../sha1.txt && cd ..");
-    std::system(git_sha1_cmd.c_str());
-    std::ifstream hfile("sha1.txt");
-    if (!hfile.good()) exit(-1);
-    std::getline(hfile, line);
-    size_t spos = line.find_first_of(" ");
-    std::string hsha1 = line.substr(0, spos);
-    rev_to_gsha1[rev] = hsha1;
-
-    std::cout << rev << " -> " << rev_to_gsha1[rev] << "\n";
-
-    hfile.close();
-    remove("sha1.txt");
+    while (std::getline(infile, line)) {
+	size_t spos = line.find_first_of(",");
+	std::string branch = line.substr(0, spos);
+	line = line.substr(spos + 1, std::string::npos);
+	spos = line.find_first_of(",");
+	std::string rev_str = line.substr(0, spos);
+	std::string gsha1 = line.substr(spos+1, std::string::npos);
+	long int rev = std::stol(rev_str);
+	rev_to_gsha1[std::pair<std::string,long int>(branch, rev)] = gsha1;
+	std::cout << branch << "," << rev << " -> " << gsha1 << "\n";
+    }
 }
 
+void write_cached_rev_sha1s()
+{
+    std::map<std::pair<std::string,long int>, std::string>::iterator r_it;
+    remove("rev_gsha1s.txt");
+    std::ofstream outfile("rev_gsha1s.txt", std::ios::out | std::ios::binary);
+    if (!outfile.good()) exit(-1);
+    for (r_it = rev_to_gsha1.begin(); r_it != rev_to_gsha1.end(); r_it++) {
+	outfile << r_it->first.first << "," << r_it->first.second << "," << r_it->second << "\n";
+    }
+    outfile.close();
+}
+
+void get_rev_sha1s(long int rev)
+{
+    std::vector<std::string> branches;
+    std::vector<std::string>::iterator b_it;
+
+    branches.push_back(std::string("master"));
+    branches.push_back(std::string("STABLE"));
+    branches.push_back(std::string("RELEASE"));
+
+    for (b_it = branches.begin(); b_it != branches.end(); b_it++) {
+	std::string line;
+	std::string branch = *b_it;
+	std::string git_sha1_cmd = std::string("cd cvs_git && git show-ref ") + branch + std::string(" > ../sha1.txt && cd ..");
+	std::system(git_sha1_cmd.c_str());
+	std::ifstream hfile("sha1.txt");
+	if (!hfile.good()) continue;
+	std::getline(hfile, line);
+	size_t spos = line.find_first_of(" ");
+	std::string hsha1 = line.substr(0, spos);
+	rev_to_gsha1[std::pair<std::string,long int>(branch, rev)] = hsha1;
+
+	std::cout << branch << "," << rev << " -> " << rev_to_gsha1[std::pair<std::string,long int>(branch, rev)] << "\n";
+
+	hfile.close();
+	remove("sha1.txt");
+    }
+    write_cached_rev_sha1s();
+}
 
 
 std::string git_sha1(std::ifstream &infile, struct svn_node *n)
@@ -1394,7 +1434,7 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 
 		verify_repos(rev.revision_number, std::string("trunk"), std::string("master"));
 
-		get_rev_sha1(rev.revision_number, rbranch);
+		get_rev_sha1s(rev.revision_number);
 
 		continue;
 	    }
@@ -1408,7 +1448,7 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 		outfile.flush();
 		verify_repos(rev.revision_number, std::string("trunk"), std::string("master"));
 
-		get_rev_sha1(rev.revision_number, rbranch);
+		get_rev_sha1s(rev.revision_number);
 
 		continue;
 	    }
@@ -1558,7 +1598,7 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
 		    verify_repos(rev.revision_number, std::string("trunk"), std::string("master"));
 		//}
 
-		get_rev_sha1(rev.revision_number, rbranch);
+		get_rev_sha1s(rev.revision_number);
 
 	    } else {
 		if (!branch_delete && !have_commit) {
@@ -1678,8 +1718,8 @@ int main(int argc, const char **argv)
 	return 1;
     }
 
-    //starting_rev = 29886;
-    starting_rev = 36000;
+    starting_rev = 29886;
+    //starting_rev = 36000;
 
     // Make sure our starting point is sound
     verify_repos(starting_rev, std::string("trunk"), std::string("master"));
@@ -1699,8 +1739,8 @@ int main(int argc, const char **argv)
     /* Read in pre-existing branch sha1 heads from git */
     load_branch_head_sha1s();
 
-    /* TODO: Read in previously defined rev -> sha1 map, if any */
-    //load_rev_sha1_map();
+    /* Read in previously defined rev -> sha1 map, if any */
+    read_cached_rev_sha1s();
 
     /* Read in pre-existing blob sha1s from git */
     load_blob_sha1s();
@@ -1718,7 +1758,7 @@ int main(int argc, const char **argv)
 
     std::ofstream outfile("brlcad-svn-export.fi", std::ios::out | std::ios::binary);
     if (!outfile.good()) return -1;
-    //rev_fast_export(infile, outfile, 29887, 30854);
+    //rev_fast_export(infile, outfile, 29887, 40000);
     rev_fast_export(infile, outfile, starting_rev + 1, 40000);
     outfile.close();
 
