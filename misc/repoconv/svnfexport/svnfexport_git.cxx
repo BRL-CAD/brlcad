@@ -47,10 +47,10 @@ void get_rev_sha1s(long int rev)
 	std::getline(hfile, line);
 	size_t spos = line.find_first_of(" ");
 	std::string hsha1 = line.substr(0, spos);
-	rev_to_gsha1[std::pair<std::string,long int>(branch, rev)] = hsha1;
-
-	std::cout << branch << "," << rev << " -> " << rev_to_gsha1[std::pair<std::string,long int>(branch, rev)] << "\n";
-
+	if (hsha1.length()) {
+	    rev_to_gsha1[std::pair<std::string,long int>(branch, rev)] = hsha1;
+	    //std::cout << branch << "," << rev << " -> " << rev_to_gsha1[std::pair<std::string,long int>(branch, rev)] << "\n";
+	}
 	hfile.close();
 	remove("sha1.txt");
     }
@@ -468,8 +468,11 @@ void standard_commit(std::ofstream &outfile, struct svn_revision &rev, std::stri
 
 }
 
-void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev_num_min, long int rev_num_max)
+void rev_fast_export(std::ifstream &infile, long int rev_num)
 {
+
+    std::string fi_file = std::to_string(rev_num) + std::string(".fi");
+
     std::set<int> special_revs;
     std::string empty_sha1("da39a3ee5e6b4b0d3255bfef95601890afd80709");
     std::map<long int, struct svn_revision>::iterator r_it;
@@ -482,262 +485,254 @@ void rev_fast_export(std::ifstream &infile, std::ofstream &outfile, long int rev
     special_revs.insert(36843);
     special_revs.insert(39465);
 
-
-    for (r_it = revs.begin(); r_it != revs.end(); r_it++) {
-	struct svn_revision &rev = r_it->second;
-
-	if (rev.revision_number == 40098) {
-	    std::cout << "at 40098\n";
-	}
-
-	if (rev.project != std::string("brlcad")) {
-	    //std::cout << "Revision " << rev.revision_number << " is not part of brlcad, skipping\n";
-	    continue;
-	}
-
-	// If we have a text content sha1, update the map
-	// to the current path state
-	if (rev.nodes.size() > 0) {
-	    for (size_t n = 0; n != rev.nodes.size(); n++) {
-		struct svn_node &node = rev.nodes[n];
-		if (node.text_content_sha1.length()) {
-		    current_sha1[node.path] = node.text_content_sha1;
-		}
-	    }
-	}
-
-	if (rev.revision_number > rev_num_max) return;
-
-	if (rev.revision_number == 30760) {
-	    std::cout << "Skipping r30760 - premature tagging of rel-7-12-2.  Will be tagged by 30792\n";
-	    continue;
-	}
-
-	if (rev.revision_number == 36472) {
-	    std::cout << "Skipping r36472 - branch rename, handled by mapping the original name in the original commit (dmtogl-branch) to the desired branch name (dmtogl)\n";
-	    continue;
-	}
-
-	if (rev.revision_number >= rev_num_min) {
-#if 0
-	    std::cout << "Processing revision " << rev.revision_number << "\n";
-	    if (rev.merged_from.length()) {
-		std::cout << "Note: merged from " << rev.merged_from << "\n";
-	    }
-#endif
-	    int git_changes = 0;
-	    int have_commit = 0;
-	    int tag_after_commit = 0;
-	    int branch_delete = 0;
-	    std::string ctag, cfrom;
-	    std::string rbranch = rev.nodes[0].branch;
-
-	    if (reject_tag(rev.nodes[0].tag)) {
-		std::cout << "Skipping " << rev.revision_number << " - edit to old tag:\n" << rev.commit_msg << "\n";
-		continue;
-	    }
-
-	    if (special_revs.find(rev.revision_number) != special_revs.end()) {
-		std::string bsrc, bdest;
-		brlcad_revs.insert(rev.revision_number);
-		std::cout << "Revision " << rev.revision_number << " requires special handling\n";
-		if (rev.revision_number == 36633 || rev.revision_number == 39465) {
-		    bdest = std::string("refs/heads/dmtogl");
-		    bsrc = branch_head_id(std::string("refs/heads/master"), rev.revision_number);
-		} else {
-		    bdest = std::string("refs/heads/STABLE");
-		}
-		if (rev.revision_number == 31039) {
-		    bsrc = tag_ids[std::string("rel-7-12-2")];
-		}
-		if (rev.revision_number == 32314 || rev.revision_number == 36843) {
-		    bsrc = tag_ids[std::string("rel-7-12-6")];
-		}
-		full_sync_commit(outfile, rev, bsrc, bdest);
-
-		// Check trunk after every commit - this will eventually expand to branch specific checks as well, but for now we
-		// need to get trunk building correctly
-		outfile.flush();
-
-		// TODO - verify_repos needs to morph into an "update cvs_git" step and a subsequent check step, writing out
-		// the current revisions fi stream and applying it rather than building up a multi-revision stream
-
-		verify_repos(rev.revision_number, std::string("trunk"), std::string("master"));
-
-		get_rev_sha1s(rev.revision_number);
-
-		continue;
-	    }
-
-	    if (rebuild_revs.find(rev.revision_number) != rebuild_revs.end()) {
-		std::cout << "Revision " << rev.revision_number << " references non-current SVN info, needs special handling\n";
-		old_references_commit(infile, outfile, rev, rbranch);
-
-		// Check trunk after every commit - this will eventually expand to branch specific checks as well, but for now we
-		// need to get trunk building correctly
-		outfile.flush();
-		verify_repos(rev.revision_number, std::string("trunk"), std::string("master"));
-
-		get_rev_sha1s(rev.revision_number);
-
-		continue;
-	    }
-
-	    if (rev.revision_number == 30332) {
-		std::cout << "at 30332\n";
-	    }
-
-	    for (size_t n = 0; n != rev.nodes.size(); n++) {
-		struct svn_node &node = rev.nodes[n];
-
-		if (node.tag_add || node.tag_edit) {
-		    std::cout << "Processing revision " << rev.revision_number << "\n";
-		    std::string ppath, bbpath, llpath, tpath;
-		    int is_tag;
-		    node_path_split(node.copyfrom_path, ppath, bbpath, tpath, llpath, &is_tag);
-
-		    int edited_tag_minr = -1;
-		    int edited_tag_maxr = -1;
-
-		    // For edited tags - first tag create branch, final tag is "real" tag,
-		    // else just branch commits
-		    if (edited_tags.find(node.tag) != edited_tags.end()) {
-			edited_tag_minr = edited_tag_first_rev[node.tag];
-			edited_tag_maxr = edited_tag_max_rev[node.tag];
-			std::cout << node.tag << ": " << edited_tag_minr << " " << edited_tag_maxr << "\n";
-			brlcad_revs.insert(rev.revision_number);
-
-			if (rev.revision_number < edited_tag_minr) {
-			    std::string nbranch = std::string("refs/heads/") + node.tag;
-			    std::cout << "Adding tag branch " << nbranch << " from " << bbpath << ", r" << rev.revision_number <<"\n";
-			    std::cout << rev.commit_msg << "\n";
-			    outfile << "reset " << nbranch << "\n";
-			    outfile << "from " << branch_head_id(bbpath, rev.revision_number) << "\n";
-			    branch_head_ids[nbranch] = branch_head_ids[bbpath];
-			    continue;
-			}
-			if (rev.revision_number == edited_tag_maxr) {
-			    tag_after_commit = 1;
-			    rbranch = node.branch;
-			    ctag = node.tag;
-			    cfrom = node.branch;
-			}
-			std::cout << "Non-final tag edit, processing normally: " << node.branch << ", r" << rev.revision_number<< "\n";
-			rbranch = node.branch;
-			//git_changes = 1;
-		    } else {
-			brlcad_revs.insert(rev.revision_number);
-			std::cout << "Adding tag " << node.tag << " from " << bbpath << ", r" << rev.revision_number << "\n";
-			have_commit = 1;
-			outfile << "tag " << node.tag << "\n";
-			outfile << "from " << branch_head_id(bbpath, rev.revision_number) << "\n";
-			outfile << "tagger " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
-			outfile << "data " << rev.commit_msg.length() << "\n";
-			outfile << rev.commit_msg << "\n";
-			tag_ids[node.tag] = branch_head_id(bbpath, rev.revision_number);
-			continue;
-		    }
-
-		}
-
-		if (node.tag_delete) {
-		    branch_delete = 1;
-		    std::cout << "processing revision " << rev.revision_number << "\n";
-		    std::cout << "TODO - delete tag: " << node.tag << "\n";
-		    continue;
-		}
-
-		if (node.branch_add) {
-		    brlcad_revs.insert(rev.revision_number);
-		    std::cout << "Processing revision " << rev.revision_number << "\n";
-		    std::string ppath, bbpath, llpath, tpath;
-		    int is_tag;
-		    node_path_split(node.copyfrom_path, ppath, bbpath, tpath, llpath, &is_tag);
-		    std::cout << "Adding branch " << node.branch << " from " << bbpath << ", r" << rev.revision_number <<"\n";
-		    std::cout << rev.commit_msg << "\n";
-		    outfile << "reset " << node.branch << "\n";
-		    // TODO - This isn't enough - r36053 branches from an older rev.  We need to build a revision number to
-		    // commit sha1 map...
-		    outfile << "from " << branch_head_id(bbpath, rev.revision_number) << "\n";
-		    branch_head_ids[node.branch] = branch_head_ids[bbpath];
-		    have_commit = 1;
-
-		    // TODO - make an empty commit on the new branch with the commit message from SVN, but no changes
-
-		    continue;
-		}
-
-		if (node.branch_delete) {
-		    //std::cout << "processing revision " << rev.revision_number << "\n";
-		    //std::cout << "Delete branch instruction: " << node.branch << " - deferring.\n";
-		    branch_delete = 1;
-		    continue;
-		}
+    struct svn_revision &rev = revs.find(rev_num)->second;
 
 
-		if (node.kind == ndir && node.action == nadd && node.copyfrom_path.length()) {
-		    git_changes = 1;
-		}
+    if (rev.project != std::string("brlcad")) {
+	//std::cout << "Revision " << rev.revision_number << " is not part of brlcad, skipping\n";
+	get_rev_sha1s(rev.revision_number);
+	return;
+    }
 
-		if (node.text_content_length > 0) {
-		    //std::cout << "	Adding node object for " << node.local_path << "\n";
-		    write_blob(infile, outfile, node);
-		    git_changes = 1;
-		}
-		if (node.text_content_sha1.length()) {
-		    git_changes = 1;
-		}
-		if (node.text_copy_source_sha1.length()) {
-		    git_changes = 1;
-		}
-		if (node.exec_change) {
-		    git_changes = 1;
-		}
-		if (node.action == ndelete) {
-		    git_changes = 1;
-		}
-	    }
-
-	    if (git_changes) {
-		if (have_commit) {
-		    std::cout << "Error - more than one commit generated for revision " << rev.revision_number << "\n";
-		}
-
-		if (rev.move_edit) {
-		    move_only_commit(outfile, rev, rbranch);
-		}
-
-		standard_commit(outfile, rev, rbranch);
-
-		if (tag_after_commit) {
-		    // Note - in this situation, we need to both build a commit and do a tag.  Will probably
-		    // take some refactoring.  Merge information will also be a factor.
-		    std::cout << "Adding tag after final tag branch commit: " << ctag << " from " << cfrom << ", r" << rev.revision_number << "\n";
-		    outfile << "tag " << ctag << "\n";
-		    outfile << "from " << branch_head_id(cfrom, rev.revision_number) << "\n";
-		    outfile << "tagger " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
-		    outfile << "data " << rev.commit_msg.length() << "\n";
-		    outfile << rev.commit_msg << "\n";
-		}
-
-
-		// Check trunk after every commit - this will eventually expand to branch specific checks as well, but for now we
-		// need to get trunk building correctly
-		outfile.flush();
-		//if (rev.revision_number % 100 == 0) {
-		    verify_repos(rev.revision_number, std::string("trunk"), std::string("master"));
-		//}
-
-		get_rev_sha1s(rev.revision_number);
-
-	    } else {
-		if (!branch_delete && !have_commit) {
-		    std::cout << "Warning(r" << rev.revision_number << ") - skipping SVN commit, no git applicable changes found\n";
-		    std::cout << rev.commit_msg << "\n";
-		}
+    // If we have a text content sha1, update the map
+    // to the current path state
+    if (rev.nodes.size() > 0) {
+	for (size_t n = 0; n != rev.nodes.size(); n++) {
+	    struct svn_node &node = rev.nodes[n];
+	    if (node.text_content_sha1.length()) {
+		current_sha1[node.path] = node.text_content_sha1;
 	    }
 	}
     }
+
+
+    if (rev.revision_number == 30760) {
+	std::cout << "Skipping r30760 - premature tagging of rel-7-12-2.  Will be tagged by 30792\n";
+	get_rev_sha1s(rev.revision_number);
+	return;
+    }
+
+    if (rev.revision_number == 36472) {
+	std::cout << "Skipping r36472 - branch rename, handled by mapping the original name in the original commit (dmtogl-branch) to the desired branch name (dmtogl)\n";
+	get_rev_sha1s(rev.revision_number);
+	return;
+    }
+
+#if 0
+    std::cout << "Processing revision " << rev.revision_number << "\n";
+    if (rev.merged_from.length()) {
+	std::cout << "Note: merged from " << rev.merged_from << "\n";
+    }
+#endif
+    int git_changes = 0;
+    int have_commit = 0;
+    int tag_after_commit = 0;
+    int branch_delete = 0;
+    std::string ctag, cfrom;
+    std::string rbranch = rev.nodes[0].branch;
+
+    if (reject_tag(rev.nodes[0].tag)) {
+	std::cout << "Skipping " << rev.revision_number << " - edit to old tag:\n" << rev.commit_msg << "\n";
+	get_rev_sha1s(rev.revision_number);
+	return;
+    }
+
+    if (special_revs.find(rev.revision_number) != special_revs.end()) {
+	std::string bsrc, bdest;
+	brlcad_revs.insert(rev.revision_number);
+	std::cout << "Revision " << rev.revision_number << " requires special handling\n";
+	if (rev.revision_number == 36633 || rev.revision_number == 39465) {
+	    bdest = std::string("refs/heads/dmtogl");
+	    bsrc = branch_head_id(std::string("refs/heads/master"), rev.revision_number);
+	} else {
+	    bdest = std::string("refs/heads/STABLE");
+	}
+	if (rev.revision_number == 31039) {
+	    bsrc = tag_ids[std::string("rel-7-12-2")];
+	}
+	if (rev.revision_number == 32314 || rev.revision_number == 36843) {
+	    bsrc = tag_ids[std::string("rel-7-12-6")];
+	}
+
+	std::ofstream outfile(fi_file.c_str(), std::ios::out | std::ios::binary);
+	full_sync_commit(outfile, rev, bsrc, bdest);
+	outfile.close();
+
+	// TODO - verify_repos needs to morph into an "update cvs_git" step and a subsequent check step, writing out
+	// the current revisions fi stream and applying it rather than building up a multi-revision stream
+
+	verify_repos(rev.revision_number, std::string("trunk"), std::string("master"));
+
+	get_rev_sha1s(rev.revision_number);
+
+	return;
+    }
+
+    if (rebuild_revs.find(rev.revision_number) != rebuild_revs.end()) {
+	std::cout << "Revision " << rev.revision_number << " references non-current SVN info, needs special handling\n";
+	std::ofstream outfile(fi_file.c_str(), std::ios::out | std::ios::binary);
+	old_references_commit(infile, outfile, rev, rbranch);
+	outfile.close();
+
+	verify_repos(rev.revision_number, std::string("trunk"), std::string("master"));
+
+	get_rev_sha1s(rev.revision_number);
+
+	return;
+    }
+
+    std::ofstream outfile(fi_file.c_str(), std::ios::out | std::ios::binary);
+
+    for (size_t n = 0; n != rev.nodes.size(); n++) {
+	struct svn_node &node = rev.nodes[n];
+
+	if (node.tag_add || node.tag_edit) {
+	    std::cout << "Processing revision " << rev.revision_number << "\n";
+	    std::string ppath, bbpath, llpath, tpath;
+	    int is_tag;
+	    node_path_split(node.copyfrom_path, ppath, bbpath, tpath, llpath, &is_tag);
+
+	    int edited_tag_minr = -1;
+	    int edited_tag_maxr = -1;
+
+	    // For edited tags - first tag create branch, final tag is "real" tag,
+	    // else just branch commits
+	    if (edited_tags.find(node.tag) != edited_tags.end()) {
+		edited_tag_minr = edited_tag_first_rev[node.tag];
+		edited_tag_maxr = edited_tag_max_rev[node.tag];
+		std::cout << node.tag << ": " << edited_tag_minr << " " << edited_tag_maxr << "\n";
+		brlcad_revs.insert(rev.revision_number);
+
+		if (rev.revision_number < edited_tag_minr) {
+		    std::string nbranch = std::string("refs/heads/") + node.tag;
+		    std::cout << "Adding tag branch " << nbranch << " from " << bbpath << ", r" << rev.revision_number <<"\n";
+		    std::cout << rev.commit_msg << "\n";
+		    outfile << "reset " << nbranch << "\n";
+		    outfile << "from " << branch_head_id(bbpath, rev.revision_number) << "\n";
+		    branch_head_ids[nbranch] = branch_head_ids[bbpath];
+		    continue;
+		}
+		if (rev.revision_number == edited_tag_maxr) {
+		    tag_after_commit = 1;
+		    rbranch = node.branch;
+		    ctag = node.tag;
+		    cfrom = node.branch;
+		}
+		std::cout << "Non-final tag edit, processing normally: " << node.branch << ", r" << rev.revision_number<< "\n";
+		rbranch = node.branch;
+		//git_changes = 1;
+	    } else {
+		brlcad_revs.insert(rev.revision_number);
+		std::cout << "Adding tag " << node.tag << " from " << bbpath << ", r" << rev.revision_number << "\n";
+		have_commit = 1;
+		outfile << "tag " << node.tag << "\n";
+		outfile << "from " << branch_head_id(bbpath, rev.revision_number) << "\n";
+		outfile << "tagger " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
+		outfile << "data " << rev.commit_msg.length() << "\n";
+		outfile << rev.commit_msg << "\n";
+		tag_ids[node.tag] = branch_head_id(bbpath, rev.revision_number);
+		continue;
+	    }
+
+	}
+
+	if (node.tag_delete) {
+	    branch_delete = 1;
+	    std::cout << "processing revision " << rev.revision_number << "\n";
+	    std::cout << "TODO - delete tag: " << node.tag << "\n";
+	    continue;
+	}
+
+	if (node.branch_add) {
+	    brlcad_revs.insert(rev.revision_number);
+	    std::cout << "Processing revision " << rev.revision_number << "\n";
+	    std::string ppath, bbpath, llpath, tpath;
+	    int is_tag;
+	    node_path_split(node.copyfrom_path, ppath, bbpath, tpath, llpath, &is_tag);
+	    std::cout << "Adding branch " << node.branch << " from " << bbpath << ", r" << rev.revision_number <<"\n";
+	    std::cout << rev.commit_msg << "\n";
+	    outfile << "reset " << node.branch << "\n";
+	    // TODO - This isn't enough - r36053 branches from an older rev.  We need to build a revision number to
+	    // commit sha1 map...
+	    outfile << "from " << branch_head_id(bbpath, rev.revision_number) << "\n";
+	    branch_head_ids[node.branch] = branch_head_ids[bbpath];
+	    have_commit = 1;
+
+	    // TODO - make an empty commit on the new branch with the commit message from SVN, but no changes
+
+	    continue;
+	}
+
+	if (node.branch_delete) {
+	    //std::cout << "processing revision " << rev.revision_number << "\n";
+	    //std::cout << "Delete branch instruction: " << node.branch << " - deferring.\n";
+	    branch_delete = 1;
+	    continue;
+	}
+
+
+	if (node.kind == ndir && node.action == nadd && node.copyfrom_path.length()) {
+	    git_changes = 1;
+	}
+
+	if (node.text_content_length > 0) {
+	    //std::cout << "	Adding node object for " << node.local_path << "\n";
+	    write_blob(infile, outfile, node);
+	    git_changes = 1;
+	}
+	if (node.text_content_sha1.length()) {
+	    git_changes = 1;
+	}
+	if (node.text_copy_source_sha1.length()) {
+	    git_changes = 1;
+	}
+	if (node.exec_change) {
+	    git_changes = 1;
+	}
+	if (node.action == ndelete) {
+	    git_changes = 1;
+	}
+    }
+
+    if (git_changes) {
+	if (have_commit) {
+	    std::cout << "Error - more than one commit generated for revision " << rev.revision_number << "\n";
+	}
+
+	if (rev.move_edit) {
+	    move_only_commit(outfile, rev, rbranch);
+	}
+
+	standard_commit(outfile, rev, rbranch);
+
+	if (tag_after_commit) {
+	    // Note - in this situation, we need to both build a commit and do a tag.  Will probably
+	    // take some refactoring.  Merge information will also be a factor.
+	    std::cout << "Adding tag after final tag branch commit: " << ctag << " from " << cfrom << ", r" << rev.revision_number << "\n";
+	    outfile << "tag " << ctag << "\n";
+	    outfile << "from " << branch_head_id(cfrom, rev.revision_number) << "\n";
+	    outfile << "tagger " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
+	    outfile << "data " << rev.commit_msg.length() << "\n";
+	    outfile << rev.commit_msg << "\n";
+	}
+
+
+	outfile.close();
+	//if (rev.revision_number % 100 == 0) {
+	verify_repos(rev.revision_number, std::string("trunk"), std::string("master"));
+	//}
+
+	get_rev_sha1s(rev.revision_number);
+
+    } else {
+	outfile.close();
+	if (!branch_delete && !have_commit) {
+	    std::cout << "Warning(r" << rev.revision_number << ") - skipping SVN commit, no git applicable changes found\n";
+	    std::cout << rev.commit_msg << "\n";
+	}
+	remove(fi_file.c_str());
+    }
+
 }
 
 

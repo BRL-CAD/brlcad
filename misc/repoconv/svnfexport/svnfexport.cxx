@@ -21,6 +21,7 @@ load_author_map(const char *f)
 
 int main(int argc, const char **argv)
 {
+    int i = 0;
     if (argc < 3) {
 	std::cerr << "svnfexport dumpfile author_map\n";
 	return 1;
@@ -64,11 +65,9 @@ int main(int argc, const char **argv)
 
     std::ifstream infile(argv[1]);
 
-    std::ofstream outfile("brlcad-svn-export.fi", std::ios::out | std::ios::binary);
-    if (!outfile.good()) return -1;
-    //rev_fast_export(infile, outfile, 29887, 40000);
-    rev_fast_export(infile, outfile, starting_rev + 1, 40000);
-    outfile.close();
+    for (i = starting_rev+1; i < 40000; i++) {
+	rev_fast_export(infile, i);
+    }
 
     return 0;
 }

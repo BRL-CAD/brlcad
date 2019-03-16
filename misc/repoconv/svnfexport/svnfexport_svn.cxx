@@ -614,7 +614,9 @@ analyze_dump()
     // Second pass - assemble node sets for the paths and revisions we will need to know
     for (r_it = revs.begin(); r_it != revs.end(); r_it++) {
 	struct svn_revision &rev = r_it->second;
-	std::cout << "Pass 2: " << rev.revision_number << "\n";
+	if (rev.revision_number % 1000 == 0) {
+	    std::cout << "Pass 2: " << rev.revision_number << "\n";
+	}
 	for (size_t n = 0; n != rev.nodes.size(); n++) {
 	    struct svn_node &node = rev.nodes[n];
 	    for (ps_it = path_states.begin(); ps_it != path_states.end(); ps_it++) {
