@@ -21,6 +21,7 @@ load_author_map(const char *f)
 
 int main(int argc, const char **argv)
 {
+    struct stat buffer;
     int i = 0;
     if (argc < 3) {
 	std::cerr << "svnfexport dumpfile author_map\n";
@@ -28,10 +29,19 @@ int main(int argc, const char **argv)
     }
 
     starting_rev = 29886;
+    std::string srfile = std::to_string(starting_rev+1) + std::string(".fi");
+    while (!stat(srfile.c_str(), &buffer)) {
+	starting_rev = starting_rev+1;
+	srfile = std::to_string(starting_rev+1) + std::string(".fi");
+    }
+
+    std::cout << "Starting by verifying revision " << starting_rev << "\n";
+
     //starting_rev = 36000;
 
     // Make sure our starting point is sound
     verify_repos(starting_rev, std::string("trunk"), std::string("master"));
+    verify_repos(starting_rev, std::string("branches/STABLE"), std::string("STABLE"));
 
     /* Populate valid_projects */
     valid_projects.insert(std::string("brlcad"));

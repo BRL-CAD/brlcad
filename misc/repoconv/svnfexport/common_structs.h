@@ -111,7 +111,12 @@ std::map<std::pair<std::string,long int>, std::string> rev_to_gsha1;
 int verify_repos(long int rev, std::string branch_svn, std::string branch_git)
 {
     std::string cleanup_cmd = std::string("rm -rf brlcad_svn_checkout cvs_git_working brlcad_git_checkout");
-    std::string svn_cmd = std::string("svn co -q -r") + std::to_string(rev) + std::string(" file:///home/cyapp/brlcad_repo/repo_dercs/brlcad/") + branch_svn + std::string(" brlcad_svn_checkout");
+    std::string svn_cmd;
+    if (branch_svn == std::string("trunk")) {
+	svn_cmd = std::string("svn co -q -r") + std::to_string(rev) + std::string(" file:///home/cyapp/brlcad_repo/repo_dercs/brlcad/trunk brlcad_svn_checkout");
+    } else { 
+	svn_cmd = std::string("svn co -q file:///home/cyapp/brlcad_repo/repo_dercs/brlcad/") + branch_svn + std::string(" brlcad_svn_checkout && cd brlcad_svn_checkout && svn up -q -r") + std::to_string(rev) + std::string(" && cd ..");
+    }
     std::string svn_emptydir_rm = std::string("cd brlcad_svn_checkout && find . -type d -empty -print0 |xargs -0 rmdir && cd ..");
     std::string git_setup = std::string("rm -rf cvs_git_working && cp -r cvs_git cvs_git_working");
     std::string git_clone = std::string("git clone --single-branch --branch ") + branch_git + std::string(" ./cvs_git_working/.git brlcad_git_checkout");
