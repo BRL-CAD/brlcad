@@ -470,8 +470,11 @@ void standard_commit(std::ofstream &outfile, struct svn_revision &rev, std::stri
 
 void rev_fast_export(std::ifstream &infile, long int rev_num)
 {
+    struct stat buffer;
 
     std::string fi_file = std::to_string(rev_num) + std::string(".fi");
+
+    if (stat(fi_file.c_str(), &buffer) == 0) return;
 
     std::set<int> special_revs;
     std::string empty_sha1("da39a3ee5e6b4b0d3255bfef95601890afd80709");
@@ -718,9 +721,19 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 
 
 	outfile.close();
-	//if (rev.revision_number % 100 == 0) {
-	verify_repos(rev.revision_number, std::string("trunk"), std::string("master"));
-	//}
+	if (rev.revision_number % 100 == 0) {
+	    verify_repos(rev.revision_number, std::string("trunk"), std::string("master"));
+	} else {
+	    // Not verifying this one - just apply the fast import file and go
+	    std::string cleanup_cmd = std::string("rm -rf cvs_git_working");
+	    std::string swap_cmd = std::string("rm -rf cvs_git && cp -r cvs_git_working cvs_git");
+	    std::string git_setup = std::string("rm -rf cvs_git_working && cp -r cvs_git cvs_git_working");
+	    std::string git_fi = std::string("cd cvs_git_working && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
+	    std::system(git_setup.c_str());
+	    std::system(git_fi.c_str());
+	    std::system(swap_cmd.c_str());
+	    std::system(cleanup_cmd.c_str());
+	}
 
 	get_rev_sha1s(rev.revision_number);
 
