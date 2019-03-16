@@ -148,6 +148,9 @@ set(misc_ignore_files
   repoconv/svnfexport/svn_date.h
   repoconv/svnfexport/branchsync.cxx
   repoconv/svnfexport/cvssvnsync.cxx
+  repoconv/svnfexport/svnfexport_svn.cxx
+  repoconv/svnfexport/svnfexport_git.cxx
+  repoconv/svnfexport/common_structs.h
   repoconv/svnfexport/svnfexport.cxx
   uncpowerplant2g.sh
   win32-msvc/CMakeLists.txt
