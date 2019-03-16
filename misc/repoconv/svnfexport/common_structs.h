@@ -7,6 +7,7 @@
 #include <vector>
 #include <locale>
 #include <iomanip>
+#include <sys/stat.h>
 #include "sha1.hpp"
 #include "svn_date.h"
 

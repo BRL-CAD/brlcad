@@ -730,7 +730,10 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	    std::string git_setup = std::string("rm -rf cvs_git_working && cp -r cvs_git cvs_git_working");
 	    std::string git_fi = std::string("cd cvs_git_working && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
 	    std::system(git_setup.c_str());
-	    std::system(git_fi.c_str());
+	    if (std::system(git_fi.c_str())) {
+		std::cout << "Fatal - could not apply fi file for revision " << rev.revision_number << "\n";
+		exit(1);
+	    }
 	    std::system(swap_cmd.c_str());
 	    std::system(cleanup_cmd.c_str());
 	}
