@@ -71,7 +71,6 @@ struct svn_revision {
 std::map<std::string,std::pair<size_t, long int>> sha1_blobs;
 std::set<std::string> exec_paths;
 std::map<std::string,std::string> current_sha1;
-std::map<std::string,std::string> branch_head_ids;
 std::map<std::string,std::string> tag_ids;
 std::map<std::string,std::string> svn_sha1_to_git_sha1;
 
@@ -125,7 +124,11 @@ int verify_repos(long int rev, std::string branch_svn, std::string branch_git)
     if (rev > starting_rev) {
 	std::string fi_file = std::to_string(rev) + std::string(".fi");
 	std::string git_fi = std::string("cd cvs_git_working && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
-	std::system(git_fi.c_str());
+	if (std::system(git_fi.c_str())) {
+	    std::cout << "Fatal - could not apply fi file for revision " << rev << "\n";
+	    remove(fi_file.c_str());
+	    exit(1);
+	}
     }
     std::system(git_clone.c_str());
     int diff_ret = std::system(repo_diff.c_str());

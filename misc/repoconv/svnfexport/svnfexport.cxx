@@ -45,8 +45,11 @@ int main(int argc, const char **argv)
     /* Read in pre-existing branch sha1 heads from git */
     load_author_map(argv[2]);
 
-    /* Read in pre-existing branch sha1 heads from git */
-    load_branch_head_sha1s();
+    /* If we're starting from scratch, read in pre-existing, pre-svn branch sha1 heads from git. */
+    if (starting_rev == 29886) {
+	load_branch_head_sha1s();
+	remove("rev_gsha1s.txt");
+    }
 
     /* Read in previously defined rev -> sha1 map, if any */
     read_cached_rev_sha1s();
