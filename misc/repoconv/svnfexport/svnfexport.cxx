@@ -29,11 +29,15 @@ int main(int argc, const char **argv)
     }
 
     starting_rev = 29886;
-    std::string srfile = std::to_string(starting_rev+1) + std::string(".fi");
-    while (!stat(srfile.c_str(), &buffer)) {
-	starting_rev = starting_rev+1;
-	srfile = std::to_string(starting_rev+1) + std::string(".fi");
+    int processed_rev = starting_rev;
+    int max_rev = 74000;
+    for (i = starting_rev+1; i < max_rev; i++) {
+	std::string srfile = std::to_string(i) + std::string(".fi");
+	if (!stat(srfile.c_str(), &buffer)) {
+	    processed_rev = i;
+	}
     }
+    starting_rev = processed_rev;
 
     std::cout << "Starting by verifying revision " << starting_rev << "\n";
 
@@ -41,7 +45,7 @@ int main(int argc, const char **argv)
 
     // Make sure our starting point is sound
     verify_repos(starting_rev, std::string("trunk"), std::string("master"));
-    verify_repos(starting_rev, std::string("branches/STABLE"), std::string("STABLE"));
+    //verify_repos(starting_rev, std::string("branches/STABLE"), std::string("STABLE"));
 
     /* Populate valid_projects */
     valid_projects.insert(std::string("brlcad"));
