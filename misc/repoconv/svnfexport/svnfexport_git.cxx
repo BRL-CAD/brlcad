@@ -480,7 +480,6 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 
     if (rev.project != std::string("brlcad")) {
 	//std::cout << "Revision " << rev.revision_number << " is not part of brlcad, skipping\n";
-	get_rev_sha1s(rev.revision_number);
 	return;
     }
 
@@ -498,13 +497,11 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 
     if (rev.revision_number == 30760) {
 	std::cout << "Skipping r30760 - premature tagging of rel-7-12-2.  Will be tagged by 30792\n";
-	get_rev_sha1s(rev.revision_number);
 	return;
     }
 
     if (rev.revision_number == 36472) {
 	std::cout << "Skipping r36472 - branch rename, handled by mapping the original name in the original commit (dmtogl-branch) to the desired branch name (dmtogl)\n";
-	get_rev_sha1s(rev.revision_number);
 	return;
     }
 
@@ -523,7 +520,6 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 
     if (reject_tag(rev.nodes[0].tag)) {
 	std::cout << "Skipping " << rev.revision_number << " - edit to old tag:\n" << rev.commit_msg << "\n";
-	get_rev_sha1s(rev.revision_number);
 	return;
     }
 
@@ -553,8 +549,6 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 
 	verify_repos(rev.revision_number, std::string("trunk"), std::string("master"));
 
-	get_rev_sha1s(rev.revision_number);
-
 	return;
     }
 
@@ -565,8 +559,6 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	outfile.close();
 
 	verify_repos(rev.revision_number, std::string("trunk"), std::string("master"));
-
-	get_rev_sha1s(rev.revision_number);
 
 	return;
     }
@@ -724,8 +716,6 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	    std::system(swap_cmd.c_str());
 	    std::system(cleanup_cmd.c_str());
 	}
-
-	get_rev_sha1s(rev.revision_number);
 
     } else {
 	outfile.close();

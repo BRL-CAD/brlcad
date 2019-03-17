@@ -80,6 +80,7 @@ int main(int argc, const char **argv)
 
     for (i = starting_rev+1; i < 40000; i++) {
 	rev_fast_export(infile, i);
+	get_rev_sha1s(i);
     }
 
     return 0;
