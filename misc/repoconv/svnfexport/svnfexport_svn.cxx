@@ -556,6 +556,12 @@ update_node(std::set<struct svn_node *> *nstate, struct svn_node *nnode)
  *  the groupings are implicit in paths.
  *
  */
+
+// TODO - we're going to have to special case r29982 - we need the current
+// state of that branch at that revision to update the executable properties
+// of .sh scripts, and the current hack of pulling the master state won't
+// work because trunk's copies at that revision don't match STABLE.
+
 void
 analyze_dump()
 {
