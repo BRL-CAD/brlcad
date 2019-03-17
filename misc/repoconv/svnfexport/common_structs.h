@@ -130,8 +130,9 @@ int verify_repos(long int rev, std::string branch_svn, std::string branch_git)
 	std::string fi_file = std::to_string(rev) + std::string(".fi");
 	std::string git_fi = std::string("cd cvs_git_working && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
 	if (std::system(git_fi.c_str())) {
+	    std::string failed_file = std::string("failed-") + fi_file;
 	    std::cout << "Fatal - could not apply fi file for revision " << rev << "\n";
-	    remove(fi_file.c_str());
+	    rename(fi_file.c_str(), failed_file.c_str());
 	    exit(1);
 	}
     }

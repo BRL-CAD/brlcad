@@ -125,12 +125,12 @@ write_blob(std::ifstream &infile, std::ofstream &outfile, struct svn_node &node)
 
 void full_sync_commit(std::ofstream &outfile, struct svn_revision &rev, std::string &bsrc, std::string &bdest)
 {
-    outfile << "commit " << bdest << "\n";
+    outfile << "commit refs/heads/" << bdest << "\n";
     outfile << "mark :" << rev.revision_number << "\n";
     outfile << "committer " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
     outfile << "data " << rev.commit_msg.length() << "\n";
     outfile << rev.commit_msg << "\n";
-    outfile << "from " <<  rev_to_gsha1[std::pair<std::string,long int>(bsrc, rev.revision_number)] << "\n";
+    outfile << "from " <<  rev_to_gsha1[std::pair<std::string,long int>(bsrc, rev.revision_number-1)] << "\n";
     outfile << "deleteall\n";
     // TODO - merge info
 
@@ -176,12 +176,12 @@ void move_only_commit(std::ofstream &outfile, struct svn_revision &rev, std::str
 
     std::string mvmark = std::string("1111") + std::to_string(rev.revision_number);
 
-    outfile << "commit " << rbranch << "\n";
+    outfile << "commit refs/heads/" << rbranch << "\n";
     outfile << "mark :" << mvmark << "\n";
     outfile << "committer " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
     outfile << "data " << ncmsg.length() << "\n";
     outfile << ncmsg << "\n";
-    outfile << "from " << rev_to_gsha1[std::pair<std::string,long int>(rbranch, rev.revision_number)] << "\n";
+    outfile << "from " << rev_to_gsha1[std::pair<std::string,long int>(rbranch, rev.revision_number-1)] << "\n";
 
     if (rev.merged_from.length()) {
 	if (brlcad_revs.find(rev.merged_rev) != brlcad_revs.end()) {
@@ -350,12 +350,12 @@ void old_references_commit(std::ifstream &infile, std::ofstream &outfile, struct
 	}
     }
 
-    outfile << "commit " << rbranch << "\n";
+    outfile << "commit refs/heads/" << rbranch << "\n";
     outfile << "mark :" << rev.revision_number << "\n";
     outfile << "committer " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
     outfile << "data " << rev.commit_msg.length() << "\n";
     outfile << rev.commit_msg << "\n";
-    outfile << "from " << rev_to_gsha1[std::pair<std::string,long int>(rbranch, rev.revision_number)] << "\n";
+    outfile << "from " << rev_to_gsha1[std::pair<std::string,long int>(rbranch, rev.revision_number-1)] << "\n";
 
     if (rev.merged_from.length()) {
 	if (brlcad_revs.find(rev.merged_rev) != brlcad_revs.end()) {
@@ -383,6 +383,13 @@ void old_references_commit(std::ifstream &infile, std::ofstream &outfile, struct
     }
 }
 
+std::string rgsha1(std::string &rbranch, long int rev)
+{
+    std::pair<std::string,long int> key = std::pair<std::string,long int>(rbranch, rev);
+    std::string gsha1 = rev_to_gsha1[key];
+    return gsha1;
+}
+
 void standard_commit(std::ofstream &outfile, struct svn_revision &rev, std::string &rbranch)
 {
     if (author_map.find(rev.author) == author_map.end()) {
@@ -392,12 +399,12 @@ void standard_commit(std::ofstream &outfile, struct svn_revision &rev, std::stri
 
     brlcad_revs.insert(rev.revision_number);
 
-    outfile << "commit " << rbranch << "\n";
+    outfile << "commit refs/heads/" << rbranch << "\n";
     outfile << "mark :" << rev.revision_number << "\n";
     outfile << "committer " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
     outfile << "data " << rev.commit_msg.length() << "\n";
     outfile << rev.commit_msg << "\n";
-    outfile << "from " << rev_to_gsha1[std::pair<std::string,long int>(rbranch, rev.revision_number)] << "\n";
+    outfile << "from " << rgsha1(rbranch, rev.revision_number - 1) << "\n";
 
     if (rev.merged_from.length()) {
 	if (brlcad_revs.find(rev.merged_rev) != brlcad_revs.end()) {
@@ -526,7 +533,7 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	std::cout << "Revision " << rev.revision_number << " requires special handling\n";
 	if (rev.revision_number == 36633 || rev.revision_number == 39465) {
 	    bdest = std::string("refs/heads/dmtogl");
-	    bsrc = rev_to_gsha1[std::pair<std::string,long int>(std::string("master"), rev.revision_number)];
+	    bsrc = rev_to_gsha1[std::pair<std::string,long int>(std::string("master"), rev.revision_number-1)];
 	} else {
 	    bdest = std::string("refs/heads/STABLE");
 	}
@@ -591,7 +598,7 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 		    std::cout << "Adding tag branch " << nbranch << " from " << bbpath << ", r" << rev.revision_number <<"\n";
 		    std::cout << rev.commit_msg << "\n";
 		    outfile << "reset " << nbranch << "\n";
-		    outfile << "from " << rev_to_gsha1[std::pair<std::string,long int>(bbpath, rev.revision_number)] << "\n";
+		    outfile << "from " << rev_to_gsha1[std::pair<std::string,long int>(bbpath, rev.revision_number-1)] << "\n";
 		    continue;
 		}
 		if (rev.revision_number == edited_tag_maxr) {
@@ -608,11 +615,11 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 		std::cout << "Adding tag " << node.tag << " from " << bbpath << ", r" << rev.revision_number << "\n";
 		have_commit = 1;
 		outfile << "tag " << node.tag << "\n";
-		outfile << "from " << rev_to_gsha1[std::pair<std::string,long int>(bbpath, rev.revision_number)] << "\n";
+		outfile << "from " << rev_to_gsha1[std::pair<std::string,long int>(bbpath, rev.revision_number-1)] << "\n";
 		outfile << "tagger " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
 		outfile << "data " << rev.commit_msg.length() << "\n";
 		outfile << rev.commit_msg << "\n";
-		tag_ids[node.tag] = rev_to_gsha1[std::pair<std::string,long int>(bbpath, rev.revision_number)];
+		tag_ids[node.tag] = rev_to_gsha1[std::pair<std::string,long int>(bbpath, rev.revision_number-1)];
 		continue;
 	    }
 
@@ -636,7 +643,7 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	    outfile << "reset " << node.branch << "\n";
 	    // TODO - This isn't enough - r36053 branches from an older rev.  We need to build a revision number to
 	    // commit sha1 map...
-	    outfile << "from " << rev_to_gsha1[std::pair<std::string,long int>(bbpath, rev.revision_number)] << "\n";
+	    outfile << "from " << rev_to_gsha1[std::pair<std::string,long int>(bbpath, rev.revision_number-1)] << "\n";
 	    have_commit = 1;
 
 	    // TODO - make an empty commit on the new branch with the commit message from SVN, but no changes
@@ -691,7 +698,7 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	    // take some refactoring.  Merge information will also be a factor.
 	    std::cout << "Adding tag after final tag branch commit: " << ctag << " from " << cfrom << ", r" << rev.revision_number << "\n";
 	    outfile << "tag " << ctag << "\n";
-	    outfile << "from " << rev_to_gsha1[std::pair<std::string,long int>(cfrom, rev.revision_number)] << "\n";
+	    outfile << "from " << rev_to_gsha1[std::pair<std::string,long int>(cfrom, rev.revision_number-1)] << "\n";
 	    outfile << "tagger " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
 	    outfile << "data " << rev.commit_msg.length() << "\n";
 	    outfile << rev.commit_msg << "\n";
@@ -709,8 +716,9 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	    std::string git_fi = std::string("cd cvs_git_working && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
 	    std::system(git_setup.c_str());
 	    if (std::system(git_fi.c_str())) {
+		std::string failed_file = std::string("failed-") + fi_file;
 		std::cout << "Fatal - could not apply fi file for revision " << rev.revision_number << "\n";
-		remove(fi_file.c_str());
+		rename(fi_file.c_str(), failed_file.c_str());
 		exit(1);
 	    }
 	    std::system(swap_cmd.c_str());
@@ -740,10 +748,12 @@ load_branch_head_sha1s()
     if (!hfile.good()) exit(-1);
     std::string line;
     while (std::getline(hfile, line)) {
+	std::string prefix = std::string("refs/heads/");
 	size_t spos = line.find_first_of(" ");
 	std::string hsha1 = line.substr(0, spos);
 	std::string hbranch = line.substr(spos+1, std::string::npos);
-	rev_to_gsha1[std::pair<std::string,long int>(hbranch, 29866)] = hsha1;
+	std::string branch = hbranch.replace(0, prefix.length(), "");
+	rev_to_gsha1[std::pair<std::string,long int>(branch, 29886)] = hsha1;
     }
     hfile.close();
     remove("brlcad_cvs_git_heads_sha1.txt");

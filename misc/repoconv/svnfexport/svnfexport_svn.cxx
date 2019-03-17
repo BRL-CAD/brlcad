@@ -454,7 +454,7 @@ node_path_split(std::string &node_path, std::string &project, std::string &branc
 	} else {
 	    wpath = std::string();
 	}
-	branch = std::string("refs/heads/master");
+	branch = std::string("master");
     }
 
     // Is it a branch?
@@ -473,7 +473,7 @@ node_path_split(std::string &node_path, std::string &project, std::string &branc
 	    bs = wpath;
 	    wpath = std::string();
 	}
-	branch = std::string("refs/heads/") + bs;
+	branch = bs;
     }
 
     // Is it a tag?
@@ -651,8 +651,8 @@ analyze_dump()
 
 	    if (node.branch.length()) {
 		// Map dmtogl-branch names to dmtogl
-		if (node.branch == std::string("refs/heads/dmtogl-branch")) {
-		    node.branch = std::string("refs/heads/dmtogl");
+		if (node.branch == std::string("dmtogl-branch")) {
+		    node.branch = std::string("dmtogl");
 		    std::cout << "Mapping dmtogl-branch rev " << rev.revision_number << " to dmtogl\n";
 		}
 		if (node.tag_path) {
@@ -684,7 +684,7 @@ analyze_dump()
 		    edited_tags.insert(node.tag);
 		    std::cout << "Edited tag(" << rev.revision_number << "): " << node.tag << "\n";
 		    edited_tag_max_rev[node.tag] = rev.revision_number;
-		    node.branch = std::string("refs/heads/") + node.tag;
+		    node.branch = node.tag;
 		}
 	    }
 	    // Branch add
