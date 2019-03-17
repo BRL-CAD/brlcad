@@ -532,9 +532,36 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 {
     struct stat buffer;
 
-    std::string fi_file = std::to_string(rev_num) + std::string(".fi");
+    std::string fi_file = std::string("custom/") + std::to_string(rev_num) + std::string(".fi");
 
-    if (stat(fi_file.c_str(), &buffer) == 0) return;
+
+    if (rev_num == 29882) {
+	std::cout << "at 29882\n";
+    }
+
+    if (stat(fi_file.c_str(), &buffer) == 0) {
+	// If we have a hand-crafted import file for this revision, use it
+	std::string cleanup_cmd = std::string("rm -rf cvs_git_working");
+	std::string swap_cmd = std::string("rm -rf cvs_git && cp -r cvs_git_working cvs_git");
+	std::string git_setup = std::string("rm -rf cvs_git_working && cp -r cvs_git cvs_git_working");
+	std::string git_fi = std::string("cd cvs_git_working && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
+	std::system(git_setup.c_str());
+	if (std::system(git_fi.c_str())) {
+	    std::string failed_file = std::string("failed-") + fi_file;
+	    std::cout << "Fatal - could not apply fi file for revision " << rev_num << "\n";
+	    rename(fi_file.c_str(), failed_file.c_str());
+	    exit(1);
+	}
+	std::system(swap_cmd.c_str());
+	std::system(cleanup_cmd.c_str());
+
+	verify_repos(rev_num, std::string("trunk"), std::string("master"));
+	verify_repos(rev_num, std::string("branches/STABLE"), std::string("STABLE"));
+
+	return;
+    }
+
+    fi_file = std::to_string(rev_num) + std::string(".fi");
 
     std::set<int> special_revs;
     std::string empty_sha1("da39a3ee5e6b4b0d3255bfef95601890afd80709");

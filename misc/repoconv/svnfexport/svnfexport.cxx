@@ -45,7 +45,7 @@ int main(int argc, const char **argv)
 
     // Make sure our starting point is sound
     verify_repos(starting_rev, std::string("trunk"), std::string("master"));
-    //verify_repos(starting_rev, std::string("branches/STABLE"), std::string("STABLE"));
+    verify_repos(starting_rev, std::string("branches/STABLE"), std::string("STABLE"));
 
     /* Populate valid_projects */
     valid_projects.insert(std::string("brlcad"));
