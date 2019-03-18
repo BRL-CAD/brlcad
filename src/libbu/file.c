@@ -42,6 +42,7 @@
 #include "bu/file.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
+#include "bu/parallel.h"
 #include "bu/str.h"
 
 #ifndef R_OK
@@ -92,6 +93,55 @@ bu_file_exists(const char *path, int *fd)
     /* FAIL */
     return 0;
 }
+
+int
+bu_file_size(const char *path)
+{
+    int fbytes = 0;
+    if (!bu_file_exists(path, NULL)) {
+	return -1;
+    }
+
+#ifdef HAVE_SYS_STAT_H
+    {
+	struct stat sbuf;
+	int ret = 0;
+	int fd = open(path, O_RDONLY | O_BINARY);
+	if (UNLIKELY(fd < 0)) {
+	    return -1;
+	}
+	bu_semaphore_acquire(BU_SEM_SYSCALL);
+	ret = fstat(fd, &sbuf);
+	bu_semaphore_release(BU_SEM_SYSCALL);
+	if (UNLIKELY(ret < 0)) {
+	    return -1;
+	}
+	fbytes = sbuf.st_size;
+    }
+#else
+    {
+	char buf[32768] = {0};
+	FILE *fp = fopen(path, "rb");
+	if (UNLIKELY(fp == NULL)) {
+	    return NULL;
+	}
+	int got;
+	fbytes = 0;
+
+	bu_semaphore_acquire(BU_SEM_SYSCALL);
+	while ((got = fread(buf, 1, sizeof(buf), fp)) > 0) {
+	    fbytes += got;
+	}
+	fclose(fp);
+	bu_semaphore_release(BU_SEM_SYSCALL);
+	if (UNLIKELY(fbytes == 0)) {
+	    return NULL;
+	}
+    }
+#endif
+    return fbytes;
+}
+
 
 
 #ifdef HAVE_GETFULLPATHNAME

@@ -53,7 +53,7 @@
 #include "rt/func.h"
 
 
-#define CACHE_FORMAT 2
+#define CACHE_FORMAT 3
 
 static const char * const cache_mime_type = "brlcad/cache";
 
@@ -67,7 +67,7 @@ struct rt_cache {
     int read_only;
     int (*log)(const char *format, ...);
     int (*debug)(const char *format, ...);
-    struct bu_hash_tbl *dbip_hash;
+    struct bu_hash_tbl *external_hash;
 };
 #define CACHE_INIT {{0}, 0, bu_log, bu_log, NULL}
 
@@ -322,7 +322,7 @@ cache_init(struct rt_cache *cache)
     }
 
     /* initialize database instance pointer storage */
-    cache->dbip_hash = bu_hash_create(1024);
+    cache->external_hash = bu_hash_create(1024);
 
     return 1;
 }
@@ -391,51 +391,53 @@ uncompress_external(const struct rt_cache *cache, const struct bu_external *exte
 }
 
 
-HIDDEN struct db_i *
-cache_read_dbip(const struct rt_cache *cache, const char *name)
+HIDDEN struct bu_external *
+cache_read_external(const struct rt_cache *cache, const char *name)
 {
-    struct db_i *dbip = NULL;
+    FILE *fext = NULL;
+    unsigned int fbytes = 0;
+    struct bu_external *external = NULL;
     char path[MAXPATHLEN] = {0};
 
     if (!cache || !name)
 	return NULL;
 
-    dbip = (struct db_i *)bu_hash_get(cache->dbip_hash, (const uint8_t *)name, strlen(name));
-    if (dbip)
-	return dbip;
+    external = (struct bu_external *)bu_hash_get(cache->external_hash, (const uint8_t *)name, strlen(name));
+    if (external)
+	return external;
 
     cache_get_objfile(cache, name, path, MAXPATHLEN);
-    if (!bu_file_exists(path, NULL))
-	return NULL;
-
-    dbip = db_open(path, DB_OPEN_READONLY);
-    if (!dbip) {
+    if (!bu_file_exists(path, NULL)) {
 	return NULL;
     }
 
-    if (db_dirbuild(dbip)) {
-	/* failed to build directory */
-	db_close(dbip);
+    fbytes = bu_file_size(path);
+    BU_GET(external, struct bu_external);
+    BU_EXTERNAL_INIT(external);
+    external->ext_buf = (uint8_t *)bu_malloc(fbytes, "extern from file");
+    fext = fopen(path, "rb");
+    if (!fext || fread(external->ext_buf, 1, fbytes, fext) != fbytes) {
+	bu_free(external, "free external");
 	return NULL;
     }
-
-    bu_hash_set(cache->dbip_hash, (const uint8_t *)name, strlen(name), dbip);
-    return dbip;
+    external->ext_nbytes = fbytes;
+    bu_hash_set(cache->external_hash, (const uint8_t *)name, strlen(name), external);
+    return external;
 }
 
 
-HIDDEN struct db_i *
-cache_create_dbip(const struct rt_cache *cache, const char *name)
+HIDDEN int
+cache_create_dir(const struct rt_cache *cache, const char *name)
 {
-    struct db_i *dbip = NULL;
+    struct bu_external *e = NULL;
     char path[MAXPATHLEN] = {0};
 
     if (!cache || !name)
-	return NULL;
+	return 0;
 
-    dbip = (struct db_i *)bu_hash_get(cache->dbip_hash, (const uint8_t *)name, strlen(name));
-    if (dbip)
-	return dbip;
+    e = (struct bu_external *)bu_hash_get(cache->external_hash, (const uint8_t *)name, strlen(name));
+    if (e)
+	return 1;
 
     cache_get_objfile(cache, name, path, MAXPATHLEN);
 
@@ -446,14 +448,10 @@ cache_create_dbip(const struct rt_cache *cache, const char *name)
 
     if (!cache_ensure_path(path, 1)) {
 	cache_warn(cache, path, "Cache object failure.  Continuing.");
-	return NULL;
+	return 0;
     }
 
-    dbip = db_create(path, 5);
-    if (!dbip)
-	return NULL;
-
-    return dbip;
+    return 1;
 }
 
 
@@ -462,31 +460,19 @@ cache_try_load(const struct rt_cache *cache, const char *name, const struct rt_d
 {
     struct bu_external data_external = BU_EXTERNAL_INIT_ZERO;
     size_t version = (size_t)-1;
-    struct bu_external raw_external;
     struct db5_raw_internal raw_internal;
-    struct directory *dp;
-    struct db_i *dbip;
+    struct bu_external *external;
 
     RT_CK_DB_INTERNAL(internal);
     RT_CK_SOLTAB(stp);
 
     CACHE_DEBUG("++++ Trying to LOAD %s\n", name);
 
-    dbip = cache_read_dbip(cache, name);
-    if (!dbip)
-	return 0; /* no storage */
-
-    dp = db_lookup(dbip, name, 0);
-    if (!dp)
-	return 0; /* not in cache */
-
-    if (dp->d_major_type != DB5_MAJORTYPE_BINARY_MIME || dp->d_minor_type != 0)
-	bu_bomb("invalid object type");
-
-    if (db_get_external(&raw_external, dp, dbip))
+    external = cache_read_external(cache, name);
+    if (!external)
 	return 0;
 
-    if (db5_get_raw_internal_ptr(&raw_internal, raw_external.ext_buf) == NULL)
+    if (db5_get_raw_internal_ptr(&raw_internal, external->ext_buf) == NULL)
 	return 0;
 
     {
@@ -514,7 +500,6 @@ cache_try_load(const struct rt_cache *cache, const char *name, const struct rt_d
     }
 
     uncompress_external(cache, &raw_internal.body, &data_external);
-    bu_free_external(&raw_external);
 
     if (rt_obj_prep_serialize(stp, internal, &data_external, &version)) {
 	/* failed to deserialize */
@@ -530,12 +515,11 @@ cache_try_load(const struct rt_cache *cache, const char *name, const struct rt_d
 HIDDEN int
 cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_internal *internal, struct soltab *stp)
 {
+    FILE *focache = NULL;
     struct bu_external attributes_external;
     struct bu_external data_external = BU_EXTERNAL_INIT_ZERO;
+    struct bu_external db_external;
     size_t version = (size_t)-1;
-    struct directory *dp;
-    struct db_i *dbip;
-    char type = 0;
     char path[MAXPATHLEN] = {0};
     char tmpname[MAXPATHLEN] = {0};
     char tmppath[MAXPATHLEN] = {0};
@@ -588,35 +572,22 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
     cache_get_objfile(cache, tmpname, tmppath, MAXPATHLEN);
     bu_file_delete(tmppath); /* okay if it doesn't exist */
 
-    dbip = cache_create_dbip(cache, tmpname);
-    if (!dbip) {
-	bu_file_delete(tmppath);
+    if (!cache_create_dir(cache, tmpname)) {
 	return 0; /* no storage */
     }
 
-    dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_NON_GEOM, (void *)&type);
-    if (!dp) {
+    db5_export_object3(&db_external, 0, name, 0, &attributes_external,
+	    &data_external, DB5_MAJORTYPE_BINARY_MIME, 0,
+	    DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED);
+
+    focache = fopen(tmppath, "wb");
+    if (!focache || fwrite((void *)db_external.ext_buf, 1, db_external.ext_nbytes, focache) != db_external.ext_nbytes) {
 	bu_file_delete(tmppath);
-	return 0; /* bad db */
+	return 0; /* can't stash */
     }
-    RT_CK_DIR(dp);
+    fclose(focache);
 
-    dp->d_major_type = DB5_MAJORTYPE_BINARY_MIME;
-    dp->d_minor_type = 0;
-
-    {
-	struct bu_external db_external;
-	db5_export_object3(&db_external, 0, dp->d_namep, 0, &attributes_external,
-			   &data_external, dp->d_major_type, dp->d_minor_type,
-			   DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED);
-
-	if (db_put_external(&db_external, dp, dbip)) {
-	    bu_file_delete(tmppath);
-	    return 0; /* can't stash */
-	}
-    }
-    db_sync(dbip);
-
+    bu_free_external(&db_external);
     bu_free_external(&attributes_external);
     bu_free_external(&data_external);
 
@@ -624,7 +595,7 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
 
     /* anyone beat us to creating the cache? */
     if (bu_file_exists(path, NULL)) {
-	if (cache_read_dbip(cache, name) != NULL) {
+	if (cache_read_external(cache, name) != NULL) {
 	    bu_file_delete(tmppath);
 	    return 1;
 	}
@@ -638,7 +609,7 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
 	return 0; /* someone probably beat us to it */
     }
 
-    if (cache_read_dbip(cache, name) != NULL) {
+    if (cache_read_external(cache, name) != NULL) {
 	return 1;
     }
     return 0;
@@ -680,14 +651,16 @@ rt_cache_close(struct rt_cache *cache)
 
     CACHE_DEBUG("++ Closing cache at %s\n", cache->dir);
 
-    entry = bu_hash_next(cache->dbip_hash, NULL);
+    entry = bu_hash_next(cache->external_hash, NULL);
     while (entry) {
-	struct db_i *dbip = (struct db_i *)bu_hash_value(entry, NULL);
-	db_close(dbip);
-	dbip->dbi_magic = 0; /* zap it */
-	entry = bu_hash_next(cache->dbip_hash, entry);
+	struct bu_external *external = (struct bu_external *)bu_hash_value(entry, NULL);
+	if (external->ext_buf) {
+	    bu_free(external->ext_buf, "free buf");
+	}
+	BU_PUT(external, struct bu_external);
+	entry = bu_hash_next(cache->external_hash, entry);
     }
-    bu_hash_destroy(cache->dbip_hash);
+    bu_hash_destroy(cache->external_hash);
 
     cache->debug = NULL;
     cache->log = NULL;
@@ -747,7 +720,7 @@ rt_cache_open(void)
 	    cache_init(cache);
 	    format = cache_format(cache);
 	}
-    } else if (format == 1) {
+    } else if (format == 1 || format == 2) {
 	struct bu_vls path = BU_VLS_INIT_ZERO;
 	char **matches = NULL;
 	size_t count;

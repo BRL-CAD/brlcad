@@ -60,6 +60,15 @@ __BEGIN_DECLS
 BU_EXPORT extern int bu_file_exists(const char *path, int *fd);
 
 /**
+ * Returns the size of the given file, or -1 if the size cannot
+ * be determined.
+ *
+ * @return >0 The given filename exists.
+ * @return 0 The given filename does not exist or there was an error.
+ */
+BU_EXPORT extern int bu_file_size(const char *path);
+
+/**
  * Returns truthfully as to whether the two provided filenames are the
  * same file.  If either file does not exist, the result is false.  If
  * either filename is empty or NULL, it is treated as non-existent
