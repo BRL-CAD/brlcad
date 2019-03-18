@@ -395,7 +395,7 @@ HIDDEN struct bu_external *
 cache_read_external(const struct rt_cache *cache, const char *name)
 {
     FILE *fext = NULL;
-    unsigned int fbytes = 0;
+    long int fbytes = 0;
     struct bu_external *external = NULL;
     char path[MAXPATHLEN] = {0};
 
@@ -412,15 +412,18 @@ cache_read_external(const struct rt_cache *cache, const char *name)
     }
 
     fbytes = bu_file_size(path);
+    if (fbytes <= 0) {
+	return NULL;
+    }
     BU_GET(external, struct bu_external);
     BU_EXTERNAL_INIT(external);
-    external->ext_buf = (uint8_t *)bu_malloc(fbytes, "extern from file");
+    external->ext_nbytes = (size_t)fbytes;
+    external->ext_buf = (uint8_t *)bu_malloc(external->ext_nbytes, "extern from file");
     fext = fopen(path, "rb");
-    if (!fext || fread(external->ext_buf, 1, fbytes, fext) != fbytes) {
+    if (!fext || fread(external->ext_buf, 1, external->ext_nbytes, fext) != external->ext_nbytes) {
 	bu_free(external, "free external");
 	return NULL;
     }
-    external->ext_nbytes = fbytes;
     bu_hash_set(cache->external_hash, (const uint8_t *)name, strlen(name), external);
     return external;
 }
