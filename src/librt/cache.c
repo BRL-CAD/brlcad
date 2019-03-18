@@ -351,7 +351,7 @@ compress_external(const struct rt_cache *cache, struct bu_external *external)
 	compressed = 1;
 
     if (!compressed) {
-	CACHE_LOG("compression failed (ret %d, %zu bytes @ %p to %d bytes max)\n", ret, external->ext_nbytes, (void *) external->ext_buf, compressed_size);
+	CACHE_DEBUG("++++++ Compression failed (ret %d, %zu bytes @ %p to %d bytes max)\n", ret, external->ext_nbytes, (void *) external->ext_buf, compressed_size);
 	return;
     }
 
@@ -383,7 +383,7 @@ uncompress_external(const struct rt_cache *cache, const struct bu_external *exte
 	uncompressed = 1;
 
     if (!uncompressed) {
-	CACHE_LOG("decompression failed (ret %d, %zu bytes @ %p to %zu bytes max)\n", ret, external->ext_nbytes, (void *) external->ext_buf, dest->ext_nbytes);
+	CACHE_DEBUG("++++++ decompression failed (ret %d, %zu bytes @ %p to %zu bytes max)\n", ret, external->ext_nbytes, (void *) external->ext_buf, dest->ext_nbytes);
 	return;
     }
 
@@ -470,6 +470,8 @@ cache_try_load(const struct rt_cache *cache, const char *name, const struct rt_d
     RT_CK_DB_INTERNAL(internal);
     RT_CK_SOLTAB(stp);
 
+    CACHE_DEBUG("++++ Trying to LOAD %s\n", name);
+
     dbip = cache_read_dbip(cache, name);
     if (!dbip)
 	return 0; /* no storage */
@@ -541,6 +543,8 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
 
     RT_CK_DB_INTERNAL(internal);
     RT_CK_SOLTAB(stp);
+
+    CACHE_DEBUG("++++ Trying to STORE %s\n", name);
 
     if (rt_obj_prep_serialize(stp, internal, &data_external, &version) || version == (size_t)-1)
 	return 0; /* can't serialize */
@@ -674,7 +678,7 @@ rt_cache_close(struct rt_cache *cache)
     if (!cache)
 	return;
 
-    CACHE_DEBUG("+++ Closing cache at %s\n", cache->dir);
+    CACHE_DEBUG("++ Closing cache at %s\n", cache->dir);
 
     entry = bu_hash_next(cache->dbip_hash, NULL);
     while (entry) {
@@ -719,7 +723,7 @@ rt_cache_open(void)
     if (!cache_init(cache))
 	return NULL;
 
-    CACHE_DEBUG("+++ Opening cache at %s\n", dir);
+    CACHE_DEBUG("++ Opening cache at %s\n", dir);
 
     format = cache_format(cache);
     if (format < 0)
@@ -754,7 +758,9 @@ rt_cache_open(void)
 	bu_vls_printf(&path, "%s%c%s", dir, BU_DIR_SEPARATOR, "objects");
 
 	count = bu_file_list(bu_vls_cstr(&path), "[A-Z0-9][A-Z0-9]", &matches);
-	/* bu_log("%zu entries for %s\n", count, bu_vls_cstr(&path)); */
+
+	CACHE_DEBUG("++++ Found V1 cache, deleting %zu objects in %s", count, bu_vls_cstr(&path));
+
 	for (i = 0; i < count; i++) {
 	    struct bu_vls subpath = BU_VLS_INIT_ZERO;
 	    const char *pattern =  /* 8-4-4-4-12 */
@@ -779,21 +785,24 @@ rt_cache_open(void)
 		bu_vls_trunc(&subpath, 0);
 		bu_vls_printf(&subpath, "%s%cobjects%c%s%c%s", dir, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, matches[i], BU_DIR_SEPARATOR, submatches[j]);
 		bu_file_delete(bu_vls_cstr(&subpath));
-		/* bu_log("bu_file_delete(%s)\n", bu_vls_cstr(&subpath)); */
+
+		CACHE_DEBUG("++++ Deleting %s", bu_vls_cstr(&subpath));
 	    }
 	    bu_argv_free(subcount, submatches);
 
 	    bu_vls_trunc(&subpath, 0);
 	    bu_vls_printf(&subpath, "%s%cobjects%c%s", dir, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, matches[i]);
 	    bu_file_delete(bu_vls_cstr(&subpath));
-	    /* bu_log("bu_file_delete(%s)\n", bu_vls_cstr(&subpath)); */
+
+	    CACHE_DEBUG("++++ Deleting %s", bu_vls_cstr(&subpath));
 
 	    bu_vls_free(&subpath);
 	}
 	bu_argv_free(count, matches);
 
 	bu_file_delete(bu_vls_cstr(&path));
-	/* bu_log("bu_file_delete(%s)\n", bu_vls_cstr(&path)); */
+
+	CACHE_DEBUG("++++ Deleting %s", bu_vls_cstr(&path));
 
 	bu_vls_trunc(&path, 0);
 	bu_vls_printf(&path, "%s%c%s", dir, BU_DIR_SEPARATOR, "format");
