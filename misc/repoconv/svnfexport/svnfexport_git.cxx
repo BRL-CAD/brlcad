@@ -539,42 +539,6 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	std::cout << "at 29882\n";
     }
 
-    if (stat(fi_file.c_str(), &buffer) == 0) {
-	// If we have a hand-crafted import file for this revision, use it
-	std::string cleanup_cmd = std::string("rm -rf cvs_git_working");
-	std::string swap_cmd = std::string("rm -rf cvs_git && cp -r cvs_git_working cvs_git");
-	std::string git_setup = std::string("rm -rf cvs_git_working && cp -r cvs_git cvs_git_working");
-	std::string git_fi = std::string("cd cvs_git_working && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
-	std::system(git_setup.c_str());
-	if (std::system(git_fi.c_str())) {
-	    std::string failed_file = std::string("failed-") + fi_file;
-	    std::cout << "Fatal - could not apply fi file for revision " << rev_num << "\n";
-	    rename(fi_file.c_str(), failed_file.c_str());
-	    exit(1);
-	}
-	std::system(swap_cmd.c_str());
-	std::system(cleanup_cmd.c_str());
-
-	verify_repos(rev_num, std::string("trunk"), std::string("master"));
-	verify_repos(rev_num, std::string("branches/STABLE"), std::string("STABLE"));
-
-	return;
-    }
-
-    fi_file = std::to_string(rev_num) + std::string(".fi");
-
-    std::set<int> special_revs;
-    std::string empty_sha1("da39a3ee5e6b4b0d3255bfef95601890afd80709");
-    std::map<long int, struct svn_revision>::iterator r_it;
-
-
-    // particular revisions that will have to be special cased:
-    special_revs.insert(31039);
-    special_revs.insert(32314);
-    special_revs.insert(36633);
-    special_revs.insert(36843);
-    special_revs.insert(39465);
-
     struct svn_revision &rev = revs.find(rev_num)->second;
 
 
@@ -593,6 +557,42 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	    }
 	}
     }
+    std::string rbranch = rev.nodes[0].branch;
+
+
+    if (stat(fi_file.c_str(), &buffer) == 0) {
+	// If we have a hand-crafted import file for this revision, use it
+	std::string cleanup_cmd = std::string("rm -rf cvs_git_working");
+	std::string swap_cmd = std::string("rm -rf cvs_git && cp -r cvs_git_working cvs_git");
+	std::string git_setup = std::string("rm -rf cvs_git_working && cp -r cvs_git cvs_git_working");
+	std::string git_fi = std::string("cd cvs_git_working && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
+	std::system(git_setup.c_str());
+	if (std::system(git_fi.c_str())) {
+	    std::string failed_file = std::string("failed-") + fi_file;
+	    std::cout << "Fatal - could not apply fi file for revision " << rev_num << "\n";
+	    rename(fi_file.c_str(), failed_file.c_str());
+	    exit(1);
+	}
+	std::system(swap_cmd.c_str());
+	std::system(cleanup_cmd.c_str());
+
+	verify_repos(rev.revision_number, rbranch, rbranch);
+
+	return;
+    }
+
+    fi_file = std::to_string(rev_num) + std::string(".fi");
+
+    std::set<int> special_revs;
+    std::string empty_sha1("da39a3ee5e6b4b0d3255bfef95601890afd80709");
+    std::map<long int, struct svn_revision>::iterator r_it;
+
+
+    // particular revisions that will have to be special cased:
+    special_revs.insert(32314);
+    special_revs.insert(36633);
+    special_revs.insert(36843);
+    special_revs.insert(39465);
 
 
     if (rev.revision_number == 30760) {
@@ -616,7 +616,6 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
     int tag_after_commit = 0;
     int branch_delete = 0;
     std::string ctag, cfrom;
-    std::string rbranch = rev.nodes[0].branch;
 
     if (reject_tag(rev.nodes[0].tag)) {
 	std::cout << "Skipping " << rev.revision_number << " - edit to old tag:\n" << rev.commit_msg << "\n";
@@ -644,11 +643,11 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	full_sync_commit(outfile, rev, bsrc, bdest);
 	outfile.close();
 
-	// TODO - verify_repos needs to morph into an "update cvs_git" step and a subsequent check step, writing out
-	// the current revisions fi stream and applying it rather than building up a multi-revision stream
-
-	verify_repos(rev.revision_number, std::string("trunk"), std::string("master"));
-
+	if (rev.revision_number == 36633 || rev.revision_number == 39465) {
+	    verify_repos(rev.revision_number, std::string("dmtogl"), std::string("dmtogl"));
+	} else {
+	    verify_repos(rev.revision_number, std::string("STABLE"), std::string("STABLE"));
+	}
 	return;
     }
 
@@ -658,7 +657,7 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	old_references_commit(infile, outfile, rev, rbranch);
 	outfile.close();
 
-	verify_repos(rev.revision_number, std::string("trunk"), std::string("master"));
+	verify_repos(rev.revision_number, rbranch, rbranch);
 
 	return;
     }
@@ -798,8 +797,8 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 
 
 	outfile.close();
-	if (rev.revision_number % 100 == 0) {
-	    verify_repos(rev.revision_number, std::string("trunk"), std::string("master"));
+	if (rev.revision_number % 10 == 0 || rbranch != std::string("master")) {
+	    verify_repos(rev.revision_number, rbranch, rbranch);
 	} else {
 	    // Not verifying this one - just apply the fast import file and go
 	    std::string cleanup_cmd = std::string("rm -rf cvs_git_working");
