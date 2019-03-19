@@ -149,7 +149,7 @@ typedef int (*bu_opt_arg_process_t)(struct bu_vls *msg, size_t argc, const char 
 #define BU_OPT_CHECK_ARGV0(_msg, _argc, _argv, _opt_name) do {\
 if ((_argc) < 1 || !(_argv) || !(_argv)[0] || (_argv)[0][0] == '\0') { \
     if ((_msg)) { \
-	bu_vls_printf((_msg), "Error: missing required argument: %s\n", (_opt_name)); \
+	bu_vls_printf((_msg), "ERROR: missing required argument: %s\n", (_opt_name)); \
     } \
     return -1; \
 } } while (0)
