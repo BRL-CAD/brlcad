@@ -94,59 +94,49 @@ bu_open_mapped_file(const char *name, const char *appl)
 
 	/* found a match */
 
-	/* if mapped file still exists, verify size and modtime */
-	if (!mp->dont_restat) {
+	bu_semaphore_acquire(BU_SEM_SYSCALL);
+	fd = open(real_path, O_RDONLY | O_BINARY);
+	bu_semaphore_release(BU_SEM_SYSCALL);
 
-	    bu_semaphore_acquire(BU_SEM_SYSCALL);
-	    fd = open(real_path, O_RDONLY | O_BINARY);
-	    bu_semaphore_release(BU_SEM_SYSCALL);
-
-	    /* If file didn't vanish from disk, make sure it's the same file */
-	    if (fd >= 0) {
+	/* If file didn't vanish from disk, make sure it's the same file */
+	if (fd >= 0) {
 
 #ifdef HAVE_SYS_STAT_H
+	    bu_semaphore_acquire(BU_SEM_SYSCALL);
+	    ret = fstat(fd, &sb);
+	    bu_semaphore_release(BU_SEM_SYSCALL);
+
+	    if (ret < 0) {
+		/* odd, open worked but fstat failed.  assume it
+		 * vanished from disk and the mapped copy is still
+		 * OK.
+		 */
+
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
-		ret = fstat(fd, &sb);
+		(void)close(fd);
 		bu_semaphore_release(BU_SEM_SYSCALL);
-
-		if (ret < 0) {
-		    /* odd, open worked but fstat failed.  assume it
-		     * vanished from disk and the mapped copy is still
-		     * OK.
-		     */
-
-		    bu_semaphore_acquire(BU_SEM_SYSCALL);
-		    (void)close(fd);
-		    bu_semaphore_release(BU_SEM_SYSCALL);
-		    fd = -1;
-		}
-		if ((size_t)sb.st_size != mp->buflen) {
-		    if (UNLIKELY(bu_debug&BU_DEBUG_MAPPED_FILE)) {
-			bu_log("bu_open_mapped_file(%s) WARNING: File size changed from %ld to %jd, opening new version.\n", real_path, mp->buflen, (intmax_t)sb.st_size);
-		    }
-		    /* mp doesn't reflect the file any longer.  Invalidate. */
-		    mp->appl = bu_strdup("__STALE__");
-		    /* Can't invalidate old copy, it may still be in use. */
-		    break;
-		}
-		if (sb.st_mtime != mp->modtime) {
-		    if (UNLIKELY(bu_debug&BU_DEBUG_MAPPED_FILE)) {
-			bu_log("bu_open_mapped_file(%s) WARNING: File modified since last mapped, opening new version.\n", real_path);
-		    }
-		    /* mp doesn't reflect the file any longer.  Invalidate. */
-		    mp->appl = bu_strdup("__STALE__");
-		    /* Can't invalidate old copy, it may still be in use. */
-		    break;
-		}
-		/* To be completely safe, should check st_dev and st_inum */
-#endif
+		fd = -1;
 	    }
-
-	    /* It is safe to reuse mp */
-	    mp->uses++;
-	    bu_semaphore_release(BU_SEM_MAPPEDFILE);
-
-	    return mp;
+	    if ((size_t)sb.st_size != mp->buflen) {
+		if (UNLIKELY(bu_debug&BU_DEBUG_MAPPED_FILE)) {
+		    bu_log("bu_open_mapped_file(%s) WARNING: File size changed from %ld to %jd, opening new version.\n", real_path, mp->buflen, (intmax_t)sb.st_size);
+		}
+		/* mp doesn't reflect the file any longer.  Invalidate. */
+		mp->appl = bu_strdup("__STALE__");
+		/* Can't invalidate old copy, it may still be in use. */
+		break;
+	    }
+	    if (sb.st_mtime != mp->modtime) {
+		if (UNLIKELY(bu_debug&BU_DEBUG_MAPPED_FILE)) {
+		    bu_log("bu_open_mapped_file(%s) WARNING: File modified since last mapped, opening new version.\n", real_path);
+		}
+		/* mp doesn't reflect the file any longer.  Invalidate. */
+		mp->appl = bu_strdup("__STALE__");
+		/* Can't invalidate old copy, it may still be in use. */
+		break;
+	    }
+	    /* To be completely safe, should check st_dev and st_inum */
+#endif
 	}
 
 	/* It is safe to reuse mp */
@@ -154,7 +144,6 @@ bu_open_mapped_file(const char *name, const char *appl)
 	bu_semaphore_release(BU_SEM_MAPPEDFILE);
 
 	return mp;
-
     }
     /* done iterating over mapped file list */
     bu_semaphore_release(BU_SEM_MAPPEDFILE);
@@ -432,8 +421,8 @@ bu_free_mapped_files(int verbose)
 
 	if (mp->appl)
 	    bu_free((void *)mp->appl, "bu_mapped_file.appl");
-    memmove(all_mapped_files.mapped_files + i, all_mapped_files.mapped_files + i + 1, sizeof(all_mapped_files.mapped_files[0]) * (all_mapped_files.size - i - 1));
-    all_mapped_files.size--;
+	memmove(all_mapped_files.mapped_files + i, all_mapped_files.mapped_files + i + 1, sizeof(all_mapped_files.mapped_files[0]) * (all_mapped_files.size - i - 1));
+	all_mapped_files.size--;
     }
     bu_semaphore_release(BU_SEM_MAPPEDFILE);
 }

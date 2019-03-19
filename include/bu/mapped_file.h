@@ -88,7 +88,6 @@ struct bu_mapped_file {
     size_t apbuflen;	/**< opt: application-specific buflen */
     time_t modtime;	/**< date stamp, in case file is modified */
     int uses;		/**< # ptrs to this struct handed out */
-    int dont_restat;	/**< 1=on subsequent opens, don't re-stat()  */
 };
 typedef struct bu_mapped_file bu_mapped_file_t;
 #define BU_MAPPED_FILE_NULL ((struct bu_mapped_file *)0)
