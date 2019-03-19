@@ -707,6 +707,7 @@ add_test(NAME bu_process_abort COMMAND bu_test process "$<TARGET_FILE:bu_subproc
 CMAKEFILES(
   tests_bitv.cmake
   tests_vls.cmake
+  mappedfile.c
 )
 
 CMAKEFILES(CMakeLists.txt)
