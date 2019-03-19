@@ -349,7 +349,6 @@ void
 bu_close_mapped_file(struct bu_mapped_file *mp)
 {
     if (UNLIKELY(!mp)) {
-	bu_log("bu_close_mapped_file() called with null pointer\n");
 	return;
     }
 
