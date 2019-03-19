@@ -35,11 +35,13 @@ test_bu_mapped_file_basic(int long file_cnt)
 	long int fint;
 	bu_vls_sprintf(&fname, "bu_mapped_file_input_%d", i);
 	mfp = bu_open_mapped_file(bu_vls_cstr(&fname), NULL);
-	if (bu_opt_long(NULL, 1, (const char **)&(mfp->buf), (void *)&fint) == -1 || fint != i) {
+	if (!mfp || bu_opt_long(NULL, 1, (const char **)&(mfp->buf), (void *)&fint) == -1 || fint != i) {
 	    bu_log("%s -> %ld [FAIL]  (should be: {%ld})\n", bu_vls_cstr(&fname), fint, i);
 	    status = 1;
 	}
-	bu_close_mapped_file(mfp);
+	if (mfp) {
+	    bu_close_mapped_file(mfp);
+	}
 	if (status) {
 	    break;
 	}
@@ -65,11 +67,13 @@ bu_mapped_worker_read(int cpu, long int file_id)
     struct bu_mapped_file *mfp;
     bu_vls_sprintf(&fname, "bu_mapped_file_input_%d", file_id);
     mfp = bu_open_mapped_file(bu_vls_cstr(&fname), NULL);
-    if (bu_opt_long(NULL, 1, (const char **)&(mfp->buf), (void *)&fint) == -1 || fint != file_id) {
+    if (!mfp || bu_opt_long(NULL, 1, (const char **)&(mfp->buf), (void *)&fint) == -1 || fint != file_id) {
 	bu_log("%s(%d) -> %d [FAIL]  (should be: {%d})\n", bu_vls_cstr(&fname), cpu, fint, file_id);
 	status = 1;
     }
-    bu_close_mapped_file(mfp);
+    if (mfp) {
+	bu_close_mapped_file(mfp);
+    }
     return status;
 }
 
