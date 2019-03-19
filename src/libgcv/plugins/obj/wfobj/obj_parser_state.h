@@ -464,12 +464,13 @@ void set_working_object(basic_parser_extra<PrecisionT, charT, traits,
 	extra.parser_state.current_object = extra.contents->object_set.size();
 
 	string_type &working_string = extra.parser_state.working_string;
-
+	if (!working_string.empty()) {
 	extra.contents->object_set.push_back(working_string);
 
 	char *objectString = wfobj_strdup(working_string.c_str());
 
 	extra.contents->objectchar_set.push_back(objectString);
+	}
     }
 
     extra.parser_state.working_polyattributes.object_index =
@@ -503,12 +504,13 @@ void set_working_material(basic_parser_extra<PrecisionT, charT, traits,
 	    extra.contents->material_set.size();
 
 	string_type &working_string = extra.parser_state.working_string;
-
+	if (!working_string.empty()) {
 	extra.contents->material_set.push_back(working_string);
 
 	char *materialString = wfobj_strdup(working_string.c_str());
 
 	extra.contents->materialchar_set.push_back(materialString);
+	}
     }
 
     extra.parser_state.working_polyattributes.material_index =
@@ -625,12 +627,13 @@ void set_working_texmap(basic_parser_extra<PrecisionT, charT, traits,
 	extra.parser_state.current_texmap = extra.contents->texmap_set.size();
 
 	string_type &working_string = extra.parser_state.working_string;
-
+	if (!working_string.empty()) {
 	extra.contents->texmap_set.push_back(working_string);
 
 	char *texmapString = wfobj_strdup(working_string.c_str());
 
 	extra.contents->texmapchar_set.push_back(texmapString);
+	}
     }
 
     extra.parser_state.working_polyattributes.texmap_index =
@@ -746,12 +749,13 @@ void set_working_shadow_obj(basic_parser_extra<PrecisionT, charT, traits,
 	    extra.contents->shadow_obj_set.size();
 
 	string_type &working_string = extra.parser_state.working_string;
-
+	if (!working_string.empty()) {
 	extra.contents->shadow_obj_set.push_back(working_string);
 
 	char *shadowObjString = wfobj_strdup(working_string.c_str());
 
 	extra.contents->shadow_objchar_set.push_back(shadowObjString);
+	}
     }
 
     extra.parser_state.working_polyattributes.shadow_obj_index =
@@ -785,12 +789,13 @@ void set_working_trace_obj(basic_parser_extra<PrecisionT, charT, traits,
 	    extra.contents->trace_obj_set.size();
 
 	string_type &working_string = extra.parser_state.working_string;
-
+	if (!working_string.empty()) {
 	extra.contents->trace_obj_set.push_back(working_string);
 
 	char *traceObjString = wfobj_strdup(working_string.c_str());
 
 	extra.contents->trace_objchar_set.push_back(traceObjString);
+	}
     }
 
     extra.parser_state.working_polyattributes.trace_obj_index =
@@ -846,10 +851,8 @@ basic_parser_extra(basic_parser_type *p, contents_type *c)
     set_working_groupset(*this);
     set_working_object(*this);
     set_working_material(*this);
-    parser_state.working_stringset.insert("");
     set_working_materiallib(*this);
     set_working_texmap(*this);
-    parser_state.working_stringset.insert("");
     set_working_texmaplib(*this);
     set_working_shadow_obj(*this);
     set_working_trace_obj(*this);
