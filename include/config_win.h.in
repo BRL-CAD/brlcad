@@ -125,7 +125,6 @@
 #define pipe(_FD) (_pipe((_FD), 256, _O_TEXT))
 
 #define read _read
-#define setmode _setmode
 /* #define tell _tell */
 #define tzset _tzset
 #define umask _umask
@@ -137,6 +136,9 @@
 #ifndef isatty
 #  define isatty _isatty
 #endif
+
+/* Both C and C++ need to know about _setmode */
+#define setmode _setmode
 
 /*
  * other functions declared elsewhere (many in stdio.h)
