@@ -31,17 +31,22 @@ test_bu_mapped_file_basic(int long file_cnt)
     int status = 0;
     struct bu_vls fname = BU_VLS_INIT_ZERO;
     struct bu_mapped_file *mfp;
+
     for (long int i = 0; i < file_cnt; i++) {
-	long int fint;
-	bu_vls_sprintf(&fname, "bu_mapped_file_input_%d", i);
+	long int fint = -1;
+
+	bu_vls_sprintf(&fname, "bu_mapped_file_input_%ld", i);
 	mfp = bu_open_mapped_file(bu_vls_cstr(&fname), NULL);
-	if (!mfp || bu_opt_long(NULL, 1, (const char **)&(mfp->buf), (void *)&fint) == -1 || fint != i) {
+
+	if (mfp) {
+	    fint = strtod(mfp->buf, NULL);
+	}
+	if (fint != i) {
 	    bu_log("%s -> %ld [FAIL]  (should be: {%ld})\n", bu_vls_cstr(&fname), fint, i);
 	    status = 1;
 	}
-	if (mfp) {
-	    bu_close_mapped_file(mfp);
-	}
+	bu_close_mapped_file(mfp);
+
 	if (status) {
 	    break;
 	}
@@ -49,7 +54,9 @@ test_bu_mapped_file_basic(int long file_cnt)
     if (!status) {
 	bu_log("Basic bu_mapped_file test: [PASS]\n");
     }
+
     bu_vls_free(&fname);
+
     return status;
 }
 
@@ -65,15 +72,19 @@ bu_mapped_worker_read(int cpu, long int file_id)
     long int fint = -1;
     struct bu_vls fname = BU_VLS_INIT_ZERO;
     struct bu_mapped_file *mfp;
-    bu_vls_sprintf(&fname, "bu_mapped_file_input_%d", file_id);
+
+    bu_vls_sprintf(&fname, "bu_mapped_file_input_%ld", file_id);
     mfp = bu_open_mapped_file(bu_vls_cstr(&fname), NULL);
-    if (!mfp || bu_opt_long(NULL, 1, (const char **)&(mfp->buf), (void *)&fint) == -1 || fint != file_id) {
-	bu_log("%s(%d) -> %d [FAIL]  (should be: {%d})\n", bu_vls_cstr(&fname), cpu, fint, file_id);
+
+    if (mfp) {
+	fint = strtod(mfp->buf, NULL);
+    }
+    if (fint != file_id) {
+	bu_log("%s(%d) -> %ld [FAIL]  (should be: {%ld})\n", bu_vls_cstr(&fname), cpu, fint, file_id);
 	status = 1;
     }
-    if (mfp) {
-	bu_close_mapped_file(mfp);
-    }
+    bu_close_mapped_file(mfp);
+
     return status;
 }
 
@@ -108,7 +119,7 @@ main(int ac, char *av[])
     int file_cnt = 1000;
     int ret = 0;
     FILE *fp = NULL;
-    int test_num = 0;
+    long int test_num = 0;
     struct bu_vls fname = BU_VLS_INIT_ZERO;
 
     if (ac < 2) {
@@ -116,17 +127,17 @@ main(int ac, char *av[])
     }
 
     /* Prepare a set of test input files */
-    for (int i = 0; i < file_cnt; i++) {
-	bu_vls_sprintf(&fname, "bu_mapped_file_input_%d", i);
+    for (long int i = 0; i < file_cnt; i++) {
+	bu_vls_sprintf(&fname, "bu_mapped_file_input_%ld", i);
 	fp = fopen(bu_vls_cstr(&fname), "wb");
 	if (!fp) {
 	    bu_exit(1, "Unable to create test input file %s\n", bu_vls_cstr(&fname));
 	}
-	fprintf(fp, "%d", i);
+	fprintf(fp, "%ld", i);
 	fclose(fp);
     }
 
-    sscanf(av[1], "%d", &test_num);
+    sscanf(av[1], "%ld", &test_num);
 
     /* basic mapped file IO */
     if (test_num == 1) {
@@ -153,8 +164,8 @@ main(int ac, char *av[])
 	}
     }
 
-    for (int i = 0; i < file_cnt; i++) {
-	bu_vls_sprintf(&fname, "bu_mapped_file_input_%d", i);
+    for (long int i = 0; i < file_cnt; i++) {
+	bu_vls_sprintf(&fname, "bu_mapped_file_input_%ld", i);
 	bu_file_delete(bu_vls_cstr(&fname));
     }
 
