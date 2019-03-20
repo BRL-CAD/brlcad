@@ -185,7 +185,8 @@ BU_EXPORT extern int bu_path_component(struct bu_vls *component, const char *pat
  * Given a path string, separate the path elements into a dynamically
  * allocated argv array with the path separators removed.  It is the
  * caller's responsibility to free the array that is returned as well
- * as all elements in the array.
+ * as all elements in the array using bu_argv_free() or manually
+ * calling bu_free().
  */
 BU_EXPORT extern char **bu_path_to_argv(const char *path, int *ac);
 
