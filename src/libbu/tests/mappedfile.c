@@ -25,10 +25,17 @@
 
 #include "bu.h"
 
-int
-test_bu_mapped_file_basic(int long file_cnt)
+
+struct bu_mapped_worker_info {
+    int file_cnt;
+    int status;
+};
+
+
+static int
+test_mapped_file_serial(long int file_cnt)
 {
-    int status = 0;
+    int status = 1;
     struct bu_vls fname = BU_VLS_INIT_ZERO;
     struct bu_mapped_file *mfp;
 
@@ -37,22 +44,25 @@ test_bu_mapped_file_basic(int long file_cnt)
 
 	bu_vls_sprintf(&fname, "bu_mapped_file_input_%ld", i);
 	mfp = bu_open_mapped_file(bu_vls_cstr(&fname), NULL);
+	if (!mfp) {
+	    bu_log("ERROR: failed to map file %s\n", bu_vls_cstr(&fname));
+	    break;
+	}
 
 	if (mfp) {
 	    fint = strtod(mfp->buf, NULL);
 	}
 	if (fint != i) {
-	    bu_log("%s -> %ld [FAIL]  (should be: {%ld})\n", bu_vls_cstr(&fname), fint, i);
+	    bu_log("%s -> %ld [FAIL]  (should be: %ld)\n", bu_vls_cstr(&fname), fint, i);
 	    status = 1;
 	}
 	bu_close_mapped_file(mfp);
 
-	if (status) {
+	if (status)
 	    break;
-	}
     }
     if (!status) {
-	bu_log("Basic bu_mapped_file test: [PASS]\n");
+	bu_log("Serial mapped file test: [PASS]\n");
     }
 
     bu_vls_free(&fname);
@@ -60,13 +70,9 @@ test_bu_mapped_file_basic(int long file_cnt)
     return status;
 }
 
-struct bu_mapped_worker_info {
-    int file_cnt;
-    int status;
-};
 
-int
-bu_mapped_worker_read(int cpu, long int file_id)
+static int
+mapped_worker_read(int cpu, long int file_id)
 {
     int status = 0;
     long int fint = -1;
@@ -80,7 +86,7 @@ bu_mapped_worker_read(int cpu, long int file_id)
 	fint = strtod(mfp->buf, NULL);
     }
     if (fint != file_id) {
-	bu_log("%s(%d) -> %ld [FAIL]  (should be: {%ld})\n", bu_vls_cstr(&fname), cpu, fint, file_id);
+	bu_log("%s(%d) -> %ld [FAIL]  (should be: %ld)\n", bu_vls_cstr(&fname), cpu, fint, file_id);
 	status = 1;
     }
     bu_close_mapped_file(mfp);
@@ -88,22 +94,25 @@ bu_mapped_worker_read(int cpu, long int file_id)
     return status;
 }
 
-void
-bu_mapped_worker(int cpu, void *data)
+
+static void
+mapped_worker(int cpu, void *data)
 {
     struct bu_mapped_worker_info *info = &(((struct bu_mapped_worker_info *)data)[cpu]);
     int order = cpu % 2;
+
     info->status = 0;
+
     if (order) {
 	for (int i = 0; i < info->file_cnt; i++) {
-	    info->status = bu_mapped_worker_read(cpu, i);
+	    info->status = mapped_worker_read(cpu, i);
 	    if (info->status) {
 		return;
 	    }
 	}
     } else {
 	for (int i = info->file_cnt - 1; i >= 0; i--) {
-	    info->status = bu_mapped_worker_read(cpu, i);
+	    info->status = mapped_worker_read(cpu, i);
 	    if (info->status) {
 		return;
 	    }
@@ -113,59 +122,79 @@ bu_mapped_worker(int cpu, void *data)
 }
 
 
+static int
+test_mapped_file_parallel(size_t file_cnt)
+{
+    int ret = 0;
+    int ncpus = bu_avail_cpus();
+    struct bu_mapped_worker_info *infos = (struct bu_mapped_worker_info *)bu_calloc(ncpus+1, sizeof(struct bu_mapped_worker_info), "parallel data");
+
+    /* parallel mapped file IO */
+
+    for (int i = 0; i < ncpus; i++) {
+	infos[i].file_cnt = file_cnt;
+	infos[i].status = 0;
+    }
+    bu_parallel(mapped_worker, ncpus, (void *)infos);
+    for (int i = 0; i < ncpus; i++) {
+	if (infos[i].status) {
+	    ret = 1;
+	}
+    }
+    bu_free(infos, "free parallel data");
+    if (!ret) {
+	bu_log("Parallel mapped file test: [PASS]\n");
+    }
+
+    return ret;
+}
+
+
 int
 main(int ac, char *av[])
 {
-    int file_cnt = 1000;
-    int ret = 0;
     FILE *fp = NULL;
+    int ret;
+    long int file_cnt = 100;
     long int test_num = 0;
+    const char *file_prefix = "bu_mapped_file_";
     struct bu_vls fname = BU_VLS_INIT_ZERO;
 
-    if (ac < 2) {
-	bu_exit(1, "Usage: %s {test_num}\n", av[0]);
+    if (ac < 2 || ac > 3) {
+	bu_exit(1, "Usage: %s {test_number} [file_count]\n", av[0]);
     }
 
-    /* Prepare a set of test input files */
+    if (ac > 2)
+	sscanf(av[2], "%ld", &file_cnt);
+    if (file_cnt < 1)
+	file_cnt = 1;
+
+    /* Create our set of test input files */
     for (long int i = 0; i < file_cnt; i++) {
-	bu_vls_sprintf(&fname, "bu_mapped_file_input_%ld", i);
+	bu_vls_sprintf(&fname, "%s%ld", file_prefix, i);
 	fp = fopen(bu_vls_cstr(&fname), "wb");
-	if (!fp) {
+	if (!fp)
 	    bu_exit(1, "Unable to create test input file %s\n", bu_vls_cstr(&fname));
-	}
 	fprintf(fp, "%ld", i);
 	fclose(fp);
+	if (!bu_file_exists(bu_vls_cstr(&fname), NULL))
+	    bu_exit(1, "Unable to verify test input file %s\n", bu_vls_cstr(&fname));
     }
 
+    /* Run our test */
     sscanf(av[1], "%ld", &test_num);
-
-    /* basic mapped file IO */
-    if (test_num == 1) {
-	ret = test_bu_mapped_file_basic(file_cnt);
+    switch(test_num) {
+    	case 1:
+	    ret = test_mapped_file_serial(file_cnt);
+	    break;
+    	case 2:
+	    ret = test_mapped_file_parallel(file_cnt);
+	    break;
     }
 
-    /* parallel mapped file IO */
-    if (test_num == 2) {
-	int ncpus = bu_avail_cpus();
-	struct bu_mapped_worker_info *infos = (struct bu_mapped_worker_info *)bu_calloc(ncpus+1, sizeof(struct bu_mapped_worker_info), "parallel data");
-	for (int i = 0; i < ncpus; i++) {
-	    infos[i].file_cnt = file_cnt;
-	    infos[i].status = 0;
-	}
-	bu_parallel(bu_mapped_worker, ncpus, (void *)infos);
-	for (int i = 0; i < ncpus; i++) {
-	    if (infos[i].status) {
-		ret = 1;
-	    }
-	}
-	bu_free(infos, "free parallel data");
-	if (!ret) {
-	    bu_log("Parallel bu_mapped_file test: [PASS]\n");
-	}
-    }
-
+    /* Delete our set of test input files */
     for (long int i = 0; i < file_cnt; i++) {
-	bu_vls_sprintf(&fname, "bu_mapped_file_input_%ld", i);
+	bu_vls_sprintf(&fname, "%s%ld", file_prefix, i);
 	bu_file_delete(bu_vls_cstr(&fname));
     }
 
