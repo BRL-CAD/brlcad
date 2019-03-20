@@ -704,6 +704,9 @@ BRLCAD_ADDEXEC(bu_subprocess subprocess.cxx libbu TEST)
 add_test(NAME bu_process_basic COMMAND bu_test process "$<TARGET_FILE:bu_subprocess>" basic)
 add_test(NAME bu_process_abort COMMAND bu_test process "$<TARGET_FILE:bu_subprocess>" abort)
 
+
+BRLCAD_ADDEXEC(bu_file file.c libbu TEST)
+
 CMAKEFILES(
   tests_bitv.cmake
   tests_vls.cmake
