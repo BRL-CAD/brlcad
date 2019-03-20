@@ -31,6 +31,9 @@
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
+#ifdef HAVE_WINDOWS_H
+#  include <direct.h>
+#endif
 #include <errno.h>
 #include "bu.h"
 #include "bio.h"
