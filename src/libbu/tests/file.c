@@ -161,6 +161,8 @@ main(int ac, char *av[])
 
 #endif
 
+    bu_vls_free(&fname);
+    bu_vls_free(&fname2);
 
     return ret;
 }
