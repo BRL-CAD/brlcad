@@ -189,6 +189,7 @@
 #define sys_errlist _sys_errlist
 #define sys_nerr _sys_nerr
 #define getcwd _getcwd
+#define chdir _chdir
 
 #if !defined(HAVE_STRTOLL) && defined(HAVE__STRTOI64)
 #  define strtoll _strtoi64
