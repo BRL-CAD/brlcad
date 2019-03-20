@@ -384,12 +384,12 @@ bu_file_symbolic(const char *path)
 int
 bu_file_delete(const char *path)
 {
-    int fd = 0;
     int ret = 0;
     int retry = 0;
 #ifdef HAVE_WINDOWS_H
     DWORD fattrs;
 #else
+    int fd = 0;
     struct stat sb;
 #endif
 
@@ -398,7 +398,12 @@ bu_file_delete(const char *path)
 	    || BU_STR_EQUAL(path, "")
 	    || BU_STR_EQUAL(path, ".")
 	    || BU_STR_EQUAL(path, "..")
-	    || !bu_file_exists(path, NULL))
+#ifdef HAVE_WINDOWS_H
+	    || !bu_file_exists(path, NULL)
+#else
+	    || !bu_file_exists(path, &fd)
+#endif
+       )
     {
 	return 0;
     }
@@ -426,14 +431,13 @@ bu_file_delete(const char *path)
 		}
 	    }
 #else
-	    if (!bu_file_exists(path, &fd) || fstat(fd, &sb) == -1) {
+	    if (fstat(fd, &sb) == -1) {
 		if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 		    bu_log("Warning, fstat failed on file %s!", path);
 		}
 		break;
 	    }
 	    bu_fchmod(fd, (sb.st_mode|S_IRWXU));
-	    close(fd);
 #endif
 	}
 #ifdef HAVE_WINDOWS_H
@@ -457,24 +461,33 @@ bu_file_delete(const char *path)
 
     } while (ret == 0 && retry < 2);
 
+#ifndef HAVE_WINDOWS_H
+    close(fd);
+#endif
+
     /* all boils down to whether the file still exists, not whether
      * remove thinks it succeeded.
      */
+#ifdef HAVE_WINDOWS_H
     if (bu_file_exists(path, NULL)) {
 	/* failure */
 	if (retry > 1) {
 	    /* restore original file permission */
-#ifdef HAVE_WINDOWS_H
 	    SetFileAttributes(path, fattrs);
-#else
-	    if (bu_file_exists(path, &fd)) {
-		bu_fchmod(fd, sb.st_mode);
-		close(fd);
-	    }
-#endif
 	}
 	return 0;
     }
+#else
+    if (bu_file_exists(path, &fd)) {
+	/* failure */
+	if (retry > 1) {
+	    /* restore original file permission */
+	    bu_fchmod(fd, sb.st_mode);
+	}
+	close(fd);
+	return 0;
+    }
+#endif
 
     /* deleted */
     return 1;
