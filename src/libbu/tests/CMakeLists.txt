@@ -14,6 +14,7 @@ set(bu_test_srcs
   dirname.c
   encode.c
   escape.c
+  file.c
   file_mime.c
   heap.c
   hook.c
@@ -113,12 +114,14 @@ add_test(NAME bu_path_component_c_sl_usr_sl_dir_sl_file_dir_core   COMMAND bu_te
 #############################
 #      bu_file_* testing    #
 #############################
-#add_test(NAME bu_file_glob   COMMAND bu_test file_glob) # runs a series of built-in unit tests
+add_test(NAME bu_file  COMMAND bu_test file) # tests bu/file.h API
 
 # NOTE: these test numbers correspond with the bu_mime_t enum values in include/bu/mime.h
 add_test(NAME bu_file_mime_dxf   COMMAND bu_test file_mime dxf 5 1) # tests dxf extension in model context
 add_test(NAME bu_file_mime_stp   COMMAND bu_test file_mime stp 5 7) # tests stp extension in model context
 add_test(NAME bu_file_mime_png   COMMAND bu_test file_mime png 3 13) # tests png extension in image context
+
+#add_test(NAME bu_file_glob   COMMAND bu_test file_glob) # runs a series of built-in unit tests
 
 #
 #  ************ bitv.c tests *************
@@ -704,8 +707,6 @@ BRLCAD_ADDEXEC(bu_subprocess subprocess.cxx libbu TEST)
 add_test(NAME bu_process_basic COMMAND bu_test process "$<TARGET_FILE:bu_subprocess>" basic)
 add_test(NAME bu_process_abort COMMAND bu_test process "$<TARGET_FILE:bu_subprocess>" abort)
 
-
-BRLCAD_ADDEXEC(bu_file file.c libbu TEST)
 
 CMAKEFILES(
   tests_bitv.cmake
