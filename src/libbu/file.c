@@ -403,14 +403,6 @@ bu_file_delete(const char *path)
 	return 0;
     }
 
-#ifdef HAVE_WINDOWS_H
-    /* Stash the attributes for later restoration if needed */
-    fattrs = GetFileAttributes(path);
-    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS) && fattrs == INVALID_FILE_ATTRIBUTES) {
-	bu_log("Warning, could not get file attributes!");
-    }
-#endif
-
     do {
 
 	if (retry++) {
@@ -418,6 +410,11 @@ bu_file_delete(const char *path)
 	     * permissions (similar to rm -f).
 	     */
 #ifdef HAVE_WINDOWS_H
+	    fattrs = GetFileAttributes(path);
+	    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS) && fattrs == INVALID_FILE_ATTRIBUTES) {
+		bu_log("Warning, could not get file attributes for file %s!", path);
+	    }
+
 	    if (!SetFileAttributes(path, GetFileAttributes(path) & !FILE_ATTRIBUTE_READONLY)) {
 		if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 		    bu_log("bu_file_delete: warning, could not set file attributes on %s!", path);
@@ -429,8 +426,10 @@ bu_file_delete(const char *path)
 		}
 	    }
 #else
-	    ;
 	    if (!bu_file_exists(path, &fd) || fstat(fd, &sb) == -1) {
+		if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
+		    bu_log("Warning, fstat failed on file %s!", path);
+		}
 		break;
 	    }
 	    bu_fchmod(fd, (sb.st_mode|S_IRWXU));
@@ -451,8 +450,9 @@ bu_file_delete(const char *path)
 	    }
 	}
 #else
-	if (remove(path) == 0)
+	if (remove(path) == 0) {
 	    ret = 1;
+	}
 #endif
 
     } while (ret == 0 && retry < 2);
@@ -469,8 +469,8 @@ bu_file_delete(const char *path)
 #else
 	    if (bu_file_exists(path, &fd)) {
 		bu_fchmod(fd, sb.st_mode);
+		close(fd);
 	    }
-	    close(fd);
 #endif
 	}
 	return 0;
