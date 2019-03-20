@@ -130,13 +130,14 @@ BU_EXPORT extern int bu_file_delete(const char *path);
  * If the caller provides a pointer to an argv-style 'files' array,
  * this function will dynamically allocate an array of strings, filled
  * with the sorted listing of matching file(s).  It is the caller's
- * responsibility to free a non-NULL array.
+ * responsibility to free a non-NULL array with bu_argv_free().
  *
 
- * If '*files' is NULL, the caller is expected to free the matches array.
- * If '*files' is non-NULL (i.e., array of string pointers is already
- * allocated or on the stack), the caller is expected to ensure adequate
- * entries are preallocated and to free all strings.
+ * If '*files' is NULL, the caller is expected to free the matches
+ * array with bu_argv_free().  If '*files' is non-NULL (i.e., array of
+ * string pointers is already allocated or on the stack), the caller
+ * is expected to ensure adequate entries are preallocated and to free
+ * all strings with bu_free_array() or as otherwise necessary.
  *
  * Example:
  @code
