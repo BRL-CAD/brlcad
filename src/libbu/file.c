@@ -163,9 +163,9 @@ file_compare_info(HANDLE handle1, HANDLE handle2)
 
     /* On Windows, test if paths map to the same space on disk. */
     if (got1 && got2 &&
-	(file_info1.dwVolumeSerialNumber == file_info2.dwVolumeSerialNumber) &&
-	(file_info1.nFileIndexLow == file_info2.nFileIndexLow) &&
-	(file_info1.nFileIndexHigh = file_info2.nFileIndexHigh)) {
+	    (file_info1.dwVolumeSerialNumber == file_info2.dwVolumeSerialNumber) &&
+	    (file_info1.nFileIndexLow == file_info2.nFileIndexLow) &&
+	    (file_info1.nFileIndexHigh = file_info2.nFileIndexHigh)) {
 	return 1;
     }
 
@@ -210,10 +210,10 @@ bu_file_same(const char *fn1, const char *fn2)
 
     {
 
-/* We could build check for HAVE_GETFILEINFORMATIONBYHANDLE, but
- * instead assume GetFullPathname implies this method will work as
- * they're part of the same API.
- */
+	/* We could build check for HAVE_GETFILEINFORMATIONBYHANDLE, but
+	 * instead assume GetFullPathname implies this method will work as
+	 * they're part of the same API.
+	 */
 #ifdef HAVE_GETFULLPATHNAME
 	HANDLE handle1, handle2;
 
@@ -229,7 +229,7 @@ bu_file_same(const char *fn1, const char *fn2)
 	 */
 	struct stat sb1, sb2;
 	if ((stat(rp1, &sb1) == 0) && (stat(rp2, &sb2) == 0) &&
-	    (sb1.st_dev == sb2.st_dev) && (sb1.st_ino == sb2.st_ino)) {
+		(sb1.st_dev == sb2.st_dev) && (sb1.st_ino == sb2.st_ino)) {
 	    ret = 1;
 	}
 #endif
@@ -387,17 +387,29 @@ bu_file_delete(const char *path)
     int fd = 0;
     int ret = 0;
     int retry = 0;
+#ifdef HAVE_WINDOWS_H
+    DWORD fattrs;
+#else
     struct stat sb;
+#endif
 
     /* reject empty, special, or non-existent paths */
     if (!path
-	|| BU_STR_EQUAL(path, "")
-	|| BU_STR_EQUAL(path, ".")
-	|| BU_STR_EQUAL(path, "..")
-	|| !bu_file_exists(path, &fd))
+	    || BU_STR_EQUAL(path, "")
+	    || BU_STR_EQUAL(path, ".")
+	    || BU_STR_EQUAL(path, "..")
+	    || !bu_file_exists(path, NULL))
     {
 	return 0;
     }
+
+#ifdef HAVE_WINDOWS_H
+    /* Stash the attributes for later restoration if needed */
+    fattrs = GetFileAttributes(path);
+    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS) && fattrs == INVALID_FILE_ATTRIBUTES) {
+	bu_log("Warning, could not get file attributes!");
+    }
+#endif
 
     do {
 
@@ -405,28 +417,62 @@ bu_file_delete(const char *path)
 	    /* second pass, try to force deletion by changing file
 	     * permissions (similar to rm -f).
 	     */
-	    if (fstat(fd, &sb) == -1) {
+#ifdef HAVE_WINDOWS_H
+	    if (!SetFileAttributes(path, GetFileAttributes(path) & !FILE_ATTRIBUTE_READONLY)) {
+		if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
+		    bu_log("bu_file_delete: warning, could not set file attributes on %s!", path);
+		}
+	    }
+	    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
+		if (fattrs == GetFileAttributes(path)) {
+		    bu_log("bu_file_delete: warning, initial delete attempt failed but file attributes unchanged after SetFileAttributes call to update permissions on %s!", path);
+		}
+	    }
+#else
+	    ;
+	    if (!bu_file_exists(path, &fd) || fstat(fd, &sb) == -1) {
 		break;
 	    }
 	    bu_fchmod(fd, (sb.st_mode|S_IRWXU));
+	    close(fd);
+#endif
 	}
-
+#ifdef HAVE_WINDOWS_H
+	if (DeleteFile(path)) {
+	    ret = 1;
+	} else if (retry > 1) {
+	    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
+		/* If we couldn't do the delete after two tries, something unusual is going on - get the message and report */
+		LPTSTR errorText = NULL;
+		DWORD lerror = GetLastError();
+		FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_IGNORE_INSERTS, NULL,
+			lerror,	MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&errorText, 0, NULL);
+		bu_log("bu_file_delete failure: %s", errorText);
+	    }
+	}
+#else
 	if (remove(path) == 0)
 	    ret = 1;
+#endif
 
     } while (ret == 0 && retry < 2);
-    close(fd);
 
     /* all boils down to whether the file still exists, not whether
      * remove thinks it succeeded.
      */
-    if (bu_file_exists(path, &fd)) {
+    if (bu_file_exists(path, NULL)) {
 	/* failure */
 	if (retry > 1) {
 	    /* restore original file permission */
-	    bu_fchmod(fd, sb.st_mode);
+#ifdef HAVE_WINDOWS_H
+	    SetFileAttributes(path, fattrs);
+#else
+	    if (bu_file_exists(path, &fd)) {
+		bu_fchmod(fd, sb.st_mode);
+	    }
+	    close(fd);
+#endif
 	}
-	close(fd);
 	return 0;
     }
 
