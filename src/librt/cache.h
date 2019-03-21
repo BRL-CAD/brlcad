@@ -38,7 +38,7 @@ __BEGIN_DECLS
 
 /*
  * TODO:
- * 
+ *
  * - put an rt_cache in dbip or rtip so you can have cached and
  *   uncached databases open at the same time, instead of as tree
  *   walker data
@@ -52,8 +52,6 @@ __BEGIN_DECLS
  *
  * - use sem_open/sem_wait/sem_post for cross-application coordination
  *   of cache writing
- *
- * - need libged means to set environment variables (set/env command)
  *
  */
 
