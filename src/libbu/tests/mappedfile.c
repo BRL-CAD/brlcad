@@ -76,7 +76,7 @@ test_mapped_file_serial(long int file_cnt)
 	    break;
 	}
     }
-    if (num == file_cnt) {
+    if (num == file_cnt-1) {
 	bu_log("Mapped file serial test: [PASS]\n");
 	return 0;
     }
@@ -113,7 +113,7 @@ mapped_file_worker(int cpu, void *data)
 	}
     }
 
-    if ((order && info->value == info->file_cnt) || (!order && info->value < 0)) {
+    if ((order && info->value == info->file_cnt-1) || (!order && info->value == 0)) {
 	info->value = 0;
     } else {
 	info->value = 1;
@@ -162,6 +162,8 @@ main(int ac, char *av[])
     long int test_num = 0;
     struct bu_vls fname = BU_VLS_INIT_ZERO;
 
+    /* bu_debug |= BU_DEBUG_MAPPED_FILE; */
+
     if (ac < 2 || ac > 3) {
 	bu_exit(1, "Usage: %s {test_number} [file_count]\n", av[0]);
     }
@@ -177,7 +179,7 @@ main(int ac, char *av[])
 	fp = fopen(bu_vls_cstr(&fname), "wb");
 	if (!fp)
 	    bu_exit(1, "Unable to create test input file %s\n", bu_vls_cstr(&fname));
-	fprintf(fp, "%ld", i);
+	fprintf(fp, "%ld\n", i);
 	fclose(fp);
 	if (!bu_file_exists(bu_vls_cstr(&fname), NULL))
 	    bu_exit(1, "Unable to verify test input file %s\n", bu_vls_cstr(&fname));
