@@ -596,7 +596,7 @@ prj_free(void *cp)
     while (BU_LIST_WHILE(img_sp, img_specific, &prj_sp->prj_images.l)) {
 
 	img_sp->i_img = (unsigned char *)0;
-	if (img_sp->i_data) bu_close_mapped_file(img_sp->i_data);
+	bu_close_mapped_file(img_sp->i_data);
 	img_sp->i_data = (struct bu_mapped_file *)NULL; /* sanity */
 	if (img_sp->i_binunifp) rt_binunif_free(img_sp->i_binunifp);
 	img_sp->i_binunifp = (struct rt_binunif_internal *)NULL; /* sanity */

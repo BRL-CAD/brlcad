@@ -665,7 +665,7 @@ txt_free(void *cp)
 
     bu_vls_free(&tp->tx_name);
     if (tp->tx_binunifp) rt_binunif_free(tp->tx_binunifp);
-    if (tp->tx_mp) bu_close_mapped_file(tp->tx_mp);
+    bu_close_mapped_file(tp->tx_mp);
     tp->tx_binunifp = (struct rt_binunif_internal *)NULL; /* sanity */
     tp->tx_mp = (struct bu_mapped_file *)NULL; /* sanity */
     BU_PUT(cp, struct txt_specific);

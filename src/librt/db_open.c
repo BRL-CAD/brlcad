@@ -167,11 +167,9 @@ db_open(const char *name, const char *mode)
 	/* Something went wrong and we didn't get the CWD. So,
 	 * free up any memory allocated here and return DBI_NULL */
 	if (argv[1] == NULL) {
-	    if (dbip->dbi_mf) {
-		bu_close_mapped_file(dbip->dbi_mf);
-		bu_free_mapped_files(0);
-		dbip->dbi_mf = (struct bu_mapped_file *)NULL;
-	    }
+	    bu_close_mapped_file(dbip->dbi_mf);
+	    bu_free_mapped_files(0);
+	    dbip->dbi_mf = (struct bu_mapped_file *)NULL;
 
 	    if (dbip->dbi_fp) {
 		fclose(dbip->dbi_fp);
@@ -305,11 +303,9 @@ db_close(register struct db_i *dbip)
     /* ready to free the database -- use count is now zero */
 
     /* free up any mapped files */
-    if (dbip->dbi_mf) {
-	bu_close_mapped_file(dbip->dbi_mf);
-	bu_free_mapped_files(0);
-	dbip->dbi_mf = (struct bu_mapped_file *)NULL;
-    }
+    bu_close_mapped_file(dbip->dbi_mf);
+    bu_free_mapped_files(0);
+    dbip->dbi_mf = (struct bu_mapped_file *)NULL;
 
     /* try to ensure/encourage that the file is written out */
     db_sync(dbip);
