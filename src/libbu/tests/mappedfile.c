@@ -40,6 +40,7 @@ mapped_file_read_number(long int i)
     char filename[MAXPATHLEN] = {0};
     struct bu_mapped_file *mfp;
     double num = -1.0;
+    double zero = 0.0;
     char *endptr;
 
     snprintf(filename, MAXPATHLEN, "%s%ld", FILE_PREFIX, i);
@@ -50,10 +51,10 @@ mapped_file_read_number(long int i)
 	return -1;
     }
 
-    num = strtod(mfp->buf, &endptr);
+    num = strtod((char*)mfp->buf, &endptr);
     bu_close_mapped_file(mfp);
 
-    if (num == 0.0 && endptr == mfp->buf) {
+    if (memcmp(&num, &zero, sizeof(double)) == 0 && endptr == mfp->buf) {
 	bu_log("%s -> [FAIL]  (unable to read number from file)\n", filename);
 	return -2;
     }
