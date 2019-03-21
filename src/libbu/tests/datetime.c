@@ -141,7 +141,7 @@ main(int argc, char *argv[])
 		int64_t t_since_epoc_systime = (int64_t)t * 1.0e6;
 		int64_t t_since_epoc_gettime = bu_gettime();
 		if (abs(t_since_epoc_gettime - t_since_epoc_systime) > 1.0e6) {
-		    bu_exit(1, "ERROR: bu_gettime(%ld) and time(%ld) disagree by > 1.0e6", t_since_epoc_gettime, t_since_epoc_systime);
+		    bu_exit(1, "ERROR: bu_gettime(%lld) and time(%lld) disagree by > 1.0e6", (long long int)t_since_epoc_gettime, (long long int)t_since_epoc_systime);
 		}
 		/* If we got this far, bu_utctime should give us the same
 		 * result - probably redundant to do so given the numerical
