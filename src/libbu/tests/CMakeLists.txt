@@ -710,8 +710,18 @@ add_test(NAME bu_process_abort COMMAND bu_test process "$<TARGET_FILE:bu_subproc
 
 
 #  *********** mappedfile.c tests ************
-add_test(NAME bu_mappedfile_serial COMMAND bu_test mappedfile 1)
-add_test(NAME bu_mappedfile_parallel COMMAND bu_test mappedfile 2)
+add_test(NAME bu_mappedfile_serial_1 COMMAND bu_test mappedfile 1 1)
+add_test(NAME bu_mappedfile_parallel_1 COMMAND bu_test mappedfile 2 1)
+add_test(NAME bu_mappedfile_serial_16 COMMAND bu_test mappedfile 1 16)
+add_test(NAME bu_mappedfile_parallel_16 COMMAND bu_test mappedfile 2 16)
+add_test(NAME bu_mappedfile_serial_128 COMMAND bu_test mappedfile 1 128)
+add_test(NAME bu_mappedfile_parallel_128 COMMAND bu_test mappedfile 2 128)
+add_test(NAME bu_mappedfile_serial_1024 COMMAND bu_test mappedfile 1 1024)
+add_test(NAME bu_mappedfile_parallel_1024 COMMAND bu_test mappedfile 2 1024)
+add_test(NAME bu_mappedfile_serial_2048 COMMAND bu_test mappedfile 1 2048)
+add_test(NAME bu_mappedfile_parallel_2048 COMMAND bu_test mappedfile 2 2048)
+add_test(NAME bu_mappedfile_serial_16384 COMMAND bu_test mappedfile 1 16384)
+add_test(NAME bu_mappedfile_parallel_16384 COMMAND bu_test mappedfile 2 16384)
 
 
 CMAKEFILES(
