@@ -36,7 +36,7 @@ struct mapped_file_worker_info {
 
 
 static long int
-mapped_file_read_number(long int i, long int test_num)
+mapped_file_read_number(long int i, long int test_num, long int file_cnt)
 {
     char filename[MAXPATHLEN] = {0};
     struct bu_mapped_file *mfp;
@@ -44,7 +44,7 @@ mapped_file_read_number(long int i, long int test_num)
     double zero = 0.0;
     char *endptr;
 
-    snprintf(filename, MAXPATHLEN, "%s-%ld-%ld", FILE_PREFIX, test_num, i);
+    snprintf(filename, MAXPATHLEN, "%s-%ld-%ld-%ld", FILE_PREFIX, test_num, file_cnt, i);
 
     mfp = bu_open_mapped_file(filename, NULL);
     if (!mfp) {
@@ -72,9 +72,9 @@ test_mapped_file_serial(long int file_cnt, long int test_num)
 
     for (i = 0; i < file_cnt; i++) {
 
-	num = mapped_file_read_number(i, test_num);
+	num = mapped_file_read_number(i, test_num, file_cnt);
 	if (num != i) {
-	    bu_log("%s-%ld-%ld -> %ld [FAIL]  (should be: %ld)\n", FILE_PREFIX, test_num, i, num, i);
+	    bu_log("%s-%ld-%ld-%ld -> %ld [FAIL]  (should be: %ld)\n", FILE_PREFIX, test_num, file_cnt, i, num, i);
 	    break;
 	}
     }
@@ -98,17 +98,17 @@ mapped_file_worker(int cpu, void *data)
 
     if (order) {
 	for (i = 0; i < info->file_cnt; i++) {
-	    info->value = mapped_file_read_number(i, info->test_num);
+	    info->value = mapped_file_read_number(i, info->test_num, info->file_cnt);
 	    if (info->value != i) {
-		bu_log("%s-%ld-%ld -> %ld [FAIL]  (should be: %ld)\n", FILE_PREFIX, info->test_num, i, info->value, i);
+		bu_log("%s-%ld-%ld-%ld -> %ld [FAIL]  (should be: %ld)\n", FILE_PREFIX, info->test_num, info->file_cnt, i, info->value, i);
 		break;
 	    }
 	}
     } else {
 	for (i = info->file_cnt - 1; i >= 0; i--) {
-	    info->value = mapped_file_read_number(i, info->test_num);
+	    info->value = mapped_file_read_number(i, info->test_num, info->file_cnt);
 	    if (info->value != i) {
-		bu_log("%s-%ld-%ld -> %ld [FAIL]  (should be: %ld)\n", FILE_PREFIX, info->test_num, i, info->value, i);
+		bu_log("%s-%ld-%ld-%ld -> %ld [FAIL]  (should be: %ld)\n", FILE_PREFIX, info->test_num, info->file_cnt, i, info->value, i);
 		break;
 	    }
 
@@ -180,7 +180,7 @@ main(int ac, char *av[])
 
     /* Create our set of test input files */
     for (long int i = 0; i < file_cnt; i++) {
-	bu_vls_sprintf(&fname, "%s-%ld-%ld", FILE_PREFIX, test_num, i);
+	bu_vls_sprintf(&fname, "%s-%ld-%ld-%ld", FILE_PREFIX, test_num, file_cnt, i);
 	fp = fopen(bu_vls_cstr(&fname), "wb");
 	if (!fp)
 	    bu_exit(1, "Unable to create test input file %s\n", bu_vls_cstr(&fname));
@@ -202,7 +202,7 @@ main(int ac, char *av[])
 
     /* Delete our set of test input files */
     for (long int i = 0; i < file_cnt; i++) {
-	bu_vls_sprintf(&fname, "%s-%ld-%ld", FILE_PREFIX, test_num, i);
+	bu_vls_sprintf(&fname, "%s-%ld-%ld-%ld", FILE_PREFIX, test_num, file_cnt, i);
 	bu_file_delete(bu_vls_cstr(&fname));
     }
 
