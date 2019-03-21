@@ -69,7 +69,7 @@ struct rt_cache {
     int (*debug)(const char *format, ...);
     struct bu_hash_tbl *external_hash;
 };
-#define CACHE_INIT {{0}, 0, bu_log, bu_log, NULL}
+#define CACHE_INIT {{0}, 0, bu_log, NULL, NULL}
 
 
 HIDDEN void
