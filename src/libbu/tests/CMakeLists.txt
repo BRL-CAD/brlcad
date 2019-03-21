@@ -21,6 +21,7 @@ set(bu_test_srcs
   humanize_number.c
   vls_incr.c
   vls_simplify.c
+  mappedfile.c
   opt.c
   parallel.c
   path_component.c
@@ -708,10 +709,14 @@ add_test(NAME bu_process_basic COMMAND bu_test process "$<TARGET_FILE:bu_subproc
 add_test(NAME bu_process_abort COMMAND bu_test process "$<TARGET_FILE:bu_subprocess>" abort)
 
 
+#  *********** mappedfile.c tests ************
+add_test(NAME bu_mappedfile_serial COMMAND bu_test mappedfile 1)
+add_test(NAME bu_mappedfile_parallel COMMAND bu_test mappedfile 2)
+
+
 CMAKEFILES(
   tests_bitv.cmake
   tests_vls.cmake
-  mappedfile.c
 )
 
 CMAKEFILES(CMakeLists.txt)
