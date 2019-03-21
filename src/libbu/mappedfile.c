@@ -207,7 +207,6 @@ bu_open_mapped_file(const char *name, const char *appl)
 {
     struct bu_mapped_file newlymapped = BU_MAPPED_FILE_INIT_ZERO;
     struct bu_mapped_file *mp = (struct bu_mapped_file *)NULL;
-    char real_path[MAXPATHLEN] = {0};
     struct stat sb;
     int fd = -1;	/* unix file descriptor */
     int readval;
@@ -216,12 +215,10 @@ bu_open_mapped_file(const char *name, const char *appl)
     if (!name)
 	return NULL;
 
-    bu_file_realpath(name, real_path);
-
     if (UNLIKELY(bu_debug&BU_DEBUG_MAPPED_FILE))
-	bu_log("bu_open_mapped_file(%s (canonical path: %s), %s)\n", name, real_path, appl?appl:"(NULL)");
+	bu_log("bu_open_mapped_file(%s , %s)\n", name, appl?appl:"(NULL)");
 
-    mp = mapped_file_find(real_path, appl);
+    mp = mapped_file_find(name, appl);
     if (mapped_file_is_valid(mp)) {
 	return mapped_file_incr(mp);
     } else {
@@ -233,12 +230,12 @@ bu_open_mapped_file(const char *name, const char *appl)
      */
     mp = &newlymapped;
 
-    mp->name = bu_strdup(real_path);
+    mp->name = bu_strdup(name);
     if (appl)
 	mp->appl = bu_strdup(appl);
 
     bu_semaphore_acquire(BU_SEM_SYSCALL);
-    fd = open(real_path, O_RDONLY | O_BINARY);
+    fd = open(name, O_RDONLY | O_BINARY);
     bu_semaphore_release(BU_SEM_SYSCALL);
 
     if (UNLIKELY(fd < 0)) {
@@ -257,7 +254,7 @@ bu_open_mapped_file(const char *name, const char *appl)
     }
 
     if (UNLIKELY(sb.st_size == 0)) {
-	bu_log("bu_open_mapped_file(%s) 0-length file\n", real_path);
+	bu_log("bu_open_mapped_file(%s) 0-length file\n", name);
 	goto fail;
     }
 
@@ -289,7 +286,7 @@ bu_open_mapped_file(const char *name, const char *appl)
 	/* Allocate a local empty buffer, and slurp the whole file.
 	 * leave space for a trailing zero.
 	 */
-	mp->buf = bu_calloc(1, sb.st_size+1, real_path);
+	mp->buf = bu_calloc(1, sb.st_size+1, name);
 
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	while (nbytes < sb.st_size) {
@@ -297,7 +294,7 @@ bu_open_mapped_file(const char *name, const char *appl)
 	    if (UNLIKELY(readval < 0)) {
 		bu_semaphore_release(BU_SEM_SYSCALL);
 		perror("read");
-		bu_free(mp->buf, real_path);
+		bu_free(mp->buf, name);
 		goto fail;
 	    } else {
 		nbytes += readval;
@@ -307,8 +304,8 @@ bu_open_mapped_file(const char *name, const char *appl)
 	bu_semaphore_release(BU_SEM_SYSCALL);
 
 	if (UNLIKELY(nbytes != sb.st_size)) {
-	    perror(real_path);
-	    bu_free(mp->buf, real_path);
+	    perror(name);
+	    bu_free(mp->buf, name);
 	    goto fail;
 	}
     }
@@ -340,7 +337,7 @@ fail:
 	if (mp->is_mapped)
 	    munmap(mp->buf, (size_t)mp->buflen);
 	else
-	    bu_free(mp->buf, real_path);
+	    bu_free(mp->buf, name);
     }
 
     mp->name = NULL;
@@ -348,8 +345,7 @@ fail:
     mp->buf = MAP_FAILED;
 
     if (UNLIKELY(bu_debug&BU_DEBUG_MAPPED_FILE))
-	bu_log("bu_open_mapped_file(%s, %s) can't open file\n",
-	       real_path, appl ? appl: "(NULL)");
+	bu_log("bu_open_mapped_file(%s, %s) can't open file\n", name, appl ? appl: "(NULL)");
 
     return (struct bu_mapped_file *)NULL;
 }
