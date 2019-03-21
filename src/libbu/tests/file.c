@@ -20,7 +20,6 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <string.h>
 #ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h>
@@ -140,20 +139,9 @@ main(int ac, char *av[])
 	}
     }
 
-#ifdef HAVE_WINDOWS_H
-    if (!RemoveDirectory(tdir)) {
+    if (!bu_file_delete(tdir)) {
 	bu_exit(1, "%s [FAIL] could not delete directory %s\n", av[0], tdir);
     }
-#endif
-
-#if defined(HAVE_UNISTD_H) && !defined(HAVE_WINDOWS_H)
-    errno = 0;
-    if (rmdir(tdir) == -1) {
-	perror("Error deleting directory:");
-	bu_exit(1, "%s [FAIL] could not delete directory %s\n", av[0], tdir);
-    }
-
-#endif
 
     bu_vls_free(&fname);
     bu_vls_free(&fname2);
