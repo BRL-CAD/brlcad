@@ -43,6 +43,7 @@
 #include "bu/app.h"
 #include "bu/file.h"
 #include "bu/cv.h"
+#include "bu/parallel.h"
 #include "bu/path.h"
 #include "bu/process.h"
 #include "bu/time.h"
@@ -400,26 +401,36 @@ cache_read_dbip(const struct rt_cache *cache, const char *name)
     if (!cache || !name)
 	return NULL;
 
+    bu_semaphore_acquire(RT_SEM_CACHE);
+
     dbip = (struct db_i *)bu_hash_get(cache->dbip_hash, (const uint8_t *)name, strlen(name));
-    if (dbip)
+    if (dbip) {
+	bu_semaphore_release(RT_SEM_CACHE);
 	return dbip;
+    }
 
     cache_get_objfile(cache, name, path, MAXPATHLEN);
-    if (!bu_file_exists(path, NULL))
+    if (!bu_file_exists(path, NULL)) {
+	bu_semaphore_release(RT_SEM_CACHE);
 	return NULL;
+    }
 
     dbip = db_open(path, DB_OPEN_READONLY);
     if (!dbip) {
+	bu_semaphore_release(RT_SEM_CACHE);
 	return NULL;
     }
 
     if (db_dirbuild(dbip)) {
 	/* failed to build directory */
 	db_close(dbip);
+	bu_semaphore_release(RT_SEM_CACHE);
 	return NULL;
     }
 
     bu_hash_set(cache->dbip_hash, (const uint8_t *)name, strlen(name), dbip);
+
+    bu_semaphore_release(RT_SEM_CACHE);
     return dbip;
 }
 
@@ -684,7 +695,6 @@ rt_cache_close(struct rt_cache *cache)
     while (entry) {
 	struct db_i *dbip = (struct db_i *)bu_hash_value(entry, NULL);
 	db_close(dbip);
-	dbip->dbi_magic = 0; /* zap it */
 	entry = bu_hash_next(cache->dbip_hash, entry);
     }
     bu_hash_destroy(cache->dbip_hash);
