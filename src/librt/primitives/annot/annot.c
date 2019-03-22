@@ -769,7 +769,7 @@ rt_annot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_
 
 
 /**
- * Import a annotation from the database format to the internal format.
+ * Import an annotation from the database format to the internal format.
  * Apply modeling transformations as well.
  */
 int

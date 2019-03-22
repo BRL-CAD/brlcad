@@ -619,7 +619,7 @@ addclient(struct pkg_conn *pc)
 static void
 input_error(const char *str)
 {
-    bu_log(str);
+    bu_log("%s", str);
 }
 
 
