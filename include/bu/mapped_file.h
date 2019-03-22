@@ -88,6 +88,7 @@ struct bu_mapped_file {
     size_t apbuflen;	/**< opt: application-specific buflen */
     time_t modtime;	/**< date stamp, in case file is modified */
     int uses;		/**< # ptrs to this struct handed out */
+    void *handle;       /**< PRIVATE - for internal file-specific implementation data */
 };
 typedef struct bu_mapped_file bu_mapped_file_t;
 #define BU_MAPPED_FILE_NULL ((struct bu_mapped_file *)0)
@@ -96,7 +97,7 @@ typedef struct bu_mapped_file bu_mapped_file_t;
  * macro suitable for declaration statement initialization of a
  * bu_mapped_file struct.  does not allocate memory.
  */
-#define BU_MAPPED_FILE_INIT_ZERO { NULL, NULL, 0, 0, NULL, NULL, 0, 0, 0 }
+#define BU_MAPPED_FILE_INIT_ZERO { NULL, NULL, 0, 0, NULL, NULL, 0, 0, 0, NULL }
 
 /**
  * Provides a standardized interface for acquiring the entire contents

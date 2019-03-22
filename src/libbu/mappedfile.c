@@ -46,6 +46,98 @@
 #include "bu/str.h"
 #include "bu/vls.h"
 
+/* Based on the public domain wrapper implemented by Mike Frysinger:
+ * https://cgit.uclibc-ng.org/cgi/cgit/uclibc-ng.git/tree/utils/mmap-windows.c */
+#ifdef HAVE_WINDOWS_H
+#  define PROT_READ     0x1
+#  define PROT_WRITE    0x2
+/* This flag is only available in WinXP+ */
+#  ifdef FILE_MAP_EXECUTE
+#    define PROT_EXEC     0x4
+#  else
+#    define PROT_EXEC        0x0
+#    define FILE_MAP_EXECUTE 0
+#  endif
+
+#  define MAP_SHARED    0x01
+#  define MAP_PRIVATE   0x02
+#  define MAP_ANONYMOUS 0x20
+#  define MAP_ANON      MAP_ANONYMOUS
+#  define MAP_FAILED    ((void *) -1)
+
+#  ifdef HAVE_OFF_T_64BIT
+#    define DWORD_HI(x) (x >> 32)
+#    define DWORD_LO(x) ((x) & 0xffffffff)
+#  else
+#    define DWORD_HI(x) (0)
+#    define DWORD_LO(x) (x)
+#  endif
+
+static void *win_mmap(void *start, size_t length, int prot, int flags, int fd, off_t offset, void **handle)
+{
+    if (prot & ~(PROT_READ | PROT_WRITE | PROT_EXEC))
+	return MAP_FAILED;
+    if (fd == -1) {
+	if (!(flags & MAP_ANON) || offset)
+	    return MAP_FAILED;
+    }
+    else if (flags & MAP_ANON)
+	return MAP_FAILED;
+
+    DWORD flProtect;
+    if (prot & PROT_WRITE) {
+	if (prot & PROT_EXEC)
+	    flProtect = PAGE_EXECUTE_READWRITE;
+	else
+	    flProtect = PAGE_READWRITE;
+    }
+    else if (prot & PROT_EXEC) {
+	if (prot & PROT_READ)
+	    flProtect = PAGE_EXECUTE_READ;
+	else if (prot & PROT_EXEC)
+	    flProtect = PAGE_EXECUTE;
+    }
+    else
+	flProtect = PAGE_READONLY;
+
+    off_t end = length + offset;
+    HANDLE mmap_fd, h;
+    if (fd == -1)
+	mmap_fd = INVALID_HANDLE_VALUE;
+    else
+	mmap_fd = (HANDLE)_get_osfhandle(fd);
+    h = CreateFileMapping(mmap_fd, NULL, flProtect, DWORD_HI(end), DWORD_LO(end), NULL);
+    if (h == NULL) {
+	return MAP_FAILED;
+    } else {
+	*handle = (void *)h;
+    }
+
+    DWORD dwDesiredAccess;
+    if (prot & PROT_WRITE)
+	dwDesiredAccess = FILE_MAP_WRITE;
+    else
+	dwDesiredAccess = FILE_MAP_READ;
+    if (prot & PROT_EXEC)
+	dwDesiredAccess |= FILE_MAP_EXECUTE;
+    if (flags & MAP_PRIVATE)
+	dwDesiredAccess |= FILE_MAP_COPY;
+    void *ret = MapViewOfFile(h, dwDesiredAccess, DWORD_HI(offset), DWORD_LO(offset), length);
+    if (ret == NULL) {
+	CloseHandle(h);
+	ret = MAP_FAILED;
+    }
+    return ret;
+}
+
+static void win_munmap(void *addr, size_t length, void *hv)
+{
+    HANDLE h = (HANDLE)hv;
+    UnmapViewOfFile(addr);
+    CloseHandle(h);
+}
+#endif
+
 
 /* list of currently open mapped files */
 #define NUM_INITIAL_MAPPED_FILES 8
@@ -277,6 +369,20 @@ bu_open_mapped_file(const char *name, const char *appl)
 	mp->is_mapped = 1;
     }
 #endif /* HAVE_SYS_MMAN_H */
+#ifdef HAVE_WINDOWS_H
+	bu_semaphore_acquire(BU_SEM_SYSCALL);
+	mp->buf = win_mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0, &(mp->handle));
+	bu_semaphore_release(BU_SEM_SYSCALL);
+
+	if (mp->buf == MAP_FAILED) {
+		if (UNLIKELY(bu_debug&BU_DEBUG_MAPPED_FILE)) {
+			perror("mmap");
+		}
+	}
+	else {
+		mp->is_mapped = 1;
+	}
+#endif
 
     /* If cannot memory-map, read it in manually */
     if (mp->buf == MAP_FAILED) {
@@ -335,7 +441,11 @@ fail:
 	bu_free(mp->appl, "mp->appl");
     if (mp->buf) {
 	if (mp->is_mapped)
+#ifndef HAVE_WINDOWS_H
 	    munmap(mp->buf, (size_t)mp->buflen);
+#else
+	    win_munmap(mp->buf, (size_t)mp->buflen, mp->handle);
+#endif
 	else
 	    bu_free(mp->buf, name);
     }
@@ -412,6 +522,19 @@ bu_free_mapped_files(int verbose)
 
 	    if (UNLIKELY(ret < 0))
 		perror("munmap");
+
+	    /* XXX How to get this chunk of address space back to malloc()? */
+	} else
+#endif
+#ifdef HAVE_WINDOWS_H
+	if (mp->is_mapped) {
+	    int ret;
+	    bu_semaphore_acquire(BU_SEM_SYSCALL);
+	    ret = win_munmap(mp->buf, (size_t)mp->buflen, mp->handle);
+	    bu_semaphore_release(BU_SEM_SYSCALL);
+
+	    if (UNLIKELY(ret < 0))
+		bu_log("Windows munmap problem");
 
 	    /* XXX How to get this chunk of address space back to malloc()? */
 	} else

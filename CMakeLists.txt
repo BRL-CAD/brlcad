@@ -2591,6 +2591,9 @@ if (CMAKE_SIZEOF_VOID_P AND HAVE_OFF_T)
     CONFIG_H_APPEND(BRLCAD "#define OFF_T_SIZE_MISMATCH 1\n")
     set(OFF_T_SIZE_MISMATCH  1 CACHE INTERNAL "Have off_t that is too small for platform.")
   endif (${CMAKE_SIZEOF_VOID_P} GREATER ${HAVE_OFF_T})
+  if (CMAKE_WORD_SIZE STREQUAL "64BIT")
+    CONFIG_H_APPEND(BRLCAD "#define HAVE_OFF_T_64BIT 1\n")
+  endif (CMAKE_WORD_SIZE STREQUAL "64BIT")
 endif (CMAKE_SIZEOF_VOID_P AND HAVE_OFF_T)
 
 # see if we have a TLS intrinsic, first check C++11 compliance
