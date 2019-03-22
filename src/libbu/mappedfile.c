@@ -528,14 +528,9 @@ bu_free_mapped_files(int verbose)
 #endif
 #ifdef HAVE_WINDOWS_H
 	if (mp->is_mapped) {
-	    int ret;
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
-	    ret = win_munmap(mp->buf, (size_t)mp->buflen, mp->handle);
+	    win_munmap(mp->buf, (size_t)mp->buflen, mp->handle);
 	    bu_semaphore_release(BU_SEM_SYSCALL);
-
-	    if (UNLIKELY(ret < 0))
-		bu_log("Windows munmap problem");
-
 	    /* XXX How to get this chunk of address space back to malloc()? */
 	} else
 #endif
