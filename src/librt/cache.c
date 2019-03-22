@@ -642,12 +642,24 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
 	return 0;
     }
 
+#ifdef HAVE_WINDOWS_H
+    /* Close the .g file
+     * Windows will refuse to rename the temp file unless we do this, but on
+     * Linux it produces errors about freeing nil d_namep (??) */
+    db_close(dbip);
+
+    if (!MoveFileEx(tmppath,path, MOVEFILE_COPY_ALLOWED|MOVEFILE_WRITE_THROUGH)) {
+	bu_file_delete(tmppath);
+	return 0; /* someone probably beat us to it */
+    }
+#else
     /* atomically flip it into place */
     ret = rename(tmppath, path);
     if (!ret) {
 	bu_file_delete(tmppath);
 	return 0; /* someone probably beat us to it */
     }
+#endif
 
     if (cache_read_dbip(cache, name) != NULL) {
 	return 1;
