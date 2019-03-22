@@ -441,9 +441,12 @@ bu_file_delete(const char *path)
 #endif
 	}
 #ifdef HAVE_WINDOWS_H
-	if (DeleteFile(path)) {
-	    ret = 1;
-	} else if (retry > 1) {
+	if (bu_file_directory(path)) {
+	    ret = (RemoveDirectory(path)) ? 1 : 0;
+	} else {
+	    ret = (DeleteFile(path)) ? 1 : 0;
+	}
+	if (ret && retry > 1) {
 	    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 		/* If we couldn't do the delete after two tries, something unusual is going on - get the message and report */
 		LPTSTR errorText = NULL;
