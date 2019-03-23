@@ -87,6 +87,7 @@ add_brep_sph(struct db_i *dbip, const char *name, point_t *v, double r)
 	rt_db_free_internal(&intern);
 	bu_exit(1, "Error: Database write error, aborting\n");
     }
+    rt_db_free_internal(&intern);
 }
 
 void
@@ -112,6 +113,8 @@ cp_brep_sph(struct db_i *dbip, const char *oname, const char *nname)
     if (db_put_external(&external, ndp, dbip) < 0) {
 	bu_exit(1, "Error: db_put_external cannot write %s to  %s\n", oname, nname);
     }
+
+    bu_free_external(&external);
 }
 
 int
@@ -203,6 +206,8 @@ main(int UNUSED(argc), char *argv[])
 	if (!bu_file_delete(bu_vls_cstr(&wpath))) {
 	    bu_exit(1, "Unable to remove the directory %s\n", bu_vls_cstr(&wpath));
 	}
+
+	bu_vls_free(&wpath);
     }
 
     return 0;
