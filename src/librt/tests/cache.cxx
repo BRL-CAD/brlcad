@@ -27,6 +27,7 @@
 #include "bu/avs.h"
 #include "bu/env.h"
 #include "bu/malloc.h"
+#include "bu/str.h"
 #include "raytrace.h"
 
 /* TODO - basic single object serial API test.  Check that the cache object
@@ -121,8 +122,13 @@ main(int UNUSED(argc), char *argv[])
     struct db_i *dbip = DBI_NULL;
     point_t v = VINIT_ZERO;
     const char *gfile = "librt_cache_test_1.g";
+    const char *cache_dir = "rt_test_cache_dir";
 
-    bu_setenv("LIBRT_CACHE", bu_dir(NULL, 0, BU_DIR_CURR, "rt_test_cache_dir", NULL), 1);
+    bu_setenv("LIBRT_CACHE", bu_dir(NULL, 0, BU_DIR_CURR, cache_dir, NULL), 1);
+
+    if (bu_file_exists(getenv("LIBRT_CACHE"), NULL)) {
+	bu_exit(1, "Stale test cache: directory %s exists\n", getenv("LIBRT_CACHE"));
+    }
 
     dbip = db_create(gfile, 5);
 
@@ -153,8 +159,51 @@ main(int UNUSED(argc), char *argv[])
 #endif
     rt_prep_parallel(rtip, 1);
 
+    bu_file_delete("librt_cache_test_1.g");
 
-    //bu_file_delete("librt_cache_test_1");
+    /**** Cache cleanup ****/
+    {
+	struct bu_vls wpath = BU_VLS_INIT_ZERO;
+
+	/* Zap the format file first (that's the easy one) */
+	bu_vls_sprintf(&wpath, "%s/format", getenv("LIBRT_CACHE"));
+	bu_file_delete(bu_vls_cstr(&wpath));
+
+	/* Now, we need to find and eliminate any cache objects */
+	char **obj_dirs = NULL;
+	bu_vls_sprintf(&wpath, "%s/objects", getenv("LIBRT_CACHE"));
+	size_t objdir_cnt = bu_file_list(bu_vls_cstr(&wpath), "[a-zA-z0-9]*", &obj_dirs);
+	for (size_t i = 0; i < objdir_cnt; i++) {
+	    /* Find and remove all files in the obj dir */
+	    char **objs = NULL;
+	    bu_vls_sprintf(&wpath, "%s/objects/%s", getenv("LIBRT_CACHE"), obj_dirs[i]);
+	    size_t objs_cnt = bu_file_list(bu_vls_cstr(&wpath), "[a-zA-z0-9]*", &objs);
+	    for (size_t j = 0; j < objs_cnt; j++) {
+		bu_vls_sprintf(&wpath, "%s/objects/%s/%s", getenv("LIBRT_CACHE"), obj_dirs[i], objs[j]);
+		if (!bu_file_delete(bu_vls_cstr(&wpath))) {
+		    bu_exit(1, "Unable to remove the object %s\n", bu_vls_cstr(&wpath));
+		}
+	    }
+	    bu_argv_free(objs_cnt, objs);
+
+	    /* Emptied the dir, now remove it */
+	    bu_vls_sprintf(&wpath, "%s/objects/%s", getenv("LIBRT_CACHE"), obj_dirs[i]);
+	    if (!bu_file_delete(bu_vls_cstr(&wpath))) {
+		bu_exit(1, "Unable to remove the directory %s\n", bu_vls_cstr(&wpath));
+	    }
+	}
+	bu_argv_free(objdir_cnt, obj_dirs);
+
+	/* That should be everything - remove the objects dir and the cache dir */
+	bu_vls_sprintf(&wpath, "%s/objects", getenv("LIBRT_CACHE"));
+	if (!bu_file_delete(bu_vls_cstr(&wpath))) {
+	    bu_exit(1, "Unable to remove the directory %s\n", bu_vls_cstr(&wpath));
+	}
+	bu_vls_sprintf(&wpath, "%s", getenv("LIBRT_CACHE"));
+	if (!bu_file_delete(bu_vls_cstr(&wpath))) {
+	    bu_exit(1, "Unable to remove the directory %s\n", bu_vls_cstr(&wpath));
+	}
+    }
 
     return 0;
 }
