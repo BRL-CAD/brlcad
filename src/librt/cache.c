@@ -622,9 +622,11 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
 			   DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED);
 
 	if (db_put_external(&db_external, dp, dbip)) {
+	    bu_free_external(&db_external);
 	    bu_file_delete(tmppath);
 	    return 0; /* can't stash */
 	}
+	bu_free_external(&db_external);
     }
     db_sync(dbip);
 
