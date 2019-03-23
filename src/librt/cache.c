@@ -646,8 +646,12 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
 
 #ifdef HAVE_WINDOWS_H
     /* Close the .g file
-     * Windows will refuse to rename the temp file unless we do this, but on
-     * Linux it produces errors about freeing nil d_namep (??) */
+     * (Windows will refuse to rename the temp file unless we do this.)
+     *
+     * TODO -on Linux running this db_close sometimes produces errors about
+     * freeing nil d_namep (??). It looks like we should be doing this close on
+     * Linux too - valgrind reports the dbip as lost memory - so more
+     * investigation needed (maybe a second semaphore protection?) */
     db_close(dbip);
 
     if (!MoveFileEx(tmppath,path, MOVEFILE_COPY_ALLOWED|MOVEFILE_WRITE_THROUGH)) {
