@@ -160,7 +160,7 @@ int
 main(int ac, char *av[])
 {
     FILE *fp = NULL;
-    int ret;
+    int ret = 1;
     long int file_cnt = 100;
     long int test_num = 0;
     struct bu_vls fname = BU_VLS_INIT_ZERO;
