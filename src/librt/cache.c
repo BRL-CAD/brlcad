@@ -723,6 +723,7 @@ rt_cache_close(struct rt_cache *cache)
 struct rt_cache *
 rt_cache_open(void)
 {
+    char *rdir = NULL;
     const char *dir = NULL;
     int format;
     struct rt_cache *result;
@@ -736,21 +737,30 @@ rt_cache_open(void)
 	if (bu_str_false(dir))
 	    return NULL;
 
-	dir = bu_file_realpath(dir, cache->dir);
+	rdir = bu_file_realpath(dir, NULL);
+	dir = rdir;
+	bu_strlcpy(cache->dir, rdir, MAXPATHLEN);
     } else {
 	/* LIBRT_CACHE is either set-and-empty or unset.  Default is on. */
 	dir = bu_dir(cache->dir, MAXPATHLEN, BU_DIR_CACHE, ".rt", NULL);
     }
 
-    if (!cache_init(cache))
+    if (!cache_init(cache)) {
+	if (rdir) {
+	    bu_free(rdir, "rdir");
+	}
 	return NULL;
+    }
 
     CACHE_DEBUG("++ Opening cache at %s\n", dir);
 
     format = cache_format(cache);
-    if (format < 0)
+    if (format < 0) {
+	if (rdir) {
+	    bu_free(rdir, "rdir");
+	}
 	return NULL;
-    else if (format == 0) {
+    } else if (format == 0) {
 	struct bu_vls path = BU_VLS_INIT_ZERO;
 	int ret;
 
@@ -838,11 +848,19 @@ rt_cache_open(void)
 	CACHE_LOG("      Delete or move folder to enable caching with this version.\n");
     }
 
-    if (format != CACHE_FORMAT)
+    if (format != CACHE_FORMAT) {
+	if (rdir) {
+	    bu_free(rdir, "rdir");
+	}
 	return NULL;
+    }
 
     BU_GET(result, struct rt_cache);
     *result = CACHE; /* struct copy */
+
+    if (rdir) {
+	bu_free(rdir, "rdir");
+    }
 
     return result;
 }
