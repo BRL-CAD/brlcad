@@ -1,4 +1,31 @@
 blob
+data 826
+dnl	This file is an input file used by the GNU "autoconf" program to
+dnl	generate the file "configure", which is run during [incr Tcl]
+dnl installation to configure the system for the local environment.
+
+AC_INIT(itcl/generic/itcl.h)
+# RCS: $Id: configure.in 19760 2000-12-06 21:35:20Z bparker $
+
+AC_CONFIG_AUX_DIR(config)
+AC_PREREQ(2.0)
+
+# -----------------------------------------------------------------------
+#
+#   Set up a new default --prefix.  If a previous installation of
+#   [incr Tcl] can be found searching $PATH use that directory.
+#
+# -----------------------------------------------------------------------
+
+AC_PREFIX_DEFAULT(/usr/local)
+AC_PREFIX_PROGRAM(itclsh)
+
+AC_CONFIG_SUBDIRS(itcl itk iwidgets2.2.0 iwidgets3.0.0)
+
+
+AC_OUTPUT(Makefile,
+	chmod +x ${srcdir}/config/install-sh ${srcdir}/config/mkinstalldirs)
+blob
 data 1129
 // SCCS: @(#) tcl.rc 1.20 96/09/12 14:57:51
 //
@@ -3031,3 +3058,12 @@ M 100644 67b9ba816c137afb7e9fd322a14eabf32b3c1ce9 libtk8.3/tests/textIndex.test
 M 100644 aaa55ed0ea6cc86e781ef4769125d094822879fa libtk8.3/tests/option.test
 M 100644 e3d15ea55299758127821216cccfd02ff73e0a3a libtk8.3/tests/winWm.test
 M 100644 7676da2410d77b50717ca77c284aea8e43b6f022 libtk8.3/tests/oldpack.test
+M 100644 30b635bc7ce3aca7d8056dc58cd37b609a69c630 libitcl3.2/CHANGES
+M 100755 a7e5b5dbf2aaa4ce400976a97d24f1babbc024b1 libitcl3.2/configure
+M 100644 476abab33546e775481b4ea2d3b33c932c3d8a9c libitcl3.2/configure.in
+M 100644 3474a6466e2b641d5654e2739fc417f688229f99 libitcl3.2/doc/README
+M 100644 bf932cb9dd79085e9c1dfb8d8b9c5dfbf525483e libitcl3.2/config/config.sub
+M 100644 62186fd166011a4317dc68fbe4d5ee47fac81348 libitcl3.2/config/config.guess
+M 100755 95d784d7cf68b3512b6832172530abd90709c911 libitcl3.2/config/install-sh
+M 100755 0801ec2c96612d4502d7ca321a3585b013b50397 libitcl3.2/config/mkinstalldirs
+M 100755 e0a9d4b69275dc8dee55998b2cffa2f65407e83b libitcl3.2/config/installFile.tcl
