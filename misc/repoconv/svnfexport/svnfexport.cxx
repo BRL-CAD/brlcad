@@ -19,39 +19,66 @@ load_author_map(const char *f)
     }
 }
 
+int get_starting_rev()
+{
+    struct stat buffer;
+    if (stat("current_rev.txt", &buffer)) {
+	return 29886;
+    }
+    std::ifstream afile("current_rev.txt");
+    std::string line;
+    std::getline(afile, line);
+    return std::stoi(line);
+}
+void update_starting_rev(int rev)
+{
+    std::ofstream ofile("current_rev.txt");
+    ofile << rev;
+    ofile.close();
+}
+
 int main(int argc, const char **argv)
 {
     std::string git_setup = std::string("rm -rf cvs_git_working && cp -r cvs_git cvs_git_working");
     std::string cleanup_cmd = std::string("rm -rf cvs_git_working");
 
-    struct stat buffer;
     int i = 0;
     if (argc < 3) {
 	std::cerr << "svnfexport dumpfile author_map\n";
 	return 1;
     }
 
-    starting_rev = 29886;
-    int processed_rev = starting_rev;
-    int max_rev = 74000;
-    for (i = starting_rev+1; i < max_rev; i++) {
-	std::string srfile = std::to_string(i) + std::string(".fi");
-	if (!stat(srfile.c_str(), &buffer)) {
-	    processed_rev = i;
-	}
+    starting_rev = get_starting_rev();
+
+    if (starting_rev == 29886) {
+	 std::string git_sync_1 = std::string("cd cvs_git && cat ../custom/r29886_cvs_svn_trunk_sync.fi | git fast-import && cd ..");
+	/* Apply sync fast imports */
+	 if (std::system(git_sync_1.c_str())) {
+	     std::cerr << "Initial trunk sync failed!\n";
+	     exit(1);
+	 }
+	 std::string git_sync_2 = std::string("cd cvs_git && cat ../custom/r29886_cvs_svn_rel-5-1-branch_sync.fi | git fast-import && cd ..");
+    	 if (std::system(git_sync_2.c_str())) {
+	     std::cerr << "Initial rel-5-1-branch sync failed!\n";
+	     exit(1);
+	 }
     }
-    starting_rev = processed_rev;
 
     std::cout << "Starting by verifying revision " << starting_rev << "\n";
 
     //starting_rev = 36000;
 
     // Make sure our starting point is sound
-    std::system(git_setup.c_str());
+    if (std::system(git_setup.c_str())) {
+	std::cout << "git setup failed!\n";
+	exit(1);
+    }
     verify_repos(starting_rev, std::string("trunk"), std::string("master"));
     verify_repos(starting_rev, std::string("STABLE"), std::string("STABLE"));
     verify_repos(starting_rev, std::string("rel-5-1-branch"), std::string("rel-5-1-branch"));
-    std::system(cleanup_cmd.c_str());
+    if (std::system(cleanup_cmd.c_str())) {
+	std::cout << "git cleanup failed!\n";
+    }
 
 
     /* Populate valid_projects */
@@ -92,6 +119,7 @@ int main(int argc, const char **argv)
     for (i = starting_rev+1; i < 40000; i++) {
 	rev_fast_export(infile, i);
 	get_rev_sha1s(i);
+	update_starting_rev(i);
     }
 
     return 0;

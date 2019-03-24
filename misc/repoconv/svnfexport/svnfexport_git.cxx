@@ -114,7 +114,10 @@ void get_rev_sha1s(long int rev)
 	std::string line;
 	std::string branch = *b_it;
 	std::string git_sha1_cmd = std::string("cd cvs_git && git show-ref ") + branch + std::string(" > ../sha1.txt && cd ..");
-	std::system(git_sha1_cmd.c_str());
+	if (std::system(git_sha1_cmd.c_str())) {
+	    std::cout << "git_sha1_cmd failed!\n";
+	    exit(1);
+	}
 	std::ifstream hfile("sha1.txt");
 	if (!hfile.good()) continue;
 	std::getline(hfile, line);
@@ -564,8 +567,11 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 
     if (stat(fi_file.c_str(), &buffer) == 0) {
 	// If we have a hand-crafted import file for this revision, use it
-	std::string git_fi = std::string("cd cvs_git_working && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
-	std::system(git_setup.c_str());
+	std::string git_fi = std::string("rm -rf cvs_git_working && cp -r cvs_git cvs_git_working cd cvs_git_working && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
+	if (std::system(git_setup.c_str())) {
+	    std::cout << "Git setup failed!\n";
+	    exit(1);
+	}
 	if (std::system(git_fi.c_str())) {
 	    std::string failed_file = std::string("failed-") + fi_file;
 	    std::cout << "Fatal - could not apply fi file for revision " << rev_num << "\n";
@@ -575,8 +581,14 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 
 	verify_repos(rev.revision_number, rbranch, rbranch);
 
-	std::system(swap_cmd.c_str());
-	std::system(cleanup_cmd.c_str());
+	if (std::system(swap_cmd.c_str())) {
+	    std::cerr << "git archive swap failed!\n";
+	    exit(1);
+	}
+	if (std::system(cleanup_cmd.c_str())) {
+	    std::cerr << "git cleanup failed!\n";
+	    exit(1);
+	}
 
 	return;
     }
@@ -640,27 +652,30 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	}
 
 	std::ofstream outfile(fi_file.c_str(), std::ios::out | std::ios::binary);
-	std::system(git_setup.c_str());
+	if (std::system(git_setup.c_str())) {
+	    std::cerr << "git setup failed!\n";
+	    exit(1);
+	}
 	full_sync_commit(outfile, rev, bsrc, bdest);
 	outfile.close();
 
 	if (rev.revision_number == 36633 || rev.revision_number == 39465) {
+
 	    verify_repos(rev.revision_number, std::string("dmtogl"), std::string("dmtogl"));
 
-	    std::system(swap_cmd.c_str());
-	    std::system(cleanup_cmd.c_str());
-
-
 	} else {
-
-	    std::system(swap_cmd.c_str());
-	    std::system(cleanup_cmd.c_str());
 
 	    verify_repos(rev.revision_number, std::string("STABLE"), std::string("STABLE"));
 	}
 
-	std::system(swap_cmd.c_str());
-	std::system(cleanup_cmd.c_str());
+	if (std::system(swap_cmd.c_str())) {
+	    std::cerr << "git archive swap failed!\n";
+	    exit(1);
+	}
+	if (std::system(cleanup_cmd.c_str())) {
+	    std::cerr << "git cleanup failed!\n";
+	    exit(1);
+	}
 
 	return;
     }
@@ -668,20 +683,32 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
     if (rebuild_revs.find(rev.revision_number) != rebuild_revs.end()) {
 	std::cout << "Revision " << rev.revision_number << " references non-current SVN info, needs special handling\n";
 	std::ofstream outfile(fi_file.c_str(), std::ios::out | std::ios::binary);
-	std::system(git_setup.c_str());
+	if (std::system(git_setup.c_str())) {
+	    std::cerr << "git setup failed\n";
+	    exit(1);
+	}
 	old_references_commit(infile, outfile, rev, rbranch);
 	outfile.close();
 
 	verify_repos(rev.revision_number, rbranch, rbranch);
 
-	std::system(swap_cmd.c_str());
-	std::system(cleanup_cmd.c_str());
+	if (std::system(swap_cmd.c_str())) {
+	    std::cerr << "git archive swap failed!\n";
+	    exit(1);
+	}
+	if (std::system(cleanup_cmd.c_str())) {
+	    std::cerr << "git cleanup failed!\n";
+	    exit(1);
+	}
 
 	return;
     }
 
     std::ofstream outfile(fi_file.c_str(), std::ios::out | std::ios::binary);
-    std::system(git_setup.c_str());
+    if (std::system(git_setup.c_str())) {
+	std::cerr << "git setup failed\n";
+	exit(1);
+    }
 
     for (size_t n = 0; n != rev.nodes.size(); n++) {
 	struct svn_node &node = rev.nodes[n];
@@ -818,21 +845,39 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	outfile.close();
 	if (rev.revision_number % 10 == 0 || rbranch != std::string("master")) {
 	    verify_repos(rev.revision_number, rbranch, rbranch);
+	    if (std::system(swap_cmd.c_str())) {
+		std::cerr << "git archive swap failed!\n";
+		exit(1);
+	    }
+	    if (std::system(cleanup_cmd.c_str())) {
+		std::cerr << "git cleanup failed!\n";
+		exit(1);
+	    }
+
 	} else {
 	    // Not verifying this one - just apply the fast import file and go
 	    std::string cleanup_cmd = std::string("rm -rf cvs_git_working");
 	    std::string swap_cmd = std::string("rm -rf cvs_git && cp -r cvs_git_working cvs_git");
 	    std::string git_setup = std::string("rm -rf cvs_git_working && cp -r cvs_git cvs_git_working");
 	    std::string git_fi = std::string("cd cvs_git_working && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
-	    std::system(git_setup.c_str());
+	    if (std::system(git_setup.c_str())) {
+		std::cerr << "git setup failed!\n";
+		exit(1);
+	    }
 	    if (std::system(git_fi.c_str())) {
 		std::string failed_file = std::string("failed-") + fi_file;
 		std::cout << "Fatal - could not apply fi file for revision " << rev.revision_number << "\n";
 		rename(fi_file.c_str(), failed_file.c_str());
 		exit(1);
 	    }
-	    std::system(swap_cmd.c_str());
-	    std::system(cleanup_cmd.c_str());
+	    if (std::system(swap_cmd.c_str())) {
+		std::cerr << "git archive swap failed!\n";
+		exit(1);
+	    }
+	    if (std::system(cleanup_cmd.c_str())) {
+		std::cerr << "git cleanup failed!\n";
+		exit(1);
+	    }
 	}
 
     } else {
@@ -844,8 +889,6 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	remove(fi_file.c_str());
     }
 
-    std::system(swap_cmd.c_str());
-    std::system(cleanup_cmd.c_str());
 }
 
 
@@ -853,7 +896,10 @@ void
 load_branch_head_sha1s()
 {
     std::string git_sha1_heads_cmd = std::string("rm -f brlcad_cvs_git_heads_sha1.txt && cd cvs_git && git show-ref --heads --tags > ../brlcad_cvs_git_heads_sha1.txt && cd ..");
-    std::system(git_sha1_heads_cmd.c_str());
+    if (std::system(git_sha1_heads_cmd.c_str())) {
+	std::cerr << "git_sha1_heads_cmd failed\n";
+	exit(1);
+    }
     std::ifstream hfile("brlcad_cvs_git_heads_sha1.txt");
     if (!hfile.good()) exit(-1);
     std::string line;
@@ -873,7 +919,10 @@ void
 load_blob_sha1s()
 {
     std::string git_sha1_heads_cmd = std::string("rm -f brlcad_cvs_git_all_blob_sha1.txt && cd cvs_git && git rev-list --objects --all | git cat-file --batch-check='%(objectname) %(objecttype) %(rest)' | grep '^[^ ]* blob' | cut -d\" \" -f1,3- > ../brlcad_cvs_git_all_blob_sha1.txt && echo \"e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 src/other/tkhtml3/AUTHORS\n\" >> ../brlcad_cvs_git_heads_sha1.txt && cd ..");
-    std::system(git_sha1_heads_cmd.c_str());
+    if (std::system(git_sha1_heads_cmd.c_str())) {
+	std::cout << "git load blobs failed\n";
+	exit(1);
+    }
     std::ifstream bfile("brlcad_cvs_git_all_blob_sha1.txt");
     if (!bfile.good()) exit(-1);
     std::string line;

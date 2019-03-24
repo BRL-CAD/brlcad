@@ -126,9 +126,18 @@ int verify_repos(long int rev, std::string branch_svn, std::string branch_git)
     }
     std::string repo_diff = std::string("diff -qrw -I '\\$Id' -I '\\$Revision' -I'\\$Header' -I'$Source' -I'$Date' -I'$Log' -I'$Locker' --exclude \".cvsignore\" --exclude \".gitignore\" --exclude \"terra.dsp\" --exclude \".git\" --exclude \".svn\" brlcad_svn_checkout brlcad_git_checkout");
     std::cout << "Verifying r" << rev << ", branch " << branch_svn << "\n";
-    std::system(cleanup_cmd.c_str());
-    std::system(svn_cmd.c_str());
-    std::system(svn_emptydir_rm.c_str());
+    if (std::system(cleanup_cmd.c_str())) {
+	std::cerr << "verify cleanup failed!\n";
+	exit(1);
+    }
+    if (std::system(svn_cmd.c_str())) {
+	std::cerr << "svn checkout failed!\n";
+	exit(1);
+    }
+    if (std::system(svn_emptydir_rm.c_str())) {
+	std::cerr << "svn emptdydir remove failed!\n";
+	exit(1);
+    }
     if (rev > starting_rev) {
 	struct stat buffer;
 	std::string fi_file = std::to_string(rev) + std::string(".fi");
@@ -142,13 +151,19 @@ int verify_repos(long int rev, std::string branch_svn, std::string branch_git)
 	    }
 	}
     }
-    std::system(git_clone.c_str());
+    if (std::system(git_clone.c_str())) {
+	std::cerr << "git clone failed!\n";
+	exit(1);
+    }
     int diff_ret = std::system(repo_diff.c_str());
     if (diff_ret) {
         std::cout << "diff test failed, r" << rev << ", branch " << branch_svn << "\n";
         exit(1);
     }
-    std::system(cleanup_cmd.c_str());
+    if (std::system(cleanup_cmd.c_str())) {
+	std::cerr << "verify cleanup failed!\n";
+	exit(1);
+    }
     return 0;
 }
 
