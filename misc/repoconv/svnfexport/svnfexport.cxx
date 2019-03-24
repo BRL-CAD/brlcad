@@ -21,6 +21,9 @@ load_author_map(const char *f)
 
 int main(int argc, const char **argv)
 {
+    std::string git_setup = std::string("rm -rf cvs_git_working && cp -r cvs_git cvs_git_working");
+    std::string cleanup_cmd = std::string("rm -rf cvs_git_working");
+
     struct stat buffer;
     int i = 0;
     if (argc < 3) {
@@ -44,8 +47,12 @@ int main(int argc, const char **argv)
     //starting_rev = 36000;
 
     // Make sure our starting point is sound
+    std::system(git_setup.c_str());
     verify_repos(starting_rev, std::string("trunk"), std::string("master"));
     verify_repos(starting_rev, std::string("STABLE"), std::string("STABLE"));
+    verify_repos(starting_rev, std::string("rel-5-1-branch"), std::string("rel-5-1-branch"));
+    std::system(cleanup_cmd.c_str());
+
 
     /* Populate valid_projects */
     valid_projects.insert(std::string("brlcad"));

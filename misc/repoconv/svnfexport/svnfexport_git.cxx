@@ -531,7 +531,9 @@ void standard_commit(std::ofstream &outfile, struct svn_revision &rev, std::stri
 void rev_fast_export(std::ifstream &infile, long int rev_num)
 {
     struct stat buffer;
-
+    std::string cleanup_cmd = std::string("rm -rf cvs_git_working");
+    std::string swap_cmd = std::string("rm -rf cvs_git && cp -r cvs_git_working cvs_git");
+    std::string git_setup = std::string("rm -rf cvs_git_working && cp -r cvs_git cvs_git_working");
     std::string fi_file = std::string("custom/") + std::to_string(rev_num) + std::string(".fi");
 
 
@@ -562,9 +564,6 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 
     if (stat(fi_file.c_str(), &buffer) == 0) {
 	// If we have a hand-crafted import file for this revision, use it
-	std::string cleanup_cmd = std::string("rm -rf cvs_git_working");
-	std::string swap_cmd = std::string("rm -rf cvs_git && cp -r cvs_git_working cvs_git");
-	std::string git_setup = std::string("rm -rf cvs_git_working && cp -r cvs_git cvs_git_working");
 	std::string git_fi = std::string("cd cvs_git_working && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
 	std::system(git_setup.c_str());
 	if (std::system(git_fi.c_str())) {
@@ -573,10 +572,11 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	    rename(fi_file.c_str(), failed_file.c_str());
 	    exit(1);
 	}
-	std::system(swap_cmd.c_str());
-	std::system(cleanup_cmd.c_str());
 
 	verify_repos(rev.revision_number, rbranch, rbranch);
+
+	std::system(swap_cmd.c_str());
+	std::system(cleanup_cmd.c_str());
 
 	return;
     }
@@ -640,29 +640,48 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	}
 
 	std::ofstream outfile(fi_file.c_str(), std::ios::out | std::ios::binary);
+	std::system(git_setup.c_str());
 	full_sync_commit(outfile, rev, bsrc, bdest);
 	outfile.close();
 
 	if (rev.revision_number == 36633 || rev.revision_number == 39465) {
 	    verify_repos(rev.revision_number, std::string("dmtogl"), std::string("dmtogl"));
+
+	    std::system(swap_cmd.c_str());
+	    std::system(cleanup_cmd.c_str());
+
+
 	} else {
+
+	    std::system(swap_cmd.c_str());
+	    std::system(cleanup_cmd.c_str());
+
 	    verify_repos(rev.revision_number, std::string("STABLE"), std::string("STABLE"));
 	}
+
+	std::system(swap_cmd.c_str());
+	std::system(cleanup_cmd.c_str());
+
 	return;
     }
 
     if (rebuild_revs.find(rev.revision_number) != rebuild_revs.end()) {
 	std::cout << "Revision " << rev.revision_number << " references non-current SVN info, needs special handling\n";
 	std::ofstream outfile(fi_file.c_str(), std::ios::out | std::ios::binary);
+	std::system(git_setup.c_str());
 	old_references_commit(infile, outfile, rev, rbranch);
 	outfile.close();
 
 	verify_repos(rev.revision_number, rbranch, rbranch);
 
+	std::system(swap_cmd.c_str());
+	std::system(cleanup_cmd.c_str());
+
 	return;
     }
 
     std::ofstream outfile(fi_file.c_str(), std::ios::out | std::ios::binary);
+    std::system(git_setup.c_str());
 
     for (size_t n = 0; n != rev.nodes.size(); n++) {
 	struct svn_node &node = rev.nodes[n];
@@ -825,6 +844,8 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	remove(fi_file.c_str());
     }
 
+    std::system(swap_cmd.c_str());
+    std::system(cleanup_cmd.c_str());
 }
 
 

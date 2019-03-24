@@ -110,7 +110,7 @@ std::map<std::pair<std::string,long int>, std::string> rev_to_gsha1;
 
 int verify_repos(long int rev, std::string branch_svn, std::string branch_git)
 {
-    std::string cleanup_cmd = std::string("rm -rf brlcad_svn_checkout cvs_git_working brlcad_git_checkout");
+    std::string cleanup_cmd = std::string("rm -rf brlcad_svn_checkout brlcad_git_checkout");
     std::string svn_cmd;
     if (branch_svn == std::string("trunk") || branch_svn == std::string("master")) {
 	svn_cmd = std::string("svn co -q -r") + std::to_string(rev) + std::string(" file:///home/cyapp/brlcad_repo/repo_dercs/brlcad/trunk brlcad_svn_checkout");
@@ -118,7 +118,6 @@ int verify_repos(long int rev, std::string branch_svn, std::string branch_git)
 	svn_cmd = std::string("svn co -q file:///home/cyapp/brlcad_repo/repo_dercs/brlcad/branches/") + branch_svn + std::string("@") + std::to_string(rev) + std::string(" brlcad_svn_checkout");
     }
     std::string svn_emptydir_rm = std::string("cd brlcad_svn_checkout && find . -type d -empty -print0 |xargs -0 rmdir && cd ..");
-    std::string git_setup = std::string("rm -rf cvs_git_working && cp -r cvs_git cvs_git_working");
     std::string git_clone;
     if (branch_git == std::string("trunk") || branch_git == std::string("master")) {
 	git_clone = std::string("git clone --single-branch --branch master ./cvs_git_working/.git brlcad_git_checkout");
@@ -130,7 +129,6 @@ int verify_repos(long int rev, std::string branch_svn, std::string branch_git)
     std::system(cleanup_cmd.c_str());
     std::system(svn_cmd.c_str());
     std::system(svn_emptydir_rm.c_str());
-    std::system(git_setup.c_str());
     if (rev > starting_rev) {
 	struct stat buffer;
 	std::string fi_file = std::to_string(rev) + std::string(".fi");
@@ -150,8 +148,6 @@ int verify_repos(long int rev, std::string branch_svn, std::string branch_git)
         std::cout << "diff test failed, r" << rev << ", branch " << branch_svn << "\n";
         exit(1);
     }
-    std::string swap_cmd = std::string("rm -rf cvs_git && cp -r cvs_git_working cvs_git");
-    std::system(swap_cmd.c_str());
     std::system(cleanup_cmd.c_str());
     return 0;
 }
