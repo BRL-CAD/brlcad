@@ -284,7 +284,7 @@ buf_strnappend(struct Buf *buf, const char *str, int n)
 struct Buf*
 buf_strappend(struct Buf *buf, const char *str)
 {
-    return buf_strnappend(buf, str, strlen(str));
+  return buf_strnappend(buf, str, (int)strlen(str));
 }
 
 /* appends "#define str def\n" */
