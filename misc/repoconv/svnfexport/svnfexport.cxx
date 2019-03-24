@@ -73,9 +73,9 @@ int main(int argc, const char **argv)
 	std::cout << "git setup failed!\n";
 	exit(1);
     }
-    verify_repos(starting_rev, std::string("trunk"), std::string("master"));
-    verify_repos(starting_rev, std::string("STABLE"), std::string("STABLE"));
-    verify_repos(starting_rev, std::string("rel-5-1-branch"), std::string("rel-5-1-branch"));
+    verify_repos(starting_rev, std::string("trunk"), std::string("master"), 1);
+    verify_repos(starting_rev, std::string("STABLE"), std::string("STABLE"), 1);
+    verify_repos(starting_rev, std::string("rel-5-1-branch"), std::string("rel-5-1-branch"), 1);
     if (std::system(cleanup_cmd.c_str())) {
 	std::cout << "git cleanup failed!\n";
     }

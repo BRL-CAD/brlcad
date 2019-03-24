@@ -108,7 +108,7 @@ std::map<std::string, std::string> tag_mappings;
 
 std::map<std::pair<std::string,long int>, std::string> rev_to_gsha1;
 
-int verify_repos(long int rev, std::string branch_svn, std::string branch_git)
+int verify_repos(long int rev, std::string branch_svn, std::string branch_git, int already_applied)
 {
     std::string cleanup_cmd = std::string("rm -rf brlcad_svn_checkout brlcad_git_checkout");
     std::string svn_cmd;
@@ -142,7 +142,12 @@ int verify_repos(long int rev, std::string branch_svn, std::string branch_git)
 	struct stat buffer;
 	std::string fi_file = std::to_string(rev) + std::string(".fi");
 	if (stat(fi_file.c_str(), &buffer) == 0) {
-	    std::string git_fi = std::string("cd cvs_git_working && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
+	    std::string git_fi;
+	    if (!already_applied) {
+		git_fi = std::string("cd cvs_git_working && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
+	    } else {
+		git_fi = std::string("cd cvs_git_working && git reset --hard HEAD && cd ..");
+	    }
 	    if (std::system(git_fi.c_str())) {
 		std::string failed_file = std::string("failed-") + fi_file;
 		std::cout << "Fatal - could not apply fi file for revision " << rev << "\n";

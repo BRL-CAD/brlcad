@@ -579,7 +579,7 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	    exit(1);
 	}
 
-	verify_repos(rev.revision_number, rbranch, rbranch);
+	verify_repos(rev.revision_number, rbranch, rbranch, 1);
 
 	if (std::system(swap_cmd.c_str())) {
 	    std::cerr << "git archive swap failed!\n";
@@ -661,11 +661,11 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 
 	if (rev.revision_number == 36633 || rev.revision_number == 39465) {
 
-	    verify_repos(rev.revision_number, std::string("dmtogl"), std::string("dmtogl"));
+	    verify_repos(rev.revision_number, std::string("dmtogl"), std::string("dmtogl"), 0);
 
 	} else {
 
-	    verify_repos(rev.revision_number, std::string("STABLE"), std::string("STABLE"));
+	    verify_repos(rev.revision_number, std::string("STABLE"), std::string("STABLE"), 0);
 	}
 
 	if (std::system(swap_cmd.c_str())) {
@@ -690,7 +690,7 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	old_references_commit(infile, outfile, rev, rbranch);
 	outfile.close();
 
-	verify_repos(rev.revision_number, rbranch, rbranch);
+	verify_repos(rev.revision_number, rbranch, rbranch, 0);
 
 	if (std::system(swap_cmd.c_str())) {
 	    std::cerr << "git archive swap failed!\n";
@@ -844,7 +844,7 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 
 	outfile.close();
 	if (rev.revision_number % 10 == 0 || rbranch != std::string("master")) {
-	    verify_repos(rev.revision_number, rbranch, rbranch);
+	    verify_repos(rev.revision_number, rbranch, rbranch, 0);
 	    if (std::system(swap_cmd.c_str())) {
 		std::cerr << "git archive swap failed!\n";
 		exit(1);
