@@ -567,7 +567,7 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 
     if (stat(fi_file.c_str(), &buffer) == 0) {
 	// If we have a hand-crafted import file for this revision, use it
-	std::string git_fi = std::string("rm -rf cvs_git_working && cp -r cvs_git cvs_git_working cd cvs_git_working && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
+	std::string git_fi = std::string("cd cvs_git_working && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
 	if (std::system(git_setup.c_str())) {
 	    std::cout << "Git setup failed!\n";
 	    exit(1);
