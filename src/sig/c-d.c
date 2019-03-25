@@ -52,7 +52,7 @@ main(int argc, char *argv[])
     double obuf[512];
     double *obp;
 
-    int i, num, onum;
+    size_t i, num, onum;
     size_t ret;
 
     fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
@@ -113,7 +113,7 @@ main(int argc, char *argv[])
 	    }
 	}
 	ret = fwrite(&obuf[0], sizeof(obuf[0]), onum, stdout);
-	if (ret != (size_t)onum)
+	if (ret != onum)
 	    perror("fwrite");
     }
     return 0;

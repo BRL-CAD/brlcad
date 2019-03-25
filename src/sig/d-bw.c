@@ -53,7 +53,7 @@ main(int argc, char *argv[])
     double ibuf[512];
     unsigned char obuf[512];
 
-    int i, num;
+    size_t i, num;
     double scale = 1.0;
     double value;
     int clip_high, clip_low;

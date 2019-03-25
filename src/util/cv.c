@@ -43,11 +43,11 @@ e.g., hui is host unsigned int, nl is network (signed) long\n\
 int in_cookie;
 int out_cookie;
 
-int iitem;
-int oitem;
+size_t iitem;
+size_t oitem;
 
-int inbytes;
-int outbytes;
+size_t inbytes;
+size_t outbytes;
 
 FILE *infp;
 FILE *outfp;
@@ -63,8 +63,8 @@ main(int argc, char **argv)
 {
     const char *in_pat;
     const char *out_pat;
-    int m;
-    int n;
+    size_t m;
+    size_t n;
 
     if (argc < 3 || argc > 5) {
 	fputs(usage, stderr);
@@ -135,13 +135,13 @@ main(int argc, char **argv)
 	    break;
 	m = bu_cv_w_cookie(obuf, out_cookie, outbytes, ibuf, in_cookie, n);
 	if (m != n) {
-	    fprintf(stderr, "cv: bu_cv_w_cookie() ret=%d, count=%d\n", m, n);
+	    bu_log("cv: bu_cv_w_cookie() ret=%zu, count=%zu\n", m, n);
 	    return 4;
 	}
 	m = fwrite(obuf, oitem, n, outfp);
 	if (m != n) {
 	    perror("fwrite");
-	    fprintf(stderr, "cv: fwrite() ret=%d, count=%d\n", m, n);
+	    bu_log("cv: fwrite() ret=%zu, count=%zu\n", m, n);
 	    return 5;
 	}
     }

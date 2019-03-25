@@ -675,7 +675,7 @@ main(int ac, char *av[])
     int arg_count;
     unsigned short *buf;
     int in_cookie, out_cookie;
-    int count;
+    size_t count;
     size_t ret;
 
     /* function to call to generate the terrain.  Default noise pattern is fbm */
