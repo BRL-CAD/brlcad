@@ -37,11 +37,13 @@ BRLCAD_ADDEXEC(db5_size db5_size.c "librt" TEST)
 # datum testing
 BRLCAD_ADDEXEC(rt_datum rt_datum.c "librt" TEST)
 
+
+BRLCAD_ADDEXEC(rt_cache cache.cxx "librt" TEST)
+
 set(distcheck_files
   CMakeLists.txt
   arb_intersect.g
   brep_boolean_tests.g
-  cache.cxx
   nurbs_surfaces.g
   extreme_ssi_test.g
   binary_attribute.c

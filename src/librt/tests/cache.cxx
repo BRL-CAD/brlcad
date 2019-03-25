@@ -30,39 +30,11 @@
 #include "bu/str.h"
 #include "raytrace.h"
 
-/* TODO - basic single object serial API test.  Check that the cache object
- * is created, that only one object is created, that rt_shootray
- * succeeds both after initial creation and in a subsequent cache
- * read. */
+const char *RTC_PREFIX = "rt_cache_test";
 
-/* TODO - basic single object parallel API test.  Check that the cache object
- * is created, that only one object is created, that rt_shootray
- * succeeds both after initial creation and in a subsequent cache
- * read. Shouldn't do much different than the serial API, but should work too. */
-
-/* TODO - basic multi object, same content serial test.  Check that the cache object
- * is created, that only one object is created, that rt_shootray succeeds both
- * after initial creation and in a subsequent cache read. */
-
-/* TODO - basic multi object, same content parallel test.  Check that the cache object
- * is created, that only one object is created, that rt_shootray succeeds both
- * after initial creation and in a subsequent cache read. */
-
-/* TODO - basic multi object, different content serial test.  Check that the cache objects
- * are created, that the correct number of objects are created, that rt_shootray succeeds both
- * after initial creation and in a subsequent cache read. */
-
-/* TODO - basic multi object, different content parallel test.  Check that the cache objects
- * are created, that the correct number of objects are created, that rt_shootray succeeds both
- * after initial creation and in a subsequent cache read. */
-
-
-
-void
-add_brep_sph(struct db_i *dbip, const char *name, point_t *v, double r)
+static void
+add_brep_sph(struct db_i *dbip, const char *name, point_t *v, double r, long int test_num)
 {
-    struct bu_external ext;
-
     struct directory *dp;
     struct rt_db_internal intern;
     ON_Sphere sph(*v, r);
@@ -81,17 +53,17 @@ add_brep_sph(struct db_i *dbip, const char *name, point_t *v, double r)
     dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
     if (dp == RT_DIR_NULL) {
 	rt_db_free_internal(&intern);
-	bu_exit(1, "Error: Cannot add %s to directory\n", name);
+	bu_exit(1, "Test %ld: cannot add %s to directory\n", test_num, name);
     }
     if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
 	rt_db_free_internal(&intern);
-	bu_exit(1, "Error: Database write error, aborting\n");
+	bu_exit(1, "Test %ld: database write error, aborting\n", test_num);
     }
     rt_db_free_internal(&intern);
 }
 
-void
-cp_brep_sph(struct db_i *dbip, const char *oname, const char *nname)
+static void
+cp_brep_sph(struct db_i *dbip, const char *oname, const char *nname, long int test_num)
 {
     struct directory *odp, *ndp;
     struct bu_external external;
@@ -99,11 +71,11 @@ cp_brep_sph(struct db_i *dbip, const char *oname, const char *nname)
 
     odp = db_lookup(dbip, oname, LOOKUP_QUIET);
     if (odp == RT_DIR_NULL) {
-	bu_exit(1, "Error: Cannot copy %s - object not found\n", oname);
+	bu_exit(1, "Test %ld: cannot copy %s - object not found\n", test_num, oname);
     }
 
     if (db_get_external(&external, odp, dbip)) {
-	bu_exit(1, "Error: db_get_external cannot get bu_external form of %s\n", oname);
+	bu_exit(1, "Test %ld: db_get_external cannot get bu_external form of %s\n", test_num, oname);
     }
 
     ndp = db_diradd(dbip, nname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&idb_type);
@@ -111,103 +83,456 @@ cp_brep_sph(struct db_i *dbip, const char *oname, const char *nname)
     ndp->d_flags = odp->d_flags;
 
     if (db_put_external(&external, ndp, dbip) < 0) {
-	bu_exit(1, "Error: db_put_external cannot write %s to  %s\n", oname, nname);
+	bu_exit(1, "Test %ld: db_put_external cannot write %s to  %s\n", test_num, oname, nname);
     }
 
     bu_free_external(&external);
 }
 
-int
-main(int UNUSED(argc), char *argv[])
+/* Make a comb with all the objects in obj_argv */
+static void
+add_comb(struct db_i *dbip, const char *name, int obj_argc, const char **obj_argv, long int test_num)
 {
-    struct application ap;
-    struct rt_i *rtip;
+    int i;
+    struct rt_db_internal intern;
+    struct directory *dp;
+    struct rt_comb_internal *comb;
+    struct rt_tree_array *tree_list;
+    RT_DB_INTERNAL_INIT(&intern);
+    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern.idb_meth = &OBJ[ID_COMBINATION];
+    intern.idb_type = ID_COMBINATION;
+    BU_ALLOC(intern.idb_ptr, struct rt_comb_internal);
+    comb = (struct rt_comb_internal *)intern.idb_ptr;
+    RT_COMB_INTERNAL_INIT(comb);
+    tree_list = (struct rt_tree_array *)bu_calloc(obj_argc, sizeof(struct rt_tree_array), "tree list");
+    for (i = 0; i < obj_argc; i++) {
+	union tree *tp;
+	BU_GET(tp, union tree);
+	RT_TREE_INIT(tp);
+	tree_list[i].tl_op = OP_UNION;
+	tree_list[i].tl_tree = tp;
+	tp->tr_l.tl_op = OP_DB_LEAF;
+	tp->tr_l.tl_name = bu_strdup(obj_argv[i]);
+	tp->tr_l.tl_mat = (matp_t)NULL;
+
+    }
+    comb->tree = (union tree *)db_mkgift_tree(tree_list, obj_argc, &rt_uniresource);
+    dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_COMB, (void *)&intern.idb_type);
+    if (dp == RT_DIR_NULL) {
+	rt_db_free_internal(&intern);
+	bu_exit(1, "Test %ld: cannot add %s to directory\n", test_num, name);
+    }
+    if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
+	rt_db_free_internal(&intern);
+	bu_exit(1, "Test %ld: Database write error creating comb, aborting\n", test_num);
+    }
+}
+
+static void
+cache_cleanup(struct bu_vls *cache_dir)
+{
+    struct bu_vls wpath = BU_VLS_INIT_ZERO;
+
+    /* Zap the format file first (that's the easy one) */
+    bu_vls_sprintf(&wpath, "%s/format", bu_vls_cstr(cache_dir));
+    bu_file_delete(bu_vls_cstr(&wpath));
+
+    /* Now, we need to find and eliminate any cache objects */
+    char **obj_dirs = NULL;
+    bu_vls_sprintf(&wpath, "%s/objects", bu_vls_cstr(cache_dir));
+    size_t objdir_cnt = bu_file_list(bu_vls_cstr(&wpath), "[a-zA-z0-9]*", &obj_dirs);
+    for (size_t i = 0; i < objdir_cnt; i++) {
+	/* Find and remove all files in the obj dir */
+	char **objs = NULL;
+	bu_vls_sprintf(&wpath, "%s/objects/%s", bu_vls_cstr(cache_dir), obj_dirs[i]);
+	size_t objs_cnt = bu_file_list(bu_vls_cstr(&wpath), "[a-zA-z0-9]*", &objs);
+	for (size_t j = 0; j < objs_cnt; j++) {
+	    bu_vls_sprintf(&wpath, "%s/objects/%s/%s", bu_vls_cstr(cache_dir), obj_dirs[i], objs[j]);
+	    if (!bu_file_delete(bu_vls_cstr(&wpath))) {
+		bu_exit(1, "Unable to remove the object %s\n", bu_vls_cstr(&wpath));
+	    }
+	}
+	bu_argv_free(objs_cnt, objs);
+
+	/* Emptied the dir, now remove it */
+	bu_vls_sprintf(&wpath, "%s/objects/%s", bu_vls_cstr(cache_dir), obj_dirs[i]);
+	if (!bu_file_delete(bu_vls_cstr(&wpath))) {
+	    bu_exit(1, "Unable to remove the directory %s\n", bu_vls_cstr(&wpath));
+	}
+    }
+    bu_argv_free(objdir_cnt, obj_dirs);
+
+    /* That should be everything - remove the objects dir and the cache dir */
+    bu_vls_sprintf(&wpath, "%s/objects", bu_vls_cstr(cache_dir));
+    if (!bu_file_delete(bu_vls_cstr(&wpath))) {
+	bu_exit(1, "Unable to remove the directory %s\n", bu_vls_cstr(&wpath));
+    }
+    if (!bu_file_delete(bu_vls_cstr(cache_dir))) {
+	bu_exit(1, "Unable to remove the directory %s\n", bu_vls_cstr(&wpath));
+    }
+
+    bu_vls_free(&wpath);
+}
+
+static struct db_i *
+create_test_g_file(long int test_num, const char *gfile)
+{
     struct db_i *dbip = DBI_NULL;
-    point_t v = VINIT_ZERO;
-    const char *gfile = "librt_cache_test_1.g";
-    const char *cache_dir = "rt_test_cache_dir";
 
-    bu_setenv("LIBRT_CACHE", bu_dir(NULL, 0, BU_DIR_CURR, cache_dir, NULL), 1);
-
-    if (bu_file_exists(getenv("LIBRT_CACHE"), NULL)) {
-	bu_exit(1, "Stale test cache: directory %s exists\n", getenv("LIBRT_CACHE"));
+    if (bu_file_exists(gfile, NULL)) {
+	bu_exit(1, "Test %ld: Stale .g file %s exists\n", test_num, gfile);
     }
 
     dbip = db_create(gfile, 5);
 
     if (dbip == DBI_NULL) {
-	bu_exit(1, "Unable to create test file %s\n", gfile);
+	bu_exit(1, "Test %ld: unable to create test file %s\n", test_num, gfile);
     }
 
     RT_CK_DBI(dbip);
-    rt_init_resource(&rt_uniresource, 0, NULL);
 
-    add_brep_sph(dbip, "0", &v, 1);
-    cp_brep_sph(dbip, "0", "1");
+    return dbip;
+}
+
+static struct rt_i *
+build_rtip(long int test_num, struct bu_vls *gfile, const char *objname, int stage_num)
+{
+    struct rt_i *rtip = RTI_NULL;
+
+    rtip = rt_dirbuild(bu_vls_cstr(gfile), NULL, 0);
+
+    if (rtip == RTI_NULL) {
+	bu_exit(1, "Test %ld: failed to rt_dirbuild in stage %d\n", test_num, stage_num);
+    }
+
+    if (rt_gettree(rtip, objname) < 0) {
+	bu_exit(1, "Test %ld: rt_getree in stage %d failed\n", test_num, stage_num);
+    }
+
+    return rtip;
+}
+
+/* Basic single object serial API test.  Check that the cache object is
+ * created, that only one object is created, that rt_shootray succeeds both
+ * after initial creation and in a subsequent cache read. */
+static int
+test_cache_single_object_serial(long int test_num)
+{
+    struct bu_vls cache_dir = BU_VLS_INIT_ZERO;
+    struct bu_vls gfile = BU_VLS_INIT_ZERO;
+    struct rt_i *rtip_stage_1, *rtip_stage_2;
+    struct db_i *dbip;
+    const char *oname = "sph.s";
+    point_t v = VINIT_ZERO;
+
+    bu_vls_sprintf(&cache_dir, "%s_dir_%ld_1", RTC_PREFIX, test_num);
+    bu_vls_sprintf(&gfile, "%s_%ld_1.g", RTC_PREFIX, test_num);
+
+    bu_setenv("LIBRT_CACHE", bu_dir(NULL, 0, BU_DIR_CURR, bu_vls_cstr(&cache_dir), NULL), 1);
+
+    if (bu_file_exists(getenv("LIBRT_CACHE"), NULL)) {
+	bu_exit(1, "Test %ld: Stale test cache directory %s exists\n", test_num, getenv("LIBRT_CACHE"));
+    }
+
+    dbip = create_test_g_file(test_num, bu_vls_cstr(&gfile));
+
+    // Unit sphere at the origin
+    add_brep_sph(dbip, "sph.s", &v, 1, test_num);
 
     db_close(dbip);
 
-    rtip = rt_dirbuild(gfile, NULL, 0);
-    if (rtip == RTI_NULL) {
-	bu_exit(1, "Failed to rt_dirbuild %s\n", gfile);
+    rtip_stage_1 = build_rtip(test_num, &gfile, oname, 1);
+    rt_prep(rtip_stage_1);
+
+    // TODO - do a shootray to confirm things actually work
+
+    // TODO - confirm there is a file in the cache
+
+    rt_free_rti(rtip_stage_1);
+
+    /*** Now, do it again with the cache in place */
+    rtip_stage_2 = build_rtip(test_num, &gfile, oname, 2);
+    rt_prep(rtip_stage_2);
+
+    // TODO - do a shootray to confirm things actually work
+
+    /* All done - scrub out the temporary cache */
+    cache_cleanup(&cache_dir);
+
+    /* Clear the .g file */
+    bu_file_delete(bu_vls_cstr(&gfile));
+
+    bu_vls_free(&cache_dir);
+    bu_vls_free(&gfile);
+    return 0;
+}
+
+
+/* Basic single object parallel API test.  Check that the cache object is
+ * created, that only one object is created, that rt_shootray succeeds both
+ * after initial creation and in a subsequent cache read. Shouldn't do anything
+ * different than the serial API, but should also work - make sure it does. */
+static int
+test_cache_single_object_parallel(long int test_num)
+{
+    struct bu_vls cache_dir = BU_VLS_INIT_ZERO;
+    struct bu_vls gfile = BU_VLS_INIT_ZERO;
+    struct rt_i *rtip_stage_1, *rtip_stage_2;
+    struct db_i *dbip;
+    const char *oname = "sph.s";
+    point_t v = VINIT_ZERO;
+
+    bu_vls_sprintf(&cache_dir, "%s_dir_%ld_1", RTC_PREFIX, test_num);
+    bu_vls_sprintf(&gfile, "%s_%ld_1.g", RTC_PREFIX, test_num);
+
+    bu_setenv("LIBRT_CACHE", bu_dir(NULL, 0, BU_DIR_CURR, bu_vls_cstr(&cache_dir), NULL), 1);
+
+    if (bu_file_exists(getenv("LIBRT_CACHE"), NULL)) {
+	bu_exit(1, "Test %ld: Stale test cache directory %s exists\n", test_num, getenv("LIBRT_CACHE"));
     }
 
-    if (rt_gettree(rtip, "0") < 0) {
-	bu_exit(1, "rt_gettree failed for object 0\n");
+    dbip = create_test_g_file(test_num, bu_vls_cstr(&gfile));
+
+    // Unit sphere at the origin
+    add_brep_sph(dbip, "sph.s", &v, 1, test_num);
+
+    db_close(dbip);
+
+    rtip_stage_1 = build_rtip(test_num, &gfile, oname, 1);
+    rt_prep_parallel(rtip_stage_1, 1);
+
+    // TODO - do a shootray to confirm things actually work
+
+    // TODO - confirm there is a file in the cache
+
+    rt_free_rti(rtip_stage_1);
+
+    /*** Now, do it again with the cache in place */
+    rtip_stage_2 = build_rtip(test_num, &gfile, oname, 2);
+    rt_prep_parallel(rtip_stage_2, 1);
+
+    // TODO - do a shootray to confirm things actually work
+
+    /* All done - scrub out the temporary cache */
+    cache_cleanup(&cache_dir);
+
+    /* Clear the .g file */
+    bu_file_delete(bu_vls_cstr(&gfile));
+
+    bu_vls_free(&cache_dir);
+    bu_vls_free(&gfile);
+    return 0;
+}
+
+/* Basic multi object, same content serial test.  Check that the cache object
+ * is created, that only one object is created, that rt_shootray succeeds both
+ * after initial creation and in a subsequent cache read. */
+static int
+test_cache_multiple_object_same_content_serial(long int test_num, long int obj_cnt)
+{
+    struct bu_vls cache_dir = BU_VLS_INIT_ZERO;
+    struct bu_vls gfile = BU_VLS_INIT_ZERO;
+    struct rt_i *rtip_stage_1, *rtip_stage_2;
+    struct db_i *dbip;
+    const char *oname_root = "sph_";
+    struct bu_vls cname = BU_VLS_INIT_ZERO;
+    point_t v = VINIT_ZERO;
+    int oc = obj_cnt;
+    char **ov = (char **)bu_calloc(oc+1, sizeof(char  *), "object array");
+
+    bu_vls_sprintf(&cache_dir, "%s_dir_%ld_1", RTC_PREFIX, test_num);
+    bu_vls_sprintf(&gfile, "%s_%ld_1.g", RTC_PREFIX, test_num);
+
+    bu_setenv("LIBRT_CACHE", bu_dir(NULL, 0, BU_DIR_CURR, bu_vls_cstr(&cache_dir), NULL), 1);
+
+    if (bu_file_exists(getenv("LIBRT_CACHE"), NULL)) {
+	bu_exit(1, "Test %ld: stale test cache directory %s exists\n", test_num, getenv("LIBRT_CACHE"));
     }
-#if 0
-    if (rt_gettree(rtip, "1") < 0) {
-	bu_exit(1, "rt_gettree failed for object 1\n");
+
+    dbip = create_test_g_file(test_num, bu_vls_cstr(&gfile));
+
+    // Unit sphere at the origin
+    add_brep_sph(dbip, "sph_0.s", &v, 1, test_num);
+    ov[0] = bu_strdup("sph_0.s");
+
+    for (long int i = 1; i < obj_cnt; i++) {
+	bu_vls_sprintf(&cname, "%s%ld.s", oname_root, i);
+	cp_brep_sph(dbip, ov[0], bu_vls_cstr(&cname), test_num);
+	ov[i] = bu_strdup(bu_vls_cstr(&cname));
     }
-#endif
-    rt_prep_parallel(rtip, 1);
+    bu_vls_sprintf(&cname, "%s%ld.c", oname_root, test_num);
 
-    bu_file_delete("librt_cache_test_1.g");
+    add_comb(dbip, bu_vls_cstr(&cname), oc, (const char **)ov, test_num);
 
-    /**** Cache cleanup ****/
-    {
-	struct bu_vls wpath = BU_VLS_INIT_ZERO;
+    db_close(dbip);
 
-	/* Zap the format file first (that's the easy one) */
-	bu_vls_sprintf(&wpath, "%s/format", getenv("LIBRT_CACHE"));
-	bu_file_delete(bu_vls_cstr(&wpath));
+    for (long int i = 0; i < obj_cnt; i++) {
+	bu_free(ov[i], "free string");
+    }
+    bu_free(ov, "free string array");
+    ov = NULL;
 
-	/* Now, we need to find and eliminate any cache objects */
-	char **obj_dirs = NULL;
-	bu_vls_sprintf(&wpath, "%s/objects", getenv("LIBRT_CACHE"));
-	size_t objdir_cnt = bu_file_list(bu_vls_cstr(&wpath), "[a-zA-z0-9]*", &obj_dirs);
-	for (size_t i = 0; i < objdir_cnt; i++) {
-	    /* Find and remove all files in the obj dir */
-	    char **objs = NULL;
-	    bu_vls_sprintf(&wpath, "%s/objects/%s", getenv("LIBRT_CACHE"), obj_dirs[i]);
-	    size_t objs_cnt = bu_file_list(bu_vls_cstr(&wpath), "[a-zA-z0-9]*", &objs);
-	    for (size_t j = 0; j < objs_cnt; j++) {
-		bu_vls_sprintf(&wpath, "%s/objects/%s/%s", getenv("LIBRT_CACHE"), obj_dirs[i], objs[j]);
-		if (!bu_file_delete(bu_vls_cstr(&wpath))) {
-		    bu_exit(1, "Unable to remove the object %s\n", bu_vls_cstr(&wpath));
-		}
-	    }
-	    bu_argv_free(objs_cnt, objs);
+    rtip_stage_1 = build_rtip(test_num, &gfile, bu_vls_cstr(&cname), 1);
+    rt_prep(rtip_stage_1);
 
-	    /* Emptied the dir, now remove it */
-	    bu_vls_sprintf(&wpath, "%s/objects/%s", getenv("LIBRT_CACHE"), obj_dirs[i]);
-	    if (!bu_file_delete(bu_vls_cstr(&wpath))) {
-		bu_exit(1, "Unable to remove the directory %s\n", bu_vls_cstr(&wpath));
-	    }
-	}
-	bu_argv_free(objdir_cnt, obj_dirs);
+    // TODO - do a shootray to confirm things actually work
 
-	/* That should be everything - remove the objects dir and the cache dir */
-	bu_vls_sprintf(&wpath, "%s/objects", getenv("LIBRT_CACHE"));
-	if (!bu_file_delete(bu_vls_cstr(&wpath))) {
-	    bu_exit(1, "Unable to remove the directory %s\n", bu_vls_cstr(&wpath));
-	}
-	bu_vls_sprintf(&wpath, "%s", getenv("LIBRT_CACHE"));
-	if (!bu_file_delete(bu_vls_cstr(&wpath))) {
-	    bu_exit(1, "Unable to remove the directory %s\n", bu_vls_cstr(&wpath));
-	}
+    // TODO - confirm there is a file in the cache
 
-	bu_vls_free(&wpath);
+    rt_free_rti(rtip_stage_1);
+
+    /*** Now, do it again with the cache in place */
+    rtip_stage_2 = build_rtip(test_num, &gfile, bu_vls_cstr(&cname), 2);
+    rt_prep(rtip_stage_2);
+
+    // TODO - do a shootray to confirm things actually work
+
+    /* All done - scrub out the temporary cache */
+    cache_cleanup(&cache_dir);
+
+    /* Clear the .g file */
+    bu_file_delete(bu_vls_cstr(&gfile));
+
+    bu_vls_free(&cache_dir);
+    bu_vls_free(&gfile);
+    bu_vls_free(&cname);
+    return 0;
+}
+
+/* Basic multi object, same content parallel test.  Check that the cache object
+ * is created, that only one object is created, that rt_shootray succeeds both
+ * after initial creation and in a subsequent cache read. */
+static int
+test_cache_multiple_object_same_content_parallel(long int test_num, long int obj_cnt)
+{
+    struct bu_vls cache_dir = BU_VLS_INIT_ZERO;
+    struct bu_vls gfile = BU_VLS_INIT_ZERO;
+    struct rt_i *rtip_stage_1, *rtip_stage_2;
+    struct db_i *dbip;
+    const char *oname_root = "sph_";
+    struct bu_vls cname = BU_VLS_INIT_ZERO;
+    point_t v = VINIT_ZERO;
+    int oc = obj_cnt;
+    char **ov = (char **)bu_calloc(oc+1, sizeof(char  *), "object array");
+
+    bu_vls_sprintf(&cache_dir, "%s_dir_%ld_1", RTC_PREFIX, test_num);
+    bu_vls_sprintf(&gfile, "%s_%ld_1.g", RTC_PREFIX, test_num);
+
+    bu_setenv("LIBRT_CACHE", bu_dir(NULL, 0, BU_DIR_CURR, bu_vls_cstr(&cache_dir), NULL), 1);
+
+    if (bu_file_exists(getenv("LIBRT_CACHE"), NULL)) {
+	bu_exit(1, "Test %ld: stale test cache directory %s exists\n", test_num, getenv("LIBRT_CACHE"));
+    }
+
+    dbip = create_test_g_file(test_num, bu_vls_cstr(&gfile));
+
+    // Unit sphere at the origin
+    add_brep_sph(dbip, "sph_0.s", &v, 1, test_num);
+    ov[0] = bu_strdup("sph_0.s");
+
+    for (long int i = 1; i < obj_cnt; i++) {
+	bu_vls_sprintf(&cname, "%s%ld.s", oname_root, i);
+	cp_brep_sph(dbip, ov[0], bu_vls_cstr(&cname), test_num);
+	ov[i] = bu_strdup(bu_vls_cstr(&cname));
+    }
+    bu_vls_sprintf(&cname, "%s%ld.c", oname_root, test_num);
+
+    add_comb(dbip, bu_vls_cstr(&cname), oc, (const char **)ov, test_num);
+
+    db_close(dbip);
+
+    for (long int i = 0; i < obj_cnt; i++) {
+	bu_free(ov[i], "free string");
+    }
+    bu_free(ov, "free string array");
+    ov = NULL;
+
+    rtip_stage_1 = build_rtip(test_num, &gfile, bu_vls_cstr(&cname), 1);
+    rt_prep_parallel(rtip_stage_1, bu_avail_cpus());
+
+    // TODO - do a shootray to confirm things actually work
+
+    // TODO - confirm there is a file in the cache
+
+    rt_free_rti(rtip_stage_1);
+
+    /*** Now, do it again with the cache in place */
+    rtip_stage_2 = build_rtip(test_num, &gfile, bu_vls_cstr(&cname), 2);
+    rt_prep_parallel(rtip_stage_2, bu_avail_cpus());
+
+    // TODO - do a shootray to confirm things actually work
+
+    /* All done - scrub out the temporary cache */
+    cache_cleanup(&cache_dir);
+
+    /* Clear the .g file */
+    bu_file_delete(bu_vls_cstr(&gfile));
+
+    bu_vls_free(&cache_dir);
+    bu_vls_free(&gfile);
+    bu_vls_free(&cname);
+    return 0;
+}
+/* TODO - basic multi object, different content serial test.  Check that the cache objects
+ * are created, that the correct number of objects are created, that rt_shootray succeeds both
+ * after initial creation and in a subsequent cache read. */
+
+/* TODO - basic multi object, different content parallel test.  Check that the cache objects
+ * are created, that the correct number of objects are created, that rt_shootray succeeds both
+ * after initial creation and in a subsequent cache read. */
+
+
+
+
+const char *rt_cache_test_usage =
+"Usage: rt_cache 1             (Single object serial test)\n"
+"       rt_cache 2             (Single object parallel test)\n"
+"       rt_cache 3 [obj_count] (Multiple identical object serial test)\n"
+"       rt_cache 4 [obj_count] (Multiple identical object parallel test)\n"
+"       rt_cache 5 [obj_count] (Multiple distinct object serial test)\n"
+"       rt_cache 6 [obj_count] (Multiple distinct object parallel test)\n"
+"       rt_cache 7 [gfile]     (Multiple process identical objects test)\n"
+"       rt_cache 8 [gfile]     (Multiple process distinct objects test)\n";
+
+int
+main(int ac, char *av[])
+{
+    long int obj_cnt = 1;
+    long int test_num = 0;
+
+    if (ac < 2 || ac > 4) {
+	bu_exit(1, rt_cache_test_usage);
+    }
+
+    sscanf(av[1], "%ld", &test_num);
+
+    if (test_num < 3 && ac > 2) {
+	bu_exit(1, rt_cache_test_usage);
+    }
+
+    if (test_num > 2 && test_num < 7 && ac == 3) {
+	sscanf(av[1], "%ld", &obj_cnt);
+    }
+
+    /* Just get this done up front - all tests need it */
+    rt_init_resource(&rt_uniresource, 0, NULL);
+
+    switch (test_num) {
+	case 1:
+	    return test_cache_single_object_serial(1);
+	    break;
+	case 2:
+	    return test_cache_single_object_parallel(2);
+	    break;
+	case 3:
+	    return test_cache_multiple_object_same_content_serial(3, obj_cnt);
+	    break;
+	case 4:
+	    return test_cache_multiple_object_same_content_parallel(4, obj_cnt);
+	    break;
+	default:
+	    break;
     }
 
     return 0;
