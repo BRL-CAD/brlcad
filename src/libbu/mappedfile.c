@@ -73,7 +73,9 @@
 #    define DWORD_LO(x) (x)
 #  endif
 
-static void *win_mmap(void *start, size_t length, int prot, int flags, int fd, off_t offset, void **handle)
+
+static void *
+win_mmap(void *start, size_t length, int prot, int flags, int fd, off_t offset, void **handle)
 {
     if (prot & ~(PROT_READ | PROT_WRITE | PROT_EXEC))
 	return MAP_FAILED;
@@ -130,11 +132,14 @@ static void *win_mmap(void *start, size_t length, int prot, int flags, int fd, o
     return ret;
 }
 
-static void win_munmap(void *addr, size_t length, void *hv)
+
+static int
+win_munmap(void *addr, size_t length, void *hv)
 {
     HANDLE h = (HANDLE)hv;
     UnmapViewOfFile(addr);
     CloseHandle(h);
+    return 0;
 }
 #endif
 
@@ -355,39 +360,28 @@ bu_open_mapped_file(const char *name, const char *appl)
     mp->modtime = sb.st_mtime;
     mp->buf = MAP_FAILED;
 
-    /* Attempt to access as memory-mapped file */
-#ifdef HAVE_SYS_MMAN_H
+    /* Attempt to memory-map the file */
     bu_semaphore_acquire(BU_SEM_SYSCALL);
+#ifdef HAVE_SYS_MMAN_H
     mp->buf = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+#else
+#  ifdef HAVE_WINDOWS_H
+    /* FIXME: shouldn't need to preserve handle */
+    mp->buf = win_mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0, &(mp->handle));
+#  endif
+#endif /* HAVE_SYS_MMAN_H */
     bu_semaphore_release(BU_SEM_SYSCALL);
 
-    if (mp->buf == MAP_FAILED) {
+    /* If cannot memory-map, read it in manually */
+    if (mp->buf != MAP_FAILED) {
+	mp->is_mapped = 1;
+    } else {
+	ssize_t bytes_to_go = sb.st_size;
+	ssize_t nbytes = 0;
+
 	if (UNLIKELY(bu_debug&BU_DEBUG_MAPPED_FILE)) {
 	    perror("mmap");
 	}
-    } else {
-	mp->is_mapped = 1;
-    }
-#endif /* HAVE_SYS_MMAN_H */
-#ifdef HAVE_WINDOWS_H
-	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	mp->buf = win_mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0, &(mp->handle));
-	bu_semaphore_release(BU_SEM_SYSCALL);
-
-	if (mp->buf == MAP_FAILED) {
-		if (UNLIKELY(bu_debug&BU_DEBUG_MAPPED_FILE)) {
-			perror("mmap");
-		}
-	}
-	else {
-		mp->is_mapped = 1;
-	}
-#endif
-
-    /* If cannot memory-map, read it in manually */
-    if (mp->buf == MAP_FAILED) {
-	ssize_t bytes_to_go = sb.st_size;
-	ssize_t nbytes = 0;
 
 	/* Allocate a local empty buffer, and slurp the whole file.
 	 * leave space for a trailing zero.
@@ -441,10 +435,12 @@ fail:
 	bu_free(mp->appl, "mp->appl");
     if (mp->buf) {
 	if (mp->is_mapped)
-#ifndef HAVE_WINDOWS_H
+#ifdef HAVE_SYS_MMAN_H
 	    munmap(mp->buf, (size_t)mp->buflen);
 #else
+#  ifdef HAVE_WINDOWS_H
 	    win_munmap(mp->buf, (size_t)mp->buflen, mp->handle);
+#  endif
 #endif
 	else
 	    bu_free(mp->buf, name);
@@ -513,28 +509,23 @@ bu_free_mapped_files(int verbose)
 
 	mp->apbuf = (void *)NULL;
 
-#ifdef HAVE_SYS_MMAN_H
 	if (mp->is_mapped) {
 	    int ret;
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
+#ifdef HAVE_SYS_MMAN_H
 	    ret = munmap(mp->buf, (size_t)mp->buflen);
+#else
+#  ifdef HAVE_WINDOWS_H
+	    ret = win_munmap(mp->buf, (size_t)mp->buflen, mp->handle);
+#  endif
+#endif
 	    bu_semaphore_release(BU_SEM_SYSCALL);
 
 	    if (UNLIKELY(ret < 0))
 		perror("munmap");
 
 	    /* XXX How to get this chunk of address space back to malloc()? */
-	} else
-#endif
-#ifdef HAVE_WINDOWS_H
-	if (mp->is_mapped) {
-	    bu_semaphore_acquire(BU_SEM_SYSCALL);
-	    win_munmap(mp->buf, (size_t)mp->buflen, mp->handle);
-	    bu_semaphore_release(BU_SEM_SYSCALL);
-	    /* XXX How to get this chunk of address space back to malloc()? */
-	} else
-#endif
-	{
+	} else {
 	    bu_free(mp->buf, "bu_mapped_file.buf[]");
 	}
 	mp->buf = (void *)NULL;		/* sanity */
