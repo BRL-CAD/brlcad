@@ -474,14 +474,162 @@ test_cache_multiple_object_same_content_parallel(long int test_num, long int obj
     bu_vls_free(&cname);
     return 0;
 }
-/* TODO - basic multi object, different content serial test.  Check that the cache objects
+
+/* Basic multi object, different content serial test.  Check that the cache objects
  * are created, that the correct number of objects are created, that rt_shootray succeeds both
  * after initial creation and in a subsequent cache read. */
+static int
+test_cache_multiple_object_different_content_serial(long int test_num, long int obj_cnt)
+{
+    struct bu_vls cache_dir = BU_VLS_INIT_ZERO;
+    struct bu_vls gfile = BU_VLS_INIT_ZERO;
+    struct rt_i *rtip_stage_1, *rtip_stage_2;
+    struct db_i *dbip;
+    const char *oname_root = "sph_";
+    struct bu_vls cname = BU_VLS_INIT_ZERO;
+    point_t v = VINIT_ZERO;
+    double r = 1;
+    int oc = obj_cnt;
+    char **ov = (char **)bu_calloc(oc+1, sizeof(char  *), "object array");
 
-/* TODO - basic multi object, different content parallel test.  Check that the cache objects
+    bu_vls_sprintf(&cache_dir, "%s_dir_%ld_%ld", RTC_PREFIX, test_num, obj_cnt);
+    bu_vls_sprintf(&gfile, "%s_%ld_%ld.g", RTC_PREFIX, test_num, obj_cnt);
+
+    bu_setenv("LIBRT_CACHE", bu_dir(NULL, 0, BU_DIR_CURR, bu_vls_cstr(&cache_dir), NULL), 1);
+
+    if (bu_file_exists(getenv("LIBRT_CACHE"), NULL)) {
+	bu_exit(1, "Test %ld: stale test cache directory %s exists\n", test_num, getenv("LIBRT_CACHE"));
+    }
+
+    dbip = create_test_g_file(test_num, bu_vls_cstr(&gfile));
+
+    // Unit sphere at the origin
+    add_brep_sph(dbip, "sph_0.s", &v, r, test_num);
+    ov[0] = bu_strdup("sph_0.s");
+
+    for (long int i = 1; i < obj_cnt; i++) {
+	r = 2 * r;
+	v[1] = v[1] + (2*r);
+	bu_vls_sprintf(&cname, "%s%ld.s", oname_root, i);
+	add_brep_sph(dbip, bu_vls_cstr(&cname), &v, r, test_num);
+	ov[i] = bu_strdup(bu_vls_cstr(&cname));
+    }
+    bu_vls_sprintf(&cname, "all.g");
+
+    add_comb(dbip, bu_vls_cstr(&cname), oc, (const char **)ov, test_num);
+
+    db_close(dbip);
+
+    for (long int i = 0; i < obj_cnt; i++) {
+	bu_free(ov[i], "free string");
+    }
+    bu_free(ov, "free string array");
+    ov = NULL;
+
+    rtip_stage_1 = build_rtip(test_num, &gfile, bu_vls_cstr(&cname), 1);
+    rt_prep(rtip_stage_1);
+
+    // TODO - do a shootray to confirm things actually work
+
+    // TODO - confirm there is a file in the cache
+
+    rt_free_rti(rtip_stage_1);
+
+    /*** Now, do it again with the cache in place */
+    rtip_stage_2 = build_rtip(test_num, &gfile, bu_vls_cstr(&cname), 2);
+    rt_prep(rtip_stage_2);
+
+    // TODO - do a shootray to confirm things actually work
+
+    /* All done - scrub out the temporary cache */
+    cache_cleanup(&cache_dir);
+
+    /* Clear the .g file */
+    bu_file_delete(bu_vls_cstr(&gfile));
+
+    bu_vls_free(&cache_dir);
+    bu_vls_free(&gfile);
+    bu_vls_free(&cname);
+    return 0;
+}
+
+/* Basic multi object, different content parallel test.  Check that the cache objects
  * are created, that the correct number of objects are created, that rt_shootray succeeds both
  * after initial creation and in a subsequent cache read. */
+static int
+test_cache_multiple_object_different_content_parallel(long int test_num, long int obj_cnt)
+{
+    struct bu_vls cache_dir = BU_VLS_INIT_ZERO;
+    struct bu_vls gfile = BU_VLS_INIT_ZERO;
+    struct rt_i *rtip_stage_1, *rtip_stage_2;
+    struct db_i *dbip;
+    const char *oname_root = "sph_";
+    struct bu_vls cname = BU_VLS_INIT_ZERO;
+    point_t v = VINIT_ZERO;
+    double r = 1;
+    int oc = obj_cnt;
+    char **ov = (char **)bu_calloc(oc+1, sizeof(char  *), "object array");
 
+    bu_vls_sprintf(&cache_dir, "%s_dir_%ld_%ld", RTC_PREFIX, test_num, obj_cnt);
+    bu_vls_sprintf(&gfile, "%s_%ld_%ld.g", RTC_PREFIX, test_num, obj_cnt);
+
+    bu_setenv("LIBRT_CACHE", bu_dir(NULL, 0, BU_DIR_CURR, bu_vls_cstr(&cache_dir), NULL), 1);
+
+    if (bu_file_exists(getenv("LIBRT_CACHE"), NULL)) {
+	bu_exit(1, "Test %ld: stale test cache directory %s exists\n", test_num, getenv("LIBRT_CACHE"));
+    }
+
+    dbip = create_test_g_file(test_num, bu_vls_cstr(&gfile));
+
+    // Unit sphere at the origin
+    add_brep_sph(dbip, "sph_0.s", &v, r, test_num);
+    ov[0] = bu_strdup("sph_0.s");
+
+    for (long int i = 1; i < obj_cnt; i++) {
+	r = 2 * r;
+	v[1] = v[1] + (2*r);
+	bu_vls_sprintf(&cname, "%s%ld.s", oname_root, i);
+	add_brep_sph(dbip, bu_vls_cstr(&cname), &v, r, test_num);
+	ov[i] = bu_strdup(bu_vls_cstr(&cname));
+    }
+    bu_vls_sprintf(&cname, "all.g");
+
+    add_comb(dbip, bu_vls_cstr(&cname), oc, (const char **)ov, test_num);
+
+    db_close(dbip);
+
+    for (long int i = 0; i < obj_cnt; i++) {
+	bu_free(ov[i], "free string");
+    }
+    bu_free(ov, "free string array");
+    ov = NULL;
+
+    rtip_stage_1 = build_rtip(test_num, &gfile, bu_vls_cstr(&cname), 1);
+    rt_prep_parallel(rtip_stage_1, bu_avail_cpus());
+
+    // TODO - do a shootray to confirm things actually work
+
+    // TODO - confirm there is a file in the cache
+
+    rt_free_rti(rtip_stage_1);
+
+    /*** Now, do it again with the cache in place */
+    rtip_stage_2 = build_rtip(test_num, &gfile, bu_vls_cstr(&cname), 2);
+    rt_prep_parallel(rtip_stage_2, bu_avail_cpus());
+
+    // TODO - do a shootray to confirm things actually work
+
+    /* All done - scrub out the temporary cache */
+    cache_cleanup(&cache_dir);
+
+    /* Clear the .g file */
+    bu_file_delete(bu_vls_cstr(&gfile));
+
+    bu_vls_free(&cache_dir);
+    bu_vls_free(&gfile);
+    bu_vls_free(&cname);
+    return 0;
+}
 
 
 
@@ -512,7 +660,7 @@ main(int ac, char *av[])
     }
 
     if (test_num > 2 && test_num < 7 && ac == 3) {
-	sscanf(av[1], "%ld", &obj_cnt);
+	sscanf(av[2], "%ld", &obj_cnt);
     }
 
     /* Just get this done up front - all tests need it */
@@ -531,6 +679,11 @@ main(int ac, char *av[])
 	case 4:
 	    return test_cache_multiple_object_same_content_parallel(4, obj_cnt);
 	    break;
+	case 5:
+	    return test_cache_multiple_object_different_content_serial(5, obj_cnt);
+	    break;
+	case 6:
+	    return test_cache_multiple_object_different_content_parallel(6, obj_cnt);
 	default:
 	    break;
     }
