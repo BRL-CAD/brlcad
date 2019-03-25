@@ -553,8 +553,10 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
 
     CACHE_DEBUG("++++ [%lu] Trying to STORE %s\n", bu_process_id(), name);
 
-    if (rt_obj_prep_serialize(stp, internal, &data_external, &version) || version == (size_t)-1)
+    if (rt_obj_prep_serialize(stp, internal, &data_external, &version) || version == (size_t)-1) {
+	CACHE_DEBUG("++++++ [%lu] Failed to serialize %s\n", bu_process_id(), name);
 	return 0; /* can't serialize */
+    }
 
     compress_external(cache, &data_external);
 
@@ -598,6 +600,7 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
     dbip = cache_create_dbip(cache, tmpname);
     if (!dbip) {
 	bu_file_delete(tmppath);
+	CACHE_DEBUG("++++++ [%lu] Failed to create cache temp %s\n", bu_process_id(), tmpname);
 	return 0; /* no storage */
     }
 
@@ -605,6 +608,7 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
     if (!dp) {
 	db_close(dbip);
 	bu_file_delete(tmppath);
+	CACHE_DEBUG("++++++ [%lu] Failed to add to cache temp %s\n", bu_process_id(), tmpname);
 	return 0; /* bad db */
     }
     RT_CK_DIR(dp);
@@ -622,26 +626,32 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
 	    bu_free_external(&db_external);
 	    db_close(dbip);
 	    bu_file_delete(tmppath);
+	    CACHE_DEBUG("++++++ [%lu] Failed to put cache temp %s\n", bu_process_id(), tmpname);
 	    return 0; /* can't stash */
 	}
 	bu_free_external(&db_external);
     }
     db_sync(dbip);
     db_close(dbip);
+    CACHE_DEBUG("++++++ [%lu] Successfully wrote cache temp %s\n", bu_process_id(), tmpname);
 
     bu_free_external(&attributes_external);
     bu_free_external(&data_external);
 
+    /* get the real / final cache object file name */
     cache_get_objfile(cache, name, path, MAXPATHLEN);
 
     /* anyone beat us to creating the cache? */
     if (bu_file_exists(path, NULL)) {
+	CACHE_DEBUG("++++++ [%lu] Someone else finished %s first, no longer need %s\n", bu_process_id(), name, tmpname);
+	bu_file_delete(tmppath);
+
 	dbip = cache_read_dbip(cache, name);
 	if (dbip) {
-	    db_close(dbip);
-	    bu_file_delete(tmppath);
+	    CACHE_DEBUG("++++++ [%lu] Successfully read %s\n", bu_process_id(), name);
 	    return 1;
 	}
+	CACHE_DEBUG("++++++ [%lu] BUT we can't read %s !!!  Giving up.\n", bu_process_id(), name);
 	return 0;
     }
 
