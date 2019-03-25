@@ -540,7 +540,7 @@ bu_free_mapped_files(int verbose)
 
 	/* shift pointers up one */
 	memmove(all_mapped_files.mapped_files + i, all_mapped_files.mapped_files + i + 1, sizeof(all_mapped_files.mapped_files[0]) * (all_mapped_files.size - i - 1));
-	all_mapped_files.mapped_files[all_mapped_files.size] = NULL;
+	memset(all_mapped_files.mapped_files[all_mapped_files.size], 0, sizeof(struct bu_mapped_file ));
 	all_mapped_files.size--;
     }
     bu_semaphore_release(BU_SEM_MAPPEDFILE);
