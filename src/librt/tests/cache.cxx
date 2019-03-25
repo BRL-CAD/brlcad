@@ -341,8 +341,8 @@ test_cache_multiple_object_same_content_serial(long int test_num, long int obj_c
     int oc = obj_cnt;
     char **ov = (char **)bu_calloc(oc+1, sizeof(char  *), "object array");
 
-    bu_vls_sprintf(&cache_dir, "%s_dir_%ld_1", RTC_PREFIX, test_num);
-    bu_vls_sprintf(&gfile, "%s_%ld_1.g", RTC_PREFIX, test_num);
+    bu_vls_sprintf(&cache_dir, "%s_dir_%ld_%ld", RTC_PREFIX, test_num, obj_cnt);
+    bu_vls_sprintf(&gfile, "%s_%ld_%ld.g", RTC_PREFIX, test_num, obj_cnt);
 
     bu_setenv("LIBRT_CACHE", bu_dir(NULL, 0, BU_DIR_CURR, bu_vls_cstr(&cache_dir), NULL), 1);
 
@@ -416,8 +416,8 @@ test_cache_multiple_object_same_content_parallel(long int test_num, long int obj
     int oc = obj_cnt;
     char **ov = (char **)bu_calloc(oc+1, sizeof(char  *), "object array");
 
-    bu_vls_sprintf(&cache_dir, "%s_dir_%ld_1", RTC_PREFIX, test_num);
-    bu_vls_sprintf(&gfile, "%s_%ld_1.g", RTC_PREFIX, test_num);
+    bu_vls_sprintf(&cache_dir, "%s_dir_%ld_%ld", RTC_PREFIX, test_num, obj_cnt);
+    bu_vls_sprintf(&gfile, "%s_%ld_%ld.g", RTC_PREFIX, test_num, obj_cnt);
 
     bu_setenv("LIBRT_CACHE", bu_dir(NULL, 0, BU_DIR_CURR, bu_vls_cstr(&cache_dir), NULL), 1);
 
