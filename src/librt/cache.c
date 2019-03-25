@@ -444,10 +444,6 @@ cache_create_dbip(const struct rt_cache *cache, const char *name)
     if (!cache || !name)
 	return NULL;
 
-    dbip = (struct db_i *)bu_hash_get(cache->dbip_hash, (const uint8_t *)name, strlen(name));
-    if (dbip)
-	return dbip;
-
     cache_get_objfile(cache, name, path, MAXPATHLEN);
 
     /* something in the way? clobber time. */
@@ -607,6 +603,7 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
 
     dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_NON_GEOM, (void *)&type);
     if (!dp) {
+	db_close(dbip);
 	bu_file_delete(tmppath);
 	return 0; /* bad db */
     }
@@ -623,12 +620,14 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
 
 	if (db_put_external(&db_external, dp, dbip)) {
 	    bu_free_external(&db_external);
+	    db_close(dbip);
 	    bu_file_delete(tmppath);
 	    return 0; /* can't stash */
 	}
 	bu_free_external(&db_external);
     }
     db_sync(dbip);
+    db_close(dbip);
 
     bu_free_external(&attributes_external);
     bu_free_external(&data_external);
@@ -637,35 +636,25 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
 
     /* anyone beat us to creating the cache? */
     if (bu_file_exists(path, NULL)) {
-	if (cache_read_dbip(cache, name) != NULL) {
+	dbip = cache_read_dbip(cache, name);
+	if (dbip) {
+	    db_close(dbip);
 	    bu_file_delete(tmppath);
 	    return 1;
 	}
 	return 0;
     }
 
-#ifdef HAVE_WINDOWS_H
-    /* Close the .g file
-     * (Windows will refuse to rename the temp file unless we do this.)
-     *
-     * TODO -on Linux running this db_close sometimes produces errors about
-     * freeing nil d_namep (??). It looks like we should be doing this close on
-     * Linux too - valgrind reports the dbip as lost memory - so more
-     * investigation needed (maybe a second semaphore protection?) */
-    db_close(dbip);
-
-    if (!MoveFileEx(tmppath,path, MOVEFILE_COPY_ALLOWED|MOVEFILE_WRITE_THROUGH)) {
-	bu_file_delete(tmppath);
-	return 0; /* someone probably beat us to it */
-    }
-#else
     /* atomically flip it into place */
+#ifdef HAVE_WINDOWS_H
+    ret = MoveFileEx(tmppath, path, MOVEFILE_WRITE_THROUGH|MOVEFILE_REPLACE_EXISTING);
+#else
     ret = rename(tmppath, path);
+#endif
     if (!ret) {
 	bu_file_delete(tmppath);
 	return 0; /* someone probably beat us to it */
     }
-#endif
 
     if (cache_read_dbip(cache, name) != NULL) {
 	return 1;
