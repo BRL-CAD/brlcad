@@ -196,7 +196,7 @@ create_test_g_file(long int test_num, const char *gfile)
 }
 
 static struct rt_i *
-build_rtip(long int test_num, struct bu_vls *gfile, const char *objname, int stage_num)
+build_rtip(long int test_num, struct bu_vls *gfile, const char *objname, int stage_num, int do_parallel, int ncpus)
 {
     struct rt_i *rtip = RTI_NULL;
 
@@ -206,8 +206,17 @@ build_rtip(long int test_num, struct bu_vls *gfile, const char *objname, int sta
 	bu_exit(1, "Test %ld: failed to rt_dirbuild in stage %d\n", test_num, stage_num);
     }
 
-    if (rt_gettree(rtip, objname) < 0) {
-	bu_exit(1, "Test %ld: rt_getree in stage %d failed\n", test_num, stage_num);
+    if (!do_parallel) {
+	if (rt_gettree(rtip, objname) < 0) {
+	    bu_exit(1, "Test %ld: rt_getree in stage %d failed\n", test_num, stage_num);
+	}
+	rt_prep(rtip);
+    } else {
+	RTG.rtg_parallel =  (ncpus > 1) ? 1 : 0;
+	if (rt_gettrees(rtip, 1, (const char **)&objname, ncpus) < 0) {
+	    bu_exit(1, "Test %ld: rt_getrees in stage %d failed\n", test_num, stage_num);
+	}
+	rt_prep_parallel(rtip, ncpus);
     }
 
     return rtip;
@@ -242,8 +251,7 @@ test_cache_single_object_serial(long int test_num)
 
     db_close(dbip);
 
-    rtip_stage_1 = build_rtip(test_num, &gfile, oname, 1);
-    rt_prep(rtip_stage_1);
+    rtip_stage_1 = build_rtip(test_num, &gfile, oname, 1, 0, 1);
 
     // TODO - do a shootray to confirm things actually work
 
@@ -252,10 +260,10 @@ test_cache_single_object_serial(long int test_num)
     rt_free_rti(rtip_stage_1);
 
     /*** Now, do it again with the cache in place */
-    rtip_stage_2 = build_rtip(test_num, &gfile, oname, 2);
-    rt_prep(rtip_stage_2);
+    rtip_stage_2 = build_rtip(test_num, &gfile, oname, 2, 0, 1);
 
     // TODO - do a shootray to confirm things actually work
+    rt_free_rti(rtip_stage_2);
 
     /* All done - scrub out the temporary cache */
     cache_cleanup(&cache_dir);
@@ -299,8 +307,7 @@ test_cache_single_object_parallel(long int test_num)
 
     db_close(dbip);
 
-    rtip_stage_1 = build_rtip(test_num, &gfile, oname, 1);
-    rt_prep_parallel(rtip_stage_1, 1);
+    rtip_stage_1 = build_rtip(test_num, &gfile, oname, 1, 1, 1);
 
     // TODO - do a shootray to confirm things actually work
 
@@ -309,10 +316,11 @@ test_cache_single_object_parallel(long int test_num)
     rt_free_rti(rtip_stage_1);
 
     /*** Now, do it again with the cache in place */
-    rtip_stage_2 = build_rtip(test_num, &gfile, oname, 2);
-    rt_prep_parallel(rtip_stage_2, 1);
+    rtip_stage_2 = build_rtip(test_num, &gfile, oname, 2, 1, 1);
 
     // TODO - do a shootray to confirm things actually work
+
+    rt_free_rti(rtip_stage_2);
 
     /* All done - scrub out the temporary cache */
     cache_cleanup(&cache_dir);
@@ -373,8 +381,7 @@ test_cache_multiple_object_same_content_serial(long int test_num, long int obj_c
     bu_free(ov, "free string array");
     ov = NULL;
 
-    rtip_stage_1 = build_rtip(test_num, &gfile, bu_vls_cstr(&cname), 1);
-    rt_prep(rtip_stage_1);
+    rtip_stage_1 = build_rtip(test_num, &gfile, bu_vls_cstr(&cname), 1, 0, 1);
 
     // TODO - do a shootray to confirm things actually work
 
@@ -383,10 +390,11 @@ test_cache_multiple_object_same_content_serial(long int test_num, long int obj_c
     rt_free_rti(rtip_stage_1);
 
     /*** Now, do it again with the cache in place */
-    rtip_stage_2 = build_rtip(test_num, &gfile, bu_vls_cstr(&cname), 2);
-    rt_prep(rtip_stage_2);
+    rtip_stage_2 = build_rtip(test_num, &gfile, bu_vls_cstr(&cname), 2, 0, 1);
 
     // TODO - do a shootray to confirm things actually work
+
+    rt_free_rti(rtip_stage_2);
 
     /* All done - scrub out the temporary cache */
     cache_cleanup(&cache_dir);
@@ -415,6 +423,7 @@ test_cache_multiple_object_same_content_parallel(long int test_num, long int obj
     point_t v = VINIT_ZERO;
     int oc = obj_cnt;
     char **ov = (char **)bu_calloc(oc+1, sizeof(char  *), "object array");
+    size_t ncpus = (bu_avail_cpus() > MAX_PSW) ? MAX_PSW : bu_avail_cpus();
 
     bu_vls_sprintf(&cache_dir, "%s_dir_%ld_%ld", RTC_PREFIX, test_num, obj_cnt);
     bu_vls_sprintf(&gfile, "%s_%ld_%ld.g", RTC_PREFIX, test_num, obj_cnt);
@@ -448,8 +457,7 @@ test_cache_multiple_object_same_content_parallel(long int test_num, long int obj
     bu_free(ov, "free string array");
     ov = NULL;
 
-    rtip_stage_1 = build_rtip(test_num, &gfile, bu_vls_cstr(&cname), 1);
-    rt_prep_parallel(rtip_stage_1, bu_avail_cpus());
+    rtip_stage_1 = build_rtip(test_num, &gfile, bu_vls_cstr(&cname), 1, 1, ncpus);
 
     // TODO - do a shootray to confirm things actually work
 
@@ -458,10 +466,11 @@ test_cache_multiple_object_same_content_parallel(long int test_num, long int obj
     rt_free_rti(rtip_stage_1);
 
     /*** Now, do it again with the cache in place */
-    rtip_stage_2 = build_rtip(test_num, &gfile, bu_vls_cstr(&cname), 2);
-    rt_prep_parallel(rtip_stage_2, bu_avail_cpus());
+    rtip_stage_2 = build_rtip(test_num, &gfile, bu_vls_cstr(&cname), 2, 1, ncpus);
 
     // TODO - do a shootray to confirm things actually work
+
+    rt_free_rti(rtip_stage_2);
 
     /* All done - scrub out the temporary cache */
     cache_cleanup(&cache_dir);
@@ -526,8 +535,7 @@ test_cache_multiple_object_different_content_serial(long int test_num, long int 
     bu_free(ov, "free string array");
     ov = NULL;
 
-    rtip_stage_1 = build_rtip(test_num, &gfile, bu_vls_cstr(&cname), 1);
-    rt_prep(rtip_stage_1);
+    rtip_stage_1 = build_rtip(test_num, &gfile, bu_vls_cstr(&cname), 1, 0, 1);
 
     // TODO - do a shootray to confirm things actually work
 
@@ -536,10 +544,11 @@ test_cache_multiple_object_different_content_serial(long int test_num, long int 
     rt_free_rti(rtip_stage_1);
 
     /*** Now, do it again with the cache in place */
-    rtip_stage_2 = build_rtip(test_num, &gfile, bu_vls_cstr(&cname), 2);
-    rt_prep(rtip_stage_2);
+    rtip_stage_2 = build_rtip(test_num, &gfile, bu_vls_cstr(&cname), 2, 0, 1);
 
     // TODO - do a shootray to confirm things actually work
+
+    rt_free_rti(rtip_stage_2);
 
     /* All done - scrub out the temporary cache */
     cache_cleanup(&cache_dir);
@@ -569,6 +578,7 @@ test_cache_multiple_object_different_content_parallel(long int test_num, long in
     double r = 1;
     int oc = obj_cnt;
     char **ov = (char **)bu_calloc(oc+1, sizeof(char  *), "object array");
+    size_t ncpus = (bu_avail_cpus() > MAX_PSW) ? MAX_PSW : bu_avail_cpus();
 
     bu_vls_sprintf(&cache_dir, "%s_dir_%ld_%ld", RTC_PREFIX, test_num, obj_cnt);
     bu_vls_sprintf(&gfile, "%s_%ld_%ld.g", RTC_PREFIX, test_num, obj_cnt);
@@ -604,8 +614,9 @@ test_cache_multiple_object_different_content_parallel(long int test_num, long in
     bu_free(ov, "free string array");
     ov = NULL;
 
-    rtip_stage_1 = build_rtip(test_num, &gfile, bu_vls_cstr(&cname), 1);
-    rt_prep_parallel(rtip_stage_1, bu_avail_cpus());
+    RTG.rtg_parallel =  (ncpus > 1) ? 1 : 0;
+
+    rtip_stage_1 = build_rtip(test_num, &gfile, bu_vls_cstr(&cname), 1, 1, ncpus);
 
     // TODO - do a shootray to confirm things actually work
 
@@ -614,10 +625,11 @@ test_cache_multiple_object_different_content_parallel(long int test_num, long in
     rt_free_rti(rtip_stage_1);
 
     /*** Now, do it again with the cache in place */
-    rtip_stage_2 = build_rtip(test_num, &gfile, bu_vls_cstr(&cname), 2);
-    rt_prep_parallel(rtip_stage_2, bu_avail_cpus());
+    rtip_stage_2 = build_rtip(test_num, &gfile, bu_vls_cstr(&cname), 2, 1, ncpus);
 
     // TODO - do a shootray to confirm things actually work
+
+    rt_free_rti(rtip_stage_2);
 
     /* All done - scrub out the temporary cache */
     cache_cleanup(&cache_dir);
