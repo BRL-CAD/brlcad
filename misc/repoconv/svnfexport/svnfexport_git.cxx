@@ -1,3 +1,5 @@
+std::vector<std::string> all_git_branches;
+
 void read_cached_rev_sha1s()
 {
     std::ifstream infile("rev_gsha1s.txt");
@@ -30,87 +32,9 @@ void write_cached_rev_sha1s()
 
 void get_rev_sha1s(long int rev)
 {
-    std::vector<std::string> branches;
     std::vector<std::string>::iterator b_it;
 
-    branches.push_back(std::string("AUTOCONF"));
-    branches.push_back(std::string("CMD"));
-    branches.push_back(std::string("Original"));
-    branches.push_back(std::string("STABLE"));
-    branches.push_back(std::string("ansi-20040316-freeze"));
-    branches.push_back(std::string("ansi-6-0-branch"));
-    branches.push_back(std::string("ansi-branch"));
-    branches.push_back(std::string("autoconf-20031202"));
-    branches.push_back(std::string("autoconf-20031203"));
-    branches.push_back(std::string("autoconf-branch"));
-    branches.push_back(std::string("bobWinPort"));
-    branches.push_back(std::string("bobWinPort-20051223-freeze"));
-    branches.push_back(std::string("brlcad_5_1_alpha_patch"));
-    branches.push_back(std::string("ctj-4-5-post"));
-    branches.push_back(std::string("ctj-4-5-pre"));
-    branches.push_back(std::string("hartley-6-0-post"));
-    branches.push_back(std::string("help"));
-    branches.push_back(std::string("import-1.1.1"));
-    branches.push_back(std::string("itcl3-2"));
-    branches.push_back(std::string("libpng_1_0_2"));
-    branches.push_back(std::string("master"));
-    branches.push_back(std::string("master-UNNAMED-BRANCH"));
-    branches.push_back(std::string("merge-to-head-20051223"));
-    branches.push_back(std::string("offsite-5-3-pre"));
-    branches.push_back(std::string("opensource-pre"));
-    branches.push_back(std::string("phong-branch"));
-    branches.push_back(std::string("photonmap-branch"));
-    branches.push_back(std::string("postmerge-autoconf"));
-    branches.push_back(std::string("premerge-20040315-windows"));
-    branches.push_back(std::string("premerge-20040404-ansi"));
-    branches.push_back(std::string("premerge-20051223-bobWinPort"));
-    branches.push_back(std::string("premerge-autoconf"));
-    branches.push_back(std::string("rel-2-0"));
-    branches.push_back(std::string("rel-5-0"));
-    branches.push_back(std::string("rel-5-0-beta"));
-    branches.push_back(std::string("rel-5-0beta"));
-    branches.push_back(std::string("rel-5-1"));
-    branches.push_back(std::string("rel-5-1-branch"));
-    branches.push_back(std::string("rel-5-1-patches"));
-    branches.push_back(std::string("rel-5-2"));
-    branches.push_back(std::string("rel-5-3"));
-    branches.push_back(std::string("rel-5-4"));
-    branches.push_back(std::string("rel-6-0"));
-    branches.push_back(std::string("rel-6-0-1"));
-    branches.push_back(std::string("rel-6-0-1-branch"));
-    branches.push_back(std::string("rel-6-1-DP"));
-    branches.push_back(std::string("rel-7-0"));
-    branches.push_back(std::string("rel-7-0-1"));
-    branches.push_back(std::string("rel-7-0-2"));
-    branches.push_back(std::string("rel-7-0-4"));
-    branches.push_back(std::string("rel-7-0-branch"));
-    branches.push_back(std::string("rel-7-10-0"));
-    branches.push_back(std::string("rel-7-10-2"));
-    branches.push_back(std::string("rel-7-2-0"));
-    branches.push_back(std::string("rel-7-2-2"));
-    branches.push_back(std::string("rel-7-2-4"));
-    branches.push_back(std::string("rel-7-2-6"));
-    branches.push_back(std::string("rel-7-4-0"));
-    branches.push_back(std::string("rel-7-4-branch"));
-    branches.push_back(std::string("rel-7-6-0"));
-    branches.push_back(std::string("rel-7-6-4"));
-    branches.push_back(std::string("rel-7-6-6"));
-    branches.push_back(std::string("rel-7-6-branch"));
-    branches.push_back(std::string("rel-7-8-0"));
-    branches.push_back(std::string("rel-7-8-2"));
-    branches.push_back(std::string("rel-7-8-4"));
-    branches.push_back(std::string("release-7-0"));
-    branches.push_back(std::string("stable-branch"));
-    branches.push_back(std::string("tcl8-3"));
-    branches.push_back(std::string("temp_tag"));
-    branches.push_back(std::string("tk8-3"));
-    branches.push_back(std::string("trimnurbs-branch"));
-    branches.push_back(std::string("windows-20040315-freeze"));
-    branches.push_back(std::string("windows-6-0-branch"));
-    branches.push_back(std::string("windows-branch"));
-    branches.push_back(std::string("zlib_1_0_4"));
-
-    for (b_it = branches.begin(); b_it != branches.end(); b_it++) {
+    for (b_it = all_git_branches.begin(); b_it != all_git_branches.end(); b_it++) {
 	std::string line;
 	std::string branch = *b_it;
 	std::string git_sha1_cmd = std::string("cd cvs_git && git show-ref ") + branch + std::string(" > ../sha1.txt && cd ..");
@@ -777,13 +701,67 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	    node_path_split(node.copyfrom_path, ppath, bbpath, tpath, llpath, &is_tag);
 	    std::cout << "Adding branch " << node.branch << " from " << bbpath << ", r" << rev.revision_number <<"\n";
 	    std::cout << rev.commit_msg << "\n";
-	    outfile << "reset " << node.branch << "\n";
-	    // TODO - This isn't enough - r36053 branches from an older rev.  We need to build a revision number to
-	    // commit sha1 map...
+	    outfile << "reset refs/heads/" << node.branch << "\n";
 	    outfile << "from " << rev_to_gsha1[std::pair<std::string,long int>(bbpath, rev.revision_number-1)] << "\n";
+	    outfile.close(); 
 	    have_commit = 1;
+	    all_git_branches.push_back(node.branch);
+	    std::string cleanup_cmd = std::string("rm -rf cvs_git_working");
+	    std::string swap_cmd = std::string("rm -rf cvs_git && cp -r cvs_git_working cvs_git");
+	    std::string git_setup = std::string("rm -rf cvs_git_working && cp -r cvs_git cvs_git_working");
+	    std::string git_fi = std::string("cd cvs_git_working && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
+	    if (std::system(git_setup.c_str())) {
+		std::cerr << "git setup failed!\n";
+		exit(1);
+	    }
+	    if (std::system(git_fi.c_str())) {
+		std::string failed_file = std::string("failed-") + fi_file;
+		std::cout << "Fatal - could not apply fi file for revision " << rev.revision_number << "\n";
+		rename(fi_file.c_str(), failed_file.c_str());
+		exit(1);
+	    }
+	    if (std::system(swap_cmd.c_str())) {
+		std::cerr << "git archive swap failed!\n";
+		exit(1);
+	    }
+	    if (std::system(cleanup_cmd.c_str())) {
+		std::cerr << "git cleanup failed!\n";
+		exit(1);
+	    }
 
-	    // TODO - make an empty commit on the new branch with the commit message from SVN, but no changes
+	    get_rev_sha1s(rev_num);
+
+	    // Make an empty commit on the new branch with the commit message from SVN, but no changes
+	    fi_file = std::to_string(rev_num) + std::string("-b.fi");
+	    std::ofstream outfile2(fi_file.c_str(), std::ios::out | std::ios::binary);
+	    outfile2 << "commit refs/heads/" << node.branch << "\n";
+	    outfile2 << "committer " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
+	    outfile2 << "data " << rev.commit_msg.length() << "\n";
+	    outfile2 << rev.commit_msg << "\n";
+	    outfile2 << "from " << rev_to_gsha1[std::pair<std::string,long int>(node.branch, rev.revision_number)] << "\n";
+	    outfile2.close();
+	    git_fi = std::string("cd cvs_git_working && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
+	    if (std::system(git_setup.c_str())) {
+		std::cerr << "git setup failed!\n";
+		exit(1);
+	    }
+	    if (std::system(git_fi.c_str())) {
+		std::string failed_file = std::string("failed-") + fi_file;
+		std::cout << "Fatal - could not apply fi file for revision " << rev.revision_number << "\n";
+		rename(fi_file.c_str(), failed_file.c_str());
+		exit(1);
+	    }
+
+	    verify_repos(rev.revision_number, node.branch, node.branch, 1);
+
+	    if (std::system(swap_cmd.c_str())) {
+		std::cerr << "git archive swap failed!\n";
+		exit(1);
+	    }
+	    if (std::system(cleanup_cmd.c_str())) {
+		std::cerr << "git cleanup failed!\n";
+		exit(1);
+	    }
 
 	    continue;
 	}
