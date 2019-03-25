@@ -85,7 +85,9 @@ db_open(const char *name, const char *mode)
 	if (mfp->apbuf) {
 	    dbip = (struct db_i *)mfp->apbuf;
 	    RT_CK_DBI(dbip);
+	    bu_semaphore_acquire(BU_SEM_LISTS);
 	    dbip->dbi_uses++;
+	    bu_semaphore_release(BU_SEM_LISTS);
 
 	    /*
 	     * decrement the mapped file reference counter by 1,
@@ -409,7 +411,9 @@ db_clone_dbi(struct db_i *dbip, long int *client)
 {
     RT_CK_DBI(dbip);
 
+    bu_semaphore_acquire(BU_SEM_LISTS);
     dbip->dbi_uses++;
+    bu_semaphore_release(BU_SEM_LISTS);
     if (client) {
 	bu_ptbl_ins_unique(&dbip->dbi_clients, client);
     }
