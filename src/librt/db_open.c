@@ -365,6 +365,7 @@ db_close(register struct db_i *dbip)
 	dbip->dbi_filepath = NULL; /* sanity */
     }
 
+    dbip->dbi_magic = (uint32_t)0x10101010;
     bu_free((char *)dbip, "struct db_i");
 }
 
