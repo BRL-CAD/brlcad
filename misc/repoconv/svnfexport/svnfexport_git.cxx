@@ -322,6 +322,8 @@ void old_ref_process_dir(std::ofstream &outfile, struct svn_revision &rev, struc
     node_path_split(node->copyfrom_path, ppath, bbpath, tpath, llpath, &is_tag);
     std::set<struct svn_node *>::iterator n_it;
     std::set<struct svn_node *> *node_set = path_states[node->copyfrom_path][node->copyfrom_rev];
+    // TODO - if this is messed up, write out a shell .fi file for manual tweaking and exit
+    if (node_set) {
     for (n_it = node_set->begin(); n_it != node_set->end(); n_it++) {
 	if ((*n_it)->kind == ndir) {
 	    std::cout << "Stashed dir node: " << (*n_it)->path << "\n";
@@ -332,6 +334,7 @@ void old_ref_process_dir(std::ofstream &outfile, struct svn_revision &rev, struc
 	std::string gsha1 = svn_sha1_to_git_sha1[(*n_it)->text_content_sha1];
 	std::string exestr = ((*n_it)->exec_path) ? std::string("100755 ") : std::string("100644 ");
 	outfile << "M " << exestr << gsha1 << " \"" << node->local_path << rp << "\"\n";
+    }
     }
 }
 

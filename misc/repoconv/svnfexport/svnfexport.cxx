@@ -42,6 +42,9 @@ int main(int argc, const char **argv)
     std::string git_setup = std::string("rm -rf cvs_git_working && cp -r cvs_git cvs_git_working");
     std::string cleanup_cmd = std::string("rm -rf cvs_git_working");
 
+    // TODO - this isn't adequate.  pre-7-12-6 isn't getting updated after restart,
+    // because it's not in the original branch list.  Need to maintain this list as
+    // the rev_gsha1 list is maintained, so we always have a current branch list.
     all_git_branches.push_back(std::string("AUTOCONF"));
     all_git_branches.push_back(std::string("CMD"));
     all_git_branches.push_back(std::string("Original"));
