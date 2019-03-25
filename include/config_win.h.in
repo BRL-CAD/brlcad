@@ -287,6 +287,9 @@ typedef int mode_t;
 #ifndef S_IXGRP
 #  define S_IXGRP      ((S_IXUSR)>>3)
 #endif
+#ifndef S_IRWXG
+#  define S_IRWXG      (((S_IRUSR)|(S_IWUSR)|(S_IXUSR))>>3)
+#endif
 #ifndef S_IROTH
 #  define S_IROTH      ((S_IRUSR)>>6)
 #endif
@@ -295,6 +298,9 @@ typedef int mode_t;
 #endif
 #ifndef S_IXOTH
 #  define S_IXOTH      ((S_IXUSR)>>6)
+#endif
+#ifndef S_IRWXO
+#  define S_IRWXO      (((S_IRUSR)|(S_IWUSR)|(S_IXUSR))>>6)
 #endif
 
 #ifndef S_ISDIR
