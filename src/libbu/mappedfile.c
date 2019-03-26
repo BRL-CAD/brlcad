@@ -284,6 +284,9 @@ mapped_file_add(struct bu_mapped_file *mp)
 		all_mapped_files.mapped_files[i] = (struct bu_mapped_file *)bu_calloc(1, sizeof(struct bu_mapped_file), "new mapped file holder");
 	}
 
+	if (all_mapped_files.mapped_files[all_mapped_files.size] == NULL) {
+	    all_mapped_files.mapped_files[all_mapped_files.size] = (struct bu_mapped_file *)bu_calloc(1, sizeof(struct bu_mapped_file), "new mapped file holder");
+	}
 	*all_mapped_files.mapped_files[all_mapped_files.size] = *mp; /* struct copy */
 	mp = all_mapped_files.mapped_files[all_mapped_files.size]; /* returning the dynamic allocation */
 	all_mapped_files.size++;
