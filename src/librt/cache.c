@@ -352,7 +352,7 @@ compress_external(const struct rt_cache *cache, struct bu_external *external)
 	compressed = 1;
 
     if (!compressed) {
-	CACHE_DEBUG("++++++ [%lu] Compression failed (ret %d, %zu bytes @ %p to %d bytes max)\n", bu_process_id(), ret, external->ext_nbytes, (void *) external->ext_buf, compressed_size);
+	CACHE_DEBUG("++++++ [%lu.%lu] Compression failed (ret %d, %zu bytes @ %p to %d bytes max)\n", bu_process_id(), bu_parallel_id(), ret, external->ext_nbytes, (void *) external->ext_buf, compressed_size);
 	return;
     }
 
@@ -384,7 +384,7 @@ uncompress_external(const struct rt_cache *cache, const struct bu_external *exte
 	uncompressed = 1;
 
     if (!uncompressed) {
-	CACHE_DEBUG("++++++ [%lu] decompression failed (ret %d, %zu bytes @ %p to %zu bytes max)\n", bu_process_id(), ret, external->ext_nbytes, (void *) external->ext_buf, dest->ext_nbytes);
+	CACHE_DEBUG("++++++ [%lu.%lu] decompression failed (ret %d, %zu bytes @ %p to %zu bytes max)\n", bu_process_id(), bu_parallel_id(), ret, external->ext_nbytes, (void *) external->ext_buf, dest->ext_nbytes);
 	return;
     }
 
@@ -477,7 +477,7 @@ cache_try_load(const struct rt_cache *cache, const char *name, const struct rt_d
     RT_CK_DB_INTERNAL(internal);
     RT_CK_SOLTAB(stp);
 
-    CACHE_DEBUG("++++ [%lu] Trying to LOAD %s\n", bu_process_id(), name);
+    CACHE_DEBUG("++++ [%lu.%lu] Trying to LOAD %s\n", bu_process_id(), bu_parallel_id(), name);
 
     dbip = cache_read_dbip(cache, name);
     if (!dbip)
@@ -551,10 +551,10 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
     RT_CK_DB_INTERNAL(internal);
     RT_CK_SOLTAB(stp);
 
-    CACHE_DEBUG("++++ [%lu] Trying to STORE %s\n", bu_process_id(), name);
+    CACHE_DEBUG("++++ [%lu.%lu] Trying to STORE %s\n", bu_process_id(), bu_parallel_id(), name);
 
     if (rt_obj_prep_serialize(stp, internal, &data_external, &version) || version == (size_t)-1) {
-	CACHE_DEBUG("++++++ [%lu] Failed to serialize %s\n", bu_process_id(), name);
+	CACHE_DEBUG("++++++ [%lu.%lu] Failed to serialize %s\n", bu_process_id(), bu_parallel_id(), name);
 	return 0; /* can't serialize */
     }
 
@@ -591,8 +591,8 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
 	return 0;
     }
 
-    /* get a somewhat random temporary name */
-    snprintf(tmpname, MAXPATHLEN, "%s.%d.%lld", name, bu_process_id(), (long long int)bu_gettime());
+    /* get a temporary name unlikely to exist */
+    snprintf(tmpname, MAXPATHLEN, "%s.%d.%d.%lld", name, bu_process_id(), bu_parallel_id(), (long long int)bu_gettime());
 
     cache_get_objfile(cache, tmpname, tmppath, MAXPATHLEN);
     bu_file_delete(tmppath); /* okay if it doesn't exist */
@@ -600,7 +600,7 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
     dbip = cache_create_dbip(cache, tmpname);
     if (!dbip) {
 	bu_file_delete(tmppath);
-	CACHE_DEBUG("++++++ [%lu] Failed to create cache temp %s\n", bu_process_id(), tmpname);
+	CACHE_DEBUG("++++++ [%lu.%lu] Failed to create cache temp %s\n", bu_process_id(), bu_parallel_id(), tmpname);
 	return 0; /* no storage */
     }
 
@@ -608,7 +608,7 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
     if (!dp) {
 	db_close(dbip);
 	bu_file_delete(tmppath);
-	CACHE_DEBUG("++++++ [%lu] Failed to add to cache temp %s\n", bu_process_id(), tmpname);
+	CACHE_DEBUG("++++++ [%lu.%lu] Failed to add to cache temp %s\n", bu_process_id(), bu_parallel_id(), tmpname);
 	return 0; /* bad db */
     }
     RT_CK_DIR(dp);
@@ -626,14 +626,14 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
 	    bu_free_external(&db_external);
 	    db_close(dbip);
 	    bu_file_delete(tmppath);
-	    CACHE_DEBUG("++++++ [%lu] Failed to put cache temp %s\n", bu_process_id(), tmpname);
+	    CACHE_DEBUG("++++++ [%lu.%lu] Failed to put cache temp %s\n", bu_process_id(), bu_parallel_id(), tmpname);
 	    return 0; /* can't stash */
 	}
 	bu_free_external(&db_external);
     }
     db_sync(dbip);
     db_close(dbip);
-    CACHE_DEBUG("++++++ [%lu] Successfully wrote cache temp %s\n", bu_process_id(), tmpname);
+    CACHE_DEBUG("++++++ [%lu.%lu] Successfully wrote cache temp %s\n", bu_process_id(), bu_parallel_id(), tmpname);
 
     bu_free_external(&attributes_external);
     bu_free_external(&data_external);
@@ -643,15 +643,15 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
 
     /* anyone beat us to creating the cache? */
     if (bu_file_exists(path, NULL)) {
-	CACHE_DEBUG("++++++ [%lu] Someone else finished %s first, no longer need %s\n", bu_process_id(), name, tmpname);
+	CACHE_DEBUG("++++++ [%lu.%lu] Someone else finished %s first, no longer need %s\n", bu_process_id(), bu_parallel_id(), name, tmpname);
 	bu_file_delete(tmppath);
 
 	dbip = cache_read_dbip(cache, name);
 	if (dbip) {
-	    CACHE_DEBUG("++++++ [%lu] Successfully read %s\n", bu_process_id(), name);
+	    CACHE_DEBUG("++++++ [%lu.%lu] Successfully read %s\n", bu_process_id(), bu_parallel_id(), name);
 	    return 1;
 	}
-	CACHE_DEBUG("++++++ [%lu] BUT we can't read %s !!!  Giving up.\n", bu_process_id(), name);
+	CACHE_DEBUG("++++++ [%lu.%lu] BUT we can't read %s !!!  Giving up.\n", bu_process_id(), bu_parallel_id(), name);
 	return 0;
     }
 
@@ -706,7 +706,7 @@ rt_cache_close(struct rt_cache *cache)
     if (!cache)
 	return;
 
-    CACHE_DEBUG("++ [%lu] Closing cache at %s\n", bu_process_id(), cache->dir);
+    CACHE_DEBUG("++ [%lu.%lu] Closing cache at %s\n", bu_process_id(), bu_parallel_id(), cache->dir);
 
     entry = bu_hash_next(cache->dbip_hash, NULL);
     while (entry) {
@@ -757,7 +757,7 @@ rt_cache_open(void)
 	return NULL;
     }
 
-    CACHE_DEBUG("++ [%lu] Opening cache at %s\n", bu_process_id(), dir);
+    CACHE_DEBUG("++ [%lu.%lu] Opening cache at %s\n", bu_process_id(), bu_parallel_id(), dir);
 
     format = cache_format(cache);
     if (format < 0) {
@@ -796,7 +796,7 @@ rt_cache_open(void)
 
 	count = bu_file_list(bu_vls_cstr(&path), "[A-Z0-9][A-Z0-9]", &matches);
 
-	CACHE_DEBUG("++++ [%lu] Found V1 cache, deleting %zu objects in %s", bu_process_id(), count, bu_vls_cstr(&path));
+	CACHE_DEBUG("++++ [%lu.%lu] Found V1 cache, deleting %zu objects in %s", bu_process_id(), bu_parallel_id(), count, bu_vls_cstr(&path));
 
 	for (i = 0; i < count; i++) {
 	    struct bu_vls subpath = BU_VLS_INIT_ZERO;
@@ -823,7 +823,7 @@ rt_cache_open(void)
 		bu_vls_printf(&subpath, "%s%cobjects%c%s%c%s", dir, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, matches[i], BU_DIR_SEPARATOR, submatches[j]);
 		bu_file_delete(bu_vls_cstr(&subpath));
 
-		CACHE_DEBUG("++++ [%lu] Deleting %s", bu_process_id(), bu_vls_cstr(&subpath));
+		CACHE_DEBUG("++++ [%lu.%lu] Deleting %s", bu_process_id(), bu_parallel_id(), bu_vls_cstr(&subpath));
 	    }
 	    bu_argv_free(subcount, submatches);
 
@@ -831,7 +831,7 @@ rt_cache_open(void)
 	    bu_vls_printf(&subpath, "%s%cobjects%c%s", dir, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, matches[i]);
 	    bu_file_delete(bu_vls_cstr(&subpath));
 
-	    CACHE_DEBUG("++++ [%lu] Deleting %s", bu_process_id(), bu_vls_cstr(&subpath));
+	    CACHE_DEBUG("++++ [%lu.%lu] Deleting %s", bu_process_id(), bu_parallel_id(), bu_vls_cstr(&subpath));
 
 	    bu_vls_free(&subpath);
 	}
@@ -839,7 +839,7 @@ rt_cache_open(void)
 
 	bu_file_delete(bu_vls_cstr(&path));
 
-	CACHE_DEBUG("++++ [%lu] Deleting %s", bu_process_id(), bu_vls_cstr(&path));
+	CACHE_DEBUG("++++ [%lu.%lu] Deleting %s", bu_process_id(), bu_parallel_id(), bu_vls_cstr(&path));
 
 	bu_vls_trunc(&path, 0);
 	bu_vls_printf(&path, "%s%c%s", dir, BU_DIR_SEPARATOR, "format");
