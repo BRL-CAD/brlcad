@@ -741,7 +741,7 @@ rt_cache_open(void)
 	if (bu_str_false(dir))
 	    return NULL;
 
-	dir = bu_file_realpath(dir, cache->dir);
+	bu_strlcpy(cache->dir, dir, MAXPATHLEN);
     } else {
 	/* LIBRT_CACHE is either set-and-empty or unset.  Default is on. */
 	dir = bu_dir(cache->dir, MAXPATHLEN, BU_DIR_CACHE, ".rt", NULL);
