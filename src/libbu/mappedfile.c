@@ -278,7 +278,7 @@ mapped_file_add(struct bu_mapped_file *mp)
 	    all_mapped_files.size = 0;
 	    all_mapped_files.mapped_files = (struct bu_mapped_file **)bu_malloc(NUM_INITIAL_MAPPED_FILES * sizeof(struct bu_mapped_file *), "initial mapped file pointers");
 	    memset(initial_mapped_files, 0, sizeof(initial_mapped_files));
-	    for (i = 0; i < all_mapped_files.capacity; i++)
+	    for (i = 0; i < NUM_INITIAL_MAPPED_FILES; i++)
 		all_mapped_files.mapped_files[i] = &initial_mapped_files[i];
 	} else if (all_mapped_files.size == all_mapped_files.capacity) {
 	    all_mapped_files.capacity *= 2;
@@ -534,12 +534,13 @@ bu_free_mapped_files(int verbose)
 	if (mp->appl)
 	    bu_free((void *)mp->appl, "bu_mapped_file.appl");
 
-	/* shift pointers */
-	for (size_t j = i + 1; j < all_mapped_files.size; j++) {
-	    all_mapped_files.mapped_files[j-1] = all_mapped_files.mapped_files[j];	
-	}
-	all_mapped_files.mapped_files[all_mapped_files.size - 1] = mp;
-	memset(all_mapped_files.mapped_files[all_mapped_files.size - 1], 0, sizeof(struct bu_mapped_file ));
+	/* skip the first few that are statically allocated */
+	if (i >= NUM_INITIAL_MAPPED_FILES)
+	    bu_free(mp, "free mapped file holder");
+
+	/* shift pointers up one */
+	memmove(all_mapped_files.mapped_files + i, all_mapped_files.mapped_files + i + 1, sizeof(all_mapped_files.mapped_files[0]) * (all_mapped_files.size - i - 1));
+	memset(all_mapped_files.mapped_files[all_mapped_files.size], 0, sizeof(struct bu_mapped_file ));
 	all_mapped_files.size--;
     }
     bu_semaphore_release(BU_SEM_MAPPEDFILE);
