@@ -79,13 +79,25 @@ test_mapped_file_serial(long int file_cnt, long int test_num)
 	}
     }
     if (num == file_cnt-1) {
-	bu_log("Mapped file serial test: [PASS]\n");
+	bu_log("Test %ld: mapped file serial test: [PASS]\n", test_num);
 	return 0;
     }
 
     return 1;
 }
 
+static int
+test_mapped_file_serial_repeat(long int file_cnt, long int test_num)
+{
+    if (test_mapped_file_serial(file_cnt, test_num)) {
+	return 1;
+    }
+    bu_free_mapped_files(0);
+    if (test_mapped_file_serial(file_cnt, test_num)) {
+	return 1;
+    }
+    return 0;
+}
 
 static void
 mapped_file_worker(int cpu, void *data)
@@ -149,12 +161,24 @@ test_mapped_file_parallel(size_t file_cnt, long int test_num)
 
     bu_free(infos, "free parallel data");
     if (ret == 0) {
-	bu_log("Mapped file parallel test: [PASS]\n");
+	bu_log("Test %ld: mapped file parallel test: [PASS]\n", test_num);
     }
 
     return ret;
 }
 
+static int
+test_mapped_file_parallel_repeat(long int file_cnt, long int test_num)
+{
+    if (test_mapped_file_parallel(file_cnt, test_num)) {
+	return 1;
+    }
+    bu_free_mapped_files(0);
+    if (test_mapped_file_parallel(file_cnt, test_num)) {
+	return 1;
+    }
+    return 0;
+}
 
 int
 main(int ac, char *av[])
@@ -197,6 +221,12 @@ main(int ac, char *av[])
 	    break;
     	case 2:
 	    ret = test_mapped_file_parallel(file_cnt, test_num);
+	    break;
+	case 3:
+	    ret = test_mapped_file_serial_repeat(file_cnt, test_num);
+	    break;
+	case 4:
+	    ret = test_mapped_file_parallel_repeat(file_cnt, test_num);
 	    break;
     }
 
