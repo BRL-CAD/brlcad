@@ -253,16 +253,12 @@ test_cache_single_object_serial(long int test_num)
 
     rtip_stage_1 = build_rtip(test_num, &gfile, oname, 1, 0, 1);
 
-    // TODO - do a shootray to confirm things actually work
-
-    // TODO - confirm there is a file in the cache
+    // TODO - confirm there is exactly 1 file in the cache
 
     rt_free_rti(rtip_stage_1);
 
     /*** Now, do it again with the cache in place */
     rtip_stage_2 = build_rtip(test_num, &gfile, oname, 2, 0, 1);
-
-    // TODO - do a shootray to confirm things actually work
     rt_free_rti(rtip_stage_2);
 
     /* All done - scrub out the temporary cache */
@@ -309,17 +305,12 @@ test_cache_single_object_parallel(long int test_num)
 
     rtip_stage_1 = build_rtip(test_num, &gfile, oname, 1, 1, 1);
 
-    // TODO - do a shootray to confirm things actually work
-
-    // TODO - confirm there is a file in the cache
+    // TODO - confirm there is exactly 1 file in the cache
 
     rt_free_rti(rtip_stage_1);
 
     /*** Now, do it again with the cache in place */
     rtip_stage_2 = build_rtip(test_num, &gfile, oname, 2, 1, 1);
-
-    // TODO - do a shootray to confirm things actually work
-
     rt_free_rti(rtip_stage_2);
 
     /* All done - scrub out the temporary cache */
@@ -383,17 +374,12 @@ test_cache_multiple_object_same_content_serial(long int test_num, long int obj_c
 
     rtip_stage_1 = build_rtip(test_num, &gfile, bu_vls_cstr(&cname), 1, 0, 1);
 
-    // TODO - do a shootray to confirm things actually work
-
-    // TODO - confirm there is a file in the cache
+    // TODO - confirm there is exactly 1 file in the cache
 
     rt_free_rti(rtip_stage_1);
 
     /*** Now, do it again with the cache in place */
     rtip_stage_2 = build_rtip(test_num, &gfile, bu_vls_cstr(&cname), 2, 0, 1);
-
-    // TODO - do a shootray to confirm things actually work
-
     rt_free_rti(rtip_stage_2);
 
     /* All done - scrub out the temporary cache */
@@ -459,17 +445,12 @@ test_cache_multiple_object_same_content_parallel(long int test_num, long int obj
 
     rtip_stage_1 = build_rtip(test_num, &gfile, bu_vls_cstr(&cname), 1, 1, ncpus);
 
-    // TODO - do a shootray to confirm things actually work
-
-    // TODO - confirm there is a file in the cache
+    // TODO - confirm there is exactly 1 file in the cache
 
     rt_free_rti(rtip_stage_1);
 
     /*** Now, do it again with the cache in place */
     rtip_stage_2 = build_rtip(test_num, &gfile, bu_vls_cstr(&cname), 2, 1, ncpus);
-
-    // TODO - do a shootray to confirm things actually work
-
     rt_free_rti(rtip_stage_2);
 
     /* All done - scrub out the temporary cache */
@@ -537,17 +518,12 @@ test_cache_multiple_object_different_content_serial(long int test_num, long int 
 
     rtip_stage_1 = build_rtip(test_num, &gfile, bu_vls_cstr(&cname), 1, 0, 1);
 
-    // TODO - do a shootray to confirm things actually work
-
-    // TODO - confirm there is a file in the cache
+    // TODO - confirm there are exactly obj_cnt files in the cache
 
     rt_free_rti(rtip_stage_1);
 
     /*** Now, do it again with the cache in place */
     rtip_stage_2 = build_rtip(test_num, &gfile, bu_vls_cstr(&cname), 2, 0, 1);
-
-    // TODO - do a shootray to confirm things actually work
-
     rt_free_rti(rtip_stage_2);
 
     /* All done - scrub out the temporary cache */
@@ -618,17 +594,12 @@ test_cache_multiple_object_different_content_parallel(long int test_num, long in
 
     rtip_stage_1 = build_rtip(test_num, &gfile, bu_vls_cstr(&cname), 1, 1, ncpus);
 
-    // TODO - do a shootray to confirm things actually work
-
-    // TODO - confirm there is a file in the cache
+    // TODO - confirm there are exactly obj_cnt files in the cache
 
     rt_free_rti(rtip_stage_1);
 
     /*** Now, do it again with the cache in place */
     rtip_stage_2 = build_rtip(test_num, &gfile, bu_vls_cstr(&cname), 2, 1, ncpus);
-
-    // TODO - do a shootray to confirm things actually work
-
     rt_free_rti(rtip_stage_2);
 
     /* All done - scrub out the temporary cache */
