@@ -551,7 +551,7 @@ bu_free_mapped_files(int verbose)
 	all_mapped_files.size--;
     }
     /* release the array if we get back to empty */
-    if (all_mapped_files.size == 0) {
+    if (all_mapped_files.size == 0 && all_mapped_files.capacity > 0) {
 	bu_free(all_mapped_files.mapped_files, "free mapped file pointers");
 	all_mapped_files.capacity = 0;
     }
