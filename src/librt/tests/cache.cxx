@@ -662,13 +662,13 @@ main(int ac, char *av[])
     long int test_num = 0;
 
     if (ac < 2 || ac > 4) {
-	bu_exit(1, rt_cache_test_usage);
+	bu_exit(1, "%s", rt_cache_test_usage);
     }
 
     sscanf(av[1], "%ld", &test_num);
 
     if (test_num < 3 && ac > 2) {
-	bu_exit(1, rt_cache_test_usage);
+	bu_exit(1, "%s", rt_cache_test_usage);
     }
 
     if (test_num > 2 && test_num < 7 && ac == 3) {
