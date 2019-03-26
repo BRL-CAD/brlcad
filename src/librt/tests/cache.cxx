@@ -151,25 +151,26 @@ cache_count(const char *cache_dir)
 
 
 static void
-cache_cleanup(struct bu_vls *cache_dir)
+cache_cleanup(struct bu_vls *cache_dir_vls)
 {
+    const char *cache_dir = bu_vls_cstr(cache_dir_vls);
     struct bu_vls wpath = BU_VLS_INIT_ZERO;
 
     /* Zap the format file first (that's the easy one) */
-    bu_vls_sprintf(&wpath, "%s/format", bu_vls_cstr(cache_dir));
+    bu_vls_sprintf(&wpath, "%s/format", cache_dir);
     bu_file_delete(bu_vls_cstr(&wpath));
 
     /* Now, we need to find and eliminate any cache objects */
     char **obj_dirs = NULL;
-    bu_vls_sprintf(&wpath, "%s/objects", bu_vls_cstr(cache_dir));
+    bu_vls_sprintf(&wpath, "%s/objects", cache_dir);
     size_t objdir_cnt = bu_file_list(bu_vls_cstr(&wpath), "[a-zA-z0-9]*", &obj_dirs);
     for (size_t i = 0; i < objdir_cnt; i++) {
 	/* Find and remove all files in the obj dir */
 	char **objs = NULL;
-	bu_vls_sprintf(&wpath, "%s/objects/%s", bu_vls_cstr(cache_dir), obj_dirs[i]);
+	bu_vls_sprintf(&wpath, "%s/objects/%s", cache_dir, obj_dirs[i]);
 	size_t objs_cnt = bu_file_list(bu_vls_cstr(&wpath), "[a-zA-z0-9]*", &objs);
 	for (size_t j = 0; j < objs_cnt; j++) {
-	    bu_vls_sprintf(&wpath, "%s/objects/%s/%s", bu_vls_cstr(cache_dir), obj_dirs[i], objs[j]);
+	    bu_vls_sprintf(&wpath, "%s/objects/%s/%s", cache_dir, obj_dirs[i], objs[j]);
 	    if (!bu_file_delete(bu_vls_cstr(&wpath))) {
 		bu_exit(1, "Unable to remove the object %s\n", bu_vls_cstr(&wpath));
 	    }
@@ -177,7 +178,7 @@ cache_cleanup(struct bu_vls *cache_dir)
 	bu_argv_free(objs_cnt, objs);
 
 	/* Emptied the dir, now remove it */
-	bu_vls_sprintf(&wpath, "%s/objects/%s", bu_vls_cstr(cache_dir), obj_dirs[i]);
+	bu_vls_sprintf(&wpath, "%s/objects/%s", cache_dir, obj_dirs[i]);
 	if (!bu_file_delete(bu_vls_cstr(&wpath))) {
 	    bu_exit(1, "Unable to remove the directory %s\n", bu_vls_cstr(&wpath));
 	}
@@ -185,11 +186,11 @@ cache_cleanup(struct bu_vls *cache_dir)
     bu_argv_free(objdir_cnt, obj_dirs);
 
     /* That should be everything - remove the objects dir and the cache dir */
-    bu_vls_sprintf(&wpath, "%s/objects", bu_vls_cstr(cache_dir));
+    bu_vls_sprintf(&wpath, "%s/objects", cache_dir);
     if (!bu_file_delete(bu_vls_cstr(&wpath))) {
 	bu_exit(1, "Unable to remove the directory %s\n", bu_vls_cstr(&wpath));
     }
-    if (!bu_file_delete(bu_vls_cstr(cache_dir))) {
+    if (!bu_file_delete(cache_dir)) {
 	bu_exit(1, "Unable to remove the directory %s\n", bu_vls_cstr(&wpath));
     }
 
