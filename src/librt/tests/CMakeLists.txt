@@ -39,6 +39,12 @@ BRLCAD_ADDEXEC(rt_datum rt_datum.c "librt" TEST)
 
 
 BRLCAD_ADDEXEC(rt_cache cache.cxx "librt" TEST)
+add_test(NAME rt_cache_serial_single_object COMMAND rt_cache 1)
+add_test(NAME rt_cache_parallel_single_object COMMAND rt_cache 2)
+add_test(NAME rt_cache_serial_multiple_identical_objects COMMAND rt_cache 3 10)
+add_test(NAME rt_cache_parallel_multiple_identical_objects  COMMAND rt_cache 4 10)
+add_test(NAME rt_cache_serial_multiple_different_objects COMMAND rt_cache 5 10)
+add_test(NAME rt_cache_parallel_multiple_different_objects  COMMAND rt_cache 6 10)
 
 set(distcheck_files
   CMakeLists.txt
