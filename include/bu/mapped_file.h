@@ -133,11 +133,14 @@ BU_EXPORT extern void bu_pr_mapped_file(const char *title,
 					const struct bu_mapped_file *mp);
 
 /**
- * Release storage being used by mapped files with no remaining users.
- * This entire routine runs inside a critical section, for parallel
- * protection.  Only call this routine if you're SURE that ALL these
- * files will never again need to be mapped by this process.  Such as
- * when running multi-frame animations.
+ * Release storage being used by mapped files with no remaining users.  This
+ * will slow subsequent re-opening of those files (since files with no users
+ * will be unmapped as part of the freeing process, they will have to be
+ * re-mapped on a subsequent reopen.) Use cases where there is a possibility of
+ * reopening such files in the future will generally want to postpone calling
+ * this routine unless they need to free up memory.
+ *
+ * This entire routine runs inside a critical section, for parallel protection.
  */
 BU_EXPORT extern void bu_free_mapped_files(int verbose);
 
