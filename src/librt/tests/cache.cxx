@@ -289,15 +289,17 @@ test_cache(long int test_num, long int obj_cnt, int do_parallel, int different_c
 	for (long int i = 1; i < obj_cnt; i++) {
 	    bu_vls_sprintf(&cname, "%s%ld.s", oname_root, i);
 	    if (different_content) {
-		// For different conent, make a series of larger spheres along the Y axis
+		// For different content, make a series of larger spheres along
+		// the Y axis
 		r = 2 * r;
 		v[1] = v[1] + (2*r);
 		bu_vls_sprintf(&cname, "%s%ld.s", oname_root, i);
 		add_brep_sph(dbip, bu_vls_cstr(&cname), &v, r, test_num);
 	    } else {
-		// For same conent, exactly duplicate the original sphere (don't want new
-		// UUID from openNURBS in data structure, for example, so we can't just
-		// make more unit spheres - need to specifically copy original) */
+		// For same content, exactly duplicate the original sphere
+		// (don't want new UUID from openNURBS in data structure, for
+		// example, so we can't just make more unit spheres - need to
+		// specifically copy original) */
 		cp_brep_sph(dbip, ov[0], bu_vls_cstr(&cname), test_num);
 	    }
 	    ov[i] = bu_strdup(bu_vls_cstr(&cname));
