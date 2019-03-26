@@ -1543,12 +1543,8 @@ main(int argc, char *argv[])
      * dm first opens filled with garbage.
      */
     {
-	unsigned char *dm_bg = dm_get_bg(DMP);
-	if (dm_bg) {
-	    dm_set_bg(DMP, dm_bg[0], dm_bg[1], dm_bg[2]);
-	} else {
-	    dm_set_bg(DMP, 0, 0, 0);
-	}
+	const unsigned char *dm_bg = dm_get_bg(DMP);
+	dm_set_bg(DMP, dm_bg[0], dm_bg[1], dm_bg[2]);
     }
 
     /* initialize a display manager */
