@@ -332,7 +332,7 @@ test_cache(long int test_num, long int obj_cnt, int do_parallel, int different_c
 
     /*** Now, do it again with the cache in place */
     rtip_stage_2 = build_rtip(test_num, &gfile, bu_vls_cstr(&cname), 2, do_parallel, ncpus);
-    rt_clean(rtip_stage_1);
+    rt_clean(rtip_stage_2);
     rt_free_rti(rtip_stage_2);
 
     /* All done - scrub out the temporary cache */
