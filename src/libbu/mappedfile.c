@@ -267,26 +267,33 @@ mapped_file_is_valid(struct bu_mapped_file *mp)
 static struct bu_mapped_file *
 mapped_file_add(struct bu_mapped_file *mp)
 {
-    /* init mapped file storage container, add newly mapped file */
     bu_semaphore_acquire(BU_SEM_MAPPEDFILE);
     {
 	size_t i;
+
+	/* init mapped file storage container.  mapped files are
+	 * stored as an array of dynamically allocated pointers.
+	 */
 	if (all_mapped_files.capacity == 0) {
 	    all_mapped_files.capacity = NUM_INITIAL_MAPPED_FILES;
 	    all_mapped_files.size = 0;
-	    all_mapped_files.mapped_files = (struct bu_mapped_file **)bu_malloc(NUM_INITIAL_MAPPED_FILES * sizeof(struct bu_mapped_file *), "initial mapped file pointers");
-	    for (i = all_mapped_files.size; i < all_mapped_files.capacity; i++)
-		all_mapped_files.mapped_files[i] = (struct bu_mapped_file *)bu_calloc(1, sizeof(struct bu_mapped_file), "new mapped file holder");
+	    all_mapped_files.mapped_files = (struct bu_mapped_file **)bu_calloc(all_mapped_files.capacity, sizeof(struct bu_mapped_file *), "initial mapped file pointers");
 	} else if (all_mapped_files.size == all_mapped_files.capacity) {
 	    all_mapped_files.capacity *= 2;
 	    all_mapped_files.mapped_files = (struct bu_mapped_file **)bu_realloc(all_mapped_files.mapped_files, all_mapped_files.capacity * sizeof(struct bu_mapped_file *), "more mapped file pointers");
 	    for (i = all_mapped_files.size; i < all_mapped_files.capacity; i++)
-		all_mapped_files.mapped_files[i] = (struct bu_mapped_file *)bu_calloc(1, sizeof(struct bu_mapped_file), "new mapped file holder");
+		all_mapped_files.mapped_files[i] = NULL;
 	}
 
+	/* calling bu_free_mapped_files() will release any mapped
+	 * files no longer in use, so we may need to reallocate.
+	 * first time through will also allocate.
+	 */
 	if (all_mapped_files.mapped_files[all_mapped_files.size] == NULL) {
 	    all_mapped_files.mapped_files[all_mapped_files.size] = (struct bu_mapped_file *)bu_calloc(1, sizeof(struct bu_mapped_file), "new mapped file holder");
 	}
+
+	/* store our mapped file */
 	*all_mapped_files.mapped_files[all_mapped_files.size] = *mp; /* struct copy */
 	mp = all_mapped_files.mapped_files[all_mapped_files.size]; /* returning the dynamic allocation */
 	all_mapped_files.size++;
