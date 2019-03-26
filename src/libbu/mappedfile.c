@@ -147,8 +147,6 @@ win_munmap(void *addr, size_t length, void *hv)
 /* list of currently open mapped files */
 #define NUM_INITIAL_MAPPED_FILES 8
 
-static struct bu_mapped_file initial_mapped_files[NUM_INITIAL_MAPPED_FILES];
-
 static struct bu_mapped_file_list {
     size_t size, capacity;
     struct bu_mapped_file **mapped_files;
@@ -277,9 +275,8 @@ mapped_file_add(struct bu_mapped_file *mp)
 	    all_mapped_files.capacity = NUM_INITIAL_MAPPED_FILES;
 	    all_mapped_files.size = 0;
 	    all_mapped_files.mapped_files = (struct bu_mapped_file **)bu_malloc(NUM_INITIAL_MAPPED_FILES * sizeof(struct bu_mapped_file *), "initial mapped file pointers");
-	    memset(initial_mapped_files, 0, sizeof(initial_mapped_files));
-	    for (i = 0; i < NUM_INITIAL_MAPPED_FILES; i++)
-		all_mapped_files.mapped_files[i] = &initial_mapped_files[i];
+	    for (i = all_mapped_files.size; i < all_mapped_files.capacity; i++)
+		all_mapped_files.mapped_files[i] = (struct bu_mapped_file *)bu_calloc(1, sizeof(struct bu_mapped_file), "new mapped file holder");
 	} else if (all_mapped_files.size == all_mapped_files.capacity) {
 	    all_mapped_files.capacity *= 2;
 	    all_mapped_files.mapped_files = (struct bu_mapped_file **)bu_realloc(all_mapped_files.mapped_files, all_mapped_files.capacity * sizeof(struct bu_mapped_file *), "more mapped file pointers");
@@ -288,7 +285,7 @@ mapped_file_add(struct bu_mapped_file *mp)
 	}
 
 	*all_mapped_files.mapped_files[all_mapped_files.size] = *mp; /* struct copy */
-	mp = all_mapped_files.mapped_files[all_mapped_files.size];
+	mp = all_mapped_files.mapped_files[all_mapped_files.size]; /* returning the dynamic allocation */
 	all_mapped_files.size++;
     }
     bu_semaphore_release(BU_SEM_MAPPEDFILE);
@@ -322,8 +319,8 @@ bu_open_mapped_file(const char *name, const char *appl)
 	mapped_file_invalidate(mp);
     }
 
-    /* File is not yet mapped or has changed. open file read only and
-     * start filling in a new mappedfile.
+    /* MAP A NEW ONE: File is not yet mapped or has changed.  Open
+     * file read only and start filling in a new mappedfile.
      */
     mp = &newlymapped;
 
@@ -534,13 +531,13 @@ bu_free_mapped_files(int verbose)
 	if (mp->appl)
 	    bu_free((void *)mp->appl, "bu_mapped_file.appl");
 
-	/* skip the first few that are statically allocated */
-	if (i >= NUM_INITIAL_MAPPED_FILES)
-	    bu_free(mp, "free mapped file holder");
+	/* release this one */
+	memset(mp, 0, sizeof(struct bu_mapped_file)); /* sanity */
+	bu_free(mp, "free mapped file holder");
 
 	/* shift pointers up one */
 	memmove(all_mapped_files.mapped_files + i, all_mapped_files.mapped_files + i + 1, sizeof(all_mapped_files.mapped_files[0]) * (all_mapped_files.size - i - 1));
-	memset(all_mapped_files.mapped_files[all_mapped_files.size], 0, sizeof(struct bu_mapped_file ));
+	all_mapped_files.mapped_files[all_mapped_files.size] = NULL; /* zero out the last (now invalid) pointer */
 	all_mapped_files.size--;
     }
     bu_semaphore_release(BU_SEM_MAPPEDFILE);
