@@ -540,6 +540,11 @@ bu_free_mapped_files(int verbose)
 	all_mapped_files.mapped_files[all_mapped_files.size] = NULL; /* zero out the last (now invalid) pointer */
 	all_mapped_files.size--;
     }
+    /* release the array if we get back to empty */
+    if (all_mapped_files.size == 0) {
+	bu_free(all_mapped_files.mapped_files, "free mapped file pointers");
+	all_mapped_files.capacity = 0;
+    }
     bu_semaphore_release(BU_SEM_MAPPEDFILE);
 }
 
