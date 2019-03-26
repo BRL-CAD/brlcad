@@ -129,6 +129,27 @@ add_comb(struct db_i *dbip, const char *name, int obj_argc, const char **obj_arg
     }
 }
 
+static int
+cache_count(const char *cache_dir)
+{
+    int cache_objects = 0;
+    struct bu_vls wpath = BU_VLS_INIT_ZERO;
+
+    /* We need to find all cache objects */
+    char **obj_dirs = NULL;
+    bu_vls_sprintf(&wpath, "%s/objects", cache_dir);
+    size_t objdir_cnt = bu_file_list(bu_vls_cstr(&wpath), "[a-zA-z0-9]*", &obj_dirs);
+    for (size_t i = 0; i < objdir_cnt; i++) {
+	/* Find and remove all files in the obj dir */
+	bu_vls_sprintf(&wpath, "%s/objects/%s", cache_dir, obj_dirs[i]);
+	cache_objects += bu_file_list(bu_vls_cstr(&wpath), "[a-zA-z0-9]*", NULL);
+    }
+    bu_argv_free(objdir_cnt, obj_dirs);
+    bu_vls_free(&wpath);
+    return cache_objects;
+}
+
+
 static void
 cache_cleanup(struct bu_vls *cache_dir)
 {
@@ -253,7 +274,11 @@ test_cache_single_object_serial(long int test_num)
 
     rtip_stage_1 = build_rtip(test_num, &gfile, oname, 1, 0, 1);
 
-    // TODO - confirm there is exactly 1 file in the cache
+    // Confirm there is exactly 1 file in the cache
+    int cc = cache_count(bu_vls_cstr(&cache_dir));
+    if (cc != 1) {
+	bu_exit(1, "Test %ld: expected 1 cache object, found %d\n", test_num, cc);
+    }
 
     rt_free_rti(rtip_stage_1);
 
@@ -305,7 +330,11 @@ test_cache_single_object_parallel(long int test_num)
 
     rtip_stage_1 = build_rtip(test_num, &gfile, oname, 1, 1, 1);
 
-    // TODO - confirm there is exactly 1 file in the cache
+    // Confirm there is exactly 1 file in the cache
+    int cc = cache_count(bu_vls_cstr(&cache_dir));
+    if (cc != 1) {
+	bu_exit(1, "Test %ld: expected 1 cache object, found %d\n", test_num, cc);
+    }
 
     rt_free_rti(rtip_stage_1);
 
@@ -374,7 +403,11 @@ test_cache_multiple_object_same_content_serial(long int test_num, long int obj_c
 
     rtip_stage_1 = build_rtip(test_num, &gfile, bu_vls_cstr(&cname), 1, 0, 1);
 
-    // TODO - confirm there is exactly 1 file in the cache
+    // Confirm there is exactly 1 file in the cache
+    int cc = cache_count(bu_vls_cstr(&cache_dir));
+    if (cc != 1) {
+	bu_exit(1, "Test %ld: expected 1 cache object, found %d\n", test_num, cc);
+    }
 
     rt_free_rti(rtip_stage_1);
 
@@ -445,7 +478,11 @@ test_cache_multiple_object_same_content_parallel(long int test_num, long int obj
 
     rtip_stage_1 = build_rtip(test_num, &gfile, bu_vls_cstr(&cname), 1, 1, ncpus);
 
-    // TODO - confirm there is exactly 1 file in the cache
+    // Confirm there is exactly 1 file in the cache
+    int cc = cache_count(bu_vls_cstr(&cache_dir));
+    if (cc != 1) {
+	bu_exit(1, "Test %ld: expected 1 cache object, found %d\n", test_num, cc);
+    }
 
     rt_free_rti(rtip_stage_1);
 
@@ -518,7 +555,11 @@ test_cache_multiple_object_different_content_serial(long int test_num, long int 
 
     rtip_stage_1 = build_rtip(test_num, &gfile, bu_vls_cstr(&cname), 1, 0, 1);
 
-    // TODO - confirm there are exactly obj_cnt files in the cache
+    // Confirm there are exactly obj_cnt files in the cache
+    long int cc = cache_count(bu_vls_cstr(&cache_dir));
+    if (cc != obj_cnt) {
+	bu_exit(1, "Test %ld: expected %ld cache object, found %ld\n", test_num, obj_cnt, cc);
+    }
 
     rt_free_rti(rtip_stage_1);
 
@@ -594,7 +635,11 @@ test_cache_multiple_object_different_content_parallel(long int test_num, long in
 
     rtip_stage_1 = build_rtip(test_num, &gfile, bu_vls_cstr(&cname), 1, 1, ncpus);
 
-    // TODO - confirm there are exactly obj_cnt files in the cache
+    // Confirm there are exactly obj_cnt files in the cache
+    long int cc = cache_count(bu_vls_cstr(&cache_dir));
+    if (cc != obj_cnt) {
+	bu_exit(1, "Test %ld: expected %ld cache object, found %ld\n", test_num, obj_cnt, cc);
+    }
 
     rt_free_rti(rtip_stage_1);
 
