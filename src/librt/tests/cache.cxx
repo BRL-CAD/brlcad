@@ -244,69 +244,11 @@ build_rtip(long int test_num, struct bu_vls *gfile, const char *objname, int sta
     return rtip;
 }
 
-/* Basic single object test.  Check that the cache object is created, that only
- * one object is created, that rt_shootray succeeds both after initial creation
- * and in a subsequent cache read. */
+/* Core test routine.  Check that the cache object is created, that only the
+ * correct number of object(s) is/are created, and that a second rtip can be
+ * successfully created after the cache is initialized. */
 static int
-test_cache_single_object(long int test_num, int do_parallel)
-{
-    struct bu_vls cache_dir = BU_VLS_INIT_ZERO;
-    struct bu_vls gfile = BU_VLS_INIT_ZERO;
-    struct rt_i *rtip_stage_1, *rtip_stage_2;
-    struct db_i *dbip;
-    const char *oname = "sph.s";
-    point_t v = VINIT_ZERO;
-    size_t ncpus = 1;
-    if (do_parallel) {
-	ncpus =	(bu_avail_cpus() > MAX_PSW) ? MAX_PSW : bu_avail_cpus();
-    }
-
-    bu_vls_sprintf(&cache_dir, "%s_dir_%ld_1", RTC_PREFIX, test_num);
-    bu_vls_sprintf(&gfile, "%s_%ld_1.g", RTC_PREFIX, test_num);
-
-    bu_setenv("LIBRT_CACHE", bu_dir(NULL, 0, BU_DIR_CURR, bu_vls_cstr(&cache_dir), NULL), 1);
-
-    if (bu_file_exists(getenv("LIBRT_CACHE"), NULL)) {
-	bu_exit(1, "Test %ld: Stale test cache directory %s exists\n", test_num, getenv("LIBRT_CACHE"));
-    }
-
-    dbip = create_test_g_file(test_num, bu_vls_cstr(&gfile));
-
-    // Unit sphere at the origin
-    add_brep_sph(dbip, "sph.s", &v, 1, test_num);
-
-    db_close(dbip);
-
-    rtip_stage_1 = build_rtip(test_num, &gfile, oname, 1, do_parallel, ncpus);
-
-    // Confirm there is exactly 1 file in the cache
-    int cc = cache_count(bu_vls_cstr(&cache_dir));
-    if (cc != 1) {
-	bu_exit(1, "Test %ld: expected 1 cache object, found %d\n", test_num, cc);
-    }
-
-    rt_free_rti(rtip_stage_1);
-
-    /*** Now, do it again with the cache in place */
-    rtip_stage_2 = build_rtip(test_num, &gfile, oname, 2, do_parallel, ncpus);
-    rt_free_rti(rtip_stage_2);
-
-    /* All done - scrub out the temporary cache */
-    cache_cleanup(&cache_dir);
-
-    /* Clear the .g file */
-    bu_file_delete(bu_vls_cstr(&gfile));
-
-    bu_vls_free(&cache_dir);
-    bu_vls_free(&gfile);
-    return 0;
-}
-
-/* Basic multi object, same content test.  Check that the cache object is
- * created, that only one object is created, that rt_shootray succeeds both
- * after initial creation and in a subsequent cache read. */
-static int
-test_cache_multiple_object_same_content(long int test_num, long int obj_cnt, int do_parallel)
+test_cache(long int test_num, long int obj_cnt, int do_parallel, int different_content)
 {
     struct bu_vls cache_dir = BU_VLS_INIT_ZERO;
     struct bu_vls gfile = BU_VLS_INIT_ZERO;
@@ -315,8 +257,7 @@ test_cache_multiple_object_same_content(long int test_num, long int obj_cnt, int
     const char *oname_root = "sph_";
     struct bu_vls cname = BU_VLS_INIT_ZERO;
     point_t v = VINIT_ZERO;
-    int oc = obj_cnt;
-    char **ov = (char **)bu_calloc(oc+1, sizeof(char  *), "object array");
+    double r = 1.0;
     size_t ncpus = 1;
     if (do_parallel) {
 	ncpus =	(bu_avail_cpus() > MAX_PSW) ? MAX_PSW : bu_avail_cpus();
@@ -333,114 +274,55 @@ test_cache_multiple_object_same_content(long int test_num, long int obj_cnt, int
 
     dbip = create_test_g_file(test_num, bu_vls_cstr(&gfile));
 
+    bu_vls_sprintf(&cname, "sph_0.s");
+
     // Unit sphere at the origin
-    add_brep_sph(dbip, "sph_0.s", &v, 1, test_num);
-    ov[0] = bu_strdup("sph_0.s");
+    add_brep_sph(dbip, bu_vls_cstr(&cname), &v, r, test_num);
 
-    for (long int i = 1; i < obj_cnt; i++) {
-	bu_vls_sprintf(&cname, "%s%ld.s", oname_root, i);
-	cp_brep_sph(dbip, ov[0], bu_vls_cstr(&cname), test_num);
-	ov[i] = bu_strdup(bu_vls_cstr(&cname));
+    // If we're doing multiple objects, put them in a comb
+    if (obj_cnt > 1) {
+	int oc = obj_cnt;
+	char **ov = (char **)bu_calloc(oc+1, sizeof(char  *), "object array");
+
+	ov[0] = bu_strdup("sph_0.s");
+
+	for (long int i = 1; i < obj_cnt; i++) {
+	    bu_vls_sprintf(&cname, "%s%ld.s", oname_root, i);
+	    if (different_content) {
+		// For different conent, make a series of larger spheres along the Y axis
+		r = 2 * r;
+		v[1] = v[1] + (2*r);
+		bu_vls_sprintf(&cname, "%s%ld.s", oname_root, i);
+		add_brep_sph(dbip, bu_vls_cstr(&cname), &v, r, test_num);
+	    } else {
+		// For same conent, exactly duplicate the original sphere (don't want new
+		// UUID from openNURBS in data structure, for example, so we can't just
+		// make more unit spheres - need to specifically copy original) */
+		cp_brep_sph(dbip, ov[0], bu_vls_cstr(&cname), test_num);
+	    }
+	    ov[i] = bu_strdup(bu_vls_cstr(&cname));
+	}
+	bu_vls_sprintf(&cname, "%s%ld.c", oname_root, test_num);
+
+	add_comb(dbip, bu_vls_cstr(&cname), oc, (const char **)ov, test_num);
+
+
+	for (long int i = 0; i < obj_cnt; i++) {
+	    bu_free(ov[i], "free string");
+	}
+	bu_free(ov, "free string array");
+	ov = NULL;
     }
-    bu_vls_sprintf(&cname, "%s%ld.c", oname_root, test_num);
-
-    add_comb(dbip, bu_vls_cstr(&cname), oc, (const char **)ov, test_num);
 
     db_close(dbip);
 
-    for (long int i = 0; i < obj_cnt; i++) {
-	bu_free(ov[i], "free string");
-    }
-    bu_free(ov, "free string array");
-    ov = NULL;
-
     rtip_stage_1 = build_rtip(test_num, &gfile, bu_vls_cstr(&cname), 1, do_parallel, ncpus);
 
-    // Confirm there is exactly 1 file in the cache
+    // Confirm the presence of the expected number of file(s) in the cache
     int cc = cache_count(bu_vls_cstr(&cache_dir));
-    if (cc != 1) {
-	bu_exit(1, "Test %ld: expected 1 cache object, found %d\n", test_num, cc);
-    }
-
-    rt_free_rti(rtip_stage_1);
-
-    /*** Now, do it again with the cache in place */
-    rtip_stage_2 = build_rtip(test_num, &gfile, bu_vls_cstr(&cname), 2, do_parallel, ncpus);
-    rt_free_rti(rtip_stage_2);
-
-    /* All done - scrub out the temporary cache */
-    cache_cleanup(&cache_dir);
-
-    /* Clear the .g file */
-    bu_file_delete(bu_vls_cstr(&gfile));
-
-    bu_vls_free(&cache_dir);
-    bu_vls_free(&gfile);
-    bu_vls_free(&cname);
-    return 0;
-}
-
-/* Basic multi object, different content test.  Check that the cache objects
- * are created, that the correct number of objects are created, and that we
- * can create a second rtip after the cache is initialized. */
-static int
-test_cache_multiple_object_different_content(long int test_num, long int obj_cnt, int do_parallel)
-{
-    struct bu_vls cache_dir = BU_VLS_INIT_ZERO;
-    struct bu_vls gfile = BU_VLS_INIT_ZERO;
-    struct rt_i *rtip_stage_1, *rtip_stage_2;
-    struct db_i *dbip;
-    const char *oname_root = "sph_";
-    struct bu_vls cname = BU_VLS_INIT_ZERO;
-    point_t v = VINIT_ZERO;
-    double r = 1;
-    int oc = obj_cnt;
-    char **ov = (char **)bu_calloc(oc+1, sizeof(char  *), "object array");
-    size_t ncpus = 1;
-    if (do_parallel) {
-	ncpus =	(bu_avail_cpus() > MAX_PSW) ? MAX_PSW : bu_avail_cpus();
-    }
-
-    bu_vls_sprintf(&cache_dir, "%s_dir_%ld_%ld", RTC_PREFIX, test_num, obj_cnt);
-    bu_vls_sprintf(&gfile, "%s_%ld_%ld.g", RTC_PREFIX, test_num, obj_cnt);
-
-    bu_setenv("LIBRT_CACHE", bu_dir(NULL, 0, BU_DIR_CURR, bu_vls_cstr(&cache_dir), NULL), 1);
-
-    if (bu_file_exists(getenv("LIBRT_CACHE"), NULL)) {
-	bu_exit(1, "Test %ld: stale test cache directory %s exists\n", test_num, getenv("LIBRT_CACHE"));
-    }
-
-    dbip = create_test_g_file(test_num, bu_vls_cstr(&gfile));
-
-    // Unit sphere at the origin
-    add_brep_sph(dbip, "sph_0.s", &v, r, test_num);
-    ov[0] = bu_strdup("sph_0.s");
-
-    for (long int i = 1; i < obj_cnt; i++) {
-	r = 2 * r;
-	v[1] = v[1] + (2*r);
-	bu_vls_sprintf(&cname, "%s%ld.s", oname_root, i);
-	add_brep_sph(dbip, bu_vls_cstr(&cname), &v, r, test_num);
-	ov[i] = bu_strdup(bu_vls_cstr(&cname));
-    }
-    bu_vls_sprintf(&cname, "all.g");
-
-    add_comb(dbip, bu_vls_cstr(&cname), oc, (const char **)ov, test_num);
-
-    db_close(dbip);
-
-    for (long int i = 0; i < obj_cnt; i++) {
-	bu_free(ov[i], "free string");
-    }
-    bu_free(ov, "free string array");
-    ov = NULL;
-
-    rtip_stage_1 = build_rtip(test_num, &gfile, bu_vls_cstr(&cname), 1, do_parallel, ncpus);
-
-    // Confirm there are exactly obj_cnt files in the cache
-    long int cc = cache_count(bu_vls_cstr(&cache_dir));
-    if (cc != obj_cnt) {
-	bu_exit(1, "Test %ld: expected %ld cache object, found %ld\n", test_num, obj_cnt, cc);
+    long int expected = (different_content) ? obj_cnt : 1;
+    if (cc != expected) {
+	bu_exit(1, "Test %ld: expected %ld cache object(s), found %d\n", test_num, expected, cc);
     }
 
     rt_free_rti(rtip_stage_1);
@@ -496,28 +378,28 @@ main(int ac, char *av[])
 
     switch (test_num) {
 	case 1:
-	    /* Serial prep API */
-	    return test_cache_single_object(1, 0);
+	    /* Serial prep API, 1 object */
+	    return test_cache(1, 1, 0, 0);
 	    break;
 	case 2:
-	    /* Parallel prep API */
-	    return test_cache_single_object(2, 1);
+	    /* Parallel prep API, 1 object */
+	    return test_cache(2, 1, 1, 0);
 	    break;
 	case 3:
-	    /* Serial prep API */
-	    return test_cache_multiple_object_same_content(3, obj_cnt, 0);
+	    /* Serial prep API, multiple objects, identical content */
+	    return test_cache(3, obj_cnt, 0, 0);
 	    break;
 	case 4:
-	    /* Parallel prep API */
-	    return test_cache_multiple_object_same_content(4, obj_cnt, 1);
+	    /* Parallel prep API, multiple objects, identical content */
+	    return test_cache(4, obj_cnt, 1, 0);
 	    break;
 	case 5:
-	    /* Serial prep API */
-	    return test_cache_multiple_object_different_content(5, obj_cnt, 0);
+	    /* Serial prep API, multiple objects, different content */
+	    return test_cache(5, obj_cnt, 0, 1);
 	    break;
 	case 6:
-	    /* Parallel prep API */
-	    return test_cache_multiple_object_different_content(6, obj_cnt, 1);
+	    /* Parallel prep API, multiple objects, different content */
+	    return test_cache(6, obj_cnt, 1, 1);
 	default:
 	    break;
     }
