@@ -385,114 +385,101 @@ int
 bu_file_delete(const char *path)
 {
     int ret = 0;
-    int retry = 0;
-#ifdef HAVE_WINDOWS_H
-    DWORD fattrs;
-#else
     int fd = 0;
     struct stat sb;
-#endif
 
     /* reject empty, special, or non-existent paths */
     if (!path
 	    || BU_STR_EQUAL(path, "")
 	    || BU_STR_EQUAL(path, ".")
-	    || BU_STR_EQUAL(path, "..")
-#ifdef HAVE_WINDOWS_H
-	    || !bu_file_exists(path, NULL)
-#else
-	    || !bu_file_exists(path, &fd)
-#endif
-       )
+	    || BU_STR_EQUAL(path, "..") )
     {
 	return 0;
     }
 
-    do {
 
-	if (retry++) {
-	    /* second pass, try to force deletion by changing file
-	     * permissions (similar to rm -f).
-	     */
 #ifdef HAVE_WINDOWS_H
-	    fattrs = GetFileAttributes(path);
-	    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS) && fattrs == INVALID_FILE_ATTRIBUTES) {
-		bu_log("Warning, could not get file attributes for file %s!", path);
-	    }
-
-	    if (!SetFileAttributes(path, GetFileAttributes(path) & !FILE_ATTRIBUTE_READONLY)) {
-		if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
-		    bu_log("bu_file_delete: warning, could not set file attributes on %s!", path);
-		}
-	    }
-	    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
-		if (fattrs == GetFileAttributes(path)) {
-		    bu_log("bu_file_delete: warning, initial delete attempt failed but file attributes unchanged after SetFileAttributes call to update permissions on %s!", path);
-		}
-	    }
+    if (bu_file_directory(path)) {
+	ret = (RemoveDirectory(path)) ? 1 : 0;
+    } else {
+	ret = (DeleteFile(path)) ? 1 : 0;
+    }
 #else
-	    if (fstat(fd, &sb) == -1) {
-		if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
-		    bu_log("Warning, fstat failed on file %s!", path);
-		}
-		break;
-	    }
-	    bu_fchmod(fd, (sb.st_mode|S_IRWXU));
-#endif
-	}
-#ifdef HAVE_WINDOWS_H
-	if (bu_file_directory(path)) {
-	    ret = (RemoveDirectory(path)) ? 1 : 0;
-	} else {
-	    ret = (DeleteFile(path)) ? 1 : 0;
-	}
-	if (ret && retry > 1) {
-	    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
-		/* If we couldn't do the delete after two tries, something unusual is going on - get the message and report */
-		LPTSTR errorText = NULL;
-		DWORD lerror = GetLastError();
-		FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_IGNORE_INSERTS, NULL,
-			lerror,	MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&errorText, 0, NULL);
-		bu_log("bu_file_delete failure: %s", errorText);
-	    }
-	}
-#else
-	if (remove(path) == 0) {
-	    ret = 1;
-	}
+    if (remove(path) == 0) {
+	ret = 1;
+    }
 #endif
 
-    } while (ret == 0 && retry < 2);
+    if (!bu_file_exists(path, &fd)) {
+	return 1;
+    }
 
-#ifndef HAVE_WINDOWS_H
+    /* Second pass, try to force deletion by changing file permissions (similar
+     * to rm -f).
+     */
+#ifdef HAVE_WINDOWS_H
+    /* Because we have to close the fd before we can successfully remove a file
+     * on Windows, we also store the existing file attributes via the Windows
+     * API mechanisms so we can restore them later using SetFileAttributes rather
+     * than bu_fchmod */
+    DWORD fattrs = GetFileAttributes(path);
+    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS) && fattrs == INVALID_FILE_ATTRIBUTES) {
+	bu_log("Warning, could not get file attributes for file %s!", path);
+    }
+
+    /* Go ahead and try the Windows API for removing READONLY, as long as we're here... */
+    if (!SetFileAttributes(path, GetFileAttributes(path) & !FILE_ATTRIBUTE_READONLY)) {
+	if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
+	    bu_log("bu_file_delete: warning, could not set file attributes on %s!", path);
+	}
+    }
+    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
+	if (fattrs == GetFileAttributes(path)) {
+	    bu_log("bu_file_delete: warning, initial delete attempt failed but file attributes unchanged after SetFileAttributes call to update permissions on %s!", path);
+	}
+    }
+#endif
+
+    if (fstat(fd, &sb) == -1) {
+	if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
+	    bu_log("Warning, fstat failed on file %s!", path);
+	}
+    }
+    bu_fchmod(fd, (sb.st_mode|S_IRWXU));
+
+    /* Permissions updated (hopefully), try delete again */
+#ifdef HAVE_WINDOWS_H
+    close(fd);  // If we don't close this here, file delete on Windows will fail
+    if (bu_file_directory(path)) {
+	ret = (RemoveDirectory(path)) ? 1 : 0;
+    } else {
+	ret = (DeleteFile(path)) ? 1 : 0;
+    }
+#else
+    if (remove(path) == 0) {
+	ret = 1;
+    }
+#endif
+
+    /* All boils down to whether the file still exists and if it does whether
+     * remove thinks it succeeded. (We don't complain if we did succeed
+     * according to our ret returns but someone else recreated the file in the
+     * meantime.) */
+    if (bu_file_exists(path, NULL) && ret) {
+	/* failure - restore original file permission */
+#ifdef HAVE_WINDOWS_H
+	SetFileAttributes(path, fattrs);
+#else
+	bu_fchmod(fd, sb.st_mode);
+	close(fd);
+#endif
+	return 0;
+    }
+
+#ifdef HAVE_WINDOWS_H
     close(fd);
 #endif
 
-    /* all boils down to whether the file still exists, not whether
-     * remove thinks it succeeded.
-     */
-#ifdef HAVE_WINDOWS_H
-    if (bu_file_exists(path, NULL)) {
-	/* failure */
-	if (retry > 1) {
-	    /* restore original file permission */
-	    SetFileAttributes(path, fattrs);
-	}
-	return 0;
-    }
-#else
-    if (bu_file_exists(path, &fd)) {
-	/* failure */
-	if (retry > 1) {
-	    /* restore original file permission */
-	    bu_fchmod(fd, sb.st_mode);
-	}
-	close(fd);
-	return 0;
-    }
-#endif
-
-    /* deleted */
     return 1;
 }
 
