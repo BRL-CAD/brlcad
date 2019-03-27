@@ -27,6 +27,7 @@ set(bu_test_srcs
   path_component.c
   process.c
   ptbl.c
+  realpath.c
   redblack.c
   semaphore.c
   sort.c
@@ -730,7 +731,11 @@ add_test(NAME bu_mappedfile_parallel_16384 COMMAND bu_test mappedfile 2 16384)
 add_test(NAME bu_mappedfile_repeat_serial_10 COMMAND bu_test mappedfile 3 10)
 add_test(NAME bu_mappedfile_repeat_parallel_10 COMMAND bu_test mappedfile 4 10)
 
-BRLCAD_ADDEXEC(bu_rpc realpath.c libbu TEST)
+#
+#  *********** realpath.c tests ************
+#
+add_test(NAME bu_file_realpath_1 COMMAND bu_test realpath 1)
+#add_test(NAME bu_file_realpath_2 COMMAND bu_test realpath 2)
 
 CMAKEFILES(
   tests_bitv.cmake
