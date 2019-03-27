@@ -14,7 +14,8 @@ changes made.  See document footer for additional details.
 --- 20XX-XX-XX  Release 7.30.2                                     ---
 ----------------------------------------------------------------------
 
-* fixed problems with file deletion on Windows - Cliff Yapp
+* fixed Windows temporary file removal for MGED commands (red, etc.)
+	- Cliff Yapp
 * fixed librt NURBS cache issues under high load conditions
 	- Sean Morrison, Cliff Yapp
 * added a copy subcommand to MGED's attr command - Cliff Yapp
