@@ -547,7 +547,7 @@ bu_free_mapped_files(int verbose)
 
 	/* shift pointers up one */
 	memmove(all_mapped_files.mapped_files + i, all_mapped_files.mapped_files + i + 1, sizeof(all_mapped_files.mapped_files[0]) * (all_mapped_files.size - i - 1));
-	all_mapped_files.mapped_files[all_mapped_files.size] = NULL; /* zero out the last (now invalid) pointer */
+	all_mapped_files.mapped_files[all_mapped_files.size - 1] = NULL; /* zero out the last (now invalid) pointer */
 	all_mapped_files.size--;
     }
     /* release the array if we get back to empty */
