@@ -34,6 +34,9 @@
 extern char *realpath(const char *, char *);
 #endif
 
+extern char *canonicalize_file_name(const char *path);
+
+
 char *
 bu_file_realpath(const char *path, char *resolved_path)
 {
@@ -43,10 +46,18 @@ bu_file_realpath(const char *path, char *resolved_path)
 #if defined(HAVE_REALPATH)
     {
 	char *dirpath = NULL;
-	dirpath = realpath(path, resolved_path);
+	/* NOTE: realpath() has a critical but well-reported
+	 * buffer-overrun bug (linux glibc pre 5.4.13), so we
+	 * intentionally avoid it.  avoid triggering buffer overflow
+	 * detections and smashing memory by calling alternates
+	 */
+	dirpath = canonicalize_file_name(path);
 	if (!dirpath) {
 	    /* if path lookup failed, resort to simple copy */
-	    bu_strlcpy(resolved_path, path, (size_t)MAXPATHLEN);
+	    bu_strlcpy(resolved_path, path, MAXPATHLEN);
+	} else {
+	    bu_strlcpy(resolved_path, dirpath, MAXPATHLEN);
+	    free(dirpath);
 	}
     }
 #elif defined(HAVE_GETFULLPATHNAME)
