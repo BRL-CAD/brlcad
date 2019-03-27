@@ -703,11 +703,13 @@ add_test(NAME bu_hook_saverestore COMMAND bu_test hook saverestore)
 #  *********** process.c tests ************
 #
 
-# Make a binary to launch as a subprocess
+# Make a binary to launch as a subprocess, and add it as
+# dependency of bu_test to make sure it is present when
+# bu_test runs its process tests
 BRLCAD_ADDEXEC(bu_subprocess subprocess.cxx libbu TEST)
+add_dependencies(bu_test bu_subprocess)
 add_test(NAME bu_process_basic COMMAND bu_test process "$<TARGET_FILE:bu_subprocess>" basic)
 add_test(NAME bu_process_abort COMMAND bu_test process "$<TARGET_FILE:bu_subprocess>" abort)
-
 
 #  *********** mappedfile.c tests ************
 add_test(NAME bu_mappedfile_serial_1 COMMAND bu_test mappedfile 1 1)
