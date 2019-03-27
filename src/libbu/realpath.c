@@ -30,12 +30,13 @@
 #include "bu/str.h"
 
 /* c89 strict doesn't declare realpath */
-#ifndef HAVE_DECL_REALPATH
+#if defined(HAVE_REALPATH) && !defined(HAVE_DECL_REALPATH)
 extern char *realpath(const char *, char *);
 #endif
 
+#if defined(HAVE_CANONICALIZE_FILE_NAME) && !defined(HAVE_DECL_CANONICALIZE_FILE_NAME)
 extern char *canonicalize_file_name(const char *path);
-
+#endif
 
 char *
 bu_file_realpath(const char *path, char *resolved_path)
@@ -43,22 +44,29 @@ bu_file_realpath(const char *path, char *resolved_path)
     if (!resolved_path)
 	resolved_path = (char *) bu_calloc(MAXPATHLEN, sizeof(char), "resolved_path alloc");
 
-#if defined(HAVE_REALPATH)
+#if defined(HAVE_CANONICALIZE_FILE_NAME) || defined(HAVE_REALPATH)
     {
 	char *dirpath = NULL;
-	/* NOTE: realpath() has a critical but well-reported
-	 * buffer-overrun bug (linux glibc pre 5.4.13), so we
-	 * intentionally avoid it.  avoid triggering buffer overflow
-	 * detections and smashing memory by calling alternates
-	 */
+	/* NOTE: realpath() has a critical but well-reported buffer-overrun bug
+	 * (linux glibc pre 5.4.13), so we intentionally avoid it if we have
+	 * alternatives. */
+#if defined(HAVE_CANONICALIZE_FILE_NAME)
 	dirpath = canonicalize_file_name(path);
+#elif defined(HAVE_REALPATH)
+	dirpath = realpath(path, resolved_path);
+#endif
 	if (!dirpath) {
-	    /* if path lookup failed, resort to simple copy */
+	    /* If path lookup failed, resort to simple copy */
 	    bu_strlcpy(resolved_path, path, MAXPATHLEN);
-	} else {
+	}
+#if defined(HAVE_CANONICALIZE_FILE_NAME)
+	/* Unlike realpath, canonicalize_file_name's results must be copied
+	 * into the file resolved_path buffer. */
+	if (dirpath) {
 	    bu_strlcpy(resolved_path, dirpath, MAXPATHLEN);
 	    free(dirpath);
 	}
+#endif
     }
 #elif defined(HAVE_GETFULLPATHNAME)
     /* Best solution currently available for Windows
