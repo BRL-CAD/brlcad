@@ -27,6 +27,7 @@
 #include "bu/avs.h"
 #include "bu/env.h"
 #include "bu/malloc.h"
+#include "bu/process.h"
 #include "bu/str.h"
 #include "raytrace.h"
 
@@ -130,7 +131,7 @@ add_comb(struct db_i *dbip, const char *name, int obj_argc, const char **obj_arg
 }
 
 static int
-cache_count(const char *cache_dir)
+cache_count(const char *cache_dir, int ignore_temp)
 {
     int cache_objects = 0;
     struct bu_vls wpath = BU_VLS_INIT_ZERO;
@@ -142,7 +143,20 @@ cache_count(const char *cache_dir)
     for (size_t i = 0; i < objdir_cnt; i++) {
 	/* Find and remove all files in the obj dir */
 	bu_vls_sprintf(&wpath, "%s/objects/%s", cache_dir, obj_dirs[i]);
-	cache_objects += bu_file_list(bu_vls_cstr(&wpath), "[a-zA-z0-9]*", NULL);
+	if (!ignore_temp) {
+	    cache_objects += bu_file_list(bu_vls_cstr(&wpath), "[a-zA-z0-9]*", NULL);
+	} else {
+	    char **objs = NULL;
+	    size_t objs_cnt = bu_file_list(bu_vls_cstr(&wpath), "[a-zA-z0-9]*", &objs);
+	    for (size_t j = 0; j < objs_cnt; j++) {
+		// Temporary objects will have '.' chars in the name - skip them,
+		// since another process might be working on one
+		if (!strchr(objs[j], '.')) {
+		    cache_objects++;
+		}
+	    }
+	    bu_argv_free(objs_cnt, objs);
+	}
     }
     bu_argv_free(objdir_cnt, obj_dirs);
     bu_vls_free(&wpath);
@@ -218,11 +232,11 @@ create_test_g_file(long int test_num, const char *gfile)
 }
 
 static struct rt_i *
-build_rtip(long int test_num, struct bu_vls *gfile, const char *objname, int stage_num, int do_parallel, int ncpus)
+build_rtip(long int test_num, const char *gfile, const char *objname, int stage_num, int do_parallel, int ncpus)
 {
     struct rt_i *rtip = RTI_NULL;
 
-    rtip = rt_dirbuild(bu_vls_cstr(gfile), NULL, 0);
+    rtip = rt_dirbuild(gfile, NULL, 0);
 
     if (rtip == RTI_NULL) {
 	bu_exit(1, "Test %ld: failed to rt_dirbuild in stage %d\n", test_num, stage_num);
@@ -244,11 +258,115 @@ build_rtip(long int test_num, struct bu_vls *gfile, const char *objname, int sta
     return rtip;
 }
 
+static int
+test_subprocess(int ac, char *av[])
+{
+    long int test_num;
+    long int process_num;
+    long int expected;
+    struct rt_i *rtip_stage_1, *rtip_stage_2;
+    const char *gfile;
+    const char *cache_dir;
+    const char *cname;
+    size_t ncpus = (bu_avail_cpus() > MAX_PSW) ? MAX_PSW : bu_avail_cpus();
+
+    if (ac != 6) {
+	bu_exit(1, "rt_cache subprocess command invoked incorrectly");
+    }
+
+    sscanf(av[0], "%ld", &test_num);
+    sscanf(av[1], "%ld", &process_num);
+    sscanf(av[2], "%ld", &expected);
+    gfile = av[3];
+    cache_dir = av[4];
+    cname = av[5];
+
+    bu_setenv("LIBRT_CACHE", bu_dir(NULL, 0, BU_DIR_CURR, cache_dir, NULL), 1);
+
+    rtip_stage_1 = build_rtip(test_num, gfile, cname, process_num*1000 + 1, 1, ncpus);
+
+    // Confirm the presence of the expected number of file(s) in the cache
+    int cc = cache_count(cache_dir, 1);
+    if (cc != expected) {
+	bu_exit(1, "Test %ld(process %ld): expected %ld cache object(s), found %d\n", test_num, process_num, expected, cc);
+    }
+
+    rt_clean(rtip_stage_1);
+    rt_free_rti(rtip_stage_1);
+
+    /*** Now, do it again with the cache definitely in place */
+    rtip_stage_2 = build_rtip(test_num, gfile, cname, process_num*1000 + 2, 1, ncpus);
+    rt_clean(rtip_stage_2);
+    rt_free_rti(rtip_stage_2);
+
+    bu_log("Test %ld(process %ld): PASSED\n", test_num, process_num);
+
+    return 0;
+}
+
+struct subprocess_data {
+    char *pname;
+    long int test_num;
+    long int process_num;
+    long int expected;
+    char *gfile;
+    char *cache_dir;
+    char *cname;
+    int result;
+    struct bu_vls *sd_result;
+};
+
+static void
+subprocess_launcher(int id, void *data)
+{
+    int count, aborted;
+    int ac = 8;
+    char *line = (char *)bu_calloc(MAXPATHLEN+501, sizeof(char), "resultstr");
+    const char *av[9];
+    int ind = (!id) ? 0 : (id - 1);
+    struct subprocess_data **sda = (struct subprocess_data **)data;
+    struct subprocess_data *sd = sda[ind];
+    struct bu_vls tn = BU_VLS_INIT_ZERO;
+    struct bu_vls pn = BU_VLS_INIT_ZERO;
+    struct bu_vls en = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&tn, "%ld", sd->test_num);
+    bu_vls_sprintf(&pn, "%ld", sd->process_num);
+    bu_vls_sprintf(&en, "%ld", sd->expected);
+
+    av[0] = sd->pname;
+    av[1] = "-1";
+    av[2] = bu_vls_cstr(&tn);
+    av[3] = bu_vls_cstr(&pn);
+    av[4] = bu_vls_cstr(&en);
+    av[5] = sd->gfile;
+    av[6] = sd->cache_dir;
+    av[7] = sd->cname;
+    av[8] = NULL;
+
+    sd->result = 0;
+
+    struct bu_process *p = NULL;
+    bu_process_exec(&p, sd->pname, ac, (const char **)av, 0, 0);
+    bu_vls_printf(sd->sd_result, "Test %ld(process %ld): running...\n", sd->test_num, sd->process_num);
+
+    while (bu_process_read((char *)line, &count, p, BU_PROCESS_STDERR, MAXPATHLEN+501) > 0) {
+	bu_vls_printf(sd->sd_result, "%s\n", line);
+	memset(line, 0, MAXPATHLEN+501);
+    }
+
+    if (bu_process_wait(&aborted, p, 120)) {
+	bu_vls_printf(sd->sd_result, "Test %ld(process %ld): rt_cache_subprocess failed\n", sd->test_num, sd->process_num);
+	sd->result = 1;
+    }
+
+    bu_free(line, "line");
+}
+
 /* Core test routine.  Check that the cache object is created, that only the
  * correct number of object(s) is/are created, and that a second rtip can be
  * successfully created after the cache is initialized. */
 static int
-test_cache(long int test_num, long int obj_cnt, int do_parallel, int different_content)
+test_cache(char *rp, long int test_num, long int obj_cnt, int do_parallel, int different_content, int subprocess_cnt)
 {
     struct bu_vls cache_dir = BU_VLS_INIT_ZERO;
     struct bu_vls gfile = BU_VLS_INIT_ZERO;
@@ -318,22 +436,53 @@ test_cache(long int test_num, long int obj_cnt, int do_parallel, int different_c
 
     db_close(dbip);
 
-    rtip_stage_1 = build_rtip(test_num, &gfile, bu_vls_cstr(&cname), 1, do_parallel, ncpus);
+    if (!subprocess_cnt) {
+	rtip_stage_1 = build_rtip(test_num, bu_vls_cstr(&gfile), bu_vls_cstr(&cname), 1, do_parallel, ncpus);
 
-    // Confirm the presence of the expected number of file(s) in the cache
-    int cc = cache_count(bu_vls_cstr(&cache_dir));
-    long int expected = (different_content) ? obj_cnt : 1;
-    if (cc != expected) {
-	bu_exit(1, "Test %ld: expected %ld cache object(s), found %d\n", test_num, expected, cc);
+	// Confirm the presence of the expected number of file(s) in the cache
+	int cc = cache_count(bu_vls_cstr(&cache_dir), 0);
+	long int expected = (different_content) ? obj_cnt : 1;
+	if (cc != expected) {
+	    bu_exit(1, "Test %ld: expected %ld cache object(s), found %d\n", test_num, expected, cc);
+	}
+
+	rt_clean(rtip_stage_1);
+	rt_free_rti(rtip_stage_1);
+
+	/*** Now, do it again with the cache in place */
+	rtip_stage_2 = build_rtip(test_num, bu_vls_cstr(&gfile), bu_vls_cstr(&cname), 2, do_parallel, ncpus);
+	rt_clean(rtip_stage_2);
+	rt_free_rti(rtip_stage_2);
+    } else {
+	long int expected = (different_content) ? obj_cnt : 1;
+	struct subprocess_data **sdata = (struct subprocess_data **)bu_calloc(subprocess_cnt, sizeof(struct subprocess_data *), "launch data array");
+	for (long int i = 0; i < subprocess_cnt; i++) {
+	    sdata[i] = (struct subprocess_data *)bu_calloc(1, sizeof(struct subprocess_data), "launch data");
+	    sdata[i]->pname = bu_strdup(rp);
+	    sdata[i]->test_num = test_num;
+	    sdata[i]->process_num = i;
+	    sdata[i]->expected = expected;
+	    sdata[i]->gfile = bu_strdup(bu_vls_cstr(&gfile));
+	    sdata[i]->cache_dir = bu_strdup(bu_vls_cstr(&cache_dir));
+	    sdata[i]->cname = bu_strdup(bu_vls_cstr(&cname));
+	    BU_GET(sdata[i]->sd_result, struct bu_vls);
+	    bu_vls_init(sdata[i]->sd_result);
+	}
+	bu_parallel(subprocess_launcher, subprocess_cnt, (void *)sdata);
+	for (long int i = 0; i < subprocess_cnt; i++) {
+	    if (sdata[i]->result) {
+		bu_exit(1, "Test %ld: subprocess failure:\n%s", test_num, bu_vls_cstr(sdata[i]->sd_result));
+	    } else {
+		bu_log("%s", bu_vls_cstr(sdata[i]->sd_result));
+	    }
+	    bu_free(sdata[i]->pname, "gfile");
+	    bu_free(sdata[i]->gfile, "gfile");
+	    bu_free(sdata[i]->cache_dir, "cache_dir");
+	    bu_free(sdata[i]->cname, "cname");
+	    bu_vls_free(sdata[i]->sd_result);
+	    BU_PUT(sdata[i]->sd_result, struct bu_vls);
+	}
     }
-
-    rt_clean(rtip_stage_1);
-    rt_free_rti(rtip_stage_1);
-
-    /*** Now, do it again with the cache in place */
-    rtip_stage_2 = build_rtip(test_num, &gfile, bu_vls_cstr(&cname), 2, do_parallel, ncpus);
-    rt_clean(rtip_stage_2);
-    rt_free_rti(rtip_stage_2);
 
     /* All done - scrub out the temporary cache */
     cache_cleanup(&cache_dir);
@@ -347,6 +496,7 @@ test_cache(long int test_num, long int obj_cnt, int do_parallel, int different_c
     return 0;
 }
 
+
 const char *rt_cache_test_usage =
 "Usage: rt_cache 1             (Single object serial test)\n"
 "       rt_cache 2             (Single object parallel test)\n"
@@ -354,27 +504,49 @@ const char *rt_cache_test_usage =
 "       rt_cache 4 [obj_count] (Multiple identical object parallel test)\n"
 "       rt_cache 5 [obj_count] (Multiple distinct object serial test)\n"
 "       rt_cache 6 [obj_count] (Multiple distinct object parallel test)\n"
-"       rt_cache 7 [gfile]     (Multiple process identical objects test)\n"
-"       rt_cache 8 [gfile]     (Multiple process distinct objects test)\n";
+"       rt_cache 7 [obj_count] [subprocess_count] (Multiple process identical objects test)\n"
+"       rt_cache 8 [obj_count] [subprocess_count] (Multiple process distinct objects test)\n";
 
 int
 main(int ac, char *av[])
 {
+    long int subprocess_cnt = 2;
     long int obj_cnt = 1;
     long int test_num = 0;
+    char *rp = bu_file_realpath(av[0], NULL);
+    size_t maxcpus = (bu_avail_cpus() > MAX_PSW) ? MAX_PSW : bu_avail_cpus();
 
-    if (ac < 2 || ac > 4) {
+    ac--; av++;
+
+    if (ac < 1) {
 	bu_exit(1, "%s", rt_cache_test_usage);
     }
 
-    sscanf(av[1], "%ld", &test_num);
+    sscanf(av[0], "%ld", &test_num);
 
-    if (test_num < 3 && ac > 2) {
+    if (test_num == -1) {
+	ac--; av++;
+	return test_subprocess(ac, av);
+    }
+
+    if (ac > 3) {
 	bu_exit(1, "%s", rt_cache_test_usage);
     }
 
-    if (test_num > 2 && test_num < 7 && ac == 3) {
-	sscanf(av[2], "%ld", &obj_cnt);
+    if (test_num < 3 && ac > 1) {
+	bu_exit(1, "%s", rt_cache_test_usage);
+    }
+
+    if (test_num > 2 && ac >= 2) {
+	sscanf(av[1], "%ld", &obj_cnt);
+    }
+
+    if (test_num > 6 && ac >= 3) {
+	sscanf(av[2], "%ld", &subprocess_cnt);
+	if (subprocess_cnt > (long int)maxcpus) {
+	    bu_log("Requested %ld subprocesses, but only %zd CPUs available - throttling to %zd\n", subprocess_cnt, maxcpus, maxcpus);
+	    subprocess_cnt = (long int)maxcpus;
+	}
     }
 
     /* Just get this done up front - all tests need it */
@@ -383,27 +555,33 @@ main(int ac, char *av[])
     switch (test_num) {
 	case 1:
 	    /* Serial prep API, 1 object */
-	    return test_cache(1, 1, 0, 0);
+	    return test_cache(rp, 1, 1, 0, 0, 0);
 	    break;
 	case 2:
 	    /* Parallel prep API, 1 object */
-	    return test_cache(2, 1, 1, 0);
+	    return test_cache(rp, 2, 1, 1, 0, 0);
 	    break;
 	case 3:
 	    /* Serial prep API, multiple objects, identical content */
-	    return test_cache(3, obj_cnt, 0, 0);
+	    return test_cache(rp, 3, obj_cnt, 0, 0, 0);
 	    break;
 	case 4:
 	    /* Parallel prep API, multiple objects, identical content */
-	    return test_cache(4, obj_cnt, 1, 0);
+	    return test_cache(rp, 4, obj_cnt, 1, 0, 0);
 	    break;
 	case 5:
 	    /* Serial prep API, multiple objects, different content */
-	    return test_cache(5, obj_cnt, 0, 1);
+	    return test_cache(rp, 5, obj_cnt, 0, 1, 0);
 	    break;
 	case 6:
 	    /* Parallel prep API, multiple objects, different content */
-	    return test_cache(6, obj_cnt, 1, 1);
+	    return test_cache(rp, 6, obj_cnt, 1, 1, 0);
+	case 7:
+	    /* Multiple objects, same content, multi-process */
+	    return test_cache(rp, 7, obj_cnt, 1, 0, subprocess_cnt);
+	case 8:
+	    /* Multiple objects, different content, multi-process */
+	    return test_cache(rp, 8, obj_cnt, 1, 1, subprocess_cnt);
 	default:
 	    break;
     }
