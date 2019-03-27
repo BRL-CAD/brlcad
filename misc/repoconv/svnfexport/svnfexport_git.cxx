@@ -1,5 +1,113 @@
 std::vector<std::string> all_git_branches;
 
+void
+load_branches_list()
+{
+    struct stat buffer;
+    if (stat("branches.txt", &buffer)) {
+	all_git_branches.push_back(std::string("AUTOCONF"));
+	all_git_branches.push_back(std::string("CMD"));
+	all_git_branches.push_back(std::string("Original"));
+	all_git_branches.push_back(std::string("STABLE"));
+	all_git_branches.push_back(std::string("ansi-20040316-freeze"));
+	all_git_branches.push_back(std::string("ansi-6-0-branch"));
+	all_git_branches.push_back(std::string("ansi-branch"));
+	all_git_branches.push_back(std::string("autoconf-20031202"));
+	all_git_branches.push_back(std::string("autoconf-20031203"));
+	all_git_branches.push_back(std::string("autoconf-branch"));
+	all_git_branches.push_back(std::string("bobWinPort"));
+	all_git_branches.push_back(std::string("bobWinPort-20051223-freeze"));
+	all_git_branches.push_back(std::string("brlcad_5_1_alpha_patch"));
+	all_git_branches.push_back(std::string("ctj-4-5-post"));
+	all_git_branches.push_back(std::string("ctj-4-5-pre"));
+	all_git_branches.push_back(std::string("hartley-6-0-post"));
+	all_git_branches.push_back(std::string("help"));
+	all_git_branches.push_back(std::string("import-1.1.1"));
+	all_git_branches.push_back(std::string("itcl3-2"));
+	all_git_branches.push_back(std::string("libpng_1_0_2"));
+	all_git_branches.push_back(std::string("master"));
+	all_git_branches.push_back(std::string("master-UNNAMED-BRANCH"));
+	all_git_branches.push_back(std::string("merge-to-head-20051223"));
+	all_git_branches.push_back(std::string("offsite-5-3-pre"));
+	all_git_branches.push_back(std::string("opensource-pre"));
+	all_git_branches.push_back(std::string("phong-branch"));
+	all_git_branches.push_back(std::string("photonmap-branch"));
+	all_git_branches.push_back(std::string("postmerge-autoconf"));
+	all_git_branches.push_back(std::string("premerge-20040315-windows"));
+	all_git_branches.push_back(std::string("premerge-20040404-ansi"));
+	all_git_branches.push_back(std::string("premerge-20051223-bobWinPort"));
+	all_git_branches.push_back(std::string("premerge-autoconf"));
+	all_git_branches.push_back(std::string("rel-2-0"));
+	all_git_branches.push_back(std::string("rel-5-0"));
+	all_git_branches.push_back(std::string("rel-5-0-beta"));
+	all_git_branches.push_back(std::string("rel-5-0beta"));
+	all_git_branches.push_back(std::string("rel-5-1"));
+	all_git_branches.push_back(std::string("rel-5-1-branch"));
+	all_git_branches.push_back(std::string("rel-5-1-patches"));
+	all_git_branches.push_back(std::string("rel-5-2"));
+	all_git_branches.push_back(std::string("rel-5-3"));
+	all_git_branches.push_back(std::string("rel-5-4"));
+	all_git_branches.push_back(std::string("rel-6-0"));
+	all_git_branches.push_back(std::string("rel-6-0-1"));
+	all_git_branches.push_back(std::string("rel-6-0-1-branch"));
+	all_git_branches.push_back(std::string("rel-6-1-DP"));
+	all_git_branches.push_back(std::string("rel-7-0"));
+	all_git_branches.push_back(std::string("rel-7-0-1"));
+	all_git_branches.push_back(std::string("rel-7-0-2"));
+	all_git_branches.push_back(std::string("rel-7-0-4"));
+	all_git_branches.push_back(std::string("rel-7-0-branch"));
+	all_git_branches.push_back(std::string("rel-7-10-0"));
+	all_git_branches.push_back(std::string("rel-7-10-2"));
+	all_git_branches.push_back(std::string("rel-7-2-0"));
+	all_git_branches.push_back(std::string("rel-7-2-2"));
+	all_git_branches.push_back(std::string("rel-7-2-4"));
+	all_git_branches.push_back(std::string("rel-7-2-6"));
+	all_git_branches.push_back(std::string("rel-7-4-0"));
+	all_git_branches.push_back(std::string("rel-7-4-branch"));
+	all_git_branches.push_back(std::string("rel-7-6-0"));
+	all_git_branches.push_back(std::string("rel-7-6-4"));
+	all_git_branches.push_back(std::string("rel-7-6-6"));
+	all_git_branches.push_back(std::string("rel-7-6-branch"));
+	all_git_branches.push_back(std::string("rel-7-8-0"));
+	all_git_branches.push_back(std::string("rel-7-8-2"));
+	all_git_branches.push_back(std::string("rel-7-8-4"));
+	all_git_branches.push_back(std::string("release-7-0"));
+	all_git_branches.push_back(std::string("stable-branch"));
+	all_git_branches.push_back(std::string("tcl8-3"));
+	all_git_branches.push_back(std::string("temp_tag"));
+	all_git_branches.push_back(std::string("tk8-3"));
+	all_git_branches.push_back(std::string("trimnurbs-branch"));
+	all_git_branches.push_back(std::string("windows-20040315-freeze"));
+	all_git_branches.push_back(std::string("windows-6-0-branch"));
+	all_git_branches.push_back(std::string("windows-branch"));
+	all_git_branches.push_back(std::string("zlib_1_0_4"));
+	return;
+    }
+
+    std::ifstream infile("branches.txt");
+    if (!infile.good()) exit(1);
+    std::string line;
+    while (std::getline(infile, line)) {
+	if (line.length() > 1) {
+	    all_git_branches.push_back(line);
+	}
+    }
+}
+
+void
+write_branches_list()
+{
+    std::vector<std::string>::iterator b_it;
+    remove("branches.txt");
+    std::ofstream outfile("branches.txt", std::ios::out | std::ios::binary);
+    if (!outfile.good()) exit(-1);
+    for (b_it = all_git_branches.begin(); b_it != all_git_branches.end(); b_it++) {
+	outfile << *b_it << "\n";
+    }
+    outfile.close();
+}
+
+
 void read_cached_rev_sha1s()
 {
     std::ifstream infile("rev_gsha1s.txt");
@@ -899,7 +1007,7 @@ load_branch_head_sha1s()
 void
 load_blob_sha1s()
 {
-    std::string git_sha1_heads_cmd = std::string("rm -f brlcad_cvs_git_all_blob_sha1.txt && cd cvs_git && git rev-list --objects --all | git cat-file --batch-check='%(objectname) %(objecttype) %(rest)' | grep '^[^ ]* blob' | cut -d\" \" -f1,3- > ../brlcad_cvs_git_all_blob_sha1.txt && echo \"e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 src/other/tkhtml3/AUTHORS\n\" >> ../brlcad_cvs_git_heads_sha1.txt && cd ..");
+    std::string git_sha1_heads_cmd = std::string("rm -f brlcad_cvs_git_all_blob_sha1.txt && cd cvs_git && git rev-list --objects --all | git cat-file --batch-check='%(objectname) %(objecttype) %(rest)' | grep '^[^ ]* blob' | cut -d\" \" -f1,3- > ../brlcad_cvs_git_all_blob_sha1.txt && echo \"e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 src/other/tkhtml3/AUTHORS\n\" >> ../brlcad_cvs_git_all_blob_sha1.txt && cd ..");
     if (std::system(git_sha1_heads_cmd.c_str())) {
 	std::cout << "git load blobs failed\n";
 	exit(1);
