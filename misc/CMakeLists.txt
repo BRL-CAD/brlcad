@@ -154,6 +154,11 @@ set(misc_ignore_files
   repoconv/svnfexport/svnfexport.cxx
   repoconv/svnfexport/custom/29982.fi
   repoconv/svnfexport/custom/31039.fi
+  repoconv/svnfexport/custom/32007.fi
+  repoconv/svnfexport/custom/32009.fi
+  repoconv/svnfexport/custom/32046.fi
+  repoconv/svnfexport/custom/r29886_cvs_svn_rel-5-1-branch_sync.fi
+  repoconv/svnfexport/custom/r29886_cvs_svn_trunk_sync.fi
   uncpowerplant2g.sh
   win32-msvc/CMakeLists.txt
   win32-msvc/Dll/BrlcadCore.def
