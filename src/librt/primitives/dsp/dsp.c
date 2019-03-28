@@ -922,6 +922,15 @@ rt_dsp_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 
 #undef BBOX_PT
 
+    switch (dsp_ip->dsp_datasrc) {
+	case RT_DSP_SRC_V4_FILE:
+	case RT_DSP_SRC_FILE:
+	    bu_semaphore_acquire(RT_SEM_MODEL);
+	    --dsp_ip->dsp_mp->uses;
+	    bu_semaphore_release(RT_SEM_MODEL);
+	    break;
+    }
+
     return 0;
 }
 
