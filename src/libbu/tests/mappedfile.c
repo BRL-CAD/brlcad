@@ -180,6 +180,77 @@ test_mapped_file_parallel_repeat(long int file_cnt, long int test_num)
     return 0;
 }
 
+static void
+mapped_file_worker_with_free(int cpu, void *data)
+{
+    int order = cpu % 2;
+    long int i;
+    struct mapped_file_worker_info *info = &(((struct mapped_file_worker_info *)data)[cpu]);
+    info->value = 0;
+
+    if (order) {
+	for (i = 0; i < info->file_cnt; i++) {
+	    info->value = mapped_file_read_number(i, info->test_num, info->file_cnt);
+	    if (info->value != i) {
+		bu_log("%s-%ld-%ld-%ld -> %ld [FAIL]  (should be: %ld)\n", FILE_PREFIX, info->test_num, info->file_cnt, i, info->value, i);
+		break;
+	    }
+	    if ((i+cpu)%3 == 0) {
+		bu_free_mapped_files(0);
+	    }
+	}
+    } else {
+	for (i = info->file_cnt - 1; i >= 0; i--) {
+	    info->value = mapped_file_read_number(i, info->test_num, info->file_cnt);
+	    if (info->value != i) {
+		bu_log("%s-%ld-%ld-%ld -> %ld [FAIL]  (should be: %ld)\n", FILE_PREFIX, info->test_num, info->file_cnt, i, info->value, i);
+		break;
+	    }
+	    if ((i+cpu)%3 == 0) {
+		bu_free_mapped_files(0);
+	    }
+	}
+    }
+
+    if ((order && info->value == info->file_cnt-1) || (!order && info->value == 0)) {
+	info->value = 0;
+    } else {
+	info->value = 1;
+    }
+}
+
+static int
+test_mapped_file_parallel_with_free(size_t file_cnt, long int test_num)
+{
+    int ret = 0;
+    int ncpus = bu_avail_cpus();
+    struct mapped_file_worker_info *infos;
+
+    infos = (struct mapped_file_worker_info *)bu_calloc(ncpus+1, sizeof(struct mapped_file_worker_info), "parallel data");
+
+    for (int i = 0; i < ncpus; i++) {
+	infos[i].file_cnt = file_cnt;
+	infos[i].test_num = test_num;
+	infos[i].value = 0;
+    }
+
+    bu_parallel(mapped_file_worker_with_free, ncpus, (void *)infos);
+
+    for (int i = 0; i < ncpus; i++) {
+	if (infos[i].value) {
+	    ret = 1;
+	    break;
+	}
+    }
+
+    bu_free(infos, "free parallel data");
+    if (ret == 0) {
+	bu_log("Test %ld: mapped file parallel test: [PASS]\n", test_num);
+    }
+
+    return ret;
+}
+
 int
 main(int ac, char *av[])
 {
@@ -227,6 +298,9 @@ main(int ac, char *av[])
 	    break;
 	case 4:
 	    ret = test_mapped_file_parallel_repeat(file_cnt, test_num);
+	    break;
+	case 5:
+	    ret = test_mapped_file_parallel_with_free(file_cnt, test_num);
 	    break;
     }
 
