@@ -922,18 +922,6 @@ rt_dsp_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 
 #undef BBOX_PT
 
-    switch (ds.dsp_i.dsp_datasrc) {
-	case RT_DSP_SRC_V4_FILE:
-	case RT_DSP_SRC_FILE:
-	    bu_close_mapped_file(ds.dsp_i.dsp_mp);
-	    if (ds.dsp_i.dsp_buf) {
-		bu_free(ds.dsp_i.dsp_buf, "dsp fake data");
-	    }
-	    break;
-	case RT_DSP_SRC_OBJ:
-	    break;
-    }
-
     return 0;
 }
 
