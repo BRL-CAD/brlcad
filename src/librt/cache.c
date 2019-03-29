@@ -645,7 +645,7 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
 	/* If a file already exists, stash the size of the file we just
 	 * finished (i.e. the one we have confidence is correctly sized) to use
 	 * as a sanity check. */
-	int tmp_file_size = bu_file_size(tmpname);
+	int tmp_file_size = bu_file_size(tmppath);
 	int final_file_size = bu_file_size(path);
 	int checkpnt_size = 0;
 	int check_cnt = 0;
