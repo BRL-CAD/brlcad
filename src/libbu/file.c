@@ -456,6 +456,11 @@ bu_file_delete(const char *path)
     } else {
 	ret = (DeleteFile(path)) ? 1 : 0;
     }
+    if (UNLIKELY(!ret && (bu_debug & BU_DEBUG_PATHS))) {
+	char buf[BUFSIZ];
+	FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, GetLastError(), LANG_NEUTRAL, buf, BUFSIZ, NULL);
+	bu_log("bu_file_delete: delete failed, Last Error was %s\n", (const char *)buf);
+    }
 #else
     if (remove(path) == 0) {
 	ret = 1;
