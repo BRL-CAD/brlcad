@@ -366,7 +366,7 @@ subprocess_launcher(int id, void *data)
  * correct number of object(s) is/are created, and that a second rtip can be
  * successfully created after the cache is initialized. */
 static int
-test_cache(char *rp, long int test_num, long int obj_cnt, int do_parallel, int different_content, int subprocess_cnt)
+test_cache(char *rp, long int test_num, long int obj_cnt, int do_parallel, int different_content, int subprocess_cnt, int comb_cnt)
 {
     struct bu_vls cache_dir = BU_VLS_INIT_ZERO;
     struct bu_vls gfile = BU_VLS_INIT_ZERO;
@@ -426,6 +426,27 @@ test_cache(char *rp, long int test_num, long int obj_cnt, int do_parallel, int d
 
 	add_comb(dbip, bu_vls_cstr(&cname), oc, (const char **)ov, test_num);
 
+	if (comb_cnt > 0) {
+	    struct bu_vls obj_comb = BU_VLS_INIT_ZERO;
+	    char **ovc = (char **)bu_calloc(comb_cnt+1, sizeof(char  *), "object array");
+	    const char *ocname = NULL;
+	    bu_vls_sprintf(&obj_comb, "%s", bu_vls_cstr(&cname));
+	    ocname = bu_vls_cstr(&obj_comb);
+
+	    for (long int i = 0; i < comb_cnt; i++) {
+		bu_vls_sprintf(&cname, "%s%ld_child%ld.c", oname_root, test_num, i);
+		ovc[i] = bu_strdup(bu_vls_cstr(&cname));
+		add_comb(dbip, bu_vls_cstr(&cname), 1, (const char **)&ocname, test_num);
+	    }
+	    bu_vls_sprintf(&cname, "%s%ld-top.c", oname_root, test_num);
+	    add_comb(dbip, bu_vls_cstr(&cname), comb_cnt, (const char **)ovc, test_num);
+
+	    for (long int i = 0; i < comb_cnt; i++) {
+		bu_free(ovc[i], "free string");
+	    }
+	    bu_free(ovc, "free string array");
+	    ovc = NULL;
+	}
 
 	for (long int i = 0; i < obj_cnt; i++) {
 	    bu_free(ov[i], "free string");
@@ -504,8 +525,9 @@ const char *rt_cache_test_usage =
 "       rt_cache 4 [obj_count] (Multiple identical object parallel test)\n"
 "       rt_cache 5 [obj_count] (Multiple distinct object serial test)\n"
 "       rt_cache 6 [obj_count] (Multiple distinct object parallel test)\n"
-"       rt_cache 7 [obj_count] [subprocess_count] (Multiple process identical objects test)\n"
-"       rt_cache 8 [obj_count] [subprocess_count] (Multiple process distinct objects test)\n";
+"       rt_cache 7 [obj_count] (Multiple distinct objects, multiple instances in tree parallel test)\n"
+"       rt_cache 20 [obj_count] [subprocess_count] (Multiple process identical objects test)\n"
+"       rt_cache 21 [obj_count] [subprocess_count] (Multiple process distinct objects test)\n";
 
 int
 main(int ac, char *av[])
@@ -541,7 +563,7 @@ main(int ac, char *av[])
 	sscanf(av[1], "%ld", &obj_cnt);
     }
 
-    if (test_num > 6 && ac >= 3) {
+    if (test_num > 19 && ac >= 3) {
 	sscanf(av[2], "%ld", &subprocess_cnt);
 	if (subprocess_cnt > (long int)maxcpus) {
 	    bu_log("Requested %ld subprocesses, but only %zd CPUs available - throttling to %zd\n", subprocess_cnt, maxcpus, maxcpus);
@@ -555,33 +577,36 @@ main(int ac, char *av[])
     switch (test_num) {
 	case 1:
 	    /* Serial prep API, 1 object */
-	    return test_cache(rp, 1, 1, 0, 0, 0);
+	    return test_cache(rp, test_num, 1, 0, 0, 0, 0);
 	    break;
 	case 2:
 	    /* Parallel prep API, 1 object */
-	    return test_cache(rp, 2, 1, 1, 0, 0);
+	    return test_cache(rp, test_num, 1, 1, 0, 0, 0);
 	    break;
 	case 3:
 	    /* Serial prep API, multiple objects, identical content */
-	    return test_cache(rp, 3, obj_cnt, 0, 0, 0);
+	    return test_cache(rp, test_num, obj_cnt, 0, 0, 0, 0);
 	    break;
 	case 4:
 	    /* Parallel prep API, multiple objects, identical content */
-	    return test_cache(rp, 4, obj_cnt, 1, 0, 0);
+	    return test_cache(rp, test_num, obj_cnt, 1, 0, 0, 0);
 	    break;
 	case 5:
 	    /* Serial prep API, multiple objects, different content */
-	    return test_cache(rp, 5, obj_cnt, 0, 1, 0);
+	    return test_cache(rp, test_num, obj_cnt, 0, 1, 0, 0);
 	    break;
 	case 6:
 	    /* Parallel prep API, multiple objects, different content */
-	    return test_cache(rp, 6, obj_cnt, 1, 1, 0);
+	    return test_cache(rp, test_num, obj_cnt, 1, 1, 0, 0);
 	case 7:
+	    /* Parallel prep API, multiple objects, non-unique content, multiple instances in tree */
+	    return test_cache(rp, test_num, obj_cnt, 1, 1, 0, 5);
+	case 20:
 	    /* Multiple objects, same content, multi-process */
-	    return test_cache(rp, 7, obj_cnt, 1, 0, subprocess_cnt);
-	case 8:
+	    return test_cache(rp, test_num, obj_cnt, 1, 0, subprocess_cnt, 0);
+	case 21:
 	    /* Multiple objects, different content, multi-process */
-	    return test_cache(rp, 8, obj_cnt, 1, 1, subprocess_cnt);
+	    return test_cache(rp, test_num, obj_cnt, 1, 1, subprocess_cnt, 0);
 	default:
 	    break;
     }

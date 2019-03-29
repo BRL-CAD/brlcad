@@ -45,6 +45,7 @@ add_test(NAME rt_cache_serial_multiple_identical_objects COMMAND rt_cache 3 10)
 add_test(NAME rt_cache_parallel_multiple_identical_objects  COMMAND rt_cache 4 10)
 add_test(NAME rt_cache_serial_multiple_different_objects COMMAND rt_cache 5 10)
 add_test(NAME rt_cache_parallel_multiple_different_objects  COMMAND rt_cache 6 10)
+add_test(NAME rt_cache_parallel_multiple_different_objects_hierarchy_1  COMMAND rt_cache 7 10)
 
 set(distcheck_files
   CMakeLists.txt
