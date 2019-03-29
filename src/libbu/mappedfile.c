@@ -545,10 +545,14 @@ bu_free_mapped_files(int verbose)
 	memset(mp, 0, sizeof(struct bu_mapped_file)); /* sanity */
 	bu_free(mp, "free mapped file holder");
 
-	/* shift pointers up one */
-	memmove(all_mapped_files.mapped_files + i, all_mapped_files.mapped_files + i + 1, sizeof(all_mapped_files.mapped_files[0]) * (all_mapped_files.size - i - 1));
+	/* shift pointers - move everything left down one */
+	for (size_t j = i; j < all_mapped_files.size - 1; j++) {
+	    all_mapped_files.mapped_files[j] = all_mapped_files.mapped_files[j+1];
+	}
 	all_mapped_files.mapped_files[all_mapped_files.size - 1] = NULL; /* zero out the last (now invalid) pointer */
 	all_mapped_files.size--;
+	/* Next item to inspect is now in the same index as the item we just removed */
+	i--;
     }
     /* release the array if we get back to empty */
     if (all_mapped_files.size == 0 && all_mapped_files.capacity > 0) {
