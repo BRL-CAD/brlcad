@@ -54,7 +54,7 @@
 #include "rt/func.h"
 
 
-#define CACHE_FORMAT 2
+#define CACHE_FORMAT 3
 
 static const char * const cache_mime_type = "brlcad/cache";
 
@@ -62,13 +62,18 @@ static const char * const cache_mime_type = "brlcad/cache";
 #define CACHE_LOG(...) if (cache && cache->log) cache->log(__VA_ARGS__);
 #define CACHE_DEBUG(...) if (cache && cache->debug) cache->debug(__VA_ARGS__);
 
+struct rt_cache_entry {
+    struct bu_mapped_file *mfp;
+    struct bu_external *ext;
+};
+
 
 struct rt_cache {
     char dir[MAXPATHLEN];
     int read_only;
     int (*log)(const char *format, ...);
     int (*debug)(const char *format, ...);
-    struct bu_hash_tbl *dbip_hash;
+    struct bu_hash_tbl *entry_hash;
 };
 #define CACHE_INIT {{0}, 0, bu_log, NULL, NULL}
 
@@ -323,7 +328,7 @@ cache_init(struct rt_cache *cache)
     }
 
     /* initialize database instance pointer storage */
-    cache->dbip_hash = bu_hash_create(1024);
+    cache->entry_hash = bu_hash_create(1024);
 
     return 1;
 }
@@ -392,10 +397,11 @@ uncompress_external(const struct rt_cache *cache, const struct bu_external *exte
 }
 
 
-HIDDEN struct db_i *
-cache_read_dbip(const struct rt_cache *cache, const char *name)
+HIDDEN struct rt_cache_entry *
+cache_read_entry(const struct rt_cache *cache, const char *name)
 {
-    struct db_i *dbip = NULL;
+    long int fbytes = 0;
+    struct rt_cache_entry *e = NULL;
     char path[MAXPATHLEN] = {0};
 
     if (!cache || !name)
@@ -403,10 +409,10 @@ cache_read_dbip(const struct rt_cache *cache, const char *name)
 
     bu_semaphore_acquire(RT_SEM_CACHE);
 
-    dbip = (struct db_i *)bu_hash_get(cache->dbip_hash, (const uint8_t *)name, strlen(name));
-    if (dbip) {
+    e = (struct rt_cache_entry *)bu_hash_get(cache->entry_hash, (const uint8_t *)name, strlen(name));
+    if (e) {
 	bu_semaphore_release(RT_SEM_CACHE);
-	return dbip;
+	return e;
     }
 
     cache_get_objfile(cache, name, path, MAXPATHLEN);
@@ -415,34 +421,46 @@ cache_read_dbip(const struct rt_cache *cache, const char *name)
 	return NULL;
     }
 
-    dbip = db_open(path, DB_OPEN_READONLY);
-    if (!dbip) {
+    fbytes = bu_file_size(path);
+    if (fbytes <= 0) {
+	return NULL;
+    }
+    BU_GET(e, struct rt_cache_entry);
+    BU_GET(e->ext, struct bu_external);
+    BU_EXTERNAL_INIT(e->ext);
+    e->ext->ext_nbytes = (size_t)fbytes;
+    e->mfp = bu_open_mapped_file(path, NULL);
+    if (!e->mfp || !e->mfp->buf || e->mfp->buflen != e->ext->ext_nbytes) {
+	if (e->mfp) {
+	    bu_close_mapped_file(e->mfp);
+	}
+	BU_PUT(e->ext, struct bu_external);
+	BU_PUT(e, struct rt_cache);
 	bu_semaphore_release(RT_SEM_CACHE);
 	return NULL;
     }
-
-    if (db_dirbuild(dbip)) {
-	/* failed to build directory */
-	db_close(dbip);
-	bu_semaphore_release(RT_SEM_CACHE);
-	return NULL;
-    }
-
-    bu_hash_set(cache->dbip_hash, (const uint8_t *)name, strlen(name), dbip);
+    e->ext->ext_buf = (uint8_t *)(e->mfp->buf);
+    bu_hash_set(cache->entry_hash, (const uint8_t *)name, strlen(name), e);
 
     bu_semaphore_release(RT_SEM_CACHE);
-    return dbip;
+
+    return e;
 }
 
 
-HIDDEN struct db_i *
-cache_create_dbip(const struct rt_cache *cache, const char *name)
+HIDDEN int
+cache_create_dir(const struct rt_cache *cache, const char *name)
 {
-    struct db_i *dbip = NULL;
+    struct rt_cache_entry *e = NULL;
     char path[MAXPATHLEN] = {0};
 
     if (!cache || !name)
-	return NULL;
+	return 0;
+
+    e = (struct rt_cache_entry *)bu_hash_get(cache->entry_hash, (const uint8_t *)name, strlen(name));
+    if (e) {
+	return 1;
+    }
 
     cache_get_objfile(cache, name, path, MAXPATHLEN);
 
@@ -453,48 +471,34 @@ cache_create_dbip(const struct rt_cache *cache, const char *name)
 
     if (!cache_ensure_path(path, 1)) {
 	cache_warn(cache, path, "Cache object failure.  Continuing.");
-	return NULL;
+	return 0;
     }
 
-    dbip = db_create(path, 5);
-    if (!dbip)
-	return NULL;
-
-    return dbip;
+    return 1;
 }
 
 
 HIDDEN int
 cache_try_load(const struct rt_cache *cache, const char *name, const struct rt_db_internal *internal, struct soltab *stp)
 {
-    struct bu_external data_external = BU_EXTERNAL_INIT_ZERO;
     size_t version = (size_t)-1;
-    struct bu_external raw_external;
     struct db5_raw_internal raw_internal;
-    struct directory *dp;
-    struct db_i *dbip;
+    struct bu_external data_external = BU_EXTERNAL_INIT_ZERO;
+    struct rt_cache_entry *e;
 
     RT_CK_DB_INTERNAL(internal);
     RT_CK_SOLTAB(stp);
 
     CACHE_DEBUG("++++ [%lu.%lu] Trying to LOAD %s\n", bu_process_id(), bu_parallel_id(), name);
 
-    dbip = cache_read_dbip(cache, name);
-    if (!dbip)
+    e = cache_read_entry(cache, name);
+    if (!e) {
 	return 0; /* no storage */
+    }
 
-    dp = db_lookup(dbip, name, 0);
-    if (!dp)
-	return 0; /* not in cache */
-
-    if (dp->d_major_type != DB5_MAJORTYPE_BINARY_MIME || dp->d_minor_type != 0)
-	bu_bomb("invalid object type");
-
-    if (db_get_external(&raw_external, dp, dbip))
+    if (db5_get_raw_internal_ptr(&raw_internal, e->ext->ext_buf) == NULL) {
 	return 0;
-
-    if (db5_get_raw_internal_ptr(&raw_internal, raw_external.ext_buf) == NULL)
-	return 0;
+    }
 
     {
 	struct bu_attribute_value_set attributes;
@@ -521,7 +525,6 @@ cache_try_load(const struct rt_cache *cache, const char *name, const struct rt_d
     }
 
     uncompress_external(cache, &raw_internal.body, &data_external);
-    bu_free_external(&raw_external);
 
     if (rt_obj_prep_serialize(stp, internal, &data_external, &version)) {
 	/* failed to deserialize */
@@ -537,12 +540,11 @@ cache_try_load(const struct rt_cache *cache, const char *name, const struct rt_d
 HIDDEN int
 cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_internal *internal, struct soltab *stp)
 {
-    struct bu_external attributes_external;
+    FILE *focache = NULL;
+    struct bu_external attributes_external = BU_EXTERNAL_INIT_ZERO;
     struct bu_external data_external = BU_EXTERNAL_INIT_ZERO;
+    struct bu_external db_external = BU_EXTERNAL_INIT_ZERO;
     size_t version = (size_t)-1;
-    struct directory *dp;
-    struct db_i *dbip;
-    char type = 0;
     char path[MAXPATHLEN] = {0};
     char tmpname[MAXPATHLEN] = {0};
     char tmppath[MAXPATHLEN] = {0};
@@ -581,6 +583,8 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
     /* [FIXME: redundant] make sure we can write to the cache dir */
     if (!bu_file_writable(cache->dir) || !bu_file_executable(cache->dir)) {
 	cache_warn(cache, cache->dir, "Directory is not writable.  Caching disabled.");
+	bu_free_external(&attributes_external);
+	bu_free_external(&data_external);
 	return 0;
     }
     cache_get_objdir(cache, name, tmppath, MAXPATHLEN);
@@ -588,6 +592,8 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
 	char objdir[MAXPATHLEN] = {0};
 	bu_path_basename(tmppath, objdir);
 	cache_warn(cache, objdir, "Subdirectory is not writable.  Caching disabled.");
+	bu_free_external(&attributes_external);
+	bu_free_external(&data_external);
 	return 0;
     }
 
@@ -597,44 +603,37 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
     cache_get_objfile(cache, tmpname, tmppath, MAXPATHLEN);
     bu_file_delete(tmppath); /* okay if it doesn't exist */
 
-    dbip = cache_create_dbip(cache, tmpname);
-    if (!dbip) {
-	bu_file_delete(tmppath);
-	CACHE_DEBUG("++++++ [%lu.%lu] Failed to create cache temp %s\n", bu_process_id(), bu_parallel_id(), tmpname);
+    if (!cache_create_dir(cache, tmpname)) {
+	CACHE_DEBUG("++++++ [%lu.%lu] Failed to create cache dir %s\n", bu_process_id(), bu_parallel_id(), tmpname);
+	bu_free_external(&attributes_external);
+	bu_free_external(&data_external);
 	return 0; /* no storage */
     }
 
-    dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_NON_GEOM, (void *)&type);
-    if (!dp) {
-	db_close(dbip);
-	bu_file_delete(tmppath);
-	CACHE_DEBUG("++++++ [%lu.%lu] Failed to add to cache temp %s\n", bu_process_id(), bu_parallel_id(), tmpname);
-	return 0; /* bad db */
-    }
-    RT_CK_DIR(dp);
-
-    dp->d_major_type = DB5_MAJORTYPE_BINARY_MIME;
-    dp->d_minor_type = 0;
-
-    {
-	struct bu_external db_external;
-	db5_export_object3(&db_external, 0, dp->d_namep, 0, &attributes_external,
-			   &data_external, dp->d_major_type, dp->d_minor_type,
+    db5_export_object3(&db_external, 0, name, 0, &attributes_external,
+	    &data_external, DB5_MAJORTYPE_BINARY_MIME, 0,
 			   DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED);
 
-	if (db_put_external(&db_external, dp, dbip)) {
-	    bu_free_external(&db_external);
-	    db_close(dbip);
-	    bu_file_delete(tmppath);
+    focache = fopen(tmppath, "wb");
+    if (!focache) {
 	    CACHE_DEBUG("++++++ [%lu.%lu] Failed to put cache temp %s\n", bu_process_id(), bu_parallel_id(), tmpname);
 	    return 0; /* can't stash */
 	}
+
+    if (fwrite((void *)db_external.ext_buf, 1, db_external.ext_nbytes, focache) != db_external.ext_nbytes) {
+	fclose(focache);
+	bu_file_delete(tmppath);
 	bu_free_external(&db_external);
+	bu_free_external(&attributes_external);
+	bu_free_external(&data_external);
+	CACHE_DEBUG("++++++ [%lu.%lu] Failed to put cache temp %s\n", bu_process_id(), bu_parallel_id(), tmpname);
+	return 0; /* can't stash */
     }
-    db_sync(dbip);
-    db_close(dbip);
+    fclose(focache);
+
     CACHE_DEBUG("++++++ [%lu.%lu] Successfully wrote cache temp %s\n", bu_process_id(), bu_parallel_id(), tmpname);
 
+    bu_free_external(&db_external);
     bu_free_external(&attributes_external);
     bu_free_external(&data_external);
 
@@ -643,16 +642,43 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
 
     /* anyone beat us to creating the cache? */
     if (bu_file_exists(path, NULL)) {
-	CACHE_DEBUG("++++++ [%lu.%lu] Someone else finished %s first, no longer need %s\n", bu_process_id(), bu_parallel_id(), name, tmpname);
+	/* If a file already exists, stash the size of the file we just
+	 * finished (i.e. the one we have confidence is correctly sized) to use
+	 * as a sanity check. */
+	int tmp_file_size = bu_file_size(tmpname);
+	int final_file_size = bu_file_size(path);
+	int checkpnt_size = 0;
+	int check_cnt = 0;
+
+	CACHE_DEBUG("++++++ [%lu.%lu] Someone else finished %s first\n", bu_process_id(), bu_parallel_id(), name);
+
+	while (tmp_file_size != final_file_size && final_file_size > checkpnt_size && check_cnt < 3) {
+	    checkpnt_size = final_file_size;
+	    sleep(1);
+	    final_file_size = bu_file_size(path);
+	    check_cnt++;
+	}
+
+	if (tmp_file_size != final_file_size) {
+	    CACHE_DEBUG("++++++ [%lu.%lu] BUT the file size of %s doesn't match that of %s !!!  Giving up.\n", bu_process_id(), bu_parallel_id(), path, tmpname);
+	    if (!cache->debug) {
+	bu_file_delete(tmppath);
+	    } else {
+		CACHE_DEBUG("++++++ [%lu.%lu] Note: temporary file %s has been left intact for debugging examination.\n", bu_process_id(), bu_parallel_id(), path, tmpname);
+	    }
+	    return 0;
+	}
+
+	CACHE_DEBUG("++++++ [%lu.%lu] No longer need %s\n", bu_process_id(), bu_parallel_id(), tmpname);
 	bu_file_delete(tmppath);
 
-	dbip = cache_read_dbip(cache, name);
-	if (dbip) {
+	if (cache_read_entry(cache, name) != NULL) {
 	    CACHE_DEBUG("++++++ [%lu.%lu] Successfully read %s\n", bu_process_id(), bu_parallel_id(), name);
 	    return 1;
-	}
+	} else {
 	CACHE_DEBUG("++++++ [%lu.%lu] BUT we can't read %s !!!  Giving up.\n", bu_process_id(), bu_parallel_id(), name);
 	return 0;
+    }
     }
 
     /* atomically flip it into place */
@@ -670,7 +696,7 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
     }
 #endif
 
-    if (cache_read_dbip(cache, name) != NULL) {
+    if (cache_read_entry(cache, name) != NULL) {
 	return 1;
     }
     return 0;
@@ -712,13 +738,15 @@ rt_cache_close(struct rt_cache *cache)
 
     CACHE_DEBUG("++ [%lu.%lu] Closing cache at %s\n", bu_process_id(), bu_parallel_id(), cache->dir);
 
-    entry = bu_hash_next(cache->dbip_hash, NULL);
+    entry = bu_hash_next(cache->entry_hash, NULL);
     while (entry) {
-	struct db_i *dbip = (struct db_i *)bu_hash_value(entry, NULL);
-	db_close(dbip);
-	entry = bu_hash_next(cache->dbip_hash, entry);
+	struct rt_cache_entry *e = (struct rt_cache_entry *)bu_hash_value(entry, NULL);
+	bu_close_mapped_file(e->mfp);
+	BU_PUT(e->ext, struct bu_external);
+	BU_PUT(e, struct rt_cache);
+	entry = bu_hash_next(cache->entry_hash, entry);
     }
-    bu_hash_destroy(cache->dbip_hash);
+    bu_hash_destroy(cache->entry_hash);
 
     cache->debug = NULL;
     cache->log = NULL;
@@ -726,6 +754,7 @@ rt_cache_close(struct rt_cache *cache)
     memset(cache->dir, 0, MAXPATHLEN);
 
     BU_PUT(cache, struct rt_cache);
+    bu_free_mapped_files(0);
 }
 
 
@@ -780,13 +809,13 @@ rt_cache_open(void)
 	    cache_init(cache);
 	    format = cache_format(cache);
 	}
-    } else if (format == 1) {
+    } else if (format < 3) {
 	struct bu_vls path = BU_VLS_INIT_ZERO;
 	char **matches = NULL;
 	size_t count;
 	size_t i;
 
-	/* V1 cache may have corruption, delete it */
+	/* V1 cache may have corruption, V2 used a different object storage container - clear the decks */
 
 	bu_vls_printf(&path, "%s%c%s", dir, BU_DIR_SEPARATOR, "objects");
 
