@@ -660,7 +660,7 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
 	}
 
 	if (tmp_file_size != final_file_size) {
-	    CACHE_DEBUG("++++++ [%lu.%lu] BUT the file size of %s doesn't match that of %s !!!  Giving up.\n", bu_process_id(), bu_parallel_id(), path, tmpname);
+	    CACHE_DEBUG("++++++ [%lu.%lu] BUT the file size of %s (%d) doesn't match that of %s (%d)!!!  Giving up.\n", bu_process_id(), bu_parallel_id(), path, final_file_size, tmpname, tmp_file_size);
 	    if (!cache->debug) {
 	bu_file_delete(tmppath);
 	    } else {
