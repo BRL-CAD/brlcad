@@ -304,6 +304,9 @@ main(int ac, char *av[])
 	    break;
     }
 
+    /* Unmap everything so we can delete files */
+    bu_free_mapped_files(0);
+
     /* Delete our set of test input files */
     for (long int i = 0; i < file_cnt; i++) {
 	bu_vls_sprintf(&fname, "%s-%ld-%ld-%ld", FILE_PREFIX, test_num, file_cnt, i);

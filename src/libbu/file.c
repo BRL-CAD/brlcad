@@ -465,7 +465,7 @@ bu_file_delete(const char *path)
      * remove thinks it succeeded. (We don't complain if we did succeed
      * according to our ret returns but someone else recreated the file in the
      * meantime.) */
-    if (bu_file_exists(path, NULL) && ret) {
+    if (bu_file_exists(path, NULL) && !ret) {
 	/* failure - restore original file permission */
 #ifdef HAVE_WINDOWS_H
 	SetFileAttributes(path, fattrs);
