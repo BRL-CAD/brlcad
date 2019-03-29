@@ -113,6 +113,7 @@ bu_file_size(const char *path)
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	ret = fstat(fd, &sbuf);
 	bu_semaphore_release(BU_SEM_SYSCALL);
+	close(fd);
 	if (UNLIKELY(ret < 0)) {
 	    return -1;
 	}
