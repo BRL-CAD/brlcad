@@ -545,7 +545,7 @@ bu_free_mapped_files(int verbose)
 	memset(mp, 0, sizeof(struct bu_mapped_file)); /* sanity */
 	bu_free(mp, "free mapped file holder");
 
-	/* shift pointers - move everything left down one */
+	/* shift pointers - move everything down one index slot in the array */
 	for (size_t j = i; j < all_mapped_files.size - 1; j++) {
 	    all_mapped_files.mapped_files[j] = all_mapped_files.mapped_files[j+1];
 	}
