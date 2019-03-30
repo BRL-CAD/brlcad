@@ -47,7 +47,7 @@ mapped_file_read_number(long int i, long int test_num, long int file_cnt)
     snprintf(filename, MAXPATHLEN, "%s-%ld-%ld-%ld", FILE_PREFIX, test_num, file_cnt, i);
 
     mfp = bu_open_mapped_file(filename, NULL);
-    if (!mfp) {
+    if (!mfp || !mfp->buf) {
 	bu_log("%s -> [FAIL]  (unable to open mapped file)\n", filename);
 	return -1;
     }
