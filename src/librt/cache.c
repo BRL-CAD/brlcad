@@ -821,7 +821,7 @@ rt_cache_open(void)
 
 	count = bu_file_list(bu_vls_cstr(&path), "[A-Z0-9][A-Z0-9]", &matches);
 
-	CACHE_DEBUG("++++ [%lu.%lu] Found V1 cache, deleting %zu objects in %s", bu_process_id(), bu_parallel_id(), count, bu_vls_cstr(&path));
+	CACHE_DEBUG("++++ [%lu.%lu] Found V%d cache, deleting %zu object dirs in %s", bu_process_id(), bu_parallel_id(), format, count, bu_vls_cstr(&path));
 
 	for (i = 0; i < count; i++) {
 	    struct bu_vls subpath = BU_VLS_INIT_ZERO;
