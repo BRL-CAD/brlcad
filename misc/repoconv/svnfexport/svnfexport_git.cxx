@@ -241,14 +241,14 @@ write_blob(std::ifstream &infile, std::ofstream &outfile, struct svn_node &node)
 
 void full_sync_commit(std::ofstream &outfile, struct svn_revision &rev, std::string &bsrc, std::string &bdest)
 {
-    outfile << "commit refs/heads/" << bdest << "\n";
+    outfile << "commit " << bdest << "\n";
     outfile << "mark :" << rev.revision_number << "\n";
     outfile << "committer " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
     outfile << "data " << rev.commit_msg.length() << "\n";
     outfile << rev.commit_msg << "\n";
     outfile << "from " <<  rev_to_gsha1[std::pair<std::string,long int>(bsrc, rev.revision_number-1)] << "\n";
+    outfile << "merge " << "\n";
     outfile << "deleteall\n";
-    // TODO - merge info
 
     std::string line;
     std::string ifile = std::to_string(rev.revision_number) + std::string(".txt");
