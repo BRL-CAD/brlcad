@@ -303,7 +303,7 @@ void move_only_commit(std::ofstream &outfile, struct svn_revision &rev, std::str
 	if (brlcad_revs.find(rev.merged_rev) != brlcad_revs.end()) {
 	    std::cout << "Revision " << rev.revision_number << " merged from: " << rev.merged_from << "(" << rev.merged_rev << "), id " << rev_to_gsha1[std::pair<std::string,long int>(rev.merged_from, rev.merged_rev)] << "\n";
 	    std::cout << "Revision " << rev.revision_number << "        from: " << rbranch << "\n";
-	    outfile << "merge :" << rgsha1(rev.merged_from, rev.merged_rev) << "\n";
+	    outfile << "merge " << rgsha1(rev.merged_from, rev.merged_rev) << "\n";
 	} else {
 	    std::cout << "Warning: r" << rev.revision_number << " is referencing a commit id (" << rev.merged_rev << ") that is not a BRL-CAD commit\n";
 	}
@@ -480,7 +480,7 @@ void old_references_commit(std::ifstream &infile, std::ofstream &outfile, struct
 	if (brlcad_revs.find(rev.merged_rev) != brlcad_revs.end()) {
 	    std::cout << "Revision " << rev.revision_number << " merged from: " << rev.merged_from << "(" << rev.merged_rev << "), id " << rev_to_gsha1[std::pair<std::string,long int>(rev.merged_from, rev.merged_rev)] << "\n";
 	    std::cout << "Revision " << rev.revision_number << "        from: " << rbranch << "\n";
-	    outfile << "merge :" << rgsha1(rev.merged_from, rev.merged_rev) << "\n";
+	    outfile << "merge " << rgsha1(rev.merged_from, rev.merged_rev) << "\n";
 	} else {
 	    std::cout << "Warning: r" << rev.revision_number << " is referencing a commit id (" << rev.merged_rev << ") that is not a BRL-CAD commit\n";
 	}
@@ -522,7 +522,7 @@ void standard_commit(std::ofstream &outfile, struct svn_revision &rev, std::stri
 	if (brlcad_revs.find(rev.merged_rev) != brlcad_revs.end()) {
 	    std::cout << "Revision " << rev.revision_number << " merged from: " << rev.merged_from << "(" << rev.merged_rev << "), id " << rev_to_gsha1[std::pair<std::string,long int>(rev.merged_from, rev.merged_rev)] << "\n";
 	    std::cout << "Revision " << rev.revision_number << "        from: " << rbranch << "\n";
-	    outfile << "merge :" << rgsha1(rev.merged_from, rev.merged_rev) << "\n";
+	    outfile << "merge " << rgsha1(rev.merged_from, rev.merged_rev) << "\n";
 	} else {
 	    std::cout << "Warning: r" << rev.revision_number << " is referencing a commit id (" << rev.merged_rev << ") that is not a BRL-CAD commit\n";
 	}
