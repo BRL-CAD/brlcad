@@ -202,6 +202,14 @@ std::string git_sha1(std::ifstream &infile, struct svn_node *n)
     return git_sha1;
 }
 
+std::string rgsha1(std::string &rbranch, long int rev)
+{
+    std::pair<std::string,long int> key = std::pair<std::string,long int>(rbranch, rev);
+    std::string gsha1 = rev_to_gsha1[key];
+    return gsha1;
+}
+
+
 //Need to write blobs with CRLF if that's the mode we're in...
 void
 write_blob(std::ifstream &infile, std::ofstream &outfile, struct svn_node &node)
@@ -295,7 +303,7 @@ void move_only_commit(std::ofstream &outfile, struct svn_revision &rev, std::str
 	if (brlcad_revs.find(rev.merged_rev) != brlcad_revs.end()) {
 	    std::cout << "Revision " << rev.revision_number << " merged from: " << rev.merged_from << "(" << rev.merged_rev << "), id " << rev_to_gsha1[std::pair<std::string,long int>(rev.merged_from, rev.merged_rev)] << "\n";
 	    std::cout << "Revision " << rev.revision_number << "        from: " << rbranch << "\n";
-	    outfile << "merge :" << rev.merged_rev << "\n";
+	    outfile << "merge :" << rgsha1(rev.merged_from, rev.merged_rev) << "\n";
 	} else {
 	    std::cout << "Warning: r" << rev.revision_number << " is referencing a commit id (" << rev.merged_rev << ") that is not a BRL-CAD commit\n";
 	}
@@ -472,7 +480,7 @@ void old_references_commit(std::ifstream &infile, std::ofstream &outfile, struct
 	if (brlcad_revs.find(rev.merged_rev) != brlcad_revs.end()) {
 	    std::cout << "Revision " << rev.revision_number << " merged from: " << rev.merged_from << "(" << rev.merged_rev << "), id " << rev_to_gsha1[std::pair<std::string,long int>(rev.merged_from, rev.merged_rev)] << "\n";
 	    std::cout << "Revision " << rev.revision_number << "        from: " << rbranch << "\n";
-	    outfile << "merge :" << rev.merged_rev << "\n";
+	    outfile << "merge :" << rgsha1(rev.merged_from, rev.merged_rev) << "\n";
 	} else {
 	    std::cout << "Warning: r" << rev.revision_number << " is referencing a commit id (" << rev.merged_rev << ") that is not a BRL-CAD commit\n";
 	}
@@ -492,13 +500,6 @@ void old_references_commit(std::ifstream &infile, std::ofstream &outfile, struct
 	write_git_node(outfile, rev, node);
 
     }
-}
-
-std::string rgsha1(std::string &rbranch, long int rev)
-{
-    std::pair<std::string,long int> key = std::pair<std::string,long int>(rbranch, rev);
-    std::string gsha1 = rev_to_gsha1[key];
-    return gsha1;
 }
 
 void standard_commit(std::ofstream &outfile, struct svn_revision &rev, std::string &rbranch)
@@ -521,7 +522,7 @@ void standard_commit(std::ofstream &outfile, struct svn_revision &rev, std::stri
 	if (brlcad_revs.find(rev.merged_rev) != brlcad_revs.end()) {
 	    std::cout << "Revision " << rev.revision_number << " merged from: " << rev.merged_from << "(" << rev.merged_rev << "), id " << rev_to_gsha1[std::pair<std::string,long int>(rev.merged_from, rev.merged_rev)] << "\n";
 	    std::cout << "Revision " << rev.revision_number << "        from: " << rbranch << "\n";
-	    outfile << "merge :" << rev.merged_rev << "\n";
+	    outfile << "merge :" << rgsha1(rev.merged_from, rev.merged_rev) << "\n";
 	} else {
 	    std::cout << "Warning: r" << rev.revision_number << " is referencing a commit id (" << rev.merged_rev << ") that is not a BRL-CAD commit\n";
 	}
