@@ -617,6 +617,10 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 
 	verify_repos(rev.revision_number, rbranch, rbranch, 1);
 
+	if (rev_num == 36053) {
+	    all_git_branches.push_back(std::string("rel8"));
+	}
+
 	if (std::system(swap_cmd.c_str())) {
 	    std::cerr << "git archive swap failed!\n";
 	    exit(1);
@@ -870,8 +874,6 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 		std::cerr << "git archive swap failed!\n";
 		exit(1);
 	    }
-
-	    all_git_branches.push_back(std::string(node.branch));
 
 	    if (std::system(cleanup_cmd.c_str())) {
 		std::cerr << "git cleanup failed!\n";
