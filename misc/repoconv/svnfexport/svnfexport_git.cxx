@@ -122,7 +122,7 @@ void read_cached_rev_sha1s()
 	std::string gsha1 = line.substr(spos+1, std::string::npos);
 	long int rev = std::stol(rev_str);
 	rev_to_gsha1[std::pair<std::string,long int>(branch, rev)] = gsha1;
-	std::cout << branch << "," << rev << " -> " << gsha1 << "\n";
+	//std::cout << branch << "," << rev << " -> " << gsha1 << "\n";
     }
 }
 
@@ -870,6 +870,9 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 		std::cerr << "git archive swap failed!\n";
 		exit(1);
 	    }
+
+	    all_git_branches.push_back(std::string(node.branch));
+
 	    if (std::system(cleanup_cmd.c_str())) {
 		std::cerr << "git cleanup failed!\n";
 		exit(1);
