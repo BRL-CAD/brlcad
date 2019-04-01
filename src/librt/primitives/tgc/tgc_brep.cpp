@@ -90,10 +90,9 @@ rt_tgc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     ellcurve1->SetDomain(0.0, 1.0);
     ellcurve2->SetDomain(0.0, 1.0);
 
-    // Create the side surface with
-    // ON_NurbsSurface::CreateRuledSurface and the top and bottom
-    // planes by using the ellipses as outer trimming curves - define
-    // UV surfaces for the top and bottom such that they contain the
+    // Create the side surface with ON_NurbsSurface::CreateRuledSurface and the
+    // top and bottom planes by using the ellipses as outer trimming curves -
+    // define UV surfaces for the top and bottom such that they contain the
     // ellipses.
     ON_SimpleArray<ON_Curve*> bottomboundary;
     bottomboundary.Append(ON_Curve::Cast(ellcurve1));
@@ -135,9 +134,8 @@ rt_tgc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     int ell2ind = (*b)->m_C3.Count() - 1;
 
 
-    // Need to use NewRuledEdge here, which means valid edges need to
-    // be created using the ellipses
-
+    // For the side of the tgc, use NewRuledEdge and reuse the 3D curves from
+    // the ellipses of the end cap surfaces.
     ON_BrepVertex& bottomvert1 = (*b)->NewVertex(ellcurve1->PointAt(0), SMALL_FASTF);
     bottomvert1.m_tolerance = 0.0;
     int vert1ind = (*b)->m_V.Count() - 1;
