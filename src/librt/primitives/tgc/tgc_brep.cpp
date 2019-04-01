@@ -29,7 +29,6 @@
 #include "rt/geom.h"
 #include "brep.h"
 
-
 extern "C" void
 rt_tgc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
@@ -114,6 +113,7 @@ rt_tgc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     bp->SetExtents(1, bp->Domain(1));
     (*b)->SetTrimIsoFlags(bface);
     (*b)->FlipFace(bface);
+    int ell1ind = (*b)->m_C3.Count() - 1;
 
     ON_SimpleArray<ON_Curve*> topboundary;
     topboundary.Append(ON_Curve::Cast(ellcurve2));
@@ -132,13 +132,12 @@ rt_tgc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     tp->SetExtents(0, tp->Domain(0));
     tp->SetExtents(1, tp->Domain(1));
     (*b)->SetTrimIsoFlags(tface);
+    int ell2ind = (*b)->m_C3.Count() - 1;
 
 
     // Need to use NewRuledEdge here, which means valid edges need to
     // be created using the ellipses
 
-    int ell1ind = (*b)->AddEdgeCurve(ellcurve1);
-    int ell2ind = (*b)->AddEdgeCurve(ellcurve2);
     ON_BrepVertex& bottomvert1 = (*b)->NewVertex(ellcurve1->PointAt(0), SMALL_FASTF);
     bottomvert1.m_tolerance = 0.0;
     int vert1ind = (*b)->m_V.Count() - 1;
@@ -153,6 +152,8 @@ rt_tgc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     int tei = (*b)->m_E.Count() - 1;
 
     (*b)->NewRuledFace((*b)->m_E[bei], false, (*b)->m_E[tei], false);
+
+    (*b)->Compact();
 }
 
 
