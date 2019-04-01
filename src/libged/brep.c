@@ -187,7 +187,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
     struct soltab *stp;
     struct bu_color color = BU_COLOR_INIT_ZERO;
     char commtag[64];
-    char namebuf[64];
+    char namebuf[65];
     int i, j, real_flag, valid_command, ret;
     const char *commands[] = {"info", "plot", "translate", "intersect", "csg", "u", "i", "-"};
     int num_commands = (int)(sizeof(commands) / sizeof(const char *));
@@ -218,6 +218,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "\tplot S [index] - plot specific BREP 'surface'\n");
 	bu_vls_printf(gedp->ged_result_str, "\tplot F [index] - plot specific BREP 'face'\n");
 	bu_vls_printf(gedp->ged_result_str, "\tcsg            - convert BREP to implicit primitive CSG tree\n");
+	bu_vls_printf(gedp->ged_result_str, "\tflip           - flip all faces on BREP\n");
 	bu_vls_printf(gedp->ged_result_str, "\ttikz [file]    - generate a Tikz LaTeX version of the B-Rep edges\n");
 	bu_vls_printf(gedp->ged_result_str, "\ttranslate SCV index i j dx dy dz - translate a surface control vertex\n");
 	bu_vls_printf(gedp->ged_result_str, "\tintersect <obj2> <i> <j> [PP|PC|PS|CC|CS|SS] - BREP intersections\n");
@@ -343,6 +344,10 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	return _ged_brep_to_csg(gedp, argv[1], 1);
     }
 
+
+    if (BU_STR_EQUAL(argv[2], "flip")) {
+	return _ged_brep_flip(gedp, bi, solid_name);
+    }
 
     if (BU_STR_EQUAL(argv[2], "tikz")) {
 	if (argc == 4) {
@@ -522,7 +527,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	GED_DB_PUT_INTERNAL(gedp, ndp, &intern, &rt_uniresource, GED_ERROR);
     }
 
-    snprintf(namebuf, 64, "%s%s_", commtag, solid_name);
+    snprintf(namebuf, sizeof(namebuf), "%s%s_", commtag, solid_name);
     _ged_cvt_vlblock_to_solids(gedp, vbp, namebuf, 0);
     bn_vlblock_free(vbp);
     vbp = (struct bn_vlblock *)NULL;

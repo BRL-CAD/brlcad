@@ -32,7 +32,7 @@ main(int argc, char **argv)
 {
     int count = 0;
     fastf_t *rays;
-    int ncpus = bu_avail_cpus();
+    size_t ncpus = bu_avail_cpus();
     struct db_i *dbip = DBI_NULL;
     struct directory *dp = RT_DIR_NULL;
     struct bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6 };

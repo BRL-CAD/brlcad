@@ -88,7 +88,10 @@ bu_argv0_full_path(void)
     if (argv0[0] == '\0') {
 	TCHAR exeFileName[MAXPATHLEN] = {0};
 	GetModuleFileName(NULL, exeFileName, MAXPATHLEN);
-	wcstombs(tbuf, exeFileName, sizeof(tbuf));
+	if (sizeof(TCHAR) == sizeof(char))
+	    bu_strlcpy(tbuf, exeFileName, MAXPATHLEN);
+	else
+	    wcstombs(tbuf, exeFileName, wcslen(tbuf)+1);
 	argv0 = tbuf;
     }
 #endif

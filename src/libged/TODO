@@ -631,3 +631,18 @@ image ::= (pixel_coordinates | pixel_dimensions | grid_dimensions) bgcolor outpu
 render_type ::= <LIGHTING_MODEL>
 hypersample ::= <UINT>
 jitter ::= <JITTER_TYPE>
+
+
+--- READ/WRITE access management ---
+
+To make things safer for multi-process subcommand execution mode, we need to
+implement some sort of multi-process awareness of when a command is interacting
+with the database and needs other processes to not change the database.  In
+other words, write processes need to wait if one or more reading processes are
+pulling data and read processes need to wait if a writing process in currently
+changing the data.
+
+As a starting point, look into fcntl with non blocking, advisory modes of
+F_SETLK on POSIX and LockFileEx on Windows - try to come up with some libbu
+wrapper that will give us the semantics we need to prevent commands from
+running when they shouldn't.

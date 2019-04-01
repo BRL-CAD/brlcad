@@ -164,35 +164,9 @@ libtermio, libcursor
 
 7.26
 ----
-ray tracing tools
-	lgt : functionally replaced by nirt
-	rtcell', rtfrac', rtpp, rtrad', rtrange, rtray, rtregis
-	Removed as part of distillation effort [deprecated 7.26]
-converter tools
-	cy-g, euclid-g, euclid_format', euclid_unformat', g-euclid,
-	g-euclid1', g-tankill, intaval-g.py, viewpoint-g : obsolete formats
-	plot3-X, plot3-hpgl, plot3-tek : obsolete interface, see overlay command
-	plot3debug, xyz-plot3 : see plot3-asc,asc-plot3
-	bot-bldxf', bot_shell-vtk, g-nmg, nmg-bot, nmg-rib, nmg-sgp',
-	poly-bot, rt_bot_faces, : primitive-specific converters
-	Removed as part of distillation effort [deprecated 7.26]
 image tools
-	cmap-fb, fb-cmap, fbcmrot : colormap support obsolete
-	fbed, cell-fb : outside scope
-	fbscanplot, polar-fb, bw-imp, pixinfo.sh : obsolete
-	png_info : incorporating into icv
-	pixpaste : outside scope, license
 	alias-pix' : incorporating into icv
 	asc2pix' : incorporating into icv
-	pix-yuv', yuv-pix' : obsolete non-standard format
-	texturescale : obsolete implementation
-	Removed as part of distillation effort [deprecated 7.26]
-video & animation tools
-	anim_*', fbanim, chan_add', chan_mult, chan_permute,
-	pixflip-fb' : outside scope
-	pixfields', pixfieldsep' : outside scope
-	orbit.sh, rtwalk, scriptsort, script-tab', tabinterp, tabsup,
-	azel, bary
 	Removed as part of distillation effort [deprecated 7.26]
 signal analysis tools
 	a-d', d-a', bw-a', i-a', u-a' : incorporating into cv
@@ -201,30 +175,13 @@ signal analysis tools
 	f-d', f-i', d-f', i-f', u-f', u-bw' : incorporating into cv
 	d2-c', double-asc' : incorporating into cv
 	Removed as part of distillation effort [deprecated 7.26]
-infrared & shapefactor tools
-	all_sf', if-X, ifdisp, pictx, showterm, firpass, secpass, shapefact
-	Removed as part of distillation effort [deprecated 7.26]
-misc tools
-	fix_polysolids' : obsolete primitive
-	remapid : superseded by reid+remat
-	buffer : unnecessary network/stream buffering tool
-	hex : superseded by hexdump
-	Removed as part of distillation effort [deprecated 7.26]
 include/bu/ptbl.h
         BU_PTBL_BASEADDR, BU_PTBL_LASTADDR, BU_PTBL_END
         Removed as private implementation detail [deprecated 7.26
-include/bu/hash.h
-	bu_hash_tbl_find, bu_set_hash_value, bu_get_hash_value, bu_get_hash_key,
-	bu_hash_tbl_add, bu_hash_tbl_print, bu_hash_tbl_free, bu_hash_tbl_first,
-	bu_hash_tbl_next, bu_hash_tbl_traverse, public structs bu_hash_entry and
-	bu_hash_tbl will be made private.
-	Replaced with new API [deprecated 7.26]
 include/bu/cmd.h
 	remove struct bu_cmdhist and struct bu_cmdhist_obj [deprecated 7.26]
 	BU_CMDHIST_NULL, BU_CMDHIST_OBJ_NULL, bu_cmdhist_histor, bu_cmdhist_add,
 	bu_cmdhist_curr, bu_cmdhist_nest, bu_cmdhist_prev [deprecated 7.26]
-fb-rle, rle-fb, bw-rle, pix-rle, rle-pix
-	All tools focused specifically on the RLE image format. [deprecated 7.26]
 nirt
 	-T - use LIBRT_BOT_MINTIE environment variable instead [deprecated 7.26]
 all global variables
@@ -251,8 +208,6 @@ include/tclcad.h
 	tclcad_bn_mat_print tclcad_rt_parse_ray tclcad_rt_pr_cutter
 	tclcad_rt_pr_hit tclcad_rt_rt tclcad_rt_import_from_path, removal of all
 	tcl-specific API functions [deprecated 7.26]
-pixcut, pixpaste
-	copyright cleanup [deprecated 7.26]
 librt, fast4-g
 	removal of CLINE entity support [deprecated 7.26]
 mged
@@ -265,8 +220,6 @@ mged
 	expand was regex were wrong - uses bu_fnmatch.) [deprecated 7.26]
 
 	pathlist, paths -> replaced by search [deprecated 7.26]
-burst
-	remove termlib-based interactive menu interface [deprecated 7.26]
 
 7.24
 ----
@@ -387,6 +340,55 @@ include/raytrace.h
 ***                       OBSOLETED CHANGES                        ***
 **********************************************************************
                     (reverse chronological order)
+7.30.2
+------
+ray tracing tools
+	lgt : functionally replaced by nirt
+	rtcell', rtfrac', rtpp, rtrad', rtrange, rtray, rtregis
+	Removed as part of distillation effort [deprecated 7.26]
+converter tools
+	cy-g, euclid-g, euclid_format', euclid_unformat', g-euclid,
+	g-euclid1', g-tankill, intaval-g.py, viewpoint-g : obsolete formats
+	plot3-X, plot3-hpgl, plot3-tek : obsolete interface, see overlay command
+	plot3debug, xyz-plot3 : see plot3-asc,asc-plot3
+	bot-bldxf', bot_shell-vtk, g-nmg, nmg-bot, nmg-rib, nmg-sgp',
+	poly-bot, rt_bot_faces, : primitive-specific converters
+	Removed as part of distillation effort [deprecated 7.26]
+image tools
+	cmap-fb, fb-cmap, fbcmrot : colormap support obsolete
+	fbed, cell-fb : outside scope
+	fbscanplot, polar-fb, bw-imp, pixinfo.sh : obsolete
+	png_info : incorporating into icv
+	pix-yuv', yuv-pix' : obsolete non-standard format
+	texturescale : obsolete implementation
+        pixcut, pixpaste : license, copyright cleanup
+	Removed as part of distillation effort [deprecated 7.26]
+video & animation tools
+	anim_*', fbanim, chan_add', chan_mult, chan_permute,
+	pixflip-fb' : outside scope
+	pixfields', pixfieldsep' : outside scope
+	orbit.sh, rtwalk, scriptsort, script-tab', tabinterp, tabsup,
+	azel, bary
+	Removed as part of distillation effort [deprecated 7.26]
+infrared & shapefactor tools
+	all_sf', if-X, ifdisp, pictx, showterm, firpass, secpass, shapefact
+	Removed as part of distillation effort [deprecated 7.26]
+misc tools
+	fix_polysolids' : obsolete primitive
+	remapid : superseded by reid+remat
+	buffer : unnecessary network/stream buffering tool
+	hex : superseded by hexdump
+	Removed as part of distillation effort [deprecated 7.26]
+fb-rle, rle-fb, bw-rle, pix-rle, rle-pix
+	All tools focused specifically on the RLE image format. [deprecated 7.26]
+burst
+	remove termlib-based interactive menu interface [deprecated 7.26]
+include/bu/hash.h
+	bu_hash_tbl_find, bu_set_hash_value, bu_get_hash_value, bu_get_hash_key,
+	bu_hash_tbl_add, bu_hash_tbl_print, bu_hash_tbl_free, bu_hash_tbl_first,
+	bu_hash_tbl_next, bu_hash_tbl_traverse, public structs bu_hash_entry and
+	bu_hash_tbl will be made private.
+	Replaced with new API [deprecated 7.26]
 
 7.30.0
 ------

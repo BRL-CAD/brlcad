@@ -1871,8 +1871,8 @@ ps_draw_solid(fastf_t perspective, FILE *fp, struct solid *sp, matp_t psmat)
         delta = SQRT_SMALL_FASTF;
 
     for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
-        int i;
-        int nused = tvp->nused;
+        size_t i;
+        size_t nused = tvp->nused;
         int *cmd = tvp->cmd;
         point_t *pt = tvp->pt;
         for (i = 0; i < nused; i++, cmd++, pt++) {
@@ -2062,8 +2062,8 @@ dl_print_schain(struct bu_list *hdlp, struct db_i *dbip, int lvl, int vlcmds, st
 	 * (typically the head), chase the list and print out the information
 	 * about each solid structure.
 	 */
-	int nvlist;
-	int npts;
+	size_t nvlist;
+	size_t npts;
 
 	if (dbip == DBI_NULL) return;
 
@@ -2132,8 +2132,8 @@ dl_print_schain(struct bu_list *hdlp, struct db_i *dbip, int lvl, int vlcmds, st
 		    }
 		}
 
-		bu_vls_printf(vls, "  %d vlist structures, %d pts\n", nvlist, npts);
-		bu_vls_printf(vls, "  %d pts (via bn_ck_vlist)\n", bn_ck_vlist(&(sp->s_vlist)));
+		bu_vls_printf(vls, "  %zu vlist structures, %zu pts\n", nvlist, npts);
+		bu_vls_printf(vls, "  %zu pts (via bn_ck_vlist)\n", bn_ck_vlist(&(sp->s_vlist)));
 	    }
 
 	    gdlp = next_gdlp;

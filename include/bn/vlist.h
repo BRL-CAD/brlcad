@@ -181,7 +181,7 @@ struct bn_vlist  {
 }
 
 
-BN_EXPORT extern int bn_vlist_cmd_cnt(struct bn_vlist *vlist);
+BN_EXPORT extern size_t bn_vlist_cmd_cnt(struct bn_vlist *vlist);
 BN_EXPORT extern int bn_vlist_bbox(struct bn_vlist *vp, point_t *bmin, point_t *bmax);
 
 
@@ -257,7 +257,7 @@ BN_EXPORT extern const char *bn_vlist_get_cmd_description(int cmd);
  * Returns -
  * npts Number of point/command sets in use.
  */
-BN_EXPORT extern int bn_ck_vlist(const struct bu_list *vhead);
+BN_EXPORT extern size_t bn_ck_vlist(const struct bu_list *vhead);
 
 
 /**

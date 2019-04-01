@@ -822,24 +822,25 @@ bu_log_indent_vls(struct bu_vls *v)
  * Log an error.  This version buffers a full line, to save network
  * traffic.
  */
-void
+int
 bu_log(const char *fmt, ...)
 {
     va_list vap;
     char buf[512];		/* a generous output line.  Must be AUTO, else non-PARALLEL. */
-    int ret;
+    int ret = 0;
 
     if (print_on == 0)
-	return;
+	return 0;
 
     bu_semaphore_acquire(BU_SEM_SYSCALL);
     va_start(vap, fmt);
-    (void)vsprintf(buf, fmt, vap);
+    ret = vsprintf(buf, fmt, vap);
     va_end(vap);
 
     if (pcsrv == PKC_NULL || pcsrv == PKC_ERROR) {
 	fprintf(stderr, "%s", buf);
-	goto out;
+	bu_semaphore_release(BU_SEM_SYSCALL);
+	return ret;
     }
 
     if (debug)
@@ -850,8 +851,9 @@ bu_log(const char *fmt, ...)
 	fprintf(stderr, "pkg_send MSG_PRINT failed\n");
 	bu_exit(12, NULL);
     }
-out:
+
     bu_semaphore_release(BU_SEM_SYSCALL);
+    return ret;
 }
 
 

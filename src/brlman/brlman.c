@@ -79,17 +79,20 @@ const char *iso639_1[] = {"ab", "aa", "af", "ak", "sq", "am", "ar", "an",
 			  "fy", "wo", "xh", "yi", "yo", "za", "zu", NULL};
 
 HIDDEN int
-opt_lang(struct bu_vls *msg, int argc, const char **argv, void *l)
+opt_lang(struct bu_vls *msg, size_t argc, const char **argv, void *l)
 {
-    int i = 0;
+    size_t i = 0;
     struct bu_vls *lang = (struct bu_vls *)l;
     if (lang) {
 	int ret = bu_opt_vls(msg, argc, argv, (void *)l);
-	if (ret == -1) return -1;
-	if (bu_vls_strlen(lang) != 2) return -1;
+	if (ret == -1)
+	    return -1;
+	if (bu_vls_strlen(lang) != 2)
+	    return -1;
 	/* Only return valid if we've got one of the ISO639-1 lang codes */
 	while (iso639_1[i]) {
-	    if (BU_STR_EQUAL(bu_vls_addr(lang), iso639_1[i])) return ret;
+	    if (BU_STR_EQUAL(bu_vls_addr(lang), iso639_1[i]))
+		return ret;
 	    i++;
 	}
 	return -1;
@@ -100,19 +103,21 @@ opt_lang(struct bu_vls *msg, int argc, const char **argv, void *l)
 
 
 HIDDEN int
-opt_section(struct bu_vls *msg, int argc, const char **argv, void *set_var)
+opt_section(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 {
-    int i = 0;
+    size_t i = 0;
     char *s_set = (char *)set_var;
 
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "bu_opt_str");
 
     /* One char only */
-    if (strlen(argv[0]) != 1) return -1;
+    if (strlen(argv[0]) != 1)
+	return -1;
 
     while(sections[i]) {
 	if (sections[i] == argv[0][0]) {
-	    if (s_set) (*s_set) = argv[0][0];
+	    if (s_set)
+		(*s_set) = argv[0][0];
 	    return 1;
 	}
 	i++;
@@ -125,20 +130,23 @@ opt_section(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 HIDDEN char *
 find_man_file(const char *man_name, const char *lang, char section, int gui)
 {
+    const char *ddir;
     char *ret = NULL;
     struct bu_vls data_dir = BU_VLS_INIT_ZERO;
     struct bu_vls file_ext = BU_VLS_INIT_ZERO;
     struct bu_vls mfile = BU_VLS_INIT_ZERO;
     if (gui) {
 	bu_vls_sprintf(&file_ext, "html");
-	bu_vls_sprintf(&data_dir, "%s/html", bu_brlcad_root(bu_brlcad_dir("doc", 1), 1));
+	ddir = bu_dir(NULL, 0, BU_DIR_DOC, "html", NULL);
+	bu_vls_sprintf(&data_dir, "%s", ddir);
     } else {
 	if (section != 'n') {
 	    bu_vls_sprintf(&file_ext, "%c", section);
 	} else {
 	    bu_vls_sprintf(&file_ext, "nged");
 	}
-	bu_vls_sprintf(&data_dir, "%s", bu_brlcad_root(bu_brlcad_dir("man", 1), 1));
+	ddir = bu_dir(NULL, 0, BU_DIR_MAN, NULL);
+	bu_vls_sprintf(&data_dir, "%s", ddir);
     }
     bu_vls_sprintf(&mfile, "%s/%s/man%c/%s.%s", bu_vls_addr(&data_dir), lang, section, man_name, bu_vls_addr(&file_ext));
     if (bu_file_exists(bu_vls_addr(&mfile), NULL)) {

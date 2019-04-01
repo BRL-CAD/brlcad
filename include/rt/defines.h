@@ -192,8 +192,9 @@
 #define RT_SEM_STATS    (RT_SEM_WORKER+1)
 #define RT_SEM_RESULTS  (RT_SEM_STATS+1)
 #define RT_SEM_MODEL    (RT_SEM_RESULTS+1)
+#define RT_SEM_CACHE    (RT_SEM_MODEL+1)
 
-#define RT_SEM_LAST     (RT_SEM_MODEL+1)
+#define RT_SEM_LAST     (RT_SEM_CACHE+1)
 
 
 #define BACKING_DIST    (-2.0)          /**< @brief  mm to look behind start point */

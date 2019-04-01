@@ -298,7 +298,7 @@ remove_ear(struct pt_vertex *ear, struct pt_lists *lists, const point2d_t *pts)
     return;
 }
 
-HIDDEN int
+HIDDEN size_t
 remove_hole(int **poly, const size_t poly_npts, const int *hole, const size_t hole_npts, const point2d_t *pts)
 {
     size_t iter, i, i2;
@@ -519,7 +519,7 @@ int bg_nested_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_p
 		    for (ph = 0; ph < holes_npts[ch]; ph++) {
 			if (pts[holes_array[ch][ph]][0] > hole_largest_x) {
 			    hole_largest_x = pts[holes_array[ch][ph]][0];
-			    xp = ch;
+			    xp = (int)ch;
 			}
 		    }
 		}
@@ -611,7 +611,7 @@ int bg_nested_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_p
     PT_ADD_TRI(PT_NEXT(vertex_list));
 
     /* Finalize the face set */
-    (*num_faces) = face_cnt;
+    (*num_faces) = (int)face_cnt;
     (*faces) = (int *)bu_calloc(face_cnt*3, sizeof(int), "final faces array");
     for (i = 0; i < face_cnt; i++) {
 	(*faces)[i*3] = local_faces[i*3];
@@ -654,8 +654,8 @@ cleanup:
     return ret;
 }
 
-int bg_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
-	const point2d_t *pts, const size_t npts, triangulation_t type)
+int
+bg_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts, const point2d_t *pts, const size_t npts, triangulation_t type)
 {
     int ret;
     size_t i;
@@ -663,7 +663,8 @@ int bg_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int
 
     if (type == DELAUNAY && (!out_pts || !num_outpts)) return 1;
     verts_ind = (int *)bu_calloc(npts, sizeof(int), "vert indices");
-    for (i = 0; i < npts; i++) verts_ind[i] = i;
+    for (i = 0; i < npts; i++)
+	verts_ind[i] = (int)i;
     ret = bg_nested_polygon_triangulate(faces, num_faces, out_pts, num_outpts, verts_ind, npts, NULL, NULL, 0, pts, npts, type);
     bu_free(verts_ind, "free verts");
     return ret;

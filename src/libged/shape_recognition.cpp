@@ -926,6 +926,28 @@ _ged_brep_tikz(struct ged *gedp, const char *dp_name, const char *outfile)
     return GED_OK;
 }
 
+// TODO - this doesn't belong here, just convenient for now since we need to crack the ON_Brep for this
+extern "C" int
+_ged_brep_flip(struct ged *gedp, struct rt_brep_internal *bi, const char *obj_name)
+{
+    const char *av[3];
+    if (!gedp || !bi || !obj_name) return GED_ERROR;
+    bi->brep->Flip();
+
+    // Delete the old object
+    av[0] = "kill";
+    av[1] = obj_name;
+    av[2] = NULL;
+    (void)ged_kill(gedp, 2, (const char **)av);
+
+    // Make the new one
+    if (mk_brep(gedp->ged_wdbp, obj_name, (void *)bi->brep)) {
+	return GED_ERROR;
+    }
+    return GED_OK;
+}
+
+
 // Local Variables:
 // tab-width: 8
 // mode: C++

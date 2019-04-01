@@ -1616,11 +1616,6 @@ endif(BRLCAD_PRINT_MSGS)
 # a Bourne shell and other commands - check for them.
 include(FindShellDeps)
 
-# CMake can detect flex, but apparently not generic lex.
-# Solution is to make our own generic lex Find routine that looks
-# first for flex, but will take whatever's available.
-include(FindLEX)
-
 # If using dtrace, we will need to find it
 if(BRLCAD_ENABLE_DTRACE)
   find_program(DTRACE_EXEC NAMES dtrace DOC "path to dtrace executable")
@@ -2596,6 +2591,9 @@ if (CMAKE_SIZEOF_VOID_P AND HAVE_OFF_T)
     CONFIG_H_APPEND(BRLCAD "#define OFF_T_SIZE_MISMATCH 1\n")
     set(OFF_T_SIZE_MISMATCH  1 CACHE INTERNAL "Have off_t that is too small for platform.")
   endif (${CMAKE_SIZEOF_VOID_P} GREATER ${HAVE_OFF_T})
+  if (CMAKE_WORD_SIZE STREQUAL "64BIT")
+    CONFIG_H_APPEND(BRLCAD "#define HAVE_OFF_T_64BIT 1\n")
+  endif (CMAKE_WORD_SIZE STREQUAL "64BIT")
 endif (CMAKE_SIZEOF_VOID_P AND HAVE_OFF_T)
 
 # see if we have a TLS intrinsic, first check C++11 compliance
@@ -2622,7 +2620,7 @@ endif (HAVE_THREAD_LOCAL)
 # ends up lacking in practice.
 include(CheckCXX11Features)
 cxx11_check_feature("nullptr" HAS_CXX11_NULLPTR)
-
+cxx11_check_feature("lib_regex" HAS_CXX11_LIB_REGEX)
 
 # see if the compiler supports %z as a size_t print width specifier
 BRLCAD_CHECK_PERCENT_Z()
@@ -2647,6 +2645,7 @@ BRLCAD_FUNCTION_EXISTS(_splitpath)
 BRLCAD_FUNCTION_EXISTS(_strtoi64)
 BRLCAD_FUNCTION_EXISTS(alarm)
 BRLCAD_FUNCTION_EXISTS(asinh REQUIRED_LIBS ${M_LIBRARY})
+BRLCAD_FUNCTION_EXISTS(canonicalize_file_name)
 BRLCAD_FUNCTION_EXISTS(confstr) # darwin/mac
 BRLCAD_FUNCTION_EXISTS(dlopen)
 BRLCAD_FUNCTION_EXISTS(drand48)
@@ -2664,6 +2663,7 @@ BRLCAD_FUNCTION_EXISTS(gethostbyname)
 BRLCAD_FUNCTION_EXISTS(gethostname)
 BRLCAD_FUNCTION_EXISTS(getloadavg)
 BRLCAD_FUNCTION_EXISTS(getopt_long)
+BRLCAD_FUNCTION_EXISTS(getpid)
 BRLCAD_FUNCTION_EXISTS(getprogname)
 BRLCAD_FUNCTION_EXISTS(gettimeofday)
 BRLCAD_FUNCTION_EXISTS(htonl)
@@ -2679,12 +2679,11 @@ BRLCAD_FUNCTION_EXISTS(modff REQUIRED_LIBS ${M_LIBRARY})
 BRLCAD_FUNCTION_EXISTS(nextafter REQUIRED_LIBS ${M_LIBRARY})
 BRLCAD_FUNCTION_EXISTS(nextafterf REQUIRED_LIBS ${M_LIBRARY})
 BRLCAD_FUNCTION_EXISTS(ntohll)
-BRLCAD_FUNCTION_EXISTS(proc_pidpath) # Mac OS X
-BRLCAD_FUNCTION_EXISTS(program_invocation_name)
-BRLCAD_FUNCTION_EXISTS(getpid)
 BRLCAD_FUNCTION_EXISTS(pipe)
 BRLCAD_FUNCTION_EXISTS(popen) # implies pclose
 BRLCAD_FUNCTION_EXISTS(posix_memalign) # IEEE Std 1003.1-2001
+BRLCAD_FUNCTION_EXISTS(proc_pidpath) # Mac OS X
+BRLCAD_FUNCTION_EXISTS(program_invocation_name)
 BRLCAD_FUNCTION_EXISTS(random)
 BRLCAD_FUNCTION_EXISTS(realpath)
 BRLCAD_FUNCTION_EXISTS(rint REQUIRED_LIBS ${M_LIBRARY})
@@ -3098,7 +3097,6 @@ mark_as_advanced(BUILD_TESTING)
 
 # We've done the toplevel configure steps, now add the subdirectories
 function(verbose_add_subdirectory root dir)
-  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir})
     if(BRLCAD_PRINT_MSGS)
       if(NOT "${root}" STREQUAL "")
 	message("-- Adding ${root}/${dir}...")
@@ -3114,15 +3112,6 @@ function(verbose_add_subdirectory root dir)
 	message("-- Adding ${dir} - done")
       endif(NOT "${root}" STREQUAL "")
     endif(BRLCAD_PRINT_MSGS)
-  else(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir})
-    if(BRLCAD_PRINT_MSGS)
-      if(NOT "${root}" STREQUAL "")
-	message("-- Addition of directory ${root}/${dir} requested, but not found on filesystem - skipping")
-      else(NOT "${root}" STREQUAL "")
-	message("-- Addition of directory ${dir} requested, but not found on filesystem - skipping")
-      endif(NOT "${root}" STREQUAL "")
-    endif(BRLCAD_PRINT_MSGS)
-  endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir})
 endfunction()
 
 verbose_add_subdirectory("" src)

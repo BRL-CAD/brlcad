@@ -31,9 +31,11 @@
 #include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/file.h"
+#include "bu/opt.h"
 #include "bu/str.h"
 #include "bu/exit.h"
 #include "bu/log.h"
+#include "bu/vls.h"
 
 #include "./burst.h"
 #include "./trie.h"
@@ -109,39 +111,6 @@ setupSigs(void)
     return;
 }
 
-
-/*
-  int parsArgv(int argc, char **argv)
-
-  Parse program command line.
-*/
-static int
-parsArgv(int argc, char **argv)
-{
-    const char optstring[] = "bpPh?";
-
-    int c;
-
-    /* Parse options.						*/
-    while ((c = bu_getopt(argc, argv, optstring)) != -1) {
-	switch (c) {
-	    case 'b' :
-		tty = 0;
-		break;
-	    case 'p' :
-		plotline = 0;
-		break;
-	    case 'P' :
-		plotline = 1;
-		break;
-	    default:
-		return 0;
-	}
-    }
-    return 1;
-}
-
-
 /*
   void readBatchInput(FILE *fp)
 
@@ -180,8 +149,7 @@ readBatchInput(FILE *fp)
 }
 
 static const char usage[] =
-    "Usage: burst [-b] [-p|-P]\n"
-    "\tThe -b option suppresses the screen display (for batch jobs).\n"
+    "Usage: burst [-p|-P] [file]\n"
     "\tThe -p/-P options specifies whether to plot points or lines."
 ;
 
@@ -189,17 +157,51 @@ static const char usage[] =
   int main(int argc, char *argv[])
 */
 int
-main(int argc, char *argv[])
+main(int argc, const char *argv[])
 {
+    const char *bfile = NULL;
+    int ret_ac;
+    int burst_opt; /* unused, for option compatibility */
+    struct bu_vls pmsg = BU_VLS_INIT_ZERO;
+    int plot_points = 0;
+    int plot_lines = 0;
+    struct bu_opt_desc d[4];
+    BU_OPT(d[0],  "p", "", "",  NULL,   &plot_points, "Plot points");
+    BU_OPT(d[1],  "P", "", "",  NULL,   &plot_lines,  "Plot lines");
+    BU_OPT(d[2],  "b", "", "",  NULL,   &burst_opt,   "Batch mode");
+    BU_OPT_NULL(d[3]);
+
+    /* Interactive mode is gone - until we strip all the leftovers out
+     * of the code, let it know we're not in tty mode */
+    tty = 0;
+
     bu_setlinebuf(stderr);
 
     tmpfp = bu_temp_file(tmpfname, TIMER_LEN);
     if (!tmpfp) {
 	bu_exit(EXIT_FAILURE, "ERROR: Unable to create temporary file.\n");
     }
-    if (!parsArgv(argc, argv)) {
+
+    /* Skip first arg */
+    argv++; argc--;
+
+    /* Process options */
+    ret_ac = bu_opt_parse(&pmsg, argc, argv, d);
+    if (ret_ac < 0) {
+	(void)fprintf(stderr, "%s\n", bu_vls_cstr(&pmsg));
+	bu_vls_free(&pmsg);
 	(void)fprintf(stderr, "%s\n", usage);
 	return EXIT_FAILURE;
+    }
+    bu_vls_free(&pmsg);
+
+    if (ret_ac) {
+	if (!bu_file_exists(argv[0], NULL)) {
+	    (void)fprintf(stderr, "%s\n", usage);
+	    return EXIT_FAILURE;
+	} else {
+	    bfile = argv[0];
+	}
     }
 
     setupSigs();
@@ -213,16 +215,11 @@ main(int argc, char *argv[])
     assert(armorids.i_next == NULL);
     assert(critids.i_next == NULL);
 
-    if (! isatty(0) || ! tty) {
+    if (!isatty(0) && !bfile ) {
 	readBatchInput(stdin);
     } else {
-#ifdef HAVE_TERMLIB
-	if (tty)
-	    (void) HmHit(mainhmenu);
-	exitCleanly(EXIT_SUCCESS);
-#else
-	bu_exit(EXIT_FAILURE, "Error: This version of burst was not compiled with interactive menu support.  To process a batch file, use the -b option.\n");
-#endif
+	FILE *fp = fopen(bfile, "rb");
+	readBatchInput(fp);
     }
     /* not reached */
     return EXIT_SUCCESS;

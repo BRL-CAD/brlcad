@@ -93,6 +93,8 @@ static char c = 0;
 static int warned;
 
 /* no stack variables in bu_backtrace() */
+static char path_gdb[MAXPATHLEN] = {0};
+static char path_lldb[MAXPATHLEN] = {0};
 static char debugger_args[3][MAXPATHLEN] = { {0}, {0}, {0} };
 static const char *locate_debugger = NULL;
 static int have_gdb = 0, have_lldb = 0;
@@ -401,27 +403,30 @@ bu_backtrace(FILE *fp)
     }
     fflush(fp); /* sanity */
 
-    /* make sure the debugger exists */
+    /* check if GNU debugger (gdb) exists */
     if ((locate_debugger = bu_which("gdb"))) {
-	bu_strlcpy(debugger_args[0], locate_debugger, MAXPATHLEN);
+	bu_strlcpy(path_gdb, locate_debugger, MAXPATHLEN);
 	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
 	    bu_log("[BACKTRACE] Found gdb in USER path: %s\n", locate_debugger);
 	}
 	have_gdb = 1;
     } else if ((locate_debugger = bu_whereis("gdb"))) {
-	bu_strlcpy(debugger_args[0], locate_debugger, MAXPATHLEN);
+	bu_strlcpy(path_gdb, locate_debugger, MAXPATHLEN);
 	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
 	    bu_log("[BACKTRACE] Found gdb in SYSTEM path: %s\n", locate_debugger);
 	}
 	have_gdb = 1;
-    } else if ((locate_debugger = bu_which("lldb"))) {
-	bu_strlcpy(debugger_args[0], locate_debugger, MAXPATHLEN);
+    }
+
+    /* check if LLVM debugger (lldb) exists */
+    if ((locate_debugger = bu_which("lldb"))) {
+	bu_strlcpy(path_lldb, locate_debugger, MAXPATHLEN);
 	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
 	    bu_log("[BACKTRACE] Found lldb in USER path: %s\n", locate_debugger);
 	}
 	have_lldb = 1;
     } else if ((locate_debugger = bu_whereis("lldb"))) {
-	bu_strlcpy(debugger_args[0], locate_debugger, MAXPATHLEN);
+	bu_strlcpy(path_lldb, locate_debugger, MAXPATHLEN);
 	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
 	    bu_log("[BACKTRACE] Found lldb in SYSTEM path: %s\n", locate_debugger);
 	}
@@ -429,11 +434,20 @@ bu_backtrace(FILE *fp)
     }
     locate_debugger = NULL; /* made a copy */
 
+#ifdef __APPLE__
+    /* gdb is defunct on Mac since the switch to clang */
+    if (have_lldb && have_gdb)
+	have_gdb = 0;
+#endif
+
     if (have_gdb) {
+	bu_strlcpy(debugger_args[0], path_gdb, MAXPATHLEN);
 	/* MUST give gdb path to binary, otherwise attach bug causes
 	 * process kill on some platforms (e.g., FreeBSD9+AMD64)
 	 */
 	bu_strlcpy(debugger_args[1], bu_argv0_full_path(), MAXPATHLEN);
+    } else if (have_lldb) {
+	bu_strlcpy(debugger_args[0], path_lldb, MAXPATHLEN);
     }
 
     /* if we don't have a debugger, don't proceed */

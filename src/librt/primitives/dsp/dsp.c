@@ -922,16 +922,12 @@ rt_dsp_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 
 #undef BBOX_PT
 
-    switch (ds.dsp_i.dsp_datasrc) {
+    switch (dsp_ip->dsp_datasrc) {
 	case RT_DSP_SRC_V4_FILE:
 	case RT_DSP_SRC_FILE:
-	    if (ds.dsp_i.dsp_mp) {
-		bu_close_mapped_file(ds.dsp_i.dsp_mp);
-	    } else if (ds.dsp_i.dsp_buf) {
-		bu_free(ds.dsp_i.dsp_buf, "dsp fake data");
-	    }
-	    break;
-	case RT_DSP_SRC_OBJ:
+	    bu_semaphore_acquire(RT_SEM_MODEL);
+	    --dsp_ip->dsp_mp->uses;
+	    bu_semaphore_release(RT_SEM_MODEL);
 	    break;
     }
 
@@ -3087,9 +3083,8 @@ rt_dsp_free(register struct soltab *stp)
     switch (dsp->dsp_i.dsp_datasrc) {
 	case RT_DSP_SRC_V4_FILE:
 	case RT_DSP_SRC_FILE:
-	    if (dsp->dsp_i.dsp_mp) {
-		bu_close_mapped_file(dsp->dsp_i.dsp_mp);
-	    } else if (dsp->dsp_i.dsp_buf) {
+	    bu_close_mapped_file(dsp->dsp_i.dsp_mp);
+	    if (dsp->dsp_i.dsp_buf) {
 		bu_free(dsp->dsp_i.dsp_buf, "dsp fake data");
 	    }
 	    break;
@@ -4549,9 +4544,7 @@ rt_dsp_ifree(struct rt_db_internal *ip)
     dsp_ip = (struct rt_dsp_internal *)ip->idb_ptr;
     RT_DSP_CK_MAGIC(dsp_ip);
 
-    if (dsp_ip->dsp_mp) {
-	bu_close_mapped_file(dsp_ip->dsp_mp);
-    }
+    bu_close_mapped_file(dsp_ip->dsp_mp);
 
     if (dsp_ip->dsp_bip) {
 	dsp_ip->dsp_bip->idb_meth->ft_ifree((struct rt_db_internal *) dsp_ip->dsp_bip);

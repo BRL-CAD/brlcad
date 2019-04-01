@@ -65,6 +65,7 @@
 
 
 #define CLONE_VERSION "Clone ver 4.0\n2006-08-08\n"
+#define CLONE_BUFPARTSIZE 511
 #define CLONE_BUFSIZE 512
 
 /**
@@ -217,7 +218,7 @@ static struct bu_vls *
 clone_get_name(struct directory *dp, struct ged_clone_state *state, size_t iter)
 {
     struct bu_vls *newname;
-    char prefix[CLONE_BUFSIZE] = {0}, suffix[CLONE_BUFSIZE] = {0}, buf[CLONE_BUFSIZE] = {0}, suffix2[CLONE_BUFSIZE] = {0};
+    char prefix[CLONE_BUFPARTSIZE] = {0}, suffix[CLONE_BUFPARTSIZE] = {0}, buf[CLONE_BUFSIZE] = {0}, suffix2[CLONE_BUFPARTSIZE] = {0};
     int num = 0, i = 1, j = 0;
 
     newname = bu_vls_vlsinit();
@@ -225,9 +226,9 @@ clone_get_name(struct directory *dp, struct ged_clone_state *state, size_t iter)
     /* Ugh. This needs much repair/cleanup. */
     if (state->updpos == 0) {
 	struct bu_vls tmpbuf = BU_VLS_INIT_ZERO;
-	sscanf(dp->d_namep, "%[!-/, :-~]%d%[!-/, :-~]%512s", prefix, &num, suffix, suffix2); /* CLONE_BUFSIZE */
+	sscanf(dp->d_namep, "%[!-/, :-~]%d%[!-/, :-~]%510s", prefix, &num, suffix, suffix2); /* CLONE_BUFPARTSIZE - 1 */
 	bu_vls_sprintf(&tmpbuf, "%s%s", suffix, suffix2);
-	snprintf(suffix, CLONE_BUFSIZE, "%s", bu_vls_addr(&tmpbuf));
+	snprintf(suffix, sizeof(suffix), "%s", bu_vls_addr(&tmpbuf));
 	bu_vls_free(&tmpbuf);
     } else if (state->updpos == 1) {
 	int num2 = 0;
@@ -239,7 +240,7 @@ clone_get_name(struct directory *dp, struct ged_clone_state *state, size_t iter)
 	    num = num2;
 	    bu_vls_sprintf(&tmpbuf, "%s%s", prefix, suffix2);
 	}
-	snprintf(prefix, CLONE_BUFSIZE, "%s", bu_vls_addr(&tmpbuf));
+	snprintf(prefix, sizeof(prefix), "%s", bu_vls_addr(&tmpbuf));
 	bu_vls_free(&tmpbuf);
     } else
 	bu_exit(EXIT_FAILURE, "multiple -c options not supported yet.");

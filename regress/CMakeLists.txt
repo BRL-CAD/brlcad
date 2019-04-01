@@ -40,6 +40,9 @@ add_subdirectory(ged)
 # Geometry Conversion Regression Tests
 add_subdirectory(gcv)
 
+# Burst Regression Tests
+add_subdirectory(burst)
+
 # RtWizard Image Generation Regression Tests
 add_subdirectory(rtwizard)
 
@@ -103,10 +106,6 @@ CMAKEFILES(
   analyze.asc
   asc2dsp.sh
   bots.sh
-  burst/ktank.b
-  burst/ktank_air.ids
-  burst/ktank_armor.ids
-  burst/ktank_crit.ids
   comgeom.sh
   dsp.sh
   dsp/asc2dsp-new.asc

@@ -24,6 +24,10 @@
 #include <string.h>
 #include "bio.h"
 
+#ifdef HAVE_WINDOWS_H
+#  include <direct.h>
+#endif
+
 #include "bu.h"
 
 

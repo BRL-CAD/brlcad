@@ -59,7 +59,7 @@ struct OutputFile {
 };
 
 static int
-parse_opt_O(struct bu_vls *error_msg, int argc, const char **argv, void *set_var)
+parse_opt_O(struct bu_vls *error_msg, size_t argc, const char **argv, void *set_var)
 {
     int ret;
     OutputFile *ofile = (OutputFile *)set_var;

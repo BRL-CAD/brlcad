@@ -78,8 +78,8 @@ int reproj_cur;	/* number of pixels reprojected this frame */
 int reproj_max;	/* out of total number of pixels */
 
 /* Local communication with worker() */
-int cur_pixel;			/* current pixel number, 0..last_pixel */
-int last_pixel;			/* last pixel number */
+int cur_pixel = 0;			/* current pixel number, 0..last_pixel */
+int last_pixel = 0;			/* last pixel number */
 
 int stop_worker = 0;
 
@@ -523,33 +523,15 @@ worker(int cpu, void *UNUSED(arg))
 	    }
 	}
     }
+
 pat_found:
 
-    if (transpose_grid) {
-	int tmp;
+    if (random_mode) {
 
-	/* switch cur_pixel and last_pixel */
-	tmp = cur_pixel;
-	cur_pixel = last_pixel;
-	last_pixel = tmp;
-
-	while (1) {
-	    if (stop_worker)
-		return;
-
-	    bu_semaphore_acquire(RT_SEM_WORKER);
-	    pixel_start = cur_pixel;
-	    cur_pixel -= per_processor_chunk;
-	    bu_semaphore_release(RT_SEM_WORKER);
-
-	    for (pixelnum = pixel_start; pixelnum > pixel_start-per_processor_chunk; pixelnum--) {
-		if (pixelnum < last_pixel)
-		    return;
-
-		do_pixel(cpu, pat_num, pixelnum);
-	    }
-	}
-    } else if (random_mode) {
+	/* FIXME: this currently runs forever. It should probably
+	 *        generate a list of random pixels and then process
+	 *        them in that order.
+	 */
 
 	while (1) {
 	    /* Generate a random pixel id between 0 and last_pixel
@@ -561,6 +543,9 @@ pat_found:
 	}
 
     } else {
+	int from;
+	int to;
+
 	while (1) {
 	    if (stop_worker)
 		return;
@@ -570,11 +555,20 @@ pat_found:
 	    cur_pixel += per_processor_chunk;
 	    bu_semaphore_release(RT_SEM_WORKER);
 
-	    for (pixelnum = pixel_start; pixelnum < pixel_start+per_processor_chunk; pixelnum++) {
+	    if (top_down) {
+		from = last_pixel - pixel_start;
+		to = from - per_processor_chunk;
+	    } else {
+		from = pixel_start;
+		to = pixel_start + per_processor_chunk;
+	    }
 
-		if (pixelnum > last_pixel)
+	    /* bu_log("SPAN[%d -> %d] for %d pixels\n", pixel_start, pixel_start+per_processor_chunk, per_processor_chunk); */
+	    for (pixelnum = from; pixelnum != to; (from < to) ? pixelnum++ : pixelnum--) {
+		if (pixelnum > last_pixel || pixelnum < 0)
 		    return;
 
+		/* bu_log("    PIXEL[%d]\n", pixelnum); */
 		do_pixel(cpu, pat_num, pixelnum);
 	    }
 	}

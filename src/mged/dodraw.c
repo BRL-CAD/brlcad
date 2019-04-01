@@ -60,7 +60,7 @@ cvt_vlblock_to_solids(struct bn_vlblock *vbp, const char *name, int copy)
     for (i=0; i < vbp->nused; i++) {
 	if (BU_LIST_IS_EMPTY(&(vbp->head[i]))) continue;
 
-	snprintf(namebuf, 32, "%s%lx",	shortname, vbp->rgb[i]);
+	snprintf(namebuf, sizeof(namebuf), "%s%lx",	shortname, vbp->rgb[i]);
 	/*invent_solid(namebuf, &vbp->head[i], vbp->rgb[i], copy);*/
 	invent_solid(GEDP->ged_gdp->gd_headDisplay, DBIP, createDListSolid, GEDP->ged_free_vlist_callback, namebuf, &vbp->head[i], vbp->rgb[i], copy, 0.0,0, GEDP->freesolid, 0);
     }

@@ -60,6 +60,15 @@ __BEGIN_DECLS
 BU_EXPORT extern int bu_file_exists(const char *path, int *fd);
 
 /**
+ * Returns the size of the given file, or -1 if the size cannot
+ * be determined.
+ *
+ * @return >=0 The given filename exists.
+ * @return -1 The given filename does not exist or there was an error.
+ */
+BU_EXPORT extern int bu_file_size(const char *path);
+
+/**
  * Returns truthfully as to whether the two provided filenames are the
  * same file.  If either file does not exist, the result is false.  If
  * either filename is empty or NULL, it is treated as non-existent
@@ -125,10 +134,10 @@ BU_EXPORT extern int bu_file_delete(const char *path);
  *
 
  * If '*files' is NULL, the caller is expected to free the matches
- * array with bu_argv_free().  If '*files' is non-NULL (i.e., string
- * array is already allocated or on the stack), the caller is expected
- * to ensure adequate entries are preallocated and to free all strings
- * with bu_free_array() or as otherwise necessary.
+ * array with bu_argv_free().  If '*files' is non-NULL (i.e., array of
+ * string pointers is already allocated or on the stack), the caller
+ * is expected to ensure adequate entries are preallocated and to free
+ * all strings with bu_argv_free() or as otherwise necessary.
  *
  * Example:
  @code

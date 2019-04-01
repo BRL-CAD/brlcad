@@ -38,7 +38,7 @@ parallel_cpp11thread(void (*func)(int, void *), size_t ncpu, void *arg)
 	 * Revert to single threading.
 	 */
 	if (!ncpu)
-	    return func(ncpu, arg);
+	    return func((int)ncpu, arg);
     }
 
     /* Create and run threads. */

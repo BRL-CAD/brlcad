@@ -50,6 +50,8 @@
 
 #include "./ged_private.h"
 
+struct analyze_densities *_gd_densities;
+char *_gd_densities_source;
 
 /* bu_getopt() options */
 char *options = "A:a:de:f:g:Gn:N:p:P:qrS:s:t:U:u:vV:W:h?";
@@ -899,7 +901,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
     for (pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
 
 	long int material_id = pp->pt_regionp->reg_gmater;
-	fastf_t grams_per_cu_mm = analyze_densities_density(_ged_current_gedp->gd_densities, material_id);
+	fastf_t grams_per_cu_mm = analyze_densities_density(_gd_densities, material_id);
 
 	/* inhit info */
 	dist = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
@@ -1496,12 +1498,12 @@ options_prep(struct rt_i *UNUSED(rtip), vect_t span)
     if (analysis_flags & ANALYSIS_WEIGHTS) {
 	if (densityFileName) {
 	    DLOG(_ged_current_gedp->ged_result_str, "density from file\n");
-	    if (_ged_read_densities(_ged_current_gedp, densityFileName, 0) != GED_OK) {
+	    if (_ged_read_densities(&_gd_densities, &_gd_densities_source, _ged_current_gedp, densityFileName, 0) != GED_OK) {
 		return GED_ERROR;
 	    }
 	} else {
 	    DLOG(_ged_current_gedp->ged_result_str, "density from db\n");
-	    if (_ged_read_densities(_ged_current_gedp, NULL, 0) != GED_OK) {
+	    if (_ged_read_densities(&_gd_densities, &_gd_densities_source, _ged_current_gedp, NULL, 0) != GED_OK) {
 		return GED_ERROR;
 	    }
 	}
@@ -1551,9 +1553,9 @@ options_prep(struct rt_i *UNUSED(rtip), vect_t span)
 	if (weight_tolerance < 0.0) {
 	    double max_den = 0.0;
 	    long int curr_id = -1;
-	    while ((curr_id = analyze_densities_next(_ged_current_gedp->gd_densities, curr_id)) != -1) {
-		if (analyze_densities_density(_ged_current_gedp->gd_densities, curr_id) > max_den)
-		    max_den = analyze_densities_density(_ged_current_gedp->gd_densities, curr_id);
+	    while ((curr_id = analyze_densities_next(_gd_densities, curr_id)) != -1) {
+		if (analyze_densities_density(_gd_densities, curr_id) > max_den)
+		    max_den = analyze_densities_density(_gd_densities, curr_id);
 	    }
 	    weight_tolerance = span[X] * span[Y] * span[Z] * 0.1 * max_den;
 	    bu_vls_printf(_ged_current_gedp->ged_result_str, "setting weight tolerance to %g %s\n",
@@ -2529,14 +2531,14 @@ aborted:
     bu_free(reg_tbl, "object table");
     reg_tbl = NULL;
 
-    if (gedp->gd_densities) {
-	analyze_densities_destroy(gedp->gd_densities);
-	gedp->gd_densities = NULL;
+    if (_gd_densities) {
+	analyze_densities_destroy(_gd_densities);
+	_gd_densities = NULL;
     }
 
-    if (gedp->gd_densities_source) {
-	bu_free(gedp->gd_densities_source, "free densities source string");
-	gedp->gd_densities_source = NULL;
+    if (_gd_densities_source) {
+	bu_free(_gd_densities_source, "free densities source string");
+	_gd_densities_source = NULL;
     }
 
     rt_free_rti(rtip);

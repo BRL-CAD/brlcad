@@ -24,6 +24,7 @@ objects.
     <arg choice="opt" rep="norepeat">list</arg>
     <arg choice="opt" rep="norepeat">show</arg>
     <arg choice="opt" rep="norepeat">sort</arg>
+    <arg choice="opt" rep="norepeat">copy</arg>
     <arg choice="req" rep="norepeat"><replaceable>object_name_pattern</replaceable></arg>
     <arg choice="opt" rep="norepeat"><replaceable>arguments</replaceable></arg>
   </cmdsynopsis>
@@ -110,7 +111,14 @@ objects.
                 </para>
           </listitem>
         </varlistentry>
-
+        <varlistentry>
+          <term><emphasis remap="B" role="bold">copy</emphasis></term>
+          <listitem>
+                <para>
+                  Takes the value of the first attribute from the specified object and set the second attribute on the object to that value.  The sequence of "attr copy" and "attr rm" can be used to rename attributes on objects.
+                </para>
+          </listitem>
+        </varlistentry>
   </variablelist>
 
 </refsection>

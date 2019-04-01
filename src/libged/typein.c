@@ -2803,6 +2803,7 @@ hrt_in(struct ged *gedp, char *cmd_argv[], struct rt_db_internal *intern)
     struct rt_hrt_internal *hip;
     n = 13;
 
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_HRT;
     intern->idb_meth = &OBJ[ID_HRT];
     intern->idb_ptr = bu_malloc(sizeof(struct rt_hrt_internal), "rt_hrt_internal");

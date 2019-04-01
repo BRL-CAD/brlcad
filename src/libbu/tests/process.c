@@ -19,7 +19,7 @@
  */
 /** @file bu_process.c
  *
- * Brief description
+ * Minimal test of the libbu subprocess API
  *
  */
 

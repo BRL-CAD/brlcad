@@ -40,6 +40,11 @@
 
 #include <stdio.h>
 
+/* strict mode may not declare fileno() */
+# if !defined(fileno) && !defined(__cplusplus)
+extern int fileno(FILE *stream);
+# endif
+
 #if defined(_WIN32) && !defined(__CYGWIN__)
 
 #  ifdef WIN32_LEAN_AND_MEAN

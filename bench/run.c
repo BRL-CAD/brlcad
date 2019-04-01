@@ -47,7 +47,7 @@
 
 /* TODO: !!! obviously */
 struct bu_vls bu_argv_to_string(int ac, const char *av[]) {struct bu_vls v = BU_VLS_INIT_ZERO; if (ac) {bu_vls_printf(&v, "%s", av[0]);} return v;}
-void (*echo)(const char *, ...) = bu_log;
+int (*echo)(const char *, ...) = &bu_log;
 extern int bu_exec(const char *program, void *data, struct bu_vls *out, struct bu_vls *err);
 
 

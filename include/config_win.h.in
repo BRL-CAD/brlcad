@@ -125,7 +125,6 @@
 #define pipe(_FD) (_pipe((_FD), 256, _O_TEXT))
 
 #define read _read
-#define setmode _setmode
 /* #define tell _tell */
 #define tzset _tzset
 #define umask _umask
@@ -137,6 +136,9 @@
 #ifndef isatty
 #  define isatty _isatty
 #endif
+
+/* Both C and C++ need to know about _setmode */
+#define setmode _setmode
 
 /*
  * other functions declared elsewhere (many in stdio.h)
@@ -170,6 +172,7 @@
 #   define isinf(x) (!_finite(x))
 #endif
 #cmakedefine asinh(x) (log(x + sqrt(x * x + 1)))
+#define execl _execl
 #define execvp _execvp
 #define fdopen _fdopen
 #define fileno _fileno
@@ -186,6 +189,7 @@
 #define sys_errlist _sys_errlist
 #define sys_nerr _sys_nerr
 #define getcwd _getcwd
+#define chdir _chdir
 
 #if !defined(HAVE_STRTOLL) && defined(HAVE__STRTOI64)
 #  define strtoll _strtoi64
@@ -283,6 +287,9 @@ typedef int mode_t;
 #ifndef S_IXGRP
 #  define S_IXGRP      ((S_IXUSR)>>3)
 #endif
+#ifndef S_IRWXG
+#  define S_IRWXG      (((S_IRUSR)|(S_IWUSR)|(S_IXUSR))>>3)
+#endif
 #ifndef S_IROTH
 #  define S_IROTH      ((S_IRUSR)>>6)
 #endif
@@ -291,6 +298,9 @@ typedef int mode_t;
 #endif
 #ifndef S_IXOTH
 #  define S_IXOTH      ((S_IXUSR)>>6)
+#endif
+#ifndef S_IRWXO
+#  define S_IRWXO      (((S_IRUSR)|(S_IWUSR)|(S_IXUSR))>>6)
 #endif
 
 #ifndef S_ISDIR

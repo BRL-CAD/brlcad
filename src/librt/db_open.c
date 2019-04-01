@@ -85,7 +85,9 @@ db_open(const char *name, const char *mode)
 	if (mfp->apbuf) {
 	    dbip = (struct db_i *)mfp->apbuf;
 	    RT_CK_DBI(dbip);
+	    bu_semaphore_acquire(BU_SEM_LISTS);
 	    dbip->dbi_uses++;
+	    bu_semaphore_release(BU_SEM_LISTS);
 
 	    /*
 	     * decrement the mapped file reference counter by 1,
@@ -167,11 +169,9 @@ db_open(const char *name, const char *mode)
 	/* Something went wrong and we didn't get the CWD. So,
 	 * free up any memory allocated here and return DBI_NULL */
 	if (argv[1] == NULL) {
-	    if (dbip->dbi_mf) {
-		bu_close_mapped_file(dbip->dbi_mf);
-		bu_free_mapped_files(0);
-		dbip->dbi_mf = (struct bu_mapped_file *)NULL;
-	    }
+	    bu_close_mapped_file(dbip->dbi_mf);
+	    bu_free_mapped_files(0);
+	    dbip->dbi_mf = (struct bu_mapped_file *)NULL;
 
 	    if (dbip->dbi_fp) {
 		fclose(dbip->dbi_fp);
@@ -305,11 +305,9 @@ db_close(register struct db_i *dbip)
     /* ready to free the database -- use count is now zero */
 
     /* free up any mapped files */
-    if (dbip->dbi_mf) {
-	bu_close_mapped_file(dbip->dbi_mf);
-	bu_free_mapped_files(0);
-	dbip->dbi_mf = (struct bu_mapped_file *)NULL;
-    }
+    bu_close_mapped_file(dbip->dbi_mf);
+    bu_free_mapped_files(0);
+    dbip->dbi_mf = (struct bu_mapped_file *)NULL;
 
     /* try to ensure/encourage that the file is written out */
     db_sync(dbip);
@@ -367,6 +365,7 @@ db_close(register struct db_i *dbip)
 	dbip->dbi_filepath = NULL; /* sanity */
     }
 
+    dbip->dbi_magic = (uint32_t)0x10101010;
     bu_free((char *)dbip, "struct db_i");
 }
 
@@ -413,7 +412,9 @@ db_clone_dbi(struct db_i *dbip, long int *client)
 {
     RT_CK_DBI(dbip);
 
+    bu_semaphore_acquire(BU_SEM_LISTS);
     dbip->dbi_uses++;
+    bu_semaphore_release(BU_SEM_LISTS);
     if (client) {
 	bu_ptbl_ins_unique(&dbip->dbi_clients, client);
     }

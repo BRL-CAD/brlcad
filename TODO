@@ -18,14 +18,11 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* fix pipe subtractions shaded display issue in archer
+
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
-
-* fix pipe subtractions shaded display issue in archer
-
-* prep caching actions
-  - debug means to set env vars
 
 * attribute normalization is drastically slowing down
   region creation - need to fix or back out
@@ -52,29 +49,19 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   contexts, allowing for more than one timer to be active.  Make sure
   the old librt API can be obsoleted cleanly.
 
-  user:hidden utility:later category:corrective impacts:some days:1
-
 * check that dbconcat supports objects created with the bo cmd
-
-  user:hidden utility:later category:corrective impacts:some days:1
 
 * libgcv should add objects to an existing .g if one is specified
   as the output target - right now it's overwriting the old file
-
-  user:visible utility:now category:enhancement impacts:some days:1
 
 * consolidate dbconcat, clone, make_name, and any other .g I/O
   routines that need to autogenerate names to use the new
   bu_vls_incr/bu_vls_simplify functions.
 
-  user:hidden utility:later category:enhancement impacts:many days:2
-
 * rename zlib and libpng when building bundled to avoid conflicting
   with system-installed libs.  e.g., default to ENABLE_Z_PREFIX=ON
   with name z_brlcad (perhaps as a post-compile rename custom command)
   and png_brlcad respectively.
-
-  user:hidden utility:now category:enhancement impacts:some days:1
 
 * investigate possibility of using simple, compact libs
   like miniz and lodepng to replace the complexity of
@@ -82,14 +69,10 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   a source of ongoing annoyance, particularly (but not
   exclusively) on OSX.
 
-  user:hidden utility:later category:enhancement impacts:many days:2
-
 * f_dbopen in MGED doesn't seem to be reporting failure
   if a non-.g file is fed to opendb.  That doesn't seem
   right... shouldn't the open process completely fail
   if the file isn't a valid .g?
-
-  user:hidden utility:now category:corrective impacts:some days:1
 
 * add coverage test geometry, e.g., scene with all object types plus a
   lookup check to ensure no new ones are missing.
@@ -98,36 +81,22 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 	- add regression test for all geometric object types
 	- test whether RT+-TIE can render all BoT modes
 
-  user:hidden utility:later category:corrective impacts:some days:1
-
 * add regression test for directional light sources
-
-  user:hidden utility:later category:corrective impacts:some days:1
 
 * bundle primary rays in rt front end into postage stamps, shoot via
   rt_shootrays(), modify to pass all rays down through the spatial
   partitioning simultaneously
 
-  user:visible utility:now category:enhancement impacts:some days:3
-
 * create a BRL-CAD .g with all possible object types embedded.
   integrate into testing.
-
-  user:hidden utility:later category:corrective impacts:some days:1
 
 * readd support for vrml v1 to g-vrml so that users can select whether
   they want v2 (default) or previous v1 output format via a
   command-line switch.  see http://brlcad.svn.sf.net/viewvc/brlcad/brlcad/trunk/conv/g-vrml.c?view=diff&pathrev=22798&r1=16900&r2=16901
 
-  user:visible utility:now category:corrective impacts:some days:1
-
 * metaball in command input needs sanity checks and better validation.
 
-  user:hidden utility:now category:enhancement impacts:some days:1
-
 * integrate gen-registered-attributes-html output into website
-
-  user:visible utility:now category:enhancement impacts:some days:1
 
 * brlcad-config build helper script is not working (not reporting
   -llibs, reporting semicolon list for 'brlcad' lib).  Example working output:
@@ -137,32 +106,60 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   $ /usr/brlcad/rel-7.18.0/bin/brlcad-config rt
   -L/usr/brlcad/rel-7.18.0/lib -m64 -L/usr/local/lib64 -L/usr/local/lib -pipe -fno-strict-aliasing -fno-common -fexceptions -ggdb3 -D_FORTIFY_SOURCE=2 -O3 -w -L/usr/brlcad/rel-7.18.0/lib -lrt -lbn -lbu -ltcl8.5 -ldl -lm -lpng14 -lz -lc -lpthread -lregex -lsysv -lopenNURBS
 
-  user:visible utility:now category:corrective impacts:some days:1
-
 * OpenCL for enhanced performance boolweave sorting
-
-  user:visible utility:later category:enhancement impacts:many days:3
 
 * create boolweave+boolfinal unit tests to validate weaving behavior
   and performance.
 
-  user:hidden utility:later category:corrective impacts:many days:1
-
 * make sure we can run db_dirbuild() multiple times without creating
   duplicate entries.
 
-  user:hidden utility:now category:enhancement impacts:many days:2
-
 * heap unit test needs to actually compare performance against system
   allocation, not just do some work
-
-  user:hidden utility:later category:corrective impacts:some days:1
 
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* put bu_num_print() to use
+
 * use bu_gettime() in rt -l8 heatgraph visualization mode
+
+* g-shell-rect appears to be the only command that will give a
+  raytraced AABB.  we need to refactor that feature into either the
+  gqa -Ab (which merely reports the prep box) or the analyze command
+  (or both).
+
+* implement a faster raytraced AABB function that calls ft_plot(),
+  shoots a ray through each point, and computes the resulting box.
+
+* implement prep optimzation to the default fast bbox approximation
+  specifically for arb8/rpp since we know the exact extent of their
+  bounds and can chop away at a box with a box.
+
+* make gqa -Ab use sample points for reporting an evaluated AABB.
+
+* make bb report an evaluated AABB by default.
+
+* fully implement analyze for all geometry objects
+
+* add unit tests for primitive callback routines (e.g., bbox).
+
+* implement general analyze estimate (perhaps just raytrace it) for
+  primitives where values like surface area, volume, or bb are very
+  difficult to calculate.
+
+* move analyze logic into libanalyze (with respective primitive logic
+  into src/librt/primitives/*).
+
+* extend analyze output formatting to user-specified formats ala nirt
+
+* calculate products of inertia in 'analyze' and/or gqa output
+
+* calculate radii of gyration in 'analyze' and/or gqa output
+
+* implement make, ted, edsol, mirror, and analyze for revolve
+  primitive.  implement tess() too.
 
 * go_open inmem to db command
 
@@ -193,9 +190,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * add a multiview rt script to regression testing (e.g., see rtwalk output)
 
 * bot overlaps when unoriented, when clearly not overlapping
-
-* improve rtweight .density file handling on Windows, can't find it.
-  needs better search and override logic.
 
 * finish implementing pnts:
   - ray trace pnts
@@ -409,10 +403,11 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   geometry constructs.  their spec is freely available online.  no
   existing libs are known.
 
-* analyze output that can characterize how much error or any other
-  issues identified in a given object.  this is primarily intended for
-  bot, nmg, and brep nurbs models, to report the amount of spatial
-  error (gaps) detected for non-solid geometry.
+* implement gdiff support for reporting the amount of spatial
+  difference between two objects.  primarily for calculating amount of
+  error introduced via bot, nmg, and brep nurbs format
+  conversion. also useful for knowing relative difference between two
+  versions (e.g., which is bigger).
 
 * air regions (aircode > 0) are removed/skipped during prep, but there
   is no message to the user that this has occurred.  this can result
@@ -1073,27 +1068,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * make Mac OS X universal binaries actually work.
 
-* fully implement analyze for all primitives, add unit tests for
-  underlying callback routines (e.g., bbox).
-
-* implement general analyze estimate (perhaps just raytrace it) for
-  primitives where values like surface area or volume are very
-  difficult to calculate.
-
-* move analyze logic into librt (with their respective primitives).
-
-* fix analyze output formatting, columns are pooched.
-    (for arbs, it should be fixed as of revision 48900)
-
-* extend analyze output formatting to user-specified formats ala nirt
-
-* calculate products of inertia in 'analyze' and/or gqa output
-
-* calculate radii of gyration in 'analyze' and/or gqa output
-
-* implement make, ted, edsol, mirror, and analyze for revolve
-  primitive.  implement tess() too.
-
 * fix/change naming convention for presented/exposed area
 
 * re-enable RISE client in ADRT
@@ -1424,11 +1398,6 @@ LIBGED
   libged/mged.  be sure to revive or at least check out the previous
   effort in src/mged/comb_bool_parse.y that already has support that
   recognizes the classical infix notation.
-
-* refactor .density file and density database reading code in files
-  src/rt/viewweight.c, src/libged/analyze.c and src/libged/gqa.c into
-  common code in src/libanalyze (there may be more candidates around
-  the tree)
 
 * Extract bounding box code from both autoview.c and get_autoview.c
   into a general bounding rpp function in librt and use accordingly
