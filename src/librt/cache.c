@@ -683,18 +683,15 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
 
     /* atomically flip it into place */
 #ifdef HAVE_WINDOWS_H
-    ret = MoveFileEx(tmppath, path, MOVEFILE_WRITE_THROUGH|MOVEFILE_REPLACE_EXISTING);
-    if (!ret) {
-	bu_file_delete(tmppath);
-	return 0; /* someone probably beat us to it */
-    }
+    /* invert zero-is-failure return */
+    ret = !MoveFileEx(tmppath, path, MOVEFILE_WRITE_THROUGH | MOVEFILE_REPLACE_EXISTING);
 #else
     ret = rename(tmppath, path);
+#endif
     if (ret) {
 	bu_file_delete(tmppath);
 	return 0; /* someone probably beat us to it */
     }
-#endif
 
     if (cache_read_entry(cache, name) != NULL) {
 	return 1;
