@@ -25,6 +25,7 @@
 #ifndef LIBRT_PRIMITIVES_BREP_BREP_LOCAL_H
 #define LIBRT_PRIMITIVES_BREP_BREP_LOCAL_H
 
+
 /**
  * The b-rep specific data structure for caching the prepared
  * acceleration data structure.
@@ -34,8 +35,20 @@ struct brep_specific {
     BrepBoundingVolume* bvh;
 };
 
-#endif /* LIBRT_PRIMITIVES_BREP_BREP_LOCAL_H */
 
+#ifdef __cplusplus
+#include "brep.h"
+/* poly2tri interface functions */
+extern void poly2tri_CDT(struct bu_list *vhead, ON_BrepFace &face, const struct rt_tess_tol *ttol, const struct bn_tol *tol, const struct rt_view_info *info, bool watertight = false, int plottype = 0, int num_points = -1.0);
+
+int brep_facecdt_plot(struct bu_vls *vls, const char *solid_name,
+	const struct rt_tess_tol *ttol, const struct bn_tol *tol,
+	struct brep_specific* bs, struct rt_brep_internal*UNUSED(bi),
+	struct bn_vlblock *vbp, int index, int plottype, int num_points = -1);
+
+#endif
+
+#endif /* LIBRT_PRIMITIVES_BREP_BREP_LOCAL_H */
 /*
  * Local Variables:
  * tab-width: 8

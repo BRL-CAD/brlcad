@@ -52,7 +52,7 @@
 #include "rt/geom.h"
 #include "wdb.h"
 
-#include "brep_local.h"
+#include "./brep_local.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -71,8 +71,6 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
-
-extern void poly2tri_CDT(struct bu_list *vhead, ON_BrepFace &face, const struct rt_tess_tol *ttol, const struct bn_tol *tol, const struct rt_view_info *info, bool watertight = false, int plottype = 0, int num_points = -1.0);
 
 /********************************************************************************
  * Auxiliary functions
@@ -1346,67 +1344,6 @@ brep_edge_info(struct brep_specific* bs, struct bu_vls *vls, int ei)
     bu_vls_printf(vls, "%s\n", ss.Array());
     return 0;
 }
-
-
-int brep_facecdt_plot(struct bu_vls *vls, const char *solid_name,
-		      const struct rt_tess_tol *ttol, const struct bn_tol *tol,
-		      struct brep_specific* bs, struct rt_brep_internal*UNUSED(bi),
-		      struct bn_vlblock *vbp, int index, int plottype, int num_points = -1)
-{
-    struct bu_list *vhead = bn_vlblock_find(vbp, YELLOW);
-    bool watertight = true;
-    ON_wString wstr;
-    ON_TextLog tl(wstr);
-
-    ON_Brep* brep = bs->brep;
-    if (brep == NULL || !brep->IsValid(&tl)) {
-	if (wstr.Length() > 0) {
-	    ON_String onstr = ON_String(wstr);
-	    const char *isvalidinfo = onstr.Array();
-	    bu_vls_strcat(vls, "brep (");
-	    bu_vls_strcat(vls, solid_name);
-	    bu_vls_strcat(vls, ") is NOT valid:");
-	    bu_vls_strcat(vls, isvalidinfo);
-	} else {
-	    bu_vls_strcat(vls, "brep (");
-	    bu_vls_strcat(vls, solid_name);
-	    bu_vls_strcat(vls, ") is NOT valid.");
-	}
-	//for now try to draw - return -1;
-    }
-
-    for (int face_index = 0; face_index < brep->m_F.Count(); face_index++) {
-	ON_BrepFace *face = brep->Face(face_index);
-	const ON_Surface *s = face->SurfaceOf();
-	double surface_width, surface_height;
-	if (s->GetSurfaceSize(&surface_width, &surface_height)) {
-	    // reparameterization of the face's surface and transforms the "u"
-	    // and "v" coordinates of all the face's parameter space trimming
-	    // curves to minimize distortion in the map from parameter space to 3d..
-	    face->SetDomain(0, 0.0, surface_width);
-	    face->SetDomain(1, 0.0, surface_height);
-	}
-    }
-
-    if (index == -1) {
-	for (index = 0; index < brep->m_F.Count(); index++) {
-	    ON_BrepFace& face = brep->m_F[index];
-	    poly2tri_CDT(vhead, face, ttol, tol, NULL, watertight, plottype, num_points);
-	}
-    } else if (index < brep->m_F.Count()) {
-	ON_BrepFaceArray& faces = brep->m_F;
-	if (index < faces.Count()) {
-	    ON_BrepFace& face = faces[index];
-	    face.Dump(tl);
-	    poly2tri_CDT(vhead, face, ttol, tol, NULL, watertight, plottype, num_points);
-	}
-    }
-
-    bu_vls_printf(vls, "%s", ON_String(wstr).Array());
-
-    return 0;
-}
-
 
 int
 brep_facetrim_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, int index, struct bu_color *color, int plotres, bool dim3d)
