@@ -65,7 +65,6 @@
 #include "./ged_private.h"
 
 
-#define CLONE_VERSION "Clone ver 4.0\n2006-08-08\n"
 #define CLONE_BUFPARTSIZE 511
 #define CLONE_BUFSIZE 512
 
@@ -845,7 +844,6 @@ print_usage(struct bu_vls *str)
     bu_vls_printf(str, "-p <x> <y> <z>\t\t- Specifies point to rotate around for -r. \n\t\t\t  Default is 0 0 0.\n");
     bu_vls_printf(str, "-r <x> <y> <z>\t\t- Specifies the rotation around x, y, and z axes.\n");
     bu_vls_printf(str, "-t <x> <y> <z>\t\t- Specifies translation between each copy.\n");
-    bu_vls_printf(str, "-v\t\t\t- Prints version info.\n");
     return;
 }
 
@@ -870,7 +868,7 @@ get_args(struct ged *gedp, int argc, char **argv, struct ged_clone_state *state)
     state->miraxis = W;
     state->updpos = 0;
 
-    while ((k = bu_getopt(argc, argv, "a:b:cgi:m:n:p:r:t:vh?")) != -1) {
+    while ((k = bu_getopt(argc, argv, "a:b:cgi:m:n:p:r:t:h?")) != -1) {
 	if (bu_optopt == '?') k='h';
 	switch (k) {
 	    case 'a':
@@ -923,10 +921,6 @@ get_args(struct ged *gedp, int argc, char **argv, struct ged_clone_state *state)
 		state->trans[Y] = atof(argv[bu_optind++]);
 		state->trans[Z] = atof(argv[bu_optind++]);
 		state->trans[W] = 1;
-		break;
-	    case 'v':
-		bu_vls_printf(gedp->ged_result_str, CLONE_VERSION);
-		return GED_ERROR;
 		break;
 	    default:
 		print_usage(gedp->ged_result_str);
