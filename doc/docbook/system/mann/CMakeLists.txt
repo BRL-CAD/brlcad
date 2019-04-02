@@ -45,6 +45,7 @@ set(mann_EN
   cat.xml
   center.xml
   check.xml
+  clone.xml
   color.xml
   comb.xml
   comb_color.xml
