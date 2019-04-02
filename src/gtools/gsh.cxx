@@ -113,8 +113,59 @@ main(int argc, const char **argv)
 	}
     }
 
-    /* TODO - can probably fold geval into this - if we have more than 1 argc, do a geval
-     * and exit, else go interactive */
+    /* Do the old geval bit - if we have more than 1 argc, eval and exit. */
+    if (argc > 1) {
+	int (*func)(struct ged *, int, char *[]);
+	char gedfunc[MAXPATHLEN] = {0};
+
+	/* If we got this far, argv[0] was a .g file */
+	argv++; argc--;
+	bu_strlcat(gedfunc, "ged_", MAXPATHLEN);
+	bu_strlcat(gedfunc, argv[0], MAXPATHLEN - strlen(gedfunc));
+	if (strlen(gedfunc) < 1 || gedfunc[0] != 'g') {
+	    bu_vls_free(&msg);
+	    bu_dlclose(libged);
+	    bu_exit(EXIT_FAILURE, "Couldn't get GED command name from [%s]\n", argv[0]);
+	}
+
+	*(void **)(&func) = bu_dlsym(libged, gedfunc);
+	if (!func) {
+	    bu_exit(EXIT_FAILURE, "Unrecognized command [%s]\n", argv[0]);
+	}
+	/* TODO - is it ever unsafe to do this cast?  Does ged mess with argv somehow? */
+	ret = func(gedp, argc, (char **)argv);
+
+	bu_dlclose(libged);
+
+	fprintf(stdout, "%s", bu_vls_addr(gedp->ged_result_str));
+
+	ged_close(gedp);
+
+	BU_PUT(gedp, struct ged);
+
+	return ret;
+    }
+
+
+    /*
+     * TODO - also add non-tty mode - could make gsh a 'generic' subprocess
+     * execution mechanism for libged commands that want to do subprocess but
+     * don't have their own (1) executable.  The simplicity of gsh's bare bones
+     * argc/argv processing would be an asset in that scenario.
+     *
+     * Note that for such a scheme to work, we would also have to figure out
+     * how to have MGED et. al. deal with async return of command results
+     * when it comes to things like executing Tcl scripts on results - the
+     * full MGED Tcl prompt acts on command results as part of Tcl scripts,
+     * and if the output is delayed the script execution (anything from
+     * assigning search results to a variable on up) must also be delayed
+     * and know to act on the 'final' result rather than the return from
+     * the 'kicking off the process' initialization.
+     *
+     * Talk a look at what rt_read_cmd is doing - use that to guide an
+     * "arg reassembly" function to avoid a super-long argv entry filling
+     * up a pipe.
+     * */
 
     /* Start the interactive loop */
     while ((line = linenoise(gpmpt)) != NULL) {

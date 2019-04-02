@@ -91,7 +91,7 @@ static int inches = 0;
 static int print_help = 0;
 
 static int
-parse_tol_abs(struct bu_vls *error_msg, int argc, const char **argv, void *set_var)
+parse_tol_abs(struct bu_vls *error_msg, size_t argc, const char **argv, void *set_var)
 {
     int ret;
     BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "absolute tolerance");
@@ -107,7 +107,7 @@ parse_tol_abs(struct bu_vls *error_msg, int argc, const char **argv, void *set_v
 
 
 static int
-parse_tol_norm(struct bu_vls *error_msg, int argc, const char **argv, void *set_var)
+parse_tol_norm(struct bu_vls *error_msg, size_t argc, const char **argv, void *set_var)
 {
     int ret;
     BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "normal tolerance");
@@ -123,7 +123,7 @@ parse_tol_norm(struct bu_vls *error_msg, int argc, const char **argv, void *set_
 
 
 static int
-parse_tol_dist(struct bu_vls *error_msg, int argc, const char **argv, void *set_var)
+parse_tol_dist(struct bu_vls *error_msg, size_t argc, const char **argv, void *set_var)
 {
     int ret;
     BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "distance tolerance");
@@ -140,7 +140,7 @@ parse_tol_dist(struct bu_vls *error_msg, int argc, const char **argv, void *set_
 
 
 static int
-parse_debug_rt(struct bu_vls *error_msg, int argc, const char **argv, void *set_var)
+parse_debug_rt(struct bu_vls *error_msg, size_t argc, const char **argv, void *set_var)
 {
     BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "debug rt");
 
@@ -154,7 +154,7 @@ parse_debug_rt(struct bu_vls *error_msg, int argc, const char **argv, void *set_
 
 
 static int
-parse_debug_nmg(struct bu_vls *error_msg, int argc, const char **argv, void *set_var)
+parse_debug_nmg(struct bu_vls *error_msg, size_t argc, const char **argv, void *set_var)
 {
     BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "debug nmg");
 

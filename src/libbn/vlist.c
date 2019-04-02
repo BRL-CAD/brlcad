@@ -34,7 +34,7 @@
 #include "bn/plot3.h"
 #include "bn/vlist.h"
 
-int
+size_t
 bn_vlist_cmd_cnt(struct bn_vlist *vlist)
 {
     size_t num_commands;
@@ -140,15 +140,15 @@ bn_vlist_get_cmd_description(int cmd)
     }
 }
 
-int
+size_t
 bn_ck_vlist(const struct bu_list *vhead)
 {
     register struct bn_vlist *vp;
-    int npts = 0;
+    size_t npts = 0;
 
     for (BU_LIST_FOR(vp, bn_vlist, vhead)) {
-	register int i;
-	register int nused = vp->nused;
+	size_t i;
+	size_t nused = vp->nused;
 	register int *cmd = vp->cmd;
 	register point_t *pt = vp->pt;
 
@@ -190,8 +190,8 @@ bn_vlist_copy(struct bu_list *vlists, struct bu_list *dest, const struct bu_list
     struct bn_vlist *vp;
 
     for (BU_LIST_FOR(vp, bn_vlist, src)) {
-	register int i;
-	register int nused = vp->nused;
+	size_t i;
+	size_t nused = vp->nused;
 	register int *cmd = vp->cmd;
 	register point_t *pt = vp->pt;
 	for (i = 0; i < nused; i++, cmd++, pt++) {
@@ -253,8 +253,8 @@ bn_vlist_export(struct bu_vls *vls, struct bu_list *hp, const char *name)
 
     /* Output cmds, as bytes */
     for (BU_LIST_FOR(vp, bn_vlist, hp)) {
-	register int i;
-	register int nused = vp->nused;
+	size_t i;
+	size_t nused = vp->nused;
 	register int *cmd = vp->cmd;
 	for (i = 0; i < nused; i++) {
 	    *bp++ = *cmd++;
@@ -263,8 +263,8 @@ bn_vlist_export(struct bu_vls *vls, struct bu_list *hp, const char *name)
 
     /* Output points, as three 8-byte doubles */
     for (BU_LIST_FOR(vp, bn_vlist, hp)) {
-	register int i;
-	register int nused = vp->nused;
+	size_t i;
+	size_t nused = vp->nused;
 	register point_t *pt = vp->pt;
 
 	/* must be double for import and export */
@@ -502,8 +502,8 @@ bn_vlist_to_uplot(FILE *fp, const struct bu_list *vhead)
     register struct bn_vlist *vp;
 
     for (BU_LIST_FOR(vp, bn_vlist, vhead)) {
-	register int i;
-	register int nused = vp->nused;
+	size_t i;
+	size_t nused = vp->nused;
 	register const int *cmd = vp->cmd;
 	register point_t *pt = vp->pt;
 

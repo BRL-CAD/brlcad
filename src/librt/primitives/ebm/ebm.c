@@ -909,9 +909,7 @@ rt_ebm_ifree(struct rt_db_internal *ip)
     eip = (struct rt_ebm_internal *)ip->idb_ptr;
     RT_EBM_CK_MAGIC(eip);
 
-    if (eip->mp) {
-	bu_close_mapped_file(eip->mp);
-    }
+    bu_close_mapped_file(eip->mp);
 
     eip->magic = 0;			/* sanity */
     eip->mp = (struct bu_mapped_file *)0;

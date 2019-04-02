@@ -4960,6 +4960,11 @@ rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
 	    bi->brep->Transform(xform);
 	}
     }
+    /*
+    if ((ip->idb_avs.magic == BU_AVS_MAGIC) && bu_avs_get(&ip->idb_avs, "plate_mode") != NULL) {
+	bu_log("plate mode brep\n");
+    }
+    */
     return 0;
     //} else {
     //	return -1;

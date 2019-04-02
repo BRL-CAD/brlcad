@@ -50,9 +50,9 @@ void gcv_fmt_opts_free(struct gcv_fmt_opts *gfo)
 }
 
 int
-gcv_fmt_fun(struct bu_vls *UNUSED(msgs), int argc, const char **argv, void *set_var)
+gcv_fmt_fun(struct bu_vls *UNUSED(msgs), size_t argc, const char **argv, void *set_var)
 {
-    int i = 0;
+    size_t i = 0;
     int args_used = 0;
     struct gcv_fmt_opts *gfo = (struct gcv_fmt_opts *)set_var;
 
@@ -93,12 +93,12 @@ gcv_fmt_fun(struct bu_vls *UNUSED(msgs), int argc, const char **argv, void *set_
 }
 
 int
-io_opt_files(int argc, const char **argv)
+io_opt_files(size_t argc, const char **argv)
 {
     int i_opts = 0;
     int o_opts = 0;
     const char *equal_pos = NULL;
-    int i = 0;
+    size_t i = 0;
     for (i = 0; i < argc; i++) {
 	struct bu_vls cmp_arg = BU_VLS_INIT_ZERO;
 	const char *arg = argv[i];
@@ -119,8 +119,8 @@ io_opt_files(int argc, const char **argv)
 }
 
 /* Emulate a FASTGEN4 format option processor */
-void fast4_arg_process(int argc, const char **argv) {
-    int i = 0;
+void fast4_arg_process(size_t argc, const char **argv) {
+    size_t i = 0;
     int ret_argc = 0;
     static int tol = 0.0;
     static int w_flag;
@@ -135,17 +135,17 @@ void fast4_arg_process(int argc, const char **argv) {
     if (w_flag)	bu_log("FASTGEN 4 warn default names set\n");
     bu_log("FASTGEN 4 tol: %d\n", tol);
 
-    if (ret_argc) {
+    if (ret_argc > 0) {
 	bu_log("Unknown args: ");
-	for (i = 0; i < ret_argc - 1; i++) {
+	for (i = 0; i < (size_t)ret_argc - 1; i++) {
 	    bu_log("%s, ", argv[i]);
 	}
 	bu_log("%s\n", argv[ret_argc - 1]);
     }
 }
 
-void stl_arg_process(int argc, const char **argv) {
-    int i= 0;
+void stl_arg_process(size_t argc, const char **argv) {
+    size_t i= 0;
     int ret_argc = 0;
     static int tol = 0.0;
     static int units = 0;
@@ -160,9 +160,9 @@ void stl_arg_process(int argc, const char **argv) {
     bu_log("STL tol: %d\n", tol);
     bu_log("STL units: %d\n", units);
 
-    if (ret_argc) {
+    if (ret_argc > 0) {
 	bu_log("Unknown args: ");
-	for (i = 0; i < ret_argc - 1; i++) {
+	for (i = 0; i < (size_t)ret_argc - 1; i++) {
 	    bu_log("%s, ", argv[i]);
 	}
 	bu_log("%s\n", argv[ret_argc - 1]);
@@ -309,7 +309,7 @@ parse_model_string(struct bu_vls *format, struct bu_vls *slog, const char *opt, 
 }
 
 int
-file_stat(struct bu_vls *msg, int argc, const char **argv, void *set_var)
+file_stat(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 {
     char **file_set = (char **)set_var;
 
@@ -326,7 +326,7 @@ file_stat(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 }
 
 int
-file_null(struct bu_vls *msg, int argc, const char **argv, void *set_var)
+file_null(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 {
     char **file_set = (char **)set_var;
 
@@ -343,7 +343,7 @@ file_null(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 }
 
 int
-model_mime(struct bu_vls *msg, int argc, const char **argv, void *set_mime)
+model_mime(struct bu_vls *msg, size_t argc, const char **argv, void *set_mime)
 {
     int type_int;
     bu_mime_model_t type = BU_MIME_MODEL_UNKNOWN;
@@ -368,7 +368,7 @@ struct gcv_help_state {
 };
 
 int
-gcv_help(struct bu_vls *UNUSED(msg), int argc, const char **argv, void *set_var)
+gcv_help(struct bu_vls *UNUSED(msg), size_t argc, const char **argv, void *set_var)
 {
     struct gcv_help_state *gs = (struct gcv_help_state *)set_var;
     if (gs) gs->flag = 1;

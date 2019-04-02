@@ -15,7 +15,8 @@ on-going issues.
 Recent Bugs
 -----------
 
-* rt -t (render from top to bottom) is broken
+* mirror command rejects brep solids and turns faces inside-out when
+  mirroring a comb with brep solids below it.
 
 * rtsil command works if do what usage says and redirect output to
   file, but mentions .pix when data is actually .bw; and using the -o

@@ -201,7 +201,8 @@ bg_polygon_direction(size_t npts, const point2d_t *pts, const int *pt_indices)
     if (pt_indices) pt_order = pt_indices;
     if (!pt_order) {
 	tmp_pt_order = (int *)bu_calloc(npts, sizeof(size_t), "temp ordering array");
-	for (i = 0; i < npts; i++) tmp_pt_order[i] = i;
+	for (i = 0; i < npts; i++)
+	    tmp_pt_order[i] = (int)i;
 	pt_order = (const int *)tmp_pt_order;
     }
 

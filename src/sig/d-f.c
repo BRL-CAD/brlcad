@@ -47,7 +47,7 @@ main(int argc, char *argv[])
     double ibuf[512] = { 0.0 };
     float obuf[512] = { 0.0f};
 
-    int i, num;
+    size_t i, num;
     double scale = 1.0;
     size_t ret;
 

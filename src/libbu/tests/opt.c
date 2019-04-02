@@ -30,7 +30,7 @@
 
 
 int
-d1_verb(struct bu_vls *msg, int argc, const char **argv, void *set_v)
+d1_verb(struct bu_vls *msg, size_t argc, const char **argv, void *set_v)
 {
     int val = INT_MAX;
     int *int_set = (int *)set_v;
@@ -613,7 +613,7 @@ isnum(const char *str) {
 
 
 int
-dc_color(struct bu_vls *msg, int argc, const char **argv, void *set_c)
+dc_color(struct bu_vls *msg, size_t argc, const char **argv, void *set_c)
 {
     struct bu_color *set_color = (struct bu_color *)set_c;
     unsigned int rgb[3] = {0, 0, 0};

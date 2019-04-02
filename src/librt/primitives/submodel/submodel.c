@@ -109,9 +109,6 @@ rt_submodel_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 	if ((sub_dbip = db_open(bu_vls_addr(&sip->file), DB_OPEN_READONLY)) == DBI_NULL)
 	    return -1;
 
-	/* Save the overhead of stat() calls on subsequent opens */
-	if (sub_dbip->dbi_mf) sub_dbip->dbi_mf->dont_restat = 1;
-
 	if (!db_is_directory_non_empty(sub_dbip)) {
 	    /* This is first open of db, build directory */
 	    if (db_dirbuild(sub_dbip) < 0) {

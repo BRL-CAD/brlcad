@@ -1,0 +1,66 @@
+set(CBDIR "@CMAKE_CURRENT_BINARY_DIR@")
+set(CSDIR "@CMAKE_CURRENT_SOURCE_DIR@")
+set(DDIR "@DATA_DIR@")
+set(BURST_CF "@BURST_CLEAN_FILES@")
+set(BURST_IF "@BURST_INPUT_FILES@")
+
+set(SBDIR "@CMAKE_RUNTIME_OUTPUT_DIRECTORY@")
+set(DBDIR "@CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG@")
+set(RBDIR "@CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE@")
+# Use the mechanism created to allow multiconfig builds to
+# know what the current build type is.
+if(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")
+  set(BDIR "${RBDIR}")
+  set(test_suffix "-Release")
+elseif(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Debug")
+  set(BDIR "${DBDIR}")
+  set(test_suffix "-Debug")
+else(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")
+  set(BDIR "${SBDIR}")
+  set(test_suffix)
+endif(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")
+
+get_filename_component(EXE "@CMAKE_COMMAND@" EXT)
+set(BURST "${BDIR}/burst${EXE}")
+
+# Clean up in case we've run before
+foreach(BCF ${BURST_CF})
+  execute_process(COMMAND "@CMAKE_COMMAND@" -E remove "${CBDIR}/${BCF}")
+endforeach(BCF ${BURST_CF})
+
+# Stage the input files
+if (NOT "${CSDIR}" STREQUAL "${CBDIR}")
+  foreach(BIF ${BURST_IF})
+    execute_process(COMMAND "@CMAKE_COMMAND@" -E copy "${CSDIR}/${BIF}" "${CBDIR}/${BIF}")
+  endforeach(BIF ${BURST_IF})
+endif (NOT "${CSDIR}" STREQUAL "${CBDIR}")
+
+execute_process(COMMAND "@CMAKE_COMMAND@" -E copy "${BDIR}/../${DDIR}/db/ktank.g" "${CBDIR}/ktank.g")
+
+file(WRITE "${CBDIR}/burst_ktank.log" "Running burst on ktank.g:\n${BURST} -b ${CBDIR}/ktank.b\n")
+
+execute_process(
+  COMMAND "${BURST}" -b "${CBDIR}/ktank.b" RESULT_VARIABLE burst_result
+  OUTPUT_VARIABLE burst_log ERROR_VARIABLE burst_log
+  WORKING_DIRECTORY ${CBDIR}
+  )
+file(APPEND "${CBDIR}/burst_ktank.log" "${burst_log}")
+set(burst_log)
+if(NOT EXISTS "${CBDIR}/ktank.burst")
+  message(FATAL_ERROR "${BURST} failed to process ktank.b, aborting.\nSee ${CBDIR}/burst_ktank.log for more details.")
+endif(NOT EXISTS "${CBDIR}/ktank.burst")
+
+if(burst_result)
+  file(APPEND "${CBDIR}/burst_ktank.log" "\n\nError: return code ${burst_result}")
+  message(FATAL_ERROR "[burst] Failure, see ${CBDIR}/burst_ktank.log for more info.\n")
+else(burst_result)
+  execute_process(COMMAND "@CMAKE_COMMAND@" -E touch "@CMAKE_CURRENT_BINARY_DIR@/burst-ktank${test_suffix}.done")
+endif(burst_result)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8
+

@@ -171,7 +171,7 @@ main(int ac, char *av[])
 {
     char imageFileName[MAXSIZE]="";
     char databaseFileName[MAXSIZE]="";
-    char scratch[MAXSIZE]="";
+    char scratch[MAXSIZE + 15]="";
     point_t origin;
 
     progname = *av;
@@ -220,7 +220,7 @@ main(int ac, char *av[])
     bu_log("Objects are %f with %f spacing\n", objectSize, cellSize);
 
 
-    snprintf(scratch, MAXSIZE, "%s Geometry Image", imageFileName);
+    snprintf(scratch, sizeof(scratch), "%s Geometry Image", imageFileName);
     mk_id(db_fp, scratch); /* create the database header record */
 
     /* make a region that is the union of these two objects

@@ -70,7 +70,7 @@ int
 main(int argc, char **argv)
 {
     unsigned char *p1, *p2, *op;
-    int i, n, m;
+    size_t i, n, m;
     size_t ret;
 
     while (argc > 3) {

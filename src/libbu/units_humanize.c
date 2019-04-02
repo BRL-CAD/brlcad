@@ -58,12 +58,13 @@
 #define hn_maxscale 7
 
 int
-bu_humanize_number(char *buf, size_t len, int64_t quotient,
-	const char *suffix, int scale, int flags)
+bu_humanize_number(char *buf, size_t len, int64_t quotient, const char *suffix, size_t scale, int flags)
 {
     struct bu_vls tmpbuf = BU_VLS_INIT_ZERO;
     const char *prefixes, *sep;
-    int	i, r, leftover, s1, s2, sign;
+    size_t i;
+    size_t r;
+    int leftover, s1, s2, sign;
     int	divisordeccut;
     int64_t	divisor, max;
     size_t	baselen;
@@ -74,8 +75,6 @@ bu_humanize_number(char *buf, size_t len, int64_t quotient,
 
     /* validate args */
     if (buf == NULL || suffix == NULL)
-	return (-1);
-    if (scale < 0)
 	return (-1);
     else if (scale >= hn_maxscale &&
 	    ((scale & ~(BU_HN_AUTOSCALE|BU_HN_GETSCALE)) != 0))
@@ -162,7 +161,7 @@ bu_humanize_number(char *buf, size_t len, int64_t quotient,
 	}
 
 	if (scale & BU_HN_GETSCALE)
-	    return (i);
+	    return (int)i;
     } else {
 	for (i = 0; i < scale && i < hn_maxscale; i++) {
 	    leftover = quotient % divisor;
@@ -176,28 +175,28 @@ bu_humanize_number(char *buf, size_t len, int64_t quotient,
      * place and if not, don't do BU_HN_DECIMAL?
      */
     if (((quotient == 9 && leftover < divisordeccut) || quotient < 9) && i > 0 && flags & BU_HN_DECIMAL) {
-	int rcpy = 0;
+	size_t rcpy = 0;
 	s1 = (int)quotient + ((leftover * 10 + divisor / 2) / divisor / 10);
 	s2 = ((leftover * 10 + divisor / 2) / divisor) % 10;
 	bu_vls_sprintf(&tmpbuf, "%d%s%d%s%s%s", sign * s1, ".", s2, sep, SCALE2PREFIX(i), suffix);
 	bu_vls_trimspace(&tmpbuf);
 	r = bu_vls_strlen(&tmpbuf);
-	rcpy = r + 1 > (int)len ? (int)len : r + 1;
+	rcpy = FMIN(r + 1, len);
 	bu_strlcpy(buf, bu_vls_addr(&tmpbuf), rcpy);
 	bu_vls_free(&tmpbuf);
 	buf[len-1] = '\0';
     } else {
-	int rcpy = 0;
+	size_t rcpy = 0;
 	bu_vls_sprintf(&tmpbuf, "%" PRId64 "%s%s%s", sign * (quotient + (leftover + divisor / 2) / divisor), sep, SCALE2PREFIX(i), suffix);
 	bu_vls_trimspace(&tmpbuf);
 	r = bu_vls_strlen(&tmpbuf);
-	rcpy = r + 1 > (int)len ? (int)len : r + 1;
+	rcpy = FMIN(r + 1, len);
 	bu_strlcpy(buf, bu_vls_addr(&tmpbuf), rcpy);
 	bu_vls_free(&tmpbuf);
 	buf[len-1] = '\0';
     }
 
-    return (r);
+    return (int)r;
 }
 
 /*

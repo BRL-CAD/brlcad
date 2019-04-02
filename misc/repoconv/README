@@ -147,3 +147,31 @@ svnadmin dump -r39465 repo_dercs > brlcad_r39465.dump
 svnfexport:
 
 ./svnfexport brlcad_full_dercs.dump authormap brlcad_cvs_git_heads_sha1.txt brlcad_cvs_git_all_blob_sha1.txt
+
+
+
+
+#############################
+
+Note: here is a simple way to use notes with svn revision numbers to checkout a specific revision:
+
+git log --all --pretty=format:"%H %N" --grep svn:revision:29886|awk '{system("git checkout "$1)}'
+
+To make this easier, add the following alias to your .gitconfig file:
+
+	svnrev = "!f() { \
+		if [ x$1 != x ] ; then \
+		   REVSHA1=\"$(git log --all --pretty=format:\"%H %N\" --grep svn:revision:$1|awk '{system(\"echo \"$1)}')\"; \
+		   if [ x$REVSHA1 != x ] ; then \
+		      git checkout $REVSHA1; \
+		   else \
+		      echo Unknown revision number: $1; \
+		   fi; \
+		else \
+		   echo Need revision number; \
+		fi; \
+		}; f"
+
+With that alias in place, the command "git svnrev 29886" will check out the git
+commit with a not matching the pattern "svn:revision:29886"
+

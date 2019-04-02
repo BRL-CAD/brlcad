@@ -51,41 +51,9 @@ extern int vsnprintf(char *str, size_t size, const char *format, va_list ap);
 
 
 int
-#ifdef HAVE_TERMLIB
-doMore(int *linesp)
-#else
 doMore(int *UNUSED(linesp))
-#endif
 {
-#ifdef HAVE_TERMLIB
-    int ret = 1;
-    if (! tty)
-	return 1;
-    save_Tty(HmTtyFd);
-    set_Raw(HmTtyFd);
-    clr_Echo(HmTtyFd);
-    ScSetStandout();
-    prompt("-- More -- ");
-    ScClrStandout();
-    (void) fflush(stdout);
-    switch (HmGetchar()) {
-	case 'q' :
-	case 'n' :
-	    ret = 0;
-	    break;
-	case LF :
-	case CRET :
-	    *linesp = 1;
-	    break;
-	default :
-	    *linesp = (PROMPT_Y-SCROLL_TOP);
-	    break;
-    }
-    reset_Tty(HmTtyFd);
-    return ret;
-#else
     return 1;
-#endif
 }
 
 
@@ -141,57 +109,9 @@ locPerror(char *msg)
 
 
 int
-#ifdef HAVE_TERMLIB
-notify(char *str, int mode)
-#else
 notify(char *UNUSED(str), int UNUSED(mode))
-#endif
 {
-#ifdef HAVE_TERMLIB
-    int i;
-    static int lastlen = -1;
-    int len;
-    static char buf[LNBUFSZ] = { 0 };
-    char *p = NULL;
-    if (! tty)
-	return 0;
-    switch (mode) {
-	case NOTIFY_APPEND :
-	    p = buf + lastlen;
-	    break;
-	case NOTIFY_DELETE :
-	    for (p = buf+lastlen; p > buf && *p != NOTIFY_DELIM; p--)
-		;
-	    break;
-	case NOTIFY_ERASE :
-	    p = buf;
-	    break;
-    }
-    if (str != NULL) {
-	if (p > buf)
-	    *p++ = NOTIFY_DELIM;
-	bu_strlcpy(p, str, LNBUFSZ);
-    } else {
-	if (p) *p = NUL;
-    }
-    (void) ScMvCursor(PROMPT_X, PROMPT_Y);
-    len = strlen(buf);
-    if (len > 0) {
-	(void) ScSetStandout();
-	(void) fputs(buf, stdout);
-	(void) ScClrStandout();
-    }
-
-    /* Blank out remainder of previous command. */
-    for (i = len; i < lastlen; i++)
-	(void) putchar(' ');
-    (void) ScMvCursor(PROMPT_X, PROMPT_Y);
-    (void) fflush(stdout);
-    lastlen = len;
-    return 1;
-#else
     return 0;
-#endif
 }
 
 
@@ -727,24 +647,9 @@ prntFiringCoords(fastf_t *vec)
 
 
 void
-#ifdef HAVE_TERMLIB
-prntGridOffsets(int x, int y)
-#else
 prntGridOffsets(int UNUSED(x), int UNUSED(y))
-#endif
 {
-#ifdef HAVE_TERMLIB
-    if (! tty)
-	return;
-    (void) ScMvCursor(GRID_X, GRID_Y);
-    (void) printf("[% 4d:% 4d, % 4d:% 4d]",
-		  x, gridxfin, y, gridyfin
-	);
-    (void) fflush(stdout);
     return;
-#else
-    return;
-#endif
 }
 
 
@@ -769,28 +674,9 @@ prntIdents(Ids *idp, char *str)
 void
 prntPagedMenu(char **menu)
 {
-#ifdef HAVE_TERMLIB
-    int done = 0;
-    int lines =	(PROMPT_Y-SCROLL_TOP);
-    if (! tty) {
-	for (; *menu != NULL; menu++)
-	    brst_log("%s\n", *menu);
-	return;
-    }
-    for (; *menu != NULL && ! done;) {
-	for (; lines > 0 && *menu != NULL; menu++, --lines)
-	    brst_log("%-*s\n", co, *menu);
-	if (*menu != NULL)
-	    done = ! doMore(&lines);
-	prompt("");
-    }
-    (void) fflush(stdout);
-    return;
-#else
     for (; *menu != NULL; menu++)
 	brst_log("%s\n", *menu);
     return;
-#endif
 }
 
 
@@ -855,38 +741,8 @@ prntScr(const char *format, ...)
 
     va_start(ap, format);
     format  = va_arg(ap, const char *);
-#ifdef HAVE_TERMLIB
-    if (tty) {
-	clr_Tabs(HmTtyFd);
-	if (ScDL != NULL) {
-	    (void) ScMvCursor(1, SCROLL_TOP);
-	    (void) ScDeleteLn();
-	    (void) ScMvCursor(1, SCROLL_BTM);
-	    (void) ScClrEOL();
-	    (void) vprintf(format, ap);
-	} else
-	    if (ScSetScrlReg(SCROLL_TOP, SCROLL_BTM+1)) {
-		char buf[LNBUFSZ];
-		(void) ScMvCursor(1, SCROLL_BTM+1);
-		(void) ScClrEOL();
-		/* Work around for problem with vprintf(): it doesn't
-		   cause the screen to scroll, don't know why. */
-		(void) vsnprintf(buf, LNBUFSZ, format, ap);
-		(void) puts(buf);
-		(void) ScMvCursor(1, SCROLL_BTM+1);
-		(void) ScClrScrlReg();
-	    } else {
-		(void) vprintf(format, ap);
-		(void) fputs("\n", stdout);
-	    }
-	(void) fflush(stdout);
-    } else {
-#endif
-	(void) vfprintf(stderr, format, ap);
-	(void) fputs("\n", stderr);
-#ifdef HAVE_TERMLIB
-    }
-#endif
+    (void) vfprintf(stderr, format, ap);
+    (void) fputs("\n", stderr);
     va_end(ap);
     return;
 }
@@ -899,18 +755,7 @@ void
 prntTimer(char *str)
 {
     (void) rt_read_timer(timer, TIMER_LEN-1);
-#ifdef HAVE_TERMLIB
-    if (tty) {
-	(void) ScMvCursor(TIMER_X, TIMER_Y);
-	if (str == NULL)
-	    (void) printf("%s", timer);
-	else
-	    (void) printf("%s:\t%s", str, timer);
-	(void) ScClrEOL();
-	(void) fflush(stdout);
-    } else
-#endif
-	brst_log("%s:\t%s\n", str == NULL ? "(null)" : str, timer);
+    brst_log("%s:\t%s\n", str == NULL ? "(null)" : str, timer);
 }
 
 
@@ -970,12 +815,7 @@ qFree(Pt_Queue *qp)
 void
 warning(char *str)
 {
-#ifdef HAVE_TERMLIB
-    if (tty)
-	HmError(str);
-    else
-#endif
-	prntScr(str);
+    prntScr(str);
 }
 
 

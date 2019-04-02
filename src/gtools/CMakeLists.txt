@@ -16,7 +16,6 @@ BRLCAD_ADDDATA(gtransfer.c sample_applications)
 BRLCAD_ADDEXEC(gex "gex.cpp" "libbu;librt")
 BRLCAD_ADDEXEC(glint glint.c "librt;${M_LIBRARY}")
 BRLCAD_ADDEXEC(gqa gqa.c "libged;librt")
-BRLCAD_ADDEXEC(remapid remapid.c "librt;libbu")
 
 set(GSH_SRCS
   gsh.cxx
@@ -25,12 +24,19 @@ set(GSH_SRCS
   )
 BRLCAD_ADDEXEC(gsh "${GSH_SRCS}"  "libged;libbu" NO_INSTALL)
 BRLCAD_ADDEXEC(gtransfer gtransfer.c "librt;libpkg" NO_INSTALL)
-BRLCAD_ADDEXEC(geval geval.c "libged;libbu" NO_INSTALL)
+
+set(GANALYZE_SRCS
+  ganalyze.cxx
+  ${LDIR}/utf8.c
+  ${LDIR}/linenoise.c
+  )
+BRLCAD_ADDEXEC(ganalyze "${GANALYZE_SRCS}" "libanalyze;librt;libbu;libpkg" NO_INSTALL)
 
 add_subdirectory(beset)
 add_subdirectory(gdiff)
 
 add_subdirectory(tests)
+
 
 CMAKEFILES(CMakeLists.txt)
 

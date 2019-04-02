@@ -81,7 +81,17 @@ BU_EXPORT int bu_process_args(const char **cmd, const char * const **argv, struc
 /* Read n bytes from specified output channel associated with process (fd == 1 for output, fd == 2 for err). */
 BU_EXPORT extern int bu_process_read(char *buff, int *count, struct bu_process *pinfo, int fd, int n);
 
-/** @brief Wrapper for executing a sub-process (execvp and CreateProcess) */
+/** @brief Wrapper for executing a sub-process (execvp and CreateProcess)
+ *
+ * TODO - see if we can expand this with an optional argument to create N
+ * additional pipe(2) style communications channels beyond just stdin, stdout,
+ * and stderr to allow for more sophisticated application data exchange (for
+ * example, drawing and/or geometry information, contextually specific
+ * information where the pipe number is the context, rather than having to
+ * parse a message, etc. ...
+ *
+ * Also, convert the last two options into a single flags option so we won't
+ * have to keep growing the arg list if we end up needing more settings...*/
 BU_EXPORT extern void bu_process_exec(struct bu_process **info, const char *cmd, int argc, const char **argv, int out_eql_err, int hide_window);
 
 /** @brief Wrapper for waiting on a sub-process to complete (wait or WaitForSingleObject) and

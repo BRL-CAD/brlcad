@@ -52,9 +52,6 @@
 
 
 static char promptbuf[LNBUFSZ];
-#ifdef HAVE_TERMLIB
-static const char *bannerp = "BURST (2.2)";
-#endif
 
 #define AddCmd(nm, f) \
 	{ \
@@ -155,9 +152,6 @@ static HmMenu *addMenu();
 static int getInput();
 static int unitStrToInt();
 static void addItem();
-#ifdef HAVE_TERMLIB
-static void banner();
-#endif
 
 typedef struct ftable Ftable;
 struct ftable
@@ -428,22 +422,6 @@ addMenu(Ftable *tp)
     return menup;
 }
 
-#ifdef HAVE_TERMLIB
-/*
-  void banner(void)
-
-  Display program name and version on one line with BORDER_CHRs
-  to border the top of the scrolling region.
-*/
-static void
-banner()
-{
-    (void) snprintf(scrbuf, LNBUFSZ, "%s", bannerp);
-    HmBanner(scrbuf, BORDER_CHR);
-    return;
-}
-#endif
-
 void
 closeUi()
 {
@@ -520,24 +498,6 @@ initMenus(Ftable *tp)
 int
 initUi()
 {
-#ifdef HAVE_TERMLIB
-    if (tty) {
-	if (! ScInit(stdout))
-	    return 0;
-	if (ScSetScrlReg(SCROLL_TOP, SCROLL_BTM))
-	    (void) ScClrScrlReg();
-	else
-	    if (ScDL == NULL) {
-		prntScr(
-		    "This terminal has no scroll region or delete line capability."
-		    );
-		return 0;
-	    }
-	(void) ScClrText();	/* wipe screen */
-	HmInit(MENU_LFT, MENU_TOP, MENU_MAXVISITEMS);
-	banner();
-    }
-#endif
     initMenus(mainmenu);
     initCmds(mainmenu);
     return 1;
@@ -939,15 +899,8 @@ MerrorFile(HmItem *itemp)
 	locPerror(errfile);
 	return;
     }
-
-/* TODO: we need a copy of stderr on non-termlib platforms or this doesn't work */
-#ifdef HAVE_TERMLIB
-    close(2);
-    if (fcntl(errfd, F_DUPFD, 2) == -1) {
-	locPerror("fcntl");
-	return;
-    }
-#endif
+    /* TODO: we need a copy of stderr on non-termlib platforms or this doesn't
+     * work. Note: is this still true after termlib support removal?? */
     (void) snprintf(scrbuf, LNBUFSZ, "%s\t\t%s",
 		    itemp != NULL ? itemp->text : cmdname,
 		    errfile);

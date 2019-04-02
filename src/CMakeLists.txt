@@ -72,7 +72,6 @@ if(NOT WIN32)
 endif(NOT WIN32)
 
 set(level_3_dirs
-  anim
   brlman
   burst
   bwish
@@ -81,13 +80,11 @@ set(level_3_dirs
   fbserv
   gtools
   halftone
-  lgt
   nirt
   proc-db
   rt
   shapes
   sig
-  tab
   util
   external
   ${non_win32_dirs}

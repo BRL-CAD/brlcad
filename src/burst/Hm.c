@@ -88,9 +88,6 @@ extern FILE *fdopen(int fd, const char *mode);
 
 
 static int HmDirty = 0;
-#ifdef HAVE_TERMLIB
-static int HmMyxflag = 0;
-#endif
 static int HmPkgInit = 0;
 
 static HmWindow *windows = NULL;
@@ -673,19 +670,6 @@ HmRedraw(void)
 void
 HmTtySet(void)
 {
-#ifdef HAVE_TERMLIB
-    set_Cbreak(HmTtyFd);
-    clr_Echo(HmTtyFd);
-    clr_Tabs(HmTtyFd);
-    if (HmMyxflag) {
-	/* Send escape codes to push current toggle settings,
-	   and turn on "editor ptr". */
-	(void) fputs("\033[?1;2Z", stdout);
-	(void) fputs("\033[?1;00000010000Z", stdout);
-	(void) fflush(stdout);
-    }
-    return;
-#endif
 }
 
 /*
@@ -696,15 +680,6 @@ HmTtySet(void)
 void
 HmTtyReset(void)
 {
-#ifdef HAVE_TERMLIB
-    if (HmMyxflag) {
-	/* Send escape codes to pop old toggle settings. */
-	(void) fputs("\033[?1;3Z", stdout);
-	(void) fflush(stdout);
-    }
-    reset_Tty(HmTtyFd);
-    return;
-#endif
 }
 
 /*
@@ -717,29 +692,9 @@ HmTtyReset(void)
   true for success and false for failure to open "/dev/tty".
 */
 int
-#ifdef HAVE_TERMLIB
-HmInit(int x, int y, int maxvis)
-#else
 HmInit(int UNUSED(x), int UNUSED(y), int UNUSED(maxvis))
-#endif
 {
-#ifdef HAVE_TERMLIB
-    if ((HmTtyFd = open("/dev/tty", O_RDONLY)) == (-1)
-	||	(HmTtyFp = fdopen(HmTtyFd, "r")) == NULL
-	) {
-	HmError("Can't open /dev/tty for reading.");
-	return 0;
-    }
-    save_Tty(HmTtyFd);
-    HmPkgInit = 1;
-    HmLftMenu = x;
-    HmTopMenu = y;
-    HmMaxVis = maxvis;
-
-    return 1;
-#else
     return 0;
-#endif
 }
 
 

@@ -43,10 +43,10 @@ main(int argc, char *argv[])
     long i, j, k, l;
     struct rt_wdb *fp_db = NULL;
 
-    char name[256] = {0};
-    char pname[256] = {0};
-    char w1name[256] = {0};
-    char w2name[256] = {0};
+    char name[264] = {0};
+    char pname[261] = {0};
+    char w1name[266] = {0};
+    char w2name[266] = {0};
     char firstname[256] = {0};
     char prefix[256] = {0};
 

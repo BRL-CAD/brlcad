@@ -1043,6 +1043,7 @@ void
 proc_region(char *name1)
 {
     char tmpname[NAMESIZE*2];
+    char tmpname2[NAMESIZE - 3];
     int chkroot;
     size_t i;
     int cc;
@@ -1069,12 +1070,15 @@ proc_region(char *name1)
 	mir_count = 0;
     }
 
+    /* explicitely shorten tmpname to quell the gcc 8.2 snprintf string length warning/error */
+    bu_strlcpy(tmpname2, tmpname, sizeof(tmpname2));
+
     if (cc != in[0].cc) {
 	mir_count++;
-	snprintf(cname, NAMESIZE+1, "%s.r%.2d", tmpname, mir_count);
+	snprintf(cname, NAMESIZE+1, "%s.r%.2d", tmpname2, mir_count);
     } else {
 	reg_count++;
-	snprintf(cname, NAMESIZE+1, "%s.r%.2d", tmpname, reg_count);
+	snprintf(cname, NAMESIZE+1, "%s.r%.2d", tmpname2, reg_count);
     }
 
 

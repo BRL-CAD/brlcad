@@ -1633,10 +1633,9 @@ rt_hf_free(struct soltab *stp)
     struct hf_specific *hf =
 	(struct hf_specific *)stp->st_specific;
 
-    if (hf->hf_mp) {
-	bu_close_mapped_file(hf->hf_mp);
-	hf->hf_mp = (struct bu_mapped_file *)0;
-    }
+    bu_close_mapped_file(hf->hf_mp);
+    hf->hf_mp = (struct bu_mapped_file *)0;
+
     BU_PUT(hf, struct hf_specific);
 }
 
@@ -2195,9 +2194,7 @@ rt_hf_ifree(struct rt_db_internal *ip)
     RT_HF_CK_MAGIC(xip);
     xip->magic = 0;			/* sanity */
 
-    if (xip->mp) {
-	bu_close_mapped_file(xip->mp);
-    }
+    bu_close_mapped_file(xip->mp);
 
     bu_free((char *)xip, "hf ifree");
     ip->idb_ptr = ((void *)0);	/* sanity */

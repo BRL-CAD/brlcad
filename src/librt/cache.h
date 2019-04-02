@@ -36,6 +36,24 @@
 
 __BEGIN_DECLS
 
+/*
+ * TODO:
+ *
+ * - put an rt_cache in dbip or rtip so you can have cached and
+ *   uncached databases open at the same time, instead of as tree
+ *   walker data
+ *
+ * - make rt_cache_prep an implementation detail in prep
+ *
+ * - rt_cache_open(dir) instead of relying on LIBRT_CACHE global
+ *
+ * - move LIBRT_CACHE environment variable access into caller
+ *   locations instead of from within rt_cache_open
+ *
+ * - use sem_open/sem_wait/sem_post for cross-application coordination
+ *   of cache writing
+ *
+ */
 
 /**
  * cache handle, opaque type

@@ -102,12 +102,6 @@ double rint(double x);
 extern int snprintf(char *str, size_t size, const char *format, ...);
 # endif
 
-/* strict c89 doesn't declare fileno() */
-# if defined(HAVE_FILENO) && !defined(HAVE_DECL_FILENO) && !defined(fileno) && !defined(__cplusplus)
-# include <stdio.h> /* for FILE */
-extern int fileno(FILE *stream);
-# endif
-
 #endif  /* BRLCADBUILD & HAVE_CONFIG_H */
 
 /* provide declaration markers for header externals */

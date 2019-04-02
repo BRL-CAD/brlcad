@@ -761,14 +761,17 @@ struct rt_bot_internal
     unsigned char bot_flags;	/**< @brief flags, (indicates surface
 				 * normals available, for example)
 				 */
-    size_t num_vertices;
+
     size_t num_faces;
     int *faces;			/**< @brief array of ints for faces
 				 * [num_faces*3]
 				 */
+
+    size_t num_vertices;
     fastf_t *vertices;		/**< @brief array of floats for
 				 * vertices [num_vertices*3]
 				 */
+
     fastf_t *thickness;		/**< @brief array of plate mode
 				 * thicknesses (corresponds to array
 				 * of faces) NULL for modes
@@ -782,10 +785,12 @@ struct rt_bot_internal
 				 * modes RT_BOT_SURFACE and
 				 * RT_BOT_SOLID).
 				 */
+
     size_t num_normals;
     fastf_t *normals;		/**< @brief array of unit surface
 				 * normals [num_normals*3]
 				 */
+
     size_t num_face_normals;	/**< @brief current size of the
 				 * face_normals array below (number of
 				 * faces in the array)
@@ -794,6 +799,15 @@ struct rt_bot_internal
 				 * "normals" array, one per face
 				 * vertex [num_face_normals*3]
 				 */
+
+    size_t num_uvs;		/**< @brief current size of the vertex
+				 * uv mappings (corresponds to number
+				 * of vertices)
+				 */
+    fastf_t *uvs;		/**< @brief array of floats for uv
+				 * texturing coordinates [num_uvs*3]
+				 */
+
     void *tie;	/* FIXME: blind casting. TIE needs to move from TIE_FUNC to XGLUE before this can not suck. */
 };
 

@@ -11,6 +11,25 @@ changes made.  See document footer for additional details.
 
 
 ----------------------------------------------------------------------
+--- 20XX-XX-XX  Release 7.30.2                                     ---
+----------------------------------------------------------------------
+
+* fixed crash calculating dsp bounding boxes - Sean Morrison
+* fixed Windows temporary file removal for MGED commands (red, etc.)
+	- Cliff Yapp
+* fixed librt NURBS cache issues under high load conditions
+	- Sean Morrison, Cliff Yapp
+* added a copy subcommand to MGED's attr command - Cliff Yapp
+* fixed a locking condition in MGED's rtcheck command - Cliff Yapp
+* added support for >=< prefixes for mater -d get options Cliff Yapp
+* fixed brlman lookup location of html manual pages - Cliff Yapp
+* fixed rt -t top-to-bottom parallel rendering option  Sean Morrison
+* added a 'flip' normals command to MGED's brep command - Cliff Yapp
+* added rtweight support for in-.g density information - Cliff Yapp
+* improved usability of vol primitives w/ missing data - Sean Morrison
+
+
+----------------------------------------------------------------------
 --- 2019-02-25  Release 7.30.0                                     ---
 ----------------------------------------------------------------------
 
@@ -20,7 +39,7 @@ compiler support for the C++11 language standard when building.
 using BRL-CAD in their own software development efforts.)
 
 This release introduces a new "-d" option to the mater command,
-supporting direct embedding of .density file information in a 
+supporting direct embedding of .density file information in a
 .g database for use by commands such as gqa and rtweight.
 
 Also present in this release are a fix for commands that work with

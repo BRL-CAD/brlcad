@@ -34,6 +34,7 @@
 
 __BEGIN_DECLS
 
+
 /**
  * Adjust object's attribute(s)
  */
@@ -782,6 +783,7 @@ GED_EXPORT int ged_pnts(struct ged *gedp, int argc, const char *argv[]);
 
 
 __END_DECLS
+
 
 #endif /* GED_COMMANDS_H */
 

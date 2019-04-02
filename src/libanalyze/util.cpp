@@ -584,10 +584,10 @@ sp_overlap(struct application *ap,
 
 /* Will need the region flag set for this to work... */
 extern "C" int
-analyze_get_solid_partitions(struct bu_ptbl *results, struct rt_gen_worker_vars *pstate, fastf_t *rays, int ray_cnt,
-	struct db_i *dbip, const char *obj, struct bn_tol *tol, int ncpus, int filter)
+analyze_get_solid_partitions(struct bu_ptbl *results, struct rt_gen_worker_vars *pstate, fastf_t *rays, size_t ray_cnt,
+	struct db_i *dbip, const char *obj, struct bn_tol *tol, size_t ncpus, int filter)
 {
-    int i;
+    size_t i;
     int ind = 0;
     int ret = 0;
     size_t j;
@@ -598,7 +598,8 @@ analyze_get_solid_partitions(struct bu_ptbl *results, struct rt_gen_worker_vars 
     struct bu_ptbl temp_results = BU_PTBL_INIT_ZERO;
     struct minimal_partitions **ray_results;
 
-    if (!results || !rays || ray_cnt == 0 || ncpus == 0 || !dbip || !obj || !tol) return 0;
+    if (!results || !rays || ray_cnt == 0 || ncpus == 0 || !dbip || !obj || !tol)
+	return 0;
 
     if (!pstate) {
 	state = (struct rt_gen_worker_vars *)bu_calloc(ncpus+1, sizeof(struct rt_gen_worker_vars), "state");

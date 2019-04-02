@@ -3096,7 +3096,7 @@ struct obj_read_options
 
 
 HIDDEN int
-parse_grouping_option(struct bu_vls *error_msg, int argc, const char **argv, void *set_var)
+parse_grouping_option(struct bu_vls *error_msg, size_t argc, const char **argv, void *set_var)
 {
     char * const value = (char *)set_var;
 
@@ -3124,7 +3124,7 @@ parse_grouping_option(struct bu_vls *error_msg, int argc, const char **argv, voi
 
 
 HIDDEN int
-parse_mode_option(struct bu_vls *error_msg, int argc, const char **argv, void *set_var)
+parse_mode_option(struct bu_vls *error_msg, size_t argc, const char **argv, void *set_var)
 {
     struct obj_read_options * const options = (struct obj_read_options *)set_var;
 
@@ -3150,7 +3150,7 @@ parse_mode_option(struct bu_vls *error_msg, int argc, const char **argv, void *s
 
 
 HIDDEN int
-parse_bot_thickness_option(struct bu_vls *error_msg, int argc, const char **argv, void *set_var)
+parse_bot_thickness_option(struct bu_vls *error_msg, size_t argc, const char **argv, void *set_var)
 {
     struct obj_read_options * const options = (struct obj_read_options *)set_var;
 
@@ -3173,7 +3173,7 @@ parse_bot_thickness_option(struct bu_vls *error_msg, int argc, const char **argv
 
 
 HIDDEN int
-parse_normal_mode_option(struct bu_vls *UNUSED(error_msg), int UNUSED(argc), const char **UNUSED(argv), void *set_var)
+parse_normal_mode_option(struct bu_vls *UNUSED(error_msg), size_t UNUSED(argc), const char **UNUSED(argv), void *set_var)
 {
     int * const value = (int *)set_var;
 
@@ -3185,7 +3185,7 @@ parse_normal_mode_option(struct bu_vls *UNUSED(error_msg), int UNUSED(argc), con
 
 
 HIDDEN int
-parse_open_bot_output_mode_option(struct bu_vls *error_msg, int argc, const char **argv, void *set_var)
+parse_open_bot_output_mode_option(struct bu_vls *error_msg, size_t argc, const char **argv, void *set_var)
 {
     int * const value = (int *)set_var;
 
@@ -3209,7 +3209,7 @@ parse_open_bot_output_mode_option(struct bu_vls *error_msg, int argc, const char
 
 
 HIDDEN int
-parse_plot_mode_option(struct bu_vls *UNUSED(error_msg), int UNUSED(argc), const char **UNUSED(argv), void *set_var)
+parse_plot_mode_option(struct bu_vls *UNUSED(error_msg), size_t UNUSED(argc), const char **UNUSED(argv), void *set_var)
 {
     int * const value = (int *)set_var;
 
@@ -3221,7 +3221,7 @@ parse_plot_mode_option(struct bu_vls *UNUSED(error_msg), int UNUSED(argc), const
 
 
 HIDDEN int
-parse_bot_orientation_option(struct bu_vls *error_msg, int argc, const char **argv, void *set_var)
+parse_bot_orientation_option(struct bu_vls *error_msg, size_t argc, const char **argv, void *set_var)
 {
     int have_orientation = 0;
     int * const value = (int *)set_var;

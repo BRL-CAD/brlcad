@@ -101,6 +101,7 @@ BU_EXPORT extern void bu_mm_cvt(const struct bu_structparse *sdp,
 /* Values for bu_humanize_number's scale parameter. */
 #define	BU_HN_GETSCALE		0x10
 #define	BU_HN_AUTOSCALE		0x20
+
 /**
  * Convert digital sizes to human readable form.  Based off the
  * BSD function humanize_number(3).
@@ -110,8 +111,8 @@ BU_EXPORT extern void bu_mm_cvt(const struct bu_structparse *sdp,
  * buf may be modified.  If BU_HN_GETSCALE is specified, the prefix index
  * number will be returned instead.
  */
-BU_EXPORT extern int bu_humanize_number(char *buf, size_t len,
-       	int64_t quotient, const char *suffix, int scale, int flags);
+BU_EXPORT extern int bu_humanize_number(char *buf, size_t len, int64_t quotient, const char *suffix, size_t scale, int flags);
+
 /*
  * Converts the number given in 'str', which may be given in a humanized
  * form (as described in BSD's humanize_number(3), but with some limitations),

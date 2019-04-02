@@ -152,7 +152,7 @@ _list_formats(struct nirt_io_data *io_data, char ***names)
 }
 
 extern "C" int
-_dequeue_scripts(struct bu_vls *UNUSED(msg), int UNUSED(argc), const char **UNUSED(argv), void *set_var)
+_dequeue_scripts(struct bu_vls *UNUSED(msg), size_t UNUSED(argc), const char **UNUSED(argv), void *set_var)
 {
     std::vector<std::string> *init_scripts = (std::vector<std::string> *)set_var;
     if (set_var) {
@@ -162,7 +162,7 @@ _dequeue_scripts(struct bu_vls *UNUSED(msg), int UNUSED(argc), const char **UNUS
 }
 
 extern "C" int
-_enqueue_script(struct bu_vls *msg, int argc, const char **argv, void *set_var)
+_enqueue_script(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 {
     std::vector<std::string> *init_scripts = (std::vector<std::string> *)set_var;
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "nirt script enqueue");
@@ -173,7 +173,7 @@ _enqueue_script(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 }
 
 extern "C" int
-_enqueue_attrs(struct bu_vls *msg, int argc, const char **argv, void *set_var)
+_enqueue_attrs(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 {
     std::set<std::string> *attrs = (std::set<std::string> *)set_var;
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "nirt attr enqueue");
@@ -190,7 +190,7 @@ struct script_file_data {
 };
 
 extern "C" int
-_enqueue_file(struct bu_vls *msg, int argc, const char **argv, void *set_var)
+_enqueue_file(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 {
     std::string s;
     std::ifstream file;
@@ -226,7 +226,7 @@ _enqueue_file(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 }
 
 extern "C" int
-_decode_overlap(struct bu_vls *msg, int argc, const char **argv, void *set_var)
+_decode_overlap(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 {
     int *oval = (int *)set_var;
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "nirt overlap handle");
