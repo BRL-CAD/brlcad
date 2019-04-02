@@ -2026,6 +2026,124 @@ int brep_facecdt_plot(struct bu_vls *vls, const char *solid_name,
 }
 
 
+int rt_brep_plot_poly(struct bu_list *vhead, const struct db_full_path *pathp, struct rt_db_internal *ip,
+		      const struct rt_tess_tol *ttol, const struct bn_tol *tol,
+		      const struct rt_view_info *info)
+{
+    TRACE1("rt_brep_plot");
+    struct rt_brep_internal* bi;
+    const char *solid_name =  DB_FULL_PATH_CUR_DIR(pathp)->d_namep;
+    ON_wString wstr;
+    ON_TextLog tl(wstr);
+
+    BU_CK_LIST_HEAD(vhead);
+    RT_CK_DB_INTERNAL(ip);
+    bi = (struct rt_brep_internal*) ip->idb_ptr;
+    RT_BREP_CK_MAGIC(bi);
+
+    ON_Brep* brep = bi->brep;
+    if (brep == NULL || !brep->IsValid(&tl)) {
+	if (wstr.Length() > 0) {
+	    ON_String onstr = ON_String(wstr);
+	    const char *isvalidinfo = onstr.Array();
+	    bu_log("brep (%s) is NOT valid: %s\n", solid_name, isvalidinfo);
+	} else {
+	    bu_log("brep (%s) is NOT valid.\n", solid_name);
+	}
+	//return 0; let's just try it for now, need to improve the not valid checks
+    }
+
+#ifndef TESTIT
+#ifndef WATER_TIGHT
+#ifdef DRAW_FACE
+    fastf_t  max_dist = 0;
+#endif
+    for (int index = 0; index < brep->m_F.Count(); index++) {
+	ON_BrepFace *face = brep->Face(index);
+	const ON_Surface *s = face->SurfaceOf();
+	if (s) {
+	    double surface_width, surface_height;
+	    if (s->GetSurfaceSize(&surface_width, &surface_height)) {
+		// reparameterization of the face's surface and transforms the "u"
+		// and "v" coordinates of all the face's parameter space trimming
+		// curves to minimize distortion in the map from parameter space to 3d..
+		face->SetDomain(0, 0.0, surface_width);
+		face->SetDomain(1, 0.0, surface_height);
+#ifdef DRAW_FACE
+		max_dist = sqrt(surface_width * surface_width + surface_height * surface_height) / 10.0;
+#endif
+	    }
+	}
+    }
+#ifdef DRAW_FACE
+    for (int index = 0; index < brep->m_E.Count(); index++) {
+	const ON_BrepEdge& edge = brep->m_E[index];
+	if (edge.m_edge_user.p == NULL) {
+	    std::map<double, ON_3dPoint *> *points = getEdgePoints(edge, max_dist, ttol, tol, info);
+	}
+    }
+#endif
+#endif /* WATER_TIGHT */
+    bool watertight = true;
+    int plottype = 0;
+    int numpoints = -1;
+    for (int index = 0; index < brep->m_F.Count(); index++) {
+	ON_BrepFace& face = brep->m_F[index];
+	const ON_Surface *s = face.SurfaceOf();
+
+	if (s) {
+
+#ifdef DRAW_FACE
+	    draw_face_CDT(vhead, face, ttol, tol, info, watertight, plottype, numpoints);
+#else
+	    poly2tri_CDT(vhead, face, ttol, tol, info, watertight, plottype, numpoints);
+#endif
+	} else {
+	    bu_log("Error solid \"%s\" missing surface definition for Face(%d). Will skip this face when drawing.\n", solid_name, index);
+	}
+    }
+#else /* TESTIT */
+    for (int index = 0; index < brep->m_F.Count(); index++) {
+	const ON_BrepFace& face = brep->m_F[index];
+	SurfaceTree st(&face, true, 10);
+	plot_poly_from_surface_tree(vhead, &st, face.m_bRev);
+    }
+#endif /* TESTIT */
+#ifdef WATERTIGHT
+    for (int index = 0; index < brep->m_E.Count(); index++) {
+	const ON_BrepEdge& edge = brep->m_E[index];
+	if (edge.m_edge_user.p != NULL) {
+	    std::map<double, ON_3dPoint *> *points = (std::map<double, ON_3dPoint *> *)edge.m_edge_user.p;
+	    std::map<double, ON_3dPoint *>::const_iterator i;
+	    for (i = points->begin(); i != points->end(); i++) {
+		const ON_3dPoint *p = (*i).second;
+		delete p;
+	    }
+	    points->clear();
+	    delete points;
+	    edge.m_edge_user.p = NULL;
+	}
+    }
+#else
+    for (int index = 0; index < brep->m_T.Count(); index++) {
+	ON_BrepTrim& trim = brep->m_T[index];
+	if (trim.m_trim_user.p != NULL) {
+	    std::map<double, ON_3dPoint *> *points = (std::map<double, ON_3dPoint *> *)trim.m_trim_user.p;
+	    std::map<double, ON_3dPoint *>::const_iterator i;
+	    for (i = points->begin(); i != points->end(); i++) {
+		const ON_3dPoint *p = (*i).second;
+		delete p;
+	    }
+	    points->clear();
+	    delete points;
+	    trim.m_trim_user.p = NULL;
+	}
+    }
+#endif
+
+    return 0;
+}
+
 /** @} */
 
 // Local Variables:
