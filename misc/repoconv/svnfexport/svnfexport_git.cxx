@@ -345,7 +345,7 @@ void write_git_node(std::ofstream &outfile, struct svn_revision &rev, struct svn
     if (node.kind == ndir && node.action == nadd) return;
 
     // If it's a straight-up path delete, do it and return
-    if (node.kind == nkerr && node.action == ndelete) {
+    if ((node.kind == nkerr || node.kind == ndir) && node.action == ndelete) {
 	std::cerr << "Revision r" << rev.revision_number << " delete: " << node.local_path << "\n";
 	outfile << "D \"" << node.local_path << "\"\n";
 	return;
@@ -570,9 +570,6 @@ void standard_commit(std::ofstream &outfile, struct svn_revision &rev, std::stri
 void rev_fast_export(std::ifstream &infile, long int rev_num)
 {
     struct stat buffer;
-    std::string cleanup_cmd = std::string("rm -rf cvs_git_working");
-    std::string swap_cmd = std::string("rm -rf cvs_git && cp -r cvs_git_working cvs_git");
-    std::string git_setup = std::string("rm -rf cvs_git_working && cp -r cvs_git cvs_git_working");
     std::string fi_file = std::string("custom/") + std::to_string(rev_num) + std::string(".fi");
 
 
@@ -604,10 +601,6 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
     if (stat(fi_file.c_str(), &buffer) == 0) {
 	// If we have a hand-crafted import file for this revision, use it
 	std::string git_fi = std::string("cd cvs_git_working && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
-	if (std::system(git_setup.c_str())) {
-	    std::cout << "Git setup failed!\n";
-	    exit(1);
-	}
 	if (std::system(git_fi.c_str())) {
 	    std::string failed_file = std::string("failed-") + fi_file;
 	    std::cout << "Fatal - could not apply fi file for revision " << rev_num << "\n";
@@ -621,12 +614,11 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	    all_git_branches.push_back(std::string("rel8"));
 	}
 
-	if (std::system(swap_cmd.c_str())) {
-	    std::cerr << "git archive swap failed!\n";
-	    exit(1);
-	}
-	if (std::system(cleanup_cmd.c_str())) {
-	    std::cerr << "git cleanup failed!\n";
+	git_fi = std::string("cd cvs_git && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
+	if (std::system(git_fi.c_str())) {
+	    std::string failed_file = std::string("failed-") + fi_file;
+	    std::cout << "Fatal - could not apply fi file for revision " << rev_num << "\n";
+	    rename(fi_file.c_str(), failed_file.c_str());
 	    exit(1);
 	}
 
@@ -692,10 +684,6 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	}
 
 	std::ofstream outfile(fi_file.c_str(), std::ios::out | std::ios::binary);
-	if (std::system(git_setup.c_str())) {
-	    std::cerr << "git setup failed!\n";
-	    exit(1);
-	}
 	full_sync_commit(outfile, rev, bsrc, bdest);
 	outfile.close();
 
@@ -708,47 +696,21 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	    verify_repos(rev.revision_number, std::string("STABLE"), std::string("STABLE"), 0);
 	}
 
-	if (std::system(swap_cmd.c_str())) {
-	    std::cerr << "git archive swap failed!\n";
-	    exit(1);
-	}
-	if (std::system(cleanup_cmd.c_str())) {
-	    std::cerr << "git cleanup failed!\n";
-	    exit(1);
-	}
-
 	return;
     }
 
     if (rebuild_revs.find(rev.revision_number) != rebuild_revs.end()) {
 	std::cout << "Revision " << rev.revision_number << " references non-current SVN info, needs special handling\n";
 	std::ofstream outfile(fi_file.c_str(), std::ios::out | std::ios::binary);
-	if (std::system(git_setup.c_str())) {
-	    std::cerr << "git setup failed\n";
-	    exit(1);
-	}
 	old_references_commit(infile, outfile, rev, rbranch);
 	outfile.close();
 
 	verify_repos(rev.revision_number, rbranch, rbranch, 0);
 
-	if (std::system(swap_cmd.c_str())) {
-	    std::cerr << "git archive swap failed!\n";
-	    exit(1);
-	}
-	if (std::system(cleanup_cmd.c_str())) {
-	    std::cerr << "git cleanup failed!\n";
-	    exit(1);
-	}
-
 	return;
     }
 
     std::ofstream outfile(fi_file.c_str(), std::ios::out | std::ios::binary);
-    if (std::system(git_setup.c_str())) {
-	std::cerr << "git setup failed\n";
-	exit(1);
-    }
 
     for (size_t n = 0; n != rev.nodes.size(); n++) {
 	struct svn_node &node = rev.nodes[n];
@@ -822,29 +784,7 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	    outfile.close(); 
 	    have_commit = 1;
 	    all_git_branches.push_back(node.branch);
-	    std::string cleanup_cmd = std::string("rm -rf cvs_git_working");
-	    std::string swap_cmd = std::string("rm -rf cvs_git && cp -r cvs_git_working cvs_git");
-	    std::string git_setup = std::string("rm -rf cvs_git_working && cp -r cvs_git cvs_git_working");
-	    std::string git_fi = std::string("cd cvs_git_working && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
-	    if (std::system(git_setup.c_str())) {
-		std::cerr << "git setup failed!\n";
-		exit(1);
-	    }
-	    if (std::system(git_fi.c_str())) {
-		std::string failed_file = std::string("failed-") + fi_file;
-		std::cout << "Fatal - could not apply fi file for revision " << rev.revision_number << "\n";
-		rename(fi_file.c_str(), failed_file.c_str());
-		exit(1);
-	    }
-	    if (std::system(swap_cmd.c_str())) {
-		std::cerr << "git archive swap failed!\n";
-		exit(1);
-	    }
-	    if (std::system(cleanup_cmd.c_str())) {
-		std::cerr << "git cleanup failed!\n";
-		exit(1);
-	    }
-
+	    std::string git_fi;
 	    get_rev_sha1s(rev_num);
 
 	    // Make an empty commit on the new branch with the commit message from SVN, but no changes
@@ -857,10 +797,6 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	    outfile2 << "from " << rev_to_gsha1[std::pair<std::string,long int>(node.branch, rev.revision_number)] << "\n";
 	    outfile2.close();
 	    git_fi = std::string("cd cvs_git_working && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
-	    if (std::system(git_setup.c_str())) {
-		std::cerr << "git setup failed!\n";
-		exit(1);
-	    }
 	    if (std::system(git_fi.c_str())) {
 		std::string failed_file = std::string("failed-") + fi_file;
 		std::cout << "Fatal - could not apply fi file for revision " << rev.revision_number << "\n";
@@ -870,15 +806,14 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 
 	    verify_repos(rev.revision_number, node.branch, node.branch, 1);
 
-	    if (std::system(swap_cmd.c_str())) {
-		std::cerr << "git archive swap failed!\n";
+	    git_fi = std::string("cd cvs_git && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
+	    if (std::system(git_fi.c_str())) {
+		std::string failed_file = std::string("failed-") + fi_file;
+		std::cout << "Fatal - could not apply fi file for revision " << rev.revision_number << "\n";
+		rename(fi_file.c_str(), failed_file.c_str());
 		exit(1);
 	    }
 
-	    if (std::system(cleanup_cmd.c_str())) {
-		std::cerr << "git cleanup failed!\n";
-		exit(1);
-	    }
 
 	    continue;
 	}
@@ -940,37 +875,20 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	outfile.close();
 	if (rev.revision_number % 10 == 0 || rbranch != std::string("master")) {
 	    verify_repos(rev.revision_number, rbranch, rbranch, 0);
-	    if (std::system(swap_cmd.c_str())) {
-		std::cerr << "git archive swap failed!\n";
-		exit(1);
-	    }
-	    if (std::system(cleanup_cmd.c_str())) {
-		std::cerr << "git cleanup failed!\n";
-		exit(1);
-	    }
-
 	} else {
 	    // Not verifying this one - just apply the fast import file and go
-	    std::string cleanup_cmd = std::string("rm -rf cvs_git_working");
-	    std::string swap_cmd = std::string("rm -rf cvs_git && cp -r cvs_git_working cvs_git");
-	    std::string git_setup = std::string("rm -rf cvs_git_working && cp -r cvs_git cvs_git_working");
 	    std::string git_fi = std::string("cd cvs_git_working && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
-	    if (std::system(git_setup.c_str())) {
-		std::cerr << "git setup failed!\n";
-		exit(1);
-	    }
+	    std::string git_fi2 = std::string("cd cvs_git && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
 	    if (std::system(git_fi.c_str())) {
 		std::string failed_file = std::string("failed-") + fi_file;
 		std::cout << "Fatal - could not apply fi file for revision " << rev.revision_number << "\n";
 		rename(fi_file.c_str(), failed_file.c_str());
 		exit(1);
 	    }
-	    if (std::system(swap_cmd.c_str())) {
-		std::cerr << "git archive swap failed!\n";
-		exit(1);
-	    }
-	    if (std::system(cleanup_cmd.c_str())) {
-		std::cerr << "git cleanup failed!\n";
+	    if (std::system(git_fi2.c_str())) {
+		std::string failed_file = std::string("failed-") + fi_file;
+		std::cout << "Fatal - could not apply fi file for revision " << rev.revision_number << "\n";
+		rename(fi_file.c_str(), failed_file.c_str());
 		exit(1);
 	    }
 	}

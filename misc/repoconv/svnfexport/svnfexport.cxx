@@ -79,10 +79,6 @@ int main(int argc, const char **argv)
     verify_repos(starting_rev, std::string("trunk"), std::string("master"), 1);
     verify_repos(starting_rev, std::string("STABLE"), std::string("STABLE"), 1);
     verify_repos(starting_rev, std::string("rel-5-1-branch"), std::string("rel-5-1-branch"), 1);
-    if (std::system(cleanup_cmd.c_str())) {
-	std::cout << "git cleanup failed!\n";
-    }
-
 
     /* Populate valid_projects */
     valid_projects.insert(std::string("brlcad"));
