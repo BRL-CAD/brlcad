@@ -40,32 +40,10 @@
 
   <variablelist remap="TP">
     <varlistentry>
-      <term><option>-a &lt;n&gt; &lt;x&gt; &lt;y&gt; &lt;z&gt;</option></term>
+      <term><option>-n &lt;copies&gt;</option></term>
       <listitem>
         <para>
-          Specifies a total <option>x</option>, <option>y</option>, and <option>z</option> translation distance split across <option>n</option> copies.  This option conflicts with <option>-t</option> which specifies incremental distances.
-        </para>
-      </listitem>
-    </varlistentry>
-  </variablelist>
-
-  <variablelist remap="TP">
-    <varlistentry>
-      <term><option>-b &lt;n&gt; &lt;x&gt; &lt;y&gt; &lt;z&gt;</option></term>
-      <listitem>
-        <para>
-          Specifies a total rotation in degrees about the <option>x</option>, <option>y</option>, and <option>z</option> axes, split across <option>n</option> copies.  This option conflicts with <option>-r</option> which specifies incremental rotation angles.
-        </para>
-      </listitem>
-    </varlistentry>
-  </variablelist>
-
-  <variablelist remap="TP">
-    <varlistentry>
-      <term><option>-p &lt;x&gt; &lt;y&gt; &lt;z&gt;</option></term>
-      <listitem>
-        <para>
-          Specifies an <option>x</option>, <option>y</option>, and <option>z</option> point to rotate around for <option>-b</option> and <option>-r</option>.  Default is 0 0 0.
+          Specifies the number of copies to make.  Default is 1.
         </para>
       </listitem>
     </varlistentry>
@@ -95,10 +73,32 @@
 
   <variablelist remap="TP">
     <varlistentry>
-      <term><option>-n &lt;copies&gt;</option></term>
+      <term><option>-p &lt;x&gt; &lt;y&gt; &lt;z&gt;</option></term>
       <listitem>
         <para>
-          Specifies the number of copies to make.  Default is 1.
+          Specifies an <option>x</option>, <option>y</option>, and <option>z</option> point to rotate around for <option>-b</option> and <option>-r</option>.  Default is 0 0 0.
+        </para>
+      </listitem>
+    </varlistentry>
+  </variablelist>
+
+  <variablelist remap="TP">
+    <varlistentry>
+      <term><option>-a &lt;n&gt; &lt;x&gt; &lt;y&gt; &lt;z&gt;</option></term>
+      <listitem>
+        <para>
+          Specifies a total <option>x</option>, <option>y</option>, and <option>z</option> translation distance split across <option>n</option> copies.  This option conflicts with <option>-t</option> which specifies incremental distances.
+        </para>
+      </listitem>
+    </varlistentry>
+  </variablelist>
+
+  <variablelist remap="TP">
+    <varlistentry>
+      <term><option>-b &lt;n&gt; &lt;x&gt; &lt;y&gt; &lt;z&gt;</option></term>
+      <listitem>
+        <para>
+          Specifies a total rotation in degrees about the <option>x</option>, <option>y</option>, and <option>z</option> axes, split across <option>n</option> copies.  This option conflicts with <option>-r</option> which specifies incremental rotation angles.
         </para>
       </listitem>
     </varlistentry>
