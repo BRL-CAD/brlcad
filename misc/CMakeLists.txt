@@ -146,8 +146,6 @@ set(misc_ignore_files
   repoconv/svn2git/svn-fast-export/svn.h
   repoconv/svnfexport/sha1.hpp
   repoconv/svnfexport/svn_date.h
-  repoconv/svnfexport/branchsync.cxx
-  repoconv/svnfexport/cvssvnsync.cxx
   repoconv/svnfexport/svnfexport_svn.cxx
   repoconv/svnfexport/svnfexport_git.cxx
   repoconv/svnfexport/common_structs.h
