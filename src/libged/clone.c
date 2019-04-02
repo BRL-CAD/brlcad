@@ -19,34 +19,35 @@
  */
 /** @file libged/clone.c
  *
- * The clone command.
+ * The clone command.  Performs a deep copy of an object.
  *
- * routines related to performing deep object copies
+ * ISSUES/TODO:
  *
- * TODO:
- *   use bu_vls strings
- *   use bu_list lists
+ * * Fix bug when number is at beginning of a name, replaces with a
+ *   number, sometimes crashes.
  *
- * ISSUES/TODO (for DK, ^D means done)
- *  1. No -c option.  This allows the increment given in the '-i' to
- *  act on the second number
- * D2. Remove 15 char name limit.  I ran into this today.
- *  3. No -p option.  I couldn't get this to work.  I re-centered the
- *     geometry, then it tried to work but I ran into the 15 char limit
- *     and had to kill the process (^C).
- *  4. Names - This tool is built around a naming convention.  Currently,
- *     the second number does not list properly (it just truncated the
- *     second number of the 'cut' prims so they ended up 'mess.s1.c' instead
- *     of 'mess.s1.c1').  And the '+' and '-' didn't work, I had to switch
- *     from 'mess.s1-1' to 'mess.s1.c1'.  Also, prims need to increment
- *     by the 'i' number but combs, regions, and assemblies (.c#, .r#, or
- *     just name with a # at the end) should increment by 1.  So you end
- *     up with widget_1, widget_2, widget_3 and not widget_1, widget_4,
- *     widget_7...
- *  5. Tree structure - please retain tree structure to the extent that
- *     you can and try not to re-create prims or combs used more than once.
- *     No warning needed for redundant copies.  Warnings can come later...
- * D6. Display - do display clones but do not resize or re-center view.
+ * * use libbu strings/lists
+ *
+ * * No -c option.  This allows the increment given in the '-i' to act
+ *   on the second number
+ *
+ * * No -p option.  I couldn't get this to work.  I re-centered the
+ *   geometry, then it tried to work but I ran into the 15 char limit
+ *   and had to kill the process (^C).
+ *
+ * * Names - This tool is built around a naming convention.
+ *   Currently, the second number does not list properly (it just
+ *   truncated the second number of the 'cut' prims so they ended up
+ *   'mess.s1.c' instead of 'mess.s1.c1').  And the '+' and '-' didn't
+ *   work, I had to switch from 'mess.s1-1' to 'mess.s1.c1'.  Also,
+ *   prims need to increment by the 'i' number but combs, regions, and
+ *   assemblies (.c#, .r#, or just name with a # at the end) should
+ *   increment by 1.  So you end up with widget_1, widget_2, widget_3
+ *   and not widget_1, widget_4, widget_7...
+ *
+ * * Tree structure - retain tree structure to the extent that we can
+ *   and try not to re-create prims or combs used more than once.  No
+ *   warning needed for redundant copies.  Warnings can come later...
  */
 
 #include "common.h"
@@ -67,6 +68,7 @@
 #define CLONE_VERSION "Clone ver 4.0\n2006-08-08\n"
 #define CLONE_BUFPARTSIZE 511
 #define CLONE_BUFSIZE 512
+
 
 /**
  * state structure used to keep track of what actions the user
@@ -94,9 +96,9 @@ struct name {
 
 
 /**
- * structure used to store the names of objects that are to be
- * cloned.  space is preallocated via names with len and used keeping
- * track of space available and used.
+ * structure used to store the names of objects that are to be cloned.
+ * space is preallocated via names with len and used keeping track of
+ * space available and used.
  */
 struct nametbl {
     struct name *names;
@@ -184,8 +186,8 @@ add_to_list(struct nametbl *l, char *name)
 
 
 /**
- * returns the location of 'name' in the list if it exists, returns
- * -1 otherwise.
+ * returns the location of 'name' in the list if it exists, returns -1
+ * otherwise.
  */
 static int
 index_in_list(struct nametbl l, char *name)
@@ -563,6 +565,7 @@ copy_v4_comb(struct db_i *dbip, struct directory *proto, struct ged_clone_state 
 
 /*
  * update the v5 combination tree with the new names.
+ *
  * DESTRUCTIVE RECURSIVE
  */
 static int
@@ -789,8 +792,8 @@ done_copy_tree:
 
 
 /**
- * copy an object, recursively copying all of the object's contents
- * if it's a combination/region.
+ * copy an object, recursively copying all of the object's contents if
+ * it's a combination/region.
  */
 static struct directory *
 deep_copy_object(struct resource *resp, struct ged_clone_state *state)
@@ -885,11 +888,12 @@ get_args(struct ged *gedp, int argc, char **argv, struct ged_clone_state *state)
 		state->rot[W] = 1;
 		break;
 	    case 'c':
-		/* I'd like to have an optional argument to -c, but for now,
-		 * just let multiple -c's add it up as a hack. I believe the
-		 * variant of this that was lost used this as a binary
-		 * operation, so it SHOULD be functionally equivalent for a user
-		 * who's dealt with this before. */
+		/* I'd like to have an optional argument to -c, but
+		 * for now, just let multiple -c's add it up as a
+		 * hack. I believe the variant of this that was lost
+		 * used this as a binary operation, so it SHOULD be
+		 * functionally equivalent for a user who's dealt with
+		 * this before. */
 		state->updpos++;
 		break;
 	    case 'i':
