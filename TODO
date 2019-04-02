@@ -18,11 +18,12 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* fix pipe subtractions shaded display issue in archer
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
+
+* fix pipe subtractions shaded display issue in archer
 
 * attribute normalization is drastically slowing down
   region creation - need to fix or back out
