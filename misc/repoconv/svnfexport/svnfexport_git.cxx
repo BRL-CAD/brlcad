@@ -147,7 +147,7 @@ void get_rev_sha1s(long int rev)
 	std::string branch = *b_it;
 	std::string git_sha1_cmd = std::string("cd cvs_git && git show-ref ") + branch + std::string(" > ../sha1.txt && cd ..");
 	if (std::system(git_sha1_cmd.c_str())) {
-	    std::cout << "git_sha1_cmd failed!\n";
+	    std::cout << "git_sha1_cmd failed: " << branch << "\n";
 	    exit(1);
 	}
 	std::ifstream hfile("sha1.txt");
@@ -781,21 +781,10 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	    std::cout << rev.commit_msg << "\n";
 	    outfile << "reset refs/heads/" << node.branch << "\n";
 	    outfile << "from " << rev_to_gsha1[std::pair<std::string,long int>(bbpath, rev.revision_number-1)] << "\n";
-	    outfile.close(); 
+	    outfile.close();
 	    have_commit = 1;
 	    all_git_branches.push_back(node.branch);
 	    std::string git_fi;
-	    get_rev_sha1s(rev_num);
-
-	    // Make an empty commit on the new branch with the commit message from SVN, but no changes
-	    fi_file = std::to_string(rev_num) + std::string("-b.fi");
-	    std::ofstream outfile2(fi_file.c_str(), std::ios::out | std::ios::binary);
-	    outfile2 << "commit refs/heads/" << node.branch << "\n";
-	    outfile2 << "committer " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
-	    outfile2 << "data " << rev.commit_msg.length() << "\n";
-	    outfile2 << rev.commit_msg << "\n";
-	    outfile2 << "from " << rev_to_gsha1[std::pair<std::string,long int>(node.branch, rev.revision_number)] << "\n";
-	    outfile2.close();
 	    git_fi = std::string("cd cvs_git_working && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
 	    if (std::system(git_fi.c_str())) {
 		std::string failed_file = std::string("failed-") + fi_file;
@@ -803,18 +792,42 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 		rename(fi_file.c_str(), failed_file.c_str());
 		exit(1);
 	    }
-
-	    verify_repos(rev.revision_number, node.branch, node.branch, 1);
-
 	    git_fi = std::string("cd cvs_git && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
-	    if (std::system(git_fi.c_str())) {
+	   if (std::system(git_fi.c_str())) {
 		std::string failed_file = std::string("failed-") + fi_file;
 		std::cout << "Fatal - could not apply fi file for revision " << rev.revision_number << "\n";
 		rename(fi_file.c_str(), failed_file.c_str());
 		exit(1);
 	    }
+	    get_rev_sha1s(rev_num);
 
+	    // Make an empty commit on the new branch with the commit message from SVN, but no changes
+	    std::string fi_file2 = std::to_string(rev_num) + std::string("-b.fi");
+	    std::ofstream outfile2(fi_file2.c_str(), std::ios::out | std::ios::binary);
+	    outfile2 << "commit refs/heads/" << node.branch << "\n";
+	    outfile2 << "committer " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
+	    outfile2 << "data " << rev.commit_msg.length() << "\n";
+	    outfile2 << rev.commit_msg << "\n";
+	    outfile2 << "from " << rev_to_gsha1[std::pair<std::string,long int>(node.branch, rev.revision_number)] << "\n";
+	    outfile2.close();
+	    std::string git_fi2 = std::string("cd cvs_git_working && cat ../") + fi_file2 + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
+	    if (std::system(git_fi2.c_str())) {
+		std::string failed_file = std::string("failed-") + fi_file2;
+		std::cout << "Fatal - could not apply fi file for revision " << rev.revision_number << "\n";
+		rename(fi_file2.c_str(), failed_file.c_str());
+		exit(1);
+	    }
 
+	    verify_repos(rev.revision_number, node.branch, node.branch, 1);
+
+	    git_fi2 = std::string("cd cvs_git && cat ../") + fi_file2 + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
+
+	    if (std::system(git_fi2.c_str())) {
+		std::string failed_file = std::string("failed-") + fi_file2;
+		std::cout << "Fatal - could not apply fi file for revision " << rev.revision_number << "\n";
+		rename(fi_file2.c_str(), failed_file.c_str());
+		exit(1);
+	    }
 	    continue;
 	}
 
