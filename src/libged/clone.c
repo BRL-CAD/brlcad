@@ -871,7 +871,7 @@ print_usage(struct bu_vls *str)
 		  "\t-i #_incr    - Specifies increment to use when naming copies.\n"
 		  "\t               (Default is 100)\n");
     bu_vls_printf(str,
-		  "\t-c           - Increment the second number in object names.\n");
+		  "\t-c           - Increment the next number in object names.\n");
 
     return;
 }
@@ -898,7 +898,10 @@ get_args(struct ged *gedp, int argc, char **argv, struct ged_clone_state *state)
     state->updpos = 0;
 
     while ((k = bu_getopt(argc, argv, "a:b:cgi:m:n:p:r:t:h?")) != -1) {
-	if (bu_optopt == '?') k='h';
+
+	if (bu_optopt == '?')
+	    k = 'h';
+
 	switch (k) {
 	    case 'a':
 		state->n_copies = atoi(bu_optarg);

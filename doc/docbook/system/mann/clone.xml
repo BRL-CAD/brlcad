@@ -120,7 +120,7 @@
       <term><option>-i &lt;increment&gt;</option></term>
       <listitem>
         <para>
-          This option pertains to automatic copy naming convention. This specifies the increment to use between copies.  If not number is found in the name, an increment number is appended to the end of the name.  Default <option>increment</option> is 100.
+          This option pertains to the copy naming convention.  It specifies the increment to use when naming copies.  If a number is not found in the name, the increment number is appended to the end of the name (e.g., <command>clone box</command> creates a 'box100' object).  Default <option>increment</option> is 100.
         </para>
       </listitem>
     </varlistentry>
@@ -131,7 +131,7 @@
       <term><option>-c</option></term>
       <listitem>
         <para>
-          This option pertains to automatic copy naming convention.  Increment the second number in object names instead of the first.  Default is to increment the first number encountered.
+          This option pertains to the copy naming convention.  Increment the <emphasis>next</emphasis> number encountered in object names.  You can specify <option>-c</option> multiple times to increment the Nth number.  For example, <command>clone -c -c -c</command> will increment the 4th number in object namess.  Default is to increment the first number encountered.
         </para>
       </listitem>
     </varlistentry>
