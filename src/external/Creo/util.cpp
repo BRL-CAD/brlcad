@@ -427,7 +427,7 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, const char *suffix,
 	bu_vls_sprintf(gname, "%s_1", bu_vls_addr(&gname_root));
 	if (suffix) {bu_vls_printf(gname, ".%s", suffix);}
 	while (nset->find(gname) != nset->end()) {
-	    (void)bu_vls_incr(gname, NULL, "0:0:0:0:-", NULL, NULL);
+	    (void)bu_vls_incr(gname, NULL, NULL, NULL, NULL);
 	    count++;
 	    creo_log(cinfo, MSG_DEBUG, "\t trying name : %s\n", bu_vls_addr(gname));
 	    if (count == LONG_MAX) {
