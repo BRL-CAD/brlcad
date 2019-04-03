@@ -15,9 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
-* creating an object with a /R on the end (e.g., cp foo foo/R) results
-  in an object that cannot be touched/deleted/renamed.  bad behavior
-  presumably extends to any name with path separators in the name.
+* creating an object with a slashes in the name (e.g., cp foo foo/R)
+  results in an object that cannot be deleted/renamed.  bad behavior
+  presumably extends to any name with path separators.
 
 * mirror command rejects brep solids and turns faces inside-out when
   mirroring a comb with brep solids below it.
