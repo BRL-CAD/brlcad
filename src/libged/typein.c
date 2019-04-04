@@ -3033,6 +3033,7 @@ annot_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern
     struct txt_seg *tsg;
     struct line_seg *lsg;
 
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_ANNOT;
     intern->idb_meth = &OBJ[ID_ANNOT];
     BU_ALLOC(intern->idb_ptr, struct rt_annot_internal);
