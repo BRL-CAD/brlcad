@@ -344,7 +344,7 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, const char *suffix,
     std::map<wchar_t *, struct bu_vls *, WStrCmp> *nmap = NULL;
     std::set<struct bu_vls *, StrCmp> *nset = cinfo->brlcad_names;
     char astr[CREO_NAME_MAX];
-    const char *keep_chars = "%&'()+,-.:<=>@^_`|~";
+    const char *keep_chars = "+-.=_";
     const char *collapse_chars = "_";
 
     ProWstringToString(astr, name);
