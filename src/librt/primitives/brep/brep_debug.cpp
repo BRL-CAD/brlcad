@@ -3145,6 +3145,9 @@ brep_command(struct bu_vls *vls, const char *solid_name, struct bu_color *color,
 		for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
 		    ret = brep_facecdt_plot(vls, solid_name, ttol, tol, bs, bi, vbp, (*e_it), 4, numpoints);
 		}
+	    } else if (BU_STR_EQUAL(part, "CDT")) {
+		snprintf(commtag, 64, "_BC_CDT_");
+		ret = brep_cdt_plot(vls, solid_name, ttol, tol, bs, bi, vbp, 0, numpoints);
 	    } else if (BU_STR_EQUAL(part, "SBB")) {
 		snprintf(commtag, 64, "_BC_SBB_");
 		for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
