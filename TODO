@@ -122,29 +122,62 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* Bounding Boxes
+
+  * make the bb command default to calculating a tighter-fitting
+    bounding box using plot points and knowledge of the subtraction
+    objects (e.g., perform inside/outside test against arb8s).
+
+  * implement a faster raytraced AABB function that calls ft_plot(),
+    shoots a ray through each point, and computes the resulting box.
+
+  * g-shell-rect appears to be the only command that will give a
+    raytraced AABB.  we need to refactor that feature into either the
+    gqa -Ab (which merely reports the prep box) or the analyze command
+    (or both).
+
+  * add option(s) to 'bb' for reporting different types of boxes:
+
+    1) unevaluated, without subtractions (current fast result)
+    2) unevaluated, with subtractions
+    3) evaluated, coarse (use plot points)
+    4) evaluated, precise (use ray tracing)
+    5) evaluated, exact (requires Implicit+CSG->BREP+CSG->BREP-CSG)
+
+    option dimensionality #1: sphere v aabb v obb v 8dop v cxhull
+                          #2: unevaluated v evaluated booleans
+                          #3: without v with subtractions
+                          #4: coarse v precise v exact
+
+  * investigate why the new bbox() routines for ARS and BoT result in
+    bounding boxes that are way too big.
+
+  * implement prep optimzation to the default fast bbox approximation
+    specifically for arb8/rpp since we know the exact extent of their
+    bounds and can chop away at a box with a box.
+
+  * make gqa -Ab use sample points for reporting an evaluated AABB.
+
+  * make bb report an evaluated AABB by default.
+
+  * provide option for displaying object bounding boxes while
+    rotating.  visualization feature to help with rotation operations,
+    showing global object alignment with respect to its own coordinate
+    space.
+
+  * Extract bounding box code from both autoview.c and get_autoview.c
+    into a general bounding rpp function in librt and use accordingly
+    (particularly in libged).  Should combine autoview.c with
+    get_autoview.c (perhaps as a flag) and utilize the general
+    function in lots of places (e.g., the ged_arb() function).
+
+* add unit tests for primitive callback routines (e.g., bbox).
+
 * put bu_num_print() to use
 
 * use bu_gettime() in rt -l8 heatgraph visualization mode
 
-* g-shell-rect appears to be the only command that will give a
-  raytraced AABB.  we need to refactor that feature into either the
-  gqa -Ab (which merely reports the prep box) or the analyze command
-  (or both).
-
-* implement a faster raytraced AABB function that calls ft_plot(),
-  shoots a ray through each point, and computes the resulting box.
-
-* implement prep optimzation to the default fast bbox approximation
-  specifically for arb8/rpp since we know the exact extent of their
-  bounds and can chop away at a box with a box.
-
-* make gqa -Ab use sample points for reporting an evaluated AABB.
-
-* make bb report an evaluated AABB by default.
-
 * fully implement analyze for all geometry objects
-
-* add unit tests for primitive callback routines (e.g., bbox).
 
 * implement general analyze estimate (perhaps just raytrace it) for
   primitives where values like surface area, volume, or bb are very
@@ -866,9 +899,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * test tgf-g conversion with "ring-mode" geometry
 
-* investigate why the new bbox() routines for ARS and BoT result in
-  bounding boxes that are way too big.
-
 * fix metaball/adjust.. wipes out all metaball values with:
   adjust metaball 1 1 1
   just gives usage with:
@@ -915,10 +945,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * make bu_dirname not allocation memory.  have caller pass
   buffer in as a parameter with size ala snprintf/memcpy.
-
-* provide option for displaying object bounding boxes while rotating.
-  visualization feature to help with rotation operations, showing
-  global object alignment with respect to its own coordinate space.
 
 * make mged not have a garbled display manager window if the
   framebuffer is enabled and the window is resized.  initialize and
@@ -1400,12 +1426,6 @@ LIBGED
   effort in src/mged/comb_bool_parse.y that already has support that
   recognizes the classical infix notation.
 
-* Extract bounding box code from both autoview.c and get_autoview.c
-  into a general bounding rpp function in librt and use accordingly
-  (particularly in libged).  Should combine autoview.c with
-  get_autoview.c (perhaps as a flag) and utilize the general function
-  in lots of places (e.g., the ged_arb() function).
-
 * Explore possibility of expanding dm command to accept object names
   as a way of tweaking display manager specific properties (wireframe
   vs solid drawing, shading on normals, etc.) that are currently
@@ -1481,11 +1501,6 @@ LIBGED
 
 * add option to 'mirror' command to delete the source object.  support
   specification of a plane as the view plane, 3 points, XY, YZ, XZ.
-
-* add an option to the bb command for calculating a bounding box that
-  encompasses subtracted objects and trimmed surfaces and default to
-  calculating a tight-fitting fbounding box once we have a robust path
-  from geom->NURBS+CSG->NURBS.
 
 * killall command reports db_lookup failures if the target object
   doesn't exist (maybe we only care about refs).  should keep quiet.
