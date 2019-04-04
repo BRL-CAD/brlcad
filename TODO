@@ -1985,6 +1985,11 @@ missing on Windows due to needing lex.
 CONVERTERS
 ----------
 
+* add glTF importer/exporter (.gltf and .glb file formats)
+
+* add 3MF importer/exporter (3D printing file format like STL that
+  supports materials, colors, and other information.)
+
 * add gcv support for the Microstation file format (DGN), probably
   leveraging http://dgnlib.maptools.org/ (MIT-licensed)
 
