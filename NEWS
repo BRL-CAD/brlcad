@@ -11,7 +11,14 @@ changes made.  See document footer for additional details.
 
 
 ----------------------------------------------------------------------
---- 20XX-XX-XX  Release 7.30.2                                     ---
+--- 20XX-XX-XX  Release 7.30.4                                     ---
+----------------------------------------------------------------------
+
+* added new manual page for the clone command - Sean Morrison
+
+
+----------------------------------------------------------------------
+--- 2019-04-03  Release 7.30.2                                     ---
 ----------------------------------------------------------------------
 
 * added new manual page for the clone command - Sean Morrison
