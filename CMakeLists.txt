@@ -3381,6 +3381,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
     set(CPACK_NSIS_INSTALL_DIRECTORY "BRL-CAD ${BRLCAD_VERSION}")
     set(CPACK_SOURCE_DIR "${CMAKE_SOURCE_DIR}")
     set(CPACK_DATA_DIR "${DATA_DIR}")
+    set(CPACK_DOC_DIR "${DOC_DIR}")
     # There is a bug in NSI that does not handle full unix paths properly. Make
     # sure there is at least one set of four (4) backslashes.
     set(CPACK_NSIS_MUI_ICON "${CMAKE_SOURCE_DIR}/misc/nsis\\\\brlcad.ico")
