@@ -1108,10 +1108,12 @@ get_loop_sample_points(
 	}
 
 	if (!trim->m_trim_user.p) {
-	    (void) getEdgePoints(*trim, max_dist, ttol, tol, info);
+	    std::map<double, ON_3dPoint *> *m = getEdgePoints(*trim, max_dist, ttol, tol, info);
+	    bu_log("Initialized trim->m_trim_user.p: Trim %d (associated with Edge %d) point count: %zd\n", trim->m_trim_index, trim->Edge()->m_edge_index, m->size());
 	}
 	if (trim->m_trim_user.p) {
 	    std::map<double, ON_3dPoint *> *param_points3d = (std::map<double, ON_3dPoint *> *) trim->m_trim_user.p;
+	    bu_log("Trim %d (associated with Edge %d) point count: %zd\n", trim->m_trim_index, trim->Edge()->m_edge_index, param_points3d->size());
 
 	    ON_3dPoint boxmin;
 	    ON_3dPoint boxmax;
@@ -2025,6 +2027,27 @@ int brep_facecdt_plot(struct bu_vls *vls, const char *solid_name,
     return 0;
 }
 
+
+void
+GetSharedEdgePoints(std::map<double, ON_3dPoint *> *pmap, const ON_NurbsCurve *nc, double tmin, double tmax, double dtol)
+{
+    ON_3dPoint *p0 = (*pmap)[tmin];
+    ON_3dPoint *p1 = (*pmap)[tmax];
+    double tmid = (tmax-tmin)*0.5 + tmin;
+    ON_3dPoint pmid = nc->PointAt(tmid);
+    double d1 = p0->DistanceTo(*p1);
+    double d2 = p0->DistanceTo(pmid);
+    double d3 = p1->DistanceTo(pmid);
+
+    if (fabs(d1 - (d2+d3)) > dtol) {
+	(*pmap)[tmid] = new ON_3dPoint(pmid);
+	GetSharedEdgePoints(pmap, nc, tmin, tmid, dtol);
+	GetSharedEdgePoints(pmap, nc, tmid, tmax, dtol);
+    }
+    bu_log("tmid: %f\n", tmid);
+}
+
+
 int brep_cdt_plot(struct bu_vls *vls, const char *solid_name,
                       const struct rt_tess_tol *ttol, const struct bn_tol *tol,
                       struct brep_specific* bs, struct rt_brep_internal*UNUSED(bi),
@@ -2051,7 +2074,53 @@ int brep_cdt_plot(struct bu_vls *vls, const char *solid_name,
         }
         //for now try to draw - return -1;
     }
+#if 1
+    /* To generate watertight meshes, the faces must share 3D edge points.  To ensure
+     * a uniform set of edge points, we first sample all the edges and build their
+     * point sets */
+    for (int index = 0; index < brep->m_E.Count(); index++) {
+	ON_BrepEdge& edge = brep->m_E[index];
+	if (edge.m_edge_user.p == NULL) {
+	    double cplen = 0.0;
+	    const ON_Curve* crv = edge.EdgeCurveOf();
 
+	    /* TODO - handle singular edge curves */
+
+	    /* Normalize the domain of the curve to the ControlPolygonLength()
+	     * of the NURBS form of the curve to attempt to minimize distortion
+	     * in 3D to mirror what we do for the surfaces.  Length would
+	     * probably be better, but this may be good enough and is probably
+	     * faster. */
+	    ON_NurbsCurve *nc = crv->NurbsCurve();
+	    cplen = nc->ControlPolygonLength();
+	    nc->SetDomain(0.0, cplen);
+	    bu_log("Edge %d cplen: %f\n", edge.m_edge_index, cplen);
+
+	    std::map<double, ON_3dPoint *> *pmap = new std::map<double, ON_3dPoint *>();
+
+	    if (nc->IsClosed()) {
+		// If we have a close loop in one curve, split it in half
+		// and work each half separately
+		ON_3dPoint *p0 = new ON_3dPoint(nc->PointAt(0.0));
+		ON_3dPoint *p1 = new ON_3dPoint(nc->PointAt(cplen*0.5));
+		(*pmap)[0.0] = p0;
+		(*pmap)[cplen*0.5] = p1;
+		(*pmap)[cplen] = p0;
+		GetSharedEdgePoints(pmap, nc, 0.0, cplen*0.5, tol->dist);
+		GetSharedEdgePoints(pmap, nc, cplen*0.5, cplen, tol->dist);
+	    } else {
+		ON_3dPoint *p0 = new ON_3dPoint(nc->PointAt(0.0));
+		ON_3dPoint *p1 = new ON_3dPoint(nc->PointAt(cplen));
+		(*pmap)[0.0] = p0;
+		(*pmap)[cplen] = p1;
+		GetSharedEdgePoints(pmap, nc, 0.0, cplen, tol->dist);
+	    }
+
+	    edge.m_edge_user.p = (void *)pmap;
+	    bu_log("Edge %d total points: %zd\n", edge.m_edge_index, pmap->size());
+	}
+    }
+#endif
     for (int face_index = 0; face_index < brep->m_F.Count(); face_index++) {
         ON_BrepFace *face = brep->Face(face_index);
         const ON_Surface *s = face->SurfaceOf();
