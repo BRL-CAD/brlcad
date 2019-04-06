@@ -2037,23 +2037,11 @@ struct brep_cdt_tol {
 
 // Digest tessellation tolerances... 
 void
-CDT_Tol_Set(struct brep_cdt_tol *cdt, ON_BrepTrim *trim, fastf_t md, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+CDT_Tol_Set(struct brep_cdt_tol *cdt, double dist, fastf_t md, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
     fastf_t min_dist, max_dist, within_dist, cos_within_ang;
 
-    double dist = 1000.0;
     max_dist = md;
-
-    // TODO - for Edges, shouldn't be using Trim (UV space) dimensioning to get
-    // tolerances.  That will most likely vary for different faces (i.e.  the
-    // same edge would get different results for tolerance settings based on
-    // which face/trim is used to calculate this... ControlPolygonLength is at
-    // least consistent if the actual curve length proves impractical.
-    bool bGrowBox = false;
-    ON_3dPoint min, max;
-    if (trim->GetBoundingBox(min, max, bGrowBox)) {
-	dist = DIST_PT_PT(min, max);
-    }
 
     if (ttol->abs < tol->dist + ON_ZERO_TOLERANCE) {
 	min_dist = tol->dist;
@@ -2071,7 +2059,7 @@ CDT_Tol_Set(struct brep_cdt_tol *cdt, ON_BrepTrim *trim, fastf_t md, const struc
     } else if (ttol->abs > 0.0 + ON_ZERO_TOLERANCE) {
 	within_dist = min_dist;
     } else {
-	within_dist = 0.01 * dist; // default to 1% minimum surface distance
+	within_dist = 0.01 * dist; // default to 1% of dist
     }
 
     if (ttol->norm > 0.0 + ON_ZERO_TOLERANCE) {
@@ -2129,7 +2117,7 @@ GetTrimSamplePoints(ON_BrepTrim *trim)
 
 
 void
-GetSharedEdgePoints(std::map<double, ON_3dPoint *> *pmap, const ON_NurbsCurve *nc, double tmin, double tmax, double dtol)
+GetSharedEdgePoints(std::map<double, ON_3dPoint *> *pmap, std::vector<ON_3dPoint *> *w3dp, const ON_NurbsCurve *nc, double tmin, double tmax, struct brep_cdt_tol *cdt)
 {
     ON_3dPoint *p0 = (*pmap)[tmin];
     ON_3dPoint *p1 = (*pmap)[tmax];
@@ -2139,10 +2127,16 @@ GetSharedEdgePoints(std::map<double, ON_3dPoint *> *pmap, const ON_NurbsCurve *n
     double d2 = p0->DistanceTo(pmid);
     double d3 = p1->DistanceTo(pmid);
 
-    if (fabs(d1 - (d2+d3)) > dtol) {
-	(*pmap)[tmid] = new ON_3dPoint(pmid);
-	GetSharedEdgePoints(pmap, nc, tmin, tmid, dtol);
-	GetSharedEdgePoints(pmap, nc, tmid, tmax, dtol);
+    // TODO - replace this simple test with getEdgePoints style evaluations - tangents, normals, etc. 
+    // (Difference is we're working with the curve, rather than trim points and
+    // surface evals)
+
+    if (fabs(d1 - (d2+d3)) > cdt->min_dist) {
+	ON_3dPoint *pmidpt = new ON_3dPoint(pmid);
+	w3dp->push_back(pmidpt);
+	(*pmap)[tmid] = pmidpt;
+	GetSharedEdgePoints(pmap, w3dp, nc, tmin, tmid, cdt);
+	GetSharedEdgePoints(pmap, w3dp, nc, tmid, tmax, cdt);
     }
     //bu_log("tmid: %f\n", tmid);
 }
@@ -2153,6 +2147,13 @@ int brep_cdt_plot(struct bu_vls *vls, const char *solid_name,
                       struct brep_specific* bs, struct rt_brep_internal*UNUSED(bi),
                       struct bn_vlblock *vbp, int plottype, int num_points)
 {
+    // For ease of memory cleanup, keep track of allocated points in containers
+    // whose specific purpose is to hold things for cleanup (allows maps to
+    // reuse pointers - we don't want to get a double free looping over a point
+    // map to clean up when a point has been mapped more than once.)
+    std::vector<ON_3dPoint *> working_3d_pnts;
+    std::map<int, ON_3dPoint *> vert_pnts;
+
     struct bu_list *vhead = bn_vlblock_find(vbp, YELLOW);
     bool watertight = true;
     ON_wString wstr;
@@ -2175,14 +2176,37 @@ int brep_cdt_plot(struct bu_vls *vls, const char *solid_name,
         //for now try to draw - return -1;
     }
 
+
+    // Reparameterize the face's surface and transform the "u" and "v"
+    // coordinates of all the face's parameter space trimming curves to
+    // minimize distortion in the map from parameter space to 3d..
+    for (int face_index = 0; face_index < brep->m_F.Count(); face_index++) {
+        ON_BrepFace *face = brep->Face(face_index);
+        const ON_Surface *s = face->SurfaceOf();
+        double surface_width, surface_height;
+	if (s->GetSurfaceSize(&surface_width, &surface_height)) {
+	    face->SetDomain(0, 0.0, surface_width);
+	    face->SetDomain(1, 0.0, surface_height);
+	}
+    }
+
+    /* We want to use ON_3dPoint pointers and BrepVertex points, but vert->Point()
+     * produces a temporary address.  Make stable copies of the Vertex points. */
+    for (int index = 0; index < brep->m_V.Count(); index++) {
+	ON_BrepVertex& v = brep->m_V[index];
+	vert_pnts[index] = new ON_3dPoint(v.Point());
+    }
+
     /* To generate watertight meshes, the faces must share 3D edge points.  To ensure
      * a uniform set of edge points, we first sample all the edges and build their
      * point sets */
     for (int index = 0; index < brep->m_E.Count(); index++) {
 	ON_BrepEdge& edge = brep->m_E[index];
 	if (edge.m_edge_user.p == NULL) {
+	    struct brep_cdt_tol cdt;
 	    double cplen = 0.0;
 	    const ON_Curve* crv = edge.EdgeCurveOf();
+
 
 	    /* TODO - handle singular edge curves */
 
@@ -2193,35 +2217,33 @@ int brep_cdt_plot(struct bu_vls *vls, const char *solid_name,
 	     * of the NURBS form of the curve to attempt to minimize distortion
 	     * in 3D to mirror what we do for the surfaces.  Length would
 	     * probably be better, but this may be good enough and is probably
-	     * faster.
-	     * TODO - use the CDT_Tol calculations - tessellation involves more
-	     * than one type of tolerance.  Old code mixed 2D and 3D point
-	     * collection, but for watertight it's looking so far like 3D
-	     * dominates the sampling for edges and 2D is driven by 3D inputs.
-	     * (TBD for surfaces...) */
+	     * faster. */
 	    ON_NurbsCurve *nc = crv->NurbsCurve();
 	    cplen = nc->ControlPolygonLength();
 	    nc->SetDomain(0.0, cplen);
+
+	    CDT_Tol_Set(&cdt, cplen, cplen/10, ttol, tol);
 
 	    std::map<double, ON_3dPoint *> *pmap = new std::map<double, ON_3dPoint *>();
 
 	    if (nc->IsClosed()) {
 		// If we have a closed loop in one curve, split it in half
 		// and work each half separately
-		ON_3dPoint *p0 = new ON_3dPoint(nc->PointAt(0.0)); // TODO - use the vertex point here, not a PointAt evaluation
+		ON_3dPoint *p0 = vert_pnts[edge.Vertex(0)->m_vertex_index]; // TODO - when do we need to pay attention to curve orientation vs edge orientation?
 		ON_3dPoint *p1 = new ON_3dPoint(nc->PointAt(cplen*0.5));
+		working_3d_pnts.push_back(p1);
 		(*pmap)[0.0] = p0;
 		(*pmap)[cplen*0.5] = p1;
 		(*pmap)[cplen] = p0;
-		GetSharedEdgePoints(pmap, nc, 0.0, cplen*0.5, tol->dist);
-		GetSharedEdgePoints(pmap, nc, cplen*0.5, cplen, tol->dist);
+		GetSharedEdgePoints(pmap, &working_3d_pnts, nc, 0.0, cplen*0.5, &cdt);
+		GetSharedEdgePoints(pmap, &working_3d_pnts, nc, cplen*0.5, cplen, &cdt);
 		bu_log("Closed Edge %d cplen: %f\n", edge.m_edge_index, cplen);
 	    } else {
-		ON_3dPoint *p0 = new ON_3dPoint(nc->PointAt(0.0)); // TODO - use the vertex point here, not a PointAt evaluation
-		ON_3dPoint *p1 = new ON_3dPoint(nc->PointAt(cplen)); // TODO - use the vertex point here, not a PointAt evaluation
+		ON_3dPoint *p0 = vert_pnts[edge.Vertex(0)->m_vertex_index]; // TODO - when do we need to pay attention to curve orientation vs edge orientation?
+		ON_3dPoint *p1 = vert_pnts[edge.Vertex(1)->m_vertex_index]; // TODO - when do we need to pay attention to curve orientation vs edge orientation?
 		(*pmap)[0.0] = p0;
 		(*pmap)[cplen] = p1;
-		GetSharedEdgePoints(pmap, nc, 0.0, cplen, tol->dist);
+		GetSharedEdgePoints(pmap, &working_3d_pnts, nc, 0.0, cplen, &cdt);
 		bu_log("Edge %d cplen: %f\n", edge.m_edge_index, cplen);
 	    }
 
@@ -2245,24 +2267,37 @@ int brep_cdt_plot(struct bu_vls *vls, const char *solid_name,
 	GetTrimSamplePoints(&trim);
     }
 
-    for (int face_index = 0; face_index < brep->m_F.Count(); face_index++) {
-        ON_BrepFace *face = brep->Face(face_index);
-        const ON_Surface *s = face->SurfaceOf();
-        double surface_width, surface_height;
-        if (s->GetSurfaceSize(&surface_width, &surface_height)) {
-            // reparameterization of the face's surface and transforms the "u"
-            // and "v" coordinates of all the face's parameter space trimming
-            // curves to minimize distortion in the map from parameter space to 3d..
-            face->SetDomain(0, 0.0, surface_width);
-            face->SetDomain(1, 0.0, surface_height);
-        }
-    }
+    // TODO - for all loops, assemble 2D polygons using the BrepTrimPoint container.
+    // Final triangulation still takes place per-face, so at this juncture we need
+    // to associate the final 3D point values with their 2D counterparts.
+
+
+    // TODO - if we are going to apply clipper boolean resolution to sets of
+    // face loops, that would come here - once we have assembled the loop
+    // polygons for the faces. That has the potential to generate "new" 3D
+    // points on edges that are driven by 2D boolean intersections between
+    // trimming loops.  Since 3D points must be shared along edges and we're
+    // using synchronized numbers of parametric domain ordered 2D and 3D points
+    // to make that work, we will need to track new 3D edge points and update
+    // the corresponding 2D trim based data structures in all faces associated
+    // with the edge in question to keep things in overall sync.
+
+    // TODO - get surface points and set up the final poly2tri triangulation input.
+    // May want to go to integer space ala clipper to make sure all points satisfy
+    // poly2tri constraints...
+
     for (int index = 0; index < brep->m_F.Count(); index++) {
 	ON_BrepFace& face = brep->m_F[index];
 	poly2tri_CDT(vhead, face, ttol, tol, NULL, watertight, plottype, num_points);
     }
 
     bu_vls_printf(vls, "%s", ON_String(wstr).Array());
+
+    // TODO - once we are generating watertight triangulations reliably, we
+    // will want to return a BoT - the output will be suitable for export or
+    // drawing, so just provide the correct data type for other routines to
+    // work with.  Also, we can then apply the bot validity testing routines.
+
 
     return 0;
 }
