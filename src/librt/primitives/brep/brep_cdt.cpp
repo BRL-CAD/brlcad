@@ -1108,12 +1108,13 @@ get_loop_sample_points(
 	}
 
 	if (!trim->m_trim_user.p) {
-	    std::map<double, ON_3dPoint *> *m = getEdgePoints(*trim, max_dist, ttol, tol, info);
-	    bu_log("Initialized trim->m_trim_user.p: Trim %d (associated with Edge %d) point count: %zd\n", trim->m_trim_index, trim->Edge()->m_edge_index, m->size());
+	    //std::map<double, ON_3dPoint *> *m = getEdgePoints(*trim, max_dist, ttol, tol, info);
+	    (void)getEdgePoints(*trim, max_dist, ttol, tol, info);
+	    //bu_log("Initialized trim->m_trim_user.p: Trim %d (associated with Edge %d) point count: %zd\n", trim->m_trim_index, trim->Edge()->m_edge_index, m->size());
 	}
 	if (trim->m_trim_user.p) {
 	    std::map<double, ON_3dPoint *> *param_points3d = (std::map<double, ON_3dPoint *> *) trim->m_trim_user.p;
-	    bu_log("Trim %d (associated with Edge %d) point count: %zd\n", trim->m_trim_index, trim->Edge()->m_edge_index, param_points3d->size());
+	    //bu_log("Trim %d (associated with Edge %d) point count: %zd\n", trim->m_trim_index, trim->Edge()->m_edge_index, param_points3d->size());
 
 	    ON_3dPoint boxmin;
 	    ON_3dPoint boxmax;
@@ -2027,6 +2028,105 @@ int brep_facecdt_plot(struct bu_vls *vls, const char *solid_name,
     return 0;
 }
 
+struct brep_cdt_tol {
+    fastf_t min_dist;
+    fastf_t max_dist;
+    fastf_t within_dist;
+    fastf_t cos_within_ang;
+};
+
+// Digest tessellation tolerances... 
+void
+CDT_Tol_Set(struct brep_cdt_tol *cdt, ON_BrepTrim *trim, fastf_t md, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+{
+    fastf_t min_dist, max_dist, within_dist, cos_within_ang;
+
+    double dist = 1000.0;
+    max_dist = md;
+
+    // TODO - for Edges, shouldn't be using Trim (UV space) dimensioning to get
+    // tolerances.  That will most likely vary for different faces (i.e.  the
+    // same edge would get different results for tolerance settings based on
+    // which face/trim is used to calculate this... ControlPolygonLength is at
+    // least consistent if the actual curve length proves impractical.
+    bool bGrowBox = false;
+    ON_3dPoint min, max;
+    if (trim->GetBoundingBox(min, max, bGrowBox)) {
+	dist = DIST_PT_PT(min, max);
+    }
+
+    if (ttol->abs < tol->dist + ON_ZERO_TOLERANCE) {
+	min_dist = tol->dist;
+    } else {
+	min_dist = ttol->abs;
+    }
+
+    double rel = 0.0;
+    if (ttol->rel > 0.0 + ON_ZERO_TOLERANCE) {
+	rel = ttol->rel * dist;
+	if (max_dist < rel * 10.0) {
+	    max_dist = rel * 10.0;
+	}
+	within_dist = rel < min_dist ? min_dist : rel;
+    } else if (ttol->abs > 0.0 + ON_ZERO_TOLERANCE) {
+	within_dist = min_dist;
+    } else {
+	within_dist = 0.01 * dist; // default to 1% minimum surface distance
+    }
+
+    if (ttol->norm > 0.0 + ON_ZERO_TOLERANCE) {
+	cos_within_ang = cos(ttol->norm);
+    } else {
+	cos_within_ang = cos(ON_PI / 2.0);
+    }
+
+    cdt->min_dist = min_dist;
+    cdt->max_dist = max_dist;
+    cdt->within_dist = within_dist;
+    cdt->cos_within_ang = cos_within_ang;
+}
+
+
+static void
+GetTrimSamplePoints(ON_BrepTrim *trim)
+{
+    double t;
+    ON_2dPoint p2d;
+    // Use a map so we get ordered points along the trim even if we
+    // have to subsequently refine.
+    std::map<double, ON_2dPoint *> *tpmap = new std::map<double, ON_2dPoint *>();
+    trim->m_trim_user.p = (void *)tpmap;
+    ON_BrepEdge& edge = trim->Brep()->m_E[trim->m_ei];
+    double edge_pnt_cnt = ((std::map<double, ON_3dPoint *> *)edge.m_edge_user.p)->size();
+
+    if (trim->m_type == ON_BrepTrim::singular) {
+
+	// Divide up the trim domain into 10 increments so P2T has something to
+	// work on.
+	double delta =  trim->Domain().Length() / edge_pnt_cnt;
+	ON_Interval trim_dom = trim->Domain();
+	for (int i = 1; i <= 10; i++) {
+	    t = trim->Domain().m_t[0] + (i - 1) * delta;
+	    p2d = trim->PointAt(t);
+	}
+
+	// We need to skip last point of trim if not last trim when 
+	// building a polygon loop, but since we're just building up
+	// the trim point set in isolation here store all the points.
+
+	t = trim->Domain().m_t[1];
+	p2d = trim->PointAt(t);
+
+    }
+
+    if (!trim->m_trim_user.p) {
+	//std::map<double, ON_3dPoint *> *m = getEdgePoints(*trim, max_dist, ttol, tol, info);
+	//(void)getEdgePoints(*trim, max_dist, ttol, tol, info);
+	//bu_log("Initialized trim->m_trim_user.p: Trim %d (associated with Edge %d) point count: %zd\n", trim->m_trim_index, trim->Edge()->m_edge_index, m->size());
+    }
+}
+
+
 
 void
 GetSharedEdgePoints(std::map<double, ON_3dPoint *> *pmap, const ON_NurbsCurve *nc, double tmin, double tmax, double dtol)
@@ -2044,7 +2144,7 @@ GetSharedEdgePoints(std::map<double, ON_3dPoint *> *pmap, const ON_NurbsCurve *n
 	GetSharedEdgePoints(pmap, nc, tmin, tmid, dtol);
 	GetSharedEdgePoints(pmap, nc, tmid, tmax, dtol);
     }
-    bu_log("tmid: %f\n", tmid);
+    //bu_log("tmid: %f\n", tmid);
 }
 
 
@@ -2074,7 +2174,7 @@ int brep_cdt_plot(struct bu_vls *vls, const char *solid_name,
         }
         //for now try to draw - return -1;
     }
-#if 1
+
     /* To generate watertight meshes, the faces must share 3D edge points.  To ensure
      * a uniform set of edge points, we first sample all the edges and build their
      * point sets */
@@ -2086,41 +2186,65 @@ int brep_cdt_plot(struct bu_vls *vls, const char *solid_name,
 
 	    /* TODO - handle singular edge curves */
 
+	    /* TODO - handle singular trims, their 3D vertex points, and how to track
+	     * that at the 3D edge level... */
+
 	    /* Normalize the domain of the curve to the ControlPolygonLength()
 	     * of the NURBS form of the curve to attempt to minimize distortion
 	     * in 3D to mirror what we do for the surfaces.  Length would
 	     * probably be better, but this may be good enough and is probably
-	     * faster. */
+	     * faster.
+	     * TODO - use the CDT_Tol calculations - tessellation involves more
+	     * than one type of tolerance.  Old code mixed 2D and 3D point
+	     * collection, but for watertight it's looking so far like 3D
+	     * dominates the sampling for edges and 2D is driven by 3D inputs.
+	     * (TBD for surfaces...) */
 	    ON_NurbsCurve *nc = crv->NurbsCurve();
 	    cplen = nc->ControlPolygonLength();
 	    nc->SetDomain(0.0, cplen);
-	    bu_log("Edge %d cplen: %f\n", edge.m_edge_index, cplen);
 
 	    std::map<double, ON_3dPoint *> *pmap = new std::map<double, ON_3dPoint *>();
 
 	    if (nc->IsClosed()) {
-		// If we have a close loop in one curve, split it in half
+		// If we have a closed loop in one curve, split it in half
 		// and work each half separately
-		ON_3dPoint *p0 = new ON_3dPoint(nc->PointAt(0.0));
+		ON_3dPoint *p0 = new ON_3dPoint(nc->PointAt(0.0)); // TODO - use the vertex point here, not a PointAt evaluation
 		ON_3dPoint *p1 = new ON_3dPoint(nc->PointAt(cplen*0.5));
 		(*pmap)[0.0] = p0;
 		(*pmap)[cplen*0.5] = p1;
 		(*pmap)[cplen] = p0;
 		GetSharedEdgePoints(pmap, nc, 0.0, cplen*0.5, tol->dist);
 		GetSharedEdgePoints(pmap, nc, cplen*0.5, cplen, tol->dist);
+		bu_log("Closed Edge %d cplen: %f\n", edge.m_edge_index, cplen);
 	    } else {
-		ON_3dPoint *p0 = new ON_3dPoint(nc->PointAt(0.0));
-		ON_3dPoint *p1 = new ON_3dPoint(nc->PointAt(cplen));
+		ON_3dPoint *p0 = new ON_3dPoint(nc->PointAt(0.0)); // TODO - use the vertex point here, not a PointAt evaluation
+		ON_3dPoint *p1 = new ON_3dPoint(nc->PointAt(cplen)); // TODO - use the vertex point here, not a PointAt evaluation
 		(*pmap)[0.0] = p0;
 		(*pmap)[cplen] = p1;
 		GetSharedEdgePoints(pmap, nc, 0.0, cplen, tol->dist);
+		bu_log("Edge %d cplen: %f\n", edge.m_edge_index, cplen);
 	    }
 
 	    edge.m_edge_user.p = (void *)pmap;
 	    bu_log("Edge %d total points: %zd\n", edge.m_edge_index, pmap->size());
 	}
     }
-#endif
+
+    /* Trims must use the same number of points as their assigned edges */
+    for (int index = 0; index < brep->m_T.Count(); index++) {
+	ON_BrepTrim& trim = brep->m_T[index];
+	if (trim.m_ei == -1) {
+	    // TODO - Singular trim...
+	    continue;
+	}
+	ON_BrepEdge& edge = brep->m_E[trim.m_ei];
+	if (!edge.m_edge_user.p) {
+	    // TODO - No pmap build for edge (??)...
+	    continue;
+	}
+	GetTrimSamplePoints(&trim);
+    }
+
     for (int face_index = 0; face_index < brep->m_F.Count(); face_index++) {
         ON_BrepFace *face = brep->Face(face_index);
         const ON_Surface *s = face->SurfaceOf();
