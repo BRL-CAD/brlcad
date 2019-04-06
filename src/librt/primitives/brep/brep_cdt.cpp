@@ -2215,9 +2215,11 @@ int brep_cdt_plot(struct bu_vls *vls, const char *solid_name,
 
 	    /* Normalize the domain of the curve to the ControlPolygonLength()
 	     * of the NURBS form of the curve to attempt to minimize distortion
-	     * in 3D to mirror what we do for the surfaces.  Length would
-	     * probably be better, but this may be good enough and is probably
-	     * faster. */
+	     * in 3D to mirror what we do for the surfaces.  A full-up length
+	     * calculation might be better, but would also be a lot more
+	     * expensive.  Additionally this is what GetSurfaceSize does for
+	     * NURBS surfaces, so it is methodologically consistent with the
+	     * above surface reparameterization.  */
 	    ON_NurbsCurve *nc = crv->NurbsCurve();
 	    cplen = nc->ControlPolygonLength();
 	    nc->SetDomain(0.0, cplen);
