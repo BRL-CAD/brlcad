@@ -2032,30 +2032,124 @@ GetTrimSamplePoints(ON_BrepTrim *trim)
 }
 
 
+void
+EdgePointsFill(const ON_NurbsCurve *nc,
+	      fastf_t t1,
+	      const ON_3dVector &start_tang,
+	      const ON_3dPoint &start_3d,
+	      fastf_t t2,
+	      const ON_3dVector &end_tang,
+	      const ON_3dPoint &end_3d,
+	      const struct brep_cdt_tol *cdt_tol,
+	      std::map<double, ON_3dPoint *> &param_points,
+	      std::vector<ON_3dPoint *> *w3dpnts
+	      )
+{
+    ON_3dPoint mid_3d = ON_3dPoint::UnsetPoint;
+    ON_3dVector mid_tang = ON_3dVector::UnsetVector;
+    fastf_t t = (t1 + t2) / 2.0;
+
+    int etan = (nc->EvTangent(t, mid_3d, mid_tang)) ? 1 : 0;
+    int leval = 0;
+
+    if (!etan)
+	return;
+
+    ON_Line line3d(start_3d, end_3d);
+    double dist3d = mid_3d.DistanceTo(line3d.ClosestPointTo(mid_3d));
+    int leval_1 = 0;
+    // TODO - I know this is less efficient than doing the tests in the if
+    // statement because we can't short-circuit in the true OR case, but
+    // leaving it this way temporarily for readability
+    leval += (line3d.Length() > cdt_tol->max_dist) ? 1 : 0;
+    leval += (dist3d > (cdt_tol->within_dist + ON_ZERO_TOLERANCE)) ? 1 : 0;
+    leval_1 += ((start_tang * end_tang) < cdt_tol->cos_within_ang - ON_ZERO_TOLERANCE) ? 1 : 0;
+    leval += (leval_1 && (dist3d > cdt_tol->min_dist + ON_ZERO_TOLERANCE)) ? 1 : 0;
+
+    if (!leval)
+	return;
+
+    EdgePointsFill(nc, t1, start_tang, start_3d, t, mid_tang, mid_3d, cdt_tol, param_points, w3dpnts);
+    ON_3dPoint *pn = new ON_3dPoint(mid_3d);
+    w3dpnts->push_back(pn);
+    param_points[t] = pn;
+    EdgePointsFill(nc, t, mid_tang, mid_3d, t2, end_tang, end_3d, cdt_tol, param_points, w3dpnts);
+}
 
 void
-GetSharedEdgePoints(std::map<double, ON_3dPoint *> *pmap, std::vector<ON_3dPoint *> *w3dp, const ON_NurbsCurve *nc, double tmin, double tmax, struct brep_cdt_tol *cdt)
+Get_Shared_Edge_Points(ON_BrepEdge &edge,
+	std::vector<ON_3dPoint *> *w3dpnts,
+	std::map<int, ON_3dPoint *> *vert_pnts,
+	const struct rt_tess_tol *ttol,
+	const struct bn_tol *tol)
 {
-    ON_3dPoint *p0 = (*pmap)[tmin];
-    ON_3dPoint *p1 = (*pmap)[tmax];
-    double tmid = (tmax-tmin)*0.5 + tmin;
-    ON_3dPoint pmid = nc->PointAt(tmid);
-    double d1 = p0->DistanceTo(*p1);
-    double d2 = p0->DistanceTo(pmid);
-    double d3 = p1->DistanceTo(pmid);
+    struct brep_cdt_tol cdt_tol = BREP_CDT_TOL_ZERO;
+    std::map<double, ON_3dPoint *> *param_points = NULL;
+    double cplen = 0.0;
+    const ON_Curve* crv = edge.EdgeCurveOf();
 
-    // TODO - replace this simple test with getEdgePoints style evaluations - tangents, normals, etc. 
-    // (Difference is we're working with the curve, rather than trim points and
-    // surface evals)
-
-    if (fabs(d1 - (d2+d3)) > cdt->min_dist) {
-	ON_3dPoint *pmidpt = new ON_3dPoint(pmid);
-	w3dp->push_back(pmidpt);
-	(*pmap)[tmid] = pmidpt;
-	GetSharedEdgePoints(pmap, w3dp, nc, tmin, tmid, cdt);
-	GetSharedEdgePoints(pmap, w3dp, nc, tmid, tmax, cdt);
+    /* If we've already got the points, just return */
+    if (edge.m_edge_user.p != NULL) {
+	return;
     }
-    //bu_log("tmid: %f\n", tmid);
+
+    /* Normalize the domain of the curve to the ControlPolygonLength()
+     * of the NURBS form of the curve to attempt to minimize distortion
+     * in 3D to mirror what we do for the surfaces.  A full-up length
+     * calculation might be better, but would also be a lot more
+     * expensive.  Additionally this is what GetSurfaceSize does for
+     * NURBS surfaces, so it is methodologically consistent with the
+     * above surface reparameterization.  */
+    ON_NurbsCurve *nc = crv->NurbsCurve();
+    cplen = nc->ControlPolygonLength();
+    nc->SetDomain(0.0, cplen);
+
+    CDT_Tol_Set(&cdt_tol, cplen, cplen/10, ttol, tol);
+
+    /* Begin point collection */
+    int evals = 0;
+    ON_3dPoint start_3d(0.0, 0.0, 0.0);
+    ON_3dVector start_tang(0.0, 0.0, 0.0);
+    ON_3dVector start_norm(0.0, 0.0, 0.0);
+    ON_3dPoint end_3d(0.0, 0.0, 0.0);
+    ON_3dVector end_tang(0.0, 0.0, 0.0);
+    ON_3dVector end_norm(0.0, 0.0, 0.0);
+
+    param_points = new std::map<double, ON_3dPoint *>();
+    edge.m_edge_user.p = (void *)param_points;
+    ON_Interval range = nc->Domain();
+
+    evals += (nc->EvTangent(range.m_t[0], start_3d, start_tang)) ? 1 : 0;
+    evals += (nc->EvTangent(range.m_t[1], end_3d, end_tang)) ? 1 : 0;
+
+    /* For beginning and end of curve, we use vert points */
+    ON_3dPoint *p0 = (*vert_pnts)[edge.Vertex(0)->m_vertex_index];
+    ON_3dPoint *p2 = (*vert_pnts)[edge.Vertex(1)->m_vertex_index];
+    start_3d = *(p0);
+    end_3d = *(p2);
+    (*param_points)[range.m_t[0]] = p0;
+    (*param_points)[range.m_t[1]] = p2;
+
+    if (nc->IsClosed()) {
+	double mid_range = (range.m_t[0] + range.m_t[1]) / 2.0;
+	ON_3dPoint mid_3d(0.0, 0.0, 0.0);
+	ON_3dVector mid_tang(0.0, 0.0, 0.0);
+	evals += (nc->EvTangent(mid_range, mid_3d, mid_tang)) ? 1 : 0;
+
+	if (evals != 3) {
+	    mid_3d =  nc->PointAt(mid_range);
+	}
+
+	ON_3dPoint *p1 = new ON_3dPoint(nc->PointAt(mid_range));
+	w3dpnts->push_back(p1);
+	(*param_points)[mid_range] = p1;
+
+	EdgePointsFill(nc, range.m_t[0], start_tang, start_3d, mid_range, mid_tang, mid_3d, &cdt_tol, *param_points, w3dpnts);
+	EdgePointsFill(nc, mid_range, mid_tang, mid_3d, range.m_t[1], end_tang, end_3d, &cdt_tol, *param_points, w3dpnts);
+
+    } else {
+	EdgePointsFill(nc, range.m_t[0], start_tang, start_3d, range.m_t[1], end_tang, end_3d, &cdt_tol, *param_points, w3dpnts);
+    }
 }
 
 
@@ -2120,54 +2214,16 @@ int brep_cdt_plot(struct bu_vls *vls, const char *solid_name,
     for (int index = 0; index < brep->m_E.Count(); index++) {
 	ON_BrepEdge& edge = brep->m_E[index];
 	if (edge.m_edge_user.p == NULL) {
-	    struct brep_cdt_tol cdt;
-	    double cplen = 0.0;
-	    const ON_Curve* crv = edge.EdgeCurveOf();
-
-
-	    /* TODO - handle singular edge curves */
-
-	    /* TODO - handle singular trims, their 3D vertex points, and how to track
+	    
+	    /* TODO - howto handle singular trims, their 3D vertex points, and how to track
 	     * that at the 3D edge level... */
 
-	    /* Normalize the domain of the curve to the ControlPolygonLength()
-	     * of the NURBS form of the curve to attempt to minimize distortion
-	     * in 3D to mirror what we do for the surfaces.  A full-up length
-	     * calculation might be better, but would also be a lot more
-	     * expensive.  Additionally this is what GetSurfaceSize does for
-	     * NURBS surfaces, so it is methodologically consistent with the
-	     * above surface reparameterization.  */
-	    ON_NurbsCurve *nc = crv->NurbsCurve();
-	    cplen = nc->ControlPolygonLength();
-	    nc->SetDomain(0.0, cplen);
+	    
+	    // TODO - check curve direction against edge direction, adjust as appropriate
 
-	    CDT_Tol_Set(&cdt, cplen, cplen/10, ttol, tol);
+	    Get_Shared_Edge_Points(edge, &working_3d_pnts, &vert_pnts, ttol, tol);
 
-	    std::map<double, ON_3dPoint *> *pmap = new std::map<double, ON_3dPoint *>();
-
-	    if (nc->IsClosed()) {
-		// If we have a closed loop in one curve, split it in half
-		// and work each half separately
-		ON_3dPoint *p0 = vert_pnts[edge.Vertex(0)->m_vertex_index]; // TODO - when do we need to pay attention to curve orientation vs edge orientation?
-		ON_3dPoint *p1 = new ON_3dPoint(nc->PointAt(cplen*0.5));
-		working_3d_pnts.push_back(p1);
-		(*pmap)[0.0] = p0;
-		(*pmap)[cplen*0.5] = p1;
-		(*pmap)[cplen] = p0;
-		GetSharedEdgePoints(pmap, &working_3d_pnts, nc, 0.0, cplen*0.5, &cdt);
-		GetSharedEdgePoints(pmap, &working_3d_pnts, nc, cplen*0.5, cplen, &cdt);
-		bu_log("Closed Edge %d cplen: %f\n", edge.m_edge_index, cplen);
-	    } else {
-		ON_3dPoint *p0 = vert_pnts[edge.Vertex(0)->m_vertex_index]; // TODO - when do we need to pay attention to curve orientation vs edge orientation?
-		ON_3dPoint *p1 = vert_pnts[edge.Vertex(1)->m_vertex_index]; // TODO - when do we need to pay attention to curve orientation vs edge orientation?
-		(*pmap)[0.0] = p0;
-		(*pmap)[cplen] = p1;
-		GetSharedEdgePoints(pmap, &working_3d_pnts, nc, 0.0, cplen, &cdt);
-		bu_log("Edge %d cplen: %f\n", edge.m_edge_index, cplen);
-	    }
-
-	    edge.m_edge_user.p = (void *)pmap;
-	    bu_log("Edge %d total points: %zd\n", edge.m_edge_index, pmap->size());
+	    bu_log("Edge %d total points: %zd\n", edge.m_edge_index, ((std::map<double, ON_3dPoint *> *)edge.m_edge_user.p)->size());
 	}
     }
 
