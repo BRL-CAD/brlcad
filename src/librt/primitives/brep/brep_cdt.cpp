@@ -87,6 +87,9 @@ getEdgePoints(const ON_BrepTrim &trim,
 	ON_Line line3d(start_3d, end_3d);
 	double dist3d = mid_3d.DistanceTo(line3d.ClosestPointTo(mid_3d));
 	int leval_1 = 0;
+	// TODO - I know this is less efficient than doing the tests in the if
+	// statement because we can't short-circuit in the true OR case, but
+	// leaving it this way temporarily for readability
 	leval += (line3d.Length() > max_dist) ? 1 : 0;
 	leval += (dist3d > (within_dist + ON_ZERO_TOLERANCE)) ? 1 : 0;
 	leval_1 += ((start_tang * end_tang) < cos_within_ang - ON_ZERO_TOLERANCE) ? 1 : 0;
