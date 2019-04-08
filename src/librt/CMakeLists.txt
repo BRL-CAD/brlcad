@@ -98,6 +98,7 @@ set(LIBRT_SOURCES
   primitives/bot/decimate.c
   primitives/brep/brep.cpp
   primitives/brep/brep_cdt.cpp
+  primitives/brep/brep_cdt2.cpp
   primitives/brep/brep_debug.cpp
   primitives/bspline/bspline.cpp
   primitives/bspline/bspline_brep.cpp
