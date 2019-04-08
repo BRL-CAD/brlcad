@@ -80,66 +80,42 @@ getEdgePoints(const ON_BrepTrim &trim,
     ON_3dVector mid_tang = ON_3dVector::UnsetVector;
     fastf_t t = (t1 + t2) / 2.0;
 
-    if (trim.EvTangent(t, mid_2d, mid_tang)
-	&& surface_EvNormal(s, mid_2d.x, mid_2d.y, mid_3d, mid_norm)) {
-	ON_Line line3d(start_3d, end_3d);
-	double dist3d;
+    int etrim = (trim.EvTangent(t, mid_2d, mid_tang) && surface_EvNormal(s, mid_2d.x, mid_2d.y, mid_3d, mid_norm)) ? 1 : 0;
+    int leval = 0;
 
-	if ((line3d.Length() > max_dist)
-	    || ((dist3d = mid_3d.DistanceTo(line3d.ClosestPointTo(mid_3d)))
-		> within_dist + ON_ZERO_TOLERANCE)
-	    || ((((start_tang * end_tang)
-		  < cos_within_ang - ON_ZERO_TOLERANCE)
-		 || ((start_norm * end_norm)
-		     < cos_within_ang - ON_ZERO_TOLERANCE))
-		&& (dist3d > min_dist + ON_ZERO_TOLERANCE))) {
-	    getEdgePoints(trim, t1, start_2d, start_tang, start_3d, start_norm,
-			  t, mid_2d, mid_tang, mid_3d, mid_norm, min_dist, max_dist,
-			  within_dist, cos_within_ang, param_points);
-	    param_points[(t - range.m_t[0]) / (range.m_t[1] - range.m_t[0])] =
-		new ON_3dPoint(mid_3d);
-	    getEdgePoints(trim, t, mid_2d, mid_tang, mid_3d, mid_norm, t2,
-			  end_2d, end_tang, end_3d, end_norm, min_dist, max_dist,
-			  within_dist, cos_within_ang, param_points);
-	} else {
-	    int udir = 0;
-	    int vdir = 0;
-	    ON_2dPoint start = start_2d;
-	    ON_2dPoint end = end_2d;
-	    if (ConsecutivePointsCrossClosedSeam(s, start, end, udir, vdir,
-			BREP_SAME_POINT_TOLERANCE))
-	    {
-		double seam_t;
-		ON_2dPoint from = ON_2dPoint::UnsetPoint;
-		ON_2dPoint to = ON_2dPoint::UnsetPoint;
-		if (FindTrimSeamCrossing(trim, t1, t2, seam_t, from, to,
-			    BREP_SAME_POINT_TOLERANCE))
-		{
-		    ON_2dPoint seam_2d = trim.PointAt(seam_t);
-		    ON_3dPoint seam_3d = s->PointAt(seam_2d.x, seam_2d.y);
-		    double tpercent = (seam_t - range.m_t[0]) / (range.m_t[1] - range.m_t[0]);
-		    if (param_points.find(tpercent) == param_points.end()) {
-			param_points[tpercent] = new ON_3dPoint(seam_3d);
-		    }
-		}
-	    }
-	}
-    } else {
-	int udir = 0;
-	int vdir = 0;
-	ON_2dPoint start = start_2d;
-	ON_2dPoint end = end_2d;
-	if (ConsecutivePointsCrossClosedSeam(s, start, end, udir, vdir, BREP_SAME_POINT_TOLERANCE)) {
-	    double seam_t;
-	    ON_2dPoint from = ON_2dPoint::UnsetPoint;
-	    ON_2dPoint to = ON_2dPoint::UnsetPoint;
-	    if (FindTrimSeamCrossing(trim, t1, t2, seam_t, from, to, BREP_SAME_POINT_TOLERANCE)) {
-		ON_2dPoint seam_2d = trim.PointAt(seam_t);
-		ON_3dPoint seam_3d = s->PointAt(seam_2d.x, seam_2d.y);
-		double tpercent = (seam_t - range.m_t[0]) / (range.m_t[1] - range.m_t[0]);
-		if (param_points.find(tpercent) == param_points.end()) {
-		    param_points[tpercent] = new ON_3dPoint(seam_3d);
-		}
+    if (etrim) {
+	ON_Line line3d(start_3d, end_3d);
+	double dist3d = mid_3d.DistanceTo(line3d.ClosestPointTo(mid_3d));
+	int leval_1 = 0;
+	leval += (line3d.Length() > max_dist) ? 1 : 0;
+	leval += (dist3d > (within_dist + ON_ZERO_TOLERANCE)) ? 1 : 0;
+	leval_1 += ((start_tang * end_tang) < cos_within_ang - ON_ZERO_TOLERANCE) ? 1 : 0;
+	leval_1 += ((start_norm * end_norm) < cos_within_ang - ON_ZERO_TOLERANCE) ? 1 : 0;
+	leval += (leval_1 && (dist3d > min_dist + ON_ZERO_TOLERANCE)) ? 1 : 0;
+    }
+
+    if (etrim && leval) {
+	getEdgePoints(trim, t1, start_2d, start_tang, start_3d, start_norm, t, mid_2d, mid_tang, mid_3d, mid_norm, min_dist, max_dist, within_dist, cos_within_ang, param_points);
+	param_points[(t - range.m_t[0]) / (range.m_t[1] - range.m_t[0])] = new ON_3dPoint(mid_3d);
+	getEdgePoints(trim, t, mid_2d, mid_tang, mid_3d, mid_norm, t2, end_2d, end_tang, end_3d, end_norm, min_dist, max_dist, within_dist, cos_within_ang, param_points);
+	return;
+    }
+
+    int udir = 0;
+    int vdir = 0;
+    ON_2dPoint start = start_2d;
+    ON_2dPoint end = end_2d;
+
+    if (ConsecutivePointsCrossClosedSeam(s, start, end, udir, vdir, BREP_SAME_POINT_TOLERANCE)) {
+	double seam_t;
+	ON_2dPoint from = ON_2dPoint::UnsetPoint;
+	ON_2dPoint to = ON_2dPoint::UnsetPoint;
+	if (FindTrimSeamCrossing(trim, t1, t2, seam_t, from, to, BREP_SAME_POINT_TOLERANCE)) {
+	    ON_2dPoint seam_2d = trim.PointAt(seam_t);
+	    ON_3dPoint seam_3d = s->PointAt(seam_2d.x, seam_2d.y);
+	    double tpercent = (seam_t - range.m_t[0]) / (range.m_t[1] - range.m_t[0]);
+	    if (param_points.find(tpercent) == param_points.end()) {
+		param_points[tpercent] = new ON_3dPoint(seam_3d);
 	    }
 	}
     }
