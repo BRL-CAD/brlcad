@@ -2190,16 +2190,19 @@ int brep_cdt_plot(struct bu_vls *vls, const char *solid_name,
     // Final triangulation still takes place per-face, so at this juncture we need
     // to associate the final 3D point values with their 2D counterparts.
 
+    // TODO - we may need to add 2D points on seams that the edges didn't know
+    // about.  Since 3D points must be shared along edges and we're using
+    // synchronized numbers of parametric domain ordered 2D and 3D points to
+    // make that work, we will need to track new 2D points and update the
+    // corresponding 3D edge based data structures.  More than that - we must
+    // also update all 2D structures in all other faces associated with the
+    // edge in question to keep things in overall sync.
 
     // TODO - if we are going to apply clipper boolean resolution to sets of
     // face loops, that would come here - once we have assembled the loop
-    // polygons for the faces. That has the potential to generate "new" 3D
+    // polygons for the faces. That also has the potential to generate "new" 3D
     // points on edges that are driven by 2D boolean intersections between
-    // trimming loops.  Since 3D points must be shared along edges and we're
-    // using synchronized numbers of parametric domain ordered 2D and 3D points
-    // to make that work, we will need to track new 3D edge points and update
-    // the corresponding 2D trim based data structures in all faces associated
-    // with the edge in question to keep things in overall sync.
+    // trimming loops, and may require another update pass as above.
 
     // TODO - get surface points and set up the final poly2tri triangulation input.
     // May want to go to integer space ala clipper to make sure all points satisfy
