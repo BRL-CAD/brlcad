@@ -1619,7 +1619,6 @@ poly2tri_CDT(struct bu_list *vhead,
     ON_2dPointArray on_surf_points;
     const ON_Surface *s = face.SurfaceOf();
     double surface_width, surface_height;
-    std::vector<ON_3dPoint *> singularity_points;
     p2t::CDT* cdt = NULL;
     ON_BoundingBox loop_bb;
     int fi = face.m_face_index;
@@ -1880,10 +1879,6 @@ poly2tri_CDT(struct bu_list *vhead,
     std::map<p2t::Point *, ON_3dPoint *>::iterator ii;
     for (ii = pointmap->begin(); ii != pointmap->end(); pointmap->erase(ii++))
 	;
-    while (!singularity_points.empty()) {
-	delete singularity_points.back();
-	singularity_points.pop_back();
-    }
     delete pointmap;
 
     std::list<std::map<double, ON_3dPoint *> *>::const_iterator bridgeIter = bridgePoints.begin();
