@@ -54,6 +54,56 @@
 #include "./brep_local.h"
 #include "./brep_debug.h"
 
+
+struct brep_cdt_tol {
+    fastf_t min_dist;
+    fastf_t max_dist;
+    fastf_t within_dist;
+    fastf_t cos_within_ang;
+};
+
+#define BREP_CDT_TOL_ZERO {0.0, 0.0, 0.0, 0.0}
+
+// Digest tessellation tolerances... 
+void
+CDT_Tol_Set(struct brep_cdt_tol *cdt, double dist, fastf_t md, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+{
+    fastf_t min_dist, max_dist, within_dist, cos_within_ang;
+
+    max_dist = md;
+
+    if (ttol->abs < tol->dist + ON_ZERO_TOLERANCE) {
+	min_dist = tol->dist;
+    } else {
+	min_dist = ttol->abs;
+    }
+
+    double rel = 0.0;
+    if (ttol->rel > 0.0 + ON_ZERO_TOLERANCE) {
+	rel = ttol->rel * dist;
+	if (max_dist < rel * 10.0) {
+	    max_dist = rel * 10.0;
+	}
+	within_dist = rel < min_dist ? min_dist : rel;
+    } else if (ttol->abs > 0.0 + ON_ZERO_TOLERANCE) {
+	within_dist = min_dist;
+    } else {
+	within_dist = 0.01 * dist; // default to 1% of dist
+    }
+
+    if (ttol->norm > 0.0 + ON_ZERO_TOLERANCE) {
+	cos_within_ang = cos(ttol->norm);
+    } else {
+	cos_within_ang = cos(ON_PI / 2.0);
+    }
+
+    cdt->min_dist = min_dist;
+    cdt->max_dist = max_dist;
+    cdt->within_dist = within_dist;
+    cdt->cos_within_ang = cos_within_ang;
+}
+
+
 void
 getEdgePoints(const ON_BrepTrim &trim,
 	      fastf_t t1,
@@ -66,10 +116,7 @@ getEdgePoints(const ON_BrepTrim &trim,
 	      const ON_3dVector &end_tang,
 	      const ON_3dPoint &end_3d,
 	      const ON_3dVector &end_norm,
-	      fastf_t min_dist,
-	      fastf_t max_dist,
-	      fastf_t within_dist,
-	      fastf_t cos_within_ang,
+	      const struct brep_cdt_tol *cdt_tol,
 	      std::map<double, ON_3dPoint *> &param_points)
 {
     const ON_Surface *s = trim.SurfaceOf();
@@ -90,17 +137,17 @@ getEdgePoints(const ON_BrepTrim &trim,
 	// TODO - I know this is less efficient than doing the tests in the if
 	// statement because we can't short-circuit in the true OR case, but
 	// leaving it this way temporarily for readability
-	leval += (line3d.Length() > max_dist) ? 1 : 0;
-	leval += (dist3d > (within_dist + ON_ZERO_TOLERANCE)) ? 1 : 0;
-	leval_1 += ((start_tang * end_tang) < cos_within_ang - ON_ZERO_TOLERANCE) ? 1 : 0;
-	leval_1 += ((start_norm * end_norm) < cos_within_ang - ON_ZERO_TOLERANCE) ? 1 : 0;
-	leval += (leval_1 && (dist3d > min_dist + ON_ZERO_TOLERANCE)) ? 1 : 0;
+	leval += (line3d.Length() > cdt_tol->max_dist) ? 1 : 0;
+	leval += (dist3d > (cdt_tol->within_dist + ON_ZERO_TOLERANCE)) ? 1 : 0;
+	leval_1 += ((start_tang * end_tang) < cdt_tol->cos_within_ang - ON_ZERO_TOLERANCE) ? 1 : 0;
+	leval_1 += ((start_norm * end_norm) < cdt_tol->cos_within_ang - ON_ZERO_TOLERANCE) ? 1 : 0;
+	leval += (leval_1 && (dist3d > cdt_tol->min_dist + ON_ZERO_TOLERANCE)) ? 1 : 0;
     }
 
     if (etrim && leval) {
-	getEdgePoints(trim, t1, start_2d, start_tang, start_3d, start_norm, t, mid_2d, mid_tang, mid_3d, mid_norm, min_dist, max_dist, within_dist, cos_within_ang, param_points);
+	getEdgePoints(trim, t1, start_2d, start_tang, start_3d, start_norm, t, mid_2d, mid_tang, mid_3d, mid_norm, cdt_tol, param_points);
 	param_points[(t - range.m_t[0]) / (range.m_t[1] - range.m_t[0])] = new ON_3dPoint(mid_3d);
-	getEdgePoints(trim, t, mid_2d, mid_tang, mid_3d, mid_norm, t2, end_2d, end_tang, end_3d, end_norm, min_dist, max_dist, within_dist, cos_within_ang, param_points);
+	getEdgePoints(trim, t, mid_2d, mid_tang, mid_3d, mid_norm, t2, end_2d, end_tang, end_3d, end_norm, cdt_tol, param_points);
 	return;
     }
 
@@ -131,8 +178,8 @@ getEdgePoints(ON_BrepTrim &trim,
 	      const struct bn_tol *tol,
 	      const struct rt_view_info *UNUSED(info))
 {
+    struct brep_cdt_tol cdt_tol = BREP_CDT_TOL_ZERO;
     std::map<double, ON_3dPoint *> *param_points = NULL;
-    fastf_t min_dist, within_dist, cos_within_ang;
 
     double dist = 1000.0;
 
@@ -140,99 +187,80 @@ getEdgePoints(ON_BrepTrim &trim,
 
     bool bGrowBox = false;
     ON_3dPoint min, max;
+
+    /* If we've already got the points, just return them */
+    if (trim.m_trim_user.p != NULL) {
+	param_points = (std::map<double, ON_3dPoint *> *) trim.m_trim_user.p;
+	return param_points;
+    }
+
+    /* Establish tolerances */
     if (trim.GetBoundingBox(min, max, bGrowBox)) {
 	dist = DIST_PT_PT(min, max);
     }
+    CDT_Tol_Set(&cdt_tol, dist, max_dist, ttol, tol);
 
-    if (ttol->abs < tol->dist + ON_ZERO_TOLERANCE) {
-	min_dist = tol->dist;
-    } else {
-	min_dist = ttol->abs;
+    /* Begin point collection */
+    int evals = 0;
+    ON_3dPoint start_2d(0.0, 0.0, 0.0);
+    ON_3dPoint start_3d(0.0, 0.0, 0.0);
+    ON_3dVector start_tang(0.0, 0.0, 0.0);
+    ON_3dVector start_norm(0.0, 0.0, 0.0);
+    ON_3dPoint end_2d(0.0, 0.0, 0.0);
+    ON_3dPoint end_3d(0.0, 0.0, 0.0);
+    ON_3dVector end_tang(0.0, 0.0, 0.0);
+    ON_3dVector end_norm(0.0, 0.0, 0.0);
+
+    param_points = new std::map<double, ON_3dPoint *>();
+    trim.m_trim_user.p = (void *) param_points;
+    ON_Interval range = trim.Domain();
+    if (s->IsClosed(0) || s->IsClosed(1)) {
+	ON_BoundingBox trim_bbox = ON_BoundingBox::EmptyBoundingBox;
+	trim.GetBoundingBox(trim_bbox, false);
     }
 
-    double rel = 0.0;
-    if (ttol->rel > 0.0 + ON_ZERO_TOLERANCE) {
-	rel = ttol->rel * dist;
-	if (max_dist < rel * 10.0) {
-	    max_dist = rel * 10.0;
-	}
-	within_dist = rel < min_dist ? min_dist : rel;
-    } else if (ttol->abs > 0.0 + ON_ZERO_TOLERANCE) {
-	within_dist = min_dist;
-    } else {
-	within_dist = 0.01 * dist; // default to 1% minimum surface distance
-    }
+    evals += (trim.EvTangent(range.m_t[0], start_2d, start_tang)) ? 1 : 0;
+    evals += (trim.EvTangent(range.m_t[1], end_2d, end_tang)) ? 1 : 0;
+    evals += (surface_EvNormal(s, start_2d.x, start_2d.y, start_3d, start_norm)) ? 1 : 0;
+    evals += (surface_EvNormal(s, end_2d.x, end_2d.y, end_3d, end_norm)) ? 1 : 0;
 
-    if (ttol->norm > 0.0 + ON_ZERO_TOLERANCE) {
-	cos_within_ang = cos(ttol->norm);
-    } else {
-	cos_within_ang = cos(ON_PI / 2.0);
-    }
+    if (trim.IsClosed()) {
+	double mid_range = (range.m_t[0] + range.m_t[1]) / 2.0;
+	ON_3dPoint mid_2d(0.0, 0.0, 0.0);
+	ON_3dPoint mid_3d(0.0, 0.0, 0.0);
+	ON_3dVector mid_tang(0.0, 0.0, 0.0);
+	ON_3dVector mid_norm(0.0, 0.0, 0.0);
+	evals += (trim.EvTangent(mid_range, mid_2d, mid_tang)) ? 1 : 0;
+	evals += (surface_EvNormal(s, mid_2d.x, mid_2d.y, mid_3d, mid_norm)) ? 1 : 0;
 
-    if (trim.m_trim_user.p == NULL) {
-	int evals = 0;
-	ON_3dPoint start_2d(0.0, 0.0, 0.0);
-	ON_3dPoint start_3d(0.0, 0.0, 0.0);
-	ON_3dVector start_tang(0.0, 0.0, 0.0);
-	ON_3dVector start_norm(0.0, 0.0, 0.0);
-	ON_3dPoint end_2d(0.0, 0.0, 0.0);
-	ON_3dPoint end_3d(0.0, 0.0, 0.0);
-	ON_3dVector end_tang(0.0, 0.0, 0.0);
-	ON_3dVector end_norm(0.0, 0.0, 0.0);
-
-	param_points = new std::map<double, ON_3dPoint *>();
-	trim.m_trim_user.p = (void *) param_points;
-	ON_Interval range = trim.Domain();
-	if (s->IsClosed(0) || s->IsClosed(1)) {
-	    ON_BoundingBox trim_bbox = ON_BoundingBox::EmptyBoundingBox;
-	    trim.GetBoundingBox(trim_bbox, false);
+	if (evals != 6) {
+	    start_2d = trim.PointAt(range.m_t[0]);
+	    end_2d = trim.PointAt(range.m_t[1]);
+	    start_3d = s->PointAt(start_2d.x,start_2d.y);
+	    end_3d = s->PointAt(end_2d.x,end_2d.y);
+	    mid_2d = trim.PointAt(mid_range);
+	    mid_3d =  s->PointAt(mid_2d.x, mid_2d.y);
 	}
 
-	evals += (trim.EvTangent(range.m_t[0], start_2d, start_tang)) ? 1 : 0;
-	evals += (trim.EvTangent(range.m_t[1], end_2d, end_tang)) ? 1 : 0;
-	evals += (surface_EvNormal(s, start_2d.x, start_2d.y, start_3d, start_norm)) ? 1 : 0;
-	evals += (surface_EvNormal(s, end_2d.x, end_2d.y, end_3d, end_norm)) ? 1 : 0;
+	(*param_points)[0.0] = new ON_3dPoint(s->PointAt(trim.PointAt(range.m_t[0]).x, trim.PointAt(range.m_t[0]).y));
+	getEdgePoints(trim, range.m_t[0], start_2d, start_tang, start_3d, start_norm, mid_range, mid_2d, mid_tang, mid_3d, mid_norm, &cdt_tol, *param_points);
+	(*param_points)[0.5] = new ON_3dPoint(s->PointAt(trim.PointAt(mid_range).x, trim.PointAt(mid_range).y));
+	getEdgePoints(trim, mid_range, mid_2d, mid_tang, mid_3d, mid_norm, range.m_t[1], end_2d, end_tang, end_3d, end_norm, &cdt_tol, *param_points);
+	(*param_points)[1.0] = new ON_3dPoint(s->PointAt(trim.PointAt(range.m_t[1]).x, trim.PointAt(range.m_t[1]).y));
 
-	if (trim.IsClosed()) {
-	    double mid_range = (range.m_t[0] + range.m_t[1]) / 2.0;
-	    ON_3dPoint mid_2d(0.0, 0.0, 0.0);
-	    ON_3dPoint mid_3d(0.0, 0.0, 0.0);
-	    ON_3dVector mid_tang(0.0, 0.0, 0.0);
-	    ON_3dVector mid_norm(0.0, 0.0, 0.0);
-	    evals += (trim.EvTangent(mid_range, mid_2d, mid_tang)) ? 1 : 0;
-	    evals += (surface_EvNormal(s, mid_2d.x, mid_2d.y, mid_3d, mid_norm)) ? 1 : 0;
-
-	    if (evals != 6) {
-		start_2d = trim.PointAt(range.m_t[0]);
-		end_2d = trim.PointAt(range.m_t[1]);
-		start_3d = s->PointAt(start_2d.x,start_2d.y);
-		end_3d = s->PointAt(end_2d.x,end_2d.y);
-		mid_2d = trim.PointAt(mid_range);
-		mid_3d =  s->PointAt(mid_2d.x, mid_2d.y);
-	    }
-
-	    (*param_points)[0.0] = new ON_3dPoint(s->PointAt(trim.PointAt(range.m_t[0]).x, trim.PointAt(range.m_t[0]).y));
-	    getEdgePoints(trim, range.m_t[0], start_2d, start_tang, start_3d, start_norm, mid_range, mid_2d, mid_tang, mid_3d, mid_norm, min_dist, max_dist, within_dist, cos_within_ang, *param_points);
-	    (*param_points)[0.5] = new ON_3dPoint(s->PointAt(trim.PointAt(mid_range).x, trim.PointAt(mid_range).y));
-	    getEdgePoints(trim, mid_range, mid_2d, mid_tang, mid_3d, mid_norm, range.m_t[1], end_2d, end_tang, end_3d, end_norm, min_dist, max_dist, within_dist, cos_within_ang, *param_points);
-	    (*param_points)[1.0] = new ON_3dPoint(s->PointAt(trim.PointAt(range.m_t[1]).x, trim.PointAt(range.m_t[1]).y));
-
-	} else {
-
-	    if (evals != 4) {
-		start_2d = trim.PointAt(range.m_t[0]);
-		end_2d = trim.PointAt(range.m_t[1]);
-		start_3d = s->PointAt(start_2d.x,start_2d.y);
-		end_3d = s->PointAt(end_2d.x,end_2d.y);
-	    }
-
-	    (*param_points)[0.0] = new ON_3dPoint(start_3d);
-	    getEdgePoints(trim, range.m_t[0], start_2d, start_tang, start_3d, start_norm, range.m_t[1], end_2d, end_tang, end_3d, end_norm, min_dist, max_dist, within_dist, cos_within_ang, *param_points);
-	    (*param_points)[1.0] = new ON_3dPoint(end_3d);
-
-	}
     } else {
-	param_points = (std::map<double, ON_3dPoint *> *) trim.m_trim_user.p;
+
+	if (evals != 4) {
+	    start_2d = trim.PointAt(range.m_t[0]);
+	    end_2d = trim.PointAt(range.m_t[1]);
+	    start_3d = s->PointAt(start_2d.x,start_2d.y);
+	    end_3d = s->PointAt(end_2d.x,end_2d.y);
+	}
+
+	(*param_points)[0.0] = new ON_3dPoint(start_3d);
+	getEdgePoints(trim, range.m_t[0], start_2d, start_tang, start_3d, start_norm, range.m_t[1], end_2d, end_tang, end_3d, end_norm, &cdt_tol, *param_points);
+	(*param_points)[1.0] = new ON_3dPoint(end_3d);
+
     }
 
     return param_points;
@@ -1961,52 +1989,6 @@ int brep_facecdt_plot(struct bu_vls *vls, const char *solid_name,
     bu_vls_printf(vls, "%s", ON_String(wstr).Array());
 
     return 0;
-}
-
-struct brep_cdt_tol {
-    fastf_t min_dist;
-    fastf_t max_dist;
-    fastf_t within_dist;
-    fastf_t cos_within_ang;
-};
-
-// Digest tessellation tolerances... 
-void
-CDT_Tol_Set(struct brep_cdt_tol *cdt, double dist, fastf_t md, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
-{
-    fastf_t min_dist, max_dist, within_dist, cos_within_ang;
-
-    max_dist = md;
-
-    if (ttol->abs < tol->dist + ON_ZERO_TOLERANCE) {
-	min_dist = tol->dist;
-    } else {
-	min_dist = ttol->abs;
-    }
-
-    double rel = 0.0;
-    if (ttol->rel > 0.0 + ON_ZERO_TOLERANCE) {
-	rel = ttol->rel * dist;
-	if (max_dist < rel * 10.0) {
-	    max_dist = rel * 10.0;
-	}
-	within_dist = rel < min_dist ? min_dist : rel;
-    } else if (ttol->abs > 0.0 + ON_ZERO_TOLERANCE) {
-	within_dist = min_dist;
-    } else {
-	within_dist = 0.01 * dist; // default to 1% of dist
-    }
-
-    if (ttol->norm > 0.0 + ON_ZERO_TOLERANCE) {
-	cos_within_ang = cos(ttol->norm);
-    } else {
-	cos_within_ang = cos(ON_PI / 2.0);
-    }
-
-    cdt->min_dist = min_dist;
-    cdt->max_dist = max_dist;
-    cdt->within_dist = within_dist;
-    cdt->cos_within_ang = cos_within_ang;
 }
 
 
