@@ -64,7 +64,7 @@ struct brep_cdt_tol {
 
 #define BREP_CDT_TOL_ZERO {0.0, 0.0, 0.0, 0.0}
 
-// Digest tessellation tolerances... 
+// Digest tessellation tolerances...
 void
 CDT_Tol_Set(struct brep_cdt_tol *cdt, double dist, fastf_t md, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
@@ -117,7 +117,7 @@ getEdgePoints(const ON_BrepTrim &trim,
 	      const ON_3dPoint &end_3d,
 	      const ON_3dVector &end_norm,
 	      const struct brep_cdt_tol *cdt_tol,
-	      std::map<double, ON_3dPoint *> &param_points)
+	      std::map<double, BrepTrimPoint *> &param_points)
 {
     const ON_Surface *s = trim.SurfaceOf();
     ON_Interval range = trim.Domain();
@@ -145,8 +145,12 @@ getEdgePoints(const ON_BrepTrim &trim,
     }
 
     if (etrim && leval) {
+	BrepTrimPoint *nbtp = new BrepTrimPoint;
+	nbtp->p3d = new ON_3dPoint(mid_3d);
+	nbtp->p2d = mid_2d;
+	nbtp->t = t;
+	param_points[nbtp->t] = nbtp;
 	getEdgePoints(trim, t1, start_2d, start_tang, start_3d, start_norm, t, mid_2d, mid_tang, mid_3d, mid_norm, cdt_tol, param_points);
-	param_points[(t - range.m_t[0]) / (range.m_t[1] - range.m_t[0])] = new ON_3dPoint(mid_3d);
 	getEdgePoints(trim, t, mid_2d, mid_tang, mid_3d, mid_norm, t2, end_2d, end_tang, end_3d, end_norm, cdt_tol, param_points);
 	return;
     }
@@ -163,22 +167,25 @@ getEdgePoints(const ON_BrepTrim &trim,
 	if (FindTrimSeamCrossing(trim, t1, t2, seam_t, from, to, BREP_SAME_POINT_TOLERANCE)) {
 	    ON_2dPoint seam_2d = trim.PointAt(seam_t);
 	    ON_3dPoint seam_3d = s->PointAt(seam_2d.x, seam_2d.y);
-	    double tpercent = (seam_t - range.m_t[0]) / (range.m_t[1] - range.m_t[0]);
-	    if (param_points.find(tpercent) == param_points.end()) {
-		param_points[tpercent] = new ON_3dPoint(seam_3d);
+	    if (param_points.find(seam_t) == param_points.end()) {
+		BrepTrimPoint *nbtp = new BrepTrimPoint;
+		nbtp->p3d = new ON_3dPoint(seam_3d);
+		nbtp->p2d = seam_2d;
+		nbtp->t = seam_t;
+		param_points[nbtp->t] = nbtp;
 	    }
 	}
     }
 }
 
-std::map<double, ON_3dPoint *> *
+std::map<double, BrepTrimPoint *> *
 getEdgePoints(ON_BrepTrim &trim,
 	      fastf_t max_dist,
 	      const struct rt_tess_tol *ttol,
 	      const struct bn_tol *tol)
 {
     struct brep_cdt_tol cdt_tol = BREP_CDT_TOL_ZERO;
-    std::map<double, ON_3dPoint *> *param_points = NULL;
+    std::map<double, BrepTrimPoint *> *param_points = NULL;
 
     double dist = 1000.0;
 
@@ -189,7 +196,7 @@ getEdgePoints(ON_BrepTrim &trim,
 
     /* If we've already got the points, just return them */
     if (trim.m_trim_user.p != NULL) {
-	param_points = (std::map<double, ON_3dPoint *> *) trim.m_trim_user.p;
+	param_points = (std::map<double, BrepTrimPoint *> *) trim.m_trim_user.p;
 	return param_points;
     }
 
@@ -210,7 +217,7 @@ getEdgePoints(ON_BrepTrim &trim,
     ON_3dVector end_tang(0.0, 0.0, 0.0);
     ON_3dVector end_norm(0.0, 0.0, 0.0);
 
-    param_points = new std::map<double, ON_3dPoint *>();
+    param_points = new std::map<double, BrepTrimPoint *>();
     trim.m_trim_user.p = (void *) param_points;
     ON_Interval range = trim.Domain();
     if (s->IsClosed(0) || s->IsClosed(1)) {
@@ -241,11 +248,26 @@ getEdgePoints(ON_BrepTrim &trim,
 	    mid_3d =  s->PointAt(mid_2d.x, mid_2d.y);
 	}
 
-	(*param_points)[0.0] = new ON_3dPoint(s->PointAt(trim.PointAt(range.m_t[0]).x, trim.PointAt(range.m_t[0]).y));
+	BrepTrimPoint *sbtp = new BrepTrimPoint;
+	sbtp->p3d = new ON_3dPoint(s->PointAt(trim.PointAt(range.m_t[0]).x, trim.PointAt(range.m_t[0]).y));
+	sbtp->p2d = start_2d;
+	sbtp->t = range.m_t[0];
+	(*param_points)[sbtp->t] = sbtp;
+
+	BrepTrimPoint *mbtp = new BrepTrimPoint;
+	mbtp->p3d = new ON_3dPoint(s->PointAt(trim.PointAt(mid_range).x, trim.PointAt(mid_range).y));
+	mbtp->p2d = mid_2d;
+	mbtp->t = mid_range;
+	(*param_points)[mbtp->t] = mbtp;
+
+	BrepTrimPoint *ebtp = new BrepTrimPoint;
+	ebtp->p3d = new ON_3dPoint(s->PointAt(trim.PointAt(range.m_t[1]).x, trim.PointAt(range.m_t[1]).y));
+	ebtp->p2d = end_2d;
+	ebtp->t = range.m_t[1];
+	(*param_points)[ebtp->t] = ebtp;
+
 	getEdgePoints(trim, range.m_t[0], start_2d, start_tang, start_3d, start_norm, mid_range, mid_2d, mid_tang, mid_3d, mid_norm, &cdt_tol, *param_points);
-	(*param_points)[0.5] = new ON_3dPoint(s->PointAt(trim.PointAt(mid_range).x, trim.PointAt(mid_range).y));
 	getEdgePoints(trim, mid_range, mid_2d, mid_tang, mid_3d, mid_norm, range.m_t[1], end_2d, end_tang, end_3d, end_norm, &cdt_tol, *param_points);
-	(*param_points)[1.0] = new ON_3dPoint(s->PointAt(trim.PointAt(range.m_t[1]).x, trim.PointAt(range.m_t[1]).y));
 
     } else {
 
@@ -256,9 +278,19 @@ getEdgePoints(ON_BrepTrim &trim,
 	    end_3d = s->PointAt(end_2d.x,end_2d.y);
 	}
 
-	(*param_points)[0.0] = new ON_3dPoint(start_3d);
+	BrepTrimPoint *sbtp = new BrepTrimPoint;
+	sbtp->p3d = new ON_3dPoint(start_3d);
+	sbtp->p2d = start_2d;
+	sbtp->t = range.m_t[0];
+	(*param_points)[sbtp->t] = sbtp;
+
+	BrepTrimPoint *ebtp = new BrepTrimPoint;
+	ebtp->p3d = new ON_3dPoint(end_3d);
+	ebtp->p2d = end_2d;
+	ebtp->t = range.m_t[1];
+	(*param_points)[ebtp->t] = ebtp;
+
 	getEdgePoints(trim, range.m_t[0], start_2d, start_tang, start_3d, start_norm, range.m_t[1], end_2d, end_tang, end_3d, end_norm, &cdt_tol, *param_points);
-	(*param_points)[1.0] = new ON_3dPoint(end_3d);
 
     }
 
@@ -1071,7 +1103,7 @@ get_loop_sample_points(
 	    //bu_log("Initialized trim->m_trim_user.p: Trim %d (associated with Edge %d) point count: %zd\n", trim->m_trim_index, trim->Edge()->m_edge_index, m->size());
 	}
 	if (trim->m_trim_user.p) {
-	    std::map<double, ON_3dPoint *> *param_points3d = (std::map<double, ON_3dPoint *> *) trim->m_trim_user.p;
+	    std::map<double, BrepTrimPoint *> *param_points3d = (std::map<double, BrepTrimPoint *> *) trim->m_trim_user.p;
 	    //bu_log("Trim %d (associated with Edge %d) point count: %zd\n", trim->m_trim_index, trim->Edge()->m_edge_index, param_points3d->size());
 
 	    ON_3dPoint boxmin;
@@ -1080,22 +1112,16 @@ get_loop_sample_points(
 	    if (trim->GetBoundingBox(boxmin, boxmax, false)) {
 		double t0, t1;
 
-		std::map<double, ON_3dPoint*>::const_iterator i;
+		std::map<double, BrepTrimPoint*>::const_iterator i;
 
 		trim->GetDomain(&t0, &t1);
-		for (i = param_points3d->begin();
-		     i != param_points3d->end();) {
-		    BrepTrimPoint btp;
-		    btp.t = (*i).first;
-		    btp.p3d = (*i).second;
-
+		for (i = param_points3d->begin(); i != param_points3d->end();) {
+		    BrepTrimPoint *btp = (*i).second;
 		    // skip last point of trim if not last trim
-		    if ((++i == param_points3d->end()) && (lti < trim_count - 1))
+		    if ((++i == param_points3d->end()) && (lti < trim_count - 1)) {
 			continue;
-
-		    btp.p2d = trim->PointAt(t0 + (t1 - t0) * btp.t);
-		    btp.e = ON_UNSET_VALUE;
-		    points->Append(btp);
+		    }
+		    points->Append(*btp);
 		}
 	    }
 	}
