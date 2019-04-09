@@ -274,7 +274,7 @@ creo_param_name(struct creo_conv_info *cinfo, wchar_t *creo_name, int flags)
     ProModelitem itm;
     ProMdl model;
 
-    if (flags == N_REGION) {
+    if (flags == N_REGION || flags == N_SOLID) {
 	if (ProMdlnameInit(creo_name, PRO_MDLFILE_PART, &model) != PRO_TK_NO_ERROR)
 	    return NULL;
     } else if (flags == N_ASSEM) {
@@ -396,9 +396,8 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, const char *suffix,
     BU_GET(gname, struct bu_vls);
     bu_vls_init(gname);
 
-    /* First try the parameters, if the user specified any and if the name type
-     * requested can use parameters */
-    if (!(flag == N_CREO) && !(flag == N_SOLID)) {
+    /* First try the parameters, if the user specified any */
+    if (flag != N_CREO) {
 	param_name = creo_param_name(cinfo, name, flag);
 	bu_vls_sprintf(&gname_root, "%s", param_name);
     }

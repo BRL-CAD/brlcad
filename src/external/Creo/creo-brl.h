@@ -246,13 +246,12 @@ extern "C" ProError PopupMsg(const char *, const char *);
 extern "C" wchar_t* stable_wchar(struct creo_conv_info *, wchar_t *);
 
 /* This function is highly important - it is responsible for all name
- * generation, translation and clean-up in the converter.  A CREO name may map
- * to up to three distinct objects in BRL-CAD - a solid, which will will have a
- * name based off of the name in CREO, a region, which may generate a "human
- * readable" name using parameters on the CREO object, and an assembly which
- * may also have a "human readable" form.  There is also the char mapping of
- * the wchar_t CREO name, which may or may not correspond to any of the object
- * names. */
+ * generation, translation and clean-up in the converter. A CREO name may map to
+ * up to three distinct objects in BRL-CAD - a solid, a region, and an assembly.
+ * Any may be given a unique human readable name using parameters on the CREO
+ * object. There is also the char mapping of the wchar_t CREO name, which may or
+ * may not correspond to any of the object names.
+ */
 #define N_REGION 1 /* Default - generate a unique, human readable name and append the specified suffix */
 #define N_ASSEM 2 /* Default - generate a unique, human readable name and append the specified suffix */
 #define N_SOLID 3 /* Default - generate a unique, human readable name and append the specified suffix */
