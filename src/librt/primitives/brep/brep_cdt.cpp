@@ -106,16 +106,8 @@ CDT_Tol_Set(struct brep_cdt_tol *cdt, double dist, fastf_t md, const struct rt_t
 
 void
 getEdgePoints(const ON_BrepTrim &trim,
-	      fastf_t t1,
-	      const ON_3dPoint &start_2d,
-	      const ON_3dVector &start_tang,
-	      const ON_3dPoint &start_3d,
-	      const ON_3dVector &start_norm,
-	      fastf_t t2,
-	      const ON_3dPoint &end_2d,
-	      const ON_3dVector &end_tang,
-	      const ON_3dPoint &end_3d,
-	      const ON_3dVector &end_norm,
+	      BrepTrimPoint *sbtp,
+              BrepTrimPoint *ebtp,
 	      const struct brep_cdt_tol *cdt_tol,
 	      std::map<double, BrepTrimPoint *> &param_points)
 {
@@ -125,13 +117,13 @@ getEdgePoints(const ON_BrepTrim &trim,
     ON_3dPoint mid_3d = ON_3dPoint::UnsetPoint;
     ON_3dVector mid_norm = ON_3dVector::UnsetVector;
     ON_3dVector mid_tang = ON_3dVector::UnsetVector;
-    fastf_t t = (t1 + t2) / 2.0;
+    fastf_t t = (sbtp->t + ebtp->t) / 2.0;
 
     int etrim = (trim.EvTangent(t, mid_2d, mid_tang) && surface_EvNormal(s, mid_2d.x, mid_2d.y, mid_3d, mid_norm)) ? 1 : 0;
     int leval = 0;
 
     if (etrim) {
-	ON_Line line3d(start_3d, end_3d);
+	ON_Line line3d(*(sbtp->p3d), *(ebtp->p3d));
 	double dist3d = mid_3d.DistanceTo(line3d.ClosestPointTo(mid_3d));
 	int leval_1 = 0;
 	// TODO - I know this is less efficient than doing the tests in the if
@@ -139,8 +131,8 @@ getEdgePoints(const ON_BrepTrim &trim,
 	// leaving it this way temporarily for readability
 	leval += (line3d.Length() > cdt_tol->max_dist) ? 1 : 0;
 	leval += (dist3d > (cdt_tol->within_dist + ON_ZERO_TOLERANCE)) ? 1 : 0;
-	leval_1 += ((start_tang * end_tang) < cdt_tol->cos_within_ang - ON_ZERO_TOLERANCE) ? 1 : 0;
-	leval_1 += ((start_norm * end_norm) < cdt_tol->cos_within_ang - ON_ZERO_TOLERANCE) ? 1 : 0;
+	leval_1 += ((sbtp->tangent * ebtp->tangent) < cdt_tol->cos_within_ang - ON_ZERO_TOLERANCE) ? 1 : 0;
+	leval_1 += ((sbtp->normal * ebtp->normal) < cdt_tol->cos_within_ang - ON_ZERO_TOLERANCE) ? 1 : 0;
 	leval += (leval_1 && (dist3d > cdt_tol->min_dist + ON_ZERO_TOLERANCE)) ? 1 : 0;
     }
 
@@ -148,29 +140,32 @@ getEdgePoints(const ON_BrepTrim &trim,
 	BrepTrimPoint *nbtp = new BrepTrimPoint;
 	nbtp->p3d = new ON_3dPoint(mid_3d);
 	nbtp->p2d = mid_2d;
+	nbtp->normal = mid_norm;
+	nbtp->tangent = mid_tang;
 	nbtp->t = t;
 	param_points[nbtp->t] = nbtp;
-	getEdgePoints(trim, t1, start_2d, start_tang, start_3d, start_norm, t, mid_2d, mid_tang, mid_3d, mid_norm, cdt_tol, param_points);
-	getEdgePoints(trim, t, mid_2d, mid_tang, mid_3d, mid_norm, t2, end_2d, end_tang, end_3d, end_norm, cdt_tol, param_points);
+	getEdgePoints(trim, sbtp, nbtp, cdt_tol, param_points);
+	getEdgePoints(trim, nbtp, ebtp, cdt_tol, param_points);
 	return;
     }
 
     int udir = 0;
     int vdir = 0;
-    ON_2dPoint start = start_2d;
-    ON_2dPoint end = end_2d;
+    ON_2dPoint start = sbtp->p2d;
+    ON_2dPoint end = ebtp->p2d;
 
     if (ConsecutivePointsCrossClosedSeam(s, start, end, udir, vdir, BREP_SAME_POINT_TOLERANCE)) {
 	double seam_t;
 	ON_2dPoint from = ON_2dPoint::UnsetPoint;
 	ON_2dPoint to = ON_2dPoint::UnsetPoint;
-	if (FindTrimSeamCrossing(trim, t1, t2, seam_t, from, to, BREP_SAME_POINT_TOLERANCE)) {
+	if (FindTrimSeamCrossing(trim, sbtp->t, ebtp->t, seam_t, from, to, BREP_SAME_POINT_TOLERANCE)) {
 	    ON_2dPoint seam_2d = trim.PointAt(seam_t);
 	    ON_3dPoint seam_3d = s->PointAt(seam_2d.x, seam_2d.y);
 	    if (param_points.find(seam_t) == param_points.end()) {
 		BrepTrimPoint *nbtp = new BrepTrimPoint;
 		nbtp->p3d = new ON_3dPoint(seam_3d);
 		nbtp->p2d = seam_2d;
+		// Note - by this point we shouldn't need tangents and normals...
 		nbtp->t = seam_t;
 		param_points[nbtp->t] = nbtp;
 	    }
@@ -251,23 +246,29 @@ getEdgePoints(ON_BrepTrim &trim,
 	BrepTrimPoint *sbtp = new BrepTrimPoint;
 	sbtp->p3d = new ON_3dPoint(s->PointAt(trim.PointAt(range.m_t[0]).x, trim.PointAt(range.m_t[0]).y));
 	sbtp->p2d = start_2d;
+	sbtp->tangent = start_tang;
+	sbtp->normal = start_norm;
 	sbtp->t = range.m_t[0];
 	(*param_points)[sbtp->t] = sbtp;
 
 	BrepTrimPoint *mbtp = new BrepTrimPoint;
 	mbtp->p3d = new ON_3dPoint(s->PointAt(trim.PointAt(mid_range).x, trim.PointAt(mid_range).y));
 	mbtp->p2d = mid_2d;
+	mbtp->tangent = mid_tang;
+	mbtp->normal = mid_norm;
 	mbtp->t = mid_range;
 	(*param_points)[mbtp->t] = mbtp;
 
 	BrepTrimPoint *ebtp = new BrepTrimPoint;
 	ebtp->p3d = new ON_3dPoint(s->PointAt(trim.PointAt(range.m_t[1]).x, trim.PointAt(range.m_t[1]).y));
 	ebtp->p2d = end_2d;
+	ebtp->tangent = end_tang;
+	ebtp->normal = end_norm;
 	ebtp->t = range.m_t[1];
 	(*param_points)[ebtp->t] = ebtp;
 
-	getEdgePoints(trim, range.m_t[0], start_2d, start_tang, start_3d, start_norm, mid_range, mid_2d, mid_tang, mid_3d, mid_norm, &cdt_tol, *param_points);
-	getEdgePoints(trim, mid_range, mid_2d, mid_tang, mid_3d, mid_norm, range.m_t[1], end_2d, end_tang, end_3d, end_norm, &cdt_tol, *param_points);
+	getEdgePoints(trim, sbtp, mbtp, &cdt_tol, *param_points);
+	getEdgePoints(trim, mbtp, ebtp, &cdt_tol, *param_points);
 
     } else {
 
@@ -281,16 +282,20 @@ getEdgePoints(ON_BrepTrim &trim,
 	BrepTrimPoint *sbtp = new BrepTrimPoint;
 	sbtp->p3d = new ON_3dPoint(start_3d);
 	sbtp->p2d = start_2d;
+	sbtp->tangent = start_tang;
+	sbtp->normal = start_norm;
 	sbtp->t = range.m_t[0];
 	(*param_points)[sbtp->t] = sbtp;
 
 	BrepTrimPoint *ebtp = new BrepTrimPoint;
 	ebtp->p3d = new ON_3dPoint(end_3d);
 	ebtp->p2d = end_2d;
+	ebtp->tangent = end_tang;
+	ebtp->normal = end_norm;
 	ebtp->t = range.m_t[1];
 	(*param_points)[ebtp->t] = ebtp;
 
-	getEdgePoints(trim, range.m_t[0], start_2d, start_tang, start_3d, start_norm, range.m_t[1], end_2d, end_tang, end_3d, end_norm, &cdt_tol, *param_points);
+	getEdgePoints(trim, sbtp, ebtp, &cdt_tol, *param_points);
 
     }
 
