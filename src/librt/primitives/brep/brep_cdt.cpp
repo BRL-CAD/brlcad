@@ -105,11 +105,13 @@ CDT_Tol_Set(struct brep_cdt_tol *cdt, double dist, fastf_t md, const struct rt_t
 
 
 void
-getEdgePoints(const ON_BrepTrim &trim,
-	      BrepTrimPoint *sbtp,
-              BrepTrimPoint *ebtp,
-	      const struct brep_cdt_tol *cdt_tol,
-	      std::map<double, BrepTrimPoint *> &param_points)
+getEdgePoints(
+	ON_BrepEdge *e,
+	const ON_BrepTrim &trim,
+	BrepTrimPoint *sbtp,
+	BrepTrimPoint *ebtp,
+	const struct brep_cdt_tol *cdt_tol,
+	std::map<double, BrepTrimPoint *> &param_points)
 {
     const ON_Surface *s = trim.SurfaceOf();
     ON_Interval range = trim.Domain();
@@ -144,8 +146,8 @@ getEdgePoints(const ON_BrepTrim &trim,
 	nbtp->tangent = mid_tang;
 	nbtp->t = t;
 	param_points[nbtp->t] = nbtp;
-	getEdgePoints(trim, sbtp, nbtp, cdt_tol, param_points);
-	getEdgePoints(trim, nbtp, ebtp, cdt_tol, param_points);
+	getEdgePoints(e, trim, sbtp, nbtp, cdt_tol, param_points);
+	getEdgePoints(e, trim, nbtp, ebtp, cdt_tol, param_points);
 	return;
     }
 
@@ -174,10 +176,12 @@ getEdgePoints(const ON_BrepTrim &trim,
 }
 
 std::map<double, BrepTrimPoint *> *
-getEdgePoints(ON_BrepTrim &trim,
-	      fastf_t max_dist,
-	      const struct rt_tess_tol *ttol,
-	      const struct bn_tol *tol)
+getEdgePoints(
+	ON_BrepEdge *e,
+	ON_BrepTrim &trim,
+	fastf_t max_dist,
+	const struct rt_tess_tol *ttol,
+	const struct bn_tol *tol)
 {
     struct brep_cdt_tol cdt_tol = BREP_CDT_TOL_ZERO;
     std::map<double, BrepTrimPoint *> *param_points = NULL;
@@ -273,12 +277,12 @@ getEdgePoints(ON_BrepTrim &trim,
 	mbtp->t = mid_range;
 	(*param_points)[mbtp->t] = mbtp;
 
-	getEdgePoints(trim, sbtp, mbtp, &cdt_tol, *param_points);
-	getEdgePoints(trim, mbtp, ebtp, &cdt_tol, *param_points);
+	getEdgePoints(e, trim, sbtp, mbtp, &cdt_tol, *param_points);
+	getEdgePoints(e, trim, mbtp, ebtp, &cdt_tol, *param_points);
 
     } else {
 
-	getEdgePoints(trim, sbtp, ebtp, &cdt_tol, *param_points);
+	getEdgePoints(e, trim, sbtp, ebtp, &cdt_tol, *param_points);
 
     }
 
@@ -1052,7 +1056,7 @@ get_loop_sample_points(
 
     for (int lti = 0; lti < trim_count; lti++) {
 	ON_BrepTrim *trim = loop->Trim(lti);
-	//ON_BrepEdge *edge = trim->Edge();
+	ON_BrepEdge *edge = trim->Edge();
 
 	if (trim->m_type == ON_BrepTrim::singular) {
 	    BrepTrimPoint btp;
@@ -1087,7 +1091,7 @@ get_loop_sample_points(
 	}
 
 	if (!trim->m_trim_user.p) {
-	    (void)getEdgePoints(*trim, max_dist, ttol, tol);
+	    (void)getEdgePoints(edge, *trim, max_dist, ttol, tol);
 	    //bu_log("Initialized trim->m_trim_user.p: Trim %d (associated with Edge %d) point count: %zd\n", trim->m_trim_index, trim->Edge()->m_edge_index, m->size());
 	}
 	if (trim->m_trim_user.p) {
