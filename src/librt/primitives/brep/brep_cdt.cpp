@@ -175,8 +175,7 @@ std::map<double, ON_3dPoint *> *
 getEdgePoints(ON_BrepTrim &trim,
 	      fastf_t max_dist,
 	      const struct rt_tess_tol *ttol,
-	      const struct bn_tol *tol,
-	      const struct rt_view_info *UNUSED(info))
+	      const struct bn_tol *tol)
 {
     struct brep_cdt_tol cdt_tol = BREP_CDT_TOL_ZERO;
     std::map<double, ON_3dPoint *> *param_points = NULL;
@@ -478,7 +477,6 @@ void
 getSurfacePoints(const ON_BrepFace &face,
 		 const struct rt_tess_tol *ttol,
 		 const struct bn_tol *tol,
-		 const struct rt_view_info *UNUSED(info),
 		 ON_2dPointArray &on_surf_points)
 {
     double surface_width, surface_height;
@@ -743,8 +741,7 @@ getUVCurveSamples(const ON_Surface *surf,
 		  const ON_Curve *curve,
 		  fastf_t max_dist,
 		  const struct rt_tess_tol *ttol,
-		  const struct bn_tol *tol,
-		  const struct rt_view_info *UNUSED(info))
+		  const struct bn_tol *tol)
 {
     fastf_t min_dist, within_dist, cos_within_ang;
 
@@ -1029,8 +1026,7 @@ get_loop_sample_points(
 	const ON_BrepLoop *loop,
 	fastf_t max_dist,
 	const struct rt_tess_tol *ttol,
-	const struct bn_tol *tol,
-	const struct rt_view_info *info)
+	const struct bn_tol *tol)
 {
     int trim_count = loop->TrimCount();
 
@@ -1071,8 +1067,7 @@ get_loop_sample_points(
 	}
 
 	if (!trim->m_trim_user.p) {
-	    //std::map<double, ON_3dPoint *> *m = getEdgePoints(*trim, max_dist, ttol, tol, info);
-	    (void)getEdgePoints(*trim, max_dist, ttol, tol, info);
+	    (void)getEdgePoints(*trim, max_dist, ttol, tol);
 	    //bu_log("Initialized trim->m_trim_user.p: Trim %d (associated with Edge %d) point count: %zd\n", trim->m_trim_index, trim->Edge()->m_edge_index, m->size());
 	}
 	if (trim->m_trim_user.p) {
@@ -1183,7 +1178,6 @@ CloseOpenLoops(
 	const ON_BrepFace &face,
 	const struct rt_tess_tol *ttol,
 	const struct bn_tol *tol,
-	const struct rt_view_info *info,
 	ON_SimpleArray<BrepTrimPoint> *brep_loop_points,
 	double same_point_tolerance)
 {
@@ -1214,7 +1208,7 @@ CloseOpenLoops(
 				if (IsAtSeam(s, rbrep_loop_begin, same_point_tolerance) && IsAtSeam(s, rbrep_loop_end, same_point_tolerance)) {
 				    double t0, t1;
 				    ON_LineCurve line1(brep_loop_end, rbrep_loop_begin);
-				    std::map<double, ON_3dPoint *> *linepoints3d = getUVCurveSamples(s, &line1, 1000.0, ttol, tol, info);
+				    std::map<double, ON_3dPoint *> *linepoints3d = getUVCurveSamples(s, &line1, 1000.0, ttol, tol);
 				    bridgePoints.push_back(linepoints3d);
 				    line1.GetDomain(&t0, &t1);
 				    std::map<double, ON_3dPoint*>::const_iterator i;
@@ -1237,7 +1231,7 @@ CloseOpenLoops(
 					brep_loop_points[li].Append(brep_loop_points[rli][j]);
 				    }
 				    ON_LineCurve line2(rbrep_loop_end, brep_loop_begin);
-				    linepoints3d = getUVCurveSamples(s, &line2, 1000.0, ttol, tol, info);
+				    linepoints3d = getUVCurveSamples(s, &line2, 1000.0, ttol, tol);
 				    bridgePoints.push_back(linepoints3d);
 				    line2.GetDomain(&t0, &t1);
 
@@ -1275,7 +1269,7 @@ CloseOpenLoops(
 				    ON_2dPoint p = brep_loop_end;
 				    p.y = v.m_t[0];
 				    ON_LineCurve line1(brep_loop_end, p);
-				    std::map<double, ON_3dPoint *> *linepoints3d = getUVCurveSamples(s, &line1, 1000.0, ttol, tol, info);
+				    std::map<double, ON_3dPoint *> *linepoints3d = getUVCurveSamples(s, &line1, 1000.0, ttol, tol);
 				    bridgePoints.push_back(linepoints3d);
 				    line1.GetDomain(&t0, &t1);
 				    std::map<double, ON_3dPoint*>::const_iterator i;
@@ -1296,7 +1290,7 @@ CloseOpenLoops(
 				    line1.SetStartPoint(p);
 				    p.x = u.m_t[1];
 				    line1.SetEndPoint(p);
-				    linepoints3d = getUVCurveSamples(s, &line1, 1000.0, ttol, tol, info);
+				    linepoints3d = getUVCurveSamples(s, &line1, 1000.0, ttol, tol);
 				    bridgePoints.push_back(linepoints3d);
 				    line1.GetDomain(&t0, &t1);
 				    for (i = linepoints3d->begin();
@@ -1315,7 +1309,7 @@ CloseOpenLoops(
 				    }
 				    line1.SetStartPoint(p);
 				    line1.SetEndPoint(brep_loop_begin);
-				    linepoints3d = getUVCurveSamples(s, &line1, 1000.0, ttol, tol, info);
+				    linepoints3d = getUVCurveSamples(s, &line1, 1000.0, ttol, tol);
 				    bridgePoints.push_back(linepoints3d);
 				    line1.GetDomain(&t0, &t1);
 				    for (i = linepoints3d->begin();
@@ -1348,7 +1342,7 @@ CloseOpenLoops(
 				    ON_2dPoint p = brep_loop_end;
 				    p.y = v.m_t[1];
 				    ON_LineCurve line1(brep_loop_end, p);
-				    std::map<double, ON_3dPoint *> *linepoints3d = getUVCurveSamples(s, &line1, 1000.0, ttol, tol, info);
+				    std::map<double, ON_3dPoint *> *linepoints3d = getUVCurveSamples(s, &line1, 1000.0, ttol, tol);
 				    bridgePoints.push_back(linepoints3d);
 				    line1.GetDomain(&t0, &t1);
 				    std::map<double, ON_3dPoint*>::const_iterator i;
@@ -1369,7 +1363,7 @@ CloseOpenLoops(
 				    line1.SetStartPoint(p);
 				    p.x = u.m_t[0];
 				    line1.SetEndPoint(p);
-				    linepoints3d = getUVCurveSamples(s, &line1, 1000.0, ttol, tol, info);
+				    linepoints3d = getUVCurveSamples(s, &line1, 1000.0, ttol, tol);
 				    bridgePoints.push_back(linepoints3d);
 				    line1.GetDomain(&t0, &t1);
 				    for (i = linepoints3d->begin();
@@ -1388,7 +1382,7 @@ CloseOpenLoops(
 				    }
 				    line1.SetStartPoint(p);
 				    line1.SetEndPoint(brep_loop_begin);
-				    linepoints3d = getUVCurveSamples(s, &line1, 1000.0, ttol, tol, info);
+				    linepoints3d = getUVCurveSamples(s, &line1, 1000.0, ttol, tol);
 				    bridgePoints.push_back(linepoints3d);
 				    line1.GetDomain(&t0, &t1);
 				    for (i = linepoints3d->begin();
@@ -1577,13 +1571,12 @@ ShiftInnerLoops(
 }
 
 
-static void
+void
 PerformClosedSurfaceChecks(
 	const ON_Surface *s,
 	const ON_BrepFace &face,
 	const struct rt_tess_tol *ttol,
 	const struct bn_tol *tol,
-	const struct rt_view_info *info,
 	ON_SimpleArray<BrepTrimPoint> *brep_loop_points,
 	double same_point_tolerance)
 {
@@ -1597,7 +1590,7 @@ PerformClosedSurfaceChecks(
     ShiftLoopsThatStraddleSeam(s, face, brep_loop_points, same_point_tolerance);
 
     // process through closing open loops that begin and end on closed seam
-    CloseOpenLoops(s, face, ttol, tol, info, brep_loop_points, same_point_tolerance);
+    CloseOpenLoops(s, face, ttol, tol, brep_loop_points, same_point_tolerance);
 
     // process through to make sure inner hole loops are actually inside of outer polygon
     // need to make sure that any hole polygons are properly shifted over correct closed seams
@@ -1610,17 +1603,16 @@ poly2tri_CDT(struct bu_list *vhead,
 	     ON_BrepFace &face,
 	     const struct rt_tess_tol *ttol,
 	     const struct bn_tol *tol,
-	     const struct rt_view_info *info,
+	     const struct rt_view_info *UNUSED(info),
 	     bool watertight,
 	     int plottype,
 	     int num_points)
 {
-    ON_RTree rt_trims, rt_points;
+    ON_RTree rt_trims;
     ON_2dPointArray on_surf_points;
     const ON_Surface *s = face.SurfaceOf();
     double surface_width, surface_height;
     p2t::CDT* cdt = NULL;
-    ON_BoundingBox loop_bb;
     int fi = face.m_face_index;
 
     fastf_t max_dist = 0.0;
@@ -1635,8 +1627,6 @@ poly2tri_CDT(struct bu_list *vhead,
     std::map<p2t::Point *, ON_3dPoint *> *pointmap = new std::map<p2t::Point *, ON_3dPoint *>();
 
     int loop_cnt = face.LoopCount();
-    //ON_2dPoint loop_start = ON_2dVector::UnsetVector;
-    //ON_2dPoint loop_end = ON_2dVector::UnsetVector;
     ON_2dPointArray on_loop_points;
     ON_SimpleArray<BrepTrimPoint> *brep_loop_points = new ON_SimpleArray<BrepTrimPoint>[loop_cnt];
     std::vector<p2t::Point*> polyline;
@@ -1644,12 +1634,12 @@ poly2tri_CDT(struct bu_list *vhead,
     // first simply load loop point samples
     for (int li = 0; li < loop_cnt; li++) {
 	const ON_BrepLoop *loop = face.Loop(li);
-	get_loop_sample_points(&brep_loop_points[li], face, loop, max_dist, ttol, tol, info);
+	get_loop_sample_points(&brep_loop_points[li], face, loop, max_dist, ttol, tol);
     }
 
     std::list<std::map<double, ON_3dPoint *> *> bridgePoints;
     if (s->IsClosed(0) || s->IsClosed(1)) {
-	PerformClosedSurfaceChecks(s, face, ttol, tol, info, brep_loop_points, BREP_SAME_POINT_TOLERANCE);
+	PerformClosedSurfaceChecks(s, face, ttol, tol, brep_loop_points, BREP_SAME_POINT_TOLERANCE);
 
     }
     // process through loops building polygons.
@@ -1694,7 +1684,7 @@ poly2tri_CDT(struct bu_list *vhead,
 	return;
     }
 
-    getSurfacePoints(face, ttol, tol, info, on_surf_points);
+    getSurfacePoints(face, ttol, tol, on_surf_points);
 
     for (int i = 0; i < on_surf_points.Count(); i++) {
 	ON_SimpleArray<void*> results;
