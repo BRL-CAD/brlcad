@@ -106,187 +106,424 @@ CDT_Tol_Set(struct brep_cdt_tol *cdt, double dist, fastf_t md, const struct rt_t
 
 void
 getEdgePoints(
-	ON_BrepEdge *e,
+	ON_BrepEdge *edge,
+	ON_NurbsCurve *nc,
 	const ON_BrepTrim &trim,
-	BrepTrimPoint *sbtp,
-	BrepTrimPoint *ebtp,
+	BrepTrimPoint *sbtp1,
+	BrepTrimPoint *ebtp1,
+	BrepTrimPoint *sbtp2,
+	BrepTrimPoint *ebtp2,
 	const struct brep_cdt_tol *cdt_tol,
-	std::map<double, BrepTrimPoint *> &param_points)
+	std::map<double, BrepTrimPoint *> *trim1_param_points,
+	std::map<double, BrepTrimPoint *> *trim2_param_points,
+	std::vector<ON_3dPoint *> *w3dpnts
+	)
 {
-    const ON_Surface *s = trim.SurfaceOf();
-    ON_Interval range = trim.Domain();
-    ON_3dPoint mid_2d = ON_3dPoint::UnsetPoint;
-    ON_3dPoint mid_3d = ON_3dPoint::UnsetPoint;
-    ON_3dVector mid_norm = ON_3dVector::UnsetVector;
-    ON_3dVector mid_tang = ON_3dVector::UnsetVector;
-    fastf_t t = (sbtp->t + ebtp->t) / 2.0;
+    ON_3dPoint tmp1, tmp2;
+    ON_BrepTrim *trim2 = (edge->Trim(0)->m_trim_index == trim.m_trim_index) ? edge->Trim(1) : edge->Trim(0);
+    const ON_Surface *s1 = trim.SurfaceOf();
+    const ON_Surface *s2 = trim2->SurfaceOf();
+    fastf_t t1 = (sbtp1->t + ebtp1->t) / 2.0;
+    fastf_t t2 = (sbtp2->t + ebtp2->t) / 2.0;
+    ON_3dPoint trim1_mid_2d = trim.PointAt(t1);
+    ON_3dPoint trim2_mid_2d = trim2->PointAt(t2);
+    fastf_t emid = (sbtp1->e + ebtp1->e) / 2.0;
 
-    int etrim = (trim.EvTangent(t, mid_2d, mid_tang) && surface_EvNormal(s, mid_2d.x, mid_2d.y, mid_3d, mid_norm)) ? 1 : 0;
-    int leval = 0;
+    ON_3dVector trim1_mid_norm = ON_3dVector::UnsetVector;
+    ON_3dVector trim2_mid_norm = ON_3dVector::UnsetVector;
+    ON_3dPoint edge_mid_3d = ON_3dPoint::UnsetPoint;
+    ON_3dVector edge_mid_tang = ON_3dVector::UnsetVector;
 
-    if (etrim) {
-	ON_Line line3d(*(sbtp->p3d), *(ebtp->p3d));
-	double dist3d = mid_3d.DistanceTo(line3d.ClosestPointTo(mid_3d));
-	int leval_1 = 0;
-	// TODO - I know this is less efficient than doing the tests in the if
-	// statement because we can't short-circuit in the true OR case, but
-	// leaving it this way temporarily for readability
-	leval += (line3d.Length() > cdt_tol->max_dist) ? 1 : 0;
-	leval += (dist3d > (cdt_tol->within_dist + ON_ZERO_TOLERANCE)) ? 1 : 0;
-	leval_1 += ((sbtp->tangent * ebtp->tangent) < cdt_tol->cos_within_ang - ON_ZERO_TOLERANCE) ? 1 : 0;
-	leval_1 += ((sbtp->normal * ebtp->normal) < cdt_tol->cos_within_ang - ON_ZERO_TOLERANCE) ? 1 : 0;
-	leval += (leval_1 && (dist3d > cdt_tol->min_dist + ON_ZERO_TOLERANCE)) ? 1 : 0;
+    bu_log("Edge: %d (%f -> %f)\n", edge->m_edge_index, sbtp1->e, ebtp1->e);
+    bu_log("Trim: %d (%f -> %f) %d\n", trim.m_trim_index, sbtp1->t, ebtp1->t, trim.m_bRev3d);
+    bu_log("Trim2: %d (%f -> %f) %d\n", trim2->m_trim_index, sbtp2->t, ebtp2->t, trim2->m_bRev3d);
+
+    if (!(nc->EvTangent(emid, edge_mid_3d, edge_mid_tang))) {
+	// EvTangent call failed, get 3d point
+	edge_mid_3d = nc->PointAt(emid);
+	// If the edge curve failed, try to average tangents from trims
+	ON_3dVector trim1_mid_tang(0.0, 0.0, 0.0);
+	ON_3dVector trim2_mid_tang(0.0, 0.0, 0.0);
+	int evals = 0;
+	evals += (trim.EvTangent(t1, tmp1, trim1_mid_tang)) ? 1 : 0;
+	evals += (trim2->EvTangent(t2, tmp2, trim2_mid_tang)) ? 1 : 0;
+	if (evals == 2) {
+	    edge_mid_tang = (trim1_mid_tang + trim2_mid_tang) / 2;
+	} else {
+	    edge_mid_tang = ON_3dVector::UnsetVector;
+	}
     }
 
-    if (etrim && leval) {
-	BrepTrimPoint *nbtp = new BrepTrimPoint;
-	nbtp->p3d = new ON_3dPoint(mid_3d);
-	nbtp->p2d = mid_2d;
-	nbtp->normal = mid_norm;
-	nbtp->tangent = mid_tang;
-	nbtp->t = t;
-	param_points[nbtp->t] = nbtp;
-	getEdgePoints(e, trim, sbtp, nbtp, cdt_tol, param_points);
-	getEdgePoints(e, trim, nbtp, ebtp, cdt_tol, param_points);
+    int dosplit = 0;
+
+    ON_Line line3d(*(sbtp1->p3d), *(ebtp1->p3d));
+    double dist3d = edge_mid_3d.DistanceTo(line3d.ClosestPointTo(edge_mid_3d));
+    bu_log("line3d.Length: %f\ndist3d: %f\n", line3d.Length(), dist3d);
+    dosplit += (line3d.Length() > cdt_tol->max_dist) ? 1 : 0;
+    dosplit += (dist3d > (cdt_tol->within_dist + ON_ZERO_TOLERANCE)) ? 1 : 0;
+    
+    bu_log("Trim: %d dosplit(1): %d\n", trim.m_trim_index, dosplit);
+
+    if (!dosplit) {
+	int leval_1 = ((sbtp1->tangent * ebtp1->tangent) < cdt_tol->cos_within_ang - ON_ZERO_TOLERANCE) ? 1 : 0;
+	dosplit += (leval_1 && (dist3d > cdt_tol->min_dist + ON_ZERO_TOLERANCE)) ? 1 : 0;
+	bu_log("Trim: %d dosplit(2): %d\n", trim.m_trim_index, dosplit);
+    }
+
+    if (!dosplit && sbtp1->normal != ON_3dVector::UnsetVector && ebtp1->normal != ON_3dVector::UnsetVector) {
+	dosplit += ((sbtp1->normal * ebtp1->normal) < cdt_tol->cos_within_ang - ON_ZERO_TOLERANCE) ? 1 : 0;
+	bu_log("Trim: %d dosplit(3): %d\n", trim.m_trim_index, dosplit);
+    }
+
+    if (!dosplit && sbtp2->normal != ON_3dVector::UnsetVector && ebtp2->normal != ON_3dVector::UnsetVector) {
+	dosplit += ((sbtp2->normal * ebtp2->normal) < cdt_tol->cos_within_ang - ON_ZERO_TOLERANCE) ? 1 : 0;
+	bu_log("Trim: %d dosplit(4): %d\n", trim.m_trim_index, dosplit);
+    }
+
+    if (dosplit) {
+
+	if (!surface_EvNormal(s1, trim1_mid_2d.x, trim1_mid_2d.y, tmp1, trim1_mid_norm)) {
+	    trim1_mid_norm = ON_3dVector::UnsetVector;
+	}
+
+	if (!surface_EvNormal(s2, trim2_mid_2d.x, trim2_mid_2d.y, tmp2, trim2_mid_norm)) {
+	    trim2_mid_norm = ON_3dVector::UnsetVector;
+	}
+
+	ON_3dPoint *npt = new ON_3dPoint(edge_mid_3d);
+	w3dpnts->push_back(npt);
+
+	BrepTrimPoint *nbtp1 = new BrepTrimPoint;
+	nbtp1->p3d = npt;
+	nbtp1->p2d = trim1_mid_2d;
+	nbtp1->normal = trim1_mid_norm;
+	nbtp1->tangent = edge_mid_tang;
+	nbtp1->t = t1;
+	(*trim1_param_points)[nbtp1->t] = nbtp1;
+
+	BrepTrimPoint *nbtp2 = new BrepTrimPoint;
+	nbtp2->p3d = npt;
+	nbtp2->p2d = trim2_mid_2d;
+	nbtp2->normal = trim2_mid_norm;
+	nbtp2->tangent = edge_mid_tang;
+	nbtp2->t = t2;
+	(*trim2_param_points)[nbtp2->t] = nbtp2;
+
+	getEdgePoints(edge, nc, trim, sbtp1, nbtp1, sbtp2, nbtp2, cdt_tol, trim1_param_points, trim2_param_points, w3dpnts);
+	getEdgePoints(edge, nc, trim, nbtp1, ebtp1, nbtp2, ebtp2, cdt_tol, trim1_param_points, trim2_param_points, w3dpnts);
 	return;
     }
 
     int udir = 0;
     int vdir = 0;
-    ON_2dPoint start = sbtp->p2d;
-    ON_2dPoint end = ebtp->p2d;
+    double trim1_seam_t = 0.0;
+    double trim2_seam_t = 0.0;
+    ON_2dPoint trim1_start = sbtp1->p2d;
+    ON_2dPoint trim1_end = ebtp1->p2d;
+    ON_2dPoint trim2_start = sbtp2->p2d;
+    ON_2dPoint trim2_end = ebtp2->p2d;
+    ON_2dPoint trim1_seam_2d, trim2_seam_2d;
+    ON_3dPoint trim1_seam_3d, trim2_seam_3d;
+    int t1_dosplit = 0;
+    int t2_dosplit = 0;
 
-    if (ConsecutivePointsCrossClosedSeam(s, start, end, udir, vdir, BREP_SAME_POINT_TOLERANCE)) {
-	double seam_t;
+    if (ConsecutivePointsCrossClosedSeam(s1, trim1_start, trim1_end, udir, vdir, BREP_SAME_POINT_TOLERANCE)) {
 	ON_2dPoint from = ON_2dPoint::UnsetPoint;
 	ON_2dPoint to = ON_2dPoint::UnsetPoint;
-	if (FindTrimSeamCrossing(trim, sbtp->t, ebtp->t, seam_t, from, to, BREP_SAME_POINT_TOLERANCE)) {
-	    ON_2dPoint seam_2d = trim.PointAt(seam_t);
-	    ON_3dPoint seam_3d = s->PointAt(seam_2d.x, seam_2d.y);
-	    if (param_points.find(seam_t) == param_points.end()) {
-		BrepTrimPoint *nbtp = new BrepTrimPoint;
-		nbtp->p3d = new ON_3dPoint(seam_3d);
-		nbtp->p2d = seam_2d;
-		// Note - by this point we shouldn't need tangents and normals...
-		nbtp->t = seam_t;
-		param_points[nbtp->t] = nbtp;
+	if (FindTrimSeamCrossing(trim, sbtp1->t, ebtp1->t, trim1_seam_t, from, to, BREP_SAME_POINT_TOLERANCE)) {
+	    trim1_seam_2d = trim.PointAt(trim1_seam_t);
+	    trim1_seam_3d = s1->PointAt(trim1_seam_2d.x, trim1_seam_2d.y);
+	    if (trim1_param_points->find(trim1_seam_t) == trim1_param_points->end()) {
+		t1_dosplit = 1;
 	    }
 	}
     }
+
+    if (ConsecutivePointsCrossClosedSeam(s2, trim2_start, trim2_end, udir, vdir, BREP_SAME_POINT_TOLERANCE)) {
+	ON_2dPoint from = ON_2dPoint::UnsetPoint;
+	ON_2dPoint to = ON_2dPoint::UnsetPoint;
+	if (FindTrimSeamCrossing(trim, sbtp2->t, ebtp2->t, trim2_seam_t, from, to, BREP_SAME_POINT_TOLERANCE)) {
+	    trim2_seam_2d = trim2->PointAt(trim2_seam_t);
+	    trim2_seam_3d = s2->PointAt(trim2_seam_2d.x, trim2_seam_2d.y);
+	    if (trim2_param_points->find(trim2_seam_t) == trim2_param_points->end()) {
+		t2_dosplit = 1;
+	    }
+	}
+    }
+
+    if (t1_dosplit || t2_dosplit) {
+	ON_3dPoint *nsptp;
+	if (t1_dosplit && t2_dosplit) {
+	    ON_3dPoint nspt = (trim1_seam_3d + trim2_seam_3d)/2;
+	    nsptp = new ON_3dPoint(nspt);
+	} else {
+	    if (!t1_dosplit) {
+		trim1_seam_t = (sbtp1->t + ebtp1->t)/2;
+		trim1_seam_2d = trim.PointAt(trim1_seam_t);
+		nsptp = new ON_3dPoint(trim2_seam_3d);
+	    }
+	    if (!t2_dosplit) {
+		trim2_seam_t = (sbtp2->t + ebtp2->t)/2;
+		trim2_seam_2d = trim2->PointAt(trim2_seam_t);
+		nsptp = new ON_3dPoint(trim1_seam_3d);
+	    }
+	}
+	w3dpnts->push_back(nsptp);
+
+	// Note - by this point we shouldn't need tangents and normals...
+	BrepTrimPoint *nbtp1 = new BrepTrimPoint;
+	nbtp1->p3d = nsptp;
+	nbtp1->p2d = trim1_seam_2d;
+	nbtp1->t = trim1_seam_t;
+	(*trim1_param_points)[nbtp1->t] = nbtp1;
+
+	BrepTrimPoint *nbtp2 = new BrepTrimPoint;
+	nbtp2->p3d = nsptp;
+	nbtp2->p2d = trim2_seam_2d;
+	nbtp2->t = trim2_seam_t;
+	(*trim2_param_points)[nbtp2->t] = nbtp2;
+    }
+
 }
 
 std::map<double, BrepTrimPoint *> *
 getEdgePoints(
-	ON_BrepEdge *e,
+	ON_BrepEdge *edge,
 	ON_BrepTrim &trim,
 	fastf_t max_dist,
 	const struct rt_tess_tol *ttol,
-	const struct bn_tol *tol)
+	const struct bn_tol *tol,
+	std::map<int, ON_3dPoint *> *vert_pnts,
+	std::vector<ON_3dPoint *> *w3dpnts
+	)
 {
     struct brep_cdt_tol cdt_tol = BREP_CDT_TOL_ZERO;
-    std::map<double, BrepTrimPoint *> *param_points = NULL;
+    std::map<double, BrepTrimPoint *> *trim1_param_points = NULL;
+    std::map<double, BrepTrimPoint *> *trim2_param_points = NULL;
+
+    // Get the other trim
+    // TODO - this won't work if we don't have a 1->2 edge to trims relationship - in that
+    // case we'll have to split up the edge and find the matching sub-trims (possibly splitting
+    // those as well if they don't line up at shared 3D points.)
+    ON_BrepTrim *trim2 = (edge->Trim(0)->m_trim_index == trim.m_trim_index) ? edge->Trim(1) : edge->Trim(0);
 
     double dist = 1000.0;
 
-    const ON_Surface *s = trim.SurfaceOf();
+    const ON_Surface *s1 = trim.SurfaceOf();
+    const ON_Surface *s2 = trim2->SurfaceOf();
 
     bool bGrowBox = false;
     ON_3dPoint min, max;
 
-    /* If we've already got the points, just return them */
-    if (trim.m_trim_user.p != NULL) {
-	param_points = (std::map<double, BrepTrimPoint *> *) trim.m_trim_user.p;
-	return param_points;
+    /* If we're out of sync, bail - something is very very wrong */
+    if (trim.m_trim_user.p != NULL && trim2->m_trim_user.p == NULL) {
+	return NULL;
+    }
+    if (trim.m_trim_user.p == NULL && trim2->m_trim_user.p != NULL) {
+	return NULL;
     }
 
-    /* Establish tolerances */
+
+    /* If we've already got the points, just return them */
+    if (trim.m_trim_user.p != NULL) {
+	trim1_param_points = (std::map<double, BrepTrimPoint *> *) trim.m_trim_user.p;
+	return trim1_param_points;
+    }
+
+    /* Establish tolerances (TODO - get from edge curve...) */
     if (trim.GetBoundingBox(min, max, bGrowBox)) {
 	dist = DIST_PT_PT(min, max);
     }
     CDT_Tol_Set(&cdt_tol, dist, max_dist, ttol, tol);
 
     /* Begin point collection */
+    ON_3dPoint tmp1, tmp2;
     int evals = 0;
-    ON_3dPoint start_2d(0.0, 0.0, 0.0);
-    ON_3dPoint start_3d(0.0, 0.0, 0.0);
-    ON_3dVector start_tang(0.0, 0.0, 0.0);
-    ON_3dVector start_norm(0.0, 0.0, 0.0);
-    ON_3dPoint end_2d(0.0, 0.0, 0.0);
-    ON_3dPoint end_3d(0.0, 0.0, 0.0);
-    ON_3dVector end_tang(0.0, 0.0, 0.0);
-    ON_3dVector end_norm(0.0, 0.0, 0.0);
+    ON_3dPoint *edge_start_3d, *edge_end_3d = NULL;
+    ON_3dVector edge_start_tang, edge_end_tang = ON_3dVector::UnsetVector;
+    ON_3dPoint trim1_start_2d, trim1_end_2d = ON_3dPoint::UnsetPoint;
+    ON_3dVector trim1_start_tang, trim1_end_tang, trim1_start_normal, trim1_end_normal = ON_3dVector::UnsetVector;
+    ON_3dPoint trim2_start_2d, trim2_end_2d = ON_3dPoint::UnsetPoint;
+    ON_3dVector trim2_start_tang, trim2_end_tang, trim2_start_normal, trim2_end_normal = ON_3dVector::UnsetVector;
 
-    param_points = new std::map<double, BrepTrimPoint *>();
-    trim.m_trim_user.p = (void *) param_points;
-    ON_Interval range = trim.Domain();
-    if (s->IsClosed(0) || s->IsClosed(1)) {
+    trim1_param_points = new std::map<double, BrepTrimPoint *>();
+    trim.m_trim_user.p = (void *) trim1_param_points;
+    trim2_param_points = new std::map<double, BrepTrimPoint *>();
+    trim2->m_trim_user.p = (void *) trim2_param_points;
+
+    ON_Interval range1 = trim.Domain();
+    ON_Interval range2 = trim2->Domain();
+
+    // TODO - what is this for?
+    if (s1->IsClosed(0) || s1->IsClosed(1)) {
 	ON_BoundingBox trim_bbox = ON_BoundingBox::EmptyBoundingBox;
 	trim.GetBoundingBox(trim_bbox, false);
     }
-
-    evals += (trim.EvTangent(range.m_t[0], start_2d, start_tang)) ? 1 : 0;
-    evals += (trim.EvTangent(range.m_t[1], end_2d, end_tang)) ? 1 : 0;
-    evals += (surface_EvNormal(s, start_2d.x, start_2d.y, start_3d, start_norm)) ? 1 : 0;
-    evals += (surface_EvNormal(s, end_2d.x, end_2d.y, end_3d, end_norm)) ? 1 : 0;
-
-    if (evals != 4) {
-	start_2d = trim.PointAt(range.m_t[0]);
-	end_2d = trim.PointAt(range.m_t[1]);
-	start_3d = s->PointAt(start_2d.x,start_2d.y);
-	end_3d = s->PointAt(end_2d.x,end_2d.y);
-	evals = 4;
+    if (s2->IsClosed(0) || s2->IsClosed(1)) {
+	ON_BoundingBox trim_bbox2 = ON_BoundingBox::EmptyBoundingBox;
+	trim2->GetBoundingBox(trim_bbox2, false);
     }
 
-    BrepTrimPoint *sbtp = new BrepTrimPoint;
-    sbtp->p3d = new ON_3dPoint(start_3d);
-    sbtp->p2d = start_2d;
-    sbtp->tangent = start_tang;
-    sbtp->normal = start_norm;
-    sbtp->t = range.m_t[0];
-    (*param_points)[sbtp->t] = sbtp;
+    /* Normalize the domain of the curve to the ControlPolygonLength() of the
+     * NURBS form of the curve to attempt to minimize distortion in 3D to
+     * mirror what we do for the surfaces.  (GetSurfaceSize uses this under the
+     * hood for its estimates.)  */
+    const ON_Curve* crv = edge->EdgeCurveOf();
+    ON_NurbsCurve *nc = crv->NurbsCurve();
+    double cplen = nc->ControlPolygonLength();
+    nc->SetDomain(0.0, cplen);
+    ON_Interval erange = nc->Domain();
 
-    BrepTrimPoint *ebtp = new BrepTrimPoint;
-    ebtp->p3d = new ON_3dPoint(end_3d);
-    ebtp->p2d = end_2d;
-    ebtp->tangent = end_tang;
-    ebtp->normal = end_norm;
-    ebtp->t = range.m_t[1];
-    (*param_points)[ebtp->t] = ebtp;
+    /* For beginning and end of curve, we use vert points */
+    edge_start_3d = (*vert_pnts)[edge->Vertex(0)->m_vertex_index];
+    edge_end_3d = (*vert_pnts)[edge->Vertex(1)->m_vertex_index];
+
+    /* Populate the 2D points */
+    double st1 = (trim.m_bRev3d) ? range1.m_t[1] : range1.m_t[0];
+    double et1 = (trim.m_bRev3d) ? range1.m_t[0] : range1.m_t[1];
+    double st2 = (trim.m_bRev3d) ? range2.m_t[1] : range2.m_t[0];
+    double et2 = (trim.m_bRev3d) ? range2.m_t[0] : range2.m_t[1];
+    trim1_start_2d = trim.PointAt(st1);
+    trim1_end_2d = trim.PointAt(et1);
+    trim2_start_2d = trim2->PointAt(st2);
+    trim2_end_2d = trim2->PointAt(et2);
+
+    /* Get starting tangent from edge*/
+    if (!(nc->EvTangent(erange.m_t[0], tmp1, edge_start_tang))) {
+	// If the edge curve failed, average tangents from trims
+	evals = 0;
+	evals += (trim.EvTangent(st1, tmp1, trim1_start_tang)) ? 1 : 0;
+	evals += (trim2->EvTangent(st2, tmp2, trim2_start_tang)) ? 1 : 0;
+	if (evals == 2) {
+	    edge_start_tang = (trim1_start_tang + trim2_start_tang) / 2;
+	} else {
+	    edge_start_tang = ON_3dVector::UnsetVector;
+	}
+    }
+    /* Get ending tangent from edge*/
+    if (!(nc->EvTangent(erange.m_t[1], tmp2, edge_end_tang))) {
+	// If the edge curve failed, average tangents from trims
+	evals = 0;
+	evals += (trim.EvTangent(et1, tmp1, trim1_end_tang)) ? 1 : 0;
+	evals += (trim2->EvTangent(et2, tmp2, trim2_end_tang)) ? 1 : 0;
+	if (evals == 2) {
+	    edge_end_tang = (trim1_end_tang + trim2_end_tang) / 2;
+	} else {
+	    edge_end_tang = ON_3dVector::UnsetVector;
+	}
+    }
+
+    // Get the normals
+    evals = 0;
+    evals += (surface_EvNormal(s1, trim1_start_2d.x, trim1_start_2d.y, tmp1, trim1_start_normal)) ? 1 : 0;
+    evals += (surface_EvNormal(s1, trim1_end_2d.x, trim1_end_2d.y, tmp2, trim1_end_normal)) ? 1 : 0;
+    evals += (surface_EvNormal(s2, trim2_start_2d.x, trim2_start_2d.y, tmp1, trim2_start_normal)) ? 1 : 0;
+    evals += (surface_EvNormal(s2, trim2_end_2d.x, trim2_end_2d.y, tmp2, trim2_end_normal)) ? 1 : 0;
+
+    if (evals != 4) {
+	bu_log("problem with normal evals\n");
+    }
+
+    /* Start and end points for both trims can now be defined */
+    BrepTrimPoint *sbtp1 = new BrepTrimPoint;
+    sbtp1->p3d = edge_start_3d;
+    sbtp1->p2d = trim1_start_2d;
+    sbtp1->tangent = edge_start_tang;
+    sbtp1->normal = trim1_start_normal;
+    sbtp1->t = st1;
+    sbtp1->e = erange.m_t[0];
+    (*trim1_param_points)[sbtp1->t] = sbtp1;
+
+    BrepTrimPoint *ebtp1 = new BrepTrimPoint;
+    ebtp1->p3d = edge_end_3d;
+    ebtp1->p2d = trim1_end_2d;
+    ebtp1->tangent = edge_end_tang;
+    ebtp1->normal = trim1_end_normal;
+    ebtp1->t = et1;
+    ebtp1->e = erange.m_t[1];
+    (*trim1_param_points)[ebtp1->t] = ebtp1;
+
+    BrepTrimPoint *sbtp2 = new BrepTrimPoint;
+    sbtp2->p3d = edge_start_3d;
+    sbtp2->p2d = trim2_start_2d;
+    sbtp2->tangent = edge_start_tang;
+    sbtp2->normal = trim2_start_normal;
+    sbtp2->t = st2;
+    sbtp2->e = erange.m_t[0];
+    (*trim2_param_points)[sbtp2->t] = sbtp2;
+
+    BrepTrimPoint *ebtp2 = new BrepTrimPoint;
+    ebtp2->p3d = edge_end_3d;
+    ebtp2->p2d = trim2_end_2d;
+    ebtp2->tangent = edge_end_tang;
+    ebtp2->normal = trim2_end_normal;
+    ebtp2->t = et2;
+    ebtp2->e = erange.m_t[1];
+    (*trim2_param_points)[ebtp2->t] = ebtp2;
 
 
-    if (trim.IsClosed()) {
+    if (trim.IsClosed() || trim2->IsClosed()) {
 
-	double mid_range = (range.m_t[0] + range.m_t[1]) / 2.0;
-	ON_3dPoint mid_2d(0.0, 0.0, 0.0);
-	ON_3dPoint mid_3d(0.0, 0.0, 0.0);
-	ON_3dVector mid_tang(0.0, 0.0, 0.0);
-	ON_3dVector mid_norm(0.0, 0.0, 0.0);
+	double trim1_mid_range = (st1 + et1) / 2.0;
+	double trim2_mid_range = (st2 + et2) / 2.0;
+	double edge_mid_range = (erange.m_t[0] + erange.m_t[1]) / 2.0;
+	ON_3dVector edge_mid_tang, trim1_mid_norm, trim2_mid_norm = ON_3dVector::UnsetVector;
+	ON_3dPoint edge_mid_3d = ON_3dPoint::UnsetPoint;
 
-	evals += (trim.EvTangent(mid_range, mid_2d, mid_tang)) ? 1 : 0;
-	evals += (surface_EvNormal(s, mid_2d.x, mid_2d.y, mid_3d, mid_norm)) ? 1 : 0;
-	if (evals != 6) {
-	    mid_2d = trim.PointAt(mid_range);
-	    mid_3d = s->PointAt(mid_2d.x, mid_2d.y);
+	if (!(nc->EvTangent(edge_mid_range, edge_mid_3d, edge_mid_tang))) {
+	    // EvTangent call failed, get 3d point
+	    edge_mid_3d = nc->PointAt(edge_mid_range);
+	    // If the edge curve failed, try to average tangents from trims
+	    ON_3dVector trim1_mid_tang(0.0, 0.0, 0.0);
+	    ON_3dVector trim2_mid_tang(0.0, 0.0, 0.0);
+	    evals = 0;
+	    evals += (trim.EvTangent(trim1_mid_range, tmp1, trim1_mid_tang)) ? 1 : 0;
+	    evals += (trim2->EvTangent(trim2_mid_range, tmp2, trim2_mid_tang)) ? 1 : 0;
+	    if (evals == 2) {
+		edge_mid_tang = (trim1_start_tang + trim2_start_tang) / 2;
+	    } else {
+		edge_mid_tang = ON_3dVector::UnsetVector;
+	    }
 	}
 
-	BrepTrimPoint *mbtp = new BrepTrimPoint;
-	mbtp->p3d = new ON_3dPoint(mid_3d);
-	mbtp->p2d = mid_2d;
-	mbtp->tangent = mid_tang;
-	mbtp->normal = mid_norm;
-	mbtp->t = mid_range;
-	(*param_points)[mbtp->t] = mbtp;
+	evals = 0;
+	ON_3dPoint trim1_mid_2d = trim.PointAt(trim1_mid_range);
+	ON_3dPoint trim2_mid_2d = trim2->PointAt(trim2_mid_range);
+	evals += (surface_EvNormal(s1, trim1_mid_2d.x, trim1_mid_2d.y, tmp1, trim1_mid_norm)) ? 1 : 0;
+	evals += (surface_EvNormal(s2, trim2_mid_2d.x, trim2_mid_2d.y, tmp2, trim2_mid_norm)) ? 1 : 0;
+	if (evals != 2) {
+	    bu_log("problem with mid normal evals\n");
+	}
 
-	getEdgePoints(e, trim, sbtp, mbtp, &cdt_tol, *param_points);
-	getEdgePoints(e, trim, mbtp, ebtp, &cdt_tol, *param_points);
+	ON_3dPoint *nmp = new ON_3dPoint(edge_mid_3d);
+	w3dpnts->push_back(nmp);
+
+	BrepTrimPoint *mbtp1 = new BrepTrimPoint;
+	mbtp1->p3d = nmp;
+	mbtp1->p2d = trim1_mid_2d;
+	mbtp1->tangent = edge_mid_tang;
+	mbtp1->normal = trim1_mid_norm;
+	mbtp1->t = trim1_mid_range;
+	(*trim1_param_points)[mbtp1->t] = mbtp1;
+
+	BrepTrimPoint *mbtp2 = new BrepTrimPoint;
+	mbtp2->p3d = nmp;
+	mbtp2->p2d = trim2_mid_2d;
+	mbtp2->tangent = edge_mid_tang;
+	mbtp2->normal = trim2_mid_norm;
+	mbtp2->t = trim2_mid_range;
+	(*trim2_param_points)[mbtp2->t] = mbtp2;
+
+	getEdgePoints(edge, nc, trim, sbtp1, mbtp1, sbtp2, mbtp2, &cdt_tol, trim1_param_points, trim2_param_points, w3dpnts);
+	getEdgePoints(edge, nc, trim, mbtp1, ebtp1, mbtp2, ebtp2, &cdt_tol, trim1_param_points, trim2_param_points, w3dpnts);
 
     } else {
 
-	getEdgePoints(e, trim, sbtp, ebtp, &cdt_tol, *param_points);
+	getEdgePoints(edge, nc, trim, sbtp1, ebtp1, sbtp2, ebtp2, &cdt_tol, trim1_param_points, trim2_param_points, w3dpnts);
 
     }
 
-    return param_points;
+    return trim1_param_points;
 }
 
 void
@@ -1050,7 +1287,10 @@ get_loop_sample_points(
 	const ON_BrepLoop *loop,
 	fastf_t max_dist,
 	const struct rt_tess_tol *ttol,
-	const struct bn_tol *tol)
+	const struct bn_tol *tol,
+	std::map<int, ON_3dPoint *> *vert_pnts,
+	std::vector<ON_3dPoint *> *w3dpnts
+	)
 {
     int trim_count = loop->TrimCount();
 
@@ -1091,7 +1331,7 @@ get_loop_sample_points(
 	}
 
 	if (!trim->m_trim_user.p) {
-	    (void)getEdgePoints(edge, *trim, max_dist, ttol, tol);
+	    (void)getEdgePoints(edge, *trim, max_dist, ttol, tol, vert_pnts, w3dpnts);
 	    //bu_log("Initialized trim->m_trim_user.p: Trim %d (associated with Edge %d) point count: %zd\n", trim->m_trim_index, trim->Edge()->m_edge_index, m->size());
 	}
 	if (trim->m_trim_user.p) {
@@ -1633,6 +1873,17 @@ poly2tri_CDT(struct bu_list *vhead,
     p2t::CDT* cdt = NULL;
     int fi = face.m_face_index;
 
+    std::map<int, ON_3dPoint *> vert_pnts;
+    std::vector<ON_3dPoint *> w3d_pnts;
+
+    /* We want to use ON_3dPoint pointers and BrepVertex points, but vert->Point()
+     * produces a temporary address.  Make stable copies of the Vertex points. */
+    const ON_Brep *brep = face.Brep();
+    for (int index = 0; index < brep->m_V.Count(); index++) {
+	const ON_BrepVertex& v = brep->m_V[index];
+	vert_pnts[index] = new ON_3dPoint(v.Point());
+    }
+
     fastf_t max_dist = 0.0;
     if (s->GetSurfaceSize(&surface_width, &surface_height)) {
 	if ((surface_width < tol->dist) || (surface_height < tol->dist)) {
@@ -1652,7 +1903,7 @@ poly2tri_CDT(struct bu_list *vhead,
     // first simply load loop point samples
     for (int li = 0; li < loop_cnt; li++) {
 	const ON_BrepLoop *loop = face.Loop(li);
-	get_loop_sample_points(&brep_loop_points[li], face, loop, max_dist, ttol, tol);
+	get_loop_sample_points(&brep_loop_points[li], face, loop, max_dist, ttol, tol, &vert_pnts, &w3d_pnts);
     }
 
     std::list<std::map<double, ON_3dPoint *> *> bridgePoints;
