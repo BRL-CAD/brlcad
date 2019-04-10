@@ -2272,7 +2272,7 @@ int brep_facecdt_plot(struct bu_vls *vls, const char *solid_name,
     return 0;
 }
 
-int brep_cdt_plot(struct bu_vls *vls, const char *solid_name,
+int brep_cdt_plot(struct rt_wdb *wdbp, struct bu_vls *vls, const char *solid_name,
                       const struct rt_tess_tol *ttol, const struct bn_tol *tol,
                       struct brep_specific* bs, struct rt_brep_internal*UNUSED(bi),
                       struct bn_vlblock *UNUSED(vbp), int UNUSED(plottype), int UNUSED(num_points))
@@ -2558,12 +2558,6 @@ int brep_cdt_plot(struct bu_vls *vls, const char *solid_name,
     std::vector<ON_3dPoint *> vfpnts;
     std::vector<ON_3dPoint *> vfnormls;
     std::map<ON_3dPoint *, int> on_pnt_to_bot_pnt;
-#if 0
-    ON_3dPoint *pnt[3] = {NULL, NULL, NULL};
-    ON_3dVector norm[3] = {ON_3dVector(), ON_3dVector(), ON_3dVector()};
-    point_t pt[3] = {VINIT_ZERO, VINIT_ZERO, VINIT_ZERO};
-    vect_t nv[3] = {VINIT_ZERO, VINIT_ZERO, VINIT_ZERO};
-#endif
     size_t triangle_cnt = 0;
 
     for (int face_index = 0; face_index != brep->m_F.Count(); face_index++) {
@@ -2592,11 +2586,60 @@ int brep_cdt_plot(struct bu_vls *vls, const char *solid_name,
     }
 
     // Know how many faces and points now - initialize BoT container.
+    int *faces = (int *)bu_calloc(triangle_cnt*3, sizeof(int), "new faces array");
+    fastf_t *vertices = (fastf_t *)bu_calloc(vfpnts.size()*3, sizeof(fastf_t), "new vert array");
+    fastf_t *normals = (fastf_t *)bu_calloc(vfpnts.size()*3, sizeof(fastf_t), "new normals array");
+    int *face_normals = (int *)bu_calloc(triangle_cnt*3, sizeof(int), "new face_normals array");
+
+    for (size_t i = 0; i < vfpnts.size(); i++) {
+	vertices[i*3] = vfpnts[i]->x;
+	vertices[i*3+1] = vfpnts[i]->y;
+	vertices[i*3+2] = vfpnts[i]->z;
+	normals[i*3] = vfnormls[i]->x;
+	normals[i*3+1] = vfnormls[i]->y;
+	normals[i*3+2] = vfnormls[i]->z;
+    }
+
 
     // Iterate over faces, adding points and faces to BoT container.  All
     // 3d points must end up unique in this final container.
+    int face_cnt = 0;
+    for (int face_index = 0; face_index != brep->m_F.Count(); face_index++) {
+	p2t::CDT *cdt = p2t_faces[face_index];
+	std::map<p2t::Point *, ON_3dPoint *> *pointmap = p2t_maps[face_index];
+	std::vector<p2t::Triangle*> tris = cdt->GetTriangles();
+	triangle_cnt += tris.size();
+	for (size_t i = 0; i < tris.size(); i++) {
+	    p2t::Triangle *t = tris[i];
+	    for (size_t j = 0; j < 3; j++) {
+		p2t::Point *p = t->GetPoint(j);
+		ON_3dPoint *op = (*pointmap)[p];
+		int ind = on_pnt_to_bot_pnt[op];
+		faces[face_cnt*3 + j] = ind;
+		face_normals[face_cnt*3 + j] = ind;
+	    }
+	    face_cnt++;
+	}
+    }
 
-    return 0;
+    struct rt_bot_internal *bot;
+    BU_ALLOC(bot, struct rt_bot_internal);
+    bot->magic = RT_BOT_INTERNAL_MAGIC;
+    bot->mode = RT_BOT_SOLID;
+    bot->orientation = RT_BOT_CW;
+    bot->bot_flags = 0;
+    bot->num_vertices = vfpnts.size();
+    bot->num_faces = triangle_cnt;
+    bot->vertices = vertices;
+    bot->faces = faces;
+    bot->thickness = NULL;
+    bot->face_mode = (struct bu_bitv *)NULL;
+    bot->num_normals = vfpnts.size();
+    bot->num_face_normals = bot->num_faces;
+    bot->normals = normals;
+    bot->face_normals = face_normals;
+
+    return wdb_export(wdbp, "bot.s", (void *)bot, ID_BOT, 1.0);
 }
 
 

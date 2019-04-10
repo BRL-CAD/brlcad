@@ -46,7 +46,7 @@ int brep_facecdt_plot(struct bu_vls *vls, const char *solid_name,
 	struct brep_specific* bs, struct rt_brep_internal*UNUSED(bi),
 	struct bn_vlblock *vbp, int index, int plottype, int num_points = -1);
 
-int brep_cdt_plot(struct bu_vls *vls, const char *solid_name,
+int brep_cdt_plot(struct rt_wdb *wdbp, struct bu_vls *vls, const char *solid_name,
 	const struct rt_tess_tol *ttol, const struct bn_tol *tol,
 	struct brep_specific* bs, struct rt_brep_internal*UNUSED(bi),
 	struct bn_vlblock *vbp, int plottype, int num_points = -1);
