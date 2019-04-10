@@ -161,7 +161,7 @@ getEdgePoints(
     bu_log("line3d.Length: %f\ndist3d: %f\n", line3d.Length(), dist3d);
     dosplit += (line3d.Length() > cdt_tol->max_dist) ? 1 : 0;
     dosplit += (dist3d > (cdt_tol->within_dist + ON_ZERO_TOLERANCE)) ? 1 : 0;
-    
+
     bu_log("Trim: %d dosplit(1): %d\n", trim.m_trim_index, dosplit);
 
     if (!dosplit) {
@@ -199,6 +199,7 @@ getEdgePoints(
 	nbtp1->normal = trim1_mid_norm;
 	nbtp1->tangent = edge_mid_tang;
 	nbtp1->t = t1;
+	nbtp1->e = emid;
 	(*trim1_param_points)[nbtp1->t] = nbtp1;
 
 	BrepTrimPoint *nbtp2 = new BrepTrimPoint;
@@ -207,6 +208,7 @@ getEdgePoints(
 	nbtp2->normal = trim2_mid_norm;
 	nbtp2->tangent = edge_mid_tang;
 	nbtp2->t = t2;
+	nbtp2->e = emid;
 	(*trim2_param_points)[nbtp2->t] = nbtp2;
 
 	getEdgePoints(edge, nc, trim, sbtp1, nbtp1, sbtp2, nbtp2, cdt_tol, trim1_param_points, trim2_param_points, w3dpnts);
@@ -275,12 +277,14 @@ getEdgePoints(
 	nbtp1->p3d = nsptp;
 	nbtp1->p2d = trim1_seam_2d;
 	nbtp1->t = trim1_seam_t;
+	nbtp1->e = ON_UNSET_VALUE;
 	(*trim1_param_points)[nbtp1->t] = nbtp1;
 
 	BrepTrimPoint *nbtp2 = new BrepTrimPoint;
 	nbtp2->p3d = nsptp;
 	nbtp2->p2d = trim2_seam_2d;
 	nbtp2->t = trim2_seam_t;
+	nbtp2->e = ON_UNSET_VALUE;
 	(*trim2_param_points)[nbtp2->t] = nbtp2;
     }
 
@@ -504,6 +508,7 @@ getEdgePoints(
 	mbtp1->tangent = edge_mid_tang;
 	mbtp1->normal = trim1_mid_norm;
 	mbtp1->t = trim1_mid_range;
+	mbtp1->e = edge_mid_range;
 	(*trim1_param_points)[mbtp1->t] = mbtp1;
 
 	BrepTrimPoint *mbtp2 = new BrepTrimPoint;
@@ -512,6 +517,7 @@ getEdgePoints(
 	mbtp2->tangent = edge_mid_tang;
 	mbtp2->normal = trim2_mid_norm;
 	mbtp2->t = trim2_mid_range;
+	mbtp1->e = edge_mid_range;
 	(*trim2_param_points)[mbtp2->t] = mbtp2;
 
 	getEdgePoints(edge, nc, trim, sbtp1, mbtp1, sbtp2, mbtp2, &cdt_tol, trim1_param_points, trim2_param_points, w3dpnts);
