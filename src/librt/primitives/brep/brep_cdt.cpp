@@ -2344,13 +2344,12 @@ int brep_cdt_plot(struct bu_vls *vls, const char *solid_name,
 	w3dpnts.push_back(vert_pnts[index]);
     }
 
-    /* TODO - get vertex normals that are the average of the surface points at the
+    /* Get vertex normals that are the average of the surface points at the
      * junction.  See if we can reject a normal in the "wrong" direction if two
      * or more surfaces vote one way and a third votes the other... */
     for (int index = 0; index < brep->m_V.Count(); index++) {
 	ON_BrepVertex& v = brep->m_V[index];
-	int inpnts = 0;
-	ON_3dPoint vpnt(0.0, 0.0, 0.0);
+	ON_3dVector vnrml(0.0, 0.0, 0.0);
 
 	for (int eind = 0; eind != v.EdgeCount(); eind++) {
 	    ON_3dPoint tmp1, tmp2;
@@ -2368,17 +2367,16 @@ int brep_cdt_plot(struct bu_vls *vls, const char *solid_name,
 	    const ON_Surface *s1 = trim1->SurfaceOf();
 	    const ON_Surface *s2 = trim2->SurfaceOf();
 	    if (surface_EvNormal(s1, t1_2d.x, t1_2d.y, tmp1, trim1_norm)) {
-		vpnt += trim1_norm;
-		inpnts++;
+		vnrml += trim1_norm;
 	    }
 	    if (surface_EvNormal(s2, t2_2d.x, t2_2d.y, tmp2, trim2_norm)) {
-		vpnt += trim1_norm;
-		inpnts++;
+		vnrml += trim1_norm;
 	    }
 	}
-	vpnt = vpnt/inpnts;
+	vnrml.Unitize();
 
-	vert_norms[index] = new ON_3dPoint(vpnt);
+	// We store this as a point to keep C++ happy...
+	vert_norms[index] = new ON_3dPoint(vnrml);
 	w3dnorms.push_back(vert_norms[index]);
     }
 
