@@ -2248,7 +2248,6 @@ int brep_facecdt_plot(struct bu_vls *vls, const char *solid_name,
     return 0;
 }
 
-
 int brep_cdt_plot(struct bu_vls *vls, const char *solid_name,
                       const struct rt_tess_tol *ttol, const struct bn_tol *tol,
                       struct brep_specific* bs, struct rt_brep_internal*UNUSED(bi),
@@ -2258,7 +2257,7 @@ int brep_cdt_plot(struct bu_vls *vls, const char *solid_name,
     // whose specific purpose is to hold things for cleanup (allows maps to
     // reuse pointers - we don't want to get a double free looping over a point
     // map to clean up when a point has been mapped more than once.)
-    std::vector<ON_3dPoint *> working_3d_pnts;
+    std::vector<ON_3dPoint *> w3dpnts;
     std::map<int, ON_3dPoint *> vert_pnts;
 
     //struct bu_list *vhead = bn_vlblock_find(vbp, YELLOW);
@@ -2316,99 +2315,66 @@ int brep_cdt_plot(struct bu_vls *vls, const char *solid_name,
     for (int index = 0; index < brep->m_V.Count(); index++) {
 	ON_BrepVertex& v = brep->m_V[index];
 	vert_pnts[index] = new ON_3dPoint(v.Point());
+	w3dpnts.push_back(vert_pnts[index]);
     }
 
     /* To generate watertight meshes, the faces must share 3D edge points.  To ensure
      * a uniform set of edge points, we first sample all the edges and build their
      * point sets */
+    std::map<const ON_Surface *, double> s_to_maxdist;
     for (int index = 0; index < brep->m_E.Count(); index++) {
 	ON_BrepEdge& edge = brep->m_E[index];
-	if (edge.TrimCount() != 2) {
-	    bu_log("Edge %d trim count: %d - can't (yet) do watertight meshing\n", edge.m_edge_index, edge.TrimCount());
-	    return -1;
-	}
-	if (edge.m_edge_user.p == NULL) {
+	ON_BrepTrim& trim1 = brep->m_T[edge.Trim(0)->m_trim_index];
+	ON_BrepTrim& trim2 = brep->m_T[edge.Trim(1)->m_trim_index];
 
-	    /* TODO - howto handle singular trims, their 3D vertex points, and how to track
-	     * that at the 3D edge level... */
-
-	    // TODO - check curve direction against edge direction, adjust as appropriate
-
-	    //Get_Shared_Edge_Points(edge, &working_3d_pnts, &vert_pnts, ttol, tol);
-
-	    //bu_log("Edge %d total points: %zd\n", edge.m_edge_index, ((std::map<double, ON_3dPoint *> *)edge.m_edge_user.p)->size());
-	}
-    }
-
-    exit(0);
-
-    /* Set up the trims */
-    for (int index = 0; index < brep->m_T.Count(); index++) {
-	ON_BrepTrim& trim = brep->m_T[index];
-	ON_BrepEdge *edge = trim.Edge();
-	double pnt_cnt = ((std::map<double, ON_3dPoint *> *)edge->m_edge_user.p)->size();
-
-	// Use a map so we get ordered points along the trim even if we
-	// have to subsequently refine.
-	std::map<double, ON_2dPoint *> *tpmap = new std::map<double, ON_2dPoint *>();
-	trim.m_trim_user.p = (void *)tpmap;
-
-	// Divide up the trim domain into increments based on the number of 3D edge points.
-	double delta =  trim.Domain().Length() / (pnt_cnt - 1);
-	ON_Interval trim_dom = trim.Domain();
-	for (int i = 1; i <= pnt_cnt; i++) {
-	    double t = trim.Domain().m_t[0] + (i - 1) * delta;
-	    ON_2dPoint p2d = trim.PointAt(t);
-	    (*tpmap)[t] = new ON_2dPoint(p2d);
-	    bu_log("Trim %d[%0.3f]: %f, %f\n", trim.m_trim_index, t, p2d.x, p2d.y);
-	}
-	bu_log("Trim %d (associated with edge %d) total points: %zd\n", trim.m_trim_index, edge->m_edge_index, ((std::map<double, ON_2dPoint *> *)trim.m_trim_user.p)->size());
-    }
-
-    // For all loops, assemble 2D polygons.
-    ON_SimpleArray<BrepTrimPoint> *brep_loop_points = new ON_SimpleArray<BrepTrimPoint>[brep->m_L.Count()];
-    for (int index = 0; index < brep->m_L.Count(); index++) {
-	ON_SimpleArray<BrepTrimPoint> *lp = &(brep_loop_points[index]);
-	const ON_BrepLoop &loop = brep->m_L[index];
-	int trim_count = loop.TrimCount();
-	for (int lti = 0; lti < trim_count; lti++) {
-	    ON_BrepTrim *trim = loop.Trim(lti);
-	    ON_BrepEdge *edge = trim->Edge();
-	    std::map<double, ON_2dPoint *> *tpmap = (std::map<double, ON_2dPoint *> *)trim->m_trim_user.p;
-	    std::map<double, ON_3dPoint *> *epmap = (std::map<double, ON_3dPoint *> *)edge->m_edge_user.p;
-	    std::map<double, ON_2dPoint*>::const_iterator i;
-	    std::map<double, ON_3dPoint*>::const_iterator j;
-	    j = epmap->begin();
-	    for (i = tpmap->begin(); i != tpmap->end();) {
-		BrepTrimPoint btp;
-		btp.trim_ind = trim->m_trim_index;
-		btp.t = (*i).first;
-		btp.p2d = *((*i).second);
-		btp.edge_ind = edge->m_edge_index;
-		btp.e = (*j).first;
-		btp.p3d = (*j).second;
-		++j;
-		lp->Append(btp);
-		// skip last point of trim if not last trim
-		if ((++i == tpmap->end()) && (lti < trim_count - 1))
-		    break;
+	// Get distance tolerances from the surface sizes
+	fastf_t max_dist = 0.0;
+	fastf_t md1, md2 = 0.0;
+	double sw1, sh1, sw2, sh2;
+	const ON_Surface *s1 = trim1.Face()->SurfaceOf();
+	const ON_Surface *s2 = trim2.Face()->SurfaceOf();
+	if (s1->GetSurfaceSize(&sw1, &sh1) && s2->GetSurfaceSize(&sw2, &sh2)) {
+	    if ((sw1 < tol->dist) || (sh1 < tol->dist) || sw2 < tol->dist || sh2 < tol->dist) {
+		return -1;
 	    }
+	    md1 = sqrt(sw1 * sh1 + sh1 * sw1) / 10.0;
+	    md2 = sqrt(sw2 * sh2 + sh2 * sw2) / 10.0;
+	    max_dist = (md1 < md2) ? md1 : md2;
+	    s_to_maxdist[s1] = max_dist;
+	    s_to_maxdist[s2] = max_dist;
 	}
+
+	// Generate the BrepTrimPoint arrays for both trims associated with this edge
+	(void)getEdgePoints(&edge, trim1, max_dist, ttol, tol, &vert_pnts, &w3dpnts);
+
     }
 
+    /* For all faces, do the Poly2Tri triangulation */
     for (int face_index = 0; face_index < brep->m_F.Count(); face_index++) {
+        ON_BrepFace &face = brep->m_F[face_index];
 	ON_RTree rt_trims;
 	ON_2dPointArray on_surf_points;
-	std::vector<p2t::Point*> polyline;
-	ON_BrepFace *face = brep->Face(face_index);
-	int fi = face->m_face_index;
-	int loop_cnt = face->LoopCount();
-	const ON_Surface *s = face->SurfaceOf();
-	std::list<std::map<double, ON_3dPoint *> *> bridgePoints;
+	const ON_Surface *s = face.SurfaceOf();
+	int loop_cnt = face.LoopCount();
+	ON_2dPointArray on_loop_points;
+	ON_SimpleArray<BrepTrimPoint> *brep_loop_points = new ON_SimpleArray<BrepTrimPoint>[loop_cnt];
 	std::map<p2t::Point *, ON_3dPoint *> *pointmap = new std::map<p2t::Point *, ON_3dPoint *>();
+	std::vector<p2t::Point*> polyline;
 	p2t::CDT* cdt = NULL;
+
+	// first simply load loop point samples
+	for (int li = 0; li < loop_cnt; li++) {
+	    double max_dist = 0.0;
+	    const ON_BrepLoop *loop = face.Loop(li);
+	    if (s_to_maxdist.find(face.SurfaceOf()) != s_to_maxdist.end()) {
+		max_dist = s_to_maxdist[face.SurfaceOf()];
+	    }
+	    get_loop_sample_points(&brep_loop_points[li], face, loop, max_dist, ttol, tol, &vert_pnts, &w3dpnts);
+	}
+
+	std::list<std::map<double, ON_3dPoint *> *> bridgePoints;
 	if (s->IsClosed(0) || s->IsClosed(1)) {
-	    PerformClosedSurfaceChecks(s, *face, ttol, tol, brep_loop_points, BREP_SAME_POINT_TOLERANCE);
+	    PerformClosedSurfaceChecks(s, face, ttol, tol, brep_loop_points, BREP_SAME_POINT_TOLERANCE);
 
 	}
 	// process through loops building polygons.
@@ -2446,17 +2412,29 @@ int brep_cdt_plot(struct bu_vls *vls, const char *solid_name,
 	    }
 	}
 
+	delete [] brep_loop_points;
+
+	// TODO - we may need to add 2D points on trims that the edges didn't know
+	// about.  Since 3D points must be shared along edges and we're using
+	// synchronized numbers of parametric domain ordered 2D and 3D points to
+	// make that work, we will need to track new 2D points and update the
+	// corresponding 3D edge based data structures.  More than that - we must
+	// also update all 2D structures in all other faces associated with the
+	// edge in question to keep things in overall sync.
+
+	// TODO - if we are going to apply clipper boolean resolution to sets of
+	// face loops, that would come here - once we have assembled the loop
+	// polygons for the faces. That also has the potential to generate "new" 3D
+	// points on edges that are driven by 2D boolean intersections between
+	// trimming loops, and may require another update pass as above.
 
 	if (outer) {
-	    std::cerr << "Error: Face(" << fi << ") cannot evaluate its outer loop and will not be facetized." << std::endl;
+	    std::cerr << "Error: Face(" << face.m_face_index << ") cannot evaluate its outer loop and will not be facetized." << std::endl;
 	    return -1;
 	}
 
-	// Have loops, get interior surface points
-	getSurfacePoints(*face, ttol, tol, on_surf_points);
+	getSurfacePoints(face, ttol, tol, on_surf_points);
 
-	// We don't want any surface points that are actually on one
-	// of the polygon loops
 	for (int i = 0; i < on_surf_points.Count(); i++) {
 	    ON_SimpleArray<void*> results;
 	    const ON_2dPoint *p = on_surf_points.At(i);
@@ -2482,40 +2460,22 @@ int brep_cdt_plot(struct bu_vls *vls, const char *solid_name,
 	    }
 	}
 
-	// Clean up (?)
 	ON_SimpleArray<void*> results;
 	ON_BoundingBox bb = rt_trims.BoundingBox();
-	rt_trims.Search2d((const double *) bb.m_min, (const double *) bb.m_max, results);
-	for (int ri = 0; ri < results.Count(); ri++) {
-	    const ON_Line *l = (const ON_Line *)*results.At(ri);
-	    delete l;
+
+	rt_trims.Search2d((const double *) bb.m_min, (const double *) bb.m_max,
+		results);
+
+	if (results.Count() > 0) {
+	    for (int ri = 0; ri < results.Count(); ri++) {
+		const ON_Line *l = (const ON_Line *)*results.At(ri);
+		delete l;
+	    }
 	}
 	rt_trims.RemoveAll();
 
-	// Poly2Tri time
 	cdt->Triangulate(true, -1);
-
     }
-
-    delete [] brep_loop_points;
-
-    // TODO - we may need to add 2D points on seams that the edges didn't know
-    // about.  Since 3D points must be shared along edges and we're using
-    // synchronized numbers of parametric domain ordered 2D and 3D points to
-    // make that work, we will need to track new 2D points and update the
-    // corresponding 3D edge based data structures.  More than that - we must
-    // also update all 2D structures in all other faces associated with the
-    // edge in question to keep things in overall sync.
-
-    // TODO - if we are going to apply clipper boolean resolution to sets of
-    // face loops, that would come here - once we have assembled the loop
-    // polygons for the faces. That also has the potential to generate "new" 3D
-    // points on edges that are driven by 2D boolean intersections between
-    // trimming loops, and may require another update pass as above.
-
-    // TODO - get surface points and set up the final poly2tri triangulation input.
-    // May want to go to integer space ala clipper to make sure all points satisfy
-    // poly2tri constraints...
 
     // TODO - once we are generating watertight triangulations reliably, we
     // will want to return a BoT - the output will be suitable for export or
