@@ -378,8 +378,8 @@ getEdgePoints(
     /* Populate the 2D points */
     double st1 = (trim.m_bRev3d) ? range1.m_t[1] : range1.m_t[0];
     double et1 = (trim.m_bRev3d) ? range1.m_t[0] : range1.m_t[1];
-    double st2 = (trim.m_bRev3d) ? range2.m_t[1] : range2.m_t[0];
-    double et2 = (trim.m_bRev3d) ? range2.m_t[0] : range2.m_t[1];
+    double st2 = (trim2->m_bRev3d) ? range2.m_t[1] : range2.m_t[0];
+    double et2 = (trim2->m_bRev3d) ? range2.m_t[0] : range2.m_t[1];
     trim1_start_2d = trim.PointAt(st1);
     trim1_end_2d = trim.PointAt(et1);
     trim2_start_2d = trim2->PointAt(st2);
@@ -423,39 +423,39 @@ getEdgePoints(
 
     /* Start and end points for both trims can now be defined */
     BrepTrimPoint *sbtp1 = new BrepTrimPoint;
-    sbtp1->p3d = (trim.m_bRev3d) ? edge_end_3d : edge_start_3d;
-    sbtp1->p2d = trim1_start_2d;
+    sbtp1->p3d = edge_start_3d;
     sbtp1->tangent = edge_start_tang;
+    sbtp1->e = erange.m_t[0];
+    sbtp1->p2d = trim1_start_2d;
     sbtp1->normal = trim1_start_normal;
     sbtp1->t = st1;
-    sbtp1->e = erange.m_t[0];
     (*trim1_param_points)[sbtp1->t] = sbtp1;
 
     BrepTrimPoint *ebtp1 = new BrepTrimPoint;
-    ebtp1->p3d = (trim.m_bRev3d) ? edge_start_3d : edge_end_3d;
-    ebtp1->p2d = trim1_end_2d;
+    ebtp1->p3d = edge_end_3d;
     ebtp1->tangent = edge_end_tang;
+    ebtp1->e = erange.m_t[1];
+    ebtp1->p2d = trim1_end_2d;
     ebtp1->normal = trim1_end_normal;
     ebtp1->t = et1;
-    ebtp1->e = erange.m_t[1];
     (*trim1_param_points)[ebtp1->t] = ebtp1;
 
     BrepTrimPoint *sbtp2 = new BrepTrimPoint;
-    sbtp2->p3d = (trim2->m_bRev3d) ? edge_end_3d : edge_start_3d;
-    sbtp2->p2d = trim2_start_2d;
+    sbtp2->p3d = edge_start_3d;
     sbtp2->tangent = edge_start_tang;
+    sbtp2->e = erange.m_t[0];
+    sbtp2->p2d = trim2_start_2d;
     sbtp2->normal = trim2_start_normal;
     sbtp2->t = st2;
-    sbtp2->e = erange.m_t[0];
     (*trim2_param_points)[sbtp2->t] = sbtp2;
 
     BrepTrimPoint *ebtp2 = new BrepTrimPoint;
-    ebtp2->p3d = (trim2->m_bRev3d) ? edge_start_3d : edge_end_3d;
-    ebtp2->p2d = trim2_end_2d;
+    ebtp2->p3d = edge_end_3d;
     ebtp2->tangent = edge_end_tang;
+    ebtp2->e = erange.m_t[1];
+    ebtp2->p2d = trim2_end_2d;
     ebtp2->normal = trim2_end_normal;
     ebtp2->t = et2;
-    ebtp2->e = erange.m_t[1];
     (*trim2_param_points)[ebtp2->t] = ebtp2;
 
 
