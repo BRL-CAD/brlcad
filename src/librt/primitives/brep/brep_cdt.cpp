@@ -134,9 +134,6 @@ getEdgePoints(
     ON_3dPoint edge_mid_3d = ON_3dPoint::UnsetPoint;
     ON_3dVector edge_mid_tang = ON_3dVector::UnsetVector;
 
-    bu_log("Edge: %d (%f -> %f)\n", edge->m_edge_index, sbtp1->e, ebtp1->e);
-    bu_log("Trim: %d (%f -> %f) %d\n", trim.m_trim_index, sbtp1->t, ebtp1->t, trim.m_bRev3d);
-    bu_log("Trim2: %d (%f -> %f) %d\n", trim2->m_trim_index, sbtp2->t, ebtp2->t, trim2->m_bRev3d);
 
     if (!(nc->EvTangent(emid, edge_mid_3d, edge_mid_tang))) {
 	// EvTangent call failed, get 3d point
@@ -154,30 +151,26 @@ getEdgePoints(
 	}
     }
 
+    bu_log("Edge %d, Trim %d(%d): %f %f %f\n", edge->m_edge_index, trim.m_trim_index, trim.m_bRev3d, edge_mid_3d.x, edge_mid_3d.y, edge_mid_3d.z);
+
     int dosplit = 0;
 
     ON_Line line3d(*(sbtp1->p3d), *(ebtp1->p3d));
     double dist3d = edge_mid_3d.DistanceTo(line3d.ClosestPointTo(edge_mid_3d));
-    bu_log("line3d.Length: %f\ndist3d: %f\n", line3d.Length(), dist3d);
     dosplit += (line3d.Length() > cdt_tol->max_dist) ? 1 : 0;
     dosplit += (dist3d > (cdt_tol->within_dist + ON_ZERO_TOLERANCE)) ? 1 : 0;
-
-    bu_log("Trim: %d dosplit(1): %d\n", trim.m_trim_index, dosplit);
 
     if (!dosplit) {
 	int leval_1 = ((sbtp1->tangent * ebtp1->tangent) < cdt_tol->cos_within_ang - ON_ZERO_TOLERANCE) ? 1 : 0;
 	dosplit += (leval_1 && (dist3d > cdt_tol->min_dist + ON_ZERO_TOLERANCE)) ? 1 : 0;
-	bu_log("Trim: %d dosplit(2): %d\n", trim.m_trim_index, dosplit);
     }
 
     if (!dosplit && sbtp1->normal != ON_3dVector::UnsetVector && ebtp1->normal != ON_3dVector::UnsetVector) {
 	dosplit += ((sbtp1->normal * ebtp1->normal) < cdt_tol->cos_within_ang - ON_ZERO_TOLERANCE) ? 1 : 0;
-	bu_log("Trim: %d dosplit(3): %d\n", trim.m_trim_index, dosplit);
     }
 
     if (!dosplit && sbtp2->normal != ON_3dVector::UnsetVector && ebtp2->normal != ON_3dVector::UnsetVector) {
 	dosplit += ((sbtp2->normal * ebtp2->normal) < cdt_tol->cos_within_ang - ON_ZERO_TOLERANCE) ? 1 : 0;
-	bu_log("Trim: %d dosplit(4): %d\n", trim.m_trim_index, dosplit);
     }
 
     if (dosplit) {
@@ -430,7 +423,7 @@ getEdgePoints(
 
     /* Start and end points for both trims can now be defined */
     BrepTrimPoint *sbtp1 = new BrepTrimPoint;
-    sbtp1->p3d = edge_start_3d;
+    sbtp1->p3d = (trim.m_bRev3d) ? edge_end_3d : edge_start_3d;
     sbtp1->p2d = trim1_start_2d;
     sbtp1->tangent = edge_start_tang;
     sbtp1->normal = trim1_start_normal;
@@ -439,7 +432,7 @@ getEdgePoints(
     (*trim1_param_points)[sbtp1->t] = sbtp1;
 
     BrepTrimPoint *ebtp1 = new BrepTrimPoint;
-    ebtp1->p3d = edge_end_3d;
+    ebtp1->p3d = (trim.m_bRev3d) ? edge_start_3d : edge_end_3d;
     ebtp1->p2d = trim1_end_2d;
     ebtp1->tangent = edge_end_tang;
     ebtp1->normal = trim1_end_normal;
@@ -448,7 +441,7 @@ getEdgePoints(
     (*trim1_param_points)[ebtp1->t] = ebtp1;
 
     BrepTrimPoint *sbtp2 = new BrepTrimPoint;
-    sbtp2->p3d = edge_start_3d;
+    sbtp2->p3d = (trim2->m_bRev3d) ? edge_end_3d : edge_start_3d;
     sbtp2->p2d = trim2_start_2d;
     sbtp2->tangent = edge_start_tang;
     sbtp2->normal = trim2_start_normal;
@@ -457,7 +450,7 @@ getEdgePoints(
     (*trim2_param_points)[sbtp2->t] = sbtp2;
 
     BrepTrimPoint *ebtp2 = new BrepTrimPoint;
-    ebtp2->p3d = edge_end_3d;
+    ebtp2->p3d = (trim2->m_bRev3d) ? edge_start_3d : edge_end_3d;
     ebtp2->p2d = trim2_end_2d;
     ebtp2->tangent = edge_end_tang;
     ebtp2->normal = trim2_end_normal;
@@ -1351,13 +1344,17 @@ get_loop_sample_points(
 		double t0, t1;
 
 		std::map<double, BrepTrimPoint*>::const_iterator i;
+		std::map<double, BrepTrimPoint*>::const_iterator ni;
 
 		trim->GetDomain(&t0, &t1);
 		for (i = param_points3d->begin(); i != param_points3d->end();) {
 		    BrepTrimPoint *btp = (*i).second;
+		    ni = ++i;
 		    // skip last point of trim if not last trim
-		    if ((++i == param_points3d->end()) && (lti < trim_count - 1)) {
-			continue;
+		    if (ni == param_points3d->end()) {
+			if (lti < trim_count - 1) {
+			    continue;
+			}
 		    }
 		    points->Append(*btp);
 		}
