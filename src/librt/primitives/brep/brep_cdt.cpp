@@ -151,7 +151,7 @@ getEdgePoints(
 	}
     }
 
-    bu_log("Edge %d, Trim %d(%d): %f %f %f\n", edge->m_edge_index, trim.m_trim_index, trim.m_bRev3d, edge_mid_3d.x, edge_mid_3d.y, edge_mid_3d.z);
+    //bu_log("Edge %d, Trim %d(%d): %f %f %f\n", edge->m_edge_index, trim.m_trim_index, trim.m_bRev3d, edge_mid_3d.x, edge_mid_3d.y, edge_mid_3d.z);
 
     int dosplit = 0;
 
@@ -525,7 +525,7 @@ getEdgePoints(
     return trim1_param_points;
 }
 
-void
+static void
 getSurfacePoints(const ON_Surface *s,
 		 fastf_t u1,
 		 fastf_t u2,
@@ -733,7 +733,7 @@ getSurfacePoints(const ON_Surface *s,
 }
 
 
-void
+static void
 getSurfacePoints(const ON_BrepFace &face,
 		 const struct rt_tess_tol *ttol,
 		 const struct bn_tol *tol,
@@ -1832,7 +1832,7 @@ ShiftInnerLoops(
 }
 
 
-void
+static void
 PerformClosedSurfaceChecks(
 	const ON_Surface *s,
 	const ON_BrepFace &face,
@@ -2247,6 +2247,286 @@ int brep_facecdt_plot(struct bu_vls *vls, const char *solid_name,
 
     return 0;
 }
+
+
+int brep_cdt_plot(struct bu_vls *vls, const char *solid_name,
+                      const struct rt_tess_tol *ttol, const struct bn_tol *tol,
+                      struct brep_specific* bs, struct rt_brep_internal*UNUSED(bi),
+                      struct bn_vlblock *UNUSED(vbp), int UNUSED(plottype), int UNUSED(num_points))
+{
+    // For ease of memory cleanup, keep track of allocated points in containers
+    // whose specific purpose is to hold things for cleanup (allows maps to
+    // reuse pointers - we don't want to get a double free looping over a point
+    // map to clean up when a point has been mapped more than once.)
+    std::vector<ON_3dPoint *> working_3d_pnts;
+    std::map<int, ON_3dPoint *> vert_pnts;
+
+    //struct bu_list *vhead = bn_vlblock_find(vbp, YELLOW);
+    ON_wString wstr;
+    ON_TextLog tl(wstr);
+
+    ON_Brep* brep = bs->brep;
+    if (brep == NULL || !brep->IsValid(&tl)) {
+        if (wstr.Length() > 0) {
+            ON_String onstr = ON_String(wstr);
+            const char *isvalidinfo = onstr.Array();
+            bu_vls_strcat(vls, "brep (");
+            bu_vls_strcat(vls, solid_name);
+            bu_vls_strcat(vls, ") is NOT valid:");
+            bu_vls_strcat(vls, isvalidinfo);
+        } else {
+            bu_vls_strcat(vls, "brep (");
+            bu_vls_strcat(vls, solid_name);
+            bu_vls_strcat(vls, ") is NOT valid.");
+        }
+        //for now try to draw - return -1;
+    }
+
+
+    // Check for any conditions that are show-stoppers
+    for (int index = 0; index < brep->m_E.Count(); index++) {
+	ON_BrepEdge& edge = brep->m_E[index];
+	if (edge.TrimCount() != 2) {
+	    bu_log("Edge %d trim count: %d - can't (yet) do watertight meshing\n", edge.m_edge_index, edge.TrimCount());
+	    return -1;
+	}
+	ON_wString wonstr;
+	ON_TextLog vout(wonstr);
+	if (!brep->IsValid(&vout)) {
+	    bu_log("brep is NOT valid, cannot produce watertight mesh\n");
+	    return -1;
+	}
+    }
+
+    // Reparameterize the face's surface and transform the "u" and "v"
+    // coordinates of all the face's parameter space trimming curves to
+    // minimize distortion in the map from parameter space to 3d..
+    for (int face_index = 0; face_index < brep->m_F.Count(); face_index++) {
+        ON_BrepFace *face = brep->Face(face_index);
+        const ON_Surface *s = face->SurfaceOf();
+        double surface_width, surface_height;
+	if (s->GetSurfaceSize(&surface_width, &surface_height)) {
+	    face->SetDomain(0, 0.0, surface_width);
+	    face->SetDomain(1, 0.0, surface_height);
+	}
+    }
+
+    /* We want to use ON_3dPoint pointers and BrepVertex points, but vert->Point()
+     * produces a temporary address.  Make stable copies of the Vertex points. */
+    for (int index = 0; index < brep->m_V.Count(); index++) {
+	ON_BrepVertex& v = brep->m_V[index];
+	vert_pnts[index] = new ON_3dPoint(v.Point());
+    }
+
+    /* To generate watertight meshes, the faces must share 3D edge points.  To ensure
+     * a uniform set of edge points, we first sample all the edges and build their
+     * point sets */
+    for (int index = 0; index < brep->m_E.Count(); index++) {
+	ON_BrepEdge& edge = brep->m_E[index];
+	if (edge.TrimCount() != 2) {
+	    bu_log("Edge %d trim count: %d - can't (yet) do watertight meshing\n", edge.m_edge_index, edge.TrimCount());
+	    return -1;
+	}
+	if (edge.m_edge_user.p == NULL) {
+
+	    /* TODO - howto handle singular trims, their 3D vertex points, and how to track
+	     * that at the 3D edge level... */
+
+	    // TODO - check curve direction against edge direction, adjust as appropriate
+
+	    //Get_Shared_Edge_Points(edge, &working_3d_pnts, &vert_pnts, ttol, tol);
+
+	    //bu_log("Edge %d total points: %zd\n", edge.m_edge_index, ((std::map<double, ON_3dPoint *> *)edge.m_edge_user.p)->size());
+	}
+    }
+
+    exit(0);
+
+    /* Set up the trims */
+    for (int index = 0; index < brep->m_T.Count(); index++) {
+	ON_BrepTrim& trim = brep->m_T[index];
+	ON_BrepEdge *edge = trim.Edge();
+	double pnt_cnt = ((std::map<double, ON_3dPoint *> *)edge->m_edge_user.p)->size();
+
+	// Use a map so we get ordered points along the trim even if we
+	// have to subsequently refine.
+	std::map<double, ON_2dPoint *> *tpmap = new std::map<double, ON_2dPoint *>();
+	trim.m_trim_user.p = (void *)tpmap;
+
+	// Divide up the trim domain into increments based on the number of 3D edge points.
+	double delta =  trim.Domain().Length() / (pnt_cnt - 1);
+	ON_Interval trim_dom = trim.Domain();
+	for (int i = 1; i <= pnt_cnt; i++) {
+	    double t = trim.Domain().m_t[0] + (i - 1) * delta;
+	    ON_2dPoint p2d = trim.PointAt(t);
+	    (*tpmap)[t] = new ON_2dPoint(p2d);
+	    bu_log("Trim %d[%0.3f]: %f, %f\n", trim.m_trim_index, t, p2d.x, p2d.y);
+	}
+	bu_log("Trim %d (associated with edge %d) total points: %zd\n", trim.m_trim_index, edge->m_edge_index, ((std::map<double, ON_2dPoint *> *)trim.m_trim_user.p)->size());
+    }
+
+    // For all loops, assemble 2D polygons.
+    ON_SimpleArray<BrepTrimPoint> *brep_loop_points = new ON_SimpleArray<BrepTrimPoint>[brep->m_L.Count()];
+    for (int index = 0; index < brep->m_L.Count(); index++) {
+	ON_SimpleArray<BrepTrimPoint> *lp = &(brep_loop_points[index]);
+	const ON_BrepLoop &loop = brep->m_L[index];
+	int trim_count = loop.TrimCount();
+	for (int lti = 0; lti < trim_count; lti++) {
+	    ON_BrepTrim *trim = loop.Trim(lti);
+	    ON_BrepEdge *edge = trim->Edge();
+	    std::map<double, ON_2dPoint *> *tpmap = (std::map<double, ON_2dPoint *> *)trim->m_trim_user.p;
+	    std::map<double, ON_3dPoint *> *epmap = (std::map<double, ON_3dPoint *> *)edge->m_edge_user.p;
+	    std::map<double, ON_2dPoint*>::const_iterator i;
+	    std::map<double, ON_3dPoint*>::const_iterator j;
+	    j = epmap->begin();
+	    for (i = tpmap->begin(); i != tpmap->end();) {
+		BrepTrimPoint btp;
+		btp.trim_ind = trim->m_trim_index;
+		btp.t = (*i).first;
+		btp.p2d = *((*i).second);
+		btp.edge_ind = edge->m_edge_index;
+		btp.e = (*j).first;
+		btp.p3d = (*j).second;
+		++j;
+		lp->Append(btp);
+		// skip last point of trim if not last trim
+		if ((++i == tpmap->end()) && (lti < trim_count - 1))
+		    break;
+	    }
+	}
+    }
+
+    for (int face_index = 0; face_index < brep->m_F.Count(); face_index++) {
+	ON_RTree rt_trims;
+	ON_2dPointArray on_surf_points;
+	std::vector<p2t::Point*> polyline;
+	ON_BrepFace *face = brep->Face(face_index);
+	int fi = face->m_face_index;
+	int loop_cnt = face->LoopCount();
+	const ON_Surface *s = face->SurfaceOf();
+	std::list<std::map<double, ON_3dPoint *> *> bridgePoints;
+	std::map<p2t::Point *, ON_3dPoint *> *pointmap = new std::map<p2t::Point *, ON_3dPoint *>();
+	p2t::CDT* cdt = NULL;
+	if (s->IsClosed(0) || s->IsClosed(1)) {
+	    PerformClosedSurfaceChecks(s, *face, ttol, tol, brep_loop_points, BREP_SAME_POINT_TOLERANCE);
+
+	}
+	// process through loops building polygons.
+	bool outer = true;
+	for (int li = 0; li < loop_cnt; li++) {
+	    int num_loop_points = brep_loop_points[li].Count();
+	    if (num_loop_points > 2) {
+		for (int i = 1; i < num_loop_points; i++) {
+		    // map point to last entry to 3d point
+		    p2t::Point *p = new p2t::Point((brep_loop_points[li])[i].p2d.x, (brep_loop_points[li])[i].p2d.y);
+		    polyline.push_back(p);
+		    (*pointmap)[p] = (brep_loop_points[li])[i].p3d;
+		}
+		for (int i = 1; i < brep_loop_points[li].Count(); i++) {
+		    // map point to last entry to 3d point
+		    ON_Line *line = new ON_Line((brep_loop_points[li])[i - 1].p2d, (brep_loop_points[li])[i].p2d);
+		    ON_BoundingBox bb = line->BoundingBox();
+
+		    bb.m_max.x = bb.m_max.x + ON_ZERO_TOLERANCE;
+		    bb.m_max.y = bb.m_max.y + ON_ZERO_TOLERANCE;
+		    bb.m_max.z = bb.m_max.z + ON_ZERO_TOLERANCE;
+		    bb.m_min.x = bb.m_min.x - ON_ZERO_TOLERANCE;
+		    bb.m_min.y = bb.m_min.y - ON_ZERO_TOLERANCE;
+		    bb.m_min.z = bb.m_min.z - ON_ZERO_TOLERANCE;
+
+		    rt_trims.Insert2d(bb.Min(), bb.Max(), line);
+		}
+		if (outer) {
+		    cdt = new p2t::CDT(polyline);
+		    outer = false;
+		} else {
+		    cdt->AddHole(polyline);
+		}
+		polyline.clear();
+	    }
+	}
+
+
+	if (outer) {
+	    std::cerr << "Error: Face(" << fi << ") cannot evaluate its outer loop and will not be facetized." << std::endl;
+	    return -1;
+	}
+
+	// Have loops, get interior surface points
+	getSurfacePoints(*face, ttol, tol, on_surf_points);
+
+	// We don't want any surface points that are actually on one
+	// of the polygon loops
+	for (int i = 0; i < on_surf_points.Count(); i++) {
+	    ON_SimpleArray<void*> results;
+	    const ON_2dPoint *p = on_surf_points.At(i);
+
+	    rt_trims.Search2d((const double *) p, (const double *) p, results);
+
+	    if (results.Count() > 0) {
+		bool on_edge = false;
+		for (int ri = 0; ri < results.Count(); ri++) {
+		    double dist;
+		    const ON_Line *l = (const ON_Line *) *results.At(ri);
+		    dist = l->MinimumDistanceTo(*p);
+		    if (NEAR_ZERO(dist, tol->dist)) {
+			on_edge = true;
+			break;
+		    }
+		}
+		if (!on_edge) {
+		    cdt->AddPoint(new p2t::Point(p->x, p->y));
+		}
+	    } else {
+		cdt->AddPoint(new p2t::Point(p->x, p->y));
+	    }
+	}
+
+	// Clean up (?)
+	ON_SimpleArray<void*> results;
+	ON_BoundingBox bb = rt_trims.BoundingBox();
+	rt_trims.Search2d((const double *) bb.m_min, (const double *) bb.m_max, results);
+	for (int ri = 0; ri < results.Count(); ri++) {
+	    const ON_Line *l = (const ON_Line *)*results.At(ri);
+	    delete l;
+	}
+	rt_trims.RemoveAll();
+
+	// Poly2Tri time
+	cdt->Triangulate(true, -1);
+
+    }
+
+    delete [] brep_loop_points;
+
+    // TODO - we may need to add 2D points on seams that the edges didn't know
+    // about.  Since 3D points must be shared along edges and we're using
+    // synchronized numbers of parametric domain ordered 2D and 3D points to
+    // make that work, we will need to track new 2D points and update the
+    // corresponding 3D edge based data structures.  More than that - we must
+    // also update all 2D structures in all other faces associated with the
+    // edge in question to keep things in overall sync.
+
+    // TODO - if we are going to apply clipper boolean resolution to sets of
+    // face loops, that would come here - once we have assembled the loop
+    // polygons for the faces. That also has the potential to generate "new" 3D
+    // points on edges that are driven by 2D boolean intersections between
+    // trimming loops, and may require another update pass as above.
+
+    // TODO - get surface points and set up the final poly2tri triangulation input.
+    // May want to go to integer space ala clipper to make sure all points satisfy
+    // poly2tri constraints...
+
+    // TODO - once we are generating watertight triangulations reliably, we
+    // will want to return a BoT - the output will be suitable for export or
+    // drawing, so just provide the correct data type for other routines to
+    // work with.  Also, we can then apply the bot validity testing routines.
+
+
+    return 0;
+}
+
+
 
 int rt_brep_plot_poly(struct bu_list *vhead, const struct db_full_path *pathp, struct rt_db_internal *ip,
 		      const struct rt_tess_tol *ttol, const struct bn_tol *tol,
