@@ -116,7 +116,8 @@ getEdgePoints(
 	const struct brep_cdt_tol *cdt_tol,
 	std::map<double, BrepTrimPoint *> *trim1_param_points,
 	std::map<double, BrepTrimPoint *> *trim2_param_points,
-	std::vector<ON_3dPoint *> *w3dpnts
+	std::vector<ON_3dPoint *> *w3dpnts,
+	std::vector<ON_3dPoint *> *w3dnorms
 	)
 {
     ON_3dPoint tmp1, tmp2;
@@ -187,8 +188,12 @@ getEdgePoints(
 	ON_3dPoint *npt = new ON_3dPoint(edge_mid_3d);
 	w3dpnts->push_back(npt);
 
+	ON_3dPoint *nrm = new ON_3dPoint((trim1_mid_norm + trim1_mid_norm)/2);
+	w3dnorms->push_back(nrm);
+
 	BrepTrimPoint *nbtp1 = new BrepTrimPoint;
 	nbtp1->p3d = npt;
+	nbtp1->n3d = nrm;
 	nbtp1->p2d = trim1_mid_2d;
 	nbtp1->normal = trim1_mid_norm;
 	nbtp1->tangent = edge_mid_tang;
@@ -198,6 +203,7 @@ getEdgePoints(
 
 	BrepTrimPoint *nbtp2 = new BrepTrimPoint;
 	nbtp2->p3d = npt;
+	nbtp2->n3d = nrm;
 	nbtp2->p2d = trim2_mid_2d;
 	nbtp2->normal = trim2_mid_norm;
 	nbtp2->tangent = edge_mid_tang;
@@ -205,8 +211,8 @@ getEdgePoints(
 	nbtp2->e = emid;
 	(*trim2_param_points)[nbtp2->t] = nbtp2;
 
-	getEdgePoints(edge, nc, trim, sbtp1, nbtp1, sbtp2, nbtp2, cdt_tol, trim1_param_points, trim2_param_points, w3dpnts);
-	getEdgePoints(edge, nc, trim, nbtp1, ebtp1, nbtp2, ebtp2, cdt_tol, trim1_param_points, trim2_param_points, w3dpnts);
+	getEdgePoints(edge, nc, trim, sbtp1, nbtp1, sbtp2, nbtp2, cdt_tol, trim1_param_points, trim2_param_points, w3dpnts, w3dnorms);
+	getEdgePoints(edge, nc, trim, nbtp1, ebtp1, nbtp2, ebtp2, cdt_tol, trim1_param_points, trim2_param_points, w3dpnts, w3dnorms);
 	return;
     }
 
@@ -292,7 +298,9 @@ getEdgePoints(
 	const struct rt_tess_tol *ttol,
 	const struct bn_tol *tol,
 	std::map<int, ON_3dPoint *> *vert_pnts,
-	std::vector<ON_3dPoint *> *w3dpnts
+	std::vector<ON_3dPoint *> *w3dpnts,
+	std::map<int, ON_3dPoint *> *vert_norms,
+	std::vector<ON_3dPoint *> *w3dnorms
 	)
 {
     struct brep_cdt_tol cdt_tol = BREP_CDT_TOL_ZERO;
@@ -338,6 +346,7 @@ getEdgePoints(
     ON_3dPoint tmp1, tmp2;
     int evals = 0;
     ON_3dPoint *edge_start_3d, *edge_end_3d = NULL;
+    ON_3dPoint *edge_start_3dnorm, *edge_end_3dnorm = NULL;
     ON_3dVector edge_start_tang, edge_end_tang = ON_3dVector::UnsetVector;
     ON_3dPoint trim1_start_2d, trim1_end_2d = ON_3dPoint::UnsetPoint;
     ON_3dVector trim1_start_tang, trim1_end_tang, trim1_start_normal, trim1_end_normal = ON_3dVector::UnsetVector;
@@ -375,6 +384,8 @@ getEdgePoints(
     /* For beginning and end of curve, we use vert points */
     edge_start_3d = (*vert_pnts)[edge->Vertex(0)->m_vertex_index];
     edge_end_3d = (*vert_pnts)[edge->Vertex(1)->m_vertex_index];
+    edge_start_3dnorm = (*vert_norms)[edge->Vertex(0)->m_vertex_index];
+    edge_end_3dnorm = (*vert_norms)[edge->Vertex(1)->m_vertex_index];
 
     /* Populate the 2D points */
     double st1 = (trim.m_bRev3d) ? range1.m_t[1] : range1.m_t[0];
@@ -425,6 +436,7 @@ getEdgePoints(
     /* Start and end points for both trims can now be defined */
     BrepTrimPoint *sbtp1 = new BrepTrimPoint;
     sbtp1->p3d = edge_start_3d;
+    sbtp1->n3d = edge_start_3dnorm;
     sbtp1->tangent = edge_start_tang;
     sbtp1->e = erange.m_t[0];
     sbtp1->p2d = trim1_start_2d;
@@ -434,6 +446,7 @@ getEdgePoints(
 
     BrepTrimPoint *ebtp1 = new BrepTrimPoint;
     ebtp1->p3d = edge_end_3d;
+    ebtp1->n3d = edge_end_3dnorm;
     ebtp1->tangent = edge_end_tang;
     ebtp1->e = erange.m_t[1];
     ebtp1->p2d = trim1_end_2d;
@@ -443,6 +456,7 @@ getEdgePoints(
 
     BrepTrimPoint *sbtp2 = new BrepTrimPoint;
     sbtp2->p3d = edge_start_3d;
+    sbtp2->n3d = edge_start_3dnorm;
     sbtp2->tangent = edge_start_tang;
     sbtp2->e = erange.m_t[0];
     sbtp2->p2d = trim2_start_2d;
@@ -452,6 +466,7 @@ getEdgePoints(
 
     BrepTrimPoint *ebtp2 = new BrepTrimPoint;
     ebtp2->p3d = edge_end_3d;
+    ebtp2->n3d = edge_end_3dnorm;
     ebtp2->tangent = edge_end_tang;
     ebtp2->e = erange.m_t[1];
     ebtp2->p2d = trim2_end_2d;
@@ -495,9 +510,12 @@ getEdgePoints(
 
 	ON_3dPoint *nmp = new ON_3dPoint(edge_mid_3d);
 	w3dpnts->push_back(nmp);
+	ON_3dPoint *nmn = new ON_3dPoint((trim1_mid_norm + trim2_mid_norm)/2);
+	w3dnorms->push_back(nmn);
 
 	BrepTrimPoint *mbtp1 = new BrepTrimPoint;
 	mbtp1->p3d = nmp;
+	mbtp1->n3d = nmn;
 	mbtp1->p2d = trim1_mid_2d;
 	mbtp1->tangent = edge_mid_tang;
 	mbtp1->normal = trim1_mid_norm;
@@ -507,6 +525,7 @@ getEdgePoints(
 
 	BrepTrimPoint *mbtp2 = new BrepTrimPoint;
 	mbtp2->p3d = nmp;
+	mbtp2->n3d = nmn;
 	mbtp2->p2d = trim2_mid_2d;
 	mbtp2->tangent = edge_mid_tang;
 	mbtp2->normal = trim2_mid_norm;
@@ -514,12 +533,12 @@ getEdgePoints(
 	mbtp1->e = edge_mid_range;
 	(*trim2_param_points)[mbtp2->t] = mbtp2;
 
-	getEdgePoints(edge, nc, trim, sbtp1, mbtp1, sbtp2, mbtp2, &cdt_tol, trim1_param_points, trim2_param_points, w3dpnts);
-	getEdgePoints(edge, nc, trim, mbtp1, ebtp1, mbtp2, ebtp2, &cdt_tol, trim1_param_points, trim2_param_points, w3dpnts);
+	getEdgePoints(edge, nc, trim, sbtp1, mbtp1, sbtp2, mbtp2, &cdt_tol, trim1_param_points, trim2_param_points, w3dpnts, w3dnorms);
+	getEdgePoints(edge, nc, trim, mbtp1, ebtp1, mbtp2, ebtp2, &cdt_tol, trim1_param_points, trim2_param_points, w3dpnts, w3dnorms);
 
     } else {
 
-	getEdgePoints(edge, nc, trim, sbtp1, ebtp1, sbtp2, ebtp2, &cdt_tol, trim1_param_points, trim2_param_points, w3dpnts);
+	getEdgePoints(edge, nc, trim, sbtp1, ebtp1, sbtp2, ebtp2, &cdt_tol, trim1_param_points, trim2_param_points, w3dpnts, w3dnorms);
 
     }
 
@@ -1289,7 +1308,9 @@ get_loop_sample_points(
 	const struct rt_tess_tol *ttol,
 	const struct bn_tol *tol,
 	std::map<int, ON_3dPoint *> *vert_pnts,
-	std::vector<ON_3dPoint *> *w3dpnts
+	std::vector<ON_3dPoint *> *w3dpnts,
+	std::map<int, ON_3dPoint *> *vert_norms,
+	std::vector<ON_3dPoint *> *w3dnorms
 	)
 {
     int trim_count = loop->TrimCount();
@@ -1331,7 +1352,7 @@ get_loop_sample_points(
 	}
 
 	if (!trim->m_trim_user.p) {
-	    (void)getEdgePoints(edge, *trim, max_dist, ttol, tol, vert_pnts, w3dpnts);
+	    (void)getEdgePoints(edge, *trim, max_dist, ttol, tol, vert_pnts, w3dpnts, vert_norms, w3dnorms);
 	    //bu_log("Initialized trim->m_trim_user.p: Trim %d (associated with Edge %d) point count: %zd\n", trim->m_trim_index, trim->Edge()->m_edge_index, m->size());
 	}
 	if (trim->m_trim_user.p) {
@@ -1879,6 +1900,8 @@ poly2tri_CDT(struct bu_list *vhead,
 
     std::map<int, ON_3dPoint *> vert_pnts;
     std::vector<ON_3dPoint *> w3d_pnts;
+    std::map<int, ON_3dPoint *> vert_norms;
+    std::vector<ON_3dPoint *> w3d_norms;
 
     /* We want to use ON_3dPoint pointers and BrepVertex points, but vert->Point()
      * produces a temporary address.  Make stable copies of the Vertex points. */
@@ -1907,7 +1930,7 @@ poly2tri_CDT(struct bu_list *vhead,
     // first simply load loop point samples
     for (int li = 0; li < loop_cnt; li++) {
 	const ON_BrepLoop *loop = face.Loop(li);
-	get_loop_sample_points(&brep_loop_points[li], face, loop, max_dist, ttol, tol, &vert_pnts, &w3d_pnts);
+	get_loop_sample_points(&brep_loop_points[li], face, loop, max_dist, ttol, tol, &vert_pnts, &w3d_pnts, &vert_norms, &w3d_norms);
     }
 
     std::list<std::map<double, ON_3dPoint *> *> bridgePoints;
@@ -2260,6 +2283,8 @@ int brep_cdt_plot(struct bu_vls *vls, const char *solid_name,
     // map to clean up when a point has been mapped more than once.)
     std::vector<ON_3dPoint *> w3dpnts;
     std::map<int, ON_3dPoint *> vert_pnts;
+    std::vector<ON_3dPoint *> w3dnorms;
+    std::map<int, ON_3dPoint *> vert_norms;
 
     //struct bu_list *vhead = bn_vlblock_find(vbp, YELLOW);
     ON_wString wstr;
@@ -2319,6 +2344,45 @@ int brep_cdt_plot(struct bu_vls *vls, const char *solid_name,
 	w3dpnts.push_back(vert_pnts[index]);
     }
 
+    /* TODO - get vertex normals that are the average of the surface points at the
+     * junction.  See if we can reject a normal in the "wrong" direction if two
+     * or more surfaces vote one way and a third votes the other... */
+    for (int index = 0; index < brep->m_V.Count(); index++) {
+	ON_BrepVertex& v = brep->m_V[index];
+	int inpnts = 0;
+	ON_3dPoint vpnt(0.0, 0.0, 0.0);
+
+	for (int eind = 0; eind != v.EdgeCount(); eind++) {
+	    ON_3dPoint tmp1, tmp2;
+	    ON_3dVector trim1_norm = ON_3dVector::UnsetVector;
+	    ON_3dVector trim2_norm = ON_3dVector::UnsetVector;
+	    ON_BrepEdge& edge = brep->m_E[v.m_ei[eind]];
+	    ON_BrepTrim *trim1 = edge.Trim(0);
+	    ON_BrepTrim *trim2 = edge.Trim(1);
+	    ON_Interval t1range = trim1->Domain();
+	    ON_Interval t2range = trim2->Domain();
+	    double t1 = ((eind && trim1->m_bRev3d) || (!eind && !trim1->m_bRev3d)) ? t1range[0] : t1range[1];
+	    double t2 = ((eind && trim2->m_bRev3d) || (!eind && !trim2->m_bRev3d)) ? t2range[0] : t2range[1];
+	    ON_3dPoint t1_2d = trim1->PointAt(t1);
+	    ON_3dPoint t2_2d = trim2->PointAt(t2);
+	    const ON_Surface *s1 = trim1->SurfaceOf();
+	    const ON_Surface *s2 = trim2->SurfaceOf();
+	    if (surface_EvNormal(s1, t1_2d.x, t1_2d.y, tmp1, trim1_norm)) {
+		vpnt += trim1_norm;
+		inpnts++;
+	    }
+	    if (surface_EvNormal(s2, t2_2d.x, t2_2d.y, tmp2, trim2_norm)) {
+		vpnt += trim1_norm;
+		inpnts++;
+	    }
+	}
+	vpnt = vpnt/inpnts;
+
+	vert_norms[index] = new ON_3dPoint(vpnt);
+	w3dnorms.push_back(vert_norms[index]);
+    }
+
+
     /* To generate watertight meshes, the faces must share 3D edge points.  To ensure
      * a uniform set of edge points, we first sample all the edges and build their
      * point sets */
@@ -2346,11 +2410,15 @@ int brep_cdt_plot(struct bu_vls *vls, const char *solid_name,
 	}
 
 	// Generate the BrepTrimPoint arrays for both trims associated with this edge
-	(void)getEdgePoints(&edge, trim1, max_dist, ttol, tol, &vert_pnts, &w3dpnts);
+	(void)getEdgePoints(&edge, trim1, max_dist, ttol, tol, &vert_pnts, &w3dpnts, &vert_norms, &w3dnorms);
 
     }
 
     /* For all faces, do the Poly2Tri triangulation */
+    p2t::CDT **p2t_faces = (p2t::CDT **)bu_calloc(brep->m_F.Count(), sizeof(p2t::CDT *), "poly2tri triangulations");
+    std::map<p2t::Point *, ON_3dPoint *> **p2t_maps = (std::map<p2t::Point *, ON_3dPoint *> **)bu_calloc(brep->m_F.Count(), sizeof(std::map<p2t::Point *, ON_3dPoint *> *), "poly2tri point to ON_3dPoint maps");
+    std::map<p2t::Point *, ON_3dPoint *> **p2t_nmaps = (std::map<p2t::Point *, ON_3dPoint *> **)bu_calloc(brep->m_F.Count(), sizeof(std::map<p2t::Point *, ON_3dPoint *> *), "poly2tri point to ON_3dVector normal maps");
+
     for (int face_index = 0; face_index < brep->m_F.Count(); face_index++) {
         ON_BrepFace &face = brep->m_F[face_index];
 	ON_RTree rt_trims;
@@ -2360,6 +2428,7 @@ int brep_cdt_plot(struct bu_vls *vls, const char *solid_name,
 	ON_2dPointArray on_loop_points;
 	ON_SimpleArray<BrepTrimPoint> *brep_loop_points = new ON_SimpleArray<BrepTrimPoint>[loop_cnt];
 	std::map<p2t::Point *, ON_3dPoint *> *pointmap = new std::map<p2t::Point *, ON_3dPoint *>();
+	std::map<p2t::Point *, ON_3dPoint *> *normalmap = new std::map<p2t::Point *, ON_3dPoint *>();
 	std::vector<p2t::Point*> polyline;
 	p2t::CDT* cdt = NULL;
 
@@ -2370,7 +2439,7 @@ int brep_cdt_plot(struct bu_vls *vls, const char *solid_name,
 	    if (s_to_maxdist.find(face.SurfaceOf()) != s_to_maxdist.end()) {
 		max_dist = s_to_maxdist[face.SurfaceOf()];
 	    }
-	    get_loop_sample_points(&brep_loop_points[li], face, loop, max_dist, ttol, tol, &vert_pnts, &w3dpnts);
+	    get_loop_sample_points(&brep_loop_points[li], face, loop, max_dist, ttol, tol, &vert_pnts, &w3dpnts, &vert_norms, &w3dnorms);
 	}
 
 	std::list<std::map<double, ON_3dPoint *> *> bridgePoints;
@@ -2388,6 +2457,7 @@ int brep_cdt_plot(struct bu_vls *vls, const char *solid_name,
 		    p2t::Point *p = new p2t::Point((brep_loop_points[li])[i].p2d.x, (brep_loop_points[li])[i].p2d.y);
 		    polyline.push_back(p);
 		    (*pointmap)[p] = (brep_loop_points[li])[i].p3d;
+		    (*normalmap)[p] = (brep_loop_points[li])[i].n3d;
 		}
 		for (int i = 1; i < brep_loop_points[li].Count(); i++) {
 		    // map point to last entry to 3d point
@@ -2476,13 +2546,57 @@ int brep_cdt_plot(struct bu_vls *vls, const char *solid_name,
 	rt_trims.RemoveAll();
 
 	cdt->Triangulate(true, -1);
+
+	/* Stash mappings for BoT reassembly */
+	p2t_faces[face_index] = cdt;
+	p2t_maps[face_index] = pointmap;
+	p2t_nmaps[face_index] = normalmap;
+
     }
 
-    // TODO - once we are generating watertight triangulations reliably, we
-    // will want to return a BoT - the output will be suitable for export or
-    // drawing, so just provide the correct data type for other routines to
-    // work with.  Also, we can then apply the bot validity testing routines.
+    // Generate a BoT with normals.
+    // TODO - apply the bot validity testing routines.
+    
+    std::vector<ON_3dPoint *> vfpnts;
+    std::vector<ON_3dPoint *> vfnormls;
+    std::map<ON_3dPoint *, int> on_pnt_to_bot_pnt;
+#if 0
+    ON_3dPoint *pnt[3] = {NULL, NULL, NULL};
+    ON_3dVector norm[3] = {ON_3dVector(), ON_3dVector(), ON_3dVector()};
+    point_t pt[3] = {VINIT_ZERO, VINIT_ZERO, VINIT_ZERO};
+    vect_t nv[3] = {VINIT_ZERO, VINIT_ZERO, VINIT_ZERO};
+#endif
+    size_t triangle_cnt = 0;
 
+    for (int face_index = 0; face_index != brep->m_F.Count(); face_index++) {
+	p2t::CDT *cdt = p2t_faces[face_index];
+	std::map<p2t::Point *, ON_3dPoint *> *pointmap = p2t_maps[face_index];
+	std::map<p2t::Point *, ON_3dPoint *> *normalmap = p2t_nmaps[face_index];
+	std::vector<p2t::Triangle*> tris = cdt->GetTriangles();
+	triangle_cnt += tris.size();
+	for (size_t i = 0; i < tris.size(); i++) {
+	    p2t::Triangle *t = tris[i];
+	    for (size_t j = 0; j < 3; j++) {
+		p2t::Point *p = t->GetPoint(j);
+		ON_3dPoint *op = (*pointmap)[p];
+		ON_3dPoint *onorm = (*normalmap)[p];
+		if (p && op && onorm) {
+		    if (on_pnt_to_bot_pnt.find(op) == on_pnt_to_bot_pnt.end()) {
+			vfpnts.push_back(op);
+			vfnormls.push_back(onorm);
+			on_pnt_to_bot_pnt[op] = vfpnts.size() - 1;
+		    }
+		} else {
+		    bu_log("What???? p2t face without proper point info...\n");
+		}
+	    }
+	}
+    }
+
+    // Know how many faces and points now - initialize BoT container.
+
+    // Iterate over faces, adding points and faces to BoT container.  All
+    // 3d points must end up unique in this final container.
 
     return 0;
 }

@@ -132,15 +132,18 @@ typedef struct _on_brep_placeholder {
 extern "C++" {
 struct BrepTrimPoint
 {
-    ON_2dPoint p2d; /* 2d surface parameter space point */
-    ON_3dPoint *p3d; /* 3d edge/trim point depending on whether we're using the 3d edge to generate points or the trims */
-    ON_3dVector tangent;
-    ON_3dVector normal;
-    double t;     /* corresponding trim curve parameter (ON_UNSET_VALUE if unknown or not pulled back) */
-    double e;     /* corresponding edge curve parameter (ON_UNSET_VALUE if using trim not edge) */
-    int trim_ind;
     int edge_ind;
-    BrepTrimPoint *other_face_trimpt;
+    double e;     /* corresponding edge curve parameter (ON_UNSET_VALUE if using trim not edge) */
+    ON_3dPoint *p3d; /* 3d edge/trim point depending on whether we're using the 3d edge to generate points or the trims */
+    ON_3dPoint *n3d; /* normal on edge, average of the normals from the two surfaces at this point, or of all surface points associated with a vertex if this is a vertex point. */
+    ON_3dVector tangent; /* Tangent from the curve, or from the surfaces if the curve wasn't usable at this point. */
+
+    int trim_ind;
+    double t;     /* corresponding trim curve parameter (ON_UNSET_VALUE if unknown or not pulled back) */
+    ON_2dPoint p2d; /* 2d surface parameter space point */
+    ON_3dVector normal; /* normal as calculated by this trim */
+
+    BrepTrimPoint *other_face_trim_pnt;
     int from_singular;
 };}
 #endif
