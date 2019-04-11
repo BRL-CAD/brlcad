@@ -2367,10 +2367,16 @@ int brep_cdt_plot(struct rt_wdb *wdbp, struct bu_vls *vls, const char *solid_nam
 	    const ON_Surface *s1 = trim1->SurfaceOf();
 	    const ON_Surface *s2 = trim2->SurfaceOf();
 	    if (surface_EvNormal(s1, t1_2d.x, t1_2d.y, tmp1, trim1_norm)) {
+		if (trim1->Face()->m_bRev) {
+		    trim1_norm = trim1_norm * -1;
+		}
 		vnrml += trim1_norm;
 	    }
 	    if (surface_EvNormal(s2, t2_2d.x, t2_2d.y, tmp2, trim2_norm)) {
-		vnrml += trim1_norm;
+		if (trim2->Face()->m_bRev) {
+		    trim2_norm = trim2_norm * -1;
+		}
+		vnrml += trim2_norm;
 	    }
 	}
 	vnrml.Unitize();
@@ -2556,11 +2562,13 @@ int brep_cdt_plot(struct rt_wdb *wdbp, struct bu_vls *vls, const char *solid_nam
     // TODO - apply the bot validity testing routines.
     
     std::vector<ON_3dPoint *> vfpnts;
-    std::vector<ON_3dPoint *> vfnormls;
+    std::vector<ON_3dPoint *> vfnormals;
     std::map<ON_3dPoint *, int> on_pnt_to_bot_pnt;
+    std::map<ON_3dPoint *, int> on_pnt_to_bot_norm;
     size_t triangle_cnt = 0;
 
     for (int face_index = 0; face_index != brep->m_F.Count(); face_index++) {
+	ON_BrepFace &face = brep->m_F[face_index];
 	p2t::CDT *cdt = p2t_faces[face_index];
 	std::map<p2t::Point *, ON_3dPoint *> *pointmap = p2t_maps[face_index];
 	std::map<p2t::Point *, ON_3dPoint *> *normalmap = p2t_nmaps[face_index];
@@ -2570,16 +2578,60 @@ int brep_cdt_plot(struct rt_wdb *wdbp, struct bu_vls *vls, const char *solid_nam
 	    p2t::Triangle *t = tris[i];
 	    for (size_t j = 0; j < 3; j++) {
 		p2t::Point *p = t->GetPoint(j);
-		ON_3dPoint *op = (*pointmap)[p];
-		ON_3dPoint *onorm = (*normalmap)[p];
-		if (p && op && onorm) {
-		    if (on_pnt_to_bot_pnt.find(op) == on_pnt_to_bot_pnt.end()) {
-			vfpnts.push_back(op);
-			vfnormls.push_back(onorm);
-			on_pnt_to_bot_pnt[op] = vfpnts.size() - 1;
+		if (p) {
+		    ON_3dPoint *op = (*pointmap)[p];
+		    ON_3dPoint *onorm = (*normalmap)[p];
+		    if (!op || !onorm) {
+			/* We've got some calculating to do... */
+			const ON_Surface *s = face.SurfaceOf();
+			ON_3dPoint pnt;
+			ON_3dVector norm;
+			if (surface_EvNormal(s, p->x, p->y, pnt, norm)) {
+			    if (face.m_bRev) {
+				norm = norm * -1.0;
+			    }
+			    if (!op) {
+				op = new ON_3dPoint(pnt);
+				w3dpnts.push_back(op);
+				vfpnts.push_back(op);
+				(*pointmap)[p] = op;
+				on_pnt_to_bot_pnt[op] = vfpnts.size() - 1;
+			    }
+			    if (!onorm) {
+				onorm = new ON_3dPoint(norm);
+				w3dnorms.push_back(onorm);
+				vfnormals.push_back(onorm);
+				(*normalmap)[p] = onorm;
+				on_pnt_to_bot_norm[op] = vfnormals.size() - 1;
+			    }
+			} else {
+			    bu_log("Erm... eval failed, no normal info?\n");
+			    if (!op) {
+				pnt = s->PointAt(p->x, p->y);
+				op = new ON_3dPoint(pnt);
+				w3dpnts.push_back(op);
+				vfpnts.push_back(op);
+				(*pointmap)[p] = op;
+				on_pnt_to_bot_pnt[op] = vfpnts.size() - 1;
+			    } else {
+				if (on_pnt_to_bot_pnt.find(op) == on_pnt_to_bot_pnt.end()) {
+				    vfpnts.push_back(op);
+				    (*pointmap)[p] = op;
+				    on_pnt_to_bot_pnt[op] = vfpnts.size() - 1;
+				}
+			    }
+			}
+		    } else {
+			/* We've got them already, just add them */ 
+			if (on_pnt_to_bot_pnt.find(op) == on_pnt_to_bot_pnt.end()) {
+			    vfpnts.push_back(op);
+			    vfnormals.push_back(onorm);
+			    on_pnt_to_bot_pnt[op] = vfpnts.size() - 1;
+			    on_pnt_to_bot_norm[op] = vfnormals.size() - 1;
+			}
 		    }
 		} else {
-		    bu_log("What???? p2t face without proper point info...\n");
+		    bu_log("Face %d: p2t face without proper point info...\n", face.m_face_index);
 		}
 	    }
 	}
@@ -2588,16 +2640,19 @@ int brep_cdt_plot(struct rt_wdb *wdbp, struct bu_vls *vls, const char *solid_nam
     // Know how many faces and points now - initialize BoT container.
     int *faces = (int *)bu_calloc(triangle_cnt*3, sizeof(int), "new faces array");
     fastf_t *vertices = (fastf_t *)bu_calloc(vfpnts.size()*3, sizeof(fastf_t), "new vert array");
-    fastf_t *normals = (fastf_t *)bu_calloc(vfpnts.size()*3, sizeof(fastf_t), "new normals array");
+    fastf_t *normals = (fastf_t *)bu_calloc(vfnormals.size()*3, sizeof(fastf_t), "new normals array");
     int *face_normals = (int *)bu_calloc(triangle_cnt*3, sizeof(int), "new face_normals array");
 
     for (size_t i = 0; i < vfpnts.size(); i++) {
 	vertices[i*3] = vfpnts[i]->x;
 	vertices[i*3+1] = vfpnts[i]->y;
 	vertices[i*3+2] = vfpnts[i]->z;
-	normals[i*3] = vfnormls[i]->x;
-	normals[i*3+1] = vfnormls[i]->y;
-	normals[i*3+2] = vfnormls[i]->z;
+    }
+
+    for (size_t i = 0; i < vfnormals.size(); i++) {
+	normals[i*3] = vfnormals[i]->x;
+	normals[i*3+1] = vfnormals[i]->y;
+	normals[i*3+2] = vfnormals[i]->z;
     }
 
 
@@ -2615,8 +2670,9 @@ int brep_cdt_plot(struct rt_wdb *wdbp, struct bu_vls *vls, const char *solid_nam
 		p2t::Point *p = t->GetPoint(j);
 		ON_3dPoint *op = (*pointmap)[p];
 		int ind = on_pnt_to_bot_pnt[op];
+		int nind = on_pnt_to_bot_norm[op];
 		faces[face_cnt*3 + j] = ind;
-		face_normals[face_cnt*3 + j] = ind;
+		face_normals[face_cnt*3 + j] = nind;
 	    }
 	    face_cnt++;
 	}
@@ -2626,7 +2682,7 @@ int brep_cdt_plot(struct rt_wdb *wdbp, struct bu_vls *vls, const char *solid_nam
     BU_ALLOC(bot, struct rt_bot_internal);
     bot->magic = RT_BOT_INTERNAL_MAGIC;
     bot->mode = RT_BOT_SOLID;
-    bot->orientation = RT_BOT_CW;
+    bot->orientation = RT_BOT_CCW;
     bot->bot_flags = 0;
     bot->num_vertices = vfpnts.size();
     bot->num_faces = triangle_cnt;
