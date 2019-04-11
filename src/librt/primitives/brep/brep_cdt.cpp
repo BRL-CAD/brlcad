@@ -2687,6 +2687,7 @@ int brep_cdt_plot(struct rt_wdb *wdbp, struct bu_vls *vls, const char *solid_nam
     // Iterate over faces, adding points and faces to BoT container.  All
     // 3d points must end up unique in this final container.
     int face_cnt = 0;
+    triangle_cnt = 0;
     for (int face_index = 0; face_index != brep->m_F.Count(); face_index++) {
 	p2t::CDT *cdt = p2t_faces[face_index];
 	std::map<p2t::Point *, ON_3dPoint *> *pointmap = p2t_maps[face_index];
@@ -2702,6 +2703,15 @@ int brep_cdt_plot(struct rt_wdb *wdbp, struct bu_vls *vls, const char *solid_nam
 		faces[face_cnt*3 + j] = ind;
 		face_normals[face_cnt*3 + j] = nind;
 	    }
+	    if (brep->m_F[face_index].m_bRev) {
+		int ftmp = faces[face_cnt*3 + 1];
+		faces[face_cnt*3 + 1] = faces[face_cnt*3 + 2];
+		faces[face_cnt*3 + 2] = ftmp;
+		int fntmp = face_normals[face_cnt*3 + 1];
+		face_normals[face_cnt*3 + 1] = face_normals[face_cnt*3 + 2];
+		face_normals[face_cnt*3 + 2] = fntmp;
+	    }
+	    
 	    face_cnt++;
 	}
     }
