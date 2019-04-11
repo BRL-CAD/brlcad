@@ -179,10 +179,18 @@ getEdgePoints(
 
 	if (!surface_EvNormal(s1, trim1_mid_2d.x, trim1_mid_2d.y, tmp1, trim1_mid_norm)) {
 	    trim1_mid_norm = ON_3dVector::UnsetVector;
+	} else {
+	    if (trim.Face()->m_bRev) {
+		trim1_mid_norm = trim1_mid_norm  * -1.0;
+	    }
 	}
 
 	if (!surface_EvNormal(s2, trim2_mid_2d.x, trim2_mid_2d.y, tmp2, trim2_mid_norm)) {
 	    trim2_mid_norm = ON_3dVector::UnsetVector;
+	} else {
+	    if (trim2->Face()->m_bRev) {
+		trim2_mid_norm = trim2_mid_norm  * -1.0;
+	    }
 	}
 
 	ON_3dPoint *npt = new ON_3dPoint(edge_mid_3d);
@@ -424,10 +432,30 @@ getEdgePoints(
 
     // Get the normals
     evals = 0;
-    evals += (surface_EvNormal(s1, trim1_start_2d.x, trim1_start_2d.y, tmp1, trim1_start_normal)) ? 1 : 0;
-    evals += (surface_EvNormal(s1, trim1_end_2d.x, trim1_end_2d.y, tmp2, trim1_end_normal)) ? 1 : 0;
-    evals += (surface_EvNormal(s2, trim2_start_2d.x, trim2_start_2d.y, tmp1, trim2_start_normal)) ? 1 : 0;
-    evals += (surface_EvNormal(s2, trim2_end_2d.x, trim2_end_2d.y, tmp2, trim2_end_normal)) ? 1 : 0;
+    if (surface_EvNormal(s1, trim1_start_2d.x, trim1_start_2d.y, tmp1, trim1_start_normal)) {
+	if (trim.Face()->m_bRev) {
+	    trim1_start_normal = trim1_start_normal  * -1.0;
+	}
+	evals++;
+    }
+    if (surface_EvNormal(s1, trim1_end_2d.x, trim1_end_2d.y, tmp2, trim1_end_normal)) {
+	if (trim.Face()->m_bRev) {
+	    trim1_end_normal = trim1_end_normal  * -1.0;
+	}
+	evals++;
+    }
+    if (surface_EvNormal(s2, trim2_start_2d.x, trim2_start_2d.y, tmp1, trim2_start_normal)) {
+	if (trim2->Face()->m_bRev) {
+	    trim2_start_normal = trim2_start_normal  * -1.0;
+	}
+	evals++;
+    }
+    if (surface_EvNormal(s2, trim2_end_2d.x, trim2_end_2d.y, tmp2, trim2_end_normal)) {
+	if (trim2->Face()->m_bRev) {
+	    trim2_end_normal = trim2_end_normal  * -1.0;
+	}
+	evals++;
+    }
 
     if (evals != 4) {
 	bu_log("problem with normal evals\n");
