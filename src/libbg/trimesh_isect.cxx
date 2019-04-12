@@ -39,11 +39,36 @@
 #include <ctype.h>
 #include <time.h>
 
+#include "bn/plot3.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bn/tol.h"
 #include "bg/tri_tri.h"
 #include "bg/trimesh.h"
+
+HIDDEN void
+plot_faces(const char *fname, std::set<int> *faces, int *f, point_t *v)
+{
+    std::set<int>::iterator f_it;
+    FILE* plot_file = fopen(fname, "w");
+    int r = int(256*drand48() + 100.0);
+    int g = int(256*drand48() + 100.0);
+    int b = int(256*drand48() + 100.0);
+    pl_color(plot_file, r, g, b);
+    for (f_it = faces->begin(); f_it != faces->end(); f_it++) {
+	point_t p1, p2, p3;
+	VMOVE(p1, v[f[(*f_it)*3+0]]);
+	VMOVE(p2, v[f[(*f_it)*3+1]]);
+	VMOVE(p3, v[f[(*f_it)*3+2]]);
+	pdv_3move(plot_file, p1);
+	pdv_3cont(plot_file, p2);
+	pdv_3move(plot_file, p1);
+	pdv_3cont(plot_file, p3);
+	pdv_3move(plot_file, p2);
+	pdv_3cont(plot_file, p3);
+    }
+    fclose(plot_file);
+}
 
 /* For NURBS refinement, we do this once and keep the set of "inside" faces from
  * each mesh.  If any of the vertices from those faces are still inside after a
@@ -186,7 +211,12 @@ bg_trimesh_isect(
     }
 
     bu_log("m1_intersecting_faces size: %zd\n", m1_intersecting_faces.size());
+
+    plot_faces("m1.plot3", &m1_intersecting_faces, faces_1, vertices_1);
+
     bu_log("m2_intersecting_faces size: %zd\n", m2_intersecting_faces.size());
+
+    plot_faces("m2.plot3", &m2_intersecting_faces, faces_2, vertices_2);
 
 
 
