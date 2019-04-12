@@ -20,6 +20,7 @@ set(LIBBG_SOURCES
   tri_ray.c
   tri_tri.c
   trimesh.c
+  trimesh_isect.cxx
   util.c
   )
 

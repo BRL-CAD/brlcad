@@ -122,6 +122,16 @@ BG_EXPORT extern int bg_trimesh_hanging_nodes(int num_vertices, int num_faces, f
 
 BG_EXPORT extern struct bg_trimesh_halfedge * bg_trimesh_generate_edge_list(int fcnt, int *f);
 
+/* Make an attempt at a trimesh intersection calculator that returns the sets
+ * of faces intersecting and inside the other for each mesh. Doesn't attempt
+ * a boolean evaluation, just characterizes faces */
+int
+bg_trimesh_isect(
+	int **faces_inside_1, int *num_faces_inside_1, int **faces_inside_2, int *num_faces_inside_2,
+	int **faces_isect_1, int *num_faces_isect_1, int **faces_isect_2, int *num_faces_isect_2,
+	int *faces_1, int num_faces_1, point_t *vertices_1, int num_vertices_1,
+	int *faces_2, int num_faces_2, point_t *vertices_2, int num_vertices_2);
+
 __END_DECLS
 
 #endif  /* BG_TRIMESH_H */
