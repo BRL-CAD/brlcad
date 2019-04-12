@@ -70,18 +70,6 @@ RT_EXPORT extern struct mem_map * rt_memalloc_nosplit(struct mem_map **pp,
                                                       size_t size);
 
 /**
- * Returns:     NULL Error
- * address Otherwise
- *
- * Comments:
- * Algorithm is first fit.
- * Free space can be split
- */
-RT_EXPORT extern size_t rt_memget(struct mem_map **pp,
-                                  size_t size,
-                                  off_t place);
-
-/**
  * Takes:
  * size,
  * address.
@@ -104,10 +92,6 @@ RT_EXPORT extern void rt_mempurge(struct mem_map **pp);
  * Return all the storage used by the rt_mem_freemap.
  */
 RT_EXPORT extern void rt_memclose(void);
-
-
-/* DEPRECATED */
-/*RT_EXPORT extern void rt_memprint(struct mem_map **pp);*/
 
 
 __END_DECLS
