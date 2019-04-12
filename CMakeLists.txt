@@ -2639,6 +2639,8 @@ if(BRLCAD_PRINT_MSGS)
   message("***********************************************************")
 endif(BRLCAD_PRINT_MSGS)
 
+include(CheckSymbolExists)
+
 BRLCAD_FUNCTION_EXISTS(XQueryExtension)
 BRLCAD_FUNCTION_EXISTS(_putenv_s)
 BRLCAD_FUNCTION_EXISTS(_splitpath)
