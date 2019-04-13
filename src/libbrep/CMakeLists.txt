@@ -4,6 +4,7 @@ set(BREP_INCLUDE_DIRS
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${BN_INCLUDE_DIRS}
+  ${P2T_INCLUDE_DIR}
   ${OPENNURBS_INCLUDE_DIRS}
   )
 
@@ -18,24 +19,25 @@ BRLCAD_LIB_INCLUDE_DIRS(brep BREP_INCLUDE_DIRS BREP_LOCAL_INCLUDE_DIRS)
 
 set(LIBBREP_SOURCES
   BBNode.cpp
-  boolean.cpp
   BRNode.cpp
+  PullbackCurve.cpp
+  Subcurve.cpp
+  Subsurface.cpp
+  boolean.cpp
+  cdt.cpp
   intersect.cpp
   libbrep_brep_tools.cpp
   opennurbs_ext.cpp
-  #opennurbs_fit.cpp
   px_event.cpp
-  PullbackCurve.cpp
   shape_recognition.cpp
   shape_recognition_cone.cpp
   shape_recognition_cylinder.cpp
-  shape_recognition_sphere.cpp
   shape_recognition_pipeline.cpp
   shape_recognition_planar.cpp
+  shape_recognition_sphere.cpp
   shape_recognition_util.cpp
   ssx_event.cpp
-  Subcurve.cpp
-  Subsurface.cpp
+  #opennurbs_fit.cpp
   )
 
 set(libbrep_ignored_files
@@ -55,7 +57,7 @@ if(CPP_DLL_DEFINES)
   set_property(GLOBAL APPEND PROPERTY libbrep_DLL_DEFINES "ON_DLL_IMPORTS")
 endif(CPP_DLL_DEFINES)
 
-BRLCAD_ADDLIB(libbrep "${LIBBREP_SOURCES}" "libbg;libbn;libbu;${OPENNURBS_LIBRARIES};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
+BRLCAD_ADDLIB(libbrep "${LIBBREP_SOURCES}" "libbg;libbn;libbu;${OPENNURBS_LIBRARIES};${P2T_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
 
 set_target_properties(libbrep PROPERTIES VERSION 20.0.1 SOVERSION 20)
 

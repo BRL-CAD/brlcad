@@ -38,7 +38,6 @@ __BEGIN_DECLS
 #ifdef __cplusplus
 extern "C++" {
 
-#if 0
     /* Container that holds the state of a triangulation */
     struct ON_Brep_CDT_State;
 
@@ -50,12 +49,14 @@ extern "C++" {
     /* Destroy a CDT state */
     void ON_Brep_CDT_Destroy(struct ON_Brep_CDT_State *s);
 
+#if 0
     /* Set/get the CDT tolerances. */
     void ON_Brep_CDT_Set_Tols(struct ON_Brep_CDT_State *s, TOL_INFO...);
     void ON_Brep_CDT_Get_Tols(TOL_INFO..., struct ON_Brep_CDT_State *s);
 
     /* Return the ON_Brep associated with state s. */
     ON_Brep *ON_Brep_CDT_brep(struct ON_Brep_CDT_State *s);
+#endif
 
     /* Given a state, produce a triangulation.  Returns 0 if a solid, valid
      * triangulation was produced, 1 if a triangulation was produced but it
@@ -66,6 +67,7 @@ extern "C++" {
      * last Tessellate call, the old tessellation information will be replaced. */
     int ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s, std::vector<int> *faces);
 
+#if 0
     /* Given a state, report the status of its triangulation. -3 indicates a
      * failed attempt to tessellate, -2 indicates a non-solid tessellation is
      * present after an attempt to tessellate all faces, -1 is a state which
