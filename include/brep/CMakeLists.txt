@@ -3,6 +3,7 @@ set(brep_headers
   bbnode.h
   boolean.h
   brnode.h
+  cdt.h
   csg.h
   curvetree.h
   intersect.h
