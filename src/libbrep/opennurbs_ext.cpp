@@ -34,7 +34,10 @@
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/parallel.h"
-#include "brep.h"
+#include "brep/defines.h"
+#include "brep/curvetree.h"
+#include "brep/surfacetree.h"
+#include "brep/ray.h"
 #include "libbrep_brep_tools.h"
 #include "bn/dvec.h"
 

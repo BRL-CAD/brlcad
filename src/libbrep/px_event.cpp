@@ -24,7 +24,8 @@
  */
 
 #include "common.h"
-#include "brep.h"
+#include "brep/defines.h"
+#include "brep/intersect.h"
 
 ON_PX_EVENT::ON_PX_EVENT()
 {

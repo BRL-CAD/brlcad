@@ -29,7 +29,10 @@
 
 #include "common.h"
 
-#include "brep.h"
+#include "brep/defines.h"
+#include "brep/curvetree.h"
+#include "brep/ray.h"
+#include "brep/util.h"
 
 /** @{ */
 /** @file brep/bbnode.h */

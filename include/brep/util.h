@@ -39,7 +39,6 @@ extern "C++" {
 }
 #endif
 
-#include "brep.h"
 
 #include "bu/cv.h"
 #include "bu/endian.h"
@@ -47,6 +46,7 @@ extern "C++" {
 #include "bu/malloc.h"
 #include "bu/parse.h"
 
+#include "brep/defines.h"
 
 __BEGIN_DECLS
 

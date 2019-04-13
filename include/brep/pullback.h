@@ -30,6 +30,7 @@
 
 #include "common.h"
 #include "brep/defines.h"
+#include "brep/surfacetree.h"
 
 /** @{ */
 /** @file brep/pullback.h */

@@ -36,8 +36,10 @@
 #include <map>
 #include <string>
 
-#include "brep.h"
 #include "bu/parallel.h"
+#include "brep/defines.h"
+#include "brep/pullback.h"
+#include "brep/ray.h"
 
 /* interface header */
 #include "PullbackCurve.h"

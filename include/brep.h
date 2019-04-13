@@ -29,20 +29,6 @@
 
 #include "common.h"
 
-#include "bio.h" /* needed to include windows.h with protections */
-#ifdef __cplusplus
-extern "C++" {
-#define ON_NO_WINDOWS 1 /* don't let opennurbs include windows.h */
-/* Note - We aren't (yet) including opennurbs in our Doxygen output. Until we
- * do, use cond to hide the opennurbs header from Doxygen. */
-/* @cond */
-#include "opennurbs.h"
-/* @endcond */
-}
-#endif
-
-#include "vmath.h"
-
 __BEGIN_DECLS
 
 #include "brep/defines.h"

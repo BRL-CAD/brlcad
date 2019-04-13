@@ -1,5 +1,6 @@
 #include "common.h"
 
+#include <vector>
 #include <set>
 #include <map>
 #include <algorithm>

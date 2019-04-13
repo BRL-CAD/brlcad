@@ -37,7 +37,9 @@ extern "C++" {
 }
 #endif
 
-#include "brep.h"
+#include "brep/defines.h"
+#include "brep/brnode.h"
+#include "brep/util.h"
 
 
 __BEGIN_DECLS

@@ -21,7 +21,7 @@
 #include "common.h"
 
 #include "bu/log.h"
-#include "brep.h"
+#include "brep/bbnode.h"
 
 
 namespace brlcad {

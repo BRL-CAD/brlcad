@@ -36,7 +36,12 @@
 
 #include "vmath.h"
 #include "bu/log.h"
-#include "brep.h"
+#include "brep/defines.h"
+#include "brep/boolean.h"
+#include "brep/intersect.h"
+#include "brep/pullback.h"
+#include "brep/ray.h"
+#include "brep/util.h"
 
 #include "brep_except.h"
 

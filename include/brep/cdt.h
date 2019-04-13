@@ -31,7 +31,7 @@
 
 #include "common.h"
 
-#include "brep.h"
+#include "brep/defines.h"
 
 __BEGIN_DECLS
 
