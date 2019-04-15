@@ -106,7 +106,7 @@ rtcheck_handler_cleanup(struct ged_rtcheck *rtcp)
 static void
 rtcheck_vector_handler(ClientData clientData, int UNUSED(mask))
 {
-    int value;
+    int value = 0;
     struct ged_rtcheck *rtcp = (struct ged_rtcheck *)clientData;
 
     /* Get vector output from rtcheck */
