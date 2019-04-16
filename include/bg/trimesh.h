@@ -125,7 +125,7 @@ BG_EXPORT extern struct bg_trimesh_halfedge * bg_trimesh_generate_edge_list(int 
 /* Make an attempt at a trimesh intersection calculator that returns the sets
  * of faces intersecting and inside the other for each mesh. Doesn't attempt
  * a boolean evaluation, just characterizes faces */
-int
+BG_EXPORT extern int
 bg_trimesh_isect(
 	int **faces_inside_1, int *num_faces_inside_1, int **faces_inside_2, int *num_faces_inside_2,
 	int **faces_isect_1, int *num_faces_isect_1, int **faces_isect_2, int *num_faces_isect_2,
