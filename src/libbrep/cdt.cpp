@@ -1973,6 +1973,101 @@ ON_Brep_CDT_Destroy(struct ON_Brep_CDT_State *s)
 
 int ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, std::vector<int> *faces)
 {
+
+    ON_wString wstr;
+    ON_TextLog tl(wstr);
+
+    ON_Brep* brep = s_cdt->brep;
+
+    // Check for any conditions that are show-stoppers
+    for (int index = 0; index < brep->m_E.Count(); index++) {
+        ON_BrepEdge& edge = brep->m_E[index];
+        if (edge.TrimCount() != 2) {
+            bu_log("Edge %d trim count: %d - can't (yet) do watertight meshing\n", edge.m_edge_index, edge.TrimCount());
+            return -1;
+        }
+        ON_wString wonstr;
+        ON_TextLog vout(wonstr);
+        if (!brep->IsValid(&vout)) {
+            bu_log("brep is NOT valid, cannot produce watertight mesh\n");
+            //return -1;
+        }
+    }
+
+    // Reparameterize the face's surface and transform the "u" and "v"
+    // coordinates of all the face's parameter space trimming curves to
+    // minimize distortion in the map from parameter space to 3d..
+    for (int face_index = 0; face_index < brep->m_F.Count(); face_index++) {
+        ON_BrepFace *face = brep->Face(face_index);
+        const ON_Surface *s = face->SurfaceOf();
+        double surface_width, surface_height;
+        if (s->GetSurfaceSize(&surface_width, &surface_height)) {
+            face->SetDomain(0, 0.0, surface_width);
+            face->SetDomain(1, 0.0, surface_height);
+        }
+    }
+
+    /* We want to use ON_3dPoint pointers and BrepVertex points, but
+     * vert->Point() produces a temporary address.  If this is our first time
+     * through, make stable copies of the Vertex points. */
+    if (!s_cdt->w3dpnts->size()) {
+	for (int index = 0; index < brep->m_V.Count(); index++) {
+	    ON_BrepVertex& v = brep->m_V[index];
+	    (*s_cdt->vert_pnts)[index] = new ON_3dPoint(v.Point());
+	    s_cdt->w3dpnts->push_back((*s_cdt->vert_pnts)[index]);
+	}
+    }
+
+    /* If this is the first time through, get vertex normals that are the
+     * average of the surface points at the junction.
+     *
+     * TODO - See if we can reject a normal in the "wrong" direction if two or
+     * more surfaces vote one way and a third votes the other... */
+    if (!s_cdt->w3dnorms->size()) {
+	for (int index = 0; index < brep->m_V.Count(); index++) {
+	    ON_BrepVertex& v = brep->m_V[index];
+	    ON_3dVector vnrml(0.0, 0.0, 0.0);
+
+	    for (int eind = 0; eind != v.EdgeCount(); eind++) {
+		ON_3dPoint tmp1, tmp2;
+		ON_3dVector trim1_norm = ON_3dVector::UnsetVector;
+		ON_3dVector trim2_norm = ON_3dVector::UnsetVector;
+		ON_BrepEdge& edge = brep->m_E[v.m_ei[eind]];
+		ON_BrepTrim *trim1 = edge.Trim(0);
+		ON_BrepTrim *trim2 = edge.Trim(1);
+		ON_Interval t1range = trim1->Domain();
+		ON_Interval t2range = trim2->Domain();
+		double t1 = ((eind && trim1->m_bRev3d) || (!eind && !trim1->m_bRev3d)) ? t1range[0] : t1range[1];
+		double t2 = ((eind && trim2->m_bRev3d) || (!eind && !trim2->m_bRev3d)) ? t2range[0] : t2range[1];
+		ON_3dPoint t1_2d = trim1->PointAt(t1);
+		ON_3dPoint t2_2d = trim2->PointAt(t2);
+		const ON_Surface *s1 = trim1->SurfaceOf();
+		const ON_Surface *s2 = trim2->SurfaceOf();
+		if (surface_EvNormal(s1, t1_2d.x, t1_2d.y, tmp1, trim1_norm)) {
+		    if (trim1->Face()->m_bRev) {
+			trim1_norm = trim1_norm * -1;
+		    }
+		    vnrml += trim1_norm;
+		}
+		if (surface_EvNormal(s2, t2_2d.x, t2_2d.y, tmp2, trim2_norm)) {
+		    if (trim2->Face()->m_bRev) {
+			trim2_norm = trim2_norm * -1;
+		    }
+		    vnrml += trim2_norm;
+		}
+	    }
+	    vnrml.Unitize();
+
+	    // We store this as a point to keep C++ happy...  If we try to
+	    // propagate the ON_3dVector type through all the CDT logic it
+	    // triggers issues with the compile.
+	    (*s_cdt->vert_norms)[index] = new ON_3dPoint(vnrml);
+	    s_cdt->w3dnorms->push_back((*s_cdt->vert_norms)[index]);
+	}
+    }
+
+
+
     /* To generate watertight meshes, the faces must share 3D edge points.  To ensure
      * a uniform set of edge points, we first sample all the edges and build their
      * point sets */
