@@ -20,6 +20,8 @@
 
 #include "common.h"
 
+#include <algorithm>
+
 #include "bu/log.h"
 #include "brep/bbnode.h"
 
