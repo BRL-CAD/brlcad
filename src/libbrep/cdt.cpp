@@ -1971,6 +1971,143 @@ ON_Brep_CDT_Destroy(struct ON_Brep_CDT_State *s)
     delete s;
 }
 
+static int
+ON_Brep_CDT_Face(struct ON_Brep_CDT_State *s_cdt, std::map<const ON_Surface *, double> *s_to_maxdist, ON_BrepFace &face)
+{
+    ON_RTree rt_trims;
+    ON_2dPointArray on_surf_points;
+    const ON_Surface *s = face.SurfaceOf();
+    int loop_cnt = face.LoopCount();
+    ON_2dPointArray on_loop_points;
+    ON_SimpleArray<BrepTrimPoint> *brep_loop_points = new ON_SimpleArray<BrepTrimPoint>[loop_cnt];
+    std::map<p2t::Point *, ON_3dPoint *> *pointmap = new std::map<p2t::Point *, ON_3dPoint *>();
+    std::map<p2t::Point *, ON_3dPoint *> *normalmap = new std::map<p2t::Point *, ON_3dPoint *>();
+    std::vector<p2t::Point*> polyline;
+    p2t::CDT* cdt = NULL;
+
+    // first simply load loop point samples
+    for (int li = 0; li < loop_cnt; li++) {
+	double max_dist = 0.0;
+	const ON_BrepLoop *loop = face.Loop(li);
+	if (s_to_maxdist->find(face.SurfaceOf()) != s_to_maxdist->end()) {
+	    max_dist = (*s_to_maxdist)[face.SurfaceOf()];
+	}
+	get_loop_sample_points(s_cdt, &brep_loop_points[li], face, loop, max_dist, s_cdt->vert_pnts, s_cdt->w3dpnts, s_cdt->vert_norms, s_cdt->w3dnorms);
+    }
+
+    std::list<std::map<double, ON_3dPoint *> *> bridgePoints;
+    if (s->IsClosed(0) || s->IsClosed(1)) {
+	PerformClosedSurfaceChecks(s_cdt, s, face, brep_loop_points, BREP_SAME_POINT_TOLERANCE);
+
+    }
+    // process through loops building polygons.
+    bool outer = true;
+    for (int li = 0; li < loop_cnt; li++) {
+	int num_loop_points = brep_loop_points[li].Count();
+	if (num_loop_points > 2) {
+	    for (int i = 1; i < num_loop_points; i++) {
+		// map point to last entry to 3d point
+		p2t::Point *p = new p2t::Point((brep_loop_points[li])[i].p2d.x, (brep_loop_points[li])[i].p2d.y);
+		polyline.push_back(p);
+		(*pointmap)[p] = (brep_loop_points[li])[i].p3d;
+		(*normalmap)[p] = (brep_loop_points[li])[i].n3d;
+	    }
+	    for (int i = 1; i < brep_loop_points[li].Count(); i++) {
+		// map point to last entry to 3d point
+		ON_Line *line = new ON_Line((brep_loop_points[li])[i - 1].p2d, (brep_loop_points[li])[i].p2d);
+		ON_BoundingBox bb = line->BoundingBox();
+
+		bb.m_max.x = bb.m_max.x + ON_ZERO_TOLERANCE;
+		bb.m_max.y = bb.m_max.y + ON_ZERO_TOLERANCE;
+		bb.m_max.z = bb.m_max.z + ON_ZERO_TOLERANCE;
+		bb.m_min.x = bb.m_min.x - ON_ZERO_TOLERANCE;
+		bb.m_min.y = bb.m_min.y - ON_ZERO_TOLERANCE;
+		bb.m_min.z = bb.m_min.z - ON_ZERO_TOLERANCE;
+
+		rt_trims.Insert2d(bb.Min(), bb.Max(), line);
+	    }
+	    if (outer) {
+		cdt = new p2t::CDT(polyline);
+		outer = false;
+	    } else {
+		cdt->AddHole(polyline);
+	    }
+	    polyline.clear();
+	}
+    }
+    delete [] brep_loop_points;
+
+    // TODO - we may need to add 2D points on trims that the edges didn't know
+    // about.  Since 3D points must be shared along edges and we're using
+    // synchronized numbers of parametric domain ordered 2D and 3D points to
+    // make that work, we will need to track new 2D points and update the
+    // corresponding 3D edge based data structures.  More than that - we must
+    // also update all 2D structures in all other faces associated with the
+    // edge in question to keep things in overall sync.
+
+    // TODO - if we are going to apply clipper boolean resolution to sets of
+    // face loops, that would come here - once we have assembled the loop
+    // polygons for the faces. That also has the potential to generate "new" 3D
+    // points on edges that are driven by 2D boolean intersections between
+    // trimming loops, and may require another update pass as above.
+
+    if (outer) {
+	std::cerr << "Error: Face(" << face.m_face_index << ") cannot evaluate its outer loop and will not be facetized." << std::endl;
+	return -1;
+    }
+
+    getSurfacePoints(s_cdt, face, on_surf_points);
+
+    for (int i = 0; i < on_surf_points.Count(); i++) {
+	ON_SimpleArray<void*> results;
+	const ON_2dPoint *p = on_surf_points.At(i);
+
+	rt_trims.Search2d((const double *) p, (const double *) p, results);
+
+	if (results.Count() > 0) {
+	    bool on_edge = false;
+	    for (int ri = 0; ri < results.Count(); ri++) {
+		double dist;
+		const ON_Line *l = (const ON_Line *) *results.At(ri);
+		dist = l->MinimumDistanceTo(*p);
+		if (NEAR_ZERO(dist, s_cdt->dist)) {
+		    on_edge = true;
+		    break;
+		}
+	    }
+	    if (!on_edge) {
+		cdt->AddPoint(new p2t::Point(p->x, p->y));
+	    }
+	} else {
+	    cdt->AddPoint(new p2t::Point(p->x, p->y));
+	}
+    }
+
+    ON_SimpleArray<void*> results;
+    ON_BoundingBox bb = rt_trims.BoundingBox();
+
+    rt_trims.Search2d((const double *) bb.m_min, (const double *) bb.m_max,
+	    results);
+
+    if (results.Count() > 0) {
+	for (int ri = 0; ri < results.Count(); ri++) {
+	    const ON_Line *l = (const ON_Line *)*results.At(ri);
+	    delete l;
+	}
+    }
+    rt_trims.RemoveAll();
+
+    cdt->Triangulate(true, -1);
+
+    /* Stash mappings for BoT reassembly */
+    int face_index = face.m_face_index;
+    s_cdt->p2t_faces[face_index] = cdt;
+    s_cdt->p2t_maps[face_index] = pointmap;
+    s_cdt->p2t_nmaps[face_index] = normalmap;
+
+    return 0;
+}
+
 int ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, std::vector<int> *faces)
 {
 
@@ -2066,40 +2203,59 @@ int ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, std::vector<int> *fa
 	}
     }
 
-
-
     /* To generate watertight meshes, the faces must share 3D edge points.  To ensure
      * a uniform set of edge points, we first sample all the edges and build their
      * point sets */
     std::map<const ON_Surface *, double> s_to_maxdist;
+    for (int index = 0; index < brep->m_E.Count(); index++) {
+        ON_BrepEdge& edge = brep->m_E[index];
+        ON_BrepTrim& trim1 = brep->m_T[edge.Trim(0)->m_trim_index];
+        ON_BrepTrim& trim2 = brep->m_T[edge.Trim(1)->m_trim_index];
+
+        // Get distance tolerances from the surface sizes
+        fastf_t max_dist = 0.0;
+        fastf_t md1, md2 = 0.0;
+        double sw1, sh1, sw2, sh2;
+        const ON_Surface *s1 = trim1.Face()->SurfaceOf();
+        const ON_Surface *s2 = trim2.Face()->SurfaceOf();
+        if (s1->GetSurfaceSize(&sw1, &sh1) && s2->GetSurfaceSize(&sw2, &sh2)) {
+            if ((sw1 < s_cdt->dist) || (sh1 < s_cdt->dist) || sw2 < s_cdt->dist || sh2 < s_cdt->dist) {
+                return -1;
+            }
+            md1 = sqrt(sw1 * sh1 + sh1 * sw1) / 10.0;
+            md2 = sqrt(sw2 * sh2 + sh2 * sw2) / 10.0;
+            max_dist = (md1 < md2) ? md1 : md2;
+            s_to_maxdist[s1] = max_dist;
+            s_to_maxdist[s2] = max_dist;
+        }
+
+        // Generate the BrepTrimPoint arrays for both trims associated with this edge
+	//
+	// TODO - need to make this robust to changed tolerances on refinement
+	// runs - if pre-existing solutions for "high level" splits exist,
+	// reuse them and dig down to find where we need further refinement to
+	// create new points.
+        (void)getEdgePoints(s_cdt, &edge, trim1, max_dist, s_cdt->vert_pnts, s_cdt->w3dpnts, s_cdt->vert_norms, s_cdt->w3dnorms);
+
+    }
+
+
 
     if (!faces) {
 	for (int face_index = 0; face_index < s_cdt->brep->m_F.Count(); face_index++) {
-	    ON_BrepFace &face = s_cdt->brep->m_F[face_index];
-	    const ON_Surface *s = face.SurfaceOf();
-	    int loop_cnt = face.LoopCount();
-	    ON_SimpleArray<BrepTrimPoint> *brep_loop_points = new ON_SimpleArray<BrepTrimPoint>[loop_cnt];
+	    ON_BrepFace &face = brep->m_F[face_index];
 
-	    // first simply load loop point samples
-	    for (int li = 0; li < loop_cnt; li++) {
-		double max_dist = 0.0;
-		const ON_BrepLoop *loop = face.Loop(li);
-		if (s_to_maxdist.find(face.SurfaceOf()) != s_to_maxdist.end()) {
-		    max_dist = s_to_maxdist[face.SurfaceOf()];
-		}
-		get_loop_sample_points(s_cdt, &brep_loop_points[li], face, loop, max_dist, s_cdt->vert_pnts, s_cdt->w3dpnts, s_cdt->vert_norms, s_cdt->w3dnorms);
-	    }
-
-	    if (s->IsClosed(0) || s->IsClosed(1)) {
-		PerformClosedSurfaceChecks(s_cdt, s, face, brep_loop_points, BREP_SAME_POINT_TOLERANCE);
-
-	    }
-
-	    ON_2dPointArray on_surf_points;
-	    getSurfacePoints(s_cdt, face, on_surf_points);
+	    (void)ON_Brep_CDT_Face(s_cdt, &s_to_maxdist, face);
 
 	}
+
+	// TODO - validate result
+	return 0;
+    } else {
+	// TODO - per face logic
     }
+
+
     return -3;
 }
 
