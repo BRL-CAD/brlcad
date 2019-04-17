@@ -163,6 +163,21 @@ bu_color_to_rgb_chars(const struct bu_color *cp, unsigned char *rgb)
     return 1;
 }
 
+int
+bu_color_to_rgb_ints(const struct bu_color *cp, int *r, int *g, int *b)
+{
+    if (UNLIKELY(!cp || !r || !g || !b)) {
+	return 0;
+    }
+    BU_ASSERT(!(cp->buc_rgb[RED] < 0.0 || cp->buc_rgb[GRN] < 0.0 || cp->buc_rgb[BLU] < 0.0));
+    BU_ASSERT(!(cp->buc_rgb[RED] > 1.0 || cp->buc_rgb[GRN] > 1.0 || cp->buc_rgb[BLU] > 1.0));
+
+    (*r) = (int)lrint(cp->buc_rgb[RED] * 255.0);
+    (*g) = (int)lrint(cp->buc_rgb[GRN] * 255.0);
+    (*b) = (int)lrint(cp->buc_rgb[BLU] * 255.0);
+
+    return 1;
+}
 
 int
 bu_color_from_rgb_chars(struct bu_color *cp, const unsigned char *rgb)
