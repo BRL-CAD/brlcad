@@ -1948,7 +1948,11 @@ ON_Brep_CDT_Create(ON_Brep *brep)
     /* Set status to "never evaluated" */
     cdt->status = BREP_CDT_UNTESSELLATED;
 
-    /* TODO - Set default tolerances */
+    /* TODO - Set sane default tolerances */
+    cdt->abs = 0.0;
+    cdt->rel = 0.0;
+    cdt->norm = 0.0;
+    cdt->dist = 0.0005;
 
     return cdt;
 }
@@ -2168,31 +2172,34 @@ int ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, std::vector<int> *fa
     ON_Brep* brep = s_cdt->brep;
 
     // Check for any conditions that are show-stoppers
+    ON_wString wonstr;
+    ON_TextLog vout(wonstr);
+    if (!brep->IsValid(&vout)) {
+	bu_log("brep is NOT valid, cannot produce watertight mesh\n");
+	//return -1;
+    }
+
     for (int index = 0; index < brep->m_E.Count(); index++) {
         ON_BrepEdge& edge = brep->m_E[index];
         if (edge.TrimCount() != 2) {
             bu_log("Edge %d trim count: %d - can't (yet) do watertight meshing\n", edge.m_edge_index, edge.TrimCount());
             return -1;
         }
-        ON_wString wonstr;
-        ON_TextLog vout(wonstr);
-        if (!brep->IsValid(&vout)) {
-            bu_log("brep is NOT valid, cannot produce watertight mesh\n");
-            //return -1;
-        }
     }
 
     // Reparameterize the face's surface and transform the "u" and "v"
     // coordinates of all the face's parameter space trimming curves to
     // minimize distortion in the map from parameter space to 3d..
-    for (int face_index = 0; face_index < brep->m_F.Count(); face_index++) {
-        ON_BrepFace *face = brep->Face(face_index);
-        const ON_Surface *s = face->SurfaceOf();
-        double surface_width, surface_height;
-        if (s->GetSurfaceSize(&surface_width, &surface_height)) {
-            face->SetDomain(0, 0.0, surface_width);
-            face->SetDomain(1, 0.0, surface_height);
-        }
+    if (!s_cdt->w3dpnts->size()) {
+	for (int face_index = 0; face_index < brep->m_F.Count(); face_index++) {
+	    ON_BrepFace *face = brep->Face(face_index);
+	    const ON_Surface *s = face->SurfaceOf();
+	    double surface_width, surface_height;
+	    if (s->GetSurfaceSize(&surface_width, &surface_height)) {
+		face->SetDomain(0, 0.0, surface_width);
+		face->SetDomain(1, 0.0, surface_height);
+	    }
+	}
     }
 
     /* We want to use ON_3dPoint pointers and BrepVertex points, but
@@ -2359,6 +2366,7 @@ ON_Brep_CDT_VList_Face(
 		BN_ADD_VLIST(vlfree, vhead, nv[2], BN_VLIST_TRI_VERTNORM);
 		BN_ADD_VLIST(vlfree, vhead, pt[2], BN_VLIST_TRI_DRAW);
 		BN_ADD_VLIST(vlfree, vhead, pt[0], BN_VLIST_TRI_END);
+		//bu_log("Face %d, Tri %zd: %f/%f/%f-%f/%f/%f -> %f/%f/%f-%f/%f/%f -> %f/%f/%f-%f/%f/%f\n", face_index, i, V3ARGS(pt[0]), V3ARGS(nv[0]), V3ARGS(pt[1]), V3ARGS(nv[1]), V3ARGS(pt[2]), V3ARGS(nv[2]));
 	    }
 	    break;
 	case 1:
@@ -2419,19 +2427,19 @@ int ON_Brep_CDT_VList(
     int r, g, b;
     struct bu_list *vhead = NULL;
     int have_color = 0;
-  
+
    if (UNLIKELY(!c) || mode < 0) {
        return -1;
    }
 
-   have_color = bu_color_to_rgb_ints(c, &r, &g, &b); 
+   have_color = bu_color_to_rgb_ints(c, &r, &g, &b);
 
    if (UNLIKELY(!have_color)) {
        return -1;
-   } 
+   }
 
    vhead = bn_vlblock_find(vbp, r, g, b);
-   
+
    if (UNLIKELY(!vhead)) {
        return -1;
    }
