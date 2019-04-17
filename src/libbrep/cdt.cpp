@@ -2107,6 +2107,49 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_State *s_cdt, std::map<const ON_Surface *, d
 
     cdt->Triangulate(true, -1);
 
+    /* Calculate any 3D points we don't already have */
+    std::vector<p2t::Triangle*> tris = cdt->GetTriangles();
+    for (size_t i = 0; i < tris.size(); i++) {
+	p2t::Triangle *t = tris[i];
+	for (size_t j = 0; j < 3; j++) {
+	    p2t::Point *p = t->GetPoint(j);
+	    if (p) {
+		ON_3dPoint *op = (*pointmap)[p];
+		ON_3dPoint *onorm = (*normalmap)[p];
+		if (!op || !onorm) {
+		    /* We've got some calculating to do... */
+		    const ON_Surface *surf = face.SurfaceOf();
+		    ON_3dPoint pnt;
+		    ON_3dVector norm;
+		    if (surface_EvNormal(surf, p->x, p->y, pnt, norm)) {
+			if (face.m_bRev) {
+			    norm = norm * -1.0;
+			}
+			if (!op) {
+			    op = new ON_3dPoint(pnt);
+			    s_cdt->w3dpnts->push_back(op);
+			    (*pointmap)[p] = op;
+			}
+			if (!onorm) {
+			    onorm = new ON_3dPoint(norm);
+			    s_cdt->w3dnorms->push_back(onorm);
+			    (*normalmap)[p] = onorm;
+			}
+		    } else {
+			if (!op) {
+			    pnt = s->PointAt(p->x, p->y);
+			    op = new ON_3dPoint(pnt);
+			    s_cdt->w3dpnts->push_back(op);
+			}
+			(*pointmap)[p] = op;
+		    }
+		}
+	    } else {
+		bu_log("Face %d: p2t face without proper point info...\n", face.m_face_index);
+	    }
+	}
+    }
+
     /* Stash mappings for BoT reassembly */
     int face_index = face.m_face_index;
     s_cdt->p2t_faces[face_index] = cdt;
