@@ -42,9 +42,11 @@
 
 #include "vmath.h"
 
+#include "bu/color.h"
 #include "bu/cv.h"
 #include "bu/opt.h"
 #include "bu/time.h"
+#include "bn/vlist.h"
 #include "brep/defines.h"
 #include "brep/cdt.h"
 #include "brep/pullback.h"
@@ -1971,6 +1973,12 @@ ON_Brep_CDT_Destroy(struct ON_Brep_CDT_State *s)
     delete s;
 }
 
+int
+ON_Brep_CDT_Status(struct ON_Brep_CDT_State *s)
+{
+    return s->status;
+}
+
 static int
 ON_Brep_CDT_Face(struct ON_Brep_CDT_State *s_cdt, std::map<const ON_Surface *, double> *s_to_maxdist, ON_BrepFace &face)
 {
@@ -2242,6 +2250,7 @@ int ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, std::vector<int> *fa
 
 
     if (!faces) {
+
 	for (int face_index = 0; face_index < s_cdt->brep->m_F.Count(); face_index++) {
 	    ON_BrepFace &face = brep->m_F[face_index];
 
@@ -2251,12 +2260,146 @@ int ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, std::vector<int> *fa
 
 	// TODO - validate result
 	return 0;
+
     } else {
-	// TODO - per face logic
+
+	for (unsigned int i = 0; i < faces->size(); i++) {
+	    ON_BrepFace &face = brep->m_F[(*faces)[i]];
+
+	    (void)ON_Brep_CDT_Face(s_cdt, &s_to_maxdist, face);
+	}
+
+	return 0;
     }
 
 
     return -3;
+}
+
+static int
+ON_Brep_CDT_VList_Face(
+	struct bu_list *vhead,
+	struct bu_list *vlfree,
+	int face_index,
+	int mode,
+	const struct ON_Brep_CDT_State *s)
+{
+    point_t pt[3] = {VINIT_ZERO, VINIT_ZERO, VINIT_ZERO};
+    vect_t nv[3] = {VINIT_ZERO, VINIT_ZERO, VINIT_ZERO};
+    point_t pt1 = VINIT_ZERO;
+    point_t pt2 = VINIT_ZERO;
+
+    p2t::CDT *cdt = s->p2t_faces[face_index];
+    std::map<p2t::Point *, ON_3dPoint *> *pointmap = s->p2t_maps[face_index];
+    std::map<p2t::Point *, ON_3dPoint *> *normalmap = s->p2t_nmaps[face_index];
+    std::vector<p2t::Triangle*> tris = cdt->GetTriangles();
+
+    switch (mode) {
+	case 0:
+	    // 3D shaded triangles
+	    for (size_t i = 0; i < tris.size(); i++) {
+		p2t::Triangle *t = tris[i];
+		p2t::Point *p = NULL;
+		for (size_t j = 0; j < 3; j++) {
+		    p = t->GetPoint(j);
+		    ON_3dPoint *op = (*pointmap)[p];
+		    ON_3dPoint *onorm = (*normalmap)[p];
+		    VSET(pt[j], op->x, op->y, op->z);
+		    VSET(nv[j], onorm->x, onorm->y, onorm->z);
+		}
+		//tri one
+		BN_ADD_VLIST(vlfree, vhead, nv[0], BN_VLIST_TRI_START);
+		BN_ADD_VLIST(vlfree, vhead, nv[0], BN_VLIST_TRI_VERTNORM);
+		BN_ADD_VLIST(vlfree, vhead, pt[0], BN_VLIST_TRI_MOVE);
+		BN_ADD_VLIST(vlfree, vhead, nv[1], BN_VLIST_TRI_VERTNORM);
+		BN_ADD_VLIST(vlfree, vhead, pt[1], BN_VLIST_TRI_DRAW);
+		BN_ADD_VLIST(vlfree, vhead, nv[2], BN_VLIST_TRI_VERTNORM);
+		BN_ADD_VLIST(vlfree, vhead, pt[2], BN_VLIST_TRI_DRAW);
+		BN_ADD_VLIST(vlfree, vhead, pt[0], BN_VLIST_TRI_END);
+	    }
+	    break;
+	case 1:
+	    // 3D wireframe
+	    for (size_t i = 0; i < tris.size(); i++) {
+		p2t::Triangle *t = tris[i];
+		p2t::Point *p = NULL;
+		for (size_t j = 0; j < 3; j++) {
+		    p = t->GetPoint(j);
+		    ON_3dPoint *op = (*pointmap)[p];
+		    VSET(pt[j], op->x, op->y, op->z);
+		}
+		//tri one
+		BN_ADD_VLIST(vlfree, vhead, pt[0], BN_VLIST_LINE_MOVE);
+		BN_ADD_VLIST(vlfree, vhead, pt[1], BN_VLIST_LINE_DRAW);
+		BN_ADD_VLIST(vlfree, vhead, pt[2], BN_VLIST_LINE_DRAW);
+		BN_ADD_VLIST(vlfree, vhead, pt[0], BN_VLIST_LINE_DRAW);
+	    }
+	    break;
+	case 2:
+	    // 2D wireframe
+	    for (size_t i = 0; i < tris.size(); i++) {
+		p2t::Triangle *t = tris[i];
+		p2t::Point *p = NULL;
+
+		for (size_t j = 0; j < 3; j++) {
+		    if (j == 0) {
+			p = t->GetPoint(2);
+		    } else {
+			p = t->GetPoint(j - 1);
+		    }
+		    pt1[0] = p->x;
+		    pt1[1] = p->y;
+		    pt1[2] = 0.0;
+		    p = t->GetPoint(j);
+		    pt2[0] = p->x;
+		    pt2[1] = p->y;
+		    pt2[2] = 0.0;
+		    BN_ADD_VLIST(vlfree, vhead, pt1, BN_VLIST_LINE_MOVE);
+		    BN_ADD_VLIST(vlfree, vhead, pt2, BN_VLIST_LINE_DRAW);
+		}
+	    }
+	    break;
+	default:
+	    return -1;
+    }
+
+    return 0;
+}
+
+int ON_Brep_CDT_VList(
+	struct bn_vlblock *vbp,
+	struct bu_list *vlfree,
+	struct bu_color *c,
+	int mode,
+	const struct ON_Brep_CDT_State *s)
+{
+    int r, g, b;
+    struct bu_list *vhead = NULL;
+    int have_color = 0;
+  
+   if (UNLIKELY(!c) || mode < 0) {
+       return -1;
+   }
+
+   have_color = bu_color_to_rgb_ints(c, &r, &g, &b); 
+
+   if (UNLIKELY(!have_color)) {
+       return -1;
+   } 
+
+   vhead = bn_vlblock_find(vbp, r, g, b);
+   
+   if (UNLIKELY(!vhead)) {
+       return -1;
+   }
+
+   for (int i = 0; i < s->brep->m_F.Count(); i++) {
+       if (s->p2t_faces[i]) {
+	   (void)ON_Brep_CDT_VList_Face(vhead, vlfree, i, mode, s);
+       }
+   }
+
+   return 0;
 }
 
 #if 0

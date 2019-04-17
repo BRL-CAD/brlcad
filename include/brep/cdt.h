@@ -67,7 +67,6 @@ extern "C++" {
      * last Tessellate call, the old tessellation information will be replaced. */
     int ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s, std::vector<int> *faces);
 
-#if 0
     /* Given a state, report the status of its triangulation. -3 indicates a
      * failed attempt to tessellate, -2 indicates a non-solid tessellation is
      * present after an attempt to tessellate all faces, -1 is a state which
@@ -76,6 +75,23 @@ extern "C++" {
      * been tessellated but not the full brep. */
     int ON_Brep_CDT_Status(struct ON_Brep_CDT_State *s);
 
+    /* Construct a vlist plot from the tessellation.  Modes are:
+     *
+     * 0 - shaded 3D triangles
+     * 1 - 3D triangle wireframe
+     * 2 - 2D triangle wireframe (from parametric space)
+     *
+     * Returns 0 if vlist was successfully generated, else -1
+     */
+    int ON_Brep_CDT_VList(
+	    struct bn_vlblock *vbp,
+	    struct bu_list *vlfree,
+	    struct bu_color *c,
+	    int mode,
+	    const struct ON_Brep_CDT_State *s);
+
+
+#if 0
     /* Given two or more triangulation states, refine them to clear any face
      * overlaps introduced by the triangulation.  If any of the states are
      * un-tessellated, first perform the tessellation indicated by the state
