@@ -378,12 +378,11 @@ getEdgePoints(
     ON_3dPoint tmp1, tmp2;
     int evals = 0;
     ON_3dPoint *edge_start_3d, *edge_end_3d = NULL;
-    ON_3dPoint *edge_start_3dnorm, *edge_end_3dnorm = NULL;
     ON_3dVector edge_start_tang, edge_end_tang = ON_3dVector::UnsetVector;
     ON_3dPoint trim1_start_2d, trim1_end_2d = ON_3dPoint::UnsetPoint;
-    ON_3dVector trim1_start_tang, trim1_end_tang, trim1_start_normal, trim1_end_normal = ON_3dVector::UnsetVector;
+    ON_3dVector trim1_start_tang, trim1_end_tang = ON_3dVector::UnsetVector;
     ON_3dPoint trim2_start_2d, trim2_end_2d = ON_3dPoint::UnsetPoint;
-    ON_3dVector trim2_start_tang, trim2_end_tang, trim2_start_normal, trim2_end_normal = ON_3dVector::UnsetVector;
+    ON_3dVector trim2_start_tang, trim2_end_tang = ON_3dVector::UnsetVector;
 
     trim1_param_points = new std::map<double, BrepTrimPoint *>();
     trim.m_trim_user.p = (void *) trim1_param_points;
@@ -403,6 +402,10 @@ getEdgePoints(
 	trim2->GetBoundingBox(trim_bbox2, false);
     }
 
+    /* For the start and end points, use the vertex point */
+    edge_start_3d = (*vert_pnts)[edge->Vertex(0)->m_vertex_index];
+    edge_end_3d = (*vert_pnts)[edge->Vertex(1)->m_vertex_index];
+
     /* Normalize the domain of the curve to the ControlPolygonLength() of the
      * NURBS form of the curve to attempt to minimize distortion in 3D to
      * mirror what we do for the surfaces.  (GetSurfaceSize uses this under the
@@ -412,12 +415,6 @@ getEdgePoints(
     double cplen = nc->ControlPolygonLength();
     nc->SetDomain(0.0, cplen);
     ON_Interval erange = nc->Domain();
-
-    /* For beginning and end of curve, we use vert points */
-    edge_start_3d = (*vert_pnts)[edge->Vertex(0)->m_vertex_index];
-    edge_end_3d = (*vert_pnts)[edge->Vertex(1)->m_vertex_index];
-    edge_start_3dnorm = (*vert_norms)[edge->Vertex(0)->m_vertex_index];
-    edge_end_3dnorm = (*vert_norms)[edge->Vertex(1)->m_vertex_index];
 
     /* Populate the 2D points */
     double st1 = (trim.m_bRev3d) ? range1.m_t[1] : range1.m_t[0];
@@ -455,40 +452,74 @@ getEdgePoints(
     }
 
     // Get the normals
-    evals = 0;
-    if (surface_EvNormal(s1, trim1_start_2d.x, trim1_start_2d.y, tmp1, trim1_start_normal)) {
+    ON_3dPoint tmpp;
+    ON_3dVector trim1_start_normal, trim1_end_normal = ON_3dVector::UnsetVector;
+    ON_3dVector trim2_start_normal, trim2_end_normal = ON_3dVector::UnsetVector;
+    ON_3dPoint *t1_sn, *t1_en, *t2_sn, *t2_en = NULL;
+    ON_3dPoint *edge_start_3dnorm = (*vert_norms)[edge->Vertex(0)->m_vertex_index];
+    ON_3dPoint *edge_end_3dnorm = (*vert_norms)[edge->Vertex(1)->m_vertex_index];
+
+    /* trim 1 */
+    if (!surface_EvNormal(s1, trim1_start_2d.x, trim1_start_2d.y, tmpp, trim1_start_normal)) {
+	t1_sn = edge_start_3dnorm;
+    } else {
 	if (trim.Face()->m_bRev) {
 	    trim1_start_normal = trim1_start_normal  * -1.0;
 	}
-	evals++;
+	if (ON_DotProduct(trim1_start_normal, *edge_start_3dnorm) < 0) {
+	    t1_sn = edge_start_3dnorm;
+	} else {
+	    t1_sn = new ON_3dPoint(trim1_start_normal);
+	    w3dnorms->push_back(t1_sn);
+	}
     }
-    if (surface_EvNormal(s1, trim1_end_2d.x, trim1_end_2d.y, tmp2, trim1_end_normal)) {
+    if (!surface_EvNormal(s1, trim1_end_2d.x, trim1_end_2d.y, tmp1, trim1_end_normal)) {
+	t1_en = edge_end_3dnorm;
+    } else {
 	if (trim.Face()->m_bRev) {
 	    trim1_end_normal = trim1_end_normal  * -1.0;
 	}
-	evals++;
+	if (ON_DotProduct(trim1_end_normal, *edge_end_3dnorm) < 0) {
+	    t1_en = edge_end_3dnorm;
+	} else {
+	    t1_en = new ON_3dPoint(trim1_end_normal);
+	    w3dnorms->push_back(t1_en);
+	}
     }
-    if (surface_EvNormal(s2, trim2_start_2d.x, trim2_start_2d.y, tmp1, trim2_start_normal)) {
+
+
+    /* trim 2 */
+    if (!surface_EvNormal(s2, trim2_start_2d.x, trim2_start_2d.y, tmpp, trim2_start_normal)) {
+	t2_sn = edge_start_3dnorm;
+    } else {
 	if (trim2->Face()->m_bRev) {
 	    trim2_start_normal = trim2_start_normal  * -1.0;
 	}
-	evals++;
+	if (ON_DotProduct(trim2_start_normal, *edge_start_3dnorm) < 0) {
+	    t2_sn = edge_start_3dnorm;
+	} else {
+	    t2_sn = new ON_3dPoint(trim2_start_normal);
+	    w3dnorms->push_back(t2_sn);
+	}
     }
-    if (surface_EvNormal(s2, trim2_end_2d.x, trim2_end_2d.y, tmp2, trim2_end_normal)) {
+    if (!surface_EvNormal(s2, trim2_end_2d.x, trim2_end_2d.y, tmpp, trim2_end_normal)) {
+	t2_en = edge_end_3dnorm;
+    } else {
 	if (trim2->Face()->m_bRev) {
 	    trim2_end_normal = trim2_end_normal  * -1.0;
 	}
-	evals++;
-    }
-
-    if (evals != 4) {
-	bu_log("problem with normal evals\n");
+	if (ON_DotProduct(trim2_end_normal, *edge_end_3dnorm) < 0) {
+	    t2_en = edge_end_3dnorm;
+	} else {
+	    t2_en = new ON_3dPoint(trim2_end_normal);
+	    w3dnorms->push_back(t2_en);
+	}
     }
 
     /* Start and end points for both trims can now be defined */
     BrepTrimPoint *sbtp1 = new BrepTrimPoint;
     sbtp1->p3d = edge_start_3d;
-    sbtp1->n3d = edge_start_3dnorm;
+    sbtp1->n3d = t1_sn;
     sbtp1->tangent = edge_start_tang;
     sbtp1->e = erange.m_t[0];
     sbtp1->p2d = trim1_start_2d;
@@ -498,6 +529,7 @@ getEdgePoints(
 
     BrepTrimPoint *ebtp1 = new BrepTrimPoint;
     ebtp1->p3d = edge_end_3d;
+    ebtp1->n3d = t1_en;
     ebtp1->n3d = edge_end_3dnorm;
     ebtp1->tangent = edge_end_tang;
     ebtp1->e = erange.m_t[1];
@@ -508,7 +540,7 @@ getEdgePoints(
 
     BrepTrimPoint *sbtp2 = new BrepTrimPoint;
     sbtp2->p3d = edge_start_3d;
-    sbtp2->n3d = edge_start_3dnorm;
+    sbtp2->n3d = t2_sn;
     sbtp2->tangent = edge_start_tang;
     sbtp2->e = erange.m_t[0];
     sbtp2->p2d = trim2_start_2d;
@@ -518,7 +550,7 @@ getEdgePoints(
 
     BrepTrimPoint *ebtp2 = new BrepTrimPoint;
     ebtp2->p3d = edge_end_3d;
-    ebtp2->n3d = edge_end_3dnorm;
+    ebtp2->n3d = t2_en;
     ebtp2->tangent = edge_end_tang;
     ebtp2->e = erange.m_t[1];
     ebtp2->p2d = trim2_end_2d;
@@ -1380,6 +1412,7 @@ get_loop_sample_points(
 
 	    for (int i = 1; i <= 10; i++) {
 		btp.p3d = p3d;
+		btp.n3d = NULL;
 		btp.p2d = v1.Point();
 		btp.t = trim->Domain().m_t[0] + (i - 1) * delta;
 		btp.p2d = trim->PointAt(btp.t);
@@ -1392,6 +1425,7 @@ get_loop_sample_points(
 
 	    const ON_BrepVertex& v2 = face.Brep()->m_V[trim->m_vi[1]];
 	    btp.p3d = p3d;
+	    btp.n3d = NULL;
 	    btp.p2d = v2.Point();
 	    btp.t = trim->Domain().m_t[1];
 	    btp.p2d = trim->PointAt(btp.t);
@@ -2214,10 +2248,10 @@ int ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, std::vector<int> *fa
     }
 
     /* If this is the first time through, get vertex normals that are the
-     * average of the surface points at the junction.
-     *
-     * TODO - See if we can reject a normal in the "wrong" direction if two or
-     * more surfaces vote one way and a third votes the other... */
+     * average of the surface points at the junction.  Use these to catch
+     * and correct surface normals that are in the "wrong" direction for
+     * the vertex.
+     */
     if (!s_cdt->w3dnorms->size()) {
 	for (int index = 0; index < brep->m_V.Count(); index++) {
 	    ON_BrepVertex& v = brep->m_V[index];
