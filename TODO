@@ -18,7 +18,17 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* fix recently introduced mged -c input bug that causes seemingly
+  random text (usually previous command output or mged version string
+  info) to be pasted automatically while commands are typed.  For
+  example:
 
+  mged> foreor (MGED)
+    Fri, 12 Apr 2019 14:51:53 -0400, Compilation 0
+    morrison@agua.lan
+
+  observed on trunk builds with both putty (windows) and terminal
+  (mac)
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
