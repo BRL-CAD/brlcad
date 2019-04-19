@@ -128,7 +128,7 @@ int verify_repos(long int rev, std::string branch_svn, std::string branch_git, i
     } else {
 	git_clone = std::string("git clone --single-branch --branch ") + branch_git + std::string(" ./cvs_git_working/.git brlcad_git_checkout");
     }
-    std::string repo_diff = std::string("diff -qrw -I '\\$Id' -I '\\$Revision' -I'\\$Header' -I'$Source' -I'$Date' -I'$Log' -I'$Locker' --exclude \".cvsignore\" --exclude \".gitignore\" --exclude \"terra.dsp\" --exclude \".git\" --exclude \".svn\" brlcad_svn_checkout brlcad_git_checkout");
+    std::string repo_diff = std::string("diff --no-dereference -qrw -I '\\$Id' -I '\\$Revision' -I'\\$Header' -I'$Source' -I'$Date' -I'$Log' -I'$Locker' --exclude \".cvsignore\" --exclude \".gitignore\" --exclude \"terra.dsp\" --exclude \".git\" --exclude \".svn\" brlcad_svn_checkout brlcad_git_checkout");
     std::cout << "Verifying r" << rev << ", branch " << branch_svn << "\n";
     if (std::system(cleanup_cmd.c_str())) {
 	std::cerr << "verify cleanup failed!\n";

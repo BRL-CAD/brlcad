@@ -886,8 +886,9 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 
 
 	outfile.close();
+	verify_repos(rev.revision_number, rbranch, rbranch, 0);
+#if 0
 	if (rev.revision_number % 10 == 0 || rbranch != std::string("master")) {
-	    verify_repos(rev.revision_number, rbranch, rbranch, 0);
 	} else {
 	    // Not verifying this one - just apply the fast import file and go
 	    std::string git_fi = std::string("cd cvs_git_working && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
@@ -905,6 +906,7 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 		exit(1);
 	    }
 	}
+#endif
 
     } else {
 	outfile.close();
