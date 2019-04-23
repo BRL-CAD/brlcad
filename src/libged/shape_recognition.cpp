@@ -948,6 +948,48 @@ _ged_brep_flip(struct ged *gedp, struct rt_brep_internal *bi, const char *obj_na
 }
 
 
+// TODO - this doesn't belong here, just convenient for now since we need to crack the ON_Brep for this
+extern "C" int
+_ged_brep_to_bot(struct ged *gedp, struct rt_brep_internal *bi, const char *bot_name)
+{
+    if (!gedp || !bi || !bot_name) return GED_ERROR;
+
+    int fcnt, fncnt, ncnt, vcnt;
+    int *faces = NULL;
+    fastf_t *vertices = NULL;
+    int *face_normals = NULL;
+    fastf_t *normals = NULL;
+
+    ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create(bi->brep);
+    // TODO - need tolerance info here...
+    ON_Brep_CDT_Tessellate(s_cdt, NULL);
+    ON_Brep_CDT_Mesh(&faces, &fcnt, &vertices, &vcnt, &face_normals, &fncnt, &normals, &ncnt, s_cdt);
+    ON_Brep_CDT_Destroy(s_cdt);
+
+    struct rt_bot_internal *bot;
+    BU_GET(bot, struct rt_bot_internal);
+    bot->magic = RT_BOT_INTERNAL_MAGIC;
+    bot->mode = RT_BOT_SOLID;
+    bot->orientation = RT_BOT_CCW;
+    bot->bot_flags = 0;
+    bot->num_vertices = vcnt;
+    bot->num_faces = fcnt;
+    bot->vertices = vertices;
+    bot->faces = faces;
+    bot->thickness = NULL;
+    bot->face_mode = (struct bu_bitv *)NULL;
+    bot->num_normals = ncnt;
+    bot->num_face_normals = fncnt;
+    bot->normals = normals;
+    bot->face_normals = face_normals;
+
+    if (wdb_export(gedp->ged_wdbp, bot_name, (void *)bot, ID_BOT, 1.0)) {
+	return GED_ERROR;
+    }
+
+    return GED_OK;
+}
+
 // Local Variables:
 // tab-width: 8
 // mode: C++

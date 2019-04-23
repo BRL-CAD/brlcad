@@ -330,6 +330,24 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	return _ged_brep_to_csg(gedp, argv[1], 0);
     }
 
+
+    if (BU_STR_EQUAL(argv[2], "bot")) {
+	/* Call bot conversion routine */
+	int bret = GED_ERROR;
+	struct bu_vls bname_bot;
+	bu_vls_init(&bname_bot);
+	if (argc < 4) {
+	    bu_vls_sprintf(&bname_bot, "%s.bot", solid_name);
+	} else {
+	    bu_vls_sprintf(&bname_bot, "%s", argv[3]);
+	}
+
+	// TODO - pass tol info down...
+	bret = _ged_brep_to_bot(gedp, bi, bu_vls_cstr(&bname_bot));
+	bu_vls_free(&bname_bot);
+	return bret;
+    }
+
     if (BU_STR_EQUAL(argv[2], "csgv")) {
 	/* Call csg conversion routine */
 	struct bu_vls bname_csg;

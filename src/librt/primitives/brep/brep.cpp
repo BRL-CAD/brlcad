@@ -2634,6 +2634,7 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 int
 rt_brep_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
+    int ret;
     struct rt_brep_internal *bi;
 
     if (!r || !m || !ip || !ttol || !tol)
@@ -2643,8 +2644,53 @@ rt_brep_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     bi = (struct rt_brep_internal *)ip->idb_ptr;
     RT_BREP_CK_MAGIC(bi);
 
-    /* XXX - implement me */
-    return -1;
+    int fcnt, fncnt, ncnt, vcnt;
+    int *faces = NULL;
+    fastf_t *vertices = NULL;
+    int *face_normals = NULL;
+    fastf_t *normals = NULL;
+
+    ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create(bi->brep);
+    // TODO - don't ignore tolerances
+    ON_Brep_CDT_Tessellate(s_cdt, NULL);
+    ON_Brep_CDT_Mesh(&faces, &fcnt, &vertices, &vcnt, &face_normals, &fncnt, &normals, &ncnt, s_cdt);
+    ON_Brep_CDT_Destroy(s_cdt);
+
+    struct rt_db_internal intern;
+    struct rt_bot_internal *bot;
+    BU_GET(bot, struct rt_bot_internal);
+    bot->magic = RT_BOT_INTERNAL_MAGIC;
+    bot->mode = RT_BOT_SOLID;
+    bot->orientation = RT_BOT_CCW;
+    bot->bot_flags = 0;
+    bot->num_vertices = vcnt;
+    bot->num_faces = fcnt;
+    bot->vertices = vertices;
+    bot->faces = faces;
+    bot->thickness = NULL;
+    bot->face_mode = (struct bu_bitv *)NULL;
+    bot->num_normals = ncnt;
+    bot->num_face_normals = fncnt;
+    bot->normals = normals;
+    bot->face_normals = face_normals;
+
+    // TODO - don't even try the NMG if the bot validation routines don't succeed
+
+    RT_DB_INTERNAL_INIT(&intern);
+    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern.idb_type = ID_BOT;
+    intern.idb_ptr = (void *)bot;
+    intern.idb_meth = &OBJ[intern.idb_type];
+
+    ret = rt_bot_tess(r, m, &intern, ttol, tol);
+
+    BU_PUT(bot, struct rt_bot_internal);
+    bu_free(faces, "faces");
+    bu_free(vertices, "vertices");
+    bu_free(face_normals, "face_normals");
+    bu_free(normals, "normals");
+
+    return ret;
 }
 
 
