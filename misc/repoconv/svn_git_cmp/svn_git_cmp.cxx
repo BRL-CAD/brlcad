@@ -10,11 +10,17 @@
 #include <iomanip>
 
 std::map<std::string,long int> svn_msg_to_rev;
+std::map<long int,std::string> svn_rev_to_msg;
 std::map<std::string,std::string> git_msg_to_sha1;
 std::set<std::string> svn_msg_non_unique;
 
 std::map<std::string,long int> svn_msg_to_time;
 std::map<std::string,long int> git_msg_to_time;
+std::map<long int,std::string> svn_time_to_msg;
+std::map<long int,long int> svn_time_to_rev;
+std::map<long int,std::string> git_time_to_msg;
+std::map<long int,std::string> git_time_to_sha1;
+
 std::set<std::string> git_msg_non_unique;
 
 std::map<std::pair<std::string, long int>,long int> svn_msgtime_to_rev;
@@ -36,6 +42,9 @@ read_svn_info()
 	std::string timestamp = line.substr(0, spos);
 	long int tstp = std::stol(timestamp);
 	std::string cmsg = line.substr(spos+1, std::string::npos);
+	svn_time_to_msg[tstp] = cmsg;
+	svn_time_to_rev[tstp] = rev;
+	svn_rev_to_msg[rev] = cmsg;
 	if (svn_msg_to_rev.find(cmsg) == svn_msg_to_rev.end()) {
 	    svn_msg_to_rev[cmsg] = rev;
 	    svn_msg_to_time[cmsg] = tstp;
@@ -67,6 +76,8 @@ read_git_line(std::string &line)
     long int tstp = std::stol(timestamp);
     std::string cmsg = line.substr(spos+1, std::string::npos);
 
+    git_time_to_msg[tstp] = cmsg;
+    git_time_to_sha1[tstp] = sha1;
     if (git_msg_to_sha1.find(cmsg) == git_msg_to_sha1.end()) {
 	git_msg_to_sha1[cmsg] = sha1;
 	git_msg_to_time[cmsg] = tstp;
@@ -130,10 +141,22 @@ int main(int argc, const char **argv)
 		if (r_it != svn_msg_to_rev.end() && g2_it != git_msg_to_sha1.end()) {
 		    std::cout << (*r_it).second << " -> " << (*g2_it).second << " (time offset)\n";
 		} else {
-		    std::cerr << (*s_it).second << " [unmapped] : " << cmsg << "\n";
+		    if (git_time_to_msg.find((*s_it).first.second) != git_time_to_msg.end()) {
+			std::cerr << (*s_it).first.second << " " << (*s_it).second << " [unmapped, but timestamp match] : " << cmsg << " -> " << git_time_to_msg[(*s_it).first.second]  << "\n";
+		    } else {
+			std::cerr << (*s_it).first.second << " " << (*s_it).second << " [unmapped] : " << cmsg << "\n";
+		    }
 		}
 	    } else {
-		std::cerr << (*s_it).second << " [non-unique,no exact timestamp match] : " << cmsg << "\n";
+		if (git_time_to_msg.find((*s_it).first.second) != git_time_to_msg.end()) {
+		    if (cmsg == std::string("Initial revision")) {
+			std::cout << (*s_it).second << " -> " << git_time_to_sha1[(*s_it).first.second] << " [\"Initial revision\" timestamp match]\n";
+		    } else {
+			std::cerr << (*s_it).first.second << " " << (*s_it).second << " [non-unique, has exact timestamp match] : " << cmsg << " -> [" << git_time_to_sha1[(*s_it).first.second] << "] " << git_time_to_msg[(*s_it).first.second] << "\n";
+		    }
+		} else {
+		    std::cerr << (*s_it).first.second << " " << (*s_it).second << " [non-unique,no exact timestamp match] : " << cmsg << "\n";
+		}
 	    }
 	}
     }
