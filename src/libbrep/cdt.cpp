@@ -221,12 +221,9 @@ getEdgePoints(
 	ON_3dPoint *npt = new ON_3dPoint(edge_mid_3d);
 	w3dpnts->push_back(npt);
 
-	ON_3dPoint *nrm = new ON_3dPoint((trim1_mid_norm + trim1_mid_norm)/2);
-	w3dnorms->push_back(nrm);
-
 	BrepTrimPoint *nbtp1 = new BrepTrimPoint;
 	nbtp1->p3d = npt;
-	nbtp1->n3d = nrm;
+	nbtp1->n3d = NULL;
 	nbtp1->p2d = trim1_mid_2d;
 	nbtp1->normal = trim1_mid_norm;
 	nbtp1->tangent = edge_mid_tang;
@@ -236,7 +233,7 @@ getEdgePoints(
 
 	BrepTrimPoint *nbtp2 = new BrepTrimPoint;
 	nbtp2->p3d = npt;
-	nbtp2->n3d = nrm;
+	nbtp2->n3d = NULL;
 	nbtp2->p2d = trim2_mid_2d;
 	nbtp2->normal = trim2_mid_norm;
 	nbtp2->tangent = edge_mid_tang;
@@ -530,7 +527,6 @@ getEdgePoints(
     BrepTrimPoint *ebtp1 = new BrepTrimPoint;
     ebtp1->p3d = edge_end_3d;
     ebtp1->n3d = t1_en;
-    ebtp1->n3d = edge_end_3dnorm;
     ebtp1->tangent = edge_end_tang;
     ebtp1->e = erange.m_t[1];
     ebtp1->p2d = trim1_end_2d;
@@ -594,12 +590,10 @@ getEdgePoints(
 
 	ON_3dPoint *nmp = new ON_3dPoint(edge_mid_3d);
 	w3dpnts->push_back(nmp);
-	ON_3dPoint *nmn = new ON_3dPoint((trim1_mid_norm + trim2_mid_norm)/2);
-	w3dnorms->push_back(nmn);
 
 	BrepTrimPoint *mbtp1 = new BrepTrimPoint;
 	mbtp1->p3d = nmp;
-	mbtp1->n3d = nmn;
+	mbtp1->n3d = NULL;
 	mbtp1->p2d = trim1_mid_2d;
 	mbtp1->tangent = edge_mid_tang;
 	mbtp1->normal = trim1_mid_norm;
@@ -609,7 +603,7 @@ getEdgePoints(
 
 	BrepTrimPoint *mbtp2 = new BrepTrimPoint;
 	mbtp2->p3d = nmp;
-	mbtp2->n3d = nmn;
+	mbtp2->n3d = NULL;
 	mbtp2->p2d = trim2_mid_2d;
 	mbtp2->tangent = edge_mid_tang;
 	mbtp2->normal = trim2_mid_norm;
@@ -2348,9 +2342,10 @@ int ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, std::vector<int> *fa
     } else {
 
 	for (unsigned int i = 0; i < faces->size(); i++) {
-	    ON_BrepFace &face = brep->m_F[(*faces)[i]];
-
-	    (void)ON_Brep_CDT_Face(s_cdt, &s_to_maxdist, face);
+	    if ((*faces)[i] < s_cdt->brep->m_F.Count()) {
+		ON_BrepFace &face = brep->m_F[(*faces)[i]];
+		(void)ON_Brep_CDT_Face(s_cdt, &s_to_maxdist, face);
+	    }
 	}
 
 	return 0;
