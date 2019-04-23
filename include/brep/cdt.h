@@ -53,10 +53,10 @@ extern "C++" {
     /* Set/get the CDT tolerances. */
     void ON_Brep_CDT_Set_Tols(struct ON_Brep_CDT_State *s, TOL_INFO...);
     void ON_Brep_CDT_Get_Tols(TOL_INFO..., struct ON_Brep_CDT_State *s);
+#endif
 
     /* Return the ON_Brep associated with state s. */
     ON_Brep *ON_Brep_CDT_brep(struct ON_Brep_CDT_State *s);
-#endif
 
     /* Given a state, produce a triangulation.  Returns 0 if a solid, valid
      * triangulation was produced, 1 if a triangulation was produced but it
@@ -90,7 +90,6 @@ extern "C++" {
 	    int mode,
 	    const struct ON_Brep_CDT_State *s);
 
-
 #if 0
     /* Given two or more triangulation states, refine them to clear any face
      * overlaps introduced by the triangulation.  If any of the states are
@@ -108,17 +107,17 @@ extern "C++" {
      * overlaps with state s.  If the ovlps argument is non-null, populate with
      * the problematic states.  If no resolve step was performed on s, return -1 */
     int ON_Brep_CDT_UnResolvable_Ovlps(std::vector<struct ON_Brep_CDT_State *> *ovlps, struct ON_Brep_CDT_State *s);
+#endif
 
     /* Retrieve the face, vertex and normal information from a tessellation state
      * in the form of integer and fastf_t arrays. */
     int ON_Brep_CDT_Mesh(
 	    int **faces, int *fcnt,
-	    int **face_normals, int *fn_cnt,
 	    fastf_t **vertices, int *vcnt,
+	    int **face_normals, int *fn_cnt,
 	    fastf_t **normals, int *ncnt,
-	    const struct ON_Brep_CDT_State *s);
+	    struct ON_Brep_CDT_State *s);
 
-#endif
 
 } /* extern C++ */
 

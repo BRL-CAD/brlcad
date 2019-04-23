@@ -2011,6 +2011,14 @@ ON_Brep_CDT_Status(struct ON_Brep_CDT_State *s)
     return s->status;
 }
 
+
+ON_Brep *
+ON_Brep_CDT_Brep(struct ON_Brep_CDT_State *s)
+{
+    return s->brep;
+}
+
+
 static int
 ON_Brep_CDT_Face(struct ON_Brep_CDT_State *s_cdt, std::map<const ON_Surface *, double> *s_to_maxdist, ON_BrepFace &face)
 {
@@ -2191,7 +2199,8 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_State *s_cdt, std::map<const ON_Surface *, d
     return 0;
 }
 
-int ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, std::vector<int> *faces)
+int
+ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, std::vector<int> *faces)
 {
 
     ON_wString wstr;
@@ -2482,29 +2491,39 @@ int ON_Brep_CDT_VList(
    return 0;
 }
 
-#if 0
-int brep_cdt_plot(struct rt_wdb *wdbp, struct bu_vls *vls, const char *solid_name,
-                      const struct rt_tess_tol *ttol, const struct bn_tol *tol,
-                      struct brep_specific* bs, struct rt_brep_internal*UNUSED(bi),
-                      struct bn_vlblock *UNUSED(vbp), int UNUSED(plottype), int UNUSED(num_points))
+// Generate a BoT with normals.
+// TODO - apply the bot validity testing routines.
+int
+ON_Brep_CDT_Mesh(
+	int **faces, int *fcnt,
+	fastf_t **vertices, int *vcnt,
+	int **face_normals, int *fn_cnt,
+	fastf_t **normals, int *ncnt,
+	struct ON_Brep_CDT_State *s_cdt)
 {
+     if (!faces || !fcnt || !vertices || !vcnt || !s_cdt) {
+	 return -1;
+     }
 
-void
-ON_Brep_CDT_To_Mesh() {
-    // Generate a BoT with normals.
-    // TODO - apply the bot validity testing routines.
-    
+     /* We can ignore the face normals if we want, but if some of the
+      * return variables are non-NULL they all need to be non-NULL */
+     if (face_normals || fn_cnt || normals || ncnt) {
+	 if (!face_normals || !fn_cnt || !normals || !ncnt) {
+	     return -1;
+	 }
+     }
+
     std::vector<ON_3dPoint *> vfpnts;
     std::vector<ON_3dPoint *> vfnormals;
     std::map<ON_3dPoint *, int> on_pnt_to_bot_pnt;
     std::map<ON_3dPoint *, int> on_pnt_to_bot_norm;
     size_t triangle_cnt = 0;
 
-    for (int face_index = 0; face_index != brep->m_F.Count(); face_index++) {
-	ON_BrepFace &face = brep->m_F[face_index];
-	p2t::CDT *cdt = p2t_faces[face_index];
-	std::map<p2t::Point *, ON_3dPoint *> *pointmap = p2t_maps[face_index];
-	std::map<p2t::Point *, ON_3dPoint *> *normalmap = p2t_nmaps[face_index];
+    for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
+	ON_BrepFace &face = s_cdt->brep->m_F[face_index];
+	p2t::CDT *cdt = s_cdt->p2t_faces[face_index];
+	std::map<p2t::Point *, ON_3dPoint *> *pointmap = s_cdt->p2t_maps[face_index];
+	std::map<p2t::Point *, ON_3dPoint *> *normalmap = s_cdt->p2t_nmaps[face_index];
 	std::vector<p2t::Triangle*> tris = cdt->GetTriangles();
 	triangle_cnt += tris.size();
 	for (size_t i = 0; i < tris.size(); i++) {
@@ -2525,14 +2544,14 @@ ON_Brep_CDT_To_Mesh() {
 			    }
 			    if (!op) {
 				op = new ON_3dPoint(pnt);
-				w3dpnts.push_back(op);
+				s_cdt->w3dpnts->push_back(op);
 				vfpnts.push_back(op);
 				(*pointmap)[p] = op;
 				on_pnt_to_bot_pnt[op] = vfpnts.size() - 1;
 			    }
 			    if (!onorm) {
 				onorm = new ON_3dPoint(norm);
-				w3dnorms.push_back(onorm);
+				s_cdt->w3dnorms->push_back(onorm);
 				vfnormals.push_back(onorm);
 				(*normalmap)[p] = onorm;
 				on_pnt_to_bot_norm[op] = vfnormals.size() - 1;
@@ -2542,7 +2561,7 @@ ON_Brep_CDT_To_Mesh() {
 			    if (!op) {
 				pnt = s->PointAt(p->x, p->y);
 				op = new ON_3dPoint(pnt);
-				w3dpnts.push_back(op);
+				s_cdt->w3dpnts->push_back(op);
 				vfpnts.push_back(op);
 				(*pointmap)[p] = op;
 				on_pnt_to_bot_pnt[op] = vfpnts.size() - 1;
@@ -2571,31 +2590,37 @@ ON_Brep_CDT_To_Mesh() {
     }
 
     // Know how many faces and points now - initialize BoT container.
-    int *faces = (int *)bu_calloc(triangle_cnt*3, sizeof(int), "new faces array");
-    fastf_t *vertices = (fastf_t *)bu_calloc(vfpnts.size()*3, sizeof(fastf_t), "new vert array");
-    fastf_t *normals = (fastf_t *)bu_calloc(vfnormals.size()*3, sizeof(fastf_t), "new normals array");
-    int *face_normals = (int *)bu_calloc(triangle_cnt*3, sizeof(int), "new face_normals array");
+    *fcnt = (int)triangle_cnt;
+    *faces = (int *)bu_calloc(triangle_cnt*3, sizeof(int), "new faces array");
+    *vcnt = (int)vfpnts.size();
+    *vertices = (fastf_t *)bu_calloc(vfpnts.size()*3, sizeof(fastf_t), "new vert array");
+    if (normals) {
+	*ncnt = (int)vfnormals.size();
+	*normals = (fastf_t *)bu_calloc(vfnormals.size()*3, sizeof(fastf_t), "new normals array");
+	*fn_cnt = (int)triangle_cnt;
+	*face_normals = (int *)bu_calloc(triangle_cnt*3, sizeof(int), "new face_normals array");
+    }
 
     for (size_t i = 0; i < vfpnts.size(); i++) {
-	vertices[i*3] = vfpnts[i]->x;
-	vertices[i*3+1] = vfpnts[i]->y;
-	vertices[i*3+2] = vfpnts[i]->z;
+	(*vertices)[i*3] = vfpnts[i]->x;
+	(*vertices)[i*3+1] = vfpnts[i]->y;
+	(*vertices)[i*3+2] = vfpnts[i]->z;
     }
 
     for (size_t i = 0; i < vfnormals.size(); i++) {
-	normals[i*3] = vfnormals[i]->x;
-	normals[i*3+1] = vfnormals[i]->y;
-	normals[i*3+2] = vfnormals[i]->z;
+	(*normals)[i*3] = vfnormals[i]->x;
+	(*normals)[i*3+1] = vfnormals[i]->y;
+	(*normals)[i*3+2] = vfnormals[i]->z;
     }
 
 
-    // Iterate over faces, adding points and faces to BoT container.  All
-    // 3d points must end up unique in this final container.
+    // Iterate over faces, adding points and faces to BoT container.  Note: all
+    // 3D points should be geometrically unique in this final container.
     int face_cnt = 0;
     triangle_cnt = 0;
-    for (int face_index = 0; face_index != brep->m_F.Count(); face_index++) {
-	p2t::CDT *cdt = p2t_faces[face_index];
-	std::map<p2t::Point *, ON_3dPoint *> *pointmap = p2t_maps[face_index];
+    for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
+	p2t::CDT *cdt = s_cdt->p2t_faces[face_index];
+	std::map<p2t::Point *, ON_3dPoint *> *pointmap = s_cdt->p2t_maps[face_index];
 	std::vector<p2t::Triangle*> tris = cdt->GetTriangles();
 	triangle_cnt += tris.size();
 	for (size_t i = 0; i < tris.size(); i++) {
@@ -2605,42 +2630,24 @@ ON_Brep_CDT_To_Mesh() {
 		ON_3dPoint *op = (*pointmap)[p];
 		int ind = on_pnt_to_bot_pnt[op];
 		int nind = on_pnt_to_bot_norm[op];
-		faces[face_cnt*3 + j] = ind;
-		face_normals[face_cnt*3 + j] = nind;
+		(*faces)[face_cnt*3 + j] = ind;
+		(*face_normals)[face_cnt*3 + j] = nind;
 	    }
-	    if (brep->m_F[face_index].m_bRev) {
-		int ftmp = faces[face_cnt*3 + 1];
-		faces[face_cnt*3 + 1] = faces[face_cnt*3 + 2];
-		faces[face_cnt*3 + 2] = ftmp;
-		int fntmp = face_normals[face_cnt*3 + 1];
-		face_normals[face_cnt*3 + 1] = face_normals[face_cnt*3 + 2];
-		face_normals[face_cnt*3 + 2] = fntmp;
+	    if (s_cdt->brep->m_F[face_index].m_bRev) {
+		int ftmp = (*faces)[face_cnt*3 + 1];
+		(*faces)[face_cnt*3 + 1] = (*faces)[face_cnt*3 + 2];
+		(*faces)[face_cnt*3 + 2] = ftmp;
+		int fntmp = (*face_normals)[face_cnt*3 + 1];
+		(*face_normals)[face_cnt*3 + 1] = (*face_normals)[face_cnt*3 + 2];
+		(*face_normals)[face_cnt*3 + 2] = fntmp;
 	    }
 
 	    face_cnt++;
 	}
     }
 
-    struct rt_bot_internal *bot;
-    BU_ALLOC(bot, struct rt_bot_internal);
-    bot->magic = RT_BOT_INTERNAL_MAGIC;
-    bot->mode = RT_BOT_SOLID;
-    bot->orientation = RT_BOT_CCW;
-    bot->bot_flags = 0;
-    bot->num_vertices = vfpnts.size();
-    bot->num_faces = triangle_cnt;
-    bot->vertices = vertices;
-    bot->faces = faces;
-    bot->thickness = NULL;
-    bot->face_mode = (struct bu_bitv *)NULL;
-    bot->num_normals = vfpnts.size();
-    bot->num_face_normals = bot->num_faces;
-    bot->normals = normals;
-    bot->face_normals = face_normals;
-
-    return wdb_export(wdbp, "bot.s", (void *)bot, ID_BOT, 1.0);
+    return 0;
 }
-#endif
 
 
 /** @} */
