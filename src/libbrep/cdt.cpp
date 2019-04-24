@@ -46,7 +46,9 @@
 #include "bu/cv.h"
 #include "bu/opt.h"
 #include "bu/time.h"
+#include "bn/tol.h"
 #include "bn/vlist.h"
+#include "bg/trimesh.h"
 #include "brep/defines.h"
 #include "brep/cdt.h"
 #include "brep/pullback.h"
@@ -56,6 +58,13 @@
 #define BREP_CDT_NON_SOLID -2
 #define BREP_CDT_UNTESSELLATED -1
 #define BREP_CDT_SOLID 0
+
+/* Note - these tolerance values are based on the default
+ * values from the GED 'tol' command */
+#define BREP_CDT_DEFAULT_TOL_ABS 0.0
+#define BREP_CDT_DEFAULT_TOL_REL 0.01
+#define BREP_CDT_DEFAULT_TOL_NORM 0.0
+#define BREP_CDT_DEFAULT_TOL_DIST BN_TOL_DIST
 
 struct ON_Brep_CDT_State {
 
@@ -1976,11 +1985,12 @@ ON_Brep_CDT_Create(ON_Brep *brep)
     /* Set status to "never evaluated" */
     cdt->status = BREP_CDT_UNTESSELLATED;
 
-    /* TODO - Set sane default tolerances */
-    cdt->abs = 0.0;
-    cdt->rel = 0.0;
-    cdt->norm = 0.0;
-    cdt->dist = 0.0005;
+    /* Set sane default tolerances.  May want to do
+     * something better (perhaps brep dimension based...) */
+    cdt->abs = BREP_CDT_DEFAULT_TOL_ABS;
+    cdt->rel = BREP_CDT_DEFAULT_TOL_REL ;
+    cdt->norm = BREP_CDT_DEFAULT_TOL_NORM ;
+    cdt->dist = BREP_CDT_DEFAULT_TOL_DIST ;
 
     return cdt;
 }
@@ -2018,6 +2028,47 @@ ON_Brep_CDT_Brep(struct ON_Brep_CDT_State *s)
     return s->brep;
 }
 
+void
+ON_Brep_CDT_Tol_Set(struct ON_Brep_CDT_State *s, const struct ON_Brep_CDT_Tols *t)
+{
+    if (!s) {
+	return;
+    }
+
+    if (!t) {
+	/* reset to defaults */
+	s->abs = BREP_CDT_DEFAULT_TOL_ABS;
+	s->rel = BREP_CDT_DEFAULT_TOL_REL ;
+	s->norm = BREP_CDT_DEFAULT_TOL_NORM ;
+	s->dist = BREP_CDT_DEFAULT_TOL_DIST ;
+    }
+
+    s->abs = t->abs;
+    s->rel = t->rel;
+    s->norm = t->norm;
+    s->dist = t->dist;
+}
+
+void
+ON_Brep_CDT_Tol_Get(struct ON_Brep_CDT_Tols *t, const struct ON_Brep_CDT_State *s)
+{
+    if (!t) {
+	return;
+    }
+
+    if (!s) {
+	/* set to defaults */
+	t->abs = BREP_CDT_DEFAULT_TOL_ABS;
+	t->rel = BREP_CDT_DEFAULT_TOL_REL ;
+	t->norm = BREP_CDT_DEFAULT_TOL_NORM ;
+	t->dist = BREP_CDT_DEFAULT_TOL_DIST ;
+    }
+
+    t->abs = s->abs;
+    t->rel = s->rel;
+    t->norm = s->norm;
+    t->dist = s->dist;
+}
 
 static int
 ON_Brep_CDT_Face(struct ON_Brep_CDT_State *s_cdt, std::map<const ON_Surface *, double> *s_to_maxdist, ON_BrepFace &face)
@@ -2335,33 +2386,60 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, std::vector<int> *faces)
     }
 
 
+    int face_failures = 0;
+    int face_successes = 0;
 
     if (!faces) {
 
 	for (int face_index = 0; face_index < s_cdt->brep->m_F.Count(); face_index++) {
 	    ON_BrepFace &face = brep->m_F[face_index];
 
-	    (void)ON_Brep_CDT_Face(s_cdt, &s_to_maxdist, face);
+	    if (ON_Brep_CDT_Face(s_cdt, &s_to_maxdist, face)) {
+		face_failures++;
+	    } else {
+		face_successes++;
+	    }
 
 	}
-
-	// TODO - validate result
-	return 0;
-
     } else {
-
 	for (unsigned int i = 0; i < faces->size(); i++) {
 	    if ((*faces)[i] < s_cdt->brep->m_F.Count()) {
 		ON_BrepFace &face = brep->m_F[(*faces)[i]];
-		(void)ON_Brep_CDT_Face(s_cdt, &s_to_maxdist, face);
+		if (ON_Brep_CDT_Face(s_cdt, &s_to_maxdist, face)) {
+		    face_failures++;
+		} else {
+		    face_successes++;
+		}
 	    }
 	}
-
-	return 0;
     }
 
+    // If we only tessellated some of the faces, we don't have the
+    // full solid mesh yet (by definition).  Return accordingly.
+    if (face_failures || !face_successes || face_successes < s_cdt->brep->m_F.Count()) {
+	return (face_successes) ? 1 : -1;
+    }
 
-    return -3;
+    /* We've got face meshes and no reported failures - check to see if we have a
+     * solid mesh */
+    int valid_fcnt, valid_vcnt;
+    int *valid_faces = NULL;
+    fastf_t *valid_vertices = NULL;
+
+    if (ON_Brep_CDT_Mesh(&valid_faces, &valid_fcnt, &valid_vertices, &valid_vcnt, NULL, NULL, NULL, NULL, s_cdt) < 0) {
+	return -1;
+    }
+
+    int invalid = bg_trimesh_solid(valid_vcnt, valid_fcnt, valid_vertices, valid_faces, NULL);
+    bu_free(valid_faces, "faces");
+    bu_free(valid_vertices, "vertices");
+
+    if (invalid) {
+	return 1;
+    }
+
+    return 0;
+
 }
 
 static int
@@ -2607,12 +2685,13 @@ ON_Brep_CDT_Mesh(
 	(*vertices)[i*3+2] = vfpnts[i]->z;
     }
 
-    for (size_t i = 0; i < vfnormals.size(); i++) {
-	(*normals)[i*3] = vfnormals[i]->x;
-	(*normals)[i*3+1] = vfnormals[i]->y;
-	(*normals)[i*3+2] = vfnormals[i]->z;
+    if (normals) {
+	for (size_t i = 0; i < vfnormals.size(); i++) {
+	    (*normals)[i*3] = vfnormals[i]->x;
+	    (*normals)[i*3+1] = vfnormals[i]->y;
+	    (*normals)[i*3+2] = vfnormals[i]->z;
+	}
     }
-
 
     // Iterate over faces, adding points and faces to BoT container.  Note: all
     // 3D points should be geometrically unique in this final container.
@@ -2629,17 +2708,21 @@ ON_Brep_CDT_Mesh(
 		p2t::Point *p = t->GetPoint(j);
 		ON_3dPoint *op = (*pointmap)[p];
 		int ind = on_pnt_to_bot_pnt[op];
-		int nind = on_pnt_to_bot_norm[op];
 		(*faces)[face_cnt*3 + j] = ind;
-		(*face_normals)[face_cnt*3 + j] = nind;
+		if (normals) {
+		    int nind = on_pnt_to_bot_norm[op];
+		    (*face_normals)[face_cnt*3 + j] = nind;
+		}
 	    }
 	    if (s_cdt->brep->m_F[face_index].m_bRev) {
 		int ftmp = (*faces)[face_cnt*3 + 1];
 		(*faces)[face_cnt*3 + 1] = (*faces)[face_cnt*3 + 2];
 		(*faces)[face_cnt*3 + 2] = ftmp;
-		int fntmp = (*face_normals)[face_cnt*3 + 1];
-		(*face_normals)[face_cnt*3 + 1] = (*face_normals)[face_cnt*3 + 2];
-		(*face_normals)[face_cnt*3 + 2] = fntmp;
+		if (normals) {
+		    int fntmp = (*face_normals)[face_cnt*3 + 1];
+		    (*face_normals)[face_cnt*3 + 1] = (*face_normals)[face_cnt*3 + 2];
+		    (*face_normals)[face_cnt*3 + 2] = fntmp;
+		}
 	    }
 
 	    face_cnt++;

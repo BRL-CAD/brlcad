@@ -41,19 +41,21 @@ extern "C++" {
     /* Container that holds the state of a triangulation */
     struct ON_Brep_CDT_State;
 
-    /* Create and initialize a CDT state with default tolerances (defaults
-     * will be based on an analysis of the brep to try to give "good" results,
-     * but Tols will provide handles to override them.) */
+    /* Create and initialize a CDT state with default tolerances. */
     struct ON_Brep_CDT_State *ON_Brep_CDT_Create(ON_Brep *brep);
 
     /* Destroy a CDT state */
     void ON_Brep_CDT_Destroy(struct ON_Brep_CDT_State *s);
 
-#if 0
+    struct ON_Brep_CDT_Tols {
+	fastf_t abs;
+	fastf_t rel;
+	fastf_t norm;
+	fastf_t dist;
+    };
     /* Set/get the CDT tolerances. */
-    void ON_Brep_CDT_Set_Tols(struct ON_Brep_CDT_State *s, TOL_INFO...);
-    void ON_Brep_CDT_Get_Tols(TOL_INFO..., struct ON_Brep_CDT_State *s);
-#endif
+    void ON_Brep_CDT_Tol_Set(struct ON_Brep_CDT_State *s, const struct ON_Brep_CDT_Tols *t);
+    void ON_Brep_CDT_Tol_Get(struct ON_Brep_CDT_Tols *t, const struct ON_Brep_CDT_State *s);
 
     /* Return the ON_Brep associated with state s. */
     ON_Brep *ON_Brep_CDT_brep(struct ON_Brep_CDT_State *s);
