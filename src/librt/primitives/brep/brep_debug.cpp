@@ -2784,7 +2784,7 @@ translate_command(
 
 
 int
-brep_command(struct bu_vls *vls, const char *solid_name, struct rt_wdb *wdbp, struct bu_color *color, const struct rt_tess_tol *ttol, const struct bn_tol *tol, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag)
+brep_command(struct bu_vls *vls, const char *solid_name, struct rt_wdb *UNUSED(wdbp), struct bu_color *color, const struct rt_tess_tol *ttol, const struct bn_tol *tol, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag)
 {
     const char *command;
     int ret = 0;
@@ -3125,6 +3125,27 @@ brep_command(struct bu_vls *vls, const char *solid_name, struct rt_wdb *wdbp, st
 		for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
 		    ret = brep_facecdt_plot(vls, solid_name, ttol, tol, bs, bi, vbp, (*e_it), 0);
 		}
+	    } else if (BU_STR_EQUAL(part, "FCDT2")) {
+		snprintf(commtag, 64, "_BC_FCDT2_");
+		struct bu_color c;
+		bu_color_from_str(&c, "255/255/0");
+		std::vector<int> faces;
+		std::set<int>::iterator f_it;
+		for (f_it = elements.begin(); f_it != elements.end(); f_it++) {
+		    faces.push_back(*f_it);
+		}
+		ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create(bs->brep);
+		ON_Brep_CDT_Tessellate(s_cdt, &faces);
+		ON_Brep_CDT_VList(vbp, &RTG.rtg_vlfree, &c, 0, s_cdt);
+		ON_Brep_CDT_Destroy(s_cdt);
+	    } else if (BU_STR_EQUAL(part, "CDT")) {
+		snprintf(commtag, 64, "_BC_CDT_");
+		struct bu_color c;
+		bu_color_from_str(&c, "255/255/0");
+		ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create(bs->brep);
+		ON_Brep_CDT_Tessellate(s_cdt, NULL);
+		ON_Brep_CDT_VList(vbp, &RTG.rtg_vlfree, &c, 0, s_cdt);
+		ON_Brep_CDT_Destroy(s_cdt);
 	    } else if (BU_STR_EQUAL(part, "FCDTw")) {
 		snprintf(commtag, 64, "_BC_FCDT_");
 		for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
@@ -3145,9 +3166,6 @@ brep_command(struct bu_vls *vls, const char *solid_name, struct rt_wdb *wdbp, st
 		for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
 		    ret = brep_facecdt_plot(vls, solid_name, ttol, tol, bs, bi, vbp, (*e_it), 4, numpoints);
 		}
-	    } else if (BU_STR_EQUAL(part, "CDT")) {
-		snprintf(commtag, 64, "_BC_CDT_");
-		ret = brep_cdt_plot(wdbp, vls, solid_name, ttol, tol, bs, bi, vbp, 0, numpoints);
 	    } else if (BU_STR_EQUAL(part, "SBB")) {
 		snprintf(commtag, 64, "_BC_SBB_");
 		for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
