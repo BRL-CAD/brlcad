@@ -169,7 +169,6 @@ getEdgePoints(
     ON_3dPoint edge_mid_3d = ON_3dPoint::UnsetPoint;
     ON_3dVector edge_mid_tang = ON_3dVector::UnsetVector;
 
-
     if (!(nc->EvTangent(emid, edge_mid_3d, edge_mid_tang))) {
 	// EvTangent call failed, get 3d point
 	edge_mid_3d = nc->PointAt(emid);
@@ -591,8 +590,17 @@ getEdgePoints(
 	evals = 0;
 	ON_3dPoint trim1_mid_2d = trim.PointAt(trim1_mid_range);
 	ON_3dPoint trim2_mid_2d = trim2->PointAt(trim2_mid_range);
+
 	evals += (surface_EvNormal(s1, trim1_mid_2d.x, trim1_mid_2d.y, tmp1, trim1_mid_norm)) ? 1 : 0;
+	if (trim.Face()->m_bRev) {
+	    trim1_mid_norm = trim1_mid_norm  * -1.0;
+	}
+
 	evals += (surface_EvNormal(s2, trim2_mid_2d.x, trim2_mid_2d.y, tmp2, trim2_mid_norm)) ? 1 : 0;
+	if (trim2->Face()->m_bRev) {
+	    trim2_mid_norm = trim2_mid_norm  * -1.0;
+	}
+
 	if (evals != 2) {
 	    bu_log("problem with mid normal evals\n");
 	}
