@@ -12,6 +12,7 @@
 #include "vmath.h"
 #include "bu/avs.h"
 #include "bu/path.h"
+#include "brep.h"
 #include "wdb.h"
 #include "analyze.h"
 #include "ged.h"
@@ -950,9 +951,9 @@ _ged_brep_flip(struct ged *gedp, struct rt_brep_internal *bi, const char *obj_na
 
 // TODO - this doesn't belong here, just convenient for now since we need to crack the ON_Brep for this
 extern "C" int
-_ged_brep_to_bot(struct ged *gedp, struct rt_brep_internal *bi, const char *bot_name)
+_ged_brep_to_bot(struct ged *gedp, const struct rt_brep_internal *bi, const char *bot_name, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
-    if (!gedp || !bi || !bot_name) return GED_ERROR;
+    if (!gedp || !bi || !bot_name || !ttol || !tol) return GED_ERROR;
 
     int fcnt, fncnt, ncnt, vcnt;
     int *faces = NULL;
@@ -960,8 +961,13 @@ _ged_brep_to_bot(struct ged *gedp, struct rt_brep_internal *bi, const char *bot_
     int *face_normals = NULL;
     fastf_t *normals = NULL;
 
+    struct ON_Brep_CDT_Tols cdttol;
+    cdttol.abs = ttol->abs;
+    cdttol.rel = ttol->rel;
+    cdttol.norm = ttol->norm;
+    cdttol.dist = tol->dist;
     ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create(bi->brep);
-    // TODO - need tolerance info here...
+    ON_Brep_CDT_Tol_Set(s_cdt, &cdttol);
     ON_Brep_CDT_Tessellate(s_cdt, NULL);
     ON_Brep_CDT_Mesh(&faces, &fcnt, &vertices, &vcnt, &face_normals, &fncnt, &normals, &ncnt, s_cdt);
     ON_Brep_CDT_Destroy(s_cdt);

@@ -538,7 +538,7 @@ extern int _ged_results_add(struct ged_results *results, const char *result_stri
 extern int _ged_brep_to_csg(struct ged *gedp, const char *obj_name, int verify);
 extern int _ged_brep_tikz(struct ged *gedp, const char *obj_name, const char *outfile);
 extern int _ged_brep_flip(struct ged *gedp, struct rt_brep_internal *bi, const char *obj_name);
-extern int _ged_brep_to_bot(struct ged *gedp, struct rt_brep_internal *bi, const char *obj_name);
+extern int _ged_brep_to_bot(struct ged *gedp, const struct rt_brep_internal *bi, const char *obj_name, const struct rt_tess_tol *ttol, const struct bn_tol *tol);
 
 
 /* defined in ged_util.c */
