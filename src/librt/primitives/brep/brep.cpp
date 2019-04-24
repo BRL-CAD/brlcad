@@ -2650,9 +2650,18 @@ rt_brep_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     int *face_normals = NULL;
     fastf_t *normals = NULL;
 
+    struct ON_Brep_CDT_Tols cdttol;
+    cdttol.abs = ttol->abs;
+    cdttol.rel = ttol->rel;
+    cdttol.norm = ttol->norm;
+    cdttol.dist = tol->dist;
     ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create(bi->brep);
-    // TODO - don't ignore tolerances
-    ON_Brep_CDT_Tessellate(s_cdt, NULL);
+    ON_Brep_CDT_Tol_Set(s_cdt, &cdttol);
+    if (ON_Brep_CDT_Tessellate(s_cdt, NULL)) {
+	// Couldn't get a solid mesh, we're done
+	ON_Brep_CDT_Destroy(s_cdt);
+	return -1;
+    }
     ON_Brep_CDT_Mesh(&faces, &fcnt, &vertices, &vcnt, &face_normals, &fncnt, &normals, &ncnt, s_cdt);
     ON_Brep_CDT_Destroy(s_cdt);
 
@@ -2673,8 +2682,6 @@ rt_brep_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     bot->num_face_normals = fncnt;
     bot->normals = normals;
     bot->face_normals = face_normals;
-
-    // TODO - don't even try the NMG if the bot validation routines don't succeed
 
     RT_DB_INTERNAL_INIT(&intern);
     intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
