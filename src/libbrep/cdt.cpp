@@ -66,6 +66,28 @@
 #define BREP_CDT_DEFAULT_TOL_NORM 0.0
 #define BREP_CDT_DEFAULT_TOL_DIST BN_TOL_DIST
 
+/* this is a debugging structure - it holds origin information for
+ * a point added to the CDT state */
+struct cdt_audit_info {
+    int face_index;
+    int vert_index;
+    int trim_index;
+    int edge_index;
+    ON_2dPoint surf_uv;
+};
+
+struct cdt_audit_info *
+cdt_ainfo(int fid, int vid, int tid, int eid, fastf_t x2d, fastf_t y2d)
+{
+    struct cdt_audit_info *a = new struct cdt_audit_info;
+    a->face_index = fid;
+    a->vert_index = vid;
+    a->trim_index = tid;
+    a->edge_index = eid;
+    a->surf_uv = ON_2dPoint(x2d, y2d);
+    return a;
+}
+
 struct ON_Brep_CDT_State {
 
     int status;
@@ -87,7 +109,19 @@ struct ON_Brep_CDT_State {
     p2t::CDT **p2t_faces;
     std::map<p2t::Point *, ON_3dPoint *> **p2t_maps;
     std::map<p2t::Point *, ON_3dPoint *> **p2t_nmaps;
+
+    /* Audit data */
+    std::map<ON_3dPoint *, struct cdt_audit_info *> pnt_audit_info;
+
 };
+
+void
+CDT_Add3DPnt(struct ON_Brep_CDT_State *s, ON_3dPoint *p, int fid, int vid, int tid, int eid, fastf_t x2d, fastf_t y2d)
+{
+    s->w3dpnts->push_back(p);
+    s->pnt_audit_info[p] = cdt_ainfo(fid, vid, tid, eid, x2d, y2d);
+}
+
 
 struct brep_cdt_tol {
     fastf_t min_dist;
@@ -140,6 +174,7 @@ CDT_Tol_Set(struct brep_cdt_tol *cdt, double dist, fastf_t md, double t_abs, dou
 
 static void
 getEdgePoints(
+	struct ON_Brep_CDT_State *s_cdt,
 	ON_BrepEdge *edge,
 	ON_NurbsCurve *nc,
 	const ON_BrepTrim &trim,
@@ -249,8 +284,8 @@ getEdgePoints(
 	nbtp2->e = emid;
 	(*trim2_param_points)[nbtp2->t] = nbtp2;
 
-	getEdgePoints(edge, nc, trim, sbtp1, nbtp1, sbtp2, nbtp2, cdt_tol, trim1_param_points, trim2_param_points, w3dpnts, w3dnorms);
-	getEdgePoints(edge, nc, trim, nbtp1, ebtp1, nbtp2, ebtp2, cdt_tol, trim1_param_points, trim2_param_points, w3dpnts, w3dnorms);
+	getEdgePoints(s_cdt, edge, nc, trim, sbtp1, nbtp1, sbtp2, nbtp2, cdt_tol, trim1_param_points, trim2_param_points, w3dpnts, w3dnorms);
+	getEdgePoints(s_cdt, edge, nc, trim, nbtp1, ebtp1, nbtp2, ebtp2, cdt_tol, trim1_param_points, trim2_param_points, w3dpnts, w3dnorms);
 	return;
     }
 
@@ -330,7 +365,7 @@ getEdgePoints(
 
 static std::map<double, BrepTrimPoint *> *
 getEdgePoints(
-	struct ON_Brep_CDT_State *s,
+	struct ON_Brep_CDT_State *s_cdt,
 	ON_BrepEdge *edge,
 	ON_BrepTrim &trim,
 	fastf_t max_dist,
@@ -377,7 +412,7 @@ getEdgePoints(
     if (trim.GetBoundingBox(min, max, bGrowBox)) {
 	dist = DIST_PT_PT(min, max);
     }
-    CDT_Tol_Set(&cdt_tol, dist, max_dist, s->abs, s->rel, s->norm, s->dist);
+    CDT_Tol_Set(&cdt_tol, dist, max_dist, s_cdt->abs, s_cdt->rel, s_cdt->norm, s_cdt->dist);
 
     /* Begin point collection */
     ON_3dPoint tmp1, tmp2;
@@ -628,12 +663,12 @@ getEdgePoints(
 	mbtp1->e = edge_mid_range;
 	(*trim2_param_points)[mbtp2->t] = mbtp2;
 
-	getEdgePoints(edge, nc, trim, sbtp1, mbtp1, sbtp2, mbtp2, &cdt_tol, trim1_param_points, trim2_param_points, w3dpnts, w3dnorms);
-	getEdgePoints(edge, nc, trim, mbtp1, ebtp1, mbtp2, ebtp2, &cdt_tol, trim1_param_points, trim2_param_points, w3dpnts, w3dnorms);
+	getEdgePoints(s_cdt, edge, nc, trim, sbtp1, mbtp1, sbtp2, mbtp2, &cdt_tol, trim1_param_points, trim2_param_points, w3dpnts, w3dnorms);
+	getEdgePoints(s_cdt, edge, nc, trim, mbtp1, ebtp1, mbtp2, ebtp2, &cdt_tol, trim1_param_points, trim2_param_points, w3dpnts, w3dnorms);
 
     } else {
 
-	getEdgePoints(edge, nc, trim, sbtp1, ebtp1, sbtp2, ebtp2, &cdt_tol, trim1_param_points, trim2_param_points, w3dpnts, w3dnorms);
+	getEdgePoints(s_cdt, edge, nc, trim, sbtp1, ebtp1, sbtp2, ebtp2, &cdt_tol, trim1_param_points, trim2_param_points, w3dpnts, w3dnorms);
 
     }
 
