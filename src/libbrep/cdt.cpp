@@ -260,7 +260,7 @@ getEdgePoints(
 	}
 
 	ON_3dPoint *npt = new ON_3dPoint(edge_mid_3d);
-	s_cdt->w3dpnts->push_back(npt);
+	CDT_Add3DPnt(s_cdt, npt, -1, -1, -1, edge->m_edge_index, emid, 0);
 
 	BrepTrimPoint *nbtp1 = new BrepTrimPoint;
 	nbtp1->p3d = npt;
@@ -329,19 +329,24 @@ getEdgePoints(
 	if (t1_dosplit && t2_dosplit) {
 	    ON_3dPoint nspt = (trim1_seam_3d + trim2_seam_3d)/2;
 	    nsptp = new ON_3dPoint(nspt);
+	    CDT_Add3DPnt(s_cdt, nsptp, trim.Face()->m_face_index, -1, trim.m_trim_index, trim.Edge()->m_edge_index, trim1_seam_2d.x, trim1_seam_2d.y);
 	} else {
+	    // Since the above if test got the both-true case, only one of these at
+	    // a time will ever be true.  TODO - could this be a source of degenerate
+	    // faces in 3D if we're only splitting one trim?
 	    if (!t1_dosplit) {
 		trim1_seam_t = (sbtp1->t + ebtp1->t)/2;
 		trim1_seam_2d = trim.PointAt(trim1_seam_t);
 		nsptp = new ON_3dPoint(trim2_seam_3d);
+		CDT_Add3DPnt(s_cdt, nsptp, trim2->Face()->m_face_index, -1, trim2->m_trim_index, trim2->Edge()->m_edge_index, trim1_seam_2d.x, trim1_seam_2d.y);
 	    }
 	    if (!t2_dosplit) {
 		trim2_seam_t = (sbtp2->t + ebtp2->t)/2;
 		trim2_seam_2d = trim2->PointAt(trim2_seam_t);
 		nsptp = new ON_3dPoint(trim1_seam_3d);
+		CDT_Add3DPnt(s_cdt, nsptp, trim.Face()->m_face_index, -1, trim.m_trim_index, trim.Edge()->m_edge_index, trim1_seam_2d.x, trim1_seam_2d.y);
 	    }
 	}
-	s_cdt->w3dpnts->push_back(nsptp);
 
 	// Note - by this point we shouldn't need tangents and normals...
 	BrepTrimPoint *nbtp1 = new BrepTrimPoint;
@@ -637,7 +642,7 @@ getEdgePoints(
 	}
 
 	ON_3dPoint *nmp = new ON_3dPoint(edge_mid_3d);
-	s_cdt->w3dpnts->push_back(nmp);
+	CDT_Add3DPnt(s_cdt, nmp, -1, -1, -1, edge->m_edge_index, edge_mid_range, 0);
 
 	BrepTrimPoint *mbtp1 = new BrepTrimPoint;
 	mbtp1->p3d = nmp;
@@ -2255,7 +2260,7 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_State *s_cdt, std::map<const ON_Surface *, d
 			}
 			if (!op) {
 			    op = new ON_3dPoint(pnt);
-			    s_cdt->w3dpnts->push_back(op);
+			    CDT_Add3DPnt(s_cdt, op, face.m_face_index, -1, -1, -1, p->x, p->y);
 			    (*pointmap)[p] = op;
 			}
 			if (!onorm) {
@@ -2267,7 +2272,7 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_State *s_cdt, std::map<const ON_Surface *, d
 			if (!op) {
 			    pnt = s->PointAt(p->x, p->y);
 			    op = new ON_3dPoint(pnt);
-			    s_cdt->w3dpnts->push_back(op);
+			    CDT_Add3DPnt(s_cdt, op, face.m_face_index, -1, -1, -1, p->x, p->y);
 			}
 			(*pointmap)[p] = op;
 		    }
@@ -2334,7 +2339,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, std::vector<int> *faces)
 	for (int index = 0; index < brep->m_V.Count(); index++) {
 	    ON_BrepVertex& v = brep->m_V[index];
 	    (*s_cdt->vert_pnts)[index] = new ON_3dPoint(v.Point());
-	    s_cdt->w3dpnts->push_back((*s_cdt->vert_pnts)[index]);
+	    CDT_Add3DPnt(s_cdt, (*s_cdt->vert_pnts)[index], -1, v.m_vertex_index, -1, -1, -1, -1);
 	}
     }
 
@@ -2659,7 +2664,7 @@ ON_Brep_CDT_Mesh(
 			    }
 			    if (!op) {
 				op = new ON_3dPoint(pnt);
-				s_cdt->w3dpnts->push_back(op);
+				CDT_Add3DPnt(s_cdt, op, face.m_face_index, -1, -1, -1, p->x, p->y);
 				vfpnts.push_back(op);
 				(*pointmap)[p] = op;
 				on_pnt_to_bot_pnt[op] = vfpnts.size() - 1;
@@ -2676,7 +2681,7 @@ ON_Brep_CDT_Mesh(
 			    if (!op) {
 				pnt = s->PointAt(p->x, p->y);
 				op = new ON_3dPoint(pnt);
-				s_cdt->w3dpnts->push_back(op);
+				CDT_Add3DPnt(s_cdt, op, face.m_face_index, -1, -1, -1, p->x, p->y);
 				vfpnts.push_back(op);
 				(*pointmap)[p] = op;
 				on_pnt_to_bot_pnt[op] = vfpnts.size() - 1;
