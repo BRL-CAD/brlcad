@@ -3125,8 +3125,8 @@ brep_command(struct bu_vls *vls, const char *solid_name, struct rt_wdb *UNUSED(w
 		for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
 		    ret = brep_facecdt_plot(vls, solid_name, ttol, tol, bs, bi, vbp, (*e_it), 0);
 		}
-	    } else if (BU_STR_EQUAL(part, "FCDT2")) {
-		snprintf(commtag, 64, "_BC_FCDT2_");
+	    } else if (BU_STR_EQUAL(part, "FCDTN")) {
+		snprintf(commtag, 64, "_BC_FCDTN_");
 		struct bu_color c;
 		bu_color_from_str(&c, "255/255/0");
 		std::vector<int> faces;
@@ -3137,6 +3137,32 @@ brep_command(struct bu_vls *vls, const char *solid_name, struct rt_wdb *UNUSED(w
 		ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create(bs->brep);
 		ON_Brep_CDT_Tessellate(s_cdt, &faces);
 		ON_Brep_CDT_VList(vbp, &RTG.rtg_vlfree, &c, 0, s_cdt);
+		ON_Brep_CDT_Destroy(s_cdt);
+	    } else if (BU_STR_EQUAL(part, "FCDTNw")) {
+		snprintf(commtag, 64, "_BC_FCDT_");
+		struct bu_color c;
+		bu_color_from_str(&c, "255/255/0");
+		std::vector<int> faces;
+		std::set<int>::iterator f_it;
+		for (f_it = elements.begin(); f_it != elements.end(); f_it++) {
+		    faces.push_back(*f_it);
+		}
+		ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create(bs->brep);
+		ON_Brep_CDT_Tessellate(s_cdt, &faces);
+		ON_Brep_CDT_VList(vbp, &RTG.rtg_vlfree, &c, 1, s_cdt);
+		ON_Brep_CDT_Destroy(s_cdt);
+	    } else if (BU_STR_EQUAL(part, "FCDTN2d")) {
+		snprintf(commtag, 64, "_BC_FCDT_");
+		struct bu_color c;
+		bu_color_from_str(&c, "255/255/0");
+		std::vector<int> faces;
+		std::set<int>::iterator f_it;
+		for (f_it = elements.begin(); f_it != elements.end(); f_it++) {
+		    faces.push_back(*f_it);
+		}
+		ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create(bs->brep);
+		ON_Brep_CDT_Tessellate(s_cdt, &faces);
+		ON_Brep_CDT_VList(vbp, &RTG.rtg_vlfree, &c, 2, s_cdt);
 		ON_Brep_CDT_Destroy(s_cdt);
 	    } else if (BU_STR_EQUAL(part, "CDT")) {
 		snprintf(commtag, 64, "_BC_CDT_");
