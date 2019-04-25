@@ -113,6 +113,8 @@ struct ON_Brep_CDT_State {
     /* Audit data */
     std::map<ON_3dPoint *, struct cdt_audit_info *> pnt_audit_info;
 
+    /* BoT -> ON mappings */
+    std::map<int, ON_3dPoint *> *vert_to_on;
 };
 
 void
@@ -2019,6 +2021,7 @@ ON_Brep_CDT_Create(ON_Brep *brep)
     cdt->vert_pnts = new std::map<int, ON_3dPoint *>;
     cdt->w3dnorms = new std::vector<ON_3dPoint *>;
     cdt->vert_norms = new std::map<int, ON_3dPoint *>;
+    cdt->vert_to_on = new std::map<int, ON_3dPoint *>;
 
     cdt->p2t_faces = (p2t::CDT **)bu_calloc(brep->m_F.Count(), sizeof(p2t::CDT *), "poly2tri triangulations");
     cdt->p2t_maps = (std::map<p2t::Point *, ON_3dPoint *> **)bu_calloc(brep->m_F.Count(), sizeof(std::map<p2t::Point *, ON_3dPoint *> *), "poly2tri point to ON_3dPoint maps");
@@ -2038,36 +2041,37 @@ ON_Brep_CDT_Create(ON_Brep *brep)
 }
 
 void
-ON_Brep_CDT_Destroy(struct ON_Brep_CDT_State *s)
+ON_Brep_CDT_Destroy(struct ON_Brep_CDT_State *s_cdt)
 {
-    for (size_t i = 0; i < s->w3dpnts->size(); i++) {
-	delete (*(s->w3dpnts))[i];
+    for (size_t i = 0; i < s_cdt->w3dpnts->size(); i++) {
+	delete (*(s_cdt->w3dpnts))[i];
     }
-    for (size_t i = 0; i < s->w3dnorms->size(); i++) {
-	delete (*(s->w3dnorms))[i];
+    for (size_t i = 0; i < s_cdt->w3dnorms->size(); i++) {
+	delete (*(s_cdt->w3dnorms))[i];
     }
 
-    delete s->w3dpnts;
-    delete s->vert_pnts;
-    delete s->w3dnorms;
-    delete s->vert_norms;
+    delete s_cdt->w3dpnts;
+    delete s_cdt->vert_pnts;
+    delete s_cdt->w3dnorms;
+    delete s_cdt->vert_norms;
+    delete s_cdt->vert_to_on;
 
     // TODO - delete p2t data
 
-    delete s;
+    delete s_cdt;
 }
 
 int
-ON_Brep_CDT_Status(struct ON_Brep_CDT_State *s)
+ON_Brep_CDT_Status(struct ON_Brep_CDT_State *s_cdt)
 {
-    return s->status;
+    return s_cdt->status;
 }
 
 
 ON_Brep *
-ON_Brep_CDT_Brep(struct ON_Brep_CDT_State *s)
+ON_Brep_CDT_Brep(struct ON_Brep_CDT_State *s_cdt)
 {
-    return s->brep;
+    return s_cdt->brep;
 }
 
 void
@@ -2477,11 +2481,33 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, std::vector<int> *faces)
 
     if (invalid) {
 	if (se.degenerate.count > 0) {
+	    std::set<int> problem_pnts;
+	    std::set<int>::iterator pp_it;
 	    for (int i = 0; i < se.degenerate.count; i++) {
 		bu_log("dface %d: %d %d %d :  %f/%f/%f->%f/%f/%f->%f/%f/%f \n", se.degenerate.faces[i], valid_faces[i*3], valid_faces[i*3+1], valid_faces[i*3+2],
 		       	valid_vertices[valid_faces[i*3]*3], valid_vertices[valid_faces[i*3]*3]+1,valid_vertices[valid_faces[i*3]*3]+2,
 		       	valid_vertices[valid_faces[i*3+1]*3], valid_vertices[valid_faces[i*3+1]*3]+1,valid_vertices[valid_faces[i*3+1]*3]+2,
 		       	valid_vertices[valid_faces[i*3+2]*3], valid_vertices[valid_faces[i*3+2]*3]+1,valid_vertices[valid_faces[i*3+2]*3]+2);
+		problem_pnts.insert(valid_faces[i*3]);
+		problem_pnts.insert(valid_faces[i*3+1]);
+		problem_pnts.insert(valid_faces[i*3+2]);
+
+		// TODO - need to preserve the vfpnts array in the state so we can decode indices to ON_3dPoint pointers, since those are the
+		// keys with the prep data
+	    }
+	    for (pp_it = problem_pnts.begin(); pp_it != problem_pnts.end(); pp_it++) {
+		int pind = (*pp_it);
+		ON_3dPoint *p = (*s_cdt->vert_to_on)[pind];
+		if (!p) {
+		    bu_log("unmapped point??? %d\n", pind);
+		} else {
+		    struct cdt_audit_info *paudit = s_cdt->pnt_audit_info[p];
+		    if (!paudit) {
+			bu_log("point with no audit info??? %d\n", pind);
+		    } else {
+			bu_log("point %d: Face(%d) Vert(%d) Trim(%d) Edge(%d) UV(%f,%f)\n", pind, paudit->face_index, paudit->vert_index, paudit->trim_index, paudit->edge_index, paudit->surf_uv.x, paudit->surf_uv.y);
+		    }
+		}
 	    }
 	}
     }
@@ -2681,6 +2707,7 @@ ON_Brep_CDT_Mesh(
 				vfpnts.push_back(op);
 				(*pointmap)[p] = op;
 				on_pnt_to_bot_pnt[op] = vfpnts.size() - 1;
+				(*s_cdt->vert_to_on)[vfpnts.size() - 1] = op;
 			    }
 			    if (!onorm) {
 				onorm = new ON_3dPoint(norm);
@@ -2698,11 +2725,13 @@ ON_Brep_CDT_Mesh(
 				vfpnts.push_back(op);
 				(*pointmap)[p] = op;
 				on_pnt_to_bot_pnt[op] = vfpnts.size() - 1;
+				(*s_cdt->vert_to_on)[vfpnts.size() - 1] = op;
 			    } else {
 				if (on_pnt_to_bot_pnt.find(op) == on_pnt_to_bot_pnt.end()) {
 				    vfpnts.push_back(op);
 				    (*pointmap)[p] = op;
 				    on_pnt_to_bot_pnt[op] = vfpnts.size() - 1;
+				    (*s_cdt->vert_to_on)[vfpnts.size() - 1] = op;
 				}
 			    }
 			}
@@ -2712,6 +2741,7 @@ ON_Brep_CDT_Mesh(
 			    vfpnts.push_back(op);
 			    vfnormals.push_back(onorm);
 			    on_pnt_to_bot_pnt[op] = vfpnts.size() - 1;
+			    (*s_cdt->vert_to_on)[vfpnts.size() - 1] = op;
 			    on_pnt_to_bot_norm[op] = vfnormals.size() - 1;
 			}
 		    }
