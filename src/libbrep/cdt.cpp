@@ -184,9 +184,7 @@ getEdgePoints(
 	BrepTrimPoint *ebtp2,
 	const struct brep_cdt_tol *cdt_tol,
 	std::map<double, BrepTrimPoint *> *trim1_param_points,
-	std::map<double, BrepTrimPoint *> *trim2_param_points,
-	std::vector<ON_3dPoint *> *w3dpnts,
-	std::vector<ON_3dPoint *> *w3dnorms
+	std::map<double, BrepTrimPoint *> *trim2_param_points
 	)
 {
     ON_3dPoint tmp1, tmp2;
@@ -262,7 +260,7 @@ getEdgePoints(
 	}
 
 	ON_3dPoint *npt = new ON_3dPoint(edge_mid_3d);
-	w3dpnts->push_back(npt);
+	s_cdt->w3dpnts->push_back(npt);
 
 	BrepTrimPoint *nbtp1 = new BrepTrimPoint;
 	nbtp1->p3d = npt;
@@ -284,8 +282,8 @@ getEdgePoints(
 	nbtp2->e = emid;
 	(*trim2_param_points)[nbtp2->t] = nbtp2;
 
-	getEdgePoints(s_cdt, edge, nc, trim, sbtp1, nbtp1, sbtp2, nbtp2, cdt_tol, trim1_param_points, trim2_param_points, w3dpnts, w3dnorms);
-	getEdgePoints(s_cdt, edge, nc, trim, nbtp1, ebtp1, nbtp2, ebtp2, cdt_tol, trim1_param_points, trim2_param_points, w3dpnts, w3dnorms);
+	getEdgePoints(s_cdt, edge, nc, trim, sbtp1, nbtp1, sbtp2, nbtp2, cdt_tol, trim1_param_points, trim2_param_points);
+	getEdgePoints(s_cdt, edge, nc, trim, nbtp1, ebtp1, nbtp2, ebtp2, cdt_tol, trim1_param_points, trim2_param_points);
 	return;
     }
 
@@ -343,7 +341,7 @@ getEdgePoints(
 		nsptp = new ON_3dPoint(trim1_seam_3d);
 	    }
 	}
-	w3dpnts->push_back(nsptp);
+	s_cdt->w3dpnts->push_back(nsptp);
 
 	// Note - by this point we shouldn't need tangents and normals...
 	BrepTrimPoint *nbtp1 = new BrepTrimPoint;
@@ -370,9 +368,7 @@ getEdgePoints(
 	ON_BrepTrim &trim,
 	fastf_t max_dist,
 	std::map<int, ON_3dPoint *> *vert_pnts,
-	std::vector<ON_3dPoint *> *w3dpnts,
-	std::map<int, ON_3dPoint *> *vert_norms,
-	std::vector<ON_3dPoint *> *w3dnorms
+	std::map<int, ON_3dPoint *> *vert_norms
 	)
 {
     struct brep_cdt_tol cdt_tol = BREP_CDT_TOL_ZERO;
@@ -510,7 +506,7 @@ getEdgePoints(
 	    t1_sn = edge_start_3dnorm;
 	} else {
 	    t1_sn = new ON_3dPoint(trim1_start_normal);
-	    w3dnorms->push_back(t1_sn);
+	    s_cdt->w3dnorms->push_back(t1_sn);
 	}
     }
     if (!surface_EvNormal(s1, trim1_end_2d.x, trim1_end_2d.y, tmp1, trim1_end_normal)) {
@@ -523,7 +519,7 @@ getEdgePoints(
 	    t1_en = edge_end_3dnorm;
 	} else {
 	    t1_en = new ON_3dPoint(trim1_end_normal);
-	    w3dnorms->push_back(t1_en);
+	    s_cdt->w3dnorms->push_back(t1_en);
 	}
     }
 
@@ -539,7 +535,7 @@ getEdgePoints(
 	    t2_sn = edge_start_3dnorm;
 	} else {
 	    t2_sn = new ON_3dPoint(trim2_start_normal);
-	    w3dnorms->push_back(t2_sn);
+	    s_cdt->w3dnorms->push_back(t2_sn);
 	}
     }
     if (!surface_EvNormal(s2, trim2_end_2d.x, trim2_end_2d.y, tmpp, trim2_end_normal)) {
@@ -552,7 +548,7 @@ getEdgePoints(
 	    t2_en = edge_end_3dnorm;
 	} else {
 	    t2_en = new ON_3dPoint(trim2_end_normal);
-	    w3dnorms->push_back(t2_en);
+	    s_cdt->w3dnorms->push_back(t2_en);
 	}
     }
 
@@ -641,7 +637,7 @@ getEdgePoints(
 	}
 
 	ON_3dPoint *nmp = new ON_3dPoint(edge_mid_3d);
-	w3dpnts->push_back(nmp);
+	s_cdt->w3dpnts->push_back(nmp);
 
 	BrepTrimPoint *mbtp1 = new BrepTrimPoint;
 	mbtp1->p3d = nmp;
@@ -663,12 +659,12 @@ getEdgePoints(
 	mbtp1->e = edge_mid_range;
 	(*trim2_param_points)[mbtp2->t] = mbtp2;
 
-	getEdgePoints(s_cdt, edge, nc, trim, sbtp1, mbtp1, sbtp2, mbtp2, &cdt_tol, trim1_param_points, trim2_param_points, w3dpnts, w3dnorms);
-	getEdgePoints(s_cdt, edge, nc, trim, mbtp1, ebtp1, mbtp2, ebtp2, &cdt_tol, trim1_param_points, trim2_param_points, w3dpnts, w3dnorms);
+	getEdgePoints(s_cdt, edge, nc, trim, sbtp1, mbtp1, sbtp2, mbtp2, &cdt_tol, trim1_param_points, trim2_param_points);
+	getEdgePoints(s_cdt, edge, nc, trim, mbtp1, ebtp1, mbtp2, ebtp2, &cdt_tol, trim1_param_points, trim2_param_points);
 
     } else {
 
-	getEdgePoints(s_cdt, edge, nc, trim, sbtp1, ebtp1, sbtp2, ebtp2, &cdt_tol, trim1_param_points, trim2_param_points, w3dpnts, w3dnorms);
+	getEdgePoints(s_cdt, edge, nc, trim, sbtp1, ebtp1, sbtp2, ebtp2, &cdt_tol, trim1_param_points, trim2_param_points);
 
     }
 
@@ -1430,15 +1426,13 @@ extend_over_seam_crossings(const ON_Surface *surf,  ON_SimpleArray<BrepTrimPoint
 
 static void
 get_loop_sample_points(
-	struct ON_Brep_CDT_State *s,
+	struct ON_Brep_CDT_State *s_cdt,
 	ON_SimpleArray<BrepTrimPoint> *points,
 	const ON_BrepFace &face,
 	const ON_BrepLoop *loop,
 	fastf_t max_dist,
 	std::map<int, ON_3dPoint *> *vert_pnts,
-	std::vector<ON_3dPoint *> *w3dpnts,
-	std::map<int, ON_3dPoint *> *vert_norms,
-	std::vector<ON_3dPoint *> *w3dnorms
+	std::map<int, ON_3dPoint *> *vert_norms
 	)
 {
     int trim_count = loop->TrimCount();
@@ -1482,7 +1476,7 @@ get_loop_sample_points(
 	}
 
 	if (!trim->m_trim_user.p) {
-	    (void)getEdgePoints(s, edge, *trim, max_dist, vert_pnts, w3dpnts, vert_norms, w3dnorms);
+	    (void)getEdgePoints(s_cdt, edge, *trim, max_dist, vert_pnts, vert_norms);
 	    //bu_log("Initialized trim->m_trim_user.p: Trim %d (associated with Edge %d) point count: %zd\n", trim->m_trim_index, trim->Edge()->m_edge_index, m->size());
 	}
 	if (trim->m_trim_user.p) {
@@ -2134,7 +2128,7 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_State *s_cdt, std::map<const ON_Surface *, d
 	if (s_to_maxdist->find(face.SurfaceOf()) != s_to_maxdist->end()) {
 	    max_dist = (*s_to_maxdist)[face.SurfaceOf()];
 	}
-	get_loop_sample_points(s_cdt, &brep_loop_points[li], face, loop, max_dist, s_cdt->vert_pnts, s_cdt->w3dpnts, s_cdt->vert_norms, s_cdt->w3dnorms);
+	get_loop_sample_points(s_cdt, &brep_loop_points[li], face, loop, max_dist, s_cdt->vert_pnts, s_cdt->vert_norms);
     }
 
     std::list<std::map<double, ON_3dPoint *> *> bridgePoints;
@@ -2424,7 +2418,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, std::vector<int> *faces)
 	// runs - if pre-existing solutions for "high level" splits exist,
 	// reuse them and dig down to find where we need further refinement to
 	// create new points.
-        (void)getEdgePoints(s_cdt, &edge, trim1, max_dist, s_cdt->vert_pnts, s_cdt->w3dpnts, s_cdt->vert_norms, s_cdt->w3dnorms);
+        (void)getEdgePoints(s_cdt, &edge, trim1, max_dist, s_cdt->vert_pnts, s_cdt->vert_norms);
 
     }
 
