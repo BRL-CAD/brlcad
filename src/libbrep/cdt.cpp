@@ -2523,7 +2523,49 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, std::vector<int> *faces)
 	    bu_log("extra edges???\n");
 	}
 	if (se.unmatched.count > 0) {
-	    bu_log("unmatched edges???\n");
+	    std::set<int> problem_pnts;
+	    std::set<int>::iterator pp_it;
+
+	    bu_log("%d unmatched edges\n", se.unmatched.count);
+	    for (int i = 0; i < se.unmatched.count; i++) {
+		int v1 = se.unmatched.edges[i*2];
+		int v2 = se.unmatched.edges[i*2+1];
+		bu_log("%d->%d: %f %f %f->%f %f %f\n", v1, v2,
+			valid_vertices[v1*3], valid_vertices[v1*3+1], valid_vertices[v1*3+2],
+			valid_vertices[v2*3], valid_vertices[v2*3+1], valid_vertices[v2*3+2]
+			);
+		for (int j = 0; j < valid_fcnt; j++) {
+		    std::set<std::pair<int,int>> fedges;
+		    fedges.insert(std::pair<int,int>(valid_faces[j*3],valid_faces[j*3+1]));
+		    fedges.insert(std::pair<int,int>(valid_faces[j*3+1],valid_faces[j*3+2]));
+		    fedges.insert(std::pair<int,int>(valid_faces[j*3+2],valid_faces[j*3]));
+		    int has_edge = (fedges.find(std::pair<int,int>(v1,v2)) != fedges.end()) ? 1 : 0;
+		    if (has_edge) {
+			int face = j;
+			bu_log("eface %d: %d %d %d :  %f %f %f->%f %f %f->%f %f %f \n", face, valid_faces[face*3], valid_faces[face*3+1], valid_faces[face*3+2],
+				valid_vertices[valid_faces[face*3]*3], valid_vertices[valid_faces[face*3]*3+1],valid_vertices[valid_faces[face*3]*3+2],
+				valid_vertices[valid_faces[face*3+1]*3], valid_vertices[valid_faces[face*3+1]*3+1],valid_vertices[valid_faces[face*3+1]*3+2],
+				valid_vertices[valid_faces[face*3+2]*3], valid_vertices[valid_faces[face*3+2]*3+1],valid_vertices[valid_faces[face*3+2]*3+2]);
+			problem_pnts.insert(valid_faces[j*3]);
+			problem_pnts.insert(valid_faces[j*3+1]);
+			problem_pnts.insert(valid_faces[j*3+2]);
+		    }
+		}
+	    }
+	    for (pp_it = problem_pnts.begin(); pp_it != problem_pnts.end(); pp_it++) {
+		int pind = (*pp_it);
+		ON_3dPoint *p = (*s_cdt->vert_to_on)[pind];
+		if (!p) {
+		    bu_log("unmapped point??? %d\n", pind);
+		} else {
+		    struct cdt_audit_info *paudit = s_cdt->pnt_audit_info[p];
+		    if (!paudit) {
+			bu_log("point with no audit info??? %d\n", pind);
+		    } else {
+			bu_log("point %d: Face(%d) Vert(%d) Trim(%d) Edge(%d) UV(%f,%f)\n", pind, paudit->face_index, paudit->vert_index, paudit->trim_index, paudit->edge_index, paudit->surf_uv.x, paudit->surf_uv.y);
+		    }
+		}
+	    }
 	}
 	if (se.misoriented.count > 0) {
 	    std::set<int> problem_pnts;
@@ -2738,6 +2780,7 @@ ON_Brep_CDT_Mesh(
     std::map<ON_3dPoint *, int> on_pnt_to_bot_pnt;
     std::map<ON_3dPoint *, int> on_pnt_to_bot_norm;
     std::set<p2t::Triangle*> tris_degen;
+    std::set<p2t::Triangle*> tris_zero_3D_area;
     size_t triangle_cnt = 0;
 
     for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
@@ -2813,6 +2856,7 @@ ON_Brep_CDT_Mesh(
 		    bu_log("Face %d: p2t face without proper point info...\n", face.m_face_index);
 		}
 	    }
+
 	    /* Now that all 3D points are mapped, make sure this face isn't degenerate (this can
 	     * happen with singular trims) */
 	    if (tpnts[0] == tpnts[1] || tpnts[1] == tpnts[2] || tpnts[2] == tpnts[0]) {
@@ -2822,21 +2866,27 @@ ON_Brep_CDT_Mesh(
 		continue;
 	    }
 
-#if 0
-	    /* If we have a face with 3 co-linear points where those points are all from an edge, also reject */
+	    /* If we have a face with 3 co-linear points, we need to locally
+	     * rework the triangles.  (This can arise when the 2D triangulation
+	     * has a non-degenerate triangle that maps degenerately into 3D). For
+	     * now, just build up the set of degenerate triangles. */
 	    ON_Line l(*tpnts[0], *tpnts[2]);
 	    if (l.DistanceTo(*tpnts[1]) < s_cdt->dist) {
-		int e1 = (s_cdt->edge_pnts->find(tpnts[0]) != s_cdt->edge_pnts->end()) ? 1 : 0;
-		int e2 = (s_cdt->edge_pnts->find(tpnts[1]) != s_cdt->edge_pnts->end()) ? 1 : 0;
-		int e3 = (s_cdt->edge_pnts->find(tpnts[2]) != s_cdt->edge_pnts->end()) ? 1 : 0;
-		if (e1 && e2 && e3) { 
-		    triangle_cnt--;
-		    tris_degen.insert(t);
-		    continue;
-		}
+		//triangle_cnt--;
+		//tris_zero_3D_area.insert(t);
+		continue;
 	    }
-#endif
 	}
+    }
+
+    /* For the zero-area triangles, we need to take each degenerate triangle
+     * (1) and find the p2t triangle that shares the longest edge of the
+     * degenerate triangle (i.e. the edge that uses the two furthest endpoints
+     * of the colinear polyline) (2).  Remove both triangles from the
+     * triangulation, and add two new triangles using the three points of (2)
+     * and the midpoint of (1). */
+    if (tris_zero_3D_area.size()) {
+	bu_log("Found %zd near-zero area triangles\n", tris_zero_3D_area.size());
     }
 
     // Know how many faces and points now - initialize BoT container.
