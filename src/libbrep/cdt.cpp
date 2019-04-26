@@ -115,6 +115,7 @@ struct ON_Brep_CDT_State {
 
     /* BoT -> ON mappings */
     std::map<int, ON_3dPoint *> *vert_to_on;
+    std::set<ON_3dPoint *> *edge_pnts;
 };
 
 void
@@ -263,6 +264,7 @@ getEdgePoints(
 
 	ON_3dPoint *npt = new ON_3dPoint(edge_mid_3d);
 	CDT_Add3DPnt(s_cdt, npt, -1, -1, -1, edge->m_edge_index, emid, 0);
+	s_cdt->edge_pnts->insert(npt);
 
 	BrepTrimPoint *nbtp1 = new BrepTrimPoint;
 	nbtp1->p3d = npt;
@@ -332,6 +334,7 @@ getEdgePoints(
 	    ON_3dPoint nspt = (trim1_seam_3d + trim2_seam_3d)/2;
 	    nsptp = new ON_3dPoint(nspt);
 	    CDT_Add3DPnt(s_cdt, nsptp, trim.Face()->m_face_index, -1, trim.m_trim_index, trim.Edge()->m_edge_index, trim1_seam_2d.x, trim1_seam_2d.y);
+	    s_cdt->edge_pnts->insert(nsptp);
 	} else {
 	    // Since the above if test got the both-true case, only one of these at
 	    // a time will ever be true.  TODO - could this be a source of degenerate
@@ -341,12 +344,14 @@ getEdgePoints(
 		trim1_seam_2d = trim.PointAt(trim1_seam_t);
 		nsptp = new ON_3dPoint(trim2_seam_3d);
 		CDT_Add3DPnt(s_cdt, nsptp, trim2->Face()->m_face_index, -1, trim2->m_trim_index, trim2->Edge()->m_edge_index, trim1_seam_2d.x, trim1_seam_2d.y);
+		s_cdt->edge_pnts->insert(nsptp);
 	    }
 	    if (!t2_dosplit) {
 		trim2_seam_t = (sbtp2->t + ebtp2->t)/2;
 		trim2_seam_2d = trim2->PointAt(trim2_seam_t);
 		nsptp = new ON_3dPoint(trim1_seam_3d);
 		CDT_Add3DPnt(s_cdt, nsptp, trim.Face()->m_face_index, -1, trim.m_trim_index, trim.Edge()->m_edge_index, trim1_seam_2d.x, trim1_seam_2d.y);
+		s_cdt->edge_pnts->insert(nsptp);
 	    }
 	}
 
@@ -645,6 +650,7 @@ getEdgePoints(
 
 	ON_3dPoint *nmp = new ON_3dPoint(edge_mid_3d);
 	CDT_Add3DPnt(s_cdt, nmp, -1, -1, -1, edge->m_edge_index, edge_mid_range, 0);
+	s_cdt->edge_pnts->insert(nmp);
 
 	BrepTrimPoint *mbtp1 = new BrepTrimPoint;
 	mbtp1->p3d = nmp;
@@ -2022,6 +2028,7 @@ ON_Brep_CDT_Create(ON_Brep *brep)
     cdt->w3dnorms = new std::vector<ON_3dPoint *>;
     cdt->vert_norms = new std::map<int, ON_3dPoint *>;
     cdt->vert_to_on = new std::map<int, ON_3dPoint *>;
+    cdt->edge_pnts = new std::set<ON_3dPoint *>;
 
     cdt->p2t_faces = (p2t::CDT **)bu_calloc(brep->m_F.Count(), sizeof(p2t::CDT *), "poly2tri triangulations");
     cdt->p2t_maps = (std::map<p2t::Point *, ON_3dPoint *> **)bu_calloc(brep->m_F.Count(), sizeof(std::map<p2t::Point *, ON_3dPoint *> *), "poly2tri point to ON_3dPoint maps");
@@ -2055,6 +2062,7 @@ ON_Brep_CDT_Destroy(struct ON_Brep_CDT_State *s_cdt)
     delete s_cdt->w3dnorms;
     delete s_cdt->vert_norms;
     delete s_cdt->vert_to_on;
+    delete s_cdt->edge_pnts;
 
     // TODO - delete p2t data
 
@@ -2344,6 +2352,8 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, std::vector<int> *faces)
 	    ON_BrepVertex& v = brep->m_V[index];
 	    (*s_cdt->vert_pnts)[index] = new ON_3dPoint(v.Point());
 	    CDT_Add3DPnt(s_cdt, (*s_cdt->vert_pnts)[index], -1, v.m_vertex_index, -1, -1, -1, -1);
+	    // topologically, any vertex point will be on edges
+	    s_cdt->edge_pnts->insert((*s_cdt->vert_pnts)[index]);
 	}
     }
 
@@ -2809,6 +2819,20 @@ ON_Brep_CDT_Mesh(
 		/* degenerate */
 		triangle_cnt--;
 		tris_degen.insert(t);
+		continue;
+	    }
+	    
+	    /* If we have a face with 3 co-linear points where those points are all from an edge, also reject */
+	    ON_Line l(*tpnts[0], *tpnts[2]);
+	    if (l.DistanceTo(*tpnts[1]) < s_cdt->dist) {
+		int e1 = (s_cdt->edge_pnts->find(tpnts[0]) != s_cdt->edge_pnts->end()) ? 1 : 0;
+		int e2 = (s_cdt->edge_pnts->find(tpnts[1]) != s_cdt->edge_pnts->end()) ? 1 : 0;
+		int e3 = (s_cdt->edge_pnts->find(tpnts[2]) != s_cdt->edge_pnts->end()) ? 1 : 0;
+		if (e1 && e2 && e3) { 
+		    triangle_cnt--;
+		    tris_degen.insert(t);
+		    continue;
+		}
 	    }
 	}
     }
