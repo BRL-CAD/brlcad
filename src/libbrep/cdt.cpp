@@ -1448,12 +1448,12 @@ get_loop_sample_points(
 	ON_BrepTrim *trim = loop->Trim(lti);
 	ON_BrepEdge *edge = trim->Edge();
 
+	/* Provide 2D points for p2d, but we need to be aware that this will result
+	 * in degenerate 3D faces that we need to filter out when assembling a mesh */
 	if (trim->m_type == ON_BrepTrim::singular) {
 	    BrepTrimPoint btp;
 	    const ON_BrepVertex& v1 = face.Brep()->m_V[trim->m_vi[0]];
 	    ON_3dPoint *p3d = (*s_cdt->vert_pnts)[v1.m_vertex_index];
-	    //ON_2dPoint p2d_begin = trim->PointAt(trim->Domain().m_t[0]);
-	    //ON_2dPoint p2d_end = trim->PointAt(trim->Domain().m_t[1]);
 	    double delta =  trim->Domain().Length() / 10.0;
 	    ON_Interval trim_dom = trim->Domain();
 
@@ -2677,6 +2677,7 @@ ON_Brep_CDT_Mesh(
     std::vector<ON_3dPoint *> vfnormals;
     std::map<ON_3dPoint *, int> on_pnt_to_bot_pnt;
     std::map<ON_3dPoint *, int> on_pnt_to_bot_norm;
+    std::set<p2t::Triangle*> tris_degen;
     size_t triangle_cnt = 0;
 
     for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
@@ -2688,6 +2689,7 @@ ON_Brep_CDT_Mesh(
 	triangle_cnt += tris.size();
 	for (size_t i = 0; i < tris.size(); i++) {
 	    p2t::Triangle *t = tris[i];
+	    ON_3dPoint *tpnts[3] = {NULL, NULL, NULL};
 	    for (size_t j = 0; j < 3; j++) {
 		p2t::Point *p = t->GetPoint(j);
 		if (p) {
@@ -2746,9 +2748,17 @@ ON_Brep_CDT_Mesh(
 			    on_pnt_to_bot_norm[op] = vfnormals.size() - 1;
 			}
 		    }
+		    tpnts[j] = op;
 		} else {
 		    bu_log("Face %d: p2t face without proper point info...\n", face.m_face_index);
 		}
+	    }
+	    /* Now that all 3D points are mapped, make sure this face isn't degenerate (this can
+	     * happen with singular trims) */
+	    if (tpnts[0] == tpnts[1] || tpnts[1] == tpnts[2] || tpnts[2] == tpnts[0]) {
+		/* degenerate */
+		triangle_cnt--;
+		tris_degen.insert(t);
 	    }
 	}
     }
@@ -2790,6 +2800,10 @@ ON_Brep_CDT_Mesh(
 	triangle_cnt += tris.size();
 	for (size_t i = 0; i < tris.size(); i++) {
 	    p2t::Triangle *t = tris[i];
+	    if (tris_degen.size() > 0 && tris_degen.find(t) != tris_degen.end()) {
+		triangle_cnt--;
+		continue;
+	    }
 	    for (size_t j = 0; j < 3; j++) {
 		p2t::Point *p = t->GetPoint(j);
 		ON_3dPoint *op = (*pointmap)[p];
