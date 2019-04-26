@@ -2866,10 +2866,11 @@ ON_Brep_CDT_Mesh(
 		continue;
 	    }
 
-	    /* If we have a face with 3 co-linear points, we need to locally
-	     * rework the triangles.  (This can arise when the 2D triangulation
-	     * has a non-degenerate triangle that maps degenerately into 3D). For
-	     * now, just build up the set of degenerate triangles. */
+	    /* If we have a face with 3 co-linear points, it's not trivially
+	     * degenerate and we need to locally rework the triangles.  (This
+	     * can arise when the 2D triangulation has a non-degenerate
+	     * triangle that maps degenerately into 3D). For now, just build up
+	     * the set of degenerate triangles. */
 	    ON_Line l(*tpnts[0], *tpnts[2]);
 	    if (l.DistanceTo(*tpnts[1]) < s_cdt->dist) {
 		//triangle_cnt--;
@@ -2894,7 +2895,22 @@ ON_Brep_CDT_Mesh(
      * the point set and face mappings again, but as a first cut don't worry
      * about it. */
     if (tris_zero_3D_area.size()) {
+	std::multimap<std::pair<int,int>, p2t::Triangle *> edge_to_tris;
+	std::map<p2t::Triangle*, std::pair<int,int>> tris_ledge;
 	bu_log("Found %zd near-zero area triangles\n", tris_zero_3D_area.size());
+	// Step 0: build an edge to tri multimap.  We don't need this unless
+	// we've reached this point in the logic, so only pay the cost of
+	// build the map if we really need it.
+	//
+	// Step 1: For each zero area triangle, find the longest edge.
+	//
+	// Step 2: For each triangle, use the maps to look up the mating
+	// triangle along the longest edge.  If that triangle is also
+	// degenerate, add them to tris_degen and continue.
+	//
+	// Step 3: If the mating triangle is not degenerate, add both to
+	// the "replaced" set and construct the new triangles.  The new
+	// triangles will be processed after the main face iteration.
     }
 
     // Know how many faces and points now - initialize BoT container.
@@ -2936,6 +2952,9 @@ ON_Brep_CDT_Mesh(
 	    p2t::Triangle *t = tris[i];
 	    if (tris_degen.size() > 0 && tris_degen.find(t) != tris_degen.end()) {
 		triangle_cnt--;
+		continue;
+	    }
+	    if (tris_zero_3D_area.size() > 0 && tris_zero_3D_area.find(t) != tris_zero_3D_area.end()) {
 		continue;
 	    }
 	    for (size_t j = 0; j < 3; j++) {
