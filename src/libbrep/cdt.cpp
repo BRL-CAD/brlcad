@@ -54,6 +54,51 @@
 #include "brep/pullback.h"
 #include "brep/util.h"
 
+
+typedef std::pair<ON_3dPoint *, ON_3dPoint *> Edge;
+typedef std::map< Edge, std::set<p2t::Triangle*> > EdgeToTri;
+
+static Edge
+mk_edge(ON_3dPoint *pt_A, ON_3dPoint *pt_B)
+{
+    if (pt_A <= pt_B) {
+	return std::make_pair(pt_A, pt_B);
+    } else {
+	return std::make_pair(pt_B, pt_A);
+    }
+}
+
+static void
+add_tri_edges(EdgeToTri *e2f, p2t::Triangle *t,
+    std::map<p2t::Point *, ON_3dPoint *> *pointmap)
+{
+    ON_3dPoint *pt_A, *pt_B, *pt_C;
+    
+    p2t::Point *p2_A = t->GetPoint(0);
+    p2t::Point *p2_B = t->GetPoint(1);
+    p2t::Point *p2_C = t->GetPoint(2);
+    pt_A = (*pointmap)[p2_A];
+    pt_B = (*pointmap)[p2_B];
+    pt_C = (*pointmap)[p2_C];
+    (*e2f)[(mk_edge(pt_A, pt_B))].insert(t);
+    (*e2f)[(mk_edge(pt_B, pt_C))].insert(t);
+    (*e2f)[(mk_edge(pt_C, pt_A))].insert(t);
+}
+
+static p2t::Triangle *
+get_matching_face(Edge e, p2t::Triangle *tri, EdgeToTri *e2f)
+{
+    EdgeToTri::iterator m_it = e2f->find(e);
+    std::set<p2t::Triangle*> &f = (*m_it).second;
+    std::set<p2t::Triangle*>::iterator f_it;
+    for (f_it = f.begin(); f_it != f.end(); f_it++) {
+	if (*f_it != tri) {
+	    return *f_it;
+	}
+    }
+    return NULL;
+}
+
 #define BREP_CDT_FAILED -3
 #define BREP_CDT_NON_SOLID -2
 #define BREP_CDT_UNTESSELLATED -1
@@ -2782,8 +2827,11 @@ ON_Brep_CDT_Mesh(
     std::set<p2t::Triangle*> tris_degen;
     std::set<p2t::Triangle*> tris_zero_3D_area;
     size_t triangle_cnt = 0;
+    EdgeToTri *e2f = NULL;
+    std::map<p2t::Point *, ON_3dPoint *> p2to3map;
 
     for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
+	int have_zero_area_faces = 0;
 	ON_BrepFace &face = s_cdt->brep->m_F[face_index];
 	p2t::CDT *cdt = s_cdt->p2t_faces[face_index];
 	std::map<p2t::Point *, ON_3dPoint *> *pointmap = s_cdt->p2t_maps[face_index];
@@ -2852,6 +2900,7 @@ ON_Brep_CDT_Mesh(
 			}
 		    }
 		    tpnts[j] = op;
+		    p2to3map[p] = op;
 		} else {
 		    bu_log("Face %d: p2t face without proper point info...\n", face.m_face_index);
 		}
@@ -2875,7 +2924,19 @@ ON_Brep_CDT_Mesh(
 	    if (l.DistanceTo(*tpnts[1]) < s_cdt->dist) {
 		//triangle_cnt--;
 		//tris_zero_3D_area.insert(t);
+		have_zero_area_faces = 1;
 		continue;
+	    }
+	}
+	if (have_zero_area_faces) {
+	    if (!e2f) {
+		// Build an edge to tri map.  We don't need this unless
+		// we've reached this point in the logic, so only pay the cost of
+		// build the map if we really need it.
+		e2f = new EdgeToTri;
+	    }
+	    for (size_t i = 0; i < tris.size(); i++) {
+		add_tri_edges(e2f, tris[i], pointmap);
 	    }
 	}
     }
@@ -2895,19 +2956,47 @@ ON_Brep_CDT_Mesh(
      * the point set and face mappings again, but as a first cut don't worry
      * about it. */
     if (tris_zero_3D_area.size()) {
-	std::multimap<std::pair<int,int>, p2t::Triangle *> edge_to_tris;
-	std::map<p2t::Triangle*, std::pair<int,int>> tris_ledge;
 	bu_log("Found %zd near-zero area triangles\n", tris_zero_3D_area.size());
-	// Step 0: build an edge to tri multimap.  We don't need this unless
-	// we've reached this point in the logic, so only pay the cost of
-	// build the map if we really need it.
-	//
+	std::map<p2t::Triangle *, Edge> lemap;
+	std::map<p2t::Triangle *, ON_3dPoint *> midmap;
 	// Step 1: For each zero area triangle, find the longest edge.
-	//
+	std::set<p2t::Triangle*>::iterator tz_it;
+	for (tz_it = tris_zero_3D_area.begin(); tz_it != tris_zero_3D_area.end(); tz_it++) {
+	    p2t::Triangle *t = *tz_it;
+	    p2t::Point *p2_A = t->GetPoint(0);
+	    p2t::Point *p2_B = t->GetPoint(1);
+	    p2t::Point *p2_C = t->GetPoint(2);
+	    ON_3dPoint *pA = p2to3map[p2_A];
+	    ON_3dPoint *pB = p2to3map[p2_B];
+	    ON_3dPoint *pC = p2to3map[p2_C];
+	    fastf_t d1 = pA->DistanceTo(*pB);
+	    fastf_t d2 = pB->DistanceTo(*pC);
+	    fastf_t d3 = pC->DistanceTo(*pA);
+	    if (d1 > d2 && d1 > d3) {
+		lemap[t] = mk_edge(pA, pB);
+		midmap[t] = pC;
+	    }
+	    if (d2 > d1 && d2 > d3) {
+		lemap[t] = mk_edge(pB, pC);
+		midmap[t] = pA;
+	    }
+	    if (d3 > d1 && d3 > d2) {
+		lemap[t] = mk_edge(pC, pA);
+		midmap[t] = pB;
+	    }
+	}
+
 	// Step 2: For each triangle, use the maps to look up the mating
 	// triangle along the longest edge.  If that triangle is also
 	// degenerate, add them to tris_degen and continue.
-	//
+	for (tz_it = tris_zero_3D_area.begin(); tz_it != tris_zero_3D_area.end(); tz_it++) {
+	    p2t::Triangle *t = *tz_it;
+	    Edge le = lemap[t];
+	    p2t::Triangle *m = get_matching_face(le, t, e2f);
+	    if (m) {
+		bu_log("found matching triangle\n");
+	    }
+	}
 	// Step 3: If the mating triangle is not degenerate, add both to
 	// the "replaced" set and construct the new triangles.  The new
 	// triangles will be processed after the main face iteration.
