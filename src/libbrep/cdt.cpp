@@ -2484,10 +2484,10 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, std::vector<int> *faces)
 	    std::set<int> problem_pnts;
 	    std::set<int>::iterator pp_it;
 	    for (int i = 0; i < se.degenerate.count; i++) {
-		bu_log("dface %d: %d %d %d :  %f/%f/%f->%f/%f/%f->%f/%f/%f \n", se.degenerate.faces[i], valid_faces[i*3], valid_faces[i*3+1], valid_faces[i*3+2],
-		       	valid_vertices[valid_faces[i*3]*3], valid_vertices[valid_faces[i*3]*3]+1,valid_vertices[valid_faces[i*3]*3]+2,
-		       	valid_vertices[valid_faces[i*3+1]*3], valid_vertices[valid_faces[i*3+1]*3]+1,valid_vertices[valid_faces[i*3+1]*3]+2,
-		       	valid_vertices[valid_faces[i*3+2]*3], valid_vertices[valid_faces[i*3+2]*3]+1,valid_vertices[valid_faces[i*3+2]*3]+2);
+		bu_log("dface %d: %d %d %d :  %f %f %f->%f %f %f->%f %f %f \n", se.degenerate.faces[i], valid_faces[i*3], valid_faces[i*3+1], valid_faces[i*3+2],
+		       	valid_vertices[valid_faces[i*3]*3], valid_vertices[valid_faces[i*3]*3+1],valid_vertices[valid_faces[i*3]*3+2],
+		       	valid_vertices[valid_faces[i*3+1]*3], valid_vertices[valid_faces[i*3+1]*3+1],valid_vertices[valid_faces[i*3+1]*3+2],
+		       	valid_vertices[valid_faces[i*3+2]*3], valid_vertices[valid_faces[i*3+2]*3+1],valid_vertices[valid_faces[i*3+2]*3+2]);
 		problem_pnts.insert(valid_faces[i*3]);
 		problem_pnts.insert(valid_faces[i*3+1]);
 		problem_pnts.insert(valid_faces[i*3+2]);
