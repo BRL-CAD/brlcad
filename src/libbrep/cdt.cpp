@@ -1451,7 +1451,7 @@ get_loop_sample_points(
 	if (trim->m_type == ON_BrepTrim::singular) {
 	    BrepTrimPoint btp;
 	    const ON_BrepVertex& v1 = face.Brep()->m_V[trim->m_vi[0]];
-	    ON_3dPoint *p3d = new ON_3dPoint(v1.Point());
+	    ON_3dPoint *p3d = (*s_cdt->vert_pnts)[v1.m_vertex_index];
 	    //ON_2dPoint p2d_begin = trim->PointAt(trim->Domain().m_t[0]);
 	    //ON_2dPoint p2d_end = trim->PointAt(trim->Domain().m_t[1]);
 	    double delta =  trim->Domain().Length() / 10.0;
@@ -2484,13 +2484,14 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, std::vector<int> *faces)
 	    std::set<int> problem_pnts;
 	    std::set<int>::iterator pp_it;
 	    for (int i = 0; i < se.degenerate.count; i++) {
-		bu_log("dface %d: %d %d %d :  %f %f %f->%f %f %f->%f %f %f \n", se.degenerate.faces[i], valid_faces[i*3], valid_faces[i*3+1], valid_faces[i*3+2],
-		       	valid_vertices[valid_faces[i*3]*3], valid_vertices[valid_faces[i*3]*3+1],valid_vertices[valid_faces[i*3]*3+2],
-		       	valid_vertices[valid_faces[i*3+1]*3], valid_vertices[valid_faces[i*3+1]*3+1],valid_vertices[valid_faces[i*3+1]*3+2],
-		       	valid_vertices[valid_faces[i*3+2]*3], valid_vertices[valid_faces[i*3+2]*3+1],valid_vertices[valid_faces[i*3+2]*3+2]);
-		problem_pnts.insert(valid_faces[i*3]);
-		problem_pnts.insert(valid_faces[i*3+1]);
-		problem_pnts.insert(valid_faces[i*3+2]);
+		int face = se.degenerate.faces[i];
+		bu_log("dface %d: %d %d %d :  %f %f %f->%f %f %f->%f %f %f \n", face, valid_faces[face*3], valid_faces[face*3+1], valid_faces[face*3+2],
+		       	valid_vertices[valid_faces[face*3]*3], valid_vertices[valid_faces[face*3]*3+1],valid_vertices[valid_faces[face*3]*3+2],
+		       	valid_vertices[valid_faces[face*3+1]*3], valid_vertices[valid_faces[face*3+1]*3+1],valid_vertices[valid_faces[face*3+1]*3+2],
+		       	valid_vertices[valid_faces[face*3+2]*3], valid_vertices[valid_faces[face*3+2]*3+1],valid_vertices[valid_faces[face*3+2]*3+2]);
+		problem_pnts.insert(valid_faces[face*3]);
+		problem_pnts.insert(valid_faces[face*3+1]);
+		problem_pnts.insert(valid_faces[face*3+2]);
 
 		// TODO - need to preserve the vfpnts array in the state so we can decode indices to ON_3dPoint pointers, since those are the
 		// keys with the prep data
