@@ -95,7 +95,7 @@ bg_trimesh_face_gather(int face_idx, void *data)
 {
     if (data && face_idx >= 0) {
 	struct bg_trimesh_faces *faces = (struct bg_trimesh_faces *)data;
-	faces->faces[faces->count++] = face_idx * 3;
+	faces->faces[faces->count++] = face_idx;
     }
     return 1;
 }
