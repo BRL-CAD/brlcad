@@ -2882,9 +2882,17 @@ ON_Brep_CDT_Mesh(
     /* For the zero-area triangles, we need to take each degenerate triangle
      * (1) and find the p2t triangle that shares the longest edge of the
      * degenerate triangle (i.e. the edge that uses the two furthest endpoints
-     * of the colinear polyline) (2).  Remove both triangles from the
-     * triangulation, and add two new triangles using the three points of (2)
-     * and the midpoint of (1). */
+     * of the colinear polyline) (2).
+     *
+     * If only one of the matching triangles is degenerate, remove both
+     * triangles from the triangulation and add two new triangles using the
+     * three points of (2) and the midpoint of (1).
+     *
+     * If BOTH triangles along the longest edge are degenerate, just remove
+     * both of them without introducing any new triangles. This will result in
+     * an unused point in the triangulation - if we really care we can rebuild
+     * the point set and face mappings again, but as a first cut don't worry
+     * about it. */
     if (tris_zero_3D_area.size()) {
 	bu_log("Found %zd near-zero area triangles\n", tris_zero_3D_area.size());
     }
