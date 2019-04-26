@@ -2483,6 +2483,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, std::vector<int> *faces)
 	if (se.degenerate.count > 0) {
 	    std::set<int> problem_pnts;
 	    std::set<int>::iterator pp_it;
+	    bu_log("%d degenerate faces\n", se.degenerate.count);
 	    for (int i = 0; i < se.degenerate.count; i++) {
 		int face = se.degenerate.faces[i];
 		bu_log("dface %d: %d %d %d :  %f %f %f->%f %f %f->%f %f %f \n", face, valid_faces[face*3], valid_faces[face*3+1], valid_faces[face*3+2],
@@ -2492,9 +2493,6 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, std::vector<int> *faces)
 		problem_pnts.insert(valid_faces[face*3]);
 		problem_pnts.insert(valid_faces[face*3+1]);
 		problem_pnts.insert(valid_faces[face*3+2]);
-
-		// TODO - need to preserve the vfpnts array in the state so we can decode indices to ON_3dPoint pointers, since those are the
-		// keys with the prep data
 	    }
 	    for (pp_it = problem_pnts.begin(); pp_it != problem_pnts.end(); pp_it++) {
 		int pind = (*pp_it);
@@ -2518,7 +2516,49 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, std::vector<int> *faces)
 	    bu_log("unmatched edges???\n");
 	}
 	if (se.misoriented.count > 0) {
-	    bu_log("misoriented edges???\n");
+	    std::set<int> problem_pnts;
+	    std::set<int>::iterator pp_it;
+
+	    bu_log("%d misoriented edges\n", se.misoriented.count);
+	    for (int i = 0; i < se.misoriented.count; i++) {
+		int v1 = se.misoriented.edges[i*2];
+		int v2 = se.misoriented.edges[i*2+1];
+		bu_log("%d->%d: %f %f %f->%f %f %f\n", v1, v2,
+			valid_vertices[v1*3], valid_vertices[v1*3+1], valid_vertices[v1*3+2],
+			valid_vertices[v2*3], valid_vertices[v2*3+1], valid_vertices[v2*3+2]
+			);
+		for (int j = 0; j < valid_fcnt; j++) {
+		    std::set<std::pair<int,int>> fedges;
+		    fedges.insert(std::pair<int,int>(valid_faces[j*3],valid_faces[j*3+1]));
+		    fedges.insert(std::pair<int,int>(valid_faces[j*3+1],valid_faces[j*3+2]));
+		    fedges.insert(std::pair<int,int>(valid_faces[j*3+2],valid_faces[j*3]));
+		    int has_edge = (fedges.find(std::pair<int,int>(v1,v2)) != fedges.end()) ? 1 : 0;
+		    if (has_edge) {
+			int face = j;
+			bu_log("eface %d: %d %d %d :  %f %f %f->%f %f %f->%f %f %f \n", face, valid_faces[face*3], valid_faces[face*3+1], valid_faces[face*3+2],
+				valid_vertices[valid_faces[face*3]*3], valid_vertices[valid_faces[face*3]*3+1],valid_vertices[valid_faces[face*3]*3+2],
+				valid_vertices[valid_faces[face*3+1]*3], valid_vertices[valid_faces[face*3+1]*3+1],valid_vertices[valid_faces[face*3+1]*3+2],
+				valid_vertices[valid_faces[face*3+2]*3], valid_vertices[valid_faces[face*3+2]*3+1],valid_vertices[valid_faces[face*3+2]*3+2]);
+			problem_pnts.insert(valid_faces[j*3]);
+			problem_pnts.insert(valid_faces[j*3+1]);
+			problem_pnts.insert(valid_faces[j*3+2]);
+		    }
+		}
+	    }
+	    for (pp_it = problem_pnts.begin(); pp_it != problem_pnts.end(); pp_it++) {
+		int pind = (*pp_it);
+		ON_3dPoint *p = (*s_cdt->vert_to_on)[pind];
+		if (!p) {
+		    bu_log("unmapped point??? %d\n", pind);
+		} else {
+		    struct cdt_audit_info *paudit = s_cdt->pnt_audit_info[p];
+		    if (!paudit) {
+			bu_log("point with no audit info??? %d\n", pind);
+		    } else {
+			bu_log("point %d: Face(%d) Vert(%d) Trim(%d) Edge(%d) UV(%f,%f)\n", pind, paudit->face_index, paudit->vert_index, paudit->trim_index, paudit->edge_index, paudit->surf_uv.x, paudit->surf_uv.y);
+		    }
+		}
+	    }
 	}
 
     }
