@@ -2821,7 +2821,8 @@ ON_Brep_CDT_Mesh(
 		tris_degen.insert(t);
 		continue;
 	    }
-	    
+
+#if 0
 	    /* If we have a face with 3 co-linear points where those points are all from an edge, also reject */
 	    ON_Line l(*tpnts[0], *tpnts[2]);
 	    if (l.DistanceTo(*tpnts[1]) < s_cdt->dist) {
@@ -2834,6 +2835,7 @@ ON_Brep_CDT_Mesh(
 		    continue;
 		}
 	    }
+#endif
 	}
     }
 
