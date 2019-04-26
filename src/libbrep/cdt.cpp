@@ -2511,6 +2511,16 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, std::vector<int> *faces)
 		}
 	    }
 	}
+	if (se.excess.count > 0) {
+	    bu_log("extra edges???\n");
+	}
+	if (se.unmatched.count > 0) {
+	    bu_log("unmatched edges???\n");
+	}
+	if (se.misoriented.count > 0) {
+	    bu_log("misoriented edges???\n");
+	}
+
     }
 
     bu_free(valid_faces, "faces");
