@@ -327,7 +327,7 @@ getEdgePoints(
     }
 
     if (t1_dosplit || t2_dosplit) {
-	ON_3dPoint *nsptp;
+	ON_3dPoint *nsptp = NULL;
 	if (t1_dosplit && t2_dosplit) {
 	    ON_3dPoint nspt = (trim1_seam_3d + trim2_seam_3d)/2;
 	    nsptp = new ON_3dPoint(nspt);
