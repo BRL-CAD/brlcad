@@ -84,7 +84,7 @@ BG_EXPORT extern int bg_trimesh_manifold_closed(int vcnt, int fcnt, fastf_t *v, 
 BG_EXPORT extern int bg_trimesh_oriented(int vcnt, int fcnt, fastf_t *v, int *f);
 
 /**
- * Check if a mesh is toplogically solid. True if the mesh is closed,
+ * Check if a mesh is topologically solid. True if the mesh is closed,
  * manifold, and oriented.
  */
 BG_EXPORT extern int bg_trimesh_solid(int vcnt, int fcnt, fastf_t *v, int *f, int **bedges);
