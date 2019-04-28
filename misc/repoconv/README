@@ -49,104 +49,57 @@ CVS -> SVN sync:
 
 The cvs repo stops at r29886, but the CVS conversion and the SVN repo
 at that revision differ (apparently in line endings.)  To resolve this,
-we generate a single revision dump file from the dercs repo:
-
-svnadmin dump -r29886 repo_dercs > brlcad_r29886.dump
-
-Per svnadmin's docs, this will create an r29886 commit in the dump
-that describes every path present in the SVN tree as of that commit.  In
-principle (to be tested) this should mean we can look for any missing blobs
-not present in the git blob set and identify paths that need to be synced
-up before we can proceed.  A specialized version of the svnfexport binary
-generates this specific file:
-
-./cvssvnsync brlcad_r29886.dump authormap brlcad_cvs_git_heads_sha1.txt brlcad_cvs_git_all_blob_sha1.txt
-
-It will generate a r29886_sync.fi file which should be applied to the git repo
-before starting to append actual SVN only commits.
-
-cd brlcad_cvs_git-<date>
-cat ../r29886_sync.fi | git fast-import
-git reset --hard
-
-Having made that update, we now need to update the sha1 files:
-
-git show-ref --heads --tags > ../brlcad_cvs_git_heads_sha1.txt
-git rev-list --objects --all | git cat-file --batch-check='%(objectname) %(objecttype) %(rest)' | grep '^[^ ]* blob' | cut -d" " -f1,3- > ../brlcad_cvs_git_all_blob_sha1.txt
-
-Make a null object in the database to be sure we have it:
-
-(There may be a better way to do this...)
-git hash-object -w --stdin < /dev/null
-cat "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 src/other/tkhtml3/AUTHORS" >> ../brlcad_cvs_git_all_blob_sha1.txt
-
+we have created "syncing" fast import files that update the git contents
+of the necessary branches (so far, master and one of the rel-5 branches)
+to match those of subversion.  The svnfexport tool now applies those as
+the first step of a conversion when the commits start at 29886.
 
 ############################
 
-There are a number of branch adds/deletes which will require special attention:
+There are a number of difficult revisions in svn that have also required
+manual fast-import files.
 
-Processing revision 31020
-Delete branch instruction: refs/heads/STABLE - deferring.
-Processing revision 31039
-Adding branch refs/heads/STABLE from rel-7-12-2
-Processing revision 32017
-Adding branch refs/heads/pre-7-12-6 from refs/heads/STABLE
-Processing revision 32313
-Delete branch instruction: refs/heads/STABLE - deferring.
-Processing revision 32314
-Adding branch refs/heads/STABLE from rel-7-12-6
-Processing revision 36842
-Delete branch instruction: refs/heads/STABLE - deferring.
-Processing revision 36843
-Adding branch refs/heads/STABLE from refs/heads/master
+It's proving simpler in cases where we're seeing svn and git differences to
+create fi files manually with the following procedure:
 
+Take the svn checkout and run the sync_commit.sh script.  Take the failed .fi
+file (if present) or create the header to add to the generated .fi list.  Test
+the file on the cvs_git_working directory, and use git hash-object to adjust
+any entries that crash the fast import.  Once a working commit is obtained,
+place it at custom/<rev_num>.fi and restart svnfexport.  Tweak file until any
+diff issues are resolved, then commit as binary:
 
-There appear to be some specific instructions in git's fast-import for deleting all contents
-of a branch and starting over.  To do that rebuilding, it might be simpler to write some
-special case fi parsers to operate on specific revision dumps to get the full branch file
-sets for those commits - the main svnfexport exectable isn't really tracking that directly.
+svn add custom/<rev_num>.fi
+svn propset svn:mime-type application/octet-stream custom/<rev_num>.fi
+svn commit
 
-Also needing special awareness will be the dmtogl branches:
+So far:
 
-Processing revision 36185
-Adding branch refs/heads/dmtogl-branch from refs/heads/master
-Processing revision 36472
-Adding branch refs/heads/dmtogl from refs/heads/dmtogl-branch
-Processing revision 36472
-Delete branch instruction: refs/heads/dmtogl-branch - deferring.
-Processing revision 36632
-Delete branch instruction: refs/heads/dmtogl - deferring.
-Processing revision 36633
-Adding branch refs/heads/dmtogl from refs/heads/master
-Processing revision 39464
-Delete branch instruction: refs/heads/dmtogl - deferring.
-Processing revision 39465
-Adding branch refs/heads/dmtogl from refs/heads/master
+29982 - set svn:executable on all scripts (particularly so ./autogen.sh will work on checkout)
+31039 - Adding branch refs/heads/STABLE from rel-7-12-2
+32007 - Update misc/nsis in STABLE to rel-7-12-4
+32009 - Update misc/win32-msvc* in STABLE to rel-7-12-4
+32046 - Start merging the primitives reorg into pre-7-12-6
+32314 - Adding branch refs/heads/STABLE from rel-7-12-6
+33115 - big ultra mega merge from r32275 to r33114 (HEAD on trunk) in preparation for the pending 7.14.0 source release
+36053 - And so begins preparations for the mighty "Release 8"...
+36631 - Hrm, merging updates won't be so simple here.  Take the incremental approach.
+36633 - Recreate the dmtogl branch with latest trunk as a start
+36843 - Adding branch refs/heads/STABLE from refs/heads/master
+36941 - Merge back in tkimg
+37277 - Update incrTcl to itcl-ng cvs version as of January 15, 2010
 
-That works out to needing the following commits:
+It's looking like there may be a fair number of these, so will probably
+need to store them somewhere other than the svn repo.
 
-Need to make a deleteall + full update commit to make STABLE match rel-7-12-2
-svnadmin dump -r31039 repo_dercs > brlcad_r31039.dump
-
-Need to make a deleteall + full update commit to make STABLE match rel-7-12-6
-svnadmin dump -r32314 repo_dercs > brlcad_r32314.dump
-
-Need to make a deleteall + full update commit to make dmtogl match trunk
-svnadmin dump -r36633 repo_dercs > brlcad_r36633.dump
-
-Need to make a deleteall + full update commit to make STABLE match rel-7-12-6
-svnadmin dump -r36843 repo_dercs > brlcad_r36843.dump
-
-Need to make a deleteall + full update commit to make dmtogl match trunk
-svnadmin dump -r39465 repo_dercs > brlcad_r39465.dump
-
-
+Expected:
+39465 - Adding branch refs/heads/dmtogl from refs/heads/master
 
 ############################
 
 svnfexport:
 
-./svnfexport brlcad_full_dercs.dump authormap brlcad_cvs_git_heads_sha1.txt brlcad_cvs_git_all_blob_sha1.txt
+./svnfexport brlcad_full_dercs.dump authormap
 
 
 
@@ -174,4 +127,25 @@ To make this easier, add the following alias to your .gitconfig file:
 
 With that alias in place, the command "git svnrev 29886" will check out the git
 commit with a not matching the pattern "svn:revision:29886"
+
+
+##############################
+
+In svn, we can svn log in a particular branch checkout to see the history
+specific to that branch, but this is apparently a challenge in git.  The
+following logic added to your .gitconfig defines a logb command that will list
+commits unique to either the currently checked out branch (if you don't supply
+a branch name) or the specified branch if you specify one. (This packages up
+the tricks from https://stackoverflow.com/q/14848274 and
+https://stackoverflow.com/a/12142066)
+
+        logb = "!f() { \
+                if [ x$1 != x ] ; then \
+                   git log $1 --not $(git for-each-ref --format='%(refname)' refs/heads/ | grep -v \"refs/heads/$1\"); \
+                else \
+                   CURRBRANCH=\"$(git rev-parse --abbrev-ref HEAD)\"; \
+                   git log $CURRBRANCH --not $(git for-each-ref --format='%(refname)' refs/heads/ | grep -v \"refs/heads/$CURRBRANCH\"); \
+                fi; \
+                }; f"
+
 
