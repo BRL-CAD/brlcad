@@ -2849,6 +2849,7 @@ ON_Brep_CDT_Mesh(
 	for (size_t i = 0; i < tris.size(); i++) {
 	    p2t::Triangle *t = tris[i];
 	    tri_brep_face[t] = face_index;
+	    ON_3dPoint *tpnts[3] = {NULL, NULL, NULL};
 	    for (size_t j = 0; j < 3; j++) {
 		p2t::Point *p = t->GetPoint(j);
 		if (p) {
@@ -2907,14 +2908,23 @@ ON_Brep_CDT_Mesh(
 			    on_pnt_to_bot_norm[op] = vfnormals.size() - 1;
 			}
 		    }
+		    tpnts[j] = op;
 		} else {
 		    bu_log("Face %d: p2t face without proper point info...\n", face.m_face_index);
 		}
 	    }
-	}
 
-	for (size_t i = 0; i < tris.size(); i++) {
+	    /* Now that all 3D points are mapped, make sure this face isn't
+	     * trivially degenerate (this can happen with singular trims) */
+	    if (tpnts[0] == tpnts[1] || tpnts[1] == tpnts[2] || tpnts[2] == tpnts[0]) {
+		/* degenerate */
+		triangle_cnt--;
+		tris_degen.insert(t);
+		continue;
+	    }
+
 	    add_tri_edges(e2f, tris[i], pointmap);
+
 	}
 
     }
@@ -2925,20 +2935,16 @@ ON_Brep_CDT_Mesh(
 	std::vector<p2t::Triangle*> tris = cdt->GetTriangles();
 	for (size_t i = 0; i < tris.size(); i++) {
 	    p2t::Triangle *t = tris[i];
+
+	    if (tris_degen.find(t) != tris_degen.end()) {
+		continue;
+	    }
+
 	    ON_3dPoint *tpnts[3] = {NULL, NULL, NULL};
 	    for (size_t j = 0; j < 3; j++) {
 		p2t::Point *p = t->GetPoint(j);
 		ON_3dPoint *op = (*pointmap)[p];
 		tpnts[j] = op;
-	    }
-
-	    /* Now that all 3D points are mapped, make sure this face isn't
-	     * trivially degenerate (this can happen with singular trims) */
-	    if (tpnts[0] == tpnts[1] || tpnts[1] == tpnts[2] || tpnts[2] == tpnts[0]) {
-		/* degenerate */
-		triangle_cnt--;
-		tris_degen.insert(t);
-		continue;
 	    }
 
 	    /* If we have a face with 3 shared or co-linear points, it's not
