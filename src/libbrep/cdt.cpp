@@ -88,21 +88,20 @@ add_tri_edges(EdgeToTri *e2f, p2t::Triangle *t,
 // TODO - can have more than 2 faces on an edge. (Probably degenerate faces make this possible...)
 // Need to sort this out
 static p2t::Triangle *
-get_matching_face(Edge e, p2t::Triangle *tri, EdgeToTri *e2f)
+get_matching_face(Edge e, EdgeToTri *e2f)
 {
     EdgeToTri::iterator m_it = e2f->find(e);
     std::set<p2t::Triangle*> &f = (*m_it).second;
     std::set<p2t::Triangle*>::iterator f_it;
 
-    if (f.size() > 2) {
-	bu_log("edge face count %zd\n", f.size());
+    if (f.size() % 2 != 0) {
+	if (f.size() > 1) {
+	    bu_log("Weird edge face count %zd\n", f.size());
+	}
+	f_it = f.begin();
+	return *f_it;
     }
 
-    for (f_it = f.begin(); f_it != f.end(); f_it++) {
-	if (*f_it != tri) {
-	    return *f_it;
-	}
-    }
     return NULL;
 }
 
@@ -2953,25 +2952,39 @@ ON_Brep_CDT_Mesh(
 	     * that maps degenerately into 3D). For now, just build up the set
 	     * of degenerate triangles. */
 	    ON_Line l(*tpnts[0], *tpnts[2]);
+	    int is_zero_area = 0;
 	    if (l.Length() < s_cdt->dist) {
 		ON_Line l2(*tpnts[0], *tpnts[1]);
 		if (l2.Length() < s_cdt->dist) {
 		    bu_log("completely degenerate triangle\n");
 		    triangle_cnt--;
 		    tris_degen.insert(t);
+		    continue;
 		} else {
 		    if (l2.DistanceTo(*tpnts[2]) < s_cdt->dist) {
-			triangle_cnt--;
-			tris_zero_3D_area.insert(t);
-			continue;
+			is_zero_area = 1;
 		    }
 		}
 	    } else {
 		if (l.DistanceTo(*tpnts[1]) < s_cdt->dist) {
-		    triangle_cnt--;
-		    tris_zero_3D_area.insert(t);
-		    continue;
+		    is_zero_area = 1;
 		}
+	    }
+	    if (is_zero_area) {
+		// Remove this face from the edge to face maps
+		ON_3dPoint *pt_A, *pt_B, *pt_C;
+		p2t::Point *p2_A = t->GetPoint(0);
+		p2t::Point *p2_B = t->GetPoint(1);
+		p2t::Point *p2_C = t->GetPoint(2);
+		pt_A = (*pointmap)[p2_A];
+		pt_B = (*pointmap)[p2_B];
+		pt_C = (*pointmap)[p2_C];
+		(*e2f)[(mk_edge(pt_A, pt_B))].erase(t);
+		(*e2f)[(mk_edge(pt_B, pt_C))].erase(t);
+		(*e2f)[(mk_edge(pt_C, pt_A))].erase(t);
+		triangle_cnt--;
+		tris_degen.insert(t);
+		tris_zero_3D_area.insert(t);
 	    }
 	}
     }
@@ -2991,7 +3004,7 @@ ON_Brep_CDT_Mesh(
      * the point set and face mappings again, but as a first cut don't worry
      * about it. */
     if (tris_zero_3D_area.size()) {
-	bu_log("Found %zd near-zero area triangles\n", tris_zero_3D_area.size());
+	//bu_log("Found %zd near-zero area triangles\n", tris_zero_3D_area.size());
 	std::map<p2t::Triangle *, Edge> lemap;
 	std::map<p2t::Triangle *, ON_3dPoint *> midmap;
 	// Step 1: For each zero area triangle, find the longest edge.
@@ -3029,7 +3042,7 @@ ON_Brep_CDT_Mesh(
 	for (tz_it = tris_zero_3D_area.begin(); tz_it != tris_zero_3D_area.end(); tz_it++) {
 	    p2t::Triangle *t = *tz_it;
 	    Edge le = lemap[t];
-	    p2t::Triangle *m = get_matching_face(le, t, e2f);
+	    p2t::Triangle *m = get_matching_face(le, e2f);
 	    if (m) {
 		bu_log("found matching triangle\n");
 	    }
