@@ -197,7 +197,7 @@ CDT_Tol_Set(struct brep_cdt_tol *cdt, double dist, fastf_t md, double t_abs, dou
     double rel = 0.0;
     if (t_rel > 0.0 + ON_ZERO_TOLERANCE) {
 	rel = t_rel * dist;
-	if (max_dist < rel * 10.0) {
+	if (max_dist > rel * 10.0) {
 	    max_dist = rel * 10.0;
 	}
 	within_dist = rel < min_dist ? min_dist : rel;
