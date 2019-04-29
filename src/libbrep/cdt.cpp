@@ -2906,8 +2906,8 @@ ON_Brep_CDT_Mesh(
 		}
 	    }
 
-	    /* Now that all 3D points are mapped, make sure this face isn't degenerate (this can
-	     * happen with singular trims) */
+	    /* Now that all 3D points are mapped, make sure this face isn't
+	     * trivially degenerate (this can happen with singular trims) */
 	    if (tpnts[0] == tpnts[1] || tpnts[1] == tpnts[2] || tpnts[2] == tpnts[0]) {
 		/* degenerate */
 		triangle_cnt--;
@@ -2915,17 +2915,33 @@ ON_Brep_CDT_Mesh(
 		continue;
 	    }
 
-	    /* If we have a face with 3 co-linear points, it's not trivially
-	     * degenerate and we need to locally rework the triangles.  (This
-	     * can arise when the 2D triangulation has a non-degenerate
-	     * triangle that maps degenerately into 3D). For now, just build up
-	     * the set of degenerate triangles. */
+	    /* If we have a face with 3 shared or co-linear points, it's not
+	     * trivially degenerate and we need to do more work.  (This can
+	     * arise when the 2D triangulation has a non-degenerate triangle
+	     * that maps degenerately into 3D). For now, just build up the set
+	     * of degenerate triangles. */
 	    ON_Line l(*tpnts[0], *tpnts[2]);
-	    if (l.DistanceTo(*tpnts[1]) < s_cdt->dist) {
-		//triangle_cnt--;
-		//tris_zero_3D_area.insert(t);
-		have_zero_area_faces = 1;
-		continue;
+	    if (l.Length() < s_cdt->dist) {
+		ON_Line l2(*tpnts[0], *tpnts[1]);
+		if (l2.Length() < s_cdt->dist) {
+		    bu_log("completely degenerate triangle\n");
+		    triangle_cnt--;
+		    tris_degen.insert(t);
+		} else {
+		    if (l2.DistanceTo(*tpnts[2]) < s_cdt->dist) {
+			//triangle_cnt--;
+			//tris_zero_3D_area.insert(t);
+			have_zero_area_faces = 1;
+			continue;
+		    }
+		}
+	    } else {
+		if (l.DistanceTo(*tpnts[1]) < s_cdt->dist) {
+		    //triangle_cnt--;
+		    //tris_zero_3D_area.insert(t);
+		    have_zero_area_faces = 1;
+		    continue;
+		}
 	    }
 	}
 	if (have_zero_area_faces) {
