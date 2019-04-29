@@ -85,12 +85,19 @@ add_tri_edges(EdgeToTri *e2f, p2t::Triangle *t,
     (*e2f)[(mk_edge(pt_C, pt_A))].insert(t);
 }
 
+// TODO - can have more than 2 faces on an edge. (Probably degenerate faces make this possible...)
+// Need to sort this out
 static p2t::Triangle *
 get_matching_face(Edge e, p2t::Triangle *tri, EdgeToTri *e2f)
 {
     EdgeToTri::iterator m_it = e2f->find(e);
     std::set<p2t::Triangle*> &f = (*m_it).second;
     std::set<p2t::Triangle*>::iterator f_it;
+
+    if (f.size() > 2) {
+	bu_log("edge face count %zd\n", f.size());
+    }
+
     for (f_it = f.begin(); f_it != f.end(); f_it++) {
 	if (*f_it != tri) {
 	    return *f_it;
@@ -2826,12 +2833,11 @@ ON_Brep_CDT_Mesh(
     std::map<ON_3dPoint *, int> on_pnt_to_bot_norm;
     std::set<p2t::Triangle*> tris_degen;
     std::set<p2t::Triangle*> tris_zero_3D_area;
+    std::map<p2t::Triangle*, int> tri_brep_face;
     size_t triangle_cnt = 0;
-    EdgeToTri *e2f = NULL;
-    std::map<p2t::Point *, ON_3dPoint *> p2to3map;
+    EdgeToTri *e2f = new EdgeToTri;
 
     for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
-	int have_zero_area_faces = 0;
 	ON_BrepFace &face = s_cdt->brep->m_F[face_index];
 	p2t::CDT *cdt = s_cdt->p2t_faces[face_index];
 	std::map<p2t::Point *, ON_3dPoint *> *pointmap = s_cdt->p2t_maps[face_index];
@@ -2840,7 +2846,7 @@ ON_Brep_CDT_Mesh(
 	triangle_cnt += tris.size();
 	for (size_t i = 0; i < tris.size(); i++) {
 	    p2t::Triangle *t = tris[i];
-	    ON_3dPoint *tpnts[3] = {NULL, NULL, NULL};
+	    tri_brep_face[t] = face_index;
 	    for (size_t j = 0; j < 3; j++) {
 		p2t::Point *p = t->GetPoint(j);
 		if (p) {
@@ -2899,11 +2905,29 @@ ON_Brep_CDT_Mesh(
 			    on_pnt_to_bot_norm[op] = vfnormals.size() - 1;
 			}
 		    }
-		    tpnts[j] = op;
-		    p2to3map[p] = op;
 		} else {
 		    bu_log("Face %d: p2t face without proper point info...\n", face.m_face_index);
 		}
+	    }
+	}
+
+	for (size_t i = 0; i < tris.size(); i++) {
+	    add_tri_edges(e2f, tris[i], pointmap);
+	}
+
+    }
+
+    for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
+	p2t::CDT *cdt = s_cdt->p2t_faces[face_index];
+	std::map<p2t::Point *, ON_3dPoint *> *pointmap = s_cdt->p2t_maps[face_index];
+	std::vector<p2t::Triangle*> tris = cdt->GetTriangles();
+	for (size_t i = 0; i < tris.size(); i++) {
+	    p2t::Triangle *t = tris[i];
+	    ON_3dPoint *tpnts[3] = {NULL, NULL, NULL};
+	    for (size_t j = 0; j < 3; j++) {
+		p2t::Point *p = t->GetPoint(j);
+		ON_3dPoint *op = (*pointmap)[p];
+		tpnts[j] = op;
 	    }
 
 	    /* Now that all 3D points are mapped, make sure this face isn't
@@ -2929,30 +2953,17 @@ ON_Brep_CDT_Mesh(
 		    tris_degen.insert(t);
 		} else {
 		    if (l2.DistanceTo(*tpnts[2]) < s_cdt->dist) {
-			//triangle_cnt--;
-			//tris_zero_3D_area.insert(t);
-			have_zero_area_faces = 1;
+			triangle_cnt--;
+			tris_zero_3D_area.insert(t);
 			continue;
 		    }
 		}
 	    } else {
 		if (l.DistanceTo(*tpnts[1]) < s_cdt->dist) {
-		    //triangle_cnt--;
-		    //tris_zero_3D_area.insert(t);
-		    have_zero_area_faces = 1;
+		    triangle_cnt--;
+		    tris_zero_3D_area.insert(t);
 		    continue;
 		}
-	    }
-	}
-	if (have_zero_area_faces) {
-	    if (!e2f) {
-		// Build an edge to tri map.  We don't need this unless
-		// we've reached this point in the logic, so only pay the cost of
-		// build the map if we really need it.
-		e2f = new EdgeToTri;
-	    }
-	    for (size_t i = 0; i < tris.size(); i++) {
-		add_tri_edges(e2f, tris[i], pointmap);
 	    }
 	}
     }
@@ -2978,13 +2989,15 @@ ON_Brep_CDT_Mesh(
 	// Step 1: For each zero area triangle, find the longest edge.
 	std::set<p2t::Triangle*>::iterator tz_it;
 	for (tz_it = tris_zero_3D_area.begin(); tz_it != tris_zero_3D_area.end(); tz_it++) {
+
 	    p2t::Triangle *t = *tz_it;
+	    std::map<p2t::Point *, ON_3dPoint *> *pointmap = s_cdt->p2t_maps[tri_brep_face[t]];
 	    p2t::Point *p2_A = t->GetPoint(0);
 	    p2t::Point *p2_B = t->GetPoint(1);
 	    p2t::Point *p2_C = t->GetPoint(2);
-	    ON_3dPoint *pA = p2to3map[p2_A];
-	    ON_3dPoint *pB = p2to3map[p2_B];
-	    ON_3dPoint *pC = p2to3map[p2_C];
+	    ON_3dPoint *pA = (*pointmap)[p2_A];
+	    ON_3dPoint *pB = (*pointmap)[p2_B];
+	    ON_3dPoint *pC = (*pointmap)[p2_C];
 	    fastf_t d1 = pA->DistanceTo(*pB);
 	    fastf_t d2 = pB->DistanceTo(*pC);
 	    fastf_t d3 = pC->DistanceTo(*pA);
