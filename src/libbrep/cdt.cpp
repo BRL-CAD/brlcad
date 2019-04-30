@@ -2993,7 +2993,7 @@ ON_Brep_CDT_Mesh(
     std::map<p2t::Triangle *, p2t::Point *> midmap;
     std::map<p2t::Triangle *, Edge> lemap;
     if (tris_zero_3D_area.size()) {
-	//bu_log("Found %zd near-zero area triangles\n", tris_zero_3D_area.size());
+	bu_log("Found %zd near-zero area triangles\n", tris_zero_3D_area.size());
 
 	// Step 1: For each zero area triangle, find the longest edge.
 	std::set<p2t::Triangle*>::iterator tz_it;
@@ -3028,11 +3028,13 @@ ON_Brep_CDT_Mesh(
 	// mating non-degenerate triangle in the same face sharing the longest
 	// edge .  Those triangles must be split, removed, and replaced by new
 	// triangles.
+	int rtriangle = 0;
 	for (tz_it = tris_zero_3D_area.begin(); tz_it != tris_zero_3D_area.end(); tz_it++) {
 	    p2t::Triangle *t = *tz_it;
 	    int t_face_index = tri_brep_face[t];
 	    Edge le = lemap[t];
 	    EdgeToTri::iterator m_it = e2f->find(le);
+	    int t_replace = 0;
 	    if (m_it != e2f->end()) {
 		std::set<p2t::Triangle*> &f = (*m_it).second;
 		if (f.size()) {
@@ -3044,7 +3046,9 @@ ON_Brep_CDT_Mesh(
 			if (t_face_index != face_index) {
 			    continue;
 			}
-			bu_log("found triangle to split\n");
+			t_replace++;
+			bu_log("found triangle to split(%d,%d) %d\n", rtriangle, face_index, t_replace);
+			rtriangle++;
 			std::map<p2t::Point *, ON_3dPoint *> *pointmap = s_cdt->p2t_maps[face_index];
 			std::vector<p2t::Triangle *> *tri_add;
 			if (!s_cdt->p2t_extra_faces[face_index]) {
@@ -3085,8 +3089,11 @@ ON_Brep_CDT_Mesh(
 			    p2t::Triangle *t1 = new p2t::Triangle(*p2_1, *cmid, *dmid);
 			    p2t::Triangle *t2 = new p2t::Triangle(*dmid, *cmid, *p2_2);
 			    tris_degen.insert(m);
+			    triangle_cnt--;
 			    tri_add->push_back(t1);
+			    triangle_cnt++;
 			    tri_add->push_back(t2);
+			    triangle_cnt++;
 			} else {
 			    bu_log("Error - failed to make new triangles\n");
 			}
