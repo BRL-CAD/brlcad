@@ -523,7 +523,6 @@ view_end(struct application *ap)
 
 	start_ridx = 0; /* region array is indexed from 0 */
 	for (id = 1; id < max_item; ++id) {
-	    const int flen = 37; /* desired size of name field */
 
 	    if (item_wt[id] < 0)
 		continue;
@@ -535,14 +534,12 @@ view_end(struct application *ap)
 		    char *cname = analyze_densities_name(density, r->reg_gmater);
 		    fastf_t cdensity = analyze_densities_density(density, r->reg_gmater);
 		    fastf_t weight = *(fastf_t *)r->reg_udata;
-		    register size_t len = strlen(r->reg_name);
-		    len = len > (size_t)flen ? len - (size_t)flen : 0;
-		    fprintf(outfp, "%8.3f %5d  %3d %-15.15s %7.4f %-*.*s\n",
+		    fprintf(outfp, "%8.3f %5d  %3d %-15.15s %7.4f %s\n",
 			    weight,
 			    r->reg_gmater, r->reg_los,
 			    cname,
 			    cdensity*1000,
-			    flen, flen, &r->reg_name[len]);
+			    r->reg_name);
 		    if (cname) {
 			bu_free(cname, "free name copy");
 		    }
@@ -564,7 +561,6 @@ view_end(struct application *ap)
 
 	start_ridx = 0; /* region array is indexed from 0 */
 	for (id = 1; id < max_item; ++id) {
-	    const int flen = 65; /* desired size of name field */
 	    int CR = 0;
 	    const int ns = 15;
 
@@ -578,13 +574,11 @@ view_end(struct application *ap)
 	    for (ridx = start_ridx; ridx < nregions; ++ridx) {
 		struct region *r = rp_array[ridx];
 		if (r->reg_regionid == id) {
-		    register size_t len = strlen(r->reg_name);
-		    len = len > (size_t)flen ? len - (size_t)flen : 0;
 		    if (CR) {
 			/* need leading spaces */
 			fprintf(outfp, "%*.*s", ns, ns, " ");
 		    }
-		    fprintf(outfp, "%-*.*s\n", flen, flen, &r->reg_name[len]);
+		    fprintf(outfp, "%s\n", r->reg_name);
 		    CR = 1;
 		} else if (r->reg_regionid > id) {
 		    /* FIXME: an "else" alone should be good enough
