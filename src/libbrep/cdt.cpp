@@ -2993,7 +2993,7 @@ ON_Brep_CDT_Mesh(
     std::map<p2t::Triangle *, p2t::Point *> midmap;
     std::map<p2t::Triangle *, Edge> lemap;
     if (tris_zero_3D_area.size()) {
-	bu_log("Found %zd near-zero area triangles\n", tris_zero_3D_area.size());
+	//bu_log("Found %zd near-zero area triangles\n", tris_zero_3D_area.size());
 
 	// Step 1: For each zero area triangle, find the longest edge.
 	std::set<p2t::Triangle*>::iterator tz_it;
@@ -3047,7 +3047,7 @@ ON_Brep_CDT_Mesh(
 			    continue;
 			}
 			t_replace++;
-			bu_log("found triangle to split(%d,%d) %d\n", rtriangle, face_index, t_replace);
+			//bu_log("found triangle to split(%d,%d) %d\n", rtriangle, face_index, t_replace);
 			rtriangle++;
 			std::map<p2t::Point *, ON_3dPoint *> *pointmap = s_cdt->p2t_maps[face_index];
 			std::vector<p2t::Triangle *> *tri_add;
@@ -3086,14 +3086,12 @@ ON_Brep_CDT_Mesh(
 			    p2_2 = p2_A;
 			}
 			if (dmid && cmid) {
-			    p2t::Triangle *t1 = new p2t::Triangle(*p2_1, *cmid, *dmid);
-			    p2t::Triangle *t2 = new p2t::Triangle(*dmid, *cmid, *p2_2);
+			    p2t::Triangle *t1 = new p2t::Triangle(*cmid, *p2_1, *dmid);
+			    p2t::Triangle *t2 = new p2t::Triangle(*cmid, *dmid, *p2_2);
 			    tris_degen.insert(m);
 			    triangle_cnt--;
 			    tri_add->push_back(t1);
-			    triangle_cnt++;
 			    tri_add->push_back(t2);
-			    triangle_cnt++;
 			} else {
 			    bu_log("Error - failed to make new triangles\n");
 			}
@@ -3102,6 +3100,17 @@ ON_Brep_CDT_Mesh(
 	    }
 	}
     }
+
+    //bu_log("tri_cnt_init: %zd\n", triangle_cnt);
+    for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
+	std::vector<p2t::Triangle *> *tri_add = s_cdt->p2t_extra_faces[face_index];
+	if (!tri_add) {
+	    continue;
+	}
+	triangle_cnt += tri_add->size();
+    }
+    //bu_log("tri_cnt_init+: %zd\n", triangle_cnt);
+
 
     // Know how many faces and points now - initialize BoT container.
     *fcnt = (int)triangle_cnt;
@@ -3171,6 +3180,8 @@ ON_Brep_CDT_Mesh(
 	    face_cnt++;
 	}
     }
+    //bu_log("tri_cnt_1: %zd\n", triangle_cnt);
+    //bu_log("face_cnt: %d\n", face_cnt);
 
     for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
 	std::vector<p2t::Triangle *> *tri_add = s_cdt->p2t_extra_faces[face_index];
@@ -3184,8 +3195,8 @@ ON_Brep_CDT_Mesh(
 	    for (size_t j = 0; j < 3; j++) {
 		p2t::Point *p = t->GetPoint(j);
 		ON_3dPoint *op = (*pointmap)[p];
-		bu_log("tri(%d)(%zu): %f %f %f\n", face_cnt, j, op->x, op->y, op->z);
 		int ind = on_pnt_to_bot_pnt[op];
+		//bu_log("tri(%d)(%zu): %f %f %f -> %d\n", face_cnt, j, op->x, op->y, op->z, ind);
 		(*faces)[face_cnt*3 + j] = ind;
 		if (normals) {
 		    int nind = on_pnt_to_bot_norm[op];
@@ -3204,6 +3215,24 @@ ON_Brep_CDT_Mesh(
 	    }
 
 	    face_cnt++;
+	}
+	//bu_log("tri_cnt_2: %zd\n", triangle_cnt);
+	//bu_log("face_cnt_2: %d\n", face_cnt);
+
+
+    }
+
+
+    /* Clear out extra faces so they don't pollute another pass */
+    for (int i = 0; i < s_cdt->brep->m_F.Count(); i++) {
+	std::vector<p2t::Triangle *> *ef = s_cdt->p2t_extra_faces[i];
+	if (ef) {
+	    std::vector<p2t::Triangle *>::iterator trit;
+	    for (trit = ef->begin(); trit != ef->end(); trit++) {
+		p2t::Triangle *t = *trit;
+		delete t;
+	    }
+	    ef->clear();
 	}
     }
 
