@@ -138,6 +138,7 @@ struct ON_Brep_CDT_State {
 
     /* Poly2Tri data */
     p2t::CDT **p2t_faces;
+    std::vector<p2t::Triangle *> **p2t_extra_faces;
     std::map<p2t::Point *, ON_3dPoint *> **p2t_maps;
     std::map<p2t::Point *, ON_3dPoint *> **p2t_nmaps;
 
@@ -2064,6 +2065,7 @@ ON_Brep_CDT_Create(ON_Brep *brep)
     cdt->edge_pnts = new std::set<ON_3dPoint *>;
 
     cdt->p2t_faces = (p2t::CDT **)bu_calloc(brep->m_F.Count(), sizeof(p2t::CDT *), "poly2tri triangulations");
+    cdt->p2t_extra_faces = (std::vector<p2t::Triangle *> **)bu_calloc(brep->m_F.Count(), sizeof(std::vector<p2t::Triangle *> *), "extra p2t faces");
     cdt->p2t_maps = (std::map<p2t::Point *, ON_3dPoint *> **)bu_calloc(brep->m_F.Count(), sizeof(std::map<p2t::Point *, ON_3dPoint *> *), "poly2tri point to ON_3dPoint maps");
     cdt->p2t_nmaps = (std::map<p2t::Point *, ON_3dPoint *> **)bu_calloc(brep->m_F.Count(), sizeof(std::map<p2t::Point *, ON_3dPoint *> *), "poly2tri point to ON_3dVector normal maps");
 
@@ -2090,12 +2092,24 @@ ON_Brep_CDT_Destroy(struct ON_Brep_CDT_State *s_cdt)
 	delete (*(s_cdt->w3dnorms))[i];
     }
 
+    for (int i = 0; i < s_cdt->brep->m_F.Count(); i++) {
+	std::vector<p2t::Triangle *> *ef = s_cdt->p2t_extra_faces[i];
+	if (ef) {
+	    std::vector<p2t::Triangle *>::iterator trit;
+	    for (trit = ef->begin(); trit != ef->end(); trit++) {
+		p2t::Triangle *t = *trit;
+		delete t;
+	    }
+	}
+    }
+
     delete s_cdt->w3dpnts;
     delete s_cdt->vert_pnts;
     delete s_cdt->w3dnorms;
     delete s_cdt->vert_norms;
     delete s_cdt->vert_to_on;
     delete s_cdt->edge_pnts;
+    delete s_cdt->p2t_extra_faces;
 
     // TODO - delete p2t data
 
@@ -2970,23 +2984,17 @@ ON_Brep_CDT_Mesh(
     }
 
     /* For the zero-area triangles, we need to take each degenerate triangle
-     * (1) and find the p2t triangle that shares the longest edge of the
+     * (1) and find the p2t triangle(s) that shares the longest edge of the
      * degenerate triangle (i.e. the edge that uses the two furthest endpoints
-     * of the colinear polyline) (2).
-     *
-     * If only one of the matching triangles is degenerate, remove both
-     * triangles from the triangulation and add two new triangles using the
-     * three points of (2) and the midpoint of (1).
-     *
-     * If BOTH triangles along the longest edge are degenerate, just remove
-     * both of them without introducing any new triangles. This will result in
-     * an unused point in the triangulation - if we really care we can rebuild
-     * the point set and face mappings again, but as a first cut don't worry
-     * about it. */
+     * of the colinear polyline) (2).  Any non-degenerate faces using that edge
+     * need to be split to incorporate the vertex that will end up otherwise
+     * unused once the degenerate faces are removed.
+     */
+    std::map<p2t::Triangle *, p2t::Point *> midmap;
+    std::map<p2t::Triangle *, Edge> lemap;
     if (tris_zero_3D_area.size()) {
 	//bu_log("Found %zd near-zero area triangles\n", tris_zero_3D_area.size());
-	std::map<p2t::Triangle *, Edge> lemap;
-	std::map<p2t::Triangle *, ON_3dPoint *> midmap;
+
 	// Step 1: For each zero area triangle, find the longest edge.
 	std::set<p2t::Triangle*>::iterator tz_it;
 	for (tz_it = tris_zero_3D_area.begin(); tz_it != tris_zero_3D_area.end(); tz_it++) {
@@ -3004,35 +3012,88 @@ ON_Brep_CDT_Mesh(
 	    fastf_t d3 = pC->DistanceTo(*pA);
 	    if (d1 > d2 && d1 > d3) {
 		lemap[t] = mk_edge(pA, pB);
-		midmap[t] = pC;
+		midmap[t] = p2_C;
 	    }
 	    if (d2 > d1 && d2 > d3) {
 		lemap[t] = mk_edge(pB, pC);
-		midmap[t] = pA;
+		midmap[t] = p2_A;
 	    }
 	    if (d3 > d1 && d3 > d2) {
 		lemap[t] = mk_edge(pC, pA);
-		midmap[t] = pB;
+		midmap[t] = p2_B;
 	    }
 	}
 
-	// Step 2: For each triangle, use the maps to look up the mating
-	// triangle along the longest edge.  If that triangle is also
-	// degenerate, add them to tris_degen and continue.
+	// Step 2: For each zero area triangle, use the maps to look up the
+	// mating non-degenerate triangle in the same face sharing the longest
+	// edge .  Those triangles must be split, removed, and replaced by new
+	// triangles.
 	for (tz_it = tris_zero_3D_area.begin(); tz_it != tris_zero_3D_area.end(); tz_it++) {
 	    p2t::Triangle *t = *tz_it;
+	    int t_face_index = tri_brep_face[t];
 	    Edge le = lemap[t];
 	    EdgeToTri::iterator m_it = e2f->find(le);
 	    if (m_it != e2f->end()) {
 		std::set<p2t::Triangle*> &f = (*m_it).second;
 		if (f.size()) {
-		    bu_log("found triangle(s) to split: %zd\n", f.size());
+		    std::set<p2t::Triangle*>::iterator f_it;
+		    std::set<p2t::Triangle*> fdone;
+		    for (f_it = f.begin(); f_it != f.end(); f_it++) {
+			p2t::Triangle *m = *f_it;
+			int face_index = tri_brep_face[m];
+			if (t_face_index != face_index) {
+			    continue;
+			}
+			bu_log("found triangle to split\n");
+			std::map<p2t::Point *, ON_3dPoint *> *pointmap = s_cdt->p2t_maps[face_index];
+			std::vector<p2t::Triangle *> *tri_add;
+			if (!s_cdt->p2t_extra_faces[face_index]) {
+			    tri_add = new std::vector<p2t::Triangle *>;
+			    s_cdt->p2t_extra_faces[face_index] = tri_add;
+			} else {
+			    tri_add = s_cdt->p2t_extra_faces[face_index];
+			}
+			p2t::Point *p2_A = m->GetPoint(0);
+			p2t::Point *p2_B = m->GetPoint(1);
+			p2t::Point *p2_C = m->GetPoint(2);
+			ON_3dPoint *pA = (*pointmap)[p2_A];
+			ON_3dPoint *pB = (*pointmap)[p2_B];
+			ON_3dPoint *pC = (*pointmap)[p2_C];
+			p2t::Point *dmid = midmap[t];
+
+			Edge se = lemap[t];
+			Edge ne;
+			p2t::Point *p2_1= NULL;
+			p2t::Point *p2_2= NULL;
+			p2t::Point *cmid = NULL;
+			if ((se.first == pA && se.second == pB) || (se.first == pB && se.second == pA)) {
+			    cmid = p2_C;
+			    p2_1 = p2_A;
+			    p2_2 = p2_B;
+			}
+			if ((se.first == pB && se.second == pC) || (se.first == pC && se.second == pB)) {
+			    cmid = p2_A;
+			    p2_1 = p2_B;
+			    p2_2 = p2_C;
+			}
+			if ((se.first == pC && se.second == pA) || (se.first == pA && se.second == pC)) {
+			    cmid = p2_B;
+			    p2_1 = p2_C;
+			    p2_2 = p2_A;
+			}
+			if (dmid && cmid) {
+			    p2t::Triangle *t1 = new p2t::Triangle(*p2_1, *cmid, *dmid);
+			    p2t::Triangle *t2 = new p2t::Triangle(*dmid, *cmid, *p2_2);
+			    tris_degen.insert(m);
+			    tri_add->push_back(t1);
+			    tri_add->push_back(t2);
+			} else {
+			    bu_log("Error - failed to make new triangles\n");
+			}
+		    }
 		}
 	    }
 	}
-	// Step 3: If the mating triangle is not degenerate, add both to
-	// the "replaced" set and construct the new triangles.  The new
-	// triangles will be processed after the main face iteration.
     }
 
     // Know how many faces and points now - initialize BoT container.
@@ -3103,6 +3164,42 @@ ON_Brep_CDT_Mesh(
 	    face_cnt++;
 	}
     }
+
+    for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
+	std::vector<p2t::Triangle *> *tri_add = s_cdt->p2t_extra_faces[face_index];
+	std::map<p2t::Point *, ON_3dPoint *> *pointmap = s_cdt->p2t_maps[face_index];
+	if (!tri_add) {
+	    continue;
+	}
+	triangle_cnt += tri_add->size();
+	for (size_t i = 0; i < tri_add->size(); i++) {
+	    p2t::Triangle *t = (*tri_add)[i];
+	    for (size_t j = 0; j < 3; j++) {
+		p2t::Point *p = t->GetPoint(j);
+		ON_3dPoint *op = (*pointmap)[p];
+		bu_log("tri(%d)(%zu): %f %f %f\n", face_cnt, j, op->x, op->y, op->z);
+		int ind = on_pnt_to_bot_pnt[op];
+		(*faces)[face_cnt*3 + j] = ind;
+		if (normals) {
+		    int nind = on_pnt_to_bot_norm[op];
+		    (*face_normals)[face_cnt*3 + j] = nind;
+		}
+	    }
+	    if (s_cdt->brep->m_F[face_index].m_bRev) {
+		int ftmp = (*faces)[face_cnt*3 + 1];
+		(*faces)[face_cnt*3 + 1] = (*faces)[face_cnt*3 + 2];
+		(*faces)[face_cnt*3 + 2] = ftmp;
+		if (normals) {
+		    int fntmp = (*face_normals)[face_cnt*3 + 1];
+		    (*face_normals)[face_cnt*3 + 1] = (*face_normals)[face_cnt*3 + 2];
+		    (*face_normals)[face_cnt*3 + 2] = fntmp;
+		}
+	    }
+
+	    face_cnt++;
+	}
+    }
+
 
     return 0;
 }
