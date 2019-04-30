@@ -73,7 +73,7 @@ add_tri_edges(EdgeToTri *e2f, p2t::Triangle *t,
     std::map<p2t::Point *, ON_3dPoint *> *pointmap)
 {
     ON_3dPoint *pt_A, *pt_B, *pt_C;
-    
+
     p2t::Point *p2_A = t->GetPoint(0);
     p2t::Point *p2_B = t->GetPoint(1);
     p2t::Point *p2_C = t->GetPoint(2);
@@ -83,26 +83,6 @@ add_tri_edges(EdgeToTri *e2f, p2t::Triangle *t,
     (*e2f)[(mk_edge(pt_A, pt_B))].insert(t);
     (*e2f)[(mk_edge(pt_B, pt_C))].insert(t);
     (*e2f)[(mk_edge(pt_C, pt_A))].insert(t);
-}
-
-// TODO - can have more than 2 faces on an edge. (Probably degenerate faces make this possible...)
-// Need to sort this out
-static p2t::Triangle *
-get_matching_face(Edge e, EdgeToTri *e2f)
-{
-    EdgeToTri::iterator m_it = e2f->find(e);
-    std::set<p2t::Triangle*> &f = (*m_it).second;
-    std::set<p2t::Triangle*>::iterator f_it;
-
-    if (f.size() % 2 != 0) {
-	if (f.size() > 1) {
-	    bu_log("Weird edge face count %zd\n", f.size());
-	}
-	f_it = f.begin();
-	return *f_it;
-    }
-
-    return NULL;
 }
 
 #define BREP_CDT_FAILED -3
@@ -3042,9 +3022,12 @@ ON_Brep_CDT_Mesh(
 	for (tz_it = tris_zero_3D_area.begin(); tz_it != tris_zero_3D_area.end(); tz_it++) {
 	    p2t::Triangle *t = *tz_it;
 	    Edge le = lemap[t];
-	    p2t::Triangle *m = get_matching_face(le, e2f);
-	    if (m) {
-		bu_log("found matching triangle\n");
+	    EdgeToTri::iterator m_it = e2f->find(le);
+	    if (m_it != e2f->end()) {
+		std::set<p2t::Triangle*> &f = (*m_it).second;
+		if (f.size()) {
+		    bu_log("found triangle(s) to split: %zd\n", f.size());
+		}
 	    }
 	}
 	// Step 3: If the mating triangle is not degenerate, add both to
