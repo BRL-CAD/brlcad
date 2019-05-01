@@ -148,6 +148,8 @@ struct ON_Brep_CDT_State {
     /* BoT -> ON mappings */
     std::map<int, ON_3dPoint *> *vert_to_on;
     std::set<ON_3dPoint *> *edge_pnts;
+    ON_SimpleArray<BrepTrimPoint> **brep_face_loop_points;
+    std::map<p2t::Point *, BrepTrimPoint *> **p2t_brep_edge_pnts;
 };
 
 void
@@ -2063,6 +2065,8 @@ ON_Brep_CDT_Create(ON_Brep *brep)
     cdt->vert_norms = new std::map<int, ON_3dPoint *>;
     cdt->vert_to_on = new std::map<int, ON_3dPoint *>;
     cdt->edge_pnts = new std::set<ON_3dPoint *>;
+    cdt->brep_face_loop_points = (ON_SimpleArray<BrepTrimPoint> **)bu_calloc(brep->m_F.Count(), sizeof(std::map<p2t::Point *, BrepTrimPoint *> *), "face loop pnts");
+    cdt->p2t_brep_edge_pnts = (std::map<p2t::Point *, BrepTrimPoint *> **)bu_calloc(brep->m_F.Count(), sizeof(std::map<p2t::Point *, BrepTrimPoint *> *), "p2t to brep edge");
 
     cdt->p2t_faces = (p2t::CDT **)bu_calloc(brep->m_F.Count(), sizeof(p2t::CDT *), "poly2tri triangulations");
     cdt->p2t_extra_faces = (std::vector<p2t::Triangle *> **)bu_calloc(brep->m_F.Count(), sizeof(std::vector<p2t::Triangle *> *), "extra p2t faces");
@@ -2103,6 +2107,15 @@ ON_Brep_CDT_Destroy(struct ON_Brep_CDT_State *s_cdt)
 	}
     }
 
+    for (int i = 0; i < s_cdt->brep->m_F.Count(); i++) {
+	if (s_cdt->p2t_brep_edge_pnts[i] != NULL) {
+	    delete s_cdt->p2t_brep_edge_pnts[i];
+	}
+	if (s_cdt->brep_face_loop_points[i] != NULL) {
+	    delete [] s_cdt->brep_face_loop_points[i];
+	}
+    }
+
     delete s_cdt->w3dpnts;
     delete s_cdt->vert_pnts;
     delete s_cdt->w3dnorms;
@@ -2111,6 +2124,8 @@ ON_Brep_CDT_Destroy(struct ON_Brep_CDT_State *s_cdt)
     delete s_cdt->edge_pnts;
     delete s_cdt->p2t_extra_faces;
 
+    bu_free(s_cdt->brep_face_loop_points, "flp array");
+    bu_free(s_cdt->p2t_brep_edge_pnts, "p2e array");
     // TODO - delete p2t data
 
     delete s_cdt;
@@ -2235,7 +2250,6 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_State *s_cdt, std::map<const ON_Surface *, d
 	    polyline.clear();
 	}
     }
-    delete [] brep_loop_points;
 
     // TODO - we may need to add 2D points on trims that the edges didn't know
     // about.  Since 3D points must be shared along edges and we're using
@@ -2347,6 +2361,7 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_State *s_cdt, std::map<const ON_Surface *, d
     s_cdt->p2t_faces[face_index] = cdt;
     s_cdt->p2t_maps[face_index] = pointmap;
     s_cdt->p2t_nmaps[face_index] = normalmap;
+    s_cdt->brep_face_loop_points[face_index] = brep_loop_points;
 
     return 0;
 }
