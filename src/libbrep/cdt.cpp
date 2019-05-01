@@ -139,17 +139,19 @@ struct ON_Brep_CDT_State {
     /* Poly2Tri data */
     p2t::CDT **p2t_faces;
     std::vector<p2t::Triangle *> **p2t_extra_faces;
-    std::map<p2t::Point *, ON_3dPoint *> **p2t_maps;
-    std::map<p2t::Point *, ON_3dPoint *> **p2t_nmaps;
+    std::map<p2t::Point *, ON_3dPoint *> **tri_to_on3_maps;
+    std::map<p2t::Point *, ON_3dPoint *> **tri_to_on3_norm_maps;
+    std::map<ON_3dPoint *, std::set<p2t::Point *>> **on3_to_tri_maps;
 
     /* Audit data */
     std::map<ON_3dPoint *, struct cdt_audit_info *> pnt_audit_info;
 
     /* BoT -> ON mappings */
+    std::map<ON_3dPoint *, std::set<BrepTrimPoint *>> on_brep_edge_pnts;
     std::map<int, ON_3dPoint *> *vert_to_on;
     std::set<ON_3dPoint *> *edge_pnts;
     ON_SimpleArray<BrepTrimPoint> **brep_face_loop_points;
-    std::map<p2t::Point *, BrepTrimPoint *> **p2t_brep_edge_pnts;
+    std::set<p2t::Point *> **face_degen_pnts;
 };
 
 void
@@ -310,7 +312,9 @@ getEdgePoints(
 	nbtp1->tangent = edge_mid_tang;
 	nbtp1->t = t1;
 	nbtp1->e = emid;
+	nbtp1->trim_ind = trim.m_trim_index;
 	(*trim1_param_points)[nbtp1->t] = nbtp1;
+	s_cdt->on_brep_edge_pnts[npt].insert(nbtp1);
 
 	BrepTrimPoint *nbtp2 = new BrepTrimPoint;
 	nbtp2->p3d = npt;
@@ -320,7 +324,9 @@ getEdgePoints(
 	nbtp2->tangent = edge_mid_tang;
 	nbtp2->t = t2;
 	nbtp2->e = emid;
+	nbtp2->trim_ind = trim2->m_trim_index;
 	(*trim2_param_points)[nbtp2->t] = nbtp2;
+	s_cdt->on_brep_edge_pnts[npt].insert(nbtp2);
 
 	getEdgePoints(s_cdt, edge, nc, trim, sbtp1, nbtp1, sbtp2, nbtp2, cdt_tol, trim1_param_points, trim2_param_points);
 	getEdgePoints(s_cdt, edge, nc, trim, nbtp1, ebtp1, nbtp2, ebtp2, cdt_tol, trim1_param_points, trim2_param_points);
@@ -396,15 +402,19 @@ getEdgePoints(
 	nbtp1->p3d = nsptp;
 	nbtp1->p2d = trim1_seam_2d;
 	nbtp1->t = trim1_seam_t;
+	nbtp1->trim_ind = trim.m_trim_index;
 	nbtp1->e = ON_UNSET_VALUE;
 	(*trim1_param_points)[nbtp1->t] = nbtp1;
+	s_cdt->on_brep_edge_pnts[nsptp].insert(nbtp1);
 
 	BrepTrimPoint *nbtp2 = new BrepTrimPoint;
 	nbtp2->p3d = nsptp;
 	nbtp2->p2d = trim2_seam_2d;
 	nbtp2->t = trim2_seam_t;
+	nbtp2->trim_ind = trim2->m_trim_index;
 	nbtp2->e = ON_UNSET_VALUE;
 	(*trim2_param_points)[nbtp2->t] = nbtp2;
+	s_cdt->on_brep_edge_pnts[nsptp].insert(nbtp2);
     }
 
 }
@@ -609,7 +619,9 @@ getEdgePoints(
     sbtp1->p2d = trim1_start_2d;
     sbtp1->normal = trim1_start_normal;
     sbtp1->t = st1;
+    sbtp1->trim_ind = trim.m_trim_index;
     (*trim1_param_points)[sbtp1->t] = sbtp1;
+    s_cdt->on_brep_edge_pnts[edge_start_3d].insert(sbtp1);
 
     BrepTrimPoint *ebtp1 = new BrepTrimPoint;
     ebtp1->p3d = edge_end_3d;
@@ -619,7 +631,9 @@ getEdgePoints(
     ebtp1->p2d = trim1_end_2d;
     ebtp1->normal = trim1_end_normal;
     ebtp1->t = et1;
+    ebtp1->trim_ind = trim.m_trim_index;
     (*trim1_param_points)[ebtp1->t] = ebtp1;
+    s_cdt->on_brep_edge_pnts[edge_end_3d].insert(ebtp1);
 
     BrepTrimPoint *sbtp2 = new BrepTrimPoint;
     sbtp2->p3d = edge_start_3d;
@@ -629,7 +643,9 @@ getEdgePoints(
     sbtp2->p2d = trim2_start_2d;
     sbtp2->normal = trim2_start_normal;
     sbtp2->t = st2;
+    sbtp2->trim_ind = trim2->m_trim_index;
     (*trim2_param_points)[sbtp2->t] = sbtp2;
+    s_cdt->on_brep_edge_pnts[edge_start_3d].insert(sbtp2);
 
     BrepTrimPoint *ebtp2 = new BrepTrimPoint;
     ebtp2->p3d = edge_end_3d;
@@ -639,7 +655,9 @@ getEdgePoints(
     ebtp2->p2d = trim2_end_2d;
     ebtp2->normal = trim2_end_normal;
     ebtp2->t = et2;
+    ebtp2->trim_ind = trim2->m_trim_index;
     (*trim2_param_points)[ebtp2->t] = ebtp2;
+    s_cdt->on_brep_edge_pnts[edge_end_3d].insert(ebtp2);
 
 
     if (trim.IsClosed() || trim2->IsClosed()) {
@@ -696,7 +714,9 @@ getEdgePoints(
 	mbtp1->normal = trim1_mid_norm;
 	mbtp1->t = trim1_mid_range;
 	mbtp1->e = edge_mid_range;
+	mbtp1->trim_ind = trim.m_trim_index;
 	(*trim1_param_points)[mbtp1->t] = mbtp1;
+	s_cdt->on_brep_edge_pnts[nmp].insert(mbtp1);
 
 	BrepTrimPoint *mbtp2 = new BrepTrimPoint;
 	mbtp2->p3d = nmp;
@@ -706,7 +726,9 @@ getEdgePoints(
 	mbtp2->normal = trim2_mid_norm;
 	mbtp2->t = trim2_mid_range;
 	mbtp1->e = edge_mid_range;
+	mbtp2->trim_ind = trim2->m_trim_index;
 	(*trim2_param_points)[mbtp2->t] = mbtp2;
+	s_cdt->on_brep_edge_pnts[nmp].insert(mbtp2);
 
 	getEdgePoints(s_cdt, edge, nc, trim, sbtp1, mbtp1, sbtp2, mbtp2, &cdt_tol, trim1_param_points, trim2_param_points);
 	getEdgePoints(s_cdt, edge, nc, trim, mbtp1, ebtp1, mbtp2, ebtp2, &cdt_tol, trim1_param_points, trim2_param_points);
@@ -2066,12 +2088,13 @@ ON_Brep_CDT_Create(ON_Brep *brep)
     cdt->vert_to_on = new std::map<int, ON_3dPoint *>;
     cdt->edge_pnts = new std::set<ON_3dPoint *>;
     cdt->brep_face_loop_points = (ON_SimpleArray<BrepTrimPoint> **)bu_calloc(brep->m_F.Count(), sizeof(std::map<p2t::Point *, BrepTrimPoint *> *), "face loop pnts");
-    cdt->p2t_brep_edge_pnts = (std::map<p2t::Point *, BrepTrimPoint *> **)bu_calloc(brep->m_F.Count(), sizeof(std::map<p2t::Point *, BrepTrimPoint *> *), "p2t to brep edge");
+    cdt->face_degen_pnts = (std::set<p2t::Point *> **)bu_calloc(brep->m_F.Count(), sizeof(std::set<p2t::Point *> *), "degenerate edge points");
 
     cdt->p2t_faces = (p2t::CDT **)bu_calloc(brep->m_F.Count(), sizeof(p2t::CDT *), "poly2tri triangulations");
     cdt->p2t_extra_faces = (std::vector<p2t::Triangle *> **)bu_calloc(brep->m_F.Count(), sizeof(std::vector<p2t::Triangle *> *), "extra p2t faces");
-    cdt->p2t_maps = (std::map<p2t::Point *, ON_3dPoint *> **)bu_calloc(brep->m_F.Count(), sizeof(std::map<p2t::Point *, ON_3dPoint *> *), "poly2tri point to ON_3dPoint maps");
-    cdt->p2t_nmaps = (std::map<p2t::Point *, ON_3dPoint *> **)bu_calloc(brep->m_F.Count(), sizeof(std::map<p2t::Point *, ON_3dPoint *> *), "poly2tri point to ON_3dVector normal maps");
+    cdt->tri_to_on3_maps = (std::map<p2t::Point *, ON_3dPoint *> **)bu_calloc(brep->m_F.Count(), sizeof(std::map<p2t::Point *, ON_3dPoint *> *), "poly2tri point to ON_3dPoint maps");
+    cdt->on3_to_tri_maps = (std::map<ON_3dPoint *, std::set<p2t::Point *>> **)bu_calloc(brep->m_F.Count(), sizeof(std::map<ON_3dPoint *, std::set<p2t::Point *>> *), "poly2tri point to ON_3dPoint maps");
+    cdt->tri_to_on3_norm_maps = (std::map<p2t::Point *, ON_3dPoint *> **)bu_calloc(brep->m_F.Count(), sizeof(std::map<p2t::Point *, ON_3dPoint *> *), "poly2tri point to ON_3dVector normal maps");
 
     /* Set status to "never evaluated" */
     cdt->status = BREP_CDT_UNTESSELLATED;
@@ -2108,11 +2131,11 @@ ON_Brep_CDT_Destroy(struct ON_Brep_CDT_State *s_cdt)
     }
 
     for (int i = 0; i < s_cdt->brep->m_F.Count(); i++) {
-	if (s_cdt->p2t_brep_edge_pnts[i] != NULL) {
-	    delete s_cdt->p2t_brep_edge_pnts[i];
-	}
 	if (s_cdt->brep_face_loop_points[i] != NULL) {
 	    delete [] s_cdt->brep_face_loop_points[i];
+	}
+	if (s_cdt->face_degen_pnts[i] != NULL) {
+	    delete s_cdt->face_degen_pnts[i];
 	}
     }
 
@@ -2125,7 +2148,7 @@ ON_Brep_CDT_Destroy(struct ON_Brep_CDT_State *s_cdt)
     delete s_cdt->p2t_extra_faces;
 
     bu_free(s_cdt->brep_face_loop_points, "flp array");
-    bu_free(s_cdt->p2t_brep_edge_pnts, "p2e array");
+    bu_free(s_cdt->face_degen_pnts, "degen pnts");
     // TODO - delete p2t data
 
     delete s_cdt;
@@ -2196,6 +2219,7 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_State *s_cdt, std::map<const ON_Surface *, d
     ON_2dPointArray on_loop_points;
     ON_SimpleArray<BrepTrimPoint> *brep_loop_points = new ON_SimpleArray<BrepTrimPoint>[loop_cnt];
     std::map<p2t::Point *, ON_3dPoint *> *pointmap = new std::map<p2t::Point *, ON_3dPoint *>();
+    std::map<ON_3dPoint *, std::set<p2t::Point *>> *on3_to_tri = new std::map<ON_3dPoint *, std::set<p2t::Point *>>();
     std::map<p2t::Point *, ON_3dPoint *> *normalmap = new std::map<p2t::Point *, ON_3dPoint *>();
     std::vector<p2t::Point*> polyline;
     p2t::CDT* cdt = NULL;
@@ -2225,6 +2249,7 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_State *s_cdt, std::map<const ON_Surface *, d
 		p2t::Point *p = new p2t::Point((brep_loop_points[li])[i].p2d.x, (brep_loop_points[li])[i].p2d.y);
 		polyline.push_back(p);
 		(*pointmap)[p] = (brep_loop_points[li])[i].p3d;
+		(*on3_to_tri)[(brep_loop_points[li])[i].p3d].insert(p);
 		(*normalmap)[p] = (brep_loop_points[li])[i].n3d;
 	    }
 	    for (int i = 1; i < brep_loop_points[li].Count(); i++) {
@@ -2359,8 +2384,9 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_State *s_cdt, std::map<const ON_Surface *, d
     /* Stash mappings for BoT reassembly */
     int face_index = face.m_face_index;
     s_cdt->p2t_faces[face_index] = cdt;
-    s_cdt->p2t_maps[face_index] = pointmap;
-    s_cdt->p2t_nmaps[face_index] = normalmap;
+    s_cdt->tri_to_on3_maps[face_index] = pointmap;
+    s_cdt->on3_to_tri_maps[face_index] = on3_to_tri;
+    s_cdt->tri_to_on3_norm_maps[face_index] = normalmap;
     s_cdt->brep_face_loop_points[face_index] = brep_loop_points;
 
     return 0;
@@ -2702,8 +2728,8 @@ ON_Brep_CDT_VList_Face(
     point_t pt2 = VINIT_ZERO;
 
     p2t::CDT *cdt = s->p2t_faces[face_index];
-    std::map<p2t::Point *, ON_3dPoint *> *pointmap = s->p2t_maps[face_index];
-    std::map<p2t::Point *, ON_3dPoint *> *normalmap = s->p2t_nmaps[face_index];
+    std::map<p2t::Point *, ON_3dPoint *> *pointmap = s->tri_to_on3_maps[face_index];
+    std::map<p2t::Point *, ON_3dPoint *> *normalmap = s->tri_to_on3_norm_maps[face_index];
     std::vector<p2t::Triangle*> tris = cdt->GetTriangles();
 
     switch (mode) {
@@ -2849,8 +2875,8 @@ ON_Brep_CDT_Mesh(
     for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
 	ON_BrepFace &face = s_cdt->brep->m_F[face_index];
 	p2t::CDT *cdt = s_cdt->p2t_faces[face_index];
-	std::map<p2t::Point *, ON_3dPoint *> *pointmap = s_cdt->p2t_maps[face_index];
-	std::map<p2t::Point *, ON_3dPoint *> *normalmap = s_cdt->p2t_nmaps[face_index];
+	std::map<p2t::Point *, ON_3dPoint *> *pointmap = s_cdt->tri_to_on3_maps[face_index];
+	std::map<p2t::Point *, ON_3dPoint *> *normalmap = s_cdt->tri_to_on3_norm_maps[face_index];
 	std::vector<p2t::Triangle*> tris = cdt->GetTriangles();
 	triangle_cnt += tris.size();
 	for (size_t i = 0; i < tris.size(); i++) {
@@ -2938,7 +2964,7 @@ ON_Brep_CDT_Mesh(
 
     for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
 	p2t::CDT *cdt = s_cdt->p2t_faces[face_index];
-	std::map<p2t::Point *, ON_3dPoint *> *pointmap = s_cdt->p2t_maps[face_index];
+	std::map<p2t::Point *, ON_3dPoint *> *pointmap = s_cdt->tri_to_on3_maps[face_index];
 	std::vector<p2t::Triangle*> tris = cdt->GetTriangles();
 	for (size_t i = 0; i < tris.size(); i++) {
 	    p2t::Triangle *t = tris[i];
@@ -2979,154 +3005,88 @@ ON_Brep_CDT_Mesh(
 		}
 	    }
 	    if (is_zero_area) {
-		// Remove this face from the edge to face maps
-		ON_3dPoint *pt_A, *pt_B, *pt_C;
+		// The edges from this face are degenerate edges
 		p2t::Point *p2_A = t->GetPoint(0);
 		p2t::Point *p2_B = t->GetPoint(1);
 		p2t::Point *p2_C = t->GetPoint(2);
-		pt_A = (*pointmap)[p2_A];
-		pt_B = (*pointmap)[p2_B];
-		pt_C = (*pointmap)[p2_C];
-		(*e2f)[(mk_edge(pt_A, pt_B))].erase(t);
-		(*e2f)[(mk_edge(pt_B, pt_C))].erase(t);
-		(*e2f)[(mk_edge(pt_C, pt_A))].erase(t);
-		triangle_cnt--;
-		tris_degen.insert(t);
-		tris_zero_3D_area.insert(t);
-	    }
-	}
-    }
 
-    /* For the zero-area triangles, we need to take each degenerate triangle
-     * (1) and find the p2t triangle(s) that shares the longest edge of the
-     * degenerate triangle (i.e. the edge that uses the two furthest endpoints
-     * of the colinear polyline) (2).  Any non-degenerate faces using that edge
-     * need to be split to incorporate the vertex that will end up otherwise
-     * unused once the degenerate faces are removed.
-     */
-    std::map<p2t::Triangle *, p2t::Point *> midmap;
-    std::map<p2t::Triangle *, Edge> lemap;
-    if (tris_zero_3D_area.size()) {
-	//bu_log("Found %zd near-zero area triangles\n", tris_zero_3D_area.size());
+		if (!s_cdt->face_degen_pnts[face_index]) {
+		    s_cdt->face_degen_pnts[face_index] = new std::set<p2t::Point *>;
+		}	    
+		s_cdt->face_degen_pnts[face_index]->insert(p2_A);
+		s_cdt->face_degen_pnts[face_index]->insert(p2_B);
+		s_cdt->face_degen_pnts[face_index]->insert(p2_C);
 
-	// Step 1: For each zero area triangle, find the longest edge.
-	std::set<p2t::Triangle*>::iterator tz_it;
-	for (tz_it = tris_zero_3D_area.begin(); tz_it != tris_zero_3D_area.end(); tz_it++) {
-
-	    p2t::Triangle *t = *tz_it;
-	    std::map<p2t::Point *, ON_3dPoint *> *pointmap = s_cdt->p2t_maps[tri_brep_face[t]];
-	    p2t::Point *p2_A = t->GetPoint(0);
-	    p2t::Point *p2_B = t->GetPoint(1);
-	    p2t::Point *p2_C = t->GetPoint(2);
-	    ON_3dPoint *pA = (*pointmap)[p2_A];
-	    ON_3dPoint *pB = (*pointmap)[p2_B];
-	    ON_3dPoint *pC = (*pointmap)[p2_C];
-	    fastf_t d1 = pA->DistanceTo(*pB);
-	    fastf_t d2 = pB->DistanceTo(*pC);
-	    fastf_t d3 = pC->DistanceTo(*pA);
-	    if (d1 > d2 && d1 > d3) {
-		lemap[t] = mk_edge(pA, pB);
-		midmap[t] = p2_C;
-	    }
-	    if (d2 > d1 && d2 > d3) {
-		lemap[t] = mk_edge(pB, pC);
-		midmap[t] = p2_A;
-	    }
-	    if (d3 > d1 && d3 > d2) {
-		lemap[t] = mk_edge(pC, pA);
-		midmap[t] = p2_B;
-	    }
-	}
-
-	// Step 2: For each zero area triangle, use the maps to look up the
-	// mating non-degenerate triangle in the same face sharing the longest
-	// edge .  Those triangles must be split, removed, and replaced by new
-	// triangles.
-	int rtriangle = 0;
-	for (tz_it = tris_zero_3D_area.begin(); tz_it != tris_zero_3D_area.end(); tz_it++) {
-	    p2t::Triangle *t = *tz_it;
-	    int t_face_index = tri_brep_face[t];
-	    Edge le = lemap[t];
-	    EdgeToTri::iterator m_it = e2f->find(le);
-	    int t_replace = 0;
-	    if (m_it != e2f->end()) {
-		std::set<p2t::Triangle*> &f = (*m_it).second;
-		if (f.size()) {
-		    std::set<p2t::Triangle*>::iterator f_it;
-		    std::set<p2t::Triangle*> fdone;
-		    for (f_it = f.begin(); f_it != f.end(); f_it++) {
-			p2t::Triangle *m = *f_it;
-			int face_index = tri_brep_face[m];
-			if (t_face_index != face_index) {
-			    continue;
+		/* If we have degeneracies along an edge, the impact is not
+		 * local to this face but will also impact the other face.
+		 * Find it and let it know.(probably need another map - 3d pnt
+		 * to trim points...) */
+		ON_3dPoint *pt_A = (*pointmap)[p2_A];
+		ON_3dPoint *pt_B = (*pointmap)[p2_B];
+		ON_3dPoint *pt_C = (*pointmap)[p2_C];
+		std::set<BrepTrimPoint *>::iterator bit;
+		std::set<BrepTrimPoint *> &pAt = s_cdt->on_brep_edge_pnts[pt_A];
+		std::set<BrepTrimPoint *> &pBt = s_cdt->on_brep_edge_pnts[pt_B];
+		std::set<BrepTrimPoint *> &pCt = s_cdt->on_brep_edge_pnts[pt_C];
+		for (bit = pAt.begin(); bit != pAt.end(); bit++) {
+		    BrepTrimPoint *tpt = *bit;
+		    int f2ind = s_cdt->brep->m_T[tpt->trim_ind].Face()->m_face_index;
+		    if (f2ind != face_index) {
+			if (!s_cdt->face_degen_pnts[f2ind]) {
+			    s_cdt->face_degen_pnts[f2ind] = new std::set<p2t::Point *>;
 			}
-			t_replace++;
-			//bu_log("found triangle to split(%d,%d) %d\n", rtriangle, face_index, t_replace);
-			rtriangle++;
-			std::map<p2t::Point *, ON_3dPoint *> *pointmap = s_cdt->p2t_maps[face_index];
-			std::vector<p2t::Triangle *> *tri_add;
-			if (!s_cdt->p2t_extra_faces[face_index]) {
-			    tri_add = new std::vector<p2t::Triangle *>;
-			    s_cdt->p2t_extra_faces[face_index] = tri_add;
-			} else {
-			    tri_add = s_cdt->p2t_extra_faces[face_index];
-			}
-
-			// TODO - the logic below only works if one extra point on the edge must be
-			// handled for this triangle.  That's not going to cut it - NIST 2 has
-			// an example of a case where we need to split triangles more than once.
-			// For each non-zero-area triangle with two points on this edge, we
-			// need to build the polygon with that triangle and all extra points on the
-			// Brep edge contained by the triangle's edge.  Then, use poly2tri to
-			// triangulate in the triangle's 2D plane (rather than the NURBS parametric
-			// space) so we get a triangulation that doesn't have degenerate faces and
-			// accounts for all points.  The 3D faces corresponding to the new triangulation
-			// are the ones that will replace the old face.
-
-
-			p2t::Point *p2_A = m->GetPoint(0);
-			p2t::Point *p2_B = m->GetPoint(1);
-			p2t::Point *p2_C = m->GetPoint(2);
-			ON_3dPoint *pA = (*pointmap)[p2_A];
-			ON_3dPoint *pB = (*pointmap)[p2_B];
-			ON_3dPoint *pC = (*pointmap)[p2_C];
-			p2t::Point *dmid = midmap[t];
-
-			Edge se = lemap[t];
-			Edge ne;
-			p2t::Point *p2_1= NULL;
-			p2t::Point *p2_2= NULL;
-			p2t::Point *cmid = NULL;
-			if ((se.first == pA && se.second == pB) || (se.first == pB && se.second == pA)) {
-			    cmid = p2_C;
-			    p2_1 = p2_A;
-			    p2_2 = p2_B;
-			}
-			if ((se.first == pB && se.second == pC) || (se.first == pC && se.second == pB)) {
-			    cmid = p2_A;
-			    p2_1 = p2_B;
-			    p2_2 = p2_C;
-			}
-			if ((se.first == pC && se.second == pA) || (se.first == pA && se.second == pC)) {
-			    cmid = p2_B;
-			    p2_1 = p2_C;
-			    p2_2 = p2_A;
-			}
-			if (dmid && cmid) {
-			    p2t::Triangle *t1 = new p2t::Triangle(*cmid, *p2_1, *dmid);
-			    p2t::Triangle *t2 = new p2t::Triangle(*cmid, *dmid, *p2_2);
-			    tris_degen.insert(m);
-			    triangle_cnt--;
-			    tri_add->push_back(t1);
-			    tri_add->push_back(t2);
-			} else {
-			    bu_log("Error - failed to make new triangles\n");
+			std::set<p2t::Point *> tri_pnts = (*s_cdt->on3_to_tri_maps[f2ind])[pt_A];
+			std::set<p2t::Point *>::iterator tp_it;
+			for (tp_it == tri_pnts.begin(); tp_it != tri_pnts.end(); tp_it++) {
+			    s_cdt->face_degen_pnts[f2ind]->insert(*tp_it);
 			}
 		    }
 		}
+		for (bit = pBt.begin(); bit != pBt.end(); bit++) {
+		    BrepTrimPoint *tpt = *bit;
+		    int f2ind = s_cdt->brep->m_T[tpt->trim_ind].Face()->m_face_index;
+		    if (f2ind != face_index) {
+			if (!s_cdt->face_degen_pnts[f2ind]) {
+			    s_cdt->face_degen_pnts[f2ind] = new std::set<p2t::Point *>;
+			}
+			std::set<p2t::Point *> tri_pnts = (*s_cdt->on3_to_tri_maps[f2ind])[pt_B];
+			std::set<p2t::Point *>::iterator tp_it;
+			for (tp_it == tri_pnts.begin(); tp_it != tri_pnts.end(); tp_it++) {
+			    s_cdt->face_degen_pnts[f2ind]->insert(*tp_it);
+			}
+		    }
+		}
+		for (bit = pCt.begin(); bit != pCt.end(); bit++) {
+		    BrepTrimPoint *tpt = *bit;
+		    int f2ind = s_cdt->brep->m_T[tpt->trim_ind].Face()->m_face_index;
+		    if (f2ind != face_index) {
+			if (!s_cdt->face_degen_pnts[f2ind]) {
+			    s_cdt->face_degen_pnts[f2ind] = new std::set<p2t::Point *>;
+			}
+			std::set<p2t::Point *> tri_pnts = (*s_cdt->on3_to_tri_maps[f2ind])[pt_C];
+			std::set<p2t::Point *>::iterator tp_it;
+			for (tp_it == tri_pnts.begin(); tp_it != tri_pnts.end(); tp_it++) {
+			    s_cdt->face_degen_pnts[f2ind]->insert(*tp_it);
+			}
+		    }
+		}
+
+		triangle_cnt--;
+		tris_degen.insert(t);
+		tris_zero_3D_area.insert(t);
+
+
 	    }
 	}
     }
+
+    /* For the non-zero-area involved triangles, we need to build new polygons
+     * from each triangle and the "orphaned" points along its edge(s).  We then
+     * re-tessellate in the triangle's parametric space.
+     *
+     * An "involved" triangle is a triangle with two of its three points in the
+     * face's degen_pnts set.
+     */
 
     //bu_log("tri_cnt_init: %zd\n", triangle_cnt);
     for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
@@ -3171,7 +3131,7 @@ ON_Brep_CDT_Mesh(
     triangle_cnt = 0;
     for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
 	p2t::CDT *cdt = s_cdt->p2t_faces[face_index];
-	std::map<p2t::Point *, ON_3dPoint *> *pointmap = s_cdt->p2t_maps[face_index];
+	std::map<p2t::Point *, ON_3dPoint *> *pointmap = s_cdt->tri_to_on3_maps[face_index];
 	std::vector<p2t::Triangle*> tris = cdt->GetTriangles();
 	triangle_cnt += tris.size();
 	for (size_t i = 0; i < tris.size(); i++) {
@@ -3212,7 +3172,7 @@ ON_Brep_CDT_Mesh(
 
     for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
 	std::vector<p2t::Triangle *> *tri_add = s_cdt->p2t_extra_faces[face_index];
-	std::map<p2t::Point *, ON_3dPoint *> *pointmap = s_cdt->p2t_maps[face_index];
+	std::map<p2t::Point *, ON_3dPoint *> *pointmap = s_cdt->tri_to_on3_maps[face_index];
 	if (!tri_add) {
 	    continue;
 	}
