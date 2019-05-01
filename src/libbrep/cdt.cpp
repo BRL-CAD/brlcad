@@ -3057,6 +3057,19 @@ ON_Brep_CDT_Mesh(
 			} else {
 			    tri_add = s_cdt->p2t_extra_faces[face_index];
 			}
+
+			// TODO - the logic below only works if one extra point on the edge must be
+			// handled for this triangle.  That's not going to cut it - NIST 2 has
+			// an example of a case where we need to split triangles more than once.
+			// For each non-zero-area triangle with two points on this edge, we
+			// need to build the polygon with that triangle and all extra points on the
+			// Brep edge contained by the triangle's edge.  Then, use poly2tri to
+			// triangulate in the triangle's 2D plane (rather than the NURBS parametric
+			// space) so we get a triangulation that doesn't have degenerate faces and
+			// accounts for all points.  The 3D faces corresponding to the new triangulation
+			// are the ones that will replace the old face.
+
+
 			p2t::Point *p2_A = m->GetPoint(0);
 			p2t::Point *p2_B = m->GetPoint(1);
 			p2t::Point *p2_C = m->GetPoint(2);
