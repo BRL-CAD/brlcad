@@ -3156,7 +3156,14 @@ ON_Brep_CDT_Mesh(
 	    }
 	    if (involved_pnt_cnt > 1) {
 		bu_log("Have involved triangle in face %d\n", face_index);
-	
+		std::vector<p2t::Point *> polyline;
+
+		// TODO - construct the plane of this face, project 3D points
+		// into that plane to get new 2D coordinates specific to this
+		// face, and then make new p2t points from those 2D coordinates.
+		// Won't be using the NURBS 2D for this part, so existing
+		// p2t points won't help.
+
 		// Any or all of the edges of the triangle may have orphan
 		// points associated with them - if both edge points are
 		// involved, we have to check.
@@ -3165,7 +3172,9 @@ ON_Brep_CDT_Mesh(
 		    p2t::Point *p2 = (j < 2) ? t2dpnts[j+1] : t2dpnts[0];
 		    if (fdp->find(p1) != fdp->end() && fdp->find(p2) != fdp->end()) {
 			std::set<ON_3dPoint *> edge_3d_pnts;
+			std::map<double, ON_3dPoint *> ordered_new_pnts;
 			ON_3dPoint *op1 = (*pointmap)[p1];
+			//polyline.push_back(new_2d_op1);
 			ON_3dPoint *op2 = (*pointmap)[p2];
 			edge_3d_pnts.insert(op1);
 			edge_3d_pnts.insert(op2);
@@ -3186,6 +3195,7 @@ ON_Brep_CDT_Mesh(
 					if (tp > t1 && tp < t2) {
 					    bu_log("point on tri edge(%f,%f): %f %f %f (%f)\n", t1, t2, p3d->x, p3d->y, p3d->z, tp);
 					    edge_3d_pnts.insert(p3d);
+					    ordered_new_pnts[tp] = p3d;
 					} else {
 					    //bu_log("point on tri line but not on edge(%f,%f): %f %f %f (%f)\n", t1, t2, p3d->x, p3d->y, p3d->z, tp);
 					}
@@ -3193,6 +3203,23 @@ ON_Brep_CDT_Mesh(
 				}
 			    }
 			}
+
+			// Have all new points on edge, add to polyline
+			if (t1 < t2) {
+			    std::map<double, ON_3dPoint *>::iterator m_it;
+			    for (m_it = ordered_new_pnts.begin(); m_it != ordered_new_pnts.end(); m_it++) {
+				//ON_3dPoint *p = (*m_it).second;
+				//polyline.push_back(new_2d_p);
+			    }
+			} else {
+			    // todo - reverse iterator...
+			    //std::map<double, ON_3dPoint *>::iterator m_it;
+			}
+		    }
+
+		    // I think(?) - need to close the loop
+		    if (j == 2) {
+			//polyline.push_back(new_2d_op2);
 		    }
 		}
 
