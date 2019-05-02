@@ -3139,6 +3139,7 @@ ON_Brep_CDT_Mesh(
 	}
    	p2t::CDT *cdt = s_cdt->p2t_faces[face_index];
 	std::map<p2t::Point *, ON_3dPoint *> *pointmap = s_cdt->tri_to_on3_maps[face_index];
+	std::map<p2t::Point *, ON_3dPoint *> *normalmap = s_cdt->tri_to_on3_norm_maps[face_index];
 	std::vector<p2t::Triangle*> tris = cdt->GetTriangles();
 	for (size_t i = 0; i < tris.size(); i++) {
 	    p2t::Triangle *t = tris[i];
@@ -3170,8 +3171,26 @@ ON_Brep_CDT_Mesh(
 		for (size_t j = 0; j < 3; j++) {
 		    t3dpnts[j] = (*pointmap)[t2dpnts[j]];
 		}
+		int normal_backwards = 0;
 		ON_Plane fplane(*t3dpnts[0], *t3dpnts[1], *t3dpnts[2]);
-		// TODO - check fplane normal against face normal(s)...
+
+		// To verify sanity, check fplane normal against face normals
+		for (size_t j = 0; j < 3; j++) {
+		    ON_3dVector pv = (*(*normalmap)[t2dpnts[j]]);
+		    if (ON_DotProduct(pv, fplane.Normal()) < 0) {
+			normal_backwards++;
+		    }
+		}
+		if (normal_backwards > 0) {
+		    if (normal_backwards == 3) {
+			fplane.Flip();
+			bu_log("flipped plane\n");
+		    } else {
+			bu_log("Only %d of the face normals agree with the plane normal??\n", 3 - normal_backwards);
+		    }
+		}
+
+		// Project the 3D face points onto the plane
 		for (size_t j = 0; j < 3; j++) {
 		    double u,v;
 		    fplane.ClosestPointTo(*t3dpnts[j], &u, &v);
@@ -3188,12 +3207,12 @@ ON_Brep_CDT_Mesh(
 		for (size_t j = 0; j < 3; j++) {
 		    p2t::Point *p1 = t2dpnts[j];
 		    p2t::Point *p2 = (j < 2) ? t2dpnts[j+1] : t2dpnts[0];
+		    ON_3dPoint *op1 = (*pointmap)[p1];
+		    polyline.push_back(old2d_to_new2d[p1]);
 		    if (fdp->find(p1) != fdp->end() && fdp->find(p2) != fdp->end()) {
 			std::set<ON_3dPoint *> edge_3d_pnts;
 			std::map<double, ON_3dPoint *> ordered_new_pnts;
-			ON_3dPoint *op1 = (*pointmap)[p1];
-			polyline.push_back(old2d_to_new2d[p1]);
-			ON_3dPoint *op2 = (*pointmap)[p2];
+					ON_3dPoint *op2 = (*pointmap)[p2];
 			edge_3d_pnts.insert(op1);
 			edge_3d_pnts.insert(op2);
 			ON_Line eline3d(*op1, *op2);
@@ -3228,7 +3247,7 @@ ON_Brep_CDT_Mesh(
 			    }
 			}
 
-			// Have all new points on edge, add to polyline
+			// Have all new points on edge, add to polyline in edge order
 			if (t1 < t2) {
 			    std::map<double, ON_3dPoint *>::iterator m_it;
 			    for (m_it = ordered_new_pnts.begin(); m_it != ordered_new_pnts.end(); m_it++) {
@@ -3236,8 +3255,11 @@ ON_Brep_CDT_Mesh(
 				polyline.push_back(on3d_to_new2d[p3d]);
 			    }
 			} else {
-			    // todo - reverse iterator...
-			    //std::map<double, ON_3dPoint *>::iterator m_it;
+			    std::map<double, ON_3dPoint *>::reverse_iterator m_it;
+			    for (m_it = ordered_new_pnts.rbegin(); m_it != ordered_new_pnts.rend(); m_it++) {
+				ON_3dPoint *p3d = (*m_it).second;
+				polyline.push_back(on3d_to_new2d[p3d]);
+			    }
 			}
 		    }
 
@@ -3247,6 +3269,14 @@ ON_Brep_CDT_Mesh(
 		    }
 		}
 
+		// Have polyline, do CDT
+		bu_log("polyline cnt: %zd\n", polyline.size());
+		if (polyline.size() > 4) {
+		    p2t::CDT *fcdt = new p2t::CDT(polyline);
+		    fcdt->Triangulate(true, -1);
+		    std::vector<p2t::Triangle*> ftris = fcdt->GetTriangles();
+		    bu_log("Have %zd new faces\n", ftris.size());
+		}
 	    }
 	}
     }
