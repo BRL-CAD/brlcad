@@ -2962,6 +2962,47 @@ ON_Brep_CDT_Mesh(
 
     }
 
+#if 0
+    // Do a second pass over the remaining non-degenerate faces, looking for
+    // near-zero length edges.  These indicate that there may be 3D points we
+    // need to consolidate.  Ideally shouldn't get this from edge points, but
+    // the surface points could conceivably introduce such points.
+    int consolidated_points = 0;
+    for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
+	p2t::CDT *cdt = s_cdt->p2t_faces[face_index];
+	std::map<p2t::Point *, ON_3dPoint *> *pointmap = s_cdt->tri_to_on3_maps[face_index];
+	std::vector<p2t::Triangle*> tris = cdt->GetTriangles();
+	triangle_cnt += tris.size();
+	for (size_t i = 0; i < tris.size(); i++) {
+	    std::set<ON_3dPoint *> c_cand;
+	    p2t::Triangle *t = tris[i];
+	    if (tris_degen.find(t) != tris_degen.end()) {
+		continue;
+	    }
+	    ON_3dPoint *tpnts[3] = {NULL, NULL, NULL};
+	    for (size_t j = 0; j < 3; j++) {
+		p2t::Point *p = t->GetPoint(j);
+		ON_3dPoint *op = (*pointmap)[p];
+		tpnts[j] = op;
+	    }
+	    fastf_t d1 = tpnts[0]->DistanceTo(*tpnts[1]);
+	    fastf_t d2 = tpnts[1]->DistanceTo(*tpnts[2]);
+	    fastf_t d3 = tpnts[2]->DistanceTo(*tpnts[0]);
+	    if (d1 < s_cdt->dist || d2 < s_cdt->dist || d3 < s_cdt->dist) {
+		bu_log("found consolidation candidate\n");
+		consolidated_points = 1;
+	    }
+	}
+    }
+    // After point consolidation, re-check for trivially degenerate triangles
+    if (consolidated_points) {
+	return 0;
+    }
+#endif
+
+    // We may still have a situation where three colinear points form a zero
+    // area face.  This is more complex to deal with, as it requires modifying
+    // non-degenerate faces in the neighborhood to incorporate different points.
     for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
 	p2t::CDT *cdt = s_cdt->p2t_faces[face_index];
 	std::map<p2t::Point *, ON_3dPoint *> *pointmap = s_cdt->tri_to_on3_maps[face_index];
@@ -3012,7 +3053,7 @@ ON_Brep_CDT_Mesh(
 
 		if (!s_cdt->face_degen_pnts[face_index]) {
 		    s_cdt->face_degen_pnts[face_index] = new std::set<p2t::Point *>;
-		}	    
+		}
 		s_cdt->face_degen_pnts[face_index]->insert(p2_A);
 		s_cdt->face_degen_pnts[face_index]->insert(p2_B);
 		s_cdt->face_degen_pnts[face_index]->insert(p2_C);
@@ -3037,7 +3078,7 @@ ON_Brep_CDT_Mesh(
 			}
 			std::set<p2t::Point *> tri_pnts = (*s_cdt->on3_to_tri_maps[f2ind])[pt_A];
 			std::set<p2t::Point *>::iterator tp_it;
-			for (tp_it == tri_pnts.begin(); tp_it != tri_pnts.end(); tp_it++) {
+			for (tp_it = tri_pnts.begin(); tp_it != tri_pnts.end(); tp_it++) {
 			    s_cdt->face_degen_pnts[f2ind]->insert(*tp_it);
 			}
 		    }
@@ -3051,7 +3092,7 @@ ON_Brep_CDT_Mesh(
 			}
 			std::set<p2t::Point *> tri_pnts = (*s_cdt->on3_to_tri_maps[f2ind])[pt_B];
 			std::set<p2t::Point *>::iterator tp_it;
-			for (tp_it == tri_pnts.begin(); tp_it != tri_pnts.end(); tp_it++) {
+			for (tp_it = tri_pnts.begin(); tp_it != tri_pnts.end(); tp_it++) {
 			    s_cdt->face_degen_pnts[f2ind]->insert(*tp_it);
 			}
 		    }
@@ -3065,7 +3106,7 @@ ON_Brep_CDT_Mesh(
 			}
 			std::set<p2t::Point *> tri_pnts = (*s_cdt->on3_to_tri_maps[f2ind])[pt_C];
 			std::set<p2t::Point *>::iterator tp_it;
-			for (tp_it == tri_pnts.begin(); tp_it != tri_pnts.end(); tp_it++) {
+			for (tp_it = tri_pnts.begin(); tp_it != tri_pnts.end(); tp_it++) {
 			    s_cdt->face_degen_pnts[f2ind]->insert(*tp_it);
 			}
 		    }
