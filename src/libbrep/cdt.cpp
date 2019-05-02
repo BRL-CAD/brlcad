@@ -46,6 +46,7 @@
 #include "bu/cv.h"
 #include "bu/opt.h"
 #include "bu/time.h"
+#include "bn/plot3.h"
 #include "bn/tol.h"
 #include "bn/vlist.h"
 #include "bg/trimesh.h"
@@ -54,7 +55,50 @@
 #include "brep/pullback.h"
 #include "brep/util.h"
 
+/***************************************************
+ * debugging routines
+ ***************************************************/
 
+void
+plot_polyline(std::vector<p2t::Point *> *pnts, const char *filename)
+{
+    FILE *plot = fopen(filename, "w");
+    int r = 255; int g = 0; int b = 0;
+    point_t pc;
+    pl_color(plot, r, g, b); 
+    for (size_t i = 0; i < pnts->size(); i++) {
+	p2t::Point *pt = (*pnts)[i];
+	VSET(pc, pt->x, pt->y, 0);
+	if (i == 0) {
+	    pdv_3move(plot, pc);
+	}
+	pdv_3cont(plot, pc);
+    }
+    fclose(plot);
+}
+
+
+void
+plot_tri(p2t::Triangle *t, const char *filename)
+{
+    FILE *plot = fopen(filename, "w");
+    int r = 0; int g = 255; int b = 0;
+    point_t pc;
+    pl_color(plot, r, g, b); 
+    for (size_t i = 0; i < 3; i++) {
+	p2t::Point *pt = t->GetPoint(i);
+	VSET(pc, pt->x, pt->y, 0);
+	if (i == 0) {
+	    pdv_3move(plot, pc);
+	}
+	pdv_3cont(plot, pc);
+    }
+    fclose(plot);
+}
+
+
+
+/***************************************************/
 typedef std::pair<ON_3dPoint *, ON_3dPoint *> Edge;
 typedef std::map< Edge, std::set<p2t::Triangle*> > EdgeToTri;
 
@@ -3212,7 +3256,7 @@ ON_Brep_CDT_Mesh(
 		    if (fdp->find(p1) != fdp->end() && fdp->find(p2) != fdp->end()) {
 			std::set<ON_3dPoint *> edge_3d_pnts;
 			std::map<double, ON_3dPoint *> ordered_new_pnts;
-					ON_3dPoint *op2 = (*pointmap)[p2];
+			ON_3dPoint *op2 = (*pointmap)[p2];
 			edge_3d_pnts.insert(op1);
 			edge_3d_pnts.insert(op2);
 			ON_Line eline3d(*op1, *op2);
@@ -3265,7 +3309,7 @@ ON_Brep_CDT_Mesh(
 
 		    // I think(?) - need to close the loop
 		    if (j == 2) {
-			polyline.push_back(on3d_to_new2d[(*pointmap)[p2]]);
+			polyline.push_back(old2d_to_new2d[p2]);
 		    }
 		}
 
@@ -3276,6 +3320,24 @@ ON_Brep_CDT_Mesh(
 		    fcdt->Triangulate(true, -1);
 		    std::vector<p2t::Triangle*> ftris = fcdt->GetTriangles();
 		    bu_log("Have %zd new faces\n", ftris.size());
+		    if (ftris.size() > polyline.size()) {
+			bu_log("weird face count: %zd\n", ftris.size());
+			for (size_t k = 0; k < polyline.size(); k++) {
+			    bu_log("polyline[%zd]: %f %f 0\n", k, polyline[k]->x, polyline[k]->y);
+			}
+
+			std::string pfile = std::string("polyline.plot3");
+			plot_polyline(&polyline, pfile.c_str());
+			for (size_t k = 0; k < ftris.size(); k++) {
+			    std::string tfile = std::string("tri-") + std::to_string(k) + std::string(".plot3");
+			    plot_tri(ftris[k], tfile.c_str());
+			    p2t::Point *p0 = ftris[k]->GetPoint(0);
+			    p2t::Point *p1 = ftris[k]->GetPoint(1);
+			    p2t::Point *p2 = ftris[k]->GetPoint(2);
+			    bu_log("tri[%zd]: %f %f -> %f %f -> %f %f\n", k, p0->x, p0->y, p1->x, p1->y, p2->x, p2->y);
+			}
+			bu_exit(1, "weird");
+		    }
 		}
 	    }
 	}
