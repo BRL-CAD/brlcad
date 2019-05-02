@@ -3146,18 +3146,56 @@ ON_Brep_CDT_Mesh(
 	    if (tris_degen.find(t) != tris_degen.end()) {
 		continue;
 	    }
+	    p2t::Point *t2dpnts[3] = {NULL, NULL, NULL};
 	    for (size_t j = 0; j < 3; j++) {
 		p2t::Point *p = t->GetPoint(j);
+		t2dpnts[j] = p;
 		if (fdp->find(p) != fdp->end()) {
 		    involved_pnt_cnt++;
 		}
 	    }
 	    if (involved_pnt_cnt > 1) {
 		bu_log("Have involved triangle in face %d\n", face_index);
+	
+		// Any or all of the edges of the triangle may have orphan
+		// points associated with them - if both edge points are
+		// involved, we have to check.
 		for (size_t j = 0; j < 3; j++) {
-		    ON_3dPoint *op = (*pointmap)[t->GetPoint(j)];
-		    bu_log("tri(%zu): %f %f %f\n", j, op->x, op->y, op->z);
+		    p2t::Point *p1 = t2dpnts[j];
+		    p2t::Point *p2 = (j < 2) ? t2dpnts[j+1] : t2dpnts[0];
+		    if (fdp->find(p1) != fdp->end() && fdp->find(p2) != fdp->end()) {
+			std::set<ON_3dPoint *> edge_3d_pnts;
+			ON_3dPoint *op1 = (*pointmap)[p1];
+			ON_3dPoint *op2 = (*pointmap)[p2];
+			edge_3d_pnts.insert(op1);
+			edge_3d_pnts.insert(op2);
+			ON_Line eline3d(*op1, *op2);
+			double t1, t2;
+			eline3d.ClosestPointTo(*op1, &t1);
+			eline3d.ClosestPointTo(*op2, &t2);
+			bu_log("involved tri edge(%f,%f): %f %f %f -> %f %f %f\n", t1, t2, op1->x, op1->y, op1->z, op2->x, op2->y, op2->z);
+			std::set<p2t::Point *>::iterator fdp_it;
+			for (fdp_it = fdp->begin(); fdp_it != fdp->end(); fdp_it++) {
+			    p2t::Point *p = *fdp_it;
+			    if (p != p1 && p != p2) {
+				ON_3dPoint *p3d = (*pointmap)[p];
+				if (edge_3d_pnts.find(p3d) == edge_3d_pnts.end()) {
+				    if (eline3d.DistanceTo(*p3d) < s_cdt->dist) {
+					double tp;
+					eline3d.ClosestPointTo(*p3d, &tp);
+					if (tp > t1 && tp < t2) {
+					    bu_log("point on tri edge(%f,%f): %f %f %f (%f)\n", t1, t2, p3d->x, p3d->y, p3d->z, tp);
+					    edge_3d_pnts.insert(p3d);
+					} else {
+					    //bu_log("point on tri line but not on edge(%f,%f): %f %f %f (%f)\n", t1, t2, p3d->x, p3d->y, p3d->z, tp);
+					}
+				    }
+				}
+			    }
+			}
+		    }
 		}
+
 	    }
 	}
     }
