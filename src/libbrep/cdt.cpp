@@ -3156,17 +3156,35 @@ ON_Brep_CDT_Mesh(
 	    }
 	    if (involved_pnt_cnt > 1) {
 		bu_log("Have involved triangle in face %d\n", face_index);
-		std::vector<p2t::Point *> polyline;
 
 		// TODO - construct the plane of this face, project 3D points
 		// into that plane to get new 2D coordinates specific to this
 		// face, and then make new p2t points from those 2D coordinates.
 		// Won't be using the NURBS 2D for this part, so existing
 		// p2t points won't help.
+		std::vector<p2t::Point *>new_2dpnts;
+		std::map<p2t::Point *, p2t::Point *> new2d_to_old2d;
+		std::map<p2t::Point *, p2t::Point *> old2d_to_new2d;
+		std::map<ON_3dPoint *, p2t::Point *> on3d_to_new2d;
+		ON_3dPoint *t3dpnts[3] = {NULL, NULL, NULL};
+		for (size_t j = 0; j < 3; j++) {
+		    t3dpnts[j] = (*pointmap)[t2dpnts[j]];
+		}
+		ON_Plane fplane(*t3dpnts[0], *t3dpnts[1], *t3dpnts[2]);
+		// TODO - check fplane normal against face normal(s)...
+		for (size_t j = 0; j < 3; j++) {
+		    double u,v;
+		    fplane.ClosestPointTo(*t3dpnts[j], &u, &v);
+		    p2t::Point *np = new p2t::Point(u, v);
+		    new2d_to_old2d[np] = t2dpnts[j];
+		    old2d_to_new2d[t2dpnts[j]] = np;
+		    on3d_to_new2d[t3dpnts[j]] = np;
+		}
 
 		// Any or all of the edges of the triangle may have orphan
 		// points associated with them - if both edge points are
 		// involved, we have to check.
+		std::vector<p2t::Point *> polyline;
 		for (size_t j = 0; j < 3; j++) {
 		    p2t::Point *p1 = t2dpnts[j];
 		    p2t::Point *p2 = (j < 2) ? t2dpnts[j+1] : t2dpnts[0];
@@ -3174,7 +3192,7 @@ ON_Brep_CDT_Mesh(
 			std::set<ON_3dPoint *> edge_3d_pnts;
 			std::map<double, ON_3dPoint *> ordered_new_pnts;
 			ON_3dPoint *op1 = (*pointmap)[p1];
-			//polyline.push_back(new_2d_op1);
+			polyline.push_back(old2d_to_new2d[p1]);
 			ON_3dPoint *op2 = (*pointmap)[p2];
 			edge_3d_pnts.insert(op1);
 			edge_3d_pnts.insert(op2);
@@ -3196,6 +3214,12 @@ ON_Brep_CDT_Mesh(
 					    bu_log("point on tri edge(%f,%f): %f %f %f (%f)\n", t1, t2, p3d->x, p3d->y, p3d->z, tp);
 					    edge_3d_pnts.insert(p3d);
 					    ordered_new_pnts[tp] = p3d;
+					    double u,v;
+					    fplane.ClosestPointTo(*p3d, &u, &v);
+					    p2t::Point *np = new p2t::Point(u, v);
+					    new2d_to_old2d[np] = p;
+					    old2d_to_new2d[p] = np;
+					    on3d_to_new2d[p3d] = np;
 					} else {
 					    //bu_log("point on tri line but not on edge(%f,%f): %f %f %f (%f)\n", t1, t2, p3d->x, p3d->y, p3d->z, tp);
 					}
@@ -3208,8 +3232,8 @@ ON_Brep_CDT_Mesh(
 			if (t1 < t2) {
 			    std::map<double, ON_3dPoint *>::iterator m_it;
 			    for (m_it = ordered_new_pnts.begin(); m_it != ordered_new_pnts.end(); m_it++) {
-				//ON_3dPoint *p = (*m_it).second;
-				//polyline.push_back(new_2d_p);
+				ON_3dPoint *p3d = (*m_it).second;
+				polyline.push_back(on3d_to_new2d[p3d]);
 			    }
 			} else {
 			    // todo - reverse iterator...
@@ -3219,7 +3243,7 @@ ON_Brep_CDT_Mesh(
 
 		    // I think(?) - need to close the loop
 		    if (j == 2) {
-			//polyline.push_back(new_2d_op2);
+			polyline.push_back(on3d_to_new2d[(*pointmap)[p2]]);
 		    }
 		}
 
