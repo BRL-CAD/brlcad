@@ -3058,6 +3058,8 @@ ON_Brep_CDT_Mesh(
 		s_cdt->face_degen_pnts[face_index]->insert(p2_B);
 		s_cdt->face_degen_pnts[face_index]->insert(p2_C);
 
+		bu_log("Have zero area tri in face %d\n", face_index);
+
 		/* If we have degeneracies along an edge, the impact is not
 		 * local to this face but will also impact the other face.
 		 * Find it and let it know.(probably need another map - 3d pnt
@@ -3073,6 +3075,7 @@ ON_Brep_CDT_Mesh(
 		    BrepTrimPoint *tpt = *bit;
 		    int f2ind = s_cdt->brep->m_T[tpt->trim_ind].Face()->m_face_index;
 		    if (f2ind != face_index) {
+			bu_log("Pulls in face %d\n", f2ind);
 			if (!s_cdt->face_degen_pnts[f2ind]) {
 			    s_cdt->face_degen_pnts[f2ind] = new std::set<p2t::Point *>;
 			}
@@ -3087,6 +3090,7 @@ ON_Brep_CDT_Mesh(
 		    BrepTrimPoint *tpt = *bit;
 		    int f2ind = s_cdt->brep->m_T[tpt->trim_ind].Face()->m_face_index;
 		    if (f2ind != face_index) {
+			bu_log("Pulls in face %d\n", f2ind);
 			if (!s_cdt->face_degen_pnts[f2ind]) {
 			    s_cdt->face_degen_pnts[f2ind] = new std::set<p2t::Point *>;
 			}
@@ -3101,6 +3105,7 @@ ON_Brep_CDT_Mesh(
 		    BrepTrimPoint *tpt = *bit;
 		    int f2ind = s_cdt->brep->m_T[tpt->trim_ind].Face()->m_face_index;
 		    if (f2ind != face_index) {
+			bu_log("Pulls in face %d\n", f2ind);
 			if (!s_cdt->face_degen_pnts[f2ind]) {
 			    s_cdt->face_degen_pnts[f2ind] = new std::set<p2t::Point *>;
 			}
@@ -3116,7 +3121,6 @@ ON_Brep_CDT_Mesh(
 		tris_degen.insert(t);
 		tris_zero_3D_area.insert(t);
 
-
 	    }
 	}
     }
@@ -3128,6 +3132,37 @@ ON_Brep_CDT_Mesh(
      * An "involved" triangle is a triangle with two of its three points in the
      * face's degen_pnts set.
      */
+    for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
+	std::set<p2t::Point *> *fdp = s_cdt->face_degen_pnts[face_index];
+	if (!fdp) {
+	    continue;
+	}
+   	p2t::CDT *cdt = s_cdt->p2t_faces[face_index];
+	std::map<p2t::Point *, ON_3dPoint *> *pointmap = s_cdt->tri_to_on3_maps[face_index];
+	std::vector<p2t::Triangle*> tris = cdt->GetTriangles();
+	for (size_t i = 0; i < tris.size(); i++) {
+	    p2t::Triangle *t = tris[i];
+	    int involved_pnt_cnt = 0;
+	    if (tris_degen.find(t) != tris_degen.end()) {
+		continue;
+	    }
+	    for (size_t j = 0; j < 3; j++) {
+		p2t::Point *p = t->GetPoint(j);
+		if (fdp->find(p) != fdp->end()) {
+		    involved_pnt_cnt++;
+		}
+	    }
+	    if (involved_pnt_cnt > 1) {
+		bu_log("Have involved triangle in face %d\n", face_index);
+		for (size_t j = 0; j < 3; j++) {
+		    ON_3dPoint *op = (*pointmap)[t->GetPoint(j)];
+		    bu_log("tri(%zu): %f %f %f\n", j, op->x, op->y, op->z);
+		}
+	    }
+	}
+    }
+
+    return 0;
 
     //bu_log("tri_cnt_init: %zd\n", triangle_cnt);
     for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
