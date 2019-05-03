@@ -14,7 +14,7 @@ set(LIBBG_SOURCES
   clipper.cxx
   obr.c
   polygon.c
-  polygon_ear_clipping.c
+  polygon_triangulate.cxx
   polygon_point_in.c
   spsr.c
   tri_ray.c

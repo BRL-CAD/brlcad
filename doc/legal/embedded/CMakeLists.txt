@@ -8,7 +8,7 @@ set(embedded_licenses
   db_nist-info.txt
   dehumanize.txt
   DejaVu_Fonts.txt
-  ear_clipping.txt
+  earcut.txt
   fnmatch.txt
   fontstash.txt
   gct.txt

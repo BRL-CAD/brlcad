@@ -3318,61 +3318,54 @@ ON_Brep_CDT_Mesh(
 		bu_log("polyline cnt: %zd\n", polyline.size());
 		if (polyline.size() > 4) {
 
-		    p2t::CDT *fcdt = new p2t::CDT(polyline);
-		    fcdt->Triangulate(true, -1);
-		    std::vector<p2t::Triangle*> ftris = fcdt->GetTriangles();
-		    bu_log("Have %zd new faces\n", ftris.size());
-		    if (ftris.size() > polyline.size()) {
-			bu_log("weird face count: %zd\n", ftris.size());
-			for (size_t k = 0; k < polyline.size(); k++) {
-			    bu_log("polyline[%zd]: %0.17f, %0.17f 0\n", k, polyline[k]->x, polyline[k]->y);
-			}
+		    // First, try ear clipping method
+		    std::map<size_t, p2t::Point *> ec_to_p2t;
+		    point2d_t *ec_pnts = (point2d_t *)bu_calloc(polyline.size(), sizeof(point2d_t), "ear clipping point array");
+		    for (size_t k = 0; k < polyline.size()-1; k++) {
+			p2t::Point *p2tp = polyline[k];
+			V2SET(ec_pnts[k], p2tp->x, p2tp->y);
+			ec_to_p2t[k] = p2tp;
+		    }
 
-			std::string pfile = std::string("polyline.plot3");
-			plot_polyline(&polyline, pfile.c_str());
-			for (size_t k = 0; k < ftris.size(); k++) {
-			    std::string tfile = std::string("tri-") + std::to_string(k) + std::string(".plot3");
-			    plot_tri(ftris[k], tfile.c_str());
-			    p2t::Point *p0 = ftris[k]->GetPoint(0);
-			    p2t::Point *p1 = ftris[k]->GetPoint(1);
-			    p2t::Point *p2 = ftris[k]->GetPoint(2);
-			    bu_log("tri[%zd]: %f %f -> %f %f -> %f %f\n", k, p0->x, p0->y, p1->x, p1->y, p2->x, p2->y);
-			}
-#if 0
-			std::reverse(polyline.begin(), polyline.end());
-			delete fcdt;
-			fcdt = new p2t::CDT(polyline);
+		    int *ecfaces;
+		    int num_faces;
+
+		    if (bg_polygon_triangulate(&ecfaces, &num_faces, NULL, NULL, ec_pnts, polyline.size()-1, EAR_CLIPPING)) {
+
+			// Didn't work, see if poly2tri can handle it
+			bu_log("ec triangulate failed\n");
+			p2t::CDT *fcdt = new p2t::CDT(polyline);
 			fcdt->Triangulate(true, -1);
-			ftris = fcdt->GetTriangles();
-			bu_log("Try 2: have %zd new faces\n", ftris.size());
+			std::vector<p2t::Triangle*> ftris = fcdt->GetTriangles();
 			if (ftris.size() > polyline.size()) {
-			    bu_log("still have weird face count: %zd\n", ftris.size());
-			}
+#if 0
+			    bu_log("weird face count: %zd\n", ftris.size());
+			    for (size_t k = 0; k < polyline.size(); k++) {
+				bu_log("polyline[%zd]: %0.17f, %0.17f 0\n", k, polyline[k]->x, polyline[k]->y);
+			    }
+
+			    std::string pfile = std::string("polyline.plot3");
+			    plot_polyline(&polyline, pfile.c_str());
+			    for (size_t k = 0; k < ftris.size(); k++) {
+				std::string tfile = std::string("tri-") + std::to_string(k) + std::string(".plot3");
+				plot_tri(ftris[k], tfile.c_str());
+				p2t::Point *p0 = ftris[k]->GetPoint(0);
+				p2t::Point *p1 = ftris[k]->GetPoint(1);
+				p2t::Point *p2 = ftris[k]->GetPoint(2);
+				bu_log("tri[%zd]: %f %f -> %f %f -> %f %f\n", k, p0->x, p0->y, p1->x, p1->y, p2->x, p2->y);
+			    }
 #endif
 
-			std::map<size_t, p2t::Point *> ec_to_p2t;
-			point2d_t *ec_pnts = (point2d_t *)bu_calloc(polyline.size(), sizeof(point2d_t), "ear clipping point array");
-			for (size_t k = 0; k < polyline.size()-1; k++) {
-			    p2t::Point *p2tp = polyline[k];
-			    V2SET(ec_pnts[k], p2tp->x, p2tp->y);
-			    ec_to_p2t[k] = p2tp;
-			}
-
-			int *ecfaces;
-			int num_faces;
-
-			if (bg_polygon_triangulate(&ecfaces, &num_faces, NULL, NULL, ec_pnts, polyline.size()-1, EAR_CLIPPING)) {
-			    bu_log("ec triangulate failed\n");
 			} else {
-			    bu_log("ec triangulate found %d faces\n", num_faces);
-			    for (int k = 0; k < num_faces; k++) {
-				bu_log("tri[%d]: %d -> %d -> %d\n", k, ecfaces[3*k], ecfaces[3*k+1], ecfaces[3*k+2]);
-				bu_log("tri[%d]: %f %f -> \n", k, ec_pnts[ecfaces[3*k]][X], ec_pnts[ecfaces[3*k]][Y]);
-			    }
+			    bu_log("Poly2Tri: found %zd faces\n", ftris.size());
 			}
 
-
-			bu_exit(1, "weird");
+		    } else {
+			bu_log("ec triangulate found %d faces\n", num_faces);
+			for (int k = 0; k < num_faces; k++) {
+			    bu_log("tri[%d]: %d -> %d -> %d\n", k, ecfaces[3*k], ecfaces[3*k+1], ecfaces[3*k+2]);
+			    bu_log("tri[%d]: %f %f -> %f %f -> %f %f\n", k, ec_pnts[ecfaces[3*k]][X], ec_pnts[ecfaces[3*k]][Y], ec_pnts[ecfaces[3*k+1]][X], ec_pnts[ecfaces[3*k+1]][Y], ec_pnts[ecfaces[3*k+2]][X], ec_pnts[ecfaces[3*k+2]][Y]);
+			}
 		    }
 		}
 	    }
