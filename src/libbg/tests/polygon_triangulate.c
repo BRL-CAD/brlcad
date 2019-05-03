@@ -42,10 +42,20 @@
 
 /* TODO - need some more stressful tests, particularly for hole removal */
 
+static void
+_tess_report(int *faces, int num_faces, int test_num)
+{
+    bu_log("Test %d: generated %d faces: \n", test_num, num_faces);
+    for (int i = 0; i < num_faces; i++) {
+	bu_log("%d: %d -> %d -> %d\n", i, faces[3*i], faces[3*i+1], faces[3*i+2]);
+    }
+}
+
 int
 main(int UNUSED(argc), const char **UNUSED(argv))
 {
     int ret;
+
     {
 	size_t num_points = 0;
 	int num_faces = 0;
@@ -103,6 +113,8 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 	if (ret) {
 	    bu_log("test 1 failure!\n");
 	    return 1;
+	} else {
+	    _tess_report(faces, num_faces, 1);
 	}
     }
     {
@@ -132,6 +144,8 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 	if (ret) {
 	    bu_log("test 2 failure!\n");
 	    return 1;
+	} else {
+	    _tess_report(faces, num_faces, 2);
 	}
     }
 
@@ -171,6 +185,8 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 	if (ret) {
 	    bu_log("Nested clipping 1 fail\n");
 	    return 1;
+	} else {
+	    _tess_report(faces, num_faces, 3);
 	}
     }
 
@@ -206,9 +222,10 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 	if (ret) {
 	    bu_log("Nested clipping 2 fail\n");
 	    return 1;
+	} else {
+	    _tess_report(faces, num_faces, 4);
 	}
     }
-
 
     /* Four point triangle */
    {
@@ -228,6 +245,8 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 	if (ret) {
 	    bu_log("4 point triangle failure!\n");
 	    return 1;
+	} else {
+	    _tess_report(faces, num_faces, 5);
 	}
     }
 
