@@ -3103,7 +3103,7 @@ ON_Brep_CDT_Mesh(
 		s_cdt->face_degen_pnts[face_index]->insert(p2_B);
 		s_cdt->face_degen_pnts[face_index]->insert(p2_C);
 
-		bu_log("Have zero area tri in face %d\n", face_index);
+		//bu_log("Have zero area tri in face %d\n", face_index);
 
 		/* If we have degeneracies along an edge, the impact is not
 		 * local to this face but will also impact the other face.
@@ -3120,7 +3120,7 @@ ON_Brep_CDT_Mesh(
 		    BrepTrimPoint *tpt = *bit;
 		    int f2ind = s_cdt->brep->m_T[tpt->trim_ind].Face()->m_face_index;
 		    if (f2ind != face_index) {
-			bu_log("Pulls in face %d\n", f2ind);
+			//bu_log("Pulls in face %d\n", f2ind);
 			if (!s_cdt->face_degen_pnts[f2ind]) {
 			    s_cdt->face_degen_pnts[f2ind] = new std::set<p2t::Point *>;
 			}
@@ -3135,7 +3135,7 @@ ON_Brep_CDT_Mesh(
 		    BrepTrimPoint *tpt = *bit;
 		    int f2ind = s_cdt->brep->m_T[tpt->trim_ind].Face()->m_face_index;
 		    if (f2ind != face_index) {
-			bu_log("Pulls in face %d\n", f2ind);
+			//bu_log("Pulls in face %d\n", f2ind);
 			if (!s_cdt->face_degen_pnts[f2ind]) {
 			    s_cdt->face_degen_pnts[f2ind] = new std::set<p2t::Point *>;
 			}
@@ -3150,7 +3150,7 @@ ON_Brep_CDT_Mesh(
 		    BrepTrimPoint *tpt = *bit;
 		    int f2ind = s_cdt->brep->m_T[tpt->trim_ind].Face()->m_face_index;
 		    if (f2ind != face_index) {
-			bu_log("Pulls in face %d\n", f2ind);
+			//bu_log("Pulls in face %d\n", f2ind);
 			if (!s_cdt->face_degen_pnts[f2ind]) {
 			    s_cdt->face_degen_pnts[f2ind] = new std::set<p2t::Point *>;
 			}
@@ -3211,7 +3211,7 @@ ON_Brep_CDT_Mesh(
 		}
 	    }
 	    if (involved_pnt_cnt > 1) {
-		bu_log("Have involved triangle in face %d\n", face_index);
+		//bu_log("Have involved triangle in face %d\n", face_index);
 
 		// TODO - construct the plane of this face, project 3D points
 		// into that plane to get new 2D coordinates specific to this
@@ -3274,7 +3274,7 @@ ON_Brep_CDT_Mesh(
 			double t1, t2;
 			eline3d.ClosestPointTo(*op1, &t1);
 			eline3d.ClosestPointTo(*op2, &t2);
-			bu_log("involved tri edge(%f,%f): %f %f %f -> %f %f %f\n", t1, t2, op1->x, op1->y, op1->z, op2->x, op2->y, op2->z);
+			//bu_log("involved tri edge(%f,%f): %f %f %f -> %f %f %f\n", t1, t2, op1->x, op1->y, op1->z, op2->x, op2->y, op2->z);
 			std::set<p2t::Point *>::iterator fdp_it;
 			for (fdp_it = fdp->begin(); fdp_it != fdp->end(); fdp_it++) {
 			    p2t::Point *p = *fdp_it;
@@ -3285,7 +3285,7 @@ ON_Brep_CDT_Mesh(
 					double tp;
 					eline3d.ClosestPointTo(*p3d, &tp);
 					if (tp > t1 && tp < t2) {
-					    bu_log("point on tri edge(%f,%f): %f %f %f (%f)\n", t1, t2, p3d->x, p3d->y, p3d->z, tp);
+					    //bu_log("point on tri edge(%f,%f): %f %f %f (%f)\n", t1, t2, p3d->x, p3d->y, p3d->z, tp);
 					    edge_3d_pnts.insert(p3d);
 					    ordered_new_pnts[tp] = p3d;
 					    double u,v;
@@ -3343,7 +3343,7 @@ ON_Brep_CDT_Mesh(
 		    if (bg_polygon_triangulate(&ecfaces, &num_faces, NULL, NULL, ec_pnts, polyline.size()-1, EAR_CLIPPING)) {
 
 			// Didn't work, see if poly2tri can handle it
-			bu_log("ec triangulate failed\n");
+			//bu_log("ec triangulate failed\n");
 			p2t::CDT *fcdt = new p2t::CDT(polyline);
 			fcdt->Triangulate(true, -1);
 			std::vector<p2t::Triangle*> ftris = fcdt->GetTriangles();
@@ -3375,10 +3375,10 @@ ON_Brep_CDT_Mesh(
 			}
 
 		    } else {
-			bu_log("ec triangulate found %d faces\n", num_faces);
+			//bu_log("ec triangulate found %d faces\n", num_faces);
 			for (int k = 0; k < num_faces; k++) {
-			    bu_log("tri[%d]: %d -> %d -> %d\n", k, ecfaces[3*k], ecfaces[3*k+1], ecfaces[3*k+2]);
-			    bu_log("tri[%d]: %f %f -> %f %f -> %f %f\n", k, ec_pnts[ecfaces[3*k]][X], ec_pnts[ecfaces[3*k]][Y], ec_pnts[ecfaces[3*k+1]][X], ec_pnts[ecfaces[3*k+1]][Y], ec_pnts[ecfaces[3*k+2]][X], ec_pnts[ecfaces[3*k+2]][Y]);
+			    //bu_log("tri[%d]: %d -> %d -> %d\n", k, ecfaces[3*k], ecfaces[3*k+1], ecfaces[3*k+2]);
+			    //bu_log("tri[%d]: %f %f -> %f %f -> %f %f\n", k, ec_pnts[ecfaces[3*k]][X], ec_pnts[ecfaces[3*k]][Y], ec_pnts[ecfaces[3*k+1]][X], ec_pnts[ecfaces[3*k+1]][Y], ec_pnts[ecfaces[3*k+2]][X], ec_pnts[ecfaces[3*k+2]][Y]);
 
 			    p2t::Point *p2_1 = new2d_to_old2d[ec_to_p2t[ecfaces[3*k]]];
 			    p2t::Point *p2_2 = new2d_to_old2d[ec_to_p2t[ecfaces[3*k+1]]];
@@ -3386,17 +3386,19 @@ ON_Brep_CDT_Mesh(
 			    p2t::Triangle *nt = new p2t::Triangle(*p2_1, *p2_2, *p2_3);
 			    tri_add->push_back(nt);
 			}
+			// We split the original triangle, so it's now replaced/degenerate in the tessellation
+			tris_degen.insert(t);
+			triangle_cnt--;
 		    }
 		} else {
-		    bu_log("Eh? Not enough points in polyline for an involved face...\n");
+		    // Point count doesn't indicate any need to split, we should be good...
+		    //bu_log("Not enough points in polyline to require splitting\n");
 		}
 	    }
 	}
     }
 
-    return 0;
-
-    //bu_log("tri_cnt_init: %zd\n", triangle_cnt);
+    bu_log("tri_cnt_init: %zd\n", triangle_cnt);
     for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
 	std::vector<p2t::Triangle *> *tri_add = s_cdt->p2t_extra_faces[face_index];
 	if (!tri_add) {
@@ -3404,7 +3406,7 @@ ON_Brep_CDT_Mesh(
 	}
 	triangle_cnt += tri_add->size();
     }
-    //bu_log("tri_cnt_init+: %zd\n", triangle_cnt);
+    bu_log("tri_cnt_init+: %zd\n", triangle_cnt);
 
 
     // Know how many faces and points now - initialize BoT container.
