@@ -3250,14 +3250,21 @@ ON_Brep_CDT_Mesh(
 		}
 
 		// Project the 3D face points onto the plane
+		double ucent = 0;
+		double vcent = 0;
 		for (size_t j = 0; j < 3; j++) {
 		    double u,v;
 		    fplane.ClosestPointTo(*t3dpnts[j], &u, &v);
+		    ucent += u;
+		    vcent += v;
 		    p2t::Point *np = new p2t::Point(u, v);
 		    new2d_to_old2d[np] = t2dpnts[j];
 		    old2d_to_new2d[t2dpnts[j]] = np;
 		    on3d_to_new2d[t3dpnts[j]] = np;
 		}
+		ucent = ucent/3;
+		vcent = vcent/3;
+		ON_2dPoint tcent(ucent, vcent);
 
 		// Any or all of the edges of the triangle may have orphan
 		// points associated with them - if both edge points are
@@ -3278,9 +3285,9 @@ ON_Brep_CDT_Mesh(
 			// able to nudge the points off the line without ill effect.
 			ON_2dPoint p2d1(p1->x, p1->y);
 			ON_2dPoint p2d2(p2->x, p2->y);
-			ON_2dVector ptb;
+			ON_2dPoint pmid = (p2d2 + p2d1)/2;
+			ON_2dVector ptb = pmid - tcent;
 			fastf_t edge_len = p2d1.DistanceTo(p2d2);
-			ptb.PerpendicularTo(p2d1, p2d2);
 			ptb.Unitize();
 			ptb = ptb * edge_len;
 
@@ -3314,7 +3321,8 @@ ON_Brep_CDT_Mesh(
 					    double u,v;
 					    fplane.ClosestPointTo(*p3d, &u, &v);
 
-					    // Make a 2D point and nudge it
+					    // Make a 2D point and nudge it 1% of the length
+					    // of the edge off the edge
 					    ON_2dPoint uvp(u, v);
 					    uvp = uvp + 0.01*ptb;
 
