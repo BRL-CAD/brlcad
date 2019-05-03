@@ -207,6 +207,28 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 	}
     }
 
+
+    /* Four point triangle */
+   {
+	size_t num_points = 0;
+	int num_faces = 0;
+	int *faces = NULL;
+
+	/* 44 point polygon derived from NIST MBE PMI sample 1 shape */
+	point2d_t points[4] = {{0}};
+	V2SET(points[0], 2.08348167919269223, -0.69232852214032814);
+	V2SET(points[1], 1.60267821476360961, -0.00000000000000006);
+	V2SET(points[2], 1.20200866111591842, 1.15388087023390984);
+	V2SET(points[3], 0.80133910746824888, 2.30776174046776017);
+
+	num_points = sizeof(points) / sizeof(point2d_t);
+	ret = bg_polygon_triangulate(&faces, &num_faces, NULL, NULL, (const point2d_t *)points, num_points, EAR_CLIPPING);
+	if (ret) {
+	    return 1;
+	}
+    }
+
+
     return 0;
 }
 
