@@ -3383,6 +3383,11 @@ ON_Brep_CDT_Mesh(
 		    int *ecfaces;
 		    int num_faces;
 
+		    // TODO - we need to check if we're getting zero area triangles back from these routines.  Unless all three
+		    // triangle edges somehow have extra points, we can construct a triangle set that meets our needs by walking
+		    // the edges in order and building triangles "by hand" to meet our need.  Calling the "canned" routines
+		    // is an attempt to avoid that bookkeeping work, but if the tricks in place to avoid collinear point issues
+		    // don't work reliably we'll need to just go with a direct build.
 		    if (bg_polygon_triangulate(&ecfaces, &num_faces, NULL, NULL, ec_pnts, polyline.size()-1, EAR_CLIPPING)) {
 
 			// Didn't work, see if poly2tri can handle it
