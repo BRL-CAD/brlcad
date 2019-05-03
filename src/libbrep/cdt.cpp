@@ -3374,8 +3374,6 @@ ON_Brep_CDT_Mesh(
 		    int *ecfaces;
 		    int num_faces;
 
-		    // TODO - ear clipping isn't good enough for this - the colinear points are still creating degenerate
-		    // outputs.  May need a special purpose routine for this situation.
 		    if (bg_polygon_triangulate(&ecfaces, &num_faces, NULL, NULL, ec_pnts, polyline.size()-1, EAR_CLIPPING)) {
 
 			// Didn't work, see if poly2tri can handle it
