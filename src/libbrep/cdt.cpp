@@ -3185,6 +3185,16 @@ ON_Brep_CDT_Mesh(
    	p2t::CDT *cdt = s_cdt->p2t_faces[face_index];
 	std::map<p2t::Point *, ON_3dPoint *> *pointmap = s_cdt->tri_to_on3_maps[face_index];
 	std::map<p2t::Point *, ON_3dPoint *> *normalmap = s_cdt->tri_to_on3_norm_maps[face_index];
+
+	std::vector<p2t::Triangle *> *tri_add;
+
+	if (!s_cdt->p2t_extra_faces[face_index]) {
+	    tri_add = new std::vector<p2t::Triangle *>;
+	    s_cdt->p2t_extra_faces[face_index] = tri_add;
+	} else {
+	    tri_add = s_cdt->p2t_extra_faces[face_index];
+	}
+
 	std::vector<p2t::Triangle*> tris = cdt->GetTriangles();
 	for (size_t i = 0; i < tris.size(); i++) {
 	    p2t::Triangle *t = tris[i];
@@ -3356,8 +3366,12 @@ ON_Brep_CDT_Mesh(
 			    }
 #endif
 
+			    bu_log("EC and Poly2Tri failed - aborting\n");
+			    return -1;
 			} else {
 			    bu_log("Poly2Tri: found %zd faces\n", ftris.size());
+			    //std::vector<p2t::Triangle *> *tri_add = s_cdt->p2t_extra_faces[face_index];
+			    // TODO - translate face 2D triangles to mesh 2D triangles
 			}
 
 		    } else {
@@ -3365,8 +3379,16 @@ ON_Brep_CDT_Mesh(
 			for (int k = 0; k < num_faces; k++) {
 			    bu_log("tri[%d]: %d -> %d -> %d\n", k, ecfaces[3*k], ecfaces[3*k+1], ecfaces[3*k+2]);
 			    bu_log("tri[%d]: %f %f -> %f %f -> %f %f\n", k, ec_pnts[ecfaces[3*k]][X], ec_pnts[ecfaces[3*k]][Y], ec_pnts[ecfaces[3*k+1]][X], ec_pnts[ecfaces[3*k+1]][Y], ec_pnts[ecfaces[3*k+2]][X], ec_pnts[ecfaces[3*k+2]][Y]);
+
+			    p2t::Point *p2_1 = new2d_to_old2d[ec_to_p2t[ecfaces[3*k]]];
+			    p2t::Point *p2_2 = new2d_to_old2d[ec_to_p2t[ecfaces[3*k+1]]];
+			    p2t::Point *p2_3 = new2d_to_old2d[ec_to_p2t[ecfaces[3*k+2]]];
+			    p2t::Triangle *nt = new p2t::Triangle(*p2_1, *p2_2, *p2_3);
+			    tri_add->push_back(nt);
 			}
 		    }
+		} else {
+		    bu_log("Eh? Not enough points in polyline for an involved face...\n");
 		}
 	    }
 	}
