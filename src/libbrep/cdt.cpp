@@ -3103,7 +3103,9 @@ ON_Brep_CDT_Mesh(
 		s_cdt->face_degen_pnts[face_index]->insert(p2_B);
 		s_cdt->face_degen_pnts[face_index]->insert(p2_C);
 
-		//bu_log("Have zero area tri in face %d\n", face_index);
+		if (face_index == 521) {
+		    bu_log("Have zero area tri in face %d\n", face_index);
+		}
 
 		/* If we have degeneracies along an edge, the impact is not
 		 * local to this face but will also impact the other face.
@@ -3211,7 +3213,9 @@ ON_Brep_CDT_Mesh(
 		}
 	    }
 	    if (involved_pnt_cnt > 1) {
-		//bu_log("Have involved triangle in face %d\n", face_index);
+		if (face_index == 521) {
+		    bu_log("Have involved triangle in face %d\n", face_index);
+		}
 
 		// TODO - construct the plane of this face, project 3D points
 		// into that plane to get new 2D coordinates specific to this
@@ -3265,6 +3269,21 @@ ON_Brep_CDT_Mesh(
 		    ON_3dPoint *op1 = (*pointmap)[p1];
 		    polyline.push_back(old2d_to_new2d[p1]);
 		    if (fdp->find(p1) != fdp->end() && fdp->find(p2) != fdp->end()) {
+
+			// Calculate a vector to use to perturb middle points off the
+			// line in 2D.  Triangulation routines don't like collinear
+			// points.  Since we're not using these 2D coordinates for
+			// anything except the tessellation itself, as long as we
+			// don't change the ordering of the polyline we should be
+			// able to nudge the points off the line without ill effect.
+			ON_2dPoint p2d1(p1->x, p1->y);
+			ON_2dPoint p2d2(p2->x, p2->y);
+			ON_2dVector ptb;
+			fastf_t edge_len = p2d1.DistanceTo(p2d2);
+			ptb.PerpendicularTo(p2d1, p2d2);
+			ptb.Unitize();
+			ptb = ptb * edge_len;
+
 			std::set<ON_3dPoint *> edge_3d_pnts;
 			std::map<double, ON_3dPoint *> ordered_new_pnts;
 			ON_3dPoint *op2 = (*pointmap)[p2];
@@ -3274,7 +3293,9 @@ ON_Brep_CDT_Mesh(
 			double t1, t2;
 			eline3d.ClosestPointTo(*op1, &t1);
 			eline3d.ClosestPointTo(*op2, &t2);
-			//bu_log("involved tri edge(%f,%f): %f %f %f -> %f %f %f\n", t1, t2, op1->x, op1->y, op1->z, op2->x, op2->y, op2->z);
+			if (face_index == 521) {
+			 bu_log("involved tri edge(%f,%f): %f %f %f -> %f %f %f\n", t1, t2, op1->x, op1->y, op1->z, op2->x, op2->y, op2->z);
+			}
 			std::set<p2t::Point *>::iterator fdp_it;
 			for (fdp_it = fdp->begin(); fdp_it != fdp->end(); fdp_it++) {
 			    p2t::Point *p = *fdp_it;
@@ -3285,17 +3306,28 @@ ON_Brep_CDT_Mesh(
 					double tp;
 					eline3d.ClosestPointTo(*p3d, &tp);
 					if (tp > t1 && tp < t2) {
-					    //bu_log("point on tri edge(%f,%f): %f %f %f (%f)\n", t1, t2, p3d->x, p3d->y, p3d->z, tp);
+					    if (face_index == 521) {
+						bu_log("point on tri edge(%f,%f): %f %f %f (%f)\n", t1, t2, p3d->x, p3d->y, p3d->z, tp);
+					    }
 					    edge_3d_pnts.insert(p3d);
 					    ordered_new_pnts[tp] = p3d;
 					    double u,v;
 					    fplane.ClosestPointTo(*p3d, &u, &v);
-					    p2t::Point *np = new p2t::Point(u, v);
+
+					    // Make a 2D point and nudge it
+					    ON_2dPoint uvp(u, v);
+					    uvp = uvp + 0.01*ptb;
+
+					    // Define the p2t point and update maps
+					    p2t::Point *np = new p2t::Point(uvp.x, uvp.y);
 					    new2d_to_old2d[np] = p;
 					    old2d_to_new2d[p] = np;
 					    on3d_to_new2d[p3d] = np;
+
 					} else {
-					    //bu_log("point on tri line but not on edge(%f,%f): %f %f %f (%f)\n", t1, t2, p3d->x, p3d->y, p3d->z, tp);
+					    if (face_index == 521) {
+						bu_log("point on tri line but not on edge(%f,%f): %f %f %f (%f)\n", t1, t2, p3d->x, p3d->y, p3d->z, tp);
+					    }
 					}
 				    }
 				}
@@ -3325,7 +3357,9 @@ ON_Brep_CDT_Mesh(
 		}
 
 		// Have polyline, do CDT
-		bu_log("polyline cnt: %zd\n", polyline.size());
+		if (polyline.size() > 5) {
+		    bu_log("%d polyline cnt: %zd\n", face_index, polyline.size());
+		}
 		if (polyline.size() > 4) {
 
 		    // First, try ear clipping method
@@ -3340,6 +3374,8 @@ ON_Brep_CDT_Mesh(
 		    int *ecfaces;
 		    int num_faces;
 
+		    // TODO - ear clipping isn't good enough for this - the colinear points are still creating degenerate
+		    // outputs.  May need a special purpose routine for this situation.
 		    if (bg_polygon_triangulate(&ecfaces, &num_faces, NULL, NULL, ec_pnts, polyline.size()-1, EAR_CLIPPING)) {
 
 			// Didn't work, see if poly2tri can handle it
@@ -3375,10 +3411,18 @@ ON_Brep_CDT_Mesh(
 			}
 
 		    } else {
-			//bu_log("ec triangulate found %d faces\n", num_faces);
+			if (face_index == 521) {
+			    bu_log("ec triangulate found %d faces\n", num_faces);
+			}
 			for (int k = 0; k < num_faces; k++) {
-			    //bu_log("tri[%d]: %d -> %d -> %d\n", k, ecfaces[3*k], ecfaces[3*k+1], ecfaces[3*k+2]);
-			    //bu_log("tri[%d]: %f %f -> %f %f -> %f %f\n", k, ec_pnts[ecfaces[3*k]][X], ec_pnts[ecfaces[3*k]][Y], ec_pnts[ecfaces[3*k+1]][X], ec_pnts[ecfaces[3*k+1]][Y], ec_pnts[ecfaces[3*k+2]][X], ec_pnts[ecfaces[3*k+2]][Y]);
+			    if (face_index == 521) {
+				bu_log("tri[%d]: %d -> %d -> %d\n", k, ecfaces[3*k], ecfaces[3*k+1], ecfaces[3*k+2]);
+				bu_log("tri[%d]: %f %f -> %f %f -> %f %f\n", k, ec_pnts[ecfaces[3*k]][X], ec_pnts[ecfaces[3*k]][Y], ec_pnts[ecfaces[3*k+1]][X], ec_pnts[ecfaces[3*k+1]][Y], ec_pnts[ecfaces[3*k+2]][X], ec_pnts[ecfaces[3*k+2]][Y]);
+				ON_3dPoint *p1 = (*pointmap)[new2d_to_old2d[ec_to_p2t[ecfaces[3*k]]]];
+				ON_3dPoint *p2 = (*pointmap)[new2d_to_old2d[ec_to_p2t[ecfaces[3*k+1]]]];
+				ON_3dPoint *p3 = (*pointmap)[new2d_to_old2d[ec_to_p2t[ecfaces[3*k+2]]]];
+				bu_log("tri[%d]: %f %f %f -> %f %f %f -> %f %f %f\n", k, p1->x, p1->y, p1->z, p2->x, p2->y, p2->z, p3->x, p3->y, p3->z);
+			    }
 
 			    p2t::Point *p2_1 = new2d_to_old2d[ec_to_p2t[ecfaces[3*k]]];
 			    p2t::Point *p2_2 = new2d_to_old2d[ec_to_p2t[ecfaces[3*k+1]]];
@@ -3404,6 +3448,7 @@ ON_Brep_CDT_Mesh(
 	if (!tri_add) {
 	    continue;
 	}
+	//bu_log("adding %zd faces from %d\n", tri_add->size(), face_index);
 	triangle_cnt += tri_add->size();
     }
     bu_log("tri_cnt_init+: %zd\n", triangle_cnt);
@@ -3444,15 +3489,14 @@ ON_Brep_CDT_Mesh(
 	std::map<p2t::Point *, ON_3dPoint *> *pointmap = s_cdt->tri_to_on3_maps[face_index];
 	std::vector<p2t::Triangle*> tris = cdt->GetTriangles();
 	triangle_cnt += tris.size();
+	int active_tris = 0;
 	for (size_t i = 0; i < tris.size(); i++) {
 	    p2t::Triangle *t = tris[i];
 	    if (tris_degen.size() > 0 && tris_degen.find(t) != tris_degen.end()) {
 		triangle_cnt--;
 		continue;
 	    }
-	    if (tris_zero_3D_area.size() > 0 && tris_zero_3D_area.find(t) != tris_zero_3D_area.end()) {
-		continue;
-	    }
+	    active_tris++;
 	    for (size_t j = 0; j < 3; j++) {
 		p2t::Point *p = t->GetPoint(j);
 		ON_3dPoint *op = (*pointmap)[p];
@@ -3476,6 +3520,7 @@ ON_Brep_CDT_Mesh(
 
 	    face_cnt++;
 	}
+	//bu_log("initial face count for %d: %d\n", face_index, active_tris);
     }
     //bu_log("tri_cnt_1: %zd\n", triangle_cnt);
     //bu_log("face_cnt: %d\n", face_cnt);
@@ -3493,7 +3538,9 @@ ON_Brep_CDT_Mesh(
 		p2t::Point *p = t->GetPoint(j);
 		ON_3dPoint *op = (*pointmap)[p];
 		int ind = on_pnt_to_bot_pnt[op];
-		//bu_log("tri(%d)(%zu): %f %f %f -> %d\n", face_cnt, j, op->x, op->y, op->z, ind);
+		if (face_index == 521) {
+		    bu_log("tri[%d](%d)(%zu): %f %f %f -> %d\n", face_index, face_cnt, j, op->x, op->y, op->z, ind);
+		}
 		(*faces)[face_cnt*3 + j] = ind;
 		if (normals) {
 		    int nind = on_pnt_to_bot_norm[op];
@@ -3513,6 +3560,7 @@ ON_Brep_CDT_Mesh(
 
 	    face_cnt++;
 	}
+	//bu_log("added faces for %d: %zd\n", face_index, tri_add->size());
 	//bu_log("tri_cnt_2: %zd\n", triangle_cnt);
 	//bu_log("face_cnt_2: %d\n", face_cnt);
 
