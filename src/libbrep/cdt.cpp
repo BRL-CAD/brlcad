@@ -49,6 +49,7 @@
 #include "bn/plot3.h"
 #include "bn/tol.h"
 #include "bn/vlist.h"
+#include "bg/polygon.h"
 #include "bg/trimesh.h"
 #include "brep/defines.h"
 #include "brep/cdt.h"
@@ -3316,6 +3317,7 @@ ON_Brep_CDT_Mesh(
 		// Have polyline, do CDT
 		bu_log("polyline cnt: %zd\n", polyline.size());
 		if (polyline.size() > 4) {
+
 		    p2t::CDT *fcdt = new p2t::CDT(polyline);
 		    fcdt->Triangulate(true, -1);
 		    std::vector<p2t::Triangle*> ftris = fcdt->GetTriangles();
@@ -3323,7 +3325,7 @@ ON_Brep_CDT_Mesh(
 		    if (ftris.size() > polyline.size()) {
 			bu_log("weird face count: %zd\n", ftris.size());
 			for (size_t k = 0; k < polyline.size(); k++) {
-			    bu_log("polyline[%zd]: %f %f 0\n", k, polyline[k]->x, polyline[k]->y);
+			    bu_log("polyline[%zd]: %0.17f, %0.17f 0\n", k, polyline[k]->x, polyline[k]->y);
 			}
 
 			std::string pfile = std::string("polyline.plot3");
@@ -3336,6 +3338,40 @@ ON_Brep_CDT_Mesh(
 			    p2t::Point *p2 = ftris[k]->GetPoint(2);
 			    bu_log("tri[%zd]: %f %f -> %f %f -> %f %f\n", k, p0->x, p0->y, p1->x, p1->y, p2->x, p2->y);
 			}
+#if 0
+			std::reverse(polyline.begin(), polyline.end());
+			delete fcdt;
+			fcdt = new p2t::CDT(polyline);
+			fcdt->Triangulate(true, -1);
+			ftris = fcdt->GetTriangles();
+			bu_log("Try 2: have %zd new faces\n", ftris.size());
+			if (ftris.size() > polyline.size()) {
+			    bu_log("still have weird face count: %zd\n", ftris.size());
+			}
+#endif
+
+			std::map<size_t, p2t::Point *> ec_to_p2t;
+			point2d_t *ec_pnts = (point2d_t *)bu_calloc(polyline.size(), sizeof(point2d_t), "ear clipping point array");
+			for (size_t k = 0; k < polyline.size()-1; k++) {
+			    p2t::Point *p2tp = polyline[k];
+			    V2SET(ec_pnts[k], p2tp->x, p2tp->y);
+			    ec_to_p2t[k] = p2tp;
+			}
+
+			int *ecfaces;
+			int num_faces;
+
+			if (bg_polygon_triangulate(&ecfaces, &num_faces, NULL, NULL, ec_pnts, polyline.size()-1, EAR_CLIPPING)) {
+			    bu_log("ec triangulate failed\n");
+			} else {
+			    bu_log("ec triangulate found %d faces\n", num_faces);
+			    for (int k = 0; k < num_faces; k++) {
+				bu_log("tri[%d]: %d -> %d -> %d\n", k, ecfaces[3*k], ecfaces[3*k+1], ecfaces[3*k+2]);
+				bu_log("tri[%d]: %f %f -> \n", k, ec_pnts[ecfaces[3*k]][X], ec_pnts[ecfaces[3*k]][Y]);
+			    }
+			}
+
+
 			bu_exit(1, "weird");
 		    }
 		}
