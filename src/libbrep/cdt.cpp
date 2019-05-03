@@ -3321,10 +3321,11 @@ ON_Brep_CDT_Mesh(
 					    double u,v;
 					    fplane.ClosestPointTo(*p3d, &u, &v);
 
-					    // Make a 2D point and nudge it 1% of the length
-					    // of the edge off the edge
+					    // Make a 2D point and nudge it off of the length
+					    // of the edge off the edge.  Use the line parameter
+					    // value to get different nudge factors for each point.
 					    ON_2dPoint uvp(u, v);
-					    uvp = uvp + 0.01*ptb;
+					    uvp = uvp + (t2-tp)/(t2-t1)*0.01*ptb;
 
 					    // Define the p2t point and update maps
 					    p2t::Point *np = new p2t::Point(uvp.x, uvp.y);
