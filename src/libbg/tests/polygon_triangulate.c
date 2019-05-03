@@ -101,6 +101,7 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 	num_points = sizeof(points) / sizeof(point2d_t);
 	ret = bg_polygon_triangulate(&faces, &num_faces, NULL, NULL, (const point2d_t *)points, num_points, EAR_CLIPPING);
 	if (ret) {
+	    bu_log("test 1 failure!\n");
 	    return 1;
 	}
     }
@@ -129,6 +130,7 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 	num_points = sizeof(points) / sizeof(point2d_t);
 	ret = bg_polygon_triangulate(&faces, &num_faces, NULL, NULL, (const point2d_t *)points, num_points, EAR_CLIPPING);
 	if (ret) {
+	    bu_log("test 2 failure!\n");
 	    return 1;
 	}
     }
@@ -224,6 +226,7 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 	num_points = sizeof(points) / sizeof(point2d_t);
 	ret = bg_polygon_triangulate(&faces, &num_faces, NULL, NULL, (const point2d_t *)points, num_points, EAR_CLIPPING);
 	if (ret) {
+	    bu_log("4 point triangle failure!\n");
 	    return 1;
 	}
     }
