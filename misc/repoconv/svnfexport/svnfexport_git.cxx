@@ -614,6 +614,12 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	    all_git_branches.push_back(std::string("rel8"));
 	}
 
+
+	if (rev_num == 64060) {
+	    all_git_branches.push_back(std::string("eab"));
+	}
+
+
 	git_fi = std::string("cd cvs_git && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
 	if (std::system(git_fi.c_str())) {
 	    std::string failed_file = std::string("failed-") + fi_file;
