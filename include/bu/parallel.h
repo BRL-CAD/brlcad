@@ -198,7 +198,7 @@ BU_EXPORT extern void bu_parallel(void (*func)(int func_cpu_id, void *func_data)
 #define BU_SEM_MALLOC 5
 #define BU_SEM_DATETIME 6
 #define BU_SEM_HASH 7
-#define BU_SEM_LAST (BU_SEM_DATETIME+1) /* allocate this many for LIBBU+LIBBN */
+#define BU_SEM_LAST (BU_SEM_HASH+1) /* allocate this many for LIBBU+LIBBN */
 /*
  * Automatic restart capability in bu_bomb().  The return from
  * BU_SETJUMP is the return from the setjmp().  It is 0 on the first
