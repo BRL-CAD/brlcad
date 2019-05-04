@@ -567,6 +567,63 @@ void standard_commit(std::ofstream &outfile, struct svn_revision &rev, std::stri
 
 }
 
+void note_svn_rev(struct svn_revision &rev, std::string &rbranch)
+{
+    std::string fi_file = std::to_string(rev.revision_number) + std::string("-note.fi");
+    std::ofstream outfile(fi_file.c_str(), std::ios::out | std::ios::binary);
+
+    std::string svn_id_str = std::string("svn:revision:") + std::to_string(rev.revision_number);
+
+    outfile << "blob" << "\n";
+    outfile << "mark :1" << "\n";
+    outfile << "data " << svn_id_str.length() << "\n";
+    outfile << svn_id_str << "\n";
+    outfile << "\n";
+    outfile << "commit refs/notes/commits" << "\n";
+    outfile << "committer " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
+
+    std::string svn_id_commit_msg = std::string("Note SVN revision ") + std::to_string(rev.revision_number);
+    outfile << "data " << svn_id_commit_msg.length() << "\n";
+    outfile << svn_id_commit_msg << "\n";
+
+
+    std::string git_sha1_cmd = std::string("cd cvs_git && git show-ref refs/notes/commits > ../nsha1.txt && cd ..");
+    if (std::system(git_sha1_cmd.c_str())) {
+	std::cout << "git_sha1_cmd failed: refs/notes/commits\n";
+	exit(1);
+    }
+    std::ifstream hfile("nsha1.txt");
+    if (!hfile.good()) {
+	std::cout << "couldn't open nsha1.txt\n";
+	exit(1);
+    }
+    std::string line;
+    std::getline(hfile, line);
+    size_t spos = line.find_first_of(" ");
+    std::string nsha1 = line.substr(0, spos);
+
+    outfile << "from " << nsha1 << "\n";
+    outfile << "N :1 " << rgsha1(rbranch, rev.revision_number) << "\n";
+    outfile.close();
+
+    std::string git_fi = std::string("cd cvs_git_working && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
+    std::string git_fi2 = std::string("cd cvs_git && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
+    if (std::system(git_fi.c_str())) {
+	std::string failed_file = std::string("failed-") + fi_file;
+	std::cout << "Fatal - could not apply note fi file for revision " << rev.revision_number << "\n";
+	rename(fi_file.c_str(), failed_file.c_str());
+	exit(1);
+    }
+    if (std::system(git_fi2.c_str())) {
+	std::string failed_file = std::string("failed-") + fi_file;
+	std::cout << "Fatal - could not apply note fi file for revision " << rev.revision_number << "\n";
+	rename(fi_file.c_str(), failed_file.c_str());
+	exit(1);
+    }
+
+}
+
+
 void rev_fast_export(std::ifstream &infile, long int rev_num)
 {
     struct stat buffer;
