@@ -18,6 +18,10 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* mged> nirt -? needs to provide help
+
+* mged> nirt -f fmt doesn't seem to work at all
+
 * fix recently introduced mged -c input bug that causes seemingly
   random text (usually previous command output or mged version string
   info) to be pasted automatically while commands are typed.  For
@@ -29,6 +33,7 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
   observed on trunk builds with both putty (windows) and terminal
   (mac)
+
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
