@@ -263,8 +263,11 @@ void full_sync_commit(std::ofstream &outfile, struct svn_revision &rev, std::str
     outfile << "\n";
 }
 
-void move_only_commit(std::ofstream &outfile, struct svn_revision &rev, std::string &rbranch)
+void move_only_commit(struct svn_revision &rev, std::string &rbranch)
 {
+    std::string fi_file = std::to_string(rev.revision_number) + std::string("-mvonly.fi");
+    std::ofstream outfile(fi_file.c_str(), std::ios::out | std::ios::binary);
+
     if (author_map.find(rev.author) == author_map.end()) {
 	std::cout << "Error - couldn't find author map for author " << rev.author << " on revision " << rev.revision_number << "\n";
 	exit(1);
@@ -288,7 +291,7 @@ void move_only_commit(std::ofstream &outfile, struct svn_revision &rev, std::str
 	return;
     }
 
-    std::string ncmsg = rev.commit_msg + std::string("(preliminiary file move commit)");
+    std::string ncmsg = rev.commit_msg + std::string(" (preliminiary file move commit)");
 
     std::string mvmark = std::string("1111") + std::to_string(rev.revision_number);
 
@@ -323,6 +326,24 @@ void move_only_commit(std::ofstream &outfile, struct svn_revision &rev, std::str
 	    }
 	}
     }
+
+
+    std::string git_fi = std::string("cd cvs_git_working && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
+    std::string git_fi2 = std::string("cd cvs_git && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
+    if (std::system(git_fi.c_str())) {
+	std::string failed_file = std::string("failed-") + fi_file;
+	std::cout << "Fatal - could not apply note fi file for revision " << rev.revision_number << "\n";
+	rename(fi_file.c_str(), failed_file.c_str());
+	exit(1);
+    }
+    if (std::system(git_fi2.c_str())) {
+	std::string failed_file = std::string("failed-") + fi_file;
+	std::cout << "Fatal - could not apply note fi file for revision " << rev.revision_number << "\n";
+	rename(fi_file.c_str(), failed_file.c_str());
+	exit(1);
+    }
+
+
 
 }
 
@@ -931,21 +952,29 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	}
 
 	if (rev.move_edit) {
-	    move_only_commit(outfile, rev, rbranch);
+	    move_only_commit(rev, rbranch);
+	    
+	    // for this branch only, update the sha1 so the standard commit can look up the right "from" reference
+	    std::string line;
+	    std::string git_sha1_cmd = std::string("cd cvs_git && git show-ref ") + rbranch + std::string(" > ../sha1.txt && cd ..");
+	    if (std::system(git_sha1_cmd.c_str())) {
+		std::cout << "git_sha1_cmd failed: " << branch << "\n";
+		exit(1);
+	    }
+	    std::ifstream hfile("sha1.txt");
+	    if (!hfile.good()) continue;
+	    std::getline(hfile, line);
+	    size_t spos = line.find_first_of(" ");
+	    std::string hsha1 = line.substr(0, spos);
+	    if (hsha1.length()) {
+		rev_to_gsha1[std::pair<std::string,long int>(branch, rev.revision_number-1)] = hsha1;
+		//std::cout << branch << "," << rev << " -> " << rev_to_gsha1[std::pair<std::string,long int>(branch, rev)] << "\n";
+	    }
+	    hfile.close();
+	    remove("sha1.txt");
 	}
 
 	standard_commit(outfile, rev, rbranch);
-
-	if (tag_after_commit) {
-	    // Note - in this situation, we need to both build a commit and do a tag.  Will probably
-	    // take some refactoring.  Merge information will also be a factor.
-	    std::cout << "Adding tag after final tag branch commit: " << ctag << " from " << cfrom << ", r" << rev.revision_number << "\n";
-	    outfile << "tag " << ctag << "\n";
-	    outfile << "from " << rev_to_gsha1[std::pair<std::string,long int>(cfrom, rev.revision_number-1)] << "\n";
-	    outfile << "tagger " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
-	    outfile << "data " << rev.commit_msg.length() << "\n";
-	    outfile << rev.commit_msg << "\n";
-	}
 
 
 	outfile.close();
@@ -970,6 +999,46 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	    }
 	}
 #endif
+
+	// Add a git note indicating what revision the last commit was
+	note_svn_rev(rev, rbranch);
+
+
+	if (tag_after_commit) {
+	    std::string tfi_file = std::to_string(rev.revision_number) + std::string("-tagaftercommit.fi");
+	    std::ofstream toutfile(fi_file.c_str(), std::ios::out | std::ios::binary);
+
+	    get_rev_sha1s(rev.revision_number);
+
+	    // Note - in this situation, we need to both build a commit and do a tag.  Will probably
+	    // take some refactoring.  Merge information will also be a factor.
+	    std::cout << "Adding tag after final tag branch commit: " << ctag << " from " << cfrom << ", r" << rev.revision_number << "\n";
+	    toutfile << "tag " << ctag << "\n";
+	    toutfile << "from " << rev_to_gsha1[std::pair<std::string,long int>(cfrom, rev.revision_number-1)] << "\n";
+	    toutfile << "tagger " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
+	    toutfile << "data " << rev.commit_msg.length() << "\n";
+	    toutfile << rev.commit_msg << "\n";
+
+	    toutfile.close();
+
+	    std::string git_fi = std::string("cd cvs_git_working && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
+	    std::string git_fi2 = std::string("cd cvs_git && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
+	    if (std::system(git_fi.c_str())) {
+		std::string failed_file = std::string("failed-") + fi_file;
+		std::cout << "Fatal - could not apply tag fi file for revision " << rev.revision_number << "\n";
+		rename(fi_file.c_str(), failed_file.c_str());
+		exit(1);
+	    }
+	    if (std::system(git_fi2.c_str())) {
+		std::string failed_file = std::string("failed-") + fi_file;
+		std::cout << "Fatal - could not apply tag fi file for revision " << rev.revision_number << "\n";
+		rename(fi_file.c_str(), failed_file.c_str());
+		exit(1);
+	    }
+
+	
+	}
+
 
     } else {
 	outfile.close();
