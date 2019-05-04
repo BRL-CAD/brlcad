@@ -272,7 +272,7 @@ ged_solids_on_ray(struct ged *gedp, int argc, const char *argv[])
     /*
      * Build a list of all the top-level objects currently displayed
      */
-    solids_on_ray_cmd_vec_len = ged_build_tops(gedp, &solids_on_ray_cmd_vec[0], &solids_on_ray_cmd_vec[args]);
+    solids_on_ray_cmd_vec_len = ged_build_tops(gedp, &solids_on_ray_cmd_vec[0], (const char **)&solids_on_ray_cmd_vec[args]);
 
     snames = skewer_solids(gedp, solids_on_ray_cmd_vec_len, (const char **)solids_on_ray_cmd_vec, ray_orig, ray_dir, 1);
 

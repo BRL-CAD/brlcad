@@ -247,7 +247,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
      */
     if (i == argc) {
 	gd_rt_cmd_len = vp - gd_rt_cmd;
-	gd_rt_cmd_len += ged_build_tops(gedp, vp, &gd_rt_cmd[args]);
+	gd_rt_cmd_len += ged_build_tops(gedp, vp, (const char **)&gd_rt_cmd[args]);
     } else {
 	while (i < argc)
 	    *vp++ = (char *)argv[i++];

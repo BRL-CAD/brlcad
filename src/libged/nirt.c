@@ -73,8 +73,8 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     vect_t dir;
     vect_t cml;
     double scan[4]; /* holds sscanf values */
-    int i = 9;
-    int j = 1;
+    int i;
+    int j;
     char line[RT_MAXLINE] = {0};
     char *val = NULL;
     struct bu_vls o_vls = BU_VLS_INIT_ZERO;
@@ -86,31 +86,40 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     char **gd_rt_cmd = NULL;
     int gd_rt_cmd_len = 0;
 
-    const char *bin = NULL;
-    char nirt[256] = {0};
+    const char *nirt = NULL;
+    char nirtcmd[MAXPATHLEN] = {0};
     size_t args;
 
     /* for bu_fgets space trimming */
     struct bu_vls v = BU_VLS_INIT_ZERO;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-    GED_CHECK_VIEW(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
+    nirt = bu_dir(nirtcmd, MAXPATHLEN, BU_DIR_BIN, argv[0], NULL);
+    if (!nirt) {
+	bu_vls_printf(gedp->ged_result_str, "ERROR: Unable to find 'nirt' plugin.\n");
+	return GED_ERROR;
+    }
+
+    /* look for help */
+    for (i = 0; i < argc; i++) {
+	if (BU_STR_EQUAL(argv[i], "-h") || BU_STR_EQUAL(argv[i], "-?")) {
+	    /* FIXME: provide proper usage */
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s [options]\n", argv[0]);
+	    return GED_HELP;
+	}
+    }
+
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+
     args = argc + 20 + 2 + ged_count_tops(gedp);
     gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
 
-    bin = bu_brlcad_root("bin", 1);
-    if (bin) {
-	snprintf(nirt, 256, "%s/%s", bin, argv[0]);
-    }
-
     vp = &gd_rt_cmd[0];
-    *vp++ = nirt;
+    *vp++ = &nirtcmd[0];
 
     /* swipe x, y, z off the end if present */
     if (argc > 3) {
@@ -122,6 +131,8 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	    VSCALE(center_model, scan, gedp->ged_wdbp->dbip->dbi_local2base);
 	}
     }
+
+    GED_CHECK_VIEW(gedp, GED_ERROR);
 
     /* Calculate point from which to fire ray */
     if (!use_input_orig) {
@@ -235,7 +246,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     gd_rt_cmd_len = vp - gd_rt_cmd;
 
     /* Note - ged_build_tops sets the last vp to (char *)0 */
-    gd_rt_cmd_len += ged_build_tops(gedp, vp, &gd_rt_cmd[args]);
+    gd_rt_cmd_len += ged_build_tops(gedp, vp, (const char **)&gd_rt_cmd[args]);
 
     if (gedp->ged_gdp->gd_qray_cmd_echo) {
 	/* Print out the command we are about to run */

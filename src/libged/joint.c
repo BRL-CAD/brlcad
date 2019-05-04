@@ -258,7 +258,7 @@ joint_mesh(struct ged *gedp, int argc, const char *argv[])
 	name = argv[2];
     }
 
-    topc = ged_build_tops(gedp, topv, topv+2000);
+    topc = ged_build_tops(gedp, topv, (const char **)(topv+2000));
     dl_set_iflag(gedp->ged_gdp->gd_headDisplay, DOWN);
 
     i = db_walk_tree(gedp->ged_wdbp->dbip, topc, (const char **)topv,

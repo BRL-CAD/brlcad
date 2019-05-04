@@ -58,7 +58,7 @@ ged_rrt(struct ged *gedp, int argc, const char *argv[])
 	*vp++ = (char *)argv[i];
     *vp++ = gedp->ged_wdbp->dbip->dbi_filename;
 
-    gd_rt_cmd_len = ged_build_tops(gedp, vp, &gd_rt_cmd[args]);
+    gd_rt_cmd_len = ged_build_tops(gedp, vp, (const char **)&gd_rt_cmd[args]);
 
     (void)_ged_run_rt(gedp, gd_rt_cmd_len, (const char **)gd_rt_cmd, -1, NULL);
 

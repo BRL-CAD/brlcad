@@ -351,9 +351,8 @@ cmd_ged_gqa(ClientData clientData, Tcl_Interp *interpreter, int argc, const char
 	bu_vls_printf(GEDP->ged_result_str, "\n");
     } else {
 	GEDP->ged_gdp->gd_rt_cmd_len = vp - GEDP->ged_gdp->gd_rt_cmd;
-	GEDP->ged_gdp->gd_rt_cmd_len += ged_build_tops(GEDP,
-						       vp,
-						       &GEDP->ged_gdp->gd_rt_cmd[args]);
+	GEDP->ged_gdp->gd_rt_cmd_len += ged_build_tops(GEDP, vp,
+						       (const char **)&GEDP->ged_gdp->gd_rt_cmd[args]);
     }
 
     ret = (*ctp->ged_func)(GEDP, GEDP->ged_gdp->gd_rt_cmd_len, (const char **)GEDP->ged_gdp->gd_rt_cmd);

@@ -54,10 +54,12 @@ __BEGIN_DECLS
 GED_EXPORT extern int ged_title(struct ged *gedp, int argc, const char *argv[]);
 
 
-/* defined in rt.c */
+/* defined in rt.c
+ * FIXME: misnomered
+ */
 GED_EXPORT extern int ged_build_tops(struct ged	*gedp,
 				     char		**start,
-				     char		**end);
+				     const char		**end);
 GED_EXPORT extern size_t ged_count_tops(struct ged *gedp);
 
 /**
