@@ -90,6 +90,7 @@ set(LIBBU_SOURCES
   hook.c
   htond.c
   htonf.c
+  init.c
   interrupt.c
   kill.c
   lex.c
