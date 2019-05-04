@@ -229,7 +229,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
 	snprintf(rtcheck, 256, "%s/%s", bin, argv[0]);
     }
 
-    args = argc + 7 + 2 + ged_count_tops(gedp);
+    args = argc + 7 + 2 + ged_who_argc(gedp);
     gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
 
     vp = &gd_rt_cmd[0];
@@ -247,7 +247,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
      */
     if (i == argc) {
 	gd_rt_cmd_len = vp - gd_rt_cmd;
-	gd_rt_cmd_len += ged_build_tops(gedp, vp, (const char **)&gd_rt_cmd[args]);
+	gd_rt_cmd_len += ged_who_argv(gedp, vp, (const char **)&gd_rt_cmd[args]);
     } else {
 	while (i < argc)
 	    *vp++ = (char *)argv[i++];

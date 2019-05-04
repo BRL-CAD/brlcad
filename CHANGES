@@ -1396,3 +1396,6 @@ s/struct[[:space:]]*ged_run_rt/struct ged_subprocess/g
 ----
 s/BU_DEBUG_MEM_LOG/0/g
 	bu memory debugging API removed [7.29]
+s/ged_count_tops/ged_who_argc/g
+s/ged_build_tops/ged_who_argv/g
+        functions renamed as they pertain to 'who' listings, not 'tops' [7.30]

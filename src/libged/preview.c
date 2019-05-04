@@ -365,13 +365,13 @@ ged_preview(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    args = argc + 2 + ged_count_tops(gedp);
+    args = argc + 2 + ged_who_argc(gedp);
     gedp->ged_gdp->gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
     vp = &gedp->ged_gdp->gd_rt_cmd[0];
     *vp++ = bu_strdup("tree");
 
     /* Build list of top-level objects in view, in _ged_current_gedp->ged_gdp->gd_rt_cmd[] */
-    _ged_current_gedp->ged_gdp->gd_rt_cmd_len = ged_build_tops(gedp, vp, (const char **)&_ged_current_gedp->ged_gdp->gd_rt_cmd[args]);
+    _ged_current_gedp->ged_gdp->gd_rt_cmd_len = ged_who_argv(gedp, vp, (const char **)&_ged_current_gedp->ged_gdp->gd_rt_cmd[args]);
     /* Print out the command we are about to run */
     vp = &_ged_current_gedp->ged_gdp->gd_rt_cmd[0];
     while ((vp != NULL) && (*vp))

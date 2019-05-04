@@ -283,7 +283,7 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    args = argc + 7 + 2 + ged_count_tops(gedp);
+    args = argc + 7 + 2 + ged_who_argc(gedp);
     gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
 
     bin = bu_brlcad_root("bin", 1);

@@ -574,7 +574,7 @@ int ged_check(struct ged *gedp, int argc, const char *argv[])
     objtab = argv + (arg_count);
 
     if (nobjs <= 0){
-	nvobjs = (int)ged_count_tops(gedp);
+	nvobjs = (int)ged_who_argc(gedp);
     }
 
     tnobjs = nvobjs + nobjs;
@@ -595,7 +595,7 @@ int ged_check(struct ged *gedp, int argc, const char *argv[])
 
     /* else copy all the objects in view if any */
     if (nobjs <= 0) {
-	nvobjs = ged_build_tops(gedp, objp, (const char **)&tobjtab[tnobjs]);
+	nvobjs = ged_who_argv(gedp, objp, (const char **)&tobjtab[tnobjs]);
 	/* now, as we know the exact number of objects in the view, check again for > 0 */
 	if (nvobjs <= 0) {
 	    bu_vls_printf(gedp->ged_result_str,"no objects specified or in view, aborting\n");

@@ -1431,12 +1431,12 @@ rtgl_drawVList(dm *dmp, struct bn_vlist *UNUSED(vp))
     }
 
     /* allocate our visible trees */
-    visibleCount = ged_count_tops(gedp);
+    visibleCount = ged_who_argc(gedp);
     if (visibleCount) {
 	visibleTrees = (char **)bu_calloc(visibleCount, sizeof(char *), "alloc visibleTrees");
 
 	/* get number and names of visible tree tops */
-	numVisible = ged_build_tops(gedp, visibleTrees, &visibleTrees[visibleCount]);
+	numVisible = ged_who_argv(gedp, visibleTrees, &visibleTrees[visibleCount]);
 
 	for (i = 0; i < rtgljob.numTrees; i++) {
 	    currTree = rtgljob.oldTrees[i];
@@ -1582,7 +1582,7 @@ rtgl_drawVList(dm *dmp, struct bn_vlist *UNUSED(vp))
 	    rtgljob.numTrees = 0;
 	    numShot = rtgljob.numJobs = 0;
 	    rtgljob.currJob = NULL;
-	    numVisible = ged_build_tops(gedp, visibleTrees, &visibleTrees[visibleCount]);
+	    numVisible = ged_who_argv(gedp, visibleTrees, &visibleTrees[visibleCount]);
 	    for (i = 0; i < numVisible; i++) {
 		currTree = visibleTrees[i];
 		new = 1;

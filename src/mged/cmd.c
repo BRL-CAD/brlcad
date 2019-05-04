@@ -314,7 +314,7 @@ cmd_ged_gqa(ClientData clientData, Tcl_Interp *interpreter, int argc, const char
     if (GEDP == GED_NULL)
 	return TCL_OK;
 
-    args = argc + 2 + ged_count_tops(GEDP);
+    args = argc + 2 + ged_who_argc(GEDP);
     GEDP->ged_gdp->gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
 
     vp = &GEDP->ged_gdp->gd_rt_cmd[0];
@@ -351,7 +351,7 @@ cmd_ged_gqa(ClientData clientData, Tcl_Interp *interpreter, int argc, const char
 	bu_vls_printf(GEDP->ged_result_str, "\n");
     } else {
 	GEDP->ged_gdp->gd_rt_cmd_len = vp - GEDP->ged_gdp->gd_rt_cmd;
-	GEDP->ged_gdp->gd_rt_cmd_len += ged_build_tops(GEDP, vp,
+	GEDP->ged_gdp->gd_rt_cmd_len += ged_who_argv(GEDP, vp,
 						       (const char **)&GEDP->ged_gdp->gd_rt_cmd[args]);
     }
 

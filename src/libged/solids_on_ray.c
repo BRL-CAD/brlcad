@@ -266,13 +266,13 @@ ged_solids_on_ray(struct ged *gedp, int argc, const char *argv[])
     VJOIN1(ray_orig, ray_orig, v * gedp->ged_gvp->gv_scale * INV_GED_V, unit_V);
 
     /* allocate space for display top-levels */
-    args = 2 + ged_count_tops(gedp);
+    args = 2 + ged_who_argc(gedp);
     solids_on_ray_cmd_vec = (char **)bu_calloc(args, sizeof(char *), "alloca solids_on_ray_cmd_vec");
 
     /*
      * Build a list of all the top-level objects currently displayed
      */
-    solids_on_ray_cmd_vec_len = ged_build_tops(gedp, &solids_on_ray_cmd_vec[0], (const char **)&solids_on_ray_cmd_vec[args]);
+    solids_on_ray_cmd_vec_len = ged_who_argv(gedp, &solids_on_ray_cmd_vec[0], (const char **)&solids_on_ray_cmd_vec[args]);
 
     snames = skewer_solids(gedp, solids_on_ray_cmd_vec_len, (const char **)solids_on_ray_cmd_vec, ray_orig, ray_dir, 1);
 

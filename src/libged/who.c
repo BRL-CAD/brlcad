@@ -27,7 +27,7 @@
 
 
 size_t
-ged_count_tops(struct ged *gedp)
+ged_who_argc(struct ged *gedp)
 {
     struct display_list *gdlp = NULL;
     size_t visibleCount = 0;
@@ -52,7 +52,7 @@ ged_count_tops(struct ged *gedp)
  * with preallocated memory.
  */
 int
-ged_build_tops(struct ged *gedp, char **start, const char **end)
+ged_who_argv(struct ged *gedp, char **start, const char **end)
 {
     struct display_list *gdlp;
     char **vp = start;
@@ -61,7 +61,7 @@ ged_build_tops(struct ged *gedp, char **start, const char **end)
 	return 0;
 
     if (UNLIKELY(!start || !end)) {
-	bu_vls_printf(gedp->ged_result_str, "INTERNAL ERROR: ged_build_tops() called with NULL args\n");
+	bu_vls_printf(gedp->ged_result_str, "INTERNAL ERROR: ged_who_argv() called with NULL args\n");
 	return 0;
     }
 
@@ -72,7 +72,7 @@ ged_build_tops(struct ged *gedp, char **start, const char **end)
 	if ((vp != NULL) && ((const char **)vp < end)) {
 	    *vp++ = bu_strdup(bu_vls_addr(&gdlp->dl_path));
 	} else {
-	    bu_vls_printf(gedp->ged_result_str, "INTERNAL ERROR: ged_build_tops() ran out of space at %s\n", ((struct directory *)gdlp->dl_dp)->d_namep);
+	    bu_vls_printf(gedp->ged_result_str, "INTERNAL ERROR: ged_who_argv() ran out of space at %s\n", ((struct directory *)gdlp->dl_dp)->d_namep);
 	    break;
 	}
     }

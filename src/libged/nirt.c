@@ -115,7 +115,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
 
-    args = argc + 20 + 2 + ged_count_tops(gedp);
+    args = argc + 20 + 2 + ged_who_argc(gedp);
     gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
 
     vp = &gd_rt_cmd[0];
@@ -245,8 +245,8 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 
     gd_rt_cmd_len = vp - gd_rt_cmd;
 
-    /* Note - ged_build_tops sets the last vp to (char *)0 */
-    gd_rt_cmd_len += ged_build_tops(gedp, vp, (const char **)&gd_rt_cmd[args]);
+    /* Note - ged_who_argv sets the last vp to (char *)0 */
+    gd_rt_cmd_len += ged_who_argv(gedp, vp, (const char **)&gd_rt_cmd[args]);
 
     if (gedp->ged_gdp->gd_qray_cmd_echo) {
 	/* Print out the command we are about to run */
