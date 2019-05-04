@@ -953,21 +953,24 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 
 	if (rev.move_edit) {
 	    move_only_commit(rev, rbranch);
-	    
+
 	    // for this branch only, update the sha1 so the standard commit can look up the right "from" reference
 	    std::string line;
 	    std::string git_sha1_cmd = std::string("cd cvs_git && git show-ref ") + rbranch + std::string(" > ../sha1.txt && cd ..");
 	    if (std::system(git_sha1_cmd.c_str())) {
-		std::cout << "git_sha1_cmd failed: " << branch << "\n";
+		std::cout << "git_sha1_cmd failed: " << rbranch << "\n";
 		exit(1);
 	    }
 	    std::ifstream hfile("sha1.txt");
-	    if (!hfile.good()) continue;
+	    if (!hfile.good()) {
+		std::cout << "sha1.txt read failed" << "\n";
+		exit(1);
+	    }
 	    std::getline(hfile, line);
 	    size_t spos = line.find_first_of(" ");
 	    std::string hsha1 = line.substr(0, spos);
 	    if (hsha1.length()) {
-		rev_to_gsha1[std::pair<std::string,long int>(branch, rev.revision_number-1)] = hsha1;
+		rev_to_gsha1[std::pair<std::string,long int>(rbranch, rev.revision_number-1)] = hsha1;
 		//std::cout << branch << "," << rev << " -> " << rev_to_gsha1[std::pair<std::string,long int>(branch, rev)] << "\n";
 	    }
 	    hfile.close();
