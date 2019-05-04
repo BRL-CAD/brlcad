@@ -26,6 +26,64 @@
 #include "ged.h"
 
 
+size_t
+ged_count_tops(struct ged *gedp)
+{
+    struct display_list *gdlp = NULL;
+    size_t visibleCount = 0;
+
+    if (!gedp || !gedp->ged_gdp || !gedp->ged_gdp->gd_headDisplay)
+	return 0;
+
+    for (BU_LIST_FOR(gdlp, display_list, gedp->ged_gdp->gd_headDisplay)) {
+	visibleCount++;
+    }
+
+    return visibleCount;
+}
+
+
+/**
+ * Build a command line vector of the tops of all objects in view.
+ *
+ * Returns the number of items displayed.
+ *
+ * FIXME: crazy inefficient for massive object lists.  needs to work
+ * with preallocated memory.
+ */
+int
+ged_build_tops(struct ged *gedp, char **start, const char **end)
+{
+    struct display_list *gdlp;
+    char **vp = start;
+
+    if (!gedp || !gedp->ged_gdp || !gedp->ged_gdp->gd_headDisplay)
+	return 0;
+
+    if (UNLIKELY(!start || !end)) {
+	bu_vls_printf(gedp->ged_result_str, "INTERNAL ERROR: ged_build_tops() called with NULL args\n");
+	return 0;
+    }
+
+    for (BU_LIST_FOR(gdlp, display_list, gedp->ged_gdp->gd_headDisplay)) {
+	if (((struct directory *)gdlp->dl_dp)->d_addr == RT_DIR_PHONY_ADDR)
+	    continue;
+
+	if ((vp != NULL) && ((const char **)vp < end)) {
+	    *vp++ = bu_strdup(bu_vls_addr(&gdlp->dl_path));
+	} else {
+	    bu_vls_printf(gedp->ged_result_str, "INTERNAL ERROR: ged_build_tops() ran out of space at %s\n", ((struct directory *)gdlp->dl_dp)->d_namep);
+	    break;
+	}
+    }
+
+    if ((vp != NULL) && ((const char **)vp < end)) {
+	*vp = (char *) 0;
+    }
+
+    return vp-start;
+}
+
 
 /*
  * List the objects currently prepped for drawing
