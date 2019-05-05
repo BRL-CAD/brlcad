@@ -523,7 +523,7 @@ void apply_commit(struct svn_revision &rev, std::string &rbranch, int verify_rep
 	apply_fi_file(wtfi_file);
 	remove(wtfi_file.c_str());
     }
-    
+
     // Update all the sha1s
     get_rev_sha1s(rev.revision_number);
 }
@@ -563,6 +563,62 @@ std::string git_sha1(std::ifstream &infile, struct svn_node *n)
 }
 
 
+int
+write_gitignore_blob(std::ofstream &outfile, long int rev)
+{
+    if (rev == 29895) {
+	std::cout << "got something\n";
+    }
+    struct stat sbuffer;
+    std::string gi_file = std::string("gitignore/") + std::to_string(rev) + std::string(".gitignore");
+    if (stat(gi_file.c_str(), &sbuffer)) {
+	return 0;
+    }
+    char *buffer = new char [sbuffer.st_size];
+    std::ifstream ifile(gi_file, std::ifstream::binary);
+    if (!ifile.good()) {
+	std::cerr << "error reading .gitignore file for revision " << rev << "\n";
+	exit(-1);
+    }
+    ifile.read(buffer, sbuffer.st_size);
+    outfile << "blob\n";
+    outfile << "data " << sbuffer.st_size << "\n";
+    outfile.write(buffer, sbuffer.st_size);
+
+    return 1;
+}
+
+void
+write_gitignore_tree(std::ofstream &outfile, long int rev)
+{
+    if (rev == 29895) {
+	std::cout << "got something\n";
+    }
+ 
+    std::string gi_file = std::string("gitignore/") + std::to_string(rev) + std::string(".gitignore");
+    struct stat sbuffer;
+    if (stat(gi_file.c_str(), &sbuffer)) {
+	return;
+    }
+    char *buffer = new char [sbuffer.st_size];
+    std::ifstream ifile(gi_file, std::ifstream::binary);
+    if (!ifile.good()) {
+	std::cerr << "error reading .gitignore file for revision " << rev << "\n";
+	exit(-1);
+    }
+    ifile.read(buffer, sbuffer.st_size);
+    std::string go_buff;
+    go_buff.append("blob ");
+    go_buff.append(std::to_string(sbuffer.st_size));
+    go_buff.append(1, '\0');
+    go_buff.append(buffer, sbuffer.st_size); 
+    std::string git_sha1 = sha1_hash_hex(go_buff.c_str(), go_buff.length());
+
+    outfile << "M 100644 ";
+    outfile << git_sha1;
+    outfile << " \".gitignore\"";
+}
+
 
 //Need to write blobs with CRLF if that's the mode we're in...
 void
@@ -593,7 +649,7 @@ write_blob(std::ifstream &infile, std::ofstream &outfile, struct svn_node &node)
     delete[] buffer;
 }
 
-void write_commit_core(std::ofstream &outfile, std::string &rbranch, struct svn_revision &rev, const char *alt_cmsg, int stub, int nomerge, int mvedcommit)
+void write_commit_core(std::ofstream &outfile, std::string &rbranch, struct svn_revision &rev, const char *alt_cmsg, int nomerge, int mvedcommit)
 {
     outfile << "commit refs/heads/" << rbranch << "\n";
     outfile << "mark :" << rev.revision_number << "\n";
@@ -606,34 +662,20 @@ void write_commit_core(std::ofstream &outfile, std::string &rbranch, struct svn_
 	outfile << "data " << cmsg.length() << "\n";
 	outfile << cmsg << "\n";
     }
-    if (stub) {
-	if (!mvedcommit) {
-	    outfile << "from " << rev.revision_number-1 << "\n";
-	} else {
-	    outfile << "from " << rev.revision_number << "\n";
-	}
+    if (!mvedcommit) {
+	outfile << "from " << rev.revision_number-1 << "\n";
     } else {
-	if (!mvedcommit) {
-	    outfile << "from " << rgsha1(rbranch, rev.revision_number - 1) << "\n";
-	} else {
-	    outfile << "from " << rgsha1(rbranch, rev.revision_number) << "\n";
-	}
+	outfile << "from " << rev.revision_number << "\n";
     }
 
     if (!nomerge && rev.merged_from.length()) {
 	if (brlcad_revs.find(rev.merged_rev) != brlcad_revs.end()) {
 	    std::cout << "Revision " << rev.revision_number << " merged from: " << rev.merged_from << "(" << rev.merged_rev << "), id " << rev_to_gsha1[std::pair<std::string,long int>(rev.merged_from, rev.merged_rev)] << "\n";
 	    std::cout << "Revision " << rev.revision_number << "        from: " << rbranch << "\n";
-	    if (stub) {
-		outfile << "merge " << rev.merged_from << "," << rev.merged_rev << "\n";
-	    } else {
-		outfile << "merge " << rgsha1(rev.merged_from, rev.merged_rev) << "\n";
-	    }
+	    outfile << "merge " << rev.merged_from << "," << rev.merged_rev << "\n";
 	} else {
 	    std::cout << "Warning: merge info " << rev.merged_from << ", r" << rev.revision_number << " is referencing a commit id (" << rev.merged_rev << ") that is not known to the merge information\n";
-	    if (stub) {
-		outfile << "merge " << rev.merged_from << ",EEEEE\n";
-	    }
+	    outfile << "merge " << rev.merged_from << ",EEEEE\n";
 	}
     }
 }
@@ -675,7 +717,7 @@ void move_only_commit(struct svn_revision &rev, std::string &rbranch)
     std::ofstream outfile(fi_file.c_str(), std::ios::out | std::ios::binary);
     std::string ncmsg = rev.commit_msg + std::string(" (preliminiary file move commit)");
 
-    write_commit_core(outfile, rbranch, rev, ncmsg.c_str(), 1, 0, 0);
+    write_commit_core(outfile, rbranch, rev, ncmsg.c_str(), 0, 0);
 
     for (size_t n = 0; n != rev.nodes.size(); n++) {
 	struct svn_node &node = rev.nodes[n];
@@ -850,6 +892,8 @@ void old_references_commit(std::ifstream &infile, struct svn_revision &rev, std:
 	    }
 	}
 
+	write_gitignore_blob(boutfile, rev.revision_number);
+
 	boutfile.close();
     }
 
@@ -858,7 +902,7 @@ void old_references_commit(std::ifstream &infile, struct svn_revision &rev, std:
     // Only make one if we don't alredy have a custom file
     if (stat(fi_file.c_str(), &buffer)) {
 	std::ofstream coutfile(cfi_file, std::ios::out | std::ios::binary);
-	write_commit_core(coutfile, rbranch, rev, NULL, 1, 0, 0);
+	write_commit_core(coutfile, rbranch, rev, NULL, 0, 0);
 	coutfile.close();
     }
 
@@ -883,6 +927,7 @@ void old_references_commit(std::ifstream &infile, struct svn_revision &rev, std:
 	    write_git_node(toutfile, rev, node);
 
 	}
+	write_gitignore_tree(toutfile, rev.revision_number);
 
 	toutfile.close();
     }
@@ -907,7 +952,7 @@ void standard_commit(struct svn_revision &rev, std::string &rbranch, int mvedcom
 
 	std::ofstream coutfile(cfi_file, std::ios::out | std::ios::binary);
 
-	write_commit_core(coutfile, rbranch, rev, NULL, 1, 0, mvedcommit);
+	write_commit_core(coutfile, rbranch, rev, NULL, 0, mvedcommit);
 
 	coutfile.close();
     }
@@ -954,6 +999,8 @@ void standard_commit(struct svn_revision &rev, std::string &rbranch, int mvedcom
 	for (d_it = deferred_deletes.begin(); d_it != deferred_deletes.end(); d_it++) {
 	    write_git_node(toutfile, rev, **d_it);
 	}
+
+	write_gitignore_tree(toutfile, rev.revision_number);
 
 	toutfile.close();
     }
@@ -1032,6 +1079,9 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
     std::string blob_fi_file = std::to_string(rev_num) + std::string("-blob.fi");
     std::ofstream bloboutfile(blob_fi_file.c_str(), std::ios::out | std::ios::binary);
 
+    if (rev.revision_number == 29895) {
+	std::cout << "got something\n";
+    }
 
     for (size_t n = 0; n != rev.nodes.size(); n++) {
 	struct svn_node &node = rev.nodes[n];
@@ -1124,7 +1174,7 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	    boutfile << "reset refs/heads/" << node.branch << "\n";
 	    boutfile << "from " << bbpath << "," << rev.revision_number-1 << "\n";
 	    boutfile.close();
-	    
+
 	    all_git_branches.push_back(node.branch);
 
 	    // Make an empty commit on the new branch with the commit message from SVN, but no changes
@@ -1132,7 +1182,7 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	    std::string cfi_file = std::to_string(rev.revision_number) + std::string("-commit.fi");
 	    std::ofstream coutfile(cfi_file, std::ios::out | std::ios::binary);
 
-	    write_commit_core(coutfile, node.branch, rev, NULL, 0, 1, 0);
+	    write_commit_core(coutfile, node.branch, rev, NULL, 1, 0);
 
 	    coutfile.close();
 
@@ -1146,7 +1196,7 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	    std::string cfi_file = std::to_string(rev.revision_number) + std::string("-commit.fi");
 	    std::ofstream coutfile(cfi_file, std::ios::out | std::ios::binary);
 
-	    write_commit_core(coutfile, node.branch, rev, NULL, 0, 1, 0);
+	    write_commit_core(coutfile, node.branch, rev, NULL, 1, 0);
 
 	    coutfile.close();
 
@@ -1177,7 +1227,10 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	    git_changes = 1;
 	}
     }
-	    
+
+    if (write_gitignore_blob(bloboutfile, rev.revision_number)) {
+	git_changes = 1;
+    }
     bloboutfile.close();
 
     if (git_changes) {
@@ -1191,7 +1244,17 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	} else {
 	    standard_commit(rev, rbranch, 0);
 	}
+    } else {
+	// If nothing else, make an empty commit
+	std::string cfi_file = std::to_string(rev.revision_number) + std::string("-commit.fi");
 
+	if (!file_exists(cfi_file)) {
+	    std::ofstream coutfile(cfi_file, std::ios::out | std::ios::binary);
+
+	    write_commit_core(coutfile, rbranch, rev, NULL, 1, 0);
+
+	    coutfile.close();
+	}
     }
 
     apply_commit(rev, rbranch, 0);
