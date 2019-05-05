@@ -76,9 +76,9 @@ int main(int argc, const char **argv)
 	std::cout << "git setup failed!\n";
 	exit(1);
     }
-    verify_repos(starting_rev, std::string("trunk"), std::string("master"), 1);
-    verify_repos(starting_rev, std::string("STABLE"), std::string("STABLE"), 1);
-    verify_repos(starting_rev, std::string("rel-5-1-branch"), std::string("rel-5-1-branch"), 1);
+    //verify_repos(starting_rev, std::string("trunk"), std::string("master"), 1);
+    //verify_repos(starting_rev, std::string("STABLE"), std::string("STABLE"), 1);
+    //verify_repos(starting_rev, std::string("rel-5-1-branch"), std::string("rel-5-1-branch"), 1);
 
     /* Populate valid_projects */
     valid_projects.insert(std::string("brlcad"));

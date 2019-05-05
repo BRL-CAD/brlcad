@@ -1,5 +1,12 @@
 std::vector<std::string> all_git_branches;
 
+bool
+file_exists(std::string fname)
+{
+    struct stat buffer;
+    return !stat(fname.c_str(), &buffer);
+}
+
 void
 load_branches_list()
 {
@@ -138,6 +145,51 @@ void write_cached_rev_sha1s()
     outfile.close();
 }
 
+
+void apply_fi_file_working(std::string &fi_file) {
+    std::string git_fi = std::string("cd cvs_git_working && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
+    if (std::system(git_fi.c_str())) {
+	std::string failed_file = std::string("failed-") + fi_file;
+	std::cout << "Fatal - could not apply fi file to working repo " << fi_file << "\n";
+	rename(fi_file.c_str(), failed_file.c_str());
+	exit(1);
+    }
+}
+
+void apply_fi_file(std::string &fi_file) {
+    std::string git_fi = std::string("cd cvs_git && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
+    if (std::system(git_fi.c_str())) {
+	std::cout << "Fatal - could not apply fi file to working repo " << fi_file << "\n";
+	exit(1);
+    }
+}
+
+// Update the sha1 for the branch from the cvs_git_working repo - used when we
+// haven't done the final cvs_git commit but still need a current sha1 for
+// reference
+std::string get_rev_sha1(std::string branch, long int rev)
+{
+    std::string line;
+    std::string git_sha1_cmd = std::string("cd cvs_git_working && git show-ref ") + branch + std::string(" > ../sha1.txt && cd ..");
+    if (std::system(git_sha1_cmd.c_str())) {
+	std::cout << "git_sha1_cmd failed: " << branch << "\n";
+	exit(1);
+    }
+    std::ifstream hfile("sha1.txt");
+    if (!hfile.good()) return std::string("");
+    std::getline(hfile, line);
+    size_t spos = line.find_first_of(" ");
+    std::string hsha1 = line.substr(0, spos);
+    if (hsha1.length()) {
+	rev_to_gsha1[std::pair<std::string,long int>(branch, rev)] = hsha1;
+    }
+    hfile.close();
+    remove("sha1.txt");
+    write_cached_rev_sha1s();
+    return hsha1;
+}
+
+
 void get_rev_sha1s(long int rev)
 {
     std::vector<std::string>::iterator b_it;
@@ -165,6 +217,317 @@ void get_rev_sha1s(long int rev)
     write_cached_rev_sha1s();
 }
 
+std::string rgsha1(std::string &rbranch, long int rev)
+{
+    std::pair<std::string,long int> key = std::pair<std::string,long int>(rbranch, rev);
+    std::string gsha1 = rev_to_gsha1[key];
+    return gsha1;
+}
+
+std::string
+populate_template(std::string ifile, std::string &rbranch)
+{
+    std::string obuf;
+    std::ifstream infile(ifile);
+    if (!infile.good()) {
+	std::cerr << "Could not open template file " << ifile << "\n";
+	exit(1);
+    }
+
+    // Replace branch,rev patterns with sha1 lookups in from and merge lines
+    std::regex fromline("^from ([0-9]+)$");
+    std::regex bfromline("^from ([A-Za-z-_0-9-]+),([0-9]+)$");
+    std::regex mergeline("^merge ([A-Za-z-_0-9-]+),([0-9]+)$");
+    std::string tline;
+    while (std::getline(infile, tline)) {
+
+	std::cout << "Processing: " << tline << "\n";
+	if (std::regex_match(tline, fromline)) {
+	    std::smatch frevmatch;
+	    if (!std::regex_search(tline, frevmatch, fromline)) {
+		std::cerr << "Error, could not find revision number in from line:\n" << tline << "\n" ;
+		exit(1);
+	    } else {
+		std::string newfline= std::string("from ") + rgsha1(rbranch, std::stol(frevmatch[1]));
+		std::cout << newfline << "\n";
+		obuf.append(newfline);
+		obuf.append("\n");
+	    }
+	    continue;
+	}
+	if (std::regex_match(tline, bfromline)) {
+	    std::smatch brevmatch;
+	    if (!std::regex_search(tline, brevmatch, bfromline)) {
+		std::cerr << "Error, could not find revision number in branch from line:\n" << tline << "\n" ;
+		exit(1);
+	    } else {
+		std::string fbranch = std::string(brevmatch[1]);
+		std::string newfline = std::string("from ") + rgsha1(fbranch, std::stol(brevmatch[2]));
+		std::cout << newfline << "\n";
+		obuf.append(newfline);
+		obuf.append("\n");
+	    }
+	    continue;
+	}
+	if (std::regex_match(tline, mergeline)) {
+	    std::smatch mrevmatch;
+	    if (!std::regex_search(tline, mrevmatch, mergeline)) {
+		std::cerr << "Error, could not find revision number in merge line:\n" << tline << "\n" ;
+		exit(1);
+	    } else {
+		std::string mbranch = std::string(mrevmatch[1]);
+		std::string newmline= std::string("merge ") + rgsha1(mbranch, std::stol(mrevmatch[2]));
+		std::cout << newmline << "\n";
+		obuf.append(newmline);
+		obuf.append("\n");
+	    }
+	    continue;
+	}
+	obuf.append(tline);
+	obuf.append("\n");
+    }
+
+    std::string ofilename = ifile + std::string("-expanded");
+    std::ofstream ofile(ofilename);
+
+    ofile << obuf;
+    ofile.close();
+
+    return ofilename;
+
+}
+
+
+std::string note_svn_rev(struct svn_revision &rev, std::string &rbranch, int is_tag)
+{
+    std::string fi_file = std::to_string(rev.revision_number) + std::string("-note.fi");
+    std::ofstream outfile(fi_file.c_str(), std::ios::out | std::ios::binary);
+
+    std::string svn_id_str = std::string("svn:revision:") + std::to_string(rev.revision_number);
+
+    outfile << "blob" << "\n";
+    outfile << "mark :1" << "\n";
+    outfile << "data " << svn_id_str.length() << "\n";
+    outfile << svn_id_str << "\n";
+    outfile << "commit refs/notes/commits" << "\n";
+    outfile << "committer " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
+
+    std::string svn_id_commit_msg = std::string("Note SVN revision ") + std::to_string(rev.revision_number);
+    outfile << "data " << svn_id_commit_msg.length() << "\n";
+    outfile << svn_id_commit_msg << "\n";
+
+
+    std::string git_sha1_cmd = std::string("cd cvs_git_working && git show-ref refs/notes/commits > ../nsha1.txt && cd ..");
+    if (std::system(git_sha1_cmd.c_str())) {
+	std::cout << "git_sha1_cmd failed: refs/notes/commits\n";
+	exit(1);
+    }
+    std::ifstream hfile("nsha1.txt");
+    if (!hfile.good()) {
+	std::cout << "couldn't open nsha1.txt\n";
+	exit(1);
+    }
+    std::string line;
+    std::getline(hfile, line);
+    size_t spos = line.find_first_of(" ");
+    std::string nsha1 = line.substr(0, spos);
+
+    outfile << "from " << nsha1 << "\n";
+    if (!is_tag) {
+	outfile << "N :1 " << rgsha1(rbranch, rev.revision_number) << "\n";
+    } else {
+	std::cerr << "TODO - handle note on tag\n";
+	exit(1);
+    }
+    outfile.close();
+
+    return fi_file;
+}
+
+
+void apply_commit(struct svn_revision &rev, std::string &rbranch, int verify_repo)
+{
+
+    struct stat buffer;
+    long int rev_num = rev.revision_number;
+
+    // Order of operations.  If we have a -b branching file, do that first and update the
+    // sha1s.
+    std::string branch_fi_template;
+    branch_fi_template = std::string("custom/") + std::to_string(rev_num) + std::string("-b.fi");
+    if (!file_exists(branch_fi_template)) {
+	branch_fi_template = std::to_string(rev_num) + std::string("-b.fi");
+	if (!file_exists(branch_fi_template)) {
+	    branch_fi_template = std::string("");
+	}
+    }
+    std::string wbfi_file;
+    if (branch_fi_template.length()) {
+	wbfi_file = populate_template(branch_fi_template, rbranch);
+	apply_fi_file_working(wbfi_file);
+	get_rev_sha1(rbranch, rev.revision_number);
+	all_git_branches.push_back(rbranch);
+    } else {
+	wbfi_file = std::string("");
+    }
+
+
+    // Next, do a move-only commit if we have one
+    std::string move_fi_template;
+    move_fi_template = std::string("custom/") + std::to_string(rev_num) + std::string("-mvonly.fi");
+    if (stat(move_fi_template.c_str(), &buffer)) {
+	move_fi_template = std::to_string(rev_num) + std::string("-mvonly.fi");
+	if (stat(move_fi_template.c_str(), &buffer)) {
+	    move_fi_template = std::string("");
+	}
+    }
+    std::string wmvfi_file;
+    if (move_fi_template.length()) {
+	wmvfi_file = populate_template(move_fi_template, rbranch);
+	apply_fi_file_working(wmvfi_file);
+	get_rev_sha1(rbranch, rev.revision_number);
+    } else {
+	wbfi_file = std::string("");
+    }
+
+    // Next assemble the working commit and/or tag files
+    std::string wfi_file = std::to_string(rev_num) + std::string("-main.fi");
+    std::string blob_fi_file = std::string("");
+    std::string commit_fi_file = std::string("");
+    std::string tree_fi_file = std::string("");
+    std::string wtfi_file = std::string("");
+    std::string wtag_fi_file = std::string("");
+    std::string nfi_file = std::string("");
+
+    blob_fi_file = std::string("custom/") + std::to_string(rev_num) + std::string("-blob.fi");
+    if (stat(blob_fi_file.c_str(), &buffer)) {
+	blob_fi_file = std::to_string(rev_num) + std::string("-blob.fi");
+	if (stat(blob_fi_file.c_str(), &buffer)) {
+	    blob_fi_file = std::string("");
+	}
+    }
+
+    std::string commit_fi_template;
+    commit_fi_template = std::string("custom/") + std::to_string(rev_num) + std::string("-commit.fi");
+    if (stat(commit_fi_template.c_str(), &buffer)) {
+	commit_fi_template = std::to_string(rev_num) + std::string("-commit.fi");
+	if (stat(commit_fi_template.c_str(), &buffer)) {
+	    commit_fi_template = std::string("");
+	}
+    }
+
+    std::string tag_fi_template;
+    tag_fi_template = std::string("custom/") + std::to_string(rev_num) + std::string("-tag.fi");
+    if (stat(tag_fi_template.c_str(), &buffer)) {
+	tag_fi_template = std::to_string(rev_num) + std::string("-tag.fi");
+	if (stat(tag_fi_template.c_str(), &buffer)) {
+	    tag_fi_template = std::string("");
+	}
+    }
+
+
+    // We need either a commit or a tag - without either, we're done
+    if (commit_fi_template == std::string("") && tag_fi_template == std::string("")) {
+	std::cerr << "Fatal - no commit or tag template for commit " << rev.revision_number << "\n";
+	std::cerr << "Every SVN commit should have at least an empty commit with its commit message and date/author info, or a tag to another commit\n";
+	exit(1);
+    }
+
+
+    // Doing the commit
+    if (commit_fi_template.length()) {
+	commit_fi_file = populate_template(commit_fi_template, rbranch);
+
+	tree_fi_file = std::string("custom/") + std::to_string(rev_num) + std::string("-tree.fi");
+	if (stat(tree_fi_file.c_str(), &buffer)) {
+	    tree_fi_file = std::to_string(rev_num) + std::string("-tree.fi");
+	    if (stat(tree_fi_file.c_str(), &buffer)) {
+		tree_fi_file = std::string("");
+	    }
+	}
+
+
+	// concat individual pieces of primary commit file and apply
+	if (commit_fi_template.length()) {
+	    std::ofstream wfi_s(wfi_file, std::ios_base::binary);
+
+	    if (blob_fi_file != std::string("")) {
+		std::ifstream bstream(blob_fi_file, std::ios_base::binary);
+		wfi_s << bstream.rdbuf();
+		bstream.close();
+	    }
+
+	    std::ifstream cstream(commit_fi_file, std::ios_base::binary);
+	    wfi_s << cstream.rdbuf();
+	    cstream.close();
+	    // Clean up intermediate commit file
+	    remove(commit_fi_file.c_str());
+
+	    if (tree_fi_file != std::string("")) {
+		std::ifstream tstream(tree_fi_file, std::ios_base::binary);
+		wfi_s << tstream.rdbuf();
+		tstream.close();
+	    }
+
+	    wfi_s.close(); 
+	    // Apply the combined contents of the commit files
+	    apply_fi_file_working(wfi_file);
+	    get_rev_sha1(rbranch, rev.revision_number);
+
+
+	    // Generate the note file
+	    nfi_file = note_svn_rev(rev, rbranch, 0);
+	    apply_fi_file_working(nfi_file);
+	}
+
+	std::string taftercommit_fi_template;
+	taftercommit_fi_template = std::string("custom/") + std::to_string(rev_num) + std::string("-tagaftercommit.fi");
+	if (stat(taftercommit_fi_template.c_str(), &buffer)) {
+	    taftercommit_fi_template = std::to_string(rev_num) + std::string("-tagaftercommit.fi");
+	    if (stat(taftercommit_fi_template.c_str(), &buffer)) {
+		taftercommit_fi_template = std::string("");
+	    }
+	}
+	if (taftercommit_fi_template.length()) {
+	    wtfi_file = populate_template(taftercommit_fi_template, rbranch);
+	    apply_fi_file_working(wtfi_file);
+	}
+
+    } else {
+	// Doing a tag
+	wtag_fi_file = populate_template(tag_fi_template, rbranch);
+    
+	// Apply the tag
+	apply_fi_file_working(wtag_fi_file);
+
+	// Generate the note file
+	std::string nfi_file = note_svn_rev(rev, rbranch, 1);
+	apply_fi_file_working(nfi_file);
+
+    }
+
+    // If we got this far, we're good to go - apply all files to the primary repo
+    if (wbfi_file.length()) {
+	apply_fi_file(wbfi_file);
+	remove(wbfi_file.c_str());
+    }
+    if (wmvfi_file.length()) {
+	apply_fi_file(wmvfi_file);
+	remove(wmvfi_file.c_str());
+    }
+    apply_fi_file(wfi_file);
+    remove(wfi_file.c_str());
+    apply_fi_file(nfi_file);
+    remove(nfi_file.c_str());
+    if (wtfi_file.length()) {
+	apply_fi_file(wtfi_file);
+	remove(wtfi_file.c_str());
+    }
+    
+    // Update all the sha1s
+    get_rev_sha1s(rev.revision_number);
+}
+
 
 std::string git_sha1(std::ifstream &infile, struct svn_node *n)
 {
@@ -172,9 +535,6 @@ std::string git_sha1(std::ifstream &infile, struct svn_node *n)
     std::string go_buff;
     char *cbuffer = new char [n->text_content_length];;
     infile.read(cbuffer, n->text_content_length);
-    if (n->text_content_sha1 == std::string("71fc76a4374348f844c480a375d594cd10835ab9")) {
-	std::cout << "working " << n->path << ", rev " << n->revision_number << "\n";
-    }
     go_buff.append("blob ");
 
     if (!n->crlf_content) {
@@ -202,12 +562,6 @@ std::string git_sha1(std::ifstream &infile, struct svn_node *n)
     return git_sha1;
 }
 
-std::string rgsha1(std::string &rbranch, long int rev)
-{
-    std::pair<std::string,long int> key = std::pair<std::string,long int>(rbranch, rev);
-    std::string gsha1 = rev_to_gsha1[key];
-    return gsha1;
-}
 
 
 //Need to write blobs with CRLF if that's the mode we're in...
@@ -239,34 +593,60 @@ write_blob(std::ifstream &infile, std::ofstream &outfile, struct svn_node &node)
     delete[] buffer;
 }
 
-void full_sync_commit(std::ofstream &outfile, struct svn_revision &rev, std::string &bsrc, std::string &bdest)
+void write_commit_core(std::ofstream &outfile, std::string &rbranch, struct svn_revision &rev, const char *alt_cmsg, int stub, int nomerge, int mvedcommit)
 {
-    outfile << "commit " << bdest << "\n";
+    outfile << "commit refs/heads/" << rbranch << "\n";
     outfile << "mark :" << rev.revision_number << "\n";
     outfile << "committer " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
-    outfile << "data " << rev.commit_msg.length() << "\n";
-    outfile << rev.commit_msg << "\n";
-    outfile << "from " <<  rev_to_gsha1[std::pair<std::string,long int>(bsrc, rev.revision_number-1)] << "\n";
-    outfile << "merge " << "\n";
-    outfile << "deleteall\n";
+    if (!alt_cmsg) {
+	outfile << "data " << rev.commit_msg.length() << "\n";
+	outfile << rev.commit_msg << "\n";
+    } else {
+	std::string cmsg(alt_cmsg);
+	outfile << "data " << cmsg.length() << "\n";
+	outfile << cmsg << "\n";
+    }
+    if (stub) {
+	if (!mvedcommit) {
+	    outfile << "from " << rev.revision_number-1 << "\n";
+	} else {
+	    outfile << "from " << rev.revision_number << "\n";
+	}
+    } else {
+	if (!mvedcommit) {
+	    outfile << "from " << rgsha1(rbranch, rev.revision_number - 1) << "\n";
+	} else {
+	    outfile << "from " << rgsha1(rbranch, rev.revision_number) << "\n";
+	}
+    }
 
-    std::string line;
-    std::string ifile = std::to_string(rev.revision_number) + std::string(".txt");
-    std::ifstream infile(ifile);
-    if (!infile.good()) {
-	std::cerr << "Fatal error: could not open file " << ifile << " for special commit handling, exiting\n";
-	exit(1);
+    if (!nomerge && rev.merged_from.length()) {
+	if (brlcad_revs.find(rev.merged_rev) != brlcad_revs.end()) {
+	    std::cout << "Revision " << rev.revision_number << " merged from: " << rev.merged_from << "(" << rev.merged_rev << "), id " << rev_to_gsha1[std::pair<std::string,long int>(rev.merged_from, rev.merged_rev)] << "\n";
+	    std::cout << "Revision " << rev.revision_number << "        from: " << rbranch << "\n";
+	    if (stub) {
+		outfile << "merge " << rev.merged_from << "," << rev.merged_rev << "\n";
+	    } else {
+		outfile << "merge " << rgsha1(rev.merged_from, rev.merged_rev) << "\n";
+	    }
+	} else {
+	    std::cout << "Warning: merge info " << rev.merged_from << ", r" << rev.revision_number << " is referencing a commit id (" << rev.merged_rev << ") that is not known to the merge information\n";
+	    if (stub) {
+		outfile << "merge " << rev.merged_from << ",EEEEE\n";
+	    }
+	}
     }
-    while (std::getline(infile, line)) {
-	outfile << line << "\n";
-    }
-    outfile << "\n";
 }
 
 void move_only_commit(struct svn_revision &rev, std::string &rbranch)
 {
-    std::string fi_file = std::to_string(rev.revision_number) + std::string("-mvonly.fi");
-    std::ofstream outfile(fi_file.c_str(), std::ios::out | std::ios::binary);
+    struct stat buffer;
+    std::string cfi_file = std::string("custom/") + std::to_string(rev.revision_number) + std::string("-mvonly.fi");
+
+    // Skip if we already have a custom file
+    if (!stat(cfi_file.c_str(), &buffer)) {
+	return;
+    }
 
     if (author_map.find(rev.author) == author_map.end()) {
 	std::cout << "Error - couldn't find author map for author " << rev.author << " on revision " << rev.revision_number << "\n";
@@ -291,26 +671,11 @@ void move_only_commit(struct svn_revision &rev, std::string &rbranch)
 	return;
     }
 
+    std::string fi_file = std::to_string(rev.revision_number) + std::string("-mvonly.fi");
+    std::ofstream outfile(fi_file.c_str(), std::ios::out | std::ios::binary);
     std::string ncmsg = rev.commit_msg + std::string(" (preliminiary file move commit)");
 
-    std::string mvmark = std::string("1111") + std::to_string(rev.revision_number);
-
-    outfile << "commit refs/heads/" << rbranch << "\n";
-    outfile << "mark :" << mvmark << "\n";
-    outfile << "committer " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
-    outfile << "data " << ncmsg.length() << "\n";
-    outfile << ncmsg << "\n";
-    outfile << "from " << rev_to_gsha1[std::pair<std::string,long int>(rbranch, rev.revision_number-1)] << "\n";
-
-    if (rev.merged_from.length()) {
-	if (brlcad_revs.find(rev.merged_rev) != brlcad_revs.end()) {
-	    std::cout << "Revision " << rev.revision_number << " merged from: " << rev.merged_from << "(" << rev.merged_rev << "), id " << rev_to_gsha1[std::pair<std::string,long int>(rev.merged_from, rev.merged_rev)] << "\n";
-	    std::cout << "Revision " << rev.revision_number << "        from: " << rbranch << "\n";
-	    outfile << "merge " << rgsha1(rev.merged_from, rev.merged_rev) << "\n";
-	} else {
-	    std::cout << "Warning: r" << rev.revision_number << " is referencing a commit id (" << rev.merged_rev << ") that is not a BRL-CAD commit\n";
-	}
-    }
+    write_commit_core(outfile, rbranch, rev, ncmsg.c_str(), 1, 0, 0);
 
     for (size_t n = 0; n != rev.nodes.size(); n++) {
 	struct svn_node &node = rev.nodes[n];
@@ -326,28 +691,11 @@ void move_only_commit(struct svn_revision &rev, std::string &rbranch)
 	    }
 	}
     }
-
-
-    std::string git_fi = std::string("cd cvs_git_working && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
-    std::string git_fi2 = std::string("cd cvs_git && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
-    if (std::system(git_fi.c_str())) {
-	std::string failed_file = std::string("failed-") + fi_file;
-	std::cout << "Fatal - could not apply note fi file for revision " << rev.revision_number << "\n";
-	rename(fi_file.c_str(), failed_file.c_str());
-	exit(1);
-    }
-    if (std::system(git_fi2.c_str())) {
-	std::string failed_file = std::string("failed-") + fi_file;
-	std::cout << "Fatal - could not apply note fi file for revision " << rev.revision_number << "\n";
-	rename(fi_file.c_str(), failed_file.c_str());
-	exit(1);
-    }
-
-
-
+    
+    outfile.close();
 }
 
-void write_git_node(std::ofstream &outfile, struct svn_revision &rev, struct svn_node &node)
+void write_git_node(std::ofstream &toutfile, struct svn_revision &rev, struct svn_node &node)
 {
     /* Don't add directory nodes themselves - git works on files.
      *
@@ -359,7 +707,7 @@ void write_git_node(std::ofstream &outfile, struct svn_revision &rev, struct svn
 	node_path_split(node.copyfrom_path, mproject, cbranch, ctag, mlocal_path, &is_tag);
 	if (mlocal_path != node.local_path) {
 	    std::cout << "(r" << rev.revision_number << ") - renaming " << mlocal_path << " to " << node.local_path << "\n";
-	    outfile << "C " << mlocal_path << " " << node.local_path << "\n";
+	    toutfile << "C " << mlocal_path << " " << node.local_path << "\n";
 	}
 	return;
     }
@@ -368,7 +716,7 @@ void write_git_node(std::ofstream &outfile, struct svn_revision &rev, struct svn
     // If it's a straight-up path delete, do it and return
     if ((node.kind == nkerr || node.kind == ndir) && node.action == ndelete) {
 	std::cerr << "Revision r" << rev.revision_number << " delete: " << node.local_path << "\n";
-	outfile << "D \"" << node.local_path << "\"\n";
+	toutfile << "D \"" << node.local_path << "\"\n";
 	return;
     }
 
@@ -409,40 +757,40 @@ void write_git_node(std::ofstream &outfile, struct svn_revision &rev, struct svn
 
     switch (node.action) {
 	case nchange:
-	    outfile << "M ";
+	    toutfile << "M ";
 	    break;
 	case nadd:
-	    outfile << "M ";
+	    toutfile << "M ";
 	    break;
 	case nreplace:
-	    outfile << "M ";
+	    toutfile << "M ";
 	    break;
 	case ndelete:
-	    outfile << "D ";
+	    toutfile << "D ";
 	    break;
 	default:
 	    std::cerr << "Unhandled node action type " << print_node_action(node.action) << "\n";
-	    outfile << "? ";
-	    outfile << "\"" << node.local_path << "\"\n";
+	    toutfile << "? ";
+	    toutfile << "\"" << node.local_path << "\"\n";
 	    std::cout << "Fatal - unhandled node action at r" << rev.revision_number << ", node: " << node.path << "\n";
 	    exit(1);
     }
 
     if (node.action != ndelete) {
 	if (node.exec_path) {
-	    outfile << "100755 ";
+	    toutfile << "100755 ";
 	} else {
-	    outfile << "100644 ";
+	    toutfile << "100644 ";
 	}
     }
 
     if (node.action == nchange || node.action == nadd || node.action == nreplace) {
-	outfile << gsha1 << " \"" << node.local_path << "\"\n";
+	toutfile << gsha1 << " \"" << node.local_path << "\"\n";
 	return;
     }
 
     if (node.action == ndelete) {
-	outfile << "\"" << node.local_path << "\"\n";
+	toutfile << "\"" << node.local_path << "\"\n";
 	return;
     }
 
@@ -451,8 +799,9 @@ void write_git_node(std::ofstream &outfile, struct svn_revision &rev, struct svn
     exit(1);
 }
 
-void old_ref_process_dir(std::ofstream &outfile, struct svn_revision &rev, struct svn_node *node)
+void old_ref_process_dir(std::ofstream &toutfile, struct svn_revision &rev, struct svn_node *node)
 {
+
     std::cout << "Non-standard DIR handling needed: " << node->path << "\n";
     std::string ppath, bbpath, llpath, tpath;
     int is_tag;
@@ -461,70 +810,89 @@ void old_ref_process_dir(std::ofstream &outfile, struct svn_revision &rev, struc
     std::set<struct svn_node *> *node_set = path_states[node->copyfrom_path][node->copyfrom_rev];
     // TODO - if this is messed up, write out a shell .fi file for manual tweaking and exit
     if (node_set) {
-    for (n_it = node_set->begin(); n_it != node_set->end(); n_it++) {
-	if ((*n_it)->kind == ndir) {
-	    std::cout << "Stashed dir node: " << (*n_it)->path << "\n";
-	    old_ref_process_dir(outfile, rev, *n_it);
+	for (n_it = node_set->begin(); n_it != node_set->end(); n_it++) {
+	    if ((*n_it)->kind == ndir) {
+		std::cout << "Stashed dir node: " << (*n_it)->path << "\n";
+		old_ref_process_dir(toutfile, rev, *n_it);
+	    }
+	    std::cout << "Stashed file node: " << (*n_it)->path << "\n";
+	    std::string rp = path_subpath(llpath, (*n_it)->local_path);
+	    std::string gsha1 = svn_sha1_to_git_sha1[(*n_it)->text_content_sha1];
+	    std::string exestr = ((*n_it)->exec_path) ? std::string("100755 ") : std::string("100644 ");
+	    toutfile << "M " << exestr << gsha1 << " \"" << node->local_path << rp << "\"\n";
 	}
-	std::cout << "Stashed file node: " << (*n_it)->path << "\n";
-	std::string rp = path_subpath(llpath, (*n_it)->local_path);
-	std::string gsha1 = svn_sha1_to_git_sha1[(*n_it)->text_content_sha1];
-	std::string exestr = ((*n_it)->exec_path) ? std::string("100755 ") : std::string("100644 ");
-	outfile << "M " << exestr << gsha1 << " \"" << node->local_path << rp << "\"\n";
-    }
     }
 }
 
-void old_references_commit(std::ifstream &infile, std::ofstream &outfile, struct svn_revision &rev, std::string &rbranch)
+
+void old_references_commit(std::ifstream &infile, struct svn_revision &rev, std::string &rbranch)
 {
+    struct stat buffer;
+    std::string fi_file;
+
     if (author_map.find(rev.author) == author_map.end()) {
 	std::cout << "Error - couldn't find author map for author " << rev.author << " on revision " << rev.revision_number << "\n";
 	exit(1);
     }
 
     // If we need to write any blobs, take care of it now - old_references_commit short-circuits the "main" logic that handles this
-    for (size_t n = 0; n != rev.nodes.size(); n++) {
-	struct svn_node &node = rev.nodes[n];
-	if (node.text_content_length > 0) {
-	    write_blob(infile, outfile, node);
+    std::string bfi_file = std::to_string(rev.revision_number) + std::string("-blob.fi");
+    fi_file = std::string("custom/") + bfi_file;
+    // Only make one if we don't alredy have a custom file
+    if (stat(fi_file.c_str(), &buffer)) {
+
+	std::ofstream boutfile(fi_file, std::ios::out | std::ios::binary);
+
+	for (size_t n = 0; n != rev.nodes.size(); n++) {
+	    struct svn_node &node = rev.nodes[n];
+	    if (node.text_content_length > 0) {
+		write_blob(infile, boutfile, node);
+	    }
 	}
+
+	boutfile.close();
     }
 
-    outfile << "commit refs/heads/" << rbranch << "\n";
-    outfile << "mark :" << rev.revision_number << "\n";
-    outfile << "committer " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
-    outfile << "data " << rev.commit_msg.length() << "\n";
-    outfile << rev.commit_msg << "\n";
-    outfile << "from " << rev_to_gsha1[std::pair<std::string,long int>(rbranch, rev.revision_number-1)] << "\n";
-
-    if (rev.merged_from.length()) {
-	if (brlcad_revs.find(rev.merged_rev) != brlcad_revs.end()) {
-	    std::cout << "Revision " << rev.revision_number << " merged from: " << rev.merged_from << "(" << rev.merged_rev << "), id " << rev_to_gsha1[std::pair<std::string,long int>(rev.merged_from, rev.merged_rev)] << "\n";
-	    std::cout << "Revision " << rev.revision_number << "        from: " << rbranch << "\n";
-	    outfile << "merge " << rgsha1(rev.merged_from, rev.merged_rev) << "\n";
-	} else {
-	    std::cout << "Warning: r" << rev.revision_number << " is referencing a commit id (" << rev.merged_rev << ") that is not a BRL-CAD commit\n";
-	}
+    std::string cfi_file = std::to_string(rev.revision_number) + std::string("-commit.fi");
+    fi_file = std::string("custom/") + cfi_file;
+    // Only make one if we don't alredy have a custom file
+    if (stat(fi_file.c_str(), &buffer)) {
+	std::ofstream coutfile(cfi_file, std::ios::out | std::ios::binary);
+	write_commit_core(coutfile, rbranch, rev, NULL, 1, 0, 0);
+	coutfile.close();
     }
 
     brlcad_revs.insert(rev.revision_number);
 
-    for (size_t n = 0; n != rev.nodes.size(); n++) {
-	struct svn_node &node = rev.nodes[n];
+    std::string tfi_file = std::to_string(rev.revision_number) + std::string("-tree.fi");
+    fi_file = std::string("custom/") + tfi_file;
+    // Only make one if we don't alredy have a custom file
+    if (stat(fi_file.c_str(), &buffer)) {
 
-	if (node.kind == ndir && node.action == nadd && node.copyfrom_path.length() && node.copyfrom_rev < rev.revision_number - 1) {
-	    old_ref_process_dir(outfile, rev, &node);
-	    continue;
+	std::ofstream toutfile(tfi_file, std::ios::out | std::ios::binary);
+
+	for (size_t n = 0; n != rev.nodes.size(); n++) {
+	    struct svn_node &node = rev.nodes[n];
+
+	    if (node.kind == ndir && node.action == nadd && node.copyfrom_path.length() && node.copyfrom_rev < rev.revision_number - 1) {
+		old_ref_process_dir(toutfile, rev, &node);
+		continue;
+	    }
+
+	    // Not one of the special cases, handle normally
+	    write_git_node(toutfile, rev, node);
+
 	}
 
-	// Not one of the special cases, handle normally
-	write_git_node(outfile, rev, node);
-
+	toutfile.close();
     }
 }
 
-void standard_commit(std::ofstream &outfile, struct svn_revision &rev, std::string &rbranch)
+void standard_commit(struct svn_revision &rev, std::string &rbranch, int mvedcommit)
 {
+    struct stat buffer;
+    std::string fi_file;
+
     if (author_map.find(rev.author) == author_map.end()) {
 	std::cout << "Error - couldn't find author map for author " << rev.author << " on revision " << rev.revision_number << "\n";
 	exit(1);
@@ -532,136 +900,76 @@ void standard_commit(std::ofstream &outfile, struct svn_revision &rev, std::stri
 
     brlcad_revs.insert(rev.revision_number);
 
-    outfile << "commit refs/heads/" << rbranch << "\n";
-    outfile << "mark :" << rev.revision_number << "\n";
-    outfile << "committer " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
-    outfile << "data " << rev.commit_msg.length() << "\n";
-    outfile << rev.commit_msg << "\n";
-    outfile << "from " << rgsha1(rbranch, rev.revision_number - 1) << "\n";
+    std::string cfi_file = std::to_string(rev.revision_number) + std::string("-commit.fi");
+    fi_file = std::string("custom/") + cfi_file;
+    // Only make one if we don't alredy have a custom file
+    if (stat(fi_file.c_str(), &buffer)) {
 
-    if (rev.merged_from.length()) {
-	if (brlcad_revs.find(rev.merged_rev) != brlcad_revs.end()) {
-	    std::cout << "Revision " << rev.revision_number << " merged from: " << rev.merged_from << "(" << rev.merged_rev << "), id " << rev_to_gsha1[std::pair<std::string,long int>(rev.merged_from, rev.merged_rev)] << "\n";
-	    std::cout << "Revision " << rev.revision_number << "        from: " << rbranch << "\n";
-	    outfile << "merge " << rgsha1(rev.merged_from, rev.merged_rev) << "\n";
-	} else {
-	    std::cout << "Warning: r" << rev.revision_number << " is referencing a commit id (" << rev.merged_rev << ") that is not a BRL-CAD commit\n";
-	}
+	std::ofstream coutfile(cfi_file, std::ios::out | std::ios::binary);
+
+	write_commit_core(coutfile, rbranch, rev, NULL, 1, 0, mvedcommit);
+
+	coutfile.close();
     }
 
+    std::string tfi_file = std::to_string(rev.revision_number) + std::string("-tree.fi");
+    fi_file = std::string("custom/") + tfi_file;
+    // Only make one if we don't alredy have a custom file
+    if (stat(fi_file.c_str(), &buffer)) {
 
-    // Check for directory deletes and copyfrom in the same node set.  If this happens,
-    // we need to defer the delete of the old dir until after the copy is made.  This is
-    // related to the problem of pulling old dir contents, but if we're in this function
-    // the assumption is that the working dir's contents are what we need here.
-    std::set<struct svn_node *> deferred_deletes;
-    std::set<struct svn_node *> deletes;
-    std::set<struct svn_node *>::iterator d_it;
-    for (size_t n = 0; n != rev.nodes.size(); n++) {
-	struct svn_node &node = rev.nodes[n];
-	if (node.action == ndelete) {
-	    deletes.insert(&node);
+	std::ofstream toutfile(tfi_file, std::ios::out | std::ios::binary);
+
+	// Check for directory deletes and copyfrom in the same node set.  If this happens,
+	// we need to defer the delete of the old dir until after the copy is made.  This is
+	// related to the problem of pulling old dir contents, but if we're in this function
+	// the assumption is that the working dir's contents are what we need here.
+	std::set<struct svn_node *> deferred_deletes;
+	std::set<struct svn_node *> deletes;
+	std::set<struct svn_node *>::iterator d_it;
+	for (size_t n = 0; n != rev.nodes.size(); n++) {
+	    struct svn_node &node = rev.nodes[n];
+	    if (node.action == ndelete) {
+		deletes.insert(&node);
+	    }
 	}
-    }
-    for (size_t n = 0; n != rev.nodes.size(); n++) {
-	struct svn_node &node = rev.nodes[n];
-	if (node.kind != nfile && node.copyfrom_path.length()) {
-	    for (d_it = deletes.begin(); d_it != deletes.end(); d_it++) {
-		if (node.copyfrom_path == (*d_it)->path) {
-		    std::cout << "Deferring delete of " << node.copyfrom_path << "\n";
-		    deferred_deletes.insert(*d_it);
+	for (size_t n = 0; n != rev.nodes.size(); n++) {
+	    struct svn_node &node = rev.nodes[n];
+	    if (node.kind != nfile && node.copyfrom_path.length()) {
+		for (d_it = deletes.begin(); d_it != deletes.end(); d_it++) {
+		    if (node.copyfrom_path == (*d_it)->path) {
+			std::cout << "Deferring delete of " << node.copyfrom_path << "\n";
+			deferred_deletes.insert(*d_it);
+		    }
 		}
 	    }
 	}
-    }
 
-    for (size_t n = 0; n != rev.nodes.size(); n++) {
-	struct svn_node &node = rev.nodes[n];
-	if (node.action != ndelete || deferred_deletes.find(&node) == deferred_deletes.end()) {
-	    write_git_node(outfile, rev, node);
+	for (size_t n = 0; n != rev.nodes.size(); n++) {
+	    struct svn_node &node = rev.nodes[n];
+	    if (node.action != ndelete || deferred_deletes.find(&node) == deferred_deletes.end()) {
+		write_git_node(toutfile, rev, node);
+	    }
 	}
+
+	for (d_it = deferred_deletes.begin(); d_it != deferred_deletes.end(); d_it++) {
+	    write_git_node(toutfile, rev, **d_it);
+	}
+
+	toutfile.close();
     }
-
-    for (d_it = deferred_deletes.begin(); d_it != deferred_deletes.end(); d_it++) {
-	write_git_node(outfile, rev, **d_it);
-    }
-
-}
-
-void note_svn_rev(struct svn_revision &rev, std::string &rbranch)
-{
-    std::string fi_file = std::to_string(rev.revision_number) + std::string("-note.fi");
-    std::ofstream outfile(fi_file.c_str(), std::ios::out | std::ios::binary);
-
-    std::string svn_id_str = std::string("svn:revision:") + std::to_string(rev.revision_number);
-
-    outfile << "blob" << "\n";
-    outfile << "mark :1" << "\n";
-    outfile << "data " << svn_id_str.length() << "\n";
-    outfile << svn_id_str << "\n";
-    outfile << "\n";
-    outfile << "commit refs/notes/commits" << "\n";
-    outfile << "committer " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
-
-    std::string svn_id_commit_msg = std::string("Note SVN revision ") + std::to_string(rev.revision_number);
-    outfile << "data " << svn_id_commit_msg.length() << "\n";
-    outfile << svn_id_commit_msg << "\n";
-
-
-    std::string git_sha1_cmd = std::string("cd cvs_git && git show-ref refs/notes/commits > ../nsha1.txt && cd ..");
-    if (std::system(git_sha1_cmd.c_str())) {
-	std::cout << "git_sha1_cmd failed: refs/notes/commits\n";
-	exit(1);
-    }
-    std::ifstream hfile("nsha1.txt");
-    if (!hfile.good()) {
-	std::cout << "couldn't open nsha1.txt\n";
-	exit(1);
-    }
-    std::string line;
-    std::getline(hfile, line);
-    size_t spos = line.find_first_of(" ");
-    std::string nsha1 = line.substr(0, spos);
-
-    outfile << "from " << nsha1 << "\n";
-    outfile << "N :1 " << rgsha1(rbranch, rev.revision_number) << "\n";
-    outfile.close();
-
-    std::string git_fi = std::string("cd cvs_git_working && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
-    std::string git_fi2 = std::string("cd cvs_git && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
-    if (std::system(git_fi.c_str())) {
-	std::string failed_file = std::string("failed-") + fi_file;
-	std::cout << "Fatal - could not apply note fi file for revision " << rev.revision_number << "\n";
-	rename(fi_file.c_str(), failed_file.c_str());
-	exit(1);
-    }
-    if (std::system(git_fi2.c_str())) {
-	std::string failed_file = std::string("failed-") + fi_file;
-	std::cout << "Fatal - could not apply note fi file for revision " << rev.revision_number << "\n";
-	rename(fi_file.c_str(), failed_file.c_str());
-	exit(1);
-    }
-
 }
 
 
 void rev_fast_export(std::ifstream &infile, long int rev_num)
 {
     struct stat buffer;
-    std::string fi_file = std::string("custom/") + std::to_string(rev_num) + std::string(".fi");
-
-
-    if (rev_num == 29882) {
-	std::cout << "at 29882\n";
-    }
-
     struct svn_revision &rev = revs.find(rev_num)->second;
-
 
     if (rev.project != std::string("brlcad")) {
 	//std::cout << "Revision " << rev.revision_number << " is not part of brlcad, skipping\n";
 	return;
     }
+
 
     // If we have a text content sha1, update the map
     // to the current path state
@@ -675,54 +983,7 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
     }
     std::string rbranch = rev.nodes[0].branch;
 
-
-    if (stat(fi_file.c_str(), &buffer) == 0) {
-	// If we have a hand-crafted import file for this revision, use it
-	std::string git_fi = std::string("cd cvs_git_working && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
-	if (std::system(git_fi.c_str())) {
-	    std::string failed_file = std::string("failed-") + fi_file;
-	    std::cout << "Fatal - could not apply fi file for revision " << rev_num << "\n";
-	    rename(fi_file.c_str(), failed_file.c_str());
-	    exit(1);
-	}
-
-	verify_repos(rev.revision_number, rbranch, rbranch, 1);
-
-	if (rev_num == 36053) {
-	    all_git_branches.push_back(std::string("rel8"));
-	}
-
-
-	if (rev_num == 64060) {
-	    all_git_branches.push_back(std::string("eab"));
-	}
-
-
-	git_fi = std::string("cd cvs_git && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
-	if (std::system(git_fi.c_str())) {
-	    std::string failed_file = std::string("failed-") + fi_file;
-	    std::cout << "Fatal - could not apply fi file for revision " << rev_num << "\n";
-	    rename(fi_file.c_str(), failed_file.c_str());
-	    exit(1);
-	}
-
-	return;
-    }
-
-    fi_file = std::to_string(rev_num) + std::string(".fi");
-
-    std::set<int> special_revs;
-    std::string empty_sha1("da39a3ee5e6b4b0d3255bfef95601890afd80709");
-    std::map<long int, struct svn_revision>::iterator r_it;
-
-
-    // particular revisions that will have to be special cased:
-    special_revs.insert(32314);
-    special_revs.insert(36633);
-    special_revs.insert(36843);
-    special_revs.insert(39465);
-
-
+    // There are a variety of "skip this" cases - handle them
     if (rev.revision_number == 30760) {
 	std::cout << "Skipping r30760 - premature tagging of rel-7-12-2.  Will be tagged by 30792\n";
 	return;
@@ -733,8 +994,24 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	return;
     }
 
-#if 0
+
+    if (rev_num == 36053) {
+	all_git_branches.push_back(std::string("rel8"));
+    }
+
+
+    if (rev_num == 64060) {
+	all_git_branches.push_back(std::string("eab"));
+    }
+
+    if (reject_tag(rev.nodes[0].tag)) {
+	std::cout << "Skipping " << rev.revision_number << " - edit to old tag:\n" << rev.commit_msg << "\n";
+	return;
+    }
+
+
     std::cout << "Processing revision " << rev.revision_number << "\n";
+#if 0
     if (rev.merged_from.length()) {
 	std::cout << "Note: merged from " << rev.merged_from << "\n";
     }
@@ -745,56 +1022,16 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
     int branch_delete = 0;
     std::string ctag, cfrom;
 
-    if (reject_tag(rev.nodes[0].tag)) {
-	std::cout << "Skipping " << rev.revision_number << " - edit to old tag:\n" << rev.commit_msg << "\n";
-	return;
-    }
-
-    if (special_revs.find(rev.revision_number) != special_revs.end()) {
-	std::string bsrc, bdest;
-	brlcad_revs.insert(rev.revision_number);
-	std::cout << "Revision " << rev.revision_number << " requires special handling\n";
-	if (rev.revision_number == 36633 || rev.revision_number == 39465) {
-	    bdest = std::string("refs/heads/dmtogl");
-	    bsrc = rev_to_gsha1[std::pair<std::string,long int>(std::string("master"), rev.revision_number-1)];
-	} else {
-	    bdest = std::string("refs/heads/STABLE");
-	}
-	if (rev.revision_number == 31039) {
-	    bsrc = tag_ids[std::string("rel-7-12-2")];
-	}
-	if (rev.revision_number == 32314 || rev.revision_number == 36843) {
-	    bsrc = tag_ids[std::string("rel-7-12-6")];
-	}
-
-	std::ofstream outfile(fi_file.c_str(), std::ios::out | std::ios::binary);
-	full_sync_commit(outfile, rev, bsrc, bdest);
-	outfile.close();
-
-	if (rev.revision_number == 36633 || rev.revision_number == 39465) {
-
-	    verify_repos(rev.revision_number, std::string("dmtogl"), std::string("dmtogl"), 0);
-
-	} else {
-
-	    verify_repos(rev.revision_number, std::string("STABLE"), std::string("STABLE"), 0);
-	}
-
-	return;
-    }
-
     if (rebuild_revs.find(rev.revision_number) != rebuild_revs.end()) {
 	std::cout << "Revision " << rev.revision_number << " references non-current SVN info, needs special handling\n";
-	std::ofstream outfile(fi_file.c_str(), std::ios::out | std::ios::binary);
-	old_references_commit(infile, outfile, rev, rbranch);
-	outfile.close();
-
-	verify_repos(rev.revision_number, rbranch, rbranch, 0);
-
+	old_references_commit(infile, rev, rbranch);
+	apply_commit(rev, rbranch, 1);
 	return;
     }
 
-    std::ofstream outfile(fi_file.c_str(), std::ios::out | std::ios::binary);
+    std::string blob_fi_file = std::to_string(rev_num) + std::string("-blob.fi");
+    std::ofstream bloboutfile(blob_fi_file.c_str(), std::ios::out | std::ios::binary);
+
 
     for (size_t n = 0; n != rev.nodes.size(); n++) {
 	struct svn_node &node = rev.nodes[n];
@@ -819,9 +1056,12 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 		if (rev.revision_number < edited_tag_minr) {
 		    std::string nbranch = std::string("refs/heads/") + node.tag;
 		    std::cout << "Adding tag branch " << nbranch << " from " << bbpath << ", r" << rev.revision_number <<"\n";
+		    std::string bfi_file = std::to_string(rev_num) + std::string("-b.fi");
+		    std::ofstream boutfile(bfi_file.c_str(), std::ios::out | std::ios::binary);
 		    std::cout << rev.commit_msg << "\n";
-		    outfile << "reset " << nbranch << "\n";
-		    outfile << "from " << rev_to_gsha1[std::pair<std::string,long int>(bbpath, rev.revision_number-1)] << "\n";
+		    boutfile << "reset " << nbranch << "\n";
+		    boutfile << "from " << bbpath << "," << rev.revision_number-1 << "\n";
+		    boutfile.close();
 		    continue;
 		}
 		if (rev.revision_number == edited_tag_maxr) {
@@ -829,6 +1069,19 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 		    rbranch = node.branch;
 		    ctag = node.tag;
 		    cfrom = node.branch;
+		    std::string tfi_file = std::to_string(rev.revision_number) + std::string("-tagaftercommit.fi");
+		    std::ofstream toutfile(tfi_file.c_str(), std::ios::out | std::ios::binary);
+
+		    // Note - in this situation, we need to both build a commit and do a tag.  Will probably
+		    // take some refactoring.  Merge information will also be a factor.
+		    std::cout << "Adding tag after final tag branch commit: " << ctag << " from " << cfrom << ", r" << rev.revision_number << "\n";
+		    toutfile << "tag " << ctag << "\n";
+		    toutfile << "from " << cfrom << "," << rev.revision_number-1 << "\n";
+		    toutfile << "tagger " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
+		    toutfile << "data " << rev.commit_msg.length() << "\n";
+		    toutfile << rev.commit_msg << "\n";
+		    toutfile.close();
+
 		}
 		std::cout << "Non-final tag edit, processing normally: " << node.branch << ", r" << rev.revision_number<< "\n";
 		rbranch = node.branch;
@@ -836,13 +1089,15 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	    } else {
 		brlcad_revs.insert(rev.revision_number);
 		std::cout << "Adding tag " << node.tag << " from " << bbpath << ", r" << rev.revision_number << "\n";
-		have_commit = 1;
-		outfile << "tag " << node.tag << "\n";
-		outfile << "from " << rev_to_gsha1[std::pair<std::string,long int>(bbpath, rev.revision_number-1)] << "\n";
-		outfile << "tagger " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
-		outfile << "data " << rev.commit_msg.length() << "\n";
-		outfile << rev.commit_msg << "\n";
+		std::string tfi_file = std::to_string(rev_num) + std::string("-tag.fi");
+		std::ofstream toutfile(tfi_file.c_str(), std::ios::out | std::ios::binary);
+		toutfile << "tag " << node.tag << "\n";
+		toutfile << "from " << rev_to_gsha1[std::pair<std::string,long int>(bbpath, rev.revision_number-1)] << "\n";
+		toutfile << "tagger " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
+		toutfile << "data " << rev.commit_msg.length() << "\n";
+		toutfile << rev.commit_msg << "\n";
 		tag_ids[node.tag] = rev_to_gsha1[std::pair<std::string,long int>(bbpath, rev.revision_number-1)];
+		toutfile.close();
 		continue;
 	    }
 
@@ -862,62 +1117,39 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	    int is_tag;
 	    node_path_split(node.copyfrom_path, ppath, bbpath, tpath, llpath, &is_tag);
 	    std::cout << "Adding branch " << node.branch << " from " << bbpath << ", r" << rev.revision_number <<"\n";
-	    std::cout << rev.commit_msg << "\n";
-	    outfile << "reset refs/heads/" << node.branch << "\n";
-	    outfile << "from " << rev_to_gsha1[std::pair<std::string,long int>(bbpath, rev.revision_number-1)] << "\n";
-	    outfile.close();
-	    have_commit = 1;
+
+	    std::string bfi_file = std::to_string(rev_num) + std::string("-b.fi");
+	    std::ofstream boutfile(bfi_file.c_str(), std::ios::out | std::ios::binary);
+
+	    boutfile << "reset refs/heads/" << node.branch << "\n";
+	    boutfile << "from " << bbpath << "," << rev.revision_number-1 << "\n";
+	    boutfile.close();
+	    
 	    all_git_branches.push_back(node.branch);
-	    std::string git_fi;
-	    git_fi = std::string("cd cvs_git_working && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
-	    if (std::system(git_fi.c_str())) {
-		std::string failed_file = std::string("failed-") + fi_file;
-		std::cout << "Fatal - could not apply fi file for revision " << rev.revision_number << "\n";
-		rename(fi_file.c_str(), failed_file.c_str());
-		exit(1);
-	    }
-	    git_fi = std::string("cd cvs_git && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
-	   if (std::system(git_fi.c_str())) {
-		std::string failed_file = std::string("failed-") + fi_file;
-		std::cout << "Fatal - could not apply fi file for revision " << rev.revision_number << "\n";
-		rename(fi_file.c_str(), failed_file.c_str());
-		exit(1);
-	    }
-	    get_rev_sha1s(rev_num);
 
 	    // Make an empty commit on the new branch with the commit message from SVN, but no changes
-	    std::string fi_file2 = std::to_string(rev_num) + std::string("-b.fi");
-	    std::ofstream outfile2(fi_file2.c_str(), std::ios::out | std::ios::binary);
-	    outfile2 << "commit refs/heads/" << node.branch << "\n";
-	    outfile2 << "committer " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
-	    outfile2 << "data " << rev.commit_msg.length() << "\n";
-	    outfile2 << rev.commit_msg << "\n";
-	    outfile2 << "from " << rev_to_gsha1[std::pair<std::string,long int>(node.branch, rev.revision_number)] << "\n";
-	    outfile2.close();
-	    std::string git_fi2 = std::string("cd cvs_git_working && cat ../") + fi_file2 + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
-	    if (std::system(git_fi2.c_str())) {
-		std::string failed_file = std::string("failed-") + fi_file2;
-		std::cout << "Fatal - could not apply fi file for revision " << rev.revision_number << "\n";
-		rename(fi_file2.c_str(), failed_file.c_str());
-		exit(1);
-	    }
 
-	    verify_repos(rev.revision_number, node.branch, node.branch, 1);
+	    std::string cfi_file = std::to_string(rev.revision_number) + std::string("-commit.fi");
+	    std::ofstream coutfile(cfi_file, std::ios::out | std::ios::binary);
 
-	    git_fi2 = std::string("cd cvs_git && cat ../") + fi_file2 + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
+	    write_commit_core(coutfile, node.branch, rev, NULL, 0, 1, 0);
 
-	    if (std::system(git_fi2.c_str())) {
-		std::string failed_file = std::string("failed-") + fi_file2;
-		std::cout << "Fatal - could not apply fi file for revision " << rev.revision_number << "\n";
-		rename(fi_file2.c_str(), failed_file.c_str());
-		exit(1);
-	    }
+	    coutfile.close();
+
 	    continue;
 	}
 
 	if (node.branch_delete) {
 	    //std::cout << "processing revision " << rev.revision_number << "\n";
 	    std::cout << "Delete branch instruction: " << node.branch << " - deferring.\n";
+
+	    std::string cfi_file = std::to_string(rev.revision_number) + std::string("-commit.fi");
+	    std::ofstream coutfile(cfi_file, std::ios::out | std::ios::binary);
+
+	    write_commit_core(coutfile, node.branch, rev, NULL, 0, 1, 0);
+
+	    coutfile.close();
+
 	    branch_delete = 1;
 	    continue;
 	}
@@ -929,7 +1161,7 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 
 	if (node.text_content_length > 0) {
 	    //std::cout << "	Adding node object for " << node.local_path << "\n";
-	    write_blob(infile, outfile, node);
+	    write_blob(infile, bloboutfile, node);
 	    git_changes = 1;
 	}
 	if (node.text_content_sha1.length()) {
@@ -945,6 +1177,8 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	    git_changes = 1;
 	}
     }
+	    
+    bloboutfile.close();
 
     if (git_changes) {
 	if (have_commit) {
@@ -953,105 +1187,14 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 
 	if (rev.move_edit) {
 	    move_only_commit(rev, rbranch);
-
-	    // for this branch only, update the sha1 so the standard commit can look up the right "from" reference
-	    std::string line;
-	    std::string git_sha1_cmd = std::string("cd cvs_git && git show-ref ") + rbranch + std::string(" > ../sha1.txt && cd ..");
-	    if (std::system(git_sha1_cmd.c_str())) {
-		std::cout << "git_sha1_cmd failed: " << rbranch << "\n";
-		exit(1);
-	    }
-	    std::ifstream hfile("sha1.txt");
-	    if (!hfile.good()) {
-		std::cout << "sha1.txt read failed" << "\n";
-		exit(1);
-	    }
-	    std::getline(hfile, line);
-	    size_t spos = line.find_first_of(" ");
-	    std::string hsha1 = line.substr(0, spos);
-	    if (hsha1.length()) {
-		rev_to_gsha1[std::pair<std::string,long int>(rbranch, rev.revision_number-1)] = hsha1;
-		//std::cout << branch << "," << rev << " -> " << rev_to_gsha1[std::pair<std::string,long int>(branch, rev)] << "\n";
-	    }
-	    hfile.close();
-	    remove("sha1.txt");
-	}
-
-	standard_commit(outfile, rev, rbranch);
-
-
-	outfile.close();
-	verify_repos(rev.revision_number, rbranch, rbranch, 0);
-#if 0
-	if (rev.revision_number % 10 == 0 || rbranch != std::string("master")) {
+	    standard_commit(rev, rbranch, 1);
 	} else {
-	    // Not verifying this one - just apply the fast import file and go
-	    std::string git_fi = std::string("cd cvs_git_working && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
-	    std::string git_fi2 = std::string("cd cvs_git && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
-	    if (std::system(git_fi.c_str())) {
-		std::string failed_file = std::string("failed-") + fi_file;
-		std::cout << "Fatal - could not apply fi file for revision " << rev.revision_number << "\n";
-		rename(fi_file.c_str(), failed_file.c_str());
-		exit(1);
-	    }
-	    if (std::system(git_fi2.c_str())) {
-		std::string failed_file = std::string("failed-") + fi_file;
-		std::cout << "Fatal - could not apply fi file for revision " << rev.revision_number << "\n";
-		rename(fi_file.c_str(), failed_file.c_str());
-		exit(1);
-	    }
-	}
-#endif
-
-	// Add a git note indicating what revision the last commit was
-	note_svn_rev(rev, rbranch);
-
-
-	if (tag_after_commit) {
-	    std::string tfi_file = std::to_string(rev.revision_number) + std::string("-tagaftercommit.fi");
-	    std::ofstream toutfile(fi_file.c_str(), std::ios::out | std::ios::binary);
-
-	    get_rev_sha1s(rev.revision_number);
-
-	    // Note - in this situation, we need to both build a commit and do a tag.  Will probably
-	    // take some refactoring.  Merge information will also be a factor.
-	    std::cout << "Adding tag after final tag branch commit: " << ctag << " from " << cfrom << ", r" << rev.revision_number << "\n";
-	    toutfile << "tag " << ctag << "\n";
-	    toutfile << "from " << rev_to_gsha1[std::pair<std::string,long int>(cfrom, rev.revision_number-1)] << "\n";
-	    toutfile << "tagger " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
-	    toutfile << "data " << rev.commit_msg.length() << "\n";
-	    toutfile << rev.commit_msg << "\n";
-
-	    toutfile.close();
-
-	    std::string git_fi = std::string("cd cvs_git_working && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
-	    std::string git_fi2 = std::string("cd cvs_git && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
-	    if (std::system(git_fi.c_str())) {
-		std::string failed_file = std::string("failed-") + fi_file;
-		std::cout << "Fatal - could not apply tag fi file for revision " << rev.revision_number << "\n";
-		rename(fi_file.c_str(), failed_file.c_str());
-		exit(1);
-	    }
-	    if (std::system(git_fi2.c_str())) {
-		std::string failed_file = std::string("failed-") + fi_file;
-		std::cout << "Fatal - could not apply tag fi file for revision " << rev.revision_number << "\n";
-		rename(fi_file.c_str(), failed_file.c_str());
-		exit(1);
-	    }
-
-	
+	    standard_commit(rev, rbranch, 0);
 	}
 
-
-    } else {
-	outfile.close();
-	if (!branch_delete && !have_commit) {
-	    std::cout << "Warning(r" << rev.revision_number << ") - skipping SVN commit, no git applicable changes found\n";
-	    std::cout << rev.commit_msg << "\n";
-	}
-	remove(fi_file.c_str());
     }
 
+    apply_commit(rev, rbranch, 0);
 }
 
 
