@@ -44,11 +44,13 @@
 #include "common.h"
 
 #include <cstdlib>
+#include <ctype.h>
 #include <string>
 #include <map>
 #include "bio.h"
 
 #include "bu/opt.h"
+#include "bu/str.h"
 #include "raytrace.h"
 
 
@@ -181,6 +183,78 @@ get_minor_type_name(const int typ)
 } // get_minor_type_name
 
 
+/**
+ * hexdump() helper function for printing a human-readable view
+ */
+static void
+print_representation(unsigned char *chars, size_t length)
+{
+    size_t i;
+
+    for (i = 0; i < length; i++) {
+	if (isascii(0x00FF & chars[i]) && (isprint(0x00FF & chars[i])))
+	    printf("%c", chars[i]);
+	else
+	    printf(".");
+    }
+}
+
+
+/**
+ * Prints a canonical hexadecimal dump for a given block of bytes
+ */
+static void
+hexdump(const unsigned char *from, const unsigned char *to)
+{
+    long i;
+    long ii; // starting offset
+    int	j;
+    int jj;
+    int k;
+    unsigned char c;
+    static const int PERLINE = 16;
+    unsigned char chars[PERLINE];
+
+    i = 0L;
+    ii = 0L;
+    j = 0;
+
+    if (from > to)
+	return;
+
+    while (from < to) {
+	c = *from++;
+
+	if (! (i % PERLINE)) {
+	    if (i) {
+		j = 0;
+		printf("  ");
+		print_representation(chars, PERLINE);
+	    }
+
+	    printf("\n%08.8lx:", ii);
+	}
+
+	ii++;
+	i++;
+	printf(" %02.2x", (c & 0x00FF));
+	chars[j++] = c;
+    }
+
+    k = (i % PERLINE);
+    if (k) {
+	k = PERLINE - k;
+
+	for (jj = 0; jj < (3 * k); ++jj)
+	    printf(" ");
+    }
+
+    printf("  ");
+    print_representation(chars, PERLINE);
+    printf("\n\n");
+}
+
+
 int
 main(int argc, char** argv)
 {
@@ -201,6 +275,7 @@ main(int argc, char** argv)
     int has_force           = 0;
     int has_help            = 0;
     int has_compress        = 0;
+    const char *dump_obj    = NULL;
     struct bu_vls db_fname  = BU_VLS_INIT_ZERO;
     struct bu_vls db2_fname = BU_VLS_INIT_ZERO;
 
@@ -208,7 +283,8 @@ main(int argc, char** argv)
     BU_OPT(d[0], "h", "help",     "",     NULL,         &has_help,     "Print help and exit");
     BU_OPT(d[1], "f", "force",    "bool", &bu_opt_bool, &has_force,    "Allow overwriting existing files.");
     BU_OPT(d[2], "c", "compress", "bool", &bu_opt_bool, &has_compress, "Create a copy with no free space.");
-    BU_OPT_NULL(d[5]);
+    BU_OPT(d[3], "d", "dump",     "str",  &bu_opt_str,  &dump_obj,     "Hexdump a specific object.");
+    BU_OPT_NULL(d[4]);
 
     /* Skip first arg */
     argv++; argc--;
@@ -398,6 +474,10 @@ main(int argc, char** argv)
             if (nw != r.object_length)
                 bu_bomb("nw != r.object_length");
         }
+	if (dump_obj && BU_STR_EQUAL(dump_obj, name.c_str())) {
+	    printf("  Hex Dumping %zu bytes\n", r.object_length);
+	    hexdump(r.buf, r.buf+r.object_length);
+	}
 
         // free the heap stuff
         if (r.buf) {
