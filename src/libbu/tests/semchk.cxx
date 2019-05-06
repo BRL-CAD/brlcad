@@ -87,7 +87,7 @@ process_file(std::map<std::string, std::string> *sem_defs, std::map<std::string,
 		 _trim_whitespace(key);
 		 _trim_whitespace(val);
 		 if (sem_defs->find(key) != sem_defs->end()) {
-		     std::cerr << "Error - duplicate definition of semaphore " << key << " found in file " << f << "!\n";
+		     std::cerr << "Error - duplicate definition of semaphore " << key << " found in file " << f << "\n";
 		     std::cerr << "Previous definition found in file " << (*sem_files)[key] << "\n";
 		     exit(-1);
 		 }
@@ -125,7 +125,7 @@ validate_semaphores(std::map<std::string, std::string> *sem_defs, int verbose)
 	    unevaluated_1.push(key);
 	} else {
 	    semaphore_values[key] = l;
-	    val_names[l] = key; 
+	    val_names[l] = key;
 	    semaphore_names.insert(std::pair<long int, std::string>(l, key));
 	}
     }
