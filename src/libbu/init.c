@@ -34,9 +34,14 @@
 
 #include "common.h"
 
+#include "bu/defines.h"
+#include "bu/app.h"
+
 
 INITIALIZE(libbu)
 {
+    char iwd[MAXPATHLEN] = {0};
+    bu_getiwd(iwd, MAXPATHLEN);
 }
 
 

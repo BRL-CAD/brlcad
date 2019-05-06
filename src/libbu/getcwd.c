@@ -42,11 +42,14 @@
 #include "bu/str.h"
 #include "bu/log.h"
 #include "bu/exit.h"
+#include "bu/parallel.h"
+
 
 /* c89 strict doesn't declare realpath */
 #ifndef HAVE_DECL_REALPATH
 extern char *realpath(const char *, char *);
 #endif
+
 
 char *
 bu_getcwd(char *buf, size_t size)
@@ -54,17 +57,18 @@ bu_getcwd(char *buf, size_t size)
     char *cwd = NULL;
     char *pwd = NULL;
     char cbuf[MAXPATHLEN] = {0};
-    size_t sz = size;
 
     /* NULL buf means allocate */
     if (!buf) {
-	sz = MAXPATHLEN;
-	buf = (char *)bu_calloc(1, sz, "alloc bu_getcwd");
+	size = MAXPATHLEN;
+	buf = (char *)bu_calloc(1, size, "alloc bu_getcwd");
     }
 
     /* FIRST: try getcwd */
 #ifdef HAVE_GETCWD
+    bu_semaphore_acquire(BU_SEM_SYSCALL);
     cwd = getcwd(cbuf, MAXPATHLEN);
+    bu_semaphore_release(BU_SEM_SYSCALL);
     if (cwd
 	&& strlen(cwd) > 0
 	&& bu_file_exists(cwd, NULL))
@@ -77,13 +81,11 @@ bu_getcwd(char *buf, size_t size)
 	    && strlen(rwd) > 0
 	    && bu_file_exists(rwd, NULL))
 	{
-	    BU_ASSERT(sz > strlen(rwd)+1);
-	    bu_strlcpy(buf, rwd, strlen(rwd)+1);
+	    bu_strlcpy(buf, rwd, size);
 	    return buf;
 	}
 #endif /* HAVE_REALPATH */
-	BU_ASSERT(sz > strlen(cwd)+1);
-	bu_strlcpy(buf, cwd, strlen(cwd)+1);
+	bu_strlcpy(buf, cwd, size);
 	return buf;
     }
 #else
@@ -105,19 +107,41 @@ bu_getcwd(char *buf, size_t size)
 	    && strlen(rwd) > 0
 	    && bu_file_exists(rwd, NULL))
 	{
-	    BU_ASSERT(sz > strlen(rwd)+1);
-	    bu_strlcpy(buf, rwd, strlen(rwd)+1);
+	    bu_strlcpy(buf, rwd, size);
 	    return buf;
 	}
 #endif /* HAVE_REALPATH */
-	BU_ASSERT(sz > strlen(pwd)+1);
-	bu_strlcpy(buf, pwd, strlen(pwd)+1);
+	bu_strlcpy(buf, pwd, size);
 	return buf;
     }
 
     /* LAST: punt (but do not return NULL) */
-    BU_ASSERT(sz > strlen(".")+1);
-    bu_strlcpy(buf, ".", strlen(".")+1);
+    bu_strlcpy(buf, ".", size);
+
+    return buf;
+}
+
+
+/* set on the first call to bu_getiwd() */
+static char iwd[MAXPATHLEN] = {0};
+
+char *
+bu_getiwd(char *buf, size_t size)
+{
+    /* first call initializes */
+    bu_semaphore_acquire(BU_SEM_DIR);
+    if (iwd[0] == '\0')
+	bu_getcwd(iwd, MAXPATHLEN);
+    bu_semaphore_release(BU_SEM_DIR);
+
+    /* NULL buf means allocate */
+    if (!buf) {
+	size = MAXPATHLEN;
+	buf = (char *)bu_calloc(1, size, "alloc bu_getcwd");
+    }
+
+    bu_strlcpy(buf, iwd, size);
+
     return buf;
 }
 
