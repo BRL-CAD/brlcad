@@ -61,7 +61,7 @@ _trim_whitespace(std::string &s)
 }
 
 int
-process_file(std::map<std::string, std::string> *sem_defs, std::string f)
+process_file(std::map<std::string, std::string> *sem_defs, std::map<std::string, std::string> *sem_files, std::string f)
 {
     int ret = 0;
     std::string sline;
@@ -87,10 +87,12 @@ process_file(std::map<std::string, std::string> *sem_defs, std::string f)
 		 _trim_whitespace(key);
 		 _trim_whitespace(val);
 		 if (sem_defs->find(key) != sem_defs->end()) {
-		     std::cerr << "Error - duplicate definition of semaphore " << key << " found!\n";
+		     std::cerr << "Error - duplicate definition of semaphore " << key << " found in file " << f << "!\n";
+		     std::cerr << "Previous definition found in file " << (*sem_files)[key] << "\n";
 		     exit(-1);
 		 }
 		(*sem_defs)[key] = val;
+		(*sem_files)[key] = f;
 		ret++;
 	    }
 	}
@@ -270,6 +272,7 @@ main(int argc, const char *argv[])
     }
 
     std::map<std::string, std::string> sem_defs;
+    std::map<std::string, std::string> sem_files;
 
     std::string sfile;
     std::ifstream fs;
@@ -278,7 +281,7 @@ main(int argc, const char *argv[])
 	std::cerr << "Unable to open file list " << argv[1] << "\n";
     }
     while (std::getline(fs, sfile)) {
-	ret += process_file(&sem_defs, sfile);
+	ret += process_file(&sem_defs, &sem_files, sfile);
     }
     fs.close();
 
