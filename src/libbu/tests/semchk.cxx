@@ -38,6 +38,8 @@
  * numerically unique.
  */
 
+#include "common.h"
+
 #include <stdlib.h> /* for strtol */
 #include <errno.h> /* for errno */
 
