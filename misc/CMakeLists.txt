@@ -124,6 +124,7 @@ set(misc_ignore_files
   repoconv/svn2git/archive_branches.sh
   repoconv/svn2git/rules
   repoconv/svn2git/rules-geomcore
+  repoconv/svn2git/svn2git_gitignore_files-r29886_to_r72245.tar.gz 
   repoconv/svn2git/svn-fast-export/CMake/FindAPR.cmake
   repoconv/svn2git/svn-fast-export/CMake/FindSubversionLibrary.cmake
   repoconv/svn2git/svn-fast-export/CMakeLists.txt
@@ -144,6 +145,8 @@ set(misc_ignore_files
   repoconv/svn2git/svn-fast-export/samples/two-projects.rules
   repoconv/svn2git/svn-fast-export/svn.cpp
   repoconv/svn2git/svn-fast-export/svn.h
+  repoconv/svn_git_cmp/svn_git_cmp.cxx
+  repoconv/svn_git_cmp/svn_msgs.cxx
   repoconv/svnfexport/sha1.hpp
   repoconv/svnfexport/svn_date.h
   repoconv/svnfexport/svnfexport_svn.cxx
@@ -167,6 +170,7 @@ set(misc_ignore_files
   repoconv/svnfexport/custom/r29886_cvs_svn_rel-5-1-branch_sync.fi
   repoconv/svnfexport/custom/r29886_cvs_svn_trunk_sync.fi
   repoconv/svnfexport/custom/sync_commit.sh
+  repoconv/svnfexport/custom/sync_commit_trunk.sh
   uncpowerplant2g.sh
   win32-msvc/CMakeLists.txt
   win32-msvc/Dll/BrlcadCore.def

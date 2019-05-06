@@ -34,8 +34,9 @@ add_subdirectory(tests)
 
 set(bg_ignore
   QuickHull.hpp
-  clipper.hpp
   bg_private.h
+  clipper.hpp
+  earcut.hpp
   pointgen.c
   )
 
