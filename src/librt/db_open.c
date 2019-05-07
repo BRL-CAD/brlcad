@@ -58,33 +58,33 @@
 struct db_i *
 db_open(const char *name, const char *mode)
 {
+    static int sem_uses = 0;
+    extern int RT_SEM_WORKER;
+    extern int RT_SEM_RESULTS;
+    extern int RT_SEM_MODEL;
+    extern int RT_SEM_TREE0;
+    extern int RT_SEM_TREE1;
+    extern int RT_SEM_TREE2;
+    extern int RT_SEM_TREE3;
     register struct db_i *dbip = DBI_NULL;
     register int i;
     char **argv;
 
-    static int sem_uses = 0;
     if (!sem_uses)
 	sem_uses = bu_semaphore_register("LIBRT_SEM_USES");
 
-    extern int RT_SEM_WORKER;
     if (!RT_SEM_WORKER)
 	RT_SEM_WORKER = bu_semaphore_register("RT_SEM_WORKER");
-    extern int RT_SEM_RESULTS;
     if (!RT_SEM_RESULTS)
 	RT_SEM_RESULTS = bu_semaphore_register("RT_SEM_RESULTS");
-    extern int RT_SEM_MODEL;
     if (!RT_SEM_MODEL)
 	RT_SEM_MODEL = bu_semaphore_register("RT_SEM_MODEL");
-    extern int RT_SEM_TREE0;
     if (!RT_SEM_TREE0)
 	RT_SEM_TREE0 = bu_semaphore_register("RT_SEM_TREE0");
-    extern int RT_SEM_TREE1;
     if (!RT_SEM_TREE1)
 	RT_SEM_TREE1 = bu_semaphore_register("RT_SEM_TREE1");
-    extern int RT_SEM_TREE2;
     if (!RT_SEM_TREE2)
 	RT_SEM_TREE2 = bu_semaphore_register("RT_SEM_TREE2");
-    extern int RT_SEM_TREE3;
     if (!RT_SEM_TREE3)
 	RT_SEM_TREE3 = bu_semaphore_register("RT_SEM_TREE3");
 

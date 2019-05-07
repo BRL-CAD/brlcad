@@ -153,22 +153,22 @@ set_target_properties(libbu PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 # Define a pre-build test for libbu to check the semaphores in BRL-CAD's headers for
 # ordering issues
-set(BCAD_HDRS_FILE "${CMAKE_CURRENT_BINARY_DIR}/brlcad_headers.txt")
-file(REMOVE "${BCAD_HDRS_FILE}")
-file(GLOB_RECURSE BCAD_HDRS "${CMAKE_SOURCE_DIR}/include/*.h*")
-foreach(HDRF ${BCAD_HDRS})
-  if (NOT "${HDRF}" MATCHES ".*.svn.*")
-    file(APPEND "${BCAD_HDRS_FILE}" "${HDRF}\n")
-  endif (NOT "${HDRF}" MATCHES ".*.svn.*")
-endforeach(HDRF ${BCAD_HDRS})
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/brlcad_headers.txt")
-BRLCAD_ADDEXEC(semchk "tests/semchk.cxx" "" NO_INSTALL)
-add_custom_command(
-  TARGET libbu PRE_BUILD
-  COMMAND $<TARGET_FILE:semchk> "${BCAD_HDRS_FILE}"
-  COMMENT "Validating BRL-CAD library semaphore definitions"
-  DEPENDS semchk
-  )
+#set(BCAD_HDRS_FILE "${CMAKE_CURRENT_BINARY_DIR}/brlcad_headers.txt")
+#file(REMOVE "${BCAD_HDRS_FILE}")
+#file(GLOB_RECURSE BCAD_HDRS "${CMAKE_SOURCE_DIR}/include/*.h*")
+#foreach(HDRF ${BCAD_HDRS})
+#  if (NOT "${HDRF}" MATCHES ".*.svn.*")
+#    file(APPEND "${BCAD_HDRS_FILE}" "${HDRF}\n")
+#  endif (NOT "${HDRF}" MATCHES ".*.svn.*")
+#endforeach(HDRF ${BCAD_HDRS})
+#DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/brlcad_headers.txt")
+#BRLCAD_ADDEXEC(semchk "tests/semchk.cxx" "" NO_INSTALL)
+#add_custom_command(
+#  TARGET libbu PRE_BUILD
+#  COMMAND $<TARGET_FILE:semchk> "${BCAD_HDRS_FILE}"
+#  COMMENT "Validating BRL-CAD library semaphore definitions"
+#  DEPENDS semchk
+#  )
 
 BRLCAD_ADDDATA(fix.6r vfont)
 BRLCAD_ADDDATA(nonie.r.12 vfont)
@@ -182,6 +182,7 @@ set(bu_ignore_files
   mime.cmake
   parallel.h
   process.h
+  tests/semchk.cxx
   sha1.h
   vfont.h
   vls_vprintf.h
