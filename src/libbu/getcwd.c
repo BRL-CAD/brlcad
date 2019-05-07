@@ -50,6 +50,8 @@
 extern char *realpath(const char *, char *);
 #endif
 
+extern int BU_SEM_DIR;
+
 
 char *
 bu_getcwd(char *buf, size_t size)

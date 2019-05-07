@@ -18,6 +18,8 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* check thread safety history of gqa + plot calls (pl_color)
+
 * mged> nirt -? needs to provide help
 
 * mged> nirt -f fmt doesn't seem to work at all

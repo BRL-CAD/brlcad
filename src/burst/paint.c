@@ -127,9 +127,9 @@ paintCellFb(struct application *ap, unsigned char *pixpaint, unsigned char *pixe
     for (y = gyorg; y < gyfin; y++) {
 	if (zoom != 1 && (y - gy) % zoom == 0)
 	    continue;
-	bu_semaphore_acquire(RT_SEM_STATS);
+	bu_semaphore_acquire(BU_SEM_GENERAL);
 	(void) fb_read(fbiop, gxorg, y, (unsigned char *)pixbuf, cnt);
-	bu_semaphore_release(RT_SEM_STATS);
+	bu_semaphore_release(BU_SEM_GENERAL);
 	for (x = gxorg; x < gxfin; x++) {
 	    if (SAMERGB(&pixbuf[x-gxorg][0], pixexpendable)
 		) {
@@ -151,9 +151,9 @@ paintCellFb(struct application *ap, unsigned char *pixpaint, unsigned char *pixe
 			 pixbuf[x-gxorg][BLU]);
 #endif
 	}
-	bu_semaphore_acquire(RT_SEM_STATS);
+	bu_semaphore_acquire(BU_SEM_GENERAL);
 	(void) fb_write(fbiop, gxorg, y, (unsigned char *)pixbuf, cnt);
-	bu_semaphore_release(RT_SEM_STATS);
+	bu_semaphore_release(BU_SEM_GENERAL);
 #if DEBUG_CELLFB
 	brst_log("paintCellFb: fb_write(%d, %d)\n", x, y);
 #endif
@@ -182,9 +182,9 @@ paintSpallFb(struct application *ap)
     celldist = ap->a_cumlen/cellsz * zoom;
     x = roundToInt(x + VDOT(ap->a_ray.r_dir, gridhor) * celldist);
     y = roundToInt(y + VDOT(ap->a_ray.r_dir, gridver) * celldist);
-    bu_semaphore_acquire(RT_SEM_STATS);
+    bu_semaphore_acquire(BU_SEM_GENERAL);
     err = fb_write(fbiop, x, y, pixel, 1);
-    bu_semaphore_release(RT_SEM_STATS);
+    bu_semaphore_release(BU_SEM_GENERAL);
 #if DEBUG_SPALLFB
     brst_log("paintSpallFb:gridhor=<%g, %g, %g> gridver=<%g, %g, %g>\n",
 	     gridhor[X], gridhor[Y], gridhor[Z],

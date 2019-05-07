@@ -116,6 +116,7 @@ set(LIBBU_SOURCES
   redblack.c
   realpath.c
   semaphore.c
+  semaphore_register.cpp
   sha1.c
   simd.c
   sort.c

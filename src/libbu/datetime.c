@@ -47,6 +47,8 @@
 extern int gettimeofday(struct timeval *, void *);
 #endif
 
+extern int BU_SEM_DATETIME;
+
 
 void
 bu_utctime(struct bu_vls *vls_gmtime, const int64_t time_val)

@@ -187,19 +187,24 @@ BU_EXPORT extern void bu_parallel(void (*func)(int func_cpu_id, void *func_data)
  * because bu_log() acquires semaphore #0 (BU_SEM_SYSCALL).
  */
 
+/**
+ *
+ */
+BU_EXPORT extern int bu_semaphore_register(const char *name);
+
+/**
+ *
+ */
+#define BU_SEMAPHORE_DEFINE(x) x = bu_semaphore_register(CPP_STR(x))
+
 /*
  * Section for manifest constants for bu_semaphore_acquire()
  */
-#define BU_SEM_SYSCALL 0
-#define BU_SEM_LISTS 1
-#define BU_SEM_BN_NOISE 2
-#define BU_SEM_MAPPEDFILE 3
-#define BU_SEM_THREAD 4
-#define BU_SEM_MALLOC 5
-#define BU_SEM_DATETIME 6
-#define BU_SEM_HASH 7
-#define BU_SEM_DIR 8
-#define BU_SEM_LAST (BU_SEM_DIR+1) /* allocate this many for LIBBU+LIBBN */
+extern int BU_SEM_GENERAL;
+extern int BU_SEM_SYSCALL;
+extern int BU_SEM_MAPPEDFILE;
+
+
 /*
  * Automatic restart capability in bu_bomb().  The return from
  * BU_SETJUMP is the return from the setjmp().  It is 0 on the first

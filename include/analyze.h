@@ -50,10 +50,7 @@ __BEGIN_DECLS
 /* Libanalyze return codes */
 #define ANALYZE_OK 0x0000
 #define ANALYZE_ERROR 0x0001 /**< something went wrong, function not completed */
-#define ANALYZE_SEM_WORKER RT_SEM_LAST
-#define ANALYZE_SEM_STATS ANALYZE_SEM_WORKER+1
-#define ANALYZE_SEM_LIST ANALYZE_SEM_STATS+1
-#define ANALYZE_SEM_LAST ANALYZE_SEM_LIST+1
+
 
 /*
  *     Density specific structures
