@@ -390,6 +390,16 @@ typedef ptrdiff_t ssize_t;
         struct lib##_t_ { lib##_t_(void) { lib(); } }; static lib##_t_ lib##_; \
         static void lib(void)
 #elif defined(_MSC_VER)
+
+/* TODO - below code is not building on Visual Studio 2015.  We may also have
+ * some issues with this in 2015 optimized builds.  See:
+ *
+ * https://bugzilla.gnome.org/show_bug.cgi?id=752837
+ * https://github.com/GNOME/glib/blob/master/glib/gconstructor.h
+ *
+ * for what the glib folks had to go through, and even after all that they had
+ * to leave their static build broken on Windows... */
+
 #  pragma section(".CRT$XCU",read)
 #  define INITIALIZE_MSVC(lib, p) \
         static void lib(void); \
