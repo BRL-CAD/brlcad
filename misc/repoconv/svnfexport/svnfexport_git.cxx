@@ -496,7 +496,7 @@ void apply_commit(struct svn_revision &rev, std::string &rbranch, int verify_rep
     } else {
 	// Doing a tag
 	wtag_fi_file = populate_template(tag_fi_template, rbranch);
-    
+
 	// Apply the tag
 	apply_fi_file_working(wtag_fi_file);
 
@@ -515,8 +515,14 @@ void apply_commit(struct svn_revision &rev, std::string &rbranch, int verify_rep
 	apply_fi_file(wmvfi_file);
 	remove(wmvfi_file.c_str());
     }
-    apply_fi_file(wfi_file);
-    remove(wfi_file.c_str());
+    if (wfi_file.length()) {
+	apply_fi_file(wfi_file);
+	remove(wfi_file.c_str());
+    }
+    if (wtag_fi_file.length()) {
+	apply_fi_file(wtag_fi_file);
+	remove(wtag_fi_file.c_str());
+    }
     apply_fi_file(nfi_file);
     remove(nfi_file.c_str());
     if (wtfi_file.length()) {
@@ -526,6 +532,12 @@ void apply_commit(struct svn_revision &rev, std::string &rbranch, int verify_rep
 
     // Update all the sha1s
     get_rev_sha1s(rev.revision_number);
+
+    std::string rmempty= std::string("find ./*.fi -empty -type f -exec rm \"{}\" \";\"");
+    if (std::system(rmempty.c_str())) {
+	std::cout << "Empty file removal failed\n";
+    }
+
 }
 
 
@@ -1076,6 +1088,13 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	return;
     }
 
+
+    // clear old commit file, if there is one
+    std::string efi_file = std::to_string(rev.revision_number) + std::string("-commit.fi");
+    if (file_exists(efi_file.c_str())) {
+	remove(efi_file.c_str());
+    }
+
     std::string blob_fi_file = std::to_string(rev_num) + std::string("-blob.fi");
     std::ofstream bloboutfile(blob_fi_file.c_str(), std::ios::out | std::ios::binary);
 
@@ -1190,16 +1209,19 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	}
 
 	if (node.branch_delete) {
+	    // TODO - this can hit multiple branches at once, which means the existing commit
+	    // logic can't handle it...  Skip commits for now.
+#if 0
 	    //std::cout << "processing revision " << rev.revision_number << "\n";
 	    std::cout << "Delete branch instruction: " << node.branch << " - deferring.\n";
 
 	    std::string cfi_file = std::to_string(rev.revision_number) + std::string("-commit.fi");
-	    std::ofstream coutfile(cfi_file, std::ios::out | std::ios::binary);
+	    std::ofstream coutfile(cfi_file, std::ios::out | std::ios::binary | std::fstream::app);
 
 	    write_commit_core(coutfile, node.branch, rev, NULL, 1, 0);
 
 	    coutfile.close();
-
+#endif
 	    branch_delete = 1;
 	    continue;
 	}
@@ -1245,19 +1267,23 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	    standard_commit(rev, rbranch, 0);
 	}
     } else {
-	// If nothing else, make an empty commit
-	std::string cfi_file = std::to_string(rev.revision_number) + std::string("-commit.fi");
+	if (!branch_delete) {
+	    // If nothing else, make an empty commit
+	    std::string cfi_file = std::to_string(rev.revision_number) + std::string("-commit.fi");
 
-	if (!file_exists(cfi_file)) {
-	    std::ofstream coutfile(cfi_file, std::ios::out | std::ios::binary);
+	    if (!file_exists(cfi_file)) {
+		std::ofstream coutfile(cfi_file, std::ios::out | std::ios::binary);
 
-	    write_commit_core(coutfile, rbranch, rev, NULL, 1, 0);
+		write_commit_core(coutfile, rbranch, rev, NULL, 1, 0);
 
-	    coutfile.close();
+		coutfile.close();
+	    }
 	}
     }
 
-    apply_commit(rev, rbranch, 0);
+    if (!branch_delete) {
+	apply_commit(rev, rbranch, 0);
+    }
 }
 
 
