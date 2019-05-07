@@ -3,7 +3,7 @@ mark :33115
 committer Christopher Sean Morrison <morrison@brlcad.org> 1225787287 +0000
 data 268
 big ultra mega merge from r32275 to r33114 (HEAD on trunk) in preparation for the pending 7.14.0 source release.  that was absurdly painful to merge, diff, and repair by hand.  this is untested (compilation-wise) but it should sync it with 33114 which has been tested.
-from 6081b4a95e893ce00245de1ad3db7c064f24aac0
+from 176affbc47eb0ad559c0f3107f48b01c58ddc215
 merge 2804389684ca42e42f9327322ca79c0e003a2a7a
 deleteall
 M 100755 a443a8b00db0d02a1ff469768db62f86f1a31ca7 "src/external/ProEngineer/win32-msvc8/proe-brl-3.0/proe-brl-3.0.vcproj"

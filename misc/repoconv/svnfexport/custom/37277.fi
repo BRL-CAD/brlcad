@@ -120933,7 +120933,7 @@ mark :37277
 committer Clifford Yapp <starseeker@brlcad.org> 1263582433 +0000
 data 283
 Update incrTcl to itcl-ng cvs version as of January 15, 2010.  Unlike older incrTcl trees this appears to have its own configure.in script, so removing the Makefile.am logic - will have to switch BRL-CAD build logic to attempt a proper subconfigure, as of right now this won't build.
-from aabb30977e2e29465da847a04ba52be954e2c6cf
+from f1af03d5cb3ec24783fafa3abf5f80bf24cb2da4
 M 100644 55c2cab0636ab0ee68ac666186ea62637d236445 "src/other/incrTcl/ChangeLog"
 M 100644 2a8c070de30c0e72264784c67c4b79ddecf80e89 "src/other/incrTcl/Makefile.in"
 M 100644 2a66694353933b7d71db436b55342b17d0020c98 "src/other/incrTcl/README"

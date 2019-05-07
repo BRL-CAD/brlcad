@@ -34243,7 +34243,7 @@ mark :36631
 committer Clifford Yapp <starseeker@brlcad.org> 1259122324 +0000
 data 77
 Hrm, merging updates won't be so simple here.  Take the incremental approach.
-from 7dd34ac6ab0489932206cb24703dda4b7463bc67
+from a1d5b1d1fc158bbe8d899547911d9b9d47716732
 M 100644 631603fe7d6ed502ba769408c9a9db0c4393347c "configure.ac"
 M 100644 c3f41a847757bb3905cd4e374f8c59874e84a23d "src/other/Makefile.am"
 M 100644 30b537bc65df094953982c1ba61ae5fe2502bfb3 "src/other/togl/image.h"

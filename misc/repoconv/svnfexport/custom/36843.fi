@@ -3,8 +3,8 @@ mark :36843
 committer Clifford Yapp <starseeker@brlcad.org> 1260369258 +0000
 data 27
 Re-create STABLE from trunk
-from b7776bb01723774c4a7af7bf55d4dfc28bbf9276
-merge a0b0988ee79736fdd9a8f24b672bc1a3dd2c59ba
+from 521778a7b035ab061e1ea1d28357c3019a10be60
+merge ff2a9574aaa92187af90b0c8fa327d71d25c8631
 deleteall
 M 100755 a443a8b00db0d02a1ff469768db62f86f1a31ca7 "src/external/ProEngineer/win32-msvc8/proe-brl-3.0/proe-brl-3.0.vcproj"
 M 100755 27b4b194b1cbdc9dcd7dfdc7f6094b8c5716ad13 "src/external/ProEngineer/win32-msvc8/proe/proe.sln"

@@ -1161,7 +1161,7 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 		std::string tfi_file = std::to_string(rev_num) + std::string("-tag.fi");
 		std::ofstream toutfile(tfi_file.c_str(), std::ios::out | std::ios::binary);
 		toutfile << "tag " << node.tag << "\n";
-		toutfile << "from " << rev_to_gsha1[std::pair<std::string,long int>(bbpath, rev.revision_number-1)] << "\n";
+		toutfile << "from " << bbpath << "," << rev.revision_number-1 << "\n";
 		toutfile << "tagger " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
 		toutfile << "data " << rev.commit_msg.length() << "\n";
 		toutfile << rev.commit_msg << "\n";

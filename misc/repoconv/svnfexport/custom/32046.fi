@@ -2068,7 +2068,7 @@ mark :32046
 committer Clifford Yapp <starseeker@brlcad.org> 1217335867 +0000
 data 50
 Start merging the primitives reorg into pre-7-12-6
-from bd004cd7192d081f99ec83a68a26e58d9e53663a
+from 253a67acd7796a6767b5edbc1a39950d98893303
 M 100644 2256e9672132b16e2c48f4b9fa5e56d9cce25ffd "include/Makefile.am"
 M 100644 e6337c36d56f6c1ee17be100f3bf008e800b7464 "include/bot.h"
 M 100644 6b545bcc1e12ef966a9243dbe51d5abe4234eaee "misc/doxygen_structure"

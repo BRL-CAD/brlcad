@@ -4,7 +4,7 @@ committer Clifford Yapp <starseeker@brlcad.org> 1218079532 +0000
 data 47
 Copy 7.12.6 release to become new STABLE branch
 from 6e4f9aae23aff0d3bd9ae3a8041c701d12b125fc
-merge 84c0585e28e7fdfb2e4c63d3824c8b8c5f0a14fe
+merge 26b54a3f8043b0b44e87f310ed52340ab26f0b1a
 deleteall
 M 100644 66ae0f5a4d7a11c33dce9562ad82d560f390a8f2 "README"
 M 100644 dfbd54e430cedc11d0c217b1b3aa056acb1dc85d "INSTALL"

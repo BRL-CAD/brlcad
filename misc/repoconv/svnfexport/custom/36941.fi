@@ -3,8 +3,8 @@ mark :36941
 committer Clifford Yapp <starseeker@brlcad.org> 1261103305 +0000
 data 259
 Merge back in tkimg - tkpng integration is taking more time to get right, and doesn't offer new functionality.  Problem of subconfigures using local BRL-CAD src/other copies of libraries needs to be considered, but this isn't the case that justifies the time.
-from 543ef4d93cb2caf5a6fb4c7548c1982a48de3964
-merge b82edb44c7c129997c3f45360ea0a5dc13c40dbb
+from 6aa682620ed3bc1bed8488c4d6bbf55101c2f4e0
+merge 129b9d4e48afea46dd491169a4909482c8c93c9e
 M 100644 ec2b308338fcd61f434dfda1d3a1a78a589ccc75 "configure.ac"
 M 100644 f890e0cf0c506152582bf08a1530e7067b0dfecd "src/other/Makefile.am"
 M 100755 4682f53aa0363714c72acd65c45aa8b7a18ea915 "src/tclscripts/archer/Archer.tcl"

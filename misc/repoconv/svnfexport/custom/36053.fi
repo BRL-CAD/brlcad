@@ -1,5 +1,5 @@
 reset refs/heads/rel8
-from efd9701a852254db5cfb98ac150e4929e57fc445
+from 1fdaa4bc3fb5d95836d5c0b7eed65f3b08856860
 commit refs/heads/rel8
 mark :36053
 committer Christopher Sean Morrison <morrison@brlcad.org> 1253898389 +0000
@@ -10,5 +10,5 @@ As implied, this version will represent a major incompatibility (i.e., v6 databa
 
 This branch should be kept in tight unidirectional sync with trunk changes.
 
-from efd9701a852254db5cfb98ac150e4929e57fc445
+from 1fdaa4bc3fb5d95836d5c0b7eed65f3b08856860
 

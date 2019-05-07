@@ -3,8 +3,8 @@ mark :36633
 committer Clifford Yapp <starseeker@brlcad.org> 1259124345 +0000
 data 55
 Recreate the dmtogl branch with latest trunk as a start
-from 681524cce2997214c9f347bb3ea6a375240f83eb
-merge 52d26f8ec2d7dae151a76b28268cf73fbdb5489c
+from ba674ef6c27689c19387e76d6e3c80dbd9e12aaa
+merge e3f5201c745b3c5bdba14a8f029d5c9d9765a5d5
 deleteall
 M 100644 d3d65f8ec167262272a9247736f31eaf3176c8c7 "bench/pixcmp.1"
 M 100644 d9a8e672ce759a8857c232a646831896c5b5c82e "bench/pixcmp.c"
