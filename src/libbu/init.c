@@ -48,6 +48,16 @@ int BU_SEM_MALLOC;
 int BU_SEM_DATETIME;
 int BU_SEM_DIR;
 
+/* The Visual C compiler pragmas needed for INITIALIZE specify a "read"
+ * attribute, which is conflicting with the system definition of read:
+ *
+ * #define read _read
+ *
+ * For the INITIALIZE macro to work with Visual C, we have to first #undef
+ * read anywhere we call it so the subsequent macro expansion will work. */
+#if defined(_WIN32)
+#  undef read
+#endif
 
 INITIALIZE(libbu)
 {

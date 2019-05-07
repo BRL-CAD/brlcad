@@ -384,15 +384,17 @@ typedef ptrdiff_t ssize_t;
 #  undef INITIALIZE
 #  warning "INITIALIZE unexpectedly defined.  Ensure common.h is included first."
 #endif
+
 #ifdef __cplusplus
+
 #  define INITIALIZE(lib) \
         static void lib(void); \
         struct lib##_t_ { lib##_t_(void) { lib(); } }; static lib##_t_ lib##_; \
         static void lib(void)
+
 #elif defined(_MSC_VER)
 
-/* TODO - below code is not building on Visual Studio 2015.  We may also have
- * some issues with this in 2015 optimized builds.  See:
+/* We may have issues with this trick in 2015 optimized builds.  See:
  *
  * https://bugzilla.gnome.org/show_bug.cgi?id=752837
  * https://github.com/GNOME/glib/blob/master/glib/gconstructor.h
@@ -400,21 +402,28 @@ typedef ptrdiff_t ssize_t;
  * for what the glib folks had to go through, and even after all that they had
  * to leave their static build broken on Windows... */
 
-#  pragma section(".CRT$XCU",read)
-#  define INITIALIZE_MSVC(lib, p) \
+#  ifdef _WIN64
+#    define INITIALIZE(lib) \
+        __pragma(section(".CRT$XCU",read)) \
         static void lib(void); \
         __declspec(allocate(".CRT$XCU")) void (*lib##_)(void) = lib; \
-        __pragma(comment(linker,"/include:" p #lib "_")) \
+        __pragma(comment(linker,"/include:" #lib "_")) \
         static void lib(void)
-#  ifdef _WIN64
-#    define INITIALIZE(lib) INITIALIZE_MSVC(lib,"")
 #  else
-#    define INITIALIZE(lib) INITIALIZE_MSVC(lib,"_")
+#    define INITIALIZE(lib) \
+        __pragma(section(".CRT$XCU",read)) \
+        static void lib(void); \
+        __declspec(allocate(".CRT$XCU")) void (*lib##_)(void) = lib; \
+        __pragma(comment(linker,"/include:" "_" #lib "_")) \
+        static void lib(void)
 #  endif
+
 #else
+
 #  define INITIALIZE(lib) \
         static void lib(void) __attribute__((constructor)); \
         static void lib(void)
+
 #endif
 
 
