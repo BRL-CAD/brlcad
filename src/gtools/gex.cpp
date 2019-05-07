@@ -232,12 +232,12 @@ hexdump(const unsigned char *from, const unsigned char *to)
 		print_representation(chars, PERLINE);
 	    }
 
-	    printf("\n%08.8lx:", ii);
+	    printf("\n%8.8lx:", ii);
 	}
 
 	ii++;
 	i++;
-	printf(" %02.2x", (c & 0x00FF));
+	printf(" %2.2x", (c & 0x00FF));
 	chars[j++] = c;
     }
 
