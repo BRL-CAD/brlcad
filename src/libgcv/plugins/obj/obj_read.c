@@ -2562,14 +2562,29 @@ output_to_bot(struct ga_t *ga,
     }
 
     /* write bot to ".g" file */
-    if (ti.tri_type == FACE_NV || ti.tri_type == FACE_TNV) {
+    if (ti.tri_type == FACE_TNV) {
 	ret = mk_bot_w_normals_and_uvs(outfp, bu_vls_addr(gfi->primitive_name),
 				       ti.bot_mode, bot_orientation,
-				       RT_BOT_HAS_SURFACE_NORMALS | RT_BOT_USE_NORMALS,
+				       RT_BOT_HAS_SURFACE_NORMALS | RT_BOT_USE_NORMALS | RT_BOT_HAS_TEXTURE_UVS,
 				       ti.bot_num_vertices, ti.bot_num_faces, ti.bot_vertices,
 				       ti.bot_faces, ti.bot_thickness, ti.bot_face_mode,
 				       ti.bot_num_normals, ti.bot_normals, ti.bot_face_normals,
 				       ti.bot_num_texture_vertices, ti.bot_texture_vertices, ti.bot_textures);
+    } else if (ti.tri_type == FACE_TV) {
+	ret = mk_bot_w_normals_and_uvs(outfp, bu_vls_addr(gfi->primitive_name),
+				       ti.bot_mode, bot_orientation,
+				       RT_BOT_HAS_TEXTURE_UVS,
+				       ti.bot_num_vertices, ti.bot_num_faces, ti.bot_vertices,
+				       ti.bot_faces, ti.bot_thickness, ti.bot_face_mode,
+				       0, NULL, NULL,
+				       ti.bot_num_texture_vertices, ti.bot_texture_vertices, ti.bot_textures);
+    } else if (ti.tri_type == FACE_NV) {
+	ret = mk_bot_w_normals(outfp, bu_vls_addr(gfi->primitive_name),
+			       ti.bot_mode, bot_orientation,
+			       RT_BOT_HAS_SURFACE_NORMALS | RT_BOT_USE_NORMALS,
+			       ti.bot_num_vertices, ti.bot_num_faces, ti.bot_vertices,
+			       ti.bot_faces, ti.bot_thickness, ti.bot_face_mode,
+			       ti.bot_num_normals, ti.bot_normals, ti.bot_face_normals);
     } else {
 	ret = mk_bot(outfp, bu_vls_addr(gfi->primitive_name), ti.bot_mode,
 		     bot_orientation, 0, ti.bot_num_vertices, ti.bot_num_faces,
