@@ -812,7 +812,7 @@ getSurfacePoints(const ON_Surface *s,
     fastf_t vdist = v2 - v1;
 
     if ((udist < min_dist + ON_ZERO_TOLERANCE)
-	|| (vdist < min_dist + ON_ZERO_TOLERANCE)) {
+	    || (vdist < min_dist + ON_ZERO_TOLERANCE)) {
 	return;
     }
 
@@ -830,15 +830,15 @@ getSurfacePoints(const ON_Surface *s,
 	    }
 	    if (i == 1) {
 		getSurfacePoints(s, u1, u1 + step, v1, v2, min_dist,
-				 within_dist, cos_within_ang, on_surf_points, left,
-				 below);
+			within_dist, cos_within_ang, on_surf_points, left,
+			below);
 	    } else if (i == isteps) {
 		getSurfacePoints(s, u2 - step, u2, v1, v2, min_dist,
-				 within_dist, cos_within_ang, on_surf_points, left,
-				 below);
+			within_dist, cos_within_ang, on_surf_points, left,
+			below);
 	    } else {
 		getSurfacePoints(s, step_u - step, step_u, v1, v2, min_dist, within_dist,
-				 cos_within_ang, on_surf_points, left, below);
+			cos_within_ang, on_surf_points, left, below);
 	    }
 	    left = false;
 
@@ -848,7 +848,9 @@ getSurfacePoints(const ON_Surface *s,
 		on_surf_points.Append(p2d);
 	    }
 	}
-    } else if (vdist > ldfactor * udist) {
+	return;
+    }
+    if (vdist > ldfactor * udist) {
 	int isteps = (int)(vdist / udist);
 	isteps = (int)(vdist / udist / ldfactor * 2.0);
 	fastf_t step = vdist / (fastf_t) isteps;
@@ -862,15 +864,15 @@ getSurfacePoints(const ON_Surface *s,
 
 	    if (i == 1) {
 		getSurfacePoints(s, u1, u2, v1, v1 + step, min_dist,
-				 within_dist, cos_within_ang, on_surf_points, left,
-				 below);
+			within_dist, cos_within_ang, on_surf_points, left,
+			below);
 	    } else if (i == isteps) {
 		getSurfacePoints(s, u1, u2, v2 - step, v2, min_dist,
-				 within_dist, cos_within_ang, on_surf_points, left,
-				 below);
+			within_dist, cos_within_ang, on_surf_points, left,
+			below);
 	    } else {
 		getSurfacePoints(s, u1, u2, step_v - step, step_v, min_dist, within_dist,
-				 cos_within_ang, on_surf_points, left, below);
+			cos_within_ang, on_surf_points, left, below);
 	    }
 
 	    below = false;
@@ -881,11 +883,13 @@ getSurfacePoints(const ON_Surface *s,
 		on_surf_points.Append(p2d);
 	    }
 	}
-    } else if ((surface_EvNormal(s, u1, v1, p[0], norm[0]))
-	       && (surface_EvNormal(s, u2, v1, p[1], norm[1])) // for u
-	       && (surface_EvNormal(s, u2, v2, p[2], norm[2]))
-	       && (surface_EvNormal(s, u1, v2, p[3], norm[3]))
-	       && (surface_EvNormal(s, u, v, mid, norm_mid))) {
+	return;
+    }
+    if ((surface_EvNormal(s, u1, v1, p[0], norm[0]))
+	    && (surface_EvNormal(s, u2, v1, p[1], norm[1])) // for u
+	    && (surface_EvNormal(s, u2, v2, p[2], norm[2]))
+	    && (surface_EvNormal(s, u1, v2, p[3], norm[3]))
+	    && (surface_EvNormal(s, u, v, mid, norm_mid))) {
 	double udot;
 	double vdot;
 	ON_Line line1(p[0], p[2]);
@@ -897,18 +901,10 @@ getSurfacePoints(const ON_Surface *s,
 	    return;
 	}
 
-	if (VNEAR_EQUAL(norm[0], norm[1], ON_ZERO_TOLERANCE)) {
-	    udot = 1.0;
-	} else {
-	    udot = norm[0] * norm[1];
-	}
-	if (VNEAR_EQUAL(norm[0], norm[3], ON_ZERO_TOLERANCE)) {
-	    vdot = 1.0;
-	} else {
-	    vdot = norm[0] * norm[3];
-	}
-	if ((udot < cos_within_ang - ON_ZERO_TOLERANCE)
-	    && (vdot < cos_within_ang - ON_ZERO_TOLERANCE)) {
+	udot = (VNEAR_EQUAL(norm[0], norm[1], ON_ZERO_TOLERANCE)) ? 1.0 : norm[0] * norm[1];
+	vdot = (VNEAR_EQUAL(norm[0], norm[3], ON_ZERO_TOLERANCE)) ? 1.0 : norm[0] * norm[3];
+
+	if ((udot < cos_within_ang - ON_ZERO_TOLERANCE) && (vdot < cos_within_ang - ON_ZERO_TOLERANCE)) {
 	    if (left) {
 		p2d.Set(u1, v);
 		on_surf_points.Append(p2d);
@@ -928,14 +924,16 @@ getSurfacePoints(const ON_Surface *s,
 	    on_surf_points.Append(p2d);
 
 	    getSurfacePoints(s, u1, u, v1, v, min_dist, within_dist,
-			     cos_within_ang, on_surf_points, left, below);
+		    cos_within_ang, on_surf_points, left, below);
 	    getSurfacePoints(s, u1, u, v, v2, min_dist, within_dist,
-			     cos_within_ang, on_surf_points, left, false);
+		    cos_within_ang, on_surf_points, left, false);
 	    getSurfacePoints(s, u, u2, v1, v, min_dist, within_dist,
-			     cos_within_ang, on_surf_points, false, below);
+		    cos_within_ang, on_surf_points, false, below);
 	    getSurfacePoints(s, u, u2, v, v2, min_dist, within_dist,
-			     cos_within_ang, on_surf_points, false, false);
-	} else if (udot < cos_within_ang - ON_ZERO_TOLERANCE) {
+		    cos_within_ang, on_surf_points, false, false);
+	    return;
+	}
+	if (udot < cos_within_ang - ON_ZERO_TOLERANCE) {
 	    if (below) {
 		p2d.Set(u, v1);
 		on_surf_points.Append(p2d);
@@ -944,10 +942,12 @@ getSurfacePoints(const ON_Surface *s,
 	    p2d.Set(u, v2);
 	    on_surf_points.Append(p2d);
 	    getSurfacePoints(s, u1, u, v1, v2, min_dist, within_dist,
-			     cos_within_ang, on_surf_points, left, below);
+		    cos_within_ang, on_surf_points, left, below);
 	    getSurfacePoints(s, u, u2, v1, v2, min_dist, within_dist,
-			     cos_within_ang, on_surf_points, false, below);
-	} else if (vdot < cos_within_ang - ON_ZERO_TOLERANCE) {
+		    cos_within_ang, on_surf_points, false, below);
+	    return;
+	}
+	if (vdot < cos_within_ang - ON_ZERO_TOLERANCE) {
 	    if (left) {
 		p2d.Set(u1, v);
 		on_surf_points.Append(p2d);
@@ -957,39 +957,40 @@ getSurfacePoints(const ON_Surface *s,
 	    on_surf_points.Append(p2d);
 
 	    getSurfacePoints(s, u1, u2, v1, v, min_dist, within_dist,
-			     cos_within_ang, on_surf_points, left, below);
+		    cos_within_ang, on_surf_points, left, below);
 	    getSurfacePoints(s, u1, u2, v, v2, min_dist, within_dist,
-			     cos_within_ang, on_surf_points, left, false);
-	} else {
-	    if (left) {
-		p2d.Set(u1, v);
-		on_surf_points.Append(p2d);
-	    }
-	    if (below) {
-		p2d.Set(u, v1);
-		on_surf_points.Append(p2d);
-	    }
-	    //center
-	    p2d.Set(u, v);
-	    on_surf_points.Append(p2d);
-	    //right
-	    p2d.Set(u2, v);
-	    on_surf_points.Append(p2d);
-	    //top
-	    p2d.Set(u, v2);
-	    on_surf_points.Append(p2d);
+		    cos_within_ang, on_surf_points, left, false);
+	    return;
+	}
 
-	    if (dist > within_dist + ON_ZERO_TOLERANCE) {
+	if (left) {
+	    p2d.Set(u1, v);
+	    on_surf_points.Append(p2d);
+	}
+	if (below) {
+	    p2d.Set(u, v1);
+	    on_surf_points.Append(p2d);
+	}
+	//center
+	p2d.Set(u, v);
+	on_surf_points.Append(p2d);
+	//right
+	p2d.Set(u2, v);
+	on_surf_points.Append(p2d);
+	//top
+	p2d.Set(u, v2);
+	on_surf_points.Append(p2d);
 
-		getSurfacePoints(s, u1, u, v1, v, min_dist, within_dist,
-				 cos_within_ang, on_surf_points, left, below);
-		getSurfacePoints(s, u1, u, v, v2, min_dist, within_dist,
-				 cos_within_ang, on_surf_points, left, false);
-		getSurfacePoints(s, u, u2, v1, v, min_dist, within_dist,
-				 cos_within_ang, on_surf_points, false, below);
-		getSurfacePoints(s, u, u2, v, v2, min_dist, within_dist,
-				 cos_within_ang, on_surf_points, false, false);
-	    }
+	if (dist > within_dist + ON_ZERO_TOLERANCE) {
+
+	    getSurfacePoints(s, u1, u, v1, v, min_dist, within_dist,
+		    cos_within_ang, on_surf_points, left, below);
+	    getSurfacePoints(s, u1, u, v, v2, min_dist, within_dist,
+		    cos_within_ang, on_surf_points, left, false);
+	    getSurfacePoints(s, u, u2, v1, v, min_dist, within_dist,
+		    cos_within_ang, on_surf_points, false, below);
+	    getSurfacePoints(s, u, u2, v, v2, min_dist, within_dist,
+		    cos_within_ang, on_surf_points, false, false);
 	}
     }
 }
