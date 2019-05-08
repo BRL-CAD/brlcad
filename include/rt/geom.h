@@ -808,6 +808,14 @@ struct rt_bot_internal
 				 * texturing coordinates [num_uvs*3]
 				 */
 
+    size_t num_face_uvs;	/**< @brief current size of the
+				 * face_uvs array below (number of
+				 * faces in the array)
+				 */
+    int *face_uvs;		/**< @brief array of indices into the
+				 * "uvs" array, one per face vertex
+				 * [num_uvs*3] */
+
     void *tie;	/* FIXME: blind casting. TIE needs to move from TIE_FUNC to XGLUE before this can not suck. */
 };
 
