@@ -387,7 +387,7 @@ void apply_commit(struct svn_revision &rev, std::string &rbranch, int verify_rep
 	apply_fi_file_working(wmvfi_file);
 	get_rev_sha1(rbranch, rev.revision_number);
     } else {
-	wbfi_file = std::string("");
+	wmvfi_file = std::string("");
     }
 
     // Next assemble the working commit and/or tag files
