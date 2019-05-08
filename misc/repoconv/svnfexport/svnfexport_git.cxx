@@ -740,7 +740,7 @@ void move_only_commit(struct svn_revision &rev, std::string &rbranch)
 	    }
 	}
     }
-    
+
     outfile.close();
 }
 
@@ -1070,6 +1070,7 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
     int have_commit = 0;
     int tag_after_commit = 0;
     int branch_delete = 0;
+    int tag_only_commit = 0;
     std::string ctag, cfrom;
 
     if (rebuild_revs.find(rev.revision_number) != rebuild_revs.end()) {
@@ -1156,6 +1157,7 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 		toutfile << rev.commit_msg << "\n";
 		tag_ids[node.tag] = rev_to_gsha1[std::pair<std::string,long int>(bbpath, rev.revision_number-1)];
 		toutfile.close();
+		tag_only_commit = 1;
 		continue;
 	    }
 
@@ -1243,6 +1245,10 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
     }
     bloboutfile.close();
 
+    if (tag_only_commit) {
+	remove(efi_file.c_str());
+    }
+
     if (git_changes) {
 	if (have_commit) {
 	    std::cout << "Error - more than one commit generated for revision " << rev.revision_number << "\n";
@@ -1255,7 +1261,7 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	    standard_commit(rev, rbranch, 0);
 	}
     } else {
-	if (!branch_delete) {
+	if (!branch_delete && !tag_only_commit) {
 	    // If nothing else, make an empty commit
 	    std::string cfi_file = std::to_string(rev.revision_number) + std::string("-commit.fi");
 
