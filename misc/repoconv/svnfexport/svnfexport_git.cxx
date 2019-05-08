@@ -298,7 +298,7 @@ populate_template(std::string ifile, std::string &rbranch)
 }
 
 
-std::string note_svn_rev(struct svn_revision &rev, std::string &rbranch, int is_tag)
+std::string note_svn_rev(struct svn_revision &rev, std::string &rbranch)
 {
     std::string fi_file = std::to_string(rev.revision_number) + std::string("-note.fi");
     std::ofstream outfile(fi_file.c_str(), std::ios::out | std::ios::binary);
@@ -333,12 +333,7 @@ std::string note_svn_rev(struct svn_revision &rev, std::string &rbranch, int is_
     std::string nsha1 = line.substr(0, spos);
 
     outfile << "from " << nsha1 << "\n";
-    if (!is_tag) {
-	outfile << "N :1 " << rgsha1(rbranch, rev.revision_number) << "\n";
-    } else {
-	std::cerr << "TODO - handle note on tag\n";
-	exit(1);
-    }
+    outfile << "N :1 " << rgsha1(rbranch, rev.revision_number) << "\n";
     outfile.close();
 
     return fi_file;
@@ -476,7 +471,7 @@ void apply_commit(struct svn_revision &rev, std::string &rbranch, int verify_rep
 
 
 	    // Generate the note file
-	    nfi_file = note_svn_rev(rev, rbranch, 0);
+	    nfi_file = note_svn_rev(rev, rbranch);
 	    apply_fi_file_working(nfi_file);
 	}
 
@@ -499,11 +494,6 @@ void apply_commit(struct svn_revision &rev, std::string &rbranch, int verify_rep
 
 	// Apply the tag
 	apply_fi_file_working(wtag_fi_file);
-
-	// Generate the note file
-	std::string nfi_file = note_svn_rev(rev, rbranch, 1);
-	apply_fi_file_working(nfi_file);
-
     }
 
     // If we got this far, we're good to go - apply all files to the primary repo
@@ -523,8 +513,10 @@ void apply_commit(struct svn_revision &rev, std::string &rbranch, int verify_rep
 	apply_fi_file(wtag_fi_file);
 	remove(wtag_fi_file.c_str());
     }
-    apply_fi_file(nfi_file);
-    remove(nfi_file.c_str());
+    if (nfi_file.length()) {
+	apply_fi_file(nfi_file);
+	remove(nfi_file.c_str());
+    }
     if (wtfi_file.length()) {
 	apply_fi_file(wtfi_file);
 	remove(wtfi_file.c_str());
