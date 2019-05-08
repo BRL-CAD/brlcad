@@ -681,14 +681,9 @@ void write_commit_core(std::ofstream &outfile, std::string &rbranch, struct svn_
     }
 
     if (!nomerge && rev.merged_from.length()) {
-	if (brlcad_revs.find(rev.merged_rev) != brlcad_revs.end()) {
-	    std::cout << "Revision " << rev.revision_number << " merged from: " << rev.merged_from << "(" << rev.merged_rev << "), id " << rev_to_gsha1[std::pair<std::string,long int>(rev.merged_from, rev.merged_rev)] << "\n";
-	    std::cout << "Revision " << rev.revision_number << "        from: " << rbranch << "\n";
-	    outfile << "merge " << rev.merged_from << "," << rev.merged_rev << "\n";
-	} else {
-	    std::cout << "Warning: merge info " << rev.merged_from << ", r" << rev.revision_number << " is referencing a commit id (" << rev.merged_rev << ") that is not known to the merge information\n";
-	    outfile << "merge " << rev.merged_from << ",EEEEE\n";
-	}
+	std::cout << "Revision " << rev.revision_number << " merged from: " << rev.merged_from << "(" << rev.merged_rev << "), id " << rev_to_gsha1[std::pair<std::string,long int>(rev.merged_from, rev.merged_rev)] << "\n";
+	std::cout << "Revision " << rev.revision_number << "        from: " << rbranch << "\n";
+	outfile << "merge " << rev.merged_from << "," << rev.merged_rev << "\n";
     }
 }
 
@@ -918,8 +913,6 @@ void old_references_commit(std::ifstream &infile, struct svn_revision &rev, std:
 	coutfile.close();
     }
 
-    brlcad_revs.insert(rev.revision_number);
-
     std::string tfi_file = std::to_string(rev.revision_number) + std::string("-tree.fi");
     fi_file = std::string("custom/") + tfi_file;
     // Only make one if we don't alredy have a custom file
@@ -954,8 +947,6 @@ void standard_commit(struct svn_revision &rev, std::string &rbranch, int mvedcom
 	std::cout << "Error - couldn't find author map for author " << rev.author << " on revision " << rev.revision_number << "\n";
 	exit(1);
     }
-
-    brlcad_revs.insert(rev.revision_number);
 
     std::string cfi_file = std::to_string(rev.revision_number) + std::string("-commit.fi");
     fi_file = std::string("custom/") + cfi_file;
@@ -1120,7 +1111,6 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 		edited_tag_minr = edited_tag_first_rev[node.tag];
 		edited_tag_maxr = edited_tag_max_rev[node.tag];
 		std::cout << node.tag << ": " << edited_tag_minr << " " << edited_tag_maxr << "\n";
-		brlcad_revs.insert(rev.revision_number);
 
 		if (rev.revision_number < edited_tag_minr) {
 		    std::string nbranch = std::string("refs/heads/") + node.tag;
@@ -1156,7 +1146,6 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 		rbranch = node.branch;
 		//git_changes = 1;
 	    } else {
-		brlcad_revs.insert(rev.revision_number);
 		std::cout << "Adding tag " << node.tag << " from " << bbpath << ", r" << rev.revision_number << "\n";
 		std::string tfi_file = std::to_string(rev_num) + std::string("-tag.fi");
 		std::ofstream toutfile(tfi_file.c_str(), std::ios::out | std::ios::binary);
@@ -1180,7 +1169,6 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	}
 
 	if (node.branch_add) {
-	    brlcad_revs.insert(rev.revision_number);
 	    std::cout << "Processing revision " << rev.revision_number << "\n";
 	    std::string ppath, bbpath, llpath, tpath;
 	    int is_tag;

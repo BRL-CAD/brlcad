@@ -102,8 +102,6 @@ std::map<long int, struct svn_revision> revs;
 /* Holds strings identifying all known projects in the svn repo */
 std::set<std::string> valid_projects;
 
-std::set<long int> brlcad_revs;
-
 std::map<std::string, std::string> branch_mappings;
 std::map<std::string, std::string> tag_mappings;
 
