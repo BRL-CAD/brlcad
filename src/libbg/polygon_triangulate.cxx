@@ -26,6 +26,7 @@
 #include "common.h"
 
 #include <vector>
+#include <array>
 
 #if defined(__GNUC__) && !defined(__clang__)
 #  pragma GCC diagnostic push
