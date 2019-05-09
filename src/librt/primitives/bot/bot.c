@@ -377,11 +377,11 @@ rt_botface_w_normals(struct soltab *stp,
 {
 
     if (bot->bot_flags & RT_BOT_USE_FLOATS) {
-	return rt_botface_w_normals_float(stp, bot, ap, bp, cp,
-					  vertex_normals, face_no, tol);
+	return bot_face_w_normals_float(stp, bot, ap, bp, cp,
+					vertex_normals, face_no, tol);
     } else {
-	return rt_botface_w_normals_double(stp, bot, ap, bp, cp,
-					   vertex_normals, face_no, tol);
+	return bot_face_w_normals_double(stp, bot, ap, bp, cp,
+					 vertex_normals, face_no, tol);
     }
 }
 
@@ -409,9 +409,9 @@ rt_bot_prep_pieces(struct bot_specific *bot,
 		   const struct bn_tol *tol)
 {
     if (bot->bot_flags & RT_BOT_USE_FLOATS) {
-	rt_bot_prep_pieces_float(bot, stp, ntri, tol);
+	bot_prep_pieces_float(bot, stp, ntri, tol);
     } else {
-	rt_bot_prep_pieces_double(bot, stp, ntri, tol);
+	bot_prep_pieces_double(bot, stp, ntri, tol);
     }
 }
 
@@ -496,9 +496,9 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     if (rt_bot_mintie > 0 && bot_ip->num_faces >= rt_bot_mintie /* FIXME: (necessary?) && (bot_ip->face_normals != NULL || bot_ip->orientation != RT_BOT_UNORIENTED) */)
 	ret = bottie_prep_double(stp, bot_ip, rtip);
     else if (bot_ip->bot_flags & RT_BOT_USE_FLOATS)
-	ret = rt_bot_prep_float(stp, bot_ip, rtip);
+	ret = bot_prep_float(stp, bot_ip, rtip);
     else
-	ret = rt_bot_prep_double(stp, bot_ip, rtip);
+	ret = bot_prep_double(stp, bot_ip, rtip);
 
 #ifdef USE_OPENCL
     clt_bot_prep(stp, bot_ip, rtip);
@@ -524,9 +524,9 @@ rt_bot_plate_segs(struct hit *hits,
 		  struct bot_specific *bot)
 {
     if (bot->bot_flags & RT_BOT_USE_FLOATS) {
-	return rt_bot_plate_segs_float(hits, nhits, stp, rp, ap, seghead, bot);
+	return bot_plate_segs_float(hits, nhits, stp, rp, ap, seghead, bot);
     } else {
-	return rt_bot_plate_segs_double(hits, nhits, stp, rp, ap, seghead, bot);
+	return bot_plate_segs_double(hits, nhits, stp, rp, ap, seghead, bot);
     }
 }
 
@@ -541,9 +541,9 @@ rt_bot_unoriented_segs(struct hit *hits,
 		       struct bot_specific *bot)
 {
     if (bot->bot_flags & RT_BOT_USE_FLOATS) {
-	return rt_bot_unoriented_segs_float(hits, nhits, stp, rp, ap, seghead);
+	return bot_unoriented_segs_float(hits, nhits, stp, rp, ap, seghead);
     } else {
-	return rt_bot_unoriented_segs_double(hits, nhits, stp, rp, ap, seghead);
+	return bot_unoriented_segs_double(hits, nhits, stp, rp, ap, seghead);
     }
 }
 
@@ -563,9 +563,9 @@ rt_bot_makesegs(struct hit *hits, size_t nhits, struct soltab *stp, struct xray 
     }
 
     if (bot->bot_flags & RT_BOT_USE_FLOATS) {
-	return rt_bot_makesegs_float(hits, nhits, stp, rp, ap, seghead, psp);
+	return bot_makesegs_float(hits, nhits, stp, rp, ap, seghead, psp);
     } else {
-	return rt_bot_makesegs_double(hits, nhits, stp, rp, ap, seghead, psp);
+	return bot_makesegs_double(hits, nhits, stp, rp, ap, seghead, psp);
     }
 }
 
@@ -597,9 +597,9 @@ rt_bot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     if (bot->tie != NULL) {
 	return bottie_shot_double(stp, rp, ap, seghead);
     } else if (bot->bot_flags & RT_BOT_USE_FLOATS) {
-	return rt_bot_shot_float(stp, rp, ap, seghead);
+	return bot_shot_float(stp, rp, ap, seghead);
     } else {
-	return rt_bot_shot_double(stp, rp, ap, seghead);
+	return bot_shot_double(stp, rp, ap, seghead);
     }
 }
 
@@ -627,9 +627,9 @@ rt_bot_piece_shot(struct rt_piecestate *psp, struct rt_piecelist *plp, double di
     bot = (struct bot_specific *)stp->st_specific;
 
     if (bot->bot_flags & RT_BOT_USE_FLOATS) {
-	return rt_bot_piece_shot_float(psp, plp, dist_corr, rp, ap, seghead);
+	return bot_piece_shot_float(psp, plp, dist_corr, rp, ap, seghead);
     } else {
-	return rt_bot_piece_shot_double(psp, plp, dist_corr, rp, ap, seghead);
+	return bot_piece_shot_double(psp, plp, dist_corr, rp, ap, seghead);
     }
 }
 
@@ -710,9 +710,9 @@ rt_bot_free(struct soltab *stp)
     }
 
     if (bot->bot_flags & RT_BOT_USE_FLOATS) {
-	rt_bot_free_float(bot);
+	bot_free_float(bot);
     } else {
-	rt_bot_free_double(bot);
+	bot_free_double(bot);
     }
 
 #ifdef USE_OPENCL
