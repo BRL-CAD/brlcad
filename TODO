@@ -18,6 +18,9 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* implement uv-mapping callback so we can texture-map BoT, NMG, and
+  NURBS geometry
+
 * check thread safety history of gqa + plot calls (pl_color)
 
 * mged> nirt -? needs to provide help
@@ -39,6 +42,13 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
+
+* add coverage test geometry, e.g., scene with all object types plus a
+  lookup check to ensure no new ones are missing.
+
+	- likely need comprehensive parameter testing for each type
+	- add regression test for all geometric object types
+	- test whether RT+-TIE can render all BoT modes
 
 * fix pipe subtractions shaded display issue in archer
 
@@ -91,13 +101,6 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   if a non-.g file is fed to opendb.  That doesn't seem
   right... shouldn't the open process completely fail
   if the file isn't a valid .g?
-
-* add coverage test geometry, e.g., scene with all object types plus a
-  lookup check to ensure no new ones are missing.
-
-	- likely need comprehensive parameter testing for each type
-	- add regression test for all geometric object types
-	- test whether RT+-TIE can render all BoT modes
 
 * add regression test for directional light sources
 
@@ -240,8 +243,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * add a multiview rt script to regression testing (e.g., see rtwalk output)
 
-* bot overlaps when unoriented, when clearly not overlapping
-
 * finish implementing pnts:
   - ray trace pnts
   - make color and vectors on pnts work
@@ -337,10 +338,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * closing the graphics window brings down X11 on Mac due to a bad
   context.  fix or revert recent close window behavior.
-
-* resolve bot bin sort optimization crash, disabled during release
-
-* rt moss.g facetize rt bot bug
 
 * evaluate OpenMesh (http://www.openmesh.org) and OpenFlipper
   (http://www.openflipper.org) for smoothing, decimation, and
@@ -480,11 +477,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   Priit Laes converted our tools to FFTW (circa 2010, see
   brlcad-devel), but FFTW is not license-compatible.  there is an sf
   patch containing this conversion, untested.
-
-* implement a means to store per object, face, and vertex information
-  on BoT mesh geometry.  useful for per-face/vertex shading as well as
-  storing analytic information during conversion (e.g., per-face
-  fastgen material codes)
 
 * import CTRI material information in fast4-g as per-face data.
 
@@ -927,9 +919,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   avoided.  presently, adding -msse* to compilation will result in a
   crash if that binary is run on non-sse hardware (e.g., Pentium M)
 
-* implement uv-mapping callback so we can texture-map BoT, NMG, and
-  NURBS geometry
-
 * add support for a zoom/viewsize and twist options to rt so you can
   adjust the image without having to feed a view script.
 
@@ -976,9 +965,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   src/libged/glob.c code, very similar.
 
 * update g-xxx_facets to use libgcv
-
-* make nreed's new bot cleanup interface update interactively without
-  resorting to calls to Tcl_DoOneEvent() down in librt.
 
 * bu_cv_optimize() should be using bu_byteorder().
 
@@ -1030,11 +1016,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   are relatively sparse, may need to consider linked lists, hash
   tables, or some hybrid storage arrangement.  Idea inspired by:
   http://math.ucr.edu/home/baez/roots/
-
-* libbn's tri_specific structure requires user-provided memory for
-  normals.. this certainly saves memory if the triangles don't have
-  normals but at a rather expensive malloc cost (which is being seen
-  on large BoT models) during prep.
 
 * make fbclear and raytrace control panel obey a -F advanced option,
   i.e., better remote framebuffer support.
@@ -2158,6 +2139,24 @@ BREP/NURBS
 
 NMG/BoT
 -------
+
+* bot overlaps when unoriented, when clearly not overlapping
+
+* resolve bot bin sort optimization crash, disabled during release
+
+* rt moss.g facetize rt bot bug
+
+* implement a means to store per object, face, and vertex information
+  on BoT mesh geometry.  useful for per-face/vertex shading as well as
+  storing analytic information during conversion (e.g., per-face
+  fastgen material codes)
+
+* bot bounding box size -- see below
+
+* libbn's tri_specific structure requires user-provided memory for
+  normals.. this certainly saves memory if the triangles don't have
+  normals but at a rather expensive malloc cost (which is being seen
+  on large BoT models) during prep.
 
 * implement conversion of plate-mode BoT into volume-mode BoT,
   probably as a 'bot' command subcommand.  this basically entails
