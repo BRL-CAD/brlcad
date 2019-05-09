@@ -789,6 +789,7 @@ getEdgePoints(
 
 struct cdt_surf_info {
     const ON_Surface *s;
+    double u1, u2, v1, v2;
     fastf_t ulen;
     fastf_t u_lower_3dlen;
     fastf_t u_upper_3dlen;
@@ -839,14 +840,24 @@ getSurfacePoints(struct cdt_surf_info *sinfo,
 		on_surf_points.Append(p2d);
 	    }
 	    if (i == 1) {
+
+		// Check the distance between v1 and v2 at u1 && u1+step.
+		// If they're both less than threshold, skip
+
 		getSurfacePoints(sinfo, u1, u1 + step, v1, v2, min_dist,
 			within_dist, cos_within_ang, on_surf_points, left,
 			below);
 	    } else if (i == isteps) {
+
+		// Check the distance between v1 and v2 at u2-step && u2
+		// If they're both less than threshold, skip
+	
 		getSurfacePoints(sinfo, u2 - step, u2, v1, v2, min_dist,
 			within_dist, cos_within_ang, on_surf_points, left,
 			below);
 	    } else {
+		// Check the distance between v1 and v2 at step_u - step and step_u
+		// If they're both less than threshold, skip
 		getSurfacePoints(sinfo, step_u - step, step_u, v1, v2, min_dist, within_dist,
 			cos_within_ang, on_surf_points, left, below);
 	    }
@@ -1025,54 +1036,51 @@ getSurfacePoints(struct cdt_surf_info *sinfo,
  *                         (0,0)
  */
 double
-_cdt_get_uv_edge_3d_len(const ON_Surface *s, int c1, int c2)
+_cdt_get_uv_edge_3d_len(struct cdt_surf_info *sinfo, int c1, int c2)
 {
-    double u1, u2, v1, v2;
-    s->GetDomain(0, &u1, &u2);
-    s->GetDomain(1, &v1, &v2);
     double wu1, wv1, wu2, wv2, umid, vmid;
 
     if (!c1 && !c2) {
-	wu1 = u1;
-	wu2 = u2;
-	wv1 = v1;
-	wv2 = v1;
-	umid = (u2 - u1)/2.0;
-	vmid = v1;
+	wu1 = sinfo->u1;
+	wu2 = sinfo->u2;
+	wv1 = sinfo->v1;
+	wv2 = sinfo->v1;
+	umid = (sinfo->u2 - sinfo->u1)/2.0;
+	vmid = sinfo->v1;
     }
     if (c1 && !c2) {
-	wu1 = u1;
-	wu2 = u2;
-	wv1 = v2;
-	wv2 = v2;
-	umid = (u2 - u1)/2.0;
-	vmid = v2;
+	wu1 = sinfo->u1;
+	wu2 = sinfo->u2;
+	wv1 = sinfo->v2;
+	wv2 = sinfo->v2;
+	umid = (sinfo->u2 - sinfo->u1)/2.0;
+	vmid = sinfo->v2;
     }
     if (!c1 && c2) {
-	wu1 = u1;
-	wu2 = u1;
-	wv1 = v1;
-	wv2 = v2;
-	umid = u1;
-	vmid = (v2 - v1)/2.0;
+	wu1 = sinfo->u1;
+	wu2 = sinfo->u1;
+	wv1 = sinfo->v1;
+	wv2 = sinfo->v2;
+	umid = sinfo->u1;
+	vmid = (sinfo->v2 - sinfo->v1)/2.0;
     }
     if (c1 && c2) {
-	wu1 = u2;
-	wu2 = u2;
-	wv1 = v1;
-	wv2 = v2;
-	umid = u2;
-	vmid = (v2 - v1)/2.0;
+	wu1 = sinfo->u2;
+	wu2 = sinfo->u2;
+	wv1 = sinfo->v1;
+	wv2 = sinfo->v2;
+	umid = sinfo->u2;
+	vmid = (sinfo->v2 - sinfo->v1)/2.0;
     }
 
     // 1st 3d point
-    ON_3dPoint p1 = s->PointAt(wu1, wv1);
+    ON_3dPoint p1 = sinfo->s->PointAt(wu1, wv1);
 
     // middle 3d point
-    ON_3dPoint pmid = s->PointAt(umid, vmid);
+    ON_3dPoint pmid = sinfo->s->PointAt(umid, vmid);
 
     // last 3d point
-    ON_3dPoint p2 = s->PointAt(wu2, wv2);
+    ON_3dPoint p2 = sinfo->s->PointAt(wu2, wv2);
 
     // length
     double d1 = pmid.DistanceTo(p1);
@@ -1109,15 +1117,20 @@ getSurfacePoints(struct ON_Brep_CDT_State *s_cdt,
 	sinfo.ulen = fabs(t2 - t1);
 	s->GetDomain(1, &t1, &t2);
 	sinfo.vlen = fabs(t2 - t1);
-	sinfo.u_lower_3dlen = _cdt_get_uv_edge_3d_len(s, 0, 0);
-	sinfo.u_upper_3dlen = _cdt_get_uv_edge_3d_len(s, 1, 0);
-	sinfo.v_lower_3dlen = _cdt_get_uv_edge_3d_len(s, 0, 1);
-	sinfo.v_upper_3dlen = _cdt_get_uv_edge_3d_len(s, 1, 1);
-	bu_log("u_lower_3dlen: %f\n",_cdt_get_uv_edge_3d_len(s, 0, 0));
-	bu_log("u_upper_3dlen: %f\n",_cdt_get_uv_edge_3d_len(s, 1, 0));
-	bu_log("v_lower_3dlen: %f\n",_cdt_get_uv_edge_3d_len(s, 0, 1));
-	bu_log("v_upper_3dlen: %f\n",_cdt_get_uv_edge_3d_len(s, 1, 1));
-
+	s->GetDomain(0, &sinfo.u1, &sinfo.u2);
+	s->GetDomain(1, &sinfo.v1, &sinfo.v2);
+	sinfo.u_lower_3dlen = _cdt_get_uv_edge_3d_len(&sinfo, 0, 0);
+	sinfo.u_upper_3dlen = _cdt_get_uv_edge_3d_len(&sinfo, 1, 0);
+	sinfo.v_lower_3dlen = _cdt_get_uv_edge_3d_len(&sinfo, 0, 1);
+	sinfo.v_upper_3dlen = _cdt_get_uv_edge_3d_len(&sinfo, 1, 1);
+	if (!NEAR_EQUAL(sinfo.u_lower_3dlen, sinfo.u_upper_3dlen, 0.001)) {
+	    bu_log("u_lower_3dlen: %f\n",_cdt_get_uv_edge_3d_len(&sinfo, 0, 0));
+	    bu_log("u_upper_3dlen: %f\n",_cdt_get_uv_edge_3d_len(&sinfo, 1, 0));
+	}
+	if (!NEAR_EQUAL(sinfo.v_lower_3dlen, sinfo.v_upper_3dlen, 0.001)) {
+	    bu_log("v_lower_3dlen: %f\n",_cdt_get_uv_edge_3d_len(&sinfo, 0, 1));
+	    bu_log("v_upper_3dlen: %f\n",_cdt_get_uv_edge_3d_len(&sinfo, 1, 1));
+	}
 
 	// may be a smaller trimmed subset of surface so worth getting
 	// face boundary
