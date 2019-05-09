@@ -1003,9 +1003,9 @@ CPP_XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct sol
  * Intersect a ray with a bot.  If an intersection occurs, a struct
  * seg will be acquired and filled in.
  *
- * Notes for rt_bot_norm(): hit_private contains pointer to the
- * tri_specific structure.  hit_vpriv[X] contains dot product of ray
- * direction and unit normal from tri_specific.
+ * Notes for rt_bot_norm() and rt_bot_uv(): hit_private contains
+ * pointer to the tri_specific structure.  hit_vpriv[X] contains dot
+ * product of ray direction and unit normal from tri_specific.
  *
  * Returns -
  * 0 MISS
@@ -1264,12 +1264,10 @@ CPP_XGLUE(rt_bot_piece_shot_, TRI_TYPE)(struct rt_piecestate *psp, struct rt_pie
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
-CPP_XGLUE(rt_bot_norm_, TRI_TYPE)(struct bot_specific *bot, struct hit *hitp, struct soltab *stp, struct xray *rp)
+CPP_XGLUE(bot_norm_, TRI_TYPE)(struct bot_specific *bot, struct hit *hitp, struct xray *rp)
 {
     vect_t old_norm;
     CPP_XGLUE(tri_specific_, TRI_TYPE) *trip=(CPP_XGLUE(tri_specific_, TRI_TYPE) *)hitp->hit_private;
-
-    if (stp) RT_CK_SOLTAB(stp);
 
     VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
     VMOVE(old_norm, hitp->hit_normal);
@@ -1322,6 +1320,20 @@ CPP_XGLUE(rt_bot_norm_, TRI_TYPE)(struct bot_specific *bot, struct hit *hitp, st
 	VUNITIZE(hitp->hit_normal);
     }
 }
+
+
+/* void */
+/* CPP_XGLUE(rt_bot_uv_, TRI_TYPE)(struct bot_specific *bot, struct hit *hitp, struct xray *rp) */
+/* { */
+/*     size_t i; */
+/*     CPP_XGLUE(tri_specific_, TRI_TYPE) *trip = (CPP_XGLUE(tri_specific_, TRI_TYPE) *)hitp->hit_private; */
+/*     VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir); */
+/*     if ((bot->bot_flags & RT_BOT_HAS_TEXTURE_UVS) /\* && trip->tri_uvs *\/) { */
+/* 	for (i = X; i <= Z; i++) { */
+/* 	    /\* TODO: do stuff *\/ */
+/* 	} */
+/*     } */
+/* } */
 
 
 void
