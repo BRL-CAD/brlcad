@@ -798,6 +798,25 @@ struct cdt_surf_info {
     fastf_t v_upper_3dlen;
 };
 
+double
+uline_len_est(struct cdt_surf_info *sinfo, double u1, double u2, double v)
+{
+    double t = 1 - (sinfo->vlen - v)/(sinfo->vlen);
+    double lenfact = sinfo->u_lower_3dlen * (1 - (t)) + sinfo->u_upper_3dlen * (t);
+    double lenest = (u2 - u1)/sinfo->ulen * lenfact;
+    return lenest;
+}
+
+
+double
+vline_len_est(struct cdt_surf_info *sinfo, double u, double v1, double v2)
+{
+    double t = 1 - (sinfo->ulen - u)/(sinfo->ulen);
+    double lenfact = sinfo->v_lower_3dlen * (1 - (t)) + sinfo->v_upper_3dlen * (t);
+    double lenest = (v2 - v1)/sinfo->vlen * lenfact;
+    return lenest;
+}
+
 static void
 getSurfacePoints(struct cdt_surf_info *sinfo,
 		 fastf_t u1,
@@ -843,7 +862,12 @@ getSurfacePoints(struct cdt_surf_info *sinfo,
 
 		// Check the distance between v1 and v2 at u1 && u1+step.
 		// If they're both less than threshold, skip
-
+		double est1 = vline_len_est(sinfo, u1, v1, v2);
+		double est2 = vline_len_est(sinfo, u1+step, v1, v2);
+		if (est1 < min_dist && est2 < min_dist) {
+		    bu_log("Small estimates: %f, %f\n", est1, est2);
+		    continue;
+		}
 		getSurfacePoints(sinfo, u1, u1 + step, v1, v2, min_dist,
 			within_dist, cos_within_ang, on_surf_points, left,
 			below);
@@ -851,13 +875,26 @@ getSurfacePoints(struct cdt_surf_info *sinfo,
 
 		// Check the distance between v1 and v2 at u2-step && u2
 		// If they're both less than threshold, skip
-	
+		double est1 = vline_len_est(sinfo, u2-step, v1, v2);
+		double est2 = vline_len_est(sinfo, u2, v1, v2);
+		if (est1 < min_dist && est2 < min_dist) {
+		    bu_log("Small estimates: %f, %f\n", est1, est2);
+		    continue;
+		}
+
 		getSurfacePoints(sinfo, u2 - step, u2, v1, v2, min_dist,
 			within_dist, cos_within_ang, on_surf_points, left,
 			below);
 	    } else {
 		// Check the distance between v1 and v2 at step_u - step and step_u
 		// If they're both less than threshold, skip
+		double est1 = vline_len_est(sinfo, step_u - step, v1, v2);
+		double est2 = vline_len_est(sinfo, step_u, v1, v2);
+		if (est1 < min_dist && est2 < min_dist) {
+		    bu_log("Small estimates: %f, %f\n", est1, est2);
+		    continue;
+		}
+
 		getSurfacePoints(sinfo, step_u - step, step_u, v1, v2, min_dist, within_dist,
 			cos_within_ang, on_surf_points, left, below);
 	    }
@@ -884,14 +921,38 @@ getSurfacePoints(struct cdt_surf_info *sinfo,
 	    }
 
 	    if (i == 1) {
+		double est1 = uline_len_est(sinfo, u1, u2, v1);
+		double est2 = uline_len_est(sinfo, u1, u2, v1 + step);
+		bu_log("est1, est2: %f, %f\n", est1, est2);
+		if (est1 < min_dist && est2 < min_dist) {
+		    bu_log("Small estimates: %f, %f\n", est1, est2);
+		    continue;
+		}
+
 		getSurfacePoints(sinfo, u1, u2, v1, v1 + step, min_dist,
 			within_dist, cos_within_ang, on_surf_points, left,
 			below);
 	    } else if (i == isteps) {
+		double est1 = uline_len_est(sinfo, u1, u2, v2 - step);
+		double est2 = uline_len_est(sinfo, u1, u2, v2);
+		bu_log("est1, est2: %f, %f\n", est1, est2);
+		if (est1 < min_dist && est2 < min_dist) {
+		    bu_log("Small estimates: %f, %f\n", est1, est2);
+		    continue;
+		}
+
 		getSurfacePoints(sinfo, u1, u2, v2 - step, v2, min_dist,
 			within_dist, cos_within_ang, on_surf_points, left,
 			below);
 	    } else {
+		double est1 = uline_len_est(sinfo, u1, u2, step_v - step);
+		double est2 = uline_len_est(sinfo, u1, u2, step_v);
+		bu_log("est1, est2: %f, %f\n", est1, est2);
+		if (est1 < min_dist && est2 < min_dist) {
+		    bu_log("Small estimates: %f, %f\n", est1, est2);
+		    continue;
+		}
+
 		getSurfacePoints(sinfo, u1, u2, step_v - step, step_v, min_dist, within_dist,
 			cos_within_ang, on_surf_points, left, below);
 	    }
@@ -906,6 +967,21 @@ getSurfacePoints(struct cdt_surf_info *sinfo,
 	}
 	return;
     }
+
+    double est1 = uline_len_est(sinfo, u1, u2, v1);
+    double est2 = uline_len_est(sinfo, u1, u2, v2);
+    double est3 = vline_len_est(sinfo, u1, v1, v2);
+    double est4 = vline_len_est(sinfo, u2, v1, v2);
+ 
+    bu_log("est1, est2, est3, est4: %f, %f, %f, %f\n", est1, est2, est3, est4);
+    if (est1 < min_dist && est2 < min_dist) {
+	bu_log("Small estimates: %f, %f\n", est1, est2);
+    }
+    if (est3 < min_dist && est4 < min_dist) {
+	bu_log("Small estimates: %f, %f\n", est3, est4);
+    }
+
+
     if ((surface_EvNormal(sinfo->s, u1, v1, p[0], norm[0]))
 	    && (surface_EvNormal(sinfo->s, u2, v1, p[1], norm[1])) // for u
 	    && (surface_EvNormal(sinfo->s, u2, v2, p[2], norm[2]))
@@ -917,6 +993,8 @@ getSurfacePoints(struct cdt_surf_info *sinfo,
 	ON_Line line2(p[1], p[3]);
 	double dist = mid.DistanceTo(line1.ClosestPointTo(mid));
 	V_MAX(dist, mid.DistanceTo(line2.ClosestPointTo(mid)));
+
+
 
 	if (dist < min_dist + ON_ZERO_TOLERANCE) {
 	    return;
@@ -1038,7 +1116,7 @@ getSurfacePoints(struct cdt_surf_info *sinfo,
 double
 _cdt_get_uv_edge_3d_len(struct cdt_surf_info *sinfo, int c1, int c2)
 {
-    double wu1, wv1, wu2, wv2, umid, vmid;
+    double wu1, wv1, wu2, wv2, umid, vmid = 0.0;
 
     if (!c1 && !c2) {
 	wu1 = sinfo->u1;
