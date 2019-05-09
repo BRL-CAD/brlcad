@@ -140,6 +140,13 @@ void write_cached_rev_sha1s()
     std::ofstream outfile("rev_gsha1s.txt", std::ios::out | std::ios::binary);
     if (!outfile.good()) exit(-1);
     for (r_it = rev_to_gsha1.begin(); r_it != rev_to_gsha1.end(); r_it++) {
+	std::string s1 = r_it->first.first;
+	std::string s2 = std::to_string(r_it->first.second);
+	std::string s3 = r_it->second;
+	if (!s1.length() || !s2.length() || !s3.length()) {
+	    std::cerr << "Invalid rev sha1 entry: " << r_it->first.first << "," << r_it->first.second << "," << r_it->second << "\n";
+	    exit(1);
+	}
 	outfile << r_it->first.first << "," << r_it->first.second << "," << r_it->second << "\n";
     }
     outfile.close();
