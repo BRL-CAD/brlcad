@@ -1115,8 +1115,16 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 		    boutfile << "from " << bbpath << "," << rev.revision_number-1 << "\n";
 		    boutfile.close();
 		    all_git_branches.push_back(node.branch);
-		    // Unlike a "real" branch we don't need an empty commit here, since the whole
-		    // point is there is commit coming up...
+
+		    // Make an empty commit on the new branch with the commit message from SVN, but no changes
+
+		    std::string cfi_file = std::to_string(rev.revision_number) + std::string("-commit.fi");
+		    std::ofstream coutfile(cfi_file, std::ios::out | std::ios::binary);
+
+		    write_commit_core(coutfile, node.branch, rev, NULL, 1, 0);
+
+		    coutfile.close();
+
 		    continue;
 		}
 		if (rev.revision_number == edited_tag_maxr) {
