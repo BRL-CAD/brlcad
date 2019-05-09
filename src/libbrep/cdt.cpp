@@ -1006,6 +1006,82 @@ getSurfacePoints(struct cdt_surf_info *sinfo,
 }
 
 
+/* flags identifying which side of the surface we're calculating
+ *
+ *                        u_upper
+ *                        (1,0)
+ *
+ *               u1v2---------------- u2v2
+ *                |                    |
+ *                |                    |
+ *                |                    |
+ *    v_lower     |                    |     v_upper
+ *     (0,1)      |                    |      (1,1)
+ *                |                    |
+ *                |                    |
+ *               u1v1-----------------u2v1
+ *
+ *                        u_lower
+ *                         (0,0)
+ */
+double
+_cdt_get_uv_edge_3d_len(const ON_Surface *s, int c1, int c2)
+{
+    double u1, u2, v1, v2;
+    s->GetDomain(0, &u1, &u2);
+    s->GetDomain(1, &v1, &v2);
+    double wu1, wv1, wu2, wv2, umid, vmid;
+
+    if (!c1 && !c2) {
+	wu1 = u1;
+	wu2 = u2;
+	wv1 = v1;
+	wv2 = v1;
+	umid = (u2 - u1)/2.0;
+	vmid = v1;
+    }
+    if (c1 && !c2) {
+	wu1 = u1;
+	wu2 = u2;
+	wv1 = v2;
+	wv2 = v2;
+	umid = (u2 - u1)/2.0;
+	vmid = v2;
+    }
+    if (!c1 && c2) {
+	wu1 = u1;
+	wu2 = u1;
+	wv1 = v1;
+	wv2 = v2;
+	umid = u1;
+	vmid = (v2 - v1)/2.0;
+    }
+    if (c1 && c2) {
+	wu1 = u2;
+	wu2 = u2;
+	wv1 = v1;
+	wv2 = v2;
+	umid = u2;
+	vmid = (v2 - v1)/2.0;
+    }
+
+    // 1st 3d point
+    ON_3dPoint p1 = s->PointAt(wu1, wv1);
+
+    // middle 3d point
+    ON_3dPoint pmid = s->PointAt(umid, vmid);
+
+    // last 3d point
+    ON_3dPoint p2 = s->PointAt(wu2, wv2);
+
+    // length
+    double d1 = pmid.DistanceTo(p1);
+    double d2 = p2.DistanceTo(pmid);
+    return d1+d2;
+}
+
+
+
 static void
 getSurfacePoints(struct ON_Brep_CDT_State *s_cdt,
 	         const ON_BrepFace &face,
@@ -1016,10 +1092,6 @@ getSurfacePoints(struct ON_Brep_CDT_State *s_cdt,
     const ON_Surface *s = face.SurfaceOf();
     const ON_Brep *brep = face.Brep();
 
-    struct cdt_surf_info sinfo;
-
-    sinfo.s = s;
-
     if (s->GetSurfaceSize(&surface_width, &surface_height)) {
 	double dist = 0.0;
 	double min_dist = 0.0;
@@ -1029,6 +1101,23 @@ getSurfacePoints(struct ON_Brep_CDT_State *s_cdt,
 	if ((surface_width < s_cdt->dist) || (surface_height < s_cdt->dist)) {
 	    return;
 	}
+
+	struct cdt_surf_info sinfo;
+	sinfo.s = s;
+	double t1, t2;
+	s->GetDomain(0, &t1, &t2);
+	sinfo.ulen = fabs(t2 - t1);
+	s->GetDomain(1, &t1, &t2);
+	sinfo.vlen = fabs(t2 - t1);
+	sinfo.u_lower_3dlen = _cdt_get_uv_edge_3d_len(s, 0, 0);
+	sinfo.u_upper_3dlen = _cdt_get_uv_edge_3d_len(s, 1, 0);
+	sinfo.v_lower_3dlen = _cdt_get_uv_edge_3d_len(s, 0, 1);
+	sinfo.v_upper_3dlen = _cdt_get_uv_edge_3d_len(s, 1, 1);
+	bu_log("u_lower_3dlen: %f\n",_cdt_get_uv_edge_3d_len(s, 0, 0));
+	bu_log("u_upper_3dlen: %f\n",_cdt_get_uv_edge_3d_len(s, 1, 0));
+	bu_log("v_lower_3dlen: %f\n",_cdt_get_uv_edge_3d_len(s, 0, 1));
+	bu_log("v_upper_3dlen: %f\n",_cdt_get_uv_edge_3d_len(s, 1, 1));
+
 
 	// may be a smaller trimmed subset of surface so worth getting
 	// face boundary
