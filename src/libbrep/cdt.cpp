@@ -787,8 +787,18 @@ getEdgePoints(
     return trim1_param_points;
 }
 
+struct cdt_surf_info {
+    const ON_Surface *s;
+    fastf_t ulen;
+    fastf_t u_lower_3dlen;
+    fastf_t u_upper_3dlen;
+    fastf_t vlen;
+    fastf_t v_lower_3dlen;
+    fastf_t v_upper_3dlen;
+};
+
 static void
-getSurfacePoints(const ON_Surface *s,
+getSurfacePoints(struct cdt_surf_info *sinfo,
 		 fastf_t u1,
 		 fastf_t u2,
 		 fastf_t v1,
@@ -829,15 +839,15 @@ getSurfacePoints(const ON_Surface *s,
 		on_surf_points.Append(p2d);
 	    }
 	    if (i == 1) {
-		getSurfacePoints(s, u1, u1 + step, v1, v2, min_dist,
+		getSurfacePoints(sinfo, u1, u1 + step, v1, v2, min_dist,
 			within_dist, cos_within_ang, on_surf_points, left,
 			below);
 	    } else if (i == isteps) {
-		getSurfacePoints(s, u2 - step, u2, v1, v2, min_dist,
+		getSurfacePoints(sinfo, u2 - step, u2, v1, v2, min_dist,
 			within_dist, cos_within_ang, on_surf_points, left,
 			below);
 	    } else {
-		getSurfacePoints(s, step_u - step, step_u, v1, v2, min_dist, within_dist,
+		getSurfacePoints(sinfo, step_u - step, step_u, v1, v2, min_dist, within_dist,
 			cos_within_ang, on_surf_points, left, below);
 	    }
 	    left = false;
@@ -863,15 +873,15 @@ getSurfacePoints(const ON_Surface *s,
 	    }
 
 	    if (i == 1) {
-		getSurfacePoints(s, u1, u2, v1, v1 + step, min_dist,
+		getSurfacePoints(sinfo, u1, u2, v1, v1 + step, min_dist,
 			within_dist, cos_within_ang, on_surf_points, left,
 			below);
 	    } else if (i == isteps) {
-		getSurfacePoints(s, u1, u2, v2 - step, v2, min_dist,
+		getSurfacePoints(sinfo, u1, u2, v2 - step, v2, min_dist,
 			within_dist, cos_within_ang, on_surf_points, left,
 			below);
 	    } else {
-		getSurfacePoints(s, u1, u2, step_v - step, step_v, min_dist, within_dist,
+		getSurfacePoints(sinfo, u1, u2, step_v - step, step_v, min_dist, within_dist,
 			cos_within_ang, on_surf_points, left, below);
 	    }
 
@@ -885,11 +895,11 @@ getSurfacePoints(const ON_Surface *s,
 	}
 	return;
     }
-    if ((surface_EvNormal(s, u1, v1, p[0], norm[0]))
-	    && (surface_EvNormal(s, u2, v1, p[1], norm[1])) // for u
-	    && (surface_EvNormal(s, u2, v2, p[2], norm[2]))
-	    && (surface_EvNormal(s, u1, v2, p[3], norm[3]))
-	    && (surface_EvNormal(s, u, v, mid, norm_mid))) {
+    if ((surface_EvNormal(sinfo->s, u1, v1, p[0], norm[0]))
+	    && (surface_EvNormal(sinfo->s, u2, v1, p[1], norm[1])) // for u
+	    && (surface_EvNormal(sinfo->s, u2, v2, p[2], norm[2]))
+	    && (surface_EvNormal(sinfo->s, u1, v2, p[3], norm[3]))
+	    && (surface_EvNormal(sinfo->s, u, v, mid, norm_mid))) {
 	double udot;
 	double vdot;
 	ON_Line line1(p[0], p[2]);
@@ -923,13 +933,13 @@ getSurfacePoints(const ON_Surface *s,
 	    p2d.Set(u, v2);
 	    on_surf_points.Append(p2d);
 
-	    getSurfacePoints(s, u1, u, v1, v, min_dist, within_dist,
+	    getSurfacePoints(sinfo, u1, u, v1, v, min_dist, within_dist,
 		    cos_within_ang, on_surf_points, left, below);
-	    getSurfacePoints(s, u1, u, v, v2, min_dist, within_dist,
+	    getSurfacePoints(sinfo, u1, u, v, v2, min_dist, within_dist,
 		    cos_within_ang, on_surf_points, left, false);
-	    getSurfacePoints(s, u, u2, v1, v, min_dist, within_dist,
+	    getSurfacePoints(sinfo, u, u2, v1, v, min_dist, within_dist,
 		    cos_within_ang, on_surf_points, false, below);
-	    getSurfacePoints(s, u, u2, v, v2, min_dist, within_dist,
+	    getSurfacePoints(sinfo, u, u2, v, v2, min_dist, within_dist,
 		    cos_within_ang, on_surf_points, false, false);
 	    return;
 	}
@@ -941,9 +951,9 @@ getSurfacePoints(const ON_Surface *s,
 	    //top
 	    p2d.Set(u, v2);
 	    on_surf_points.Append(p2d);
-	    getSurfacePoints(s, u1, u, v1, v2, min_dist, within_dist,
+	    getSurfacePoints(sinfo, u1, u, v1, v2, min_dist, within_dist,
 		    cos_within_ang, on_surf_points, left, below);
-	    getSurfacePoints(s, u, u2, v1, v2, min_dist, within_dist,
+	    getSurfacePoints(sinfo, u, u2, v1, v2, min_dist, within_dist,
 		    cos_within_ang, on_surf_points, false, below);
 	    return;
 	}
@@ -956,9 +966,9 @@ getSurfacePoints(const ON_Surface *s,
 	    p2d.Set(u2, v);
 	    on_surf_points.Append(p2d);
 
-	    getSurfacePoints(s, u1, u2, v1, v, min_dist, within_dist,
+	    getSurfacePoints(sinfo, u1, u2, v1, v, min_dist, within_dist,
 		    cos_within_ang, on_surf_points, left, below);
-	    getSurfacePoints(s, u1, u2, v, v2, min_dist, within_dist,
+	    getSurfacePoints(sinfo, u1, u2, v, v2, min_dist, within_dist,
 		    cos_within_ang, on_surf_points, left, false);
 	    return;
 	}
@@ -983,13 +993,13 @@ getSurfacePoints(const ON_Surface *s,
 
 	if (dist > within_dist + ON_ZERO_TOLERANCE) {
 
-	    getSurfacePoints(s, u1, u, v1, v, min_dist, within_dist,
+	    getSurfacePoints(sinfo, u1, u, v1, v, min_dist, within_dist,
 		    cos_within_ang, on_surf_points, left, below);
-	    getSurfacePoints(s, u1, u, v, v2, min_dist, within_dist,
+	    getSurfacePoints(sinfo, u1, u, v, v2, min_dist, within_dist,
 		    cos_within_ang, on_surf_points, left, false);
-	    getSurfacePoints(s, u, u2, v1, v, min_dist, within_dist,
+	    getSurfacePoints(sinfo, u, u2, v1, v, min_dist, within_dist,
 		    cos_within_ang, on_surf_points, false, below);
-	    getSurfacePoints(s, u, u2, v, v2, min_dist, within_dist,
+	    getSurfacePoints(sinfo, u, u2, v, v2, min_dist, within_dist,
 		    cos_within_ang, on_surf_points, false, false);
 	}
     }
@@ -1002,8 +1012,13 @@ getSurfacePoints(struct ON_Brep_CDT_State *s_cdt,
 		 ON_2dPointArray &on_surf_points)
 {
     double surface_width, surface_height;
+
     const ON_Surface *s = face.SurfaceOf();
     const ON_Brep *brep = face.Brep();
+
+    struct cdt_surf_info sinfo;
+
+    sinfo.s = s;
 
     if (s->GetSurfaceSize(&surface_width, &surface_height)) {
 	double dist = 0.0;
@@ -1075,7 +1090,7 @@ getSurfacePoints(struct ON_Brep_CDT_State *s_cdt,
 	    p.Set(min.x, midy);
 	    on_surf_points.Append(p);
 
-	    getSurfacePoints(s, min.x, midx, min.y, midy, min_dist, within_dist,
+	    getSurfacePoints(&sinfo, min.x, midx, min.y, midy, min_dist, within_dist,
 			     cos_within_ang, on_surf_points, true, true);
 
 	    //bottom midx
@@ -1086,7 +1101,7 @@ getSurfacePoints(struct ON_Brep_CDT_State *s_cdt,
 	    p.Set(midx, midy);
 	    on_surf_points.Append(p);
 
-	    getSurfacePoints(s, midx, max.x, min.y, midy, min_dist, within_dist,
+	    getSurfacePoints(&sinfo, midx, max.x, min.y, midy, min_dist, within_dist,
 			     cos_within_ang, on_surf_points, false, true);
 
 	    //bottom right
@@ -1101,14 +1116,14 @@ getSurfacePoints(struct ON_Brep_CDT_State *s_cdt,
 	    p.Set(min.x, max.y);
 	    on_surf_points.Append(p);
 
-	    getSurfacePoints(s, min.x, midx, midy, max.y, min_dist, within_dist,
+	    getSurfacePoints(&sinfo, min.x, midx, midy, max.y, min_dist, within_dist,
 			     cos_within_ang, on_surf_points, true, false);
 
 	    //top midx
 	    p.Set(midx, max.y);
 	    on_surf_points.Append(p);
 
-	    getSurfacePoints(s, midx, max.x, midy, max.y, min_dist, within_dist,
+	    getSurfacePoints(&sinfo, midx, max.x, midy, max.y, min_dist, within_dist,
 			     cos_within_ang, on_surf_points, false, false);
 
 	    //top left
@@ -1126,7 +1141,7 @@ getSurfacePoints(struct ON_Brep_CDT_State *s_cdt,
 	    p.Set(min.x, max.y);
 	    on_surf_points.Append(p);
 
-	    getSurfacePoints(s, min.x, midx, min.y, max.y, min_dist,
+	    getSurfacePoints(&sinfo, min.x, midx, min.y, max.y, min_dist,
 			     within_dist, cos_within_ang, on_surf_points, true, true);
 
 	    //bottom midx
@@ -1137,7 +1152,7 @@ getSurfacePoints(struct ON_Brep_CDT_State *s_cdt,
 	    p.Set(midx, max.y);
 	    on_surf_points.Append(p);
 
-	    getSurfacePoints(s, midx, max.x, min.y, max.y, min_dist,
+	    getSurfacePoints(&sinfo, midx, max.x, min.y, max.y, min_dist,
 			     within_dist, cos_within_ang, on_surf_points, false, true);
 
 	    //bottom right
@@ -1159,7 +1174,7 @@ getSurfacePoints(struct ON_Brep_CDT_State *s_cdt,
 	    p.Set(min.x, midy);
 	    on_surf_points.Append(p);
 
-	    getSurfacePoints(s, min.x, max.x, min.y, midy, min_dist,
+	    getSurfacePoints(&sinfo, min.x, max.x, min.y, midy, min_dist,
 			     within_dist, cos_within_ang, on_surf_points, true, true);
 
 	    //bottom right
@@ -1170,7 +1185,7 @@ getSurfacePoints(struct ON_Brep_CDT_State *s_cdt,
 	    p.Set(max.x, midy);
 	    on_surf_points.Append(p);
 
-	    getSurfacePoints(s, min.x, max.x, midy, max.y, min_dist,
+	    getSurfacePoints(&sinfo, min.x, max.x, midy, max.y, min_dist,
 			     within_dist, cos_within_ang, on_surf_points, true, false);
 
 	    // top left
@@ -1191,7 +1206,7 @@ getSurfacePoints(struct ON_Brep_CDT_State *s_cdt,
 	    p.Set(min.x, max.y);
 	    on_surf_points.Append(p);
 
-	    getSurfacePoints(s, min.x, max.x, min.y, max.y, min_dist,
+	    getSurfacePoints(&sinfo, min.x, max.x, min.y, max.y, min_dist,
 			     within_dist, cos_within_ang, on_surf_points, true, true);
 
 	    //bottom right
