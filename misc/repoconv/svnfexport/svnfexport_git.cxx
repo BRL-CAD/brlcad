@@ -1114,6 +1114,9 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 		    boutfile << "reset " << nbranch << "\n";
 		    boutfile << "from " << bbpath << "," << rev.revision_number-1 << "\n";
 		    boutfile.close();
+		    all_git_branches.push_back(node.branch);
+		    // Unlike a "real" branch we don't need an empty commit here, since the whole
+		    // point is there is commit coming up...
 		    continue;
 		}
 		if (rev.revision_number == edited_tag_maxr) {
