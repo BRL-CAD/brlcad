@@ -1489,6 +1489,11 @@ rt_bot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	    + SIZEOF_NETWORK_LONG * (bip->num_face_normals * 3 + 2); /* indices into normals array, num_normals, num_face_normals */
     }
 
+    if (bip->bot_flags & RT_BOT_HAS_TEXTURE_UVS) {
+	ep->ext_nbytes += SIZEOF_NETWORK_DOUBLE * bip->num_uvs * 3 /* vertex uvs */
+	    + SIZEOF_NETWORK_LONG * (bip->num_face_uvs * 3 + 2); /* indices into uvs array, num_uvs, num_face_uvs */
+    }
+
     ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "BOT external");
 
     cp = ep->ext_buf;
@@ -1587,6 +1592,49 @@ rt_bot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 		rem -= SIZEOF_NETWORK_LONG;
 
 		*(uint32_t *)&cp[0] = htonl(bip->face_normals[i*ELEMENTS_PER_VECT + 2]);
+		cp += SIZEOF_NETWORK_LONG;
+		rem -= SIZEOF_NETWORK_LONG;
+	    }
+	}
+    }
+
+    if (bip->bot_flags & RT_BOT_HAS_TEXTURE_UVS) {
+	*(uint32_t *)&cp[0] = htonl(bip->num_uvs);
+	cp += SIZEOF_NETWORK_LONG;
+	rem -= SIZEOF_NETWORK_LONG;
+
+	*(uint32_t *)&cp[0] = htonl(bip->num_face_uvs);
+	cp += SIZEOF_NETWORK_LONG;
+	rem -= SIZEOF_NETWORK_LONG;
+
+	if (bip->num_uvs > 0) {
+	    /* must be double for import and export */
+	    double *uvs;
+	    uvs = (double *)bu_malloc(bip->num_uvs*ELEMENTS_PER_VECT*sizeof(double), "uvs");
+
+	    /* convert fastf_t to double */
+	    for (i = 0; i < bip->num_uvs * ELEMENTS_PER_VECT; i++) {
+		uvs[i] = bip->uvs[i];
+	    }
+
+	    bu_cv_htond(cp, (unsigned char*)uvs, bip->num_uvs*ELEMENTS_PER_VECT);
+
+	    bu_free(uvs, "uvs");
+
+	    cp += SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT * bip->num_uvs;
+	    rem -= SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT * bip->num_uvs;
+	}
+	if (bip->num_face_uvs > 0) {
+	    for (i = 0; i < bip->num_face_uvs; i++) {
+		*(uint32_t *)&cp[0] = htonl(bip->face_uvs[i*ELEMENTS_PER_VECT + 0]);
+		cp += SIZEOF_NETWORK_LONG;
+		rem -= SIZEOF_NETWORK_LONG;
+
+		*(uint32_t *)&cp[0] = htonl(bip->face_uvs[i*ELEMENTS_PER_VECT + 1]);
+		cp += SIZEOF_NETWORK_LONG;
+		rem -= SIZEOF_NETWORK_LONG;
+
+		*(uint32_t *)&cp[0] = htonl(bip->face_uvs[i*ELEMENTS_PER_VECT + 2]);
 		cp += SIZEOF_NETWORK_LONG;
 		rem -= SIZEOF_NETWORK_LONG;
 	    }
