@@ -995,11 +995,11 @@ getSurfacePoints(struct cdt_surf_info *sinfo,
     double est4 = vline_len_est(sinfo, u2, v1, v2);
 
     //bu_log("(min: %f) est1, est2, est3, est4: %f, %f, %f, %f\n", min_dist, est1, est2, est3, est4);
-    if (est1 < 0.5 && est2 < 0.5) {
+    if (est1 < 0.5*within_dist && est2 < 0.5*within_dist) {
 	//bu_log("Small estimates: %f, %f\n", est1, est2);
 	return;
     }
-    if (est3 < 0.5 && est4 < 0.5) {
+    if (est3 < 0.5*within_dist && est4 < 0.5*within_dist) {
 	//bu_log("Small estimates: %f, %f\n", est3, est4);
 	return;
     }
