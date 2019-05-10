@@ -849,10 +849,14 @@ struct rt_bot_list {
 #define RT_BOT_PLATE_NOCOS 4
 
 /* flags for bot_flags */
-#define RT_BOT_HAS_SURFACE_NORMALS 0x1 /**< @brief Has surface normals at each face vertex */
-#define RT_BOT_USE_NORMALS         0x2 /**< @brief Use the surface normals if they exist */
-#define RT_BOT_USE_FLOATS          0x4 /**< @brief Use the single precision version of "tri_specific" during prep */
-#define RT_BOT_HAS_TEXTURE_UVS     0x8 /**< @brief Has uv texture coordinates at each face vertex */
+#define RT_BOT_HAS_SURFACE_NORMALS 0x01 /**< @brief Has surface normals at each face vertex */
+#define RT_BOT_USE_NORMALS         0x02 /**< @brief Use the surface normals if they exist */
+#define RT_BOT_USE_FLOATS          0x04 /**< @brief Use the single precision version of "tri_specific" during prep */
+#define RT_BOT_HAS_TEXTURE_UVS     0x08 /**< @brief Has uv texture coordinates at each face vertex */
+#define RT_BOT_HAS_UNUSED1         0x10 /**< @brief TBD */
+#define RT_BOT_HAS_UNUSED2         0x20 /**< @brief TBD */
+#define RT_BOT_HAS_UNUSED3         0x40 /**< @brief TBD */
+#define RT_BOT_HAS_UNUSED4         0x80 /**< @brief WARNING: use this flag to denote more bits in the export serialization */
 
 #define RT_BOT_CK_MAGIC(_p) BU_CKMAG(_p, RT_BOT_INTERNAL_MAGIC, "rt_bot_internal")
 /** @} */
