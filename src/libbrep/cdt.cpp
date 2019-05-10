@@ -56,6 +56,8 @@
 #include "brep/pullback.h"
 #include "brep/util.h"
 
+int print_debug = 0;
+
 /***************************************************
  * debugging routines
  ***************************************************/
@@ -792,18 +794,31 @@ struct cdt_surf_info {
     double u1, u2, v1, v2;
     fastf_t ulen;
     fastf_t u_lower_3dlen;
+    fastf_t u_mid_3dlen;
     fastf_t u_upper_3dlen;
     fastf_t vlen;
     fastf_t v_lower_3dlen;
+    fastf_t v_mid_3dlen;
     fastf_t v_upper_3dlen;
 };
 
 double
 uline_len_est(struct cdt_surf_info *sinfo, double u1, double u2, double v)
 {
-    double t = 1 - (sinfo->vlen - v)/(sinfo->vlen);
-    double lenfact = sinfo->u_lower_3dlen * (1 - (t)) + sinfo->u_upper_3dlen * (t);
-    double lenest = (u2 - u1)/sinfo->ulen * lenfact;
+    double vp, t, lenfact, lenest;
+    int active_half = (fabs(sinfo->v1 - v) < fabs(sinfo->v2 - v)) ? 0 : 1;
+    vp = (active_half == 0) ? fabs(sinfo->v1 - v)/(sinfo->vlen*0.5) : fabs(sinfo->v2 - v)/(sinfo->vlen*0.5);
+    t = 1 - (sinfo->vlen*0.5 - vp)/(sinfo->vlen*0.5);
+    if (active_half == 0) {
+	lenfact = sinfo->u_lower_3dlen * (1 - (t)) + sinfo->u_mid_3dlen * (t);
+	lenest = (u2 - u1)/sinfo->ulen * lenfact;
+    } else {
+	lenfact = sinfo->u_mid_3dlen * (1 - (t)) + sinfo->u_upper_3dlen * (t);
+	lenest = (u2 - u1)/sinfo->ulen * lenfact;
+    }
+    if (print_debug) {
+	bu_log("active_half: %d u1:%f u2:%f v: %f -> vp: %f t: %f lenfact: %f lenest: %f\n", active_half, u1, u2, v,vp, t, lenfact, lenest);
+    }
     return lenest;
 }
 
@@ -811,9 +826,21 @@ uline_len_est(struct cdt_surf_info *sinfo, double u1, double u2, double v)
 double
 vline_len_est(struct cdt_surf_info *sinfo, double u, double v1, double v2)
 {
-    double t = 1 - (sinfo->ulen - u)/(sinfo->ulen);
-    double lenfact = sinfo->v_lower_3dlen * (1 - (t)) + sinfo->v_upper_3dlen * (t);
-    double lenest = (v2 - v1)/sinfo->vlen * lenfact;
+    double up, t, lenfact, lenest;
+    int active_half = (fabs(sinfo->u1 - u) < fabs(sinfo->u2 - u)) ? 0 : 1;
+    up = (active_half == 0) ? fabs(sinfo->u1 - u)/(sinfo->ulen*0.5) : fabs(sinfo->u2 - u)/(sinfo->ulen*0.5);
+    t = 1 - (sinfo->ulen*0.5 - up)/(sinfo->ulen*0.5);
+    if (active_half == 0) {
+	lenfact = sinfo->v_lower_3dlen * (1 - (t)) + sinfo->v_mid_3dlen * (t);
+	lenest = (v2 - v1)/sinfo->vlen * lenfact;
+    } else {
+	lenfact = sinfo->v_mid_3dlen * (1 - (t)) + sinfo->v_upper_3dlen * (t);
+	lenest = (v2 - v1)/sinfo->vlen * lenfact;
+    } 
+    
+    if (print_debug) {
+	bu_log("active_half: %d u:%f v1:%f v2: %f -> up: %f t: %f lenfact: %f lenest: %f\n", active_half, u, v1, v2, up, t, lenfact, lenest);
+    }
     return lenest;
 }
 
@@ -864,9 +891,11 @@ getSurfacePoints(struct cdt_surf_info *sinfo,
 		// If they're both less than threshold, skip
 		double est1 = vline_len_est(sinfo, u1, v1, v2);
 		double est2 = vline_len_est(sinfo, u1+step, v1, v2);
+		if (print_debug) {
 		if (est1 < min_dist && est2 < min_dist) {
 		    bu_log("Small estimates: %f, %f\n", est1, est2);
 		    continue;
+		}
 		}
 		getSurfacePoints(sinfo, u1, u1 + step, v1, v2, min_dist,
 			within_dist, cos_within_ang, on_surf_points, left,
@@ -877,9 +906,11 @@ getSurfacePoints(struct cdt_surf_info *sinfo,
 		// If they're both less than threshold, skip
 		double est1 = vline_len_est(sinfo, u2-step, v1, v2);
 		double est2 = vline_len_est(sinfo, u2, v1, v2);
+		if (print_debug) {
 		if (est1 < min_dist && est2 < min_dist) {
 		    bu_log("Small estimates: %f, %f\n", est1, est2);
 		    continue;
+		}
 		}
 
 		getSurfacePoints(sinfo, u2 - step, u2, v1, v2, min_dist,
@@ -890,9 +921,11 @@ getSurfacePoints(struct cdt_surf_info *sinfo,
 		// If they're both less than threshold, skip
 		double est1 = vline_len_est(sinfo, step_u - step, v1, v2);
 		double est2 = vline_len_est(sinfo, step_u, v1, v2);
+		if (print_debug) {
 		if (est1 < min_dist && est2 < min_dist) {
 		    bu_log("Small estimates: %f, %f\n", est1, est2);
 		    continue;
+		}
 		}
 
 		getSurfacePoints(sinfo, step_u - step, step_u, v1, v2, min_dist, within_dist,
@@ -923,10 +956,12 @@ getSurfacePoints(struct cdt_surf_info *sinfo,
 	    if (i == 1) {
 		double est1 = uline_len_est(sinfo, u1, u2, v1);
 		double est2 = uline_len_est(sinfo, u1, u2, v1 + step);
+		if (print_debug) {
 		bu_log("est1, est2: %f, %f\n", est1, est2);
 		if (est1 < min_dist && est2 < min_dist) {
 		    bu_log("Small estimates: %f, %f\n", est1, est2);
 		    continue;
+		}
 		}
 
 		getSurfacePoints(sinfo, u1, u2, v1, v1 + step, min_dist,
@@ -935,10 +970,12 @@ getSurfacePoints(struct cdt_surf_info *sinfo,
 	    } else if (i == isteps) {
 		double est1 = uline_len_est(sinfo, u1, u2, v2 - step);
 		double est2 = uline_len_est(sinfo, u1, u2, v2);
+		if (print_debug) {
 		bu_log("est1, est2: %f, %f\n", est1, est2);
 		if (est1 < min_dist && est2 < min_dist) {
 		    bu_log("Small estimates: %f, %f\n", est1, est2);
 		    continue;
+		}
 		}
 
 		getSurfacePoints(sinfo, u1, u2, v2 - step, v2, min_dist,
@@ -947,10 +984,12 @@ getSurfacePoints(struct cdt_surf_info *sinfo,
 	    } else {
 		double est1 = uline_len_est(sinfo, u1, u2, step_v - step);
 		double est2 = uline_len_est(sinfo, u1, u2, step_v);
+		if (print_debug) {
 		bu_log("est1, est2: %f, %f\n", est1, est2);
 		if (est1 < min_dist && est2 < min_dist) {
 		    bu_log("Small estimates: %f, %f\n", est1, est2);
 		    continue;
+		}
 		}
 
 		getSurfacePoints(sinfo, u1, u2, step_v - step, step_v, min_dist, within_dist,
@@ -973,12 +1012,16 @@ getSurfacePoints(struct cdt_surf_info *sinfo,
     double est3 = vline_len_est(sinfo, u1, v1, v2);
     double est4 = vline_len_est(sinfo, u2, v1, v2);
  
-    bu_log("est1, est2, est3, est4: %f, %f, %f, %f\n", est1, est2, est3, est4);
-    if (est1 < min_dist && est2 < min_dist) {
+    if (print_debug) {
+    bu_log("(min: %f) est1, est2, est3, est4: %f, %f, %f, %f\n", min_dist, est1, est2, est3, est4);
+    if (est1 < 0.5 && est2 < 0.5) {
 	bu_log("Small estimates: %f, %f\n", est1, est2);
+	return;
     }
-    if (est3 < min_dist && est4 < min_dist) {
+    if (est3 < 0.5 && est4 < 0.5) {
 	bu_log("Small estimates: %f, %f\n", est3, est4);
+	return;
+    }
     }
 
 
@@ -1098,16 +1141,16 @@ getSurfacePoints(struct cdt_surf_info *sinfo,
 /* flags identifying which side of the surface we're calculating
  *
  *                        u_upper
- *                        (1,0)
+ *                        (2,0)
  *
  *               u1v2---------------- u2v2
- *                |                    |
- *                |                    |
- *                |                    |
- *    v_lower     |                    |     v_upper
- *     (0,1)      |                    |      (1,1)
- *                |                    |
- *                |                    |
+ *                |          |         |
+ *                |          |         |
+ *                |  u_lmid  |         |
+ *    v_lower     |----------|---------|     v_upper
+ *     (0,1)      |  (1,0)   |         |      (2,1)
+ *                |         v|lmid     |
+ *                |          |(1,1)    |
  *               u1v1-----------------u2v1
  *
  *                        u_lower
@@ -1116,39 +1159,78 @@ getSurfacePoints(struct cdt_surf_info *sinfo,
 double
 _cdt_get_uv_edge_3d_len(struct cdt_surf_info *sinfo, int c1, int c2)
 {
+    int line_set = 0;
     double wu1, wv1, wu2, wv2, umid, vmid = 0.0;
 
-    if (!c1 && !c2) {
+    /* u_lower */
+    if (c1 == 0 && c2 == 0) {
 	wu1 = sinfo->u1;
 	wu2 = sinfo->u2;
 	wv1 = sinfo->v1;
 	wv2 = sinfo->v1;
 	umid = (sinfo->u2 - sinfo->u1)/2.0;
 	vmid = sinfo->v1;
+	line_set = 1;
     }
-    if (c1 && !c2) {
+
+    /* u_lmid */
+    if (c1 == 1 && c2 == 0) {
+	wu1 = sinfo->u1;
+	wu2 = sinfo->u2;
+	wv1 = (sinfo->v2 - sinfo->v1)/2.0;
+	wv2 = (sinfo->v2 - sinfo->v1)/2.0;
+	umid = (sinfo->u2 - sinfo->u1)/2.0;
+	vmid = (sinfo->v2 - sinfo->v1)/2.0;
+	line_set = 1;
+    }
+
+    /* u_upper */
+    if (c1 == 2 && c2 == 0) {
 	wu1 = sinfo->u1;
 	wu2 = sinfo->u2;
 	wv1 = sinfo->v2;
 	wv2 = sinfo->v2;
 	umid = (sinfo->u2 - sinfo->u1)/2.0;
 	vmid = sinfo->v2;
+	line_set = 1;
     }
-    if (!c1 && c2) {
+    
+    /* v_lower */
+    if (c1 == 0 && c2 == 1) {
 	wu1 = sinfo->u1;
 	wu2 = sinfo->u1;
 	wv1 = sinfo->v1;
 	wv2 = sinfo->v2;
 	umid = sinfo->u1;
 	vmid = (sinfo->v2 - sinfo->v1)/2.0;
+	line_set = 1;
     }
-    if (c1 && c2) {
+    
+    /* v_lmid */
+    if (c1 == 1 && c2 == 1) {
+	wu1 = (sinfo->u2 - sinfo->u1)/2.0;
+	wu2 = (sinfo->u2 - sinfo->u1)/2.0;
+	wv1 = sinfo->v1;
+	wv2 = sinfo->v2;
+	umid = (sinfo->u2 - sinfo->u1)/2.0;
+	vmid = (sinfo->v2 - sinfo->v1)/2.0;
+	line_set = 1;
+    }
+
+    /* v_upper */
+    if (c1 == 2 && c2 == 1) {
 	wu1 = sinfo->u2;
 	wu2 = sinfo->u2;
 	wv1 = sinfo->v1;
 	wv2 = sinfo->v2;
 	umid = sinfo->u2;
 	vmid = (sinfo->v2 - sinfo->v1)/2.0;
+	line_set = 1;
+    }
+
+    if (!line_set) {
+	bu_log("Invalid edge %d, %d specified\n", c1, c2);
+	return DBL_MAX;
     }
 
     // 1st 3d point
@@ -1178,6 +1260,8 @@ getSurfacePoints(struct ON_Brep_CDT_State *s_cdt,
     const ON_Surface *s = face.SurfaceOf();
     const ON_Brep *brep = face.Brep();
 
+    print_debug = 0;
+
     if (s->GetSurfaceSize(&surface_width, &surface_height)) {
 	double dist = 0.0;
 	double min_dist = 0.0;
@@ -1198,16 +1282,31 @@ getSurfacePoints(struct ON_Brep_CDT_State *s_cdt,
 	s->GetDomain(0, &sinfo.u1, &sinfo.u2);
 	s->GetDomain(1, &sinfo.v1, &sinfo.v2);
 	sinfo.u_lower_3dlen = _cdt_get_uv_edge_3d_len(&sinfo, 0, 0);
-	sinfo.u_upper_3dlen = _cdt_get_uv_edge_3d_len(&sinfo, 1, 0);
+	sinfo.u_mid_3dlen   = _cdt_get_uv_edge_3d_len(&sinfo, 1, 0);
+	sinfo.u_upper_3dlen = _cdt_get_uv_edge_3d_len(&sinfo, 2, 0);
 	sinfo.v_lower_3dlen = _cdt_get_uv_edge_3d_len(&sinfo, 0, 1);
-	sinfo.v_upper_3dlen = _cdt_get_uv_edge_3d_len(&sinfo, 1, 1);
-	if (!NEAR_EQUAL(sinfo.u_lower_3dlen, sinfo.u_upper_3dlen, 0.001)) {
+	sinfo.v_mid_3dlen   = _cdt_get_uv_edge_3d_len(&sinfo, 1, 1);
+	sinfo.v_upper_3dlen = _cdt_get_uv_edge_3d_len(&sinfo, 2, 1);
+	if (!NEAR_EQUAL(sinfo.u_lower_3dlen, sinfo.u_mid_3dlen, 0.001) ||
+		!NEAR_EQUAL(sinfo.u_upper_3dlen, sinfo.u_mid_3dlen, 0.001)
+		) {
+	    bu_log("face %d:\n", face.m_face_index);
 	    bu_log("u_lower_3dlen: %f\n",_cdt_get_uv_edge_3d_len(&sinfo, 0, 0));
-	    bu_log("u_upper_3dlen: %f\n",_cdt_get_uv_edge_3d_len(&sinfo, 1, 0));
+	    bu_log("u_mid_3dlen: %f\n",_cdt_get_uv_edge_3d_len(&sinfo, 1, 0));
+	    bu_log("u_upper_3dlen: %f\n",_cdt_get_uv_edge_3d_len(&sinfo, 2, 0));
+	    print_debug = 1;
 	}
-	if (!NEAR_EQUAL(sinfo.v_lower_3dlen, sinfo.v_upper_3dlen, 0.001)) {
+	if (!NEAR_EQUAL(sinfo.v_lower_3dlen, sinfo.v_mid_3dlen, 0.001) || 
+		!NEAR_EQUAL(sinfo.v_upper_3dlen, sinfo.v_mid_3dlen, 0.001)
+		) {
+	    bu_log("face %d:\n", face.m_face_index);
 	    bu_log("v_lower_3dlen: %f\n",_cdt_get_uv_edge_3d_len(&sinfo, 0, 1));
-	    bu_log("v_upper_3dlen: %f\n",_cdt_get_uv_edge_3d_len(&sinfo, 1, 1));
+	    bu_log("v_mid_3dlen: %f\n",_cdt_get_uv_edge_3d_len(&sinfo, 1, 1));
+	    bu_log("v_upper_3dlen: %f\n",_cdt_get_uv_edge_3d_len(&sinfo, 2, 1));
+	    print_debug = 1;
+	}
+	if (face.m_face_index == 294) {
+	    bu_log("starting face 294\n");
 	}
 
 	// may be a smaller trimmed subset of surface so worth getting
