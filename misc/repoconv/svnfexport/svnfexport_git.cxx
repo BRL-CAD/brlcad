@@ -189,6 +189,9 @@ std::string get_rev_sha1(std::string branch, long int rev)
     std::string hsha1 = line.substr(0, spos);
     if (hsha1.length()) {
 	rev_to_gsha1[std::pair<std::string,long int>(branch, rev)] = hsha1;
+    } else {
+	std::cerr << "get_rev_sha1: failed to get sha1 for branch " << branch << ", revision " << rev << "\n";
+	exit(1);
     }
     hfile.close();
     remove("sha1.txt");
@@ -217,6 +220,9 @@ void get_rev_sha1s(long int rev)
 	if (hsha1.length()) {
 	    rev_to_gsha1[std::pair<std::string,long int>(branch, rev)] = hsha1;
 	    //std::cout << branch << "," << rev << " -> " << rev_to_gsha1[std::pair<std::string,long int>(branch, rev)] << "\n";
+	} else {
+	    std::cerr << "get_rev_sha1s: failed to get sha1 for branch " << branch << ", revision " << rev << "\n";
+	    exit(1);
 	}
 	hfile.close();
 	remove("sha1.txt");
@@ -451,31 +457,32 @@ void apply_commit(struct svn_revision &rev, std::string &rbranch, int verify_rep
 
 	// concat individual pieces of primary commit file and apply
 	if (commit_fi_template.length()) {
-	    std::ofstream wfi_s(wfi_file, std::ios_base::binary);
+	    std::string catstr = std::string("cat");
+	    remove(wfi_file.c_str());
 
 	    if (blob_fi_file != std::string("")) {
-		std::ifstream bstream(blob_fi_file, std::ios_base::binary);
-		wfi_s << bstream.rdbuf();
-		bstream.close();
+		catstr = catstr + std::string(" ") + blob_fi_file;
 	    }
 
-	    std::ifstream cstream(commit_fi_file, std::ios_base::binary);
-	    wfi_s << cstream.rdbuf();
-	    cstream.close();
-	    // Clean up intermediate commit file
-	    remove(commit_fi_file.c_str());
+	    catstr = catstr + std::string(" ") + commit_fi_file;
 
 	    if (tree_fi_file != std::string("")) {
-		std::ifstream tstream(tree_fi_file, std::ios_base::binary);
-		wfi_s << tstream.rdbuf();
-		tstream.close();
+		catstr = catstr + std::string(" ") + tree_fi_file;
 	    }
 
-	    wfi_s.close(); 
+	    catstr = catstr + std::string(" > ") + wfi_file;
+
+	    if (std::system(catstr.c_str())) {
+		std::cerr << "Failed to create " << wfi_file << "\n";
+		exit(1);
+	    }
+
 	    // Apply the combined contents of the commit files
 	    apply_fi_file_working(wfi_file);
 	    get_rev_sha1(rbranch, rev.revision_number);
 
+	    // Clean up intermediate commit file
+	    remove(commit_fi_file.c_str());
 
 	    // Generate the note file
 	    nfi_file = note_svn_rev(rev, rbranch);
@@ -660,7 +667,7 @@ write_blob(std::ifstream &infile, std::ofstream &outfile, struct svn_node &node)
     delete[] buffer;
 }
 
-void write_commit_core(std::ofstream &outfile, std::string &rbranch, struct svn_revision &rev, const char *alt_cmsg, int nomerge, int mvedcommit)
+void write_commit_core(std::ofstream &outfile, std::string &rbranch, struct svn_revision &rev, const char *alt_cmsg, int nomerge, int mvedcommit, int branch_first)
 {
     outfile << "commit refs/heads/" << rbranch << "\n";
     outfile << "mark :" << rev.revision_number << "\n";
@@ -673,7 +680,7 @@ void write_commit_core(std::ofstream &outfile, std::string &rbranch, struct svn_
 	outfile << "data " << cmsg.length() << "\n";
 	outfile << cmsg << "\n";
     }
-    if (!mvedcommit) {
+    if (!mvedcommit && !branch_first) {
 	outfile << "from " << rev.revision_number-1 << "\n";
     } else {
 	outfile << "from " << rev.revision_number << "\n";
@@ -723,7 +730,7 @@ void move_only_commit(struct svn_revision &rev, std::string &rbranch)
     std::ofstream outfile(fi_file.c_str(), std::ios::out | std::ios::binary);
     std::string ncmsg = rev.commit_msg + std::string(" (preliminiary file move commit)");
 
-    write_commit_core(outfile, rbranch, rev, ncmsg.c_str(), 0, 0);
+    write_commit_core(outfile, rbranch, rev, ncmsg.c_str(), 0, 0, 0);
 
     for (size_t n = 0; n != rev.nodes.size(); n++) {
 	struct svn_node &node = rev.nodes[n];
@@ -908,7 +915,7 @@ void old_references_commit(std::ifstream &infile, struct svn_revision &rev, std:
     // Only make one if we don't alredy have a custom file
     if (stat(fi_file.c_str(), &buffer)) {
 	std::ofstream coutfile(cfi_file, std::ios::out | std::ios::binary);
-	write_commit_core(coutfile, rbranch, rev, NULL, 0, 0);
+	write_commit_core(coutfile, rbranch, rev, NULL, 0, 0, 0);
 	coutfile.close();
     }
 
@@ -954,7 +961,7 @@ void standard_commit(struct svn_revision &rev, std::string &rbranch, int mvedcom
 
 	std::ofstream coutfile(cfi_file, std::ios::out | std::ios::binary);
 
-	write_commit_core(coutfile, rbranch, rev, NULL, 0, mvedcommit);
+	write_commit_core(coutfile, rbranch, rev, NULL, 0, mvedcommit, 0);
 
 	coutfile.close();
     }
@@ -1018,7 +1025,6 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	//std::cout << "Revision " << rev.revision_number << " is not part of brlcad, skipping\n";
 	return;
     }
-
 
     // If we have a text content sha1, update the map
     // to the current path state
@@ -1121,14 +1127,14 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 		    boutfile << "reset " << nbranch << "\n";
 		    boutfile << "from " << bbpath << "," << rev.revision_number-1 << "\n";
 		    boutfile.close();
-		    all_git_branches.push_back(node.branch);
+		    all_git_branches.push_back(node.tag);
 
 		    // Make an empty commit on the new branch with the commit message from SVN, but no changes
 
 		    std::string cfi_file = std::to_string(rev.revision_number) + std::string("-commit.fi");
 		    std::ofstream coutfile(cfi_file, std::ios::out | std::ios::binary);
 
-		    write_commit_core(coutfile, node.branch, rev, NULL, 1, 0);
+		    write_commit_core(coutfile, node.tag, rev, NULL, 1, 0, 1);
 
 		    coutfile.close();
 
@@ -1201,7 +1207,7 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	    std::string cfi_file = std::to_string(rev.revision_number) + std::string("-commit.fi");
 	    std::ofstream coutfile(cfi_file, std::ios::out | std::ios::binary);
 
-	    write_commit_core(coutfile, node.branch, rev, NULL, 1, 0);
+	    write_commit_core(coutfile, node.branch, rev, NULL, 1, 0, 1);
 
 	    coutfile.close();
 
@@ -1278,7 +1284,7 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	    if (!file_exists(cfi_file)) {
 		std::ofstream coutfile(cfi_file, std::ios::out | std::ios::binary);
 
-		write_commit_core(coutfile, rbranch, rev, NULL, 1, 0);
+		write_commit_core(coutfile, rbranch, rev, NULL, 1, 0, 0);
 
 		coutfile.close();
 	    }
