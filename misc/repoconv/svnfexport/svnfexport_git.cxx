@@ -1037,7 +1037,21 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	    }
 	}
     }
-    std::string rbranch = rev.nodes[0].branch;
+
+    std::string rbranch = std::string("");
+    for (size_t n = 0; n != rev.nodes.size(); n++) {
+	struct svn_node &node = rev.nodes[n];
+	if (rbranch.length()) break;
+	rbranch = rev.nodes[0].branch;
+    }
+    if (!rbranch.length()) {
+	// If we don't have a branch, may be editing a tag.  (See, for example, r34555)
+	for (size_t n = 0; n != rev.nodes.size(); n++) {
+	    struct svn_node &node = rev.nodes[n];
+	    if (rbranch.length()) break;
+	    rbranch = rev.nodes[0].tag;
+	}
+    }
 
     // There are a variety of "skip this" cases - handle them
     if (rev.revision_number == 30760) {
