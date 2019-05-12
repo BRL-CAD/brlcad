@@ -136,8 +136,7 @@ void read_cached_rev_sha1s()
 void write_cached_rev_sha1s()
 {
     std::map<std::pair<std::string,long int>, std::string>::iterator r_it;
-    remove("rev_gsha1s.txt");
-    std::ofstream outfile("rev_gsha1s.txt", std::ios::out | std::ios::binary);
+    std::ofstream outfile("rev_gsha1s_tmp.txt", std::ios::out | std::ios::binary);
     if (!outfile.good()) exit(-1);
     for (r_it = rev_to_gsha1.begin(); r_it != rev_to_gsha1.end(); r_it++) {
 	std::string s1 = r_it->first.first;
@@ -150,6 +149,8 @@ void write_cached_rev_sha1s()
 	outfile << r_it->first.first << "," << r_it->first.second << "," << r_it->second << "\n";
     }
     outfile.close();
+    remove("rev_gsha1s.txt");
+    rename("rev_gsha1s_tmp.txt", "rev_gsha1s.txt");
 }
 
 
@@ -1138,6 +1139,9 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 
 		    coutfile.close();
 
+		    // Make sure rbranch knows what branch this is. (Hi r33127...)
+		    rbranch = node.tag;
+
 		    continue;
 		}
 		if (rev.revision_number == edited_tag_maxr) {
@@ -1210,6 +1214,9 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	    write_commit_core(coutfile, node.branch, rev, NULL, 1, 0, 1);
 
 	    coutfile.close();
+
+	    // Make sure rbranch knows what branch this is.
+	    rbranch = node.branch;
 
 	    continue;
 	}
