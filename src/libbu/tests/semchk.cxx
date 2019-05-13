@@ -38,6 +38,11 @@
  * numerically unique.
  */
 
+// TODO - if this is needed long term, we need to do as the env cmd builder
+// does and assemble (and figure out the definitions for everything in a
+// bu_semaphore_acquire call as well as just pattern matching the SEM
+// definitions themselves...
+
 #include "common.h"
 
 #include <stdlib.h> /* for strtol */
