@@ -1082,10 +1082,7 @@ number follows a common convention where the three numbers represent:
     {MAJOR_VERSION}.{MINOR_VERSION}.{PATCH_VERSION}
 
 All "development" builds use an odd number for the minor version.  All
-"release" builds use an even number for the minor version.  Patched
-versions should include a release count:
-
-    {MAJOR_VERSION}.{MINOR_VERSION}.{PATCH_VERSION}[-{RELEASE_COUNT}]
+"release" builds use an even number for the minor version.
 
 The MAJOR_VERSION should only increment when it is deemed that a
 significant amount of major changes have accumulated, new features
@@ -1107,9 +1104,13 @@ backwards incompatible in some manner should increment the patch
 version number.
 
 If it becomes necessary to update a posted release, use and increment
-the RELEASE_COUNT.  The first posted release is implicitly the "-0"
-release count (e.g., 7.10.2 is implicitly 7.10.2-0) with subsequent
-updated releases incrementing the count (e.g., 7.10.2-1).
+the ERRATA_COUNT format outlined below.  The first posted release is
+implicitly the "-0" release (e.g., 7.10.2 is implicitly 7.10.2-0) with
+subsequent updated releases incrementing the count (e.g., 7.10.2-1).
+See the "ISSUING AN ERRATA" section below for guidelines on when an
+errata update should be used in lieu of a new PATCH_VERSION release.
+
+    {MAJOR_VERSION}.{MINOR_VERSION}.{PATCH_VERSION}[-{ERRATA_COUNT}]
 
 
 NAMING A SOURCE RELEASE
@@ -1203,33 +1204,42 @@ necessary convention by a binary package management system.  Examples:
   zip
 
 
-PATCHING A RELEASE
-------------------
+ISSUING AN ERRATA UPDATE TO A RELEASE
+-------------------------------------
 
-Should it become necessary to patch a release that has already been
-posted and announced, the mechanism is to post patch files for the
-source release and update the uploaded release notes README file.
+There are occasionally situations that arise in the release process
+where immediately after the tagging and archive uploading a flaw is
+identified in the tagged release.  If the corrective change can be
+succinctly expressed as a small update to the source code, the 
+update is posted as a patch file for the source release and the
+uploaded release notes README file is adjusted to instruct users
+building from source code to first apply the patch file or files.
+
+It's expected that all errata patch files are independent and will be
+applied sequentially.  They should be consistently and incrementally
+numbered. Users should be instructed in the release notes README to
+download and apply all available patch files.
 
 Example: stop_rt_crashing-0.patch and fix_fbserv-1.patch
 
-It's expected that all patch files are independent and will be applied
-sequentially.  They should be consistently and incrementally numbered.
-Users should be instructed in the release notes README to download and
-apply all available patch files.
-
-For binary releases, it's recommended to just "move on" and let issues
-become resolved in the next release unless there's a critical security
-or significant data corruption issue involved.  If it becomes
-necessary to repost a release, use the RELEASE_COUNT file name
-convention described in VERSION NUMBERS & COMPATIBILITY.
+If it becomes necessary to repost a release, use the ERRATA_COUNT
+file name convention described in VERSION NUMBERS & COMPATIBILITY.
 
 Example:  BRL-CAD-7.12.2.dmg is superseded by BRL-CAD-7.12.2-1.dmg
 
-Patched binary releases may be moved to the hidden attic folder if
+For binary builds, it's recommended to just "move on" and let issues
+become resolved in the next release unless there's a critical security
+or significant data corruption issue involved.  If it is necessary to
+update the binary, the CMake variable BRLCAD_VERSION_ERRATA may be
+defined at configuration time to propagate the errata version number
+through the build.  BRLCAD_VERSION_ERRATA should be set to match the
+highest errata patch file number applied to the source tree.
+
+Older binary releases may be moved to the hidden attic folder if
 critical, though not necessary or recommended.  They are preserved for
 historic record and should never be deleted once announced.  Releases
-not yet been announced may be updated within two days of being posted
-without involving a patch.
+which have not yet been announced may be updated within two days of
+being posted without involving a errata update.
 
 
 MAKING A RELEASE
