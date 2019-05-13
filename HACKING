@@ -1104,13 +1104,13 @@ backwards incompatible in some manner should increment the patch
 version number.
 
 If it becomes necessary to update a posted release, use and increment
-the ERRATA_COUNT format outlined below.  The first posted release is
+the AMEND_COUNT format outlined below.  The first posted release is
 implicitly the "-0" release (e.g., 7.10.2 is implicitly 7.10.2-0) with
 subsequent updated releases incrementing the count (e.g., 7.10.2-1).
-See the "ISSUING AN ERRATA" section below for guidelines on when an
-errata update should be used in lieu of a new PATCH_VERSION release.
+See the "AMENDING A RELEASE" section below for guidelines on when a
+release should be amended in lieu of a new PATCH_VERSION release.
 
-    {MAJOR_VERSION}.{MINOR_VERSION}.{PATCH_VERSION}[-{ERRATA_COUNT}]
+    {MAJOR_VERSION}.{MINOR_VERSION}.{PATCH_VERSION}[-{AMEND_COUNT}]
 
 
 NAMING A SOURCE RELEASE
@@ -1204,42 +1204,35 @@ necessary convention by a binary package management system.  Examples:
   zip
 
 
-ISSUING AN ERRATA UPDATE TO A RELEASE
--------------------------------------
+AMENDING A RELEASE
+------------------
 
-There are occasionally situations that arise in the release process
-where immediately after the tagging and archive uploading a flaw is
-identified in the tagged release.  If the corrective change can be
-succinctly expressed as a small update to the source code, the 
-update is posted as a patch file for the source release and the
-uploaded release notes README file is adjusted to instruct users
-building from source code to first apply the patch file or files.
+Should it become necessary to modify a release after it has been
+tagged, uploaded, and announced, a release amendment may be issued.
+Releases that are neither tagged, uploaded, or announced are subject
+to at-will change and re-tagging.
 
-It's expected that all errata patch files are independent and will be
-applied sequentially.  They should be consistently and incrementally
-numbered. Users should be instructed in the release notes README to
-download and apply all available patch files.
+Amendments to source releases are expressed as a sequence of one or
+more patch files that are to be applied sequentially.  Patch files may
+be descriptively named but must be incrementally numbered.  The
+uploaded release notes and/or README file(s) should instruct users
+building from source to download and apply all available patch files
+in order.
 
 Example: stop_rt_crashing-0.patch and fix_fbserv-1.patch
 
-If it becomes necessary to repost a release, use the ERRATA_COUNT
-file name convention described in VERSION NUMBERS & COMPATIBILITY.
+For binary builds, it's recommended to just "move on" and let issues
+become resolved in the next release unless there's a critical security
+or data corruption issue involved.  That said, binary releases may be
+re-posted with a modified name per the convention described in VERSION
+NUMBERS & COMPATIBILITY.
 
 Example:  BRL-CAD-7.12.2.dmg is superseded by BRL-CAD-7.12.2-1.dmg
 
-For binary builds, it's recommended to just "move on" and let issues
-become resolved in the next release unless there's a critical security
-or significant data corruption issue involved.  If it is necessary to
-update the binary, the CMake variable BRLCAD_VERSION_ERRATA may be
-defined at configuration time to propagate the errata version number
-through the build.  BRLCAD_VERSION_ERRATA should be set to match the
-highest errata patch file number applied to the source tree.
-
-Older binary releases may be moved to the hidden attic folder if
-critical, though not necessary or recommended.  They are preserved for
-historic record and should never be deleted once announced.  Releases
-which have not yet been announced may be updated within two days of
-being posted without involving a errata update.
+Older binary releases may be moved to the hidden attic folder, though
+not necessary or recommended except where critical vulnerabilities are
+involved.  Releases are preserved for historic record and should never
+be deleted once announced.
 
 
 MAKING A RELEASE
@@ -1283,10 +1276,14 @@ Release steps are as follows:
 #####################################################################
 # 02: Test the merge.
 
+    # NON-AUTO: Confirm versioning in include/conf/.
+    # BRLCAD_VERSION_AMEND may be defined during CMake for an
+    # amendment build.
+
     mkdir -p .build && cd .build
     cmake .. -DBRLCAD_BUNDLED_LIBS=ON -DCMAKE_BUILD_TYPE=Release && make
 
-    # Manually check rt, mged, and archer.
+    # NON-AUTO: Manually check rt, mged, and archer.
     bin/rt        # should report usage with correct library versions
     bin/mged -c test.g "make sph sph ; draw sph ; rt"   # pops up a sphere
     bin/mged      # displays gui, run: opendb test.g ; draw sph ; rt
