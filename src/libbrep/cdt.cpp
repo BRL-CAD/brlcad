@@ -2372,8 +2372,9 @@ PerformClosedSurfaceChecks(
 
 
 struct ON_Brep_CDT_State *
-ON_Brep_CDT_Create(ON_Brep *brep)
+ON_Brep_CDT_Create(void *bv)
 {
+    ON_Brep *brep = (ON_Brep *)bv;
     struct ON_Brep_CDT_State *cdt = new struct ON_Brep_CDT_State;
     cdt->brep = brep;
 
@@ -2457,10 +2458,10 @@ ON_Brep_CDT_Status(struct ON_Brep_CDT_State *s_cdt)
 }
 
 
-ON_Brep *
+void *
 ON_Brep_CDT_Brep(struct ON_Brep_CDT_State *s_cdt)
 {
-    return s_cdt->brep;
+    return (void *)s_cdt->brep;
 }
 
 void
@@ -2689,7 +2690,7 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_State *s_cdt, std::map<const ON_Surface *, d
 }
 
 int
-ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, std::vector<int> *faces)
+ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces)
 {
 
     ON_wString wstr;
@@ -2829,7 +2830,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, std::vector<int> *faces)
     int face_failures = 0;
     int face_successes = 0;
 
-    if (!faces) {
+    if ((face_cnt == 0) || !faces) {
 
 	for (int face_index = 0; face_index < s_cdt->brep->m_F.Count(); face_index++) {
 	    ON_BrepFace &face = brep->m_F[face_index];
@@ -2842,9 +2843,9 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, std::vector<int> *faces)
 
 	}
     } else {
-	for (unsigned int i = 0; i < faces->size(); i++) {
-	    if ((*faces)[i] < s_cdt->brep->m_F.Count()) {
-		ON_BrepFace &face = brep->m_F[(*faces)[i]];
+	for (int i = 0; i < face_cnt; i++) {
+	    if (faces[i] < s_cdt->brep->m_F.Count()) {
+		ON_BrepFace &face = brep->m_F[faces[i]];
 		if (ON_Brep_CDT_Face(s_cdt, &s_to_maxdist, face)) {
 		    face_failures++;
 		} else {

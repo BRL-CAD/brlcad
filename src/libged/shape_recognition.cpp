@@ -966,9 +966,9 @@ _ged_brep_to_bot(struct ged *gedp, const struct rt_brep_internal *bi, const char
     cdttol.rel = ttol->rel;
     cdttol.norm = ttol->norm;
     cdttol.dist = tol->dist;
-    ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create(bi->brep);
+    ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create((void *)bi->brep);
     ON_Brep_CDT_Tol_Set(s_cdt, &cdttol);
-    ON_Brep_CDT_Tessellate(s_cdt, NULL);
+    ON_Brep_CDT_Tessellate(s_cdt, 0, NULL);
     ON_Brep_CDT_Mesh(&faces, &fcnt, &vertices, &vcnt, &face_normals, &fncnt, &normals, &ncnt, s_cdt);
     ON_Brep_CDT_Destroy(s_cdt);
 

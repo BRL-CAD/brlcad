@@ -3129,47 +3129,56 @@ brep_command(struct bu_vls *vls, const char *solid_name, struct rt_wdb *UNUSED(w
 		snprintf(commtag, 64, "_BC_FCDTN_");
 		struct bu_color c;
 		bu_color_from_str(&c, "255/255/0");
-		std::vector<int> faces;
+		int face_cnt = 0;
+		int *faces = (int *)bu_calloc(elements.size()+1, sizeof(int), "face array");
 		std::set<int>::iterator f_it;
 		for (f_it = elements.begin(); f_it != elements.end(); f_it++) {
-		    faces.push_back(*f_it);
+		    faces[face_cnt] = *f_it;
+		    face_cnt++;
 		}
-		ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create(bs->brep);
-		ON_Brep_CDT_Tessellate(s_cdt, &faces);
+		ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create((void *)bs->brep);
+		ON_Brep_CDT_Tessellate(s_cdt, face_cnt, faces);
 		ON_Brep_CDT_VList(vbp, &RTG.rtg_vlfree, &c, 0, s_cdt);
 		ON_Brep_CDT_Destroy(s_cdt);
+		bu_free(faces, "free face array");
 	    } else if (BU_STR_EQUAL(part, "FCDTNw")) {
 		snprintf(commtag, 64, "_BC_FCDT_");
 		struct bu_color c;
 		bu_color_from_str(&c, "255/255/0");
-		std::vector<int> faces;
+		int face_cnt = 0;
+		int *faces = (int *)bu_calloc(elements.size()+1, sizeof(int), "face array");
 		std::set<int>::iterator f_it;
 		for (f_it = elements.begin(); f_it != elements.end(); f_it++) {
-		    faces.push_back(*f_it);
+		    faces[face_cnt] = *f_it;
+		    face_cnt++;
 		}
-		ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create(bs->brep);
-		ON_Brep_CDT_Tessellate(s_cdt, &faces);
+		ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create((void *)bs->brep);
+		ON_Brep_CDT_Tessellate(s_cdt, face_cnt, faces);
 		ON_Brep_CDT_VList(vbp, &RTG.rtg_vlfree, &c, 1, s_cdt);
 		ON_Brep_CDT_Destroy(s_cdt);
+		bu_free(faces, "free face array");
 	    } else if (BU_STR_EQUAL(part, "FCDTN2d")) {
 		snprintf(commtag, 64, "_BC_FCDT_");
 		struct bu_color c;
 		bu_color_from_str(&c, "255/255/0");
-		std::vector<int> faces;
+		int face_cnt = 0;
+		int *faces = (int *)bu_calloc(elements.size()+1, sizeof(int), "face array");
 		std::set<int>::iterator f_it;
 		for (f_it = elements.begin(); f_it != elements.end(); f_it++) {
-		    faces.push_back(*f_it);
+		    faces[face_cnt] = *f_it;
+		    face_cnt++;
 		}
-		ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create(bs->brep);
-		ON_Brep_CDT_Tessellate(s_cdt, &faces);
+		ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create((void *)bs->brep);
+		ON_Brep_CDT_Tessellate(s_cdt, face_cnt, faces);
 		ON_Brep_CDT_VList(vbp, &RTG.rtg_vlfree, &c, 2, s_cdt);
 		ON_Brep_CDT_Destroy(s_cdt);
+		bu_free(faces, "free face array");
 	    } else if (BU_STR_EQUAL(part, "CDT")) {
 		snprintf(commtag, 64, "_BC_CDT_");
 		struct bu_color c;
 		bu_color_from_str(&c, "255/255/0");
-		ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create(bs->brep);
-		ON_Brep_CDT_Tessellate(s_cdt, NULL);
+		ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create((void *)bs->brep);
+		ON_Brep_CDT_Tessellate(s_cdt, 0, NULL);
 		ON_Brep_CDT_VList(vbp, &RTG.rtg_vlfree, &c, 0, s_cdt);
 		ON_Brep_CDT_Destroy(s_cdt);
 	    } else if (BU_STR_EQUAL(part, "FCDTw")) {

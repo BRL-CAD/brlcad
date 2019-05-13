@@ -2655,9 +2655,9 @@ rt_brep_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     cdttol.rel = ttol->rel;
     cdttol.norm = ttol->norm;
     cdttol.dist = tol->dist;
-    ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create(bi->brep);
+    ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create((void *)bi->brep);
     ON_Brep_CDT_Tol_Set(s_cdt, &cdttol);
-    if (ON_Brep_CDT_Tessellate(s_cdt, NULL)) {
+    if (ON_Brep_CDT_Tessellate(s_cdt, 0, NULL)) {
 	// Couldn't get a solid mesh, we're done
 	ON_Brep_CDT_Destroy(s_cdt);
 	return -1;
