@@ -96,6 +96,9 @@ file(READ "${BRLCAD_SOURCE_DIR}/include/conf/PATCH" BRLCAD_VERSION_PATCH)
 string(STRIP ${BRLCAD_VERSION_PATCH} BRLCAD_VERSION_PATCH)
 
 set(BRLCAD_VERSION "${BRLCAD_VERSION_MAJOR}.${BRLCAD_VERSION_MINOR}.${BRLCAD_VERSION_PATCH}")
+if(DEFINED BRLCAD_VERSION_AMEND)
+  set(BRLCAD_VERSION "${BRLCAD_VERSION}-${BRLCAD_VERSION_AMEND}")
+endif(DEFINED BRLCAD_VERSION_AMEND)
 
 #---------------------------------------------------------------------
 # Let CMake know where to look for our counting file for configuration
@@ -939,6 +942,11 @@ CONFIG_H_APPEND(BRLCAD "#define BRLCAD_INCLUDE_DIR \"${INCLUDE_DIR}\"\n")
 CONFIG_H_APPEND(BRLCAD "#define BRLCAD_DATA_DIR \"${DATA_DIR}\"\n")
 CONFIG_H_APPEND(BRLCAD "#define BRLCAD_DOC_DIR \"${DOC_DIR}\"\n")
 CONFIG_H_APPEND(BRLCAD "#define BRLCAD_MAN_DIR \"${MAN_DIR}\"\n")
+
+# Define the ammendment count if we have one
+if(DEFINED BRLCAD_VERSION_AMEND)
+  CONFIG_H_APPEND(BRLCAD "#define BRLCAD_VERSION_AMEND ${BRLCAD_VERSION_AMEND}\n")
+endif(DEFINED BRLCAD_VERSION_AMEND)
 
 #----------------------------------------------------------------------
 # If we're not debugging, we want HIDDEN to be defined as static.  Set
@@ -3347,9 +3355,14 @@ if(NOT BRLCAD_IS_SUBBUILD)
     set(CPACK_RPM_SPEC_INSTALL_POST /bin/true)
 
     if(CPACK_RPM_VERSION)
-      set(CPACK_RPM_PACKAGE_NAME "brlcad_${BRLCAD_VERSION_MAJOR}_${BRLCAD_VERSION_MINOR}_${BRLCAD_VERSION_PATCH}")
-      # If we've got a Redhat release, include some info about the specific release in the name.
-      # Otherwise, just go generic.
+      if(DEFINED BRLCAD_VERSION_AMEND)
+	set(CPACK_RPM_PACKAGE_NAME "brlcad_${BRLCAD_VERSION_MAJOR}_${BRLCAD_VERSION_MINOR}_${BRLCAD_VERSION_PATCH}_${BRLCAD_VERSION_AMEND}")
+      else(DEFINED BRLCAD_VERSION_AMEND)
+	set(CPACK_RPM_PACKAGE_NAME "brlcad_${BRLCAD_VERSION_MAJOR}_${BRLCAD_VERSION_MINOR}_${BRLCAD_VERSION_PATCH}")
+      endif(DEFINED BRLCAD_VERSION_AMEND)
+
+      # If we've got a Redhat release, include some info about the
+      # specific release in the name.  Otherwise, just go generic.
       if(EXISTS /etc/redhat-release)
 	file(READ /etc/redhat-release REDHAT_RELEASE)
 	string(REGEX MATCH "[0-9]+" REDHAT_VERSION ${REDHAT_RELEASE})
@@ -3363,6 +3376,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
       else(EXISTS /etc/redhat-release)
 	set(CPACK_RPM_PACKAGE_RELEASE ${CPACK_RPM_VERSION})
       endif(EXISTS /etc/redhat-release)
+
     endif(CPACK_RPM_VERSION)
   endif(RPMBUILD_EXEC AND NOT CPACK_RPM_SKIP)
 
