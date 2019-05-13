@@ -38,16 +38,6 @@
 #include "bu/app.h"
 #include "bu/parallel.h"
 
-
-int BU_SEM_GENERAL;
-int BU_SEM_SYSCALL;
-int BU_SEM_BN_NOISE;
-int BU_SEM_MAPPEDFILE;
-int BU_SEM_THREAD;
-int BU_SEM_MALLOC;
-int BU_SEM_DATETIME;
-int BU_SEM_DIR;
-
 /* The Visual C compiler pragmas needed for INITIALIZE specify a "read"
  * attribute, which is conflicting with the system definition of read:
  *
@@ -62,16 +52,6 @@ int BU_SEM_DIR;
 INITIALIZE(libbu)
 {
     char iwd[MAXPATHLEN] = {0};
-
-    BU_SEMAPHORE_DEFINE(BU_SEM_GENERAL);
-    BU_SEMAPHORE_DEFINE(BU_SEM_SYSCALL);
-    BU_SEMAPHORE_DEFINE(BU_SEM_BN_NOISE);
-    BU_SEMAPHORE_DEFINE(BU_SEM_MAPPEDFILE);
-    BU_SEMAPHORE_DEFINE(BU_SEM_THREAD);
-    BU_SEMAPHORE_DEFINE(BU_SEM_MALLOC);
-    BU_SEMAPHORE_DEFINE(BU_SEM_DATETIME);
-    BU_SEMAPHORE_DEFINE(BU_SEM_DIR);
-
     bu_getiwd(iwd, MAXPATHLEN);
 }
 

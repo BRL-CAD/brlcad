@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "bu/parallel.h"
 #include "ged.h"
 
 #include "../ged_private.h"
@@ -40,9 +41,9 @@ gaps(const struct xray* ray, const struct partition *pp, double gap_dist, point_
 {
     struct gap_context *context = (struct gap_context*) callback_data;
     /* we only want to report unique pairs */
-    bu_semaphore_acquire(BU_SEM_GENERAL);
+    bu_semaphore_acquire(GED_SEM_LIST);
     add_to_list(context->gapList, pp->pt_regionp->reg_name, pp->pt_back->pt_regionp->reg_name, gap_dist, pt);
-    bu_semaphore_release(BU_SEM_GENERAL);
+    bu_semaphore_release(GED_SEM_LIST);
 
     /* let's plot */
     if (context->plot_gaps) {

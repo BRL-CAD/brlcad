@@ -43,8 +43,6 @@
 extern int posix_memalign(void **, size_t, size_t);
 #endif
 
-extern int BU_SEM_MALLOC;
-
 
 /**
  * this controls whether to semaphore protect malloc calls

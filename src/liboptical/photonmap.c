@@ -1079,15 +1079,11 @@ Irradiance(int pid, struct Photon *P, struct application *ap)
 void
 BuildIrradianceCache(int pid, struct PNode *Node, struct application *ap)
 {
-    static int sem_photonmap = 0;
-    if (!sem_photonmap)
-	sem_photonmap = bu_semaphore_register("sem_photonmap");
-
     if (!Node)
 	return;
 
     /* Determine if this pt will be used by calculating a weight */
-    bu_semaphore_acquire(sem_photonmap);
+    bu_semaphore_acquire(RT_SEM_PM);
     if (!Node->C) {
 	ICSize++;
 	Node->C++;
@@ -1095,10 +1091,10 @@ BuildIrradianceCache(int pid, struct PNode *Node, struct application *ap)
 	if (!(ICSize%(PMap[PM_GLOBAL]->MaxPhotons/8)))
 	    bu_log("    Irradiance Cache Progress: %d%%\n", (int)(0.5+100.0*ICSize/PMap[PM_GLOBAL]->MaxPhotons));
 #endif
-	bu_semaphore_release(sem_photonmap);
+	bu_semaphore_release(RT_SEM_PM);
 	Irradiance(pid, &Node->P, ap);
     } else {
-	bu_semaphore_release(sem_photonmap);
+	bu_semaphore_release(RT_SEM_PM);
     }
 
     BuildIrradianceCache(pid, Node->L, ap);

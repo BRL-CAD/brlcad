@@ -58,38 +58,11 @@
 struct db_i *
 db_open(const char *name, const char *mode)
 {
-    static int sem_uses = 0;
-    extern int RT_SEM_WORKER;
-    extern int RT_SEM_RESULTS;
-    extern int RT_SEM_MODEL;
-    extern int RT_SEM_TREE0;
-    extern int RT_SEM_TREE1;
-    extern int RT_SEM_TREE2;
-    extern int RT_SEM_TREE3;
     register struct db_i *dbip = DBI_NULL;
     register int i;
     char **argv;
 
-    if (!sem_uses)
-	sem_uses = bu_semaphore_register("LIBRT_SEM_USES");
-
-    if (!RT_SEM_WORKER)
-	RT_SEM_WORKER = bu_semaphore_register("RT_SEM_WORKER");
-    if (!RT_SEM_RESULTS)
-	RT_SEM_RESULTS = bu_semaphore_register("RT_SEM_RESULTS");
-    if (!RT_SEM_MODEL)
-	RT_SEM_MODEL = bu_semaphore_register("RT_SEM_MODEL");
-    if (!RT_SEM_TREE0)
-	RT_SEM_TREE0 = bu_semaphore_register("RT_SEM_TREE0");
-    if (!RT_SEM_TREE1)
-	RT_SEM_TREE1 = bu_semaphore_register("RT_SEM_TREE1");
-    if (!RT_SEM_TREE2)
-	RT_SEM_TREE2 = bu_semaphore_register("RT_SEM_TREE2");
-    if (!RT_SEM_TREE3)
-	RT_SEM_TREE3 = bu_semaphore_register("RT_SEM_TREE3");
-
-    if (name == NULL)
-	return DBI_NULL;
+    if (name == NULL) return DBI_NULL;
 
     if (RT_G_DEBUG & DEBUG_DB) {
 	bu_log("db_open(%s, %s)\n", name, mode);
@@ -112,9 +85,9 @@ db_open(const char *name, const char *mode)
 	if (mfp->apbuf) {
 	    dbip = (struct db_i *)mfp->apbuf;
 	    RT_CK_DBI(dbip);
-	    bu_semaphore_acquire(sem_uses);
+	    bu_semaphore_acquire(BU_SEM_LISTS);
 	    dbip->dbi_uses++;
-	    bu_semaphore_release(sem_uses);
+	    bu_semaphore_release(BU_SEM_LISTS);
 
 	    /*
 	     * decrement the mapped file reference counter by 1,
@@ -313,9 +286,6 @@ db_close(register struct db_i *dbip)
 {
     register int i;
     register struct directory *dp, *nextdp;
-    static int sem_uses = 0;
-    if (!sem_uses)
-	sem_uses = bu_semaphore_register("LIBRT_SEM_USES");
 
     if (!dbip)
 	return;
@@ -324,13 +294,13 @@ db_close(register struct db_i *dbip)
     if (RT_G_DEBUG&DEBUG_DB) bu_log("db_close(%s) %p uses=%d\n",
 				    dbip->dbi_filename, (void *)dbip, dbip->dbi_uses);
 
-    bu_semaphore_acquire(sem_uses);
+    bu_semaphore_acquire(BU_SEM_LISTS);
     if ((--dbip->dbi_uses) > 0) {
-	bu_semaphore_release(sem_uses);
+	bu_semaphore_release(BU_SEM_LISTS);
 	/* others are still using this database */
 	return;
     }
-    bu_semaphore_release(sem_uses);
+    bu_semaphore_release(BU_SEM_LISTS);
 
     /* ready to free the database -- use count is now zero */
 
@@ -440,15 +410,11 @@ db_dump(struct rt_wdb *wdbp, struct db_i *dbip)
 struct db_i *
 db_clone_dbi(struct db_i *dbip, long int *client)
 {
-    static int sem_uses = 0;
-    if (!sem_uses)
-	sem_uses = bu_semaphore_register("LIBRT_SEM_USES");
-
     RT_CK_DBI(dbip);
 
-    bu_semaphore_acquire(sem_uses);
+    bu_semaphore_acquire(BU_SEM_LISTS);
     dbip->dbi_uses++;
-    bu_semaphore_release(sem_uses);
+    bu_semaphore_release(BU_SEM_LISTS);
     if (client) {
 	bu_ptbl_ins_unique(&dbip->dbi_clients, client);
     }

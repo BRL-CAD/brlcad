@@ -26,7 +26,6 @@
 #include "bu/malloc.h"
 #include "bu/parallel.h"
 
-
 struct bu_list *
 bu_list_new(void)
 {
@@ -87,6 +86,31 @@ bu_list_free(struct bu_list *hd)
     }
 }
 
+void
+bu_list_parallel_append(struct bu_list *headp, struct bu_list *itemp)
+{
+    bu_semaphore_acquire(BU_SEM_LISTS);
+    BU_LIST_INSERT(headp, itemp);		/* insert before head = append */
+    bu_semaphore_release(BU_SEM_LISTS);
+}
+
+struct bu_list *
+bu_list_parallel_dequeue(struct bu_list *headp)
+{
+    for (;;) {
+	register struct bu_list *p;
+
+	bu_semaphore_acquire(BU_SEM_LISTS);
+	p = BU_LIST_FIRST(bu_list, headp);
+	if (BU_LIST_NOT_HEAD(p, headp)) {
+	    BU_LIST_DEQUEUE(p);
+	    bu_semaphore_release(BU_SEM_LISTS);
+	    return p;
+	}
+	bu_semaphore_release(BU_SEM_LISTS);
+    }
+    /* NOTREACHED */
+}
 
 void
 bu_ck_list(const struct bu_list *hd, const char *str)

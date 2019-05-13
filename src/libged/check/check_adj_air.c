@@ -39,9 +39,9 @@ HIDDEN void
 adj_air(const struct xray* ray, const struct partition *pp, point_t pt, void* callback_data)
 {
     struct adj_air_context *context = (struct adj_air_context*) callback_data;
-    bu_semaphore_acquire(BU_SEM_GENERAL);
+    bu_semaphore_acquire(GED_SEM_LIST);
     add_to_list(context->adjAirList, pp->pt_back->pt_regionp->reg_name, pp->pt_regionp->reg_name, 0.0, pt);
-    bu_semaphore_release(BU_SEM_GENERAL);
+    bu_semaphore_release(GED_SEM_LIST);
 
     if (context->plot_adjair) {
 	double d = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;

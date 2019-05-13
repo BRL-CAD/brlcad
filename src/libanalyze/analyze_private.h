@@ -100,14 +100,10 @@ struct current_state {
     int v_axis;    	/* is being used for the U, V, or invariant vector direction */
     int i_axis;
 
-    int sem_worker;
-
-    /* sem_worker protects this */
+    /* ANALYZE_SEM_WORKER protects this */
     int v;         	/* indicates how many "grid_size" steps in the v direction have been taken */
 
-    int sem_stats;
-
-    /* sem_stats protects this */
+    /* ANALYZE_SEM_STATS protects this */
     double *m_lenDensity;
     double *m_len;
     unsigned long *shots;

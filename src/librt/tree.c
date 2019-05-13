@@ -420,9 +420,9 @@ _rt_find_identical_solid(const matp_t mat, struct directory *dp, struct rt_i *rt
     /* Enter an exclusive critical section to protect nsolids.
      * nsolids++ needs to be locked to a SINGLE thread
      */
-    bu_semaphore_acquire(BU_SEM_GENERAL);
+    bu_semaphore_acquire(RT_SEM_STATS);
     stp->st_bit = rtip->nsolids++;
-    bu_semaphore_release(BU_SEM_GENERAL);
+    bu_semaphore_release(RT_SEM_STATS);
 
     /*
      * Fill in the last little bit of the structure in full parallel

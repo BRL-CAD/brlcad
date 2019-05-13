@@ -85,7 +85,6 @@ static struct bu_semaphores bu_semaphores[SEMAPHORE_MAX] = {{0, SEMAPHORE_INIT}}
 #endif
 
 
-
 void
 bu_semaphore_init(unsigned int nsemaphores)
 {

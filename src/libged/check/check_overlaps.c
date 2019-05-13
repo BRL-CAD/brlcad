@@ -52,8 +52,6 @@ struct overlaps_context {
     FILE *plot_overlaps;
     int overlap_color[3];
     struct ged_check_plot *overlaps_overlay_plot;
-    int sem_stats;
-    int sem_lists;
 };
 
 
@@ -65,9 +63,9 @@ check_log_overlaps(const char *reg1, const char *reg2, double depth, vect_t ihit
     struct overlap_list *new_op;
     struct overlap_list *op;
 
-    bu_semaphore_acquire(callbackdata->sem_stats);
+    bu_semaphore_acquire(BU_SEM_SYSCALL);
     callbackdata->noverlaps++;
-    bu_semaphore_release(callbackdata->sem_stats);
+    bu_semaphore_release(BU_SEM_SYSCALL);
 
     if (!callbackdata->rpt_overlap_flag) {
 	bu_vls_printf(_ged_current_gedp->ged_result_str,
@@ -83,13 +81,13 @@ check_log_overlaps(const char *reg1, const char *reg2, double depth, vect_t ihit
 	 */
     } else {
 	BU_GET(new_op, struct overlap_list);
-	bu_semaphore_acquire(callbackdata->sem_stats);
+	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	for (BU_LIST_FOR(op, overlap_list, &(olist->l))) {
 	    if ((BU_STR_EQUAL(reg1, op->reg1)) && (BU_STR_EQUAL(reg2, op->reg2))) {
 		op->count++;
 		if (depth > op->maxdepth)
 		    op->maxdepth = depth;
-		bu_semaphore_release(callbackdata->sem_stats);
+		bu_semaphore_release(BU_SEM_SYSCALL);
 		bu_free((char *) new_op, "overlap list");
 		return;
 	    }
@@ -113,7 +111,7 @@ check_log_overlaps(const char *reg1, const char *reg2, double depth, vect_t ihit
 	new_op->maxdepth = depth;
 	new_op->count = 1;
 	BU_LIST_INSERT(&(olist->l), &(new_op->l));
-	bu_semaphore_release(callbackdata->sem_stats);
+	bu_semaphore_release(BU_SEM_SYSCALL);
     }
 }
 
@@ -254,19 +252,21 @@ overlap(const struct xray *ray,
     VJOIN1(ohit, ray->r_pt, ohitp->hit_dist, ray->r_dir);
 
     if (context->overlaps_overlay_flag) {
-	bu_semaphore_acquire(context->sem_stats);
+	bu_semaphore_acquire(GED_SEM_WORKER);
 	BN_ADD_VLIST(context->overlaps_overlay_plot->vbp->free_vlist_hd, context->overlaps_overlay_plot->vhead, ihit, BN_VLIST_LINE_MOVE);
 	BN_ADD_VLIST(context->overlaps_overlay_plot->vbp->free_vlist_hd, context->overlaps_overlay_plot->vhead, ohit, BN_VLIST_LINE_DRAW);
-	bu_semaphore_release(context->sem_stats);
+	bu_semaphore_release(GED_SEM_WORKER);
     }
 
-    bu_semaphore_acquire(context->sem_lists);
+    bu_semaphore_acquire(GED_SEM_LIST);
     check_log_overlaps(reg1->reg_name, reg2->reg_name, depth, ihit, ohit, context);
-    bu_semaphore_release(context->sem_lists);
+    bu_semaphore_release(GED_SEM_LIST);
 
     if (context->plot_overlaps) {
+	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	pl_color(context->plot_overlaps, V3ARGS(context->overlap_color));
 	pdv_3line(context->plot_overlaps, ihit, ohit);
+	bu_semaphore_release(BU_SEM_SYSCALL);
     }
 }
 
@@ -314,8 +314,6 @@ int check_overlaps(struct current_state *state,
     callbackdata.overlapList = &overlapList;
     callbackdata.overlaps_overlay_flag = options->overlaps_overlay_flag;
     callbackdata.overlaps_overlay_plot = &check_plot;
-    callbackdata.sem_stats = bu_semaphore_register("check_stats");
-    callbackdata.sem_lists = bu_semaphore_register("check_lists");
 
     /* register callback */
     analyze_register_overlaps_callback(state, overlap, &callbackdata);

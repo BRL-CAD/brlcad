@@ -50,15 +50,6 @@ extern void rt_ck(struct rt_i *rtip);
 HIDDEN void rt_solid_bitfinder(register union tree *treep, struct region *regp, struct resource *resp);
 
 
-int RT_SEM_WORKER = 0;
-int RT_SEM_RESULTS = 0;
-int RT_SEM_MODEL = 0;
-int RT_SEM_TREE0 = 0;
-int RT_SEM_TREE1 = 0;
-int RT_SEM_TREE2 = 0;
-int RT_SEM_TREE3 = 0;
-
-
 /* XXX Need rt_init_rtg(), rt_clean_rtg() */
 
 /**
@@ -833,21 +824,6 @@ rt_init_resource(struct resource *resp, int cpu_num, struct rt_i *rtip)
 
     BU_ASSERT(cpu_num >= 0);
     BU_ASSERT(cpu_num < MAX_PSW);
-
-    if (!RT_SEM_WORKER)
-	RT_SEM_WORKER = bu_semaphore_register("RT_SEM_WORKER");
-    if (!RT_SEM_RESULTS)
-	RT_SEM_RESULTS = bu_semaphore_register("RT_SEM_RESULTS");
-    if (!RT_SEM_MODEL)
-	RT_SEM_MODEL = bu_semaphore_register("RT_SEM_MODEL");
-    if (!RT_SEM_TREE0)
-	RT_SEM_TREE0 = bu_semaphore_register("RT_SEM_TREE0");
-    if (!RT_SEM_TREE1)
-	RT_SEM_TREE1 = bu_semaphore_register("RT_SEM_TREE1");
-    if (!RT_SEM_TREE2)
-	RT_SEM_TREE2 = bu_semaphore_register("RT_SEM_TREE2");
-    if (!RT_SEM_TREE3)
-	RT_SEM_TREE3 = bu_semaphore_register("RT_SEM_TREE3");
 
     if (rtip)
 	RT_CK_RTI(rtip);

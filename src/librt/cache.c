@@ -71,12 +71,11 @@ struct rt_cache_entry {
 struct rt_cache {
     char dir[MAXPATHLEN];
     int read_only;
-    int semaphore;
     int (*log)(const char *format, ...);
     int (*debug)(const char *format, ...);
     struct bu_hash_tbl *entry_hash;
 };
-#define CACHE_INIT {{0}, 0, 0, bu_log, NULL, NULL}
+#define CACHE_INIT {{0}, 0, bu_log, NULL, NULL}
 
 
 HIDDEN void
@@ -331,8 +330,6 @@ cache_init(struct rt_cache *cache)
     /* initialize database instance pointer storage */
     cache->entry_hash = bu_hash_create(1024);
 
-    cache->semaphore = bu_semaphore_register("SEM_CACHE");
-
     return 1;
 }
 
@@ -410,17 +407,17 @@ cache_read_entry(const struct rt_cache *cache, const char *name)
     if (!cache || !name)
 	return NULL;
 
-    bu_semaphore_acquire(cache->semaphore);
+    bu_semaphore_acquire(RT_SEM_CACHE);
 
     e = (struct rt_cache_entry *)bu_hash_get(cache->entry_hash, (const uint8_t *)name, strlen(name));
     if (e) {
-	bu_semaphore_release(cache->semaphore);
+	bu_semaphore_release(RT_SEM_CACHE);
 	return e;
     }
 
     cache_get_objfile(cache, name, path, MAXPATHLEN);
     if (!bu_file_exists(path, NULL)) {
-	bu_semaphore_release(cache->semaphore);
+	bu_semaphore_release(RT_SEM_CACHE);
 	return NULL;
     }
 
@@ -439,13 +436,13 @@ cache_read_entry(const struct rt_cache *cache, const char *name)
 	}
 	BU_PUT(e->ext, struct bu_external);
 	BU_PUT(e, struct rt_cache);
-	bu_semaphore_release(cache->semaphore);
+	bu_semaphore_release(RT_SEM_CACHE);
 	return NULL;
     }
     e->ext->ext_buf = (uint8_t *)(e->mfp->buf);
     bu_hash_set(cache->entry_hash, (const uint8_t *)name, strlen(name), e);
 
-    bu_semaphore_release(cache->semaphore);
+    bu_semaphore_release(RT_SEM_CACHE);
 
     return e;
 }

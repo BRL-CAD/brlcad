@@ -37,6 +37,8 @@
 
 
 /* workers acquire semaphore number 0 on smp machines */
+#define P2G_WORKER RT_SEM_LAST
+#define P2G_INIT_COUNT P2G_WORKER+1
 #define MAXSIZE 256
 int done=0;
 int ncpu=1;
@@ -84,10 +86,10 @@ void computeScanline(int UNUSED(pid), void *UNUSED(arg)) {
 	struct wmember scanlineList;
 	BU_LIST_INIT(&scanlineList.l);
 
-	bu_semaphore_acquire(BU_SEM_GENERAL);
+	bu_semaphore_acquire(P2G_WORKER);
 	i=nextAvailableRow;
 	nextAvailableRow++;
-	bu_semaphore_release(BU_SEM_GENERAL);
+	bu_semaphore_release(P2G_WORKER);
 
 	if (i >= height) {
 	    break;
@@ -123,9 +125,9 @@ void computeScanline(int UNUSED(pid), void *UNUSED(arg)) {
 	     * of the regions will use it.
 	     ***
 	     sprintf(solidName, "%dx%d.s", i+1, j+1);
-	     bu_semaphore_acquire(BU_SEM_GENERAL);
+	     bu_semaphore_acquire(P2G_WORKER);
 	     mk_sph(db_fp, solidName, p1, objectSize/2.0);
-	     bu_semaphore_release(BU_SEM_GENERAL);
+	     bu_semaphore_release(P2G_WORKER);
 	    */
 
 	    /* make the region */
@@ -143,18 +145,18 @@ void computeScanline(int UNUSED(pid), void *UNUSED(arg)) {
 	    MAT_IDN(matrix);
 	    MAT_DELTAS(matrix, p1[0], p1[1], 0.0);
 
-	    bu_semaphore_acquire(BU_SEM_GENERAL);
+	    bu_semaphore_acquire(P2G_WORKER);
 	    mk_lcomb(db_fp, scratch, &wm_hd, is_region, NULL, NULL, rgb, 0);
-	    bu_semaphore_release(BU_SEM_GENERAL);
+	    bu_semaphore_release(P2G_WORKER);
 
 	    mk_addmember(scratch, &scanlineList.l, matrix, WMOP_UNION);
 	}
 
 	/* write out a combination for each scanline */
 	sprintf(scratch, "%d.c", i+1);
-	bu_semaphore_acquire(BU_SEM_GENERAL);
+	bu_semaphore_acquire(P2G_WORKER);
 	mk_lcomb(db_fp, scratch, &scanlineList, 0, NULL, NULL, NULL, 0);
-	bu_semaphore_release(BU_SEM_GENERAL);
+	bu_semaphore_release(P2G_WORKER);
 
 	/* all threads keep track of the scan line (in case they get to the end first */
 	sprintf(scratch, "%d.c", i+1);

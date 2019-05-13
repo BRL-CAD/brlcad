@@ -552,7 +552,7 @@ brep_build_bvh_surface_tree(int cpu, void *data)
 	index = -1;
 
 	/* figure out which face to work on next */
-	bu_semaphore_acquire(BU_SEM_GENERAL);
+	bu_semaphore_acquire(BU_SEM_LISTS);
 	for (size_t i = 0; i < faceCount; i++) {
 	    if (bbbp->faces[i] == NULL) {
 		index = i;
@@ -560,7 +560,7 @@ brep_build_bvh_surface_tree(int cpu, void *data)
 		break;
 	    }
 	}
-	bu_semaphore_release(BU_SEM_GENERAL);
+	bu_semaphore_release(BU_SEM_LISTS);
 
 	if (index != -1) {
 	    /* bu_log("thread %d: preparing face %d of %d\n", cpu, index+1, faceCount); */

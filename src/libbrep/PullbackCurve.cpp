@@ -258,8 +258,7 @@ surface_GetBoundingBox(
     int p = bu_parallel_id();
 
     if (!locals_initialized[p]) {
-	static int sem_pullback_init = bu_semaphore_register("SEM_PULLBACK_INIT");
-	bu_semaphore_acquire(sem_pullback_init);
+	bu_semaphore_acquire(BU_SEM_MALLOC);
 	rev_surface[p] = ON_RevSurface::New();
 	nurbs_surface[p] = ON_NurbsSurface::New();
 	extr_surface[p] = new ON_Extrusion();
@@ -267,7 +266,7 @@ surface_GetBoundingBox(
 	sum_surface[p] = ON_SumSurface::New();
 	proxy_surface[p] = new ON_SurfaceProxy();
 	locals_initialized[p] = true;
-	bu_semaphore_release(sem_pullback_init);
+	bu_semaphore_release(BU_SEM_MALLOC);
     }
 
     ON_Interval domSplits[2][2] = { { ON_Interval::EmptyInterval, ON_Interval::EmptyInterval }, { ON_Interval::EmptyInterval, ON_Interval::EmptyInterval }};
