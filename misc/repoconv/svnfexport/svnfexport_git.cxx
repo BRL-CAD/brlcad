@@ -153,15 +153,32 @@ void write_cached_rev_sha1s()
     rename("rev_gsha1s_tmp.txt", "rev_gsha1s.txt");
 }
 
+void generate_svn_tree(const char *svn_repo, const char *branch, long int rev)
+{
+    std::string tree_cmd;
 
-void apply_fi_file_working(std::string &fi_file) {
+    if (std::string(branch) == std::string("master")) {
+	tree_cmd = std::string("cd custom && ../sync_commit_trunk.sh ") + std::string(svn_repo) + std::string(" ") + std::to_string(rev) + std::string(" && cd ..");
+    } else {
+	tree_cmd = std::string("cd custom && ../sync_commit_trunk.sh ") + std::string(svn_repo) + std::string(" ") + std::string(branch) + std::string(" ") + std::to_string(rev) + std::string(" && cd ..");
+    }
+    if (std::system(tree_cmd.c_str())) {
+	std::cerr << "Error running tree command: " << tree_cmd << "\n";
+	exit(1);
+    }
+}
+
+
+int apply_fi_file_working(std::string &fi_file) {
     std::string git_fi = std::string("cd cvs_git_working && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
     if (std::system(git_fi.c_str())) {
 	std::string failed_file = std::string("failed-") + fi_file;
 	std::cout << "Fatal - could not apply fi file to working repo " << fi_file << "\n";
 	rename(fi_file.c_str(), failed_file.c_str());
-	exit(1);
+	return 0;
     }
+    // TODO - this is when we need to do a verify step, if we're going to do one...
+    return 1;
 }
 
 void apply_fi_file(std::string &fi_file) {
@@ -479,8 +496,44 @@ void apply_commit(struct svn_revision &rev, std::string &rbranch, int verify_rep
 	    }
 
 	    // Apply the combined contents of the commit files
-	    apply_fi_file_working(wfi_file);
+	    if (!apply_fi_file_working(wfi_file)) {
+		// If the apply failed, try generating the tree portion of the
+		// commit from an actual svn checkout.  At least for the later
+		// commits this is the most common remedy, so see if we can
+		// automate it.
+		generate_svn_tree("actual_repo_checkokut_path...", rbranch.c_str(), rev.revision_number);
+
+		catstr = std::string("cat");
+		remove(wfi_file.c_str());
+
+		if (blob_fi_file != std::string("")) {
+		    catstr = catstr + std::string(" ") + blob_fi_file;
+		}
+
+		catstr = catstr + std::string(" ") + commit_fi_file;
+
+		tree_fi_file = std::string("custom/") + std::to_string(rev_num) + std::string("-tree.fi");
+		if (!file_exists(tree_fi_file.c_str())) {
+		    std::cerr << "Failed to generate custom tree file for commit " << rev.revision_number << "\n";
+		    exit(1);
+		}
+		catstr = catstr + std::string(" ") + tree_fi_file + std::string(" > ") + wfi_file;
+
+		if (std::system(catstr.c_str())) {
+		    std::cerr << "Failed to create " << wfi_file << "\n";
+		    exit(1);
+		}
+
+		if (!apply_fi_file_working(wfi_file)) {
+		    // If we fail again, we're done - need manual review
+		    std::cerr << "Failed to apply commit with custom tree: " << rev.revision_number << "\n";
+		}
+	    }
+
 	    get_rev_sha1(rbranch, rev.revision_number);
+
+
+
 
 	    // Clean up intermediate commit file
 	    remove(commit_fi_file.c_str());
