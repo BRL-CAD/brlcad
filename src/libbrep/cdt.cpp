@@ -995,12 +995,12 @@ getSurfacePoints(struct cdt_surf_info *sinfo,
     double est4 = vline_len_est(sinfo, u2, v1, v2);
 
     //bu_log("(min: %f) est1, est2, est3, est4: %f, %f, %f, %f\n", min_dist, est1, est2, est3, est4);
-    if (est1 < 0.5*within_dist && est2 < 0.5*within_dist) {
-	//bu_log("Small estimates: %f, %f\n", est1, est2);
+    if (est1 < 0.01*within_dist && est2 < 0.01*within_dist) {
+	bu_log("e12 Small estimates: %f, %f\n", est1, est2);
 	return;
     }
-    if (est3 < 0.5*within_dist && est4 < 0.5*within_dist) {
-	//bu_log("Small estimates: %f, %f\n", est3, est4);
+    if (est3 < 0.01*within_dist && est4 < 0.01*within_dist) {
+	bu_log("e34 Small estimates: %f, %f\n", est3, est4);
 	return;
     }
 
@@ -1279,7 +1279,12 @@ getSurfacePoints(struct ON_Brep_CDT_State *s_cdt,
 
 	ON_BoundingBox tight_bbox;
 	if (brep->GetTightBoundingBox(tight_bbox)) {
-	    dist = DIST_PT_PT(tight_bbox.m_min, tight_bbox.m_max);
+	    // Note: this needs to be based on the smallest dimension of the
+	    // box, not the diagonal, in case we've got something really long
+	    // and narrow.
+	    fastf_t d1 = tight_bbox.m_max[0] - tight_bbox.m_min[0];
+	    fastf_t d2 = tight_bbox.m_max[1] - tight_bbox.m_min[1];
+	    dist = (d1 < d2) ? d1 : d2;
 	}
 
 	if (s_cdt->abs < s_cdt->dist + ON_ZERO_TOLERANCE) {
