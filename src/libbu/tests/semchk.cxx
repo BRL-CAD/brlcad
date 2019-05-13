@@ -143,6 +143,8 @@ validate_semaphores(std::map<std::string, std::string> *sem_defs, int verbose)
 
 	working->pop();
 
+	//std::cerr << "Processing " << key << " -> " << val << "\n";
+
 	if (semaphore_values.find(val) != semaphore_values.end()) {
 
 	    // The string value has a numerical definition - use it
@@ -171,6 +173,11 @@ validate_semaphores(std::map<std::string, std::string> *sem_defs, int verbose)
 		// value of yet. queue and continue
 		next->push(key);
 
+		if (!key.length()) {
+		    std::cerr << "Empty key string??\n";
+		    exit(1);
+		}
+
 	    } else {
 
 		std::string ekey = std::string(sem_exp[1]);
@@ -181,6 +188,7 @@ validate_semaphores(std::map<std::string, std::string> *sem_defs, int verbose)
 		ninc = strtol(einc.c_str(), &endptr, 0);
 		if ((endptr != NULL && strlen(endptr) > 0) || errno == ERANGE) {
 		    std::cerr << "Could not evalute expression number: " << einc << "\n";
+		    exit(1);
 		}
 
 		if (semaphore_values.find(ekey) != semaphore_values.end()) {
@@ -207,6 +215,10 @@ validate_semaphores(std::map<std::string, std::string> *sem_defs, int verbose)
 		    // yet, queue and continue
 		    next->push(key);
 
+		    if (!key.length()) {
+			std::cerr << "Empty key string??\n";
+			exit(1);
+		    }
 		}
 	    }
 	}
@@ -217,7 +229,13 @@ validate_semaphores(std::map<std::string, std::string> *sem_defs, int verbose)
 	    working = qtmp;
 	    if ((int)working->size() == wcnt) {
 		// Infinite loop - we should always process at least one definition per pass
-		std::cerr << "Error processing semaphore definitions\n";
+		std::cerr << "Error processing semaphore definitions.  (Perhaps the regex pattern matching didn't catch a string being used as a semaphore?):\n";
+		while (!working->empty()) {
+		    key = working->front();
+		    val = (*sem_defs)[key];
+		    std::cerr << key << " -> " << val << "\n";
+		    working->pop();
+		}
 		exit(-1);
 	    }
 	    wcnt = working->size();
@@ -283,6 +301,7 @@ main(int argc, const char *argv[])
 	std::cerr << "Unable to open file list " << argv[1] << "\n";
     }
     while (std::getline(fs, sfile)) {
+	//std::cout << "Processing " << sfile << "\n";
 	ret += process_file(&sem_defs, &sem_files, sfile);
     }
     fs.close();
