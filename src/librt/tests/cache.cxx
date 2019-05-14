@@ -565,6 +565,11 @@ main(int ac, char *av[])
 
     if (test_num > 19 && ac >= 3) {
 	sscanf(av[2], "%ld", &subprocess_cnt);
+
+	// TODO - see if we can use the bu_debug |= BU_DEBUG_PARALLEL trick from
+	// the libbu semaphore.c unit test to push this harder... - we may not
+	// need to be capped at the CPU count
+
 	if (subprocess_cnt > (long int)maxcpus) {
 	    bu_log("Requested %ld subprocesses, but only %zd CPUs available - throttling to %zd\n", subprocess_cnt, maxcpus, maxcpus);
 	    subprocess_cnt = (long int)maxcpus;
