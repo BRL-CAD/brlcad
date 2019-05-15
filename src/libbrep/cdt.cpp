@@ -3463,6 +3463,15 @@ ON_Brep_CDT_Mesh(
 	}
     }
 
+    // TODO - it's even possible in principle for a triangulation to form a non-zero,
+    // non degenerate face from 3 edge points that will "close" the solid but result
+    // in a face with all of its vertices normals pointing in a very strange direction
+    // compared to the surface normals at those points (not to mention looking "wrong"
+    // in that the "proper" surface of the mesh will look like it is flattened in the
+    // area of that triangle.  If we can recognize these cases and splitting them will
+    // improve the situation, we want to handle them just as we would a zero area
+    // triangle...
+
     /* For the non-zero-area involved triangles, we need to build new polygons
      * from each triangle and the "orphaned" points along its edge(s).  We then
      * re-tessellate in the triangle's parametric space.
