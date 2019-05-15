@@ -874,6 +874,8 @@ getSurfacePoints(struct cdt_surf_info *sinfo,
 	isteps = (int)(udist / vdist / ldfactor * 2.0);
 	fastf_t step = udist / (fastf_t) isteps;
 
+	//bu_log("split: udist > ldfactor * vdist\n");
+
 	fastf_t step_u;
 	for (int i = 1; i <= isteps; i++) {
 	    step_u = u1 + i * step;
@@ -937,6 +939,9 @@ getSurfacePoints(struct cdt_surf_info *sinfo,
 	isteps = (int)(vdist / udist / ldfactor * 2.0);
 	fastf_t step = vdist / (fastf_t) isteps;
 	fastf_t step_v;
+
+	//bu_log("split: vdist > ldfactor * udist\n");
+
 	for (int i = 1; i <= isteps; i++) {
 	    step_v = v1 + i * step;
 	    if ((left) && (i < isteps)) {
@@ -996,11 +1001,11 @@ getSurfacePoints(struct cdt_surf_info *sinfo,
 
     //bu_log("(min: %f) est1, est2, est3, est4: %f, %f, %f, %f\n", min_dist, est1, est2, est3, est4);
     if (est1 < 0.01*within_dist && est2 < 0.01*within_dist) {
-	bu_log("e12 Small estimates: %f, %f\n", est1, est2);
+	//bu_log("e12 Small estimates: %f, %f\n", est1, est2);
 	return;
     }
     if (est3 < 0.01*within_dist && est4 < 0.01*within_dist) {
-	bu_log("e34 Small estimates: %f, %f\n", est3, est4);
+	//bu_log("e34 Small estimates: %f, %f\n", est3, est4);
 	return;
     }
 
@@ -1026,6 +1031,7 @@ getSurfacePoints(struct cdt_surf_info *sinfo,
 	vdot = (VNEAR_EQUAL(norm[0], norm[3], ON_ZERO_TOLERANCE)) ? 1.0 : norm[0] * norm[3];
 
 	if ((udot < cos_within_ang - ON_ZERO_TOLERANCE) && (vdot < cos_within_ang - ON_ZERO_TOLERANCE)) {
+	    //bu_log("split: both cos_within_ang\n");
 	    if (left) {
 		p2d.Set(u1, v);
 		on_surf_points.Append(p2d);
@@ -1055,6 +1061,7 @@ getSurfacePoints(struct cdt_surf_info *sinfo,
 	    return;
 	}
 	if (udot < cos_within_ang - ON_ZERO_TOLERANCE) {
+	    //bu_log("split: udot cos_within_ang\n");
 	    if (below) {
 		p2d.Set(u, v1);
 		on_surf_points.Append(p2d);
@@ -1069,6 +1076,7 @@ getSurfacePoints(struct cdt_surf_info *sinfo,
 	    return;
 	}
 	if (vdot < cos_within_ang - ON_ZERO_TOLERANCE) {
+	    //bu_log("split: vdot cos_within_ang\n");
 	    if (left) {
 		p2d.Set(u1, v);
 		on_surf_points.Append(p2d);
@@ -1103,6 +1111,7 @@ getSurfacePoints(struct cdt_surf_info *sinfo,
 	on_surf_points.Append(p2d);
 
 	if (dist > within_dist + ON_ZERO_TOLERANCE) {
+	    //bu_log("split: dist(%f) > within_dist(%f)\n", dist, within_dist);
 
 	    getSurfacePoints(sinfo, u1, u, v1, v, min_dist, within_dist,
 		    cos_within_ang, on_surf_points, left, below);
@@ -2541,6 +2550,31 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_State *s_cdt, std::map<const ON_Surface *, d
 	PerformClosedSurfaceChecks(s_cdt, s, face, brep_loop_points, BREP_SAME_POINT_TOLERANCE);
 
     }
+
+    // Find for this face the minimum and maximum edge polyline segment lengths
+    double max_edge_seg = 0.0;
+    double min_edge_seg = DBL_MAX;
+    for (int li = 0; li < loop_cnt; li++) {
+	int num_loop_points = brep_loop_points[li].Count();
+	if (num_loop_points > 1) {
+	    ON_3dPoint *p1 = (brep_loop_points[li])[0].p3d;
+	    ON_3dPoint *p2 = NULL;
+	    for (int i = 1; i < num_loop_points; i++) {
+		p2 = p1;
+		p1 = (brep_loop_points[li])[i].p3d;
+		fastf_t dist = p1->DistanceTo(*p2);
+		if (dist > max_edge_seg) {
+		    max_edge_seg = dist;
+		}
+		if ((dist > SMALL_FASTF) && (dist < min_edge_seg))  {
+		    min_edge_seg = dist;
+		}
+	    }
+	}
+    }
+    bu_log("Face %d max_edge_seg: %f\n", face.m_face_index, max_edge_seg);
+    bu_log("Face %d min_edge_seg: %f\n", face.m_face_index, min_edge_seg);
+
     // process through loops building polygons.
     bool outer = true;
     for (int li = 0; li < loop_cnt; li++) {
