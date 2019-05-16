@@ -1021,7 +1021,11 @@ getSurfacePoints(struct cdt_surf_info *sinfo,
 	double dist = mid.DistanceTo(line1.ClosestPointTo(mid));
 	V_MAX(dist, mid.DistanceTo(line2.ClosestPointTo(mid)));
 
-
+	for (int i = 0; i < 4; i++) {
+	    if (ON_DotProduct(norm[i], norm_mid) < 0) {
+		bu_log("norm[%d] backwards\n", i);
+	    }
+	}
 
 	if (dist < min_dist + ON_ZERO_TOLERANCE) {
 	    return;
