@@ -206,6 +206,11 @@
 	    </row>
 
 	    <row>
+	      <entry><command>help</command></entry>
+	      <entry>display a list of available commands</entry>
+	    </row>
+
+	    <row>
 	      <entry><command>histogram-file</command></entry>
 	      <entry><parameter class='command'>file</parameter></entry>
 	      <entry>write hit frequency histogram to file</entry>
@@ -245,6 +250,11 @@
 	      <entry><command>plot-file</command></entry>
 	      <entry><parameter class='command'>file</parameter></entry>
 	      <entry>generate plot data in file</entry>
+	    </row>
+
+	    <row>
+	      <entry><command>quit</command></entry>
+	      <entry>quit the application</entry>
 	    </row>
 
 	    <row>
