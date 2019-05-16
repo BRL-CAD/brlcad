@@ -146,6 +146,8 @@ static void MreadCmdFile();
 static void MshotlineFile();
 static void Munits();
 static void MwriteCmdFile();
+static void Mhelp();
+static void Mquit();
 
 /* local utility functions */
 static HmMenu *addMenu();
@@ -374,6 +376,10 @@ Ftable mainmenu[] =
     { "preferences",
       "options for tailoring behavior of user interface",
       prefmenu, 0 },
+    { "help",
+      "get a list of available commands", 0, Mhelp },
+    { "quit",
+      "stop reading commands, exit the application", 0, Mquit },
     { NULL, NULL, 0, NULL },
 };
 
@@ -749,6 +755,24 @@ Mcomment(HmItem *UNUSED(itemp))
     } else
 	logCmd(cmdptr);
     return;
+}
+
+
+/*ARGSUSED*/
+static void
+Mhelp(HmItem *UNUSED(itemp))
+{
+    brst_log("\nAvailable Commands"
+	     "\n------------------\n");
+    prntTrie(cmdtrie, 0);
+}
+
+
+/*ARGSUSED*/
+static void
+Mquit(HmItem *UNUSED(itemp))
+{
+    bu_exit(EXIT_SUCCESS, "Quitting application.\n");
 }
 
 
