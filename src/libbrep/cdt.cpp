@@ -181,6 +181,10 @@ struct ON_Brep_CDT_State {
     std::vector<ON_3dPoint *> *w3dnorms;
     std::map<int, ON_3dPoint *> *vert_norms;
 
+    /* singular trim info */
+    std::map<int, std::map<int,ON_3dPoint *>> *strim_pnts;
+    std::map<int, std::map<int,ON_3dPoint *>> *strim_norms;
+
     /* Poly2Tri data */
     p2t::CDT **p2t_faces;
     std::vector<p2t::Triangle *> **p2t_extra_faces;
@@ -789,6 +793,9 @@ getEdgePoints(
 
 struct cdt_surf_info {
     const ON_Surface *s;
+    const ON_BrepFace *f;
+    std::map<int, std::map<int,ON_3dPoint *>> *strim_pnts;
+    std::map<int, std::map<int,ON_3dPoint *>> *strim_norms;
     double u1, u2, v1, v2;
     fastf_t ulen;
     fastf_t u_lower_3dlen;
@@ -1009,6 +1016,27 @@ getSurfacePoints(struct cdt_surf_info *sinfo,
 	return;
     }
 
+    // If we have singular trims on this face, surface evaluations won't be enough
+    ON_3dPoint *vnorm = NULL;
+    if (sinfo->strim_pnts->find(sinfo->f->m_face_index) != sinfo->strim_pnts->end()) {
+	bu_log("Face %d has singular trims\n", sinfo->f->m_face_index);
+	std::map<int, ON_3dPoint *>::iterator m_it;
+	for (m_it = (*sinfo->strim_pnts)[sinfo->f->m_face_index].begin(); m_it != (*sinfo->strim_pnts)[sinfo->f->m_face_index].end(); m_it++) {
+	    bu_log("  trim %d\n", (*m_it).first);
+	    ON_Interval trim_dom = sinfo->f->Brep()->m_T[(*m_it).first].Domain();
+	    ON_2dPoint p2d1 = sinfo->f->Brep()->m_T[(*m_it).first].PointAt(trim_dom.m_t[0]);
+	    ON_2dPoint p2d2 = sinfo->f->Brep()->m_T[(*m_it).first].PointAt(trim_dom.m_t[0]);
+	    bu_log("  points: %f,%f -> %f,%f\n", p2d1.x, p2d1.y, p2d2.x, p2d2.y);
+	    if (sinfo->strim_norms->find(sinfo->f->m_face_index) !=  sinfo->strim_norms->end()) {
+		if ((*sinfo->strim_pnts)[sinfo->f->m_face_index].find((*m_it).first) != (*sinfo->strim_pnts)[sinfo->f->m_face_index].end()) {
+		    vnorm = (*sinfo->strim_pnts)[sinfo->f->m_face_index][(*m_it).first];
+		    bu_log(" normal: %f, %f, %f\n", vnorm->x, vnorm->y, vnorm->z);
+		}
+	    }
+	}
+    }
+
+
     if ((surface_EvNormal(sinfo->s, u1, v1, p[0], norm[0]))
 	    && (surface_EvNormal(sinfo->s, u2, v1, p[1], norm[1])) // for u
 	    && (surface_EvNormal(sinfo->s, u2, v2, p[2], norm[2]))
@@ -1020,10 +1048,39 @@ getSurfacePoints(struct cdt_surf_info *sinfo,
 	ON_Line line2(p[1], p[3]);
 	double dist = mid.DistanceTo(line1.ClosestPointTo(mid));
 	V_MAX(dist, mid.DistanceTo(line2.ClosestPointTo(mid)));
-
+	
+	// TODO - find 3D point and normal associated with trim based on uv coords - hard-coded single
+	// lookup above won't generalize
 	for (int i = 0; i < 4; i++) {
 	    if (ON_DotProduct(norm[i], norm_mid) < 0) {
 		bu_log("norm[%d] backwards\n", i);
+		if (i == 0) {
+		    bu_log(" at 0 point %f,%f\n", u1, v1);
+		    if (ON_DotProduct(*vnorm, norm_mid) > 0) {
+			bu_log("vert norm works\n");
+		    }
+		}
+		if (i == 1) {
+		    bu_log(" at 1 point %f,%f\n", u2, v1);
+		    if (ON_DotProduct(*vnorm, norm_mid) > 0) {
+			bu_log("vert norm works\n");
+		    }
+
+		}
+		if (i == 2) {
+		    bu_log(" at 2 point %f,%f\n", u2, v2);
+		    if (ON_DotProduct(*vnorm, norm_mid) > 0) {
+			bu_log("vert norm works\n");
+		    }
+
+		}
+		if (i == 3) {
+		    bu_log(" at 3 point %f,%f\n", u1, v2);
+		    if (ON_DotProduct(*vnorm, norm_mid) > 0) {
+			bu_log("vert norm works\n");
+		    }
+
+		}
 	    }
 	}
 
@@ -1264,6 +1321,9 @@ getSurfacePoints(struct ON_Brep_CDT_State *s_cdt,
 
 	struct cdt_surf_info sinfo;
 	sinfo.s = s;
+	sinfo.f = &face;
+	sinfo.strim_pnts = s_cdt->strim_pnts;
+	sinfo.strim_norms = s_cdt->strim_norms;
 	double t1, t2;
 	s->GetDomain(0, &t1, &t2);
 	sinfo.ulen = fabs(t2 - t1);
@@ -1832,6 +1892,11 @@ get_loop_sample_points(
 	    BrepTrimPoint btp;
 	    const ON_BrepVertex& v1 = face.Brep()->m_V[trim->m_vi[0]];
 	    ON_3dPoint *p3d = (*s_cdt->vert_pnts)[v1.m_vertex_index];
+	    (*s_cdt->strim_pnts)[face.m_face_index].insert(std::make_pair(trim->m_trim_index, p3d));
+	    ON_3dPoint *n3d = (*s_cdt->vert_norms)[v1.m_vertex_index];
+	    if (n3d) {
+		(*s_cdt->strim_norms)[face.m_face_index].insert(std::make_pair(trim->m_trim_index, n3d));
+	    }
 	    double delta =  trim->Domain().Length() / 10.0;
 	    ON_Interval trim_dom = trim->Domain();
 
@@ -2400,6 +2465,8 @@ ON_Brep_CDT_Create(void *bv)
     cdt->vert_pnts = new std::map<int, ON_3dPoint *>;
     cdt->w3dnorms = new std::vector<ON_3dPoint *>;
     cdt->vert_norms = new std::map<int, ON_3dPoint *>;
+    cdt->strim_pnts = new std::map<int,std::map<int, ON_3dPoint *> >;
+    cdt->strim_norms = new std::map<int,std::map<int, ON_3dPoint *> >;
     cdt->vert_to_on = new std::map<int, ON_3dPoint *>;
     cdt->edge_pnts = new std::set<ON_3dPoint *>;
     cdt->brep_face_loop_points = (ON_SimpleArray<BrepTrimPoint> **)bu_calloc(brep->m_F.Count(), sizeof(std::map<p2t::Point *, BrepTrimPoint *> *), "face loop pnts");
@@ -2458,6 +2525,8 @@ ON_Brep_CDT_Destroy(struct ON_Brep_CDT_State *s_cdt)
     delete s_cdt->vert_pnts;
     delete s_cdt->w3dnorms;
     delete s_cdt->vert_norms;
+    delete s_cdt->strim_pnts;
+    delete s_cdt->strim_norms;
     delete s_cdt->vert_to_on;
     delete s_cdt->edge_pnts;
     delete s_cdt->p2t_extra_faces;
