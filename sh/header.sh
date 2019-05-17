@@ -50,7 +50,6 @@
 #   find src -type f \( -name \*.c -or -name \*.h \) -not -regex '.*src/lib.*' -exec sh/header.sh BSD {} \;
 #
 ###
-set -x
 
 LICE="$1"
 FILE="$2"
