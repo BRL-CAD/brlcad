@@ -375,40 +375,6 @@ typedef ptrdiff_t ssize_t;
 #endif
 
 
-/**
- * INITIALIZE provides a common mechanism for libraries needing to
- * define an initialization function to be run when the library is
- * loaded.
- */
-#ifdef INITIALIZE
-#  undef INITIALIZE
-#  warning "INITIALIZE unexpectedly defined.  Ensure common.h is included first."
-#endif
-
-#ifdef __cplusplus
-
-#  define INITIALIZE(lib) \
-static void lib(void); \
-struct lib##_t_ { lib##_t_(void) { lib(); } }; static lib##_t_ lib##_; \
-static void lib(void)
-
-/* #elif defined(HAVE_WINDOWS_H) */
-
-/* #  define INITIALIZE(lib) \ */
-/* \ */
-/* static void lib(void); \ */
-/* BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, LPVOID nil) { lib(); return TRUE; } \ */
-/* static void lib(void) */
-
-#else
-
-/* #  define INITIALIZE(lib) \ */
-/* static void lib(void) __attribute__((constructor)); \ */
-/* static void lib(void) */
-
-#endif
-
-
 /* ActiveState Tcl doesn't include this catch in tclPlatDecls.h, so we
  * have to add it for them
  */
