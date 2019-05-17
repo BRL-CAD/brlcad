@@ -179,25 +179,6 @@
 #  define RT_G_DEBUG RTG.debug
 #endif
 
-/**
- * Definition of global parallel-processing semaphores.
- *
- * res_syscall is now   BU_SEM_SYSCALL
- */
-#define RT_SEM_TREE0    (BU_SEM_LAST)
-#define RT_SEM_TREE1    (RT_SEM_TREE0+1)
-#define RT_SEM_TREE2    (RT_SEM_TREE1+1)
-#define RT_SEM_TREE3    (RT_SEM_TREE2+1)
-#define RT_SEM_WORKER   (RT_SEM_TREE3+1)
-#define RT_SEM_STATS    (RT_SEM_WORKER+1)
-#define RT_SEM_RESULTS  (RT_SEM_STATS+1)
-#define RT_SEM_MODEL    (RT_SEM_RESULTS+1)
-#define RT_SEM_CACHE    (RT_SEM_MODEL+1)
-#define RT_SEM_PM       (RT_SEM_CACHE+1)
-#define RT_SEM_TIE      (RT_SEM_PM+1)
-
-#define RT_SEM_LAST     (RT_SEM_TIE+1)
-
 
 #define BACKING_DIST    (-2.0)          /**< @brief  mm to look behind start point */
 #define OFFSET_DIST     0.01            /**< @brief  mm to advance point into box */

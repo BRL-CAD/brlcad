@@ -82,7 +82,8 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
     if (!segs) /* unexpected */
 	return 0;
 
-    if (PartHeadp->pt_forw == PartHeadp) return 1;
+    if (PartHeadp->pt_forw == PartHeadp)
+	return 1;
 
 
     /* examine each partition until we get back to the head */
@@ -107,10 +108,10 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 	VJOIN1(opt, ap->a_ray.r_pt, pp->pt_outhit->hit_dist, ap->a_ray.r_dir);
 
 	if (state->debug) {
-	    bu_semaphore_acquire(ANALYZE_SEM_WORKER);
+	    bu_semaphore_acquire(BU_SEM_GENERAL);
 	    bu_vls_printf(state->debug_str, "%s %g->%g\n", pp->pt_regionp->reg_name,
 			  pp->pt_inhit->hit_dist, pp->pt_outhit->hit_dist);
-	    bu_semaphore_release(ANALYZE_SEM_WORKER);
+	    bu_semaphore_release(BU_SEM_GENERAL);
 	}
 
 	if (state->analysis_flags & ANALYSIS_EXP_AIR) {
@@ -145,18 +146,18 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 	/* computing the mass of the objects */
 	if (state->analysis_flags & ANALYSIS_MASS) {
 	    if (state->debug) {
-		bu_semaphore_acquire(ANALYZE_SEM_WORKER);
+		bu_semaphore_acquire(BU_SEM_GENERAL);
 		bu_vls_printf(state->debug_str, "Hit %s doing mass\n", pp->pt_regionp->reg_name);
-		bu_semaphore_release(ANALYZE_SEM_WORKER);
+		bu_semaphore_release(BU_SEM_GENERAL);
 	    }
 
 	    /* make sure mater index is within range of densities */
 	    if (material_id < 0 && state->default_den == 0) {
-		bu_semaphore_acquire(ANALYZE_SEM_WORKER);
+		bu_semaphore_acquire(BU_SEM_GENERAL);
 		bu_vls_printf(state->log_str, "Density index %d on region %s is not in density table.\nSet GIFTmater on region or add entry to density table\n",
 			pp->pt_regionp->reg_gmater,
 			pp->pt_regionp->reg_name); /* XXX this should do something else */
-		bu_semaphore_release(ANALYZE_SEM_WORKER);
+		bu_semaphore_release(BU_SEM_GENERAL);
 		return ANALYZE_ERROR;
 	    }
 
@@ -205,9 +206,9 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 		los = pp->pt_regionp->reg_los;
 
 		if (los < 1) {
-		    bu_semaphore_acquire(ANALYZE_SEM_WORKER);
+		    bu_semaphore_acquire(BU_SEM_GENERAL);
 		    bu_vls_printf(state->log_str, "bad LOS (%d) on %s\n", los, pp->pt_regionp->reg_name);
-		    bu_semaphore_release(ANALYZE_SEM_WORKER);
+		    bu_semaphore_release(BU_SEM_GENERAL);
 		}
 
 		/* accumulate the total mass values */
@@ -216,7 +217,7 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 
 		prd = ((struct per_region_data *)pp->pt_regionp->reg_udata);
 		/* accumulate the per-region per-view mass values */
-		bu_semaphore_acquire(ANALYZE_SEM_STATS);
+		bu_semaphore_acquire(state->sem_stats);
 		prd->r_lenDensity[state->i_axis] += val;
 
 		/* accumulate the per-object per-view mass values */
@@ -265,7 +266,7 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 			poi[Z] -= mass*cmass[Y]*cmass[Z];
 		    }
 		}
-		bu_semaphore_release(ANALYZE_SEM_STATS);
+		bu_semaphore_release(state->sem_stats);
 
 	    }
 	}
@@ -293,7 +294,7 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 	    }
 
 	    {
-		bu_semaphore_acquire(ANALYZE_SEM_STATS);
+		bu_semaphore_acquire(state->sem_worker);
 		/* factor in the normal vector to find how 'skew' the surface is */
 		RT_HIT_NORMAL(inormal, pp->pt_inhit, pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip);
 		VREVERSE(inormal, inormal);
@@ -311,7 +312,7 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 		prd->optr->o_area[state->curr_view] += (cell_area/icos);
 		prd->optr->o_area[state->curr_view] += (cell_area/ocos);
 
-		bu_semaphore_release(ANALYZE_SEM_STATS);
+		bu_semaphore_release(state->sem_worker);
 	    }
 	}
 
@@ -320,7 +321,7 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 	    struct per_region_data *prd = ((struct per_region_data *)pp->pt_regionp->reg_udata);
 	    ap->A_LEN += dist; /* add to total volume */
 	    {
-		bu_semaphore_acquire(ANALYZE_SEM_STATS);
+		bu_semaphore_acquire(state->sem_worker);
 
 		/* add to region volume */
 		prd->r_len[state->curr_view] += dist;
@@ -328,16 +329,15 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 		/* add to object volume */
 		prd->optr->o_len[state->curr_view] += dist;
 
-		bu_semaphore_release(ANALYZE_SEM_STATS);
+		bu_semaphore_release(state->sem_worker);
 	    }
 	    if (state->debug) {
-		bu_semaphore_acquire(ANALYZE_SEM_WORKER);
+		bu_semaphore_acquire(BU_SEM_GENERAL);
 		bu_vls_printf(state->debug_str, "\t\tvol hit %s oDist:%g objVol:%g %s\n",
 			      pp->pt_regionp->reg_name, dist, prd->optr->o_len[state->curr_view], prd->optr->o_name);
-		bu_semaphore_release(ANALYZE_SEM_WORKER);
+		bu_semaphore_release(BU_SEM_GENERAL);
 	    }
 	    if (state->plot_volume) {
-		bu_semaphore_acquire(BU_SEM_SYSCALL);
 		if (ap->a_user & 1) {
 		    pl_color(state->plot_volume, 128, 255, 192);  /* pale green */
 		} else {
@@ -345,7 +345,6 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 		}
 
 		pdv_3line(state->plot_volume, pt, opt);
-		bu_semaphore_release(BU_SEM_SYSCALL);
 	    }
 	}
 
@@ -358,7 +357,7 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 	}
 
 	if (pp->pt_regionp->reg_aircode) {
-	    /* look for air first on shotlines */	
+	    /* look for air first on shotlines */
 	    if (pp->pt_back == PartHeadp) {
 		if (state->analysis_flags & ANALYSIS_FIRST_AIR)
 		    state->first_air_callback(&ap->a_ray, pp, state->first_air_callback_data);
@@ -460,14 +459,14 @@ analyze_overlap(struct application *ap,
     VJOIN1(ihit, rp->r_pt, ihitp->hit_dist, rp->r_dir);
 
     if (state->analysis_flags & ANALYSIS_OVERLAPS) {
-	bu_semaphore_acquire(ANALYZE_SEM_LIST);
+	bu_semaphore_acquire(state->sem_worker);
 	add_unique_pair(state->overlapList, reg1, reg2, depth, ihit);
-	bu_semaphore_release(ANALYZE_SEM_LIST);
+	bu_semaphore_release(state->sem_worker);
 	state->overlaps_callback(&ap->a_ray, pp, reg1, reg2, depth, state->overlaps_callback_data);
     }  else {
-	bu_semaphore_acquire(ANALYZE_SEM_WORKER);
+	bu_semaphore_acquire(state->sem_worker);
 	bu_vls_printf(state->log_str, "overlap %s %s\n", reg1->reg_name, reg2->reg_name);
-	bu_semaphore_release(ANALYZE_SEM_WORKER);
+	bu_semaphore_release(state->sem_worker);
     }
 
     /* XXX We should somehow flag the volume/mass calculations as invalid */
@@ -801,13 +800,13 @@ analyze_worker(int cpu, void *ptr)
 
     shot_cnt = 0;
     while (1) {
-	bu_semaphore_acquire(ANALYZE_SEM_WORKER);
+	bu_semaphore_acquire(state->sem_worker);
 	if (rectangular_grid_generator(&ap.a_ray, state->grid) == 1){
-	    bu_semaphore_release(ANALYZE_SEM_WORKER);
+	    bu_semaphore_release(state->sem_worker);
 	    break;
 	}
 	ap.a_user = (int)(state->grid->current_point / (state->grid->x_points));
-	bu_semaphore_release(ANALYZE_SEM_WORKER);
+	bu_semaphore_release(state->sem_worker);
 	(void)rt_shootray(&ap);
 	if (state->aborted)
 	    return;
@@ -819,11 +818,11 @@ analyze_worker(int cpu, void *ptr)
      * view and return.  When all threads have been through here,
      * we'll have returned to serial computation.
      */
-    bu_semaphore_acquire(ANALYZE_SEM_STATS);
+    bu_semaphore_acquire(state->sem_stats);
     state->shots[state->curr_view] += shot_cnt;
     state->m_lenDensity[state->curr_view] += ap.A_LENDEN; /* add our length*density value */
     state->m_len[state->curr_view] += ap.A_LEN; /* add our volume value */
-    bu_semaphore_release(ANALYZE_SEM_STATS);
+    bu_semaphore_release(state->sem_stats);
 }
 
 /**
@@ -1401,6 +1400,8 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
     }
 
     /* initialize some stuff */
+    state->sem_worker = bu_semaphore_register("analyze_sem_worker");
+    state->sem_stats = bu_semaphore_register("analyze_sem_stats");
     allocate_region_data(state, names);
     grid.refine_flag = 0;
     shoot_rays(state);

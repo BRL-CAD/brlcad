@@ -29,6 +29,9 @@
 #include "bu/parallel.h"
 
 
+extern "C" int BU_SEM_THREAD;
+
+
 #if defined(HAVE_THREAD_LOCAL)
 
 static thread_local int thread_cpu = 0;

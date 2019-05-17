@@ -431,10 +431,10 @@ do_pixel(int cpu, int pat_num, int pixelnum)
 
 	pixelTime = rt_get_timer(NULL,NULL); /* FIXME: needs to use bu_gettime() */
 	/* bu_log("PixelTime = %lf X:%d Y:%d\n", pixelTime, a.a_x, a.a_y); */
-	bu_semaphore_acquire(RT_SEM_LAST-2);
+	bu_semaphore_acquire(RT_SEM_RESULTS);
 	timeTable = timeTable_init(width, height);
 	timeTable_input(a.a_x, a.a_y, pixelTime, timeTable);
-	bu_semaphore_release(RT_SEM_LAST-2);
+	bu_semaphore_release(RT_SEM_RESULTS);
     }
 
     /* we're done */

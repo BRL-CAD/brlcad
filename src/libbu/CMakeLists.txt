@@ -61,6 +61,7 @@ set(LIBBU_SOURCES
   bomb.c
   booleanize.c
   brlcad_path.c
+  bu_init.cpp
   cmd.c
   cmdhist.c
   color.c
@@ -90,7 +91,6 @@ set(LIBBU_SOURCES
   hook.c
   htond.c
   htonf.c
-  init.c
   interrupt.c
   kill.c
   lex.c
@@ -116,6 +116,7 @@ set(LIBBU_SOURCES
   redblack.c
   realpath.c
   semaphore.c
+  semaphore_register.cpp
   sha1.c
   simd.c
   sort.c
@@ -152,32 +153,22 @@ set_target_properties(libbu PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 # Define a pre-build test for libbu to check the semaphores in BRL-CAD's headers for
 # ordering issues
-set(BCAD_SRCS_FILE "${CMAKE_CURRENT_BINARY_DIR}/brlcad_srcs.txt")
-file(REMOVE "${BCAD_SRCS_FILE}")
-file(GLOB_RECURSE BCAD_HDRS "${CMAKE_SOURCE_DIR}/include/*.h*")
-foreach(HDRF ${BCAD_HDRS})
-  if (NOT "${HDRF}" MATCHES ".*.svn.*")
-    file(APPEND "${BCAD_SRCS_FILE}" "${HDRF}\n")
-  endif (NOT "${HDRF}" MATCHES ".*.svn.*")
-endforeach(HDRF ${BCAD_HDRS})
-file(GLOB_RECURSE BCAD_SRCS "${CMAKE_SOURCE_DIR}/src/*.c*")
-foreach(SRCF ${BCAD_SRCS})
-  if (NOT "${SRCF}" MATCHES ".*.svn.*")
-    if (NOT "${SRCF}" MATCHES ".*/other/*")
-      if (NOT "${SRCF}" MATCHES ".*/misc/*")
-	file(APPEND "${BCAD_SRCS_FILE}" "${SRCF}\n")
-      endif (NOT "${SRCF}" MATCHES ".*/misc/*")
-    endif (NOT "${SRCF}" MATCHES ".*/other/*")
-  endif (NOT "${SRCF}" MATCHES ".*.svn.*")
-endforeach(SRCF ${BCAD_SRCS})
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/brlcad_srcs.txt")
-BRLCAD_ADDEXEC(semchk "tests/semchk.cxx" "" NO_INSTALL)
-add_custom_command(
-  TARGET libbu PRE_BUILD
-  COMMAND $<TARGET_FILE:semchk> "${BCAD_SRCS_FILE}"
-  COMMENT "Validating BRL-CAD semaphore definitions"
-  DEPENDS semchk
-  )
+#set(BCAD_HDRS_FILE "${CMAKE_CURRENT_BINARY_DIR}/brlcad_headers.txt")
+#file(REMOVE "${BCAD_HDRS_FILE}")
+#file(GLOB_RECURSE BCAD_HDRS "${CMAKE_SOURCE_DIR}/include/*.h*")
+#foreach(HDRF ${BCAD_HDRS})
+#  if (NOT "${HDRF}" MATCHES ".*.svn.*")
+#    file(APPEND "${BCAD_HDRS_FILE}" "${HDRF}\n")
+#  endif (NOT "${HDRF}" MATCHES ".*.svn.*")
+#endforeach(HDRF ${BCAD_HDRS})
+#DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/brlcad_headers.txt")
+#BRLCAD_ADDEXEC(semchk "tests/semchk.cxx" "" NO_INSTALL)
+#add_custom_command(
+#  TARGET libbu PRE_BUILD
+#  COMMAND $<TARGET_FILE:semchk> "${BCAD_HDRS_FILE}"
+#  COMMENT "Validating BRL-CAD library semaphore definitions"
+#  DEPENDS semchk
+#  )
 
 BRLCAD_ADDDATA(fix.6r vfont)
 BRLCAD_ADDDATA(nonie.r.12 vfont)

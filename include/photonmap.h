@@ -53,6 +53,7 @@
 #define	PM_SHADOW	2	/* Current not used */
 #define	PM_IMPORTANCE	3
 
+
 /**
  *  Photon Map Data Structure
  */

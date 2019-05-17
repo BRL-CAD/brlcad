@@ -187,19 +187,41 @@ BU_EXPORT extern void bu_parallel(void (*func)(int func_cpu_id, void *func_data)
  * because bu_log() acquires semaphore #0 (BU_SEM_SYSCALL).
  */
 
-/*
- * Section for manifest constants for bu_semaphore_acquire()
+/**
+ *
  */
-#define BU_SEM_SYSCALL 0
-#define BU_SEM_LISTS 1
-#define BU_SEM_BN_NOISE 2
-#define BU_SEM_MAPPEDFILE 3
-#define BU_SEM_THREAD 4
-#define BU_SEM_MALLOC 5
-#define BU_SEM_DATETIME 6
-#define BU_SEM_HASH 7
-#define BU_SEM_DIR 8
-#define BU_SEM_LAST (BU_SEM_DIR+1) /* allocate this many for LIBBU+LIBBN */
+BU_EXPORT extern int bu_semaphore_register(const char *name);
+
+
+/**
+ * emaphores available for both library and application
+ * use.
+ *
+ */
+#define BU_SEMAPHORE_DEFINE(x) x = bu_semaphore_register(CPP_STR(x))
+
+/**
+ * This semaphore is intended for short-lived protection.
+ *
+ * It is provided for both library and application use, code that
+ * doesn't call into a BRL-CAD library.
+ */
+BU_EXPORT extern int BU_SEM_GENERAL;
+
+/**
+ * This semaphore is intended to protect general system calls.
+ *
+ * It is provided for both library and application use, code that
+ * doesn't call into a BRL-CAD library.
+ */
+BU_EXPORT extern int BU_SEM_SYSCALL;
+
+/**
+ * FIXME: this one shouldn't need to be global.
+ */
+BU_EXPORT extern int BU_SEM_MAPPEDFILE;
+
+
 /*
  * Automatic restart capability in bu_bomb().  The return from
  * BU_SETJUMP is the return from the setjmp().  It is 0 on the first
@@ -227,6 +249,8 @@ BU_EXPORT extern void bu_semaphore_init(unsigned int nsemaphores);
 
 /**
  * Release all initialized semaphores and any associated memory.
+ *
+ * FIXME: per hacking, rename to bu_semaphore_clear()
  */
 BU_EXPORT extern void bu_semaphore_free(void);
 

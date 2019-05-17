@@ -111,6 +111,8 @@
 void parallel_cpp11thread(void (*func)(int, void *), size_t ncpu, void *arg);
 #endif /* CPP11THREAD */
 
+int BU_SEM_THREAD;
+
 
 typedef enum {
     PARALLEL_GET = 0,

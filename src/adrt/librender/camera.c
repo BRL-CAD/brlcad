@@ -23,13 +23,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-
 #include "bio.h"
+
 #include "bu/parallel.h"
 #include "bu/dylib.h"
-#include "raytrace.h" /* for RT_SEM_TIE semaphore */
+#include "bu/parallel.h"
+#include "bu/log.h"
+#include "bu/str.h"
 
-#include "camera.h"
+#include "./camera.h"
+
 
 struct render_shader_s {
     const char *name;
@@ -408,15 +411,15 @@ render_camera_render_thread(int UNUSED(cpu), void *ptr)
 
     while (1) {
 	/* Determine if this scanline should be computed by this thread */
-	bu_semaphore_acquire(RT_SEM_TIE);
+	bu_semaphore_acquire(td->sem_tie_worker);
 	if (*td->scanline == td->tile->size_y) {
-	    bu_semaphore_release(RT_SEM_TIE);
+	    bu_semaphore_release(td->sem_tie_worker);
 	    return;
 	} else {
 	    scanline = *td->scanline;
 	    (*td->scanline)++;
 	}
-	bu_semaphore_release(RT_SEM_TIE);
+	bu_semaphore_release(td->sem_tie_worker);
 
 	v_scanline = scanline + td->tile->orig_y;
 	if (td->tile->format == RENDER_CAMERA_BIT_DEPTH_24) {
@@ -542,6 +545,7 @@ render_camera_render(render_camera_t *camera, struct tie_s *tie, camera_tile_t *
     td.res_buf = &((char *)result->data)[result->ind];
     scanline = 0;
     td.scanline = &scanline;
+    td.sem_tie_worker = bu_semaphore_register("sem_tie_worker");
 
     bu_parallel(render_camera_render_thread, camera->thread_num, &td);
 

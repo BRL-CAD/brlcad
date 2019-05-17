@@ -1,4 +1,4 @@
-/*                          I N I T . C
+/*                     B U _ I N I T . C P P
  * BRL-CAD
  *
  * Copyright (c) 2019 United States Government as represented by
@@ -38,28 +38,24 @@
 #include "bu/app.h"
 #include "bu/parallel.h"
 
+#include <iostream>
 
+
+/* These ARE exported outside LIBBU */
 int BU_SEM_GENERAL;
 int BU_SEM_SYSCALL;
 int BU_SEM_BN_NOISE;
 int BU_SEM_MAPPEDFILE;
-int BU_SEM_THREAD;
-int BU_SEM_MALLOC;
-int BU_SEM_DATETIME;
-int BU_SEM_DIR;
 
-/* The Visual C compiler pragmas needed for INITIALIZE specify a "read"
- * attribute, which is conflicting with the system definition of read:
- *
- * #define read _read
- *
- * For the INITIALIZE macro to work with Visual C, we have to first #undef
- * read anywhere we call it so the subsequent macro expansion will work. */
-#if defined(_WIN32)
-#  undef read
-#endif
+/* These ARE NOT exported outside LIBBU */
+extern "C" int BU_SEM_DATETIME;
+extern "C" int BU_SEM_DIR;
+extern "C" int BU_SEM_MALLOC;
+extern "C" int BU_SEM_THREAD;
 
-INITIALIZE(libbu)
+
+static void
+libbu_init(void)
 {
     char iwd[MAXPATHLEN] = {0};
 
@@ -74,6 +70,27 @@ INITIALIZE(libbu)
 
     bu_getiwd(iwd, MAXPATHLEN);
 }
+
+
+static void
+libbu_clear(void)
+{
+    bu_semaphore_free();
+}
+
+
+struct libbu_initializer {
+    /* constructor */
+    libbu_initializer() {
+	libbu_init();
+    }
+    /* destructor */
+    ~libbu_initializer() {
+	libbu_clear();
+    }
+};
+
+static libbu_initializer LIBBU;
 
 
 /*
