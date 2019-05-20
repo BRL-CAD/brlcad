@@ -142,11 +142,11 @@
  * down into LIBRT.  External applications should not use this.
  */
 #define RT_DBNHASH              8192    /**< @brief hash table is an
-                                         * array of linked lists with
-                                         * this many array pointer
-                                         * elements (Memory use for
-                                         * 32-bit: 32KB, 64-bit: 64KB)
-                                         */
+					 * array of linked lists with
+					 * this many array pointer
+					 * elements (Memory use for
+					 * 32-bit: 32KB, 64-bit: 64KB)
+					 */
 
 #if     ((RT_DBNHASH)&((RT_DBNHASH)-1)) != 0
 /**

@@ -128,27 +128,27 @@ struct bg_3d_spsr_opts {
 #define BG_3D_SPSR_DEFAULT_LINEARFIT         0
 #define BG_3D_SPSR_DEFAULT_EXACT             1
 
-#define BG_3D_SPSR_OPTS_DEFAULT { \
-    BG_3D_SPSR_DEFAULT_DEGREE           , \
-    BG_3D_SPSR_BOUNDARY_NEUMANN         , \
-    BG_3D_SPSR_DEFAULT_DEPTH            , \
-    BG_3D_SPSR_DEFAULT_KERNELDEPTH      , \
-    BG_3D_SPSR_DEFAULT_ITERATIONS       , \
-    BG_3D_SPSR_DEFAULT_FULL_DEPTH       , \
-    BG_3D_SPSR_DEFAULT_BASE_DEPTH       , \
-    BG_3D_SPSR_DEFAULT_BASEVCYCLES      , \
-    BG_3D_SPSR_DEFAULT_MAX_MEM          , \
-    BG_3D_SPSR_DEFAULT_THREADS          , \
-    BG_3D_SPSR_DEFAULT_SAMPLES_PER_NODE , \
-    BG_3D_SPSR_DEFAULT_SCALE            , \
-    BG_3D_SPSR_DEFAULT_WIDTH            , \
-    BG_3D_SPSR_DEFAULT_CONFIDENCE       , \
-    BG_3D_SPSR_DEFAULT_CONFIDENCE_BIAS  , \
-    BG_3D_SPSR_DEFAULT_CGSOLVER_ACCURACY, \
-    BG_3D_SPSR_DEFAULT_POINT_WEIGHT     , \
-    BG_3D_SPSR_DEFAULT_NONMANIFOLD      , \
-    BG_3D_SPSR_DEFAULT_LINEARFIT        , \
-    BG_3D_SPSR_DEFAULT_EXACT            }
+#define BG_3D_SPSR_OPTS_DEFAULT  { \
+	BG_3D_SPSR_DEFAULT_DEGREE           , \
+	BG_3D_SPSR_BOUNDARY_NEUMANN         , \
+	BG_3D_SPSR_DEFAULT_DEPTH            , \
+	BG_3D_SPSR_DEFAULT_KERNELDEPTH      , \
+	BG_3D_SPSR_DEFAULT_ITERATIONS       , \
+	BG_3D_SPSR_DEFAULT_FULL_DEPTH       , \
+	BG_3D_SPSR_DEFAULT_BASE_DEPTH       , \
+	BG_3D_SPSR_DEFAULT_BASEVCYCLES      , \
+	BG_3D_SPSR_DEFAULT_MAX_MEM          , \
+	BG_3D_SPSR_DEFAULT_THREADS          , \
+	BG_3D_SPSR_DEFAULT_SAMPLES_PER_NODE , \
+	BG_3D_SPSR_DEFAULT_SCALE            , \
+	BG_3D_SPSR_DEFAULT_WIDTH            , \
+	BG_3D_SPSR_DEFAULT_CONFIDENCE       , \
+	BG_3D_SPSR_DEFAULT_CONFIDENCE_BIAS  , \
+	BG_3D_SPSR_DEFAULT_CGSOLVER_ACCURACY, \
+	BG_3D_SPSR_DEFAULT_POINT_WEIGHT     , \
+	BG_3D_SPSR_DEFAULT_NONMANIFOLD      , \
+	BG_3D_SPSR_DEFAULT_LINEARFIT        , \
+	BG_3D_SPSR_DEFAULT_EXACT            }
 
 /**
  *@brief
@@ -168,8 +168,8 @@ struct bg_3d_spsr_opts {
  *
  */
 BG_EXPORT int bg_3d_spsr(int **faces, int *num_faces, point_t **vertices, int *num_vertices,
-	                 const point_t *input_points_3d, const vect_t *input_normals_3d,
-	                 int num_input_pnts, struct bg_3d_spsr_opts *opts);
+			 const point_t *input_points_3d, const vect_t *input_normals_3d,
+			 int num_input_pnts, struct bg_3d_spsr_opts *opts);
 
 __END_DECLS
 

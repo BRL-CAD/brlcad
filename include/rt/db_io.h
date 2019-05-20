@@ -354,7 +354,7 @@ RT_EXPORT extern unsigned char *db5_encode_length(unsigned char *cp,
  * NULL, on error.
  */
 RT_EXPORT extern const unsigned char *db5_get_raw_internal_ptr(struct db5_raw_internal *rip,
-								const unsigned char *ip);
+							       const unsigned char *ip);
 
 
 /**

@@ -47,8 +47,9 @@
 
 #  if defined(_WIN32) && !defined(__CYGWIN__) && !defined(__MINGW32__)
 #    include "brlcad_config.h"
-#    /* Put this after brlcad_config.h, since some of the tests
-       	in here require defines from brlcad_config.h */
+    /* Put Windows config after brlcad_config.h, since some of the
+     * tests in it require defines from brlcad_config.h
+     */
 #    include "config_win.h"
 #  else
 #    include "brlcad_config.h"
@@ -196,9 +197,9 @@ typedef ptrdiff_t ssize_t;
  */
 #if !defined(INT8_MAX) || !defined(INT16_MAX) || !defined(INT32_MAX) || !defined(INT64_MAX)
 #  if (defined _MSC_VER && (_MSC_VER <= 1500))
-     /* Older Versions of Visual C++ seem to need pstdint.h
-      * but still pass the tests below, so force it based on
-      * version (ugh.) */
+    /* Older Versions of Visual C++ seem to need pstdint.h but still
+     * pass the tests below, so force it based on version (ugh.)
+     */
 #    include "pstdint.h"
 #  elif defined(__STDC__) || defined(__STRICT_ANSI__) || defined(__SIZE_TYPE__) || defined(HAVE_STDINT_H)
 #    if !defined(__STDC_LIMIT_MACROS)
@@ -301,13 +302,13 @@ typedef ptrdiff_t ssize_t;
 #  undef UNUSED
 #endif
 #if GCC_PREREQ(2, 5)
-   /* GCC-style compilers have an attribute */
+/* GCC-style compilers have an attribute */
 #  define UNUSED(parameter) UNUSED_ ## parameter __attribute__((unused))
 #elif defined(__cplusplus)
-   /* C++ allows the name to go away */
+/* C++ allows the name to go away */
 #  define UNUSED(parameter) /* parameter */
 #else
-   /* some are asserted when !NDEBUG */
+/* some are asserted when !NDEBUG */
 #  define UNUSED(parameter) (parameter)
 #endif
 
@@ -380,8 +381,8 @@ typedef ptrdiff_t ssize_t;
  */
 #if defined(_MSC_VER) && defined(__STDC__)
 #  include <tchar.h>
-   /* MSVC++ misses this. */
-   typedef _TCHAR TCHAR;
+/* MSVC++ misses this. */
+typedef _TCHAR TCHAR;
 #endif
 
 /* Avoid -Wundef warnings for system headers that use __STDC_VERSION__ without
@@ -445,9 +446,9 @@ typedef ptrdiff_t ssize_t;
  *   extern const int var = 10;
  */
 #if defined(__cplusplus)
-  #define EXTERNVARINIT extern
+#  define EXTERNVARINIT extern
 #else
-  #define EXTERNVARINIT
+#  define EXTERNVARINIT
 #endif
 
 /**

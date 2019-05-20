@@ -53,12 +53,12 @@ struct rt_db_internal {
 };
 #define idb_type                idb_minor_type
 #define RT_DB_INTERNAL_INIT(_p) { \
-        (_p)->idb_magic = RT_DB_INTERNAL_MAGIC; \
-        (_p)->idb_major_type = -1; \
-        (_p)->idb_minor_type = -1; \
-        (_p)->idb_meth = (const struct rt_functab *) ((void *)0); \
-        (_p)->idb_ptr = ((void *)0); \
-        bu_avs_init_empty(&(_p)->idb_avs); \
+	(_p)->idb_magic = RT_DB_INTERNAL_MAGIC; \
+	(_p)->idb_major_type = -1; \
+	(_p)->idb_minor_type = -1; \
+	(_p)->idb_meth = (const struct rt_functab *) ((void *)0); \
+	(_p)->idb_ptr = ((void *)0); \
+	bu_avs_init_empty(&(_p)->idb_avs); \
     }
 #define RT_CK_DB_INTERNAL(_p) BU_CKMAG(_p, RT_DB_INTERNAL_MAGIC, "rt_db_internal")
 
@@ -71,10 +71,10 @@ struct rt_db_internal {
  * id On success.
  */
 RT_EXPORT extern int rt_db_get_internal(struct rt_db_internal   *ip,
-                                        const struct directory  *dp,
-                                        const struct db_i       *dbip,
-                                        const mat_t             mat,
-                                        struct resource         *resp);
+					const struct directory  *dp,
+					const struct db_i       *dbip,
+					const mat_t             mat,
+					struct resource         *resp);
 
 /**
  * Convert the internal representation of a solid to the external one,
@@ -86,9 +86,9 @@ RT_EXPORT extern int rt_db_get_internal(struct rt_db_internal   *ip,
  * 0 success
  */
 RT_EXPORT extern int rt_db_put_internal(struct directory        *dp,
-                                        struct db_i             *dbip,
-                                        struct rt_db_internal   *ip,
-                                        struct resource         *resp);
+					struct db_i             *dbip,
+					struct rt_db_internal   *ip,
+					struct resource         *resp);
 
 /**
  * Put an object in internal format out onto a file in external
@@ -104,9 +104,9 @@ RT_EXPORT extern int rt_db_put_internal(struct directory        *dp,
  * <0 error
  */
 RT_EXPORT extern int rt_fwrite_internal(FILE *fp,
-                                        const char *name,
-                                        const struct rt_db_internal *ip,
-                                        double conv2mm);
+					const char *name,
+					const struct rt_db_internal *ip,
+					double conv2mm);
 RT_EXPORT extern void rt_db_free_internal(struct rt_db_internal *ip);
 
 /**
@@ -118,11 +118,11 @@ RT_EXPORT extern void rt_db_free_internal(struct rt_db_internal *ip);
  * ID_NULL on error, otherwise returns the type of the object.
  */
 RT_EXPORT extern int rt_db_lookup_internal(struct db_i *dbip,
-                                           const char *obj_name,
-                                           struct directory **dpp,
-                                           struct rt_db_internal *ip,
-                                           int noisy,
-                                           struct resource *resp);
+					   const char *obj_name,
+					   struct directory **dpp,
+					   struct rt_db_internal *ip,
+					   int noisy,
+					   struct resource *resp);
 
 
 __END_DECLS

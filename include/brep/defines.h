@@ -33,11 +33,11 @@
 #ifdef __cplusplus
 extern "C++" {
 #define ON_NO_WINDOWS 1 /* don't let opennurbs include windows.h */
-    /* Note - We aren't (yet) including opennurbs in our Doxygen output. Until we
-     * do, use cond to hide the opennurbs header from Doxygen. */
-    /* @cond */
+/* Note - We aren't (yet) including opennurbs in our Doxygen output. Until we
+ * do, use cond to hide the opennurbs header from Doxygen. */
+/* @cond */
 #include "opennurbs.h"
-    /* @endcond */
+/* @endcond */
 }
 #endif
 
@@ -64,7 +64,7 @@ extern "C++" {
  * compiling with a C compiler
  */
 typedef struct _on_brep_placeholder {
-        int dummy; /* MS Visual C hack which can be removed if the struct contains something meaningful */
+    int dummy; /* MS Visual C hack which can be removed if the struct contains something meaningful */
 } ON_Brep;
 #endif
 

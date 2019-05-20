@@ -315,10 +315,10 @@ struct arbn_rec {
 }; /* struct arbn_rec */
 
 struct exported_pipept  {
-	    unsigned char	epp_coord[8*3];
-	    unsigned char	epp_bendradius[8];
-	    unsigned char	epp_id[8];
-	    unsigned char	epp_od[8];
+    unsigned char	epp_coord[8*3];
+    unsigned char	epp_bendradius[8];
+    unsigned char	epp_id[8];
+    unsigned char	epp_od[8];
 }; /* exported_pipept */
 
 struct pipewire_rec {

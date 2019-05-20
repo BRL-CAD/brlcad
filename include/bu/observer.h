@@ -64,7 +64,7 @@ struct bu_observer_list {
  * initializes a bu_observer struct without allocating any memory.
  */
 #define BU_OBSERVER_INIT(_op) { \
-    (_op)->magic = BU_OBSERVER_MAGIC; \
+	(_op)->magic = BU_OBSERVER_MAGIC; \
 	BU_VLS_INIT(&(_op)->observer); \
 	BU_VLS_INIT(&(_op)->cmd); \
     }

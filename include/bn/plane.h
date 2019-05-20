@@ -127,16 +127,16 @@ BN_EXPORT extern int bn_distsq_line3_line3(fastf_t dist[3],
  * (PCA).
  *
  @code
-			P
-		       *
-		      /.
-		     / .
-		    /  .
-		   /   . (dist)
-		  /    .
-		 /     .
-		*------*-------->
-		A      PCA    dir
+ //         P
+ //         *
+ //        /.
+ //       / .
+ //      /  .
+ //     /   . (dist)
+ //    /    .
+ //   /     .
+ //  *------*-------->
+ //  A      PCA    dir
  @endcode
  * There are three distinct cases, with these return codes -
  *   0 => P is within tolerance of point A.  *dist = 0, pca=A.
@@ -385,9 +385,9 @@ BN_EXPORT extern int bn_dist_pt2_lseg2(fastf_t *dist_sq,
  * @param tol	tolerance values
  */
 BN_EXPORT extern int bn_isect_lseg3_lseg3(fastf_t *dist,
-					      const point_t p, const vect_t pdir,
-					      const point_t q, const vect_t qdir,
-					      const struct bn_tol *tol);
+					  const point_t p, const vect_t pdir,
+					  const point_t q, const vect_t qdir,
+					  const struct bn_tol *tol);
 
 BN_EXPORT extern int bn_lseg3_lseg3_parallel(const point_t sg1pt1, const point_t sg1pt2,
 					     const point_t sg2pt1, const point_t sg2pt2,
@@ -435,11 +435,11 @@ BN_EXPORT extern int bn_lseg3_lseg3_parallel(const point_t sg1pt1, const point_t
  *		negative. The same occurs for the distance to point q1.
  */
 BN_EXPORT extern int bn_isect_line3_line3(fastf_t *s, fastf_t *t,
-					      const point_t p0,
-					      const vect_t u,
-					      const point_t q0,
-					      const vect_t v,
-					      const struct bn_tol *tol);
+					  const point_t p0,
+					  const vect_t u,
+					  const point_t q0,
+					  const vect_t v,
+					  const struct bn_tol *tol);
 
 /**
  * @brief

@@ -36,9 +36,9 @@
 
 __BEGIN_DECLS
 
-/*********************************************************
-  Operations on 2D point types
- *********************************************************/
+/********************************
+ * Operations on 2D point types *
+ ********************************/
 
 /**
  * @brief
@@ -127,9 +127,9 @@ typedef enum {
  * @return 1 if triangulation is unsuccessful
  */
 BG_EXPORT extern int bg_nested_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
-	const int *poly, const size_t poly_npts,
-       	const int **holes_array, const size_t *holes_npts, const size_t nholes,
-       	const point2d_t *pts, const size_t npts, triangulation_t type);
+						   const int *poly, const size_t poly_npts,
+						   const int **holes_array, const size_t *holes_npts, const size_t nholes,
+						   const point2d_t *pts, const size_t npts, triangulation_t type);
 
 /**
  * @brief
@@ -158,13 +158,13 @@ BG_EXPORT extern int bg_nested_polygon_triangulate(int **faces, int *num_faces, 
  * @return 1 if triangulation is unsuccessful
  */
 BG_EXPORT extern int bg_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
-	const point2d_t *pts, const size_t npts, triangulation_t type);
+					    const point2d_t *pts, const size_t npts, triangulation_t type);
 
 
 /*********************************************************
   Operations on 3D point types - these are assumed to be
   polygons embedded in 3D planes in space
- *********************************************************/
+*********************************************************/
 
 /**
  * @brief

@@ -79,45 +79,45 @@ struct partition {
     (((char *)&(p)->RT_PT_MIDDLE_END) - ((char *)&(p)->RT_PT_MIDDLE_START))
 
 #define RT_DUP_PT(ip, new, old, res) { \
-        GET_PT(ip, new, res); \
-        memcpy((char *)(&(new)->RT_PT_MIDDLE_START), (char *)(&(old)->RT_PT_MIDDLE_START), RT_PT_MIDDLE_LEN(old)); \
-        (new)->pt_overlap_reg = NULL; \
-        bu_ptbl_cat(&(new)->pt_seglist, &(old)->pt_seglist);  }
+	GET_PT(ip, new, res); \
+	memcpy((char *)(&(new)->RT_PT_MIDDLE_START), (char *)(&(old)->RT_PT_MIDDLE_START), RT_PT_MIDDLE_LEN(old)); \
+	(new)->pt_overlap_reg = NULL; \
+	bu_ptbl_cat(&(new)->pt_seglist, &(old)->pt_seglist);  }
 
 /** Clear out the pointers, empty the hit list */
 #define GET_PT_INIT(ip, p, res) {\
-        GET_PT(ip, p, res); \
-        memset(((char *) &(p)->RT_PT_MIDDLE_START), 0, RT_PT_MIDDLE_LEN(p)); }
+	GET_PT(ip, p, res); \
+	memset(((char *) &(p)->RT_PT_MIDDLE_START), 0, RT_PT_MIDDLE_LEN(p)); }
 
 #define GET_PT(ip, p, res) { \
-        if (BU_LIST_NON_EMPTY_P(p, partition, &res->re_parthead)) { \
-            BU_LIST_DEQUEUE((struct bu_list *)(p)); \
-            bu_ptbl_reset(&(p)->pt_seglist); \
-        } else { \
-            BU_ALLOC((p), struct partition); \
-            (p)->pt_magic = PT_MAGIC; \
-            bu_ptbl_init(&(p)->pt_seglist, 42, "pt_seglist ptbl"); \
-            (res)->re_partlen++; \
-        } \
-        res->re_partget++; }
+	if (BU_LIST_NON_EMPTY_P(p, partition, &res->re_parthead)) { \
+	    BU_LIST_DEQUEUE((struct bu_list *)(p)); \
+	    bu_ptbl_reset(&(p)->pt_seglist); \
+	} else { \
+	    BU_ALLOC((p), struct partition); \
+	    (p)->pt_magic = PT_MAGIC; \
+	    bu_ptbl_init(&(p)->pt_seglist, 42, "pt_seglist ptbl"); \
+	    (res)->re_partlen++; \
+	} \
+	res->re_partget++; }
 
 #define FREE_PT(p, res) { \
-        BU_LIST_APPEND(&(res->re_parthead), (struct bu_list *)(p)); \
-        if ((p)->pt_overlap_reg) { \
-            bu_free((void *)((p)->pt_overlap_reg), "pt_overlap_reg");\
-            (p)->pt_overlap_reg = NULL; \
-        } \
-        res->re_partfree++; }
+	BU_LIST_APPEND(&(res->re_parthead), (struct bu_list *)(p)); \
+	if ((p)->pt_overlap_reg) { \
+	    bu_free((void *)((p)->pt_overlap_reg), "pt_overlap_reg");\
+	    (p)->pt_overlap_reg = NULL; \
+	} \
+	res->re_partfree++; }
 
 #define RT_FREE_PT_LIST(_headp, _res) { \
-        register struct partition *_pp, *_zap; \
-        for (_pp = (_headp)->pt_forw; _pp != (_headp);) { \
-            _zap = _pp; \
-            _pp = _pp->pt_forw; \
-            BU_LIST_DEQUEUE((struct bu_list *)(_zap)); \
-            FREE_PT(_zap, _res); \
-        } \
-        (_headp)->pt_forw = (_headp)->pt_back = (_headp); \
+	register struct partition *_pp, *_zap; \
+	for (_pp = (_headp)->pt_forw; _pp != (_headp);) { \
+	    _zap = _pp; \
+	    _pp = _pp->pt_forw; \
+	    BU_LIST_DEQUEUE((struct bu_list *)(_zap)); \
+	    FREE_PT(_zap, _res); \
+	} \
+	(_headp)->pt_forw = (_headp)->pt_back = (_headp); \
     }
 
 /** Insert "new" partition in front of "old" partition.  Note order change */

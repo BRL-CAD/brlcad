@@ -64,7 +64,7 @@ __BEGIN_DECLS
 GED_EXPORT void dl_set_iflag(struct bu_list *hdlp, int iflag);
 GED_EXPORT extern void dl_color_soltab(struct bu_list *hdlp);
 GED_EXPORT extern void dl_erasePathFromDisplay(struct bu_list *hdlp,
-	                                       struct db_i *dbip,
+					       struct db_i *dbip,
 					       void (*callback)(unsigned int, int),
 					       const char *path,
 					       int allow_split,

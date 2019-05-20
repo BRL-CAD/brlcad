@@ -63,8 +63,8 @@ typedef struct bu_color bu_color_t;
  * initializes a bu_color struct without allocating any memory.
  */
 #define BU_COLOR_INIT(_c) { \
-    (_c)->buc_rgb[RED] = (_c)->buc_rgb[GRN] = (_c)->buc_rgb[BLU] = 0; (_c)->buc_rgb[ALP]; \
-}
+	(_c)->buc_rgb[RED] = (_c)->buc_rgb[GRN] = (_c)->buc_rgb[BLU] = 0; (_c)->buc_rgb[ALP]; \
+    }
 
 /**
  * macro suitable for declaration statement initialization of a bu_color

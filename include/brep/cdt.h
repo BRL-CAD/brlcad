@@ -92,11 +92,11 @@ ON_Brep_CDT_Status(struct ON_Brep_CDT_State *s);
  */
 extern BREP_EXPORT int
 ON_Brep_CDT_VList(
-	struct bn_vlblock *vbp,
-	struct bu_list *vlfree,
-	struct bu_color *c,
-	int mode,
-	const struct ON_Brep_CDT_State *s);
+    struct bn_vlblock *vbp,
+    struct bu_list *vlfree,
+    struct bu_color *c,
+    int mode,
+    const struct ON_Brep_CDT_State *s);
 
 #if 0
 /* Given two or more triangulation states, refine them to clear any face
@@ -123,11 +123,11 @@ ON_Brep_CDT_UnResolvable_Ovlps(std::vector<struct ON_Brep_CDT_State *> *ovlps, s
  * in the form of integer and fastf_t arrays. */
 extern BREP_EXPORT int
 ON_Brep_CDT_Mesh(
-	int **faces, int *fcnt,
-	fastf_t **vertices, int *vcnt,
-	int **face_normals, int *fn_cnt,
-	fastf_t **normals, int *ncnt,
-	struct ON_Brep_CDT_State *s);
+    int **faces, int *fcnt,
+    fastf_t **vertices, int *vcnt,
+    int **face_normals, int *fn_cnt,
+    fastf_t **normals, int *ncnt,
+    struct ON_Brep_CDT_State *s);
 
 
 

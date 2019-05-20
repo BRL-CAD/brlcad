@@ -142,9 +142,9 @@ struct rt_i {
  * } RT_VISIT_ALL_SOLTABS_END
  */
 #define RT_VISIT_ALL_SOLTABS_START(_s, _rti) { \
-            register struct bu_list *_head = &((_rti)->rti_solidheads[0]); \
-            for (; _head < &((_rti)->rti_solidheads[RT_DBNHASH]); _head++) \
-                for (BU_LIST_FOR(_s, soltab, _head)) {
+    register struct bu_list *_head = &((_rti)->rti_solidheads[0]); \
+    for (; _head < &((_rti)->rti_solidheads[RT_DBNHASH]); _head++) \
+	for (BU_LIST_FOR(_s, soltab, _head)) {
 
 #define RT_VISIT_ALL_SOLTABS_END        } }
 
@@ -158,7 +158,7 @@ RT_EXPORT extern struct rt_i *rt_new_rti(struct db_i *dbip);
 RT_EXPORT extern void rt_free_rti(struct rt_i *rtip);
 RT_EXPORT extern void rt_prep(struct rt_i *rtip);
 RT_EXPORT extern void rt_prep_parallel(struct rt_i *rtip,
-	                                       int ncpu);
+				       int ncpu);
 
 
 /* Get expr tree for object */
@@ -174,10 +174,10 @@ RT_EXPORT extern void rt_prep_parallel(struct rt_i *rtip,
  * Note: -2 returns from rt_gettrees_and_attrs are filtered.
  */
 RT_EXPORT extern int rt_gettree(struct rt_i *rtip,
-                                const char *node);
+				const char *node);
 RT_EXPORT extern int rt_gettrees(struct rt_i *rtip,
-                                 int argc,
-                                 const char **argv, int ncpus);
+				 int argc,
+				 const char **argv, int ncpus);
 
 /**
  * User-called function to add a set of tree hierarchies to the active
@@ -198,9 +198,9 @@ RT_EXPORT extern int rt_gettrees(struct rt_i *rtip,
  * -2 If there were unresolved names
  */
 RT_EXPORT extern int rt_gettrees_and_attrs(struct rt_i *rtip,
-                                           const char **attrs,
-                                           int argc,
-                                           const char **argv, int ncpus);
+					   const char **attrs,
+					   int argc,
+					   const char **argv, int ncpus);
 
 
 /**
@@ -235,19 +235,19 @@ RT_EXPORT extern int rt_gettrees_and_attrs(struct rt_i *rtip,
  * -1 On major error
  */
 RT_EXPORT extern int rt_gettrees_muves(struct rt_i *rtip,
-                                       const char **attrs,
-                                       int argc,
-                                       const char **argv,
-                                       int ncpus);
+				       const char **attrs,
+				       int argc,
+				       const char **argv,
+				       int ncpus);
 
 DEPRECATED RT_EXPORT extern int rt_load_attrs(struct rt_i *rtip,
-	                                              char **attrs);
+					      char **attrs);
 
 
 /* Print the partitions */
 RT_EXPORT extern void rt_pr_partitions(const struct rt_i *rtip,
-	const struct partition *phead,
-	const char *title);
+				       const struct partition *phead,
+				       const char *title);
 
 /**
  * @brief
@@ -258,7 +258,7 @@ RT_EXPORT extern void rt_pr_partitions(const struct rt_i *rtip,
  * soltab pointer, or RT_SOLTAB_NULL.
  */
 RT_EXPORT extern struct soltab *rt_find_solid(const struct rt_i *rtip,
-	                                              const char *name);
+					      const char *name);
 
 /**
  * initialize a memory resource structure for use during ray tracing.
@@ -280,38 +280,38 @@ RT_EXPORT extern void rt_init_resource(struct resource *resp, int cpu_num, struc
 
 
 RT_EXPORT extern void rt_clean_resource(struct rt_i *rtip,
-                                        struct resource *resp);
+					struct resource *resp);
 RT_EXPORT extern void rt_clean_resource_complete(struct rt_i *rtip,
-                                                 struct resource *resp);
+						 struct resource *resp);
 
 
 /* Plot a solid */
 int rt_plot_solid(
-	FILE                *fp,
-	struct rt_i         *rtip,
-	const struct soltab *stp,
-	struct resource     *resp);
+    FILE                *fp,
+    struct rt_i         *rtip,
+    const struct soltab *stp,
+    struct resource     *resp);
 
 /* Release storage assoc with rt_i */
 RT_EXPORT extern void rt_clean(struct rt_i *rtip);
 RT_EXPORT extern int rt_del_regtree(struct rt_i *rtip,
-	struct region *delregp,
-	struct resource *resp);
+				    struct region *delregp,
+				    struct resource *resp);
 /* Check in-memory data structures */
 RT_EXPORT extern void rt_ck(struct rt_i *rtip);
 
 /* Print value of tree for a partition */
 RT_EXPORT extern void rt_pr_tree_val(const union tree *tp,
-	                             const struct partition *partp,
+				     const struct partition *partp,
 				     int pr_name, int lvl);
 /* Print a partition */
 RT_EXPORT extern void rt_pr_pt(const struct rt_i *rtip,
-	                       const struct partition *pp);
+			       const struct partition *pp);
 RT_EXPORT extern void rt_pr_pt_vls(struct bu_vls *v,
-                                   const struct rt_i *rtip,
-                                   const struct partition *pp);
+				   const struct rt_i *rtip,
+				   const struct partition *pp);
 RT_EXPORT extern void rt_pr_pt(const struct rt_i *rtip,
-                               const struct partition *pp);
+			       const struct partition *pp);
 
 
 /**
@@ -324,7 +324,7 @@ RT_EXPORT extern void rt_pr_pt(const struct rt_i *rtip,
  * rt_prep().
  */
 RT_EXPORT extern void rt_cut_it(struct rt_i *rtip,
-                                int ncpu);
+				int ncpu);
 
 /* free a cut tree */
 /**
@@ -333,7 +333,7 @@ RT_EXPORT extern void rt_cut_it(struct rt_i *rtip,
  * clobber rti_CutHead !
  */
 RT_EXPORT extern void rt_fr_cut(struct rt_i *rtip,
-                                union cutter *cutp);
+				union cutter *cutp);
 
 /**
  * Apply any deltas to reg_regionid values to allow old applications

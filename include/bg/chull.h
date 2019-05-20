@@ -118,9 +118,9 @@ BG_EXPORT int bg_3d_coplanar_chull(point_t** hull, const point_t* points_3d, int
  *
  * This routine is based off of Antti Kuukka's implementation of the QuickHull
  * algorithm: https://github.com/akuukka/quickhull implementation
-*/
+ */
 BG_EXPORT int bg_3d_chull(int **faces, int *num_faces, point_t **vertices, int *num_vertices,
-                          const point_t *input_points_3d, int num_input_pnts);
+			  const point_t *input_points_3d, int num_input_pnts);
 
 
 __END_DECLS

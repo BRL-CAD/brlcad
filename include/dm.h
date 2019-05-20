@@ -240,9 +240,9 @@ DM_EXPORT extern dm dm_osgl;
 
 DM_EXPORT extern int Dm_Init(void *interp);
 DM_EXPORT extern dm *dm_open(Tcl_Interp *interp,
-				    int type,
-				    int argc,
-				    const char *argv[]);
+			     int type,
+			     int argc,
+			     const char *argv[]);
 DM_EXPORT extern void *dm_interp(dm *dmp);
 DM_EXPORT extern int dm_share_dlist(dm *dmp1,
 				    dm *dmp2);
@@ -301,8 +301,8 @@ DM_EXPORT extern int dm_draw_labels(dm *dmp,
 				    mat_t viewmat,
 				    int *labelsColor,
 				    int (*labelsHook)(dm *dmp_arg, struct rt_wdb *wdbp_arg,
-                                                      const char *name_arg, mat_t viewmat_arg,
-                                                      int *labelsColor_arg, ClientData labelsHookClientdata_arg),
+						      const char *name_arg, mat_t viewmat_arg,
+						      int *labelsColor_arg, ClientData labelsHookClientdata_arg),
 				    ClientData labelsHookClientdata);
 
 /* rect.c */
@@ -411,23 +411,23 @@ DM_EXPORT extern fastf_t *dm_get_vp(dm *dmp);
 DM_EXPORT extern void dm_set_vp(dm *dmp, fastf_t *vp);
 
 DM_EXPORT extern int dm_set_hook(const struct bu_structparse_map *map,
-       	const char *key, void *data, struct dm_hook_data *hook);
+				 const char *key, void *data, struct dm_hook_data *hook);
 
 DM_EXPORT extern struct bu_structparse *dm_get_vparse(dm *dmp);
 DM_EXPORT extern void *dm_get_mvars(dm *dmp);
 
 DM_EXPORT extern int dm_draw_display_list(dm *dmp,
-	struct bu_list *dl,
-	fastf_t transparency_threshold,
-	fastf_t inv_viewsize,
-	short r, short g, short b,
-	int line_width,
-	int draw_style,
-	int draw_edit,
-	unsigned char *gdc,
-	int solids_down,
-	int mv_dlist
-	);
+					  struct bu_list *dl,
+					  fastf_t transparency_threshold,
+					  fastf_t inv_viewsize,
+					  short r, short g, short b,
+					  int line_width,
+					  int draw_style,
+					  int draw_edit,
+					  unsigned char *gdc,
+					  int solids_down,
+					  int mv_dlist
+					 );
 
 DM_EXPORT extern int dm_default_type();
 

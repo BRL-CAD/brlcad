@@ -55,15 +55,15 @@ struct rt_reprep_obj_list {
 
 /* prep.c */
 RT_EXPORT extern int rt_unprep(struct rt_i *rtip,
-                               struct rt_reprep_obj_list *objs,
-                               struct resource *resp);
+			       struct rt_reprep_obj_list *objs,
+			       struct resource *resp);
 RT_EXPORT extern int rt_reprep(struct rt_i *rtip,
-                               struct rt_reprep_obj_list *objs,
-                               struct resource *resp);
+			       struct rt_reprep_obj_list *objs,
+			       struct resource *resp);
 RT_EXPORT extern int re_prep_solids(struct rt_i *rtip,
-                                    int num_solids,
-                                    char **solid_names,
-                                    struct resource *resp);
+				    int num_solids,
+				    char **solid_names,
+				    struct resource *resp);
 
 
 __END_DECLS

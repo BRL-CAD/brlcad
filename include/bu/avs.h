@@ -48,8 +48,8 @@ __BEGIN_DECLS
 /** for attr and avs use.
  */
 typedef enum {
-  BU_ATTR_CREATED,
-  BU_ATTR_MODIFIED
+    BU_ATTR_CREATED,
+    BU_ATTR_MODIFIED
 } bu_attr_time_t;
 
 /**
@@ -135,11 +135,11 @@ typedef struct bu_attribute_value_set bu_avs_t;
  @code
  void
  print_avs(struct bu_attribute_value_set *avs) {
-   struct bu_attribute_value_pair *avpp;
+ struct bu_attribute_value_pair *avpp;
 
-   for (BU_AVS_FOR(avpp, avs)) {
-     bu_log("key=%s, value=%s\n", avpp->name, avpp->value);
-   }
+ for (BU_AVS_FOR(avpp, avs)) {
+ bu_log("key=%s, value=%s\n", avpp->name, avpp->value);
+ }
  }
  @endcode
  *
@@ -155,8 +155,8 @@ typedef struct bu_attribute_value_set bu_avs_t;
  */
 #define AVS_IS_FREEABLE(_avsp, _p)	\
     ((_avsp)->readonly_max == NULL \
-     || (const void *)(_p) < (_avsp)->readonly_min \
-     || (const void *)(_p) > (_avsp)->readonly_max)
+    || (const void *)(_p) < (_avsp)->readonly_min \
+    || (const void *)(_p) > (_avsp)->readonly_max)
 
 
 /**

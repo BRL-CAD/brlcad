@@ -35,16 +35,16 @@ __BEGIN_DECLS
 
 /* BREP drawing routines */
 RT_EXPORT extern int rt_brep_plot(struct bu_list                *vhead,
-                                 struct rt_db_internal          *ip,
-                                 const struct rt_tess_tol       *ttol,
-                                 const struct bn_tol            *tol,
-                                 const struct rt_view_info *info);
+				  struct rt_db_internal          *ip,
+				  const struct rt_tess_tol       *ttol,
+				  const struct bn_tol            *tol,
+				  const struct rt_view_info *info);
 RT_EXPORT extern int rt_brep_plot_poly(struct bu_list           *vhead,
-                                          const struct db_full_path *pathp,
-                                      struct rt_db_internal     *ip,
-                                      const struct rt_tess_tol  *ttol,
-                                      const struct bn_tol       *tol,
-                                      const struct rt_view_info *info);
+				       const struct db_full_path *pathp,
+				       struct rt_db_internal     *ip,
+				       const struct rt_tess_tol  *ttol,
+				       const struct bn_tol       *tol,
+				       const struct rt_view_info *info);
 /* BREP validity test */
 #define RT_BREP_OPENNURBS    0x1    /**< @brief OpenNURBS tests (default)*/
 #define RT_BREP_UV_PARAM     0x2    /**< @brief sanity checks for UV parameterization bounds */

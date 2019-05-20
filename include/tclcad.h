@@ -141,8 +141,8 @@ TCLCAD_EXPORT extern void tclcad_bn_mat_print(Tcl_Interp *interp, const char *ti
  * {20 -13.5 20} at {10 .5 3}
  */
 TCLCAD_EXPORT extern int tclcad_rt_parse_ray(Tcl_Interp *interp,
-				      struct xray *rp,
-				      const char *const*argv);
+					     struct xray *rp,
+					     const char *const*argv);
 
 
 /**
@@ -154,11 +154,11 @@ TCLCAD_EXPORT extern int tclcad_rt_parse_ray(Tcl_Interp *interp,
  * type boxnode
  */
 TCLCAD_EXPORT extern void tclcad_rt_pr_cutter(Tcl_Interp *interp,
-				       const union cutter *cutp);
+					      const union cutter *cutp);
 TCLCAD_EXPORT extern int tclcad_rt_cutter(ClientData clientData,
-				   Tcl_Interp *interp,
-				   int argc,
-				   const char *const*argv);
+					  Tcl_Interp *interp,
+					  int argc,
+					  const char *const*argv);
 
 
 /**
@@ -189,9 +189,9 @@ TCLCAD_EXPORT extern void tclcad_rt_pr_hit(Tcl_Interp *interp, struct hit *hitp,
  *      .rt shootray {0 0 0} dir {0 0 -1}
  */
 TCLCAD_EXPORT extern int tclcad_rt(ClientData clientData,
-			       Tcl_Interp *interp,
-			       int argc,
-			       const char **argv);
+				   Tcl_Interp *interp,
+				   int argc,
+				   const char **argv);
 
 /************************************************************************************************
  *                                                                                              *
@@ -209,9 +209,9 @@ TCLCAD_EXPORT extern int tclcad_rt(ClientData clientData,
  * TCL_ERROR
  */
 TCLCAD_EXPORT extern int tclcad_rt_import_from_path(Tcl_Interp *interp,
-					     struct rt_db_internal *ip,
-					     const char *path,
-					     struct rt_wdb *wdb);
+						    struct rt_db_internal *ip,
+						    const char *path,
+						    struct rt_wdb *wdb);
 
 /**
  * Add all the supported Tcl interfaces to LIBRT routines to the list
@@ -247,7 +247,7 @@ TCLCAD_EXPORT extern int Rt_Init(Tcl_Interp *interp);
  * NOT moving to db_fullpath.h because it is evil Tcl_Interp api
  */
 TCLCAD_EXPORT extern void db_full_path_appendresult(Tcl_Interp *interp,
-						const struct db_full_path *pp);
+						    const struct db_full_path *pp);
 
 
 /**
@@ -258,9 +258,9 @@ TCLCAD_EXPORT extern void db_full_path_appendresult(Tcl_Interp *interp,
  * elements converted.
  */
 TCLCAD_EXPORT extern int tcl_obj_to_int_array(Tcl_Interp *interp,
-					  Tcl_Obj *list,
-					  int **array,
-					  int *array_len);
+					      Tcl_Obj *list,
+					      int **array,
+					      int *array_len);
 
 /**
  * Expects the Tcl_obj argument (list) to be a Tcl list and extracts
@@ -270,9 +270,9 @@ TCLCAD_EXPORT extern int tcl_obj_to_int_array(Tcl_Interp *interp,
  * elements converted.
  */
 TCLCAD_EXPORT extern int tcl_obj_to_fastf_array(Tcl_Interp *interp,
-					    Tcl_Obj *list,
-					    fastf_t **array,
-					    int *array_len);
+						Tcl_Obj *list,
+						fastf_t **array,
+						int *array_len);
 
 
 /**
@@ -282,9 +282,9 @@ TCLCAD_EXPORT extern int tcl_obj_to_fastf_array(Tcl_Interp *interp,
  * Returns the number of elements converted.
  */
 TCLCAD_EXPORT extern int tcl_list_to_int_array(Tcl_Interp *interp,
-					   char *char_list,
-					   int **array,
-					   int *array_len);
+					       char *char_list,
+					       int **array,
+					       int *array_len);
 
 
 /**
@@ -294,9 +294,9 @@ TCLCAD_EXPORT extern int tcl_list_to_int_array(Tcl_Interp *interp,
  * returns the number of elements converted.
  */
 TCLCAD_EXPORT extern int tcl_list_to_fastf_array(Tcl_Interp *interp,
-					     const char *char_list,
-					     fastf_t **array,
-					     int *array_len);
+						 const char *char_list,
+						 fastf_t **array,
+						 int *array_len);
 
 
 TCLCAD_EXPORT extern int Tclcad_Init(Tcl_Interp *interp);
@@ -311,7 +311,7 @@ TCLCAD_EXPORT extern struct application *to_rt_gettrees_application(struct ged *
 								    int argc,
 								    const char *argv[]);
 TCLCAD_EXPORT extern void go_refresh(struct ged_obj *gop,
-				  struct ged_dm_view *gdvp);
+				     struct ged_dm_view *gdvp);
 TCLCAD_EXPORT extern void go_refresh_draw(struct ged_obj *gop,
 					  struct ged_dm_view *gdvp,
 					  int restore_zbuffer);

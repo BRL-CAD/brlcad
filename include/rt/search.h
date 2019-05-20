@@ -43,8 +43,8 @@ typedef int(*db_search_callback_t)(int, const char*[],void*);
  * @brief Execution context for the -exec filter.
  */
 struct db_search_context {
-	db_search_callback_t _e_callback; /**< @brief A function that evaluates an array of strings and returns a boolean. */
-	void *_e_userdata; /**< @brief A pointer that will be passed to the callback, usually a pointer to an interpreter. */
+    db_search_callback_t _e_callback; /**< @brief A function that evaluates an array of strings and returns a boolean. */
+    void *_e_userdata; /**< @brief A pointer that will be passed to the callback, usually a pointer to an interpreter. */
 };
 
 /**
@@ -112,18 +112,18 @@ RT_EXPORT extern void db_search_register_data(struct db_search_context *, void *
  * The following example assumes a database instance pointer (dbip) is
  * available and ready to use.
  *
- @code
-  size_t i = 0;
-  struct bu_ptbl results = BU_PTBL_INIT_ZERO;
-  const char *plan = "-name *.s -or -below -type region";
-  int matches = db_search(&results, DB_SEARCH_HIDDEN | DB_SEARCH_QUIET , plan, 0, NULL, dbip, ctx);
-  for (i = 0; matches > 0 && i < BU_PTBL_LEN(&results); i++) {
-      char *path_str = db_path_to_string((struct db_full_path *)BU_PTBL_GET(&results, i));
-      bu_log("%s\n", path_str);
-      bu_free(path_str, "free db_fullpath_to_string allocation");
-  }
-  db_search_free(&results);
- @endcode
+ * @code
+ * size_t i = 0;
+ * struct bu_ptbl results = BU_PTBL_INIT_ZERO;
+ * const char *plan = "-name *.s -or -below -type region";
+ * int matches = db_search(&results, DB_SEARCH_HIDDEN | DB_SEARCH_QUIET , plan, 0, NULL, dbip, ctx);
+ * for (i = 0; matches > 0 && i < BU_PTBL_LEN(&results); i++) {
+ *   char *path_str = db_path_to_string((struct db_full_path *)BU_PTBL_GET(&results, i));
+ *   bu_log("%s\n", path_str);
+ *   bu_free(path_str, "free db_fullpath_to_string allocation");
+ * }
+ * db_search_free(&results);
+ * @endcode
  *
  * Note:
  * Be aware that if you are using db_search to filter pre-built lists of paths,
@@ -134,13 +134,13 @@ RT_EXPORT extern void db_search_register_data(struct db_search_context *, void *
  *
  */
 RT_EXPORT extern int db_search(struct bu_ptbl *results,
-                               int flags,
-                               const char *filter,
-                               int path_c,
-                               struct directory **path_v,
-                               struct db_i *dbip,
-                               struct db_search_context *ctx
-);
+			       int flags,
+			       const char *filter,
+			       int path_c,
+			       struct directory **path_v,
+			       struct db_i *dbip,
+			       struct db_search_context *ctx
+			      );
 
 /* These are the possible search flags. */
 #define DB_SEARCH_TREE             0x0   /**< @brief Do a hierarchy-aware search.  This is the default. */
@@ -173,9 +173,9 @@ RT_EXPORT extern void db_search_free(struct bu_ptbl *search_results);
  *
  */
 RT_EXPORT extern size_t db_ls(const struct db_i *dbip,
-                              int flags,
-                              const char *pattern,
-                              struct directory ***dpv);
+			      int flags,
+			      const char *pattern,
+			      struct directory ***dpv);
 
 /* These are the possible listing flags. */
 #define DB_LS_PRIM         0x1    /**< @brief filter for primitives (solids)*/
@@ -185,8 +185,8 @@ RT_EXPORT extern size_t db_ls(const struct db_i *dbip,
 #define DB_LS_NON_GEOM     0x10   /**< @brief filter for non-geometry objects */
 #define DB_LS_TOPS         0x20   /**< @brief filter for objects un-referenced by other objects */
 /* TODO - implement this flag
-#define DB_LS_REGEX        0x40*/ /* interpret pattern using regex rules, instead of
-                                              globbing rules (default) */
+   #define DB_LS_REGEX        0x40*/ /* interpret pattern using regex rules, instead of
+					globbing rules (default) */
 
 
 __END_DECLS

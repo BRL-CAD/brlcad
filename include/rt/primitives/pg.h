@@ -33,17 +33,17 @@
 __BEGIN_DECLS
 
 RT_EXPORT extern int rt_pg_to_bot(struct rt_db_internal *ip,
-                                  const struct bn_tol *tol,
-                                  struct resource *resp0);
+				  const struct bn_tol *tol,
+				  struct resource *resp0);
 RT_EXPORT extern int rt_pg_plot(struct bu_list          *vhead,
-                                struct rt_db_internal   *ip,
-                                const struct rt_tess_tol *ttol,
-                                const struct bn_tol     *tol,
-                                const struct rt_view_info *info);
+				struct rt_db_internal   *ip,
+				const struct rt_tess_tol *ttol,
+				const struct bn_tol     *tol,
+				const struct rt_view_info *info);
 RT_EXPORT extern int rt_pg_plot_poly(struct bu_list             *vhead,
-                                     struct rt_db_internal      *ip,
-                                     const struct rt_tess_tol   *ttol,
-                                     const struct bn_tol        *tol);
+				     struct rt_db_internal      *ip,
+				     const struct rt_tess_tol   *ttol,
+				     const struct bn_tol        *tol);
 
 /** @} */
 

@@ -79,9 +79,9 @@ typedef pthread_mutex_t bu_mtx_t;
 /* Condition variable */
 #if defined(HAVE_WINDOWS_H)
 typedef struct {
-  HANDLE mEvents[2];                  /* Signal and broadcast event HANDLEs. */
-  unsigned int mWaitersCount;         /* Count of the number of waiters. */
-  CRITICAL_SECTION mWaitersCountLock; /* Serialize access to mWaitersCount. */
+    HANDLE mEvents[2];                  /* Signal and broadcast event HANDLEs. */
+    unsigned int mWaitersCount;         /* Count of the number of waiters. */
+    CRITICAL_SECTION mWaitersCountLock; /* Serialize access to mWaitersCount. */
 } bu_cnd_t;
 #else
 typedef pthread_cond_t bu_cnd_t;

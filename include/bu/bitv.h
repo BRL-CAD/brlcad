@@ -234,25 +234,25 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
  * to smear to the right.
  *
  * @par Example:
- @code
-
- BU_BITV_LOOP_START(bv) {
-   fiddle(BU_BITV_LOOP_INDEX);
- } BU_BITV_LOOP_END;
-
- @endcode
+ * @code
+ *
+ * BU_BITV_LOOP_START(bv) {
+ *   fiddle(BU_BITV_LOOP_INDEX);
+ * } BU_BITV_LOOP_END;
+ *
+ * @endcode
  *
  */
 #define BU_BITV_LOOP_START(_bv)	\
     { \
-	int _wd;	/* Current word number */  \
-	BU_CK_BITV(_bv); \
-	for (_wd=BU_BITS2WORDS((_bv)->nbits)-1; _wd>=0; _wd--) {  \
-	    int _b;	/* Current bit-in-word number */  \
-	    bitv_t _val;	/* Current word value */  \
-	    if ((_val = (_bv)->bits[_wd])==0) continue;  \
-	    for (_b=0; _b < BU_BITV_MASK+1; _b++, _val >>= 1) { \
-		if (!(_val & 1)) continue;
+    int _wd;	/* Current word number */  \
+    BU_CK_BITV(_bv); \
+    for (_wd=BU_BITS2WORDS((_bv)->nbits)-1; _wd>=0; _wd--) {  \
+    int _b;	/* Current bit-in-word number */  \
+    bitv_t _val;	/* Current word value */  \
+    if ((_val = (_bv)->bits[_wd])==0) continue;  \
+    for (_b=0; _b < BU_BITV_MASK+1; _b++, _val >>= 1) { \
+    if (!(_val & 1)) continue;
 
 /**
  * This macro is valid only between a BU_BITV_LOOP_START/LOOP_END
@@ -263,9 +263,8 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
 /**
  * Paired with BU_BITV_LOOP_START()
  */
-#define BU_BITV_LOOP_END	\
-    } /* end for (_b) */ \
-	    } /* end for (_wd) */ \
+#define BU_BITV_LOOP_END } /* end for (_b) */ \
+	} /* end for (_wd) */ \
 	} /* end block */
 
 /**

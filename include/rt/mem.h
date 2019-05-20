@@ -54,7 +54,7 @@ struct mem_map {
  * Algorithm is first fit.
  */
 RT_EXPORT extern size_t rt_memalloc(struct mem_map **pp,
-                                    size_t size);
+				    size_t size);
 
 /**
  * Takes:               & pointer of map,
@@ -67,7 +67,7 @@ RT_EXPORT extern size_t rt_memalloc(struct mem_map **pp,
  * Algorithm is BEST fit.
  */
 RT_EXPORT extern struct mem_map * rt_memalloc_nosplit(struct mem_map **pp,
-                                                      size_t size);
+						      size_t size);
 
 /**
  * Takes:
@@ -79,8 +79,8 @@ RT_EXPORT extern struct mem_map * rt_memalloc_nosplit(struct mem_map **pp,
  * or changing addresses.  Other wrap-around conditions are flagged.
  */
 RT_EXPORT extern void rt_memfree(struct mem_map **pp,
-                                 size_t size,
-                                 off_t addr);
+				 size_t size,
+				 off_t addr);
 
 /**
  * Take everything on the current memory chain, and place it on the

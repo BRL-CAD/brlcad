@@ -74,64 +74,64 @@ struct bot_specific {
 };
 
 RT_EXPORT extern void rt_bot_prep_pieces(struct bot_specific    *bot,
-                                         struct soltab          *stp,
-                                         size_t                 ntri,
-                                         const struct bn_tol    *tol);
+					 struct soltab          *stp,
+					 size_t                 ntri,
+					 const struct bn_tol    *tol);
 
 RT_EXPORT extern size_t rt_botface(struct soltab                *stp,
-                                   struct bot_specific  *bot,
-                                   fastf_t                      *ap,
-                                   fastf_t                      *bp,
-                                   fastf_t                      *cp,
-                                   size_t                       face_no,
-                                   const struct bn_tol  *tol);
+				   struct bot_specific  *bot,
+				   fastf_t                      *ap,
+				   fastf_t                      *bp,
+				   fastf_t                      *cp,
+				   size_t                       face_no,
+				   const struct bn_tol  *tol);
 
 
 /* bot.c */
 RT_EXPORT extern size_t rt_bot_get_edge_list(const struct rt_bot_internal *bot,
-                                             size_t **edge_list);
+					     size_t **edge_list);
 RT_EXPORT extern int rt_bot_edge_in_list(const size_t v1,
-                                         const size_t v2,
-                                         const size_t edge_list[],
-                                         const size_t edge_count0);
+					 const size_t v2,
+					 const size_t edge_list[],
+					 const size_t edge_count0);
 RT_EXPORT extern int rt_bot_plot(struct bu_list         *vhead,
-                                 struct rt_db_internal  *ip,
-                                 const struct rt_tess_tol *ttol,
-                                 const struct bn_tol    *tol,
-                                 const struct rt_view_info *info);
+				 struct rt_db_internal  *ip,
+				 const struct rt_tess_tol *ttol,
+				 const struct bn_tol    *tol,
+				 const struct rt_view_info *info);
 RT_EXPORT extern int rt_bot_plot_poly(struct bu_list            *vhead,
-                                      struct rt_db_internal     *ip,
-                                      const struct rt_tess_tol *ttol,
-                                      const struct bn_tol       *tol);
+				      struct rt_db_internal     *ip,
+				      const struct rt_tess_tol *ttol,
+				      const struct bn_tol       *tol);
 RT_EXPORT extern int rt_bot_find_v_nearest_pt2(const struct rt_bot_internal *bot,
-                                               const point_t    pt2,
-                                               const mat_t      mat);
+					       const point_t    pt2,
+					       const mat_t      mat);
 RT_EXPORT extern int rt_bot_find_e_nearest_pt2(int *vert1, int *vert2, const struct rt_bot_internal *bot, const point_t pt2, const mat_t mat);
 RT_EXPORT extern fastf_t rt_bot_propget(struct rt_bot_internal *bot,
-                                        const char *property);
+					const char *property);
 RT_EXPORT extern int rt_bot_vertex_fuse(struct rt_bot_internal *bot,
-                                        const struct bn_tol *tol);
+					const struct bn_tol *tol);
 RT_EXPORT extern int rt_bot_face_fuse(struct rt_bot_internal *bot);
 RT_EXPORT extern int rt_bot_condense(struct rt_bot_internal *bot);
 RT_EXPORT extern int rt_bot_smooth(struct rt_bot_internal *bot,
-                                   const char *bot_name,
-                                   struct db_i *dbip,
-                                   fastf_t normal_tolerance_angle);
+				   const char *bot_name,
+				   struct db_i *dbip,
+				   fastf_t normal_tolerance_angle);
 RT_EXPORT extern int rt_bot_flip(struct rt_bot_internal *bot);
 RT_EXPORT extern int rt_bot_sync(struct rt_bot_internal *bot);
 RT_EXPORT extern struct rt_bot_list * rt_bot_split(struct rt_bot_internal *bot);
 RT_EXPORT extern struct rt_bot_list * rt_bot_patches(struct rt_bot_internal *bot);
 RT_EXPORT extern void rt_bot_list_free(struct rt_bot_list *headRblp,
-                                       int fbflag);
+				       int fbflag);
 
 RT_EXPORT extern int rt_bot_same_orientation(const int *a,
-                                             const int *b);
+					     const int *b);
 
 RT_EXPORT extern int rt_bot_tess(struct nmgregion **r,
-                                 struct model *m,
-                                 struct rt_db_internal *ip,
-                                 const struct rt_tess_tol *ttol,
-                                 const struct bn_tol *tol);
+				 struct model *m,
+				 struct rt_db_internal *ip,
+				 const struct rt_tess_tol *ttol,
+				 const struct bn_tol *tol);
 
 RT_EXPORT extern struct rt_bot_internal * rt_bot_merge(size_t num_bots, const struct rt_bot_internal * const *bots);
 
@@ -141,11 +141,11 @@ RT_EXPORT extern struct rt_bot_internal * rt_bot_merge(size_t num_bots, const st
 RT_EXPORT extern size_t rt_bot_minpieces;
 RT_EXPORT extern size_t rt_bot_tri_per_piece;
 RT_EXPORT extern int rt_bot_sort_faces(struct rt_bot_internal *bot,
-                                       size_t tris_per_piece);
+				       size_t tris_per_piece);
 RT_EXPORT extern int rt_bot_decimate(struct rt_bot_internal *bot,
-                                     fastf_t max_chord_error,
-                                     fastf_t max_normal_error,
-                                     fastf_t min_edge_length);
+				     fastf_t max_chord_error,
+				     fastf_t max_normal_error,
+				     fastf_t min_edge_length);
 RT_EXPORT extern size_t rt_bot_decimate_gct(struct rt_bot_internal *bot, fastf_t feature_size);
 
 

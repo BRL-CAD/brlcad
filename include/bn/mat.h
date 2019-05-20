@@ -68,9 +68,9 @@ BN_EXPORT extern double bn_atan2(double x, double y);
 	bu_log("%s:%d bn_mat_zero() is deprecated, use MAT_ZERO()\n", \
 	       __FILE__, __LINE__); \
 	(_m)[0] = (_m)[1] = (_m)[2] = (_m)[3] = \
-	    (_m)[4] = (_m)[5] = (_m)[6] = (_m)[7] = \
-	    (_m)[8] = (_m)[9] = (_m)[10] = (_m)[11] = \
-	    (_m)[12] = (_m)[13] = (_m)[14] = (_m)[15] = 0.0; }
+	(_m)[4] = (_m)[5] = (_m)[6] = (_m)[7] = \
+	(_m)[8] = (_m)[9] = (_m)[10] = (_m)[11] = \
+	(_m)[12] = (_m)[13] = (_m)[14] = (_m)[15] = 0.0; }
 /*
   #define bn_mat_zero(_m)	(void)memset((void *)_m, 0, sizeof(mat_t))
 */
@@ -78,8 +78,8 @@ BN_EXPORT extern double bn_atan2(double x, double y);
 	bu_log("%s:%d bn_mat_idn() is deprecated, use MAT_IDN()\n", \
 	       __FILE__, __LINE__); \
 	(_m)[1] = (_m)[2] = (_m)[3] = (_m)[4] = \
-	    (_m)[6] = (_m)[7] = (_m)[8] = (_m)[9] = \
-	    (_m)[11] = (_m)[12] = (_m)[13] = (_m)[14] = 0.0; \
+	(_m)[6] = (_m)[7] = (_m)[8] = (_m)[9] = \
+	(_m)[11] = (_m)[12] = (_m)[13] = (_m)[14] = 0.0; \
 	(_m)[0] = (_m)[5] = (_m)[10] = (_m)[15] = 1.0; }
 /*
   #define bn_mat_idn(_m)	(void)memcpy((void *)_m, (const void *)bn_mat_identity, sizeof(mat_t))

@@ -34,29 +34,29 @@
 __BEGIN_DECLS
 
 RT_EXPORT extern int curve_to_vlist(struct bu_list              *vhead,
-                                    const struct rt_tess_tol    *ttol,
-                                    point_t                     V,
-                                    vect_t                      u_vec,
-                                    vect_t                      v_vec,
-                                    struct rt_sketch_internal *sketch_ip,
-                                    struct rt_curve             *crv);
+				    const struct rt_tess_tol    *ttol,
+				    point_t                     V,
+				    vect_t                      u_vec,
+				    vect_t                      v_vec,
+				    struct rt_sketch_internal *sketch_ip,
+				    struct rt_curve             *crv);
 
 RT_EXPORT extern int rt_check_curve(const struct rt_curve *crv,
-                                    const struct rt_sketch_internal *skt,
-                                    int noisy);
+				    const struct rt_sketch_internal *skt,
+				    int noisy);
 
 RT_EXPORT extern void rt_curve_reverse_segment(uint32_t *lng);
 RT_EXPORT extern void rt_curve_order_segments(struct rt_curve *crv);
 
 RT_EXPORT extern void rt_copy_curve(struct rt_curve *crv_out,
-                                    const struct rt_curve *crv_in);
+				    const struct rt_curve *crv_in);
 
 RT_EXPORT extern void rt_curve_free(struct rt_curve *crv);
 RT_EXPORT extern void rt_copy_curve(struct rt_curve *crv_out,
-                                    const struct rt_curve *crv_in);
+				    const struct rt_curve *crv_in);
 RT_EXPORT extern struct rt_sketch_internal *rt_copy_sketch(const struct rt_sketch_internal *sketch_ip);
 RT_EXPORT extern int curve_to_tcl_list(struct bu_vls *vls,
-                                       struct rt_curve *crv);
+				       struct rt_curve *crv);
 
 __END_DECLS
 

@@ -266,7 +266,7 @@ struct per_region_data;
 
 ANALYZE_EXPORT int
 analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
-	const char *left, const char *right, struct bn_tol *tol, int solidcheck);
+		const char *left, const char *right, struct bn_tol *tol, int solidcheck);
 
 ANALYZE_EXPORT void
 analyze_raydiff_results_free(struct analyze_raydiff_results *results);
@@ -294,8 +294,8 @@ struct rt_gen_worker_vars {
 
 ANALYZE_EXPORT int
 analyze_find_subtracted(struct bu_ptbl *results, struct rt_wdb *wdbp,
-	const char *pbrep, struct rt_gen_worker_vars *pbrep_rtvars,
-	const char *curr_comb, struct bu_ptbl *candidates, void *curr_union_data, size_t ncpus);
+			const char *pbrep, struct rt_gen_worker_vars *pbrep_rtvars,
+			const char *curr_comb, struct bu_ptbl *candidates, void *curr_union_data, size_t ncpus);
 
 ANALYZE_EXPORT void
 analyze_heal_bot(struct rt_bot_internal *bot, double zipper_tol);
@@ -425,7 +425,7 @@ ANALYZE_EXPORT int nirt_line_segments(struct bn_vlblock **segs, struct nirt_stat
 #define ANALYZE_OBJ_TO_PNTS_RAND  0x4 /**< @brief sample using Marsaglia sampling on the bounding sphere with pseudo random numbers */
 #define ANALYZE_OBJ_TO_PNTS_SOBOL 0x8 /**< @brief sample using Marsaglia sampling on the bounding sphere with Sobol' low-discrepancy-sequence generation */
 ANALYZE_EXPORT int analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, double *avg_thickness, struct db_i *dbip,
-	       const char *obj, struct bn_tol *tol, int flags, int max_pnts, int max_time, int verbosity);
+				       const char *obj, struct bn_tol *tol, int flags, int max_pnts, int max_time, int verbosity);
 
 struct analyze_polygonize_params {
     int max_time;

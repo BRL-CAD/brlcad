@@ -44,17 +44,17 @@ struct hitmiss {
     struct hit          hit;
     fastf_t             dist_in_plane;  /**< @brief  distance from plane intersect */
     int                 in_out;         /**< @brief  status of ray as it transitions
-                                         * this hit point.
-                                         */
+					 * this hit point.
+					 */
     long                *inbound_use;
     vect_t              inbound_norm;
     long                *outbound_use;
     vect_t              outbound_norm;
     int                 start_stop;     /**< @brief  is this a seg_in or seg_out */
     struct hitmiss      *other;         /**< @brief  for keeping track of the other
-                                         * end of the segment when we know
-                                         * it
-                                         */
+					 * end of the segment when we know
+					 * it
+					 */
 };
 
 
@@ -150,61 +150,61 @@ RT_EXPORT extern void rt_isect_ray_model(struct ray_data *rd, struct bu_list *vl
 RT_EXPORT extern int nmg_ray_segs(struct ray_data       *rd, struct bu_list *vlfree);
 
 RT_EXPORT extern int nmg_to_arb(const struct model *m,
-                                struct rt_arb_internal *arb_int);
+				struct rt_arb_internal *arb_int);
 RT_EXPORT extern int nmg_to_tgc(const struct model *m,
-                                struct rt_tgc_internal *tgc_int,
-                                const struct bn_tol *tol);
+				struct rt_tgc_internal *tgc_int,
+				const struct bn_tol *tol);
 RT_EXPORT extern int nmg_to_poly(const struct model *m,
-                                 struct rt_pg_internal *poly_int,
+				 struct rt_pg_internal *poly_int,
 				 struct bu_list *vlfree,
-                                 const struct bn_tol *tol);
+				 const struct bn_tol *tol);
 RT_EXPORT extern struct rt_bot_internal *nmg_bot(struct shell *s,
 						 struct bu_list *vlfree,
-                                                 const struct bn_tol *tol);
+						 const struct bn_tol *tol);
 RT_EXPORT extern struct rt_bot_internal *nmg_mdl_to_bot(struct model *m,
-       	                                                struct bu_list *vlfree,
-       	                                                const struct bn_tol *tol);
+							struct bu_list *vlfree,
+							const struct bn_tol *tol);
 struct db_tree_state; /* forward declaration */
 RT_EXPORT extern union tree *nmg_booltree_leaf_tess(struct db_tree_state *tsp,
-                                                    const struct db_full_path *pathp,
-                                                    struct rt_db_internal *ip,
-                                                    void *client_data);
+						    const struct db_full_path *pathp,
+						    struct rt_db_internal *ip,
+						    void *client_data);
 RT_EXPORT extern union tree *nmg_booltree_leaf_tnurb(struct db_tree_state *tsp,
-                                                     const struct db_full_path *pathp,
-                                                     struct rt_db_internal *ip,
-                                                     void *client_data);
+						     const struct db_full_path *pathp,
+						     struct rt_db_internal *ip,
+						     void *client_data);
 RT_EXPORT extern int nmg_bool_eval_silent;      /* quell output from nmg_booltree_evaluate */
 RT_EXPORT extern union tree *nmg_booltree_evaluate(union tree *tp,
 						   struct bu_list *vlfree,
-                                                   const struct bn_tol *tol,
-                                                   struct resource *resp);
+						   const struct bn_tol *tol,
+						   struct resource *resp);
 RT_EXPORT extern int nmg_boolean(union tree *tp,
-                                 struct model *m,
+				 struct model *m,
 				 struct bu_list *vlfree,
-                                 const struct bn_tol *tol,
-                                 struct resource *resp);
+				 const struct bn_tol *tol,
+				 struct resource *resp);
 
 
 
 
 /*  nmg_tri_mc.c */
 RT_EXPORT extern void nmg_triangulate_model_mc(struct model *m,
-                                               const struct bn_tol *tol);
+					       const struct bn_tol *tol);
 RT_EXPORT extern int nmg_mc_realize_cube(struct shell *s,
-                                         int pv,
-                                         point_t *edges,
-                                         const struct bn_tol *tol);
+					 int pv,
+					 point_t *edges,
+					 const struct bn_tol *tol);
 RT_EXPORT extern int nmg_mc_evaluate(struct shell *s,
-                                     struct rt_i *rtip,
-                                     const struct db_full_path *pathp,
-                                     const struct rt_tess_tol *ttol,
-                                     const struct bn_tol *tol);
+				     struct rt_i *rtip,
+				     const struct db_full_path *pathp,
+				     const struct rt_tess_tol *ttol,
+				     const struct bn_tol *tol);
 
 
 /* nmg.c */
 RT_EXPORT extern void nmg_stash_model_to_file(const char *filename,
-                                              const struct model *m,
-                                              const char *title);
+					      const struct model *m,
+					      const char *title);
 
 
 #endif

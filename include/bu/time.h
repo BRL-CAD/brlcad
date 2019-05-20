@@ -44,13 +44,13 @@ __BEGIN_DECLS
  * Returns a microsecond-accurate wall-clock time counter.
  *
  * Example use:
-@code
-int64_t start = bu_gettime();
-do_some_work_here();
-double elapsed = bu_gettime() - start;
-double seconds = elapsed / 1000000.0;
-printf("time: %.2f\n", seconds);
-@endcode
+ * @code
+ * int64_t start = bu_gettime();
+ * do_some_work_here();
+ * double elapsed = bu_gettime() - start;
+ * double seconds = elapsed / 1000000.0;
+ * printf("time: %.2f\n", seconds);
+ * @endcode
  *
  */
 BU_EXPORT extern int64_t bu_gettime(void);

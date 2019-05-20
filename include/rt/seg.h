@@ -68,19 +68,19 @@ struct seg {
 #define RT_CK_SEG(_p) BU_CKMAG(_p, RT_SEG_MAGIC, "struct seg")
 
 #define RT_GET_SEG(p, res) { \
-        while (!BU_LIST_WHILE((p), seg, &((res)->re_seg)) || !(p)) \
-            rt_alloc_seg_block(res); \
-        BU_LIST_DEQUEUE(&((p)->l)); \
-        (p)->l.forw = (p)->l.back = BU_LIST_NULL; \
-        (p)->seg_in.hit_magic = (p)->seg_out.hit_magic = RT_HIT_MAGIC; \
-        res->re_segget++; \
+	while (!BU_LIST_WHILE((p), seg, &((res)->re_seg)) || !(p)) \
+	    rt_alloc_seg_block(res); \
+	BU_LIST_DEQUEUE(&((p)->l)); \
+	(p)->l.forw = (p)->l.back = BU_LIST_NULL; \
+	(p)->seg_in.hit_magic = (p)->seg_out.hit_magic = RT_HIT_MAGIC; \
+	res->re_segget++; \
     }
 
 
 #define RT_FREE_SEG(p, res) { \
-        RT_CHECK_SEG(p); \
-        BU_LIST_INSERT(&((res)->re_seg), &((p)->l)); \
-        res->re_segfree++; \
+	RT_CHECK_SEG(p); \
+	BU_LIST_INSERT(&((res)->re_seg), &((p)->l)); \
+	res->re_segfree++; \
     }
 
 
@@ -90,11 +90,11 @@ struct seg {
  * except for security of checking & counting each element this way.
  */
 #define RT_FREE_SEG_LIST(_segheadp, _res) { \
-        register struct seg *_a; \
-        while (BU_LIST_WHILE(_a, seg, &((_segheadp)->l))) { \
-            BU_LIST_DEQUEUE(&(_a->l)); \
-            RT_FREE_SEG(_a, _res); \
-        } \
+	register struct seg *_a; \
+	while (BU_LIST_WHILE(_a, seg, &((_segheadp)->l))) { \
+	    BU_LIST_DEQUEUE(&(_a->l)); \
+	    RT_FREE_SEG(_a, _res); \
+	} \
     }
 
 /* Print seg struct */

@@ -493,13 +493,13 @@ GED_EXPORT extern int ged_in(struct ged *gedp, int argc, const char *argv[]);
 GED_EXPORT extern int ged_importFg4Section(struct ged *gedp, int argc, const char *argv[]);
 
 /**
-  * Joint command ported to the libged library.
-  */
+ * Joint command ported to the libged library.
+ */
 GED_EXPORT extern int ged_joint(struct ged *gedp, int argc, const char *argv[]);
 
 /**
-  * New joint command.
-  */
+ * New joint command.
+ */
 GED_EXPORT extern int ged_joint2(struct ged *gedp, int argc, const char *argv[]);
 
 /**
@@ -726,11 +726,11 @@ GED_EXPORT extern int ged_voxelize(struct ged *gedp, int argc, const char *argv[
  *
  */
 GED_EXPORT extern int ged_get_obj_bounds(struct ged *gedp,
-			       int argc,
-			       const char *argv[],
-			       int use_air,
-			       point_t rpp_min,
-			       point_t rpp_max);
+					 int argc,
+					 const char *argv[],
+					 int use_air,
+					 point_t rpp_min,
+					 point_t rpp_max);
 
 
 /**

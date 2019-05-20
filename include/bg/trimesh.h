@@ -127,10 +127,10 @@ BG_EXPORT extern struct bg_trimesh_halfedge * bg_trimesh_generate_edge_list(int 
  * a boolean evaluation, just characterizes faces */
 BG_EXPORT extern int
 bg_trimesh_isect(
-	int **faces_inside_1, int *num_faces_inside_1, int **faces_inside_2, int *num_faces_inside_2,
-	int **faces_isect_1, int *num_faces_isect_1, int **faces_isect_2, int *num_faces_isect_2,
-	int *faces_1, int num_faces_1, point_t *vertices_1, int num_vertices_1,
-	int *faces_2, int num_faces_2, point_t *vertices_2, int num_vertices_2);
+    int **faces_inside_1, int *num_faces_inside_1, int **faces_inside_2, int *num_faces_inside_2,
+    int **faces_isect_1, int *num_faces_isect_1, int **faces_isect_2, int *num_faces_isect_2,
+    int *faces_1, int num_faces_1, point_t *vertices_1, int num_vertices_1,
+    int *faces_2, int num_faces_2, point_t *vertices_2, int num_vertices_2);
 
 __END_DECLS
 

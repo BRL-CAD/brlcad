@@ -71,20 +71,20 @@ struct db_tree_state {
 
     int                 ts_stop_at_regions;     /**< @brief else stop at solids */
     int                 (*ts_region_start_func)(struct db_tree_state *tsp,
-                                                const struct db_full_path *pathp,
-                                                const struct rt_comb_internal *comb,
-                                                void *client_data
-        ); /**< @brief callback during DAG downward traversal called on region nodes */
+						const struct db_full_path *pathp,
+						const struct rt_comb_internal *comb,
+						void *client_data
+					       ); /**< @brief callback during DAG downward traversal called on region nodes */
     union tree *        (*ts_region_end_func)(struct db_tree_state *tsp,
-                                              const struct db_full_path *pathp,
-                                              union tree *curtree,
-                                              void *client_data
-        ); /**< @brief callback during DAG upward traversal called on region nodes */
+					      const struct db_full_path *pathp,
+					      union tree *curtree,
+					      void *client_data
+					     ); /**< @brief callback during DAG upward traversal called on region nodes */
     union tree *        (*ts_leaf_func)(struct db_tree_state *tsp,
-                                        const struct db_full_path *pathp,
-                                        struct rt_db_internal *ip,
-                                        void *client_data
-        ); /**< @brief callback during DAG traversal called on leaf primitive nodes */
+					const struct db_full_path *pathp,
+					struct rt_db_internal *ip,
+					void *client_data
+				       ); /**< @brief callback during DAG traversal called on leaf primitive nodes */
     const struct rt_tess_tol *  ts_ttol;        /**< @brief  Tessellation tolerance */
     const struct bn_tol *       ts_tol;         /**< @brief  Math tolerance */
     struct model **             ts_m;           /**< @brief  ptr to ptr to NMG "model" */
@@ -117,24 +117,24 @@ struct db_traverse
     uint32_t magic;
     struct db_i *dbip;
     void (*comb_enter_func) (
-        struct db_i *,
-        struct directory *,
-        void *);
+	struct db_i *,
+	struct directory *,
+	void *);
     void (*comb_exit_func) (
-        struct db_i *,
-        struct directory *,
-        void *);
+	struct db_i *,
+	struct directory *,
+	void *);
     void (*leaf_func) (
-        struct db_i *,
-        struct directory *,
-        void *);
+	struct db_i *,
+	struct directory *,
+	void *);
     struct resource *resp;
     void *client_data;
 };
 #define RT_DB_TRAVERSE_INIT(_p) {(_p)->magic = RT_DB_TRAVERSE_MAGIC;   \
-        (_p)->dbip = ((void *)0); (_p)->comb_enter_func = ((void *)0); \
-        (_p)->comb_exit_func = ((void *)0); (_p)->leaf_func = ((void *)0); \
-        (_p)->resp = ((void *)0); (_p)->client_data = ((void *)0);}
+	(_p)->dbip = ((void *)0); (_p)->comb_enter_func = ((void *)0); \
+	(_p)->comb_exit_func = ((void *)0); (_p)->leaf_func = ((void *)0); \
+	(_p)->resp = ((void *)0); (_p)->client_data = ((void *)0);}
 #define RT_CK_DB_TRAVERSE(_p) BU_CKMAG(_p, RT_DB_TRAVERSE_MAGIC, "db_traverse")
 
 struct combined_tree_state {
@@ -148,35 +148,35 @@ union tree {
     uint32_t magic;             /**< @brief  First word: magic number */
     /* Second word is always OP code */
     struct tree_node {
-        uint32_t magic;
-        int tb_op;                      /**< @brief  non-leaf */
-        struct region *tb_regionp;      /**< @brief  ptr to containing region */
-        union tree *tb_left;
-        union tree *tb_right;
+	uint32_t magic;
+	int tb_op;                      /**< @brief  non-leaf */
+	struct region *tb_regionp;      /**< @brief  ptr to containing region */
+	union tree *tb_left;
+	union tree *tb_right;
     } tr_b;
     struct tree_leaf {
-        uint32_t magic;
-        int tu_op;                      /**< @brief  leaf, OP_SOLID */
-        struct region *tu_regionp;      /**< @brief  ptr to containing region */
-        struct soltab *tu_stp;
+	uint32_t magic;
+	int tu_op;                      /**< @brief  leaf, OP_SOLID */
+	struct region *tu_regionp;      /**< @brief  ptr to containing region */
+	struct soltab *tu_stp;
     } tr_a;
     struct tree_cts {
-        uint32_t magic;
-        int tc_op;                      /**< @brief  leaf, OP_REGION */
-        struct region *tc_pad;          /**< @brief  unused */
-        struct combined_tree_state *tc_ctsp;
+	uint32_t magic;
+	int tc_op;                      /**< @brief  leaf, OP_REGION */
+	struct region *tc_pad;          /**< @brief  unused */
+	struct combined_tree_state *tc_ctsp;
     } tr_c;
     struct tree_nmgregion {
-        uint32_t magic;
-        int td_op;                      /**< @brief  leaf, OP_NMG_TESS */
-        const char *td_name;            /**< @brief  If non-null, dynamic string describing heritage of this region */
-        struct nmgregion *td_r;         /**< @brief  ptr to NMG region */
+	uint32_t magic;
+	int td_op;                      /**< @brief  leaf, OP_NMG_TESS */
+	const char *td_name;            /**< @brief  If non-null, dynamic string describing heritage of this region */
+	struct nmgregion *td_r;         /**< @brief  ptr to NMG region */
     } tr_d;
     struct tree_db_leaf {
-        uint32_t magic;
-        int tl_op;                      /**< @brief  leaf, OP_DB_LEAF */
-        matp_t tl_mat;                  /**< @brief  xform matp, NULL ==> identity */
-        char *tl_name;                  /**< @brief  Name of this leaf (bu_strdup'ed) */
+	uint32_t magic;
+	int tl_op;                      /**< @brief  leaf, OP_DB_LEAF */
+	matp_t tl_mat;                  /**< @brief  xform matp, NULL ==> identity */
+	char *tl_name;                  /**< @brief  Name of this leaf (bu_strdup'ed) */
     } tr_l;
 };
 /* Things which are in the same place in both A & B structures */
@@ -192,11 +192,11 @@ union tree {
  * magic number.
  */
 #define RT_TREE_INIT(_p) {                 \
-        (_p)->magic = RT_TREE_MAGIC;       \
-        (_p)->tr_b.tb_op = 0;              \
-        (_p)->tr_b.tb_regionp = NULL;      \
-        (_p)->tr_b.tb_left = NULL;         \
-        (_p)->tr_b.tb_right = NULL;        \
+	(_p)->magic = RT_TREE_MAGIC;       \
+	(_p)->tr_b.tb_op = 0;              \
+	(_p)->tr_b.tb_regionp = NULL;      \
+	(_p)->tr_b.tb_left = NULL;         \
+	(_p)->tr_b.tb_right = NULL;        \
     }
 
 /**
@@ -207,7 +207,7 @@ union tree {
  */
 #define RT_GET_TREE(_tp, _res) { \
 	BU_GET((_tp), union tree); \
-        RT_TREE_INIT((_tp));                             \
+	RT_TREE_INIT((_tp));                             \
     }
 
 
@@ -267,33 +267,33 @@ struct cl_tree_bit {
 
 /* Print a bit expr tree */
 RT_EXPORT extern void rt_pr_bit_tree(const struct bit_tree *btp,
-                                     int idx,
-                                     int lvl);
+				     int idx,
+				     int lvl);
 
 RT_EXPORT extern void rt_bit_tree(struct bit_tree *btp,
-                                  const union tree *tp,
-                                  size_t *len);
+				  const union tree *tp,
+				  size_t *len);
 #endif
 
 /* Print an expr tree */
 RT_EXPORT extern void rt_pr_tree(const union tree *tp,
-	                         int lvl);
+				 int lvl);
 RT_EXPORT extern void rt_pr_tree_vls(struct bu_vls *vls,
-                                     const union tree *tp);
+				     const union tree *tp);
 RT_EXPORT extern char *rt_pr_tree_str(const union tree *tree);
 
 struct partition; /* forward declaration */
 RT_EXPORT extern void rt_pr_tree_val(const union tree *tp,
-                                     const struct partition *partp,
-                                     int pr_name,
-                                     int lvl);
+				     const struct partition *partp,
+				     int pr_name,
+				     int lvl);
 
 /**
  * Duplicate the contents of a db_tree_state structure, including a
  * private copy of the ts_mater field(s) and the attribute/value set.
  */
 RT_EXPORT extern void db_dup_db_tree_state(struct db_tree_state *otsp,
-                                           const struct db_tree_state *itsp);
+					   const struct db_tree_state *itsp);
 
 /**
  * Release dynamic fields inside the structure, but not the structure
@@ -307,10 +307,10 @@ RT_EXPORT extern void db_free_db_tree_state(struct db_tree_state *tsp);
  * then set ts_dbip in your copy.
  */
 RT_EXPORT extern void db_init_db_tree_state(struct db_tree_state *tsp,
-                                            struct db_i *dbip,
-                                            struct resource *resp);
+					    struct db_i *dbip,
+					    struct resource *resp);
 RT_EXPORT extern struct combined_tree_state *db_new_combined_tree_state(const struct db_tree_state *tsp,
-                                                                        const struct db_full_path *pathp);
+									const struct db_full_path *pathp);
 RT_EXPORT extern struct combined_tree_state *db_dup_combined_tree_state(const struct combined_tree_state *old);
 RT_EXPORT extern void db_free_combined_tree_state(struct combined_tree_state *ctsp);
 RT_EXPORT extern void db_pr_tree_state(const struct db_tree_state *tsp);
@@ -327,8 +327,8 @@ RT_EXPORT extern void db_pr_combined_tree_state(const struct combined_tree_state
  * 1 success, this is the top of a new region.
  */
 RT_EXPORT extern int db_apply_state_from_comb(struct db_tree_state *tsp,
-                                              const struct db_full_path *pathp,
-                                              const struct rt_comb_internal *comb);
+					      const struct db_full_path *pathp,
+					      const struct rt_comb_internal *comb);
 
 /**
  * Updates state via *tsp, pushes member's directory entry on *pathp.
@@ -339,8 +339,8 @@ RT_EXPORT extern int db_apply_state_from_comb(struct db_tree_state *tsp,
  * 0 success, member pushed on path
  */
 RT_EXPORT extern int db_apply_state_from_memb(struct db_tree_state *tsp,
-                                              struct db_full_path *pathp,
-                                              const union tree *tp);
+					      struct db_full_path *pathp,
+					      const union tree *tp);
 
 /**
  * Returns -
@@ -349,10 +349,10 @@ RT_EXPORT extern int db_apply_state_from_memb(struct db_tree_state *tsp,
  * 1 state applied OK
  */
 RT_EXPORT extern int db_apply_state_from_one_member(struct db_tree_state *tsp,
-                                                    struct db_full_path *pathp,
-                                                    const char *cp,
-                                                    int sofar,
-                                                    const union tree *tp);
+						    struct db_full_path *pathp,
+						    const char *cp,
+						    int sofar,
+						    const union tree *tp);
 
 /**
  * The search stops on the first match.
@@ -374,12 +374,12 @@ RT_EXPORT extern union tree *db_find_named_leaf(union tree *tp, const char *cp);
  *
  */
 RT_EXPORT extern union tree *db_find_named_leafs_parent(int *side,
-                                                        union tree *tp,
-                                                        const char *cp);
+							union tree *tp,
+							const char *cp);
 RT_EXPORT extern void db_tree_del_lhs(union tree *tp,
-                                      struct resource *resp);
+				      struct resource *resp);
 RT_EXPORT extern void db_tree_del_rhs(union tree *tp,
-                                      struct resource *resp);
+				      struct resource *resp);
 
 /**
  * Given a name presumably referenced in a OP_DB_LEAF node, delete
@@ -402,16 +402,16 @@ RT_EXPORT extern void db_tree_del_rhs(union tree *tp,
  * 0 OK
  */
 RT_EXPORT extern int db_tree_del_dbleaf(union tree **tp,
-                                        const char *cp,
-                                        struct resource *resp,
-                                        int nflag);
+					const char *cp,
+					struct resource *resp,
+					int nflag);
 
 /**
  * Multiply on the left every matrix found in a DB_LEAF node in a
  * tree.
  */
 RT_EXPORT extern void db_tree_mul_dbleaf(union tree *tp,
-                                         const mat_t mat);
+					 const mat_t mat);
 
 /**
  * This routine traverses a combination (union tree) in LNR order and
@@ -421,14 +421,14 @@ RT_EXPORT extern void db_tree_mul_dbleaf(union tree *tp,
  * was previously named comb_functree()
  */
 RT_EXPORT extern void db_tree_funcleaf(struct db_i              *dbip,
-                                       struct rt_comb_internal  *comb,
-                                       union tree               *comb_tree,
-                                       void (*leaf_func)(struct db_i *, struct rt_comb_internal *, union tree *,
-                                                         void *, void *, void *, void *),
-                                       void *           user_ptr1,
-                                       void *           user_ptr2,
-                                       void *           user_ptr3,
-                                       void *           user_ptr4);
+				       struct rt_comb_internal  *comb,
+				       union tree               *comb_tree,
+				       void (*leaf_func)(struct db_i *, struct rt_comb_internal *, union tree *,
+							 void *, void *, void *, void *),
+				       void *           user_ptr1,
+				       void *           user_ptr2,
+				       void *           user_ptr3,
+				       void *           user_ptr4);
 
 /**
  * Starting with possible prior partial path and corresponding
@@ -450,10 +450,10 @@ RT_EXPORT extern void db_tree_funcleaf(struct db_i              *dbip,
  * -1 error (*tsp values are not useful)
  */
 RT_EXPORT extern int db_follow_path(struct db_tree_state *tsp,
-                                    struct db_full_path *total_path,
-                                    const struct db_full_path *new_path,
-                                    int noisy,
-                                    long pdepth);
+				    struct db_full_path *total_path,
+				    const struct db_full_path *new_path,
+				    int noisy,
+				    long pdepth);
 
 /**
  * Follow the slash-separated path given by "cp", and update *tsp and
@@ -466,8 +466,8 @@ RT_EXPORT extern int db_follow_path(struct db_tree_state *tsp,
  * -1 error (*tsp values are not useful)
  */
 RT_EXPORT extern int db_follow_path_for_state(struct db_tree_state *tsp,
-                                              struct db_full_path *pathp,
-                                              const char *orig_str, int noisy);
+					      struct db_full_path *pathp,
+					      const char *orig_str, int noisy);
 
 /**
  * Recurse down the tree, finding all the leaves (or finding just all
@@ -477,11 +477,11 @@ RT_EXPORT extern int db_follow_path_for_state(struct db_tree_state *tsp,
  * It is not intended to be used for collecting state.
  */
 RT_EXPORT extern union tree *db_recurse(struct db_tree_state    *tsp,
-                                        struct db_full_path *pathp,
-                                        struct combined_tree_state **region_start_statepp,
-                                        void *client_data);
+					struct db_full_path *pathp,
+					struct combined_tree_state **region_start_statepp,
+					void *client_data);
 RT_EXPORT extern union tree *db_dup_subtree(const union tree *tp,
-                                            struct resource *resp);
+					    struct resource *resp);
 RT_EXPORT extern void db_ck_tree(const union tree *tp);
 
 
@@ -490,7 +490,7 @@ RT_EXPORT extern void db_ck_tree(const union tree *tp);
  * nodes.
  */
 RT_EXPORT extern void db_free_tree(union tree *tp,
-                                   struct resource *resp);
+				   struct resource *resp);
 
 
 /**
@@ -508,14 +508,14 @@ RT_EXPORT extern void db_left_hvy_node(union tree *tp);
  * down near the region nodes.
  */
 RT_EXPORT extern void db_non_union_push(union tree *tp,
-                                        struct resource *resp);
+					struct resource *resp);
 
 /**
  * Return a count of the number of "union tree" nodes below "tp",
  * including tp.
  */
 RT_EXPORT extern int db_count_tree_nodes(const union tree *tp,
-                                         int count);
+					 int count);
 
 
 /**
@@ -526,10 +526,10 @@ RT_EXPORT extern int db_count_tree_nodes(const union tree *tp,
 RT_EXPORT extern int db_is_tree_all_unions(const union tree *tp);
 RT_EXPORT extern int db_count_subtree_regions(const union tree *tp);
 RT_EXPORT extern int db_tally_subtree_regions(union tree        *tp,
-                                              union tree        **reg_trees,
-                                              int               cur,
-                                              int               lim,
-                                              struct resource *resp);
+					      union tree        **reg_trees,
+					      int               cur,
+					      int               lim,
+					      struct resource *resp);
 
 /**
  * This is the top interface to the "tree walker."
@@ -584,23 +584,23 @@ RT_EXPORT extern int db_tally_subtree_regions(union tree        *tp,
  * 0 OK
  */
 RT_EXPORT extern int db_walk_tree(struct db_i *dbip,
-                                  int argc,
-                                  const char **argv,
-                                  int ncpu,
-                                  const struct db_tree_state *init_state,
-                                  int (*reg_start_func) (struct db_tree_state * /*tsp*/,
-                                                         const struct db_full_path * /*pathp*/,
-                                                         const struct rt_comb_internal * /* combp */,
-                                                         void *client_data),
-                                  union tree *(*reg_end_func) (struct db_tree_state * /*tsp*/,
-                                                               const struct db_full_path * /*pathp*/,
-                                                               union tree * /*curtree*/,
-                                                               void *client_data),
-                                  union tree *(*leaf_func) (struct db_tree_state * /*tsp*/,
-                                                            const struct db_full_path * /*pathp*/,
-                                                            struct rt_db_internal * /*ip*/,
-                                                            void *client_data),
-                                  void *client_data);
+				  int argc,
+				  const char **argv,
+				  int ncpu,
+				  const struct db_tree_state *init_state,
+				  int (*reg_start_func) (struct db_tree_state * /*tsp*/,
+							 const struct db_full_path * /*pathp*/,
+							 const struct rt_comb_internal * /* combp */,
+							 void *client_data),
+				  union tree *(*reg_end_func) (struct db_tree_state * /*tsp*/,
+							       const struct db_full_path * /*pathp*/,
+							       union tree * /*curtree*/,
+							       void *client_data),
+				  union tree *(*leaf_func) (struct db_tree_state * /*tsp*/,
+							    const struct db_full_path * /*pathp*/,
+							    struct rt_db_internal * /*ip*/,
+							    void *client_data),
+				  void *client_data);
 
 /**
  * Fills a bu_vls with a representation of the given tree appropriate
@@ -642,15 +642,15 @@ RT_EXPORT extern union tree *db_tree_parse(struct bu_vls *vls, const char *str, 
  * This routine is recursive, so no variables may be declared static.
  */
 RT_EXPORT extern void db_functree(struct db_i *dbip,
-                                  struct directory *dp,
-                                  void (*comb_func)(struct db_i *,
-                                                    struct directory *,
-                                                    void *),
-                                  void (*leaf_func)(struct db_i *,
-                                                    struct directory *,
-                                                    void *),
-                                  struct resource *resp,
-                                  void *client_data);
+				  struct directory *dp,
+				  void (*comb_func)(struct db_i *,
+						    struct directory *,
+						    void *),
+				  void (*leaf_func)(struct db_i *,
+						    struct directory *,
+						    void *),
+				  struct resource *resp,
+				  void *client_data);
 /**
  * Ray Tracing library database tree walker.
  *
@@ -669,8 +669,8 @@ RT_EXPORT extern void db_functree(struct db_i *dbip,
  * -1 failure (tree_min and tree_max may have been altered)
  */
 RT_EXPORT extern int rt_bound_tree(const union tree     *tp,
-                                   vect_t               tree_min,
-                                   vect_t               tree_max);
+				   vect_t               tree_min,
+				   vect_t               tree_max);
 
 /**
  * Eliminate any references to NOP nodes from the tree.  It is safe to
@@ -685,7 +685,7 @@ RT_EXPORT extern int rt_bound_tree(const union tree     *tp,
  * -1 request caller to kill this node
  */
 RT_EXPORT extern int rt_tree_elim_nops(union tree *,
-                                       struct resource *resp);
+				       struct resource *resp);
 
 /**
  * Return count of number of leaf nodes in this tree.
@@ -714,17 +714,17 @@ RT_EXPORT extern struct rt_tree_array *db_flatten_tree(struct rt_tree_array *rt_
  * regardless of the structure of the tree we've been given.
  */
 RT_EXPORT extern void db_tree_flatten_describe(struct bu_vls    *vls,
-                                               const union tree *tp,
-                                               int              indented,
-                                               int              lvl,
-                                               double           mm2local,
-                                               struct resource  *resp);
+					       const union tree *tp,
+					       int              indented,
+					       int              lvl,
+					       double           mm2local,
+					       struct resource  *resp);
 
 RT_EXPORT extern void db_tree_describe(struct bu_vls    *vls,
-                                       const union tree *tp,
-                                       int              indented,
-                                       int              lvl,
-                                       double           mm2local);
+				       const union tree *tp,
+				       int              indented,
+				       int              lvl,
+				       double           mm2local);
 
 /**
  * Support routine for db_ck_v4gift_tree().
@@ -736,7 +736,7 @@ RT_EXPORT extern void db_tree_describe(struct bu_vls    *vls,
  * 0 OK
  */
 RT_EXPORT extern int db_ck_left_heavy_tree(const union tree     *tp,
-                                           int          no_unions);
+					   int          no_unions);
 /**
  * Look a gift-tree in the mouth.
  *
@@ -762,16 +762,16 @@ RT_EXPORT extern int db_ck_v4gift_tree(const union tree *tp);
  * top of the tree.
  */
 RT_EXPORT extern union tree *db_mkbool_tree(struct rt_tree_array *rt_tree_array,
-                                            size_t              howfar,
-                                            struct resource     *resp);
+					    size_t              howfar,
+					    struct resource     *resp);
 
 RT_EXPORT extern union tree *db_mkgift_tree(struct rt_tree_array *trees,
-                                            size_t subtreecount,
-                                            struct resource *resp);
+					    size_t subtreecount,
+					    struct resource *resp);
 
 
 RT_EXPORT extern void rt_optim_tree(union tree *tp,
-	                            struct resource *resp);
+				    struct resource *resp);
 
 
 

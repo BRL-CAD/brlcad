@@ -55,7 +55,7 @@ BU_EXPORT extern size_t bu_n_free;
  * Allocation failure results in bu_bomb() being called.
  */
 BU_EXPORT extern void *bu_malloc(size_t siz,
-				    const char *str);
+				 const char *str);
 
 /**
  * This routine only returns on successful allocation.
@@ -63,8 +63,8 @@ BU_EXPORT extern void *bu_malloc(size_t siz,
  * Failure results in bu_bomb() being called.
  */
 BU_EXPORT extern void *bu_calloc(size_t nelem,
-				    size_t elsize,
-				    const char *str);
+				 size_t elsize,
+				 const char *str);
 
 BU_EXPORT extern void bu_free(void *ptr,
 			      const char *str);
@@ -82,8 +82,8 @@ BU_EXPORT extern void bu_free(void *ptr,
  * tracked back to its original creator.
  */
 BU_EXPORT extern void *bu_realloc(void *ptr,
-				     size_t siz,
-				     const char *str);
+				  size_t siz,
+				  const char *str);
 
 /**
  * On systems with the CalTech malloc(), the amount of storage

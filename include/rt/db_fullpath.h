@@ -117,7 +117,7 @@ RT_EXPORT extern void db_path_to_vls(struct bu_vls *str,
 #define DB_FP_PRINT_TYPE         0x2    /* print object types */
 #define DB_FP_PRINT_MATRIX       0x4    /* print notice that a matrix is present */
 RT_EXPORT extern void db_fullpath_to_vls(struct bu_vls *vls,
-	                                 const struct db_full_path *full_path,
+					 const struct db_full_path *full_path,
 					 const struct db_i *dbip,  /* needed for type determination */
 					 int fp_flags);
 
