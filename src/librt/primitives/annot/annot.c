@@ -615,7 +615,7 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 			    pt[j] /= pt[coords-1];
 		    }
 		    if (i == 0)
-			RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_MOVE)
+			RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_MOVE);
 		    else
 			RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
 		}

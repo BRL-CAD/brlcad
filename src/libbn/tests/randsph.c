@@ -76,7 +76,7 @@ main(int argc, const char *argv[])
     bu_free(parray, "free array");
 
 
-  return 1;
+    return 1;
 }
 
 

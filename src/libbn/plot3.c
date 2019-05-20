@@ -42,24 +42,24 @@
  * letters.
  *
  * @code
-		2d	3d	2df	3df
-space		s	S	w	W
-move		m	M	o	O
-cont		n	N	q	Q
-point		p	P	x	X
-line		l	L	v	V
-circle		c		i
-arc		a		r
-linmod		f
-label		t
-erase		e
-color		C
-flush		F
+ 2d	3d	2df	3df
+ space		s	S	w	W
+ move		m	M	o	O
+ cont		n	N	q	Q
+ point		p	P	x	X
+ line		l	L	v	V
+ circle		c		i
+ arc		a		r
+ linmod		f
+ label		t
+ erase		e
+ color		C
+ flush		F
 
  bd gh jk  uyz
-ABDEGHIJKRTUYZ
+ ABDEGHIJKRTUYZ
 
-@endcode
+ @endcode
  *
  */
 
@@ -429,7 +429,7 @@ pl_3box(register FILE *plotfp, int px1, int py1, int pz1, int px2, int py2, int 
 void
 pd_point(register FILE *plotfp, double x, double y)
 {
-	pd( plotfp, x, y, 'x'); /* calling common function pd */
+    pd( plotfp, x, y, 'x'); /* calling common function pd */
 }
 
 void
@@ -622,7 +622,7 @@ pdv_3move(register FILE *plotfp, const fastf_t *pt)
 void
 pd_3move(register FILE *plotfp, double x, double y, double z)
 {
-   pd_3(plotfp, x, y, z, 'O'); /* calling common function pd_3 */
+    pd_3(plotfp, x, y, z, 'O'); /* calling common function pd_3 */
 }
 
 void

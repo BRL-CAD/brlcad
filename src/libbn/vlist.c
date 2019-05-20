@@ -432,49 +432,49 @@ bn_vlist_rpp(struct bu_list *vlists, struct bu_list *hd, const point_t minn, con
     point_t p;
 
     VSET(p, minn[X], minn[Y], minn[Z]);
-    BN_ADD_VLIST(vlists, hd, p, BN_VLIST_LINE_MOVE)
+    BN_ADD_VLIST(vlists, hd, p, BN_VLIST_LINE_MOVE);
 
-	/* first side */
-	VSET(p, minn[X], maxx[Y], minn[Z]);
-    BN_ADD_VLIST(vlists, hd, p, BN_VLIST_LINE_DRAW)
-	VSET(p, minn[X], maxx[Y], maxx[Z]);
-    BN_ADD_VLIST(vlists, hd, p, BN_VLIST_LINE_DRAW)
-	VSET(p, minn[X], minn[Y], maxx[Z]);
-    BN_ADD_VLIST(vlists, hd, p, BN_VLIST_LINE_DRAW)
-	VSET(p, minn[X], minn[Y], minn[Z]);
-    BN_ADD_VLIST(vlists, hd, p, BN_VLIST_LINE_DRAW)
+    /* first side */
+    VSET(p, minn[X], maxx[Y], minn[Z]);
+    BN_ADD_VLIST(vlists, hd, p, BN_VLIST_LINE_DRAW);
+    VSET(p, minn[X], maxx[Y], maxx[Z]);
+    BN_ADD_VLIST(vlists, hd, p, BN_VLIST_LINE_DRAW);
+    VSET(p, minn[X], minn[Y], maxx[Z]);
+    BN_ADD_VLIST(vlists, hd, p, BN_VLIST_LINE_DRAW);
+    VSET(p, minn[X], minn[Y], minn[Z]);
+    BN_ADD_VLIST(vlists, hd, p, BN_VLIST_LINE_DRAW);
 
-	/* across */
-	VSET(p, maxx[X], minn[Y], minn[Z]);
-    BN_ADD_VLIST(vlists, hd, p, BN_VLIST_LINE_DRAW)
+    /* across */
+    VSET(p, maxx[X], minn[Y], minn[Z]);
+    BN_ADD_VLIST(vlists, hd, p, BN_VLIST_LINE_DRAW);
 
-	/* second side */
-	VSET(p, maxx[X], maxx[Y], minn[Z]);
-    BN_ADD_VLIST(vlists, hd, p, BN_VLIST_LINE_DRAW)
-	VSET(p, maxx[X], maxx[Y], maxx[Z]);
-    BN_ADD_VLIST(vlists, hd, p, BN_VLIST_LINE_DRAW)
-	VSET(p, maxx[X], minn[Y], maxx[Z]);
-    BN_ADD_VLIST(vlists, hd, p, BN_VLIST_LINE_DRAW)
-	VSET(p, maxx[X], minn[Y], minn[Z]);
-    BN_ADD_VLIST(vlists, hd, p, BN_VLIST_LINE_DRAW)
+    /* second side */
+    VSET(p, maxx[X], maxx[Y], minn[Z]);
+    BN_ADD_VLIST(vlists, hd, p, BN_VLIST_LINE_DRAW);
+    VSET(p, maxx[X], maxx[Y], maxx[Z]);
+    BN_ADD_VLIST(vlists, hd, p, BN_VLIST_LINE_DRAW);
+    VSET(p, maxx[X], minn[Y], maxx[Z]);
+    BN_ADD_VLIST(vlists, hd, p, BN_VLIST_LINE_DRAW);
+    VSET(p, maxx[X], minn[Y], minn[Z]);
+    BN_ADD_VLIST(vlists, hd, p, BN_VLIST_LINE_DRAW);
 
-	/* front edge */
-	VSET(p, minn[X], maxx[Y], minn[Z]);
-    BN_ADD_VLIST(vlists, hd, p, BN_VLIST_LINE_MOVE)
-	VSET(p, maxx[X], maxx[Y], minn[Z]);
-    BN_ADD_VLIST(vlists, hd, p, BN_VLIST_LINE_DRAW)
+    /* front edge */
+    VSET(p, minn[X], maxx[Y], minn[Z]);
+    BN_ADD_VLIST(vlists, hd, p, BN_VLIST_LINE_MOVE);
+    VSET(p, maxx[X], maxx[Y], minn[Z]);
+    BN_ADD_VLIST(vlists, hd, p, BN_VLIST_LINE_DRAW);
 
-	/* bottom back */
-	VSET(p, minn[X], minn[Y], maxx[Z]);
-    BN_ADD_VLIST(vlists, hd, p, BN_VLIST_LINE_MOVE)
-	VSET(p, maxx[X], minn[Y], maxx[Z]);
-    BN_ADD_VLIST(vlists, hd, p, BN_VLIST_LINE_DRAW)
+    /* bottom back */
+    VSET(p, minn[X], minn[Y], maxx[Z]);
+    BN_ADD_VLIST(vlists, hd, p, BN_VLIST_LINE_MOVE);
+    VSET(p, maxx[X], minn[Y], maxx[Z]);
+    BN_ADD_VLIST(vlists, hd, p, BN_VLIST_LINE_DRAW);
 
-	/* top back */
-	VSET(p, minn[X], maxx[Y], maxx[Z]);
-    BN_ADD_VLIST(vlists, hd, p, BN_VLIST_LINE_MOVE)
-	VSET(p, maxx[X], maxx[Y], maxx[Z]);
-    BN_ADD_VLIST(vlists, hd, p, BN_VLIST_LINE_DRAW)
+    /* top back */
+    VSET(p, minn[X], maxx[Y], maxx[Z]);
+    BN_ADD_VLIST(vlists, hd, p, BN_VLIST_LINE_MOVE);
+    VSET(p, maxx[X], maxx[Y], maxx[Z]);
+    BN_ADD_VLIST(vlists, hd, p, BN_VLIST_LINE_DRAW);
 }
 
 void
@@ -488,9 +488,9 @@ bn_plot_vlblock(FILE *fp, const struct bn_vlblock *vbp)
 	if (vbp->rgb[i] == 0) continue;
 	if (BU_LIST_IS_EMPTY(&(vbp->head[i]))) continue;
 	pl_color(fp,
-		(vbp->rgb[i]>>16) & 0xFF,
-		(vbp->rgb[i]>> 8) & 0xFF,
-		(vbp->rgb[i]) & 0xFF);
+		 (vbp->rgb[i]>>16) & 0xFF,
+		 (vbp->rgb[i]>> 8) & 0xFF,
+		 (vbp->rgb[i]) & 0xFF);
 	bn_vlist_to_uplot(fp, &(vbp->head[i]));
     }
 }
@@ -526,7 +526,7 @@ bn_vlist_to_uplot(FILE *fp, const struct bu_list *vhead)
 		    break;
 		default:
 		    bu_log("bn_vlist_to_uplot: unknown vlist cmd x%x\n",
-			    *cmd);
+			   *cmd);
 	    }
 	}
     }

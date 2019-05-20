@@ -1116,8 +1116,8 @@ bn_mat_det3(const mat_t m)
     register fastf_t sum;
 
     sum = m[0] * (m[5] * m[10] - m[6] * m[9])
-	  - m[1] * (m[4] * m[10] - m[6] * m[8])
-	  + m[2] * (m[4] * m[9] - m[5] * m[8]);
+	- m[1] * (m[4] * m[10] - m[6] * m[8])
+	+ m[2] * (m[4] * m[9] - m[5] * m[8]);
 
     return sum;
 }
@@ -1130,20 +1130,20 @@ bn_mat_determinant(const mat_t m)
     fastf_t sum;
 
     det[0] = m[5] * (m[10] * m[15] - m[11] * m[14])
-	     - m[6] * (m[ 9] * m[15] - m[11] * m[13])
-	     + m[7] * (m[ 9] * m[14] - m[10] * m[13]);
+	- m[6] * (m[ 9] * m[15] - m[11] * m[13])
+	+ m[7] * (m[ 9] * m[14] - m[10] * m[13]);
 
     det[1] = m[4] * (m[10] * m[15] - m[11] * m[14])
-	     - m[6] * (m[ 8] * m[15] - m[11] * m[12])
-	     + m[7] * (m[ 8] * m[14] - m[10] * m[12]);
+	- m[6] * (m[ 8] * m[15] - m[11] * m[12])
+	+ m[7] * (m[ 8] * m[14] - m[10] * m[12]);
 
     det[2] = m[4] * (m[ 9] * m[15] - m[11] * m[13])
-	     - m[5] * (m[ 8] * m[15] - m[11] * m[12])
-	     + m[7] * (m[ 8] * m[13] - m[ 9] * m[12]);
+	- m[5] * (m[ 8] * m[15] - m[11] * m[12])
+	+ m[7] * (m[ 8] * m[13] - m[ 9] * m[12]);
 
     det[3] = m[4] * (m[ 9] * m[14] - m[10] * m[13])
-	     - m[5] * (m[ 8] * m[14] - m[10] * m[12])
-	     + m[6] * (m[ 8] * m[13] - m[ 9] * m[12]);
+	- m[5] * (m[ 8] * m[14] - m[10] * m[12])
+	+ m[6] * (m[ 8] * m[13] - m[ 9] * m[12]);
 
     sum = m[0] * det[0] - m[1] * det[1] + m[2] * det[2] - m[3] * det[3];
 
@@ -1259,8 +1259,8 @@ mike_persp_mat(fastf_t *pmat, const fastf_t *eye)
     point_t sheared_eye;
 
     if (eye[Z] < SMALL) {
-        VPRINT("mike_persp_mat(): ERROR, z<0, eye", eye);
-        return;
+	VPRINT("mike_persp_mat(): ERROR, z<0, eye", eye);
+	return;
     }
 
     /* Shear "eye" to +Z axis */
@@ -1270,8 +1270,8 @@ mike_persp_mat(fastf_t *pmat, const fastf_t *eye)
 
     MAT4X3VEC(sheared_eye, shear, eye);
     if (!NEAR_ZERO(sheared_eye[X], .01) || !NEAR_ZERO(sheared_eye[Y], .01)) {
-        VPRINT("ERROR sheared_eye", sheared_eye);
-        return;
+	VPRINT("ERROR sheared_eye", sheared_eye);
+	return;
     }
 
     /* Translate along +Z axis to put sheared_eye at (0, 0, 1). */
@@ -1320,9 +1320,9 @@ mike_persp_mat(fastf_t *pmat, const fastf_t *eye)
  */
 void
 deering_persp_mat(fastf_t *m, const fastf_t *l, const fastf_t *h, const fastf_t *eye)
-    /* lower left corner of screen */
-    /* upper right (high) corner of screen */
-    /* eye location.  Traditionally at (0, 0, 1) */
+/* lower left corner of screen */
+/* upper right (high) corner of screen */
+/* eye location.  Traditionally at (0, 0, 1) */
 {
     vect_t diff;        /* H - L */
     vect_t sum; /* H + L */

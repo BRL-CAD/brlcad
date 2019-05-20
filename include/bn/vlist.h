@@ -100,7 +100,7 @@ struct bn_vlist  {
  *
  * Note that BN_GET_VLIST and BN_FREE_VLIST are non-PARALLEL.
  */
-#define BN_GET_VLIST(_free_hd, p) {\
+#define BN_GET_VLIST(_free_hd, p) do {\
 	(p) = BU_LIST_FIRST(bn_vlist, (_free_hd)); \
 	if (BU_LIST_IS_HEAD((p), (_free_hd))) { \
 	    BU_ALLOC((p), struct bn_vlist); \
@@ -109,15 +109,15 @@ struct bn_vlist  {
 	    BU_LIST_DEQUEUE(&((p)->l)); \
 	} \
 	(p)->nused = 0; \
-    }
+    } while (0)
 
 /** Place an entire chain of bn_vlist structs on the freelist _free_hd */
-#define BN_FREE_VLIST(_free_hd, hd) { \
+#define BN_FREE_VLIST(_free_hd, hd) do { \
 	BU_CK_LIST_HEAD((hd)); \
 	BU_LIST_APPEND_LIST((_free_hd), (hd)); \
-    }
+    } while (0)
 
-#define BN_ADD_VLIST(_free_hd, _dest_hd, pnt, draw) { \
+#define BN_ADD_VLIST(_free_hd, _dest_hd, pnt, draw) do { \
 	struct bn_vlist *_vp; \
 	BU_CK_LIST_HEAD(_dest_hd); \
 	_vp = BU_LIST_LAST(bn_vlist, (_dest_hd)); \
@@ -127,10 +127,10 @@ struct bn_vlist  {
 	} \
 	VMOVE(_vp->pt[_vp->nused], (pnt)); \
 	_vp->cmd[_vp->nused++] = (draw); \
-    }
+    } while (0)
 
 /** Change the transformation matrix to display */
-#define BN_VLIST_SET_DISP_MAT(_free_hd, _dest_hd, _ref_pt) { \
+#define BN_VLIST_SET_DISP_MAT(_free_hd, _dest_hd, _ref_pt) do { \
 	struct bn_vlist *_vp; \
 	BU_CK_LIST_HEAD(_dest_hd); \
 	_vp = BU_LIST_LAST(bn_vlist, (_dest_hd)); \
@@ -140,10 +140,10 @@ struct bn_vlist  {
 	} \
 	VMOVE(_vp->pt[_vp->nused], (_ref_pt)); \
 	_vp->cmd[_vp->nused++] = BN_VLIST_DISPLAY_MAT; \
-}
+    } while (0)
 
 /** Change the transformation matrix to model */
-#define BN_VLIST_SET_MODEL_MAT(_free_hd, _dest_hd) { \
+#define BN_VLIST_SET_MODEL_MAT(_free_hd, _dest_hd) do { \
 	struct bn_vlist *_vp; \
 	BU_CK_LIST_HEAD(_dest_hd); \
 	_vp = BU_LIST_LAST(bn_vlist, (_dest_hd)); \
@@ -152,10 +152,10 @@ struct bn_vlist  {
 	    BU_LIST_INSERT((_dest_hd), &(_vp->l)); \
 	} \
 	_vp->cmd[_vp->nused++] = BN_VLIST_MODEL_MAT; \
-}
+    } while (0)
 
 /** Set a point size to apply to the vlist elements that follow. */
-#define BN_VLIST_SET_POINT_SIZE(_free_hd, _dest_hd, _size) { \
+#define BN_VLIST_SET_POINT_SIZE(_free_hd, _dest_hd, _size) do { \
 	struct bn_vlist *_vp; \
 	BU_CK_LIST_HEAD(_dest_hd); \
 	_vp = BU_LIST_LAST(bn_vlist, (_dest_hd)); \
@@ -165,10 +165,10 @@ struct bn_vlist  {
 	} \
 	_vp->pt[_vp->nused][0] = (_size); \
 	_vp->cmd[_vp->nused++] = BN_VLIST_POINT_SIZE; \
-}
+    } while (0)
 
 /** Set a line width to apply to the vlist elements that follow. */
-#define BN_VLIST_SET_LINE_WIDTH(_free_hd, _dest_hd, _width) { \
+#define BN_VLIST_SET_LINE_WIDTH(_free_hd, _dest_hd, _width) do { \
 	struct bn_vlist *_vp; \
 	BU_CK_LIST_HEAD(_dest_hd); \
 	_vp = BU_LIST_LAST(bn_vlist, (_dest_hd)); \
@@ -178,7 +178,7 @@ struct bn_vlist  {
 	} \
 	_vp->pt[_vp->nused][0] = (_width); \
 	_vp->cmd[_vp->nused++] = BN_VLIST_LINE_WIDTH; \
-}
+    } while (0)
 
 
 BN_EXPORT extern size_t bn_vlist_cmd_cnt(struct bn_vlist *vlist);

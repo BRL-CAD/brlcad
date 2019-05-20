@@ -209,17 +209,17 @@ int test_quat_log(int argc, const char *argv[])
 int
 qmath_main(int argc, char *argv[])
 {
-  int function_num = 0;
+    int function_num = 0;
 
-  const char **av = (const char **)argv;
+    const char **av = (const char **)argv;
 
-  if (argc < 3) {
-      bu_exit(1, "ERROR: input format is function_num function_test_args [%s]\n", argv[0]);
-  }
+    if (argc < 3) {
+	bu_exit(1, "ERROR: input format is function_num function_test_args [%s]\n", argv[0]);
+    }
 
-  sscanf(argv[1], "%d", &function_num);
+    sscanf(argv[1], "%d", &function_num);
 
-  switch (function_num) {
+    switch (function_num) {
 	case 1:
 	    return test_quat_mat2quat(argc - 2, av + 2);
 	case 2:
@@ -242,9 +242,9 @@ qmath_main(int argc, char *argv[])
 	    return test_quat_log(argc - 2, av + 2);
 	default:
 	    bu_exit(1, "ERROR: Unrecognized function_num\n");
-  }
+    }
 
-  return 1;
+    return 1;
 }
 
 

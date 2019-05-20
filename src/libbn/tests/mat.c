@@ -544,60 +544,60 @@ mat_main(int argc, char *argv[])
     if (function_num < 1 || function_num > 27) function_num = 0;
 
     switch (function_num) {
-    case 1:
-	return test_bn_mat_mul(argc, argv);
-    case 2:
-	return test_bn_mat_mul3(argc, argv);
-    case 3:
-	return test_bn_mat_mul4(argc, argv);
-    case 4:
-	return test_bn_matXvec(argc, argv);
-    case 5:
-	return test_bn_mat_inverse(argc, argv);
-    case 6:
-	return test_bn_mat_trn(argc, argv);
-    case 7:
-	return test_bn_mat_is_identity(argc, argv);
-    case 8:
-	return test_bn_mat_det3(argc, argv);
-    case 9:
-	return test_bn_mat_determinant(argc, argv);
-    case 10:
-	return test_bn_mat_is_equal(argc, argv);
-    case 11:
-	return test_bn_atan2(argc, argv);
-    case 12:
-	return test_bn_vtoh_move(argc, argv);
-    case 13:
-	return test_bn_htov_move(argc, argv);
-    case 14:
-	return test_bn_mat_ae(argc, argv);
-    case 15:
-	return test_bn_ae_vec(argc, argv);
-    case 16:
-	return test_bn_vec_ae(argc, argv);
-    case 17:
-	return test_bn_vec_aed(argc, argv);
-    case 18:
-	return test_bn_mat_angles(argc, argv);
-    case 19:
-	return test_bn_mat_angles_rad(argc, argv);
-    case 20:
-	return test_bn_eigen2x2(argc, argv);
-    case 21:
-	return test_bn_mat_xrot(argc, argv);
-    case 22:
-	return test_bn_mat_yrot(argc, argv);
-    case 23:
-	return test_bn_mat_zrot(argc, argv);
-    case 24:
-	return test_bn_mat_scale_about_pt(argc, argv);
-    case 25:
-	return test_bn_mat_xform_about_pt(argc, argv);
-    case 26:
-	return test_bn_mat_ck(argc, argv);
-    case 27:
-	return test_bn_mat_dup();
+	case 1:
+	    return test_bn_mat_mul(argc, argv);
+	case 2:
+	    return test_bn_mat_mul3(argc, argv);
+	case 3:
+	    return test_bn_mat_mul4(argc, argv);
+	case 4:
+	    return test_bn_matXvec(argc, argv);
+	case 5:
+	    return test_bn_mat_inverse(argc, argv);
+	case 6:
+	    return test_bn_mat_trn(argc, argv);
+	case 7:
+	    return test_bn_mat_is_identity(argc, argv);
+	case 8:
+	    return test_bn_mat_det3(argc, argv);
+	case 9:
+	    return test_bn_mat_determinant(argc, argv);
+	case 10:
+	    return test_bn_mat_is_equal(argc, argv);
+	case 11:
+	    return test_bn_atan2(argc, argv);
+	case 12:
+	    return test_bn_vtoh_move(argc, argv);
+	case 13:
+	    return test_bn_htov_move(argc, argv);
+	case 14:
+	    return test_bn_mat_ae(argc, argv);
+	case 15:
+	    return test_bn_ae_vec(argc, argv);
+	case 16:
+	    return test_bn_vec_ae(argc, argv);
+	case 17:
+	    return test_bn_vec_aed(argc, argv);
+	case 18:
+	    return test_bn_mat_angles(argc, argv);
+	case 19:
+	    return test_bn_mat_angles_rad(argc, argv);
+	case 20:
+	    return test_bn_eigen2x2(argc, argv);
+	case 21:
+	    return test_bn_mat_xrot(argc, argv);
+	case 22:
+	    return test_bn_mat_yrot(argc, argv);
+	case 23:
+	    return test_bn_mat_zrot(argc, argv);
+	case 24:
+	    return test_bn_mat_scale_about_pt(argc, argv);
+	case 25:
+	    return test_bn_mat_xform_about_pt(argc, argv);
+	case 26:
+	    return test_bn_mat_ck(argc, argv);
+	case 27:
+	    return test_bn_mat_dup();
     }
 
     bu_log("ERROR: function_num %d is not valid [%s]\n", function_num, argv[0]);

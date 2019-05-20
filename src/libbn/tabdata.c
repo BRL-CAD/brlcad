@@ -545,7 +545,7 @@ bn_table_lin_interp(const struct bn_tabdata *samp, register double wl)
     if (fract < 0 || fract > 1)  bu_bomb("bn_table_lin_interp() assertion2 failed\n");
     ret = (1-fract) * samp->y[i] + fract * samp->y[i+1];
     if (bu_debug&BU_DEBUG_TABDATA)bu_log("bn_table_lin_interp(%g)=%g in range %g to %g\n",
-					     wl, ret, tabp->x[i], tabp->x[i+1]);
+					 wl, ret, tabp->x[i], tabp->x[i+1]);
     return ret;
 }
 
@@ -651,8 +651,8 @@ bn_tabdata_resample_avg(const struct bn_table *newtable, const struct bn_tabdata
 	     *  Interpolate for both ends, take average.
 	     */
 	    newsamp->y[i] = 0.5 * (
-				bn_table_lin_interp(olddata, newtable->x[i]) +
-				bn_table_lin_interp(olddata, newtable->x[i+1]));
+		bn_table_lin_interp(olddata, newtable->x[i]) +
+		bn_table_lin_interp(olddata, newtable->x[i+1]));
 	} else {
 	    /*
 	     *  Complex case: find average value.

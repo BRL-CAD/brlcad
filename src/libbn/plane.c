@@ -1849,7 +1849,7 @@ bn_distsq_pt3_lseg3_v2(fastf_t *dist_sq_out, const fastf_t *a, const fastf_t *b,
 		dot = VDOT(AtoP, AtoB);
 		flip = 1;
 	    }
-	    if ZERO(dot) {
+	    if (ZERO(dot)) {
 		bu_bomb("bn_distsq_pt3_lseg3_v2(): failed");
 	    }
 
