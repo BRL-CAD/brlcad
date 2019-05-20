@@ -65,6 +65,8 @@ Emacs. For example, invoke:
 	(c-set-offset 'innamespace 0)
 	(c-set-offset 'inline-open 0)
 	(indent-region (point-min) (point-max) nil)
+	;; only tabify from the beginning of line, not internal spaces
+	(setq tabify-regexp "^\t* [ \t]+")
 	(tabify (point-min) (point-max))
 	(save-buffer)
 	(setq command-line-args-left (cdr command-line-args-left))))
