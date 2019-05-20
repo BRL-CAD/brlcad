@@ -63,6 +63,7 @@ Emacs. For example, invoke:
 	(c-set-offset 'case-label '+)
 	(c-set-offset 'statement-case-open '+)
 	(c-set-offset 'innamespace 0)
+	(c-set-offset 'inextern-lang 0)
 	(c-set-offset 'inline-open 0)
 	(indent-region (point-min) (point-max) nil)
 	;; only tabify from the beginning of line, not internal spaces
