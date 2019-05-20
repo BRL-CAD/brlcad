@@ -677,7 +677,7 @@ typedef int (*bu_vls_uniq_t)(struct bu_vls *v, void *data);
  *
  */
 BU_EXPORT extern int bu_vls_incr(struct bu_vls *name, const char *regex_str, const char *incr_spec, bu_vls_uniq_t uniq_test, void *data);
- *
+
 __END_DECLS
 
 /** @} */
