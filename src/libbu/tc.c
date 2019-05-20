@@ -120,7 +120,7 @@ bu_cnd_destroy(bu_cnd_t *cond)
 }
 
 
-in
+int
 bu_mtx_lock(bu_mtx_t *mtx)
 {
 #if defined(HAVE_WINDOWS_H)
@@ -392,14 +392,11 @@ typedef struct {
 } _bu_thread_start_info;
 
 /* Thread wrapper function. */
-static DWORD WINAPI
-_bu_thrd_wrapper_function(
 #if defined(HAVE_WINDOWS_H)
-    LPVOID aArg
+static DWORD WINAPI _bu_thrd_wrapper_function(LPVOID aArg)
 #else
-    (void *) aArg
+static void * _bu_thrd_wrapper_function(void * aArg)
 #endif
-    )
 {
     bu_thrd_start_t fun;
     void *arg;
