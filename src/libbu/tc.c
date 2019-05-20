@@ -28,13 +28,15 @@
 #include <stdlib.h>
 #include "bu/tc.h"
 
-int bu_mtx_init(bu_mtx_t *mtx)
+
+int
+bu_mtx_init(bu_mtx_t *mtx)
 {
 #if defined(HAVE_WINDOWS_H)
     mtx->mAlreadyLocked = FALSE;
     mtx->mRecursive = 0;
     mtx->mTimed = 0;
-	InitializeCriticalSection(&(mtx->mHandle.cs));
+    InitializeCriticalSection(&(mtx->mHandle.cs));
     return bu_thrd_success;
 #else
     int ret;
@@ -46,246 +48,260 @@ int bu_mtx_init(bu_mtx_t *mtx)
 #endif
 }
 
-void bu_mtx_destroy(bu_mtx_t *mtx)
+
+void
+bu_mtx_destroy(bu_mtx_t *mtx)
 {
 #if defined(HAVE_WINDOWS_H)
-  if (!mtx->mTimed)
-  {
-    DeleteCriticalSection(&(mtx->mHandle.cs));
-  }
-  else
-  {
-    CloseHandle(mtx->mHandle.mut);
-  }
+    if (!mtx->mTimed) {
+	DeleteCriticalSection(&(mtx->mHandle.cs));
+    } else {
+	CloseHandle(mtx->mHandle.mut);
+    }
 #else
-  pthread_mutex_destroy(mtx);
+    pthread_mutex_destroy(mtx);
 #endif
 }
+
 
 #if defined(HAVE_WINDOWS_H)
 #define _CONDITION_EVENT_ONE 0
 #define _CONDITION_EVENT_ALL 1
 #endif
 
-int bu_cnd_init(bu_cnd_t *cond)
+
+int
+bu_cnd_init(bu_cnd_t *cond)
 {
 #if defined(HAVE_WINDOWS_H)
-  cond->mWaitersCount = 0;
+    cond->mWaitersCount = 0;
 
-  /* Init critical section */
-  InitializeCriticalSection(&cond->mWaitersCountLock);
+    /* Init critical section */
+    InitializeCriticalSection(&cond->mWaitersCountLock);
 
-  /* Init events */
-  cond->mEvents[_CONDITION_EVENT_ONE] = CreateEvent(NULL, FALSE, FALSE, NULL);
-  if (cond->mEvents[_CONDITION_EVENT_ONE] == NULL)
-  {
-    cond->mEvents[_CONDITION_EVENT_ALL] = NULL;
-    return bu_thrd_error;
-  }
-  cond->mEvents[_CONDITION_EVENT_ALL] = CreateEvent(NULL, TRUE, FALSE, NULL);
-  if (cond->mEvents[_CONDITION_EVENT_ALL] == NULL)
-  {
-    CloseHandle(cond->mEvents[_CONDITION_EVENT_ONE]);
-    cond->mEvents[_CONDITION_EVENT_ONE] = NULL;
-    return bu_thrd_error;
-  }
-
-  return bu_thrd_success;
-#else
-  return pthread_cond_init(cond, NULL) == 0 ? bu_thrd_success : bu_thrd_error;
-#endif
-}
-
-void bu_cnd_destroy(bu_cnd_t *cond)
-{
-#if defined(HAVE_WINDOWS_H)
-  if (cond->mEvents[_CONDITION_EVENT_ONE] != NULL)
-  {
-    CloseHandle(cond->mEvents[_CONDITION_EVENT_ONE]);
-  }
-  if (cond->mEvents[_CONDITION_EVENT_ALL] != NULL)
-  {
-    CloseHandle(cond->mEvents[_CONDITION_EVENT_ALL]);
-  }
-  DeleteCriticalSection(&cond->mWaitersCountLock);
-#else
-  pthread_cond_destroy(cond);
-#endif
-}
-
-int bu_mtx_lock(bu_mtx_t *mtx)
-{
-#if defined(HAVE_WINDOWS_H)
-  if (!mtx->mTimed)
-  {
-    EnterCriticalSection(&(mtx->mHandle.cs));
-  }
-  else
-  {
-    switch (WaitForSingleObject(mtx->mHandle.mut, INFINITE))
+    /* Init events */
+    cond->mEvents[_CONDITION_EVENT_ONE] = CreateEvent(NULL, FALSE, FALSE, NULL);
+    if (cond->mEvents[_CONDITION_EVENT_ONE] == NULL)
     {
-      case WAIT_OBJECT_0:
-        break;
-      case WAIT_ABANDONED:
-      default:
-        return bu_thrd_error;
+	cond->mEvents[_CONDITION_EVENT_ALL] = NULL;
+	return bu_thrd_error;
     }
-  }
-
-  if (!mtx->mRecursive)
-  {
-    while(mtx->mAlreadyLocked) Sleep(1); /* Simulate deadlock... */
-    mtx->mAlreadyLocked = TRUE;
-  }
-  return bu_thrd_success;
-#else
-  return pthread_mutex_lock(mtx) == 0 ? bu_thrd_success : bu_thrd_error;
-#endif
-}
-
-int bu_mtx_unlock(bu_mtx_t *mtx)
-{
-#if defined(HAVE_WINDOWS_H)
-  mtx->mAlreadyLocked = FALSE;
-  if (!mtx->mTimed)
-  {
-    LeaveCriticalSection(&(mtx->mHandle.cs));
-  }
-  else
-  {
-    if (!ReleaseMutex(mtx->mHandle.mut))
+    cond->mEvents[_CONDITION_EVENT_ALL] = CreateEvent(NULL, TRUE, FALSE, NULL);
+    if (cond->mEvents[_CONDITION_EVENT_ALL] == NULL)
     {
-      return bu_thrd_error;
+	CloseHandle(cond->mEvents[_CONDITION_EVENT_ONE]);
+	cond->mEvents[_CONDITION_EVENT_ONE] = NULL;
+	return bu_thrd_error;
     }
-  }
-  return bu_thrd_success;
+
+    return bu_thrd_success;
 #else
-  return pthread_mutex_unlock(mtx) == 0 ? bu_thrd_success : bu_thrd_error;;
+    return pthread_cond_init(cond, NULL) == 0 ? bu_thrd_success : bu_thrd_error;
 #endif
 }
 
-int bu_mtx_trylock(bu_mtx_t *mtx)
+
+void
+bu_cnd_destroy(bu_cnd_t *cond)
 {
 #if defined(HAVE_WINDOWS_H)
-	int ret;
+    if (cond->mEvents[_CONDITION_EVENT_ONE] != NULL)
+    {
+	CloseHandle(cond->mEvents[_CONDITION_EVENT_ONE]);
+    }
+    if (cond->mEvents[_CONDITION_EVENT_ALL] != NULL)
+    {
+	CloseHandle(cond->mEvents[_CONDITION_EVENT_ALL]);
+    }
+    DeleteCriticalSection(&cond->mWaitersCountLock);
+#else
+    pthread_cond_destroy(cond);
+#endif
+}
 
-	if (!mtx->mTimed)
+
+in
+bu_mtx_lock(bu_mtx_t *mtx)
+{
+#if defined(HAVE_WINDOWS_H)
+    if (!mtx->mTimed)
+    {
+	EnterCriticalSection(&(mtx->mHandle.cs));
+    }
+    else
+    {
+	switch (WaitForSingleObject(mtx->mHandle.mut, INFINITE))
 	{
-		ret = TryEnterCriticalSection(&(mtx->mHandle.cs)) ? bu_thrd_success : bu_thrd_busy;
+	    case WAIT_OBJECT_0:
+		break;
+	    case WAIT_ABANDONED:
+	    default:
+		return bu_thrd_error;
+	}
+    }
+
+    if (!mtx->mRecursive)
+    {
+	while(mtx->mAlreadyLocked) Sleep(1); /* Simulate deadlock... */
+	mtx->mAlreadyLocked = TRUE;
+    }
+    return bu_thrd_success;
+#else
+    return pthread_mutex_lock(mtx) == 0 ? bu_thrd_success : bu_thrd_error;
+#endif
+}
+
+
+int
+bu_mtx_unlock(bu_mtx_t *mtx)
+{
+#if defined(HAVE_WINDOWS_H)
+    mtx->mAlreadyLocked = FALSE;
+    if (!mtx->mTimed)
+    {
+	LeaveCriticalSection(&(mtx->mHandle.cs));
+    }
+    else
+    {
+	if (!ReleaseMutex(mtx->mHandle.mut))
+	{
+	    return bu_thrd_error;
+	}
+    }
+    return bu_thrd_success;
+#else
+    return pthread_mutex_unlock(mtx) == 0 ? bu_thrd_success : bu_thrd_error;;
+#endif
+}
+
+
+int
+bu_mtx_trylock(bu_mtx_t *mtx)
+{
+#if defined(HAVE_WINDOWS_H)
+    int ret;
+
+    if (!mtx->mTimed)
+    {
+	ret = TryEnterCriticalSection(&(mtx->mHandle.cs)) ? bu_thrd_success : bu_thrd_busy;
+    }
+    else
+    {
+	ret = (WaitForSingleObject(mtx->mHandle.mut, 0) == WAIT_OBJECT_0) ? bu_thrd_success : bu_thrd_busy;
+    }
+
+    if ((!mtx->mRecursive) && (ret == bu_thrd_success))
+    {
+	if (mtx->mAlreadyLocked)
+	{
+	    LeaveCriticalSection(&(mtx->mHandle.cs));
+	    ret = bu_thrd_busy;
 	}
 	else
 	{
-		ret = (WaitForSingleObject(mtx->mHandle.mut, 0) == WAIT_OBJECT_0) ? bu_thrd_success : bu_thrd_busy;
+	    mtx->mAlreadyLocked = TRUE;
 	}
-
-	if ((!mtx->mRecursive) && (ret == bu_thrd_success))
-	{
-		if (mtx->mAlreadyLocked)
-		{
-			LeaveCriticalSection(&(mtx->mHandle.cs));
-			ret = bu_thrd_busy;
-		}
-		else
-		{
-			mtx->mAlreadyLocked = TRUE;
-		}
-	}
-	return ret;
+    }
+    return ret;
 #else
-	return pthread_mutex_trylock(mtx) == 0 ? bu_thrd_success : bu_thrd_error;
+    return pthread_mutex_trylock(mtx) == 0 ? bu_thrd_success : bu_thrd_error;
 #endif
 }
 
 
-int bu_cnd_signal(bu_cnd_t *cond)
+int
+bu_cnd_signal(bu_cnd_t *cond)
 {
 #if defined(HAVE_WINDOWS_H)
-  int haveWaiters;
+    int haveWaiters;
 
-  /* Are there any waiters? */
-  EnterCriticalSection(&cond->mWaitersCountLock);
-  haveWaiters = (cond->mWaitersCount > 0);
-  LeaveCriticalSection(&cond->mWaitersCountLock);
+    /* Are there any waiters? */
+    EnterCriticalSection(&cond->mWaitersCountLock);
+    haveWaiters = (cond->mWaitersCount > 0);
+    LeaveCriticalSection(&cond->mWaitersCountLock);
 
-  /* If we have any waiting threads, send them a signal */
-  if(haveWaiters)
-  {
-    if (SetEvent(cond->mEvents[_CONDITION_EVENT_ONE]) == 0)
+    /* If we have any waiting threads, send them a signal */
+    if(haveWaiters)
     {
-      return bu_thrd_error;
+	if (SetEvent(cond->mEvents[_CONDITION_EVENT_ONE]) == 0)
+	{
+	    return bu_thrd_error;
+	}
     }
-  }
 
-  return bu_thrd_success;
+    return bu_thrd_success;
 #else
-  return pthread_cond_signal(cond) == 0 ? bu_thrd_success : bu_thrd_error;
+    return pthread_cond_signal(cond) == 0 ? bu_thrd_success : bu_thrd_error;
 #endif
 }
 
 #if defined(HAVE_WINDOWS_H)
 static int _bu_cnd_timedwait_win32(bu_cnd_t *cond, bu_mtx_t *mtx, DWORD timeout)
 {
-  DWORD result;
-  int lastWaiter;
+    DWORD result;
+    int lastWaiter;
 
-  /* Increment number of waiters */
-  EnterCriticalSection(&cond->mWaitersCountLock);
-  ++ cond->mWaitersCount;
-  LeaveCriticalSection(&cond->mWaitersCountLock);
+    /* Increment number of waiters */
+    EnterCriticalSection(&cond->mWaitersCountLock);
+    ++ cond->mWaitersCount;
+    LeaveCriticalSection(&cond->mWaitersCountLock);
 
-  /* Release the mutex while waiting for the condition (will decrease
-     the number of waiters when done)... */
-  bu_mtx_unlock(mtx);
+    /* Release the mutex while waiting for the condition (will decrease
+       the number of waiters when done)... */
+    bu_mtx_unlock(mtx);
 
-  /* Wait for either event to become signaled due to cnd_signal() or
-     cnd_broadcast() being called */
-  result = WaitForMultipleObjects(2, cond->mEvents, FALSE, timeout);
-  if (result == WAIT_TIMEOUT)
-  {
-    /* The mutex is locked again before the function returns, even if an error occurred */
-    bu_mtx_lock(mtx);
-    return bu_thrd_timedout;
-  }
-  else if (result == WAIT_FAILED)
-  {
-    /* The mutex is locked again before the function returns, even if an error occurred */
-    bu_mtx_lock(mtx);
-    return bu_thrd_error;
-  }
-
-  /* Check if we are the last waiter */
-  EnterCriticalSection(&cond->mWaitersCountLock);
-  -- cond->mWaitersCount;
-  lastWaiter = (result == (WAIT_OBJECT_0 + _CONDITION_EVENT_ALL)) &&
-               (cond->mWaitersCount == 0);
-  LeaveCriticalSection(&cond->mWaitersCountLock);
-
-  /* If we are the last waiter to be notified to stop waiting, reset the event */
-  if (lastWaiter)
-  {
-    if (ResetEvent(cond->mEvents[_CONDITION_EVENT_ALL]) == 0)
+    /* Wait for either event to become signaled due to cnd_signal() or
+       cnd_broadcast() being called */
+    result = WaitForMultipleObjects(2, cond->mEvents, FALSE, timeout);
+    if (result == WAIT_TIMEOUT)
     {
-      /* The mutex is locked again before the function returns, even if an error occurred */
-      bu_mtx_lock(mtx);
-      return bu_thrd_error;
+	/* The mutex is locked again before the function returns, even if an error occurred */
+	bu_mtx_lock(mtx);
+	return bu_thrd_timedout;
     }
-  }
+    else if (result == WAIT_FAILED)
+    {
+	/* The mutex is locked again before the function returns, even if an error occurred */
+	bu_mtx_lock(mtx);
+	return bu_thrd_error;
+    }
 
-  /* Re-acquire the mutex */
-  bu_mtx_lock(mtx);
+    /* Check if we are the last waiter */
+    EnterCriticalSection(&cond->mWaitersCountLock);
+    -- cond->mWaitersCount;
+    lastWaiter = (result == (WAIT_OBJECT_0 + _CONDITION_EVENT_ALL)) &&
+	(cond->mWaitersCount == 0);
+    LeaveCriticalSection(&cond->mWaitersCountLock);
 
-  return bu_thrd_success;
+    /* If we are the last waiter to be notified to stop waiting, reset the event */
+    if (lastWaiter)
+    {
+	if (ResetEvent(cond->mEvents[_CONDITION_EVENT_ALL]) == 0)
+	{
+	    /* The mutex is locked again before the function returns, even if an error occurred */
+	    bu_mtx_lock(mtx);
+	    return bu_thrd_error;
+	}
+    }
+
+    /* Re-acquire the mutex */
+    bu_mtx_lock(mtx);
+
+    return bu_thrd_success;
 }
 #endif
 
-int bu_cnd_wait(bu_cnd_t *cond, bu_mtx_t *mtx)
+
+int
+bu_cnd_wait(bu_cnd_t *cond, bu_mtx_t *mtx)
 {
 #if defined(HAVE_WINDOWS_H)
-  return _bu_cnd_timedwait_win32(cond, mtx, INFINITE);
+    return _bu_cnd_timedwait_win32(cond, mtx, INFINITE);
 #else
-  return pthread_cond_wait(cond, mtx) == 0 ? bu_thrd_success : bu_thrd_error;
+    return pthread_cond_wait(cond, mtx) == 0 ? bu_thrd_success : bu_thrd_error;
 #endif
 }
+
 
 #if defined(HAVE_WINDOWS_H)
 
@@ -295,9 +311,9 @@ typedef void(*tss_dtor_t)(void *val);
 #define TSS_DTOR_ITERATIONS (4)
 
 struct TinyCThreadTSSData {
-	void* value;
-	tss_t key;
-	struct TinyCThreadTSSData* next;
+    void* value;
+    tss_t key;
+    struct TinyCThreadTSSData* next;
 };
 
 static tss_dtor_t _tinycthread_tss_dtors[1088] = { NULL, };
@@ -305,50 +321,54 @@ static tss_dtor_t _tinycthread_tss_dtors[1088] = { NULL, };
 static _Thread_local struct TinyCThreadTSSData* _tinycthread_tss_head = NULL;
 static _Thread_local struct TinyCThreadTSSData* _tinycthread_tss_tail = NULL;
 
-static void _tinycthread_tss_cleanup(void);
 
-static void _tinycthread_tss_cleanup(void) {
-	struct TinyCThreadTSSData* data;
-	int iteration;
-	unsigned int again = 1;
-	void* value;
+static void
+_tinycthread_tss_cleanup(void)
 
-	for (iteration = 0; iteration < TSS_DTOR_ITERATIONS && again > 0; iteration++)
+    struct TinyCThreadTSSData* data;
+    int iteration;
+    unsigned int again = 1;
+    void* value;
+
+    for (iteration = 0; iteration < TSS_DTOR_ITERATIONS && again > 0; iteration++)
+    {
+	again = 0;
+	for (data = _tinycthread_tss_head; data != NULL; data = data->next)
 	{
-		again = 0;
-		for (data = _tinycthread_tss_head; data != NULL; data = data->next)
+	    if (data->value != NULL)
+	    {
+		value = data->value;
+		data->value = NULL;
+
+		if (_tinycthread_tss_dtors[data->key] != NULL)
 		{
-			if (data->value != NULL)
-			{
-				value = data->value;
-				data->value = NULL;
-
-				if (_tinycthread_tss_dtors[data->key] != NULL)
-				{
-					again = 1;
-					_tinycthread_tss_dtors[data->key](value);
-				}
-			}
+		    again = 1;
+		    _tinycthread_tss_dtors[data->key](value);
 		}
+	    }
 	}
+    }
 
-	while (_tinycthread_tss_head != NULL) {
-		data = _tinycthread_tss_head->next;
-		free(_tinycthread_tss_head);
-		_tinycthread_tss_head = data;
-	}
-	_tinycthread_tss_head = NULL;
-	_tinycthread_tss_tail = NULL;
+    while (_tinycthread_tss_head != NULL) {
+	data = _tinycthread_tss_head->next;
+	free(_tinycthread_tss_head);
+	_tinycthread_tss_head = data;
+    }
+    _tinycthread_tss_head = NULL;
+    _tinycthread_tss_tail = NULL;
 }
-static void NTAPI _tinycthread_tss_callback(PVOID h, DWORD dwReason, PVOID pv)
-{
-	(void)h;
-	(void)pv;
 
-	if (_tinycthread_tss_head != NULL && (dwReason == DLL_THREAD_DETACH || dwReason == DLL_PROCESS_DETACH))
-	{
-		_tinycthread_tss_cleanup();
-	}
+
+static void NTAPI
+_tinycthread_tss_callback(PVOID h, DWORD dwReason, PVOID pv)
+{
+    (void)h;
+    (void)pv;
+
+    if (_tinycthread_tss_head != NULL && (dwReason == DLL_THREAD_DETACH || dwReason == DLL_PROCESS_DETACH))
+    {
+	_tinycthread_tss_cleanup();
+    }
 }
 
 #if defined(_MSC_VER)
@@ -372,11 +392,14 @@ typedef struct {
 } _bu_thread_start_info;
 
 /* Thread wrapper function. */
+static DWORD WINAPI
+_bu_thrd_wrapper_function(
 #if defined(HAVE_WINDOWS_H)
-static DWORD WINAPI _bu_thrd_wrapper_function(LPVOID aArg)
+    LPVOID aArg
 #else
-static void * _bu_thrd_wrapper_function(void * aArg)
+    (void *) aArg
 #endif
+    )
 {
     bu_thrd_start_t fun;
     void *arg;

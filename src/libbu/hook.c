@@ -60,9 +60,9 @@ bu_hook_add(struct bu_hook_list *hlp, bu_hook_t func, void *clientdata)
     if (hlp->size == hlp->capacity) {
 	hlp->capacity = (hlp->capacity > 0) ? hlp->capacity * 2 : 1;
 	hlp->hooks = (struct bu_hook *)bu_realloc(
-		hlp->hooks,
-		sizeof (struct bu_hook) * hlp->capacity,
-		"resize hooks");
+	    hlp->hooks,
+	    sizeof (struct bu_hook) * hlp->capacity,
+	    "resize hooks");
     }
 
     hlp->hooks[hlp->size].hookfunc = func;
@@ -78,7 +78,7 @@ bu_hook_delete(struct bu_hook_list *hlp, bu_hook_t func, void *clientdata)
     size_t i;
 
     for (i = 0; i < hlp->size; i++) {
-	    crt = &hlp->hooks[i];
+	crt = &hlp->hooks[i];
 	if (crt->hookfunc == func && crt->clientdata == clientdata) {
 	    memmove(crt, crt + 1, sizeof (struct bu_hook) * (hlp->size - i));
 	    hlp->size--;
@@ -94,7 +94,7 @@ bu_hook_call(struct bu_hook_list *hlp, void *buf)
     size_t i;
 
     for (i = 0; i < hlp->size; i++) {
-	    call_hook = &hlp->hooks[i];
+	call_hook = &hlp->hooks[i];
 	if (UNLIKELY(!(call_hook->hookfunc))) {
 	    exit(EXIT_FAILURE);	/* don't call through 0! */
 	}

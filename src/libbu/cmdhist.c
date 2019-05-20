@@ -44,14 +44,14 @@ cmdhist_record(struct bu_cmdhist_obj *chop, struct bu_vls *cmdp, struct timeval 
     if (chop->cmdhist.capacity == 0) {
 	chop->cmdhist.capacity = BU_CMDHIST_OBJ_LIST_INIT_CAPACITY;
 	chop->cmdhist.cmdhist = (struct bu_cmdhist *)bu_malloc(
-		sizeof (struct bu_cmdhist) * chop->cmdhist.capacity,
-		"init chop");
+	    sizeof (struct bu_cmdhist) * chop->cmdhist.capacity,
+	    "init chop");
     } else if (chop->cmdhist.size == chop->cmdhist.capacity) {
 	chop->cmdhist.capacity *= 2;
 	chop->cmdhist.cmdhist = (struct bu_cmdhist *)bu_realloc(
-		chop->cmdhist.cmdhist,
-		sizeof (struct bu_cmdhist_obj) * chop->cmdhist.capacity,
-		"init chop");
+	    chop->cmdhist.cmdhist,
+	    sizeof (struct bu_cmdhist_obj) * chop->cmdhist.capacity,
+	    "init chop");
     }
 
     new_hist = &chop->cmdhist.cmdhist[chop->cmdhist.size];
@@ -218,7 +218,7 @@ bu_cmdhist_curr(void *clientData, int argc, const char **UNUSED(argv))
     }
 
     if (chop->cmdhist.capacity > 0) {
-    /* result is at index chop->cmdhist.current */
+	/* result is at index chop->cmdhist.current */
 	return BRLCAD_OK;
     }
 
@@ -237,12 +237,12 @@ bu_cmdhist_next(void *clientData, int argc, const char **UNUSED(argv))
 	return BRLCAD_ERROR;
     }
 
-	if (chop->cmdhist.capacity == 0 ||
-		chop->cmdhist.current == chop->cmdhist.size - 1) {
+    if (chop->cmdhist.capacity == 0 ||
+	chop->cmdhist.current == chop->cmdhist.size - 1) {
 	return BRLCAD_ERROR;
-	}
+    }
 
-	chop->cmdhist.current++;
+    chop->cmdhist.current++;
 
     /* result is at index chop->cmdhist.current */
     return BRLCAD_OK;

@@ -32,7 +32,7 @@ static int
 expand_expression(const char *expression, struct bu_vls *vp)
 {
     const char *ep = expression;
-	const char *cp;
+    const char *cp;
 
     if (!expression)
 	return 0;

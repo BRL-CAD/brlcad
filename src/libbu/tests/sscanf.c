@@ -149,26 +149,26 @@ checkReturnsEqual(int ret, int bu_ret)
 }
 
 #define CHECK_INT_VALS_EQUAL(int_type, valp, bu_valp) \
-{ \
-    int_type _val = *(int_type*)(valp); \
-    int_type _bu_val = *(int_type*)(bu_valp); \
-    if (_val != _bu_val) { \
-	bu_exit(1, "\t[FAIL] conversion value mismatch.\n" \
-		"\t(sscanf) %lld != %lld (bu_sscanf).\n", \
-		(long long int)_val, (long long int)_bu_val); \
-    } \
-}
+    { \
+	int_type _val = *(int_type*)(valp); \
+	int_type _bu_val = *(int_type*)(bu_valp); \
+	if (_val != _bu_val) { \
+	    bu_exit(1, "\t[FAIL] conversion value mismatch.\n" \
+		    "\t(sscanf) %lld != %lld (bu_sscanf).\n", \
+		    (long long int)_val, (long long int)_bu_val); \
+	} \
+    }
 
 #define CHECK_FLOAT_VALS_EQUAL(float_type, valp, bu_valp) \
-{ \
-    float_type _val = *(float_type*)(valp); \
-    float_type _bu_val = *(float_type*)(bu_valp); \
-    if (!NEAR_EQUAL(_val, _bu_val, TS_FLOAT_TOL)) { \
-	bu_exit(1, "\t[FAIL] conversion value mismatch.\n" \
-		"\t(sscanf) %Le != %Le (bu_sscanf).\n", \
-		(long double)_val, (long double)_bu_val); \
-    } \
-}
+    { \
+	float_type _val = *(float_type*)(valp); \
+	float_type _bu_val = *(float_type*)(bu_valp); \
+	if (!NEAR_EQUAL(_val, _bu_val, TS_FLOAT_TOL)) { \
+	    bu_exit(1, "\t[FAIL] conversion value mismatch.\n" \
+		    "\t(sscanf) %Le != %Le (bu_sscanf).\n", \
+		    (long double)_val, (long double)_bu_val); \
+	} \
+    }
 
 static void
 test_sscanf(int type, const char *src, const char *fmt) {
@@ -192,74 +192,74 @@ test_sscanf(int type, const char *src, const char *fmt) {
     checkReturnsEqual(bu_ret, ret);
 
     switch (type) {
-    case SCAN_INT:
-	SSCANF_TYPE(int);
-	CHECK_INT_VALS_EQUAL(int, val, bu_val);
-	break;
-    case SCAN_UINT:
-	SSCANF_TYPE(unsigned);
-	CHECK_INT_VALS_EQUAL(unsigned, val, bu_val);
-	break;
-    case SCAN_SHORT:
-	SSCANF_TYPE(short);
-	CHECK_INT_VALS_EQUAL(short, val, bu_val);
-	break;
-    case SCAN_USHORT:
-	SSCANF_TYPE(unsigned short);
-	CHECK_INT_VALS_EQUAL(unsigned short, val, bu_val);
-	break;
-    case SCAN_SHORTSHORT:
-	SSCANF_TYPE(char);
-	CHECK_INT_VALS_EQUAL(char, val, bu_val);
-	break;
-    case SCAN_USHORTSHORT:
-	SSCANF_TYPE(unsigned char);
-	CHECK_INT_VALS_EQUAL(unsigned char, val, bu_val);
-	break;
-    case SCAN_LONG:
-	SSCANF_TYPE(long);
-	CHECK_INT_VALS_EQUAL(long, val, bu_val);
-	break;
-    case SCAN_ULONG:
-	SSCANF_TYPE(unsigned long);
-	CHECK_INT_VALS_EQUAL(unsigned long, val, bu_val);
-	break;
-    case SCAN_SIZE:
-	SSCANF_TYPE(size_t);
-	CHECK_INT_VALS_EQUAL(size_t, val, bu_val);
-	break;
-    case SCAN_PTRDIFF:
-	SSCANF_TYPE(ptrdiff_t);
-	CHECK_INT_VALS_EQUAL(ptrdiff_t, val, bu_val);
-	break;
-    case SCAN_POINTER:
-	ret = sscanf(src, fmt, &val);
-	bu_ret = bu_sscanf(src, fmt, &bu_val);
+	case SCAN_INT:
+	    SSCANF_TYPE(int);
+	    CHECK_INT_VALS_EQUAL(int, val, bu_val);
+	    break;
+	case SCAN_UINT:
+	    SSCANF_TYPE(unsigned);
+	    CHECK_INT_VALS_EQUAL(unsigned, val, bu_val);
+	    break;
+	case SCAN_SHORT:
+	    SSCANF_TYPE(short);
+	    CHECK_INT_VALS_EQUAL(short, val, bu_val);
+	    break;
+	case SCAN_USHORT:
+	    SSCANF_TYPE(unsigned short);
+	    CHECK_INT_VALS_EQUAL(unsigned short, val, bu_val);
+	    break;
+	case SCAN_SHORTSHORT:
+	    SSCANF_TYPE(char);
+	    CHECK_INT_VALS_EQUAL(char, val, bu_val);
+	    break;
+	case SCAN_USHORTSHORT:
+	    SSCANF_TYPE(unsigned char);
+	    CHECK_INT_VALS_EQUAL(unsigned char, val, bu_val);
+	    break;
+	case SCAN_LONG:
+	    SSCANF_TYPE(long);
+	    CHECK_INT_VALS_EQUAL(long, val, bu_val);
+	    break;
+	case SCAN_ULONG:
+	    SSCANF_TYPE(unsigned long);
+	    CHECK_INT_VALS_EQUAL(unsigned long, val, bu_val);
+	    break;
+	case SCAN_SIZE:
+	    SSCANF_TYPE(size_t);
+	    CHECK_INT_VALS_EQUAL(size_t, val, bu_val);
+	    break;
+	case SCAN_PTRDIFF:
+	    SSCANF_TYPE(ptrdiff_t);
+	    CHECK_INT_VALS_EQUAL(ptrdiff_t, val, bu_val);
+	    break;
+	case SCAN_POINTER:
+	    ret = sscanf(src, fmt, &val);
+	    bu_ret = bu_sscanf(src, fmt, &bu_val);
 
-	checkReturnVal("sscanf", ret, 1);
-	checkReturnsEqual(bu_ret, ret);
+	    checkReturnVal("sscanf", ret, 1);
+	    checkReturnsEqual(bu_ret, ret);
 
-	if (val != bu_val) {
-	    bu_exit(1, "\t[FAIL] conversion value mismatch.\n"
-		    "\t(sscanf) %p != %p (bu_sscanf).\n",
-		    val, bu_val);
-	}
-	val = bu_val = NULL;
-	break;
-    case SCAN_FLOAT:
-	SSCANF_TYPE(float);
-	CHECK_FLOAT_VALS_EQUAL(float, val, bu_val);
-	break;
-    case SCAN_DOUBLE:
-	SSCANF_TYPE(double);
-	CHECK_FLOAT_VALS_EQUAL(double, val, bu_val);
-	break;
-    case SCAN_LDOUBLE:
-	SSCANF_TYPE(long double);
-	CHECK_FLOAT_VALS_EQUAL(long double, val, bu_val);
-	break;
-    default:
-	bu_exit(1, "Error: test_sscanf was given an unrecognized pointer type.\n");
+	    if (val != bu_val) {
+		bu_exit(1, "\t[FAIL] conversion value mismatch.\n"
+			"\t(sscanf) %p != %p (bu_sscanf).\n",
+			val, bu_val);
+	    }
+	    val = bu_val = NULL;
+	    break;
+	case SCAN_FLOAT:
+	    SSCANF_TYPE(float);
+	    CHECK_FLOAT_VALS_EQUAL(float, val, bu_val);
+	    break;
+	case SCAN_DOUBLE:
+	    SSCANF_TYPE(double);
+	    CHECK_FLOAT_VALS_EQUAL(double, val, bu_val);
+	    break;
+	case SCAN_LDOUBLE:
+	    SSCANF_TYPE(long double);
+	    CHECK_FLOAT_VALS_EQUAL(long double, val, bu_val);
+	    break;
+	default:
+	    bu_exit(1, "Error: test_sscanf was given an unrecognized pointer type.\n");
     }
     if (val != NULL) {
 	bu_free(val, "test_sscanf val");
@@ -567,7 +567,7 @@ test_string_width(const char *src, const char *fmt)
 
     ret = sscanf(src, fmt, str_vals[0], str_vals[1], str_vals[2]);
     bu_ret = bu_sscanf(src, fmt, bu_str_vals[0], bu_str_vals[1],
-	    bu_str_vals[2]);
+		       bu_str_vals[2]);
     checkReturnVal("sscanf", ret, 3);
     checkReturnsEqual(bu_ret, ret);
 
@@ -664,21 +664,21 @@ doErrorTests(void)
      * If src is empty, should return EOF to indicate input failure.
      */
 #define TEST_FAILURE_1(type, type_fmt, type_init, src, expected_err) \
-{ \
-    type vals[3] = { type_init, type_init, type_init }; \
-    print_src_and_fmt(src, FMT_ASSIGN3(type_fmt)); \
-    ret = sscanf(src, FMT_ASSIGN3(type_fmt), &vals[0], &vals[1], &vals[2]); \
-    bu_ret = sscanf(src, FMT_ASSIGN3(type_fmt), &vals[0], &vals[1], &vals[2]); \
-    checkReturnVal("sscanf", ret, expected_err); \
-    checkReturnsEqual(ret, bu_ret); \
-    for (i = 0; i < 3; ++i) { \
-	if (vals[i] != type_init) { \
-	    bu_exit(1, "\t[FAIL] No assignment expected, but vals[%d] " \
-		    "changed from %" CPP_STR(type_fmt) " to %" CPP_STR(type_fmt) ".\n", \
-		    i, type_init, vals[i]); \
+    { \
+	type vals[3] = { type_init, type_init, type_init }; \
+	print_src_and_fmt(src, FMT_ASSIGN3(type_fmt)); \
+	ret = sscanf(src, FMT_ASSIGN3(type_fmt), &vals[0], &vals[1], &vals[2]); \
+	bu_ret = sscanf(src, FMT_ASSIGN3(type_fmt), &vals[0], &vals[1], &vals[2]); \
+	checkReturnVal("sscanf", ret, expected_err); \
+	checkReturnsEqual(ret, bu_ret); \
+	for (i = 0; i < 3; ++i) { \
+	    if (vals[i] != type_init) { \
+		bu_exit(1, "\t[FAIL] No assignment expected, but vals[%d] " \
+			"changed from %" CPP_STR(type_fmt) " to %" CPP_STR(type_fmt) ".\n", \
+			i, type_init, vals[i]); \
+	    } \
 	} \
-    } \
-}
+    }
 
     /* Attempt to read 2 values and assign 1 value from src.
      * If src includes 2 valid and 1 invalid input value, should return 0 to
@@ -687,34 +687,34 @@ doErrorTests(void)
      * indicate input failure.
      */
 #define TEST_FAILURE_2(type, type_fmt, type_init, src, expected_err) \
-{ \
-    type val = type_init; \
-    print_src_and_fmt(src, FMT_READ2_ASSIGN1(type_fmt)); \
-    ret = sscanf(src, FMT_READ2_ASSIGN1(type_fmt), &val); \
-    bu_ret = sscanf(src, FMT_READ2_ASSIGN1(type_fmt), &val); \
-    checkReturnVal("sscanf", ret, expected_err); \
-    checkReturnsEqual(ret, bu_ret); \
-    if (val != type_init) { \
-	bu_exit(1, "\t[FAIL] No assignment expected, but val " \
-		"changed from %" CPP_STR(type_fmt) " to %" CPP_STR(type_fmt) ".\n", \
-		type_init, val); \
-    } \
-}
+    { \
+	type val = type_init; \
+	print_src_and_fmt(src, FMT_READ2_ASSIGN1(type_fmt)); \
+	ret = sscanf(src, FMT_READ2_ASSIGN1(type_fmt), &val); \
+	bu_ret = sscanf(src, FMT_READ2_ASSIGN1(type_fmt), &val); \
+	checkReturnVal("sscanf", ret, expected_err); \
+	checkReturnsEqual(ret, bu_ret); \
+	if (val != type_init) { \
+	    bu_exit(1, "\t[FAIL] No assignment expected, but val " \
+		    "changed from %" CPP_STR(type_fmt) " to %" CPP_STR(type_fmt) ".\n", \
+		    type_init, val); \
+	} \
+    }
 
 #define EXPECT_MATCH_FAILURE 0
 #define EXPECT_INPUT_FAILURE EOF
 
-    TEST_FAILURE_1(int, d, 0, "xx 34 56", EXPECT_MATCH_FAILURE);
-    TEST_FAILURE_2(int, d, 0, "12 34 xx", EXPECT_MATCH_FAILURE);
-    TEST_FAILURE_2(int, d, 0, "12 34", EXPECT_INPUT_FAILURE);
-    TEST_FAILURE_1(int, d, 0, "", EXPECT_INPUT_FAILURE);
+TEST_FAILURE_1(int, d, 0, "xx 34 56", EXPECT_MATCH_FAILURE);
+TEST_FAILURE_2(int, d, 0, "12 34 xx", EXPECT_MATCH_FAILURE);
+TEST_FAILURE_2(int, d, 0, "12 34", EXPECT_INPUT_FAILURE);
+TEST_FAILURE_1(int, d, 0, "", EXPECT_INPUT_FAILURE);
 
-    // TODO - what is the intent here?  The 1[123] input seems to be causing problems
+// TODO - what is the intent here?  The 1[123] input seems to be causing problems
 #if 0
-    TEST_FAILURE_1(char, 1[123], 'a', "x 2 3", EXPECT_MATCH_FAILURE);
-    TEST_FAILURE_2(char, 1[123], 'a', "1 2 x", EXPECT_MATCH_FAILURE);
-    TEST_FAILURE_2(char, 1[123], 'a', "1 2", EXPECT_INPUT_FAILURE);
-    TEST_FAILURE_1(char, 1[123], 'a', "", EXPECT_INPUT_FAILURE);
+TEST_FAILURE_1(char, 1[123], 'a', "x 2 3", EXPECT_MATCH_FAILURE);
+TEST_FAILURE_2(char, 1[123], 'a', "1 2 x", EXPECT_MATCH_FAILURE);
+TEST_FAILURE_2(char, 1[123], 'a', "1 2", EXPECT_INPUT_FAILURE);
+TEST_FAILURE_1(char, 1[123], 'a', "", EXPECT_INPUT_FAILURE);
 #endif
 }
 

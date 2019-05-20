@@ -347,7 +347,7 @@ int
 #ifdef HAVE_SYS_SHM_H
 bu_shmget(int *shmid, char **shared_memory, int key, size_t size)
 #else
-bu_shmget(int *UNUSED(shmid), char **UNUSED(shared_memory), int UNUSED(key), size_t UNUSED(size))
+    bu_shmget(int *UNUSED(shmid), char **UNUSED(shared_memory), int UNUSED(key), size_t UNUSED(size))
 #endif
 {
     int ret = 1;
@@ -366,9 +366,9 @@ bu_shmget(int *UNUSED(shmid), char **UNUSED(shared_memory), int UNUSED(key), siz
     errno = 0;
 
     /*
-       make more portable
-       shmsize = (size + getpagesize()-1) & ~(getpagesize()-1);
-       */
+      make more portable
+      shmsize = (size + getpagesize()-1) & ~(getpagesize()-1);
+    */
     shmsize = (size + psize - 1) & ~(psize - 1);
     /* First try to attach to an existing one */
     if (((*shmid) = shmget(key, shmsize, 0)) < 0) {

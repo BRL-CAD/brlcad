@@ -72,10 +72,10 @@ static struct temp_file_list {
  * to avoid the issue. */
 #if defined(HAVE_WINDOWS_H)
 static void disable_duplicate_close_check(const wchar_t* UNUSED(expression),
-	const wchar_t* UNUSED(function),
-	const wchar_t* UNUSED(file),
-	unsigned int UNUSED(line),
-	uintptr_t UNUSED(pReserved)) {}
+					  const wchar_t* UNUSED(function),
+					  const wchar_t* UNUSED(file),
+					  unsigned int UNUSED(line),
+					  uintptr_t UNUSED(pReserved)) {}
 #endif
 
 HIDDEN void

@@ -61,8 +61,8 @@ _trim_whitespace(std::string &s)
     size_t ep = s.find_last_not_of(" \t\n\v\f\r");
     size_t sp = s.find_first_not_of(" \t\n\v\f\r");
     if (sp == std::string::npos) {
-        s.clear();
-        return;
+	s.clear();
+	return;
     }
     s = s.substr(sp, ep-sp+1);
 }
@@ -91,13 +91,13 @@ process_file(std::map<std::string, std::string> *sem_defs, std::map<std::string,
 		std::string val = std::string(sdef[2]);
 		std::replace(val.begin(), val.end(), '(', ' ');
 		std::replace(val.begin(), val.end(), ')', ' ');
-		 _trim_whitespace(key);
-		 _trim_whitespace(val);
-		 if (sem_defs->find(key) != sem_defs->end()) {
-		     std::cerr << "Error - duplicate definition of semaphore " << key << " found in file " << f << "\n";
-		     std::cerr << "Previous definition found in file " << (*sem_files)[key] << "\n";
-		     exit(-1);
-		 }
+		_trim_whitespace(key);
+		_trim_whitespace(val);
+		if (sem_defs->find(key) != sem_defs->end()) {
+		    std::cerr << "Error - duplicate definition of semaphore " << key << " found in file " << f << "\n";
+		    std::cerr << "Previous definition found in file " << (*sem_files)[key] << "\n";
+		    exit(-1);
+		}
 		(*sem_defs)[key] = val;
 		(*sem_files)[key] = f;
 		ret++;

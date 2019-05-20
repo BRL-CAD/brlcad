@@ -30,7 +30,8 @@
 /* Slightly tweaked and reformatted text originally generated from libsum.com -
  * 275 words, one of which is an empty string (position 195 after "feugiat.")
  * to test behavior in the NULL conditions */
-const char *lorem_ipsum[] = {"Lorem", "ipsum", "dolor", "sit", "amet,",
+const char *lorem_ipsum[] = {
+    "Lorem", "ipsum", "dolor", "sit", "amet,",
     "consectetur", "adipiscing", "elit.", "Nulla", "quis", "neque", "egetdui",
     "consequat", "sodales.", "Cras", "vitae", "quam", "ut", "neque", "rutrum",
     "posuere", "gravida", "a", "nisi.Pellentesque", "quis", "eros",
@@ -70,7 +71,8 @@ const char *lorem_ipsum[] = {"Lorem", "ipsum", "dolor", "sit", "amet,",
     "suscipit", "ex", "leo,", "sit", "amet", "sollicitudin", "odio",
     "laoreetvel.", "Phasellus", "tellus", "felis,", "blandit", "vitae", "est",
     "vel,", "consectetur", "molestie", "dolor.Donec", "vitae", "eros", "odio.",
-    "Nullam", "tempus", "auctor."};
+    "Nullam", "tempus", "auctor."
+};
 
 const char *array1[] = {
     "1",
@@ -204,15 +206,15 @@ main(int argc, const char **argv)
     }
 
     switch (test_num) {
-    case 0:
-	ret = hash_noop_test();
-	break;
-    case 1:
-	ret = hash_add_del_one();
-	break;
-    case 2:
-	ret = hash_loremipsum();
-	break;
+	case 0:
+	    ret = hash_noop_test();
+	    break;
+	case 1:
+	    ret = hash_add_del_one();
+	    break;
+	case 2:
+	    ret = hash_loremipsum();
+	    break;
     }
 
     return ret;

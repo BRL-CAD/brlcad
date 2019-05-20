@@ -308,7 +308,7 @@ bu_color_from_str(struct bu_color *color, const char *str)
 
 	errno = 0;
 
-        /* 0 = RGB, 1 = FLOAT, 2 = UNKNOWN */
+	/* 0 = RGB, 1 = FLOAT, 2 = UNKNOWN */
 	switch (mode) {
 	    case 0: /*RGB*/
 		newcolor.buc_rgb[i] = strtol(str, (char **)&endptr, 10) / 255.0;

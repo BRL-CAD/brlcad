@@ -73,7 +73,7 @@ observer_attach(void *clientData, int argc, const char **argv)
 
 	    return BRLCAD_OK;
 	}
-	}
+    }
 
     /* acquire bu_observer struct */
     bu_observer_list_init(observers);
@@ -123,7 +123,7 @@ observer_detach(void *clientData, int argc, const char **argv)
 
 	    return BRLCAD_OK;
 	}
-	}
+    }
 
     bu_log("detach: %s not found", argv[1]);
     return BRLCAD_ERROR;

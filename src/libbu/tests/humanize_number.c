@@ -281,7 +281,7 @@ static struct {
     /* Need to implement tests for GETSCALE */
     /*	{ ?, "", (int64_t)0L, BU_HN_DIVISOR_1000, BU_HN_GETSCALE },
 	...
-	*/
+    */
     /* Tests for BU_HN_DECIMAL */
     /* Positive, Autoscale */
     { 5, "500 k", (int64_t)500*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
@@ -400,7 +400,7 @@ usage(char * progname) {
 /* Parse command line options */
 static void
 read_options(int argc, char * const argv[], size_t *bufLength,
-	int *includeNegativeScale, int *includeExabytes, int *verbose) {
+	     int *includeNegativeScale, int *includeExabytes, int *verbose) {
     int ch;
     size_t temp;
 
@@ -458,7 +458,7 @@ str_flags(int hn_flags, char *noFlags) {
 	if (hn_flags & flags[i].value) {
 	    if (*result != 0)
 		bu_strlcat(result, separator,
-			MAX_STR_FLAGS_RESULT);
+			   MAX_STR_FLAGS_RESULT);
 	    bu_strlcat(result, flags[i].name, MAX_STR_FLAGS_RESULT);
 	}
     }
@@ -509,7 +509,7 @@ main(int argc, char *argv[])
     verbose = 0;
 
     read_options(argc, argv, &buflen, &includeNegScale,
-	    &includeExabyteTests, &verbose);
+		 &includeExabyteTests, &verbose);
 
     buf = (char *)bu_malloc(buflen, NULL);
     errcnt = 0;
@@ -543,34 +543,34 @@ main(int argc, char *argv[])
 	}
 
 	r = bu_humanize_number(buf, buflen, test_args[i].num, "",
-		test_args[i].scale, test_args[i].flags);
+			       test_args[i].scale, test_args[i].flags);
 	flag_str = str_flags(test_args[i].flags, "[no flags]");
 	scale_str = str_scale(test_args[i].scale);
 
 	if (r != test_args[i].retval) {
 	    if (verbose)
 		bu_log("wrong return value on index %lu, buflen: %zu, got: %d + \"%s\", expected %d + \"%s\"; num = %" PRId64 ", scale = %s, flags= %s.\n",
-			i, buflen, r, buf, test_args[i].retval,
-			test_args[i].res, test_args[i].num,
-			scale_str, flag_str);
+		       i, buflen, r, buf, test_args[i].retval,
+		       test_args[i].res, test_args[i].num,
+		       scale_str, flag_str);
 	    else
 		printf("not ok %lu # return %d != %d\n", (long unsigned int)i, r,
-			test_args[i].retval);
+		       test_args[i].retval);
 	    errcnt++;
 	} else if (bu_strcmp(buf, test_args[i].res) != 0) {
 	    if (verbose)
 		printf("result mismatch on index %lu, got: \"%s\", expected \"%s\"; num = %" PRId64 ", scale = %s, flags= %s.\n",
-			(long unsigned int)i, buf, test_args[i].res, test_args[i].num,
-			scale_str, flag_str);
+		       (long unsigned int)i, buf, test_args[i].res, test_args[i].num,
+		       scale_str, flag_str);
 	    else
 		printf("not ok %lu # buf \"%s\" != \"%s\"\n", (long unsigned int)i,
-			buf, test_args[i].res);
+		       buf, test_args[i].res);
 	    errcnt++;
 	} else {
 	    if (verbose)
 		printf("successful result on index %lu, returned %d, got: \"%s\"; num = %" PRId64 ", scale = %s, flags= %s.\n",
-			(long unsigned int)i, r, buf, test_args[i].num, scale_str,
-			flag_str);
+		       (long unsigned int)i, r, buf, test_args[i].num, scale_str,
+		       flag_str);
 	    else
 		printf("ok %lu\n", (long unsigned int)i);
 	}
@@ -579,7 +579,7 @@ main(int argc, char *argv[])
 
     if (verbose)
 	printf("total errors: %lu/%lu tests, %lu skipped\n", (long unsigned int)errcnt,
-		(long unsigned int)tested, (long unsigned int)skipped);
+	       (long unsigned int)tested, (long unsigned int)skipped);
 
     if (errcnt)
 	return 1;

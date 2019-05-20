@@ -40,7 +40,7 @@
  * Qsort routine from Bentley & McIlroy's "Engineering a Sort Function".
  */
 #define SWAPCODE(TYPE, parmi, parmj, n)     \
-    {                                       \
+    do {                                       \
 	size_t i = (n) / sizeof (TYPE); 		\
 	TYPE *pi = (TYPE *) (parmi); 		\
 	TYPE *pj = (TYPE *) (parmj); 		\
@@ -49,29 +49,31 @@
 	    *pi++ = *pj;                    \
 	    *pj++ = t;                      \
 	} while (--i > 0);                  \
-    }
+    } while (0)
 
 #define SWAPINIT(a, es) swaptype = ((char *)a - (char *)0) % sizeof(long) || \
-    es % sizeof(long) ? 2 : es == sizeof(long)? 0 : 1;
+	es % sizeof(long) ? 2 : es == sizeof(long)? 0 : 1;
 
 
 static void
 swapfunc(char *a, char *b, size_t n, int swaptype)
 {
     if (swaptype <= 1)
-	SWAPCODE(long, a, b, n)
+	SWAPCODE(long, a, b, n);
     else
-	SWAPCODE(char, a, b, n)
+	SWAPCODE(char, a, b, n);
 }
 
 
-#define SWAP(a, b)				\
-    if (swaptype == 0) {			\
-	long t = *(long *)(a);			\
-	*(long *)(a) = *(long *)(b);		\
-	*(long *)(b) = t;			\
-    } else 					\
-	swapfunc((char *)a, (char *)b, sizememb, swaptype)
+#define SWAP(a, b) do {  			\
+	if (swaptype == 0) {			\
+	    long t = *(long *)(a);			\
+	    *(long *)(a) = *(long *)(b);		\
+	    *(long *)(b) = t;			\
+	} else { 					\
+	    swapfunc((char *)a, (char *)b, sizememb, swaptype); \
+	} \
+    } while (0)
 
 #define VECSWAP(a, b, n) if ((n) > 0) swapfunc((char *)a, (char *)b, n, swaptype)
 
@@ -82,8 +84,8 @@ static char *
 med3(char *a, char *b, char *c, int (*compare)(const void *, const void *, void *), void *thunk)
 {
     return CMP(a, b, thunk) < 0 ?
-	   (CMP(b, c, thunk) < 0 ? b : (CMP(a, c, thunk) < 0 ? c : a))
-	  :(CMP(b, c, thunk) > 0 ? b : (CMP(a, c, thunk) < 0 ? a : c));
+	(CMP(b, c, thunk) < 0 ? b : (CMP(a, c, thunk) < 0 ? c : a))
+	:(CMP(b, c, thunk) > 0 ? b : (CMP(a, c, thunk) < 0 ? a : c));
 }
 
 
@@ -96,7 +98,7 @@ bu_sort(void *array, size_t nummemb, size_t sizememb, int (*compare)(const void 
     size_t d, r;
     size_t swap_cnt;
 
-  loop:	SWAPINIT(array, sizememb);
+loop:	SWAPINIT(array, sizememb);
     swap_cnt = 0;
     if (nummemb < 7) {
 	for (pm = (char *)array + sizememb; pm < (char *)array + nummemb * sizememb; pm += sizememb)

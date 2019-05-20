@@ -287,10 +287,10 @@ main(int ac, char *av[])
 
     /* Run our test */
     switch(test_num) {
-    	case 1:
+	case 1:
 	    ret = test_mapped_file_serial(file_cnt, test_num);
 	    break;
-    	case 2:
+	case 2:
 	    ret = test_mapped_file_parallel(file_cnt, test_num);
 	    break;
 	case 3:

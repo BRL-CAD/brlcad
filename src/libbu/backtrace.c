@@ -192,8 +192,8 @@ backtrace(int processid, char args[][MAXPATHLEN], int fd)
 
 	if (have_gdb) {
 	    /*    if (write(input[1], "set prompt\n", 12) != 12) {
-		perror("write [set prompt] failed");
-		} else */if (write(input[1], "set confirm off\n", 16) != 16) {
+		  perror("write [set prompt] failed");
+		  } else */if (write(input[1], "set confirm off\n", 16) != 16) {
 		perror("write [set confirm off] failed");
 	    } else if (write(input[1], "set backtrace past-main on\n", 27) != 27) {
 		perror("write [set backtrace past-main on] failed");
@@ -501,7 +501,7 @@ bu_backtrace(FILE *fp)
 		bu_log("[BACKTRACE] bu_backtrace() waiting 1 second (of %d)\n", cnt);
 	    }
 	    bu_snooze(BU_SEC2USEC(1));
-            cnt++;
+	    cnt++;
 	}
 #ifdef HAVE_KILL
 	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {

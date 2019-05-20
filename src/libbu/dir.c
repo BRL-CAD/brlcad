@@ -174,8 +174,8 @@ dir_home(char *buf, size_t len)
     if (BU_STR_EMPTY(path)) {
 	PWSTR wpath;
 	if (SHGetKnownFolderPath(&FOLDERID_Profile, 0, NULL, &wpath) == S_OK) {
-		wcstombs(path, wpath, MAXPATHLEN);
-		CoTaskMemFree(wpath);
+	    wcstombs(path, wpath, MAXPATHLEN);
+	    CoTaskMemFree(wpath);
 	}
     }
 #endif
@@ -231,7 +231,7 @@ dir_cache(char *buf, size_t len)
     if (BU_STR_EMPTY(path)) {
 	PWSTR wpath;
 	if (SHGetKnownFolderPath(&FOLDERID_RoamingAppData, 0, NULL, &wpath) == S_OK) {
-		wcstombs(path, wpath, MAXPATHLEN);
+	    wcstombs(path, wpath, MAXPATHLEN);
 	    CoTaskMemFree(wpath);
 	}
     }

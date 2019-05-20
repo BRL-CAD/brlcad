@@ -39,6 +39,7 @@
 extern pid_t wait(int *);
 #endif
 
+
 int
 bu_process_id()
 {
@@ -98,6 +99,7 @@ bu_process_close(struct bu_process *pinfo, int fd)
     }
 }
 
+
 FILE *
 bu_process_open(struct bu_process *pinfo, int fd)
 {
@@ -150,12 +152,14 @@ bu_process_fd(struct bu_process *pinfo, int fd)
     return NULL;
 }
 
+
 int
 bu_process_pid(struct bu_process *pinfo)
 {
     if (!pinfo) return -1;
     return (int)pinfo->pid;
 }
+
 
 int
 bu_process_args(const char **cmd, const char * const **argv, struct bu_process *pinfo)
@@ -169,6 +173,7 @@ bu_process_args(const char **cmd, const char * const **argv, struct bu_process *
     }
     return pinfo->argc;
 }
+
 
 int
 bu_process_read(char *buff, int *count, struct bu_process *pinfo, int fd, int n)
@@ -218,11 +223,14 @@ bu_process_read(char *buff, int *count, struct bu_process *pinfo, int fd, int n)
 
 
 void
+bu_process_exec(
+    struct bu_process **p, const char *cmd, int argc, const char **argv, int out_eql_err,
 #ifdef _WIN32
-bu_process_exec(struct bu_process **p, const char *cmd, int argc, const char **argv, int out_eql_err, int hide_window)
+    int hide_window
 #else
-bu_process_exec(struct bu_process **p, const char *cmd, int argc, const char **argv, int out_eql_err, int UNUSED(hide_window))
+    int UNUSED(hide_window)
 #endif
+    )
 {
     int pret = 0;
     int ac = argc;
@@ -372,9 +380,9 @@ bu_process_exec(struct bu_process **p, const char *cmd, int argc, const char **a
 
     /* Create noninheritable read handle and close the inheritable read handle. */
     DuplicateHandle(GetCurrentProcess(), pipe_out[0],
-	    GetCurrentProcess(),  &pipe_outDup ,
-	    0,  FALSE,
-	    DUPLICATE_SAME_ACCESS);
+		    GetCurrentProcess(),  &pipe_outDup ,
+		    0,  FALSE,
+		    DUPLICATE_SAME_ACCESS);
     CloseHandle(pipe_out[0]);
 
     /* Create a pipe for the child process's STDERR. */
@@ -382,9 +390,9 @@ bu_process_exec(struct bu_process **p, const char *cmd, int argc, const char **a
 
     /* Create noninheritable read handle and close the inheritable read handle. */
     DuplicateHandle(GetCurrentProcess(), pipe_err[0],
-	    GetCurrentProcess(),  &pipe_errDup ,
-	    0,  FALSE,
-	    DUPLICATE_SAME_ACCESS);
+		    GetCurrentProcess(),  &pipe_errDup ,
+		    0,  FALSE,
+		    DUPLICATE_SAME_ACCESS);
     CloseHandle(pipe_err[0]);
 
     /* Create a pipe for the child process's STDIN. */
@@ -392,9 +400,9 @@ bu_process_exec(struct bu_process **p, const char *cmd, int argc, const char **a
 
     /* Duplicate the write handle to the pipe so it is not inherited. */
     DuplicateHandle(GetCurrentProcess(), pipe_in[1],
-	    GetCurrentProcess(), &pipe_inDup,
-	    0, FALSE,                  /* not inherited */
-	    DUPLICATE_SAME_ACCESS);
+		    GetCurrentProcess(), &pipe_inDup,
+		    0, FALSE,                  /* not inherited */
+		    DUPLICATE_SAME_ACCESS);
     CloseHandle(pipe_in[1]);
 
     si.cb = sizeof(STARTUPINFO);
@@ -427,8 +435,8 @@ bu_process_exec(struct bu_process **p, const char *cmd, int argc, const char **a
     }
 
     CreateProcess(NULL, bu_vls_addr(&cp_cmd), NULL, NULL, TRUE,
-	    DETACHED_PROCESS, NULL, NULL,
-	    &si, &pi);
+		  DETACHED_PROCESS, NULL, NULL,
+		  &si, &pi);
     bu_vls_free(&cp_cmd);
 
     CloseHandle(pipe_in[0]);
@@ -451,11 +459,14 @@ bu_process_exec(struct bu_process **p, const char *cmd, int argc, const char **a
 }
 
 int
+bu_process_wait(
+    int *aborted, struct bu_process *pinfo,
 #ifndef _WIN32
-bu_process_wait(int *aborted, struct bu_process *pinfo, int UNUSED(wtime))
+    int UNUSED(wtime)
 #else
-bu_process_wait(int *aborted, struct bu_process *pinfo, int wtime)
+    int wtime
 #endif
+    )
 {
     int rc = 0;
 #ifndef _WIN32

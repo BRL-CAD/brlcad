@@ -287,8 +287,8 @@ bu_cv_itemlen(register int cookie)
 {
     register int fmt = (cookie & CV_TYPE_MASK) >> CV_TYPE_SHIFT;
     static size_t host_size_table[8] = {0, sizeof(char),
-				     sizeof(short), sizeof(int),
-				     sizeof(long int), sizeof(double)};
+					sizeof(short), sizeof(int),
+					sizeof(long int), sizeof(double)};
     static size_t net_size_table[8] = {0, 1, 2, 4, 8, 8};
 
     if (cookie & CV_HOST_MASK)

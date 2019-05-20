@@ -111,7 +111,7 @@ main(int ac, char *av[])
 	    bu_exit(1, "%s [FAIL] %s should contain %d files, found %zd\n", av[0], tdir, file_cnt, count);
 	}
 	/* bu_file_list doesn't guarantee ordering, but make sure each lfiles entry matches the pattern */
- 	for (size_t c = 0; c < count; c++) {
+	for (size_t c = 0; c < count; c++) {
 	    if (bu_path_match(pattern, lfiles[c], 0)) {
 		bu_exit(1, "%s [FAIL] file array entry %zd (%s) doesn't match the bu file test pattern \"%s\"\n", av[0], c, lfiles[c], pattern);
 	    }
