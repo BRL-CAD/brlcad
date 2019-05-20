@@ -55,20 +55,48 @@ Emacs. For example, invoke:
 	(error "`batch-indent-region' is to be used only with -batch"))
 
     (while command-line-args-left
+	;; don't align backslash line continuations
 	(setq c-auto-align-backslashes nil)
+	;; don't indent goto labels
 	(setq c-label-minimum-indentation 0)
+
 	(setq file (car command-line-args-left))
 	(print file)
 	(find-file file)
+
+	;; indent switch() { case: sections
 	(c-set-offset 'case-label '+)
+	;; indent switch() { lines after case:
 	(c-set-offset 'statement-case-open '+)
-	(c-set-offset 'innamespace 0)
+	;; don't indent C++ function decls that span lines
+	(c-set-offset 'statement-cont 0)
+	;; don't indent function declarations that span lines (probably a bug)
+	(c-set-offset 'func-decl-cont 0)
+	;; align braces to their parent statement
+	(c-set-offset 'substatement-open 0)
+	;; don't indent namespace {} blocks
+	(c-set-offset 'innamespace '-)
+	;; don't indent extern "C" {} blocks
 	(c-set-offset 'inextern-lang 0)
+	;; don't treat inline functions differently
 	(c-set-offset 'inline-open 0)
+	;; line up multiline function args
+	(c-set-offset 'arglist-cont '(c-lineup-arglist-operators 0))
+	;; line up multiline function args with previous arg
+	(c-set-offset 'arglist-cont-nonempty '(c-lineup-arglist-operators c-lineup-arglist))
+	;; line up multilin function paren with open paren
+	(c-set-offset 'arglist-close '(c-lineup-arglist-close-under-paren))
+	;; line up C++ template args
+	(c-set-offset 'template-args-cont '+)
+
+	;; DO IT
 	(indent-region (point-min) (point-max) nil)
+
 	;; only tabify from the beginning of line, not internal spaces
 	(setq tabify-regexp "^\t* [ \t]+")
+	;; replace leading tabs
 	(tabify (point-min) (point-max))
+
 	(save-buffer)
 	(setq command-line-args-left (cdr command-line-args-left))))
 
