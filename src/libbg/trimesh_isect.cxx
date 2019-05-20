@@ -81,10 +81,10 @@ plot_faces(const char *fname, std::set<int> *faces, int *f, point_t *v)
  * assemble the new meshes. */
 extern "C" int
 bg_trimesh_isect(
-	int **faces_inside_1, int *num_faces_inside_1, int **faces_inside_2, int *num_faces_inside_2,
-	int **faces_isect_1, int *num_faces_isect_1, int **faces_isect_2, int *num_faces_isect_2,
-	int *faces_1, int num_faces_1, point_t *vertices_1, int num_vertices_1,
-	int *faces_2, int num_faces_2, point_t *vertices_2, int num_vertices_2)
+    int **faces_inside_1, int *num_faces_inside_1, int **faces_inside_2, int *num_faces_inside_2,
+    int **faces_isect_1, int *num_faces_isect_1, int **faces_isect_2, int *num_faces_isect_2,
+    int *faces_1, int num_faces_1, point_t *vertices_1, int num_vertices_1,
+    int *faces_2, int num_faces_2, point_t *vertices_2, int num_vertices_2)
 {
     int ret = 0;
     if (!faces_1 || !num_faces_1 || !vertices_1 || !num_vertices_1) return 0;
@@ -114,10 +114,10 @@ bg_trimesh_isect(
     }
 
     int isect = (
-	    (bb1min[0] <= bb2max[0] && bb1max[0] >= bb2min[0]) &&
-	    (bb1min[1] <= bb2max[1] && bb1max[1] >= bb2min[1]) &&
-	    (bb1min[2] <= bb2max[2] && bb1max[2] >= bb2min[2])
-	    ) ? 1 : 0;
+	(bb1min[0] <= bb2max[0] && bb1max[0] >= bb2min[0]) &&
+	(bb1min[1] <= bb2max[1] && bb1max[1] >= bb2min[1]) &&
+	(bb1min[2] <= bb2max[2] && bb1max[2] >= bb2min[2])
+	) ? 1 : 0;
 
     if (!isect) {
 	if (num_faces_inside_1) (*num_faces_inside_1) = 0;
@@ -132,9 +132,9 @@ bg_trimesh_isect(
     }
 
     /*if (!isect) {
-	bu_log("in bbox1.s rpp %f %f %f %f %f %f\n", bb1min[0], bb1max[0], bb1min[1], bb1max[1], bb1min[2], bb1max[2]);
-	bu_log("in bbox2.s rpp %f %f %f %f %f %f\n", bb2min[0], bb2max[0], bb2min[1], bb2max[1], bb2min[2], bb2max[2]);
-    }*/
+      bu_log("in bbox1.s rpp %f %f %f %f %f %f\n", bb1min[0], bb1max[0], bb1min[1], bb1max[1], bb1min[2], bb1max[2]);
+      bu_log("in bbox2.s rpp %f %f %f %f %f %f\n", bb2min[0], bb2max[0], bb2min[1], bb2max[1], bb2min[2], bb2max[2]);
+      }*/
 
     /* If the bboxes overlap, build the sets of faces with at least one vertex in the
      * other mesh's bounding box.  Those are the only ones we need to worry about */
@@ -201,8 +201,8 @@ bg_trimesh_isect(
 	    int v2_2 = faces_2[3*m2_working_faces[j]+1];
 	    int v2_3 = faces_2[3*m2_working_faces[j]+2];
 	    if (bg_tri_tri_isect(
-			vertices_1[v1_1], vertices_1[v1_2], vertices_1[v1_3],
-			vertices_2[v2_1], vertices_2[v2_2], vertices_2[v2_3]))
+		    vertices_1[v1_1], vertices_1[v1_2], vertices_1[v1_3],
+		    vertices_2[v2_1], vertices_2[v2_2], vertices_2[v2_3]))
 	    {
 		m1_intersecting_faces.insert(m1_working_faces[i]);
 		m2_intersecting_faces.insert(m2_working_faces[j]);

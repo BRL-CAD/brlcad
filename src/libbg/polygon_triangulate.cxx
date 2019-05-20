@@ -49,9 +49,9 @@
 
 extern "C" int
 bg_nested_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
-	const int *poly, const size_t poly_pnts,
-	const int **holes_array, const size_t *holes_npts, const size_t nholes,
-	const point2d_t *pts, const size_t npts, triangulation_t type)
+			      const int *poly, const size_t poly_pnts,
+			      const int **holes_array, const size_t *holes_npts, const size_t nholes,
+			      const point2d_t *pts, const size_t npts, triangulation_t type)
 {
     if (npts < 3 || poly_pnts < 3) return 1;
     if (!faces || !num_faces || !pts || !poly) return 1;

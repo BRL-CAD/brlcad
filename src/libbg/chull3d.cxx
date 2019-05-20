@@ -45,7 +45,7 @@
 
 extern "C" int
 bg_3d_chull(int **faces, int *num_faces, point_t **vertices, int *num_vertices,
-	const point_t *input_points_3d, int num_input_pnts)
+	    const point_t *input_points_3d, int num_input_pnts)
 {
     int pnt_cnt = 0;
     int f_ind = 0;

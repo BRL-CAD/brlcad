@@ -179,8 +179,8 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 	hole_array[0] = (int *)hole;
 
 	ret = bg_nested_polygon_triangulate(&faces, &num_faces, NULL, NULL,
-	       	(const int *)poly, 12, (const int **)hole_array, (const size_t *)&hole_cnt, 1,
-	       	(const point2d_t *)points, 16, EAR_CLIPPING);
+					    (const int *)poly, 12, (const int **)hole_array, (const size_t *)&hole_cnt, 1,
+					    (const point2d_t *)points, 16, EAR_CLIPPING);
 	bu_free(hole_array, "free hole array");
 	if (ret) {
 	    bu_log("Nested clipping 1 fail\n");
@@ -190,7 +190,7 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 	}
     }
 
-   /* Nested test case 2 */
+    /* Nested test case 2 */
     {
 	int num_faces;
 	int *faces;
@@ -216,8 +216,8 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 	hole_array[0] = (int *)hole;
 
 	ret = bg_nested_polygon_triangulate(&faces, &num_faces, NULL, NULL,
-	       	(const int *)poly, 8, (const int **)hole_array, (const size_t *)&hole_cnt, 1,
-	       	(const point2d_t *)points, 12, EAR_CLIPPING);
+					    (const int *)poly, 8, (const int **)hole_array, (const size_t *)&hole_cnt, 1,
+					    (const point2d_t *)points, 12, EAR_CLIPPING);
 	bu_free(hole_array, "free hole array");
 	if (ret) {
 	    bu_log("Nested clipping 2 fail\n");
@@ -228,7 +228,7 @@ main(int UNUSED(argc), const char **UNUSED(argv))
     }
 
     /* Four point triangle */
-   {
+    {
 	size_t num_points = 0;
 	int num_faces = 0;
 	int *faces = NULL;

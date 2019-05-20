@@ -87,7 +87,7 @@ main(int argc, const char **argv)
 	    bu_log("    expected[%d]: (%f, %f)\n", i, V2ARGS(test1_results[i]));
 	    bu_log("      actual[%d]: (%f, %f)\n", i, V2ARGS(hull_polyline[i]));
 	    if (!NEAR_ZERO(test1_results[i][0] - hull_polyline[i][0], SMALL_FASTF) ||
-		    !NEAR_ZERO(test1_results[i][1] - hull_polyline[i][1], SMALL_FASTF)) {
+		!NEAR_ZERO(test1_results[i][1] - hull_polyline[i][1], SMALL_FASTF)) {
 		retval = 0;
 	    }
 	}
@@ -101,7 +101,7 @@ main(int argc, const char **argv)
 	    bu_log("    expected[%d]: (%f, %f)\n", i, V2ARGS(test1_results[i]));
 	    bu_log("      actual[%d]: (%f, %f)\n", i, V2ARGS(hull_pnts[i]));
 	    if (!NEAR_ZERO(test1_results[i][0] - hull_pnts[i][0], SMALL_FASTF) ||
-		    !NEAR_ZERO(test1_results[i][1] - hull_pnts[i][1], SMALL_FASTF) ) {
+		!NEAR_ZERO(test1_results[i][1] - hull_pnts[i][1], SMALL_FASTF) ) {
 		retval = 0;
 	    }
 	}
@@ -131,7 +131,7 @@ main(int argc, const char **argv)
 	    bu_log("    expected[%d]: (%f, %f)\n", i, V2ARGS(test1_results[i]));
 	    bu_log("      actual[%d]: (%f, %f)\n", i, V2ARGS(hull_pnts[i]));
 	    if (!NEAR_ZERO(test1_results[i][0] - hull_pnts[i][0], SMALL_FASTF) ||
-		    !NEAR_ZERO(test1_results[i][1] - hull_pnts[i][1], SMALL_FASTF) ) {
+		!NEAR_ZERO(test1_results[i][1] - hull_pnts[i][1], SMALL_FASTF) ) {
 		retval = 0;
 	    }
 	}

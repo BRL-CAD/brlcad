@@ -44,7 +44,7 @@ bg_pt_in_polygon(size_t nvert, const point2d_t *pnts, const point2d_t *test)
     int c = 0;
     for (i = 0, j = nvert-1; i < nvert; j = i++) {
 	if ( ((pnts[i][1] > (*test)[1]) != (pnts[j][1] > (*test)[1])) &&
-		((*test)[0] < (pnts[j][0]-pnts[i][0]) * ((*test)[1]-pnts[i][1]) / (pnts[j][1]-pnts[i][1]) + pnts[i][0]) )
+	     ((*test)[0] < (pnts[j][0]-pnts[i][0]) * ((*test)[1]-pnts[i][1]) / (pnts[j][1]-pnts[i][1]) + pnts[i][0]) )
 	    c = !c;
     }
     return c;

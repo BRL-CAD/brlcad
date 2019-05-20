@@ -166,7 +166,7 @@ bg_3d_polygon_mk_pts_planes(size_t *npts, point_t **pts, size_t neqs, const plan
 		}
 	    }
 	}
-   }
+    }
     return 0;
 }
 

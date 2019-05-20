@@ -340,16 +340,16 @@ bg_free_trimesh_faces(struct bg_trimesh_faces *faces)
     faces->count = 0;
 }
 
- void
- bg_free_trimesh_solid_errors(struct bg_trimesh_solid_errors *errors)
- {
-     if (!errors) return;
+void
+bg_free_trimesh_solid_errors(struct bg_trimesh_solid_errors *errors)
+{
+    if (!errors) return;
 
-     bg_free_trimesh_edges(&(errors->unmatched));
-     bg_free_trimesh_edges(&(errors->misoriented));
-     bg_free_trimesh_edges(&(errors->excess));
-     bg_free_trimesh_faces(&(errors->degenerate));
- }
+    bg_free_trimesh_edges(&(errors->unmatched));
+    bg_free_trimesh_edges(&(errors->misoriented));
+    bg_free_trimesh_edges(&(errors->excess));
+    bg_free_trimesh_faces(&(errors->degenerate));
+}
 
 int
 bg_trimesh_solid(int vcnt, int fcnt, fastf_t *v, int *f, int **bedges)
