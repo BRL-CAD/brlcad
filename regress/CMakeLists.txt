@@ -77,6 +77,7 @@ if(SH_EXEC)
   Sh_Regression_Test(solids "rt;mged;pixdiff;asc2pix;gencolor")
   Sh_Regression_Test(shaders "rt;mged;pixdiff;gencolor")
   Sh_Regression_Test(spdi "rt;mged;pixdiff")
+  Sh_Regression_Test(rtedge "rt;rtedge;pixdiff;asc2g")
   Sh_Regression_Test(iges "iges-g;g-iges;mged;asc2g")
   Sh_Regression_Test(weight "rtweight;mged")
   Sh_Regression_Test(gqa "gqa;mged")
@@ -147,6 +148,8 @@ CMAKEFILES(
   nurbs/brep-3dm.tar.bz2
   red.sh
   repository.sh
+  rtedge.ref.pix.gz
+  rtedge.sh
   shaders.eagleCAD-512x438.pix
   shaders.ref.pix
   shaders.sh
@@ -158,6 +161,7 @@ CMAKEFILES(
   tgms/comgeom.cg
   tgms/comgeom.tgt-1-v4-documented.cg
   tgms/comgeom.tgt-1-v4.cg
+  tgms/havoc.g.gz
   tgms/m35.asc.gz
   tgms/m35.cg.gz
   tgms/solids.dsp.dat
@@ -347,6 +351,10 @@ set(regress_outfiles
   region_ids
   regions
   repository.log
+  rtedge.diff.pix
+  rtedge.log
+  rtedge.pix
+  rtedge.havoc.g
   shaders.ebm.bw
   shaders.ell_2.prj
   shaders.g
