@@ -115,7 +115,7 @@ run ( ) {
 # script's location
 ensearch ( ) {
     ensearch_file="$1"
-    ensearch_dirs="$ARG1/bin ../bin \"$PATH_TO_THIS/../bin\" ../bench \"$PATH_TO_THIS/../bench\" "
+    ensearch_dirs="$ARG1/bin ../bin ./bin \"$PATH_TO_THIS/../bin\" ../bench \"$PATH_TO_THIS/../bench\" "
 
     if test "x$ensearch_file" = "x" ; then
 	# nothing to do
