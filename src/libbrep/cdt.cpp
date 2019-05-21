@@ -61,7 +61,7 @@ get_loop_sample_points(
 
 	    for (int i = 1; i <= 10; i++) {
 		btp.p3d = p3d;
-		btp.n3d = NULL;
+		btp.n3d = n3d;
 		btp.p2d = v1.Point();
 		btp.t = trim->Domain().m_t[0] + (i - 1) * delta;
 		btp.p2d = trim->PointAt(btp.t);
@@ -74,7 +74,7 @@ get_loop_sample_points(
 
 	    const ON_BrepVertex& v2 = face.Brep()->m_V[trim->m_vi[1]];
 	    btp.p3d = p3d;
-	    btp.n3d = NULL;
+	    btp.n3d = n3d;
 	    btp.p2d = v2.Point();
 	    btp.t = trim->Domain().m_t[1];
 	    btp.p2d = trim->PointAt(btp.t);
