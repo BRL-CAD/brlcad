@@ -72,34 +72,64 @@ if test ! -f "$GZIP" ; then
     exit 1
 fi
 
+FAILURES=0
+
 # make our database
 rm -f rtedge.havoc.g
 log "... running rtedge.havoc.g gzip decompress"
 $GZIP -d -c "$PATH_TO_THIS/tgms/havoc.g.gz" > rtedge.havoc.g
 
-# get our reference
-rm -f rtedge.ref.pix
-log "... running rtedge.ref.pix gzip decompress"
+# get our references
+rm -f rtedge.ref.pix rtedge.2.ref.pix
+log "... running rtedge reference gzip decompressions"
 $GZIP -d -c "$PATH_TO_THIS/rtedge.ref.pix.gz" > rtedge.ref.pix
+$GZIP -d -c "$PATH_TO_THIS/rtedge.ref2.pix.gz" > rtedge.ref2.pix
 
-log "... rendering rtedge"
+cmd="$RTEDGE -s 1024 -o rtedge.pix rtedge.havoc.g havoc"
+log "... rendering rtedge #1: $cmd"
 rm -f rtedge.pix
-$RTEDGE -s 1024 -o rtedge.pix rtedge.havoc.g 'havoc' 2>> $LOGFILE
+$cmd 2>> $LOGFILE
 
-log "... running $PIXDIFF rtedge.pix rtedge.ref.pix > rtedge.diff.pix"
+cmd="$PIXDIFF rtedge.pix rtedge.ref.pix"
+log "... comparing rtedge #1: $cmd"
 rm -f rtedge.diff.pix
-$PIXDIFF rtedge.pix rtedge.ref.pix > rtedge.diff.pix 2>> $LOGFILE
+$cmd > rtedge.diff.pix 2>> $LOGFILE
 NUMBER_WRONG=`tail -n1 $LOGFILE | tr , '\012' | awk '/many/ {print $1}'`
-log "rtedge.pix $NUMBER_WRONG off by many"
-
 
 if [ "X$NUMBER_WRONG" = "X0" ] ; then
-    log "-> rtedge.sh succeeded"
+    log "... -> rtedge.pix is correct"
 else
-    log "-> rtedge.sh FAILED, see $LOGFILE"
+    log "... -> rtedge.pix $NUMBER_WRONG off by many"
+    FAILURES="`expr $FAILURES + 1`"
 fi
 
-exit $NUMBER_WRONG
+
+cmd="$RTEDGE -s 1024 -o rtedge.2.pix -c\"set fg=0/255/0 bg=255/0/0\" rtedge.havoc.g havoc"
+log "... rendering rtedge #2: $cmd"
+rm -f rtedge.2.pix
+eval $cmd 2>> $LOGFILE
+
+cmd="$PIXDIFF rtedge.2.pix rtedge.ref2.pix"
+log "... comparing rtedge #2: $cmd"
+rm -f rtedge.diff2.pix
+$cmd > rtedge.diff2.pix 2>> $LOGFILE
+NUMBER_WRONG=`tail -n1 $LOGFILE | tr , '\012' | awk '/many/ {print $1}'`
+
+if [ "X$NUMBER_WRONG" = "X0" ] ; then
+    log "... -> rtedge.2.pix is correct"
+else
+    log "... -> rtedge.2.pix $NUMBER_WRONG off by many"
+    FAILURES="`expr $FAILURES + 1`"
+fi
+
+
+if test $FAILURES -eq 0 ; then
+    log "-> rtcheck check succeeded"
+else
+    log "-> rtcheck check FAILED, see $LOGFILE"
+fi
+
+exit $FAILURES
 
 # Local Variables:
 # mode: sh
