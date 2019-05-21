@@ -78,7 +78,7 @@ FAILURES=0
 # make our starting database
 rm -f comgeom.m35.asc
 log "... running gzip decompress"
-$GZIP -d -c "$1/regress/tgms/m35.asc.gz" > comgeom.m35.asc
+$GZIP -d -c "$PATH_TO_THIS/tgms/m35.asc.gz" > comgeom.m35.asc
 rm -f comgeom.m35.g
 run $ASC2G comgeom.m35.asc comgeom.m35.g
 
@@ -102,7 +102,7 @@ cat region_ids >> comgeom.m35.cg
 # get test version
 rm -f comgeom.m35-baseline.cg
 log "... running gzip decompress"
-$GZIP -d -c "$1/regress/tgms/m35.cg.gz" > comgeom.m35-baseline.cg
+$GZIP -d -c "$PATH_TO_THIS/tgms/m35.cg.gz" > comgeom.m35-baseline.cg
 
 cmp comgeom.m35.cg comgeom.m35-baseline.cg
 STATUS=$?
@@ -119,7 +119,7 @@ fi
 # by vdeck
 log "...testing 'comgeom-g' command (GIFT v5)..."
 rm -f comgeom.t-v5.g
-run $COMGEOM "$1/regress/tgms/comgeom.cg" comgeom.t-v5.g
+run $COMGEOM "$PATH_TO_THIS/tgms/comgeom.cg" comgeom.t-v5.g
 STATUS=$?
 
 if [ X$STATUS != X0 ] ; then
