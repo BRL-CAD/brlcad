@@ -2622,11 +2622,4 @@ DOCUMENTATION
 See the feature request and bug trackers for more tasks and future
 planning efforts: https://sourceforge.net/tracker/?group_id=105292
 
-Items may encode metadata on a separate line including whether:
-  1) result is user 'V'isible or 'H'idden
-  2) utility is 'N'ow (by next minor release) or 'L'ater,
-  3) category is 'C'orrective or 'E'nhancement (perfective, adaptive),
-  4) interfaces impacted is 'S'ome (1-3 api/ui) or 'M'any (>3 api/ui),
-  5) and a time estimate (i.e., number of days effort).
-
 TODO items should be formatted to column 70 (M-q in emacs), no tabs.
