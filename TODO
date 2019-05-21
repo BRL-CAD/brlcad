@@ -2492,9 +2492,10 @@ DOCUMENTATION
     doc/docbook/presentations/en/intro-to-tcltk.xml
     doc/docbook/specifications/en/BRL_CAD_g_format_V5.xml
 
-* improve rtedge documentation, explain how it computes its "centroid"
-  (as it's not exactly the center of bounding box of all objects -- it
-  depends on the booleans).
+* improve rtweight documentation, explain how it computes its
+  "centroid" (as it's not the center of bounding box of all objects,
+  it's the geometric centoid that that takes booleans into
+  consideration).
 
 * write up some documentation on other build tools besides make -
   CMake supports other generators, wouldn't hurt to detail how to
