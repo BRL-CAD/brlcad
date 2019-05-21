@@ -15,6 +15,11 @@ on-going issues.
 Recent Bugs
 -----------
 
+* rtedge's overlay mode generates different results on Windows, Mac,
+  and Linux for the m35.  Difference is related to the overlay objects
+  not overlaying correctly.  Particularly noticeable on steering wheel
+  and wheels.  (regress rtwizard test D.)
+
 * creating an object with a slashes in the name (e.g., cp foo foo/R)
   results in an object that cannot be deleted/renamed.  bad behavior
   presumably extends to any name with path separators.
@@ -115,10 +120,6 @@ Recent Bugs
   where shmget() fails (or is requested via /dev/oglp) and we get
   private memory -- looks like private memory is not initialized
   (observed on Mac 10.6, Windows, and Ubuntu Linux using 7.26).
-
-* rtedge's overlay mode appears to be generating different results on
-  Windows and Linux for the m35 steering wheel (rtwizard rendering
-  mode D.)
 
 * pixdiff on Windows is reporting no differences with a pair of files
   that pixcmp can see differences in.
