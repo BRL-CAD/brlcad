@@ -15,6 +15,12 @@ on-going issues.
 Recent Bugs
 -----------
 
+* The overlay and occlusion examples in the rtedge manual page are not
+  working.  rt -o file.pix followed by rtedge -o file.pix -c "set
+  ov=1" should overlay the edges into file.pix but it presently seems
+  to output nothing even when permissions are opened up.  Works
+  with a framebuffer server.
+
 * rtedge's overlay mode generates different results on Windows, Mac,
   and Linux for the m35.  Difference is related to the overlay objects
   not overlaying correctly.  Particularly noticeable on steering wheel
