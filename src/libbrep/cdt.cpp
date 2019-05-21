@@ -188,6 +188,7 @@ struct ON_Brep_CDT_State {
     /* Poly2Tri data */
     p2t::CDT **p2t_faces;
     std::vector<p2t::Triangle *> **p2t_extra_faces;
+    std::map<ON_2dPoint *, ON_3dPoint *> **on2_to_on3_maps;
     std::map<p2t::Point *, ON_3dPoint *> **tri_to_on3_maps;
     std::map<p2t::Point *, ON_3dPoint *> **tri_to_on3_norm_maps;
     std::map<ON_3dPoint *, std::set<p2t::Point *>> **on3_to_tri_maps;
@@ -905,7 +906,9 @@ singular_trim_norm(struct cdt_surf_info *sinfo, fastf_t uc, fastf_t vc)
 }
 
 static void
-getSurfacePoints(struct cdt_surf_info *sinfo,
+getSurfacePoints(
+	         struct ON_Brep_CDT_State *s_cdt,
+	         struct cdt_surf_info *sinfo,
 		 fastf_t u1,
 		 fastf_t u2,
 		 fastf_t v1,
@@ -958,7 +961,7 @@ getSurfacePoints(struct cdt_surf_info *sinfo,
 		    continue;
 		}
 
-		getSurfacePoints(sinfo, u1, u1 + step, v1, v2, min_dist,
+		getSurfacePoints(s_cdt, sinfo, u1, u1 + step, v1, v2, min_dist,
 			within_dist, cos_within_ang, on_surf_points, left,
 			below);
 	    } else if (i == isteps) {
@@ -972,7 +975,7 @@ getSurfacePoints(struct cdt_surf_info *sinfo,
 		    continue;
 		}
 
-		getSurfacePoints(sinfo, u2 - step, u2, v1, v2, min_dist,
+		getSurfacePoints(s_cdt, sinfo, u2 - step, u2, v1, v2, min_dist,
 			within_dist, cos_within_ang, on_surf_points, left,
 			below);
 	    } else {
@@ -985,7 +988,7 @@ getSurfacePoints(struct cdt_surf_info *sinfo,
 		    continue;
 		}
 
-		getSurfacePoints(sinfo, step_u - step, step_u, v1, v2, min_dist, within_dist,
+		getSurfacePoints(s_cdt, sinfo, step_u - step, step_u, v1, v2, min_dist, within_dist,
 			cos_within_ang, on_surf_points, left, below);
 	    }
 	    left = false;
@@ -1021,7 +1024,7 @@ getSurfacePoints(struct cdt_surf_info *sinfo,
 		    continue;
 		}
 
-		getSurfacePoints(sinfo, u1, u2, v1, v1 + step, min_dist,
+		getSurfacePoints(s_cdt, sinfo, u1, u2, v1, v1 + step, min_dist,
 			within_dist, cos_within_ang, on_surf_points, left,
 			below);
 	    } else if (i == isteps) {
@@ -1032,7 +1035,7 @@ getSurfacePoints(struct cdt_surf_info *sinfo,
 		    continue;
 		}
 
-		getSurfacePoints(sinfo, u1, u2, v2 - step, v2, min_dist,
+		getSurfacePoints(s_cdt, sinfo, u1, u2, v2 - step, v2, min_dist,
 			within_dist, cos_within_ang, on_surf_points, left,
 			below);
 	    } else {
@@ -1043,7 +1046,7 @@ getSurfacePoints(struct cdt_surf_info *sinfo,
 		    continue;
 		}
 
-		getSurfacePoints(sinfo, u1, u2, step_v - step, step_v, min_dist, within_dist,
+		getSurfacePoints(s_cdt, sinfo, u1, u2, step_v - step, step_v, min_dist, within_dist,
 			cos_within_ang, on_surf_points, left, below);
 	    }
 
@@ -1127,13 +1130,13 @@ getSurfacePoints(struct cdt_surf_info *sinfo,
 	    p2d.Set(u, v2);
 	    on_surf_points.Append(p2d);
 
-	    getSurfacePoints(sinfo, u1, u, v1, v, min_dist, within_dist,
+	    getSurfacePoints(s_cdt, sinfo, u1, u, v1, v, min_dist, within_dist,
 		    cos_within_ang, on_surf_points, left, below);
-	    getSurfacePoints(sinfo, u1, u, v, v2, min_dist, within_dist,
+	    getSurfacePoints(s_cdt, sinfo, u1, u, v, v2, min_dist, within_dist,
 		    cos_within_ang, on_surf_points, left, false);
-	    getSurfacePoints(sinfo, u, u2, v1, v, min_dist, within_dist,
+	    getSurfacePoints(s_cdt, sinfo, u, u2, v1, v, min_dist, within_dist,
 		    cos_within_ang, on_surf_points, false, below);
-	    getSurfacePoints(sinfo, u, u2, v, v2, min_dist, within_dist,
+	    getSurfacePoints(s_cdt, sinfo, u, u2, v, v2, min_dist, within_dist,
 		    cos_within_ang, on_surf_points, false, false);
 	    return;
 	}
@@ -1146,9 +1149,9 @@ getSurfacePoints(struct cdt_surf_info *sinfo,
 	    //top
 	    p2d.Set(u, v2);
 	    on_surf_points.Append(p2d);
-	    getSurfacePoints(sinfo, u1, u, v1, v2, min_dist, within_dist,
+	    getSurfacePoints(s_cdt, sinfo, u1, u, v1, v2, min_dist, within_dist,
 		    cos_within_ang, on_surf_points, left, below);
-	    getSurfacePoints(sinfo, u, u2, v1, v2, min_dist, within_dist,
+	    getSurfacePoints(s_cdt, sinfo, u, u2, v1, v2, min_dist, within_dist,
 		    cos_within_ang, on_surf_points, false, below);
 	    return;
 	}
@@ -1162,9 +1165,9 @@ getSurfacePoints(struct cdt_surf_info *sinfo,
 	    p2d.Set(u2, v);
 	    on_surf_points.Append(p2d);
 
-	    getSurfacePoints(sinfo, u1, u2, v1, v, min_dist, within_dist,
+	    getSurfacePoints(s_cdt, sinfo, u1, u2, v1, v, min_dist, within_dist,
 		    cos_within_ang, on_surf_points, left, below);
-	    getSurfacePoints(sinfo, u1, u2, v, v2, min_dist, within_dist,
+	    getSurfacePoints(s_cdt, sinfo, u1, u2, v, v2, min_dist, within_dist,
 		    cos_within_ang, on_surf_points, left, false);
 	    return;
 	}
@@ -1190,13 +1193,13 @@ getSurfacePoints(struct cdt_surf_info *sinfo,
 	if (dist > within_dist + ON_ZERO_TOLERANCE) {
 	    //bu_log("split: dist(%f) > within_dist(%f)\n", dist, within_dist);
 
-	    getSurfacePoints(sinfo, u1, u, v1, v, min_dist, within_dist,
+	    getSurfacePoints(s_cdt, sinfo, u1, u, v1, v, min_dist, within_dist,
 		    cos_within_ang, on_surf_points, left, below);
-	    getSurfacePoints(sinfo, u1, u, v, v2, min_dist, within_dist,
+	    getSurfacePoints(s_cdt, sinfo, u1, u, v, v2, min_dist, within_dist,
 		    cos_within_ang, on_surf_points, left, false);
-	    getSurfacePoints(sinfo, u, u2, v1, v, min_dist, within_dist,
+	    getSurfacePoints(s_cdt, sinfo, u, u2, v1, v, min_dist, within_dist,
 		    cos_within_ang, on_surf_points, false, below);
-	    getSurfacePoints(sinfo, u, u2, v, v2, min_dist, within_dist,
+	    getSurfacePoints(s_cdt, sinfo, u, u2, v, v2, min_dist, within_dist,
 		    cos_within_ang, on_surf_points, false, false);
 	}
     }
@@ -1335,6 +1338,11 @@ getSurfacePoints(struct ON_Brep_CDT_State *s_cdt,
 	    return;
 	}
 
+	if (!s_cdt->on2_to_on3_maps[face.m_face_index]) {
+	    std::map<ON_2dPoint *, ON_3dPoint *> *on2to3 = new std::map<ON_2dPoint *, ON_3dPoint *>();
+	    s_cdt->on2_to_on3_maps[face.m_face_index] = on2to3;
+	}
+
 	struct cdt_surf_info sinfo;
 	sinfo.s = s;
 	sinfo.f = &face;
@@ -1419,7 +1427,7 @@ getSurfacePoints(struct ON_Brep_CDT_State *s_cdt,
 	    p.Set(min.x, midy);
 	    on_surf_points.Append(p);
 
-	    getSurfacePoints(&sinfo, min.x, midx, min.y, midy, min_dist, within_dist,
+	    getSurfacePoints(s_cdt, &sinfo, min.x, midx, min.y, midy, min_dist, within_dist,
 			     cos_within_ang, on_surf_points, true, true);
 
 	    //bottom midx
@@ -1430,7 +1438,7 @@ getSurfacePoints(struct ON_Brep_CDT_State *s_cdt,
 	    p.Set(midx, midy);
 	    on_surf_points.Append(p);
 
-	    getSurfacePoints(&sinfo, midx, max.x, min.y, midy, min_dist, within_dist,
+	    getSurfacePoints(s_cdt, &sinfo, midx, max.x, min.y, midy, min_dist, within_dist,
 			     cos_within_ang, on_surf_points, false, true);
 
 	    //bottom right
@@ -1445,14 +1453,14 @@ getSurfacePoints(struct ON_Brep_CDT_State *s_cdt,
 	    p.Set(min.x, max.y);
 	    on_surf_points.Append(p);
 
-	    getSurfacePoints(&sinfo, min.x, midx, midy, max.y, min_dist, within_dist,
+	    getSurfacePoints(s_cdt, &sinfo, min.x, midx, midy, max.y, min_dist, within_dist,
 			     cos_within_ang, on_surf_points, true, false);
 
 	    //top midx
 	    p.Set(midx, max.y);
 	    on_surf_points.Append(p);
 
-	    getSurfacePoints(&sinfo, midx, max.x, midy, max.y, min_dist, within_dist,
+	    getSurfacePoints(s_cdt, &sinfo, midx, max.x, midy, max.y, min_dist, within_dist,
 			     cos_within_ang, on_surf_points, false, false);
 
 	    //top left
@@ -1470,7 +1478,7 @@ getSurfacePoints(struct ON_Brep_CDT_State *s_cdt,
 	    p.Set(min.x, max.y);
 	    on_surf_points.Append(p);
 
-	    getSurfacePoints(&sinfo, min.x, midx, min.y, max.y, min_dist,
+	    getSurfacePoints(s_cdt, &sinfo, min.x, midx, min.y, max.y, min_dist,
 			     within_dist, cos_within_ang, on_surf_points, true, true);
 
 	    //bottom midx
@@ -1481,7 +1489,7 @@ getSurfacePoints(struct ON_Brep_CDT_State *s_cdt,
 	    p.Set(midx, max.y);
 	    on_surf_points.Append(p);
 
-	    getSurfacePoints(&sinfo, midx, max.x, min.y, max.y, min_dist,
+	    getSurfacePoints(s_cdt, &sinfo, midx, max.x, min.y, max.y, min_dist,
 			     within_dist, cos_within_ang, on_surf_points, false, true);
 
 	    //bottom right
@@ -1503,7 +1511,7 @@ getSurfacePoints(struct ON_Brep_CDT_State *s_cdt,
 	    p.Set(min.x, midy);
 	    on_surf_points.Append(p);
 
-	    getSurfacePoints(&sinfo, min.x, max.x, min.y, midy, min_dist,
+	    getSurfacePoints(s_cdt, &sinfo, min.x, max.x, min.y, midy, min_dist,
 			     within_dist, cos_within_ang, on_surf_points, true, true);
 
 	    //bottom right
@@ -1514,7 +1522,7 @@ getSurfacePoints(struct ON_Brep_CDT_State *s_cdt,
 	    p.Set(max.x, midy);
 	    on_surf_points.Append(p);
 
-	    getSurfacePoints(&sinfo, min.x, max.x, midy, max.y, min_dist,
+	    getSurfacePoints(s_cdt, &sinfo, min.x, max.x, midy, max.y, min_dist,
 			     within_dist, cos_within_ang, on_surf_points, true, false);
 
 	    // top left
@@ -1535,7 +1543,7 @@ getSurfacePoints(struct ON_Brep_CDT_State *s_cdt,
 	    p.Set(min.x, max.y);
 	    on_surf_points.Append(p);
 
-	    getSurfacePoints(&sinfo, min.x, max.x, min.y, max.y, min_dist,
+	    getSurfacePoints(s_cdt, &sinfo, min.x, max.x, min.y, max.y, min_dist,
 			     within_dist, cos_within_ang, on_surf_points, true, true);
 
 	    //bottom right
@@ -2490,6 +2498,7 @@ ON_Brep_CDT_Create(void *bv)
 
     cdt->p2t_faces = (p2t::CDT **)bu_calloc(brep->m_F.Count(), sizeof(p2t::CDT *), "poly2tri triangulations");
     cdt->p2t_extra_faces = (std::vector<p2t::Triangle *> **)bu_calloc(brep->m_F.Count(), sizeof(std::vector<p2t::Triangle *> *), "extra p2t faces");
+    cdt->on2_to_on3_maps = (std::map<ON_2dPoint *, ON_3dPoint *> **)bu_calloc(brep->m_F.Count(), sizeof(std::map<ON_2dPoint *, ON_3dPoint *> *), "ON_2dPoint to ON_3dPoint maps");
     cdt->tri_to_on3_maps = (std::map<p2t::Point *, ON_3dPoint *> **)bu_calloc(brep->m_F.Count(), sizeof(std::map<p2t::Point *, ON_3dPoint *> *), "poly2tri point to ON_3dPoint maps");
     cdt->on3_to_tri_maps = (std::map<ON_3dPoint *, std::set<p2t::Point *>> **)bu_calloc(brep->m_F.Count(), sizeof(std::map<ON_3dPoint *, std::set<p2t::Point *>> *), "poly2tri point to ON_3dPoint maps");
     cdt->tri_to_on3_norm_maps = (std::map<p2t::Point *, ON_3dPoint *> **)bu_calloc(brep->m_F.Count(), sizeof(std::map<p2t::Point *, ON_3dPoint *> *), "poly2tri point to ON_3dVector normal maps");
@@ -2536,6 +2545,13 @@ ON_Brep_CDT_Destroy(struct ON_Brep_CDT_State *s_cdt)
 	    delete s_cdt->face_degen_pnts[i];
 	}
     }
+
+    for (int i = 0; i < s_cdt->brep->m_F.Count(); i++) {
+	if (s_cdt->on2_to_on3_maps[i] != NULL) {
+	    delete s_cdt->on2_to_on3_maps[i];
+	}
+    }
+    bu_free(s_cdt->on2_to_on3_maps, "degen pnts");
 
     delete s_cdt->w3dpnts;
     delete s_cdt->vert_pnts;
