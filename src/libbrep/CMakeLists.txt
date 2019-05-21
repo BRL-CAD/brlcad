@@ -24,6 +24,10 @@ set(LIBBREP_SOURCES
   Subcurve.cpp
   Subsurface.cpp
   boolean.cpp
+  cdt_closed_surf.cpp
+  cdt_edge.cpp
+  cdt_surf.cpp
+  cdt_util.cpp
   cdt.cpp
   intersect.cpp
   libbrep_brep_tools.cpp
@@ -43,6 +47,7 @@ set(LIBBREP_SOURCES
 set(libbrep_ignored_files
   libbrep_brep_tools.h
   brep_except.h
+  cdt.h
   opennurbs_fit.h
   opennurbs_fit.cpp
   PullbackCurve.h
