@@ -870,8 +870,10 @@ singular_trim_norm(struct cdt_surf_info *sinfo, fastf_t uc, fastf_t vc)
 		    on_trim = 0;
 		}
 	    } else {
-		if (!((uc > p2d1.x && uc < p2d2.x) || (uc < p2d1.x && uc > p2d2.x))) {
-		    on_trim = 0;
+		if (!NEAR_EQUAL(p2d1.x, uc, ON_ZERO_TOLERANCE) && !NEAR_EQUAL(p2d2.x, uc, ON_ZERO_TOLERANCE)) {
+		    if (!((uc > p2d1.x && uc < p2d2.x) || (uc < p2d1.x && uc > p2d2.x))) {
+			on_trim = 0;
+		    }
 		}
 	    }
 	    if (NEAR_EQUAL(p2d1.y, p2d2.y, ON_ZERO_TOLERANCE)) {
@@ -879,8 +881,10 @@ singular_trim_norm(struct cdt_surf_info *sinfo, fastf_t uc, fastf_t vc)
 		    on_trim = 0;
 		}
 	    } else {
-		if (!((vc > p2d1.y && vc < p2d2.y) || (vc < p2d1.y && vc > p2d2.y))) {
-		    on_trim = 0;
+		if (!NEAR_EQUAL(p2d1.y, vc, ON_ZERO_TOLERANCE) && !NEAR_EQUAL(p2d2.y, vc, ON_ZERO_TOLERANCE)) {
+		    if (!((vc > p2d1.y && vc < p2d2.y) || (vc < p2d1.y && vc > p2d2.y))) {
+			on_trim = 0;
+		    }
 		}
 	    }
 
@@ -1069,10 +1073,6 @@ getSurfacePoints(struct cdt_surf_info *sinfo,
 	return;
     }
 
-    // If we have singular trims on this face, surface evaluations won't be enough
-    
-
-
     if ((surface_EvNormal(sinfo->s, u1, v1, p[0], norm[0]))
 	    && (surface_EvNormal(sinfo->s, u2, v1, p[1], norm[1])) // for u
 	    && (surface_EvNormal(sinfo->s, u2, v2, p[2], norm[2]))
@@ -1085,16 +1085,15 @@ getSurfacePoints(struct cdt_surf_info *sinfo,
 	double dist = mid.DistanceTo(line1.ClosestPointTo(mid));
 	V_MAX(dist, mid.DistanceTo(line2.ClosestPointTo(mid)));
 	
-	// TODO - find 3D point and normal associated with trim based on uv coords - hard-coded single
-	// lookup above won't generalize
 	for (int i = 0; i < 4; i++) {
 	    if (ON_DotProduct(norm[i], norm_mid) < 0) {
 		fastf_t uc = (i == 0 || i == 3) ? u1 : u2;
 		fastf_t vc = (i == 0 || i == 1) ? v1 : v2;
-		bu_log("norm[%d] backwards at %d point %f,%f\n", i, i, uc, vc);
+		bu_log("norm[%d](%f %f %f) backwards at %d point %f,%f\n", i, norm[i].x, norm[i].y, norm[i].z, i, uc, vc);
 		ON_3dPoint *vnorm = singular_trim_norm(sinfo, uc, vc);
 		if (vnorm && ON_DotProduct(*vnorm, norm_mid) > 0) {
 		    bu_log("vert norm works\n");
+		    norm[i] = *vnorm;
 		} else {
 		    bu_log("no matching vert normal, problem...\n");
 		}
@@ -2721,6 +2720,10 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_State *s_cdt, std::map<const ON_Surface *, d
 	return -1;
     }
 
+    // TODO - if we need to tie surface points to vertex normals (we do for singular trims)
+    // we will need more than just a point array back from on_surf_points - we also need
+    // the mapping to 3D normals and maybe points.  We need to set the maps up so the p2t
+    // points will pull the correct normals when building a mesh
     getSurfacePoints(s_cdt, face, on_surf_points);
 
     for (int i = 0; i < on_surf_points.Count(); i++) {
