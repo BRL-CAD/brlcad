@@ -309,7 +309,8 @@ getSurfacePoints(
 	V_MAX(dist, mid.DistanceTo(line2.ClosestPointTo(mid)));
 	
 	for (int i = 0; i < 4; i++) {
-	    if (ON_DotProduct(norm[i], norm_mid) < 0) {
+	    double nnm_dot = ON_DotProduct(norm[i], norm_mid);
+	    if ((nnm_dot < ON_ZERO_TOLERANCE) && (fabs(nnm_dot) > ON_ZERO_TOLERANCE)) {
 		fastf_t uc = (i == 0 || i == 3) ? u1 : u2;
 		fastf_t vc = (i == 0 || i == 1) ? v1 : v2;
 		bu_log("norm[%d](%f %f %f) backwards at %d point %f,%f\n", i, norm[i].x, norm[i].y, norm[i].z, i, uc, vc);

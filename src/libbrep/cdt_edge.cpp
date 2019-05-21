@@ -376,10 +376,11 @@ getEdgePoints(
 	if (trim.Face()->m_bRev) {
 	    trim1_start_normal = trim1_start_normal  * -1.0;
 	}
-	if (ON_DotProduct(trim1_start_normal, *edge_start_3dnorm) < 0) {
+	if (edge_start_3dnorm && ON_DotProduct(trim1_start_normal, *edge_start_3dnorm) < -0.5) {
 	    t1_sn = edge_start_3dnorm;
 	} else {
 	    t1_sn = new ON_3dPoint(trim1_start_normal);
+	    *t1_sn = trim1_start_normal;
 	    s_cdt->w3dnorms->push_back(t1_sn);
 	}
     }
@@ -389,10 +390,11 @@ getEdgePoints(
 	if (trim.Face()->m_bRev) {
 	    trim1_end_normal = trim1_end_normal  * -1.0;
 	}
-	if (ON_DotProduct(trim1_end_normal, *edge_end_3dnorm) < 0) {
+	if (edge_end_3dnorm && ON_DotProduct(trim1_end_normal, *edge_end_3dnorm) < -0.5) {
 	    t1_en = edge_end_3dnorm;
 	} else {
 	    t1_en = new ON_3dPoint(trim1_end_normal);
+	    *t1_en = trim1_end_normal;
 	    s_cdt->w3dnorms->push_back(t1_en);
 	}
     }
@@ -405,10 +407,11 @@ getEdgePoints(
 	if (trim2->Face()->m_bRev) {
 	    trim2_start_normal = trim2_start_normal  * -1.0;
 	}
-	if (ON_DotProduct(trim2_start_normal, *edge_start_3dnorm) < 0) {
+	if (edge_start_3dnorm && ON_DotProduct(trim2_start_normal, *edge_start_3dnorm) < -0.5) {
 	    t2_sn = edge_start_3dnorm;
 	} else {
 	    t2_sn = new ON_3dPoint(trim2_start_normal);
+	    *t2_sn = trim2_start_normal;
 	    s_cdt->w3dnorms->push_back(t2_sn);
 	}
     }
@@ -418,10 +421,11 @@ getEdgePoints(
 	if (trim2->Face()->m_bRev) {
 	    trim2_end_normal = trim2_end_normal  * -1.0;
 	}
-	if (ON_DotProduct(trim2_end_normal, *edge_end_3dnorm) < 0) {
+	if (edge_end_3dnorm && ON_DotProduct(trim2_end_normal, *edge_end_3dnorm) < -0.5) {
 	    t2_en = edge_end_3dnorm;
 	} else {
 	    t2_en = new ON_3dPoint(trim2_end_normal);
+	    *t2_en = trim2_end_normal;
 	    s_cdt->w3dnorms->push_back(t2_en);
 	}
     }

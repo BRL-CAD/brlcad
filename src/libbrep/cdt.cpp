@@ -392,6 +392,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
     if (!s_cdt->w3dnorms->size()) {
 	for (int index = 0; index < brep->m_V.Count(); index++) {
 	    ON_BrepVertex& v = brep->m_V[index];
+	    int have_calculated = 0;
 	    ON_3dVector vnrml(0.0, 0.0, 0.0);
 
 	    for (int eind = 0; eind != v.EdgeCount(); eind++) {
@@ -399,6 +400,10 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 		ON_3dVector trim1_norm = ON_3dVector::UnsetVector;
 		ON_3dVector trim2_norm = ON_3dVector::UnsetVector;
 		ON_BrepEdge& edge = brep->m_E[v.m_ei[eind]];
+		if (edge.TrimCount() != 2) {
+		    // Don't know what to do with this yet... skip.
+		    continue;
+		}
 		ON_BrepTrim *trim1 = edge.Trim(0);
 		ON_BrepTrim *trim2 = edge.Trim(1);
 		ON_Interval t1range = trim1->Domain();
@@ -413,14 +418,36 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 		    if (trim1->Face()->m_bRev) {
 			trim1_norm = trim1_norm * -1;
 		    }
-		    vnrml += trim1_norm;
 		}
 		if (surface_EvNormal(s2, t2_2d.x, t2_2d.y, tmp2, trim2_norm)) {
 		    if (trim2->Face()->m_bRev) {
 			trim2_norm = trim2_norm * -1;
 		    }
-		    vnrml += trim2_norm;
 		}
+
+		// Want the angle between the two faces to not be "sharp" - if
+		// it is, we don't want to use the average, since that will
+		// tend to introduce visual artifacts at the vertex.
+		//
+		// TODO - come up with a strategy to allow a fallback to this
+		// anyway if the surface is just giving nonsense answers at the
+		// edge...
+		if (trim1_norm == ON_3dVector::UnsetVector) {
+		    continue;
+		}
+		if (trim2_norm == ON_3dVector::UnsetVector) {
+		    continue;
+		}
+		if (ON_DotProduct(trim1_norm, trim2_norm) > 0.5) {
+		    vnrml += trim1_norm;
+		    vnrml += trim2_norm;
+		    have_calculated = 1;
+		} else {
+		    continue;
+		}
+	    }
+	    if (!have_calculated) {
+		continue;
 	    }
 	    vnrml.Unitize();
 
@@ -997,10 +1024,6 @@ ON_Brep_CDT_Mesh(
 		s_cdt->face_degen_pnts[face_index]->insert(p2_B);
 		s_cdt->face_degen_pnts[face_index]->insert(p2_C);
 
-		if (face_index == 521) {
-		    bu_log("Have zero area tri in face %d\n", face_index);
-		}
-
 		/* If we have degeneracies along an edge, the impact is not
 		 * local to this face but will also impact the other face.
 		 * Find it and let it know.(probably need another map - 3d pnt
@@ -1116,9 +1139,6 @@ ON_Brep_CDT_Mesh(
 		}
 	    }
 	    if (involved_pnt_cnt > 1) {
-		if (face_index == 521) {
-		    bu_log("Have involved triangle in face %d\n", face_index);
-		}
 
 		// TODO - construct the plane of this face, project 3D points
 		// into that plane to get new 2D coordinates specific to this
@@ -1203,9 +1223,6 @@ ON_Brep_CDT_Mesh(
 			double t1, t2;
 			eline3d.ClosestPointTo(*op1, &t1);
 			eline3d.ClosestPointTo(*op2, &t2);
-			if (face_index == 521) {
-			 bu_log("involved tri edge(%f,%f): %f %f %f -> %f %f %f\n", t1, t2, op1->x, op1->y, op1->z, op2->x, op2->y, op2->z);
-			}
 			std::set<p2t::Point *>::iterator fdp_it;
 			for (fdp_it = fdp->begin(); fdp_it != fdp->end(); fdp_it++) {
 			    p2t::Point *p = *fdp_it;
@@ -1216,9 +1233,6 @@ ON_Brep_CDT_Mesh(
 					double tp;
 					eline3d.ClosestPointTo(*p3d, &tp);
 					if (tp > t1 && tp < t2) {
-					    if (face_index == 521) {
-						bu_log("point on tri edge(%f,%f): %f %f %f (%f)\n", t1, t2, p3d->x, p3d->y, p3d->z, tp);
-					    }
 					    edge_3d_pnts.insert(p3d);
 					    ordered_new_pnts[tp] = p3d;
 					    double u,v;
@@ -1236,10 +1250,6 @@ ON_Brep_CDT_Mesh(
 					    old2d_to_new2d[p] = np;
 					    on3d_to_new2d[p3d] = np;
 
-					} else {
-					    if (face_index == 521) {
-						bu_log("point on tri line but not on edge(%f,%f): %f %f %f (%f)\n", t1, t2, p3d->x, p3d->y, p3d->z, tp);
-					    }
 					}
 				    }
 				}
@@ -1326,19 +1336,7 @@ ON_Brep_CDT_Mesh(
 			}
 
 		    } else {
-			if (face_index == 521) {
-			    bu_log("ec triangulate found %d faces\n", num_faces);
-			}
 			for (int k = 0; k < num_faces; k++) {
-			    if (face_index == 521) {
-				bu_log("tri[%d]: %d -> %d -> %d\n", k, ecfaces[3*k], ecfaces[3*k+1], ecfaces[3*k+2]);
-				bu_log("tri[%d]: %f %f -> %f %f -> %f %f\n", k, ec_pnts[ecfaces[3*k]][X], ec_pnts[ecfaces[3*k]][Y], ec_pnts[ecfaces[3*k+1]][X], ec_pnts[ecfaces[3*k+1]][Y], ec_pnts[ecfaces[3*k+2]][X], ec_pnts[ecfaces[3*k+2]][Y]);
-				ON_3dPoint *p1 = (*pointmap)[new2d_to_old2d[ec_to_p2t[ecfaces[3*k]]]];
-				ON_3dPoint *p2 = (*pointmap)[new2d_to_old2d[ec_to_p2t[ecfaces[3*k+1]]]];
-				ON_3dPoint *p3 = (*pointmap)[new2d_to_old2d[ec_to_p2t[ecfaces[3*k+2]]]];
-				bu_log("tri[%d]: %f %f %f -> %f %f %f -> %f %f %f\n", k, p1->x, p1->y, p1->z, p2->x, p2->y, p2->z, p3->x, p3->y, p3->z);
-			    }
-
 			    p2t::Point *p2_1 = new2d_to_old2d[ec_to_p2t[ecfaces[3*k]]];
 			    p2t::Point *p2_2 = new2d_to_old2d[ec_to_p2t[ecfaces[3*k+1]]];
 			    p2t::Point *p2_3 = new2d_to_old2d[ec_to_p2t[ecfaces[3*k+2]]];
@@ -1453,9 +1451,6 @@ ON_Brep_CDT_Mesh(
 		p2t::Point *p = t->GetPoint(j);
 		ON_3dPoint *op = (*pointmap)[p];
 		int ind = on_pnt_to_bot_pnt[op];
-		if (face_index == 521) {
-		    bu_log("tri[%d](%d)(%zu): %f %f %f -> %d\n", face_index, face_cnt, j, op->x, op->y, op->z, ind);
-		}
 		(*faces)[face_cnt*3 + j] = ind;
 		if (normals) {
 		    int nind = on_pnt_to_bot_norm[op];
