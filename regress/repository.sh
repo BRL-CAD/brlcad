@@ -375,7 +375,7 @@ fi
 # make sure no more platform-specific defines are introduced than
 # existed previously.  for cases where it "seems" necessary, find and
 # fix some other case before adding more.  lets not increase this.
-NEED_FIXING=178
+NEED_FIXING=166
 if test $FOUND -lt `expr $NEED_FIXING + 1` ; then
     if test $FOUND -ne $NEED_FIXING ; then
 	log "********************************************************"
