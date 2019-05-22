@@ -308,21 +308,33 @@ getSurfacePoints(
 	double dist = mid.DistanceTo(line1.ClosestPointTo(mid));
 	V_MAX(dist, mid.DistanceTo(line2.ClosestPointTo(mid)));
 
+
+	for (int i = 0; i < 4; i++) {
+	    fastf_t uc = (i == 0 || i == 3) ? u1 : u2;
+	    fastf_t vc = (i == 0 || i == 1) ? v1 : v2;
+	    ON_3dPoint *vnorm = singular_trim_norm(sinfo, uc, vc);
+	    if (vnorm && ON_DotProduct(*vnorm, norm_mid) > 0) {
+		bu_log("vert norm %f %f %f works\n", vnorm->x, vnorm->y, vnorm->z);
+		norm[i] = *vnorm;
+	    }
+	}
+#if 0
 	for (int i = 0; i < 4; i++) {
 	    double nnm_dot = ON_DotProduct(norm[i], norm_mid);
 	    if ((nnm_dot < ON_ZERO_TOLERANCE) && (fabs(nnm_dot) > ON_ZERO_TOLERANCE)) {
 		fastf_t uc = (i == 0 || i == 3) ? u1 : u2;
 		fastf_t vc = (i == 0 || i == 1) ? v1 : v2;
-		bu_log("norm[%d](%f %f %f) backwards at %d point %f,%f\n", i, norm[i].x, norm[i].y, norm[i].z, i, uc, vc);
+		bu_log("norm[%d](%f %f %f) backwards at %d point %f,%f (%f %f %f)\n", i, norm[i].x, norm[i].y, norm[i].z, i, uc, vc, p[i].x, p[i].y, p[i].z);
 		ON_3dPoint *vnorm = singular_trim_norm(sinfo, uc, vc);
 		if (vnorm && ON_DotProduct(*vnorm, norm_mid) > 0) {
-		    bu_log("vert norm works\n");
+		    bu_log("vert norm %f %f %f works\n", vnorm->x, vnorm->y, vnorm->z);
 		    norm[i] = *vnorm;
 		} else {
 		    bu_log("no matching vert normal, problem...\n");
 		}
 	    }
 	}
+#endif
 
 	if (dist < min_dist + ON_ZERO_TOLERANCE) {
 	    return;

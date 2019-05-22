@@ -28,6 +28,8 @@
 #include "common.h"
 #include "./cdt.h"
 
+#define BREP_PLANAR_TOL 0.05
+
 static void
 Process_Loop_Edges(
 	struct ON_Brep_CDT_State *s_cdt,
@@ -402,26 +404,23 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 
     /* If this is the first time through, get vertex normals that are the
      * average of the surface normals at the junction from faces that don't use
-     * a singular trim to reference the vertex.  Used to provide faces that do
-     * reference that vertex via singular trim with a reasonable normal at this
-     * surface point.
-     *
-     * TODO - should probably do this ONLY when the vertex is associated with
-     * singular trims, if we need to do it at all... a different bug was at
-     * the root of the original issue, so this may not really be necessary...
-     *
-     * The other situation where this can be useful is if a misbehaving surface
-     * "curls back" right at the edge and produces a weird normal - see if we
-     * can check for that somehow?  Maybe postpone this calculation until
-     * we have faces and look for weird normals compared to the triangles... */
+     * a singular trim to reference the vertex.  When subdividing the surface
+     * during surface point builds, we use the normals as a curvature guide.
+     * When we hit singular trims, we use the normal calculated below to ensure
+     * the normal is always the same at the singularity regardless of the
+     * particular UV point on the singular trim we are evaluating. */
     if (!s_cdt->w3dnorms->size()) {
 	for (int index = 0; index < brep->m_V.Count(); index++) {
 	    ON_BrepVertex& v = brep->m_V[index];
 	    int have_calculated = 0;
 	    ON_3dVector vnrml(0.0, 0.0, 0.0);
+	    if (index == 595) {
+		bu_log("595: %f %f %f\n", v.Point().x, v.Point().y, v.Point().z);
+	    }
 
 	    for (int eind = 0; eind != v.EdgeCount(); eind++) {
-		ON_3dPoint tmp1, tmp2;
+		ON_3dPoint t1_1, t1_2, t2_1, t2_2;
+		ON_3dVector t1_v1, t1_v2, t2_v1, t2_v2 = ON_3dVector::UnsetVector;
 		ON_3dVector trim1_norm = ON_3dVector::UnsetVector;
 		ON_3dVector trim2_norm = ON_3dVector::UnsetVector;
 		ON_BrepEdge& edge = brep->m_E[v.m_ei[eind]];
@@ -431,23 +430,61 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 		}
 		ON_BrepTrim *trim1 = edge.Trim(0);
 		ON_BrepTrim *trim2 = edge.Trim(1);
+
+		if (trim1->m_type == ON_BrepTrim::singular || trim2->m_type == ON_BrepTrim::singular) {
+		    continue;
+		}
+
 		ON_Interval t1range = trim1->Domain();
 		ON_Interval t2range = trim2->Domain();
-		double t1 = ((eind && trim1->m_bRev3d) || (!eind && !trim1->m_bRev3d)) ? t1range[0] : t1range[1];
-		double t2 = ((eind && trim2->m_bRev3d) || (!eind && !trim2->m_bRev3d)) ? t2range[0] : t2range[1];
-		ON_3dPoint t1_2d = trim1->PointAt(t1);
-		ON_3dPoint t2_2d = trim2->PointAt(t2);
+		ON_3dPoint t1_2d1 = trim1->PointAt(t1range[0]);
+		ON_3dPoint t1_2d2 = trim1->PointAt(t1range[1]);
+		ON_3dPoint t2_2d1 = trim2->PointAt(t2range[0]);
+		ON_3dPoint t2_2d2 = trim2->PointAt(t2range[1]);
+		ON_Plane plane1, plane2;
 		const ON_Surface *s1 = trim1->SurfaceOf();
 		const ON_Surface *s2 = trim2->SurfaceOf();
-		if (surface_EvNormal(s1, t1_2d.x, t1_2d.y, tmp1, trim1_norm)) {
+		if (s1->IsPlanar(&plane1, BREP_PLANAR_TOL)) {
+		    trim1_norm = plane1.Normal();
 		    if (trim1->Face()->m_bRev) {
 			trim1_norm = trim1_norm * -1;
 		    }
+		} else {
+		    if (surface_EvNormal(s1, t1_2d1.x, t1_2d1.y, t1_1, t1_v1)) {
+			if (trim1->Face()->m_bRev) {
+			    t1_v1 = t1_v1 * -1;
+			}
+		    }
+		    if (surface_EvNormal(s1, t1_2d2.x, t1_2d2.y, t1_2, t1_v2)) {
+			if (trim1->Face()->m_bRev) {
+			    t1_v2 = t1_v2 * -1;
+			}
+		    }
+		    trim1_norm = (v.Point().DistanceTo(t1_1) < v.Point().DistanceTo(t1_2)) ? t1_v1 : t1_v2;
 		}
-		if (surface_EvNormal(s2, t2_2d.x, t2_2d.y, tmp2, trim2_norm)) {
+		if (s2->IsPlanar(&plane2, BREP_PLANAR_TOL)) {
+		    trim2_norm = plane2.Normal();
 		    if (trim2->Face()->m_bRev) {
 			trim2_norm = trim2_norm * -1;
 		    }
+		} else {
+
+		    if (surface_EvNormal(s2, t2_2d1.x, t2_2d1.y, t2_1, t2_v1)) {
+			if (trim2->Face()->m_bRev) {
+			    t2_v1 = t2_v1 * -1;
+			}
+		    }
+		    if (surface_EvNormal(s2, t2_2d2.x, t2_2d2.y, t2_2, t2_v2)) {
+			if (trim2->Face()->m_bRev) {
+			    t2_v2 = t2_v2 * -1;
+			}
+		    }
+		    trim2_norm = (v.Point().DistanceTo(t2_1) < v.Point().DistanceTo(t2_2)) ? t2_v1 : t2_v2;
+		}
+
+		if (index == 595) {
+		    bu_log("trim face %d normal: %f %f %f\n", trim1->Face()->m_face_index, trim1_norm.x, trim1_norm.y, trim1_norm.z);
+		    bu_log("trim face %d normal: %f %f %f\n", trim2->Face()->m_face_index, trim2_norm.x, trim2_norm.y, trim1_norm.z);
 		}
 
 		// Want the angle between the two faces to not be "sharp" - if
@@ -469,6 +506,9 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 		    have_calculated = 1;
 		} else {
 		    continue;
+		}
+		if (index == 523) {
+		    bu_log("normal sum: %f %f %f\n", vnrml.x, vnrml.y, vnrml.z);
 		}
 	    }
 	    if (!have_calculated) {
