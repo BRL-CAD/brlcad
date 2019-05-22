@@ -134,9 +134,7 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_State *s_cdt, std::map<const ON_Surface *, d
     std::vector<p2t::Point*> polyline;
     p2t::CDT* cdt = NULL;
 
-    // Use the edge curves and loops to generate an initial set of trim points.
-    // This generation is coordinated across shared faces to produce a
-    // watertight mesh.
+    // Use the edge curves and loops to generate an initial set of trim polygons.
     for (int li = 0; li < loop_cnt; li++) {
 	double max_dist = 0.0;
 	const ON_BrepLoop *loop = face.Loop(li);
@@ -278,53 +276,66 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_State *s_cdt, std::map<const ON_Surface *, d
     rt_trims.RemoveAll();
 
     // All preliminary steps are complete, perform the triangulation using
-    // Poly2Tri
+    // Poly2Tri's triangulation.  NOTE: it is important that the inputs to
+    // Poly2Tri satisfy its constraints - failure here could cause a crash.
     cdt->Triangulate(true, -1);
 
     /* Calculate any 3D points we don't already have from the loop processing */
     std::vector<p2t::Triangle*> tris = cdt->GetTriangles();
     for (size_t i = 0; i < tris.size(); i++) {
+
 	p2t::Triangle *t = tris[i];
+
 	for (size_t j = 0; j < 3; j++) {
+
 	    p2t::Point *p = t->GetPoint(j);
-	    if (p) {
-		ON_3dPoint *op = (*pointmap)[p];
-		ON_3dPoint *onorm = (*normalmap)[p];
-		if (!op || !onorm) {
-		    /* We've got some calculating to do... */
-		    const ON_Surface *surf = face.SurfaceOf();
-		    ON_3dPoint pnt;
-		    ON_3dVector norm;
-		    if (surface_EvNormal(surf, p->x, p->y, pnt, norm)) {
-			if (face.m_bRev) {
-			    norm = norm * -1.0;
-			}
-			if (!op) {
-			    op = new ON_3dPoint(pnt);
-			    CDT_Add3DPnt(s_cdt, op, face.m_face_index, -1, -1, -1, p->x, p->y);
-			    (*pointmap)[p] = op;
-			}
-			if (!onorm) {
-			    onorm = new ON_3dPoint(norm);
-			    s_cdt->w3dnorms->push_back(onorm);
-			    (*normalmap)[p] = onorm;
-			}
-		    } else {
-			if (!op) {
-			    pnt = s->PointAt(p->x, p->y);
-			    op = new ON_3dPoint(pnt);
-			    CDT_Add3DPnt(s_cdt, op, face.m_face_index, -1, -1, -1, p->x, p->y);
-			}
-			(*pointmap)[p] = op;
-		    }
+	    if (!p) {
+		bu_log("Face %d: p2t face without proper point info...\n", face.m_face_index);
+		continue;
+	    }
+
+	    ON_3dPoint *op = (*pointmap)[p];
+	    ON_3dPoint *onorm = (*normalmap)[p];
+	    if (op && onorm) {
+		// We have what we need
+		continue;
+	    }
+
+	    const ON_Surface *surf = face.SurfaceOf();
+	    ON_3dPoint pnt;
+	    ON_3dVector norm;
+	    if (surface_EvNormal(surf, p->x, p->y, pnt, norm)) {
+		// Have point and normal from surface - store
+		if (face.m_bRev) {
+		    norm = norm * -1.0;
+		}
+		if (!op) {
+		    op = new ON_3dPoint(pnt);
+		    CDT_Add3DPnt(s_cdt, op, face.m_face_index, -1, -1, -1, p->x, p->y);
+		    (*pointmap)[p] = op;
+		}
+		if (!onorm) {
+		    onorm = new ON_3dPoint(norm);
+		    s_cdt->w3dnorms->push_back(onorm);
+		    (*normalmap)[p] = onorm;
 		}
 	    } else {
-		bu_log("Face %d: p2t face without proper point info...\n", face.m_face_index);
+		// surface_EvNormal failed - fall back on PointAt
+		if (!op) {
+		    pnt = s->PointAt(p->x, p->y);
+		    op = new ON_3dPoint(pnt);
+		    CDT_Add3DPnt(s_cdt, op, face.m_face_index, -1, -1, -1, p->x, p->y);
+		}
+		(*pointmap)[p] = op;
 	    }
+
 	}
+
     }
 
-    /* Stash mappings for BoT reassembly */
+    /* Stash mappings for BoT reassembly.  Because there may be subsequent
+     * refinement in overlap clearing operations, we avoid immediately
+     * generating the mesh. */
     int face_index = face.m_face_index;
     s_cdt->p2t_faces[face_index] = cdt;
     s_cdt->tri_to_on3_maps[face_index] = pointmap;
@@ -352,6 +363,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	//return -1;
     }
 
+    // For now, edges must have 2 and only 2 trims for this to work.
     for (int index = 0; index < brep->m_E.Count(); index++) {
         ON_BrepEdge& edge = brep->m_E[index];
         if (edge.TrimCount() != 2) {
@@ -389,10 +401,19 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
     }
 
     /* If this is the first time through, get vertex normals that are the
-     * average of the surface points at the junction.  Use these to catch
-     * and correct surface normals that are in the "wrong" direction for
-     * the vertex.
-     */
+     * average of the surface normals at the junction from faces that don't use
+     * a singular trim to reference the vertex.  Used to provide faces that do
+     * reference that vertex via singular trim with a reasonable normal at this
+     * surface point.
+     *
+     * TODO - should probably do this ONLY when the vertex is associated with
+     * singular trims, if we need to do it at all... a different bug was at
+     * the root of the original issue, so this may not really be necessary...
+     *
+     * The other situation where this can be useful is if a misbehaving surface
+     * "curls back" right at the edge and produces a weird normal - see if we
+     * can check for that somehow?  Maybe postpone this calculation until
+     * we have faces and look for weird normals compared to the triangles... */
     if (!s_cdt->w3dnorms->size()) {
 	for (int index = 0; index < brep->m_V.Count(); index++) {
 	    ON_BrepVertex& v = brep->m_V[index];
@@ -500,6 +521,8 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
     }
 
 
+    // Process all of the faces we have been instructed to process, or (default) all faces.
+    // Keep track of failures and successes.
     int face_failures = 0;
     int face_successes = 0;
 
@@ -539,140 +562,142 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
     int valid_fcnt, valid_vcnt;
     int *valid_faces = NULL;
     fastf_t *valid_vertices = NULL;
-    struct bg_trimesh_solid_errors se = BG_TRIMESH_SOLID_ERRORS_INIT_NULL;
 
     if (ON_Brep_CDT_Mesh(&valid_faces, &valid_fcnt, &valid_vertices, &valid_vcnt, NULL, NULL, NULL, NULL, s_cdt) < 0) {
 	return -1;
     }
 
+    struct bg_trimesh_solid_errors se = BG_TRIMESH_SOLID_ERRORS_INIT_NULL;
     int invalid = bg_trimesh_solid2(valid_vcnt, valid_fcnt, valid_vertices, valid_faces, &se);
 
-    if (invalid) {
-	if (se.degenerate.count > 0) {
-	    std::set<int> problem_pnts;
-	    std::set<int>::iterator pp_it;
-	    bu_log("%d degenerate faces\n", se.degenerate.count);
-	    for (int i = 0; i < se.degenerate.count; i++) {
-		int face = se.degenerate.faces[i];
-		bu_log("dface %d: %d %d %d :  %f %f %f->%f %f %f->%f %f %f \n", face, valid_faces[face*3], valid_faces[face*3+1], valid_faces[face*3+2],
-		       	valid_vertices[valid_faces[face*3]*3], valid_vertices[valid_faces[face*3]*3+1],valid_vertices[valid_faces[face*3]*3+2],
-		       	valid_vertices[valid_faces[face*3+1]*3], valid_vertices[valid_faces[face*3+1]*3+1],valid_vertices[valid_faces[face*3+1]*3+2],
-		       	valid_vertices[valid_faces[face*3+2]*3], valid_vertices[valid_faces[face*3+2]*3+1],valid_vertices[valid_faces[face*3+2]*3+2]);
-		problem_pnts.insert(valid_faces[face*3]);
-		problem_pnts.insert(valid_faces[face*3+1]);
-		problem_pnts.insert(valid_faces[face*3+2]);
-	    }
-	    for (pp_it = problem_pnts.begin(); pp_it != problem_pnts.end(); pp_it++) {
-		int pind = (*pp_it);
-		ON_3dPoint *p = (*s_cdt->vert_to_on)[pind];
-		if (!p) {
-		    bu_log("unmapped point??? %d\n", pind);
-		} else {
-		    struct cdt_audit_info *paudit = s_cdt->pnt_audit_info[p];
-		    if (!paudit) {
-			bu_log("point with no audit info??? %d\n", pind);
-		    } else {
-			bu_log("point %d: Face(%d) Vert(%d) Trim(%d) Edge(%d) UV(%f,%f)\n", pind, paudit->face_index, paudit->vert_index, paudit->trim_index, paudit->edge_index, paudit->surf_uv.x, paudit->surf_uv.y);
-		    }
-		}
-	    }
-	}
-	if (se.excess.count > 0) {
-	    bu_log("extra edges???\n");
-	}
-	if (se.unmatched.count > 0) {
-	    std::set<int> problem_pnts;
-	    std::set<int>::iterator pp_it;
-
-	    bu_log("%d unmatched edges\n", se.unmatched.count);
-	    for (int i = 0; i < se.unmatched.count; i++) {
-		int v1 = se.unmatched.edges[i*2];
-		int v2 = se.unmatched.edges[i*2+1];
-		bu_log("%d->%d: %f %f %f->%f %f %f\n", v1, v2,
-			valid_vertices[v1*3], valid_vertices[v1*3+1], valid_vertices[v1*3+2],
-			valid_vertices[v2*3], valid_vertices[v2*3+1], valid_vertices[v2*3+2]
-			);
-		for (int j = 0; j < valid_fcnt; j++) {
-		    std::set<std::pair<int,int>> fedges;
-		    fedges.insert(std::pair<int,int>(valid_faces[j*3],valid_faces[j*3+1]));
-		    fedges.insert(std::pair<int,int>(valid_faces[j*3+1],valid_faces[j*3+2]));
-		    fedges.insert(std::pair<int,int>(valid_faces[j*3+2],valid_faces[j*3]));
-		    int has_edge = (fedges.find(std::pair<int,int>(v1,v2)) != fedges.end()) ? 1 : 0;
-		    if (has_edge) {
-			int face = j;
-			bu_log("eface %d: %d %d %d :  %f %f %f->%f %f %f->%f %f %f \n", face, valid_faces[face*3], valid_faces[face*3+1], valid_faces[face*3+2],
-				valid_vertices[valid_faces[face*3]*3], valid_vertices[valid_faces[face*3]*3+1],valid_vertices[valid_faces[face*3]*3+2],
-				valid_vertices[valid_faces[face*3+1]*3], valid_vertices[valid_faces[face*3+1]*3+1],valid_vertices[valid_faces[face*3+1]*3+2],
-				valid_vertices[valid_faces[face*3+2]*3], valid_vertices[valid_faces[face*3+2]*3+1],valid_vertices[valid_faces[face*3+2]*3+2]);
-			problem_pnts.insert(valid_faces[j*3]);
-			problem_pnts.insert(valid_faces[j*3+1]);
-			problem_pnts.insert(valid_faces[j*3+2]);
-		    }
-		}
-	    }
-	    for (pp_it = problem_pnts.begin(); pp_it != problem_pnts.end(); pp_it++) {
-		int pind = (*pp_it);
-		ON_3dPoint *p = (*s_cdt->vert_to_on)[pind];
-		if (!p) {
-		    bu_log("unmapped point??? %d\n", pind);
-		} else {
-		    struct cdt_audit_info *paudit = s_cdt->pnt_audit_info[p];
-		    if (!paudit) {
-			bu_log("point with no audit info??? %d\n", pind);
-		    } else {
-			bu_log("point %d: Face(%d) Vert(%d) Trim(%d) Edge(%d) UV(%f,%f)\n", pind, paudit->face_index, paudit->vert_index, paudit->trim_index, paudit->edge_index, paudit->surf_uv.x, paudit->surf_uv.y);
-		    }
-		}
-	    }
-	}
-	if (se.misoriented.count > 0) {
-	    std::set<int> problem_pnts;
-	    std::set<int>::iterator pp_it;
-
-	    bu_log("%d misoriented edges\n", se.misoriented.count);
-	    for (int i = 0; i < se.misoriented.count; i++) {
-		int v1 = se.misoriented.edges[i*2];
-		int v2 = se.misoriented.edges[i*2+1];
-		bu_log("%d->%d: %f %f %f->%f %f %f\n", v1, v2,
-			valid_vertices[v1*3], valid_vertices[v1*3+1], valid_vertices[v1*3+2],
-			valid_vertices[v2*3], valid_vertices[v2*3+1], valid_vertices[v2*3+2]
-			);
-		for (int j = 0; j < valid_fcnt; j++) {
-		    std::set<std::pair<int,int>> fedges;
-		    fedges.insert(std::pair<int,int>(valid_faces[j*3],valid_faces[j*3+1]));
-		    fedges.insert(std::pair<int,int>(valid_faces[j*3+1],valid_faces[j*3+2]));
-		    fedges.insert(std::pair<int,int>(valid_faces[j*3+2],valid_faces[j*3]));
-		    int has_edge = (fedges.find(std::pair<int,int>(v1,v2)) != fedges.end()) ? 1 : 0;
-		    if (has_edge) {
-			int face = j;
-			bu_log("eface %d: %d %d %d :  %f %f %f->%f %f %f->%f %f %f \n", face, valid_faces[face*3], valid_faces[face*3+1], valid_faces[face*3+2],
-				valid_vertices[valid_faces[face*3]*3], valid_vertices[valid_faces[face*3]*3+1],valid_vertices[valid_faces[face*3]*3+2],
-				valid_vertices[valid_faces[face*3+1]*3], valid_vertices[valid_faces[face*3+1]*3+1],valid_vertices[valid_faces[face*3+1]*3+2],
-				valid_vertices[valid_faces[face*3+2]*3], valid_vertices[valid_faces[face*3+2]*3+1],valid_vertices[valid_faces[face*3+2]*3+2]);
-			problem_pnts.insert(valid_faces[j*3]);
-			problem_pnts.insert(valid_faces[j*3+1]);
-			problem_pnts.insert(valid_faces[j*3+2]);
-		    }
-		}
-	    }
-	    for (pp_it = problem_pnts.begin(); pp_it != problem_pnts.end(); pp_it++) {
-		int pind = (*pp_it);
-		ON_3dPoint *p = (*s_cdt->vert_to_on)[pind];
-		if (!p) {
-		    bu_log("unmapped point??? %d\n", pind);
-		} else {
-		    struct cdt_audit_info *paudit = s_cdt->pnt_audit_info[p];
-		    if (!paudit) {
-			bu_log("point with no audit info??? %d\n", pind);
-		    } else {
-			bu_log("point %d: Face(%d) Vert(%d) Trim(%d) Edge(%d) UV(%f,%f)\n", pind, paudit->face_index, paudit->vert_index, paudit->trim_index, paudit->edge_index, paudit->surf_uv.x, paudit->surf_uv.y);
-		    }
-		}
-	    }
-	}
-
+    if (!invalid) {
+	goto cdt_done;
     }
 
+    if (se.degenerate.count > 0) {
+	std::set<int> problem_pnts;
+	std::set<int>::iterator pp_it;
+	bu_log("%d degenerate faces\n", se.degenerate.count);
+	for (int i = 0; i < se.degenerate.count; i++) {
+	    int face = se.degenerate.faces[i];
+	    bu_log("dface %d: %d %d %d :  %f %f %f->%f %f %f->%f %f %f \n", face, valid_faces[face*3], valid_faces[face*3+1], valid_faces[face*3+2],
+		    valid_vertices[valid_faces[face*3]*3], valid_vertices[valid_faces[face*3]*3+1],valid_vertices[valid_faces[face*3]*3+2],
+		    valid_vertices[valid_faces[face*3+1]*3], valid_vertices[valid_faces[face*3+1]*3+1],valid_vertices[valid_faces[face*3+1]*3+2],
+		    valid_vertices[valid_faces[face*3+2]*3], valid_vertices[valid_faces[face*3+2]*3+1],valid_vertices[valid_faces[face*3+2]*3+2]);
+	    problem_pnts.insert(valid_faces[face*3]);
+	    problem_pnts.insert(valid_faces[face*3+1]);
+	    problem_pnts.insert(valid_faces[face*3+2]);
+	}
+	for (pp_it = problem_pnts.begin(); pp_it != problem_pnts.end(); pp_it++) {
+	    int pind = (*pp_it);
+	    ON_3dPoint *p = (*s_cdt->vert_to_on)[pind];
+	    if (!p) {
+		bu_log("unmapped point??? %d\n", pind);
+	    } else {
+		struct cdt_audit_info *paudit = s_cdt->pnt_audit_info[p];
+		if (!paudit) {
+		    bu_log("point with no audit info??? %d\n", pind);
+		} else {
+		    bu_log("point %d: Face(%d) Vert(%d) Trim(%d) Edge(%d) UV(%f,%f)\n", pind, paudit->face_index, paudit->vert_index, paudit->trim_index, paudit->edge_index, paudit->surf_uv.x, paudit->surf_uv.y);
+		}
+	    }
+	}
+    }
+    if (se.excess.count > 0) {
+	bu_log("extra edges???\n");
+    }
+    if (se.unmatched.count > 0) {
+	std::set<int> problem_pnts;
+	std::set<int>::iterator pp_it;
+
+	bu_log("%d unmatched edges\n", se.unmatched.count);
+	for (int i = 0; i < se.unmatched.count; i++) {
+	    int v1 = se.unmatched.edges[i*2];
+	    int v2 = se.unmatched.edges[i*2+1];
+	    bu_log("%d->%d: %f %f %f->%f %f %f\n", v1, v2,
+		    valid_vertices[v1*3], valid_vertices[v1*3+1], valid_vertices[v1*3+2],
+		    valid_vertices[v2*3], valid_vertices[v2*3+1], valid_vertices[v2*3+2]
+		  );
+	    for (int j = 0; j < valid_fcnt; j++) {
+		std::set<std::pair<int,int>> fedges;
+		fedges.insert(std::pair<int,int>(valid_faces[j*3],valid_faces[j*3+1]));
+		fedges.insert(std::pair<int,int>(valid_faces[j*3+1],valid_faces[j*3+2]));
+		fedges.insert(std::pair<int,int>(valid_faces[j*3+2],valid_faces[j*3]));
+		int has_edge = (fedges.find(std::pair<int,int>(v1,v2)) != fedges.end()) ? 1 : 0;
+		if (has_edge) {
+		    int face = j;
+		    bu_log("eface %d: %d %d %d :  %f %f %f->%f %f %f->%f %f %f \n", face, valid_faces[face*3], valid_faces[face*3+1], valid_faces[face*3+2],
+			    valid_vertices[valid_faces[face*3]*3], valid_vertices[valid_faces[face*3]*3+1],valid_vertices[valid_faces[face*3]*3+2],
+			    valid_vertices[valid_faces[face*3+1]*3], valid_vertices[valid_faces[face*3+1]*3+1],valid_vertices[valid_faces[face*3+1]*3+2],
+			    valid_vertices[valid_faces[face*3+2]*3], valid_vertices[valid_faces[face*3+2]*3+1],valid_vertices[valid_faces[face*3+2]*3+2]);
+		    problem_pnts.insert(valid_faces[j*3]);
+		    problem_pnts.insert(valid_faces[j*3+1]);
+		    problem_pnts.insert(valid_faces[j*3+2]);
+		}
+	    }
+	}
+	for (pp_it = problem_pnts.begin(); pp_it != problem_pnts.end(); pp_it++) {
+	    int pind = (*pp_it);
+	    ON_3dPoint *p = (*s_cdt->vert_to_on)[pind];
+	    if (!p) {
+		bu_log("unmapped point??? %d\n", pind);
+	    } else {
+		struct cdt_audit_info *paudit = s_cdt->pnt_audit_info[p];
+		if (!paudit) {
+		    bu_log("point with no audit info??? %d\n", pind);
+		} else {
+		    bu_log("point %d: Face(%d) Vert(%d) Trim(%d) Edge(%d) UV(%f,%f)\n", pind, paudit->face_index, paudit->vert_index, paudit->trim_index, paudit->edge_index, paudit->surf_uv.x, paudit->surf_uv.y);
+		}
+	    }
+	}
+    }
+    if (se.misoriented.count > 0) {
+	std::set<int> problem_pnts;
+	std::set<int>::iterator pp_it;
+
+	bu_log("%d misoriented edges\n", se.misoriented.count);
+	for (int i = 0; i < se.misoriented.count; i++) {
+	    int v1 = se.misoriented.edges[i*2];
+	    int v2 = se.misoriented.edges[i*2+1];
+	    bu_log("%d->%d: %f %f %f->%f %f %f\n", v1, v2,
+		    valid_vertices[v1*3], valid_vertices[v1*3+1], valid_vertices[v1*3+2],
+		    valid_vertices[v2*3], valid_vertices[v2*3+1], valid_vertices[v2*3+2]
+		  );
+	    for (int j = 0; j < valid_fcnt; j++) {
+		std::set<std::pair<int,int>> fedges;
+		fedges.insert(std::pair<int,int>(valid_faces[j*3],valid_faces[j*3+1]));
+		fedges.insert(std::pair<int,int>(valid_faces[j*3+1],valid_faces[j*3+2]));
+		fedges.insert(std::pair<int,int>(valid_faces[j*3+2],valid_faces[j*3]));
+		int has_edge = (fedges.find(std::pair<int,int>(v1,v2)) != fedges.end()) ? 1 : 0;
+		if (has_edge) {
+		    int face = j;
+		    bu_log("eface %d: %d %d %d :  %f %f %f->%f %f %f->%f %f %f \n", face, valid_faces[face*3], valid_faces[face*3+1], valid_faces[face*3+2],
+			    valid_vertices[valid_faces[face*3]*3], valid_vertices[valid_faces[face*3]*3+1],valid_vertices[valid_faces[face*3]*3+2],
+			    valid_vertices[valid_faces[face*3+1]*3], valid_vertices[valid_faces[face*3+1]*3+1],valid_vertices[valid_faces[face*3+1]*3+2],
+			    valid_vertices[valid_faces[face*3+2]*3], valid_vertices[valid_faces[face*3+2]*3+1],valid_vertices[valid_faces[face*3+2]*3+2]);
+		    problem_pnts.insert(valid_faces[j*3]);
+		    problem_pnts.insert(valid_faces[j*3+1]);
+		    problem_pnts.insert(valid_faces[j*3+2]);
+		}
+	    }
+	}
+	for (pp_it = problem_pnts.begin(); pp_it != problem_pnts.end(); pp_it++) {
+	    int pind = (*pp_it);
+	    ON_3dPoint *p = (*s_cdt->vert_to_on)[pind];
+	    if (!p) {
+		bu_log("unmapped point??? %d\n", pind);
+	    } else {
+		struct cdt_audit_info *paudit = s_cdt->pnt_audit_info[p];
+		if (!paudit) {
+		    bu_log("point with no audit info??? %d\n", pind);
+		} else {
+		    bu_log("point %d: Face(%d) Vert(%d) Trim(%d) Edge(%d) UV(%f,%f)\n", pind, paudit->face_index, paudit->vert_index, paudit->trim_index, paudit->edge_index, paudit->surf_uv.x, paudit->surf_uv.y);
+		}
+	    }
+	}
+    }
+
+cdt_done:
     bu_free(valid_faces, "faces");
     bu_free(valid_vertices, "vertices");
 
