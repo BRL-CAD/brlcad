@@ -410,7 +410,17 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
      * during surface point builds, we use the normals as a curvature guide.
      * When we hit singular trims, we use the normal calculated below to ensure
      * the normal is always the same at the singularity regardless of the
-     * particular UV point on the singular trim we are evaluating. */
+     * particular UV point on the singular trim we are evaluating.
+     *
+     * TODO - rather than averaging, we probably want to get a per-face
+     * normal for each vert.  When we hit singular trims we can do a lookup
+     * by vert, but we still want a normal specific to the face since
+     * an average will tend to visually corrupt sharp edges. Let's do this -
+     * iterate over all trims, build the set of singular trims, for those trims
+     * get the associated verts and for each vert and each face associated with
+     * that vert that has a singular trim, calculate a normal based on the
+     * surface evaluation at that point from non-singular trims in the face
+     * that share the same vertex point.*/
     if (!s_cdt->w3dnorms->size()) {
 	for (int index = 0; index < brep->m_V.Count(); index++) {
 	    ON_BrepVertex& v = brep->m_V[index];
