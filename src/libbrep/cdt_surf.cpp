@@ -307,7 +307,7 @@ getSurfacePoints(
 	ON_Line line2(p[1], p[3]);
 	double dist = mid.DistanceTo(line1.ClosestPointTo(mid));
 	V_MAX(dist, mid.DistanceTo(line2.ClosestPointTo(mid)));
-	
+
 	for (int i = 0; i < 4; i++) {
 	    double nnm_dot = ON_DotProduct(norm[i], norm_mid);
 	    if ((nnm_dot < ON_ZERO_TOLERANCE) && (fabs(nnm_dot) > ON_ZERO_TOLERANCE)) {
@@ -542,7 +542,8 @@ _cdt_get_uv_edge_3d_len(struct cdt_surf_info *sinfo, int c1, int c2)
 void
 getSurfacePoints(struct ON_Brep_CDT_State *s_cdt,
 	         const ON_BrepFace &face,
-		 ON_2dPointArray &on_surf_points)
+		 ON_2dPointArray &on_surf_points,
+		 fastf_t min_edge, fastf_t max_edge)
 {
     double surface_width, surface_height;
 
@@ -553,7 +554,7 @@ getSurfacePoints(struct ON_Brep_CDT_State *s_cdt,
 	double dist = 0.0;
 	double min_dist = 0.0;
 	double within_dist = 0.0;
-	double  cos_within_ang = 0.0;
+	double cos_within_ang = 0.0;
 
 	if ((surface_width < s_cdt->dist) || (surface_height < s_cdt->dist)) {
 	    return;
@@ -582,6 +583,8 @@ getSurfacePoints(struct ON_Brep_CDT_State *s_cdt,
 	sinfo.v_lower_3dlen = _cdt_get_uv_edge_3d_len(&sinfo, 0, 1);
 	sinfo.v_mid_3dlen   = _cdt_get_uv_edge_3d_len(&sinfo, 1, 1);
 	sinfo.v_upper_3dlen = _cdt_get_uv_edge_3d_len(&sinfo, 2, 1);
+	sinfo.min_edge = min_edge;
+	sinfo.max_edge = max_edge;
 
 	// may be a smaller trimmed subset of surface so worth getting
 	// face boundary

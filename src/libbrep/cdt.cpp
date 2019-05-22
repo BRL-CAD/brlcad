@@ -173,9 +173,6 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_State *s_cdt, std::map<const ON_Surface *, d
 	    }
 	}
     }
-    // TODO - introduce these values into the tolerance structures...
-    bu_log("Face %d max_edge_seg: %f\n", face.m_face_index, max_edge_seg);
-    bu_log("Face %d min_edge_seg: %f\n", face.m_face_index, min_edge_seg);
 
     // Process through loops, building Poly2Tri polygons for facetization.
     bool outer = true;
@@ -235,7 +232,7 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_State *s_cdt, std::map<const ON_Surface *, d
 
     // Sample the surface, independent of the trimming curves, to get points that
     // will tie the mesh to the interior surface.
-    getSurfacePoints(s_cdt, face, on_surf_points);
+    getSurfacePoints(s_cdt, face, on_surf_points, min_edge_seg, max_edge_seg);
 
     // Strip out points from the surface that are on the trimming curves.  Trim
     // points require special handling for watertightness and introducing them

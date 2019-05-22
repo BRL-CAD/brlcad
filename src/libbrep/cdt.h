@@ -145,6 +145,8 @@ struct cdt_surf_info {
     fastf_t v_lower_3dlen;
     fastf_t v_mid_3dlen;
     fastf_t v_upper_3dlen;
+    fastf_t min_edge;
+    fastf_t max_edge;
 };
 
 
@@ -169,7 +171,8 @@ getEdgePoints(
 void
 getSurfacePoints(struct ON_Brep_CDT_State *s_cdt,
 	         const ON_BrepFace &face,
-		 ON_2dPointArray &on_surf_points);
+		 ON_2dPointArray &on_surf_points,
+		 fastf_t min_edge, fastf_t max_edge);
 
 void
 plot_polyline(std::vector<p2t::Point *> *pnts, const char *filename);
