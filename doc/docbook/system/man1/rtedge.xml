@@ -864,23 +864,26 @@
 	    valid modes. Mode 2 is the default.
 	  </para>
 	  <para>
-	    <emphasis remap="B" role="B">mode 1 -</emphasis>
-	    An edge detected in the first set of geometry is written to
-	    the framebuffer if and only if it occludes the second set of
-	    geometry. The edge is colored according to the foreground or
-	    region colors options.
+	    <emphasis remap="B" role="B">mode 1 - EDGES</emphasis> An
+	    Only edge pixels are drawn.  Edges detected in the first
+	    set of geometry are written to the framebuffer if and only
+	    if they are NOT occluded by the second set of geometry.
+	    Edges are colored according to the foreground or region
+	    color options.
 	  </para>
 	  <para>
-	    <emphasis remap="B" role="B">mode 2 -</emphasis>
-	    All pixels that hit the first set of geometry that are not
-	    occluded by the second set are written to the framebuffer.
-	    Edges are rendered in the foreground or region color; non-edges
-	    are rendered in the background color.
+	    <emphasis remap="B" role="B">mode 2 - ALL HITS</emphasis>
+	    Edge and non-edge pixels are drawn.  All pixels that hit
+	    the first set of geometry and are NOT occluded by the
+	    second set are written to the framebuffer.  Edges are
+	    rendered in the foreground or region color; non-edges are
+	    rendered in the background color.
 	  </para>
 	  <para>
-	    <emphasis remap="B" role="B">mode 3 -</emphasis>
-	    Like mode 2 except non-edge pixels are dithered to make the
-	    geometry semi-transparent.
+	    <emphasis remap="B" role="B">mode 3 - DITHER</emphasis>
+	    Edge and dithered non-edge pixels are drawn.  This is like
+	    mode 2 except non-edge pixels are dithered to make the
+	    exterior geometry appear semi-transparent.
 	  </para>
 	</listitem>
       </varlistentry>
