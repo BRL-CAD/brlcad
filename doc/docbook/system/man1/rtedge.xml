@@ -950,7 +950,7 @@
 
 	<literallayout remap=".nf" class="normal">
 #!/bin/sh
-rt -M -s1280 -o new.pix -C255/255/255\
+rt -M -s1280 -F new.pix -C255/255/255\
  $*\
  havoc.g\
  havoc\
@@ -964,7 +964,7 @@ end;
 
 EOF
 
-rtedge -M -s1280 -o new.pix \
+rtedge -M -s1280 -F new.pix \
  -c"set dr=1 dn=1 ov=1"\
  -c"set fg=255,200,0" \
  $*\
@@ -993,7 +993,7 @@ EOF
 	<literallayout remap=".nf" class="normal">
 #!/bin/sh
 
-rt -M -s1280 -o new.pix -C255/255/255 \
+rt -M -s1280 -F new.pix -C255/255/255 \
  $*\
  havoc.g\
  weapons\
@@ -1007,7 +1007,7 @@ end;
 
 EOF
 
-rtedge -M -s1280 -o new.pix \
+rtedge -M -s1280 -F new.pix \
  -c"set dr=1 dn=1 om=3"\
  -c"set fg=0,0,0 bg=200,200,200"\
  -c"set oo=\"weapons\" "\
