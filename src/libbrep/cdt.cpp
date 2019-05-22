@@ -134,7 +134,9 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_State *s_cdt, std::map<const ON_Surface *, d
     std::vector<p2t::Point*> polyline;
     p2t::CDT* cdt = NULL;
 
-    // first simply load loop point samples
+    // Use the edge curves and loops to generate an initial set of trim points.
+    // This generation is coordinated across shared faces to produce a
+    // watertight mesh.
     for (int li = 0; li < loop_cnt; li++) {
 	double max_dist = 0.0;
 	const ON_BrepLoop *loop = face.Loop(li);
@@ -144,13 +146,13 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_State *s_cdt, std::map<const ON_Surface *, d
 	get_loop_sample_points(s_cdt, &brep_loop_points[li], face, loop, max_dist, s_cdt->vert_pnts, s_cdt->vert_norms);
     }
 
+    // Handle a variety of situations that complicate loop handling on closed surfaces
     std::list<std::map<double, ON_3dPoint *> *> bridgePoints;
     if (s->IsClosed(0) || s->IsClosed(1)) {
 	PerformClosedSurfaceChecks(s_cdt, s, face, brep_loop_points, BREP_SAME_POINT_TOLERANCE);
-
     }
 
-    // Find for this face the minimum and maximum edge polyline segment lengths
+    // Find for this face, find the minimum and maximum edge polyline segment lengths
     double max_edge_seg = 0.0;
     double min_edge_seg = DBL_MAX;
     for (int li = 0; li < loop_cnt; li++) {
@@ -171,10 +173,11 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_State *s_cdt, std::map<const ON_Surface *, d
 	    }
 	}
     }
+    // TODO - introduce these values into the tolerance structures...
     bu_log("Face %d max_edge_seg: %f\n", face.m_face_index, max_edge_seg);
     bu_log("Face %d min_edge_seg: %f\n", face.m_face_index, min_edge_seg);
 
-    // process through loops building polygons.
+    // Process through loops, building Poly2Tri polygons for facetization.
     bool outer = true;
     for (int li = 0; li < loop_cnt; li++) {
 	int num_loop_points = brep_loop_points[li].Count();
@@ -230,12 +233,14 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_State *s_cdt, std::map<const ON_Surface *, d
 	return -1;
     }
 
-    // TODO - if we need to tie surface points to vertex normals (we do for singular trims)
-    // we will need more than just a point array back from on_surf_points - we also need
-    // the mapping to 3D normals and maybe points.  We need to set the maps up so the p2t
-    // points will pull the correct normals when building a mesh
+    // Sample the surface, independent of the trimming curves, to get points that
+    // will tie the mesh to the interior surface.
     getSurfacePoints(s_cdt, face, on_surf_points);
 
+    // Strip out points from the surface that are on the trimming curves.  Trim
+    // points require special handling for watertightness and introducing them
+    // from the surface also runs the risk of adding duplicate 2D points, which
+    // aren't allowed for facetization.
     for (int i = 0; i < on_surf_points.Count(); i++) {
 	ON_SimpleArray<void*> results;
 	const ON_2dPoint *p = on_surf_points.At(i);
@@ -275,9 +280,11 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_State *s_cdt, std::map<const ON_Surface *, d
     }
     rt_trims.RemoveAll();
 
+    // All preliminary steps are complete, perform the triangulation using
+    // Poly2Tri
     cdt->Triangulate(true, -1);
 
-    /* Calculate any 3D points we don't already have */
+    /* Calculate any 3D points we don't already have from the loop processing */
     std::vector<p2t::Triangle*> tris = cdt->GetTriangles();
     for (size_t i = 0; i < tris.size(); i++) {
 	p2t::Triangle *t = tris[i];
