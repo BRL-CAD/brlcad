@@ -322,9 +322,14 @@ static int occludes(struct application *ap, struct cell *here)
 	return 2;
     }
 
-    if (occlusion_apps[cpu]->a_dist < here->c_dist) {
-	/*
-	 * The second geometry is close than the edge, therefore it is
+    if (NEAR_EQUAL(occlusion_apps[cpu]->a_dist, here->c_dist, BN_TOL_DIST)) {
+	/* same hit point.  object is probably in first and second
+	 * geometry sets.  it's not occluding itself, but we want an
+	 * edge because it's in the first display set.
+	 */
+	return 1;
+    } else if (	occlusion_apps[cpu]->a_dist < here->c_dist) {
+	/* second geometry is closer than the first, therefore it is
 	 * 'foreground'. Do not draw the edge.
 	 *
 	 * This pixel DOES NOT occlude the second geometry.
@@ -900,13 +905,13 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
      *
      *    left      right
      * _____________________
-     * |0, 0 | AL | AR | 0, 3|  above
+     * |0 0 | AL | AR | 0 3|  above
      * |____|____|____|____|
      * | TL | UL | UR | TR |  top/upper
      * |____|____|____|____|
      * | BL | LL | LR | BR |  bottom/lower
      * |____|____|____|____|
-     * |3, 0 | DL | DR | 3, 3|  debajo
+     * |3 0 | DL | DR | 3 3|  debajo
      * |____|____|____|____|
      */
 
@@ -1312,9 +1317,11 @@ handle_main_ray(struct application *ap, register struct partition *PartHeadp,
      * check on edges as well since right side and top edges are
      * actually misses.
      */
-    if (occlusion_mode != OCCLUSION_MODE_NONE)
-	if (me.c_ishit || edge)
+    if (occlusion_mode != OCCLUSION_MODE_NONE) {
+	if (me.c_ishit || edge) {
 	    oc = occludes(ap, &me);
+	}
+    }
 
     /*
      * Perverse Pixel Painting Paradigm(tm) If a pixel should be
