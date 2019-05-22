@@ -29,7 +29,7 @@
 #include "./cdt.h"
 
 static void
-get_loop_sample_points(
+Process_Loop_Edges(
 	struct ON_Brep_CDT_State *s_cdt,
 	ON_SimpleArray<BrepTrimPoint> *points,
 	const ON_BrepFace &face,
@@ -143,7 +143,7 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_State *s_cdt, std::map<const ON_Surface *, d
 	if (s_to_maxdist->find(face.SurfaceOf()) != s_to_maxdist->end()) {
 	    max_dist = (*s_to_maxdist)[face.SurfaceOf()];
 	}
-	get_loop_sample_points(s_cdt, &brep_loop_points[li], face, loop, max_dist, s_cdt->vert_pnts, s_cdt->vert_norms);
+	Process_Loop_Edges(s_cdt, &brep_loop_points[li], face, loop, max_dist, s_cdt->vert_pnts, s_cdt->vert_norms);
     }
 
     // Handle a variety of situations that complicate loop handling on closed surfaces
