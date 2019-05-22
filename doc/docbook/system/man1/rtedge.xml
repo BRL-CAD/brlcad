@@ -911,7 +911,7 @@
     <example><title><command>rtedge</command> rendering of havoc.g</title>
 
       <para>
-      <userinput>rtedge -s 1024 -o new.pix havoc.g havoc</userinput>
+        <userinput>rtedge -s 1024 -o new.pix havoc.g havoc</userinput>
       </para>
       <para>
 	results in a 1024 by 1024 BRL-CAD image file showing the
@@ -934,21 +934,30 @@
       </para>
 
       <para>
-	The remaining examples will illustrate how to use <command>rtedge</command>
-	in concert with <command>rt</command> to produce interesting
-	images. When merging <command>rtedge</command> and
-	<command>rt</command> images, it is best to use
-	<emphasis remap="I">saveview</emphasis> scripts. In
-	<command>mged</command>, configure your view, save it,
-	and then open the file in an editor. Duplicate the
-	<command>rt</command> command block. After duplicating
-	the block, change the second to <command>rtedge</command> .</para>
+	The remaining examples illustrate how to use
+	<command>rtedge</command> in concert with
+	<command>rt</command> to produce merged images.  When merging
+	<command>rtedge</command> and <command>rt</command> images, it
+	is helpful to use <emphasis remap="I">saveview</emphasis>
+	scripts in order to maintain alignment of successive
+	renderings.  In <command>mged</command>, configure your view,
+	save it via <emphasis remap="I">saveview</emphasis>, and then
+	open the file in an editor. Duplicate the
+	<command>rt</command> command block.  After duplicating the
+	block, change the second one to use <command>rtedge</command>.
+      </para>
 
-	<para>
-	  This script will overlay bright orange edges on the Havoc.
-	</para>
+      <para>
+        NOTE: You must use the <option>-F</option> option instead of
+        <option>-o</option> when performing overlay or occlusion
+        renderings.  With -F, a file or framebuffer may be specified.
+      </para>
 
-	<literallayout remap=".nf" class="normal">
+      <para>
+	This script will overlay bright orange edges on the Havoc.
+      </para>
+      
+      <literallayout remap=".nf" class="normal">
 #!/bin/sh
 rt -M -s1280 -F new.pix -C255/255/255\
  $*\
@@ -980,17 +989,17 @@ start 0; clean;
 end;
 
 EOF
-	</literallayout>
+      </literallayout>
 
-	<para>
-	  Finally, this script will render the Havoc weapon systems in
-	  full color, render the edges on the remainder of the aircraft
-	  in black, and render the non-edges in dithered gray to make
-	  them semi-transparent. Note that when specifying the occlusion
-	  objects, the delimiting quotes must be escaped.
-	</para>
+      <para>
+	Finally, this script will render the Havoc weapon systems in
+	full color, render the edges on the remainder of the aircraft
+	in black, and render the non-edges in dithered gray to make
+	them semi-transparent. Note that when specifying the occlusion
+	objects, the delimiting quotes must be escaped.
+      </para>
 
-	<literallayout remap=".nf" class="normal">
+      <literallayout remap=".nf" class="normal">
 #!/bin/sh
 
 rt -M -s1280 -F new.pix -C255/255/255 \
@@ -1024,13 +1033,13 @@ start 0; clean;
 end;
 
 EOF
-	</literallayout>
+      </literallayout>
 
-	<para>
-	  In general, if you are mixing <command>rt</command>
-	  and <command>rtedge</command> renderings, and the objects being
-	  rendered are different, occlusion checking should be used.
-	</para>
+      <para>
+	In general, if you are mixing <command>rt</command> and
+	<command>rtedge</command> renderings, and the objects being
+	rendered are different, occlusion checking should be used.
+      </para>
     </example>
   </refsection>
 
