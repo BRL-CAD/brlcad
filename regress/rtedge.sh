@@ -76,11 +76,17 @@ FAILURES=0
 
 # make our database
 rm -f rtedge.havoc.g
+
 log "... running rtedge.havoc.g gzip decompress"
 $GZIP -d -c "$PATH_TO_THIS/tgms/havoc.g.gz" > rtedge.havoc.g
 
 # get our references
-rm -f rtedge.ref.pix rtedge.2.ref.pix
+rm -f rtedge.ref.pix
+rm -f rtedge.ref2.pix
+rm -f rtedge.ref3.pix
+rm -f rtedge.ref4.pix
+rm -f rtedge.ref5.pix
+
 log "... running rtedge reference gzip decompressions"
 $GZIP -d -c "$PATH_TO_THIS/rtedge.ref.pix.gz" > rtedge.ref.pix 2>> $LOGFILE
 $GZIP -d -c "$PATH_TO_THIS/rtedge.ref2.pix.gz" > rtedge.ref2.pix 2>> $LOGFILE
@@ -90,16 +96,16 @@ $GZIP -d -c "$PATH_TO_THIS/rtedge.ref5.pix.gz" > rtedge.ref5.pix 2>> $LOGFILE
 
 
 # === #1 ===
-
-cmd="$RTEDGE -s 1024 -o rtedge.pix rtedge.havoc.g havoc"
-log "... rendering rtedge #1: $cmd"
 rm -f rtedge.pix
-$cmd 2>> $LOGFILE
-
-cmd="$PIXDIFF rtedge.pix rtedge.ref.pix"
-log "... comparing rtedge #1: $cmd"
 rm -f rtedge.diff.pix
-$cmd > rtedge.diff.pix 2>> $LOGFILE
+
+cmd='echo $RTEDGE -s 1024 -o rtedge.pix rtedge.havoc.g havoc'
+log "... rendering rtedge #1: `eval $cmd`"
+`eval $cmd` 2>> $LOGFILE
+
+cmd='echo $PIXDIFF rtedge.pix rtedge.ref.pix'
+log "... comparing rtedge #1: `eval $cmd`"
+`eval $cmd` > rtedge.diff.pix 2>> $LOGFILE
 NUMBER_WRONG=`tail -n1 $LOGFILE | tr , '\012' | awk '/many/ {print $1}'`
 
 if [ "X$NUMBER_WRONG" = "X0" ] ; then
@@ -111,16 +117,16 @@ fi
 
 
 # === #2 ===
-
-cmd="$RTEDGE -s 1024 -o rtedge.2.pix -c\"set fg=0/255/0 bg=255/0/0\" rtedge.havoc.g havoc"
-log "... rendering rtedge #2: $cmd"
 rm -f rtedge.2.pix
-eval $cmd 2>> $LOGFILE
+rm -f rtedge.diff2.pix
+
+cmd="$RTEDGE -s 1024 -o rtedge.2.pix -c \"set fg=0/255/0 bg=255/0/0\" rtedge.havoc.g havoc"
+log "... rendering rtedge #2: $cmd"
+eval "$cmd" 2>> $LOGFILE
 
 cmd="$PIXDIFF rtedge.2.pix rtedge.ref2.pix"
 log "... comparing rtedge #2: $cmd"
-rm -f rtedge.diff2.pix
-$cmd > rtedge.diff2.pix 2>> $LOGFILE
+eval $cmd > rtedge.diff2.pix 2>> $LOGFILE
 NUMBER_WRONG=`tail -n1 $LOGFILE | tr , '\012' | awk '/many/ {print $1}'`
 
 if [ "X$NUMBER_WRONG" = "X0" ] ; then
@@ -132,16 +138,16 @@ fi
 
 
 # === #3 ===
+rm -f rtedge.3.pix
+rm -f rtedge.diff3.pix
 
 cmd="$RTEDGE -s 1024 -o rtedge.3.pix -c\"set rc=1 dr=1\" rtedge.havoc.g havoc"
 log "... rendering rtedge #3: $cmd"
-rm -f rtedge.3.pix
 eval $cmd 2>> $LOGFILE
 
 cmd="$PIXDIFF rtedge.3.pix rtedge.ref3.pix"
 log "... comparing rtedge #3: $cmd"
-rm -f rtedge.diff3.pix
-$cmd > rtedge.diff3.pix 2>> $LOGFILE
+eval $cmd > rtedge.diff3.pix 2>> $LOGFILE
 NUMBER_WRONG=`tail -n1 $LOGFILE | tr , '\012' | awk '/many/ {print $1}'`
 
 if [ "X$NUMBER_WRONG" = "X0" ] ; then
@@ -153,6 +159,8 @@ fi
 
 
 # === #4 ===
+rm -f rtedge.4.pix
+rm -f rtedge.diff4.pix
 
 view="
   viewsize 8.000e+03;
@@ -162,24 +170,21 @@ view="
   end;
 "
 
-cmd="$RT -M -o rtedge.4.pix -C255/255/255 rtedge.havoc.g havoc"
+cmd="$RT -B -M -F rtedge.4.pix -C255/255/255 rtedge.havoc.g havoc"
 log "... rendering rt #4: $cmd"
-rm -f rtedge.4.pix
 eval $cmd 2>> $LOGFILE <<EOF
 $view
 EOF
 
-cmd="$RTEDGE -M -o rtedge.4.pix -c\"set dr=1 dn=1 ov=1\" -c\"set fg=255,200,0\" rtedge.havoc.g havoc"
+cmd="$RTEDGE -B -M -F rtedge.4.pix -c\"set dr=1 dn=1 ov=1\" -c\"set fg=255,200,0\" rtedge.havoc.g havoc"
 log "... rendering rtedge #4: $cmd"
-rm -f rtedge.4.pix
 eval $cmd 2>> $LOGFILE <<EOF
 $view
 EOF
 
 cmd="$PIXDIFF rtedge.4.pix rtedge.ref4.pix"
 log "... comparing rtedge #4: $cmd"
-rm -f rtedge.diff4.pix
-$cmd > rtedge.diff4.pix 2>> $LOGFILE
+eval $cmd > rtedge.diff4.pix 2>> $LOGFILE
 NUMBER_WRONG=`tail -n1 $LOGFILE | tr , '\012' | awk '/many/ {print $1}'`
 
 if [ "X$NUMBER_WRONG" = "X0" ] ; then
@@ -191,6 +196,8 @@ fi
 
 
 # === #5 ===
+rm -f rtedge.5.pix
+rm -f rtedge.diff5.pix
 
 view="
   viewsize 8.000e+03;
@@ -200,24 +207,21 @@ view="
   end;
 "
 
-cmd="$RT -M -o rtedge.5.pix -C255/255/255 rtedge.havoc.g weapons"
+cmd="$RT -B -M -F rtedge.5.pix -C255/255/255 rtedge.havoc.g weapons"
 log "... rendering rt #5: $cmd"
-rm -f rtedge.5.pix
 eval $cmd 2>> $LOGFILE <<EOF
 $view
 EOF
 
-cmd="$RTEDGE -M -o rtedge.5.pix -c\"set dr=1 dn=1 om=3\" -c\"set fg=0,0,0 bg=200,200,200\" -c\"set oo=\\\"weapons\\\" \" rtedge.havoc.g havoc_front havoc_middle havoc_tail landing_gear main_rotor"
+cmd="$RTEDGE -B -M -F rtedge.5.pix -c\"set dr=1 dn=1 om=3\" -c\"set fg=0,0,0 bg=200,200,200\" -c\"set oo=\\\"weapons\\\" \" rtedge.havoc.g havoc_front havoc_middle havoc_tail landing_gear main_rotor"
 log "... rendering rtedge #5: $cmd"
-rm -f rtedge.5.pix
 eval $cmd 2>> $LOGFILE <<EOF
 $view
 EOF
 
 cmd="$PIXDIFF rtedge.5.pix rtedge.ref5.pix"
 log "... comparing rtedge #5: $cmd"
-rm -f rtedge.diff5.pix
-$cmd > rtedge.diff5.pix 2>> $LOGFILE
+eval $cmd > rtedge.diff5.pix 2>> $LOGFILE
 NUMBER_WRONG=`tail -n1 $LOGFILE | tr , '\012' | awk '/many/ {print $1}'`
 
 if [ "X$NUMBER_WRONG" = "X0" ] ; then
