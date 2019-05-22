@@ -21,11 +21,6 @@ Recent Bugs
   to output nothing even when permissions are opened up.  Works
   with a framebuffer server.
 
-* rtedge's overlay mode generates different results on Windows, Mac,
-  and Linux for the m35.  Difference is related to the overlay objects
-  not overlaying correctly.  Particularly noticeable on steering wheel
-  and wheels.  (regress rtwizard test D.)
-
 * creating an object with a slashes in the name (e.g., cp foo foo/R)
   results in an object that cannot be deleted/renamed.  bad behavior
   presumably extends to any name with path separators.

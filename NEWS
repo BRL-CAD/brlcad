@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 20XX-XX-XX  Release 7.30.4                                     ---
 ----------------------------------------------------------------------
 
+* fixed rtedge and rtwizard occlusion object edge bug - Sean Morrison
 * rt* tools no longer force outputs to be read-only - Sean Morrison
 * fixed 'burst' crash when run without options - Sean Morrison
 * changed rtweight to not truncate long pathnames - Sean Morrison

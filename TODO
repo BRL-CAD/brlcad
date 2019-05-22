@@ -1054,9 +1054,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * make db_open modes behave the same as the fopen() modes (i.e.,
   create the .g if one doesn't exist when write mode)
 
-* fix the shaders.sh regression test case, failing due to changes
-  with mged's view initialization.
-
 * inside support for ARS
 
 * add support to 'rtxray' for outputting inverted pixel values so that
