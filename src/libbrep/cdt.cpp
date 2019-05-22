@@ -357,6 +357,8 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 
     ON_Brep* brep = s_cdt->brep;
 
+    brep->ShrinkSurfaces();
+
     // Check for any conditions that are show-stoppers
     ON_wString wonstr;
     ON_TextLog vout(wonstr);
