@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* icv dpix support is not cross-platform (it writes out native, reads
+  in assuming same encoding).  regression tests fail on big endian.
+
 * The overlay and occlusion examples in the rtedge manual page are not
   working.  rt -o file.pix followed by rtedge -o file.pix -c "set
   ov=1" should overlay the edges into file.pix but it presently seems
