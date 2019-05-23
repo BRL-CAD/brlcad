@@ -355,7 +355,10 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
     ON_wString wstr;
     ON_TextLog tl(wstr);
 
-    ON_Brep* brep = new ON_Brep(*s_cdt->brep);
+    if (!s_cdt->brep) {
+	s_cdt->brep = new ON_Brep(*s_cdt->orig_brep);
+    }
+    ON_Brep* brep = s_cdt->brep;
 
     brep->ShrinkSurfaces();
 
@@ -363,7 +366,6 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
     ON_wString wonstr;
     ON_TextLog vout(wonstr);
     if (!brep->IsValid(&vout)) {
-	delete brep;
 	bu_log("brep is NOT valid, cannot produce watertight mesh\n");
 	//return -1;
     }
@@ -372,7 +374,6 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
     for (int index = 0; index < brep->m_E.Count(); index++) {
         ON_BrepEdge& edge = brep->m_E[index];
         if (edge.TrimCount() != 2) {
-	    delete brep;
 	    bu_log("Edge %d trim count: %d - can't (yet) do watertight meshing\n", edge.m_edge_index, edge.TrimCount());
             return -1;
         }
@@ -754,7 +755,6 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 cdt_done:
     bu_free(valid_faces, "faces");
     bu_free(valid_vertices, "vertices");
-    delete brep;
 
     if (invalid) {
 	return 1;

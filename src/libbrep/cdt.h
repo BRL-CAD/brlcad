@@ -86,6 +86,7 @@ struct cdt_audit_info {
 struct ON_Brep_CDT_State {
 
     int status;
+    ON_Brep *orig_brep;
     ON_Brep *brep;
 
     /* Tolerances */

@@ -163,7 +163,8 @@ ON_Brep_CDT_Create(void *bv)
 {
     ON_Brep *brep = (ON_Brep *)bv;
     struct ON_Brep_CDT_State *cdt = new struct ON_Brep_CDT_State;
-    cdt->brep = brep;
+    cdt->orig_brep = brep;
+    cdt->brep = NULL;
 
     cdt->w3dpnts = new std::vector<ON_3dPoint *>;
     cdt->vert_pnts = new std::map<int, ON_3dPoint *>;
@@ -242,6 +243,10 @@ ON_Brep_CDT_Destroy(struct ON_Brep_CDT_State *s_cdt)
     delete s_cdt->vert_to_on;
     delete s_cdt->edge_pnts;
     delete s_cdt->p2t_extra_faces;
+
+    if (s_cdt->brep) {
+	delete s_cdt->brep;
+    }
 
     bu_free(s_cdt->brep_face_loop_points, "flp array");
     bu_free(s_cdt->face_degen_pnts, "degen pnts");
