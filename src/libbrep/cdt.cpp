@@ -52,7 +52,6 @@ Process_Loop_Edges(
 	    const ON_BrepVertex& v1 = face.Brep()->m_V[trim->m_vi[0]];
 	    ON_3dPoint *p3d = (*s_cdt->vert_pnts)[v1.m_vertex_index];
 	    (*s_cdt->strim_pnts)[face.m_face_index].insert(std::make_pair(trim->m_trim_index, p3d));
-	    // TODO - use face normals for this, not avg
 	    ON_3dPoint *n3d = (*s_cdt->vert_avg_norms)[v1.m_vertex_index];
 	    if (n3d) {
 		(*s_cdt->strim_norms)[face.m_face_index].insert(std::make_pair(trim->m_trim_index, n3d));
@@ -495,41 +494,38 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 		ON_BrepTrim *trim1 = edge.Trim(0);
 		ON_BrepTrim *trim2 = edge.Trim(1);
 
-		if (trim1->m_type != ON_BrepTrim::singular) {
-		    trim1_norm = calc_trim_vnorm(v, trim1);
+		if (trim1->m_type == ON_BrepTrim::singular || trim2->m_type == ON_BrepTrim::singular) {
+		    continue;
 		}
 
-		if (trim2->m_type != ON_BrepTrim::singular) {
-		    trim2_norm = calc_trim_vnorm(v, trim2);
+		trim1_norm = calc_trim_vnorm(v, trim1);
+		trim2_norm = calc_trim_vnorm(v, trim2);
+
+
+		if (trim1_norm == ON_3dVector::UnsetVector || trim2_norm == ON_3dVector::UnsetVector) {
+		    continue;
 		}
 
 		// Stash normals coming from non-singular trims at vertices for faces.  If a singular trim
 		// needs a normal in 3D, want to use one of these
-		if (trim1_norm != ON_3dVector::UnsetVector) {
-		    ON_3dPoint *t1pnt = new ON_3dPoint(trim1_norm);
-		    (*s_cdt->vert_face_norms)[v.m_vertex_index][trim1->Face()->m_face_index].insert(t1pnt);
-		    s_cdt->w3dnorms->push_back(t1pnt);
+		ON_3dPoint *t1pnt = new ON_3dPoint(trim1_norm);
+		(*s_cdt->vert_face_norms)[v.m_vertex_index][trim1->Face()->m_face_index].insert(t1pnt);
+		s_cdt->w3dnorms->push_back(t1pnt);
+		ON_3dPoint *t2pnt = new ON_3dPoint(trim2_norm);
+		(*s_cdt->vert_face_norms)[v.m_vertex_index][trim2->Face()->m_face_index].insert(t2pnt);
+		s_cdt->w3dnorms->push_back(t2pnt);
 
-		    // Add the normal to the vnrml total
-		    vnrml += trim1_norm;
-		    have_calculated = 1;
-		}
-		if (trim2_norm != ON_3dVector::UnsetVector) {
-		    ON_3dPoint *t2pnt = new ON_3dPoint(trim2_norm);
-		    (*s_cdt->vert_face_norms)[v.m_vertex_index][trim2->Face()->m_face_index].insert(t2pnt);
-		    s_cdt->w3dnorms->push_back(t2pnt);
-
-		    // Add the normal to the vnrml total
-		    vnrml += trim2_norm;
-		    have_calculated = 1;
-		}
+		// Add the normals to the vnrml total
+		vnrml += trim1_norm;
+		vnrml += trim2_norm;
+		have_calculated = 1;
 
 	    }
 	    if (!have_calculated) {
 		continue;
 	    }
 
-	    // Average all the successfully calculated normals into a new unit normal 
+	    // Average all the successfully calculated normals into a new unit normal
 	    vnrml.Unitize();
 
 	    // We store this as a point to keep C++ happy...  If we try to
