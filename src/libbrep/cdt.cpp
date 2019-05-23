@@ -360,8 +360,6 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
     }
     ON_Brep* brep = s_cdt->brep;
 
-    brep->ShrinkSurfaces();
-
     // Check for any conditions that are show-stoppers
     ON_wString wonstr;
     ON_TextLog vout(wonstr);
@@ -378,6 +376,13 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
             return -1;
         }
     }
+
+    // Have observed at least one case where a small face on a large surface
+    // resulted in a valid 2D triangulation that produced a self-intersecting
+    // 3D mesh.  Attempt to minimize situations where 2D and 3D distances get
+    // out of sync by shrinking the surfaces down to the active area
+    brep->ShrinkSurfaces();
+
 
     // Reparameterize the face's surface and transform the "u" and "v"
     // coordinates of all the face's parameter space trimming curves to
