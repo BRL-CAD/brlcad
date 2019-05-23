@@ -97,9 +97,11 @@ struct ON_Brep_CDT_State {
 
     /* 3D data */
     std::vector<ON_3dPoint *> *w3dpnts;
-    std::map<int, ON_3dPoint *> *vert_pnts;
     std::vector<ON_3dPoint *> *w3dnorms;
-    std::map<int, ON_3dPoint *> *vert_norms;
+
+    std::map<int, ON_3dPoint *> *vert_pnts;
+    std::map<int, ON_3dPoint *> *vert_avg_norms;
+    std::map<int, std::map<int, std::set<ON_3dPoint *>>> *vert_face_norms;
 
     /* singular trim info */
     std::map<int, std::map<int,ON_3dPoint *>> *strim_pnts;
@@ -164,9 +166,7 @@ getEdgePoints(
 	struct ON_Brep_CDT_State *s_cdt,
 	ON_BrepEdge *edge,
 	ON_BrepTrim &trim,
-	fastf_t max_dist,
-	std::map<int, ON_3dPoint *> *vert_pnts,
-	std::map<int, ON_3dPoint *> *vert_norms
+	fastf_t max_dist
 	);
 
 void

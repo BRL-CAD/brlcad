@@ -169,7 +169,8 @@ ON_Brep_CDT_Create(void *bv)
     cdt->w3dpnts = new std::vector<ON_3dPoint *>;
     cdt->vert_pnts = new std::map<int, ON_3dPoint *>;
     cdt->w3dnorms = new std::vector<ON_3dPoint *>;
-    cdt->vert_norms = new std::map<int, ON_3dPoint *>;
+    cdt->vert_avg_norms = new std::map<int, ON_3dPoint *>;
+    cdt->vert_face_norms = new std::map<int, std::map<int, std::set<ON_3dPoint *>>>;
     cdt->strim_pnts = new std::map<int,std::map<int, ON_3dPoint *> >;
     cdt->strim_norms = new std::map<int,std::map<int, ON_3dPoint *> >;
     cdt->vert_to_on = new std::map<int, ON_3dPoint *>;
@@ -237,7 +238,8 @@ ON_Brep_CDT_Destroy(struct ON_Brep_CDT_State *s_cdt)
     delete s_cdt->w3dpnts;
     delete s_cdt->vert_pnts;
     delete s_cdt->w3dnorms;
-    delete s_cdt->vert_norms;
+    delete s_cdt->vert_avg_norms;
+    delete s_cdt->vert_face_norms;
     delete s_cdt->strim_pnts;
     delete s_cdt->strim_norms;
     delete s_cdt->vert_to_on;

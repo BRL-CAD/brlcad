@@ -240,9 +240,7 @@ getEdgePoints(
 	struct ON_Brep_CDT_State *s_cdt,
 	ON_BrepEdge *edge,
 	ON_BrepTrim &trim,
-	fastf_t max_dist,
-	std::map<int, ON_3dPoint *> *vert_pnts,
-	std::map<int, ON_3dPoint *> *vert_norms
+	fastf_t max_dist
 	)
 {
     struct brep_cdt_tol cdt_tol = BREP_CDT_TOL_ZERO;
@@ -313,8 +311,8 @@ getEdgePoints(
     }
 
     /* For the start and end points, use the vertex point */
-    edge_start_3d = (*vert_pnts)[edge->Vertex(0)->m_vertex_index];
-    edge_end_3d = (*vert_pnts)[edge->Vertex(1)->m_vertex_index];
+    edge_start_3d = (*s_cdt->vert_pnts)[edge->Vertex(0)->m_vertex_index];
+    edge_end_3d = (*s_cdt->vert_pnts)[edge->Vertex(1)->m_vertex_index];
 
     /* Normalize the domain of the curve to the ControlPolygonLength() of the
      * NURBS form of the curve to attempt to minimize distortion in 3D to
@@ -366,8 +364,8 @@ getEdgePoints(
     ON_3dVector trim1_start_normal, trim1_end_normal = ON_3dVector::UnsetVector;
     ON_3dVector trim2_start_normal, trim2_end_normal = ON_3dVector::UnsetVector;
     ON_3dPoint *t1_sn, *t1_en, *t2_sn, *t2_en = NULL;
-    ON_3dPoint *edge_start_3dnorm = (*vert_norms)[edge->Vertex(0)->m_vertex_index];
-    ON_3dPoint *edge_end_3dnorm = (*vert_norms)[edge->Vertex(1)->m_vertex_index];
+    ON_3dPoint *edge_start_3dnorm = (*s_cdt->vert_avg_norms)[edge->Vertex(0)->m_vertex_index];
+    ON_3dPoint *edge_end_3dnorm = (*s_cdt->vert_avg_norms)[edge->Vertex(1)->m_vertex_index];
 
     /* trim 1 */
     if (!surface_EvNormal(s1, trim1_start_2d.x, trim1_start_2d.y, tmpp, trim1_start_normal)) {

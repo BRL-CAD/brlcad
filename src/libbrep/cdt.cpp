@@ -36,9 +36,7 @@ Process_Loop_Edges(
 	ON_SimpleArray<BrepTrimPoint> *points,
 	const ON_BrepFace &face,
 	const ON_BrepLoop *loop,
-	fastf_t max_dist,
-	std::map<int, ON_3dPoint *> *vert_pnts,
-	std::map<int, ON_3dPoint *> *vert_norms
+	fastf_t max_dist
 	)
 {
     int trim_count = loop->TrimCount();
@@ -54,7 +52,8 @@ Process_Loop_Edges(
 	    const ON_BrepVertex& v1 = face.Brep()->m_V[trim->m_vi[0]];
 	    ON_3dPoint *p3d = (*s_cdt->vert_pnts)[v1.m_vertex_index];
 	    (*s_cdt->strim_pnts)[face.m_face_index].insert(std::make_pair(trim->m_trim_index, p3d));
-	    ON_3dPoint *n3d = (*s_cdt->vert_norms)[v1.m_vertex_index];
+	    // TODO - use face normals for this, not avg
+	    ON_3dPoint *n3d = (*s_cdt->vert_avg_norms)[v1.m_vertex_index];
 	    if (n3d) {
 		(*s_cdt->strim_norms)[face.m_face_index].insert(std::make_pair(trim->m_trim_index, n3d));
 	    }
@@ -87,7 +86,7 @@ Process_Loop_Edges(
 	}
 
 	if (!trim->m_trim_user.p) {
-	    (void)getEdgePoints(s_cdt, edge, *trim, max_dist, vert_pnts, vert_norms);
+	    (void)getEdgePoints(s_cdt, edge, *trim, max_dist);
 	    //bu_log("Initialized trim->m_trim_user.p: Trim %d (associated with Edge %d) point count: %zd\n", trim->m_trim_index, trim->Edge()->m_edge_index, m->size());
 	}
 	if (trim->m_trim_user.p) {
@@ -143,7 +142,7 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_State *s_cdt, std::map<const ON_Surface *, d
 	if (s_to_maxdist->find(face.SurfaceOf()) != s_to_maxdist->end()) {
 	    max_dist = (*s_to_maxdist)[face.SurfaceOf()];
 	}
-	Process_Loop_Edges(s_cdt, &brep_loop_points[li], face, loop, max_dist, s_cdt->vert_pnts, s_cdt->vert_norms);
+	Process_Loop_Edges(s_cdt, &brep_loop_points[li], face, loop, max_dist);
     }
 
     // Handle a variety of situations that complicate loop handling on closed surfaces
@@ -348,6 +347,54 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_State *s_cdt, std::map<const ON_Surface *, d
     return 0;
 }
 
+static ON_3dVector
+calc_trim_vnorm(ON_BrepVertex& v, ON_BrepTrim *trim)
+{
+    ON_3dPoint t1, t2;
+    ON_3dVector v1, v2 = ON_3dVector::UnsetVector;
+    ON_3dVector trim_norm = ON_3dVector::UnsetVector;
+
+    ON_Interval trange = trim->Domain();
+    ON_3dPoint t_2d1 = trim->PointAt(trange[0]);
+    ON_3dPoint t_2d2 = trim->PointAt(trange[1]);
+
+    ON_Plane fplane;
+    const ON_Surface *s = trim->SurfaceOf();
+    if (s->IsPlanar(&fplane, BREP_PLANAR_TOL)) {
+	trim_norm = fplane.Normal();
+	if (trim->Face()->m_bRev) {
+	    trim_norm = trim_norm * -1;
+	}
+    } else {
+	int ev1, ev2 = 0;
+	if (surface_EvNormal(s, t_2d1.x, t_2d1.y, t1, v1)) {
+	    if (trim->Face()->m_bRev) {
+		v1 = v1 * -1;
+	    }
+	    if (v.Point().DistanceTo(t1) < ON_ZERO_TOLERANCE) {
+		ev1 = 1;
+		trim_norm = v1;
+	    }
+	}
+	if (surface_EvNormal(s, t_2d2.x, t_2d2.y, t2, v2)) {
+	    if (trim->Face()->m_bRev) {
+		v2 = v2 * -1;
+	    }
+	    if (v.Point().DistanceTo(t2) < ON_ZERO_TOLERANCE) {
+		ev2 = 1;
+		trim_norm = v2;
+	    }
+	}
+	// If we got both of them, go with the closest one
+	if (ev1 && ev2) {
+	    bu_log("Vertex %d: got both normals\n", v.m_vertex_index);
+	    trim_norm = (v.Point().DistanceTo(t1) < v.Point().DistanceTo(t2)) ? v1 : v2;
+	}
+    }
+
+    return trim_norm;
+}
+
 int
 ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces)
 {
@@ -358,14 +405,14 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
     // Check for any conditions that are show-stoppers
     ON_wString wonstr;
     ON_TextLog vout(wonstr);
-    if (!brep->IsValid(&vout)) {
+    if (!s_cdt->orig_brep->IsValid(&vout)) {
 	bu_log("brep is NOT valid, cannot produce watertight mesh\n");
 	//return -1;
     }
 
     // For now, edges must have 2 and only 2 trims for this to work.
-    for (int index = 0; index < brep->m_E.Count(); index++) {
-        ON_BrepEdge& edge = brep->m_E[index];
+    for (int index = 0; index < s_cdt->orig_brep->m_E.Count(); index++) {
+        ON_BrepEdge& edge = s_cdt->orig_brep->m_E[index];
         if (edge.TrimCount() != 2) {
 	    bu_log("Edge %d trim count: %d - can't (yet) do watertight meshing\n", edge.m_edge_index, edge.TrimCount());
             return -1;
@@ -420,33 +467,16 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 
     /* If this is the first time through, get vertex normals that are the
      * average of the surface normals at the junction from faces that don't use
-     * a singular trim to reference the vertex.  When subdividing the surface
-     * during surface point builds, we use the normals as a curvature guide.
-     * When we hit singular trims, we use the normal calculated below to ensure
-     * the normal is always the same at the singularity regardless of the
-     * particular UV point on the singular trim we are evaluating.
-     *
-     * TODO - rather than averaging, we probably want to get a per-face
-     * normal for each vert.  When we hit singular trims we can do a lookup
-     * by vert, but we still want a normal specific to the face since
-     * an average will tend to visually corrupt sharp edges. Let's do this -
-     * iterate over all trims, build the set of singular trims, for those trims
-     * get the associated verts and for each vert and each face associated with
-     * that vert that has a singular trim, calculate a normal based on the
-     * surface evaluation at that point from non-singular trims in the face
-     * that share the same vertex point.*/
-    if (!s_cdt->w3dnorms->size()) {
+     * a singular trim to reference the vertex.  When subdividing the edges, we
+     * use the normals as a curvature guide.
+     */
+    if (!s_cdt->vert_avg_norms->size()) {
 	for (int index = 0; index < brep->m_V.Count(); index++) {
 	    ON_BrepVertex& v = brep->m_V[index];
 	    int have_calculated = 0;
 	    ON_3dVector vnrml(0.0, 0.0, 0.0);
-	    if (index == 595) {
-		bu_log("595: %f %f %f\n", v.Point().x, v.Point().y, v.Point().z);
-	    }
 
 	    for (int eind = 0; eind != v.EdgeCount(); eind++) {
-		ON_3dPoint t1_1, t1_2, t2_1, t2_2;
-		ON_3dVector t1_v1, t1_v2, t2_v1, t2_v2 = ON_3dVector::UnsetVector;
 		ON_3dVector trim1_norm = ON_3dVector::UnsetVector;
 		ON_3dVector trim2_norm = ON_3dVector::UnsetVector;
 		ON_BrepEdge& edge = brep->m_E[v.m_ei[eind]];
@@ -457,96 +487,48 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 		ON_BrepTrim *trim1 = edge.Trim(0);
 		ON_BrepTrim *trim2 = edge.Trim(1);
 
-		if (trim1->m_type == ON_BrepTrim::singular || trim2->m_type == ON_BrepTrim::singular) {
-		    continue;
+		if (trim1->m_type != ON_BrepTrim::singular) {
+		    trim1_norm = calc_trim_vnorm(v, trim1);
 		}
 
-		ON_Interval t1range = trim1->Domain();
-		ON_Interval t2range = trim2->Domain();
-		ON_3dPoint t1_2d1 = trim1->PointAt(t1range[0]);
-		ON_3dPoint t1_2d2 = trim1->PointAt(t1range[1]);
-		ON_3dPoint t2_2d1 = trim2->PointAt(t2range[0]);
-		ON_3dPoint t2_2d2 = trim2->PointAt(t2range[1]);
-		ON_Plane plane1, plane2;
-		const ON_Surface *s1 = trim1->SurfaceOf();
-		const ON_Surface *s2 = trim2->SurfaceOf();
-		if (s1->IsPlanar(&plane1, BREP_PLANAR_TOL)) {
-		    trim1_norm = plane1.Normal();
-		    if (trim1->Face()->m_bRev) {
-			trim1_norm = trim1_norm * -1;
-		    }
-		} else {
-		    if (surface_EvNormal(s1, t1_2d1.x, t1_2d1.y, t1_1, t1_v1)) {
-			if (trim1->Face()->m_bRev) {
-			    t1_v1 = t1_v1 * -1;
-			}
-		    }
-		    if (surface_EvNormal(s1, t1_2d2.x, t1_2d2.y, t1_2, t1_v2)) {
-			if (trim1->Face()->m_bRev) {
-			    t1_v2 = t1_v2 * -1;
-			}
-		    }
-		    trim1_norm = (v.Point().DistanceTo(t1_1) < v.Point().DistanceTo(t1_2)) ? t1_v1 : t1_v2;
-		}
-		if (s2->IsPlanar(&plane2, BREP_PLANAR_TOL)) {
-		    trim2_norm = plane2.Normal();
-		    if (trim2->Face()->m_bRev) {
-			trim2_norm = trim2_norm * -1;
-		    }
-		} else {
-
-		    if (surface_EvNormal(s2, t2_2d1.x, t2_2d1.y, t2_1, t2_v1)) {
-			if (trim2->Face()->m_bRev) {
-			    t2_v1 = t2_v1 * -1;
-			}
-		    }
-		    if (surface_EvNormal(s2, t2_2d2.x, t2_2d2.y, t2_2, t2_v2)) {
-			if (trim2->Face()->m_bRev) {
-			    t2_v2 = t2_v2 * -1;
-			}
-		    }
-		    trim2_norm = (v.Point().DistanceTo(t2_1) < v.Point().DistanceTo(t2_2)) ? t2_v1 : t2_v2;
+		if (trim2->m_type != ON_BrepTrim::singular) {
+		    trim2_norm = calc_trim_vnorm(v, trim2);
 		}
 
-		if (index == 595) {
-		    bu_log("trim face %d normal: %f %f %f\n", trim1->Face()->m_face_index, trim1_norm.x, trim1_norm.y, trim1_norm.z);
-		    bu_log("trim face %d normal: %f %f %f\n", trim2->Face()->m_face_index, trim2_norm.x, trim2_norm.y, trim1_norm.z);
-		}
+		// Stash normals coming from non-singular trims at vertices for faces.  If a singular trim
+		// needs a normal in 3D, want to use one of these
+		if (trim1_norm != ON_3dVector::UnsetVector) {
+		    ON_3dPoint *t1pnt = new ON_3dPoint(trim1_norm);
+		    (*s_cdt->vert_face_norms)[v.m_vertex_index][trim1->Face()->m_face_index].insert(t1pnt);
+		    s_cdt->w3dnorms->push_back(t1pnt);
 
-		// Want the angle between the two faces to not be "sharp" - if
-		// it is, we don't want to use the average, since that will
-		// tend to introduce visual artifacts at the vertex.
-		//
-		// TODO - come up with a strategy to allow a fallback to this
-		// anyway if the surface is just giving nonsense answers at the
-		// edge...
-		if (trim1_norm == ON_3dVector::UnsetVector) {
-		    continue;
-		}
-		if (trim2_norm == ON_3dVector::UnsetVector) {
-		    continue;
-		}
-		if (ON_DotProduct(trim1_norm, trim2_norm) > 0.5) {
+		    // Add the normal to the vnrml total
 		    vnrml += trim1_norm;
+		    have_calculated = 1;
+		}
+		if (trim2_norm != ON_3dVector::UnsetVector) {
+		    ON_3dPoint *t2pnt = new ON_3dPoint(trim2_norm);
+		    (*s_cdt->vert_face_norms)[v.m_vertex_index][trim2->Face()->m_face_index].insert(t2pnt);
+		    s_cdt->w3dnorms->push_back(t2pnt);
+
+		    // Add the normal to the vnrml total
 		    vnrml += trim2_norm;
 		    have_calculated = 1;
-		} else {
-		    continue;
 		}
-		if (index == 523) {
-		    bu_log("normal sum: %f %f %f\n", vnrml.x, vnrml.y, vnrml.z);
-		}
+
 	    }
 	    if (!have_calculated) {
 		continue;
 	    }
+
+	    // Average all the successfully calculated normals into a new unit normal 
 	    vnrml.Unitize();
 
 	    // We store this as a point to keep C++ happy...  If we try to
 	    // propagate the ON_3dVector type through all the CDT logic it
 	    // triggers issues with the compile.
-	    (*s_cdt->vert_norms)[index] = new ON_3dPoint(vnrml);
-	    s_cdt->w3dnorms->push_back((*s_cdt->vert_norms)[index]);
+	    (*s_cdt->vert_avg_norms)[index] = new ON_3dPoint(vnrml);
+	    s_cdt->w3dnorms->push_back((*s_cdt->vert_avg_norms)[index]);
 	}
     }
 
@@ -582,7 +564,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	// runs - if pre-existing solutions for "high level" splits exist,
 	// reuse them and dig down to find where we need further refinement to
 	// create new points.
-        (void)getEdgePoints(s_cdt, &edge, trim1, max_dist, s_cdt->vert_pnts, s_cdt->vert_norms);
+        (void)getEdgePoints(s_cdt, &edge, trim1, max_dist);
 
     }
 
