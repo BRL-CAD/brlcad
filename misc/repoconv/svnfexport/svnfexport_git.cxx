@@ -1069,6 +1069,30 @@ void standard_commit(struct svn_revision &rev, std::string &rbranch, int mvedcom
     }
 }
 
+// We don't delete branches during conversion, so make an empty commit that denotes
+// the delete event
+void branch_delete_commit(struct svn_revision &rev, std::string &rbranch)
+{
+    std::string cfi_file = std::to_string(rev.revision_number) + std::string("-bdelete.fi");
+    std::ofstream coutfile(cfi_file, std::ios::out | std::ios::binary);
+    write_commit_core(coutfile, rbranch, rev, NULL, 0, 0, 0);
+    coutfile.close();
+
+    std::string commit_fi_file = populate_template(cfi_file, rbranch);
+
+    apply_fi_file_working(commit_fi_file);
+    get_rev_sha1(rbranch, rev.revision_number);
+
+    std::string nfi_file = note_svn_rev(rev, rbranch);
+    apply_fi_file_working(nfi_file);
+
+    apply_fi_file(commit_fi_file);
+    apply_fi_file(nfi_file);
+    remove(nfi_file.c_str());
+
+    get_rev_sha1s(rev.revision_number);
+}
+
 
 void rev_fast_export(std::ifstream &infile, long int rev_num)
 {
@@ -1251,9 +1275,8 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	}
 
 	if (node.tag_delete) {
-	    branch_delete = 1;
-	    std::cout << "processing revision " << rev.revision_number << "\n";
-	    std::cout << "TODO - delete tag: " << node.tag << "\n";
+	    std::cout << "delete tag: " << rev.revision_number << "\n";
+	    branch_delete_commit(rev, node.tag);
 	    continue;
 	}
 
@@ -1289,19 +1312,8 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	}
 
 	if (node.branch_delete) {
-	    // TODO - this can hit multiple branches at once, which means the existing commit
-	    // logic can't handle it...  Skip commits for now.
-#if 0
-	    //std::cout << "processing revision " << rev.revision_number << "\n";
-	    std::cout << "Delete branch instruction: " << node.branch << " - deferring.\n";
-
-	    std::string cfi_file = std::to_string(rev.revision_number) + std::string("-commit.fi");
-	    std::ofstream coutfile(cfi_file, std::ios::out | std::ios::binary | std::fstream::app);
-
-	    write_commit_core(coutfile, node.branch, rev, NULL, 1, 0);
-
-	    coutfile.close();
-#endif
+	    // Branch deletes can hit multiple branches per commit - process fully and immediately
+	    branch_delete_commit(rev, node.tag);
 	    branch_delete = 1;
 	    continue;
 	}
