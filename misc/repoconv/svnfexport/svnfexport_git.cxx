@@ -1313,7 +1313,7 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 
 	if (node.branch_delete) {
 	    // Branch deletes can hit multiple branches per commit - process fully and immediately
-	    branch_delete_commit(rev, node.tag);
+	    branch_delete_commit(rev, node.branch);
 	    branch_delete = 1;
 	    continue;
 	}
