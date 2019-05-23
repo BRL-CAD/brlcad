@@ -169,7 +169,7 @@ void generate_svn_tree(const char *svn_repo, const char *branch, long int rev)
 }
 
 
-int apply_fi_file_working(std::string &fi_file, std::string &rbranch, int is_tag, int do_verify) {
+int apply_fi_file_working(std::string &fi_file, std::string &rbranch, long int rev, int is_tag, int do_verify) {
     std::string git_fi = std::string("cd cvs_git_working && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
     if (std::system(git_fi.c_str())) {
 	std::string failed_file = std::string("failed-") + fi_file;
@@ -179,7 +179,7 @@ int apply_fi_file_working(std::string &fi_file, std::string &rbranch, int is_tag
     }
     // TODO - should check tags as well...
     if (do_verify)
-	verify_repos(starting_rev, rbranch);
+	verify_repos(rev, rbranch);
     return 1;
 }
 
@@ -392,7 +392,7 @@ void apply_commit(struct svn_revision &rev, std::string &rbranch, int verify_rep
     std::string wbfi_file;
     if (branch_fi_template.length()) {
 	wbfi_file = populate_template(branch_fi_template, rbranch);
-	apply_fi_file_working(wbfi_file,rbranch, 0, 1);
+	apply_fi_file_working(wbfi_file,rbranch, rev.revision_number, 0, 1);
 	get_rev_sha1(rbranch, rev.revision_number);
 	all_git_branches.push_back(rbranch);
     } else {
@@ -412,7 +412,7 @@ void apply_commit(struct svn_revision &rev, std::string &rbranch, int verify_rep
     std::string wmvfi_file;
     if (move_fi_template.length()) {
 	wmvfi_file = populate_template(move_fi_template, rbranch);
-	apply_fi_file_working(wmvfi_file, rbranch, 0, 0);
+	apply_fi_file_working(wmvfi_file, rbranch, rev.revision_number, 0, 0);
 	get_rev_sha1(rbranch, rev.revision_number);
     } else {
 	wmvfi_file = std::string("");
@@ -498,7 +498,7 @@ void apply_commit(struct svn_revision &rev, std::string &rbranch, int verify_rep
 	    }
 
 	    // Apply the combined contents of the commit files
-	    if (!apply_fi_file_working(wfi_file, rbranch, 0, 1)) {
+	    if (!apply_fi_file_working(wfi_file, rbranch, rev.revision_number, 0, 1)) {
 		// If the apply failed, try generating the tree portion of the
 		// commit from an actual svn checkout.  At least for the later
 		// commits this is the most common remedy, so see if we can
@@ -526,7 +526,7 @@ void apply_commit(struct svn_revision &rev, std::string &rbranch, int verify_rep
 		    exit(1);
 		}
 
-		if (!apply_fi_file_working(wfi_file, rbranch, 0, 1)) {
+		if (!apply_fi_file_working(wfi_file, rbranch, rev.revision_number, 0, 1)) {
 		    // If we fail again, we're done - need manual review
 		    std::cerr << "Failed to apply commit with custom tree: " << rev.revision_number << "\n";
 		}
@@ -542,7 +542,7 @@ void apply_commit(struct svn_revision &rev, std::string &rbranch, int verify_rep
 
 	    // Generate the note file
 	    nfi_file = note_svn_rev(rev, rbranch);
-	    apply_fi_file_working(nfi_file, rbranch, 0, 0);
+	    apply_fi_file_working(nfi_file, rbranch, rev.revision_number, 0, 0);
 	}
 
 	std::string taftercommit_fi_template;
@@ -555,7 +555,7 @@ void apply_commit(struct svn_revision &rev, std::string &rbranch, int verify_rep
 	}
 	if (taftercommit_fi_template.length()) {
 	    wtfi_file = populate_template(taftercommit_fi_template, rbranch);
-	    apply_fi_file_working(wtfi_file, rbranch, 1, 1);
+	    apply_fi_file_working(wtfi_file, rbranch, rev.revision_number, 1, 1);
 	}
 
     } else {
@@ -563,7 +563,7 @@ void apply_commit(struct svn_revision &rev, std::string &rbranch, int verify_rep
 	wtag_fi_file = populate_template(tag_fi_template, rbranch);
 
 	// Apply the tag
-	apply_fi_file_working(wtag_fi_file, rbranch, 1, 1);
+	apply_fi_file_working(wtag_fi_file, rbranch, rev.revision_number, 1, 1);
     }
 
     // If we got this far, we're good to go - apply all files to the primary repo
@@ -1085,11 +1085,11 @@ void branch_delete_commit(struct svn_revision &rev, std::string &rbranch)
 
     std::string commit_fi_file = populate_template(cfi_file, rbranch);
 
-    apply_fi_file_working(commit_fi_file, rbranch, 0, 0);
+    apply_fi_file_working(commit_fi_file, rbranch, rev.revision_number, 0, 0);
     get_rev_sha1(rbranch, rev.revision_number);
 
     std::string nfi_file = note_svn_rev(rev, rbranch);
-    apply_fi_file_working(nfi_file, rbranch, 0, 0);
+    apply_fi_file_working(nfi_file, rbranch, rev.revision_number, 0, 0);
 
     apply_fi_file(commit_fi_file);
     apply_fi_file(nfi_file);
