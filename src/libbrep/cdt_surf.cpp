@@ -72,19 +72,19 @@ ON_3dPoint *
 singular_trim_norm(struct cdt_surf_info *sinfo, fastf_t uc, fastf_t vc)
 {
     if (sinfo->strim_pnts->find(sinfo->f->m_face_index) != sinfo->strim_pnts->end()) {
-	bu_log("Face %d has singular trims\n", sinfo->f->m_face_index);
+	//bu_log("Face %d has singular trims\n", sinfo->f->m_face_index);
 	if (sinfo->strim_norms->find(sinfo->f->m_face_index) == sinfo->strim_norms->end()) {
-	    bu_log("Face %d has no singular trim normal information\n", sinfo->f->m_face_index);
+	    //bu_log("Face %d has no singular trim normal information\n", sinfo->f->m_face_index);
 	    return NULL;
 	}
 	std::map<int, ON_3dPoint *>::iterator m_it;
 	// Check the trims to see if uc,vc is on one of them
 	for (m_it = (*sinfo->strim_pnts)[sinfo->f->m_face_index].begin(); m_it != (*sinfo->strim_pnts)[sinfo->f->m_face_index].end(); m_it++) {
-	    bu_log("  trim %d\n", (*m_it).first);
+	    //bu_log("  trim %d\n", (*m_it).first);
 	    ON_Interval trim_dom = sinfo->f->Brep()->m_T[(*m_it).first].Domain();
 	    ON_2dPoint p2d1 = sinfo->f->Brep()->m_T[(*m_it).first].PointAt(trim_dom.m_t[0]);
 	    ON_2dPoint p2d2 = sinfo->f->Brep()->m_T[(*m_it).first].PointAt(trim_dom.m_t[1]);
-	    bu_log("  points: %f,%f -> %f,%f\n", p2d1.x, p2d1.y, p2d2.x, p2d2.y);
+	    //bu_log("  points: %f,%f -> %f,%f\n", p2d1.x, p2d1.y, p2d2.x, p2d2.y);
 	    int on_trim = 1;
 	    if (NEAR_EQUAL(p2d1.x, p2d2.x, ON_ZERO_TOLERANCE)) {
 		if (!NEAR_EQUAL(p2d1.x, uc, ON_ZERO_TOLERANCE)) {
@@ -113,10 +113,10 @@ singular_trim_norm(struct cdt_surf_info *sinfo, fastf_t uc, fastf_t vc)
 		if ((*sinfo->strim_norms)[sinfo->f->m_face_index].find((*m_it).first) != (*sinfo->strim_norms)[sinfo->f->m_face_index].end()) {
 		    ON_3dPoint *vnorm = NULL;
 		    vnorm = (*sinfo->strim_norms)[sinfo->f->m_face_index][(*m_it).first];
-		    bu_log(" normal: %f, %f, %f\n", vnorm->x, vnorm->y, vnorm->z);
+		    //bu_log(" normal: %f, %f, %f\n", vnorm->x, vnorm->y, vnorm->z);
 		    return vnorm;
 		} else {
-		    bu_log(" on singular trim, but no matching normal\n");
+		    bu_log("Face %d: on singular trim, but no matching normal: %f, %f\n", sinfo->f->m_face_index, uc, vc);
 		    return NULL;
 		}
 	    }
@@ -314,7 +314,7 @@ getSurfacePoints(
 	    fastf_t vc = (i == 0 || i == 1) ? v1 : v2;
 	    ON_3dPoint *vnorm = singular_trim_norm(sinfo, uc, vc);
 	    if (vnorm && ON_DotProduct(*vnorm, norm_mid) > 0) {
-		bu_log("vert norm %f %f %f works\n", vnorm->x, vnorm->y, vnorm->z);
+		//bu_log("vert norm %f %f %f works\n", vnorm->x, vnorm->y, vnorm->z);
 		norm[i] = *vnorm;
 	    }
 	}
