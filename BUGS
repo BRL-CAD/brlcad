@@ -18,12 +18,6 @@ Recent Bugs
 * icv dpix support is not cross-platform (it writes out native, reads
   in assuming same encoding).  regression tests fail on big endian.
 
-* The overlay and occlusion examples in the rtedge manual page are not
-  working.  rt -o file.pix followed by rtedge -o file.pix -c "set
-  ov=1" should overlay the edges into file.pix but it presently seems
-  to output nothing even when permissions are opened up.  Works
-  with a framebuffer server.
-
 * creating an object with a slashes in the name (e.g., cp foo foo/R)
   results in an object that cannot be deleted/renamed.  bad behavior
   presumably extends to any name with path separators.
