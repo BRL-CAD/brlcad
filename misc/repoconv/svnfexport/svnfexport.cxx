@@ -113,6 +113,13 @@ int main(int argc, const char **argv)
 	return -1;
     }
 
+    // This process will create a lot of fi files - stash them
+    std::string stashdir_cmd = std::string("rm -rf done && mkdir done");
+    if (std::system(stashdir_cmd.c_str())) {
+	std::cout << "failed to create 'done' directory!\n";
+	exit(1);
+    }
+
     std::ifstream infile(argv[1]);
 
     for (i = starting_rev+1; i < 71000; i++) {

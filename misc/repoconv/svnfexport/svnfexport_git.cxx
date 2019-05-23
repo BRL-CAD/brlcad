@@ -597,7 +597,10 @@ void apply_commit(struct svn_revision &rev, std::string &rbranch, int verify_rep
     if (std::system(rmempty.c_str())) {
 	std::cout << "Empty file removal failed\n";
     }
-
+    std::string mvfifiles = std::string("mv ./*.fi ./done/");
+    if (std::system(mvfifiles.c_str())) {
+	std::cout << ".fi file move failed\n";
+    }
 }
 
 
