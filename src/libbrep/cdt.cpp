@@ -355,11 +355,6 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
     ON_wString wstr;
     ON_TextLog tl(wstr);
 
-    if (!s_cdt->brep) {
-	s_cdt->brep = new ON_Brep(*s_cdt->orig_brep);
-    }
-    ON_Brep* brep = s_cdt->brep;
-
     // Check for any conditions that are show-stoppers
     ON_wString wonstr;
     ON_TextLog vout(wonstr);
@@ -376,6 +371,13 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
             return -1;
         }
     }
+
+    // We may be changing the ON_Brep data, so work on a copy
+    // rather than the original object
+    if (!s_cdt->brep) {
+	s_cdt->brep = new ON_Brep(*s_cdt->orig_brep);
+    }
+    ON_Brep* brep = s_cdt->brep;
 
     // Have observed at least one case (NIST2 face 237) where a small face on a
     // large surface resulted in a valid 2D triangulation that produced a
