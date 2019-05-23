@@ -1171,6 +1171,7 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
     int git_changes = 0;
     int have_commit = 0;
     int tag_after_commit = 0;
+    int branch_add = 0;
     int branch_delete = 0;
     int tag_only_commit = 0;
     std::string ctag, cfrom;
@@ -1313,6 +1314,8 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	    // Make sure rbranch knows what branch this is.
 	    rbranch = node.branch;
 
+	    branch_add = 1;
+
 	    continue;
 	}
 
@@ -1382,7 +1385,7 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	}
     }
 
-    if (!branch_delete) {
+    if (branch_add || git_changes || tag_only_commit) {
 	apply_commit(rev, rbranch, 0);
     }
 }
