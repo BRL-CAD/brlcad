@@ -1,6 +1,7 @@
 set(util_TCLSCRIPTS
   expand_int_ranges.tcl
   luniq.tcl
+  metastrength.tcl
   regionstobots.tcl
   )
 BRLCAD_ADDDATA(util_TCLSCRIPTS tclscripts/util)
