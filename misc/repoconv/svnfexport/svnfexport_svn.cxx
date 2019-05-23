@@ -668,7 +668,7 @@ analyze_dump()
 		}
 	    }
 	    // Find move + edit operations
-	    if (node.copyfrom_path.length() > 0 && node.text_content_length > 0 && node.copyfrom_rev == rev.revision_number) {
+	    if (node.copyfrom_path.length() > 0 && node.text_content_length > 0) {
 		node.move_edit = 1;
 		rev.move_edit = 1;
 	    }
