@@ -291,6 +291,9 @@ add_test(NAME bu_semaphore_P3 COMMAND bu_test semaphore -P3)
 #
 add_test(NAME bu_parallel_test COMMAND bu_test parallel)
 
+# TODO - add a parallel test for the static version of the library,
+# maybe using bu_getiwd
+
 #
 #  ************ vls_vprintf.c tests *************
 #
