@@ -367,6 +367,10 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	return _ged_brep_flip(gedp, bi, solid_name);
     }
 
+    if (BU_STR_EQUAL(argv[2], "shrink-surfaces")) {
+	return _ged_brep_shrink_surfaces(gedp, bi, solid_name);
+    }
+
     if (BU_STR_EQUAL(argv[2], "tikz")) {
 	if (argc == 4) {
 	    return _ged_brep_tikz(gedp, argv[1], argv[3]);
