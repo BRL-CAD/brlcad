@@ -382,6 +382,10 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
     // self-intersecting 3D mesh.  Attempt to minimize situations where 2D and
     // 3D distances get out of sync by shrinking the surfaces down to the
     // active area of the face
+    //
+    // TODO - we may want to do this only for faces where the surface size is
+    // much larger than the bounded trimming curves in 2D, rather than just
+    // shrinking everything...
     brep->ShrinkSurfaces();
 
     // Reparameterize the face's surface and transform the "u" and "v"
