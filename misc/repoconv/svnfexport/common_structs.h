@@ -107,14 +107,22 @@ std::map<std::string, std::string> tag_mappings;
 
 std::map<std::pair<std::string,long int>, std::string> rev_to_gsha1;
 
-int verify_repos(long int rev, std::string branch_svn, std::string branch_git, int already_applied)
+int verify_repos(long int rev, std::string branch_git)
 {
     int ret = 0;
     std::string git_fi;
+    std::string branch_svn;
+
+    if (branch_mappings.find(branch_git) != branch_mappings.end()) {
+	// TODO - some of these mappings are rev number specific...
+	branch_svn = branch_mappings[branch_git];
+    } else {
+	branch_svn = branch_git;
+    }
 
     std::string cleanup_cmd = std::string("rm -rf brlcad_svn_checkout brlcad_git_checkout");
     std::string svn_cmd;
-    if (branch_svn == std::string("trunk") || branch_svn == std::string("master")) {
+    if (branch_svn == std::string("trunk")) {
 	svn_cmd = std::string("svn co -q -r") + std::to_string(rev) + std::string(" file:///home/cyapp/brlcad_repo/repo_dercs/brlcad/trunk brlcad_svn_checkout");
     } else {
 	svn_cmd = std::string("svn co -q file:///home/cyapp/brlcad_repo/repo_dercs/brlcad/branches/") + branch_svn + std::string("@") + std::to_string(rev) + std::string(" brlcad_svn_checkout");
@@ -148,23 +156,6 @@ int verify_repos(long int rev, std::string branch_svn, std::string branch_git, i
     while (!ret) {
 	ret = std::system(git_emptydir_rm.c_str());
     }
-    if (rev > starting_rev) {
-	struct stat buffer;
-	std::string fi_file = std::to_string(rev) + std::string(".fi");
-	if (stat(fi_file.c_str(), &buffer) == 0) {
-	    if (!already_applied) {
-		git_fi = std::string("cd cvs_git_working && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
-	    } else {
-		git_fi = std::string("cd cvs_git_working && git reset --hard HEAD && cd ..");
-	    }
-	    if (std::system(git_fi.c_str())) {
-		std::string failed_file = std::string("failed-") + fi_file;
-		std::cout << "Fatal - could not apply fi file for revision " << rev << "\n";
-		rename(fi_file.c_str(), failed_file.c_str());
-		exit(1);
-	    }
-	}
-    }
     if (std::system(git_clone.c_str())) {
 	std::cerr << "git clone failed!\n";
 	exit(1);
@@ -173,19 +164,6 @@ int verify_repos(long int rev, std::string branch_svn, std::string branch_git, i
     if (diff_ret) {
         std::cout << "diff test failed, r" << rev << ", branch " << branch_svn << "\n";
         exit(1);
-    }
-
-    std::string fi_file = std::to_string(rev) + std::string(".fi");
-    if (!already_applied) {
-	git_fi = std::string("cd cvs_git && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
-    } else {
-	git_fi = std::string("cd cvs_git && git reset --hard HEAD && cd ..");
-    }
-    if (std::system(git_fi.c_str())) {
-	std::string failed_file = std::string("failed-") + fi_file;
-	std::cout << "Fatal - could not apply fi file for revision " << rev << "\n";
-	rename(fi_file.c_str(), failed_file.c_str());
-	exit(1);
     }
 
     return 0;
