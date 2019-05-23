@@ -351,7 +351,8 @@ static ON_3dVector
 calc_trim_vnorm(ON_BrepVertex& v, ON_BrepTrim *trim)
 {
     ON_3dPoint t1, t2;
-    ON_3dVector v1, v2 = ON_3dVector::UnsetVector;
+    ON_3dVector v1 = ON_3dVector::UnsetVector;
+    ON_3dVector v2 = ON_3dVector::UnsetVector;
     ON_3dVector trim_norm = ON_3dVector::UnsetVector;
 
     ON_Interval trange = trim->Domain();
@@ -366,7 +367,8 @@ calc_trim_vnorm(ON_BrepVertex& v, ON_BrepTrim *trim)
 	    trim_norm = trim_norm * -1;
 	}
     } else {
-	int ev1, ev2 = 0;
+	int ev1 = 0;
+	int ev2 = 0;
 	if (surface_EvNormal(s, t_2d1.x, t_2d1.y, t1, v1)) {
 	    if (trim->Face()->m_bRev) {
 		v1 = v1 * -1;
@@ -387,7 +389,13 @@ calc_trim_vnorm(ON_BrepVertex& v, ON_BrepTrim *trim)
 	}
 	// If we got both of them, go with the closest one
 	if (ev1 && ev2) {
-	    bu_log("Vertex %d: got both normals\n", v.m_vertex_index);
+#if 0
+	    if (ON_DotProduct(v1, v2) < 0) {
+		bu_log("Vertex %d(%f %f %f), trim %d: got both normals\n", v.m_vertex_index, v.Point().x, v.Point().y, v.Point().z, trim->m_trim_index);
+		bu_log("v1(%f)(%f %f)(%f %f %f): %f %f %f\n", v.Point().DistanceTo(t1), t_2d1.x, t_2d1.y, t1.x, t1.y, t1.z, v1.x, v1.y, v1.z);
+		bu_log("v2(%f)(%f %f)(%f %f %f): %f %f %f\n", v.Point().DistanceTo(t2), t_2d2.x, t_2d2.y, t2.x, t2.y, t2.z, v2.x, v2.y, v2.z);
+	    }
+#endif
 	    trim_norm = (v.Point().DistanceTo(t1) < v.Point().DistanceTo(t2)) ? v1 : v2;
 	}
     }
