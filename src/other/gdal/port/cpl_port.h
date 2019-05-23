@@ -150,9 +150,10 @@
 
 #ifdef HAVE_LOCALE_H
 #  include <locale.h>
-#endif
-#ifdef HAVE_XLOCALE_H
-#  include <xlocale.h>
+#else
+#  ifdef HAVE_XLOCALE_H
+#    include <xlocale.h>
+#  endif
 #endif
 
 #ifdef HAVE_DIRECT_H
