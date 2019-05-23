@@ -753,7 +753,7 @@ void move_only_commit(struct svn_revision &rev, std::string &rbranch)
     std::string cfi_file = std::string("custom/") + std::to_string(rev.revision_number) + std::string("-mvonly.fi");
 
     // Skip if we already have a custom file
-    if (!stat(cfi_file.c_str(), &buffer)) {
+    if (file_exists(cfi_file.c_str())) {
 	return;
     }
 
@@ -1089,8 +1089,6 @@ void branch_delete_commit(struct svn_revision &rev, std::string &rbranch)
     apply_fi_file(commit_fi_file);
     apply_fi_file(nfi_file);
     remove(nfi_file.c_str());
-
-    get_rev_sha1s(rev.revision_number);
 }
 
 
@@ -1158,6 +1156,10 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 
 
     std::cout << "Processing revision " << rev.revision_number << "\n";
+
+    if (rev.move_edit) {
+	std::cout << "Move edit " << rev.merged_from << "\n";
+    }
 #if 0
     if (rev.merged_from.length()) {
 	std::cout << "Note: merged from " << rev.merged_from << "\n";
