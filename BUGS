@@ -15,6 +15,11 @@ on-going issues.
 Recent Bugs
 -----------
 
+* running 'put' on geometry that is already displayed results in a NaN
+  view (at least View and Eye_pos parameters are non) despite geometry
+  setill being displayed.  this causes 'rt' to fly into an infinite
+  loop, presumably trying to increment rays from the eye position.
+
 * icv dpix support is not cross-platform (it writes out native, reads
   in assuming same encoding).  regression tests fail on big endian.
 
