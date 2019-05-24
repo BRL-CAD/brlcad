@@ -1078,18 +1078,38 @@ void standard_commit(struct svn_revision &rev, std::string &rbranch, int mvedcom
 // the delete event
 void branch_delete_commit(struct svn_revision &rev, std::string &rbranch)
 {
+    if (rbranch == std::string("scriptics")) {
+	std::string itclstr = std::string("itcl3-2");
+	std::string tclstr = std::string("tcl8-3");
+	std::string tkstr = std::string("tk8-3");
+	branch_delete_commit(rev, itclstr);
+	branch_delete_commit(rev, tclstr);
+	branch_delete_commit(rev, tkstr);
+	return;
+    }
+    std::string wbranch = rbranch;
+    if (rbranch == std::string("VendorARL")) {
+	wbranch = std::string("Original");
+    }
+    if (rbranch == std::string("libpng")) {
+	wbranch = std::string("libpng_1_0_2");
+    }
+    if (rbranch == std::string("zlib")) {
+	wbranch = std::string("zlib_1_0_4");
+    }
+
     std::string cfi_file = std::to_string(rev.revision_number) + std::string("-bdelete.fi");
     std::ofstream coutfile(cfi_file, std::ios::out | std::ios::binary);
-    write_commit_core(coutfile, rbranch, rev, NULL, 0, 0, 0);
+    write_commit_core(coutfile, wbranch, rev, NULL, 0, 0, 0);
     coutfile.close();
 
-    std::string commit_fi_file = populate_template(cfi_file, rbranch);
+    std::string commit_fi_file = populate_template(cfi_file, wbranch);
 
-    apply_fi_file_working(commit_fi_file, rbranch, rev.revision_number, 0, 0);
-    get_rev_sha1(rbranch, rev.revision_number);
+    apply_fi_file_working(commit_fi_file, wbranch, rev.revision_number, 0, 0);
+    get_rev_sha1(wbranch, rev.revision_number);
 
-    std::string nfi_file = note_svn_rev(rev, rbranch);
-    apply_fi_file_working(nfi_file, rbranch, rev.revision_number, 0, 0);
+    std::string nfi_file = note_svn_rev(rev, wbranch);
+    apply_fi_file_working(nfi_file, wbranch, rev.revision_number, 0, 0);
 
     apply_fi_file(commit_fi_file);
     apply_fi_file(nfi_file);
