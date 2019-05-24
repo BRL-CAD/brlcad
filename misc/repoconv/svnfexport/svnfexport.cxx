@@ -54,17 +54,22 @@ int main(int argc, const char **argv)
     starting_rev = get_starting_rev();
 
     if (starting_rev == 29886) {
-	 std::string git_sync_1 = std::string("cd cvs_git && cat ../custom/r29886_cvs_svn_trunk_sync.fi | git fast-import && cd ..");
+	std::string git_sync_1 = std::string("cd cvs_git && cat ../custom/r29886_cvs_svn_trunk_sync.fi | git fast-import && cd ..");
 	/* Apply sync fast imports */
-	 if (std::system(git_sync_1.c_str())) {
-	     std::cerr << "Initial trunk sync failed!\n";
-	     exit(1);
-	 }
-	 std::string git_sync_2 = std::string("cd cvs_git && cat ../custom/r29886_cvs_svn_rel-5-1-branch_sync.fi | git fast-import && cd ..");
-    	 if (std::system(git_sync_2.c_str())) {
-	     std::cerr << "Initial rel-5-1-branch sync failed!\n";
-	     exit(1);
-	 }
+	if (std::system(git_sync_1.c_str())) {
+	    std::cerr << "Initial trunk sync failed!\n";
+	    exit(1);
+	}
+	std::string git_sync_2 = std::string("cd cvs_git && cat ../custom/r29886_cvs_svn_rel-5-1-branch_sync.fi | git fast-import && cd ..");
+	if (std::system(git_sync_2.c_str())) {
+	    std::cerr << "Initial rel-5-1-branch sync failed!\n";
+	    exit(1);
+	}
+	std::string git_sync_3 = std::string("cd cvs_git && cat ../custom/r29886_cjohnson_mac_hack.fi | git fast-import && cd ..");
+	if (std::system(git_sync_3.c_str())) {
+	    std::cerr << "Initial mac-hack sync failed!\n";
+	    exit(1);
+	}
     }
 
 

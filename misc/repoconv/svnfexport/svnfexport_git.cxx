@@ -643,9 +643,6 @@ std::string git_sha1(std::ifstream &infile, struct svn_node *n)
 int
 write_gitignore_blob(std::ofstream &outfile, long int rev)
 {
-    if (rev == 29895) {
-	std::cout << "got something\n";
-    }
     struct stat sbuffer;
     std::string gi_file = std::string("gitignore/") + std::to_string(rev) + std::string(".gitignore");
     if (stat(gi_file.c_str(), &sbuffer)) {
@@ -1096,6 +1093,23 @@ void branch_delete_commit(struct svn_revision &rev, std::string &rbranch)
     }
     if (rbranch == std::string("zlib")) {
 	wbranch = std::string("zlib_1_0_4");
+    }
+    if (rbranch == std::string("unlabeled-1.1.1")) return;
+    if (rbranch == std::string("unlabeled-1.2.1")) return;
+    if (rbranch == std::string("unlabeled-11.1.1")) return;
+    if (rbranch == std::string("unlabeled-2.12.1")) return;
+    if (rbranch == std::string("unlabeled-2.6.1")) return;
+    if (rbranch == std::string("unlabeled-9.1.1")) return;
+    if (rbranch == std::string("unlabeled-9.10.1")) return;
+    if (rbranch == std::string("unlabeled-9.12.1")) return;
+    if (rbranch == std::string("unlabeled-9.2.1")) return;
+    if (rbranch == std::string("unlabeled-9.3.1")) return;
+    if (rbranch == std::string("unlabeled-9.9.1")) return;
+    if (rbranch == std::string("unlabeled-1.1.2")) {
+	wbranch = std::string("master-UNNAMED-BRANCH");
+    }
+    if (rbranch == std::string("unlabeled-9.7.1")) {
+	wbranch = std::string("cjohnson-mac-hack");
     }
 
     std::string cfi_file = std::to_string(rev.revision_number) + std::string("-bdelete.fi");
