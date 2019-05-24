@@ -151,8 +151,8 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_State *s_cdt, std::map<const ON_Surface *, d
     }
 
     // Find for this face, find the minimum and maximum edge polyline segment lengths
-    double max_edge_seg = 0.0;
-    double min_edge_seg = DBL_MAX;
+    (*s_cdt->max_edge_seg_len)[face.m_face_index] = 0.0;
+    (*s_cdt->min_edge_seg_len)[face.m_face_index] = DBL_MAX;
     for (int li = 0; li < loop_cnt; li++) {
 	int num_loop_points = brep_loop_points[li].Count();
 	if (num_loop_points > 1) {
@@ -162,11 +162,11 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_State *s_cdt, std::map<const ON_Surface *, d
 		p2 = p1;
 		p1 = (brep_loop_points[li])[i].p3d;
 		fastf_t dist = p1->DistanceTo(*p2);
-		if (dist > max_edge_seg) {
-		    max_edge_seg = dist;
+		if (dist > (*s_cdt->max_edge_seg_len)[face.m_face_index]) {
+		    (*s_cdt->max_edge_seg_len)[face.m_face_index] = dist;
 		}
-		if ((dist > SMALL_FASTF) && (dist < min_edge_seg))  {
-		    min_edge_seg = dist;
+		if ((dist > SMALL_FASTF) && (dist < (*s_cdt->min_edge_seg_len)[face.m_face_index]))  {
+		    (*s_cdt->min_edge_seg_len)[face.m_face_index] = dist;
 		}
 	    }
 	}
@@ -230,7 +230,7 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_State *s_cdt, std::map<const ON_Surface *, d
 
     // Sample the surface, independent of the trimming curves, to get points that
     // will tie the mesh to the interior surface.
-    getSurfacePoints(s_cdt, face, on_surf_points, min_edge_seg, max_edge_seg);
+    getSurfacePoints(s_cdt, face, on_surf_points);
 
     // Strip out points from the surface that are on the trimming curves.  Trim
     // points require special handling for watertightness and introducing them

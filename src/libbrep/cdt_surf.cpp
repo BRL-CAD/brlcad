@@ -554,8 +554,7 @@ _cdt_get_uv_edge_3d_len(struct cdt_surf_info *sinfo, int c1, int c2)
 void
 getSurfacePoints(struct ON_Brep_CDT_State *s_cdt,
 	         const ON_BrepFace &face,
-		 ON_2dPointArray &on_surf_points,
-		 fastf_t min_edge, fastf_t max_edge)
+		 ON_2dPointArray &on_surf_points)
 {
     double surface_width, surface_height;
 
@@ -595,8 +594,8 @@ getSurfacePoints(struct ON_Brep_CDT_State *s_cdt,
 	sinfo.v_lower_3dlen = _cdt_get_uv_edge_3d_len(&sinfo, 0, 1);
 	sinfo.v_mid_3dlen   = _cdt_get_uv_edge_3d_len(&sinfo, 1, 1);
 	sinfo.v_upper_3dlen = _cdt_get_uv_edge_3d_len(&sinfo, 2, 1);
-	sinfo.min_edge = min_edge;
-	sinfo.max_edge = max_edge;
+	sinfo.min_edge = (*s_cdt->min_edge_seg_len)[face.m_face_index];
+	sinfo.max_edge = (*s_cdt->max_edge_seg_len)[face.m_face_index];
 
 	// may be a smaller trimmed subset of surface so worth getting
 	// face boundary

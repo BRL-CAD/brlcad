@@ -96,6 +96,8 @@ struct ON_Brep_CDT_State {
     fastf_t dist;
 
     /* 3D data */
+    std::map<int, double> *min_edge_seg_len;
+    std::map<int, double> *max_edge_seg_len;
     std::vector<ON_3dPoint *> *w3dpnts;
     std::vector<ON_3dPoint *> *w3dnorms;
 
@@ -172,8 +174,7 @@ getEdgePoints(
 void
 getSurfacePoints(struct ON_Brep_CDT_State *s_cdt,
 	         const ON_BrepFace &face,
-		 ON_2dPointArray &on_surf_points,
-		 fastf_t min_edge, fastf_t max_edge);
+		 ON_2dPointArray &on_surf_points);
 
 void
 plot_polyline(std::vector<p2t::Point *> *pnts, const char *filename);

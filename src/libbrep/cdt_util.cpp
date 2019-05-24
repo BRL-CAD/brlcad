@@ -166,6 +166,9 @@ ON_Brep_CDT_Create(void *bv)
     cdt->orig_brep = brep;
     cdt->brep = NULL;
 
+    cdt->min_edge_seg_len = new std::map<int, double>;
+    cdt->max_edge_seg_len = new std::map<int, double>;
+
     cdt->w3dpnts = new std::vector<ON_3dPoint *>;
     cdt->vert_pnts = new std::map<int, ON_3dPoint *>;
     cdt->w3dnorms = new std::vector<ON_3dPoint *>;
@@ -234,6 +237,9 @@ ON_Brep_CDT_Destroy(struct ON_Brep_CDT_State *s_cdt)
 	}
     }
     bu_free(s_cdt->on2_to_on3_maps, "degen pnts");
+
+    delete s_cdt->min_edge_seg_len;
+    delete s_cdt->max_edge_seg_len;
 
     delete s_cdt->w3dpnts;
     delete s_cdt->vert_pnts;
