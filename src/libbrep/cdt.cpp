@@ -494,16 +494,48 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 		ON_BrepTrim *trim1 = edge.Trim(0);
 		ON_BrepTrim *trim2 = edge.Trim(1);
 
-		if (trim1->m_type == ON_BrepTrim::singular || trim2->m_type == ON_BrepTrim::singular) {
-		    continue;
+		if (trim1->m_type != ON_BrepTrim::singular) {
+		    trim1_norm = calc_trim_vnorm(v, trim1);
+		}
+		if (trim2->m_type != ON_BrepTrim::singular) {
+		    trim2_norm = calc_trim_vnorm(v, trim2);
 		}
 
-		trim1_norm = calc_trim_vnorm(v, trim1);
-		trim2_norm = calc_trim_vnorm(v, trim2);
+		// If one of the normals is unset and the other comes from a plane, use it
+		if (trim1_norm == ON_3dVector::UnsetVector && trim2_norm != ON_3dVector::UnsetVector) {
+		    const ON_Surface *s2 = trim2->SurfaceOf();
+		    if (!s2->IsPlanar(NULL, ON_ZERO_TOLERANCE)) {
+			continue;
+		    }
+		    trim1_norm = trim2_norm;
+		}
+		if (trim1_norm != ON_3dVector::UnsetVector && trim2_norm == ON_3dVector::UnsetVector) {
+		    const ON_Surface *s1 = trim1->SurfaceOf();
+		    if (!s1->IsPlanar(NULL, ON_ZERO_TOLERANCE)) {
+			continue;
+		    }
+		    trim2_norm = trim1_norm;
+		}
 
-
-		if (trim1_norm == ON_3dVector::UnsetVector || trim2_norm == ON_3dVector::UnsetVector) {
-		    continue;
+		// If we have disagreeing normals and one of them is from a planar surface, go
+		// with that one
+		if (NEAR_EQUAL(ON_DotProduct(trim1_norm, trim2_norm), -1, VUNITIZE_TOL)) {
+		    const ON_Surface *s1 = trim1->SurfaceOf();
+		    const ON_Surface *s2 = trim2->SurfaceOf();
+		    if (!s1->IsPlanar(NULL, ON_ZERO_TOLERANCE) && !s2->IsPlanar(NULL, ON_ZERO_TOLERANCE)) {
+			// Normals severely disagree, no planar surface to fall back on - can't use this
+			continue;
+		    }
+		    if (s1->IsPlanar(NULL, ON_ZERO_TOLERANCE) && s2->IsPlanar(NULL, ON_ZERO_TOLERANCE)) {
+			// Two disagreeing planes - can't use this
+			continue;
+		    }
+		    if (s1->IsPlanar(NULL, ON_ZERO_TOLERANCE)) {
+			trim2_norm = trim1_norm;
+		    }
+		    if (s2->IsPlanar(NULL, ON_ZERO_TOLERANCE)) {
+			trim1_norm = trim2_norm;
+		    }
 		}
 
 		// Stash normals coming from non-singular trims at vertices for faces.  If a singular trim
