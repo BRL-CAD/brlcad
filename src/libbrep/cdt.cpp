@@ -920,6 +920,20 @@ int ON_Brep_CDT_VList(
    return 0;
 }
 
+static ON_3dVector
+p2tTri_Normal(p2t::Triangle *t, std::map<p2t::Point *, ON_3dPoint *> *pointmap)
+{
+    ON_3dPoint *p1 = (*pointmap)[t->GetPoint(0)];
+    ON_3dPoint *p2 = (*pointmap)[t->GetPoint(1)];
+    ON_3dPoint *p3 = (*pointmap)[t->GetPoint(2)];
+
+    ON_3dVector e1 = *p2 - *p1;
+    ON_3dVector e2 = *p3 - *p1;
+    ON_3dVector tdir = ON_CrossProduct(e1, e2);
+    tdir.Unitize();
+    return tdir;
+}
+
 // Generate a BoT with normals.
 int
 ON_Brep_CDT_Mesh(
@@ -960,6 +974,7 @@ ON_Brep_CDT_Mesh(
 	triangle_cnt += tris.size();
 	for (size_t i = 0; i < tris.size(); i++) {
 	    p2t::Triangle *t = tris[i];
+	    ON_3dVector tdir = p2tTri_Normal(t, pointmap);
 	    tri_brep_face[t] = face_index;
 	    ON_3dPoint *tpnts[3] = {NULL, NULL, NULL};
 	    for (size_t j = 0; j < 3; j++) {
@@ -1021,6 +1036,19 @@ ON_Brep_CDT_Mesh(
 			}
 		    }
 		    tpnts[j] = op;
+
+		    // TODO - validate onorm against triangle face
+		    if (tdir.Length() > 0 && ON_DotProduct(*onorm, tdir) < 0) {
+			ON_3dPoint tri_cent = (*(*pointmap)[t->GetPoint(0)] + *(*pointmap)[t->GetPoint(1)] + *(*pointmap)[t->GetPoint(2)])/3;
+			bu_log("Normal in wrong direction:\n");
+			bu_log("Tri p1: %f %f %f\n", (*pointmap)[t->GetPoint(0)]->x, (*pointmap)[t->GetPoint(0)]->y, (*pointmap)[t->GetPoint(0)]->z);
+			bu_log("Tri p2: %f %f %f\n", (*pointmap)[t->GetPoint(1)]->x, (*pointmap)[t->GetPoint(1)]->y, (*pointmap)[t->GetPoint(1)]->z);
+			bu_log("Tri p3: %f %f %f\n", (*pointmap)[t->GetPoint(2)]->x, (*pointmap)[t->GetPoint(2)]->y, (*pointmap)[t->GetPoint(2)]->z);
+			bu_log("Tri center: %f %f %f\n", tri_cent.x, tri_cent.y, tri_cent.z);
+			bu_log("Tri norm: %f %f %f\n", tdir.x, tdir.y, tdir.z);
+			bu_log("onorm: %f %f %f\n", onorm->x, onorm->y, onorm->z);
+		    }
+		    
 		} else {
 		    bu_log("Face %d: p2t face without proper point info...\n", face.m_face_index);
 		}
