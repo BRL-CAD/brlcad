@@ -139,6 +139,7 @@ struct brep_cdt_tol {
 struct cdt_surf_info {
     const ON_Surface *s;
     const ON_BrepFace *f;
+    ON_RTree *rt_trims;
     std::map<int, std::map<int,ON_3dPoint *>> *strim_pnts;
     std::map<int, std::map<int,ON_3dPoint *>> *strim_norms;
     double u1, u2, v1, v2;
@@ -174,7 +175,8 @@ getEdgePoints(
 void
 getSurfacePoints(struct ON_Brep_CDT_State *s_cdt,
 	         const ON_BrepFace &face,
-		 ON_2dPointArray &on_surf_points);
+		 ON_2dPointArray &on_surf_points,
+		 ON_RTree *rt_trims);
 
 void
 plot_polyline(std::vector<p2t::Point *> *pnts, const char *filename);

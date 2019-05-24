@@ -278,7 +278,7 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_State *s_cdt, std::map<const ON_Surface *, d
 
     // Sample the surface, independent of the trimming curves, to get points that
     // will tie the mesh to the interior surface.
-    getSurfacePoints(s_cdt, face, on_surf_points);
+    getSurfacePoints(s_cdt, face, on_surf_points, &rt_trims);
 
     // Strip out points from the surface that are on the trimming curves.  Trim
     // points require special handling for watertightness and introducing them

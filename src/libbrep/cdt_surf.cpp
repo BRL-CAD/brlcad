@@ -125,6 +125,26 @@ singular_trim_norm(struct cdt_surf_info *sinfo, fastf_t uc, fastf_t vc)
     return NULL;
 }
 
+/* If we've got trimming curves involved, we need to be more careful about respecting
+ * the min edge distance.
+ *
+ * TODO - rather than blanket assuming the min edge distance, we should go one
+ * better and find the min edge segment length for the involved edge segments.
+ * This approach generates too many unnecessary triangles and is actually a
+ * problem when a globally fine edge seg forces the surface to be fine at a
+ * course edge. */
+bool involves_trims(struct cdt_surf_info *sinfo, fastf_t u1, fastf_t u2, fastf_t v1, fastf_t v2)
+{
+    ON_SimpleArray<void*> results;
+    ON_2dPoint pmin(u1, v1);
+    ON_2dPoint pmax(u2, v2);
+    sinfo->rt_trims->Search2d((const double *) &pmin, (const double *) &pmax, results);
+    return (results.Count() > 0);
+}
+
+/* The "left" and "below" parameters tell this particular iteration of the subdivision
+ * which UV points should be stored.  This bookkeeping is done to avoid introducing
+ * duplicated points at shared subdivision edges. */
 static void
 getSurfacePoints(
 	         struct ON_Brep_CDT_State *s_cdt,
@@ -141,11 +161,9 @@ getSurfacePoints(
 		 bool below)
 {
     double ldfactor = 2.0;
+    int split_u = 0;
+    int split_v = 0;
     ON_2dPoint p2d(0.0, 0.0);
-    ON_3dPoint p[4] = {ON_3dPoint(), ON_3dPoint(), ON_3dPoint(), ON_3dPoint()};
-    ON_3dVector norm[4] = {ON_3dVector(), ON_3dVector(), ON_3dVector(), ON_3dVector()};
-    ON_3dPoint mid(0.0, 0.0, 0.0);
-    ON_3dVector norm_mid(0.0, 0.0, 0.0);
     fastf_t u = (u1 + u2) / 2.0;
     fastf_t v = (v1 + v2) / 2.0;
     fastf_t udist = u2 - u1;
@@ -153,131 +171,6 @@ getSurfacePoints(
 
     if ((udist < min_dist + ON_ZERO_TOLERANCE)
 	    || (vdist < min_dist + ON_ZERO_TOLERANCE)) {
-	return;
-    }
-
-    if (udist > ldfactor * vdist) {
-	int isteps = (int)(udist / vdist);
-	isteps = (int)(udist / vdist / ldfactor * 2.0);
-	fastf_t step = udist / (fastf_t) isteps;
-
-	//bu_log("split: udist > ldfactor * vdist\n");
-
-	fastf_t step_u;
-	for (int i = 1; i <= isteps; i++) {
-	    step_u = u1 + i * step;
-	    if ((below) && (i < isteps)) {
-		p2d.Set(step_u, v1);
-		on_surf_points.Append(p2d);
-	    }
-	    if (i == 1) {
-
-		// Check the distance between v1 and v2 at u1 && u1+step.
-		// If they're both less than threshold, skip
-		double est1 = vline_len_est(sinfo, u1, v1, v2);
-		double est2 = vline_len_est(sinfo, u1+step, v1, v2);
-		if (est1 < min_dist && est2 < min_dist) {
-		    //bu_log("Small estimates: %f, %f\n", est1, est2);
-		    continue;
-		}
-
-		getSurfacePoints(s_cdt, sinfo, u1, u1 + step, v1, v2, min_dist,
-			within_dist, cos_within_ang, on_surf_points, left,
-			below);
-	    } else if (i == isteps) {
-
-		// Check the distance between v1 and v2 at u2-step && u2
-		// If they're both less than threshold, skip
-		double est1 = vline_len_est(sinfo, u2-step, v1, v2);
-		double est2 = vline_len_est(sinfo, u2, v1, v2);
-		if (est1 < min_dist && est2 < min_dist) {
-		    //bu_log("Small estimates: %f, %f\n", est1, est2);
-		    continue;
-		}
-
-		getSurfacePoints(s_cdt, sinfo, u2 - step, u2, v1, v2, min_dist,
-			within_dist, cos_within_ang, on_surf_points, left,
-			below);
-	    } else {
-		// Check the distance between v1 and v2 at step_u - step and step_u
-		// If they're both less than threshold, skip
-		double est1 = vline_len_est(sinfo, step_u - step, v1, v2);
-		double est2 = vline_len_est(sinfo, step_u, v1, v2);
-		if (est1 < min_dist && est2 < min_dist) {
-		    //bu_log("Small estimates: %f, %f\n", est1, est2);
-		    continue;
-		}
-
-		getSurfacePoints(s_cdt, sinfo, step_u - step, step_u, v1, v2, min_dist, within_dist,
-			cos_within_ang, on_surf_points, left, below);
-	    }
-	    left = false;
-
-	    if (i < isteps) {
-		//top
-		p2d.Set(step_u, v2);
-		on_surf_points.Append(p2d);
-	    }
-	}
-	return;
-    }
-    if (vdist > ldfactor * udist) {
-	int isteps = (int)(vdist / udist);
-	isteps = (int)(vdist / udist / ldfactor * 2.0);
-	fastf_t step = vdist / (fastf_t) isteps;
-	fastf_t step_v;
-
-	//bu_log("split: vdist > ldfactor * udist\n");
-
-	for (int i = 1; i <= isteps; i++) {
-	    step_v = v1 + i * step;
-	    if ((left) && (i < isteps)) {
-		p2d.Set(u1, step_v);
-		on_surf_points.Append(p2d);
-	    }
-
-	    if (i == 1) {
-		double est1 = uline_len_est(sinfo, u1, u2, v1);
-		double est2 = uline_len_est(sinfo, u1, u2, v1 + step);
-		if (est1 < min_dist && est2 < min_dist) {
-		    //bu_log("Small estimates: %f, %f\n", est1, est2);
-		    continue;
-		}
-
-		getSurfacePoints(s_cdt, sinfo, u1, u2, v1, v1 + step, min_dist,
-			within_dist, cos_within_ang, on_surf_points, left,
-			below);
-	    } else if (i == isteps) {
-		double est1 = uline_len_est(sinfo, u1, u2, v2 - step);
-		double est2 = uline_len_est(sinfo, u1, u2, v2);
-		if (est1 < min_dist && est2 < min_dist) {
-		    //bu_log("Small estimates: %f, %f\n", est1, est2);
-		    continue;
-		}
-
-		getSurfacePoints(s_cdt, sinfo, u1, u2, v2 - step, v2, min_dist,
-			within_dist, cos_within_ang, on_surf_points, left,
-			below);
-	    } else {
-		double est1 = uline_len_est(sinfo, u1, u2, step_v - step);
-		double est2 = uline_len_est(sinfo, u1, u2, step_v);
-		if (est1 < min_dist && est2 < min_dist) {
-		    //bu_log("Small estimates: %f, %f\n", est1, est2);
-		    continue;
-		}
-
-		getSurfacePoints(s_cdt, sinfo, u1, u2, step_v - step, step_v, min_dist, within_dist,
-			cos_within_ang, on_surf_points, left, below);
-	    }
-
-	    below = false;
-
-	    if (i < isteps) {
-		//right
-		p2d.Set(u2, step_v);
-		on_surf_points.Append(p2d);
-	    }
-	}
 	return;
     }
 
@@ -296,115 +189,76 @@ getSurfacePoints(
 	return;
     }
 
-    if ((surface_EvNormal(sinfo->s, u1, v1, p[0], norm[0]))
-	    && (surface_EvNormal(sinfo->s, u2, v1, p[1], norm[1])) // for u
-	    && (surface_EvNormal(sinfo->s, u2, v2, p[2], norm[2]))
-	    && (surface_EvNormal(sinfo->s, u1, v2, p[3], norm[3]))
-	    && (surface_EvNormal(sinfo->s, u, v, mid, norm_mid))) {
-	double udot;
-	double vdot;
-	ON_Line line1(p[0], p[2]);
-	ON_Line line2(p[1], p[3]);
-	double dist = mid.DistanceTo(line1.ClosestPointTo(mid));
-	V_MAX(dist, mid.DistanceTo(line2.ClosestPointTo(mid)));
+    if (udist > ldfactor * vdist) {
+	split_u = 1;
+    }
 
+    if (vdist > ldfactor * udist) {
+	split_v = 1;
+    }
 
-	for (int i = 0; i < 4; i++) {
-	    fastf_t uc = (i == 0 || i == 3) ? u1 : u2;
-	    fastf_t vc = (i == 0 || i == 1) ? v1 : v2;
-	    ON_3dPoint *vnorm = singular_trim_norm(sinfo, uc, vc);
-	    if (vnorm && ON_DotProduct(*vnorm, norm_mid) > 0) {
-		//bu_log("vert norm %f %f %f works\n", vnorm->x, vnorm->y, vnorm->z);
-		norm[i] = *vnorm;
+    if (!split_u || !split_v) {
+	// Don't know if we're splitting in at least one direction - check if we're close
+	// enough to trims to need to worry about edges
+	if (involves_trims(sinfo, u1, u2, v1, v2)) {
+	    if (est1 > 2*(*s_cdt->min_edge_seg_len)[sinfo->f->m_face_index] || est2 > 2*(*s_cdt->min_edge_seg_len)[sinfo->f->m_face_index]) {
+		split_u = 1;
+	    }
+
+	    if (est3 > 2*(*s_cdt->min_edge_seg_len)[sinfo->f->m_face_index] || est4 > 2*(*s_cdt->min_edge_seg_len)[sinfo->f->m_face_index]) {
+		split_v = 1;
 	    }
 	}
-#if 0
-	for (int i = 0; i < 4; i++) {
-	    double nnm_dot = ON_DotProduct(norm[i], norm_mid);
-	    if ((nnm_dot < ON_ZERO_TOLERANCE) && (fabs(nnm_dot) > ON_ZERO_TOLERANCE)) {
+    }
+
+
+    if (!split_u || !split_v) {
+	// Don't know if we're splitting in at least one direction - check dot products
+	ON_3dPoint mid(0.0, 0.0, 0.0);
+	ON_3dVector norm_mid(0.0, 0.0, 0.0);
+	ON_3dPoint p[4] = {ON_3dPoint(), ON_3dPoint(), ON_3dPoint(), ON_3dPoint()};
+	ON_3dVector norm[4] = {ON_3dVector(), ON_3dVector(), ON_3dVector(), ON_3dVector()};
+	if ((surface_EvNormal(sinfo->s, u1, v1, p[0], norm[0]))
+		&& (surface_EvNormal(sinfo->s, u2, v1, p[1], norm[1])) // for u
+		&& (surface_EvNormal(sinfo->s, u2, v2, p[2], norm[2]))
+		&& (surface_EvNormal(sinfo->s, u1, v2, p[3], norm[3]))
+		&& (surface_EvNormal(sinfo->s, u, v, mid, norm_mid))) {
+	    double udot;
+	    double vdot;
+	    ON_Line line1(p[0], p[2]);
+	    ON_Line line2(p[1], p[3]);
+	    double dist = mid.DistanceTo(line1.ClosestPointTo(mid));
+	    V_MAX(dist, mid.DistanceTo(line2.ClosestPointTo(mid)));
+
+
+	    for (int i = 0; i < 4; i++) {
 		fastf_t uc = (i == 0 || i == 3) ? u1 : u2;
 		fastf_t vc = (i == 0 || i == 1) ? v1 : v2;
-		bu_log("norm[%d](%f %f %f) backwards at %d point %f,%f (%f %f %f)\n", i, norm[i].x, norm[i].y, norm[i].z, i, uc, vc, p[i].x, p[i].y, p[i].z);
 		ON_3dPoint *vnorm = singular_trim_norm(sinfo, uc, vc);
 		if (vnorm && ON_DotProduct(*vnorm, norm_mid) > 0) {
-		    bu_log("vert norm %f %f %f works\n", vnorm->x, vnorm->y, vnorm->z);
+		    //bu_log("vert norm %f %f %f works\n", vnorm->x, vnorm->y, vnorm->z);
 		    norm[i] = *vnorm;
-		} else {
-		    bu_log("no matching vert normal, problem...\n");
 		}
 	    }
-	}
-#endif
 
-	if (dist < min_dist + ON_ZERO_TOLERANCE) {
-	    return;
-	}
 
-	udot = (VNEAR_EQUAL(norm[0], norm[1], ON_ZERO_TOLERANCE)) ? 1.0 : norm[0] * norm[1];
-	vdot = (VNEAR_EQUAL(norm[0], norm[3], ON_ZERO_TOLERANCE)) ? 1.0 : norm[0] * norm[3];
-
-	if ((udot < cos_within_ang - ON_ZERO_TOLERANCE) && (vdot < cos_within_ang - ON_ZERO_TOLERANCE)) {
-	    //bu_log("split: both cos_within_ang\n");
-	    if (left) {
-		p2d.Set(u1, v);
-		on_surf_points.Append(p2d);
+	    if (dist < min_dist + ON_ZERO_TOLERANCE) {
+		return;
 	    }
-	    if (below) {
-		p2d.Set(u, v1);
-		on_surf_points.Append(p2d);
-	    }
-	    //center
-	    p2d.Set(u, v);
-	    on_surf_points.Append(p2d);
-	    //right
-	    p2d.Set(u2, v);
-	    on_surf_points.Append(p2d);
-	    //top
-	    p2d.Set(u, v2);
-	    on_surf_points.Append(p2d);
 
-	    getSurfacePoints(s_cdt, sinfo, u1, u, v1, v, min_dist, within_dist,
-		    cos_within_ang, on_surf_points, left, below);
-	    getSurfacePoints(s_cdt, sinfo, u1, u, v, v2, min_dist, within_dist,
-		    cos_within_ang, on_surf_points, left, false);
-	    getSurfacePoints(s_cdt, sinfo, u, u2, v1, v, min_dist, within_dist,
-		    cos_within_ang, on_surf_points, false, below);
-	    getSurfacePoints(s_cdt, sinfo, u, u2, v, v2, min_dist, within_dist,
-		    cos_within_ang, on_surf_points, false, false);
-	    return;
-	}
-	if (udot < cos_within_ang - ON_ZERO_TOLERANCE) {
-	    //bu_log("split: udot cos_within_ang\n");
-	    if (below) {
-		p2d.Set(u, v1);
-		on_surf_points.Append(p2d);
+	    udot = (VNEAR_EQUAL(norm[0], norm[1], ON_ZERO_TOLERANCE)) ? 1.0 : norm[0] * norm[1];
+	    vdot = (VNEAR_EQUAL(norm[0], norm[3], ON_ZERO_TOLERANCE)) ? 1.0 : norm[0] * norm[3];
+	    if (udot < cos_within_ang - ON_ZERO_TOLERANCE) {
+		split_u = 1;
 	    }
-	    //top
-	    p2d.Set(u, v2);
-	    on_surf_points.Append(p2d);
-	    getSurfacePoints(s_cdt, sinfo, u1, u, v1, v2, min_dist, within_dist,
-		    cos_within_ang, on_surf_points, left, below);
-	    getSurfacePoints(s_cdt, sinfo, u, u2, v1, v2, min_dist, within_dist,
-		    cos_within_ang, on_surf_points, false, below);
-	    return;
-	}
-	if (vdot < cos_within_ang - ON_ZERO_TOLERANCE) {
-	    //bu_log("split: vdot cos_within_ang\n");
-	    if (left) {
-		p2d.Set(u1, v);
-		on_surf_points.Append(p2d);
+	    if (vdot < cos_within_ang - ON_ZERO_TOLERANCE) {
+		split_v = 1;
 	    }
-	    //right
-	    p2d.Set(u2, v);
-	    on_surf_points.Append(p2d);
-
-	    getSurfacePoints(s_cdt, sinfo, u1, u2, v1, v, min_dist, within_dist,
-		    cos_within_ang, on_surf_points, left, below);
-	    getSurfacePoints(s_cdt, sinfo, u1, u2, v, v2, min_dist, within_dist,
-		    cos_within_ang, on_surf_points, left, false);
-	    return;
 	}
+    }
 
+    if (split_u && split_v) {
+	//bu_log("split: both cos_within_ang\n");
 	if (left) {
 	    p2d.Set(u1, v);
 	    on_surf_points.Append(p2d);
@@ -423,19 +277,65 @@ getSurfacePoints(
 	p2d.Set(u, v2);
 	on_surf_points.Append(p2d);
 
-	if (dist > within_dist + ON_ZERO_TOLERANCE) {
-	    //bu_log("split: dist(%f) > within_dist(%f)\n", dist, within_dist);
-
-	    getSurfacePoints(s_cdt, sinfo, u1, u, v1, v, min_dist, within_dist,
-		    cos_within_ang, on_surf_points, left, below);
-	    getSurfacePoints(s_cdt, sinfo, u1, u, v, v2, min_dist, within_dist,
-		    cos_within_ang, on_surf_points, left, false);
-	    getSurfacePoints(s_cdt, sinfo, u, u2, v1, v, min_dist, within_dist,
-		    cos_within_ang, on_surf_points, false, below);
-	    getSurfacePoints(s_cdt, sinfo, u, u2, v, v2, min_dist, within_dist,
-		    cos_within_ang, on_surf_points, false, false);
-	}
+	getSurfacePoints(s_cdt, sinfo, u1, u, v1, v, min_dist, within_dist,
+		cos_within_ang, on_surf_points, left, below);
+	getSurfacePoints(s_cdt, sinfo, u1, u, v, v2, min_dist, within_dist,
+		cos_within_ang, on_surf_points, left, false);
+	getSurfacePoints(s_cdt, sinfo, u, u2, v1, v, min_dist, within_dist,
+		cos_within_ang, on_surf_points, false, below);
+	getSurfacePoints(s_cdt, sinfo, u, u2, v, v2, min_dist, within_dist,
+		cos_within_ang, on_surf_points, false, false);
+	return;
     }
+    if (split_u) {
+	//bu_log("split: udot cos_within_ang\n");
+	if (below) {
+	    p2d.Set(u, v1);
+	    on_surf_points.Append(p2d);
+	}
+	//top
+	p2d.Set(u, v2);
+	on_surf_points.Append(p2d);
+	getSurfacePoints(s_cdt, sinfo, u1, u, v1, v2, min_dist, within_dist,
+		cos_within_ang, on_surf_points, left, below);
+	getSurfacePoints(s_cdt, sinfo, u, u2, v1, v2, min_dist, within_dist,
+		cos_within_ang, on_surf_points, false, below);
+	return;
+    }
+    if (split_v) {
+	//bu_log("split: vdot cos_within_ang\n");
+	if (left) {
+	    p2d.Set(u1, v);
+	    on_surf_points.Append(p2d);
+	}
+	//right
+	p2d.Set(u2, v);
+	on_surf_points.Append(p2d);
+
+	getSurfacePoints(s_cdt, sinfo, u1, u2, v1, v, min_dist, within_dist,
+		cos_within_ang, on_surf_points, left, below);
+	getSurfacePoints(s_cdt, sinfo, u1, u2, v, v2, min_dist, within_dist,
+		cos_within_ang, on_surf_points, left, false);
+	return;
+    }
+
+    if (left) {
+	p2d.Set(u1, v);
+	on_surf_points.Append(p2d);
+    }
+    if (below) {
+	p2d.Set(u, v1);
+	on_surf_points.Append(p2d);
+    }
+    //center
+    p2d.Set(u, v);
+    on_surf_points.Append(p2d);
+    //right
+    p2d.Set(u2, v);
+    on_surf_points.Append(p2d);
+    //top
+    p2d.Set(u, v2);
+    on_surf_points.Append(p2d);
 }
 
 
@@ -554,7 +454,9 @@ _cdt_get_uv_edge_3d_len(struct cdt_surf_info *sinfo, int c1, int c2)
 void
 getSurfacePoints(struct ON_Brep_CDT_State *s_cdt,
 	         const ON_BrepFace &face,
-		 ON_2dPointArray &on_surf_points)
+		 ON_2dPointArray &on_surf_points,
+		 ON_RTree *rt_trims
+		 )
 {
     double surface_width, surface_height;
 
@@ -579,6 +481,7 @@ getSurfacePoints(struct ON_Brep_CDT_State *s_cdt,
 	struct cdt_surf_info sinfo;
 	sinfo.s = s;
 	sinfo.f = &face;
+	sinfo.rt_trims = rt_trims;
 	sinfo.strim_pnts = s_cdt->strim_pnts;
 	sinfo.strim_norms = s_cdt->strim_norms;
 	double t1, t2;
