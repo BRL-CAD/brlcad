@@ -256,6 +256,8 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_State *s_cdt, std::map<const ON_Surface *, d
 	    polyline.clear();
 	}
     }
+    // Using this in surface calculations, so assign now
+    s_cdt->brep_face_loop_points[face.m_face_index] = brep_loop_points;
 
     // TODO - we may need to add 2D points on trims that the edges didn't know
     // about.  Since 3D points must be shared along edges and we're using
@@ -389,7 +391,6 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_State *s_cdt, std::map<const ON_Surface *, d
     s_cdt->tri_to_on3_maps[face_index] = pointmap;
     s_cdt->on3_to_tri_maps[face_index] = on3_to_tri;
     s_cdt->tri_to_on3_norm_maps[face_index] = normalmap;
-    s_cdt->brep_face_loop_points[face_index] = brep_loop_points;
 
     return 0;
 }

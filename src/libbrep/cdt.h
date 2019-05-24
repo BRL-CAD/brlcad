@@ -105,6 +105,9 @@ struct ON_Brep_CDT_State {
     std::map<int, ON_3dPoint *> *vert_avg_norms;
     std::map<int, std::map<int, std::set<ON_3dPoint *>>> *vert_face_norms;
 
+    /* loop points */
+    std::map<int, ON_SimpleArray<BrepTrimPoint> *> *face_loop_points;
+
     /* singular trim info */
     std::map<int, std::map<int,ON_3dPoint *>> *strim_pnts;
     std::map<int, std::map<int,ON_3dPoint *>> *strim_norms;

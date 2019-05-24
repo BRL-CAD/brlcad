@@ -133,13 +133,55 @@ singular_trim_norm(struct cdt_surf_info *sinfo, fastf_t uc, fastf_t vc)
  * This approach generates too many unnecessary triangles and is actually a
  * problem when a globally fine edge seg forces the surface to be fine at a
  * course edge. */
-bool involves_trims(struct cdt_surf_info *sinfo, fastf_t u1, fastf_t u2, fastf_t v1, fastf_t v2)
+bool involves_trims(double *min_edge, struct ON_Brep_CDT_State *s_cdt, struct cdt_surf_info *sinfo, fastf_t u1, fastf_t u2, fastf_t v1, fastf_t v2)
 {
+    bool ret = false;
     ON_SimpleArray<void*> results;
     ON_2dPoint pmin(u1, v1);
     ON_2dPoint pmax(u2, v2);
     sinfo->rt_trims->Search2d((const double *) &pmin, (const double *) &pmax, results);
-    return (results.Count() > 0);
+    ret = (results.Count() > 0);
+    if (!min_edge) {
+	return ret;
+    }
+
+    if (results.Count() > 0) {
+	double min_edge_dist = DBL_MAX;
+	ON_BoundingBox uvbb(ON_2dPoint(u1,v1),ON_2dPoint(u2,v2));
+
+	ON_SimpleArray<BrepTrimPoint> *brep_loop_points = s_cdt->brep_face_loop_points[sinfo->f->m_face_index];
+	if (!brep_loop_points) {
+	    (*min_edge) = min_edge_dist;
+	    return ret;
+	}
+	for (int li = 0; li < sinfo->f->LoopCount(); li++) {
+	    int num_loop_points = brep_loop_points[li].Count();
+	    if (num_loop_points > 1) {
+		ON_3dPoint *p1 = (brep_loop_points[li])[0].p3d;
+		ON_3dPoint *p2 = NULL;
+		const ON_2dPoint *p2d1 = &(brep_loop_points[li])[0].p2d;
+		const ON_2dPoint *p2d2 = NULL;
+		for (int i = 1; i < num_loop_points; i++) {
+		    p2 = p1;
+		    p1 = (brep_loop_points[li])[i].p3d;
+		    p2d2 = p2d1;
+		    p2d1 = &(brep_loop_points[li])[i].p2d;
+		    // Overlaps bbox? 
+		    if (uvbb.IsPointIn(*p2d1, false) || uvbb.IsPointIn(*p2d2, false)) {
+			fastf_t dist = p1->DistanceTo(*p2);
+			if ((dist > SMALL_FASTF) && (dist < min_edge_dist))  {
+			    min_edge_dist = dist;
+			}
+		    }
+		}
+	    }
+	}
+
+	//bu_log("Face %d: %f\n", sinfo->f->m_face_index, min_edge_dist);
+	(*min_edge) = min_edge_dist;
+    }
+
+    return ret;
 }
 
 /* The "left" and "below" parameters tell this particular iteration of the subdivision
@@ -200,12 +242,13 @@ getSurfacePoints(
     if (!split_u || !split_v) {
 	// Don't know if we're splitting in at least one direction - check if we're close
 	// enough to trims to need to worry about edges
-	if (involves_trims(sinfo, u1, u2, v1, v2)) {
-	    if (est1 > 2*(*s_cdt->min_edge_seg_len)[sinfo->f->m_face_index] || est2 > 2*(*s_cdt->min_edge_seg_len)[sinfo->f->m_face_index]) {
+	double min_edge_len;
+	if (involves_trims(&min_edge_len, s_cdt, sinfo, u1, u2, v1, v2)) {
+	    if (est1 > 2*min_edge_len || est2 > 2*min_edge_len) {
 		split_u = 1;
 	    }
 
-	    if (est3 > 2*(*s_cdt->min_edge_seg_len)[sinfo->f->m_face_index] || est4 > 2*(*s_cdt->min_edge_seg_len)[sinfo->f->m_face_index]) {
+	    if (est3 > 2*min_edge_len || est4 > 2*min_edge_len) {
 		split_v = 1;
 	    }
 	}
