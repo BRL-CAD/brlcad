@@ -49,7 +49,7 @@ validate_face_normals(
 	struct ON_Brep_CDT_State *s_cdt,
 	std::vector<p2t::Triangle*> *tris,
 	std::set<p2t::Triangle*> *tris_degen,
-	int face_index) 
+	int face_index)
 {
     std::map<p2t::Point *, ON_3dPoint *> *pointmap = s_cdt->tri_to_on3_maps[face_index];
     std::map<p2t::Point *, ON_3dPoint *> *normalmap = s_cdt->tri_to_on3_norm_maps[face_index];
@@ -66,7 +66,7 @@ validate_face_normals(
 	    ON_3dPoint *onorm = (*normalmap)[p];
 	    if (tdir.Length() > 0 && ON_DotProduct(*onorm, tdir) < 0) {
 		ON_3dPoint tri_cent = (*(*pointmap)[t->GetPoint(0)] + *(*pointmap)[t->GetPoint(1)] + *(*pointmap)[t->GetPoint(2)])/3;
-		bu_log("Normal in wrong direction:\n");
+		bu_log("Face %d: normal in wrong direction:\n", face_index);
 		bu_log("Tri p1: %f %f %f\n", (*pointmap)[t->GetPoint(0)]->x, (*pointmap)[t->GetPoint(0)]->y, (*pointmap)[t->GetPoint(0)]->z);
 		bu_log("Tri p2: %f %f %f\n", (*pointmap)[t->GetPoint(1)]->x, (*pointmap)[t->GetPoint(1)]->y, (*pointmap)[t->GetPoint(1)]->z);
 		bu_log("Tri p3: %f %f %f\n", (*pointmap)[t->GetPoint(2)]->x, (*pointmap)[t->GetPoint(2)]->y, (*pointmap)[t->GetPoint(2)]->z);
