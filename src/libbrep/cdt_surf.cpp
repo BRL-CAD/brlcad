@@ -647,6 +647,38 @@ getSurfacePoints(struct ON_Brep_CDT_State *s_cdt,
 	} else {
 	    cos_within_ang = cos(ON_PI / 2.0);
 	}
+
+
+
+        /**
+	 * Sample portions of the surface to collect sufficient points
+	 * to capture the surface shape according to the settings
+	 *
+         * M = max
+         * m = min
+         * o = mid
+         *
+         *    umvM------uovM-------uMvM
+         *     |          |         |
+         *     |          |         |
+         *     |          |         |
+         *    umvo------uovo-------uMvo
+         *     |          |         |
+         *     |          |         |
+         *     |          |         |
+         *    umvm------uovm-------uMvm
+         *
+         * left bottom  = umvm
+         * left midy    = umvo
+         * left top     = umvM
+         * midx bottom  = uovm
+         * midx midy    = uovo
+         * midx top     = uovM
+         * right bottom = uMvm
+         * right midy   = uMvo
+         * right top    = uMvM
+         */
+
 	ON_BOOL32 uclosed = s->IsClosed(0);
 	ON_BOOL32 vclosed = s->IsClosed(1);
 	if (uclosed && vclosed) {
@@ -654,91 +686,7 @@ getSurfacePoints(struct ON_Brep_CDT_State *s_cdt,
 	    double midx = (min.x + max.x) / 2.0;
 	    double midy = (min.y + max.y) / 2.0;
 
-	    //bottom left
-	    p.Set(min.x, min.y);
-	    on_surf_points.Append(p);
-
-	    //midy left
-	    p.Set(min.x, midy);
-	    on_surf_points.Append(p);
-
-	    getSurfacePoints(s_cdt, &sinfo, min.x, midx, min.y, midy, min_dist, within_dist,
-			     cos_within_ang, on_surf_points, true, true);
-
-	    //bottom midx
-	    p.Set(midx, min.y);
-	    on_surf_points.Append(p);
-
-	    //midx midy
-	    p.Set(midx, midy);
-	    on_surf_points.Append(p);
-
-	    getSurfacePoints(s_cdt, &sinfo, midx, max.x, min.y, midy, min_dist, within_dist,
-			     cos_within_ang, on_surf_points, false, true);
-
-	    //bottom right
-	    p.Set(max.x, min.y);
-	    on_surf_points.Append(p);
-
-	    //right  midy
-	    p.Set(max.x, midy);
-	    on_surf_points.Append(p);
-
-	    //top left
-	    p.Set(min.x, max.y);
-	    on_surf_points.Append(p);
-
-	    getSurfacePoints(s_cdt, &sinfo, min.x, midx, midy, max.y, min_dist, within_dist,
-			     cos_within_ang, on_surf_points, true, false);
-
-	    //top midx
-	    p.Set(midx, max.y);
-	    on_surf_points.Append(p);
-
-	    getSurfacePoints(s_cdt, &sinfo, midx, max.x, midy, max.y, min_dist, within_dist,
-			     cos_within_ang, on_surf_points, false, false);
-
-	    //top left
-	    p.Set(max.x, max.y);
-	    on_surf_points.Append(p);
-	} else if (uclosed) {
-	    ON_2dPoint p(0.0, 0.0);
-	    double midx = (min.x + max.x) / 2.0;
-
-	    //bottom left
-	    p.Set(min.x, min.y);
-	    on_surf_points.Append(p);
-
-	    //top left
-	    p.Set(min.x, max.y);
-	    on_surf_points.Append(p);
-
-	    getSurfacePoints(s_cdt, &sinfo, min.x, midx, min.y, max.y, min_dist,
-			     within_dist, cos_within_ang, on_surf_points, true, true);
-
-	    //bottom midx
-	    p.Set(midx, min.y);
-	    on_surf_points.Append(p);
-
-	    //top midx
-	    p.Set(midx, max.y);
-	    on_surf_points.Append(p);
-
-	    getSurfacePoints(s_cdt, &sinfo, midx, max.x, min.y, max.y, min_dist,
-			     within_dist, cos_within_ang, on_surf_points, false, true);
-
-	    //bottom right
-	    p.Set(max.x, min.y);
-	    on_surf_points.Append(p);
-
-	    //top right
-	    p.Set(max.x, max.y);
-	    on_surf_points.Append(p);
-	} else if (vclosed) {
-	    ON_2dPoint p(0.0, 0.0);
-	    double midy = (min.y + max.y) / 2.0;
-
-	    //bottom left
+	    //left bottom
 	    p.Set(min.x, min.y);
 	    on_surf_points.Append(p);
 
@@ -746,10 +694,44 @@ getSurfacePoints(struct ON_Brep_CDT_State *s_cdt,
 	    p.Set(min.x, midy);
 	    on_surf_points.Append(p);
 
-	    getSurfacePoints(s_cdt, &sinfo, min.x, max.x, min.y, midy, min_dist,
-			     within_dist, cos_within_ang, on_surf_points, true, true);
+            /*
+             *     #--------------------#
+             *     |          |         |
+             *     |          |         |
+             *     |          |         |
+             *    umvo------uovo--------#
+             *     |          |         |
+             *     |          |         |
+             *     |          |         |
+             *    umvm------uovm--------#
+             */
+	    getSurfacePoints(s_cdt, &sinfo, min.x, midx, min.y, midy, min_dist, within_dist,
+			     cos_within_ang, on_surf_points, true, true);
 
-	    //bottom right
+	    //midx bottom
+	    p.Set(midx, min.y);
+	    on_surf_points.Append(p);
+
+	    //midx midy
+	    p.Set(midx, midy);
+	    on_surf_points.Append(p);
+
+
+           /*
+            *     #----------#---------#
+            *     |          |         |
+            *     |          |         |
+            *     |          |         |
+            *     #--------uovo-------uMvo
+            *     |          |         |
+            *     |          |         |
+            *     |          |         |
+            *     #--------uovm-------uMvm
+            */
+	    getSurfacePoints(s_cdt, &sinfo, midx, max.x, min.y, midy, min_dist, within_dist,
+			     cos_within_ang, on_surf_points, false, true);
+
+	    //right bottom
 	    p.Set(max.x, min.y);
 	    on_surf_points.Append(p);
 
@@ -757,35 +739,188 @@ getSurfacePoints(struct ON_Brep_CDT_State *s_cdt,
 	    p.Set(max.x, midy);
 	    on_surf_points.Append(p);
 
-	    getSurfacePoints(s_cdt, &sinfo, min.x, max.x, midy, max.y, min_dist,
-			     within_dist, cos_within_ang, on_surf_points, true, false);
-
-	    // top left
+	    //left top
 	    p.Set(min.x, max.y);
 	    on_surf_points.Append(p);
 
-	    //top right
+           /*
+            *    umvM------uovM--------#
+            *     |          |         |
+            *     |          |         |
+            *     |          |         |
+            *    umvo------uovo--------#
+            *     |          |         |
+            *     |          |         |
+            *     |          |         |
+            *     #----------#---------#
+            */
+	    getSurfacePoints(s_cdt, &sinfo, min.x, midx, midy, max.y, min_dist, within_dist,
+			     cos_within_ang, on_surf_points, true, false);
+
+	    //midx top
+	    p.Set(midx, max.y);
+	    on_surf_points.Append(p);
+
+           /*
+            *     #--------uovM------ uMvM
+            *     |          |         |
+            *     |          |         |
+            *     |          |         |
+            *     #--------uovo-------uMvo
+            *     |          |         |
+            *     |          |         |
+            *     |          |         |
+            *     #----------#---------#
+            */
+	    getSurfacePoints(s_cdt, &sinfo, midx, max.x, midy, max.y, min_dist, within_dist,
+			     cos_within_ang, on_surf_points, false, false);
+
+	    //left top
+	    p.Set(max.x, max.y);
+	    on_surf_points.Append(p);
+
+	} else if (uclosed) {
+	    ON_2dPoint p(0.0, 0.0);
+	    double midx = (min.x + max.x) / 2.0;
+
+	    //left bottom
+	    p.Set(min.x, min.y);
+	    on_surf_points.Append(p);
+
+	    //left top
+	    p.Set(min.x, max.y);
+	    on_surf_points.Append(p);
+
+           /*
+            *    umvM------uovM--------#
+            *     |          |         |
+            *     |          |         |
+            *     |          |         |
+            *     #----------#---------#
+            *     |          |         |
+            *     |          |         |
+            *     |          |         |
+            *    umvm------uovm--------#
+            */
+	    getSurfacePoints(s_cdt, &sinfo, min.x, midx, min.y, max.y, min_dist,
+			     within_dist, cos_within_ang, on_surf_points, true, true);
+
+	    //midx bottom
+	    p.Set(midx, min.y);
+	    on_surf_points.Append(p);
+
+	    //midx top
+	    p.Set(midx, max.y);
+	    on_surf_points.Append(p);
+
+ 	   /*
+            *     #--------uovM------ uMvM
+            *     |          |         |
+            *     |          |         |
+            *     |          |         |
+            *     #----------#---------#
+            *     |          |         |
+            *     |          |         |
+            *     |          |         |
+            *     #--------uovm-------uMvm
+            */
+	    getSurfacePoints(s_cdt, &sinfo, midx, max.x, min.y, max.y, min_dist,
+			     within_dist, cos_within_ang, on_surf_points, false, true);
+
+	    //right bottom
+	    p.Set(max.x, min.y);
+	    on_surf_points.Append(p);
+
+	    //right top
+	    p.Set(max.x, max.y);
+	    on_surf_points.Append(p);
+
+	} else if (vclosed) {
+
+	    ON_2dPoint p(0.0, 0.0);
+	    double midy = (min.y + max.y) / 2.0;
+
+	    //left bottom
+	    p.Set(min.x, min.y);
+	    on_surf_points.Append(p);
+
+	    //midy left
+	    p.Set(min.x, midy);
+	    on_surf_points.Append(p);
+
+ 	   /*
+            *     #----------#---------#
+            *     |          |         |
+            *     |          |         |
+            *     |          |         |
+            *    umvo--------#--------uMvo
+            *     |          |         |
+            *     |          |         |
+            *     |          |         |
+            *    umvm--------#--------uMvm
+            */
+	    getSurfacePoints(s_cdt, &sinfo, min.x, max.x, min.y, midy, min_dist,
+			     within_dist, cos_within_ang, on_surf_points, true, true);
+
+	    //right bottom
+	    p.Set(max.x, min.y);
+	    on_surf_points.Append(p);
+
+	    //midy right
+	    p.Set(max.x, midy);
+	    on_surf_points.Append(p);
+
+           /*
+            *    umvM--------#------- uMvM
+            *     |          |         |
+            *     |          |         |
+            *     |          |         |
+            *    umvo--------#--------uMvo
+            *     |          |         |
+            *     |          |         |
+            *     |          |         |
+            *     #----------#---------#
+            */
+	    getSurfacePoints(s_cdt, &sinfo, min.x, max.x, midy, max.y, min_dist,
+			     within_dist, cos_within_ang, on_surf_points, true, false);
+
+	    //left top
+	    p.Set(min.x, max.y);
+	    on_surf_points.Append(p);
+
+	    //right top
 	    p.Set(max.x, max.y);
 	    on_surf_points.Append(p);
 	} else {
 	    ON_2dPoint p(0.0, 0.0);
 
-	    //bottom left
+	    //left bottom
 	    p.Set(min.x, min.y);
 	    on_surf_points.Append(p);
 
-	    //top left
+	    //left top
 	    p.Set(min.x, max.y);
 	    on_surf_points.Append(p);
 
+           /*
+            *    umvM--------#------- uMvM
+            *     |          |         |
+            *     |          |         |
+            *     |          |         |
+            *     #----------#---------#
+            *     |          |         |
+            *     |          |         |
+            *     |          |         |
+            *    umvm--------#--------uMvm
+            */
 	    getSurfacePoints(s_cdt, &sinfo, min.x, max.x, min.y, max.y, min_dist,
 			     within_dist, cos_within_ang, on_surf_points, true, true);
 
-	    //bottom right
+	    //right bottom
 	    p.Set(max.x, min.y);
 	    on_surf_points.Append(p);
 
-	    //top right
+	    //right top
 	    p.Set(max.x, max.y);
 	    on_surf_points.Append(p);
 	}
