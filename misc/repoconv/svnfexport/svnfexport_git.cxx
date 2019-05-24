@@ -25,6 +25,7 @@ load_branches_list()
 	all_git_branches.push_back(std::string("bobWinPort"));
 	all_git_branches.push_back(std::string("bobWinPort-20051223-freeze"));
 	all_git_branches.push_back(std::string("brlcad_5_1_alpha_patch"));
+	all_git_branches.push_back(std::string("cjohnson-mac-hack"));
 	all_git_branches.push_back(std::string("ctj-4-5-post"));
 	all_git_branches.push_back(std::string("ctj-4-5-pre"));
 	all_git_branches.push_back(std::string("hartley-6-0-post"));
