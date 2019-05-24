@@ -121,6 +121,51 @@ read_git_info()
     infile.close();
 }
 
+void write_note(long int rev, std::string gsha1, long int commit_time)
+{
+    std::string fi_file = std::to_string(rev) + std::string("-note.fi");
+    std::ofstream outfile(fi_file.c_str(), std::ios::out | std::ios::binary);
+    std::string svn_id_str = std::string("svn:revision:") + std::to_string(rev);
+
+    outfile << "blob" << "\n";
+    outfile << "mark :1" << "\n";
+    outfile << "data " << svn_id_str.length() << "\n";
+    outfile << svn_id_str << "\n";
+    outfile << "commit refs/notes/commits" << "\n";
+    outfile << "committer CVS_SVN_GIT Mapper <cvs_svn_git@brlcad.org> " <<  commit_time << " +0000\n";
+
+    std::string svn_id_commit_msg = std::string("Note SVN revision ") + std::to_string(rev);
+    outfile << "data " << svn_id_commit_msg.length() << "\n";
+    outfile << svn_id_commit_msg << "\n";
+
+
+    std::string git_sha1_cmd = std::string("cd cvs_git && git show-ref refs/notes/commits > ../nsha1.txt && cd ..");
+    if (std::system(git_sha1_cmd.c_str())) {
+        std::cout << "git_sha1_cmd failed: refs/notes/commits\n";
+        exit(1);
+    }
+    std::ifstream hfile("nsha1.txt");
+    if (!hfile.good()) {
+        std::cout << "couldn't open nsha1.txt\n";
+        exit(1);
+    }
+    std::string line;
+    std::getline(hfile, line);
+    size_t spos = line.find_first_of(" ");
+    std::string nsha1 = line.substr(0, spos);
+
+    outfile << "from " << nsha1 << "\n";
+    outfile << "N :1 " << gsha1 << "\n";
+    outfile.close();
+
+    std::string git_fi = std::string("cd cvs_git && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
+    if (std::system(git_fi.c_str())) {
+        std::cout << "Fatal - could not apply fi file to working repo " << fi_file << "\n";
+        exit(1);
+    }
+
+}
+
 int main(int argc, const char **argv)
 {
     read_svn_info();
@@ -132,6 +177,7 @@ int main(int argc, const char **argv)
 	g_it = git_msgtime_to_sha1.find((*s_it).first);
 	if (g_it != git_msgtime_to_sha1.end()) {
 	    std::cout << (*s_it).second << " -> " << (*g_it).second << "\n";
+	    write_note((*s_it).second , (*g_it).second, (*g_it).first.second);
 	} else {
 	    std::string cmsg = (*s_it).first.first;
 	    if (svn_msg_non_unique.find(cmsg) == svn_msg_non_unique.end() &&
@@ -140,17 +186,20 @@ int main(int argc, const char **argv)
 		std::map<std::string,std::string>::iterator g2_it = git_msg_to_sha1.find(cmsg);
 		if (r_it != svn_msg_to_rev.end() && g2_it != git_msg_to_sha1.end()) {
 		    std::cout << (*r_it).second << " -> " << (*g2_it).second << " (time offset)\n";
+		    write_note((*r_it).second , (*g2_it).second, git_msg_to_time[cmsg]);
 		} else {
 		    if (git_time_to_msg.find((*s_it).first.second) != git_time_to_msg.end()) {
-			std::cerr << (*s_it).first.second << " " << (*s_it).second << " [unmapped, but timestamp match] : " << cmsg << " -> " << git_time_to_msg[(*s_it).first.second]  << "\n";
+			std::cout << (*s_it).first.second << " " << (*s_it).second << " [unique, unmapped, but timestamp match] : " << cmsg << " -> " << git_time_to_msg[(*s_it).first.second]  << "\n";
+			write_note((*s_it).second , git_time_to_sha1[(*s_it).first.second], git_msg_to_time[cmsg]);
 		    } else {
-			std::cerr << (*s_it).first.second << " " << (*s_it).second << " [unmapped] : " << cmsg << "\n";
+			std::cerr << (*s_it).first.second << " " << (*s_it).second << " [unique, unmapped] : " << cmsg << "\n";
 		    }
 		}
 	    } else {
 		if (git_time_to_msg.find((*s_it).first.second) != git_time_to_msg.end()) {
 		    if (cmsg == std::string("Initial revision")) {
 			std::cout << (*s_it).second << " -> " << git_time_to_sha1[(*s_it).first.second] << " [\"Initial revision\" timestamp match]\n";
+			write_note((*s_it).second , git_time_to_sha1[(*s_it).first.second], (*s_it).first.second);
 		    } else {
 			std::cerr << (*s_it).first.second << " " << (*s_it).second << " [non-unique, has exact timestamp match] : " << cmsg << " -> [" << git_time_to_sha1[(*s_it).first.second] << "] " << git_time_to_msg[(*s_it).first.second] << "\n";
 		    }
