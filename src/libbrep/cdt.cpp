@@ -1051,6 +1051,10 @@ ON_Brep_CDT_Mesh(
     // area face.  This is more complex to deal with, as it requires modifying
     // non-degenerate faces in the neighborhood to incorporate different points.
     for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
+	// Use a distance three orders of magnitude smaller than the smallest
+	// edge segment length of the face to decide if a face is degenerate
+	// based on area.
+	fastf_t dist = 0.001 * (*s_cdt->min_edge_seg_len)[face_index];
 	p2t::CDT *cdt = s_cdt->p2t_faces[face_index];
 	std::map<p2t::Point *, ON_3dPoint *> *pointmap = s_cdt->tri_to_on3_maps[face_index];
 	std::vector<p2t::Triangle*> tris = cdt->GetTriangles();
@@ -1075,20 +1079,20 @@ ON_Brep_CDT_Mesh(
 	     * of degenerate triangles. */
 	    ON_Line l(*tpnts[0], *tpnts[2]);
 	    int is_zero_area = 0;
-	    if (l.Length() < s_cdt->dist) {
+	    if (l.Length() < dist) {
 		ON_Line l2(*tpnts[0], *tpnts[1]);
-		if (l2.Length() < s_cdt->dist) {
+		if (l2.Length() < dist) {
 		    bu_log("completely degenerate triangle\n");
 		    triangle_cnt--;
 		    tris_degen.insert(t);
 		    continue;
 		} else {
-		    if (l2.DistanceTo(*tpnts[2]) < s_cdt->dist) {
+		    if (l2.DistanceTo(*tpnts[2]) < dist) {
 			is_zero_area = 1;
 		    }
 		}
 	    } else {
-		if (l.DistanceTo(*tpnts[1]) < s_cdt->dist) {
+		if (l.DistanceTo(*tpnts[1]) < dist) {
 		    is_zero_area = 1;
 		}
 	    }
