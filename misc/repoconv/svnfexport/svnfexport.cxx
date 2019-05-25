@@ -70,6 +70,16 @@ int main(int argc, const char **argv)
 	    std::cerr << "Initial mac-hack sync failed!\n";
 	    exit(1);
 	}
+	std::string git_sync_4 = std::string("cd cvs_git && cat ../custom/r29886_tags.fi | git fast-import && cd ..");
+	if (std::system(git_sync_4.c_str())) {
+	    std::cerr << "Initial tag sync failed!\n";
+	    exit(1);
+	}
+	std::string git_sync_5 = std::string("cd cvs_git && cat ../custom/r29886_branches.fi | git fast-import && cd ..");
+	if (std::system(git_sync_5.c_str())) {
+	    std::cerr << "Initial branch sync failed!\n";
+	    exit(1);
+	}
     }
 
 
