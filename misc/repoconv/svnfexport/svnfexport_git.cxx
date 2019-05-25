@@ -1112,6 +1112,9 @@ void branch_delete_commit(struct svn_revision &rev, std::string &rbranch)
     if (rbranch == std::string("unlabeled-9.7.1")) {
 	wbranch = std::string("cjohnson-mac-hack");
     }
+    if (rbranch == std::string("unlabeled-2.5.1")) {
+	wbranch = std::string("master-UNNAMED-BRANCH");
+    }
 
     std::string cfi_file = std::to_string(rev.revision_number) + std::string("-bdelete.fi");
     std::ofstream coutfile(cfi_file, std::ios::out | std::ios::binary);
@@ -1168,17 +1171,10 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	}
     }
 
-    // There are a variety of "skip this" cases - handle them
-    if (rev.revision_number == 30760) {
-	std::cout << "Skipping r30760 - premature tagging of rel-7-12-2.  Will be tagged by 30792\n";
-	return;
-    }
-
     if (rev.revision_number == 36472) {
 	std::cout << "Skipping r36472 - branch rename, handled by mapping the original name in the original commit (dmtogl-branch) to the desired branch name (dmtogl)\n";
-	return;
+	exit(1);
     }
-
 
     if (rev_num == 36053) {
 	all_git_branches.push_back(std::string("rel8"));
