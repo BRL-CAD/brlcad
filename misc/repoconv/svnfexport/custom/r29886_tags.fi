@@ -1,0 +1,275 @@
+tag CMD
+from 5e0e724ece7f5ee93a4b42b149e160d675d42abc
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 678068547 +0000
+data 7
+Tag CMD
+tag Original
+from 804a820a3b3d3f01a28eea31df145ab2582a608d
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 899228287 +0000
+data 12
+Tag Original
+tag ansi-20040316-freeze
+from 47e87511d71665b3c38b96e48e6758b9cc1f576a
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 1050602923 +0000
+data 24
+Tag ansi-20040316-freeze
+tag autoconf-20031202
+from 6bf7182687556591cf3a641d3929c7f9a6e6b3d0
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 1070393635 +0000
+data 21
+Tag autoconf-20031202
+tag autoconf-20031203
+from 8cd5880ca29782ef29f8df3bd999617a653dc130
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 1070474160 +0000
+data 21
+Tag autoconf-20031203
+tag bobWinPort-20051223-freeze
+from cc9afe3eb376cbc531fca11d905621084a396d32
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 1135112176 +0000
+data 30
+Tag bobWinPort-20051223-freeze
+tag ctj-4-5-post
+from 060ee4c715f28ad86c29865cb3ea72cfc9d73eed
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 911619916 +0000
+data 16
+Tag ctj-4-5-post
+tag ctj-4-5-pre
+from 9f12298a07b9f1a08bccad103b154b07f13d1223
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 911619916 +0000
+data 15
+Tag ctj-4-5-pre
+tag hartley-6-0-post
+from 3731282126d178bff96e5bb61263cd100ddf3f60
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 1029580623 +0000
+data 20
+Tag hartley-6-0-post
+tag help
+from 2d2a560d6d6cd6a24776fea2a9e18d3aabd23344
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 1141633324 +0000
+data 8
+Tag help
+tag itcl3-2
+from 2d1fd13b8e04a1d0aa5e1eb3c7cf586026066c38
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 976139290 +0000
+data 11
+Tag itcl3-2
+tag libpng_1_0_2
+from 0955a191e6e09e0a30d3f74c6744ae07dd7c7f24
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 898718414 +0000
+data 16
+Tag libpng_1_0_2
+tag merge-to-head-20051223
+from 4d2282ab1a20ed2c664116ea5037dd80f34808da
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 1126208331 +0000
+data 26
+Tag merge-to-head-20051223
+tag offsite-5-3-pre
+from 7752de9fb05b957ca43fdf8adb55a20e9c8e7636
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 985029900 +0000
+data 19
+Tag offsite-5-3-pre
+tag opensource-pre
+from 26edc023f79ee04667277e79ef55988c9d266bbf
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 1100303607 +0000
+data 18
+Tag opensource-pre
+tag postmerge-autoconf
+from 098151d38d5ad00a113ae3066e7d5b1096c6344d
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 1079635669 +0000
+data 22
+Tag postmerge-autoconf
+tag premerge-20040315-windows
+from 9755fa3c7a3f216f7f06b7b413b61d992c38d404
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 1079382021 +0000
+data 29
+Tag premerge-20040315-windows
+tag premerge-20040404-ansi
+from ab86ca09739f4e3cd68749a0423c8c0319cb7c28
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 1080932463 +0000
+data 26
+Tag premerge-20040404-ansi
+tag premerge-20051223-bobWinPort
+from 282d98fb1fa7c7dc97660185d6e6538e8ab1e5c4
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 1135287072 +0000
+data 32
+Tag premerge-20051223-bobWinPort
+tag premerge-autoconf
+from 52a517ec8e53e70694b00dddcc3d9d79887eece9
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 1079537702 +0000
+data 21
+Tag premerge-autoconf
+tag rel-2-0
+from b22f8f33b3956261e745940d65c8035f63ea8e53
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 552989398 +0000
+data 11
+Tag rel-2-0
+tag rel-5-0
+from d0059ac14208e15b28544300f554e222a7d432a8
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 937232529 +0000
+data 11
+Tag rel-5-0
+tag rel-5-0-beta
+from bffdc482bbaa14b92410cbcba6892a08e829f513
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 928272991 +0000
+data 16
+Tag rel-5-0-beta
+tag rel-5-0beta
+from 2aff4ab4a9bad23b1d3c9e747b5ab4d78cb52427
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 927291940 +0000
+data 15
+Tag rel-5-0beta
+tag rel-5-1
+from b43adaef6e272fab842283075449537ec5e42d30
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 963515253 +0000
+data 11
+Tag rel-5-1
+tag rel-5-2
+from 3274ed353a4463e430cd80ff4d3cc1f0422e89ca
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 968702101 +0000
+data 11
+Tag rel-5-2
+tag rel-5-3
+from 6e9b92670d5150a849d04f7c61ecca0e0ae64f52
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 985117001 +0000
+data 11
+Tag rel-5-3
+tag rel-5-4
+from d23646d1c7ece4ec389b23a459d2feaf2f7f7086
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 998067628 +0000
+data 11
+Tag rel-5-4
+tag rel-6-0
+from d439ddb2d8852f57999ec1f1b0ee536f003ff747
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 1016833722 +0000
+data 11
+Tag rel-6-0
+tag rel-6-0-1
+from a2afb1ed0dc930783df5021be1769905c3e81226
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 1028899967 +0000
+data 13
+Tag rel-6-0-1
+tag rel-6-1-DP
+from f43efdd84d465a338b2106370d813b1e6bdd2efd
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 1035513177 +0000
+data 14
+Tag rel-6-1-DP
+tag rel-7-0
+from 0533192fa9d049463e2794c258b758c0f7974751
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 1099322734 +0000
+data 11
+Tag rel-7-0
+tag rel-7-0-1
+from 636171c83c24676a181583906c56b4fb5a1cd836
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 1103615622 +0000
+data 13
+Tag rel-7-0-1
+tag rel-7-0-2
+from 4884127d65d16fc724c04f03c20213b923e58852
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 1105110765 +0000
+data 13
+Tag rel-7-0-2
+tag rel-7-0-4
+from c36d0c4b174ba7de206c806a52067527ae1b551a
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 1106753172 +0000
+data 13
+Tag rel-7-0-4
+tag rel-7-10-0
+from 1aa51bfff3de7c9a6120651832ac324e8ef7808c
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 1176170021 +0000
+data 14
+Tag rel-7-10-0
+tag rel-7-10-2
+from 8df7c71e06ec03d71dde83c01e6bfba752de9a21
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 1187294327 +0000
+data 14
+Tag rel-7-10-2
+tag rel-7-2-0
+from a1a7314e29e7cfaa18df53ac0232f79dcadbb8bf
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 1109103141 +0000
+data 13
+Tag rel-7-2-0
+tag rel-7-2-2
+from cf13d923008468d92a980b3352ad094882678cc2
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 1112510740 +0000
+data 13
+Tag rel-7-2-2
+tag rel-7-2-4
+from c928f6a2fc82ccb75768ffbd2380df2f87822098
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 1115855387 +0000
+data 13
+Tag rel-7-2-4
+tag rel-7-2-6
+from 494bc0efe3c48e6ecb436f7a0ee05651d1d48c16
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 1118288949 +0000
+data 13
+Tag rel-7-2-6
+tag rel-7-4-0
+from 050b1a6f45483b82334b7abe00c62374c8be7f70
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 1121227901 +0000
+data 13
+Tag rel-7-4-0
+tag rel-7-6-0
+from e6c52c0ba7da9b15f8f62c283db2681768a17419
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 1126218450 +0000
+data 13
+Tag rel-7-6-0
+tag rel-7-6-4
+from 6a19ebd6830da0a8653c61e5694cb6e85d5b1a6c
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 1132025255 +0000
+data 13
+Tag rel-7-6-4
+tag rel-7-6-6
+from 4cc3b15b59d9f65e81843a6af49680144d2e8297
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 1135042201 +0000
+data 13
+Tag rel-7-6-6
+tag rel-7-8-0
+from 09bce85a0ccee208aba967df98a48d1c88a3a8e8
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 1144726326 +0000
+data 13
+Tag rel-7-8-0
+tag rel-7-8-2
+from efea4a08ac2f26db2c81ecc8dade1462f1c532f1
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 1150826309 +0000
+data 13
+Tag rel-7-8-2
+tag rel-7-8-4
+from f7aeb850db5a875e319e9b04a6e987db1e0d1c44
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 1161031530 +0000
+data 13
+Tag rel-7-8-4
+tag release-7-0
+from f357694adfe7d6b6455150dd6e67d9c1c36b142a
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 1099086331 +0000
+data 15
+Tag release-7-0
+tag stable-branch
+from 74e9503c8dea09b6be1b2222776e732d709d2dcd
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 1113588181 +0000
+data 17
+Tag stable-branch
+tag tcl8-3
+from 98a7a77c8c9874ce63062135986acc2a2eb50b9c
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 976138401 +0000
+data 10
+Tag tcl8-3
+tag temp_tag
+from 1dd3415662058df55e7a9564d8c8b3c3e2da69d0
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 1135392248 +0000
+data 12
+Tag temp_tag
+tag tk8-3
+from e73df93990aee00a32106cb346674770943bae55
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 976138461 +0000
+data 9
+Tag tk8-3
+tag windows-20040315-freeze
+from 618310f0263a40f57f7a3cec997cf1bd83b96ced
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 1079381829 +0000
+data 27
+Tag windows-20040315-freeze
+tag zlib_1_0_4
+from 9d78cb3484e4cbbff23d9da1bef2e0625b54fdbe
+tagger CVS SVN Sync <cvs_svn_sync@brlcad.org> 898694399 +0000
+data 14
+Tag zlib_1_0_4
