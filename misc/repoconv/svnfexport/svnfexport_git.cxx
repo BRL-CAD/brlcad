@@ -803,7 +803,14 @@ void move_only_commit(struct svn_revision &rev, std::string &rbranch)
 	    node_path_split(node.copyfrom_path, mproject, cbranch, ctag, mlocal_path, &is_tag);
 	    if (mlocal_path != node.local_path) {
 		std::cout << "(r" << rev.revision_number << ") - renaming " << mlocal_path << " to " << node.local_path << "\n";
-		outfile << "R " << mlocal_path << " " << node.local_path << "\n";
+		outfile << "D " << mlocal_path << "\n";
+		outfile << "M ";
+		if (node.exec_path) {
+		    outfile << "100755 ";
+		} else {
+		    outfile << "100644 ";
+		}
+		outfile << svn_sha1_to_git_sha1[node.text_copy_source_sha1] << " " << node.local_path << "\n";
 	    }
 	}
     }
