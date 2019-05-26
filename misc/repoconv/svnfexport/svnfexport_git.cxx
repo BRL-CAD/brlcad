@@ -773,7 +773,7 @@ int move_only_commit(struct svn_revision &rev, std::string &rbranch)
     int have_real_rename = 0;
     for (size_t n = 0; n != rev.nodes.size(); n++) {
 	struct svn_node &node = rev.nodes[n];
-	if (node.copyfrom_path.length() > 0) {
+	if (node.move_edit && node.copyfrom_path.length() > 0) {
 	    int is_tag;
 	    std::string mproject, cbranch, mlocal_path, ctag;
 	    node_path_split(node.copyfrom_path, mproject, cbranch, ctag, mlocal_path, &is_tag);
@@ -797,6 +797,7 @@ int move_only_commit(struct svn_revision &rev, std::string &rbranch)
 	struct svn_node &node = rev.nodes[n];
 	/* Don't add directory nodes themselves - git works on files */
 	if (node.kind == ndir) continue;
+	if (!node.move_edit) continue;
 	if (node.copyfrom_path.length() > 0) {
 	    int is_tag;
 	    std::string mproject, cbranch, mlocal_path, ctag;
@@ -1401,13 +1402,14 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	remove(efi_file.c_str());
     }
 
+    int have_mvonly = 0;
     if (git_changes) {
 	if (have_commit) {
 	    std::cout << "Error - more than one commit generated for revision " << rev.revision_number << "\n";
 	}
 
 	if (rev.move_edit) {
-	    int have_mvonly = move_only_commit(rev, rbranch);
+	    have_mvonly = move_only_commit(rev, rbranch);
 	    standard_commit(rev, rbranch, have_mvonly);
 	} else {
 	    standard_commit(rev, rbranch, 0);
@@ -1430,6 +1432,7 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
     if (branch_add || git_changes || tag_only_commit) {
 	apply_commit(rev, rbranch, 0);
     }
+
 }
 
 
