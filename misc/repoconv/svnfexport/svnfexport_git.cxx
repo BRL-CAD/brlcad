@@ -1184,11 +1184,6 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	}
     }
 
-    if (rev.revision_number == 36472) {
-	std::cout << "Skipping r36472 - branch rename, handled by mapping the original name in the original commit (dmtogl-branch) to the desired branch name (dmtogl)\n";
-	exit(1);
-    }
-
     if (rev_num == 36053) {
 	all_git_branches.push_back(std::string("rel8"));
     }
