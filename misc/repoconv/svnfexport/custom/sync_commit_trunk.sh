@@ -10,7 +10,7 @@ sed -i 's/\.\///' ../exec.txt
 sed -i 's/\.\///' ../noexec.txt
 cat ../exec.txt |xargs git hash-object > ../exec_hashes.txt
 cat ../noexec.txt |xargs git hash-object > ../noexec_hashes.txt
-echo "deleteall" > ../commit-$2.fi
+echo "deleteall" > ../custom/$2-tree.fi
 #https://www.linuxquestions.org/questions/showthread.php?p=1682282#post1682282
 awk  '
 BEGIN {
@@ -22,7 +22,7 @@ BEGIN {
 }
 {
         print "M 100755", f1[NR], "\""$1"\""
-} ' ../exec.txt >> ../commit-$2.fi
+} ' ../exec.txt >> ../custom/$2-tree.fi
 awk  '
 BEGIN {
         while ( getline < "../noexec_hashes.txt" > 0 )
@@ -33,7 +33,7 @@ BEGIN {
 }
 {
         print "M 100644", f1[NR], "\""$1"\""
-} ' ../noexec.txt >> ../commit-$2.fi
+} ' ../noexec.txt >> ../custom/$2-tree.fi
 rm ../exec.txt
 rm ../noexec.txt
 rm ../exec_hashes.txt
@@ -42,16 +42,17 @@ cd ..
 
 # fix sha1 on objects where git and svn disagree
 # misc/archlinux/brlcad.install
-sed -i -e 's/2db7d92d08d6b81c9bfac0b5cc232f45b867e0a5/b491df545130756e59e586db082e8be15f8c154b/g' commit-$2.fi
+sed -i -e 's/2db7d92d08d6b81c9bfac0b5cc232f45b867e0a5/b491df545130756e59e586db082e8be15f8c154b/g' custom/$2-tree.fi
 
 # doc/docbook/articles/en/images/projection_shader_fig05.png
-sed -i -e 's/b67a1bdac086671244186372498369656e15b482/674bc5bec1631eb373d026e3c35f02580d33d6d9/g' commit-$2.fi
+sed -i -e 's/b67a1bdac086671244186372498369656e15b482/674bc5bec1631eb373d026e3c35f02580d33d6d9/g' custom/$2-tree.fi
 
 # doc/docbook/resources/standard/xsl/extensions/xalan27.jar
-sed -i -e 's/8749b32c1b86d101019e7f7b3c3a085b4ea64597/cb090114149cda7052c417e8c2ba557b635b647e/g' commit-$2.fi
+sed -i -e 's/8749b32c1b86d101019e7f7b3c3a085b4ea64597/cb090114149cda7052c417e8c2ba557b635b647e/g' custom/$2-tree.fi
 
 # doc/docbook/resources/standard/xsl/extensions/saxon65.jar
-sed -i -e 's/06d5271f3e9ec1ca4411865b26a3e1ac1b64b1e8/744df1a5cb1124b64cee08086f6316c89616c1ae/g' commit-$2.fi
+sed -i -e 's/06d5271f3e9ec1ca4411865b26a3e1ac1b64b1e8/744df1a5cb1124b64cee08086f6316c89616c1ae/g' custom/$2-tree.fi
 
+# regress/gcv/fastgen/fastgen_box.fast4
+sed -i -e 's/3785040dbb9252dcf56f1d3edcfedc8859141339/33ddd71cf9d6b856d94d7bd3c0600f24c1db7120/g' custom/$2-tree.fi
 
-#rm -rf trunk-$2
