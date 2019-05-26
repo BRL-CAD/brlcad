@@ -159,9 +159,9 @@ void generate_svn_tree(const char *svn_repo, const char *branch, long int rev)
     std::string tree_cmd;
 
     if (std::string(branch) == std::string("master")) {
-	tree_cmd = std::string("cd custom && ../sync_commit_trunk.sh ") + std::string(svn_repo) + std::string(" ") + std::to_string(rev) + std::string(" && cd ..");
+	tree_cmd = std::string("./sync_commit_trunk.sh ") + std::string(svn_repo) + std::string(" ") + std::to_string(rev);
     } else {
-	tree_cmd = std::string("cd custom && ../sync_commit_trunk.sh ") + std::string(svn_repo) + std::string(" ") + std::string(branch) + std::string(" ") + std::to_string(rev) + std::string(" && cd ..");
+	tree_cmd = std::string("./sync_commit.sh ") + std::string(svn_repo) + std::string(" ") + std::string(branch) + std::string(" ") + std::to_string(rev);
     }
     if (std::system(tree_cmd.c_str())) {
 	std::cerr << "Error running tree command: " << tree_cmd << "\n";

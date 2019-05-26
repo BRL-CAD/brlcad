@@ -44,10 +44,12 @@ int main(int argc, const char **argv)
     std::string cleanup_cmd = std::string("rm -rf cvs_git_working");
 
     int i = 0;
-    if (argc < 3) {
-	std::cerr << "svnfexport dumpfile author_map\n";
+    if (argc < 4) {
+	std::cerr << "svnfexport dumpfile author_map repo_checkout_path \n";
 	return 1;
     }
+
+    repo_checkout_path = std::string(argv[3]);
 
     load_branches_list();
 

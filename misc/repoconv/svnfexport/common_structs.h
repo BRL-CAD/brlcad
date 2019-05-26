@@ -82,6 +82,7 @@ std::map<std::string, std::map<long int, std::set<struct svn_node *> *>> path_st
 std::map<std::string, std::map<long int, std::set<struct svn_node *> *>>::iterator ps_it;
 std::set<long int> rebuild_revs;
 
+std::string repo_checkout_path;
 
 /* Branches */
 std::set<std::string> branches;
