@@ -116,6 +116,9 @@ int verify_repos(long int rev, std::string branch_git)
     if (branch_mappings.find(branch_git) != branch_mappings.end()) {
 	// TODO - some of these mappings are rev number specific...
 	branch_svn = branch_mappings[branch_git];
+	if (rev.revision_number < 36472 && branch_svn == std::string("dmtogl")) {
+	    branch_svn = std::string("dmtogl-branch");
+	}
     } else {
 	branch_svn = branch_git;
     }
