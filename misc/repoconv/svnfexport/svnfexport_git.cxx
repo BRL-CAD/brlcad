@@ -754,14 +754,14 @@ void write_commit_core(std::ofstream &outfile, std::string &rbranch, struct svn_
     }
 }
 
-void move_only_commit(struct svn_revision &rev, std::string &rbranch)
+int move_only_commit(struct svn_revision &rev, std::string &rbranch)
 {
     struct stat buffer;
     std::string cfi_file = std::string("custom/") + std::to_string(rev.revision_number) + std::string("-mvonly.fi");
 
     // Skip if we already have a custom file
     if (file_exists(cfi_file.c_str())) {
-	return;
+	return 1;
     }
 
     if (author_map.find(rev.author) == author_map.end()) {
@@ -784,7 +784,7 @@ void move_only_commit(struct svn_revision &rev, std::string &rbranch)
     }
 
     if (!have_real_rename) {
-	return;
+	return 0;
     }
 
     std::string fi_file = std::to_string(rev.revision_number) + std::string("-mvonly.fi");
@@ -816,6 +816,7 @@ void move_only_commit(struct svn_revision &rev, std::string &rbranch)
     }
 
     outfile.close();
+    return 1;
 }
 
 void write_git_node(std::ofstream &toutfile, struct svn_revision &rev, struct svn_node &node)
@@ -1406,8 +1407,8 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	}
 
 	if (rev.move_edit) {
-	    move_only_commit(rev, rbranch);
-	    standard_commit(rev, rbranch, 1);
+	    int have_mvonly = move_only_commit(rev, rbranch);
+	    standard_commit(rev, rbranch, have_mvonly);
 	} else {
 	    standard_commit(rev, rbranch, 0);
 	}
