@@ -206,7 +206,7 @@ int main(int argc, const char **argv)
 			// There are two timestamp ranges where SVN is known to be out of wack - in those ranges,
 			// a timestamp match is not enough.  Otherwise, assume a match
 
-			if ((timestamp > 524275754 && timestamp < 524313178) || (timestamp > 624936263 && timestamp < 625839678)) {
+			if ((timestamp > 524275754) && (timestamp < 625839678)) {
 			    std::cerr << (*s_it).first.second << " " << (*s_it).second << " [unique, unmapped, timestamp in unreliable range] : " << cmsg << "\n";
 			} else {
 			    std::cout << (*s_it).first.second << " " << (*s_it).second << " [unique, unmapped, but timestamp match] : " << cmsg << " -> " << git_time_to_msg[(*s_it).first.second]  << "\n";
@@ -228,14 +228,14 @@ int main(int argc, const char **argv)
 		    }
 
 		    if (cmsg == std::string("Initial revision")) {
-			if ((timestamp > 524275754 && timestamp < 524313178) || (timestamp > 624936263 && timestamp < 625839678)) {
+			if ((timestamp > 524275754) && (timestamp < 625839678)) {
 			    std::cerr << (*s_it).second << " -> " << git_time_to_sha1[(*s_it).first.second] << " [\"Initial revision\" timestamp match, timestamp in unreliable range]\n";
 			} else {
 			    std::cout << (*s_it).second << " -> " << git_time_to_sha1[(*s_it).first.second] << " [\"Initial revision\" timestamp match]\n";
 			    //write_note((*s_it).second , git_time_to_sha1[(*s_it).first.second], (*s_it).first.second);
 			}
 		    } else {
-			if ((timestamp > 524275754 && timestamp < 524313178) || (timestamp > 624936263 && timestamp < 625839678)) {
+			if ((timestamp > 524275754) && (timestamp < 625839678)) {
 			    std::cerr << (*s_it).first.second << " " << (*s_it).second << " [non-unique, has exact timestamp match, timestamp in unreliable range] : " << cmsg << " -> [" << git_time_to_sha1[(*s_it).first.second] << "] " << git_time_to_msg[(*s_it).first.second] << "\n";
 			} else {
 			    std::cerr << (*s_it).first.second << " " << (*s_it).second << " [non-unique, has exact timestamp match] : " << cmsg << " -> [" << git_time_to_sha1[(*s_it).first.second] << "] " << git_time_to_msg[(*s_it).first.second] << "\n";
