@@ -1270,6 +1270,8 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 		    boutfile.close();
 		    all_git_branches.push_back(node.tag);
 
+		    branch_add = 1;
+
 		    // Make an empty commit on the new branch with the commit message from SVN, but no changes
 
 		    std::string cfi_file = std::to_string(rev.revision_number) + std::string("-commit.fi");
