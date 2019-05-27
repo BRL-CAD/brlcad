@@ -20,6 +20,7 @@ std::map<long int,std::string> svn_time_to_msg;
 std::map<long int,long int> svn_time_to_rev;
 std::map<long int,std::string> git_time_to_msg;
 std::map<long int,std::string> git_time_to_sha1;
+std::set<long int> git_time_nonuniq;
 
 std::set<std::string> git_msg_non_unique;
 
@@ -77,6 +78,9 @@ read_git_line(std::string &line)
     std::string cmsg = line.substr(spos+1, std::string::npos);
 
     git_time_to_msg[tstp] = cmsg;
+    if (git_time_to_sha1.find(tstp) != git_time_to_sha1.end()) {
+	git_time_nonuniq.insert(tstp);
+    }
     git_time_to_sha1[tstp] = sha1;
     if (git_msg_to_sha1.find(cmsg) == git_msg_to_sha1.end()) {
 	git_msg_to_sha1[cmsg] = sha1;
@@ -170,38 +174,72 @@ int main(int argc, const char **argv)
 {
     read_svn_info();
     read_git_info();
-
+#if 1
     std::map<std::pair<std::string, long int>,long int>::iterator s_it;
     for (s_it = svn_msgtime_to_rev.begin(); s_it != svn_msgtime_to_rev.end(); s_it++) {
 	std::map<std::pair<std::string, long int>,std::string>::iterator g_it;
 	g_it = git_msgtime_to_sha1.find((*s_it).first);
 	if (g_it != git_msgtime_to_sha1.end()) {
+	    // Unique time,message mapping
 	    std::cout << (*s_it).second << " -> " << (*g_it).second << "\n";
-	    write_note((*s_it).second , (*g_it).second, (*g_it).first.second);
+	    //write_note((*s_it).second , (*g_it).second, (*g_it).first.second);
 	} else {
 	    std::string cmsg = (*s_it).first.first;
 	    if (svn_msg_non_unique.find(cmsg) == svn_msg_non_unique.end() &&
 		    git_msg_non_unique.find(cmsg) == git_msg_non_unique.end()) {
+		// Unique message
 		std::map<std::string,long int>::iterator r_it = svn_msg_to_rev.find(cmsg);
 		std::map<std::string,std::string>::iterator g2_it = git_msg_to_sha1.find(cmsg);
 		if (r_it != svn_msg_to_rev.end() && g2_it != git_msg_to_sha1.end()) {
+		    // Unique msg has matching revision, but not matching time
 		    std::cout << (*r_it).second << " -> " << (*g2_it).second << " (time offset)\n";
-		    write_note((*r_it).second , (*g2_it).second, git_msg_to_time[cmsg]);
+		    //write_note((*r_it).second , (*g2_it).second, git_msg_to_time[cmsg]);
 		} else {
 		    if (git_time_to_msg.find((*s_it).first.second) != git_time_to_msg.end()) {
-			std::cout << (*s_it).first.second << " " << (*s_it).second << " [unique, unmapped, but timestamp match] : " << cmsg << " -> " << git_time_to_msg[(*s_it).first.second]  << "\n";
-			write_note((*s_it).second , git_time_to_sha1[(*s_it).first.second], git_msg_to_time[cmsg]);
+			// Unique msg is unmapped, but there is a matching timestamp in the git history
+			long int timestamp = (*s_it).first.second;
+
+			if (git_time_nonuniq.find(timestamp) != git_time_nonuniq.end()) {
+			    std::cerr << (*s_it).first.second << " " << (*s_it).second << " [unique, unmapped, timestamp not unique in git] : " << cmsg << "\n";
+			}
+
+			// There are two timestamp ranges where SVN is known to be out of wack - in those ranges,
+			// a timestamp match is not enough.  Otherwise, assume a match
+
+			if ((timestamp > 524275754 && timestamp < 524313178) || (timestamp > 624936263 && timestamp < 625839678)) {
+			    std::cerr << (*s_it).first.second << " " << (*s_it).second << " [unique, unmapped, timestamp in unreliable range] : " << cmsg << "\n";
+			} else {
+			    std::cout << (*s_it).first.second << " " << (*s_it).second << " [unique, unmapped, but timestamp match] : " << cmsg << " -> " << git_time_to_msg[(*s_it).first.second]  << "\n";
+			    //write_note((*s_it).second , git_time_to_sha1[(*s_it).first.second], git_msg_to_time[cmsg]);
+			}
 		    } else {
+			// Unique msg is unmapped, and there is no matching timestamp in the git history
 			std::cerr << (*s_it).first.second << " " << (*s_it).second << " [unique, unmapped] : " << cmsg << "\n";
 		    }
 		}
 	    } else {
+		// Non-unique message
 		if (git_time_to_msg.find((*s_it).first.second) != git_time_to_msg.end()) {
+		    // Have a timestamp match, even though the non-unique git message doesn't match
+		    long int timestamp = (*s_it).first.second;
+
+		    if (git_time_nonuniq.find(timestamp) != git_time_nonuniq.end()) {
+			std::cerr << (*s_it).first.second << " " << (*s_it).second << " [non-unique, timestamp not unique in git] : " << cmsg << "\n";
+		    }
+
 		    if (cmsg == std::string("Initial revision")) {
-			std::cout << (*s_it).second << " -> " << git_time_to_sha1[(*s_it).first.second] << " [\"Initial revision\" timestamp match]\n";
-			write_note((*s_it).second , git_time_to_sha1[(*s_it).first.second], (*s_it).first.second);
+			if ((timestamp > 524275754 && timestamp < 524313178) || (timestamp > 624936263 && timestamp < 625839678)) {
+			    std::cerr << (*s_it).second << " -> " << git_time_to_sha1[(*s_it).first.second] << " [\"Initial revision\" timestamp match, timestamp in unreliable range]\n";
+			} else {
+			    std::cout << (*s_it).second << " -> " << git_time_to_sha1[(*s_it).first.second] << " [\"Initial revision\" timestamp match]\n";
+			    //write_note((*s_it).second , git_time_to_sha1[(*s_it).first.second], (*s_it).first.second);
+			}
 		    } else {
-			std::cerr << (*s_it).first.second << " " << (*s_it).second << " [non-unique, has exact timestamp match] : " << cmsg << " -> [" << git_time_to_sha1[(*s_it).first.second] << "] " << git_time_to_msg[(*s_it).first.second] << "\n";
+			if ((timestamp > 524275754 && timestamp < 524313178) || (timestamp > 624936263 && timestamp < 625839678)) {
+			    std::cerr << (*s_it).first.second << " " << (*s_it).second << " [non-unique, has exact timestamp match, timestamp in unreliable range] : " << cmsg << " -> [" << git_time_to_sha1[(*s_it).first.second] << "] " << git_time_to_msg[(*s_it).first.second] << "\n";
+			} else {
+			    std::cerr << (*s_it).first.second << " " << (*s_it).second << " [non-unique, has exact timestamp match] : " << cmsg << " -> [" << git_time_to_sha1[(*s_it).first.second] << "] " << git_time_to_msg[(*s_it).first.second] << "\n";
+			}
 		    }
 		} else {
 		    std::cerr << (*s_it).first.second << " " << (*s_it).second << " [non-unique,no exact timestamp match] : " << cmsg << "\n";
@@ -209,6 +247,31 @@ int main(int argc, const char **argv)
 	    }
 	}
     }
+#endif
+
+#if 0
+    // Write out diffable timestamp sorted msg histories from git and svn
+    std::map<std::pair<std::string, long int>,std::string>::iterator gm_it;
+    std::ofstream gitatimes("git_all_times.txt", std::ios::out | std::ios::binary);
+    for (gm_it = git_msgtime_to_sha1.begin(); gm_it != git_msgtime_to_sha1.end(); gm_it++) {
+	gitatimes << (*gm_it).first.second << " " << (*gm_it).first.first << "\n";
+    }
+    gitatimes.close();
+
+    std::map<long int,std::string>::iterator tmsg_it;
+    std::ofstream gittimes("git_times.txt", std::ios::out | std::ios::binary);
+
+    for (tmsg_it = git_time_to_msg.begin(); tmsg_it != git_time_to_msg.end(); tmsg_it++) {
+	gittimes << (*tmsg_it).first << " " << (*tmsg_it).second << "\n";
+    }
+    gittimes.close();
+
+    std::ofstream svntimes("svn_times.txt", std::ios::out | std::ios::binary);
+    for (tmsg_it = svn_time_to_msg.begin(); tmsg_it != svn_time_to_msg.end(); tmsg_it++) {
+	svntimes << (*tmsg_it).first << " " << (*tmsg_it).second << "\n";
+    }
+    svntimes.close();
+#endif
 
     return 0;
 }
