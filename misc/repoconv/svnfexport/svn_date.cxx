@@ -83,15 +83,14 @@ svn_time_to_git_time(const char *tstamp)
     return std::to_string(ssec) + std::string(" +0000");
 }
 
-#if 1
 int
-main()
+main(int argc, const char **argv)
 {
-    const std::string tstamp("1989-10-31T08:48:58.000000Z");
+    //const std::string tstamp("1989-10-31T08:48:58.000000Z");
+    const std::string tstamp(argv[1]);
     std::cout << tstamp << "\n";
     std::cout << "converted time: " << svn_time_to_git_time(tstamp.c_str()) << "\n";
 }
-#endif
 
 // Local Variables:
 // tab-width: 8
