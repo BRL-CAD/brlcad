@@ -12,6 +12,13 @@
 #include "sha1.hpp"
 #include "svn_date.h"
 
+bool
+file_exists(std::string fname)
+{
+    struct stat buffer;
+    return !stat(fname.c_str(), &buffer);
+}
+
 long int starting_rev;
 
 enum svn_node_kind_t { nkerr, nfile, ndir };

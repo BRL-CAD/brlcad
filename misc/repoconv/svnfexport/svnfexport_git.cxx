@@ -1,12 +1,5 @@
 std::vector<std::string> all_git_branches;
 
-bool
-file_exists(std::string fname)
-{
-    struct stat buffer;
-    return !stat(fname.c_str(), &buffer);
-}
-
 void
 load_branches_list()
 {
