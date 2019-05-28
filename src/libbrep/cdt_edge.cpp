@@ -39,66 +39,73 @@ midpt_binary_search(fastf_t *tmid, const ON_BrepTrim *trim, double tstart, doubl
     double dist = edge_mid_3d.DistanceTo(trim_mid_3d);
 
     if (dist > tol) {
-	if (verbose)
-	    bu_log("Note (%f:%f) - edge point (%f %f %f) and trim point (%f %f %f) are far apart: %f, %f\n", tstart, tend, edge_mid_3d.x, edge_mid_3d.y, edge_mid_3d.z, trim_mid_3d.x, trim_mid_3d.y, trim_mid_3d.z, dist, tol);
-	double tlmid = (tstart + tcmid) / 2.0;
-	double trmid = (tcmid + tend) / 2.0;
-	ON_3dPoint trim_lmid_2d = trim->PointAt(tlmid);
-	ON_3dPoint trim_rmid_2d = trim->PointAt(trmid);
-	ON_3dPoint trim_lmid_3d = s->PointAt(trim_lmid_2d.x, trim_lmid_2d.y);
-	ON_3dPoint trim_rmid_3d = s->PointAt(trim_rmid_2d.x, trim_rmid_2d.y);
-	double ldist = edge_mid_3d.DistanceTo(trim_lmid_3d);
-	double rdist = edge_mid_3d.DistanceTo(trim_rmid_3d);
+	ON_3dPoint trim_start_2d = trim->PointAt(tstart);
+	ON_3dPoint trim_end_2d = trim->PointAt(tend);
+	ON_3dPoint trim_start_3d = s->PointAt(trim_start_2d.x, trim_start_2d.y);
+	ON_3dPoint trim_end_3d = s->PointAt(trim_end_2d.x, trim_end_2d.y);
 
-	if (ldist < dist && ! NEAR_EQUAL(ldist, dist, tol)) {
-	    bu_log("left possible: %f -> %f\n", dist, ldist);
-	    ldist = midpt_binary_search(tmid, trim, tstart, tcmid, edge_mid_3d, tol, verbose);
+	ON_3dVector v1 = edge_mid_3d - trim_start_3d;
+	ON_3dVector v2 = edge_mid_3d - trim_end_3d;
+
+	if (verbose) {
+	    bu_log("start point (%f %f %f) and end point (%f %f %f)\n", trim_start_3d.x, trim_start_3d.y, trim_start_3d.z, trim_end_3d.x, trim_end_3d.y, trim_end_3d.z);
+	    bu_log("Note (%f:%f)%f - edge point (%f %f %f) and trim point (%f %f %f): %f, %f\n", tstart, tend, ON_DotProduct(v1,v2), edge_mid_3d.x, edge_mid_3d.y, edge_mid_3d.z, trim_mid_3d.x, trim_mid_3d.y, trim_mid_3d.z, dist, tol);
 	}
-	if (rdist < dist && ! NEAR_EQUAL(rdist, dist, tol)) {
-	    bu_log("right possible: %f -> %f\n", dist, rdist);
-	    rdist = midpt_binary_search(tmid, trim, tcmid, tend, edge_mid_3d, tol, verbose);
-	}
-	if (ldist < rdist) {
-	    (*tmid) = tlmid;
-	    bu_log("going with ldist: %f\n", ldist);
-	    return ldist;
+
+	if (ON_DotProduct(v1,v2) < 0) {
+	    if (verbose)
+		bu_log("(%f - %f - %f (%f): searching left and right subspans\n", tstart, tcmid, tend, ON_DotProduct(v1,v2));
+	    double tlmid, trmid;
+	    double fldist = midpt_binary_search(&tlmid, trim, tstart, tcmid, edge_mid_3d, tol, 0);
+	    double frdist = midpt_binary_search(&trmid, trim, tcmid, tend, edge_mid_3d, tol, 0);
+	    if (fldist >= 0 && frdist < -1) {
+		if (verbose)
+		    bu_log("(%f - %f - %f: going with fldist: %f\n", tstart, tcmid, tend, fldist);
+		(*tmid) = tlmid;
+		return fldist;
+	    }
+	    if (frdist >= 0 && fldist < -1) {
+		if (verbose)
+		    bu_log("(%f - %f - %f: going with frdist: %f\n", tstart, tcmid, tend, frdist);
+		(*tmid) = trmid;
+		return frdist;
+	    }
+	    if (fldist < -1 && frdist < -1) {
+		if (verbose)
+		    bu_log("(%f - %f: point not in either subspan\n", tstart, tend);
+		return -2;
+	    }
 	} else {
-	    (*tmid) = trmid;
-	    bu_log("going with rdist: %f\n", ldist);
-	    return rdist;
+	    // Not in this span
+	    if (verbose)
+		bu_log("(%f - %f: point not in span (dot-product: %f)\n", tstart, tend, ON_DotProduct(v1,v2));
+	    return -2;
 	}
-    } else {
-	// close enough - this works
-	if (verbose)
-	    bu_log("Workable (%f:%f) - edge point (%f %f %f) and trim point (%f %f %f): %f, %f\n", tstart, tend, edge_mid_3d.x, edge_mid_3d.y, edge_mid_3d.z, trim_mid_3d.x, trim_mid_3d.y, trim_mid_3d.z, dist, tol);
-
-	(*tmid) = tcmid;
-	return dist;
     }
+
+    // close enough - this works
+    if (verbose)
+	bu_log("Workable (%f:%f) - edge point (%f %f %f) and trim point (%f %f %f): %f, %f\n", tstart, tend, edge_mid_3d.x, edge_mid_3d.y, edge_mid_3d.z, trim_mid_3d.x, trim_mid_3d.y, trim_mid_3d.z, dist, tol);
+
+    (*tmid) = tcmid;
+    return dist;
 }
 
 ON_3dPoint
 get_trim_midpt(fastf_t *t, const ON_BrepTrim *trim, double tstart, double tend, ON_3dPoint &edge_mid_3d, double tol, int verbose) {
-    fastf_t tmid = (tstart + tend) / 2.0;
-    ON_3dPoint trim_mid_2d = trim->PointAt(tmid);
-    const ON_Surface *s = trim->SurfaceOf();
-    ON_3dPoint trim_mid_3d = s->PointAt(trim_mid_2d.x, trim_mid_2d.y);
-    double dist = edge_mid_3d.DistanceTo(trim_mid_3d);
-    if (dist > tol && verbose) {
-    }
-    if (dist > tol && verbose) {
+    double tmid;
+    double dist = midpt_binary_search(&tmid, trim, tstart, tend, edge_mid_3d, tol, verbose);
+    if (dist < 0) {
 	if (verbose)
-	    bu_log("Note (%f:%f) - edge point (%f %f %f) and trim point (%f %f %f) are far apart: %f, %f\n", tstart, tend, edge_mid_3d.x, edge_mid_3d.y, edge_mid_3d.z, trim_mid_3d.x, trim_mid_3d.y, trim_mid_3d.z, dist, tol);
-	// check left
-	if (midpt_binary_search(&tmid, trim, tstart, tmid, edge_mid_3d, tol, verbose) < 0) {
-	    if (verbose)
-		bu_log("Warning - could not find suitable trim point\n");
-	}
-	trim_mid_2d = trim->PointAt(tmid);
+	    bu_log("Warning - could not find suitable trim point\n");
+	tmid = (tstart + tend) / 2.0;
     } else {
-	if (verbose)
-	    bu_log("original midpoint close enough\n");
+	if (verbose) {
+	    if (dist < tol)
+		bu_log("going with distance %f greater than desired tolerance %f\n", dist, tol);
+	}
     }
+    ON_3dPoint trim_mid_2d = trim->PointAt(tmid);
     (*t) = tmid;
     return trim_mid_2d;
 }
