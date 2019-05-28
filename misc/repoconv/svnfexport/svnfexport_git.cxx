@@ -172,12 +172,12 @@ int apply_fi_file_working(std::string &fi_file, std::string &rbranch, long int r
 	if (!try_recovery) {
 	    exit(1);
 	}
-	return 0;
+	return 1;
     }
     // TODO - should check tags as well...
     if (do_verify)
-	verify_repos(rev, rbranch);
-    return 1;
+	return verify_repos(rev, rbranch);
+    return 0;
 }
 
 void apply_fi_file(std::string &fi_file) {
@@ -495,12 +495,12 @@ void apply_commit(struct svn_revision &rev, std::string &rbranch, int verify_rep
 	    }
 
 	    // Apply the combined contents of the commit files
-	    if (!apply_fi_file_working(wfi_file, rbranch, rev.revision_number, 0, 1, 1)) {
+	    if (apply_fi_file_working(wfi_file, rbranch, rev.revision_number, 0, 1, 1)) {
 		// If the apply failed, try generating the tree portion of the
 		// commit from an actual svn checkout.  At least for the later
 		// commits this is the most common remedy, so see if we can
 		// automate it.
-		generate_svn_tree("actual_repo_checkout_path...", rbranch.c_str(), rev.revision_number);
+		generate_svn_tree(repo_checkout_path.c_str(), rbranch.c_str(), rev.revision_number);
 
 		catstr = std::string("cat");
 		remove(wfi_file.c_str());
@@ -523,7 +523,7 @@ void apply_commit(struct svn_revision &rev, std::string &rbranch, int verify_rep
 		    exit(1);
 		}
 
-		if (!apply_fi_file_working(wfi_file, rbranch, rev.revision_number, 0, 1, 0)) {
+		if (apply_fi_file_working(wfi_file, rbranch, rev.revision_number, 0, 1, 0)) {
 		    // If we fail again, we're done - need manual review
 		    std::cerr << "Failed to apply commit with custom tree: " << rev.revision_number << "\n";
 		    exit(1);
