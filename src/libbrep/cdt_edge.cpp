@@ -29,6 +29,80 @@
 #include "common.h"
 #include "./cdt.h"
 
+double
+midpt_binary_search(fastf_t *tmid, const ON_BrepTrim *trim, double tstart, double tend, ON_3dPoint &edge_mid_3d, double tol, int verbose)
+{
+    double tcmid = (tstart + tend) / 2.0;
+    ON_3dPoint trim_mid_2d = trim->PointAt(tcmid);
+    const ON_Surface *s = trim->SurfaceOf();
+    ON_3dPoint trim_mid_3d = s->PointAt(trim_mid_2d.x, trim_mid_2d.y);
+    double dist = edge_mid_3d.DistanceTo(trim_mid_3d);
+
+    if (dist > tol) {
+	if (verbose)
+	    bu_log("Note (%f:%f) - edge point (%f %f %f) and trim point (%f %f %f) are far apart: %f, %f\n", tstart, tend, edge_mid_3d.x, edge_mid_3d.y, edge_mid_3d.z, trim_mid_3d.x, trim_mid_3d.y, trim_mid_3d.z, dist, tol);
+	double tlmid = (tstart + tcmid) / 2.0;
+	double trmid = (tcmid + tend) / 2.0;
+	ON_3dPoint trim_lmid_2d = trim->PointAt(tlmid);
+	ON_3dPoint trim_rmid_2d = trim->PointAt(trmid);
+	ON_3dPoint trim_lmid_3d = s->PointAt(trim_lmid_2d.x, trim_lmid_2d.y);
+	ON_3dPoint trim_rmid_3d = s->PointAt(trim_rmid_2d.x, trim_rmid_2d.y);
+	double ldist = edge_mid_3d.DistanceTo(trim_lmid_3d);
+	double rdist = edge_mid_3d.DistanceTo(trim_rmid_3d);
+
+	if (ldist < dist && ! NEAR_EQUAL(ldist, dist, tol)) {
+	    bu_log("left possible: %f -> %f\n", dist, ldist);
+	    ldist = midpt_binary_search(tmid, trim, tstart, tcmid, edge_mid_3d, tol, verbose);
+	}
+	if (rdist < dist && ! NEAR_EQUAL(rdist, dist, tol)) {
+	    bu_log("right possible: %f -> %f\n", dist, rdist);
+	    rdist = midpt_binary_search(tmid, trim, tcmid, tend, edge_mid_3d, tol, verbose);
+	}
+	if (ldist < rdist) {
+	    (*tmid) = tlmid;
+	    bu_log("going with ldist: %f\n", ldist);
+	    return ldist;
+	} else {
+	    (*tmid) = trmid;
+	    bu_log("going with rdist: %f\n", ldist);
+	    return rdist;
+	}
+    } else {
+	// close enough - this works
+	if (verbose)
+	    bu_log("Workable (%f:%f) - edge point (%f %f %f) and trim point (%f %f %f): %f, %f\n", tstart, tend, edge_mid_3d.x, edge_mid_3d.y, edge_mid_3d.z, trim_mid_3d.x, trim_mid_3d.y, trim_mid_3d.z, dist, tol);
+
+	(*tmid) = tcmid;
+	return dist;
+    }
+}
+
+ON_3dPoint
+get_trim_midpt(fastf_t *t, const ON_BrepTrim *trim, double tstart, double tend, ON_3dPoint &edge_mid_3d, double tol, int verbose) {
+    fastf_t tmid = (tstart + tend) / 2.0;
+    ON_3dPoint trim_mid_2d = trim->PointAt(tmid);
+    const ON_Surface *s = trim->SurfaceOf();
+    ON_3dPoint trim_mid_3d = s->PointAt(trim_mid_2d.x, trim_mid_2d.y);
+    double dist = edge_mid_3d.DistanceTo(trim_mid_3d);
+    if (dist > tol && verbose) {
+    }
+    if (dist > tol && verbose) {
+	if (verbose)
+	    bu_log("Note (%f:%f) - edge point (%f %f %f) and trim point (%f %f %f) are far apart: %f, %f\n", tstart, tend, edge_mid_3d.x, edge_mid_3d.y, edge_mid_3d.z, trim_mid_3d.x, trim_mid_3d.y, trim_mid_3d.z, dist, tol);
+	// check left
+	if (midpt_binary_search(&tmid, trim, tstart, tmid, edge_mid_3d, tol, verbose) < 0) {
+	    if (verbose)
+		bu_log("Warning - could not find suitable trim point\n");
+	}
+	trim_mid_2d = trim->PointAt(tmid);
+    } else {
+	if (verbose)
+	    bu_log("original midpoint close enough\n");
+    }
+    (*t) = tmid;
+    return trim_mid_2d;
+}
+
 static void
 getEdgePoints(
 	struct ON_Brep_CDT_State *s_cdt,
@@ -41,28 +115,45 @@ getEdgePoints(
 	BrepTrimPoint *ebtp2,
 	const struct brep_cdt_tol *cdt_tol,
 	std::map<double, BrepTrimPoint *> *trim1_param_points,
-	std::map<double, BrepTrimPoint *> *trim2_param_points
+	std::map<double, BrepTrimPoint *> *trim2_param_points,
+	double loop_min_dist
 	)
 {
     ON_3dPoint tmp1, tmp2;
     ON_BrepTrim *trim2 = (edge->Trim(0)->m_trim_index == trim.m_trim_index) ? edge->Trim(1) : edge->Trim(0);
     const ON_Surface *s1 = trim.SurfaceOf();
     const ON_Surface *s2 = trim2->SurfaceOf();
-    fastf_t t1 = (sbtp1->t + ebtp1->t) / 2.0;
-    fastf_t t2 = (sbtp2->t + ebtp2->t) / 2.0;
-    ON_3dPoint trim1_mid_2d = trim.PointAt(t1);
-    ON_3dPoint trim2_mid_2d = trim2->PointAt(t2);
-    fastf_t emid = (sbtp1->e + ebtp1->e) / 2.0;
 
     ON_3dVector trim1_mid_norm = ON_3dVector::UnsetVector;
     ON_3dVector trim2_mid_norm = ON_3dVector::UnsetVector;
     ON_3dPoint edge_mid_3d = ON_3dPoint::UnsetPoint;
     ON_3dVector edge_mid_tang = ON_3dVector::UnsetVector;
-
-    if (!(nc->EvTangent(emid, edge_mid_3d, edge_mid_tang))) {
+    
+    fastf_t emid = (sbtp1->e + ebtp1->e) / 2.0;
+    bool evtangent_status = nc->EvTangent(emid, edge_mid_3d, edge_mid_tang);
+    if (!evtangent_status) {
 	// EvTangent call failed, get 3d point
 	edge_mid_3d = nc->PointAt(emid);
-	// If the edge curve failed, try to average tangents from trims
+    }
+
+    // We need the trim points to be pretty close to the edge point, or
+    // we get distortions in the mesh.
+    
+    if (edge->m_edge_index == 790) {
+	bu_log("trim fun commencing\n");
+    }
+    fastf_t t1, t2;
+    ON_3dPoint trim1_mid_2d, trim2_mid_2d;
+    if (edge->m_edge_index == 790) {
+	trim1_mid_2d = get_trim_midpt(&t1, &trim, sbtp1->t, ebtp1->t, edge_mid_3d, 0.5 * loop_min_dist, 1);
+	trim2_mid_2d = get_trim_midpt(&t2, trim2, sbtp2->t, ebtp2->t, edge_mid_3d, 0.5 * loop_min_dist, 1);
+    } else {
+	trim1_mid_2d = get_trim_midpt(&t1, &trim, sbtp1->t, ebtp1->t, edge_mid_3d, 0.5 * loop_min_dist, 0);
+	trim2_mid_2d = get_trim_midpt(&t2, trim2, sbtp2->t, ebtp2->t, edge_mid_3d, 0.5 * loop_min_dist, 0);
+    }
+
+    if (!evtangent_status) {
+	// If the edge curve evaluation failed, try to average tangents from trims
 	ON_3dVector trim1_mid_tang(0.0, 0.0, 0.0);
 	ON_3dVector trim2_mid_tang(0.0, 0.0, 0.0);
 	int evals = 0;
@@ -75,14 +166,13 @@ getEdgePoints(
 	}
     }
 
-    // bu_log("Edge %d, Trim %d(%d): %f %f %f\n", edge->m_edge_index, trim.m_trim_index, trim.m_bRev3d, edge_mid_3d.x, edge_mid_3d.y, edge_mid_3d.z);
-
     int dosplit = 0;
 
     ON_Line line3d(*(sbtp1->p3d), *(ebtp1->p3d));
     double dist3d = edge_mid_3d.DistanceTo(line3d.ClosestPointTo(edge_mid_3d));
     dosplit += (line3d.Length() > cdt_tol->max_dist) ? 1 : 0;
     dosplit += (dist3d > (cdt_tol->within_dist + ON_ZERO_TOLERANCE)) ? 1 : 0;
+    dosplit += (dist3d > 2*loop_min_dist) ? 1 : 0;
 
     if ((dist3d > cdt_tol->min_dist + ON_ZERO_TOLERANCE)) {
 	if (!dosplit) {
@@ -116,6 +206,13 @@ getEdgePoints(
 	    }
 	}
 
+    if (edge->m_edge_index == 790) {
+	bu_log("Edge %d: %f %f %f\n", edge->m_edge_index, edge_mid_3d.x, edge_mid_3d.y, edge_mid_3d.z);
+	bu_log("Trim %d, Face %d, (IsRev: %d): %f %f %f\n", trim.m_trim_index, trim.Face()->m_face_index, trim.m_bRev3d, tmp1.x, tmp1.y, tmp1.z);
+	bu_log("Trim %d, Face %d, (IsRev: %d): %f %f %f\n", trim2->m_trim_index, trim2->Face()->m_face_index, trim2->m_bRev3d, tmp2.x, tmp2.y, tmp2.z);
+    }
+
+
 	ON_3dPoint *npt = new ON_3dPoint(edge_mid_3d);
 	CDT_Add3DPnt(s_cdt, npt, -1, -1, -1, edge->m_edge_index, emid, 0);
 	s_cdt->edge_pnts->insert(npt);
@@ -144,8 +241,8 @@ getEdgePoints(
 	(*trim2_param_points)[nbtp2->t] = nbtp2;
 	s_cdt->on_brep_edge_pnts[npt].insert(nbtp2);
 
-	getEdgePoints(s_cdt, edge, nc, trim, sbtp1, nbtp1, sbtp2, nbtp2, cdt_tol, trim1_param_points, trim2_param_points);
-	getEdgePoints(s_cdt, edge, nc, trim, nbtp1, ebtp1, nbtp2, ebtp2, cdt_tol, trim1_param_points, trim2_param_points);
+	getEdgePoints(s_cdt, edge, nc, trim, sbtp1, nbtp1, sbtp2, nbtp2, cdt_tol, trim1_param_points, trim2_param_points, loop_min_dist);
+	getEdgePoints(s_cdt, edge, nc, trim, nbtp1, ebtp1, nbtp2, ebtp2, cdt_tol, trim1_param_points, trim2_param_points, loop_min_dist);
 	return;
     }
 
@@ -240,7 +337,8 @@ getEdgePoints(
 	struct ON_Brep_CDT_State *s_cdt,
 	ON_BrepEdge *edge,
 	ON_BrepTrim &trim,
-	fastf_t max_dist
+	fastf_t max_dist,
+	fastf_t loop_min_dist
 	)
 {
     struct brep_cdt_tol cdt_tol = BREP_CDT_TOL_ZERO;
@@ -252,6 +350,10 @@ getEdgePoints(
     // case we'll have to split up the edge and find the matching sub-trims (possibly splitting
     // those as well if they don't line up at shared 3D points.)
     ON_BrepTrim *trim2 = (edge->Trim(0)->m_trim_index == trim.m_trim_index) ? edge->Trim(1) : edge->Trim(0);
+
+    if (edge->m_edge_index == 790) {
+	bu_log("Starting 790\n");
+    }
 
     double dist = 1000.0;
 
@@ -281,6 +383,20 @@ getEdgePoints(
 	dist = DIST_PT_PT(min, max);
     }
     CDT_Tol_Set(&cdt_tol, dist, max_dist, s_cdt->abs, s_cdt->rel, s_cdt->norm, s_cdt->dist);
+
+
+    /* Normalize the domain of the curve to the ControlPolygonLength() of the
+     * NURBS form of the curve to attempt to minimize distortion in 3D to
+     * mirror what we do for the surfaces.  (GetSurfaceSize uses this under the
+     * hood for its estimates.)  */
+    const ON_Curve* crv = edge->EdgeCurveOf();
+    ON_NurbsCurve *nc = crv->NurbsCurve();
+    double cplen = nc->ControlPolygonLength();
+    nc->SetDomain(0.0, cplen);
+    s_cdt->brep->m_T[trim.TrimCurveIndexOf()].SetDomain(0.0, cplen);
+    s_cdt->brep->m_T[trim2->TrimCurveIndexOf()].SetDomain(0.0, cplen);
+    ON_Interval erange = nc->Domain();
+
 
     /* Begin point collection */
     ON_3dPoint tmp1, tmp2;
@@ -313,16 +429,6 @@ getEdgePoints(
     /* For the start and end points, use the vertex point */
     edge_start_3d = (*s_cdt->vert_pnts)[edge->Vertex(0)->m_vertex_index];
     edge_end_3d = (*s_cdt->vert_pnts)[edge->Vertex(1)->m_vertex_index];
-
-    /* Normalize the domain of the curve to the ControlPolygonLength() of the
-     * NURBS form of the curve to attempt to minimize distortion in 3D to
-     * mirror what we do for the surfaces.  (GetSurfaceSize uses this under the
-     * hood for its estimates.)  */
-    const ON_Curve* crv = edge->EdgeCurveOf();
-    ON_NurbsCurve *nc = crv->NurbsCurve();
-    double cplen = nc->ControlPolygonLength();
-    nc->SetDomain(0.0, cplen);
-    ON_Interval erange = nc->Domain();
 
     /* Populate the 2D points */
     double st1 = (trim.m_bRev3d) ? range1.m_t[1] : range1.m_t[0];
@@ -548,12 +654,12 @@ getEdgePoints(
 	(*trim2_param_points)[mbtp2->t] = mbtp2;
 	s_cdt->on_brep_edge_pnts[nmp].insert(mbtp2);
 
-	getEdgePoints(s_cdt, edge, nc, trim, sbtp1, mbtp1, sbtp2, mbtp2, &cdt_tol, trim1_param_points, trim2_param_points);
-	getEdgePoints(s_cdt, edge, nc, trim, mbtp1, ebtp1, mbtp2, ebtp2, &cdt_tol, trim1_param_points, trim2_param_points);
+	getEdgePoints(s_cdt, edge, nc, trim, sbtp1, mbtp1, sbtp2, mbtp2, &cdt_tol, trim1_param_points, trim2_param_points, loop_min_dist);
+	getEdgePoints(s_cdt, edge, nc, trim, mbtp1, ebtp1, mbtp2, ebtp2, &cdt_tol, trim1_param_points, trim2_param_points, loop_min_dist);
 
     } else {
 
-	getEdgePoints(s_cdt, edge, nc, trim, sbtp1, ebtp1, sbtp2, ebtp2, &cdt_tol, trim1_param_points, trim2_param_points);
+	getEdgePoints(s_cdt, edge, nc, trim, sbtp1, ebtp1, sbtp2, ebtp2, &cdt_tol, trim1_param_points, trim2_param_points, loop_min_dist);
 
     }
 

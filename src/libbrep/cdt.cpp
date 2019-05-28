@@ -133,7 +133,7 @@ Process_Loop_Edges(
 	}
 
 	if (!trim->m_trim_user.p) {
-	    (void)getEdgePoints(s_cdt, edge, *trim, max_dist);
+	    (void)getEdgePoints(s_cdt, edge, *trim, max_dist, DBL_MAX);
 	    //bu_log("Initialized trim->m_trim_user.p: Trim %d (associated with Edge %d) point count: %zd\n", trim->m_trim_index, trim->Edge()->m_edge_index, m->size());
 	}
 	if (trim->m_trim_user.p) {
@@ -617,6 +617,15 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	}
     }
 
+#if 0
+    /* When we're working on edges, we need to have some sense of how fine we need
+     * to go to make sure we don't end up with severely distorted triangles - use
+     * the minimum length from the loop edges */
+    for (int li = 0; li < s_cdt->brep->m_L.Count(); li++) {
+	const ON_BrepLoop &loop = brep->m_L[li];
+    }
+#endif
+
     /* To generate watertight meshes, the faces must share 3D edge points.  To ensure
      * a uniform set of edge points, we first sample all the edges and build their
      * point sets */
@@ -628,6 +637,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 
         // Get distance tolerances from the surface sizes
         fastf_t max_dist = 0.0;
+        fastf_t min_dist, mw, mh;
         fastf_t md1, md2 = 0.0;
         double sw1, sh1, sw2, sh2;
         const ON_Surface *s1 = trim1.Face()->SurfaceOf();
@@ -639,6 +649,9 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
             md1 = sqrt(sw1 * sh1 + sh1 * sw1) / 10.0;
             md2 = sqrt(sw2 * sh2 + sh2 * sw2) / 10.0;
             max_dist = (md1 < md2) ? md1 : md2;
+            mw = (sw1 < sw2) ? sw1 : sw2;
+            mh = (sh1 < sh2) ? sh1 : sh2;
+            min_dist = (mw < mh) ? mw : mh;
             s_to_maxdist[s1] = max_dist;
             s_to_maxdist[s2] = max_dist;
         }
@@ -649,7 +662,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	// runs - if pre-existing solutions for "high level" splits exist,
 	// reuse them and dig down to find where we need further refinement to
 	// create new points.
-        (void)getEdgePoints(s_cdt, &edge, trim1, max_dist);
+        (void)getEdgePoints(s_cdt, &edge, trim1, max_dist, 0.0001*min_dist);
 
     }
 

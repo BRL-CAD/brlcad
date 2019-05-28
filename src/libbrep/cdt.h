@@ -172,7 +172,8 @@ getEdgePoints(
 	struct ON_Brep_CDT_State *s_cdt,
 	ON_BrepEdge *edge,
 	ON_BrepTrim &trim,
-	fastf_t max_dist
+	fastf_t max_dist,
+	fastf_t min_dist
 	);
 
 void
