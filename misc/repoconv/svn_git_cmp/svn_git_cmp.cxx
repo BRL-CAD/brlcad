@@ -229,7 +229,7 @@ int main(int argc, const char **argv)
 
 		    if (cmsg == std::string("Initial revision")) {
 			if ((timestamp > 524275754) && (timestamp < 625839678)) {
-			    std::cerr << (*s_it).second << " -> " << git_time_to_sha1[(*s_it).first.second] << " [\"Initial revision\" timestamp match, timestamp in unreliable range]\n";
+			    std::cerr << (*s_it).first.second << " " << (*s_it).second << " [\"Initial revision\" timestamp match, timestamp in unreliable range]: " << cmsg << "\n";
 			} else {
 			    std::cout << (*s_it).second << " -> " << git_time_to_sha1[(*s_it).first.second] << " [\"Initial revision\" timestamp match]\n";
 			    //write_note((*s_it).second , git_time_to_sha1[(*s_it).first.second], (*s_it).first.second);
