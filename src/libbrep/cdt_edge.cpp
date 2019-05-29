@@ -56,8 +56,8 @@ midpt_binary_search(fastf_t *tmid, const ON_BrepTrim *trim, double tstart, doubl
 	    if (verbose)
 		bu_log("(%f - %f - %f (%f): searching left and right subspans\n", tstart, tcmid, tend, ON_DotProduct(v1,v2));
 	    double tlmid, trmid;
-	    double fldist = midpt_binary_search(&tlmid, trim, tstart, tcmid, edge_mid_3d, tol, 1);
-	    double frdist = midpt_binary_search(&trmid, trim, tcmid, tend, edge_mid_3d, tol, 1);
+	    double fldist = midpt_binary_search(&tlmid, trim, tstart, tcmid, edge_mid_3d, tol, 0);
+	    double frdist = midpt_binary_search(&trmid, trim, tcmid, tend, edge_mid_3d, tol, 0);
 	    if (fldist >= 0 && frdist < -1) {
 		if (verbose)
 		    bu_log("(%f - %f - %f: going with fldist: %f\n", tstart, tcmid, tend, fldist);
@@ -101,7 +101,7 @@ get_trim_midpt(fastf_t *t, const ON_BrepTrim *trim, double tstart, double tend, 
 	tmid = (tstart + tend) / 2.0;
     } else {
 	if (verbose) {
-	    if (dist < tol)
+	    if (dist > tol)
 		bu_log("going with distance %f greater than desired tolerance %f\n", dist, tol);
 	}
     }
@@ -150,13 +150,14 @@ getEdgePoints(
 	bu_log("trim fun commencing\n");
     }
     fastf_t t1, t2;
+    fastf_t emindist = (cdt_tol->min_dist < 0.5*loop_min_dist) ? cdt_tol->min_dist : 0.5 * loop_min_dist;
     ON_3dPoint trim1_mid_2d, trim2_mid_2d;
     if (edge->m_edge_index == 790) {
-	trim1_mid_2d = get_trim_midpt(&t1, &trim, sbtp1->t, ebtp1->t, edge_mid_3d, 0.5 * loop_min_dist, 1);
-	trim2_mid_2d = get_trim_midpt(&t2, trim2, sbtp2->t, ebtp2->t, edge_mid_3d, 0.5 * loop_min_dist, 1);
+	trim1_mid_2d = get_trim_midpt(&t1, &trim, sbtp1->t, ebtp1->t, edge_mid_3d, emindist, 1);
+	trim2_mid_2d = get_trim_midpt(&t2, trim2, sbtp2->t, ebtp2->t, edge_mid_3d, emindist, 1);
     } else {
-	trim1_mid_2d = get_trim_midpt(&t1, &trim, sbtp1->t, ebtp1->t, edge_mid_3d, 0.5 * loop_min_dist, 0);
-	trim2_mid_2d = get_trim_midpt(&t2, trim2, sbtp2->t, ebtp2->t, edge_mid_3d, 0.5 * loop_min_dist, 0);
+	trim1_mid_2d = get_trim_midpt(&t1, &trim, sbtp1->t, ebtp1->t, edge_mid_3d, emindist, 0);
+	trim2_mid_2d = get_trim_midpt(&t2, trim2, sbtp2->t, ebtp2->t, edge_mid_3d, emindist, 0);
     }
 
     if (!evtangent_status) {
