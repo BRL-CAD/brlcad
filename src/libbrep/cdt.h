@@ -114,6 +114,7 @@ struct ON_Brep_CDT_State {
 
     /* Poly2Tri data */
     p2t::CDT **p2t_faces;
+    std::map<p2t::Point *, int> *p2t_edge_points;
     std::vector<p2t::Triangle *> **p2t_extra_faces;
     std::map<ON_2dPoint *, ON_3dPoint *> **on2_to_on3_maps;
     std::map<p2t::Point *, ON_3dPoint *> **tri_to_on3_maps;

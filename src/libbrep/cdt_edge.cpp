@@ -153,8 +153,8 @@ getEdgePoints(
     fastf_t emindist = (cdt_tol->min_dist < 0.5*loop_min_dist) ? cdt_tol->min_dist : 0.5 * loop_min_dist;
     ON_3dPoint trim1_mid_2d, trim2_mid_2d;
     if (edge->m_edge_index == 790) {
-	trim1_mid_2d = get_trim_midpt(&t1, &trim, sbtp1->t, ebtp1->t, edge_mid_3d, emindist, 1);
-	trim2_mid_2d = get_trim_midpt(&t2, trim2, sbtp2->t, ebtp2->t, edge_mid_3d, emindist, 1);
+	trim1_mid_2d = get_trim_midpt(&t1, &trim, sbtp1->t, ebtp1->t, edge_mid_3d, emindist, 0);
+	trim2_mid_2d = get_trim_midpt(&t2, trim2, sbtp2->t, ebtp2->t, edge_mid_3d, emindist, 0);
     } else {
 	trim1_mid_2d = get_trim_midpt(&t1, &trim, sbtp1->t, ebtp1->t, edge_mid_3d, emindist, 0);
 	trim2_mid_2d = get_trim_midpt(&t2, trim2, sbtp2->t, ebtp2->t, edge_mid_3d, emindist, 0);

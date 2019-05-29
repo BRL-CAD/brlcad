@@ -182,6 +182,7 @@ ON_Brep_CDT_Create(void *bv)
     cdt->face_degen_pnts = (std::set<p2t::Point *> **)bu_calloc(brep->m_F.Count(), sizeof(std::set<p2t::Point *> *), "degenerate edge points");
 
     cdt->p2t_faces = (p2t::CDT **)bu_calloc(brep->m_F.Count(), sizeof(p2t::CDT *), "poly2tri triangulations");
+    cdt->p2t_edge_points = new std::map<p2t::Point *, int>;
     cdt->p2t_extra_faces = (std::vector<p2t::Triangle *> **)bu_calloc(brep->m_F.Count(), sizeof(std::vector<p2t::Triangle *> *), "extra p2t faces");
     cdt->on2_to_on3_maps = (std::map<ON_2dPoint *, ON_3dPoint *> **)bu_calloc(brep->m_F.Count(), sizeof(std::map<ON_2dPoint *, ON_3dPoint *> *), "ON_2dPoint to ON_3dPoint maps");
     cdt->tri_to_on3_maps = (std::map<p2t::Point *, ON_3dPoint *> **)bu_calloc(brep->m_F.Count(), sizeof(std::map<p2t::Point *, ON_3dPoint *> *), "poly2tri point to ON_3dPoint maps");
@@ -240,6 +241,8 @@ ON_Brep_CDT_Destroy(struct ON_Brep_CDT_State *s_cdt)
 
     delete s_cdt->min_edge_seg_len;
     delete s_cdt->max_edge_seg_len;
+
+    delete s_cdt->p2t_edge_points;
 
     delete s_cdt->w3dpnts;
     delete s_cdt->vert_pnts;

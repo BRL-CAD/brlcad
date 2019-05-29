@@ -44,6 +44,7 @@ p2tTri_Normal(p2t::Triangle *t, std::map<p2t::Point *, ON_3dPoint *> *pointmap)
     return tdir;
 }
 
+#if 0
 static void
 validate_face_normals(
 	struct ON_Brep_CDT_State *s_cdt,
@@ -80,6 +81,7 @@ validate_face_normals(
 	}
     }
 }
+#endif
 
 struct on_brep_mesh_data {
     std::vector<ON_3dPoint *> vfpnts;
@@ -310,6 +312,116 @@ triangles_scrub_colinear(struct ON_Brep_CDT_State *s_cdt, struct on_brep_mesh_da
     }
 }
 
+static void
+triangles_incorrect_normals(struct ON_Brep_CDT_State *s_cdt, struct on_brep_mesh_data *md, int face_index)
+{
+    p2t::CDT *cdt = s_cdt->p2t_faces[face_index];
+    std::map<p2t::Point *, ON_3dPoint *> *pointmap = s_cdt->tri_to_on3_maps[face_index];
+    std::map<p2t::Point *, ON_3dPoint *> *normalmap = s_cdt->tri_to_on3_norm_maps[face_index];
+    std::vector<p2t::Triangle*> tris = cdt->GetTriangles();
+    for (size_t i = 0; i < tris.size(); i++) {
+	p2t::Triangle *t = tris[i];
+	if (md->tris_degen.size() > 0 && md->tris_degen.find(t) != md->tris_degen.end()) {
+	    continue;
+	}
+
+
+	int invalid_face_normal = 0;
+	ON_3dVector tdir = p2tTri_Normal(t, pointmap);
+	p2t::Point *p[3];
+	p[0] = t->GetPoint(0);
+	p[1] = t->GetPoint(1);
+	p[2] = t->GetPoint(2);
+	int wnorm[3] = {0, 0, 0};
+	for (size_t j = 0; j < 3; j++) {
+	    ON_3dPoint onorm = *(*normalmap)[p[j]];
+	    if (s_cdt->brep->m_F[face_index].m_bRev) {
+		onorm = onorm * -1;
+	    }
+	    if (tdir.Length() > 0 && ON_DotProduct(onorm, tdir) < 0.1) {
+		invalid_face_normal++;
+		wnorm[j] = 1;
+	    }
+	}
+
+	if (invalid_face_normal == 3) {
+	    int tind[3] = {-1, -1, -1};
+	    int edge_pnt_cnt = 0;
+	    for (int j = 0; j < 3; j++) {
+		if (s_cdt->p2t_edge_points->find(p[j]) != s_cdt->p2t_edge_points->end()) {
+		    tind[j] = (*s_cdt->p2t_edge_points)[p[j]];
+		    edge_pnt_cnt++;
+		}
+	    }
+	    bu_log("Face %d: 3 normals in wrong direction:\n", face_index);
+	    if ((tind[0] != -1) && (tind[0] == tind[1]) && (tind[1] == tind[2])) {
+		bu_log("invalid face normal with all points on the same trim curve\n");
+		ON_3dPoint tri_cent = (*(*pointmap)[t->GetPoint(0)] + *(*pointmap)[t->GetPoint(1)] + *(*pointmap)[t->GetPoint(2)])/3;
+		bu_log("Tri p1: %f %f %f\n", (*pointmap)[t->GetPoint(0)]->x, (*pointmap)[t->GetPoint(0)]->y, (*pointmap)[t->GetPoint(0)]->z);
+		bu_log("Tri p2: %f %f %f\n", (*pointmap)[t->GetPoint(1)]->x, (*pointmap)[t->GetPoint(1)]->y, (*pointmap)[t->GetPoint(1)]->z);
+		bu_log("Tri p3: %f %f %f\n", (*pointmap)[t->GetPoint(2)]->x, (*pointmap)[t->GetPoint(2)]->y, (*pointmap)[t->GetPoint(2)]->z);
+		bu_log("Tri center: %f %f %f\n", tri_cent.x, tri_cent.y, tri_cent.z);
+		bu_log("Tri norm: %f %f %f\n", tdir.x, tdir.y, tdir.z);
+		bu_log("edge trim: %d\n", (*s_cdt->p2t_edge_points)[t->GetPoint(0)]);
+
+		md->triangle_cnt--;
+		md->tris_degen.insert(t);
+	    }
+
+	    if (edge_pnt_cnt == 2) {
+		bu_log("problem point from surface:\n");
+		for (int j = 0; j < 3; j++) {
+		    if (tind[j] == -1) {
+			ON_3dPoint *spt = (*pointmap)[p[j]];
+			bu_log("%f %f %f\n", spt->x, spt->y, spt->z);
+		    }
+		}
+	    }
+	    if (edge_pnt_cnt == 1) {
+		bu_log("two problem points from surface:\n");
+		for (int j = 0; j < 3; j++) {
+		    if (tind[j] == -1) {
+			ON_3dPoint *spt = (*pointmap)[p[j]];
+			bu_log("%f %f %f\n", spt->x, spt->y, spt->z);
+		    }
+		}
+
+	    }
+	    if (edge_pnt_cnt == 0) {
+		bu_log("no edge pnts involved:\n");
+		for (int j = 0; j < 3; j++) {
+		    if (tind[j] == -1) {
+			ON_3dPoint *spt = (*pointmap)[p[j]];
+			bu_log("%f %f %f\n", spt->x, spt->y, spt->z);
+		    }
+		}
+
+
+	    }
+	}
+
+	if (invalid_face_normal == 2) {
+	    bu_log("Face %d: 2 normals in wrong direction:\n", face_index);
+	    for (int j = 0; j < 3; j++) {
+		if (wnorm[j] != 0) {
+		    ON_3dPoint *spt = (*pointmap)[p[j]];
+		    bu_log("%f %f %f\n", spt->x, spt->y, spt->z);
+		}
+	    }
+	}
+	if (invalid_face_normal == 1) {
+	    bu_log("Face %d: 1 normal in wrong direction:\n", face_index);
+	    for (int j = 0; j < 3; j++) {
+		if (wnorm[j] != 0) {
+		    ON_3dPoint *spt = (*pointmap)[p[j]];
+		    bu_log("%f %f %f\n", spt->x, spt->y, spt->z);
+		}
+	    }
+
+	}
+    }
+}
+
 
 static void
 Process_Loop_Edges(
@@ -462,6 +574,7 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_State *s_cdt, std::map<const ON_Surface *, d
 		// map point to last entry to 3d point
 		p2t::Point *p = new p2t::Point((brep_loop_points[li])[i].p2d.x, (brep_loop_points[li])[i].p2d.y);
 		polyline.push_back(p);
+		(*s_cdt->p2t_edge_points)[p] = (brep_loop_points[li])[i].trim_ind;
 		(*pointmap)[p] = (brep_loop_points[li])[i].p3d;
 		(*on3_to_tri)[(brep_loop_points[li])[i].p3d].insert(p);
 		(*normalmap)[p] = (brep_loop_points[li])[i].n3d;
@@ -1554,6 +1667,10 @@ ON_Brep_CDT_Mesh(
 	}
     }
 
+    for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
+	triangles_incorrect_normals(s_cdt, &md, face_index);
+    }
+
     bu_log("tri_cnt_init: %zd\n", md.triangle_cnt);
     for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
 	std::vector<p2t::Triangle *> *tri_add = s_cdt->p2t_extra_faces[face_index];
@@ -1565,7 +1682,7 @@ ON_Brep_CDT_Mesh(
     }
     bu_log("tri_cnt_init+: %zd\n", md.triangle_cnt);
 
-
+#if 0
     // Validate normals using the triangle itself
     for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
 	p2t::CDT *cdt = s_cdt->p2t_faces[face_index];
@@ -1579,6 +1696,7 @@ ON_Brep_CDT_Mesh(
 	}
 	validate_face_normals(s_cdt, tri_add, NULL, face_index);
     }
+#endif
 
     // Know how many faces and points now - initialize BoT container.
     *fcnt = (int)md.triangle_cnt;
