@@ -369,6 +369,46 @@ std::string note_svn_rev(struct svn_revision &rev, std::string &rbranch)
     return fi_file;
 }
 
+void apply_working_branch_and_mvall(struct svn_revision &rev, std::string &rbranch) {
+    struct stat buffer;
+    long int rev_num = rev.revision_number;
+    std::string branch_fi_template;
+    branch_fi_template = std::string("custom/") + std::to_string(rev_num) + std::string("-b.fi");
+    if (!file_exists(branch_fi_template)) {
+	branch_fi_template = std::to_string(rev_num) + std::string("-b.fi");
+	if (!file_exists(branch_fi_template)) {
+	    branch_fi_template = std::string("");
+	}
+    }
+    std::string wbfi_file;
+    if (branch_fi_template.length()) {
+	wbfi_file = populate_template(branch_fi_template, rbranch);
+	apply_fi_file_working(wbfi_file,rbranch, rev.revision_number, 0, 0, 0);
+	get_rev_sha1(rbranch, rev.revision_number);
+	all_git_branches.push_back(rbranch);
+    } else {
+	wbfi_file = std::string("");
+    }
+
+
+    // Next, do a move-only commit if we have one
+    std::string move_fi_template;
+    move_fi_template = std::string("custom/") + std::to_string(rev_num) + std::string("-mvonly.fi");
+    if (stat(move_fi_template.c_str(), &buffer)) {
+	move_fi_template = std::to_string(rev_num) + std::string("-mvonly.fi");
+	if (stat(move_fi_template.c_str(), &buffer)) {
+	    move_fi_template = std::string("");
+	}
+    }
+    std::string wmvfi_file;
+    if (move_fi_template.length()) {
+	wmvfi_file = populate_template(move_fi_template, rbranch);
+	apply_fi_file_working(wmvfi_file, rbranch, rev.revision_number, 0, 0, 0);
+	get_rev_sha1(rbranch, rev.revision_number);
+    } else {
+	wmvfi_file = std::string("");
+    }
+}
 
 void apply_commit(struct svn_revision &rev, std::string &rbranch, int verify_repo)
 {
@@ -496,6 +536,17 @@ void apply_commit(struct svn_revision &rev, std::string &rbranch, int verify_rep
 
 	    // Apply the combined contents of the commit files
 	    if (apply_fi_file_working(wfi_file, rbranch, rev.revision_number, 0, 1, 1)) {
+
+		// If we're going to try this, we need to wipe cvs_git_working,
+		// copy in cvs_git, and re-apply any branch or mvonly commits before
+		// we proceed.
+		std::string working_reset_cmd = std::string("rm -rf cvs_git_working && cp -r cvs_git cvs_git_working");
+		if (std::system(working_reset_cmd.c_str())) {
+		    std::cout << "working_reset_cmd failed.\n";
+		    exit(1);
+		}
+		apply_working_branch_and_mvall(rev, rbranch);
+
 		// If the apply failed, try generating the tree portion of the
 		// commit from an actual svn checkout.  At least for the later
 		// commits this is the most common remedy, so see if we can
