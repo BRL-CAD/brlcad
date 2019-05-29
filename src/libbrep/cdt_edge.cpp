@@ -56,8 +56,8 @@ midpt_binary_search(fastf_t *tmid, const ON_BrepTrim *trim, double tstart, doubl
 	    if (verbose)
 		bu_log("(%f - %f - %f (%f): searching left and right subspans\n", tstart, tcmid, tend, ON_DotProduct(v1,v2));
 	    double tlmid, trmid;
-	    double fldist = midpt_binary_search(&tlmid, trim, tstart, tcmid, edge_mid_3d, tol, 0);
-	    double frdist = midpt_binary_search(&trmid, trim, tcmid, tend, edge_mid_3d, tol, 0);
+	    double fldist = midpt_binary_search(&tlmid, trim, tstart, tcmid, edge_mid_3d, tol, 1);
+	    double frdist = midpt_binary_search(&trmid, trim, tcmid, tend, edge_mid_3d, tol, 1);
 	    if (fldist >= 0 && frdist < -1) {
 		if (verbose)
 		    bu_log("(%f - %f - %f: going with fldist: %f\n", tstart, tcmid, tend, fldist);
@@ -72,7 +72,7 @@ midpt_binary_search(fastf_t *tmid, const ON_BrepTrim *trim, double tstart, doubl
 	    }
 	    if (fldist < -1 && frdist < -1) {
 		if (verbose)
-		    bu_log("(%f - %f: point not in either subspan\n", tstart, tend);
+		    bu_log("(%f - %f: point not in either subspan (%f)\n", tstart, tend, ON_DotProduct(v1,v2));
 		return -2;
 	    }
 	} else {
