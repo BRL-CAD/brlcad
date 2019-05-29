@@ -63,8 +63,11 @@ validate_face_normals(
 	ON_3dVector tdir = p2tTri_Normal(t, pointmap);
 	for (size_t j = 0; j < 3; j++) {
 	    p2t::Point *p = t->GetPoint(j);
-	    ON_3dPoint *onorm = (*normalmap)[p];
-	    if (tdir.Length() > 0 && ON_DotProduct(*onorm, tdir) < 0) {
+	    ON_3dPoint onorm = *(*normalmap)[p];
+	    if (s_cdt->brep->m_F[face_index].m_bRev) {
+		onorm = onorm * -1;
+	    }
+	    if (tdir.Length() > 0 && ON_DotProduct(onorm, tdir) < 0) {
 		ON_3dPoint tri_cent = (*(*pointmap)[t->GetPoint(0)] + *(*pointmap)[t->GetPoint(1)] + *(*pointmap)[t->GetPoint(2)])/3;
 		bu_log("Face %d: normal in wrong direction:\n", face_index);
 		bu_log("Tri p1: %f %f %f\n", (*pointmap)[t->GetPoint(0)]->x, (*pointmap)[t->GetPoint(0)]->y, (*pointmap)[t->GetPoint(0)]->z);
@@ -72,7 +75,7 @@ validate_face_normals(
 		bu_log("Tri p3: %f %f %f\n", (*pointmap)[t->GetPoint(2)]->x, (*pointmap)[t->GetPoint(2)]->y, (*pointmap)[t->GetPoint(2)]->z);
 		bu_log("Tri center: %f %f %f\n", tri_cent.x, tri_cent.y, tri_cent.z);
 		bu_log("Tri norm: %f %f %f\n", tdir.x, tdir.y, tdir.z);
-		bu_log("onorm: %f %f %f\n", onorm->x, onorm->y, onorm->z);
+		bu_log("onorm: %f %f %f\n", onorm.x, onorm.y, onorm.z);
 	    }
 	}
     }
@@ -892,7 +895,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	// runs - if pre-existing solutions for "high level" splits exist,
 	// reuse them and dig down to find where we need further refinement to
 	// create new points.
-        (void)getEdgePoints(s_cdt, &edge, trim1, max_dist, 0.0001*min_dist);
+        (void)getEdgePoints(s_cdt, &edge, trim1, max_dist, min_dist);
 
     }
 
