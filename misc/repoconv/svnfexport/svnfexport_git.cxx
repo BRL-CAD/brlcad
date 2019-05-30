@@ -175,7 +175,7 @@ int apply_fi_file_working(std::string &fi_file, std::string &rbranch, long int r
 	return 1;
     }
     // TODO - should check tags as well...
-    if (do_verify)
+    if (do_verify && !is_tag)
 	return verify_repos(rev, rbranch);
     return 0;
 }
