@@ -157,7 +157,7 @@ int verify_repos(long int rev, std::string branch_git)
 	if (std::system(cleanup_cmd.c_str())) {
 	    std::cerr << "verify cleanup failed!\n";
 	}
-	exit(1);
+	return 0;
     }
     ret = std::system(svn_emptydir_rm.c_str());
     while (!ret) {
