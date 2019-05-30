@@ -24,4 +24,5 @@ find . -type f -path "*/win32-msvc/*" -exec sed -i 's/$Log:[^$;"]*/$Log/' {} \;
 find . -type f -path "*/win32-msvc/*" -exec sed -i 's/$Revision:[^$;"]*/$Revision/' {} \;
 find . -type f -path "*/win32-msvc/*" -exec sed -i 's/$Source:[^$;"]*/$Source/' {} \;
 
+sed -i 's/$Id:[^$;"]*/$Id/' misc/archlinux/brlcad.install
 sed -i 's/$Locker:[^$;"]*/$Locker/' src/other/URToolkit/tools/mallocNd.c
