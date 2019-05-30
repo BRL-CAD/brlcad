@@ -983,7 +983,8 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 
         // Get distance tolerances from the surface sizes
         fastf_t max_dist = 0.0;
-        fastf_t min_dist, mw, mh;
+        fastf_t min_dist = DBL_MAX;
+	fastf_t mw, mh;
         fastf_t md1, md2 = 0.0;
         double sw1, sh1, sw2, sh2;
         const ON_Surface *s1 = trim1.Face()->SurfaceOf();
