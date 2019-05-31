@@ -42,6 +42,8 @@ bool skip_dercs(std::string &npath) {
     if (npath.find("/misc/win32-msvc8") != std::string::npos) return false;
     if (npath.find("/misc/rcs2log") != std::string::npos) return false;
     if (npath.find("/misc/win32-msvc") != std::string::npos) return false;
+    if (npath.find("/misc/archlinux/brlcad.install") != std::string::npos) return false;
+    if (npath.find("/misc/brlcad.spec.in") != std::string::npos) return false;
     if (npath.find("/misc/") != std::string::npos) return true;
     if (npath.find("/src/other/step") != std::string::npos) return true;
     if (npath.find("/src/conv/step") != std::string::npos) return true;
