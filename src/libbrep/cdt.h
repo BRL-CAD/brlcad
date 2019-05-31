@@ -87,7 +87,7 @@ struct ON_Brep_CDT_State;
 
 struct ON_Brep_CDT_Face_State {
     struct ON_Brep_CDT_State *s_cdt;
-    int face_ind;
+    int ind;
 
     /* 3D data specific to this face (i.e. not shared at an edge) */
     std::vector<ON_3dPoint *> *w3dpnts;

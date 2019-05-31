@@ -544,11 +544,13 @@ Process_Loop_Edges(
 
 
 static int
-ON_Brep_CDT_Face(struct ON_Brep_CDT_State *s_cdt, std::map<const ON_Surface *, double> *s_to_maxdist, ON_BrepFace &face)
+ON_Brep_CDT_Face(struct ON_Brep_CDT_Face_State *f, std::map<const ON_Surface *, double> *s_to_maxdist)
 {
+    struct ON_Brep_CDT_State *s_cdt = f->s_cdt;
+    int face_index = f->ind;
     ON_RTree rt_trims;
     ON_2dPointArray on_surf_points;
-    int face_index = face.m_face_index;
+    ON_BrepFace &face = f->s_cdt->brep->m_F[face_index];
     const ON_Surface *s = face.SurfaceOf();
     int loop_cnt = face.LoopCount();
     ON_2dPointArray on_loop_points;
@@ -964,10 +966,18 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 		// needs a normal in 3D, want to use one of these
 		int mfaceind1 = trim1->Face()->m_face_index;
 		ON_3dPoint *t1pnt = new ON_3dPoint(trim1_norm);
+		if (s_cdt->faces->find(mfaceind1) == s_cdt->faces->end()) {
+		    struct ON_Brep_CDT_Face_State *f = ON_Brep_CDT_Face_Create(s_cdt, mfaceind1);
+		    (*s_cdt->faces)[mfaceind1] = f;
+		}
 		(*(*s_cdt->faces)[mfaceind1]->vert_face_norms)[v.m_vertex_index].insert(t1pnt);
 		(*s_cdt->faces)[mfaceind1]->w3dnorms->push_back(t1pnt);
 		int mfaceind2 = trim2->Face()->m_face_index;
 		ON_3dPoint *t2pnt = new ON_3dPoint(trim2_norm);
+		if (s_cdt->faces->find(mfaceind2) == s_cdt->faces->end()) {
+		    struct ON_Brep_CDT_Face_State *f = ON_Brep_CDT_Face_Create(s_cdt, mfaceind2);
+		    (*s_cdt->faces)[mfaceind2] = f;
+		}
 		(*(*s_cdt->faces)[mfaceind2]->vert_face_norms)[v.m_vertex_index].insert(t1pnt);
 		(*s_cdt->faces)[mfaceind2]->w3dnorms->push_back(t2pnt);
 
@@ -1051,9 +1061,11 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
     if ((face_cnt == 0) || !faces) {
 
 	for (int face_index = 0; face_index < s_cdt->brep->m_F.Count(); face_index++) {
-	    ON_BrepFace &face = brep->m_F[face_index];
-
-	    if (ON_Brep_CDT_Face(s_cdt, &s_to_maxdist, face)) {
+	    if (s_cdt->faces->find(face_index) == s_cdt->faces->end()) {
+		struct ON_Brep_CDT_Face_State *f = ON_Brep_CDT_Face_Create(s_cdt, face_index);
+		(*s_cdt->faces)[face_index] = f;
+	    }
+	    if (ON_Brep_CDT_Face((*s_cdt->faces)[face_index],&s_to_maxdist)) {
 		face_failures++;
 	    } else {
 		face_successes++;
@@ -1063,8 +1075,11 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
     } else {
 	for (int i = 0; i < face_cnt; i++) {
 	    if (faces[i] < s_cdt->brep->m_F.Count()) {
-		ON_BrepFace &face = brep->m_F[faces[i]];
-		if (ON_Brep_CDT_Face(s_cdt, &s_to_maxdist, face)) {
+		if (s_cdt->faces->find(i) == s_cdt->faces->end()) {
+		    struct ON_Brep_CDT_Face_State *f = ON_Brep_CDT_Face_Create(s_cdt, i);
+		    (*s_cdt->faces)[i] = f;
+		}
+		if (ON_Brep_CDT_Face((*s_cdt->faces)[i], &s_to_maxdist)) {
 		    face_failures++;
 		} else {
 		    face_successes++;

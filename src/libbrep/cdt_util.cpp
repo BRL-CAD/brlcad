@@ -164,7 +164,7 @@ ON_Brep_CDT_Face_Create(struct ON_Brep_CDT_State *s_cdt, int ind)
     struct ON_Brep_CDT_Face_State *fcdt = new struct ON_Brep_CDT_Face_State;
 
     fcdt->s_cdt = s_cdt;
-    fcdt->face_ind = ind;
+    fcdt->ind = ind;
 
     fcdt->w3dpnts = new std::vector<ON_3dPoint *>;
     fcdt->w3dnorms = new std::vector<ON_3dPoint *>;
