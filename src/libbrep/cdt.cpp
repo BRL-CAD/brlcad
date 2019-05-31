@@ -1075,11 +1075,11 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
     } else {
 	for (int i = 0; i < face_cnt; i++) {
 	    if (faces[i] < s_cdt->brep->m_F.Count()) {
-		if (s_cdt->faces->find(i) == s_cdt->faces->end()) {
-		    struct ON_Brep_CDT_Face_State *f = ON_Brep_CDT_Face_Create(s_cdt, i);
-		    (*s_cdt->faces)[i] = f;
+		if (s_cdt->faces->find(faces[i]) == s_cdt->faces->end()) {
+		    struct ON_Brep_CDT_Face_State *f = ON_Brep_CDT_Face_Create(s_cdt, faces[i]);
+		    (*s_cdt->faces)[faces[i]] = f;
 		}
-		if (ON_Brep_CDT_Face((*s_cdt->faces)[i], &s_to_maxdist)) {
+		if (ON_Brep_CDT_Face((*s_cdt->faces)[faces[i]], &s_to_maxdist)) {
 		    face_failures++;
 		} else {
 		    face_successes++;
