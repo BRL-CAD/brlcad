@@ -25,4 +25,5 @@ find . -type f -path "*/win32-msvc/*" -exec sed -i 's/$Revision:[^$;"]*/$Revisio
 find . -type f -path "*/win32-msvc/*" -exec sed -i 's/$Source:[^$;"]*/$Source/' {} \;
 
 sed -i 's/$Id:[^$;"]*/$Id/' misc/archlinux/brlcad.install
+sed -i 's/$Id:[^$;"]*/$Id/' misc/brlcad.spec.in
 sed -i 's/$Locker:[^$;"]*/$Locker/' src/other/URToolkit/tools/mallocNd.c
