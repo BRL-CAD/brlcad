@@ -1365,7 +1365,7 @@ int ON_Brep_CDT_VList(
    }
 
    for (int i = 0; i < s->brep->m_F.Count(); i++) {
-       if ((*s->faces)[i]) {
+       if ((*s->faces)[i] && (*s->faces)[i]->cdt) {
 	   (void)ON_Brep_CDT_VList_Face(vhead, vlfree, i, mode, s);
        }
    }
