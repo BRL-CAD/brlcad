@@ -83,6 +83,50 @@ struct cdt_audit_info {
     ON_2dPoint surf_uv;
 };
 
+struct ON_Brep_CDT_State;
+
+struct ON_Brep_CDT_Face_State {
+    struct ON_Brep_CDT_State *s_cdt;
+    int face_ind;
+
+    /* 3D data specific to this face (i.e. not shared at an edge) */
+    std::vector<ON_3dPoint *> *w3dpnts;
+    std::vector<ON_3dPoint *> *w3dnorms;
+
+    std::map<int, std::set<ON_3dPoint *>> *vert_face_norms;
+
+    /* loop points */
+    ON_SimpleArray<BrepTrimPoint> *face_loop_points;
+    std::map<p2t::Point *, BrepTrimPoint *> *p2t_to_trimpt;
+    std::map<p2t::Point *, int> *p2t_trim_ind;
+
+    /* singular trim info */
+    std::map<int,ON_3dPoint *> *strim_pnts;
+    std::map<int,ON_3dPoint *> *strim_norms;
+
+    /* non-loop surface points */
+    ON_2dPointArray *on_surf_points;
+
+    /* mappings */
+    std::map<ON_2dPoint *, ON_3dPoint *> *on2_to_on3_map;
+    std::map<ON_2dPoint *, p2t::Point *> *on2_to_p2t_map;
+    std::map<p2t::Point *, ON_3dPoint *> *p2t_to_on2_map;
+    std::map<p2t::Point *, ON_3dPoint *> *p2t_to_on3_map;
+    std::map<p2t::Point *, ON_3dPoint *> *p2t_to_on3_norm_map;
+    std::map<ON_3dPoint *, std::set<p2t::Point *>> *on3_to_tri_map;
+
+    /* Poly2Tri information */
+    p2t::CDT *cdt;
+    std::vector<p2t::Triangle *> *p2t_extra_faces;
+    std::set<p2t::Triangle *> *degen_faces;
+
+    /* Point status tracker */
+    std::set<p2t::Point *> *degen_pnts;
+    std::set<ON_2dPoint *> *deactivated_surf_pnts;
+    std::set<ON_2dPoint *> *added_surf_pnts;
+};
+
+
 struct ON_Brep_CDT_State {
 
     int status;
@@ -96,40 +140,25 @@ struct ON_Brep_CDT_State {
     fastf_t dist;
 
     /* 3D data */
-    std::map<int, double> *min_edge_seg_len;
-    std::map<int, double> *max_edge_seg_len;
     std::vector<ON_3dPoint *> *w3dpnts;
     std::vector<ON_3dPoint *> *w3dnorms;
 
+    /* Vertices */
     std::map<int, ON_3dPoint *> *vert_pnts;
     std::map<int, ON_3dPoint *> *vert_avg_norms;
-    std::map<int, std::map<int, std::set<ON_3dPoint *>>> *vert_face_norms;
+    std::map<int, ON_3dPoint *> *vert_to_on;
 
-    /* loop points */
-    std::map<int, ON_SimpleArray<BrepTrimPoint> *> *face_loop_points;
-
-    /* singular trim info */
-    std::map<int, std::map<int,ON_3dPoint *>> *strim_pnts;
-    std::map<int, std::map<int,ON_3dPoint *>> *strim_norms;
-
-    /* Poly2Tri data */
-    p2t::CDT **p2t_faces;
-    std::map<p2t::Point *, int> *p2t_edge_points;
-    std::vector<p2t::Triangle *> **p2t_extra_faces;
-    std::map<ON_2dPoint *, ON_3dPoint *> **on2_to_on3_maps;
-    std::map<p2t::Point *, ON_3dPoint *> **tri_to_on3_maps;
-    std::map<p2t::Point *, ON_3dPoint *> **tri_to_on3_norm_maps;
-    std::map<ON_3dPoint *, std::set<p2t::Point *>> **on3_to_tri_maps;
+    /* Edges */
+    std::set<ON_3dPoint *> *edge_pnts;
+    std::map<int, double> *min_edge_seg_len;
+    std::map<int, double> *max_edge_seg_len;
+    std::map<ON_3dPoint *, std::set<BrepTrimPoint *>> *on_brep_edge_pnts;
 
     /* Audit data */
-    std::map<ON_3dPoint *, struct cdt_audit_info *> pnt_audit_info;
+    std::map<ON_3dPoint *, struct cdt_audit_info *> *pnt_audit_info;
 
-    /* BoT -> ON mappings */
-    std::map<ON_3dPoint *, std::set<BrepTrimPoint *>> on_brep_edge_pnts;
-    std::map<int, ON_3dPoint *> *vert_to_on;
-    std::set<ON_3dPoint *> *edge_pnts;
-    ON_SimpleArray<BrepTrimPoint> **brep_face_loop_points;
-    std::set<p2t::Point *> **face_degen_pnts;
+    /* Face specific data */
+    std::map<int, struct ON_Brep_CDT_Face_State *> *faces;
 };
 
 struct brep_cdt_tol {
@@ -144,8 +173,8 @@ struct cdt_surf_info {
     const ON_Surface *s;
     const ON_BrepFace *f;
     ON_RTree *rt_trims;
-    std::map<int, std::map<int,ON_3dPoint *>> *strim_pnts;
-    std::map<int, std::map<int,ON_3dPoint *>> *strim_norms;
+    std::map<int,ON_3dPoint *> *strim_pnts;
+    std::map<int,ON_3dPoint *> *strim_norms;
     double u1, u2, v1, v2;
     fastf_t ulen;
     fastf_t u_lower_3dlen;
@@ -182,6 +211,14 @@ getSurfacePoints(struct ON_Brep_CDT_State *s_cdt,
 	         const ON_BrepFace &face,
 		 ON_2dPointArray &on_surf_points,
 		 ON_RTree *rt_trims);
+
+
+struct ON_Brep_CDT_Face_State *
+ON_Brep_CDT_Face_Create(struct ON_Brep_CDT_State *s_cdt, int ind);
+void
+ON_Brep_CDT_Face_Reset(struct ON_Brep_CDT_Face_State *fcdt);
+void
+ON_Brep_CDT_Face_Destroy(struct ON_Brep_CDT_Face_State *fcdt);
 
 void
 plot_polyline(std::vector<p2t::Point *> *pnts, const char *filename);

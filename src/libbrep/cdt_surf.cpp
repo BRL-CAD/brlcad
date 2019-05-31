@@ -79,7 +79,7 @@ singular_trim_norm(struct cdt_surf_info *sinfo, fastf_t uc, fastf_t vc)
 	}
 	std::map<int, ON_3dPoint *>::iterator m_it;
 	// Check the trims to see if uc,vc is on one of them
-	for (m_it = (*sinfo->strim_pnts)[sinfo->f->m_face_index].begin(); m_it != (*sinfo->strim_pnts)[sinfo->f->m_face_index].end(); m_it++) {
+	for (m_it = sinfo->strim_pnts->begin(); m_it != sinfo->strim_pnts->end(); m_it++) {
 	    //bu_log("  trim %d\n", (*m_it).first);
 	    ON_Interval trim_dom = sinfo->f->Brep()->m_T[(*m_it).first].Domain();
 	    ON_2dPoint p2d1 = sinfo->f->Brep()->m_T[(*m_it).first].PointAt(trim_dom.m_t[0]);
@@ -110,9 +110,9 @@ singular_trim_norm(struct cdt_surf_info *sinfo, fastf_t uc, fastf_t vc)
 	    }
 
 	    if (on_trim) {
-		if ((*sinfo->strim_norms)[sinfo->f->m_face_index].find((*m_it).first) != (*sinfo->strim_norms)[sinfo->f->m_face_index].end()) {
+		if (sinfo->strim_norms->find((*m_it).first) != sinfo->strim_norms->end()) {
 		    ON_3dPoint *vnorm = NULL;
-		    vnorm = (*sinfo->strim_norms)[sinfo->f->m_face_index][(*m_it).first];
+		    vnorm = (*sinfo->strim_norms)[(*m_it).first];
 		    //bu_log(" normal: %f, %f, %f\n", vnorm->x, vnorm->y, vnorm->z);
 		    return vnorm;
 		} else {
@@ -149,7 +149,7 @@ bool involves_trims(double *min_edge, struct ON_Brep_CDT_State *s_cdt, struct cd
 	double min_edge_dist = DBL_MAX;
 	ON_BoundingBox uvbb(ON_2dPoint(u1,v1),ON_2dPoint(u2,v2));
 
-	ON_SimpleArray<BrepTrimPoint> *brep_loop_points = s_cdt->brep_face_loop_points[sinfo->f->m_face_index];
+	ON_SimpleArray<BrepTrimPoint> *brep_loop_points = (*s_cdt->faces)[sinfo->f->m_face_index]->face_loop_points;
 	if (!brep_loop_points) {
 	    (*min_edge) = min_edge_dist;
 	    return ret;
@@ -516,17 +516,12 @@ getSurfacePoints(struct ON_Brep_CDT_State *s_cdt,
 	    return;
 	}
 
-	if (!s_cdt->on2_to_on3_maps[face.m_face_index]) {
-	    std::map<ON_2dPoint *, ON_3dPoint *> *on2to3 = new std::map<ON_2dPoint *, ON_3dPoint *>();
-	    s_cdt->on2_to_on3_maps[face.m_face_index] = on2to3;
-	}
-
 	struct cdt_surf_info sinfo;
 	sinfo.s = s;
 	sinfo.f = &face;
 	sinfo.rt_trims = rt_trims;
-	sinfo.strim_pnts = s_cdt->strim_pnts;
-	sinfo.strim_norms = s_cdt->strim_norms;
+	sinfo.strim_pnts = (*s_cdt->faces)[face.m_face_index]->strim_pnts;
+	sinfo.strim_norms = (*s_cdt->faces)[face.m_face_index]->strim_norms;
 	double t1, t2;
 	s->GetDomain(0, &t1, &t2);
 	sinfo.ulen = fabs(t2 - t1);

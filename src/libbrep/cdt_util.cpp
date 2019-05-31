@@ -114,7 +114,7 @@ void
 CDT_Add3DPnt(struct ON_Brep_CDT_State *s, ON_3dPoint *p, int fid, int vid, int tid, int eid, fastf_t x2d, fastf_t y2d)
 {
     s->w3dpnts->push_back(p);
-    s->pnt_audit_info[p] = cdt_ainfo(fid, vid, tid, eid, x2d, y2d);
+    (*s->pnt_audit_info)[p] = cdt_ainfo(fid, vid, tid, eid, x2d, y2d);
 }
 
 // Digest tessellation tolerances...
@@ -158,39 +158,122 @@ CDT_Tol_Set(struct brep_cdt_tol *cdt, double dist, fastf_t md, double t_abs, dou
     cdt->cos_within_ang = cos_within_ang;
 }
 
+struct ON_Brep_CDT_Face_State *
+ON_Brep_CDT_Face_Create(struct ON_Brep_CDT_State *s_cdt, int ind)
+{
+    struct ON_Brep_CDT_Face_State *fcdt = new struct ON_Brep_CDT_Face_State;
+
+    fcdt->s_cdt = s_cdt;
+    fcdt->face_ind = ind;
+
+    fcdt->w3dpnts = new std::vector<ON_3dPoint *>;
+    fcdt->w3dnorms = new std::vector<ON_3dPoint *>;
+
+    fcdt->vert_face_norms = new std::map<int, std::set<ON_3dPoint *>>;
+    fcdt->face_loop_points = NULL;
+    fcdt->p2t_to_trimpt = new std::map<p2t::Point *, BrepTrimPoint *>;
+    fcdt->p2t_trim_ind = new std::map<p2t::Point *, int>;
+
+    fcdt->strim_pnts = new std::map<int,ON_3dPoint *>;
+    fcdt->strim_norms = new std::map<int,ON_3dPoint *>;
+
+    fcdt->on_surf_points = new ON_2dPointArray;
+
+    fcdt->on2_to_on3_map = new std::map<ON_2dPoint *, ON_3dPoint *>;
+    fcdt->on2_to_p2t_map = new std::map<ON_2dPoint *, p2t::Point *>;
+    fcdt->p2t_to_on2_map = new std::map<p2t::Point *, ON_3dPoint *>;
+    fcdt->p2t_to_on3_map = new std::map<p2t::Point *, ON_3dPoint *>;
+    fcdt->p2t_to_on3_norm_map = new std::map<p2t::Point *, ON_3dPoint *>;
+    fcdt->on3_to_tri_map = new std::map<ON_3dPoint *, std::set<p2t::Point *>>;
+
+    fcdt->cdt = NULL;
+    fcdt->p2t_extra_faces = new std::vector<p2t::Triangle *>;
+    fcdt->degen_faces = new std::set<p2t::Triangle *>;
+
+    fcdt->degen_pnts = new std::set<p2t::Point *>;
+
+    return fcdt;
+}
+
+/* Clears old triangulation data */
+void
+ON_Brep_CDT_Face_Reset(struct ON_Brep_CDT_Face_State *fcdt)
+{
+    fcdt->on2_to_p2t_map->clear();
+    fcdt->p2t_to_on2_map->clear();
+    fcdt->p2t_to_on3_map->clear();
+    fcdt->p2t_to_on3_norm_map->clear();
+    fcdt->on3_to_tri_map->clear();
+    fcdt->p2t_to_trimpt->clear();
+    fcdt->p2t_trim_ind->clear();
+
+    if (fcdt->cdt) {
+	delete fcdt->cdt;
+	fcdt->cdt = NULL;
+    }
+
+    std::vector<p2t::Triangle *>::iterator trit;
+    for (trit = fcdt->p2t_extra_faces->begin(); trit != fcdt->p2t_extra_faces->end(); trit++) {
+	p2t::Triangle *t = *trit;
+	delete t;
+    }
+
+    fcdt->p2t_extra_faces->clear();
+    fcdt->degen_faces->clear();
+
+}
+
+void
+ON_Brep_CDT_Face_Destroy(struct ON_Brep_CDT_Face_State *fcdt)
+{
+    for (size_t i = 0; i < fcdt->w3dpnts->size(); i++) {
+	delete (*(fcdt->w3dpnts))[i];
+    }
+    for (size_t i = 0; i < fcdt->w3dnorms->size(); i++) {
+	delete (*(fcdt->w3dnorms))[i];
+    }
+
+    std::vector<p2t::Triangle *>::iterator trit;
+    for (trit = fcdt->p2t_extra_faces->begin(); trit != fcdt->p2t_extra_faces->end(); trit++) {
+	p2t::Triangle *t = *trit;
+	delete t;
+    }
+
+    delete fcdt->w3dpnts;
+    delete fcdt->w3dnorms;
+    delete fcdt->vert_face_norms;
+    if (fcdt->face_loop_points) {
+	delete fcdt->face_loop_points;
+    }
+    delete fcdt->p2t_to_trimpt;
+    delete fcdt->strim_pnts;
+    delete fcdt->strim_norms;
+    delete fcdt->on_surf_points;
+    delete fcdt->on2_to_on3_map;
+    delete fcdt->on2_to_p2t_map;
+    delete fcdt->p2t_to_on2_map;
+    delete fcdt->p2t_to_on3_map;
+    delete fcdt->p2t_to_on3_norm_map;
+    delete fcdt->on3_to_tri_map;
+    delete fcdt->p2t_extra_faces;
+    delete fcdt->degen_faces;
+    delete fcdt->degen_pnts;
+
+    delete fcdt;
+}
+
+
 struct ON_Brep_CDT_State *
 ON_Brep_CDT_Create(void *bv)
 {
-    ON_Brep *brep = (ON_Brep *)bv;
     struct ON_Brep_CDT_State *cdt = new struct ON_Brep_CDT_State;
-    cdt->orig_brep = brep;
-    cdt->brep = NULL;
-
-    cdt->min_edge_seg_len = new std::map<int, double>;
-    cdt->max_edge_seg_len = new std::map<int, double>;
-
-    cdt->w3dpnts = new std::vector<ON_3dPoint *>;
-    cdt->vert_pnts = new std::map<int, ON_3dPoint *>;
-    cdt->w3dnorms = new std::vector<ON_3dPoint *>;
-    cdt->vert_avg_norms = new std::map<int, ON_3dPoint *>;
-    cdt->vert_face_norms = new std::map<int, std::map<int, std::set<ON_3dPoint *>>>;
-    cdt->strim_pnts = new std::map<int,std::map<int, ON_3dPoint *> >;
-    cdt->strim_norms = new std::map<int,std::map<int, ON_3dPoint *> >;
-    cdt->vert_to_on = new std::map<int, ON_3dPoint *>;
-    cdt->edge_pnts = new std::set<ON_3dPoint *>;
-    cdt->brep_face_loop_points = (ON_SimpleArray<BrepTrimPoint> **)bu_calloc(brep->m_F.Count(), sizeof(std::map<p2t::Point *, BrepTrimPoint *> *), "face loop pnts");
-    cdt->face_degen_pnts = (std::set<p2t::Point *> **)bu_calloc(brep->m_F.Count(), sizeof(std::set<p2t::Point *> *), "degenerate edge points");
-
-    cdt->p2t_faces = (p2t::CDT **)bu_calloc(brep->m_F.Count(), sizeof(p2t::CDT *), "poly2tri triangulations");
-    cdt->p2t_edge_points = new std::map<p2t::Point *, int>;
-    cdt->p2t_extra_faces = (std::vector<p2t::Triangle *> **)bu_calloc(brep->m_F.Count(), sizeof(std::vector<p2t::Triangle *> *), "extra p2t faces");
-    cdt->on2_to_on3_maps = (std::map<ON_2dPoint *, ON_3dPoint *> **)bu_calloc(brep->m_F.Count(), sizeof(std::map<ON_2dPoint *, ON_3dPoint *> *), "ON_2dPoint to ON_3dPoint maps");
-    cdt->tri_to_on3_maps = (std::map<p2t::Point *, ON_3dPoint *> **)bu_calloc(brep->m_F.Count(), sizeof(std::map<p2t::Point *, ON_3dPoint *> *), "poly2tri point to ON_3dPoint maps");
-    cdt->on3_to_tri_maps = (std::map<ON_3dPoint *, std::set<p2t::Point *>> **)bu_calloc(brep->m_F.Count(), sizeof(std::map<ON_3dPoint *, std::set<p2t::Point *>> *), "poly2tri point to ON_3dPoint maps");
-    cdt->tri_to_on3_norm_maps = (std::map<p2t::Point *, ON_3dPoint *> **)bu_calloc(brep->m_F.Count(), sizeof(std::map<p2t::Point *, ON_3dPoint *> *), "poly2tri point to ON_3dVector normal maps");
-
+ 
     /* Set status to "never evaluated" */
     cdt->status = BREP_CDT_UNTESSELLATED;
+
+    ON_Brep *brep = (ON_Brep *)bv;
+    cdt->orig_brep = brep;
+    cdt->brep = NULL;
 
     /* Set sane default tolerances.  May want to do
      * something better (perhaps brep dimension based...) */
@@ -199,8 +282,26 @@ ON_Brep_CDT_Create(void *bv)
     cdt->norm = BREP_CDT_DEFAULT_TOL_NORM ;
     cdt->dist = BREP_CDT_DEFAULT_TOL_DIST ;
 
+
+    cdt->w3dpnts = new std::vector<ON_3dPoint *>;
+    cdt->w3dnorms = new std::vector<ON_3dPoint *>;
+
+    cdt->vert_pnts = new std::map<int, ON_3dPoint *>;
+    cdt->vert_avg_norms = new std::map<int, ON_3dPoint *>;
+    cdt->vert_to_on = new std::map<int, ON_3dPoint *>;
+
+    cdt->edge_pnts = new std::set<ON_3dPoint *>;
+    cdt->min_edge_seg_len = new std::map<int, double>;
+    cdt->max_edge_seg_len = new std::map<int, double>;
+    cdt->on_brep_edge_pnts = new std::map<ON_3dPoint *, std::set<BrepTrimPoint *>>;
+
+    cdt->pnt_audit_info = new std::map<ON_3dPoint *, struct cdt_audit_info *>;
+
+    cdt->faces = new std::map<int, struct ON_Brep_CDT_Face_State *>;
+
     return cdt;
 }
+
 
 void
 ON_Brep_CDT_Destroy(struct ON_Brep_CDT_State *s_cdt)
@@ -212,56 +313,29 @@ ON_Brep_CDT_Destroy(struct ON_Brep_CDT_State *s_cdt)
 	delete (*(s_cdt->w3dnorms))[i];
     }
 
-    for (int i = 0; i < s_cdt->brep->m_F.Count(); i++) {
-	std::vector<p2t::Triangle *> *ef = s_cdt->p2t_extra_faces[i];
-	if (ef) {
-	    std::vector<p2t::Triangle *>::iterator trit;
-	    for (trit = ef->begin(); trit != ef->end(); trit++) {
-		p2t::Triangle *t = *trit;
-		delete t;
-	    }
+    if (s_cdt->faces) {
+	std::map<int, struct ON_Brep_CDT_Face_State *>::iterator f_it;
+	for (f_it = s_cdt->faces->begin(); f_it != s_cdt->faces->end(); f_it++) {
+	    struct ON_Brep_CDT_Face_State *f = f_it->second;
+	    delete f;
 	}
     }
-
-    for (int i = 0; i < s_cdt->brep->m_F.Count(); i++) {
-	if (s_cdt->brep_face_loop_points[i] != NULL) {
-	    delete [] s_cdt->brep_face_loop_points[i];
-	}
-	if (s_cdt->face_degen_pnts[i] != NULL) {
-	    delete s_cdt->face_degen_pnts[i];
-	}
-    }
-
-    for (int i = 0; i < s_cdt->brep->m_F.Count(); i++) {
-	if (s_cdt->on2_to_on3_maps[i] != NULL) {
-	    delete s_cdt->on2_to_on3_maps[i];
-	}
-    }
-    bu_free(s_cdt->on2_to_on3_maps, "degen pnts");
-
-    delete s_cdt->min_edge_seg_len;
-    delete s_cdt->max_edge_seg_len;
-
-    delete s_cdt->p2t_edge_points;
-
-    delete s_cdt->w3dpnts;
-    delete s_cdt->vert_pnts;
-    delete s_cdt->w3dnorms;
-    delete s_cdt->vert_avg_norms;
-    delete s_cdt->vert_face_norms;
-    delete s_cdt->strim_pnts;
-    delete s_cdt->strim_norms;
-    delete s_cdt->vert_to_on;
-    delete s_cdt->edge_pnts;
-    delete s_cdt->p2t_extra_faces;
 
     if (s_cdt->brep) {
 	delete s_cdt->brep;
     }
 
-    bu_free(s_cdt->brep_face_loop_points, "flp array");
-    bu_free(s_cdt->face_degen_pnts, "degen pnts");
-    // TODO - delete p2t data
+    delete s_cdt->vert_pnts;
+    delete s_cdt->vert_avg_norms;
+    delete s_cdt->vert_to_on;
+
+    delete s_cdt->edge_pnts;
+    delete s_cdt->min_edge_seg_len;
+    delete s_cdt->max_edge_seg_len;
+    delete s_cdt->on_brep_edge_pnts;
+
+    delete s_cdt->pnt_audit_info;
+    delete s_cdt->faces;
 
     delete s_cdt;
 }

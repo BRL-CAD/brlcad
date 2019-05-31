@@ -235,7 +235,7 @@ getEdgePoints(
 	nbtp1->e = emid;
 	nbtp1->trim_ind = trim.m_trim_index;
 	(*trim1_param_points)[nbtp1->t] = nbtp1;
-	s_cdt->on_brep_edge_pnts[npt].insert(nbtp1);
+	(*s_cdt->on_brep_edge_pnts)[npt].insert(nbtp1);
 
 	BrepTrimPoint *nbtp2 = new BrepTrimPoint;
 	nbtp2->p3d = npt;
@@ -247,7 +247,7 @@ getEdgePoints(
 	nbtp2->e = emid;
 	nbtp2->trim_ind = trim2->m_trim_index;
 	(*trim2_param_points)[nbtp2->t] = nbtp2;
-	s_cdt->on_brep_edge_pnts[npt].insert(nbtp2);
+	(*s_cdt->on_brep_edge_pnts)[npt].insert(nbtp2);
 
 	getEdgePoints(s_cdt, edge, nc, trim, sbtp1, nbtp1, sbtp2, nbtp2, cdt_tol, trim1_param_points, trim2_param_points, loop_min_dist);
 	getEdgePoints(s_cdt, edge, nc, trim, nbtp1, ebtp1, nbtp2, ebtp2, cdt_tol, trim1_param_points, trim2_param_points, loop_min_dist);
@@ -326,7 +326,7 @@ getEdgePoints(
 	nbtp1->trim_ind = trim.m_trim_index;
 	nbtp1->e = ON_UNSET_VALUE;
 	(*trim1_param_points)[nbtp1->t] = nbtp1;
-	s_cdt->on_brep_edge_pnts[nsptp].insert(nbtp1);
+	(*s_cdt->on_brep_edge_pnts)[nsptp].insert(nbtp1);
 
 	BrepTrimPoint *nbtp2 = new BrepTrimPoint;
 	nbtp2->p3d = nsptp;
@@ -335,7 +335,7 @@ getEdgePoints(
 	nbtp2->trim_ind = trim2->m_trim_index;
 	nbtp2->e = ON_UNSET_VALUE;
 	(*trim2_param_points)[nbtp2->t] = nbtp2;
-	s_cdt->on_brep_edge_pnts[nsptp].insert(nbtp2);
+	(*s_cdt->on_brep_edge_pnts)[nsptp].insert(nbtp2);
     }
 
 }
@@ -553,7 +553,7 @@ getEdgePoints(
     sbtp1->t = st1;
     sbtp1->trim_ind = trim.m_trim_index;
     (*trim1_param_points)[sbtp1->t] = sbtp1;
-    s_cdt->on_brep_edge_pnts[edge_start_3d].insert(sbtp1);
+    (*s_cdt->on_brep_edge_pnts)[edge_start_3d].insert(sbtp1);
 
     BrepTrimPoint *ebtp1 = new BrepTrimPoint;
     ebtp1->p3d = edge_end_3d;
@@ -565,7 +565,7 @@ getEdgePoints(
     ebtp1->t = et1;
     ebtp1->trim_ind = trim.m_trim_index;
     (*trim1_param_points)[ebtp1->t] = ebtp1;
-    s_cdt->on_brep_edge_pnts[edge_end_3d].insert(ebtp1);
+    (*s_cdt->on_brep_edge_pnts)[edge_end_3d].insert(ebtp1);
 
     BrepTrimPoint *sbtp2 = new BrepTrimPoint;
     sbtp2->p3d = edge_start_3d;
@@ -577,7 +577,7 @@ getEdgePoints(
     sbtp2->t = st2;
     sbtp2->trim_ind = trim2->m_trim_index;
     (*trim2_param_points)[sbtp2->t] = sbtp2;
-    s_cdt->on_brep_edge_pnts[edge_start_3d].insert(sbtp2);
+    (*s_cdt->on_brep_edge_pnts)[edge_start_3d].insert(sbtp2);
 
     BrepTrimPoint *ebtp2 = new BrepTrimPoint;
     ebtp2->p3d = edge_end_3d;
@@ -589,7 +589,7 @@ getEdgePoints(
     ebtp2->t = et2;
     ebtp2->trim_ind = trim2->m_trim_index;
     (*trim2_param_points)[ebtp2->t] = ebtp2;
-    s_cdt->on_brep_edge_pnts[edge_end_3d].insert(ebtp2);
+    (*s_cdt->on_brep_edge_pnts)[edge_end_3d].insert(ebtp2);
 
 
     if (trim.IsClosed() || trim2->IsClosed()) {
@@ -648,7 +648,7 @@ getEdgePoints(
 	mbtp1->e = edge_mid_range;
 	mbtp1->trim_ind = trim.m_trim_index;
 	(*trim1_param_points)[mbtp1->t] = mbtp1;
-	s_cdt->on_brep_edge_pnts[nmp].insert(mbtp1);
+	(*s_cdt->on_brep_edge_pnts)[nmp].insert(mbtp1);
 
 	BrepTrimPoint *mbtp2 = new BrepTrimPoint;
 	mbtp2->p3d = nmp;
@@ -660,7 +660,7 @@ getEdgePoints(
 	mbtp1->e = edge_mid_range;
 	mbtp2->trim_ind = trim2->m_trim_index;
 	(*trim2_param_points)[mbtp2->t] = mbtp2;
-	s_cdt->on_brep_edge_pnts[nmp].insert(mbtp2);
+	(*s_cdt->on_brep_edge_pnts)[nmp].insert(mbtp2);
 
 	getEdgePoints(s_cdt, edge, nc, trim, sbtp1, mbtp1, sbtp2, mbtp2, &cdt_tol, trim1_param_points, trim2_param_points, loop_min_dist);
 	getEdgePoints(s_cdt, edge, nc, trim, mbtp1, ebtp1, mbtp2, ebtp2, &cdt_tol, trim1_param_points, trim2_param_points, loop_min_dist);
