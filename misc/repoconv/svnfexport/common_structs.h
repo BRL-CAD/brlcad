@@ -127,6 +127,9 @@ int verify_repos(long int rev, std::string branch_git)
 	if (rev < 36472 && branch_svn == std::string("dmtogl")) {
 	    branch_svn = std::string("dmtogl-branch");
 	}
+	if (rev >= 36472 && branch_svn == std::string("dmtogl-branch")) {
+	    branch_svn = std::string("dmtogl");
+	}
     } else {
 	branch_svn = branch_git;
     }

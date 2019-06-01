@@ -846,7 +846,7 @@ int move_only_commit(struct svn_revision &rev, std::string &rbranch)
 	    int is_tag;
 	    std::string mproject, cbranch, mlocal_path, ctag;
 	    node_path_split(node.copyfrom_path, mproject, cbranch, ctag, mlocal_path, &is_tag);
-	    if (mlocal_path != node.local_path) {
+	    if (mlocal_path != node.local_path && mlocal_path.length()) {
 		std::cout << "(r" << rev.revision_number << ") - renaming " << mlocal_path << " to " << node.local_path << "\n";
 		outfile << "D " << mlocal_path << "\n";
 		outfile << "M ";
@@ -885,7 +885,9 @@ void write_git_node(std::ofstream &toutfile, struct svn_revision &rev, struct sv
     // If it's a straight-up path delete, do it and return
     if ((node.kind == nkerr || node.kind == ndir) && node.action == ndelete) {
 	std::cerr << "Revision r" << rev.revision_number << " delete: " << node.local_path << "\n";
-	toutfile << "D \"" << node.local_path << "\"\n";
+	if (node.local_path.length()) {
+	    toutfile << "D \"" << node.local_path << "\"\n";
+	}
 	return;
     }
 
@@ -924,42 +926,47 @@ void write_git_node(std::ofstream &toutfile, struct svn_revision &rev, struct sv
 	}
     }
 
-    switch (node.action) {
-	case nchange:
-	    toutfile << "M ";
-	    break;
-	case nadd:
-	    toutfile << "M ";
-	    break;
-	case nreplace:
-	    toutfile << "M ";
-	    break;
-	case ndelete:
-	    toutfile << "D ";
-	    break;
-	default:
-	    std::cerr << "Unhandled node action type " << print_node_action(node.action) << "\n";
-	    toutfile << "? ";
-	    toutfile << "\"" << node.local_path << "\"\n";
-	    std::cout << "Fatal - unhandled node action at r" << rev.revision_number << ", node: " << node.path << "\n";
-	    exit(1);
-    }
-
-    if (node.action != ndelete) {
-	if (node.exec_path) {
-	    toutfile << "100755 ";
-	} else {
-	    toutfile << "100644 ";
+    if (node.local_path.length()) {
+	switch (node.action) {
+	    case nchange:
+		toutfile << "M ";
+		break;
+	    case nadd:
+		toutfile << "M ";
+		break;
+	    case nreplace:
+		toutfile << "M ";
+		break;
+	    case ndelete:
+		toutfile << "D ";
+		break;
+	    default:
+		std::cerr << "Unhandled node action type " << print_node_action(node.action) << "\n";
+		toutfile << "? ";
+		toutfile << "\"" << node.local_path << "\"\n";
+		std::cout << "Fatal - unhandled node action at r" << rev.revision_number << ", node: " << node.path << "\n";
+		exit(1);
 	}
-    }
 
-    if (node.action == nchange || node.action == nadd || node.action == nreplace) {
-	toutfile << gsha1 << " \"" << node.local_path << "\"\n";
-	return;
-    }
+	if (node.action != ndelete) {
+	    if (node.exec_path) {
+		toutfile << "100755 ";
+	    } else {
+		toutfile << "100644 ";
+	    }
+	}
 
-    if (node.action == ndelete) {
-	toutfile << "\"" << node.local_path << "\"\n";
+	if (node.action == nchange || node.action == nadd || node.action == nreplace) {
+	    toutfile << gsha1 << " \"" << node.local_path << "\"\n";
+	    return;
+	}
+
+	if (node.action == ndelete) {
+	    toutfile << "\"" << node.local_path << "\"\n";
+	    return;
+	}
+    } else {
+	std::cout << "Note (r" << rev.revision_number << ") - skipping node with no local path.\n";
 	return;
     }
 
@@ -1173,9 +1180,11 @@ void branch_delete_commit(struct svn_revision &rev, std::string &rbranch)
 	wbranch = std::string("master-UNNAMED-BRANCH");
     }
 
+    std::string bdelete_msg = rev.commit_msg + std::string(" (svn branch delete)");
+
     std::string cfi_file = std::to_string(rev.revision_number) + std::string("-bdelete.fi");
     std::ofstream coutfile(cfi_file, std::ios::out | std::ios::binary);
-    write_commit_core(coutfile, wbranch, rev, NULL, 0, 0, 0);
+    write_commit_core(coutfile, wbranch, rev, bdelete_msg.c_str(), 0, 0, 0);
     coutfile.close();
 
     std::string commit_fi_file = populate_template(cfi_file, wbranch);
@@ -1371,6 +1380,18 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 
 	if (node.tag_delete) {
 	    std::cout << "delete tag: " << rev.revision_number << "\n";
+	    // Because we are applying and commiting immediately, these commits can be
+	    // somewhat involved to unwind - back up first
+	    std::string cvsbackup = std::string("cvs_git-r") + std::to_string(rev_num-1);
+	    if (!file_exists(cvsbackup)) {
+		std::cerr << "backing up cvs_git ahead of tag delete in commit " << rev_num << "\n";
+		std::string cvsbackupcmd = std::string("cp -r cvs_git ") + cvsbackup;
+		if (std::system(cvsbackupcmd.c_str())) {
+		    std::cerr << "backing up cvs_git ahead of delete tag failed\n";
+		    exit(1);
+		}
+	    }
+
 	    branch_delete_commit(rev, node.tag);
 	    continue;
 	}
@@ -1410,6 +1431,19 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 
 	if (node.branch_delete) {
 	    // Branch deletes can hit multiple branches per commit - process fully and immediately
+	    
+	    // Because we are applying and commiting locally, these commits can be
+	    // somewhat involved to unwind - back up first
+	    std::string cvsbackup = std::string("cvs_git-r") + std::to_string(rev_num - 1);
+	    if (!file_exists(cvsbackup)) {
+		std::cerr << "backing up cvs_git ahead of branch delete in commit " << rev_num << "\n";
+		std::string cvsbackupcmd = std::string("cp -r cvs_git ") + cvsbackup;
+		if (std::system(cvsbackupcmd.c_str())) {
+		    std::cerr << "backing up cvs_git ahead of branch delete failed\n";
+		    exit(1);
+		}
+	    }
+
 	    branch_delete_commit(rev, node.branch);
 	    branch_delete = 1;
 	    continue;
