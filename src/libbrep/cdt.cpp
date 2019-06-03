@@ -899,7 +899,7 @@ ON_Brep_CDT_Mesh(
 
      // Trivially degenerate pass
      for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
-	 triangles_trivially_degenerate(s_cdt, &md, face_index);
+	 triangles_degenerate_trivial(s_cdt, &md, face_index);
      }
 
      // Build edge map (TODO - this should probably come after all degenerate tests?)
@@ -949,7 +949,7 @@ ON_Brep_CDT_Mesh(
     // area face.  This is more complex to deal with, as it requires modifying
     // non-degenerate faces in the neighborhood to incorporate different points.
     for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
-	triangles_scrub_colinear(s_cdt, &md, face_index);
+	triangles_degenerate_area(s_cdt, &md, face_index);
     }
 
     // TODO - it's even possible in principle for a triangulation to form a non-zero,

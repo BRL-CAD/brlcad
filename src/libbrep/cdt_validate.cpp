@@ -126,7 +126,7 @@ validate_face_normals(
 #endif
 
 void
-triangles_trivially_degenerate(struct ON_Brep_CDT_State *s_cdt, struct on_brep_mesh_data *md, int face_index)
+triangles_degenerate_trivial(struct ON_Brep_CDT_State *s_cdt, struct on_brep_mesh_data *md, int face_index)
 {
     p2t::CDT *cdt = (*s_cdt->faces)[face_index]->cdt;
     std::map<p2t::Point *, ON_3dPoint *> *pointmap = (*s_cdt->faces)[face_index]->p2t_to_on3_map;
@@ -150,7 +150,7 @@ triangles_trivially_degenerate(struct ON_Brep_CDT_State *s_cdt, struct on_brep_m
 }
 
 void
-triangles_scrub_colinear(struct ON_Brep_CDT_State *s_cdt, struct on_brep_mesh_data *md, int face_index)
+triangles_degenerate_area(struct ON_Brep_CDT_State *s_cdt, struct on_brep_mesh_data *md, int face_index)
 {
     // Use a distance three orders of magnitude smaller than the smallest
     // edge segment length of the face to decide if a face is degenerate

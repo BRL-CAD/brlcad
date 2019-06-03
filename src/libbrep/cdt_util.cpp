@@ -607,7 +607,6 @@ triangles_build_edgemap(struct ON_Brep_CDT_State *s_cdt, struct on_brep_mesh_dat
     std::map<p2t::Point *, ON_3dPoint *> *pointmap = (*s_cdt->faces)[face_index]->p2t_to_on3_map;
     std::vector<p2t::Triangle*> tris = cdt->GetTriangles();
     for (size_t i = 0; i < tris.size(); i++) {
-	p2t::Triangle *t = tris[i];
 	/* Make sure this face isn't degenerate */
 	if (md->tris_degen.find(tris[i]) != md->tris_degen.end()) {
 	    continue;
