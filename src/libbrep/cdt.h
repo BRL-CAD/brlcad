@@ -188,6 +188,17 @@ struct cdt_surf_info {
     fastf_t max_edge;
 };
 
+struct on_brep_mesh_data {
+    std::vector<ON_3dPoint *> vfpnts;
+    std::vector<ON_3dPoint *> vfnormals;
+    std::map<ON_3dPoint *, int> on_pnt_to_bot_pnt;
+    std::map<ON_3dPoint *, int> on_pnt_to_bot_norm;
+    std::set<p2t::Triangle*> tris_degen;
+    std::set<p2t::Triangle*> tris_zero_3D_area;
+    std::map<p2t::Triangle*, int> tri_brep_face;
+    size_t triangle_cnt = 0;
+    EdgeToTri *e2f;
+};
 
 void
 PerformClosedSurfaceChecks(
@@ -238,6 +249,12 @@ CDT_Add3DPnt(struct ON_Brep_CDT_State *s, ON_3dPoint *p, int fid, int vid, int t
 void
 CDT_Tol_Set(struct brep_cdt_tol *cdt, double dist, fastf_t md, double t_abs, double t_rel, double t_norm, double t_dist);
 
+void
+triangles_first_pass(struct ON_Brep_CDT_State *s_cdt, struct on_brep_mesh_data *md, int face_index);
+void
+triangles_scrub_colinear(struct ON_Brep_CDT_State *s_cdt, struct on_brep_mesh_data *md, int face_index);
+void
+triangles_incorrect_normals(struct ON_Brep_CDT_State *s_cdt, struct on_brep_mesh_data *md, int face_index);
 
 /** @} */
 

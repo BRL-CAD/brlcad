@@ -28,6 +28,7 @@ set(LIBBREP_SOURCES
   cdt_edge.cpp
   cdt_surf.cpp
   cdt_util.cpp
+  cdt_validate.cpp
   cdt.cpp
   intersect.cpp
   libbrep_brep_tools.cpp
