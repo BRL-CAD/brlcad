@@ -952,6 +952,10 @@ ON_Brep_CDT_Mesh(
 	triangles_degenerate_area(s_cdt, &md, face_index);
     }
 
+    for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
+	triangles_incorrect_normals(s_cdt, &md, face_index);
+    }
+
     // TODO - it's even possible in principle for a triangulation to form a non-zero,
     // non degenerate face from 3 edge points that will "close" the solid but result
     // in a face with all of its vertices normals pointing in a very strange direction
@@ -1211,10 +1215,6 @@ ON_Brep_CDT_Mesh(
 		}
 	    }
 	}
-    }
-
-    for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
-	triangles_incorrect_normals(s_cdt, &md, face_index);
     }
 
     bu_log("tri_cnt_init: %zd\n", md.triangle_cnt);
