@@ -599,14 +599,18 @@ getEdgePoints(
 	ON_3dVector edge_mid_tang, trim1_mid_norm, trim2_mid_norm = ON_3dVector::UnsetVector;
 	ON_3dPoint edge_mid_3d = ON_3dPoint::UnsetPoint;
 
+	int ev_tangent = nc->EvTangent(edge_mid_range, edge_mid_3d, edge_mid_tang);
+	if (!ev_tangent) {
+	    // EvTangent call failed, get 3d point
+	    edge_mid_3d = nc->PointAt(edge_mid_range);
+	}
+
 	double trim1_mid_range;
 	double trim2_mid_range;
 	ON_3dPoint trim1_mid_2d = get_trim_midpt(&trim1_mid_range, &trim, sbtp1->t, ebtp1->t, edge_mid_3d, emindist, 0);
 	ON_3dPoint trim2_mid_2d = get_trim_midpt(&trim2_mid_range, trim2, sbtp2->t, ebtp2->t, edge_mid_3d, emindist, 0);
 
-	if (!(nc->EvTangent(edge_mid_range, edge_mid_3d, edge_mid_tang))) {
-	    // EvTangent call failed, get 3d point
-	    edge_mid_3d = nc->PointAt(edge_mid_range);
+	if (!ev_tangent) {
 	    // If the edge curve failed, try to average tangents from trims
 	    ON_3dVector trim1_mid_tang(0.0, 0.0, 0.0);
 	    ON_3dVector trim2_mid_tang(0.0, 0.0, 0.0);
