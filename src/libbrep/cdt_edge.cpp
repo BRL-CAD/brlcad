@@ -591,14 +591,18 @@ getEdgePoints(
     (*trim2_param_points)[ebtp2->t] = ebtp2;
     (*s_cdt->on_brep_edge_pnts)[edge_end_3d].insert(ebtp2);
 
+    fastf_t emindist = (cdt_tol.min_dist < 0.5*loop_min_dist) ? cdt_tol.min_dist : 0.5 * loop_min_dist;
 
     if (trim.IsClosed() || trim2->IsClosed()) {
 
-	double trim1_mid_range = (st1 + et1) / 2.0;
-	double trim2_mid_range = (st2 + et2) / 2.0;
 	double edge_mid_range = (erange.m_t[0] + erange.m_t[1]) / 2.0;
 	ON_3dVector edge_mid_tang, trim1_mid_norm, trim2_mid_norm = ON_3dVector::UnsetVector;
 	ON_3dPoint edge_mid_3d = ON_3dPoint::UnsetPoint;
+
+	double trim1_mid_range;
+	double trim2_mid_range;
+	ON_3dPoint trim1_mid_2d = get_trim_midpt(&trim1_mid_range, &trim, sbtp1->t, ebtp1->t, edge_mid_3d, emindist, 0);
+	ON_3dPoint trim2_mid_2d = get_trim_midpt(&trim2_mid_range, trim2, sbtp2->t, ebtp2->t, edge_mid_3d, emindist, 0);
 
 	if (!(nc->EvTangent(edge_mid_range, edge_mid_3d, edge_mid_tang))) {
 	    // EvTangent call failed, get 3d point
@@ -617,9 +621,6 @@ getEdgePoints(
 	}
 
 	evals = 0;
-	ON_3dPoint trim1_mid_2d = trim.PointAt(trim1_mid_range);
-	ON_3dPoint trim2_mid_2d = trim2->PointAt(trim2_mid_range);
-
 	evals += (surface_EvNormal(s1, trim1_mid_2d.x, trim1_mid_2d.y, tmp1, trim1_mid_norm)) ? 1 : 0;
 	if (trim.Face()->m_bRev) {
 	    trim1_mid_norm = trim1_mid_norm  * -1.0;
