@@ -261,6 +261,8 @@ void
 triangles_degenerate_area(struct ON_Brep_CDT_State *s_cdt, struct on_brep_mesh_data *md, int face_index);
 void
 triangles_incorrect_normals(struct ON_Brep_CDT_State *s_cdt, struct on_brep_mesh_data *md, int face_index);
+void
+triangles_rebuild_involved(struct ON_Brep_CDT_State *s_cdt, struct on_brep_mesh_data *md, int face_index);
 
 /** @} */
 

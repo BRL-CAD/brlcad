@@ -373,6 +373,256 @@ triangles_incorrect_normals(struct ON_Brep_CDT_State *s_cdt, struct on_brep_mesh
     }
 }
 
+void
+triangles_rebuild_involved(struct ON_Brep_CDT_State *s_cdt, struct on_brep_mesh_data *md, int face_index)
+{
+    std::set<p2t::Point *> *fdp = (*s_cdt->faces)[face_index]->degen_pnts;
+    if (!fdp) {
+	return;
+    }
+    p2t::CDT *cdt = (*s_cdt->faces)[face_index]->cdt;
+    std::map<p2t::Point *, ON_3dPoint *> *pointmap = (*s_cdt->faces)[face_index]->p2t_to_on3_map;
+    std::map<p2t::Point *, ON_3dPoint *> *normalmap = (*s_cdt->faces)[face_index]->p2t_to_on3_norm_map;
+
+    std::vector<p2t::Triangle *> *tri_add;
+
+    tri_add = (*s_cdt->faces)[face_index]->p2t_extra_faces;
+
+    std::vector<p2t::Triangle*> tris = cdt->GetTriangles();
+    for (size_t i = 0; i < tris.size(); i++) {
+	p2t::Triangle *t = tris[i];
+	int involved_pnt_cnt = 0;
+	if (md->tris_degen.find(t) != md->tris_degen.end()) {
+	    continue;
+	}
+	p2t::Point *t2dpnts[3] = {NULL, NULL, NULL};
+	for (size_t j = 0; j < 3; j++) {
+	    p2t::Point *p = t->GetPoint(j);
+	    t2dpnts[j] = p;
+	    if (fdp->find(p) != fdp->end()) {
+		involved_pnt_cnt++;
+	    }
+	}
+	if (involved_pnt_cnt > 1) {
+
+	    // TODO - construct the plane of this face, project 3D points
+	    // into that plane to get new 2D coordinates specific to this
+	    // face, and then make new p2t points from those 2D coordinates.
+	    // Won't be using the NURBS 2D for this part, so existing
+	    // p2t points won't help.
+	    std::vector<p2t::Point *>new_2dpnts;
+	    std::map<p2t::Point *, p2t::Point *> new2d_to_old2d;
+	    std::map<p2t::Point *, p2t::Point *> old2d_to_new2d;
+	    std::map<ON_3dPoint *, p2t::Point *> on3d_to_new2d;
+	    ON_3dPoint *t3dpnts[3] = {NULL, NULL, NULL};
+	    for (size_t j = 0; j < 3; j++) {
+		t3dpnts[j] = (*pointmap)[t2dpnts[j]];
+	    }
+	    int normal_backwards = 0;
+	    ON_Plane fplane(*t3dpnts[0], *t3dpnts[1], *t3dpnts[2]);
+
+	    // To verify sanity, check fplane normal against face normals
+	    for (size_t j = 0; j < 3; j++) {
+		ON_3dVector pv = (*(*normalmap)[t2dpnts[j]]);
+		if (ON_DotProduct(pv, fplane.Normal()) < 0) {
+		    normal_backwards++;
+		}
+	    }
+	    if (normal_backwards > 0) {
+		if (normal_backwards == 3) {
+		    fplane.Flip();
+		    bu_log("flipped plane\n");
+		} else {
+		    bu_log("Only %d of the face normals agree with the plane normal??\n", 3 - normal_backwards);
+		}
+	    }
+
+	    // Project the 3D face points onto the plane
+	    double ucent = 0;
+	    double vcent = 0;
+	    for (size_t j = 0; j < 3; j++) {
+		double u,v;
+		fplane.ClosestPointTo(*t3dpnts[j], &u, &v);
+		ucent += u;
+		vcent += v;
+		p2t::Point *np = new p2t::Point(u, v);
+		new2d_to_old2d[np] = t2dpnts[j];
+		old2d_to_new2d[t2dpnts[j]] = np;
+		on3d_to_new2d[t3dpnts[j]] = np;
+	    }
+	    ucent = ucent/3;
+	    vcent = vcent/3;
+	    ON_2dPoint tcent(ucent, vcent);
+
+	    // Any or all of the edges of the triangle may have orphan
+	    // points associated with them - if both edge points are
+	    // involved, we have to check.
+	    std::vector<p2t::Point *> polyline;
+	    for (size_t j = 0; j < 3; j++) {
+		p2t::Point *p1 = t2dpnts[j];
+		p2t::Point *p2 = (j < 2) ? t2dpnts[j+1] : t2dpnts[0];
+		ON_3dPoint *op1 = (*pointmap)[p1];
+		polyline.push_back(old2d_to_new2d[p1]);
+		if (fdp->find(p1) != fdp->end() && fdp->find(p2) != fdp->end()) {
+
+		    // Calculate a vector to use to perturb middle points off the
+		    // line in 2D.  Triangulation routines don't like collinear
+		    // points.  Since we're not using these 2D coordinates for
+		    // anything except the tessellation itself, as long as we
+		    // don't change the ordering of the polyline we should be
+		    // able to nudge the points off the line without ill effect.
+		    ON_2dPoint p2d1(p1->x, p1->y);
+		    ON_2dPoint p2d2(p2->x, p2->y);
+		    ON_2dPoint pmid = (p2d2 + p2d1)/2;
+		    ON_2dVector ptb = pmid - tcent;
+		    fastf_t edge_len = p2d1.DistanceTo(p2d2);
+		    ptb.Unitize();
+		    ptb = ptb * edge_len;
+
+		    std::set<ON_3dPoint *> edge_3d_pnts;
+		    std::map<double, ON_3dPoint *> ordered_new_pnts;
+		    ON_3dPoint *op2 = (*pointmap)[p2];
+		    edge_3d_pnts.insert(op1);
+		    edge_3d_pnts.insert(op2);
+		    ON_Line eline3d(*op1, *op2);
+		    double t1, t2;
+		    eline3d.ClosestPointTo(*op1, &t1);
+		    eline3d.ClosestPointTo(*op2, &t2);
+		    std::set<p2t::Point *>::iterator fdp_it;
+		    for (fdp_it = fdp->begin(); fdp_it != fdp->end(); fdp_it++) {
+			p2t::Point *p = *fdp_it;
+			if (p != p1 && p != p2) {
+			    ON_3dPoint *p3d = (*pointmap)[p];
+			    if (edge_3d_pnts.find(p3d) == edge_3d_pnts.end()) {
+				if (eline3d.DistanceTo(*p3d) < s_cdt->dist) {
+				    double tp;
+				    eline3d.ClosestPointTo(*p3d, &tp);
+				    if (tp > t1 && tp < t2) {
+					edge_3d_pnts.insert(p3d);
+					ordered_new_pnts[tp] = p3d;
+					double u,v;
+					fplane.ClosestPointTo(*p3d, &u, &v);
+
+					// Make a 2D point and nudge it off of the length
+					// of the edge off the edge.  Use the line parameter
+					// value to get different nudge factors for each point.
+					ON_2dPoint uvp(u, v);
+					uvp = uvp + (t2-tp)/(t2-t1)*0.01*ptb;
+
+					// Define the p2t point and update maps
+					p2t::Point *np = new p2t::Point(uvp.x, uvp.y);
+					new2d_to_old2d[np] = p;
+					old2d_to_new2d[p] = np;
+					on3d_to_new2d[p3d] = np;
+
+				    }
+				}
+			    }
+			}
+		    }
+
+		    // Have all new points on edge, add to polyline in edge order
+		    if (t1 < t2) {
+			std::map<double, ON_3dPoint *>::iterator m_it;
+			for (m_it = ordered_new_pnts.begin(); m_it != ordered_new_pnts.end(); m_it++) {
+			    ON_3dPoint *p3d = (*m_it).second;
+			    polyline.push_back(on3d_to_new2d[p3d]);
+			}
+		    } else {
+			std::map<double, ON_3dPoint *>::reverse_iterator m_it;
+			for (m_it = ordered_new_pnts.rbegin(); m_it != ordered_new_pnts.rend(); m_it++) {
+			    ON_3dPoint *p3d = (*m_it).second;
+			    polyline.push_back(on3d_to_new2d[p3d]);
+			}
+		    }
+		}
+
+		// I think(?) - need to close the loop
+		if (j == 2) {
+		    polyline.push_back(old2d_to_new2d[p2]);
+		}
+	    }
+
+	    // Have polyline, do CDT
+	    if (polyline.size() > 5) {
+		bu_log("%d polyline cnt: %zd\n", face_index, polyline.size());
+	    }
+	    if (polyline.size() > 4) {
+
+		// First, try ear clipping method
+		std::map<size_t, p2t::Point *> ec_to_p2t;
+		point2d_t *ec_pnts = (point2d_t *)bu_calloc(polyline.size(), sizeof(point2d_t), "ear clipping point array");
+		for (size_t k = 0; k < polyline.size()-1; k++) {
+		    p2t::Point *p2tp = polyline[k];
+		    V2SET(ec_pnts[k], p2tp->x, p2tp->y);
+		    ec_to_p2t[k] = p2tp;
+		}
+
+		int *ecfaces;
+		int num_faces;
+
+		// TODO - we need to check if we're getting zero area triangles
+		// back from these routines.  Unless all three triangle edges
+		// somehow have extra points, we can construct a triangle set
+		// that meets our needs by walking the edges in order and
+		// building triangles "by hand" to meet our need.  Calling the
+		// "canned" routines is an attempt to avoid that bookkeeping
+		// work, but if the tricks in place to avoid collinear point
+		// issues don't work reliably we'll need to just go with a
+		// direct build.
+		if (bg_polygon_triangulate(&ecfaces, &num_faces, NULL, NULL, ec_pnts, polyline.size()-1, EAR_CLIPPING)) {
+
+		    // Didn't work, see if poly2tri can handle it
+		    //bu_log("ec triangulate failed\n");
+		    p2t::CDT *fcdt = new p2t::CDT(polyline);
+		    fcdt->Triangulate(true, -1);
+		    std::vector<p2t::Triangle*> ftris = fcdt->GetTriangles();
+		    if (ftris.size() > polyline.size()) {
+#if 0
+			bu_log("weird face count: %zd\n", ftris.size());
+			for (size_t k = 0; k < polyline.size(); k++) {
+			    bu_log("polyline[%zd]: %0.17f, %0.17f 0\n", k, polyline[k]->x, polyline[k]->y);
+			}
+
+			std::string pfile = std::string("polyline.plot3");
+			plot_polyline(&polyline, pfile.c_str());
+			for (size_t k = 0; k < ftris.size(); k++) {
+			    std::string tfile = std::string("tri-") + std::to_string(k) + std::string(".plot3");
+			    plot_tri(ftris[k], tfile.c_str());
+			    p2t::Point *p0 = ftris[k]->GetPoint(0);
+			    p2t::Point *p1 = ftris[k]->GetPoint(1);
+			    p2t::Point *p2 = ftris[k]->GetPoint(2);
+			    bu_log("tri[%zd]: %f %f -> %f %f -> %f %f\n", k, p0->x, p0->y, p1->x, p1->y, p2->x, p2->y);
+			}
+#endif
+
+			bu_log("EC and Poly2Tri failed - aborting\n");
+			return;
+		    } else {
+			bu_log("Poly2Tri: found %zd faces\n", ftris.size());
+			//std::vector<p2t::Triangle *> *tri_add = s_cdt->p2t_extra_faces[face_index];
+			// TODO - translate face 2D triangles to mesh 2D triangles
+		    }
+
+		} else {
+		    for (int k = 0; k < num_faces; k++) {
+			p2t::Point *p2_1 = new2d_to_old2d[ec_to_p2t[ecfaces[3*k]]];
+			p2t::Point *p2_2 = new2d_to_old2d[ec_to_p2t[ecfaces[3*k+1]]];
+			p2t::Point *p2_3 = new2d_to_old2d[ec_to_p2t[ecfaces[3*k+2]]];
+			p2t::Triangle *nt = new p2t::Triangle(*p2_1, *p2_2, *p2_3);
+			tri_add->push_back(nt);
+		    }
+		    // We split the original triangle, so it's now replaced/degenerate in the tessellation
+		    md->tris_degen.insert(t);
+		    md->triangle_cnt--;
+		}
+	    } else {
+		// Point count doesn't indicate any need to split, we should be good...
+		//bu_log("Not enough points in polyline to require splitting\n");
+	    }
+	}
+    }
+}
 
 /** @} */
 
