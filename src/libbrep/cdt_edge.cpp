@@ -676,6 +676,129 @@ getEdgePoints(
 }
 
 
+int
+SplitEdgeSegment(
+	struct ON_Brep_CDT_State *s_cdt,
+	ON_BrepEdge *edge,
+	ON_BrepTrim &trim,
+	BrepTrimPoint *t1_1,
+	BrepTrimPoint *t1_2
+	)
+{
+    int evals = 0;
+    ON_3dPoint tmp1, tmp2;
+
+    // Get the other trim
+    // TODO - this won't work if we don't have a 1->2 edge to trims relationship - in that
+    // case we'll have to split up the edge and find the matching sub-trims (possibly splitting
+    // those as well if they don't line up at shared 3D points.)
+    ON_BrepTrim *trim2 = (edge->Trim(0)->m_trim_index == trim.m_trim_index) ? edge->Trim(1) : edge->Trim(0);
+
+    // By the time we are calling SplitEdgeSegment, both trims should have param points
+    if (trim.m_trim_user.p == NULL || trim2->m_trim_user.p == NULL) {
+	return -1;
+    }
+
+    std::map<double, BrepTrimPoint *> *trim1_param_points = (std::map<double, BrepTrimPoint *> *) trim.m_trim_user.p;
+    std::map<double, BrepTrimPoint *> *trim2_param_points = (std::map<double, BrepTrimPoint *> *) trim2->m_trim_user.p;
+
+    // Using trim 1 points, get corresponding trim 2 points
+    BrepTrimPoint *t2_1 = t1_1->other_face_trim_pnt;
+    BrepTrimPoint *t2_2 = t1_2->other_face_trim_pnt;
+
+    const ON_Curve* crv = edge->EdgeCurveOf();
+    ON_NurbsCurve *nc = crv->NurbsCurve();
+    ON_Interval erange = nc->Domain();
+
+    ON_Interval range1 = trim.Domain();
+    ON_Interval range2 = trim2->Domain();
+
+    /* Populate the 2D points */
+    double st1 = t1_1->t;
+    double et1 = t1_2->t;
+    double st2 = t2_1->t;
+    double et2 = t2_2->t;
+
+    double edge_mid_range = (t1_1->e + t1_2->e) / 2.0;
+    ON_3dVector edge_mid_tang, trim1_mid_norm, trim2_mid_norm = ON_3dVector::UnsetVector;
+    ON_3dPoint edge_mid_3d = ON_3dPoint::UnsetPoint;
+    int ev_tangent = nc->EvTangent(edge_mid_range, edge_mid_3d, edge_mid_tang);
+    if (!ev_tangent) {
+	// EvTangent call failed, get 3d point
+	edge_mid_3d = nc->PointAt(edge_mid_range);
+    }
+
+    double trim1_mid_range;
+    double trim2_mid_range;
+    ON_3dPoint trim1_mid_2d = get_trim_midpt(&trim1_mid_range, &trim, st1, et1, edge_mid_3d, DBL_MAX, 0);
+    ON_3dPoint trim2_mid_2d = get_trim_midpt(&trim2_mid_range, trim2, st2, et2, edge_mid_3d, DBL_MAX, 0);
+
+    if (!ev_tangent) {
+	// If the edge curve failed, try to average tangents from trims
+	ON_3dVector trim1_mid_tang(0.0, 0.0, 0.0);
+	ON_3dVector trim2_mid_tang(0.0, 0.0, 0.0);
+	evals = 0;
+	evals += (trim.EvTangent(trim1_mid_range, tmp1, trim1_mid_tang)) ? 1 : 0;
+	evals += (trim2->EvTangent(trim2_mid_range, tmp2, trim2_mid_tang)) ? 1 : 0;
+	if (evals == 2) {
+	    ON_3dVector trim1_start_tang = t1_1->tangent;
+	    ON_3dVector trim2_start_tang = t2_1->tangent;
+	    edge_mid_tang = (trim1_start_tang + trim2_start_tang) / 2;
+	} else {
+	    edge_mid_tang = ON_3dVector::UnsetVector;
+	}
+    }
+
+    const ON_Surface *s1 = trim.SurfaceOf();
+    const ON_Surface *s2 = trim2->SurfaceOf();
+
+    evals = 0;
+    evals += (surface_EvNormal(s1, trim1_mid_2d.x, trim1_mid_2d.y, tmp1, trim1_mid_norm)) ? 1 : 0;
+    if (trim.Face()->m_bRev) {
+	trim1_mid_norm = trim1_mid_norm  * -1.0;
+    }
+
+    evals += (surface_EvNormal(s2, trim2_mid_2d.x, trim2_mid_2d.y, tmp2, trim2_mid_norm)) ? 1 : 0;
+    if (trim2->Face()->m_bRev) {
+	trim2_mid_norm = trim2_mid_norm  * -1.0;
+    }
+
+    if (evals != 2) {
+	bu_log("problem with mid normal evals\n");
+    }
+
+    ON_3dPoint *nmp = new ON_3dPoint(edge_mid_3d);
+    CDT_Add3DPnt(s_cdt, nmp, -1, -1, -1, edge->m_edge_index, edge_mid_range, 0);
+    s_cdt->edge_pnts->insert(nmp);
+
+    BrepTrimPoint *mbtp1 = new BrepTrimPoint;
+    mbtp1->p3d = nmp;
+    mbtp1->n3d = NULL;
+    mbtp1->p2d = trim1_mid_2d;
+    mbtp1->tangent = edge_mid_tang;
+    mbtp1->normal = trim1_mid_norm;
+    mbtp1->t = trim1_mid_range;
+    mbtp1->e = edge_mid_range;
+    mbtp1->trim_ind = trim.m_trim_index;
+    (*trim1_param_points)[mbtp1->t] = mbtp1;
+    (*s_cdt->on_brep_edge_pnts)[nmp].insert(mbtp1);
+
+    BrepTrimPoint *mbtp2 = new BrepTrimPoint;
+    mbtp2->p3d = nmp;
+    mbtp2->n3d = NULL;
+    mbtp2->p2d = trim2_mid_2d;
+    mbtp2->tangent = edge_mid_tang;
+    mbtp2->normal = trim2_mid_norm;
+    mbtp2->t = trim2_mid_range;
+    mbtp1->e = edge_mid_range;
+    mbtp2->trim_ind = trim2->m_trim_index;
+    (*trim2_param_points)[mbtp2->t] = mbtp2;
+    (*s_cdt->on_brep_edge_pnts)[nmp].insert(mbtp2);
+
+    return 0;
+}
+
+
 
 /** @} */
 
