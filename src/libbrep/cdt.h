@@ -124,6 +124,12 @@ struct ON_Brep_CDT_Face_State {
     std::set<p2t::Point *> *degen_pnts;
     std::set<ON_2dPoint *> *deactivated_surf_pnts;
     std::set<ON_2dPoint *> *added_surf_pnts;
+
+    /* Mesh Data */
+    std::set<p2t::Triangle*> *tris_degen;
+    std::set<p2t::Triangle*> *tris_zero_3D_area;
+    size_t triangle_cnt;
+    EdgeToTri *e2f;
 };
 
 
@@ -159,6 +165,14 @@ struct ON_Brep_CDT_State {
 
     /* Face specific data */
     std::map<int, struct ON_Brep_CDT_Face_State *> *faces;
+
+
+    /* Mesh data */
+    std::vector<ON_3dPoint *> *vfpnts;
+    std::vector<ON_3dPoint *> *vfnormals;
+    std::map<ON_3dPoint *, int> *on_pnt_to_bot_pnt;
+    std::map<ON_3dPoint *, int> *on_pnt_to_bot_norm;
+    std::map<p2t::Triangle*, int> *tri_brep_face;
 };
 
 struct brep_cdt_tol {
@@ -186,18 +200,6 @@ struct cdt_surf_info {
     fastf_t v_upper_3dlen;
     fastf_t min_edge;
     fastf_t max_edge;
-};
-
-struct on_brep_mesh_data {
-    std::vector<ON_3dPoint *> vfpnts;
-    std::vector<ON_3dPoint *> vfnormals;
-    std::map<ON_3dPoint *, int> on_pnt_to_bot_pnt;
-    std::map<ON_3dPoint *, int> on_pnt_to_bot_norm;
-    std::set<p2t::Triangle*> tris_degen;
-    std::set<p2t::Triangle*> tris_zero_3D_area;
-    std::map<p2t::Triangle*, int> tri_brep_face;
-    size_t triangle_cnt = 0;
-    EdgeToTri *e2f;
 };
 
 void
@@ -249,20 +251,13 @@ CDT_Add3DPnt(struct ON_Brep_CDT_State *s, ON_3dPoint *p, int fid, int vid, int t
 void
 CDT_Tol_Set(struct brep_cdt_tol *cdt, double dist, fastf_t md, double t_abs, double t_rel, double t_norm, double t_dist);
 
-void
-populate_3d_pnts(struct ON_Brep_CDT_State *s_cdt, struct on_brep_mesh_data *md, int face_index);
+void populate_3d_pnts(struct ON_Brep_CDT_Face_State *f);
+void triangles_build_edgemap(struct ON_Brep_CDT_Face_State *f);
+void triangles_degenerate_trivial(struct ON_Brep_CDT_Face_State *f);
+void triangles_degenerate_area(struct ON_Brep_CDT_Face_State *f);
+void triangles_incorrect_normals(struct ON_Brep_CDT_Face_State *f);
+void triangles_rebuild_involved(struct ON_Brep_CDT_Face_State *f);
 
-void
-triangles_build_edgemap(struct ON_Brep_CDT_State *s_cdt, struct on_brep_mesh_data *md, int face_index);
-
-void
-triangles_degenerate_trivial(struct ON_Brep_CDT_State *s_cdt, struct on_brep_mesh_data *md, int face_index);
-void
-triangles_degenerate_area(struct ON_Brep_CDT_State *s_cdt, struct on_brep_mesh_data *md, int face_index);
-void
-triangles_incorrect_normals(struct ON_Brep_CDT_State *s_cdt, struct on_brep_mesh_data *md, int face_index);
-void
-triangles_rebuild_involved(struct ON_Brep_CDT_State *s_cdt, struct on_brep_mesh_data *md, int face_index);
 void
 trimesh_error_report(struct ON_Brep_CDT_State *s_cdt, int valid_fcnt, int valid_vcnt, int *valid_faces, fastf_t *valid_vertices, struct bg_trimesh_solid_errors *se);
 

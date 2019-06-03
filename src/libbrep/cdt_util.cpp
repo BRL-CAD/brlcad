@@ -192,6 +192,12 @@ ON_Brep_CDT_Face_Create(struct ON_Brep_CDT_State *s_cdt, int ind)
 
     fcdt->degen_pnts = new std::set<p2t::Point *>;
 
+    /* Mesh data */
+    fcdt->tris_degen = new std::set<p2t::Triangle*>;
+    fcdt->tris_zero_3D_area = new std::set<p2t::Triangle*>;
+    fcdt->triangle_cnt = 0;
+    fcdt->e2f = new EdgeToTri;
+
     return fcdt;
 }
 
@@ -221,6 +227,11 @@ ON_Brep_CDT_Face_Reset(struct ON_Brep_CDT_Face_State *fcdt)
     fcdt->p2t_extra_faces->clear();
     fcdt->degen_faces->clear();
 
+    /* Mesh data */
+    fcdt->tris_degen->clear();
+    fcdt->tris_zero_3D_area->clear();
+    fcdt->triangle_cnt = 0;
+    fcdt->e2f->clear();
 }
 
 void
@@ -258,6 +269,10 @@ ON_Brep_CDT_Face_Destroy(struct ON_Brep_CDT_Face_State *fcdt)
     delete fcdt->p2t_extra_faces;
     delete fcdt->degen_faces;
     delete fcdt->degen_pnts;
+
+    delete fcdt->tris_degen;
+    delete fcdt->tris_zero_3D_area;
+    delete fcdt->e2f;
 
     delete fcdt;
 }
@@ -299,6 +314,13 @@ ON_Brep_CDT_Create(void *bv)
 
     cdt->faces = new std::map<int, struct ON_Brep_CDT_Face_State *>;
 
+
+    cdt->vfpnts = new std::vector<ON_3dPoint *>;
+    cdt->vfnormals = new std::vector<ON_3dPoint *>;
+    cdt->on_pnt_to_bot_pnt = new std::map<ON_3dPoint *, int>;
+    cdt->on_pnt_to_bot_norm = new std::map<ON_3dPoint *, int>;
+    cdt->tri_brep_face = new std::map<p2t::Triangle*, int>;
+
     return cdt;
 }
 
@@ -336,6 +358,12 @@ ON_Brep_CDT_Destroy(struct ON_Brep_CDT_State *s_cdt)
 
     delete s_cdt->pnt_audit_info;
     delete s_cdt->faces;
+
+    delete s_cdt->vfpnts;
+    delete s_cdt->vfnormals;
+    delete s_cdt->on_pnt_to_bot_pnt;
+    delete s_cdt->on_pnt_to_bot_norm;
+    delete s_cdt->tri_brep_face;
 
     delete s_cdt;
 }
@@ -524,16 +552,17 @@ int ON_Brep_CDT_VList(
 
 
 void
-populate_3d_pnts(struct ON_Brep_CDT_State *s_cdt, struct on_brep_mesh_data *md, int face_index)
+populate_3d_pnts(struct ON_Brep_CDT_Face_State *f)
 {
-    ON_BrepFace &face = s_cdt->brep->m_F[face_index];
-    p2t::CDT *cdt = (*s_cdt->faces)[face_index]->cdt;
-    std::map<p2t::Point *, ON_3dPoint *> *pointmap = (*s_cdt->faces)[face_index]->p2t_to_on3_map;
-    std::map<p2t::Point *, ON_3dPoint *> *normalmap = (*s_cdt->faces)[face_index]->p2t_to_on3_norm_map;
+    int face_index = f->ind;
+    ON_BrepFace &face = f->s_cdt->brep->m_F[face_index];
+    p2t::CDT *cdt = f->cdt;
+    std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
+    std::map<p2t::Point *, ON_3dPoint *> *normalmap = f->p2t_to_on3_norm_map;
     std::vector<p2t::Triangle*> tris = cdt->GetTriangles();
     for (size_t i = 0; i < tris.size(); i++) {
 	p2t::Triangle *t = tris[i];
-	md->tri_brep_face[t] = face_index;
+	(*f->s_cdt->tri_brep_face)[t] = face_index;
 	for (size_t j = 0; j < 3; j++) {
 	    p2t::Point *p = t->GetPoint(j);
 	    if (p) {
@@ -550,46 +579,46 @@ populate_3d_pnts(struct ON_Brep_CDT_State *s_cdt, struct on_brep_mesh_data *md, 
 			}
 			if (!op) {
 			    op = new ON_3dPoint(pnt);
-			    CDT_Add3DPnt(s_cdt, op, face.m_face_index, -1, -1, -1, p->x, p->y);
-			    md->vfpnts.push_back(op);
+			    CDT_Add3DPnt(f->s_cdt, op, face.m_face_index, -1, -1, -1, p->x, p->y);
+			    f->s_cdt->vfpnts->push_back(op);
 			    (*pointmap)[p] = op;
-			    md->on_pnt_to_bot_pnt[op] = md->vfpnts.size() - 1;
-			    (*s_cdt->vert_to_on)[md->vfpnts.size() - 1] = op;
+			    (*f->s_cdt->on_pnt_to_bot_pnt)[op] = f->s_cdt->vfpnts->size() - 1;
+			    (*f->s_cdt->vert_to_on)[f->s_cdt->vfpnts->size() - 1] = op;
 			}
 			if (!onorm) {
 			    onorm = new ON_3dPoint(norm);
-			    s_cdt->w3dnorms->push_back(onorm);
-			    md->vfnormals.push_back(onorm);
+			    f->s_cdt->w3dnorms->push_back(onorm);
+			    f->s_cdt->vfnormals->push_back(onorm);
 			    (*normalmap)[p] = onorm;
-			    md->on_pnt_to_bot_norm[op] = md->vfnormals.size() - 1;
+			    (*f->s_cdt->on_pnt_to_bot_norm)[op] = f->s_cdt->vfnormals->size() - 1;
 			}
 		    } else {
 			bu_log("Erm... eval failed, no normal info?\n");
 			if (!op) {
 			    pnt = s->PointAt(p->x, p->y);
 			    op = new ON_3dPoint(pnt);
-			    CDT_Add3DPnt(s_cdt, op, face.m_face_index, -1, -1, -1, p->x, p->y);
-			    md->vfpnts.push_back(op);
+			    CDT_Add3DPnt(f->s_cdt, op, face.m_face_index, -1, -1, -1, p->x, p->y);
+			    f->s_cdt->vfpnts->push_back(op);
 			    (*pointmap)[p] = op;
-			    md->on_pnt_to_bot_pnt[op] = md->vfpnts.size() - 1;
-			    (*s_cdt->vert_to_on)[md->vfpnts.size() - 1] = op;
+			    (*f->s_cdt->on_pnt_to_bot_pnt)[op] = f->s_cdt->vfpnts->size() - 1;
+			    (*f->s_cdt->vert_to_on)[f->s_cdt->vfpnts->size() - 1] = op;
 			} else {
-			    if (md->on_pnt_to_bot_pnt.find(op) == md->on_pnt_to_bot_pnt.end()) {
-				md->vfpnts.push_back(op);
+			    if (f->s_cdt->on_pnt_to_bot_pnt->find(op) == f->s_cdt->on_pnt_to_bot_pnt->end()) {
+				f->s_cdt->vfpnts->push_back(op);
 				(*pointmap)[p] = op;
-				md->on_pnt_to_bot_pnt[op] = md->vfpnts.size() - 1;
-				(*s_cdt->vert_to_on)[md->vfpnts.size() - 1] = op;
+				(*f->s_cdt->on_pnt_to_bot_pnt)[op] = f->s_cdt->vfpnts->size() - 1;
+				(*f->s_cdt->vert_to_on)[f->s_cdt->vfpnts->size() - 1] = op;
 			    }
 			}
 		    }
 		} else {
 		    /* We've got them already, just add them */
-		    if (md->on_pnt_to_bot_pnt.find(op) == md->on_pnt_to_bot_pnt.end()) {
-			md->vfpnts.push_back(op);
-			md->vfnormals.push_back(onorm);
-			md->on_pnt_to_bot_pnt[op] = md->vfpnts.size() - 1;
-			(*s_cdt->vert_to_on)[md->vfpnts.size() - 1] = op;
-			md->on_pnt_to_bot_norm[op] = md->vfnormals.size() - 1;
+		    if (f->s_cdt->on_pnt_to_bot_pnt->find(op) == f->s_cdt->on_pnt_to_bot_pnt->end()) {
+			f->s_cdt->vfpnts->push_back(op);
+			f->s_cdt->vfnormals->push_back(onorm);
+			(*f->s_cdt->on_pnt_to_bot_pnt)[op] = f->s_cdt->vfpnts->size() - 1;
+			(*f->s_cdt->vert_to_on)[f->s_cdt->vfpnts->size() - 1] = op;
+			(*f->s_cdt->on_pnt_to_bot_norm)[op] = f->s_cdt->vfnormals->size() - 1;
 		    }
 		}
 	    } else {
@@ -601,17 +630,17 @@ populate_3d_pnts(struct ON_Brep_CDT_State *s_cdt, struct on_brep_mesh_data *md, 
 
 
 void
-triangles_build_edgemap(struct ON_Brep_CDT_State *s_cdt, struct on_brep_mesh_data *md, int face_index)
+triangles_build_edgemap(struct ON_Brep_CDT_Face_State *f)
 {
-    p2t::CDT *cdt = (*s_cdt->faces)[face_index]->cdt;
-    std::map<p2t::Point *, ON_3dPoint *> *pointmap = (*s_cdt->faces)[face_index]->p2t_to_on3_map;
+    p2t::CDT *cdt = f->cdt;
+    std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
     std::vector<p2t::Triangle*> tris = cdt->GetTriangles();
     for (size_t i = 0; i < tris.size(); i++) {
 	/* Make sure this face isn't degenerate */
-	if (md->tris_degen.find(tris[i]) != md->tris_degen.end()) {
+	if (f->tris_degen->find(tris[i]) != f->tris_degen->end()) {
 	    continue;
 	}
-	add_tri_edges(md->e2f, tris[i], pointmap);
+	add_tri_edges(f->e2f, tris[i], pointmap);
     }
 }
 

@@ -384,7 +384,20 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_Face_State *f, std::map<const ON_Surface *, 
     /* Stash mappings for BoT reassembly.  Because there may be subsequent
      * refinement in overlap clearing operations, we avoid immediately
      * generating the mesh. */
-    (*s_cdt->faces)[face_index]->cdt = cdt;
+    f->cdt = cdt;
+    f->triangle_cnt = f->cdt->GetTriangles().size();
+
+    populate_3d_pnts(f);
+
+    // Trivially degenerate pass
+    triangles_degenerate_trivial(f);
+
+    // Zero area triangles
+    triangles_degenerate_area(f);
+
+    // Incorrect normals
+    triangles_incorrect_normals(f);
+
     return 0;
 }
 
@@ -588,10 +601,9 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
     // If this is the first time through, there are a number of once-per-conversion
     // operations to take care of.
     if (!s_cdt->w3dpnts->size()) {
-	// reparameterize the face's surface and
-	// transform the "u" and "v" coordinates of all the face's parameter space
-	// trimming curves to minimize distortion in the map from parameter space
-	// to 3d..
+	// Reparameterize the face's surface and transform the "u" and "v"
+	// coordinates of all the face's parameter space trimming curves to
+	// minimize distortion in the map from parameter space to 3d.
 	for (int face_index = 0; face_index < brep->m_F.Count(); face_index++) {
 	    ON_BrepFace *face = brep->Face(face_index);
 	    const ON_Surface *s = face->SurfaceOf();
@@ -662,6 +674,13 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 
 	}
 
+    } else {
+	/* Clear the mesh state, if this container was previously used */
+	s_cdt->vfpnts->clear();
+	s_cdt->vfnormals->clear();
+	s_cdt->on_pnt_to_bot_pnt->clear();
+	s_cdt->on_pnt_to_bot_norm->clear();
+	s_cdt->tri_brep_face->clear();
     }
 
     // Process all of the faces we have been instructed to process, or (default) all faces.
@@ -728,38 +747,24 @@ ON_Brep_CDT_Mesh(
 	fastf_t **normals, int *ncnt,
 	struct ON_Brep_CDT_State *s_cdt)
 {
-     if (!faces || !fcnt || !vertices || !vcnt || !s_cdt) {
-	 return -1;
-     }
+    size_t triangle_cnt = 0;
+    if (!faces || !fcnt || !vertices || !vcnt || !s_cdt) {
+	return -1;
+    }
 
-     /* We can ignore the face normals if we want, but if some of the
-      * return variables are non-NULL they all need to be non-NULL */
-     if (face_normals || fn_cnt || normals || ncnt) {
-	 if (!face_normals || !fn_cnt || !normals || !ncnt) {
-	     return -1;
-	 }
-     }
+    /* We can ignore the face normals if we want, but if some of the
+     * return variables are non-NULL they all need to be non-NULL */
+    if (face_normals || fn_cnt || normals || ncnt) {
+	if (!face_normals || !fn_cnt || !normals || !ncnt) {
+	    return -1;
+	}
+    }
 
-     struct on_brep_mesh_data md;
-     md.e2f = new EdgeToTri;
-
-     for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
-	 md.triangle_cnt += (*s_cdt->faces)[face_index]->cdt->GetTriangles().size();
-     }
-
-     for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
-	 populate_3d_pnts(s_cdt, &md, face_index);
-     }
-
-     // Trivially degenerate pass
-     for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
-	 triangles_degenerate_trivial(s_cdt, &md, face_index);
-     }
-
-     // Build edge map (TODO - this should probably come after all degenerate tests?)
-     for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
-	 triangles_build_edgemap(s_cdt, &md, face_index);
-     }
+    // Build edge map
+    for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
+	struct ON_Brep_CDT_Face_State *f = (*s_cdt->faces)[face_index];
+	triangles_build_edgemap(f);
+    }
 
 #if 0
     // Do a second pass over the remaining non-degenerate faces, looking for
@@ -799,17 +804,10 @@ ON_Brep_CDT_Mesh(
     }
 #endif
 
-    // We may still have a situation where three colinear points form a zero
-    // area face.  This is more complex to deal with, as it requires modifying
-    // non-degenerate faces in the neighborhood to incorporate different points.
     for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
-	triangles_degenerate_area(s_cdt, &md, face_index);
+	struct ON_Brep_CDT_Face_State *f = (*s_cdt->faces)[face_index];
+	triangle_cnt += f->triangle_cnt;
     }
-
-    for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
-	triangles_incorrect_normals(s_cdt, &md, face_index);
-    }
-
 
     /* For the non-zero-area triangles sharing an edge with a non-trivially
      * degenerate zero area triangle, we need to build new polygons from each
@@ -821,67 +819,69 @@ ON_Brep_CDT_Mesh(
      * degenerate zero-area triangle.)
      */
     for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
-	triangles_rebuild_involved(s_cdt, &md, face_index);
+	struct ON_Brep_CDT_Face_State *f = (*s_cdt->faces)[face_index];
+	triangles_rebuild_involved(f);
     }
 
-    bu_log("tri_cnt_init: %zd\n", md.triangle_cnt);
+    bu_log("tri_cnt_init: %zd\n", triangle_cnt);
     for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
-	std::vector<p2t::Triangle *> *tri_add = (*s_cdt->faces)[face_index]->p2t_extra_faces;
-	//bu_log("adding %zd faces from %d\n", tri_add->size(), face_index);
-	md.triangle_cnt += tri_add->size();
+	struct ON_Brep_CDT_Face_State *f = (*s_cdt->faces)[face_index];
+	triangle_cnt += f->p2t_extra_faces->size();
+	//bu_log("adding %zd faces from %d\n", f->p2t_extra_faces->size(), face_index);
     }
-    bu_log("tri_cnt_init+: %zd\n", md.triangle_cnt);
+    bu_log("tri_cnt_init+: %zd\n", triangle_cnt);
 
     // Know how many faces and points now - initialize BoT container.
-    *fcnt = (int)md.triangle_cnt;
-    *faces = (int *)bu_calloc(md.triangle_cnt*3, sizeof(int), "new faces array");
-    *vcnt = (int)md.vfpnts.size();
-    *vertices = (fastf_t *)bu_calloc(md.vfpnts.size()*3, sizeof(fastf_t), "new vert array");
+    *fcnt = (int)triangle_cnt;
+    *faces = (int *)bu_calloc(triangle_cnt*3, sizeof(int), "new faces array");
+    *vcnt = (int)s_cdt->vfpnts->size();
+    *vertices = (fastf_t *)bu_calloc(s_cdt->vfpnts->size()*3, sizeof(fastf_t), "new vert array");
     if (normals) {
-	*ncnt = (int)md.vfnormals.size();
-	*normals = (fastf_t *)bu_calloc(md.vfnormals.size()*3, sizeof(fastf_t), "new normals array");
-	*fn_cnt = (int)md.triangle_cnt;
-	*face_normals = (int *)bu_calloc(md.triangle_cnt*3, sizeof(int), "new face_normals array");
+	*ncnt = (int)s_cdt->vfnormals->size();
+	*normals = (fastf_t *)bu_calloc(s_cdt->vfnormals->size()*3, sizeof(fastf_t), "new normals array");
+	*fn_cnt = (int)triangle_cnt;
+	*face_normals = (int *)bu_calloc(triangle_cnt*3, sizeof(int), "new face_normals array");
     }
 
-    for (size_t i = 0; i < md.vfpnts.size(); i++) {
-	(*vertices)[i*3] = md.vfpnts[i]->x;
-	(*vertices)[i*3+1] = md.vfpnts[i]->y;
-	(*vertices)[i*3+2] = md.vfpnts[i]->z;
+    for (size_t i = 0; i < s_cdt->vfpnts->size(); i++) {
+	(*vertices)[i*3] = (*s_cdt->vfpnts)[i]->x;
+	(*vertices)[i*3+1] = (*s_cdt->vfpnts)[i]->y;
+	(*vertices)[i*3+2] = (*s_cdt->vfpnts)[i]->z;
     }
 
     if (normals) {
-	for (size_t i = 0; i < md.vfnormals.size(); i++) {
-	    (*normals)[i*3] = md.vfnormals[i]->x;
-	    (*normals)[i*3+1] = md.vfnormals[i]->y;
-	    (*normals)[i*3+2] = md.vfnormals[i]->z;
+	for (size_t i = 0; i < s_cdt->vfnormals->size(); i++) {
+	    (*normals)[i*3] = (*s_cdt->vfnormals)[i]->x;
+	    (*normals)[i*3+1] = (*s_cdt->vfnormals)[i]->y;
+	    (*normals)[i*3+2] = (*s_cdt->vfnormals)[i]->z;
 	}
     }
 
     // Iterate over faces, adding points and faces to BoT container.  Note: all
     // 3D points should be geometrically unique in this final container.
     int face_cnt = 0;
-    md.triangle_cnt = 0;
+    triangle_cnt = 0;
     for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
-	p2t::CDT *cdt = (*s_cdt->faces)[face_index]->cdt;
-	std::map<p2t::Point *, ON_3dPoint *> *pointmap = (*s_cdt->faces)[face_index]->p2t_to_on3_map;
+	struct ON_Brep_CDT_Face_State *f = (*s_cdt->faces)[face_index];
+	p2t::CDT *cdt = f->cdt;
+	std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
 	std::vector<p2t::Triangle*> tris = cdt->GetTriangles();
-	md.triangle_cnt += tris.size();
+	triangle_cnt += tris.size();
 	int active_tris = 0;
 	for (size_t i = 0; i < tris.size(); i++) {
 	    p2t::Triangle *t = tris[i];
-	    if (md.tris_degen.size() > 0 && md.tris_degen.find(t) != md.tris_degen.end()) {
-		md.triangle_cnt--;
+	    if (f->tris_degen->size() > 0 && f->tris_degen->find(t) != f->tris_degen->end()) {
+		triangle_cnt--;
 		continue;
 	    }
 	    active_tris++;
 	    for (size_t j = 0; j < 3; j++) {
 		p2t::Point *p = t->GetPoint(j);
 		ON_3dPoint *op = (*pointmap)[p];
-		int ind = md.on_pnt_to_bot_pnt[op];
+		int ind = (*s_cdt->on_pnt_to_bot_pnt)[op];
 		(*faces)[face_cnt*3 + j] = ind;
 		if (normals) {
-		    int nind = md.on_pnt_to_bot_norm[op];
+		    int nind = (*s_cdt->on_pnt_to_bot_norm)[op];
 		    (*face_normals)[face_cnt*3 + j] = nind;
 		}
 	    }
@@ -900,7 +900,7 @@ ON_Brep_CDT_Mesh(
 	}
 	//bu_log("initial face count for %d: %d\n", face_index, active_tris);
     }
-    //bu_log("tri_cnt_1: %zd\n", md.triangle_cnt);
+    //bu_log("tri_cnt_1: %zd\n", triangle_cnt);
     //bu_log("face_cnt: %d\n", face_cnt);
 
     for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
@@ -909,16 +909,16 @@ ON_Brep_CDT_Mesh(
 	if (!tri_add) {
 	    continue;
 	}
-	md.triangle_cnt += tri_add->size();
+	triangle_cnt += tri_add->size();
 	for (size_t i = 0; i < tri_add->size(); i++) {
 	    p2t::Triangle *t = (*tri_add)[i];
 	    for (size_t j = 0; j < 3; j++) {
 		p2t::Point *p = t->GetPoint(j);
 		ON_3dPoint *op = (*pointmap)[p];
-		int ind = md.on_pnt_to_bot_pnt[op];
+		int ind = (*s_cdt->on_pnt_to_bot_pnt)[op];
 		(*faces)[face_cnt*3 + j] = ind;
 		if (normals) {
-		    int nind = md.on_pnt_to_bot_norm[op];
+		    int nind = (*s_cdt->on_pnt_to_bot_norm)[op];
 		    (*face_normals)[face_cnt*3 + j] = nind;
 		}
 	    }
@@ -936,7 +936,7 @@ ON_Brep_CDT_Mesh(
 	    face_cnt++;
 	}
 	//bu_log("added faces for %d: %zd\n", face_index, tri_add->size());
-	//bu_log("tri_cnt_2: %zd\n", md.triangle_cnt);
+	//bu_log("tri_cnt_2: %zd\n", triangle_cnt);
 	//bu_log("face_cnt_2: %d\n", face_cnt);
 
 
