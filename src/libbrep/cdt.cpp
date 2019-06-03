@@ -471,25 +471,25 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
     // We may be changing the ON_Brep data, so work on a copy
     // rather than the original object
     if (!s_cdt->brep) {
+
 	s_cdt->brep = new ON_Brep(*s_cdt->orig_brep);
+
+	// Attempt to minimize situations where 2D and 3D distances get out of sync
+	// by shrinking the surfaces down to the active area of the face
+	s_cdt->brep->ShrinkSurfaces();
+
     }
+
     ON_Brep* brep = s_cdt->brep;
+    std::map<const ON_Surface *, double> s_to_maxdist;
 
-    // Have observed at least one case (NIST2 face 237) where a small face on a
-    // large surface resulted in a valid 2D triangulation that produced a
-    // self-intersecting 3D mesh.  Attempt to minimize situations where 2D and
-    // 3D distances get out of sync by shrinking the surfaces down to the
-    // active area of the face
-    //
-    // TODO - we may want to do this only for faces where the surface size is
-    // much larger than the bounded trimming curves in 2D, rather than just
-    // shrinking everything...
-    brep->ShrinkSurfaces();
-
-    // Reparameterize the face's surface and transform the "u" and "v"
-    // coordinates of all the face's parameter space trimming curves to
-    // minimize distortion in the map from parameter space to 3d..
+    // If this is the first time through, there are a number of once-per-conversion
+    // operations to take care of.
     if (!s_cdt->w3dpnts->size()) {
+	// reparameterize the face's surface and
+	// transform the "u" and "v" coordinates of all the face's parameter space
+	// trimming curves to minimize distortion in the map from parameter space
+	// to 3d..
 	for (int face_index = 0; face_index < brep->m_F.Count(); face_index++) {
 	    ON_BrepFace *face = brep->Face(face_index);
 	    const ON_Surface *s = face->SurfaceOf();
@@ -499,12 +499,10 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 		face->SetDomain(1, 0.0, surface_height);
 	    }
 	}
-    }
 
-    /* We want to use ON_3dPoint pointers and BrepVertex points, but
-     * vert->Point() produces a temporary address.  If this is our first time
-     * through, make stable copies of the Vertex points. */
-    if (!s_cdt->w3dpnts->size()) {
+	/* We want to use ON_3dPoint pointers and BrepVertex points, but
+	 * vert->Point() produces a temporary address.  If this is our first time
+	 * through, make stable copies of the Vertex points. */
 	for (int index = 0; index < brep->m_V.Count(); index++) {
 	    ON_BrepVertex& v = brep->m_V[index];
 	    (*s_cdt->vert_pnts)[index] = new ON_3dPoint(v.Point());
@@ -512,14 +510,12 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	    // topologically, any vertex point will be on edges
 	    s_cdt->edge_pnts->insert((*s_cdt->vert_pnts)[index]);
 	}
-    }
 
-    /* If this is the first time through, get vertex normals that are the
-     * average of the surface normals at the junction from faces that don't use
-     * a singular trim to reference the vertex.  When subdividing the edges, we
-     * use the normals as a curvature guide.
-     */
-    if (!s_cdt->vert_avg_norms->size()) {
+	/* If this is the first time through, get vertex normals that are the
+	 * average of the surface normals at the junction from faces that don't use
+	 * a singular trim to reference the vertex.  When subdividing the edges, we
+	 * use the normals as a curvature guide.
+	 */
 	for (int index = 0; index < brep->m_V.Count(); index++) {
 	    ON_BrepVertex& v = brep->m_V[index];
 	    int have_calculated = 0;
@@ -618,58 +614,48 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	    (*s_cdt->vert_avg_norms)[index] = new ON_3dPoint(vnrml);
 	    s_cdt->w3dnorms->push_back((*s_cdt->vert_avg_norms)[index]);
 	}
-    }
 
-#if 0
-    /* When we're working on edges, we need to have some sense of how fine we need
-     * to go to make sure we don't end up with severely distorted triangles - use
-     * the minimum length from the loop edges */
-    for (int li = 0; li < s_cdt->brep->m_L.Count(); li++) {
-	const ON_BrepLoop &loop = brep->m_L[li];
-    }
-#endif
+	/* To generate watertight meshes, the faces *must* share 3D edge points.  To ensure
+	 * a uniform set of edge points, we first sample all the edges and build their
+	 * point sets */
+	for (int index = 0; index < brep->m_E.Count(); index++) {
+	    ON_BrepEdge& edge = brep->m_E[index];
+	    ON_BrepTrim& trim1 = brep->m_T[edge.Trim(0)->m_trim_index];
+	    ON_BrepTrim& trim2 = brep->m_T[edge.Trim(1)->m_trim_index];
 
-    /* To generate watertight meshes, the faces must share 3D edge points.  To ensure
-     * a uniform set of edge points, we first sample all the edges and build their
-     * point sets */
-    std::map<const ON_Surface *, double> s_to_maxdist;
-    for (int index = 0; index < brep->m_E.Count(); index++) {
-        ON_BrepEdge& edge = brep->m_E[index];
-        ON_BrepTrim& trim1 = brep->m_T[edge.Trim(0)->m_trim_index];
-        ON_BrepTrim& trim2 = brep->m_T[edge.Trim(1)->m_trim_index];
+	    // Get distance tolerances from the surface sizes
+	    fastf_t max_dist = 0.0;
+	    fastf_t min_dist = DBL_MAX;
+	    fastf_t mw, mh;
+	    fastf_t md1, md2 = 0.0;
+	    double sw1, sh1, sw2, sh2;
+	    const ON_Surface *s1 = trim1.Face()->SurfaceOf();
+	    const ON_Surface *s2 = trim2.Face()->SurfaceOf();
+	    if (s1->GetSurfaceSize(&sw1, &sh1) && s2->GetSurfaceSize(&sw2, &sh2)) {
+		if ((sw1 < s_cdt->dist) || (sh1 < s_cdt->dist) || sw2 < s_cdt->dist || sh2 < s_cdt->dist) {
+		    return -1;
+		}
+		md1 = sqrt(sw1 * sh1 + sh1 * sw1) / 10.0;
+		md2 = sqrt(sw2 * sh2 + sh2 * sw2) / 10.0;
+		max_dist = (md1 < md2) ? md1 : md2;
+		mw = (sw1 < sw2) ? sw1 : sw2;
+		mh = (sh1 < sh2) ? sh1 : sh2;
+		min_dist = (mw < mh) ? mw : mh;
+		s_to_maxdist[s1] = max_dist;
+		s_to_maxdist[s2] = max_dist;
+	    }
 
-        // Get distance tolerances from the surface sizes
-        fastf_t max_dist = 0.0;
-        fastf_t min_dist = DBL_MAX;
-	fastf_t mw, mh;
-        fastf_t md1, md2 = 0.0;
-        double sw1, sh1, sw2, sh2;
-        const ON_Surface *s1 = trim1.Face()->SurfaceOf();
-        const ON_Surface *s2 = trim2.Face()->SurfaceOf();
-        if (s1->GetSurfaceSize(&sw1, &sh1) && s2->GetSurfaceSize(&sw2, &sh2)) {
-            if ((sw1 < s_cdt->dist) || (sh1 < s_cdt->dist) || sw2 < s_cdt->dist || sh2 < s_cdt->dist) {
-                return -1;
-            }
-            md1 = sqrt(sw1 * sh1 + sh1 * sw1) / 10.0;
-            md2 = sqrt(sw2 * sh2 + sh2 * sw2) / 10.0;
-            max_dist = (md1 < md2) ? md1 : md2;
-            mw = (sw1 < sw2) ? sw1 : sw2;
-            mh = (sh1 < sh2) ? sh1 : sh2;
-            min_dist = (mw < mh) ? mw : mh;
-            s_to_maxdist[s1] = max_dist;
-            s_to_maxdist[s2] = max_dist;
-        }
+	    // Generate the BrepTrimPoint arrays for both trims associated with this edge
+	    //
+	    // TODO - need to make this robust to changed tolerances on refinement
+	    // runs - if pre-existing solutions for "high level" splits exist,
+	    // reuse them and dig down to find where we need further refinement to
+	    // create new points.
+	    (void)getEdgePoints(s_cdt, &edge, trim1, max_dist, min_dist);
 
-        // Generate the BrepTrimPoint arrays for both trims associated with this edge
-	//
-	// TODO - need to make this robust to changed tolerances on refinement
-	// runs - if pre-existing solutions for "high level" splits exist,
-	// reuse them and dig down to find where we need further refinement to
-	// create new points.
-        (void)getEdgePoints(s_cdt, &edge, trim1, max_dist, min_dist);
+	}
 
     }
-
 
     // Process all of the faces we have been instructed to process, or (default) all faces.
     // Keep track of failures and successes.
