@@ -263,6 +263,8 @@ void
 triangles_incorrect_normals(struct ON_Brep_CDT_State *s_cdt, struct on_brep_mesh_data *md, int face_index);
 void
 triangles_rebuild_involved(struct ON_Brep_CDT_State *s_cdt, struct on_brep_mesh_data *md, int face_index);
+void
+trimesh_error_report(struct ON_Brep_CDT_State *s_cdt, int valid_fcnt, int valid_vcnt, int *valid_faces, fastf_t *valid_vertices, struct bg_trimesh_solid_errors *se);
 
 /** @} */
 
