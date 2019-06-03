@@ -49,9 +49,11 @@ sed -i -e 's/b67a1bdac086671244186372498369656e15b482/674bc5bec1631eb373d026e3c3
 
 # doc/docbook/resources/standard/xsl/extensions/xalan27.jar
 sed -i -e 's/8749b32c1b86d101019e7f7b3c3a085b4ea64597/cb090114149cda7052c417e8c2ba557b635b647e/g' custom/$2-tree.fi
+sed -i -e 's/76170136a4416561bf7a6ee58fc6d79e9cd6ed86/7f06fdb34becd3fed03b2e9ddf43fdb8da5376cc/g' custom/$2-tree.fi
 
 # doc/docbook/resources/standard/xsl/extensions/saxon65.jar
 sed -i -e 's/06d5271f3e9ec1ca4411865b26a3e1ac1b64b1e8/744df1a5cb1124b64cee08086f6316c89616c1ae/g' custom/$2-tree.fi
+sed -i -e 's/2f7de475e6bbd22df7305fce1f6750bec8016ba2/5bad294f6af0d436036d00d2666d2a3309ca8cdb/g' custom/$2-tree.fi
 
 # regress/gcv/fastgen/fastgen_box.fast4
 sed -i -e 's/3785040dbb9252dcf56f1d3edcfedc8859141339/33ddd71cf9d6b856d94d7bd3c0600f24c1db7120/g' custom/$2-tree.fi

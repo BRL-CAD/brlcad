@@ -150,7 +150,17 @@ void write_cached_rev_sha1s()
 void generate_svn_tree(const char *svn_repo, const char *branch, long int rev)
 {
     std::string tree_cmd;
+    std::string prep_cmd;
 
+    if (std::string(branch) == std::string("master")) {
+	prep_cmd = std::string("rm -f custom/") + std::to_string(rev) + std::string("-tree.fi && rm -rf trunk-") + std::to_string(rev);
+    } else {
+	prep_cmd = std::string("rm -f custom/") + std::to_string(rev) + std::string("-tree.fi && rm -rf ") + std::string(branch) + std::string("-") + std::to_string(rev);
+    }
+    if (std::system(prep_cmd.c_str())) {
+    	std::cerr << "Error running tree generation prep command: " << prep_cmd << "\n";
+	exit(1);
+    }
     if (std::string(branch) == std::string("master")) {
 	tree_cmd = std::string("./sync_commit_trunk.sh ") + std::string(svn_repo) + std::string(" ") + std::to_string(rev);
     } else {
