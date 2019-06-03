@@ -679,7 +679,7 @@ getEdgePoints(
     return trim1_param_points;
 }
 
-
+// Untested, need to step through
 int
 SplitEdgeSegment(
 	struct ON_Brep_CDT_State *s_cdt,

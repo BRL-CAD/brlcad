@@ -395,7 +395,132 @@ ON_Brep_CDT_Tol_Get(struct ON_Brep_CDT_Tols *t, const struct ON_Brep_CDT_State *
     t->dist = s->dist;
 }
 
+static int
+ON_Brep_CDT_VList_Face(
+	struct bu_list *vhead,
+	struct bu_list *vlfree,
+	int face_index,
+	int mode,
+	const struct ON_Brep_CDT_State *s)
+{
+    point_t pt[3] = {VINIT_ZERO, VINIT_ZERO, VINIT_ZERO};
+    vect_t nv[3] = {VINIT_ZERO, VINIT_ZERO, VINIT_ZERO};
+    point_t pt1 = VINIT_ZERO;
+    point_t pt2 = VINIT_ZERO;
 
+    p2t::CDT *cdt = (*s->faces)[face_index]->cdt;
+    std::map<p2t::Point *, ON_3dPoint *> *pointmap = (*s->faces)[face_index]->p2t_to_on3_map;
+    std::map<p2t::Point *, ON_3dPoint *> *normalmap = (*s->faces)[face_index]->p2t_to_on3_norm_map;
+    std::vector<p2t::Triangle*> tris = cdt->GetTriangles();
+
+    switch (mode) {
+	case 0:
+	    // 3D shaded triangles
+	    for (size_t i = 0; i < tris.size(); i++) {
+		p2t::Triangle *t = tris[i];
+		p2t::Point *p = NULL;
+		for (size_t j = 0; j < 3; j++) {
+		    p = t->GetPoint(j);
+		    ON_3dPoint *op = (*pointmap)[p];
+		    ON_3dPoint *onorm = (*normalmap)[p];
+		    VSET(pt[j], op->x, op->y, op->z);
+		    VSET(nv[j], onorm->x, onorm->y, onorm->z);
+		}
+		//tri one
+		BN_ADD_VLIST(vlfree, vhead, nv[0], BN_VLIST_TRI_START);
+		BN_ADD_VLIST(vlfree, vhead, nv[0], BN_VLIST_TRI_VERTNORM);
+		BN_ADD_VLIST(vlfree, vhead, pt[0], BN_VLIST_TRI_MOVE);
+		BN_ADD_VLIST(vlfree, vhead, nv[1], BN_VLIST_TRI_VERTNORM);
+		BN_ADD_VLIST(vlfree, vhead, pt[1], BN_VLIST_TRI_DRAW);
+		BN_ADD_VLIST(vlfree, vhead, nv[2], BN_VLIST_TRI_VERTNORM);
+		BN_ADD_VLIST(vlfree, vhead, pt[2], BN_VLIST_TRI_DRAW);
+		BN_ADD_VLIST(vlfree, vhead, pt[0], BN_VLIST_TRI_END);
+		//bu_log("Face %d, Tri %zd: %f/%f/%f-%f/%f/%f -> %f/%f/%f-%f/%f/%f -> %f/%f/%f-%f/%f/%f\n", face_index, i, V3ARGS(pt[0]), V3ARGS(nv[0]), V3ARGS(pt[1]), V3ARGS(nv[1]), V3ARGS(pt[2]), V3ARGS(nv[2]));
+	    }
+	    break;
+	case 1:
+	    // 3D wireframe
+	    for (size_t i = 0; i < tris.size(); i++) {
+		p2t::Triangle *t = tris[i];
+		p2t::Point *p = NULL;
+		for (size_t j = 0; j < 3; j++) {
+		    p = t->GetPoint(j);
+		    ON_3dPoint *op = (*pointmap)[p];
+		    VSET(pt[j], op->x, op->y, op->z);
+		}
+		//tri one
+		BN_ADD_VLIST(vlfree, vhead, pt[0], BN_VLIST_LINE_MOVE);
+		BN_ADD_VLIST(vlfree, vhead, pt[1], BN_VLIST_LINE_DRAW);
+		BN_ADD_VLIST(vlfree, vhead, pt[2], BN_VLIST_LINE_DRAW);
+		BN_ADD_VLIST(vlfree, vhead, pt[0], BN_VLIST_LINE_DRAW);
+	    }
+	    break;
+	case 2:
+	    // 2D wireframe
+	    for (size_t i = 0; i < tris.size(); i++) {
+		p2t::Triangle *t = tris[i];
+		p2t::Point *p = NULL;
+
+		for (size_t j = 0; j < 3; j++) {
+		    if (j == 0) {
+			p = t->GetPoint(2);
+		    } else {
+			p = t->GetPoint(j - 1);
+		    }
+		    pt1[0] = p->x;
+		    pt1[1] = p->y;
+		    pt1[2] = 0.0;
+		    p = t->GetPoint(j);
+		    pt2[0] = p->x;
+		    pt2[1] = p->y;
+		    pt2[2] = 0.0;
+		    BN_ADD_VLIST(vlfree, vhead, pt1, BN_VLIST_LINE_MOVE);
+		    BN_ADD_VLIST(vlfree, vhead, pt2, BN_VLIST_LINE_DRAW);
+		}
+	    }
+	    break;
+	default:
+	    return -1;
+    }
+
+    return 0;
+}
+
+int ON_Brep_CDT_VList(
+	struct bn_vlblock *vbp,
+	struct bu_list *vlfree,
+	struct bu_color *c,
+	int mode,
+	const struct ON_Brep_CDT_State *s)
+{
+    int r, g, b;
+    struct bu_list *vhead = NULL;
+    int have_color = 0;
+
+   if (UNLIKELY(!c) || mode < 0) {
+       return -1;
+   }
+
+   have_color = bu_color_to_rgb_ints(c, &r, &g, &b);
+
+   if (UNLIKELY(!have_color)) {
+       return -1;
+   }
+
+   vhead = bn_vlblock_find(vbp, r, g, b);
+
+   if (UNLIKELY(!vhead)) {
+       return -1;
+   }
+
+   for (int i = 0; i < s->brep->m_F.Count(); i++) {
+       if ((*s->faces)[i] && (*s->faces)[i]->cdt) {
+	   (void)ON_Brep_CDT_VList_Face(vhead, vlfree, i, mode, s);
+       }
+   }
+
+   return 0;
+}
 
 /** @} */
 
