@@ -1190,6 +1190,15 @@ void branch_delete_commit(struct svn_revision &rev, std::string &rbranch)
 	wbranch = std::string("master-UNNAMED-BRANCH");
     }
 
+    if (rbranch == std::string("ansi-20040405-merged")) return;
+    if (rbranch == std::string("autoconf-freeze")) return;
+    if (rbranch == std::string("hartley-6-0-pre")) return;
+    if (rbranch == std::string("opensource-post")) return;
+    if (rbranch == std::string("postmerge-20040315-windows")) return;
+    if (rbranch == std::string("postmerge-20040405-ansi")) return;
+    if (rbranch == std::string("postmerge-20051223-bobWinPort")) return;
+
+
     std::string bdelete_msg = rev.commit_msg + std::string(" (svn branch delete)");
 
     std::string cfi_file = std::to_string(rev.revision_number) + std::string("-bdelete.fi");
