@@ -444,6 +444,108 @@ calc_trim_vnorm(ON_BrepVertex& v, ON_BrepTrim *trim)
     return trim_norm;
 }
 
+static void
+calc_vert_norm(struct ON_Brep_CDT_State *s_cdt, int index)
+{
+    ON_BrepVertex& v = s_cdt->brep->m_V[index];
+    int have_calculated = 0;
+    ON_3dVector vnrml(0.0, 0.0, 0.0);
+
+    for (int eind = 0; eind != v.EdgeCount(); eind++) {
+	ON_3dVector trim1_norm = ON_3dVector::UnsetVector;
+	ON_3dVector trim2_norm = ON_3dVector::UnsetVector;
+	ON_BrepEdge& edge = s_cdt->brep->m_E[v.m_ei[eind]];
+	if (edge.TrimCount() != 2) {
+	    // Don't know what to do with this yet... skip.
+	    continue;
+	}
+	ON_BrepTrim *trim1 = edge.Trim(0);
+	ON_BrepTrim *trim2 = edge.Trim(1);
+
+	if (trim1->m_type != ON_BrepTrim::singular) {
+	    trim1_norm = calc_trim_vnorm(v, trim1);
+	}
+	if (trim2->m_type != ON_BrepTrim::singular) {
+	    trim2_norm = calc_trim_vnorm(v, trim2);
+	}
+
+	// If one of the normals is unset and the other comes from a plane, use it
+	if (trim1_norm == ON_3dVector::UnsetVector && trim2_norm != ON_3dVector::UnsetVector) {
+	    const ON_Surface *s2 = trim2->SurfaceOf();
+	    if (!s2->IsPlanar(NULL, ON_ZERO_TOLERANCE)) {
+		continue;
+	    }
+	    trim1_norm = trim2_norm;
+	}
+	if (trim1_norm != ON_3dVector::UnsetVector && trim2_norm == ON_3dVector::UnsetVector) {
+	    const ON_Surface *s1 = trim1->SurfaceOf();
+	    if (!s1->IsPlanar(NULL, ON_ZERO_TOLERANCE)) {
+		continue;
+	    }
+	    trim2_norm = trim1_norm;
+	}
+
+	// If we have disagreeing normals and one of them is from a planar surface, go
+	// with that one
+	if (NEAR_EQUAL(ON_DotProduct(trim1_norm, trim2_norm), -1, VUNITIZE_TOL)) {
+	    const ON_Surface *s1 = trim1->SurfaceOf();
+	    const ON_Surface *s2 = trim2->SurfaceOf();
+	    if (!s1->IsPlanar(NULL, ON_ZERO_TOLERANCE) && !s2->IsPlanar(NULL, ON_ZERO_TOLERANCE)) {
+		// Normals severely disagree, no planar surface to fall back on - can't use this
+		continue;
+	    }
+	    if (s1->IsPlanar(NULL, ON_ZERO_TOLERANCE) && s2->IsPlanar(NULL, ON_ZERO_TOLERANCE)) {
+		// Two disagreeing planes - can't use this
+		continue;
+	    }
+	    if (s1->IsPlanar(NULL, ON_ZERO_TOLERANCE)) {
+		trim2_norm = trim1_norm;
+	    }
+	    if (s2->IsPlanar(NULL, ON_ZERO_TOLERANCE)) {
+		trim1_norm = trim2_norm;
+	    }
+	}
+
+	// Stash normals coming from non-singular trims at vertices for faces.  If a singular trim
+	// needs a normal in 3D, want to use one of these
+	int mfaceind1 = trim1->Face()->m_face_index;
+	ON_3dPoint *t1pnt = new ON_3dPoint(trim1_norm);
+	if (s_cdt->faces->find(mfaceind1) == s_cdt->faces->end()) {
+	    struct ON_Brep_CDT_Face_State *f = ON_Brep_CDT_Face_Create(s_cdt, mfaceind1);
+	    (*s_cdt->faces)[mfaceind1] = f;
+	}
+	(*(*s_cdt->faces)[mfaceind1]->vert_face_norms)[v.m_vertex_index].insert(t1pnt);
+	(*s_cdt->faces)[mfaceind1]->w3dnorms->push_back(t1pnt);
+	int mfaceind2 = trim2->Face()->m_face_index;
+	ON_3dPoint *t2pnt = new ON_3dPoint(trim2_norm);
+	if (s_cdt->faces->find(mfaceind2) == s_cdt->faces->end()) {
+	    struct ON_Brep_CDT_Face_State *f = ON_Brep_CDT_Face_Create(s_cdt, mfaceind2);
+	    (*s_cdt->faces)[mfaceind2] = f;
+	}
+	(*(*s_cdt->faces)[mfaceind2]->vert_face_norms)[v.m_vertex_index].insert(t1pnt);
+	(*s_cdt->faces)[mfaceind2]->w3dnorms->push_back(t2pnt);
+
+	// Add the normals to the vnrml total
+	vnrml += trim1_norm;
+	vnrml += trim2_norm;
+	have_calculated = 1;
+
+    }
+    if (!have_calculated) {
+	return;
+    }
+
+    // Average all the successfully calculated normals into a new unit normal
+    vnrml.Unitize();
+
+    // We store this as a point to keep C++ happy...  If we try to
+    // propagate the ON_3dVector type through all the CDT logic it
+    // triggers issues with the compile.
+    (*s_cdt->vert_avg_norms)[index] = new ON_3dPoint(vnrml);
+    s_cdt->w3dnorms->push_back((*s_cdt->vert_avg_norms)[index]);
+
+}
+
 int
 ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces)
 {
@@ -517,102 +619,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	 * use the normals as a curvature guide.
 	 */
 	for (int index = 0; index < brep->m_V.Count(); index++) {
-	    ON_BrepVertex& v = brep->m_V[index];
-	    int have_calculated = 0;
-	    ON_3dVector vnrml(0.0, 0.0, 0.0);
-
-	    for (int eind = 0; eind != v.EdgeCount(); eind++) {
-		ON_3dVector trim1_norm = ON_3dVector::UnsetVector;
-		ON_3dVector trim2_norm = ON_3dVector::UnsetVector;
-		ON_BrepEdge& edge = brep->m_E[v.m_ei[eind]];
-		if (edge.TrimCount() != 2) {
-		    // Don't know what to do with this yet... skip.
-		    continue;
-		}
-		ON_BrepTrim *trim1 = edge.Trim(0);
-		ON_BrepTrim *trim2 = edge.Trim(1);
-
-		if (trim1->m_type != ON_BrepTrim::singular) {
-		    trim1_norm = calc_trim_vnorm(v, trim1);
-		}
-		if (trim2->m_type != ON_BrepTrim::singular) {
-		    trim2_norm = calc_trim_vnorm(v, trim2);
-		}
-
-		// If one of the normals is unset and the other comes from a plane, use it
-		if (trim1_norm == ON_3dVector::UnsetVector && trim2_norm != ON_3dVector::UnsetVector) {
-		    const ON_Surface *s2 = trim2->SurfaceOf();
-		    if (!s2->IsPlanar(NULL, ON_ZERO_TOLERANCE)) {
-			continue;
-		    }
-		    trim1_norm = trim2_norm;
-		}
-		if (trim1_norm != ON_3dVector::UnsetVector && trim2_norm == ON_3dVector::UnsetVector) {
-		    const ON_Surface *s1 = trim1->SurfaceOf();
-		    if (!s1->IsPlanar(NULL, ON_ZERO_TOLERANCE)) {
-			continue;
-		    }
-		    trim2_norm = trim1_norm;
-		}
-
-		// If we have disagreeing normals and one of them is from a planar surface, go
-		// with that one
-		if (NEAR_EQUAL(ON_DotProduct(trim1_norm, trim2_norm), -1, VUNITIZE_TOL)) {
-		    const ON_Surface *s1 = trim1->SurfaceOf();
-		    const ON_Surface *s2 = trim2->SurfaceOf();
-		    if (!s1->IsPlanar(NULL, ON_ZERO_TOLERANCE) && !s2->IsPlanar(NULL, ON_ZERO_TOLERANCE)) {
-			// Normals severely disagree, no planar surface to fall back on - can't use this
-			continue;
-		    }
-		    if (s1->IsPlanar(NULL, ON_ZERO_TOLERANCE) && s2->IsPlanar(NULL, ON_ZERO_TOLERANCE)) {
-			// Two disagreeing planes - can't use this
-			continue;
-		    }
-		    if (s1->IsPlanar(NULL, ON_ZERO_TOLERANCE)) {
-			trim2_norm = trim1_norm;
-		    }
-		    if (s2->IsPlanar(NULL, ON_ZERO_TOLERANCE)) {
-			trim1_norm = trim2_norm;
-		    }
-		}
-
-		// Stash normals coming from non-singular trims at vertices for faces.  If a singular trim
-		// needs a normal in 3D, want to use one of these
-		int mfaceind1 = trim1->Face()->m_face_index;
-		ON_3dPoint *t1pnt = new ON_3dPoint(trim1_norm);
-		if (s_cdt->faces->find(mfaceind1) == s_cdt->faces->end()) {
-		    struct ON_Brep_CDT_Face_State *f = ON_Brep_CDT_Face_Create(s_cdt, mfaceind1);
-		    (*s_cdt->faces)[mfaceind1] = f;
-		}
-		(*(*s_cdt->faces)[mfaceind1]->vert_face_norms)[v.m_vertex_index].insert(t1pnt);
-		(*s_cdt->faces)[mfaceind1]->w3dnorms->push_back(t1pnt);
-		int mfaceind2 = trim2->Face()->m_face_index;
-		ON_3dPoint *t2pnt = new ON_3dPoint(trim2_norm);
-		if (s_cdt->faces->find(mfaceind2) == s_cdt->faces->end()) {
-		    struct ON_Brep_CDT_Face_State *f = ON_Brep_CDT_Face_Create(s_cdt, mfaceind2);
-		    (*s_cdt->faces)[mfaceind2] = f;
-		}
-		(*(*s_cdt->faces)[mfaceind2]->vert_face_norms)[v.m_vertex_index].insert(t1pnt);
-		(*s_cdt->faces)[mfaceind2]->w3dnorms->push_back(t2pnt);
-
-		// Add the normals to the vnrml total
-		vnrml += trim1_norm;
-		vnrml += trim2_norm;
-		have_calculated = 1;
-
-	    }
-	    if (!have_calculated) {
-		continue;
-	    }
-
-	    // Average all the successfully calculated normals into a new unit normal
-	    vnrml.Unitize();
-
-	    // We store this as a point to keep C++ happy...  If we try to
-	    // propagate the ON_3dVector type through all the CDT logic it
-	    // triggers issues with the compile.
-	    (*s_cdt->vert_avg_norms)[index] = new ON_3dPoint(vnrml);
-	    s_cdt->w3dnorms->push_back((*s_cdt->vert_avg_norms)[index]);
+	    calc_vert_norm(s_cdt, index);
 	}
 
 	/* To generate watertight meshes, the faces *must* share 3D edge points.  To ensure
