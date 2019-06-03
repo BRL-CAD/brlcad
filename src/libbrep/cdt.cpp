@@ -661,33 +661,18 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
     // Keep track of failures and successes.
     int face_failures = 0;
     int face_successes = 0;
-
-    if ((face_cnt == 0) || !faces) {
-
-	for (int face_index = 0; face_index < s_cdt->brep->m_F.Count(); face_index++) {
-	    if (s_cdt->faces->find(face_index) == s_cdt->faces->end()) {
-		struct ON_Brep_CDT_Face_State *f = ON_Brep_CDT_Face_Create(s_cdt, face_index);
-		(*s_cdt->faces)[face_index] = f;
+    int fc = ((face_cnt == 0) || !faces) ? s_cdt->brep->m_F.Count() : face_cnt;
+    for (int i = 0; i < fc; i++) {
+	int fi = ((face_cnt == 0) || !faces) ? i : faces[i];
+	if (fi < s_cdt->brep->m_F.Count()) {
+	    if (s_cdt->faces->find(fi) == s_cdt->faces->end()) {
+		struct ON_Brep_CDT_Face_State *f = ON_Brep_CDT_Face_Create(s_cdt, fi);
+		(*s_cdt->faces)[fi] = f;
 	    }
-	    if (ON_Brep_CDT_Face((*s_cdt->faces)[face_index],&s_to_maxdist)) {
+	    if (ON_Brep_CDT_Face((*s_cdt->faces)[fi], &s_to_maxdist)) {
 		face_failures++;
 	    } else {
 		face_successes++;
-	    }
-
-	}
-    } else {
-	for (int i = 0; i < face_cnt; i++) {
-	    if (faces[i] < s_cdt->brep->m_F.Count()) {
-		if (s_cdt->faces->find(faces[i]) == s_cdt->faces->end()) {
-		    struct ON_Brep_CDT_Face_State *f = ON_Brep_CDT_Face_Create(s_cdt, faces[i]);
-		    (*s_cdt->faces)[faces[i]] = f;
-		}
-		if (ON_Brep_CDT_Face((*s_cdt->faces)[faces[i]], &s_to_maxdist)) {
-		    face_failures++;
-		} else {
-		    face_successes++;
-		}
 	    }
 	}
     }
