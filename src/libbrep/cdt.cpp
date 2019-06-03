@@ -889,9 +889,23 @@ ON_Brep_CDT_Mesh(
      struct on_brep_mesh_data md;
      md.e2f = new EdgeToTri;
 
-    for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
-	triangles_first_pass(s_cdt, &md, face_index);
-    }
+     for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
+	 md.triangle_cnt += (*s_cdt->faces)[face_index]->cdt->GetTriangles().size();
+     }
+
+     for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
+	 populate_3d_pnts(s_cdt, &md, face_index);
+     }
+
+     // Trivially degenerate pass
+     for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
+	 triangles_trivially_degenerate(s_cdt, &md, face_index);
+     }
+
+     // Build edge map (TODO - this should probably come after all degenerate tests?)
+     for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
+	 triangles_build_edgemap(s_cdt, &md, face_index);
+     }
 
 #if 0
     // Do a second pass over the remaining non-degenerate faces, looking for

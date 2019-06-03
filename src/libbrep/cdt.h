@@ -250,7 +250,13 @@ void
 CDT_Tol_Set(struct brep_cdt_tol *cdt, double dist, fastf_t md, double t_abs, double t_rel, double t_norm, double t_dist);
 
 void
-triangles_first_pass(struct ON_Brep_CDT_State *s_cdt, struct on_brep_mesh_data *md, int face_index);
+populate_3d_pnts(struct ON_Brep_CDT_State *s_cdt, struct on_brep_mesh_data *md, int face_index);
+
+void
+triangles_build_edgemap(struct ON_Brep_CDT_State *s_cdt, struct on_brep_mesh_data *md, int face_index);
+
+void
+triangles_trivially_degenerate(struct ON_Brep_CDT_State *s_cdt, struct on_brep_mesh_data *md, int face_index);
 void
 triangles_scrub_colinear(struct ON_Brep_CDT_State *s_cdt, struct on_brep_mesh_data *md, int face_index);
 void
