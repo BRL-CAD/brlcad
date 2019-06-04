@@ -276,6 +276,13 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_Face_State *f, std::map<const ON_Surface *, 
 	return -1;
     }
 
+
+    ////////////////////////////////////////////////////////////////////////////
+    //   Operations from this point on need to be factored into a function
+    //   call that can be called iteratively until a 'correct' face is
+    //   arrived at.
+    ////////////////////////////////////////////////////////////////////////////
+
     // Sample the surface, independent of the trimming curves, to get points that
     // will tie the mesh to the interior surface.
     getSurfacePoints(s_cdt, face, on_surf_points, &rt_trims);
@@ -339,65 +346,9 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_Face_State *f, std::map<const ON_Surface *, 
     // Poly2Tri's triangulation.  NOTE: it is important that the inputs to
     // Poly2Tri satisfy its constraints - failure here could cause a crash.
     cdt->Triangulate(true, -1);
-
-    /* Calculate any 3D points we don't already have from the loop processing */
-    std::vector<p2t::Triangle*> tris = cdt->GetTriangles();
-    for (size_t i = 0; i < tris.size(); i++) {
-
-	p2t::Triangle *t = tris[i];
-
-	for (size_t j = 0; j < 3; j++) {
-
-	    p2t::Point *p = t->GetPoint(j);
-	    if (!p) {
-		bu_log("Face %d: p2t face without proper point info...\n", face.m_face_index);
-		continue;
-	    }
-
-	    ON_3dPoint *op = (*pointmap)[p];
-	    ON_3dPoint *onorm = (*normalmap)[p];
-	    if (op && onorm) {
-		// We have what we need
-		continue;
-	    }
-
-	    const ON_Surface *surf = face.SurfaceOf();
-	    ON_3dPoint pnt;
-	    ON_3dVector norm;
-	    if (surface_EvNormal(surf, p->x, p->y, pnt, norm)) {
-		// Have point and normal from surface - store
-		if (face.m_bRev) {
-		    norm = norm * -1.0;
-		}
-		if (!op) {
-		    op = new ON_3dPoint(pnt);
-		    CDT_Add3DPnt(s_cdt, op, face.m_face_index, -1, -1, -1, p->x, p->y);
-		    (*pointmap)[p] = op;
-		}
-		if (!onorm) {
-		    onorm = new ON_3dPoint(norm);
-		    s_cdt->w3dnorms->push_back(onorm);
-		    (*normalmap)[p] = onorm;
-		}
-	    } else {
-		// surface_EvNormal failed - fall back on PointAt
-		if (!op) {
-		    pnt = s->PointAt(p->x, p->y);
-		    op = new ON_3dPoint(pnt);
-		    CDT_Add3DPnt(s_cdt, op, face.m_face_index, -1, -1, -1, p->x, p->y);
-		}
-		(*pointmap)[p] = op;
-	    }
-
-	}
-
-    }
-
-    /* Stash mappings for BoT reassembly.  Because there may be subsequent
-     * refinement in overlap clearing operations, we avoid immediately
-     * generating the mesh. */
     f->cdt = cdt;
 
+    /* Calculate any 3D points we don't already have from the loop processing */
     populate_3d_pnts(f);
 
     // Trivially degenerate pass
