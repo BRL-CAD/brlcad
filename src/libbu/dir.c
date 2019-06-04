@@ -311,6 +311,7 @@ vdir(char *result, size_t len, va_list args)
 		break;
 	    case BU_DIR_INIT:
 		bu_getiwd(buf, MAXPATHLEN);
+		append(&vls, buf);
 		break;
 	    case BU_DIR_BIN:
 		cpath = bu_brlcad_root(BRLCAD_BIN_DIR, 1);
