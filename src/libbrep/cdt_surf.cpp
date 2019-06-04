@@ -146,7 +146,7 @@ bool involves_trims(double *min_edge, struct ON_Brep_CDT_State *s_cdt, struct cd
     }
 
     if (results.Count() > 0) {
-	double min_edge_dist = DBL_MAX;
+	double min_edge_dist = sinfo->max_edge;
 	ON_BoundingBox uvbb(ON_2dPoint(u1,v1),ON_2dPoint(u2,v2));
 
 	ON_SimpleArray<BrepTrimPoint> *brep_loop_points = (*s_cdt->faces)[sinfo->f->m_face_index]->face_loop_points;
@@ -221,7 +221,20 @@ getSurfacePoints(
     double est3 = vline_len_est(sinfo, u1, v1, v2);
     double est4 = vline_len_est(sinfo, u2, v1, v2);
 
-    //bu_log("(min: %f) est1, est2, est3, est4: %f, %f, %f, %f\n", min_dist, est1, est2, est3, est4);
+    double uavg = (est1+est2)/2.0;
+    double vavg = (est3+est4)/2.0;
+
+#if 0
+    double umin = (est1 < est2) ? est1 : est2;
+    double vmin = (est3 < est4) ? est3 : est4;
+    double umax = (est1 > est2) ? est1 : est2;
+    double vmax = (est3 > est4) ? est3 : est4;
+
+    bu_log("umin,vmin: %f, %f\n", umin, vmin);
+    bu_log("umax,vmax: %f, %f\n", umax, vmax);
+    bu_log("uavg,vavg: %f, %f\n", uavg, vavg);
+    bu_log("min_edge %f\n", sinfo->min_edge);
+#endif
     if (est1 < 0.01*within_dist && est2 < 0.01*within_dist) {
 	//bu_log("e12 Small estimates: %f, %f\n", est1, est2);
 	return;
@@ -231,11 +244,16 @@ getSurfacePoints(
 	return;
     }
 
-    if (udist > ldfactor * vdist) {
+    if (uavg < sinfo->min_edge || vavg < sinfo->min_edge) {
+	return;
+    }
+
+
+    if (uavg > ldfactor * vavg) {
 	split_u = 1;
     }
 
-    if (vdist > ldfactor * udist) {
+    if (vavg > ldfactor * uavg) {
 	split_v = 1;
     }
 
@@ -244,16 +262,15 @@ getSurfacePoints(
 	// enough to trims to need to worry about edges
 	double min_edge_len;
 	if (involves_trims(&min_edge_len, s_cdt, sinfo, u1, u2, v1, v2)) {
-	    if (est1 > 2*min_edge_len || est2 > 2*min_edge_len) {
+	    if (uavg > min_edge_len && vavg > min_edge_len) {
 		split_u = 1;
 	    }
 
-	    if (est3 > 2*min_edge_len || est4 > 2*min_edge_len) {
+	    if (uavg > min_edge_len && vavg > min_edge_len) {
 		split_v = 1;
 	    }
 	}
     }
-
 
     if (!split_u || !split_v) {
 	// Don't know if we're splitting in at least one direction - check dot products
