@@ -82,34 +82,6 @@ cdt_ainfo(int fid, int vid, int tid, int eid, fastf_t x2d, fastf_t y2d)
 }
 
 
-static Edge
-mk_edge(ON_3dPoint *pt_A, ON_3dPoint *pt_B)
-{
-    if (pt_A <= pt_B) {
-	return std::make_pair(pt_A, pt_B);
-    } else {
-	return std::make_pair(pt_B, pt_A);
-    }
-}
-
-void
-add_tri_edges(EdgeToTri *e2f, p2t::Triangle *t,
-    std::map<p2t::Point *, ON_3dPoint *> *pointmap)
-{
-    ON_3dPoint *pt_A, *pt_B, *pt_C;
-
-    p2t::Point *p2_A = t->GetPoint(0);
-    p2t::Point *p2_B = t->GetPoint(1);
-    p2t::Point *p2_C = t->GetPoint(2);
-    pt_A = (*pointmap)[p2_A];
-    pt_B = (*pointmap)[p2_B];
-    pt_C = (*pointmap)[p2_C];
-    (*e2f)[(mk_edge(pt_A, pt_B))].insert(t);
-    (*e2f)[(mk_edge(pt_B, pt_C))].insert(t);
-    (*e2f)[(mk_edge(pt_C, pt_A))].insert(t);
-}
-
-
 void
 CDT_Add3DPnt(struct ON_Brep_CDT_State *s, ON_3dPoint *p, int fid, int vid, int tid, int eid, fastf_t x2d, fastf_t y2d)
 {
@@ -196,6 +168,7 @@ ON_Brep_CDT_Face_Create(struct ON_Brep_CDT_State *s_cdt, int ind)
     fcdt->tris_degen = new std::set<p2t::Triangle*>;
     fcdt->tris_zero_3D_area = new std::set<p2t::Triangle*>;
     fcdt->e2f = new EdgeToTri;
+    fcdt->ecnt = new std::map<Edge, int>;
 
     return fcdt;
 }
@@ -230,6 +203,7 @@ ON_Brep_CDT_Face_Reset(struct ON_Brep_CDT_Face_State *fcdt)
     fcdt->tris_degen->clear();
     fcdt->tris_zero_3D_area->clear();
     fcdt->e2f->clear();
+    fcdt->ecnt->clear();
 }
 
 void
@@ -271,6 +245,7 @@ ON_Brep_CDT_Face_Destroy(struct ON_Brep_CDT_Face_State *fcdt)
     delete fcdt->tris_degen;
     delete fcdt->tris_zero_3D_area;
     delete fcdt->e2f;
+    delete fcdt->ecnt;
 
     delete fcdt;
 }
@@ -623,22 +598,6 @@ populate_3d_pnts(struct ON_Brep_CDT_Face_State *f)
 		bu_log("Face %d: p2t face without proper point info...\n", face.m_face_index);
 	    }
 	}
-    }
-}
-
-
-void
-triangles_build_edgemap(struct ON_Brep_CDT_Face_State *f)
-{
-    p2t::CDT *cdt = f->cdt;
-    std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
-    std::vector<p2t::Triangle*> tris = cdt->GetTriangles();
-    for (size_t i = 0; i < tris.size(); i++) {
-	/* Make sure this face isn't degenerate */
-	if (f->tris_degen->find(tris[i]) != f->tris_degen->end()) {
-	    continue;
-	}
-	add_tri_edges(f->e2f, tris[i], pointmap);
     }
 }
 

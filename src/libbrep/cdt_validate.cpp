@@ -72,6 +72,94 @@
 
 #define BREP_PLANAR_TOL 0.05
 
+static Edge
+mk_edge(ON_3dPoint *pt_A, ON_3dPoint *pt_B)
+{
+    if (pt_A <= pt_B) {
+	return std::make_pair(pt_A, pt_B);
+    } else {
+	return std::make_pair(pt_B, pt_A);
+    }
+}
+
+#define IsEdgePt(_a) (f->s_cdt->edge_pnts->find(_a) != f->s_cdt->edge_pnts->end())
+
+void
+add_tri_edges(struct ON_Brep_CDT_Face_State *f, p2t::Triangle *t,
+	std::map<p2t::Point *, ON_3dPoint *> *pointmap)
+{
+    ON_3dPoint *pt_A, *pt_B, *pt_C;
+
+    p2t::Point *p2_A = t->GetPoint(0);
+    p2t::Point *p2_B = t->GetPoint(1);
+    p2t::Point *p2_C = t->GetPoint(2);
+    pt_A = (*pointmap)[p2_A];
+    pt_B = (*pointmap)[p2_B];
+    pt_C = (*pointmap)[p2_C];
+    (*f->e2f)[(std::make_pair(pt_A, pt_B))].insert(t);
+    (*f->e2f)[(std::make_pair(pt_B, pt_C))].insert(t);
+    (*f->e2f)[(std::make_pair(pt_C, pt_A))].insert(t);
+
+    // We need to count edge uses.
+    (*f->ecnt)[(mk_edge(pt_A, pt_B))]++;
+    (*f->ecnt)[(mk_edge(pt_B, pt_C))]++;
+    (*f->ecnt)[(mk_edge(pt_C, pt_A))]++;
+
+    // Because we are working on a single isolated face, only closed surface
+    // directions will result in closed meshes.  Count edge segments twice, so
+    // the < 2 uses test will always work even if the surface isn't closed
+    if (IsEdgePt(pt_A) && IsEdgePt(pt_B)) {
+	(*f->ecnt)[(mk_edge(pt_A, pt_B))]++;
+    }
+    if (IsEdgePt(pt_B) && IsEdgePt(pt_C)) {
+	(*f->ecnt)[(mk_edge(pt_B, pt_C))]++;
+    }
+    if (IsEdgePt(pt_C) && IsEdgePt(pt_A)) {
+	(*f->ecnt)[(mk_edge(pt_C, pt_A))]++;
+    }
+}
+
+void
+triangles_build_edgemaps(struct ON_Brep_CDT_Face_State *f)
+{
+    p2t::CDT *cdt = f->cdt;
+    std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
+    std::vector<p2t::Triangle*> tris = cdt->GetTriangles();
+    for (size_t i = 0; i < tris.size(); i++) {
+	/* Make sure this face isn't degenerate */
+	if (f->tris_degen->find(tris[i]) != f->tris_degen->end()) {
+	    continue;
+	}
+	add_tri_edges(f, tris[i], pointmap);
+    }
+
+    std::map<ON_3dPoint *, int> point_cnts;
+    std::map<Edge, int>::iterator ec_it;
+
+    for (ec_it = f->ecnt->begin(); ec_it != f->ecnt->end(); ec_it++) {
+	if (ec_it->second < 2) {
+	    ON_3dPoint *p1 = ec_it->first.first;
+	    ON_3dPoint *p2 = ec_it->first.second;
+	    bu_log("Face %d: single use edge found! %f %f %f -> %f %f %f\n", f->ind, p1->x, p1->y, p1->z, p2->x, p2->y, p2->z);
+	    if (!IsEdgePt(p1)) {
+		point_cnts[p1]++;
+	    }
+	    if (!IsEdgePt(p2)) {
+		point_cnts[p2]++;
+	    }
+	}
+    }
+
+    std::map<ON_3dPoint *, int>::iterator pc_it;
+    for (pc_it = point_cnts.begin(); pc_it != point_cnts.end(); pc_it++) {
+	if (pc_it->second > 1) {
+	    ON_3dPoint *p = pc_it->first;
+	    bu_log("Face %d problem point with %d hits: %f %f %f\n", f->ind, pc_it->second, p->x, p->y, p->z);
+	}
+    }
+}
+
+
 static ON_3dVector
 p2tTri_Normal(p2t::Triangle *t, std::map<p2t::Point *, ON_3dPoint *> *pointmap)
 {

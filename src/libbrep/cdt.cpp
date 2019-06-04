@@ -399,6 +399,9 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_Face_State *f, std::map<const ON_Surface *, 
     // Zero area triangles
     triangles_degenerate_area(f);
 
+    // Build information about edges for validation
+    triangles_build_edgemaps(f);
+
     // Incorrect normals
     triangles_incorrect_normals(f);
 
@@ -762,12 +765,6 @@ ON_Brep_CDT_Mesh(
 	if (!face_normals || !fn_cnt || !normals || !ncnt) {
 	    return -1;
 	}
-    }
-
-    // Build edge map
-    for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
-	struct ON_Brep_CDT_Face_State *f = (*s_cdt->faces)[face_index];
-	triangles_build_edgemap(f);
     }
 
 #if 0

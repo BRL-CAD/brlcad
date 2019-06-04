@@ -59,7 +59,7 @@
 
 /***************************************************/
 typedef std::pair<ON_3dPoint *, ON_3dPoint *> Edge;
-typedef std::map< Edge, std::set<p2t::Triangle*> > EdgeToTri;
+typedef std::map<Edge, std::set<p2t::Triangle*> > EdgeToTri;
 
 #define BREP_CDT_FAILED -3
 #define BREP_CDT_NON_SOLID -2
@@ -129,6 +129,7 @@ struct ON_Brep_CDT_Face_State {
     std::set<p2t::Triangle*> *tris_degen;
     std::set<p2t::Triangle*> *tris_zero_3D_area;
     EdgeToTri *e2f;
+    std::map<Edge, int> *ecnt;
 };
 
 
@@ -251,10 +252,14 @@ void
 CDT_Tol_Set(struct brep_cdt_tol *cdt, double dist, fastf_t md, double t_abs, double t_rel, double t_norm, double t_dist);
 
 void populate_3d_pnts(struct ON_Brep_CDT_Face_State *f);
-void triangles_build_edgemap(struct ON_Brep_CDT_Face_State *f);
+
+
 void triangles_degenerate_trivial(struct ON_Brep_CDT_Face_State *f);
 void triangles_degenerate_area(struct ON_Brep_CDT_Face_State *f);
 void triangles_incorrect_normals(struct ON_Brep_CDT_Face_State *f);
+
+void triangles_build_edgemaps(struct ON_Brep_CDT_Face_State *f);
+
 void triangles_rebuild_involved(struct ON_Brep_CDT_Face_State *f);
 
 void
