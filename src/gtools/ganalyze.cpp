@@ -1,4 +1,4 @@
-/*                    G A N A L Y Z E . C X X
+/*                    G A N A L Y Z E . C P P
  * BRL-CAD
  *
  * Copyright (c) 2019 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ganalyze.cxx
+/** @file ganalyze.cpp
  *
  * Command line interface to libanalyze capabilities
  *

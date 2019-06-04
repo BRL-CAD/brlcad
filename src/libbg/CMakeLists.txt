@@ -9,18 +9,18 @@ BRLCAD_LIB_INCLUDE_DIRS(bg BG_INCLUDE_DIRS "")
 
 set(LIBBG_SOURCES
   chull.c
-  QuickHull.cxx
-  chull3d.cxx
-  clipper.cxx
+  QuickHull.cpp
+  chull3d.cpp
+  clipper.cpp
   obr.c
   polygon.c
-  polygon_triangulate.cxx
+  polygon_triangulate.cpp
   polygon_point_in.c
   spsr.c
   tri_ray.c
   tri_tri.c
   trimesh.c
-  trimesh_isect.cxx
+  trimesh_isect.cpp
   util.c
   )
 

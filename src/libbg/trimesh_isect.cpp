@@ -1,4 +1,4 @@
-/*               T R I M E S H _ I S E C T . C X X
+/*               T R I M E S H _ I S E C T . C P P
  * BRL-CAD
  *
  * Copyright (c) 2018-2019 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file trimesh_isect.cxx
+/** @file trimesh_isect.cpp
  *
  * Test if two meshes intersect and return the set of intersecting faces.
  *

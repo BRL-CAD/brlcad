@@ -1,4 +1,4 @@
-/*                        N I R T . C X X
+/*                        N I R T . C P P
  * BRL-CAD
  *
  * Copyright (c) 2004-2019 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file nirt.cxx
+/** @file nirt.cpp
  *
  * Implementation of Natalie's Interactive Ray-Tracer (NIRT)
  * functionality.

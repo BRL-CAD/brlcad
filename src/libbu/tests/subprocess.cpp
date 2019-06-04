@@ -1,4 +1,4 @@
-/*                  S U B P R O C E S S . C X X
+/*                  S U B P R O C E S S . C P P
  * BRL-CAD
  *
  * Copyright (c) 2013-2019 United States Government as represented by

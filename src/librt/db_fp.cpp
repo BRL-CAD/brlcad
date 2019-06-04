@@ -1,4 +1,4 @@
-/*                       D B _ F P . C X X
+/*                       D B _ F P . C P P
  * BRL-CAD
  *
  * Copyright (c) 1990-2019 United States Government as represented by
@@ -19,7 +19,7 @@
  */
 /** @addtogroup dbio */
 /** @{ */
-/** @file librt/db_fp.cxx
+/** @file librt/db_fp.cpp
  *
  * Routines to manipulate geometry database hierarchical path description
  * structures.

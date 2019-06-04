@@ -1,4 +1,4 @@
-/*                      M A I N . C X X
+/*                      M A I N . C P P
  * BRL-CAD
  *
  * Copyright (c) 2004-2019 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file nirt/main.cxx
+/** @file nirt/main.cpp
  *
  * This program is Natalie's Interactive Ray-Tracer
  *

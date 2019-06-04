@@ -1,4 +1,4 @@
-/*                     C H U L L 3 D . C X X
+/*                     C H U L L 3 D . C P P
  * BRL-CAD
  *
  * Copyright (c) 2018-2019 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file chull3d.cxx
+/** @file chull3d.cpp
  *
  * Interface to the Quickhull algorithm code for creating a convex
  * hull from a set of faces and vertices.

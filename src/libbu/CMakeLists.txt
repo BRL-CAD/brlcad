@@ -162,7 +162,7 @@ set_target_properties(libbu PROPERTIES VERSION 20.0.1 SOVERSION 20)
 #  endif (NOT "${HDRF}" MATCHES ".*.svn.*")
 #endforeach(HDRF ${BCAD_HDRS})
 #DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/brlcad_headers.txt")
-#BRLCAD_ADDEXEC(semchk "tests/semchk.cxx" "" NO_INSTALL)
+#BRLCAD_ADDEXEC(semchk "tests/semchk.cpp" "" NO_INSTALL)
 #add_custom_command(
 #  TARGET libbu PRE_BUILD
 #  COMMAND $<TARGET_FILE:semchk> "${BCAD_HDRS_FILE}"
@@ -182,7 +182,7 @@ set(bu_ignore_files
   mime.cmake
   parallel.h
   process.h
-  tests/semchk.cxx
+  tests/semchk.cpp
   sha1.h
   vfont.h
   vls_vprintf.h

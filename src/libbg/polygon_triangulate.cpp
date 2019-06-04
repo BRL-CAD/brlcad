@@ -1,4 +1,4 @@
-/*         P O L Y G O N _ T R I A N G U L A T E . C X X
+/*         P O L Y G O N _ T R I A N G U L A T E . C P P
  * BRL-CAD
  *
  * Copyright (c) 2019 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file polygon_triangulate.cxx
+/** @file polygon_triangulate.cpp
  *
  * libbg wrapper functions for Polygon Triangulation codes
  *

@@ -1,4 +1,4 @@
-/*                       S E M C H K . C X X
+/*                       S E M C H K . C P P
  * BRL-CAD
  *
  * Copyright (c) 2018-2019 United States Government as represented by
@@ -32,7 +32,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/** @file semchk.cxx
+/** @file semchk.cpp
  *
  * Check that all non-LAST *_SEM_* definitions in the BRL-CAD headers are
  * numerically unique.

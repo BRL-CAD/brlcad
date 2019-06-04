@@ -68,7 +68,7 @@ set(LIBGED_SOURCES
   brep.c
   cat.c
   cc.c
-  center.cxx
+  center.cpp
   check/check.c
   check/check_adj_air.c
   check/check_centroid.c
@@ -183,7 +183,7 @@ set(LIBGED_SOURCES
   make.c
   make_name.c
   match.c
-  mater.cxx
+  mater.cpp
   mirror.c
   model2grid_lu.c
   model2view.c

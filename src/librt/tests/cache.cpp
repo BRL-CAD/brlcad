@@ -1,4 +1,4 @@
-/*                           C A C H E . C X X
+/*                           C A C H E . C P P
  * BRL-CAD
  *
  * Copyright (c) 2018-2019 United States Government as represented by

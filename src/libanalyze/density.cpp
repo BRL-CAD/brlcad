@@ -1,4 +1,4 @@
-/*                   D E N S I T Y . C X X
+/*                   D E N S I T Y . C P P
  * BRL-CAD
  *
  * Copyright (c) 2009-2019 United States Government as represented by

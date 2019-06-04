@@ -1,4 +1,4 @@
-/*                           G S H . C X X
+/*                           G S H . C P P
  * BRL-CAD
  *
  * Copyright (c) 2004-2019 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file gtools/bgsh.cxx
+/** @file gtools/gsh.cpp
  *
  * This program (the BRL-CAD Geometry SHell) is a low level way to
  * interact with BRL-CAD geometry (.g) files.

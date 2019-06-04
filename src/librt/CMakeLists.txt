@@ -391,7 +391,7 @@ endif(CPP_DLL_DEFINES)
 add_subdirectory(tests)
 
 CMAKEFILES(CMakeLists.txt)
-CMAKEFILES(db_fp.cxx)
+CMAKEFILES(db_fp.cpp)
 
 # Local Variables:
 # tab-width: 8
