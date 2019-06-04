@@ -284,6 +284,11 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_Face_State *f, std::map<const ON_Surface *, 
     // points require special handling for watertightness and introducing them
     // from the surface also runs the risk of adding duplicate 2D points, which
     // aren't allowed for facetization.
+
+    // TODO - it's looking like a 2D check isn't going to be enough - we probably
+    // need BOTH a 2D and a 3D check to make sure none of the points are in a
+    // position that will cause trouble.  Will need to build a 3D RTree of the line
+    // segments from the edges, as well as 2D rt_trims tree.
     for (int i = 0; i < on_surf_points.Count(); i++) {
 	ON_SimpleArray<void*> results;
 	const ON_2dPoint *p = on_surf_points.At(i);
