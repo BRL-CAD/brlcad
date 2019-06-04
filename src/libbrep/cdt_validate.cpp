@@ -143,7 +143,6 @@ triangles_degenerate_trivial(struct ON_Brep_CDT_Face_State *f)
 	 * singular trims) */
 	if (tpnts[0] == tpnts[1] || tpnts[1] == tpnts[2] || tpnts[2] == tpnts[0]) {
 	    /* degenerate */
-	    f->triangle_cnt--;
 	    f->tris_degen->insert(t);
 	}
     }
@@ -184,7 +183,6 @@ triangles_degenerate_area(struct ON_Brep_CDT_Face_State *f)
 	    ON_Line l2(*tpnts[0], *tpnts[1]);
 	    if (l2.Length() < dist) {
 		bu_log("completely degenerate triangle\n");
-		f->triangle_cnt--;
 		f->tris_degen->insert(t);
 		continue;
 	    } else {
@@ -255,7 +253,6 @@ triangles_degenerate_area(struct ON_Brep_CDT_Face_State *f)
 		}
 	    }
 
-	    f->triangle_cnt--;
 	    f->tris_degen->insert(t);
 	    f->tris_zero_3D_area->insert(t);
 	}
@@ -315,7 +312,6 @@ triangles_incorrect_normals(struct ON_Brep_CDT_Face_State *f)
 		bu_log("Tri norm: %f %f %f\n", tdir.x, tdir.y, tdir.z);
 		bu_log("edge trim: %d\n", (*p2t_trim_ind)[t->GetPoint(0)]);
 
-		f->triangle_cnt--;
 		f->tris_degen->insert(t);
 	    }
 
@@ -612,7 +608,6 @@ triangles_rebuild_involved(struct ON_Brep_CDT_Face_State *f)
 		    }
 		    // We split the original triangle, so it's now replaced/degenerate in the tessellation
 		    f->tris_degen->insert(t);
-		    f->triangle_cnt--;
 		}
 	    } else {
 		// Point count doesn't indicate any need to split, we should be good...

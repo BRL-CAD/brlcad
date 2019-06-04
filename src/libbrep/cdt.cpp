@@ -385,7 +385,6 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_Face_State *f, std::map<const ON_Surface *, 
      * refinement in overlap clearing operations, we avoid immediately
      * generating the mesh. */
     f->cdt = cdt;
-    f->triangle_cnt = f->cdt->GetTriangles().size();
 
     populate_3d_pnts(f);
 
@@ -804,11 +803,6 @@ ON_Brep_CDT_Mesh(
     }
 #endif
 
-    for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
-	struct ON_Brep_CDT_Face_State *f = (*s_cdt->faces)[face_index];
-	triangle_cnt += f->triangle_cnt;
-    }
-
     /* For the non-zero-area triangles sharing an edge with a non-trivially
      * degenerate zero area triangle, we need to build new polygons from each
      * triangle and the "orphaned" points along the edge(s).  We then
@@ -823,13 +817,19 @@ ON_Brep_CDT_Mesh(
 	triangles_rebuild_involved(f);
     }
 
-    bu_log("tri_cnt_init: %zd\n", triangle_cnt);
     for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
 	struct ON_Brep_CDT_Face_State *f = (*s_cdt->faces)[face_index];
+	triangle_cnt += f->cdt->GetTriangles().size();
+	triangle_cnt -= f->tris_degen->size();
 	triangle_cnt += f->p2t_extra_faces->size();
-	//bu_log("adding %zd faces from %d\n", f->p2t_extra_faces->size(), face_index);
+	/*if (f->p2t_extra_faces->size()) {
+	    bu_log("adding %zd faces from %d\n", f->p2t_extra_faces->size(), face_index);
+	}*/
+
+	//bu_log("Face %d - %zu\n", face_index, triangle_cnt);
     }
-    bu_log("tri_cnt_init+: %zd\n", triangle_cnt);
+
+    bu_log("tri_cnt: %zd\n", triangle_cnt);
 
     // Know how many faces and points now - initialize BoT container.
     *fcnt = (int)triangle_cnt;
@@ -906,7 +906,7 @@ ON_Brep_CDT_Mesh(
     for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
 	std::vector<p2t::Triangle *> *tri_add = (*s_cdt->faces)[face_index]->p2t_extra_faces;
 	std::map<p2t::Point *, ON_3dPoint *> *pointmap = (*s_cdt->faces)[face_index]->p2t_to_on3_map;
-	if (!tri_add) {
+	if (!tri_add->size()) {
 	    continue;
 	}
 	triangle_cnt += tri_add->size();
@@ -941,20 +941,6 @@ ON_Brep_CDT_Mesh(
 
 
     }
-
-
-    /* Clear out extra faces so they don't pollute another pass.
-     * TODO - need a better way to do this, incorporated with reset */
-    for (int i = 0; i < s_cdt->brep->m_F.Count(); i++) {
-	std::vector<p2t::Triangle *> *ef = (*s_cdt->faces)[i]->p2t_extra_faces;
-	std::vector<p2t::Triangle *>::iterator trit;
-	for (trit = ef->begin(); trit != ef->end(); trit++) {
-	    p2t::Triangle *t = *trit;
-	    delete t;
-	}
-	ef->clear();
-    }
-
 
     return 0;
 }

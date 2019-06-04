@@ -195,7 +195,6 @@ ON_Brep_CDT_Face_Create(struct ON_Brep_CDT_State *s_cdt, int ind)
     /* Mesh data */
     fcdt->tris_degen = new std::set<p2t::Triangle*>;
     fcdt->tris_zero_3D_area = new std::set<p2t::Triangle*>;
-    fcdt->triangle_cnt = 0;
     fcdt->e2f = new EdgeToTri;
 
     return fcdt;
@@ -230,7 +229,6 @@ ON_Brep_CDT_Face_Reset(struct ON_Brep_CDT_Face_State *fcdt)
     /* Mesh data */
     fcdt->tris_degen->clear();
     fcdt->tris_zero_3D_area->clear();
-    fcdt->triangle_cnt = 0;
     fcdt->e2f->clear();
 }
 

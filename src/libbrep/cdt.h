@@ -128,7 +128,6 @@ struct ON_Brep_CDT_Face_State {
     /* Mesh Data */
     std::set<p2t::Triangle*> *tris_degen;
     std::set<p2t::Triangle*> *tris_zero_3D_area;
-    size_t triangle_cnt;
     EdgeToTri *e2f;
 };
 
