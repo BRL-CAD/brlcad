@@ -391,7 +391,7 @@ tcl_bu_brlcad_dir(void *clientData,
 {
     Tcl_Interp *interp = (Tcl_Interp *)clientData;
     if (argc != 2) {
-	bu_log("Usage: bu_brlcad_dir [curr|init|bin|lib|libexec|include|data|doc|man|temp|home|cache|config|ext|libext]\n");
+	bu_log("Usage: bu_brlcad_dir dirkey\n");
 	return BRLCAD_ERROR;
     }
     Tcl_AppendResult(interp, bu_brlcad_dir(argv[1], 1), NULL);
