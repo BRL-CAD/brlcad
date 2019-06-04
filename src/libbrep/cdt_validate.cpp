@@ -133,6 +133,7 @@ triangles_build_edgemaps(struct ON_Brep_CDT_Face_State *f)
 	add_tri_edges(f, tris[i], pointmap);
     }
 
+    std::map<ON_3dPoint *, std::set<Edge>> point_to_edges;
     std::map<ON_3dPoint *, int> point_cnts;
     std::map<Edge, int>::iterator ec_it;
 
@@ -143,9 +144,11 @@ triangles_build_edgemaps(struct ON_Brep_CDT_Face_State *f)
 	    bu_log("Face %d: single use edge found! %f %f %f -> %f %f %f\n", f->ind, p1->x, p1->y, p1->z, p2->x, p2->y, p2->z);
 	    if (!IsEdgePt(p1)) {
 		point_cnts[p1]++;
+		point_to_edges[p1].insert(ec_it->first);
 	    }
 	    if (!IsEdgePt(p2)) {
 		point_cnts[p2]++;
+		point_to_edges[p2].insert(ec_it->first);
 	    }
 	}
     }
@@ -155,6 +158,27 @@ triangles_build_edgemaps(struct ON_Brep_CDT_Face_State *f)
 	if (pc_it->second > 1) {
 	    ON_3dPoint *p = pc_it->first;
 	    bu_log("Face %d problem point with %d hits: %f %f %f\n", f->ind, pc_it->second, p->x, p->y, p->z);
+	    std::set<Edge> edges = point_to_edges[p];
+	    std::set<Edge>::iterator e_it;
+	    for (e_it = edges.begin(); e_it != edges.end(); e_it++) {
+		Edge e = *e_it;
+		std::set<p2t::Triangle*> tset;
+		if (f->e2f->find(e) == f->e2f->end()) {
+		    Edge ef = std::make_pair(e.second, e.first);
+		    tset = (*f->e2f)[ef];
+		} else {
+		    tset = (*f->e2f)[e];
+		}
+		std::set<p2t::Triangle*>::iterator tr_it;
+		for (tr_it = tset.begin(); tr_it != tset.end(); tr_it++) {
+		    p2t::Triangle *t = *tr_it;
+		    ON_3dPoint *tpnts[3] = {NULL, NULL, NULL};
+		    for (size_t j = 0; j < 3; j++) {
+			tpnts[j] = (*pointmap)[t->GetPoint(j)];
+		    }
+		    bu_log("Triangle (%f %f %f) -> (%f %f %f) -> (%f %f %f)\n", tpnts[0]->x, tpnts[0]->y, tpnts[0]->z, tpnts[1]->x, tpnts[1]->y, tpnts[1]->z ,tpnts[2]->x, tpnts[2]->y, tpnts[2]->z);
+		}
+	    }
 	}
     }
 }
@@ -259,6 +283,8 @@ triangles_degenerate_area(struct ON_Brep_CDT_Face_State *f)
 	    ON_3dPoint *op = (*pointmap)[p];
 	    tpnts[j] = op;
 	}
+
+	//bu_log("Triangle %zu: (%f %f %f) -> (%f %f %f) -> (%f %f %f)\n", i, tpnts[0]->x, tpnts[0]->y, tpnts[0]->z, tpnts[1]->x, tpnts[1]->y, tpnts[1]->z ,tpnts[2]->x, tpnts[2]->y, tpnts[2]->z);
 
 	/* If we have a face with 3 shared or co-linear points, it's not
 	 * trivially degenerate and we need to do more work.  (This can
