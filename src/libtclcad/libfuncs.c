@@ -278,6 +278,103 @@ tcl_bu_hsv_to_rgb(void *clientData,
 
 }
 
+const char *
+_tclcad_bu_dir_print(const char *dirkey, int fail_quietly)
+{
+    static char result[MAXPATHLEN] = {0};
+    if (BU_STR_EQUIV(dirkey, "curr") || BU_STR_EQUIV(dirkey, "cwd") ||
+	    BU_STR_EQUAL(dirkey, "BU_DIR_CURR")) {
+	snprintf(result, MAXPATHLEN, "%s", bu_dir(NULL, 0, BU_DIR_CURR, NULL));
+	return result;
+    }
+    if (BU_STR_EQUIV(dirkey, "init") || BU_STR_EQUIV(dirkey, "iwd") ||
+	    BU_STR_EQUAL(dirkey, "BU_DIR_INIT")) {
+	snprintf(result, MAXPATHLEN, "%s", bu_dir(NULL, 0, BU_DIR_INIT, NULL));
+	return result;
+    }
+    if (BU_STR_EQUIV(dirkey, "bin") || BU_STR_EQUAL(dirkey, "BU_DIR_BIN")) {
+	snprintf(result, MAXPATHLEN, "%s", bu_dir(NULL, 0, BU_DIR_BIN, NULL));
+	return result;
+    }
+    if (BU_STR_EQUIV(dirkey, "lib") || BU_STR_EQUAL(dirkey, "BU_DIR_LIB")) {
+	snprintf(result, MAXPATHLEN, "%s", bu_dir(NULL, 0, BU_DIR_LIB, NULL));
+	return result;
+    }
+    if (BU_STR_EQUIV(dirkey, "libexec") || BU_STR_EQUAL(dirkey, "BU_DIR_LIBEXEC")) {
+	snprintf(result, MAXPATHLEN, "%s", bu_dir(NULL, 0, BU_DIR_LIBEXEC, NULL));
+	return result;
+    }
+    if (BU_STR_EQUIV(dirkey, "include") || BU_STR_EQUAL(dirkey, "BU_DIR_INCLUDE")) {
+	snprintf(result, MAXPATHLEN, "%s", bu_dir(NULL, 0, BU_DIR_INCLUDE, NULL));
+	return result;
+    }
+    if (BU_STR_EQUIV(dirkey, "data") || BU_STR_EQUIV(dirkey, "share") ||
+	    BU_STR_EQUAL(dirkey, "BU_DIR_DATA")) {
+	snprintf(result, MAXPATHLEN, "%s", bu_dir(NULL, 0, BU_DIR_DATA, NULL));
+	return result;
+    }
+    if (BU_STR_EQUIV(dirkey, "doc") || BU_STR_EQUAL(dirkey, "BU_DIR_DOC")) {
+	snprintf(result, MAXPATHLEN, "%s", bu_dir(NULL, 0, BU_DIR_DOC, NULL));
+	return result;
+    }
+    if (BU_STR_EQUIV(dirkey, "man") || BU_STR_EQUAL(dirkey, "BU_DIR_MAN")) {
+	snprintf(result, MAXPATHLEN, "%s", bu_dir(NULL, 0, BU_DIR_MAN, NULL));
+	return result;
+    }
+    if (BU_STR_EQUIV(dirkey, "temp") || BU_STR_EQUAL(dirkey, "BU_DIR_TEMP")) {
+	snprintf(result, MAXPATHLEN, "%s", bu_dir(NULL, 0, BU_DIR_TEMP, NULL));
+	return result;
+    }
+    if (BU_STR_EQUIV(dirkey, "home") || BU_STR_EQUAL(dirkey, "BU_DIR_HOME")) {
+	snprintf(result, MAXPATHLEN, "%s", bu_dir(NULL, 0, BU_DIR_HOME, NULL));
+	return result;
+    }
+    if (BU_STR_EQUIV(dirkey, "cache") || BU_STR_EQUAL(dirkey, "BU_DIR_CACHE")) {
+	snprintf(result, MAXPATHLEN, "%s", bu_dir(NULL, 0, BU_DIR_CACHE, NULL));
+	return result;
+    }
+    if (BU_STR_EQUIV(dirkey, "config") || BU_STR_EQUAL(dirkey, "BU_DIR_CONFIG")) {
+	snprintf(result, MAXPATHLEN, "%s", bu_dir(NULL, 0, BU_DIR_CONFIG, NULL));
+	return result;
+    }
+    if (BU_STR_EQUIV(dirkey, "ext") || BU_STR_EQUAL(dirkey, "BU_DIR_EXT")) {
+	snprintf(result, MAXPATHLEN, "%s", bu_dir(NULL, 0, BU_DIR_EXT, NULL));
+	return result;
+    }
+    if (BU_STR_EQUIV(dirkey, "libext") || BU_STR_EQUAL(dirkey, "BU_DIR_LIBEXT")) {
+	snprintf(result, MAXPATHLEN, "%s", bu_dir(NULL, 0, BU_DIR_LIBEXT, NULL));
+	return result;
+    }
+    if (!fail_quietly) {
+	snprintf(result, MAXPATHLEN, "Unknown directory key %s", dirkey);
+	return result;
+    }
+    return NULL;
+}
+
+/**
+ * A wrapper for bu_dir.
+ *
+ * @param clientData	- associated data/state
+ * @param argc		- number of elements in argv
+ * @param argv		- command name and arguments
+ *
+ * @return BRLCAD_OK if successful, otherwise, BRLCAD_ERROR.
+ */
+HIDDEN int
+tcl_bu_dir(void *clientData,
+		   int argc,
+		   const char **argv)
+{
+    Tcl_Interp *interp = (Tcl_Interp *)clientData;
+    if (argc != 2) {
+	bu_log("Usage: bu_dir [curr|init|bin|lib|libexec|include|data|doc|man|temp|home|cache|config|ext|libext]\n");
+	return BRLCAD_ERROR;
+    }
+    Tcl_AppendResult(interp, _tclcad_bu_dir_print(argv[1],1), NULL);
+    return BRLCAD_OK;
+}
+
 /**
  * A wrapper for bu_brlcad_dir.
  *
@@ -294,7 +391,7 @@ tcl_bu_brlcad_dir(void *clientData,
 {
     Tcl_Interp *interp = (Tcl_Interp *)clientData;
     if (argc != 2) {
-	bu_log("Usage: bu_brlcad_dir dirkey\n");
+	bu_log("Usage: bu_brlcad_dir [curr|init|bin|lib|libexec|include|data|doc|man|temp|home|cache|config|ext|libext]\n");
 	return BRLCAD_ERROR;
     }
     Tcl_AppendResult(interp, bu_brlcad_dir(argv[1], 1), NULL);
@@ -379,6 +476,7 @@ Bu_Init(void *p)
 
     static struct bu_cmdtab cmds[] = {
 	{"bu_units_conversion",		tcl_bu_units_conversion},
+	{"bu_dir",		        tcl_bu_dir},
 	{"bu_brlcad_dir",		tcl_bu_brlcad_dir},
 	{"bu_brlcad_root",		tcl_bu_brlcad_root},
 	{"bu_prmem",			tcl_bu_prmem},
