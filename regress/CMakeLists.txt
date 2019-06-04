@@ -149,6 +149,10 @@ CMAKEFILES(
   red.sh
   repository.sh
   rtedge.ref.pix.gz
+  rtedge.ref2.pix.gz
+  rtedge.ref3.pix.gz
+  rtedge.ref4.pix.gz
+  rtedge.ref5.pix.gz
   rtedge.sh
   shaders.eagleCAD-512x438.pix
   shaders.ref.pix
