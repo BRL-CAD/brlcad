@@ -328,6 +328,13 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_Face_State *f, std::map<const ON_Surface *, 
     }
     rt_trims.RemoveAll();
 
+
+    // TODO - need to perturb 2D points slightly to nudge any collinear
+    // points out of collinearity.  As long as we don't change the relative
+    // positions of the 2D points (and keep the originals for 3D point calculation)
+    // this should work.
+
+
     // All preliminary steps are complete, perform the triangulation using
     // Poly2Tri's triangulation.  NOTE: it is important that the inputs to
     // Poly2Tri satisfy its constraints - failure here could cause a crash.
