@@ -1322,18 +1322,19 @@ CPP_XGLUE(bot_norm_, TRI_TYPE)(struct bot_specific *bot, struct hit *hitp, struc
 }
 
 
-/* void */
-/* CPP_XGLUE(bot_uv_, TRI_TYPE)(struct bot_specific *bot, struct hit *hitp, struct xray *rp) */
-/* { */
-/*     size_t i; */
-/*     CPP_XGLUE(tri_specific_, TRI_TYPE) *trip = (CPP_XGLUE(tri_specific_, TRI_TYPE) *)hitp->hit_private; */
-/*     VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir); */
-/*     if ((bot->bot_flags & RT_BOT_HAS_TEXTURE_UVS) /\* && trip->tri_uvs *\/) { */
-/* 	for (i = X; i <= Z; i++) { */
-/* 	    /\* TODO: do stuff *\/ */
-/* 	} */
-/*     } */
-/* } */
+void
+CPP_XGLUE(bot_uv_, TRI_TYPE)(struct bot_specific *bot, struct hit *hitp, struct uvcoord *uvp)
+{
+    size_t i;
+    CPP_XGLUE(tri_specific_, TRI_TYPE) *trip = (CPP_XGLUE(tri_specific_, TRI_TYPE) *)hitp->hit_private;
+    if (!trip || !uvp) return;
+
+    if ((bot->bot_flags & RT_BOT_HAS_TEXTURE_UVS) /* && trip->tri_uvs */) {
+	for (i = X; i <= Z; i++) {
+	    /* TODO: do stuff */
+	}
+    }
+}
 
 
 void
