@@ -691,10 +691,20 @@ rt_bot_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 void
 rt_bot_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
+    struct bot_specific *bot;
+
     if (ap) RT_CK_APPLICATION(ap);
     if (stp) RT_CK_SOLTAB(stp);
     if (hitp) RT_CK_HIT(hitp);
     if (!uvp) return;
+
+    bot = (struct bot_specific *)stp->st_specific;
+
+    if (bot->bot_flags & RT_BOT_USE_FLOATS) {
+	bot_uv_float(bot, hitp, uvp);
+    } else {
+	bot_uv_double(bot, hitp, uvp);
+    }
 }
 
 
@@ -1443,6 +1453,49 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	bip->face_normals = (int *)NULL;
 	bip->num_normals = 0;
 	bip->num_face_normals = 0;
+    }
+
+    if (bip->bot_flags & RT_BOT_HAS_TEXTURE_UVS) {
+	/* must be double for import and export */
+	double tmp[ELEMENTS_PER_VECT];
+
+	bip->num_uvs = ntohl(*(uint32_t *)&cp[0]);
+	cp += SIZEOF_NETWORK_LONG;
+	bip->num_face_uvs = ntohl(*(uint32_t *)&cp[0]);
+	cp += SIZEOF_NETWORK_LONG;
+
+	if (bip->num_uvs <= 0) {
+	    bip->uvs = (fastf_t *)NULL;
+	}
+	if (bip->num_face_uvs <= 0) {
+	    bip->face_uvs = (int *)NULL;
+	}
+	if (bip->num_uvs > 0) {
+	    bip->uvs = (fastf_t *)bu_calloc(bip->num_uvs * 3, sizeof(fastf_t), "BOT texture UVs");
+
+	    for (i = 0; i < bip->num_uvs; i++) {
+		bu_cv_ntohd((unsigned char *)tmp, (const unsigned char *)cp, ELEMENTS_PER_VECT);
+		cp += SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT;
+		MAT4X3VEC(&(bip->uvs[i*ELEMENTS_PER_VECT]), mat, tmp);
+	    }
+	}
+	if (bip->num_face_uvs > 0) {
+	    bip->face_uvs = (int *)bu_calloc(bip->num_face_uvs * 3, sizeof(int), "BOT face UVs");
+
+	    for (i = 0; i < bip->num_face_uvs; i++) {
+		bip->face_uvs[i*3 + 0] = ntohl(*(uint32_t *)&cp[0]);
+		cp += SIZEOF_NETWORK_LONG;
+		bip->face_uvs[i*3 + 1] = ntohl(*(uint32_t *)&cp[0]);
+		cp += SIZEOF_NETWORK_LONG;
+		bip->face_uvs[i*3 + 2] = ntohl(*(uint32_t *)&cp[0]);
+		cp += SIZEOF_NETWORK_LONG;
+	    }
+	}
+    } else {
+	bip->uvs = (fastf_t *)NULL;
+	bip->face_uvs = (int *)NULL;
+	bip->num_uvs = 0;
+	bip->num_face_uvs = 0;
     }
 
     bip->tie = NULL;
