@@ -176,7 +176,6 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_Face_State *f, std::map<const ON_Surface *, 
     std::map<ON_3dPoint *, std::set<p2t::Point *>> *on3_to_tri = (*s_cdt->faces)[face.m_face_index]->on3_to_tri_map;
     std::map<p2t::Point *, ON_3dPoint *> *normalmap = (*s_cdt->faces)[face_index]->p2t_to_on3_norm_map;
     std::vector<p2t::Point*> polyline;
-    p2t::CDT* cdt = NULL;
 
     // Use the edge curves and loops to generate an initial set of trim polygons.
     for (int li = 0; li < loop_cnt; li++) {
@@ -245,10 +244,13 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_Face_State *f, std::map<const ON_Surface *, 
 		f->rt_trims->Insert2d(bb.Min(), bb.Max(), line);
 	    }
 	    if (outer) {
-		cdt = new p2t::CDT(polyline);
+		if (f->cdt) {
+		    delete f->cdt;
+		}
+		f->cdt = new p2t::CDT(polyline);
 		outer = false;
 	    } else {
-		cdt->AddHole(polyline);
+		f->cdt->AddHole(polyline);
 	    }
 	    polyline.clear();
 	}
@@ -313,10 +315,10 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_Face_State *f, std::map<const ON_Surface *, 
 		}
 	    }
 	    if (!on_edge) {
-		cdt->AddPoint(new p2t::Point(p->x, p->y));
+		f->cdt->AddPoint(new p2t::Point(p->x, p->y));
 	    }
 	} else {
-	    cdt->AddPoint(new p2t::Point(p->x, p->y));
+	    f->cdt->AddPoint(new p2t::Point(p->x, p->y));
 	}
     }
 
@@ -343,8 +345,7 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_Face_State *f, std::map<const ON_Surface *, 
     // All preliminary steps are complete, perform the triangulation using
     // Poly2Tri's triangulation.  NOTE: it is important that the inputs to
     // Poly2Tri satisfy its constraints - failure here could cause a crash.
-    cdt->Triangulate(true, -1);
-    f->cdt = cdt;
+    f->cdt->Triangulate(true, -1);
 
     /* Calculate any 3D points we don't already have from the loop processing */
     populate_3d_pnts(f);
