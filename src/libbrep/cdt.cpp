@@ -166,7 +166,6 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_Face_State *f, std::map<const ON_Surface *, 
 {
     struct ON_Brep_CDT_State *s_cdt = f->s_cdt;
     int face_index = f->ind;
-    ON_RTree rt_trims;
     ON_2dPointArray on_surf_points;
     ON_BrepFace &face = f->s_cdt->brep->m_F[face_index];
     const ON_Surface *s = face.SurfaceOf();
@@ -243,7 +242,7 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_Face_State *f, std::map<const ON_Surface *, 
 		bb.m_min.y = bb.m_min.y - ON_ZERO_TOLERANCE;
 		bb.m_min.z = bb.m_min.z - ON_ZERO_TOLERANCE;
 
-		rt_trims.Insert2d(bb.Min(), bb.Max(), line);
+		f->rt_trims->Insert2d(bb.Min(), bb.Max(), line);
 	    }
 	    if (outer) {
 		cdt = new p2t::CDT(polyline);
@@ -285,7 +284,7 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_Face_State *f, std::map<const ON_Surface *, 
 
     // Sample the surface, independent of the trimming curves, to get points that
     // will tie the mesh to the interior surface.
-    getSurfacePoints(s_cdt, face, on_surf_points, &rt_trims);
+    getSurfacePoints(s_cdt, face, on_surf_points, f->rt_trims);
 
     // Strip out points from the surface that are on the trimming curves.  Trim
     // points require special handling for watertightness and introducing them
@@ -300,7 +299,7 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_Face_State *f, std::map<const ON_Surface *, 
 	ON_SimpleArray<void*> results;
 	const ON_2dPoint *p = on_surf_points.At(i);
 
-	rt_trims.Search2d((const double *) p, (const double *) p, results);
+	f->rt_trims->Search2d((const double *) p, (const double *) p, results);
 
 	if (results.Count() > 0) {
 	    bool on_edge = false;
@@ -322,10 +321,9 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_Face_State *f, std::map<const ON_Surface *, 
     }
 
     ON_SimpleArray<void*> results;
-    ON_BoundingBox bb = rt_trims.BoundingBox();
+    ON_BoundingBox bb = f->rt_trims->BoundingBox();
 
-    rt_trims.Search2d((const double *) bb.m_min, (const double *) bb.m_max,
-	    results);
+    f->rt_trims->Search2d((const double *) bb.m_min, (const double *) bb.m_max, results);
 
     if (results.Count() > 0) {
 	for (int ri = 0; ri < results.Count(); ri++) {
@@ -333,7 +331,7 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_Face_State *f, std::map<const ON_Surface *, 
 	    delete l;
 	}
     }
-    rt_trims.RemoveAll();
+    f->rt_trims->RemoveAll();
 
 
     // TODO - need to perturb 2D points slightly to nudge any collinear

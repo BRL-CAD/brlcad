@@ -99,6 +99,7 @@ struct ON_Brep_CDT_Face_State {
     ON_SimpleArray<BrepTrimPoint> *face_loop_points;
     std::map<p2t::Point *, BrepTrimPoint *> *p2t_to_trimpt;
     std::map<p2t::Point *, int> *p2t_trim_ind;
+    ON_RTree *rt_trims;
 
     /* singular trim info */
     std::map<int,ON_3dPoint *> *strim_pnts;

@@ -145,6 +145,7 @@ ON_Brep_CDT_Face_Create(struct ON_Brep_CDT_State *s_cdt, int ind)
     fcdt->face_loop_points = NULL;
     fcdt->p2t_to_trimpt = new std::map<p2t::Point *, BrepTrimPoint *>;
     fcdt->p2t_trim_ind = new std::map<p2t::Point *, int>;
+    fcdt->rt_trims = new ON_RTree;
 
     fcdt->strim_pnts = new std::map<int,ON_3dPoint *>;
     fcdt->strim_norms = new std::map<int,ON_3dPoint *>;
@@ -190,6 +191,9 @@ ON_Brep_CDT_Face_Reset(struct ON_Brep_CDT_Face_State *fcdt)
 	fcdt->cdt = NULL;
     }
 
+    delete fcdt->rt_trims;
+    fcdt->rt_trims = new ON_RTree;
+
     std::vector<p2t::Triangle *>::iterator trit;
     for (trit = fcdt->p2t_extra_faces->begin(); trit != fcdt->p2t_extra_faces->end(); trit++) {
 	p2t::Triangle *t = *trit;
@@ -229,6 +233,7 @@ ON_Brep_CDT_Face_Destroy(struct ON_Brep_CDT_Face_State *fcdt)
 	delete fcdt->face_loop_points;
     }
     delete fcdt->p2t_to_trimpt;
+    delete fcdt->rt_trims;
     delete fcdt->strim_pnts;
     delete fcdt->strim_norms;
     delete fcdt->on_surf_points;
