@@ -501,6 +501,7 @@ filter_surface_edge_pnts(struct ON_Brep_CDT_Face_State *f)
     // need BOTH a 2D and a 3D check to make sure none of the points are in a
     // position that will cause trouble.  Will need to build a 3D RTree of the line
     // segments from the edges, as well as 2D rt_trims tree.
+    std::set<ON_2dPoint *> rm_pnts;
     std::set<ON_2dPoint *>::iterator osp_it;
     for (osp_it = f->on_surf_points->begin(); osp_it != f->on_surf_points->end(); osp_it++) {
 	ON_SimpleArray<void*> results;
@@ -519,12 +520,14 @@ filter_surface_edge_pnts(struct ON_Brep_CDT_Face_State *f)
 		    break;
 		}
 	    }
-	    if (!on_edge) {
-		f->cdt->AddPoint(new p2t::Point(p->x, p->y));
+	    if (on_edge) {
+		rm_pnts.insert((ON_2dPoint *)p);
 	    }
-	} else {
-	    f->cdt->AddPoint(new p2t::Point(p->x, p->y));
 	}
+    }
+    for (osp_it = rm_pnts.begin(); osp_it != rm_pnts.end(); osp_it++) {
+	const ON_2dPoint *p = *osp_it;
+	f->on_surf_points->erase((ON_2dPoint *)p);
     }
 }
 

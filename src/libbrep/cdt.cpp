@@ -291,7 +291,11 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_Face_State *f, std::map<const ON_Surface *, 
     // points out of collinearity.  As long as we don't change the relative
     // positions of the 2D points (and keep the originals for 3D point calculation)
     // this should work.
-
+    std::set<ON_2dPoint *>::iterator p_it;
+    for (p_it = f->on_surf_points->begin(); p_it != f->on_surf_points->end(); p_it++) {
+	ON_2dPoint *p = *p_it;
+	f->cdt->AddPoint(new p2t::Point(p->x, p->y));
+    }
 
     // All preliminary steps are complete, perform the triangulation using
     // Poly2Tri's triangulation.  NOTE: it is important that the inputs to
