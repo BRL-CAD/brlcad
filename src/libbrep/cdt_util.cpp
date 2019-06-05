@@ -146,11 +146,10 @@ ON_Brep_CDT_Face_Create(struct ON_Brep_CDT_State *s_cdt, int ind)
     fcdt->p2t_to_trimpt = new std::map<p2t::Point *, BrepTrimPoint *>;
     fcdt->p2t_trim_ind = new std::map<p2t::Point *, int>;
     fcdt->rt_trims = new ON_RTree;
+    fcdt->on_surf_points = new std::set<ON_2dPoint *>;
 
     fcdt->strim_pnts = new std::map<int,ON_3dPoint *>;
     fcdt->strim_norms = new std::map<int,ON_3dPoint *>;
-
-    fcdt->on_surf_points = new ON_2dPointArray;
 
     fcdt->on2_to_on3_map = new std::map<ON_2dPoint *, ON_3dPoint *>;
     fcdt->on2_to_p2t_map = new std::map<ON_2dPoint *, p2t::Point *>;
@@ -191,8 +190,21 @@ ON_Brep_CDT_Face_Reset(struct ON_Brep_CDT_Face_State *fcdt)
 	fcdt->cdt = NULL;
     }
 
+    // I think this is cleanup code for the tree?
+    ON_SimpleArray<void*> results;
+    ON_BoundingBox bb = fcdt->rt_trims->BoundingBox();
+    fcdt->rt_trims->Search2d((const double *) bb.m_min, (const double *) bb.m_max, results);
+    if (results.Count() > 0) {
+	for (int ri = 0; ri < results.Count(); ri++) {
+	    const ON_Line *l = (const ON_Line *)*results.At(ri);
+	    delete l;
+	}
+    }
+    fcdt->rt_trims->RemoveAll();
+
     delete fcdt->rt_trims;
     fcdt->rt_trims = new ON_RTree;
+    fcdt->on_surf_points->clear();
 
     std::vector<p2t::Triangle *>::iterator trit;
     for (trit = fcdt->p2t_extra_faces->begin(); trit != fcdt->p2t_extra_faces->end(); trit++) {
@@ -233,7 +245,22 @@ ON_Brep_CDT_Face_Destroy(struct ON_Brep_CDT_Face_State *fcdt)
 	delete fcdt->face_loop_points;
     }
     delete fcdt->p2t_to_trimpt;
+
+    // I think this is cleanup code for the tree?
+    ON_SimpleArray<void*> results;
+    ON_BoundingBox bb = fcdt->rt_trims->BoundingBox();
+    fcdt->rt_trims->Search2d((const double *) bb.m_min, (const double *) bb.m_max, results);
+    if (results.Count() > 0) {
+	for (int ri = 0; ri < results.Count(); ri++) {
+	    const ON_Line *l = (const ON_Line *)*results.At(ri);
+	    delete l;
+	}
+    }
+    fcdt->rt_trims->RemoveAll();
+
     delete fcdt->rt_trims;
+
+    delete fcdt->on_surf_points;
     delete fcdt->strim_pnts;
     delete fcdt->strim_norms;
     delete fcdt->on_surf_points;

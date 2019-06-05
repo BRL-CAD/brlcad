@@ -166,7 +166,6 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_Face_State *f, std::map<const ON_Surface *, 
 {
     struct ON_Brep_CDT_State *s_cdt = f->s_cdt;
     int face_index = f->ind;
-    ON_2dPointArray on_surf_points;
     ON_BrepFace &face = f->s_cdt->brep->m_F[face_index];
     const ON_Surface *s = face.SurfaceOf();
     int loop_cnt = face.LoopCount();
@@ -286,55 +285,7 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_Face_State *f, std::map<const ON_Surface *, 
 
     // Sample the surface, independent of the trimming curves, to get points that
     // will tie the mesh to the interior surface.
-    getSurfacePoints(s_cdt, face, on_surf_points, f->rt_trims);
-
-    // Strip out points from the surface that are on the trimming curves.  Trim
-    // points require special handling for watertightness and introducing them
-    // from the surface also runs the risk of adding duplicate 2D points, which
-    // aren't allowed for facetization.
-
-    // TODO - it's looking like a 2D check isn't going to be enough - we probably
-    // need BOTH a 2D and a 3D check to make sure none of the points are in a
-    // position that will cause trouble.  Will need to build a 3D RTree of the line
-    // segments from the edges, as well as 2D rt_trims tree.
-    for (int i = 0; i < on_surf_points.Count(); i++) {
-	ON_SimpleArray<void*> results;
-	const ON_2dPoint *p = on_surf_points.At(i);
-
-	f->rt_trims->Search2d((const double *) p, (const double *) p, results);
-
-	if (results.Count() > 0) {
-	    bool on_edge = false;
-	    for (int ri = 0; ri < results.Count(); ri++) {
-		double dist;
-		const ON_Line *l = (const ON_Line *) *results.At(ri);
-		dist = l->MinimumDistanceTo(*p);
-		if (NEAR_ZERO(dist, s_cdt->dist)) {
-		    on_edge = true;
-		    break;
-		}
-	    }
-	    if (!on_edge) {
-		f->cdt->AddPoint(new p2t::Point(p->x, p->y));
-	    }
-	} else {
-	    f->cdt->AddPoint(new p2t::Point(p->x, p->y));
-	}
-    }
-
-    ON_SimpleArray<void*> results;
-    ON_BoundingBox bb = f->rt_trims->BoundingBox();
-
-    f->rt_trims->Search2d((const double *) bb.m_min, (const double *) bb.m_max, results);
-
-    if (results.Count() > 0) {
-	for (int ri = 0; ri < results.Count(); ri++) {
-	    const ON_Line *l = (const ON_Line *)*results.At(ri);
-	    delete l;
-	}
-    }
-    f->rt_trims->RemoveAll();
-
+    getSurfacePoints(f);
 
     // TODO - need to perturb 2D points slightly to nudge any collinear
     // points out of collinearity.  As long as we don't change the relative
