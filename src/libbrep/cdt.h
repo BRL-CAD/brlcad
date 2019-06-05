@@ -117,14 +117,7 @@ struct ON_Brep_CDT_Face_State {
     /* Poly2Tri information */
     p2t::CDT *cdt;
     std::vector<p2t::Triangle *> *p2t_extra_faces;
-    std::set<p2t::Triangle *> *degen_faces;
-
-    /* Point status tracker */
     std::set<p2t::Point *> *degen_pnts;
-    std::set<ON_2dPoint *> *deactivated_surf_pnts;
-    std::set<ON_2dPoint *> *added_surf_pnts;
-
-    /* Mesh Data */
     std::set<p2t::Triangle*> *tris_degen;
     std::set<p2t::Triangle*> *tris_zero_3D_area;
     EdgeToTri *e2f;
@@ -260,6 +253,8 @@ void triangles_rebuild_involved(struct ON_Brep_CDT_Face_State *f);
 
 void
 trimesh_error_report(struct ON_Brep_CDT_State *s_cdt, int valid_fcnt, int valid_vcnt, int *valid_faces, fastf_t *valid_vertices, struct bg_trimesh_solid_errors *se);
+
+bool build_poly2tri_polylines(struct ON_Brep_CDT_Face_State *f);
 
 /** @} */
 

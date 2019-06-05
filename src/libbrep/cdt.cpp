@@ -169,12 +169,8 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_Face_State *f, std::map<const ON_Surface *, 
     ON_BrepFace &face = f->s_cdt->brep->m_F[face_index];
     const ON_Surface *s = face.SurfaceOf();
     int loop_cnt = face.LoopCount();
-    ON_2dPointArray on_loop_points;
-    ON_SimpleArray<BrepTrimPoint> *brep_loop_points = new ON_SimpleArray<BrepTrimPoint>[loop_cnt];
-    std::map<p2t::Point *, ON_3dPoint *> *pointmap = (*s_cdt->faces)[face.m_face_index]->p2t_to_on3_map;
-    std::map<ON_3dPoint *, std::set<p2t::Point *>> *on3_to_tri = (*s_cdt->faces)[face.m_face_index]->on3_to_tri_map;
-    std::map<p2t::Point *, ON_3dPoint *> *normalmap = (*s_cdt->faces)[face_index]->p2t_to_on3_norm_map;
-    std::vector<p2t::Point*> polyline;
+    ON_SimpleArray<BrepTrimPoint> *brep_loop_points = (f->face_loop_points) ? f->face_loop_points : new ON_SimpleArray<BrepTrimPoint>[loop_cnt];
+    f->face_loop_points = brep_loop_points;
 
     // Use the edge curves and loops to generate an initial set of trim polygons.
     for (int li = 0; li < loop_cnt; li++) {
@@ -187,7 +183,6 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_Face_State *f, std::map<const ON_Surface *, 
     }
 
     // Handle a variety of situations that complicate loop handling on closed surfaces
-    std::list<std::map<double, ON_3dPoint *> *> bridgePoints;
     if (s->IsClosed(0) || s->IsClosed(1)) {
 	PerformClosedSurfaceChecks(s_cdt, s, face, brep_loop_points, BREP_SAME_POINT_TOLERANCE);
     }
@@ -214,48 +209,6 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_Face_State *f, std::map<const ON_Surface *, 
 	}
     }
 
-    // Process through loops, building Poly2Tri polygons for facetization.
-    bool outer = true;
-    for (int li = 0; li < loop_cnt; li++) {
-	int num_loop_points = brep_loop_points[li].Count();
-	if (num_loop_points > 2) {
-	    for (int i = 1; i < num_loop_points; i++) {
-		// map point to last entry to 3d point
-		p2t::Point *p = new p2t::Point((brep_loop_points[li])[i].p2d.x, (brep_loop_points[li])[i].p2d.y);
-		polyline.push_back(p);
-		(*((*s_cdt->faces)[face.m_face_index]->p2t_trim_ind))[p] = (brep_loop_points[li])[i].trim_ind;
-		(*pointmap)[p] = (brep_loop_points[li])[i].p3d;
-		(*on3_to_tri)[(brep_loop_points[li])[i].p3d].insert(p);
-		(*normalmap)[p] = (brep_loop_points[li])[i].n3d;
-	    }
-	    for (int i = 1; i < brep_loop_points[li].Count(); i++) {
-		// map point to last entry to 3d point
-		ON_Line *line = new ON_Line((brep_loop_points[li])[i - 1].p2d, (brep_loop_points[li])[i].p2d);
-		ON_BoundingBox bb = line->BoundingBox();
-
-		bb.m_max.x = bb.m_max.x + ON_ZERO_TOLERANCE;
-		bb.m_max.y = bb.m_max.y + ON_ZERO_TOLERANCE;
-		bb.m_max.z = bb.m_max.z + ON_ZERO_TOLERANCE;
-		bb.m_min.x = bb.m_min.x - ON_ZERO_TOLERANCE;
-		bb.m_min.y = bb.m_min.y - ON_ZERO_TOLERANCE;
-		bb.m_min.z = bb.m_min.z - ON_ZERO_TOLERANCE;
-
-		f->rt_trims->Insert2d(bb.Min(), bb.Max(), line);
-	    }
-	    if (outer) {
-		if (f->cdt) {
-		    delete f->cdt;
-		}
-		f->cdt = new p2t::CDT(polyline);
-		outer = false;
-	    } else {
-		f->cdt->AddHole(polyline);
-	    }
-	    polyline.clear();
-	}
-    }
-    // Using this in surface calculations, so assign now
-    (*s_cdt->faces)[face.m_face_index]->face_loop_points = brep_loop_points;
 
     // TODO - we may need to add 2D points on trims that the edges didn't know
     // about.  Since 3D points must be shared along edges and we're using
@@ -270,7 +223,7 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_Face_State *f, std::map<const ON_Surface *, 
     // polygons for the faces. That also has the potential to generate "new" 3D
     // points on edges that are driven by 2D boolean intersections between
     // trimming loops, and may require another update pass as above.
-
+    bool outer = build_poly2tri_polylines(f);
     if (outer) {
 	std::cerr << "Error: Face(" << face.m_face_index << ") cannot evaluate its outer loop and will not be facetized." << std::endl;
 	return -1;

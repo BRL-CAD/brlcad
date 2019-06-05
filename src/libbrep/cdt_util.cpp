@@ -160,7 +160,6 @@ ON_Brep_CDT_Face_Create(struct ON_Brep_CDT_State *s_cdt, int ind)
 
     fcdt->cdt = NULL;
     fcdt->p2t_extra_faces = new std::vector<p2t::Triangle *>;
-    fcdt->degen_faces = new std::set<p2t::Triangle *>;
 
     fcdt->degen_pnts = new std::set<p2t::Point *>;
 
@@ -177,18 +176,9 @@ ON_Brep_CDT_Face_Create(struct ON_Brep_CDT_State *s_cdt, int ind)
 void
 ON_Brep_CDT_Face_Reset(struct ON_Brep_CDT_Face_State *fcdt)
 {
-    fcdt->on2_to_p2t_map->clear();
-    fcdt->p2t_to_on2_map->clear();
-    fcdt->p2t_to_on3_map->clear();
-    fcdt->p2t_to_on3_norm_map->clear();
-    fcdt->on3_to_tri_map->clear();
     fcdt->p2t_to_trimpt->clear();
     fcdt->p2t_trim_ind->clear();
-
-    if (fcdt->cdt) {
-	delete fcdt->cdt;
-	fcdt->cdt = NULL;
-    }
+    fcdt->on_surf_points->clear();
 
     // I think this is cleanup code for the tree?
     ON_SimpleArray<void*> results;
@@ -201,21 +191,27 @@ ON_Brep_CDT_Face_Reset(struct ON_Brep_CDT_Face_State *fcdt)
 	}
     }
     fcdt->rt_trims->RemoveAll();
-
     delete fcdt->rt_trims;
     fcdt->rt_trims = new ON_RTree;
-    fcdt->on_surf_points->clear();
 
+
+    fcdt->on2_to_p2t_map->clear();
+    fcdt->p2t_to_on2_map->clear();
+    fcdt->p2t_to_on3_map->clear();
+    fcdt->p2t_to_on3_norm_map->clear();
+    fcdt->on3_to_tri_map->clear();
+
+    /* Mesh data */
+    if (fcdt->cdt) {
+	delete fcdt->cdt;
+	fcdt->cdt = NULL;
+    }
     std::vector<p2t::Triangle *>::iterator trit;
     for (trit = fcdt->p2t_extra_faces->begin(); trit != fcdt->p2t_extra_faces->end(); trit++) {
 	p2t::Triangle *t = *trit;
 	delete t;
     }
-
     fcdt->p2t_extra_faces->clear();
-    fcdt->degen_faces->clear();
-
-    /* Mesh data */
     fcdt->tris_degen->clear();
     fcdt->tris_zero_3D_area->clear();
     fcdt->e2f->clear();
@@ -271,7 +267,6 @@ ON_Brep_CDT_Face_Destroy(struct ON_Brep_CDT_Face_State *fcdt)
     delete fcdt->p2t_to_on3_norm_map;
     delete fcdt->on3_to_tri_map;
     delete fcdt->p2t_extra_faces;
-    delete fcdt->degen_faces;
     delete fcdt->degen_pnts;
 
     delete fcdt->tris_degen;
@@ -631,6 +626,59 @@ populate_3d_pnts(struct ON_Brep_CDT_Face_State *f)
 	    }
 	}
     }
+}
+
+bool
+build_poly2tri_polylines(struct ON_Brep_CDT_Face_State *f)
+{
+    // Process through loops, building Poly2Tri polygons for facetization.
+    std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
+    std::map<ON_3dPoint *, std::set<p2t::Point *>> *on3_to_tri = f->on3_to_tri_map;
+    std::map<p2t::Point *, ON_3dPoint *> *normalmap = f->p2t_to_on3_norm_map;
+    std::vector<p2t::Point*> polyline;
+    ON_BrepFace &face = f->s_cdt->brep->m_F[f->ind];
+    int loop_cnt = face.LoopCount();
+    ON_SimpleArray<BrepTrimPoint> *brep_loop_points = f->face_loop_points;
+    bool outer = true;
+    for (int li = 0; li < loop_cnt; li++) {
+	int num_loop_points = brep_loop_points[li].Count();
+	if (num_loop_points > 2) {
+	    for (int i = 1; i < num_loop_points; i++) {
+		// map point to last entry to 3d point
+		p2t::Point *p = new p2t::Point((brep_loop_points[li])[i].p2d.x, (brep_loop_points[li])[i].p2d.y);
+		polyline.push_back(p);
+		(*f->p2t_trim_ind)[p] = (brep_loop_points[li])[i].trim_ind;
+		(*pointmap)[p] = (brep_loop_points[li])[i].p3d;
+		(*on3_to_tri)[(brep_loop_points[li])[i].p3d].insert(p);
+		(*normalmap)[p] = (brep_loop_points[li])[i].n3d;
+	    }
+	    for (int i = 1; i < brep_loop_points[li].Count(); i++) {
+		// map point to last entry to 3d point
+		ON_Line *line = new ON_Line((brep_loop_points[li])[i - 1].p2d, (brep_loop_points[li])[i].p2d);
+		ON_BoundingBox bb = line->BoundingBox();
+
+		bb.m_max.x = bb.m_max.x + ON_ZERO_TOLERANCE;
+		bb.m_max.y = bb.m_max.y + ON_ZERO_TOLERANCE;
+		bb.m_max.z = bb.m_max.z + ON_ZERO_TOLERANCE;
+		bb.m_min.x = bb.m_min.x - ON_ZERO_TOLERANCE;
+		bb.m_min.y = bb.m_min.y - ON_ZERO_TOLERANCE;
+		bb.m_min.z = bb.m_min.z - ON_ZERO_TOLERANCE;
+
+		f->rt_trims->Insert2d(bb.Min(), bb.Max(), line);
+	    }
+	    if (outer) {
+		if (f->cdt) {
+		    ON_Brep_CDT_Face_Reset(f);
+		}
+		f->cdt = new p2t::CDT(polyline);
+		outer = false;
+	    } else {
+		f->cdt->AddHole(polyline);
+	    }
+	    polyline.clear();
+	}
+    }
+    return outer;
 }
 
 /** @} */
