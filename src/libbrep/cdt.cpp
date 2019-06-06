@@ -187,7 +187,7 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_Face_State *f, std::map<const ON_Surface *, 
 	PerformClosedSurfaceChecks(s_cdt, s, face, brep_loop_points, BREP_SAME_POINT_TOLERANCE);
     }
 
-    // For this face, find the minimum and maximum edge polyline segment lengths
+    // Find for this face, find the minimum and maximum edge polyline segment lengths
     (*s_cdt->max_edge_seg_len)[face.m_face_index] = 0.0;
     (*s_cdt->min_edge_seg_len)[face.m_face_index] = DBL_MAX;
     for (int li = 0; li < loop_cnt; li++) {
@@ -210,18 +210,25 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_Face_State *f, std::map<const ON_Surface *, 
     }
 
 
+    // TODO - we may need to add 2D points on trims that the edges didn't know
+    // about.  Since 3D points must be shared along edges and we're using
+    // synchronized numbers of parametric domain ordered 2D and 3D points to
+    // make that work, we will need to track new 2D points and update the
+    // corresponding 3D edge based data structures.  More than that - we must
+    // also update all 2D structures in all other faces associated with the
+    // edge in question to keep things in overall sync.
+
+    // TODO - if we are going to apply clipper boolean resolution to sets of
+    // face loops, that would come here - once we have assembled the loop
+    // polygons for the faces. That also has the potential to generate "new" 3D
+    // points on edges that are driven by 2D boolean intersections between
+    // trimming loops, and may require another update pass as above.
     bool outer = build_poly2tri_polylines(f);
     if (outer) {
 	std::cerr << "Error: Face(" << face.m_face_index << ") cannot evaluate its outer loop and will not be facetized." << std::endl;
 	return -1;
     }
 
-    // TODO - if we are going to apply clipper boolean resolution to sets of
-    // face loops, that would come here - once we have assembled the loop
-    // polygons for the faces. That also has the potential to generate "new" 3D
-    // points on edges that are driven by 2D boolean intersections between
-    // trimming loops, which will have to be fed back as a requirement to an
-    // edge processing refinement step.
 
     ////////////////////////////////////////////////////////////////////////////
     //   Operations from this point on need to be factored into a function
@@ -240,7 +247,7 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_Face_State *f, std::map<const ON_Surface *, 
     std::set<ON_2dPoint *>::iterator p_it;
     for (p_it = f->on_surf_points->begin(); p_it != f->on_surf_points->end(); p_it++) {
 	ON_2dPoint *p = *p_it;
-	f->cdt->AddPoint(poly2tri_point(p, f->prand));
+	f->cdt->AddPoint(new p2t::Point(p->x, p->y));
     }
 
     // All preliminary steps are complete, perform the triangulation using

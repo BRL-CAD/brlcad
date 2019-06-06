@@ -26,7 +26,6 @@
  */
 
 #include "common.h"
-#include "bn/rand.h"
 #include "./cdt.h"
 
 /***************************************************
@@ -82,17 +81,6 @@ cdt_ainfo(int fid, int vid, int tid, int eid, fastf_t x2d, fastf_t y2d)
     return a;
 }
 
-p2t::Point *
-poly2tri_point(const ON_2dPoint *on_p, float *prand)
-{
-    // Jitter the points a small random amount, and create the point
-    double px = on_p->x + (bn_rand_half(prand) * 100*ON_ZERO_TOLERANCE);
-    double py = on_p->y + (bn_rand_half(prand) * 100*ON_ZERO_TOLERANCE);
-    //bu_log("x: %f -> %f\n", on_p->x, px);
-    //bu_log("y: %f -> %f\n", on_p->y, py);
-    p2t::Point *p = new p2t::Point(px,py);
-    return p;
-}
 
 void
 CDT_Add3DPnt(struct ON_Brep_CDT_State *s, ON_3dPoint *p, int fid, int vid, int tid, int eid, fastf_t x2d, fastf_t y2d)
@@ -180,9 +168,6 @@ ON_Brep_CDT_Face_Create(struct ON_Brep_CDT_State *s_cdt, int ind)
     fcdt->tris_zero_3D_area = new std::set<p2t::Triangle*>;
     fcdt->e2f = new EdgeToTri;
     fcdt->ecnt = new std::map<Edge, int>;
-
-    /* We want to jitter 2D triangulation points out of linearity */
-    bn_rand_init(fcdt->prand, 0);
 
     return fcdt;
 }
@@ -660,7 +645,7 @@ build_poly2tri_polylines(struct ON_Brep_CDT_Face_State *f)
 	if (num_loop_points > 2) {
 	    for (int i = 1; i < num_loop_points; i++) {
 		// map point to last entry to 3d point
-		p2t::Point *p = poly2tri_point(&((brep_loop_points[li])[i].p2d), f->prand);
+		p2t::Point *p = new p2t::Point((brep_loop_points[li])[i].p2d.x, (brep_loop_points[li])[i].p2d.y);
 		polyline.push_back(p);
 		(*f->p2t_trim_ind)[p] = (brep_loop_points[li])[i].trim_ind;
 		(*pointmap)[p] = (brep_loop_points[li])[i].p3d;
