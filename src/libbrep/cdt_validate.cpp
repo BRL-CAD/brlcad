@@ -215,45 +215,6 @@ p2tTri_Normal(p2t::Triangle *t, std::map<p2t::Point *, ON_3dPoint *> *pointmap)
     return tdir;
 }
 
-#if 0
-static void
-validate_face_normals(
-	struct ON_Brep_CDT_State *s_cdt,
-	std::vector<p2t::Triangle*> *tris,
-	std::set<p2t::Triangle*> *tris_degen,
-	int face_index)
-{
-    std::map<p2t::Point *, ON_3dPoint *> *pointmap = s_cdt->tri_to_on3_maps[face_index];
-    std::map<p2t::Point *, ON_3dPoint *> *normalmap = s_cdt->tri_to_on3_norm_maps[face_index];
-    for (size_t i = 0; i < tris->size(); i++) {
-	p2t::Triangle *t = (*tris)[i];
-	if (tris_degen) {
-	    if (tris_degen->size() > 0 && tris_degen->find(t) != tris_degen->end()) {
-		continue;
-	    }
-	}
-	ON_3dVector tdir = p2tTri_Normal(t, pointmap);
-	for (size_t j = 0; j < 3; j++) {
-	    p2t::Point *p = t->GetPoint(j);
-	    ON_3dPoint onorm = *(*normalmap)[p];
-	    if (s_cdt->brep->m_F[face_index].m_bRev) {
-		onorm = onorm * -1;
-	    }
-	    if (tdir.Length() > 0 && ON_DotProduct(onorm, tdir) < 0) {
-		ON_3dPoint tri_cent = (*(*pointmap)[t->GetPoint(0)] + *(*pointmap)[t->GetPoint(1)] + *(*pointmap)[t->GetPoint(2)])/3;
-		bu_log("Face %d: normal in wrong direction:\n", face_index);
-		bu_log("Tri p1: %f %f %f\n", (*pointmap)[t->GetPoint(0)]->x, (*pointmap)[t->GetPoint(0)]->y, (*pointmap)[t->GetPoint(0)]->z);
-		bu_log("Tri p2: %f %f %f\n", (*pointmap)[t->GetPoint(1)]->x, (*pointmap)[t->GetPoint(1)]->y, (*pointmap)[t->GetPoint(1)]->z);
-		bu_log("Tri p3: %f %f %f\n", (*pointmap)[t->GetPoint(2)]->x, (*pointmap)[t->GetPoint(2)]->y, (*pointmap)[t->GetPoint(2)]->z);
-		bu_log("Tri center: %f %f %f\n", tri_cent.x, tri_cent.y, tri_cent.z);
-		bu_log("Tri norm: %f %f %f\n", tdir.x, tdir.y, tdir.z);
-		bu_log("onorm: %f %f %f\n", onorm.x, onorm.y, onorm.z);
-	    }
-	}
-    }
-}
-#endif
-
 void
 triangles_degenerate_trivial(struct ON_Brep_CDT_Face_State *f)
 {
@@ -390,9 +351,12 @@ triangles_degenerate_area(struct ON_Brep_CDT_Face_State *f)
     }
 }
 
+// TODO - either look up the normals on singular verts the way the mesh build will or
+// skip using them to report normal problems.
 int
 triangles_incorrect_normals(struct ON_Brep_CDT_Face_State *f)
 {
+    int ret = 0;
     p2t::CDT *cdt = f->cdt;
     std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
     std::map<p2t::Point *, ON_3dPoint *> *normalmap = f->p2t_to_on3_norm_map;
@@ -451,6 +415,8 @@ triangles_incorrect_normals(struct ON_Brep_CDT_Face_State *f)
 		for (int j = 0; j < 3; j++) {
 		    if (tind[j] == -1) {
 			ON_3dPoint *spt = (*pointmap)[p[j]];
+			f->on_surf_points->erase((*f->p2t_to_on2_map)[p[j]]);
+			ret = 1;
 			bu_log("%f %f %f\n", spt->x, spt->y, spt->z);
 		    }
 		}
@@ -460,6 +426,8 @@ triangles_incorrect_normals(struct ON_Brep_CDT_Face_State *f)
 		for (int j = 0; j < 3; j++) {
 		    if (tind[j] == -1) {
 			ON_3dPoint *spt = (*pointmap)[p[j]];
+			f->on_surf_points->erase((*f->p2t_to_on2_map)[p[j]]);
+			ret = 1;
 			bu_log("%f %f %f\n", spt->x, spt->y, spt->z);
 		    }
 		}
@@ -470,6 +438,8 @@ triangles_incorrect_normals(struct ON_Brep_CDT_Face_State *f)
 		for (int j = 0; j < 3; j++) {
 		    if (tind[j] == -1) {
 			ON_3dPoint *spt = (*pointmap)[p[j]];
+			f->on_surf_points->erase((*f->p2t_to_on2_map)[p[j]]);
+			ret = 1;
 			bu_log("%f %f %f\n", spt->x, spt->y, spt->z);
 		    }
 		}
@@ -483,6 +453,8 @@ triangles_incorrect_normals(struct ON_Brep_CDT_Face_State *f)
 	    for (int j = 0; j < 3; j++) {
 		if (wnorm[j] != 0) {
 		    ON_3dPoint *spt = (*pointmap)[p[j]];
+		    f->on_surf_points->erase((*f->p2t_to_on2_map)[p[j]]);
+		    ret = 1;
 		    bu_log("%f %f %f\n", spt->x, spt->y, spt->z);
 		}
 	    }
@@ -492,13 +464,15 @@ triangles_incorrect_normals(struct ON_Brep_CDT_Face_State *f)
 	    for (int j = 0; j < 3; j++) {
 		if (wnorm[j] != 0) {
 		    ON_3dPoint *spt = (*pointmap)[p[j]];
+		    f->on_surf_points->erase((*f->p2t_to_on2_map)[p[j]]);
+		    ret = 1;
 		    bu_log("%f %f %f\n", spt->x, spt->y, spt->z);
 		}
 	    }
 
 	}
     }
-    return 0;
+    return ret;
 }
 
 void

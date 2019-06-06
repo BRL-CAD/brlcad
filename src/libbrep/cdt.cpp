@@ -166,12 +166,14 @@ static int
 do_triangulation(struct ON_Brep_CDT_Face_State *f, int full_surface_sample, int cnt)
 {
     int ret = 0;
-    ON_Brep_CDT_Face_Reset(f, full_surface_sample);
 
     if (cnt > MAX_TRIANGULATION_ATTEMPTS) {
 	std::cerr << "Error: even after " << MAX_TRIANGULATION_ATTEMPTS << " iterations could not successfully triangulate face " << f->ind << "\n";
-	return -1;
+	return 0;
     }
+    // TODO - for now, don't reset before returning the error - we want to see the
+    // failed mesh for diagnostics
+    ON_Brep_CDT_Face_Reset(f, full_surface_sample);
 
     bool outer = build_poly2tri_polylines(f, full_surface_sample);
     if (outer) {
@@ -223,12 +225,15 @@ do_triangulation(struct ON_Brep_CDT_Face_State *f, int full_surface_sample, int 
 	bu_log("Fatal failure on normals checking\n");
 	return -1;
     }
-    ret += eret;
+    ret += nret;
 
     if (ret > 0) {
 	return do_triangulation(f, 0, cnt+1);
     }
 
+    if (!ret) {
+	bu_log("Face %d: successful triangulation after %d passes\n", f->ind, cnt);
+    }
     return ret;
 }
 
