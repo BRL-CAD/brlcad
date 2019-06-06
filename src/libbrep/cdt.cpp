@@ -160,6 +160,53 @@ Process_Loop_Edges(
     }
 }
 
+static int
+do_triangulation(struct ON_Brep_CDT_Face_State *f)
+{
+    ON_Brep_CDT_Face_Reset(f);
+    
+    bool outer = build_poly2tri_polylines(f);
+    if (outer) {
+	std::cerr << "Error: Face(" << f->ind << ") cannot evaluate its outer loop and will not be facetized." << std::endl;
+	return -1;
+    }
+
+    // Sample the surface, independent of the trimming curves, to get points that
+    // will tie the mesh to the interior surface.
+    getSurfacePoints(f);
+
+    // TODO - need to perturb 2D points slightly to nudge any collinear
+    // points out of collinearity.  As long as we don't change the relative
+    // positions of the 2D points (and keep the originals for 3D point calculation)
+    // this should work.
+    std::set<ON_2dPoint *>::iterator p_it;
+    for (p_it = f->on_surf_points->begin(); p_it != f->on_surf_points->end(); p_it++) {
+	ON_2dPoint *p = *p_it;
+	f->cdt->AddPoint(new p2t::Point(p->x, p->y));
+    }
+
+    // All preliminary steps are complete, perform the triangulation using
+    // Poly2Tri's triangulation.  NOTE: it is important that the inputs to
+    // Poly2Tri satisfy its constraints - failure here could cause a crash.
+    f->cdt->Triangulate(true, -1);
+
+    /* Calculate any 3D points we don't already have from the loop processing */
+    populate_3d_pnts(f);
+
+    // Trivially degenerate pass
+    triangles_degenerate_trivial(f);
+
+    // Zero area triangles
+    triangles_degenerate_area(f);
+
+    // Build information about edges for validation
+    triangles_build_edgemaps(f);
+
+    // Incorrect normals
+    triangles_incorrect_normals(f);
+
+    return 0;
+}
 
 static int
 ON_Brep_CDT_Face(struct ON_Brep_CDT_Face_State *f, std::map<const ON_Surface *, double> *s_to_maxdist)
@@ -223,54 +270,12 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_Face_State *f, std::map<const ON_Surface *, 
     // polygons for the faces. That also has the potential to generate "new" 3D
     // points on edges that are driven by 2D boolean intersections between
     // trimming loops, and may require another update pass as above.
-    bool outer = build_poly2tri_polylines(f);
-    if (outer) {
-	std::cerr << "Error: Face(" << face.m_face_index << ") cannot evaluate its outer loop and will not be facetized." << std::endl;
-	return -1;
+    int ret = do_triangulation(f);
+    while (ret > 0) {
+	ret = do_triangulation(f);
     }
-
-
-    ////////////////////////////////////////////////////////////////////////////
-    //   Operations from this point on need to be factored into a function
-    //   call that can be called iteratively until a 'correct' face is
-    //   arrived at.
-    ////////////////////////////////////////////////////////////////////////////
-
-    // Sample the surface, independent of the trimming curves, to get points that
-    // will tie the mesh to the interior surface.
-    getSurfacePoints(f);
-
-    // TODO - need to perturb 2D points slightly to nudge any collinear
-    // points out of collinearity.  As long as we don't change the relative
-    // positions of the 2D points (and keep the originals for 3D point calculation)
-    // this should work.
-    std::set<ON_2dPoint *>::iterator p_it;
-    for (p_it = f->on_surf_points->begin(); p_it != f->on_surf_points->end(); p_it++) {
-	ON_2dPoint *p = *p_it;
-	f->cdt->AddPoint(new p2t::Point(p->x, p->y));
-    }
-
-    // All preliminary steps are complete, perform the triangulation using
-    // Poly2Tri's triangulation.  NOTE: it is important that the inputs to
-    // Poly2Tri satisfy its constraints - failure here could cause a crash.
-    f->cdt->Triangulate(true, -1);
-
-    /* Calculate any 3D points we don't already have from the loop processing */
-    populate_3d_pnts(f);
-
-    // Trivially degenerate pass
-    triangles_degenerate_trivial(f);
-
-    // Zero area triangles
-    triangles_degenerate_area(f);
-
-    // Build information about edges for validation
-    triangles_build_edgemaps(f);
-
-    // Incorrect normals
-    triangles_incorrect_normals(f);
-
-    return 0;
+    
+    return ret;
 }
 
 static ON_3dVector
