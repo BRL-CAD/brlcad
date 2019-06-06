@@ -220,7 +220,7 @@ getSurfacePoints(struct ON_Brep_CDT_Face_State *f);
 struct ON_Brep_CDT_Face_State *
 ON_Brep_CDT_Face_Create(struct ON_Brep_CDT_State *s_cdt, int ind);
 void
-ON_Brep_CDT_Face_Reset(struct ON_Brep_CDT_Face_State *fcdt);
+ON_Brep_CDT_Face_Reset(struct ON_Brep_CDT_Face_State *fcdt, int full_surface_sample);
 void
 ON_Brep_CDT_Face_Destroy(struct ON_Brep_CDT_Face_State *fcdt);
 
@@ -247,16 +247,16 @@ void populate_3d_pnts(struct ON_Brep_CDT_Face_State *f);
 
 void triangles_degenerate_trivial(struct ON_Brep_CDT_Face_State *f);
 void triangles_degenerate_area(struct ON_Brep_CDT_Face_State *f);
-void triangles_incorrect_normals(struct ON_Brep_CDT_Face_State *f);
+int triangles_incorrect_normals(struct ON_Brep_CDT_Face_State *f);
 
-void triangles_build_edgemaps(struct ON_Brep_CDT_Face_State *f);
+int triangles_check_edges(struct ON_Brep_CDT_Face_State *f);
 
 void triangles_rebuild_involved(struct ON_Brep_CDT_Face_State *f);
 
 void
 trimesh_error_report(struct ON_Brep_CDT_State *s_cdt, int valid_fcnt, int valid_vcnt, int *valid_faces, fastf_t *valid_vertices, struct bg_trimesh_solid_errors *se);
 
-bool build_poly2tri_polylines(struct ON_Brep_CDT_Face_State *f);
+bool build_poly2tri_polylines(struct ON_Brep_CDT_Face_State *f, int init_rtree);
 
 /** @} */
 

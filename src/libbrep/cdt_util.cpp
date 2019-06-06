@@ -174,26 +174,28 @@ ON_Brep_CDT_Face_Create(struct ON_Brep_CDT_State *s_cdt, int ind)
 
 /* Clears old triangulation data */
 void
-ON_Brep_CDT_Face_Reset(struct ON_Brep_CDT_Face_State *fcdt)
+ON_Brep_CDT_Face_Reset(struct ON_Brep_CDT_Face_State *fcdt, int full_surface_sample)
 {
     fcdt->p2t_to_trimpt->clear();
     fcdt->p2t_trim_ind->clear();
-    fcdt->on_surf_points->clear();
 
-    // I think this is cleanup code for the tree?
-    ON_SimpleArray<void*> results;
-    ON_BoundingBox bb = fcdt->rt_trims->BoundingBox();
-    fcdt->rt_trims->Search2d((const double *) bb.m_min, (const double *) bb.m_max, results);
-    if (results.Count() > 0) {
-	for (int ri = 0; ri < results.Count(); ri++) {
-	    const ON_Line *l = (const ON_Line *)*results.At(ri);
-	    delete l;
+    if (full_surface_sample) {
+	fcdt->on_surf_points->clear();
+
+	// I think this is cleanup code for the tree?
+	ON_SimpleArray<void*> results;
+	ON_BoundingBox bb = fcdt->rt_trims->BoundingBox();
+	fcdt->rt_trims->Search2d((const double *) bb.m_min, (const double *) bb.m_max, results);
+	if (results.Count() > 0) {
+	    for (int ri = 0; ri < results.Count(); ri++) {
+		const ON_Line *l = (const ON_Line *)*results.At(ri);
+		delete l;
+	    }
 	}
+	fcdt->rt_trims->RemoveAll();
+	delete fcdt->rt_trims;
+	fcdt->rt_trims = new ON_RTree;
     }
-    fcdt->rt_trims->RemoveAll();
-    delete fcdt->rt_trims;
-    fcdt->rt_trims = new ON_RTree;
-
 
     fcdt->on2_to_p2t_map->clear();
     fcdt->p2t_to_on2_map->clear();
@@ -629,7 +631,7 @@ populate_3d_pnts(struct ON_Brep_CDT_Face_State *f)
 }
 
 bool
-build_poly2tri_polylines(struct ON_Brep_CDT_Face_State *f)
+build_poly2tri_polylines(struct ON_Brep_CDT_Face_State *f, int init_rtree)
 {
     // Process through loops, building Poly2Tri polygons for facetization.
     std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
@@ -652,23 +654,25 @@ build_poly2tri_polylines(struct ON_Brep_CDT_Face_State *f)
 		(*on3_to_tri)[(brep_loop_points[li])[i].p3d].insert(p);
 		(*normalmap)[p] = (brep_loop_points[li])[i].n3d;
 	    }
-	    for (int i = 1; i < brep_loop_points[li].Count(); i++) {
-		// map point to last entry to 3d point
-		ON_Line *line = new ON_Line((brep_loop_points[li])[i - 1].p2d, (brep_loop_points[li])[i].p2d);
-		ON_BoundingBox bb = line->BoundingBox();
+	    if (init_rtree) {
+		for (int i = 1; i < brep_loop_points[li].Count(); i++) {
+		    // map point to last entry to 3d point
+		    ON_Line *line = new ON_Line((brep_loop_points[li])[i - 1].p2d, (brep_loop_points[li])[i].p2d);
+		    ON_BoundingBox bb = line->BoundingBox();
 
-		bb.m_max.x = bb.m_max.x + ON_ZERO_TOLERANCE;
-		bb.m_max.y = bb.m_max.y + ON_ZERO_TOLERANCE;
-		bb.m_max.z = bb.m_max.z + ON_ZERO_TOLERANCE;
-		bb.m_min.x = bb.m_min.x - ON_ZERO_TOLERANCE;
-		bb.m_min.y = bb.m_min.y - ON_ZERO_TOLERANCE;
-		bb.m_min.z = bb.m_min.z - ON_ZERO_TOLERANCE;
+		    bb.m_max.x = bb.m_max.x + ON_ZERO_TOLERANCE;
+		    bb.m_max.y = bb.m_max.y + ON_ZERO_TOLERANCE;
+		    bb.m_max.z = bb.m_max.z + ON_ZERO_TOLERANCE;
+		    bb.m_min.x = bb.m_min.x - ON_ZERO_TOLERANCE;
+		    bb.m_min.y = bb.m_min.y - ON_ZERO_TOLERANCE;
+		    bb.m_min.z = bb.m_min.z - ON_ZERO_TOLERANCE;
 
-		f->rt_trims->Insert2d(bb.Min(), bb.Max(), line);
+		    f->rt_trims->Insert2d(bb.Min(), bb.Max(), line);
+		}
 	    }
 	    if (outer) {
 		if (f->cdt) {
-		    ON_Brep_CDT_Face_Reset(f);
+		    ON_Brep_CDT_Face_Reset(f, init_rtree);
 		}
 		f->cdt = new p2t::CDT(polyline);
 		outer = false;

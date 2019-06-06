@@ -118,8 +118,8 @@ add_tri_edges(struct ON_Brep_CDT_Face_State *f, p2t::Triangle *t,
     }
 }
 
-void
-triangles_build_edgemaps(struct ON_Brep_CDT_Face_State *f)
+int
+triangles_check_edges(struct ON_Brep_CDT_Face_State *f)
 {
     p2t::CDT *cdt = f->cdt;
     std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
@@ -180,6 +180,7 @@ triangles_build_edgemaps(struct ON_Brep_CDT_Face_State *f)
 	    }
 	}
     }
+    return 0;
 }
 
 
@@ -372,7 +373,7 @@ triangles_degenerate_area(struct ON_Brep_CDT_Face_State *f)
     }
 }
 
-void
+int
 triangles_incorrect_normals(struct ON_Brep_CDT_Face_State *f)
 {
     p2t::CDT *cdt = f->cdt;
@@ -480,6 +481,7 @@ triangles_incorrect_normals(struct ON_Brep_CDT_Face_State *f)
 
 	}
     }
+    return 0;
 }
 
 void

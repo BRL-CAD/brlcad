@@ -160,25 +160,31 @@ Process_Loop_Edges(
     }
 }
 
+#define MAX_TRIANGULATION_ATTEMPTS 5
+
 static int
-do_triangulation(struct ON_Brep_CDT_Face_State *f)
+do_triangulation(struct ON_Brep_CDT_Face_State *f, int full_surface_sample, int cnt)
 {
-    ON_Brep_CDT_Face_Reset(f);
-    
-    bool outer = build_poly2tri_polylines(f);
+    int ret = 0;
+    ON_Brep_CDT_Face_Reset(f, full_surface_sample);
+
+    if (cnt > MAX_TRIANGULATION_ATTEMPTS) {
+	std::cerr << "Error: even after " << MAX_TRIANGULATION_ATTEMPTS << " iterations could not successfully triangulate face " << f->ind << "\n";
+	return -1;
+    }
+
+    bool outer = build_poly2tri_polylines(f, full_surface_sample);
     if (outer) {
 	std::cerr << "Error: Face(" << f->ind << ") cannot evaluate its outer loop and will not be facetized." << std::endl;
 	return -1;
     }
 
-    // Sample the surface, independent of the trimming curves, to get points that
-    // will tie the mesh to the interior surface.
-    getSurfacePoints(f);
+    if (full_surface_sample) {
+	// Sample the surface, independent of the trimming curves, to get points that
+	// will tie the mesh to the interior surface.
+	getSurfacePoints(f);
+    }
 
-    // TODO - need to perturb 2D points slightly to nudge any collinear
-    // points out of collinearity.  As long as we don't change the relative
-    // positions of the 2D points (and keep the originals for 3D point calculation)
-    // this should work.
     std::set<ON_2dPoint *>::iterator p_it;
     for (p_it = f->on_surf_points->begin(); p_it != f->on_surf_points->end(); p_it++) {
 	ON_2dPoint *p = *p_it;
@@ -190,7 +196,7 @@ do_triangulation(struct ON_Brep_CDT_Face_State *f)
     // Poly2Tri satisfy its constraints - failure here could cause a crash.
     f->cdt->Triangulate(true, -1);
 
-    /* Calculate any 3D points we don't already have from the loop processing */
+    /* Calculate any 3D points we don't already have */
     populate_3d_pnts(f);
 
     // Trivially degenerate pass
@@ -199,13 +205,29 @@ do_triangulation(struct ON_Brep_CDT_Face_State *f)
     // Zero area triangles
     triangles_degenerate_area(f);
 
-    // Build information about edges for validation
-    triangles_build_edgemaps(f);
+    // Validate based on edges.  If we get a return > 0, adjustments were
+    // made to the surface points and we need to redo the triangulation
+    int eret = triangles_check_edges(f);
+    if (eret < 0) {
+	bu_log("Fatal failure on edge checking\n");
+	return -1;
+    }
+    ret += eret;
 
-    // Incorrect normals
-    triangles_incorrect_normals(f);
+    // Incorrect normals.  If we get a return > 0, adjustments were mde
+    // to the surface points and we need to redo the triangulation
+    int nret = triangles_incorrect_normals(f);
+    if (nret < 0) {
+	bu_log("Fatal failure on normals checking\n");
+	return -1;
+    }
+    ret += eret;
 
-    return 0;
+    if (ret > 0) {
+	return do_triangulation(f, 0, cnt+1);
+    }
+
+    return ret;
 }
 
 static int
@@ -270,12 +292,8 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_Face_State *f, std::map<const ON_Surface *, 
     // polygons for the faces. That also has the potential to generate "new" 3D
     // points on edges that are driven by 2D boolean intersections between
     // trimming loops, and may require another update pass as above.
-    int ret = do_triangulation(f);
-    while (ret > 0) {
-	ret = do_triangulation(f);
-    }
-    
-    return ret;
+
+    return do_triangulation(f, 1, 0);
 }
 
 static ON_3dVector
