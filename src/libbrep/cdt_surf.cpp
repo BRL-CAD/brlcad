@@ -26,6 +26,7 @@
  */
 
 #include "common.h"
+#include "bn/rand.h"
 #include "./cdt.h"
 
 double
@@ -184,206 +185,6 @@ bool involves_trims(double *min_edge, struct ON_Brep_CDT_State *s_cdt, struct cd
     return ret;
 }
 
-/* The "left" and "below" parameters tell this particular iteration of the subdivision
- * which UV points should be stored.  This bookkeeping is done to avoid introducing
- * duplicated points at shared subdivision edges. */
-static void
-getSurfacePoints(
-	         struct ON_Brep_CDT_Face_State *f,
-	         struct cdt_surf_info *sinfo,
-		 fastf_t u1,
-		 fastf_t u2,
-		 fastf_t v1,
-		 fastf_t v2,
-		 fastf_t min_dist,
-		 fastf_t within_dist,
-		 fastf_t cos_within_ang,
-		 bool left,
-		 bool below)
-{
-    double ldfactor = 2.0;
-    int split_u = 0;
-    int split_v = 0;
-    ON_2dPoint p2d(0.0, 0.0);
-    fastf_t u = (u1 + u2) / 2.0;
-    fastf_t v = (v1 + v2) / 2.0;
-    fastf_t udist = u2 - u1;
-    fastf_t vdist = v2 - v1;
-
-    if ((udist < min_dist + ON_ZERO_TOLERANCE)
-	    || (vdist < min_dist + ON_ZERO_TOLERANCE)) {
-	return;
-    }
-
-    double est1 = uline_len_est(sinfo, u1, u2, v1);
-    double est2 = uline_len_est(sinfo, u1, u2, v2);
-    double est3 = vline_len_est(sinfo, u1, v1, v2);
-    double est4 = vline_len_est(sinfo, u2, v1, v2);
-
-    double uavg = (est1+est2)/2.0;
-    double vavg = (est3+est4)/2.0;
-
-#if 0
-    double umin = (est1 < est2) ? est1 : est2;
-    double vmin = (est3 < est4) ? est3 : est4;
-    double umax = (est1 > est2) ? est1 : est2;
-    double vmax = (est3 > est4) ? est3 : est4;
-
-    bu_log("umin,vmin: %f, %f\n", umin, vmin);
-    bu_log("umax,vmax: %f, %f\n", umax, vmax);
-    bu_log("uavg,vavg: %f, %f\n", uavg, vavg);
-    bu_log("min_edge %f\n", sinfo->min_edge);
-#endif
-    if (est1 < 0.01*within_dist && est2 < 0.01*within_dist) {
-	//bu_log("e12 Small estimates: %f, %f\n", est1, est2);
-	return;
-    }
-    if (est3 < 0.01*within_dist && est4 < 0.01*within_dist) {
-	//bu_log("e34 Small estimates: %f, %f\n", est3, est4);
-	return;
-    }
-
-    if (uavg < sinfo->min_edge || vavg < sinfo->min_edge) {
-	return;
-    }
-
-
-    if (uavg > ldfactor * vavg) {
-	split_u = 1;
-    }
-
-    if (vavg > ldfactor * uavg) {
-	split_v = 1;
-    }
-
-    if (!split_u || !split_v) {
-	// Don't know if we're splitting in at least one direction - check if we're close
-	// enough to trims to need to worry about edges
-	double min_edge_len;
-	if (involves_trims(&min_edge_len, f->s_cdt, sinfo, u1, u2, v1, v2)) {
-	    if (uavg > min_edge_len && vavg > min_edge_len) {
-		split_u = 1;
-	    }
-
-	    if (uavg > min_edge_len && vavg > min_edge_len) {
-		split_v = 1;
-	    }
-	}
-    }
-
-    if (!split_u || !split_v) {
-	// Don't know if we're splitting in at least one direction - check dot products
-	ON_3dPoint mid(0.0, 0.0, 0.0);
-	ON_3dVector norm_mid(0.0, 0.0, 0.0);
-	ON_3dPoint p[4] = {ON_3dPoint(), ON_3dPoint(), ON_3dPoint(), ON_3dPoint()};
-	ON_3dVector norm[4] = {ON_3dVector(), ON_3dVector(), ON_3dVector(), ON_3dVector()};
-	if ((surface_EvNormal(sinfo->s, u1, v1, p[0], norm[0]))
-		&& (surface_EvNormal(sinfo->s, u2, v1, p[1], norm[1])) // for u
-		&& (surface_EvNormal(sinfo->s, u2, v2, p[2], norm[2]))
-		&& (surface_EvNormal(sinfo->s, u1, v2, p[3], norm[3]))
-		&& (surface_EvNormal(sinfo->s, u, v, mid, norm_mid))) {
-	    double udot;
-	    double vdot;
-	    ON_Line line1(p[0], p[2]);
-	    ON_Line line2(p[1], p[3]);
-	    double dist = mid.DistanceTo(line1.ClosestPointTo(mid));
-	    V_MAX(dist, mid.DistanceTo(line2.ClosestPointTo(mid)));
-
-
-	    for (int i = 0; i < 4; i++) {
-		fastf_t uc = (i == 0 || i == 3) ? u1 : u2;
-		fastf_t vc = (i == 0 || i == 1) ? v1 : v2;
-		ON_3dPoint *vnorm = singular_trim_norm(sinfo, uc, vc);
-		if (vnorm && ON_DotProduct(*vnorm, norm_mid) > 0) {
-		    //bu_log("vert norm %f %f %f works\n", vnorm->x, vnorm->y, vnorm->z);
-		    norm[i] = *vnorm;
-		}
-	    }
-
-
-	    if (dist < min_dist + ON_ZERO_TOLERANCE) {
-		return;
-	    }
-
-	    udot = (VNEAR_EQUAL(norm[0], norm[1], ON_ZERO_TOLERANCE)) ? 1.0 : norm[0] * norm[1];
-	    vdot = (VNEAR_EQUAL(norm[0], norm[3], ON_ZERO_TOLERANCE)) ? 1.0 : norm[0] * norm[3];
-	    if (udot < cos_within_ang - ON_ZERO_TOLERANCE) {
-		split_u = 1;
-	    }
-	    if (vdot < cos_within_ang - ON_ZERO_TOLERANCE) {
-		split_v = 1;
-	    }
-	}
-    }
-
-    if (split_u && split_v) {
-	//bu_log("split: both cos_within_ang\n");
-	if (left) {
-	    f->on_surf_points->insert(new ON_2dPoint(u1, v));
-	}
-	if (below) {
-	    f->on_surf_points->insert(new ON_2dPoint(u, v1));
-	}
-	//center
-	f->on_surf_points->insert(new ON_2dPoint(u, v));
-	//right
-	f->on_surf_points->insert(new ON_2dPoint(u2, v));
-	//top
-	f->on_surf_points->insert(new ON_2dPoint(u, v2));
-
-	getSurfacePoints(f, sinfo, u1, u, v1, v, min_dist, within_dist,
-		cos_within_ang, left, below);
-	getSurfacePoints(f, sinfo, u1, u, v, v2, min_dist, within_dist,
-		cos_within_ang, left, false);
-	getSurfacePoints(f, sinfo, u, u2, v1, v, min_dist, within_dist,
-		cos_within_ang, false, below);
-	getSurfacePoints(f, sinfo, u, u2, v, v2, min_dist, within_dist,
-		cos_within_ang, false, false);
-	return;
-    }
-    if (split_u) {
-	//bu_log("split: udot cos_within_ang\n");
-	if (below) {
-	    f->on_surf_points->insert(new ON_2dPoint(u, v1));
-	}
-	//top
-	f->on_surf_points->insert(new ON_2dPoint(u, v2));
-	getSurfacePoints(f, sinfo, u1, u, v1, v2, min_dist, within_dist,
-		cos_within_ang, left, below);
-	getSurfacePoints(f, sinfo, u, u2, v1, v2, min_dist, within_dist,
-		cos_within_ang, false, below);
-	return;
-    }
-    if (split_v) {
-	//bu_log("split: vdot cos_within_ang\n");
-	if (left) {
-	    f->on_surf_points->insert(new ON_2dPoint(u1, v));
-	}
-	//right
-	f->on_surf_points->insert(new ON_2dPoint(u2, v));
-
-	getSurfacePoints(f, sinfo, u1, u2, v1, v, min_dist, within_dist,
-		cos_within_ang, left, below);
-	getSurfacePoints(f, sinfo, u1, u2, v, v2, min_dist, within_dist,
-		cos_within_ang, left, false);
-	return;
-    }
-
-    if (left) {
-	f->on_surf_points->insert(new ON_2dPoint(u1, v));
-    }
-    if (below) {
-	f->on_surf_points->insert(new ON_2dPoint(u, v1));
-    }
-    //center
-    f->on_surf_points->insert(new ON_2dPoint(u, v));
-    //right
-    f->on_surf_points->insert(new ON_2dPoint(u2, v));
-    //top
-    f->on_surf_points->insert(new ON_2dPoint(u, v2));
-}
-
-
 /* flags identifying which side of the surface we're calculating
  *
  *                        u_upper
@@ -531,7 +332,188 @@ filter_surface_edge_pnts(struct ON_Brep_CDT_Face_State *f)
     }
 }
 
+static bool
+getSurfacePoints(
+	         struct ON_Brep_CDT_Face_State *f,
+	         struct cdt_surf_info *sinfo,
+		 fastf_t u1,
+		 fastf_t u2,
+		 fastf_t v1,
+		 fastf_t v2,
+		 fastf_t min_dist,
+		 fastf_t within_dist,
+		 fastf_t cos_within_ang,
+		 bool left,
+		 bool below)
+{
+    double ldfactor = 2.0;
+    int split_u = 0;
+    int split_v = 0;
+    ON_2dPoint p2d(0.0, 0.0);
+    fastf_t u = (u1 + u2) / 2.0;
+    fastf_t v = (v1 + v2) / 2.0;
+    fastf_t udist = u2 - u1;
+    fastf_t vdist = v2 - v1;
 
+    if ((udist < min_dist + ON_ZERO_TOLERANCE)
+	    || (vdist < min_dist + ON_ZERO_TOLERANCE)) {
+	return false;
+    }
+
+    double est1 = uline_len_est(sinfo, u1, u2, v1);
+    double est2 = uline_len_est(sinfo, u1, u2, v2);
+    double est3 = vline_len_est(sinfo, u1, v1, v2);
+    double est4 = vline_len_est(sinfo, u2, v1, v2);
+
+    double uavg = (est1+est2)/2.0;
+    double vavg = (est3+est4)/2.0;
+
+#if 0
+    double umin = (est1 < est2) ? est1 : est2;
+    double vmin = (est3 < est4) ? est3 : est4;
+    double umax = (est1 > est2) ? est1 : est2;
+    double vmax = (est3 > est4) ? est3 : est4;
+
+    bu_log("umin,vmin: %f, %f\n", umin, vmin);
+    bu_log("umax,vmax: %f, %f\n", umax, vmax);
+    bu_log("uavg,vavg: %f, %f\n", uavg, vavg);
+    bu_log("min_edge %f\n", sinfo->min_edge);
+#endif
+    if (est1 < 0.01*within_dist && est2 < 0.01*within_dist) {
+	//bu_log("e12 Small estimates: %f, %f\n", est1, est2);
+	return false;
+    }
+    if (est3 < 0.01*within_dist && est4 < 0.01*within_dist) {
+	//bu_log("e34 Small estimates: %f, %f\n", est3, est4);
+	return false;
+    }
+
+    if (uavg < sinfo->min_edge || vavg < sinfo->min_edge) {
+	return false;
+    }
+
+
+    if (uavg > ldfactor * vavg) {
+	split_u = 1;
+    }
+
+    if (vavg > ldfactor * uavg) {
+	split_v = 1;
+    }
+
+    if (!split_u || !split_v) {
+	// Don't know if we're splitting in at least one direction - check if we're close
+	// enough to trims to need to worry about edges
+	double min_edge_len;
+	if (involves_trims(&min_edge_len, f->s_cdt, sinfo, u1, u2, v1, v2)) {
+	    if (uavg > min_edge_len && vavg > min_edge_len) {
+		split_u = 1;
+	    }
+
+	    if (uavg > min_edge_len && vavg > min_edge_len) {
+		split_v = 1;
+	    }
+	}
+    }
+
+    if (!split_u || !split_v) {
+	// Don't know if we're splitting in at least one direction - check dot products
+	ON_3dPoint mid(0.0, 0.0, 0.0);
+	ON_3dVector norm_mid(0.0, 0.0, 0.0);
+	ON_3dPoint p[4] = {ON_3dPoint(), ON_3dPoint(), ON_3dPoint(), ON_3dPoint()};
+	ON_3dVector norm[4] = {ON_3dVector(), ON_3dVector(), ON_3dVector(), ON_3dVector()};
+	if ((surface_EvNormal(sinfo->s, u1, v1, p[0], norm[0]))
+		&& (surface_EvNormal(sinfo->s, u2, v1, p[1], norm[1])) // for u
+		&& (surface_EvNormal(sinfo->s, u2, v2, p[2], norm[2]))
+		&& (surface_EvNormal(sinfo->s, u1, v2, p[3], norm[3]))
+		&& (surface_EvNormal(sinfo->s, u, v, mid, norm_mid))) {
+	    double udot;
+	    double vdot;
+	    ON_Line line1(p[0], p[2]);
+	    ON_Line line2(p[1], p[3]);
+	    double dist = mid.DistanceTo(line1.ClosestPointTo(mid));
+	    V_MAX(dist, mid.DistanceTo(line2.ClosestPointTo(mid)));
+
+
+	    for (int i = 0; i < 4; i++) {
+		fastf_t uc = (i == 0 || i == 3) ? u1 : u2;
+		fastf_t vc = (i == 0 || i == 1) ? v1 : v2;
+		ON_3dPoint *vnorm = singular_trim_norm(sinfo, uc, vc);
+		if (vnorm && ON_DotProduct(*vnorm, norm_mid) > 0) {
+		    //bu_log("vert norm %f %f %f works\n", vnorm->x, vnorm->y, vnorm->z);
+		    norm[i] = *vnorm;
+		}
+	    }
+
+
+	    if (dist < min_dist + ON_ZERO_TOLERANCE) {
+		return false;
+	    }
+
+	    udot = (VNEAR_EQUAL(norm[0], norm[1], ON_ZERO_TOLERANCE)) ? 1.0 : norm[0] * norm[1];
+	    vdot = (VNEAR_EQUAL(norm[0], norm[3], ON_ZERO_TOLERANCE)) ? 1.0 : norm[0] * norm[3];
+	    if (udot < cos_within_ang - ON_ZERO_TOLERANCE) {
+		split_u = 1;
+	    }
+	    if (vdot < cos_within_ang - ON_ZERO_TOLERANCE) {
+		split_v = 1;
+	    }
+	}
+    }
+
+    bool split;
+    if (split_u && split_v) {
+	split = getSurfacePoints(f, sinfo, u1, u, v1, v, min_dist, within_dist, cos_within_ang, left, below);
+	if (!split) {
+	    ON_BoundingBox bb(ON_2dPoint(u1, v1),ON_2dPoint(u,v));
+	    sinfo->leaf_bboxes.insert(new ON_BoundingBox(bb));
+	}
+	split = getSurfacePoints(f, sinfo, u1, u, v, v2, min_dist, within_dist, cos_within_ang, left, false);
+	if (!split) {
+	    ON_BoundingBox bb(ON_2dPoint(u1,v),ON_2dPoint(u,v2));
+	    sinfo->leaf_bboxes.insert(new ON_BoundingBox(bb));
+	}
+	split = getSurfacePoints(f, sinfo, u, u2, v1, v, min_dist, within_dist, cos_within_ang, false, below);
+	if (!split) {
+	    ON_BoundingBox bb(ON_2dPoint(u,v1),ON_2dPoint(u2,v));
+	    sinfo->leaf_bboxes.insert(new ON_BoundingBox(bb));
+	}
+	split = getSurfacePoints(f, sinfo, u, u2, v, v2, min_dist, within_dist, cos_within_ang, false, false);
+	if (!split) {
+	    ON_BoundingBox bb(ON_2dPoint(u,v),ON_2dPoint(u2,v2));
+	    sinfo->leaf_bboxes.insert(new ON_BoundingBox(bb));
+	}
+	return true;
+    }
+    if (split_u) {
+	split = getSurfacePoints(f, sinfo, u1, u, v1, v2, min_dist, within_dist, cos_within_ang, left, below);
+	if (!split) {
+	    ON_BoundingBox bb(ON_2dPoint(u1, v1),ON_2dPoint(u,v2));
+	    sinfo->leaf_bboxes.insert(new ON_BoundingBox(bb));
+	}
+	split = getSurfacePoints(f, sinfo, u, u2, v1, v2, min_dist, within_dist, cos_within_ang, false, below);
+	if (!split) {
+	    ON_BoundingBox bb(ON_2dPoint(u,v1),ON_2dPoint(u2,v2));
+	    sinfo->leaf_bboxes.insert(new ON_BoundingBox(bb));
+	}
+	return true;
+    }
+    if (split_v) {
+	split = getSurfacePoints(f, sinfo, u1, u2, v1, v, min_dist, within_dist, cos_within_ang, left, below);
+	if (!split) {
+	    ON_BoundingBox bb(ON_2dPoint(u1,v1),ON_2dPoint(u2,v));
+	    sinfo->leaf_bboxes.insert(new ON_BoundingBox(bb));
+	}
+	split = getSurfacePoints(f, sinfo, u1, u2, v, v2, min_dist, within_dist, cos_within_ang, left, false);
+	if (!split) {
+	    ON_BoundingBox bb(ON_2dPoint(u1,v),ON_2dPoint(u2,v2));
+	    sinfo->leaf_bboxes.insert(new ON_BoundingBox(bb));
+	}
+	return true;
+    }
+
+    return false;
+}
 
 void
 getSurfacePoints(struct ON_Brep_CDT_Face_State *f)
@@ -611,10 +593,10 @@ getSurfacePoints(struct ON_Brep_CDT_Face_State *f)
 	    //    min_dist = within_dist;
 	    //}
 	} else if ((f->s_cdt->abs > 0.0 + ON_ZERO_TOLERANCE)
-		   && (f->s_cdt->norm < 0.0 + ON_ZERO_TOLERANCE)) {
+		&& (f->s_cdt->norm < 0.0 + ON_ZERO_TOLERANCE)) {
 	    within_dist = min_dist;
 	} else if ((f->s_cdt->abs > 0.0 + ON_ZERO_TOLERANCE)
-		   || (f->s_cdt->norm > 0.0 + ON_ZERO_TOLERANCE)) {
+		|| (f->s_cdt->norm > 0.0 + ON_ZERO_TOLERANCE)) {
 	    within_dist = dist;
 	} else {
 	    within_dist = 0.01 * dist; // default to 1% minimum surface distance
@@ -628,259 +610,227 @@ getSurfacePoints(struct ON_Brep_CDT_Face_State *f)
 
 
 
-        /**
+	/**
 	 * Sample portions of the surface to collect sufficient points
 	 * to capture the surface shape according to the settings
 	 *
-         * M = max
-         * m = min
-         * o = mid
-         *
-         *    umvM------uovM-------uMvM
-         *     |          |         |
-         *     |          |         |
-         *     |          |         |
-         *    umvo------uovo-------uMvo
-         *     |          |         |
-         *     |          |         |
-         *     |          |         |
-         *    umvm------uovm-------uMvm
-         *
-         * left bottom  = umvm
-         * left midy    = umvo
-         * left top     = umvM
-         * midx bottom  = uovm
-         * midx midy    = uovo
-         * midx top     = uovM
-         * right bottom = uMvm
-         * right midy   = uMvo
-         * right top    = uMvM
-         */
+	 * M = max
+	 * m = min
+	 * o = mid
+	 *
+	 *    umvM------uovM-------uMvM
+	 *     |          |         |
+	 *     |          |         |
+	 *     |          |         |
+	 *    umvo------uovo-------uMvo
+	 *     |          |         |
+	 *     |          |         |
+	 *     |          |         |
+	 *    umvm------uovm-------uMvm
+	 *
+	 * left bottom  = umvm
+	 * left midy    = umvo
+	 * left top     = umvM
+	 * midx bottom  = uovm
+	 * midx midy    = uovo
+	 * midx top     = uovM
+	 * right bottom = uMvm
+	 * right midy   = uMvo
+	 * right top    = uMvM
+	 */
 
 	ON_BOOL32 uclosed = s->IsClosed(0);
 	ON_BOOL32 vclosed = s->IsClosed(1);
 	double midx = (min.x + max.x) / 2.0;
 	double midy = (min.y + max.y) / 2.0;
+	bool split;
 
 	if (uclosed && vclosed) {
+	    /*
+	     *     #--------------------#
+	     *     |          |         |
+	     *     |          |         |
+	     *     |          |         |
+	     *    umvo------uovo--------#
+	     *     |          |         |
+	     *     |          |         |
+	     *     |          |         |
+	     *    umvm------uovm--------#
+	     */
+	    split = getSurfacePoints(f, &sinfo, min.x, midx, min.y, midy, min_dist, within_dist, cos_within_ang, true, true);
+	    if (!split) {
+		ON_BoundingBox bb(ON_2dPoint(min.x,min.y),ON_2dPoint(midx,midy));
+		sinfo.leaf_bboxes.insert(new ON_BoundingBox(bb));
+	    }
 
-	    //left bottom
-	    f->on_surf_points->insert(new ON_2dPoint(min.x, min.y));
-
-	    //left midy
-	    f->on_surf_points->insert(new ON_2dPoint(min.x, midy));
-
-            /*
-             *     #--------------------#
-             *     |          |         |
-             *     |          |         |
-             *     |          |         |
-             *    umvo------uovo--------#
-             *     |          |         |
-             *     |          |         |
-             *     |          |         |
-             *    umvm------uovm--------#
-             */
-	    getSurfacePoints(f, &sinfo, min.x, midx, min.y, midy, min_dist, within_dist,
-			     cos_within_ang, true, true);
-
-	    //midx bottom
-	    f->on_surf_points->insert(new ON_2dPoint(midx, min.y));
-
-	    //midx midy
-	    f->on_surf_points->insert(new ON_2dPoint(midx, midy));
+	    /*
+	     *     #----------#---------#
+	     *     |          |         |
+	     *     |          |         |
+	     *     |          |         |
+	     *     #--------uovo-------uMvo
+	     *     |          |         |
+	     *     |          |         |
+	     *     |          |         |
+	     *     #--------uovm-------uMvm
+	     */
+	    split = getSurfacePoints(f, &sinfo, midx, max.x, min.y, midy, min_dist, within_dist, cos_within_ang, false, true);
+	    if (!split) {
+		ON_BoundingBox bb(ON_2dPoint(midx,min.y),ON_2dPoint(max.x,midy));
+		sinfo.leaf_bboxes.insert(new ON_BoundingBox(bb));
+	    }
 
 
-           /*
-            *     #----------#---------#
-            *     |          |         |
-            *     |          |         |
-            *     |          |         |
-            *     #--------uovo-------uMvo
-            *     |          |         |
-            *     |          |         |
-            *     |          |         |
-            *     #--------uovm-------uMvm
-            */
-	    getSurfacePoints(f, &sinfo, midx, max.x, min.y, midy, min_dist, within_dist,
-			     cos_within_ang, false, true);
+	    /*
+	     *    umvM------uovM--------#
+	     *     |          |         |
+	     *     |          |         |
+	     *     |          |         |
+	     *    umvo------uovo--------#
+	     *     |          |         |
+	     *     |          |         |
+	     *     |          |         |
+	     *     #----------#---------#
+	     */
+	    split = getSurfacePoints(f, &sinfo, min.x, midx, midy, max.y, min_dist, within_dist, cos_within_ang, true, false);
+	    if (!split) {
+		ON_BoundingBox bb(ON_2dPoint(min.x,midy),ON_2dPoint(midx,max.y));
+		sinfo.leaf_bboxes.insert(new ON_BoundingBox(bb));
+	    }
 
-	    //right bottom
-	    f->on_surf_points->insert(new ON_2dPoint(max.x, min.y));
-
-	    //right midy
-	    f->on_surf_points->insert(new ON_2dPoint(max.x, midy));
-
-	    //left top
-	    f->on_surf_points->insert(new ON_2dPoint(min.x, max.y));
-
-           /*
-            *    umvM------uovM--------#
-            *     |          |         |
-            *     |          |         |
-            *     |          |         |
-            *    umvo------uovo--------#
-            *     |          |         |
-            *     |          |         |
-            *     |          |         |
-            *     #----------#---------#
-            */
-	    getSurfacePoints(f, &sinfo, min.x, midx, midy, max.y, min_dist, within_dist,
-			     cos_within_ang, true, false);
-
-	    //midx top
-	    f->on_surf_points->insert(new ON_2dPoint(midx, max.y));
-
-           /*
-            *     #--------uovM------ uMvM
-            *     |          |         |
-            *     |          |         |
-            *     |          |         |
-            *     #--------uovo-------uMvo
-            *     |          |         |
-            *     |          |         |
-            *     |          |         |
-            *     #----------#---------#
-            */
-	    getSurfacePoints(f, &sinfo, midx, max.x, midy, max.y, min_dist, within_dist,
-			     cos_within_ang, false, false);
-
-	    //left top
-	    f->on_surf_points->insert(new ON_2dPoint(max.x, max.y));
+	    /*
+	     *     #--------uovM------ uMvM
+	     *     |          |         |
+	     *     |          |         |
+	     *     |          |         |
+	     *     #--------uovo-------uMvo
+	     *     |          |         |
+	     *     |          |         |
+	     *     |          |         |
+	     *     #----------#---------#
+	     */
+	    split = getSurfacePoints(f, &sinfo, midx, max.x, midy, max.y, min_dist, within_dist, cos_within_ang, false, false);
+	    if (!split) {
+		ON_BoundingBox bb(ON_2dPoint(midx,midy),ON_2dPoint(max.x,max.y));
+		sinfo.leaf_bboxes.insert(new ON_BoundingBox(bb));
+	    }
 
 	} else if (uclosed) {
 
-	    //left bottom
-	    f->on_surf_points->insert(new ON_2dPoint(min.x, min.y));
+	    /*
+	     *    umvM------uovM--------#
+	     *     |          |         |
+	     *     |          |         |
+	     *     |          |         |
+	     *     #----------#---------#
+	     *     |          |         |
+	     *     |          |         |
+	     *     |          |         |
+	     *    umvm------uovm--------#
+	     */
+	    split = getSurfacePoints(f, &sinfo, min.x, midx, min.y, max.y, min_dist, within_dist, cos_within_ang, true, true);
+	    if (!split) {
+		ON_BoundingBox bb(ON_2dPoint(min.x,min.y),ON_2dPoint(midx,max.y));
+		sinfo.leaf_bboxes.insert(new ON_BoundingBox(bb));
+	    }
 
-	    //left top
-	    f->on_surf_points->insert(new ON_2dPoint(min.x, max.y));
-
-           /*
-            *    umvM------uovM--------#
-            *     |          |         |
-            *     |          |         |
-            *     |          |         |
-            *     #----------#---------#
-            *     |          |         |
-            *     |          |         |
-            *     |          |         |
-            *    umvm------uovm--------#
-            */
-	    getSurfacePoints(f, &sinfo, min.x, midx, min.y, max.y, min_dist,
-			     within_dist, cos_within_ang, true, true);
-
-	    //midx bottom
-	    f->on_surf_points->insert(new ON_2dPoint(midx, min.y));
-
-	    //midx top
-	    f->on_surf_points->insert(new ON_2dPoint(midx, max.y));
-
- 	   /*
-            *     #--------uovM------ uMvM
-            *     |          |         |
-            *     |          |         |
-            *     |          |         |
-            *     #----------#---------#
-            *     |          |         |
-            *     |          |         |
-            *     |          |         |
-            *     #--------uovm-------uMvm
-            */
-	    getSurfacePoints(f, &sinfo, midx, max.x, min.y, max.y, min_dist,
-			     within_dist, cos_within_ang, false, true);
-
-	    //right bottom
-	    f->on_surf_points->insert(new ON_2dPoint(max.x, min.y));
-
-	    //right top
-	    f->on_surf_points->insert(new ON_2dPoint(max.x, max.y));
+	    /*
+	     *     #--------uovM------ uMvM
+	     *     |          |         |
+	     *     |          |         |
+	     *     |          |         |
+	     *     #----------#---------#
+	     *     |          |         |
+	     *     |          |         |
+	     *     |          |         |
+	     *     #--------uovm-------uMvm
+	     */
+	    split = getSurfacePoints(f, &sinfo, midx, max.x, min.y, max.y, min_dist, within_dist, cos_within_ang, false, true);
+	    if (!split) {
+		ON_BoundingBox bb(ON_2dPoint(midx,min.y),ON_2dPoint(max.x,max.y));
+		sinfo.leaf_bboxes.insert(new ON_BoundingBox(bb));
+	    }
 
 	} else if (vclosed) {
 
-	    //left bottom
-	    f->on_surf_points->insert(new ON_2dPoint(min.x, min.y));
+	    /*
+	     *     #----------#---------#
+	     *     |          |         |
+	     *     |          |         |
+	     *     |          |         |
+	     *    umvo--------#--------uMvo
+	     *     |          |         |
+	     *     |          |         |
+	     *     |          |         |
+	     *    umvm--------#--------uMvm
+	     */
+	    split = getSurfacePoints(f, &sinfo, min.x, max.x, min.y, midy, min_dist, within_dist, cos_within_ang, true, true);
+	    if (!split) {
+		ON_BoundingBox bb(ON_2dPoint(min.x,min.y),ON_2dPoint(max.x,midy));
+		sinfo.leaf_bboxes.insert(new ON_BoundingBox(bb));
+	    }
 
-	    //midy left
-	    f->on_surf_points->insert(new ON_2dPoint(min.x, midy));
-
- 	   /*
-            *     #----------#---------#
-            *     |          |         |
-            *     |          |         |
-            *     |          |         |
-            *    umvo--------#--------uMvo
-            *     |          |         |
-            *     |          |         |
-            *     |          |         |
-            *    umvm--------#--------uMvm
-            */
-	    getSurfacePoints(f, &sinfo, min.x, max.x, min.y, midy, min_dist,
-			     within_dist, cos_within_ang, true, true);
-
-	    //right bottom
-	    f->on_surf_points->insert(new ON_2dPoint(max.x, min.y));
-
-	    //midy right
-	    f->on_surf_points->insert(new ON_2dPoint(max.x, midy));
-
-           /*
-            *    umvM--------#------- uMvM
-            *     |          |         |
-            *     |          |         |
-            *     |          |         |
-            *    umvo--------#--------uMvo
-            *     |          |         |
-            *     |          |         |
-            *     |          |         |
-            *     #----------#---------#
-            */
-	    getSurfacePoints(f, &sinfo, min.x, max.x, midy, max.y, min_dist,
-			     within_dist, cos_within_ang, true, false);
-
-	    //left top
-	    f->on_surf_points->insert(new ON_2dPoint(min.x, max.y));
-
-	    //right top
-	    f->on_surf_points->insert(new ON_2dPoint(max.x, max.y));
+	    /*
+	     *    umvM--------#------- uMvM
+	     *     |          |         |
+	     *     |          |         |
+	     *     |          |         |
+	     *    umvo--------#--------uMvo
+	     *     |          |         |
+	     *     |          |         |
+	     *     |          |         |
+	     *     #----------#---------#
+	     */
+	    split = getSurfacePoints(f, &sinfo, min.x, max.x, midy, max.y, min_dist, within_dist, cos_within_ang, true, false);
+	    if (!split) {
+		ON_BoundingBox bb(ON_2dPoint(min.x,midy),ON_2dPoint(max.x,max.y));
+		sinfo.leaf_bboxes.insert(new ON_BoundingBox(bb));
+	    }
 
 	} else {
 
-	    //left bottom
-	    f->on_surf_points->insert(new ON_2dPoint(min.x, min.y));
-
-	    //left top
-	    f->on_surf_points->insert(new ON_2dPoint(min.x, max.y));
-
-           /*
-            *    umvM--------#------- uMvM
-            *     |          |         |
-            *     |          |         |
-            *     |          |         |
-            *     #----------#---------#
-            *     |          |         |
-            *     |          |         |
-            *     |          |         |
-            *    umvm--------#--------uMvm
-            */
-	    getSurfacePoints(f, &sinfo, min.x, max.x, min.y, max.y, min_dist,
-			     within_dist, cos_within_ang, true, true);
-
-	    //right bottom
-	    f->on_surf_points->insert(new ON_2dPoint(max.x, min.y));
-
-	    //right top
-	    f->on_surf_points->insert(new ON_2dPoint(max.x, max.y));
+	    /*
+	     *    umvM--------#------- uMvM
+	     *     |          |         |
+	     *     |          |         |
+	     *     |          |         |
+	     *     #----------#---------#
+	     *     |          |         |
+	     *     |          |         |
+	     *     |          |         |
+	     *    umvm--------#--------uMvm
+	     */
+	    split = getSurfacePoints(f, &sinfo, min.x, max.x, min.y, max.y, min_dist, within_dist, cos_within_ang, true, true);
+	    if (!split) {
+		ON_BoundingBox bb(ON_2dPoint(min.x,min.y),ON_2dPoint(max.x,max.y));
+		sinfo.leaf_bboxes.insert(new ON_BoundingBox(bb));
+	    }
 	}
+
+	float *prand;
+	std::set<ON_BoundingBox *>::iterator b_it;
+	/* We want to jitter sampled 2D points out of linearity */
+	bn_rand_init(prand, 0);
+	for (b_it = sinfo.leaf_bboxes.begin(); b_it != sinfo.leaf_bboxes.end(); b_it++) {
+	    ON_3dPoint p3d = (*b_it)->Center();
+	    ON_3dPoint pmax = (*b_it)->Max();
+	    ON_3dPoint pmin = (*b_it)->Min();
+	    double ulen = pmax.x - pmin.x;
+	    double vlen = pmax.y - pmin.y;
+	    double px = p3d.x + (bn_rand_half(prand) * 0.3*ulen);
+	    double py = p3d.y + (bn_rand_half(prand) * 0.3*vlen);
+	    f->on_surf_points->insert(new ON_2dPoint(px,py));
+	}
+
+	// Strip out points from the surface that are on the trimming curves.  Trim
+	// points require special handling for watertightness and introducing them
+	// from the surface also runs the risk of adding duplicate 2D points, which
+	// aren't allowed for facetization.
+	filter_surface_edge_pnts(f);
+
     }
-
-    // Strip out points from the surface that are on the trimming curves.  Trim
-    // points require special handling for watertightness and introducing them
-    // from the surface also runs the risk of adding duplicate 2D points, which
-    // aren't allowed for facetization.
-    filter_surface_edge_pnts(f);
-
 }
+
 
 /** @} */
 
