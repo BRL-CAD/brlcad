@@ -659,9 +659,10 @@ getSurfacePoints(struct ON_Brep_CDT_Face_State *f)
 
 	ON_BOOL32 uclosed = s->IsClosed(0);
 	ON_BOOL32 vclosed = s->IsClosed(1);
+	double midx = (min.x + max.x) / 2.0;
+	double midy = (min.y + max.y) / 2.0;
+
 	if (uclosed && vclosed) {
-	    double midx = (min.x + max.x) / 2.0;
-	    double midy = (min.y + max.y) / 2.0;
 
 	    //left bottom
 	    f->on_surf_points->insert(new ON_2dPoint(min.x, min.y));
@@ -748,8 +749,6 @@ getSurfacePoints(struct ON_Brep_CDT_Face_State *f)
 	    f->on_surf_points->insert(new ON_2dPoint(max.x, max.y));
 
 	} else if (uclosed) {
-	    ON_2dPoint p(0.0, 0.0);
-	    double midx = (min.x + max.x) / 2.0;
 
 	    //left bottom
 	    f->on_surf_points->insert(new ON_2dPoint(min.x, min.y));
@@ -798,8 +797,6 @@ getSurfacePoints(struct ON_Brep_CDT_Face_State *f)
 	    f->on_surf_points->insert(new ON_2dPoint(max.x, max.y));
 
 	} else if (vclosed) {
-
-	    double midy = (min.y + max.y) / 2.0;
 
 	    //left bottom
 	    f->on_surf_points->insert(new ON_2dPoint(min.x, min.y));

@@ -70,7 +70,6 @@
 #include "common.h"
 #include "./cdt.h"
 
-#define BREP_PLANAR_TOL 0.05
 
 static Edge
 mk_edge(ON_3dPoint *pt_A, ON_3dPoint *pt_B)

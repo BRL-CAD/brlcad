@@ -56,6 +56,7 @@
 #include "brep/pullback.h"
 #include "brep/util.h"
 
+#define BREP_PLANAR_TOL 0.05
 
 /***************************************************/
 typedef std::pair<ON_3dPoint *, ON_3dPoint *> Edge;
