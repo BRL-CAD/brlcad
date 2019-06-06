@@ -122,6 +122,9 @@ struct ON_Brep_CDT_Face_State {
     std::set<p2t::Triangle*> *tris_zero_3D_area;
     EdgeToTri *e2f;
     std::map<Edge, int> *ecnt;
+
+    /* pseudo-random number source */
+    float *prand;
 };
 
 
@@ -255,6 +258,8 @@ void
 trimesh_error_report(struct ON_Brep_CDT_State *s_cdt, int valid_fcnt, int valid_vcnt, int *valid_faces, fastf_t *valid_vertices, struct bg_trimesh_solid_errors *se);
 
 bool build_poly2tri_polylines(struct ON_Brep_CDT_Face_State *f);
+
+p2t::Point * poly2tri_point(const ON_2dPoint *on_p, float *prand);
 
 /** @} */
 
