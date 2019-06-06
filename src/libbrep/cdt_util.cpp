@@ -153,7 +153,7 @@ ON_Brep_CDT_Face_Create(struct ON_Brep_CDT_State *s_cdt, int ind)
 
     fcdt->on2_to_on3_map = new std::map<ON_2dPoint *, ON_3dPoint *>;
     fcdt->on2_to_p2t_map = new std::map<ON_2dPoint *, p2t::Point *>;
-    fcdt->p2t_to_on2_map = new std::map<p2t::Point *, ON_3dPoint *>;
+    fcdt->p2t_to_on2_map = new std::map<p2t::Point *, ON_2dPoint *>;
     fcdt->p2t_to_on3_map = new std::map<p2t::Point *, ON_3dPoint *>;
     fcdt->p2t_to_on3_norm_map = new std::map<p2t::Point *, ON_3dPoint *>;
     fcdt->on3_to_tri_map = new std::map<ON_3dPoint *, std::set<p2t::Point *>>;

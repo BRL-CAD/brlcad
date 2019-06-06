@@ -85,7 +85,7 @@ mk_edge(ON_3dPoint *pt_A, ON_3dPoint *pt_B)
 
 void
 add_tri_edges(struct ON_Brep_CDT_Face_State *f, p2t::Triangle *t,
-	std::map<p2t::Point *, ON_3dPoint *> *pointmap)
+	std::map<p2t::Point *, ON_3dPoint *> *pointmap, std::map<ON_3dPoint *, p2t::Point *> *on3_to_p2t)
 {
     ON_3dPoint *pt_A, *pt_B, *pt_C;
 
@@ -95,6 +95,9 @@ add_tri_edges(struct ON_Brep_CDT_Face_State *f, p2t::Triangle *t,
     pt_A = (*pointmap)[p2_A];
     pt_B = (*pointmap)[p2_B];
     pt_C = (*pointmap)[p2_C];
+    (*on3_to_p2t)[pt_A] = p2_A;
+    (*on3_to_p2t)[pt_B] = p2_B;
+    (*on3_to_p2t)[pt_C] = p2_C;
     (*f->e2f)[(std::make_pair(pt_A, pt_B))].insert(t);
     (*f->e2f)[(std::make_pair(pt_B, pt_C))].insert(t);
     (*f->e2f)[(std::make_pair(pt_C, pt_A))].insert(t);
@@ -121,15 +124,18 @@ add_tri_edges(struct ON_Brep_CDT_Face_State *f, p2t::Triangle *t,
 int
 triangles_check_edges(struct ON_Brep_CDT_Face_State *f)
 {
+    int have_problem_edge = 0;
+    int ret = 0;
     p2t::CDT *cdt = f->cdt;
     std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
+    std::map<ON_3dPoint *, p2t::Point *> on3_to_p2t;
     std::vector<p2t::Triangle*> tris = cdt->GetTriangles();
     for (size_t i = 0; i < tris.size(); i++) {
 	/* Make sure this face isn't degenerate */
 	if (f->tris_degen->find(tris[i]) != f->tris_degen->end()) {
 	    continue;
 	}
-	add_tri_edges(f, tris[i], pointmap);
+	add_tri_edges(f, tris[i], pointmap, &on3_to_p2t);
     }
 
     std::map<ON_3dPoint *, std::set<Edge>> point_to_edges;
@@ -141,6 +147,7 @@ triangles_check_edges(struct ON_Brep_CDT_Face_State *f)
 	    ON_3dPoint *p1 = ec_it->first.first;
 	    ON_3dPoint *p2 = ec_it->first.second;
 	    bu_log("Face %d: single use edge found! %f %f %f -> %f %f %f\n", f->ind, p1->x, p1->y, p1->z, p2->x, p2->y, p2->z);
+	    have_problem_edge = 1;
 	    if (!IsEdgePt(p1)) {
 		point_cnts[p1]++;
 		point_to_edges[p1].insert(ec_it->first);
@@ -157,6 +164,10 @@ triangles_check_edges(struct ON_Brep_CDT_Face_State *f)
 	if (pc_it->second > 1) {
 	    ON_3dPoint *p = pc_it->first;
 	    bu_log("Face %d problem point with %d hits: %f %f %f\n", f->ind, pc_it->second, p->x, p->y, p->z);
+	    p2t::Point *tpnt = on3_to_p2t[p];
+	    ON_2dPoint *spnt = (*f->p2t_to_on2_map)[tpnt];
+	    f->on_surf_points->erase(spnt);
+	    ret = 1;
 	    std::set<Edge> edges = point_to_edges[p];
 	    std::set<Edge>::iterator e_it;
 	    for (e_it = edges.begin(); e_it != edges.end(); e_it++) {
@@ -180,7 +191,13 @@ triangles_check_edges(struct ON_Brep_CDT_Face_State *f)
 	    }
 	}
     }
-    return 0;
+
+    if (have_problem_edge && !ret) {
+	bu_log("Problem edge with no way to resolve it\n");
+	ret = -1;
+    }
+
+    return ret;
 }
 
 

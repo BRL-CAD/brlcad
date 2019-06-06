@@ -188,7 +188,9 @@ do_triangulation(struct ON_Brep_CDT_Face_State *f, int full_surface_sample, int 
     std::set<ON_2dPoint *>::iterator p_it;
     for (p_it = f->on_surf_points->begin(); p_it != f->on_surf_points->end(); p_it++) {
 	ON_2dPoint *p = *p_it;
-	f->cdt->AddPoint(new p2t::Point(p->x, p->y));
+	p2t::Point *tp = new p2t::Point(p->x, p->y);
+	(*f->p2t_to_on2_map)[tp] = p;
+	f->cdt->AddPoint(tp);
     }
 
     // All preliminary steps are complete, perform the triangulation using
