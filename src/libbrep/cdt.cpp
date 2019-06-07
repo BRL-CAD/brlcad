@@ -87,8 +87,9 @@ Process_Loop_Edges(
 	ON_BrepTrim *trim = loop->Trim(lti);
 	ON_BrepEdge *edge = trim->Edge();
 
-	/* Provide 2D points for p2d, but we need to be aware that this will result
-	 * in degenerate 3D faces that we need to filter out when assembling a mesh */
+	/* Provide 2D points for p2d, but we need to be aware that this will
+	 * result in (trivially) degenerate 3D faces that we need to filter out
+	 * when assembling a mesh */
 	if (trim->m_type == ON_BrepTrim::singular) {
 	    BrepTrimPoint btp;
 	    const ON_BrepVertex& v1 = face.Brep()->m_V[trim->m_vi[0]];
@@ -128,33 +129,29 @@ Process_Loop_Edges(
 
 	if (!trim->m_trim_user.p) {
 	    (void)getEdgePoints(s_cdt, edge, *trim, max_dist, DBL_MAX);
-	    //bu_log("Initialized trim->m_trim_user.p: Trim %d (associated with Edge %d) point count: %zd\n", trim->m_trim_index, trim->Edge()->m_edge_index, m->size());
+	    if (!trim->m_trim_user.p) {
+		//bu_log("Failed to initialize trim->m_trim_user.p: Trim %d (associated with Edge %d) point count: %zd\n", trim->m_trim_index, trim->Edge()->m_edge_index, m->size());
+		continue;
+	    }
 	}
-	if (trim->m_trim_user.p) {
-	    std::map<double, BrepTrimPoint *> *param_points3d = (std::map<double, BrepTrimPoint *> *) trim->m_trim_user.p;
-	    //bu_log("Trim %d (associated with Edge %d) point count: %zd\n", trim->m_trim_index, trim->Edge()->m_edge_index, param_points3d->size());
 
-	    ON_3dPoint boxmin;
-	    ON_3dPoint boxmax;
-
-	    if (trim->GetBoundingBox(boxmin, boxmax, false)) {
-		double t0, t1;
-
-		std::map<double, BrepTrimPoint*>::const_iterator i;
-		std::map<double, BrepTrimPoint*>::const_iterator ni;
-
-		trim->GetDomain(&t0, &t1);
-		for (i = param_points3d->begin(); i != param_points3d->end();) {
-		    BrepTrimPoint *btp = (*i).second;
-		    ni = ++i;
-		    // skip last point of trim if not last trim
-		    if (ni == param_points3d->end()) {
-			if (lti < trim_count - 1) {
-			    continue;
-			}
+	// If we can bound it, assemble the trim segments in order on the
+	// loop array (which will in turn be used to generate the poly2tri
+	// polyline for CDT)
+	ON_3dPoint boxmin, boxmax;
+	if (trim->GetBoundingBox(boxmin, boxmax, false)) {
+	    std::map<double, BrepTrimPoint *> *param_points3d = (std::map<double, BrepTrimPoint *> *)trim->m_trim_user.p;
+	    std::map<double, BrepTrimPoint*>::const_iterator i, ni;
+	    for (i = param_points3d->begin(); i != param_points3d->end();) {
+		BrepTrimPoint *btp = (*i).second;
+		ni = ++i;
+		// skip last point of trim if not last trim
+		if (ni == param_points3d->end()) {
+		    if (lti < trim_count - 1) {
+			continue;
 		    }
-		    points->Append(*btp);
 		}
+		points->Append(*btp);
 	    }
 	}
     }
