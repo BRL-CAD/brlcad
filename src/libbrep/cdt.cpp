@@ -71,92 +71,6 @@
 #include "./cdt.h"
 
 #define BREP_PLANAR_TOL 0.05
-
-static void
-Process_Loop_Edges(
-	struct ON_Brep_CDT_State *s_cdt,
-	ON_SimpleArray<BrepTrimPoint> *points,
-	const ON_BrepFace &face,
-	const ON_BrepLoop *loop,
-	fastf_t max_dist
-	)
-{
-    int trim_count = loop->TrimCount();
-
-    for (int lti = 0; lti < trim_count; lti++) {
-	ON_BrepTrim *trim = loop->Trim(lti);
-	ON_BrepEdge *edge = trim->Edge();
-
-	/* Provide 2D points for p2d, but we need to be aware that this will
-	 * result in (trivially) degenerate 3D faces that we need to filter out
-	 * when assembling a mesh */
-	if (trim->m_type == ON_BrepTrim::singular) {
-	    BrepTrimPoint btp;
-	    const ON_BrepVertex& v1 = face.Brep()->m_V[trim->m_vi[0]];
-	    ON_3dPoint *p3d = (*s_cdt->vert_pnts)[v1.m_vertex_index];
-	    (*s_cdt->faces)[face.m_face_index]->strim_pnts->insert(std::make_pair(trim->m_trim_index, p3d));
-	    ON_3dPoint *n3d = (*s_cdt->vert_avg_norms)[v1.m_vertex_index];
-	    if (n3d) {
-		(*s_cdt->faces)[face.m_face_index]->strim_norms->insert(std::make_pair(trim->m_trim_index, n3d));
-	    }
-	    double delta =  trim->Domain().Length() / 10.0;
-	    ON_Interval trim_dom = trim->Domain();
-
-	    for (int i = 1; i <= 10; i++) {
-		btp.p3d = p3d;
-		btp.n3d = n3d;
-		btp.p2d = v1.Point();
-		btp.t = trim->Domain().m_t[0] + (i - 1) * delta;
-		btp.p2d = trim->PointAt(btp.t);
-		btp.e = ON_UNSET_VALUE;
-		points->Append(btp);
-	    }
-	    // skip last point of trim if not last trim
-	    if (lti < trim_count - 1)
-		continue;
-
-	    const ON_BrepVertex& v2 = face.Brep()->m_V[trim->m_vi[1]];
-	    btp.p3d = p3d;
-	    btp.n3d = n3d;
-	    btp.p2d = v2.Point();
-	    btp.t = trim->Domain().m_t[1];
-	    btp.p2d = trim->PointAt(btp.t);
-	    btp.e = ON_UNSET_VALUE;
-	    points->Append(btp);
-
-	    continue;
-	}
-
-	if (!trim->m_trim_user.p) {
-	    (void)getEdgePoints(s_cdt, edge, *trim, max_dist, DBL_MAX);
-	    if (!trim->m_trim_user.p) {
-		//bu_log("Failed to initialize trim->m_trim_user.p: Trim %d (associated with Edge %d) point count: %zd\n", trim->m_trim_index, trim->Edge()->m_edge_index, m->size());
-		continue;
-	    }
-	}
-
-	// If we can bound it, assemble the trim segments in order on the
-	// loop array (which will in turn be used to generate the poly2tri
-	// polyline for CDT)
-	ON_3dPoint boxmin, boxmax;
-	if (trim->GetBoundingBox(boxmin, boxmax, false)) {
-	    std::map<double, BrepTrimPoint *> *param_points3d = (std::map<double, BrepTrimPoint *> *)trim->m_trim_user.p;
-	    std::map<double, BrepTrimPoint*>::const_iterator i, ni;
-	    for (i = param_points3d->begin(); i != param_points3d->end();) {
-		BrepTrimPoint *btp = (*i).second;
-		ni = ++i;
-		// skip last point of trim if not last trim
-		if (ni == param_points3d->end()) {
-		    if (lti < trim_count - 1) {
-			continue;
-		    }
-		}
-		points->Append(*btp);
-	    }
-	}
-    }
-}
-
 #define MAX_TRIANGULATION_ATTEMPTS 5
 
 static int
@@ -248,11 +162,10 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_Face_State *f, std::map<const ON_Surface *, 
     // Use the edge curves and loops to generate an initial set of trim polygons.
     for (int li = 0; li < loop_cnt; li++) {
 	double max_dist = 0.0;
-	const ON_BrepLoop *loop = face.Loop(li);
 	if (s_to_maxdist->find(face.SurfaceOf()) != s_to_maxdist->end()) {
 	    max_dist = (*s_to_maxdist)[face.SurfaceOf()];
 	}
-	Process_Loop_Edges(s_cdt, &brep_loop_points[li], face, loop, max_dist);
+	Process_Loop_Edges(f, li, max_dist);
     }
 
     // Handle a variety of situations that complicate loop handling on closed surfaces

@@ -255,6 +255,10 @@ trimesh_error_report(struct ON_Brep_CDT_State *s_cdt, int valid_fcnt, int valid_
 
 bool build_poly2tri_polylines(struct ON_Brep_CDT_Face_State *f, int init_rtree);
 
+void
+Process_Loop_Edges(struct ON_Brep_CDT_Face_State *f, int li, fastf_t max_dist);
+
+
 /** @} */
 
 // Local Variables:

@@ -601,60 +601,6 @@ populate_3d_pnts(struct ON_Brep_CDT_Face_State *f)
     }
 }
 
-bool
-build_poly2tri_polylines(struct ON_Brep_CDT_Face_State *f, int init_rtree)
-{
-    // Process through loops, building Poly2Tri polygons for facetization.
-    std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
-    std::map<ON_3dPoint *, std::set<p2t::Point *>> *on3_to_tri = f->on3_to_tri_map;
-    std::map<p2t::Point *, ON_3dPoint *> *normalmap = f->p2t_to_on3_norm_map;
-    std::vector<p2t::Point*> polyline;
-    ON_BrepFace &face = f->s_cdt->brep->m_F[f->ind];
-    int loop_cnt = face.LoopCount();
-    ON_SimpleArray<BrepTrimPoint> *brep_loop_points = f->face_loop_points;
-    bool outer = true;
-    for (int li = 0; li < loop_cnt; li++) {
-	int num_loop_points = brep_loop_points[li].Count();
-	if (num_loop_points > 2) {
-	    for (int i = 1; i < num_loop_points; i++) {
-		// map point to last entry to 3d point
-		p2t::Point *p = new p2t::Point((brep_loop_points[li])[i].p2d.x, (brep_loop_points[li])[i].p2d.y);
-		polyline.push_back(p);
-		(*f->p2t_trim_ind)[p] = (brep_loop_points[li])[i].trim_ind;
-		(*pointmap)[p] = (brep_loop_points[li])[i].p3d;
-		(*on3_to_tri)[(brep_loop_points[li])[i].p3d].insert(p);
-		(*normalmap)[p] = (brep_loop_points[li])[i].n3d;
-	    }
-	    if (init_rtree) {
-		for (int i = 1; i < brep_loop_points[li].Count(); i++) {
-		    // map point to last entry to 3d point
-		    ON_Line *line = new ON_Line((brep_loop_points[li])[i - 1].p2d, (brep_loop_points[li])[i].p2d);
-		    ON_BoundingBox bb = line->BoundingBox();
-
-		    bb.m_max.x = bb.m_max.x + ON_ZERO_TOLERANCE;
-		    bb.m_max.y = bb.m_max.y + ON_ZERO_TOLERANCE;
-		    bb.m_max.z = bb.m_max.z + ON_ZERO_TOLERANCE;
-		    bb.m_min.x = bb.m_min.x - ON_ZERO_TOLERANCE;
-		    bb.m_min.y = bb.m_min.y - ON_ZERO_TOLERANCE;
-		    bb.m_min.z = bb.m_min.z - ON_ZERO_TOLERANCE;
-
-		    f->rt_trims->Insert2d(bb.Min(), bb.Max(), line);
-		}
-	    }
-	    if (outer) {
-		if (f->cdt) {
-		    ON_Brep_CDT_Face_Reset(f, init_rtree);
-		}
-		f->cdt = new p2t::CDT(polyline);
-		outer = false;
-	    } else {
-		f->cdt->AddHole(polyline);
-	    }
-	    polyline.clear();
-	}
-    }
-    return outer;
-}
 
 /** @} */
 

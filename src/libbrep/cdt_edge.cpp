@@ -802,6 +802,143 @@ SplitEdgeSegment(
     return 0;
 }
 
+bool
+build_poly2tri_polylines(struct ON_Brep_CDT_Face_State *f, int init_rtree)
+{
+    // Process through loops, building Poly2Tri polygons for facetization.
+    std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
+    std::map<ON_3dPoint *, std::set<p2t::Point *>> *on3_to_tri = f->on3_to_tri_map;
+    std::map<p2t::Point *, ON_3dPoint *> *normalmap = f->p2t_to_on3_norm_map;
+    std::vector<p2t::Point*> polyline;
+    ON_BrepFace &face = f->s_cdt->brep->m_F[f->ind];
+    int loop_cnt = face.LoopCount();
+    ON_SimpleArray<BrepTrimPoint> *brep_loop_points = f->face_loop_points;
+    bool outer = true;
+    for (int li = 0; li < loop_cnt; li++) {
+	int num_loop_points = brep_loop_points[li].Count();
+	if (num_loop_points > 2) {
+	    for (int i = 1; i < num_loop_points; i++) {
+		// map point to last entry to 3d point
+		p2t::Point *p = new p2t::Point((brep_loop_points[li])[i].p2d.x, (brep_loop_points[li])[i].p2d.y);
+		polyline.push_back(p);
+		(*f->p2t_trim_ind)[p] = (brep_loop_points[li])[i].trim_ind;
+		(*pointmap)[p] = (brep_loop_points[li])[i].p3d;
+		(*on3_to_tri)[(brep_loop_points[li])[i].p3d].insert(p);
+		(*normalmap)[p] = (brep_loop_points[li])[i].n3d;
+	    }
+	    if (init_rtree) {
+		for (int i = 1; i < brep_loop_points[li].Count(); i++) {
+		    // map point to last entry to 3d point
+		    ON_Line *line = new ON_Line((brep_loop_points[li])[i - 1].p2d, (brep_loop_points[li])[i].p2d);
+		    ON_BoundingBox bb = line->BoundingBox();
+
+		    bb.m_max.x = bb.m_max.x + ON_ZERO_TOLERANCE;
+		    bb.m_max.y = bb.m_max.y + ON_ZERO_TOLERANCE;
+		    bb.m_max.z = bb.m_max.z + ON_ZERO_TOLERANCE;
+		    bb.m_min.x = bb.m_min.x - ON_ZERO_TOLERANCE;
+		    bb.m_min.y = bb.m_min.y - ON_ZERO_TOLERANCE;
+		    bb.m_min.z = bb.m_min.z - ON_ZERO_TOLERANCE;
+
+		    f->rt_trims->Insert2d(bb.Min(), bb.Max(), line);
+		}
+	    }
+	    if (outer) {
+		if (f->cdt) {
+		    ON_Brep_CDT_Face_Reset(f, init_rtree);
+		}
+		f->cdt = new p2t::CDT(polyline);
+		outer = false;
+	    } else {
+		f->cdt->AddHole(polyline);
+	    }
+	    polyline.clear();
+	}
+    }
+    return outer;
+}
+
+void
+Process_Loop_Edges(struct ON_Brep_CDT_Face_State *f, int li, fastf_t max_dist)
+{
+    struct ON_Brep_CDT_State *s_cdt = f->s_cdt;
+    ON_SimpleArray<BrepTrimPoint> *points = &(f->face_loop_points[li]);
+    const ON_BrepFace &face = s_cdt->brep->m_F[f->ind];
+    const ON_BrepLoop *loop = face.Loop(li);
+    int trim_count = loop->TrimCount();
+
+    for (int lti = 0; lti < trim_count; lti++) {
+	ON_BrepTrim *trim = loop->Trim(lti);
+	ON_BrepEdge *edge = trim->Edge();
+
+	/* Provide 2D points for p2d, but we need to be aware that this will
+	 * result in (trivially) degenerate 3D faces that we need to filter out
+	 * when assembling a mesh */
+	if (trim->m_type == ON_BrepTrim::singular) {
+	    BrepTrimPoint btp;
+	    const ON_BrepVertex& v1 = face.Brep()->m_V[trim->m_vi[0]];
+	    ON_3dPoint *p3d = (*s_cdt->vert_pnts)[v1.m_vertex_index];
+	    (*s_cdt->faces)[face.m_face_index]->strim_pnts->insert(std::make_pair(trim->m_trim_index, p3d));
+	    ON_3dPoint *n3d = (*s_cdt->vert_avg_norms)[v1.m_vertex_index];
+	    if (n3d) {
+		(*s_cdt->faces)[face.m_face_index]->strim_norms->insert(std::make_pair(trim->m_trim_index, n3d));
+	    }
+	    double delta =  trim->Domain().Length() / 10.0;
+	    ON_Interval trim_dom = trim->Domain();
+
+	    for (int i = 1; i <= 10; i++) {
+		btp.p3d = p3d;
+		btp.n3d = n3d;
+		btp.p2d = v1.Point();
+		btp.t = trim->Domain().m_t[0] + (i - 1) * delta;
+		btp.p2d = trim->PointAt(btp.t);
+		btp.e = ON_UNSET_VALUE;
+		points->Append(btp);
+	    }
+	    // skip last point of trim if not last trim
+	    if (lti < trim_count - 1)
+		continue;
+
+	    const ON_BrepVertex& v2 = face.Brep()->m_V[trim->m_vi[1]];
+	    btp.p3d = p3d;
+	    btp.n3d = n3d;
+	    btp.p2d = v2.Point();
+	    btp.t = trim->Domain().m_t[1];
+	    btp.p2d = trim->PointAt(btp.t);
+	    btp.e = ON_UNSET_VALUE;
+	    points->Append(btp);
+
+	    continue;
+	}
+
+	if (!trim->m_trim_user.p) {
+	    (void)getEdgePoints(s_cdt, edge, *trim, max_dist, DBL_MAX);
+	    if (!trim->m_trim_user.p) {
+		//bu_log("Failed to initialize trim->m_trim_user.p: Trim %d (associated with Edge %d) point count: %zd\n", trim->m_trim_index, trim->Edge()->m_edge_index, m->size());
+		continue;
+	    }
+	}
+
+	// If we can bound it, assemble the trim segments in order on the
+	// loop array (which will in turn be used to generate the poly2tri
+	// polyline for CDT)
+	ON_3dPoint boxmin, boxmax;
+	if (trim->GetBoundingBox(boxmin, boxmax, false)) {
+	    std::map<double, BrepTrimPoint *> *param_points3d = (std::map<double, BrepTrimPoint *> *)trim->m_trim_user.p;
+	    std::map<double, BrepTrimPoint*>::const_iterator i, ni;
+	    for (i = param_points3d->begin(); i != param_points3d->end();) {
+		BrepTrimPoint *btp = (*i).second;
+		ni = ++i;
+		// skip last point of trim if not last trim
+		if (ni == param_points3d->end()) {
+		    if (lti < trim_count - 1) {
+			continue;
+		    }
+		}
+		points->Append(*btp);
+	    }
+	}
+    }
+}
 
 
 /** @} */
