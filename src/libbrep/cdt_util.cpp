@@ -83,6 +83,13 @@ cdt_ainfo(int fid, int vid, int tid, int eid, fastf_t x2d, fastf_t y2d, fastf_t 
 }
 
 void
+CDT_Add2DPnt(struct ON_Brep_CDT_Face_State *f, ON_2dPoint *p, int fid, int vid, int tid, int eid, fastf_t tparam)
+{
+    f->w2dpnts->push_back(p);
+    (*f->pnt2d_audit_info)[p] = cdt_ainfo(fid, vid, tid, eid, tid, tparam, 0.0, 0.0, 0.0);
+}
+
+void
 CDT_Add3DPnt(struct ON_Brep_CDT_State *s, ON_3dPoint *p, int fid, int vid, int tid, int eid, fastf_t x2d, fastf_t y2d)
 {
     s->w3dpnts->push_back(p);
@@ -145,6 +152,7 @@ ON_Brep_CDT_Face_Create(struct ON_Brep_CDT_State *s_cdt, int ind)
     fcdt->s_cdt = s_cdt;
     fcdt->ind = ind;
 
+    fcdt->w2dpnts = new std::vector<ON_2dPoint *>;
     fcdt->w3dpnts = new std::vector<ON_3dPoint *>;
     fcdt->w3dnorms = new std::vector<ON_3dPoint *>;
 
@@ -229,6 +237,9 @@ ON_Brep_CDT_Face_Reset(struct ON_Brep_CDT_Face_State *fcdt, int full_surface_sam
 void
 ON_Brep_CDT_Face_Destroy(struct ON_Brep_CDT_Face_State *fcdt)
 {
+    for (size_t i = 0; i < fcdt->w2dpnts->size(); i++) {
+	delete (*(fcdt->w2dpnts))[i];
+    }
     for (size_t i = 0; i < fcdt->w3dpnts->size(); i++) {
 	delete (*(fcdt->w3dpnts))[i];
     }
@@ -242,6 +253,7 @@ ON_Brep_CDT_Face_Destroy(struct ON_Brep_CDT_Face_State *fcdt)
 	delete t;
     }
 
+    delete fcdt->w2dpnts;
     delete fcdt->w3dpnts;
     delete fcdt->w3dnorms;
     if (fcdt->face_loop_points) {

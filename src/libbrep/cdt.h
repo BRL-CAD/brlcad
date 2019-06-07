@@ -90,8 +90,10 @@ struct ON_Brep_CDT_State;
 struct ON_Brep_CDT_Face_State {
     struct ON_Brep_CDT_State *s_cdt;
     int ind;
+    std::map<ON_2dPoint *, struct cdt_audit_info *> *pnt2d_audit_info;
 
     /* 3D data specific to this face (i.e. not shared at an edge) */
+    std::vector<ON_2dPoint *> *w2dpnts;
     std::vector<ON_3dPoint *> *w3dpnts;
     std::vector<ON_3dPoint *> *w3dnorms;
 
@@ -230,6 +232,8 @@ void
 add_tri_edges(EdgeToTri *e2f, p2t::Triangle *t,
     std::map<p2t::Point *, ON_3dPoint *> *pointmap);
 
+void
+CDT_Add2DPnt(struct ON_Brep_CDT_Face_State *f, ON_2dPoint *p, int fid, int vid, int tid, int eid, fastf_t tparam);
 void
 CDT_Add3DPnt(struct ON_Brep_CDT_State *s, ON_3dPoint *p, int fid, int vid, int tid, int eid, fastf_t x2d, fastf_t y2d);
 void
