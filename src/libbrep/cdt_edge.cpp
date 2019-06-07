@@ -29,6 +29,29 @@
 #include "common.h"
 #include "./cdt.h"
 
+BrepTrimPoint *
+Add_BrepTrimPoint(
+	struct ON_Brep_CDT_State *s_cdt,
+	std::map<double, BrepTrimPoint *> *tpp,
+	ON_3dPoint *p3d, ON_3dPoint *norm,
+	ON_3dVector &tangent, double e, ON_3dPoint &p2d,
+	ON_3dVector &trim_normal, double t, int trim_index
+	)
+{
+    BrepTrimPoint *btp = new BrepTrimPoint;
+    btp->p3d = p3d;
+    btp->n3d = norm;
+    btp->tangent = tangent;
+    btp->e = e;
+    btp->p2d = p2d;
+    btp->normal = trim_normal;
+    btp->t = t;
+    btp->trim_ind = trim_index;
+    (*tpp)[btp->t] = btp;
+    (*s_cdt->on_brep_edge_pnts)[p3d].insert(btp);
+    return btp;
+}
+
 double
 midpt_binary_search(fastf_t *tmid, const ON_BrepTrim *trim, double tstart, double tend, ON_3dPoint &edge_mid_3d, double tol, int verbose)
 {
@@ -225,29 +248,9 @@ getEdgePoints(
 	CDT_Add3DPnt(s_cdt, npt, -1, -1, -1, edge->m_edge_index, emid, 0);
 	s_cdt->edge_pnts->insert(npt);
 
-	BrepTrimPoint *nbtp1 = new BrepTrimPoint;
-	nbtp1->p3d = npt;
-	nbtp1->n3d = NULL;
-	nbtp1->p2d = trim1_mid_2d;
-	nbtp1->normal = trim1_mid_norm;
-	nbtp1->tangent = edge_mid_tang;
-	nbtp1->t = t1;
-	nbtp1->e = emid;
-	nbtp1->trim_ind = trim.m_trim_index;
-	(*trim1_param_points)[nbtp1->t] = nbtp1;
-	(*s_cdt->on_brep_edge_pnts)[npt].insert(nbtp1);
+	BrepTrimPoint *nbtp1 = Add_BrepTrimPoint(s_cdt, trim1_param_points, npt, NULL, edge_mid_tang, emid, trim1_mid_2d, trim1_mid_norm, t1, trim.m_trim_index);
 
-	BrepTrimPoint *nbtp2 = new BrepTrimPoint;
-	nbtp2->p3d = npt;
-	nbtp2->n3d = NULL;
-	nbtp2->p2d = trim2_mid_2d;
-	nbtp2->normal = trim2_mid_norm;
-	nbtp2->tangent = edge_mid_tang;
-	nbtp2->t = t2;
-	nbtp2->e = emid;
-	nbtp2->trim_ind = trim2->m_trim_index;
-	(*trim2_param_points)[nbtp2->t] = nbtp2;
-	(*s_cdt->on_brep_edge_pnts)[npt].insert(nbtp2);
+	BrepTrimPoint *nbtp2 = Add_BrepTrimPoint(s_cdt, trim2_param_points, npt, NULL, edge_mid_tang, emid, trim2_mid_2d, trim2_mid_norm, t2, trim2->m_trim_index);
 
 	getEdgePoints(s_cdt, edge, nc, trim, sbtp1, nbtp1, sbtp2, nbtp2, cdt_tol, trim1_param_points, trim2_param_points, loop_min_dist);
 	getEdgePoints(s_cdt, edge, nc, trim, nbtp1, ebtp1, nbtp2, ebtp2, cdt_tol, trim1_param_points, trim2_param_points, loop_min_dist);
@@ -319,23 +322,12 @@ getEdgePoints(
 	}
 
 	// Note - by this point we shouldn't need tangents and normals...
-	BrepTrimPoint *nbtp1 = new BrepTrimPoint;
-	nbtp1->p3d = nsptp;
-	nbtp1->p2d = trim1_seam_2d;
-	nbtp1->t = trim1_seam_t;
-	nbtp1->trim_ind = trim.m_trim_index;
-	nbtp1->e = ON_UNSET_VALUE;
-	(*trim1_param_points)[nbtp1->t] = nbtp1;
-	(*s_cdt->on_brep_edge_pnts)[nsptp].insert(nbtp1);
+	ON_3dVector v_unset = ON_3dVector::UnsetVector;
+	ON_3dPoint t1s2d(trim1_seam_2d);
+	(void)Add_BrepTrimPoint(s_cdt, trim1_param_points, nsptp, NULL, v_unset, ON_UNSET_VALUE, t1s2d, v_unset, trim1_seam_t, trim.m_trim_index);
 
-	BrepTrimPoint *nbtp2 = new BrepTrimPoint;
-	nbtp2->p3d = nsptp;
-	nbtp2->p2d = trim2_seam_2d;
-	nbtp2->t = trim2_seam_t;
-	nbtp2->trim_ind = trim2->m_trim_index;
-	nbtp2->e = ON_UNSET_VALUE;
-	(*trim2_param_points)[nbtp2->t] = nbtp2;
-	(*s_cdt->on_brep_edge_pnts)[nsptp].insert(nbtp2);
+	ON_3dPoint t2s2d(trim2_seam_2d);
+	(void)Add_BrepTrimPoint(s_cdt, trim2_param_points, nsptp, NULL, v_unset, ON_UNSET_VALUE, t2s2d, v_unset, trim2_seam_t, trim2->m_trim_index);
     }
 
 }
@@ -543,53 +535,13 @@ getEdgePoints(
     }
 
     /* Start and end points for both trims can now be defined */
-    BrepTrimPoint *sbtp1 = new BrepTrimPoint;
-    sbtp1->p3d = edge_start_3d;
-    sbtp1->n3d = t1_sn;
-    sbtp1->tangent = edge_start_tang;
-    sbtp1->e = erange.m_t[0];
-    sbtp1->p2d = trim1_start_2d;
-    sbtp1->normal = trim1_start_normal;
-    sbtp1->t = st1;
-    sbtp1->trim_ind = trim.m_trim_index;
-    (*trim1_param_points)[sbtp1->t] = sbtp1;
-    (*s_cdt->on_brep_edge_pnts)[edge_start_3d].insert(sbtp1);
+    BrepTrimPoint *sbtp1 = Add_BrepTrimPoint(s_cdt, trim1_param_points, edge_start_3d, t1_sn, edge_start_tang, erange.m_t[0], trim1_start_2d, trim1_start_normal, st1, trim.m_trim_index);
 
-    BrepTrimPoint *ebtp1 = new BrepTrimPoint;
-    ebtp1->p3d = edge_end_3d;
-    ebtp1->n3d = t1_en;
-    ebtp1->tangent = edge_end_tang;
-    ebtp1->e = erange.m_t[1];
-    ebtp1->p2d = trim1_end_2d;
-    ebtp1->normal = trim1_end_normal;
-    ebtp1->t = et1;
-    ebtp1->trim_ind = trim.m_trim_index;
-    (*trim1_param_points)[ebtp1->t] = ebtp1;
-    (*s_cdt->on_brep_edge_pnts)[edge_end_3d].insert(ebtp1);
+    BrepTrimPoint *ebtp1 = Add_BrepTrimPoint(s_cdt, trim1_param_points, edge_end_3d, t1_en, edge_end_tang, erange.m_t[1], trim1_end_2d, trim1_end_normal, et1, trim.m_trim_index);
 
-    BrepTrimPoint *sbtp2 = new BrepTrimPoint;
-    sbtp2->p3d = edge_start_3d;
-    sbtp2->n3d = t2_sn;
-    sbtp2->tangent = edge_start_tang;
-    sbtp2->e = erange.m_t[0];
-    sbtp2->p2d = trim2_start_2d;
-    sbtp2->normal = trim2_start_normal;
-    sbtp2->t = st2;
-    sbtp2->trim_ind = trim2->m_trim_index;
-    (*trim2_param_points)[sbtp2->t] = sbtp2;
-    (*s_cdt->on_brep_edge_pnts)[edge_start_3d].insert(sbtp2);
+    BrepTrimPoint *sbtp2 = Add_BrepTrimPoint(s_cdt, trim2_param_points, edge_start_3d, t2_sn, edge_start_tang, erange.m_t[0], trim2_start_2d, trim2_start_normal, st2, trim2->m_trim_index);
 
-    BrepTrimPoint *ebtp2 = new BrepTrimPoint;
-    ebtp2->p3d = edge_end_3d;
-    ebtp2->n3d = t2_en;
-    ebtp2->tangent = edge_end_tang;
-    ebtp2->e = erange.m_t[1];
-    ebtp2->p2d = trim2_end_2d;
-    ebtp2->normal = trim2_end_normal;
-    ebtp2->t = et2;
-    ebtp2->trim_ind = trim2->m_trim_index;
-    (*trim2_param_points)[ebtp2->t] = ebtp2;
-    (*s_cdt->on_brep_edge_pnts)[edge_end_3d].insert(ebtp2);
+    BrepTrimPoint *ebtp2 = Add_BrepTrimPoint(s_cdt, trim2_param_points, edge_end_3d, t2_en, edge_end_tang, erange.m_t[1], trim2_end_2d, trim2_end_normal, et2, trim2->m_trim_index);
 
     fastf_t emindist = (cdt_tol.min_dist < 0.5*loop_min_dist) ? cdt_tol.min_dist : 0.5 * loop_min_dist;
 
@@ -643,29 +595,9 @@ getEdgePoints(
 	CDT_Add3DPnt(s_cdt, nmp, -1, -1, -1, edge->m_edge_index, edge_mid_range, 0);
 	s_cdt->edge_pnts->insert(nmp);
 
-	BrepTrimPoint *mbtp1 = new BrepTrimPoint;
-	mbtp1->p3d = nmp;
-	mbtp1->n3d = NULL;
-	mbtp1->p2d = trim1_mid_2d;
-	mbtp1->tangent = edge_mid_tang;
-	mbtp1->normal = trim1_mid_norm;
-	mbtp1->t = trim1_mid_range;
-	mbtp1->e = edge_mid_range;
-	mbtp1->trim_ind = trim.m_trim_index;
-	(*trim1_param_points)[mbtp1->t] = mbtp1;
-	(*s_cdt->on_brep_edge_pnts)[nmp].insert(mbtp1);
+	BrepTrimPoint *mbtp1 = Add_BrepTrimPoint(s_cdt, trim1_param_points, nmp, NULL, edge_mid_tang, edge_mid_range, trim1_mid_2d, trim1_mid_norm, trim1_mid_range, trim.m_trim_index);
 
-	BrepTrimPoint *mbtp2 = new BrepTrimPoint;
-	mbtp2->p3d = nmp;
-	mbtp2->n3d = NULL;
-	mbtp2->p2d = trim2_mid_2d;
-	mbtp2->tangent = edge_mid_tang;
-	mbtp2->normal = trim2_mid_norm;
-	mbtp2->t = trim2_mid_range;
-	mbtp1->e = edge_mid_range;
-	mbtp2->trim_ind = trim2->m_trim_index;
-	(*trim2_param_points)[mbtp2->t] = mbtp2;
-	(*s_cdt->on_brep_edge_pnts)[nmp].insert(mbtp2);
+	BrepTrimPoint *mbtp2 = Add_BrepTrimPoint(s_cdt, trim2_param_points, nmp, NULL, edge_mid_tang, edge_mid_range, trim2_mid_2d, trim2_mid_norm, trim2_mid_range, trim2->m_trim_index);
 
 	getEdgePoints(s_cdt, edge, nc, trim, sbtp1, mbtp1, sbtp2, mbtp2, &cdt_tol, trim1_param_points, trim2_param_points, loop_min_dist);
 	getEdgePoints(s_cdt, edge, nc, trim, mbtp1, ebtp1, mbtp2, ebtp2, &cdt_tol, trim1_param_points, trim2_param_points, loop_min_dist);
@@ -775,29 +707,9 @@ SplitEdgeSegment(
     CDT_Add3DPnt(s_cdt, nmp, -1, -1, -1, edge->m_edge_index, edge_mid_range, 0);
     s_cdt->edge_pnts->insert(nmp);
 
-    BrepTrimPoint *mbtp1 = new BrepTrimPoint;
-    mbtp1->p3d = nmp;
-    mbtp1->n3d = NULL;
-    mbtp1->p2d = trim1_mid_2d;
-    mbtp1->tangent = edge_mid_tang;
-    mbtp1->normal = trim1_mid_norm;
-    mbtp1->t = trim1_mid_range;
-    mbtp1->e = edge_mid_range;
-    mbtp1->trim_ind = trim.m_trim_index;
-    (*trim1_param_points)[mbtp1->t] = mbtp1;
-    (*s_cdt->on_brep_edge_pnts)[nmp].insert(mbtp1);
+    (void)Add_BrepTrimPoint(s_cdt, trim1_param_points, nmp, NULL, edge_mid_tang, edge_mid_range, trim1_mid_2d, trim1_mid_norm, trim1_mid_range, trim.m_trim_index);
 
-    BrepTrimPoint *mbtp2 = new BrepTrimPoint;
-    mbtp2->p3d = nmp;
-    mbtp2->n3d = NULL;
-    mbtp2->p2d = trim2_mid_2d;
-    mbtp2->tangent = edge_mid_tang;
-    mbtp2->normal = trim2_mid_norm;
-    mbtp2->t = trim2_mid_range;
-    mbtp1->e = edge_mid_range;
-    mbtp2->trim_ind = trim2->m_trim_index;
-    (*trim2_param_points)[mbtp2->t] = mbtp2;
-    (*s_cdt->on_brep_edge_pnts)[nmp].insert(mbtp2);
+    (void)Add_BrepTrimPoint(s_cdt, trim2_param_points, nmp, NULL, edge_mid_tang, edge_mid_range, trim2_mid_2d, trim2_mid_norm, trim2_mid_range, trim2->m_trim_index);
 
     return 0;
 }
