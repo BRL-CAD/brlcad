@@ -148,7 +148,6 @@ ON_Brep_CDT_Face_Create(struct ON_Brep_CDT_State *s_cdt, int ind)
     fcdt->w3dpnts = new std::vector<ON_3dPoint *>;
     fcdt->w3dnorms = new std::vector<ON_3dPoint *>;
 
-    fcdt->vert_face_norms = new std::map<int, std::set<ON_3dPoint *>>;
     fcdt->face_loop_points = NULL;
     fcdt->p2t_to_trimpt = new std::map<p2t::Point *, BrepTrimPoint *>;
     fcdt->p2t_trim_ind = new std::map<p2t::Point *, int>;
@@ -245,7 +244,6 @@ ON_Brep_CDT_Face_Destroy(struct ON_Brep_CDT_Face_State *fcdt)
 
     delete fcdt->w3dpnts;
     delete fcdt->w3dnorms;
-    delete fcdt->vert_face_norms;
     if (fcdt->face_loop_points) {
 	delete fcdt->face_loop_points;
     }

@@ -418,25 +418,6 @@ calc_vert_norm(struct ON_Brep_CDT_State *s_cdt, int index)
 	    }
 	}
 
-	// Stash normals coming from non-singular trims at vertices for faces.  If a singular trim
-	// needs a normal in 3D, want to use one of these
-	int mfaceind1 = trim1->Face()->m_face_index;
-	ON_3dPoint *t1pnt = new ON_3dPoint(trim1_norm);
-	if (s_cdt->faces->find(mfaceind1) == s_cdt->faces->end()) {
-	    struct ON_Brep_CDT_Face_State *f = ON_Brep_CDT_Face_Create(s_cdt, mfaceind1);
-	    (*s_cdt->faces)[mfaceind1] = f;
-	}
-	(*(*s_cdt->faces)[mfaceind1]->vert_face_norms)[v.m_vertex_index].insert(t1pnt);
-	(*s_cdt->faces)[mfaceind1]->w3dnorms->push_back(t1pnt);
-	int mfaceind2 = trim2->Face()->m_face_index;
-	ON_3dPoint *t2pnt = new ON_3dPoint(trim2_norm);
-	if (s_cdt->faces->find(mfaceind2) == s_cdt->faces->end()) {
-	    struct ON_Brep_CDT_Face_State *f = ON_Brep_CDT_Face_Create(s_cdt, mfaceind2);
-	    (*s_cdt->faces)[mfaceind2] = f;
-	}
-	(*(*s_cdt->faces)[mfaceind2]->vert_face_norms)[v.m_vertex_index].insert(t1pnt);
-	(*s_cdt->faces)[mfaceind2]->w3dnorms->push_back(t2pnt);
-
 	// Add the normals to the vnrml total
 	vnrml += trim1_norm;
 	vnrml += trim2_norm;

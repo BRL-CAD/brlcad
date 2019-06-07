@@ -95,8 +95,6 @@ struct ON_Brep_CDT_Face_State {
     std::vector<ON_3dPoint *> *w3dpnts;
     std::vector<ON_3dPoint *> *w3dnorms;
 
-    std::map<int, std::set<ON_3dPoint *>> *vert_face_norms;
-
     /* loop points */
     ON_SimpleArray<BrepTrimPoint> *face_loop_points;
     std::map<p2t::Point *, BrepTrimPoint *> *p2t_to_trimpt;
