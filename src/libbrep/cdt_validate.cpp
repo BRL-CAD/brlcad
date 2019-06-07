@@ -742,7 +742,7 @@ trimesh_error_report(struct ON_Brep_CDT_State *s_cdt, int valid_fcnt, int UNUSED
 	}
 	for (pp_it = problem_pnts.begin(); pp_it != problem_pnts.end(); pp_it++) {
 	    int pind = (*pp_it);
-	    ON_3dPoint *p = (*s_cdt->vert_to_on)[pind];
+	    ON_3dPoint *p = (*s_cdt->vert_pnts)[pind];
 	    if (!p) {
 		bu_log("unmapped point??? %d\n", pind);
 	    } else {
@@ -790,7 +790,7 @@ trimesh_error_report(struct ON_Brep_CDT_State *s_cdt, int valid_fcnt, int UNUSED
 	}
 	for (pp_it = problem_pnts.begin(); pp_it != problem_pnts.end(); pp_it++) {
 	    int pind = (*pp_it);
-	    ON_3dPoint *p = (*s_cdt->vert_to_on)[pind];
+	    ON_3dPoint *p = (*s_cdt->vert_pnts)[pind];
 	    if (!p) {
 		bu_log("unmapped point??? %d\n", pind);
 	    } else {
@@ -835,7 +835,7 @@ trimesh_error_report(struct ON_Brep_CDT_State *s_cdt, int valid_fcnt, int UNUSED
 	}
 	for (pp_it = problem_pnts.begin(); pp_it != problem_pnts.end(); pp_it++) {
 	    int pind = (*pp_it);
-	    ON_3dPoint *p = (*s_cdt->vert_to_on)[pind];
+	    ON_3dPoint *p = (*s_cdt->vert_pnts)[pind];
 	    if (!p) {
 		bu_log("unmapped point??? %d\n", pind);
 	    } else {

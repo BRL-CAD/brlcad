@@ -82,6 +82,7 @@ struct cdt_audit_info {
     int trim_index;
     int edge_index;
     ON_2dPoint surf_uv;
+    ON_3dPoint vert_pnt; // For auditing normals
 };
 
 struct ON_Brep_CDT_State;
@@ -145,7 +146,6 @@ struct ON_Brep_CDT_State {
     /* Vertices */
     std::map<int, ON_3dPoint *> *vert_pnts;
     std::map<int, ON_3dPoint *> *vert_avg_norms;
-    std::map<int, ON_3dPoint *> *vert_to_on;
 
     /* Edges */
     std::set<ON_3dPoint *> *edge_pnts;
@@ -161,10 +161,6 @@ struct ON_Brep_CDT_State {
 
 
     /* Mesh data */
-    std::vector<ON_3dPoint *> *vfpnts;
-    std::vector<ON_3dPoint *> *vfnormals;
-    std::map<ON_3dPoint *, int> *on_pnt_to_bot_pnt;
-    std::map<ON_3dPoint *, int> *on_pnt_to_bot_norm;
     std::map<p2t::Triangle*, int> *tri_brep_face;
 };
 
@@ -230,7 +226,7 @@ void
 plot_tri(p2t::Triangle *t, const char *filename);
 
 struct cdt_audit_info *
-cdt_ainfo(int fid, int vid, int tid, int eid, fastf_t x2d, fastf_t y2d);
+cdt_ainfo(int fid, int vid, int tid, int eid, fastf_t x2d, fastf_t y2d, double px, double py, double pz);
 
 void
 add_tri_edges(EdgeToTri *e2f, p2t::Triangle *t,
@@ -238,6 +234,9 @@ add_tri_edges(EdgeToTri *e2f, p2t::Triangle *t,
 
 void
 CDT_Add3DPnt(struct ON_Brep_CDT_State *s, ON_3dPoint *p, int fid, int vid, int tid, int eid, fastf_t x2d, fastf_t y2d);
+void
+CDT_Add3DNorm(struct ON_Brep_CDT_State *s, ON_3dPoint *norm, ON_3dPoint *vert, int fid, int vid, int tid, int eid, fastf_t x2d, fastf_t y2d);
+
 
 void
 CDT_Tol_Set(struct brep_cdt_tol *cdt, double dist, fastf_t md, double t_abs, double t_rel, double t_norm, double t_dist);

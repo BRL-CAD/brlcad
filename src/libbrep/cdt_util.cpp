@@ -70,7 +70,7 @@ plot_tri(p2t::Triangle *t, const char *filename)
 }
 
 struct cdt_audit_info *
-cdt_ainfo(int fid, int vid, int tid, int eid, fastf_t x2d, fastf_t y2d)
+cdt_ainfo(int fid, int vid, int tid, int eid, fastf_t x2d, fastf_t y2d, fastf_t px, fastf_t py, fastf_t pz)
 {
     struct cdt_audit_info *a = new struct cdt_audit_info;
     a->face_index = fid;
@@ -78,15 +78,22 @@ cdt_ainfo(int fid, int vid, int tid, int eid, fastf_t x2d, fastf_t y2d)
     a->trim_index = tid;
     a->edge_index = eid;
     a->surf_uv = ON_2dPoint(x2d, y2d);
+    a->vert_pnt = ON_3dPoint(px, py, pz);
     return a;
 }
-
 
 void
 CDT_Add3DPnt(struct ON_Brep_CDT_State *s, ON_3dPoint *p, int fid, int vid, int tid, int eid, fastf_t x2d, fastf_t y2d)
 {
     s->w3dpnts->push_back(p);
-    (*s->pnt_audit_info)[p] = cdt_ainfo(fid, vid, tid, eid, x2d, y2d);
+    (*s->pnt_audit_info)[p] = cdt_ainfo(fid, vid, tid, eid, x2d, y2d, 0.0, 0.0, 0.0);
+}
+
+void
+CDT_Add3DNorm(struct ON_Brep_CDT_State *s, ON_3dPoint *normal, ON_3dPoint *vert, int fid, int vid, int tid, int eid, fastf_t x2d, fastf_t y2d)
+{
+    s->w3dnorms->push_back(normal);
+    (*s->pnt_audit_info)[normal] = cdt_ainfo(fid, vid, tid, eid, x2d, y2d, vert->x, vert->y, vert->z);
 }
 
 // Digest tessellation tolerances...
@@ -305,7 +312,6 @@ ON_Brep_CDT_Create(void *bv)
 
     cdt->vert_pnts = new std::map<int, ON_3dPoint *>;
     cdt->vert_avg_norms = new std::map<int, ON_3dPoint *>;
-    cdt->vert_to_on = new std::map<int, ON_3dPoint *>;
 
     cdt->edge_pnts = new std::set<ON_3dPoint *>;
     cdt->min_edge_seg_len = new std::map<int, double>;
@@ -316,11 +322,6 @@ ON_Brep_CDT_Create(void *bv)
 
     cdt->faces = new std::map<int, struct ON_Brep_CDT_Face_State *>;
 
-
-    cdt->vfpnts = new std::vector<ON_3dPoint *>;
-    cdt->vfnormals = new std::vector<ON_3dPoint *>;
-    cdt->on_pnt_to_bot_pnt = new std::map<ON_3dPoint *, int>;
-    cdt->on_pnt_to_bot_norm = new std::map<ON_3dPoint *, int>;
     cdt->tri_brep_face = new std::map<p2t::Triangle*, int>;
 
     return cdt;
@@ -351,7 +352,6 @@ ON_Brep_CDT_Destroy(struct ON_Brep_CDT_State *s_cdt)
 
     delete s_cdt->vert_pnts;
     delete s_cdt->vert_avg_norms;
-    delete s_cdt->vert_to_on;
 
     delete s_cdt->edge_pnts;
     delete s_cdt->min_edge_seg_len;
@@ -361,10 +361,6 @@ ON_Brep_CDT_Destroy(struct ON_Brep_CDT_State *s_cdt)
     delete s_cdt->pnt_audit_info;
     delete s_cdt->faces;
 
-    delete s_cdt->vfpnts;
-    delete s_cdt->vfnormals;
-    delete s_cdt->on_pnt_to_bot_pnt;
-    delete s_cdt->on_pnt_to_bot_norm;
     delete s_cdt->tri_brep_face;
 
     delete s_cdt;
@@ -571,56 +567,33 @@ populate_3d_pnts(struct ON_Brep_CDT_Face_State *f)
 		ON_3dPoint *op = (*pointmap)[p];
 		ON_3dPoint *onorm = (*normalmap)[p];
 		if (!op || !onorm) {
-		    /* We've got some calculating to do... */
+		    /* Don't know the point, normal or both.  Ask the Surface */
 		    const ON_Surface *s = face.SurfaceOf();
 		    ON_3dPoint pnt;
 		    ON_3dVector norm;
-		    if (surface_EvNormal(s, p->x, p->y, pnt, norm)) {
+		    bool surf_ev = surface_EvNormal(s, p->x, p->y, pnt, norm);
+		    if (!surf_ev && !op) {
+			// Couldn't get point and normal, go with just point
+			pnt = s->PointAt(p->x, p->y);
+		    }
+		    if (!op) {
+			op = new ON_3dPoint(pnt);
+			CDT_Add3DPnt(f->s_cdt, op, face.m_face_index, -1, -1, -1, p->x, p->y);
+		    }
+		    (*pointmap)[p] = op;
+
+		    // We can only supply a normal if we either a) already had
+		    // it or b) got it from surface_EvNormal - we don't have
+		    // any PointAt style fallback
+		    if (surf_ev && !onorm) {
 			if (face.m_bRev) {
 			    norm = norm * -1.0;
 			}
-			if (!op) {
-			    op = new ON_3dPoint(pnt);
-			    CDT_Add3DPnt(f->s_cdt, op, face.m_face_index, -1, -1, -1, p->x, p->y);
-			    f->s_cdt->vfpnts->push_back(op);
-			    (*pointmap)[p] = op;
-			    (*f->s_cdt->on_pnt_to_bot_pnt)[op] = f->s_cdt->vfpnts->size() - 1;
-			    (*f->s_cdt->vert_to_on)[f->s_cdt->vfpnts->size() - 1] = op;
-			}
-			if (!onorm) {
-			    onorm = new ON_3dPoint(norm);
-			    f->s_cdt->w3dnorms->push_back(onorm);
-			    f->s_cdt->vfnormals->push_back(onorm);
-			    (*normalmap)[p] = onorm;
-			    (*f->s_cdt->on_pnt_to_bot_norm)[op] = f->s_cdt->vfnormals->size() - 1;
-			}
-		    } else {
-			bu_log("Erm... eval failed, no normal info?\n");
-			if (!op) {
-			    pnt = s->PointAt(p->x, p->y);
-			    op = new ON_3dPoint(pnt);
-			    CDT_Add3DPnt(f->s_cdt, op, face.m_face_index, -1, -1, -1, p->x, p->y);
-			    f->s_cdt->vfpnts->push_back(op);
-			    (*pointmap)[p] = op;
-			    (*f->s_cdt->on_pnt_to_bot_pnt)[op] = f->s_cdt->vfpnts->size() - 1;
-			    (*f->s_cdt->vert_to_on)[f->s_cdt->vfpnts->size() - 1] = op;
-			} else {
-			    if (f->s_cdt->on_pnt_to_bot_pnt->find(op) == f->s_cdt->on_pnt_to_bot_pnt->end()) {
-				f->s_cdt->vfpnts->push_back(op);
-				(*pointmap)[p] = op;
-				(*f->s_cdt->on_pnt_to_bot_pnt)[op] = f->s_cdt->vfpnts->size() - 1;
-				(*f->s_cdt->vert_to_on)[f->s_cdt->vfpnts->size() - 1] = op;
-			    }
-			}
+			onorm = new ON_3dPoint(norm);
+			CDT_Add3DNorm(f->s_cdt, onorm, op, face.m_face_index, -1, -1, -1, p->x, p->y);
 		    }
-		} else {
-		    /* We've got them already, just add them */
-		    if (f->s_cdt->on_pnt_to_bot_pnt->find(op) == f->s_cdt->on_pnt_to_bot_pnt->end()) {
-			f->s_cdt->vfpnts->push_back(op);
-			f->s_cdt->vfnormals->push_back(onorm);
-			(*f->s_cdt->on_pnt_to_bot_pnt)[op] = f->s_cdt->vfpnts->size() - 1;
-			(*f->s_cdt->vert_to_on)[f->s_cdt->vfpnts->size() - 1] = op;
-			(*f->s_cdt->on_pnt_to_bot_norm)[op] = f->s_cdt->vfnormals->size() - 1;
+		    if (onorm) {
+			(*normalmap)[p] = onorm;
 		    }
 		}
 	    } else {
