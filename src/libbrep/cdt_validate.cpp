@@ -27,9 +27,6 @@
 
 /* TODO:
  *
- * Refactor checking routines (degen triangles, zero area triangles, normal checks)
- * into routines that can run per-face if possible.
- *
  * Need a process for how to modify edges and faces, and in what order.  Need to
  * come up with heuristics for applying different "fixing" strategies:
  *
@@ -52,24 +49,10 @@
  *
  * Need to be able to introduce new edge points in specific subranges of an edge.
  *
- * Try to come up with a system that is more systematic, rather than the somewhat
- * ad-hoc routines we have below.  Will have to be iterative, and we can't assume
- * faces that were previously "clean" but which have to be reprocessed due to a new
- * edge point have remained clean.
- *
- * Remember there will be a variety of per-face containers that need to be reset
- * for this operation to work - may want to rework cdt state container to be more
- * per-face sets as opposed to maps-of-sets per face index, so we can wipe and reset
- * a face more easily.
- *
- * These are actually the same operations that will be needed for resolving overlaps,
- * so this is worth solving correctly.
  */
-
 
 #include "common.h"
 #include "./cdt.h"
-
 
 static Edge
 mk_edge(ON_3dPoint *pt_A, ON_3dPoint *pt_B)

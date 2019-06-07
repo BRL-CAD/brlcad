@@ -25,48 +25,6 @@
  *
  */
 
-/* TODO:
- *
- * Refactor checking routines (degen triangles, zero area triangles, normal checks)
- * into routines that can run per-face if possible.
- *
- * Need a process for how to modify edges and faces, and in what order.  Need to
- * come up with heuristics for applying different "fixing" strategies:
- *
- * - remove problematic surface point from face tessellation
- * - insert new point(s) at midpoints of edges of problem face
- * - insert new point at the center of the problem face
- * - split edge involved with problem face and retessellate both faces on that edge
- *
- * Different strategies may be appropriate depending on the characteristics of the
- * "bad" triangle - for example, a triangle with all three brep normals nearly perpendicular
- * to the triangle normal and having only one non-edge point we should probably try to
- * handle by removing the surface point.  On the other hand, if the angle is not as
- * perpendicular and the surface area is significant, we might want to add a new point
- * on the longest edge of the triangle (which might be a shared edge with another face.)
- *
- * Also, consider whether to retessellate whole face or try to assemble "local" set of
- * faces involved, build bounding polygon and do new local tessellation.  Latter
- * is a lot more work but might avoid re-introducing new problems elsewhere in a
- * mesh during a full re-CDT.
- *
- * Need to be able to introduce new edge points in specific subranges of an edge.
- *
- * Try to come up with a system that is more systematic, rather than the somewhat
- * ad-hoc routines we have below.  Will have to be iterative, and we can't assume
- * faces that were previously "clean" but which have to be reprocessed due to a new
- * edge point have remained clean.
- *
- * Remember there will be a variety of per-face containers that need to be reset
- * for this operation to work - may want to rework cdt state container to be more
- * per-face sets as opposed to maps-of-sets per face index, so we can wipe and reset
- * a face more easily.
- *
- * These are actually the same operations that will be needed for resolving overlaps,
- * so this is worth solving correctly.
- */
-
-
 #include "common.h"
 #include "./cdt.h"
 
