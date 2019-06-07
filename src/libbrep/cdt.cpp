@@ -596,6 +596,7 @@ ON_Brep_CDT_Mesh(
 	(*vertices)[pnt_ind*3+1] = vp->y;
 	(*vertices)[pnt_ind*3+2] = vp->z;
 	on_pnt_to_bot_pnt[vp] = pnt_ind;
+	(*s_cdt->bot_pnt_to_on_pnt)[pnt_ind] = vp;
 	pnt_ind++;
     }
 

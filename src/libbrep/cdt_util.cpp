@@ -333,6 +333,7 @@ ON_Brep_CDT_Create(void *bv)
     cdt->faces = new std::map<int, struct ON_Brep_CDT_Face_State *>;
 
     cdt->tri_brep_face = new std::map<p2t::Triangle*, int>;
+    cdt->bot_pnt_to_on_pnt = new std::map<int, ON_3dPoint *>;
 
     return cdt;
 }
@@ -372,6 +373,7 @@ ON_Brep_CDT_Destroy(struct ON_Brep_CDT_State *s_cdt)
     delete s_cdt->faces;
 
     delete s_cdt->tri_brep_face;
+    delete s_cdt->bot_pnt_to_on_pnt;
 
     delete s_cdt;
 }

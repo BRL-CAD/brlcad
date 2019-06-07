@@ -161,6 +161,7 @@ struct ON_Brep_CDT_State {
 
 
     /* Mesh data */
+    std::map<int, ON_3dPoint *> *bot_pnt_to_on_pnt;
     std::map<p2t::Triangle*, int> *tri_brep_face;
 };
 
