@@ -1664,7 +1664,9 @@ ogl_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
     register int mflag = 1;
     static float black[4] = {0.0, 0.0, 0.0, 0.0};
     GLfloat originalPointSize, originalLineWidth;
-    GLfloat m[16];
+    GLdouble m[16];
+    GLdouble mt[16];
+    GLdouble tlate[3];
 
     glGetFloatv(GL_POINT_SIZE, &originalPointSize);
     glGetFloatv(GL_LINE_WIDTH, &originalLineWidth);
@@ -1708,15 +1710,28 @@ ogl_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
 		    glVertex3dv(dpt);
 		    break;
 		case BN_VLIST_MODEL_MAT:
-		    glMatrixMode(GL_PROJECTION);
-		    glLoadIdentity();
-		    glLoadMatrixf(m);
+		    if (first == 0) {
+			glEnd();
+			first = 1;
+		    }
+
+		    glMatrixMode(GL_MODELVIEW);
+		    glPopMatrix();
 		    break;
 		case BN_VLIST_DISPLAY_MAT:
-		    glMatrixMode(GL_PROJECTION);
-		    glGetFloatv (GL_PROJECTION_MATRIX, m);
-		    glPopMatrix();
+		    glMatrixMode(GL_MODELVIEW);
+		    glGetDoublev(GL_MODELVIEW_MATRIX, m);
+
+		    MAT_TRANSPOSE(mt, m);
+		    MAT4X3PNT(tlate, mt, dpt);
+
+		    glPushMatrix();
 		    glLoadIdentity();
+		    glTranslated(tlate[0], tlate[1], tlate[2]);
+		    /* 96 dpi = 3.78 pixel/mm hardcoded */
+		    glScaled(2. * 3.78 / dmp->dm_width,
+		             2. * 3.78 / dmp->dm_height,
+		             1.);
 		    break;
 		case BN_VLIST_POLY_START:
 		case BN_VLIST_TRI_START:
