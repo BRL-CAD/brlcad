@@ -731,7 +731,7 @@ load_dump_file(const char *f)
 
 void write_msgs(std::ifstream &infile, std::ofstream &outfile)
 {
-    for (size_t n = 0; n < 29887; n++) {
+    for (size_t n = 0; n < 29886; n++) {
 	struct svn_revision &rev = revs[n];
 	std::string msg = rev.commit_msg;
 	msg.erase(std::remove(msg.begin(), msg.end(), '\n'), msg.end());
