@@ -146,6 +146,7 @@ struct ON_Brep_CDT_State {
     /* Vertices */
     std::map<int, ON_3dPoint *> *vert_pnts;
     std::map<int, ON_3dPoint *> *vert_avg_norms;
+    std::map<ON_3dPoint *, ON_3dPoint *> *vert_to_norms;
 
     /* Edges */
     std::set<ON_3dPoint *> *edge_pnts;

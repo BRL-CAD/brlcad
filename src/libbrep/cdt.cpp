@@ -308,6 +308,12 @@ calc_vert_norm(struct ON_Brep_CDT_State *s_cdt, int index)
     (*s_cdt->vert_avg_norms)[index] = new ON_3dPoint(vnrml);
     s_cdt->w3dnorms->push_back((*s_cdt->vert_avg_norms)[index]);
 
+    // If we have a vertex normal, add it to the map which will allow us
+    // to ascertain if a given point has such a normal.  This will allow
+    // a point-based check even if we don't know a vertex index locally
+    // in the code.
+    (*s_cdt->vert_to_norms)[(*s_cdt->vert_pnts)[index]] = (*s_cdt->vert_avg_norms)[index];
+
 }
 
 int
