@@ -534,7 +534,6 @@ ON_Brep_CDT_Mesh(
 	for (size_t i = 0; i < tris.size(); i++) {
 	    p2t::Triangle *t = tris[i];
 	    if (f->tris_degen->size() > 0 && f->tris_degen->find(t) != f->tris_degen->end()) {
-		triangle_cnt--;
 		continue;
 	    }
 	    for (size_t j = 0; j < 3; j++) {
