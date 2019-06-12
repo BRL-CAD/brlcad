@@ -91,6 +91,13 @@ public:
 
     Int128(const Int128 &val): hi(val.hi), lo(val.lo){}
 
+    Int128& operator = (const Int128 &val)
+    {
+	hi = val.hi;
+	lo = val.lo;
+	return *this;
+    }
+
     long64 operator = (const long64 &val)
     {
 	hi = 0;
