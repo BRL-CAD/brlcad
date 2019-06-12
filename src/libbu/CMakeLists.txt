@@ -43,12 +43,6 @@ if(HAVE_FPIC)
   set_property(SOURCE y2038/time64.c APPEND PROPERTY COMPILE_FLAGS "-fPIC")
 endif(HAVE_FPIC)
 
-if(Foundation_FRAMEWORKS)
-  set(DIR_MACOSX_M dir_macosx.m)
-else(Foundation_FRAMEWORKS)
-  CMAKEFILES(dir_macosx.m)
-endif(Foundation_FRAMEWORKS)
-
 set(LIBBU_SOURCES
   y2038/time64.c
   affinity.c
@@ -69,7 +63,6 @@ set(LIBBU_SOURCES
   crashreport.c
   ctype.c
   dir.c
-  ${DIR_MACOSX_M}
   dirent.c
   datetime.c
   dylib.c

@@ -212,21 +212,13 @@ dir_cache(char *buf, size_t len)
     }
 
     /* method #1b: platform standard (macosx) */
-#ifdef HAVE_FOUNDATION_FOUNDATION_H
-    if (BU_STR_EMPTY(path)) {
-	extern void dir_cache_macosx(char *buf, size_t len);
-	dir_cache_macosx(path, MAXPATHLEN);
-    }
-#endif
-
-    /* method #1c: platform standard (macosx) */
 #if defined(HAVE_CONFSTR) && defined(_CS_DARWIN_CACHE_DIR)
     if (BU_STR_EMPTY(path)) {
 	confstr(_CS_DARWIN_CACHE_DIR, path, len);
     }
 #endif
 
-    /* method #1d: platform standard (windows) */
+    /* method #1c: platform standard (windows) */
 #ifdef HAVE_WINDOWS_H
     if (BU_STR_EMPTY(path)) {
 	PWSTR wpath;
