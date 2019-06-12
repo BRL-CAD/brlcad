@@ -27,9 +27,8 @@
 #include "brep/defines.h"
 #include "brep/intersect.h"
 
-ON_PX_EVENT::ON_PX_EVENT()
+ON_PX_EVENT::ON_PX_EVENT() :m_type(no_px_event), m_A(ON_3dVector::ZeroVector), m_B(ON_3dVector::ZeroVector), m_b(ON_2dVector::ZeroVector), m_Mid(ON_3dVector::ZeroVector), m_radius(0.0)
 {
-    memset(this, 0, sizeof(*this));
 }
 
 
