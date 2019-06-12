@@ -548,6 +548,11 @@ ON_Brep_CDT_Mesh(
 		vfpnts.insert(p3d);
 		ON_3dPoint *onorm = (*normalmap)[p];
 		if (onorm) {
+		    if (s_cdt->vert_to_norms->find(onorm) != s_cdt->vert_to_norms->end()) {
+			// Override singularity points with calculated normal, if present
+			ON_3dPoint *cnrm = (*f->s_cdt->vert_to_norms)[onorm];
+			onorm = cnrm;
+		    }
 		    vfnormals.insert(onorm);
 		}
 	    }
@@ -561,6 +566,11 @@ ON_Brep_CDT_Mesh(
 		vfpnts.insert(p3d);
 		ON_3dPoint *onorm = (*normalmap)[p];
 		if (onorm) {
+		    if (s_cdt->vert_to_norms->find(onorm) != s_cdt->vert_to_norms->end()) {
+			// Override singularity points with calculated normal, if present
+			ON_3dPoint *cnrm = (*f->s_cdt->vert_to_norms)[onorm];
+			onorm = cnrm;
+		    }
 		    vfnormals.insert(onorm);
 		}
 	    }
@@ -652,6 +662,11 @@ ON_Brep_CDT_Mesh(
 		(*faces)[face_cnt*3 + j] = on_pnt_to_bot_pnt[op];
 		if (normals) {
 		    ON_3dPoint *onorm = (*normalmap)[p];
+		    if (s_cdt->vert_to_norms->find(onorm) != s_cdt->vert_to_norms->end()) {
+			// Override singularity points with calculated normal, if present
+			ON_3dPoint *cnrm = (*f->s_cdt->vert_to_norms)[onorm];
+			onorm = cnrm;
+		    }
 		    (*face_normals)[face_cnt*3 + j] = on_norm_to_bot_norm[onorm];
 		}
 	    }
@@ -689,6 +704,11 @@ ON_Brep_CDT_Mesh(
 		(*faces)[face_cnt*3 + j] = on_pnt_to_bot_pnt[op];
 		if (normals) {
 		    ON_3dPoint *onorm = (*normalmap)[p];
+		    if (s_cdt->vert_to_norms->find(onorm) != s_cdt->vert_to_norms->end()) {
+			// Override singularity points with calculated normal, if present
+			ON_3dPoint *cnrm = (*f->s_cdt->vert_to_norms)[onorm];
+			onorm = cnrm;
+		    }
 		    (*face_normals)[face_cnt*3 + j] = on_norm_to_bot_norm[onorm];
 		}
 	    }
