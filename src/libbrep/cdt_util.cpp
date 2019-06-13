@@ -144,6 +144,20 @@ CDT_Tol_Set(struct brep_cdt_tol *cdt, double dist, fastf_t md, double t_abs, dou
     cdt->cos_within_ang = cos_within_ang;
 }
 
+ON_3dVector
+p2tTri_Normal(p2t::Triangle *t, std::map<p2t::Point *, ON_3dPoint *> *pointmap)
+{
+    ON_3dPoint *p1 = (*pointmap)[t->GetPoint(0)];
+    ON_3dPoint *p2 = (*pointmap)[t->GetPoint(1)];
+    ON_3dPoint *p3 = (*pointmap)[t->GetPoint(2)];
+
+    ON_3dVector e1 = *p2 - *p1;
+    ON_3dVector e2 = *p3 - *p1;
+    ON_3dVector tdir = ON_CrossProduct(e1, e2);
+    tdir.Unitize();
+    return tdir;
+}
+
 struct ON_Brep_CDT_Face_State *
 ON_Brep_CDT_Face_Create(struct ON_Brep_CDT_State *s_cdt, int ind)
 {

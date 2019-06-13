@@ -539,6 +539,7 @@ ON_Brep_CDT_Mesh(
 	std::vector<p2t::Triangle*> tris = f->cdt->GetTriangles();
 	for (size_t i = 0; i < tris.size(); i++) {
 	    p2t::Triangle *t = tris[i];
+	    ON_3dVector tdir = p2tTri_Normal(t, pointmap);
 	    if (f->tris_degen->size() > 0 && f->tris_degen->find(t) != f->tris_degen->end()) {
 		continue;
 	    }
@@ -548,10 +549,17 @@ ON_Brep_CDT_Mesh(
 		vfpnts.insert(p3d);
 		ON_3dPoint *onorm = (*normalmap)[p];
 		if (onorm) {
-		    if (s_cdt->vert_to_norms->find(onorm) != s_cdt->vert_to_norms->end()) {
-			// Override singularity points with calculated normal, if present
-			ON_3dPoint *cnrm = (*f->s_cdt->vert_to_norms)[onorm];
-			onorm = cnrm;
+		    double onorm_dp = ON_DotProduct(*onorm, tdir);
+		    if (ON_DotProduct(*onorm, tdir) < 0.1) {
+			if (s_cdt->vert_to_norms->find(p3d) != s_cdt->vert_to_norms->end()) {
+			    // Override singularity points with calculated normal, if present
+			    // and a "better" normal than onorm
+			    ON_3dPoint *cnrm = (*f->s_cdt->vert_to_norms)[p3d];
+			    double vertnorm_dp = ON_DotProduct(*cnrm, tdir);
+			    if (vertnorm_dp > onorm_dp) {
+				onorm = cnrm;
+			    }
+			}
 		    }
 		    vfnormals.insert(onorm);
 		}
@@ -560,16 +568,24 @@ ON_Brep_CDT_Mesh(
 	std::vector<p2t::Triangle *> *tri_add = (*s_cdt->faces)[face_index]->p2t_extra_faces;
 	for (size_t i = 0; i < tri_add->size(); i++) {
 	    p2t::Triangle *t = tris[i];
+	    ON_3dVector tdir = p2tTri_Normal(t, pointmap);
 	    for (size_t j = 0; j < 3; j++) {
 		p2t::Point *p = t->GetPoint(j);
 		ON_3dPoint *p3d = (*pointmap)[p];
 		vfpnts.insert(p3d);
 		ON_3dPoint *onorm = (*normalmap)[p];
 		if (onorm) {
-		    if (s_cdt->vert_to_norms->find(onorm) != s_cdt->vert_to_norms->end()) {
-			// Override singularity points with calculated normal, if present
-			ON_3dPoint *cnrm = (*f->s_cdt->vert_to_norms)[onorm];
-			onorm = cnrm;
+		    double onorm_dp = ON_DotProduct(*onorm, tdir);
+		    if (ON_DotProduct(*onorm, tdir) < 0.1) {
+			if (s_cdt->vert_to_norms->find(p3d) != s_cdt->vert_to_norms->end()) {
+			    // Override singularity points with calculated normal, if present
+			    // and a "better" normal than onorm
+			    ON_3dPoint *cnrm = (*f->s_cdt->vert_to_norms)[p3d];
+			    double vertnorm_dp = ON_DotProduct(*cnrm, tdir);
+			    if (vertnorm_dp > onorm_dp) {
+				onorm = cnrm;
+			    }
+			}
 		    }
 		    vfnormals.insert(onorm);
 		}
@@ -655,6 +671,7 @@ ON_Brep_CDT_Mesh(
 		triangle_cnt--;
 		continue;
 	    }
+	    ON_3dVector tdir = p2tTri_Normal(t, pointmap);
 	    active_tris++;
 	    for (size_t j = 0; j < 3; j++) {
 		p2t::Point *p = t->GetPoint(j);
@@ -662,10 +679,17 @@ ON_Brep_CDT_Mesh(
 		(*faces)[face_cnt*3 + j] = on_pnt_to_bot_pnt[op];
 		if (normals) {
 		    ON_3dPoint *onorm = (*normalmap)[p];
-		    if (s_cdt->vert_to_norms->find(onorm) != s_cdt->vert_to_norms->end()) {
-			// Override singularity points with calculated normal, if present
-			ON_3dPoint *cnrm = (*f->s_cdt->vert_to_norms)[onorm];
-			onorm = cnrm;
+		    double onorm_dp = ON_DotProduct(*onorm, tdir);
+		    if (ON_DotProduct(*onorm, tdir) < 0.1) {
+			if (s_cdt->vert_to_norms->find(op) != s_cdt->vert_to_norms->end()) {
+			    // Override singularity points with calculated normal, if present
+			    // and a "better" normal than onorm
+			    ON_3dPoint *cnrm = (*f->s_cdt->vert_to_norms)[op];
+			    double vertnorm_dp = ON_DotProduct(*cnrm, tdir);
+			    if (vertnorm_dp > onorm_dp) {
+				onorm = cnrm;
+			    }
+			}
 		    }
 		    (*face_normals)[face_cnt*3 + j] = on_norm_to_bot_norm[onorm];
 		}
@@ -698,16 +722,24 @@ ON_Brep_CDT_Mesh(
 	triangle_cnt += tri_add->size();
 	for (size_t i = 0; i < tri_add->size(); i++) {
 	    p2t::Triangle *t = (*tri_add)[i];
+	    ON_3dVector tdir = p2tTri_Normal(t, pointmap);
 	    for (size_t j = 0; j < 3; j++) {
 		p2t::Point *p = t->GetPoint(j);
 		ON_3dPoint *op = (*pointmap)[p];
 		(*faces)[face_cnt*3 + j] = on_pnt_to_bot_pnt[op];
 		if (normals) {
 		    ON_3dPoint *onorm = (*normalmap)[p];
-		    if (s_cdt->vert_to_norms->find(onorm) != s_cdt->vert_to_norms->end()) {
-			// Override singularity points with calculated normal, if present
-			ON_3dPoint *cnrm = (*f->s_cdt->vert_to_norms)[onorm];
-			onorm = cnrm;
+		    double onorm_dp = ON_DotProduct(*onorm, tdir);
+		    if (ON_DotProduct(*onorm, tdir) < 0.1) {
+			if (s_cdt->vert_to_norms->find(op) != s_cdt->vert_to_norms->end()) {
+			    // Override singularity points with calculated normal, if present
+			    // and a "better" normal than onorm
+			    ON_3dPoint *cnrm = (*f->s_cdt->vert_to_norms)[op];
+			    double vertnorm_dp = ON_DotProduct(*cnrm, tdir);
+			    if (vertnorm_dp > onorm_dp) {
+				onorm = cnrm;
+			    }
+			}
 		    }
 		    (*face_normals)[face_cnt*3 + j] = on_norm_to_bot_norm[onorm];
 		}

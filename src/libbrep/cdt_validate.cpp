@@ -184,20 +184,6 @@ triangles_check_edges(struct ON_Brep_CDT_Face_State *f)
 }
 
 
-static ON_3dVector
-p2tTri_Normal(p2t::Triangle *t, std::map<p2t::Point *, ON_3dPoint *> *pointmap)
-{
-    ON_3dPoint *p1 = (*pointmap)[t->GetPoint(0)];
-    ON_3dPoint *p2 = (*pointmap)[t->GetPoint(1)];
-    ON_3dPoint *p3 = (*pointmap)[t->GetPoint(2)];
-
-    ON_3dVector e1 = *p2 - *p1;
-    ON_3dVector e2 = *p3 - *p1;
-    ON_3dVector tdir = ON_CrossProduct(e1, e2);
-    tdir.Unitize();
-    return tdir;
-}
-
 void
 triangles_degenerate_trivial(struct ON_Brep_CDT_Face_State *f)
 {
