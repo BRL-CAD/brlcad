@@ -1232,6 +1232,21 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	return;
     }
 
+    // Periodically, run git gc
+    if (rev_num % 100 == 0) {
+	std::string gitgc = std::string("cd cvs_git && git gc && cd ..");
+	if (std::system(gitgc.c_str())) {
+	    std::cerr << "cvs_git git gc failed\n";
+	    exit(1);
+	}
+
+	std::string gitwgc = std::string("cd cvs_git_working && git gc && cd ..");
+	if (std::system(gitwgc.c_str())) {
+	    std::cerr << "cvs_git_working git gc failed\n";
+	    exit(1);
+	}
+    }
+
     // If we have a text content sha1, update the map
     // to the current path state
     if (rev.nodes.size() > 0) {
