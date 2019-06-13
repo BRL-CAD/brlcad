@@ -58,3 +58,4 @@ sed -i -e 's/2f7de475e6bbd22df7305fce1f6750bec8016ba2/5bad294f6af0d436036d00d266
 # regress/gcv/fastgen/fastgen_box.fast4
 sed -i -e 's/3785040dbb9252dcf56f1d3edcfedc8859141339/33ddd71cf9d6b856d94d7bd3c0600f24c1db7120/g' custom/$2-tree.fi
 
+rm -rf trunk-$2

@@ -1405,6 +1405,10 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	    std::cout << "delete tag: " << rev.revision_number << "\n";
 	    // Because we are applying and commiting immediately, these commits can be
 	    // somewhat involved to unwind - back up first
+	    std::string clear_old_cvsbackup = std::string("rm -rf cvs_git-r*");
+	    if (std::system(clear_old_cvsbackup .c_str())) {
+		std::cerr << "clearing old cvs_git backups didn't work\n";
+	    }
 	    std::string cvsbackup = std::string("cvs_git-r") + std::to_string(rev_num-1);
 	    if (!file_exists(cvsbackup)) {
 		std::cerr << "backing up cvs_git ahead of tag delete in commit " << rev_num << "\n";
