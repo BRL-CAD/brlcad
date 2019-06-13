@@ -228,11 +228,18 @@ calc_trim_vnorm(ON_BrepVertex& v, ON_BrepTrim *trim)
 }
 
 static void
-calc_vert_norm(struct ON_Brep_CDT_State *s_cdt, int index)
+calc_singular_vert_norm(struct ON_Brep_CDT_State *s_cdt, int index)
 {
     ON_BrepVertex& v = s_cdt->brep->m_V[index];
     int have_calculated = 0;
     ON_3dVector vnrml(0.0, 0.0, 0.0);
+
+    if (s_cdt->singular_vert_to_norms->find((*s_cdt->vert_pnts)[index]) != (s_cdt->singular_vert_to_norms->end())) {
+	// Already processed this one
+	return;
+    }
+
+    bu_log("Processing vert %d (%f %f %f)\n", index, v.Point().x, v.Point().y, v.Point().z);
 
     for (int eind = 0; eind != v.EdgeCount(); eind++) {
 	ON_3dVector trim1_norm = ON_3dVector::UnsetVector;
@@ -382,13 +389,19 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	    s_cdt->edge_pnts->insert((*s_cdt->vert_pnts)[index]);
 	}
 
-	/* If this is the first time through, get vertex normals that are the
-	 * average of the surface normals at the junction from faces that don't use
-	 * a singular trim to reference the vertex.  When subdividing the edges, we
-	 * use the normals as a curvature guide.
+	/* If this is the first time through, check for singular trims.  For
+	 * vertices associated with such a trim get vertex normals that are the
+	 * average of the surface normals at the junction from faces that don't
+	 * use a singular trim to reference the vertex.
 	 */
-	for (int index = 0; index < brep->m_V.Count(); index++) {
-	    calc_vert_norm(s_cdt, index);
+	for (int index = 0; index < brep->m_T.Count(); index++) {
+	    ON_BrepTrim &trim = s_cdt->brep->m_T[index];
+	    if (trim.m_type == ON_BrepTrim::singular) {
+		ON_BrepVertex *v1 = trim.Vertex(0);
+		ON_BrepVertex *v2 = trim.Vertex(1);
+		calc_singular_vert_norm(s_cdt, v1->m_vertex_index);
+		calc_singular_vert_norm(s_cdt, v2->m_vertex_index);
+	    }
 	}
 
 	/* To generate watertight meshes, the faces *must* share 3D edge points.  To ensure
