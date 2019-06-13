@@ -137,9 +137,9 @@ int verify_repos(long int rev, std::string branch_git)
     std::string cleanup_cmd = std::string("rm -rf brlcad_svn_checkout brlcad_git_checkout");
     std::string svn_cmd;
     if (branch_svn == std::string("trunk")) {
-	svn_cmd = std::string("svn co -q -r") + std::to_string(rev) + std::string(" file:///home/cyapp/brlcad_repo/repo_dercs/brlcad/trunk brlcad_svn_checkout");
+	svn_cmd = std::string("svn co -q -r") + std::to_string(rev) + std::string(" file://" + repo_checkout_path + std::string("/brlcad/trunk brlcad_svn_checkout");
     } else {
-	svn_cmd = std::string("svn co -q file:///home/cyapp/brlcad_repo/repo_dercs/brlcad/branches/") + branch_svn + std::string("@") + std::to_string(rev) + std::string(" brlcad_svn_checkout");
+	svn_cmd = std::string("svn co -q file://" + repo_checkout_path + std::string("/brlcad/branches/") + branch_svn + std::string("@") + std::to_string(rev) + std::string(" brlcad_svn_checkout");
     }
     std::string svn_emptydir_rm = std::string("find brlcad_svn_checkout -type d -empty -print0 |xargs -0 rmdir");
     std::string git_emptydir_rm = std::string("find brlcad_git_checkout -type d -empty -print0 |xargs -0 rmdir");
