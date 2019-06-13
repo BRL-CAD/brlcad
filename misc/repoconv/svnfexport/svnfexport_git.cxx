@@ -1272,6 +1272,10 @@ void rev_fast_export(std::ifstream &infile, long int rev_num)
 	return;
     }
 
+    if (rev_num == 72430 || rev_num ==72431 ||  rev_num ==72432) {
+	return;
+    }
+
 
     std::cout << "Processing revision " << rev.revision_number << "\n";
 
