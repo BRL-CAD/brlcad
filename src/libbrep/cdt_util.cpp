@@ -336,7 +336,7 @@ ON_Brep_CDT_Create(void *bv)
 
     cdt->vert_pnts = new std::map<int, ON_3dPoint *>;
     cdt->vert_avg_norms = new std::map<int, ON_3dPoint *>;
-    cdt->vert_to_norms = new std::map<ON_3dPoint *, ON_3dPoint *>;
+    cdt->singular_vert_to_norms = new std::map<ON_3dPoint *, ON_3dPoint *>;
 
     cdt->edge_pnts = new std::set<ON_3dPoint *>;
     cdt->min_edge_seg_len = new std::map<int, double>;
@@ -378,7 +378,7 @@ ON_Brep_CDT_Destroy(struct ON_Brep_CDT_State *s_cdt)
 
     delete s_cdt->vert_pnts;
     delete s_cdt->vert_avg_norms;
-    delete s_cdt->vert_to_norms;
+    delete s_cdt->singular_vert_to_norms;
 
     delete s_cdt->edge_pnts;
     delete s_cdt->min_edge_seg_len;

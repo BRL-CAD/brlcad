@@ -433,8 +433,8 @@ triangles_incorrect_normals(struct ON_Brep_CDT_Face_State *f)
 	    for (int j = 0; j < 3; j++) {
 		if (wnorm[j] != 0) {
 		    ON_3dPoint *spt = (*pointmap)[p[j]];
-		    if (f->s_cdt->vert_to_norms->find(spt) != f->s_cdt->vert_to_norms->end()) {
-			ON_3dPoint *cnrm = (*f->s_cdt->vert_to_norms)[spt];
+		    if (f->s_cdt->singular_vert_to_norms->find(spt) != f->s_cdt->singular_vert_to_norms->end()) {
+			ON_3dPoint *cnrm = (*f->s_cdt->singular_vert_to_norms)[spt];
 			bu_log("Only invalid normal is at a vertex with calculated normal!\n");
 			if (ON_DotProduct(*cnrm, tdir) < 0.1) {
 			    bu_log("Calculated normal is also not correct for triangle.\n");
