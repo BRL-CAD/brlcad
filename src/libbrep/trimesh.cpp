@@ -2,6 +2,8 @@
 // License: Public Domain.  (I, Yotam Gingold, the author, release this code into the public domain.)
 // GitHub: https://github.com/yig/halfedge
 
+#include "common.h"
+
 #include "./trimesh.h"
 
 // needed for implementation

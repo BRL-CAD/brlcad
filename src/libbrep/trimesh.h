@@ -5,6 +5,8 @@
 #ifndef __trimesh_h__
 #define __trimesh_h__
 
+#include "common.h"
+
 #include <vector>
 #include <map>
 #include "poly2tri/poly2tri.h"
