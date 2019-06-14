@@ -26,6 +26,7 @@
  */
 
 #include "common.h"
+#include "bn/plot3.h"
 #include "./cdt.h"
 #include "./trimesh.h"
 
@@ -34,6 +35,48 @@
 #define p2dIsSingular()
 
 #define IsEdgePt(_a) (f->s_cdt->edge_pnts->find(_a) != f->s_cdt->edge_pnts->end())
+
+static void
+plot_face(p2t::Triangle *t, std::map<p2t::Point *, ON_3dPoint *> *pointmap, int r, int g, int b, FILE *c_plot)
+{
+    point_t p1, p2, p3;
+    ON_3dPoint *on1 = (*pointmap)[t->GetPoint(0)];
+    ON_3dPoint *on2 = (*pointmap)[t->GetPoint(1)];
+    ON_3dPoint *on3 = (*pointmap)[t->GetPoint(2)];
+    p1[X] = on1->x;
+    p1[Y] = on1->y;
+    p1[Z] = on1->z;
+    p2[X] = on2->x;
+    p2[Y] = on2->y;
+    p2[Z] = on2->z;
+    p3[X] = on3->x;
+    p3[Y] = on3->y;
+    p3[Z] = on3->z;
+    pl_color(c_plot, r, g, b);
+    pdv_3move(c_plot, p1);
+    pdv_3cont(c_plot, p2);
+    pdv_3move(c_plot, p1);
+    pdv_3cont(c_plot, p3);
+    pdv_3move(c_plot, p2);
+    pdv_3cont(c_plot, p3);
+}
+
+
+static void
+plot_faces(std::set<size_t> *faces, std::vector<trimesh::triangle_t> &farray, std::map<p2t::Point *, ON_3dPoint *> *pointmap, const char *filename)
+{
+    std::set<size_t>::iterator f_it;
+    FILE* plot_file = fopen(filename, "w");
+    int r = int(256*drand48() + 1.0);
+    int g = int(256*drand48() + 1.0);
+    int b = int(256*drand48() + 1.0);
+    for (f_it = faces->begin(); f_it != faces->end(); f_it++) {
+	p2t::Triangle *t = farray[*f_it].t;
+	plot_face(t, pointmap, r, g ,b, plot_file);
+    }
+    fclose(plot_file);
+}
+
 
 void
 ON_Singular_Face_Process(struct ON_Brep_CDT_Face_State *f)
@@ -115,7 +158,7 @@ ON_Singular_Face_Process(struct ON_Brep_CDT_Face_State *f)
     std::map<ON_3dPoint *,std::set<p2t::Point *>>::iterator ap_it;
 
     // In a multi-singularity version of this code this set will have to be specific to each point
-    std::set<p2t::Triangle *> singularity_triangles;
+    std::set<size_t> singularity_triangles;
 
     for (ap_it = p2t_singular_pnts.begin(); ap_it != p2t_singular_pnts.end(); ap_it++) {
 	std::set<p2t::Point *>::iterator p_it;
@@ -126,9 +169,13 @@ ON_Singular_Face_Process(struct ON_Brep_CDT_Face_State *f)
 	    std::vector<trimesh::index_t> faces = mesh.vertex_face_neighbors(ind);
 	    for (size_t i = 0; i < faces.size(); i++) {
 		std::cout << "face index " << faces[i] << "\n";
+		singularity_triangles.insert(faces[i]);
 	    }
 	}
     }
+
+    bu_file_delete("singularity_triangles.plot3");
+    plot_faces(&singularity_triangles, triangles, pointmap, "singularity_triangles.plot3");
 
     // Find the best fit plane for the vertices of the triangles involved with
     // the singular point

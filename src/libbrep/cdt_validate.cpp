@@ -459,7 +459,7 @@ triangles_incorrect_normals(struct ON_Brep_CDT_Face_State *f)
     // involve a singularity, not just flagging on the surface.  Ideally, pass
     // in the singularity point that is the particular problem so the routine
     // knows where it's working
-    if (ret && f->has_singular_trims) {
+    if (f->has_singular_trims) {
 	ON_Singular_Face_Process(f);
     }
 
