@@ -165,6 +165,7 @@ ON_Brep_CDT_Face_Create(struct ON_Brep_CDT_State *s_cdt, int ind)
 
     fcdt->s_cdt = s_cdt;
     fcdt->ind = ind;
+    fcdt->has_singular_trims = 0;
 
     fcdt->w2dpnts = new std::vector<ON_2dPoint *>;
     fcdt->w3dpnts = new std::vector<ON_3dPoint *>;

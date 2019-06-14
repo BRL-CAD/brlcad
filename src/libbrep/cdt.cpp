@@ -117,6 +117,23 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_Face_State *f, std::map<const ON_Surface *, 
     ON_SimpleArray<BrepTrimPoint> *brep_loop_points = (f->face_loop_points) ? f->face_loop_points : new ON_SimpleArray<BrepTrimPoint>[loop_cnt];
     f->face_loop_points = brep_loop_points;
 
+    // If this face is using at least one singular trim, set the flag
+    for (int li = 0; li < loop_cnt; li++) {
+	ON_BrepLoop *l = face.Loop(li);
+	int trim_count = l->TrimCount();
+	for (int lti = 0; lti < trim_count; lti++) {
+	    ON_BrepTrim *trim = l->Trim(lti);
+	    if (trim->m_type == ON_BrepTrim::singular) {
+		f->has_singular_trims = 1;
+		break;
+	    }
+	}
+	if (f->has_singular_trims) {
+	    break;
+	}
+    }
+
+
     // Use the edge curves and loops to generate an initial set of trim polygons.
     for (int li = 0; li < loop_cnt; li++) {
 	double max_dist = 0.0;

@@ -36,7 +36,7 @@
 #define IsEdgePt(_a) (f->s_cdt->edge_pnts->find(_a) != f->s_cdt->edge_pnts->end())
 
 void
-onsf_process(struct ON_Brep_CDT_Face_State *f)
+ON_Singular_Face_Process(struct ON_Brep_CDT_Face_State *f)
 {
     p2t::CDT *cdt = f->cdt;
     std::vector<p2t::Triangle*> tris = cdt->GetTriangles();

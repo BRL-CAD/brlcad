@@ -89,6 +89,7 @@ struct ON_Brep_CDT_State;
 
 struct ON_Brep_CDT_Face_State {
     struct ON_Brep_CDT_State *s_cdt;
+    int has_singular_trims;
     int ind;
     std::map<ON_2dPoint *, struct cdt_audit_info *> *pnt2d_audit_info;
 
@@ -265,6 +266,7 @@ bool build_poly2tri_polylines(struct ON_Brep_CDT_Face_State *f, int init_rtree);
 void
 Process_Loop_Edges(struct ON_Brep_CDT_Face_State *f, int li, fastf_t max_dist);
 
+void ON_Singular_Face_Process(struct ON_Brep_CDT_Face_State *f);
 
 /** @} */
 
