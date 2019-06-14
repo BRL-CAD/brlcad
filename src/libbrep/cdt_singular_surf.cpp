@@ -27,108 +27,78 @@
 
 #include "common.h"
 #include "./cdt.h"
+#include "./trimesh.h"
 
 #define p2tEdge std::pair<p2t::Point *, p2t::Point *>
 
 #define p2dIsSingular()
 
-struct ON_Mesh_Singular_Face {
-    struct ON_Brep_CDT_Face_State *f;
-    std::map<p2t::Point *, std::set<p2t::Triangle *>> p2t;
-    std::map<p2t::Point *, std::set<p2tEdge>> p2e_ordered;
-    std::map<p2t::Point *, std::set<p2tEdge>> p2e_unordered;
-    std::map<p2tEdge, std::set<p2t::Triangle *>> e2t_ordered;
-    std::map<p2tEdge, std::set<p2t::Triangle *>> e2t_unordered;
-    std::map<p2t::Triangle *, std::set<p2tEdge>> t2e_ordered;
-    std::map<p2t::Triangle *, std::set<p2tEdge>> t2e_unordered;
-    std::map<p2tEdge, int> euse;
-    std::map<ON_3dPoint *,std::set<p2t::Point *>> p2t_singular_pnts;
-};
-
-static p2tEdge
-mk_unordered_edge(p2t::Point *pt_A, p2t::Point *pt_B)
-{
-    if (pt_A <= pt_B) {
-	return std::make_pair(pt_A, pt_B);
-    } else {
-	return std::make_pair(pt_B, pt_A);
-    }
-}
-
 #define IsEdgePt(_a) (f->s_cdt->edge_pnts->find(_a) != f->s_cdt->edge_pnts->end())
-
-static void
-add_p2t_tri_edges(struct ON_Mesh_Singular_Face *sf, p2t::Triangle *t)
-{
-    p2t::Point *p2_A = t->GetPoint(0);
-    p2t::Point *p2_B = t->GetPoint(1);
-    p2t::Point *p2_C = t->GetPoint(2);
-
-    sf->e2t_ordered[(std::make_pair(p2_A, p2_B))].insert(t);
-    sf->e2t_ordered[(std::make_pair(p2_B, p2_C))].insert(t);
-    sf->e2t_ordered[(std::make_pair(p2_C, p2_A))].insert(t);
-    sf->t2e_ordered[t].insert(std::make_pair(p2_A, p2_B));
-    sf->t2e_ordered[t].insert(std::make_pair(p2_B, p2_C));
-    sf->t2e_ordered[t].insert(std::make_pair(p2_C, p2_A));
-
-    sf->e2t_unordered[(mk_unordered_edge(p2_A, p2_B))].insert(t);
-    sf->e2t_unordered[(mk_unordered_edge(p2_B, p2_C))].insert(t);
-    sf->e2t_unordered[(mk_unordered_edge(p2_C, p2_A))].insert(t);
-    sf->t2e_unordered[t].insert(mk_unordered_edge(p2_A, p2_B));
-    sf->t2e_unordered[t].insert(mk_unordered_edge(p2_B, p2_C));
-    sf->t2e_unordered[t].insert(mk_unordered_edge(p2_C, p2_A));
-
-
-    sf->p2e_ordered[p2_A].insert(std::make_pair(p2_A, p2_B));
-    sf->p2e_ordered[p2_A].insert(std::make_pair(p2_C, p2_A));
-    sf->p2e_ordered[p2_B].insert(std::make_pair(p2_A, p2_B));
-    sf->p2e_ordered[p2_B].insert(std::make_pair(p2_B, p2_C));
-    sf->p2e_ordered[p2_C].insert(std::make_pair(p2_B, p2_C));
-    sf->p2e_ordered[p2_C].insert(std::make_pair(p2_A, p2_C));
-
-    sf->p2e_unordered[p2_A].insert(mk_unordered_edge(p2_A, p2_B));
-    sf->p2e_unordered[p2_A].insert(mk_unordered_edge(p2_C, p2_A));
-    sf->p2e_unordered[p2_B].insert(mk_unordered_edge(p2_A, p2_B));
-    sf->p2e_unordered[p2_B].insert(mk_unordered_edge(p2_B, p2_C));
-    sf->p2e_unordered[p2_C].insert(mk_unordered_edge(p2_B, p2_C));
-    sf->p2e_unordered[p2_C].insert(mk_unordered_edge(p2_A, p2_C));
-
-    // We need to count unordered edge uses to identify boundary edges.
-    sf->euse[(mk_unordered_edge(p2_A, p2_B))]++;
-    sf->euse[(mk_unordered_edge(p2_B, p2_C))]++;
-    sf->euse[(mk_unordered_edge(p2_C, p2_A))]++;
-}
 
 void
 onsf_process(struct ON_Brep_CDT_Face_State *f)
 {
-    struct ON_Mesh_Singular_Face *sf = new struct ON_Mesh_Singular_Face;
-    sf->f = f;
-
-    // For all non-degenerate triangles in the face, we need to build up maps
-    // so we can know where we are in relationship to other points, edges and
-    // triangles.
     p2t::CDT *cdt = f->cdt;
-    std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
     std::vector<p2t::Triangle*> tris = cdt->GetTriangles();
+
+    // Assemble the set of unique 2D poly2tri points
+    std::set<p2t::Point *> uniq_p2d;
+    for (size_t i = 0; i < tris.size(); i++) {
+	p2t::Triangle *t = tris[i];
+	for (size_t j = 0; j < 3; j++) {
+	    uniq_p2d.insert(t->GetPoint(j));
+	}
+    }
+    // Assign all poly2tri 2D points a trimesh index
+    std::map<p2t::Point *, trimesh::index_t> p2dind;
+    std::map<trimesh::index_t, p2t::Point *> ind2p2d;
+    std::set<p2t::Point *>::iterator u_it;
+    {
+	trimesh::index_t ind = 0;
+	for (u_it = uniq_p2d.begin(); u_it != uniq_p2d.end(); u_it++) {
+	    p2dind[*u_it] = ind;
+	    ind2p2d[ind] = *u_it;
+	    ind++;
+	}
+    }
+
+    // Assemble the faces array
+    std::vector<trimesh::triangle_t> triangles;
     for (size_t i = 0; i < tris.size(); i++) {
 	p2t::Triangle *t = tris[i];
 	if (f->tris_degen->find(t) != f->tris_degen->end()) {
 	    continue;
 	}
 
-	// point map
+	trimesh::triangle_t tmt;
 	for (size_t j = 0; j < 3; j++) {
-	    sf->p2t[t->GetPoint(j)].insert(t);
+	    tmt.v[j] = p2dind[t->GetPoint(j)];
 	}
-	// edge map
-	add_p2t_tri_edges(sf, t);
-	// Identify any singular points for later reference
+	tmt.t = t;
+	triangles.push_back(tmt);
+    }
+
+    // Build the mesh topology information - we are going to have to 'walk' the mesh
+    // locally to do this, so we need neighbor lookups
+    std::vector<trimesh::edge_t> edges;
+    trimesh::unordered_edges_from_triangles(triangles.size(), &triangles[0], edges);
+    trimesh::trimesh_t mesh;
+    mesh.build(uniq_p2d.size(), triangles.size(), &triangles[0], edges.size(), &edges[0]);
+
+
+    // Identify any singular points for later reference
+    std::map<ON_3dPoint *,std::set<p2t::Point *>> p2t_singular_pnts;
+    std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
+    for (size_t i = 0; i < tris.size(); i++) {
+	p2t::Triangle *t = tris[i];
+	if (f->tris_degen->find(t) != f->tris_degen->end()) {
+	    continue;
+	}
 	for (size_t j = 0; j < 3; j++) {
 	    p2t::Point *p2t = t->GetPoint(j);
 	    ON_3dPoint *p3d = (*pointmap)[p2t];
 	    if (f->s_cdt->singular_vert_to_norms->find(p3d) != f->s_cdt->singular_vert_to_norms->end()) {
-		sf->p2t_singular_pnts[p3d].insert(p2t);
+		p2t_singular_pnts[p3d].insert(p2t);
 	    }
 	}
     }
@@ -139,7 +109,7 @@ onsf_process(struct ON_Brep_CDT_Face_State *f)
     // TODO - initially, the code is going to pretty much assume one singularity per face,
     // but that's not a good assumption in general - ultimately, we should build up sets
     // of faces for each singularity for separate processing.
-    if (sf->p2t_singular_pnts.size() != 1) {
+    if (p2t_singular_pnts.size() != 1) {
 	bu_log("odd singularity point count, aborting\n");
     }
     std::map<ON_3dPoint *,std::set<p2t::Point *>>::iterator ap_it;
@@ -147,14 +117,15 @@ onsf_process(struct ON_Brep_CDT_Face_State *f)
     // In a multi-singularity version of this code this set will have to be specific to each point
     std::set<p2t::Triangle *> singularity_triangles;
 
-    for (ap_it = sf->p2t_singular_pnts.begin(); ap_it != sf->p2t_singular_pnts.end(); ap_it++) {
+    for (ap_it = p2t_singular_pnts.begin(); ap_it != p2t_singular_pnts.end(); ap_it++) {
 	std::set<p2t::Point *>::iterator p_it;
 	std::set<p2t::Point *> &p2tspnts = ap_it->second;
 	for (p_it = p2tspnts.begin(); p_it != p2tspnts.end(); p_it++) {
-	    std::set<p2t::Triangle *> &p2t = sf->p2t[*p_it];
-	    std::set<p2t::Triangle *>::iterator p2t_it;
-	    for (p2t_it = p2t.begin(); p2t_it != p2t.end(); p2t_it++) {
-		singularity_triangles.insert(*p2t_it);
+	    p2t::Point *p2d = *p_it;
+	    trimesh::index_t ind = p2dind[p2d];
+	    std::vector<trimesh::index_t> faces = mesh.vertex_face_neighbors(ind);
+	    for (size_t i = 0; i < faces.size(); i++) {
+		std::cout << "face index " << faces[i] << "\n";
 	    }
 	}
     }
@@ -188,8 +159,6 @@ onsf_process(struct ON_Brep_CDT_Face_State *f)
     // triangle set, else fail.  Note that a consequence of this will be that
     // only one of the original singularity trim points will end up being used.
 
-    // Done, cleanup
-    delete sf;
 }
 
 
