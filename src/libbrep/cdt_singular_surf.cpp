@@ -42,7 +42,7 @@ struct ON_Mesh_Singular_Face {
     std::map<p2t::Triangle *, std::set<p2tEdge>> t2e_ordered;
     std::map<p2t::Triangle *, std::set<p2tEdge>> t2e_unordered;
     std::map<p2tEdge, int> euse;
-    std::set<p2t::Point *> p2t_singular_pnts;
+    std::map<ON_3dPoint *,std::set<p2t::Point *>> p2t_singular_pnts;
 };
 
 static p2tEdge
@@ -128,13 +128,36 @@ onsf_process(struct ON_Brep_CDT_Face_State *f)
 	    p2t::Point *p2t = t->GetPoint(j);
 	    ON_3dPoint *p3d = (*pointmap)[p2t];
 	    if (f->s_cdt->singular_vert_to_norms->find(p3d) != f->s_cdt->singular_vert_to_norms->end()) {
-		sf->p2t_singular_pnts.insert(p2t);
+		sf->p2t_singular_pnts[p3d].insert(p2t);
 	    }
 	}
     }
 
     // Find all the triangles using a singular point as a vertex - that's our
     // starting triangle set.
+    //
+    // TODO - initially, the code is going to pretty much assume one singularity per face,
+    // but that's not a good assumption in general - ultimately, we should build up sets
+    // of faces for each singularity for separate processing.
+    if (sf->p2t_singular_pnts.size() != 1) {
+	bu_log("odd singularity point count, aborting\n");
+    }
+    std::map<ON_3dPoint *,std::set<p2t::Point *>>::iterator ap_it;
+
+    // In a multi-singularity version of this code this set will have to be specific to each point
+    std::set<p2t::Triangle *> singularity_triangles;
+
+    for (ap_it = sf->p2t_singular_pnts.begin(); ap_it != sf->p2t_singular_pnts.end(); ap_it++) {
+	std::set<p2t::Point *>::iterator p_it;
+	std::set<p2t::Point *> &p2tspnts = ap_it->second;
+	for (p_it = p2tspnts.begin(); p_it != p2tspnts.end(); p_it++) {
+	    std::set<p2t::Triangle *> &p2t = sf->p2t[*p_it];
+	    std::set<p2t::Triangle *>::iterator p2t_it;
+	    for (p2t_it = p2t.begin(); p2t_it != p2t.end(); p2t_it++) {
+		singularity_triangles.insert(*p2t_it);
+	    }
+	}
+    }
 
     // Find the best fit plane for the vertices of the triangles involved with
     // the singular point
