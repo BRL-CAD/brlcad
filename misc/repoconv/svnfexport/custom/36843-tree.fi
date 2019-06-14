@@ -1,3 +1,4 @@
+deleteall
 M 100755 a443a8b00db0d02a1ff469768db62f86f1a31ca7 "src/external/ProEngineer/win32-msvc8/proe-brl-3.0/proe-brl-3.0.vcproj"
 M 100755 27b4b194b1cbdc9dcd7dfdc7f6094b8c5716ad13 "src/external/ProEngineer/win32-msvc8/proe/proe.sln"
 M 100755 58f291d41cb93e2f4f44fe35a38e00b501ebc5e9 "src/external/ProEngineer/win32-msvc8/proe-brl-4.0/proe-brl.vcproj"
