@@ -56,7 +56,7 @@ git checkout master
 
 git reset --hard HEAD~1
 CHEAD=$(git show-ref master | awk '{print $1}')
-sed "s/CURRENTHEAD/$CHEAD/" ./29886-note-template.fi > 29886-note.fi
+sed "s/CURRENTHEAD/$CHEAD/" ../29886-note-template.fi > 29886-note.fi
 cat ./29886-note.fi | git fast-import
 rm ./29886-note.fi
 
