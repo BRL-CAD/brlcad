@@ -1,0 +1,54 @@
+Here is a simple way to use notes with svn revision numbers to checkout a specific revision:
+
+git log --all --pretty=format:"%H %N" --grep svn:revision:29886|awk '{system("git checkout "$1)}'
+
+To make this easier, add the following alias to your .gitconfig file:
+
+	svnrev = "!f() { \
+		if [ x$1 != x ] ; then \
+		   REVSHA1=\"$(git log --all --pretty=format:\"%H %N\" --grep svn:revision:$1|awk '{system(\"echo \"$1)}')\"; \
+		   if [ x$REVSHA1 != x ] ; then \
+		      git checkout $REVSHA1; \
+		   else \
+		      echo Unknown revision number: $1; \
+		   fi; \
+		else \
+		   echo Need revision number; \
+		fi; \
+		}; f"
+
+With that alias in place, the command "git svnrev 29886" will check out the git
+commit with a not matching the pattern "svn:revision:29886"
+
+
+In svn, we can svn log in a particular branch checkout to see the history
+specific to that branch, but this is apparently a challenge in git.  The
+following logic added to your .gitconfig defines a logb command that will list
+commits unique to either the currently checked out branch (if you don't supply
+a branch name) or the specified branch if you specify one. (This packages up
+the tricks from https://stackoverflow.com/q/14848274 and
+https://stackoverflow.com/a/12142066)
+
+        logb = "!f() { \
+                if [ x$1 != x ] ; then \
+                   git log $1 --not $(git for-each-ref --format='%(refname)' refs/heads/ | grep -v \"refs/heads/$1\"); \
+                else \
+                   CURRBRANCH=\"$(git rev-parse --abbrev-ref HEAD)\"; \
+                   git log $CURRBRANCH --not $(git for-each-ref --format='%(refname)' refs/heads/ | grep -v \"refs/heads/$CURRBRANCH\"); \
+                fi; \
+                }; f"
+
+
+# Other useful commands:
+
+# Overview with all branches:
+
+# gitk --branches="*" --show-notes
+
+# Nifty trick for getting commit counts per committer (https://stackoverflow.com/a/9839491)
+# git shortlog -s -n --all
+
+# Good way to get a quick overview of branch/tag structure:
+# tig --all --simplify-by-decoration
+
+
