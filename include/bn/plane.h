@@ -1115,6 +1115,17 @@ BN_EXPORT extern int bn_isect_planes(point_t pt,
 				     const plane_t planes[],
 				     const size_t pl_count);
 
+/**
+ * @brief
+ * Calculates the best fit plane for a set of points
+ *
+ * Use SVD algorithm from Soderkvist to fit a plane to vertex points
+ * http://www.math.ltu.se/~jove/courses/mam208/svd.pdf
+ *
+ * Returns a center point and a normal direction for the plane
+ */
+BN_EXPORT extern int bn_fit_plane(point_t *c, vect_t *n, int npnts, point_t *pnts);
+
 __END_DECLS
 
 #endif  /* BN_PLANE_H */

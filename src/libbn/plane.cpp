@@ -33,6 +33,8 @@
 #include <stdio.h>
 #include <math.h>
 
+#include <Eigen/SVD>
+
 #include "bu/debug.h"
 #include "bu/log.h"
 #include "vmath.h"
@@ -2524,6 +2526,46 @@ bn_lseg3_lseg3_parallel(const point_t sg1pt1, const point_t sg1pt2,
     }
 
     return 1;
+}
+
+// Use SVD algorithm from Soderkvist to fit a plane to vertex points
+// http://www.math.ltu.se/~jove/courses/mam208/svd.pdf
+extern "C" int
+bn_fit_plane(point_t *c, vect_t *n, int npnts, point_t *pnts)
+{
+    if (!c || !n || npnts <= 0 || !pnts) {
+	return -1;
+    }
+
+    // 1.  Find the center point
+    point_t center = VINIT_ZERO;
+    for (int i = 0; i < npnts; i++) {
+	VADD2(center, pnts[i], center);
+    }
+    VSCALE(center, center, 1.0/(fastf_t)npnts);
+
+    // 2.  Transfer the points into Eigen data types
+    Eigen::MatrixXd A(3, npnts);
+    for (int i = 0; i < npnts; i++) {
+	A(0,i) = pnts[i][X] - center[X];
+	A(1,i) = pnts[i][Y] - center[Y];
+	A(2,i) = pnts[i][Z] - center[Z];
+    }
+
+    // 3.  Perform SVD
+    Eigen::JacobiSVD<Eigen::MatrixXd> svd(A, Eigen::ComputeThinU);
+
+    // 4.  Normal is in column 3 of U matrix
+    vect_t normal;
+    normal[X] = svd.matrixU()(0,2);
+    normal[Y] = svd.matrixU()(1,2);
+    normal[Z] = svd.matrixU()(2,2);
+
+    // 5.  Set the outputs
+    VMOVE(*c, center);
+    VMOVE(*n, normal);
+
+    return 0;
 }
 
 
