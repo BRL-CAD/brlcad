@@ -1,9 +1,16 @@
 #!/bin/bash
 
+REPODIR="$PWD/brlcad_repo"
+
+if [ ! -e "cvs-fast-export" ]; then
+        git clone https://gitlab.com/esr/cvs-fast-export.git
+fi
+cd cvs-fast-export && make cvs-fast-export && cd ..
+
 # Need an up-to-date copy of the BRL-CAD svn repository on the filesystem
 
+
 echo "Rsyncing BRL-CAD SVN repository"
-REPODIR="$PWD/brlcad_repo"
 mv $REPODIR code
 rsync -av svn.code.sf.net::p/brlcad/code .
 mv code $REPODIR
@@ -17,6 +24,7 @@ mkdir cvs_git_info
 if [ ! -e "brlcad_cvs.tar.gz" ]; then
         curl -o brlcad_cvs.tar.gz https://brlcad.org/brlcad_cvs.tar.gz
 fi
+rm -rf brlcad_cvs
 tar -xf brlcad_cvs.tar.gz
 cd brlcad_cvs/brlcad
 rm src/librt/Attic/parse.c,v
@@ -25,20 +33,26 @@ cp ../../cvs_repaired/sphflake.pix,v pix/
 # RCS headers introduce unnecessary file differences, which are poison pills
 # for git log --follow
 echo "Scrubbing expanded RCS headers"
+echo "Date"
 find . -type f -exec sed -i 's/$Date:[^$;"]*/$Date/' {} \;
+echo "Header"
 find . -type f -exec sed -i 's/$Header:[^$;"]*/$Header/' {} \;
+echo "Id"
 find . -type f -exec sed -i 's/$Id:[^$;"]*/$Id/' {} \;
+echo "Log"
 find . -type f -exec sed -i 's/$Log:[^$;"]*/$Log/' {} \;
+echo "Revision"
 find . -type f -exec sed -i 's/$Revision:[^$;"]*/$Revision/' {} \;
+echo "Source"
 find . -type f -exec sed -i 's/$Source:[^$;"]*/$Source/' {} \;
 sed -i 's/$Author:[^$;"]*/$Author/' misc/Attic/cvs2cl.pl,v
 sed -i 's/$Author:[^$;"]*/$Author/' sh/Attic/cvs2cl.pl,v
 sed -i 's/$Locker:[^$;"]*/$Locker/' src/other/URToolkit/tools/mallocNd.c,v
 
-echo "Running cvs-fast-export"
-find . | cvs-fast-export -A ../../cvs_authormap > ../../brlcad_cvs_git.fi
+echo "Running cvs-fast-export $PWD"
+find . | ../../cvs-fast-export/cvs-fast-export -A ../../cvs_authormap > ../../brlcad_cvs_git.fi
 cd ../
-cvsconvert -n brlcad 2> ../cvs_git_info/cvs_all_fast_export_audit.txt
+../cvs-fast-export/cvsconvert -n brlcad 2> ../cvs_git_info/cvs_all_fast_export_audit.txt
 cd ../
 rm -rf brlcad_cvs_git
 mkdir brlcad_cvs_git
@@ -59,6 +73,8 @@ CHEAD=$(git show-ref master | awk '{print $1}')
 sed "s/CURRENTHEAD/$CHEAD/" ../29886-note-template.fi > 29886-note.fi
 cat ./29886-note.fi | git fast-import
 rm ./29886-note.fi
+
+cd brlcad_cvs_git
 
 # Prepare a list of the SHA1 commits corresponding the the heads and tags, to allow
 # for subsequent fast-imports that will reference them as parents:
@@ -118,7 +134,19 @@ g++ -O3 -o svn_map_commit_revs svn_map_commit_revs.cxx
 ./svn_map_commit_revs
 rm *-note.fi
 
+# Position repo for svnfexport
+echo "Prepare cvs_git"
+rm -rf cvs_git
+cp -r brlcad_cvs_git cvs_git
+
+# Unpack merge data files
+echo "Unpack supporting data"
+tar -xf manual_merge_info.tar.gz
+tar -xf gitignore.tar.gz
+
 # Begin the primary svn conversion
 g++ -O3 -o svnfexport svnfexport.cxx
+
+echo "Start main conversion"
 REPODERCSDIR="$PWD/repo_dercs"
 ./svnfexport ./brlcad_full_dercs.dump account-map $REPODERCSDIR
