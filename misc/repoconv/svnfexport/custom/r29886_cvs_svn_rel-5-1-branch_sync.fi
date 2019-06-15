@@ -750,7 +750,7 @@ mark :1111229886
 committer CVS SVN Sync <cvs_svn_sync@brlcad.org> 1199132714 +0000
 data 77
 Sync CVS repo contents for r29886 to match the SVN contents at that revision.
-from b366bf05851c70d899bfdc4b0a81f075d3fac948
+from 15e0e41d43c4d281fb7526a78e3efd9bcb6ce654
 D html/manuals/mged/cup.g
 D html/manuals/mged/Cup.g
 M 100755 14a29f45a0e42cb5005742b74fb03691007c9c57 libitcl3.2/itcl/pkgIndex.tcl

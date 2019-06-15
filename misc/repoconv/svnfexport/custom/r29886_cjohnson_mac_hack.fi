@@ -1752,12 +1752,12 @@ int ymin, ymax;
 	}
 }
 reset refs/heads/cjohnson-mac-hack
-from cdb65c26ec2cde7e81df86e9e6bf42d6ef3a49c4
+from da27807129b61eda16eb31b14d3acaf8cfbeae25
 commit refs/heads/cjohnson-mac-hack
 mark :1111329886
 committer CVS SVN Sync <cvs_svn_sync@brlcad.org> 625826938 +0000
 data 24
 Chris Johnson's Mac Hack
-from cdb65c26ec2cde7e81df86e9e6bf42d6ef3a49c4
+from da27807129b61eda16eb31b14d3acaf8cfbeae25
 deleteall
 M 100644 8684ce993e973b87c057cb7bad43a84c71ffe704 libfb/if_X.c
