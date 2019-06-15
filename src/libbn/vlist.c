@@ -75,9 +75,6 @@ bn_vlist_bbox(struct bn_vlist *vp, point_t *bmin, point_t *bmax)
 	    case BN_VLIST_MODEL_MAT:
 		/* attribute, not location */
 		break;
-	    case BN_VLIST_DISPLAY_MAT:
-		disp_mode = 1;
-		/* fall through */
 	    case BN_VLIST_LINE_MOVE:
 	    case BN_VLIST_LINE_DRAW:
 	    case BN_VLIST_POLY_MOVE:
@@ -93,6 +90,9 @@ bn_vlist_bbox(struct bn_vlist *vp, point_t *bmin, point_t *bmax)
 		V_MIN((*bmin)[Z], (*pt)[Z]);
 		V_MAX((*bmax)[Z], (*pt)[Z]);
 		break;
+	    case BN_VLIST_DISPLAY_MAT:
+		disp_mode = 1;
+		/* fall through */
 	    case BN_VLIST_POINT_DRAW:
 		V_MIN((*bmin)[X], (*pt)[X]-1.0);
 		V_MAX((*bmax)[X], (*pt)[X]+1.0);
