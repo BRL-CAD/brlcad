@@ -150,3 +150,17 @@ g++ -O3 -o svnfexport svnfexport.cxx
 echo "Start main conversion"
 REPODERCSDIR="$PWD/repo_dercs"
 ./svnfexport ./brlcad_full_dercs.dump account-map $REPODERCSDIR
+
+echo "Archive tags"
+cd cvs_git && ../archive_tags.sh
+
+echo "Do a file git gc --aggressive"
+git gc --aggressive
+
+echo "Make the final tar.gz file (NOTE!!! we can't use git bundle for this, it drops all the notes with the svn rev info)"
+mkdir brlcad-git
+mv .git brlcad-git
+tar -czf ../brlcad-git.tar.gz brlcad-git
+mv brlcad-git .git
+
+echo "Be aware that by default a checkout of the repo won't get the notes - it requires an extra step, see https://stackoverflow.com/questions/37941650/fetch-git-notes-when-cloning"
