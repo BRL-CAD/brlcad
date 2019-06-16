@@ -74,22 +74,10 @@ sed "s/CURRENTHEAD/$CHEAD/" ../29886-note-template.fi > 29886-note.fi
 cat ./29886-note.fi | git fast-import
 rm ./29886-note.fi
 
-cd brlcad_cvs_git
-
-# Prepare a list of the SHA1 commits corresponding the the heads and tags, to allow
-# for subsequent fast-imports that will reference them as parents:
-git show-ref --heads --tags > ../cvs_git_info/brlcad_cvs_git_heads_sha1.txt
-
-# List all blob SHA1 hashes, so we can detect in subsequent processing if SVN is
-# referencing an object we don't have from the git conversion.
-# (This line from https://stackoverflow.com/a/25954360/2037687)
-git rev-list --objects --all | git cat-file --batch-check='%(objectname) %(objecttype) %(rest)' | grep '^[^ ]* blob' | cut -d" " -f1,3- > ../cvs_git_info/brlcad_cvs_git_all_blob_sha1.txt
-
 # Comparing this to the svn checkout:
 echo "Validating cvs-fast-export r29886 against SVN"
-git archive --format=tar --prefix=brlcad_cvs-r29886/ HEAD | gzip > ../brlcad_cvs-r29886.tar.gz
+cd brlcad_cvs_git && git archive --format=tar --prefix=brlcad_cvs-r29886/ HEAD | gzip > ../brlcad_cvs-r29886.tar.gz && cd ..
 # (assuming a local brlcad rsynced svn copy)
-cd ..
 tar -xf brlcad_cvs-r29886.tar.gz
 svn co -q -r29886 file://$REPODIR/brlcad/trunk brlcad_svn-r29886
 find ./brlcad_cvs-r29886 -name .gitignore |xargs rm
