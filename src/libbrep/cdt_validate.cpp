@@ -52,6 +52,9 @@
  */
 
 #include "common.h"
+#include "bn/mat.h"
+#include "bn/plane.h"
+#include "bn/plot3.h"
 #include "./cdt.h"
 
 static Edge
@@ -321,6 +324,54 @@ triangles_degenerate_area(struct ON_Brep_CDT_Face_State *f)
 }
 
 static void
+plot_best_fit_plane(point_t *center, vect_t *norm, const char *filename)
+{
+    FILE* plot_file = fopen(filename, "w");
+    int r = int(256*drand48() + 1.0);
+    int g = int(256*drand48() + 1.0);
+    int b = int(256*drand48() + 1.0);
+    pl_color(plot_file, r, g, b);
+
+    vect_t xbase, ybase, tip;
+    vect_t x_1, x_2, y_1, y_2;
+    bn_vec_perp(xbase, *norm);
+    VCROSS(ybase, xbase, *norm);
+    VUNITIZE(xbase);
+    VUNITIZE(ybase);
+    VSCALE(xbase, xbase, 10);
+    VSCALE(ybase, ybase, 10);
+    VADD2(x_1, *center, xbase);
+    VSUB2(x_2, *center, xbase);
+    VADD2(y_1, *center, ybase);
+    VSUB2(y_2, *center, ybase);
+
+    pdv_3move(plot_file, x_1);
+    pdv_3cont(plot_file, x_2);
+    pdv_3move(plot_file, y_1);
+    pdv_3cont(plot_file, y_2);
+
+    pdv_3move(plot_file, x_1);
+    pdv_3cont(plot_file, y_1);
+    pdv_3move(plot_file, x_2);
+    pdv_3cont(plot_file, y_2);
+ 
+
+    pdv_3move(plot_file, x_2);
+    pdv_3cont(plot_file, y_1);
+    pdv_3move(plot_file, x_1);
+    pdv_3cont(plot_file, y_2);
+
+    VSCALE(tip, *norm, 5);
+    VADD2(tip, *center, tip);
+    pdv_3move(plot_file, *center);
+    pdv_3cont(plot_file, tip);
+
+    fclose(plot_file);
+
+}
+
+
+static void
 plot_trimesh_tris_3d(std::set<size_t> *faces, std::vector<trimesh::triangle_t> &farray, std::map<p2t::Point *, ON_3dPoint *> *pointmap, const char *filename)
 {
     std::set<size_t>::iterator f_it;
@@ -334,8 +385,6 @@ plot_trimesh_tris_3d(std::set<size_t> *faces, std::vector<trimesh::triangle_t> &
     }
     fclose(plot_file);
 }
-
-
 
 void
 Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f)
@@ -392,6 +441,31 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f)
 
     // Find the best fit plane for the vertices of the triangles involved with
     // the singular point
+    std::set<ON_3dPoint *> active_3d_pnts;
+    std::set<size_t>::iterator f_it;
+    for (f_it = singularity_triangles.begin(); f_it != singularity_triangles.end(); f_it++) {
+	p2t::Triangle *t = f->he_triangles[*f_it].t;
+	for (size_t j = 0; j < 3; j++) {
+	    active_3d_pnts.insert((*pointmap)[t->GetPoint(j)]);
+	}
+    }
+    point_t *pnts = (point_t *)bu_calloc(active_3d_pnts.size()+1, sizeof(point_t), "fitting points");
+    std::set<ON_3dPoint *>::iterator a_it;
+    int pnts_ind = 0;
+    for (a_it = active_3d_pnts.begin(); a_it != active_3d_pnts.end(); a_it++) {
+	ON_3dPoint *p = *a_it;
+	pnts[pnts_ind][X] = p->x;
+	pnts[pnts_ind][Y] = p->y;
+	pnts[pnts_ind][Z] = p->z;
+	pnts_ind++;
+    }
+    point_t pcenter;
+    vect_t pnorm;
+    if (bn_fit_plane(&pcenter, &pnorm, pnts_ind, pnts)) {
+	bu_log("Failed to get best fit plane!\n");
+    }
+    bu_file_delete("best_fit_plane.plot3");
+    plot_best_fit_plane(&pcenter, &pnorm, "best_fit_plane.plot3");
 
     // Make sure all of the triangles can be projected to the plane
     // successfully, without flipping triangles.  If not, the mess will have be
