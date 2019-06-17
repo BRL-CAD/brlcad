@@ -324,6 +324,37 @@ triangles_degenerate_area(struct ON_Brep_CDT_Face_State *f)
 }
 
 static void
+plot_edge_set(std::vector<std::pair<trimesh::index_t, trimesh::index_t>> &es, std::map<trimesh::index_t, p2t::Point *> *ind2p2d, std::map<p2t::Point *, ON_3dPoint *> *pointmap, const char *filename)
+{
+    FILE* plot_file = fopen(filename, "w");
+    int r = int(256*drand48() + 1.0);
+    int g = int(256*drand48() + 1.0);
+    int b = int(256*drand48() + 1.0);
+    pl_color(plot_file, r, g, b);
+
+    for (size_t i = 0; i < es.size(); i++) {
+	ON_3dPoint *p1 = (*pointmap)[(*ind2p2d)[es[i].first]];
+	ON_3dPoint *p2 = (*pointmap)[(*ind2p2d)[es[i].second]];
+	point_t bnp1, bnp2;
+	bnp1[X] = p1->x;
+	bnp1[Y] = p1->y;
+	bnp1[Z] = p1->z;
+	bnp2[X] = p2->x;
+	bnp2[Y] = p2->y;
+	bnp2[Z] = p2->z;
+
+	std::cout << "in sph1_" << i << ".s sph " << p1->x << " " << p1->y << " " << p1->z << " 0.1\n";
+	std::cout << "in sph2_" << i << ".s sph " << p2->x << " " << p2->y << " " << p2->z << " 0.1\n";
+
+	pdv_3move(plot_file, bnp1);
+	pdv_3cont(plot_file, bnp2);
+    }
+
+    fclose(plot_file);
+}
+
+
+static void
 plot_best_fit_plane(point_t *center, vect_t *norm, const char *filename)
 {
     FILE* plot_file = fopen(filename, "w");
@@ -371,9 +402,9 @@ plot_best_fit_plane(point_t *center, vect_t *norm, const char *filename)
 
 
 static void
-plot_trimesh_tris_3d(std::set<size_t> *faces, std::vector<trimesh::triangle_t> &farray, std::map<p2t::Point *, ON_3dPoint *> *pointmap, const char *filename)
+plot_trimesh_tris_3d(std::set<trimesh::index_t> *faces, std::vector<trimesh::triangle_t> &farray, std::map<p2t::Point *, ON_3dPoint *> *pointmap, const char *filename)
 {
-    std::set<size_t>::iterator f_it;
+    std::set<trimesh::index_t>::iterator f_it;
     FILE* plot_file = fopen(filename, "w");
     int r = int(256*drand48() + 1.0);
     int g = int(256*drand48() + 1.0);
@@ -390,8 +421,8 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, ON_3dPoint *p3d)
 {
     std::vector<p2t::Triangle*> tris = f->cdt->GetTriangles();
     std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
-    std::set<size_t> singularity_triangles;
-    std::set<size_t>::iterator f_it;
+    std::set<trimesh::index_t> singularity_triangles;
+    std::set<trimesh::index_t>::iterator f_it;
 
     // Find all the triangles using p3d as a vertex - that's our
     // starting triangle set.
@@ -467,6 +498,10 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, ON_3dPoint *p3d)
     bu_file_delete("best_fit_plane_1.plot3");
     plot_best_fit_plane(&pcenter, &pnorm, "best_fit_plane_1.plot3");
 
+    // TODO - Make sure all of the triangles can be projected to the plane
+    // successfully, without flipping triangles.  If not, the mess will have be
+    // handled in coordinated subsections (doable but hard!) and for now we
+    // will punt in that situation.
 
     // Walk out along the mesh, adding triangles with all 3 verts within max_connected_dist and
     // whose triangle normal is < 45 degrees away from that of the original best fit plane
@@ -554,20 +589,27 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, ON_3dPoint *p3d)
     plot_best_fit_plane(&pcenter2, &pnorm2, "best_fit_plane_2.plot3");
 #endif
 
-    // Make sure all of the triangles can be projected to the plane
-    // successfully, without flipping triangles.  If not, the mess will have be
-    // handled in coordinated subsections (doable but hard!) and for now we
-    // will punt in that situation.
+    // Construct the bounding polygon of the subset mesh for poly2Tri.  Build a trimesh
+    // for the subset of triangles we have just identified, and use the trimesh routines
+    // to get the bounding polygon.  Use the same set of unique points so those indices
+    // will match, but the edge and mesh sets will need to be new to reflect the uses
+    // of just the submesh.
+    {
+	std::vector<trimesh::triangle_t> submesh_triangles;
+	std::set<trimesh::index_t>::iterator tr_it;
+	for (tr_it = singularity_triangles.begin(); tr_it != singularity_triangles.end(); tr_it++) {
+	    trimesh::triangle_t tmt = f->he_triangles[*tr_it];
+	    submesh_triangles.push_back(tmt);
+	}
+	std::vector<trimesh::edge_t> sedges;
+	trimesh::trimesh_t smesh;
+	trimesh::unordered_edges_from_triangles(submesh_triangles.size(), &submesh_triangles[0], sedges);
+	smesh.build(f->he_uniq_p2d.size(), submesh_triangles.size(), &submesh_triangles[0], sedges.size(), &sedges[0]);
 
-    // Walk out along the mesh, collecting all the triangles from the face
-    // that can be projected onto the plane without undo loss of area or normal
-    // issues.  Once the terminating criteria are reached, we have the set
-    // of triangles that will provide our "replace and remesh" subset of the
-    // original face.
+	std::vector<std::pair<trimesh::index_t, trimesh::index_t>> bedges = smesh.boundary_edges();
 
-    // Walk around the outer triangles (edge use count internal to the subset will
-    // be critical here) and construct the bounding polygon of the subset for
-    // poly2Tri.
+	plot_edge_set(bedges, &f->he_ind2p2d, pointmap, "outer_edge.plot3");
+    }
 
     // Project all points in the subset into the plane, getting XY coordinates
     // for poly2Tri.  Use the previously constructed loop and assemble the

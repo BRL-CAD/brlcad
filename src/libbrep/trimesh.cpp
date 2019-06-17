@@ -153,7 +153,7 @@ void trimesh_t::build(const unsigned long num_vertices, const unsigned long num_
 	const index_t originating_vertex = m_halfedges[ m_halfedges[ *hei ].opposite_he ].to_vertex;
 	vertex2outgoing_boundary_hei[ originating_vertex ].insert(*hei);
 	if (vertex2outgoing_boundary_hei[ originating_vertex ].size() > 1) {
-	    std::cerr << "Butterfly vertex encountered.\n";
+	    std::cerr << "Butterfly vertex encountered (Edge count: " << vertex2outgoing_boundary_hei[ originating_vertex ].size() <<  ").\n";
 	}
     }
 
