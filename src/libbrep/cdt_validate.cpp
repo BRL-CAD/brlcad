@@ -460,7 +460,7 @@ triangles_incorrect_normals(struct ON_Brep_CDT_Face_State *f)
     // in the singularity point that is the particular problem so the routine
     // knows where it's working
     if (f->has_singular_trims) {
-	ON_Singular_Face_Process(f);
+	CDT_Face_Build_Halfedge(f);
     }
 
     if (ret) {

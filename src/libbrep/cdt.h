@@ -266,7 +266,8 @@ bool build_poly2tri_polylines(struct ON_Brep_CDT_Face_State *f, int init_rtree);
 void
 Process_Loop_Edges(struct ON_Brep_CDT_Face_State *f, int li, fastf_t max_dist);
 
-void ON_Singular_Face_Process(struct ON_Brep_CDT_Face_State *f);
+void CDT_Face_Build_Halfedge(struct ON_Brep_CDT_Face_State *f);
+
 
 /** @} */
 
