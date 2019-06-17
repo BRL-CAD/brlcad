@@ -225,10 +225,6 @@ ON_Brep_CDT_Face_Create(struct ON_Brep_CDT_State *s_cdt, int ind)
     fcdt->e2f = new EdgeToTri;
     fcdt->ecnt = new std::map<Edge, int>;
 
-    /* Only create halfedge data if we need it */
-    fcdt->he_edges = NULL;
-    fcdt->he_mesh = NULL;
-
     return fcdt;
 }
 
@@ -663,64 +659,54 @@ populate_3d_pnts(struct ON_Brep_CDT_Face_State *f)
     }
 }
 
-void
-CDT_Face_Build_Halfedge(struct ON_Brep_CDT_Face_State *f)
+struct trimesh_info *
+CDT_Face_Build_Halfedge(std::set<p2t::Triangle*> *triangles, std::set<p2t::Triangle*> *tris_degen)
 {
-    p2t::CDT *cdt = f->cdt;
-    std::vector<p2t::Triangle*> tris = cdt->GetTriangles();
-
-    f->he_uniq_p2d.clear();
-    f->he_p2dind.clear();
-    f->he_ind2p2d.clear();
-    f->he_triangles.clear();
+    struct trimesh_info *tm = new struct trimesh_info;
+    std::set<p2t::Triangle*>::iterator s_it;
 
     // Assemble the set of unique 2D poly2tri points
-    for (size_t i = 0; i < tris.size(); i++) {
-	p2t::Triangle *t = tris[i];
+    for (s_it = triangles->begin(); s_it != triangles->end(); s_it++) {
+	p2t::Triangle *t = *s_it;
+	if (tris_degen->find(t) != tris_degen->end()) {
+	    continue;
+	}
 	for (size_t j = 0; j < 3; j++) {
-	    f->he_uniq_p2d.insert(t->GetPoint(j));
+	    tm->uniq_p2d.insert(t->GetPoint(j));
 	}
     }
+
     // Assign all poly2tri 2D points a trimesh index
     std::set<p2t::Point *>::iterator u_it;
     {
 	trimesh::index_t ind = 0;
-	for (u_it = f->he_uniq_p2d.begin(); u_it != f->he_uniq_p2d.end(); u_it++) {
-	    f->he_p2dind[*u_it] = ind;
-	    f->he_ind2p2d[ind] = *u_it;
+	for (u_it = tm->uniq_p2d.begin(); u_it != tm->uniq_p2d.end(); u_it++) {
+	    tm->p2dind[*u_it] = ind;
+	    tm->ind2p2d[ind] = *u_it;
 	    ind++;
 	}
     }
 
     // Assemble the faces array
-    for (size_t i = 0; i < tris.size(); i++) {
-	p2t::Triangle *t = tris[i];
-	if (f->tris_degen->find(t) != f->tris_degen->end()) {
+    for (s_it = triangles->begin(); s_it != triangles->end(); s_it++) {
+	p2t::Triangle *t = *s_it;
+	if (tris_degen->find(t) != tris_degen->end()) {
 	    continue;
 	}
 
 	trimesh::triangle_t tmt;
 	for (size_t j = 0; j < 3; j++) {
-	    tmt.v[j] = f->he_p2dind[t->GetPoint(j)];
+	    tmt.v[j] = tm->p2dind[t->GetPoint(j)];
 	}
 	tmt.t = t;
-	f->he_triangles.push_back(tmt);
+	tm->triangles.push_back(tmt);
     }
 
     // Build the mesh topology information
+    trimesh::unordered_edges_from_triangles(tm->triangles.size(), &tm->triangles[0], tm->edges);
+    tm->mesh.build(tm->uniq_p2d.size(), tm->triangles.size(), &tm->triangles[0], tm->edges.size(), &tm->edges[0]);
 
-    if (f->he_edges) {
-	delete f->he_edges;
-    }
-    if (f->he_mesh) {
-	delete f->he_mesh;
-    }
-    f->he_edges = new std::vector<trimesh::edge_t>;
-    f->he_mesh = new trimesh::trimesh_t;
-
-    trimesh::unordered_edges_from_triangles(f->he_triangles.size(), &f->he_triangles[0], *f->he_edges);
-    f->he_mesh->build(f->he_uniq_p2d.size(), f->he_triangles.size(), &f->he_triangles[0], f->he_edges->size(), &(*f->he_edges)[0]);
-
+    return tm;
 }
 
 /** @} */

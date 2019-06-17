@@ -87,6 +87,16 @@ struct cdt_audit_info {
     ON_3dPoint vert_pnt; // For auditing normals
 };
 
+/* Halfedge info for local mesh subset building */
+struct trimesh_info {
+    std::vector<trimesh::edge_t> edges;
+    trimesh::trimesh_t mesh;
+    std::set<p2t::Point *> uniq_p2d;
+    std::map<p2t::Point *, trimesh::index_t> p2dind;
+    std::map<trimesh::index_t, p2t::Point *> ind2p2d;
+    std::vector<trimesh::triangle_t> triangles;
+};
+
 struct ON_Brep_CDT_State;
 
 struct ON_Brep_CDT_Face_State {
@@ -127,14 +137,6 @@ struct ON_Brep_CDT_Face_State {
     std::set<p2t::Triangle*> *tris_zero_3D_area;
     EdgeToTri *e2f;
     std::map<Edge, int> *ecnt;
-
-    /* Halfedge info for local mesh subset building */
-    std::vector<trimesh::edge_t> *he_edges;
-    trimesh::trimesh_t *he_mesh;
-    std::set<p2t::Point *> he_uniq_p2d;
-    std::map<p2t::Point *, trimesh::index_t> he_p2dind;
-    std::map<trimesh::index_t, p2t::Point *> he_ind2p2d;
-    std::vector<trimesh::triangle_t> he_triangles;
 
 };
 
@@ -279,8 +281,7 @@ bool build_poly2tri_polylines(struct ON_Brep_CDT_Face_State *f, int init_rtree);
 void
 Process_Loop_Edges(struct ON_Brep_CDT_Face_State *f, int li, fastf_t max_dist);
 
-void CDT_Face_Build_Halfedge(struct ON_Brep_CDT_Face_State *f);
-
+struct trimesh_info *CDT_Face_Build_Halfedge(std::set<p2t::Triangle *> *triangles, std::set<p2t::Triangle*> *tris_degen);
 
 /** @} */
 
