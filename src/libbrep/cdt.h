@@ -56,6 +56,8 @@
 #include "brep/pullback.h"
 #include "brep/util.h"
 
+#include "./trimesh.h"
+
 #define BREP_PLANAR_TOL 0.05
 
 /***************************************************/
@@ -125,6 +127,15 @@ struct ON_Brep_CDT_Face_State {
     std::set<p2t::Triangle*> *tris_zero_3D_area;
     EdgeToTri *e2f;
     std::map<Edge, int> *ecnt;
+
+    /* Halfedge info for local mesh subset building */
+    std::vector<trimesh::edge_t> *he_edges;
+    trimesh::trimesh_t *he_mesh;
+    std::set<p2t::Point *> he_uniq_p2d;
+    std::map<p2t::Point *, trimesh::index_t> he_p2dind;
+    std::map<trimesh::index_t, p2t::Point *> he_ind2p2d;
+    std::vector<trimesh::triangle_t> he_triangles;
+
 };
 
 

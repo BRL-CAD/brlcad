@@ -27,7 +27,6 @@
 
 #include "common.h"
 #include "./cdt.h"
-#include "./trimesh.h"
 
 /***************************************************
  * debugging routines
@@ -97,7 +96,7 @@ plot_tri_3d(p2t::Triangle *t, std::map<p2t::Point *, ON_3dPoint *> *pointmap, in
 
 
 static void
-plot_tris_3d(std::set<size_t> *faces, std::vector<trimesh::triangle_t> &farray, std::map<p2t::Point *, ON_3dPoint *> *pointmap, const char *filename)
+plot_trimesh_tris_3d(std::set<size_t> *faces, std::vector<trimesh::triangle_t> &farray, std::map<p2t::Point *, ON_3dPoint *> *pointmap, const char *filename)
 {
     std::set<size_t>::iterator f_it;
     FILE* plot_file = fopen(filename, "w");
@@ -240,6 +239,10 @@ ON_Brep_CDT_Face_Create(struct ON_Brep_CDT_State *s_cdt, int ind)
     fcdt->tris_zero_3D_area = new std::set<p2t::Triangle*>;
     fcdt->e2f = new EdgeToTri;
     fcdt->ecnt = new std::map<Edge, int>;
+
+    /* Only create halfedge data if we need it */
+    fcdt->he_edges = NULL;
+    fcdt->he_mesh = NULL;
 
     return fcdt;
 }
@@ -681,29 +684,30 @@ CDT_Face_Build_Halfedge(struct ON_Brep_CDT_Face_State *f)
     p2t::CDT *cdt = f->cdt;
     std::vector<p2t::Triangle*> tris = cdt->GetTriangles();
 
+    f->he_uniq_p2d.clear();
+    f->he_p2dind.clear();
+    f->he_ind2p2d.clear();
+    f->he_triangles.clear();
+
     // Assemble the set of unique 2D poly2tri points
-    std::set<p2t::Point *> uniq_p2d;
     for (size_t i = 0; i < tris.size(); i++) {
 	p2t::Triangle *t = tris[i];
 	for (size_t j = 0; j < 3; j++) {
-	    uniq_p2d.insert(t->GetPoint(j));
+	    f->he_uniq_p2d.insert(t->GetPoint(j));
 	}
     }
     // Assign all poly2tri 2D points a trimesh index
-    std::map<p2t::Point *, trimesh::index_t> p2dind;
-    std::map<trimesh::index_t, p2t::Point *> ind2p2d;
     std::set<p2t::Point *>::iterator u_it;
     {
 	trimesh::index_t ind = 0;
-	for (u_it = uniq_p2d.begin(); u_it != uniq_p2d.end(); u_it++) {
-	    p2dind[*u_it] = ind;
-	    ind2p2d[ind] = *u_it;
+	for (u_it = f->he_uniq_p2d.begin(); u_it != f->he_uniq_p2d.end(); u_it++) {
+	    f->he_p2dind[*u_it] = ind;
+	    f->he_ind2p2d[ind] = *u_it;
 	    ind++;
 	}
     }
 
     // Assemble the faces array
-    std::vector<trimesh::triangle_t> triangles;
     for (size_t i = 0; i < tris.size(); i++) {
 	p2t::Triangle *t = tris[i];
 	if (f->tris_degen->find(t) != f->tris_degen->end()) {
@@ -712,18 +716,25 @@ CDT_Face_Build_Halfedge(struct ON_Brep_CDT_Face_State *f)
 
 	trimesh::triangle_t tmt;
 	for (size_t j = 0; j < 3; j++) {
-	    tmt.v[j] = p2dind[t->GetPoint(j)];
+	    tmt.v[j] = f->he_p2dind[t->GetPoint(j)];
 	}
 	tmt.t = t;
-	triangles.push_back(tmt);
+	f->he_triangles.push_back(tmt);
     }
 
-    // Build the mesh topology information - we are going to have to 'walk' the mesh
-    // locally to do this, so we need neighbor lookups
-    std::vector<trimesh::edge_t> edges;
-    trimesh::unordered_edges_from_triangles(triangles.size(), &triangles[0], edges);
-    trimesh::trimesh_t mesh;
-    mesh.build(uniq_p2d.size(), triangles.size(), &triangles[0], edges.size(), &edges[0]);
+    // Build the mesh topology information
+
+    if (f->he_edges) {
+	delete f->he_edges;
+    }
+    if (f->he_mesh) {
+	delete f->he_mesh;
+    }
+    f->he_edges = new std::vector<trimesh::edge_t>;
+    f->he_mesh = new trimesh::trimesh_t;
+
+    trimesh::unordered_edges_from_triangles(f->he_triangles.size(), &f->he_triangles[0], *f->he_edges);
+    f->he_mesh->build(f->he_uniq_p2d.size(), f->he_triangles.size(), &f->he_triangles[0], f->he_edges->size(), &(*f->he_edges)[0]);
 
 
     // Identify any singular points for later reference
@@ -762,8 +773,8 @@ CDT_Face_Build_Halfedge(struct ON_Brep_CDT_Face_State *f)
 	std::set<p2t::Point *> &p2tspnts = ap_it->second;
 	for (p_it = p2tspnts.begin(); p_it != p2tspnts.end(); p_it++) {
 	    p2t::Point *p2d = *p_it;
-	    trimesh::index_t ind = p2dind[p2d];
-	    std::vector<trimesh::index_t> faces = mesh.vertex_face_neighbors(ind);
+	    trimesh::index_t ind = f->he_p2dind[p2d];
+	    std::vector<trimesh::index_t> faces = f->he_mesh->vertex_face_neighbors(ind);
 	    for (size_t i = 0; i < faces.size(); i++) {
 		std::cout << "face index " << faces[i] << "\n";
 		singularity_triangles.insert(faces[i]);
@@ -772,7 +783,7 @@ CDT_Face_Build_Halfedge(struct ON_Brep_CDT_Face_State *f)
     }
 
     bu_file_delete("singularity_triangles.plot3");
-    plot_tris_3d(&singularity_triangles, triangles, pointmap, "singularity_triangles.plot3");
+    plot_trimesh_tris_3d(&singularity_triangles, f->he_triangles, pointmap, "singularity_triangles.plot3");
 
     // Find the best fit plane for the vertices of the triangles involved with
     // the singular point
