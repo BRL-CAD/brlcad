@@ -443,12 +443,16 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f)
     // the singular point
     std::set<ON_3dPoint *> active_3d_pnts;
     std::set<size_t>::iterator f_it;
+    ON_3dVector avgtnorm(0.0,0.0,0.0);
     for (f_it = singularity_triangles.begin(); f_it != singularity_triangles.end(); f_it++) {
 	p2t::Triangle *t = f->he_triangles[*f_it].t;
+	ON_3dVector tdir = p2tTri_Normal(t, pointmap);
+	avgtnorm += tdir;
 	for (size_t j = 0; j < 3; j++) {
 	    active_3d_pnts.insert((*pointmap)[t->GetPoint(j)]);
 	}
     }
+    avgtnorm = avgtnorm * 1.0/(double)singularity_triangles.size();
     point_t *pnts = (point_t *)bu_calloc(active_3d_pnts.size()+1, sizeof(point_t), "fitting points");
     std::set<ON_3dPoint *>::iterator a_it;
     int pnts_ind = 0;
@@ -464,6 +468,12 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f)
     if (bn_fit_plane(&pcenter, &pnorm, pnts_ind, pnts)) {
 	bu_log("Failed to get best fit plane!\n");
     }
+
+    ON_3dVector on_norm(pnorm[X], pnorm[Y], pnorm[Z]);
+    if (ON_DotProduct(on_norm, avgtnorm) < 0) {
+	VSCALE(pnorm, pnorm, -1);
+    }
+
     bu_file_delete("best_fit_plane.plot3");
     plot_best_fit_plane(&pcenter, &pnorm, "best_fit_plane.plot3");
 
