@@ -439,25 +439,29 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, ON_3dPoint *p3d)
 	}
     }
     avgtnorm = avgtnorm * 1.0/(double)singularity_triangles.size();
-    point_t *pnts = (point_t *)bu_calloc(active_3d_pnts.size()+1, sizeof(point_t), "fitting points");
-    std::set<ON_3dPoint *>::iterator a_it;
-    int pnts_ind = 0;
-    for (a_it = active_3d_pnts.begin(); a_it != active_3d_pnts.end(); a_it++) {
-	ON_3dPoint *p = *a_it;
-	pnts[pnts_ind][X] = p->x;
-	pnts[pnts_ind][Y] = p->y;
-	pnts[pnts_ind][Z] = p->z;
-	pnts_ind++;
-    }
+
     point_t pcenter;
     vect_t pnorm;
-    if (bn_fit_plane(&pcenter, &pnorm, pnts_ind, pnts)) {
-	bu_log("Failed to get best fit plane!\n");
-    }
+    {
+	point_t *pnts = (point_t *)bu_calloc(active_3d_pnts.size()+1, sizeof(point_t), "fitting points");
+	int pnts_ind = 0;
+	std::set<ON_3dPoint *>::iterator a_it;
+	for (a_it = active_3d_pnts.begin(); a_it != active_3d_pnts.end(); a_it++) {
+	    ON_3dPoint *p = *a_it;
+	    pnts[pnts_ind][X] = p->x;
+	    pnts[pnts_ind][Y] = p->y;
+	    pnts[pnts_ind][Z] = p->z;
+	    pnts_ind++;
+	}
+	if (bn_fit_plane(&pcenter, &pnorm, pnts_ind, pnts)) {
+	    bu_log("Failed to get best fit plane!\n");
+	}
+	bu_free(pnts, "fitting points");
 
-    ON_3dVector on_norm(pnorm[X], pnorm[Y], pnorm[Z]);
-    if (ON_DotProduct(on_norm, avgtnorm) < 0) {
-	VSCALE(pnorm, pnorm, -1);
+	ON_3dVector on_norm(pnorm[X], pnorm[Y], pnorm[Z]);
+	if (ON_DotProduct(on_norm, avgtnorm) < 0) {
+	    VSCALE(pnorm, pnorm, -1);
+	}
     }
 
     bu_file_delete("best_fit_plane_1.plot3");
@@ -518,7 +522,37 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, ON_3dPoint *p3d)
     bu_file_delete("singularity_triangles_2.plot3");
     plot_trimesh_tris_3d(&singularity_triangles, f->he_triangles, pointmap, "singularity_triangles_2.plot3");
 
+    // We could recalculate the best fit plane if needed.  The triangle selection criteria
+    // should mean that the original best fit plane should work, given a reasonably well behaved
+    // surface...
+#if 0
+    point_t pcenter2;
+    vect_t pnorm2;
+    {
+	point_t *pnts = (point_t *)bu_calloc(active_3d_pnts.size()+1, sizeof(point_t), "fitting points");
+	int pnts_ind = 0;
+	std::set<ON_3dPoint *>::iterator a_it;
+	for (a_it = active_3d_pnts.begin(); a_it != active_3d_pnts.end(); a_it++) {
+	    ON_3dPoint *p = *a_it;
+	    pnts[pnts_ind][X] = p->x;
+	    pnts[pnts_ind][Y] = p->y;
+	    pnts[pnts_ind][Z] = p->z;
+	    pnts_ind++;
+	}
+	if (bn_fit_plane(&pcenter2, &pnorm2, pnts_ind, pnts)) {
+	    bu_log("Failed to get best fit plane!\n");
+	}
+	bu_free(pnts, "fitting points");
 
+	ON_3dVector on_norm(pnorm[X], pnorm[Y], pnorm[Z]);
+	if (ON_DotProduct(on_norm, avgtnorm) < 0) {
+	    VSCALE(pnorm, pnorm, -1);
+	}
+    }
+
+    bu_file_delete("best_fit_plane_2.plot3");
+    plot_best_fit_plane(&pcenter2, &pnorm2, "best_fit_plane_2.plot3");
+#endif
 
     // Make sure all of the triangles can be projected to the plane
     // successfully, without flipping triangles.  If not, the mess will have be
