@@ -354,7 +354,6 @@ plot_best_fit_plane(point_t *center, vect_t *norm, const char *filename)
     pdv_3cont(plot_file, y_1);
     pdv_3move(plot_file, x_2);
     pdv_3cont(plot_file, y_2);
- 
 
     pdv_3move(plot_file, x_2);
     pdv_3cont(plot_file, y_1);
@@ -387,51 +386,27 @@ plot_trimesh_tris_3d(std::set<size_t> *faces, std::vector<trimesh::triangle_t> &
 }
 
 void
-Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f)
+Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, ON_3dPoint *p3d)
 {
     std::vector<p2t::Triangle*> tris = f->cdt->GetTriangles();
-
-    // Identify any singular points for later reference
-    std::map<ON_3dPoint *,std::set<p2t::Point *>> p2t_singular_pnts;
     std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
+    std::set<size_t> singularity_triangles;
+    std::set<size_t>::iterator f_it;
+
+    // Find all the triangles using p3d as a vertex - that's our
+    // starting triangle set.
     for (size_t i = 0; i < tris.size(); i++) {
 	p2t::Triangle *t = tris[i];
 	if (f->tris_degen->find(t) != f->tris_degen->end()) {
 	    continue;
 	}
 	for (size_t j = 0; j < 3; j++) {
-	    p2t::Point *p2t = t->GetPoint(j);
-	    ON_3dPoint *p3d = (*pointmap)[p2t];
-	    if (f->s_cdt->singular_vert_to_norms->find(p3d) != f->s_cdt->singular_vert_to_norms->end()) {
-		p2t_singular_pnts[p3d].insert(p2t);
-	    }
-	}
-    }
-
-    // Find all the triangles using a singular point as a vertex - that's our
-    // starting triangle set.
-    //
-    // TODO - initially, the code is going to pretty much assume one singularity per face,
-    // but that's not a good assumption in general - ultimately, we should build up sets
-    // of faces for each singularity for separate processing.
-    if (p2t_singular_pnts.size() != 1) {
-	bu_log("odd singularity point count, aborting\n");
-    }
-    std::map<ON_3dPoint *,std::set<p2t::Point *>>::iterator ap_it;
-
-    // In a multi-singularity version of this code this set will have to be specific to each point
-    std::set<size_t> singularity_triangles;
-
-    for (ap_it = p2t_singular_pnts.begin(); ap_it != p2t_singular_pnts.end(); ap_it++) {
-	std::set<p2t::Point *>::iterator p_it;
-	std::set<p2t::Point *> &p2tspnts = ap_it->second;
-	for (p_it = p2tspnts.begin(); p_it != p2tspnts.end(); p_it++) {
-	    p2t::Point *p2d = *p_it;
-	    trimesh::index_t ind = f->he_p2dind[p2d];
-	    std::vector<trimesh::index_t> faces = f->he_mesh->vertex_face_neighbors(ind);
-	    for (size_t i = 0; i < faces.size(); i++) {
-		std::cout << "face index " << faces[i] << "\n";
-		singularity_triangles.insert(faces[i]);
+	    if ((*pointmap)[t->GetPoint(j)] == p3d) {
+		trimesh::index_t ind = f->he_p2dind[t->GetPoint(j)];
+		std::vector<trimesh::index_t> faces = f->he_mesh->vertex_face_neighbors(ind);
+		for (size_t k = 0; k < faces.size(); k++) {
+		    singularity_triangles.insert(faces[k]);
+		}
 	    }
 	}
     }
@@ -439,10 +414,21 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f)
     bu_file_delete("singularity_triangles.plot3");
     plot_trimesh_tris_3d(&singularity_triangles, f->he_triangles, pointmap, "singularity_triangles.plot3");
 
+    // Find the furthest distance of any active triangle vertex to the singularity point - this
+    // will define our 'local' region in which to add triangles
+    double max_connected_dist = 0.0;
+    for (f_it = singularity_triangles.begin(); f_it != singularity_triangles.end(); f_it++) {
+	p2t::Triangle *t = f->he_triangles[*f_it].t;
+	for (size_t j = 0; j < 3; j++) {
+	    ON_3dPoint *vpnt = (*pointmap)[t->GetPoint(j)];
+	    double vpntdist = vpnt->DistanceTo(*p3d);
+	    max_connected_dist = (max_connected_dist < vpntdist) ? vpntdist : max_connected_dist;
+	}
+    }
+
     // Find the best fit plane for the vertices of the triangles involved with
     // the singular point
     std::set<ON_3dPoint *> active_3d_pnts;
-    std::set<size_t>::iterator f_it;
     ON_3dVector avgtnorm(0.0,0.0,0.0);
     for (f_it = singularity_triangles.begin(); f_it != singularity_triangles.end(); f_it++) {
 	p2t::Triangle *t = f->he_triangles[*f_it].t;
@@ -474,8 +460,65 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f)
 	VSCALE(pnorm, pnorm, -1);
     }
 
-    bu_file_delete("best_fit_plane.plot3");
-    plot_best_fit_plane(&pcenter, &pnorm, "best_fit_plane.plot3");
+    bu_file_delete("best_fit_plane_1.plot3");
+    plot_best_fit_plane(&pcenter, &pnorm, "best_fit_plane_1.plot3");
+
+
+    // Walk out along the mesh, adding triangles with all 3 verts within max_connected_dist and
+    // whose triangle normal is < 45 degrees away from that of the original best fit plane
+    std::queue<trimesh::index_t> q1, q2;
+    std::queue<trimesh::index_t> *tq, *nq;
+    tq = &q1;
+    nq = &q2;
+    for (f_it = singularity_triangles.begin(); f_it != singularity_triangles.end(); f_it++) {
+	q1.push(*f_it);
+    }
+    while (!tq->empty()) {
+	trimesh::index_t t_he = tq->front();
+	tq->pop();
+	p2t::Triangle *t = f->he_triangles[t_he].t;
+	// Check normal
+	ON_3dVector tdir = p2tTri_Normal(t, pointmap);
+	if (ON_DotProduct(tdir, avgtnorm) < 0.707) {
+	    continue;
+	}
+	for (size_t i = 0; i < 3; i++) {
+	    trimesh::index_t ind = f->he_p2dind[t->GetPoint(i)];
+	    std::vector<trimesh::index_t> faces = f->he_mesh->vertex_face_neighbors(ind);
+	    for (size_t j = 0; j < faces.size(); j++) {
+		if (singularity_triangles.find(faces[j]) != singularity_triangles.end()) {
+		    // We've already got this one, keep going
+		    continue;
+		}
+		p2t::Triangle *tn = f->he_triangles[faces[j]].t;
+		int is_close = 1;
+		for (size_t k = 0; k < 3; k++) {
+		    // If all three vertices are within max_connected_dist, queue up
+		    // the triangle
+		    ON_3dPoint *vnpt = (*pointmap)[tn->GetPoint(k)];
+		    if (p3d->DistanceTo(*vnpt) > max_connected_dist) {
+			is_close = 0;
+			break;
+		    }
+		}
+		if (is_close) {
+		    nq->push(faces[j]);
+		    singularity_triangles.insert(faces[j]);
+		}
+	    }
+	}
+
+	if (tq->empty()) {
+	    std::queue<trimesh::index_t> *tmpq = tq;
+	    tq = nq;
+	    nq = tmpq;
+	}
+    }
+
+    bu_file_delete("singularity_triangles_2.plot3");
+    plot_trimesh_tris_3d(&singularity_triangles, f->he_triangles, pointmap, "singularity_triangles_2.plot3");
+
+
 
     // Make sure all of the triangles can be projected to the plane
     // successfully, without flipping triangles.  If not, the mess will have be
@@ -647,7 +690,25 @@ triangles_incorrect_normals(struct ON_Brep_CDT_Face_State *f)
     // knows where it's working
     if (f->has_singular_trims) {
 	CDT_Face_Build_Halfedge(f);
-	Plot_Singular_Connected(f);
+
+	// Identify any singular points
+	std::set<ON_3dPoint *> active_singular_pnts;
+	for (size_t i = 0; i < tris.size(); i++) {
+	    p2t::Triangle *t = tris[i];
+	    if (f->tris_degen->find(t) != f->tris_degen->end()) {
+		continue;
+	    }
+	    for (size_t j = 0; j < 3; j++) {
+		ON_3dPoint *p3d = (*pointmap)[t->GetPoint(j)];
+		if (f->s_cdt->singular_vert_to_norms->find(p3d) != f->s_cdt->singular_vert_to_norms->end()) {
+		    active_singular_pnts.insert(p3d);
+		}
+	    }
+	}
+	std::set<ON_3dPoint *>::iterator a_it;
+	for (a_it = active_singular_pnts.begin(); a_it != active_singular_pnts.end(); a_it++) {
+	    Plot_Singular_Connected(f, *a_it);
+	}
     }
 
     if (ret) {
