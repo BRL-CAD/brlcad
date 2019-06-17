@@ -69,7 +69,7 @@ plot_tri(p2t::Triangle *t, const char *filename)
     fclose(plot);
 }
 
-static void
+void
 plot_tri_3d(p2t::Triangle *t, std::map<p2t::Point *, ON_3dPoint *> *pointmap, int r, int g, int b, FILE *c_plot)
 {
     point_t p1, p2, p3;
@@ -94,21 +94,6 @@ plot_tri_3d(p2t::Triangle *t, std::map<p2t::Point *, ON_3dPoint *> *pointmap, in
     pdv_3cont(c_plot, p3);
 }
 
-
-static void
-plot_trimesh_tris_3d(std::set<size_t> *faces, std::vector<trimesh::triangle_t> &farray, std::map<p2t::Point *, ON_3dPoint *> *pointmap, const char *filename)
-{
-    std::set<size_t>::iterator f_it;
-    FILE* plot_file = fopen(filename, "w");
-    int r = int(256*drand48() + 1.0);
-    int g = int(256*drand48() + 1.0);
-    int b = int(256*drand48() + 1.0);
-    for (f_it = faces->begin(); f_it != faces->end(); f_it++) {
-	p2t::Triangle *t = farray[*f_it].t;
-	plot_tri_3d(t, pointmap, r, g ,b, plot_file);
-    }
-    fclose(plot_file);
-}
 
 
 struct cdt_audit_info *
@@ -736,86 +721,7 @@ CDT_Face_Build_Halfedge(struct ON_Brep_CDT_Face_State *f)
     trimesh::unordered_edges_from_triangles(f->he_triangles.size(), &f->he_triangles[0], *f->he_edges);
     f->he_mesh->build(f->he_uniq_p2d.size(), f->he_triangles.size(), &f->he_triangles[0], f->he_edges->size(), &(*f->he_edges)[0]);
 
-
-    // Identify any singular points for later reference
-    std::map<ON_3dPoint *,std::set<p2t::Point *>> p2t_singular_pnts;
-    std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
-    for (size_t i = 0; i < tris.size(); i++) {
-	p2t::Triangle *t = tris[i];
-	if (f->tris_degen->find(t) != f->tris_degen->end()) {
-	    continue;
-	}
-	for (size_t j = 0; j < 3; j++) {
-	    p2t::Point *p2t = t->GetPoint(j);
-	    ON_3dPoint *p3d = (*pointmap)[p2t];
-	    if (f->s_cdt->singular_vert_to_norms->find(p3d) != f->s_cdt->singular_vert_to_norms->end()) {
-		p2t_singular_pnts[p3d].insert(p2t);
-	    }
-	}
-    }
-
-    // Find all the triangles using a singular point as a vertex - that's our
-    // starting triangle set.
-    //
-    // TODO - initially, the code is going to pretty much assume one singularity per face,
-    // but that's not a good assumption in general - ultimately, we should build up sets
-    // of faces for each singularity for separate processing.
-    if (p2t_singular_pnts.size() != 1) {
-	bu_log("odd singularity point count, aborting\n");
-    }
-    std::map<ON_3dPoint *,std::set<p2t::Point *>>::iterator ap_it;
-
-    // In a multi-singularity version of this code this set will have to be specific to each point
-    std::set<size_t> singularity_triangles;
-
-    for (ap_it = p2t_singular_pnts.begin(); ap_it != p2t_singular_pnts.end(); ap_it++) {
-	std::set<p2t::Point *>::iterator p_it;
-	std::set<p2t::Point *> &p2tspnts = ap_it->second;
-	for (p_it = p2tspnts.begin(); p_it != p2tspnts.end(); p_it++) {
-	    p2t::Point *p2d = *p_it;
-	    trimesh::index_t ind = f->he_p2dind[p2d];
-	    std::vector<trimesh::index_t> faces = f->he_mesh->vertex_face_neighbors(ind);
-	    for (size_t i = 0; i < faces.size(); i++) {
-		std::cout << "face index " << faces[i] << "\n";
-		singularity_triangles.insert(faces[i]);
-	    }
-	}
-    }
-
-    bu_file_delete("singularity_triangles.plot3");
-    plot_trimesh_tris_3d(&singularity_triangles, f->he_triangles, pointmap, "singularity_triangles.plot3");
-
-    // Find the best fit plane for the vertices of the triangles involved with
-    // the singular point
-
-    // Make sure all of the triangles can be projected to the plane
-    // successfully, without flipping triangles.  If not, the mess will have be
-    // handled in coordinated subsections (doable but hard!) and for now we
-    // will punt in that situation.
-
-    // Walk out along the mesh, collecting all the triangles from the face
-    // that can be projected onto the plane without undo loss of area or normal
-    // issues.  Once the terminating criteria are reached, we have the set
-    // of triangles that will provide our "replace and remesh" subset of the
-    // original face.
-
-    // Walk around the outer triangles (edge use count internal to the subset will
-    // be critical here) and construct the bounding polygon of the subset for
-    // poly2Tri.
-
-    // Project all points in the subset into the plane, getting XY coordinates
-    // for poly2Tri.  Use the previously constructed loop and assemble the
-    // polyline and internal point set for the new triangulation, keeping a
-    // map from the new XY points to the original p2t points.
-
-    // Perform the new triangulation, assemble the new p2t Triangle set using
-    // the mappings, and check the new 3D mesh thus created for issues.  If it
-    // is clean, replace the original subset of the parent face with the new
-    // triangle set, else fail.  Note that a consequence of this will be that
-    // only one of the original singularity trim points will end up being used.
-
 }
-
 
 /** @} */
 

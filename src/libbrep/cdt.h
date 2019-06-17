@@ -238,6 +238,8 @@ void
 plot_polyline(std::vector<p2t::Point *> *pnts, const char *filename);
 void
 plot_tri(p2t::Triangle *t, const char *filename);
+void
+plot_tri_3d(p2t::Triangle *t, std::map<p2t::Point *, ON_3dPoint *> *pointmap, int r, int g, int b, FILE *c_plot);
 
 struct cdt_audit_info *
 cdt_ainfo(int fid, int vid, int tid, int eid, fastf_t x2d, fastf_t y2d, double px, double py, double pz);
