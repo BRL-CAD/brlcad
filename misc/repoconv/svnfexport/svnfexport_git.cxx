@@ -343,7 +343,7 @@ std::string note_svn_rev(struct svn_revision &rev, std::string &rbranch)
     std::string fi_file = std::to_string(rev.revision_number) + std::string("-note.fi");
     std::ofstream outfile(fi_file.c_str(), std::ios::out | std::ios::binary);
 
-    std::string svn_id_str = std::string("svn:revision:") + std::to_string(rev.revision_number);
+    std::string svn_id_str = std::string("svn:revision:") + std::to_string(rev.revision_number) + std::string("\n") + std::string("svn:branch:") + rbranch;
 
     outfile << "blob" << "\n";
     outfile << "mark :1" << "\n";
@@ -352,7 +352,7 @@ std::string note_svn_rev(struct svn_revision &rev, std::string &rbranch)
     outfile << "commit refs/notes/commits" << "\n";
     outfile << "committer " << author_map[rev.author] << " " << svn_time_to_git_time(rev.timestamp.c_str()) << "\n";
 
-    std::string svn_id_commit_msg = std::string("Note SVN revision ") + std::to_string(rev.revision_number);
+    std::string svn_id_commit_msg = std::string("Note SVN revision and branch");
     outfile << "data " << svn_id_commit_msg.length() << "\n";
     outfile << svn_id_commit_msg << "\n";
 
