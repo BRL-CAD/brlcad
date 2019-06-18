@@ -544,6 +544,7 @@ vol_from_file(const char *file, size_t xdim, size_t ydim, size_t zdim, unsigned 
 {
     size_t y;
     size_t z;
+    size_t ret = 0;
     size_t nbytes;
     FILE *fp;
 
@@ -564,26 +565,27 @@ vol_from_file(const char *file, size_t xdim, size_t ydim, size_t zdim, unsigned 
     /* Because of in-memory padding, read each scanline separately */
     for (z = 0; z < zdim; z++) {
 	for (y = 0; y < ydim; y++) {
-	    size_t ret;
+	    size_t fret;
 	    void *data = &VOLMAP(map, xdim, ydim, 0, y, z);
 
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);	/* lock */
-	    ret = fread(data, xdim, 1, fp);		/* res_syscall */
+	    fret = fread(data, xdim, 1, fp);		/* res_syscall */
 	    bu_semaphore_release(BU_SEM_SYSCALL);	/* unlock */
-	    if (ret < 1) {
+	    if (fret < 1) {
 		bu_log("rt_vol_import4(%s): Unable to read whole VOL, y=%zu, z=%zu\n", file, y, z);
 		bu_semaphore_acquire(BU_SEM_SYSCALL);	/* lock */
 		fclose(fp);
 		bu_semaphore_release(BU_SEM_SYSCALL);	/* unlock */
 		return 0;
 	    }
+	    ret += xdim;
 	}
     }
     bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
     fclose(fp);
     bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
 
-    return nbytes;
+    return ret;
 }
 
 
