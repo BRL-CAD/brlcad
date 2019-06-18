@@ -46,6 +46,8 @@
 #include "bu/cv.h"
 #include "bu/opt.h"
 #include "bu/time.h"
+#include "bn/mat.h"
+#include "bn/plane.h"
 #include "bn/plot3.h"
 #include "bn/tol.h"
 #include "bn/vlist.h"
