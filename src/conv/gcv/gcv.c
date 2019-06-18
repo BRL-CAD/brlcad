@@ -373,7 +373,7 @@ gcv_help(struct bu_vls *UNUSED(msg), size_t argc, const char **argv, void *set_v
     struct gcv_help_state *gs = (struct gcv_help_state *)set_var;
     if (gs) gs->flag = 1;
 
-    if (!argv || strlen(argv[0]) || argc == 0) {
+    if (!argv || !argv[0] || strlen(argv[0]) || argc == 0) {
 	return 0;
     } else {
 	if (gs) gs->format = bu_strdup(argv[0]);
