@@ -545,7 +545,7 @@ template<typename T> struct smart_memmove_helper<T,false> {
 #ifndef EIGEN_ALLOCA
   #if EIGEN_OS_LINUX || (defined alloca)
     #define EIGEN_ALLOCA alloca
-  #elif EIGNE_OS_MAC
+  #elif EIGEN_OS_MAC
     #define EIGEN_ALLOCA malloc
   #elif EIGEN_COMP_MSVC
     #define EIGEN_ALLOCA _alloca
