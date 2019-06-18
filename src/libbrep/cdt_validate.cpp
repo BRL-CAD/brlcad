@@ -602,6 +602,7 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
     std::vector<ON_3dPoint *> pnts_3d(active_3d_pnts.begin(), active_3d_pnts.end());
     std::vector<ON_2dPoint> pnts_2d;
     std::map<ON_3dPoint *, size_t> pnts_3d_ind;
+    bu_log("singularity triangle cnt: %zd\n", singularity_triangles.size());
     {
 	for (size_t i = 0; i < pnts_3d.size(); i++) {
 	    pnts_3d_ind[pnts_3d[i]] = i;
@@ -617,6 +618,7 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
 
 
 	std::vector<trimesh::triangle_t> submesh_triangles;
+	std::set<trimesh::index_t> smtri;
 	std::set<trimesh::index_t>::iterator tr_it;
 	for (tr_it = singularity_triangles.begin(); tr_it != singularity_triangles.end(); tr_it++) {
 	    p2t::Triangle *t = tm->triangles[*tr_it].t;
@@ -625,7 +627,10 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
 		tmt.v[j] = pnts_3d_ind[(*pointmap)[t->GetPoint(j)]];
 	    }
 	    tmt.t = t;
-	    submesh_triangles.push_back(tmt);
+	    if (tmt.v[0] != tmt.v[1] && tmt.v[0] != tmt.v[2] && tmt.v[1] != tmt.v[2]) {
+		smtri.insert(submesh_triangles.size());
+		submesh_triangles.push_back(tmt);
+	    }
 	}
 	bu_log("submesh triangle cnt: %zd\n", submesh_triangles.size());
 
@@ -635,8 +640,10 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
 	smesh.build(pnts_2d.size(), submesh_triangles.size(), &submesh_triangles[0], sedges.size(), &sedges[0]);
 
 	std::vector<std::pair<trimesh::index_t, trimesh::index_t>> bedges = smesh.boundary_edges();
+	bu_log("boundary edge segment cnt: %zd\n", bedges.size());
 
 	plot_edge_set(bedges, pnts_3d, "outer_edge.plot3");
+	plot_trimesh_tris_3d(&smtri, submesh_triangles, pointmap, "submesh_triangles.plot3");
     }
 
 
