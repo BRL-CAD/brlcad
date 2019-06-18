@@ -10,6 +10,7 @@
 #include <cassert>
 #include <set>
 #include <iostream>
+#include <algorithm>
 
 namespace
 {
