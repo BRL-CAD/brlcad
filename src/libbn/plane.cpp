@@ -67,8 +67,8 @@ bn_dist_pt3_pt3(const fastf_t *a, const fastf_t *b)
 int
 bn_pt3_pt3_equal(const fastf_t *a, const fastf_t *b, const struct bn_tol *tol)
 {
-    register fastf_t tmp = tol->dist_sq;
-    register fastf_t ab, abx, aby, abz;
+    fastf_t tmp = tol->dist_sq;
+    fastf_t ab, abx, aby, abz;
 
     abx = a[X]-b[X];
     ab = abx * abx;
@@ -207,7 +207,7 @@ bn_mk_plane_3pts(fastf_t *plane,
     vect_t B_A;
     vect_t C_A;
     vect_t C_B;
-    register fastf_t mag;
+    fastf_t mag;
 
     BN_CK_TOL(tol);
 
@@ -496,9 +496,9 @@ bn_isect_line3_plane(fastf_t *dist,
 		     const fastf_t *plane,
 		     const struct bn_tol *tol)
 {
-    register fastf_t slant_factor;
-    register fastf_t norm_dist;
-    register fastf_t dot;
+    fastf_t slant_factor;
+    fastf_t norm_dist;
+    fastf_t dot;
     vect_t local_dir;
 
     BN_CK_TOL(tol);
@@ -623,8 +623,8 @@ bn_isect_line2_line2(fastf_t *dist, const fastf_t *p, const fastf_t *d, const fa
 
 {
     fastf_t hx, hy;		/* A - P */
-    register fastf_t det;
-    register fastf_t det1;
+    fastf_t det;
+    fastf_t det1;
     vect_t unit_d;
     vect_t unit_c;
     vect_t unit_h;
@@ -778,7 +778,7 @@ bn_isect_line2_lseg2(fastf_t *dist,
 		     const fastf_t *c,
 		     const struct bn_tol *tol)
 {
-    register fastf_t f;
+    fastf_t f;
     fastf_t ctol;
     int ret;
     point_t b;
@@ -1524,7 +1524,7 @@ double
 bn_dist_line3_pt3(const fastf_t *pt, const fastf_t *dir, const fastf_t *a)
 {
     vect_t f;
-    register fastf_t FdotD;
+    fastf_t FdotD;
 
     if ((FdotD = MAGNITUDE(dir)) <= SMALL_FASTF) {
 	FdotD = 0.0;
@@ -1550,7 +1550,7 @@ double
 bn_distsq_line3_pt3(const fastf_t *pt, const fastf_t *dir, const fastf_t *a)
 {
     vect_t f;
-    register fastf_t FdotD;
+    fastf_t FdotD;
 
     VSUB2(f, pt, a);
     FdotD = MAGNITUDE(dir);
@@ -1574,7 +1574,7 @@ out:
 double
 bn_dist_line_origin(const fastf_t *pt, const fastf_t *dir)
 {
-    register fastf_t PTdotD;
+    fastf_t PTdotD;
 
     if ((PTdotD = MAGNITUDE(dir)) <= SMALL_FASTF)
 	return 0.0;
@@ -1589,7 +1589,7 @@ double
 bn_dist_line2_point2(const fastf_t *pt, const fastf_t *dir, const fastf_t *a)
 {
     vect_t f;
-    register fastf_t FdotD;
+    fastf_t FdotD;
 
     V2SUB2(f, pt, a);
     if ((FdotD = sqrt(MAG2SQ(dir))) <= SMALL_FASTF)
@@ -1605,7 +1605,7 @@ double
 bn_distsq_line2_point2(const fastf_t *pt, const fastf_t *dir, const fastf_t *a)
 {
     vect_t f;
-    register fastf_t FdotD;
+    fastf_t FdotD;
 
     V2SUB2(f, pt, a);
     if ((FdotD = sqrt(MAG2SQ(dir))) <= SMALL_FASTF)
@@ -1618,10 +1618,10 @@ bn_distsq_line2_point2(const fastf_t *pt, const fastf_t *dir, const fastf_t *a)
 
 
 double
-bn_area_of_triangle(register const fastf_t *a, register const fastf_t *b, register const fastf_t *c)
+bn_area_of_triangle(const fastf_t *a, const fastf_t *b, const fastf_t *c)
 {
-    register double t;
-    register double area;
+    double t;
+    double area;
 
     t =	a[Y] * (b[Z] - c[Z]) -
 	b[Y] * (a[Z] - c[Z]) +
@@ -1985,7 +1985,7 @@ bn_dist_pt3_lseg3(fastf_t *dist,
     }
     if (t < B_A) {
 	/* PCA falls between A and B */
-	register fastf_t dsq;
+	fastf_t dsq;
 	fastf_t param_dist;	/* parametric dist */
 
 	/* Find PCA */
@@ -2074,7 +2074,7 @@ bn_dist_pt2_lseg2(fastf_t *dist_sq, fastf_t *pca, const fastf_t *a, const fastf_
     }
     if (t < B_A) {
 	/* PCA falls between A and B */
-	register fastf_t dsq;
+	fastf_t dsq;
 	fastf_t param_dist;	/* parametric dist */
 
 	/* Find PCA */
@@ -2150,7 +2150,7 @@ bn_rotate_plane(fastf_t *oplane, const fastf_t *mat, const fastf_t *iplane)
 int
 bn_coplanar(const fastf_t *a, const fastf_t *b, const struct bn_tol *tol)
 {
-    register fastf_t dot;
+    fastf_t dot;
     vect_t pt_a, pt_b;
     BN_CK_TOL(tol);
 
@@ -2468,7 +2468,7 @@ bn_lseg3_lseg3_parallel(const point_t sg1pt1, const point_t sg1pt2,
     char e_sc[2][3] = {{0, 0, 0}, {0, 0, 0}};
     fastf_t dist = tol->dist;
     fastf_t tmp;
-    register int i, j;
+    int i, j;
 
     VSUB2(e_dif[0], sg1pt2, sg1pt1);
     VSUB2(e_dif[1], sg2pt2, sg2pt1);
