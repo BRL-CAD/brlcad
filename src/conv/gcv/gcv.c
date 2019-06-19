@@ -36,20 +36,25 @@ struct gcv_fmt_opts {
     struct bu_opt_desc *ds;
 };
 
-void gcv_fmt_opts_init(struct gcv_fmt_opts *gfo, struct bu_opt_desc *ds)
+
+static void
+gcv_fmt_opts_init(struct gcv_fmt_opts *gfo, struct bu_opt_desc *ds)
 {
     BU_GET(gfo->args, struct bu_ptbl);
     bu_ptbl_init(gfo->args, 8, "init opts tbl");
     gfo->ds = ds;
 }
 
-void gcv_fmt_opts_free(struct gcv_fmt_opts *gfo)
+
+static void
+gcv_fmt_opts_free(struct gcv_fmt_opts *gfo)
 {
     bu_ptbl_free(gfo->args);
     BU_PUT(gfo->args, struct bu_ptbl);
 }
 
-int
+
+static int
 gcv_fmt_fun(struct bu_vls *UNUSED(msgs), size_t argc, const char **argv, void *set_var)
 {
     size_t i = 0;
@@ -58,7 +63,7 @@ gcv_fmt_fun(struct bu_vls *UNUSED(msgs), size_t argc, const char **argv, void *s
 
     if (!gfo) return -1;
 
-    if (!argv || argc < 1 ) return 0;
+    if (!argv || argc < 1) return 0;
 
     for (i = 0; i < argc; i++) {
 	struct bu_vls cmp_arg = BU_VLS_INIT_ZERO;
@@ -92,34 +97,11 @@ gcv_fmt_fun(struct bu_vls *UNUSED(msgs), size_t argc, const char **argv, void *s
     return args_used;
 }
 
-int
-io_opt_files(size_t argc, const char **argv)
-{
-    int i_opts = 0;
-    int o_opts = 0;
-    const char *equal_pos = NULL;
-    size_t i = 0;
-    for (i = 0; i < argc; i++) {
-	struct bu_vls cmp_arg = BU_VLS_INIT_ZERO;
-	const char *arg = argv[i];
-	if (arg[0] != '-') continue;
-	arg++;
-	if (arg[0] == '-') arg++;
-	equal_pos = strchr(arg, '=');
-	bu_vls_sprintf(&cmp_arg, "%s", arg);
-	if (equal_pos)
-	    bu_vls_trunc(&cmp_arg, -1 * strlen(equal_pos));
-
-	if (BU_STR_EQUAL(bu_vls_addr(&cmp_arg), "input")) i_opts++;
-	if (BU_STR_EQUAL(bu_vls_addr(&cmp_arg), "output")) o_opts++;
-    }
-    i_opts = (i_opts > 0) ? 1 : 0;
-    o_opts = (o_opts > 0) ? 1 : 0;
-    return i_opts + o_opts;
-}
 
 /* Emulate a FASTGEN4 format option processor */
-void fast4_arg_process(size_t argc, const char **argv) {
+void
+fast4_arg_process(size_t argc, const char **argv)
+{
     size_t i = 0;
     int ret_argc = 0;
     static int tol = 0.0;
@@ -132,7 +114,7 @@ void fast4_arg_process(size_t argc, const char **argv) {
 
     ret_argc = bu_opt_parse(NULL, argc, (const char **)argv, fg4_opt_desc);
 
-    if (w_flag)	bu_log("FASTGEN 4 warn default names set\n");
+    if (w_flag) bu_log("FASTGEN 4 warn default names set\n");
     bu_log("FASTGEN 4 tol: %d\n", tol);
 
     if (ret_argc > 0) {
@@ -144,7 +126,10 @@ void fast4_arg_process(size_t argc, const char **argv) {
     }
 }
 
-void stl_arg_process(size_t argc, const char **argv) {
+
+void
+stl_arg_process(size_t argc, const char **argv)
+{
     size_t i= 0;
     int ret_argc = 0;
     static int tol = 0.0;
@@ -169,7 +154,8 @@ void stl_arg_process(size_t argc, const char **argv) {
     }
 }
 
-HIDDEN int
+
+static int
 extract_path(struct bu_vls *path, const char *input)
 {
     int ret = 0;
@@ -196,7 +182,8 @@ extract_path(struct bu_vls *path, const char *input)
     return ret;
 }
 
-HIDDEN int
+
+static int
 extract_format_prefix(struct bu_vls *format, const char *input)
 {
     struct bu_vls wformat = BU_VLS_INIT_ZERO;
@@ -227,7 +214,8 @@ extract_format_prefix(struct bu_vls *format, const char *input)
     return 0;
 }
 
-int
+
+static int
 parse_model_string(struct bu_vls *format, struct bu_vls *slog, const char *opt, const char *input)
 {
     int type_int = 0;
@@ -308,14 +296,15 @@ parse_model_string(struct bu_vls *format, struct bu_vls *slog, const char *opt, 
     return (int)type;
 }
 
-int
+
+static int
 file_stat(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 {
     char **file_set = (char **)set_var;
 
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "input file");
 
-    if (!bu_file_exists(argv[0], NULL)){
+    if (!bu_file_exists(argv[0], NULL)) {
 	if (msg) bu_vls_sprintf(msg, "Error - file %s does not exist!\n", argv[0]);
 	return -1;
     }
@@ -325,14 +314,15 @@ file_stat(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
     return 1;
 }
 
-int
+
+static int
 file_null(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 {
     char **file_set = (char **)set_var;
 
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "output file");
 
-    if (bu_file_exists(argv[0], NULL)){
+    if (bu_file_exists(argv[0], NULL)) {
 	if (msg) bu_vls_sprintf(msg, "Error - file %s already exists!\n", argv[0]);
 	return -1;
     }
@@ -342,7 +332,8 @@ file_null(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
     return 1;
 }
 
-int
+
+static int
 model_mime(struct bu_vls *msg, size_t argc, const char **argv, void *set_mime)
 {
     int type_int;
@@ -367,7 +358,8 @@ struct gcv_help_state {
     char *format;
 };
 
-int
+
+static int
 gcv_help(struct bu_vls *UNUSED(msg), size_t argc, const char **argv, void *set_var)
 {
     struct gcv_help_state *gs = (struct gcv_help_state *)set_var;
@@ -382,13 +374,13 @@ gcv_help(struct bu_vls *UNUSED(msg), size_t argc, const char **argv, void *set_v
 }
 
 
-HIDDEN int
+static int
 gcv_do_conversion(
-	struct bu_vls *messages,
-	const char *in_path, bu_mime_model_t in_type,
-	const char *out_path, bu_mime_model_t out_type,
-	size_t in_argc, const char **in_argv,
-	size_t out_argc, const char **out_argv)
+    struct bu_vls *messages,
+    const char *in_path, bu_mime_model_t in_type,
+    const char *out_path, bu_mime_model_t out_type,
+    size_t in_argc, const char **in_argv,
+    size_t out_argc, const char **out_argv)
 {
     const struct bu_ptbl * const filters = gcv_list_filters();
     const struct gcv_filter * const *entry;
@@ -400,14 +392,14 @@ gcv_do_conversion(
 	if ((*entry)->filter_type == GCV_FILTER_READ) {
 	    if (!in_filter && (emt != BU_MIME_MODEL_AUTO) && (emt == in_type)) in_filter = *entry;
 	    if (!in_filter && (emt == BU_MIME_MODEL_AUTO) &&
-		    ((*entry)->data_supported && in_path && (*(*entry)->data_supported)(in_path)) ) {
+		((*entry)->data_supported && in_path && (*(*entry)->data_supported)(in_path))) {
 	       	in_filter = *entry;
 	    }
 	}
 	if ((*entry)->filter_type == GCV_FILTER_WRITE) {
 	    if (!out_filter && (emt != BU_MIME_MODEL_AUTO) && (emt == out_type)) out_filter = *entry;
 	    if (!out_filter && (emt == BU_MIME_MODEL_AUTO) &&
-		    ((*entry)->data_supported && (*(*entry)->data_supported)(bu_file_mime_str(out_type, BU_MIME_MODEL))) ) {
+		((*entry)->data_supported && (*(*entry)->data_supported)(bu_file_mime_str(out_type, BU_MIME_MODEL)))) {
 		out_filter = *entry;
 	    }
 	}
@@ -478,8 +470,6 @@ main(int ac, const char **av)
     struct bu_ptbl output_opts = BU_PTBL_INIT_ZERO;
     struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
     int uac = 0;
-    int io_opt_cnt = io_opt_files(ac, av);
-
 
     struct bu_opt_desc gcv_opt_desc[] = {
 	{"h", "help",             "[format]",   &gcv_help,    (void *)&hs,            gcv_help_str,                 },
@@ -494,6 +484,8 @@ main(int ac, const char **av)
 	BU_OPT_DESC_NULL
     };
 
+    BU_ASSERT(ac > 0 && av);
+
     bu_setprogname(av[0]);
 
     gcv_fmt_opts_init(&in_only_opts, gcv_opt_desc);
@@ -503,7 +495,8 @@ main(int ac, const char **av)
     hs.flag = 0;
     hs.format = NULL;
 
-    ac-=(ac>0); av+=(ac>0); /* skip program name argv[0] if present */
+    /* skip program name */
+    ac--; av++;
 
     if (ac == 0) {
 	char *help = bu_opt_describe(gcv_opt_desc, NULL);
@@ -513,7 +506,7 @@ main(int ac, const char **av)
 	goto cleanup;
     }
 
-    uac = bu_opt_parse(&parse_msgs, ac - 2 + io_opt_cnt, av, gcv_opt_desc);
+    uac = bu_opt_parse(&parse_msgs, ac, av, gcv_opt_desc);
 
     if (uac == -1) {
 	bu_log("Parsing error: %s\n", bu_vls_addr(&parse_msgs));
@@ -688,7 +681,7 @@ main(int ac, const char **av)
 	const char ** const out_argv = (const char **)output_opts.buffer;
 
 	if (!gcv_do_conversion(&slog, bu_vls_addr(&in_path), in_type, bu_vls_addr(&out_path),
-		    out_type, in_argc, in_argv, out_argc, out_argv)) {
+			       out_type, in_argc, in_argv, out_argc, out_argv)) {
 	    bu_vls_printf(&slog, "Conversion failed\n");
 	    ret = 1;
 	    goto cleanup;
