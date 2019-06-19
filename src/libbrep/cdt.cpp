@@ -26,6 +26,7 @@
  */
 
 #include "common.h"
+#include "bg/chull.h"
 #include "./cdt.h"
 
 #define BREP_PLANAR_TOL 0.05
@@ -123,6 +124,31 @@ plot_edge_loop_2d(std::vector<p2t::Point *> &el , const char *filename)
 	VSET(bnp, el[i]->x, el[i]->y, 0);
 	pdv_3cont(plot_file, bnp);
     }
+
+    fclose(plot_file);
+}
+
+static void
+plot_concave_hull_2d(point2d_t *pnts, int npnts, const char *filename)
+{
+    bu_file_delete(filename);
+    FILE* plot_file = fopen(filename, "w");
+    int r = int(256*drand48() + 1.0);
+    int g = int(256*drand48() + 1.0);
+    int b = int(256*drand48() + 1.0);
+    pl_color(plot_file, r, g, b);
+
+    point_t bnp;
+    VSET(bnp, pnts[0][X], pnts[0][Y], 0);
+    pdv_3move(plot_file, bnp);
+
+    for (int i = 1; i < npnts; i++) {
+	VSET(bnp, pnts[i][X], pnts[i][Y], 0);
+	pdv_3cont(plot_file, bnp);
+    }
+
+    VSET(bnp, pnts[0][X], pnts[0][Y], 0);
+    pdv_3cont(plot_file, bnp);
 
     fclose(plot_file);
 }
@@ -427,6 +453,26 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
     // of the projected 3D loop...
     plot_edge_loop(sloop, pnts_3d, "outer_loop.plot3");
 
+    point2d_t *hull;
+    {
+	point2d_t *bpnts_2d = (point2d_t *)bu_calloc(sloop.size()+2, sizeof(point_t), "concave hull 2D points");
+	for (size_t i = 0; i < sloop.size(); i++) {
+	    ON_2dPoint *p = pnts_2d[sloop[i]];
+	    bpnts_2d[i][X] = p->x;
+	    bpnts_2d[i][Y] = p->y;
+	}
+
+	bu_log("sloop.size: %zd\n", sloop.size());
+
+	int ccnt = bg_2d_concave_hull(&hull, bpnts_2d, (int)sloop.size());
+	if (!ccnt) {
+	    bu_log("concave hull build failed\n");
+	} else {
+	    bu_log("ccnt: %d\n", ccnt);
+	    plot_concave_hull_2d(bpnts_2d, ccnt, "concave_hull.plot3");
+	}
+    }
+
     if (flipped_faces.size() > 0) {
 	bu_log("WARNING: incorporated flipped faces - need to do outer boundary ordering sanity checking!!\n");
     }
@@ -447,9 +493,9 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
     plot_edge_loop_2d(polyline, "polyline.plot3");
     // Perform the new triangulation
     std::reverse(polyline.begin(), polyline.end());
+#if 0
     p2t::CDT *ncdt = new p2t::CDT(polyline);
     ncdt->Triangulate(true, -1);
-#if 0
     for (size_t i = 0; i < pnts_2d.size(); i++) {
 	ON_2dPoint *onp2d = pnts_2d[i];
 	if (handled.find(onp2d) != handled.end()) continue;
@@ -457,7 +503,6 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
 	(*pointmap)[np] = pnts_3d[i];
 	ncdt->AddPoint(np);
     }
-#endif
     FILE* plot_file = fopen("newmesh.plot3", "w");
     int r = int(256*drand48() + 1.0);
     int g = int(256*drand48() + 1.0);
@@ -482,6 +527,7 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
 	    plot_tri_3d(t, pointmap, r, g, b, plot_file);
     }
     fclose(plot_file);
+#endif
 
     // assemble the new p2t Triangle set using
     // the mappings, and check the new 3D mesh thus created for issues.  If it
