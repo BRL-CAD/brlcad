@@ -52,11 +52,18 @@ plot_edge_set(std::vector<std::pair<trimesh::index_t, trimesh::index_t>> &es, st
 	bnp2[Y] = p2->y;
 	bnp2[Z] = p2->z;
 
-	std::cout << "in sph1_" << i << ".s sph " << p1->x << " " << p1->y << " " << p1->z << " 0.1\n";
-	std::cout << "in sph2_" << i << ".s sph " << p2->x << " " << p2->y << " " << p2->z << " 0.1\n";
+	// Arrowhead
+	vect_t vrev, vperp, varrow;
+	VSUB2(vrev, bnp2, bnp1);
+	VSCALE(vrev, vrev, 0.1);
+	bn_vec_perp(vperp, vrev);
+	VSCALE(vperp, vperp, 0.5);
+	VADD2(varrow, vperp, vrev);
+	VADD2(varrow, varrow, bnp2);
 
 	pdv_3move(plot_file, bnp1);
 	pdv_3cont(plot_file, bnp2);
+	pdv_3cont(plot_file, varrow);
     }
 
     fclose(plot_file);
@@ -275,6 +282,7 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
 		}
 		if (is_close) {
 		    if (ff) {
+			flipped_faces.insert(faces[j]);
 			bu_log("adding flipped face\n");
 		    } else {
 			bu_log("adding face\n");
@@ -362,6 +370,10 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
 
 	plot_edge_set(bedges, pnts_3d, "outer_edge.plot3");
 	plot_trimesh_tris_3d(&smtri, submesh_triangles, pointmap, "submesh_triangles.plot3");
+
+	// Given the set of unordered boundary edge segments, construct the outer loop
+
+
     }
 
 
