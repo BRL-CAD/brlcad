@@ -12,7 +12,6 @@ set(LIBBG_SOURCES
   QuickHull.cpp
   chull3d.cpp
   clipper.cpp
-  concave_hull.cpp
   obr.c
   polygon.c
   polygon_triangulate.cpp

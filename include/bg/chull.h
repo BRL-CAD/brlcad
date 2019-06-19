@@ -24,7 +24,7 @@
 /** @{ */
 
 /**
- *  @brief Routines for the computation of convex and concave hulls in 2D and 3D
+ *  @brief Routines for the computation of convex hulls in 2D and 3D
  */
 
 #ifndef BG_CHULL_H
@@ -69,26 +69,15 @@ BG_EXPORT int bg_polyline_2d_chull(point2d_t** hull, const point2d_t* polyline, 
  * defining a simple polyline and use Melkman's algorithm for the
  * hull building.
  *
+ * The input point array currently uses type point_t, but all Z
+ * values should be zero.
+ *
  * @param[out]	hull 2D convex hull array vertices in ccw orientation (max is n)
  * @param	points_2d The input 2d points for which a convex hull will be built
  * @param	n the number of points in the input set
  * @return the number of points in the output hull array or zero if error.
  */
 BG_EXPORT int bg_2d_chull(point2d_t** hull, const point2d_t* points_2d, int n);
-
-
-/**
- * @brief
- * Find 2D concave hull for unordered co-planar point sets
- *
- *
- *
- * @param[out]	hull 2D convex hull array vertices in ccw orientation (max is n)
- * @param	points_2d The input 2d points for which a convex hull will be built
- * @param	n the number of points in the input set
- * @return the number of points in the output hull array or zero if error.
- */
-BG_EXPORT int bg_2d_concave_hull(point2d_t** hull, const point2d_t* points_2d, int n);
 
 /**
  * @brief
