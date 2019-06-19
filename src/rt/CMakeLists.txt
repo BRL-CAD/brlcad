@@ -29,16 +29,28 @@ if(BRLCAD_ENABLE_OPENCL)
   set(OPENCL_LIBS ${OPENCL_LIBRARIES})
 endif(BRLCAD_ENABLE_OPENCL)
 
-set(RT_STD_LIBS
-  ${CMAKE_THREAD_LIBS_INIT}
-  ${MPI_C_LIBRARIES}
-  librt
-  libnmg
-  libfb
-  liboptical
-  libicv
-  ${M_LIBRARY}
-  )
+if(MPI_C_LIBRARIES)
+  set(RT_STD_LIBS
+    ${CMAKE_THREAD_LIBS_INIT}
+    ${MPI_C_LIBRARIES}
+    librt
+    libnmg
+    libfb
+    liboptical
+    libicv
+    ${M_LIBRARY}
+    )
+else()
+  set(RT_STD_LIBS
+    ${CMAKE_THREAD_LIBS_INIT}
+    librt
+    libnmg
+    libfb
+    liboptical
+    libicv
+    ${M_LIBRARY}
+    )
+endif(MPI_C_LIBRARIES)
 
 BRLCAD_ADDDATA(rtexample.c sample_applications)
 
