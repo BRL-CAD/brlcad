@@ -106,6 +106,28 @@ plot_edge_loop(std::vector<trimesh::index_t> &el, std::vector<ON_3dPoint *> &pnt
 }
 
 static void
+plot_edge_loop_2d(std::vector<p2t::Point *> &el , const char *filename)
+{
+    bu_file_delete(filename);
+    FILE* plot_file = fopen(filename, "w");
+    int r = int(256*drand48() + 1.0);
+    int g = int(256*drand48() + 1.0);
+    int b = int(256*drand48() + 1.0);
+    pl_color(plot_file, r, g, b);
+
+    point_t bnp;
+    VSET(bnp, el[0]->x, el[0]->y, 0);
+    pdv_3move(plot_file, bnp);
+
+    for (size_t i = 1; i < el.size(); i++) {
+	VSET(bnp, el[i]->x, el[i]->y, 0);
+	pdv_3cont(plot_file, bnp);
+    }
+
+    fclose(plot_file);
+}
+
+static void
 plot_best_fit_plane(point_t *center, vect_t *norm, const char *filename)
 {
     FILE* plot_file = fopen(filename, "w");
@@ -340,9 +362,7 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
     plot_trimesh_tris_3d(&singularity_triangles, tm->triangles, pointmap, "singularity_triangles_2.plot3");
 
     // Project all 3D points in the subset into the plane, getting XY coordinates
-    // for poly2Tri.  Build a new set of triangles in a trimesh using the new projected
-    // points, and use that to get the boundary curve.  (Can't use the original 2D
-    // points, since 3D degenerate triangles have been removed.)
+    // for poly2Tri.
     std::set<ON_3dPoint *> sub_3d;
     std::set<trimesh::index_t>::iterator tr_it;
     for (tr_it = singularity_triangles.begin(); tr_it != singularity_triangles.end(); tr_it++) {
@@ -352,73 +372,124 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
 	}
     }
     std::vector<ON_3dPoint *> pnts_3d(sub_3d.begin(), sub_3d.end());
-    std::vector<ON_2dPoint> pnts_2d;
+    std::vector<ON_2dPoint *> pnts_2d;
     std::map<ON_3dPoint *, size_t> pnts_3d_ind;
     bu_log("singularity triangle cnt: %zd\n", singularity_triangles.size());
-    {
-	for (size_t i = 0; i < pnts_3d.size(); i++) {
-	    pnts_3d_ind[pnts_3d[i]] = i;
+    
+    for (size_t i = 0; i < pnts_3d.size(); i++) {
+	pnts_3d_ind[pnts_3d[i]] = i;
+    }
+    std::vector<trimesh::triangle_t> submesh_triangles;
+    std::set<trimesh::index_t> smtri;
+    for (tr_it = singularity_triangles.begin(); tr_it != singularity_triangles.end(); tr_it++) {
+	p2t::Triangle *t = tm->triangles[*tr_it].t;
+	trimesh::triangle_t tmt;
+	for (size_t j = 0; j < 3; j++) {
+	    tmt.v[j] = pnts_3d_ind[(*pointmap)[t->GetPoint(j)]];
 	}
-	std::vector<trimesh::triangle_t> submesh_triangles;
-	std::set<trimesh::index_t> smtri;
-	for (tr_it = singularity_triangles.begin(); tr_it != singularity_triangles.end(); tr_it++) {
-	    p2t::Triangle *t = tm->triangles[*tr_it].t;
-	    trimesh::triangle_t tmt;
-	    for (size_t j = 0; j < 3; j++) {
-		tmt.v[j] = pnts_3d_ind[(*pointmap)[t->GetPoint(j)]];
-	    }
-	    tmt.t = t;
-	    if (tmt.v[0] != tmt.v[1] && tmt.v[0] != tmt.v[2] && tmt.v[1] != tmt.v[2]) {
-		smtri.insert(submesh_triangles.size());
-		submesh_triangles.push_back(tmt);
-	    } else {
-		bu_log("Skipping: %ld -> %ld -> %ld\n", tmt.v[0], tmt.v[1], tmt.v[2]);
-	    }
-
-	}
-	bu_log("submesh triangle cnt: %zd\n", submesh_triangles.size());
-
-	ON_Plane bfplane(ON_3dPoint(pcenter[X],pcenter[Y],pcenter[Z]),ON_3dVector(pnorm[X],pnorm[Y],pnorm[Z]));
-	ON_Xform to_plane;
-	to_plane.PlanarProjection(bfplane);
-	for (size_t i = 0; i < pnts_3d.size(); i++) {
-	    ON_3dPoint op3d = (*pnts_3d[i]);
-	    op3d.Transform(to_plane);
-	    pnts_2d.push_back(ON_2dPoint(op3d.x, op3d.y)); 
-	}
-
-	std::vector<trimesh::edge_t> sedges;
-	trimesh::trimesh_t smesh;
-	trimesh::unordered_edges_from_triangles(submesh_triangles.size(), &submesh_triangles[0], sedges);
-	smesh.build(pnts_2d.size(), submesh_triangles.size(), &submesh_triangles[0], sedges.size(), &sedges[0]);
-
-	std::vector<std::pair<trimesh::index_t, trimesh::index_t>> bedges = smesh.boundary_edges();
-	bu_log("boundary edge segment cnt: %zd\n", bedges.size());
-
-	plot_edge_set(bedges, pnts_3d, "outer_edge.plot3");
-	//plot_trimesh_tris_3d(&smtri, submesh_triangles, pointmap, "submesh_triangles.plot3");
-
-	// Given the set of unordered boundary edge segments, construct the outer loop
-	std::vector<trimesh::index_t> sloop = smesh.boundary_loop();
-
-	// TODO - may do better to just use https://github.com/sadaszewski/concaveman-cpp to
-	// build the loop we want from the outer points, rather than the (questionable) behavior
-	// of the projected 3D loop...
-	plot_edge_loop(sloop, pnts_3d, "outer_loop.plot3");
-
-	if (flipped_faces.size() > 0) {
-	    bu_log("WARNING: incorporated flipped faces - need to do outer boundary ordering sanity checking!!\n");
+	tmt.t = t;
+	if (tmt.v[0] != tmt.v[1] && tmt.v[0] != tmt.v[2] && tmt.v[1] != tmt.v[2]) {
+	    smtri.insert(submesh_triangles.size());
+	    submesh_triangles.push_back(tmt);
+	} else {
+	    bu_log("Skipping: %ld -> %ld -> %ld\n", tmt.v[0], tmt.v[1], tmt.v[2]);
 	}
 
     }
+    bu_log("submesh triangle cnt: %zd\n", submesh_triangles.size());
 
+    ON_Plane bfplane(ON_3dPoint(pcenter[X],pcenter[Y],pcenter[Z]),ON_3dVector(pnorm[X],pnorm[Y],pnorm[Z]));
+    ON_Xform to_plane;
+    to_plane.PlanarProjection(bfplane);
+    for (size_t i = 0; i < pnts_3d.size(); i++) {
+	ON_3dPoint op3d = (*pnts_3d[i]);
+	op3d.Transform(to_plane);
+	pnts_2d.push_back(new ON_2dPoint(op3d.x, op3d.y)); 
+    }
 
+    std::vector<trimesh::edge_t> sedges;
+    trimesh::trimesh_t smesh;
+    trimesh::unordered_edges_from_triangles(submesh_triangles.size(), &submesh_triangles[0], sedges);
+    smesh.build(pnts_2d.size(), submesh_triangles.size(), &submesh_triangles[0], sedges.size(), &sedges[0]);
 
-    // Perform the new triangulation, assemble the new p2t Triangle set using
+    // Build the new outer boundary
+    std::vector<std::pair<trimesh::index_t, trimesh::index_t>> bedges = smesh.boundary_edges();
+    bu_log("boundary edge segment cnt: %zd\n", bedges.size());
+
+    plot_edge_set(bedges, pnts_3d, "outer_edge.plot3");
+    //plot_trimesh_tris_3d(&smtri, submesh_triangles, pointmap, "submesh_triangles.plot3");
+
+    // Given the set of unordered boundary edge segments, construct the outer loop
+    std::vector<trimesh::index_t> sloop = smesh.boundary_loop();
+
+    // TODO - may do better to just use https://github.com/sadaszewski/concaveman-cpp to
+    // build the loop we want from the outer points, rather than the (questionable) behavior
+    // of the projected 3D loop...
+    plot_edge_loop(sloop, pnts_3d, "outer_loop.plot3");
+
+    if (flipped_faces.size() > 0) {
+	bu_log("WARNING: incorporated flipped faces - need to do outer boundary ordering sanity checking!!\n");
+    }
+
+    std::set<ON_2dPoint *> handled;
+    std::set<ON_2dPoint *>::iterator u_it;
+    std::vector<p2t::Point *> polyline; 
+    p2t::Point *fp = NULL;
+    for (size_t i = 0; i < sloop.size() - 1; i++) {
+	ON_2dPoint *onp2d = pnts_2d[sloop[i]];
+	p2t::Point *np = new p2t::Point(onp2d->x, onp2d->y);
+	if (!fp) fp = np;
+	(*pointmap)[np] = pnts_3d[i];
+	polyline.push_back(np);
+	handled.insert(onp2d);
+    }
+    polyline.push_back(fp);
+    plot_edge_loop_2d(polyline, "polyline.plot3");
+    // Perform the new triangulation
+    std::reverse(polyline.begin(), polyline.end());
+    p2t::CDT *ncdt = new p2t::CDT(polyline);
+    ncdt->Triangulate(true, -1);
+#if 0
+    for (size_t i = 0; i < pnts_2d.size(); i++) {
+	ON_2dPoint *onp2d = pnts_2d[i];
+	if (handled.find(onp2d) != handled.end()) continue;
+	p2t::Point *np = new p2t::Point(onp2d->x, onp2d->y);
+	(*pointmap)[np] = pnts_3d[i];
+	ncdt->AddPoint(np);
+    }
+#endif
+    FILE* plot_file = fopen("newmesh.plot3", "w");
+    int r = int(256*drand48() + 1.0);
+    int g = int(256*drand48() + 1.0);
+    int b = int(256*drand48() + 1.0);
+    std::vector<p2t::Triangle*> ntris = ncdt->GetTriangles();
+    for (size_t i = 0; i < ntris.size(); i++) {
+	p2t::Triangle *t = ntris[i];
+	int bad = 0;
+	if (!(*pointmap)[t->GetPoint(0)]) {
+	    std::cout << "Unmapped 2D point 0 in triangle " << i << "\n";
+	    bad = 1;
+	}
+	if (!(*pointmap)[t->GetPoint(1)]) {
+	    std::cout << "Unmapped 2D point 1 in triangle " << i << "\n";
+	    bad = 1;
+	}
+	if (!(*pointmap)[t->GetPoint(2)]) {
+	    std::cout << "Unmapped 2D point 2 in triangle " << i << "\n";
+	    bad = 1;
+	}
+	if (!bad)
+	    plot_tri_3d(t, pointmap, r, g, b, plot_file);
+    }
+    fclose(plot_file);
+
+    // assemble the new p2t Triangle set using
     // the mappings, and check the new 3D mesh thus created for issues.  If it
     // is clean, replace the original subset of the parent face with the new
     // triangle set, else fail.  Note that a consequence of this will be that
     // only one of the original singularity trim points will end up being used.
+
+
 
 }
 
