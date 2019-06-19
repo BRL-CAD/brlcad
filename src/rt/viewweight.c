@@ -641,8 +641,8 @@ application_init(void)
     /* this reassignment hack ensures help is last in the first list */
     option("dummy", "-? or -h", "Display help", 1);
     option("", "-? or -h", "Display help", 1);
-    option(NULL, "-C", "Disabled, not implemented", 2);
-    option(NULL, "-W", "Disabled, non implemented", 2);
+    option(NULL, "-C", "Disabled, not implemented", -2);
+    option(NULL, "-W", "Disabled, non implemented", -2);
 }
 
 

@@ -31,6 +31,7 @@ endif(BRLCAD_ENABLE_OPENCL)
 
 set(RT_STD_LIBS
   ${CMAKE_THREAD_LIBS_INIT}
+  ${MPI_C_LIBRARIES}
   librt
   libnmg
   libfb
@@ -67,7 +68,7 @@ set_property(TARGET rthide APPEND PROPERTY COMPILE_DEFINITIONS "RT_TXT_OUTPUT")
 
 BRLCAD_ADDEXEC(rtsil "${LIBRTUIF_SOURCES};viewsil.c" "${RT_STD_LIBS}")
 
-BRLCAD_ADDEXEC(rtweight "${LIBRTUIF_SOURCES};viewweight.c" "${CMAKE_THREAD_LIBS_INIT};libanalyze;librt;libnmg;libfb;liboptical;libicv;libbu;${M_LIBRARY}")
+BRLCAD_ADDEXEC(rtweight "${LIBRTUIF_SOURCES};viewweight.c" "libanalyze;${RT_STD_LIBS}")
 set_property(TARGET rtweight APPEND PROPERTY COMPILE_DEFINITIONS "RT_TXT_OUTPUT")
 
 BRLCAD_ADDEXEC(rtxray "${LIBRTUIF_SOURCES};viewxray.c" "${RT_STD_LIBS}")

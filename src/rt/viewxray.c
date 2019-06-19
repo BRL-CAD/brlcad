@@ -323,8 +323,8 @@ application_init (void)
     option("Raytrace", "-i", "Enable incremental (progressive-style) rendering", 1);
     option("Raytrace", "-t", "Render from top to bottom (default: from bottom up)", 1);
 
-    option(NULL, "-C", "Disabled, not implemented", 2);
-    option(NULL, "-W", "Disabled, non implemented", 2);
+    option(NULL, "-C", "Disabled, not implemented", -2);
+    option(NULL, "-W", "Disabled, non implemented", -2);
 }
 
 /*
