@@ -15,6 +15,12 @@ on-going issues.
 Recent Bugs
 -----------
 
+* fix checker.sh script and/or overlap GUI so that the latter will
+  read the resulting overlap pairings file from the prior.
+  alternatively, need to be able to run overlap check on server
+  without GUI, so could implement an overlaps file output option to be
+  run via mged -c.
+
 * running 'put' on geometry that is already displayed results in a NaN
   view (at least View and Eye_pos parameters are non) despite geometry
   setill being displayed.  this causes 'rt' to fly into an infinite
