@@ -124,6 +124,24 @@ plot_trimesh_tris_3d(std::set<trimesh::index_t> *faces, std::vector<trimesh::tri
     fclose(plot_file);
 }
 
+static bool
+flipped_face(p2t::Triangle *t, std::map<p2t::Point *, ON_3dPoint *> *pointmap, std::map<p2t::Point *, ON_3dPoint *> *normalmap, bool m_bRev)
+{
+    ON_3dVector tdir = p2tTri_Normal(t, pointmap);
+    int invalid_face_normal = 0;
+
+    for (size_t j = 0; j < 3; j++) {
+	ON_3dPoint onorm = *(*normalmap)[t->GetPoint(j)];
+	if (m_bRev) {
+	    onorm = onorm * -1;
+	}
+	if (tdir.Length() > 0 && ON_DotProduct(onorm, tdir) < 0.1) {
+	    invalid_face_normal++;
+	}
+    }
+
+    return (invalid_face_normal == 3);
+}
 
 void
 Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *tm, ON_3dPoint *p3d)
@@ -131,6 +149,7 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
     if (bu_file_exists("singularity_triangles.plot3", NULL)) return;
     std::vector<p2t::Triangle*> tris = f->cdt->GetTriangles();
     std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
+    std::map<p2t::Point *, ON_3dPoint *> *normalmap = f->p2t_to_on3_norm_map;
     std::set<trimesh::index_t> singularity_triangles;
     std::set<trimesh::index_t>::iterator f_it;
 
@@ -208,13 +227,9 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
     bu_file_delete("best_fit_plane_1.plot3");
     plot_best_fit_plane(&pcenter, &pnorm, "best_fit_plane_1.plot3");
 
-    // TODO - Make sure all of the triangles can be projected to the plane
-    // successfully, without flipping triangles.  If not, the mess will have be
-    // handled in coordinated subsections (doable but hard!) and for now we
-    // will punt in that situation.
-
     // Walk out along the mesh, adding triangles with at least 1 vert within max_connected_dist and
     // whose triangle normal is < 45 degrees away from that of the original best fit plane
+    std::set<trimesh::index_t> flipped_faces;
     std::queue<trimesh::index_t> q1, q2;
     std::queue<trimesh::index_t> *tq, *nq;
     tq = &q1;
@@ -241,6 +256,19 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
 		    continue;
 		}
 		p2t::Triangle *tn = tm->triangles[faces[j]].t;
+
+		// If this triangle is "flipped" or nearly so relative to the NURBS surface
+		// add it.  If an edge from this triangle ends up in the outer boundary,
+		// we're going to have to fix the outer boundary in the projection...
+		bool ff = flipped_face(tn, pointmap, normalmap, f->s_cdt->brep->m_F[f->ind].m_bRev);
+		if (ff) {
+		    bu_log("adding flipped face\n");
+		    nq->push(faces[j]);
+		    singularity_triangles.insert(faces[j]);
+		    flipped_faces.insert(faces[j]);
+		    continue;
+		}
+
 		int is_close = 0;
 		for (size_t k = 0; k < 3; k++) {
 		    // If at least one vertex is within max_connected_dist, queue up
@@ -269,37 +297,9 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
     bu_file_delete("singularity_triangles_2.plot3");
     plot_trimesh_tris_3d(&singularity_triangles, tm->triangles, pointmap, "singularity_triangles_2.plot3");
 
-    // We could recalculate the best fit plane if needed.  The triangle selection criteria
-    // should mean that the original best fit plane should work, given a reasonably well behaved
-    // surface...
-#if 0
-    point_t pcenter2;
-    vect_t pnorm2;
-    {
-	point_t *pnts = (point_t *)bu_calloc(active_3d_pnts.size()+1, sizeof(point_t), "fitting points");
-	int pnts_ind = 0;
-	std::set<ON_3dPoint *>::iterator a_it;
-	for (a_it = active_3d_pnts.begin(); a_it != active_3d_pnts.end(); a_it++) {
-	    ON_3dPoint *p = *a_it;
-	    pnts[pnts_ind][X] = p->x;
-	    pnts[pnts_ind][Y] = p->y;
-	    pnts[pnts_ind][Z] = p->z;
-	    pnts_ind++;
-	}
-	if (bn_fit_plane(&pcenter2, &pnorm2, pnts_ind, pnts)) {
-	    bu_log("Failed to get best fit plane!\n");
-	}
-	bu_free(pnts, "fitting points");
-
-	ON_3dVector on_norm(pnorm[X], pnorm[Y], pnorm[Z]);
-	if (ON_DotProduct(on_norm, avgtnorm) < 0) {
-	    VSCALE(pnorm, pnorm, -1);
-	}
+    if (flipped_faces.size() > 0) {
+	bu_log("WARNING: incorporated flipped faces - need to do outer boundary ordering sanity checking!!\n");
     }
-
-    bu_file_delete("best_fit_plane_2.plot3");
-    plot_best_fit_plane(&pcenter2, &pnorm2, "best_fit_plane_2.plot3");
-#endif
 
     // Project all 3D points in the subset into the plane, getting XY coordinates
     // for poly2Tri.  Build a new set of triangles in a trimesh using the new projected
