@@ -137,6 +137,7 @@ rt_vol_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     vect_t P;	/* hit point */
     int inside;	/* inside/outside a solid flag */
     int in_axis;
+    int axis_set = 0;
     int out_axis;
     int j;
     struct xray ideal_ray;
@@ -211,6 +212,11 @@ rt_vol_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	t[X] = (volp->vol_origin[X] + j*volp->vol_i.cellsize[X] -
 		rp->r_pt[X]) * invdir[X];
 	delta[X] = volp->vol_i.cellsize[X] * fabs(invdir[X]);
+
+	/* face of entry into first cell -- max initial t value */
+	t0 = t[X];
+	in_axis = X;
+	axis_set = 1;
     }
     /* Y setup */
     if (ZERO(rp->r_dir[Y])) {
@@ -222,6 +228,19 @@ rt_vol_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	t[Y] = (volp->vol_origin[Y] + j*volp->vol_i.cellsize[Y] -
 		rp->r_pt[Y]) * invdir[Y];
 	delta[Y] = volp->vol_i.cellsize[Y] * fabs(invdir[Y]);
+
+	/* face of entry into first cell -- max initial t value */
+	if (axis_set) {
+	    if (t[Y] > t0) {
+		t0 = t[Y];
+		in_axis = Y;
+	    }
+	}
+	else {
+	    t0 = t[Y];
+	    in_axis = Y;
+	    axis_set = 1;
+	}
     }
     /* Z setup */
     if (ZERO(rp->r_dir[Z])) {
@@ -233,6 +252,19 @@ rt_vol_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	t[Z] = (volp->vol_origin[Z] + j*volp->vol_i.cellsize[Z] -
 		rp->r_pt[Z]) * invdir[Z];
 	delta[Z] = volp->vol_i.cellsize[Z] * fabs(invdir[Z]);
+
+	/* face of entry into first cell -- max initial t value */
+	if (axis_set) {
+	    if (t[Z] > t0) {
+		t0 = t[Z];
+		in_axis = Z;
+	    }
+	}
+	else {
+	    t0 = t[Z];
+	    in_axis = Z;
+	    axis_set = 1;
+	}
     }
 
     /* The delta[] elements *must* be positive, as t must increase */
@@ -240,18 +272,8 @@ rt_vol_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     if (RT_G_DEBUG&DEBUG_VOL)bu_log("t[Y] = %g, delta[Y] = %g\n", t[Y], delta[Y]);
     if (RT_G_DEBUG&DEBUG_VOL)bu_log("t[Z] = %g, delta[Z] = %g\n", t[Z], delta[Z]);
 
-    /* Find face of entry into first cell -- max initial t value */
-    if (t[X] >= t[Y]) {
-	in_axis = X;
-	t0 = t[X];
-    } else {
-	in_axis = Y;
-	t0 = t[Y];
-    }
-    if (t[Z] > t0) {
-	in_axis = Z;
-	t0 = t[Z];
-    }
+    if (!axis_set) bu_log("ERROR vol: no valid entry face found\n");
+
     if (RT_G_DEBUG&DEBUG_VOL)bu_log("Entry axis is %s, t0=%g\n", in_axis==X ? "X" : (in_axis==Y?"Y":"Z"), t0);
 
     /* Advance to next exits */
@@ -539,8 +561,8 @@ rt_vol_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 }
 
 
-size_t
-vol_from_file(const char *file, size_t xdim, size_t ydim, size_t zdim, unsigned char *map)
+static size_t
+vol_from_file(const char *file, size_t xdim, size_t ydim, size_t zdim, unsigned char **map)
 {
     size_t y;
     size_t z;
@@ -552,7 +574,7 @@ vol_from_file(const char *file, size_t xdim, size_t ydim, size_t zdim, unsigned 
     nbytes = (xdim+VOL_XWIDEN*2)*
 	(ydim+VOL_YWIDEN*2)*
 	(zdim+VOL_ZWIDEN*2);
-    map = (unsigned char *)bu_calloc(1, nbytes, "vol_import4 bitmap");
+    *map = (unsigned char *)bu_calloc(1, nbytes, "vol_import4 bitmap");
 
     bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
     if ((fp = fopen(file, "rb")) == NULL) {
@@ -566,7 +588,7 @@ vol_from_file(const char *file, size_t xdim, size_t ydim, size_t zdim, unsigned 
     for (z = 0; z < zdim; z++) {
 	for (y = 0; y < ydim; y++) {
 	    size_t fret;
-	    void *data = &VOLMAP(map, xdim, ydim, 0, y, z);
+	    void *data = &VOLMAP(*map, xdim, ydim, 0, y, z);
 
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);	/* lock */
 	    fret = fread(data, xdim, 1, fp);		/* res_syscall */
@@ -648,7 +670,7 @@ rt_vol_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
     if (bu_file_exists(vip->file, NULL)) {
 	size_t bytes = vip->xdim * vip->ydim * vip->zdim;
-	nbytes = vol_from_file(vip->file, vip->xdim, vip->ydim, vip->zdim, vip->map);
+	nbytes = vol_from_file(vip->file, vip->xdim, vip->ydim, vip->zdim, &vip->map);
 	if (nbytes != bytes) {
 	    bu_log("WARNING: unexpected VOL bytes (read %zu, expected %zu) in %s\n", nbytes, bytes, vip->file);
 	}
@@ -952,7 +974,7 @@ int
 rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     register struct rt_vol_internal *vip;
-    size_t x, y, z;
+    int x, y, z;
     register short v1, v2;
     point_t a, b, c, d;
 
@@ -965,16 +987,16 @@ rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
      * Scan across in Z & X.  For each X position, scan down Y,
      * looking for the longest run of edge.
      */
-    for (z=-1; z<=vip->zdim; z++) {
-	for (x=-1; x<=vip->xdim; x++) {
-	    for (y=-1; y<=vip->ydim; y++) {
+    for (z=-1; z<=(int)vip->zdim; z++) {
+	for (x=-1; x<=(int)vip->xdim; x++) {
+	    for (y=-1; y<=(int)vip->ydim; y++) {
 		v1 = VOL(vip, x, y, z);
 		v2 = VOL(vip, x+1, y, z);
 		if (OK(vip, (size_t)v1) == OK(vip, (size_t)v2)) continue;
 		/* Note start point, continue scan */
 		VSET(a, x+0.5, y-0.5, z-0.5);
 		VSET(b, x+0.5, y-0.5, z+0.5);
-		for (++y; y<=vip->ydim; y++) {
+		for (++y; y<=(int)vip->ydim; y++) {
 		    v1 = VOL(vip, x, y, z);
 		    v2 = VOL(vip, x+1, y, z);
 		    if (OK(vip, (size_t)v1) == OK(vip, (size_t)v2))
@@ -991,16 +1013,16 @@ rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     /*
      * Scan up in Z & Y.  For each Y position, scan across X
      */
-    for (z=-1; z<=vip->zdim; z++) {
-	for (y=-1; y<=vip->ydim; y++) {
-	    for (x=-1; x<=vip->xdim; x++) {
+    for (z=-1; z<=(int)vip->zdim; z++) {
+	for (y=-1; y<=(int)vip->ydim; y++) {
+	    for (x=-1; x<=(int)vip->xdim; x++) {
 		v1 = VOL(vip, x, y, z);
 		v2 = VOL(vip, x, y+1, z);
 		if (OK(vip, (size_t)v1) == OK(vip, (size_t)v2)) continue;
 		/* Note start point, continue scan */
 		VSET(a, x-0.5, y+0.5, z-0.5);
 		VSET(b, x-0.5, y+0.5, z+0.5);
-		for (++x; x<=vip->xdim; x++) {
+		for (++x; x<=(int)vip->xdim; x++) {
 		    v1 = VOL(vip, x, y, z);
 		    v2 = VOL(vip, x, y+1, z);
 		    if (OK(vip, (size_t)v1) == OK(vip, (size_t)v2))
@@ -1017,16 +1039,16 @@ rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     /*
      * Scan across in Y & X.  For each X position pair edge, scan up Z.
      */
-    for (x=-1; x<=vip->xdim; x++) {
-	for (z=-1; z<=vip->zdim; z++) {
-	    for (y=-1; y<=vip->ydim; y++) {
+    for (x=-1; x<=(int)vip->xdim; x++) {
+	for (z=-1; z<=(int)vip->zdim; z++) {
+	    for (y=-1; y<=(int)vip->ydim; y++) {
 		v1 = VOL(vip, x, y, z);
 		v2 = VOL(vip, x, y, z+1);
 		if (OK(vip, (size_t)v1) == OK(vip, (size_t)v2)) continue;
 		/* Note start point, continue scan */
 		VSET(a, (x-0.5), (y-0.5), (z+0.5));
 		VSET(b, (x+0.5), (y-0.5), (z+0.5));
-		for (++y; y<=vip->ydim; y++) {
+		for (++y; y<=(int)vip->ydim; y++) {
 		    v1 = VOL(vip, x, y, z);
 		    v2 = VOL(vip, x, y, z+1);
 		    if (OK(vip, (size_t)v1) == OK(vip, (size_t)v2))
