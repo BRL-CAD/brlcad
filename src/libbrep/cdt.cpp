@@ -26,6 +26,7 @@
  */
 
 #include "common.h"
+#include "bg/chull.h"
 #include "./cdt.h"
 
 #define BREP_PLANAR_TOL 0.05
@@ -121,6 +122,28 @@ plot_edge_loop_2d(std::vector<p2t::Point *> &el , const char *filename)
 
     for (size_t i = 1; i < el.size(); i++) {
 	VSET(bnp, el[i]->x, el[i]->y, 0);
+	pdv_3cont(plot_file, bnp);
+    }
+
+    fclose(plot_file);
+}
+
+static void
+plot_concave_hull_2d(point2d_t *pnts, int npnts, const char *filename)
+{
+    bu_file_delete(filename);
+    FILE* plot_file = fopen(filename, "w");
+    int r = int(256*drand48() + 1.0);
+    int g = int(256*drand48() + 1.0);
+    int b = int(256*drand48() + 1.0);
+    pl_color(plot_file, r, g, b);
+
+    point_t bnp;
+    VSET(bnp, pnts[0][X], pnts[0][Y], 0);
+    pdv_3move(plot_file, bnp);
+
+    for (int i = 1; i < npnts; i++) {
+	VSET(bnp, pnts[i][X], pnts[i][Y], 0);
 	pdv_3cont(plot_file, bnp);
     }
 
@@ -426,6 +449,25 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
     // build the loop we want from the outer points, rather than the (questionable) behavior
     // of the projected 3D loop...
     plot_edge_loop(sloop, pnts_3d, "outer_loop.plot3");
+
+    point2d_t *hull;
+    {
+	point2d_t *bpnts_2d = (point2d_t *)bu_calloc(pnts_2d.size()+1, sizeof(point_t), "concave hull 2D points");
+	int pnts_ind = 0;
+	for (size_t i = 0; i < pnts_2d.size(); i++) {
+	    ON_2dPoint *p = pnts_2d[i];
+	    bpnts_2d[i][X] = p->x;
+	    bpnts_2d[i][Y] = p->y;
+	    pnts_ind++;
+	}
+
+	int ccnt = bg_2d_concave_hull(&hull, bpnts_2d, (int)pnts_2d.size());
+	if (!ccnt) {
+	    bu_log("concave hull build failed\n");
+	} else {
+	    plot_concave_hull_2d(bpnts_2d, ccnt, "concave_hull.plot3");
+	}
+    }
 
     if (flipped_faces.size() > 0) {
 	bu_log("WARNING: incorporated flipped faces - need to do outer boundary ordering sanity checking!!\n");

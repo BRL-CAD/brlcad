@@ -4,6 +4,7 @@ set(embedded_licenses
   chull2d.txt
   chull3d.txt
   clipper.txt
+  concaveman.txt
   db_faa-info.txt
   db_nist-info.txt
   dehumanize.txt
