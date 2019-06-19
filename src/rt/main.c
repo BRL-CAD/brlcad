@@ -38,7 +38,9 @@
 #include <signal.h>
 #include <math.h>
 
-#include <mpi.h>
+#ifdef MPI_ENABLED
+#  include <mpi.h>
+#endif
 
 #include "bu/endian.h"
 #include "bu/getopt.h"
@@ -217,21 +219,27 @@ int main(int argc, char *argv[])
     RT_APPLICATION_INIT( &APP );
     application_init();
 
+#ifdef MPI_ENABLED
     MPI_Init(&argc, &argv);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     fprintf(stderr, "MPI Rank: %d of %d\n", rank+1, size);
+#endif
 
     /* Process command line options */
     i = get_args(argc, (const char **)argv);
     if (i < 0)  {
 	usage(argv[0], 0);
+#ifdef MPI_ENABLED
 	MPI_Finalize();
+#endif
 	return 1;
     } else if (i == 0) {
 	/* asking for help is ok */
 	usage(argv[0], 100);
+#ifdef MPI_ENABLED
 	MPI_Finalize();
+#endif
 	return 0;
     }
 
@@ -261,7 +269,9 @@ int main(int argc, char *argv[])
     if (bu_optind >= argc) {
 	fprintf(stderr, "%s:  BRL-CAD geometry database not specified\n", argv[0]);
 	usage(argv[0], 0);
+#ifdef MPI_ENABLED
 	MPI_Finalize();
+#endif
 	return 1;
     }
 
@@ -290,7 +300,9 @@ int main(int argc, char *argv[])
 		     sub_xmin, sub_ymin, sub_xmax, sub_ymax);
 	    fprintf(stderr, "\tFor a %lu X %lu image, the subgrid must be within 0, 0,%lu,%lu\n",
 		     (unsigned long)width, (unsigned long)height, (unsigned long)width-1, (unsigned long)height-1 );
+#ifdef MPI_ENABLED
 	    MPI_Finalize();
+#endif
 	    return 1;
 	}
     }
@@ -418,7 +430,9 @@ int main(int argc, char *argv[])
     rt_prep_timer();
     if ((rtip = rt_dirbuild(title_file, idbuf, sizeof(idbuf))) == RTI_NULL) {
 	bu_log("rt:  rt_dirbuild(%s) failure\n", title_file);
+#ifdef MPI_ENABLED
 	MPI_Finalize();
+#endif
 	return 2;
     }
     APP.a_rt_i = rtip;
@@ -461,7 +475,9 @@ int main(int argc, char *argv[])
 	/* output_is_binary is changed by view_init, as appropriate */
 	if (output_is_binary && isatty(fileno(outfp))) {
 	    fprintf(stderr, "rt:  attempting to send binary output to terminal, aborting\n");
+#ifdef MPI_ENABLED
 	    MPI_Finalize();
+#endif
 	    return 14;
 	}
     }
@@ -503,7 +519,9 @@ int main(int argc, char *argv[])
 	if (need_fb != 0 && !fbp)  {
 	    int fb_status = fb_setup();
 	    if (fb_status) {
+#ifdef MPI_ENABLED
 		MPI_Finalize();
+#endif
 		return fb_status;
 	    }
 	}
@@ -554,7 +572,9 @@ int main(int argc, char *argv[])
 		if (need_fb != 0 && !fbp)  {
 		    int fb_status = fb_setup();
 		    if (fb_status) {
+#ifdef MPI_ENABLED
 			MPI_Finalize();
+#endif
 			return fb_status;
 		    }
 		}
@@ -599,7 +619,9 @@ rt_cleanup:
     rt_free_rti(rtip);
     rtip = NULL;
 
+#ifdef MPI_ENABLED
     MPI_Finalize();
+#endif
 
     return ret;
 }
