@@ -372,7 +372,7 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
 	plot_trimesh_tris_3d(&smtri, submesh_triangles, pointmap, "submesh_triangles.plot3");
 
 	// Given the set of unordered boundary edge segments, construct the outer loop
-
+	std::vector<trimesh::index_t> sloop = smesh.boundary_loop();
 
     }
 

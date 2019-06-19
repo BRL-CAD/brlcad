@@ -243,6 +243,8 @@ public:
 
     std::vector< std::pair< index_t, index_t > > boundary_edges() const;
 
+    std::vector< index_t > boundary_loop() const;
+
 private:
     std::vector< halfedge_t > m_halfedges;
     // Offsets into the 'halfedges' sequence, one per vertex.

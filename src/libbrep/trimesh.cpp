@@ -221,6 +221,70 @@ std::vector< std::pair< trimesh_t::index_t, trimesh_t::index_t > > trimesh_t::bo
     return result;
 }
 
+std::vector< trimesh_t::index_t > trimesh_t::boundary_loop() const
+{
+    /* Returns an ordered loop from the boundary edges. */
+
+    std::vector< std::pair< index_t, index_t > > edges = boundary_edges();
+
+    std::map<index_t, std::set<std::pair< index_t, index_t >>> vert_to_edges;
+    std::set<std::pair< index_t, index_t>> unadded;
+    for (size_t i = 0; i < edges.size(); i++) {
+	std::pair< index_t, index_t > ce = edges[i];
+	vert_to_edges[ce.first].insert(ce);
+	vert_to_edges[ce.second].insert(ce);
+	unadded.insert(ce);
+    }
+
+    index_t curr_v;
+    std::vector<index_t> bl;
+    std::pair<index_t, index_t> fedge = *unadded.begin();
+    bl.push_back(fedge.first);
+    bl.push_back(fedge.second);
+    curr_v = fedge.second;
+    unadded.erase(fedge);
+    while (unadded.size()) {
+	std::set<std::pair< index_t, index_t >> vedges = vert_to_edges[curr_v];
+	if (vedges.size() != 2) {
+	    std::cerr << "invalid edge count " << vedges.size() << " for vertex " << curr_v << "\n";
+	    std::vector<index_t> emptyv;
+	    return emptyv;
+	}
+	std::set<std::pair< index_t, index_t>>::iterator vi = vedges.begin();
+	std::pair< index_t, index_t> e1 = *vi;
+	vedges.erase(vi);
+	vi = vedges.begin();
+	std::pair< index_t, index_t> e2 = *vi;
+
+	if (unadded.find(e1) != unadded.end() && unadded.find(e2) != unadded.end()) {
+	    std::cerr << "Fork in loop - cannot complete";
+	    std::vector<index_t> emptyv;
+	    return emptyv;
+	}
+	if (unadded.find(e1) == unadded.end() && unadded.find(e2) == unadded.end()) {
+	    std::cerr << "Unknown edge - cannot complete";
+	    std::vector<index_t> emptyv;
+	    return emptyv;
+	}
+	std::pair< index_t, index_t> ce = (unadded.find(e1) != unadded.end()) ? e1 : e2;
+	if (ce.first != curr_v) {
+	    bl.push_back(ce.first);
+	    curr_v = ce.first;
+	} else {
+	    bl.push_back(ce.second);
+	    curr_v = ce.second;
+	}
+	unadded.erase(ce);
+    }
+
+    for (size_t i = 0; i < bl.size() - 1; i++) {
+	std::cout << bl[i] << "->";
+    }
+    std::cout << bl[bl.size()-1] << "\n";
+
+    return bl;
+}
+
 void unordered_edges_from_triangles(const unsigned long num_triangles, const triangle_t* triangles, std::vector< edge_t >& edges_out)
 {
     typedef std::set< std::pair< index_t, index_t > > edge_set_t;
