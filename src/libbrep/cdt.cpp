@@ -244,7 +244,13 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
 	// Check normal
 	ON_3dVector tdir = p2tTri_Normal(t, pointmap);
 	ON_3dVector on_pnorm(pnorm[X], pnorm[Y], pnorm[Z]);
-	if (ON_DotProduct(tdir, on_pnorm) < 0.707) {
+
+	// If this triangle is "flipped" or nearly so relative to the NURBS surface
+	// add it.  If an edge from this triangle ends up in the outer boundary,
+	// we're going to have to fix the outer boundary in the projection...
+	bool ff = flipped_face(t, pointmap, normalmap, f->s_cdt->brep->m_F[f->ind].m_bRev);
+
+	if (!ff && ON_DotProduct(tdir, on_pnorm) < 0.707) {
 	    continue;
 	}
 	for (size_t i = 0; i < 3; i++) {
@@ -257,18 +263,6 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
 		}
 		p2t::Triangle *tn = tm->triangles[faces[j]].t;
 
-		// If this triangle is "flipped" or nearly so relative to the NURBS surface
-		// add it.  If an edge from this triangle ends up in the outer boundary,
-		// we're going to have to fix the outer boundary in the projection...
-		bool ff = flipped_face(tn, pointmap, normalmap, f->s_cdt->brep->m_F[f->ind].m_bRev);
-		if (ff) {
-		    bu_log("adding flipped face\n");
-		    nq->push(faces[j]);
-		    singularity_triangles.insert(faces[j]);
-		    flipped_faces.insert(faces[j]);
-		    continue;
-		}
-
 		int is_close = 0;
 		for (size_t k = 0; k < 3; k++) {
 		    // If at least one vertex is within max_connected_dist, queue up
@@ -280,7 +274,11 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
 		    }
 		}
 		if (is_close) {
-		    bu_log("adding face\n");
+		    if (ff) {
+			bu_log("adding flipped face\n");
+		    } else {
+			bu_log("adding face\n");
+		    }
 		    nq->push(faces[j]);
 		    singularity_triangles.insert(faces[j]);
 		}
