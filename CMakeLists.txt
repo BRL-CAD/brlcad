@@ -2311,6 +2311,9 @@ find_package(Threads)
 # some compilation situations
 find_package(STL)
 
+# Check for an MPI library
+find_package(MPI)
+
 # Check for the daemon function in -lbsd and/or -lc for adrt
 BRLCAD_CHECK_LIBRARY(BSD bsd daemon)
 BRLCAD_CHECK_LIBRARY(BSD c daemon)
