@@ -45,12 +45,8 @@ plot_edge_set(std::vector<std::pair<trimesh::index_t, trimesh::index_t>> &es, st
 	ON_3dPoint *p1 = pnts_3d[es[i].first];
 	ON_3dPoint *p2 = pnts_3d[es[i].second];
 	point_t bnp1, bnp2;
-	bnp1[X] = p1->x;
-	bnp1[Y] = p1->y;
-	bnp1[Z] = p1->z;
-	bnp2[X] = p2->x;
-	bnp2[Y] = p2->y;
-	bnp2[Z] = p2->z;
+	VSET(bnp1, p1->x, p1->y, p1->z);
+	VSET(bnp2, p2->x, p2->y, p2->z);
 
 	// Arrowhead
 	vect_t vrev, vperp, varrow;
@@ -64,6 +60,46 @@ plot_edge_set(std::vector<std::pair<trimesh::index_t, trimesh::index_t>> &es, st
 	pdv_3move(plot_file, bnp1);
 	pdv_3cont(plot_file, bnp2);
 	pdv_3cont(plot_file, varrow);
+    }
+
+    fclose(plot_file);
+}
+
+static void
+plot_edge_loop(std::vector<trimesh::index_t> &el, std::vector<ON_3dPoint *> &pnts_3d, const char *filename)
+{
+    bu_file_delete(filename);
+    FILE* plot_file = fopen(filename, "w");
+    int r = int(256*drand48() + 1.0);
+    int g = int(256*drand48() + 1.0);
+    int b = int(256*drand48() + 1.0);
+    pl_color(plot_file, r, g, b);
+
+    point_t bnp1, bnp2;
+    ON_3dPoint *p1, *p2;
+    p2 = pnts_3d[el[0]];
+    VSET(bnp2, p2->x, p2->y, p2->z);
+    pdv_3move(plot_file, bnp2);
+
+    for (size_t i = 1; i < el.size(); i++) {
+	p1 = p2;
+	p2 = pnts_3d[el[i]];
+	VSET(bnp1, p1->x, p1->y, p1->z);
+	VSET(bnp2, p2->x, p2->y, p2->z);
+
+	// Arrowhead
+	vect_t vrev, vperp, varrow;
+	VSUB2(vrev, bnp2, bnp1);
+	VSCALE(vrev, vrev, 0.1);
+	bn_vec_perp(vperp, vrev);
+	VSCALE(vperp, vperp, 0.5);
+	VADD2(varrow, vperp, vrev);
+	VADD2(varrow, varrow, bnp2);
+
+	pdv_3cont(plot_file, bnp2);
+
+	pdv_3cont(plot_file, varrow);
+	pdv_3cont(plot_file, bnp2);
     }
 
     fclose(plot_file);
@@ -303,19 +339,10 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
     bu_file_delete("singularity_triangles_2.plot3");
     plot_trimesh_tris_3d(&singularity_triangles, tm->triangles, pointmap, "singularity_triangles_2.plot3");
 
-    if (flipped_faces.size() > 0) {
-	bu_log("WARNING: incorporated flipped faces - need to do outer boundary ordering sanity checking!!\n");
-    }
-
     // Project all 3D points in the subset into the plane, getting XY coordinates
     // for poly2Tri.  Build a new set of triangles in a trimesh using the new projected
     // points, and use that to get the boundary curve.  (Can't use the original 2D
     // points, since 3D degenerate triangles have been removed.)
-    //
-    // TODO - for this to work, can't have any triangle that is pointing 'away'
-    // from the projection plane be involved with an outer edge.  (The outer
-    // edge will be self intersecting in that situation.)  Will have to add
-    // that to the termination criteria for singularity face gathering.
     std::set<ON_3dPoint *> sub_3d;
     std::set<trimesh::index_t>::iterator tr_it;
     for (tr_it = singularity_triangles.begin(); tr_it != singularity_triangles.end(); tr_it++) {
@@ -369,10 +396,19 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
 	bu_log("boundary edge segment cnt: %zd\n", bedges.size());
 
 	plot_edge_set(bedges, pnts_3d, "outer_edge.plot3");
-	plot_trimesh_tris_3d(&smtri, submesh_triangles, pointmap, "submesh_triangles.plot3");
+	//plot_trimesh_tris_3d(&smtri, submesh_triangles, pointmap, "submesh_triangles.plot3");
 
 	// Given the set of unordered boundary edge segments, construct the outer loop
 	std::vector<trimesh::index_t> sloop = smesh.boundary_loop();
+
+	// TODO - may do better to just use https://github.com/sadaszewski/concaveman-cpp to
+	// build the loop we want from the outer points, rather than the (questionable) behavior
+	// of the projected 3D loop...
+	plot_edge_loop(sloop, pnts_3d, "outer_loop.plot3");
+
+	if (flipped_faces.size() > 0) {
+	    bu_log("WARNING: incorporated flipped faces - need to do outer boundary ordering sanity checking!!\n");
+	}
 
     }
 
