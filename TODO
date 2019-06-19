@@ -1326,6 +1326,19 @@ OVERLAP TOOLS
 
 * modify gqa to search for >1 region flag in a tree path.
 
+* modify default behavior of the overlap GUI to do what overlaps_tool
+  -F does or to supply some togglable means to enable that option in
+  the GUI.
+
+* extend overlap GUI to report null/empty regions and regions not hit
+
+* need some means to control the runtime and/or density of the overlap
+  GUI sampling, ideally without exposing grid size options so that it
+  remains agnostic to future sampling methods.  a good solution would
+  be better status reporting of the current density sampled and a
+  means to interrupt the process cleanly (while retaining progress and
+  ability to pick up from that point)
+
 
 DATABASE MAINTENANCE/ADMINISTRATION
 -----------------------------------
