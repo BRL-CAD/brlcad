@@ -98,63 +98,6 @@ gcv_fmt_fun(struct bu_vls *UNUSED(msgs), size_t argc, const char **argv, void *s
 }
 
 
-/* Emulate a FASTGEN4 format option processor */
-void
-fast4_arg_process(size_t argc, const char **argv)
-{
-    size_t i = 0;
-    int ret_argc = 0;
-    static int tol = 0.0;
-    static int w_flag;
-    struct bu_opt_desc fg4_opt_desc[] = {
-	{"t", "tol",                "#", &bu_opt_int, (void *)&tol,    "Dimensional tolerance."},
-	{"w", "warn-default-names", "" , NULL,        (void *)&w_flag, "File format of input file."},
-	BU_OPT_DESC_NULL
-    };
-
-    ret_argc = bu_opt_parse(NULL, argc, (const char **)argv, fg4_opt_desc);
-
-    if (w_flag) bu_log("FASTGEN 4 warn default names set\n");
-    bu_log("FASTGEN 4 tol: %d\n", tol);
-
-    if (ret_argc > 0) {
-	bu_log("Unknown args: ");
-	for (i = 0; i < (size_t)ret_argc - 1; i++) {
-	    bu_log("%s, ", argv[i]);
-	}
-	bu_log("%s\n", argv[ret_argc - 1]);
-    }
-}
-
-
-void
-stl_arg_process(size_t argc, const char **argv)
-{
-    size_t i= 0;
-    int ret_argc = 0;
-    static int tol = 0.0;
-    static int units = 0;
-    struct bu_opt_desc stl_opt_desc[3] = {
-	{"t",  "tol",   "#", &bu_opt_int, (void *)&tol,   "Dimensional tolerance." },
-	{"u",  "units", "#", &bu_opt_int, (void *)&units, "Units of input file." },
-	BU_OPT_DESC_NULL
-    };
-
-    ret_argc = bu_opt_parse(NULL, argc, (const char **)argv, stl_opt_desc);
-
-    bu_log("STL tol: %d\n", tol);
-    bu_log("STL units: %d\n", units);
-
-    if (ret_argc > 0) {
-	bu_log("Unknown args: ");
-	for (i = 0; i < (size_t)ret_argc - 1; i++) {
-	    bu_log("%s, ", argv[i]);
-	}
-	bu_log("%s\n", argv[ret_argc - 1]);
-    }
-}
-
-
 static int
 extract_path(struct bu_vls *path, const char *input)
 {
@@ -673,8 +616,6 @@ main(int ac, const char **av)
     bu_log("Input file path: %s\n", bu_vls_addr(&in_path));
     bu_log("Output file path: %s\n", bu_vls_addr(&out_path));
 
-
-#if 1
     {
 	const size_t in_argc = BU_PTBL_LEN(&input_opts), out_argc = BU_PTBL_LEN(&output_opts);
 	const char ** const in_argv = (const char **)input_opts.buffer;
@@ -687,29 +628,6 @@ main(int ac, const char **av)
 	    goto cleanup;
 	}
     }
-
-#else
-    switch (in_type) {
-	case BU_MIME_MODEL_VND_FASTGEN:
-	    fast4_arg_process(BU_PTBL_LEN(&input_opts), (const char **)input_opts.buffer);
-	    break;
-	case BU_MIME_MODEL_STL:
-	    stl_arg_process(BU_PTBL_LEN(&input_opts), (const char **)input_opts.buffer);
-	default:
-	    break;
-    }
-
-    switch (out_type) {
-	case BU_MIME_MODEL_VND_FASTGEN:
-	    fast4_arg_process(BU_PTBL_LEN(&output_opts), (const char **)output_opts.buffer);
-	    break;
-	case BU_MIME_MODEL_STL:
-	    stl_arg_process(BU_PTBL_LEN(&output_opts), (const char **)output_opts.buffer);
-	default:
-	    break;
-    }
-#endif
-
 
     /* Clean up */
 cleanup:
