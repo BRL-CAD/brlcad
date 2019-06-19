@@ -194,8 +194,11 @@ int main(int argc, char *argv[])
     struct bu_vls times = BU_VLS_INIT_ZERO;
     int i;
     int objs_free_argv = 0;
+
+#ifdef MPI_ENABLED
     int size;
     int rank;
+#endif
 
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
