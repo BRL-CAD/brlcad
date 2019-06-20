@@ -96,7 +96,7 @@ opt_desc_is_null(const struct bu_opt_desc *ds)
 
 
 HIDDEN int
-opt_is_filtered(struct bu_opt_desc *d, size_t f_ac, char **f_av, int accept)
+opt_is_filtered(const struct bu_opt_desc *d, size_t f_ac, char **f_av, int accept)
 {
     size_t i = 0;
     if (!d || !f_av || f_ac == 0)
@@ -118,7 +118,7 @@ opt_is_filtered(struct bu_opt_desc *d, size_t f_ac, char **f_av, int accept)
 
 
 HIDDEN char *
-bu_opt_describe_internal_ascii(struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings)
+bu_opt_describe_internal_ascii(const struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings)
 {
     size_t i = 0;
     size_t j = 0;
@@ -169,8 +169,8 @@ bu_opt_describe_internal_ascii(struct bu_opt_desc *ds, struct bu_opt_desc_opts *
     status = (int *)bu_calloc(opt_cnt, sizeof(int), "opt status");
     i = 0;
     while (i < opt_cnt) {
-	struct bu_opt_desc *curr;
-	struct bu_opt_desc *d;
+	const struct bu_opt_desc *curr;
+	const struct bu_opt_desc *d;
 	curr = &(ds[i]);
 
 	if (!opt_is_filtered(curr, filtered_argc, filtered_argv, accept)) {
@@ -293,13 +293,13 @@ bu_opt_describe_internal_ascii(struct bu_opt_desc *ds, struct bu_opt_desc_opts *
 #define OPT_REPEAT   0x10
 
 HIDDEN int
-docbook_get_opt_type(struct bu_opt_desc *d, struct bu_opt_desc_opts *settings)
+docbook_get_opt_type(const struct bu_opt_desc *d, struct bu_opt_desc_opts *settings)
 {
-    struct bu_opt_desc *curr = NULL;
+    const struct bu_opt_desc *curr = NULL;
     int flags = OPT_PLAIN;
-    struct bu_opt_desc *required = NULL;
-    struct bu_opt_desc *repeated = NULL;
-    struct bu_opt_desc *optional = NULL;
+    const struct bu_opt_desc *required = NULL;
+    const struct bu_opt_desc *repeated = NULL;
+    const struct bu_opt_desc *optional = NULL;
 
     if (settings) {
 	required = settings->required;
@@ -355,7 +355,7 @@ docbook_get_opt_type(struct bu_opt_desc *d, struct bu_opt_desc_opts *settings)
 
 
 HIDDEN void
-docbook_print_short_opt(struct bu_vls *desc, struct bu_opt_desc *d, int opt_type, size_t offset)
+docbook_print_short_opt(struct bu_vls *desc, const struct bu_opt_desc *d, int opt_type, size_t offset)
 {
     if (!desc || !d)
 	return;
@@ -381,7 +381,7 @@ docbook_print_short_opt(struct bu_vls *desc, struct bu_opt_desc *d, int opt_type
 
 
 HIDDEN void
-docbook_print_long_opt(struct bu_vls *desc, struct bu_opt_desc *d, int opt_type, size_t offset)
+docbook_print_long_opt(struct bu_vls *desc, const struct bu_opt_desc *d, int opt_type, size_t offset)
 {
     if (!desc || !d)
 	return;
@@ -407,7 +407,7 @@ docbook_print_long_opt(struct bu_vls *desc, struct bu_opt_desc *d, int opt_type,
 
 
 HIDDEN char *
-bu_opt_describe_internal_docbook(struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings)
+bu_opt_describe_internal_docbook(const struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings)
 {
     int opt_cnt;
     int i = 0;
@@ -431,8 +431,8 @@ bu_opt_describe_internal_docbook(struct bu_opt_desc *ds, struct bu_opt_desc_opts
     status = (int *)bu_calloc(opt_cnt, sizeof(int), "opt status");
     i = 0;
     while (i < opt_cnt) {
-	struct bu_opt_desc *curr = NULL;
-	struct bu_opt_desc *d = NULL;
+	const struct bu_opt_desc *curr = NULL;
+	const struct bu_opt_desc *d = NULL;
 	curr = &(ds[i]);
 	if (!status[i]) {
 	    int opt_alias_cnt = 0;
@@ -506,7 +506,7 @@ bu_opt_describe_internal_docbook(struct bu_opt_desc *ds, struct bu_opt_desc_opts
 
 
 char *
-bu_opt_describe(struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings)
+bu_opt_describe(const struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings)
 {
     if (!ds)
 	return NULL;
