@@ -108,13 +108,15 @@ typedef enum {
  *
  * @param[out] faces Set of faces in the triangulation, stored as integer indices to the pts.  The first three indices are the vertices of the first face, the second three define the second face, and so forth.
  * @param[out] num_faces Number of faces created
- * @param[out] out_pts  output points used by faces set, if an algorithm was selected that generates new points
+ * @param[out] out_pts  output points used by faces set. If an algorithm was selected that generates new points, this will be a new array.
  * @param[out] num_outpts number of output points, if an algorithm was selected that generates new points
  * @param[in] poly Non-hole polygon, defined as a CCW array of indices into the pts array.
  * @param[in] poly_npts Number of points in non-hole polygon
  * @param[in] holes_array Array of hole polygons, each defined as a CW array of indices into the pts array.
  * @param[in] holes_npts Array of counts of points in hole polygons
  * @param[in] nholes Number of hole polygons contained in holes_array
+ * @param[in] steiner Array of Steiner points
+ * @param[in] steiner_npts Number of Steiner points
  * @param[in] pts Array of points defining a polygon. Duplicated points
  * @param[in] npts Number of points pts contains
  * @param[in] type Type of triangulation 
@@ -125,6 +127,7 @@ typedef enum {
 BG_EXPORT extern int bg_nested_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
 						   const int *poly, const size_t poly_npts,
 						   const int **holes_array, const size_t *holes_npts, const size_t nholes,
+						   const int *steiner, const size_t steiner_npts,
 						   const point2d_t *pts, const size_t npts, triangulation_t type);
 
 /**
@@ -146,6 +149,8 @@ BG_EXPORT extern int bg_nested_polygon_triangulate(int **faces, int *num_faces, 
  * @param[out] num_faces Number of faces created
  * @param[out] out_pts output points used by faces set, if an algorithm was selected that generates new points
  * @param[out] num_outpts number of output points, if an algorithm was selected that generates new points
+ * @param[in] steiner Array of Steiner points
+ * @param[in] steiner_npts Number of Steiner points
  * @param[in] pts Array of points defining a polygon. Duplicated points
  * @param[in] npts Number of points pts contains
  * @param[in] type Triangulation type
@@ -154,6 +159,7 @@ BG_EXPORT extern int bg_nested_polygon_triangulate(int **faces, int *num_faces, 
  * @return 1 if triangulation is unsuccessful
  */
 BG_EXPORT extern int bg_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
+				   	    const int *steiner, const size_t steiner_npts,
 					    const point2d_t *pts, const size_t npts, triangulation_t type);
 
 
