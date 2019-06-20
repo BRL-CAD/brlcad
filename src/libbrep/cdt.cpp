@@ -199,7 +199,7 @@ plot_2d_cdt_tri(p2t::CDT *ncdt, const char *filename)
 	VSET(pp1, p1->x, p1->y, 0);
 	VSET(pp2, p2->x, p2->y, 0);
 	VSET(pp3, p3->x, p3->y, 0);
-    
+
 	pdv_3move(plot_file, pp1);
 	pdv_3cont(plot_file, pp2);
 	pdv_3move(plot_file, pp1);
@@ -580,7 +580,7 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
 	    (*pointmap)[np] = pnts_3d[i];
 	    polyline.push_back(np);
 	}
-	polyline.push_back(fp);
+	//polyline.push_back(fp);
     }
     plot_edge_loop_2d(polyline, "polyline.plot3");
     // Perform the new triangulation
