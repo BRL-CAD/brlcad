@@ -187,7 +187,7 @@ main(int argc, const char **argv)
 	int num_faces;
 	int *faces;
 	int poly[12] = {11,10,9,8,7,6,5,4,3,2,1,0};
-	int hole[4] = {12,13,14,15};
+	int hole[4] = {15,14,13,12};
 	int **hole_array = (int **)bu_calloc(1, sizeof(int *), "hole_array");
 	size_t hole_cnt = 4;
 
