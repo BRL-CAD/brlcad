@@ -43,9 +43,9 @@
 /* TODO - need some more stressful tests, particularly for hole removal */
 
 static void
-_tess_report(int *faces, int num_faces, int test_num)
+_tess_report(int *faces, int num_faces, int test_num, int method_num)
 {
-    bu_log("Test %d: generated %d faces: \n", test_num, num_faces);
+    bu_log("Test %d, method %d: generated %d faces: \n", test_num, method_num, num_faces);
     for (int i = 0; i < num_faces; i++) {
 	bu_log("%d: %d -> %d -> %d\n", i, faces[3*i], faces[3*i+1], faces[3*i+2]);
     }
@@ -60,6 +60,9 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 	size_t num_points = 0;
 	int num_faces = 0;
 	int *faces = NULL;
+	int num_faces2 = 0;
+	int *faces2 = NULL;
+
 
 	/* 44 point polygon derived from NIST MBE PMI sample 1 shape */
 	point2d_t points[44] = {{0}};
@@ -111,11 +114,22 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 	num_points = sizeof(points) / sizeof(point2d_t);
 	ret = bg_polygon_triangulate(&faces, &num_faces, NULL, NULL, NULL, 0, (const point2d_t *)points, num_points, TRI_EAR_CLIPPING);
 	if (ret) {
-	    bu_log("test 1 failure!\n");
+	    bu_log("test 1 ear clipping failure!\n");
 	    return 1;
 	} else {
-	    _tess_report(faces, num_faces, 1);
+	    _tess_report(faces, num_faces, 1, 1);
 	}
+
+	ret = bg_polygon_triangulate(&faces2, &num_faces2, NULL, NULL, NULL, 0, (const point2d_t *)points, num_points, TRI_CONSTRAINED_DELAUNAY);
+	if (ret) {
+	    bu_log("test 1 constrained delaunay failure!\n");
+	    return 1;
+	} else {
+	    _tess_report(faces2, num_faces2, 1, 2);
+	}
+
+
+
     }
     {
 	size_t num_points = 0;
@@ -145,7 +159,7 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 	    bu_log("test 2 failure!\n");
 	    return 1;
 	} else {
-	    _tess_report(faces, num_faces, 2);
+	    _tess_report(faces, num_faces, 2, 1);
 	}
     }
 
@@ -186,7 +200,7 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 	    bu_log("Nested clipping 1 fail\n");
 	    return 1;
 	} else {
-	    _tess_report(faces, num_faces, 3);
+	    _tess_report(faces, num_faces, 3, 1);
 	}
     }
 
@@ -223,7 +237,7 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 	    bu_log("Nested clipping 2 fail\n");
 	    return 1;
 	} else {
-	    _tess_report(faces, num_faces, 4);
+	    _tess_report(faces, num_faces, 4, 1);
 	}
     }
 
@@ -246,7 +260,7 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 	    bu_log("4 point triangle failure!\n");
 	    return 1;
 	} else {
-	    _tess_report(faces, num_faces, 5);
+	    _tess_report(faces, num_faces, 5, 1);
 	}
     }
 
