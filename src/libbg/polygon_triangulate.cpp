@@ -25,6 +25,8 @@
 
 #include "common.h"
 
+#include "bio.h"
+
 #include <array>
 #include <map>
 #include <set>
@@ -46,10 +48,12 @@
 #  pragma clang diagnostic pop
 #endif
 
+#include "poly2tri/poly2tri.h"
+
 #include "bu/malloc.h"
+#include "bn/plot3.h"
 #include "bg/polygon.h"
 
-#include "poly2tri/poly2tri.h"
 
 static int
 bg_poly2tri(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
@@ -250,6 +254,29 @@ bg_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *nu
 
     bu_free(verts_ind, "vert indices");
     return ret;
+}
+
+
+extern "C" void
+bg_tri_plot_2d(const char *filename, const int *faces, int num_faces, const point2d_t *pnts)
+{
+    FILE* plot_file = fopen(filename, "w");
+    pl_color(plot_file, 0, 255, 0);
+
+    for (int k = 0; k < num_faces; k++) {
+	point_t p1, p2, p3;
+	VSET(p1, pnts[faces[3*k]][X], pnts[faces[3*k]][Y], 0);
+	VSET(p2, pnts[faces[3*k+1]][X], pnts[faces[3*k+1]][Y], 0);
+	VSET(p3, pnts[faces[3*k+2]][X], pnts[faces[3*k+2]][Y], 0);
+
+	pdv_3move(plot_file, p1);
+	pdv_3cont(plot_file, p2);
+	pdv_3move(plot_file, p1);
+	pdv_3cont(plot_file, p3);
+	pdv_3move(plot_file, p2);
+	pdv_3cont(plot_file, p3);
+    }
+    fclose(plot_file);
 }
 
 

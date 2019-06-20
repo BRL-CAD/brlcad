@@ -163,6 +163,7 @@ BG_EXPORT extern int bg_polygon_triangulate(int **faces, int *num_faces, point2d
 					    const point2d_t *pts, const size_t npts, triangulation_t type);
 
 
+
 /*********************************************************
   Operations on 3D point types - these are assumed to be
   polygons embedded in 3D planes in space
@@ -235,6 +236,10 @@ BG_EXPORT extern int bg_3d_polygon_sort_ccw(size_t npts, point_t *pts, plane_t c
 BG_EXPORT extern int bg_3d_polygon_mk_pts_planes(size_t *npts, point_t **pts, size_t neqs, const plane_t *eqs);
 
 
+
+/* Debugging functions - do not use */
+BG_EXPORT extern void bg_polygon_plot_2d(const char *filename, const point2d_t *pnts, int npnts);
+BG_EXPORT extern void bg_tri_plot_2d(const char *filename, const int *faces, int num_faces, const point2d_t *pnts);
 
 __END_DECLS
 

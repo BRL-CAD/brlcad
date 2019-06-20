@@ -20,9 +20,12 @@
 
 #include "common.h"
 
+#include <bio.h>
+
 #include "bu/malloc.h"
 #include "bu/sort.h"
 #include "bn/plane.h"
+#include "bn/plot3.h"
 #include "bn/tol.h"
 #include "bg/polygon.h"
 
@@ -219,6 +222,27 @@ bg_polygon_direction(size_t npts, const point2d_t *pts, const int *pt_indices)
     if (tmp_pt_order) bu_free(tmp_pt_order, "free tmp_pt_order");
     if (NEAR_ZERO(sum, SMALL_FASTF)) return 0;
     return (sum > 0) ? BG_CW : BG_CCW;
+}
+
+void
+bg_polygon_plot_2d(const char *filename, const point2d_t *pnts, int npnts)
+{
+    point_t bnp;
+    FILE* plot_file = fopen(filename, "w");
+    pl_color(plot_file, 255, 0, 0);
+
+    VSET(bnp, pnts[0][X], pnts[0][Y], 0);
+    pdv_3move(plot_file, bnp);
+
+    for (int i = 1; i < npnts; i++) {
+	VSET(bnp, pnts[i][X], pnts[i][Y], 0);
+	pdv_3cont(plot_file, bnp);
+    }
+
+    VSET(bnp, pnts[0][X], pnts[0][Y], 0);
+    pdv_3cont(plot_file, bnp);
+
+    fclose(plot_file);
 }
 
 /*

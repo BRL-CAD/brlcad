@@ -42,19 +42,32 @@
 
 /* TODO - need some more stressful tests, particularly for hole removal */
 
+static int plot_files;
+
 static void
-_tess_report(int *faces, int num_faces, int test_num, int method_num)
+_tess_report(int *faces, int num_faces, const point2d_t *points, int test_num, int method_num)
 {
     bu_log("Test %d, method %d: generated %d faces: \n", test_num, method_num, num_faces);
     for (int i = 0; i < num_faces; i++) {
 	bu_log("%d: %d -> %d -> %d\n", i, faces[3*i], faces[3*i+1], faces[3*i+2]);
     }
+    if (plot_files) {
+	struct bu_vls tfile = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&tfile, "test_%d-%d_triangles.plot3", test_num, method_num);
+	bg_tri_plot_2d(bu_vls_cstr(&tfile), faces, num_faces, points);
+	bu_vls_free(&tfile);
+    }
 }
 
 int
-main(int UNUSED(argc), const char **UNUSED(argv))
+main(int argc, const char **argv)
 {
     int ret;
+
+    plot_files = 0;
+    if (argc > 1 && BU_STR_EQUAL(argv[1], "--plot")) {
+	plot_files = 1;
+    }
 
     {
 	size_t num_points = 0;
@@ -112,12 +125,15 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 	V2SET(points[43], 2807.83, 2372.83);
 
 	num_points = sizeof(points) / sizeof(point2d_t);
+	if (plot_files) {
+	    bg_polygon_plot_2d("test_1_polygon.plot3", (const point2d_t *)points, num_points);
+	}
 	ret = bg_polygon_triangulate(&faces, &num_faces, NULL, NULL, NULL, 0, (const point2d_t *)points, num_points, TRI_EAR_CLIPPING);
 	if (ret) {
 	    bu_log("test 1 ear clipping failure!\n");
 	    return 1;
 	} else {
-	    _tess_report(faces, num_faces, 1, 1);
+	    _tess_report(faces, num_faces, (const point2d_t *)points, 1, 1);
 	}
 
 	ret = bg_polygon_triangulate(&faces2, &num_faces2, NULL, NULL, NULL, 0, (const point2d_t *)points, num_points, TRI_CONSTRAINED_DELAUNAY);
@@ -125,7 +141,7 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 	    bu_log("test 1 constrained delaunay failure!\n");
 	    return 1;
 	} else {
-	    _tess_report(faces2, num_faces2, 1, 2);
+	    _tess_report(faces2, num_faces2, (const point2d_t *)points, 1, 2);
 	}
 
 
@@ -154,12 +170,15 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 	V2SET(points[13], 814.092008, 761.624528);
 
 	num_points = sizeof(points) / sizeof(point2d_t);
+	if (plot_files) {
+	    bg_polygon_plot_2d("test_2_polygon.plot3", (const point2d_t *)points, num_points);
+	}
 	ret = bg_polygon_triangulate(&faces, &num_faces, NULL, NULL, NULL, 0, (const point2d_t *)points, num_points, TRI_EAR_CLIPPING);
 	if (ret) {
 	    bu_log("test 2 failure!\n");
 	    return 1;
 	} else {
-	    _tess_report(faces, num_faces, 2, 1);
+	    _tess_report(faces, num_faces, (const point2d_t *)points, 2, 1);
 	}
     }
 
@@ -192,6 +211,11 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 
 	hole_array[0] = (int *)hole;
 
+	if (plot_files) {
+	    bg_polygon_plot_2d("test_3_polygon.plot3", (const point2d_t *)points, 12);
+	    bg_polygon_plot_2d("test_3_polygon_hole.plot3", (const point2d_t *)(points+12), 4);
+	}
+
 	ret = bg_nested_polygon_triangulate(&faces, &num_faces, NULL, NULL,
 					    (const int *)poly, 12, (const int **)hole_array, (const size_t *)&hole_cnt, 1, NULL, 0,
 					    (const point2d_t *)points, 16, TRI_EAR_CLIPPING);
@@ -200,7 +224,7 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 	    bu_log("Nested clipping 1 fail\n");
 	    return 1;
 	} else {
-	    _tess_report(faces, num_faces, 3, 1);
+	    _tess_report(faces, num_faces, (const point2d_t *)points, 3, 1);
 	}
     }
 
@@ -229,6 +253,11 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 
 	hole_array[0] = (int *)hole;
 
+	if (plot_files) {
+	    bg_polygon_plot_2d("test_4_polygon.plot3", (const point2d_t *)points, 8);
+	    bg_polygon_plot_2d("test_4_polygon_hole.plot3", (const point2d_t *)(points+8), 4);
+	}
+
 	ret = bg_nested_polygon_triangulate(&faces, &num_faces, NULL, NULL,
 					    (const int *)poly, 8, (const int **)hole_array, (const size_t *)&hole_cnt, 1, NULL, 0,
 					    (const point2d_t *)points, 12, TRI_EAR_CLIPPING);
@@ -237,7 +266,7 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 	    bu_log("Nested clipping 2 fail\n");
 	    return 1;
 	} else {
-	    _tess_report(faces, num_faces, 4, 1);
+	    _tess_report(faces, num_faces, (const point2d_t *)points, 4, 1);
 	}
     }
 
@@ -254,13 +283,17 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 	V2SET(points[2], 1.20200866111591842, 1.15388087023390984);
 	V2SET(points[3], 0.80133910746824888, 2.30776174046776017);
 
+	if (plot_files) {
+	    bg_polygon_plot_2d("test_5_polygon.plot3", (const point2d_t *)points, 4);
+	}
+
 	num_points = sizeof(points) / sizeof(point2d_t);
 	ret = bg_polygon_triangulate(&faces, &num_faces, NULL, NULL, NULL, 0, (const point2d_t *)points, num_points, TRI_EAR_CLIPPING);
 	if (ret) {
 	    bu_log("4 point triangle failure!\n");
 	    return 1;
 	} else {
-	    _tess_report(faces, num_faces, 5, 1);
+	    _tess_report(faces, num_faces, (const point2d_t *)points, 5, 1);
 	}
     }
 
