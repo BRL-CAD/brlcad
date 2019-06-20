@@ -542,8 +542,11 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
 	    }
 	    if (hull_dir == BG_CCW) bu_log("CCW\n");
 	    if (hull_dir == BG_CW) bu_log("CW\n");
-	    plot_concave_hull_2d(bpnts_2d, ccnt, "concave_hull.plot3");
+	    plot_concave_hull_2d(hull, ccnt, "concave_hull.plot3");
 
+	    for (int i = 0; i < ccnt; i++) {
+		bu_log("%d: %f %f 0\n", i, hull[i][X], hull[i][Y]);
+	    }
 
 	    int *ecfaces;
 	    int num_faces;
@@ -572,7 +575,6 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
 	    polyline.push_back(np);
 	    handled.insert(onp2d);
 	}
-	polyline.push_back(fp);
     } else {
 	for (int i = 0; i < ccnt; i++) {
 	    p2t::Point *np = new p2t::Point(hull[i][X], hull[i][Y]);
@@ -585,8 +587,6 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
     plot_edge_loop_2d(polyline, "polyline.plot3");
     // Perform the new triangulation
     p2t::CDT *ncdt = new p2t::CDT(polyline);
-    ncdt->Triangulate(true, -1);
-    plot_2d_cdt_tri(ncdt, "poly2tri_2d.plot3");
 #if 0
     for (size_t i = 0; i < pnts_2d.size(); i++) {
 	ON_2dPoint *onp2d = pnts_2d[i];
@@ -596,6 +596,8 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
 	ncdt->AddPoint(np);
     }
 #endif
+    ncdt->Triangulate(true, -1);
+    plot_2d_cdt_tri(ncdt, "poly2tri_2d.plot3");
 
     // assemble the new p2t Triangle set using
     // the mappings, and check the new 3D mesh thus created for issues.  If it
