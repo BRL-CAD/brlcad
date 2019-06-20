@@ -550,7 +550,7 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
 
 	    int *ecfaces;
 	    int num_faces;
-	    if (bg_polygon_triangulate(&ecfaces, &num_faces, NULL, NULL, hull, ccnt, EAR_CLIPPING)) {
+	    if (bg_polygon_triangulate(&ecfaces, &num_faces, NULL, NULL, hull, ccnt, TRI_EAR_CLIPPING)) {
 		bu_log("ear clipping failed\n");
 	    } else {
 		plot_2d_bg_tri(ecfaces, num_faces, hull, "earclip.plot3");

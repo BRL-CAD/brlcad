@@ -83,19 +83,15 @@ BG_EXPORT extern int bg_pt_in_polygon(size_t npts, const point2d_t *pts, const p
  * Triangulation is the process of finding a set of triangles that as a set cover
  * the same total surface area as a polygon.  There are many algorithms for this
  * operation, which have various trade-offs in speed and output quality.
- *
- * Ear clipping is implemented here in a manner similar to the method
- * documented in David Eberly's Triangulation by Ear Clipping, section 2:
- * http://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf
- *
  */
-
 typedef enum {
-    EAR_CLIPPING = 0,
-    MONOTONE,
-    HERTEL_MEHLHORN,
-    KEIL_SNOEYINK,
-    DELAUNAY
+    TRI_ANY = 0,
+    TRI_EAR_CLIPPING,
+    TRI_CONSTRAINED_DELAUNAY,
+    TRI_MONOTONE,
+    TRI_HERTEL_MEHLHORN,
+    TRI_KEIL_SNOEYINK,
+    TRI_DELAUNAY
 } triangulation_t;
 
 /**

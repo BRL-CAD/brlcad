@@ -60,7 +60,7 @@ bg_nested_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, 
 	if (!holes_array || !holes_npts) return 1;
     }
 
-    if (type == DELAUNAY && (!out_pts || !num_outpts)) return 1;
+    if (type == TRI_DELAUNAY && (!out_pts || !num_outpts)) return 1;
 
     /* Set up for ear clipping */
     using Coord = fastf_t;
@@ -112,7 +112,7 @@ bg_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *nu
 {
     int ret;
 
-    if (type == DELAUNAY && (!out_pts || !num_outpts)) return 1;
+    if (type == TRI_DELAUNAY && (!out_pts || !num_outpts)) return 1;
 
     int *verts_ind = NULL;
     verts_ind = (int *)bu_calloc(npts, sizeof(int), "vert indices");

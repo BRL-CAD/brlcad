@@ -109,7 +109,7 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 	V2SET(points[43], 2807.83, 2372.83);
 
 	num_points = sizeof(points) / sizeof(point2d_t);
-	ret = bg_polygon_triangulate(&faces, &num_faces, NULL, NULL, (const point2d_t *)points, num_points, EAR_CLIPPING);
+	ret = bg_polygon_triangulate(&faces, &num_faces, NULL, NULL, (const point2d_t *)points, num_points, TRI_EAR_CLIPPING);
 	if (ret) {
 	    bu_log("test 1 failure!\n");
 	    return 1;
@@ -140,7 +140,7 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 	V2SET(points[13], 814.092008, 761.624528);
 
 	num_points = sizeof(points) / sizeof(point2d_t);
-	ret = bg_polygon_triangulate(&faces, &num_faces, NULL, NULL, (const point2d_t *)points, num_points, EAR_CLIPPING);
+	ret = bg_polygon_triangulate(&faces, &num_faces, NULL, NULL, (const point2d_t *)points, num_points, TRI_EAR_CLIPPING);
 	if (ret) {
 	    bu_log("test 2 failure!\n");
 	    return 1;
@@ -180,7 +180,7 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 
 	ret = bg_nested_polygon_triangulate(&faces, &num_faces, NULL, NULL,
 					    (const int *)poly, 12, (const int **)hole_array, (const size_t *)&hole_cnt, 1,
-					    (const point2d_t *)points, 16, EAR_CLIPPING);
+					    (const point2d_t *)points, 16, TRI_EAR_CLIPPING);
 	bu_free(hole_array, "free hole array");
 	if (ret) {
 	    bu_log("Nested clipping 1 fail\n");
@@ -217,7 +217,7 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 
 	ret = bg_nested_polygon_triangulate(&faces, &num_faces, NULL, NULL,
 					    (const int *)poly, 8, (const int **)hole_array, (const size_t *)&hole_cnt, 1,
-					    (const point2d_t *)points, 12, EAR_CLIPPING);
+					    (const point2d_t *)points, 12, TRI_EAR_CLIPPING);
 	bu_free(hole_array, "free hole array");
 	if (ret) {
 	    bu_log("Nested clipping 2 fail\n");
@@ -241,7 +241,7 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 	V2SET(points[3], 0.80133910746824888, 2.30776174046776017);
 
 	num_points = sizeof(points) / sizeof(point2d_t);
-	ret = bg_polygon_triangulate(&faces, &num_faces, NULL, NULL, (const point2d_t *)points, num_points, EAR_CLIPPING);
+	ret = bg_polygon_triangulate(&faces, &num_faces, NULL, NULL, (const point2d_t *)points, num_points, TRI_EAR_CLIPPING);
 	if (ret) {
 	    bu_log("4 point triangle failure!\n");
 	    return 1;

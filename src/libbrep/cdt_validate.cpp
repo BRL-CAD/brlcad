@@ -663,7 +663,7 @@ triangles_rebuild_involved(struct ON_Brep_CDT_Face_State *f)
 		// work, but if the tricks in place to avoid collinear point
 		// issues don't work reliably we'll need to just go with a
 		// direct build.
-		if (bg_polygon_triangulate(&ecfaces, &num_faces, NULL, NULL, ec_pnts, polyline.size()-1, EAR_CLIPPING)) {
+		if (bg_polygon_triangulate(&ecfaces, &num_faces, NULL, NULL, ec_pnts, polyline.size()-1, TRI_EAR_CLIPPING)) {
 
 		    // Didn't work, see if poly2tri can handle it
 		    //bu_log("ec triangulate failed\n");
