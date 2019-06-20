@@ -238,8 +238,8 @@ BG_EXPORT extern int bg_3d_polygon_mk_pts_planes(size_t *npts, point_t **pts, si
 
 
 /* Debugging functions - do not use */
-BG_EXPORT extern void bg_polygon_plot_2d(const char *filename, const point2d_t *pnts, int npnts);
-BG_EXPORT extern void bg_tri_plot_2d(const char *filename, const int *faces, int num_faces, const point2d_t *pnts);
+BG_EXPORT extern void bg_polygon_plot_2d(const char *filename, const point2d_t *pnts, int npnts, int r, int g, int b);
+BG_EXPORT extern void bg_tri_plot_2d(const char *filename, const int *faces, int num_faces, const point2d_t *pnts, int r, int g, int b);
 
 __END_DECLS
 

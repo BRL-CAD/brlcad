@@ -225,11 +225,11 @@ bg_polygon_direction(size_t npts, const point2d_t *pts, const int *pt_indices)
 }
 
 void
-bg_polygon_plot_2d(const char *filename, const point2d_t *pnts, int npnts)
+bg_polygon_plot_2d(const char *filename, const point2d_t *pnts, int npnts, int r, int g, int b)
 {
     point_t bnp;
     FILE* plot_file = fopen(filename, "w");
-    pl_color(plot_file, 255, 0, 0);
+    pl_color(plot_file, r, g, b);
 
     VSET(bnp, pnts[0][X], pnts[0][Y], 0);
     pdv_3move(plot_file, bnp);
