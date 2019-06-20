@@ -153,6 +153,66 @@ plot_concave_hull_2d(point2d_t *pnts, int npnts, const char *filename)
     fclose(plot_file);
 }
 
+void
+plot_2d_bg_tri(int *ecfaces, int num_faces, point2d_t *pnts, const char *filename)
+{
+    bu_file_delete(filename);
+    FILE* plot_file = fopen(filename, "w");
+    int r = int(256*drand48() + 1.0);
+    int g = int(256*drand48() + 1.0);
+    int b = int(256*drand48() + 1.0);
+    pl_color(plot_file, r, g, b);
+
+    for (int k = 0; k < num_faces; k++) {
+	point_t p1, p2, p3;
+	VSET(p1, pnts[ecfaces[3*k]][X], pnts[ecfaces[3*k]][Y], 0);
+	VSET(p2, pnts[ecfaces[3*k+1]][X], pnts[ecfaces[3*k+1]][Y], 0);
+	VSET(p3, pnts[ecfaces[3*k+2]][X], pnts[ecfaces[3*k+2]][Y], 0);
+
+	pdv_3move(plot_file, p1);
+	pdv_3cont(plot_file, p2);
+	pdv_3move(plot_file, p1);
+	pdv_3cont(plot_file, p3);
+	pdv_3move(plot_file, p2);
+	pdv_3cont(plot_file, p3);
+    }
+    fclose(plot_file);
+}
+
+void
+plot_2d_cdt_tri(p2t::CDT *ncdt, const char *filename)
+{
+    bu_file_delete(filename);
+    FILE* plot_file = fopen(filename, "w");
+    int r = int(256*drand48() + 1.0);
+    int g = int(256*drand48() + 1.0);
+    int b = int(256*drand48() + 1.0);
+    pl_color(plot_file, r, g, b);
+
+    std::vector<p2t::Triangle*> ntris = ncdt->GetTriangles();
+    for (size_t i = 0; i < ntris.size(); i++) {
+	point_t pp1, pp2, pp3;
+	p2t::Triangle *t = ntris[i];
+	p2t::Point *p1 = t->GetPoint(0);
+	p2t::Point *p2 = t->GetPoint(1);
+	p2t::Point *p3 = t->GetPoint(2);
+	VSET(pp1, p1->x, p1->y, 0);
+	VSET(pp2, p2->x, p2->y, 0);
+	VSET(pp3, p3->x, p3->y, 0);
+    
+	pdv_3move(plot_file, pp1);
+	pdv_3cont(plot_file, pp2);
+	pdv_3move(plot_file, pp1);
+	pdv_3cont(plot_file, pp3);
+	pdv_3move(plot_file, pp2);
+	pdv_3cont(plot_file, pp3);
+
+    }
+    fclose(plot_file);
+}
+
+
+
 static void
 plot_best_fit_plane(point_t *center, vect_t *norm, const char *filename)
 {
@@ -453,6 +513,8 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
     // of the projected 3D loop...
     plot_edge_loop(sloop, pnts_3d, "outer_loop.plot3");
 
+    int ccnt = 0;
+    int hull_dir = 0;
     point2d_t *hull;
     {
 	point2d_t *bpnts_2d = (point2d_t *)bu_calloc(sloop.size()+2, sizeof(point_t), "concave hull 2D points");
@@ -464,12 +526,32 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
 
 	bu_log("sloop.size: %zd\n", sloop.size());
 
-	int ccnt = bg_2d_concave_hull(&hull, bpnts_2d, (int)sloop.size());
+	ccnt = bg_2d_concave_hull(&hull, bpnts_2d, (int)sloop.size());
 	if (!ccnt) {
 	    bu_log("concave hull build failed\n");
 	} else {
+	    int *pt_ind = (int *)bu_calloc(ccnt, sizeof(int), "pt_ind");
+	    for (int i = 0; i < ccnt; i++) {
+		pt_ind[i] = i;
+	    }
+	    hull_dir = bg_polygon_direction(ccnt, hull, pt_ind);
+	    bu_free(pt_ind, "point indices");
 	    bu_log("ccnt: %d\n", ccnt);
+	    if (!hull_dir) {
+		bu_log("could not determine hull direction!\n");
+	    }
+	    if (hull_dir == BG_CCW) bu_log("CCW\n");
+	    if (hull_dir == BG_CW) bu_log("CW\n");
 	    plot_concave_hull_2d(bpnts_2d, ccnt, "concave_hull.plot3");
+
+
+	    int *ecfaces;
+	    int num_faces;
+	    if (bg_polygon_triangulate(&ecfaces, &num_faces, NULL, NULL, hull, ccnt, EAR_CLIPPING)) {
+		bu_log("ear clipping failed\n");
+	    } else {
+		plot_2d_bg_tri(ecfaces, num_faces, hull, "earclip.plot3");
+	    }
 	}
     }
 
@@ -479,23 +561,33 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
 
     std::set<ON_2dPoint *> handled;
     std::set<ON_2dPoint *>::iterator u_it;
-    std::vector<p2t::Point *> polyline; 
+    std::vector<p2t::Point *> polyline;
     p2t::Point *fp = NULL;
-    for (size_t i = 0; i < sloop.size() - 1; i++) {
-	ON_2dPoint *onp2d = pnts_2d[sloop[i]];
-	p2t::Point *np = new p2t::Point(onp2d->x, onp2d->y);
-	if (!fp) fp = np;
-	(*pointmap)[np] = pnts_3d[i];
-	polyline.push_back(np);
-	handled.insert(onp2d);
+    if (!ccnt) {
+	for (size_t i = 0; i < sloop.size(); i++) {
+	    ON_2dPoint *onp2d = pnts_2d[sloop[i]];
+	    p2t::Point *np = new p2t::Point(onp2d->x, onp2d->y);
+	    if (!fp) fp = np;
+	    (*pointmap)[np] = pnts_3d[i];
+	    polyline.push_back(np);
+	    handled.insert(onp2d);
+	}
+	polyline.push_back(fp);
+    } else {
+	for (int i = 0; i < ccnt; i++) {
+	    p2t::Point *np = new p2t::Point(hull[i][X], hull[i][Y]);
+	    if (!fp) fp = np;
+	    (*pointmap)[np] = pnts_3d[i];
+	    polyline.push_back(np);
+	}
+	polyline.push_back(fp);
     }
-    polyline.push_back(fp);
     plot_edge_loop_2d(polyline, "polyline.plot3");
     // Perform the new triangulation
-    std::reverse(polyline.begin(), polyline.end());
-#if 0
     p2t::CDT *ncdt = new p2t::CDT(polyline);
     ncdt->Triangulate(true, -1);
+    plot_2d_cdt_tri(ncdt, "poly2tri_2d.plot3");
+#if 0
     for (size_t i = 0; i < pnts_2d.size(); i++) {
 	ON_2dPoint *onp2d = pnts_2d[i];
 	if (handled.find(onp2d) != handled.end()) continue;
@@ -503,30 +595,6 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
 	(*pointmap)[np] = pnts_3d[i];
 	ncdt->AddPoint(np);
     }
-    FILE* plot_file = fopen("newmesh.plot3", "w");
-    int r = int(256*drand48() + 1.0);
-    int g = int(256*drand48() + 1.0);
-    int b = int(256*drand48() + 1.0);
-    std::vector<p2t::Triangle*> ntris = ncdt->GetTriangles();
-    for (size_t i = 0; i < ntris.size(); i++) {
-	p2t::Triangle *t = ntris[i];
-	int bad = 0;
-	if (!(*pointmap)[t->GetPoint(0)]) {
-	    std::cout << "Unmapped 2D point 0 in triangle " << i << "\n";
-	    bad = 1;
-	}
-	if (!(*pointmap)[t->GetPoint(1)]) {
-	    std::cout << "Unmapped 2D point 1 in triangle " << i << "\n";
-	    bad = 1;
-	}
-	if (!(*pointmap)[t->GetPoint(2)]) {
-	    std::cout << "Unmapped 2D point 2 in triangle " << i << "\n";
-	    bad = 1;
-	}
-	if (!bad)
-	    plot_tri_3d(t, pointmap, r, g, b, plot_file);
-    }
-    fclose(plot_file);
 #endif
 
     // assemble the new p2t Triangle set using
