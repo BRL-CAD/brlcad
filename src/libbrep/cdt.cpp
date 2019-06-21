@@ -128,31 +128,6 @@ plot_edge_loop_2d(std::vector<p2t::Point *> &el , const char *filename)
     fclose(plot_file);
 }
 
-static void
-plot_concave_hull_2d(point2d_t *pnts, int npnts, const char *filename)
-{
-    bu_file_delete(filename);
-    FILE* plot_file = fopen(filename, "w");
-    int r = int(256*drand48() + 1.0);
-    int g = int(256*drand48() + 1.0);
-    int b = int(256*drand48() + 1.0);
-    pl_color(plot_file, r, g, b);
-
-    point_t bnp;
-    VSET(bnp, pnts[0][X], pnts[0][Y], 0);
-    pdv_3move(plot_file, bnp);
-
-    for (int i = 1; i < npnts; i++) {
-	VSET(bnp, pnts[i][X], pnts[i][Y], 0);
-	pdv_3cont(plot_file, bnp);
-    }
-
-    VSET(bnp, pnts[0][X], pnts[0][Y], 0);
-    pdv_3cont(plot_file, bnp);
-
-    fclose(plot_file);
-}
-
 void
 plot_2d_bg_tri(int *ecfaces, int num_faces, point2d_t *pnts, const char *filename)
 {
@@ -508,55 +483,17 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
     // Given the set of unordered boundary edge segments, construct the outer loop
     std::vector<trimesh::index_t> sloop = smesh.boundary_loop();
 
-    // TODO - may do better to just use https://github.com/sadaszewski/concaveman-cpp to
-    // build the loop we want from the outer points, rather than the (questionable) behavior
-    // of the projected 3D loop...
+    // TODO - may do better to use https://github.com/sadaszewski/concaveman-cpp to
+    // build the loop we want from the outer points, rather than rely on the (questionable)
+    // behavior of the projected 3D loop.  However, doing that correctly/robustly will require
+    // rework of not just concaveman but also most of the libbg polygon bounding codes to
+    // return indices into a point array, rather than new point arrays.  For this purpose,
+    // we need to avoid having to compare point values whenever possible and our codes aren't
+    // currently set up to support/allow that.  Quick experimentation indicates it's a fair
+    // bit of work to implement and debug all the necessary changes.  Worth doing (probably
+    // NEED to do, actually) but will need a block of time to focus on it.
     plot_edge_loop(sloop, pnts_3d, "outer_loop.plot3");
 
-    int ccnt = 0;
-    int hull_dir = 0;
-    point2d_t *hull;
-    {
-	point2d_t *bpnts_2d = (point2d_t *)bu_calloc(sloop.size()+2, sizeof(point_t), "concave hull 2D points");
-	for (size_t i = 0; i < sloop.size(); i++) {
-	    ON_2dPoint *p = pnts_2d[sloop[i]];
-	    bpnts_2d[i][X] = p->x;
-	    bpnts_2d[i][Y] = p->y;
-	}
-
-	bu_log("sloop.size: %zd\n", sloop.size());
-
-	ccnt = bg_2d_concave_hull(&hull, bpnts_2d, (int)sloop.size());
-	if (!ccnt) {
-	    bu_log("concave hull build failed\n");
-	} else {
-	    int *pt_ind = (int *)bu_calloc(ccnt, sizeof(int), "pt_ind");
-	    for (int i = 0; i < ccnt; i++) {
-		pt_ind[i] = i;
-	    }
-	    hull_dir = bg_polygon_direction(ccnt, hull, pt_ind);
-	    bu_free(pt_ind, "point indices");
-	    bu_log("ccnt: %d\n", ccnt);
-	    if (!hull_dir) {
-		bu_log("could not determine hull direction!\n");
-	    }
-	    if (hull_dir == BG_CCW) bu_log("CCW\n");
-	    if (hull_dir == BG_CW) bu_log("CW\n");
-	    plot_concave_hull_2d(hull, ccnt, "concave_hull.plot3");
-
-	    for (int i = 0; i < ccnt; i++) {
-		bu_log("%d: %f %f 0\n", i, hull[i][X], hull[i][Y]);
-	    }
-
-	    int *ecfaces;
-	    int num_faces;
-	    if (bg_polygon_triangulate(&ecfaces, &num_faces, NULL, NULL, NULL, 0, hull, ccnt, TRI_EAR_CLIPPING)) {
-		bu_log("ear clipping failed\n");
-	    } else {
-		plot_2d_bg_tri(ecfaces, num_faces, hull, "earclip.plot3");
-	    }
-	}
-    }
 
     if (flipped_faces.size() > 0) {
 	bu_log("WARNING: incorporated flipped faces - need to do outer boundary ordering sanity checking!!\n");
@@ -566,28 +503,18 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
     std::set<ON_2dPoint *>::iterator u_it;
     std::vector<p2t::Point *> polyline;
     p2t::Point *fp = NULL;
-    if (!ccnt) {
-	for (size_t i = 0; i < sloop.size(); i++) {
-	    ON_2dPoint *onp2d = pnts_2d[sloop[i]];
-	    p2t::Point *np = new p2t::Point(onp2d->x, onp2d->y);
-	    if (!fp) fp = np;
-	    (*pointmap)[np] = pnts_3d[i];
-	    polyline.push_back(np);
-	    handled.insert(onp2d);
-	}
-    } else {
-	for (int i = 0; i < ccnt; i++) {
-	    p2t::Point *np = new p2t::Point(hull[i][X], hull[i][Y]);
-	    if (!fp) fp = np;
-	    (*pointmap)[np] = pnts_3d[i];
-	    polyline.push_back(np);
-	}
-	//polyline.push_back(fp);
+    for (size_t i = 0; i < sloop.size(); i++) {
+	ON_2dPoint *onp2d = pnts_2d[sloop[i]];
+	p2t::Point *np = new p2t::Point(onp2d->x, onp2d->y);
+	if (!fp) fp = np;
+	(*pointmap)[np] = pnts_3d[i];
+	polyline.push_back(np);
+	handled.insert(onp2d);
     }
+
     plot_edge_loop_2d(polyline, "polyline.plot3");
     // Perform the new triangulation
     p2t::CDT *ncdt = new p2t::CDT(polyline);
-#if 0
     for (size_t i = 0; i < pnts_2d.size(); i++) {
 	ON_2dPoint *onp2d = pnts_2d[i];
 	if (handled.find(onp2d) != handled.end()) continue;
@@ -595,17 +522,29 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
 	(*pointmap)[np] = pnts_3d[i];
 	ncdt->AddPoint(np);
     }
-#endif
     ncdt->Triangulate(true, -1);
     plot_2d_cdt_tri(ncdt, "poly2tri_2d.plot3");
 
     // assemble the new p2t Triangle set using
     // the mappings, and check the new 3D mesh thus created for issues.  If it
     // is clean, replace the original subset of the parent face with the new
-    // triangle set, else fail.  Note that a consequence of this will be that
-    // only one of the original singularity trim points will end up being used.
+    // triangle set, else fail.
 
+    std::vector<p2t::Triangle*> ftris = ncdt->GetTriangles();
+    for (size_t i = 0; i < ftris.size(); i++) {
+	p2t::Triangle *t = ftris[i];
+	p2t::Point *p2_1 = t->GetPoint(0);
+	p2t::Point *p2_2 = t->GetPoint(0);
+	p2t::Point *p2_3 = t->GetPoint(0);
+	p2t::Triangle *nt = new p2t::Triangle(*p2_1, *p2_2, *p2_3);
+	f->p2t_extra_faces->push_back(nt);
+    }
 
+    std::set<trimesh::index_t>::iterator tm_it;
+    for (tm_it = singularity_triangles.begin(); tm_it != singularity_triangles.end(); tm_it++) {
+	p2t::Triangle *t = tm->triangles[*tm_it].t;
+	f->tris_degen->insert(t);
+    }
 
 }
 
