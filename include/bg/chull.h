@@ -52,6 +52,9 @@ __BEGIN_DECLS
  */
 BG_EXPORT int bg_polyline_2d_chull(point2d_t** hull, const point2d_t* polyline, int n);
 
+BG_EXPORT int bg_polyline_2d_chull2(int** hull, const int *polyline, int n, const point2d_t* pnts);
+
+
 /**
  * @brief
  * Find 2D convex hull for unordered co-planar point sets
@@ -77,13 +80,15 @@ BG_EXPORT int bg_polyline_2d_chull(point2d_t** hull, const point2d_t* polyline, 
 BG_EXPORT int bg_2d_chull(point2d_t** hull, const point2d_t* points_2d, int n);
 
 
+BG_EXPORT int bg_2d_chull2(int** hull, const point2d_t* points_2d, int n);
+
 /**
  * @brief
  * Find 2D concave hull for unordered co-planar point sets
  *
  *
  *
- * @param[out]	hull 2D convex hull array vertices in ccw orientation (max is n)
+ * @param[out]	hull 2D convex hull array vertex indices in ccw orientation (max is n)
  * @param	points_2d The input 2d points for which a convex hull will be built
  * @param	n the number of points in the input set
  * @return the number of points in the output hull array or zero if error.
@@ -110,6 +115,9 @@ BG_EXPORT int bg_2d_concave_hull(point2d_t** hull, const point2d_t* points_2d, i
  * @return the number of points in the output hull array
  */
 BG_EXPORT int bg_3d_coplanar_chull(point_t** hull, const point_t* points_3d, int n);
+
+
+BG_EXPORT int bg_3d_coplanar_chull2(int** hull, const point_t* points_3d, int n);
 
 /**
  * @brief

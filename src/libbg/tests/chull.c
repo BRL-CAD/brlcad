@@ -36,7 +36,7 @@ void plot_chull(int test_num, const point_t *pnt_array, int pnt_cnt)
     struct bu_vls name;
     FILE *plot_file = NULL;
     bu_vls_init(&name);
-    bu_vls_printf(&name, "chull_test_%.3d.pl", test_num);
+    bu_vls_printf(&name, "chull_test_%.3d.plot3", test_num);
     plot_file = fopen(bu_vls_addr(&name), "w");
     pl_color(plot_file, 0, 255, 0);
     for (i = 0; i < pnt_cnt; i++) {
@@ -45,6 +45,80 @@ void plot_chull(int test_num, const point_t *pnt_array, int pnt_cnt)
 	    pdv_3cont(plot_file, pnt_array[i+1]);
 	} else {
 	    pdv_3cont(plot_file, pnt_array[0]);
+	}
+    }
+    fclose(plot_file);
+    bu_vls_free(&name);
+}
+
+HIDDEN
+void plot2d_chull(int test_num, const point2d_t *pnt_array, int pnt_cnt)
+{
+    int i = 0;
+    struct bu_vls name;
+    FILE *plot_file = NULL;
+    point_t p3d;
+    bu_vls_init(&name);
+    bu_vls_printf(&name, "chull_test_%.3d.plot3", test_num);
+    plot_file = fopen(bu_vls_addr(&name), "w");
+    pl_color(plot_file, 0, 255, 0);
+    for (i = 0; i < pnt_cnt; i++) {
+	VSET(p3d, pnt_array[i][X], pnt_array[i][Y], 0);
+	pdv_3move(plot_file, p3d);
+	if (i < pnt_cnt - 1) {
+	    VSET(p3d, pnt_array[i+1][X], pnt_array[i+1][Y], 0);
+	    pdv_3cont(plot_file, p3d);
+	} else {
+	    VSET(p3d, pnt_array[0][X], pnt_array[i][0], 0);
+	    pdv_3cont(plot_file, p3d);
+	}
+    }
+    fclose(plot_file);
+    bu_vls_free(&name);
+}
+
+HIDDEN
+void plot_chull2(int test_num, int *hull, int pnt_cnt, const point_t *pnt_array)
+{
+    int i = 0;
+    struct bu_vls name;
+    FILE *plot_file = NULL;
+    bu_vls_init(&name);
+    bu_vls_printf(&name, "chull2_test_%.3d.plot3", test_num);
+    plot_file = fopen(bu_vls_addr(&name), "w");
+    pl_color(plot_file, 0, 255, 0);
+    for (i = 0; i < pnt_cnt; i++) {
+	pdv_3move(plot_file, pnt_array[hull[i]]);
+	if (i < pnt_cnt - 1) {
+	    pdv_3cont(plot_file, pnt_array[hull[i+1]]);
+	} else {
+	    pdv_3cont(plot_file, pnt_array[hull[0]]);
+	}
+    }
+    fclose(plot_file);
+    bu_vls_free(&name);
+}
+
+HIDDEN
+void plot2d_chull2(int test_num, int *hull, int pnt_cnt, const point2d_t *pnt_array)
+{
+    int i = 0;
+    struct bu_vls name;
+    FILE *plot_file = NULL;
+    point_t p3d;
+    bu_vls_init(&name);
+    bu_vls_printf(&name, "chull2_test_%.3d.plot3", test_num);
+    plot_file = fopen(bu_vls_addr(&name), "w");
+    pl_color(plot_file, 0, 255, 0);
+    for (i = 0; i < pnt_cnt; i++) {
+	VSET(p3d, pnt_array[hull[i]][X], pnt_array[hull[i]][Y], 0);
+	pdv_3move(plot_file, p3d);
+	if (i < pnt_cnt - 1) {
+	    VSET(p3d, pnt_array[hull[i+1]][X], pnt_array[hull[i+1]][Y], 0);
+	    pdv_3cont(plot_file, p3d);
+	} else {
+	    VSET(p3d, pnt_array[hull[0]][X], pnt_array[hull[0]][Y], 0);
+	    pdv_3cont(plot_file, p3d);
 	}
     }
     fclose(plot_file);
@@ -63,6 +137,9 @@ main(int argc, const char **argv)
 
     /* 2D input */
     {
+	int hcnt;
+	int *hull;
+	int *polyline;
 	point2d_t test1_points[4+1] = {{0}};
 	point2d_t test1_results[5+1] = {{0}};
 	int n = 4;
@@ -92,7 +169,28 @@ main(int argc, const char **argv)
 	    }
 	}
 	if (!retval) {return -1;} else {bu_log("Test #001 Passed!\n");}
+	if (do_plotting) {
+	    plot2d_chull(1, (const point2d_t *)hull_polyline, retval);
+	}
 
+	polyline = (int *)bu_calloc(n, sizeof(int), "polyline");
+	for (i = 0; i < n; i++) {
+	    polyline[i] = i;
+	}
+	hcnt = bg_polyline_2d_chull2(&hull, polyline, n, (const point2d_t *)test1_points);
+	bu_log("Test #001(2):  polyline_2d_hull - 4 point test:\n");
+	for (i = 0; i < hcnt; i++) {
+	    bu_log("    expected[%d]: (%f, %f)\n", i, V2ARGS(test1_results[i]));
+	    bu_log("      actual[%d]: (%f, %f)\n", i, V2ARGS(test1_points[hull[i]]));
+	    if (!NEAR_ZERO(test1_results[i][0] - test1_points[hull[i]][0], SMALL_FASTF) ||
+		!NEAR_ZERO(test1_results[i][1] - test1_points[hull[i]][1], SMALL_FASTF)) {
+		retval = 0;
+	    }
+	}
+	if (do_plotting) {
+	    plot2d_chull2(1, hull, hcnt, (const point2d_t *)test1_points);
+	}
+	if (!retval) {return -1;} else {bu_log("Test #001-1 Passed!\n");}
 
 	retval = bg_2d_chull(&hull_pnts, (const point2d_t *)test1_points, n);
 	if (!retval) return -1;
@@ -106,10 +204,34 @@ main(int argc, const char **argv)
 	    }
 	}
 	if (!retval) {return -1;} else {bu_log("Test #002 Passed!\n");}
+	if (do_plotting) {
+	    plot2d_chull(1, (const point2d_t *)hull_pnts, retval);
+	}
+
+	hcnt = bg_2d_chull2(&hull, (const point2d_t *)test1_points, n);
+	bu_log("Test #002(2):  polyline_2d_hull - 4 point test:\n");
+	for (i = 0; i < hcnt; i++) {
+	    bu_log("    expected[%d]: (%f, %f)\n", i, V2ARGS(test1_results[i]));
+	    bu_log("      actual[%d]: (%f, %f)\n", i, V2ARGS(test1_points[hull[i]]));
+	    if (!NEAR_ZERO(test1_results[i][0] - test1_points[hull[i]][0], SMALL_FASTF) ||
+		!NEAR_ZERO(test1_results[i][1] - test1_points[hull[i]][1], SMALL_FASTF)) {
+		retval = 0;
+	    }
+	}
+	if (do_plotting) {
+	    plot2d_chull2(1, hull, hcnt, (const point2d_t *)test1_points);
+	}
+	if (!retval) {return -1;} else {bu_log("Test #002-1 Passed!\n");}
+
+
+
     }
 
     /* Triangle input */
     {
+	int hcnt;
+	int *hull;
+
 	point2d_t test1_points[3+1] = {{0}};
 	point2d_t test1_results[4+1] = {{0}};
 	int n = 3;
@@ -137,10 +259,24 @@ main(int argc, const char **argv)
 	}
 	if (!retval) {return -1;} else {bu_log("Triangle Test Passed!\n");}
 
+	hcnt = bg_2d_chull2(&hull, (const point2d_t *)test1_points, n);
+	bu_log("Test #002-2:  2d_hull - triangle test:\n");
+	for (i = 0; i < hcnt; i++) {
+	    bu_log("    expected[%d]: (%f, %f)\n", i, V2ARGS(test1_results[i]));
+	    bu_log("      actual[%d]: (%f, %f)\n", i, V2ARGS(test1_points[hull[i]]));
+	    if (!NEAR_ZERO(test1_results[i][0] - test1_points[hull[i]][0], SMALL_FASTF) ||
+		!NEAR_ZERO(test1_results[i][1] - test1_points[hull[i]][1], SMALL_FASTF)) {
+		retval = 0;
+	    }
+	}
+	if (!retval) {return -1;} else {bu_log("Test #002-2 Passed!\n");}
+
     }
 
     /* 3D input */
     {
+	int hcnt;
+	int *hull;
 	point_t test3_points[17+1] = {{0}};
 	point_t *test3_hull_pnts = NULL;
 	VSET(test3_points[0], -0.5, 0.5, 0.5);
@@ -165,14 +301,26 @@ main(int argc, const char **argv)
 	for (i = 0; i < retval; i++) {
 	    bu_log("      actual[%d]: (%f, %f, %f)\n", i, test3_hull_pnts[i][0], test3_hull_pnts[i][1], test3_hull_pnts[i][2]);
 	}
+
+	hcnt = bg_3d_coplanar_chull2(&hull, (const point_t *)test3_points, 17);
+	bu_log("Test #003-2:  3d_hull - points in XY plane at Z=0.5, duplicate points:\n");
+	for (i = 0; i < hcnt; i++) {
+	    bu_log("      actual[%d]: (%f, %f, %f)\n", i, test3_points[hull[i]][0], test3_points[hull[i]][1], test3_points[hull[i]][2]);
+	}
+
 	if (do_plotting) {
 	    const point_t *const_test3_hull_pnts = (const point_t *)test3_hull_pnts;
 	    plot_chull(3, const_test3_hull_pnts, retval);
+	    plot_chull2(3, hull, hcnt, (const point_t *)test3_points);
 	}
+
 
     }
 
     {
+	int hcnt;
+	int *hull;
+
 	point_t test4_points[17+1] = {{0}};
 	point_t *test4_hull_pnts = NULL;
 	VSET(test4_points[0],-0.2615997126297299746333636,0.9692719821506950994560725,1.113297221058902053414386);
@@ -197,13 +345,23 @@ main(int argc, const char **argv)
 	for (i = 0; i < retval; i++) {
 	    bu_log("      actual[%d]: (%f, %f, %f)\n", i, test4_hull_pnts[i][0], test4_hull_pnts[i][1], test4_hull_pnts[i][2]);
 	}
+
+	hcnt = bg_3d_coplanar_chull2(&hull, (const point_t *)test4_points, 17);
+	bu_log("Test #004-2:  3d_hull - points in tilted plane, duplicate points:\n");
+	for (i = 0; i < hcnt; i++) {
+	    bu_log("      actual[%d]: (%f, %f, %f)\n", i, test4_points[hull[i]][0], test4_points[hull[i]][1], test4_points[hull[i]][2]);
+	}
+
 	if (do_plotting) {
 	    const point_t *const_test4_hull_pnts = (const point_t *)test4_hull_pnts;
 	    plot_chull(4, const_test4_hull_pnts, retval);
+	    plot_chull2(4, hull, hcnt, (const point_t *)test4_points);
 	}
     }
 
     {
+	int hcnt;
+	int *hull;
 	point_t test5_points[9+1] = {{0}};
 	point_t *test5_hull_pnts = NULL;
 	VSET(test5_points[0],-0.2894335616770786212548217,0.2866157180445003671565019,0.8153689453291005362345345);
@@ -220,9 +378,17 @@ main(int argc, const char **argv)
 	for (i = 0; i < retval; i++) {
 	    bu_log("      actual[%d]: (%f, %f, %f)\n", i, test5_hull_pnts[i][0], test5_hull_pnts[i][1], test5_hull_pnts[i][2]);
 	}
+
+	hcnt = bg_3d_coplanar_chull2(&hull, (const point_t *)test5_points, 9);
+	bu_log("Test #005-2:  3d_hull - points from test 4 sans square corners, no duplicate points:\n");
+	for (i = 0; i < hcnt; i++) {
+	    bu_log("      actual[%d]: (%f, %f, %f)\n", i, test5_points[hull[i]][0], test5_points[hull[i]][1], test5_points[hull[i]][2]);
+	}
+
 	if (do_plotting) {
 	    const point_t *const_test5_hull_pnts = (const point_t *)test5_hull_pnts;
 	    plot_chull(5, const_test5_hull_pnts, retval);
+	    plot_chull2(5, hull, hcnt, (const point_t *)test5_points);
 	}
 
     }

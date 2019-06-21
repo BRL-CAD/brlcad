@@ -10,6 +10,7 @@ BRLCAD_LIB_INCLUDE_DIRS(bg BG_INCLUDE_DIRS "")
 
 set(LIBBG_SOURCES
   chull.c
+  chull2.cpp
   QuickHull.cpp
   chull3d.cpp
   clipper.cpp
