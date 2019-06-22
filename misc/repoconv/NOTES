@@ -21,6 +21,9 @@ With that alias in place, the command "git svnrev 29886" will check out the git
 commit with a not matching the pattern "svn:revision:29886"
 
 
+TODO - rewrite the below to use the new svn::branch:: note lines as well, for better reporting
+of SVN branch commit histories
+
 In svn, we can svn log in a particular branch checkout to see the history
 specific to that branch, but this is apparently a challenge in git.  The
 following logic added to your .gitconfig defines a logb command that will list
@@ -37,6 +40,14 @@ https://stackoverflow.com/a/12142066)
                    git log $CURRBRANCH --not $(git for-each-ref --format='%(refname)' refs/heads/ | grep -v \"refs/heads/$CURRBRANCH\"); \
                 fi; \
                 }; f"
+
+
+
+Many (most?) of BRL-CAD's commit messages are long one liners - it turns out gitk does have
+the ability to word wrap, but (why???) it isn't on by default.  We'll want to advise users
+to enable it, per https://stackoverflow.com/questions/35017472/enabling-word-wrap-in-gitk-for-commit-message-display-on-a-mac
+
+
 
 
 # Other useful commands:
