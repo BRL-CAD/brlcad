@@ -47,6 +47,8 @@ Many (most?) of BRL-CAD's commit messages are long one liners - it turns out git
 the ability to word wrap, but (why???) it isn't on by default.  We'll want to advise users
 to enable it, per https://stackoverflow.com/questions/35017472/enabling-word-wrap-in-gitk-for-commit-message-display-on-a-mac
 
+May want to investigate conditional includes as well so we can pre-package a repo specific .gitconfig:
+https://git-scm.com/docs/git-config#_conditional_includes
 
 
 
