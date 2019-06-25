@@ -6647,6 +6647,8 @@ nmg_isect_2faceuse(point_t pt,
     int parallel = 0;
     int coplanar = 0;
     int cnt = 0;
+    int above_plane_count = 0;
+    int below_plane_count = 0;
     fastf_t avg_dist = 0.0;
     fastf_t tot_dist = 0.0;
     fastf_t dist = 0.0;
@@ -6690,6 +6692,8 @@ nmg_isect_2faceuse(point_t pt,
     /* test fu1 against f2 */
     parallel = 1;
     cnt = 0;
+    above_plane_count = 0;
+    below_plane_count = 0;
     avg_dist = 0.0;
     tot_dist = 0.0;
     dist = 0.0;
@@ -6705,8 +6709,21 @@ nmg_isect_2faceuse(point_t pt,
 	for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 	    NMG_CK_EDGEUSE(eu);
 	    cnt++;
-	    dist = fabs(DIST_PT_PLANE(eu->vu_p->v_p->vg_p->coord, f2_pl));
+            dist = DIST_PT_PLANE(eu->vu_p->v_p->vg_p->coord, f2_pl);
+            if (dist > tol->dist) {
+                above_plane_count++;
+            } else if (dist < -tol->dist) {
+                below_plane_count++;
+            }
+            
+            if (above_plane_count > 0 && below_plane_count > 0) {
+		/* not parallel */
+		parallel = 0;
+		break;
+            }
+	    dist = fabs(dist);
 	    tot_dist += dist;
+
 	    /* the current distance is included in the average
 	     * that the current distance is compared against
 	     */
@@ -6723,6 +6740,8 @@ nmg_isect_2faceuse(point_t pt,
     /* test fu2 against f1 */
     if (parallel == 1) {
 	cnt = 0;
+        above_plane_count = 0;
+        below_plane_count = 0;
 	avg_dist = 0.0;
 	tot_dist = 0.0;
 	dist = 0.0;
@@ -6736,7 +6755,19 @@ nmg_isect_2faceuse(point_t pt,
 	    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 		NMG_CK_EDGEUSE(eu);
 		cnt++;
-		dist = fabs(DIST_PT_PLANE(eu->vu_p->v_p->vg_p->coord, f1_pl));
+                dist = DIST_PT_PLANE(eu->vu_p->v_p->vg_p->coord, f1_pl);
+                if (dist > tol->dist) {
+                    above_plane_count++;
+                } else if (dist < -tol->dist) {
+                    below_plane_count++;
+                }
+                
+                if (above_plane_count > 0 && below_plane_count > 0) {
+                    /* not parallel */
+                    parallel = 0;
+                    break;
+                }
+                dist = fabs(dist);
 		tot_dist += dist;
 		/* the current distance is included in the average
 		 * that the current distance is compared against
