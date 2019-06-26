@@ -6710,6 +6710,13 @@ nmg_isect_2faceuse(point_t pt,
 	    NMG_CK_EDGEUSE(eu);
 	    cnt++;
             dist = DIST_PT_PLANE(eu->vu_p->v_p->vg_p->coord, f2_pl);
+            
+            /* Using the absolute value of the dist will work in the vast majority
+             * of situations. However, if the loop being checked has vertices above
+             * and below the plane, then using absolute value hides that fact,
+             * and it is possible for such a loop to be incorrectly evaluated as
+             * parallel
+             */
             if (dist > tol->dist) {
                 above_plane_count++;
             } else if (dist < -tol->dist) {
@@ -6756,6 +6763,13 @@ nmg_isect_2faceuse(point_t pt,
 		NMG_CK_EDGEUSE(eu);
 		cnt++;
                 dist = DIST_PT_PLANE(eu->vu_p->v_p->vg_p->coord, f1_pl);
+            
+                /* Using the absolute value of the dist will work in the vast majority
+                 * of situations. However, if the loop being checked has vertices above
+                 * and below the plane, then using absolute value hides that fact,
+                 * and it is possible for such a loop to be incorrectly evaluated as
+                 * parallel
+                 */
                 if (dist > tol->dist) {
                     above_plane_count++;
                 } else if (dist < -tol->dist) {
