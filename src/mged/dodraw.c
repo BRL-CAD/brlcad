@@ -74,28 +74,21 @@ cvt_vlblock_to_solids(struct bn_vlblock *vbp, const char *name, int copy)
 static void
 mged_bound_solid(struct solid *sp)
 {
-    struct bn_vlist *vp;
-
     point_t bmin, bmax;
+    int length = 0;
     int cmd;
     VSET(bmin, INFINITY, INFINITY, INFINITY);
     VSET(bmax, -INFINITY, -INFINITY, -INFINITY);
 
-    sp->s_vlen = 0;
-
-
-
-    for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
-	cmd = bn_vlist_bbox(vp, &bmin, &bmax);
-	if (cmd) {
-	    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
-	    bu_vls_printf(&tmp_vls, "unknown vlist op %d\n", cmd);
-	    Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
-	    bu_vls_free(&tmp_vls);
-	}
-	sp->s_vlen += vp->nused;
+    cmd = bn_vlist_bbox(&sp->s_vlist, &bmin, &bmax, &length);
+    if (cmd) {
+	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
+	bu_vls_printf(&tmp_vls, "unknown vlist op %d\n", cmd);
+	Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
+	bu_vls_free(&tmp_vls);
     }
 
+    sp->s_vlen = length;
     sp->s_center[X] = (bmin[X] + bmax[X]) * 0.5;
     sp->s_center[Y] = (bmin[Y] + bmax[Y]) * 0.5;
     sp->s_center[Z] = (bmin[Z] + bmax[Z]) * 0.5;

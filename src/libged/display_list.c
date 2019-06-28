@@ -640,19 +640,14 @@ solid_set_color_info(
 static void
 bound_solid(struct solid *sp)
 {
-    struct bn_vlist *vp;
     point_t bmin, bmax;
     int cmd;
     VSET(bmin, INFINITY, INFINITY, INFINITY);
     VSET(bmax, -INFINITY, -INFINITY, -INFINITY);
-
-    for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
-	cmd = bn_vlist_bbox(vp, &bmin, &bmax);
-	if (cmd) {
-	    bu_log("unknown vlist op %d\n", cmd);
-	}
+    cmd = bn_vlist_bbox(&sp->s_vlist, &bmin, &bmax, NULL);
+    if (cmd) {
+	bu_log("unknown vlist op %d\n", cmd);
     }
-
     sp->s_center[X] = (bmin[X] + bmax[X]) * 0.5;
     sp->s_center[Y] = (bmin[Y] + bmax[Y]) * 0.5;
     sp->s_center[Z] = (bmin[Z] + bmax[Z]) * 0.5;

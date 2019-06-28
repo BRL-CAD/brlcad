@@ -52,19 +52,18 @@ bn_vlist_cmd_cnt(struct bn_vlist *vlist)
     return num_commands;
 }
 
-int
-bn_vlist_bbox(struct bn_vlist *vp, point_t *bmin, point_t *bmax)
+static int
+bn_vlist_bbox_internal(struct bn_vlist *vp, point_t *bmin, point_t *bmax, int *disp_mode)
 {
     size_t i;
     size_t nused = vp->nused;
     int *cmd = vp->cmd;
-    int disp_mode = 0;
     point_t *pt = vp->pt;
 
     for (i = 0; i < nused; i++, cmd++, pt++) {
-	if(disp_mode == 1 && *cmd != BN_VLIST_MODEL_MAT)
+	if(*disp_mode == 1 && *cmd != BN_VLIST_MODEL_MAT)
 	    continue;
-	disp_mode = 0;
+	*disp_mode = 0;
 	switch (*cmd) {
 	    case BN_VLIST_POLY_START:
 	    case BN_VLIST_POLY_VERTNORM:
@@ -91,7 +90,7 @@ bn_vlist_bbox(struct bn_vlist *vp, point_t *bmin, point_t *bmax)
 		V_MAX((*bmax)[Z], (*pt)[Z]);
 		break;
 	    case BN_VLIST_DISPLAY_MAT:
-		disp_mode = 1;
+		*disp_mode = 1;
 		/* fall through */
 	    case BN_VLIST_POINT_DRAW:
 		V_MIN((*bmin)[X], (*pt)[X]-1.0);
@@ -107,6 +106,26 @@ bn_vlist_bbox(struct bn_vlist *vp, point_t *bmin, point_t *bmax)
     }
 
     return 0;
+}
+
+int
+bn_vlist_bbox(struct bu_list *vlistp, point_t *bmin, point_t *bmax, int *length) 
+{
+    struct bn_vlist* vp;
+    int cmd = 0;
+    int disp_mode = 0;
+    int len = 0;
+    for (BU_LIST_FOR(vp, bn_vlist, vlistp)) {
+	cmd = bn_vlist_bbox_internal(vp, bmin, bmax, &disp_mode);
+	if (cmd) {
+	    break;
+	}
+	len += vp->nused;
+    }
+    if (length){
+	*length = len;
+    }
+    return cmd;
 }
 
 const char *
