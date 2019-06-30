@@ -1,5 +1,9 @@
 #!/bin/bash
 
+rm -rf brlcad_cvs_git brlcad_full.dump brlcad_full_dercs.dump repo_dercs
+rm -rf brlcad_git_checkout brlcad_svn_checkout
+rm -f current_rev.txt git.log nsha1.txt rev_gsha1s.txt svn_msgs.txt branches.txt
+
 REPODIR="$PWD/brlcad_repo"
 
 if [ ! -e "cvs-fast-export" ]; then
@@ -73,6 +77,7 @@ CHEAD=$(git show-ref master | awk '{print $1}')
 sed "s/CURRENTHEAD/$CHEAD/" ../29886-note-template.fi > 29886-note.fi
 cat ./29886-note.fi | git fast-import
 rm ./29886-note.fi
+cd ..
 
 # Comparing this to the svn checkout:
 echo "Validating cvs-fast-export r29886 against SVN"
