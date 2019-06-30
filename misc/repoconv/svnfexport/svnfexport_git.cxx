@@ -843,7 +843,7 @@ int move_only_commit(struct svn_revision &rev, std::string &rbranch)
 
     std::string fi_file = std::to_string(rev.revision_number) + std::string("-mvonly.fi");
     std::ofstream outfile(fi_file.c_str(), std::ios::out | std::ios::binary);
-    std::string ncmsg = rev.commit_msg + std::string(" (preliminiary file move commit)");
+    std::string ncmsg = rev.commit_msg + std::string(" (preliminary file move commit)");
 
     write_commit_core(outfile, rbranch, rev, ncmsg.c_str(), 0, 0, 0);
 
