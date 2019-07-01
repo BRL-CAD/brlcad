@@ -6,7 +6,7 @@ To make this easier, add the following alias to your .gitconfig file:
 
 	svnrev = "!f() { \
 		if [ x$1 != x ] ; then \
-		   REVSHA1=\"$(git log --all --pretty=format:\"%H %N\" --grep svn:revision:$1\$|awk '{system(\"echo \"$1)}')\"; \
+		   REVSHA1=\"$(git log --all --pretty=format:\"%H %N\" --grep svn:revision:$1$|awk '{system(\"echo \"$1)}')\"; \
 		   if [ x$REVSHA1 != x ] ; then \
 		      git checkout $REVSHA1; \
 		   else \
@@ -21,9 +21,6 @@ With that alias in place, the command "git svnrev 29886" will check out the git
 commit with a not matching the pattern "svn:revision:29886"
 
 
-TODO - rewrite the below to use the new svn::branch:: note lines as well, for better reporting
-of SVN branch commit histories
-
 In svn, we can svn log in a particular branch checkout to see the history
 specific to that branch, but this is apparently a challenge in git.  The
 following logic added to your .gitconfig defines a logb command that will list
@@ -34,11 +31,30 @@ https://stackoverflow.com/a/12142066)
 
         logb = "!f() { \
                 if [ x$1 != x ] ; then \
-                   git log $1 --not $(git for-each-ref --format='%(refname)' refs/heads/ | grep -v \"refs/heads/$1\"); \
+                   CURRBRANCH=$1; \
                 else \
                    CURRBRANCH=\"$(git rev-parse --abbrev-ref HEAD)\"; \
-                   git log $CURRBRANCH --not $(git for-each-ref --format='%(refname)' refs/heads/ | grep -v \"refs/heads/$CURRBRANCH\"); \
                 fi; \
+                HAVEBRANCH=$(git rev-parse --verify --quiet $CURRBRANCH); \
+                HAVEABRANCH=$(git rev-parse --verify --quiet archived/$CURRBRANCH); \
+		if [ -z $HAVEBRANCH ] && [ ! -z $HAVEABRANCH ] ; then \
+                   echo \"Branch $CURRBRANCH is not current - to see archived branch history, specify archived/$CURRBRANCH\" ; \
+                else \
+                   git log $CURRBRANCH --not $(git for-each-ref --format='%(refname)' refs/heads/ | grep -v \"refs/heads/$CURRBRANCH\"); \
+                fi ; \
+                }; f"
+
+The above report is limited by git's knowledge of branch history, which will not
+always match SVN's (the history of the bullet branch is an example).  To print
+the SVN record of the branch, use the following alias:
+
+        logsvnb = "!f() { \
+                if [ x$1 != x ] ; then \
+                   CURRBRANCH=$1; \
+                else \
+                   CURRBRANCH=\"$(git rev-parse --abbrev-ref HEAD)\"; \
+                fi; \
+                git log --all --show-notes --grep=\"svn:branch:$CURRBRANCH$\"; \
                 }; f"
 
 
