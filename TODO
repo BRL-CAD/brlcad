@@ -73,6 +73,11 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   path - need to print a warning and stop walking.  Requries full
   path awareness in tree command walk.
 
+  Consider implementing a corollary to FTS instead of dirent for
+  simplified tree traversal with cyclic awareness.
+  
+  https://keramida.wordpress.com/2009/07/05/fts3-or-avoiding-to-reinvent-the-wheel/
+
 * move the rt_*_timer timing facilities to libbu and rework to allow
   contexts, allowing for more than one timer to be active.  Make sure
   the old librt API can be obsoleted cleanly.
