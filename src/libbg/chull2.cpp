@@ -107,40 +107,38 @@ bg_polyline_2d_chull2(int** hull, const int *polyline, int n, const point2d_t* p
 }
 
 
+/* sorting comparison function for points */
+static int
+pnt_cmp_2d(point2d_t *p1, point2d_t *p2)
+{
+    if (UNLIKELY(NEAR_ZERO((*p2)[0] - (*p1)[0], SMALL_FASTF) && NEAR_ZERO((*p2)[1] - (*p1)[1], SMALL_FASTF))) return 0;
+    if ((*p1)[0] < (*p2)[0]) return 1;
+    if ((*p1)[0] > (*p2)[0]) return -1;
+    if ((*p1)[1] < (*p2)[1]) return 1;
+    if ((*p1)[1] > (*p2)[1]) return -1;
+
+    /* should never get here */
+    return 0;
+}
+
 /* bu_sort functions for points */
-HIDDEN int
+static int
 pnt_compare_2d(const void *pnt1, const void *pnt2, void *UNUSED(arg))
 {
     point2d_t *p1 = (point2d_t *)pnt1;
     point2d_t *p2 = (point2d_t *)pnt2;
 
-    if (UNLIKELY(NEAR_ZERO((*p2)[0] - (*p1)[0], SMALL_FASTF) && NEAR_ZERO((*p2)[1] - (*p1)[1], SMALL_FASTF))) return 0;
-    if ((*p1)[0] < (*p2)[0]) return 1;
-    if ((*p1)[0] > (*p2)[0]) return -1;
-    if ((*p1)[1] < (*p2)[1]) return 1;
-    if ((*p1)[1] > (*p2)[1]) return -1;
-
-    /* should never get here */
-
-    return 0;
+    return pnt_cmp_2d(p1, p2);
 }
 
-/* bu_sort functions for points */
-HIDDEN int
+/* bu_sort functions for pointers to points */
+static int
 pnt_compare_2d_ptr(const void *pnt1, const void *pnt2, void *UNUSED(arg))
 {
     point2d_t *p1 = *(point2d_t **)pnt1;
     point2d_t *p2 = *(point2d_t **)pnt2;
 
-    if (UNLIKELY(NEAR_ZERO((*p2)[0] - (*p1)[0], SMALL_FASTF) && NEAR_ZERO((*p2)[1] - (*p1)[1], SMALL_FASTF))) return 0;
-    if ((*p1)[0] < (*p2)[0]) return 1;
-    if ((*p1)[0] > (*p2)[0]) return -1;
-    if ((*p1)[1] < (*p2)[1]) return 1;
-    if ((*p1)[1] > (*p2)[1]) return -1;
-
-    /* should never get here */
-
-    return 0;
+    return pnt_cmp_2d(p1, p2);
 }
 
 
