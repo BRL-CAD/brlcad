@@ -57,6 +57,24 @@ BG_EXPORT int bg_polyline_2d_chull2(int** hull, const int *polyline, int n, cons
 
 /**
  * @brief
+ * Return an array that contains just the set of 2D points active in the polyline.
+ *
+ * @param[out] opoly array containing just the active points in the polyline.
+ * @param[in] n number of points in polyline
+ * @param[in] polyline indices of polyline points in pnts array
+ * @param[in] pnts array that holds the points defining the polyline
+ *
+ * The output array will store the points in polyline order, avoiding the need
+ * for an explicit index array of point positions to define the polyline.
+ *
+ * @return number of points in opoly if calculation was successful
+ * @return -1 if error
+ */
+BG_EXPORT extern int bg_2d_polyline_gc(point2d_t **opoly, int n, int *polyline, const point2d_t *pnts);
+
+
+/**
+ * @brief
  * Find 2D convex hull for unordered co-planar point sets
  *
  * The monotone chain algorithm's sorting approach is used to do

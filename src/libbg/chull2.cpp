@@ -195,6 +195,16 @@ bg_2d_chull2(int **hull, const point2d_t *points_2d, int n)
 }
 
 int
+bg_2d_polyline_gc(point2d_t **opoly, int n, int *polyline, const point2d_t *pnts)
+{
+    if (!opoly || n <= 0 || !polyline || !pnts) {
+	return -1;
+    }
+    return 0;
+}
+
+
+int
 bg_3d_coplanar_chull2(int **hull, const point_t *points_3d, int n)
 {
     int ret = 0;
