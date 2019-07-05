@@ -839,6 +839,51 @@ bg_trimesh_2d_gc(int **ofaces, point2d_t **opnts, int *n_opnts,
     return num_faces;
 }
 
+int
+bg_trimesh_3d_gc(int **ofaces, point_t **opnts, int *n_opnts,
+	const int *faces, int num_faces, const point_t *in_pts)
+{
+    std::set<int> active_pnts;
+    std::map<int,int> o2n;
+
+    if (!ofaces || !opnts || !n_opnts || !faces || num_faces <= 0 || !in_pts) {
+	return -1;
+    }
+
+    // Build unique active point set
+    for (int i = 0; i < num_faces; i++) {
+	active_pnts.insert(faces[i*3+0]);
+	active_pnts.insert(faces[i*3+1]);
+	active_pnts.insert(faces[i*3+2]);
+    }
+
+    point_t *op = (point_t *)bu_calloc(active_pnts.size(), sizeof(point_t), "new points array");
+    int *ofcs = (int *)bu_calloc(num_faces*3, sizeof(int), "new faces array");
+
+    // Assign unique points to new array, building map from old array indices to new
+    int nind = 0;
+    std::set<int>::iterator ap;
+    for (ap = active_pnts.begin(); ap != active_pnts.end(); ap++) {
+	V2MOVE(op[nind], in_pts[*ap]);
+	o2n[*ap] = nind;
+	nind++;
+    }
+
+    // Use map to create new face index array
+    for (int i = 0; i < num_faces; i++) {
+	ofcs[i*3+0] = o2n[faces[i*3+0]];
+	ofcs[i*3+1] = o2n[faces[i*3+1]];
+	ofcs[i*3+2] = o2n[faces[i*3+2]];
+    }
+
+    // Assign results
+    (*ofaces) = ofcs;
+    (*opnts) = op;
+    (*n_opnts) = (int)active_pnts.size();
+
+    return num_faces;
+}
+
 
 /*
  * Local Variables:
