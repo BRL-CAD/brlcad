@@ -135,8 +135,8 @@ bg_trimesh_isect(
 
 /**
  * @brief
- * Return trimesh information that contains just the set of points active in
- * the mesh.
+ * Return trimesh information for a planar (2D) mesh that contains just the set
+ * of points active in the mesh.
  *
  * @param[out] ofaces faces array for the new output mesh.
  * @param[out] opnts points array for the new output mesh.
@@ -148,7 +148,7 @@ bg_trimesh_isect(
  * @return -1 if error, number of faces in new trimesh if successful (should
  * match the original face count)
  */
-BG_EXPORT extern int bg_trimesh_gc(int **ofaces, int *n_ofaces, point2d_t **opnts, int *n_opnts,
+BG_EXPORT extern int bg_trimesh_2d_gc(int **ofaces, int *n_ofaces, point2d_t **opnts, int *n_opnts,
 	const int *faces, int num_faces, const point2d_t *in_pts);
 
 
