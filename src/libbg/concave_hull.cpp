@@ -41,41 +41,34 @@ bg_2d_concave_hull(point2d_t** hull, const point2d_t* points_2d, int n)
     if (!hull | !points_2d || n <= 0) return 0;
 
     /* As a first step, we need the convex hull */
-    point2d_t *convex_hull = NULL;
-    int convex_pnts = bg_2d_chull(&convex_hull, points_2d, n);
+    int *convex_hull = NULL;
+    int convex_pnts = bg_2d_chull2(&convex_hull, points_2d, n);
     if (!convex_pnts) {
 	bu_log("bg_2d_concave_hull: failed to get convex hull, cannot proceed to concave hull\n");
 	return 0;
     }
 
-    // concaveman works with indices, make maps
-    std::map<std::pair<double, double>, int> p2d_ind;
-    for (int i = 0; i < n; i++) {
-	std::pair<double,double> p2d(points_2d[i][X], points_2d[i][Y]);
-	p2d_ind[p2d] = i;
-    }
-
-    typedef double T;
-    typedef std::array<T, 2> point_type;
-    std::vector<point_type> points(n);
+    // Put all points_2d into a vector that preserves their original index position
+    // in the data container.
+    std::vector<std::array<double,3>> points(n);
     for (auto i = 0; i < n; i++) {
-	points[i] = { points_2d[i][X], points_2d[i][Y] };
+	points[i] = { points_2d[i][X], points_2d[i][Y], (double)i };
     }
 
+    // Assemble concaveman form of convex hull
     std::vector<int> convex_hull_v(convex_pnts+1);
     for (auto i = 0; i < convex_pnts; i++) {
-	std::pair<double,double> p2d(convex_hull[i][X], convex_hull[i][Y]);
-	convex_hull_v[i] = p2d_ind[p2d];
+	convex_hull_v[i] = convex_hull[i];
     }
     // We need to explicitly close the bg_2d_chull loop for concaveman
-    std::pair<double,double> p2d0(convex_hull[0][X], convex_hull[0][Y]);
-    convex_hull_v[convex_pnts] = p2d_ind[p2d0];
+    convex_hull_v[convex_pnts] = convex_hull[0];
 
-    auto concave_points = concaveman<T, 16>(points, convex_hull_v);
+    auto concave_points = concaveman<double, 16>(points, convex_hull_v);
     point2d_t *concave_hull = (point2d_t *)bu_calloc(concave_points.size(), sizeof(point2d_t), "concave hull pnts");
     for (auto i = 0; i < (int)concave_points.size(); i++) {
 	concave_hull[i][X] = concave_points[i][0];
 	concave_hull[i][Y] = concave_points[i][1];
+	bu_log("%f, %f: new ind %d, old ind %d\n", concave_hull[i][X], concave_hull[i][Y], i, (int)concave_points[i][2]);
     }
 
     int concave_pnts_cnt = (int)concave_points.size();

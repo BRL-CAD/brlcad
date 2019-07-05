@@ -59,9 +59,9 @@ public:
 
 
 template<class T> T orient2d(
-    const std::array<T, 2> &p1,
-    const std::array<T, 2> &p2,
-    const std::array<T, 2> &p3) {
+    const std::array<T, 3> &p1,
+    const std::array<T, 3> &p2,
+    const std::array<T, 3> &p3) {
 
     T res = (p2[1] - p1[1]) * (p3[0] - p2[0]) -
         (p2[0] - p1[0]) * (p3[1] - p2[1]);
@@ -71,10 +71,10 @@ template<class T> T orient2d(
 
 
 template<class T> bool intersects(
-    const std::array<T, 2> &p1,
-    const std::array<T, 2> &q1,
-    const std::array<T, 2> &p2,
-    const std::array<T, 2> &q2) {
+    const std::array<T, 3> &p1,
+    const std::array<T, 3> &q1,
+    const std::array<T, 3> &p2,
+    const std::array<T, 3> &q2) {
 
     auto res =
 	    ((!NEAR_EQUAL(p1[0], q2[0], SMALL_FASTF)) || (!NEAR_EQUAL(p1[1], q2[1], SMALL_FASTF))) &&
@@ -87,8 +87,8 @@ template<class T> bool intersects(
 
 
 template<class T> T getSqDist(
-    const std::array<T, 2> &p1,
-    const std::array<T, 2> &p2) {
+    const std::array<T, 3> &p1,
+    const std::array<T, 3> &p2) {
 
     auto dx = p1[0] - p2[0];
     auto dy = p1[1] - p2[1];
@@ -97,9 +97,9 @@ template<class T> T getSqDist(
 
 
 template<class T> T sqSegDist(
-    const std::array<T, 2> &p,
-    const std::array<T, 2> &p1,
-    const std::array<T, 2> &p2) {
+    const std::array<T, 3> &p,
+    const std::array<T, 3> &p1,
+    const std::array<T, 3> &p2) {
 
     auto x = p1[0];
     auto y = p1[1];
@@ -384,7 +384,7 @@ private:
 template<class T> struct Node {
     typedef Node<T> type;
     typedef type *type_ptr;
-    typedef std::array<T, 2> point_type;
+    typedef std::array<T, 3> point_type;
 
     Node(): p(),
     minX(), minY(), maxX(), maxY() {
@@ -503,13 +503,13 @@ template<class T> void updateBBox(typename CircularElement<T>::ptr_type elem) {
 }
 
 
-template<class T, int MAX_CHILDREN> std::vector<std::array<T, 2>> concaveman(
-    const std::vector<std::array<T, 2>> &points,
+template<class T, int MAX_CHILDREN> std::vector<std::array<T, 3>> concaveman(
+    const std::vector<std::array<T, 3>> &points,
     const std::vector<int> &hull,
     T concavity=2, T lengthThreshold=0) {
 
     typedef Node<T> node_type;
-    typedef std::array<T, 2> point_type;
+    typedef std::array<T, 3> point_type;
     typedef CircularElement<node_type> circ_elem_type;
     typedef CircularList<node_type> circ_list_type;
     typedef circ_elem_type *circ_elem_ptr_type;
@@ -606,18 +606,18 @@ template<class T, int MAX_CHILDREN> std::vector<std::array<T, 2>> concaveman(
 }
 
 
-template<class T, int MAX_CHILDREN> std::array<T, 2> findCandidate(
-    const rtree<T, 2, MAX_CHILDREN, std::array<T, 2>> &tree,
-    const std::array<T, 2> &a,
-    const std::array<T, 2> &b,
-    const std::array<T, 2> &c,
-    const std::array<T, 2> &d,
+template<class T, int MAX_CHILDREN> std::array<T, 3> findCandidate(
+    const rtree<T, 2, MAX_CHILDREN, std::array<T, 3>> &tree,
+    const std::array<T, 3> &a,
+    const std::array<T, 3> &b,
+    const std::array<T, 3> &c,
+    const std::array<T, 3> &d,
     T maxDist,
     const rtree<T, 2, MAX_CHILDREN, typename CircularElement<Node<T>>::ptr_type> &segTree,
     bool &ok) {
 
-    typedef std::array<T, 2> point_type;
-    typedef rtree<T, 2, MAX_CHILDREN, std::array<T, 2>> tree_type;
+    typedef std::array<T, 3> point_type;
+    typedef rtree<T, 2, MAX_CHILDREN, std::array<T, 3>> tree_type;
     typedef const tree_type const_tree_type;
     typedef std::reference_wrapper<const_tree_type> tree_ref_type;
     typedef std::tuple<T, tree_ref_type> tuple_type;
@@ -673,8 +673,8 @@ template<class T, int MAX_CHILDREN> std::array<T, 2> findCandidate(
 
 
 template<class T, int MAX_CHILDREN, class USER_DATA> T sqSegBoxDist(
-    const std::array<T, 2> &a,
-    const std::array<T, 2> &b,
+    const std::array<T, 3> &a,
+    const std::array<T, 3> &b,
     const rtree<T, 2, MAX_CHILDREN, USER_DATA> &bbox) {
 
     if (inside(a, bbox) || inside(b, bbox))
@@ -703,7 +703,7 @@ template<class T, int MAX_CHILDREN, class USER_DATA> T sqSegBoxDist(
 
 
 template<class T, int MAX_CHILDREN, class USER_DATA> bool inside(
-    const std::array<T, 2> &a,
+    const std::array<T, 3> &a,
     const rtree<T, 2, MAX_CHILDREN, USER_DATA> &bbox) {
 
     auto &bounds = bbox.bounds();
@@ -722,8 +722,8 @@ template<class T, int MAX_CHILDREN, class USER_DATA> bool inside(
 
 
 template<class T, int MAX_CHILDREN> bool noIntersections(
-    const std::array<T, 2> &a,
-    const std::array<T, 2> &b,
+    const std::array<T, 3> &a,
+    const std::array<T, 3> &b,
     const rtree<T, 2, MAX_CHILDREN, typename CircularElement<Node<T>>::ptr_type> &segTree) {
 
     auto minX = std::min(a[0], b[0]);
