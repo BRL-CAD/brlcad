@@ -36,7 +36,7 @@
 #include "bn/plot3.h"
 
 extern "C" int
-bg_2d_concave_hull(point2d_t** hull, const point2d_t* points_2d, int n)
+bg_2d_concave_hull(int **hull, const point2d_t* points_2d, int n)
 {
     if (!hull | !points_2d || n <= 0) return 0;
 
@@ -64,11 +64,10 @@ bg_2d_concave_hull(point2d_t** hull, const point2d_t* points_2d, int n)
     convex_hull_v[convex_pnts] = convex_hull[0];
 
     auto concave_points = concaveman<double, 16>(points, convex_hull_v);
-    point2d_t *concave_hull = (point2d_t *)bu_calloc(concave_points.size(), sizeof(point2d_t), "concave hull pnts");
+    int *concave_hull = (int *)bu_calloc(concave_points.size(), sizeof(int), "concave hull pnts");
     for (auto i = 0; i < (int)concave_points.size(); i++) {
-	concave_hull[i][X] = concave_points[i][0];
-	concave_hull[i][Y] = concave_points[i][1];
-	bu_log("%f, %f: new ind %d, old ind %d\n", concave_hull[i][X], concave_hull[i][Y], i, (int)concave_points[i][2]);
+	concave_hull[i] = (int)concave_points[i][2];
+	bu_log("%f, %f: new ind %d, old ind %d, orig_ind %f\n", points_2d[concave_hull[i]][X], points_2d[concave_hull[i]][Y], i, (int)concave_points[i][2], concave_points[i][2]);
     }
 
     int concave_pnts_cnt = (int)concave_points.size();

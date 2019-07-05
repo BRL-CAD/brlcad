@@ -129,7 +129,7 @@ plot_edge_loop_2d(std::vector<p2t::Point *> &el , const char *filename)
 }
 
 static void
-plot_concave_hull_2d(point2d_t *pnts, int npnts, const char *filename)
+plot_concave_hull_2d(int *hull, int npnts, point2d_t *pnts, const char *filename)
 {
     bu_file_delete(filename);
     FILE* plot_file = fopen(filename, "w");
@@ -139,15 +139,15 @@ plot_concave_hull_2d(point2d_t *pnts, int npnts, const char *filename)
     pl_color(plot_file, r, g, b);
 
     point_t bnp;
-    VSET(bnp, pnts[0][X], pnts[0][Y], 0);
+    VSET(bnp, pnts[hull[0]][X], pnts[hull[0]][Y], 0);
     pdv_3move(plot_file, bnp);
 
     for (int i = 1; i < npnts; i++) {
-	VSET(bnp, pnts[i][X], pnts[i][Y], 0);
+	VSET(bnp, pnts[hull[i]][X], pnts[hull[i]][Y], 0);
 	pdv_3cont(plot_file, bnp);
     }
 
-    VSET(bnp, pnts[0][X], pnts[0][Y], 0);
+    VSET(bnp, pnts[hull[0]][X], pnts[hull[0]][Y], 0);
     pdv_3cont(plot_file, bnp);
 
     fclose(plot_file);
@@ -540,7 +540,7 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
 
     plot_edge_loop_2d(polyline, "polyline.plot3");
 
-    point2d_t *hull;
+    int *hull;
     point2d_t *bpnts_2d = (point2d_t *)bu_calloc(sloop.size()+2, sizeof(point_t), "concave hull 2D points");
     for (size_t i = 0; i < sloop.size(); i++) {
 	ON_2dPoint *p = pnts_2d[sloop[i]];
@@ -548,7 +548,7 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
 	bpnts_2d[i][Y] = p->y;
     }
     int ccnt = bg_2d_concave_hull(&hull, bpnts_2d, (int)sloop.size());
-    plot_concave_hull_2d(hull, ccnt, "concave_hull.plot3");
+    plot_concave_hull_2d(hull, ccnt, bpnts_2d, "concave_hull.plot3");
 
 
     // Perform the new triangulation

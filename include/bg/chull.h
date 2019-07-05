@@ -111,7 +111,7 @@ BG_EXPORT int bg_2d_chull2(int** hull, const point2d_t* points_2d, int n);
  * @param	n the number of points in the input set
  * @return the number of points in the output hull array or zero if error.
  */
-BG_EXPORT int bg_2d_concave_hull(point2d_t** hull, const point2d_t* points_2d, int n);
+BG_EXPORT int bg_2d_concave_hull(int** hull, const point2d_t* points_2d, int n);
 
 /**
  * @brief
