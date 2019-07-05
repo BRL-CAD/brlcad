@@ -128,6 +128,32 @@ plot_edge_loop_2d(std::vector<p2t::Point *> &el , const char *filename)
     fclose(plot_file);
 }
 
+static void
+plot_concave_hull_2d(point2d_t *pnts, int npnts, const char *filename)
+{
+    bu_file_delete(filename);
+    FILE* plot_file = fopen(filename, "w");
+    int r = int(256*drand48() + 1.0);
+    int g = int(256*drand48() + 1.0);
+    int b = int(256*drand48() + 1.0);
+    pl_color(plot_file, r, g, b);
+
+    point_t bnp;
+    VSET(bnp, pnts[0][X], pnts[0][Y], 0);
+    pdv_3move(plot_file, bnp);
+
+    for (int i = 1; i < npnts; i++) {
+	VSET(bnp, pnts[i][X], pnts[i][Y], 0);
+	pdv_3cont(plot_file, bnp);
+    }
+
+    VSET(bnp, pnts[0][X], pnts[0][Y], 0);
+    pdv_3cont(plot_file, bnp);
+
+    fclose(plot_file);
+}
+
+
 void
 plot_2d_bg_tri(int *ecfaces, int num_faces, point2d_t *pnts, const char *filename)
 {
@@ -513,6 +539,18 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
     }
 
     plot_edge_loop_2d(polyline, "polyline.plot3");
+
+    point2d_t *hull;
+    point2d_t *bpnts_2d = (point2d_t *)bu_calloc(sloop.size()+2, sizeof(point_t), "concave hull 2D points");
+    for (size_t i = 0; i < sloop.size(); i++) {
+	ON_2dPoint *p = pnts_2d[sloop[i]];
+	bpnts_2d[i][X] = p->x;
+	bpnts_2d[i][Y] = p->y;
+    }
+    int ccnt = bg_2d_concave_hull(&hull, bpnts_2d, (int)sloop.size());
+    plot_concave_hull_2d(hull, ccnt, "concave_hull.plot3");
+
+
     // Perform the new triangulation
     p2t::CDT *ncdt = new p2t::CDT(polyline);
     for (size_t i = 0; i < pnts_2d.size(); i++) {
