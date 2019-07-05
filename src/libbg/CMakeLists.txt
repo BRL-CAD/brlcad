@@ -22,7 +22,7 @@ set(LIBBG_SOURCES
   spsr.c
   tri_ray.c
   tri_tri.c
-  trimesh.c
+  trimesh.cpp
   trimesh_isect.cpp
   util.c
   )
