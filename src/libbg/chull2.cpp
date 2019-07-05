@@ -200,7 +200,15 @@ bg_2d_polyline_gc(point2d_t **opoly, int n, int *polyline, const point2d_t *pnts
     if (!opoly || n <= 0 || !polyline || !pnts) {
 	return -1;
     }
-    return 0;
+
+    point2d_t *pl = (point2d_t *)bu_calloc(n, sizeof(point2d_t), "point_2d array");
+    for (int i = 0; i < n; i++) {
+	V2MOVE(pl[i], pnts[polyline[i]]);
+    }
+
+    (*opoly) = pl;
+
+    return n;
 }
 
 
