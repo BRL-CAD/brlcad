@@ -36,13 +36,13 @@
 #include "bn/plot3.h"
 
 extern "C" int
-bg_2d_concave_hull(int **hull, const point2d_t* points_2d, int n)
+bg_2d_concave_hull(int **hull, const point2d_t* points_2d, int pnt_cnt, int concavity, double lt)
 {
-    if (!hull | !points_2d || n <= 0) return 0;
+    if (!hull | !points_2d || pnt_cnt <= 0) return 0;
 
     /* As a first step, we need the convex hull */
     int *convex_hull = NULL;
-    int convex_pnts = bg_2d_chull2(&convex_hull, points_2d, n);
+    int convex_pnts = bg_2d_chull2(&convex_hull, points_2d, pnt_cnt);
     if (!convex_pnts) {
 	bu_log("bg_2d_concave_hull: failed to get convex hull, cannot proceed to concave hull\n");
 	return 0;
@@ -50,8 +50,8 @@ bg_2d_concave_hull(int **hull, const point2d_t* points_2d, int n)
 
     // Put all points_2d into a vector that preserves their original index position
     // in the data container.
-    std::vector<std::array<double,3>> points(n);
-    for (auto i = 0; i < n; i++) {
+    std::vector<std::array<double,3>> points(pnt_cnt);
+    for (auto i = 0; i < pnt_cnt; i++) {
 	points[i] = { points_2d[i][X], points_2d[i][Y], (double)i };
     }
 
@@ -63,7 +63,7 @@ bg_2d_concave_hull(int **hull, const point2d_t* points_2d, int n)
     // We need to explicitly close the bg_2d_chull loop for concaveman
     convex_hull_v[convex_pnts] = convex_hull[0];
 
-    auto concave_points = concaveman<double, 16>(points, convex_hull_v);
+    auto concave_points = concaveman<double, 16>(points, convex_hull_v, (double)concavity, lt);
     int *concave_hull = (int *)bu_calloc(concave_points.size(), sizeof(int), "concave hull pnts");
     for (auto i = 0; i < (int)concave_points.size(); i++) {
 	concave_hull[i] = (int)concave_points[i][2];

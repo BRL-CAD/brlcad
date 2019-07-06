@@ -547,7 +547,7 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
 	bpnts_2d[i][X] = p->x;
 	bpnts_2d[i][Y] = p->y;
     }
-    int ccnt = bg_2d_concave_hull(&hull, bpnts_2d, (int)sloop.size());
+    int ccnt = bg_2d_concave_hull(&hull, bpnts_2d, (int)sloop.size(), 2, BN_TOL_DIST);
     plot_concave_hull_2d(hull, ccnt, bpnts_2d, "concave_hull.plot3");
 
 
