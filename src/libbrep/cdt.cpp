@@ -565,6 +565,28 @@ do_triangulation(struct ON_Brep_CDT_Face_State *f, int full_surface_sample, int 
 	getSurfacePoints(f);
     }
 
+    // TODO - want to get away from explicit exposure of poly2tri data types.  For now, build
+    // up a parallel execution stack using libbg data types - once it is working, remove
+    // the original logic that works with polyt2tri types.  What we need to do:
+    //
+    // 1.  Construct a single 2d point array of all 2d points associated with the face.
+    //     Do this in such a way that 2d point and 3d point array indices coincide, if
+    //     at all possible.
+    // 2.  Build up the polygons in libbg data types.
+    // 3.  Assemble all necessary data and call bg_nested_polygon_triangulate with
+    //     type TRI_CONSTRAINED_DELAUNAY
+    // 4.  Create a triangle set of individually created faces, so triangles may be
+    //     easily added and removed from the set in post-processing.
+    // 5.  Adjust the final mesh assembly logic to use the set container (should simplify
+    //     things overall, eliminate the multiple status tracking sets currently in use.
+    //     If a triangle is in the set, it's active.
+    //
+    // For now, correct is more important than fast.  If we end up having multiple copies
+    // of things in different containers for different stages of processing (for example,
+    // maintaining the 2D points in another container until we're got all of them and are
+    // ready to assign them to an array) so be it.
+
+
     std::set<ON_2dPoint *>::iterator p_it;
     for (p_it = f->on_surf_points->begin(); p_it != f->on_surf_points->end(); p_it++) {
 	ON_2dPoint *p = *p_it;
