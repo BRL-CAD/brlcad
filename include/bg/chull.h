@@ -102,21 +102,6 @@ BG_EXPORT int bg_2d_chull2(int** hull, const point2d_t* points_2d, int n);
 
 /**
  * @brief
- * Find 2D concave hull for unordered co-planar point sets
- *
- *
- *
- * @param[out]	hull 2D convex hull array vertex indices in ccw orientation (max is pnt_cnt)
- * @param[in]	points_2d The input 2d points for which a convex hull will be built
- * @param[in]	pnt_cnt the number of points in the input set
- * @param[in]	concavity concavity parameter
- * @param[in]	lt length threshold 
- * @return the number of points in the output hull array or zero if error.
- */
-BG_EXPORT int bg_2d_concave_hull(int** hull, const point2d_t* points_2d, int pnt_cnt, int concavity, double lt);
-
-/**
- * @brief
  * Find 3D coplanar point convex hull for unordered co-planar point sets
  *
  * This function assumes an input an array of 3D points which are coplanar

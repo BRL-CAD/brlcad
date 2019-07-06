@@ -128,32 +128,6 @@ plot_edge_loop_2d(std::vector<p2t::Point *> &el , const char *filename)
     fclose(plot_file);
 }
 
-static void
-plot_concave_hull_2d(int *hull, int npnts, point2d_t *pnts, const char *filename)
-{
-    bu_file_delete(filename);
-    FILE* plot_file = fopen(filename, "w");
-    int r = int(256*drand48() + 1.0);
-    int g = int(256*drand48() + 1.0);
-    int b = int(256*drand48() + 1.0);
-    pl_color(plot_file, r, g, b);
-
-    point_t bnp;
-    VSET(bnp, pnts[hull[0]][X], pnts[hull[0]][Y], 0);
-    pdv_3move(plot_file, bnp);
-
-    for (int i = 1; i < npnts; i++) {
-	VSET(bnp, pnts[hull[i]][X], pnts[hull[i]][Y], 0);
-	pdv_3cont(plot_file, bnp);
-    }
-
-    VSET(bnp, pnts[hull[0]][X], pnts[hull[0]][Y], 0);
-    pdv_3cont(plot_file, bnp);
-
-    fclose(plot_file);
-}
-
-
 void
 plot_2d_bg_tri(int *ecfaces, int num_faces, point2d_t *pnts, const char *filename)
 {
@@ -509,15 +483,6 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
     // Given the set of unordered boundary edge segments, construct the outer loop
     std::vector<trimesh::index_t> sloop = smesh.boundary_loop();
 
-    // TODO - may do better to use https://github.com/sadaszewski/concaveman-cpp to
-    // build the loop we want from the outer points, rather than rely on the (questionable)
-    // behavior of the projected 3D loop.  However, doing that correctly/robustly will require
-    // rework of not just concaveman but also most of the libbg polygon bounding codes to
-    // return indices into a point array, rather than new point arrays.  For this purpose,
-    // we need to avoid having to compare point values whenever possible and our codes aren't
-    // currently set up to support/allow that.  Quick experimentation indicates it's a fair
-    // bit of work to implement and debug all the necessary changes.  Worth doing (probably
-    // NEED to do, actually) but will need a block of time to focus on it.
     plot_edge_loop(sloop, pnts_3d, "outer_loop.plot3");
 
 
@@ -539,17 +504,6 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
     }
 
     plot_edge_loop_2d(polyline, "polyline.plot3");
-
-    int *hull;
-    point2d_t *bpnts_2d = (point2d_t *)bu_calloc(sloop.size()+2, sizeof(point_t), "concave hull 2D points");
-    for (size_t i = 0; i < sloop.size(); i++) {
-	ON_2dPoint *p = pnts_2d[sloop[i]];
-	bpnts_2d[i][X] = p->x;
-	bpnts_2d[i][Y] = p->y;
-    }
-    int ccnt = bg_2d_concave_hull(&hull, bpnts_2d, (int)sloop.size(), 2, BN_TOL_DIST);
-    plot_concave_hull_2d(hull, ccnt, bpnts_2d, "concave_hull.plot3");
-
 
     // Perform the new triangulation
     p2t::CDT *ncdt = new p2t::CDT(polyline);
