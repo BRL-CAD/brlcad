@@ -527,7 +527,7 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
 	p2t::Point *p2_2 = t->GetPoint(0);
 	p2t::Point *p2_3 = t->GetPoint(0);
 	p2t::Triangle *nt = new p2t::Triangle(*p2_1, *p2_2, *p2_3);
-	f->p2t_extra_faces->push_back(nt);
+	f->tris->insert(nt);
     }
 
     std::set<trimesh::index_t>::iterator tms_it;
@@ -1166,39 +1166,12 @@ ON_Brep_CDT_Mesh(
 		}
 	    }
 	}
-	std::vector<p2t::Triangle *> *tri_add = (*s_cdt->faces)[face_index]->p2t_extra_faces;
-	for (size_t i = 0; i < tri_add->size(); i++) {
-	    p2t::Triangle *t = (*tri_add)[i];
-	    ON_3dVector tdir = p2tTri_Normal(t, pointmap);
-	    for (size_t j = 0; j < 3; j++) {
-		p2t::Point *p = t->GetPoint(j);
-		ON_3dPoint *p3d = (*pointmap)[p];
-		vfpnts.insert(p3d);
-		ON_3dPoint *onorm = (*normalmap)[p];
-		if (onorm) {
-		    double onorm_dp = ON_DotProduct(*onorm, tdir);
-		    if (ON_DotProduct(*onorm, tdir) < 0.1) {
-			if (s_cdt->singular_vert_to_norms->find(p3d) != s_cdt->singular_vert_to_norms->end()) {
-			    // Override singularity points with calculated normal, if present
-			    // and a "better" normal than onorm
-			    ON_3dPoint *cnrm = (*f->s_cdt->singular_vert_to_norms)[p3d];
-			    double vertnorm_dp = ON_DotProduct(*cnrm, tdir);
-			    if (vertnorm_dp > onorm_dp) {
-				onorm = cnrm;
-			    }
-			}
-		    }
-		    vfnormals.insert(onorm);
-		}
-	    }
-	}
     }
 
     // Get the final triangle count
     for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
 	struct ON_Brep_CDT_Face_State *f = (*s_cdt->faces)[face_index];
 	triangle_cnt += f->tris->size();
-	triangle_cnt += f->p2t_extra_faces->size();
     }
 
     bu_log("tri_cnt: %zd\n", triangle_cnt);
@@ -1309,57 +1282,6 @@ ON_Brep_CDT_Mesh(
     }
     //bu_log("tri_cnt_1: %zd\n", triangle_cnt);
     //bu_log("face_cnt: %d\n", face_cnt);
-
-    for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
-	struct ON_Brep_CDT_Face_State *f = (*s_cdt->faces)[face_index];
-	std::vector<p2t::Triangle *> *tri_add = f->p2t_extra_faces;
-	std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
-	std::map<p2t::Point *, ON_3dPoint *> *normalmap = f->p2t_to_on3_norm_map;
-	triangle_cnt += tri_add->size();
-	for (size_t i = 0; i < tri_add->size(); i++) {
-	    p2t::Triangle *t = (*tri_add)[i];
-	    ON_3dVector tdir = p2tTri_Normal(t, pointmap);
-	    for (size_t j = 0; j < 3; j++) {
-		p2t::Point *p = t->GetPoint(j);
-		ON_3dPoint *op = (*pointmap)[p];
-		(*faces)[face_cnt*3 + j] = on_pnt_to_bot_pnt[op];
-		if (normals) {
-		    ON_3dPoint *onorm = (*normalmap)[p];
-		    double onorm_dp = ON_DotProduct(*onorm, tdir);
-		    if (ON_DotProduct(*onorm, tdir) < 0.1) {
-			if (s_cdt->singular_vert_to_norms->find(op) != s_cdt->singular_vert_to_norms->end()) {
-			    // Override singularity points with calculated normal, if present
-			    // and a "better" normal than onorm
-			    ON_3dPoint *cnrm = (*f->s_cdt->singular_vert_to_norms)[op];
-			    double vertnorm_dp = ON_DotProduct(*cnrm, tdir);
-			    if (vertnorm_dp > onorm_dp) {
-				onorm = cnrm;
-			    }
-			}
-		    }
-		    (*face_normals)[face_cnt*3 + j] = on_norm_to_bot_norm[onorm];
-		}
-	    }
-	    // If we have a reversed face we need to adjust the triangle vertex
-	    // ordering.
-	    if (s_cdt->brep->m_F[face_index].m_bRev) {
-		int ftmp = (*faces)[face_cnt*3 + 1];
-		(*faces)[face_cnt*3 + 1] = (*faces)[face_cnt*3 + 2];
-		(*faces)[face_cnt*3 + 2] = ftmp;
-		if (normals) {
-		    // Keep the normals in sync with the vertex points
-		    int fntmp = (*face_normals)[face_cnt*3 + 1];
-		    (*face_normals)[face_cnt*3 + 1] = (*face_normals)[face_cnt*3 + 2];
-		    (*face_normals)[face_cnt*3 + 2] = fntmp;
-		}
-	    }
-
-	    face_cnt++;
-	}
-	//bu_log("added faces for %d: %zd\n", face_index, tri_add->size());
-	//bu_log("tri_cnt_2: %zd\n", triangle_cnt);
-	//bu_log("face_cnt_2: %d\n", face_cnt);
-    }
 
     return 0;
 }

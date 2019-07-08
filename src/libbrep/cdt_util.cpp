@@ -214,7 +214,6 @@ ON_Brep_CDT_Face_Create(struct ON_Brep_CDT_State *s_cdt, int ind)
     fcdt->on3_to_tri_map = new std::map<ON_3dPoint *, std::set<p2t::Point *>>;
 
     fcdt->tris = new std::set<p2t::Triangle *>;
-    fcdt->p2t_extra_faces = new std::vector<p2t::Triangle *>;
 
     fcdt->degen_pnts = new std::set<p2t::Point *>;
 
@@ -263,12 +262,6 @@ ON_Brep_CDT_Face_Reset(struct ON_Brep_CDT_Face_State *fcdt, int full_surface_sam
     }
     fcdt->tris->clear();
 
-    std::vector<p2t::Triangle *>::iterator trit;
-    for (trit = fcdt->p2t_extra_faces->begin(); trit != fcdt->p2t_extra_faces->end(); trit++) {
-	p2t::Triangle *t = *trit;
-	delete t;
-    }
-    fcdt->p2t_extra_faces->clear();
     fcdt->e2f->clear();
     fcdt->ecnt->clear();
 }
@@ -286,11 +279,12 @@ ON_Brep_CDT_Face_Destroy(struct ON_Brep_CDT_Face_State *fcdt)
 	delete (*(fcdt->w3dnorms))[i];
     }
 
-    std::vector<p2t::Triangle *>::iterator trit;
-    for (trit = fcdt->p2t_extra_faces->begin(); trit != fcdt->p2t_extra_faces->end(); trit++) {
-	p2t::Triangle *t = *trit;
+    std::set<p2t::Triangle *>::iterator ts_it;
+    for (ts_it = fcdt->tris->begin(); ts_it != fcdt->tris->end(); ts_it++) {
+	p2t::Triangle *t = *ts_it;
 	delete t;
     }
+    delete fcdt->tris;
 
     delete fcdt->w2dpnts;
     delete fcdt->w3dpnts;
@@ -323,7 +317,6 @@ ON_Brep_CDT_Face_Destroy(struct ON_Brep_CDT_Face_State *fcdt)
     delete fcdt->p2t_to_on3_map;
     delete fcdt->p2t_to_on3_norm_map;
     delete fcdt->on3_to_tri_map;
-    delete fcdt->p2t_extra_faces;
     delete fcdt->degen_pnts;
 
     delete fcdt->e2f;

@@ -486,10 +486,6 @@ triangles_rebuild_involved(struct ON_Brep_CDT_Face_State *f)
     std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
     std::map<p2t::Point *, ON_3dPoint *> *normalmap = f->p2t_to_on3_norm_map;
 
-    std::vector<p2t::Triangle *> *tri_add;
-
-    tri_add = f->p2t_extra_faces;
-
     std::set<p2t::Triangle *>::iterator tr_it;
     std::set<p2t::Triangle *> *tris = f->tris;
     for (tr_it = tris->begin(); tr_it != tris->end(); tr_it++) {
@@ -708,7 +704,7 @@ triangles_rebuild_involved(struct ON_Brep_CDT_Face_State *f)
 			p2t::Point *p2_2 = new2d_to_old2d[ec_to_p2t[ecfaces[3*k+1]]];
 			p2t::Point *p2_3 = new2d_to_old2d[ec_to_p2t[ecfaces[3*k+2]]];
 			p2t::Triangle *nt = new p2t::Triangle(*p2_1, *p2_2, *p2_3);
-			tri_add->push_back(nt);
+			f->tris->insert(nt);
 		    }
 		    // We split the original triangle, so it's now replaced/degenerate in the tessellation
 		    tris_degen.insert(t);
