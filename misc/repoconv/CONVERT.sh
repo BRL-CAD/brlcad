@@ -177,4 +177,5 @@ echo "Be aware that by default a checkout of the repo won't get the notes - it r
 # git replace 7cffbab2a73 e166ad7454
 # git filter-branch --tag-name-filter cat --env-filter 'export GIT_COMMITTER_DATE="$GIT_AUTHOR_DATE"' -- --all
 # git replace -d 7cffbab2a734e3cf
-# git gc --aggressive
+
+# TODO - if the notes will have to be manually remapped, may need this:  https://stackoverflow.com/a/14783391
