@@ -279,6 +279,9 @@ Process_Loop_Edges(struct ON_Brep_CDT_Face_State *f, int li, fastf_t max_dist);
 
 struct trimesh_info *CDT_Face_Build_Halfedge(std::set<p2t::Triangle *> *triangles);
 
+int Remesh_Near_Point(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *tm, ON_3dPoint *p3d);
+
+
 /** @} */
 
 // Local Variables:
