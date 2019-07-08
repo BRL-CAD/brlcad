@@ -53,10 +53,11 @@ extern "C" {
 #include "linenoise.h"
 }
 
+
 #if defined(HAVE_POPEN) && !defined(HAVE_DECL_POPEN)
 extern "C" {
-extern FILE *popen(const char *command, const char *mode);
-extern int pclose(FILE *stream);
+    extern FILE *popen(const char *command, const char *mode);
+    extern int pclose(FILE *stream);
 }
 #endif
 
@@ -103,6 +104,7 @@ nirt_err(struct nirt_io_data *io_data, const char *output)
     fprintf(io_data->err, "%s", output);
     if (io_data->err == stderr) fflush(stderr);
 }
+
 
 size_t
 _list_formats(struct nirt_io_data *io_data, char ***names)
@@ -151,6 +153,7 @@ _list_formats(struct nirt_io_data *io_data, char ***names)
     return files;
 }
 
+
 extern "C" int
 _dequeue_scripts(struct bu_vls *UNUSED(msg), size_t UNUSED(argc), const char **UNUSED(argv), void *set_var)
 {
@@ -160,6 +163,7 @@ _dequeue_scripts(struct bu_vls *UNUSED(msg), size_t UNUSED(argc), const char **U
     }
     return 0;
 }
+
 
 extern "C" int
 _enqueue_script(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
@@ -172,6 +176,7 @@ _enqueue_script(struct bu_vls *msg, size_t argc, const char **argv, void *set_va
     return 1;
 }
 
+
 extern "C" int
 _enqueue_attrs(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 {
@@ -183,11 +188,13 @@ _enqueue_attrs(struct bu_vls *msg, size_t argc, const char **argv, void *set_var
     return 1;
 }
 
+
 struct script_file_data {
     std::vector<std::string> *init_scripts;
     struct bu_vls *filename;
     int file_cnt;
 };
+
 
 extern "C" int
 _enqueue_file(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
@@ -225,6 +232,7 @@ _enqueue_file(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
     return 1;
 }
 
+
 extern "C" int
 _decode_overlap(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 {
@@ -257,6 +265,7 @@ nirt_stdout_hook(struct nirt_state *ns, void *u_data)
     return 0;
 }
 
+
 int
 nirt_msg_hook(struct nirt_state *ns, void *u_data)
 {
@@ -267,6 +276,7 @@ nirt_msg_hook(struct nirt_state *ns, void *u_data)
     bu_vls_free(&out);
     return 0;
 }
+
 
 int
 nirt_stderr_hook(struct nirt_state *ns, void *u_data)
@@ -279,6 +289,7 @@ nirt_stderr_hook(struct nirt_state *ns, void *u_data)
     return 0;
 }
 
+
 int
 nirt_show_menu_hook(struct nirt_state *ns, void *u_data)
 {
@@ -290,6 +301,7 @@ nirt_show_menu_hook(struct nirt_state *ns, void *u_data)
     return 0;
 }
 
+
 int
 nirt_dump_hook(struct nirt_state *ns, void *u_data)
 {
@@ -300,7 +312,6 @@ nirt_dump_hook(struct nirt_state *ns, void *u_data)
     bu_vls_free(&tmp);
     return 0;
 }
-
 
 
 /* TODO - eventually, should support separate destinations for output
@@ -385,8 +396,8 @@ _nirt_dest_cmd(struct nirt_io_data *io_data, struct bu_vls *iline) {
 
 /* TODO - need some libbu mechanism for subcommands a.l.a. bu_opt... */
 struct nirt_help_desc {
-        const char *cmd;
-	const char *desc;
+    const char *cmd;
+    const char *desc;
 };
 const struct nirt_help_desc nirt_help_descs[] = {
     { "dest",           "set/query output destination" },
@@ -396,6 +407,7 @@ const struct nirt_help_desc nirt_help_descs[] = {
     { "clear",          "clears text from the terminal screen (interactive mode only)" },
     { (char *)NULL,     NULL }
 };
+
 
 int
 nirt_app_exec(struct nirt_state *ns, struct bu_vls *iline, struct bu_vls *state_file, struct nirt_io_data *io_data)
@@ -492,7 +504,7 @@ nirt_app_exec(struct nirt_state *ns, struct bu_vls *iline, struct bu_vls *state_
 	bu_vls_free(&helpstr);
 
 	const struct nirt_help_desc *hd;
-	for (hd = nirt_help_descs; hd->cmd != NULL; hd++) {	    
+	for (hd = nirt_help_descs; hd->cmd != NULL; hd++) {
 	    fprintf(io_data->out, "%*s %s\n", 14, hd->cmd, hd->desc);
 	}
 
@@ -504,6 +516,7 @@ nirt_app_exec(struct nirt_state *ns, struct bu_vls *iline, struct bu_vls *state_
 
     return nret;
 }
+
 
 /* gateway into the old struct nirt_state code, if we need to run it */
 extern "C" {int old_nirt_main(int argc, const char *argv[]);}
@@ -561,25 +574,26 @@ main(int argc, const char **argv)
     mat_t q;
     /* These bu_opt_desc_opts settings approximate the old struct nirt_state help formatting */
     struct bu_opt_desc_opts dopts = { BU_OPT_ASCII, 1, 11, 67, NULL, NULL, NULL, 1, NULL, NULL };
-    struct bu_opt_desc d[18];
-    BU_OPT(d[0],  "h", "help", "",       NULL,              &print_help,     "print help and exit");
-    BU_OPT(d[1],  "A", "",     "n",      &_enqueue_attrs,   &attrs,          "add attribute_name=n"); /* TODO - support reading a list of attributes? */
-    BU_OPT(d[2],  "M", "",     "",       NULL,              &read_matrix,    "read matrix, cmds on stdin");
-    BU_OPT(d[3],  "b", "",     "",       NULL,              &backout,        "back out of geometry before first shot");
-    BU_OPT(d[4],  "B", "",     "n",      &bu_opt_int,       &minpieces,      "set rt_bot_minpieces=n");
-    BU_OPT(d[5],  "T", "",     "n",      &bu_opt_int,       &bot_mintie,     "set rt_bot_mintie=n (deprecated, use LIBRT_BOT_MINTIE instead)");
-    BU_OPT(d[6],  "e", "",     "script", &_enqueue_script,  &init_scripts,   "run script before interacting");
-    BU_OPT(d[7],  "f", "",     "sfile",  &_enqueue_file,    &sfd,            "run script sfile before interacting");
-    BU_OPT(d[8],  "E", "",     "",       &_dequeue_scripts, &init_scripts,   "ignore any -e or -f options specified earlier on the command line");
-    BU_OPT(d[9],  "L", "",     "",       NULL,              &list_formats,   "list output formatting options");
-    BU_OPT(d[10], "s", "",     "",       NULL,              &silent_mode,    "run in silent (non-verbose) mode");
-    BU_OPT(d[11], "v", "",     "",       NULL,              &verbose_mode,   "run in verbose mode");
-    BU_OPT(d[12], "H", "",     "n",      &bu_opt_int,       &header_mode,    "flag (n) for enable/disable informational header - (n=1 [on] by default, always off in silent mode)");
-    BU_OPT(d[13], "u", "",     "n",      &bu_opt_int,       &use_air,        "set use_air=n (default 0)");
-    BU_OPT(d[14], "O", "",     "action", &_decode_overlap,  &overlap_claims, "handle overlap claims via action");
-    BU_OPT(d[15], "x", "",     "v",      NULL,    &RTG.debug,      "set librt(3) diagnostic flag=v");
-    BU_OPT(d[16], "X", "",     "v",      &bu_opt_vls,       &nirt_debug,     "set nirt diagnostic flag=v");
-    BU_OPT_NULL(d[17]);
+    struct bu_opt_desc d[19] = {0};
+    BU_OPT(d[0],  "?", "",     "",       NULL,              &print_help,     "print help and exit");
+    BU_OPT(d[1],  "h", "help", "",       NULL,              &print_help,     "print help and exit");
+    BU_OPT(d[2],  "A", "",     "n",      &_enqueue_attrs,   &attrs,          "add attribute_name=n"); /* TODO - support reading a list of attributes? */
+    BU_OPT(d[3],  "M", "",     "",       NULL,              &read_matrix,    "read matrix, cmds on stdin");
+    BU_OPT(d[4],  "b", "",     "",       NULL,              &backout,        "back out of geometry before first shot");
+    BU_OPT(d[5],  "B", "",     "n",      &bu_opt_int,       &minpieces,      "set rt_bot_minpieces=n");
+    BU_OPT(d[6],  "T", "",     "n",      &bu_opt_int,       &bot_mintie,     "set rt_bot_mintie=n (deprecated, use LIBRT_BOT_MINTIE instead)");
+    BU_OPT(d[7],  "e", "",     "script", &_enqueue_script,  &init_scripts,   "run script before interacting");
+    BU_OPT(d[8],  "f", "",     "sfile",  &_enqueue_file,    &sfd,            "run script sfile before interacting");
+    BU_OPT(d[9],  "E", "",     "",       &_dequeue_scripts, &init_scripts,   "ignore any -e or -f options specified earlier on the command line");
+    BU_OPT(d[10],  "L", "",     "",       NULL,              &list_formats,   "list output formatting options");
+    BU_OPT(d[11], "s", "",     "",       NULL,              &silent_mode,    "run in silent (non-verbose) mode");
+    BU_OPT(d[12], "v", "",     "",       NULL,              &verbose_mode,   "run in verbose mode");
+    BU_OPT(d[13], "H", "",     "n",      &bu_opt_int,       &header_mode,    "flag (n) for enable/disable informational header - (n=1 [on] by default, always off in silent mode)");
+    BU_OPT(d[14], "u", "",     "n",      &bu_opt_int,       &use_air,        "set use_air=n (default 0)");
+    BU_OPT(d[15], "O", "",     "action", &_decode_overlap,  &overlap_claims, "handle overlap claims via action");
+    BU_OPT(d[16], "x", "",     "v",      NULL,    &RTG.debug,      "set librt(3) diagnostic flag=v");
+    BU_OPT(d[17], "X", "",     "v",      &bu_opt_vls,       &nirt_debug,     "set nirt diagnostic flag=v");
+    BU_OPT_NULL(d[18]);
 
     if (argc == 0 || !argv) return -1;
 
@@ -666,7 +680,7 @@ main(int argc, const char **argv)
 
     /* OK, from here on out we are actually going to be working with NIRT
      * itself.  Set up the initial environment */
-   if (rt_uniresource.re_magic == 0) rt_init_resource(&rt_uniresource, 0, NULL);
+    if (rt_uniresource.re_magic == 0) rt_init_resource(&rt_uniresource, 0, NULL);
 
     if (silent_mode != SILENT_YES) {
 	bu_vls_sprintf(&msg, "Database file:  '%s'\n", argv[0]);
@@ -698,7 +712,7 @@ main(int argc, const char **argv)
     }
 
     /* Set up hooks so we can capture I/O from nirt_exec */
-   (void)nirt_udata(ns, (void *)&io_data);
+    (void)nirt_udata(ns, (void *)&io_data);
     nirt_hook(ns, &nirt_stdout_hook, NIRT_OUT);
     if (silent_mode != SILENT_YES) {
 	nirt_hook(ns, &nirt_msg_hook, NIRT_MSG);
@@ -833,11 +847,11 @@ main(int argc, const char **argv)
 		status |= RMAT_SAW_ORI;
 	    } else if (bu_strncmp(buf, "viewrot", 7) == 0) {
 		if (sscanf(buf + 7,
-			    "%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf",
-			    &scan[0], &scan[1], &scan[2], &scan[3],
-			    &scan[4], &scan[5], &scan[6], &scan[7],
-			    &scan[8], &scan[9], &scan[10], &scan[11],
-			    &scan[12], &scan[13], &scan[14], &scan[15]) != 16) {
+			   "%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf",
+			   &scan[0], &scan[1], &scan[2], &scan[3],
+			   &scan[4], &scan[5], &scan[6], &scan[7],
+			   &scan[8], &scan[9], &scan[10], &scan[11],
+			   &scan[12], &scan[13], &scan[14], &scan[15]) != 16) {
 		    bu_exit(1, "nirt: read_mat(): Failed to read viewrot\n");
 		}
 		MAT_COPY(m, scan);
@@ -916,6 +930,7 @@ done:
     if (ns) BU_PUT(ns, struct nirt_state);
     return ret;
 }
+
 
 /*
  * Local Variables:
