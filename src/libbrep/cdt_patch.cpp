@@ -566,9 +566,21 @@ Remesh_Near_Point(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *tm, ON_
     std::vector<p2t::Triangle*> ftris = ncdt->GetTriangles();
     for (size_t i = 0; i < ftris.size(); i++) {
 	p2t::Triangle *t = ftris[i];
-	p2t::Point *p2_1 = t->GetPoint(0);
-	p2t::Point *p2_2 = t->GetPoint(1);
-	p2t::Point *p2_3 = t->GetPoint(2);
+	p2t::Point *p2_1;
+	p2t::Point *p2_2;
+	p2t::Point *p2_3;
+	// Check the triangle direction against the normals
+	ON_3dVector tdir = p2tTri_Normal(t, pointmap);
+	ON_3dPoint *onorm = (*normalmap)[t->GetPoint(0)];
+	if (ON_DotProduct(*onorm, tdir) < 0) {
+	    p2_1 = t->GetPoint(0);
+	    p2_2 = t->GetPoint(2);
+	    p2_3 = t->GetPoint(1);
+	} else {
+	    p2_1 = t->GetPoint(0);
+	    p2_2 = t->GetPoint(1);
+	    p2_3 = t->GetPoint(2);
+	}
 	p2t::Triangle *nt = new p2t::Triangle(*p2_1, *p2_2, *p2_3);
 	f->tris->insert(nt);
 	new_faces.insert(nt);
