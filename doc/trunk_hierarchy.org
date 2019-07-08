@@ -77,7 +77,7 @@
 * [[file:../COPYING][COPYING]]
 * [[file:../doc][doc]]
 ** [[file:../doc/pkg.tr][pkg.tr]]
-** [[file:../doc/code_review.txt][code_review.txt]]
+** [[file:../doc/checklist.txt][checklist.txt]]
 ** [[file:../doc/archer_ack.txt][archer_ack.txt]]
 ** [[file:../doc/README.VAX][README.VAX]]
 ** [[file:../doc/mater.txt][mater.txt]]
