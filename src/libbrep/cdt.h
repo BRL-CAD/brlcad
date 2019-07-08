@@ -114,7 +114,6 @@ struct ON_Brep_CDT_Face_State {
 
     /* loop points */
     ON_SimpleArray<BrepTrimPoint> *face_loop_points;
-    std::map<p2t::Point *, BrepTrimPoint *> *p2t_to_trimpt;
     std::map<p2t::Point *, int> *p2t_trim_ind;
     std::set<ON_2dPoint *> *on_surf_points;
     ON_RTree *rt_trims;
@@ -136,7 +135,6 @@ struct ON_Brep_CDT_Face_State {
     std::vector<p2t::Triangle *> *p2t_extra_faces;
     std::set<p2t::Point *> *degen_pnts;
     std::set<p2t::Triangle*> *tris_degen;
-    std::set<p2t::Triangle*> *tris_zero_3D_area;
     EdgeToTri *e2f;
     std::map<Edge, int> *ecnt;
 

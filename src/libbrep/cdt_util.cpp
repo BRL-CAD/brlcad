@@ -199,7 +199,6 @@ ON_Brep_CDT_Face_Create(struct ON_Brep_CDT_State *s_cdt, int ind)
     fcdt->w3dnorms = new std::vector<ON_3dPoint *>;
 
     fcdt->face_loop_points = NULL;
-    fcdt->p2t_to_trimpt = new std::map<p2t::Point *, BrepTrimPoint *>;
     fcdt->p2t_trim_ind = new std::map<p2t::Point *, int>;
     fcdt->rt_trims = new ON_RTree;
     fcdt->on_surf_points = new std::set<ON_2dPoint *>;
@@ -221,7 +220,6 @@ ON_Brep_CDT_Face_Create(struct ON_Brep_CDT_State *s_cdt, int ind)
 
     /* Mesh data */
     fcdt->tris_degen = new std::set<p2t::Triangle*>;
-    fcdt->tris_zero_3D_area = new std::set<p2t::Triangle*>;
     fcdt->e2f = new EdgeToTri;
     fcdt->ecnt = new std::map<Edge, int>;
 
@@ -232,7 +230,6 @@ ON_Brep_CDT_Face_Create(struct ON_Brep_CDT_State *s_cdt, int ind)
 void
 ON_Brep_CDT_Face_Reset(struct ON_Brep_CDT_Face_State *fcdt, int full_surface_sample)
 {
-    fcdt->p2t_to_trimpt->clear();
     fcdt->p2t_trim_ind->clear();
 
     if (full_surface_sample) {
@@ -274,7 +271,6 @@ ON_Brep_CDT_Face_Reset(struct ON_Brep_CDT_Face_State *fcdt, int full_surface_sam
     }
     fcdt->p2t_extra_faces->clear();
     fcdt->tris_degen->clear();
-    fcdt->tris_zero_3D_area->clear();
     fcdt->e2f->clear();
     fcdt->ecnt->clear();
 }
@@ -304,7 +300,6 @@ ON_Brep_CDT_Face_Destroy(struct ON_Brep_CDT_Face_State *fcdt)
     if (fcdt->face_loop_points) {
 	delete fcdt->face_loop_points;
     }
-    delete fcdt->p2t_to_trimpt;
 
     // I think this is cleanup code for the tree?
     ON_SimpleArray<void*> results;
@@ -334,7 +329,6 @@ ON_Brep_CDT_Face_Destroy(struct ON_Brep_CDT_Face_State *fcdt)
     delete fcdt->degen_pnts;
 
     delete fcdt->tris_degen;
-    delete fcdt->tris_zero_3D_area;
     delete fcdt->e2f;
     delete fcdt->ecnt;
 

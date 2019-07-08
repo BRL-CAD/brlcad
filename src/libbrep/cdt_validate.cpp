@@ -316,7 +316,6 @@ triangles_degenerate_area(struct ON_Brep_CDT_Face_State *f)
 	    }
 
 	    f->tris_degen->insert(t);
-	    f->tris_zero_3D_area->insert(t);
 	}
     }
 }
