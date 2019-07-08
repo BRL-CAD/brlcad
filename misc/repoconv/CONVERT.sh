@@ -161,12 +161,20 @@ echo "Be aware that by default a checkout of the repo won't get the notes - it r
 # Sigh... It seems the (maybe?) in an old commit name causes
 # problems for https://github.com/tomgi/git_stats - may need
 # to do something along the lines of https://stackoverflow.com/a/28845565
-# with https://stackoverflow.com/a/41301726 thrown in... maybe the
-# following... (experiment only on a COPY doing this rewrite - it is
-# destructive!!!)
+# with https://stackoverflow.com/a/41301726 and https://stackoverflow.com/a/38586928
+# thrown in...
 #
+# Note: experiment only on a COPY doing this rewrite - it is destructive!!!
+#
+# Also note:  Once you do the below step, svnfexport cannot incrementally update
+# the repository.  Most of the sha1 hashes will be wrong.  Do this ONLY as the
+# final step BEFORE the git repository becomes live and AFTER the SVN history is frozen.
+#
+# git config notes.rewriteRef refs/notes/commits  (see https://stackoverflow.com/a/43785538)
 # git checkout 7cffbab2a734e3cf
-# git commit --amend --committer-date-is-author-date --author "root <root@brlcad.org>"
-# git replace 7cffbab2a73 ???????
-# git filter-branch --committer-date-is-author-date -- --all
+# git commit --amend --author "root <root@brlcad.org>" --date="Fri Oct 3 06:46:53 1986 +0000"
+# git replace 7cffbab2a73 ?????
+# git filter-branch --tag-name-filter cat --env-filter 'export GIT_COMMITTER_DATE="$GIT_AUTHOR_DATE"' -- --all
 # git replace -d 7cffbab2a734e3cf
+# git checkout master
+# git gc --aggressive
