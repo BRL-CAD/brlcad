@@ -668,7 +668,8 @@ opt_process(struct bu_ptbl *opts, const char **eq_arg, const char *opt_candidate
  * 2.  Must not have white space characters present in the string.
  */
 HIDDEN int
-can_be_opt(const char *opt) {
+can_be_opt(const char *opt)
+{
     size_t i = 0;
     if (!opt)
 	return 0;
@@ -692,6 +693,7 @@ bu_opt_parse(struct bu_vls *msgs, size_t argc, const char **argv, const struct b
     int ret_argc = 0;
     struct bu_ptbl known_args = BU_PTBL_INIT_ZERO;
     struct bu_ptbl unknown_args = BU_PTBL_INIT_ZERO;
+
     if (!argv || !ds)
 	return -1;
 
