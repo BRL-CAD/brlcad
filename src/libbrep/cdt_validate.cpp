@@ -115,10 +115,6 @@ triangles_check_edges(struct ON_Brep_CDT_Face_State *f)
     std::set<p2t::Triangle *> *tris = f->tris;
     for (tr_it = tris->begin(); tr_it != tris->end(); tr_it++) {
 	p2t::Triangle *t = *tr_it;
-	/* Make sure this face isn't degenerate */
-	if (f->tris_degen->find(t) != f->tris_degen->end()) {
-	    continue;
-	}
 	add_tri_edges(f, t, pointmap, &on3_to_p2t);
     }
 
@@ -188,6 +184,7 @@ triangles_check_edges(struct ON_Brep_CDT_Face_State *f)
 void
 triangles_degenerate_trivial(struct ON_Brep_CDT_Face_State *f)
 {
+    std::set<p2t::Triangle*> tris_degen;
     std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
     std::set<p2t::Triangle *>::iterator tr_it;
     std::set<p2t::Triangle *> *tris = f->tris;
@@ -203,14 +200,21 @@ triangles_degenerate_trivial(struct ON_Brep_CDT_Face_State *f)
 	 * singular trims) */
 	if (tpnts[0] == tpnts[1] || tpnts[1] == tpnts[2] || tpnts[2] == tpnts[0]) {
 	    /* degenerate */
-	    f->tris_degen->insert(t);
+	    tris_degen.insert(t);
 	}
+    }
+
+    for (tr_it = tris_degen.begin(); tr_it != tris_degen.end(); tr_it++) {
+	p2t::Triangle *t = *tr_it;
+	f->tris->erase(t);
+	delete t;
     }
 }
 
 void
 triangles_degenerate_area(struct ON_Brep_CDT_Face_State *f)
 {
+    std::set<p2t::Triangle*> tris_degen;
     // Use a distance three orders of magnitude smaller than the smallest
     // edge segment length of the face to decide if a face is degenerate
     // based on area.
@@ -220,10 +224,6 @@ triangles_degenerate_area(struct ON_Brep_CDT_Face_State *f)
     std::set<p2t::Triangle *> *tris = f->tris;
     for (tr_it = tris->begin(); tr_it != tris->end(); tr_it++) {
 	p2t::Triangle *t = *tr_it;
-
-	if (f->tris_degen->find(t) != f->tris_degen->end()) {
-	    continue;
-	}
 
 	ON_3dPoint *tpnts[3] = {NULL, NULL, NULL};
 	for (size_t j = 0; j < 3; j++) {
@@ -245,7 +245,7 @@ triangles_degenerate_area(struct ON_Brep_CDT_Face_State *f)
 	    ON_Line l2(*tpnts[0], *tpnts[1]);
 	    if (l2.Length() < dist) {
 		bu_log("completely degenerate triangle\n");
-		f->tris_degen->insert(t);
+		tris_degen.insert(t);
 		continue;
 	    } else {
 		if (l2.DistanceTo(*tpnts[2]) < dist) {
@@ -315,8 +315,14 @@ triangles_degenerate_area(struct ON_Brep_CDT_Face_State *f)
 		}
 	    }
 
-	    f->tris_degen->insert(t);
+	    tris_degen.insert(t);
 	}
+    }
+
+    for (tr_it = tris_degen.begin(); tr_it != tris_degen.end(); tr_it++) {
+	p2t::Triangle *t = *tr_it;
+	f->tris->erase(t);
+	delete t;
     }
 }
 
@@ -326,6 +332,7 @@ int
 triangles_incorrect_normals(struct ON_Brep_CDT_Face_State *f)
 {
     int ret = 0;
+    std::set<p2t::Triangle*> tris_degen;
     std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
     std::map<p2t::Point *, ON_3dPoint *> *normalmap = f->p2t_to_on3_norm_map;
     std::set<p2t::Point *> problem_points;
@@ -334,9 +341,6 @@ triangles_incorrect_normals(struct ON_Brep_CDT_Face_State *f)
     std::set<p2t::Triangle *> *tris = f->tris;
     for (tr_it = tris->begin(); tr_it != tris->end(); tr_it++) {
 	p2t::Triangle *t = *tr_it;
-	if (f->tris_degen->find(t) != f->tris_degen->end()) {
-	    continue;
-	}
 
 	int invalid_face_normal = 0;
 	ON_3dVector tdir = p2tTri_Normal(t, pointmap);
@@ -377,7 +381,7 @@ triangles_incorrect_normals(struct ON_Brep_CDT_Face_State *f)
 		bu_log("Tri norm: %f %f %f\n", tdir.x, tdir.y, tdir.z);
 		bu_log("edge trim: %d\n", (*p2t_trim_ind)[t->GetPoint(0)]);
 
-		f->tris_degen->insert(t);
+		tris_degen.insert(t);
 	    }
 
 	    if (edge_pnt_cnt == 2) {
@@ -462,12 +466,19 @@ triangles_incorrect_normals(struct ON_Brep_CDT_Face_State *f)
 	}
     }
 
+    for (tr_it = tris_degen.begin(); tr_it != tris_degen.end(); tr_it++) {
+	p2t::Triangle *t = *tr_it;
+	f->tris->erase(t);
+	delete t;
+    }
+
     return (ret > 0);
 }
 
 void
 triangles_rebuild_involved(struct ON_Brep_CDT_Face_State *f)
 {
+    std::set<p2t::Triangle*> tris_degen;
     std::set<p2t::Point *> *fdp = f->degen_pnts;
     if (!fdp) {
 	return;
@@ -484,9 +495,6 @@ triangles_rebuild_involved(struct ON_Brep_CDT_Face_State *f)
     for (tr_it = tris->begin(); tr_it != tris->end(); tr_it++) {
 	p2t::Triangle *t = *tr_it;
 	int involved_pnt_cnt = 0;
-	if (f->tris_degen->find(t) != f->tris_degen->end()) {
-	    continue;
-	}
 	p2t::Point *t2dpnts[3] = {NULL, NULL, NULL};
 	for (size_t j = 0; j < 3; j++) {
 	    p2t::Point *p = t->GetPoint(j);
@@ -703,13 +711,19 @@ triangles_rebuild_involved(struct ON_Brep_CDT_Face_State *f)
 			tri_add->push_back(nt);
 		    }
 		    // We split the original triangle, so it's now replaced/degenerate in the tessellation
-		    f->tris_degen->insert(t);
+		    tris_degen.insert(t);
 		}
 	    } else {
 		// Point count doesn't indicate any need to split, we should be good...
 		//bu_log("Not enough points in polyline to require splitting\n");
 	    }
 	}
+    }
+
+    for (tr_it = tris_degen.begin(); tr_it != tris_degen.end(); tr_it++) {
+	p2t::Triangle *t = *tr_it;
+	f->tris->erase(t);
+	delete t;
     }
 }
 

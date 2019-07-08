@@ -219,7 +219,6 @@ ON_Brep_CDT_Face_Create(struct ON_Brep_CDT_State *s_cdt, int ind)
     fcdt->degen_pnts = new std::set<p2t::Point *>;
 
     /* Mesh data */
-    fcdt->tris_degen = new std::set<p2t::Triangle*>;
     fcdt->e2f = new EdgeToTri;
     fcdt->ecnt = new std::map<Edge, int>;
 
@@ -270,7 +269,6 @@ ON_Brep_CDT_Face_Reset(struct ON_Brep_CDT_Face_State *fcdt, int full_surface_sam
 	delete t;
     }
     fcdt->p2t_extra_faces->clear();
-    fcdt->tris_degen->clear();
     fcdt->e2f->clear();
     fcdt->ecnt->clear();
 }
@@ -328,7 +326,6 @@ ON_Brep_CDT_Face_Destroy(struct ON_Brep_CDT_Face_State *fcdt)
     delete fcdt->p2t_extra_faces;
     delete fcdt->degen_pnts;
 
-    delete fcdt->tris_degen;
     delete fcdt->e2f;
     delete fcdt->ecnt;
 
@@ -657,7 +654,7 @@ populate_3d_pnts(struct ON_Brep_CDT_Face_State *f)
 }
 
 struct trimesh_info *
-CDT_Face_Build_Halfedge(std::set<p2t::Triangle*> *triangles, std::set<p2t::Triangle*> *tris_degen)
+CDT_Face_Build_Halfedge(std::set<p2t::Triangle*> *triangles)
 {
     struct trimesh_info *tm = new struct trimesh_info;
     std::set<p2t::Triangle*>::iterator s_it;
@@ -665,9 +662,6 @@ CDT_Face_Build_Halfedge(std::set<p2t::Triangle*> *triangles, std::set<p2t::Trian
     // Assemble the set of unique 2D poly2tri points
     for (s_it = triangles->begin(); s_it != triangles->end(); s_it++) {
 	p2t::Triangle *t = *s_it;
-	if (tris_degen->find(t) != tris_degen->end()) {
-	    continue;
-	}
 	for (size_t j = 0; j < 3; j++) {
 	    tm->uniq_p2d.insert(t->GetPoint(j));
 	}
@@ -687,9 +681,6 @@ CDT_Face_Build_Halfedge(std::set<p2t::Triangle*> *triangles, std::set<p2t::Trian
     // Assemble the faces array
     for (s_it = triangles->begin(); s_it != triangles->end(); s_it++) {
 	p2t::Triangle *t = *s_it;
-	if (tris_degen->find(t) != tris_degen->end()) {
-	    continue;
-	}
 
 	trimesh::triangle_t tmt;
 	for (size_t j = 0; j < 3; j++) {

@@ -284,9 +284,6 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
     std::set<p2t::Triangle *> *tris = f->tris;
     for (tr_it = tris->begin(); tr_it != tris->end(); tr_it++) {
 	p2t::Triangle *t = *tr_it;
-	if (f->tris_degen->find(t) != f->tris_degen->end()) {
-	    continue;
-	}
 	for (size_t j = 0; j < 3; j++) {
 	    if ((*pointmap)[t->GetPoint(j)] == p3d) {
 		trimesh::index_t ind = tm->p2dind[t->GetPoint(j)];
@@ -536,9 +533,9 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
     std::set<trimesh::index_t>::iterator tms_it;
     for (tms_it = singularity_triangles.begin(); tms_it != singularity_triangles.end(); tms_it++) {
 	p2t::Triangle *t = tm->triangles[*tms_it].t;
-	f->tris_degen->insert(t);
+	f->tris->erase(t);
+	delete t;
     }
-
 }
 
 static int
@@ -1147,9 +1144,6 @@ ON_Brep_CDT_Mesh(
 	for (tr_it = tris->begin(); tr_it != tris->end(); tr_it++) {
 	    p2t::Triangle *t = *tr_it;
 	    ON_3dVector tdir = p2tTri_Normal(t, pointmap);
-	    if (f->tris_degen->size() > 0 && f->tris_degen->find(t) != f->tris_degen->end()) {
-		continue;
-	    }
 	    for (size_t j = 0; j < 3; j++) {
 		p2t::Point *p = t->GetPoint(j);
 		ON_3dPoint *p3d = (*pointmap)[p];
@@ -1204,7 +1198,6 @@ ON_Brep_CDT_Mesh(
     for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
 	struct ON_Brep_CDT_Face_State *f = (*s_cdt->faces)[face_index];
 	triangle_cnt += f->tris->size();
-	triangle_cnt -= f->tris_degen->size();
 	triangle_cnt += f->p2t_extra_faces->size();
     }
 
@@ -1274,10 +1267,6 @@ ON_Brep_CDT_Mesh(
 	int active_tris = 0;
 	for (tr_it = tris->begin(); tr_it != tris->end(); tr_it++) {
 	    p2t::Triangle *t = *tr_it;
-	    if (f->tris_degen->size() > 0 && f->tris_degen->find(t) != f->tris_degen->end()) {
-		triangle_cnt--;
-		continue;
-	    }
 	    ON_3dVector tdir = p2tTri_Normal(t, pointmap);
 	    active_tris++;
 	    for (size_t j = 0; j < 3; j++) {

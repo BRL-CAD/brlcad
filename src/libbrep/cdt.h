@@ -134,7 +134,6 @@ struct ON_Brep_CDT_Face_State {
     std::set<p2t::Triangle *> *tris;
     std::vector<p2t::Triangle *> *p2t_extra_faces;
     std::set<p2t::Point *> *degen_pnts;
-    std::set<p2t::Triangle*> *tris_degen;
     EdgeToTri *e2f;
     std::map<Edge, int> *ecnt;
 
