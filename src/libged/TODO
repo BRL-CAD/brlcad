@@ -646,3 +646,62 @@ As a starting point, look into fcntl with non blocking, advisory modes of
 F_SETLK on POSIX and LockFileEx on Windows - try to come up with some libbu
 wrapper that will give us the semantics we need to prevent commands from
 running when they shouldn't.
+
+
+--- core shell commands ---
+
+Here are GNU core utilities grouped logically as they could pertain to
+geometry.  It's not to suggest that we'll implement any of these, but
+it's useful to see all in context when considering new commands and
+common conventions we could adopt.
+
+arch/uname/set/env/printenv/date/df/hostid/hostname/logname/nproc/tty/uptime/whoami
+        displays runtime environment
+        set/delete variables
+        get/set environment vars
+        current date/time
+        available disk space
+        host identifier
+        avail processors
+        tty name
+        uptime
+        username
+base64/od/expand/unexpand
+        encode/compress
+basename/dirname/realpath
+        extracts portion of path names
+cat/head/tail/nl/pr/readlink
+        displays contents
+chgrp/chmod/chown/groups/id/users/who
+        permissions
+chroot/dir/pathchk/pwd
+        switch absolute path context
+        get path context
+cksum/md5/md5sum/shasum
+        hash an entity to a number
+comm/csplit/join/paste/shred/shuf/sort/split/truncate/tsort/uniq
+        select/reject lines that are in both/either/neigther
+        split file into pieces / interleave lines together
+        topological sort of graph
+        get/count uniq lines
+cp/dd/install/mv/rm/rmdir/touch/unlink
+        copy objects/data
+        delete objects/data
+cut/tr
+        extract fields from lines
+du/stat/wc
+        file/object size usage
+echo/fmt/fold/printf
+        print line / format lines
+expr/factor
+        do math
+kill/nice/nohup/runcon/sleep/stdbuf/timeout/yes/true/false
+        task management
+link/ln
+        create reference to an object
+ls
+        display listing of objcts
+mkdir/mkfifo/mknod/mktemp
+        make combination directory
+seq
+        sequence of numbers
