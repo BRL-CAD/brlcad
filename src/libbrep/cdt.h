@@ -123,8 +123,6 @@ struct ON_Brep_CDT_Face_State {
     std::map<int,ON_3dPoint *> *strim_norms;
 
     /* mappings */
-    std::map<ON_2dPoint *, ON_3dPoint *> *on2_to_on3_map;
-    std::map<ON_2dPoint *, p2t::Point *> *on2_to_p2t_map;
     std::map<p2t::Point *, ON_2dPoint *> *p2t_to_on2_map;
     std::map<p2t::Point *, ON_3dPoint *> *p2t_to_on3_map;
     std::map<p2t::Point *, ON_3dPoint *> *p2t_to_on3_norm_map;
