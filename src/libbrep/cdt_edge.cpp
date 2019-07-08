@@ -29,6 +29,24 @@
 #include "common.h"
 #include "./cdt.h"
 
+// TODO - need a tree-ish structure for each edge so we can
+// take a 3D point and use it as a guide to refine the
+// splitting up of the edge, without redoing the whole
+// subdivision for the entire edge.  There will almost certainly
+// be a variety of situations were we need to locally refine
+// the edge approximation, and we don't want to have to start
+// over each time.  One already-observed situation is when the
+// edge curve is very blocky compared to the mesh of the associated
+// surface (large cylinder fillet surface - big circle with large
+// linear segments, but curve in the other direction of the surface
+// requires very fine triangles - this creates very distorted
+// triangles at best and can even create "wrong" triangles depending
+// on how the 2D sampling vs 3D projections work out.)  Another
+// highly probable situation will be refinement in object overlap
+// regions - we'll have to first refine any involved edges before
+// we can work on the faces.
+
+
 BrepTrimPoint *
 Add_BrepTrimPoint(
 	struct ON_Brep_CDT_State *s_cdt,
