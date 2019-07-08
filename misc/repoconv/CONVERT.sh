@@ -172,9 +172,9 @@ echo "Be aware that by default a checkout of the repo won't get the notes - it r
 #
 # git config notes.rewriteRef refs/notes/commits  (see https://stackoverflow.com/a/43785538)
 # git checkout 7cffbab2a734e3cf
-# git commit --amend --author "root <root@brlcad.org>" --date="Fri Oct 3 06:46:53 1986 +0000"
-# git replace 7cffbab2a73 ?????
+# GIT_COMMITTER_DATE="Fri Oct 3 06:46:53 1986 +0000" git commit --amend --author "root <root@brlcad.org>" --date="Fri Oct 3 06:46:53 1986 +0000"
+# git checkout master
+# git replace 7cffbab2a73 e166ad7454
 # git filter-branch --tag-name-filter cat --env-filter 'export GIT_COMMITTER_DATE="$GIT_AUTHOR_DATE"' -- --all
 # git replace -d 7cffbab2a734e3cf
-# git checkout master
 # git gc --aggressive
