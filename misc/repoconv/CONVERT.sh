@@ -157,3 +157,16 @@ tar -czf ../brlcad-git.tar.gz brlcad-git
 mv brlcad-git .git
 
 echo "Be aware that by default a checkout of the repo won't get the notes - it requires an extra step, see https://stackoverflow.com/questions/37941650/fetch-git-notes-when-cloning"
+
+# Sigh... It seems the (maybe?) in an old commit name causes
+# problems for https://github.com/tomgi/git_stats - may need
+# to do something along the lines of https://stackoverflow.com/a/28845565
+# with https://stackoverflow.com/a/41301726 thrown in... maybe the
+# following... (experiment only on a COPY doing this rewrite - it is
+# destructive!!!)
+#
+# git checkout 7cffbab2a734e3cf
+# git commit --amend --committer-date-is-author-date --author "root <root@brlcad.org>"
+# git replace 7cffbab2a73 ???????
+# git filter-branch --committer-date-is-author-date -- --all
+# git replace -d 7cffbab2a734e3cf
