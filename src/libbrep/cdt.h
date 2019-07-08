@@ -165,6 +165,7 @@ struct ON_Brep_CDT_State {
     std::map<ON_3dPoint *, std::set<BrepTrimPoint *>> *on_brep_edge_pnts;
 
     /* Audit data */
+    std::map<int, ON_3dPoint *> *bot_pnt_to_on_pnt;
     std::map<ON_3dPoint *, struct cdt_audit_info *> *pnt_audit_info;
 
     /* Face specific data */
@@ -172,7 +173,6 @@ struct ON_Brep_CDT_State {
 
 
     /* Mesh data */
-    std::map<int, ON_3dPoint *> *bot_pnt_to_on_pnt;
     std::map<p2t::Triangle*, int> *tri_brep_face;
 };
 
@@ -277,7 +277,7 @@ bool build_poly2tri_polylines(struct ON_Brep_CDT_Face_State *f, p2t::CDT **cdt, 
 void
 Process_Loop_Edges(struct ON_Brep_CDT_Face_State *f, int li, fastf_t max_dist);
 
-struct trimesh_info *CDT_Face_Build_Halfedge(std::set<p2t::Triangle *> *triangles, std::set<p2t::Triangle*> *tris_degen);
+struct trimesh_info *CDT_Face_Build_Halfedge(std::set<p2t::Triangle *> *triangles);
 
 /** @} */
 

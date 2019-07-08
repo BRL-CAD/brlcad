@@ -250,6 +250,23 @@ plot_trimesh_tris_3d(std::set<trimesh::index_t> *faces, std::vector<trimesh::tri
     fclose(plot_file);
 }
 
+
+static void
+plot_3d_cdt_tri(std::set<p2t::Triangle *> *faces, std::map<p2t::Point *, ON_3dPoint *> *pointmap, const char *filename)
+{
+    std::set<p2t::Triangle *>::iterator f_it;
+    FILE* plot_file = fopen(filename, "w");
+    int r = int(256*drand48() + 1.0);
+    int g = int(256*drand48() + 1.0);
+    int b = int(256*drand48() + 1.0);
+    for (f_it = faces->begin(); f_it != faces->end(); f_it++) {
+	p2t::Triangle *t = *f_it;
+	plot_tri_3d(t, pointmap, r, g ,b, plot_file);
+    }
+    fclose(plot_file);
+}
+
+
 static bool
 flipped_face(p2t::Triangle *t, std::map<p2t::Point *, ON_3dPoint *> *pointmap, std::map<p2t::Point *, ON_3dPoint *> *normalmap, bool m_bRev)
 {
@@ -460,10 +477,13 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
     ON_Plane bfplane(ON_3dPoint(pcenter[X],pcenter[Y],pcenter[Z]),ON_3dVector(pnorm[X],pnorm[Y],pnorm[Z]));
     ON_Xform to_plane;
     to_plane.PlanarProjection(bfplane);
+    std::map<ON_2dPoint *, ON_3dPoint *> on2_3;
     for (size_t i = 0; i < pnts_3d.size(); i++) {
 	ON_3dPoint op3d = (*pnts_3d[i]);
 	op3d.Transform(to_plane);
-	pnts_2d.push_back(new ON_2dPoint(op3d.x, op3d.y)); 
+	ON_2dPoint *n2d = new ON_2dPoint(op3d.x, op3d.y);
+	pnts_2d.push_back(n2d); 
+	on2_3[n2d] = pnts_3d[i];
     }
 
     std::vector<trimesh::edge_t> sedges;
@@ -496,7 +516,7 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
 	ON_2dPoint *onp2d = pnts_2d[sloop[i]];
 	p2t::Point *np = new p2t::Point(onp2d->x, onp2d->y);
 	if (!fp) fp = np;
-	(*pointmap)[np] = pnts_3d[i];
+	(*pointmap)[np] = on2_3[onp2d];
 	polyline.push_back(np);
 	handled.insert(onp2d);
     }
@@ -509,7 +529,7 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
 	ON_2dPoint *onp2d = pnts_2d[i];
 	if (handled.find(onp2d) != handled.end()) continue;
 	p2t::Point *np = new p2t::Point(onp2d->x, onp2d->y);
-	(*pointmap)[np] = pnts_3d[i];
+	(*pointmap)[np] = on2_3[onp2d];
 	ncdt->AddPoint(np);
     }
     ncdt->Triangulate(true, -1);
@@ -520,15 +540,19 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
     // is clean, replace the original subset of the parent face with the new
     // triangle set, else fail.
 
+    std::set<p2t::Triangle*> new_faces;
     std::vector<p2t::Triangle*> ftris = ncdt->GetTriangles();
     for (size_t i = 0; i < ftris.size(); i++) {
 	p2t::Triangle *t = ftris[i];
 	p2t::Point *p2_1 = t->GetPoint(0);
-	p2t::Point *p2_2 = t->GetPoint(0);
-	p2t::Point *p2_3 = t->GetPoint(0);
+	p2t::Point *p2_2 = t->GetPoint(1);
+	p2t::Point *p2_3 = t->GetPoint(2);
 	p2t::Triangle *nt = new p2t::Triangle(*p2_1, *p2_2, *p2_3);
 	f->tris->insert(nt);
+	new_faces.insert(nt);
     }
+
+    plot_3d_cdt_tri(&new_faces, pointmap, "poly2tri_3d.plot3");
 
     std::set<trimesh::index_t>::iterator tms_it;
     for (tms_it = singularity_triangles.begin(); tms_it != singularity_triangles.end(); tms_it++) {
@@ -610,7 +634,7 @@ do_triangulation(struct ON_Brep_CDT_Face_State *f, int full_surface_sample, int 
     /* Calculate any 3D points we don't already have */
     populate_3d_pnts(f);
 
-#if 0
+#if 1
     // TODO - this needs to be considerably more sophisticated - only fall back
     // on the singular surface logic if the problem points are from faces that
     // involve a singularity, not just flagging on the surface.  Ideally, pass
@@ -618,17 +642,13 @@ do_triangulation(struct ON_Brep_CDT_Face_State *f, int full_surface_sample, int 
     // knows where it's working
     if (f->has_singular_trims) {
 	std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
-	std::vector<p2t::Triangle*> tv = f->cdt->GetTriangles();
-	std::set<p2t::Triangle *> triset(tv.begin(), tv.end());
-	struct trimesh_info *tm = CDT_Face_Build_Halfedge(&triset, f->tris_degen);
+	std::set<p2t::Triangle *>::iterator tr_it;
+	struct trimesh_info *tm = CDT_Face_Build_Halfedge(f->tris);
 
 	// Identify any singular points
 	std::set<ON_3dPoint *> active_singular_pnts;
-	for (size_t i = 0; i < tv.size(); i++) {
-	    p2t::Triangle *t = tv[i];
-	    if (f->tris_degen->find(t) != f->tris_degen->end()) {
-		continue;
-	    }
+	for (tr_it = f->tris->begin(); tr_it != f->tris->end(); tr_it++) {
+	    p2t::Triangle *t = *tr_it;
 	    for (size_t j = 0; j < 3; j++) {
 		ON_3dPoint *p3d = (*pointmap)[t->GetPoint(j)];
 		if (f->s_cdt->singular_vert_to_norms->find(p3d) != f->s_cdt->singular_vert_to_norms->end()) {
@@ -640,8 +660,8 @@ do_triangulation(struct ON_Brep_CDT_Face_State *f, int full_surface_sample, int 
 	for (a_it = active_singular_pnts.begin(); a_it != active_singular_pnts.end(); a_it++) {
 	    Plot_Singular_Connected(f, tm, *a_it);
 	}
-
 	delete tm;
+return 0;
     }
 #endif
 
