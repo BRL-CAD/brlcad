@@ -273,7 +273,6 @@ void
 Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *tm, ON_3dPoint *p3d)
 {
     if (bu_file_exists("singularity_triangles.plot3", NULL)) return;
-    std::vector<p2t::Triangle*> tris = f->cdt->GetTriangles();
     std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
     std::map<p2t::Point *, ON_3dPoint *> *normalmap = f->p2t_to_on3_norm_map;
     std::set<trimesh::index_t> singularity_triangles;
@@ -281,8 +280,10 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
 
     // Find all the triangles using p3d as a vertex - that's our
     // starting triangle set.
-    for (size_t i = 0; i < tris.size(); i++) {
-	p2t::Triangle *t = tris[i];
+    std::set<p2t::Triangle *>::iterator tr_it;
+    std::set<p2t::Triangle *> *tris = f->tris;
+    for (tr_it = tris->begin(); tr_it != tris->end(); tr_it++) {
+	p2t::Triangle *t = *tr_it;
 	if (f->tris_degen->find(t) != f->tris_degen->end()) {
 	    continue;
 	}
@@ -425,9 +426,9 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
     // Project all 3D points in the subset into the plane, getting XY coordinates
     // for poly2Tri.
     std::set<ON_3dPoint *> sub_3d;
-    std::set<trimesh::index_t>::iterator tr_it;
-    for (tr_it = singularity_triangles.begin(); tr_it != singularity_triangles.end(); tr_it++) {
-	p2t::Triangle *t = tm->triangles[*tr_it].t;
+    std::set<trimesh::index_t>::iterator tm_it;
+    for (tm_it = singularity_triangles.begin(); tm_it != singularity_triangles.end(); tm_it++) {
+	p2t::Triangle *t = tm->triangles[*tm_it].t;
 	for (size_t j = 0; j < 3; j++) {
 	    sub_3d.insert((*pointmap)[t->GetPoint(j)]);
 	}
@@ -442,8 +443,8 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
     }
     std::vector<trimesh::triangle_t> submesh_triangles;
     std::set<trimesh::index_t> smtri;
-    for (tr_it = singularity_triangles.begin(); tr_it != singularity_triangles.end(); tr_it++) {
-	p2t::Triangle *t = tm->triangles[*tr_it].t;
+    for (tm_it = singularity_triangles.begin(); tm_it != singularity_triangles.end(); tm_it++) {
+	p2t::Triangle *t = tm->triangles[*tm_it].t;
 	trimesh::triangle_t tmt;
 	for (size_t j = 0; j < 3; j++) {
 	    tmt.v[j] = pnts_3d_ind[(*pointmap)[t->GetPoint(j)]];
@@ -532,9 +533,9 @@ Plot_Singular_Connected(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *t
 	f->p2t_extra_faces->push_back(nt);
     }
 
-    std::set<trimesh::index_t>::iterator tm_it;
-    for (tm_it = singularity_triangles.begin(); tm_it != singularity_triangles.end(); tm_it++) {
-	p2t::Triangle *t = tm->triangles[*tm_it].t;
+    std::set<trimesh::index_t>::iterator tms_it;
+    for (tms_it = singularity_triangles.begin(); tms_it != singularity_triangles.end(); tms_it++) {
+	p2t::Triangle *t = tm->triangles[*tms_it].t;
 	f->tris_degen->insert(t);
     }
 
@@ -553,7 +554,8 @@ do_triangulation(struct ON_Brep_CDT_Face_State *f, int full_surface_sample, int 
     // failed mesh for diagnostics
     ON_Brep_CDT_Face_Reset(f, full_surface_sample);
 
-    bool outer = build_poly2tri_polylines(f, full_surface_sample);
+    p2t::CDT *cdt = NULL;
+    bool outer = build_poly2tri_polylines(f, &cdt, full_surface_sample);
     if (outer) {
 	std::cerr << "Error: Face(" << f->ind << ") cannot evaluate its outer loop and will not be facetized." << std::endl;
 	return -1;
@@ -592,18 +594,26 @@ do_triangulation(struct ON_Brep_CDT_Face_State *f, int full_surface_sample, int 
 	ON_2dPoint *p = *p_it;
 	p2t::Point *tp = new p2t::Point(p->x, p->y);
 	(*f->p2t_to_on2_map)[tp] = p;
-	f->cdt->AddPoint(tp);
+	cdt->AddPoint(tp);
     }
 
     // All preliminary steps are complete, perform the triangulation using
     // Poly2Tri's triangulation.  NOTE: it is important that the inputs to
     // Poly2Tri satisfy its constraints - failure here could cause a crash.
-    f->cdt->Triangulate(true, -1);
+    cdt->Triangulate(true, -1);
+
+    // Copy triangles to set
+    std::vector<p2t::Triangle*> cdt_tris = cdt->GetTriangles();
+    for (size_t i = 0; i < cdt_tris.size(); i++) {
+	p2t::Triangle *t = cdt_tris[i];
+	f->tris->insert(new p2t::Triangle(*t));
+    }
+    delete cdt;
 
     /* Calculate any 3D points we don't already have */
     populate_3d_pnts(f);
 
-
+#if 0
     // TODO - this needs to be considerably more sophisticated - only fall back
     // on the singular surface logic if the problem points are from faces that
     // involve a singularity, not just flagging on the surface.  Ideally, pass
@@ -636,7 +646,7 @@ do_triangulation(struct ON_Brep_CDT_Face_State *f, int full_surface_sample, int 
 
 	delete tm;
     }
-
+#endif
 
     // Trivially degenerate pass
     triangles_degenerate_trivial(f);
@@ -1132,9 +1142,10 @@ ON_Brep_CDT_Mesh(
 	struct ON_Brep_CDT_Face_State *f = (*s_cdt->faces)[face_index];
 	std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
 	std::map<p2t::Point *, ON_3dPoint *> *normalmap = f->p2t_to_on3_norm_map;
-	std::vector<p2t::Triangle*> tris = f->cdt->GetTriangles();
-	for (size_t i = 0; i < tris.size(); i++) {
-	    p2t::Triangle *t = tris[i];
+	std::set<p2t::Triangle *>::iterator tr_it;
+	std::set<p2t::Triangle *> *tris = f->tris;
+	for (tr_it = tris->begin(); tr_it != tris->end(); tr_it++) {
+	    p2t::Triangle *t = *tr_it;
 	    ON_3dVector tdir = p2tTri_Normal(t, pointmap);
 	    if (f->tris_degen->size() > 0 && f->tris_degen->find(t) != f->tris_degen->end()) {
 		continue;
@@ -1163,7 +1174,7 @@ ON_Brep_CDT_Mesh(
 	}
 	std::vector<p2t::Triangle *> *tri_add = (*s_cdt->faces)[face_index]->p2t_extra_faces;
 	for (size_t i = 0; i < tri_add->size(); i++) {
-	    p2t::Triangle *t = tris[i];
+	    p2t::Triangle *t = (*tri_add)[i];
 	    ON_3dVector tdir = p2tTri_Normal(t, pointmap);
 	    for (size_t j = 0; j < 3; j++) {
 		p2t::Point *p = t->GetPoint(j);
@@ -1192,7 +1203,7 @@ ON_Brep_CDT_Mesh(
     // Get the final triangle count
     for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
 	struct ON_Brep_CDT_Face_State *f = (*s_cdt->faces)[face_index];
-	triangle_cnt += f->cdt->GetTriangles().size();
+	triangle_cnt += f->tris->size();
 	triangle_cnt -= f->tris_degen->size();
 	triangle_cnt += f->p2t_extra_faces->size();
     }
@@ -1255,14 +1266,14 @@ ON_Brep_CDT_Mesh(
     triangle_cnt = 0;
     for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
 	struct ON_Brep_CDT_Face_State *f = (*s_cdt->faces)[face_index];
-	p2t::CDT *cdt = f->cdt;
 	std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
 	std::map<p2t::Point *, ON_3dPoint *> *normalmap = f->p2t_to_on3_norm_map;
-	std::vector<p2t::Triangle*> tris = cdt->GetTriangles();
-	triangle_cnt += tris.size();
+	std::set<p2t::Triangle *>::iterator tr_it;
+	std::set<p2t::Triangle *> *tris = f->tris;
+	triangle_cnt += tris->size();
 	int active_tris = 0;
-	for (size_t i = 0; i < tris.size(); i++) {
-	    p2t::Triangle *t = tris[i];
+	for (tr_it = tris->begin(); tr_it != tris->end(); tr_it++) {
+	    p2t::Triangle *t = *tr_it;
 	    if (f->tris_degen->size() > 0 && f->tris_degen->find(t) != f->tris_degen->end()) {
 		triangle_cnt--;
 		continue;

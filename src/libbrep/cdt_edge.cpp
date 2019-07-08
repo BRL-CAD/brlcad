@@ -715,7 +715,7 @@ SplitEdgeSegment(
 }
 
 bool
-build_poly2tri_polylines(struct ON_Brep_CDT_Face_State *f, int init_rtree)
+build_poly2tri_polylines(struct ON_Brep_CDT_Face_State *f, p2t::CDT **cdt, int init_rtree)
 {
     // Process through loops, building Poly2Tri polygons for facetization.
     std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
@@ -755,13 +755,13 @@ build_poly2tri_polylines(struct ON_Brep_CDT_Face_State *f, int init_rtree)
 		}
 	    }
 	    if (outer) {
-		if (f->cdt) {
+		if (f->tris->size() > 0) {
 		    ON_Brep_CDT_Face_Reset(f, init_rtree);
 		}
-		f->cdt = new p2t::CDT(polyline);
+		(*cdt) = new p2t::CDT(polyline);
 		outer = false;
 	    } else {
-		f->cdt->AddHole(polyline);
+		(*cdt)->AddHole(polyline);
 	    }
 	    polyline.clear();
 	}

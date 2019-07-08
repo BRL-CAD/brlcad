@@ -132,7 +132,7 @@ struct ON_Brep_CDT_Face_State {
     std::map<ON_3dPoint *, std::set<p2t::Point *>> *on3_to_tri_map;
 
     /* Poly2Tri information */
-    p2t::CDT *cdt;
+    std::set<p2t::Triangle *> *tris;
     std::vector<p2t::Triangle *> *p2t_extra_faces;
     std::set<p2t::Point *> *degen_pnts;
     std::set<p2t::Triangle*> *tris_degen;
@@ -278,7 +278,7 @@ void triangles_rebuild_involved(struct ON_Brep_CDT_Face_State *f);
 void
 trimesh_error_report(struct ON_Brep_CDT_State *s_cdt, int valid_fcnt, int valid_vcnt, int *valid_faces, fastf_t *valid_vertices, struct bg_trimesh_solid_errors *se);
 
-bool build_poly2tri_polylines(struct ON_Brep_CDT_Face_State *f, int init_rtree);
+bool build_poly2tri_polylines(struct ON_Brep_CDT_Face_State *f, p2t::CDT **cdt, int init_rtree);
 
 void
 Process_Loop_Edges(struct ON_Brep_CDT_Face_State *f, int li, fastf_t max_dist);

@@ -109,16 +109,17 @@ triangles_check_edges(struct ON_Brep_CDT_Face_State *f)
 {
     int have_problem_edge = 0;
     int ret = 0;
-    p2t::CDT *cdt = f->cdt;
     std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
     std::map<ON_3dPoint *, p2t::Point *> on3_to_p2t;
-    std::vector<p2t::Triangle*> tris = cdt->GetTriangles();
-    for (size_t i = 0; i < tris.size(); i++) {
+    std::set<p2t::Triangle *>::iterator tr_it;
+    std::set<p2t::Triangle *> *tris = f->tris;
+    for (tr_it = tris->begin(); tr_it != tris->end(); tr_it++) {
+	p2t::Triangle *t = *tr_it;
 	/* Make sure this face isn't degenerate */
-	if (f->tris_degen->find(tris[i]) != f->tris_degen->end()) {
+	if (f->tris_degen->find(t) != f->tris_degen->end()) {
 	    continue;
 	}
-	add_tri_edges(f, tris[i], pointmap, &on3_to_p2t);
+	add_tri_edges(f, t, pointmap, &on3_to_p2t);
     }
 
     std::map<ON_3dPoint *, std::set<Edge>> point_to_edges;
@@ -162,9 +163,9 @@ triangles_check_edges(struct ON_Brep_CDT_Face_State *f)
 		} else {
 		    tset = (*f->e2f)[e];
 		}
-		std::set<p2t::Triangle*>::iterator tr_it;
-		for (tr_it = tset.begin(); tr_it != tset.end(); tr_it++) {
-		    p2t::Triangle *t = *tr_it;
+		std::set<p2t::Triangle*>::iterator ptr_it;
+		for (ptr_it = tset.begin(); ptr_it != tset.end(); ptr_it++) {
+		    p2t::Triangle *t = *ptr_it;
 		    ON_3dPoint *tpnts[3] = {NULL, NULL, NULL};
 		    for (size_t j = 0; j < 3; j++) {
 			tpnts[j] = (*pointmap)[t->GetPoint(j)];
@@ -187,11 +188,11 @@ triangles_check_edges(struct ON_Brep_CDT_Face_State *f)
 void
 triangles_degenerate_trivial(struct ON_Brep_CDT_Face_State *f)
 {
-    p2t::CDT *cdt = f->cdt;
     std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
-    std::vector<p2t::Triangle*> tris = cdt->GetTriangles();
-    for (size_t i = 0; i < tris.size(); i++) {
-	p2t::Triangle *t = tris[i];
+    std::set<p2t::Triangle *>::iterator tr_it;
+    std::set<p2t::Triangle *> *tris = f->tris;
+    for (tr_it = tris->begin(); tr_it != tris->end(); tr_it++) {
+	p2t::Triangle *t = *tr_it;
 	(*f->s_cdt->tri_brep_face)[t] = f->ind;
 	ON_3dPoint *tpnts[3] = {NULL, NULL, NULL};
 	for (size_t j = 0; j < 3; j++) {
@@ -214,11 +215,11 @@ triangles_degenerate_area(struct ON_Brep_CDT_Face_State *f)
     // edge segment length of the face to decide if a face is degenerate
     // based on area.
     fastf_t dist = 0.001 * (*f->s_cdt->min_edge_seg_len)[f->ind];
-    p2t::CDT *cdt = f->cdt;
     std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
-    std::vector<p2t::Triangle*> tris = cdt->GetTriangles();
-    for (size_t i = 0; i < tris.size(); i++) {
-	p2t::Triangle *t = tris[i];
+    std::set<p2t::Triangle *>::iterator tr_it;
+    std::set<p2t::Triangle *> *tris = f->tris;
+    for (tr_it = tris->begin(); tr_it != tris->end(); tr_it++) {
+	p2t::Triangle *t = *tr_it;
 
 	if (f->tris_degen->find(t) != f->tris_degen->end()) {
 	    continue;
@@ -326,15 +327,14 @@ int
 triangles_incorrect_normals(struct ON_Brep_CDT_Face_State *f)
 {
     int ret = 0;
-    p2t::CDT *cdt = f->cdt;
     std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
     std::map<p2t::Point *, ON_3dPoint *> *normalmap = f->p2t_to_on3_norm_map;
-    std::vector<p2t::Triangle*> tris = cdt->GetTriangles();
-
     std::set<p2t::Point *> problem_points;
 
-    for (size_t i = 0; i < tris.size(); i++) {
-	p2t::Triangle *t = tris[i];
+    std::set<p2t::Triangle *>::iterator tr_it;
+    std::set<p2t::Triangle *> *tris = f->tris;
+    for (tr_it = tris->begin(); tr_it != tris->end(); tr_it++) {
+	p2t::Triangle *t = *tr_it;
 	if (f->tris_degen->find(t) != f->tris_degen->end()) {
 	    continue;
 	}
@@ -473,7 +473,6 @@ triangles_rebuild_involved(struct ON_Brep_CDT_Face_State *f)
     if (!fdp) {
 	return;
     }
-    p2t::CDT *cdt = f->cdt;
     std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
     std::map<p2t::Point *, ON_3dPoint *> *normalmap = f->p2t_to_on3_norm_map;
 
@@ -481,9 +480,10 @@ triangles_rebuild_involved(struct ON_Brep_CDT_Face_State *f)
 
     tri_add = f->p2t_extra_faces;
 
-    std::vector<p2t::Triangle*> tris = cdt->GetTriangles();
-    for (size_t i = 0; i < tris.size(); i++) {
-	p2t::Triangle *t = tris[i];
+    std::set<p2t::Triangle *>::iterator tr_it;
+    std::set<p2t::Triangle *> *tris = f->tris;
+    for (tr_it = tris->begin(); tr_it != tris->end(); tr_it++) {
+	p2t::Triangle *t = *tr_it;
 	int involved_pnt_cnt = 0;
 	if (f->tris_degen->find(t) != f->tris_degen->end()) {
 	    continue;

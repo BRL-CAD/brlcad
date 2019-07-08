@@ -214,7 +214,7 @@ ON_Brep_CDT_Face_Create(struct ON_Brep_CDT_State *s_cdt, int ind)
     fcdt->p2t_to_on3_norm_map = new std::map<p2t::Point *, ON_3dPoint *>;
     fcdt->on3_to_tri_map = new std::map<ON_3dPoint *, std::set<p2t::Point *>>;
 
-    fcdt->cdt = NULL;
+    fcdt->tris = new std::set<p2t::Triangle *>;
     fcdt->p2t_extra_faces = new std::vector<p2t::Triangle *>;
 
     fcdt->degen_pnts = new std::set<p2t::Point *>;
@@ -260,10 +260,13 @@ ON_Brep_CDT_Face_Reset(struct ON_Brep_CDT_Face_State *fcdt, int full_surface_sam
     fcdt->on3_to_tri_map->clear();
 
     /* Mesh data */
-    if (fcdt->cdt) {
-	delete fcdt->cdt;
-	fcdt->cdt = NULL;
+    std::set<p2t::Triangle *>::iterator ts_it;
+    for (ts_it = fcdt->tris->begin(); ts_it != fcdt->tris->end(); ts_it++) {
+	p2t::Triangle *t = *ts_it;
+	delete t;
     }
+    fcdt->tris->clear();
+
     std::vector<p2t::Triangle *>::iterator trit;
     for (trit = fcdt->p2t_extra_faces->begin(); trit != fcdt->p2t_extra_faces->end(); trit++) {
 	p2t::Triangle *t = *trit;
@@ -490,16 +493,16 @@ ON_Brep_CDT_VList_Face(
     point_t pt1 = VINIT_ZERO;
     point_t pt2 = VINIT_ZERO;
 
-    p2t::CDT *cdt = (*s->faces)[face_index]->cdt;
+    std::set<p2t::Triangle *>::iterator tr_it;
+    std::set<p2t::Triangle *> *tris = (*s->faces)[face_index]->tris;
     std::map<p2t::Point *, ON_3dPoint *> *pointmap = (*s->faces)[face_index]->p2t_to_on3_map;
     std::map<p2t::Point *, ON_3dPoint *> *normalmap = (*s->faces)[face_index]->p2t_to_on3_norm_map;
-    std::vector<p2t::Triangle*> tris = cdt->GetTriangles();
 
     switch (mode) {
 	case 0:
 	    // 3D shaded triangles
-	    for (size_t i = 0; i < tris.size(); i++) {
-		p2t::Triangle *t = tris[i];
+	    for (tr_it = tris->begin(); tr_it != tris->end(); tr_it++) {
+		p2t::Triangle *t = *tr_it;
 		p2t::Point *p = NULL;
 		for (size_t j = 0; j < 3; j++) {
 		    p = t->GetPoint(j);
@@ -522,8 +525,8 @@ ON_Brep_CDT_VList_Face(
 	    break;
 	case 1:
 	    // 3D wireframe
-	    for (size_t i = 0; i < tris.size(); i++) {
-		p2t::Triangle *t = tris[i];
+	    for (tr_it = tris->begin(); tr_it != tris->end(); tr_it++) {
+		p2t::Triangle *t = *tr_it;
 		p2t::Point *p = NULL;
 		for (size_t j = 0; j < 3; j++) {
 		    p = t->GetPoint(j);
@@ -539,8 +542,8 @@ ON_Brep_CDT_VList_Face(
 	    break;
 	case 2:
 	    // 2D wireframe
-	    for (size_t i = 0; i < tris.size(); i++) {
-		p2t::Triangle *t = tris[i];
+	    for (tr_it = tris->begin(); tr_it != tris->end(); tr_it++) {
+		p2t::Triangle *t = *tr_it;
 		p2t::Point *p = NULL;
 
 		for (size_t j = 0; j < 3; j++) {
@@ -596,7 +599,7 @@ int ON_Brep_CDT_VList(
    }
 
    for (int i = 0; i < s->brep->m_F.Count(); i++) {
-       if ((*s->faces)[i] && (*s->faces)[i]->cdt) {
+       if ((*s->faces)[i] && (*s->faces)[i]->tris->size()) {
 	   (void)ON_Brep_CDT_VList_Face(vhead, vlfree, i, mode, s);
        }
    }
@@ -610,12 +613,12 @@ populate_3d_pnts(struct ON_Brep_CDT_Face_State *f)
 {
     int face_index = f->ind;
     ON_BrepFace &face = f->s_cdt->brep->m_F[face_index];
-    p2t::CDT *cdt = f->cdt;
     std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
     std::map<p2t::Point *, ON_3dPoint *> *normalmap = f->p2t_to_on3_norm_map;
-    std::vector<p2t::Triangle*> tris = cdt->GetTriangles();
-    for (size_t i = 0; i < tris.size(); i++) {
-	p2t::Triangle *t = tris[i];
+    std::set<p2t::Triangle *>::iterator tr_it;
+    std::set<p2t::Triangle *> *tris = f->tris;
+    for (tr_it = tris->begin(); tr_it != tris->end(); tr_it++) {
+	p2t::Triangle *t = *tr_it;
 	(*f->s_cdt->tri_brep_face)[t] = face_index;
 	for (size_t j = 0; j < 3; j++) {
 	    p2t::Point *p = t->GetPoint(j);
