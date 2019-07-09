@@ -115,13 +115,11 @@ extract_path(struct bu_vls *path, const char *input)
     int ret = 0;
     struct bu_vls wpath = BU_VLS_INIT_ZERO;
     char *colon_pos = NULL;
-    char *inputcpy = NULL;
 
     if (UNLIKELY(!input))
 	return 0;
 
-    inputcpy = bu_strdup(input);
-    colon_pos = strchr(inputcpy, ':');
+    colon_pos = strchr(input, ':');
 
     if (colon_pos) {
 	bu_vls_sprintf(&wpath, "%s", input);
@@ -137,8 +135,6 @@ extract_path(struct bu_vls *path, const char *input)
 	ret = 1;
     }
 
-    if (inputcpy)
-	bu_free(inputcpy, "input copy");
     if (path && !(bu_vls_strlen(path) > 0))
 	return 0;
 
