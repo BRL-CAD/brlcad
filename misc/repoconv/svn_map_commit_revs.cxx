@@ -143,7 +143,7 @@ void write_note(long int rev, std::string gsha1, long int commit_time)
     outfile << svn_id_commit_msg << "\n";
 
 
-    std::string git_sha1_cmd = std::string("cd cvs_git && git show-ref refs/notes/commits > ../nsha1.txt && cd ..");
+    std::string git_sha1_cmd = std::string("cd brlcad_cvs_git && git show-ref refs/notes/commits > ../nsha1.txt && cd ..");
     if (std::system(git_sha1_cmd.c_str())) {
         std::cout << "git_sha1_cmd failed: refs/notes/commits\n";
         exit(1);
@@ -162,7 +162,7 @@ void write_note(long int rev, std::string gsha1, long int commit_time)
     outfile << "N :1 " << gsha1 << "\n";
     outfile.close();
 
-    std::string git_fi = std::string("cd cvs_git && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
+    std::string git_fi = std::string("cd brlcad_cvs_git && cat ../") + fi_file + std::string(" | git fast-import && git reset --hard HEAD && cd ..");
     if (std::system(git_fi.c_str())) {
         std::cout << "Fatal - could not apply fi file to working repo " << fi_file << "\n";
         exit(1);
@@ -182,7 +182,7 @@ int main(int argc, const char **argv)
 	if (g_it != git_msgtime_to_sha1.end()) {
 	    // Unique time,message mapping
 	    std::cout << (*s_it).second << " -> " << (*g_it).second << "\n";
-	    //write_note((*s_it).second , (*g_it).second, (*g_it).first.second);
+	    write_note((*s_it).second , (*g_it).second, (*g_it).first.second);
 	} else {
 	    std::string cmsg = (*s_it).first.first;
 	    if (svn_msg_non_unique.find(cmsg) == svn_msg_non_unique.end() &&
@@ -193,7 +193,7 @@ int main(int argc, const char **argv)
 		if (r_it != svn_msg_to_rev.end() && g2_it != git_msg_to_sha1.end()) {
 		    // Unique msg has matching revision, but not matching time
 		    std::cout << (*r_it).second << " -> " << (*g2_it).second << " (time offset)\n";
-		    //write_note((*r_it).second , (*g2_it).second, git_msg_to_time[cmsg]);
+		    write_note((*r_it).second , (*g2_it).second, git_msg_to_time[cmsg]);
 		} else {
 		    if (git_time_to_msg.find((*s_it).first.second) != git_time_to_msg.end()) {
 			// Unique msg is unmapped, but there is a matching timestamp in the git history
@@ -210,7 +210,7 @@ int main(int argc, const char **argv)
 			    std::cerr << (*s_it).first.second << " " << (*s_it).second << " [unique, unmapped, timestamp in unreliable range] : " << cmsg << "\n";
 			} else {
 			    std::cout << (*s_it).first.second << " " << (*s_it).second << " [unique, unmapped, but timestamp match] : " << cmsg << " -> " << git_time_to_msg[(*s_it).first.second]  << "\n";
-			    //write_note((*s_it).second , git_time_to_sha1[(*s_it).first.second], git_msg_to_time[cmsg]);
+			    write_note((*s_it).second , git_time_to_sha1[(*s_it).first.second], git_msg_to_time[cmsg]);
 			}
 		    } else {
 			// Unique msg is unmapped, and there is no matching timestamp in the git history
@@ -232,7 +232,7 @@ int main(int argc, const char **argv)
 			    std::cerr << (*s_it).first.second << " " << (*s_it).second << " [\"Initial revision\" timestamp match, timestamp in unreliable range]: " << cmsg << "\n";
 			} else {
 			    std::cout << (*s_it).second << " -> " << git_time_to_sha1[(*s_it).first.second] << " [\"Initial revision\" timestamp match]\n";
-			    //write_note((*s_it).second , git_time_to_sha1[(*s_it).first.second], (*s_it).first.second);
+			    write_note((*s_it).second , git_time_to_sha1[(*s_it).first.second], (*s_it).first.second);
 			}
 		    } else {
 			if ((timestamp > 524275754) && (timestamp < 625839678)) {

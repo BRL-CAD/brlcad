@@ -157,25 +157,3 @@ tar -czf ../brlcad-git.tar.gz brlcad-git
 mv brlcad-git .git
 
 echo "Be aware that by default a checkout of the repo won't get the notes - it requires an extra step, see https://stackoverflow.com/questions/37941650/fetch-git-notes-when-cloning"
-
-# Sigh... It seems the (maybe?) in an old commit name causes
-# problems for https://github.com/tomgi/git_stats - may need
-# to do something along the lines of https://stackoverflow.com/a/28845565
-# with https://stackoverflow.com/a/41301726 and https://stackoverflow.com/a/38586928
-# thrown in...
-#
-# Note: experiment only on a COPY doing this rewrite - it is destructive!!!
-#
-# Also note:  Once you do the below step, svnfexport cannot incrementally update
-# the repository.  Most of the sha1 hashes will be wrong.  Do this ONLY as the
-# final step BEFORE the git repository becomes live and AFTER the SVN history is frozen.
-#
-# git config notes.rewriteRef refs/notes/commits  (see https://stackoverflow.com/a/43785538)
-# git checkout 7cffbab2a734e3cf
-# GIT_COMMITTER_DATE="Fri Oct 3 06:46:53 1986 +0000" git commit --amend --author "root <root@brlcad.org>" --date="Fri Oct 3 06:46:53 1986 +0000"
-# git checkout master
-# git replace 7cffbab2a73 e166ad7454
-# git filter-branch --tag-name-filter cat --env-filter 'export GIT_COMMITTER_DATE="$GIT_AUTHOR_DATE"' -- --all
-# git replace -d 7cffbab2a734e3cf
-
-# TODO - if the notes will have to be manually remapped, may need this:  https://stackoverflow.com/a/14783391
