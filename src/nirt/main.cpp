@@ -637,6 +637,16 @@ main(int argc, const char **argv)
     ac = bu_opt_parse(&optparse_msg, argc, (const char **)argv, d);
     if (ac < 0) {
        	bu_exit(EXIT_FAILURE, "ERROR: option parsing failed\n%s", bu_vls_addr(&optparse_msg));
+    } else if (ac > 0) {
+	size_t badopts = 0;
+	for (i=0; i<(size_t)ac; i++) {
+	    if (argv[i][0] == '-') {
+		bu_log("ERROR: unrecognized option %s\n", argv[i]);
+		badopts++;
+	    }
+	}
+	if (badopts)
+	    bu_exit(EXIT_FAILURE, "Exiting.\n");
     }
     bu_vls_free(&optparse_msg);
 
