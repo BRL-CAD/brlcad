@@ -46,6 +46,45 @@
 // regions - we'll have to first refine any involved edges before
 // we can work on the faces.
 
+struct BrepEdgeSegment;
+struct BrepEdgeSegment {
+    struct ON_Brep_CDT_State *s_cdt;
+    ON_BrepEdge *edge;
+    ON_NurbsCurve *nc;
+    const ON_BrepTrim *trim1;
+    const ON_BrepTrim *trim2;
+    BrepTrimPoint *sbtp1;
+    BrepTrimPoint *ebtp1;
+    BrepTrimPoint *sbtp2;
+    BrepTrimPoint *ebtp2;
+    std::map<double, BrepTrimPoint *> *trim1_param_points;
+    std::map<double, BrepTrimPoint *> *trim2_param_points;
+    std::set<struct BrepEdgeSegment *> children;
+    struct BrepEdgeSegment *parent;
+};
+
+struct BrepEdgeSegment *
+NewBrepEdgeSegment(struct BrepEdgeSegment *parent)
+{
+    BrepEdgeSegment *bseg = NULL;
+    if (parent) {
+	bseg = new BrepEdgeSegment(*parent);
+	bseg->children.clear();
+    } else {
+	bseg = new BrepEdgeSegment;
+    }
+    bseg->sbtp1 = NULL;
+    bseg->ebtp1 = NULL;
+    bseg->sbtp2 = NULL;
+    bseg->ebtp2 = NULL;
+    bseg->parent = parent;
+    if (parent) {
+	parent->children.insert(bseg);
+    }
+
+    return bseg;
+}
+
 
 BrepTrimPoint *
 Add_BrepTrimPoint(
@@ -176,7 +215,7 @@ getEdgePoints(
     ON_3dVector trim2_mid_norm = ON_3dVector::UnsetVector;
     ON_3dPoint edge_mid_3d = ON_3dPoint::UnsetPoint;
     ON_3dVector edge_mid_tang = ON_3dVector::UnsetVector;
-    
+
     fastf_t emid = (sbtp1->e + ebtp1->e) / 2.0;
     bool evtangent_status = nc->EvTangent(emid, edge_mid_3d, edge_mid_tang);
     if (!evtangent_status) {
@@ -186,20 +225,11 @@ getEdgePoints(
 
     // We need the trim points to be pretty close to the edge point, or
     // we get distortions in the mesh.
-    
-    if (edge->m_edge_index == 790) {
-	bu_log("trim fun commencing\n");
-    }
     fastf_t t1, t2;
     fastf_t emindist = (cdt_tol->min_dist < 0.5*loop_min_dist) ? cdt_tol->min_dist : 0.5 * loop_min_dist;
     ON_3dPoint trim1_mid_2d, trim2_mid_2d;
-    if (edge->m_edge_index == 790) {
-	trim1_mid_2d = get_trim_midpt(&t1, &trim, sbtp1->t, ebtp1->t, edge_mid_3d, emindist, 0);
-	trim2_mid_2d = get_trim_midpt(&t2, trim2, sbtp2->t, ebtp2->t, edge_mid_3d, emindist, 0);
-    } else {
-	trim1_mid_2d = get_trim_midpt(&t1, &trim, sbtp1->t, ebtp1->t, edge_mid_3d, emindist, 0);
-	trim2_mid_2d = get_trim_midpt(&t2, trim2, sbtp2->t, ebtp2->t, edge_mid_3d, emindist, 0);
-    }
+    trim1_mid_2d = get_trim_midpt(&t1, &trim, sbtp1->t, ebtp1->t, edge_mid_3d, emindist, 0);
+    trim2_mid_2d = get_trim_midpt(&t2, trim2, sbtp2->t, ebtp2->t, edge_mid_3d, emindist, 0);
 
     if (!evtangent_status) {
 	// If the edge curve evaluation failed, try to average tangents from trims
@@ -363,15 +393,14 @@ getEdgePoints(
     std::map<double, BrepTrimPoint *> *trim1_param_points = NULL;
     std::map<double, BrepTrimPoint *> *trim2_param_points = NULL;
 
-    // Get the other trim
+
+
+    // Get the trims
     // TODO - this won't work if we don't have a 1->2 edge to trims relationship - in that
     // case we'll have to split up the edge and find the matching sub-trims (possibly splitting
     // those as well if they don't line up at shared 3D points.)
+    ON_BrepTrim *trim1 = (edge->Trim(0)->m_trim_index == trim.m_trim_index) ? edge->Trim(0) : edge->Trim(1);
     ON_BrepTrim *trim2 = (edge->Trim(0)->m_trim_index == trim.m_trim_index) ? edge->Trim(1) : edge->Trim(0);
-
-    if (edge->m_edge_index == 790) {
-	bu_log("Starting 790\n");
-    }
 
     double dist = 1000.0;
 
@@ -560,6 +589,22 @@ getEdgePoints(
     BrepTrimPoint *sbtp2 = Add_BrepTrimPoint(s_cdt, trim2_param_points, edge_start_3d, t2_sn, edge_start_tang, erange.m_t[0], trim2_start_2d, trim2_start_normal, st2, trim2->m_trim_index);
 
     BrepTrimPoint *ebtp2 = Add_BrepTrimPoint(s_cdt, trim2_param_points, edge_end_3d, t2_en, edge_end_tang, erange.m_t[1], trim2_end_2d, trim2_end_normal, et2, trim2->m_trim_index);
+
+
+    // Set up the root BrepEdgeSegment
+    struct BrepEdgeSegment *root = NewBrepEdgeSegment(NULL);
+    root->s_cdt = s_cdt;
+    root->edge = edge;
+    root->nc = nc;
+    root->trim1 = trim1;
+    root->trim2 = trim2;
+    root->sbtp1 = sbtp1;
+    root->ebtp1 = ebtp1;
+    root->sbtp2 = sbtp2;
+    root->ebtp2 = ebtp2;
+    root->trim1_param_points = trim1_param_points;
+    root->trim2_param_points = trim2_param_points;
+
 
     fastf_t emindist = (cdt_tol.min_dist < 0.5*loop_min_dist) ? cdt_tol.min_dist : 0.5 * loop_min_dist;
 
