@@ -604,7 +604,7 @@ main(int argc, const char **argv)
     mat_t q;
     /* These bu_opt_desc_opts settings approximate the old struct nirt_state help formatting */
     struct bu_opt_desc_opts dopts = { BU_OPT_ASCII, 1, 11, 67, NULL, NULL, NULL, 1, NULL, NULL };
-    struct bu_opt_desc d[19] = {0};
+    struct bu_opt_desc d[19] = BU_OPT_DESC_NULL;
 
     BU_OPT(d[0],  "?", "",     "",       NULL,             &print_help,     "print help and exit");
     BU_OPT(d[1],  "h", "help", "",       NULL,             &print_help,     "print help and exit");
