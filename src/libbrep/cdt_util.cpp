@@ -352,6 +352,7 @@ ON_Brep_CDT_Create(void *bv)
     cdt->min_edge_seg_len = new std::map<int, double>;
     cdt->max_edge_seg_len = new std::map<int, double>;
     cdt->on_brep_edge_pnts = new std::map<ON_3dPoint *, std::set<BrepTrimPoint *>>;
+    cdt->etrees = new std::map<int, struct BrepEdgeSegment *>;
 
     cdt->pnt_audit_info = new std::map<ON_3dPoint *, struct cdt_audit_info *>;
 
@@ -394,6 +395,9 @@ ON_Brep_CDT_Destroy(struct ON_Brep_CDT_State *s_cdt)
     delete s_cdt->min_edge_seg_len;
     delete s_cdt->max_edge_seg_len;
     delete s_cdt->on_brep_edge_pnts;
+
+    // TODO - free segment trees in etrees
+    delete s_cdt->etrees;
 
     delete s_cdt->pnt_audit_info;
     delete s_cdt->faces;

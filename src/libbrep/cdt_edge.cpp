@@ -46,23 +46,6 @@
 // regions - we'll have to first refine any involved edges before
 // we can work on the faces.
 
-struct BrepEdgeSegment;
-struct BrepEdgeSegment {
-    struct ON_Brep_CDT_State *s_cdt;
-    ON_BrepEdge *edge;
-    ON_NurbsCurve *nc;
-    const ON_BrepTrim *trim1;
-    const ON_BrepTrim *trim2;
-    BrepTrimPoint *sbtp1;
-    BrepTrimPoint *ebtp1;
-    BrepTrimPoint *sbtp2;
-    BrepTrimPoint *ebtp2;
-    std::map<double, BrepTrimPoint *> *trim1_param_points;
-    std::map<double, BrepTrimPoint *> *trim2_param_points;
-    std::set<struct BrepEdgeSegment *> children;
-    struct BrepEdgeSegment *parent;
-};
-
 struct BrepEdgeSegment *
 NewBrepEdgeSegment(struct BrepEdgeSegment *parent)
 {
@@ -602,6 +585,7 @@ getEdgePoints(
     root->trim1_param_points = trim1_param_points;
     root->trim2_param_points = trim2_param_points;
 
+    (*s_cdt->etrees)[edge->m_edge_index] = root;
 
     fastf_t emindist = (cdt_tol.min_dist < 0.5*loop_min_dist) ? cdt_tol.min_dist : 0.5 * loop_min_dist;
 

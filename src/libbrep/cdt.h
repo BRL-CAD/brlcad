@@ -99,6 +99,7 @@ struct trimesh_info {
     std::vector<trimesh::triangle_t> triangles;
 };
 
+
 struct ON_Brep_CDT_State;
 
 struct ON_Brep_CDT_Face_State {
@@ -136,6 +137,22 @@ struct ON_Brep_CDT_Face_State {
 
 };
 
+struct BrepEdgeSegment;
+struct BrepEdgeSegment {
+    struct ON_Brep_CDT_State *s_cdt;
+    ON_BrepEdge *edge;
+    ON_NurbsCurve *nc;
+    const ON_BrepTrim *trim1;
+    const ON_BrepTrim *trim2;
+    BrepTrimPoint *sbtp1;
+    BrepTrimPoint *ebtp1;
+    BrepTrimPoint *sbtp2;
+    BrepTrimPoint *ebtp2;
+    std::map<double, BrepTrimPoint *> *trim1_param_points;
+    std::map<double, BrepTrimPoint *> *trim2_param_points;
+    std::set<struct BrepEdgeSegment *> children;
+    struct BrepEdgeSegment *parent;
+};
 
 struct ON_Brep_CDT_State {
 
@@ -163,6 +180,7 @@ struct ON_Brep_CDT_State {
     std::map<int, double> *min_edge_seg_len;
     std::map<int, double> *max_edge_seg_len;
     std::map<ON_3dPoint *, std::set<BrepTrimPoint *>> *on_brep_edge_pnts;
+    std::map<int, struct BrepEdgeSegment *> *etrees;
 
     /* Audit data */
     std::map<int, ON_3dPoint *> *bot_pnt_to_on_pnt;
