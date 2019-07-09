@@ -137,11 +137,20 @@ struct ON_Brep_CDT_Face_State {
 
 };
 
+struct brep_cdt_tol {
+    fastf_t min_dist;
+    fastf_t max_dist;
+    fastf_t within_dist;
+    fastf_t cos_within_ang;
+};
+#define BREP_CDT_TOL_ZERO {0.0, 0.0, 0.0, 0.0}
+
 struct BrepEdgeSegment;
 struct BrepEdgeSegment {
     struct ON_Brep_CDT_State *s_cdt;
     ON_BrepEdge *edge;
     ON_NurbsCurve *nc;
+    double loop_min_dist;
     const ON_BrepTrim *trim1;
     const ON_BrepTrim *trim2;
     BrepTrimPoint *sbtp1;
@@ -152,6 +161,7 @@ struct BrepEdgeSegment {
     std::map<double, BrepTrimPoint *> *trim2_param_points;
     std::set<struct BrepEdgeSegment *> children;
     struct BrepEdgeSegment *parent;
+    struct brep_cdt_tol cdt_tol;
 };
 
 struct ON_Brep_CDT_State {
@@ -193,14 +203,6 @@ struct ON_Brep_CDT_State {
     /* Mesh data */
     std::map<p2t::Triangle*, int> *tri_brep_face;
 };
-
-struct brep_cdt_tol {
-    fastf_t min_dist;
-    fastf_t max_dist;
-    fastf_t within_dist;
-    fastf_t cos_within_ang;
-};
-#define BREP_CDT_TOL_ZERO {0.0, 0.0, 0.0, 0.0}
 
 struct cdt_surf_info {
     const ON_Surface *s;

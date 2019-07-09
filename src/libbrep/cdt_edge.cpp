@@ -174,11 +174,7 @@ get_trim_midpt(fastf_t *t, const ON_BrepTrim *trim, double tstart, double tend, 
 }
 
 static void
-getEdgePoints2(
-	struct BrepEdgeSegment *bseg,
-	const struct brep_cdt_tol *cdt_tol,
-	double loop_min_dist
-	)
+SplitEdgeSegmentMidPt(struct BrepEdgeSegment *bseg)
 {
     ON_3dPoint tmp1, tmp2;
     const ON_Surface *s1 = bseg->trim1->SurfaceOf();
@@ -199,7 +195,7 @@ getEdgePoints2(
     // We need the trim points to be pretty close to the edge point, or
     // we get distortions in the mesh.
     fastf_t t1, t2;
-    fastf_t emindist = (cdt_tol->min_dist < 0.5*loop_min_dist) ? cdt_tol->min_dist : 0.5 * loop_min_dist;
+    fastf_t emindist = (bseg->cdt_tol.min_dist < 0.5*bseg->loop_min_dist) ? bseg->cdt_tol.min_dist : 0.5 * bseg->loop_min_dist;
     ON_3dPoint trim1_mid_2d, trim2_mid_2d;
     trim1_mid_2d = get_trim_midpt(&t1, bseg->trim1, bseg->sbtp1->t, bseg->ebtp1->t, edge_mid_3d, emindist, 0);
     trim2_mid_2d = get_trim_midpt(&t2, bseg->trim2, bseg->sbtp2->t, bseg->ebtp2->t, edge_mid_3d, emindist, 0);
@@ -222,21 +218,21 @@ getEdgePoints2(
 
     ON_Line line3d(*(bseg->sbtp1->p3d), *(bseg->ebtp1->p3d));
     double dist3d = edge_mid_3d.DistanceTo(line3d.ClosestPointTo(edge_mid_3d));
-    dosplit += (line3d.Length() > cdt_tol->max_dist) ? 1 : 0;
-    dosplit += (dist3d > (cdt_tol->within_dist + ON_ZERO_TOLERANCE)) ? 1 : 0;
-    dosplit += (dist3d > 2*loop_min_dist) ? 1 : 0;
+    dosplit += (line3d.Length() > bseg->cdt_tol.max_dist) ? 1 : 0;
+    dosplit += (dist3d > (bseg->cdt_tol.within_dist + ON_ZERO_TOLERANCE)) ? 1 : 0;
+    dosplit += (dist3d > 2*bseg->loop_min_dist) ? 1 : 0;
 
-    if ((dist3d > cdt_tol->min_dist + ON_ZERO_TOLERANCE)) {
+    if ((dist3d > bseg->cdt_tol.min_dist + ON_ZERO_TOLERANCE)) {
 	if (!dosplit) {
-	    dosplit += ((bseg->sbtp1->tangent * bseg->ebtp1->tangent) < cdt_tol->cos_within_ang - ON_ZERO_TOLERANCE) ? 1 : 0;
+	    dosplit += ((bseg->sbtp1->tangent * bseg->ebtp1->tangent) < bseg->cdt_tol.cos_within_ang - ON_ZERO_TOLERANCE) ? 1 : 0;
 	}
 
 	if (!dosplit && bseg->sbtp1->normal != ON_3dVector::UnsetVector && bseg->ebtp1->normal != ON_3dVector::UnsetVector) {
-	    dosplit += ((bseg->sbtp1->normal * bseg->ebtp1->normal) < cdt_tol->cos_within_ang - ON_ZERO_TOLERANCE) ? 1 : 0;
+	    dosplit += ((bseg->sbtp1->normal * bseg->ebtp1->normal) < bseg->cdt_tol.cos_within_ang - ON_ZERO_TOLERANCE) ? 1 : 0;
 	}
 
 	if (!dosplit && bseg->sbtp2->normal != ON_3dVector::UnsetVector && bseg->ebtp2->normal != ON_3dVector::UnsetVector) {
-	    dosplit += ((bseg->sbtp2->normal * bseg->ebtp2->normal) < cdt_tol->cos_within_ang - ON_ZERO_TOLERANCE) ? 1 : 0;
+	    dosplit += ((bseg->sbtp2->normal * bseg->ebtp2->normal) < bseg->cdt_tol.cos_within_ang - ON_ZERO_TOLERANCE) ? 1 : 0;
 	}
     }
 
@@ -271,15 +267,15 @@ getEdgePoints2(
 	bseg1->ebtp1 = nbtp1;
 	bseg1->sbtp2 = bseg->sbtp2;
 	bseg1->ebtp2 = nbtp2;
-	getEdgePoints2(bseg1, cdt_tol, loop_min_dist);
-	
+	SplitEdgeSegmentMidPt(bseg1);
+
 
 	struct BrepEdgeSegment *bseg2 = NewBrepEdgeSegment(bseg);
 	bseg2->sbtp1 = nbtp1;
 	bseg2->ebtp1 = bseg->ebtp1;
 	bseg2->sbtp2 = nbtp2;
 	bseg2->ebtp2 = bseg->ebtp2;
-	getEdgePoints2(bseg2, cdt_tol, loop_min_dist);
+	SplitEdgeSegmentMidPt(bseg2);
 
 	return;
     }
@@ -369,11 +365,8 @@ getEdgePoints(
 	fastf_t loop_min_dist
 	)
 {
-    struct brep_cdt_tol cdt_tol = BREP_CDT_TOL_ZERO;
     std::map<double, BrepTrimPoint *> *trim1_param_points = NULL;
     std::map<double, BrepTrimPoint *> *trim2_param_points = NULL;
-
-
 
     // Get the trims
     // TODO - this won't work if we don't have a 1->2 edge to trims relationship - in that
@@ -404,13 +397,6 @@ getEdgePoints(
 	trim1_param_points = (std::map<double, BrepTrimPoint *> *) trim.m_trim_user.p;
 	return trim1_param_points;
     }
-
-    /* Establish tolerances (TODO - get from edge curve...) */
-    if (trim.GetBoundingBox(min, max, bGrowBox)) {
-	dist = DIST_PT_PT(min, max);
-    }
-    CDT_Tol_Set(&cdt_tol, dist, max_dist, s_cdt->abs, s_cdt->rel, s_cdt->norm, s_cdt->dist);
-
 
     /* Normalize the domain of the curve to the ControlPolygonLength() of the
      * NURBS form of the curve to attempt to minimize distortion in 3D to
@@ -576,6 +562,7 @@ getEdgePoints(
     root->s_cdt = s_cdt;
     root->edge = edge;
     root->nc = nc;
+    root->loop_min_dist = loop_min_dist;
     root->trim1 = trim1;
     root->trim2 = trim2;
     root->sbtp1 = sbtp1;
@@ -587,7 +574,15 @@ getEdgePoints(
 
     (*s_cdt->etrees)[edge->m_edge_index] = root;
 
-    fastf_t emindist = (cdt_tol.min_dist < 0.5*loop_min_dist) ? cdt_tol.min_dist : 0.5 * loop_min_dist;
+
+    /* Establish tolerances (TODO - get from edge curve...) */
+    root->cdt_tol = BREP_CDT_TOL_ZERO;
+    if (trim.GetBoundingBox(min, max, bGrowBox)) {
+	dist = DIST_PT_PT(min, max);
+    }
+    CDT_Tol_Set(&root->cdt_tol, dist, max_dist, s_cdt->abs, s_cdt->rel, s_cdt->norm, s_cdt->dist);
+
+    fastf_t emindist = (root->cdt_tol.min_dist < 0.5*loop_min_dist) ? root->cdt_tol.min_dist : 0.5 * loop_min_dist;
 
     if (trim.IsClosed() || trim2->IsClosed()) {
 
@@ -649,18 +644,18 @@ getEdgePoints(
 	bseg1->ebtp1 = mbtp1;
 	bseg1->sbtp2 = sbtp2;
 	bseg1->ebtp2 = mbtp2;
-	getEdgePoints2(bseg1, &cdt_tol, loop_min_dist);
+	SplitEdgeSegmentMidPt(bseg1);
 
 	struct BrepEdgeSegment *bseg2 = NewBrepEdgeSegment(root);
 	bseg2->sbtp1 = mbtp1;
 	bseg2->ebtp1 = ebtp1;
 	bseg2->sbtp2 = mbtp2;
 	bseg2->ebtp2 = ebtp2;
-	getEdgePoints2(bseg2, &cdt_tol, loop_min_dist);
+	SplitEdgeSegmentMidPt(bseg2);
 
     } else {
 
-	getEdgePoints2(root, &cdt_tol, loop_min_dist);
+	SplitEdgeSegmentMidPt(root);
 
     }
 
