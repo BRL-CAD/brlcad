@@ -49,8 +49,9 @@ fmt_opts_init(struct fmt_opts *gfo, struct bu_opt_desc *ds)
 static void
 fmt_opts_free(struct fmt_opts *gfo)
 {
-    bu_ptbl_free(gfo->args);
     BU_PUT(gfo->args, struct bu_ptbl);
+    bu_ptbl_free(gfo->args);
+    gfo->ds = gfo->args = NULL;
 }
 
 
@@ -332,7 +333,7 @@ model_mime(struct bu_vls *msg, size_t argc, const char **argv, void *set_mime)
 
 
 struct help_state {
-    int flag;
+    int showhelp;
     char *format;
 };
 
@@ -342,7 +343,7 @@ help(struct bu_vls *UNUSED(msg), size_t argc, const char **argv, void *set_var)
 {
     struct help_state *gs = (struct help_state *)set_var;
     if (gs)
-	gs->flag = 1;
+	gs->showhelp = 1;
 
     if (!argv || !argv[0] || strlen(argv[0]) || argc == 0) {
 	return 0;
@@ -415,10 +416,15 @@ do_conversion(
 }
 
 
-#define STR_HELP "Print help and exit.  If a format is specified to --help, print help specific to that format"
-#define STR_INOPT "Options to apply only while processing input file.  Accepts options until another toplevel option is encountered."
-#define STR_OUTOPT "Options to apply only while preparing output file.  Accepts options until another toplevel option is encountered."
-#define STR_BOTH "Options to apply both during input and output handling.  Accepts options until another toplevel option is encountered."
+void
+usage(const struct bu_opt_desc *opts) {
+    char *help = bu_opt_describe(opts, NULL);
+    if (help) {
+	bu_log("%s\n", help);
+	bu_free(help, "help str");
+    }
+}
+
 
 int
 main(int ac, const char **av)
@@ -426,42 +432,54 @@ main(int ac, const char **av)
     size_t i;
     int fmt = 0;
     int ret = 0;
-    int skip_in = 0;
-    int skip_out = 0;
-    const char *in_fmt = NULL;
-    const char *out_fmt = NULL;
+
     static bu_mime_model_t in_type = BU_MIME_MODEL_UNKNOWN;
     static bu_mime_model_t out_type = BU_MIME_MODEL_UNKNOWN;
-    static char *in_path_str = NULL;
-    static char *out_path_str = NULL;
+
     static struct fmt_opts in_only_opts;
     static struct fmt_opts out_only_opts;
     static struct fmt_opts both_opts;
     static struct help_state hs;
 
+    const char *in_fmt = NULL;
+    const char *out_fmt = NULL;
     struct bu_vls in_format = BU_VLS_INIT_ZERO;
-    struct bu_vls in_path_raw = BU_VLS_INIT_ZERO;
-    struct bu_vls in_path = BU_VLS_INIT_ZERO;
     struct bu_vls out_format = BU_VLS_INIT_ZERO;
+
+    /* input/output file names as read by bu_opt */
+    static char *in_str = NULL;
+    static char *out_str = NULL;
+
+    /* input/output file names at end of argv */
+    struct bu_vls in_path_raw = BU_VLS_INIT_ZERO;
     struct bu_vls out_path_raw = BU_VLS_INIT_ZERO;
+
+    /* input/output file names finalized */
+    struct bu_vls in_path = BU_VLS_INIT_ZERO;
     struct bu_vls out_path = BU_VLS_INIT_ZERO;
+
+    struct bu_ptbl in_opts = BU_PTBL_INIT_ZERO;
+    struct bu_ptbl out_opts = BU_PTBL_INIT_ZERO;
+
     struct bu_vls slog = BU_VLS_INIT_ZERO;
-
-    struct bu_ptbl input_opts = BU_PTBL_INIT_ZERO;
-    struct bu_ptbl output_opts = BU_PTBL_INIT_ZERO;
     struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
-    int uac = 0;
+    int unknown_ac = 0;
 
-    struct bu_opt_desc opt_desc[] = {
-	{"h", "help",             "[format]",   &help,    (void *)&hs,               STR_HELP,                     },
-	{"?", "",                 "[format]",   &help,    (void *)&hs,               "",                           },
-	{"i", "input",            "file",       &file_stat,   (void *)&in_path_str,  "Input file.",                },
-	{"o", "output",           "file",       &file_null,   (void *)&out_path_str, "Output file.",               },
-	{"",  "input-format",     "format",     &model_mime,  (void *)&in_type,      "File format of input file.", },
-	{"",  "output-format",    "format",     &model_mime,  (void *)&out_type,     "File format of output file." },
-	{"I", "input-only-opts",  "opts",       &fmt_fun, (void *)&in_only_opts,     STR_INOPT,                    },
-	{"O", "output-only-opts", "opts",       &fmt_fun, (void *)&out_only_opts,    STR_OUTOPT,                   },
-	{"B", "input-and-output-opts", "opts",  &fmt_fun, (void *)&both_opts,        STR_BOTH,                     },
+#define STR_HELP "Print help and exit.  If a format is specified to --help, print help specific to that format"
+#define STR_INOPT "Options to apply only while processing input file.  Accepts options until another toplevel option is encountered."
+#define STR_OUTOPT "Options to apply only while preparing output file.  Accepts options until another toplevel option is encountered."
+#define STR_BOTH "Options to apply both during input and output handling.  Accepts options until another toplevel option is encountered."
+
+    struct bu_opt_desc options[] = {
+	{"h", "help",             "[format]",  &help,    (void *)&hs,            STR_HELP,                     },
+	{"?", "",                 "[format]",  &help,    (void *)&hs,            "",                           },
+	{"i", "input",            "file",      &file_stat,   (void *)&in_str,    "Input file.",                },
+	{"o", "output",           "file",      &file_null,   (void *)&out_str,   "Output file.",               },
+	{"",  "input-format",     "format",    &model_mime,  (void *)&in_type,   "File format of input file.", },
+	{"",  "output-format",    "format",    &model_mime,  (void *)&out_type,  "File format of output file." },
+	{"I", "input-only-opts",  "opts",      &fmt_fun, (void *)&in_only_opts,  STR_INOPT,                    },
+	{"O", "output-only-opts", "opts",      &fmt_fun, (void *)&out_only_opts, STR_OUTOPT,                   },
+	{"B", "input-and-output-opts", "opts", &fmt_fun, (void *)&both_opts,     STR_BOTH,                     },
 	BU_OPT_DESC_NULL
     };
 
@@ -469,119 +487,114 @@ main(int ac, const char **av)
 
     bu_setprogname(av[0]);
 
-    fmt_opts_init(&in_only_opts, opt_desc);
-    fmt_opts_init(&out_only_opts, opt_desc);
-    fmt_opts_init(&both_opts, opt_desc);
+    fmt_opts_init(&in_only_opts, options);
+    fmt_opts_init(&out_only_opts, options);
+    fmt_opts_init(&both_opts, options);
 
-    hs.flag = 0;
+    hs.showhelp = 0;
     hs.format = NULL;
 
     /* skip program name */
     ac--; av++;
 
     if (ac == 0) {
-	char *help = bu_opt_describe(opt_desc, NULL);
-	bu_log("%s\n", help);
-	if (help)
-	    bu_free(help, "help str");
-	/* TODO - print some help */
+	usage(options);
 	goto cleanup;
     }
 
-    uac = bu_opt_parse(&parse_msgs, ac, av, opt_desc);
+    unknown_ac = bu_opt_parse(&parse_msgs, ac, av, options);
 
-    if (uac == -1) {
-	bu_log("Parsing error: %s\n", bu_vls_addr(&parse_msgs));
+    if (unknown_ac < 0) {
+        bu_log("ERROR: option parsing failed\n%s", bu_vls_addr(&parse_msgs));
 	goto cleanup;
     }
 
     /* First, see if help was supplied */
-    if (hs.flag) {
+    if (hs.showhelp) {
 	if (hs.format) {
-	    /* TODO - generate some help based on format */
-	} else {
-	    /* Test static help print  */
-	    char *help = bu_opt_describe(opt_desc, NULL);
-	    bu_log("Options:\n");
-	    bu_log("%s\n", help);
-	    if (help)
-		bu_free(help, "help str");
+	    /* TODO - generate format-specific help */
+	}
+	usage(options);
 
 #if 0
-
-	    /* TODO - figure out how to get this info from each plugin to construct this table */
-	    /* on the fly... */
-	    bu_log("\nSupported formats:\n");
-	    bu_log(" ------------------------------------------------------------\n");
-	    bu_log(" | Extension  |          File Format      |  Input | Output |\n");
-	    bu_log(" |----------------------------------------------------------|\n");
-	    bu_log(" |    stl     |   STereoLithography       |   Yes  |   Yes  |\n");
-	    bu_log(" |------------|---------------------------|--------|--------|\n");
-	    bu_log(" |    obj     |   Wavefront Object        |   Yes  |   Yes  |\n");
-	    bu_log(" |------------|---------------------------|--------|--------|\n");
-	    bu_log(" |    step    |   STEP (AP203)            |   Yes  |   Yes  |\n");
-	    bu_log(" |------------|---------------------------|--------|--------|\n");
-	    bu_log(" |    iges    |   Initial Graphics        |   Yes  |   No   |\n");
-	    bu_log(" |            |   Exchange Specification  |        |        |\n");
-	    bu_log(" |----------------------------------------------------------|\n");
+	/* TODO - figure out how to get this info from each plugin to construct this table */
+	/* on the fly... */
+	bu_log("\nSupported formats:\n");
+	bu_log(" ------------------------------------------------------------\n");
+	bu_log(" | Extension  |          File Format      |  Input | Output |\n");
+	bu_log(" |----------------------------------------------------------|\n");
+	bu_log(" |    stl     |   STereoLithography       |   Yes  |   Yes  |\n");
+	bu_log(" |------------|---------------------------|--------|--------|\n");
+	bu_log(" |    obj     |   Wavefront Object        |   Yes  |   Yes  |\n");
+	bu_log(" |------------|---------------------------|--------|--------|\n");
+	bu_log(" |    step    |   STEP (AP203)            |   Yes  |   Yes  |\n");
+	bu_log(" |------------|---------------------------|--------|--------|\n");
+	bu_log(" |    iges    |   Initial Graphics        |   Yes  |   No   |\n");
+	bu_log(" |            |   Exchange Specification  |        |        |\n");
+	bu_log(" |----------------------------------------------------------|\n");
 #endif
-	}
+
 	goto cleanup;
     }
 
-    /* TODO - Do a general check on option validity here - if anything fails, halt and
-     * report it */
-
     /* Did we get explicit options for an input and/or output file? */
-    if (in_path_str) {
-	bu_vls_sprintf(&in_path_raw, "%s", in_path_str);
-	skip_in++;
+    if (in_str) {
+	bu_vls_sprintf(&in_path_raw, "%s", in_str);
     }
-    if (out_path_str) {
-	bu_vls_sprintf(&out_path_raw, "%s", out_path_str);
-	skip_out++;
+    if (out_str) {
+	bu_vls_sprintf(&out_path_raw, "%s", out_str);
     }
 
     /* If not specified explicitly with -i or -o, the input and output paths must always
-     * be the last two arguments supplied */
-    if (!(skip_in && skip_out)) {
-	if (skip_in && !skip_out) {
+     * be the last arguments supplied */
+    if (in_str && !out_str) {
+	bu_vls_sprintf(&out_path_raw, "%s", av[ac - 1]);
+	av[ac - 1] = NULL;
+	ac--;
+    }
+    if (!in_str && out_str) {
+	bu_vls_sprintf(&in_path_raw, "%s", av[ac - 1]);
+	av[ac - 1] = NULL;
+	ac--;
+    }
+    if (!in_str && !out_str) {
+	if (ac > 1) {
+	    bu_vls_sprintf(&in_path_raw, "%s", av[ac - 2]);
 	    bu_vls_sprintf(&out_path_raw, "%s", av[ac - 1]);
-	}
-	if (!skip_in && skip_out) {
+	    av[ac - 1] = av[ac - 2] = NULL;
+	    ac -= 2;
+	} else if (ac == 1) {
 	    bu_vls_sprintf(&in_path_raw, "%s", av[ac - 1]);
-	}
-	if (!skip_in && !skip_out) {
-	    if (ac > 1) {
-		bu_vls_sprintf(&in_path_raw, "%s", av[ac - 2]);
-		bu_vls_sprintf(&out_path_raw, "%s", av[ac - 1]);
-	    } else {
-		bu_vls_sprintf(&in_path_raw, "%s", av[ac - 1]);
-	    }
+	    av[ac - 1] = NULL;
+	    ac--;
 	}
     }
 
-    /* Any unknown strings not otherwise processed are passed to both input and output.
-     * These are deliberately placed at the beginning of the input strings, so any
-     * input/output specific options have a chance to override them. */
-    if (uac) {
-	for (i = 0; i < (size_t)uac; i++) {
-	    bu_ptbl_ins(&input_opts, (long *)av[i]);
-	    bu_ptbl_ins(&output_opts, (long *)av[i]);
+    /* Any unknown strings not otherwise processed are passed to both
+     * input and output format processors.  Unknown options are placed
+     * at the beginning of the respective option sets so subsequent
+     * known options have a chance to override.
+     */
+    if (unknown_ac) {
+	for (i = 0; i < (size_t)unknown_ac; i++) {
+	    bu_ptbl_ins(&in_opts, (long *)av[i]);
+	    bu_ptbl_ins(&out_opts, (long *)av[i]);
 	}
     }
-    /* Same for any options that were supplied explicitly to go to both input and output */
+    /* Same for any options that were supplied explicitly to go to
+     * both input and output.
+     */
     if (BU_PTBL_LEN(both_opts.args) > 0) {
-	bu_ptbl_cat(&input_opts, both_opts.args);
-	bu_ptbl_cat(&output_opts, both_opts.args);
+	bu_ptbl_cat(&in_opts, both_opts.args);
+	bu_ptbl_cat(&out_opts, both_opts.args);
     }
 
     /* If we have input and/or output specific options, append them now */
     if (BU_PTBL_LEN(in_only_opts.args) > 0) {
-	bu_ptbl_cat(&input_opts, in_only_opts.args);
+	bu_ptbl_cat(&in_opts, in_only_opts.args);
     }
     if (BU_PTBL_LEN(out_only_opts.args) > 0) {
-	bu_ptbl_cat(&output_opts, out_only_opts.args);
+	bu_ptbl_cat(&out_opts, out_only_opts.args);
     }
 
     /* See if we have input and output files specified */
@@ -656,9 +669,9 @@ main(int ac, const char **av)
     bu_log("Output file path: %s\n", bu_vls_addr(&out_path));
 
     {
-	const size_t in_argc = BU_PTBL_LEN(&input_opts), out_argc = BU_PTBL_LEN(&output_opts);
-	const char ** const in_argv = (const char **)input_opts.buffer;
-	const char ** const out_argv = (const char **)output_opts.buffer;
+	const size_t in_argc = BU_PTBL_LEN(&in_opts), out_argc = BU_PTBL_LEN(&out_opts);
+	const char ** const in_argv = (const char **)in_opts.buffer;
+	const char ** const out_argv = (const char **)out_opts.buffer;
 
 	if (!do_conversion(&slog, bu_vls_addr(&in_path), in_type, bu_vls_addr(&out_path),
 			   out_type, in_argc, in_argv, out_argc, out_argv)) {
@@ -682,8 +695,8 @@ cleanup:
     bu_vls_free(&out_path);
     bu_vls_free(&slog);
 
-    bu_ptbl_free(&input_opts);
-    bu_ptbl_free(&output_opts);
+    bu_ptbl_free(&in_opts);
+    bu_ptbl_free(&out_opts);
 
     fmt_opts_free(&in_only_opts);
     fmt_opts_free(&out_only_opts);
