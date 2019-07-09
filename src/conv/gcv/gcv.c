@@ -49,8 +49,8 @@ fmt_opts_init(struct fmt_opts *gfo, struct bu_opt_desc *ds)
 static void
 fmt_opts_free(struct fmt_opts *gfo)
 {
-    BU_PUT(gfo->args, struct bu_ptbl);
     bu_ptbl_free(gfo->args);
+    BU_PUT(gfo->args, struct bu_ptbl);
     gfo->ds = NULL;
     gfo->args = NULL;
 }
