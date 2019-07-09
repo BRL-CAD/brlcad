@@ -103,6 +103,12 @@ fmt_fun(struct bu_vls *UNUSED(msgs), size_t argc, const char **argv, void *set_v
 }
 
 
+/* given an input string with an optional format specifier of the
+ * format /path/to/file.ext:format, this routine saves
+ * "/path/to/file.ext" in path.
+ *
+ * returns 1 if a :format was found on the input string, 0 otherwise
+ */
 static int
 extract_path(struct bu_vls *path, const char *input)
 {
