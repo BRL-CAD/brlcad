@@ -191,36 +191,26 @@ get_trim_midpt(fastf_t *t, const ON_BrepTrim *trim, double tstart, double tend, 
 }
 
 static void
-getEdgePoints(
-	struct ON_Brep_CDT_State *s_cdt,
-	ON_BrepEdge *edge,
-	ON_NurbsCurve *nc,
-	const ON_BrepTrim &trim,
-	BrepTrimPoint *sbtp1,
-	BrepTrimPoint *ebtp1,
-	BrepTrimPoint *sbtp2,
-	BrepTrimPoint *ebtp2,
+getEdgePoints2(
+	struct BrepEdgeSegment *bseg,
 	const struct brep_cdt_tol *cdt_tol,
-	std::map<double, BrepTrimPoint *> *trim1_param_points,
-	std::map<double, BrepTrimPoint *> *trim2_param_points,
 	double loop_min_dist
 	)
 {
     ON_3dPoint tmp1, tmp2;
-    ON_BrepTrim *trim2 = (edge->Trim(0)->m_trim_index == trim.m_trim_index) ? edge->Trim(1) : edge->Trim(0);
-    const ON_Surface *s1 = trim.SurfaceOf();
-    const ON_Surface *s2 = trim2->SurfaceOf();
+    const ON_Surface *s1 = bseg->trim1->SurfaceOf();
+    const ON_Surface *s2 = bseg->trim2->SurfaceOf();
 
     ON_3dVector trim1_mid_norm = ON_3dVector::UnsetVector;
     ON_3dVector trim2_mid_norm = ON_3dVector::UnsetVector;
     ON_3dPoint edge_mid_3d = ON_3dPoint::UnsetPoint;
     ON_3dVector edge_mid_tang = ON_3dVector::UnsetVector;
 
-    fastf_t emid = (sbtp1->e + ebtp1->e) / 2.0;
-    bool evtangent_status = nc->EvTangent(emid, edge_mid_3d, edge_mid_tang);
+    fastf_t emid = (bseg->sbtp1->e + bseg->ebtp1->e) / 2.0;
+    bool evtangent_status = bseg->nc->EvTangent(emid, edge_mid_3d, edge_mid_tang);
     if (!evtangent_status) {
 	// EvTangent call failed, get 3d point
-	edge_mid_3d = nc->PointAt(emid);
+	edge_mid_3d = bseg->nc->PointAt(emid);
     }
 
     // We need the trim points to be pretty close to the edge point, or
@@ -228,16 +218,16 @@ getEdgePoints(
     fastf_t t1, t2;
     fastf_t emindist = (cdt_tol->min_dist < 0.5*loop_min_dist) ? cdt_tol->min_dist : 0.5 * loop_min_dist;
     ON_3dPoint trim1_mid_2d, trim2_mid_2d;
-    trim1_mid_2d = get_trim_midpt(&t1, &trim, sbtp1->t, ebtp1->t, edge_mid_3d, emindist, 0);
-    trim2_mid_2d = get_trim_midpt(&t2, trim2, sbtp2->t, ebtp2->t, edge_mid_3d, emindist, 0);
+    trim1_mid_2d = get_trim_midpt(&t1, bseg->trim1, bseg->sbtp1->t, bseg->ebtp1->t, edge_mid_3d, emindist, 0);
+    trim2_mid_2d = get_trim_midpt(&t2, bseg->trim2, bseg->sbtp2->t, bseg->ebtp2->t, edge_mid_3d, emindist, 0);
 
     if (!evtangent_status) {
 	// If the edge curve evaluation failed, try to average tangents from trims
 	ON_3dVector trim1_mid_tang(0.0, 0.0, 0.0);
 	ON_3dVector trim2_mid_tang(0.0, 0.0, 0.0);
 	int evals = 0;
-	evals += (trim.EvTangent(t1, tmp1, trim1_mid_tang)) ? 1 : 0;
-	evals += (trim2->EvTangent(t2, tmp2, trim2_mid_tang)) ? 1 : 0;
+	evals += (bseg->trim1->EvTangent(t1, tmp1, trim1_mid_tang)) ? 1 : 0;
+	evals += (bseg->trim2->EvTangent(t2, tmp2, trim2_mid_tang)) ? 1 : 0;
 	if (evals == 2) {
 	    edge_mid_tang = (trim1_mid_tang + trim2_mid_tang) / 2;
 	} else {
@@ -247,7 +237,7 @@ getEdgePoints(
 
     int dosplit = 0;
 
-    ON_Line line3d(*(sbtp1->p3d), *(ebtp1->p3d));
+    ON_Line line3d(*(bseg->sbtp1->p3d), *(bseg->ebtp1->p3d));
     double dist3d = edge_mid_3d.DistanceTo(line3d.ClosestPointTo(edge_mid_3d));
     dosplit += (line3d.Length() > cdt_tol->max_dist) ? 1 : 0;
     dosplit += (dist3d > (cdt_tol->within_dist + ON_ZERO_TOLERANCE)) ? 1 : 0;
@@ -255,15 +245,15 @@ getEdgePoints(
 
     if ((dist3d > cdt_tol->min_dist + ON_ZERO_TOLERANCE)) {
 	if (!dosplit) {
-	    dosplit += ((sbtp1->tangent * ebtp1->tangent) < cdt_tol->cos_within_ang - ON_ZERO_TOLERANCE) ? 1 : 0;
+	    dosplit += ((bseg->sbtp1->tangent * bseg->ebtp1->tangent) < cdt_tol->cos_within_ang - ON_ZERO_TOLERANCE) ? 1 : 0;
 	}
 
-	if (!dosplit && sbtp1->normal != ON_3dVector::UnsetVector && ebtp1->normal != ON_3dVector::UnsetVector) {
-	    dosplit += ((sbtp1->normal * ebtp1->normal) < cdt_tol->cos_within_ang - ON_ZERO_TOLERANCE) ? 1 : 0;
+	if (!dosplit && bseg->sbtp1->normal != ON_3dVector::UnsetVector && bseg->ebtp1->normal != ON_3dVector::UnsetVector) {
+	    dosplit += ((bseg->sbtp1->normal * bseg->ebtp1->normal) < cdt_tol->cos_within_ang - ON_ZERO_TOLERANCE) ? 1 : 0;
 	}
 
-	if (!dosplit && sbtp2->normal != ON_3dVector::UnsetVector && ebtp2->normal != ON_3dVector::UnsetVector) {
-	    dosplit += ((sbtp2->normal * ebtp2->normal) < cdt_tol->cos_within_ang - ON_ZERO_TOLERANCE) ? 1 : 0;
+	if (!dosplit && bseg->sbtp2->normal != ON_3dVector::UnsetVector && bseg->ebtp2->normal != ON_3dVector::UnsetVector) {
+	    dosplit += ((bseg->sbtp2->normal * bseg->ebtp2->normal) < cdt_tol->cos_within_ang - ON_ZERO_TOLERANCE) ? 1 : 0;
 	}
     }
 
@@ -272,7 +262,7 @@ getEdgePoints(
 	if (!surface_EvNormal(s1, trim1_mid_2d.x, trim1_mid_2d.y, tmp1, trim1_mid_norm)) {
 	    trim1_mid_norm = ON_3dVector::UnsetVector;
 	} else {
-	    if (trim.Face()->m_bRev) {
+	    if (bseg->trim1->Face()->m_bRev) {
 		trim1_mid_norm = trim1_mid_norm  * -1.0;
 	    }
 	}
@@ -280,28 +270,34 @@ getEdgePoints(
 	if (!surface_EvNormal(s2, trim2_mid_2d.x, trim2_mid_2d.y, tmp2, trim2_mid_norm)) {
 	    trim2_mid_norm = ON_3dVector::UnsetVector;
 	} else {
-	    if (trim2->Face()->m_bRev) {
+	    if (bseg->trim2->Face()->m_bRev) {
 		trim2_mid_norm = trim2_mid_norm  * -1.0;
 	    }
 	}
 
-    if (edge->m_edge_index == 790) {
-	bu_log("Edge %d: %f %f %f\n", edge->m_edge_index, edge_mid_3d.x, edge_mid_3d.y, edge_mid_3d.z);
-	bu_log("Trim %d, Face %d, (IsRev: %d): %f %f %f\n", trim.m_trim_index, trim.Face()->m_face_index, trim.m_bRev3d, tmp1.x, tmp1.y, tmp1.z);
-	bu_log("Trim %d, Face %d, (IsRev: %d): %f %f %f\n", trim2->m_trim_index, trim2->Face()->m_face_index, trim2->m_bRev3d, tmp2.x, tmp2.y, tmp2.z);
-    }
-
-
 	ON_3dPoint *npt = new ON_3dPoint(edge_mid_3d);
-	CDT_Add3DPnt(s_cdt, npt, -1, -1, -1, edge->m_edge_index, emid, 0);
-	s_cdt->edge_pnts->insert(npt);
+	CDT_Add3DPnt(bseg->s_cdt, npt, -1, -1, -1, bseg->edge->m_edge_index, emid, 0);
+	bseg->s_cdt->edge_pnts->insert(npt);
 
-	BrepTrimPoint *nbtp1 = Add_BrepTrimPoint(s_cdt, trim1_param_points, npt, NULL, edge_mid_tang, emid, trim1_mid_2d, trim1_mid_norm, t1, trim.m_trim_index);
+	BrepTrimPoint *nbtp1 = Add_BrepTrimPoint(bseg->s_cdt, bseg->trim1_param_points, npt, NULL, edge_mid_tang, emid, trim1_mid_2d, trim1_mid_norm, t1, bseg->trim1->m_trim_index);
 
-	BrepTrimPoint *nbtp2 = Add_BrepTrimPoint(s_cdt, trim2_param_points, npt, NULL, edge_mid_tang, emid, trim2_mid_2d, trim2_mid_norm, t2, trim2->m_trim_index);
+	BrepTrimPoint *nbtp2 = Add_BrepTrimPoint(bseg->s_cdt, bseg->trim2_param_points, npt, NULL, edge_mid_tang, emid, trim2_mid_2d, trim2_mid_norm, t2, bseg->trim2->m_trim_index);
 
-	getEdgePoints(s_cdt, edge, nc, trim, sbtp1, nbtp1, sbtp2, nbtp2, cdt_tol, trim1_param_points, trim2_param_points, loop_min_dist);
-	getEdgePoints(s_cdt, edge, nc, trim, nbtp1, ebtp1, nbtp2, ebtp2, cdt_tol, trim1_param_points, trim2_param_points, loop_min_dist);
+	struct BrepEdgeSegment *bseg1 = NewBrepEdgeSegment(bseg);
+	bseg1->sbtp1 = bseg->sbtp1;
+	bseg1->ebtp1 = nbtp1;
+	bseg1->sbtp2 = bseg->sbtp2;
+	bseg1->ebtp2 = nbtp2;
+	getEdgePoints2(bseg1, cdt_tol, loop_min_dist);
+	
+
+	struct BrepEdgeSegment *bseg2 = NewBrepEdgeSegment(bseg);
+	bseg2->sbtp1 = nbtp1;
+	bseg2->ebtp1 = bseg->ebtp1;
+	bseg2->sbtp2 = nbtp2;
+	bseg2->ebtp2 = bseg->ebtp2;
+	getEdgePoints2(bseg2, cdt_tol, loop_min_dist);
+
 	return;
     }
 
@@ -309,10 +305,10 @@ getEdgePoints(
     int vdir = 0;
     double trim1_seam_t = 0.0;
     double trim2_seam_t = 0.0;
-    ON_2dPoint trim1_start = sbtp1->p2d;
-    ON_2dPoint trim1_end = ebtp1->p2d;
-    ON_2dPoint trim2_start = sbtp2->p2d;
-    ON_2dPoint trim2_end = ebtp2->p2d;
+    ON_2dPoint trim1_start = bseg->sbtp1->p2d;
+    ON_2dPoint trim1_end = bseg->ebtp1->p2d;
+    ON_2dPoint trim2_start = bseg->sbtp2->p2d;
+    ON_2dPoint trim2_end = bseg->ebtp2->p2d;
     ON_2dPoint trim1_seam_2d, trim2_seam_2d;
     ON_3dPoint trim1_seam_3d, trim2_seam_3d;
     int t1_dosplit = 0;
@@ -321,10 +317,10 @@ getEdgePoints(
     if (ConsecutivePointsCrossClosedSeam(s1, trim1_start, trim1_end, udir, vdir, BREP_SAME_POINT_TOLERANCE)) {
 	ON_2dPoint from = ON_2dPoint::UnsetPoint;
 	ON_2dPoint to = ON_2dPoint::UnsetPoint;
-	if (FindTrimSeamCrossing(trim, sbtp1->t, ebtp1->t, trim1_seam_t, from, to, BREP_SAME_POINT_TOLERANCE)) {
-	    trim1_seam_2d = trim.PointAt(trim1_seam_t);
+	if (FindTrimSeamCrossing(*bseg->trim1, bseg->sbtp1->t, bseg->ebtp1->t, trim1_seam_t, from, to, BREP_SAME_POINT_TOLERANCE)) {
+	    trim1_seam_2d = bseg->trim1->PointAt(trim1_seam_t);
 	    trim1_seam_3d = s1->PointAt(trim1_seam_2d.x, trim1_seam_2d.y);
-	    if (trim1_param_points->find(trim1_seam_t) == trim1_param_points->end()) {
+	    if (bseg->trim1_param_points->find(trim1_seam_t) == bseg->trim1_param_points->end()) {
 		t1_dosplit = 1;
 	    }
 	}
@@ -333,10 +329,10 @@ getEdgePoints(
     if (ConsecutivePointsCrossClosedSeam(s2, trim2_start, trim2_end, udir, vdir, BREP_SAME_POINT_TOLERANCE)) {
 	ON_2dPoint from = ON_2dPoint::UnsetPoint;
 	ON_2dPoint to = ON_2dPoint::UnsetPoint;
-	if (FindTrimSeamCrossing(trim, sbtp2->t, ebtp2->t, trim2_seam_t, from, to, BREP_SAME_POINT_TOLERANCE)) {
-	    trim2_seam_2d = trim2->PointAt(trim2_seam_t);
+	if (FindTrimSeamCrossing(*bseg->trim2, bseg->sbtp2->t, bseg->ebtp2->t, trim2_seam_t, from, to, BREP_SAME_POINT_TOLERANCE)) {
+	    trim2_seam_2d = bseg->trim2->PointAt(trim2_seam_t);
 	    trim2_seam_3d = s2->PointAt(trim2_seam_2d.x, trim2_seam_2d.y);
-	    if (trim2_param_points->find(trim2_seam_t) == trim2_param_points->end()) {
+	    if (bseg->trim2_param_points->find(trim2_seam_t) == bseg->trim2_param_points->end()) {
 		t2_dosplit = 1;
 	    }
 	}
@@ -347,38 +343,39 @@ getEdgePoints(
 	if (t1_dosplit && t2_dosplit) {
 	    ON_3dPoint nspt = (trim1_seam_3d + trim2_seam_3d)/2;
 	    nsptp = new ON_3dPoint(nspt);
-	    CDT_Add3DPnt(s_cdt, nsptp, trim.Face()->m_face_index, -1, trim.m_trim_index, trim.Edge()->m_edge_index, trim1_seam_2d.x, trim1_seam_2d.y);
-	    s_cdt->edge_pnts->insert(nsptp);
+	    CDT_Add3DPnt(bseg->s_cdt, nsptp, bseg->trim1->Face()->m_face_index, -1, bseg->trim1->m_trim_index, bseg->trim1->Edge()->m_edge_index, trim1_seam_2d.x, trim1_seam_2d.y);
+	    bseg->s_cdt->edge_pnts->insert(nsptp);
 	} else {
 	    // Since the above if test got the both-true case, only one of these at
 	    // a time will ever be true.  TODO - could this be a source of degenerate
 	    // faces in 3D if we're only splitting one trim?
 	    if (!t1_dosplit) {
-		trim1_seam_t = (sbtp1->t + ebtp1->t)/2;
-		trim1_seam_2d = trim.PointAt(trim1_seam_t);
+		trim1_seam_t = (bseg->sbtp1->t + bseg->ebtp1->t)/2;
+		trim1_seam_2d = bseg->trim1->PointAt(trim1_seam_t);
 		nsptp = new ON_3dPoint(trim2_seam_3d);
-		CDT_Add3DPnt(s_cdt, nsptp, trim2->Face()->m_face_index, -1, trim2->m_trim_index, trim2->Edge()->m_edge_index, trim1_seam_2d.x, trim1_seam_2d.y);
-		s_cdt->edge_pnts->insert(nsptp);
+		CDT_Add3DPnt(bseg->s_cdt, nsptp, bseg->trim2->Face()->m_face_index, -1, bseg->trim2->m_trim_index, bseg->trim2->Edge()->m_edge_index, trim1_seam_2d.x, trim1_seam_2d.y);
+		bseg->s_cdt->edge_pnts->insert(nsptp);
 	    }
 	    if (!t2_dosplit) {
-		trim2_seam_t = (sbtp2->t + ebtp2->t)/2;
-		trim2_seam_2d = trim2->PointAt(trim2_seam_t);
+		trim2_seam_t = (bseg->sbtp2->t + bseg->ebtp2->t)/2;
+		trim2_seam_2d = bseg->trim2->PointAt(trim2_seam_t);
 		nsptp = new ON_3dPoint(trim1_seam_3d);
-		CDT_Add3DPnt(s_cdt, nsptp, trim.Face()->m_face_index, -1, trim.m_trim_index, trim.Edge()->m_edge_index, trim1_seam_2d.x, trim1_seam_2d.y);
-		s_cdt->edge_pnts->insert(nsptp);
+		CDT_Add3DPnt(bseg->s_cdt, nsptp, bseg->trim1->Face()->m_face_index, -1, bseg->trim1->m_trim_index, bseg->trim1->Edge()->m_edge_index, trim1_seam_2d.x, trim1_seam_2d.y);
+		bseg->s_cdt->edge_pnts->insert(nsptp);
 	    }
 	}
 
 	// Note - by this point we shouldn't need tangents and normals...
 	ON_3dVector v_unset = ON_3dVector::UnsetVector;
 	ON_3dPoint t1s2d(trim1_seam_2d);
-	(void)Add_BrepTrimPoint(s_cdt, trim1_param_points, nsptp, NULL, v_unset, ON_UNSET_VALUE, t1s2d, v_unset, trim1_seam_t, trim.m_trim_index);
+	(void)Add_BrepTrimPoint(bseg->s_cdt, bseg->trim1_param_points, nsptp, NULL, v_unset, ON_UNSET_VALUE, t1s2d, v_unset, trim1_seam_t, bseg->trim1->m_trim_index);
 
 	ON_3dPoint t2s2d(trim2_seam_2d);
-	(void)Add_BrepTrimPoint(s_cdt, trim2_param_points, nsptp, NULL, v_unset, ON_UNSET_VALUE, t2s2d, v_unset, trim2_seam_t, trim2->m_trim_index);
+	(void)Add_BrepTrimPoint(bseg->s_cdt, bseg->trim2_param_points, nsptp, NULL, v_unset, ON_UNSET_VALUE, t2s2d, v_unset, trim2_seam_t, bseg->trim2->m_trim_index);
     }
 
 }
+
 
 std::map<double, BrepTrimPoint *> *
 getEdgePoints(
@@ -662,12 +659,24 @@ getEdgePoints(
 
 	BrepTrimPoint *mbtp2 = Add_BrepTrimPoint(s_cdt, trim2_param_points, nmp, NULL, edge_mid_tang, edge_mid_range, trim2_mid_2d, trim2_mid_norm, trim2_mid_range, trim2->m_trim_index);
 
-	getEdgePoints(s_cdt, edge, nc, trim, sbtp1, mbtp1, sbtp2, mbtp2, &cdt_tol, trim1_param_points, trim2_param_points, loop_min_dist);
-	getEdgePoints(s_cdt, edge, nc, trim, mbtp1, ebtp1, mbtp2, ebtp2, &cdt_tol, trim1_param_points, trim2_param_points, loop_min_dist);
+
+	struct BrepEdgeSegment *bseg1 = NewBrepEdgeSegment(root);
+	bseg1->sbtp1 = sbtp1;
+	bseg1->ebtp1 = mbtp1;
+	bseg1->sbtp2 = sbtp2;
+	bseg1->ebtp2 = mbtp2;
+	getEdgePoints2(bseg1, &cdt_tol, loop_min_dist);
+
+	struct BrepEdgeSegment *bseg2 = NewBrepEdgeSegment(root);
+	bseg2->sbtp1 = mbtp1;
+	bseg2->ebtp1 = ebtp1;
+	bseg2->sbtp2 = mbtp2;
+	bseg2->ebtp2 = ebtp2;
+	getEdgePoints2(bseg2, &cdt_tol, loop_min_dist);
 
     } else {
 
-	getEdgePoints(s_cdt, edge, nc, trim, sbtp1, ebtp1, sbtp2, ebtp2, &cdt_tol, trim1_param_points, trim2_param_points, loop_min_dist);
+	getEdgePoints2(root, &cdt_tol, loop_min_dist);
 
     }
 
