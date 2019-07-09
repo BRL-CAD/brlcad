@@ -8,8 +8,8 @@
 #include <vector>
 #include <locale>
 #include <iomanip>
-#include "../svnfexport/sha1.hpp"
-#include "../svnfexport/svn_date.h"
+#include "./sha1.hpp"
+#include "./svn_date.h"
 
 enum svn_node_kind_t { nkerr, nfile, ndir };
 enum svn_node_action_t { naerr, nchange, nadd, ndelete, nreplace };
