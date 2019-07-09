@@ -10,59 +10,59 @@ The answer to all questions should be "yes".
 
 Legal
 -----
-00. are all changes legally compatible?  per COPYING, assigned or 0BSD/PD.
-01. if the change is from someone else, are they documented?  AUTHORS if new.
-02. do all new files have correct license header, copyright line, year?
+00. Are all changes legally compatible?  Per COPYING, assigned or 0BSD/PD.
+01. If the change is from someone else, are they documented?  AUTHORS if new.
+02. Do all new files have correct license header, copyright line, year?
 
 Organization
 ------------
-03. are changes in an appropriate location with similar/related logic?
-04. do all new files have a consistent name?  c/cpp/h extension.
-05. do the changes NOT introduce a cyclic dependency?
+03. Are changes in an appropriate location with similar/related logic?
+04. Do all new files have a consistent name?  c/cpp/h extension.
+05. Do the changes NOT introduce a cyclic dependency?
 
 Style
 -----
-06. does the file have the right style footer?
-07. is the code indented consistently?  4 char per level, 8 char tabs.
-08. is whitespace correct (no EOL spaces, internal tabs, or space around ops)?
-09. are braces consistent with existing code?  typically BSD KNF / K&R style.
+06. Does the file have the right style footer?
+07. Is the code indented consistently?  4 char per level, 8 char tabs.
+08. Is whitespace correct (no EOL spaces, internal tabs, or space around ops)?
+09. Are braces consistent with existing code?  Typically BSD KNF / K&R style.
 
 Documentation
 -------------
-10. publicly visible changes / features are documented?  NEWS entry.
-11. does referencing documentation reflect interface changes?  check manpages.
-12. are new public symbols documented?  doxygen comment in include/ dir.
-13. are changed public symbols documented?  CHANGES entry, DEPRECATED comment.
-14. is all dead or conditional debugging code documented?  comment or remove.
-15. are new numeric constants documented?  comment or eliminate.
+10. Publicly visible changes / features are documented?  NEWS entry.
+11. Does referencing documentation reflect interface changes?  Check manpages.
+12. Are new public symbols documented?  Doxygen comment in include/ dir.
+13. Are changed public symbols documented?  CHANGES entry, DEPRECATED comment.
+14. Is all dead or conditional debugging code documented?  Comment or remove.
+15. Are new numeric constants documented?  Comment or eliminate.
 
 Declaration
 -----------
-16. do changed files include and only include headers in use by that file?
-17. are new public symbols named consistently?  prefixed according to libray.
-18. are new private symbols NOT prefixed like they're public?  no prefix.
-19. are new functions NOT referenced in other files marked static?
-20. are new global variables avoided?  no new ones allowed in libraries.
+16. Do changed files include and only include headers in use by that file?
+17. Are new public symbols named consistently?  Prefixed according to library.
+18. Are new private symbols NOT prefixed like they're public?
+19. Are new functions NOT referenced in other files marked static?
+20. Are new global variables avoided?  No new ones allowed in libraries.
 
 Definition
 ----------
-21. do changes avoid platform/compiler-specific constructs?  libbu exempt.
-22. do new structures / classes have static size?  no preprocessor toggles.
-23. do changes avoid exact floating point math?  use NEAR_EQUAL, see vmath.h
-24. do changes use wrapped system functions?  see libbu API and HACKING.
-25. do changes avoid duplication, or refactor accordingly to shared code?
+21. Do changes avoid platform/compiler-specific constructs?  libbu exempt.
+22. Do new structures / classes have static size?  No preprocessor toggles.
+23. Do changes avoid exact floating point math?  Use NEAR_EQUAL, see vmath.h
+24. Do changes use wrapped system functions?  See libbu API and HACKING.
+25. Do changes avoid duplication, or refactor accordingly to shared code?
 
 Compilation
 -----------
-26. does the code compile without warnings?  all enabled.
-27. reasonable to think changes will trivially compile on all major platforms?
+26. Does the code compile without warnings?  All enabled.
+27. Reasonable to think changes will trivially compile on all major platforms?
 
 Testing
 -------
-28. are any new inputs checked, sanitized?
-29. for changes fixing a recurrant bug, is there an accompanying test?
-30. does performance testing pass and NOT decrease?  no slow downs.
-31. do all regression tests pass?  no new failures.
+28. Are any new inputs checked, sanitized?
+29. For changes fixing a recurrant bug, is there an accompanying test?
+30. Does performance testing pass and NOT decrease?  No slow downs.
+31. Do all regression tests pass?  No new failures.
 
 
 The following guidelines are also desirable ideals, but not as
