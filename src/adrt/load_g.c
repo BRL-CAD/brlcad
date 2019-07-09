@@ -290,7 +290,7 @@ load_g(struct tie_s *tie, const char *db, int argc, const char **argv, struct ad
     BN_CK_TOL(tree_state.ts_tol);
     RT_CK_TESS_TOL(tree_state.ts_ttol);
 
-    TIE_VAL(tie_init)(cur_tie, 4096, TIE_KDTREE_FAST);
+    TIE_VAL(tie_init)(cur_tie, BU_PAGE_SIZE, TIE_KDTREE_FAST);
 
     /* FIXME: where is this released? */
     BU_ALLOC(*meshes, struct adrt_mesh_s);

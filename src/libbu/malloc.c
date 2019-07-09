@@ -359,7 +359,7 @@ bu_shmget(int *shmid, char **shared_memory, int key, size_t size)
 #ifdef _SC_PAGESIZE
     psize = sysconf(_SC_PAGESIZE);
 #else
-    psize = 4096;
+    psize = BU_PAGE_SIZE;
 #endif
 
     ret = 0;

@@ -43,7 +43,7 @@
 #include "bu/file.h"
 
 
-#define MAXBUFBYTES 4096*4096	/* max bytes to malloc in buffer space */
+#define MAXBUFBYTES BU_PAGE_SIZE*BU_PAGE_SIZE	/* max bytes to malloc in buffer space */
 
 unsigned char *outbuf;
 unsigned char *buffer;
@@ -300,11 +300,11 @@ init_buffer()
     max = MAXBUFBYTES / scanlen;
 
     /*
-     * XXX We really should see how big
-     * the input file is to decide if we should buffer
-     * less than our max.
+     * TODO: We really should see how big the input file is to decide
+     * if we should buffer less than our max.
      */
-    if (max > 4096) max = 4096;
+    if (max > BU_PAGE_SIZE)
+	max = BU_PAGE_SIZE;
 
     if (max < iny)
 	buflines = max;

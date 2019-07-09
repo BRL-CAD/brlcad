@@ -135,6 +135,7 @@ struct str_ht {
 
 static struct str_ht ht;
 
+/* must not vary in size cross-platform for repeatibility */
 #define TABLE_SIZE 4096
 
 #define MAGIC_STRHT1 1771561

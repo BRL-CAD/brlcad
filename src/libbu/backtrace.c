@@ -71,9 +71,8 @@ extern int fileno(FILE*);
 #endif
 
 
-/* so we don't have to worry as much about stack stomping */
-#define BT_BUFSIZE 4096
-static char buffer[BT_BUFSIZE] = {0};
+/* local buffer so we don't have to worry as much about stack stomping */
+static char buffer[BU_PAGE_SIZE] = {0};
 
 static pid_t process = (pid_t)0;
 static pid_t pid = (pid_t)0;
@@ -234,7 +233,7 @@ backtrace(int processid, char args[][MAXPATHLEN], int fd)
 
     position = 0;
     processing_bt = 0;
-    memset(buffer, 0, BT_BUFSIZE);
+    memset(buffer, 0, BU_PAGE_SIZE);
 
     if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
 	bu_log("[BACKTRACE] Reading debugger output\n");
@@ -280,7 +279,7 @@ backtrace(int processid, char args[][MAXPATHLEN], int fd)
 			if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
 			    bu_log("[BACKTRACE] Output: %s\n", buffer);
 			}
-			if (position+1 < BT_BUFSIZE) {
+			if (position+1 < BU_PAGE_SIZE) {
 			    buffer[position++] = c;
 			    buffer[position] = '\0';
 			} else {
@@ -302,7 +301,7 @@ backtrace(int processid, char args[][MAXPATHLEN], int fd)
 				perror("error writing stack to file");
 				break;
 			    }
-			    if (position > BT_BUFSIZE) {
+			    if (position > BU_PAGE_SIZE) {
 				if (write(fd, " [TRIMMED]\n", 11) != 11) {
 				    perror("error writing trim message to file");
 				    break;
@@ -314,7 +313,7 @@ backtrace(int processid, char args[][MAXPATHLEN], int fd)
 		    default:
 			break;
 		}
-		if (position+1 < BT_BUFSIZE) {
+		if (position+1 < BU_PAGE_SIZE) {
 		    buffer[position++] = c;
 		    buffer[position] = '\0';
 		} else {

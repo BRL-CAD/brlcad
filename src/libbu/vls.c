@@ -55,7 +55,7 @@ static const unsigned int VLS_ALLOC_MIN = 32;
 static const size_t VLS_ALLOC_STEP = 128;
 
 /* minimum vls buffer allocation size */
-static const unsigned int VLS_ALLOC_READ = 4096;
+static const unsigned int VLS_ALLOC_READ = BU_PAGE_SIZE;
 
 void
 bu_vls_init(struct bu_vls *vp)

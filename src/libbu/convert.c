@@ -485,7 +485,7 @@ bu_cv_w_cookie(void *out, int outcookie, size_t size, void *in, int incookie, si
 
     /*
      * Work_count is the size of the working buffer.  If count is
-     * smaller than the default work_count (4096) use the smaller
+     * smaller than the default work_count (page size) use the smaller
      * number.
      */
 

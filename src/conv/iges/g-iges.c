@@ -55,7 +55,7 @@
 #include "brlcad_version.h"
 
 
-#define CP_BUF_SIZE 4096	/* size of buffer for file copy */
+#define CP_BUF_SIZE BU_PAGE_SIZE /* size of buffer for file copy */
 #define SUFFIX_LEN 10 /* max size of suffix for 'part' files (-m option) */
 
 extern union tree *do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);

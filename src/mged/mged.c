@@ -1811,14 +1811,14 @@ stdin_input(ClientData clientData, int UNUSED(mask))
     /*XXXXX*/
 #define TRY_STDIN_INPUT_HACK
 #ifdef TRY_STDIN_INPUT_HACK
-    /* Grab everything --- assuming everything is <= 4096 */
+    /* Grab everything --- assuming everything is <= page size */
     {
-	char buf[4096];
+	char buf[BU_PAGE_SIZE];
 	int idx;
 #  ifdef _WIN32
-	count = Tcl_Read(chan, buf, 4096);
+	count = Tcl_Read(chan, buf, BU_PAGE_SIZE);
 #  else
-	count = read((int)fd, (void *)buf, 4096);
+	count = read((int)fd, (void *)buf, BU_PAGE_SIZE);
 #  endif
 
 #else
