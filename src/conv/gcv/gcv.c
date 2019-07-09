@@ -51,7 +51,8 @@ fmt_opts_free(struct fmt_opts *gfo)
 {
     BU_PUT(gfo->args, struct bu_ptbl);
     bu_ptbl_free(gfo->args);
-    gfo->ds = gfo->args = NULL;
+    gfo->ds = NULL;
+    gfo->args = NULL;
 }
 
 
