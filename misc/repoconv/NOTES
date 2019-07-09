@@ -80,4 +80,79 @@ https://git-scm.com/docs/git-config#_conditional_includes
 # Good way to get a quick overview of branch/tag structure:
 # tig --all --simplify-by-decoration
 
+###################################
+In case this comes up again, here's a quick and dirty way to do a mapping of a bunch of
+sha1s between two different git repos based on msg and date:
 
+#!/bin/bash
+
+domap() {
+cd /home/user/git_old
+MSG=$(git show --quiet --format="%s" $1)
+DATE=$(git show --quiet --format="%ct" $1)
+cd /home/user/git_new
+SHA1=$(git log --all --grep="$MSG\$" --grep="$DATE" --format="%H")
+echo "sed -i 's/$1/$SHA1/g' r29886_tags.fi"
+}
+
+declare -a sha1s=(
+"6732b3ae04ea2efc14b078cff0c4bafd54efaf8b"
+"da31186d8e2a3b92db134ab8d019b1ba96a16c52"
+"9fcde9ce909dfb745235f8c1e6021f2e43a94cc4"
+"33e9ae26d687d71b25601afcf7ffd500af68e0f4"
+"6e6cf502a373c6c639b76934a98d9c6ecef079e7"
+"df641bc5f9400aaf8a4aa93bfa781a4320a2d752"
+"87cdad2ab128136256105f210e91fcf9246243f8"
+"79e0e9e6a12fa4f43c5cf6c607893a1c4cc53da5"
+"987cf38059e773ebd26eb351a297d8318800eb46"
+"18c827233a7282210847cda19cc4a1dea23599be"
+"a932994f52048fbff85d7ff62d00880b4cc458b8"
+"6bf536c2ced667a12cc226e57a567dd087cd67a4"
+"1fe06f06690355b9446a31d719dd5676a1fc844d"
+"42b88fa150eace692392c4a07b3b7a7c1aae5692"
+"e7226d2d397d2f552b7f499eaf002d9036d7e0c5"
+"5adcdd001341a7b7bce7e73f6825f9aa82aee2f7"
+"abaab6bf19c3c10cc0d1034f3011cfc463e10cfa"
+"a857b8dfeeec0590dfeab4186c8b3c86c9f80459"
+"eaea736df6cee415c2a76b1eb2b964af535d1106"
+"c7f6ae9cc7d551bc87a1e02fb0f6de387aa4ee50"
+"0918f518b576627e77e77ba41394f3029ed6606f"
+"80aa3aaac21e35cd287c0f6a9dfe489985104ab7"
+"490ed3f06e580c2fa93b0da10f8f8571df294b14"
+"8772453ce94aed34d41a87938e8ceefd1e6161ec"
+"fa845175e9688286bfaf7c0cd3d7b31183386487"
+"1d688c3a19888ef35c7ad1ae620e38e0dba204a1"
+"f66a5f63f53a78e1829b14dd3628fe1356a7e5fb"
+"104c01519ca221dd6753fad3eaa5a1eddcc12b46"
+"cee2208afebf8432eadf59710a92fabfe970c48a"
+"2141b80a296f8500ad17896cd97b9b13b3b3631b"
+"d5533368993ba74bf1b1b5c6265aab8f227f88d5"
+"eb233faf9e1d1226a76f7f0d036a03fd66ae72cf"
+"12a73c2c8686eda051792f5ed3c99468abea96ce"
+"2ce9de0729ad5673d0a90cc06328c9dcffbb5aea"
+"3e35a93c3b6b556cd678e5ec6aa3de16c154f4fb"
+"1d5155b104c7e13b77889e7b1be73af9df5fc799"
+"805298a25a1f52fe6027dda56015c54f14394209"
+"fc6ac13d4adc62d82ae3278823cbbcfb1ab4812f"
+"086b7d8c76e46feaf5f27d25d990732c5f99f946"
+"2bc3da857e3fd101b160e0b28a2528284367c0a9"
+"6a18e97c7b36a52ecb28aaf9d289e2e89acca098"
+"856085985385b7f1d7b628a50c36cf31d2174c54"
+"dea30720435ffe7928c02d342ab7bef14bad7a14"
+"5cad31095ee56812d2cff4d2eb14731190a85e61"
+"c7c0956ae4e68ef447584d8e3217b0f7db2bc6f4"
+"33c113c3e284430c40b55ea34f85dccee1825705"
+"8ded46c9bfc0612519ab8d416c70e0f43677af8a"
+"febf9c84017e2219f0a92fd8c11c535722d7d520"
+"d159b8291d89327221d8aad9c863fdc2132bef51"
+"442e13f0f8368acda7cb7a5a7f658a1fd2788fcc"
+"83e80bfee05799bfac089d3969c18b2ab00b6c29"
+"b347d4a1c0085d0e7b659c55b05fd70b94dd09bf"
+"d7fe11aa96b174798a340e8e8b709d5a7a3f5bbc"
+"aecd2750fc895d538df9028458a1adde2668d7a9"
+)
+
+for i in "${sha1s[@]}"
+do
+	domap $i
+done
