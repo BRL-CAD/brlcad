@@ -49,6 +49,29 @@ BU_EXPORT extern size_t bu_n_malloc;
 BU_EXPORT extern size_t bu_n_realloc;
 BU_EXPORT extern size_t bu_n_free;
 
+
+/**
+ * Compilation constant for a page of memory.
+ *
+ * This is basically intended to be the minimum size for a contiguous
+ * block of virtual memory that hopefully, but not necessarily, aligns
+ * with or is a smaller evenly divisible fraction of the operating
+ * system's virtual memory page size.  We could look page size up at
+ * runtime but the primary purpose of this define is to help routines
+ * using static memory buffers for processing pick a fixed array size.
+ */
+#ifndef BU_PAGE_SIZE
+#  include <limits.h>
+#  if defined(PAGE_SIZE)
+     /* use the system page size if handy */
+#    define BU_PAGE_SIZE PAGE_SIZE
+#  else
+     /* common enough default */
+#    define BU_PAGE_SIZE 4096
+#  endif
+#endif /* BU_PAGE_SIZE */
+
+
 /**
  * This routine only returns on successful allocation.  We promise
  * never to return a NULL pointer; caller doesn't have to check.
