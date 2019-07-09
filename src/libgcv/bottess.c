@@ -39,9 +39,7 @@
 #include "./tri_intersect.h"
 
 
-/* assume 4096, seems common enough. a portable way to get to PAGE_SIZE might be
- * better. */
-const int faces_per_page = 4096 / sizeof(struct face_s);
+const int faces_per_page = BU_PAGE_SIZE / sizeof(struct face_s);
 
 
 int

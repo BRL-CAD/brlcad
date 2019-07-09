@@ -470,7 +470,7 @@ bu_cv_htonul(void *out, size_t size, register long unsigned int *in, size_t coun
 size_t
 bu_cv_w_cookie(void *out, int outcookie, size_t size, void *in, int incookie, size_t count)
 {
-    size_t work_count = 4096;
+    size_t work_count = BU_PAGE_SIZE;
     size_t number_done = 0;
     int inIsHost, outIsHost, infmt, outfmt;
     size_t insize, outsize;
