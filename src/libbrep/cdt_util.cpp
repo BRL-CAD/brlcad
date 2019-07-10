@@ -215,10 +215,6 @@ ON_Brep_CDT_Face_Create(struct ON_Brep_CDT_State *s_cdt, int ind)
 
     fcdt->degen_pnts = new std::set<p2t::Point *>;
 
-    /* Mesh data */
-    fcdt->e2f = new EdgeToTri;
-    fcdt->ecnt = new std::map<Edge, int>;
-
     return fcdt;
 }
 
@@ -258,9 +254,6 @@ ON_Brep_CDT_Face_Reset(struct ON_Brep_CDT_Face_State *fcdt, int full_surface_sam
 	delete t;
     }
     fcdt->tris->clear();
-
-    fcdt->e2f->clear();
-    fcdt->ecnt->clear();
 }
 
 void
@@ -313,9 +306,6 @@ ON_Brep_CDT_Face_Destroy(struct ON_Brep_CDT_Face_State *fcdt)
     delete fcdt->p2t_to_on3_norm_map;
     delete fcdt->on3_to_tri_map;
     delete fcdt->degen_pnts;
-
-    delete fcdt->e2f;
-    delete fcdt->ecnt;
 
     delete fcdt;
 }

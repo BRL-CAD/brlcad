@@ -54,6 +54,10 @@
 #include "common.h"
 #include "./cdt.h"
 
+typedef std::pair<ON_3dPoint *, ON_3dPoint *> Edge;
+typedef std::map<Edge, std::set<p2t::Triangle*> > EdgeToTri;
+
+
 static Edge
 mk_edge(ON_3dPoint *pt_A, ON_3dPoint *pt_B)
 {
@@ -67,7 +71,7 @@ mk_edge(ON_3dPoint *pt_A, ON_3dPoint *pt_B)
 #define IsEdgePt(_a) (f->s_cdt->edge_pnts->find(_a) != f->s_cdt->edge_pnts->end())
 
 void
-add_tri_edges(struct ON_Brep_CDT_Face_State *f, p2t::Triangle *t,
+add_tri_edges(EdgeToTri &e2f, std::map<Edge, int> &ecnt, struct ON_Brep_CDT_Face_State *f, p2t::Triangle *t,
 	std::map<p2t::Point *, ON_3dPoint *> *pointmap, std::map<ON_3dPoint *, p2t::Point *> *on3_to_p2t)
 {
     ON_3dPoint *pt_A, *pt_B, *pt_C;
@@ -81,32 +85,34 @@ add_tri_edges(struct ON_Brep_CDT_Face_State *f, p2t::Triangle *t,
     (*on3_to_p2t)[pt_A] = p2_A;
     (*on3_to_p2t)[pt_B] = p2_B;
     (*on3_to_p2t)[pt_C] = p2_C;
-    (*f->e2f)[(std::make_pair(pt_A, pt_B))].insert(t);
-    (*f->e2f)[(std::make_pair(pt_B, pt_C))].insert(t);
-    (*f->e2f)[(std::make_pair(pt_C, pt_A))].insert(t);
+    e2f[(std::make_pair(pt_A, pt_B))].insert(t);
+    e2f[(std::make_pair(pt_B, pt_C))].insert(t);
+    e2f[(std::make_pair(pt_C, pt_A))].insert(t);
 
     // We need to count edge uses.
-    (*f->ecnt)[(mk_edge(pt_A, pt_B))]++;
-    (*f->ecnt)[(mk_edge(pt_B, pt_C))]++;
-    (*f->ecnt)[(mk_edge(pt_C, pt_A))]++;
+    ecnt[(mk_edge(pt_A, pt_B))]++;
+    ecnt[(mk_edge(pt_B, pt_C))]++;
+    ecnt[(mk_edge(pt_C, pt_A))]++;
 
     // Because we are working on a single isolated face, only closed surface
     // directions will result in closed meshes.  Count edge segments twice, so
     // the < 2 uses test will always work even if the surface isn't closed
     if (IsEdgePt(pt_A) && IsEdgePt(pt_B)) {
-	(*f->ecnt)[(mk_edge(pt_A, pt_B))]++;
+	ecnt[(mk_edge(pt_A, pt_B))]++;
     }
     if (IsEdgePt(pt_B) && IsEdgePt(pt_C)) {
-	(*f->ecnt)[(mk_edge(pt_B, pt_C))]++;
+	ecnt[(mk_edge(pt_B, pt_C))]++;
     }
     if (IsEdgePt(pt_C) && IsEdgePt(pt_A)) {
-	(*f->ecnt)[(mk_edge(pt_C, pt_A))]++;
+	ecnt[(mk_edge(pt_C, pt_A))]++;
     }
 }
 
 int
 triangles_check_edges(struct ON_Brep_CDT_Face_State *f)
 {
+    EdgeToTri e2f;
+    std::map<Edge, int> ecnt;
     int have_problem_edge = 0;
     int ret = 0;
     std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
@@ -115,14 +121,14 @@ triangles_check_edges(struct ON_Brep_CDT_Face_State *f)
     std::set<p2t::Triangle *> *tris = f->tris;
     for (tr_it = tris->begin(); tr_it != tris->end(); tr_it++) {
 	p2t::Triangle *t = *tr_it;
-	add_tri_edges(f, t, pointmap, &on3_to_p2t);
+	add_tri_edges(e2f, ecnt, f, t, pointmap, &on3_to_p2t);
     }
 
     std::map<ON_3dPoint *, std::set<Edge>> point_to_edges;
     std::map<ON_3dPoint *, int> point_cnts;
     std::map<Edge, int>::iterator ec_it;
 
-    for (ec_it = f->ecnt->begin(); ec_it != f->ecnt->end(); ec_it++) {
+    for (ec_it = ecnt.begin(); ec_it != ecnt.end(); ec_it++) {
 	if (ec_it->second < 2) {
 	    ON_3dPoint *p1 = ec_it->first.first;
 	    ON_3dPoint *p2 = ec_it->first.second;
@@ -153,11 +159,11 @@ triangles_check_edges(struct ON_Brep_CDT_Face_State *f)
 	    for (e_it = edges.begin(); e_it != edges.end(); e_it++) {
 		Edge e = *e_it;
 		std::set<p2t::Triangle*> tset;
-		if (f->e2f->find(e) == f->e2f->end()) {
+		if (e2f.find(e) == e2f.end()) {
 		    Edge ef = std::make_pair(e.second, e.first);
-		    tset = (*f->e2f)[ef];
+		    tset = e2f[ef];
 		} else {
-		    tset = (*f->e2f)[e];
+		    tset = e2f[e];
 		}
 		std::set<p2t::Triangle*>::iterator ptr_it;
 		for (ptr_it = tset.begin(); ptr_it != tset.end(); ptr_it++) {

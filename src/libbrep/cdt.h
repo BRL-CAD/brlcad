@@ -63,8 +63,6 @@
 #define BREP_PLANAR_TOL 0.05
 
 /***************************************************/
-typedef std::pair<ON_3dPoint *, ON_3dPoint *> Edge;
-typedef std::map<Edge, std::set<p2t::Triangle*> > EdgeToTri;
 
 #define BREP_CDT_FAILED -3
 #define BREP_CDT_NON_SOLID -2
@@ -132,9 +130,6 @@ struct ON_Brep_CDT_Face_State {
     /* Poly2Tri information */
     std::set<p2t::Triangle *> *tris;
     std::set<p2t::Point *> *degen_pnts;
-    EdgeToTri *e2f;
-    std::map<Edge, int> *ecnt;
-
 };
 
 struct brep_cdt_tol {
@@ -261,10 +256,6 @@ plot_tri_3d(p2t::Triangle *t, std::map<p2t::Point *, ON_3dPoint *> *pointmap, in
 
 struct cdt_audit_info *
 cdt_ainfo(int fid, int vid, int tid, int eid, fastf_t x2d, fastf_t y2d, double px, double py, double pz);
-
-void
-add_tri_edges(EdgeToTri *e2f, p2t::Triangle *t,
-    std::map<p2t::Point *, ON_3dPoint *> *pointmap);
 
 void
 CDT_Add2DPnt(struct ON_Brep_CDT_Face_State *f, ON_2dPoint *p, int fid, int vid, int tid, int eid, fastf_t tparam);
