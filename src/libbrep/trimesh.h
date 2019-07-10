@@ -133,11 +133,7 @@ public:
 
     std::pair< index_t, index_t > he_index2directed_edge(const index_t he_index) const
     {
-	/*
-	   Given the index of a halfedge_t, returns the corresponding directed edge (i,j).
-
-	   untested
-	   */
+	/* Given the index of a halfedge_t, returns the corresponding directed edge (i,j). */
 
 	const halfedge_t& he = m_halfedges[ he_index ];
 	return std::make_pair(m_halfedges[ he.opposite_he ].to_vertex, he.to_vertex);

@@ -202,11 +202,8 @@ std::vector< trimesh_t::index_t > trimesh_t::boundary_vertices() const
 
 std::vector< std::pair< trimesh_t::index_t, trimesh_t::index_t > > trimesh_t::boundary_edges() const
 {
-    /*
-       Returns a list of undirected boundary edges (i,j).  If (i,j) is in the result, (j,i) will not be.
-
-       untested
-       */
+    /* Returns a list of undirected boundary edges (i,j).  If (i,j) is in the
+     * result, (j,i) will not be. */
 
     std::vector< std::pair< index_t, index_t > > result;
     for (size_t hei = 0; hei < m_halfedges.size(); ++hei) {
