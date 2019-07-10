@@ -99,69 +99,10 @@ do_triangulation(struct ON_Brep_CDT_Face_State *f, int full_surface_sample, int 
     populate_3d_pnts(f);
 
 
-    std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
 
-    // We'll need to be able to identify and work with subsets of the face mesh
-    struct trimesh_info *tm = CDT_Face_Build_Halfedge(f->tris);
-
-    // Check boundary triangles for distortion.  If any of them are unsuitable,
-    // flag the boundary polyline edge segments in question for splitting.  We'll
-    // have to redo the triangulation once the edge curve is refined.  Also, mark
-    // the opposing face sharing the edge as dirty - it too must be retriangulated
-    // to incorporate any new edge points.
-    std::vector<std::pair<trimesh::index_t, trimesh::index_t>> bedges = tm->mesh.boundary_edges();
-    std::vector<std::pair<trimesh::index_t, trimesh::index_t>>::iterator b_it;
-    std::set<trimesh::index_t> etris;
-    for (b_it = bedges.begin(); b_it != bedges.end(); b_it++) {
-	// trimesh boundary edges won't map to a triangle - get the flipped
-	// form of the edge that will
-	std::pair<trimesh::index_t, trimesh::index_t> fedge = std::pair<trimesh::index_t, trimesh::index_t>((*b_it).second, (*b_it).first);
-	bu_log("edge: %ld -> %ld\n", fedge.first, fedge.second);
-	trimesh::index_t tind = tm->mesh.m_de2fi[fedge];
-	bu_log("tind: %ld\n", tind);
-	etris.insert(tind);
-	p2t::Triangle *t = tm->triangles[tind].t;
-	p2t::Point *p1 = tm->ind2p2d[(*b_it).first];  // edge point
-	p2t::Point *p2 = tm->ind2p2d[(*b_it).second]; // edge point
-	p2t::Point *p3 = NULL; // surface point
-	for (size_t j = 0; j < 3; j++) {
-	    if (t->GetPoint(j) != p1 && t->GetPoint(j) != p2) {
-		p3 = t->GetPoint(j);
-		break;
-	    }
-	}
-
-	if (!p1 || !p2 || !p3) {
-	    bu_log("Triangle point failure!\n");
-	}
-
-	ON_3dPoint *e1 = (*pointmap)[p1];
-	ON_3dPoint *e2 = (*pointmap)[p2];
-	ON_3dPoint *pf3d = (*pointmap)[p3];
-
-	if (!e1 || !e2 || !pf3d) {
-	    bu_log("3D Triangle point failure!\n");
-	}
-
-	if (e1 == e2 || e1 == pf3d || e2 == pf3d) {
-	    // Degenerate
-	    continue;
-	}
-
-	ON_Line eline(*e1, *e2);
-	double elen = e1->DistanceTo(*e2);
-	double dist = eline.DistanceTo(*pf3d);
-	bu_log("%f %f %f elen: %f, dist: %f\n", pf3d->x, pf3d->y, pf3d->z, elen, dist);
-    }
-
-    plot_trimesh_tris_3d(&etris, tm->triangles, pointmap, "edge_tris.plot3");
-
-    // TODO - this needs to be considerably more sophisticated - only fall back
-    // on the singular surface logic if the problem points are from faces that
-    // involve a singularity, not just flagging on the surface.  Ideally, pass
-    // in the singularity point that is the particular problem so the routine
-    // knows where it's working
+    // Singularity areas are bad news.  Remesh in those areas, if present
     if (f->has_singular_trims) {
+	std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
 	std::set<p2t::Triangle *>::iterator tr_it;
 
 	// Identify any singular points
@@ -177,10 +118,71 @@ do_triangulation(struct ON_Brep_CDT_Face_State *f, int full_surface_sample, int 
 	}
 	std::set<ON_3dPoint *>::iterator a_it;
 	for (a_it = active_singular_pnts.begin(); a_it != active_singular_pnts.end(); a_it++) {
+	    struct trimesh_info *tm = CDT_Face_Build_Halfedge(f->tris);
 	    Remesh_Near_Point(f, tm, *a_it);
+	    delete tm;
 	}
+    }
+
+    // Check boundary triangles for distortion.  If any of them are unsuitable,
+    // flag the boundary polyline edge segments in question for splitting.  We'll
+    // have to redo the triangulation once the edge curve is refined.  Also, mark
+    // the opposing face sharing the edge as dirty - it too must be retriangulated
+    // to incorporate any new edge points.
+    //
+    // Probably should combine this check with the normals-in-wrong-direction check
+    // to decide whether to split edge or yank a "shouldn't have sampled there"
+    // point.
+    {
+	struct trimesh_info *tm = CDT_Face_Build_Halfedge(f->tris);
+	std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
+
+	std::vector<std::pair<trimesh::index_t, trimesh::index_t>> bedges = tm->mesh.boundary_edges();
+	std::vector<std::pair<trimesh::index_t, trimesh::index_t>>::iterator b_it;
+	std::set<trimesh::index_t> etris;
+	for (b_it = bedges.begin(); b_it != bedges.end(); b_it++) {
+	    // trimesh boundary edges won't map to a triangle - get the flipped
+	    // form of the edge that will
+	    std::pair<trimesh::index_t, trimesh::index_t> fedge = std::pair<trimesh::index_t, trimesh::index_t>((*b_it).second, (*b_it).first);
+	    trimesh::index_t tind = tm->mesh.m_de2fi[fedge];
+	    etris.insert(tind);
+	    p2t::Triangle *t = tm->triangles[tind].t;
+	    p2t::Point *p1 = tm->ind2p2d[(*b_it).first];  // edge point
+	    p2t::Point *p2 = tm->ind2p2d[(*b_it).second]; // edge point
+	    p2t::Point *p3 = NULL; // surface point
+	    for (size_t j = 0; j < 3; j++) {
+		if (t->GetPoint(j) != p1 && t->GetPoint(j) != p2) {
+		    p3 = t->GetPoint(j);
+		    break;
+		}
+	    }
+
+	    if (!p1 || !p2 || !p3) {
+		bu_log("Triangle point failure!\n");
+	    }
+
+	    ON_3dPoint *e1 = (*pointmap)[p1];
+	    ON_3dPoint *e2 = (*pointmap)[p2];
+	    ON_3dPoint *pf3d = (*pointmap)[p3];
+
+	    if (!e1 || !e2 || !pf3d) {
+		bu_log("3D Triangle point failure!\n");
+	    }
+
+	    if (e1 == e2 || e1 == pf3d || e2 == pf3d) {
+		// Degenerate
+		continue;
+	    }
+
+	    ON_Line eline(*e1, *e2);
+	    double elen = e1->DistanceTo(*e2);
+	    double dist = eline.DistanceTo(*pf3d);
+	    if (elen > 100*dist) {
+		bu_log("%f %f %f elen: %f, dist: %f\n", pf3d->x, pf3d->y, pf3d->z, elen, dist);
+	    }
+	}
+	plot_trimesh_tris_3d(&etris, tm->triangles, pointmap, "edge_tris.plot3");
 	delete tm;
-	tm = CDT_Face_Build_Halfedge(f->tris);
     }
 
     // Trivially degenerate pass
@@ -194,7 +196,6 @@ do_triangulation(struct ON_Brep_CDT_Face_State *f, int full_surface_sample, int 
     int eret = triangles_check_edges(f);
     if (eret < 0) {
 	bu_log("Fatal failure on edge checking\n");
-	delete tm;
 	return -1;
     }
     ret += eret;
@@ -204,20 +205,17 @@ do_triangulation(struct ON_Brep_CDT_Face_State *f, int full_surface_sample, int 
     int nret = triangles_incorrect_normals(f);
     if (nret < 0) {
 	bu_log("Fatal failure on normals checking\n");
-	delete tm;
 	return -1;
     }
     ret += nret;
 
     if (ret > 0) {
-	delete tm;
 	return do_triangulation(f, 0, cnt+1);
     }
 
     if (!ret) {
 	bu_log("Face %d: successful triangulation after %d passes\n", f->ind, cnt);
     }
-    delete tm;
     return ret;
 }
 
