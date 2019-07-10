@@ -32,6 +32,22 @@
 #define BREP_PLANAR_TOL 0.05
 #define MAX_TRIANGULATION_ATTEMPTS 5
 
+static void
+plot_trimesh_tris_3d(std::set<trimesh::index_t> *faces, std::vector<trimesh::triangle_t> &farray, std::map<p2t::Point *, ON_3dPoint *> *pointmap, const char *filename)
+{
+    std::set<trimesh::index_t>::iterator f_it;
+    FILE* plot_file = fopen(filename, "w");
+    int r = int(256*drand48() + 1.0);
+    int g = int(256*drand48() + 1.0);
+    int b = int(256*drand48() + 1.0);
+    for (f_it = faces->begin(); f_it != faces->end(); f_it++) {
+	p2t::Triangle *t = farray[*f_it].t;
+	plot_tri_3d(t, pointmap, r, g ,b, plot_file);
+    }
+    fclose(plot_file);
+}
+
+
 static int
 do_triangulation(struct ON_Brep_CDT_Face_State *f, int full_surface_sample, int cnt)
 {
@@ -95,8 +111,12 @@ do_triangulation(struct ON_Brep_CDT_Face_State *f, int full_surface_sample, int 
     // to incorporate any new edge points.
     std::vector<std::pair<trimesh::index_t, trimesh::index_t>> bedges = tm->mesh.boundary_edges();
     std::vector<std::pair<trimesh::index_t, trimesh::index_t>>::iterator b_it;
+    std::set<trimesh::index_t> etris;
     for (b_it = bedges.begin(); b_it != bedges.end(); b_it++) {
+	bu_log("edge: %ld -> %ld\n", (*b_it).first, (*b_it).second);
 	trimesh::index_t tind = tm->mesh.m_de2fi[*b_it];
+	bu_log("tind: %ld\n", tind);
+	etris.insert(tind);
 	p2t::Triangle *t = tm->triangles[tind].t;
 	p2t::Point *p1 = tm->ind2p2d[(*b_it).first];  // edge point
 	p2t::Point *p2 = tm->ind2p2d[(*b_it).second]; // edge point
@@ -128,9 +148,10 @@ do_triangulation(struct ON_Brep_CDT_Face_State *f, int full_surface_sample, int 
 	ON_Line eline(*e1, *e2);
 	double elen = e1->DistanceTo(*e2);
 	double dist = eline.DistanceTo(*pf3d);
-	if (elen > 10*dist)
-	    bu_log("%f %f %f elen: %f, dist: %f\n", pf3d->x, pf3d->y, pf3d->z, elen, dist);
+	bu_log("%f %f %f elen: %f, dist: %f\n", pf3d->x, pf3d->y, pf3d->z, elen, dist);
     }
+
+    plot_trimesh_tris_3d(&etris, tm->triangles, pointmap, "edge_tris.plot3");
 
     // TODO - this needs to be considerably more sophisticated - only fall back
     // on the singular surface logic if the problem points are from faces that
