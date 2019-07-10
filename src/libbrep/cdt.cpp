@@ -124,10 +124,19 @@ do_triangulation(struct ON_Brep_CDT_Face_State *f, int full_surface_sample, int 
 	}
     }
 
-    // Check boundary triangles for distortion.  If any of them are unsuitable,
-    // flag the boundary polyline edge segments in question for splitting.  We'll
-    // have to redo the triangulation once the edge curve is refined.  Also, mark
-    // the opposing face sharing the edge as dirty - it too must be retriangulated
+    // Check boundary triangles for distortion.
+    //
+    // If any of them are unsuitable, there are a range of possible corrective measures.
+    //
+    // Simplest is to yank the non-edge point - local impact only, and we already try
+    // to avoid sampling too close to edges.
+    //
+    // There is, however, another possibility for long, thin surfaces - a
+    // triangle may directly use points from another edge, instead of a surface
+    // point.  In that case we either have to accept the distortion, or start
+    // splitting edges.  If we decide we have to split an edge, we also have to
+    // redo the triangulation once the edge curve is refined.  Also, mark the
+    // opposing face sharing the edge as dirty - it too must be retriangulated
     // to incorporate any new edge points.
     //
     // Probably should combine this check with the normals-in-wrong-direction check
