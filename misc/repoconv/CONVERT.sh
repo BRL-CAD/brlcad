@@ -154,6 +154,7 @@ echo "Make the final tar.gz file (NOTE!!! we can't use git bundle for this, it d
 mkdir brlcad-git
 mv .git brlcad-git
 tar -czf ../brlcad-git.tar.gz brlcad-git
-mv brlcad-git .git
+mv brlcad-git/.git .git
+rmdir brlcad-git
 
 echo "Be aware that by default a checkout of the repo won't get the notes - it requires an extra step, see https://stackoverflow.com/questions/37941650/fetch-git-notes-when-cloning"
