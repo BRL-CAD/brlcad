@@ -48,12 +48,11 @@ void trimesh_t::build(const unsigned long num_vertices, const unsigned long num_
     assert(triangles);
     assert(edges);
 
-    directed_edge2index_map_t de2fi;
     for (size_t fi = 0; fi < num_triangles; ++fi) {
 	const triangle_t& tri = triangles[fi];
-	de2fi[ std::make_pair(tri.v[0], tri.v[1]) ] = fi;
-	de2fi[ std::make_pair(tri.v[1], tri.v[2]) ] = fi;
-	de2fi[ std::make_pair(tri.v[2], tri.v[0]) ] = fi;
+	m_de2fi[ std::make_pair(tri.v[0], tri.v[1]) ] = fi;
+	m_de2fi[ std::make_pair(tri.v[1], tri.v[2]) ] = fi;
+	m_de2fi[ std::make_pair(tri.v[2], tri.v[0]) ] = fi;
     }
 
     clear();
@@ -75,12 +74,12 @@ void trimesh_t::build(const unsigned long num_vertices, const unsigned long num_
 	halfedge_t& he1 = m_halfedges.back();
 
 	// The face will be -1 if it is a boundary half-edge.
-	he0.face = directed_edge2face_index(de2fi, edge.v[0], edge.v[1]);
+	he0.face = directed_edge2face_index(m_de2fi, edge.v[0], edge.v[1]);
 	he0.to_vertex = edge.v[1];
 	he0.edge = ei;
 
 	// The face will be -1 if it is a boundary half-edge.
-	he1.face = directed_edge2face_index(de2fi, edge.v[1], edge.v[0]);
+	he1.face = directed_edge2face_index(m_de2fi, edge.v[1], edge.v[0]);
 	he1.to_vertex = edge.v[0];
 	he1.edge = ei;
 

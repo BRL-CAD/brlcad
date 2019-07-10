@@ -58,28 +58,6 @@ do_triangulation(struct ON_Brep_CDT_Face_State *f, int full_surface_sample, int 
 	getSurfacePoints(f);
     }
 
-    // TODO - want to get away from explicit exposure of poly2tri data types.  For now, build
-    // up a parallel execution stack using libbg data types - once it is working, remove
-    // the original logic that works with polyt2tri types.  What we need to do:
-    //
-    // 1.  Construct a single 2d point array of all 2d points associated with the face.
-    //     Do this in such a way that 2d point and 3d point array indices coincide, if
-    //     at all possible.
-    // 2.  Build up the polygons in libbg data types.
-    // 3.  Assemble all necessary data and call bg_nested_polygon_triangulate with
-    //     type TRI_CONSTRAINED_DELAUNAY
-    // 4.  Create a triangle set of individually created faces, so triangles may be
-    //     easily added and removed from the set in post-processing.
-    // 5.  Adjust the final mesh assembly logic to use the set container (should simplify
-    //     things overall, eliminate the multiple status tracking sets currently in use.
-    //     If a triangle is in the set, it's active.
-    //
-    // For now, correct is more important than fast.  If we end up having multiple copies
-    // of things in different containers for different stages of processing (for example,
-    // maintaining the 2D points in another container until we're got all of them and are
-    // ready to assign them to an array) so be it.
-
-
     std::set<ON_2dPoint *>::iterator p_it;
     for (p_it = f->on_surf_points->begin(); p_it != f->on_surf_points->end(); p_it++) {
 	ON_2dPoint *p = *p_it;
@@ -104,15 +82,62 @@ do_triangulation(struct ON_Brep_CDT_Face_State *f, int full_surface_sample, int 
     /* Calculate any 3D points we don't already have */
     populate_3d_pnts(f);
 
+
+    std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
+
+    // We'll need to be able to identify and work with subsets of the face mesh
+    struct trimesh_info *tm = CDT_Face_Build_Halfedge(f->tris);
+
+    // Check boundary triangles for distortion.  If any of them are unsuitable,
+    // flag the boundary polyline edge segments in question for splitting.  We'll
+    // have to redo the triangulation once the edge curve is refined.  Also, mark
+    // the opposing face sharing the edge as dirty - it too must be retriangulated
+    // to incorporate any new edge points.
+    std::vector<std::pair<trimesh::index_t, trimesh::index_t>> bedges = tm->mesh.boundary_edges();
+    std::vector<std::pair<trimesh::index_t, trimesh::index_t>>::iterator b_it;
+    for (b_it = bedges.begin(); b_it != bedges.end(); b_it++) {
+	trimesh::index_t tind = tm->mesh.m_de2fi[*b_it];
+	p2t::Triangle *t = tm->triangles[tind].t;
+	p2t::Point *p1 = tm->ind2p2d[(*b_it).first];  // edge point
+	p2t::Point *p2 = tm->ind2p2d[(*b_it).second]; // edge point
+	p2t::Point *p3 = NULL; // surface point
+	for (size_t j = 0; j < 3; j++) {
+	    if (t->GetPoint(j) != p1 && t->GetPoint(j) != p2) {
+		p3 = t->GetPoint(j);
+		break;
+	    }
+	}
+
+	if (!p1 || !p2 || !p3) {
+	    bu_log("Triangle point failure!\n");
+	}
+
+	ON_3dPoint *e1 = (*pointmap)[p1];
+	ON_3dPoint *e2 = (*pointmap)[p2];
+	ON_3dPoint *pf3d = (*pointmap)[p3];
+
+	if (!e1 || !e2 || !pf3d) {
+	    bu_log("3D Triangle point failure!\n");
+	}
+
+	if (e1 == e2) {
+	    // Degenerate
+	    continue;
+	}
+
+	ON_Line eline(*e1, *e2);
+	double elen = e1->DistanceTo(*e2);
+	double dist = eline.DistanceTo(*pf3d);
+	bu_log("elen: %f, dist: %f\n", elen, dist);
+    }
+
     // TODO - this needs to be considerably more sophisticated - only fall back
     // on the singular surface logic if the problem points are from faces that
     // involve a singularity, not just flagging on the surface.  Ideally, pass
     // in the singularity point that is the particular problem so the routine
     // knows where it's working
     if (f->has_singular_trims) {
-	std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
 	std::set<p2t::Triangle *>::iterator tr_it;
-	struct trimesh_info *tm = CDT_Face_Build_Halfedge(f->tris);
 
 	// Identify any singular points
 	std::set<ON_3dPoint *> active_singular_pnts;
@@ -130,6 +155,7 @@ do_triangulation(struct ON_Brep_CDT_Face_State *f, int full_surface_sample, int 
 	    Remesh_Near_Point(f, tm, *a_it);
 	}
 	delete tm;
+	tm = CDT_Face_Build_Halfedge(f->tris);
     }
 
     // Trivially degenerate pass

@@ -245,6 +245,11 @@ public:
 
     std::vector< index_t > boundary_loop() const;
 
+    typedef std::map< std::pair< index_t, index_t >, index_t > directed_edge2index_map_t;
+
+    // Map from directed edges to face indices
+    directed_edge2index_map_t m_de2fi;
+
 private:
     std::vector< halfedge_t > m_halfedges;
     // Offsets into the 'halfedges' sequence, one per vertex.
@@ -254,7 +259,6 @@ private:
     // Offset into the 'halfedges' sequence, one per edge (unordered pair of vertex indices).
     std::vector< index_t > m_edge_halfedges;
     // A map from an ordered edge (an std::pair of index_t's) to an offset into the 'halfedge' sequence.
-    typedef std::map< std::pair< index_t, index_t >, index_t > directed_edge2index_map_t;
     directed_edge2index_map_t m_directed_edge2he_index;
 };
 
