@@ -120,7 +120,7 @@ do_triangulation(struct ON_Brep_CDT_Face_State *f, int full_surface_sample, int 
 	    bu_log("3D Triangle point failure!\n");
 	}
 
-	if (e1 == e2) {
+	if (e1 == e2 || e1 == pf3d || e2 == pf3d) {
 	    // Degenerate
 	    continue;
 	}
@@ -128,7 +128,8 @@ do_triangulation(struct ON_Brep_CDT_Face_State *f, int full_surface_sample, int 
 	ON_Line eline(*e1, *e2);
 	double elen = e1->DistanceTo(*e2);
 	double dist = eline.DistanceTo(*pf3d);
-	bu_log("elen: %f, dist: %f\n", elen, dist);
+	if (elen > 10*dist)
+	    bu_log("%f %f %f elen: %f, dist: %f\n", pf3d->x, pf3d->y, pf3d->z, elen, dist);
     }
 
     // TODO - this needs to be considerably more sophisticated - only fall back
@@ -169,6 +170,7 @@ do_triangulation(struct ON_Brep_CDT_Face_State *f, int full_surface_sample, int 
     int eret = triangles_check_edges(f);
     if (eret < 0) {
 	bu_log("Fatal failure on edge checking\n");
+	delete tm;
 	return -1;
     }
     ret += eret;
@@ -178,17 +180,20 @@ do_triangulation(struct ON_Brep_CDT_Face_State *f, int full_surface_sample, int 
     int nret = triangles_incorrect_normals(f);
     if (nret < 0) {
 	bu_log("Fatal failure on normals checking\n");
+	delete tm;
 	return -1;
     }
     ret += nret;
 
     if (ret > 0) {
+	delete tm;
 	return do_triangulation(f, 0, cnt+1);
     }
 
     if (!ret) {
 	bu_log("Face %d: successful triangulation after %d passes\n", f->ind, cnt);
     }
+    delete tm;
     return ret;
 }
 
