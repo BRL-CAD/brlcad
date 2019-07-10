@@ -143,7 +143,7 @@ int main(int argc, const char **argv)
 
     std::ifstream infile(argv[1]);
 
-    for (i = starting_rev+1; i < 71000; i++) {
+    for (i = starting_rev+1; i < 75000; i++) {
 	rev_fast_export(infile, i);
 	get_rev_sha1s(i);
 	update_starting_rev(i);
