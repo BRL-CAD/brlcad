@@ -25,6 +25,9 @@
  *
  */
 
+// TODO - investigate odd sampling in NIST2 face 501
+
+
 #include "common.h"
 #include "bn/rand.h"
 #include "./cdt.h"
