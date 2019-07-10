@@ -222,17 +222,12 @@ enqueue_attrs(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 
 
 static int
-enqueue_file(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+enqueue_format(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 {
     std::string s;
     std::ifstream file;
     struct script_file_data *sfd = (struct script_file_data *)set_var;
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "nirt script file");
-
-    if (!bu_file_exists(argv[0], NULL)) {
-	bu_vls_printf(msg, "ERROR: -f file [%s] does not exist\n", argv[0]);
-	return -1;
-    }
 
     file.open(argv[0]);
     if (!file.is_open()) {
@@ -242,8 +237,11 @@ enqueue_file(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 	file.open(bu_vls_addr(&str));
 	bu_vls_free(&str);
 
-	if (!file.is_open())
+	if (!file.is_open()) {
+	    bu_vls_printf(msg, "ERROR: -f [%s] does not exist as a file or predefined format\n", argv[0]);
+
 	    return -1;
+	}
 
 	while (std::getline(file, s)) {
 	    if (sfd) {
@@ -614,7 +612,7 @@ main(int argc, const char **argv)
     BU_OPT(d[5],  "B", "",     "n",      &bu_opt_int,      &minpieces,      "set rt_bot_minpieces=n");
     BU_OPT(d[6],  "T", "",     "n",      &bu_opt_int,      &bot_mintie,     "set rt_bot_mintie=n (deprecated, use LIBRT_BOT_MINTIE instead)");
     BU_OPT(d[7],  "e", "",     "script", &enqueue_script,  &init_scripts,   "run script before interacting");
-    BU_OPT(d[8],  "f", "",     "sfile",  &enqueue_file,    &sfd,            "run script sfile before interacting");
+    BU_OPT(d[8],  "f", "",     "format", &enqueue_format,  &sfd,            "load predefined format or file (see -L)");
     BU_OPT(d[9],  "E", "",     "",       &dequeue_scripts, &init_scripts,   "ignore any -e or -f options specified earlier on the command line");
     BU_OPT(d[10], "L", "",     "",       NULL,             &show_formats,   "list output formatting options");
     BU_OPT(d[11], "s", "",     "",       NULL,             &silent_mode,    "run in silent (non-verbose) mode");
