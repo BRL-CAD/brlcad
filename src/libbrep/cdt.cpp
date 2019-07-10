@@ -113,8 +113,11 @@ do_triangulation(struct ON_Brep_CDT_Face_State *f, int full_surface_sample, int 
     std::vector<std::pair<trimesh::index_t, trimesh::index_t>>::iterator b_it;
     std::set<trimesh::index_t> etris;
     for (b_it = bedges.begin(); b_it != bedges.end(); b_it++) {
-	bu_log("edge: %ld -> %ld\n", (*b_it).first, (*b_it).second);
-	trimesh::index_t tind = tm->mesh.m_de2fi[*b_it];
+	// trimesh boundary edges won't map to a triangle - get the flipped
+	// form of the edge that will
+	std::pair<trimesh::index_t, trimesh::index_t> fedge = std::pair<trimesh::index_t, trimesh::index_t>((*b_it).second, (*b_it).first);
+	bu_log("edge: %ld -> %ld\n", fedge.first, fedge.second);
+	trimesh::index_t tind = tm->mesh.m_de2fi[fedge];
 	bu_log("tind: %ld\n", tind);
 	etris.insert(tind);
 	p2t::Triangle *t = tm->triangles[tind].t;
