@@ -132,6 +132,17 @@ int main(int argc, const char **argv)
 	return -1;
     }
 
+    std::string smaxrev_cmd = std::string("svn info --show-item revision file://$PWD/repo_dercs > smaxrev.txt");
+    if (std::system(smaxrev_cmd.c_str())) {
+	std::cout << "smaxrev_cmd failed\n";
+	exit(1);
+    }
+    std::string maxline;
+    std::ifstream maxfile("smaxrev.txt");
+    if (!maxfile.good()) exit(1);
+    std::getline(maxfile, maxline);
+    long mrev = std::stol(maxline);
+
     // This process will create a lot of fi files - stash them
     if (!file_exists(std::string("done"))) {
 	std::string stashdir_cmd = std::string("mkdir done");
@@ -143,7 +154,7 @@ int main(int argc, const char **argv)
 
     std::ifstream infile(argv[1]);
 
-    for (i = starting_rev+1; i < 75000; i++) {
+    for (i = starting_rev+1; i < mrev; i++) {
 	rev_fast_export(infile, i);
 	get_rev_sha1s(i);
 	update_starting_rev(i);
