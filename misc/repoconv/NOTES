@@ -9,9 +9,9 @@ better list:
 git cat-file --batch-check --batch-all-objects |grep commit | awk '{print "git log -1 --pretty=format:\"%H %s%n\" " $1}' > print_all_msgs.sh
 bash print_all_msgs.sh > all_msgs.txt
 cat all_msgs.txt|grep -v Note\ SVN\ revision > all_non_note_msgs.txt
-awk '{print "git log -1 --pretty=format:\"GITMSG%n%H,%ct +0000,%B%nGITMSGEND%n\" " $1}' all_non_note_msgs.txt > print_msgs.sha1
+awk '{print "git log -1 --pretty=format:\"GITMSG%n%H,%ct +0000,%B%nGITMSGEND%n\" " $1}' all_non_note_msgs.txt > print_msgs.sh
 bash print_msgs.sh > git.log
-rm print_all_msgs.sh all_msgs.txt all_non_note_msgs.txt print_msgs.sha1
+rm print_all_msgs.sh all_msgs.txt all_non_note_msgs.txt print_msgs.sh
 #rm all_msgs.txt all_non_note_msgs.txt
 
 (Also worth noting - preliminary move commits have the same timestamp as their
@@ -39,6 +39,20 @@ it's likely that other features used in distcheck will prompt either a version b
 some kind of feature check to make sure a new enough git is present on the system for things
 to function as expected.
 
+
+TODO:  We'll need to look at protecting branches from deletion, i.e.
+https://help.github.com/en/articles/configuring-protected-branches
+https://gist.github.com/pixelhandler/5718585
+https://stackoverflow.com/questions/48381923/how-can-i-prevent-deletion-of-remote-branches-in-pure-git
+https://stackoverflow.com/questions/19293222/how-to-prevent-remote-branch-deletion-in-git-without-using-gitolite
+
+May also want style-based enforcement at some point:
+https://github.com/barisione/clang-format-hooks
+https://github.com/mellowcandle/astyle_precommit_hook
+https://github.com/Sarcasm/run-clang-format
+
+
+################# .gitconfig helpers ###################
 
 Here is a simple way to use notes with svn revision numbers to checkout a specific revision:
 
@@ -101,6 +115,7 @@ the SVN record of the branch, use the following alias:
                 }; f"
 
 
+############  Other useful tips ##############
 
 Many (most?) of BRL-CAD's commit messages are long one liners - it turns out gitk does have
 the ability to word wrap, but (why???) it isn't on by default.  We'll want to advise users
@@ -110,12 +125,9 @@ May want to investigate conditional includes as well so we can pre-package a rep
 https://git-scm.com/docs/git-config#_conditional_includes
 
 
-
-# Other useful commands:
-
 # Overview with all branches:
 
-# gitk --branches="*" --show-notes
+# gitk --branches="*"
 
 # Nifty trick for getting commit counts per committer (https://stackoverflow.com/a/9839491)
 # git shortlog -s -n --all
