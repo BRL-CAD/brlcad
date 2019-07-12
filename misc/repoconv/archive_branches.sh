@@ -124,7 +124,7 @@ branches=(
 for i in "${branches[@]}"
 do
 	echo "Archiving $i"
-	git tag archived/$i $i
+	git tag archived/$i refs/heads/$i
 	git branch -D $i
 done
 
