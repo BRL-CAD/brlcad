@@ -1,7 +1,18 @@
 NOTE:  When generating lists of git commits to compare against an SVN list, do so *before*
 archiving the branches that aren't active in SVN.  The git logging mechanisms will ignore
 commits now active only in the history of the tag that has archived the branch, and will
-look like "dropped" commits in a comparison.
+look like "dropped" commits in a comparison.  The below script is an attempt to get a
+better list:
+
+#!/bin/sh
+# Use a trick from https://stackoverflow.com/a/47947423
+git cat-file --batch-check --batch-all-objects |grep commit | awk '{print "git log -1 --pretty=format:\"%H %s%n\" " $1}' > print_all_msgs.sh
+bash print_all_msgs.sh > all_msgs.txt
+cat all_msgs.txt|grep -v Note\ SVN\ revision > all_non_note_msgs.txt
+awk '{print "git log -1 --pretty=format:\"GITMSG%n%H,%ct +0000,%B%nGITMSGEND%n\" " $1}' all_non_note_msgs.txt > print_msgs.sha1
+bash print_msgs.sh > git.log
+rm print_all_msgs.sh all_msgs.txt all_non_note_msgs.txt print_msgs.sha1
+#rm all_msgs.txt all_non_note_msgs.txt
 
 (Also worth noting - preliminary move commits have the same timestamp as their
 child commit, so they get chosen as that timestamp's commit line and the
