@@ -86,6 +86,57 @@ function(SVN_INFO_TO_PATH_LIST SVN_INFO SVN_PATHLIST)
   set(${SVN_PATHLIST} "${SVN_FILES}" PARENT_SCOPE)
 endfunction(SVN_INFO_TO_PATH_LIST)
 
+# Git generates a textual report that we need to convert into a file list.
+#function(GIT_INFO_TO_PATH_LIST GIT_INFO GIT_PATHLIST)
+#  set(GIT_PROCESSING ${${GIT_INFO}})
+#  string(REGEX REPLACE "\n" ";" GIT_PROCESSING "${GIT_PROCESSING}")
+#  set(GIT_FILES)
+#  foreach(gf ${GIT_PROCESSING})
+#    # https://git-scm.com/docs/git-status/#_output
+#    string(REGEX REPLACE "[MADRCU?! ][MADRCU?!] " "" FILE_PATH "${gf}")
+#    message("PATH: ${FILE_PATH}")
+#    if(NOT IS_DIRECTORY "@CMAKE_SOURCE_DIR@/${FILE_PATH}")
+#      list(APPEND GIT_FILES ${FILE_PATH})
+#    else(NOT IS_DIRECTORY "@CMAKE_SOURCE_DIR@/${FILE_PATH}")
+#      file(GLOB_RECURSE AFILES RELATIVE "@CMAKE_SOURCE_DIR@" "@CMAKE_SOURCE_DIR@/${FILE_PATH}/*")
+#      foreach(gr ${AFILES})
+#        list(APPEND GIT_FILES ${gr})
+#      endforeach(gr ${AFILES})
+#    endif(NOT IS_DIRECTORY "@CMAKE_SOURCE_DIR@/${FILE_PATH}")
+#  endforeach(gf ${GIT_PROCESSING})
+#  set(${GIT_PATHLIST} "${GIT_FILES}" PARENT_SCOPE)
+#endfunction(GIT_INFO_TO_PATH_LIST)
+#
+## Look for Git - if we don't have the command, we can't query the
+## repository even if it is present.
+#find_program(GIT_EXEC git)
+#
+## We need the Git binary and the source directory must be a
+## checkout of the BRL-CAD git repository.  If these two conditions
+## are met, we can collect information from Git
+#if(GIT_EXEC AND EXISTS "@CMAKE_SOURCE_DIR@/.git")
+#
+#  # By default, assume that nothing has been modified.
+#  set(GIT_TREE_MODIFIED 0)
+#
+#  # Get the file list
+#  set(GIT_FILES "")
+#  execute_process(COMMAND ${GIT_EXEC} -C "@CMAKE_SOURCE_DIR@" status --porcelain --ignored OUTPUT_VARIABLE GIT_STDOUT ERROR_VARIABLE GIT_STDERR RESULT_VARIABLE RETVAL)
+#  if (RETVAL)
+#    message("")
+#    message("WARNING: Git does not seem to be working correctly.")
+#    message("         Output from ${GIT_EXEC} -C \"@CMAKE_SOURCE_DIR@\" status --porcelain --ignored:")
+#    message("${GIT_STDERR}")
+#  endif (RETVAL)
+#
+#
+#  message(" --- Building file list from Git information: ...")
+#
+#  GIT_INFO_TO_PATH_LIST(GIT_STDOUT GIT_FILES)
+#
+#  message(FATAL_ERROR "git testing done")
+#endif(GIT_EXEC AND EXISTS "@CMAKE_SOURCE_DIR@/.git")
+
 
 # Look for Subversion - if we don't have the command, we can't query the
 # repository even if it is present.
