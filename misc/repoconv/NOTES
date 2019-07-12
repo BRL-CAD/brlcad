@@ -1,3 +1,13 @@
+NOTE:  When generating lists of git commits to compare against an SVN list, do so *before*
+archiving the branches that aren't active in SVN.  The git logging mechanisms will ignore
+commits now active only in the history of the tag that has archived the branch, and will
+look like "dropped" commits in a comparison.
+
+(Also worth noting - preliminary move commits have the same timestamp as their
+child commit, so they get chosen as that timestamp's commit line and the
+subsequent (identical) commit with it's message doesn't make the list.  The
+commits are there, but not (currently) written out by the svn_msg.cxx code...)
+
 NOTE:  When building new logic with Git, we're assuming a modern version (work is being done with
 2.17.1.)  1.7 is known to be too old for most of the git notes based tricks below to work, and
 it's likely that other features used in distcheck will prompt either a version based test or
