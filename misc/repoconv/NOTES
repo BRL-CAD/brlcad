@@ -6,9 +6,10 @@ To make this easier, add the following alias to your .gitconfig file:
 
 	svnrev = "!f() { \
 		if [ x$1 != x ] ; then \
-		   REVSHA1=\"$(git log --all --pretty=format:\"%H %N\" --grep svn:revision:$1$|awk '{system(\"echo \"$1)}')\"; \
-		   if [ x$REVSHA1 != x ] ; then \
-		      git checkout $REVSHA1; \
+                   REVSHA1=\"$(git log --all --pretty=format:\"%H %N\" --grep svn:revision:$1$)\"; \
+                   REVSHA1N=$(echo $REVSHA1 | awk '{print $1}'); \
+                   if [ x$REVSHA1N != x ] ; then \
+                      git checkout $REVSHA1N; \
 		   else \
 		      echo Unknown revision number: $1; \
 		   fi; \
