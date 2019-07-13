@@ -32,6 +32,23 @@
 #include "bn/rand.h"
 #include "./cdt.h"
 
+class SPatch {
+
+    public:
+	SPatch(double u1, double u2, double v1, double v2)
+	{
+	    umin = u1;
+	    umax = u2;
+	    vmin = v1;
+	    vmax = v2;
+	}
+
+	double umin;
+	double umax;
+	double vmin;
+	double vmax;
+};
+
 double
 uline_len_est(struct cdt_surf_info *sinfo, double u1, double u2, double v)
 {
@@ -336,15 +353,17 @@ filter_surface_edge_pnts(struct ON_Brep_CDT_Face_State *f)
 }
 
 static bool
-getSurfacePoints(
+getSurfacePoint(
 	         struct ON_Brep_CDT_Face_State *f,
 	         struct cdt_surf_info *sinfo,
-		 fastf_t u1,
-		 fastf_t u2,
-		 fastf_t v1,
-		 fastf_t v2
+		 SPatch &sp,
+		 std::queue<SPatch> &nq
 		 )
 {
+    fastf_t u1 = sp.umin;
+    fastf_t u2 = sp.umax;
+    fastf_t v1 = sp.vmin;
+    fastf_t v2 = sp.vmax;
     double ldfactor = 2.0;
     int split_u = 0;
     int split_v = 0;
@@ -460,54 +479,21 @@ getSurfacePoints(
 	}
     }
 
-    bool split;
     if (split_u && split_v) {
-	split = getSurfacePoints(f, sinfo, u1, u, v1, v);
-	if (!split) {
-	    ON_BoundingBox bb(ON_2dPoint(u1, v1),ON_2dPoint(u,v));
-	    sinfo->leaf_bboxes.insert(new ON_BoundingBox(bb));
-	}
-	split = getSurfacePoints(f, sinfo, u1, u, v, v2);
-	if (!split) {
-	    ON_BoundingBox bb(ON_2dPoint(u1,v),ON_2dPoint(u,v2));
-	    sinfo->leaf_bboxes.insert(new ON_BoundingBox(bb));
-	}
-	split = getSurfacePoints(f, sinfo, u, u2, v1, v);
-	if (!split) {
-	    ON_BoundingBox bb(ON_2dPoint(u,v1),ON_2dPoint(u2,v));
-	    sinfo->leaf_bboxes.insert(new ON_BoundingBox(bb));
-	}
-	split = getSurfacePoints(f, sinfo, u, u2, v, v2);
-	if (!split) {
-	    ON_BoundingBox bb(ON_2dPoint(u,v),ON_2dPoint(u2,v2));
-	    sinfo->leaf_bboxes.insert(new ON_BoundingBox(bb));
-	}
+	nq.push(SPatch(u1, u, v1, v));
+	nq.push(SPatch(u1, u, v, v2));
+	nq.push(SPatch(u, u2, v1, v));
+	nq.push(SPatch(u, u2, v, v2));
 	return true;
     }
     if (split_u) {
-	split = getSurfacePoints(f, sinfo, u1, u, v1, v2);
-	if (!split) {
-	    ON_BoundingBox bb(ON_2dPoint(u1, v1),ON_2dPoint(u,v2));
-	    sinfo->leaf_bboxes.insert(new ON_BoundingBox(bb));
-	}
-	split = getSurfacePoints(f, sinfo, u, u2, v1, v2);
-	if (!split) {
-	    ON_BoundingBox bb(ON_2dPoint(u,v1),ON_2dPoint(u2,v2));
-	    sinfo->leaf_bboxes.insert(new ON_BoundingBox(bb));
-	}
+	nq.push(SPatch(u1, u, v1, v2));
+	nq.push(SPatch(u, u2, v1, v2));
 	return true;
     }
     if (split_v) {
-	split = getSurfacePoints(f, sinfo, u1, u2, v1, v);
-	if (!split) {
-	    ON_BoundingBox bb(ON_2dPoint(u1,v1),ON_2dPoint(u2,v));
-	    sinfo->leaf_bboxes.insert(new ON_BoundingBox(bb));
-	}
-	split = getSurfacePoints(f, sinfo, u1, u2, v, v2);
-	if (!split) {
-	    ON_BoundingBox bb(ON_2dPoint(u1,v),ON_2dPoint(u2,v2));
-	    sinfo->leaf_bboxes.insert(new ON_BoundingBox(bb));
-	}
+	nq.push(SPatch(u1, u2, v1, v));
+	nq.push(SPatch(u1, u2, v, v2));
 	return true;
     }
 
@@ -611,6 +597,8 @@ getSurfacePoints(struct ON_Brep_CDT_Face_State *f)
 	sinfo.within_dist = within_dist;
 	sinfo.cos_within_ang = cos_within_ang;
 
+	std::queue<SPatch> spq1, spq2;
+
 	/**
 	 * Sample portions of the surface to collect sufficient points
 	 * to capture the surface shape according to the settings
@@ -644,7 +632,6 @@ getSurfacePoints(struct ON_Brep_CDT_Face_State *f)
 	ON_BOOL32 vclosed = s->IsClosed(1);
 	double midx = (min.x + max.x) / 2.0;
 	double midy = (min.y + max.y) / 2.0;
-	bool split;
 
 	if (uclosed && vclosed) {
 	    /*
@@ -658,11 +645,7 @@ getSurfacePoints(struct ON_Brep_CDT_Face_State *f)
 	     *     |          |         |
 	     *    umvm------uovm--------#
 	     */
-	    split = getSurfacePoints(f, &sinfo, min.x, midx, min.y, midy);
-	    if (!split) {
-		ON_BoundingBox bb(ON_2dPoint(min.x,min.y),ON_2dPoint(midx,midy));
-		sinfo.leaf_bboxes.insert(new ON_BoundingBox(bb));
-	    }
+	    spq1.push(SPatch(min.x, midx, min.y, midy));
 
 	    /*
 	     *     #----------#---------#
@@ -675,12 +658,7 @@ getSurfacePoints(struct ON_Brep_CDT_Face_State *f)
 	     *     |          |         |
 	     *     #--------uovm-------uMvm
 	     */
-	    split = getSurfacePoints(f, &sinfo, midx, max.x, min.y, midy);
-	    if (!split) {
-		ON_BoundingBox bb(ON_2dPoint(midx,min.y),ON_2dPoint(max.x,midy));
-		sinfo.leaf_bboxes.insert(new ON_BoundingBox(bb));
-	    }
-
+	    spq1.push(SPatch(midx, max.x, min.y, midy));
 
 	    /*
 	     *    umvM------uovM--------#
@@ -693,11 +671,7 @@ getSurfacePoints(struct ON_Brep_CDT_Face_State *f)
 	     *     |          |         |
 	     *     #----------#---------#
 	     */
-	    split = getSurfacePoints(f, &sinfo, min.x, midx, midy, max.y);
-	    if (!split) {
-		ON_BoundingBox bb(ON_2dPoint(min.x,midy),ON_2dPoint(midx,max.y));
-		sinfo.leaf_bboxes.insert(new ON_BoundingBox(bb));
-	    }
+	    spq1.push(SPatch(min.x, midx, midy, max.y));
 
 	    /*
 	     *     #--------uovM------ uMvM
@@ -710,11 +684,7 @@ getSurfacePoints(struct ON_Brep_CDT_Face_State *f)
 	     *     |          |         |
 	     *     #----------#---------#
 	     */
-	    split = getSurfacePoints(f, &sinfo, midx, max.x, midy, max.y);
-	    if (!split) {
-		ON_BoundingBox bb(ON_2dPoint(midx,midy),ON_2dPoint(max.x,max.y));
-		sinfo.leaf_bboxes.insert(new ON_BoundingBox(bb));
-	    }
+	    spq1.push(SPatch(midx, max.x, midy, max.y));
 
 	} else if (uclosed) {
 
@@ -729,11 +699,7 @@ getSurfacePoints(struct ON_Brep_CDT_Face_State *f)
 	     *     |          |         |
 	     *    umvm------uovm--------#
 	     */
-	    split = getSurfacePoints(f, &sinfo, min.x, midx, min.y, max.y);
-	    if (!split) {
-		ON_BoundingBox bb(ON_2dPoint(min.x,min.y),ON_2dPoint(midx,max.y));
-		sinfo.leaf_bboxes.insert(new ON_BoundingBox(bb));
-	    }
+	    spq1.push(SPatch(min.x, midx, min.y, max.y));
 
 	    /*
 	     *     #--------uovM------ uMvM
@@ -746,11 +712,7 @@ getSurfacePoints(struct ON_Brep_CDT_Face_State *f)
 	     *     |          |         |
 	     *     #--------uovm-------uMvm
 	     */
-	    split = getSurfacePoints(f, &sinfo, midx, max.x, min.y, max.y);
-	    if (!split) {
-		ON_BoundingBox bb(ON_2dPoint(midx,min.y),ON_2dPoint(max.x,max.y));
-		sinfo.leaf_bboxes.insert(new ON_BoundingBox(bb));
-	    }
+	    spq1.push(SPatch(midx, max.x, min.y, max.y));
 
 	} else if (vclosed) {
 
@@ -765,11 +727,7 @@ getSurfacePoints(struct ON_Brep_CDT_Face_State *f)
 	     *     |          |         |
 	     *    umvm--------#--------uMvm
 	     */
-	    split = getSurfacePoints(f, &sinfo, min.x, max.x, min.y, midy);
-	    if (!split) {
-		ON_BoundingBox bb(ON_2dPoint(min.x,min.y),ON_2dPoint(max.x,midy));
-		sinfo.leaf_bboxes.insert(new ON_BoundingBox(bb));
-	    }
+	    spq1.push(SPatch(min.x, max.x, min.y, midy));
 
 	    /*
 	     *    umvM--------#------- uMvM
@@ -782,11 +740,7 @@ getSurfacePoints(struct ON_Brep_CDT_Face_State *f)
 	     *     |          |         |
 	     *     #----------#---------#
 	     */
-	    split = getSurfacePoints(f, &sinfo, min.x, max.x, midy, max.y);
-	    if (!split) {
-		ON_BoundingBox bb(ON_2dPoint(min.x,midy),ON_2dPoint(max.x,max.y));
-		sinfo.leaf_bboxes.insert(new ON_BoundingBox(bb));
-	    }
+	    spq1.push(SPatch(min.x, max.x, midy, max.y));
 
 	} else {
 
@@ -801,12 +755,32 @@ getSurfacePoints(struct ON_Brep_CDT_Face_State *f)
 	     *     |          |         |
 	     *    umvm--------#--------uMvm
 	     */
-	    split = getSurfacePoints(f, &sinfo, min.x, max.x, min.y, max.y);
-	    if (!split) {
-		ON_BoundingBox bb(ON_2dPoint(min.x,min.y),ON_2dPoint(max.x,max.y));
+	    spq1.push(SPatch(min.x, max.x, min.y, max.y));
+	}
+
+	std::queue<SPatch> *wq = &spq1;
+	std::queue<SPatch> *nq = &spq2;
+	int split_depth = 0;
+
+	while (!wq->empty()) {
+	    SPatch sp = wq->front();
+	    wq->pop();
+	    if (!getSurfacePoint(f, &sinfo, sp, *nq)) {
+		ON_BoundingBox bb(ON_2dPoint(sp.umin,sp.vmin),ON_2dPoint(sp.umax, sp.vmax));
 		sinfo.leaf_bboxes.insert(new ON_BoundingBox(bb));
 	    }
+
+	    // Once we've processed the current level,
+	    // work on the next if we need to
+	    if (wq->empty() && !nq->empty()) {
+		std::queue<SPatch> *tq = wq;
+		wq = nq;
+		nq = tq;
+		// Let the counter know we're going deeper
+		split_depth++;
+	    }
 	}
+
 
 	float *prand;
 	std::set<ON_BoundingBox *>::iterator b_it;
