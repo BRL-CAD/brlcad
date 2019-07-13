@@ -217,9 +217,68 @@ triangles_degenerate_trivial(struct ON_Brep_CDT_Face_State *f)
     }
 }
 
+int
+triangle_is_zero_area(p2t::Triangle *t, std::map<p2t::Point *, ON_3dPoint *> *pointmap, fastf_t dist)
+{
+    int is_zero_area = 0;
+
+    ON_3dPoint *tpnts[3] = {NULL, NULL, NULL};
+    for (size_t j = 0; j < 3; j++) {
+	p2t::Point *p = t->GetPoint(j);
+	ON_3dPoint *op = (*pointmap)[p];
+	tpnts[j] = op;
+    }
+
+    ON_Line l(*tpnts[0], *tpnts[2]);
+    if (l.Length() < dist) {
+	ON_Line l2(*tpnts[0], *tpnts[1]);
+	if (l2.Length() < dist) {
+	    is_zero_area = 1;
+	} else {
+	    if (l2.DistanceTo(*tpnts[2]) < dist) {
+		is_zero_area = 1;
+	    }
+	}
+    } else {
+	if (l.DistanceTo(*tpnts[1]) < dist) {
+	    is_zero_area = 1;
+	}
+    }
+
+    return is_zero_area;
+}
+
+void
+triangles_degenerate_area_notify(struct ON_Brep_CDT_Face_State *f)
+{
+    /* If we have degeneracies along an edge, the impact is not
+     * local to this face but will also impact the other face.
+     * Find them and notify them. */
+    std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
+    std::set<p2t::Point *>::iterator p2it;
+    for (p2it = f->degen_pnts->begin(); p2it != f->degen_pnts->end(); p2it++) {
+	ON_3dPoint *pt3D = (*pointmap)[*p2it];
+	std::set<BrepTrimPoint *> &pt = (*f->s_cdt->on_brep_edge_pnts)[pt3D];
+	std::set<BrepTrimPoint *>::iterator bit;
+	for (bit = pt.begin(); bit != pt.end(); bit++) {
+	    BrepTrimPoint *tpt = *bit;
+	    int f2ind = f->s_cdt->brep->m_T[tpt->trim_ind].Face()->m_face_index;
+	    if (f2ind != f->ind) {
+		//bu_log("Pulls in face %d\n", f2ind);
+		std::set<p2t::Point *> tri_pnts = (*f->on3_to_tri_map)[pt3D];
+		std::set<p2t::Point *>::iterator tp_it;
+		for (tp_it = tri_pnts.begin(); tp_it != tri_pnts.end(); tp_it++) {
+		    f->ext_degen_pnts->insert(*tp_it);
+		}
+	    }
+	}
+    }
+}
+
 void
 triangles_degenerate_area(struct ON_Brep_CDT_Face_State *f)
 {
+    f->degen_pnts->clear();
     std::set<p2t::Triangle*> tris_degen;
     // Use a distance three orders of magnitude smaller than the smallest
     // edge segment length of the face to decide if a face is degenerate
@@ -231,39 +290,7 @@ triangles_degenerate_area(struct ON_Brep_CDT_Face_State *f)
     for (tr_it = tris->begin(); tr_it != tris->end(); tr_it++) {
 	p2t::Triangle *t = *tr_it;
 
-	ON_3dPoint *tpnts[3] = {NULL, NULL, NULL};
-	for (size_t j = 0; j < 3; j++) {
-	    p2t::Point *p = t->GetPoint(j);
-	    ON_3dPoint *op = (*pointmap)[p];
-	    tpnts[j] = op;
-	}
-
-	//bu_log("Triangle %zu: (%f %f %f) -> (%f %f %f) -> (%f %f %f)\n", i, tpnts[0]->x, tpnts[0]->y, tpnts[0]->z, tpnts[1]->x, tpnts[1]->y, tpnts[1]->z ,tpnts[2]->x, tpnts[2]->y, tpnts[2]->z);
-
-	/* If we have a face with 3 shared or co-linear points, it's not
-	 * trivially degenerate and we need to do more work.  (This can
-	 * arise when the 2D triangulation has a non-degenerate triangle
-	 * that maps degenerately into 3D). For now, just build up the set
-	 * of degenerate triangles. */
-	ON_Line l(*tpnts[0], *tpnts[2]);
-	int is_zero_area = 0;
-	if (l.Length() < dist) {
-	    ON_Line l2(*tpnts[0], *tpnts[1]);
-	    if (l2.Length() < dist) {
-		bu_log("completely degenerate triangle\n");
-		tris_degen.insert(t);
-		continue;
-	    } else {
-		if (l2.DistanceTo(*tpnts[2]) < dist) {
-		    is_zero_area = 1;
-		}
-	    }
-	} else {
-	    if (l.DistanceTo(*tpnts[1]) < dist) {
-		is_zero_area = 1;
-	    }
-	}
-	if (is_zero_area) {
+	if (triangle_is_zero_area(t, pointmap, dist)) {
 	    // The edges from this face are degenerate edges
 	    p2t::Point *p2_A = t->GetPoint(0);
 	    p2t::Point *p2_B = t->GetPoint(1);
@@ -272,54 +299,6 @@ triangles_degenerate_area(struct ON_Brep_CDT_Face_State *f)
 	    f->degen_pnts->insert(p2_A);
 	    f->degen_pnts->insert(p2_B);
 	    f->degen_pnts->insert(p2_C);
-
-	    /* If we have degeneracies along an edge, the impact is not
-	     * local to this face but will also impact the other face.
-	     * Find it and let it know.(probably need another map - 3d pnt
-	     * to trim points...) */
-	    ON_3dPoint *pt_A = (*pointmap)[p2_A];
-	    ON_3dPoint *pt_B = (*pointmap)[p2_B];
-	    ON_3dPoint *pt_C = (*pointmap)[p2_C];
-	    std::set<BrepTrimPoint *>::iterator bit;
-	    std::set<BrepTrimPoint *> &pAt = (*f->s_cdt->on_brep_edge_pnts)[pt_A];
-	    std::set<BrepTrimPoint *> &pBt = (*f->s_cdt->on_brep_edge_pnts)[pt_B];
-	    std::set<BrepTrimPoint *> &pCt = (*f->s_cdt->on_brep_edge_pnts)[pt_C];
-	    for (bit = pAt.begin(); bit != pAt.end(); bit++) {
-		BrepTrimPoint *tpt = *bit;
-		int f2ind = f->s_cdt->brep->m_T[tpt->trim_ind].Face()->m_face_index;
-		if (f2ind != f->ind) {
-		    //bu_log("Pulls in face %d\n", f2ind);
-		    std::set<p2t::Point *> tri_pnts = (*f->on3_to_tri_map)[pt_A];
-		    std::set<p2t::Point *>::iterator tp_it;
-		    for (tp_it = tri_pnts.begin(); tp_it != tri_pnts.end(); tp_it++) {
-			f->degen_pnts->insert(*tp_it);
-		    }
-		}
-	    }
-	    for (bit = pBt.begin(); bit != pBt.end(); bit++) {
-		BrepTrimPoint *tpt = *bit;
-		int f2ind = f->s_cdt->brep->m_T[tpt->trim_ind].Face()->m_face_index;
-		if (f2ind != f->ind) {
-		    //bu_log("Pulls in face %d\n", f2ind);
-		    std::set<p2t::Point *> tri_pnts = (*f->on3_to_tri_map)[pt_B];
-		    std::set<p2t::Point *>::iterator tp_it;
-		    for (tp_it = tri_pnts.begin(); tp_it != tri_pnts.end(); tp_it++) {
-			f->degen_pnts->insert(*tp_it);
-		    }
-		}
-	    }
-	    for (bit = pCt.begin(); bit != pCt.end(); bit++) {
-		BrepTrimPoint *tpt = *bit;
-		int f2ind = f->s_cdt->brep->m_T[tpt->trim_ind].Face()->m_face_index;
-		if (f2ind != f->ind) {
-		    //bu_log("Pulls in face %d\n", f2ind);
-		    std::set<p2t::Point *> tri_pnts = (*f->on3_to_tri_map)[pt_C];
-		    std::set<p2t::Point *>::iterator tp_it;
-		    for (tp_it = tri_pnts.begin(); tp_it != tri_pnts.end(); tp_it++) {
-			f->degen_pnts->insert(*tp_it);
-		    }
-		}
-	    }
 
 	    tris_degen.insert(t);
 	}
@@ -482,10 +461,9 @@ triangles_incorrect_normals(struct ON_Brep_CDT_Face_State *f)
 }
 
 void
-triangles_rebuild_involved(struct ON_Brep_CDT_Face_State *f)
+triangles_rebuild_involved_pnts(struct ON_Brep_CDT_Face_State *f, std::set<p2t::Point *> *fdp)
 {
     std::set<p2t::Triangle*> tris_degen;
-    std::set<p2t::Point *> *fdp = f->degen_pnts;
     if (!fdp) {
 	return;
     }
@@ -727,6 +705,13 @@ triangles_rebuild_involved(struct ON_Brep_CDT_Face_State *f)
 	f->tris->erase(t);
 	delete t;
     }
+}
+
+void
+triangles_rebuild_involved(struct ON_Brep_CDT_Face_State *f)
+{
+    triangles_rebuild_involved_pnts(f, f->degen_pnts);
+    triangles_rebuild_involved_pnts(f, f->ext_degen_pnts);
 }
 
 void

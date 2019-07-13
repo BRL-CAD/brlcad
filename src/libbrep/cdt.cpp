@@ -197,7 +197,7 @@ do_triangulation(struct ON_Brep_CDT_Face_State *f, int full_surface_sample, int 
     // Trivially degenerate pass
     triangles_degenerate_trivial(f);
 
-    // Zero area triangles
+    // Flag zero area triangles for subsequent handling
     triangles_degenerate_area(f);
 
     // Validate based on edges.  If we get a return > 0, adjustments were
@@ -223,6 +223,7 @@ do_triangulation(struct ON_Brep_CDT_Face_State *f, int full_surface_sample, int 
     }
 
     if (!ret) {
+	triangles_degenerate_area_notify(f);
 	bu_log("Face %d: successful triangulation after %d passes\n", f->ind, cnt);
     }
     return ret;

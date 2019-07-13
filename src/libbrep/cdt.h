@@ -130,6 +130,7 @@ struct ON_Brep_CDT_Face_State {
     /* Poly2Tri information */
     std::set<p2t::Triangle *> *tris;
     std::set<p2t::Point *> *degen_pnts;
+    std::set<p2t::Point *> *ext_degen_pnts;
 };
 
 struct brep_cdt_tol {
@@ -274,6 +275,7 @@ void populate_3d_pnts(struct ON_Brep_CDT_Face_State *f);
 
 void triangles_degenerate_trivial(struct ON_Brep_CDT_Face_State *f);
 void triangles_degenerate_area(struct ON_Brep_CDT_Face_State *f);
+void triangles_degenerate_area_notify(struct ON_Brep_CDT_Face_State *f);
 int triangles_incorrect_normals(struct ON_Brep_CDT_Face_State *f);
 
 int triangles_check_edges(struct ON_Brep_CDT_Face_State *f);
