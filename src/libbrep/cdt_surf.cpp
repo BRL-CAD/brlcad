@@ -345,9 +345,8 @@ getSurfacePoints(
 		 fastf_t v2,
 		 fastf_t min_dist,
 		 fastf_t within_dist,
-		 fastf_t cos_within_ang,
-		 bool left,
-		 bool below)
+		 fastf_t cos_within_ang
+		 )
 {
     double ldfactor = 2.0;
     int split_u = 0;
@@ -466,22 +465,22 @@ getSurfacePoints(
 
     bool split;
     if (split_u && split_v) {
-	split = getSurfacePoints(f, sinfo, u1, u, v1, v, min_dist, within_dist, cos_within_ang, left, below);
+	split = getSurfacePoints(f, sinfo, u1, u, v1, v, min_dist, within_dist, cos_within_ang);
 	if (!split) {
 	    ON_BoundingBox bb(ON_2dPoint(u1, v1),ON_2dPoint(u,v));
 	    sinfo->leaf_bboxes.insert(new ON_BoundingBox(bb));
 	}
-	split = getSurfacePoints(f, sinfo, u1, u, v, v2, min_dist, within_dist, cos_within_ang, left, false);
+	split = getSurfacePoints(f, sinfo, u1, u, v, v2, min_dist, within_dist, cos_within_ang);
 	if (!split) {
 	    ON_BoundingBox bb(ON_2dPoint(u1,v),ON_2dPoint(u,v2));
 	    sinfo->leaf_bboxes.insert(new ON_BoundingBox(bb));
 	}
-	split = getSurfacePoints(f, sinfo, u, u2, v1, v, min_dist, within_dist, cos_within_ang, false, below);
+	split = getSurfacePoints(f, sinfo, u, u2, v1, v, min_dist, within_dist, cos_within_ang);
 	if (!split) {
 	    ON_BoundingBox bb(ON_2dPoint(u,v1),ON_2dPoint(u2,v));
 	    sinfo->leaf_bboxes.insert(new ON_BoundingBox(bb));
 	}
-	split = getSurfacePoints(f, sinfo, u, u2, v, v2, min_dist, within_dist, cos_within_ang, false, false);
+	split = getSurfacePoints(f, sinfo, u, u2, v, v2, min_dist, within_dist, cos_within_ang);
 	if (!split) {
 	    ON_BoundingBox bb(ON_2dPoint(u,v),ON_2dPoint(u2,v2));
 	    sinfo->leaf_bboxes.insert(new ON_BoundingBox(bb));
@@ -489,12 +488,12 @@ getSurfacePoints(
 	return true;
     }
     if (split_u) {
-	split = getSurfacePoints(f, sinfo, u1, u, v1, v2, min_dist, within_dist, cos_within_ang, left, below);
+	split = getSurfacePoints(f, sinfo, u1, u, v1, v2, min_dist, within_dist, cos_within_ang);
 	if (!split) {
 	    ON_BoundingBox bb(ON_2dPoint(u1, v1),ON_2dPoint(u,v2));
 	    sinfo->leaf_bboxes.insert(new ON_BoundingBox(bb));
 	}
-	split = getSurfacePoints(f, sinfo, u, u2, v1, v2, min_dist, within_dist, cos_within_ang, false, below);
+	split = getSurfacePoints(f, sinfo, u, u2, v1, v2, min_dist, within_dist, cos_within_ang);
 	if (!split) {
 	    ON_BoundingBox bb(ON_2dPoint(u,v1),ON_2dPoint(u2,v2));
 	    sinfo->leaf_bboxes.insert(new ON_BoundingBox(bb));
@@ -502,12 +501,12 @@ getSurfacePoints(
 	return true;
     }
     if (split_v) {
-	split = getSurfacePoints(f, sinfo, u1, u2, v1, v, min_dist, within_dist, cos_within_ang, left, below);
+	split = getSurfacePoints(f, sinfo, u1, u2, v1, v, min_dist, within_dist, cos_within_ang);
 	if (!split) {
 	    ON_BoundingBox bb(ON_2dPoint(u1,v1),ON_2dPoint(u2,v));
 	    sinfo->leaf_bboxes.insert(new ON_BoundingBox(bb));
 	}
-	split = getSurfacePoints(f, sinfo, u1, u2, v, v2, min_dist, within_dist, cos_within_ang, left, false);
+	split = getSurfacePoints(f, sinfo, u1, u2, v, v2, min_dist, within_dist, cos_within_ang);
 	if (!split) {
 	    ON_BoundingBox bb(ON_2dPoint(u1,v),ON_2dPoint(u2,v2));
 	    sinfo->leaf_bboxes.insert(new ON_BoundingBox(bb));
@@ -660,7 +659,7 @@ getSurfacePoints(struct ON_Brep_CDT_Face_State *f)
 	     *     |          |         |
 	     *    umvm------uovm--------#
 	     */
-	    split = getSurfacePoints(f, &sinfo, min.x, midx, min.y, midy, min_dist, within_dist, cos_within_ang, true, true);
+	    split = getSurfacePoints(f, &sinfo, min.x, midx, min.y, midy, min_dist, within_dist, cos_within_ang);
 	    if (!split) {
 		ON_BoundingBox bb(ON_2dPoint(min.x,min.y),ON_2dPoint(midx,midy));
 		sinfo.leaf_bboxes.insert(new ON_BoundingBox(bb));
@@ -677,7 +676,7 @@ getSurfacePoints(struct ON_Brep_CDT_Face_State *f)
 	     *     |          |         |
 	     *     #--------uovm-------uMvm
 	     */
-	    split = getSurfacePoints(f, &sinfo, midx, max.x, min.y, midy, min_dist, within_dist, cos_within_ang, false, true);
+	    split = getSurfacePoints(f, &sinfo, midx, max.x, min.y, midy, min_dist, within_dist, cos_within_ang);
 	    if (!split) {
 		ON_BoundingBox bb(ON_2dPoint(midx,min.y),ON_2dPoint(max.x,midy));
 		sinfo.leaf_bboxes.insert(new ON_BoundingBox(bb));
@@ -695,7 +694,7 @@ getSurfacePoints(struct ON_Brep_CDT_Face_State *f)
 	     *     |          |         |
 	     *     #----------#---------#
 	     */
-	    split = getSurfacePoints(f, &sinfo, min.x, midx, midy, max.y, min_dist, within_dist, cos_within_ang, true, false);
+	    split = getSurfacePoints(f, &sinfo, min.x, midx, midy, max.y, min_dist, within_dist, cos_within_ang);
 	    if (!split) {
 		ON_BoundingBox bb(ON_2dPoint(min.x,midy),ON_2dPoint(midx,max.y));
 		sinfo.leaf_bboxes.insert(new ON_BoundingBox(bb));
@@ -712,7 +711,7 @@ getSurfacePoints(struct ON_Brep_CDT_Face_State *f)
 	     *     |          |         |
 	     *     #----------#---------#
 	     */
-	    split = getSurfacePoints(f, &sinfo, midx, max.x, midy, max.y, min_dist, within_dist, cos_within_ang, false, false);
+	    split = getSurfacePoints(f, &sinfo, midx, max.x, midy, max.y, min_dist, within_dist, cos_within_ang);
 	    if (!split) {
 		ON_BoundingBox bb(ON_2dPoint(midx,midy),ON_2dPoint(max.x,max.y));
 		sinfo.leaf_bboxes.insert(new ON_BoundingBox(bb));
@@ -731,7 +730,7 @@ getSurfacePoints(struct ON_Brep_CDT_Face_State *f)
 	     *     |          |         |
 	     *    umvm------uovm--------#
 	     */
-	    split = getSurfacePoints(f, &sinfo, min.x, midx, min.y, max.y, min_dist, within_dist, cos_within_ang, true, true);
+	    split = getSurfacePoints(f, &sinfo, min.x, midx, min.y, max.y, min_dist, within_dist, cos_within_ang);
 	    if (!split) {
 		ON_BoundingBox bb(ON_2dPoint(min.x,min.y),ON_2dPoint(midx,max.y));
 		sinfo.leaf_bboxes.insert(new ON_BoundingBox(bb));
@@ -748,7 +747,7 @@ getSurfacePoints(struct ON_Brep_CDT_Face_State *f)
 	     *     |          |         |
 	     *     #--------uovm-------uMvm
 	     */
-	    split = getSurfacePoints(f, &sinfo, midx, max.x, min.y, max.y, min_dist, within_dist, cos_within_ang, false, true);
+	    split = getSurfacePoints(f, &sinfo, midx, max.x, min.y, max.y, min_dist, within_dist, cos_within_ang);
 	    if (!split) {
 		ON_BoundingBox bb(ON_2dPoint(midx,min.y),ON_2dPoint(max.x,max.y));
 		sinfo.leaf_bboxes.insert(new ON_BoundingBox(bb));
@@ -767,7 +766,7 @@ getSurfacePoints(struct ON_Brep_CDT_Face_State *f)
 	     *     |          |         |
 	     *    umvm--------#--------uMvm
 	     */
-	    split = getSurfacePoints(f, &sinfo, min.x, max.x, min.y, midy, min_dist, within_dist, cos_within_ang, true, true);
+	    split = getSurfacePoints(f, &sinfo, min.x, max.x, min.y, midy, min_dist, within_dist, cos_within_ang);
 	    if (!split) {
 		ON_BoundingBox bb(ON_2dPoint(min.x,min.y),ON_2dPoint(max.x,midy));
 		sinfo.leaf_bboxes.insert(new ON_BoundingBox(bb));
@@ -784,7 +783,7 @@ getSurfacePoints(struct ON_Brep_CDT_Face_State *f)
 	     *     |          |         |
 	     *     #----------#---------#
 	     */
-	    split = getSurfacePoints(f, &sinfo, min.x, max.x, midy, max.y, min_dist, within_dist, cos_within_ang, true, false);
+	    split = getSurfacePoints(f, &sinfo, min.x, max.x, midy, max.y, min_dist, within_dist, cos_within_ang);
 	    if (!split) {
 		ON_BoundingBox bb(ON_2dPoint(min.x,midy),ON_2dPoint(max.x,max.y));
 		sinfo.leaf_bboxes.insert(new ON_BoundingBox(bb));
@@ -803,7 +802,7 @@ getSurfacePoints(struct ON_Brep_CDT_Face_State *f)
 	     *     |          |         |
 	     *    umvm--------#--------uMvm
 	     */
-	    split = getSurfacePoints(f, &sinfo, min.x, max.x, min.y, max.y, min_dist, within_dist, cos_within_ang, true, true);
+	    split = getSurfacePoints(f, &sinfo, min.x, max.x, min.y, max.y, min_dist, within_dist, cos_within_ang);
 	    if (!split) {
 		ON_BoundingBox bb(ON_2dPoint(min.x,min.y),ON_2dPoint(max.x,max.y));
 		sinfo.leaf_bboxes.insert(new ON_BoundingBox(bb));
