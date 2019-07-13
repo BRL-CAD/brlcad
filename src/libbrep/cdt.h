@@ -272,10 +272,10 @@ CDT_Tol_Set(struct brep_cdt_tol *cdt, double dist, fastf_t md, double t_abs, dou
 
 void populate_3d_pnts(struct ON_Brep_CDT_Face_State *f);
 
-
 void triangles_degenerate_trivial(struct ON_Brep_CDT_Face_State *f);
 void triangles_degenerate_area(struct ON_Brep_CDT_Face_State *f);
 void triangles_degenerate_area_notify(struct ON_Brep_CDT_Face_State *f);
+int triangles_slim_edge(struct ON_Brep_CDT_Face_State *f);
 int triangles_incorrect_normals(struct ON_Brep_CDT_Face_State *f);
 
 int triangles_check_edges(struct ON_Brep_CDT_Face_State *f);

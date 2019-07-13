@@ -311,6 +311,89 @@ triangles_degenerate_area(struct ON_Brep_CDT_Face_State *f)
     }
 }
 
+static void
+plot_trimesh_tris_3d(std::set<trimesh::index_t> *faces, std::vector<trimesh::triangle_t> &farray, std::map<p2t::Point *, ON_3dPoint *> *pointmap, const char *filename)
+{
+    std::set<trimesh::index_t>::iterator f_it;
+    FILE* plot_file = fopen(filename, "w");
+    int r = int(256*drand48() + 1.0);
+    int g = int(256*drand48() + 1.0);
+    int b = int(256*drand48() + 1.0);
+    for (f_it = faces->begin(); f_it != faces->end(); f_it++) {
+	p2t::Triangle *t = farray[*f_it].t;
+	plot_tri_3d(t, pointmap, r, g ,b, plot_file);
+    }
+    fclose(plot_file);
+}
+
+// Check boundary triangles for distortion.
+// If problem, yank the non-edge point - local impact only, and we already try
+// to avoid sampling too close to edges.
+int
+triangles_slim_edge(struct ON_Brep_CDT_Face_State *f)
+{
+    int pntset_altered = 0;
+    struct trimesh_info *tm = CDT_Face_Build_Halfedge(f->tris);
+    std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
+
+    std::vector<std::pair<trimesh::index_t, trimesh::index_t>> bedges = tm->mesh.boundary_edges();
+    std::vector<std::pair<trimesh::index_t, trimesh::index_t>>::iterator b_it;
+    std::set<trimesh::index_t> etris;
+    for (b_it = bedges.begin(); b_it != bedges.end(); b_it++) {
+	// trimesh boundary edges won't map to a triangle - get the flipped
+	// form of the edge that will
+	std::pair<trimesh::index_t, trimesh::index_t> fedge = std::pair<trimesh::index_t, trimesh::index_t>((*b_it).second, (*b_it).first);
+	trimesh::index_t tind = tm->mesh.m_de2fi[fedge];
+	etris.insert(tind);
+	p2t::Triangle *t = tm->triangles[tind].t;
+	p2t::Point *p1 = tm->ind2p2d[(*b_it).first];  // edge point
+	p2t::Point *p2 = tm->ind2p2d[(*b_it).second]; // edge point
+	p2t::Point *p3 = NULL; // surface point
+	for (size_t j = 0; j < 3; j++) {
+	    if (t->GetPoint(j) != p1 && t->GetPoint(j) != p2) {
+		p3 = t->GetPoint(j);
+		break;
+	    }
+	}
+
+	if (!p1 || !p2 || !p3) {
+	    bu_log("Triangle point failure!\n");
+	}
+
+	ON_3dPoint *e1 = (*pointmap)[p1];
+	ON_3dPoint *e2 = (*pointmap)[p2];
+	ON_3dPoint *pf3d = (*pointmap)[p3];
+
+	if (!e1 || !e2 || !pf3d) {
+	    bu_log("3D Triangle point failure!\n");
+	}
+
+	if (e1 == e2 || e1 == pf3d || e2 == pf3d) {
+	    // Degenerate
+	    continue;
+	}
+
+	ON_Line eline(*e1, *e2);
+	double elen = e1->DistanceTo(*e2);
+	double dist = eline.DistanceTo(*pf3d);
+	if (elen > 100*dist) {
+	    ON_2dPoint *spnt = (*f->p2t_to_on2_map)[p3];
+	    ON_3dPoint *pt3D = (*pointmap)[p3];
+	    // Don't yank if pt3D is also an edge point
+	    if (f->s_cdt->on_brep_edge_pnts->find(pt3D) == f->s_cdt->on_brep_edge_pnts->end()) {
+		f->on_surf_points->erase(spnt);
+		pntset_altered = 1;
+		bu_log("%f %f %f elen: %f, dist: %f\n", pf3d->x, pf3d->y, pf3d->z, elen, dist);
+	    }
+	}
+    }
+    plot_trimesh_tris_3d(&etris, tm->triangles, pointmap, "edge_tris.plot3");
+    delete tm;
+    return pntset_altered;
+}
+
+
+
 // TODO - either look up the normals on singular verts the way the mesh build will or
 // skip using them to report normal problems.
 int

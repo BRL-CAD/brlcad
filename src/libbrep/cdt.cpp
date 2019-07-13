@@ -32,22 +32,6 @@
 #define BREP_PLANAR_TOL 0.05
 #define MAX_TRIANGULATION_ATTEMPTS 5
 
-static void
-plot_trimesh_tris_3d(std::set<trimesh::index_t> *faces, std::vector<trimesh::triangle_t> &farray, std::map<p2t::Point *, ON_3dPoint *> *pointmap, const char *filename)
-{
-    std::set<trimesh::index_t>::iterator f_it;
-    FILE* plot_file = fopen(filename, "w");
-    int r = int(256*drand48() + 1.0);
-    int g = int(256*drand48() + 1.0);
-    int b = int(256*drand48() + 1.0);
-    for (f_it = faces->begin(); f_it != faces->end(); f_it++) {
-	p2t::Triangle *t = farray[*f_it].t;
-	plot_tri_3d(t, pointmap, r, g ,b, plot_file);
-    }
-    fclose(plot_file);
-}
-
-
 static int
 do_triangulation(struct ON_Brep_CDT_Face_State *f, int full_surface_sample, int cnt)
 {
@@ -124,78 +108,19 @@ do_triangulation(struct ON_Brep_CDT_Face_State *f, int full_surface_sample, int 
 	}
     }
 
-    // Check boundary triangles for distortion.
-    //
-    // If any of them are unsuitable, there are a range of possible corrective measures.
-    //
-    // Simplest is to yank the non-edge point - local impact only, and we already try
-    // to avoid sampling too close to edges.
-    //
-    // There is, however, another possibility for long, thin surfaces - a
-    // triangle may directly use points from another edge, instead of a surface
-    // point.  In that case we either have to accept the distortion, or start
-    // splitting edges.  If we decide we have to split an edge, we also have to
-    // redo the triangulation once the edge curve is refined.  Also, mark the
-    // opposing face sharing the edge as dirty - it too must be retriangulated
-    // to incorporate any new edge points.
-    //
-    // Probably should combine this check with the normals-in-wrong-direction check
-    // to decide whether to split edge or yank a "shouldn't have sampled there"
-    // point.
-    {
-	struct trimesh_info *tm = CDT_Face_Build_Halfedge(f->tris);
-	std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
-
-	std::vector<std::pair<trimesh::index_t, trimesh::index_t>> bedges = tm->mesh.boundary_edges();
-	std::vector<std::pair<trimesh::index_t, trimesh::index_t>>::iterator b_it;
-	std::set<trimesh::index_t> etris;
-	for (b_it = bedges.begin(); b_it != bedges.end(); b_it++) {
-	    // trimesh boundary edges won't map to a triangle - get the flipped
-	    // form of the edge that will
-	    std::pair<trimesh::index_t, trimesh::index_t> fedge = std::pair<trimesh::index_t, trimesh::index_t>((*b_it).second, (*b_it).first);
-	    trimesh::index_t tind = tm->mesh.m_de2fi[fedge];
-	    etris.insert(tind);
-	    p2t::Triangle *t = tm->triangles[tind].t;
-	    p2t::Point *p1 = tm->ind2p2d[(*b_it).first];  // edge point
-	    p2t::Point *p2 = tm->ind2p2d[(*b_it).second]; // edge point
-	    p2t::Point *p3 = NULL; // surface point
-	    for (size_t j = 0; j < 3; j++) {
-		if (t->GetPoint(j) != p1 && t->GetPoint(j) != p2) {
-		    p3 = t->GetPoint(j);
-		    break;
-		}
-	    }
-
-	    if (!p1 || !p2 || !p3) {
-		bu_log("Triangle point failure!\n");
-	    }
-
-	    ON_3dPoint *e1 = (*pointmap)[p1];
-	    ON_3dPoint *e2 = (*pointmap)[p2];
-	    ON_3dPoint *pf3d = (*pointmap)[p3];
-
-	    if (!e1 || !e2 || !pf3d) {
-		bu_log("3D Triangle point failure!\n");
-	    }
-
-	    if (e1 == e2 || e1 == pf3d || e2 == pf3d) {
-		// Degenerate
-		continue;
-	    }
-
-	    ON_Line eline(*e1, *e2);
-	    double elen = e1->DistanceTo(*e2);
-	    double dist = eline.DistanceTo(*pf3d);
-	    if (elen > 100*dist) {
-		bu_log("%f %f %f elen: %f, dist: %f\n", pf3d->x, pf3d->y, pf3d->z, elen, dist);
-	    }
-	}
-	plot_trimesh_tris_3d(&etris, tm->triangles, pointmap, "edge_tris.plot3");
-	delete tm;
-    }
 
     // Trivially degenerate pass
     triangles_degenerate_trivial(f);
+
+    // Check boundary triangles for distortion.  If we get a return > 0,
+    // adjustments were made to the surface points and we need to redo the
+    // triangulation
+    int esret = triangles_slim_edge(f);
+    if (esret < 0) {
+	bu_log("Fatal failure on slim edge checking\n");
+	return -1;
+    }
+    ret += esret;
 
     // Flag zero area triangles for subsequent handling
     triangles_degenerate_area(f);
@@ -209,7 +134,7 @@ do_triangulation(struct ON_Brep_CDT_Face_State *f, int full_surface_sample, int 
     }
     ret += eret;
 
-    // Incorrect normals.  If we get a return > 0, adjustments were mde
+    // Incorrect normals.  If we get a return > 0, adjustments were made
     // to the surface points and we need to redo the triangulation
     int nret = triangles_incorrect_normals(f);
     if (nret < 0) {
