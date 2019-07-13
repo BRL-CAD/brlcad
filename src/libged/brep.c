@@ -380,6 +380,11 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
     }
 
 
+    if (BU_STR_EQUAL(argv[2], "nirt")) {
+	return _ged_brep_pick_face(gedp, bi, argv[1]);
+    }
+
+
     /* make sure arg isn't --no-evaluate */
     if (argc > 2 && argv[2][1] != '-') {
 	op = db_str2op(argv[2]);

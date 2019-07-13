@@ -948,6 +948,34 @@ _ged_brep_flip(struct ged *gedp, struct rt_brep_internal *bi, const char *obj_na
     return GED_OK;
 }
 
+
+// TODO - this doesn't belong here, just convenient for now since we need to crack the ON_Brep for this
+extern "C" int
+_ged_brep_pick_face(struct ged *gedp, struct rt_brep_internal *bi, const char *obj_name)
+{
+    struct bu_vls log = BU_VLS_INIT_ZERO;
+    vect_t xlate;
+    vect_t eye;
+    vect_t dir;
+
+    GED_CHECK_VIEW(gedp, GED_ERROR);
+    VSET(xlate, 0.0, 0.0, 1.0);
+    MAT4X3PNT(eye, gedp->ged_gvp->gv_view2model, xlate);
+    VSCALE(eye, eye, gedp->ged_wdbp->dbip->dbi_base2local);
+
+    VMOVEN(dir, gedp->ged_gvp->gv_rotation + 8, 3);
+    VSCALE(dir, dir, -1.0);
+
+    bu_vls_sprintf(&log, "%s:\n", obj_name);
+    if (ON_Brep_Report_Faces(&log, (void *)bi->brep, eye, dir)) {
+	bu_vls_free(&log);
+	return GED_ERROR;
+    }
+    bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_cstr(&log));
+    bu_vls_free(&log);
+    return GED_OK;
+}
+
 // TODO - this doesn't belong here, just convenient for now since we need to crack the ON_Brep for this
 extern "C" int
 _ged_brep_shrink_surfaces(struct ged *gedp, struct rt_brep_internal *bi, const char *obj_name)

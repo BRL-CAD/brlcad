@@ -121,6 +121,9 @@ ON_Brep_CDT_UnResolvable_Ovlps(std::vector<struct ON_Brep_CDT_State *> *ovlps, s
 
 /* Retrieve the face, vertex and normal information from a tessellation state
  * in the form of integer and fastf_t arrays. */
+/* TODO - need to allow optional specification of specific faces here -
+ * have already hit one scenario where I want triangle information from
+ * specific faces. */
 extern BREP_EXPORT int
 ON_Brep_CDT_Mesh(
     int **faces, int *fcnt,
@@ -130,6 +133,10 @@ ON_Brep_CDT_Mesh(
     struct ON_Brep_CDT_State *s);
 
 
+
+/* TODO - this doesn't belong here.  Don't consider this public. */
+extern BREP_EXPORT int
+ON_Brep_Report_Faces(struct bu_vls *log, void *bp, const vect_t center, const vect_t dir);
 
 __END_DECLS
 

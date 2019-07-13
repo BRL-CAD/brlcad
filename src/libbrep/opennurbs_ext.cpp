@@ -38,6 +38,8 @@
 #include "brep/curvetree.h"
 #include "brep/surfacetree.h"
 #include "brep/ray.h"
+#include "brep/cdt.h" // for ON_Brep_Report_Faces - should go away
+#include "bg/tri_ray.h" // for ON_Brep_Report_Faces - should go away
 #include "libbrep_brep_tools.h"
 #include "bn/dvec.h"
 
@@ -113,6 +115,63 @@ brep_newton_iterate(const plane_ray& pr, pt2d_t R, const ON_3dVector& su, const 
 	TRACE2("inverse failed"); // FIXME: how to handle this?
 	move(out_uv, uv);
     }
+}
+
+// This doesn't belong here - just not sure where to put it yet.  By rights
+// this should do a ray intersection and report on the faces with that info,
+// which means this should really be in libanalyze.  For now, just do a quick
+// and dirty bbox check to at least let us narrow down what faces are active
+// along a ray.
+int
+ON_Brep_Report_Faces(struct bu_vls *log, void *bp, const vect_t center, const vect_t dir)
+{
+    struct bu_vls faces = BU_VLS_INIT_ZERO;
+    point_t p1, p2;
+    if (!log || !bp) return -1;
+    VMOVE(p1, center);
+    VADD2(p2, center, dir);
+    ON_Line l(ON_3dPoint(p1[X], p1[Y], p1[Z]), ON_3dPoint(p2[X], p2[Y], p2[Z]));
+
+    ON_Brep *brep = (ON_Brep *)bp;
+    for (int i = 0; i < brep->m_F.Count(); i++) {
+	ON_BrepFace &face = brep->m_F[i];
+	ON_3dPoint bmin, bmax;
+	face.SurfaceOf()->GetBoundingBox(bmin, bmax);
+	ON_BoundingBox bb(bmin, bmax);
+	double t1, t2;
+	if (bb.Intersection(l, &t1, &t2)) {
+	    int faces_array = face.m_face_index;
+	    ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create((void *)brep);
+	    ON_Brep_CDT_Tessellate(s_cdt, 1, &faces_array);
+	    int fcnt, vcnt;
+	    int *csg_faces;
+	    point_t *csg_vertices;
+	    ON_Brep_CDT_Mesh(&csg_faces, &fcnt, (fastf_t **)&csg_vertices, &vcnt, NULL, NULL, NULL, NULL, s_cdt);
+	    int is_hit = 0;
+	    for (int j = 0; j < fcnt; j++) {
+		point_t cp1, cp2, cp3, isect;
+		VMOVE(cp1, csg_vertices[csg_faces[j*3+0]]);
+		VMOVE(cp2, csg_vertices[csg_faces[j*3+1]]);
+		VMOVE(cp3, csg_vertices[csg_faces[j*3+2]]);
+		is_hit = bg_isect_tri_ray(center, dir, cp1, cp2, cp3, &isect);
+		if (is_hit) {
+		    if (!bu_vls_strlen(&faces)) {
+			bu_vls_printf(&faces, "%d", face.m_face_index);
+		    } else {
+			bu_vls_printf(&faces, ",%d", face.m_face_index);
+		    }
+		    break;
+		}
+	    }
+	    bu_free(csg_faces, "free faces");
+	    bu_free(csg_vertices, "free faces");
+	    ON_Brep_CDT_Destroy(s_cdt);
+	}
+    }
+    bu_vls_printf(log, "%s", bu_vls_cstr(&faces));
+    bu_vls_free(&faces);
+
+    return 0;
 }
 
 

@@ -547,7 +547,7 @@ void
 triangles_rebuild_involved_pnts(struct ON_Brep_CDT_Face_State *f, std::set<p2t::Point *> *fdp)
 {
     std::set<p2t::Triangle*> tris_degen;
-    if (!fdp) {
+    if (!f || !fdp) {
 	return;
     }
     std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
@@ -793,6 +793,7 @@ triangles_rebuild_involved_pnts(struct ON_Brep_CDT_Face_State *f, std::set<p2t::
 void
 triangles_rebuild_involved(struct ON_Brep_CDT_Face_State *f)
 {
+    if (!f) return;
     triangles_rebuild_involved_pnts(f, f->degen_pnts);
     triangles_rebuild_involved_pnts(f, f->ext_degen_pnts);
 }

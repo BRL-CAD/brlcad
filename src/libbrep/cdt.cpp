@@ -612,6 +612,7 @@ ON_Brep_CDT_Mesh(
     std::set<ON_3dPoint *> vfnormals;
     for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
 	struct ON_Brep_CDT_Face_State *f = (*s_cdt->faces)[face_index];
+	if (!f) continue;
 	std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
 	std::map<p2t::Point *, ON_3dPoint *> *normalmap = f->p2t_to_on3_norm_map;
 	std::set<p2t::Triangle *>::iterator tr_it;
@@ -646,6 +647,7 @@ ON_Brep_CDT_Mesh(
     // Get the final triangle count
     for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
 	struct ON_Brep_CDT_Face_State *f = (*s_cdt->faces)[face_index];
+	if (!f) continue;
 	triangle_cnt += f->tris->size();
     }
 
@@ -707,6 +709,7 @@ ON_Brep_CDT_Mesh(
     triangle_cnt = 0;
     for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
 	struct ON_Brep_CDT_Face_State *f = (*s_cdt->faces)[face_index];
+	if (!f) continue;
 	std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
 	std::map<p2t::Point *, ON_3dPoint *> *normalmap = f->p2t_to_on3_norm_map;
 	std::set<p2t::Triangle *>::iterator tr_it;
