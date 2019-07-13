@@ -217,6 +217,9 @@ struct cdt_surf_info {
     fastf_t v_upper_3dlen;
     fastf_t min_edge;
     fastf_t max_edge;
+    fastf_t min_dist;
+    fastf_t within_dist;
+    fastf_t cos_within_ang;
     std::set<ON_BoundingBox *> leaf_bboxes;
 };
 
