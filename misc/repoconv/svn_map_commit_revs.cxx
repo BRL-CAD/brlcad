@@ -19,6 +19,7 @@ std::map<std::string,long int> git_msg_to_time;
 std::map<long int,std::string> svn_time_to_msg;
 std::map<long int,long int> svn_time_to_rev;
 std::map<long int,std::string> git_time_to_msg;
+std::map<long int,std::set<std::string>> git_time_to_msg_nonuniq;
 std::map<long int,std::string> git_time_to_sha1;
 std::set<long int> git_time_nonuniq;
 
@@ -78,6 +79,7 @@ read_git_line(std::string &line)
     std::string cmsg = line.substr(spos+1, std::string::npos);
 
     git_time_to_msg[tstp] = cmsg;
+    git_time_to_msg_nonuniq[tstp].insert(cmsg);
     if (git_time_to_sha1.find(tstp) != git_time_to_sha1.end()) {
 	git_time_nonuniq.insert(tstp);
     }
@@ -251,24 +253,22 @@ int main(int argc, const char **argv)
 
 #if 0
     // Write out diffable timestamp sorted msg histories from git and svn
-    std::map<std::pair<std::string, long int>,std::string>::iterator gm_it;
-    std::ofstream gitatimes("git_all_times.txt", std::ios::out | std::ios::binary);
-    for (gm_it = git_msgtime_to_sha1.begin(); gm_it != git_msgtime_to_sha1.end(); gm_it++) {
-	gitatimes << (*gm_it).first.second << " " << (*gm_it).first.first << "\n";
-    }
-    gitatimes.close();
-
-    std::map<long int,std::string>::iterator tmsg_it;
+    std::map<long int,std::set<std::string>>::iterator tmsg_it;
+    std::set<std::string>::iterator msgs_it;
     std::ofstream gittimes("git_times.txt", std::ios::out | std::ios::binary);
 
-    for (tmsg_it = git_time_to_msg.begin(); tmsg_it != git_time_to_msg.end(); tmsg_it++) {
-	gittimes << (*tmsg_it).first << " " << (*tmsg_it).second << "\n";
+    for (tmsg_it = git_time_to_msg_nonuniq.begin(); tmsg_it != git_time_to_msg_nonuniq.end(); tmsg_it++) {
+	std::set<std::string> msgs = (*tmsg_it).second;
+	for (msgs_it = msgs.begin(); msgs_it != msgs.end(); msgs_it++) {
+	    gittimes << (*tmsg_it).first << " " << (*msgs_it) << "\n";
+	}
     }
     gittimes.close();
 
+    std::map<long int,std::string>::iterator smsg_it;
     std::ofstream svntimes("svn_times.txt", std::ios::out | std::ios::binary);
-    for (tmsg_it = svn_time_to_msg.begin(); tmsg_it != svn_time_to_msg.end(); tmsg_it++) {
-	svntimes << (*tmsg_it).first << " " << (*tmsg_it).second << "\n";
+    for (smsg_it = svn_time_to_msg.begin(); smsg_it != svn_time_to_msg.end(); smsg_it++) {
+	svntimes << (*smsg_it).first << " " << (*smsg_it).second << "\n";
     }
     svntimes.close();
 #endif
