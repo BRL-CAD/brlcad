@@ -739,7 +739,7 @@ add_test(NAME bu_mappedfile_repeat_parallel_10 COMMAND bu_test mappedfile 4 10)
 #  *********** realpath.c tests ************
 #
 add_test(NAME bu_file_realpath_1 COMMAND bu_test realpath 1)
-#add_test(NAME bu_file_realpath_2 COMMAND bu_test realpath 2)
+add_test(NAME bu_file_realpath_2 COMMAND bu_test realpath 2)
 
 CMAKEFILES(
   tests_bitv.cmake

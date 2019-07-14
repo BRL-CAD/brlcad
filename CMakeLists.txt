@@ -2658,7 +2658,6 @@ BRLCAD_FUNCTION_EXISTS(_splitpath)
 BRLCAD_FUNCTION_EXISTS(_strtoi64)
 BRLCAD_FUNCTION_EXISTS(alarm)
 BRLCAD_FUNCTION_EXISTS(asinh REQUIRED_LIBS ${M_LIBRARY})
-BRLCAD_FUNCTION_EXISTS(canonicalize_file_name)
 BRLCAD_FUNCTION_EXISTS(confstr) # darwin/mac
 BRLCAD_FUNCTION_EXISTS(dlopen)
 BRLCAD_FUNCTION_EXISTS(drand48)
@@ -2771,6 +2770,19 @@ if(NOT HAVE_SNPRINTF)
     CONFIG_H_APPEND(BRLCAD "#define snprintf _snprintf\n")
   endif(HAVE__SNPRINTF)
 endif(NOT HAVE_SNPRINTF)
+
+# So far I haven't been able to come up with a reliable self contained
+# test for this, but libbu's #2 realpath test triggers a stack smash
+# on some linux systems.  For the moment, fall back on OpenBSD's
+# userspace implementation, which does seem to work.  Once we can
+# get a self-contained reproduction of this failure, put it below
+# and we can use the system realpath again.
+if(HAVE_REALPATH)
+  #check_c_source_runs("#include<limits.h>\n#include <stdlib.h>\nint main() { char dir[512]; const char *d = \"/tmp/REALPATH_TEST_PATH\"; d = (const char *)realpath(d, dir); return 0; }" HAVE_WORKING_REALPATH)
+  #if(HAVE_WORKING_REALPATH)
+  #  CONFIG_H_APPEND(BRLCAD "#define HAVE_WORKING_REALPATH 1\n")
+  #endif(HAVE_WORKING_REALPATH)
+endif(HAVE_REALPATH)
 
 # GetFullPathName
 check_c_source_compiles("
