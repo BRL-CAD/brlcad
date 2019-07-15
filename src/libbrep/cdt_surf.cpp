@@ -406,7 +406,7 @@ getSurfacePoint(
 	return false;
     }
 
-    if (uavg < sinfo->min_edge || vavg < sinfo->min_edge) {
+    if (uavg < sinfo->min_edge && vavg < sinfo->min_edge) {
 	return false;
     }
 
