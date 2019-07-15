@@ -178,6 +178,10 @@ p2tTri_Normal(p2t::Triangle *t, std::map<p2t::Point *, ON_3dPoint *> *pointmap)
     ON_3dPoint *p2 = (*pointmap)[t->GetPoint(1)];
     ON_3dPoint *p3 = (*pointmap)[t->GetPoint(2)];
 
+    if (!p1 || !p2 || !p3) {
+	bu_exit(1, "Fatal: 2D poly2tri point has no corresponding 3D point in the map\n");
+    }
+
     ON_3dVector e1 = *p2 - *p1;
     ON_3dVector e2 = *p3 - *p1;
     ON_3dVector tdir = ON_CrossProduct(e1, e2);
