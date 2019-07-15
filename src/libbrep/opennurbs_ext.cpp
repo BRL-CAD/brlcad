@@ -133,6 +133,9 @@ ON_Brep_Report_Faces(struct bu_vls *log, void *bp, const vect_t center, const ve
     ON_Line l(ON_3dPoint(p1[X], p1[Y], p1[Z]), ON_3dPoint(p2[X], p2[Y], p2[Z]));
 
     ON_Brep *brep = (ON_Brep *)bp;
+    ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create((void *)brep);
+    ON_Brep_CDT_Tessellate(s_cdt, 0, NULL);
+
     for (int i = 0; i < brep->m_F.Count(); i++) {
 	ON_BrepFace &face = brep->m_F[i];
 	ON_3dPoint bmin, bmax;
@@ -141,12 +144,10 @@ ON_Brep_Report_Faces(struct bu_vls *log, void *bp, const vect_t center, const ve
 	double t1, t2;
 	if (bb.Intersection(l, &t1, &t2)) {
 	    int faces_array = face.m_face_index;
-	    ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create((void *)brep);
-	    ON_Brep_CDT_Tessellate(s_cdt, 1, &faces_array);
 	    int fcnt, vcnt;
 	    int *csg_faces;
 	    point_t *csg_vertices;
-	    ON_Brep_CDT_Mesh(&csg_faces, &fcnt, (fastf_t **)&csg_vertices, &vcnt, NULL, NULL, NULL, NULL, s_cdt);
+	    ON_Brep_CDT_Mesh(&csg_faces, &fcnt, (fastf_t **)&csg_vertices, &vcnt, NULL, NULL, NULL, NULL, s_cdt, 1, &faces_array);
 	    int is_hit = 0;
 	    for (int j = 0; j < fcnt; j++) {
 		point_t cp1, cp2, cp3, isect;
@@ -165,9 +166,10 @@ ON_Brep_Report_Faces(struct bu_vls *log, void *bp, const vect_t center, const ve
 	    }
 	    bu_free(csg_faces, "free faces");
 	    bu_free(csg_vertices, "free faces");
-	    ON_Brep_CDT_Destroy(s_cdt);
 	}
     }
+
+    ON_Brep_CDT_Destroy(s_cdt);
     bu_vls_printf(log, "%s", bu_vls_cstr(&faces));
     bu_vls_free(&faces);
 

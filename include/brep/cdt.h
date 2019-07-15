@@ -130,7 +130,9 @@ ON_Brep_CDT_Mesh(
     fastf_t **vertices, int *vcnt,
     int **face_normals, int *fn_cnt,
     fastf_t **normals, int *ncnt,
-    struct ON_Brep_CDT_State *s);
+    struct ON_Brep_CDT_State *s,
+    int exp_face_cnt, int *exp_faces
+    );
 
 
 

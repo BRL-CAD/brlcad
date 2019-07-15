@@ -546,7 +546,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
     int *valid_faces = NULL;
     fastf_t *valid_vertices = NULL;
 
-    if (ON_Brep_CDT_Mesh(&valid_faces, &valid_fcnt, &valid_vertices, &valid_vcnt, NULL, NULL, NULL, NULL, s_cdt) < 0) {
+    if (ON_Brep_CDT_Mesh(&valid_faces, &valid_fcnt, &valid_vertices, &valid_vcnt, NULL, NULL, NULL, NULL, s_cdt, 0, NULL) < 0) {
 	return -1;
     }
 
@@ -576,7 +576,8 @@ ON_Brep_CDT_Mesh(
 	fastf_t **vertices, int *vcnt,
 	int **face_normals, int *fn_cnt,
 	fastf_t **normals, int *ncnt,
-	struct ON_Brep_CDT_State *s_cdt)
+	struct ON_Brep_CDT_State *s_cdt,
+	int exp_face_cnt, int *exp_faces)
 {
     size_t triangle_cnt = 0;
     if (!faces || !fcnt || !vertices || !vcnt || !s_cdt) {
@@ -591,6 +592,17 @@ ON_Brep_CDT_Mesh(
 	}
     }
 
+    std::vector<int> active_faces;
+    if (!exp_face_cnt || !exp_faces) {
+	for (int face_index = 0; face_index < s_cdt->brep->m_F.Count(); face_index++) {
+	    active_faces.push_back(face_index);
+	}
+    } else {
+	for (int i = 0; i < exp_face_cnt; i++) {
+	    active_faces.push_back(exp_faces[i]);
+	}
+    }
+
     /* For the non-zero-area triangles sharing an edge with a non-trivially
      * degenerate zero area triangle, we need to build new polygons from each
      * triangle and the "orphaned" points along the edge(s).  We then
@@ -600,9 +612,11 @@ ON_Brep_CDT_Mesh(
      * face's degen_pnts set (i.e. it shares an edge with a non-trivially
      * degenerate zero-area triangle.)
      */
-    for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
-	struct ON_Brep_CDT_Face_State *f = (*s_cdt->faces)[face_index];
-	triangles_rebuild_involved(f);
+    for (int fi = 0; fi != s_cdt->brep->m_F.Count(); fi++) {
+	struct ON_Brep_CDT_Face_State *f = (*s_cdt->faces)[fi];
+	if (f) {
+	    triangles_rebuild_involved(f);
+	}
     }
 
     /* We know now the final triangle set.  We need to build up the set of
@@ -610,8 +624,8 @@ ON_Brep_CDT_Mesh(
      * information actually used by the final triangle set. */
     std::set<ON_3dPoint *> vfpnts;
     std::set<ON_3dPoint *> vfnormals;
-    for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
-	struct ON_Brep_CDT_Face_State *f = (*s_cdt->faces)[face_index];
+    for (size_t fi = 0; fi < active_faces.size(); fi++) {
+	struct ON_Brep_CDT_Face_State *f = (*s_cdt->faces)[active_faces[fi]];
 	if (!f) continue;
 	std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
 	std::map<p2t::Point *, ON_3dPoint *> *normalmap = f->p2t_to_on3_norm_map;
@@ -631,7 +645,7 @@ ON_Brep_CDT_Mesh(
 			if (s_cdt->singular_vert_to_norms->find(p3d) != s_cdt->singular_vert_to_norms->end()) {
 			    // Override singularity points with calculated normal, if present
 			    // and a "better" normal than onorm
-			    ON_3dPoint *cnrm = (*f->s_cdt->singular_vert_to_norms)[p3d];
+			    ON_3dPoint *cnrm = (*s_cdt->singular_vert_to_norms)[p3d];
 			    double vertnorm_dp = ON_DotProduct(*cnrm, tdir);
 			    if (vertnorm_dp > onorm_dp) {
 				onorm = cnrm;
@@ -645,8 +659,8 @@ ON_Brep_CDT_Mesh(
     }
 
     // Get the final triangle count
-    for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
-	struct ON_Brep_CDT_Face_State *f = (*s_cdt->faces)[face_index];
+    for (size_t fi = 0; fi < active_faces.size(); fi++) {
+	struct ON_Brep_CDT_Face_State *f = (*s_cdt->faces)[active_faces[fi]];
 	if (!f) continue;
 	triangle_cnt += f->tris->size();
     }
@@ -707,8 +721,8 @@ ON_Brep_CDT_Mesh(
     // 3D points should be geometrically unique in this final container.
     int face_cnt = 0;
     triangle_cnt = 0;
-    for (int face_index = 0; face_index != s_cdt->brep->m_F.Count(); face_index++) {
-	struct ON_Brep_CDT_Face_State *f = (*s_cdt->faces)[face_index];
+    for (size_t fi = 0; fi < active_faces.size(); fi++) {
+	struct ON_Brep_CDT_Face_State *f = (*s_cdt->faces)[active_faces[fi]];
 	if (!f) continue;
 	std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
 	std::map<p2t::Point *, ON_3dPoint *> *normalmap = f->p2t_to_on3_norm_map;
@@ -731,7 +745,7 @@ ON_Brep_CDT_Mesh(
 			if (s_cdt->singular_vert_to_norms->find(op) != s_cdt->singular_vert_to_norms->end()) {
 			    // Override singularity points with calculated normal, if present
 			    // and a "better" normal than onorm
-			    ON_3dPoint *cnrm = (*f->s_cdt->singular_vert_to_norms)[op];
+			    ON_3dPoint *cnrm = (*s_cdt->singular_vert_to_norms)[op];
 			    double vertnorm_dp = ON_DotProduct(*cnrm, tdir);
 			    if (vertnorm_dp > onorm_dp) {
 				onorm = cnrm;
@@ -743,7 +757,7 @@ ON_Brep_CDT_Mesh(
 	    }
 	    // If we have a reversed face we need to adjust the triangle vertex
 	    // ordering.
-	    if (s_cdt->brep->m_F[face_index].m_bRev) {
+	    if (s_cdt->brep->m_F[active_faces[fi]].m_bRev) {
 		int ftmp = (*faces)[face_cnt*3 + 1];
 		(*faces)[face_cnt*3 + 1] = (*faces)[face_cnt*3 + 2];
 		(*faces)[face_cnt*3 + 2] = ftmp;

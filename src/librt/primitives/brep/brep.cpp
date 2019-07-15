@@ -2662,7 +2662,7 @@ rt_brep_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 	ON_Brep_CDT_Destroy(s_cdt);
 	return -1;
     }
-    ON_Brep_CDT_Mesh(&faces, &fcnt, &vertices, &vcnt, &face_normals, &fncnt, &normals, &ncnt, s_cdt);
+    ON_Brep_CDT_Mesh(&faces, &fcnt, &vertices, &vcnt, &face_normals, &fncnt, &normals, &ncnt, s_cdt, 0, NULL);
     ON_Brep_CDT_Destroy(s_cdt);
 
     struct rt_db_internal intern;
