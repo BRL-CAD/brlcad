@@ -29,7 +29,7 @@
 #include "bg/chull.h"
 #include "./cdt.h"
 
-#define CDT_DEBUG_PLOTS 0
+#define CDT_DEBUG_PLOTS 1
 
 #if CDT_DEBUG_PLOTS
 static void
@@ -287,148 +287,66 @@ flipped_face(p2t::Triangle *t, std::map<p2t::Point *, ON_3dPoint *> *pointmap, s
 }
 
 int
-Remesh_Near_Point(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *tm, ON_3dPoint *p3d)
+Remesh_Near_Tri(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *tm, p2t::Triangle *seed_tri, std::set<p2t::Triangle *> *wq)
 {
 
 #if CDT_DEBUG_PLOTS
-    if (bu_file_exists("singularity_triangles.plot3", NULL)) return 0;
+    struct bu_vls pname_root = BU_VLS_INIT_ZERO;
+    struct bu_vls pname = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&pname_root, "remesh_triangles");
+    bu_vls_sprintf(&pname, "%s-%d.plot3", bu_vls_cstr(&pname_root), f->ind);
+    while (bu_file_exists(bu_vls_cstr(&pname), NULL)) {
+	bu_vls_incr(&pname_root, NULL, "0:0:0:0:-", NULL, NULL);
+	bu_vls_sprintf(&pname, "%s.plot3", bu_vls_cstr(&pname_root));
+    }
 #endif
 
     std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
     std::map<p2t::Point *, ON_3dPoint *> *normalmap = f->p2t_to_on3_norm_map;
-    std::set<trimesh::index_t> singularity_triangles;
+    std::set<trimesh::index_t> remesh_triangles;
+    std::set<trimesh::index_t> visited_triangles;
     std::set<trimesh::index_t>::iterator f_it;
 
-    // Find all the triangles using p3d as a vertex - that's our
-    // starting triangle set.
-    std::set<p2t::Triangle *>::iterator tr_it;
-    std::set<p2t::Triangle *> *tris = f->tris;
-    for (tr_it = tris->begin(); tr_it != tris->end(); tr_it++) {
-	p2t::Triangle *t = *tr_it;
-	for (size_t j = 0; j < 3; j++) {
-	    if ((*pointmap)[t->GetPoint(j)] == p3d) {
-		trimesh::index_t ind = tm->p2dind[t->GetPoint(j)];
-		std::vector<trimesh::index_t> faces = tm->mesh.vertex_face_neighbors(ind);
-		for (size_t k = 0; k < faces.size(); k++) {
-		    singularity_triangles.insert(faces[k]);
-		}
-	    }
-	}
-    }
+    trimesh::index_t seed_id = tm->t2ind[seed_tri];
+    ON_3dVector tdir = p2tTri_Normal(seed_tri, pointmap);
 
-#if CDT_DEBUG_PLOTS
-    plot_trimesh_tris_3d(&singularity_triangles, tm->triangles, pointmap, "singularity_triangles.plot3");
-#endif
-
-    // Find the furthest distance of any active triangle vertex to the singularity point - this
-    // will define our 'local' region in which to add triangles
-    double max_connected_dist = 0.0;
-    for (f_it = singularity_triangles.begin(); f_it != singularity_triangles.end(); f_it++) {
-	p2t::Triangle *t = tm->triangles[*f_it].t;
-	for (size_t j = 0; j < 3; j++) {
-	    ON_3dPoint *vpnt = (*pointmap)[t->GetPoint(j)];
-	    double vpntdist = vpnt->DistanceTo(*p3d);
-	    max_connected_dist = (max_connected_dist < vpntdist) ? vpntdist : max_connected_dist;
-	}
-    }
-
-    // Find the best fit plane for the vertices of the triangles involved with
-    // the singular point
-    std::set<ON_3dPoint *> active_3d_pnts;
-    ON_3dVector avgtnorm(0.0,0.0,0.0);
-    for (f_it = singularity_triangles.begin(); f_it != singularity_triangles.end(); f_it++) {
-	p2t::Triangle *t = tm->triangles[*f_it].t;
-	ON_3dVector tdir = p2tTri_Normal(t, pointmap);
-	avgtnorm += tdir;
-	for (size_t j = 0; j < 3; j++) {
-	    active_3d_pnts.insert((*pointmap)[t->GetPoint(j)]);
-	}
-    }
-    avgtnorm = avgtnorm * 1.0/(double)singularity_triangles.size();
-
-    point_t pcenter;
-    vect_t pnorm;
-    {
-	point_t *pnts = (point_t *)bu_calloc(active_3d_pnts.size()+1, sizeof(point_t), "fitting points");
-	int pnts_ind = 0;
-	std::set<ON_3dPoint *>::iterator a_it;
-	for (a_it = active_3d_pnts.begin(); a_it != active_3d_pnts.end(); a_it++) {
-	    ON_3dPoint *p = *a_it;
-	    pnts[pnts_ind][X] = p->x;
-	    pnts[pnts_ind][Y] = p->y;
-	    pnts[pnts_ind][Z] = p->z;
-	    pnts_ind++;
-	}
-	if (bn_fit_plane(&pcenter, &pnorm, pnts_ind, pnts)) {
-	    bu_log("Failed to get best fit plane!\n");
-	}
-	bu_free(pnts, "fitting points");
-
-	ON_3dVector on_norm(pnorm[X], pnorm[Y], pnorm[Z]);
-	if (ON_DotProduct(on_norm, avgtnorm) < 0) {
-	    VSCALE(pnorm, pnorm, -1);
-	}
-    }
-
-#if CDT_DEBUG_PLOTS
-    plot_best_fit_plane(&pcenter, &pnorm, "best_fit_plane_1.plot3");
-#endif
-
-    // Walk out along the mesh, adding triangles with at least 1 vert within max_connected_dist and
-    // whose triangle normal is < 45 degrees away from that of the original best fit plane
+    // Walk out along the mesh, adding triangles whose triangle normal is < 45
+    // degrees away from that of the original triangle
     std::set<trimesh::index_t> flipped_faces;
     std::queue<trimesh::index_t> q1, q2;
     std::queue<trimesh::index_t> *tq, *nq;
     tq = &q1;
     nq = &q2;
-    for (f_it = singularity_triangles.begin(); f_it != singularity_triangles.end(); f_it++) {
-	q1.push(*f_it);
-    }
+    q1.push(seed_id);
     while (!tq->empty()) {
 	trimesh::index_t t_he = tq->front();
 	tq->pop();
-	p2t::Triangle *t = tm->triangles[t_he].t;
+	bu_log("Triangle: %ld\n", t_he);
+	p2t::Triangle *ct = tm->triangles[t_he].t;
 	// Check normal
-	ON_3dVector tdir = p2tTri_Normal(t, pointmap);
-	ON_3dVector on_pnorm(pnorm[X], pnorm[Y], pnorm[Z]);
+	ON_3dVector ctdir = p2tTri_Normal(ct, pointmap);
 
 	// If this triangle is "flipped" or nearly so relative to the NURBS surface
 	// add it.  If an edge from this triangle ends up in the outer boundary,
 	// we're going to have to fix the outer boundary in the projection...
-	bool ff = flipped_face(t, pointmap, normalmap, f->s_cdt->brep->m_F[f->ind].m_bRev);
+	bool ff = flipped_face(ct, pointmap, normalmap, f->s_cdt->brep->m_F[f->ind].m_bRev);
 
-	if (!ff && ON_DotProduct(tdir, on_pnorm) < 0.707) {
+	if (!ff && ON_DotProduct(ctdir, tdir) < 0.707) {
 	    continue;
+	} else {
+	    remesh_triangles.insert(t_he);
+	    wq->erase(ct);
 	}
+
+	// Queue up the connected faces we don't already have in the set
 	for (size_t i = 0; i < 3; i++) {
-	    trimesh::index_t ind = tm->p2dind[t->GetPoint(i)];
+	    trimesh::index_t ind = tm->p2dind[ct->GetPoint(i)];
 	    std::vector<trimesh::index_t> faces = tm->mesh.vertex_face_neighbors(ind);
 	    for (size_t j = 0; j < faces.size(); j++) {
-		if (singularity_triangles.find(faces[j]) != singularity_triangles.end()) {
-		    // We've already got this one, keep going
-		    continue;
-		}
-		p2t::Triangle *tn = tm->triangles[faces[j]].t;
-
-		int is_close = 0;
-		for (size_t k = 0; k < 3; k++) {
-		    // If at least one vertex is within max_connected_dist, queue up
-		    // the triangle
-		    ON_3dPoint *vnpt = (*pointmap)[tn->GetPoint(k)];
-		    if (p3d->DistanceTo(*vnpt) < max_connected_dist) {
-			is_close = 1;
-			break;
-		    }
-		}
-		if (is_close) {
-		    if (ff) {
-			flipped_faces.insert(faces[j]);
-			bu_log("adding flipped face\n");
-		    } else {
-			bu_log("adding face\n");
-		    }
+		if (visited_triangles.find(faces[j]) == visited_triangles.end()) {
+		    // We haven't seen this one yet
 		    nq->push(faces[j]);
-		    singularity_triangles.insert(faces[j]);
+		    visited_triangles.insert(faces[j]);
 		}
 	    }
 	}
@@ -441,7 +359,51 @@ Remesh_Near_Point(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *tm, ON_
     }
 
 #if CDT_DEBUG_PLOTS
-    plot_trimesh_tris_3d(&singularity_triangles, tm->triangles, pointmap, "singularity_triangles_2.plot3");
+    bu_vls_sprintf(&pname, "%s-%d-working_tris.plot3", bu_vls_cstr(&pname_root), f->ind);
+    plot_trimesh_tris_3d(&remesh_triangles, tm->triangles, pointmap, bu_vls_cstr(&pname));
+#endif
+
+    // Find the best fit plane for the vertices of the triangles involved with
+    // the remeshing
+    std::set<ON_3dPoint *> active_3d_pnts;
+    ON_3dVector avgtnorm(0.0,0.0,0.0);
+    for (f_it = remesh_triangles.begin(); f_it != remesh_triangles.end(); f_it++) {
+        p2t::Triangle *t = tm->triangles[*f_it].t;
+        ON_3dVector ltdir = p2tTri_Normal(t, pointmap);
+        avgtnorm += ltdir;
+        for (size_t j = 0; j < 3; j++) {
+            active_3d_pnts.insert((*pointmap)[t->GetPoint(j)]);
+        }
+    }
+    avgtnorm = avgtnorm * 1.0/(double)remesh_triangles.size();
+
+    point_t pcenter;
+    vect_t pnorm;
+    {
+        point_t *pnts = (point_t *)bu_calloc(active_3d_pnts.size()+1, sizeof(point_t), "fitting points");
+        int pnts_ind = 0;
+        std::set<ON_3dPoint *>::iterator a_it;
+        for (a_it = active_3d_pnts.begin(); a_it != active_3d_pnts.end(); a_it++) {
+            ON_3dPoint *p = *a_it;
+            pnts[pnts_ind][X] = p->x;
+            pnts[pnts_ind][Y] = p->y;
+            pnts[pnts_ind][Z] = p->z;
+            pnts_ind++;
+        }
+        if (bn_fit_plane(&pcenter, &pnorm, pnts_ind, pnts)) {
+            bu_log("Failed to get best fit plane!\n");
+        }
+        bu_free(pnts, "fitting points");
+
+        ON_3dVector on_norm(pnorm[X], pnorm[Y], pnorm[Z]);
+        if (ON_DotProduct(on_norm, avgtnorm) < 0) {
+            VSCALE(pnorm, pnorm, -1);
+        }
+    }
+
+#if CDT_DEBUG_PLOTS
+    bu_vls_sprintf(&pname, "%s-%d-best_fit_plane.plot3", bu_vls_cstr(&pname_root), f->ind);
+    plot_best_fit_plane(&pcenter, &pnorm, bu_vls_cstr(&pname));
 #endif
 
     // Project all 3D points in the subset into the plane, getting XY coordinates
@@ -449,7 +411,7 @@ Remesh_Near_Point(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *tm, ON_
     std::set<ON_3dPoint *> sub_3d;
     std::map<ON_3dPoint *, ON_3dPoint *> sub_3d_norm;
     std::set<trimesh::index_t>::iterator tm_it;
-    for (tm_it = singularity_triangles.begin(); tm_it != singularity_triangles.end(); tm_it++) {
+    for (tm_it = remesh_triangles.begin(); tm_it != remesh_triangles.end(); tm_it++) {
 	p2t::Triangle *t = tm->triangles[*tm_it].t;
 	for (size_t j = 0; j < 3; j++) {
 	    sub_3d.insert((*pointmap)[t->GetPoint(j)]);
@@ -459,14 +421,14 @@ Remesh_Near_Point(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *tm, ON_
     std::vector<ON_3dPoint *> pnts_3d(sub_3d.begin(), sub_3d.end());
     std::vector<ON_2dPoint *> pnts_2d;
     std::map<ON_3dPoint *, size_t> pnts_3d_ind;
-    bu_log("singularity triangle cnt: %zd\n", singularity_triangles.size());
+    bu_log("remesh triangle cnt: %zd\n", remesh_triangles.size());
 
     for (size_t i = 0; i < pnts_3d.size(); i++) {
 	pnts_3d_ind[pnts_3d[i]] = i;
     }
     std::vector<trimesh::triangle_t> submesh_triangles;
     std::set<trimesh::index_t> smtri;
-    for (tm_it = singularity_triangles.begin(); tm_it != singularity_triangles.end(); tm_it++) {
+    for (tm_it = remesh_triangles.begin(); tm_it != remesh_triangles.end(); tm_it++) {
 	p2t::Triangle *t = tm->triangles[*tm_it].t;
 	trimesh::triangle_t tmt;
 	for (size_t j = 0; j < 3; j++) {
@@ -508,7 +470,8 @@ Remesh_Near_Point(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *tm, ON_
 
 
 #if CDT_DEBUG_PLOTS
-    plot_edge_set(bedges, pnts_3d, "outer_edge.plot3");
+    bu_vls_sprintf(&pname, "%s-%d-outer_edge.plot3", bu_vls_cstr(&pname_root), f->ind);
+    plot_edge_set(bedges, pnts_3d, bu_vls_cstr(&pname));
     //plot_trimesh_tris_3d(&smtri, submesh_triangles, pointmap, "submesh_triangles.plot3");
 #endif
 
@@ -516,7 +479,8 @@ Remesh_Near_Point(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *tm, ON_
     std::vector<trimesh::index_t> sloop = smesh.boundary_loop();
 
 #if CDT_DEBUG_PLOTS
-    plot_edge_loop(sloop, pnts_3d, "outer_loop.plot3");
+    bu_vls_sprintf(&pname, "%s-%d-outer_loop.plot3", bu_vls_cstr(&pname_root), f->ind);
+    plot_edge_loop(sloop, pnts_3d, bu_vls_cstr(&pname));
 #endif
 
     if (flipped_faces.size() > 0) {
@@ -532,12 +496,14 @@ Remesh_Near_Point(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *tm, ON_
 	p2t::Point *np = new p2t::Point(onp2d->x, onp2d->y);
 	if (!fp) fp = np;
 	(*pointmap)[np] = on2_3[onp2d];
+	bu_log("polyline %f %f -> %f %f %f\n", np->x, np->y, (*pointmap)[np]->x, (*pointmap)[np]->y, (*pointmap)[np]->z);
 	(*normalmap)[np] = on2_3n[onp2d];
 	polyline.push_back(np);
 	handled.insert(onp2d);
     }
 
 #if CDT_DEBUG_PLOTS
+    bu_vls_sprintf(&pname, "%s-%d-polyline.plot3", bu_vls_cstr(&pname_root), f->ind);
     plot_edge_loop_2d(polyline, "polyline.plot3");
 #endif
 
@@ -548,13 +514,15 @@ Remesh_Near_Point(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *tm, ON_
 	if (handled.find(onp2d) != handled.end()) continue;
 	p2t::Point *np = new p2t::Point(onp2d->x, onp2d->y);
 	(*pointmap)[np] = on2_3[onp2d];
+	bu_log("AddPoint %f %f -> %f %f %f\n", np->x, np->y, (*pointmap)[np]->x, (*pointmap)[np]->y, (*pointmap)[np]->z);
 	(*normalmap)[np] = on2_3n[onp2d];
 	ncdt->AddPoint(np);
     }
     ncdt->Triangulate(true, -1);
 
 #if CDT_DEBUG_PLOTS
-    plot_2d_cdt_tri(ncdt, "poly2tri_2d.plot3");
+    bu_vls_sprintf(&pname, "%s-%d-poly2tri_2d.plot3", bu_vls_cstr(&pname_root), f->ind);
+    plot_2d_cdt_tri(ncdt, bu_vls_cstr(&pname));
 #endif
 
     // assemble the new p2t Triangle set using
@@ -566,20 +534,20 @@ Remesh_Near_Point(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *tm, ON_
     std::vector<p2t::Triangle*> ftris = ncdt->GetTriangles();
     for (size_t i = 0; i < ftris.size(); i++) {
 	p2t::Triangle *t = ftris[i];
-	p2t::Point *p2_1;
-	p2t::Point *p2_2;
-	p2t::Point *p2_3;
+	p2t::Point *p2_1 = t->GetPoint(0);
+	p2t::Point *p2_2 = t->GetPoint(1);
+	p2t::Point *p2_3 = t->GetPoint(2);
+	//bu_log("TPnt1 %f %f -> %f %f %f\n", p2_1->x, p2_1->y, (*pointmap)[p2_1]->x, (*pointmap)[p2_1]->y, (*pointmap)[p2_1]->z);
+	//bu_log("TPnt2 %f %f -> %f %f %f\n", p2_2->x, p2_2->y, (*pointmap)[p2_2]->x, (*pointmap)[p2_2]->y, (*pointmap)[p2_2]->z);
+	//bu_log("TPnt3 %f %f -> %f %f %f\n", p2_3->x, p2_3->y, (*pointmap)[p2_3]->x, (*pointmap)[p2_3]->y, (*pointmap)[p2_3]->z);
+	//bu_log("TPoints %f %f -> %f %f -> %f %f\n", p2_1->x, p2_1->y, p2_2->x, p2_2->y, p2_3->x, p2_3->y);
 	// Check the triangle direction against the normals
-	ON_3dVector tdir = p2tTri_Normal(t, pointmap);
+	ON_3dVector ltdir = p2tTri_Normal(t, pointmap);
 	ON_3dPoint *onorm = (*normalmap)[t->GetPoint(0)];
-	if (ON_DotProduct(*onorm, tdir) < 0) {
+	if (ON_DotProduct(*onorm, ltdir) < 0) {
 	    p2_1 = t->GetPoint(0);
 	    p2_2 = t->GetPoint(2);
 	    p2_3 = t->GetPoint(1);
-	} else {
-	    p2_1 = t->GetPoint(0);
-	    p2_2 = t->GetPoint(1);
-	    p2_3 = t->GetPoint(2);
 	}
 	p2t::Triangle *nt = new p2t::Triangle(*p2_1, *p2_2, *p2_3);
 	f->tris->insert(nt);
@@ -587,11 +555,12 @@ Remesh_Near_Point(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *tm, ON_
     }
 
 #if CDT_DEBUG_PLOTS
-    plot_3d_cdt_tri(&new_faces, pointmap, "poly2tri_3d.plot3");
+    bu_vls_sprintf(&pname, "%s-%d.plot3", bu_vls_cstr(&pname_root), f->ind);
+    plot_3d_cdt_tri(&new_faces, pointmap, bu_vls_cstr(&pname));
 #endif
 
     std::set<trimesh::index_t>::iterator tms_it;
-    for (tms_it = singularity_triangles.begin(); tms_it != singularity_triangles.end(); tms_it++) {
+    for (tms_it = remesh_triangles.begin(); tms_it != remesh_triangles.end(); tms_it++) {
 	p2t::Triangle *t = tm->triangles[*tms_it].t;
 	f->tris->erase(t);
 	delete t;

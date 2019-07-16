@@ -676,6 +676,7 @@ CDT_Face_Build_Halfedge(std::set<p2t::Triangle*> *triangles)
 	}
 	tmt.t = t;
 	tm->triangles.push_back(tmt);
+	tm->t2ind[t] = tm->triangles.size()-1;
     }
 
     // Build the mesh topology information

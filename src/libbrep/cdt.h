@@ -94,6 +94,7 @@ struct trimesh_info {
     std::set<p2t::Point *> uniq_p2d;
     std::map<p2t::Point *, trimesh::index_t> p2dind;
     std::map<trimesh::index_t, p2t::Point *> ind2p2d;
+    std::map<p2t::Triangle *, trimesh::index_t> t2ind;
     std::vector<trimesh::triangle_t> triangles;
 };
 
@@ -278,8 +279,10 @@ void populate_3d_pnts(struct ON_Brep_CDT_Face_State *f);
 void triangles_degenerate_trivial(struct ON_Brep_CDT_Face_State *f);
 void triangles_degenerate_area(struct ON_Brep_CDT_Face_State *f);
 void triangles_degenerate_area_notify(struct ON_Brep_CDT_Face_State *f);
+int triangles_check_edge_tris(struct ON_Brep_CDT_Face_State *f);
 int triangles_slim_edge(struct ON_Brep_CDT_Face_State *f);
-int triangles_incorrect_normals(struct ON_Brep_CDT_Face_State *f);
+int triangles_incorrect_normals(struct ON_Brep_CDT_Face_State *f, std::set<p2t::Triangle *> *atris);
+
 
 int triangles_check_edges(struct ON_Brep_CDT_Face_State *f);
 
@@ -295,8 +298,7 @@ Process_Loop_Edges(struct ON_Brep_CDT_Face_State *f, int li, fastf_t max_dist);
 
 struct trimesh_info *CDT_Face_Build_Halfedge(std::set<p2t::Triangle *> *triangles);
 
-int Remesh_Near_Point(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *tm, ON_3dPoint *p3d);
-
+int Remesh_Near_Tri(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *tm, p2t::Triangle *t, std::set<p2t::Triangle *> *wq);
 
 /** @} */
 

@@ -33,29 +33,18 @@
 #define MAX_TRIANGULATION_ATTEMPTS 5
 
 static int
-do_triangulation(struct ON_Brep_CDT_Face_State *f, int full_surface_sample, int cnt)
+full_retriangulation(struct ON_Brep_CDT_Face_State *f)
 {
-    int ret = 0;
 
-    if (cnt > MAX_TRIANGULATION_ATTEMPTS) {
-	std::cerr << "Error: even after " << MAX_TRIANGULATION_ATTEMPTS << " iterations could not successfully triangulate face " << f->ind << "\n";
-	return 0;
-    }
     // TODO - for now, don't reset before returning the error - we want to see the
-    // failed mesh for diagnostics
-    ON_Brep_CDT_Face_Reset(f, full_surface_sample);
+    // failed mesh for debugging
+    ON_Brep_CDT_Face_Reset(f, 0);
 
     p2t::CDT *cdt = NULL;
-    bool outer = build_poly2tri_polylines(f, &cdt, full_surface_sample);
+    bool outer = build_poly2tri_polylines(f, &cdt, 0);
     if (outer) {
 	std::cerr << "Error: Face(" << f->ind << ") cannot evaluate its outer loop and will not be facetized." << std::endl;
 	return -1;
-    }
-
-    if (full_surface_sample) {
-	// Sample the surface, independent of the trimming curves, to get points that
-	// will tie the mesh to the interior surface.
-	getSurfacePoints(f);
     }
 
     std::set<ON_2dPoint *>::iterator p_it;
@@ -79,79 +68,164 @@ do_triangulation(struct ON_Brep_CDT_Face_State *f, int full_surface_sample, int 
     }
     delete cdt;
 
-    /* Calculate any 3D points we don't already have */
     populate_3d_pnts(f);
 
+    return 0;
+}
 
+int
+refine_triangulation(struct ON_Brep_CDT_Face_State *f, int cnt, int rebuild)
+{
+    std::set<p2t::Triangle *> active_tris;
+    int ret = 0;
 
-    // Singularity areas are bad news.  Remesh in those areas, if present
-    if (f->has_singular_trims) {
-	std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
-	std::set<p2t::Triangle *>::iterator tr_it;
+    if (cnt > MAX_TRIANGULATION_ATTEMPTS) {
+	std::cerr << "Error: even after " << MAX_TRIANGULATION_ATTEMPTS << " iterations could not successfully refine triangulate face " << f->ind << " for solidity criteria\n";
+	return 0;
+    }
 
-	// Identify any singular points
-	std::set<ON_3dPoint *> active_singular_pnts;
-	for (tr_it = f->tris->begin(); tr_it != f->tris->end(); tr_it++) {
-	    p2t::Triangle *t = *tr_it;
-	    for (size_t j = 0; j < 3; j++) {
-		ON_3dPoint *p3d = (*pointmap)[t->GetPoint(j)];
-		if (f->s_cdt->singular_vert_to_norms->find(p3d) != f->s_cdt->singular_vert_to_norms->end()) {
-		    active_singular_pnts.insert(p3d);
-		}
-	    }
-	}
-	std::set<ON_3dPoint *>::iterator a_it;
-	for (a_it = active_singular_pnts.begin(); a_it != active_singular_pnts.end(); a_it++) {
-	    struct trimesh_info *tm = CDT_Face_Build_Halfedge(f->tris);
-	    Remesh_Near_Point(f, tm, *a_it);
-	    delete tm;
+    // If a previous pass has made changes in which points are active in the
+    // surface set, we need to rebuild the whole triangulation.
+
+    if (rebuild) {
+	ret = full_retriangulation(f);
+	if (ret < 0) {
+	    bu_log("Fatal failure attempting full retriangulation of face\n");
+	    return -1;
 	}
     }
 
-
-    // Trivially degenerate pass
+    // Trivially degenerate triangles (a triangle defined by only
+    // two points) are never useful - cull them up front.
     triangles_degenerate_trivial(f);
 
-    // Check boundary triangles for distortion.  If we get a return > 0,
-    // adjustments were made to the surface points and we need to redo the
-    // triangulation
+    // Check the triangles around edges first - these may require
+    // the removal of points from the surface set
+    ret = triangles_check_edge_tris(f);
     int esret = triangles_slim_edge(f);
     if (esret < 0) {
 	bu_log("Fatal failure on slim edge checking\n");
 	return -1;
     }
     ret += esret;
+    if (ret) {
+	bu_log("Pass %d: surface points removed, need full retriangulation\n", cnt);
+	return refine_triangulation(f, cnt+1, 1);
+    }
 
-    // Flag zero area triangles for subsequent handling
+    // If we're starting from scratch (one way or another) build up our initial
+    // set of triangles to work with 
+    if (cnt == 0 || rebuild) {
+	// Singularity areas are bad news.  Remesh in those areas, if present
+	if (f->has_singular_trims) {
+	    std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
+	    std::set<p2t::Triangle *>::iterator tr_it;
+
+	    // Identify any triangles using singular points
+	    std::set<ON_3dPoint *> active_singular_pnts;
+	    for (tr_it = f->tris->begin(); tr_it != f->tris->end(); tr_it++) {
+		p2t::Triangle *t = *tr_it;
+		for (size_t j = 0; j < 3; j++) {
+		    ON_3dPoint *p3d = (*pointmap)[t->GetPoint(j)];
+		    if (f->s_cdt->singular_vert_to_norms->find(p3d) != f->s_cdt->singular_vert_to_norms->end()) {
+			active_tris.insert(t);
+		    }
+		}
+	    }
+	}
+
+	// Any triangle not having an edge on the mesh boundary polyline with
+	// an incorrect triangle face normal is a seed for local remeshing
+	ret = triangles_incorrect_normals(f, &active_tris);
+	if (ret == -1) {
+	    bu_log("unexpected edge triangle issues\n");
+	}
+    }
+
+    // Locally remesh in the area of triangles identified by above steps
+    // We don't want to do any more remeshing than we have to, so if a
+    // seed triangle incorporates other seed triangles into its remeshing
+    // process, we'll pull them out of the work queue 
+    std::set<p2t::Triangle *> wq;
+    std::set<p2t::Triangle *>::iterator a_it;
+    wq.insert(active_tris.begin(), active_tris.end());
+    while (wq.size()) {
+	a_it = wq.begin();
+	p2t::Triangle *t = *a_it;
+	// Because the mesh probably changes after each Remesh pass, we need to rebuild
+	// the trimesh half edge structure each time we iterate
+	struct trimesh_info *tm = CDT_Face_Build_Halfedge(f->tris);
+	Remesh_Near_Tri(f, tm, t, &wq);
+	delete tm;
+    }
+ 
+    // Identify zero area triangles
     triangles_degenerate_area(f);
 
-    // Validate based on edges.  If we get a return > 0, adjustments were
-    // made to the surface points and we need to redo the triangulation
+    // Validate based on edges.  If we get a return > 0, something went very
+    // wrong. 
     int eret = triangles_check_edges(f);
     if (eret < 0) {
 	bu_log("Fatal failure on edge checking\n");
 	return -1;
     }
-    ret += eret;
-
-    // Incorrect normals.  If we get a return > 0, adjustments were made
-    // to the surface points and we need to redo the triangulation
-    int nret = triangles_incorrect_normals(f);
-    if (nret < 0) {
-	bu_log("Fatal failure on normals checking\n");
-	return -1;
-    }
-    ret += nret;
-
-    if (ret > 0) {
-	return do_triangulation(f, 0, cnt+1);
-    }
 
     if (!ret) {
+	// Flag zero area triangles for subsequent handling (potentially
+	// involves localized changes to multiple faces, don't notify them
+	// until we're done locally)
 	triangles_degenerate_area_notify(f);
 	bu_log("Face %d: successful triangulation after %d passes\n", f->ind, cnt);
     }
     return ret;
+}
+
+static int
+do_triangulation(struct ON_Brep_CDT_Face_State *f)
+{
+    ON_Brep_CDT_Face_Reset(f, 1);
+
+    // Build the polylines in the poly2tri data container
+    p2t::CDT *cdt = NULL;
+    bool outer = build_poly2tri_polylines(f, &cdt, 1);
+    if (outer) {
+	std::cerr << "Error: Face(" << f->ind << ") cannot evaluate its outer loop and will not be facetized." << std::endl;
+	return -1;
+    }
+
+    // Sample the surface, independent of the trimming curves, to get points that
+    // will tie the mesh to the interior surface.
+    getSurfacePoints(f);
+    std::set<ON_2dPoint *>::iterator p_it;
+    for (p_it = f->on_surf_points->begin(); p_it != f->on_surf_points->end(); p_it++) {
+	ON_2dPoint *p = *p_it;
+	p2t::Point *tp = new p2t::Point(p->x, p->y);
+	(*f->p2t_to_on2_map)[tp] = p;
+	cdt->AddPoint(tp);
+    }
+
+    // All preliminary steps are complete, perform the initial triangulation
+    // using Poly2Tri's triangulation.  NOTE: it is important that the inputs
+    // to Poly2Tri satisfy its constraints - failure here could cause a crash.
+
+    // TODO - wrap all this inside of a libbg routine that catches the crash and
+    // bails out more gracefully...
+    cdt->Triangulate(true, -1);
+
+    // Copy generated triangles to set for easier manipulation
+    std::vector<p2t::Triangle*> cdt_tris = cdt->GetTriangles();
+    for (size_t i = 0; i < cdt_tris.size(); i++) {
+	p2t::Triangle *t = cdt_tris[i];
+	f->tris->insert(new p2t::Triangle(*t));
+    }
+    delete cdt;
+
+    /* Calculate any 3D points we don't already have */
+    populate_3d_pnts(f);
+
+    /* The poly2tri triangulation is not guaranteed to have all the properties
+     * we want out of the box - trigger a series of checks */
+    return refine_triangulation(f, 0, 0);
 }
 
 static int
@@ -233,7 +307,7 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_Face_State *f, std::map<const ON_Surface *, 
     // points on edges that are driven by 2D boolean intersections between
     // trimming loops, and may require another update pass as above.
 
-    return do_triangulation(f, 1, 0);
+    return do_triangulation(f);
 }
 
 static ON_3dVector
