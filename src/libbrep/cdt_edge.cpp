@@ -575,7 +575,13 @@ getEdgePoints(
     (*s_cdt->etrees)[edge->m_edge_index] = root;
 
 
-    /* Establish tolerances (TODO - get from edge curve...) */
+    /* Establish tolerances (TODO - get from edge curve...)
+     *
+     * TODO - linear edges aren't being split nearly far enough for curved surfaces
+     * that generate small triangles - need some sort of heuristic.  One possibility - 
+     * for all loops, queue up and process non-linear edge curves first.  Use something
+     * (smallest avg. seg length from any non-linear edge curve in the loop?) to guide
+     * how far to split linear edge curves. */
     root->cdt_tol = BREP_CDT_TOL_ZERO;
     if (trim.GetBoundingBox(min, max, bGrowBox)) {
 	dist = DIST_PT_PT(min, max);
