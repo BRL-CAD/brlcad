@@ -241,10 +241,38 @@ public:
 
     std::vector< index_t > boundary_loop() const;
 
+
+    std::vector< index_t > face_neighbors(const index_t face_index) const
+    {
+	std::vector< index_t > result;
+
+	const index_t start_hei = m_face_halfedges[ face_index ];
+	index_t hei = start_hei;
+	while (true) {
+	    const halfedge_t& he = m_halfedges[ hei ];
+	    if (-1 != he.face) result.push_back(he.face);
+
+	    hei = m_halfedges[ he.opposite_he ].next_he;
+	    if (hei == start_hei) break;
+	}
+
+	return result;
+    }
+
     typedef std::map< std::pair< index_t, index_t >, index_t > directed_edge2index_map_t;
 
     // Map from directed edges to face indices
     directed_edge2index_map_t m_de2fi;
+
+    // Butterfly vertices
+    std::set< index_t > m_butterfly_vertices;
+    std::map< index_t, std::set< index_t > > m_vertex2outgoing_boundary_hei;
+
+    size_t butterfly_edge_cnt(const index_t v_index)
+    {
+	if (m_butterfly_vertices.find(v_index) == m_butterfly_vertices.end()) return 0;
+	return m_vertex2outgoing_boundary_hei[v_index].size();
+    }
 
 private:
     std::vector< halfedge_t > m_halfedges;

@@ -267,6 +267,70 @@ plot_3d_cdt_tri(std::set<p2t::Triangle *> *faces, std::map<p2t::Point *, ON_3dPo
 }
 #endif
 
+
+static int 
+remove_boundary_self_intersections(std::vector<trimesh::triangle_t> &triangles, size_t pnt_size, std::set<trimesh::index_t> *remesh_triangles, trimesh::index_t seed_id)
+{
+    int butterfly_verts = 1;
+
+    while (butterfly_verts) {
+
+	std::set<trimesh::index_t> culls;
+	std::vector<trimesh::triangle_t> submesh_triangles;
+	std::map<trimesh::index_t, trimesh::index_t> n2o;
+	std::set<trimesh::index_t>::iterator tm_it;
+	for (tm_it = remesh_triangles->begin(); tm_it != remesh_triangles->end(); tm_it++) {
+	    trimesh::triangle_t tmt = triangles[*tm_it];
+	    submesh_triangles.push_back(tmt);
+	    n2o[submesh_triangles.size()-1] = *tm_it;
+	}
+	bu_log("initial submesh triangle cnt: %zd\n", submesh_triangles.size());
+
+	trimesh::trimesh_t smesh;
+	std::vector<trimesh::edge_t> sedges;
+	trimesh::unordered_edges_from_triangles(submesh_triangles.size(), &submesh_triangles[0], sedges);
+
+	smesh.build(pnt_size, submesh_triangles.size(), &submesh_triangles[0], sedges.size(), &sedges[0]);
+
+	bu_log("butterfly vertex cnt: %zd\n", smesh.m_butterfly_vertices.size());
+	if (smesh.m_butterfly_vertices.size()) {
+	    bu_log("butterfly verts!\n");
+	}
+
+	// For each butterfly vertex, pull the set of associated faces.
+	// For each triangle, if not the seed triangle, yank it.
+	std::set<trimesh::index_t>::iterator bf_it;
+	for (bf_it = smesh.m_butterfly_vertices.begin(); bf_it != smesh.m_butterfly_vertices.end(); bf_it++) {
+	    std::vector<trimesh::index_t> faces = smesh.vertex_face_neighbors(*bf_it);
+	    bu_log("bf faces cnt: %zd\n", faces.size());
+	    for (size_t i = 0; i < faces.size(); i++) {
+		if (n2o[faces[i]] == seed_id) continue;
+
+		// Get the trimesh index from the original mesh, not the working submesh
+		culls.insert(n2o[faces[i]]);
+		bu_log("cull %ld -> %ld\n", faces[i], n2o[faces[i]]);
+	    }
+	}
+
+	// Thin down the remesh triangle set based on the edge analysis
+	std::set<trimesh::index_t>::iterator c_it;
+	for (c_it = culls.begin(); c_it != culls.end(); c_it++) {
+	    remesh_triangles->erase(*c_it);
+	    bu_log("culling %ld\n", *c_it);
+	}
+	
+	// If we didn't have to pull anything, we should be done (may still have to deal with holes,
+	// but that involves a generalization of boundary_loop in trimesh...)
+	if (!culls.size()) {
+	    butterfly_verts = 0;
+	}
+    }
+
+    return 0;
+}
+
+
+
 static bool
 flipped_face(p2t::Triangle *t, std::map<p2t::Point *, ON_3dPoint *> *pointmap, std::map<p2t::Point *, ON_3dPoint *> *normalmap, bool m_bRev)
 {
@@ -339,15 +403,12 @@ Remesh_Near_Tri(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *tm, p2t::
 	}
 
 	// Queue up the connected faces we don't already have in the set
-	for (size_t i = 0; i < 3; i++) {
-	    trimesh::index_t ind = tm->p2dind[ct->GetPoint(i)];
-	    std::vector<trimesh::index_t> faces = tm->mesh.vertex_face_neighbors(ind);
-	    for (size_t j = 0; j < faces.size(); j++) {
-		if (visited_triangles.find(faces[j]) == visited_triangles.end()) {
-		    // We haven't seen this one yet
-		    nq->push(faces[j]);
-		    visited_triangles.insert(faces[j]);
-		}
+	std::vector<trimesh::index_t> faces = tm->mesh.face_neighbors(t_he);
+	for (size_t j = 0; j < faces.size(); j++) {
+	    if (visited_triangles.find(faces[j]) == visited_triangles.end()) {
+		// We haven't seen this one yet
+		nq->push(faces[j]);
+		visited_triangles.insert(faces[j]);
 	    }
 	}
 
@@ -426,7 +487,8 @@ Remesh_Near_Tri(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *tm, p2t::
     for (size_t i = 0; i < pnts_3d.size(); i++) {
 	pnts_3d_ind[pnts_3d[i]] = i;
     }
-    std::vector<trimesh::triangle_t> submesh_triangles;
+
+    std::vector<trimesh::triangle_t> submesh_triangles_prelim;
     std::set<trimesh::index_t> smtri;
     for (tm_it = remesh_triangles.begin(); tm_it != remesh_triangles.end(); tm_it++) {
 	p2t::Triangle *t = tm->triangles[*tm_it].t;
@@ -436,14 +498,15 @@ Remesh_Near_Tri(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *tm, p2t::
 	}
 	tmt.t = t;
 	if (tmt.v[0] != tmt.v[1] && tmt.v[0] != tmt.v[2] && tmt.v[1] != tmt.v[2]) {
-	    smtri.insert(submesh_triangles.size());
-	    submesh_triangles.push_back(tmt);
+	    submesh_triangles_prelim.push_back(tmt);
+	    smtri.insert(submesh_triangles_prelim.size()-1);
 	} else {
 	    bu_log("Skipping: %ld -> %ld -> %ld\n", tmt.v[0], tmt.v[1], tmt.v[2]);
 	}
 
     }
-    bu_log("submesh triangle cnt: %zd\n", submesh_triangles.size());
+    bu_log("submesh triangle prelim cnt: %zd\n", submesh_triangles_prelim.size());
+
 
     ON_Plane bfplane(ON_3dPoint(pcenter[X],pcenter[Y],pcenter[Z]),ON_3dVector(pnorm[X],pnorm[Y],pnorm[Z]));
     ON_Xform to_plane;
@@ -458,6 +521,17 @@ Remesh_Near_Tri(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *tm, p2t::
 	on2_3[n2d] = pnts_3d[i];
 	on2_3n[n2d] = sub_3d_norm[pnts_3d[i]];
     }
+
+    // The above selection isn't guaranteed to produce something poly2tri can
+    // handle - do a filtering pass to clean up the triangles first
+    remove_boundary_self_intersections(submesh_triangles_prelim, pnts_2d.size(), &smtri, seed_id);
+
+    std::vector<trimesh::triangle_t> submesh_triangles;
+    for (tm_it = smtri.begin(); tm_it != smtri.end(); tm_it++) {
+	trimesh::triangle_t tmt = submesh_triangles_prelim[*tm_it];
+	submesh_triangles.push_back(tmt);
+    }
+    bu_log("submesh triangle cnt: %zd\n", submesh_triangles.size());
 
     std::vector<trimesh::edge_t> sedges;
     trimesh::trimesh_t smesh;
@@ -476,6 +550,7 @@ Remesh_Near_Tri(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *tm, p2t::
 #endif
 
     // Given the set of unordered boundary edge segments, construct the outer loop
+    // TODO - triangle selection doesn't guarantee no-hole mesh sets - need to handle
     std::vector<trimesh::index_t> sloop = smesh.boundary_loop();
 
 #if CDT_DEBUG_PLOTS

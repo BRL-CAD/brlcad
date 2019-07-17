@@ -148,12 +148,12 @@ void trimesh_t::build(const unsigned long num_vertices, const unsigned long num_
 
     // Make a map from vertices to boundary halfedges (indices) originating from them.
     // NOTE: There will only be multiple originating boundary halfedges at butterfly vertices.
-    std::map< index_t, std::set< index_t > > vertex2outgoing_boundary_hei;
     for (std::vector< index_t >::const_iterator hei = boundary_heis.begin(); hei != boundary_heis.end(); ++hei) {
 	const index_t originating_vertex = m_halfedges[ m_halfedges[ *hei ].opposite_he ].to_vertex;
-	vertex2outgoing_boundary_hei[ originating_vertex ].insert(*hei);
-	if (vertex2outgoing_boundary_hei[ originating_vertex ].size() > 1) {
-	    std::cerr << "Butterfly vertex encountered (Edge count: " << vertex2outgoing_boundary_hei[ originating_vertex ].size() <<  ").\n";
+	m_vertex2outgoing_boundary_hei[ originating_vertex ].insert(*hei);
+	if (m_vertex2outgoing_boundary_hei[ originating_vertex ].size() > 1) {
+	    std::cerr << "Butterfly vertex encountered (Edge count: " << m_vertex2outgoing_boundary_hei[ originating_vertex ].size() <<  ").\n";
+	    m_butterfly_vertices.insert(originating_vertex );
 	}
     }
 
@@ -162,7 +162,7 @@ void trimesh_t::build(const unsigned long num_vertices, const unsigned long num_
     for (std::vector< index_t >::const_iterator hei = boundary_heis.begin(); hei != boundary_heis.end(); ++hei) {
 	halfedge_t& he = m_halfedges[ *hei ];
 
-	std::set< index_t >& outgoing = vertex2outgoing_boundary_hei[ he.to_vertex ];
+	std::set< index_t >& outgoing = m_vertex2outgoing_boundary_hei[ he.to_vertex ];
 	if (!outgoing.empty()) {
 	    std::set< index_t >::iterator outgoing_hei = outgoing.begin();
 	    he.next_he = *outgoing_hei;
@@ -172,7 +172,7 @@ void trimesh_t::build(const unsigned long num_vertices, const unsigned long num_
     }
 
 #ifndef NDEBUG
-    for (std::map< index_t, std::set< index_t > >::const_iterator it = vertex2outgoing_boundary_hei.begin(); it != vertex2outgoing_boundary_hei.end(); ++it) {
+    for (std::map< index_t, std::set< index_t > >::const_iterator it = m_vertex2outgoing_boundary_hei.begin(); it != m_vertex2outgoing_boundary_hei.end(); ++it) {
 	assert(it->second.empty());
     }
 #endif
@@ -222,6 +222,12 @@ std::vector< trimesh_t::index_t > trimesh_t::boundary_loop() const
     /* Returns an ordered loop from the boundary edges. */
 
     std::vector< std::pair< index_t, index_t > > edges = boundary_edges();
+
+    if (!edges.size()) {
+	std::cerr << "No boundary edges???\n";
+	std::vector<index_t> emptyv;
+	return emptyv;
+    }
 
     std::map<index_t, std::set<std::pair< index_t, index_t >>> vert_to_edges;
     std::set<std::pair< index_t, index_t>> unadded;
@@ -273,10 +279,14 @@ std::vector< trimesh_t::index_t > trimesh_t::boundary_loop() const
 	unadded.erase(ce);
     }
 
-    for (size_t i = 0; i < bl.size() - 1; i++) {
-	std::cout << bl[i] << "->";
+    //for (size_t i = 0; i < bl.size() - 1; i++) {
+    //	std::cout << bl[i] << "->";
+    //}
+    //std::cout << bl[bl.size()-1] << "\n";
+
+    if (!bl.size()) {
+	std::cerr << "Empty loop???\n";
     }
-    std::cout << bl[bl.size()-1] << "\n";
 
     return bl;
 }
