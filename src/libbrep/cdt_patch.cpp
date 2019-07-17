@@ -268,10 +268,59 @@ plot_3d_cdt_tri(std::set<p2t::Triangle *> *faces, std::map<p2t::Point *, ON_3dPo
 #endif
 
 
-static int 
-remove_boundary_self_intersections(std::vector<trimesh::triangle_t> &triangles, size_t pnt_size, std::set<trimesh::index_t> *remesh_triangles, trimesh::index_t seed_id)
+void
+best_fit_plane(point_t *orig, vect_t *norm, struct trimesh_info *tm, std::set<trimesh::index_t> *remesh_triangles,
+    std::map<p2t::Point *, ON_3dPoint *> *pointmap)
+{
+    // Find the best fit plane for the vertices of the triangles involved with
+    // the remeshing
+    std::set<ON_3dPoint *> active_3d_pnts;
+    ON_3dVector avgtnorm(0.0,0.0,0.0);
+    std::set<trimesh::index_t>::iterator f_it;
+    for (f_it = remesh_triangles->begin(); f_it != remesh_triangles->end(); f_it++) {
+	p2t::Triangle *t = tm->triangles[*f_it].t;
+	ON_3dVector ltdir = p2tTri_Normal(t, pointmap);
+	avgtnorm += ltdir;
+	for (size_t j = 0; j < 3; j++) {
+	    active_3d_pnts.insert((*pointmap)[t->GetPoint(j)]);
+	}
+    }
+    avgtnorm = avgtnorm * 1.0/(double)remesh_triangles->size();
+
+    point_t pcenter;
+    vect_t pnorm;
+    {
+	point_t *pnts = (point_t *)bu_calloc(active_3d_pnts.size()+1, sizeof(point_t), "fitting points");
+	int pnts_ind = 0;
+	std::set<ON_3dPoint *>::iterator a_it;
+	for (a_it = active_3d_pnts.begin(); a_it != active_3d_pnts.end(); a_it++) {
+	    ON_3dPoint *p = *a_it;
+	    pnts[pnts_ind][X] = p->x;
+	    pnts[pnts_ind][Y] = p->y;
+	    pnts[pnts_ind][Z] = p->z;
+	    pnts_ind++;
+	}
+	if (bn_fit_plane(&pcenter, &pnorm, pnts_ind, pnts)) {
+	    bu_log("Failed to get best fit plane!\n");
+	}
+	bu_free(pnts, "fitting points");
+
+	ON_3dVector on_norm(pnorm[X], pnorm[Y], pnorm[Z]);
+	if (ON_DotProduct(on_norm, avgtnorm) < 0) {
+	    VSCALE(pnorm, pnorm, -1);
+	}
+    }
+
+    VMOVE(*orig, pcenter);
+    VMOVE(*norm, pnorm);
+}
+
+
+static int
+remove_butterfly_vertices(std::vector<trimesh::triangle_t> &triangles, size_t pnt_size, std::set<trimesh::index_t> *remesh_triangles, trimesh::index_t seed_id, std::map<p2t::Point *, ON_3dPoint *> *pointmap, int face_index, struct bu_vls *pname_root)
 {
     int butterfly_verts = 1;
+    int pass = 1;
 
     while (butterfly_verts) {
 
@@ -318,12 +367,23 @@ remove_boundary_self_intersections(std::vector<trimesh::triangle_t> &triangles, 
 	    remesh_triangles->erase(*c_it);
 	    bu_log("culling %ld\n", *c_it);
 	}
-	
+
 	// If we didn't have to pull anything, we should be done (may still have to deal with holes,
 	// but that involves a generalization of boundary_loop in trimesh...)
 	if (!culls.size()) {
 	    butterfly_verts = 0;
 	}
+
+#if CDT_DEBUG_PLOTS
+	struct bu_vls pname = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&pname, "%s-%d-04-butterfly-pass-%d-3D.plot3", bu_vls_cstr(pname_root), face_index, pass);
+	plot_trimesh_tris_3d(remesh_triangles, triangles, pointmap, bu_vls_cstr(&pname));
+
+	// TODO - need to see 2D projection mesh as well, since that's actually the one poly2tri needs
+	// to work on
+#endif
+
+
     }
 
     return 0;
@@ -351,19 +411,22 @@ flipped_face(p2t::Triangle *t, std::map<p2t::Point *, ON_3dPoint *> *pointmap, s
 }
 
 int
-Remesh_Near_Tri(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *tm, p2t::Triangle *seed_tri, std::set<p2t::Triangle *> *wq)
+Remesh_Near_Tri(struct ON_Brep_CDT_Face_State *f, p2t::Triangle *seed_tri, std::set<p2t::Triangle *> *wq)
 {
 
 #if CDT_DEBUG_PLOTS
     struct bu_vls pname_root = BU_VLS_INIT_ZERO;
     struct bu_vls pname = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&pname_root, "remesh_triangles");
+    bu_vls_sprintf(&pname_root, "remesh_triangles-0");
     bu_vls_sprintf(&pname, "%s-%d.plot3", bu_vls_cstr(&pname_root), f->ind);
     while (bu_file_exists(bu_vls_cstr(&pname), NULL)) {
-	bu_vls_incr(&pname_root, NULL, "0:0:0:0:-", NULL, NULL);
-	bu_vls_sprintf(&pname, "%s.plot3", bu_vls_cstr(&pname_root));
+	bu_vls_incr(&pname_root, NULL, "2:0:0:0", NULL, NULL);
+	bu_vls_sprintf(&pname, "%s-%d.plot3", bu_vls_cstr(&pname_root), f->ind);
     }
 #endif
+
+
+    struct trimesh_info *tm = CDT_Face_Build_Halfedge(f->tris);
 
     std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
     std::map<p2t::Point *, ON_3dPoint *> *normalmap = f->p2t_to_on3_norm_map;
@@ -375,7 +438,12 @@ Remesh_Near_Tri(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *tm, p2t::
     ON_3dVector tdir = p2tTri_Normal(seed_tri, pointmap);
 
     // Walk out along the mesh, adding triangles whose triangle normal is < 45
-    // degrees away from that of the original triangle
+    // degrees away from that of the original triangle.  These form the initial
+    // candidate set of remeshing triangles, although they are not yet the
+    // final set.
+    //
+    // TODO - should this be based on the Brep normals of the verts rather than
+    // the triangle face normal?
     std::set<trimesh::index_t> flipped_faces;
     std::queue<trimesh::index_t> q1, q2;
     std::queue<trimesh::index_t> *tq, *nq;
@@ -385,7 +453,6 @@ Remesh_Near_Tri(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *tm, p2t::
     while (!tq->empty()) {
 	trimesh::index_t t_he = tq->front();
 	tq->pop();
-	bu_log("Triangle: %ld\n", t_he);
 	p2t::Triangle *ct = tm->triangles[t_he].t;
 	// Check normal
 	ON_3dVector ctdir = p2tTri_Normal(ct, pointmap);
@@ -399,7 +466,6 @@ Remesh_Near_Tri(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *tm, p2t::
 	    continue;
 	} else {
 	    remesh_triangles.insert(t_he);
-	    wq->erase(ct);
 	}
 
 	// Queue up the connected faces we don't already have in the set
@@ -418,60 +484,53 @@ Remesh_Near_Tri(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *tm, p2t::
 	    nq = tmpq;
 	}
     }
+    bu_log("remesh triangle stage 1 cnt: %zd\n", remesh_triangles.size());
 
 #if CDT_DEBUG_PLOTS
-    bu_vls_sprintf(&pname, "%s-%d-working_tris.plot3", bu_vls_cstr(&pname_root), f->ind);
+    bu_vls_sprintf(&pname, "%s-%d-01.plot3", bu_vls_cstr(&pname_root), f->ind);
+    plot_trimesh_tris_3d(&remesh_triangles, tm->triangles, pointmap, bu_vls_cstr(&pname));
+#endif
+
+
+    // Weed out any trivially degenerate triangles (TODO - shouldn't we have
+    // already culled these by now?)
+    std::set<trimesh::index_t>::iterator tm_it;
+    std::set<trimesh::index_t> tm_degen;
+    for (tm_it = remesh_triangles.begin(); tm_it != remesh_triangles.end(); tm_it++) {
+	p2t::Triangle *t = tm->triangles[*tm_it].t;
+	ON_3dPoint *v[3];
+	for (size_t j = 0; j < 3; j++) {
+	    v[j] = (*pointmap)[t->GetPoint(j)];
+	}
+	if (!(v[0] != v[1] && v[0] != v[2] && v[1] != v[2])) {
+	    tm_degen.insert(*tm_it);
+	}
+    }
+    for (tm_it = tm_degen.begin(); tm_it != tm_degen.end(); tm_it++) {
+	remesh_triangles.erase(*tm_it);
+    }
+    bu_log("remesh triangle stage 2 cnt: %zd\n", remesh_triangles.size());
+
+
+#if CDT_DEBUG_PLOTS
+    bu_vls_sprintf(&pname, "%s-%d-02.plot3", bu_vls_cstr(&pname_root), f->ind);
     plot_trimesh_tris_3d(&remesh_triangles, tm->triangles, pointmap, bu_vls_cstr(&pname));
 #endif
 
     // Find the best fit plane for the vertices of the triangles involved with
     // the remeshing
-    std::set<ON_3dPoint *> active_3d_pnts;
-    ON_3dVector avgtnorm(0.0,0.0,0.0);
-    for (f_it = remesh_triangles.begin(); f_it != remesh_triangles.end(); f_it++) {
-        p2t::Triangle *t = tm->triangles[*f_it].t;
-        ON_3dVector ltdir = p2tTri_Normal(t, pointmap);
-        avgtnorm += ltdir;
-        for (size_t j = 0; j < 3; j++) {
-            active_3d_pnts.insert((*pointmap)[t->GetPoint(j)]);
-        }
-    }
-    avgtnorm = avgtnorm * 1.0/(double)remesh_triangles.size();
-
     point_t pcenter;
     vect_t pnorm;
-    {
-        point_t *pnts = (point_t *)bu_calloc(active_3d_pnts.size()+1, sizeof(point_t), "fitting points");
-        int pnts_ind = 0;
-        std::set<ON_3dPoint *>::iterator a_it;
-        for (a_it = active_3d_pnts.begin(); a_it != active_3d_pnts.end(); a_it++) {
-            ON_3dPoint *p = *a_it;
-            pnts[pnts_ind][X] = p->x;
-            pnts[pnts_ind][Y] = p->y;
-            pnts[pnts_ind][Z] = p->z;
-            pnts_ind++;
-        }
-        if (bn_fit_plane(&pcenter, &pnorm, pnts_ind, pnts)) {
-            bu_log("Failed to get best fit plane!\n");
-        }
-        bu_free(pnts, "fitting points");
-
-        ON_3dVector on_norm(pnorm[X], pnorm[Y], pnorm[Z]);
-        if (ON_DotProduct(on_norm, avgtnorm) < 0) {
-            VSCALE(pnorm, pnorm, -1);
-        }
-    }
-
+    best_fit_plane(&pcenter, &pnorm, tm, &remesh_triangles, pointmap);
 #if CDT_DEBUG_PLOTS
-    bu_vls_sprintf(&pname, "%s-%d-best_fit_plane.plot3", bu_vls_cstr(&pname_root), f->ind);
+    bu_vls_sprintf(&pname, "%s-%d-03-best_fit_plane.plot3", bu_vls_cstr(&pname_root), f->ind);
     plot_best_fit_plane(&pcenter, &pnorm, bu_vls_cstr(&pname));
 #endif
 
-    // Project all 3D points in the subset into the plane, getting XY coordinates
+    // Project all 3D points in the subset into the best fit plane. We need XY coordinates
     // for poly2Tri.
     std::set<ON_3dPoint *> sub_3d;
     std::map<ON_3dPoint *, ON_3dPoint *> sub_3d_norm;
-    std::set<trimesh::index_t>::iterator tm_it;
     for (tm_it = remesh_triangles.begin(); tm_it != remesh_triangles.end(); tm_it++) {
 	p2t::Triangle *t = tm->triangles[*tm_it].t;
 	for (size_t j = 0; j < 3; j++) {
@@ -482,12 +541,24 @@ Remesh_Near_Tri(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *tm, p2t::
     std::vector<ON_3dPoint *> pnts_3d(sub_3d.begin(), sub_3d.end());
     std::vector<ON_2dPoint *> pnts_2d;
     std::map<ON_3dPoint *, size_t> pnts_3d_ind;
-    bu_log("remesh triangle cnt: %zd\n", remesh_triangles.size());
 
+    ON_Plane bfplane(ON_3dPoint(pcenter[X],pcenter[Y],pcenter[Z]),ON_3dVector(pnorm[X],pnorm[Y],pnorm[Z]));
+    ON_Xform to_plane;
+    to_plane.PlanarProjection(bfplane);
+    std::map<ON_2dPoint *, ON_3dPoint *> on2_3;
+    std::map<ON_2dPoint *, ON_3dPoint *> on2_3n;
     for (size_t i = 0; i < pnts_3d.size(); i++) {
 	pnts_3d_ind[pnts_3d[i]] = i;
+	ON_3dPoint op3d = (*pnts_3d[i]);
+	op3d.Transform(to_plane);
+	ON_2dPoint *n2d = new ON_2dPoint(op3d.x, op3d.y);
+	pnts_2d.push_back(n2d);
+	on2_3[n2d] = pnts_3d[i];
+	on2_3n[n2d] = sub_3d_norm[pnts_3d[i]];
     }
 
+    // Translate the poly2tri triangle into trimesh
+    std::map<trimesh::index_t, trimesh::index_t> sp2o;
     std::vector<trimesh::triangle_t> submesh_triangles_prelim;
     std::set<trimesh::index_t> smtri;
     for (tm_it = remesh_triangles.begin(); tm_it != remesh_triangles.end(); tm_it++) {
@@ -499,6 +570,7 @@ Remesh_Near_Tri(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *tm, p2t::
 	tmt.t = t;
 	if (tmt.v[0] != tmt.v[1] && tmt.v[0] != tmt.v[2] && tmt.v[1] != tmt.v[2]) {
 	    submesh_triangles_prelim.push_back(tmt);
+	    sp2o[submesh_triangles_prelim.size()-1] = *tm_it;
 	    smtri.insert(submesh_triangles_prelim.size()-1);
 	} else {
 	    bu_log("Skipping: %ld -> %ld -> %ld\n", tmt.v[0], tmt.v[1], tmt.v[2]);
@@ -507,31 +579,23 @@ Remesh_Near_Tri(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *tm, p2t::
     }
     bu_log("submesh triangle prelim cnt: %zd\n", submesh_triangles_prelim.size());
 
-
-    ON_Plane bfplane(ON_3dPoint(pcenter[X],pcenter[Y],pcenter[Z]),ON_3dVector(pnorm[X],pnorm[Y],pnorm[Z]));
-    ON_Xform to_plane;
-    to_plane.PlanarProjection(bfplane);
-    std::map<ON_2dPoint *, ON_3dPoint *> on2_3;
-    std::map<ON_2dPoint *, ON_3dPoint *> on2_3n;
-    for (size_t i = 0; i < pnts_3d.size(); i++) {
-	ON_3dPoint op3d = (*pnts_3d[i]);
-	op3d.Transform(to_plane);
-	ON_2dPoint *n2d = new ON_2dPoint(op3d.x, op3d.y);
-	pnts_2d.push_back(n2d);
-	on2_3[n2d] = pnts_3d[i];
-	on2_3n[n2d] = sub_3d_norm[pnts_3d[i]];
-    }
-
     // The above selection isn't guaranteed to produce something poly2tri can
-    // handle - do a filtering pass to clean up the triangles first
-    remove_boundary_self_intersections(submesh_triangles_prelim, pnts_2d.size(), &smtri, seed_id);
+    // handle - do a filtering pass to deactivate triangles causing butterfly
+    // vertices in the mesh
+    remove_butterfly_vertices(submesh_triangles_prelim, pnts_2d.size(), &smtri, seed_id, pointmap, f->ind, &pname_root);
 
     std::vector<trimesh::triangle_t> submesh_triangles;
+    std::map<trimesh::index_t, trimesh::index_t> s2sp;
     for (tm_it = smtri.begin(); tm_it != smtri.end(); tm_it++) {
 	trimesh::triangle_t tmt = submesh_triangles_prelim[*tm_it];
 	submesh_triangles.push_back(tmt);
+	s2sp[submesh_triangles.size()-1] = *tm_it;
     }
     bu_log("submesh triangle cnt: %zd\n", submesh_triangles.size());
+
+    for (size_t i = 0; i < submesh_triangles.size(); i++) {
+	wq->erase(tm->triangles[sp2o[s2sp[i]]].t);
+    }
 
     std::vector<trimesh::edge_t> sedges;
     trimesh::trimesh_t smesh;
@@ -544,7 +608,7 @@ Remesh_Near_Tri(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *tm, p2t::
 
 
 #if CDT_DEBUG_PLOTS
-    bu_vls_sprintf(&pname, "%s-%d-outer_edge.plot3", bu_vls_cstr(&pname_root), f->ind);
+    bu_vls_sprintf(&pname, "%s-%d-05-outer_edge.plot3", bu_vls_cstr(&pname_root), f->ind);
     plot_edge_set(bedges, pnts_3d, bu_vls_cstr(&pname));
     //plot_trimesh_tris_3d(&smtri, submesh_triangles, pointmap, "submesh_triangles.plot3");
 #endif
@@ -553,8 +617,13 @@ Remesh_Near_Tri(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *tm, p2t::
     // TODO - triangle selection doesn't guarantee no-hole mesh sets - need to handle
     std::vector<trimesh::index_t> sloop = smesh.boundary_loop();
 
+    if (!sloop.size()) {
+	bu_log("Error - failed to generate boundary loop!\n");
+	return -1;
+    }
+
 #if CDT_DEBUG_PLOTS
-    bu_vls_sprintf(&pname, "%s-%d-outer_loop.plot3", bu_vls_cstr(&pname_root), f->ind);
+    bu_vls_sprintf(&pname, "%s-%d-06-outer_loop.plot3", bu_vls_cstr(&pname_root), f->ind);
     plot_edge_loop(sloop, pnts_3d, bu_vls_cstr(&pname));
 #endif
 
@@ -562,41 +631,73 @@ Remesh_Near_Tri(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *tm, p2t::
 	bu_log("WARNING: incorporated flipped faces - need to do outer boundary ordering sanity checking!!\n");
     }
 
+    // Perform the new triangulation
     std::set<ON_2dPoint *> handled;
     std::set<ON_2dPoint *>::iterator u_it;
     std::vector<p2t::Point *> polyline;
     p2t::Point *fp = NULL;
     for (size_t i = 0; i < sloop.size(); i++) {
 	ON_2dPoint *onp2d = pnts_2d[sloop[i]];
+	if (!onp2d) {
+	    bu_log("missing onp2d!\n");
+	}
 	p2t::Point *np = new p2t::Point(onp2d->x, onp2d->y);
 	if (!fp) fp = np;
+	if (on2_3.find(onp2d) == on2_3.end()) {
+	    bu_log("missing onp2d to 3D mapping!\n");
+	}
 	(*pointmap)[np] = on2_3[onp2d];
-	bu_log("polyline %f %f -> %f %f %f\n", np->x, np->y, (*pointmap)[np]->x, (*pointmap)[np]->y, (*pointmap)[np]->z);
+	//bu_log("polyline %f %f -> %f %f %f\n", np->x, np->y, (*pointmap)[np]->x, (*pointmap)[np]->y, (*pointmap)[np]->z);
 	(*normalmap)[np] = on2_3n[onp2d];
 	polyline.push_back(np);
 	handled.insert(onp2d);
     }
 
+    if (!polyline.size()) {
+    	bu_log("Error - failed to generate polyline!\n");
+	return -1;
+    }
+
 #if CDT_DEBUG_PLOTS
-    bu_vls_sprintf(&pname, "%s-%d-polyline.plot3", bu_vls_cstr(&pname_root), f->ind);
-    plot_edge_loop_2d(polyline, "polyline.plot3");
+    bu_vls_sprintf(&pname, "%s-%d-07-polyline.plot3", bu_vls_cstr(&pname_root), f->ind);
+    plot_edge_loop_2d(polyline, bu_vls_cstr(&pname));
 #endif
 
-    // Perform the new triangulation
     p2t::CDT *ncdt = new p2t::CDT(polyline);
+
     for (size_t i = 0; i < pnts_2d.size(); i++) {
 	ON_2dPoint *onp2d = pnts_2d[i];
+	if (!onp2d) {
+	    bu_log("missing onp2d!\n");
+	}
 	if (handled.find(onp2d) != handled.end()) continue;
 	p2t::Point *np = new p2t::Point(onp2d->x, onp2d->y);
+	if (on2_3.find(onp2d) == on2_3.end()) {
+	    bu_log("missing onp2d to 3D mapping!\n");
+	}
 	(*pointmap)[np] = on2_3[onp2d];
-	bu_log("AddPoint %f %f -> %f %f %f\n", np->x, np->y, (*pointmap)[np]->x, (*pointmap)[np]->y, (*pointmap)[np]->z);
+	//bu_log("AddPoint %f %f -> %f %f %f\n", np->x, np->y, (*pointmap)[np]->x, (*pointmap)[np]->y, (*pointmap)[np]->z);
 	(*normalmap)[np] = on2_3n[onp2d];
 	ncdt->AddPoint(np);
     }
     ncdt->Triangulate(true, -1);
 
+    // Validate that all points have a corresponding 3D point
+    std::vector<p2t::Triangle*> fntris = ncdt->GetTriangles();
+    for (size_t i = 0; i < fntris.size(); i++) {
+	p2t::Triangle *t = fntris[i];
+	for (size_t j = 0; j < 3; j++) {
+	    p2t::Point *tp = t->GetPoint(j);
+	    if (f->p2t_to_on3_map->find(tp) == f->p2t_to_on3_map->end()) {
+		bu_log("Error - triangle created with invalid 3D mapping!\n");
+	    } else {
+		//bu_log("TPnt(%zd,%zd) %f %f -> %f %f %f\n", i,j, tp->x, tp->y, (*pointmap)[tp]->x, (*pointmap)[tp]->y, (*pointmap)[tp]->z);
+	    }
+	}
+    }
+
 #if CDT_DEBUG_PLOTS
-    bu_vls_sprintf(&pname, "%s-%d-poly2tri_2d.plot3", bu_vls_cstr(&pname_root), f->ind);
+    bu_vls_sprintf(&pname, "%s-%d-08-poly2tri_2d.plot3", bu_vls_cstr(&pname_root), f->ind);
     plot_2d_cdt_tri(ncdt, bu_vls_cstr(&pname));
 #endif
 
@@ -612,6 +713,15 @@ Remesh_Near_Tri(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *tm, p2t::
 	p2t::Point *p2_1 = t->GetPoint(0);
 	p2t::Point *p2_2 = t->GetPoint(1);
 	p2t::Point *p2_3 = t->GetPoint(2);
+	for (size_t j = 0; j < 3; j++) {
+	    p2t::Point *tp = t->GetPoint(j);
+	    if (pointmap->find(tp) == pointmap->end()) {
+		bu_log("Error - triangle created with invalid 3D mapping!\n");
+	    } else {
+		//bu_log("TPnt2(%zd,%zd) %f %f -> %f %f %f\n", i,j, tp->x, tp->y, (*pointmap)[tp]->x, (*pointmap)[tp]->y, (*pointmap)[tp]->z);
+	    }
+	}
+
 	//bu_log("TPnt1 %f %f -> %f %f %f\n", p2_1->x, p2_1->y, (*pointmap)[p2_1]->x, (*pointmap)[p2_1]->y, (*pointmap)[p2_1]->z);
 	//bu_log("TPnt2 %f %f -> %f %f %f\n", p2_2->x, p2_2->y, (*pointmap)[p2_2]->x, (*pointmap)[p2_2]->y, (*pointmap)[p2_2]->z);
 	//bu_log("TPnt3 %f %f -> %f %f %f\n", p2_3->x, p2_3->y, (*pointmap)[p2_3]->x, (*pointmap)[p2_3]->y, (*pointmap)[p2_3]->z);
@@ -634,12 +744,13 @@ Remesh_Near_Tri(struct ON_Brep_CDT_Face_State *f, struct trimesh_info *tm, p2t::
     plot_3d_cdt_tri(&new_faces, pointmap, bu_vls_cstr(&pname));
 #endif
 
-    std::set<trimesh::index_t>::iterator tms_it;
-    for (tms_it = remesh_triangles.begin(); tms_it != remesh_triangles.end(); tms_it++) {
-	p2t::Triangle *t = tm->triangles[*tms_it].t;
+    for (size_t i = 0; i < submesh_triangles.size(); i++) {
+	p2t::Triangle *t = submesh_triangles[i].t;
 	f->tris->erase(t);
 	delete t;
     }
+
+    delete tm;
 
     return 0;
 }

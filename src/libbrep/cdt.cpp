@@ -70,6 +70,18 @@ full_retriangulation(struct ON_Brep_CDT_Face_State *f)
 
     populate_3d_pnts(f);
 
+    // Validate that all points have a corresponding 3D point
+    std::set<p2t::Triangle*>::iterator  s_it;
+    for (s_it = f->tris->begin(); s_it != f->tris->end(); s_it++) {
+	p2t::Triangle *t = *s_it;
+	for (size_t j = 0; j < 3; j++) {
+	    p2t::Point *tp = t->GetPoint(j);
+	    if (f->p2t_to_on3_map->find(tp) == f->p2t_to_on3_map->end()) {
+		bu_log("Error - triangle created with invalid 3D mapping!\n");
+	    }
+	}
+    }
+
     return 0;
 }
 
@@ -154,9 +166,7 @@ refine_triangulation(struct ON_Brep_CDT_Face_State *f, int cnt, int rebuild)
 	p2t::Triangle *t = *a_it;
 	// Because the mesh probably changes after each Remesh pass, we need to rebuild
 	// the trimesh half edge structure each time we iterate
-	struct trimesh_info *tm = CDT_Face_Build_Halfedge(f->tris);
-	Remesh_Near_Tri(f, tm, t, &wq);
-	delete tm;
+	Remesh_Near_Tri(f, t, &wq);
     }
  
     // Identify zero area triangles
