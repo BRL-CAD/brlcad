@@ -197,14 +197,15 @@ p2tTri_Brep_Normal(struct ON_Brep_CDT_Face_State *f, p2t::Triangle *t)
     bool m_bRev = f->s_cdt->brep->m_F[f->ind].m_bRev;
     ON_3dPoint avgnorm(0,0,0);
 
+    double norm_cnt = 0.0;
+
     for (size_t i = 0; i < 3; i++) {
 	ON_3dPoint *p3d = (*pointmap)[t->GetPoint(i)];
 	ON_3dPoint onrm;
 	ON_3dPoint *n1 = NULL;
 	if (f->s_cdt->singular_vert_to_norms->find(p3d) != f->s_cdt->singular_vert_to_norms->end()) {
-	    // singular vert norms are a producte of multiple faces - don't flip
-	    n1 = (*f->s_cdt->singular_vert_to_norms)[p3d];
-	    onrm = *n1;
+	    // singular vert norms are a product of multiple faces - not useful for this
+	    continue;
 	} else {
 	    n1 = (*normalmap)[t->GetPoint(i)];
 	    if (!n1) {
@@ -216,9 +217,10 @@ p2tTri_Brep_Normal(struct ON_Brep_CDT_Face_State *f, p2t::Triangle *t)
 	    }
 	}
 	avgnorm = avgnorm + *n1;
+	norm_cnt = norm_cnt + 1.0;
     }
 
-    ON_3dVector anrm = avgnorm/3;
+    ON_3dVector anrm = avgnorm/norm_cnt;
     anrm.Unitize();
     return anrm;
 }

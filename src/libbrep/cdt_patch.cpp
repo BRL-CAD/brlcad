@@ -250,6 +250,20 @@ plot_trimesh_tris_3d(std::set<trimesh::index_t> *faces, std::vector<trimesh::tri
     fclose(plot_file);
 }
 
+static void
+plot_trimesh(std::vector<trimesh::triangle_t> &farray, std::map<p2t::Point *, ON_3dPoint *> *pointmap, const char *filename)
+{
+    std::set<trimesh::index_t>::iterator f_it;
+    FILE* plot_file = fopen(filename, "w");
+    int r = int(256*drand48() + 1.0);
+    int g = int(256*drand48() + 1.0);
+    int b = int(256*drand48() + 1.0);
+    for (size_t i = 0; i < farray.size(); i++) {
+	p2t::Triangle *t = farray[i].t;
+	plot_tri_3d(t, pointmap, r, g ,b, plot_file);
+    }
+    fclose(plot_file);
+}
 
 static void
 plot_3d_cdt_tri(std::set<p2t::Triangle *> *faces, std::map<p2t::Point *, ON_3dPoint *> *pointmap, const char *filename)
@@ -405,7 +419,6 @@ Remesh_Near_Tri(struct ON_Brep_CDT_Face_State *f, p2t::Triangle *seed_tri, std::
     }
 #endif
 
-
     struct trimesh_info *tm = CDT_Face_Build_Halfedge(f->tris);
 
     std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
@@ -413,6 +426,12 @@ Remesh_Near_Tri(struct ON_Brep_CDT_Face_State *f, p2t::Triangle *seed_tri, std::
     std::set<trimesh::index_t> remesh_triangles;
     std::set<trimesh::index_t> visited_triangles;
     std::set<trimesh::index_t>::iterator f_it;
+
+#if CDT_DEBUG_PLOTS
+    bu_vls_sprintf(&pname, "%s-%d-00-initial_tmesh.plot3", bu_vls_cstr(&pname_root), f->ind);
+    plot_trimesh(tm->triangles, pointmap, bu_vls_cstr(&pname));
+#endif
+
 
     trimesh::index_t seed_id = tm->t2ind[seed_tri];
     ON_3dVector tdir = p2tTri_Brep_Normal(f, seed_tri);

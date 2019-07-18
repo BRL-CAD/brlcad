@@ -250,9 +250,9 @@ public:
 	index_t hei = start_hei;
 	while (true) {
 	    const halfedge_t& he = m_halfedges[ hei ];
-	    if (-1 != he.face) result.push_back(he.face);
-
-	    hei = m_halfedges[ he.opposite_he ].next_he;
+	    const halfedge_t& ohe = m_halfedges[he.opposite_he];
+	    if (-1 != ohe.face) result.push_back(ohe.face);
+	    hei = he.next_he;
 	    if (hei == start_hei) break;
 	}
 
