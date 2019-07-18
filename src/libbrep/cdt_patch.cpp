@@ -270,16 +270,17 @@ plot_3d_cdt_tri(std::set<p2t::Triangle *> *faces, std::map<p2t::Point *, ON_3dPo
 
 void
 best_fit_plane(point_t *orig, vect_t *norm, struct trimesh_info *tm, std::set<trimesh::index_t> *remesh_triangles,
-    std::map<p2t::Point *, ON_3dPoint *> *pointmap)
+    struct ON_Brep_CDT_Face_State *f)
 {
-    // Find the best fit plane for the vertices of the triangles involved with
+    // Find the best fit plane for the Brep normals of the vertices of the triangles involved with
     // the remeshing
+    std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
     std::set<ON_3dPoint *> active_3d_pnts;
     ON_3dVector avgtnorm(0.0,0.0,0.0);
     std::set<trimesh::index_t>::iterator f_it;
     for (f_it = remesh_triangles->begin(); f_it != remesh_triangles->end(); f_it++) {
 	p2t::Triangle *t = tm->triangles[*f_it].t;
-	ON_3dVector ltdir = p2tTri_Normal(t, pointmap);
+	ON_3dVector ltdir = p2tTri_Brep_Normal(f, t);
 	avgtnorm += ltdir;
 	for (size_t j = 0; j < 3; j++) {
 	    active_3d_pnts.insert((*pointmap)[t->GetPoint(j)]);
@@ -389,27 +390,6 @@ remove_butterfly_vertices(std::vector<trimesh::triangle_t> &triangles, size_t pn
     return 0;
 }
 
-
-
-static bool
-flipped_face(p2t::Triangle *t, std::map<p2t::Point *, ON_3dPoint *> *pointmap, std::map<p2t::Point *, ON_3dPoint *> *normalmap, bool m_bRev)
-{
-    ON_3dVector tdir = p2tTri_Normal(t, pointmap);
-    int invalid_face_normal = 0;
-
-    for (size_t j = 0; j < 3; j++) {
-	ON_3dPoint onorm = *(*normalmap)[t->GetPoint(j)];
-	if (m_bRev) {
-	    onorm = onorm * -1;
-	}
-	if (tdir.Length() > 0 && ON_DotProduct(onorm, tdir) < 0.1) {
-	    invalid_face_normal++;
-	}
-    }
-
-    return (invalid_face_normal == 3);
-}
-
 int
 Remesh_Near_Tri(struct ON_Brep_CDT_Face_State *f, p2t::Triangle *seed_tri, std::set<p2t::Triangle *> *wq)
 {
@@ -435,7 +415,7 @@ Remesh_Near_Tri(struct ON_Brep_CDT_Face_State *f, p2t::Triangle *seed_tri, std::
     std::set<trimesh::index_t>::iterator f_it;
 
     trimesh::index_t seed_id = tm->t2ind[seed_tri];
-    ON_3dVector tdir = p2tTri_Normal(seed_tri, pointmap);
+    ON_3dVector tdir = p2tTri_Brep_Normal(f, seed_tri);
 
     // Walk out along the mesh, adding triangles whose triangle normal is < 45
     // degrees away from that of the original triangle.  These form the initial
@@ -455,14 +435,9 @@ Remesh_Near_Tri(struct ON_Brep_CDT_Face_State *f, p2t::Triangle *seed_tri, std::
 	tq->pop();
 	p2t::Triangle *ct = tm->triangles[t_he].t;
 	// Check normal
-	ON_3dVector ctdir = p2tTri_Normal(ct, pointmap);
+	ON_3dVector ctdir = p2tTri_Brep_Normal(f, ct);
 
-	// If this triangle is "flipped" or nearly so relative to the NURBS surface
-	// add it.  If an edge from this triangle ends up in the outer boundary,
-	// we're going to have to fix the outer boundary in the projection...
-	bool ff = flipped_face(ct, pointmap, normalmap, f->s_cdt->brep->m_F[f->ind].m_bRev);
-
-	if (!ff && ON_DotProduct(ctdir, tdir) < 0.707) {
+	if (ON_DotProduct(ctdir, tdir) < 0.707) {
 	    continue;
 	} else {
 	    remesh_triangles.insert(t_he);
@@ -521,7 +496,7 @@ Remesh_Near_Tri(struct ON_Brep_CDT_Face_State *f, p2t::Triangle *seed_tri, std::
     // the remeshing
     point_t pcenter;
     vect_t pnorm;
-    best_fit_plane(&pcenter, &pnorm, tm, &remesh_triangles, pointmap);
+    best_fit_plane(&pcenter, &pnorm, tm, &remesh_triangles, f);
 #if CDT_DEBUG_PLOTS
     bu_vls_sprintf(&pname, "%s-%d-03-best_fit_plane.plot3", bu_vls_cstr(&pname_root), f->ind);
     plot_best_fit_plane(&pcenter, &pnorm, bu_vls_cstr(&pname));

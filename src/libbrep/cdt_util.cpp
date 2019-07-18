@@ -189,6 +189,42 @@ p2tTri_Normal(p2t::Triangle *t, std::map<p2t::Point *, ON_3dPoint *> *pointmap)
     return tdir;
 }
 
+ON_3dVector
+p2tTri_Brep_Normal(struct ON_Brep_CDT_Face_State *f, p2t::Triangle *t)
+{
+    std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
+    std::map<p2t::Point *, ON_3dPoint *> *normalmap = f->p2t_to_on3_norm_map;
+    bool m_bRev = f->s_cdt->brep->m_F[f->ind].m_bRev;
+    ON_3dPoint avgnorm(0,0,0);
+
+    for (size_t i = 0; i < 3; i++) {
+	ON_3dPoint *p3d = (*pointmap)[t->GetPoint(i)];
+	ON_3dPoint onrm;
+	ON_3dPoint *n1 = NULL;
+	if (f->s_cdt->singular_vert_to_norms->find(p3d) != f->s_cdt->singular_vert_to_norms->end()) {
+	    // singular vert norms are a producte of multiple faces - don't flip
+	    n1 = (*f->s_cdt->singular_vert_to_norms)[p3d];
+	    onrm = *n1;
+	} else {
+	    n1 = (*normalmap)[t->GetPoint(i)];
+	    if (!n1) {
+		bu_exit(1, "Fatal: 2D poly2tri point has no corresponding 3D normal in the map\n");
+	    }
+	    onrm = *n1;
+	    if (m_bRev) {
+		onrm = onrm * -1;
+	    }
+	}
+	avgnorm = avgnorm + *n1;
+    }
+
+    ON_3dVector anrm = avgnorm/3;
+    anrm.Unitize();
+    return anrm;
+}
+
+
+
 struct ON_Brep_CDT_Face_State *
 ON_Brep_CDT_Face_Create(struct ON_Brep_CDT_State *s_cdt, int ind)
 {
