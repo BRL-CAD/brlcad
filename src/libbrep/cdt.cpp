@@ -556,42 +556,8 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	/* To generate watertight meshes, the faces *must* share 3D edge points.  To ensure
 	 * a uniform set of edge points, we first sample all the edges and build their
 	 * point sets */
-	for (int index = 0; index < brep->m_E.Count(); index++) {
-	    ON_BrepEdge& edge = brep->m_E[index];
-	    ON_BrepTrim& trim1 = brep->m_T[edge.Trim(0)->m_trim_index];
-	    ON_BrepTrim& trim2 = brep->m_T[edge.Trim(1)->m_trim_index];
 
-	    // Get distance tolerances from the surface sizes
-	    fastf_t max_dist = 0.0;
-	    fastf_t min_dist = DBL_MAX;
-	    fastf_t mw, mh;
-	    fastf_t md1, md2 = 0.0;
-	    double sw1, sh1, sw2, sh2;
-	    const ON_Surface *s1 = trim1.Face()->SurfaceOf();
-	    const ON_Surface *s2 = trim2.Face()->SurfaceOf();
-	    if (s1->GetSurfaceSize(&sw1, &sh1) && s2->GetSurfaceSize(&sw2, &sh2)) {
-		if ((sw1 < s_cdt->dist) || (sh1 < s_cdt->dist) || sw2 < s_cdt->dist || sh2 < s_cdt->dist) {
-		    return -1;
-		}
-		md1 = sqrt(sw1 * sh1 + sh1 * sw1) / 10.0;
-		md2 = sqrt(sw2 * sh2 + sh2 * sw2) / 10.0;
-		max_dist = (md1 < md2) ? md1 : md2;
-		mw = (sw1 < sw2) ? sw1 : sw2;
-		mh = (sh1 < sh2) ? sh1 : sh2;
-		min_dist = (mw < mh) ? mw : mh;
-		s_to_maxdist[s1] = max_dist;
-		s_to_maxdist[s2] = max_dist;
-	    }
-
-	    // Generate the BrepTrimPoint arrays for both trims associated with this edge
-	    //
-	    // TODO - need to make this robust to changed tolerances on refinement
-	    // runs - if pre-existing solutions for "high level" splits exist,
-	    // reuse them and dig down to find where we need further refinement to
-	    // create new points.
-	    (void)getEdgePoints(s_cdt, &edge, trim1, max_dist, min_dist);
-
-	}
+	ProcessEdgePoints(s_cdt, s_to_maxdist);
 
     } else {
 	/* Clear the mesh state, if this container was previously used */

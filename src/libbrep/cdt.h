@@ -159,6 +159,7 @@ struct BrepEdgeSegment {
     std::set<struct BrepEdgeSegment *> children;
     struct BrepEdgeSegment *parent;
     struct brep_cdt_tol cdt_tol;
+    double avg_seg_len;
 };
 
 struct ON_Brep_CDT_State {
@@ -232,13 +233,10 @@ PerformClosedSurfaceChecks(
 	ON_SimpleArray<BrepTrimPoint> *brep_loop_points,
 	double same_point_tolerance);
 
-std::map<double, BrepTrimPoint *> *
-getEdgePoints(
+void
+ProcessEdgePoints(
 	struct ON_Brep_CDT_State *s_cdt,
-	ON_BrepEdge *edge,
-	ON_BrepTrim &trim,
-	fastf_t max_dist,
-	fastf_t min_dist
+	std::map<const ON_Surface *, double> &s_to_maxdist
 	);
 
 void
