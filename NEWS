@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 20XX-XX-XX  Release 7.30.4                                     ---
 ----------------------------------------------------------------------
 
+* changed mged escape key binding to reset mouse mode - Sean Morrison
 * removed default xXyYzZ0 rate rotation key bindings - Sean Morrison
 * improved tessellation of nearly coplanar surfaces - John Anderson
 * fixed display of annotations on Windows - Daniel Roßberg

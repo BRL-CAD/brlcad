@@ -2924,7 +2924,7 @@ rt -s 512 -F :1
                 &lt; Escape &gt;
               </entry>
               <entry>
-                stop interactive rotation and reject edits
+                stop interactive rotation, reject edits, reset mouse behavior
               </entry>
             </row>
           </tbody>

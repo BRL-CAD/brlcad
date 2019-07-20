@@ -156,12 +156,27 @@ proc default_key_bindings { w } {
     bind $w <Control-p> "winset $w; _mged_view_ring prev; break"
     bind $w <Control-t> "winset $w; _mged_view_ring toggle; break"
 
-    bind $w <Escape> "winset $w; knob zero; press reject; break"
+    bind $w <Escape> "winset $w; reset_everything $w; break"
 
     # Throw away other key events
     bind $w <KeyPress> {
 	break
     }
+}
+
+proc reset_everything { w } {
+    global mged_gui
+
+    # stop all the spinning
+    knob zero
+
+    # stop all the editing
+    press reject
+    
+    # restore default mouse behavior
+    set id [get_player_id_dm $w]
+    set mged_gui($id,mouse_behavior) d
+    set_mouse_behavior $id
 }
 
 proc set_forward_keys { w val } {
@@ -245,6 +260,8 @@ proc forward_key_bindings { w } {
     bind $w <Control-p> {}
     bind $w <Control-t> {}
 
+    bind $w <Escape> {}
+    
     # The focus commands in the binding below are necessary to insure
     # that .$id.t gets the event.
     bind $w <KeyPress> "\
