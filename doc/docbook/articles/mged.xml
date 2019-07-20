@@ -2619,62 +2619,6 @@ rt -s 512 -F :1
             </row>
             <row>
               <entry>
-                0
-              </entry>
-              <entry>
-                zero knobs
-              </entry>
-            </row>
-            <row>
-              <entry>
-                x
-              </entry>
-              <entry>
-                rate rotate about x axis
-              </entry>
-            </row>
-            <row>
-              <entry>
-                y
-              </entry>
-              <entry>
-                rate rotate about y axis
-              </entry>
-            </row>
-            <row>
-              <entry>
-                z
-              </entry>
-              <entry>
-                rate rotate about z axis
-              </entry>
-            </row>
-            <row>
-              <entry>
-                X
-              </entry>
-              <entry>
-                rate rotate about x axis
-              </entry>
-            </row>
-            <row>
-              <entry>
-                Y
-              </entry>
-              <entry>
-                rate rotate about y axis
-              </entry>
-            </row>
-            <row>
-              <entry>
-                Z
-              </entry>
-              <entry>
-                rate rotate about z axis
-              </entry>
-            </row>
-            <row>
-              <entry>
                 3
               </entry>
               <entry>
@@ -2973,6 +2917,14 @@ rt -s 512 -F :1
               </entry>
               <entry>
                 toggle between the current view and the last view
+              </entry>
+            </row>
+            <row>
+              <entry>
+                &lt; Escape &gt;
+              </entry>
+              <entry>
+                stop interactive rotation and reject edits
               </entry>
             </row>
           </tbody>

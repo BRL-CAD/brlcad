@@ -61,13 +61,6 @@ if ![info exists mged_default(dm_key_bindings)] {
 \ti\t\t\tadvance illumination pointer forward
 \tI\t\t\tadvance illumination pointer backward
 \tp\t\t\tsimulate mouse press (i.e. to pick a solid)
-\t0\t\t\tzero knobs
-\tx\t\t\trate rotate about x axis
-\ty\t\t\trate rotate about y axis
-\tz\t\t\trate rotate about z axis
-\tX\t\t\trate translate in X direction
-\tY\t\t\trate translate in Y direction
-\tZ\t\t\trate translate in Z direction
 \t3\t\t\tview - ae 35 25
 \t4\t\t\tview - ae 45 45
 \tf\t\t\tfront view
@@ -119,13 +112,6 @@ proc default_key_bindings { w } {
     bind $w i "winset $w; aip f; break"
     bind $w I "winset $w; aip b; break"
     bind $w p "winset $w; M 1 0 0; break"
-    bind $w 0 "winset $w; knob zero; break"
-    bind $w x "winset $w; knob -i x 0.3; break"
-    bind $w y "winset $w; knob -i y 0.3; break"
-    bind $w z "winset $w; knob -i z 0.3; break"
-    bind $w X "winset $w; knob -i x -0.3; break"
-    bind $w Y "winset $w; knob -i y -0.3; break"
-    bind $w Z "winset $w; knob -i z -0.3; break"
     bind $w 3 "winset $w; press 35,25; break"
     bind $w 4 "winset $w; press 45,45; break"
     bind $w f "winset $w; press front; break"
@@ -170,7 +156,7 @@ proc default_key_bindings { w } {
     bind $w <Control-p> "winset $w; _mged_view_ring prev; break"
     bind $w <Control-t> "winset $w; _mged_view_ring toggle; break"
 
-    bind $w <Escape> "winset $w; press reject ; break"
+    bind $w <Escape> "winset $w; knob zero; press reject; break"
 
     # Throw away other key events
     bind $w <KeyPress> {
@@ -216,13 +202,6 @@ proc forward_key_bindings { w } {
     bind $w i {}
     bind $w I {}
     bind $w p {}
-    bind $w 0 {}
-    bind $w x {}
-    bind $w y {}
-    bind $w z {}
-    bind $w X {}
-    bind $w Y {}
-    bind $w Z {}
     bind $w 3 {}
     bind $w 4 {}
     bind $w f {}
