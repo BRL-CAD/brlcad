@@ -620,7 +620,7 @@ main(int argc, const char **argv)
     BU_OPT(d[13], "H", "",     "n",      &bu_opt_int,      &header_mode,    "flag (n) for enable/disable informational header - (n=1 [on] by default, always off in silent mode)");
     BU_OPT(d[14], "u", "",     "n",      &bu_opt_int,      &use_air,        "set use_air=n (default 0)");
     BU_OPT(d[15], "O", "",     "action", &decode_overlap,  &overlap_claims, "handle overlap claims via action");
-    BU_OPT(d[16], "x", "",     "v",      NULL,             &RTG.debug,      "set librt(3) diagnostic flag=v");
+    BU_OPT(d[16], "x", "",     "v",      &bu_opt_int,      &RTG.debug,      "set librt(3) diagnostic flag=v");
     BU_OPT(d[17], "X", "",     "v",      &bu_opt_vls,      &nirt_debug,     "set nirt diagnostic flag=v");
     BU_OPT_NULL(d[18]);
 
