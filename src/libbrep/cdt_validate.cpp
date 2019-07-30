@@ -646,7 +646,7 @@ triangles_rebuild_involved_pnts(struct ON_Brep_CDT_Face_State *f, std::set<p2t::
 			if (p != p1 && p != p2) {
 			    ON_3dPoint *p3d = (*pointmap)[p];
 			    if (edge_3d_pnts.find(p3d) == edge_3d_pnts.end()) {
-				if (eline3d.DistanceTo(*p3d) < f->s_cdt->dist) {
+				if (eline3d.DistanceTo(*p3d) < BN_TOL_DIST) {
 				    double tp;
 				    eline3d.ClosestPointTo(*p3d, &tp);
 				    if (tp > t1 && tp < t2) {

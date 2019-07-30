@@ -589,7 +589,7 @@ getEdgePoints(
     if (trim1->GetBoundingBox(min, max, bGrowBox)) {
 	dist = DIST_PT_PT(min, max);
     }
-    CDT_Tol_Set(&root->cdt_tol, dist, max_dist, s_cdt->tol.abs, s_cdt->tol.rel, s_cdt->dist);
+    CDT_Tol_Set(&root->cdt_tol, dist, max_dist, s_cdt->tol.abs, s_cdt->tol.rel, BN_TOL_DIST);
 
     fastf_t emindist = (root->cdt_tol.min_dist < 0.5*loop_min_dist) ? root->cdt_tol.min_dist : 0.5 * loop_min_dist;
 
@@ -794,33 +794,88 @@ refineEdgePoints(
     return (*s_cdt->etrees)[edge->m_edge_index]->avg_seg_len;
 }
 
-// Get initial distance tolerances from the surface sizes
+// Get min and max surface dimensions for an edge's surface pair
 void
-get_surface_dimensions(double *maxd, double *mind, ON_BrepEdge *e, double dist)
+get_edge_surface_dimensions(double *maxd, double *mind, ON_BrepEdge *e)
 {
-    // Get initial distance tolerances from the surface sizes
-    ON_BrepTrim *trim1 = e->Trim(0);
-    ON_BrepTrim *trim2 = e->Trim(1);
     fastf_t max_dist = 0.0;
     fastf_t min_dist = DBL_MAX;
-    fastf_t mw, mh;
-    fastf_t md1, md2 = 0.0;
+
+    ON_BrepTrim *trim1 = e->Trim(0);
+    ON_BrepTrim *trim2 = e->Trim(1);
     double sw1, sh1, sw2, sh2;
     const ON_Surface *s1 = trim1->Face()->SurfaceOf();
     const ON_Surface *s2 = trim2->Face()->SurfaceOf();
     if (s1->GetSurfaceSize(&sw1, &sh1) && s2->GetSurfaceSize(&sw2, &sh2)) {
-	if ((sw1 < dist) || (sh1 < dist) || sw2 < dist || sh2 < dist) {
-	    (*maxd) = -1;
-	    (*mind) = -1;
-	    return;
-	}
-	md1 = sqrt(sw1 * sh1 + sh1 * sw1) / 10.0;
-	md2 = sqrt(sw2 * sh2 + sh2 * sw2) / 10.0;
+	// For the maximum, use the diagonal
+	fastf_t md1, md2 = 0.0;
+	md1 = sqrt(sw1 * sw1 + sh1 * sh1);
+	md2 = sqrt(sw2 * sw2 + sh2 * sh2);
 	max_dist = (md1 < md2) ? md1 : md2;
+
+	// For the minimum, use the smaller of the width and height
+	fastf_t mw, mh;
 	mw = (sw1 < sw2) ? sw1 : sw2;
 	mh = (sh1 < sh2) ? sh1 : sh2;
 	min_dist = (mw < mh) ? mw : mh;
+    } else {
+	max_dist = 0.0;
+	min_dist = DBL_MAX;
     }
+
+    (*maxd) = max_dist;
+    (*mind) = min_dist;
+}
+
+// Get initial distance tolerances from surface min/max dimensions and
+// tolerance settings
+void
+get_edge_surface_tolerances(double *maxd, double *mind, double smax, double smin, struct ON_Brep_CDT_State *s_cdt)
+{
+    fastf_t max_dist = smax;
+    fastf_t min_dist = smin;
+
+#if 0    
+    bu_log("max_dist(0): %f\n", max_dist);
+    bu_log("min_dist(0): %f\n", min_dist);
+    bu_log("tol.rel: %f\n", s_cdt->tol.rel);
+    bu_log("tol.rel_lmax: %f\n", s_cdt->tol.rel_lmax);
+    bu_log("tol.rel_lmin: %f\n", s_cdt->tol.rel_lmin);
+    bu_log("tol.relmax: %f\n", s_cdt->tol.relmax);
+    bu_log("tol.relmin: %f\n", s_cdt->tol.relmin);
+    bu_log("absmax: %f\n", s_cdt->absmax);
+    bu_log("absmin: %f\n", s_cdt->absmin);
+    bu_log("smax: %f\n", smax);
+    bu_log("smin: %f\n", smin);
+#endif
+
+    if (s_cdt->tol.rel_lmax > ON_ZERO_TOLERANCE) {
+	max_dist = smax * s_cdt->tol.rel_lmax;
+    }
+    if (s_cdt->tol.rel_lmin > ON_ZERO_TOLERANCE) {
+	min_dist = smin * s_cdt->tol.rel_lmin;
+    }
+
+    if (s_cdt->absmax > ON_ZERO_TOLERANCE && max_dist > s_cdt->absmax) {
+	max_dist = s_cdt->absmax;
+    }
+    if (s_cdt->tol.rel_lmin < ON_ZERO_TOLERANCE && s_cdt->absmin > ON_ZERO_TOLERANCE && min_dist > s_cdt->absmin) {
+	min_dist = s_cdt->absmin;
+    }
+
+#if 0
+    bu_log("max_dist(1): %f\n", max_dist);
+    bu_log("min_dist(1): %f\n", min_dist);
+#endif
+
+    // Sanity
+    max_dist = (max_dist < min_dist) ? min_dist : max_dist;
+    min_dist = (min_dist > max_dist) ? max_dist : min_dist;
+
+#if 0
+    bu_log("max_dist(2): %f\n", max_dist);
+    bu_log("min_dist(2): %f\n", min_dist);
+#endif
 
     (*maxd) = max_dist;
     (*mind) = min_dist;
@@ -838,7 +893,8 @@ Get_Edge_Points(struct ON_Brep_CDT_State *s_cdt)
 	const ON_Curve* crv = edge.EdgeCurveOf();
 	if (!crv->IsLinear(BN_TOL_DIST)) {
 	    fastf_t max_dist, min_dist;
-	    get_surface_dimensions(&max_dist, &min_dist, &edge, s_cdt->dist);
+	    get_edge_surface_dimensions(&max_dist, &min_dist, &edge);
+	    get_edge_surface_tolerances(&max_dist, &min_dist, max_dist, min_dist, s_cdt);
 	    (void)getEdgePoints(s_cdt, &edge, max_dist, min_dist);
 	}
     }
@@ -929,7 +985,8 @@ Get_Edge_Points(struct ON_Brep_CDT_State *s_cdt)
 
 	    } else {
 		// No curve edges on this loop - fall back on standard surface seeding
-		get_surface_dimensions(&max_dist, &min_dist, &edge, s_cdt->dist);
+		get_edge_surface_dimensions(&max_dist, &min_dist, &edge);
+		get_edge_surface_tolerances(&max_dist, &min_dist, max_dist, min_dist, s_cdt);
 		bu_log("linear edge %d: min %f max %f\n", edge.m_edge_index, min_dist, max_dist);
 	    }
 

@@ -336,7 +336,7 @@ filter_surface_edge_pnts(struct ON_Brep_CDT_Face_State *f)
 		double dist;
 		const ON_Line *l = (const ON_Line *) *results.At(ri);
 		dist = l->MinimumDistanceTo(*p);
-		if (NEAR_ZERO(dist, f->s_cdt->dist)) {
+		if (NEAR_ZERO(dist, BN_TOL_DIST)) {
 		    on_edge = true;
 		    break;
 		}
@@ -516,7 +516,7 @@ getSurfacePoints(struct ON_Brep_CDT_Face_State *f)
 	double within_dist = 0.0;
 	double cos_within_ang = 0.0;
 
-	if ((surface_width < f->s_cdt->dist) || (surface_height < f->s_cdt->dist)) {
+	if ((surface_width < BN_TOL_DIST) || (surface_height < BN_TOL_DIST)) {
 	    return;
 	}
 
@@ -564,8 +564,8 @@ getSurfacePoints(struct ON_Brep_CDT_Face_State *f)
 	    dist = (d1 < d2) ? d1 : d2;
 	}
 
-	if (f->s_cdt->tol.abs < f->s_cdt->dist + ON_ZERO_TOLERANCE) {
-	    min_dist = f->s_cdt->dist;
+	if (f->s_cdt->tol.abs < BN_TOL_DIST + ON_ZERO_TOLERANCE) {
+	    min_dist = BN_TOL_DIST;
 	} else {
 	    min_dist = f->s_cdt->tol.abs;
 	}

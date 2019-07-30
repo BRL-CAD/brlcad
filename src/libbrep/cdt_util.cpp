@@ -353,13 +353,16 @@ ON_Brep_CDT_Create(void *bv)
     cdt->orig_brep = brep;
     cdt->brep = NULL;
 
-    /* Set sane default tolerances.  May want to do
-     * something better (perhaps brep dimension based...) */
-    cdt->tol.abs = BREP_CDT_DEFAULT_TOL_ABS;
-    cdt->tol.rel = BREP_CDT_DEFAULT_TOL_REL ;
-    cdt->tol.norm = BREP_CDT_DEFAULT_TOL_NORM ;
-    cdt->dist = BREP_CDT_DEFAULT_TOL_DIST ;
-
+    /* By default, all tolerances are unset */
+    cdt->tol.abs = -1;
+    cdt->tol.rel = -1;
+    cdt->tol.norm = -1;
+    cdt->tol.absmax = -1;
+    cdt->tol.absmin = -1;
+    cdt->tol.relmax = -1;
+    cdt->tol.relmin = -1;
+    cdt->tol.rel_lmax = -1;
+    cdt->tol.rel_lmin = -1;
 
     cdt->w3dpnts = new std::vector<ON_3dPoint *>;
     cdt->w3dnorms = new std::vector<ON_3dPoint *>;
@@ -441,6 +444,83 @@ ON_Brep_CDT_Brep(struct ON_Brep_CDT_State *s_cdt)
     return (void *)s_cdt->brep;
 }
 
+// Rules of precedence:
+//
+// 1.  absmax >= absmin
+// 2.  absolute over relative
+// 3.  relative local over relative global 
+// 4.  normal (curvature)
+void
+cdt_tol_global_calc(struct ON_Brep_CDT_State *s)
+{
+    if (s->tol.abs < ON_ZERO_TOLERANCE && s->tol.rel < ON_ZERO_TOLERANCE && s->tol.norm < ON_ZERO_TOLERANCE &&
+	    s->tol.absmax < ON_ZERO_TOLERANCE && s->tol.absmin < ON_ZERO_TOLERANCE && s->tol.relmax < ON_ZERO_TOLERANCE &&
+	    s->tol.relmin < ON_ZERO_TOLERANCE && s->tol.rel_lmax < ON_ZERO_TOLERANCE && s->tol.rel_lmin < ON_ZERO_TOLERANCE) {
+    }
+
+    if (s->tol.abs > ON_ZERO_TOLERANCE) {
+	s->absmax = s->tol.abs;
+    }
+
+    if (s->tol.absmax > ON_ZERO_TOLERANCE && s->tol.abs < ON_ZERO_TOLERANCE) {
+	s->absmax = s->tol.absmax;
+    }
+
+    if (s->tol.absmin > ON_ZERO_TOLERANCE) {
+	s->absmin = s->tol.absmin;
+    }
+
+    // If we don't have hard set limits globally, see if we have global relative
+    // settings
+    if (s->absmax < ON_ZERO_TOLERANCE || s->absmin < ON_ZERO_TOLERANCE) {
+
+	/* If we've got nothing, set a default global relative tolerance */
+	if (s->tol.rel < ON_ZERO_TOLERANCE && s->tol.relmax < ON_ZERO_TOLERANCE &&
+		s->tol.relmin < ON_ZERO_TOLERANCE && s->tol.rel_lmax < ON_ZERO_TOLERANCE && s->tol.rel_lmin < ON_ZERO_TOLERANCE) {
+	    s->tol.rel = BREP_CDT_DEFAULT_TOL_REL ;
+	}
+
+	// Need some bounding box information
+	ON_BoundingBox bbox;
+	if (!s->brep->GetTightBoundingBox(bbox)) {
+	   bbox = s->brep->BoundingBox(); 
+	}
+	double len = bbox.Diagonal().Length();
+
+	if (s->tol.rel > ON_ZERO_TOLERANCE) {
+	    // Largest dimension, unless set by abs, is tol.rel * the bbox diagonal length
+	    if ( s->tol.relmax < ON_ZERO_TOLERANCE) {
+		s->absmax = len * s->tol.rel;
+	    }
+
+	    // Smallest dimension, unless otherwise set, is  0.01 * tol.rel * the bbox diagonal length.
+	    if (s->tol.relmin < ON_ZERO_TOLERANCE) {
+		s->absmin = len * s->tol.rel * 0.01;
+	    }
+	}
+
+	if (s->absmax < ON_ZERO_TOLERANCE && s->tol.relmax > ON_ZERO_TOLERANCE) {
+	    s->absmax = len * s->tol.relmax;
+	}
+
+	if (s->absmin < ON_ZERO_TOLERANCE && s->tol.relmin > ON_ZERO_TOLERANCE) {
+	    s->absmin = len * s->tol.relmin;
+	}
+
+    }
+
+    // Sanity
+    s->absmax = (s->absmin > s->absmax) ? s->absmin : s->absmax;
+    s->absmin = (s->absmax < s->absmin) ? s->absmax : s->absmin;
+
+    // Get the normal based parameter as well
+    if (s->tol.norm > ON_ZERO_TOLERANCE) {
+	s->cos_within_ang = cos(s->tol.norm);
+    } else {
+	s->cos_within_ang = cos(ON_PI / 2.0);
+    }
+}
+
 void
 ON_Brep_CDT_Tol_Set(struct ON_Brep_CDT_State *s, const struct bg_tess_tol *t)
 {
@@ -450,22 +530,31 @@ ON_Brep_CDT_Tol_Set(struct ON_Brep_CDT_State *s, const struct bg_tess_tol *t)
 
     if (!t) {
 	/* reset to defaults */
-	s->tol.abs = BREP_CDT_DEFAULT_TOL_ABS;
-	s->tol.rel = BREP_CDT_DEFAULT_TOL_REL ;
-	s->tol.norm = BREP_CDT_DEFAULT_TOL_NORM ;
-	s->dist = BREP_CDT_DEFAULT_TOL_DIST;
+	s->tol.abs = -1;
+	s->tol.rel = -1;
+	s->tol.norm = -1;
+	s->tol.absmax = -1;
+	s->tol.absmin = -1;
+	s->tol.relmax = -1;
+	s->tol.relmin = -1;
+	s->tol.rel_lmax = -1;
+	s->tol.rel_lmin = -1;
+	s->absmax = 0;
+	s->absmin = 0;
+	s->cos_within_ang = 0;
+	if (s->brep) {
+	    cdt_tol_global_calc(s);
+	}
 	return;
     }
 
     s->tol = *t;
-
-    // The normal based parameter is global - do it up front
-    if (s->tol.norm > 0.0 + ON_ZERO_TOLERANCE) {
-	s->cos_within_ang = cos(s->tol.norm);
-    } else {
-	s->cos_within_ang = cos(ON_PI / 2.0);
+    s->absmax = 0;
+    s->absmin = 0;
+    s->cos_within_ang = 0;
+    if (s->brep) {
+	cdt_tol_global_calc(s);
     }
-
 }
 
 void
@@ -477,9 +566,15 @@ ON_Brep_CDT_Tol_Get(struct bg_tess_tol *t, const struct ON_Brep_CDT_State *s)
 
     if (!s) {
 	/* set to defaults */
-	t->abs = BREP_CDT_DEFAULT_TOL_ABS;
-	t->rel = BREP_CDT_DEFAULT_TOL_REL ;
-	t->norm = BREP_CDT_DEFAULT_TOL_NORM ;
+	t->abs = -1;
+	t->rel = -1;
+	t->norm = -1;
+    	t->absmax = -1;
+	t->absmin = -1;
+	t->relmax = -1;
+	t->relmin = -1;
+	t->rel_lmax = -1;
+	t->rel_lmin = -1;
     }
 
     *t = s->tol;

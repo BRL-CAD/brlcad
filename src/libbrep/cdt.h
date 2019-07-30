@@ -69,12 +69,9 @@
 #define BREP_CDT_UNTESSELLATED -1
 #define BREP_CDT_SOLID 0
 
-/* Note - these tolerance values are based on the default
- * values from the GED 'tol' command */
-#define BREP_CDT_DEFAULT_TOL_ABS 0.0
+/* Note - this tolerance value is based on the default
+ * value from the GED 'tol' command */
 #define BREP_CDT_DEFAULT_TOL_REL 0.01
-#define BREP_CDT_DEFAULT_TOL_NORM 0.0
-#define BREP_CDT_DEFAULT_TOL_DIST BN_TOL_DIST
 
 /* this is a debugging structure - it holds origin information for
  * a point added to the CDT state */
@@ -170,7 +167,8 @@ struct ON_Brep_CDT_State {
 
     /* Tolerances */
     struct bg_tess_tol tol;
-    fastf_t dist;
+    fastf_t absmax;
+    fastf_t absmin;
     fastf_t cos_within_ang;
 
     /* 3D data */
@@ -266,6 +264,7 @@ CDT_Add3DNorm(struct ON_Brep_CDT_State *s, ON_3dPoint *norm, ON_3dPoint *vert, i
 ON_3dVector p2tTri_Normal(p2t::Triangle *t, std::map<p2t::Point *, ON_3dPoint *> *pointmap);
 ON_3dVector p2tTri_Brep_Normal(struct ON_Brep_CDT_Face_State *f, p2t::Triangle *t);
 
+void cdt_tol_global_calc(struct ON_Brep_CDT_State *s);
 void
 CDT_Tol_Set(struct brep_cdt_tol *cdt, double dist, fastf_t md, double t_abs, double t_rel, double t_dist);
 

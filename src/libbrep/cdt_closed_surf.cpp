@@ -100,8 +100,8 @@ getUVCurveSamples(struct ON_Brep_CDT_State *s_cdt,
 	dist = DIST_PT_PT(min, max);
     }
 
-    if (s_cdt->tol.abs < s_cdt->dist + ON_ZERO_TOLERANCE) {
-	min_dist = s_cdt->dist;
+    if (s_cdt->tol.abs < BN_TOL_DIST + ON_ZERO_TOLERANCE) {
+	min_dist = BN_TOL_DIST;
     } else {
 	min_dist = s_cdt->tol.abs;
     }

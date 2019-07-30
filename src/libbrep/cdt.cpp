@@ -509,6 +509,11 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
     // If this is the first time through, there are a number of once-per-conversion
     // operations to take care of.
     if (!s_cdt->w3dpnts->size()) {
+
+	// Translate global relative tolerances into physical dimensions based
+	// on the BRep bounding box
+	cdt_tol_global_calc(s_cdt);
+
 	// Reparameterize the face's surface and transform the "u" and "v"
 	// coordinates of all the face's parameter space trimming curves to
 	// minimize distortion in the map from parameter space to 3d.
