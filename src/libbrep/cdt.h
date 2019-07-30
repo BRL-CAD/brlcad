@@ -98,6 +98,12 @@ struct trimesh_info {
     std::vector<trimesh::triangle_t> triangles;
 };
 
+struct brep_cdt_tol {
+    fastf_t min_dist;
+    fastf_t max_dist;
+    fastf_t within_dist;
+};
+#define BREP_CDT_TOL_ZERO {0.0, 0.0, 0.0}
 
 struct ON_Brep_CDT_State;
 
@@ -134,19 +140,11 @@ struct ON_Brep_CDT_Face_State {
     std::set<p2t::Point *> *ext_degen_pnts;
 };
 
-struct brep_cdt_tol {
-    fastf_t min_dist;
-    fastf_t max_dist;
-    fastf_t within_dist;
-};
-#define BREP_CDT_TOL_ZERO {0.0, 0.0, 0.0}
-
 struct BrepEdgeSegment;
 struct BrepEdgeSegment {
     struct ON_Brep_CDT_State *s_cdt;
     ON_BrepEdge *edge;
     ON_NurbsCurve *nc;
-    double loop_min_dist;
     const ON_BrepTrim *trim1;
     const ON_BrepTrim *trim2;
     BrepTrimPoint *sbtp1;
@@ -158,7 +156,10 @@ struct BrepEdgeSegment {
     std::set<struct BrepEdgeSegment *> children;
     struct BrepEdgeSegment *parent;
     struct brep_cdt_tol cdt_tol;
+    /* Average length of the child segments below the current segment */
     double avg_seg_len;
+    /* Distance used when deciding to refine edges */
+    double loop_min_dist;
 };
 
 struct ON_Brep_CDT_State {
@@ -232,7 +233,7 @@ PerformClosedSurfaceChecks(
 	double same_point_tolerance);
 
 void
-ProcessEdgePoints(
+Get_Edge_Points(
 	struct ON_Brep_CDT_State *s_cdt,
 	std::map<const ON_Surface *, double> &s_to_maxdist
 	);

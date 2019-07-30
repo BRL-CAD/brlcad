@@ -557,7 +557,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	 * a uniform set of edge points, we first sample all the edges and build their
 	 * point sets */
 
-	ProcessEdgePoints(s_cdt, s_to_maxdist);
+	Get_Edge_Points(s_cdt, s_to_maxdist);
 
     } else {
 	/* Clear the mesh state, if this container was previously used */

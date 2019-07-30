@@ -709,7 +709,7 @@ get_surface_dimensions(double *maxd, double *mind, ON_BrepEdge *e, double dist,
 }
 
 void
-ProcessEdgePoints(struct ON_Brep_CDT_State *s_cdt, std::map<const ON_Surface *, double> &s_to_maxdist)
+Get_Edge_Points(struct ON_Brep_CDT_State *s_cdt, std::map<const ON_Surface *, double> &s_to_maxdist)
 {
     ON_Brep *brep = s_cdt->brep;
 
@@ -725,10 +725,40 @@ ProcessEdgePoints(struct ON_Brep_CDT_State *s_cdt, std::map<const ON_Surface *, 
 	}
     }
 
+    // TODO For loops with multiple curved edges, check relative sizing - we don't
+    // want loops with wildly different segment lengths on the same surface
+    // loop, so refine curved edges that are much larger avg. seg. length
+    // compared to other edges in the loop
+    for (int index = 0; index < brep->m_L.Count(); index++) {
+	ON_BrepLoop &loop = brep->m_L[index];
+	double emin = DBL_MAX;
+	double emax = -DBL_MAX;
+	int ccnt = 0;
+	for (int j = 0; j < loop.TrimCount(); j++) {
+	    ON_BrepTrim *t = loop.Trim(j);
+	    ON_BrepEdge *e = t->Edge();
+	    if (!e) continue;
+	    const ON_Curve* crv = e->EdgeCurveOf();
+	    if (crv && !crv->IsLinear(BN_TOL_DIST)) {
+		double cavg = (*s_cdt->etrees)[e->m_edge_index]->avg_seg_len;
+		emin = (cavg < emin) ? cavg : emin;
+		emax = (cavg > emax) ? cavg : emax;
+		ccnt++;
+	    }
+	}
+	if (ccnt && emax > 10*emin) {
+	    bu_log("loop %d (%f, %f)\n", loop.m_loop_index, emin, emax);
+	}
+    }
+
     // For each linear edge, for both loops associated with its trims
     // find the smallest calculated average segment length from any
     // curved edges in the loops.  Use that as a targeted segment
     // dimension for the linear edge
+    //
+    // TODO - change to using a weighted avg, using the ratio of the
+    // total segment length per edge as the weight - the longer the
+    // edge, the more it's average segment length counts (curved edges only!).
     for (int index = 0; index < brep->m_E.Count(); index++) {
 	ON_BrepEdge& edge = brep->m_E[index];
 	const ON_Curve* crv = edge.EdgeCurveOf();
