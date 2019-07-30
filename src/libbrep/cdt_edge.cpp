@@ -673,6 +673,127 @@ getEdgePoints(
     return root->avg_seg_len;
 }
 
+static void
+RefineEdgeSegmentMidPt(struct BrepEdgeSegment *bseg, double split_dist)
+{
+
+    if (bseg->children.size()) {
+	std::set<struct BrepEdgeSegment *>::iterator b_it;
+	for (b_it = bseg->children.begin(); b_it != bseg->children.end(); b_it++) {
+	    RefineEdgeSegmentMidPt(*b_it, split_dist);
+	}
+	double avg = 0.0;
+	for (b_it = bseg->children.begin(); b_it != bseg->children.end(); b_it++) {
+	    avg += (*b_it)->avg_seg_len;
+	}
+	avg = avg/((double)bseg->children.size());
+	bseg->avg_seg_len = avg;
+	return;
+    }
+
+    ON_Line line3d(*(bseg->sbtp1->p3d), *(bseg->ebtp1->p3d));
+
+    if (line3d.Length() < split_dist) {
+	bseg->avg_seg_len = line3d.Length(); 
+	return;
+    }
+
+    // Splitting - proceed
+    fastf_t emid = (bseg->sbtp1->e + bseg->ebtp1->e) / 2.0;
+    ON_3dPoint edge_mid_3d = ON_3dPoint::UnsetPoint;
+    ON_3dVector edge_mid_tang = ON_3dVector::UnsetVector;
+    bool evtangent_status = bseg->nc->EvTangent(emid, edge_mid_3d, edge_mid_tang);
+    if (!evtangent_status) {
+	// EvTangent call failed, get 3d point
+	edge_mid_3d = bseg->nc->PointAt(emid);
+    }
+
+    // We need the trim points to be pretty close to the edge point, or
+    // we get distortions in the mesh.
+    fastf_t t1, t2;
+    fastf_t emindist = (bseg->cdt_tol.min_dist < 0.5*bseg->loop_min_dist) ? bseg->cdt_tol.min_dist : 0.5 * bseg->loop_min_dist;
+    ON_3dPoint trim1_mid_2d, trim2_mid_2d;
+    trim1_mid_2d = get_trim_midpt(&t1, bseg->trim1, bseg->sbtp1->t, bseg->ebtp1->t, edge_mid_3d, emindist, 0);
+    trim2_mid_2d = get_trim_midpt(&t2, bseg->trim2, bseg->sbtp2->t, bseg->ebtp2->t, edge_mid_3d, emindist, 0);
+
+    ON_3dPoint tmp1, tmp2;
+    const ON_Surface *s1 = bseg->trim1->SurfaceOf();
+    const ON_Surface *s2 = bseg->trim2->SurfaceOf();
+    ON_3dVector trim1_mid_norm = ON_3dVector::UnsetVector;
+    ON_3dVector trim2_mid_norm = ON_3dVector::UnsetVector;
+
+    if (!surface_EvNormal(s1, trim1_mid_2d.x, trim1_mid_2d.y, tmp1, trim1_mid_norm)) {
+	trim1_mid_norm = ON_3dVector::UnsetVector;
+    } else {
+	if (bseg->trim1->Face()->m_bRev) {
+	    trim1_mid_norm = trim1_mid_norm  * -1.0;
+	}
+    }
+
+    if (!surface_EvNormal(s2, trim2_mid_2d.x, trim2_mid_2d.y, tmp2, trim2_mid_norm)) {
+	trim2_mid_norm = ON_3dVector::UnsetVector;
+    } else {
+	if (bseg->trim2->Face()->m_bRev) {
+	    trim2_mid_norm = trim2_mid_norm  * -1.0;
+	}
+    }
+
+    ON_3dPoint *npt = new ON_3dPoint(edge_mid_3d);
+    CDT_Add3DPnt(bseg->s_cdt, npt, -1, -1, -1, bseg->edge->m_edge_index, emid, 0);
+    bseg->s_cdt->edge_pnts->insert(npt);
+
+
+    BrepTrimPoint *nbtp1 = Add_BrepTrimPoint(bseg->s_cdt, bseg->trim1_param_points, npt, NULL, edge_mid_tang, emid, trim1_mid_2d, trim1_mid_norm, t1, bseg->trim1->m_trim_index);
+
+    BrepTrimPoint *nbtp2 = Add_BrepTrimPoint(bseg->s_cdt, bseg->trim2_param_points, npt, NULL, edge_mid_tang, emid, trim2_mid_2d, trim2_mid_norm, t2, bseg->trim2->m_trim_index);
+
+    struct BrepEdgeSegment *bseg1 = NewBrepEdgeSegment(bseg);
+    bseg1->sbtp1 = bseg->sbtp1;
+    bseg1->ebtp1 = nbtp1;
+    bseg1->sbtp2 = bseg->sbtp2;
+    bseg1->ebtp2 = nbtp2;
+    RefineEdgeSegmentMidPt(bseg1, split_dist);
+
+
+    struct BrepEdgeSegment *bseg2 = NewBrepEdgeSegment(bseg);
+    bseg2->sbtp1 = nbtp1;
+    bseg2->ebtp1 = bseg->ebtp1;
+    bseg2->sbtp2 = nbtp2;
+    bseg2->ebtp2 = bseg->ebtp2;
+    RefineEdgeSegmentMidPt(bseg2, split_dist);
+
+    bseg->avg_seg_len = (bseg1->avg_seg_len + bseg2->avg_seg_len) * 0.5;
+
+    return;
+}
+
+double
+refineEdgePoints(
+	struct ON_Brep_CDT_State *s_cdt,
+	ON_BrepEdge *edge,
+	fastf_t split_dist
+	)
+{
+    // Get the trims
+    // TODO - this won't work if we don't have a 1->2 edge to trims relationship - in that
+    // case we'll have to split up the edge and find the matching sub-trims (possibly splitting
+    // those as well if they don't line up at shared 3D points.)
+    ON_BrepTrim *trim1 = edge->Trim(0);
+    ON_BrepTrim *trim2 = edge->Trim(1);
+
+    std::map<double, BrepTrimPoint *> *trim1_param_points = (std::map<double, BrepTrimPoint *> *)trim1->m_trim_user.p;
+    std::map<double, BrepTrimPoint *> *trim2_param_points = (std::map<double, BrepTrimPoint *> *)trim2->m_trim_user.p;
+
+    /* If we're out of sync, bail - something is very very wrong */
+    if (!trim1_param_points || !trim2_param_points) {
+	return -1;
+    }
+
+    RefineEdgeSegmentMidPt((*s_cdt->etrees)[edge->m_edge_index], split_dist);
+
+    return (*s_cdt->etrees)[edge->m_edge_index]->avg_seg_len;
+}
+
 // Get initial distance tolerances from the surface sizes
 void
 get_surface_dimensions(double *maxd, double *mind, ON_BrepEdge *e, double dist,
@@ -746,9 +867,22 @@ Get_Edge_Points(struct ON_Brep_CDT_State *s_cdt, std::map<const ON_Surface *, do
 		ccnt++;
 	    }
 	}
-	if (ccnt && emax > 10*emin) {
-	    bu_log("loop %d (%f, %f)\n", loop.m_loop_index, emin, emax);
+	if (!ccnt || emax < 5*emin) continue;
+
+	bu_log("loop %d (%f, %f)\n", loop.m_loop_index, emin, emax);
+	for (int j = 0; j < loop.TrimCount(); j++) {
+	    ON_BrepTrim *t = loop.Trim(j);
+	    ON_BrepEdge *e = t->Edge();
+	    if (!e) continue;
+	    const ON_Curve* crv = e->EdgeCurveOf();
+	    if (crv && !crv->IsLinear(BN_TOL_DIST)) {
+		double cavg = (*s_cdt->etrees)[e->m_edge_index]->avg_seg_len;
+		if (cavg > 5*emin) {
+		    (void)refineEdgePoints(s_cdt, e, 5*emin);
+		}
+	    }	
 	}
+	bu_log("loop %d, face %d refined\n", loop.m_loop_index, loop.Face()->m_face_index);
     }
 
     // For each linear edge, for both loops associated with its trims
