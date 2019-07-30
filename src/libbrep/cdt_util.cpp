@@ -38,7 +38,7 @@ plot_polyline(std::vector<p2t::Point *> *pnts, const char *filename)
     FILE *plot = fopen(filename, "w");
     int r = 255; int g = 0; int b = 0;
     point_t pc;
-    pl_color(plot, r, g, b); 
+    pl_color(plot, r, g, b);
     for (size_t i = 0; i < pnts->size(); i++) {
 	p2t::Point *pt = (*pnts)[i];
 	VSET(pc, pt->x, pt->y, 0);
@@ -369,9 +369,9 @@ ON_Brep_CDT_Create(void *bv)
 
     /* Set sane default tolerances.  May want to do
      * something better (perhaps brep dimension based...) */
-    cdt->abs = BREP_CDT_DEFAULT_TOL_ABS;
-    cdt->rel = BREP_CDT_DEFAULT_TOL_REL ;
-    cdt->norm = BREP_CDT_DEFAULT_TOL_NORM ;
+    cdt->tol.abs = BREP_CDT_DEFAULT_TOL_ABS;
+    cdt->tol.rel = BREP_CDT_DEFAULT_TOL_REL ;
+    cdt->tol.norm = BREP_CDT_DEFAULT_TOL_NORM ;
     cdt->dist = BREP_CDT_DEFAULT_TOL_DIST ;
 
 
@@ -456,7 +456,7 @@ ON_Brep_CDT_Brep(struct ON_Brep_CDT_State *s_cdt)
 }
 
 void
-ON_Brep_CDT_Tol_Set(struct ON_Brep_CDT_State *s, const struct ON_Brep_CDT_Tols *t)
+ON_Brep_CDT_Tol_Set(struct ON_Brep_CDT_State *s, const struct bg_tess_tol *t)
 {
     if (!s) {
 	return;
@@ -464,20 +464,18 @@ ON_Brep_CDT_Tol_Set(struct ON_Brep_CDT_State *s, const struct ON_Brep_CDT_Tols *
 
     if (!t) {
 	/* reset to defaults */
-	s->abs = BREP_CDT_DEFAULT_TOL_ABS;
-	s->rel = BREP_CDT_DEFAULT_TOL_REL ;
-	s->norm = BREP_CDT_DEFAULT_TOL_NORM ;
-	s->dist = BREP_CDT_DEFAULT_TOL_DIST ;
+	s->tol.abs = BREP_CDT_DEFAULT_TOL_ABS;
+	s->tol.rel = BREP_CDT_DEFAULT_TOL_REL ;
+	s->tol.norm = BREP_CDT_DEFAULT_TOL_NORM ;
+	s->dist = BREP_CDT_DEFAULT_TOL_DIST;
+	return;
     }
 
-    s->abs = t->abs;
-    s->rel = t->rel;
-    s->norm = t->norm;
-    s->dist = t->dist;
+    s->tol = *t;
 }
 
 void
-ON_Brep_CDT_Tol_Get(struct ON_Brep_CDT_Tols *t, const struct ON_Brep_CDT_State *s)
+ON_Brep_CDT_Tol_Get(struct bg_tess_tol *t, const struct ON_Brep_CDT_State *s)
 {
     if (!t) {
 	return;
@@ -488,13 +486,9 @@ ON_Brep_CDT_Tol_Get(struct ON_Brep_CDT_Tols *t, const struct ON_Brep_CDT_State *
 	t->abs = BREP_CDT_DEFAULT_TOL_ABS;
 	t->rel = BREP_CDT_DEFAULT_TOL_REL ;
 	t->norm = BREP_CDT_DEFAULT_TOL_NORM ;
-	t->dist = BREP_CDT_DEFAULT_TOL_DIST ;
     }
 
-    t->abs = s->abs;
-    t->rel = s->rel;
-    t->norm = s->norm;
-    t->dist = s->dist;
+    *t = s->tol;
 }
 
 static int

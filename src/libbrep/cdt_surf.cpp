@@ -564,31 +564,31 @@ getSurfacePoints(struct ON_Brep_CDT_Face_State *f)
 	    dist = (d1 < d2) ? d1 : d2;
 	}
 
-	if (f->s_cdt->abs < f->s_cdt->dist + ON_ZERO_TOLERANCE) {
+	if (f->s_cdt->tol.abs < f->s_cdt->dist + ON_ZERO_TOLERANCE) {
 	    min_dist = f->s_cdt->dist;
 	} else {
-	    min_dist = f->s_cdt->abs;
+	    min_dist = f->s_cdt->tol.abs;
 	}
 
 	double rel = 0.0;
-	if (f->s_cdt->rel > 0.0 + ON_ZERO_TOLERANCE) {
-	    rel = f->s_cdt->rel * dist;
+	if (f->s_cdt->tol.rel > 0.0 + ON_ZERO_TOLERANCE) {
+	    rel = f->s_cdt->tol.rel * dist;
 	    within_dist = rel < min_dist ? min_dist : rel;
 	    //if (s_cdt->abs < s_cdt->dist + ON_ZERO_TOLERANCE) {
 	    //    min_dist = within_dist;
 	    //}
-	} else if ((f->s_cdt->abs > 0.0 + ON_ZERO_TOLERANCE)
-		&& (f->s_cdt->norm < 0.0 + ON_ZERO_TOLERANCE)) {
+	} else if ((f->s_cdt->tol.abs > 0.0 + ON_ZERO_TOLERANCE)
+		&& (f->s_cdt->tol.norm < 0.0 + ON_ZERO_TOLERANCE)) {
 	    within_dist = min_dist;
-	} else if ((f->s_cdt->abs > 0.0 + ON_ZERO_TOLERANCE)
-		|| (f->s_cdt->norm > 0.0 + ON_ZERO_TOLERANCE)) {
+	} else if ((f->s_cdt->tol.abs > 0.0 + ON_ZERO_TOLERANCE)
+		|| (f->s_cdt->tol.norm > 0.0 + ON_ZERO_TOLERANCE)) {
 	    within_dist = dist;
 	} else {
 	    within_dist = 0.01 * dist; // default to 1% minimum surface distance
 	}
 
-	if (f->s_cdt->norm > 0.0 + ON_ZERO_TOLERANCE) {
-	    cos_within_ang = cos(f->s_cdt->norm);
+	if (f->s_cdt->tol.norm > 0.0 + ON_ZERO_TOLERANCE) {
+	    cos_within_ang = cos(f->s_cdt->tol.norm);
 	} else {
 	    cos_within_ang = cos(ON_PI / 2.0);
 	}

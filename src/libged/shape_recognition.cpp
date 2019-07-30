@@ -1009,11 +1009,10 @@ _ged_brep_to_bot(struct ged *gedp, const struct rt_brep_internal *bi, const char
     int *face_normals = NULL;
     fastf_t *normals = NULL;
 
-    struct ON_Brep_CDT_Tols cdttol;
+    struct bg_tess_tol cdttol;
     cdttol.abs = ttol->abs;
     cdttol.rel = ttol->rel;
     cdttol.norm = ttol->norm;
-    cdttol.dist = tol->dist;
     ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create((void *)bi->brep);
     ON_Brep_CDT_Tol_Set(s_cdt, &cdttol);
     ON_Brep_CDT_Tessellate(s_cdt, 0, NULL);

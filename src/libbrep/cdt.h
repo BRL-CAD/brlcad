@@ -169,9 +169,7 @@ struct ON_Brep_CDT_State {
     ON_Brep *brep;
 
     /* Tolerances */
-    fastf_t abs;
-    fastf_t rel;
-    fastf_t norm;
+    struct bg_tess_tol tol;
     fastf_t dist;
 
     /* 3D data */

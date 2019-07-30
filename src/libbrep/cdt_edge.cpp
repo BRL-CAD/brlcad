@@ -589,7 +589,7 @@ getEdgePoints(
     if (trim1->GetBoundingBox(min, max, bGrowBox)) {
 	dist = DIST_PT_PT(min, max);
     }
-    CDT_Tol_Set(&root->cdt_tol, dist, max_dist, s_cdt->abs, s_cdt->rel, s_cdt->norm, s_cdt->dist);
+    CDT_Tol_Set(&root->cdt_tol, dist, max_dist, s_cdt->tol.abs, s_cdt->tol.rel, s_cdt->tol.norm, s_cdt->dist);
 
     fastf_t emindist = (root->cdt_tol.min_dist < 0.5*loop_min_dist) ? root->cdt_tol.min_dist : 0.5 * loop_min_dist;
 

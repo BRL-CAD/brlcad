@@ -31,6 +31,7 @@
 
 #include "common.h"
 
+#include "bg/defines.h"
 #include "brep/defines.h"
 
 __BEGIN_DECLS
@@ -47,17 +48,12 @@ ON_Brep_CDT_Create(void *bv);
 extern BREP_EXPORT void
 ON_Brep_CDT_Destroy(struct ON_Brep_CDT_State *s);
 
-struct ON_Brep_CDT_Tols {
-    fastf_t abs;
-    fastf_t rel;
-    fastf_t norm;
-    fastf_t dist;
-};
+
 /* Set/get the CDT tolerances. */
 extern BREP_EXPORT void
-ON_Brep_CDT_Tol_Set(struct ON_Brep_CDT_State *s, const struct ON_Brep_CDT_Tols *t);
+ON_Brep_CDT_Tol_Set(struct ON_Brep_CDT_State *s, const struct bg_tess_tol *t);
 extern BREP_EXPORT void
-ON_Brep_CDT_Tol_Get(struct ON_Brep_CDT_Tols *t, const struct ON_Brep_CDT_State *s);
+ON_Brep_CDT_Tol_Get(struct bg_tess_tol *t, const struct ON_Brep_CDT_State *s);
 
 /* Return the ON_Brep associated with state s. */
 extern BREP_EXPORT void *

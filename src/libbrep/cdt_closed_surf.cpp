@@ -100,27 +100,27 @@ getUVCurveSamples(struct ON_Brep_CDT_State *s_cdt,
 	dist = DIST_PT_PT(min, max);
     }
 
-    if (s_cdt->abs < s_cdt->dist + ON_ZERO_TOLERANCE) {
+    if (s_cdt->tol.abs < s_cdt->dist + ON_ZERO_TOLERANCE) {
 	min_dist = s_cdt->dist;
     } else {
-	min_dist = s_cdt->abs;
+	min_dist = s_cdt->tol.abs;
     }
 
     double rel = 0.0;
-    if (s_cdt->rel > 0.0 + ON_ZERO_TOLERANCE) {
-	rel = s_cdt->rel * dist;
+    if (s_cdt->tol.rel > 0.0 + ON_ZERO_TOLERANCE) {
+	rel = s_cdt->tol.rel * dist;
 	if (max_dist < rel * 10.0) {
 	    max_dist = rel * 10.0;
 	}
 	within_dist = rel < min_dist ? min_dist : rel;
-    } else if (s_cdt->abs > 0.0 + ON_ZERO_TOLERANCE) {
+    } else if (s_cdt->tol.abs > 0.0 + ON_ZERO_TOLERANCE) {
 	within_dist = min_dist;
     } else {
 	within_dist = 0.01 * dist; // default to 1% minimum surface distance
     }
 
-    if (s_cdt->norm > 0.0 + ON_ZERO_TOLERANCE) {
-	cos_within_ang = cos(s_cdt->norm);
+    if (s_cdt->tol.norm > 0.0 + ON_ZERO_TOLERANCE) {
+	cos_within_ang = cos(s_cdt->tol.norm);
     } else {
 	cos_within_ang = cos(ON_PI / 2.0);
     }

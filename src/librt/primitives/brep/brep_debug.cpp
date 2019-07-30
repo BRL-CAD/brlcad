@@ -3137,12 +3137,11 @@ brep_command(struct bu_vls *vls, const char *solid_name, struct rt_wdb *UNUSED(w
 		    face_cnt++;
 		}
 		ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create((void *)bs->brep);
-		
-		struct ON_Brep_CDT_Tols cdttol;
+
+		struct bg_tess_tol cdttol;
 		cdttol.abs = ttol->abs;
 		cdttol.rel = ttol->rel;
 		cdttol.norm = ttol->norm;
-		cdttol.dist = tol->dist;
 		ON_Brep_CDT_Tol_Set(s_cdt, &cdttol);
 
 		ON_Brep_CDT_Tessellate(s_cdt, face_cnt, faces);
@@ -3161,14 +3160,13 @@ brep_command(struct bu_vls *vls, const char *solid_name, struct rt_wdb *UNUSED(w
 		    face_cnt++;
 		}
 		ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create((void *)bs->brep);
-		
-		struct ON_Brep_CDT_Tols cdttol;
+
+		struct bg_tess_tol cdttol;
 		cdttol.abs = ttol->abs;
 		cdttol.rel = ttol->rel;
 		cdttol.norm = ttol->norm;
-		cdttol.dist = tol->dist;
 		ON_Brep_CDT_Tol_Set(s_cdt, &cdttol);
-		
+
 		ON_Brep_CDT_Tessellate(s_cdt, face_cnt, faces);
 		ON_Brep_CDT_VList(vbp, &RTG.rtg_vlfree, &c, 1, s_cdt);
 		ON_Brep_CDT_Destroy(s_cdt);
@@ -3186,13 +3184,12 @@ brep_command(struct bu_vls *vls, const char *solid_name, struct rt_wdb *UNUSED(w
 		}
 		ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create((void *)bs->brep);
 
-		struct ON_Brep_CDT_Tols cdttol;
+		struct bg_tess_tol cdttol;
 		cdttol.abs = ttol->abs;
 		cdttol.rel = ttol->rel;
 		cdttol.norm = ttol->norm;
-		cdttol.dist = tol->dist;
 		ON_Brep_CDT_Tol_Set(s_cdt, &cdttol);
-		
+
 		ON_Brep_CDT_Tessellate(s_cdt, face_cnt, faces);
 		ON_Brep_CDT_VList(vbp, &RTG.rtg_vlfree, &c, 2, s_cdt);
 		ON_Brep_CDT_Destroy(s_cdt);
@@ -3203,13 +3200,12 @@ brep_command(struct bu_vls *vls, const char *solid_name, struct rt_wdb *UNUSED(w
 		bu_color_from_str(&c, "255/255/0");
 		ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create((void *)bs->brep);
 
-		struct ON_Brep_CDT_Tols cdttol;
+		struct bg_tess_tol cdttol;
 		cdttol.abs = ttol->abs;
 		cdttol.rel = ttol->rel;
 		cdttol.norm = ttol->norm;
-		cdttol.dist = tol->dist;
 		ON_Brep_CDT_Tol_Set(s_cdt, &cdttol);
-		
+
 		ON_Brep_CDT_Tessellate(s_cdt, 0, NULL);
 		ON_Brep_CDT_VList(vbp, &RTG.rtg_vlfree, &c, 0, s_cdt);
 		ON_Brep_CDT_Destroy(s_cdt);
