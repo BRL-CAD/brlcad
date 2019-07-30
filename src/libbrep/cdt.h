@@ -138,9 +138,8 @@ struct brep_cdt_tol {
     fastf_t min_dist;
     fastf_t max_dist;
     fastf_t within_dist;
-    fastf_t cos_within_ang;
 };
-#define BREP_CDT_TOL_ZERO {0.0, 0.0, 0.0, 0.0}
+#define BREP_CDT_TOL_ZERO {0.0, 0.0, 0.0}
 
 struct BrepEdgeSegment;
 struct BrepEdgeSegment {
@@ -171,6 +170,7 @@ struct ON_Brep_CDT_State {
     /* Tolerances */
     struct bg_tess_tol tol;
     fastf_t dist;
+    fastf_t cos_within_ang;
 
     /* 3D data */
     std::vector<ON_3dPoint *> *w3dpnts;
@@ -269,7 +269,7 @@ ON_3dVector p2tTri_Normal(p2t::Triangle *t, std::map<p2t::Point *, ON_3dPoint *>
 ON_3dVector p2tTri_Brep_Normal(struct ON_Brep_CDT_Face_State *f, p2t::Triangle *t);
 
 void
-CDT_Tol_Set(struct brep_cdt_tol *cdt, double dist, fastf_t md, double t_abs, double t_rel, double t_norm, double t_dist);
+CDT_Tol_Set(struct brep_cdt_tol *cdt, double dist, fastf_t md, double t_abs, double t_rel, double t_dist);
 
 void populate_3d_pnts(struct ON_Brep_CDT_Face_State *f);
 

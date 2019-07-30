@@ -132,43 +132,29 @@ CDT_Add3DNorm(struct ON_Brep_CDT_State *s, ON_3dPoint *normal, ON_3dPoint *vert,
 
 // Digest tessellation tolerances...
 void
-CDT_Tol_Set(struct brep_cdt_tol *cdt, double dist, fastf_t md, double t_abs, double t_rel, double t_norm, double t_dist)
+CDT_Tol_Set(struct brep_cdt_tol *cdt, double dist, fastf_t md, double t_abs, double t_rel, double t_dist)
 {
-    fastf_t min_dist, max_dist, within_dist, cos_within_ang;
+    fastf_t max_dist = md;
+    fastf_t min_dist = (t_abs < t_dist + ON_ZERO_TOLERANCE) ? t_dist : t_abs;
+    fastf_t within_dist = 0.01 * dist; // default to 1% of dist
 
-    max_dist = md;
-
-    if (t_abs < t_dist + ON_ZERO_TOLERANCE) {
-	min_dist = t_dist;
-    } else {
-	min_dist = t_abs;
-    }
-
-    double rel = 0.0;
     if (t_rel > 0.0 + ON_ZERO_TOLERANCE) {
-	rel = t_rel * dist;
+	double rel = t_rel * dist;
 	// TODO - think about what we want maximum distance to mean and how it
 	// relates to other tessellation settings...
 	if (max_dist < rel * 10.0) {
 	    max_dist = rel * 10.0;
 	}
 	within_dist = rel < min_dist ? min_dist : rel;
-    } else if (t_abs > 0.0 + ON_ZERO_TOLERANCE) {
-	within_dist = min_dist;
     } else {
-	within_dist = 0.01 * dist; // default to 1% of dist
-    }
-
-    if (t_norm > 0.0 + ON_ZERO_TOLERANCE) {
-	cos_within_ang = cos(t_norm);
-    } else {
-	cos_within_ang = cos(ON_PI / 2.0);
+	if (t_abs > 0.0 + ON_ZERO_TOLERANCE) {
+	    within_dist = min_dist;
+	}
     }
 
     cdt->min_dist = min_dist;
     cdt->max_dist = max_dist;
     cdt->within_dist = within_dist;
-    cdt->cos_within_ang = cos_within_ang;
 }
 
 ON_3dVector
@@ -472,6 +458,14 @@ ON_Brep_CDT_Tol_Set(struct ON_Brep_CDT_State *s, const struct bg_tess_tol *t)
     }
 
     s->tol = *t;
+
+    // The normal based parameter is global - do it up front
+    if (s->tol.norm > 0.0 + ON_ZERO_TOLERANCE) {
+	s->cos_within_ang = cos(s->tol.norm);
+    } else {
+	s->cos_within_ang = cos(ON_PI / 2.0);
+    }
+
 }
 
 void

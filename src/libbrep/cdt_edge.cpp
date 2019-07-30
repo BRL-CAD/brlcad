@@ -224,15 +224,15 @@ SplitEdgeSegmentMidPt(struct BrepEdgeSegment *bseg)
 
     if ((dist3d > bseg->cdt_tol.min_dist + ON_ZERO_TOLERANCE)) {
 	if (!dosplit) {
-	    dosplit += ((bseg->sbtp1->tangent * bseg->ebtp1->tangent) < bseg->cdt_tol.cos_within_ang - ON_ZERO_TOLERANCE) ? 1 : 0;
+	    dosplit += ((bseg->sbtp1->tangent * bseg->ebtp1->tangent) < bseg->s_cdt->cos_within_ang - ON_ZERO_TOLERANCE) ? 1 : 0;
 	}
 
 	if (!dosplit && bseg->sbtp1->normal != ON_3dVector::UnsetVector && bseg->ebtp1->normal != ON_3dVector::UnsetVector) {
-	    dosplit += ((bseg->sbtp1->normal * bseg->ebtp1->normal) < bseg->cdt_tol.cos_within_ang - ON_ZERO_TOLERANCE) ? 1 : 0;
+	    dosplit += ((bseg->sbtp1->normal * bseg->ebtp1->normal) < bseg->s_cdt->cos_within_ang - ON_ZERO_TOLERANCE) ? 1 : 0;
 	}
 
 	if (!dosplit && bseg->sbtp2->normal != ON_3dVector::UnsetVector && bseg->ebtp2->normal != ON_3dVector::UnsetVector) {
-	    dosplit += ((bseg->sbtp2->normal * bseg->ebtp2->normal) < bseg->cdt_tol.cos_within_ang - ON_ZERO_TOLERANCE) ? 1 : 0;
+	    dosplit += ((bseg->sbtp2->normal * bseg->ebtp2->normal) < bseg->s_cdt->cos_within_ang - ON_ZERO_TOLERANCE) ? 1 : 0;
 	}
     }
 
@@ -589,7 +589,7 @@ getEdgePoints(
     if (trim1->GetBoundingBox(min, max, bGrowBox)) {
 	dist = DIST_PT_PT(min, max);
     }
-    CDT_Tol_Set(&root->cdt_tol, dist, max_dist, s_cdt->tol.abs, s_cdt->tol.rel, s_cdt->tol.norm, s_cdt->dist);
+    CDT_Tol_Set(&root->cdt_tol, dist, max_dist, s_cdt->tol.abs, s_cdt->tol.rel, s_cdt->dist);
 
     fastf_t emindist = (root->cdt_tol.min_dist < 0.5*loop_min_dist) ? root->cdt_tol.min_dist : 0.5 * loop_min_dist;
 
