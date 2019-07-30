@@ -435,7 +435,7 @@ void
 gcv_opts_default(struct gcv_opts *gcv_options)
 {
     const struct bg_tess_tol default_tessellation_tolerance =
-    {BG_TESS_TOL_MAGIC, 0.0, 1.0e-2, 0.0};
+    {BG_TESS_TOL_MAGIC, 0.0, 1.0e-2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
     memset(gcv_options, 0, sizeof(*gcv_options));
 
