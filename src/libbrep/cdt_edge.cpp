@@ -946,9 +946,12 @@ Get_Edge_Points(struct ON_Brep_CDT_State *s_cdt, std::map<const ON_Surface *, do
 		max_dist = 2*smallest_curve_avg_seg;
 		min_dist = 0.5*smallest_curve_avg_seg;
 
+		bu_log("curve limits linear edge %d: min %f max %f\n", edge.m_edge_index, min_dist, max_dist);
+
 	    } else {
 		// No curve edges on this loop - fall back on standard surface seeding
 		get_surface_dimensions(&max_dist, &min_dist, &edge, s_cdt->dist, &s_to_maxdist);
+		bu_log("linear edge %d: min %f max %f\n", edge.m_edge_index, min_dist, max_dist);
 	    }
 
 	    (void)getEdgePoints(s_cdt, &edge, max_dist, min_dist);
