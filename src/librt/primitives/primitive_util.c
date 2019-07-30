@@ -62,7 +62,7 @@ primitive_hitsort(register struct hit *h, register int nh)
 #define DEFAULT_REL_TOL .1
 fastf_t
 primitive_get_absolute_tolerance(
-	const struct rt_tess_tol *ttol,
+	const struct bg_tess_tol *ttol,
 	fastf_t rel_to_abs)
 {
     fastf_t tol, rel_tol, abs_tol;

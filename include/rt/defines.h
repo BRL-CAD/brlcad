@@ -66,6 +66,7 @@
 #endif
 #endif
 
+#include "bg/defines.h"
 
 /*
  * Values for Solid ID.

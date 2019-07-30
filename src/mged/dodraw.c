@@ -250,7 +250,7 @@ replot_modified_solid(
     /* Draw (plot) a normal solid */
     RT_CK_DB_INTERNAL(ip);
 
-    mged_ttol.magic = RT_TESS_TOL_MAGIC;
+    mged_ttol.magic = BG_TESS_TOL_MAGIC;
     mged_ttol.abs = mged_abs_tol;
     mged_ttol.rel = mged_rel_tol;
     mged_ttol.norm = mged_nrm_tol;

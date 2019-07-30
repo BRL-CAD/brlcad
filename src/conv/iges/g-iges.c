@@ -75,7 +75,7 @@ extern int nmgregion_to_iges(char *name, struct nmgregion *r, int dependent, FIL
 extern int write_shell_face_loop(struct nmgregion *r, int edge_de, struct bu_ptbl *etab, int vert_de, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param);
 extern void csg_comb_func(struct db_i *dbip, struct directory *dp, void *ptr);
 extern void csg_leaf_func(struct db_i *dbip, struct directory *dp, void *ptr);
-extern void set_iges_tolerances(struct bn_tol *set_tol, struct rt_tess_tol *set_ttol);
+extern void set_iges_tolerances(struct bn_tol *set_tol, struct bg_tess_tol *set_ttol);
 extern void count_refs(struct db_i *dbip, struct directory *dp, void *ptr);
 extern int nmgregion_to_tsurf(char *name, struct nmgregion *r, FILE *fp_dir, FILE *fp_param);
 extern int write_solid_instance(int orig_de, mat_t mat, FILE *fp_dir, FILE *fp_param);
@@ -119,7 +119,7 @@ static int ncpu = 1;	/* Number of processors */
 static char *output_file = NULL;	/* output filename */
 static FILE *fp_dir = NULL;	/* IGES start, global, and directory sections */
 static FILE *fp_param = NULL;	/* IGES parameter section */
-static struct rt_tess_tol ttol;
+static struct bg_tess_tol ttol;
 static struct bn_tol tol;
 static struct model *the_model;
 struct db_i *DBIP;
@@ -135,7 +135,7 @@ extern int tor_to_iges(struct rt_db_internal *, char *, FILE *, FILE *);
 extern int tgc_to_iges(struct rt_db_internal *, char *, FILE *, FILE *);
 extern int nmg_to_iges(struct rt_db_internal *, char *, FILE *, FILE *);
 extern int sketch_to_iges(struct rt_db_internal *, char *, FILE *, FILE *);
-extern void iges_init(struct bn_tol *, struct rt_tess_tol *, int, struct db_i *);
+extern void iges_init(struct bn_tol *, struct bg_tess_tol *, int, struct db_i *);
 extern void Print_stats(FILE *);
 
 struct iges_functab
@@ -209,7 +209,7 @@ main(int argc, char *argv[])
     tree_state.ts_ttol = &ttol;
     tree_state.ts_m = &the_model;
 
-    ttol.magic = RT_TESS_TOL_MAGIC;
+    ttol.magic = BG_TESS_TOL_MAGIC;
     /* Defaults, updated by command line options. */
     ttol.abs = 0.0;
     ttol.rel = 0.01;
@@ -500,7 +500,7 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
     int dependent;
     size_t i;
 
-    RT_CK_TESS_TOL(tsp->ts_ttol);
+    BG_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
     NMG_CK_MODEL(*tsp->ts_m);
 

@@ -961,7 +961,7 @@ append_solid_to_display_list(
     struct bview_client_data *bview_data = (struct bview_client_data *)client_data;
 
     RT_CK_DB_INTERNAL(ip);
-    RT_CK_TESS_TOL(tsp->ts_ttol);
+    BG_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
     RT_CK_RESOURCE(tsp->ts_resp);
 

@@ -169,7 +169,7 @@ extern int rt_binunif_import5_minor_type(struct rt_db_internal *, const struct b
 extern void primitive_hitsort(struct hit h[], int nh);
 
 extern fastf_t primitive_get_absolute_tolerance(
-	const struct rt_tess_tol *ttol,
+	const struct bg_tess_tol *ttol,
 	fastf_t rel_to_abs);
 
 extern fastf_t primitive_diagonal_samples(

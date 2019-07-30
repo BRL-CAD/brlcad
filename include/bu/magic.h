@@ -86,6 +86,9 @@ __BEGIN_DECLS
 #define BN_VLBLOCK_MAGIC		0x981bd112 /**< ???? */
 #define BN_VLIST_MAGIC			0x98237474 /**< ?\#tt */
 
+/* libbg */
+#define BG_TESS_TOL_MAGIC		0xb9090dab /**< ???? */
+
 /* primitive internals */
 
 #define RT_ARBN_INTERNAL_MAGIC		0x18236461 /**< ?\#da */
@@ -180,7 +183,6 @@ __BEGIN_DECLS
 #define RT_SEG_MAGIC			0x98bcdef1 /**< ???? */
 #define RT_SOLTAB2_MAGIC		0x92bfcde2 /**< ???? => l2.magic */
 #define RT_SOLTAB_MAGIC			0x92bfcde0 /**< ???? => l.magic */
-#define RT_TESS_TOL_MAGIC		0xb9090dab /**< ???? */
 #define RT_TREE_MAGIC			0x91191191 /**< ???? */
 #define RT_WDB_MAGIC		       	0x5f576462 /**< _Wdb */
 

@@ -44,7 +44,7 @@
 #include "../../librt_private.h"
 
 
-extern int seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, point_t V,
+extern int seg_to_vlist(struct bu_list *vhead, const struct bg_tess_tol *ttol, point_t V,
 			vect_t u_vec, vect_t v_vec, struct rt_sketch_internal *sketch_ip, void *seg);
 
 extern void rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip);
@@ -1387,7 +1387,7 @@ rt_extrude_free(struct soltab *stp)
 
 
 int
-rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     struct rt_extrude_internal *extrude_ip;
     struct rt_curve *crv = NULL;
@@ -2052,7 +2052,7 @@ classify_sketch_loops(struct bu_ptbl *loopa, struct bu_ptbl *loopb, struct rt_sk
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     struct bu_list vhead;
     struct shell *s;

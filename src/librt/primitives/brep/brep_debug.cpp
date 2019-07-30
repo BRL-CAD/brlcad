@@ -57,7 +57,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-    RT_EXPORT extern int brep_command(struct bu_vls *vls, const char *solid_name, struct rt_wdb *wdbp, struct bu_color *color, const struct rt_tess_tol* ttol, const struct bn_tol* tol, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag);
+    RT_EXPORT extern int brep_command(struct bu_vls *vls, const char *solid_name, struct rt_wdb *wdbp, struct bu_color *color, const struct bg_tess_tol* ttol, const struct bn_tol* tol, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag);
     extern int single_conversion(struct rt_db_internal* intern, ON_Brep** brep, const struct db_i *dbip);
     RT_EXPORT extern int brep_conversion(struct rt_db_internal* in, struct rt_db_internal* out, const struct db_i *dbip);
     RT_EXPORT extern int brep_conversion_comb(struct rt_db_internal *old_internal, const char *name, const char *suffix, struct rt_wdb *wdbp, fastf_t local2mm);
@@ -2784,7 +2784,7 @@ translate_command(
 
 
 int
-brep_command(struct bu_vls *vls, const char *solid_name, struct rt_wdb *UNUSED(wdbp), struct bu_color *color, const struct rt_tess_tol *ttol, const struct bn_tol *tol, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag)
+brep_command(struct bu_vls *vls, const char *solid_name, struct rt_wdb *UNUSED(wdbp), struct bu_color *color, const struct bg_tess_tol *ttol, const struct bn_tol *tol, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag)
 {
     const char *command;
     int ret = 0;

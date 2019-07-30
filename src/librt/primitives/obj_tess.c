@@ -26,7 +26,7 @@
 
 
 int
-rt_obj_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_obj_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     int id;
     const struct rt_functab *ft;
@@ -37,7 +37,7 @@ rt_obj_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     if (*r) NMG_CK_REGION(*r);
     if (m) NMG_CK_MODEL(m);
     RT_CK_DB_INTERNAL(ip);
-    if (ttol) RT_CK_TESS_TOL(ttol);
+    if (ttol) BG_CK_TESS_TOL(ttol);
     if (tol) BN_CK_TOL(tol);
 
     id = ip->idb_minor_type;

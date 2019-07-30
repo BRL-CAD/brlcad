@@ -905,7 +905,7 @@ rt_epa_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 }
 
 int
-rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     fastf_t dtol, mag_h, ntol, r1, r2;
     fastf_t **ellipses, theta_new, theta_prev;
@@ -1191,7 +1191,7 @@ rt_ell(fastf_t *ov, const fastf_t *V, const fastf_t *A, const fastf_t *B, int si
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     fastf_t dtol, mag_h, ntol, r1, r2;
     fastf_t **ellipses, **normals, theta_new, theta_prev;

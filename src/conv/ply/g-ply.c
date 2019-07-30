@@ -47,7 +47,7 @@
 static int NMG_debug = 0; /* saved arg of -X, for longjmp handling */
 static int verbose = 0;
 static struct db_i *dbip = NULL;
-static struct rt_tess_tol ttol = RT_TESS_TOL_INIT_ZERO; /* tessellation tolerance in mm */
+static struct bg_tess_tol ttol = BG_TESS_TOL_INIT_ZERO; /* tessellation tolerance in mm */
 static struct bn_tol tol = BN_TOL_INIT_ZERO;            /* calculation tolerance */
 static struct model *the_model = NULL;
 static char *ply_file = NULL;
@@ -606,7 +606,7 @@ Usage: %s [-v][-xX lvl][-a abs_tess_tol (default: 0.0)][-r rel_tess_tol (default
     tree_state.ts_m = &the_model;
 
     /* Set up tessellation tolerance defaults */
-    ttol.magic = RT_TESS_TOL_MAGIC;
+    ttol.magic = BG_TESS_TOL_MAGIC;
     /* Defaults, updated by command line options. */
     ttol.abs = 0.0;
     ttol.rel = 0.01;
@@ -731,7 +731,7 @@ Usage: %s [-v][-xX lvl][-a abs_tess_tol (default: 0.0)][-r rel_tess_tol (default
 	bu_exit(1, "db_dirbuild failed\n");
     }
     BN_CK_TOL(tree_state.ts_tol);
-    RT_CK_TESS_TOL(tree_state.ts_ttol);
+    BG_CK_TESS_TOL(tree_state.ts_ttol);
 
     if (verbose) {
 	int i;

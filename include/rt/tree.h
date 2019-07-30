@@ -85,7 +85,7 @@ struct db_tree_state {
 					struct rt_db_internal *ip,
 					void *client_data
 				       ); /**< @brief callback during DAG traversal called on leaf primitive nodes */
-    const struct rt_tess_tol *  ts_ttol;        /**< @brief  Tessellation tolerance */
+    const struct bg_tess_tol *  ts_ttol;        /**< @brief  Tessellation tolerance */
     const struct bn_tol *       ts_tol;         /**< @brief  Math tolerance */
     struct model **             ts_m;           /**< @brief  ptr to ptr to NMG "model" */
     struct rt_i *               ts_rtip;        /**< @brief  Helper for rt_gettrees() */

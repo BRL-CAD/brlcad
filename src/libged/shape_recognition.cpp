@@ -999,7 +999,7 @@ _ged_brep_shrink_surfaces(struct ged *gedp, struct rt_brep_internal *bi, const c
 
 // TODO - this doesn't belong here, just convenient for now since we need to crack the ON_Brep for this
 extern "C" int
-_ged_brep_to_bot(struct ged *gedp, const struct rt_brep_internal *bi, const char *bot_name, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+_ged_brep_to_bot(struct ged *gedp, const struct rt_brep_internal *bi, const char *bot_name, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     if (!gedp || !bi || !bot_name || !ttol || !tol) return GED_ERROR;
 

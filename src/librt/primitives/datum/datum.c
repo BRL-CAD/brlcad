@@ -144,7 +144,7 @@ rt_datum_free(struct soltab *stp)
 
 
 int
-rt_datum_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_datum_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     struct rt_datum_internal *datum_ip;
     point_t point_size = VINIT_ZERO;
@@ -262,7 +262,7 @@ rt_datum_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_datum_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
+rt_datum_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     struct rt_datum_internal *datum_ip;
 

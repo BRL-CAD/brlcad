@@ -226,7 +226,7 @@ main(int argc, char** argv)
     // Now, need nmg form of the arb
     struct model *m = nmg_mm();
     struct nmgregion *r;
-    struct rt_tess_tol ttol;
+    struct bg_tess_tol ttol;
     ttol.abs = 0.0;
     ttol.rel = 0.01;
     ttol.norm = 0.0;

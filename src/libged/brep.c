@@ -44,7 +44,7 @@
  * lots of new public librt functions?  right now, we reach into librt
  * directly and export what we need from brep_debug.cpp which sucks.
  */
-RT_EXPORT extern int brep_command(struct bu_vls *vls, const char *solid_name, struct rt_wdb *wdbp, struct bu_color *color, const struct rt_tess_tol *ttol, const struct bn_tol *tol, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag);
+RT_EXPORT extern int brep_command(struct bu_vls *vls, const char *solid_name, struct rt_wdb *wdbp, struct bu_color *color, const struct bg_tess_tol *ttol, const struct bn_tol *tol, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag);
 RT_EXPORT extern int brep_conversion(struct rt_db_internal* in, struct rt_db_internal* out, const struct db_i *dbip);
 RT_EXPORT extern int brep_conversion_comb(struct rt_db_internal *old_internal, const char *name, const char *suffix, struct rt_wdb *wdbp, fastf_t local2mm);
 RT_EXPORT extern int brep_intersect_point_point(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
@@ -343,7 +343,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	// TODO - pass tol info down...
-	bret = _ged_brep_to_bot(gedp, bi, bu_vls_cstr(&bname_bot), (const struct rt_tess_tol *)&gedp->ged_wdbp->wdb_ttol, &gedp->ged_wdbp->wdb_tol);
+	bret = _ged_brep_to_bot(gedp, bi, bu_vls_cstr(&bname_bot), (const struct bg_tess_tol *)&gedp->ged_wdbp->wdb_ttol, &gedp->ged_wdbp->wdb_tol);
 	bu_vls_free(&bname_bot);
 	return bret;
     }
@@ -544,9 +544,9 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
     vbp = rt_vlblock_init();
 
     if ((int)color.buc_rgb[0] == 0 && (int)color.buc_rgb[1] == 0 && (int)color.buc_rgb[2] == 0) {
-	brep_command(gedp->ged_result_str, solid_name, gedp->ged_wdbp, NULL, (const struct rt_tess_tol *)&gedp->ged_wdbp->wdb_ttol, &gedp->ged_wdbp->wdb_tol, bs, bi, vbp, argc, argv, commtag);
+	brep_command(gedp->ged_result_str, solid_name, gedp->ged_wdbp, NULL, (const struct bg_tess_tol *)&gedp->ged_wdbp->wdb_ttol, &gedp->ged_wdbp->wdb_tol, bs, bi, vbp, argc, argv, commtag);
     } else {
-	brep_command(gedp->ged_result_str, solid_name, gedp->ged_wdbp, &color, (const struct rt_tess_tol *)&gedp->ged_wdbp->wdb_ttol, &gedp->ged_wdbp->wdb_tol, bs, bi, vbp, argc, argv, commtag);
+	brep_command(gedp->ged_result_str, solid_name, gedp->ged_wdbp, &color, (const struct bg_tess_tol *)&gedp->ged_wdbp->wdb_ttol, &gedp->ged_wdbp->wdb_tol, bs, bi, vbp, argc, argv, commtag);
     }
 
     if (BU_STR_EQUAL(argv[2], "translate")) {

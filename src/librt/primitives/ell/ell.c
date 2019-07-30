@@ -816,7 +816,7 @@ rt_ell_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 }
 
 int
-rt_ell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_ell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     register int i;
     struct rt_ell_internal *eip;
@@ -919,7 +919,7 @@ struct ell_vert_strip {
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     mat_t R;
     mat_t S;

@@ -486,7 +486,7 @@ rt_pg_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uv
 
 
 int
-rt_pg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_pg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     size_t i;
     size_t p;	/* current polygon number */
@@ -516,7 +516,7 @@ rt_pg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tes
  * Convert to vlist, draw as polygons.
  */
 int
-rt_pg_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
+rt_pg_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     size_t i;
     size_t p;	/* current polygon number */
@@ -564,7 +564,7 @@ rt_pg_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 
 
 int
-rt_pg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
+rt_pg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
 {
     size_t i;
     struct shell *s;

@@ -243,7 +243,7 @@ int
 load_g(struct tie_s *tie, const char *db, int argc, const char **argv, struct adrt_mesh_s **meshes)
 {
     struct model *the_model;
-    struct rt_tess_tol ttol;		/* tessellation tolerance in mm */
+    struct bg_tess_tol ttol;		/* tessellation tolerance in mm */
     struct db_tree_state tree_state;	/* includes tol & model */
 
     cur_tie = tie;	/* blehhh, global... need locking. */
@@ -254,7 +254,7 @@ load_g(struct tie_s *tie, const char *db, int argc, const char **argv, struct ad
     tree_state.ts_m = &the_model;
 
     /* Set up tessellation tolerance defaults */
-    ttol.magic = RT_TESS_TOL_MAGIC;
+    ttol.magic = BG_TESS_TOL_MAGIC;
     /* Defaults, updated by command line options. */
     ttol.abs = 0.0;
     ttol.rel = 0.01;
@@ -288,7 +288,7 @@ load_g(struct tie_s *tie, const char *db, int argc, const char **argv, struct ad
     }
 
     BN_CK_TOL(tree_state.ts_tol);
-    RT_CK_TESS_TOL(tree_state.ts_ttol);
+    BG_CK_TESS_TOL(tree_state.ts_ttol);
 
     TIE_VAL(tie_init)(cur_tie, BU_PAGE_SIZE, TIE_KDTREE_FAST);
 

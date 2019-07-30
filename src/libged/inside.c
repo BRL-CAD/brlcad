@@ -266,11 +266,11 @@ arbin(struct ged *gedp,
 	struct nmgregion *r;
 	struct shell *s = NULL;
 	struct faceuse *fu;
-	struct rt_tess_tol ttol;
+	struct bg_tess_tol ttol;
 	struct bu_ptbl vert_tab;
 	struct rt_bot_internal *bot;
 
-	ttol.magic = RT_TESS_TOL_MAGIC;
+	ttol.magic = BG_TESS_TOL_MAGIC;
 	ttol.abs = gedp->ged_wdbp->wdb_ttol.abs;
 	ttol.rel = gedp->ged_wdbp->wdb_ttol.rel;
 	ttol.norm = gedp->ged_wdbp->wdb_ttol.norm;

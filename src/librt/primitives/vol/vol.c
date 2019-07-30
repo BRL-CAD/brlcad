@@ -971,7 +971,7 @@ rt_vol_free(struct soltab *stp)
 
 
 int
-rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     register struct rt_vol_internal *vip;
     int x, y, z;
@@ -1094,7 +1094,7 @@ rt_vol_plate(fastf_t *a, fastf_t *b, fastf_t *c, fastf_t *d, register fastf_t *m
 
 
 int
-rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     struct rt_vol_internal *vip;
     register size_t x, y, z;
@@ -1107,7 +1107,7 @@ rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     NMG_CK_MODEL(m);
     BN_CK_TOL(tol);
-    RT_CK_TESS_TOL(ttol);
+    BG_CK_TESS_TOL(ttol);
 
     RT_CK_DB_INTERNAL(ip);
     vip = (struct rt_vol_internal *)ip->idb_ptr;

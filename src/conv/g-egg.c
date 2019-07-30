@@ -187,7 +187,7 @@ main(int argc, char *argv[])
     char *output_file = NULL;	/* output filename */
     struct db_i *dbip;
     struct model *the_model;
-    struct rt_tess_tol ttol;		/* tessellation tolerance in mm */
+    struct bg_tess_tol ttol;		/* tessellation tolerance in mm */
     struct db_tree_state tree_state;	/* includes tol & model */
 
     int i, use_mc = 0, use_bottess = 0;
@@ -205,7 +205,7 @@ main(int argc, char *argv[])
     tree_state.ts_m = &the_model;
 
     /* Set up tessellation tolerance defaults */
-    ttol.magic = RT_TESS_TOL_MAGIC;
+    ttol.magic = BG_TESS_TOL_MAGIC;
     /* Defaults, updated by command line options. */
     ttol.abs = 0.0;
     ttol.rel = 0.01;
@@ -298,7 +298,7 @@ main(int argc, char *argv[])
     }
 
     BN_CK_TOL(tree_state.ts_tol);
-    RT_CK_TESS_TOL(tree_state.ts_ttol);
+    BG_CK_TESS_TOL(tree_state.ts_ttol);
 
     if (verbose) {
 	bu_log("Model: %s\n", argv[0]);

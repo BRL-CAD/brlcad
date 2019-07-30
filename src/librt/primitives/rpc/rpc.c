@@ -927,7 +927,7 @@ rt_rpc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 }
 
 int
-rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     struct rt_rpc_internal *xip;
     fastf_t *front;
@@ -1101,7 +1101,7 @@ rt_mk_parabola(struct rt_pt_node *pts, fastf_t r, fastf_t b, fastf_t dtol, fastf
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     int i, j, n;
     fastf_t b, *back, *front, rh;
@@ -1119,7 +1119,7 @@ rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     NMG_CK_MODEL(m);
     BN_CK_TOL(tol);
-    RT_CK_TESS_TOL(ttol);
+    BG_CK_TESS_TOL(ttol);
 
     RT_CK_DB_INTERNAL(ip);
 

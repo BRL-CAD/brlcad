@@ -1399,3 +1399,7 @@ s/BU_DEBUG_MEM_LOG/0/g
 s/ged_count_tops/ged_who_argc/g
 s/ged_build_tops/ged_who_argv/g
         functions renamed as they pertain to 'who' listings, not 'tops' [7.30]
+s/rt_tess_tol/bg_tess_tol/g
+s/RT_TESS_TOL_MAGIC/BG_TESS_TOL_MAGIC/g
+s/RT_TESS_TOL_INIT_ZERO/BG_TESS_TOL_INIT_ZERO/g
+s/RT_CK_TESS_TOL/BG_CK_TESS_TOL/g

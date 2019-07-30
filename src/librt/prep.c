@@ -121,7 +121,7 @@ rt_new_rti(struct db_i *dbip)
     rtip->rti_tol.perp = 1e-6;
     rtip->rti_tol.para = 1 - rtip->rti_tol.perp;
 
-    rtip->rti_ttol.magic = RT_TESS_TOL_MAGIC;
+    rtip->rti_ttol.magic = BG_TESS_TOL_MAGIC;
     rtip->rti_ttol.abs = 0.0;
     rtip->rti_ttol.rel = 0.01;
     rtip->rti_ttol.norm = 0;

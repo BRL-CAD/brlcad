@@ -96,12 +96,12 @@ RT_EXPORT extern int rt_bot_edge_in_list(const size_t v1,
 					 const size_t edge_count0);
 RT_EXPORT extern int rt_bot_plot(struct bu_list         *vhead,
 				 struct rt_db_internal  *ip,
-				 const struct rt_tess_tol *ttol,
+				 const struct bg_tess_tol *ttol,
 				 const struct bn_tol    *tol,
 				 const struct rt_view_info *info);
 RT_EXPORT extern int rt_bot_plot_poly(struct bu_list            *vhead,
 				      struct rt_db_internal     *ip,
-				      const struct rt_tess_tol *ttol,
+				      const struct bg_tess_tol *ttol,
 				      const struct bn_tol       *tol);
 RT_EXPORT extern int rt_bot_find_v_nearest_pt2(const struct rt_bot_internal *bot,
 					       const point_t    pt2,
@@ -130,7 +130,7 @@ RT_EXPORT extern int rt_bot_same_orientation(const int *a,
 RT_EXPORT extern int rt_bot_tess(struct nmgregion **r,
 				 struct model *m,
 				 struct rt_db_internal *ip,
-				 const struct rt_tess_tol *ttol,
+				 const struct bg_tess_tol *ttol,
 				 const struct bn_tol *tol);
 
 RT_EXPORT extern struct rt_bot_internal * rt_bot_merge(size_t num_bots, const struct rt_bot_internal * const *bots);

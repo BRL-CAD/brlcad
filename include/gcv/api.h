@@ -101,7 +101,7 @@ struct gcv_opts
     unsigned max_cpus;
 
     struct bn_tol calculational_tolerance;
-    struct rt_tess_tol tessellation_tolerance;
+    struct bg_tess_tol tessellation_tolerance;
     enum gcv_tessellation_algorithm tessellation_algorithm;
 
     /* conversion to units */

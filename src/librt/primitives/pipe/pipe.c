@@ -2347,7 +2347,7 @@ int
 rt_pipe_plot(
     struct bu_list *vhead,
     struct rt_db_internal *ip,
-    const struct rt_tess_tol *UNUSED(ttol),
+    const struct bg_tess_tol *UNUSED(ttol),
     const struct bn_tol *UNUSED(tol),
     const struct rt_view_info *UNUSED(info))
 {
@@ -3207,7 +3207,7 @@ tesselate_pipe_bend(
     fastf_t *start_r2,
     struct shell *s,
     const struct bn_tol *tol,
-    const struct rt_tess_tol *ttol)
+    const struct bg_tess_tol *ttol)
 {
     struct vertex **new_outer_loop = NULL;
     struct vertex **new_inner_loop = NULL;
@@ -3236,7 +3236,7 @@ tesselate_pipe_bend(
 
     NMG_CK_SHELL(s);
     BN_CK_TOL(tol);
-    RT_CK_TESS_TOL(ttol);
+    BG_CK_TESS_TOL(ttol);
     vertex_tree = bn_vert_tree_create();
 
     VMOVE(r1, start_r1);
@@ -3715,7 +3715,7 @@ rt_pipe_tess(
     struct nmgregion **r,
     struct model *m,
     struct rt_db_internal *ip,
-    const struct rt_tess_tol *ttol,
+    const struct bg_tess_tol *ttol,
     const struct bn_tol *tol)
 {
     struct wdb_pipept *pp1;
@@ -3744,7 +3744,7 @@ rt_pipe_tess(
     RT_PIPE_CK_MAGIC(pip);
 
     BN_CK_TOL(tol);
-    RT_CK_TESS_TOL(ttol);
+    BG_CK_TESS_TOL(ttol);
     NMG_CK_MODEL(m);
 
     *r = (struct nmgregion *)NULL;

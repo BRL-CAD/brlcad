@@ -266,7 +266,7 @@ _gcv_opts_check(const struct gcv_opts *gcv_options)
 	bu_bomb("null gcv_options");
 
     BN_CK_TOL(&gcv_options->calculational_tolerance);
-    RT_CK_TESS_TOL(&gcv_options->tessellation_tolerance);
+    BG_CK_TESS_TOL(&gcv_options->tessellation_tolerance);
 
     if (gcv_options->debug_mode != 0 && gcv_options->debug_mode != 1)
 	bu_bomb("invalid gcv_opts.debug_mode");
@@ -434,8 +434,8 @@ gcv_list_filters(void)
 void
 gcv_opts_default(struct gcv_opts *gcv_options)
 {
-    const struct rt_tess_tol default_tessellation_tolerance =
-    {RT_TESS_TOL_MAGIC, 0.0, 1.0e-2, 0.0};
+    const struct bg_tess_tol default_tessellation_tolerance =
+    {BG_TESS_TOL_MAGIC, 0.0, 1.0e-2, 0.0};
 
     memset(gcv_options, 0, sizeof(*gcv_options));
 

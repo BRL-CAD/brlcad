@@ -66,7 +66,7 @@ struct brep_cdt_tol {
 
 // Digest tessellation tolerances...
 void
-CDT_Tol_Set(struct brep_cdt_tol *cdt, double dist, fastf_t md, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+CDT_Tol_Set(struct brep_cdt_tol *cdt, double dist, fastf_t md, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     fastf_t min_dist, max_dist, within_dist, cos_within_ang;
 
@@ -176,7 +176,7 @@ getEdgePoints(const ON_BrepTrim &trim,
 std::map<double, BrepTrimPoint *> *
 getEdgePoints(ON_BrepTrim &trim,
 	      fastf_t max_dist,
-	      const struct rt_tess_tol *ttol,
+	      const struct bg_tess_tol *ttol,
 	      const struct bn_tol *tol)
 {
     struct brep_cdt_tol cdt_tol = BREP_CDT_TOL_ZERO;
@@ -495,7 +495,7 @@ getSurfacePoints(const ON_Surface *s,
 
 void
 getSurfacePoints(const ON_BrepFace &face,
-		 const struct rt_tess_tol *ttol,
+		 const struct bg_tess_tol *ttol,
 		 const struct bn_tol *tol,
 		 ON_2dPointArray &on_surf_points)
 {
@@ -760,7 +760,7 @@ std::map<double, ON_3dPoint *> *
 getUVCurveSamples(const ON_Surface *surf,
 		  const ON_Curve *curve,
 		  fastf_t max_dist,
-		  const struct rt_tess_tol *ttol,
+		  const struct bg_tess_tol *ttol,
 		  const struct bn_tol *tol)
 {
     fastf_t min_dist, within_dist, cos_within_ang;
@@ -1045,7 +1045,7 @@ get_loop_sample_points(
 	const ON_BrepFace &face,
 	const ON_BrepLoop *loop,
 	fastf_t max_dist,
-	const struct rt_tess_tol *ttol,
+	const struct bg_tess_tol *ttol,
 	const struct bn_tol *tol)
 {
     int trim_count = loop->TrimCount();
@@ -1190,7 +1190,7 @@ static void
 CloseOpenLoops(
 	const ON_Surface *s,
 	const ON_BrepFace &face,
-	const struct rt_tess_tol *ttol,
+	const struct bg_tess_tol *ttol,
 	const struct bn_tol *tol,
 	ON_SimpleArray<BrepTrimPoint> *brep_loop_points,
 	double same_point_tolerance)
@@ -1589,7 +1589,7 @@ void
 PerformClosedSurfaceChecks(
 	const ON_Surface *s,
 	const ON_BrepFace &face,
-	const struct rt_tess_tol *ttol,
+	const struct bg_tess_tol *ttol,
 	const struct bn_tol *tol,
 	ON_SimpleArray<BrepTrimPoint> *brep_loop_points,
 	double same_point_tolerance)
@@ -1615,7 +1615,7 @@ PerformClosedSurfaceChecks(
 void
 poly2tri_CDT(struct bu_list *vhead,
 	     ON_BrepFace &face,
-	     const struct rt_tess_tol *ttol,
+	     const struct bg_tess_tol *ttol,
 	     const struct bn_tol *tol,
 	     const struct rt_view_info *UNUSED(info),
 	     bool watertight,
@@ -1932,7 +1932,7 @@ poly2tri_CDT(struct bu_list *vhead,
 }
 
 int brep_facecdt_plot(struct bu_vls *vls, const char *solid_name,
-                      const struct rt_tess_tol *ttol, const struct bn_tol *tol,
+                      const struct bg_tess_tol *ttol, const struct bn_tol *tol,
                       struct brep_specific* bs, struct rt_brep_internal*UNUSED(bi),
                       struct bn_vlblock *vbp, int index, int plottype, int num_points)
 {
@@ -1991,7 +1991,7 @@ int brep_facecdt_plot(struct bu_vls *vls, const char *solid_name,
 }
 
 int rt_brep_plot_poly(struct bu_list *vhead, const struct db_full_path *pathp, struct rt_db_internal *ip,
-		      const struct rt_tess_tol *ttol, const struct bn_tol *tol,
+		      const struct bg_tess_tol *ttol, const struct bn_tol *tol,
 		      const struct rt_view_info *info)
 {
     TRACE1("rt_brep_plot");

@@ -404,7 +404,7 @@ compose(union tree *left_tree, union tree *right_tree, unsigned long int UNUSED(
 
 
 union tree *
-evaluate(union tree *tr, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+evaluate(union tree *tr, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     RT_CK_TREE(tr);
 
@@ -490,7 +490,7 @@ gcv_bottess_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
 
     RT_CK_FULL_PATH(pathp);
     RT_CK_TREE(curtree);
-    RT_CK_TESS_TOL(tsp->ts_ttol);
+    BG_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
     NMG_CK_MODEL(*tsp->ts_m);
 
@@ -499,7 +499,7 @@ gcv_bottess_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
 
     RT_CK_FULL_PATH(pathp);
     RT_CK_TREE(curtree);
-    RT_CK_TESS_TOL(tsp->ts_ttol);
+    BG_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
     NMG_CK_MODEL(*tsp->ts_m);
 
@@ -519,7 +519,7 @@ gcv_bottess_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
 
 
 union tree *
-gcv_bottess(int argc, const char **argv, struct db_i *dbip, struct rt_tess_tol *ttol)
+gcv_bottess(int argc, const char **argv, struct db_i *dbip, struct bg_tess_tol *ttol)
 {
     struct db_tree_state tree_state = rt_initial_tree_state;
     tree_state.ts_ttol = ttol;

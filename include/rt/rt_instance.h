@@ -70,7 +70,7 @@ struct rt_i {
     char *              rti_region_fix_file; /**< @brief  rt_regionfix() file or NULL */
     int                 rti_space_partition;  /**< @brief  space partitioning method */
     struct bn_tol       rti_tol;        /**< @brief  Math tolerances for this model */
-    struct rt_tess_tol  rti_ttol;       /**< @brief  Tessellation tolerance defaults */
+    struct bg_tess_tol  rti_ttol;       /**< @brief  Tessellation tolerance defaults */
     fastf_t             rti_max_beam_radius; /**< @brief  Max threat radius for FASTGEN cline solid */
     /* THESE ITEMS ARE AVAILABLE FOR APPLICATIONS TO READ */
     point_t             mdl_min;        /**< @brief  min corner of model bounding RPP */

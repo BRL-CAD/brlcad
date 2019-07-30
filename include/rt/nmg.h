@@ -28,6 +28,7 @@
 #include "bu/ptbl.h"
 #include "bn/tol.h"
 #include "bn/vlist.h"
+#include "bg/defines.h"
 #include "rt/geom.h"
 #include "rt/hit.h"
 #include "rt/seg.h"
@@ -197,7 +198,7 @@ RT_EXPORT extern int nmg_mc_realize_cube(struct shell *s,
 RT_EXPORT extern int nmg_mc_evaluate(struct shell *s,
 				     struct rt_i *rtip,
 				     const struct db_full_path *pathp,
-				     const struct rt_tess_tol *ttol,
+				     const struct bg_tess_tol *ttol,
 				     const struct bn_tol *tol);
 
 

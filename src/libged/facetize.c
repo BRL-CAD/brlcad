@@ -157,7 +157,7 @@ struct _ged_facetize_opts {
     fastf_t feature_scale;
     fastf_t d_feature_size;
     int max_time;
-    struct rt_tess_tol *tol;
+    struct bg_tess_tol *tol;
     struct bu_vls *faceted_suffix;
 
     /* NMG specific options */
@@ -1619,7 +1619,7 @@ _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _ged
     struct db_i *dbip = gedp->ged_wdbp->dbip;
     struct bu_vls oname = BU_VLS_INIT_ZERO;
     int flags = opts->method_flags;
-    struct rt_tess_tol *tol = &(gedp->ged_wdbp->wdb_ttol);
+    struct bg_tess_tol *tol = &(gedp->ged_wdbp->wdb_ttol);
 
     RT_CHECK_DBI(dbip);
 
@@ -1858,7 +1858,7 @@ _ged_methodattr_set(struct ged *gedp, struct _ged_facetize_opts *opts, const cha
     attrav[2] = rcname;
 
     if (method == GED_FACETIZE_NMGBOOL) {
-	struct rt_tess_tol *tol = &(gedp->ged_wdbp->wdb_ttol);
+	struct bg_tess_tol *tol = &(gedp->ged_wdbp->wdb_ttol);
 	attrav[3] = _ged_facetize_attr(method);
 	attrav[4] = "1";
 	if (ged_attr(gedp, 5, (const char **)&attrav) != GED_OK && opts->verbosity) {

@@ -734,7 +734,7 @@ fire_row(int cpu, void * ptr)
 
 /* rtip needs to be valid, s is where the results are stashed */
 int
-nmg_mc_evaluate(struct shell *s, struct rt_i *rtip, const struct db_full_path *pathp, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+nmg_mc_evaluate(struct shell *s, struct rt_i *rtip, const struct db_full_path *pathp, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     struct mci_s m;
     int i;

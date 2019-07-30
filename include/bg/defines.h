@@ -47,6 +47,19 @@
 #define BG_CW 1
 #define BG_CCW -1
 
+/**
+ * Tessellation (geometric) tolerances, different beasts than the
+ * calculation tolerance in bn_tol.
+ */
+struct bg_tess_tol {
+    uint32_t magic;
+    double              abs;                    /**< @brief absolute dist tol */
+    double              rel;                    /**< @brief rel dist tol */
+    double              norm;                   /**< @brief normal tol */
+};
+#define BG_CK_TESS_TOL(_p) BU_CKMAG(_p, BG_TESS_TOL_MAGIC, "bg_tess_tol")
+#define BG_TESS_TOL_INIT_ZERO {BG_TESS_TOL_MAGIC, 0.0, 0.0, 0.0}
+
 #endif  /* BG_DEFINES_H */
 /** @} */
 /*
