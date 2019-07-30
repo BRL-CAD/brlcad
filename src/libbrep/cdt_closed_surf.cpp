@@ -57,28 +57,29 @@ getUVCurveSamples(
     ON_3dVector mid_tang(0.0, 0.0, 0.0);
     fastf_t t = (t1 + t2) / 2.0;
 
-    if (curve->EvTangent(t, mid_2d, mid_tang)
-	&& surface_EvNormal(s, mid_2d.x, mid_2d.y, mid_3d, mid_norm)) {
-	ON_Line line3d(start_3d, end_3d);
-	double dist3d;
+    int c_ev = curve->EvTangent(t, mid_2d, mid_tang);
+    int s_ev = surface_EvNormal(s, mid_2d.x, mid_2d.y, mid_3d, mid_norm);
+    if (!c_ev || !s_ev) {
+	return;
+    }
 
-	if ((line3d.Length() > max_dist)
-	    || ((dist3d = mid_3d.DistanceTo(line3d.ClosestPointTo(mid_3d)))
-		> within_dist + ON_ZERO_TOLERANCE)
-	    || ((((start_tang * end_tang)
-		  < cos_within_ang - ON_ZERO_TOLERANCE)
-		 || ((start_norm * end_norm)
-		     < cos_within_ang - ON_ZERO_TOLERANCE))
-		&& (dist3d > min_dist + ON_ZERO_TOLERANCE))) {
-	    getUVCurveSamples(s, curve, t1, start_2d, start_tang, start_3d, start_norm,
-			      t, mid_2d, mid_tang, mid_3d, mid_norm, min_dist, max_dist,
-			      within_dist, cos_within_ang, param_points);
-	    param_points[(t - range.m_t[0]) / (range.m_t[1] - range.m_t[0])] =
-		new ON_3dPoint(mid_3d);
-	    getUVCurveSamples(s, curve, t, mid_2d, mid_tang, mid_3d, mid_norm, t2,
-			      end_2d, end_tang, end_3d, end_norm, min_dist, max_dist,
-			      within_dist, cos_within_ang, param_points);
-	}
+    ON_Line line3d(start_3d, end_3d);
+    double dist3d = mid_3d.DistanceTo(line3d.ClosestPointTo(mid_3d));
+
+    bool lmaxdist = (line3d.Length() > max_dist);
+    bool wd3d = (dist3d > within_dist + ON_ZERO_TOLERANCE);
+    bool set_cos = ((start_tang * end_tang) < cos_within_ang - ON_ZERO_TOLERANCE);
+    bool sen_cos = ((start_norm * end_norm) < cos_within_ang - ON_ZERO_TOLERANCE);
+    bool md3d = (dist3d > min_dist + ON_ZERO_TOLERANCE);
+
+    if (lmaxdist || wd3d || ((set_cos || sen_cos) && md3d)) {
+	getUVCurveSamples(s, curve, t1, start_2d, start_tang, start_3d, start_norm,
+		t, mid_2d, mid_tang, mid_3d, mid_norm, min_dist, max_dist,
+		within_dist, cos_within_ang, param_points);
+	param_points[(t - range.m_t[0]) / (range.m_t[1] - range.m_t[0])] = new ON_3dPoint(mid_3d);
+	getUVCurveSamples(s, curve, t, mid_2d, mid_tang, mid_3d, mid_norm, t2,
+		end_2d, end_tang, end_3d, end_norm, min_dist, max_dist,
+		within_dist, cos_within_ang, param_points);
     }
 }
 
@@ -127,27 +128,30 @@ getUVCurveSamples(struct ON_Brep_CDT_State *s_cdt,
     std::map<double, ON_3dPoint *> *param_points = new std::map<double, ON_3dPoint *>();
     ON_Interval range = curve->Domain();
 
+    ON_3dPoint start_2d(0.0, 0.0, 0.0);
+    ON_3dPoint start_3d(0.0, 0.0, 0.0);
+    ON_3dVector start_tang(0.0, 0.0, 0.0);
+    ON_3dVector start_norm(0.0, 0.0, 0.0);
+    ON_3dPoint end_2d(0.0, 0.0, 0.0);
+    ON_3dPoint end_3d(0.0, 0.0, 0.0);
+    ON_3dVector end_tang(0.0, 0.0, 0.0);
+    ON_3dVector end_norm(0.0, 0.0, 0.0);
+
+    bool tan_mt0 = curve->EvTangent(range.m_t[0], start_2d, start_tang); 
+    bool tan_mt1 = curve->EvTangent(range.m_t[1], end_2d, end_tang);
+    bool srf_start = surface_EvNormal(surf, start_2d.x, start_2d.y, start_3d, start_norm);
+    bool srf_end = surface_EvNormal(surf, end_2d.x, end_2d.y, end_3d, end_norm);
+
     if (curve->IsClosed()) {
 	double mid_range = (range.m_t[0] + range.m_t[1]) / 2.0;
-	ON_3dPoint start_2d(0.0, 0.0, 0.0);
-	ON_3dPoint start_3d(0.0, 0.0, 0.0);
-	ON_3dVector start_tang(0.0, 0.0, 0.0);
-	ON_3dVector start_norm(0.0, 0.0, 0.0);
 	ON_3dPoint mid_2d(0.0, 0.0, 0.0);
 	ON_3dPoint mid_3d(0.0, 0.0, 0.0);
 	ON_3dVector mid_tang(0.0, 0.0, 0.0);
 	ON_3dVector mid_norm(0.0, 0.0, 0.0);
-	ON_3dPoint end_2d(0.0, 0.0, 0.0);
-	ON_3dPoint end_3d(0.0, 0.0, 0.0);
-	ON_3dVector end_tang(0.0, 0.0, 0.0);
-	ON_3dVector end_norm(0.0, 0.0, 0.0);
 
-	if (curve->EvTangent(range.m_t[0], start_2d, start_tang)
+	if (tan_mt0 && tan_mt1 && srf_start && srf_end
 	    && curve->EvTangent(mid_range, mid_2d, mid_tang)
-	    && curve->EvTangent(range.m_t[1], end_2d, end_tang)
-	    && surface_EvNormal(surf, mid_2d.x, mid_2d.y, mid_3d, mid_norm)
-	    && surface_EvNormal(surf, start_2d.x, start_2d.y, start_3d, start_norm)
-	    && surface_EvNormal(surf, end_2d.x, end_2d.y, end_3d, end_norm))
+	    && surface_EvNormal(surf, mid_2d.x, mid_2d.y, mid_3d, mid_norm))
 	{
 	    (*param_points)[0.0] = new ON_3dPoint(
 		surf->PointAt(curve->PointAt(range.m_t[0]).x,
@@ -168,20 +172,8 @@ getUVCurveSamples(struct ON_Brep_CDT_State *s_cdt,
 			      curve->PointAt(range.m_t[1]).y));
 	}
     } else {
-	ON_3dPoint start_2d(0.0, 0.0, 0.0);
-	ON_3dPoint start_3d(0.0, 0.0, 0.0);
-	ON_3dVector start_tang(0.0, 0.0, 0.0);
-	ON_3dVector start_norm(0.0, 0.0, 0.0);
-	ON_3dPoint end_2d(0.0, 0.0, 0.0);
-	ON_3dPoint end_3d(0.0, 0.0, 0.0);
-	ON_3dVector end_tang(0.0, 0.0, 0.0);
-	ON_3dVector end_norm(0.0, 0.0, 0.0);
 
-	if (curve->EvTangent(range.m_t[0], start_2d, start_tang)
-	    && curve->EvTangent(range.m_t[1], end_2d, end_tang)
-	    && surface_EvNormal(surf, start_2d.x, start_2d.y, start_3d, start_norm)
-	    && surface_EvNormal(surf, end_2d.x, end_2d.y, end_3d, end_norm))
-	{
+	if (tan_mt0 && tan_mt1 && srf_start && srf_end) {
 	    (*param_points)[0.0] = new ON_3dPoint(start_3d);
 	    getUVCurveSamples(surf, curve, range.m_t[0], start_2d, start_tang,
 			      start_3d, start_norm, range.m_t[1], end_2d, end_tang,
@@ -741,12 +733,7 @@ ShiftInnerLoops(
 		if (s->IsClosed(0) && s->IsClosed(1)) {
 		    // First just U
 		    for(int iu = 0; iu < 2; iu++) {
-			double ushift = 0.0;
-			if (iu == 0) {
-			    ushift = -ulength;
-			} else {
-			    ushift =  ulength;
-			}
+			double ushift = (iu == 0) ? -ulength : ulength;
 			sftd_pt.x = p2d.x + ushift;
 			if (PointInPolygon(sftd_pt, brep_loop_points[0])) {
 			    // shift all U accordingly
@@ -756,12 +743,7 @@ ShiftInnerLoops(
 		    }
 		    // Second just V
 		    for(int iv = 0; iv < 2; iv++) {
-			double vshift = 0.0;
-			if (iv == 0) {
-			    vshift = -vlength;
-			} else {
-			    vshift = vlength;
-			}
+			double vshift = (iv == 0) ? -vlength : vlength;
 			sftd_pt.y = p2d.y + vshift;
 			if (PointInPolygon(sftd_pt, brep_loop_points[0])) {
 			    // shift all V accordingly
@@ -771,20 +753,10 @@ ShiftInnerLoops(
 		    }
 		    // Third both U & V
 		    for(int iu = 0; iu < 2; iu++) {
-			double ushift = 0.0;
-			if (iu == 0) {
-			    ushift = -ulength;
-			} else {
-			    ushift =  ulength;
-			}
+			double ushift = (iu == 0) ? -ulength : ulength;
 			sftd_pt.x = p2d.x + ushift;
 			for(int iv = 0; iv < 2; iv++) {
-			    double vshift = 0.0;
-			    if (iv == 0) {
-				vshift = -vlength;
-			    } else {
-				vshift = vlength;
-			    }
+			    double vshift = (iv == 0) ? -vlength : vlength;
 			    sftd_pt.y = p2d.y + vshift;
 			    if (PointInPolygon(sftd_pt, brep_loop_points[0])) {
 				// shift all U & V accordingly
@@ -796,12 +768,7 @@ ShiftInnerLoops(
 		} else if (s->IsClosed(0)) {
 		    // just U
 		    for(int iu = 0; iu < 2; iu++) {
-			double ushift = 0.0;
-			if (iu == 0) {
-			    ushift = -ulength;
-			} else {
-			    ushift =  ulength;
-			}
+			double ushift = (iu == 0) ? -ulength : ulength;
 			sftd_pt.x = p2d.x + ushift;
 			if (PointInPolygon(sftd_pt, brep_loop_points[0])) {
 			    // shift all U accordingly
@@ -812,12 +779,7 @@ ShiftInnerLoops(
 		} else if (s->IsClosed(1)) {
 		    // just V
 		    for(int iv = 0; iv < 2; iv++) {
-			double vshift = 0.0;
-			if (iv == 0) {
-			    vshift = -vlength;
-			} else {
-			    vshift = vlength;
-			}
+			double vshift = (iv == 0) ? -vlength : vlength;
 			sftd_pt.y = p2d.y + vshift;
 			if (PointInPolygon(sftd_pt, brep_loop_points[0])) {
 			    // shift all V accordingly
