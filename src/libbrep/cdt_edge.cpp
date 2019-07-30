@@ -796,8 +796,7 @@ refineEdgePoints(
 
 // Get initial distance tolerances from the surface sizes
 void
-get_surface_dimensions(double *maxd, double *mind, ON_BrepEdge *e, double dist,
-	std::map<const ON_Surface *, double> *s_to_maxdist)
+get_surface_dimensions(double *maxd, double *mind, ON_BrepEdge *e, double dist)
 {
     // Get initial distance tolerances from the surface sizes
     ON_BrepTrim *trim1 = e->Trim(0);
@@ -821,8 +820,6 @@ get_surface_dimensions(double *maxd, double *mind, ON_BrepEdge *e, double dist,
 	mw = (sw1 < sw2) ? sw1 : sw2;
 	mh = (sh1 < sh2) ? sh1 : sh2;
 	min_dist = (mw < mh) ? mw : mh;
-	(*s_to_maxdist)[s1] = max_dist;
-	(*s_to_maxdist)[s2] = max_dist;
     }
 
     (*maxd) = max_dist;
@@ -830,7 +827,7 @@ get_surface_dimensions(double *maxd, double *mind, ON_BrepEdge *e, double dist,
 }
 
 void
-Get_Edge_Points(struct ON_Brep_CDT_State *s_cdt, std::map<const ON_Surface *, double> &s_to_maxdist)
+Get_Edge_Points(struct ON_Brep_CDT_State *s_cdt)
 {
     ON_Brep *brep = s_cdt->brep;
 
@@ -841,7 +838,7 @@ Get_Edge_Points(struct ON_Brep_CDT_State *s_cdt, std::map<const ON_Surface *, do
 	const ON_Curve* crv = edge.EdgeCurveOf();
 	if (!crv->IsLinear(BN_TOL_DIST)) {
 	    fastf_t max_dist, min_dist;
-	    get_surface_dimensions(&max_dist, &min_dist, &edge, s_cdt->dist, &s_to_maxdist);
+	    get_surface_dimensions(&max_dist, &min_dist, &edge, s_cdt->dist);
 	    (void)getEdgePoints(s_cdt, &edge, max_dist, min_dist);
 	}
     }
@@ -923,24 +920,6 @@ Get_Edge_Points(struct ON_Brep_CDT_State *s_cdt, std::map<const ON_Surface *, do
 	    }
 
 	    if (have_curve) {
-		// Populate s_to_maxdist from the surface sizes
-		ON_BrepTrim *trim1 = edge.Trim(0);
-		ON_BrepTrim *trim2 = edge.Trim(1);
-		fastf_t md = 0.0;
-		fastf_t md1, md2 = 0.0;
-		double sw1, sh1, sw2, sh2;
-		const ON_Surface *s1 = trim1->Face()->SurfaceOf();
-		const ON_Surface *s2 = trim2->Face()->SurfaceOf();
-		if (s1->GetSurfaceSize(&sw1, &sh1) && s2->GetSurfaceSize(&sw2, &sh2)) {
-		    if ((sw1 < s_cdt->dist) || (sh1 < s_cdt->dist) || sw2 < s_cdt->dist || sh2 < s_cdt->dist) {
-			return;
-		    }
-		    md1 = sqrt(sw1 * sh1 + sh1 * sw1) / 10.0;
-		    md2 = sqrt(sw2 * sh2 + sh2 * sw2) / 10.0;
-		    md = (md1 < md2) ? md1 : md2;
-		    s_to_maxdist[s1] = md;
-		    s_to_maxdist[s2] = md;
-		}
 
 		// Set max_dist and min_dist from the curve information
 		max_dist = 2*smallest_curve_avg_seg;
@@ -950,7 +929,7 @@ Get_Edge_Points(struct ON_Brep_CDT_State *s_cdt, std::map<const ON_Surface *, do
 
 	    } else {
 		// No curve edges on this loop - fall back on standard surface seeding
-		get_surface_dimensions(&max_dist, &min_dist, &edge, s_cdt->dist, &s_to_maxdist);
+		get_surface_dimensions(&max_dist, &min_dist, &edge, s_cdt->dist);
 		bu_log("linear edge %d: min %f max %f\n", edge.m_edge_index, min_dist, max_dist);
 	    }
 
@@ -1016,7 +995,7 @@ build_poly2tri_polylines(struct ON_Brep_CDT_Face_State *f, p2t::CDT **cdt, int i
 }
 
 void
-Process_Loop_Edges(struct ON_Brep_CDT_Face_State *f, int li, fastf_t max_dist)
+Process_Loop_Edges(struct ON_Brep_CDT_Face_State *f, int li)
 {
     struct ON_Brep_CDT_State *s_cdt = f->s_cdt;
     ON_SimpleArray<BrepTrimPoint> *points = &(f->face_loop_points[li]);
@@ -1026,7 +1005,6 @@ Process_Loop_Edges(struct ON_Brep_CDT_Face_State *f, int li, fastf_t max_dist)
 
     for (int lti = 0; lti < trim_count; lti++) {
 	ON_BrepTrim *trim = loop->Trim(lti);
-	ON_BrepEdge *edge = trim->Edge();
 
 	/* Provide 2D points for p2d, but we need to be aware that this will
 	 * result in (trivially) degenerate 3D faces that we need to filter out
@@ -1069,11 +1047,8 @@ Process_Loop_Edges(struct ON_Brep_CDT_Face_State *f, int li, fastf_t max_dist)
 	}
 
 	if (!trim->m_trim_user.p) {
-	    (void)getEdgePoints(s_cdt, edge, max_dist, DBL_MAX);
-	    if (!trim->m_trim_user.p) {
-		//bu_log("Failed to initialize trim->m_trim_user.p: Trim %d (associated with Edge %d) point count: %zd\n", trim->m_trim_index, trim->Edge()->m_edge_index, m->size());
-		continue;
-	    }
+	    bu_log("Error - uninitialized trim->m_trim_user.p: Trim %d (associated with Edge %d)\n", trim->m_trim_index, trim->Edge()->m_edge_index);
+	    return;
 	}
 
 	// If we can bound it, assemble the trim segments in order on the

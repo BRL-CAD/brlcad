@@ -233,10 +233,7 @@ PerformClosedSurfaceChecks(
 	double same_point_tolerance);
 
 void
-Get_Edge_Points(
-	struct ON_Brep_CDT_State *s_cdt,
-	std::map<const ON_Surface *, double> &s_to_maxdist
-	);
+Get_Edge_Points(struct ON_Brep_CDT_State *s_cdt);
 
 void
 getSurfacePoints(struct ON_Brep_CDT_Face_State *f);
@@ -292,7 +289,7 @@ trimesh_error_report(struct ON_Brep_CDT_State *s_cdt, int valid_fcnt, int valid_
 bool build_poly2tri_polylines(struct ON_Brep_CDT_Face_State *f, p2t::CDT **cdt, int init_rtree);
 
 void
-Process_Loop_Edges(struct ON_Brep_CDT_Face_State *f, int li, fastf_t max_dist);
+Process_Loop_Edges(struct ON_Brep_CDT_Face_State *f, int li);
 
 struct trimesh_info *CDT_Face_Build_Halfedge(std::set<p2t::Triangle *> *triangles);
 

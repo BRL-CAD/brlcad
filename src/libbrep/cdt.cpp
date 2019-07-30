@@ -239,7 +239,7 @@ do_triangulation(struct ON_Brep_CDT_Face_State *f)
 }
 
 static int
-ON_Brep_CDT_Face(struct ON_Brep_CDT_Face_State *f, std::map<const ON_Surface *, double> *s_to_maxdist)
+ON_Brep_CDT_Face(struct ON_Brep_CDT_Face_State *f)
 {
     struct ON_Brep_CDT_State *s_cdt = f->s_cdt;
     int face_index = f->ind;
@@ -268,11 +268,7 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_Face_State *f, std::map<const ON_Surface *, 
 
     // Use the edge curves and loops to generate an initial set of trim polygons.
     for (int li = 0; li < loop_cnt; li++) {
-	double max_dist = 0.0;
-	if (s_to_maxdist->find(face.SurfaceOf()) != s_to_maxdist->end()) {
-	    max_dist = (*s_to_maxdist)[face.SurfaceOf()];
-	}
-	Process_Loop_Edges(f, li, max_dist);
+	Process_Loop_Edges(f, li);
     }
 
     // Handle a variety of situations that complicate loop handling on closed surfaces
@@ -509,7 +505,6 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
     }
 
     ON_Brep* brep = s_cdt->brep;
-    std::map<const ON_Surface *, double> s_to_maxdist;
 
     // If this is the first time through, there are a number of once-per-conversion
     // operations to take care of.
@@ -557,7 +552,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	 * a uniform set of edge points, we first sample all the edges and build their
 	 * point sets */
 
-	Get_Edge_Points(s_cdt, s_to_maxdist);
+	Get_Edge_Points(s_cdt);
 
     } else {
 	/* Clear the mesh state, if this container was previously used */
@@ -576,7 +571,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 		struct ON_Brep_CDT_Face_State *f = ON_Brep_CDT_Face_Create(s_cdt, fi);
 		(*s_cdt->faces)[fi] = f;
 	    }
-	    if (ON_Brep_CDT_Face((*s_cdt->faces)[fi], &s_to_maxdist)) {
+	    if (ON_Brep_CDT_Face((*s_cdt->faces)[fi])) {
 		face_failures++;
 	    } else {
 		face_successes++;
