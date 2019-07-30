@@ -199,6 +199,7 @@ public:
 
     void vertex_face_neighbors(const index_t vertex_index, std::vector< index_t >& result) const
     {
+	std::set<index_t> r;
 	/*
 	   Returns in 'result' the face neighbors (as indices) of the vertex 'vertex_index'.
 
@@ -211,12 +212,16 @@ public:
 	index_t hei = start_hei;
 	while (true) {
 	    const halfedge_t& he = m_halfedges[ hei ];
-	    if (-1 != he.face) result.push_back(he.face);
+	    if (-1 != he.face) {
+		result.push_back(he.face);
+		r.insert(hei);
+	    }
 
 	    hei = m_halfedges[ he.opposite_he ].next_he;
-	    if (hei == start_hei) break;
+	    if (r.find(hei) != r.end()) break;
 	}
     }
+
     std::vector< index_t > vertex_face_neighbors(const index_t vertex_index) const
     {
 	std::vector< index_t > result;
