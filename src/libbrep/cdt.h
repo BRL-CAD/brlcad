@@ -88,9 +88,9 @@ struct cdt_audit_info {
 struct trimesh_info {
     std::vector<trimesh::edge_t> edges;
     trimesh::trimesh_t mesh;
-    std::set<p2t::Point *> uniq_p2d;
+    std::set<ON_3dPoint *> uniq_p3d;
+    std::map<trimesh::index_t, ON_3dPoint *> ind2p3d;
     std::map<p2t::Point *, trimesh::index_t> p2dind;
-    std::map<trimesh::index_t, p2t::Point *> ind2p2d;
     std::map<p2t::Triangle *, trimesh::index_t> t2ind;
     std::vector<trimesh::triangle_t> triangles;
 };
@@ -271,6 +271,7 @@ CDT_Tol_Set(struct brep_cdt_tol *cdt, double dist, fastf_t md, double t_abs, dou
 void populate_3d_pnts(struct ON_Brep_CDT_Face_State *f);
 
 void triangles_degenerate_trivial(struct ON_Brep_CDT_Face_State *f);
+void triangles_degenerate_duplicate(struct ON_Brep_CDT_Face_State *f);
 void triangles_degenerate_area(struct ON_Brep_CDT_Face_State *f);
 void triangles_degenerate_area_notify(struct ON_Brep_CDT_Face_State *f);
 int triangles_check_edge_tris(struct ON_Brep_CDT_Face_State *f);
@@ -290,7 +291,7 @@ bool build_poly2tri_polylines(struct ON_Brep_CDT_Face_State *f, p2t::CDT **cdt, 
 void
 Process_Loop_Edges(struct ON_Brep_CDT_Face_State *f, int li);
 
-struct trimesh_info *CDT_Face_Build_Halfedge(std::set<p2t::Triangle *> *triangles);
+struct trimesh_info *CDT_Face_Build_Halfedge(std::set<p2t::Triangle *> *triangles, std::map<p2t::Point *, ON_3dPoint *> *pointmap);
 
 int Remesh_Near_Tri(struct ON_Brep_CDT_Face_State *f, p2t::Triangle *t, std::set<p2t::Triangle *> *wq);
 

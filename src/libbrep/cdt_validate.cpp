@@ -217,6 +217,36 @@ triangles_degenerate_trivial(struct ON_Brep_CDT_Face_State *f)
     }
 }
 
+void
+triangles_degenerate_duplicate(struct ON_Brep_CDT_Face_State *f)
+{
+    std::set<std::set<ON_3dPoint *>> tri_pntsets;
+    std::set<p2t::Triangle*> tris_dup;
+    std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
+    std::set<p2t::Triangle *>::iterator tr_it;
+    std::set<p2t::Triangle *> *tris = f->tris;
+    for (tr_it = tris->begin(); tr_it != tris->end(); tr_it++) {
+	p2t::Triangle *t = *tr_it;
+	(*f->s_cdt->tri_brep_face)[t] = f->ind;
+	std::set<ON_3dPoint *> pset;
+	for (size_t j = 0; j < 3; j++) {
+	    pset.insert((*pointmap)[t->GetPoint(j)]);
+	}
+	if (tri_pntsets.find(pset) != tri_pntsets.end()) {
+	    tris_dup.insert(t);
+	    bu_log("found dup triangle\n");
+	} else {
+	    tri_pntsets.insert(pset);
+	}
+    }
+
+    for (tr_it = tris_dup.begin(); tr_it != tris_dup.end(); tr_it++) {
+	p2t::Triangle *t = *tr_it;
+	f->tris->erase(t);
+	delete t;
+    }
+}
+
 int
 triangle_is_zero_area(p2t::Triangle *t, std::map<p2t::Point *, ON_3dPoint *> *pointmap, fastf_t dist)
 {
@@ -333,8 +363,8 @@ int
 triangles_slim_edge(struct ON_Brep_CDT_Face_State *f)
 {
     int pntset_altered = 0;
-    struct trimesh_info *tm = CDT_Face_Build_Halfedge(f->tris);
     std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
+    struct trimesh_info *tm = CDT_Face_Build_Halfedge(f->tris, pointmap);
 
     std::vector<std::pair<trimesh::index_t, trimesh::index_t>> bedges = tm->mesh.boundary_edges();
     std::vector<std::pair<trimesh::index_t, trimesh::index_t>>::iterator b_it;
@@ -346,44 +376,39 @@ triangles_slim_edge(struct ON_Brep_CDT_Face_State *f)
 	trimesh::index_t tind = tm->mesh.m_de2fi[fedge];
 	etris.insert(tind);
 	p2t::Triangle *t = tm->triangles[tind].t;
-	p2t::Point *p1 = tm->ind2p2d[(*b_it).first];  // edge point
-	p2t::Point *p2 = tm->ind2p2d[(*b_it).second]; // edge point
-	p2t::Point *p3 = NULL; // surface point
+
+	ON_3dPoint *p1 = tm->ind2p3d[(*b_it).first];  // edge point
+	ON_3dPoint *p2 = tm->ind2p3d[(*b_it).second]; // edge point
+	p2t::Point *p3_2d = NULL;
+	ON_3dPoint *p3 = NULL; // surface point
 	for (size_t j = 0; j < 3; j++) {
-	    if (t->GetPoint(j) != p1 && t->GetPoint(j) != p2) {
-		p3 = t->GetPoint(j);
+	    p3_2d = t->GetPoint(j);
+	    ON_3dPoint *ptmp = (*pointmap)[p3_2d];
+	    if (ptmp != p1 &&  ptmp!= p2) {
+		p3 = ptmp;
 		break;
 	    }
 	}
 
-	if (!p1 || !p2 || !p3) {
+	if (!p1 || !p2 || !p3 || !p3_2d) {
 	    bu_log("Triangle point failure!\n");
 	}
 
-	ON_3dPoint *e1 = (*pointmap)[p1];
-	ON_3dPoint *e2 = (*pointmap)[p2];
-	ON_3dPoint *pf3d = (*pointmap)[p3];
-
-	if (!e1 || !e2 || !pf3d) {
-	    bu_log("3D Triangle point failure!\n");
-	}
-
-	if (e1 == e2 || e1 == pf3d || e2 == pf3d) {
+	if (p1 == p2 || p1 == p3 || p2 == p3) {
 	    // Degenerate
 	    continue;
 	}
 
-	ON_Line eline(*e1, *e2);
-	double elen = e1->DistanceTo(*e2);
-	double dist = eline.DistanceTo(*pf3d);
+	ON_Line eline(*p1, *p2);
+	double elen = p1->DistanceTo(*p2);
+	double dist = eline.DistanceTo(*p3);
 	if (elen > 100*dist) {
-	    ON_2dPoint *spnt = (*f->p2t_to_on2_map)[p3];
-	    ON_3dPoint *pt3D = (*pointmap)[p3];
-	    // Don't yank if pt3D is also an edge point
-	    if (f->s_cdt->on_brep_edge_pnts->find(pt3D) == f->s_cdt->on_brep_edge_pnts->end()) {
+	    ON_2dPoint *spnt = (*f->p2t_to_on2_map)[p3_2d];
+	    // Don't yank if p3 is also an edge point
+	    if (f->s_cdt->on_brep_edge_pnts->find(p3) == f->s_cdt->on_brep_edge_pnts->end()) {
 		f->on_surf_points->erase(spnt);
 		pntset_altered = 1;
-		bu_log("%f %f %f elen: %f, dist: %f\n", pf3d->x, pf3d->y, pf3d->z, elen, dist);
+		bu_log("%f %f %f elen: %f, dist: %f\n", p3->x, p3->y, p3->z, elen, dist);
 	    }
 	}
     }

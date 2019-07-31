@@ -250,6 +250,7 @@ public:
     std::vector< index_t > face_neighbors(const index_t face_index) const
     {
 	std::vector< index_t > result;
+	std::set<index_t> visited;
 
 	const index_t start_hei = m_face_halfedges[ face_index ];
 	index_t hei = start_hei;
@@ -257,8 +258,10 @@ public:
 	    const halfedge_t& he = m_halfedges[ hei ];
 	    const halfedge_t& ohe = m_halfedges[he.opposite_he];
 	    if (-1 != ohe.face) result.push_back(ohe.face);
+	    visited.insert(hei);
 	    hei = he.next_he;
 	    if (hei == start_hei) break;
+	    if (visited.find(hei) != visited.end()) break;
 	}
 
 	return result;

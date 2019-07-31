@@ -110,6 +110,7 @@ refine_triangulation(struct ON_Brep_CDT_Face_State *f, int cnt, int rebuild)
     // Trivially degenerate triangles (a triangle defined by only
     // two points) are never useful - cull them up front.
     triangles_degenerate_trivial(f);
+    triangles_degenerate_duplicate(f);
 
     // Check the triangles around edges first - these may require
     // the removal of points from the surface set
