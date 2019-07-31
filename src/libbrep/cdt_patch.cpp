@@ -618,6 +618,13 @@ Remesh_Near_Tri(struct ON_Brep_CDT_Face_State *f, p2t::Triangle *seed_tri, std::
     std::map<ON_3dPoint *, size_t> pnts_3d_ind;
     std::set<ON_3dPoint *>::iterator p_it;
 
+    for (tm_it = remesh_triangles.begin(); tm_it != remesh_triangles.end(); tm_it++) {
+	p2t::Triangle *t = tm->triangles[*tm_it].t;
+	for (size_t j = 0; j < 3; j++) {
+	    sub_3d_norm[(*pointmap)[t->GetPoint(j)]] = (*normalmap)[t->GetPoint(j)];
+	}
+    }
+
     ON_Plane bfplane(ON_3dPoint(pcenter[X],pcenter[Y],pcenter[Z]),ON_3dVector(pnorm[X],pnorm[Y],pnorm[Z]));
     ON_Xform to_plane;
     to_plane.PlanarProjection(bfplane);
