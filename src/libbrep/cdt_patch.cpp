@@ -234,6 +234,25 @@ plot_best_fit_plane(point_t *center, vect_t *norm, const char *filename)
 
 }
 
+static void
+plot_trimesh_tris_3d_each_tri(std::set<trimesh::index_t> *faces, std::vector<trimesh::triangle_t> &farray, std::map<p2t::Point *, ON_3dPoint *> *pointmap, const char *filename)
+{
+    std::set<trimesh::index_t>::iterator f_it;
+    struct bu_vls fname = BU_VLS_INIT_ZERO;
+    int cnt = 0;
+    for (f_it = faces->begin(); f_it != faces->end(); f_it++) {
+	bu_vls_sprintf(&fname, "%s-%d", filename, cnt);
+	FILE* plot_file = fopen(bu_vls_cstr(&fname), "w");
+	int r = int(256*drand48() + 1.0);
+	int g = int(256*drand48() + 1.0);
+	int b = int(256*drand48() + 1.0);
+	p2t::Triangle *t = farray[*f_it].t;
+	plot_tri_3d(t, pointmap, r, g ,b, plot_file);
+	fclose(plot_file);
+	cnt++;
+    }
+    bu_vls_free(&fname);
+}
 
 static void
 plot_trimesh_tris_3d(std::set<trimesh::index_t> *faces, std::vector<trimesh::triangle_t> &farray, std::map<p2t::Point *, ON_3dPoint *> *pointmap, const char *filename)
@@ -404,6 +423,66 @@ remove_butterfly_vertices(std::vector<trimesh::triangle_t> &triangles, size_t pn
     return 0;
 }
 
+size_t
+collect_neighbor_triangles(std::set<trimesh::index_t> *remesh_triangles, double deg, struct ON_Brep_CDT_Face_State *f, struct trimesh_info *tm, p2t::Triangle *seed_tri)
+{
+    double angle = deg*ON_PI/180.0;
+    
+    std::set<trimesh::index_t> visited_triangles;
+
+    remesh_triangles->clear();
+
+    trimesh::index_t seed_id = tm->t2ind[seed_tri];
+    ON_3dVector tdir = p2tTri_Brep_Normal(f, seed_tri);
+    tdir.Unitize();
+
+    // Walk out along the mesh, adding triangles whose triangle normal is < deg
+    // degrees away from that of the original triangle.  These form the initial
+    // candidate set of remeshing triangles, although they are not yet the
+    // final set.
+    std::queue<trimesh::index_t> q1, q2;
+    std::queue<trimesh::index_t> *tq, *nq;
+    tq = &q1;
+    nq = &q2;
+    q1.push(seed_id);
+    while (!tq->empty()) {
+	trimesh::index_t t_he = tq->front();
+	tq->pop();
+	p2t::Triangle *ct = tm->triangles[t_he].t;
+	// Check normal
+	ON_3dVector ctdir = p2tTri_Brep_Normal(f, ct);
+	ctdir.Unitize();
+
+	double dprd = ON_DotProduct(ctdir, tdir);
+	double dang = (NEAR_EQUAL(dprd, 1.0, ON_ZERO_TOLERANCE)) ? 0 : acos(dprd); 
+
+	if (dang > angle) {
+	    bu_log("reject: %f > %f\n", dang, angle);
+	    continue;
+	} else {
+	    (*remesh_triangles).insert(t_he);
+	}
+
+	// Queue up the connected faces we don't already have in the set
+	std::vector<trimesh::index_t> faces = tm->mesh.face_neighbors(t_he);
+	for (size_t j = 0; j < faces.size(); j++) {
+	    if (visited_triangles.find(faces[j]) == visited_triangles.end()) {
+		// We haven't seen this one yet
+		nq->push(faces[j]);
+		visited_triangles.insert(faces[j]);
+	    }
+	}
+
+	if (tq->empty()) {
+	    std::queue<trimesh::index_t> *tmpq = tq;
+	    tq = nq;
+	    nq = tmpq;
+	}
+    }
+
+    return remesh_triangles->size();
+}
+
 int
 Remesh_Near_Tri(struct ON_Brep_CDT_Face_State *f, p2t::Triangle *seed_tri, std::set<p2t::Triangle *> *wq)
 {
@@ -424,60 +503,35 @@ Remesh_Near_Tri(struct ON_Brep_CDT_Face_State *f, p2t::Triangle *seed_tri, std::
     std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
     std::map<p2t::Point *, ON_3dPoint *> *normalmap = f->p2t_to_on3_norm_map;
     std::set<trimesh::index_t> remesh_triangles;
-    std::set<trimesh::index_t> visited_triangles;
     std::set<trimesh::index_t>::iterator f_it;
+    trimesh::index_t seed_id = tm->t2ind[seed_tri];
 
 #if CDT_DEBUG_PLOTS
     bu_vls_sprintf(&pname, "%s-%d-00-initial_tmesh.plot3", bu_vls_cstr(&pname_root), f->ind);
     plot_trimesh(tm->triangles, pointmap, bu_vls_cstr(&pname));
 #endif
 
-
-    trimesh::index_t seed_id = tm->t2ind[seed_tri];
-    ON_3dVector tdir = p2tTri_Brep_Normal(f, seed_tri);
-
-    // Walk out along the mesh, adding triangles whose triangle normal is < 45
-    // degrees away from that of the original triangle.  These form the initial
-    // candidate set of remeshing triangles, although they are not yet the
-    // final set.
-    //
-    // TODO - should this be based on the Brep normals of the verts rather than
-    // the triangle face normal?
-    std::set<trimesh::index_t> flipped_faces;
-    std::queue<trimesh::index_t> q1, q2;
-    std::queue<trimesh::index_t> *tq, *nq;
-    tq = &q1;
-    nq = &q2;
-    q1.push(seed_id);
-    while (!tq->empty()) {
-	trimesh::index_t t_he = tq->front();
-	tq->pop();
-	p2t::Triangle *ct = tm->triangles[t_he].t;
-	// Check normal
-	ON_3dVector ctdir = p2tTri_Brep_Normal(f, ct);
-
-	if (ON_DotProduct(ctdir, tdir) < 0.707) {
-	    continue;
-	} else {
-	    remesh_triangles.insert(t_he);
-	}
-
-	// Queue up the connected faces we don't already have in the set
-	std::vector<trimesh::index_t> faces = tm->mesh.face_neighbors(t_he);
-	for (size_t j = 0; j < faces.size(); j++) {
-	    if (visited_triangles.find(faces[j]) == visited_triangles.end()) {
-		// We haven't seen this one yet
-		nq->push(faces[j]);
-		visited_triangles.insert(faces[j]);
-	    }
-	}
-
-	if (tq->empty()) {
-	    std::queue<trimesh::index_t> *tmpq = tq;
-	    tq = nq;
-	    nq = tmpq;
-	}
+    double deg = 10;
+    size_t ntricnt = collect_neighbor_triangles(&remesh_triangles, deg, f, tm, seed_tri);
+    while (ntricnt < 10 && deg < 45) {
+	bu_log("too few triangles: %zd\n", ntricnt);
+	deg = deg + 5;
+	ntricnt = collect_neighbor_triangles(&remesh_triangles, deg, f, tm, seed_tri);
     }
+
+    if (remesh_triangles.size() < 3) {
+	bu_log("Could not get enough triangles, even at degree %f: %zd\n", deg, remesh_triangles.size());
+	plot_trimesh_tris_3d_each_tri(&remesh_triangles, tm->triangles, pointmap, "bad_news.plot3");
+	deg = 10;
+	ntricnt = collect_neighbor_triangles(&remesh_triangles, deg, f, tm, seed_tri);
+	while (ntricnt < 10 && deg < 45) {
+	    bu_log("too few triangles: %zd\n", ntricnt);
+	    deg = deg + 5;
+	    ntricnt = collect_neighbor_triangles(&remesh_triangles, deg, f, tm, seed_tri);
+	}
+	bu_exit(1, "fail");
+    }
+
     bu_log("remesh triangle stage 1 cnt: %zd\n", remesh_triangles.size());
 
 #if CDT_DEBUG_PLOTS
@@ -613,6 +667,7 @@ Remesh_Near_Tri(struct ON_Brep_CDT_Face_State *f, p2t::Triangle *seed_tri, std::
 
     if (!sloop.size()) {
 	bu_log("Error - failed to generate boundary loop!\n");
+	bu_exit(1, "bail");
 	return -1;
     }
 
@@ -620,10 +675,6 @@ Remesh_Near_Tri(struct ON_Brep_CDT_Face_State *f, p2t::Triangle *seed_tri, std::
     bu_vls_sprintf(&pname, "%s-%d-06-outer_loop.plot3", bu_vls_cstr(&pname_root), f->ind);
     plot_edge_loop(sloop, pnts_3d, bu_vls_cstr(&pname));
 #endif
-
-    if (flipped_faces.size() > 0) {
-	bu_log("WARNING: incorporated flipped faces - need to do outer boundary ordering sanity checking!!\n");
-    }
 
     // Perform the new triangulation
     std::set<ON_2dPoint *> handled;
