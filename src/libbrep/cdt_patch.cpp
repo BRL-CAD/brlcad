@@ -613,33 +613,36 @@ Remesh_Near_Tri(struct ON_Brep_CDT_Face_State *f, p2t::Triangle *seed_tri, std::
 
     // Project all 3D points in the subset into the best fit plane. We need XY coordinates
     // for poly2Tri.
+    std::set<ON_3dPoint *> sub_3d;
     std::map<ON_3dPoint *, ON_3dPoint *> sub_3d_norm;
-    std::vector<ON_2dPoint *> pnts_2d;
-    std::map<ON_3dPoint *, size_t> pnts_3d_ind;
-    std::set<ON_3dPoint *>::iterator p_it;
 
     for (tm_it = remesh_triangles.begin(); tm_it != remesh_triangles.end(); tm_it++) {
+	trimesh::triangle_t tmt = tm->triangles[*tm_it];
 	p2t::Triangle *t = tm->triangles[*tm_it].t;
 	for (size_t j = 0; j < 3; j++) {
+	    sub_3d.insert(tm->ind2p3d[tmt.v[j]]);
 	    sub_3d_norm[(*pointmap)[t->GetPoint(j)]] = (*normalmap)[t->GetPoint(j)];
 	}
     }
+
+    std::vector<ON_2dPoint *> pnts_2d;
+    std::vector<ON_3dPoint *> pnts_3d(sub_3d.begin(), sub_3d.end());
+    std::map<ON_3dPoint *, size_t> pnts_3d_ind;
+    std::set<ON_3dPoint *>::iterator p_it;
 
     ON_Plane bfplane(ON_3dPoint(pcenter[X],pcenter[Y],pcenter[Z]),ON_3dVector(pnorm[X],pnorm[Y],pnorm[Z]));
     ON_Xform to_plane;
     to_plane.PlanarProjection(bfplane);
     std::map<ON_2dPoint *, ON_3dPoint *> on2_3;
     std::map<ON_2dPoint *, ON_3dPoint *> on2_3n;
-    int icnt = 0;
-    for (p_it = tm->uniq_p3d.begin(); p_it != tm->uniq_p3d.end(); p_it++) {
-	pnts_3d_ind[*p_it] = icnt;
-	ON_3dPoint op3d = ON_3dPoint(**p_it);
+    for (size_t i = 0; i < pnts_3d.size(); i++) {
+	pnts_3d_ind[pnts_3d[i]] = i;
+	ON_3dPoint op3d = (*pnts_3d[i]);
 	op3d.Transform(to_plane);
 	ON_2dPoint *n2d = new ON_2dPoint(op3d.x, op3d.y);
 	pnts_2d.push_back(n2d);
-	on2_3[n2d] = *p_it;
-	on2_3n[n2d] = sub_3d_norm[*p_it];
-	icnt++;
+	on2_3[n2d] = pnts_3d[i];
+	on2_3n[n2d] = sub_3d_norm[pnts_3d[i]];
     }
 
     // Translate the poly2tri triangle into trimesh
