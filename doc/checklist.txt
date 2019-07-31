@@ -10,8 +10,8 @@ The answer to all questions should be "yes".
 
 Legal
 -----
-00. Are all changes legally compatible?  Per COPYING, assigned or 0BSD/PD.
-01. If the change is from someone else, are they documented?  AUTHORS if new.
+00. Are all changes under legally compatible license?  No GPL, no NC.
+01. Are all contributors documented?  AUTHORS if new.
 02. Do all new files have correct license header, copyright line, year?
 
 Organization
