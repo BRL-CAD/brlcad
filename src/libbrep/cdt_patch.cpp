@@ -30,15 +30,22 @@
  * of remeshing - something like the following:
  *
  * 1.  For each seed triangle, mark all faces that are candidates for
- * inclusion in its local remeshing.  If a seed triangle can be added
- * to another seed triangle's local remesh, subsume it into that remesh.
+ * inclusion in its local remeshing.  If a seed triangle can be added to
+ * another seed triangle's local remesh, subsume it into that remesh.
  *
  * 2.  For non-subsumable remesh islands, do a second crawl out.  For each
  * candidate face to add to the subregion that can also be added to another
- * subregion, see if the current subregion plane is the closest to parallel
- * with the original triangle of the possible assignments.  If so, add it
- * and keep going.  If not, the triangle will go into another local remesh
- * and it is rejected.
+ * subregion, see if it is closer to the closest seed triangle in the current region
+ * or one of the other candidates.  If it is closest to this one, use it.  If a
+ * tie breaker is needed, use the subregion whose starting plane is the closest
+ * to parallel with the triangle of the possible assignments.  If it is judged
+ * to be local, add it and keep going.  If not, the triangle will go into
+ * another local remesh and it is rejected.
+ *
+ * One addtional control that will likely be needed - for each local region,
+ * keep a count of included and candidate faces.  If a local region has a
+ * small face count, it may need some faces that would otherwise be awarded
+ * to another subregion.
  *
  * 3.  Do all the remeshes, replace the triangles.  Since each remesh is
  * localized, they should all "match up" when reassembled.
