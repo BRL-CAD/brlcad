@@ -23,6 +23,26 @@
  *
  * Local remeshing of portions of a previously triangulated mesh.
  *
+ * THOUGHT:  it may be that using remeshed triangles in a second remeshing
+ * is breaking assumptions about the behavior of the mesh in 2D parameter
+ * space.  If we have multiple triangles in a single face that need remeshing,
+ * what we may need to do is localize the remeshing around each "island"
+ * of remeshing - something like the following:
+ *
+ * 1.  For each seed triangle, mark all faces that are candidates for
+ * inclusion in its local remeshing.  If a seed triangle can be added
+ * to another seed triangle's local remesh, subsume it into that remesh.
+ *
+ * 2.  For non-subsumable remesh islands, do a second crawl out.  For each
+ * candidate face to add to the subregion that can also be added to another
+ * subregion, see if the current subregion plane is the closest to parallel
+ * with the original triangle of the possible assignments.  If so, add it
+ * and keep going.  If not, the triangle will go into another local remesh
+ * and it is rejected.
+ *
+ * 3.  Do all the remeshes, replace the triangles.  Since each remesh is
+ * localized, they should all "match up" when reassembled.
+ *
  */
 
 #include "common.h"
