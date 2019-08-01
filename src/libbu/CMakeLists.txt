@@ -58,7 +58,7 @@ set(LIBBU_SOURCES
   bu_init.cpp
   cmd.c
   cmdhist.c
-  color.c
+  color.cpp
   convert.c
   crashreport.c
   ctype.c
