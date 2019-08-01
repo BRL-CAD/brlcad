@@ -763,7 +763,7 @@ populate_3d_pnts(struct ON_Brep_CDT_Face_State *f)
 }
 
 struct trimesh_info *
-CDT_Face_Build_Halfedge(std::set<p2t::Triangle*> *triangles, std::map<p2t::Point *, ON_3dPoint *> *pointmap)
+CDT_Face_Build_Halfedge(std::set<p2t::Triangle*> *triangles)
 {
     struct trimesh_info *tm = new struct trimesh_info;
     std::set<p2t::Triangle*>::iterator s_it;
@@ -772,31 +772,18 @@ CDT_Face_Build_Halfedge(std::set<p2t::Triangle*> *triangles, std::map<p2t::Point
     for (s_it = triangles->begin(); s_it != triangles->end(); s_it++) {
 	p2t::Triangle *t = *s_it;
 	for (size_t j = 0; j < 3; j++) {
-	    tm->uniq_p3d.insert((*pointmap)[t->GetPoint(j)]);
+	    tm->uniq_p2d.insert(t->GetPoint(j));
 	}
     }
-
-    // Assign all 3D points a trimesh index
-    std::set<ON_3dPoint *>::iterator o_it;
-    std::map<ON_3dPoint *, trimesh::index_t> p3dind;
-    {
-	trimesh::index_t ind = 0;
-	for (o_it = tm->uniq_p3d.begin(); o_it != tm->uniq_p3d.end(); o_it++) {
-	    p3dind[*o_it] = ind;
-	    tm->ind2p3d[ind] = *o_it;
-	    ind++;
-	}
-    }
-
 
     // Assign all poly2tri 2D points a trimesh index
-    for (s_it = triangles->begin(); s_it != triangles->end(); s_it++) {
-	p2t::Triangle *t = *s_it;
-	for (size_t j = 0; j < 3; j++) {
-	    p2t::Point *p2d = t->GetPoint(j);
-	    ON_3dPoint *p = (*pointmap)[p2d];
-	    trimesh::index_t ind = p3dind[p];
-	    tm->p2dind[p2d] = ind;
+    std::set<p2t::Point *>::iterator u_it;
+    {
+	trimesh::index_t ind = 0;
+	for (u_it = tm->uniq_p2d.begin(); u_it != tm->uniq_p2d.end(); u_it++) {
+	    tm->p2dind[*u_it] = ind;
+	    tm->ind2p2d[ind] = *u_it;
+	    ind++;
 	}
     }
 
@@ -815,7 +802,7 @@ CDT_Face_Build_Halfedge(std::set<p2t::Triangle*> *triangles, std::map<p2t::Point
 
     // Build the mesh topology information
     trimesh::unordered_edges_from_triangles(tm->triangles.size(), &tm->triangles[0], tm->edges);
-    tm->mesh.build(tm->uniq_p3d.size(), tm->triangles.size(), &tm->triangles[0], tm->edges.size(), &tm->edges[0]);
+    tm->mesh.build(tm->uniq_p2d.size(), tm->triangles.size(), &tm->triangles[0], tm->edges.size(), &tm->edges[0]);
 
     return tm;
 }

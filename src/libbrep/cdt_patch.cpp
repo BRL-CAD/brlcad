@@ -23,33 +23,6 @@
  *
  * Local remeshing of portions of a previously triangulated mesh.
  *
- * THOUGHT:  it may be that using remeshed triangles in a second remeshing
- * is breaking assumptions about the behavior of the mesh in 2D parameter
- * space.  If we have multiple triangles in a single face that need remeshing,
- * what we may need to do is localize the remeshing around each "island"
- * of remeshing - something like the following:
- *
- * 1.  For each seed triangle, mark all faces that are candidates for
- * inclusion in its local remeshing.  If a seed triangle can be added to
- * another seed triangle's local remesh, subsume it into that remesh.
- *
- * 2.  For non-subsumable remesh islands, do a second crawl out.  For each
- * candidate face to add to the subregion that can also be added to another
- * subregion, see if it is closer to the closest seed triangle in the current region
- * or one of the other candidates.  If it is closest to this one, use it.  If a
- * tie breaker is needed, use the subregion whose starting plane is the closest
- * to parallel with the triangle of the possible assignments.  If it is judged
- * to be local, add it and keep going.  If not, the triangle will go into
- * another local remesh and it is rejected.
- *
- * One addtional control that will likely be needed - for each local region,
- * keep a count of included and candidate faces.  If a local region has a
- * small face count, it may need some faces that would otherwise be awarded
- * to another subregion.
- *
- * 3.  Do all the remeshes, replace the triangles.  Since each remesh is
- * localized, they should all "match up" when reassembled.
- *
  */
 
 #include "common.h"
@@ -59,7 +32,6 @@
 #define CDT_DEBUG_PLOTS 1
 
 #if CDT_DEBUG_PLOTS
-#if 0
 static void
 plot_edge_set(std::vector<std::pair<trimesh::index_t, trimesh::index_t>> &es, std::vector<ON_3dPoint *> &pnts_3d, const char *filename)
 {
@@ -93,6 +65,7 @@ plot_edge_set(std::vector<std::pair<trimesh::index_t, trimesh::index_t>> &es, st
 
     fclose(plot_file);
 }
+
 static void
 plot_edge_loop(std::vector<trimesh::index_t> &el, std::vector<ON_3dPoint *> &pnts_3d, const char *filename)
 {
@@ -132,7 +105,6 @@ plot_edge_loop(std::vector<trimesh::index_t> &el, std::vector<ON_3dPoint *> &pnt
 
     fclose(plot_file);
 }
-#endif
 
 static void
 plot_edge_loop_2d(std::vector<p2t::Point *> &el , const char *filename)
@@ -451,38 +423,11 @@ remove_butterfly_vertices(std::vector<trimesh::triangle_t> &triangles, size_t pn
     return 0;
 }
 
-std::vector<trimesh::index_t>
-face_neighbors(trimesh::index_t ind, struct trimesh_info *tm)
-{
-    // If the triangle is involved with a butterfly vertex, get all faces associated
-    // with the vertices as the set to consider.  Else, get the mesh face neighbors.
-    trimesh::triangle_t tri = tm->triangles[ind];
-    int butterfly_vert = 0;
-    for (size_t j = 0; j < 3; j++) {
-	if (tm->mesh.m_butterfly_vertices.find(tri.v[j]) != tm->mesh.m_butterfly_vertices.end()) {
-	    butterfly_vert++;
-	    break;
-	}
-    }
-
-    if (butterfly_vert) {
-	std::vector<trimesh::index_t> faces;
-	for (size_t j = 0; j < 3; j++) {
-	    std::vector<trimesh::index_t> vf = tm->mesh.vertex_face_neighbors(tri.v[j]);
-	    faces.insert(faces.end(), vf.begin(), vf.end());
-	}
-	return faces;
-    } else {
-	return tm->mesh.face_neighbors(ind);
-    }
-}
-
-
 size_t
 collect_neighbor_triangles(std::set<trimesh::index_t> *remesh_triangles, double deg, struct ON_Brep_CDT_Face_State *f, struct trimesh_info *tm, p2t::Triangle *seed_tri)
 {
     double angle = deg*ON_PI/180.0;
-
+    
     std::set<trimesh::index_t> visited_triangles;
 
     remesh_triangles->clear();
@@ -509,22 +454,22 @@ collect_neighbor_triangles(std::set<trimesh::index_t> *remesh_triangles, double 
 	ctdir.Unitize();
 
 	double dprd = ON_DotProduct(ctdir, tdir);
-	double dang = (NEAR_EQUAL(dprd, 1.0, ON_ZERO_TOLERANCE)) ? 0 : acos(dprd);
+	double dang = (NEAR_EQUAL(dprd, 1.0, ON_ZERO_TOLERANCE)) ? 0 : acos(dprd); 
 
 	if (dang > angle) {
 	    bu_log("reject: %f > %f\n", dang, angle);
 	    continue;
 	} else {
 	    (*remesh_triangles).insert(t_he);
+	}
 
-	    // Queue up the connected faces we don't already have in the set
-	    std::vector<trimesh::index_t> faces = face_neighbors(t_he, tm);
-	    for (size_t j = 0; j < faces.size(); j++) {
-		if (visited_triangles.find(faces[j]) == visited_triangles.end()) {
-		    // We haven't seen this one yet
-		    nq->push(faces[j]);
-		    visited_triangles.insert(faces[j]);
-		}
+	// Queue up the connected faces we don't already have in the set
+	std::vector<trimesh::index_t> faces = tm->mesh.face_neighbors(t_he);
+	for (size_t j = 0; j < faces.size(); j++) {
+	    if (visited_triangles.find(faces[j]) == visited_triangles.end()) {
+		// We haven't seen this one yet
+		nq->push(faces[j]);
+		visited_triangles.insert(faces[j]);
 	    }
 	}
 
@@ -553,23 +498,15 @@ Remesh_Near_Tri(struct ON_Brep_CDT_Face_State *f, p2t::Triangle *seed_tri, std::
     }
 #endif
 
+    struct trimesh_info *tm = CDT_Face_Build_Halfedge(f->tris);
+
     std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
     std::map<p2t::Point *, ON_3dPoint *> *normalmap = f->p2t_to_on3_norm_map;
-
-    struct trimesh_info *tm = CDT_Face_Build_Halfedge(f->tris, pointmap);
-
     std::set<trimesh::index_t> remesh_triangles;
     std::set<trimesh::index_t>::iterator f_it;
     trimesh::index_t seed_id = tm->t2ind[seed_tri];
-    remesh_triangles.insert(seed_id);
 
 #if CDT_DEBUG_PLOTS
-
-    bu_vls_sprintf(&pname, "%s-%d-00-seed_tri.plot3", bu_vls_cstr(&pname_root), f->ind);
-    std::set<trimesh::index_t> seeds;
-    seeds.insert(seed_id);
-    plot_trimesh_tris_3d(&seeds, tm->triangles, pointmap, bu_vls_cstr(&pname));
-
     bu_vls_sprintf(&pname, "%s-%d-00-initial_tmesh.plot3", bu_vls_cstr(&pname_root), f->ind);
     plot_trimesh(tm->triangles, pointmap, bu_vls_cstr(&pname));
 #endif
@@ -642,20 +579,16 @@ Remesh_Near_Tri(struct ON_Brep_CDT_Face_State *f, p2t::Triangle *seed_tri, std::
     // for poly2Tri.
     std::set<ON_3dPoint *> sub_3d;
     std::map<ON_3dPoint *, ON_3dPoint *> sub_3d_norm;
-
     for (tm_it = remesh_triangles.begin(); tm_it != remesh_triangles.end(); tm_it++) {
-	trimesh::triangle_t tmt = tm->triangles[*tm_it];
 	p2t::Triangle *t = tm->triangles[*tm_it].t;
 	for (size_t j = 0; j < 3; j++) {
-	    sub_3d.insert(tm->ind2p3d[tmt.v[j]]);
+	    sub_3d.insert((*pointmap)[t->GetPoint(j)]);
 	    sub_3d_norm[(*pointmap)[t->GetPoint(j)]] = (*normalmap)[t->GetPoint(j)];
 	}
     }
-
-    std::vector<ON_2dPoint *> pnts_2d;
     std::vector<ON_3dPoint *> pnts_3d(sub_3d.begin(), sub_3d.end());
+    std::vector<ON_2dPoint *> pnts_2d;
     std::map<ON_3dPoint *, size_t> pnts_3d_ind;
-    std::set<ON_3dPoint *>::iterator p_it;
 
     ON_Plane bfplane(ON_3dPoint(pcenter[X],pcenter[Y],pcenter[Z]),ON_3dVector(pnorm[X],pnorm[Y],pnorm[Z]));
     ON_Xform to_plane;
@@ -724,7 +657,7 @@ Remesh_Near_Tri(struct ON_Brep_CDT_Face_State *f, p2t::Triangle *seed_tri, std::
 
 #if CDT_DEBUG_PLOTS
     bu_vls_sprintf(&pname, "%s-%d-05-outer_edge.plot3", bu_vls_cstr(&pname_root), f->ind);
-    //plot_edge_set(bedges, pnts_3d, bu_vls_cstr(&pname));
+    plot_edge_set(bedges, pnts_3d, bu_vls_cstr(&pname));
     //plot_trimesh_tris_3d(&smtri, submesh_triangles, pointmap, "submesh_triangles.plot3");
 #endif
 
@@ -740,7 +673,7 @@ Remesh_Near_Tri(struct ON_Brep_CDT_Face_State *f, p2t::Triangle *seed_tri, std::
 
 #if CDT_DEBUG_PLOTS
     bu_vls_sprintf(&pname, "%s-%d-06-outer_loop.plot3", bu_vls_cstr(&pname_root), f->ind);
-    //plot_edge_loop(sloop, pnts_3d, bu_vls_cstr(&pname));
+    plot_edge_loop(sloop, pnts_3d, bu_vls_cstr(&pname));
 #endif
 
     // Perform the new triangulation
@@ -840,11 +773,7 @@ Remesh_Near_Tri(struct ON_Brep_CDT_Face_State *f, p2t::Triangle *seed_tri, std::
 	//bu_log("TPoints %f %f -> %f %f -> %f %f\n", p2_1->x, p2_1->y, p2_2->x, p2_2->y, p2_3->x, p2_3->y);
 	// Check the triangle direction against the normals
 	ON_3dVector ltdir = p2tTri_Normal(t, pointmap);
-	ON_3dPoint *onorm;
-	for (int j = 0; j < 3; j++) {
-	    onorm = (*normalmap)[t->GetPoint(j)];
-	    if (onorm) break;
-	}
+	ON_3dPoint *onorm = (*normalmap)[t->GetPoint(0)];
 	if (ON_DotProduct(*onorm, ltdir) < 0) {
 	    p2_1 = t->GetPoint(0);
 	    p2_2 = t->GetPoint(2);
