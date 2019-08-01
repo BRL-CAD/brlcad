@@ -539,7 +539,7 @@ extern int _ged_brep_to_csg(struct ged *gedp, const char *obj_name, int verify);
 extern int _ged_brep_tikz(struct ged *gedp, const char *obj_name, const char *outfile);
 extern int _ged_brep_flip(struct ged *gedp, struct rt_brep_internal *bi, const char *obj_name);
 extern int _ged_brep_shrink_surfaces(struct ged *gedp, struct rt_brep_internal *bi, const char *obj_name);
-extern int _ged_brep_to_bot(struct ged *gedp, const struct rt_brep_internal *bi, const char *obj_name, const struct bg_tess_tol *ttol, const struct bn_tol *tol);
+extern int _ged_brep_to_bot(struct ged *gedp, const char *obj_name, const struct rt_brep_internal *bi, const char *bot_name, const struct bg_tess_tol *ttol, const struct bn_tol *tol);
 extern int _ged_brep_pick_face(struct ged *gedp, const struct rt_brep_internal *bi, const char *obj_name);
 
 

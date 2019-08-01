@@ -245,6 +245,9 @@ ON_Brep_CDT_Face_Create(struct ON_Brep_CDT_State *s_cdt, int ind)
 {
     struct ON_Brep_CDT_Face_State *fcdt = new struct ON_Brep_CDT_Face_State;
 
+    fcdt->face_root = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&fcdt->face_root, "%s%d_", bu_vls_cstr(&s_cdt->brep_root), ind);
+
     fcdt->s_cdt = s_cdt;
     fcdt->ind = ind;
     fcdt->has_singular_trims = 0;
@@ -369,10 +372,17 @@ ON_Brep_CDT_Face_Destroy(struct ON_Brep_CDT_Face_State *fcdt)
 
 
 struct ON_Brep_CDT_State *
-ON_Brep_CDT_Create(void *bv)
+ON_Brep_CDT_Create(void *bv, const char *objname)
 {
     struct ON_Brep_CDT_State *cdt = new struct ON_Brep_CDT_State;
- 
+
+    cdt->brep_root = BU_VLS_INIT_ZERO;
+    if (objname) {
+	bu_vls_sprintf(&cdt->brep_root, "%s_", objname);
+    } else {
+	bu_vls_trunc(&cdt->brep_root, 0);
+    }
+
     /* Set status to "never evaluated" */
     cdt->status = BREP_CDT_UNTESSELLATED;
 

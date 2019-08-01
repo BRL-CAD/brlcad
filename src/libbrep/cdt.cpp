@@ -97,6 +97,10 @@ refine_triangulation(struct ON_Brep_CDT_Face_State *f, int cnt, int rebuild)
 	return 0;
     }
 
+    struct trimesh_info *tm_init = CDT_Face_Build_Halfedge(f->tris);
+    bu_vls_sprintf(&pname, "%srefine_tri-%d-00_initial-iteration_tmesh_2d.plot3", bu_vls_cstr(&f->face_root), cnt);
+    plot_trimesh_2d(tm_init->triangles, bu_vls_cstr(&pname));
+
     // If a previous pass has made changes in which points are active in the
     // surface set, we need to rebuild the whole triangulation.
 
@@ -106,19 +110,19 @@ refine_triangulation(struct ON_Brep_CDT_Face_State *f, int cnt, int rebuild)
 	    bu_log("Fatal failure attempting full retriangulation of face\n");
 	    return -1;
 	}
-    }
 
-    struct trimesh_info *tm_init = CDT_Face_Build_Halfedge(f->tris);
-    bu_vls_sprintf(&pname, "0_2d-%d-iteration_%d-tmesh_2d.plot3", f->ind, cnt);
-    plot_trimesh_2d(tm_init->triangles, bu_vls_cstr(&pname));
+	struct trimesh_info *tm_full_retri = CDT_Face_Build_Halfedge(f->tris);
+	bu_vls_sprintf(&pname, "%srefine_tri-%d-01_after_full_retri-iteration_tmesh_2d.plot3", bu_vls_cstr(&f->face_root), cnt);
+	plot_trimesh_2d(tm_full_retri->triangles, bu_vls_cstr(&pname));
+    }
 
     // Trivially degenerate triangles (a triangle defined by only
     // two points) are never useful - cull them up front.
     triangles_degenerate_trivial(f);
 
-    struct trimesh_info *tm_1 = CDT_Face_Build_Halfedge(f->tris);
-    bu_vls_sprintf(&pname, "1_2d-%d-iteration_%d-tmesh_2d.plot3", f->ind, cnt);
-    plot_trimesh_2d(tm_1->triangles, bu_vls_cstr(&pname));
+    struct trimesh_info *tm_degen1 = CDT_Face_Build_Halfedge(f->tris);
+    bu_vls_sprintf(&pname, "%srefine_tri-%d-02_after_trivial_degen-iteration_tmesh_2d.plot3", bu_vls_cstr(&f->face_root), cnt);
+    plot_trimesh_2d(tm_degen1->triangles, bu_vls_cstr(&pname));
 
     // Check the triangles around edges first - these may require
     // the removal of points from the surface set
@@ -134,12 +138,12 @@ refine_triangulation(struct ON_Brep_CDT_Face_State *f, int cnt, int rebuild)
 	return refine_triangulation(f, cnt+1, 1);
     }
 
-    struct trimesh_info *tm_2 = CDT_Face_Build_Halfedge(f->tris);
-    bu_vls_sprintf(&pname, "2_2d-%d-iteration_%d-tmesh_2d.plot3", f->ind, cnt);
-    plot_trimesh_2d(tm_2->triangles, bu_vls_cstr(&pname));
+    struct trimesh_info *tm_slim_edge = CDT_Face_Build_Halfedge(f->tris);
+    bu_vls_sprintf(&pname, "%srefine_tri-%d-03_after_slim_edge-iteration_tmesh_2d.plot3", bu_vls_cstr(&f->face_root), cnt);
+    plot_trimesh_2d(tm_slim_edge->triangles, bu_vls_cstr(&pname));
 
     // If we're starting from scratch (one way or another) build up our initial
-    // set of triangles to work with 
+    // set of triangles to work with
     if (cnt == 0 || rebuild) {
 	// Singularity areas are bad news.  Remesh in those areas, if present
 	if (f->has_singular_trims) {
@@ -159,36 +163,46 @@ refine_triangulation(struct ON_Brep_CDT_Face_State *f, int cnt, int rebuild)
 	    }
 	}
 
+	{
+	    struct trimesh_info *tm_sing_tris = CDT_Face_Build_Halfedge(&active_tris);
+	    bu_vls_sprintf(&pname, "%srefine_tri-%d-04_seed_singularity_triangles-iteration_tmesh_2d.plot3", bu_vls_cstr(&f->face_root), cnt);
+	    plot_trimesh_2d(tm_sing_tris->triangles, bu_vls_cstr(&pname));
+	}
+
 	// Any triangle not having an edge on the mesh boundary polyline with
 	// an incorrect triangle face normal is a seed for local remeshing
 	ret = triangles_incorrect_normals(f, &active_tris);
 	if (ret == -1) {
 	    bu_log("unexpected edge triangle issues\n");
 	}
-    }
 
-    struct trimesh_info *tm_3 = CDT_Face_Build_Halfedge(&active_tris);
-    bu_vls_sprintf(&pname, "3_active_2d-%d-iteration_%d-tmesh_2d.plot3", f->ind, cnt);
-    plot_trimesh_2d(tm_3->triangles, bu_vls_cstr(&pname));
+	{
+	    struct trimesh_info *tm_sing_tris = CDT_Face_Build_Halfedge(&active_tris);
+	    bu_vls_sprintf(&pname, "%srefine_tri-%d-05_all_seed_triangles-iteration_tmesh_2d.plot3", bu_vls_cstr(&f->face_root), cnt);
+	    plot_trimesh_2d(tm_sing_tris->triangles, bu_vls_cstr(&pname));
+	}
+    }
 
     // Locally remesh in the area of triangles identified by above steps
     // We don't want to do any more remeshing than we have to, so if a
     // seed triangle incorporates other seed triangles into its remeshing
-    // process, we'll pull them out of the work queue 
-    std::set<p2t::Triangle *> wq;
-    std::set<p2t::Triangle *>::iterator a_it;
-    wq.insert(active_tris.begin(), active_tris.end());
-    int remesh_cnt = 0;
-    while (wq.size()) {
-	a_it = wq.begin();
-	p2t::Triangle *t = *a_it;
-	// Because the mesh probably changes after each Remesh pass, we need to rebuild
-	// the trimesh half edge structure each time we iterate
-	Remesh_Near_Tri(f, t, &wq);
+    // process, we'll pull them out of the work queue
+    if (active_tris.size()) {
+	std::set<p2t::Triangle *> wq;
+	std::set<p2t::Triangle *>::iterator a_it;
+	wq.insert(active_tris.begin(), active_tris.end());
+	int remesh_cnt = 0;
+	while (wq.size()) {
+	    a_it = wq.begin();
+	    p2t::Triangle *t = *a_it;
+	    // Because the mesh probably changes after each Remesh pass, we need to rebuild
+	    // the trimesh half edge structure each time we iterate
+	    Remesh_Near_Tri(f, t, &wq);
 
-	struct trimesh_info *tm_w = CDT_Face_Build_Halfedge(f->tris);
-	bu_vls_sprintf(&pname, "4_%d-workedtri_%d_%d-tmesh_2d.plot3", f->ind, cnt, remesh_cnt);
-	plot_trimesh_2d(tm_w->triangles, bu_vls_cstr(&pname));
+	    struct trimesh_info *tm_w = CDT_Face_Build_Halfedge(f->tris);
+	    bu_vls_sprintf(&pname, "%srefine_tri-%d-06_iteration-workedtri_%d-tmesh_2d.plot3", bu_vls_cstr(&f->face_root), cnt, remesh_cnt);
+	    plot_trimesh_2d(tm_w->triangles, bu_vls_cstr(&pname));
+	}
     }
 
     // Identify zero area triangles

@@ -133,7 +133,7 @@ ON_Brep_Report_Faces(struct bu_vls *log, void *bp, const vect_t center, const ve
     ON_Line l(ON_3dPoint(p1[X], p1[Y], p1[Z]), ON_3dPoint(p2[X], p2[Y], p2[Z]));
 
     ON_Brep *brep = (ON_Brep *)bp;
-    ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create((void *)brep);
+    ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create((void *)brep, NULL);
     ON_Brep_CDT_Tessellate(s_cdt, 0, NULL);
 
     for (int i = 0; i < brep->m_F.Count(); i++) {

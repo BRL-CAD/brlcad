@@ -42,7 +42,7 @@ struct ON_Brep_CDT_State;
 /* Create and initialize a CDT state with default tolerances.  bv
  * must be a pointer to an ON_Brep object. */
 extern BREP_EXPORT struct ON_Brep_CDT_State *
-ON_Brep_CDT_Create(void *bv);
+ON_Brep_CDT_Create(void *bv, const char *objname);
 
 /* Destroy a CDT state */
 extern BREP_EXPORT void

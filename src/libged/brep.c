@@ -343,7 +343,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	// TODO - pass tol info down...
-	bret = _ged_brep_to_bot(gedp, bi, bu_vls_cstr(&bname_bot), (const struct bg_tess_tol *)&gedp->ged_wdbp->wdb_ttol, &gedp->ged_wdbp->wdb_tol);
+	bret = _ged_brep_to_bot(gedp, argv[1], bi, bu_vls_cstr(&bname_bot), (const struct bg_tess_tol *)&gedp->ged_wdbp->wdb_ttol, &gedp->ged_wdbp->wdb_tol);
 	bu_vls_free(&bname_bot);
 	return bret;
     }

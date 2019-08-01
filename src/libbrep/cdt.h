@@ -106,6 +106,9 @@ struct ON_Brep_CDT_State;
 
 struct ON_Brep_CDT_Face_State {
     struct ON_Brep_CDT_State *s_cdt;
+
+    struct bu_vls face_root;
+
     int has_singular_trims;
     int ind;
     std::map<ON_2dPoint *, struct cdt_audit_info *> *pnt2d_audit_info;
@@ -164,6 +167,8 @@ struct ON_Brep_CDT_State {
     int status;
     ON_Brep *orig_brep;
     ON_Brep *brep;
+
+    struct bu_vls brep_root;
 
     /* Tolerances */
     struct bg_tess_tol tol;
