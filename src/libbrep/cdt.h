@@ -136,6 +136,7 @@ struct ON_Brep_CDT_Face_State {
 
     /* Poly2Tri information */
     std::set<p2t::Triangle *> *tris;
+    std::set<p2t::Triangle *> *degen_tris;
     std::set<p2t::Point *> *degen_pnts;
     std::set<p2t::Point *> *ext_degen_pnts;
 };

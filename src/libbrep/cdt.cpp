@@ -116,8 +116,8 @@ refine_triangulation(struct ON_Brep_CDT_Face_State *f, int cnt, int rebuild)
 	plot_trimesh_2d(tm_full_retri->triangles, bu_vls_cstr(&pname));
     }
 
-    // Trivially degenerate triangles (a triangle defined by only
-    // two points) are never useful - cull them up front.
+    // Identify trivially degenerate triangles (a triangle defined by only
+    // two points).
     triangles_degenerate_trivial(f);
 
     struct trimesh_info *tm_degen1 = CDT_Face_Build_Halfedge(f->tris);
@@ -207,6 +207,14 @@ refine_triangulation(struct ON_Brep_CDT_Face_State *f, int cnt, int rebuild)
 
     // Identify zero area triangles
     triangles_degenerate_area(f);
+
+    // Remove degenerate triangles
+    std::set<p2t::Triangle *>::iterator tr_it;
+    for (tr_it = f->degen_tris->begin(); tr_it != f->degen_tris->end(); tr_it++) {
+	p2t::Triangle *t = *tr_it;
+	f->tris->erase(t);
+	delete t;
+    }
 
     // Validate based on edges.  If we get a return > 0, something went very
     // wrong.

@@ -190,7 +190,6 @@ triangles_check_edges(struct ON_Brep_CDT_Face_State *f)
 void
 triangles_degenerate_trivial(struct ON_Brep_CDT_Face_State *f)
 {
-    std::set<p2t::Triangle*> tris_degen;
     std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
     std::set<p2t::Triangle *>::iterator tr_it;
     std::set<p2t::Triangle *> *tris = f->tris;
@@ -206,14 +205,8 @@ triangles_degenerate_trivial(struct ON_Brep_CDT_Face_State *f)
 	 * singular trims) */
 	if (tpnts[0] == tpnts[1] || tpnts[1] == tpnts[2] || tpnts[2] == tpnts[0]) {
 	    /* degenerate */
-	    tris_degen.insert(t);
+	    f->degen_tris->insert(t);
 	}
-    }
-
-    for (tr_it = tris_degen.begin(); tr_it != tris_degen.end(); tr_it++) {
-	p2t::Triangle *t = *tr_it;
-	f->tris->erase(t);
-	delete t;
     }
 }
 
@@ -345,6 +338,7 @@ triangles_slim_edge(struct ON_Brep_CDT_Face_State *f)
 	trimesh::index_t tind = tm->mesh.m_de2fi[fedge];
 	etris.insert(tind);
 	p2t::Triangle *t = tm->triangles[tind].t;
+
 	p2t::Point *p1 = tm->ind2p2d[(*b_it).first];  // edge point
 	p2t::Point *p2 = tm->ind2p2d[(*b_it).second]; // edge point
 	p2t::Point *p3 = NULL; // surface point
@@ -368,7 +362,7 @@ triangles_slim_edge(struct ON_Brep_CDT_Face_State *f)
 	}
 
 	if (e1 == e2 || e1 == pf3d || e2 == pf3d) {
-	    // Degenerate
+	    // Don't make any decisions based on trivially degenerate triangles
 	    continue;
 	}
 
@@ -409,6 +403,9 @@ triangles_check_edge_tris(struct ON_Brep_CDT_Face_State *f)
     std::set<p2t::Triangle *> *tris = f->tris;
     for (tr_it = tris->begin(); tr_it != tris->end(); tr_it++) {
 	p2t::Triangle *t = *tr_it;
+
+	// Don't make any decisions based on trivially degenerate triangles
+	if (f->degen_tris->find(t) != f->degen_tris->end()) continue;
 
 	int invalid_face_normal = 0;
 	ON_3dVector tdir = p2tTri_Normal(t, pointmap);

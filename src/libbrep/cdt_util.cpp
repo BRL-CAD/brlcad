@@ -276,6 +276,7 @@ ON_Brep_CDT_Face_Create(struct ON_Brep_CDT_State *s_cdt, int ind)
     fcdt->on3_to_tri_map = new std::map<ON_3dPoint *, std::set<p2t::Point *>>;
 
     fcdt->tris = new std::set<p2t::Triangle *>;
+    fcdt->degen_tris = new std::set<p2t::Triangle *>;
 
     fcdt->degen_pnts = new std::set<p2t::Point *>;
     fcdt->ext_degen_pnts = new std::set<p2t::Point *>;
@@ -370,6 +371,7 @@ ON_Brep_CDT_Face_Destroy(struct ON_Brep_CDT_Face_State *fcdt)
     delete fcdt->p2t_to_on3_map;
     delete fcdt->p2t_to_on3_norm_map;
     delete fcdt->on3_to_tri_map;
+    delete fcdt->degen_tris;
     delete fcdt->degen_pnts;
     delete fcdt->ext_degen_pnts;
 
