@@ -70,10 +70,10 @@ plot_tri(p2t::Triangle *t, const char *filename)
 }
 
 void
-plot_tri_2d(p2t::Triangle *t, int r, int g, int b, FILE *plot)
+plot_tri_2d(p2t::Triangle *t, struct bu_color *c, FILE *plot)
 {
     point_t pc;
-    pl_color(plot, r, g, b);
+    pl_color_buc(plot, c);
     for (size_t i = 0; i < 3; i++) {
 	p2t::Point *pt = t->GetPoint(i);
 	VSET(pc, pt->x, pt->y, 0);
@@ -89,18 +89,17 @@ plot_trimesh_2d(std::vector<trimesh::triangle_t> &farray, const char *filename)
 {
     std::set<trimesh::index_t>::iterator f_it;
     FILE* plot_file = fopen(filename, "w");
-    int r = int(256*drand48() + 1.0);
-    int g = int(256*drand48() + 1.0);
-    int b = int(256*drand48() + 1.0);
+    struct bu_color c = BU_COLOR_INIT_ZERO;
+    bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
     for (size_t i = 0; i < farray.size(); i++) {
 	p2t::Triangle *t = farray[i].t;
-	plot_tri_2d(t, r, g ,b, plot_file);
+	plot_tri_2d(t, &c, plot_file);
     }
     fclose(plot_file);
 }
 
 void
-plot_tri_3d(p2t::Triangle *t, std::map<p2t::Point *, ON_3dPoint *> *pointmap, int r, int g, int b, FILE *c_plot)
+plot_tri_3d(p2t::Triangle *t, std::map<p2t::Point *, ON_3dPoint *> *pointmap, struct bu_color *c, FILE *c_plot)
 {
     point_t p1, p2, p3;
     ON_3dPoint *on1 = (*pointmap)[t->GetPoint(0)];
@@ -115,7 +114,7 @@ plot_tri_3d(p2t::Triangle *t, std::map<p2t::Point *, ON_3dPoint *> *pointmap, in
     p3[X] = on3->x;
     p3[Y] = on3->y;
     p3[Z] = on3->z;
-    pl_color(c_plot, r, g, b);
+    pl_color_buc(c_plot, c);
     pdv_3move(c_plot, p1);
     pdv_3cont(c_plot, p2);
     pdv_3move(c_plot, p1);

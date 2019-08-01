@@ -243,11 +243,10 @@ plot_trimesh_tris_3d_each_tri(std::set<trimesh::index_t> *faces, std::vector<tri
     for (f_it = faces->begin(); f_it != faces->end(); f_it++) {
 	bu_vls_sprintf(&fname, "%s-%d", filename, cnt);
 	FILE* plot_file = fopen(bu_vls_cstr(&fname), "w");
-	int r = int(256*drand48() + 1.0);
-	int g = int(256*drand48() + 1.0);
-	int b = int(256*drand48() + 1.0);
+	struct bu_color c = BU_COLOR_INIT_ZERO;
+	bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
 	p2t::Triangle *t = farray[*f_it].t;
-	plot_tri_3d(t, pointmap, r, g ,b, plot_file);
+	plot_tri_3d(t, pointmap, &c, plot_file);
 	fclose(plot_file);
 	cnt++;
     }
@@ -259,12 +258,11 @@ plot_trimesh_tris_3d(std::set<trimesh::index_t> *faces, std::vector<trimesh::tri
 {
     std::set<trimesh::index_t>::iterator f_it;
     FILE* plot_file = fopen(filename, "w");
-    int r = int(256*drand48() + 1.0);
-    int g = int(256*drand48() + 1.0);
-    int b = int(256*drand48() + 1.0);
+    struct bu_color c = BU_COLOR_INIT_ZERO;
+    bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
     for (f_it = faces->begin(); f_it != faces->end(); f_it++) {
 	p2t::Triangle *t = farray[*f_it].t;
-	plot_tri_3d(t, pointmap, r, g ,b, plot_file);
+	plot_tri_3d(t, pointmap, &c, plot_file);
     }
     fclose(plot_file);
 }
@@ -274,12 +272,11 @@ plot_trimesh(std::vector<trimesh::triangle_t> &farray, std::map<p2t::Point *, ON
 {
     std::set<trimesh::index_t>::iterator f_it;
     FILE* plot_file = fopen(filename, "w");
-    int r = int(256*drand48() + 1.0);
-    int g = int(256*drand48() + 1.0);
-    int b = int(256*drand48() + 1.0);
+    struct bu_color c = BU_COLOR_INIT_ZERO;
+    bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
     for (size_t i = 0; i < farray.size(); i++) {
 	p2t::Triangle *t = farray[i].t;
-	plot_tri_3d(t, pointmap, r, g ,b, plot_file);
+	plot_tri_3d(t, pointmap, &c, plot_file);
     }
     fclose(plot_file);
 }
@@ -289,12 +286,11 @@ plot_3d_cdt_tri(std::set<p2t::Triangle *> *faces, std::map<p2t::Point *, ON_3dPo
 {
     std::set<p2t::Triangle *>::iterator f_it;
     FILE* plot_file = fopen(filename, "w");
-    int r = int(256*drand48() + 1.0);
-    int g = int(256*drand48() + 1.0);
-    int b = int(256*drand48() + 1.0);
+    struct bu_color c = BU_COLOR_INIT_ZERO;
+    bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
     for (f_it = faces->begin(); f_it != faces->end(); f_it++) {
 	p2t::Triangle *t = *f_it;
-	plot_tri_3d(t, pointmap, r, g ,b, plot_file);
+	plot_tri_3d(t, pointmap, &c, plot_file);
     }
     fclose(plot_file);
 }

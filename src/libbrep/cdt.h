@@ -249,9 +249,9 @@ plot_polyline(std::vector<p2t::Point *> *pnts, const char *filename);
 void
 plot_tri(p2t::Triangle *t, const char *filename);
 void
-plot_tri_2d(p2t::Triangle *t, int r, int g, int b, FILE *plot);
+plot_tri_2d(p2t::Triangle *t, struct bu_color *c, FILE *plot);
 void
-plot_tri_3d(p2t::Triangle *t, std::map<p2t::Point *, ON_3dPoint *> *pointmap, int r, int g, int b, FILE *c_plot);
+plot_tri_3d(p2t::Triangle *t, std::map<p2t::Point *, ON_3dPoint *> *pointmap, struct bu_color *c, FILE *c_plot);
 void
 plot_trimesh_2d(std::vector<trimesh::triangle_t> &farray, const char *filename);
 
