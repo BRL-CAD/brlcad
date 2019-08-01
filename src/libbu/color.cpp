@@ -28,6 +28,9 @@
 #include <errno.h>
 #include "bio.h"
 
+#include <chrono>
+#include <random>
+
 #include "bu/color.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
@@ -35,6 +38,100 @@
 
 #define COMMA ','
 
+static int
+_bu_hsv_to_float_rgb(fastf_t *rgb, const fastf_t *hsv)
+{
+    fastf_t float_rgb[3] = { 0.0, 0.0, 0.0 };
+    fastf_t hue, sat, val;
+    fastf_t hue_frac;
+    fastf_t p, q, t;
+    long int hue_int;
+
+
+    if (!rgb || !hsv) {
+	return -1;
+    }
+
+    hue = FMAX(hsv[HUE], 0.0);
+    hue = FMIN(hue, 360.0);
+    sat = FMAX(hsv[SAT], 0.0);
+    sat = FMIN(sat, 1.0);
+    val = FMAX(hsv[VAL], 0.0);
+    val = FMIN(val, 1.0);
+
+    if (NEAR_ZERO(sat, SMALL_FASTF)) {
+	/* hue is achromatic, so just set constant value */
+	VSETALL(float_rgb, val);
+    } else {
+	if (NEAR_ZERO(hue - 360.0, SMALL_FASTF))
+	    hue = 0.0;
+	hue /= 60.0;
+	hue_int = lrint(floor((double)hue));
+	hue_frac = hue - hue_int;
+	p = val * (1.0 - sat);
+	q = val * (1.0 - (sat * hue_frac));
+	t = val * (1.0 - (sat * (1.0 - hue_frac)));
+	switch (hue_int) {
+	    case 0: VSET(float_rgb, val, t, p); break;
+	    case 1: VSET(float_rgb, q, val, p); break;
+	    case 2: VSET(float_rgb, p, val, t); break;
+	    case 3: VSET(float_rgb, p, q, val); break;
+	    case 4: VSET(float_rgb, t, p, val); break;
+	    case 5: VSET(float_rgb, val, p, q); break;
+	    default:
+		bu_log("%s:%d: This shouldn't happen\n",
+		       __FILE__, __LINE__);
+		bu_bomb("unexpected condition encountered in bu_hsv_to_rgb\n");
+	}
+    }
+
+    rgb[0] = float_rgb[0];
+    rgb[1] = float_rgb[1];
+    rgb[2] = float_rgb[2];
+
+    return 0;
+}    
+
+int
+bu_color_rand(struct bu_color *c, bu_color_rand_t type)
+{
+    if (!c) {
+	return -1;
+    }
+
+    if (type == BU_COLOR_RANDOM) {
+	// https://stackoverflow.com/q/21102105
+	std::uniform_real_distribution<double> g_rand(0, 1);
+	std::default_random_engine engine(std::chrono::system_clock::now().time_since_epoch().count());
+	c->buc_rgb[RED] = (fastf_t)g_rand(engine);
+	c->buc_rgb[GRN] = (fastf_t)g_rand(engine);
+	c->buc_rgb[BLU] = (fastf_t)g_rand(engine);
+	return 0;
+    }
+
+    if (type == BU_COLOR_RANDOM_LIGHTENED) {
+	/* golden ratio */
+	static fastf_t hsv[3] = { 0.0, 0.5, 0.95 };
+	static double golden_ratio_conjugate = 0.618033988749895;
+	std::uniform_real_distribution<double> g_rand(0, 1);
+	std::default_random_engine engine(std::chrono::system_clock::now().time_since_epoch().count());
+	fastf_t h = (fastf_t)g_rand(engine);
+	h = fmod(h+golden_ratio_conjugate,1.0);
+	*hsv = h * 360.0;
+
+	fastf_t float_rgb[3] = { 0.0, 0.0, 0.0 };
+	if (_bu_hsv_to_float_rgb((fastf_t *)float_rgb, hsv) < 0) {
+	    return -1;
+	}
+	c->buc_rgb[RED] = float_rgb[RED];
+	c->buc_rgb[GRN] = float_rgb[GRN];
+	c->buc_rgb[BLU] = float_rgb[BLU];
+
+	return 0;
+    }
+
+    return -1;
+}
 
 void
 bu_rgb_to_hsv(const unsigned char *rgb, fastf_t *hsv)
@@ -101,42 +198,9 @@ int
 bu_hsv_to_rgb(const fastf_t *hsv, unsigned char *rgb)
 {
     fastf_t float_rgb[3] = { 0.0, 0.0, 0.0 };
-    fastf_t hue, sat, val;
-    fastf_t hue_frac;
-    fastf_t p, q, t;
-    long int hue_int;
 
-    hue = FMAX(hsv[HUE], 0.0);
-    hue = FMIN(hue, 360.0);
-    sat = FMAX(hsv[SAT], 0.0);
-    sat = FMIN(sat, 1.0);
-    val = FMAX(hsv[VAL], 0.0);
-    val = FMIN(val, 1.0);
-
-    if (NEAR_ZERO(sat, SMALL_FASTF)) {
-	/* hue is achromatic, so just set constant value */
-	VSETALL(float_rgb, val);
-    } else {
-	if (NEAR_ZERO(hue - 360.0, SMALL_FASTF))
-	    hue = 0.0;
-	hue /= 60.0;
-	hue_int = lrint(floor((double)hue));
-	hue_frac = hue - hue_int;
-	p = val * (1.0 - sat);
-	q = val * (1.0 - (sat * hue_frac));
-	t = val * (1.0 - (sat * (1.0 - hue_frac)));
-	switch (hue_int) {
-	    case 0: VSET(float_rgb, val, t, p); break;
-	    case 1: VSET(float_rgb, q, val, p); break;
-	    case 2: VSET(float_rgb, p, val, t); break;
-	    case 3: VSET(float_rgb, p, q, val); break;
-	    case 4: VSET(float_rgb, t, p, val); break;
-	    case 5: VSET(float_rgb, val, p, q); break;
-	    default:
-		bu_log("%s:%d: This shouldn't happen\n",
-		       __FILE__, __LINE__);
-		bu_bomb("unexpected condition encountered in bu_hsv_to_rgb\n");
-	}
+    if (_bu_hsv_to_float_rgb((fastf_t *)float_rgb, hsv) < 0) {
+	return -1;
     }
 
     rgb[RED] = (unsigned char)lrint(float_rgb[RED] * 255.0);
