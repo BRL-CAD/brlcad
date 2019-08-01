@@ -345,8 +345,7 @@ struct bu_opt_desc_opts {
  @endverbatim
  *
  * @returns
-
- * The generated help string.  Note that the string uses allocated
+ * The generated help string. Note that the string uses allocated
  * memory and it is the responsibility of the caller to free it with
  * @link bu_free @endlink.
  */
