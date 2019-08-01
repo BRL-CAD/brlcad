@@ -57,15 +57,18 @@ plot_tri(p2t::Triangle *t, const char *filename)
     FILE *plot = fopen(filename, "w");
     int r = 0; int g = 255; int b = 0;
     point_t pc;
+    point_t pc_orig;
     pl_color(plot, r, g, b); 
     for (size_t i = 0; i < 3; i++) {
 	p2t::Point *pt = t->GetPoint(i);
 	VSET(pc, pt->x, pt->y, 0);
 	if (i == 0) {
+	    VSET(pc_orig, pt->x, pt->y, 0);
 	    pdv_3move(plot, pc);
 	}
 	pdv_3cont(plot, pc);
     }
+    pdv_3cont(plot, pc_orig);
     fclose(plot);
 }
 
@@ -73,15 +76,18 @@ void
 plot_tri_2d(p2t::Triangle *t, struct bu_color *c, FILE *plot)
 {
     point_t pc;
+    point_t pc_orig;
     pl_color_buc(plot, c);
     for (size_t i = 0; i < 3; i++) {
 	p2t::Point *pt = t->GetPoint(i);
 	VSET(pc, pt->x, pt->y, 0);
 	if (i == 0) {
+	    VSET(pc_orig, pt->x, pt->y, 0);
 	    pdv_3move(plot, pc);
 	}
 	pdv_3cont(plot, pc);
     }
+    pdv_3cont(plot, pc_orig);
 }
 
 void
