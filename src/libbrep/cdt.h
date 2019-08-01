@@ -252,6 +252,9 @@ void
 plot_tri_2d(p2t::Triangle *t, int r, int g, int b, FILE *plot);
 void
 plot_tri_3d(p2t::Triangle *t, std::map<p2t::Point *, ON_3dPoint *> *pointmap, int r, int g, int b, FILE *c_plot);
+void
+plot_trimesh_2d(std::vector<trimesh::triangle_t> &farray, const char *filename);
+
 
 struct cdt_audit_info *
 cdt_ainfo(int fid, int vid, int tid, int eid, fastf_t x2d, fastf_t y2d, double px, double py, double pz);

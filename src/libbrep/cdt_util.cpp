@@ -85,6 +85,21 @@ plot_tri_2d(p2t::Triangle *t, int r, int g, int b, FILE *plot)
 }
 
 void
+plot_trimesh_2d(std::vector<trimesh::triangle_t> &farray, const char *filename)
+{
+    std::set<trimesh::index_t>::iterator f_it;
+    FILE* plot_file = fopen(filename, "w");
+    int r = int(256*drand48() + 1.0);
+    int g = int(256*drand48() + 1.0);
+    int b = int(256*drand48() + 1.0);
+    for (size_t i = 0; i < farray.size(); i++) {
+	p2t::Triangle *t = farray[i].t;
+	plot_tri_2d(t, r, g ,b, plot_file);
+    }
+    fclose(plot_file);
+}
+
+void
 plot_tri_3d(p2t::Triangle *t, std::map<p2t::Point *, ON_3dPoint *> *pointmap, int r, int g, int b, FILE *c_plot)
 {
     point_t p1, p2, p3;
@@ -108,8 +123,6 @@ plot_tri_3d(p2t::Triangle *t, std::map<p2t::Point *, ON_3dPoint *> *pointmap, in
     pdv_3move(c_plot, p2);
     pdv_3cont(c_plot, p3);
 }
-
-
 
 struct cdt_audit_info *
 cdt_ainfo(int fid, int vid, int tid, int eid, fastf_t x2d, fastf_t y2d, fastf_t px, fastf_t py, fastf_t pz)

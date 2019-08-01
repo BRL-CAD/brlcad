@@ -285,21 +285,6 @@ plot_trimesh(std::vector<trimesh::triangle_t> &farray, std::map<p2t::Point *, ON
 }
 
 static void
-plot_trimesh_2d(std::vector<trimesh::triangle_t> &farray, const char *filename)
-{
-    std::set<trimesh::index_t>::iterator f_it;
-    FILE* plot_file = fopen(filename, "w");
-    int r = int(256*drand48() + 1.0);
-    int g = int(256*drand48() + 1.0);
-    int b = int(256*drand48() + 1.0);
-    for (size_t i = 0; i < farray.size(); i++) {
-	p2t::Triangle *t = farray[i].t;
-	plot_tri_2d(t, r, g ,b, plot_file);
-    }
-    fclose(plot_file);
-}
-
-static void
 plot_3d_cdt_tri(std::set<p2t::Triangle *> *faces, std::map<p2t::Point *, ON_3dPoint *> *pointmap, const char *filename)
 {
     std::set<p2t::Triangle *>::iterator f_it;
