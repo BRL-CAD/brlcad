@@ -70,6 +70,21 @@ plot_tri(p2t::Triangle *t, const char *filename)
 }
 
 void
+plot_tri_2d(p2t::Triangle *t, int r, int g, int b, FILE *plot)
+{
+    point_t pc;
+    pl_color(plot, r, g, b);
+    for (size_t i = 0; i < 3; i++) {
+	p2t::Point *pt = t->GetPoint(i);
+	VSET(pc, pt->x, pt->y, 0);
+	if (i == 0) {
+	    pdv_3move(plot, pc);
+	}
+	pdv_3cont(plot, pc);
+    }
+}
+
+void
 plot_tri_3d(p2t::Triangle *t, std::map<p2t::Point *, ON_3dPoint *> *pointmap, int r, int g, int b, FILE *c_plot)
 {
     point_t p1, p2, p3;

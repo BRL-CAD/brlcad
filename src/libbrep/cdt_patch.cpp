@@ -285,6 +285,21 @@ plot_trimesh(std::vector<trimesh::triangle_t> &farray, std::map<p2t::Point *, ON
 }
 
 static void
+plot_trimesh_2d(std::vector<trimesh::triangle_t> &farray, const char *filename)
+{
+    std::set<trimesh::index_t>::iterator f_it;
+    FILE* plot_file = fopen(filename, "w");
+    int r = int(256*drand48() + 1.0);
+    int g = int(256*drand48() + 1.0);
+    int b = int(256*drand48() + 1.0);
+    for (size_t i = 0; i < farray.size(); i++) {
+	p2t::Triangle *t = farray[i].t;
+	plot_tri_2d(t, r, g ,b, plot_file);
+    }
+    fclose(plot_file);
+}
+
+static void
 plot_3d_cdt_tri(std::set<p2t::Triangle *> *faces, std::map<p2t::Point *, ON_3dPoint *> *pointmap, const char *filename)
 {
     std::set<p2t::Triangle *>::iterator f_it;
@@ -509,6 +524,8 @@ Remesh_Near_Tri(struct ON_Brep_CDT_Face_State *f, p2t::Triangle *seed_tri, std::
 #if CDT_DEBUG_PLOTS
     bu_vls_sprintf(&pname, "%s-%d-00-initial_tmesh.plot3", bu_vls_cstr(&pname_root), f->ind);
     plot_trimesh(tm->triangles, pointmap, bu_vls_cstr(&pname));
+    bu_vls_sprintf(&pname, "%s-%d-00-initial_tmesh_2d.plot3", bu_vls_cstr(&pname_root), f->ind);
+    plot_trimesh_2d(tm->triangles, bu_vls_cstr(&pname));
 #endif
 
     double deg = 10;
