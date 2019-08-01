@@ -334,6 +334,15 @@ pl_color(register FILE *plotfp, int r, int g, int b)
 }
 
 void
+pl_color_buc(register FILE *plotfp, struct bu_color *c)
+{
+    int r = 0;
+    int g = 0;
+    int b = 0;
+    (void)bu_color_to_rgb_ints(c, &r, &g, &b);
+    pl_color(plotfp, r, g, b);
+}
+void
 pl_flush(register FILE *plotfp)
 {
     if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {

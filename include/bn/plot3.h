@@ -37,6 +37,7 @@
 
 #include "vmath.h"
 #include "bu/defines.h"
+#include "bu/color.h"
 #include "bu/file.h"
 #include "bn/defines.h"
 #include "bn/plot3.h"
@@ -101,6 +102,8 @@ BN_EXPORT extern void pl_color(FILE *plotfp,
 			       int r,
 			       int g,
 			       int b);
+BN_EXPORT extern void pl_color_buc(FILE *plotfp,
+			       struct bu_color *c);
 BN_EXPORT extern void pl_flush(FILE *plotfp);
 BN_EXPORT extern void pl_3space(FILE *plotfp,
 				int x_1,
