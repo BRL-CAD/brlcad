@@ -96,6 +96,11 @@ BRLCAD_ADDEXEC(obj-g "${obj-g_SRCS}" "libbu;libbn;librt;libnmg;libwdb;libwfobj")
 
 BRLCAD_ADDEXEC(g-voxel g-voxel.c "librt;libbu;libwdb;libanalyze;")
 
+BRLCAD_ADDEXEC(g-vdb g-vdb.cpp "librt;libbu;libwdb;libanalyze;")
+set_property(SOURCE g-vdb.cpp APPEND PROPERTY COMPILE_FLAGS "-I/Users/morrison/Applications/include -w")
+set_property(TARGET g-vdb APPEND PROPERTY LINK_FLAGS "-L/Users/morrison/Applications/lib -lopenvdb -L/usr/local/Cellar/tbb/2019_U8/lib -ltbb -L/usr/local/Cellar//ilmbase/2.3.0/lib -lHalf -Wl,-rpath -Wl,/usr/local/Cellar//ilmbase/2.3.0/lib:/Users/morrison/Applications/lib")
+
+
 BRLCAD_ADDEXEC(patch-g patch/patch-g.c "libwdb;librt;libnmg;libbu;${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(rpatch patch/rpatch.c "librt;libbu")
