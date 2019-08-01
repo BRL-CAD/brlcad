@@ -1,4 +1,4 @@
-/*                         C O L O R . C
+/*                       C O L O R . C P P
  * BRL-CAD
  *
  * Copyright (c) 1997-2019 United States Government as represented by
@@ -79,9 +79,8 @@ _bu_hsv_to_float_rgb(fastf_t *rgb, const fastf_t *hsv)
 	    case 4: VSET(float_rgb, t, p, val); break;
 	    case 5: VSET(float_rgb, val, p, q); break;
 	    default:
-		bu_log("%s:%d: This shouldn't happen\n",
-		       __FILE__, __LINE__);
-		bu_bomb("unexpected condition encountered in bu_hsv_to_rgb\n");
+		    bu_log("%s:%d: This shouldn't happen\n", __FILE__, __LINE__);
+		    bu_bomb("unexpected condition encountered in bu_hsv_to_rgb\n");
 	}
     }
 
@@ -416,12 +415,11 @@ bu_str_to_rgb(const char *str, unsigned char *rgb)
 }
 
 
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
