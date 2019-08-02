@@ -59,6 +59,7 @@
 #include "brep/util.h"
 
 #include "./trimesh.h"
+#include "./cmesh.h"
 
 #define BREP_PLANAR_TOL 0.05
 
