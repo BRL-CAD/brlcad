@@ -191,6 +191,9 @@ public:
     std::vector<triangle_t> face_neighbors(const triangle_t &f);
     std::vector<triangle_t> vertex_face_neighbors(long vind);
 
+    std::vector<triangle_t> interior_incorrect_normals();
+
+
     ON_3dVector tnorm(const triangle_t &t);
 
     // Plot3 generation routines for debugging
@@ -198,7 +201,10 @@ public:
     void boundary_loops_plot(const char *filename);
     void face_neighbors_plot(const triangle_t &f, const char *filename);
     void vertex_face_neighbors_plot(long vind, const char *filename);
+    void interior_incorrect_normals_plot(const char *filename);
+    void tris_set_plot(std::set<triangle_t> &tset, const char *filename);
     void tris_plot(const char *filename);
+    void tri_plot(triangle_t &tri, const char *filename);
 
 #if 0
     void build_2d_submesh(cmesh_t *mesh_3d, triangle_t &seed, double deg_tol);

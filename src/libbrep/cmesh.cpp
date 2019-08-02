@@ -253,6 +253,8 @@ cmesh_t::boundary_loops()
     return results;
 }
 
+
+
 std::set<long>
 cmesh_t::interior_points()
 {
@@ -271,6 +273,39 @@ cmesh_t::interior_points()
 	    if (bedge_pnts.find(vind) == bedge_pnts.end()) {
 		results.insert(vind);
 	    }
+	}
+    }
+
+    return results;
+}
+
+std::vector<triangle_t>
+cmesh_t::interior_incorrect_normals()
+{
+    std::vector<triangle_t> results;
+    std::set<long> bedge_pnts;
+    std::set<uedge_t> bedges = this->boundary_edges();
+    std::set<uedge_t>::iterator ue_it;
+    for (ue_it = bedges.begin(); ue_it != bedges.end(); ue_it++) {
+	bedge_pnts.insert((*ue_it).v[0]);
+	bedge_pnts.insert((*ue_it).v[1]);
+    }
+
+    std::set<triangle_t>::iterator tr_it;
+    for (tr_it = this->tris.begin(); tr_it != this->tris.end(); tr_it++) {
+	ON_3dVector tdir = this->tnorm(*tr_it);
+	ON_3dVector bdir = this->bnorm(*tr_it);
+	if (tdir.Length() > 0 && bdir.Length() > 0 && ON_DotProduct(tdir, bdir) < 0.1) {
+	    int epnt_cnt = 0;
+	    for (int i = 0; i < 3; i++) {
+		epnt_cnt = (bedge_pnts.find((*tr_it).v[i]) == bedge_pnts.end()) ? epnt_cnt : epnt_cnt + 1;
+	    }
+	    if (epnt_cnt == 2) {
+		std::cerr << "UNCULLED problem point from surface???????\n";
+		results.clear();
+		return results;
+	    }
+	    results.push_back(*tr_it);
 	}
     }
 
@@ -596,7 +631,35 @@ void cmesh_t::vertex_face_neighbors_plot(long vind, const char *filename)
     fclose(plot_file);
 }
 
-void cmesh_t::tris_plot(const char *filename)
+void cmesh_t::interior_incorrect_normals_plot(const char *filename)
+{
+    FILE* plot_file = fopen(filename, "w");
+
+    struct bu_color c = BU_COLOR_INIT_ZERO;
+    bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
+    pl_color_buc(plot_file, &c);
+
+    std::vector<triangle_t> faces = this->interior_incorrect_normals();
+    for (size_t i = 0; i < faces.size(); i++) {
+	this->plot_tri(faces[i], &c, plot_file, 0, 255, 0);
+    }
+    fclose(plot_file);
+}
+
+void cmesh_t::tri_plot(triangle_t &tri, const char *filename)
+{
+    FILE* plot_file = fopen(filename, "w");
+
+    struct bu_color c = BU_COLOR_INIT_ZERO;
+    bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
+    pl_color_buc(plot_file, &c);
+
+    this->plot_tri(tri, &c, plot_file, 255, 0, 0);
+
+    fclose(plot_file);
+}
+
+void cmesh_t::tris_set_plot(std::set<triangle_t> &tset, const char *filename)
 {
     FILE* plot_file = fopen(filename, "w");
 
@@ -606,11 +669,16 @@ void cmesh_t::tris_plot(const char *filename)
 
     std::set<triangle_t>::iterator s_it;
 
-    for (s_it = this->tris.begin(); s_it != this->tris.end(); s_it++) {
+    for (s_it = tset.begin(); s_it != tset.end(); s_it++) {
 	triangle_t tri = (*s_it);
 	this->plot_tri(tri, &c, plot_file, 255, 0, 0);
     }
     fclose(plot_file);
+}
+
+void cmesh_t::tris_plot(const char *filename)
+{
+    this->tris_set_plot(this->tris, filename);
 }
 
 }

@@ -979,7 +979,25 @@ Remesh_Near_Tri(struct ON_Brep_CDT_Face_State *f, p2t::Triangle *seed_tri, std::
     return 0;
 }
 
+int
+Remesh_Near_cTri(struct ON_Brep_CDT_Face_State *f, cmesh::triangle_t seed_tri, std::set<cmesh::triangle_t> *wq, int rcnt)
+{
+#if CDT_DEBUG_PLOTS
+    struct bu_vls pname = BU_VLS_INIT_ZERO;
+    struct bu_vls tname = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&tname, "%ld-%ld-%ld", seed_tri.v[0], seed_tri.v[1], seed_tri.v[2]);
+#endif
 
+    if (!wq || !f) return -1;
+
+#if CDT_DEBUG_PLOTS
+    bu_vls_sprintf(&pname, "%sremesh_tri-seed_%d_%s-00_initial_tmesh_3d.plot3", bu_vls_cstr(&f->face_root), rcnt, bu_vls_cstr(&tname));
+    f->fmesh.tris_plot(bu_vls_cstr(&pname));
+    bu_vls_sprintf(&pname, "%sremesh_tri-seed_%d_%s-00_initial_seed_3d.plot3", bu_vls_cstr(&f->face_root), rcnt, bu_vls_cstr(&tname));
+    f->fmesh.tri_plot(seed_tri, bu_vls_cstr(&pname));
+#endif
+    return 0;
+}
 
 /** @} */
 

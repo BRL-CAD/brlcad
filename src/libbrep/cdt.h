@@ -310,6 +310,7 @@ Process_Loop_Edges(struct ON_Brep_CDT_Face_State *f, int li);
 struct trimesh_info *CDT_Face_Build_Halfedge(std::set<p2t::Triangle *> *triangles);
 
 int Remesh_Near_Tri(struct ON_Brep_CDT_Face_State *f, p2t::Triangle *t, std::set<p2t::Triangle *> *wq);
+int Remesh_Near_cTri(struct ON_Brep_CDT_Face_State *f, cmesh::triangle_t t, std::set<cmesh::triangle_t> *wq, int rcnt);
 
 /** @} */
 

@@ -191,12 +191,15 @@ refine_triangulation(struct ON_Brep_CDT_Face_State *f, int cnt, int rebuild)
 	    }
 
 	}
-
-	{
-	    struct trimesh_info *tm_sing_tris = CDT_Face_Build_Halfedge(&active_tris);
-	    bu_vls_sprintf(&pname, "%srefine_tri-%d-04_seed_singularity_triangles-iteration_tmesh_2d.plot3", bu_vls_cstr(&f->face_root), cnt);
-	    plot_trimesh_2d(tm_sing_tris->triangles, bu_vls_cstr(&pname));
+	std::vector<cmesh::triangle_t> ntri = f->fmesh.interior_incorrect_normals();
+	if (ntri.size()) {
+	    bu_vls_sprintf(&pname, "%srefine_tri-%d-04_interior_bad_normals-cmesh_3d.plot3", bu_vls_cstr(&f->face_root), cnt);
+	    f->fmesh.interior_incorrect_normals_plot(bu_vls_cstr(&pname));
+	    active_ctris.insert(ntri.begin(), ntri.end());
 	}
+
+	bu_vls_sprintf(&pname, "%srefine_tri-%d-05_all_seed_tris-cmesh_3d.plot3", bu_vls_cstr(&f->face_root), cnt);
+	f->fmesh.tris_set_plot(active_ctris, bu_vls_cstr(&pname));
 
 	// Any triangle not having an edge on the mesh boundary polyline with
 	// an incorrect triangle face normal is a seed for local remeshing
@@ -204,12 +207,15 @@ refine_triangulation(struct ON_Brep_CDT_Face_State *f, int cnt, int rebuild)
 	if (ret == -1) {
 	    bu_log("unexpected edge triangle issues\n");
 	}
+    }
 
-	{
-	    struct trimesh_info *tm_sing_tris = CDT_Face_Build_Halfedge(&active_tris);
-	    bu_vls_sprintf(&pname, "%srefine_tri-%d-05_all_seed_triangles-iteration_tmesh_2d.plot3", bu_vls_cstr(&f->face_root), cnt);
-	    plot_trimesh_2d(tm_sing_tris->triangles, bu_vls_cstr(&pname));
-	}
+    // Now, the hard part - create local subsets, remesh them, and replace the original
+    // triangles with the new ones.
+    int rcnt = 0;
+    while (active_ctris.size()) {
+	cmesh::triangle_t seed_tri = *(active_ctris.begin());
+	Remesh_Near_cTri(f, seed_tri, &active_ctris, rcnt);
+	rcnt++;
     }
 
     // Locally remesh in the area of triangles identified by above steps
