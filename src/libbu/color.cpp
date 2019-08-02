@@ -28,7 +28,6 @@
 #include <errno.h>
 #include "bio.h"
 
-#include <chrono>
 #include <random>
 
 #include "bu/color.h"
@@ -89,7 +88,7 @@ _bu_hsv_to_float_rgb(fastf_t *rgb, const fastf_t *hsv)
     rgb[2] = float_rgb[2];
 
     return 0;
-}    
+}
 
 int
 bu_color_rand(struct bu_color *c, bu_color_rand_t type)
@@ -101,7 +100,8 @@ bu_color_rand(struct bu_color *c, bu_color_rand_t type)
     if (type == BU_COLOR_RANDOM) {
 	// https://stackoverflow.com/q/21102105
 	std::uniform_real_distribution<double> g_rand(0, 1);
-	std::default_random_engine engine(std::chrono::system_clock::now().time_since_epoch().count());
+	std::random_device rdev;
+	std::default_random_engine engine(rdev());
 	c->buc_rgb[RED] = (fastf_t)g_rand(engine);
 	c->buc_rgb[GRN] = (fastf_t)g_rand(engine);
 	c->buc_rgb[BLU] = (fastf_t)g_rand(engine);
@@ -113,7 +113,8 @@ bu_color_rand(struct bu_color *c, bu_color_rand_t type)
 	static fastf_t hsv[3] = { 0.0, 0.5, 0.95 };
 	static double golden_ratio_conjugate = 0.618033988749895;
 	std::uniform_real_distribution<double> g_rand(0, 1);
-	std::default_random_engine engine(std::chrono::system_clock::now().time_since_epoch().count());
+	std::random_device rdev;
+	std::default_random_engine engine(rdev());
 	fastf_t h = (fastf_t)g_rand(engine);
 	h = fmod(h+golden_ratio_conjugate,1.0);
 	*hsv = h * 360.0;
