@@ -85,6 +85,23 @@ full_retriangulation(struct ON_Brep_CDT_Face_State *f)
     // Testing new mesh container
     f->fmesh.build_3d(f->tris, f->p2t_to_on3_map);
 
+    // Identify any singular points
+    f->singularities.clear();
+    if (f->has_singular_trims) {
+	std::set<p2t::Triangle *>::iterator tr_it;
+	for (tr_it = f->tris->begin(); tr_it != f->tris->end(); tr_it++) {
+	    p2t::Triangle *t = *tr_it;
+	    for (size_t j = 0; j < 3; j++) {
+		ON_3dPoint *p3d = (*f->p2t_to_on3_map)[t->GetPoint(j)];
+		if (f->s_cdt->singular_vert_to_norms->find(p3d) != f->s_cdt->singular_vert_to_norms->end()) {
+		    f->singularities.insert(p3d);
+		}
+	    }
+	}
+    }
+
+    f->fmesh.set_brep_data(f->s_cdt->brep->m_F[f->ind].m_bRev, &f->singularities, f->on3_to_norm_map);
+
     return 0;
 }
 
@@ -93,6 +110,7 @@ refine_triangulation(struct ON_Brep_CDT_Face_State *f, int cnt, int rebuild)
 {
     struct bu_vls pname = BU_VLS_INIT_ZERO;
     std::set<p2t::Triangle *> active_tris;
+    std::set<cmesh::triangle_t> active_ctris;
     int ret = 0;
 
     if (cnt > MAX_TRIANGULATION_ATTEMPTS) {
@@ -150,24 +168,24 @@ refine_triangulation(struct ON_Brep_CDT_Face_State *f, int cnt, int rebuild)
 	    std::set<p2t::Triangle *>::iterator tr_it;
 
 	    // Identify any triangles using singular points
-	    std::set<ON_3dPoint *> active_singular_pnts;
 	    for (tr_it = f->tris->begin(); tr_it != f->tris->end(); tr_it++) {
 		p2t::Triangle *t = *tr_it;
 		for (size_t j = 0; j < 3; j++) {
 		    ON_3dPoint *p3d = (*pointmap)[t->GetPoint(j)];
 		    if (f->s_cdt->singular_vert_to_norms->find(p3d) != f->s_cdt->singular_vert_to_norms->end()) {
 			active_tris.insert(t);
-			active_singular_pnts.insert(p3d);
 		    }
 		}
 	    }
 
 	    std::set<ON_3dPoint *>::iterator s_it;
 	    int singularity_cnt = 0;
-	    for (s_it = active_singular_pnts.begin(); s_it != active_singular_pnts.end(); s_it++) {
+	    for (s_it = f->singularities.begin(); s_it != f->singularities.end(); s_it++) {
 		ON_3dPoint *p3d = (*s_it);
 		long s_ind = f->fmesh.p2ind[p3d];
 		bu_vls_sprintf(&pname, "%srefine_tri-%d-03_singularity_%d-cmesh_3d.plot3", bu_vls_cstr(&f->face_root), cnt, singularity_cnt);
+		std::vector<cmesh::triangle_t> stri = f->fmesh.vertex_face_neighbors(s_ind);
+		active_ctris.insert(stri.begin(), stri.end());
 		f->fmesh.vertex_face_neighbors_plot(s_ind, bu_vls_cstr(&pname));
 		singularity_cnt++;
 	    }
@@ -290,6 +308,23 @@ do_triangulation(struct ON_Brep_CDT_Face_State *f)
 
     // Testing new mesh container
     f->fmesh.build_3d(f->tris, f->p2t_to_on3_map);
+
+    // Identify any singular 3D points
+    f->singularities.clear();
+    if (f->has_singular_trims) {
+	std::set<p2t::Triangle *>::iterator tr_it;
+	for (tr_it = f->tris->begin(); tr_it != f->tris->end(); tr_it++) {
+	    p2t::Triangle *t = *tr_it;
+	    for (size_t j = 0; j < 3; j++) {
+		ON_3dPoint *p3d = (*f->p2t_to_on3_map)[t->GetPoint(j)];
+		if (f->s_cdt->singular_vert_to_norms->find(p3d) != f->s_cdt->singular_vert_to_norms->end()) {
+		    f->singularities.insert(p3d);
+		}
+	    }
+	}
+    }
+
+    f->fmesh.set_brep_data(f->s_cdt->brep->m_F[f->ind].m_bRev, &f->singularities, f->on3_to_norm_map);
 
     /* The poly2tri triangulation is not guaranteed to have all the properties
      * we want out of the box - trigger a series of checks */

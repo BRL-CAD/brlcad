@@ -277,14 +277,17 @@ cmesh_t::interior_points()
     return results;
 }
 
-ON_3dVector
-cmesh_t::tnorm(triangle_t &t)
+void
+cmesh_t::set_brep_data(bool brev, std::set<ON_3dPoint *> *s, std::map<ON_3dPoint *, ON_3dPoint *> *n)
 {
-    if (this->type == 1) {
-	// 2D
-	return ON_3dVector(0,0,1);
-    }
+    this->m_bRev = brev;
+    this->singularities = s;
+    this->normalmap = n;
+}
 
+ON_3dVector
+cmesh_t::tnorm(const triangle_t &t)
+{
     ON_3dPoint *p1 = this->pnts[t.v[0]];
     ON_3dPoint *p2 = this->pnts[t.v[1]];
     ON_3dPoint *p3 = this->pnts[t.v[2]];
@@ -296,6 +299,35 @@ cmesh_t::tnorm(triangle_t &t)
     return tdir;
 }
 
+ON_3dVector
+cmesh_t::bnorm(const triangle_t &t)
+{
+    ON_3dPoint avgnorm(0,0,0);
+
+    // Can't calculate this without some key Brep data
+    if (!this->normalmap || !this->singularities) return avgnorm;
+
+    double norm_cnt = 0.0;
+
+    for (size_t i = 0; i < 3; i++) {
+	ON_3dPoint *p3d = this->pnts[t.v[i]];
+	if (singularities->find(p3d) != singularities->end()) {
+	    // singular vert norms are a product of multiple faces - not useful for this
+	    continue;
+	}
+	ON_3dPoint onrm(*(*normalmap)[p3d]);
+	// TODO - do I need to flip this?  Previous code was accidentally not flipping...  maybe tnorm is backwards too?
+	if (this->m_bRev) {
+	    onrm = onrm * -1;
+	}
+	avgnorm = avgnorm + onrm;
+	norm_cnt = norm_cnt + 1.0;
+    }
+
+    ON_3dVector anrm = avgnorm/norm_cnt;
+    anrm.Unitize();
+    return anrm;
+}
 
 void cmesh_t::reset()
 {
@@ -309,6 +341,9 @@ void cmesh_t::reset()
     this->edges2tris.clear();
     this->uedges2tris.clear();
     this->type = 0;
+    this->m_bRev = false;
+    this->singularities = NULL;
+    this->normalmap = NULL;
 }
 
 void cmesh_t::build_3d(std::set<p2t::Triangle *> *cdttri, std::map<p2t::Point *, ON_3dPoint *> *pointmap)
@@ -480,6 +515,17 @@ void cmesh_t::plot_tri(const triangle_t &t, struct bu_color *buc, FILE *plot, in
 	pdv_3move(plot, p[i]);
 	pdv_3cont(plot, c);
     }
+
+
+    /* Plot the triangle normal */
+    pl_color(plot, 0, 255, 255);
+    ON_3dVector tn = this->tnorm(t);
+    vect_t tnt;
+    VSET(tnt, tn.x, tn.y, tn.z);
+    point_t npnt;
+    VADD2(npnt, tnt, c);
+    pdv_3move(plot, c);
+    pdv_3cont(plot, npnt);
 
     /* restore previous color */
     pl_color_buc(plot, buc);

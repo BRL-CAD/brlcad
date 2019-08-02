@@ -1003,6 +1003,7 @@ build_poly2tri_polylines(struct ON_Brep_CDT_Face_State *f, p2t::CDT **cdt, int i
     std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
     std::map<ON_3dPoint *, std::set<p2t::Point *>> *on3_to_tri = f->on3_to_tri_map;
     std::map<p2t::Point *, ON_3dPoint *> *normalmap = f->p2t_to_on3_norm_map;
+    std::map<ON_3dPoint *, ON_3dPoint *> *nmap= f->on3_to_norm_map;
     std::vector<p2t::Point*> polyline;
     ON_BrepFace &face = f->s_cdt->brep->m_F[f->ind];
     int loop_cnt = face.LoopCount();
@@ -1019,6 +1020,7 @@ build_poly2tri_polylines(struct ON_Brep_CDT_Face_State *f, p2t::CDT **cdt, int i
 		(*pointmap)[p] = (brep_loop_points[li])[i].p3d;
 		(*on3_to_tri)[(brep_loop_points[li])[i].p3d].insert(p);
 		(*normalmap)[p] = (brep_loop_points[li])[i].n3d;
+		(*nmap)[(*pointmap)[p]] = (brep_loop_points[li])[i].n3d;
 	    }
 	    if (init_rtree) {
 		for (int i = 1; i < brep_loop_points[li].Count(); i++) {

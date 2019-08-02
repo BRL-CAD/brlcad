@@ -180,7 +180,7 @@ public:
     void reset();
 
     void build_3d(std::set<p2t::Triangle *> *cdttri, std::map<p2t::Point *, ON_3dPoint *> *pointmap);
-
+    void set_brep_data(bool brev, std::set<ON_3dPoint *> *s, std::map<ON_3dPoint *, ON_3dPoint *> *n);
 
     bool add(triangle_t &atris, int check);
     void remove(triangle_t &etris);
@@ -191,7 +191,7 @@ public:
     std::vector<triangle_t> face_neighbors(const triangle_t &f);
     std::vector<triangle_t> vertex_face_neighbors(long vind);
 
-    ON_3dVector tnorm(triangle_t &t);
+    ON_3dVector tnorm(const triangle_t &t);
 
     // Plot3 generation routines for debugging
     void boundary_edges_plot(const char *filename);
@@ -201,10 +201,16 @@ public:
     void tris_plot(const char *filename);
 
 #if 0
-    void build_2d_submesh(cmesh_t *mesh_3d, triangle_t &seed, double deg_tol,
-	    std::map<ON_3dPoint *, ON_3dPoint *> *normalmap);
+    void build_2d_submesh(cmesh_t *mesh_3d, triangle_t &seed, double deg_tol);
 #endif
 private:
+    // For situations where we need to process using Brep data
+    std::set<ON_3dPoint *> *singularities;
+    std::map<ON_3dPoint *, ON_3dPoint *> *normalmap;
+    bool m_bRev;
+    ON_3dVector bnorm(const triangle_t &t);
+
+    // misc
     edge_t find_boundary_oriented_edge(uedge_t &ue);
     void plot_tri(const triangle_t &t, struct bu_color *buc, FILE *plot, int r, int g, int b);
 };

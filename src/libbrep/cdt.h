@@ -111,8 +111,11 @@ struct ON_Brep_CDT_Face_State {
     struct bu_vls face_root;
 
     cmesh::cmesh_t fmesh;
+    std::map<ON_3dPoint *, ON_3dPoint *> *on3_to_norm_map;
 
     int has_singular_trims;
+    std::set<ON_3dPoint *> singularities;
+
     int ind;
     std::map<ON_2dPoint *, struct cdt_audit_info *> *pnt2d_audit_info;
 

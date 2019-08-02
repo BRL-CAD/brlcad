@@ -290,6 +290,8 @@ ON_Brep_CDT_Face_Create(struct ON_Brep_CDT_State *s_cdt, int ind)
     fcdt->strim_pnts = new std::map<int,ON_3dPoint *>;
     fcdt->strim_norms = new std::map<int,ON_3dPoint *>;
 
+    fcdt->on3_to_norm_map = new std::map<ON_3dPoint *, ON_3dPoint *>;
+
     fcdt->p2t_to_on2_map = new std::map<p2t::Point *, ON_2dPoint *>;
     fcdt->p2t_to_on3_map = new std::map<p2t::Point *, ON_3dPoint *>;
     fcdt->p2t_to_on3_norm_map = new std::map<p2t::Point *, ON_3dPoint *>;
@@ -328,6 +330,7 @@ ON_Brep_CDT_Face_Reset(struct ON_Brep_CDT_Face_State *fcdt, int full_surface_sam
 	fcdt->rt_trims = new ON_RTree;
     }
 
+    fcdt->on3_to_norm_map->clear();
     fcdt->p2t_to_on2_map->clear();
     fcdt->p2t_to_on3_map->clear();
     fcdt->p2t_to_on3_norm_map->clear();
@@ -390,6 +393,7 @@ ON_Brep_CDT_Face_Destroy(struct ON_Brep_CDT_Face_State *fcdt)
     delete fcdt->p2t_to_on2_map;
     delete fcdt->p2t_to_on3_map;
     delete fcdt->p2t_to_on3_norm_map;
+    delete fcdt->on3_to_norm_map;
     delete fcdt->on3_to_tri_map;
     delete fcdt->degen_tris;
     delete fcdt->degen_pnts;
@@ -780,6 +784,7 @@ populate_3d_pnts(struct ON_Brep_CDT_Face_State *f)
     ON_BrepFace &face = f->s_cdt->brep->m_F[face_index];
     std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
     std::map<p2t::Point *, ON_3dPoint *> *normalmap = f->p2t_to_on3_norm_map;
+    std::map<ON_3dPoint *, ON_3dPoint *> *nmap = f->on3_to_norm_map;
     std::set<p2t::Triangle *>::iterator tr_it;
     std::set<p2t::Triangle *> *tris = f->tris;
     for (tr_it = tris->begin(); tr_it != tris->end(); tr_it++) {
@@ -818,6 +823,7 @@ populate_3d_pnts(struct ON_Brep_CDT_Face_State *f)
 		    }
 		    if (onorm) {
 			(*normalmap)[p] = onorm;
+			(*nmap)[op] = onorm;
 		    }
 		}
 	    } else {
