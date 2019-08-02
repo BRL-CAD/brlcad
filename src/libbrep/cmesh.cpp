@@ -316,7 +316,6 @@ cmesh_t::bnorm(const triangle_t &t)
 	    continue;
 	}
 	ON_3dPoint onrm(*(*normalmap)[p3d]);
-	// TODO - do I need to flip this?  Previous code was accidentally not flipping...  maybe tnorm is backwards too?
 	if (this->m_bRev) {
 	    onrm = onrm * -1;
 	}
@@ -519,13 +518,28 @@ void cmesh_t::plot_tri(const triangle_t &t, struct bu_color *buc, FILE *plot, in
 
     /* Plot the triangle normal */
     pl_color(plot, 0, 255, 255);
-    ON_3dVector tn = this->tnorm(t);
-    vect_t tnt;
-    VSET(tnt, tn.x, tn.y, tn.z);
-    point_t npnt;
-    VADD2(npnt, tnt, c);
-    pdv_3move(plot, c);
-    pdv_3cont(plot, npnt);
+    {
+	ON_3dVector tn = this->tnorm(t);
+	vect_t tnt;
+	VSET(tnt, tn.x, tn.y, tn.z);
+	point_t npnt;
+	VADD2(npnt, tnt, c);
+	pdv_3move(plot, c);
+	pdv_3cont(plot, npnt);
+    }
+
+    /* Plot the brep normal */
+    pl_color(plot, 0, 100, 0);
+    {
+	ON_3dVector tn = this->bnorm(t);
+	tn = tn * 0.5;
+	vect_t tnt;
+	VSET(tnt, tn.x, tn.y, tn.z);
+	point_t npnt;
+	VADD2(npnt, tnt, c);
+	pdv_3move(plot, c);
+	pdv_3cont(plot, npnt);
+    }
 
     /* restore previous color */
     pl_color_buc(plot, buc);
