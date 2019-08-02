@@ -495,7 +495,7 @@ best_fit_plane(point_t *orig, vect_t *norm, struct trimesh_info *tm, std::set<tr
 
 
 static int
-remove_butterfly_vertices(std::vector<trimesh::triangle_t> &triangles, size_t pnt_size, std::set<trimesh::index_t> *remesh_triangles, trimesh::index_t seed_id, std::map<p2t::Point *, ON_3dPoint *> *pointmap, struct ON_Brep_CDT_Face_State *f)
+remove_butterfly_vertices(std::vector<trimesh::triangle_t> &triangles, size_t pnt_size, std::set<trimesh::index_t> *remesh_triangles, trimesh::index_t seed_id, std::map<p2t::Point *, ON_3dPoint *> *pointmap, std::vector<ON_2dPoint *> &pnts_2d, struct ON_Brep_CDT_Face_State *f)
 {
     int butterfly_verts = 1;
     int pass = 1;
@@ -522,6 +522,10 @@ remove_butterfly_vertices(std::vector<trimesh::triangle_t> &triangles, size_t pn
 	bu_log("butterfly vertex cnt: %zd\n", smesh.m_butterfly_vertices.size());
 	if (smesh.m_butterfly_vertices.size()) {
 	    bu_log("butterfly verts!\n");
+	    std::set<trimesh::index_t>::iterator v_it;
+	    for (v_it = smesh.m_butterfly_vertices.begin(); v_it != smesh.m_butterfly_vertices.end(); v_it++) {
+		bu_log("v: %f %f 0\n", pnts_2d[*v_it]->x, pnts_2d[*v_it]->y);
+	    }
 	} else {
 	    return 0;
 	}
@@ -771,7 +775,7 @@ Remesh_Near_Tri(struct ON_Brep_CDT_Face_State *f, p2t::Triangle *seed_tri, std::
     // TODO - any triangles removed here also need to have
     // their corresponding triangle in the remesh set yanked, since we'll no longer
     // be handling it here...
-    remove_butterfly_vertices(submesh_triangles_prelim, pnts_2d.size(), &smtri, seed_id, pointmap, f);
+    remove_butterfly_vertices(submesh_triangles_prelim, pnts_2d.size(), &smtri, seed_id, pointmap, pnts_2d, f);
 
     std::vector<trimesh::triangle_t> submesh_triangles;
     std::map<trimesh::index_t, trimesh::index_t> s2sp;
