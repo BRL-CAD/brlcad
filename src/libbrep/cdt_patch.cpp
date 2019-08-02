@@ -732,6 +732,19 @@ Remesh_Near_Tri(struct ON_Brep_CDT_Face_State *f, p2t::Triangle *seed_tri, std::
     }
 
     // Translate the poly2tri triangle into trimesh
+    //
+    // TODO - we actually probably don't want a full trimesh here.  What we need
+    // for p2t is the polygon outer loop and the interior points - "butterfly"
+    // vertices are an issue only if they indicate a hole in the mesh from the
+    // perspective of the outer loop.  Those cases are apparenty hard to detect,
+    // so what we might try instead is to build up the projected mesh at the
+    // same time as we are assigning faces from the original mesh, using the initial
+    // brep normal avg from the seed face as the plane for projecting, and "walk out"
+    // the outer loop at the same time.  Track edge uses and check outer point edge
+    // use counts in the projection, and evaluate each new candidate triangle to see
+    // if it will produce a problem in the outer loop.  That will mean refactoring
+    // this whole thing to build a candidate projection at the same time as the
+    // initial set is built.
     std::set<std::set<trimesh::index_t>> tri_pntsets;
     std::map<trimesh::index_t, trimesh::index_t> sp2o;
     std::vector<trimesh::triangle_t> submesh_triangles_prelim;
