@@ -177,6 +177,8 @@ public:
     std::map<edge_t, triangle_t> edges2tris;
     std::map<uedge_t, std::set<triangle_t>> uedges2tris;
 
+    void reset();
+
     void build_3d(std::set<p2t::Triangle *> *cdttri, std::map<p2t::Point *, ON_3dPoint *> *pointmap);
 
 
@@ -194,6 +196,7 @@ public:
     void boundary_loops_plot(const char *filename);
     void face_neighbors_plot(const triangle_t &f, const char *filename);
     void vertex_face_neighbors_plot(long vind, const char *filename);
+    void tris_plot(const char *filename);
 
 #if 0
     ON_3dVector tnormal(triangle_t &t);

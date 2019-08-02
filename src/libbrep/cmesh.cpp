@@ -48,10 +48,13 @@ cmesh_t::add(triangle_t &tri, int check)
     // Add the triangle
     this->tris.insert(tri);
 
-    // Populate edge maps
+    // Populate maps
     long i = tri.v[0];
     long j = tri.v[1];
     long k = tri.v[2];
+    this->v2tris[i].insert(tri);
+    this->v2tris[j].insert(tri);
+    this->v2tris[k].insert(tri);
     struct edge_t e1(i, j);
     struct edge_t e2(j, k);
     struct edge_t e3(k, i);
@@ -274,9 +277,26 @@ cmesh_t::interior_points()
     return results;
 }
 
+void cmesh_t::reset()
+{
+    this->pnts_2d.clear();
+    this->p2d2ind.clear();
+    this->pnts.clear();
+    this->p2ind.clear();
+    this->tris.clear();
+    this->v2edges.clear();
+    this->v2tris.clear();
+    this->edges2tris.clear();
+    this->uedges2tris.clear();
+    this->type = 0;
+}
+
 void cmesh_t::build_3d(std::set<p2t::Triangle *> *cdttri, std::map<p2t::Point *, ON_3dPoint *> *pointmap)
 {
     if (!cdttri || !pointmap) return;
+
+    this->reset();
+
     std::set<p2t::Triangle*>::iterator s_it;
 
     // 3D mesh
@@ -492,6 +512,23 @@ void cmesh_t::vertex_face_neighbors_plot(long vind, const char *filename)
     if (this->type == 1) {
    	ON_2dPoint *p = this->pnts_2d[vind];
 	pd_point(plot_file, p->x, p->y);
+    }
+    fclose(plot_file);
+}
+
+void cmesh_t::tris_plot(const char *filename)
+{
+    FILE* plot_file = fopen(filename, "w");
+
+    struct bu_color c = BU_COLOR_INIT_ZERO;
+    bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
+    pl_color_buc(plot_file, &c);
+
+    std::set<triangle_t>::iterator s_it;
+
+    for (s_it = this->tris.begin(); s_it != this->tris.end(); s_it++) {
+	triangle_t tri = (*s_it);
+	this->plot_tri(tri, &c, plot_file, 255, 0, 0);
     }
     fclose(plot_file);
 }

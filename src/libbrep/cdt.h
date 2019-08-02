@@ -1,4 +1,4 @@
-/*                        C D T . H 
+/*                        C D T . H
  * BRL-CAD
  *
  * Copyright (c) 2007-2019 United States Government as represented by
@@ -109,6 +109,8 @@ struct ON_Brep_CDT_Face_State {
     struct ON_Brep_CDT_State *s_cdt;
 
     struct bu_vls face_root;
+
+    cmesh::cmesh_t fmesh;
 
     int has_singular_trims;
     int ind;

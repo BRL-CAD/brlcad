@@ -82,6 +82,9 @@ full_retriangulation(struct ON_Brep_CDT_Face_State *f)
 	}
     }
 
+    // Testing new mesh container
+    f->fmesh.build_3d(f->tris, f->p2t_to_on3_map);
+
     return 0;
 }
 
@@ -97,9 +100,8 @@ refine_triangulation(struct ON_Brep_CDT_Face_State *f, int cnt, int rebuild)
 	return 0;
     }
 
-    struct trimesh_info *tm_init = CDT_Face_Build_Halfedge(f->tris);
-    bu_vls_sprintf(&pname, "%srefine_tri-%d-00_initial-iteration_tmesh_2d.plot3", bu_vls_cstr(&f->face_root), cnt);
-    plot_trimesh_2d(tm_init->triangles, bu_vls_cstr(&pname));
+    bu_vls_sprintf(&pname, "%srefine_tri-%d-00_initial-iteration_cmesh_3d.plot3", bu_vls_cstr(&f->face_root), cnt);
+    f->fmesh.tris_plot(bu_vls_cstr(&pname));
 
     // If a previous pass has made changes in which points are active in the
     // surface set, we need to rebuild the whole triangulation.
@@ -111,18 +113,15 @@ refine_triangulation(struct ON_Brep_CDT_Face_State *f, int cnt, int rebuild)
 	    return -1;
 	}
 
-	struct trimesh_info *tm_full_retri = CDT_Face_Build_Halfedge(f->tris);
-	bu_vls_sprintf(&pname, "%srefine_tri-%d-01_after_full_retri-iteration_tmesh_2d.plot3", bu_vls_cstr(&f->face_root), cnt);
-	plot_trimesh_2d(tm_full_retri->triangles, bu_vls_cstr(&pname));
+	bu_vls_sprintf(&pname, "%srefine_tri-%d-01_after_full_retri-iteration_cmesh_3d.plot3", bu_vls_cstr(&f->face_root), cnt);
+	f->fmesh.tris_plot(bu_vls_cstr(&pname));
     }
 
-    // Identify trivially degenerate triangles (a triangle defined by only
-    // two points).
+    // Identify trivially degenerate triangles (a triangle defined by only two
+    // points).
+    // NOTE - for the new fmesh container this and duplicate filtering are handled by
+    // the build routine
     triangles_degenerate_trivial(f);
-
-    struct trimesh_info *tm_degen1 = CDT_Face_Build_Halfedge(f->tris);
-    bu_vls_sprintf(&pname, "%srefine_tri-%d-02_after_trivial_degen-iteration_tmesh_2d.plot3", bu_vls_cstr(&f->face_root), cnt);
-    plot_trimesh_2d(tm_degen1->triangles, bu_vls_cstr(&pname));
 
     // Check the triangles around edges first - these may require
     // the removal of points from the surface set
@@ -138,9 +137,9 @@ refine_triangulation(struct ON_Brep_CDT_Face_State *f, int cnt, int rebuild)
 	return refine_triangulation(f, cnt+1, 1);
     }
 
-    struct trimesh_info *tm_slim_edge = CDT_Face_Build_Halfedge(f->tris);
-    bu_vls_sprintf(&pname, "%srefine_tri-%d-03_after_slim_edge-iteration_tmesh_2d.plot3", bu_vls_cstr(&f->face_root), cnt);
-    plot_trimesh_2d(tm_slim_edge->triangles, bu_vls_cstr(&pname));
+    // If we got here, we shouldn't have had to change the mesh - should match previous
+    bu_vls_sprintf(&pname, "%srefine_tri-%d-02_after_slim_edge-iteration_cmesh_3d.plot3", bu_vls_cstr(&f->face_root), cnt);
+    f->fmesh.tris_plot(bu_vls_cstr(&pname));
 
     // If we're starting from scratch (one way or another) build up our initial
     // set of triangles to work with
@@ -158,9 +157,21 @@ refine_triangulation(struct ON_Brep_CDT_Face_State *f, int cnt, int rebuild)
 		    ON_3dPoint *p3d = (*pointmap)[t->GetPoint(j)];
 		    if (f->s_cdt->singular_vert_to_norms->find(p3d) != f->s_cdt->singular_vert_to_norms->end()) {
 			active_tris.insert(t);
+			active_singular_pnts.insert(p3d);
 		    }
 		}
 	    }
+
+	    std::set<ON_3dPoint *>::iterator s_it;
+	    int singularity_cnt = 0;
+	    for (s_it = active_singular_pnts.begin(); s_it != active_singular_pnts.end(); s_it++) {
+		ON_3dPoint *p3d = (*s_it);
+		long s_ind = f->fmesh.p2ind[p3d];
+		bu_vls_sprintf(&pname, "%srefine_tri-%d-03_singularity_%d-cmesh_3d.plot3", bu_vls_cstr(&f->face_root), cnt, singularity_cnt);
+		f->fmesh.vertex_face_neighbors_plot(s_ind, bu_vls_cstr(&pname));
+		singularity_cnt++;
+	    }
+
 	}
 
 	{
@@ -276,6 +287,9 @@ do_triangulation(struct ON_Brep_CDT_Face_State *f)
 
     /* Calculate any 3D points we don't already have */
     populate_3d_pnts(f);
+
+    // Testing new mesh container
+    f->fmesh.build_3d(f->tris, f->p2t_to_on3_map);
 
     /* The poly2tri triangulation is not guaranteed to have all the properties
      * we want out of the box - trigger a series of checks */
