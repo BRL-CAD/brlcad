@@ -208,9 +208,13 @@ std::vector< std::pair< trimesh_t::index_t, trimesh_t::index_t > > trimesh_t::bo
     std::vector< std::pair< index_t, index_t > > result;
     for (size_t hei = 0; hei < m_halfedges.size(); ++hei) {
 	const halfedge_t& he = m_halfedges[ hei ];
-
 	if (-1 == he.face) {
+	std::cout << "hei: " << hei << " to_vertex = " << he.to_vertex << ", face = " << he.face << ", edge = " << he.edge << ", opposite_he = " << he.opposite_he << ", next_he = " << he.next_he << " -> " << he_index2directed_edge(hei).first << "," << he_index2directed_edge(hei).second << "\n";
 	    result.push_back(he_index2directed_edge(hei));
+	} else {
+	    if (he.face == 5 || hei == 10 || hei == 12 || hei == 22) {
+		std::cout << "hei: " << hei << " skip: to_vertex = " << he.to_vertex << ", face = " << he.face << ", edge = " << he.edge << ", opposite_he = " << he.opposite_he << ", next_he = " << he.next_he << " -> " << he_index2directed_edge(hei).first << "," << he_index2directed_edge(hei).second << "\n";
+	    }
 	}
     }
 

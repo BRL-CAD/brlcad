@@ -334,7 +334,56 @@ plot_all_trimesh_tris_2d(std::vector<trimesh::triangle_t> &farray, std::vector<O
     FILE* plot = fopen(filename, "w");
     struct bu_color c = BU_COLOR_INIT_ZERO;
     bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
+
     for (size_t i = 0; i < farray.size(); i++) {
+	point_t pc;
+	point_t pc_orig;
+	point_t center = VINIT_ZERO;
+
+	for (size_t j = 0; j < 3; j++) {
+	    ON_2dPoint *pt = pnts_2d[farray[i].v[j]];
+	    center[X] += pt->x;
+	    center[Y] += pt->y;
+	}
+	center[X] = center[X]/3.0;
+	center[Y] = center[Y]/3.0;
+	center[Z] = 0;
+
+	pl_color_buc(plot, &c);
+	for (size_t j = 0; j < 3; j++) {
+	    ON_2dPoint *pt = pnts_2d[farray[i].v[j]];
+	    VSET(pc, pt->x, pt->y, 0);
+	    if (j == 0) {
+		VSET(pc_orig, pt->x, pt->y, 0);
+		pdv_3move(plot, pc);
+	    }
+	    pdv_3cont(plot, pc);
+	}
+	pdv_3cont(plot, pc_orig);
+
+	/* fill in the "interior" using red */
+	pl_color(plot, 255,0,0);
+	for (size_t j = 0; j < 3; j++) {
+	    ON_2dPoint *pt = pnts_2d[farray[i].v[j]];
+	    VSET(pc, pt->x, pt->y, 0);
+	    pdv_3move(plot, pc);
+	    pdv_3cont(plot, center);
+	}
+    }
+
+    fclose(plot);
+}
+
+#if 0
+static void
+plot_all_trimesh_tris_2d_each_tri(std::vector<trimesh::triangle_t> &farray, std::vector<ON_2dPoint *> &pnts_2d, const char *filename)
+{
+    struct bu_vls fname = BU_VLS_INIT_ZERO;
+    for (size_t i = 0; i < farray.size(); i++) {
+	bu_vls_sprintf(&fname, "%s-2d-%zd.plot3", filename, i);
+	FILE* plot = fopen(bu_vls_cstr(&fname), "w");
+	struct bu_color c = BU_COLOR_INIT_ZERO;
+	bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
 	point_t pc;
 	point_t pc_orig;
 	for (size_t j = 0; j < 3; j++) {
@@ -347,10 +396,10 @@ plot_all_trimesh_tris_2d(std::vector<trimesh::triangle_t> &farray, std::vector<O
 	    pdv_3cont(plot, pc);
 	}
 	pdv_3cont(plot, pc_orig);
+	fclose(plot);
     }
-    fclose(plot);
 }
-
+#endif
 
 static void
 plot_trimesh_tris_2d(std::set<trimesh::index_t> *faces, std::vector<trimesh::triangle_t> &farray, const char *filename)
@@ -679,30 +728,49 @@ Remesh_Near_Tri(struct ON_Brep_CDT_Face_State *f, p2t::Triangle *seed_tri, std::
     }
 
     // Translate the poly2tri triangle into trimesh
+    std::set<std::set<trimesh::index_t>> tri_pntsets;
     std::map<trimesh::index_t, trimesh::index_t> sp2o;
     std::vector<trimesh::triangle_t> submesh_triangles_prelim;
     std::set<trimesh::index_t> smtri;
     for (tm_it = remesh_triangles.begin(); tm_it != remesh_triangles.end(); tm_it++) {
 	p2t::Triangle *t = tm->triangles[*tm_it].t;
 	trimesh::triangle_t tmt;
+	std::set<trimesh::index_t> pset;
 	for (size_t j = 0; j < 3; j++) {
 	    tmt.v[j] = pnts_3d_ind[(*pointmap)[t->GetPoint(j)]];
+	    pset.insert(tmt.v[j]);
 	}
 	tmt.t = t;
 	if (tmt.v[0] != tmt.v[1] && tmt.v[0] != tmt.v[2] && tmt.v[1] != tmt.v[2]) {
-	    submesh_triangles_prelim.push_back(tmt);
-	    sp2o[submesh_triangles_prelim.size()-1] = *tm_it;
-	    smtri.insert(submesh_triangles_prelim.size()-1);
+	    if (tri_pntsets.find(pset) == tri_pntsets.end()) {
+		submesh_triangles_prelim.push_back(tmt);
+		sp2o[submesh_triangles_prelim.size()-1] = *tm_it;
+		smtri.insert(submesh_triangles_prelim.size()-1);
+		tri_pntsets.insert(pset);
+	    } else {
+		bu_log("Skipping duplicate: %ld -> %ld -> %ld\n", tmt.v[0], tmt.v[1], tmt.v[2]);
+	    }
 	} else {
 	    bu_log("Skipping: %ld -> %ld -> %ld\n", tmt.v[0], tmt.v[1], tmt.v[2]);
 	}
 
     }
+
     bu_log("submesh triangle prelim cnt: %zd\n", submesh_triangles_prelim.size());
+
+#if CDT_DEBUG_PLOTS
+    bu_vls_sprintf(&pname, "%sremesh_tri-seed_%ld-10_submesh_triangles-pre_butterfly_tmesh_3d.plot3", bu_vls_cstr(&f->face_root), seed_id);
+    plot_all_trimesh_tris_3d(submesh_triangles_prelim, pointmap, bu_vls_cstr(&pname));
+    bu_vls_sprintf(&pname, "%sremesh_tri-seed_%ld-10_submesh_triangles-pre_butterfly_tmesh_2d.plot3", bu_vls_cstr(&f->face_root), seed_id);
+    plot_all_trimesh_tris_2d(submesh_triangles_prelim, pnts_2d, bu_vls_cstr(&pname));
+#endif
 
     // The above selection isn't guaranteed to produce something poly2tri can
     // handle - do a filtering pass to deactivate triangles causing butterfly
-    // vertices in the mesh
+    // vertices in the mesh.
+    // TODO - any triangles removed here also need to have
+    // their corresponding triangle in the remesh set yanked, since we'll no longer
+    // be handling it here...
     remove_butterfly_vertices(submesh_triangles_prelim, pnts_2d.size(), &smtri, seed_id, pointmap, f);
 
     std::vector<trimesh::triangle_t> submesh_triangles;
@@ -725,6 +793,10 @@ Remesh_Near_Tri(struct ON_Brep_CDT_Face_State *f, p2t::Triangle *seed_tri, std::
     plot_all_trimesh_tris_3d(submesh_triangles, pointmap, bu_vls_cstr(&pname));
     bu_vls_sprintf(&pname, "%sremesh_tri-seed_%ld-10_submesh_triangles_tmesh_2d.plot3", bu_vls_cstr(&f->face_root), seed_id);
     plot_all_trimesh_tris_2d(submesh_triangles, pnts_2d, bu_vls_cstr(&pname));
+#if 0
+    bu_vls_sprintf(&pname, "%sremesh_tri-seed_%ld-00_submesh", bu_vls_cstr(&f->face_root), seed_id);
+    plot_all_trimesh_tris_2d_each_tri(submesh_triangles, pnts_2d, bu_vls_cstr(&pname));
+#endif
 #endif
 
     // Build the new outer boundary
@@ -737,7 +809,6 @@ Remesh_Near_Tri(struct ON_Brep_CDT_Face_State *f, p2t::Triangle *seed_tri, std::
     plot_edge_set_2d(bedges, pnts_2d, bu_vls_cstr(&pname));
     bu_vls_sprintf(&pname, "%sremesh_tri-seed_%ld-05_outer_edge_3d.plot3", bu_vls_cstr(&f->face_root), seed_id);
     plot_edge_set(bedges, pnts_3d, bu_vls_cstr(&pname));
-    //plot_trimesh_tris_3d(&smtri, submesh_triangles, pointmap, "submesh_triangles.plot3");
 #endif
 
     // Given the set of unordered boundary edge segments, construct the outer loop

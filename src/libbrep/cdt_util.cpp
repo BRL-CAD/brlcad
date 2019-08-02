@@ -77,7 +77,18 @@ plot_tri_2d(p2t::Triangle *t, struct bu_color *c, FILE *plot)
 {
     point_t pc;
     point_t pc_orig;
+    point_t center = VINIT_ZERO;
     pl_color_buc(plot, c);
+
+    for (size_t i = 0; i < 3; i++) {
+	p2t::Point *pt = t->GetPoint(i);
+	center[X] += pt->x;
+	center[Y] += pt->y;
+    }
+    center[X] = center[X]/3.0;
+    center[Y] = center[Y]/3.0;
+    center[Z] = 0;
+
     for (size_t i = 0; i < 3; i++) {
 	p2t::Point *pt = t->GetPoint(i);
 	VSET(pc, pt->x, pt->y, 0);
@@ -88,6 +99,15 @@ plot_tri_2d(p2t::Triangle *t, struct bu_color *c, FILE *plot)
 	pdv_3cont(plot, pc);
     }
     pdv_3cont(plot, pc_orig);
+
+    /* fill in the "interior" using red */
+    pl_color(plot, 255,0,0);
+    for (size_t i = 0; i < 3; i++) {
+	p2t::Point *pt = t->GetPoint(i);
+	VSET(pc, pt->x, pt->y, 0);
+	pdv_3move(plot, pc);
+	pdv_3cont(plot, center);
+    }
 }
 
 void
