@@ -191,6 +191,8 @@ public:
     std::vector<triangle_t> face_neighbors(const triangle_t &f);
     std::vector<triangle_t> vertex_face_neighbors(long vind);
 
+    ON_3dVector tnorm(triangle_t &t);
+
     // Plot3 generation routines for debugging
     void boundary_edges_plot(const char *filename);
     void boundary_loops_plot(const char *filename);
@@ -199,7 +201,6 @@ public:
     void tris_plot(const char *filename);
 
 #if 0
-    ON_3dVector tnormal(triangle_t &t);
     void build_2d_submesh(cmesh_t *mesh_3d, triangle_t &seed, double deg_tol,
 	    std::map<ON_3dPoint *, ON_3dPoint *> *normalmap);
 #endif

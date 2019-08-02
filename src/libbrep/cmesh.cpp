@@ -277,6 +277,26 @@ cmesh_t::interior_points()
     return results;
 }
 
+ON_3dVector
+cmesh_t::tnorm(triangle_t &t)
+{
+    if (this->type == 1) {
+	// 2D
+	return ON_3dVector(0,0,1);
+    }
+
+    ON_3dPoint *p1 = this->pnts[t.v[0]];
+    ON_3dPoint *p2 = this->pnts[t.v[1]];
+    ON_3dPoint *p3 = this->pnts[t.v[2]];
+
+    ON_3dVector e1 = *p2 - *p1;
+    ON_3dVector e2 = *p3 - *p1;
+    ON_3dVector tdir = ON_CrossProduct(e1, e2);
+    tdir.Unitize();
+    return tdir;
+}
+
+
 void cmesh_t::reset()
 {
     this->pnts_2d.clear();
