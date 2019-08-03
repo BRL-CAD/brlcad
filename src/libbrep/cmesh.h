@@ -217,6 +217,8 @@ public:
     void tris_plot(const char *filename);
     void tri_plot(triangle_t &tri, const char *filename);
 
+    // Trigger mesh repair logic
+    void repair();
 
 private:
     // For situations where we need to process using Brep data
@@ -250,7 +252,6 @@ private:
     // Mesh manipulation functions
     bool tri_add(triangle_t &atris, int check);
     void tri_remove(triangle_t &etris);
-    void repair();
     void reset();
 
     // Plotting utility functions
