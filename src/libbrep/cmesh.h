@@ -14,6 +14,7 @@
 
 #include "common.h"
 
+#include <algorithm>
 #include <vector>
 #include <set>
 #include <map>
@@ -62,7 +63,6 @@ struct edge_t {
 	bool c2 = (v[1] != other.v[1]);
 	return (c1 || c2);
     }
- 
 };
 
 struct uedge_t {
@@ -136,25 +136,32 @@ struct triangle_t {
 
     bool operator<(triangle_t other) const
     {
-	bool c1 = (v[0] < other.v[0]);
-	bool c1e = (v[0] == other.v[0]);
-	bool c2 = (v[1] < other.v[1]);
-	bool c2e = (v[1] == other.v[1]);
-	bool c3 = (v[2] < other.v[2]);
+	std::vector<long> vca, voa;
+	for (int i = 0; i < 3; i++) {
+	    vca.push_back(v[i]);
+	    voa.push_back(other.v[i]);
+	}
+	std::sort(vca.begin(), vca.end());
+	std::sort(voa.begin(), voa.end());
+	bool c1 = (vca[0] < voa[0]);
+	bool c1e = (vca[0] == voa[0]);
+	bool c2 = (vca[1] < voa[1]);
+	bool c2e = (vca[1] == voa[1]);
+	bool c3 = (vca[2] < voa[2]);
 	return (c1 || (c1e && c2) || (c1e && c2e && c3));
     }
     bool operator==(triangle_t other) const
     {
-	bool c1 = (v[0] == other.v[0]);
-	bool c2 = (v[1] == other.v[1]);
-	bool c3 = (v[2] == other.v[2]);
+	bool c1 = ((v[0] == other.v[0]) || (v[0] == other.v[1]) || (v[0] == other.v[2]));
+	bool c2 = ((v[1] == other.v[0]) || (v[1] == other.v[1]) || (v[1] == other.v[2]));
+	bool c3 = ((v[2] == other.v[0]) || (v[2] == other.v[1]) || (v[2] == other.v[2]));
 	return (c1 && c2 && c3);
     }
     bool operator!=(triangle_t other) const
     {
-	bool c1 = (v[0] != other.v[0]);
-	bool c2 = (v[1] != other.v[1]);
-	bool c3 = (v[2] != other.v[2]);
+	bool c1 = ((v[0] != other.v[0]) && (v[0] != other.v[1]) && (v[0] != other.v[2]));
+	bool c2 = ((v[1] != other.v[0]) && (v[1] != other.v[1]) && (v[1] != other.v[2]));
+	bool c3 = ((v[2] != other.v[0]) && (v[2] != other.v[1]) && (v[2] != other.v[2]));
 	return (c1 || c2 || c3);
     }
 

@@ -211,12 +211,14 @@ refine_triangulation(struct ON_Brep_CDT_Face_State *f, int cnt, int rebuild)
 
     // Now, the hard part - create local subsets, remesh them, and replace the original
     // triangles with the new ones.
+#if 0
     int rcnt = 0;
     while (active_ctris.size()) {
 	cmesh::triangle_t seed_tri = *(active_ctris.begin());
 	Remesh_Near_cTri(f, seed_tri, &active_ctris, rcnt);
 	rcnt++;
     }
+#endif
 
     // Locally remesh in the area of triangles identified by above steps
     // We don't want to do any more remeshing than we have to, so if a
