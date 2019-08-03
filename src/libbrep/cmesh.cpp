@@ -106,17 +106,10 @@ cmesh_t::tri_add(triangle_t &tri, int check)
 	    }
 	}
     }
-    for (int ind = 0; ind < 3; ind++) {
-	long v = tri.v[ind];
-	if (this->edge_pnt_edges[v].size() > 2) {
-	    std::cerr << "edge point with >2 edge2??\n";
-	}
-    }
 
-    std::map<long, std::set<edge_t>>::iterator m_it;
-    for (m_it = edge_pnt_edges.begin(); m_it != edge_pnt_edges.end(); m_it++) {
-	ON_3dPoint *p = pnts[(*m_it).first];
-	std::cerr << "point " << (*m_it).first << "(" << p->x << " " << p->y << " " << p->z <<  ") edge cnt: " << (*m_it).second.size() << "\n";
+    std::map<uedge_t, std::set<triangle_t>>::iterator uet_it;
+    for (uet_it = uedges2tris.begin(); uet_it != uedges2tris.end(); uet_it++) {
+	std::cerr << "edge " << (*uet_it).first.v[0] << "-" << (*uet_it).first.v[1] <<  " tri cnt: " << (*uet_it).second.size() << "\n";
     }
 
     return true;
@@ -210,9 +203,6 @@ cmesh_t::boundary_edges()
 			// to be a Brep edge point - not a boundary
 			// edge
 			skip_pnt = 1;
-			std::cout << ue.v[ind] << " is not an edge point\n";
-		    } else {
-			std::cout << ue.v[ind] << " is edge point\n";
 		    }
 		}
 	    }
@@ -220,6 +210,8 @@ cmesh_t::boundary_edges()
 	    if (!skip_pnt) {
 		result.insert((*ue_it).first);
 	    } else {
+		// Track these edges, as they represent places where subsequent
+		// mesh operations will require extra care
 		this->problem_edges.insert((*ue_it).first);
 	    }
 	}
