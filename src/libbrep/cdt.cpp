@@ -123,7 +123,7 @@ refine_triangulation(struct ON_Brep_CDT_Face_State *f, int cnt, int rebuild)
     bu_vls_sprintf(&pname, "%srefine_tri-%d-00_initial-boundary_cmesh_3d.plot3", bu_vls_cstr(&f->face_root), cnt);
     f->fmesh.boundary_edges_plot(bu_vls_cstr(&pname));
     bu_vls_sprintf(&pname, "%srefine_tri-%d-00_initial-boundary_loops_cmesh_3d.plot3", bu_vls_cstr(&f->face_root), cnt);
-    f->fmesh.boundary_loops_plot(bu_vls_cstr(&pname));
+    f->fmesh.boundary_loops_plot(1, bu_vls_cstr(&pname));
 
     // If a previous pass has made changes in which points are active in the
     // surface set, we need to rebuild the whole triangulation.
@@ -195,7 +195,7 @@ refine_triangulation(struct ON_Brep_CDT_Face_State *f, int cnt, int rebuild)
 	    }
 
 	}
-	std::vector<cmesh::triangle_t> ntri = f->fmesh.interior_incorrect_normals();
+	std::vector<cmesh::triangle_t> ntri = f->fmesh.interior_incorrect_normals(1);
 	if (ntri.size()) {
 	    bu_vls_sprintf(&pname, "%srefine_tri-%d-04_interior_bad_normals-cmesh_3d.plot3", bu_vls_cstr(&f->face_root), cnt);
 	    f->fmesh.interior_incorrect_normals_plot(bu_vls_cstr(&pname));

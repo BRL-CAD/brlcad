@@ -18,6 +18,7 @@
 
 // needed for implementation
 #include <iostream>
+#include <queue>
 
 namespace cmesh
 {
@@ -38,6 +39,11 @@ cmesh_t::tri_add(triangle_t &tri, int check)
 	return true;
     }
 
+
+    if (check) {
+	std::vector<long> sml = boundary_loops(0)[0];
+	std::cout << "loop v cnt: " << sml.size() << "\n";
+    }
 
     // Add the triangle
     this->tris.insert(tri);
@@ -98,6 +104,7 @@ cmesh_t::tri_add(triangle_t &tri, int check)
     // If we're growing a triangle set by marching, rather than dumping a bag
     // of triangles into the container, check to see if the triangle just added
     // causes a problem in the boundary loop.  If it does, reject it.
+#if 0
     if (check) {
 	for (int ind = 0; ind < 3; ind++) {
 	    long v = tri.v[ind];
@@ -107,6 +114,7 @@ cmesh_t::tri_add(triangle_t &tri, int check)
 	    }
 	}
     }
+#endif
 
 #if 0
     std::map<uedge_t, std::set<triangle_t>>::iterator uet_it;
@@ -187,7 +195,7 @@ cmesh_t::vertex_face_neighbors(long vind)
 }
 
 std::set<uedge_t>
-cmesh_t::boundary_edges()
+cmesh_t::boundary_edges(int use_brep_data)
 {
     this->problem_edges.clear();
     std::set<uedge_t> result;
@@ -196,7 +204,7 @@ cmesh_t::boundary_edges()
 	if ((*ue_it).second.size() == 1) {
 	    struct uedge_t ue((*ue_it).first);
 	    int skip_pnt = 0;
-	    if (this->edge_pnts) {
+	    if (use_brep_data && this->edge_pnts) {
 		// If we have extra information from the Brep, we can filter out
 		// some "bad" edges
 		for (int ind = 0; ind < 2; ind++) {
@@ -245,12 +253,12 @@ cmesh_t::find_boundary_oriented_edge(uedge_t &ue)
 }
 
 std::vector<std::vector<long>>
-cmesh_t::boundary_loops()
+cmesh_t::boundary_loops(int use_brep_data)
 {
     std::set<edge_t>::iterator e_it;
     std::vector<std::vector<long>> results;
 
-    std::set<uedge_t> bedges = this->boundary_edges();
+    std::set<uedge_t> bedges = this->boundary_edges(use_brep_data);
 
     if (!bedges.size()) {
 	std::cerr << "No boundary edges in mesh??\n";
@@ -279,6 +287,7 @@ cmesh_t::boundary_loops()
 	    uedge_t vue(*e_it);
 	    if (cue == vue) continue;
 	    if (bedges.find(vue) == bedges.end()) continue;
+	    if (unadded.find(vue) == unadded.end()) continue;
 	    candidates.insert(*e_it);
 	    break;
 	}
@@ -330,11 +339,11 @@ cmesh_t::boundary_loops()
 
 
 std::set<long>
-cmesh_t::interior_points()
+cmesh_t::interior_points(int use_brep_data)
 {
     std::set<long> results;
     std::set<long> bedge_pnts;
-    std::set<uedge_t> bedges = this->boundary_edges();
+    std::set<uedge_t> bedges = this->boundary_edges(use_brep_data);
     std::set<uedge_t>::iterator ue_it;
     for (ue_it = bedges.begin(); ue_it != bedges.end(); ue_it++) {
 	bedge_pnts.insert((*ue_it).v[0]);
@@ -354,11 +363,11 @@ cmesh_t::interior_points()
 }
 
 std::vector<triangle_t>
-cmesh_t::interior_incorrect_normals()
+cmesh_t::interior_incorrect_normals(int use_brep_data)
 {
     std::vector<triangle_t> results;
     std::set<long> bedge_pnts;
-    std::set<uedge_t> bedges = this->boundary_edges();
+    std::set<uedge_t> bedges = this->boundary_edges(use_brep_data);
     std::set<uedge_t>::iterator ue_it;
     for (ue_it = bedges.begin(); ue_it != bedges.end(); ue_it++) {
 	bedge_pnts.insert((*ue_it).v[0]);
@@ -482,13 +491,6 @@ cmesh_t::bnorm(const triangle_t &t)
 
 void cmesh_t::reset()
 {
-
-    for (size_t i = 0; i < pnts_2d.size(); i++) {
-	delete this->pnts_2d[i];
-    }
-    this->pnts_2d.clear();
-    this->pnts.clear();
-    this->p2ind.clear();
     this->tris.clear();
     this->v2edges.clear();
     this->v2tris.clear();
@@ -502,7 +504,10 @@ void cmesh_t::build_3d(std::set<p2t::Triangle *> *cdttri, std::map<p2t::Point *,
     if (!cdttri || !pointmap) return;
 
     this->reset();
-
+    this->pnts_2d.clear();
+    this->pnts.clear();
+    this->p2ind.clear();
+ 
     std::set<p2t::Triangle*>::iterator s_it;
 
     // 3D mesh
@@ -547,21 +552,121 @@ void cmesh_t::build_3d(std::set<p2t::Triangle *> *cdttri, std::map<p2t::Point *,
 
 }
 
+bool
+cmesh_t::tri_problem_edges(triangle_t &t)
+{
+    if (!problem_edges.size()) return false;
+
+    uedge_t ue1(t.v[0], t.v[1]);
+    uedge_t ue2(t.v[1], t.v[2]);
+    uedge_t ue3(t.v[2], t.v[0]);
+
+    if (problem_edges.find(ue1) != problem_edges.end()) return true;
+    if (problem_edges.find(ue2) != problem_edges.end()) return true;
+    if (problem_edges.find(ue3) != problem_edges.end()) return true;
+    return false;
+}
+
+size_t
+cmesh_t::collect_neighbor_tris(triangle_t &seed, double deg, cmesh_t *submesh)
+{
+    double angle = deg * ON_PI/180.0;
+    ON_3dVector sn = bnorm(seed);
+
+    submesh->visited_triangles.insert(seed);
+
+    std::queue<triangle_t> q1, q2;
+    std::queue<triangle_t> *tq, *nq;
+    tq = &q1;
+    nq = &q2;
+
+    {
+	std::set<triangle_t> fvneigh;
+	std::set<triangle_t>::iterator f_it;
+	for (int i = 0; i < 3; i++) {
+	    std::vector<triangle_t> fneigh = vertex_face_neighbors(seed.v[i]);
+	    fvneigh.insert(fneigh.begin(), fneigh.end());
+	}
+	for (f_it = fvneigh.begin(); f_it != fvneigh.end(); f_it++) {
+	    q1.push(*f_it);
+	}
+    }
+    while (!tq->empty()) {
+	triangle_t ct = tq->front();
+	tq->pop();
+	// Check normal
+	ON_3dVector tn = bnorm(ct);
+	double dprd = ON_DotProduct(sn, tn);
+	double dang = (NEAR_EQUAL(dprd, 1.0, ON_ZERO_TOLERANCE)) ? 0 : acos(dprd);
+
+	if (dang > angle) {
+	    std::cerr << "Angle rejection (" << dang << "," << angle << ")\n";
+	    continue;
+	}
+
+	// TODO - if triangle's non active vertex is inside the current
+	// boundary loop, it needs to be stored as an interior point - no
+	// triangle is added to the submesh, as the submesh's only purpose is
+	// to provide the outer bounding polygon for p2t.  However, the
+	// triangles associated with the interior point MUST be added to the
+	// mesh, or problems will result
+	//
+	// In principle this might happen with a triangle flipped relative to
+	// its brep normals...
+
+	// TODO - if triangle has problem edges, it cannot be added as a
+	// triangle - its non-active vertex needs to be stored as an interior
+	// point, and the mesh must grow until that 2D point is inside the 2D
+	// loop.  This will usually happen quickly, but isn't guaranteed to...
+	//
+	// One option might be to do a post-repair re-assessment, and if any
+	// new problem edges have appeared re-seed with those triangles...
+	//
+	// Another might be an "all or nothing" policy for uedges with more than
+	// two triangles...
+
+
+	// TODO -reject triangle if tri_add indicates it would self-intersect
+	// the boundary loop.  Remove it from visited if that's why we're
+	// rejecting it, since subsequent additions might make it viable again.
+	submesh->tri_add(ct, 1);
+
+
+	// TODO grow this not by vertex or face neighbors, but by getting the
+	// triangle sets from the current boundary_loop's uedge segments.
+	// In essence, march the boundary loop out in steps rather than 
+	// once face at a time.
+	{
+	    std::set<triangle_t> fvneigh;
+	    std::set<triangle_t>::iterator f_it;
+	    for (int i = 0; i < 3; i++) {
+		std::vector<triangle_t> fneigh = vertex_face_neighbors(seed.v[i]);
+		fvneigh.insert(fneigh.begin(), fneigh.end());
+	    }
+	    for (f_it = fvneigh.begin(); f_it != fvneigh.end(); f_it++) {
+		if (submesh->visited_triangles.find(*f_it) == submesh->visited_triangles.end()) {
+		    nq->push(*f_it);
+		    submesh->visited_triangles.insert(*f_it);
+		}
+	    }
+	}
+
+	if (tq->empty()) {
+	    std::queue<triangle_t> *tmpq = tq;
+	    tq = nq;
+	    nq = tmpq;
+	}
+    }
+
+    return submesh->tris.size();
+}
+
 void
 cmesh_t::remesh_tri(triangle_t &seed)
 {
     std::set<long> interior_pnts;
 
-    // Any seed triangle vertices not on the parent mesh boundary
-    // will need to be interior in the remesh.
-    for (int i = 0; i < 3; i++) {
-	if (sv.find(seed.v[i]) != sv.end()) continue;
-	ON_3dPoint *p = pnts[seed.v[i]];
-	if (edge_pnts->find(p) != edge_pnts->end()) continue;
-	interior_pnts.insert(seed.v[i]);
-    }
 
-    std::cout << "got " << interior_pnts.size() << " interior pnts\n";
 
     cmesh_t submesh;
     submesh.set_brep_data(this->m_bRev, this->edge_pnts, this->singularities, this->normalmap);
@@ -583,9 +688,52 @@ cmesh_t::remesh_tri(triangle_t &seed)
 	submesh.pnts_2d.push_back(n2d);
     }
 
-
     // Grow submesh
-
+    //
+    // TODO - the "seeding" problem is a little more complex than just
+    // picking a triangle.  What we actually need is a seed LOOP, which
+    // we keep valid.  If the initial triangle can't give us that loop
+    // (which it sometimes can't - say if it's flipped) we
+    // need to use neighbor information to establish an initial valid
+    // loop.  Probably pull all the tris sharing at least one vert
+    // with the seed, eliminate all the edges sharing a vertex with
+    // the seed, and try to build a loop out of the others. For any
+    // bad faces in the neighbors, pull their neighbors and do the
+    // same thing until we get a loop that doesn't have bad edges.
+    // Brep edges are hard stops (obviously).  Any points not used
+    // in the boundary need to be interior points for p2t
+    if (!tri_problem_edges(seed)) {
+	submesh.tri_add(seed, 0);
+    } else {
+	// Any seed triangle vertices not on the parent mesh boundary
+	// will need to be interior in the remesh.
+	for (int i = 0; i < 3; i++) {
+	    if (sv.find(seed.v[i]) != sv.end()) continue;
+	    ON_3dPoint *p = pnts[seed.v[i]];
+	    if (edge_pnts->find(p) != edge_pnts->end()) continue;
+	    interior_pnts.insert(seed.v[i]);
+	}
+	std::cout << "got " << interior_pnts.size() << " interior pnts\n";
+    }
+    double deg = 10;
+    size_t ncnt = collect_neighbor_tris(seed, deg, &submesh);
+    while (ncnt < 10 && deg < 45) {
+	submesh.reset();
+	if (!tri_problem_edges(seed)) {
+	    submesh.tri_add(seed, 0);
+	} else {
+	    // Any seed triangle vertices not on the parent mesh boundary
+	    // will need to be interior in the remesh.
+	    for (int i = 0; i < 3; i++) {
+		if (sv.find(seed.v[i]) != sv.end()) continue;
+		ON_3dPoint *p = pnts[seed.v[i]];
+		if (edge_pnts->find(p) != edge_pnts->end()) continue;
+		interior_pnts.insert(seed.v[i]);
+	    }
+	}
+	deg = deg + 5;
+	ncnt = collect_neighbor_tris(seed, deg, &submesh);
+    }
 
     // Re-triangulate submesh and replace the triangles in the current mesh
 
@@ -601,7 +749,7 @@ void
 cmesh_t::repair()
 {
     std::vector<triangle_t> s_tris = this->singularity_triangles();
-    std::vector<triangle_t> f_tris = this->interior_incorrect_normals();
+    std::vector<triangle_t> f_tris = this->interior_incorrect_normals(1);
     seed_tris.clear(); 
     seed_tris.insert(s_tris.begin(), s_tris.end());
     seed_tris.insert(f_tris.begin(), f_tris.end());
@@ -644,7 +792,7 @@ void cmesh_t::boundary_edges_plot(const char *filename)
     bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
     pl_color_buc(plot_file, &c);
 
-    std::set<uedge_t> bedges = this->boundary_edges();
+    std::set<uedge_t> bedges = this->boundary_edges(1);
     std::set<uedge_t>::iterator b_it;
     for (b_it = bedges.begin(); b_it != bedges.end(); b_it++) {
 	uedge_t ue = *b_it;
@@ -663,11 +811,11 @@ void cmesh_t::boundary_edges_plot(const char *filename)
 }
 
 
-void cmesh_t::boundary_loops_plot(const char *filename)
+void cmesh_t::boundary_loops_plot(int use_brep_data, const char *filename)
 {
     FILE* plot_file = fopen(filename, "w");
 
-    std::vector<std::vector<long>> loops = this->boundary_loops();
+    std::vector<std::vector<long>> loops = this->boundary_loops(use_brep_data);
     point_t bnp;
     for (size_t i = 0; i < loops.size(); i++) {
 	struct bu_color c = BU_COLOR_INIT_ZERO;
@@ -838,7 +986,7 @@ void cmesh_t::interior_incorrect_normals_plot(const char *filename)
     bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
     pl_color_buc(plot_file, &c);
 
-    std::vector<triangle_t> faces = this->interior_incorrect_normals();
+    std::vector<triangle_t> faces = this->interior_incorrect_normals(1);
     for (size_t i = 0; i < faces.size(); i++) {
 	this->plot_tri(faces[i], &c, plot_file, 0, 255, 0);
     }
