@@ -57,6 +57,7 @@ cmesh_t::tri_add(triangle_t &tri, int check)
     e[2].set(k, i);
     for (int ind = 0; ind < 3; ind++) {
 	this->edges2tris[e[ind]] = tri;
+	this->v2edges[e[ind].v[0]].insert(e[ind]);
     }
 
     // Update unordered edge triangle count
@@ -107,10 +108,12 @@ cmesh_t::tri_add(triangle_t &tri, int check)
 	}
     }
 
+#if 0
     std::map<uedge_t, std::set<triangle_t>>::iterator uet_it;
     for (uet_it = uedges2tris.begin(); uet_it != uedges2tris.end(); uet_it++) {
 	std::cerr << "edge " << (*uet_it).first.v[0] << "-" << (*uet_it).first.v[1] <<  " tri cnt: " << (*uet_it).second.size() << "\n";
     }
+#endif
 
     return true;
 }
@@ -277,6 +280,7 @@ cmesh_t::boundary_loops()
 	    if (cue == vue) continue;
 	    if (bedges.find(vue) == bedges.end()) continue;
 	    candidates.insert(*e_it);
+	    break;
 	}
 	if (candidates.size() != 1) {
 	    std::cerr << "No viable candidate boundary edge??\n";
@@ -284,8 +288,8 @@ cmesh_t::boundary_loops()
 	    return results;
 	}
 	edge_t nedge = *(candidates.begin());
-	prev_v = dedge.v[0];
-	curr_v = dedge.v[1];
+	prev_v = nedge.v[0];
+	curr_v = nedge.v[1];
 	wl->push_back(curr_v);
 	uedge_t nuedge(nedge);
 	unadded.erase(nuedge);
@@ -368,10 +372,17 @@ cmesh_t::interior_incorrect_normals()
 	if (tdir.Length() > 0 && bdir.Length() > 0 && ON_DotProduct(tdir, bdir) < 0.1) {
 	    int epnt_cnt = 0;
 	    for (int i = 0; i < 3; i++) {
-		epnt_cnt = (bedge_pnts.find((*tr_it).v[i]) == bedge_pnts.end()) ? epnt_cnt : epnt_cnt + 1;
+		ON_3dPoint *p = pnts[(*tr_it).v[i]];
+		epnt_cnt = (edge_pnts->find(p) == edge_pnts->end()) ? epnt_cnt : epnt_cnt + 1;
 	    }
 	    if (epnt_cnt == 2) {
 		std::cerr << "UNCULLED problem point from surface???????\n";
+		for (int i = 0; i < 3; i++) {
+		    ON_3dPoint *p = pnts[(*tr_it).v[i]];
+		    if (edge_pnts->find(p) == edge_pnts->end()) {
+			std::cout << p->x << " " << p->y << " " << p->z << "\n";
+		    }
+		}
 		results.clear();
 		return results;
 	    }
@@ -379,6 +390,23 @@ cmesh_t::interior_incorrect_normals()
 	}
     }
 
+    return results;
+}
+
+
+std::vector<triangle_t>
+cmesh_t::singularity_triangles()
+{
+    std::vector<triangle_t> results;
+    std::set<triangle_t> uniq_tris;
+    std::set<long>::iterator s_it;
+
+    for (s_it = sv.begin(); s_it != sv.end(); s_it++) {
+	std::vector<triangle_t> faces = this->vertex_face_neighbors(*s_it);
+	uniq_tris.insert(faces.begin(), faces.end());
+    }
+
+    results.assign(uniq_tris.begin(), uniq_tris.end());
     return results;
 }
 
@@ -407,6 +435,20 @@ cmesh_t::tnorm(const triangle_t &t)
     ON_3dVector tdir = ON_CrossProduct(e1, e2);
     tdir.Unitize();
     return tdir;
+}
+
+ON_3dPoint
+cmesh_t::tcenter(const triangle_t &t)
+{
+    ON_3dPoint avgpnt(0,0,0);
+
+    for (size_t i = 0; i < 3; i++) {
+	ON_3dPoint *p3d = this->pnts[t.v[i]];
+	avgpnt = avgpnt + *p3d;
+    }
+
+    ON_3dPoint cpnt = avgpnt/3.0;
+    return cpnt;
 }
 
 ON_3dVector
@@ -440,8 +482,11 @@ cmesh_t::bnorm(const triangle_t &t)
 
 void cmesh_t::reset()
 {
+
+    for (size_t i = 0; i < pnts_2d.size(); i++) {
+	delete this->pnts_2d[i];
+    }
     this->pnts_2d.clear();
-    this->p2d2ind.clear();
     this->pnts.clear();
     this->p2ind.clear();
     this->tris.clear();
@@ -471,12 +516,13 @@ void cmesh_t::build_3d(std::set<p2t::Triangle *> *cdttri, std::map<p2t::Point *,
 	    uniq_p3d.insert((*pointmap)[t->GetPoint(j)]);
 	}
     }
+    this->sv.clear();
     std::set<ON_3dPoint *>::iterator u_it;
     for (u_it = uniq_p3d.begin(); u_it != uniq_p3d.end(); u_it++) {
 	this->pnts.push_back(*u_it);
 	this->p2ind[*u_it] = this->pnts.size() - 1;
 	if (this->singularities->find(*u_it) != this->singularities->end()) {
-	    std::cout << "singularity point: " << this->p2ind[*u_it] << "\n";
+	    this->sv.insert(this->p2ind[*u_it]);
 	}
     }
 
@@ -499,6 +545,72 @@ void cmesh_t::build_3d(std::set<p2t::Triangle *> *cdttri, std::map<p2t::Point *,
 	cmesh_t::tri_add(nt, 0);
     }
 
+}
+
+void
+cmesh_t::remesh_tri(triangle_t &seed)
+{
+    std::set<long> interior_pnts;
+
+    // Any seed triangle vertices not on the parent mesh boundary
+    // will need to be interior in the remesh.
+    for (int i = 0; i < 3; i++) {
+	if (sv.find(seed.v[i]) != sv.end()) continue;
+	ON_3dPoint *p = pnts[seed.v[i]];
+	if (edge_pnts->find(p) != edge_pnts->end()) continue;
+	interior_pnts.insert(seed.v[i]);
+    }
+
+    std::cout << "got " << interior_pnts.size() << " interior pnts\n";
+
+    cmesh_t submesh;
+    submesh.set_brep_data(this->m_bRev, this->edge_pnts, this->singularities, this->normalmap);
+    submesh.type = 1; // 2D mesh
+
+    // It's a 2D mesh, but go ahead and copy the 3D points in case anything
+    // needs to refer to them
+    submesh.pnts.assign(pnts.begin(), pnts.end());
+
+    ON_3dPoint sp = this->tcenter(seed);
+    ON_3dVector sn = this->bnorm(seed);
+    ON_Plane tplane(sp, sn);
+    ON_Xform to_plane;
+    to_plane.PlanarProjection(tplane);
+    for (size_t i = 0; i < pnts.size(); i++) {
+	ON_3dPoint op3d = (*pnts[i]);
+	op3d.Transform(to_plane);
+	ON_2dPoint *n2d = new ON_2dPoint(op3d.x, op3d.y);
+	submesh.pnts_2d.push_back(n2d);
+    }
+
+
+    // Grow submesh
+
+
+    // Re-triangulate submesh and replace the triangles in the current mesh
+
+
+    // Clean up
+    for (size_t i = 0; i < pnts_2d.size(); i++) {
+	delete pnts_2d[i];
+    }
+    seed_tris.erase(seed);
+}
+
+void
+cmesh_t::repair()
+{
+    std::vector<triangle_t> s_tris = this->singularity_triangles();
+    std::vector<triangle_t> f_tris = this->interior_incorrect_normals();
+    seed_tris.clear(); 
+    seed_tris.insert(s_tris.begin(), s_tris.end());
+    seed_tris.insert(f_tris.begin(), f_tris.end());
+
+    while (seed_tris.size()) {
+	triangle_t seed = *seed_tris.begin();
+
+	remesh_tri(seed);
+    }
 }
 
 void cmesh_t::plot_uedge(struct uedge_t &ue, FILE* plot_file)

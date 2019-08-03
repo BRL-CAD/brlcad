@@ -179,7 +179,6 @@ public:
 
     int type;  /* 0 = 3D, 1 = 2D */
     std::vector<ON_2dPoint *> pnts_2d;
-    std::map<ON_2dPoint *, long> p2d2ind;
     std::vector<ON_3dPoint *> pnts;
     std::map<ON_3dPoint *, long> p2ind;
 
@@ -210,6 +209,7 @@ public:
     std::vector<triangle_t> vertex_face_neighbors(long vind);
 
     std::vector<triangle_t> interior_incorrect_normals();
+    std::vector<triangle_t> singularity_triangles();
 
 
     ON_3dVector tnorm(const triangle_t &t);
@@ -224,8 +224,9 @@ public:
     void tris_plot(const char *filename);
     void tri_plot(triangle_t &tri, const char *filename);
 
+    void repair();
+
 #if 0
-    void build_2d_submesh(cmesh_t *mesh_3d, triangle_t &seed, double deg_tol);
 #endif
 private:
     // For situations where we need to process using Brep data
@@ -233,11 +234,17 @@ private:
     std::set<ON_3dPoint *> *singularities;
     std::map<ON_3dPoint *, ON_3dPoint *> *normalmap;
     bool m_bRev;
+    ON_3dPoint tcenter(const triangle_t &t);
     ON_3dVector bnorm(const triangle_t &t);
 
     std::set<uedge_t> current_bedges;
     std::set<uedge_t> problem_edges;
     std::map<long, std::set<edge_t>> edge_pnt_edges;
+
+    std::set<long> sv;
+
+    std::set<triangle_t> seed_tris;
+    void remesh_tri(triangle_t &seed);
 
     // misc
     edge_t find_boundary_oriented_edge(uedge_t &ue);
