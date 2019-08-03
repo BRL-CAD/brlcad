@@ -193,11 +193,35 @@ cmesh_t::vertex_face_neighbors(long vind)
 std::set<uedge_t>
 cmesh_t::boundary_edges()
 {
+    this->problem_edges.clear();
     std::set<uedge_t> result;
     std::map<uedge_t, std::set<triangle_t>>::iterator ue_it;
     for (ue_it = this->uedges2tris.begin(); ue_it != this->uedges2tris.end(); ue_it++) {
 	if ((*ue_it).second.size() == 1) {
-	    result.insert((*ue_it).first);
+	    struct uedge_t ue((*ue_it).first);
+	    int skip_pnt = 0;
+	    if (this->edge_pnts) {
+		// If we have extra information from the Brep, we can filter out
+		// some "bad" edges
+		for (int ind = 0; ind < 2; ind++) {
+		    ON_3dPoint *p = pnts[ue.v[ind]];
+		    if (edge_pnts->find(p) == edge_pnts->end()) {
+			// Strange edge count on a vertex not known
+			// to be a Brep edge point - not a boundary
+			// edge
+			skip_pnt = 1;
+			std::cout << ue.v[ind] << " is not an edge point\n";
+		    } else {
+			std::cout << ue.v[ind] << " is edge point\n";
+		    }
+		}
+	    }
+
+	    if (!skip_pnt) {
+		result.insert((*ue_it).first);
+	    } else {
+		this->problem_edges.insert((*ue_it).first);
+	    }
 	}
     }
     return result;
@@ -367,9 +391,14 @@ cmesh_t::interior_incorrect_normals()
 }
 
 void
-cmesh_t::set_brep_data(bool brev, std::set<ON_3dPoint *> *s, std::map<ON_3dPoint *, ON_3dPoint *> *n)
+cmesh_t::set_brep_data(
+	bool brev,
+       	std::set<ON_3dPoint *> *e,
+       	std::set<ON_3dPoint *> *s,
+       	std::map<ON_3dPoint *, ON_3dPoint *> *n)
 {
     this->m_bRev = brev;
+    this->edge_pnts = e;
     this->singularities = s;
     this->normalmap = n;
 }
@@ -480,6 +509,29 @@ void cmesh_t::build_3d(std::set<p2t::Triangle *> *cdttri, std::map<p2t::Point *,
 
 }
 
+void cmesh_t::plot_uedge(struct uedge_t &ue, FILE* plot_file)
+{
+    if (this->type == 0) {
+	// 3D
+	ON_3dPoint *p1 = this->pnts[ue.v[0]];
+	ON_3dPoint *p2 = this->pnts[ue.v[1]];
+	point_t bnp1, bnp2;
+	VSET(bnp1, p1->x, p1->y, p1->z);
+	VSET(bnp2, p2->x, p2->y, p2->z);
+	pdv_3move(plot_file, bnp1);
+	pdv_3cont(plot_file, bnp2);
+    }
+    if (this->type == 1) {
+	// 2D
+	ON_2dPoint *p1 = this->pnts_2d[ue.v[0]];
+	ON_2dPoint *p2 = this->pnts_2d[ue.v[1]];
+	point_t bnp1, bnp2;
+	VSET(bnp1, p1->x, p1->y, 0);
+	VSET(bnp2, p2->x, p2->y, 0);
+	pdv_3move(plot_file, bnp1);
+	pdv_3cont(plot_file, bnp2);
+    }
+}
 
 void cmesh_t::boundary_edges_plot(const char *filename)
 {
@@ -492,25 +544,14 @@ void cmesh_t::boundary_edges_plot(const char *filename)
     std::set<uedge_t>::iterator b_it;
     for (b_it = bedges.begin(); b_it != bedges.end(); b_it++) {
 	uedge_t ue = *b_it;
-	if (this->type == 0) {
-	    // 3D
-	    ON_3dPoint *p1 = this->pnts[ue.v[0]];
-	    ON_3dPoint *p2 = this->pnts[ue.v[1]];
-	    point_t bnp1, bnp2;
-	    VSET(bnp1, p1->x, p1->y, p1->z);
-	    VSET(bnp2, p2->x, p2->y, p2->z);
-	    pdv_3move(plot_file, bnp1);
-	    pdv_3cont(plot_file, bnp2);
-	}
-	if (this->type == 1) {
-	    // 2D
-	    ON_2dPoint *p1 = this->pnts_2d[ue.v[0]];
-	    ON_2dPoint *p2 = this->pnts_2d[ue.v[1]];
-	    point_t bnp1, bnp2;
-	    VSET(bnp1, p1->x, p1->y, 0);
-	    VSET(bnp2, p2->x, p2->y, 0);
-	    pdv_3move(plot_file, bnp1);
-	    pdv_3cont(plot_file, bnp2);
+	plot_uedge(ue, plot_file);
+    }
+
+    if (this->problem_edges.size()) {
+	pl_color(plot_file, 255, 0, 0);
+	for (b_it = problem_edges.begin(); b_it != problem_edges.end(); b_it++) {
+	    uedge_t ue = *b_it;
+	    plot_uedge(ue, plot_file);
 	}
     }
 

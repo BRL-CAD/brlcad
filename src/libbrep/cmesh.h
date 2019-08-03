@@ -193,7 +193,12 @@ public:
     void reset();
 
     void build_3d(std::set<p2t::Triangle *> *cdttri, std::map<p2t::Point *, ON_3dPoint *> *pointmap);
-    void set_brep_data(bool brev, std::set<ON_3dPoint *> *s, std::map<ON_3dPoint *, ON_3dPoint *> *n);
+    void set_brep_data(
+	    bool brev,
+	    std::set<ON_3dPoint *> *e,
+	    std::set<ON_3dPoint *> *s,
+	    std::map<ON_3dPoint *, ON_3dPoint *> *n
+	    );
 
     bool tri_add(triangle_t &atris, int check);
     void tri_remove(triangle_t &etris);
@@ -224,17 +229,20 @@ public:
 #endif
 private:
     // For situations where we need to process using Brep data
+    std::set<ON_3dPoint *> *edge_pnts;
     std::set<ON_3dPoint *> *singularities;
     std::map<ON_3dPoint *, ON_3dPoint *> *normalmap;
     bool m_bRev;
     ON_3dVector bnorm(const triangle_t &t);
 
     std::set<uedge_t> current_bedges;
+    std::set<uedge_t> problem_edges;
     std::map<long, std::set<edge_t>> edge_pnt_edges;
 
     // misc
     edge_t find_boundary_oriented_edge(uedge_t &ue);
     void plot_tri(const triangle_t &t, struct bu_color *buc, FILE *plot, int r, int g, int b);
+    void plot_uedge(struct uedge_t &ue, FILE* plot_file);
 };
 
 }

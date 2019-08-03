@@ -98,7 +98,7 @@ full_retriangulation(struct ON_Brep_CDT_Face_State *f)
     }
 
     // Testing new mesh container
-    f->fmesh.set_brep_data(f->s_cdt->brep->m_F[f->ind].m_bRev, f->singularities, f->on3_to_norm_map);
+    f->fmesh.set_brep_data(f->s_cdt->brep->m_F[f->ind].m_bRev, f->s_cdt->edge_pnts, f->singularities, f->on3_to_norm_map);
     f->fmesh.build_3d(f->tris, f->p2t_to_on3_map);
 
 
@@ -334,7 +334,7 @@ do_triangulation(struct ON_Brep_CDT_Face_State *f)
     }
 
     // Testing new mesh container
-    f->fmesh.set_brep_data(f->s_cdt->brep->m_F[f->ind].m_bRev, f->singularities, f->on3_to_norm_map);
+    f->fmesh.set_brep_data(f->s_cdt->brep->m_F[f->ind].m_bRev, f->s_cdt->edge_pnts, f->singularities, f->on3_to_norm_map);
     f->fmesh.build_3d(f->tris, f->p2t_to_on3_map);
 
     /* The poly2tri triangulation is not guaranteed to have all the properties
