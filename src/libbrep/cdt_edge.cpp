@@ -922,7 +922,7 @@ Get_Edge_Points(struct ON_Brep_CDT_State *s_cdt)
 	}
 	if (!ccnt || emax < 5*emin) continue;
 
-	bu_log("loop %d (%f, %f)\n", loop.m_loop_index, emin, emax);
+	//bu_log("loop %d (%f, %f)\n", loop.m_loop_index, emin, emax);
 	for (int j = 0; j < loop.TrimCount(); j++) {
 	    ON_BrepTrim *t = loop.Trim(j);
 	    ON_BrepEdge *e = t->Edge();
@@ -935,7 +935,7 @@ Get_Edge_Points(struct ON_Brep_CDT_State *s_cdt)
 		}
 	    }	
 	}
-	bu_log("loop %d, face %d refined\n", loop.m_loop_index, loop.Face()->m_face_index);
+	//bu_log("loop %d, face %d refined\n", loop.m_loop_index, loop.Face()->m_face_index);
     }
 
     // For each linear edge, for both loops associated with its trims
@@ -981,13 +981,13 @@ Get_Edge_Points(struct ON_Brep_CDT_State *s_cdt)
 		max_dist = 2*smallest_curve_avg_seg;
 		min_dist = 0.5*smallest_curve_avg_seg;
 
-		bu_log("curve limits linear edge %d: min %f max %f\n", edge.m_edge_index, min_dist, max_dist);
+		//bu_log("curve limits linear edge %d: min %f max %f\n", edge.m_edge_index, min_dist, max_dist);
 
 	    } else {
 		// No curve edges on this loop - fall back on standard surface seeding
 		get_edge_surface_dimensions(&max_dist, &min_dist, &edge);
 		get_edge_surface_tolerances(&max_dist, &min_dist, max_dist, min_dist, s_cdt);
-		bu_log("linear edge %d: min %f max %f\n", edge.m_edge_index, min_dist, max_dist);
+		//bu_log("linear edge %d: min %f max %f\n", edge.m_edge_index, min_dist, max_dist);
 	    }
 
 	    (void)getEdgePoints(s_cdt, &edge, max_dist, min_dist);

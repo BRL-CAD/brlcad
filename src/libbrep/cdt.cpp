@@ -82,11 +82,8 @@ full_retriangulation(struct ON_Brep_CDT_Face_State *f)
 	}
     }
 
-    // Testing new mesh container
-    f->fmesh.build_3d(f->tris, f->p2t_to_on3_map);
-
     // Identify any singular points
-    f->singularities.clear();
+    f->singularities->clear();
     if (f->has_singular_trims) {
 	std::set<p2t::Triangle *>::iterator tr_it;
 	for (tr_it = f->tris->begin(); tr_it != f->tris->end(); tr_it++) {
@@ -94,13 +91,16 @@ full_retriangulation(struct ON_Brep_CDT_Face_State *f)
 	    for (size_t j = 0; j < 3; j++) {
 		ON_3dPoint *p3d = (*f->p2t_to_on3_map)[t->GetPoint(j)];
 		if (f->s_cdt->singular_vert_to_norms->find(p3d) != f->s_cdt->singular_vert_to_norms->end()) {
-		    f->singularities.insert(p3d);
+		    f->singularities->insert(p3d);
 		}
 	    }
 	}
     }
 
-    f->fmesh.set_brep_data(f->s_cdt->brep->m_F[f->ind].m_bRev, &f->singularities, f->on3_to_norm_map);
+    // Testing new mesh container
+    f->fmesh.set_brep_data(f->s_cdt->brep->m_F[f->ind].m_bRev, f->singularities, f->on3_to_norm_map);
+    f->fmesh.build_3d(f->tris, f->p2t_to_on3_map);
+
 
     return 0;
 }
@@ -120,6 +120,8 @@ refine_triangulation(struct ON_Brep_CDT_Face_State *f, int cnt, int rebuild)
 
     bu_vls_sprintf(&pname, "%srefine_tri-%d-00_initial-iteration_cmesh_3d.plot3", bu_vls_cstr(&f->face_root), cnt);
     f->fmesh.tris_plot(bu_vls_cstr(&pname));
+    bu_vls_sprintf(&pname, "%srefine_tri-%d-00_initial-boundary_cmesh_3d.plot3", bu_vls_cstr(&f->face_root), cnt);
+    f->fmesh.boundary_edges_plot(bu_vls_cstr(&pname));
 
     // If a previous pass has made changes in which points are active in the
     // surface set, we need to rebuild the whole triangulation.
@@ -180,7 +182,7 @@ refine_triangulation(struct ON_Brep_CDT_Face_State *f, int cnt, int rebuild)
 
 	    std::set<ON_3dPoint *>::iterator s_it;
 	    int singularity_cnt = 0;
-	    for (s_it = f->singularities.begin(); s_it != f->singularities.end(); s_it++) {
+	    for (s_it = f->singularities->begin(); s_it != f->singularities->end(); s_it++) {
 		ON_3dPoint *p3d = (*s_it);
 		long s_ind = f->fmesh.p2ind[p3d];
 		bu_vls_sprintf(&pname, "%srefine_tri-%d-03_singularity_%d-cmesh_3d.plot3", bu_vls_cstr(&f->face_root), cnt, singularity_cnt);
@@ -211,6 +213,7 @@ refine_triangulation(struct ON_Brep_CDT_Face_State *f, int cnt, int rebuild)
 
     // Now, the hard part - create local subsets, remesh them, and replace the original
     // triangles with the new ones.
+    exit(1);
 #if 0
     int rcnt = 0;
     while (active_ctris.size()) {
@@ -314,11 +317,9 @@ do_triangulation(struct ON_Brep_CDT_Face_State *f)
     /* Calculate any 3D points we don't already have */
     populate_3d_pnts(f);
 
-    // Testing new mesh container
-    f->fmesh.build_3d(f->tris, f->p2t_to_on3_map);
 
     // Identify any singular 3D points
-    f->singularities.clear();
+    f->singularities->clear();
     if (f->has_singular_trims) {
 	std::set<p2t::Triangle *>::iterator tr_it;
 	for (tr_it = f->tris->begin(); tr_it != f->tris->end(); tr_it++) {
@@ -326,13 +327,15 @@ do_triangulation(struct ON_Brep_CDT_Face_State *f)
 	    for (size_t j = 0; j < 3; j++) {
 		ON_3dPoint *p3d = (*f->p2t_to_on3_map)[t->GetPoint(j)];
 		if (f->s_cdt->singular_vert_to_norms->find(p3d) != f->s_cdt->singular_vert_to_norms->end()) {
-		    f->singularities.insert(p3d);
+		    f->singularities->insert(p3d);
 		}
 	    }
 	}
     }
 
-    f->fmesh.set_brep_data(f->s_cdt->brep->m_F[f->ind].m_bRev, &f->singularities, f->on3_to_norm_map);
+    // Testing new mesh container
+    f->fmesh.set_brep_data(f->s_cdt->brep->m_F[f->ind].m_bRev, f->singularities, f->on3_to_norm_map);
+    f->fmesh.build_3d(f->tris, f->p2t_to_on3_map);
 
     /* The poly2tri triangulation is not guaranteed to have all the properties
      * we want out of the box - trigger a series of checks */
@@ -485,7 +488,7 @@ calc_singular_vert_norm(struct ON_Brep_CDT_State *s_cdt, int index)
 	return;
     }
 
-    bu_log("Processing vert %d (%f %f %f)\n", index, v.Point().x, v.Point().y, v.Point().z);
+    //bu_log("Processing vert %d (%f %f %f)\n", index, v.Point().x, v.Point().y, v.Point().z);
 
     for (int eind = 0; eind != v.EdgeCount(); eind++) {
 	ON_3dVector trim1_norm = ON_3dVector::UnsetVector;

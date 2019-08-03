@@ -277,6 +277,7 @@ ON_Brep_CDT_Face_Create(struct ON_Brep_CDT_State *s_cdt, int ind)
     fcdt->s_cdt = s_cdt;
     fcdt->ind = ind;
     fcdt->has_singular_trims = 0;
+    fcdt->singularities = new std::set<ON_3dPoint *>;
 
     fcdt->w2dpnts = new std::vector<ON_2dPoint *>;
     fcdt->w3dpnts = new std::vector<ON_3dPoint *>;
@@ -329,6 +330,7 @@ ON_Brep_CDT_Face_Reset(struct ON_Brep_CDT_Face_State *fcdt, int full_surface_sam
 	delete fcdt->rt_trims;
 	fcdt->rt_trims = new ON_RTree;
     }
+    fcdt->singularities->clear();
 
     fcdt->on3_to_norm_map->clear();
     fcdt->p2t_to_on2_map->clear();
@@ -386,6 +388,7 @@ ON_Brep_CDT_Face_Destroy(struct ON_Brep_CDT_Face_State *fcdt)
 
     delete fcdt->rt_trims;
 
+    delete fcdt->singularities;
     delete fcdt->on_surf_points;
     delete fcdt->strim_pnts;
     delete fcdt->strim_norms;

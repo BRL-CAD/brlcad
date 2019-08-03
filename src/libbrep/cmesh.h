@@ -44,6 +44,12 @@ struct edge_t {
 	v[0] = v[1] = -1;
     }
 
+    void set(long i, long j)
+    {
+	v[0] = i;
+	v[1] = j;
+    }
+
     bool operator<(edge_t other) const
     {
 	bool c1 = (v[0] < other.v[0]);
@@ -189,8 +195,8 @@ public:
     void build_3d(std::set<p2t::Triangle *> *cdttri, std::map<p2t::Point *, ON_3dPoint *> *pointmap);
     void set_brep_data(bool brev, std::set<ON_3dPoint *> *s, std::map<ON_3dPoint *, ON_3dPoint *> *n);
 
-    bool add(triangle_t &atris, int check);
-    void remove(triangle_t &etris);
+    bool tri_add(triangle_t &atris, int check);
+    void tri_remove(triangle_t &etris);
 
     std::set<long> interior_points();
     std::set<uedge_t> boundary_edges();
@@ -222,6 +228,9 @@ private:
     std::map<ON_3dPoint *, ON_3dPoint *> *normalmap;
     bool m_bRev;
     ON_3dVector bnorm(const triangle_t &t);
+
+    std::set<uedge_t> current_bedges;
+    std::map<long, std::set<edge_t>> edge_pnt_edges;
 
     // misc
     edge_t find_boundary_oriented_edge(uedge_t &ue);

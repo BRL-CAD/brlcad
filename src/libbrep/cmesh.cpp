@@ -22,11 +22,8 @@
 namespace cmesh
 {
 
-
-// TODO - check if we are self-intersecting any boundary loops by adding in this
-// triangle
 bool
-cmesh_t::add(triangle_t &tri, int check)
+cmesh_t::tri_add(triangle_t &tri, int check)
 {
 
     // Skip degenerate triangles, but report true since this was never
@@ -41,12 +38,11 @@ cmesh_t::add(triangle_t &tri, int check)
 	return true;
     }
 
-    if (check) {
-	return false;
-    }
 
     // Add the triangle
     this->tris.insert(tri);
+
+    std::cout << "tris cnt: " << tris.size() << "\n";
 
     // Populate maps
     long i = tri.v[0];
@@ -55,21 +51,79 @@ cmesh_t::add(triangle_t &tri, int check)
     this->v2tris[i].insert(tri);
     this->v2tris[j].insert(tri);
     this->v2tris[k].insert(tri);
-    struct edge_t e1(i, j);
-    struct edge_t e2(j, k);
-    struct edge_t e3(k, i);
-    this->edges2tris[e1] = tri;
-    this->edges2tris[e2] = tri;
-    this->edges2tris[e3] = tri;
-    this->uedges2tris[uedge_t(e1)].insert(tri);
-    this->uedges2tris[uedge_t(e2)].insert(tri);
-    this->uedges2tris[uedge_t(e3)].insert(tri);
+    struct edge_t e[3];
+    e[0].set(i, j);
+    e[1].set(j, k);
+    e[2].set(k, i);
+    for (int ind = 0; ind < 3; ind++) {
+	this->edges2tris[e[ind]] = tri;
+    }
+
+    // Update unordered edge triangle count
+    struct uedge_t ue[3];
+    for (int ind = 0; ind < 3; ind++) {
+	ue[ind].set(e[ind].v[0], e[ind].v[1]);
+	this->uedges2tris[ue[ind]].insert(tri);
+    }
+
+    // Now that we know the triangle count for the unordered edges: the
+    // addition of a triangle may change the boundary edge set.  Update.
+    for (int ind = 0; ind < 3; ind++) {
+	if (this->uedges2tris[ue[ind]].size() == 1) {
+	    this->current_bedges.insert(ue[ind]);
+	} else {
+	    this->current_bedges.erase(ue[ind]);
+	}
+    }
+
+    // With the addition of the new triangle, we need to update the
+    // point->edge mappings as well.
+    for (int ind = 0; ind < 3; ind++) {
+	// For the directed edge associated with the new triangle,
+	// we may need to add
+	if (this->current_bedges.find(ue[ind]) != this->current_bedges.end()) {
+	    this->edge_pnt_edges[e[ind].v[0]].insert(e[ind]);
+	    this->edge_pnt_edges[e[ind].v[1]].insert(e[ind]);
+	}
+	// For the directed edge that now (potentially) has a mate,
+	// we need to remove
+	struct edge_t oe(e[ind].v[1],e[ind].v[0]);
+	if (this->current_bedges.find(ue[ind]) == this->current_bedges.end()) {
+	    this->edge_pnt_edges[oe.v[0]].erase(oe);
+	    this->edge_pnt_edges[oe.v[1]].erase(oe);
+	}
+    }
+
+    // If we're growing a triangle set by marching, rather than dumping a bag
+    // of triangles into the container, check to see if the triangle just added
+    // causes a problem in the boundary loop.  If it does, reject it.
+    if (check) {
+	for (int ind = 0; ind < 3; ind++) {
+	    long v = tri.v[ind];
+	    if (this->edge_pnt_edges[v].size() > 2) {
+		std::cerr << "Triangle introduced a problem in boundary loop, cannot add\n";
+		this->tri_remove(tri);
+	    }
+	}
+    }
+    for (int ind = 0; ind < 3; ind++) {
+	long v = tri.v[ind];
+	if (this->edge_pnt_edges[v].size() > 2) {
+	    std::cerr << "edge point with >2 edge2??\n";
+	}
+    }
+
+    std::map<long, std::set<edge_t>>::iterator m_it;
+    for (m_it = edge_pnt_edges.begin(); m_it != edge_pnt_edges.end(); m_it++) {
+	ON_3dPoint *p = pnts[(*m_it).first];
+	std::cerr << "point " << (*m_it).first << "(" << p->x << " " << p->y << " " << p->z <<  ") edge cnt: " << (*m_it).second.size() << "\n";
+    }
 
     return true;
 }
 
 
-void cmesh_t::remove(triangle_t &tri)
+void cmesh_t::tri_remove(triangle_t &tri)
 {
     // Update edge maps
     long i = tri.v[0];
@@ -340,7 +394,7 @@ cmesh_t::bnorm(const triangle_t &t)
     ON_3dPoint avgnorm(0,0,0);
 
     // Can't calculate this without some key Brep data
-    if (!this->normalmap || !this->singularities) return avgnorm;
+    if (!this->normalmap) return avgnorm;
 
     double norm_cnt = 0.0;
 
@@ -375,9 +429,6 @@ void cmesh_t::reset()
     this->edges2tris.clear();
     this->uedges2tris.clear();
     this->type = 0;
-    this->m_bRev = false;
-    this->singularities = NULL;
-    this->normalmap = NULL;
 }
 
 void cmesh_t::build_3d(std::set<p2t::Triangle *> *cdttri, std::map<p2t::Point *, ON_3dPoint *> *pointmap)
@@ -403,6 +454,9 @@ void cmesh_t::build_3d(std::set<p2t::Triangle *> *cdttri, std::map<p2t::Point *,
     for (u_it = uniq_p3d.begin(); u_it != uniq_p3d.end(); u_it++) {
 	this->pnts.push_back(*u_it);
 	this->p2ind[*u_it] = this->pnts.size() - 1;
+	if (this->singularities->find(*u_it) != this->singularities->end()) {
+	    std::cout << "singularity point: " << this->p2ind[*u_it] << "\n";
+	}
     }
 
     // From the triangles, populate the containers
@@ -421,7 +475,7 @@ void cmesh_t::build_3d(std::set<p2t::Triangle *> *cdttri, std::map<p2t::Point *,
 	long Bind = this->p2ind[pt_B];
 	long Cind = this->p2ind[pt_C];
 	struct triangle_t nt(Aind, Bind, Cind);
-	cmesh_t::add(nt, 0);
+	cmesh_t::tri_add(nt, 0);
     }
 
 }
