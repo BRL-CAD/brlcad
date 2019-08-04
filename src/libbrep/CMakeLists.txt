@@ -32,6 +32,7 @@ set(LIBBREP_SOURCES
   cdt_validate.cpp
   cdt.cpp
   cmesh.cpp
+  csweep.cpp
   intersect.cpp
   libbrep_brep_tools.cpp
   opennurbs_ext.cpp

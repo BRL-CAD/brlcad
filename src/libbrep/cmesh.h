@@ -178,8 +178,6 @@ class cmesh_t
 public:
 
     /* Data containers */
-    int type;  /* 0 = 3D, 1 = 2D */
-    std::vector<ON_2dPoint *> pnts_2d;
     std::vector<ON_3dPoint *> pnts;
     std::map<ON_3dPoint *, long> p2ind;
     std::set<triangle_t> tris;
@@ -188,9 +186,8 @@ public:
     std::map<edge_t, triangle_t> edges2tris;
     std::map<uedge_t, std::set<triangle_t>> uedges2tris;
 
-
     /* Setup */
-    void build_3d(std::set<p2t::Triangle *> *cdttri, std::map<p2t::Point *, ON_3dPoint *> *pointmap);
+    void build(std::set<p2t::Triangle *> *cdttri, std::map<p2t::Point *, ON_3dPoint *> *pointmap);
     void set_brep_data(
 	    bool brev,
 	    std::set<ON_3dPoint *> *e,
@@ -217,6 +214,11 @@ public:
     void tris_plot(const char *filename);
     void tri_plot(triangle_t &tri, const char *filename);
 
+    // Triangle geometry information
+    ON_3dPoint tcenter(const triangle_t &t);
+    ON_3dVector bnorm(const triangle_t &t);
+    ON_3dVector tnorm(const triangle_t &t);
+
     // Trigger mesh repair logic
     void repair();
 
@@ -228,11 +230,6 @@ private:
     std::map<ON_3dPoint *, ON_3dPoint *> *normalmap;
     bool m_bRev;
 
-    // Triangle geometry information
-    ON_3dPoint tcenter(const triangle_t &t);
-    ON_3dVector bnorm(const triangle_t &t);
-    ON_3dVector tnorm(const triangle_t &t);
-
     // Boundary edge information
     std::set<uedge_t> current_bedges;
     std::set<uedge_t> problem_edges;
@@ -240,14 +237,7 @@ private:
     edge_t find_boundary_oriented_edge(uedge_t &ue);
 
     // Submesh building
-    std::set<triangle_t> visited_triangles;
-    std::set<triangle_t> seed_tris;
-    void remesh_tri(triangle_t &seed);
     bool tri_problem_edges(triangle_t &t);
-    size_t collect_neighbor_tris(triangle_t &seed, double deg, cmesh_t *submesh);
-
-    bool point_inside_loop(long v, std::vector<long> l);
-
 
     // Mesh manipulation functions
     bool tri_add(triangle_t &atris, int check);
@@ -258,6 +248,43 @@ private:
     void plot_tri(const triangle_t &t, struct bu_color *buc, FILE *plot, int r, int g, int b);
     void plot_uedge(struct uedge_t &ue, FILE* plot_file);
 };
+
+class csweep_t
+{
+    public:
+	std::vector<long> polygon;
+	std::set<long> interior_points;
+
+	bool point_in_polygon(long v);
+	bool polygon_closed();
+
+	void build_2d_pnts(ON_3dPoint &c, ON_3dVector &n);
+
+	long build_initial_loop(triangle_t &seed);
+
+	long grow_loop(double deg);
+
+	cmesh_t *cmesh;
+
+	void plot_uedge(struct uedge_t &ue, FILE* plot_file);
+	void polygon_plot(const char *filename);
+	void plot_tri(const triangle_t &t, struct bu_color *buc, FILE *plot, int r, int g, int b);
+	void face_neighbors_plot(const triangle_t &f, const char *filename);
+	void vertex_face_neighbors_plot(long vind, const char *filename);
+
+    private:
+	// TODO - this should be a libbg 2d point array for easy triangulation via libbg routines
+	std::vector<ON_2dPoint *> pnts_2d;
+	ON_Plane tplane;
+
+	std::set<triangle_t> visited_triangles;
+
+	// Edges from polygon will guide "next triangle" logic
+	size_t collect_neighbor_tris(edge_t &e);
+
+};
+
+
 
 }
 
