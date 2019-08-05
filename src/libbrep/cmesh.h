@@ -221,6 +221,9 @@ public:
     ON_3dPoint tcenter(const triangle_t &t);
     ON_3dVector bnorm(const triangle_t &t);
     ON_3dVector tnorm(const triangle_t &t);
+    std::set<uedge_t> uedges(const triangle_t &t);
+
+    bool brep_edge_pnt(long v);
 
     // Trigger mesh repair logic
     void repair();
@@ -276,10 +279,11 @@ class cpolygon_t
 	std::set<cpolyedge_t *> poly;
 	std::map<long, cpolyedge_t *> v2pe;
 
-	long add_edge(cpolyedge_t *, std::set<long> *ip);
+	long add_edge(edge_t);
 	bool closed();
 	bool point_in_polygon(long v);
 	std::vector<long> polyvect();
+	std::set<long> dangling_vertices();
 };
 
 class csweep_t
@@ -287,6 +291,7 @@ class csweep_t
     public:
 	cpolygon_t polygon;
 	std::set<long> interior_points;
+	std::set<uedge_t> interior_uedges;
 
 	// Project cmesh 3D points into a 2D point array.  Probably won't use all of
 	// them, but this way vert indices on triangles will match in 2D and 3D.
@@ -320,6 +325,21 @@ class csweep_t
 	ON_3dVector pdir;
 
 	std::set<triangle_t> visited_triangles;
+
+	std::set<triangle_t> non_visited_neighbors(const triangle_t &t);
+	std::set<triangle_t> non_visited_tris(std::set<long> &verts);
+
+	bool edge_is_interior(struct edge_t &e);
+	void cull_interior_edges(std::set<edge_t> *ecandidates);
+
+	// vertices and edges of any problem candidate triangles go into the interior sets
+	void cull_problem_tris(std::set<triangle_t> *tcandidates);
+
+	std::set<edge_t> exterior_edges(std::set<triangle_t> &ctris);
+
+	std::set<edge_t> non_interior_edges(const triangle_t &t);
+	long non_interior_vert(const triangle_t &t);
+
 
 	// Edges from polygon will guide "next triangle" logic
 	size_t collect_neighbor_tris(edge_t &e);

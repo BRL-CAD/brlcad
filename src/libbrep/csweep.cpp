@@ -26,14 +26,19 @@ namespace cmesh
 long
 csweep_t::grow_loop(double deg, bool stop_on_contained)
 {
+    if (stop_on_contained && !interior_points.size()) {
+	return 0;
+    }
+
     if (deg < 0 || deg > 170) {
 	return -1;
     }
+
 #if 0
     double angle = deg * ON_PI/180.0;
     ON_3dVector sn = bnorm(seed);
 
-    submesh->visited_triangles.insert(seed);
+    visited_triangles.insert(seed);
 
     std::queue<triangle_t> q1, q2;
     std::queue<triangle_t> *tq, *nq;
@@ -145,66 +150,77 @@ csweep_t::build_2d_pnts(ON_3dPoint &c, ON_3dVector &n)
     tplane = tri_plane;
 }
 
+
+
 long
 csweep_t::build_initial_loop(triangle_t &seed)
 {
-    if (seed.v[0] == -1) return -1;
-    // TODO - the "seeding" problem is a little more complex than just
-    // picking a triangle.  What we actually need is a seed LOOP, which
-    // we keep valid.  If the initial triangle can't give us that loop
-    // (which it sometimes can't - say if it's flipped) we
-    // need to use neighbor information to establish an initial valid
-    // loop.  Probably pull all the tris sharing at least one vert
-    // with the seed, eliminate all the edges sharing a vertex with
-    // the seed, and try to build a loop out of the others. For any
-    // bad faces in the neighbors, pull their neighbors and do the
-    // same thing until we get a loop that doesn't have bad edges.
-    // Brep edges are hard stops (obviously).  Any points not used
-    // in the boundary need to be interior points for p2t
+    std::set<uedge_t>::iterator u_it;
 
-#if 0
-    if (!tri_problem_edges(seed)) {
-	submesh.tri_add(seed, 0);
-    } else {
-	// Any seed triangle vertices not on the parent mesh boundary
-	// will need to be interior in the remesh.
-	for (int i = 0; i < 3; i++) {
-	    if (sv.find(seed.v[i]) != sv.end()) continue;
-	    ON_3dPoint *p = pnts[seed.v[i]];
-	    if (edge_pnts->find(p) != edge_pnts->end()) continue;
-	    interior_pnts.insert(seed.v[i]);
+    visited_triangles.insert(seed);
+
+    // None of the edges or vertices from any of the problem triangles can be
+    // in a polygon edge.  By definition, the seed is a problem triangle.
+    std::set<uedge_t> tedges = cmesh->uedges(seed);
+    std::set<long> seed_verts;
+    for (int i = 0; i < 3; i++) {
+	seed_verts.insert(seed.v[i]);
+	// The exception to interior categorization is Brep boundary points -
+	// they are never interior
+	if (cmesh->brep_edge_pnt(seed.v[i])) {
+	    continue;
 	}
-	std::cout << "got " << interior_pnts.size() << " interior pnts\n";
+	interior_points.insert(seed.v[i]);
     }
-    double deg = 10;
-    size_t ncnt = collect_neighbor_tris(seed, deg, &submesh);
-    while (ncnt < 10 && deg < 45) {
-	submesh.reset();
-	if (!tri_problem_edges(seed)) {
-	    submesh.tri_add(seed, 0);
-	} else {
-	    // Any seed triangle vertices not on the parent mesh boundary
-	    // will need to be interior in the remesh.
-	    for (int i = 0; i < 3; i++) {
-		if (sv.find(seed.v[i]) != sv.end()) continue;
-		ON_3dPoint *p = pnts[seed.v[i]];
-		if (edge_pnts->find(p) != edge_pnts->end()) continue;
-		interior_pnts.insert(seed.v[i]);
+
+    for (u_it = tedges.begin(); u_it != tedges.end(); u_it++) {
+	// The exception to this is Brep boundary edges - they are never
+	// interior.  Note that one point on the edge isn't enough - the
+	// whole edge must be on the brep edge.
+	if (cmesh->brep_edge_pnt((*u_it).v[0]) && cmesh->brep_edge_pnt((*u_it).v[1])) {
+	    continue;
+	}
+	interior_uedges.insert(*u_it);
+    }
+
+    // The seed's neighbors are the first candidates for polygon edges
+    std::set<triangle_t> candidates = non_visited_tris(seed_verts);
+    if (!candidates.size()) {
+	std::cerr << "Seed has NO non-visited neighbors???\n";
+	return -1;
+    }
+
+    while (!polygon.closed()) {
+
+	// If we're exhausted our candidates, get some more.
+	if (!candidates.size()) {
+	    std::set<long> dv = polygon.dangling_vertices();
+	    candidates = non_visited_tris(dv);
+	}
+	cull_problem_tris(&candidates);
+
+	// If ALL the candidates were problems, get all unvisited neighbors
+	// from the interior points - need SOMETHING to work on...
+	while (!candidates.size()) {
+	    candidates = non_visited_tris(interior_points);
+	    if (!candidates.size()) {
+		std::cerr << "NO candidates found from interior points???\n";
+		return -1;
 	    }
+	    cull_problem_tris(&candidates);
 	}
-	deg = deg + 5;
-	ncnt = collect_neighbor_tris(seed, deg, &submesh);
+
+	// OK, we have candidate triangles.  Get some exterior edges.
+	std::set<edge_t> ee = exterior_edges(candidates);
+	std::set<edge_t>::iterator e_it;
+	for (e_it = ee.begin(); e_it != ee.end(); e_it++) {
+	    polygon.add_edge(*e_it);
+	}
+
     }
 
-    // Re-triangulate submesh and replace the triangles in the current mesh
 
 
-    // Clean up
-    for (size_t i = 0; i < pnts_2d.size(); i++) {
-	delete pnts_2d[i];
-    }
-    seed_tris.erase(seed);
-#endif
     return -1;
 }
 

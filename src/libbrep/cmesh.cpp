@@ -432,6 +432,22 @@ cmesh_t::set_brep_data(
     this->normalmap = n;
 }
 
+std::set<uedge_t>
+cmesh_t::uedges(const triangle_t &t)
+{
+    struct uedge_t ue[3];
+    ue[0].set(t.v[0], t.v[1]);
+    ue[1].set(t.v[1], t.v[2]);
+    ue[2].set(t.v[2], t.v[0]);
+
+    std::set<uedge_t> uedges;
+    for (int i = 0; i < 3; i++) {
+	uedges.insert(ue[i]);
+    }
+
+    return uedges;
+}
+
 ON_3dVector
 cmesh_t::tnorm(const triangle_t &t)
 {
@@ -487,6 +503,16 @@ cmesh_t::bnorm(const triangle_t &t)
     ON_3dVector anrm = avgnorm/norm_cnt;
     anrm.Unitize();
     return anrm;
+}
+
+bool
+cmesh_t::brep_edge_pnt(long v)
+{
+    ON_3dPoint *p = pnts[v];
+    if (edge_pnts->find(p) != edge_pnts->end()) {
+	return true;
+    }
+    return false;
 }
 
 void cmesh_t::reset()
@@ -608,8 +634,12 @@ cmesh_t::repair()
 	sweep.build_2d_pnts(sp, sn);
 
 	// build sweep
-	//long tcnt = sweep->build_initial_loop(seed);
-	//if (tcnt <= 0) { fatal failure };
+	long tcnt = sweep.build_initial_loop(seed);
+
+	if (tcnt <= 0) {
+	    std::cerr << "Could not build initial valid loop\n";
+	    exit(1);
+	}
 	//double deg = 10;
 	//tcnt = sweep->grow_loop(deg);
 	//if (tcnt <= 0) { fatal failure };
