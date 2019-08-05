@@ -173,7 +173,6 @@ struct triangle_t {
 
 };
 
-struct ON_Brep_CDT_Face_State;
 class cmesh_t
 {
 public:
@@ -200,7 +199,7 @@ public:
     std::set<long> interior_points(int use_brep_data);
     std::set<uedge_t> boundary_edges(int use_brep_data);
     std::vector<std::vector<long>> boundary_loops(int use_brep_data);
-    std::vector<triangle_t> face_neighbors(const triangle_t &t);
+    std::vector<triangle_t> face_neighbors(const triangle_t &f);
     std::vector<triangle_t> vertex_face_neighbors(long vind);
     std::vector<triangle_t> interior_incorrect_normals(int use_brep_data);
     std::vector<triangle_t> singularity_triangles();
@@ -208,7 +207,7 @@ public:
     // Plot3 generation routines for debugging
     void boundary_edges_plot(const char *filename);
     void boundary_loops_plot(int use_brep_data, const char *filename);
-    void face_neighbors_plot(const triangle_t &t, const char *filename);
+    void face_neighbors_plot(const triangle_t &f, const char *filename);
     void vertex_face_neighbors_plot(long vind, const char *filename);
     void interior_incorrect_normals_plot(const char *filename);
     void tris_set_plot(std::set<triangle_t> &tset, const char *filename);
@@ -225,7 +224,6 @@ public:
 
 private:
     // For situations where we need to process using Brep data
-    struct ON_Brep_CDT_Face_State *f;
     std::set<ON_3dPoint *> *edge_pnts;
     std::set<ON_3dPoint *> *singularities;
     std::set<long> sv; // Singularity vertex indices
