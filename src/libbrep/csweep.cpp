@@ -139,11 +139,11 @@ cpolygon_t::remove_edge(const struct edge_t &e)
 }
 
 long
-cpolygon_t::add_edges(std::set<edge_t> &new_edges, std::set<edge_t> &shared_edges)
+cpolygon_t::replace_edges(std::set<edge_t> &new_edges, std::set<edge_t> &old_edges)
 {
 
     std::set<edge_t>::iterator e_it;
-    for (e_it = shared_edges.begin(); e_it != shared_edges.end(); e_it++) {
+    for (e_it = old_edges.begin(); e_it != old_edges.end(); e_it++) {
 	remove_edge(*e_it);
     }
     for (e_it = new_edges.begin(); e_it != new_edges.end(); e_it++) {
@@ -437,7 +437,7 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 	    return -1;
 	}
 
-	polygon.add_edges(new_edges, shared_edges);
+	polygon.replace_edges(new_edges, shared_edges);
 
 	// If the triangle shares one edge but all three vertices are on the
 	// polygon, we can't use this triangle at this time - it would produce

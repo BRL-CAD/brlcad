@@ -282,9 +282,11 @@ class cpolygon_t
 
 	long add_edge(const struct edge_t &e);
 	void remove_edge(const struct edge_t &e);
-	long add_edges(std::set<edge_t> &new_edges, std::set<edge_t> &shared_edges);
+	long replace_edges(std::set<edge_t> &new_edges, std::set<edge_t> &old_edges);
 	bool closed();
 	bool point_in_polygon(long v);
+	// Apply the point-in-polygon test to all uncontained points, moving any inside the loop into interior_points
+	void check_uncontained();
 	std::vector<long> polyvect();
 	std::set<long> dangling_vertices();
 	long tri_shared_filter(std::set<edge_t> *ne, std::set<edge_t> *se, long *nv, triangle_t &t);
