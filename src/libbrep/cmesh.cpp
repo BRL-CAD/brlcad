@@ -158,12 +158,12 @@ void cmesh_t::tri_remove(triangle_t &tri)
 }
 
 std::vector<triangle_t>
-cmesh_t::face_neighbors(const triangle_t &f)
+cmesh_t::face_neighbors(const triangle_t &t)
 {
     std::vector<triangle_t> result;
-    long i = f.v[0];
-    long j = f.v[1];
-    long k = f.v[2];
+    long i = t.v[0];
+    long j = t.v[1];
+    long k = t.v[2];
     struct uedge_t e[3];
     e[0].set(i, j);
     e[1].set(j, k);
@@ -172,7 +172,7 @@ cmesh_t::face_neighbors(const triangle_t &f)
 	std::set<triangle_t> faces = this->uedges2tris[e[ind]];
 	std::set<triangle_t>::iterator f_it;
 	for (f_it = faces.begin(); f_it != faces.end(); f_it++) {
-	    if (*f_it != f) {
+	    if (*f_it != t) {
 		result.push_back(*f_it);
 	    }
 	}
@@ -728,7 +728,7 @@ void cmesh_t::plot_tri(const triangle_t &t, struct bu_color *buc, FILE *plot, in
     pl_color_buc(plot, buc);
 }
 
-void cmesh_t::face_neighbors_plot(const triangle_t &f, const char *filename)
+void cmesh_t::face_neighbors_plot(const triangle_t &t, const char *filename)
 {
     FILE* plot_file = fopen(filename, "w");
 
@@ -737,8 +737,8 @@ void cmesh_t::face_neighbors_plot(const triangle_t &f, const char *filename)
     pl_color_buc(plot_file, &c);
 
     // Origin triangle has red interior
-    std::vector<triangle_t> faces = this->face_neighbors(f);
-    this->plot_tri(f, &c, plot_file, 255, 0, 0);
+    std::vector<triangle_t> faces = this->face_neighbors(t);
+    this->plot_tri(t, &c, plot_file, 255, 0, 0);
 
     // Neighbor triangles have blue interior
     for (size_t i = 0; i < faces.size(); i++) {
