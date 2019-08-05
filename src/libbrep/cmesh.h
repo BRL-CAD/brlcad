@@ -249,14 +249,40 @@ private:
     void plot_uedge(struct uedge_t &ue, FILE* plot_file);
 };
 
+class cpolyedge_t
+{
+    public:
+	cpolyedge_t *prev;
+	cpolyedge_t *next;
+
+	long v[2];
+	int uses;
+
+	cpolyedge_t(edge_t &e){
+	    v[0] = e.v[0];
+	    v[1] = e.v[1];
+	    uses = 1;
+	    prev = NULL;
+	    next = NULL;
+	};
+};
+
+class cpolygon_t
+{
+    public:
+	std::set<cpolyedge_t *> poly;
+	std::map<long, cpolyedge_t *> v2pe;
+
+	long add_edge(cpolyedge_t *, std::set<long> *ip);
+	bool closed();
+	bool point_in_polygon(long v);
+};
+
 class csweep_t
 {
     public:
-	std::vector<long> polygon;
+	cpolygon_t polygon;
 	std::set<long> interior_points;
-
-	bool point_in_polygon(long v);
-	bool polygon_closed();
 
 	void build_2d_pnts(ON_3dPoint &c, ON_3dVector &n);
 

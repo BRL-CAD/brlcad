@@ -221,18 +221,23 @@ void csweep_t::polygon_plot(const char *filename)
     bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
     pl_color_buc(plot_file, &c);
 
-    point_t bnp;
+    cpolyedge_t *efirst = *(polygon.poly.begin());
+    cpolyedge_t *ecurr = NULL;
 
-    ON_2dPoint *p = pnts_2d[polygon[0]];
+    point_t bnp;
+    ON_2dPoint *p = pnts_2d[efirst->v[0]];
     VSET(bnp, p->x, p->y, 0);
     pdv_3move(plot_file, bnp);
+    p = pnts_2d[ecurr->v[1]];
+    VSET(bnp, p->x, p->y, 0);
+    pdv_3cont(plot_file, bnp);
 
-    for (size_t i = 1; i < polygon.size(); i++) {
-	p = pnts_2d[polygon[i]];
+    while (ecurr != efirst) {
+	ecurr = (!ecurr) ? efirst->next : ecurr->next;
+	p = pnts_2d[ecurr->v[1]];
 	VSET(bnp, p->x, p->y, 0);
 	pdv_3cont(plot_file, bnp);
     }
-
     fclose(plot_file);
 }
 
