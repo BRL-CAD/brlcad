@@ -28,13 +28,83 @@ cpolygon_t::add_edge(const struct edge_t &e)
 {
     if (e.v[0] == -1) return -1;
 
-    return -1;
+    struct edge_t ne = e;
+    cpolyedge_t *nedge = new cpolyedge_t(ne);
+
+    cpolyedge_t *prev = NULL;
+    cpolyedge_t *next = NULL;
+    cpolyedge_t *cull = NULL;
+
+    poly.insert(nedge);
+
+    std::set<cpolyedge_t *>::iterator cp_it;
+    for (cp_it = poly.begin(); cp_it != poly.end(); cp_it++) {
+	cpolyedge_t *pe = *cp_it;
+
+	if (pe == nedge) continue;
+
+	if (pe->v[0] == nedge->v[0]) {
+	    // Existing segment with this starting vertex exists
+	    cull = pe;
+	}
+
+	if (pe->v[1] == nedge->v[1]) {
+	    // Existing segment with this ending vertex exists
+	    cull = pe;
+	}
+
+	if (pe->v[1] == nedge->v[0]) {
+	    prev = pe;
+	}
+
+	if (pe->v[0] == nedge->v[1]) {
+	    next = pe;
+	}
+    }
+
+    if (cull) {
+	for (cp_it = poly.begin(); cp_it != poly.end(); cp_it++) {
+	    cpolyedge_t *pe = *cp_it;
+	    if (pe->prev == cull) {
+		pe->prev = NULL;
+	    }
+	    if (pe->next == cull) {
+		pe->next = NULL;
+	    }
+	}
+	poly.erase(cull);
+	delete cull;
+    }
+
+    if (prev) {
+	prev->next = nedge;
+	nedge->prev = prev;
+    }
+
+    if (next) {
+	next->prev = nedge;
+	nedge->next = next;
+    }
+
+    return 0;
 }
 
 bool
 cpolygon_t::closed()
 {
-    return false;
+    if (poly.size() < 3) {
+	return false;
+    }
+
+    std::set<cpolyedge_t *>::iterator cp_it;
+    for (cp_it = poly.begin(); cp_it != poly.end(); cp_it++) {
+	cpolyedge_t *pe = *cp_it;
+	if (!pe->prev || !pe->next) {
+	    return false;
+	}
+    }
+
+    return true;
 }
 
 bool
@@ -90,6 +160,30 @@ csweep_t::exterior_edges(std::set<triangle_t> &tris)
 	return result;
     }
 
+    std::set<triangle_t>::iterator t_it;
+    for (t_it = tris.begin(); t_it != tris.end(); t_it++) {
+	triangle_t t = (*t_it);
+	struct edge_t e[3];
+	e[0].set(t.v[0], t.v[1]);
+	e[1].set(t.v[1], t.v[2]);
+	e[2].set(t.v[2], t.v[0]);
+	struct uedge_t ue[3];
+	for (int i = 0; i < 3; i++) {
+	    ue[i].set(e[i].v[0], e[i].v[1]);
+	}
+
+	for (int i = 0; i < 3; i++) {
+	    bool v1int = (interior_points.find(e[i].v[0]) != interior_points.end());
+	    bool v2int = (interior_points.find(e[i].v[1]) != interior_points.end());
+	    if (v1int || v2int) {
+		interior_uedges.insert(ue[i]);
+	    } else {
+		result.insert(e[i]);
+	    }
+	}
+
+    }
+
     return result;
 }
 
@@ -102,9 +196,21 @@ csweep_t::interior_points_contained()
 void
 csweep_t::cull_problem_tris(std::set<triangle_t> *tcandidates)
 {
+    std::set<triangle_t> gtris;
     if (!tcandidates) {
 	return;
     }
+
+    std::set<triangle_t>::iterator tc_it;
+    for (tc_it = tcandidates->begin(); tc_it != tcandidates->end(); tc_it++) {
+	if (cmesh->problem_triangles.find(*tc_it) == cmesh->problem_triangles.end()) {
+	    gtris.insert(*tc_it);
+	}
+    }
+
+    tcandidates->clear();
+
+    (*tcandidates) = gtris;
 }
 
 std::set<triangle_t>
@@ -113,6 +219,26 @@ csweep_t::non_visited_tris(std::set<long> &verts)
     std::set<triangle_t> result;
     if (!verts.size()) {
 	return result;
+    }
+    std::set<long>::iterator v_it;
+
+    for (v_it = verts.begin(); v_it != verts.end(); v_it++) {
+	std::vector<triangle_t> faces = cmesh->vertex_face_neighbors(*v_it);
+
+	// TODO - we need to constrain this set - we're looking for triangles
+	// near the original triangle, but a vertex triangle set may potentially
+	// pull in a large number of other triangles.  Maybe the subset that
+	// either share an edge with the poly or failing that the closest to
+	// the original seed triangle?  Or, maybe check the directions of the
+	// edges and only accept those that are least far from the center of the
+	// seed?  Maybe prefer triangles with more points on the polyline or
+	// (pre-polyline) more interior points?
+
+	for (size_t i = 0; i < faces.size(); i++) {
+	    if (visited_triangles.find(faces[i]) == visited_triangles.end()) {
+		result.insert(faces[i]);
+	    }
+	}
     }
 
     return result;
@@ -287,7 +413,6 @@ csweep_t::build_initial_loop(triangle_t &seed)
 
     while (!polygon.closed()) {
 
-	// If we're exhausted our candidates, get some more.
 	if (!candidates.size()) {
 	    std::set<long> dv = polygon.dangling_vertices();
 	    candidates = non_visited_tris(dv);
@@ -312,6 +437,7 @@ csweep_t::build_initial_loop(triangle_t &seed)
 	    polygon.add_edge(*e_it);
 	}
 
+	candidates.clear();
     }
 
 

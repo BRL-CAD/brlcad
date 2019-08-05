@@ -203,9 +203,10 @@ public:
     std::vector<triangle_t> vertex_face_neighbors(long vind);
 
     std::vector<triangle_t> singularity_triangles();
-    
+
     std::vector<triangle_t> interior_incorrect_normals(int use_brep_data);
     std::vector<triangle_t> problem_edge_tris();
+    std::set<triangle_t> problem_triangles;
 
     // Plot3 generation routines for debugging
     void boundary_edges_plot(const char *filename);

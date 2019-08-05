@@ -613,13 +613,14 @@ cmesh_t::problem_edge_tris()
 void
 cmesh_t::repair()
 {
-    // The most difficult cases are problem end and/or flipped normal
+    // The most difficult cases are problem edge and/or flipped normal
     // triangles.  Handle those first.
+    std::set<triangle_t> seed_tris;
     std::vector<triangle_t> f_tris = this->interior_incorrect_normals(1);
     std::vector<triangle_t> e_tris = this->problem_edge_tris();
-    std::set<triangle_t> seed_tris;
     seed_tris.insert(e_tris.begin(), e_tris.end());
     seed_tris.insert(f_tris.begin(), f_tris.end());
+    problem_triangles = seed_tris;
 
     while (seed_tris.size()) {
 	triangle_t seed = *seed_tris.begin();
