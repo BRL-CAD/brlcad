@@ -279,7 +279,7 @@ class cpolygon_t
 	std::set<cpolyedge_t *> poly;
 	std::map<long, cpolyedge_t *> v2pe;
 
-	long add_edge(edge_t);
+	long add_edge(const struct edge_t &e);
 	bool closed();
 	bool point_in_polygon(long v);
 	std::vector<long> polyvect();
@@ -326,7 +326,6 @@ class csweep_t
 
 	std::set<triangle_t> visited_triangles;
 
-	std::set<triangle_t> non_visited_neighbors(const triangle_t &t);
 	std::set<triangle_t> non_visited_tris(std::set<long> &verts);
 
 	bool edge_is_interior(struct edge_t &e);
@@ -335,10 +334,10 @@ class csweep_t
 	// vertices and edges of any problem candidate triangles go into the interior sets
 	void cull_problem_tris(std::set<triangle_t> *tcandidates);
 
+	std::set<edge_t> tri_ext_edges(const triangle_t &t);
 	std::set<edge_t> exterior_edges(std::set<triangle_t> &ctris);
 
-	std::set<edge_t> non_interior_edges(const triangle_t &t);
-	long non_interior_vert(const triangle_t &t);
+	std::set<long> non_interior_verts(const triangle_t &t);
 
 
 	// Edges from polygon will guide "next triangle" logic

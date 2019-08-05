@@ -24,6 +24,101 @@ namespace cmesh
 {
 
 long
+cpolygon_t::add_edge(const struct edge_t &e)
+{
+    if (e.v[0] == -1) return -1;
+
+    return -1;
+}
+
+bool
+cpolygon_t::closed()
+{
+    return false;
+}
+
+bool
+cpolygon_t::point_in_polygon(long v)
+{
+    if (v == -1) return false;
+
+    return false;
+}
+
+std::vector<long>
+cpolygon_t::polyvect()
+{
+    std::vector<long> result;
+    return result;
+}
+
+std::set<long>
+cpolygon_t::dangling_vertices()
+{
+    std::set<long> result;
+    return result;
+}
+
+std::set<long>
+csweep_t::non_interior_verts(const triangle_t &t)
+{
+    std::set<long> result;
+    if (t.v[0] == -1) {
+	return result;
+    }
+
+    return result;
+
+}
+
+std::set<edge_t>
+csweep_t::tri_ext_edges(const triangle_t &t)
+{
+    std::set<edge_t> result;
+    if (t.v[0] == -1) {
+	return result;
+    }
+
+    return result;
+}
+
+std::set<edge_t>
+csweep_t::exterior_edges(std::set<triangle_t> &tris)
+{
+    std::set<edge_t> result;
+    if (!tris.size()) {
+	return result;
+    }
+
+    return result;
+}
+
+bool
+csweep_t::interior_points_contained()
+{
+    return false;
+}
+
+void
+csweep_t::cull_problem_tris(std::set<triangle_t> *tcandidates)
+{
+    if (!tcandidates) {
+	return;
+    }
+}
+
+std::set<triangle_t>
+csweep_t::non_visited_tris(std::set<long> &verts)
+{
+    std::set<triangle_t> result;
+    if (!verts.size()) {
+	return result;
+    }
+
+    return result;
+}
+
+long
 csweep_t::grow_loop(double deg, bool stop_on_contained)
 {
     if (stop_on_contained && !interior_points.size()) {
@@ -161,7 +256,6 @@ csweep_t::build_initial_loop(triangle_t &seed)
 
     // None of the edges or vertices from any of the problem triangles can be
     // in a polygon edge.  By definition, the seed is a problem triangle.
-    std::set<uedge_t> tedges = cmesh->uedges(seed);
     std::set<long> seed_verts;
     for (int i = 0; i < 3; i++) {
 	seed_verts.insert(seed.v[i]);
@@ -173,6 +267,7 @@ csweep_t::build_initial_loop(triangle_t &seed)
 	interior_points.insert(seed.v[i]);
     }
 
+    std::set<uedge_t> tedges = cmesh->uedges(seed);
     for (u_it = tedges.begin(); u_it != tedges.end(); u_it++) {
 	// The exception to this is Brep boundary edges - they are never
 	// interior.  Note that one point on the edge isn't enough - the
