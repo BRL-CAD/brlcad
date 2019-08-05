@@ -634,15 +634,17 @@ cmesh_t::repair()
 	sweep.cmesh = this;
 	sweep.build_2d_pnts(sp, sn);
 
-	// build sweep
-	long tcnt = sweep.build_initial_loop(seed);
+	// build an initial loop from a nearby valid triangle
+	bool tcnt = sweep.build_initial_loop(seed);
 
-	if (tcnt <= 0) {
+	if (!tcnt) {
 	    std::cerr << "Could not build initial valid loop\n";
 	    exit(1);
 	}
-	//double deg = 10;
-	//tcnt = sweep->grow_loop(deg);
+
+	// Grow until we contain the seed and its associated problem data
+	tcnt = sweep.grow_loop(170, true);
+
 	//if (tcnt <= 0) { fatal failure };
 	//while (tcnt < 10 && deg < 45) {
 	//deg = deg + 5;

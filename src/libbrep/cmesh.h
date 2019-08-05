@@ -281,10 +281,13 @@ class cpolygon_t
 	std::map<long, cpolyedge_t *> v2pe;
 
 	long add_edge(const struct edge_t &e);
+	void remove_edge(const struct edge_t &e);
+	long add_edges(std::set<edge_t> &new_edges, std::set<edge_t> &shared_edges);
 	bool closed();
 	bool point_in_polygon(long v);
 	std::vector<long> polyvect();
 	std::set<long> dangling_vertices();
+	long tri_shared_filter(std::set<edge_t> *ne, std::set<edge_t> *se, long *nv, triangle_t &t);
 };
 
 class csweep_t
@@ -293,6 +296,7 @@ class csweep_t
 	cpolygon_t polygon;
 	std::set<long> interior_points;
 	std::set<uedge_t> interior_uedges;
+	std::set<long> uncontained;
 
 	// Project cmesh 3D points into a 2D point array.  Probably won't use all of
 	// them, but this way vert indices on triangles will match in 2D and 3D.
@@ -300,7 +304,7 @@ class csweep_t
 
 	// An initial loop may not contain all the interior points - to ensure it does,
 	// use grow_loop with a large deg value and the stop_on_contained flag set.
-	long build_initial_loop(triangle_t &seed);
+	bool build_initial_loop(triangle_t &seed);
 
 	// To grow only until all interior points are within the polygon, supply true
 	// for stop_on_contained.  Otherwise, grow_loop will follow the triangles out
@@ -340,6 +344,7 @@ class csweep_t
 
 	std::set<long> non_interior_verts(const triangle_t &t);
 
+	std::set<triangle_t> polygon_tris(double angle);
 
 	// Edges from polygon will guide "next triangle" logic
 	size_t collect_neighbor_tris(edge_t &e);
