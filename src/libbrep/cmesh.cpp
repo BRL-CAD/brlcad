@@ -563,18 +563,43 @@ cmesh_t::tri_problem_edges(triangle_t &t)
     return false;
 }
 
+std::vector<triangle_t>
+cmesh_t::problem_edge_tris()
+{
+    std::vector<triangle_t> eresults;
+    if (!problem_edges.size()) return eresults;
+
+    std::set<triangle_t> uresults;
+    std::set<uedge_t>::iterator u_it;
+    std::set<triangle_t>::iterator t_it;
+    for (u_it = problem_edges.begin(); u_it != problem_edges.end(); u_it++) {
+	std::set<triangle_t> ptris = uedges2tris[(*u_it)];
+	for (t_it = uedges2tris[(*u_it)].begin(); t_it != uedges2tris[(*u_it)].end(); t_it++) {
+	    uresults.insert(*t_it);
+	}
+    }
+
+    std::vector<triangle_t> results(uresults.begin(), uresults.end());
+    return results;
+}
+
+
 void
 cmesh_t::repair()
 {
-    std::vector<triangle_t> s_tris = this->singularity_triangles();
+    // The most difficult cases are problem end and/or flipped normal
+    // triangles.  Handle those first.
     std::vector<triangle_t> f_tris = this->interior_incorrect_normals(1);
+    std::vector<triangle_t> e_tris = this->problem_edge_tris();
     std::set<triangle_t> seed_tris;
-    seed_tris.insert(s_tris.begin(), s_tris.end());
+    seed_tris.insert(e_tris.begin(), e_tris.end());
     seed_tris.insert(f_tris.begin(), f_tris.end());
 
     while (seed_tris.size()) {
 	triangle_t seed = *seed_tris.begin();
 
+	// We use the Brep normal for this, since the triangles are
+	// problem triangles and their normals cannot be relied upon.
 	ON_3dPoint sp = this->tcenter(seed);
 	ON_3dVector sn = this->bnorm(seed);
 
@@ -601,6 +626,13 @@ cmesh_t::repair()
 	// insert new triangles into cmesh
 
     }
+
+    // Now that the out-and-out problem triangles have been handled,
+    // remesh near singularities to try and produce more reasonable
+    // triangles.
+    std::vector<triangle_t> s_tris = this->singularity_triangles();
+    seed_tris.insert(s_tris.begin(), s_tris.end());
+
 }
 
 void cmesh_t::plot_uedge(struct uedge_t &ue, FILE* plot_file)

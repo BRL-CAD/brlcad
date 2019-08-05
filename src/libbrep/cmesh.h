@@ -201,8 +201,11 @@ public:
     std::vector<std::vector<long>> boundary_loops(int use_brep_data);
     std::vector<triangle_t> face_neighbors(const triangle_t &f);
     std::vector<triangle_t> vertex_face_neighbors(long vind);
-    std::vector<triangle_t> interior_incorrect_normals(int use_brep_data);
+
     std::vector<triangle_t> singularity_triangles();
+    
+    std::vector<triangle_t> interior_incorrect_normals(int use_brep_data);
+    std::vector<triangle_t> problem_edge_tris();
 
     // Plot3 generation routines for debugging
     void boundary_edges_plot(const char *filename);
@@ -276,6 +279,7 @@ class cpolygon_t
 	long add_edge(cpolyedge_t *, std::set<long> *ip);
 	bool closed();
 	bool point_in_polygon(long v);
+	std::vector<long> polyvect();
 };
 
 class csweep_t
@@ -284,11 +288,22 @@ class csweep_t
 	cpolygon_t polygon;
 	std::set<long> interior_points;
 
+	// Project cmesh 3D points into a 2D point array.  Probably won't use all of
+	// them, but this way vert indices on triangles will match in 2D and 3D.
 	void build_2d_pnts(ON_3dPoint &c, ON_3dVector &n);
 
+	// An initial loop may not contain all the interior points - to ensure it does,
+	// use grow_loop with a large deg value and the stop_on_contained flag set.
 	long build_initial_loop(triangle_t &seed);
 
-	long grow_loop(double deg);
+	// To grow only until all interior points are within the polygon, supply true
+	// for stop_on_contained.  Otherwise, grow_loop will follow the triangles out
+	// until the Brep normals of the triangles are beyond the deg limit.  Note
+	// that triangles which would cause a self-intersecting polygon will be
+	// rejected, even if they satisfy deg.
+	long grow_loop(double deg, bool stop_on_contained);
+
+	bool interior_points_contained();
 
 	cmesh_t *cmesh;
 
@@ -302,6 +317,7 @@ class csweep_t
 	// TODO - this should be a libbg 2d point array for easy triangulation via libbg routines
 	std::vector<ON_2dPoint *> pnts_2d;
 	ON_Plane tplane;
+	ON_3dVector pdir;
 
 	std::set<triangle_t> visited_triangles;
 

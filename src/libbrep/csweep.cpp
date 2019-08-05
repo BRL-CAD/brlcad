@@ -24,10 +24,10 @@ namespace cmesh
 {
 
 long
-csweep_t::grow_loop(double deg)
+csweep_t::grow_loop(double deg, bool stop_on_contained)
 {
     if (deg < 0 || deg > 170) {
-	return false;
+	return -1;
     }
 #if 0
     double angle = deg * ON_PI/180.0;
@@ -121,12 +121,17 @@ csweep_t::grow_loop(double deg)
     return submesh->tris.size();
 #endif
 
+    if (stop_on_contained && !interior_points_contained()) {
+	return -1;
+    }
+
     return -1;
 }
 
 void
 csweep_t::build_2d_pnts(ON_3dPoint &c, ON_3dVector &n)
 {
+    pdir = n;
     ON_Plane tri_plane(c, n);
     ON_Xform to_plane;
     to_plane.PlanarProjection(tplane);
