@@ -64,6 +64,9 @@ cpolygon_t::add_edge(const struct edge_t &e)
     cpolyedge_t *nedge = new cpolyedge_t(le);
     poly.insert(nedge);
 
+    v2pe[v1].insert(nedge);
+    v2pe[v2].insert(nedge);
+
     cpolyedge_t *prev = NULL;
     cpolyedge_t *next = NULL;
 
@@ -108,19 +111,31 @@ cpolygon_t::remove_edge(const struct edge_t &e)
 	}
     }
 
-    if (cull) {
-	for (cp_it = poly.begin(); cp_it != poly.end(); cp_it++) {
-	    cpolyedge_t *pe = *cp_it;
-	    if (pe->prev == cull) {
-		pe->prev = NULL;
-	    }
-	    if (pe->next == cull) {
-		pe->next = NULL;
-	    }
+    if (!cull) return;
+
+    v2pe[e.v[0]].erase(cull);
+    v2pe[e.v[1]].erase(cull);
+
+    // An edge removal may produce a new interior point candidate - check
+    // (need to verify it's actually inside the loop geometrically before
+    // we call it actually interior)
+    for (int i = 0; i < 2; i++) {
+	if (!v2pe[e.v[i]].size()) {
+	    uncontained.insert(e.v[i]);
 	}
-	poly.erase(cull);
-	delete cull;
     }
+
+    for (cp_it = poly.begin(); cp_it != poly.end(); cp_it++) {
+	cpolyedge_t *pe = *cp_it;
+	if (pe->prev == cull) {
+	    pe->prev = NULL;
+	}
+	if (pe->next == cull) {
+	    pe->next = NULL;
+	}
+    }
+    poly.erase(cull);
+    delete cull;
 }
 
 long
@@ -191,52 +206,6 @@ csweep_t::non_interior_verts(const triangle_t &t)
 
     return result;
 
-}
-
-std::set<edge_t>
-csweep_t::tri_ext_edges(const triangle_t &t)
-{
-    std::set<edge_t> result;
-    if (t.v[0] == -1) {
-	return result;
-    }
-
-    return result;
-}
-
-std::set<edge_t>
-csweep_t::exterior_edges(std::set<triangle_t> &tris)
-{
-    std::set<edge_t> result;
-    if (!tris.size()) {
-	return result;
-    }
-
-    std::set<triangle_t>::iterator t_it;
-    for (t_it = tris.begin(); t_it != tris.end(); t_it++) {
-	triangle_t t = (*t_it);
-	struct edge_t e[3];
-	e[0].set(t.v[0], t.v[1]);
-	e[1].set(t.v[1], t.v[2]);
-	e[2].set(t.v[2], t.v[0]);
-	struct uedge_t ue[3];
-	for (int i = 0; i < 3; i++) {
-	    ue[i].set(e[i].v[0], e[i].v[1]);
-	}
-
-	for (int i = 0; i < 3; i++) {
-	    bool v1int = (interior_points.find(e[i].v[0]) != interior_points.end());
-	    bool v2int = (interior_points.find(e[i].v[1]) != interior_points.end());
-	    if (v1int || v2int) {
-		interior_uedges.insert(ue[i]);
-	    } else {
-		result.insert(e[i]);
-	    }
-	}
-
-    }
-
-    return result;
 }
 
 long
@@ -420,7 +389,10 @@ csweep_t::polygon_tris(double angle)
 long
 csweep_t::grow_loop(double deg, bool stop_on_contained)
 {
-    if (stop_on_contained && !uncontained.size()) {
+    // TODO - do an initial pass to check for uncontained points that are actually interior.
+
+
+    if (stop_on_contained && !polygon.uncontained.size()) {
 	return 0;
     }
 
@@ -563,7 +535,7 @@ csweep_t::build_initial_loop(triangle_t &seed)
 	if (cmesh->brep_edge_pnt(seed.v[i])) {
 	    continue;
 	}
-	uncontained.insert(seed.v[i]);
+	polygon.uncontained.insert(seed.v[i]);
     }
 
     // TODO - do we need this?

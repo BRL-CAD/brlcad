@@ -263,12 +263,10 @@ class cpolyedge_t
 	cpolyedge_t *next;
 
 	long v[2];
-	int uses;
 
 	cpolyedge_t(edge_t &e){
 	    v[0] = e.v[0];
 	    v[1] = e.v[1];
-	    uses = 1;
 	    prev = NULL;
 	    next = NULL;
 	};
@@ -278,7 +276,9 @@ class cpolygon_t
 {
     public:
 	std::set<cpolyedge_t *> poly;
-	std::map<long, cpolyedge_t *> v2pe;
+	std::map<long, std::set<cpolyedge_t *>> v2pe;
+	std::set<long> interior_points;
+	std::set<long> uncontained;
 
 	long add_edge(const struct edge_t &e);
 	void remove_edge(const struct edge_t &e);
@@ -294,9 +294,7 @@ class csweep_t
 {
     public:
 	cpolygon_t polygon;
-	std::set<long> interior_points;
 	std::set<uedge_t> interior_uedges;
-	std::set<long> uncontained;
 
 	// Project cmesh 3D points into a 2D point array.  Probably won't use all of
 	// them, but this way vert indices on triangles will match in 2D and 3D.
@@ -338,9 +336,6 @@ class csweep_t
 
 	// vertices and edges of any problem candidate triangles go into the interior sets
 	void cull_problem_tris(std::set<triangle_t> *tcandidates);
-
-	std::set<edge_t> tri_ext_edges(const triangle_t &t);
-	std::set<edge_t> exterior_edges(std::set<triangle_t> &ctris);
 
 	std::set<long> non_interior_verts(const triangle_t &t);
 
