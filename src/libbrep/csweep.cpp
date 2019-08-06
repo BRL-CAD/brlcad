@@ -262,24 +262,25 @@ cpolygon_t::cdt()
 	}
     }
 
-    int *opoly = (int *)bu_calloc(poly.size(), sizeof(int), "polygon points");
+    int *opoly = (int *)bu_calloc(poly.size()+1, sizeof(int), "polygon points");
 
-    size_t vcnt = 0;
+    size_t vcnt = 1;
     cpolyedge_t *pe = (*poly.begin());
     cpolyedge_t *first = pe;
     cpolyedge_t *next = pe->next;
 
-    opoly[vcnt] = pe->v[0];
+    opoly[vcnt-1] = pe->v[0];
+    opoly[vcnt] = pe->v[1];
 
-    // Walk the loop - an infinite loop is not closed
+    // Walk the loop
     while (first != next) {
 	vcnt++;
-	opoly[vcnt] = next->v[0];
+	opoly[vcnt] = next->v[1];
 	next = next->next;
     }
 
     bool result = (bool)!bg_nested_polygon_triangulate( &faces, &num_faces,
-	    NULL, NULL, opoly, vcnt, NULL, NULL, 0, steiner,
+	    NULL, NULL, opoly, poly.size()+1, NULL, NULL, 0, steiner,
 	    interior_points.size(), pnts_2d, cmesh->pnts.size(),
 	    TRI_CONSTRAINED_DELAUNAY);
 
@@ -744,9 +745,11 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 
 	if (!polygon.have_uncontained()) {
 	    std::cout << "In principle, we now have a workable subset\n";
-	    polygon.polygon_plot("test.plot3");
+	    polygon.polygon_plot("poly_2d.plot3");
 
 	    polygon.cdt();
+
+	    cmesh->tris_set_plot(polygon.tris, "tri_2d.plot3d");
 
 	    exit(0);
 	}
