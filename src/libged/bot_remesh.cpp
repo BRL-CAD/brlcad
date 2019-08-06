@@ -25,14 +25,24 @@
 
 #include "common.h"
 
-#include <openvdb/openvdb.h>
-#include <openvdb/tools/VolumeToMesh.h>
-#include <openvdb/tools/MeshToVolume.h>
+#ifdef OPENVDB_ABI_VERSION_NUMBER
+#  include <openvdb/openvdb.h>
+#  include <openvdb/tools/VolumeToMesh.h>
+#  include <openvdb/tools/MeshToVolume.h>
+#endif /* OPENVDB_ABI_VERSION_NUMBER */
 
+#include "bu/str.h"
+#include "rt/db5.h"
+#include "rt/db_internal.h"
+#include "rt/db_io.h"
 #include "rt/geom.h"
+#include "rt/wdb.h"
+#include "ged/commands.h"
+#include "ged/database.h"
+#include "ged/objects.h"
 
-#include "./ged_private.h"
 
+#ifdef OPENVDB_ABI_VERSION_NUMBER
 
 struct botDataAdapter {
     struct rt_bot_internal *bot;
@@ -59,8 +69,8 @@ struct botDataAdapter {
 };
 
 
-static void
-bot_remesh(struct rt_bot_internal *bot)
+static bool
+bot_remesh(struct ged *UNUSED(gedp), struct rt_bot_internal *bot)
 {
     struct botDataAdapter bda(bot);
 
@@ -118,8 +128,22 @@ bot_remesh(struct rt_bot_internal *bot)
 	   "ntris = %zu\n"
 	   "nquads = %zu\n", points.size(), triangles.size(), quadrilaterals.size());
 
-    return;
+    return (points.size() > 0);
 }
+
+#else /* OPENVDB_ABI_VERSION_NUMBER */
+
+static bool
+bot_remesh(struct ged *gedp, struct rt_bot_internal *UNUSED(bot))
+{
+    bu_vls_printf(gedp->ged_result_str,
+		  "WARNING: BoT remeshing is unavailable.\n"
+		  "BRL-CAD needs to be compiled with OpenVDB support.\n"
+		  "(cmake -DBRLCAD_ENABLE_OPENVDB=ON)\n");
+    return false;
+}
+
+#endif /* OPENVDB_ABI_VERSION_NUMBER */
 
 
 int
@@ -186,7 +210,10 @@ ged_bot_remesh(struct ged *gedp, int argc, const char *argv[])
 
     /* TODO: stash a backup if overwriting the original */
 
-    bot_remesh(input_bot);
+    bool ok = bot_remesh(gedp, input_bot);
+    if (!ok) {
+	return GED_ERROR;
+    }
 
     if (BU_STR_EQUAL(input_bot_name, output_bot_name)) {
 	dp_output = dp_input;
