@@ -12,6 +12,7 @@
 #include "common.h"
 
 #include "bu/color.h"
+#include "bu/malloc.h"
 //#include "bn/mat.h" /* bn_vec_perp */
 #include "bn/plot3.h"
 #include "./cmesh.h"
@@ -363,17 +364,14 @@ void cpolygon_t::polygon_plot(const char *filename)
     cpolyedge_t *ecurr = NULL;
 
     point_t bnp;
-    ON_2dPoint *p = pnts_2d[efirst->v[0]];
-    VSET(bnp, p->x, p->y, 0);
+    VSET(bnp, pnts_2d[efirst->v[0]][X], pnts_2d[efirst->v[0]][Y], 0);
     pdv_3move(plot_file, bnp);
-    p = pnts_2d[efirst->v[1]];
-    VSET(bnp, p->x, p->y, 0);
+    VSET(bnp, pnts_2d[efirst->v[1]][X], pnts_2d[efirst->v[1]][Y], 0);
     pdv_3cont(plot_file, bnp);
 
     while (ecurr != efirst) {
 	ecurr = (!ecurr) ? efirst->next : ecurr->next;
-	p = pnts_2d[ecurr->v[1]];
-	VSET(bnp, p->x, p->y, 0);
+	VSET(bnp, pnts_2d[ecurr->v[1]][X], pnts_2d[ecurr->v[1]][Y], 0);
 	pdv_3cont(plot_file, bnp);
     }
 
@@ -631,13 +629,13 @@ csweep_t::build_2d_pnts(ON_3dPoint &c, ON_3dVector &n)
     ON_Plane tri_plane(c, n);
     ON_Xform to_plane;
     to_plane.PlanarProjection(tplane);
+    polygon.pnts_2d = (point2d_t *)bu_calloc(cmesh->pnts.size() + 1, sizeof(point2d_t), "2D points array");
     for (size_t i = 0; i < cmesh->pnts.size(); i++) {
 	ON_3dPoint op3d = (*cmesh->pnts[i]);
 	op3d.Transform(to_plane);
-	ON_2dPoint *n2d = new ON_2dPoint(op3d.x, op3d.y);
-	polygon.pnts_2d.push_back(n2d);
+	polygon.pnts_2d[i][X] = op3d.x;
+	polygon.pnts_2d[i][Y] = op3d.y;
     }
-
     tplane = tri_plane;
 }
 
@@ -716,11 +714,9 @@ csweep_t::build_initial_loop(triangle_t &seed)
 
 void csweep_t::plot_uedge(struct uedge_t &ue, FILE* plot_file)
 {
-    ON_2dPoint *p1 = this->polygon.pnts_2d[ue.v[0]];
-    ON_2dPoint *p2 = this->polygon.pnts_2d[ue.v[1]];
     point_t bnp1, bnp2;
-    VSET(bnp1, p1->x, p1->y, 0);
-    VSET(bnp2, p2->x, p2->y, 0);
+    VSET(bnp1, polygon.pnts_2d[ue.v[0]][X], polygon.pnts_2d[ue.v[0]][Y], 0);
+    VSET(bnp2, polygon.pnts_2d[ue.v[1]][X], polygon.pnts_2d[ue.v[1]][Y], 0);
     pdv_3move(plot_file, bnp1);
     pdv_3cont(plot_file, bnp2);
 }
@@ -733,10 +729,9 @@ void csweep_t::plot_tri(const triangle_t &t, struct bu_color *buc, FILE *plot, i
     point_t c = VINIT_ZERO;
 
     for (int i = 0; i < 3; i++) {
-	ON_2dPoint *p2d = this->polygon.pnts_2d[t.v[i]];
-	VSET(p[i], p2d->x, p2d->y, 0);
-	c[X] += p2d->x;
-	c[Y] += p2d->y;
+	VSET(p[i], polygon.pnts_2d[t.v[i]][X], polygon.pnts_2d[t.v[i]][Y], 0);
+	c[X] += p[i][X];
+	c[Y] += p[i][Y];
     }
     c[X] = c[X]/3.0;
     c[Y] = c[Y]/3.0;
@@ -826,8 +821,9 @@ void csweep_t::vertex_face_neighbors_plot(long vind, const char *filename)
 
     // Plot the vind point that is the source of the triangles
     pl_color(plot_file, 0, 255,0);
-    ON_2dPoint *p = this->polygon.pnts_2d[vind];
-    pd_point(plot_file, p->x, p->y);
+    point2d_t p;
+    V2MOVE(p, polygon.pnts_2d[vind]);
+    pd_point(plot_file, p[X], p[Y]);
     fclose(plot_file);
 }
 

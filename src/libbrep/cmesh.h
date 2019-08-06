@@ -282,7 +282,7 @@ class cpolygon_t
 	std::set<long> flipped_face;
 
 	// TODO - this should be a libbg 2d point array for easy triangulation via libbg routines
-	std::vector<ON_2dPoint *> pnts_2d;
+	point2d_t *pnts_2d;
 
 	std::set<uedge_t> problem_edges;
 
