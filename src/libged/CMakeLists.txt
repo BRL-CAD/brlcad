@@ -61,6 +61,7 @@ set(LIBGED_SOURCES
   bot_fuse.c
   bot_flip.c
   bot_merge.c
+  bot_remesh.cpp
   bot_smooth.c
   bot_split.c
   bot_sync.c
@@ -375,6 +376,15 @@ BRLCAD_LIB_INCLUDE_DIRS(ged GED_INCLUDE_DIRS GED_LOCAL_INCLUDE_DIRS)
 if(BRLCAD_ENABLE_BULLET)
   set(CADBULLET_LIBRARY cadbullet)
 endif(BRLCAD_ENABLE_BULLET)
+
+if (BRLCAD_ENABLE_OPENVDB)
+  include_directories(${OpenVDB_INCLUDE_DIRS})
+  include_directories(${Tbb_INCLUDE_DIRS})
+  include_directories(${IlmBase_INCLUDE_DIRS})
+  set(LIBGED_CMD_LIBS_LIST ${LIBGED_CMD_LIBS_LIST} "${OpenVDB_LIBRARIES};${IlmBase_LIBRARIES};${Tbb_LIBRARIES}")
+  # disable warnings due to unquellable issues in Boost and IlmBase/half headers
+  set_property(SOURCE bot_remesh.cpp APPEND PROPERTY COMPILE_FLAGS "${OpenVDB_DEFINITIONS} -w")
+endif (BRLCAD_ENABLE_OPENVDB)
 
 BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;librt;libnmg;libfb;libbg;libbn;libbu;libicv;libanalyze;${LIBGED_CMD_LIBS_LIST};${CADBULLET_LIBRARY};${REGEX_LIBRARY};${WINSOCK_LIB};${M_LIBRARY}")
 SET_TARGET_PROPERTIES(libged PROPERTIES VERSION 20.0.1 SOVERSION 20)

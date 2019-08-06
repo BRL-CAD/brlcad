@@ -52,11 +52,21 @@ _bot_show_help(struct ged *gedp, struct bu_opt_desc *d)
     }
     bu_vls_printf(&str, "Subcommands:\n\n");
     bu_vls_printf(&str, "  get   (faces|minEdge|maxEdge|orientation|type|vertices) <bot>\n");
-    bu_vls_printf(&str, "    - Get specific BoT information.\n\n");
+    bu_vls_printf(&str, "    - Get specific BoT information.\n");
     bu_vls_printf(&str, "  check (solid|degen_faces|open_edges|extra_edges|flipped_edges) <bot>\n");
-    bu_vls_printf(&str, "    - Check the BoT for problems (see bot_check man page).\n\n");
+    bu_vls_printf(&str, "    - Check the BoT for problems (see bot_check man page).\n");
     bu_vls_printf(&str, "  chull <bot> <output_bot>\n");
-    bu_vls_printf(&str, "    - Store the BoT's convex hull in <output_bot>.\n\n");
+    bu_vls_printf(&str, "    - Store the BoT's convex hull in <output_bot>.\n");
+    bu_vls_printf(&str, "  remesh <bot> <output_bot>\n");
+    bu_vls_printf(&str, "    - Store a remeshed version of <bot> in <output_bot>.\n");
+/*
+  TODO: document 'isect'
+    bu_vls_printf(&str, "  isect <bot1> <bot2>\n");
+    bu_vls_printf(&str, "    - intersection of <bot1> and <bot2>.\n");
+
+  TODO: add/merge other bot_* commands as subcommands
+*/
+    bu_vls_printf(&str, "\n");
 
     bu_vls_vlscat(gedp->ged_result_str, &str);
     bu_vls_free(&str);
@@ -486,7 +496,7 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
     int opt_ret = 0;
     int opt_argc;
     struct bu_opt_desc d[3];
-    const char * const bot_subcommands[] = {"check","chull","get", "isect", NULL};
+    const char * const bot_subcommands[] = {"check", "chull", "get", "isect", "remesh", NULL};
     BU_OPT(d[0], "h", "help",      "", NULL, &print_help,        "Print help and exit");
     BU_OPT(d[1], "V", "visualize", "", NULL, &visualize_results, "Use subcommand's 3D visualization.");
     BU_OPT_NULL(d[2]);
@@ -546,11 +556,15 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
 	primitive = argv[argc - 1];
     } else if (bu_strncmp(sub, "chull", len) == 0) {
 	primitive = argv[1];
+	primitive_2 = argv[2];
     } else if (bu_strncmp(sub, "isect", len) == 0) {
 	primitive = argv[1];
 	primitive_2 = argv[2];
     } else if (bu_strncmp(sub, "check", len) == 0) {
 	primitive = argv[argc - 1];
+    } else if (bu_strncmp(sub, "remesh", len) == 0) {
+	primitive = argv[1];
+	primitive_2 = argv[2];
     } else {
 	bu_vls_printf(gedp->ged_result_str, "%s: %s is not a known subcommand!", cmd, sub);
 	return GED_ERROR;
@@ -592,8 +606,9 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
 	    rt_db_free_internal(&intern);
 	    return GED_ERROR;
 	}
-    }
-    if (bu_strncmp(sub, "chull", len) == 0) {
+
+    } else if (bu_strncmp(sub, "chull", len) == 0) {
+
 	int retval = 0;
 	int fc = 0;
 	int vc = 0;
@@ -615,7 +630,7 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
 	}
 
-	retval = mk_bot(gedp->ged_wdbp, argv[2], RT_BOT_SOLID, RT_BOT_CCW, err, vc, fc, (fastf_t *)vert_array, faces, NULL, NULL);
+	retval = mk_bot(gedp->ged_wdbp, primitive_2, RT_BOT_SOLID, RT_BOT_CCW, err, vc, fc, (fastf_t *)vert_array, faces, NULL, NULL);
 
 	bu_free(faces, "free faces");
 	bu_free(vert_array, "free verts");
@@ -624,9 +639,8 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
 	    rt_db_free_internal(&intern);
 	    return GED_ERROR;
 	}
-    }
 
-    if (bu_strncmp(sub, "isect", len) == 0) {
+    } else if (bu_strncmp(sub, "isect", len) == 0) {
 
 	struct directory *bot_dp_2;
 	struct rt_db_internal intern_2;
@@ -667,15 +681,19 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
 	rt_db_free_internal(&intern_2);
 	return GED_OK;
 	}
-    }
 
+    } else if (bu_strncmp(sub, "check", len) == 0) {
 
-
-    if (bu_strncmp(sub, "check", len) == 0) {
 	return bot_check(gedp, argc, argv, d, &intern, visualize_results);
+
+    } else if (bu_strncmp(sub, "remesh", len) == 0) {
+
+	return ged_bot_remesh(gedp, argc, argv);
+
     }
 
     rt_db_free_internal(&intern);
+
     return GED_OK;
 }
 
