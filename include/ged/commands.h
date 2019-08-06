@@ -366,6 +366,18 @@ GED_EXPORT extern int ged_bot_sync(struct ged *gedp, int argc, const char *argv[
 GED_EXPORT extern int ged_bot_vertex_fuse(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+ * Remesh an existing bot.
+ *
+ * This routine will take an existing BoT and perform a global
+ * remeshing.  This operation will heal and repair some polygonal mesh
+ * errors such as elimination of dangling faces, elimination of
+ * overlapping faces, and closure of small gaps (solidity errors).
+ *
+ * This routine currently only works on solid mesh geometry.
+ */
+GED_EXPORT int ged_bot_remesh(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  * BREP utility command
  */
 GED_EXPORT extern int ged_brep(struct ged *gedp, int argc, const char *argv[]);
@@ -778,7 +790,9 @@ GED_EXPORT extern int ged_track2(struct bu_vls *log_str, struct rt_wdb *wdbp, co
 /* defined in wdb_importFg4Section.c */
 GED_EXPORT int wdb_importFg4Section_cmd(void *data, int argc, const char *argv[]);
 
-
+/**
+ * manipulate point set geometry
+ */
 GED_EXPORT int ged_pnts(struct ged *gedp, int argc, const char *argv[]);
 
 
