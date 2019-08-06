@@ -627,10 +627,7 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 
     // First step - collect all the unvisited triangles from the polyline edges.
 
-    std::queue<triangle_t> q1, q2;
-    std::queue<triangle_t> *tq, *nq;
-    tq = &q1;
-    nq = &q2;
+    std::queue<triangle_t> tq;
 
     std::set<edge_t> flipped_edges;
 
@@ -640,13 +637,13 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 
     std::set<triangle_t>::iterator f_it;
     for (f_it = ptris.begin(); f_it != ptris.end(); f_it++) {
-	q1.push(*f_it);
+	tq.push(*f_it);
     }
 
-    while (!tq->empty()) {
+    while (!tq.empty()) {
 
-	triangle_t ct = tq->front();
-	tq->pop();
+	triangle_t ct = tq.front();
+	tq.pop();
 
 	// A triangle will introduce at most one new point into the loop.  If
 	// the triangle is bad, it will define uncontained interior points and
@@ -709,18 +706,14 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 	    exit(0);
 	}
 
-	if (tq->empty()) {
-	    // TODO - that's all the triangles from this ring - check for termination criteria
-	    // If we can't terminate, pull the next triangle set.
+	if (tq.empty()) {
+	    // TODO - that's all the triangles from this ring - if we haven't
+	    // terminated yet, pull the next triangle set.
 
 	    std::set<triangle_t> ntris = polygon_tris(angle);
 	    for (f_it = ntris.begin(); f_it != ntris.end(); f_it++) {
-		nq->push(*f_it);
+		tq.push(*f_it);
 	    }
-
-	    std::queue<triangle_t> *tmpq = tq;
-	    tq = nq;
-	    nq = tmpq;
 	}
     }
 
