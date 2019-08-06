@@ -337,6 +337,87 @@ TCLCAD_EXPORT extern int go_data_pick(struct ged *gedp,
 				      int argc,
 				      const char *argv[],
 				      const char *usage);
+TCLCAD_EXPORT extern int go_data_axes(Tcl_Interp *interp,
+				      struct ged *gedp,
+				      struct ged_dm_view *gdvp,
+				      int argc,
+				      const char *argv[],
+				      const char *usage);
+TCLCAD_EXPORT extern int go_data_lines(Tcl_Interp *interp,
+				       struct ged *gedp,
+				       struct ged_dm_view *gdvp,
+				       int argc,
+				       const char *argv[],
+				       const char *usage);
+TCLCAD_EXPORT extern int go_data_move(Tcl_Interp *interp,
+				      struct ged *gedp,
+				      struct ged_dm_view *gdvp,
+				      int argc,
+				      const char *argv[],
+				      const char *usage);
+TCLCAD_EXPORT extern int go_data_move_object_mode(Tcl_Interp *interp,
+						  struct ged *gedp,
+						  struct ged_dm_view *gdvp,
+						  int argc,
+						  const char *argv[],
+						  const char *usage);
+TCLCAD_EXPORT extern int go_data_move_point_mode(Tcl_Interp *interp,
+						 struct ged *gedp,
+						 struct ged_dm_view *gdvp,
+						 int argc,
+						 const char *argv[],
+						 const char *usage);
+TCLCAD_EXPORT extern int go_data_polygons(Tcl_Interp *interp,
+					  struct ged *gedp,
+					  struct ged_dm_view *gdvp,
+					  int argc,
+					  const char *argv[],
+					  const char *usage);
+TCLCAD_EXPORT extern int go_mouse_poly_circ(Tcl_Interp *interp,
+					    struct ged *gedp,
+					    struct ged_dm_view *gdvp,
+					    int argc,
+					    const char *argv[],
+					    const char *usage);
+TCLCAD_EXPORT extern int go_mouse_poly_cont(Tcl_Interp *interp,
+					    struct ged *gedp,
+					    struct ged_dm_view *gdvp,
+					    int argc,
+					    const char *argv[],
+					    const char *usage);
+TCLCAD_EXPORT extern int go_mouse_poly_ell(Tcl_Interp *interp,
+					   struct ged *gedp,
+					   struct ged_dm_view *gdvp,
+					   int argc,
+					   const char *argv[],
+					   const char *usage);
+TCLCAD_EXPORT extern int go_mouse_poly_rect(Tcl_Interp *interp,
+					    struct ged *gedp,
+					    struct ged_dm_view *gdvp,
+					    int argc,
+					    const char *argv[],
+					    const char *usage);
+TCLCAD_EXPORT extern int go_poly_circ_mode(Tcl_Interp *interp,
+					   struct ged *gedp,
+					   struct ged_dm_view *gdvp,
+					   int argc,
+					   const char *argv[],
+					   const char *usage);
+TCLCAD_EXPORT extern int go_poly_ell_mode(Tcl_Interp *interp,
+					  struct ged *gedp,
+					  struct ged_dm_view *gdvp,
+					  int argc,
+					  const char *argv[],
+					  const char *usage);
+TCLCAD_EXPORT extern int go_poly_rect_mode(Tcl_Interp *interp,
+					   struct ged *gedp,
+					   struct ged_dm_view *gdvp,
+					   int argc,
+					   const char *argv[],
+					   const char *usage);
+TCLCAD_EXPORT extern int go_run_tclscript(Tcl_Interp *interp,
+					  const char *tclscript,
+					  struct bu_vls *result_str);
 
 /* defined in cmdhist_obj.c */
 TCLCAD_EXPORT extern int Cho_Init(Tcl_Interp *interp);
