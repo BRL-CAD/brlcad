@@ -298,6 +298,7 @@ class cpolygon_t
 	long tri_process(std::set<edge_t> *ne, std::set<edge_t> *se, long *nv, triangle_t &t);
 
 	void polygon_plot(const char *filename);
+	void print();
 };
 
 class csweep_t

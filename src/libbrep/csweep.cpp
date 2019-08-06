@@ -101,13 +101,16 @@ cpolygon_t::add_edge(const struct edge_t &e)
 void
 cpolygon_t::remove_edge(const struct edge_t &e)
 {
+    struct uedge_t ue(e);
     cpolyedge_t *cull = NULL;
     std::set<cpolyedge_t *>::iterator cp_it;
     for (cp_it = poly.begin(); cp_it != poly.end(); cp_it++) {
 	cpolyedge_t *pe = *cp_it;
-	if (pe->v[0] == e.v[0] && pe->v[1] == e.v[1]) {
+	struct uedge_t pue(pe->v[0], pe->v[1]);
+	if (ue == pue) {
 	    // Existing segment with this ending vertex exists
 	    cull = pe;
+	    break;
 	}
     }
 
@@ -123,9 +126,8 @@ cpolygon_t::remove_edge(const struct edge_t &e)
 	if (!v2pe[e.v[i]].size()) {
 	    if (flipped_face.find(e.v[i]) != flipped_face.end()) {
 		flipped_face.erase(e.v[i]);
-		continue;
 	    }
-	    uncontained.erase(e.v[i]);
+	    uncontained.insert(e.v[i]);
 	}
     }
 
@@ -157,9 +159,6 @@ cpolygon_t::replace_edges(std::set<edge_t> &new_edges, std::set<edge_t> &old_edg
     return 0;
 }
 
-
-
-
 bool
 cpolygon_t::closed()
 {
@@ -167,10 +166,34 @@ cpolygon_t::closed()
 	return false;
     }
 
+    if (flipped_face.size()) {
+	return false;
+    }
+
+    size_t ecnt = 1;
+    cpolyedge_t *pe = (*poly.begin());
+    cpolyedge_t *first = pe;
+    cpolyedge_t *next = pe->next;
+
+    // Walk the loop - an infinite loop is not closed
+    while (first != next) {
+	ecnt++;
+	next = next->next;
+	if (ecnt > poly.size()) {
+	    return false;
+	}
+    }
+
+    // If we're not using all the poly edges in the loop, we're not closed
+    if (ecnt < poly.size()) {
+	return false;
+    }
+
+    // Prev and next need to be set for all poly edges, or we're not closed
     std::set<cpolyedge_t *>::iterator cp_it;
     for (cp_it = poly.begin(); cp_it != poly.end(); cp_it++) {
-	cpolyedge_t *pe = *cp_it;
-	if (!pe->prev || !pe->next) {
+	cpolyedge_t *pec = *cp_it;
+	if (!pec->prev || !pec->next) {
 	    return false;
 	}
     }
@@ -361,6 +384,45 @@ void cpolygon_t::polygon_plot(const char *filename)
     fclose(plot_file);
 }
 
+
+void cpolygon_t::print()
+{
+
+    size_t ecnt = 1;
+    cpolyedge_t *pe = (*poly.begin());
+    cpolyedge_t *first = pe;
+    cpolyedge_t *next = pe->next;
+
+    std::set<cpolyedge_t *> visited;
+    visited.insert(first);
+
+    std::cout << first->v[0];
+
+    // Walk the loop - an infinite loop is not closed
+    while (first != next) {
+	ecnt++;
+	std::cout << "->" << next->v[0];
+	visited.insert(next);
+	next = next->next;
+	if (ecnt > poly.size()) {
+	    std::cout << " ERROR infinite loop\n";
+	    return;
+	}
+    }
+
+    std::cout << "\n";
+
+    if (visited.size() != poly.size()) {
+	std::cout << "Missing edges:\n";
+	std::set<cpolyedge_t *>::iterator p_it;
+	for (p_it = poly.begin(); p_it != poly.end(); p_it++) {
+	    if (visited.find(*p_it) == visited.end()) {
+		std::cout << "  " << (*p_it)->v[0] << "->" << (*p_it)->v[1] << "\n";
+	    }
+	}
+    }
+}
+
 bool
 csweep_t::interior_points_contained()
 {
@@ -472,7 +534,12 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
     tq = &q1;
     nq = &q2;
 
+    std::set<edge_t> flipped_edges;
+
     std::set<triangle_t> ptris = polygon_tris(angle);
+
+
+
     std::set<triangle_t>::iterator f_it;
     for (f_it = ptris.begin(); f_it != ptris.end(); f_it++) {
 	q1.push(*f_it);
@@ -495,6 +562,10 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 	long vert = -1;
 	long new_edge_cnt = polygon.tri_process(&new_edges, &shared_edges, &vert, ct);
 
+	ON_3dVector tdir = cmesh->tnorm(ct);
+	ON_3dVector bdir = cmesh->bnorm(ct);
+	bool flipped_tri = (ON_DotProduct(tdir, bdir) < 0);
+
 	if (new_edge_cnt == -2) {
 	    // Vert from bad edges - added to uncontained.  Start over with another triangle - we
 	    // need to walk out until this point is swept up by the polygon.
@@ -510,37 +581,28 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 	    continue;
 	}
 
+	if (new_edge_cnt == 2 && flipped_tri) {
+	    // It is possible that a flipped face adding two new edges will
+	    // make a mess out of the polygon (i.e. make it self intersecting.)
+	    // Tag it so we know we can't trust point_in_polygon until we've grown
+	    // the vertex out of flipped_face (remove_edge will handle that.)
+
+	    // If we have a flipped triangle vert involving a brep edge vertex... um...
+	    if (cmesh->brep_edge_pnt(vert)) {
+		std::cerr << "URK! flipped face vertex on edge!\n";
+		return -1;
+	    } else {
+		polygon.flipped_face.insert(vert);
+	    }
+	}
+
 	if (new_edge_cnt <= 0 || new_edge_cnt > 2) {
 	    std::cerr << "fatal shared triangle filter error!\n";
 	    return -1;
 	}
 
-	if (new_edge_cnt == 2) {
-
-	    ON_3dVector tdir = cmesh->tnorm(ct);
-	    ON_3dVector bdir = cmesh->bnorm(ct);
-	    if (ON_DotProduct(tdir, bdir) < 0) {
-		// It is possible that a flipped face will have edges that make
-		// a mess out of the polygon.  Stash the points in a special
-		// set - until all the points from the flipped face are
-		// interior via walking, we can't trust the point-in-polygon
-		// test as we may have a self intersecting polygon, and even
-		// afterwards we'll need to double check the interior points -
-		// they will graduate to uncontained rather than interior... we
-		// may have to grow the loop beyond it's basic size to pull in
-		// a stray point from a flipped face.
-		for (int i = 0; i < 3; i++) {
-		    // The exception to flipped categorization is Brep boundary points -
-		    // they are never interior or uncontained
-		    if (cmesh->brep_edge_pnt(ct.v[i])) {
-			continue;
-		    }
-		    polygon.flipped_face.insert(ct.v[i]);
-		}
-	    }
-	}
-
 	polygon.replace_edges(new_edges, shared_edges);
+	visited_triangles.insert(ct);
 
 
 	if (tq->empty()) {

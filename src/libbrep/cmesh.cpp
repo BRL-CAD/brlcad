@@ -36,6 +36,19 @@ cmesh_t::tri_add(triangle_t &tri, int check)
     // Skip duplicate triangles, but report true as this triangle is in the mesh
     // already
     if (this->tris.find(tri) != this->tris.end()) {
+	// Check the normal of the included duplicate and the candidate.
+	// If the original is flipped and the new one isn't, swap them out - this
+	// will help with subsequent processing.
+	triangle_t orig = (*this->tris.find(tri));
+	ON_3dVector torig_dir = tnorm(orig);
+	ON_3dVector tnew_dir = tnorm(tri);
+	ON_3dVector bdir = tnorm(orig);
+	bool f1 = (ON_DotProduct(torig_dir, bdir) < 0);
+	bool f2 = (ON_DotProduct(tnew_dir, bdir) < 0);
+	if (f1 && !f2) {
+	    tris.erase(orig);
+	    tris.insert(tri);
+	}
 	return true;
     }
 
