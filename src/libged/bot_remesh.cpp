@@ -54,14 +54,14 @@ struct botDataAdapter {
     size_t pointCount() const {
 	return bot->num_vertices;
     };
-    size_t vertexCount(size_t n) const {
+    size_t vertexCount(size_t) const {
 	return 3;
     };
     void getIndexSpacePoint(size_t n, size_t v, openvdb::Vec3d& pos) const {
 	int idx = bot->faces[n*3+v];
-	pos[X] = bot->vertices[idx*3+X];
-	pos[Y] = bot->vertices[idx*3+Y];
-	pos[Z] = bot->vertices[idx*3+Z];
+	pos[X] = bot->vertices[idx+X];
+	pos[Y] = bot->vertices[idx+Y];
+	pos[Z] = bot->vertices[idx+Z];
 	return;
     };
 
@@ -73,12 +73,15 @@ struct botDataAdapter {
 static bool
 bot_remesh(struct ged *UNUSED(gedp), struct rt_bot_internal *bot)
 {
+    const float exteriorBandWidth = 3.0;
+    const float interiorBandWidth = std::numeric_limits<float>::max();
+
     struct botDataAdapter bda(bot);
 
     openvdb::initialize();
 
-    openvdb::math::Transform::Ptr xform = openvdb::math::Transform::createLinearTransform(10.0);
-    openvdb::FloatGrid::Ptr bot2vol = openvdb::tools::meshToVolume<openvdb::FloatGrid, botDataAdapter>(bda, *xform);
+    openvdb::math::Transform::Ptr xform = openvdb::math::Transform::createLinearTransform();
+    openvdb::FloatGrid::Ptr bot2vol = openvdb::tools::meshToVolume<openvdb::FloatGrid, botDataAdapter>(bda, *xform, exteriorBandWidth, interiorBandWidth);
 
     std::vector<openvdb::Vec3s> points;
     std::vector<openvdb::Vec3I> triangles;
