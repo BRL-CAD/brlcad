@@ -632,6 +632,7 @@ cmesh_t::repair()
 
 	csweep_t sweep;
 	sweep.cmesh = this;
+	sweep.polygon.problem_edges = problem_edges;
 	sweep.build_2d_pnts(sp, sn);
 
 	// build an initial loop from a nearby valid triangle

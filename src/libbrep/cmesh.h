@@ -279,6 +279,12 @@ class cpolygon_t
 	std::map<long, std::set<cpolyedge_t *>> v2pe;
 	std::set<long> interior_points;
 	std::set<long> uncontained;
+	std::set<long> flipped_face;
+
+	// TODO - this should be a libbg 2d point array for easy triangulation via libbg routines
+	std::vector<ON_2dPoint *> pnts_2d;
+
+	std::set<uedge_t> problem_edges;
 
 	long add_edge(const struct edge_t &e);
 	void remove_edge(const struct edge_t &e);
@@ -324,8 +330,6 @@ class csweep_t
 	void vertex_face_neighbors_plot(long vind, const char *filename);
 
     private:
-	// TODO - this should be a libbg 2d point array for easy triangulation via libbg routines
-	std::vector<ON_2dPoint *> pnts_2d;
 	ON_Plane tplane;
 	ON_3dVector pdir;
 
