@@ -43,7 +43,7 @@ ged_bot_smooth(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal intern;
     fastf_t tolerance_angle=180.0;
     int arg_index=1;
-    static const char *usage = "[-t ntol] new_bot old_bot";
+    static const char *usage = "[-t angle_tolerance] new_bot old_bot";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
