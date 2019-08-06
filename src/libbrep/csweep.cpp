@@ -214,7 +214,7 @@ csweep_t::non_interior_verts(const triangle_t &t)
 }
 
 long
-cpolygon_t::tri_shared_filter(std::set<edge_t> *ne, std::set<edge_t> *se, long *nv, triangle_t &t)
+cpolygon_t::tri_process(std::set<edge_t> *ne, std::set<edge_t> *se, long *nv, triangle_t &t)
 {
     std::set<cpolyedge_t *>::iterator pe_it;
 
@@ -459,7 +459,7 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 	std::set<edge_t> shared_edges;
 	std::set<edge_t>::iterator ne_it;
 	long vert = -1;
-	long new_edge_cnt = polygon.tri_shared_filter(&new_edges, &shared_edges, &vert, ct);
+	long new_edge_cnt = polygon.tri_process(&new_edges, &shared_edges, &vert, ct);
 
 	if (new_edge_cnt == -2) {
 	    // Vert from bad edges - added to uncontained.  Start over with another triangle - we

@@ -295,7 +295,7 @@ class cpolygon_t
 	void check_uncontained();
 	std::vector<long> polyvect();
 	std::set<long> dangling_vertices();
-	long tri_shared_filter(std::set<edge_t> *ne, std::set<edge_t> *se, long *nv, triangle_t &t);
+	long tri_process(std::set<edge_t> *ne, std::set<edge_t> *se, long *nv, triangle_t &t);
 };
 
 class csweep_t
