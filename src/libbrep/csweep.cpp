@@ -707,8 +707,15 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 	}
 
 	if (tq.empty()) {
-	    // TODO - that's all the triangles from this ring - if we haven't
+	    // That's all the triangles from this ring - if we haven't
 	    // terminated yet, pull the next triangle set.
+
+	    // TODO - we may want to be more selective about what triangles
+	    // we queue up - i.e. if we have known uncontained points we're
+	    // trying to contain, skip triangles that are moving away from
+	    // the uncontained points (don't want to pull in additional
+	    // problem regions unnecessarily - it is possible to grow a subset
+	    // to a point where it can't be projected.)
 
 	    std::set<triangle_t> ntris = polygon_tris(angle);
 	    for (f_it = ntris.begin(); f_it != ntris.end(); f_it++) {
