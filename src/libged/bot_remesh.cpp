@@ -34,9 +34,90 @@
 #include "./ged_private.h"
 
 
+struct botDataAdapter {
+    struct rt_bot_internal *bot;
+
+    size_t polygonCount() const {
+	return bot->num_faces;
+    };
+    size_t pointCount() const {
+	return bot->num_vertices;
+    };
+    size_t vertexCount(size_t n) const {
+	return 3;
+    };
+    void getIndexSpacePoint(size_t n, size_t v, openvdb::Vec3d& pos) const {
+	int idx = bot->faces[n*3+v];
+	pos[X] = bot->vertices[idx*3+X];
+	pos[Y] = bot->vertices[idx*3+Y];
+	pos[Z] = bot->vertices[idx*3+Z];
+	return;
+    };
+
+    /* constructor */
+    botDataAdapter(struct rt_bot_internal *bip) : bot(bip) {}
+};
+
+
 static void
-bot_remesh(void)
+bot_remesh(struct rt_bot_internal *bot)
 {
+    struct botDataAdapter bda(bot);
+
+    openvdb::initialize();
+
+    openvdb::math::Transform::Ptr xform = openvdb::math::Transform::createLinearTransform(10.0);
+    openvdb::FloatGrid::Ptr bot2vol = openvdb::tools::meshToVolume<openvdb::FloatGrid, botDataAdapter>(bda, *xform);
+
+    std::vector<openvdb::Vec3s> points;
+    std::vector<openvdb::Vec3I> triangles;
+    std::vector<openvdb::Vec4I> quadrilaterals;
+    openvdb::tools::volumeToMesh<openvdb::FloatGrid>(*bot2vol, points, triangles, quadrilaterals);
+
+    if (bot->vertices) {
+	bu_free(bot->vertices, "vertices");
+	bot->num_vertices = 0;
+    }
+    if (bot->faces) {
+	bu_free(bot->faces, "faces");
+	bot->num_faces = 0;
+    }
+    if (bot->normals) {
+	bu_free(bot->normals, "normals");
+    }
+    if (bot->face_normals) {
+	bu_free(bot->face_normals, "face normals");
+    }
+
+    bot->num_vertices = points.size();
+    bot->vertices = (fastf_t *)bu_malloc(bot->num_vertices * ELEMENTS_PER_POINT * sizeof(fastf_t), "vertices");
+    for (size_t i = 0; i < points.size(); i++) {
+	bot->vertices[i+X] = points[i].x();
+	bot->vertices[i+Y] = points[i].y();
+	bot->vertices[i+Z] = points[i].z();
+    }
+    bot->num_faces = triangles.size() + (quadrilaterals.size() * 2);
+    bot->faces = (int *)bu_malloc(bot->num_faces * 3 * sizeof(int), "triangles");
+    for (size_t i = 0; i < triangles.size(); i++) {
+	bot->faces[i+X] = triangles[i].x();
+	bot->faces[i+Y] = triangles[i].y();
+	bot->faces[i+Z] = triangles[i].z();
+    }
+    size_t ntri = triangles.size();
+    for (size_t i = 0; i < quadrilaterals.size(); i++) {
+	bot->faces[ntri+i+X] = quadrilaterals[i][0];
+	bot->faces[ntri+i+Y] = quadrilaterals[i][1];
+	bot->faces[ntri+i+Z] = quadrilaterals[i][2];
+
+	bot->faces[ntri+i+1+X] = quadrilaterals[i][0];
+	bot->faces[ntri+i+1+Y] = quadrilaterals[i][2];
+	bot->faces[ntri+i+1+Z] = quadrilaterals[i][3];
+    }
+
+    bu_log("npoints = %zu\n"
+	   "ntris = %zu\n"
+	   "nquads = %zu\n", points.size(), triangles.size(), quadrilaterals.size());
+
     return;
 }
 
@@ -103,15 +184,15 @@ ged_bot_remesh(struct ged *gedp, int argc, const char *argv[])
     input_bot = (struct rt_bot_internal *)intern.idb_ptr;
     RT_BOT_CK_MAGIC(input_bot);
 
-    bot_remesh();
+    /* TODO: stash a backup if overwriting the original */
+
+    bot_remesh(input_bot);
 
     if (BU_STR_EQUAL(input_bot_name, output_bot_name)) {
 	dp_output = dp_input;
     } else {
 	GED_DB_DIRADD(gedp, dp_output, output_bot_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type, GED_ERROR);
     }
-
-    /* TODO: stash a backup if overwriting the original */
 
     GED_DB_PUT_INTERNAL(gedp, dp_output, &intern, gedp->ged_wdbp->wdb_resp, GED_ERROR);
     rt_db_free_internal(&intern);
