@@ -1333,7 +1333,7 @@ if(BRLCAD_ENABLE_OPENCL)
 endif(BRLCAD_ENABLE_OPENCL)
 
 # Enable features requiring OpenVDB
-option(BRLCAD_ENABLE_OPENVDB "Enable features requiring OpenVDB" ON)
+option(BRLCAD_ENABLE_OPENVDB "Enable features requiring OpenVDB" OFF)
 mark_as_advanced(BRLCAD_ENABLE_OPENVDB)
 if(BRLCAD_ENABLE_OPENVDB)
   find_package(OpenVDB)
