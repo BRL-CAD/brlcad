@@ -275,30 +275,32 @@ class cpolyedge_t
 class cpolygon_t
 {
     public:
+	bool closed();
+	bool cdt();
+
+	bool point_in_polygon(long v);
+	// Apply the point-in-polygon test to all uncontained points, moving any inside the loop into interior_points
+	bool have_uncontained();
+
+	long tri_process(std::set<edge_t> *ne, std::set<edge_t> *se, long *nv, triangle_t &t);
+	long add_edge(const struct edge_t &e);
+	void remove_edge(const struct edge_t &e);
+	long replace_edges(std::set<edge_t> &new_edges, std::set<edge_t> &old_edges);
+
+	void polygon_plot(const char *filename);
+	void print();
+
+	std::set<triangle_t> tris;
 	std::set<cpolyedge_t *> poly;
 	std::map<long, std::set<cpolyedge_t *>> v2pe;
 	std::set<long> interior_points;
 	std::set<long> uncontained;
 	std::set<long> flipped_face;
-
-	// TODO - this should be a libbg 2d point array for easy triangulation via libbg routines
 	point2d_t *pnts_2d;
 
 	std::set<uedge_t> problem_edges;
 
-	long add_edge(const struct edge_t &e);
-	void remove_edge(const struct edge_t &e);
-	long replace_edges(std::set<edge_t> &new_edges, std::set<edge_t> &old_edges);
-	bool closed();
-	bool point_in_polygon(long v);
-	// Apply the point-in-polygon test to all uncontained points, moving any inside the loop into interior_points
-	bool have_uncontained();
-	std::vector<long> polyvect();
-	std::set<long> dangling_vertices();
-	long tri_process(std::set<edge_t> *ne, std::set<edge_t> *se, long *nv, triangle_t &t);
-
-	void polygon_plot(const char *filename);
-	void print();
+	cmesh_t *cmesh;
 };
 
 class csweep_t
@@ -325,7 +327,6 @@ class csweep_t
 	cmesh_t *cmesh;
 
 	void plot_uedge(struct uedge_t &ue, FILE* plot_file);
-	void polygon_plot(const char *filename);
 	void plot_tri(const triangle_t &t, struct bu_color *buc, FILE *plot, int r, int g, int b);
 	void face_neighbors_plot(const triangle_t &f, const char *filename);
 	void vertex_face_neighbors_plot(long vind, const char *filename);
@@ -343,8 +344,6 @@ class csweep_t
 
 	// vertices and edges of any problem candidate triangles go into the interior sets
 	void cull_problem_tris(std::set<triangle_t> *tcandidates);
-
-	std::set<long> non_interior_verts(const triangle_t &t);
 
 	std::set<triangle_t> polygon_tris(double angle);
 

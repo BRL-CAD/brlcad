@@ -245,30 +245,72 @@ cpolygon_t::point_in_polygon(long v)
     return result;
 }
 
-std::vector<long>
-cpolygon_t::polyvect()
+bool
+cpolygon_t::cdt()
 {
-    std::vector<long> result;
-    return result;
-}
+    if (!closed()) return false;
+    int *faces = NULL;
+    int num_faces = 0;
+    int *steiner = NULL;
+    if (interior_points.size()) {
+	steiner = (int *)bu_calloc(interior_points.size(), sizeof(int), "interior points");
+	std::set<long>::iterator p_it;
+	int vind = 0;
+	for (p_it = interior_points.begin(); p_it != interior_points.end(); p_it++) {
+	    steiner[vind] = (int)*p_it;
+	    vind++;
+	}
+    }
 
-std::set<long>
-cpolygon_t::dangling_vertices()
-{
-    std::set<long> result;
-    return result;
-}
+    int *opoly = (int *)bu_calloc(poly.size(), sizeof(int), "polygon points");
 
-std::set<long>
-csweep_t::non_interior_verts(const triangle_t &t)
-{
-    std::set<long> result;
-    if (t.v[0] == -1) {
-	return result;
+    size_t vcnt = 0;
+    cpolyedge_t *pe = (*poly.begin());
+    cpolyedge_t *first = pe;
+    cpolyedge_t *next = pe->next;
+
+    opoly[vcnt] = pe->v[0];
+
+    // Walk the loop - an infinite loop is not closed
+    while (first != next) {
+	vcnt++;
+	opoly[vcnt] = next->v[0];
+	next = next->next;
+    }
+
+    bool result = (bool)!bg_nested_polygon_triangulate( &faces, &num_faces,
+	    NULL, NULL, opoly, vcnt, NULL, NULL, 0, steiner,
+	    interior_points.size(), pnts_2d, cmesh->pnts.size(),
+	    TRI_CONSTRAINED_DELAUNAY);
+
+    if (result) {
+	for (int i = 0; i < num_faces; i++) {
+	    triangle_t t;
+	    t.v[0] = faces[3*i+0];
+	    t.v[1] = faces[3*i+1];
+	    t.v[2] = faces[3*i+2];
+
+	    ON_3dVector tdir = cmesh->tnorm(t);
+	    ON_3dVector bdir = cmesh->bnorm(t);
+	    bool flipped_tri = (ON_DotProduct(tdir, bdir) < 0);
+	    if (flipped_tri) {
+		t.v[2] = faces[3*i+1];
+		t.v[1] = faces[3*i+2];
+	    }
+
+	    tris.insert(t);
+	}
+
+	bu_free(faces, "faces array");
+    }
+
+    bu_free(opoly, "polygon points");
+
+    if (steiner) {
+	bu_free(steiner, "faces array");
     }
 
     return result;
-
 }
 
 long
@@ -699,10 +741,13 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 	polygon.replace_edges(new_edges, shared_edges);
 	visited_triangles.insert(ct);
 
-	
+
 	if (!polygon.have_uncontained()) {
 	    std::cout << "In principle, we now have a workable subset\n";
 	    polygon.polygon_plot("test.plot3");
+
+	    polygon.cdt();
+
 	    exit(0);
 	}
 
@@ -743,6 +788,8 @@ csweep_t::build_2d_pnts(ON_3dPoint &c, ON_3dVector &n)
 	polygon.pnts_2d[i][Y] = op3d.y;
     }
     tplane = tri_plane;
+
+    polygon.cmesh = cmesh;
 }
 
 
