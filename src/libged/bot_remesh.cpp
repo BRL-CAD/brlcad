@@ -31,6 +31,7 @@
 #  include <openvdb/tools/MeshToVolume.h>
 #endif /* OPENVDB_ABI_VERSION_NUMBER */
 
+#include "vmath.h"
 #include "bu/str.h"
 #include "rt/db5.h"
 #include "rt/db_internal.h"
