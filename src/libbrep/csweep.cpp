@@ -15,6 +15,7 @@
 #include "bu/malloc.h"
 //#include "bn/mat.h" /* bn_vec_perp */
 #include "bn/plot3.h"
+#include "bg/polygon.h"
 #include "./cmesh.h"
 
 // needed for implementation
@@ -206,9 +207,42 @@ bool
 cpolygon_t::point_in_polygon(long v)
 {
     if (v == -1) return false;
-    if (flipped_face.size()) return false;
+    if (!closed()) return false;
 
-    return false;
+    point2d_t *polypnts = (point2d_t *)bu_calloc(poly.size()+1, sizeof(point2d_t), "polyline");
+
+    size_t pind = 0;
+    cpolyedge_t *pe = (*poly.begin());
+    cpolyedge_t *first = pe;
+    cpolyedge_t *next = pe->next;
+  
+    if (v == pe->v[0]) {
+	bu_free(polypnts, "polyline");
+	return false;
+    }
+
+    V2MOVE(polypnts[pind], pnts_2d[pe->v[0]]);
+   
+    // Walk the loop
+    while (first != next) {
+	pind++;
+	if (v == next->v[0]) {
+	    bu_free(polypnts, "polyline");
+	    return false;
+	}
+
+	V2MOVE(polypnts[pind], pnts_2d[next->v[0]]);
+	next = next->next;
+    }
+
+    point2d_t test_pnt;
+    V2MOVE(test_pnt, pnts_2d[v]);
+
+    bool result = (bool)bg_pt_in_polygon(pind, (const point2d_t *)polypnts, (const point2d_t *)&test_pnt);
+
+    bu_free(polypnts, "polyline");
+
+    return result;
 }
 
 std::vector<long>
@@ -353,12 +387,19 @@ cpolygon_t::tri_process(std::set<edge_t> *ne, std::set<edge_t> *se, long *nv, tr
 
 void cpolygon_t::polygon_plot(const char *filename)
 {
+    if (!closed()) {
+	std::cerr << "Polygon not closed\n";
+	return;
+    }
+
     FILE* plot_file = fopen(filename, "w");
     struct bu_color c = BU_COLOR_INIT_ZERO;
     bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
     pl_color_buc(plot_file, &c);
 
-    if (closed()) {
+    point2d_t pmin, pmax;
+    V2SET(pmin, DBL_MAX, DBL_MAX);
+    V2SET(pmax, -DBL_MAX, -DBL_MAX);
 
     cpolyedge_t *efirst = *(poly.begin());
     cpolyedge_t *ecurr = NULL;
@@ -369,14 +410,58 @@ void cpolygon_t::polygon_plot(const char *filename)
     VSET(bnp, pnts_2d[efirst->v[1]][X], pnts_2d[efirst->v[1]][Y], 0);
     pdv_3cont(plot_file, bnp);
 
+    V2MINMAX(pmin, pmax, pnts_2d[efirst->v[0]]);
+    V2MINMAX(pmin, pmax, pnts_2d[efirst->v[1]]);
+
     while (ecurr != efirst) {
 	ecurr = (!ecurr) ? efirst->next : ecurr->next;
 	VSET(bnp, pnts_2d[ecurr->v[1]][X], pnts_2d[ecurr->v[1]][Y], 0);
 	pdv_3cont(plot_file, bnp);
+	V2MINMAX(pmin, pmax, pnts_2d[efirst->v[1]]);
     }
 
-    } else {
-	std::cerr << "Polygon not closed\n";
+    // Plot interior and uncontained points as well
+    double r = DIST_PT2_PT2(pmin, pmax) * 0.01;
+    std::set<long>::iterator p_it;
+
+    // Interior
+    pl_color(plot_file, 0, 255, 0);
+    for (p_it = interior_points.begin(); p_it != interior_points.end(); p_it++) {
+	point_t origin;
+	VSET(origin, pnts_2d[*p_it][X], pnts_2d[*p_it][Y], 0);
+	pdv_3move(plot_file, origin);
+	VSET(bnp, pnts_2d[*p_it][X]+r, pnts_2d[*p_it][Y]+r, 0);
+	pdv_3cont(plot_file, bnp);
+	pdv_3cont(plot_file, origin);
+	VSET(bnp, pnts_2d[*p_it][X]+r, pnts_2d[*p_it][Y]-r, 0);
+	pdv_3cont(plot_file, bnp);
+	pdv_3cont(plot_file, origin);
+	VSET(bnp, pnts_2d[*p_it][X]-r, pnts_2d[*p_it][Y]-r, 0);
+	pdv_3cont(plot_file, bnp);
+	pdv_3cont(plot_file, origin);
+	VSET(bnp, pnts_2d[*p_it][X]-r, pnts_2d[*p_it][Y]+r, 0);
+	pdv_3cont(plot_file, bnp);
+	pdv_3cont(plot_file, origin);
+    }
+
+    // Uncontained
+    pl_color(plot_file, 255, 0, 0);
+    for (p_it = uncontained.begin(); p_it != uncontained.end(); p_it++) {
+	point_t origin;
+	VSET(origin, pnts_2d[*p_it][X], pnts_2d[*p_it][Y], 0);
+	pdv_3move(plot_file, origin);
+	VSET(bnp, pnts_2d[*p_it][X]+r, pnts_2d[*p_it][Y]+r, 0);
+	pdv_3cont(plot_file, bnp);
+	pdv_3cont(plot_file, origin);
+	VSET(bnp, pnts_2d[*p_it][X]+r, pnts_2d[*p_it][Y]-r, 0);
+	pdv_3cont(plot_file, bnp);
+	pdv_3cont(plot_file, origin);
+	VSET(bnp, pnts_2d[*p_it][X]-r, pnts_2d[*p_it][Y]-r, 0);
+	pdv_3cont(plot_file, bnp);
+	pdv_3cont(plot_file, origin);
+	VSET(bnp, pnts_2d[*p_it][X]-r, pnts_2d[*p_it][Y]+r, 0);
+	pdv_3cont(plot_file, bnp);
+	pdv_3cont(plot_file, origin);
     }
 
     fclose(plot_file);
@@ -422,9 +507,24 @@ void cpolygon_t::print()
 }
 
 bool
-csweep_t::interior_points_contained()
+cpolygon_t::have_uncontained()
 {
-    return false;
+    std::set<long>::iterator u_it;
+    if (!uncontained.size()) return true;
+
+    std::set<long> mvpnts;
+
+    for (u_it = uncontained.begin(); u_it != uncontained.end(); u_it++) {
+	if (point_in_polygon(*u_it)) {
+	    mvpnts.insert(*u_it);
+	}
+    }
+    for (u_it = mvpnts.begin(); u_it != mvpnts.end(); u_it++) {
+	uncontained.erase(*u_it);
+	interior_points.insert(*u_it);
+    }
+
+    return (uncontained.size() > 0) ? true : false;
 }
 
 void
@@ -602,6 +702,12 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 	polygon.replace_edges(new_edges, shared_edges);
 	visited_triangles.insert(ct);
 
+	
+	if (!polygon.have_uncontained()) {
+	    std::cout << "In principle, we now have a workable subset\n";
+	    polygon.polygon_plot("test.plot3");
+	    exit(0);
+	}
 
 	if (tq->empty()) {
 	    // TODO - that's all the triangles from this ring - check for termination criteria

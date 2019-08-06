@@ -292,7 +292,7 @@ class cpolygon_t
 	bool closed();
 	bool point_in_polygon(long v);
 	// Apply the point-in-polygon test to all uncontained points, moving any inside the loop into interior_points
-	void check_uncontained();
+	bool have_uncontained();
 	std::vector<long> polyvect();
 	std::set<long> dangling_vertices();
 	long tri_process(std::set<edge_t> *ne, std::set<edge_t> *se, long *nv, triangle_t &t);
@@ -321,8 +321,6 @@ class csweep_t
 	// that triangles which would cause a self-intersecting polygon will be
 	// rejected, even if they satisfy deg.
 	long grow_loop(double deg, bool stop_on_contained);
-
-	bool interior_points_contained();
 
 	cmesh_t *cmesh;
 
