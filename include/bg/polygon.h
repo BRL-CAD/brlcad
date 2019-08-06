@@ -66,7 +66,7 @@ BG_EXPORT extern int bg_polygon_direction(size_t npts, const point2d_t *pts, con
  * test whether a point is inside a 2d polygon
  *
  * franklin's test for point inclusion within a polygon - see
- * http://www.ecse.rpi.edu/homepages/wrf/research/short_notes/pnpoly.html
+ * https://wrf.ecse.rpi.edu/Research/Short_Notes/pnpoly.html
  * for more details and the implementation file polygon.c for license info.
  *
  * @param[in] npts number of points pts contains
