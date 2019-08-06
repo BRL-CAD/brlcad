@@ -327,6 +327,40 @@ cpolygon_t::tri_process(std::set<edge_t> *ne, std::set<edge_t> *se, long *nv, tr
     return 3 - shared_cnt;
 }
 
+void cpolygon_t::polygon_plot(const char *filename)
+{
+    FILE* plot_file = fopen(filename, "w");
+    struct bu_color c = BU_COLOR_INIT_ZERO;
+    bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
+    pl_color_buc(plot_file, &c);
+
+    if (closed()) {
+
+    cpolyedge_t *efirst = *(poly.begin());
+    cpolyedge_t *ecurr = NULL;
+
+    point_t bnp;
+    ON_2dPoint *p = pnts_2d[efirst->v[0]];
+    VSET(bnp, p->x, p->y, 0);
+    pdv_3move(plot_file, bnp);
+    p = pnts_2d[efirst->v[1]];
+    VSET(bnp, p->x, p->y, 0);
+    pdv_3cont(plot_file, bnp);
+
+    while (ecurr != efirst) {
+	ecurr = (!ecurr) ? efirst->next : ecurr->next;
+	p = pnts_2d[ecurr->v[1]];
+	VSET(bnp, p->x, p->y, 0);
+	pdv_3cont(plot_file, bnp);
+    }
+
+    } else {
+	std::cerr << "Polygon not closed\n";
+    }
+
+    fclose(plot_file);
+}
+
 bool
 csweep_t::interior_points_contained()
 {
@@ -629,32 +663,6 @@ void csweep_t::plot_uedge(struct uedge_t &ue, FILE* plot_file)
     pdv_3cont(plot_file, bnp2);
 }
 
-void csweep_t::polygon_plot(const char *filename)
-{
-    FILE* plot_file = fopen(filename, "w");
-    struct bu_color c = BU_COLOR_INIT_ZERO;
-    bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
-    pl_color_buc(plot_file, &c);
-
-    cpolyedge_t *efirst = *(polygon.poly.begin());
-    cpolyedge_t *ecurr = NULL;
-
-    point_t bnp;
-    ON_2dPoint *p = polygon.pnts_2d[efirst->v[0]];
-    VSET(bnp, p->x, p->y, 0);
-    pdv_3move(plot_file, bnp);
-    p = polygon.pnts_2d[ecurr->v[1]];
-    VSET(bnp, p->x, p->y, 0);
-    pdv_3cont(plot_file, bnp);
-
-    while (ecurr != efirst) {
-	ecurr = (!ecurr) ? efirst->next : ecurr->next;
-	p = polygon.pnts_2d[ecurr->v[1]];
-	VSET(bnp, p->x, p->y, 0);
-	pdv_3cont(plot_file, bnp);
-    }
-    fclose(plot_file);
-}
 
 void csweep_t::plot_tri(const triangle_t &t, struct bu_color *buc, FILE *plot, int r, int g, int b)
 {

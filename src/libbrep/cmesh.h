@@ -296,6 +296,8 @@ class cpolygon_t
 	std::vector<long> polyvect();
 	std::set<long> dangling_vertices();
 	long tri_process(std::set<edge_t> *ne, std::set<edge_t> *se, long *nv, triangle_t &t);
+
+	void polygon_plot(const char *filename);
 };
 
 class csweep_t
