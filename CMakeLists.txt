@@ -1332,6 +1332,17 @@ if(BRLCAD_ENABLE_OPENCL)
   endif(NOT OPENCL_FOUND)
 endif(BRLCAD_ENABLE_OPENCL)
 
+# Enable features requiring OpenVDB
+option(BRLCAD_ENABLE_OPENVDB "Enable features requiring OpenVDB" ON)
+mark_as_advanced(BRLCAD_ENABLE_OPENVDB)
+if(BRLCAD_ENABLE_OPENVDB)
+  find_package(OpenVDB)
+  if(NOT OpenVDB_FOUND)
+    message("OpenVDB enablement requested, but OpenVDB is not found - disabling")
+    set(BRLCAD_ENABLE_OPENVDB OFF)
+  endif(NOT OpenVDB_FOUND)
+endif(BRLCAD_ENABLE_OPENVDB)
+
 # Enable experimental support for binary attributes
 option(BRLCAD_ENABLE_BINARY_ATTRIBUTES "Enable support for binary attributes" OFF)
 mark_as_advanced(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
