@@ -58,10 +58,10 @@ struct botDataAdapter {
 	return 3;
     };
     void getIndexSpacePoint(size_t n, size_t v, openvdb::Vec3d& pos) const {
-	int idx = bot->faces[n*3+v];
-	pos[X] = bot->vertices[idx+X];
-	pos[Y] = bot->vertices[idx+Y];
-	pos[Z] = bot->vertices[idx+Z];
+	int idx = bot->faces[(n*3)+v];
+	pos[X] = bot->vertices[(idx*3)+X];
+	pos[Y] = bot->vertices[(idx*3)+Y];
+	pos[Z] = bot->vertices[(idx*3)+Z];
 	return;
     };
 
@@ -71,22 +71,37 @@ struct botDataAdapter {
 
 
 static bool
-bot_remesh(struct ged *UNUSED(gedp), struct rt_bot_internal *bot)
+bot_remesh(struct ged *UNUSED(gedp), struct rt_bot_internal *bot, double voxelSize)
 {
-    const float exteriorBandWidth = 3.0;
+    const float exteriorBandWidth = 10.0;
     const float interiorBandWidth = std::numeric_limits<float>::max();
 
     struct botDataAdapter bda(bot);
 
     openvdb::initialize();
 
-    openvdb::math::Transform::Ptr xform = openvdb::math::Transform::createLinearTransform();
+    bu_log("...voxelizing");
+
+    openvdb::math::Transform::Ptr xform = openvdb::math::Transform::createLinearTransform(voxelSize);
     openvdb::FloatGrid::Ptr bot2vol = openvdb::tools::meshToVolume<openvdb::FloatGrid, botDataAdapter>(bda, *xform, exteriorBandWidth, interiorBandWidth);
+
+#if 0
+    openvdb::io::File file("mesh.vdb");
+    openvdb::GridPtrVec grids;
+    grids.push_back(bot2vol);
+    file.write(grids);
+    file.close();
+    return false;
+#endif
+
+    bu_log("...devoxelizing");
 
     std::vector<openvdb::Vec3s> points;
     std::vector<openvdb::Vec3I> triangles;
     std::vector<openvdb::Vec4I> quadrilaterals;
     openvdb::tools::volumeToMesh<openvdb::FloatGrid>(*bot2vol, points, triangles, quadrilaterals);
+
+    bu_log("...storing");
 
     if (bot->vertices) {
 	bu_free(bot->vertices, "vertices");
@@ -106,31 +121,29 @@ bot_remesh(struct ged *UNUSED(gedp), struct rt_bot_internal *bot)
     bot->num_vertices = points.size();
     bot->vertices = (fastf_t *)bu_malloc(bot->num_vertices * ELEMENTS_PER_POINT * sizeof(fastf_t), "vertices");
     for (size_t i = 0; i < points.size(); i++) {
-	bot->vertices[i+X] = points[i].x();
-	bot->vertices[i+Y] = points[i].y();
-	bot->vertices[i+Z] = points[i].z();
+	bot->vertices[(i*3)+X] = points[i].x();
+	bot->vertices[(i*3)+Y] = points[i].y();
+	bot->vertices[(i*3)+Z] = points[i].z();
     }
     bot->num_faces = triangles.size() + (quadrilaterals.size() * 2);
     bot->faces = (int *)bu_malloc(bot->num_faces * 3 * sizeof(int), "triangles");
     for (size_t i = 0; i < triangles.size(); i++) {
-	bot->faces[i+X] = triangles[i].x();
-	bot->faces[i+Y] = triangles[i].y();
-	bot->faces[i+Z] = triangles[i].z();
+	bot->faces[(i*3)+X] = triangles[i].x();
+	bot->faces[(i*3)+Y] = triangles[i].y();
+	bot->faces[(i*3)+Z] = triangles[i].z();
     }
     size_t ntri = triangles.size();
     for (size_t i = 0; i < quadrilaterals.size(); i++) {
-	bot->faces[ntri+i+X] = quadrilaterals[i][0];
-	bot->faces[ntri+i+Y] = quadrilaterals[i][1];
-	bot->faces[ntri+i+Z] = quadrilaterals[i][2];
+	bot->faces[((ntri+i)*3)+X] = quadrilaterals[i][0];
+	bot->faces[((ntri+i)*3)+Y] = quadrilaterals[i][1];
+	bot->faces[((ntri+i)*3)+Z] = quadrilaterals[i][2];
 
-	bot->faces[ntri+i+1+X] = quadrilaterals[i][0];
-	bot->faces[ntri+i+1+Y] = quadrilaterals[i][2];
-	bot->faces[ntri+i+1+Z] = quadrilaterals[i][3];
+	bot->faces[((ntri+i+1)*3)+X] = quadrilaterals[i][0];
+	bot->faces[((ntri+i+1)*3)+Y] = quadrilaterals[i][2];
+	bot->faces[((ntri+i+1)*3)+Z] = quadrilaterals[i][3];
     }
 
-    bu_log("npoints = %zu\n"
-	   "ntris = %zu\n"
-	   "nquads = %zu\n", points.size(), triangles.size(), quadrilaterals.size());
+    bu_log("...done!\n");
 
     return (points.size() > 0);
 }
@@ -138,7 +151,7 @@ bot_remesh(struct ged *UNUSED(gedp), struct rt_bot_internal *bot)
 #else /* OPENVDB_ABI_VERSION_NUMBER */
 
 static bool
-bot_remesh(struct ged *gedp, struct rt_bot_internal *UNUSED(bot))
+bot_remesh(struct ged *gedp, struct rt_bot_internal *UNUSED(bot), double UNUSED(voxelSize))
 {
     bu_vls_printf(gedp->ged_result_str,
 		  "WARNING: BoT remeshing is unavailable.\n"
@@ -212,12 +225,16 @@ ged_bot_remesh(struct ged *gedp, int argc, const char *argv[])
     input_bot = (struct rt_bot_internal *)intern.idb_ptr;
     RT_BOT_CK_MAGIC(input_bot);
 
+    bu_log("INPUT BoT has %zu vertices and %zu faces\n", input_bot->num_vertices, input_bot->num_faces);
+
     /* TODO: stash a backup if overwriting the original */
 
-    bool ok = bot_remesh(gedp, input_bot);
+    bool ok = bot_remesh(gedp, input_bot, 50);
     if (!ok) {
 	return GED_ERROR;
     }
+
+    bu_log("OUTPUT BoT has %zu vertices and %zu faces\n", input_bot->num_vertices, input_bot->num_faces);
 
     if (BU_STR_EQUAL(input_bot_name, output_bot_name)) {
 	dp_output = dp_input;
