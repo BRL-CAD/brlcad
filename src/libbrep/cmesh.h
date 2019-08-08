@@ -331,24 +331,13 @@ class csweep_t
 	void face_neighbors_plot(const triangle_t &f, const char *filename);
 	void vertex_face_neighbors_plot(long vind, const char *filename);
 
+	std::set<triangle_t> visited_triangles;
+
     private:
 	ON_Plane tplane;
 	ON_3dVector pdir;
 
-	std::set<triangle_t> visited_triangles;
-
-	std::set<triangle_t> non_visited_tris(std::set<long> &verts);
-
-	bool edge_is_interior(struct edge_t &e);
-	void cull_interior_edges(std::set<edge_t> *ecandidates);
-
-	// vertices and edges of any problem candidate triangles go into the interior sets
-	void cull_problem_tris(std::set<triangle_t> *tcandidates);
-
 	std::set<triangle_t> polygon_tris(double angle);
-
-	// Edges from polygon will guide "next triangle" logic
-	size_t collect_neighbor_tris(edge_t &e);
 
 };
 

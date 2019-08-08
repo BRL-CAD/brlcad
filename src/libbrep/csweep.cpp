@@ -212,28 +212,44 @@ cpolygon_t::point_in_polygon(long v)
     point2d_t *polypnts = (point2d_t *)bu_calloc(poly.size()+1, sizeof(point2d_t), "polyline");
 
     size_t pind = 0;
+
     cpolyedge_t *pe = (*poly.begin());
     cpolyedge_t *first = pe;
     cpolyedge_t *next = pe->next;
-  
-    if (v == pe->v[0]) {
+
+    if (v == pe->v[0] || v == pe->v[1]) {
 	bu_free(polypnts, "polyline");
 	return false;
     }
 
     V2MOVE(polypnts[pind], pnts_2d[pe->v[0]]);
-   
+    pind++;
+    V2MOVE(polypnts[pind], pnts_2d[pe->v[1]]);
+
     // Walk the loop
     while (first != next) {
 	pind++;
-	if (v == next->v[0]) {
+	if (v == next->v[0] || v == next->v[1]) {
 	    bu_free(polypnts, "polyline");
 	    return false;
 	}
-
-	V2MOVE(polypnts[pind], pnts_2d[next->v[0]]);
+	V2MOVE(polypnts[pind], pnts_2d[next->v[1]]);
 	next = next->next;
     }
+
+#if 0
+    if (bg_polygon_direction(pind+1, pnts_2d, NULL) == BG_CCW) {
+	point2d_t *rpolypnts = (point2d_t *)bu_calloc(poly.size()+1, sizeof(point2d_t), "polyline");
+	for (long p = (long)pind; p >= 0; p--) {
+	    V2MOVE(rpolypnts[pind - p], polypnts[p]);
+	}
+	bu_free(polypnts, "free original loop");
+	polypnts = rpolypnts;
+    }
+#endif
+
+    polygon_plot("poly_2d.plot3");
+    bg_polygon_plot_2d("pnt_in_poly_loop.plot3", polypnts, pind, 255, 0, 0);
 
     point2d_t test_pnt;
     V2MOVE(test_pnt, pnts_2d[v]);
@@ -570,57 +586,6 @@ cpolygon_t::have_uncontained()
     return (uncontained.size() > 0) ? true : false;
 }
 
-void
-csweep_t::cull_problem_tris(std::set<triangle_t> *tcandidates)
-{
-    std::set<triangle_t> gtris;
-    if (!tcandidates) {
-	return;
-    }
-
-    std::set<triangle_t>::iterator tc_it;
-    for (tc_it = tcandidates->begin(); tc_it != tcandidates->end(); tc_it++) {
-	if (cmesh->problem_triangles.find(*tc_it) == cmesh->problem_triangles.end()) {
-	    gtris.insert(*tc_it);
-	}
-    }
-
-    tcandidates->clear();
-
-    (*tcandidates) = gtris;
-}
-
-std::set<triangle_t>
-csweep_t::non_visited_tris(std::set<long> &verts)
-{
-    std::set<triangle_t> result;
-    if (!verts.size()) {
-	return result;
-    }
-    std::set<long>::iterator v_it;
-
-    for (v_it = verts.begin(); v_it != verts.end(); v_it++) {
-	std::vector<triangle_t> faces = cmesh->vertex_face_neighbors(*v_it);
-
-	// TODO - we need to constrain this set - we're looking for triangles
-	// near the original triangle, but a vertex triangle set may potentially
-	// pull in a large number of other triangles.  Maybe the subset that
-	// either share an edge with the poly or failing that the closest to
-	// the original seed triangle?  Or, maybe check the directions of the
-	// edges and only accept those that are least far from the center of the
-	// seed?  Maybe prefer triangles with more points on the polyline or
-	// (pre-polyline) more interior points?
-
-	for (size_t i = 0; i < faces.size(); i++) {
-	    if (visited_triangles.find(faces[i]) == visited_triangles.end()) {
-		result.insert(faces[i]);
-	    }
-	}
-    }
-
-    return result;
-}
-
 std::set<triangle_t>
 csweep_t::polygon_tris(double angle)
 {
@@ -650,13 +615,10 @@ csweep_t::polygon_tris(double angle)
     return result;
 }
 
-
-
 long
 csweep_t::grow_loop(double deg, bool stop_on_contained)
 {
-    // TODO - do an initial pass to check for uncontained points that are actually interior.
-
+    double angle = deg * ON_PI/180.0;
 
     if (stop_on_contained && !polygon.uncontained.size()) {
 	return 0;
@@ -666,8 +628,6 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 	return -1;
     }
 
-    double angle = deg * ON_PI/180.0;
-
     // First step - collect all the unvisited triangles from the polyline edges.
 
     std::queue<triangle_t> tq;
@@ -676,9 +636,8 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 
     std::set<triangle_t> ptris = polygon_tris(angle);
 
-
-
     std::set<triangle_t>::iterator f_it;
+
     for (f_it = ptris.begin(); f_it != ptris.end(); f_it++) {
 	tq.push(*f_it);
     }
@@ -687,6 +646,7 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 
 	triangle_t ct = tq.front();
 	tq.pop();
+	polygon.polygon_plot("poly_2d.plot3");
 
 	// A triangle will introduce at most one new point into the loop.  If
 	// the triangle is bad, it will define uncontained interior points and
@@ -755,6 +715,7 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 		    ON_3dVector vu = up2d - p2d;
 		    if (ON_DotProduct(vu, vt) >= 0) {
 			use_tri = 1;
+			break;
 		    }
 		}
 	    }
@@ -765,16 +726,15 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 	}
 
 	if (new_edge_cnt <= 0 || new_edge_cnt > 2) {
-	    std::cerr << "fatal shared triangle filter error!\n";
+	    std::cerr << "fatal loop growth error!\n";
 	    return -1;
 	}
 
 	polygon.replace_edges(new_edges, shared_edges);
 	visited_triangles.insert(ct);
-	polygon.polygon_plot("poly_2d.plot3");
 
 
-	if (!polygon.have_uncontained()) {
+	if (!polygon.have_uncontained() && polygon.poly.size() > 4) {
 	    std::cout << "In principle, we now have a workable subset\n";
 	    polygon.polygon_plot("poly_2d.plot3");
 
@@ -782,8 +742,10 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 
 	    cmesh->tris_set_plot(polygon.tris, "tri_2d.plot3d");
 
-	    exit(0);
+	    return (long)cmesh->tris.size();
 	}
+
+	polygon.polygon_plot("poly_2d.plot3");
 
 	if (tq.empty()) {
 	    // That's all the triangles from this ring - if we haven't
@@ -791,7 +753,9 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 
 	    std::set<triangle_t> ntris = polygon_tris(angle);
 	    for (f_it = ntris.begin(); f_it != ntris.end(); f_it++) {
-		tq.push(*f_it);
+		if (visited_triangles.find(*f_it) == visited_triangles.end()) {
+		    tq.push(*f_it);
+		}
 	    }
 	}
     }
