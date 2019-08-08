@@ -694,34 +694,36 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 	    }
 	}
 
-	if (new_edge_cnt == 2 && !flipped_tri && stop_on_contained) {
-	    // If this is a good triangle and we're in repair mode, don't add it unless
-	    // it uses or points in the direction of at least one uncontained point.
-	    int use_tri = 0;
-	    for (int i = 0; i < 3; i++) {
-		if (polygon.uncontained.find(ct.v[i]) != polygon.uncontained.end()) {
-		    use_tri = 1;
-		    break;
-		}
-	    }
-	    if (!use_tri) {
-		struct edge_t e = (*shared_edges.begin());
-		ON_2dPoint p2d = (ON_2dPoint(polygon.pnts_2d[e.v[0]][X], polygon.pnts_2d[e.v[0]][Y]) + ON_2dPoint(polygon.pnts_2d[e.v[1]][X], polygon.pnts_2d[e.v[1]][Y])) * 0.5;
-		ON_2dPoint np2d(polygon.pnts_2d[vert][X], polygon.pnts_2d[vert][Y]);
-		ON_3dVector vt = np2d - p2d;
-		std::set<long>::iterator u_it;
-		for (u_it = polygon.uncontained.begin(); u_it != polygon.uncontained.end(); u_it++) {
-		    ON_2dPoint up2d(polygon.pnts_2d[*u_it][X], polygon.pnts_2d[*u_it][Y]);
-		    ON_3dVector vu = up2d - p2d;
-		    if (ON_DotProduct(vu, vt) >= 0) {
+	if (!(polygon.poly.size() == 3 && polygon.interior_points.size())) {
+	    if (new_edge_cnt == 2 && !flipped_tri && stop_on_contained) {
+		// If this is a good triangle and we're in repair mode, don't add it unless
+		// it uses or points in the direction of at least one uncontained point.
+		int use_tri = 0;
+		for (int i = 0; i < 3; i++) {
+		    if (polygon.uncontained.find(ct.v[i]) != polygon.uncontained.end()) {
 			use_tri = 1;
 			break;
 		    }
 		}
-	    }
+		if (!use_tri) {
+		    struct edge_t e = (*shared_edges.begin());
+		    ON_2dPoint p2d = (ON_2dPoint(polygon.pnts_2d[e.v[0]][X], polygon.pnts_2d[e.v[0]][Y]) + ON_2dPoint(polygon.pnts_2d[e.v[1]][X], polygon.pnts_2d[e.v[1]][Y])) * 0.5;
+		    ON_2dPoint np2d(polygon.pnts_2d[vert][X], polygon.pnts_2d[vert][Y]);
+		    ON_3dVector vt = np2d - p2d;
+		    std::set<long>::iterator u_it;
+		    for (u_it = polygon.uncontained.begin(); u_it != polygon.uncontained.end(); u_it++) {
+			ON_2dPoint up2d(polygon.pnts_2d[*u_it][X], polygon.pnts_2d[*u_it][Y]);
+			ON_3dVector vu = up2d - p2d;
+			if (ON_DotProduct(vu, vt) >= 0) {
+			    use_tri = 1;
+			    break;
+			}
+		    }
+		}
 
-	    if (!use_tri) {
-		continue;
+		if (!use_tri) {
+		    continue;
+		}
 	    }
 	}
 
@@ -734,7 +736,7 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 	visited_triangles.insert(ct);
 
 
-	if (!polygon.have_uncontained() && polygon.poly.size() > 4) {
+	if (!polygon.have_uncontained() && polygon.poly.size() > 3) {
 	    std::cout << "In principle, we now have a workable subset\n";
 	    polygon.polygon_plot("poly_2d.plot3");
 

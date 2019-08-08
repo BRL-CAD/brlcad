@@ -666,13 +666,15 @@ cmesh_t::repair()
 	// Remove everything the patch claimed
 	std::set<triangle_t>::iterator v_it;
 	for (v_it = sweep.visited_triangles.begin(); v_it != sweep.visited_triangles.end(); v_it++) {
-	    seed_tris.erase(*v_it);
-	    tris.erase(*v_it);
+	    triangle_t vt = *v_it;
+	    seed_tris.erase(vt);
+	    tri_remove(vt);
 	}
 
 	// Add in the replacement triangles
 	for (v_it = sweep.polygon.tris.begin(); v_it != sweep.polygon.tris.end(); v_it++) {
-	    tris.insert(*v_it);
+	    triangle_t vt = *v_it;
+	    tri_add(vt, 0);
 	}
 
 	tris_plot("mesh_post_patch.plot3");
@@ -681,6 +683,9 @@ cmesh_t::repair()
     // Now that the out-and-out problem triangles have been handled,
     // remesh near singularities to try and produce more reasonable
     // triangles.
+
+    problem_edges.clear();
+
     std::vector<triangle_t> s_tris = this->singularity_triangles();
     seed_tris.insert(s_tris.begin(), s_tris.end());
 
