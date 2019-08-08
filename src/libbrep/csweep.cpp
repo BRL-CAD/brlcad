@@ -734,6 +734,36 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 	    }
 	}
 
+	if (new_edge_cnt == 2 && !flipped_tri && stop_on_contained) {
+	    // If this is a good triangle and we're in repair mode, don't add it unless
+	    // it uses or points in the direction of at least one uncontained point.
+	    int use_tri = 0;
+	    for (int i = 0; i < 3; i++) {
+		if (polygon.uncontained.find(ct.v[i]) != polygon.uncontained.end()) {
+		    use_tri = 1;
+		    break;
+		}
+	    }
+	    if (!use_tri) {
+		struct edge_t e = (*shared_edges.begin());
+		ON_2dPoint p2d = (ON_2dPoint(polygon.pnts_2d[e.v[0]][X], polygon.pnts_2d[e.v[0]][Y]) + ON_2dPoint(polygon.pnts_2d[e.v[1]][X], polygon.pnts_2d[e.v[1]][Y])) * 0.5;
+		ON_2dPoint np2d(polygon.pnts_2d[vert][X], polygon.pnts_2d[vert][Y]);
+		ON_3dVector vt = np2d - p2d;
+		std::set<long>::iterator u_it;
+		for (u_it = polygon.uncontained.begin(); u_it != polygon.uncontained.end(); u_it++) {
+		    ON_2dPoint up2d(polygon.pnts_2d[*u_it][X], polygon.pnts_2d[*u_it][Y]);
+		    ON_3dVector vu = up2d - p2d;
+		    if (ON_DotProduct(vu, vt) >= 0) {
+			use_tri = 1;
+		    }
+		}
+	    }
+
+	    if (!use_tri) {
+		continue;
+	    }
+	}
+
 	if (new_edge_cnt <= 0 || new_edge_cnt > 2) {
 	    std::cerr << "fatal shared triangle filter error!\n";
 	    return -1;
@@ -741,6 +771,7 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 
 	polygon.replace_edges(new_edges, shared_edges);
 	visited_triangles.insert(ct);
+	polygon.polygon_plot("poly_2d.plot3");
 
 
 	if (!polygon.have_uncontained()) {
@@ -757,13 +788,6 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 	if (tq.empty()) {
 	    // That's all the triangles from this ring - if we haven't
 	    // terminated yet, pull the next triangle set.
-
-	    // TODO - we may want to be more selective about what triangles
-	    // we queue up - i.e. if we have known uncontained points we're
-	    // trying to contain, skip triangles that are moving away from
-	    // the uncontained points (don't want to pull in additional
-	    // problem regions unnecessarily - it is possible to grow a subset
-	    // to a point where it can't be projected.)
 
 	    std::set<triangle_t> ntris = polygon_tris(angle);
 	    for (f_it = ntris.begin(); f_it != ntris.end(); f_it++) {
