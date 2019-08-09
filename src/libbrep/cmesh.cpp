@@ -694,11 +694,30 @@ cmesh_t::repair()
     // remesh near singularities to try and produce more reasonable
     // triangles.
 
+    // TODO - want, if possible, to tackle all the singularity triangles at
+    // once - meshing portions of them is apparently causing issues where one
+    // projection is generating triangles that overlap with another projection.
+    // For each singularity vertex, grab all its associated triangles and find
+    // the maximum angle span between them.  If it's < 170, we may be able to
+    // try a projection with all of them using the max angle as a selection
+    // criteria...
     std::vector<triangle_t> s_tris = this->singularity_triangles();
     seed_tris.insert(s_tris.begin(), s_tris.end());
 
     while (seed_tris.size()) {
 	triangle_t seed = *seed_tris.begin();
+
+	// TODO - This seed triangle, after several post processings,
+	// exposes a problem where it overlaps another triangle in the
+	// mesh.  Somewhere I'm not catching an issue...
+	triangle_t bseed;
+	bseed.v[0] = 11;
+	bseed.v[1] = 7;
+	bseed.v[2] = 21;
+	if (seed == bseed) {
+	    std::cout << "bad news coming\n";
+	}
+
 
 	// We use the Brep normal for this, since the triangles are
 	// problem triangles and their normals cannot be relied upon.
