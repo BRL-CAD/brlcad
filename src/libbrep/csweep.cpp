@@ -695,7 +695,7 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 	}
 
 	if (!(polygon.poly.size() == 3 && polygon.interior_points.size())) {
-	    if (new_edge_cnt == 2 && !flipped_tri && stop_on_contained) {
+	    if (stop_on_contained && new_edge_cnt == 2 && !flipped_tri) {
 		// If this is a good triangle and we're in repair mode, don't add it unless
 		// it uses or points in the direction of at least one uncontained point.
 		int use_tri = 0;
@@ -735,8 +735,9 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 	polygon.replace_edges(new_edges, shared_edges);
 	visited_triangles.insert(ct);
 
+	bool h_uc = polygon.have_uncontained();
 
-	if (!polygon.have_uncontained() && polygon.poly.size() > 3) {
+	if (stop_on_contained && !h_uc && polygon.poly.size() > 3) {
 	    std::cout << "In principle, we now have a workable subset\n";
 	    polygon.polygon_plot("poly_2d.plot3");
 
@@ -759,6 +760,21 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 		    tq.push(*f_it);
 		}
 	    }
+
+	    if (!stop_on_contained && tq.empty()) {
+		// per the current angle criteria we've got everything, and we're
+		// not concerned with contained points so this isn't an indication
+		// of an error condition.  Generate triangles.
+		std::cout << "In principle, we now have a workable patch\n";
+		polygon.polygon_plot("poly_2d.plot3");
+
+		polygon.cdt();
+
+		cmesh->tris_set_plot(polygon.tris, "patch.plot3d");
+
+		return (long)cmesh->tris.size();
+	    }
+
 	}
     }
 

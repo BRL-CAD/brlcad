@@ -694,8 +694,6 @@ cmesh_t::repair()
     // remesh near singularities to try and produce more reasonable
     // triangles.
 
-    problem_edges.clear();
-
     std::vector<triangle_t> s_tris = this->singularity_triangles();
     seed_tris.insert(s_tris.begin(), s_tris.end());
 
