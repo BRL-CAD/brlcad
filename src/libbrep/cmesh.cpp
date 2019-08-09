@@ -24,7 +24,7 @@ namespace cmesh
 {
 
 bool
-cmesh_t::tri_add(triangle_t &tri, int check)
+cmesh_t::tri_add(triangle_t &tri)
 {
 
     // Skip degenerate triangles, but report true since this was never
@@ -46,17 +46,12 @@ cmesh_t::tri_add(triangle_t &tri, int check)
 	bool f1 = (ON_DotProduct(torig_dir, bdir) < 0);
 	bool f2 = (ON_DotProduct(tnew_dir, bdir) < 0);
 	if (f1 && !f2) {
-	    tris.erase(orig);
-	    tris.insert(tri);
+	    tri_remove(orig);
+	} else {
+	    return true;
 	}
-	return true;
     }
 
-
-    if (check) {
-	std::vector<long> sml = boundary_loops(0)[0];
-	std::cout << "loop v cnt: " << sml.size() << "\n";
-    }
 
     // Add the triangle
     this->tris.insert(tri);
@@ -67,24 +62,21 @@ cmesh_t::tri_add(triangle_t &tri, int check)
     long i = tri.v[0];
     long j = tri.v[1];
     long k = tri.v[2];
-    this->v2tris[i].insert(tri);
     this->v2tris[j].insert(tri);
     this->v2tris[k].insert(tri);
     struct edge_t e[3];
+    struct uedge_t ue[3];
     e[0].set(i, j);
     e[1].set(j, k);
     e[2].set(k, i);
     for (int ind = 0; ind < 3; ind++) {
+	ue[ind].set(e[ind].v[0], e[ind].v[1]);
 	this->edges2tris[e[ind]] = tri;
+	this->uedges2tris[uedge_t(e[ind])].insert(tri);
 	this->v2edges[e[ind].v[0]].insert(e[ind]);
+	this->v2tris[tri.v[i]].insert(tri);
     }
 
-    // Update unordered edge triangle count
-    struct uedge_t ue[3];
-    for (int ind = 0; ind < 3; ind++) {
-	ue[ind].set(e[ind].v[0], e[ind].v[1]);
-	this->uedges2tris[ue[ind]].insert(tri);
-    }
 
     // Now that we know the triangle count for the unordered edges: the
     // addition of a triangle may change the boundary edge set.  Update.
@@ -114,27 +106,18 @@ cmesh_t::tri_add(triangle_t &tri, int check)
 	}
     }
 
-    // If we're growing a triangle set by marching, rather than dumping a bag
-    // of triangles into the container, check to see if the triangle just added
-    // causes a problem in the boundary loop.  If it does, reject it.
-#if 0
-    if (check) {
-	for (int ind = 0; ind < 3; ind++) {
-	    long v = tri.v[ind];
-	    if (this->edge_pnt_edges[v].size() > 2) {
-		std::cerr << "Triangle introduced a problem in boundary loop, cannot add\n";
-		this->tri_remove(tri);
-	    }
-	}
-    }
-#endif
-
 #if 0
     std::map<uedge_t, std::set<triangle_t>>::iterator uet_it;
     for (uet_it = uedges2tris.begin(); uet_it != uedges2tris.end(); uet_it++) {
 	std::cerr << "edge " << (*uet_it).first.v[0] << "-" << (*uet_it).first.v[1] <<  " tri cnt: " << (*uet_it).second.size() << "\n";
     }
 #endif
+    // Update boundary edge information
+    this->boundary_edges(1);
+
+    tris_plot("post_tri_add_tris.plot3");
+    boundary_edges_plot("post_tri_add_be.plot3");
+
 
     return true;
 }
@@ -146,28 +129,55 @@ void cmesh_t::tri_remove(triangle_t &tri)
     long i = tri.v[0];
     long j = tri.v[1];
     long k = tri.v[2];
-    struct edge_t e1(i, j);
-    struct edge_t e2(j, k);
-    struct edge_t e3(k, i);
-
-    this->v2edges[i].erase(e1);
-    this->v2edges[j].erase(e2);
-    this->v2edges[k].erase(e3);
-
-    this->v2tris[i].erase(tri);
-    this->v2tris[j].erase(tri);
-    this->v2tris[k].erase(tri);
-
-    this->edges2tris.erase(e1);
-    this->edges2tris.erase(e2);
-    this->edges2tris.erase(e3);
-
-    this->uedges2tris[uedge_t(e1)].erase(tri);
-    this->uedges2tris[uedge_t(e2)].erase(tri);
-    this->uedges2tris[uedge_t(e3)].erase(tri);
+    struct edge_t e[3];
+    struct uedge_t ue[3];
+    e[0].set(i, j);
+    e[1].set(j, k);
+    e[2].set(k, i);
+    for (int ind = 0; ind < 3; ind++) {
+	ue[ind].set(e[ind].v[0], e[ind].v[1]);
+	this->edges2tris[e[ind]];
+	this->uedges2tris[uedge_t(e[ind])].erase(tri);
+	this->v2edges[e[ind].v[0]].erase(e[ind]);
+	this->v2tris[tri.v[i]].erase(tri);
+    }
 
     // Remove the triangle
     this->tris.erase(tri);
+
+    // Now that we know the new triangle count for the unordered edges: the
+    // addition of a triangle may change the boundary edge set.  Update.
+    for (int ind = 0; ind < 3; ind++) {
+	if (this->uedges2tris[ue[ind]].size() == 1) {
+	    this->current_bedges.insert(ue[ind]);
+	} else {
+	    this->current_bedges.erase(ue[ind]);
+	}
+    }
+
+    // With the addition of the new triangle, we need to update the
+    // point->edge mappings as well.
+    for (int ind = 0; ind < 3; ind++) {
+	// For the directed edge associated with the new triangle,
+	// we may need to add
+	if (this->current_bedges.find(ue[ind]) == this->current_bedges.end()) {
+	    this->edge_pnt_edges[e[ind].v[0]].erase(e[ind]);
+	    this->edge_pnt_edges[e[ind].v[1]].erase(e[ind]);
+	}
+	// For the directed edge that now (potentially) no longer has a mate,
+	// we need to dd
+	struct edge_t oe(e[ind].v[1],e[ind].v[0]);
+	if (this->current_bedges.find(ue[ind]) != this->current_bedges.end()) {
+	    this->edge_pnt_edges[oe.v[0]].insert(oe);
+	    this->edge_pnt_edges[oe.v[1]].insert(oe);
+	}
+    }
+
+    // Update boundary edge information
+    this->boundary_edges(1);
+
+    tris_plot("post_tri_remove.plot3");
+    boundary_edges_plot("post_tri_remove_be.plot3");
 }
 
 std::vector<triangle_t>
@@ -582,7 +592,7 @@ void cmesh_t::build(std::set<p2t::Triangle *> *cdttri, std::map<p2t::Point *, ON
 	long Bind = this->p2ind[pt_B];
 	long Cind = this->p2ind[pt_C];
 	struct triangle_t nt(Aind, Bind, Cind);
-	cmesh_t::tri_add(nt, 0);
+	cmesh_t::tri_add(nt);
     }
 
 }
@@ -674,7 +684,7 @@ cmesh_t::repair()
 	// Add in the replacement triangles
 	for (v_it = sweep.polygon.tris.begin(); v_it != sweep.polygon.tris.end(); v_it++) {
 	    triangle_t vt = *v_it;
-	    tri_add(vt, 0);
+	    tri_add(vt);
 	}
 
 	tris_plot("mesh_post_patch.plot3");

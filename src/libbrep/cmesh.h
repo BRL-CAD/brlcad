@@ -247,7 +247,7 @@ private:
     bool tri_problem_edges(triangle_t &t);
 
     // Mesh manipulation functions
-    bool tri_add(triangle_t &atris, int check);
+    bool tri_add(triangle_t &atris);
     void tri_remove(triangle_t &etris);
     void reset();
 
