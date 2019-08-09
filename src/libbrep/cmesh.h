@@ -315,7 +315,7 @@ class csweep_t
 
 	// An initial loop may not contain all the interior points - to ensure it does,
 	// use grow_loop with a large deg value and the stop_on_contained flag set.
-	bool build_initial_loop(triangle_t &seed);
+	bool build_initial_loop(triangle_t &seed, bool repair);
 
 	// To grow only until all interior points are within the polygon, supply true
 	// for stop_on_contained.  Otherwise, grow_loop will follow the triangles out
@@ -337,7 +337,7 @@ class csweep_t
 	ON_Plane tplane;
 	ON_3dVector pdir;
 
-	std::set<triangle_t> polygon_tris(double angle);
+	std::set<triangle_t> polygon_tris(double angle, bool brep_norm);
 
 };
 

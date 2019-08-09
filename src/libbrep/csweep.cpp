@@ -587,7 +587,7 @@ cpolygon_t::have_uncontained()
 }
 
 std::set<triangle_t>
-csweep_t::polygon_tris(double angle)
+csweep_t::polygon_tris(double angle, bool brep_norm)
 {
     std::set<triangle_t> result;
 
@@ -598,7 +598,7 @@ csweep_t::polygon_tris(double angle)
 	std::set<triangle_t> petris = cmesh->uedges2tris[ue];
 	std::set<triangle_t>::iterator t_it;
 	for (t_it = petris.begin(); t_it != petris.end(); t_it++) {
-	    ON_3dVector tn = cmesh->bnorm(*t_it);
+	    ON_3dVector tn = (brep_norm) ? cmesh->bnorm(*t_it) : cmesh->tnorm(*t_it);
 	    double dprd = ON_DotProduct(pdir, tn);
 	    double dang = (NEAR_EQUAL(dprd, 1.0, ON_ZERO_TOLERANCE)) ? 0 : acos(dprd);
 	    if (dang > angle) {
@@ -634,7 +634,12 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 
     std::set<edge_t> flipped_edges;
 
-    std::set<triangle_t> ptris = polygon_tris(angle);
+    std::set<triangle_t> ptris = polygon_tris(angle, stop_on_contained);
+
+    if (!ptris.size()) {
+	std::cout << "No triangles available??\n";
+	return -1;
+    }
 
     std::set<triangle_t>::iterator f_it;
 
@@ -664,11 +669,13 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 	ON_3dVector bdir = cmesh->bnorm(ct);
 	bool flipped_tri = (ON_DotProduct(tdir, bdir) < 0);
 
+	bool process = true;
+
 	if (new_edge_cnt == -2) {
 	    // Vert from bad edges - added to uncontained.  Start over with another triangle - we
 	    // need to walk out until this point is swept up by the polygon.
 	    visited_triangles.insert(ct);
-	    continue;
+	    process = false;
 	}
 
 	if (new_edge_cnt == -1) {
@@ -676,85 +683,88 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 	    // polygon, we can't use this triangle at this time - it would produce
 	    // a self-intersecting polygon.  Don't mark it as visited however, as
 	    // it may be pulled back in successfully in later processing.
-	    continue;
+	    process = false;
 	}
 
-	if (new_edge_cnt == 2 && flipped_tri) {
-	    // It is possible that a flipped face adding two new edges will
-	    // make a mess out of the polygon (i.e. make it self intersecting.)
-	    // Tag it so we know we can't trust point_in_polygon until we've grown
-	    // the vertex out of flipped_face (remove_edge will handle that.)
+	if (process) {
+	    if (stop_on_contained && new_edge_cnt == 2 && flipped_tri) {
+		// It is possible that a flipped face adding two new edges will
+		// make a mess out of the polygon (i.e. make it self intersecting.)
+		// Tag it so we know we can't trust point_in_polygon until we've grown
+		// the vertex out of flipped_face (remove_edge will handle that.)
 
-	    // If we have a flipped triangle vert involving a brep edge vertex... um...
-	    if (cmesh->brep_edge_pnt(vert)) {
-		std::cerr << "URK! flipped face vertex on edge!\n";
-		return -1;
-	    } else {
-		polygon.flipped_face.insert(vert);
-	    }
-	}
-
-	if (!(polygon.poly.size() == 3 && polygon.interior_points.size())) {
-	    if (stop_on_contained && new_edge_cnt == 2 && !flipped_tri) {
-		// If this is a good triangle and we're in repair mode, don't add it unless
-		// it uses or points in the direction of at least one uncontained point.
-		int use_tri = 0;
-		for (int i = 0; i < 3; i++) {
-		    if (polygon.uncontained.find(ct.v[i]) != polygon.uncontained.end()) {
-			use_tri = 1;
-			break;
-		    }
+		// If we have a flipped triangle vert involving a brep edge vertex... um...
+		if (cmesh->brep_edge_pnt(vert)) {
+		    std::cerr << "URK! flipped face vertex on edge!\n";
+		    return -1;
+		} else {
+		    polygon.flipped_face.insert(vert);
 		}
-		if (!use_tri) {
-		    struct edge_t e = (*shared_edges.begin());
-		    ON_2dPoint p2d = (ON_2dPoint(polygon.pnts_2d[e.v[0]][X], polygon.pnts_2d[e.v[0]][Y]) + ON_2dPoint(polygon.pnts_2d[e.v[1]][X], polygon.pnts_2d[e.v[1]][Y])) * 0.5;
-		    ON_2dPoint np2d(polygon.pnts_2d[vert][X], polygon.pnts_2d[vert][Y]);
-		    ON_3dVector vt = np2d - p2d;
-		    std::set<long>::iterator u_it;
-		    for (u_it = polygon.uncontained.begin(); u_it != polygon.uncontained.end(); u_it++) {
-			ON_2dPoint up2d(polygon.pnts_2d[*u_it][X], polygon.pnts_2d[*u_it][Y]);
-			ON_3dVector vu = up2d - p2d;
-			if (ON_DotProduct(vu, vt) >= 0) {
+	    }
+
+	    if (!(polygon.poly.size() == 3 && polygon.interior_points.size())) {
+		if (stop_on_contained && new_edge_cnt == 2 && !flipped_tri) {
+		    // If this is a good triangle and we're in repair mode, don't add it unless
+		    // it uses or points in the direction of at least one uncontained point.
+		    int use_tri = 0;
+		    for (int i = 0; i < 3; i++) {
+			if (polygon.uncontained.find(ct.v[i]) != polygon.uncontained.end()) {
 			    use_tri = 1;
 			    break;
 			}
 		    }
-		}
+		    if (!use_tri) {
+			struct edge_t e = (*shared_edges.begin());
+			ON_2dPoint p2d = (ON_2dPoint(polygon.pnts_2d[e.v[0]][X], polygon.pnts_2d[e.v[0]][Y]) + ON_2dPoint(polygon.pnts_2d[e.v[1]][X], polygon.pnts_2d[e.v[1]][Y])) * 0.5;
+			ON_2dPoint np2d(polygon.pnts_2d[vert][X], polygon.pnts_2d[vert][Y]);
+			ON_3dVector vt = np2d - p2d;
+			std::set<long>::iterator u_it;
+			for (u_it = polygon.uncontained.begin(); u_it != polygon.uncontained.end(); u_it++) {
+			    ON_2dPoint up2d(polygon.pnts_2d[*u_it][X], polygon.pnts_2d[*u_it][Y]);
+			    ON_3dVector vu = up2d - p2d;
+			    if (ON_DotProduct(vu, vt) >= 0) {
+				use_tri = 1;
+				break;
+			    }
+			}
+		    }
 
-		if (!use_tri) {
-		    continue;
+		    if (!use_tri) {
+			continue;
+		    }
 		}
 	    }
-	}
 
-	if (new_edge_cnt <= 0 || new_edge_cnt > 2) {
-	    std::cerr << "fatal loop growth error!\n";
-	    return -1;
-	}
+	    if (new_edge_cnt <= 0 || new_edge_cnt > 2) {
+		std::cerr << "fatal loop growth error!\n";
+		return -1;
+	    }
 
-	polygon.replace_edges(new_edges, shared_edges);
-	visited_triangles.insert(ct);
+	    polygon.replace_edges(new_edges, shared_edges);
+	    visited_triangles.insert(ct);
+	}
 
 	bool h_uc = polygon.have_uncontained();
 
 	if (stop_on_contained && !h_uc && polygon.poly.size() > 3) {
 	    std::cout << "In principle, we now have a workable subset\n";
-	    polygon.polygon_plot("poly_2d.plot3");
 
+	    //polygon.polygon_plot("poly_2d.plot3");
+	    //
 	    polygon.cdt();
 
-	    cmesh->tris_set_plot(polygon.tris, "tri_2d.plot3d");
+	    //cmesh->tris_set_plot(polygon.tris, "tri_2d.plot3");
 
 	    return (long)cmesh->tris.size();
 	}
 
-	polygon.polygon_plot("poly_2d.plot3");
+	//polygon.polygon_plot("poly_2d.plot3");
 
 	if (tq.empty()) {
 	    // That's all the triangles from this ring - if we haven't
 	    // terminated yet, pull the next triangle set.
 
-	    std::set<triangle_t> ntris = polygon_tris(angle);
+	    std::set<triangle_t> ntris = polygon_tris(angle, stop_on_contained);
 	    for (f_it = ntris.begin(); f_it != ntris.end(); f_it++) {
 		if (visited_triangles.find(*f_it) == visited_triangles.end()) {
 		    tq.push(*f_it);
@@ -770,14 +780,13 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 
 		polygon.cdt();
 
-		cmesh->tris_set_plot(polygon.tris, "patch.plot3d");
+		cmesh->tris_set_plot(polygon.tris, "patch.plot3");
 
 		return (long)cmesh->tris.size();
 	    }
 
 	}
     }
-
 
     return -1;
 }
@@ -802,59 +811,30 @@ csweep_t::build_2d_pnts(ON_3dPoint &c, ON_3dVector &n)
 }
 
 
-
 bool
-csweep_t::build_initial_loop(triangle_t &seed)
+csweep_t::build_initial_loop(triangle_t &seed, bool repair)
 {
     std::set<uedge_t>::iterator u_it;
 
-    // None of the edges or vertices from any of the problem triangles can be
-    // in a polygon edge.  By definition, the seed is a problem triangle.
-    std::set<long> seed_verts;
-    for (int i = 0; i < 3; i++) {
-	seed_verts.insert(seed.v[i]);
-	// The exception to interior categorization is Brep boundary points -
-	// they are never interior or uncontained
-	if (cmesh->brep_edge_pnt(seed.v[i])) {
-	    continue;
+    if (repair) {
+	// None of the edges or vertices from any of the problem triangles can be
+	// in a polygon edge.  By definition, the seed is a problem triangle.
+	std::set<long> seed_verts;
+	for (int i = 0; i < 3; i++) {
+	    seed_verts.insert(seed.v[i]);
+	    // The exception to interior categorization is Brep boundary points -
+	    // they are never interior or uncontained
+	    if (cmesh->brep_edge_pnt(seed.v[i])) {
+		continue;
+	    }
+	    polygon.uncontained.insert(seed.v[i]);
 	}
-	polygon.uncontained.insert(seed.v[i]);
-    }
 
-    // TODO - do we need this?
-    std::set<uedge_t> tedges = cmesh->uedges(seed);
-    for (u_it = tedges.begin(); u_it != tedges.end(); u_it++) {
-	// The exception to this is Brep boundary edges - they are never
-	// interior.  Note that one point on the edge isn't enough - the
-	// whole edge must be on the brep edge.
-	if (cmesh->brep_edge_pnt((*u_it).v[0]) && cmesh->brep_edge_pnt((*u_it).v[1])) {
-	    continue;
-	}
-	interior_uedges.insert(*u_it);
-    }
-
-    // We need a initial valid polygon loop to grow.  Poll the neighbor faces - if one
-    // of them is valid, it will be used to build an initial loop
-    std::vector<triangle_t> faces = cmesh->face_neighbors(seed);
-    for (size_t i = 0; i < faces.size(); i++) {
-	triangle_t t = faces[i];
-	if (cmesh->problem_triangles.find(t) == cmesh->problem_triangles.end()) {
-	    struct edge_t e1(t.v[0], t.v[1]);
-	    struct edge_t e2(t.v[1], t.v[2]);
-	    struct edge_t e3(t.v[2], t.v[0]);
-	    polygon.add_edge(e1);
-	    polygon.add_edge(e2);
-	    polygon.add_edge(e3);
-	    visited_triangles.insert(t);
-	    return polygon.closed();
-	}
-    }
-
-    // If we didn't find a valid mated edge triangle (urk?) try the vertices
-    for (int i = 0; i < 3; i++) {
-	std::vector<triangle_t> vfaces = cmesh->vertex_face_neighbors(seed.v[i]);
-	for (size_t j = 0; j < vfaces.size(); j++) {
-	    triangle_t t = vfaces[j];
+	// We need a initial valid polygon loop to grow.  Poll the neighbor faces - if one
+	// of them is valid, it will be used to build an initial loop
+	std::vector<triangle_t> faces = cmesh->face_neighbors(seed);
+	for (size_t i = 0; i < faces.size(); i++) {
+	    triangle_t t = faces[i];
 	    if (cmesh->problem_triangles.find(t) == cmesh->problem_triangles.end()) {
 		struct edge_t e1(t.v[0], t.v[1]);
 		struct edge_t e2(t.v[1], t.v[2]);
@@ -866,12 +846,41 @@ csweep_t::build_initial_loop(triangle_t &seed)
 		return polygon.closed();
 	    }
 	}
+
+	// If we didn't find a valid mated edge triangle (urk?) try the vertices
+	for (int i = 0; i < 3; i++) {
+	    std::vector<triangle_t> vfaces = cmesh->vertex_face_neighbors(seed.v[i]);
+	    for (size_t j = 0; j < vfaces.size(); j++) {
+		triangle_t t = vfaces[j];
+		if (cmesh->problem_triangles.find(t) == cmesh->problem_triangles.end()) {
+		    struct edge_t e1(t.v[0], t.v[1]);
+		    struct edge_t e2(t.v[1], t.v[2]);
+		    struct edge_t e3(t.v[2], t.v[0]);
+		    polygon.add_edge(e1);
+		    polygon.add_edge(e2);
+		    polygon.add_edge(e3);
+		    visited_triangles.insert(t);
+		    return polygon.closed();
+		}
+	    }
+	}
+
+	// NONE of the triangles in the neighborhood are valid?  We'll have to hope that
+	// subsequent processing of other seeds will put a proper mesh in contact with
+	// this face...
+	return false;
+
     }
 
-    // NONE of the triangles in the neighborhood are valid?  We'll have to hope that
-    // subsequent processing of other seeds will put a proper mesh in contact with
-    // this face...
-    return false;
+    // We're not repairing - start with the seed itself
+    struct edge_t e1(seed.v[0], seed.v[1]);
+    struct edge_t e2(seed.v[1], seed.v[2]);
+    struct edge_t e3(seed.v[2], seed.v[0]);
+    polygon.add_edge(e1);
+    polygon.add_edge(e2);
+    polygon.add_edge(e3);
+    visited_triangles.insert(seed);
+    return polygon.closed();
 }
 
 void csweep_t::plot_uedge(struct uedge_t &ue, FILE* plot_file)
