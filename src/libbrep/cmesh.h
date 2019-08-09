@@ -229,6 +229,8 @@ public:
     // Trigger mesh repair logic
     void repair();
 
+    int op_cnt;
+
 private:
     // For situations where we need to process using Brep data
     std::set<ON_3dPoint *> *edge_pnts;

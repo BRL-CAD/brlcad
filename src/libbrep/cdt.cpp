@@ -215,8 +215,9 @@ refine_triangulation(struct ON_Brep_CDT_Face_State *f, int cnt, int rebuild)
 
     // Now, the hard part - create local subsets, remesh them, and replace the original
     // triangles with the new ones.
+    f->fmesh.op_cnt = 0;
     f->fmesh.repair();
-    exit(1);
+    //exit(1);
 #if 0
     int rcnt = 0;
     while (active_ctris.size()) {
@@ -224,7 +225,6 @@ refine_triangulation(struct ON_Brep_CDT_Face_State *f, int cnt, int rebuild)
 	Remesh_Near_cTri(f, seed_tri, &active_ctris, rcnt);
 	rcnt++;
     }
-#endif
 
     // Locally remesh in the area of triangles identified by above steps
     // We don't want to do any more remeshing than we have to, so if a
@@ -266,6 +266,7 @@ refine_triangulation(struct ON_Brep_CDT_Face_State *f, int cnt, int rebuild)
 	bu_log("Fatal failure on edge checking\n");
 	return -1;
     }
+#endif
 
     if (!ret) {
 	// Flag zero area triangles for subsequent handling (potentially

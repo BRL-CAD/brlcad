@@ -62,8 +62,6 @@ cmesh_t::tri_add(triangle_t &tri)
     long i = tri.v[0];
     long j = tri.v[1];
     long k = tri.v[2];
-    this->v2tris[j].insert(tri);
-    this->v2tris[k].insert(tri);
     struct edge_t e[3];
     struct uedge_t ue[3];
     e[0].set(i, j);
@@ -115,9 +113,15 @@ cmesh_t::tri_add(triangle_t &tri)
     // Update boundary edge information
     this->boundary_edges(1);
 
-    tris_plot("post_tri_add_tris.plot3");
-    boundary_edges_plot("post_tri_add_be.plot3");
-
+#if 0
+    op_cnt++;
+    struct bu_vls pname = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&pname, "post_tri_add_tris.plot3-%05d", op_cnt);
+    tris_plot(bu_vls_cstr(&pname));
+    bu_vls_sprintf(&pname, "post_tri_add_boundary_edge.plot3%05d", op_cnt);
+    boundary_edges_plot(bu_vls_cstr(&pname));
+    bu_vls_free(&pname);
+#endif
 
     return true;
 }
@@ -176,8 +180,15 @@ void cmesh_t::tri_remove(triangle_t &tri)
     // Update boundary edge information
     this->boundary_edges(1);
 
-    tris_plot("post_tri_remove.plot3");
-    boundary_edges_plot("post_tri_remove_be.plot3");
+#if 0
+    op_cnt++;
+    struct bu_vls pname = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&pname, "post_tri_remove_tris.plot3-%05d", op_cnt);
+    tris_plot(bu_vls_cstr(&pname));
+    bu_vls_sprintf(&pname, "post_tri_remove_boundary_edge.plot3-%05d", op_cnt);
+    boundary_edges_plot(bu_vls_cstr(&pname));
+    bu_vls_free(&pname);
+#endif
 }
 
 std::vector<triangle_t>
@@ -645,6 +656,8 @@ cmesh_t::repair()
     seed_tris.insert(f_tris.begin(), f_tris.end());
     problem_triangles = seed_tris;
 
+    std::vector<triangle_t> s_tris_orig = this->singularity_triangles();
+
     while (seed_tris.size()) {
 	triangle_t seed = *seed_tris.begin();
 
@@ -703,6 +716,12 @@ cmesh_t::repair()
     // criteria...
     std::vector<triangle_t> s_tris = this->singularity_triangles();
     seed_tris.insert(s_tris.begin(), s_tris.end());
+
+
+    /// TO TRY - see if the projected candidate triangles flip their normal
+    //direction in the projection - may be getting some "valid" triangles
+    //that are distorted inside out, even if their brep normals or triangle
+    //normals nominally are "close"? ...
 
     while (seed_tris.size()) {
 	triangle_t seed = *seed_tris.begin();
@@ -831,7 +850,11 @@ void cmesh_t::boundary_loops_plot(int use_brep_data, const char *filename)
     fclose(plot_file);
 }
 
+#if 0
 void cmesh_t::plot_tri(const triangle_t &t, struct bu_color *buc, FILE *plot, int r, int g, int b)
+#else
+void cmesh_t::plot_tri(const triangle_t &t, struct bu_color *buc, FILE *plot, int UNUSED(r), int UNUSED(g), int UNUSED(b))
+#endif
 {
     point_t p[3];
     point_t porig;
@@ -855,14 +878,14 @@ void cmesh_t::plot_tri(const triangle_t &t, struct bu_color *buc, FILE *plot, in
 	pdv_3cont(plot, p[i]);
     }
     pdv_3cont(plot, porig);
-
+#if 0
     /* fill in the "interior" using the rgb color*/
     pl_color(plot, r, g, b);
     for (size_t i = 0; i < 3; i++) {
 	pdv_3move(plot, p[i]);
 	pdv_3cont(plot, c);
     }
-
+#endif
 
     /* Plot the triangle normal */
     pl_color(plot, 0, 255, 255);
@@ -876,6 +899,7 @@ void cmesh_t::plot_tri(const triangle_t &t, struct bu_color *buc, FILE *plot, in
 	pdv_3cont(plot, npnt);
     }
 
+#if 0
     /* Plot the brep normal */
     pl_color(plot, 0, 100, 0);
     {
@@ -888,7 +912,7 @@ void cmesh_t::plot_tri(const triangle_t &t, struct bu_color *buc, FILE *plot, in
 	pdv_3move(plot, c);
 	pdv_3cont(plot, npnt);
     }
-
+#endif
     /* restore previous color */
     pl_color_buc(plot, buc);
 }
