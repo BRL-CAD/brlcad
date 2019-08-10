@@ -278,6 +278,7 @@ class cpolygon_t
 {
     public:
 	bool closed();
+	bool self_intersecting();
 	bool cdt();
 
 	bool point_in_polygon(long v);

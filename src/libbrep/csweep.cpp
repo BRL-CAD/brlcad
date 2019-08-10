@@ -162,6 +162,63 @@ cpolygon_t::replace_edges(std::set<edge_t> &new_edges, std::set<edge_t> &old_edg
 }
 
 bool
+cpolygon_t::self_intersecting()
+{
+    bool self_isect = false;
+    std::map<long, int> vecnt;
+    std::set<cpolyedge_t *>::iterator pe_it;
+    for (pe_it = poly.begin(); pe_it != poly.end(); pe_it++) {
+	cpolyedge_t *pe = *pe_it;
+	vecnt[pe->v[0]]++;
+	vecnt[pe->v[1]]++;
+    }
+    std::map<long, int>::iterator v_it;
+    for (v_it = vecnt.begin(); v_it != vecnt.end(); v_it++) {
+	if (v_it->second > 2) {
+	    self_isect = true;
+	    uncontained.insert(v_it->second);
+	}
+    }
+
+    // Check the projected segments against each other as well
+    std::vector<cpolyedge_t *> pv(poly.begin(), poly.end());
+    for (size_t i = 0; i < pv.size(); i++) {
+	cpolyedge_t *pe1 = pv[i];
+	ON_2dPoint p1_1(pnts_2d[pe1->v[0]][X], pnts_2d[pe1->v[0]][Y]);
+	ON_2dPoint p1_2(pnts_2d[pe1->v[1]][X], pnts_2d[pe1->v[1]][Y]);
+	ON_Line e1(p1_1, p1_2);
+	for (size_t j = i+1; j < pv.size(); j++) {
+	    cpolyedge_t *pe2 = pv[j];
+	    ON_2dPoint p2_1(pnts_2d[pe2->v[0]][X], pnts_2d[pe2->v[0]][Y]);
+	    ON_2dPoint p2_2(pnts_2d[pe2->v[1]][X], pnts_2d[pe2->v[1]][Y]);
+	    ON_Line e2(p2_1, p2_2);
+
+	    double a, b = 0;
+	    if (!ON_IntersectLineLine(e1, e2, &a, &b, 0.0, false)) {
+		continue;
+	    }
+
+	    if ((a < 0 || NEAR_ZERO(a, ON_ZERO_TOLERANCE) || a > 1 || NEAR_ZERO(1-a, ON_ZERO_TOLERANCE)) ||
+		    (b < 0 || NEAR_ZERO(b, ON_ZERO_TOLERANCE) || b > 1 || NEAR_ZERO(1-b, ON_ZERO_TOLERANCE))) {
+		continue;
+	    } else {
+		std::cout << "a: " << a << ", b: " << b << "\n";
+	    }
+
+	    self_isect = true;
+	}
+    }
+#if 0
+    if (self_isect) {
+	std::cout << "Polygon reports self-intersecting\n";
+	polygon_plot("self_isect.plot3");
+    }
+#endif
+
+    return self_isect;
+}
+
+bool
 cpolygon_t::closed()
 {
     if (poly.size() < 3) {
@@ -169,6 +226,10 @@ cpolygon_t::closed()
     }
 
     if (flipped_face.size()) {
+	return false;
+    }
+
+    if (self_intersecting()) {
 	return false;
     }
 
@@ -454,11 +515,6 @@ cpolygon_t::tri_process(std::set<edge_t> *ne, std::set<edge_t> *se, long *nv, tr
 
 void cpolygon_t::polygon_plot(const char *filename)
 {
-    if (!closed()) {
-	std::cerr << "Polygon not closed\n";
-	return;
-    }
-
     FILE* plot_file = fopen(filename, "w");
     struct bu_color c = BU_COLOR_INIT_ZERO;
     bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
@@ -480,7 +536,8 @@ void cpolygon_t::polygon_plot(const char *filename)
     V2MINMAX(pmin, pmax, pnts_2d[efirst->v[0]]);
     V2MINMAX(pmin, pmax, pnts_2d[efirst->v[1]]);
 
-    while (ecurr != efirst) {
+    size_t ecnt = 1;
+    while (ecurr != efirst && ecnt < poly.size()+1) {
 	ecurr = (!ecurr) ? efirst->next : ecurr->next;
 	VSET(bnp, pnts_2d[ecurr->v[1]][X], pnts_2d[ecurr->v[1]][Y], 0);
 	pdv_3cont(plot_file, bnp);
