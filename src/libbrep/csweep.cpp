@@ -330,6 +330,14 @@ cpolygon_t::cdt()
     return result;
 }
 
+// TODO - there is another case we need to handle here - when the candidate
+// triangle OVERLAPS an existing visited triangle in the projection, but
+// its normal indicates it should not (i.e. it's not overlapping in the
+// projection by "wrapping around" the mesh on the other side of the object.)
+// In that case we mark it as visited and either a. keep going if all the
+// triangle verts are on the polygon already or b. mark it's non-polygon
+// vert as uncontained - that vertex is something we need to contain before
+// the polygon is viable.
 long
 cpolygon_t::tri_process(std::set<edge_t> *ne, std::set<edge_t> *se, long *nv, triangle_t &t)
 {
