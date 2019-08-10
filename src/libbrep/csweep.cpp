@@ -926,7 +926,7 @@ csweep_t::build_initial_loop(triangle_t &seed, bool repair)
 	std::vector<triangle_t> faces = cmesh->face_neighbors(seed);
 	for (size_t i = 0; i < faces.size(); i++) {
 	    triangle_t t = faces[i];
-	    if (cmesh->problem_triangles.find(t) == cmesh->problem_triangles.end()) {
+	    if (cmesh->seed_tris.find(t) == cmesh->seed_tris.end()) {
 		struct edge_t e1(t.v[0], t.v[1]);
 		struct edge_t e2(t.v[1], t.v[2]);
 		struct edge_t e3(t.v[2], t.v[0]);
@@ -943,7 +943,7 @@ csweep_t::build_initial_loop(triangle_t &seed, bool repair)
 	    std::vector<triangle_t> vfaces = cmesh->vertex_face_neighbors(seed.v[i]);
 	    for (size_t j = 0; j < vfaces.size(); j++) {
 		triangle_t t = vfaces[j];
-		if (cmesh->problem_triangles.find(t) == cmesh->problem_triangles.end()) {
+		if (cmesh->seed_tris.find(t) == cmesh->seed_tris.end()) {
 		    struct edge_t e1(t.v[0], t.v[1]);
 		    struct edge_t e2(t.v[1], t.v[2]);
 		    struct edge_t e3(t.v[2], t.v[0]);
@@ -963,7 +963,7 @@ csweep_t::build_initial_loop(triangle_t &seed, bool repair)
 
     }
 
-    // We're not repairing - start with the seed itself
+    // If we're not repairing, start with the seed itself
     struct edge_t e1(seed.v[0], seed.v[1]);
     struct edge_t e2(seed.v[1], seed.v[2]);
     struct edge_t e3(seed.v[2], seed.v[0]);

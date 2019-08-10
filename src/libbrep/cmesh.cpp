@@ -286,116 +286,6 @@ cmesh_t::find_boundary_oriented_edge(uedge_t &ue)
     return empty;
 }
 
-std::vector<std::vector<long>>
-cmesh_t::boundary_loops(int use_brep_data)
-{
-    std::set<edge_t>::iterator e_it;
-    std::vector<std::vector<long>> results;
-
-    std::set<uedge_t> bedges = this->boundary_edges(use_brep_data);
-
-    if (!bedges.size()) {
-	std::cerr << "No boundary edges in mesh??\n";
-	return results;
-    }
-
-    std::set<uedge_t> unadded(bedges.begin(), bedges.end());
-    std::vector<long> *wl = new std::vector<long>;
-
-    uedge_t fedge = *(unadded.begin());
-    unadded.erase(fedge);
-    edge_t dedge = this->find_boundary_oriented_edge(fedge);
-
-    long first_v = dedge.v[0];
-    long prev_v = dedge.v[0];
-    long curr_v = dedge.v[1];
-
-    wl->push_back(first_v);
-    wl->push_back(curr_v);
-
-    while (unadded.size()) {
-	std::set<edge_t> candidates;
-	std::set<edge_t> vedges = this->v2edges[curr_v];
-	uedge_t cue(prev_v, curr_v);
-	for (e_it = vedges.begin(); e_it != vedges.end(); e_it++) {
-	    uedge_t vue(*e_it);
-	    if (cue == vue) continue;
-	    if (bedges.find(vue) == bedges.end()) continue;
-	    if (unadded.find(vue) == unadded.end()) continue;
-	    candidates.insert(*e_it);
-	    break;
-	}
-	if (candidates.size() != 1) {
-	    std::cerr << "No viable candidate boundary edge??\n";
-	    results.clear();
-	    return results;
-	}
-	edge_t nedge = *(candidates.begin());
-	prev_v = nedge.v[0];
-	curr_v = nedge.v[1];
-	wl->push_back(curr_v);
-	uedge_t nuedge(nedge);
-	unadded.erase(nuedge);
-	if (curr_v == first_v) {
-	    results.push_back(*wl);
-	    delete wl;
-	    if (unadded.size()) {
-		wl = new std::vector<long>;
-
-		fedge = *(unadded.begin());
-		unadded.erase(fedge);
-		dedge = this->find_boundary_oriented_edge(fedge);
-
-		first_v = dedge.v[0];
-		prev_v = dedge.v[0];
-		curr_v = dedge.v[1];
-
-		wl->push_back(first_v);
-		wl->push_back(curr_v);
-	    }
-	}
-    }
-    if (curr_v != first_v) {
-	std::cerr << "Unable to close loop!\n";
-	results.clear();
-	return results;
-    }
-
-    // TODO If we have more than one loop, need to determine which is the outer
-    // loop.  A difficult problem in general, but CDT projections we should be able
-    // to use the bbox of the 3D points to find the largest box
-    if (results.size() > 1) {
-    }
-
-    return results;
-}
-
-
-
-std::set<long>
-cmesh_t::interior_points(int use_brep_data)
-{
-    std::set<long> results;
-    std::set<long> bedge_pnts;
-    std::set<uedge_t> bedges = this->boundary_edges(use_brep_data);
-    std::set<uedge_t>::iterator ue_it;
-    for (ue_it = bedges.begin(); ue_it != bedges.end(); ue_it++) {
-	bedge_pnts.insert((*ue_it).v[0]);
-	bedge_pnts.insert((*ue_it).v[1]);
-    }
-    std::set<triangle_t>::iterator tr_it;
-    for (tr_it = this->tris.begin(); tr_it != this->tris.end(); tr_it++) {
-	for (int j = 0; j < 3; j++) {
-	    long vind = (*tr_it).v[j];
-	    if (bedge_pnts.find(vind) == bedge_pnts.end()) {
-		results.insert(vind);
-	    }
-	}
-    }
-
-    return results;
-}
-
 std::vector<triangle_t>
 cmesh_t::interior_incorrect_normals(int use_brep_data)
 {
@@ -566,7 +456,7 @@ void cmesh_t::build(std::set<p2t::Triangle *> *cdttri, std::map<p2t::Point *, ON
     this->pnts.clear();
     this->p2ind.clear();
     this->sv.clear();
- 
+
     std::set<p2t::Triangle*>::iterator s_it;
 
     // Populate points
@@ -647,14 +537,25 @@ cmesh_t::problem_edge_tris()
 void
 cmesh_t::repair()
 {
-    // The most difficult cases are problem edge and/or flipped normal
-    // triangles.  Handle those first.
-    std::set<triangle_t> seed_tris;
+    // If we have edges with > 2 triangles and 3 or more of those triangles are
+    // not problem_edge triangles, we have what amounts to a self-intersecting
+    // mesh.  I'm not sure yet what to do about it - the obvious starting point
+    // is to pick one of the triangles and yank it, along with any of its edge-
+    // neighbors that overlap with any of the other triangles associated with
+    // the original overloaded edge, and mark all the involved vertices as
+    // uncontained.  But I'm not sure what the subsequent implications are for
+    // the mesh processing...
+
+
+
+    // *Wrong* triangles: problem edge and/or flipped normal triangles.  Handle
+    // those first, so the subsequent clean-up pass doesn't have to worry about
+    // errors they might introduce.
     std::vector<triangle_t> f_tris = this->interior_incorrect_normals(1);
     std::vector<triangle_t> e_tris = this->problem_edge_tris();
+    seed_tris.clear();
     seed_tris.insert(e_tris.begin(), e_tris.end());
     seed_tris.insert(f_tris.begin(), f_tris.end());
-    problem_triangles = seed_tris;
 
     std::vector<triangle_t> s_tris_orig = this->singularity_triangles();
 
@@ -707,36 +608,11 @@ cmesh_t::repair()
     // remesh near singularities to try and produce more reasonable
     // triangles.
 
-    // TODO - want, if possible, to tackle all the singularity triangles at
-    // once - meshing portions of them is apparently causing issues where one
-    // projection is generating triangles that overlap with another projection.
-    // For each singularity vertex, grab all its associated triangles and find
-    // the maximum angle span between them.  If it's < 170, we may be able to
-    // try a projection with all of them using the max angle as a selection
-    // criteria...
     std::vector<triangle_t> s_tris = this->singularity_triangles();
     seed_tris.insert(s_tris.begin(), s_tris.end());
 
-
-    /// TO TRY - see if the projected candidate triangles flip their normal
-    //direction in the projection - may be getting some "valid" triangles
-    //that are distorted inside out, even if their brep normals or triangle
-    //normals nominally are "close"? ...
-
     while (seed_tris.size()) {
 	triangle_t seed = *seed_tris.begin();
-
-	// TODO - This seed triangle, after several post processings,
-	// exposes a problem where it overlaps another triangle in the
-	// mesh.  Somewhere I'm not catching an issue...
-	triangle_t bseed;
-	bseed.v[0] = 11;
-	bseed.v[1] = 7;
-	bseed.v[2] = 21;
-	if (seed == bseed) {
-	    std::cout << "bad news coming\n";
-	}
-
 
 	// We use the Brep normal for this, since the triangles are
 	// problem triangles and their normals cannot be relied upon.
@@ -817,33 +693,6 @@ void cmesh_t::boundary_edges_plot(const char *filename)
 	for (b_it = problem_edges.begin(); b_it != problem_edges.end(); b_it++) {
 	    uedge_t ue = *b_it;
 	    plot_uedge(ue, plot_file);
-	}
-    }
-
-    fclose(plot_file);
-}
-
-
-void cmesh_t::boundary_loops_plot(int use_brep_data, const char *filename)
-{
-    FILE* plot_file = fopen(filename, "w");
-
-    std::vector<std::vector<long>> loops = this->boundary_loops(use_brep_data);
-    point_t bnp;
-    for (size_t i = 0; i < loops.size(); i++) {
-	struct bu_color c = BU_COLOR_INIT_ZERO;
-	bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
-	pl_color_buc(plot_file, &c);
-
-	ON_3dPoint *p = this->pnts[loops[i][0]];
-	VSET(bnp, p->x, p->y, p->z);
-	pdv_3move(plot_file, bnp);
-	for (size_t j = 1; j < loops[i].size(); j++) {
-	    // 3D
-	    p = this->pnts[loops[i][j]];
-	    VSET(bnp, p->x, p->y, p->z);
-	    pdv_3cont(plot_file, bnp);
-
 	}
     }
 

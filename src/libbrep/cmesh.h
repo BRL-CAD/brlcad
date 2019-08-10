@@ -196,9 +196,7 @@ public:
 	    );
 
     /* Mesh data sets */
-    std::set<long> interior_points(int use_brep_data);
     std::set<uedge_t> boundary_edges(int use_brep_data);
-    std::vector<std::vector<long>> boundary_loops(int use_brep_data);
     std::vector<triangle_t> face_neighbors(const triangle_t &f);
     std::vector<triangle_t> vertex_face_neighbors(long vind);
 
@@ -206,11 +204,11 @@ public:
 
     std::vector<triangle_t> interior_incorrect_normals(int use_brep_data);
     std::vector<triangle_t> problem_edge_tris();
-    std::set<triangle_t> problem_triangles;
+
+    std::set<triangle_t> seed_tris;
 
     // Plot3 generation routines for debugging
     void boundary_edges_plot(const char *filename);
-    void boundary_loops_plot(int use_brep_data, const char *filename);
     void face_neighbors_plot(const triangle_t &f, const char *filename);
     void vertex_face_neighbors_plot(long vind, const char *filename);
     void interior_incorrect_normals_plot(const char *filename);
