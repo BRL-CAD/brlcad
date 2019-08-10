@@ -438,6 +438,32 @@ cpolygon_t::tri_process(std::set<edge_t> *ne, std::set<edge_t> *se, long *nv, tr
 	}
     }
 
+    if (shared_cnt == 0) {
+	// If we don't have any shared edges any longer (we must have at the
+	// start of processing or we wouldn't be here), we've probably got a
+	// "bad" triangle that is already inside the loop due to another triangle
+	// from the same shared edge expanding the loop.  Find the triangle
+	// vertex that is the problem and mark it as an uncontained vertex.
+	for (int i = 0; i < 3; i++) {
+	    long vert = t.v[i];
+	    int vert_problem_cnt = 0;
+	    std::set<uedge_t>::iterator p_it;
+	    for (p_it = problem_edges.begin(); p_it != problem_edges.end(); p_it++) {
+		if (((*p_it).v[0] == vert) || ((*p_it).v[1] == vert)) {
+		    vert_problem_cnt++;
+		}
+	    }
+
+	    if (vert_problem_cnt > 1) {
+		uncontained.insert(vert);
+		(*nv) = -1;
+		se->clear();
+		ne->clear();
+		return -2;
+	    }
+	}
+    }
+
     if (shared_cnt == 1) {
 	bool v_shared[3];
 	for (int i = 0; i < 3; i++) {
