@@ -729,9 +729,12 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 
     std::set<triangle_t> ptris = polygon_tris(angle, stop_on_contained);
 
-    if (!ptris.size()) {
+    if (!ptris.size() && stop_on_contained) {
 	std::cout << "No triangles available??\n";
 	return -1;
+    }
+    if (!ptris.size() && !stop_on_contained) {
+	return 0;
     }
 
     std::set<triangle_t>::iterator f_it;
@@ -758,10 +761,6 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 	long vert = -1;
 	long new_edge_cnt = polygon.tri_process(&new_edges, &shared_edges, &vert, ct);
 
-	ON_3dVector tdir = cmesh->tnorm(ct);
-	ON_3dVector bdir = cmesh->bnorm(ct);
-	bool flipped_tri = (ON_DotProduct(tdir, bdir) < 0);
-
 	bool process = true;
 
 	if (new_edge_cnt == -2) {
@@ -780,6 +779,11 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 	}
 
 	if (process) {
+
+	    ON_3dVector tdir = cmesh->tnorm(ct);
+	    ON_3dVector bdir = cmesh->bnorm(ct);
+	    bool flipped_tri = (ON_DotProduct(tdir, bdir) < 0);
+
 	    if (stop_on_contained && new_edge_cnt == 2 && flipped_tri) {
 		// It is possible that a flipped face adding two new edges will
 		// make a mess out of the polygon (i.e. make it self intersecting.)

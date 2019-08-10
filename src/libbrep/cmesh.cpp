@@ -574,6 +574,24 @@ cmesh_t::self_intersecting_mesh()
     return false;
 }
 
+double
+cmesh_t::max_angle_delta(triangle_t &seed, std::vector<triangle_t> &s_tris)
+{
+    double dmax = 0;
+    ON_3dVector sn = bnorm(seed);
+
+    for (size_t i = 0; i < s_tris.size(); i++) {
+	ON_3dVector tn = bnorm(s_tris[i]);
+	double dprd = ON_DotProduct(sn, tn);
+	double dang = (NEAR_EQUAL(dprd, 1.0, ON_ZERO_TOLERANCE)) ? 0 : acos(dprd);
+	dmax = (dang > dmax) ? dang : dmax;
+    }
+
+    dmax = dmax * 180.0/ON_PI;
+    dmax = (dmax < 10) ? 10 : dmax;
+    return (dmax < 170) ? dmax : 170;
+}
+
 void
 cmesh_t::repair()
 {
@@ -583,14 +601,13 @@ cmesh_t::repair()
     // is to pick one of the triangles and yank it, along with any of its edge-
     // neighbors that overlap with any of the other triangles associated with
     // the original overloaded edge, and mark all the involved vertices as
-    // uncontained.  But I'm not sure what the subsequent implications are for
-    // the mesh processing...
+    // uncontained.  But I'm not sure yet what the subsequent implications are
+    // for the mesh processing...
 
     if (this->self_intersecting_mesh()) {
 	tris_plot("self_intersecting_mesh.plot3");
 	exit(1);
     }
-
 
     // *Wrong* triangles: problem edge and/or flipped normal triangles.  Handle
     // those first, so the subsequent clean-up pass doesn't have to worry about
@@ -600,8 +617,6 @@ cmesh_t::repair()
     seed_tris.clear();
     seed_tris.insert(e_tris.begin(), e_tris.end());
     seed_tris.insert(f_tris.begin(), f_tris.end());
-
-    std::vector<triangle_t> s_tris_orig = this->singularity_triangles();
 
     while (seed_tris.size()) {
 	triangle_t seed = *seed_tris.begin();
@@ -658,10 +673,8 @@ cmesh_t::repair()
     while (seed_tris.size()) {
 	triangle_t seed = *seed_tris.begin();
 
-	// We use the Brep normal for this, since the triangles are
-	// problem triangles and their normals cannot be relied upon.
 	ON_3dPoint sp = this->tcenter(seed);
-	ON_3dVector sn = this->bnorm(seed);
+	ON_3dVector sn = this->tnorm(seed);
 
 	csweep_t sweep;
 	sweep.cmesh = this;
@@ -676,16 +689,17 @@ cmesh_t::repair()
 	    exit(1);
 	}
 
-	// Grow until we contain the seed and its associated problem data
-
-	double deg = 40;
+	// Grow the loop
+	double deg = max_angle_delta(seed, s_tris);
 	long tri_cnt = sweep.grow_loop(deg, false);
-	while (tri_cnt < 10 && deg < 45) {
-	    if (tri_cnt < 0) {
-		std::cerr << "Couldn't handle mesh rebuild\n";
-		exit(1);
-	    }
-	    tri_cnt = sweep.grow_loop(deg, false);
+	if (tri_cnt < 0) {
+	    std::cerr << "Couldn't handle mesh rebuild\n";
+	    exit(1);
+	}
+
+	// If nothing to do at the singularity, we don't change the mesh
+	if (tri_cnt == 0) {
+	    return;
 	}
 
 	// Remove everything the patch claimed

@@ -246,6 +246,7 @@ private:
 
     // Submesh building
     bool tri_problem_edges(triangle_t &t);
+    double max_angle_delta(triangle_t &seed, std::vector<triangle_t> &s_tris);
 
     // Mesh manipulation functions
     bool tri_add(triangle_t &atris);
