@@ -204,6 +204,7 @@ public:
 
     std::vector<triangle_t> interior_incorrect_normals(int use_brep_data);
     std::vector<triangle_t> problem_edge_tris();
+    bool self_intersecting_mesh();
 
     std::set<triangle_t> seed_tris;
 
@@ -333,6 +334,7 @@ class csweep_t
 	void vertex_face_neighbors_plot(long vind, const char *filename);
 
 	std::set<triangle_t> visited_triangles;
+	std::set<triangle_t> unusable_triangles;
 
     private:
 	ON_Plane tplane;

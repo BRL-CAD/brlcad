@@ -719,6 +719,8 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 	return -1;
     }
 
+    unusable_triangles.clear();
+
     // First step - collect all the unvisited triangles from the polyline edges.
 
     std::queue<triangle_t> tq;
@@ -771,9 +773,9 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 
 	if (new_edge_cnt == -1) {
 	    // If the triangle shares one edge but all three vertices are on the
-	    // polygon, we can't use this triangle at this time - it would produce
-	    // a self-intersecting polygon.  Don't mark it as visited however, as
-	    // it may be pulled back in successfully in later processing.
+	    // polygon, we can't use this triangle in this context - it would produce
+	    // a self-intersecting polygon.
+	    unusable_triangles.insert(ct);
 	    process = false;
 	}
 
@@ -858,7 +860,9 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 	    std::set<triangle_t> ntris = polygon_tris(angle, stop_on_contained);
 	    for (f_it = ntris.begin(); f_it != ntris.end(); f_it++) {
 		if (visited_triangles.find(*f_it) == visited_triangles.end()) {
-		    tq.push(*f_it);
+		    if (unusable_triangles.find(*f_it) == unusable_triangles.end()) {
+			tq.push(*f_it);
+		    }
 		}
 	    }
 

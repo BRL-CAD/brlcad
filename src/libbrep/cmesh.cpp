@@ -533,6 +533,46 @@ cmesh_t::problem_edge_tris()
     return results;
 }
 
+bool
+cmesh_t::self_intersecting_mesh()
+{
+    std::set<triangle_t> pedge_tris;
+    std::set<uedge_t>::iterator u_it;
+    std::set<triangle_t>::iterator t_it;
+    for (u_it = problem_edges.begin(); u_it != problem_edges.end(); u_it++) {
+	std::set<triangle_t> ptris = uedges2tris[(*u_it)];
+	for (t_it = uedges2tris[(*u_it)].begin(); t_it != uedges2tris[(*u_it)].end(); t_it++) {
+	    pedge_tris.insert(*t_it);
+	}
+    }
+
+    std::map<uedge_t, std::set<triangle_t>>::iterator et_it;
+    for (et_it = uedges2tris.begin(); et_it != uedges2tris.end(); et_it++) {
+	std::set<triangle_t> uetris = et_it->second;
+	if (uetris.size() > 2) {
+	    size_t valid_cnt = 0;
+	    for (t_it = uetris.begin(); t_it != uetris.end(); t_it++) {
+		triangle_t t = *t_it;
+		if (pedge_tris.find(t) == pedge_tris.end()) {
+		    valid_cnt++;
+		}
+	    }
+	    if (valid_cnt > 2) {
+		std::cout << "Self intersection in mesh found\n";
+		struct uedge_t pue = et_it->first;
+		FILE* plot_file = fopen("self_intersecting_edge.plot3", "w");
+		struct bu_color c = BU_COLOR_INIT_ZERO;
+		bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
+		pl_color_buc(plot_file, &c);
+		plot_uedge(pue, plot_file);
+		fclose(plot_file);
+		return true;
+	    }
+	}
+    }
+
+    return false;
+}
 
 void
 cmesh_t::repair()
@@ -546,6 +586,10 @@ cmesh_t::repair()
     // uncontained.  But I'm not sure what the subsequent implications are for
     // the mesh processing...
 
+    if (this->self_intersecting_mesh()) {
+	tris_plot("self_intersecting_mesh.plot3");
+	exit(1);
+    }
 
 
     // *Wrong* triangles: problem edge and/or flipped normal triangles.  Handle
