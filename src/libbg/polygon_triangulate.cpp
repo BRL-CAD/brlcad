@@ -104,18 +104,12 @@ bg_poly2tri(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
 	    cdt->Triangulate(true, -1);
 	}
 	catch (...) {
-	    for (p_it = p2t_pnts.begin(); p_it != p2t_pnts.end(); p_it++) {
-		delete *p_it;
-	    }
 	    return 1;
 	}
     }
 
     // If we didn't get any triangles, fail
     if (!cdt->GetTriangles().size()) {
-	for (p_it = p2t_pnts.begin(); p_it != p2t_pnts.end(); p_it++) {
-	    delete *p_it;
-	}
 	return 1;
     }
 
@@ -153,9 +147,6 @@ bg_poly2tri(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
     }
 
     // Cleanup
-    for (p_it = p2t_pnts.begin(); p_it != p2t_pnts.end(); p_it++) {
-	delete *p_it;
-    }
     delete cdt;
 
     return 0;
