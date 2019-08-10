@@ -72,7 +72,7 @@ cmesh_t::tri_add(triangle_t &tri)
 	this->edges2tris[e[ind]] = tri;
 	this->uedges2tris[uedge_t(e[ind])].insert(tri);
 	this->v2edges[e[ind].v[0]].insert(e[ind]);
-	this->v2tris[tri.v[i]].insert(tri);
+	this->v2tris[tri.v[ind]].insert(tri);
     }
 
 
@@ -143,7 +143,7 @@ void cmesh_t::tri_remove(triangle_t &tri)
 	this->edges2tris[e[ind]];
 	this->uedges2tris[uedge_t(e[ind])].erase(tri);
 	this->v2edges[e[ind].v[0]].erase(e[ind]);
-	this->v2tris[tri.v[i]].erase(tri);
+	this->v2tris[tri.v[ind]].erase(tri);
     }
 
     // Remove the triangle
