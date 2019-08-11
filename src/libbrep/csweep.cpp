@@ -873,6 +873,10 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 	    // That's all the triangles from this ring - if we haven't
 	    // terminated yet, pull the next triangle set.
 
+	    if (!stop_on_contained) {
+		angle = 0.25 * angle;
+	    }
+
 	    // We queue these up in a specific order - we want any triangles
 	    // actually using flipped or uncontained vertices to be at the top
 	    // of the stack (i.e. the first ones tried.  Loop through twice -
