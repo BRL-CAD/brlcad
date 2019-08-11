@@ -27,6 +27,7 @@
  */
 
 #include "common.h"
+#include "brep.h"
 #include "./cdt.h"
 
 // TODO - need a tree-ish structure for each edge so we can
@@ -996,6 +997,79 @@ Get_Edge_Points(struct ON_Brep_CDT_State *s_cdt)
 
 }
 
+#define BB_PLOT_2D(min, max) {         \
+    fastf_t pt[4][3];                  \
+    VSET(pt[0], max[X], min[Y], 0);    \
+    VSET(pt[1], max[X], max[Y], 0);    \
+    VSET(pt[2], min[X], max[Y], 0);    \
+    VSET(pt[3], min[X], min[Y], 0);    \
+    pdv_3move(plot_file, pt[0]); \
+    pdv_3cont(plot_file, pt[1]); \
+    pdv_3cont(plot_file, pt[2]); \
+    pdv_3cont(plot_file, pt[3]); \
+    pdv_3cont(plot_file, pt[0]); \
+}
+
+#define TREE_LEAF_FACE_3D(valp, a, b, c, d)  \
+    pdv_3move(plot_file, pt[a]); \
+    pdv_3cont(plot_file, pt[b]); \
+    pdv_3cont(plot_file, pt[c]); \
+    pdv_3cont(plot_file, pt[d]); \
+    pdv_3cont(plot_file, pt[a]); \
+
+#define BB_PLOT(min, max) {                 \
+    fastf_t pt[8][3];                       \
+    VSET(pt[0], max[X], min[Y], min[Z]);    \
+    VSET(pt[1], max[X], max[Y], min[Z]);    \
+    VSET(pt[2], max[X], max[Y], max[Z]);    \
+    VSET(pt[3], max[X], min[Y], max[Z]);    \
+    VSET(pt[4], min[X], min[Y], min[Z]);    \
+    VSET(pt[5], min[X], max[Y], min[Z]);    \
+    VSET(pt[6], min[X], max[Y], max[Z]);    \
+    VSET(pt[7], min[X], min[Y], max[Z]);    \
+    TREE_LEAF_FACE_3D(pt, 0, 1, 2, 3);      \
+    TREE_LEAF_FACE_3D(pt, 4, 0, 3, 7);      \
+    TREE_LEAF_FACE_3D(pt, 5, 4, 7, 6);      \
+    TREE_LEAF_FACE_3D(pt, 1, 5, 6, 2);      \
+}
+
+
+void
+plot_rtree_2d(ON_RTree *rtree, const char *filename)
+{
+    FILE* plot_file = fopen(filename, "w");
+    struct bu_color c = BU_COLOR_INIT_ZERO;
+    bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
+    pl_color_buc(plot_file, &c);
+
+    ON_RTreeIterator rit(*rtree);
+    const ON_RTreeBranch *rtree_leaf;
+    for (rit.First(); 0 != (rtree_leaf = rit.Value()); rit.Next())
+    {
+	BB_PLOT_2D(rtree_leaf->m_rect.m_min, rtree_leaf->m_rect.m_max);
+    }
+
+    fclose(plot_file);
+}
+
+void
+plot_rtree_3d(ON_RTree *rtree, const char *filename)
+{
+    FILE* plot_file = fopen(filename, "w");
+    struct bu_color c = BU_COLOR_INIT_ZERO;
+    bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
+    pl_color_buc(plot_file, &c);
+
+    ON_RTreeIterator rit(*rtree);
+    const ON_RTreeBranch *rtree_leaf;
+    for (rit.First(); 0 != (rtree_leaf = rit.Value()); rit.Next())
+    {
+	BB_PLOT(rtree_leaf->m_rect.m_min, rtree_leaf->m_rect.m_max);
+    }
+
+    fclose(plot_file);
+}
+
 bool
 build_poly2tri_polylines(struct ON_Brep_CDT_Face_State *f, p2t::CDT **cdt, int init_rtree)
 {
@@ -1064,7 +1138,23 @@ build_poly2tri_polylines(struct ON_Brep_CDT_Face_State *f, p2t::CDT **cdt, int i
 
 		    f->rt_trims_3d->Insert(bb.Min(), bb.Max(), line);
 		}
-		// TODO - do we need ON_Line(*(brep_loop_points[li])[brep_loop_points[li].Count() - 1].p3d, *(brep_loop_points[li])[0].p3d) as well?
+		{
+		    // TODO - do we need the closing line segment?
+		    ON_Line *line = new ON_Line(*(brep_loop_points[li])[brep_loop_points[li].Count() - 1].p3d, *(brep_loop_points[li])[0].p3d);
+		    ON_BoundingBox bb = line->BoundingBox();
+
+		    bb.m_max.x = bb.m_max.x + ON_ZERO_TOLERANCE;
+		    bb.m_max.y = bb.m_max.y + ON_ZERO_TOLERANCE;
+		    bb.m_max.z = bb.m_max.z + ON_ZERO_TOLERANCE;
+		    bb.m_min.x = bb.m_min.x - ON_ZERO_TOLERANCE;
+		    bb.m_min.y = bb.m_min.y - ON_ZERO_TOLERANCE;
+		    bb.m_min.z = bb.m_min.z - ON_ZERO_TOLERANCE;
+
+		    f->rt_trims_3d->Insert(bb.Min(), bb.Max(), line);
+		}
+
+		plot_rtree_2d(f->rt_trims, "rtree_2d.plot3");
+		plot_rtree_3d(f->rt_trims_3d, "rtree_3d.plot3");
 	    }
 	    if (outer) {
 		if (f->tris->size() > 0) {
