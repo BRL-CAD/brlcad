@@ -20,7 +20,7 @@
 
 // needed for implementation
 #include <iostream>
-#include <queue>
+#include <stack>
 
 namespace cmesh
 {
@@ -176,7 +176,9 @@ cpolygon_t::self_intersecting()
     for (v_it = vecnt.begin(); v_it != vecnt.end(); v_it++) {
 	if (v_it->second > 2) {
 	    self_isect = true;
-	    uncontained.insert(v_it->second);
+	    if (!cmesh->brep_edge_pnt(v_it->second)) {
+		uncontained.insert(v_it->second);
+	    }
 	}
     }
 
@@ -446,6 +448,9 @@ cpolygon_t::tri_process(std::set<edge_t> *ne, std::set<edge_t> *se, long *nv, tr
 	// vertex that is the problem and mark it as an uncontained vertex.
 	for (int i = 0; i < 3; i++) {
 	    long vert = t.v[i];
+	    if (cmesh->brep_edge_pnt(vert)) {
+		continue;
+	    }
 	    int vert_problem_cnt = 0;
 	    std::set<uedge_t>::iterator p_it;
 	    for (p_it = problem_edges.begin(); p_it != problem_edges.end(); p_it++) {
@@ -502,7 +507,9 @@ cpolygon_t::tri_process(std::set<edge_t> *ne, std::set<edge_t> *se, long *nv, tr
 	    }
 
 	    if (vert_problem_cnt > 1) {
-		uncontained.insert(*nv);
+		if (!cmesh->brep_edge_pnt(*nv)) {
+		    uncontained.insert(*nv);
+		}
 		(*nv) = -1;
 		se->clear();
 		ne->clear();
@@ -723,7 +730,7 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 
     // First step - collect all the unvisited triangles from the polyline edges.
 
-    std::queue<triangle_t> tq;
+    std::stack<triangle_t> ts;
 
     std::set<edge_t> flipped_edges;
 
@@ -740,13 +747,13 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
     std::set<triangle_t>::iterator f_it;
 
     for (f_it = ptris.begin(); f_it != ptris.end(); f_it++) {
-	tq.push(*f_it);
+	ts.push(*f_it);
     }
 
-    while (!tq.empty()) {
+    while (!ts.empty()) {
 
-	triangle_t ct = tq.front();
-	tq.pop();
+	triangle_t ct = ts.top();
+	ts.pop();
 	polygon.polygon_plot("poly_2d.plot3");
 
 	// A triangle will introduce at most one new point into the loop.  If
@@ -795,21 +802,27 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 		    std::cerr << "URK! flipped face vertex on edge!\n";
 		    return -1;
 		} else {
-		    polygon.flipped_face.insert(vert);
+		    if (!cmesh->brep_edge_pnt(vert)) {
+			polygon.flipped_face.insert(vert);
+		    }
 		}
 	    }
 
+	    int use_tri = 1;
 	    if (!(polygon.poly.size() == 3 && polygon.interior_points.size())) {
 		if (stop_on_contained && new_edge_cnt == 2 && !flipped_tri) {
 		    // If this is a good triangle and we're in repair mode, don't add it unless
 		    // it uses or points in the direction of at least one uncontained point.
-		    int use_tri = 0;
+		    int uncontained_use = 0;
 		    for (int i = 0; i < 3; i++) {
 			if (polygon.uncontained.find(ct.v[i]) != polygon.uncontained.end()) {
-			    use_tri = 1;
-			    break;
+			    uncontained_use++;
 			}
 		    }
+		    if (!uncontained_use) {
+			use_tri = 0;
+		    }
+
 		    if (!use_tri) {
 			struct edge_t e = (*shared_edges.begin());
 			ON_2dPoint p2d = (ON_2dPoint(polygon.pnts_2d[e.v[0]][X], polygon.pnts_2d[e.v[0]][Y]) + ON_2dPoint(polygon.pnts_2d[e.v[1]][X], polygon.pnts_2d[e.v[1]][Y])) * 0.5;
@@ -826,9 +839,6 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 			}
 		    }
 
-		    if (!use_tri) {
-			continue;
-		    }
 		}
 	    }
 
@@ -837,8 +847,10 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 		return -1;
 	    }
 
-	    polygon.replace_edges(new_edges, shared_edges);
-	    visited_triangles.insert(ct);
+	    if (use_tri) {
+		polygon.replace_edges(new_edges, shared_edges);
+		visited_triangles.insert(ct);
+	    }
 	}
 
 	bool h_uc = polygon.have_uncontained();
@@ -857,20 +869,59 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 
 	//polygon.polygon_plot("poly_2d.plot3");
 
-	if (tq.empty()) {
+	if (ts.empty()) {
 	    // That's all the triangles from this ring - if we haven't
 	    // terminated yet, pull the next triangle set.
 
+	    // We queue these up in a specific order - we want any triangles
+	    // actually using flipped or uncontained vertices to be at the top
+	    // of the stack (i.e. the first ones tried.  Loop through twice -
+	    // first pass pushes down the triangles not using a point of
+	    // specific interest, and the second one pushes the more
+	    // interesting ones.
 	    std::set<triangle_t> ntris = polygon_tris(angle, stop_on_contained);
 	    for (f_it = ntris.begin(); f_it != ntris.end(); f_it++) {
 		if (visited_triangles.find(*f_it) == visited_triangles.end()) {
 		    if (unusable_triangles.find(*f_it) == unusable_triangles.end()) {
-			tq.push(*f_it);
+			int priority_triangle = 0;
+			for (int i = 0; i < 3; i++) {
+			    if (polygon.uncontained.find((*f_it).v[i]) != polygon.uncontained.end()) {
+				priority_triangle = 1;
+			    }
+			    if (priority_triangle) break;
+			    if (polygon.flipped_face.find((*f_it).v[i]) != polygon.flipped_face.end()) {
+				priority_triangle = 1;
+			    }
+			    if (priority_triangle) break;
+			}
+			if (!priority_triangle) {
+			    ts.push(*f_it);
+			}
+		    }
+		}
+	    }
+	    for (f_it = ntris.begin(); f_it != ntris.end(); f_it++) {
+		if (visited_triangles.find(*f_it) == visited_triangles.end()) {
+		    if (unusable_triangles.find(*f_it) == unusable_triangles.end()) {
+			int priority_triangle = 0;
+			for (int i = 0; i < 3; i++) {
+			    if (polygon.uncontained.find((*f_it).v[i]) != polygon.uncontained.end()) {
+				priority_triangle = 1;
+			    }
+			    if (priority_triangle) break;
+			    if (polygon.flipped_face.find((*f_it).v[i]) != polygon.flipped_face.end()) {
+				priority_triangle = 1;
+			    }
+			    if (priority_triangle) break;
+			}
+			if (priority_triangle) {
+			    ts.push(*f_it);
+			}
 		    }
 		}
 	    }
 
-	    if (!stop_on_contained && tq.empty()) {
+	    if (!stop_on_contained && ts.empty()) {
 		// per the current angle criteria we've got everything, and we're
 		// not concerned with contained points so this isn't an indication
 		// of an error condition.  Generate triangles.
