@@ -1024,7 +1024,6 @@ build_poly2tri_polylines(struct ON_Brep_CDT_Face_State *f, p2t::CDT **cdt, int i
 	    }
 	    if (init_rtree) {
 		for (int i = 1; i < brep_loop_points[li].Count(); i++) {
-		    // map point to last entry to 3d point
 		    ON_Line *line = new ON_Line((brep_loop_points[li])[i - 1].p2d, (brep_loop_points[li])[i].p2d);
 		    ON_BoundingBox bb = line->BoundingBox();
 
@@ -1038,6 +1037,20 @@ build_poly2tri_polylines(struct ON_Brep_CDT_Face_State *f, p2t::CDT **cdt, int i
 		    f->rt_trims->Insert2d(bb.Min(), bb.Max(), line);
 		}
 		// TODO - do we need ON_Line((brep_loop_points[li])[brep_loop_points[li].Count() - 1].p2d, (brep_loop_points[li])[0].p2d) as well?
+		for (int i = 1; i < brep_loop_points[li].Count(); i++) {
+		    ON_Line *line = new ON_Line(*(brep_loop_points[li])[i - 1].p3d, *(brep_loop_points[li])[i].p3d);
+		    ON_BoundingBox bb = line->BoundingBox();
+
+		    bb.m_max.x = bb.m_max.x + ON_ZERO_TOLERANCE;
+		    bb.m_max.y = bb.m_max.y + ON_ZERO_TOLERANCE;
+		    bb.m_max.z = bb.m_max.z + ON_ZERO_TOLERANCE;
+		    bb.m_min.x = bb.m_min.x - ON_ZERO_TOLERANCE;
+		    bb.m_min.y = bb.m_min.y - ON_ZERO_TOLERANCE;
+		    bb.m_min.z = bb.m_min.z - ON_ZERO_TOLERANCE;
+
+		    f->rt_trims_3d->Insert(bb.Min(), bb.Max(), line);
+		}
+		// TODO - do we need ON_Line(*(brep_loop_points[li])[brep_loop_points[li].Count() - 1].p3d, *(brep_loop_points[li])[0].p3d) as well?
 	    }
 	    if (outer) {
 		if (f->tris->size() > 0) {
