@@ -85,7 +85,11 @@ Add_BrepTrimPoint(
     btp->tangent = tangent;
     btp->e = e;
     btp->p2d = p2d;
-    btp->normal = trim_normal;
+    if (s_cdt->singular_vert_to_norms->find(p3d) == s_cdt->singular_vert_to_norms->end()) {
+	btp->normal = trim_normal;
+    } else {
+	btp->normal = ON_3dVector::UnsetVector;
+    }
     btp->t = t;
     btp->trim_ind = trim_index;
     (*tpp)[btp->t] = btp;
@@ -505,6 +509,7 @@ getEdgePoints(
 	    s_cdt->w3dnorms->push_back(t1_sn);
 	}
     }
+
     if (!surface_EvNormal(s1, trim1_end_2d.x, trim1_end_2d.y, tmp1, trim1_end_normal)) {
 	t1_en = edge_end_3dnorm;
     } else {
@@ -664,6 +669,10 @@ getEdgePoints(
 	SplitEdgeSegmentMidPt(bseg2);
 
     } else {
+
+	if (edge->m_edge_index == 542) {
+	    std::cout << "here we go\n";
+	}
 
 	SplitEdgeSegmentMidPt(root);
 
