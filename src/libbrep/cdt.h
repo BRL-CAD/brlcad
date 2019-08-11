@@ -129,6 +129,7 @@ struct ON_Brep_CDT_Face_State {
     std::map<p2t::Point *, int> *p2t_trim_ind;
     std::set<ON_2dPoint *> *on_surf_points;
     ON_RTree *rt_trims;
+    ON_RTree *rt_trims_3d;
 
     /* singular trim info */
     std::map<int,ON_3dPoint *> *strim_pnts;

@@ -1037,6 +1037,7 @@ build_poly2tri_polylines(struct ON_Brep_CDT_Face_State *f, p2t::CDT **cdt, int i
 
 		    f->rt_trims->Insert2d(bb.Min(), bb.Max(), line);
 		}
+		// TODO - do we need ON_Line((brep_loop_points[li])[brep_loop_points[li].Count() - 1].p2d, (brep_loop_points[li])[0].p2d) as well?
 	    }
 	    if (outer) {
 		if (f->tris->size() > 0) {
