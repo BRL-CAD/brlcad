@@ -578,10 +578,10 @@ double
 cmesh_t::max_angle_delta(triangle_t &seed, std::vector<triangle_t> &s_tris)
 {
     double dmax = 0;
-    ON_3dVector sn = bnorm(seed);
+    ON_3dVector sn = tnorm(seed);
 
     for (size_t i = 0; i < s_tris.size(); i++) {
-	ON_3dVector tn = bnorm(s_tris[i]);
+	ON_3dVector tn = tnorm(s_tris[i]);
 	double dprd = ON_DotProduct(sn, tn);
 	double dang = (NEAR_EQUAL(dprd, 1.0, ON_ZERO_TOLERANCE)) ? 0 : acos(dprd);
 	dmax = (dang > dmax) ? dang : dmax;
