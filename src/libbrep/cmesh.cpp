@@ -56,7 +56,7 @@ cmesh_t::tri_add(triangle_t &tri)
     // Add the triangle
     this->tris.insert(tri);
 
-    std::cout << "tris cnt: " << tris.size() << "\n";
+    //std::cout << "tris cnt: " << tris.size() << "\n";
 
     // Populate maps
     long i = tri.v[0];
@@ -895,6 +895,21 @@ void cmesh_t::tri_plot(triangle_t &tri, const char *filename)
 
     this->plot_tri(tri, &c, plot_file, 255, 0, 0);
 
+    fclose(plot_file);
+}
+
+void cmesh_t::tris_vect_plot(std::vector<triangle_t> &tvect, const char *filename)
+{
+    FILE* plot_file = fopen(filename, "w");
+
+    struct bu_color c = BU_COLOR_INIT_ZERO;
+    bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
+    pl_color_buc(plot_file, &c);
+
+    for (size_t i = 0; i < tvect.size(); i++) {
+	triangle_t tri = tvect[i];
+	this->plot_tri(tri, &c, plot_file, 255, 0, 0);
+    }
     fclose(plot_file);
 }
 

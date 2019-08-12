@@ -21,9 +21,18 @@
 #include "poly2tri/poly2tri.h"
 #include "opennurbs.h"
 #include "bu/color.h"
+
+extern "C" {
+    struct ctriangle_t {
+	long v[3];
+	bool uses_uncontained;
+	bool contains_uncontained;
+	double angle_to_nearest_uncontained;
+    };
+}
+
 namespace cmesh
 {
-
 
 struct edge_t {
     long v[2];
@@ -214,6 +223,7 @@ public:
     void vertex_face_neighbors_plot(long vind, const char *filename);
     void interior_incorrect_normals_plot(const char *filename);
     void tris_set_plot(std::set<triangle_t> &tset, const char *filename);
+    void tris_vect_plot(std::vector<triangle_t> &tvect, const char *filename);
     void tris_plot(const char *filename);
     void tri_plot(triangle_t &tri, const char *filename);
 
@@ -341,7 +351,7 @@ class csweep_t
 	ON_Plane tplane;
 	ON_3dVector pdir;
 
-	std::vector<triangle_t> polygon_tris(double angle, bool brep_norm);
+	std::vector<struct ctriangle_t> polygon_tris(double angle, bool brep_norm);
 
 };
 

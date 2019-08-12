@@ -210,8 +210,9 @@ cpolygon_t::self_intersecting()
 
 	    self_isect = true;
 	}
+	if (self_isect) break;
     }
-#if 0
+#if 1
     if (self_isect) {
 	std::cout << "Polygon reports self-intersecting\n";
 	polygon_plot("self_isect.plot3");
@@ -672,9 +673,11 @@ bool
 cpolygon_t::have_uncontained()
 {
     std::set<long>::iterator u_it;
-    if (!uncontained.size()) return true;
+    if (!uncontained.size()) return false;
 
     std::set<long> mvpnts;
+
+    if (!closed()) return true;
 
     for (u_it = uncontained.begin(); u_it != uncontained.end(); u_it++) {
 	if (point_in_polygon(*u_it, false)) {
@@ -691,21 +694,17 @@ cpolygon_t::have_uncontained()
 
 
 extern "C" {
-    struct ctriangle_t {
-	long v[3];
-	bool uses_uncontained;
-	bool contains_uncontained;
-	double angle_to_nearest_uncontained;
-    };
-
     HIDDEN int
 	ctriangle_cmp(const void *p1, const void *p2, void *UNUSED(arg))
 	{
-	    struct ctriangle_t *t1 = (struct ctriangle_t *)p1;
-	    struct ctriangle_t *t2 = (struct ctriangle_t *)p2;
-	    if (t1->uses_uncontained && !t2->uses_uncontained) return 0;
-	    if (t1->contains_uncontained && !t2->contains_uncontained) return 0;
-	    if (t1->angle_to_nearest_uncontained > t2->angle_to_nearest_uncontained) return 0;
+	    struct ctriangle_t *t1 = *(struct ctriangle_t **)p1;
+	    struct ctriangle_t *t2 = *(struct ctriangle_t **)p2;
+	    if (t1->uses_uncontained && !t2->uses_uncontained) return 1;
+	    if (!t1->uses_uncontained && t2->uses_uncontained) return 0;
+	    if (t1->contains_uncontained && !t2->contains_uncontained) return 1;
+	    if (!t1->contains_uncontained && t2->contains_uncontained) return 0;
+	    if (t1->angle_to_nearest_uncontained > t2->angle_to_nearest_uncontained) return 1;
+	    if (t1->angle_to_nearest_uncontained < t2->angle_to_nearest_uncontained) return 0;
 	    bool c1 = (t1->v[0] < t2->v[0]);
 	    bool c1e = (t1->v[0] == t2->v[0]);
 	    bool c2 = (t1->v[1] < t2->v[1]);
@@ -715,7 +714,7 @@ extern "C" {
 	}
 }
 
-std::vector<triangle_t>
+std::vector<struct ctriangle_t>
 csweep_t::polygon_tris(double angle, bool brep_norm)
 {
     std::set<triangle_t> initial_set;
@@ -740,6 +739,7 @@ csweep_t::polygon_tris(double angle, bool brep_norm)
 	    initial_set.insert(*t_it);
 	}
     }
+    std::cout << "Pre_sort: ";
 
     // Now that we have the triangles, characterize them.
     struct ctriangle_t **ctris = (struct ctriangle_t **)bu_calloc(initial_set.size()+1, sizeof(ctriangle_t *), "sortable ctris");
@@ -751,6 +751,7 @@ csweep_t::polygon_tris(double angle, bool brep_norm)
 	nct->v[0] = t.v[0];
 	nct->v[1] = t.v[1];
 	nct->v[2] = t.v[2];
+	std::cout << "(" << t.v[0] << "," << t.v[1] << "," << t.v[2] << ") ";
 	nct->uses_uncontained = false;
 	nct->contains_uncontained = false;
 	nct->angle_to_nearest_uncontained = DBL_MAX;
@@ -876,15 +877,20 @@ csweep_t::polygon_tris(double angle, bool brep_norm)
 	ctris[ctris_cnt] = nct;
 	ctris_cnt++;
     }
+    std::cout << "\n";
+
     // Now that we have the characterized triangles, sort them.
     bu_sort(ctris, ctris_cnt, sizeof(struct ctriangle_t *), ctriangle_cmp, NULL);
 
+    std::cout << "Post_sort: ";
+
     // Push the final sorted results into the vector, free the ctris entries and array
-    std::vector<triangle_t> result;
+    std::vector<ctriangle_t> result;
     for (long i = 0; i < ctris_cnt; i++) {
-	triangle_t t(ctris[i]->v[0], ctris[i]->v[1], ctris[i]->v[2]);
-	result.push_back(t);
+	std::cout << "(" << ctris[i]->v[0] << "," << ctris[i]->v[1] << "," << ctris[i]->v[2] << ") ";
+	result.push_back(*ctris[i]);
     }
+    std::cout << "\n";
     for (long i = 0; i < ctris_cnt; i++) {
 	bu_free(ctris[i], "ctri");
     }
@@ -911,11 +917,11 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 
     // First step - collect all the unvisited triangles from the polyline edges.
 
-    std::stack<triangle_t> ts;
+    std::stack<ctriangle_t> ts;
 
     std::set<edge_t> flipped_edges;
 
-    std::vector<triangle_t> ptris = polygon_tris(angle, stop_on_contained);
+    std::vector<ctriangle_t> ptris = polygon_tris(angle, stop_on_contained);
 
     if (!ptris.size() && stop_on_contained) {
 	std::cout << "No triangles available??\n";
@@ -932,8 +938,9 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 
     while (!ts.empty()) {
 
-	triangle_t ct = ts.top();
+	ctriangle_t cct = ts.top();
 	ts.pop();
+	triangle_t ct(cct.v[0], cct.v[1], cct.v[2]);
 	polygon.polygon_plot("poly_2d.plot3");
 
 	// A triangle will introduce at most one new point into the loop.  If
@@ -1001,32 +1008,10 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 		if (stop_on_contained && new_edge_cnt == 2 && !flipped_tri) {
 		    // If this is a good triangle and we're in repair mode, don't add it unless
 		    // it uses or points in the direction of at least one uncontained point.
-		    int uncontained_use = 0;
-		    for (int i = 0; i < 3; i++) {
-			if (polygon.uncontained.find(ct.v[i]) != polygon.uncontained.end()) {
-			    uncontained_use++;
-			}
-		    }
-		    if (!uncontained_use) {
+		    if (!cct.uses_uncontained && !cct.contains_uncontained &&
+			    (cct.angle_to_nearest_uncontained > 2*ON_PI || cct.angle_to_nearest_uncontained < 0)) {
 			use_tri = 0;
 		    }
-
-		    if (!use_tri) {
-			struct edge_t e = (*shared_edges.begin());
-			ON_2dPoint p2d = (ON_2dPoint(polygon.pnts_2d[e.v[0]][X], polygon.pnts_2d[e.v[0]][Y]) + ON_2dPoint(polygon.pnts_2d[e.v[1]][X], polygon.pnts_2d[e.v[1]][Y])) * 0.5;
-			ON_2dPoint np2d(polygon.pnts_2d[vert][X], polygon.pnts_2d[vert][Y]);
-			ON_3dVector vt = np2d - p2d;
-			std::set<long>::iterator u_it;
-			for (u_it = polygon.uncontained.begin(); u_it != polygon.uncontained.end(); u_it++) {
-			    ON_2dPoint up2d(polygon.pnts_2d[*u_it][X], polygon.pnts_2d[*u_it][Y]);
-			    ON_3dVector vu = up2d - p2d;
-			    if (ON_DotProduct(vu, vt) >= 0) {
-				use_tri = 1;
-				break;
-			    }
-			}
-		    }
-
 		}
 	    }
 
@@ -1069,7 +1054,7 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 	    // actually using flipped or uncontained vertices to be at the top
 	    // of the stack (i.e. the first ones tried.  polygon_tris is responsible
 	    // for sorting in priority order.
-	    std::vector<triangle_t> ntris = polygon_tris(angle, stop_on_contained);
+	    std::vector<struct ctriangle_t> ntris = polygon_tris(angle, stop_on_contained);
 	    for (size_t i = 0; i < ntris.size(); i++) {
 		ts.push(ntris[i]);
 	    }
@@ -1099,14 +1084,13 @@ csweep_t::build_2d_pnts(ON_3dPoint &c, ON_3dVector &n)
 {
     pdir = n;
     ON_Plane tri_plane(c, n);
-    ON_Xform to_plane;
-    to_plane.PlanarProjection(tplane);
     polygon.pnts_2d = (point2d_t *)bu_calloc(cmesh->pnts.size() + 1, sizeof(point2d_t), "2D points array");
     for (size_t i = 0; i < cmesh->pnts.size(); i++) {
+	double u, v;
 	ON_3dPoint op3d = (*cmesh->pnts[i]);
-	op3d.Transform(to_plane);
-	polygon.pnts_2d[i][X] = op3d.x;
-	polygon.pnts_2d[i][Y] = op3d.y;
+	tri_plane.ClosestPointTo(op3d, &u, &v);
+	polygon.pnts_2d[i][X] = u;
+	polygon.pnts_2d[i][Y] = v;
     }
     tplane = tri_plane;
 
