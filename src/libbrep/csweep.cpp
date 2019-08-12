@@ -799,8 +799,16 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 
 		// If we have a flipped triangle vert involving a brep edge vertex... um...
 		if (cmesh->brep_edge_pnt(vert)) {
-		    std::cerr << "URK! flipped face vertex on edge!\n";
-		    return -1;
+		    ON_3dPoint *p = cmesh->pnts[vert];
+		    std::cerr << "URK! flipped face vertex " << vert << " (" << p->x << " " << p->y << " " << p->z  << ")  on edge!\n";
+		    cmesh->tri_plot(ct, "flipped_face_vert_on_edge.plot3");
+		    // We can't flag brep edge points as uncontained, so if we hit this case
+		    // flag all the verts except the edge verts as flipped face problem cases.
+		    for (int i = 0; i < 3; i++) {
+			if (!cmesh->brep_edge_pnt(ct.v[i])) {
+			    polygon.flipped_face.insert(ct.v[i]);
+			}
+		    }
 		} else {
 		    if (!cmesh->brep_edge_pnt(vert)) {
 			polygon.flipped_face.insert(vert);
