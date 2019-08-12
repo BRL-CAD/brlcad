@@ -854,7 +854,6 @@ csweep_t::polygon_tris(double angle, bool brep_norm)
 			    if (nct->angle_to_nearest_uncontained > vangle) {
 				nct->angle_to_nearest_uncontained = vangle;
 			    }
-			    
 			}
 		    }
 		    for (u_it = polygon.flipped_face.begin(); u_it != polygon.flipped_face.end(); u_it++) {
@@ -878,10 +877,18 @@ csweep_t::polygon_tris(double angle, bool brep_norm)
 	ctris_cnt++;
     }
     // Now that we have the characterized triangles, sort them.
-    bu_sort(ctris, ctris_cnt, sizeof(struct ctriangle_t), ctriangle_cmp, NULL);
+    bu_sort(ctris, ctris_cnt, sizeof(struct ctriangle_t *), ctriangle_cmp, NULL);
 
     // Push the final sorted results into the vector, free the ctris entries and array
     std::vector<triangle_t> result;
+    for (long i = 0; i < ctris_cnt; i++) {
+	triangle_t t(ctris[i]->v[0], ctris[i]->v[1], ctris[i]->v[2]);
+	result.push_back(t);
+    }
+    for (long i = 0; i < ctris_cnt; i++) {
+	bu_free(ctris[i], "ctri");
+    }
+    bu_free(ctris, "ctris array");
     return result;
 }
 
