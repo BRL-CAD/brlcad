@@ -884,6 +884,26 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 	    // specific interest, and the second one pushes the more
 	    // interesting ones.
 	    std::set<triangle_t> ntris = polygon_tris(angle, stop_on_contained);
+
+	    // If an ntris triangle directly uses an uncontained vert, pull it out of unusable
+	    // for the next round
+	    for (f_it = ntris.begin(); f_it != ntris.end(); f_it++) {
+		int priority_triangle = 0;
+		for (int i = 0; i < 3; i++) {
+		    if (polygon.uncontained.find((*f_it).v[i]) != polygon.uncontained.end()) {
+			priority_triangle = 1;
+		    }
+		    if (priority_triangle) break;
+		    if (polygon.flipped_face.find((*f_it).v[i]) != polygon.flipped_face.end()) {
+			priority_triangle = 1;
+		    }
+		    if (priority_triangle) break;
+		}
+		if (priority_triangle) {
+		    unusable_triangles.erase(*f_it);
+		}
+	    }
+
 	    for (f_it = ntris.begin(); f_it != ntris.end(); f_it++) {
 		if (visited_triangles.find(*f_it) == visited_triangles.end()) {
 		    if (unusable_triangles.find(*f_it) == unusable_triangles.end()) {
