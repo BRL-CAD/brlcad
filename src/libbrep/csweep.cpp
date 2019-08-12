@@ -895,6 +895,10 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 
 	    // If an ntris triangle directly uses an uncontained vert, pull it out of unusable
 	    // for the next round
+	    //
+	    // TODO - not enough - we also need triangles whose projections actually contain
+	    // (or possibly are headed in the direction of) uncontained points to be back in
+	    // play.
 	    for (f_it = ntris.begin(); f_it != ntris.end(); f_it++) {
 		int priority_triangle = 0;
 		for (int i = 0; i < 3; i++) {
