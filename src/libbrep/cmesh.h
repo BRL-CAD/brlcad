@@ -281,7 +281,7 @@ class cpolygon_t
 	bool self_intersecting();
 	bool cdt();
 
-	bool point_in_polygon(long v);
+	bool point_in_polygon(long v, bool flip);
 	// Apply the point-in-polygon test to all uncontained points, moving any inside the loop into interior_points
 	bool have_uncontained();
 
@@ -341,7 +341,7 @@ class csweep_t
 	ON_Plane tplane;
 	ON_3dVector pdir;
 
-	std::set<triangle_t> polygon_tris(double angle, bool brep_norm);
+	std::vector<triangle_t> polygon_tris(double angle, bool brep_norm);
 
 };
 
