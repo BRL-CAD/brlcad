@@ -865,7 +865,7 @@ csweep_t::polygon_tris(double angle, bool brep_norm)
 			    ON_2dPoint op = ON_2dPoint(polygon.pnts_2d[*u_it][X], polygon.pnts_2d[*u_it][Y]);
 			    ON_3dVector vt = op - emid;
 			    double vangle = ON_DotProduct(vu, vt);
-			    if (nct->angle_to_nearest_uncontained > vangle) {
+			    if (vangle > 0 && nct->angle_to_nearest_uncontained > vangle) {
 				nct->angle_to_nearest_uncontained = vangle;
 			    }
 			}
@@ -875,7 +875,7 @@ csweep_t::polygon_tris(double angle, bool brep_norm)
 			    ON_2dPoint op = ON_2dPoint(polygon.pnts_2d[*u_it][X], polygon.pnts_2d[*u_it][Y]);
 			    ON_3dVector vt = op - emid;
 			    double vangle = ON_DotProduct(vu, vt);
-			    if (nct->angle_to_nearest_uncontained > vangle) {
+			    if (vangle > 0 && nct->angle_to_nearest_uncontained > vangle) {
 				nct->angle_to_nearest_uncontained = vangle;
 			    }
 			}
