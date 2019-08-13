@@ -69,6 +69,7 @@ cpolygon_t::add_edge(const struct edge_t &e)
 
     v2pe[v1].insert(nedge);
     v2pe[v2].insert(nedge);
+    active_edges.insert(uedge_t(le));
 
     cpolyedge_t *prev = NULL;
     cpolyedge_t *next = NULL;
@@ -121,6 +122,7 @@ cpolygon_t::remove_edge(const struct edge_t &e)
 
     v2pe[e.v[0]].erase(cull);
     v2pe[e.v[1]].erase(cull);
+    active_edges.insert(ue);
 
     // An edge removal may produce a new interior point candidate - check
     // Will need to verify eventually with point_in_polygon, but topologically
@@ -161,6 +163,105 @@ cpolygon_t::replace_edges(std::set<edge_t> &new_edges, std::set<edge_t> &old_edg
 
     return 0;
 }
+
+long
+cpolygon_t::shared_edge_cnt(triangle_t &t)
+{
+    struct uedge_t ue[3];
+    ue[0].set(t.v[0], t.v[1]);
+    ue[1].set(t.v[1], t.v[2]);
+    ue[2].set(t.v[2], t.v[0]);
+    long shared_cnt = 0;
+    for (int i = 0; i < 3; i++) {
+	if (active_edges.find(ue[i]) != active_edges.end()) {
+	    shared_cnt++;
+	}
+    }
+    return shared_cnt;
+}
+
+long
+cpolygon_t::unshared_vertex(triangle_t &t)
+{
+    if (shared_edge_cnt(t) != 1) return -1;
+
+    for (int i = 0; i < 3; i++) {
+	if (v2pe.find(t.v[i]) == v2pe.end()) {
+	    return t.v[i];
+	}
+    }
+
+    return -1;
+}
+
+std::pair<long,long>
+cpolygon_t::shared_vertices(triangle_t &t)
+{
+    if (shared_edge_cnt(t) != 1) {
+       	return std::make_pair<long,long>(-1,-1);
+    }
+
+    std::pair<long, long> ret;
+
+    int vcnt = 0;
+    for (int i = 0; i < 3; i++) {
+	if (v2pe.find(t.v[i]) != v2pe.end()) {
+	   if (!vcnt) {
+	       ret.first = t.v[i];
+	       vcnt++;
+	   } else {
+	       ret.second = t.v[i];
+	   }
+	}
+    }
+
+    return ret;
+}
+
+double
+cpolygon_t::ucv_angle(triangle_t &t)
+{
+    double r_ang = DBL_MAX;
+    std::set<long>::iterator u_it;
+    long nv = unshared_vertex(t);
+    if (nv == -1) return -1;
+    std::pair<long, long> s_vert = shared_vertices(t);
+    if (s_vert.first == -1 || s_vert.second == -1) return -1;
+
+    ON_3dPoint ep1 = ON_3dPoint(pnts_2d[s_vert.first][X], pnts_2d[s_vert.first][Y], 0);
+    ON_3dPoint ep2 = ON_3dPoint(pnts_2d[s_vert.second][X], pnts_2d[s_vert.second][Y], 0);
+    ON_3dPoint pnew = ON_3dPoint(pnts_2d[nv][X], pnts_2d[nv][Y], 0);
+    ON_Line l2d(ep1,ep2);
+    ON_3dPoint pline = l2d.ClosestPointTo(pnew);
+    ON_3dVector vu = pnew - pline;
+    vu.Unitize();
+
+    for (u_it = uncontained.begin(); u_it != uncontained.end(); u_it++) {
+	if (point_in_polygon(*u_it, true)) {
+	    ON_2dPoint op = ON_2dPoint(pnts_2d[*u_it][X], pnts_2d[*u_it][Y]);
+	    ON_3dVector vt = op - pline;
+	    vt.Unitize();
+	    double vangle = ON_DotProduct(vu, vt);
+	    if (vangle > 0 && r_ang > vangle) {
+		r_ang = vangle;
+	    }
+	}
+    }
+    for (u_it = flipped_face.begin(); u_it != flipped_face.end(); u_it++) {
+	if (point_in_polygon(*u_it, true)) {
+	    ON_2dPoint op = ON_2dPoint(pnts_2d[*u_it][X], pnts_2d[*u_it][Y]);
+	    ON_3dVector vt = op - pline;
+	    vt.Unitize();
+	    double vangle = ON_DotProduct(vu, vt);
+	    if (vangle > 0 && r_ang > vangle) {
+		r_ang = vangle;
+	    }
+	}
+    }
+
+    return r_ang;
+}
+
 
 bool
 cpolygon_t::self_intersecting()
@@ -567,6 +668,84 @@ void cpolygon_t::polygon_plot(const char *filename)
     bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
     pl_color_buc(plot_file, &c);
 
+    point2d_t pmin, pmax;
+    V2SET(pmin, DBL_MAX, DBL_MAX);
+    V2SET(pmax, -DBL_MAX, -DBL_MAX);
+
+    cpolyedge_t *efirst = *(poly.begin());
+    cpolyedge_t *ecurr = NULL;
+
+    point_t bnp;
+    VSET(bnp, pnts_2d[efirst->v[0]][X], pnts_2d[efirst->v[0]][Y], 0);
+    pdv_3move(plot_file, bnp);
+    VSET(bnp, pnts_2d[efirst->v[1]][X], pnts_2d[efirst->v[1]][Y], 0);
+    pdv_3cont(plot_file, bnp);
+
+    V2MINMAX(pmin, pmax, pnts_2d[efirst->v[0]]);
+    V2MINMAX(pmin, pmax, pnts_2d[efirst->v[1]]);
+
+    size_t ecnt = 1;
+    while (ecurr != efirst && ecnt < poly.size()+1) {
+        ecurr = (!ecurr) ? efirst->next : ecurr->next;
+        VSET(bnp, pnts_2d[ecurr->v[1]][X], pnts_2d[ecurr->v[1]][Y], 0);
+        pdv_3cont(plot_file, bnp);
+        V2MINMAX(pmin, pmax, pnts_2d[efirst->v[1]]);
+    }
+
+    // Plot interior and uncontained points as well
+    double r = DIST_PT2_PT2(pmin, pmax) * 0.01;
+    std::set<long>::iterator p_it;
+
+    // Interior
+    pl_color(plot_file, 0, 255, 0);
+    for (p_it = interior_points.begin(); p_it != interior_points.end(); p_it++) {
+        point_t origin;
+        VSET(origin, pnts_2d[*p_it][X], pnts_2d[*p_it][Y], 0);
+        pdv_3move(plot_file, origin);
+        VSET(bnp, pnts_2d[*p_it][X]+r, pnts_2d[*p_it][Y]+r, 0);
+        pdv_3cont(plot_file, bnp);
+        pdv_3cont(plot_file, origin);
+        VSET(bnp, pnts_2d[*p_it][X]+r, pnts_2d[*p_it][Y]-r, 0);
+        pdv_3cont(plot_file, bnp);
+        pdv_3cont(plot_file, origin);
+        VSET(bnp, pnts_2d[*p_it][X]-r, pnts_2d[*p_it][Y]-r, 0);
+        pdv_3cont(plot_file, bnp);
+        pdv_3cont(plot_file, origin);
+        VSET(bnp, pnts_2d[*p_it][X]-r, pnts_2d[*p_it][Y]+r, 0);
+        pdv_3cont(plot_file, bnp);
+        pdv_3cont(plot_file, origin);
+    }
+
+    // Uncontained
+    pl_color(plot_file, 255, 0, 0);
+    for (p_it = uncontained.begin(); p_it != uncontained.end(); p_it++) {
+        point_t origin;
+        VSET(origin, pnts_2d[*p_it][X], pnts_2d[*p_it][Y], 0);
+        pdv_3move(plot_file, origin);
+        VSET(bnp, pnts_2d[*p_it][X]+r, pnts_2d[*p_it][Y]+r, 0);
+        pdv_3cont(plot_file, bnp);
+        pdv_3cont(plot_file, origin);
+        VSET(bnp, pnts_2d[*p_it][X]+r, pnts_2d[*p_it][Y]-r, 0);
+        pdv_3cont(plot_file, bnp);
+        pdv_3cont(plot_file, origin);
+        VSET(bnp, pnts_2d[*p_it][X]-r, pnts_2d[*p_it][Y]-r, 0);
+        pdv_3cont(plot_file, bnp);
+        pdv_3cont(plot_file, origin);
+        VSET(bnp, pnts_2d[*p_it][X]-r, pnts_2d[*p_it][Y]+r, 0);
+        pdv_3cont(plot_file, bnp);
+        pdv_3cont(plot_file, origin);
+    }
+
+    fclose(plot_file);
+}
+
+void cpolygon_t::polygon_plot_in_plane(const char *filename)
+{
+    FILE* plot_file = fopen(filename, "w");
+    struct bu_color c = BU_COLOR_INIT_ZERO;
+    bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
+    pl_color_buc(plot_file, &c);
+
     ON_3dPoint ppnt;
     point_t pmin, pmax;
     point_t bnp;
@@ -779,7 +958,11 @@ csweep_t::polygon_tris(double angle, bool brep_norm)
     std::set<triangle_t>::iterator f_it;
     int ctris_cnt = 0;
     for (f_it = initial_set.begin(); f_it != initial_set.end(); f_it++) {
+
 	struct ctriangle_t *nct = (struct ctriangle_t *)bu_calloc(1, sizeof(ctriangle_t), "ctriangle");
+	ctris[ctris_cnt] = nct;
+	ctris_cnt++;
+
 	triangle_t t = *f_it;
 	nct->v[0] = t.v[0];
 	nct->v[1] = t.v[1];
@@ -805,129 +988,59 @@ csweep_t::polygon_tris(double angle, bool brep_norm)
 	    }
 	    if (nct->isect_edge) break;
 	}
+	if (nct->isect_edge) continue;
 
-	if (!nct->isect_edge) {
 
-	    // If we're not on a self-intersecting edge, check for use of uncontained points
-	    for (int i = 0; i < 3; i++) {
-		if (polygon.uncontained.find((t).v[i]) != polygon.uncontained.end()) {
-		    nct->uses_uncontained = true;
-		    unusable_triangles.erase(*f_it);
-		}
-		if (nct->uses_uncontained) break;
-		if (polygon.flipped_face.find((t).v[i]) != polygon.flipped_face.end()) {
-		    nct->uses_uncontained = true;
-		    unusable_triangles.erase(*f_it);
-		}
-		if (nct->uses_uncontained) break;
+	// If we're not on a self-intersecting edge, check for use of uncontained points
+	for (int i = 0; i < 3; i++) {
+	    if (polygon.uncontained.find((t).v[i]) != polygon.uncontained.end()) {
+		nct->uses_uncontained = true;
+		unusable_triangles.erase(*f_it);
 	    }
+	    if (nct->uses_uncontained) break;
+	    if (polygon.flipped_face.find((t).v[i]) != polygon.flipped_face.end()) {
+		nct->uses_uncontained = true;
+		unusable_triangles.erase(*f_it);
+	    }
+	    if (nct->uses_uncontained) break;
+	}
+	if (nct->uses_uncontained) continue;
 
-	    // If we aren't directly using an uncontained point, see if one is inside
-	    // the triangle projection
-	    if (!nct->uses_uncontained) {
-		cpolygon_t tpoly;
-		tpoly.pnts_2d = polygon.pnts_2d;
-		tpoly.add_edge(e1);
-		tpoly.add_edge(e2);
-		tpoly.add_edge(e3);
-		std::set<long>::iterator u_it;
-		for (u_it = polygon.uncontained.begin(); u_it != polygon.uncontained.end(); u_it++) {
-		    if (tpoly.point_in_polygon(*u_it, false)) {
-			nct->contains_uncontained = true;
-			unusable_triangles.erase(*f_it);
-		    }
-		}
-		if (!nct->contains_uncontained) {
-		    for (u_it = polygon.flipped_face.begin(); u_it != polygon.flipped_face.end(); u_it++) {
-			if (tpoly.point_in_polygon(*u_it, false)) {
-			    nct->contains_uncontained = true;
-			    unusable_triangles.erase(*f_it);
-			}
-		    }
-		}
-
-		// If we aren't directly involved with an uncontained point and we only
-		// share 1 edge with the polygon, see how much it points at one of the
-		// points of interest (if any) definitely outside the current polygon
-		if (!nct->contains_uncontained) {
-		    std::set<cpolyedge_t *>::iterator pe_it;
-
-		    // Check shared edge cnt...
-		    long shared_cnt = 0;
-		    for (int i = 0; i < 3; i++) {
-			for (pe_it = polygon.poly.begin(); pe_it != polygon.poly.end(); pe_it++) {
-			    cpolyedge_t *pe = *pe_it;
-			    struct uedge_t pue(pe->v[0], pe->v[1]);
-			    if (ue[i] == pue) {
-				shared_cnt++;
-				break;
-			    }
-			}
-		    }
-
-		    if (shared_cnt == 1) {
-			// Get the unshared vertex - and the shared uedge midpoint
-			bool v_shared[3];
-			for (int i = 0; i < 3; i++) {
-			    v_shared[i] = false;
-			}
-			for (int i = 0; i < 3; i++) {
-			    for (pe_it = polygon.poly.begin(); pe_it != polygon.poly.end(); pe_it++) {
-				cpolyedge_t *pe = *pe_it;
-				if (pe->v[0] == t.v[i] || pe->v[1] == t.v[i]) {
-				    v_shared[i] = true;
-				    break;
-				}
-			    }
-			}
-			ON_3dPoint epnts[2];
-			ON_3dPoint pnew;
-			int ecnt = 0;
-			for (int i = 0; i < 3; i++) {
-			    if (v_shared[i] == false) {
-				pnew = ON_3dPoint(polygon.pnts_2d[t.v[i]][X], polygon.pnts_2d[t.v[i]][Y], 0);
-			    } else {
-				epnts[ecnt] = ON_3dPoint(polygon.pnts_2d[t.v[i]][X], polygon.pnts_2d[t.v[i]][Y], 0);
-				ecnt++;
-			    }
-			}
-			ON_Line l2d(epnts[0], epnts[1]);
-			ON_3dPoint pline = l2d.ClosestPointTo(pnew);
-			ON_3dVector vu = pnew - pline;
-			vu.Unitize();
-
-			for (u_it = polygon.uncontained.begin(); u_it != polygon.uncontained.end(); u_it++) {
-			    if (polygon.point_in_polygon(*u_it, true)) {
-				ON_2dPoint op = ON_2dPoint(polygon.pnts_2d[*u_it][X], polygon.pnts_2d[*u_it][Y]);
-				ON_3dVector vt = op - pline;
-				vt.Unitize();
-				double vangle = ON_DotProduct(vu, vt);
-				if (vangle > 0 && nct->angle_to_nearest_uncontained > vangle) {
-				    nct->angle_to_nearest_uncontained = vangle;
-				}
-			    }
-			}
-			for (u_it = polygon.flipped_face.begin(); u_it != polygon.flipped_face.end(); u_it++) {
-			    if (polygon.point_in_polygon(*u_it, true)) {
-				ON_2dPoint op = ON_2dPoint(polygon.pnts_2d[*u_it][X], polygon.pnts_2d[*u_it][Y]);
-				ON_3dVector vt = op - pline;
-				vt.Unitize();
-				double vangle = ON_DotProduct(vu, vt);
-				if (vangle > 0 && nct->angle_to_nearest_uncontained > vangle) {
-				    nct->angle_to_nearest_uncontained = vangle;
-				}
-			    }
-			}
-			if (nct->angle_to_nearest_uncontained*180/ON_PI < 60) {
-			    unusable_triangles.erase(*f_it);
-			}
-		    }
-
+	// If we aren't directly using an uncontained point, see if one is inside
+	// the triangle projection
+	cpolygon_t tpoly;
+	tpoly.pnts_2d = polygon.pnts_2d;
+	tpoly.add_edge(e1);
+	tpoly.add_edge(e2);
+	tpoly.add_edge(e3);
+	std::set<long>::iterator u_it;
+	for (u_it = polygon.uncontained.begin(); u_it != polygon.uncontained.end(); u_it++) {
+	    if (tpoly.point_in_polygon(*u_it, false)) {
+		nct->contains_uncontained = true;
+		unusable_triangles.erase(*f_it);
+	    }
+	}
+	if (!nct->contains_uncontained) {
+	    for (u_it = polygon.flipped_face.begin(); u_it != polygon.flipped_face.end(); u_it++) {
+		if (tpoly.point_in_polygon(*u_it, false)) {
+		    nct->contains_uncontained = true;
+		    unusable_triangles.erase(*f_it);
 		}
 	    }
 	}
-	ctris[ctris_cnt] = nct;
-	ctris_cnt++;
+	if (nct->contains_uncontained) continue;
+
+	// If we aren't directly involved with an uncontained point and we only
+	// share 1 edge with the polygon, see how much it points at one of the
+	// points of interest (if any) definitely outside the current polygon
+	std::set<cpolyedge_t *>::iterator pe_it;
+	long shared_cnt = polygon.shared_edge_cnt(t);
+	if (shared_cnt != 1) continue;
+	double vangle = polygon.ucv_angle(t);
+	if (vangle > 0 && nct->angle_to_nearest_uncontained > vangle) {
+	    nct->angle_to_nearest_uncontained = vangle;
+	    unusable_triangles.erase(*f_it);
+	}
     }
     std::cout << "\n";
 
@@ -994,6 +1107,7 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 	ts.pop();
 	triangle_t ct(cct.v[0], cct.v[1], cct.v[2]);
 	polygon.polygon_plot("poly_2d.plot3");
+	polygon.polygon_plot_in_plane("poly_3d.plot3");
 
 	// A triangle will introduce at most one new point into the loop.  If
 	// the triangle is bad, it will define uncontained interior points and

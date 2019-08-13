@@ -314,12 +314,19 @@ class cpolygon_t
 	std::set<long> flipped_face;
 	point2d_t *pnts_2d;
 
+	std::set<uedge_t> active_edges;
 	std::set<uedge_t> problem_edges;
 	std::set<uedge_t> self_isect_edges;
 
 	ON_Plane tplane;
 
 	cmesh_t *cmesh;
+
+	long shared_edge_cnt(triangle_t &t);
+	long unshared_vertex(triangle_t &t);
+	std::pair<long,long> shared_vertices(triangle_t &t);
+	double ucv_angle(triangle_t &t);
+
 };
 
 class csweep_t
