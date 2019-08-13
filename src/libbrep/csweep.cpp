@@ -165,6 +165,7 @@ cpolygon_t::replace_edges(std::set<edge_t> &new_edges, std::set<edge_t> &old_edg
 bool
 cpolygon_t::self_intersecting()
 {
+    self_isect_edges.clear();
     bool self_isect = false;
     std::map<long, int> vecnt;
     std::set<cpolyedge_t *>::iterator pe_it;
@@ -183,17 +184,23 @@ cpolygon_t::self_intersecting()
 	}
     }
 
-    // Check the projected segments against each other as well
+    // Check the projected segments against each other as well.  Store any
+    // self-intersecting edges for use in later repair attempts.
     std::vector<cpolyedge_t *> pv(poly.begin(), poly.end());
     for (size_t i = 0; i < pv.size(); i++) {
 	cpolyedge_t *pe1 = pv[i];
 	ON_2dPoint p1_1(pnts_2d[pe1->v[0]][X], pnts_2d[pe1->v[0]][Y]);
 	ON_2dPoint p1_2(pnts_2d[pe1->v[1]][X], pnts_2d[pe1->v[1]][Y]);
+	struct uedge_t ue1(pe1->v[0], pe1->v[1]);
+	// if we already know this segment intersects at least one other segment, we
+	// don't need to re-test it - it's already "active"
+	if (self_isect_edges.find(ue1) != self_isect_edges.end()) continue;
 	ON_Line e1(p1_1, p1_2);
 	for (size_t j = i+1; j < pv.size(); j++) {
 	    cpolyedge_t *pe2 = pv[j];
 	    ON_2dPoint p2_1(pnts_2d[pe2->v[0]][X], pnts_2d[pe2->v[0]][Y]);
 	    ON_2dPoint p2_2(pnts_2d[pe2->v[1]][X], pnts_2d[pe2->v[1]][Y]);
+	    struct uedge_t ue2(pe2->v[0], pe2->v[1]);
 	    ON_Line e2(p2_1, p2_2);
 
 	    double a, b = 0;
@@ -205,12 +212,13 @@ cpolygon_t::self_intersecting()
 		    (b < 0 || NEAR_ZERO(b, ON_ZERO_TOLERANCE) || b > 1 || NEAR_ZERO(1-b, ON_ZERO_TOLERANCE))) {
 		continue;
 	    } else {
-		std::cout << "a: " << a << ", b: " << b << "\n";
+		self_isect_edges.insert(ue1);
+		self_isect_edges.insert(ue2);
+		//std::cout << "a: " << a << ", b: " << b << "\n";
 	    }
 
 	    self_isect = true;
 	}
-	if (self_isect) break;
     }
 #if 1
     if (self_isect) {
@@ -712,6 +720,8 @@ extern "C" {
 	{
 	    struct ctriangle_t *t1 = *(struct ctriangle_t **)p1;
 	    struct ctriangle_t *t2 = *(struct ctriangle_t **)p2;
+	    if (t1->isect_edge && !t2->isect_edge) return 1;
+	    if (!t1->isect_edge && t2->isect_edge) return 0;
 	    if (t1->uses_uncontained && !t2->uses_uncontained) return 1;
 	    if (!t1->uses_uncontained && t2->uses_uncontained) return 0;
 	    if (t1->contains_uncontained && !t2->contains_uncontained) return 1;
@@ -736,18 +746,28 @@ csweep_t::polygon_tris(double angle, bool brep_norm)
     for (p_it = polygon.poly.begin(); p_it != polygon.poly.end(); p_it++) {
 	cpolyedge_t *pe = *p_it;
 	struct uedge_t ue(pe->v[0], pe->v[1]);
+	bool edge_isect = (polygon.self_isect_edges.find(ue) != polygon.self_isect_edges.end());
 	std::set<triangle_t> petris = cmesh->uedges2tris[ue];
 	std::set<triangle_t>::iterator t_it;
 	for (t_it = petris.begin(); t_it != petris.end(); t_it++) {
+
+	    if (visited_triangles.find(*t_it) != visited_triangles.end()) {
+	       	continue;
+	    }
+
+	    // If the triangle is involved with a self intersecting edge in the
+	    // polygon and we haven't already see it, we have to try incorporating it
+	    if (edge_isect) {
+		initial_set.insert(*t_it);
+		continue;
+	    }
+
 	    ON_3dVector tn = (brep_norm) ? cmesh->bnorm(*t_it) : cmesh->tnorm(*t_it);
 	    double dprd = ON_DotProduct(pdir, tn);
 	    double dang = (NEAR_EQUAL(dprd, 1.0, ON_ZERO_TOLERANCE)) ? 0 : acos(dprd);
 	    if (dang > angle) {
 		std::cerr << "Angle rejection (" << dang << "," << angle << ")\n";
 		continue;
-	    }
-	    if (visited_triangles.find(*t_it) != visited_triangles.end()) {
-	       	continue;
 	    }
 	    initial_set.insert(*t_it);
 	}
@@ -764,127 +784,146 @@ csweep_t::polygon_tris(double angle, bool brep_norm)
 	nct->v[0] = t.v[0];
 	nct->v[1] = t.v[1];
 	nct->v[2] = t.v[2];
+	struct edge_t e1(t.v[0], t.v[1]);
+	struct edge_t e2(t.v[1], t.v[2]);
+	struct edge_t e3(t.v[2], t.v[0]);
+	struct uedge_t ue[3];
+	ue[0].set(t.v[0], t.v[1]);
+	ue[1].set(t.v[1], t.v[2]);
+	ue[2].set(t.v[2], t.v[0]);
+
 	std::cout << "(" << t.v[0] << "," << t.v[1] << "," << t.v[2] << ") ";
+	nct->isect_edge = false;
 	nct->uses_uncontained = false;
 	nct->contains_uncontained = false;
 	nct->angle_to_nearest_uncontained = DBL_MAX;
 
 	for (int i = 0; i < 3; i++) {
-	    if (polygon.uncontained.find((t).v[i]) != polygon.uncontained.end()) {
-		nct->uses_uncontained = true;
+	    if (polygon.self_isect_edges.find(ue[i]) != polygon.self_isect_edges.end()) {
+		nct->isect_edge = true;
 		unusable_triangles.erase(*f_it);
 	    }
-	    if (nct->uses_uncontained) break;
-	    if (polygon.flipped_face.find((t).v[i]) != polygon.flipped_face.end()) {
-		nct->uses_uncontained = true;
-		unusable_triangles.erase(*f_it);
-	    }
-	    if (nct->uses_uncontained) break;
+	    if (nct->isect_edge) break;
 	}
 
-	// If we aren't directly using an uncontained point, see if one is inside
-	// the triangle projection
-	if (!nct->uses_uncontained) {
-	    cpolygon_t tpoly;
-	    tpoly.pnts_2d = polygon.pnts_2d;
-	    struct edge_t e1(t.v[0], t.v[1]);
-	    struct edge_t e2(t.v[1], t.v[2]);
-	    struct edge_t e3(t.v[2], t.v[0]);
-	    tpoly.add_edge(e1);
-	    tpoly.add_edge(e2);
-	    tpoly.add_edge(e3);
-	    std::set<long>::iterator u_it;
-	    for (u_it = polygon.uncontained.begin(); u_it != polygon.uncontained.end(); u_it++) {
-		if (tpoly.point_in_polygon(*u_it, false)) {
-		    nct->contains_uncontained = true;
+	if (!nct->isect_edge) {
+
+	    // If we're not on a self-intersecting edge, check for use of uncontained points
+	    for (int i = 0; i < 3; i++) {
+		if (polygon.uncontained.find((t).v[i]) != polygon.uncontained.end()) {
+		    nct->uses_uncontained = true;
 		    unusable_triangles.erase(*f_it);
 		}
+		if (nct->uses_uncontained) break;
+		if (polygon.flipped_face.find((t).v[i]) != polygon.flipped_face.end()) {
+		    nct->uses_uncontained = true;
+		    unusable_triangles.erase(*f_it);
+		}
+		if (nct->uses_uncontained) break;
 	    }
-	    if (!nct->contains_uncontained) {
-		for (u_it = polygon.flipped_face.begin(); u_it != polygon.flipped_face.end(); u_it++) {
+
+	    // If we aren't directly using an uncontained point, see if one is inside
+	    // the triangle projection
+	    if (!nct->uses_uncontained) {
+		cpolygon_t tpoly;
+		tpoly.pnts_2d = polygon.pnts_2d;
+		tpoly.add_edge(e1);
+		tpoly.add_edge(e2);
+		tpoly.add_edge(e3);
+		std::set<long>::iterator u_it;
+		for (u_it = polygon.uncontained.begin(); u_it != polygon.uncontained.end(); u_it++) {
 		    if (tpoly.point_in_polygon(*u_it, false)) {
 			nct->contains_uncontained = true;
 			unusable_triangles.erase(*f_it);
 		    }
 		}
-	    }
-
-	    // If we aren't directly involved with an uncontained point and we only
-	    // share 1 edge with the polygon, see how much it points at one of the
-	    // points of interest (if any) definitely outside the current polygon
-	    if (!nct->contains_uncontained) {
-		std::set<cpolyedge_t *>::iterator pe_it;
-
-		// Check shared edge cnt...
-		long shared_cnt = 0;
-		struct uedge_t ue[3];
-		ue[0].set(t.v[0], t.v[1]);
-		ue[1].set(t.v[1], t.v[2]);
-		ue[2].set(t.v[2], t.v[0]);
-		for (int i = 0; i < 3; i++) {
-		    for (pe_it = polygon.poly.begin(); pe_it != polygon.poly.end(); pe_it++) {
-			cpolyedge_t *pe = *pe_it;
-			struct uedge_t pue(pe->v[0], pe->v[1]);
-			if (ue[i] == pue) {
-			    shared_cnt++;
-			    break;
+		if (!nct->contains_uncontained) {
+		    for (u_it = polygon.flipped_face.begin(); u_it != polygon.flipped_face.end(); u_it++) {
+			if (tpoly.point_in_polygon(*u_it, false)) {
+			    nct->contains_uncontained = true;
+			    unusable_triangles.erase(*f_it);
 			}
 		    }
 		}
 
-		if (shared_cnt == 1) {
-		    // Get the unshared vertex - and the shared uedge midpoint
-		    bool v_shared[3];
-		    for (int i = 0; i < 3; i++) {
-			v_shared[i] = false;
-		    }
+		// If we aren't directly involved with an uncontained point and we only
+		// share 1 edge with the polygon, see how much it points at one of the
+		// points of interest (if any) definitely outside the current polygon
+		if (!nct->contains_uncontained) {
+		    std::set<cpolyedge_t *>::iterator pe_it;
+
+		    // Check shared edge cnt...
+		    long shared_cnt = 0;
 		    for (int i = 0; i < 3; i++) {
 			for (pe_it = polygon.poly.begin(); pe_it != polygon.poly.end(); pe_it++) {
 			    cpolyedge_t *pe = *pe_it;
-			    if (pe->v[0] == t.v[i] || pe->v[1] == t.v[i]) {
-				v_shared[i] = true;
+			    struct uedge_t pue(pe->v[0], pe->v[1]);
+			    if (ue[i] == pue) {
+				shared_cnt++;
 				break;
 			    }
 			}
 		    }
-		    ON_2dPoint emid(0,0);
-		    ON_2dPoint pnew;
-		    for (int i = 0; i < 3; i++) {
-			if (v_shared[i] == false) {
-			    pnew = ON_2dPoint(polygon.pnts_2d[t.v[i]][X], polygon.pnts_2d[t.v[i]][Y]);
-			} else {
-			    ON_2dPoint p = ON_2dPoint(polygon.pnts_2d[t.v[i]][X], polygon.pnts_2d[t.v[i]][Y]);
-			    emid = emid + p;
-			}
-		    }
-		    emid = emid * 0.5;
-		    ON_3dVector vu = pnew - emid;
 
-		    for (u_it = polygon.uncontained.begin(); u_it != polygon.uncontained.end(); u_it++) {
-			if (polygon.point_in_polygon(*u_it, true)) {
-			    ON_2dPoint op = ON_2dPoint(polygon.pnts_2d[*u_it][X], polygon.pnts_2d[*u_it][Y]);
-			    ON_3dVector vt = op - emid;
-			    double vangle = ON_DotProduct(vu, vt);
-			    if (vangle > 0 && nct->angle_to_nearest_uncontained > vangle) {
-				nct->angle_to_nearest_uncontained = vangle;
+		    if (shared_cnt == 1) {
+			// Get the unshared vertex - and the shared uedge midpoint
+			bool v_shared[3];
+			for (int i = 0; i < 3; i++) {
+			    v_shared[i] = false;
+			}
+			for (int i = 0; i < 3; i++) {
+			    for (pe_it = polygon.poly.begin(); pe_it != polygon.poly.end(); pe_it++) {
+				cpolyedge_t *pe = *pe_it;
+				if (pe->v[0] == t.v[i] || pe->v[1] == t.v[i]) {
+				    v_shared[i] = true;
+				    break;
+				}
 			    }
 			}
-		    }
-		    for (u_it = polygon.flipped_face.begin(); u_it != polygon.flipped_face.end(); u_it++) {
-			if (polygon.point_in_polygon(*u_it, true)) {
-			    ON_2dPoint op = ON_2dPoint(polygon.pnts_2d[*u_it][X], polygon.pnts_2d[*u_it][Y]);
-			    ON_3dVector vt = op - emid;
-			    double vangle = ON_DotProduct(vu, vt);
-			    if (vangle > 0 && nct->angle_to_nearest_uncontained > vangle) {
-				nct->angle_to_nearest_uncontained = vangle;
+			ON_3dPoint epnts[2];
+			ON_3dPoint pnew;
+			int ecnt = 0;
+			for (int i = 0; i < 3; i++) {
+			    if (v_shared[i] == false) {
+				pnew = ON_3dPoint(polygon.pnts_2d[t.v[i]][X], polygon.pnts_2d[t.v[i]][Y], 0);
+			    } else {
+				epnts[ecnt] = ON_3dPoint(polygon.pnts_2d[t.v[i]][X], polygon.pnts_2d[t.v[i]][Y], 0);
+				ecnt++;
 			    }
 			}
+			ON_Line l2d(epnts[0], epnts[1]);
+			ON_3dPoint pline = l2d.ClosestPointTo(pnew);
+			ON_3dVector vu = pnew - pline;
+			vu.Unitize();
+
+			for (u_it = polygon.uncontained.begin(); u_it != polygon.uncontained.end(); u_it++) {
+			    if (polygon.point_in_polygon(*u_it, true)) {
+				ON_2dPoint op = ON_2dPoint(polygon.pnts_2d[*u_it][X], polygon.pnts_2d[*u_it][Y]);
+				ON_3dVector vt = op - pline;
+				vt.Unitize();
+				double vangle = ON_DotProduct(vu, vt);
+				if (vangle > 0 && nct->angle_to_nearest_uncontained > vangle) {
+				    nct->angle_to_nearest_uncontained = vangle;
+				}
+			    }
+			}
+			for (u_it = polygon.flipped_face.begin(); u_it != polygon.flipped_face.end(); u_it++) {
+			    if (polygon.point_in_polygon(*u_it, true)) {
+				ON_2dPoint op = ON_2dPoint(polygon.pnts_2d[*u_it][X], polygon.pnts_2d[*u_it][Y]);
+				ON_3dVector vt = op - pline;
+				vt.Unitize();
+				double vangle = ON_DotProduct(vu, vt);
+				if (vangle > 0 && nct->angle_to_nearest_uncontained > vangle) {
+				    nct->angle_to_nearest_uncontained = vangle;
+				}
+			    }
+			}
+			if (nct->angle_to_nearest_uncontained*180/ON_PI < 60) {
+			    unusable_triangles.erase(*f_it);
+			}
 		    }
-		    if (nct->angle_to_nearest_uncontained*180/ON_PI < 60) {
-			unusable_triangles.erase(*f_it);
-		    }
+
 		}
-
 	    }
 	}
 	ctris[ctris_cnt] = nct;
@@ -1021,7 +1060,7 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 		if (stop_on_contained && new_edge_cnt == 2 && !flipped_tri) {
 		    // If this is a good triangle and we're in repair mode, don't add it unless
 		    // it uses or points in the direction of at least one uncontained point.
-		    if (!cct.uses_uncontained && !cct.contains_uncontained &&
+		    if (!cct.isect_edge && !cct.uses_uncontained && !cct.contains_uncontained &&
 			    (cct.angle_to_nearest_uncontained > 2*ON_PI || cct.angle_to_nearest_uncontained < 0)) {
 			use_tri = 0;
 		    }

@@ -25,6 +25,7 @@
 extern "C" {
     struct ctriangle_t {
 	long v[3];
+	bool isect_edge;
 	bool uses_uncontained;
 	bool contains_uncontained;
 	double angle_to_nearest_uncontained;
@@ -314,6 +315,7 @@ class cpolygon_t
 	point2d_t *pnts_2d;
 
 	std::set<uedge_t> problem_edges;
+	std::set<uedge_t> self_isect_edges;
 
 	ON_Plane tplane;
 
