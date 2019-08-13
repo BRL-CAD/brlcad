@@ -559,50 +559,58 @@ void cpolygon_t::polygon_plot(const char *filename)
     bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
     pl_color_buc(plot_file, &c);
 
-    point2d_t pmin, pmax;
-    V2SET(pmin, DBL_MAX, DBL_MAX);
-    V2SET(pmax, -DBL_MAX, -DBL_MAX);
+    ON_3dPoint ppnt;
+    point_t pmin, pmax;
+    point_t bnp;
+    VSET(pmin, DBL_MAX, DBL_MAX, DBL_MAX);
+    VSET(pmax, -DBL_MAX, -DBL_MAX, -DBL_MAX);
 
     cpolyedge_t *efirst = *(poly.begin());
     cpolyedge_t *ecurr = NULL;
 
-    point_t bnp;
-    VSET(bnp, pnts_2d[efirst->v[0]][X], pnts_2d[efirst->v[0]][Y], 0);
+    ppnt = tplane.PointAt(pnts_2d[efirst->v[0]][X], pnts_2d[efirst->v[0]][Y]);
+    VSET(bnp, ppnt.x, ppnt.y, ppnt.z);
     pdv_3move(plot_file, bnp);
-    VSET(bnp, pnts_2d[efirst->v[1]][X], pnts_2d[efirst->v[1]][Y], 0);
+    VMINMAX(pmin, pmax, bnp);
+    ppnt = tplane.PointAt(pnts_2d[efirst->v[1]][X], pnts_2d[efirst->v[1]][Y]);
+    VSET(bnp, ppnt.x, ppnt.y, ppnt.z);
     pdv_3cont(plot_file, bnp);
-
-    V2MINMAX(pmin, pmax, pnts_2d[efirst->v[0]]);
-    V2MINMAX(pmin, pmax, pnts_2d[efirst->v[1]]);
+    VMINMAX(pmin, pmax, bnp);
 
     size_t ecnt = 1;
     while (ecurr != efirst && ecnt < poly.size()+1) {
 	ecurr = (!ecurr) ? efirst->next : ecurr->next;
-	VSET(bnp, pnts_2d[ecurr->v[1]][X], pnts_2d[ecurr->v[1]][Y], 0);
+	ppnt = tplane.PointAt(pnts_2d[ecurr->v[1]][X], pnts_2d[ecurr->v[1]][Y]);
+	VSET(bnp, ppnt.x, ppnt.y, ppnt.z);
 	pdv_3cont(plot_file, bnp);
-	V2MINMAX(pmin, pmax, pnts_2d[efirst->v[1]]);
+	VMINMAX(pmin, pmax, bnp);
     }
 
     // Plot interior and uncontained points as well
-    double r = DIST_PT2_PT2(pmin, pmax) * 0.01;
+    double r = DIST_PT_PT(pmin, pmax) * 0.01;
     std::set<long>::iterator p_it;
 
     // Interior
     pl_color(plot_file, 0, 255, 0);
     for (p_it = interior_points.begin(); p_it != interior_points.end(); p_it++) {
 	point_t origin;
-	VSET(origin, pnts_2d[*p_it][X], pnts_2d[*p_it][Y], 0);
+	ppnt = tplane.PointAt(pnts_2d[*p_it][X], pnts_2d[*p_it][Y]);
+	VSET(origin, ppnt.x, ppnt.y, ppnt.z);
 	pdv_3move(plot_file, origin);
-	VSET(bnp, pnts_2d[*p_it][X]+r, pnts_2d[*p_it][Y]+r, 0);
+	ppnt = tplane.PointAt(pnts_2d[*p_it][X]+r, pnts_2d[*p_it][Y]+r);
+	VSET(bnp, ppnt.x, ppnt.y, ppnt.z);
 	pdv_3cont(plot_file, bnp);
 	pdv_3cont(plot_file, origin);
-	VSET(bnp, pnts_2d[*p_it][X]+r, pnts_2d[*p_it][Y]-r, 0);
+	ppnt = tplane.PointAt(pnts_2d[*p_it][X]+r, pnts_2d[*p_it][Y]-r);
+	VSET(bnp, ppnt.x, ppnt.y, ppnt.z);
 	pdv_3cont(plot_file, bnp);
 	pdv_3cont(plot_file, origin);
-	VSET(bnp, pnts_2d[*p_it][X]-r, pnts_2d[*p_it][Y]-r, 0);
+	ppnt = tplane.PointAt(pnts_2d[*p_it][X]-r, pnts_2d[*p_it][Y]-r);
+	VSET(bnp, ppnt.x, ppnt.y, ppnt.z);
 	pdv_3cont(plot_file, bnp);
 	pdv_3cont(plot_file, origin);
-	VSET(bnp, pnts_2d[*p_it][X]-r, pnts_2d[*p_it][Y]+r, 0);
+	ppnt = tplane.PointAt(pnts_2d[*p_it][X]-r, pnts_2d[*p_it][Y]+r);
+	VSET(bnp, ppnt.x, ppnt.y, ppnt.z);
 	pdv_3cont(plot_file, bnp);
 	pdv_3cont(plot_file, origin);
     }
@@ -611,18 +619,23 @@ void cpolygon_t::polygon_plot(const char *filename)
     pl_color(plot_file, 255, 0, 0);
     for (p_it = uncontained.begin(); p_it != uncontained.end(); p_it++) {
 	point_t origin;
-	VSET(origin, pnts_2d[*p_it][X], pnts_2d[*p_it][Y], 0);
+	ppnt = tplane.PointAt(pnts_2d[*p_it][X], pnts_2d[*p_it][Y]);
+	VSET(origin, ppnt.x, ppnt.y, ppnt.z);
 	pdv_3move(plot_file, origin);
-	VSET(bnp, pnts_2d[*p_it][X]+r, pnts_2d[*p_it][Y]+r, 0);
+	ppnt = tplane.PointAt(pnts_2d[*p_it][X]+r, pnts_2d[*p_it][Y]+r);
+	VSET(bnp, ppnt.x, ppnt.y, ppnt.z);
 	pdv_3cont(plot_file, bnp);
 	pdv_3cont(plot_file, origin);
-	VSET(bnp, pnts_2d[*p_it][X]+r, pnts_2d[*p_it][Y]-r, 0);
+	ppnt = tplane.PointAt(pnts_2d[*p_it][X]+r, pnts_2d[*p_it][Y]-r);
+	VSET(bnp, ppnt.x, ppnt.y, ppnt.z);
 	pdv_3cont(plot_file, bnp);
 	pdv_3cont(plot_file, origin);
-	VSET(bnp, pnts_2d[*p_it][X]-r, pnts_2d[*p_it][Y]-r, 0);
+	ppnt = tplane.PointAt(pnts_2d[*p_it][X]-r, pnts_2d[*p_it][Y]-r);
+	VSET(bnp, ppnt.x, ppnt.y, ppnt.z);
 	pdv_3cont(plot_file, bnp);
 	pdv_3cont(plot_file, origin);
-	VSET(bnp, pnts_2d[*p_it][X]-r, pnts_2d[*p_it][Y]+r, 0);
+	ppnt = tplane.PointAt(pnts_2d[*p_it][X]-r, pnts_2d[*p_it][Y]+r);
+	VSET(bnp, ppnt.x, ppnt.y, ppnt.z);
 	pdv_3cont(plot_file, bnp);
 	pdv_3cont(plot_file, origin);
     }
@@ -1095,6 +1108,7 @@ csweep_t::build_2d_pnts(ON_3dPoint &c, ON_3dVector &n)
     tplane = tri_plane;
 
     polygon.cmesh = cmesh;
+    polygon.tplane = tplane;
 }
 
 

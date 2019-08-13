@@ -898,6 +898,21 @@ void cmesh_t::tri_plot(triangle_t &tri, const char *filename)
     fclose(plot_file);
 }
 
+void cmesh_t::ctris_vect_plot(std::vector<struct ctriangle_t> &tvect, const char *filename)
+{
+    FILE* plot_file = fopen(filename, "w");
+
+    struct bu_color c = BU_COLOR_INIT_ZERO;
+    bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
+    pl_color_buc(plot_file, &c);
+
+    for (size_t i = 0; i < tvect.size(); i++) {
+	triangle_t tri(tvect[i].v[0], tvect[i].v[1], tvect[i].v[2]);
+	this->plot_tri(tri, &c, plot_file, 255, 0, 0);
+    }
+    fclose(plot_file);
+}
+
 void cmesh_t::tris_vect_plot(std::vector<triangle_t> &tvect, const char *filename)
 {
     FILE* plot_file = fopen(filename, "w");

@@ -224,6 +224,7 @@ public:
     void interior_incorrect_normals_plot(const char *filename);
     void tris_set_plot(std::set<triangle_t> &tset, const char *filename);
     void tris_vect_plot(std::vector<triangle_t> &tvect, const char *filename);
+    void ctris_vect_plot(std::vector<struct ctriangle_t> &tvect, const char *filename);
     void tris_plot(const char *filename);
     void tri_plot(triangle_t &tri, const char *filename);
 
@@ -301,6 +302,7 @@ class cpolygon_t
 	long replace_edges(std::set<edge_t> &new_edges, std::set<edge_t> &old_edges);
 
 	void polygon_plot(const char *filename);
+	void polygon_plot_in_plane(const char *filename);
 	void print();
 
 	std::set<triangle_t> tris;
@@ -312,6 +314,8 @@ class cpolygon_t
 	point2d_t *pnts_2d;
 
 	std::set<uedge_t> problem_edges;
+
+	ON_Plane tplane;
 
 	cmesh_t *cmesh;
 };
