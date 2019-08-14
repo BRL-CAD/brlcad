@@ -471,6 +471,10 @@ cpolygon_t::cdt()
 	vcnt++;
 	opoly[vcnt] = next->v[1];
 	next = next->next;
+    	if (vcnt > poly.size()) {
+	    std::cerr << "cdt attempt on infinite loop (shouldn't be possible - closed() test failed to detect this somehow...)\n";
+	    return false;
+	}
     }
 
     bool result = (bool)!bg_nested_polygon_triangulate( &faces, &num_faces,
@@ -690,6 +694,9 @@ void cpolygon_t::polygon_plot(const char *filename)
         VSET(bnp, pnts_2d[ecurr->v[1]][X], pnts_2d[ecurr->v[1]][Y], 0);
         pdv_3cont(plot_file, bnp);
         V2MINMAX(pmin, pmax, pnts_2d[efirst->v[1]]);
+    	if (ecnt > poly.size()) {
+	    break;
+	}
     }
 
     // Plot interior and uncontained points as well
@@ -771,6 +778,9 @@ void cpolygon_t::polygon_plot_in_plane(const char *filename)
 	VSET(bnp, ppnt.x, ppnt.y, ppnt.z);
 	pdv_3cont(plot_file, bnp);
 	VMINMAX(pmin, pmax, bnp);
+       	if (ecnt > poly.size()) {
+	    break;
+	}
     }
 
     // Plot interior and uncontained points as well
@@ -1236,7 +1246,7 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 	    std::vector<struct ctriangle_t> ntris = polygon_tris(angle, stop_on_contained);
 
 	    if (ctriangle_vect_cmp(ptris, ntris)) {
-		std::cout << "Error - new triangle set from polygon edge is the same as the previous triangle set.  Infinite loop error!\n";
+		std::cout << "Error - new triangle set from polygon edge is the same as the previous triangle set.  Infinite loop, aborting\n";
 		std::vector<struct ctriangle_t> infinite_loop_tris = polygon_tris(angle, stop_on_contained);
 		polygon.polygon_plot("infinite_loop_poly_2d.plot3");
 		polygon.polygon_plot_in_plane("infinite_loop_poly_3d.plot3");
@@ -1266,6 +1276,9 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 	}
     }
 
+    std::cout << "Error - loop growth terminated but conditions for triangulation were never satisfied!\n";
+    polygon.polygon_plot("failed_patch_poly_2d.plot3");
+    polygon.polygon_plot_in_plane("failed_patch_poly_3d.plot3");
     return -1;
 }
 

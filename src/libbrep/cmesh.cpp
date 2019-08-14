@@ -618,6 +618,7 @@ cmesh_t::repair()
     seed_tris.insert(e_tris.begin(), e_tris.end());
     seed_tris.insert(f_tris.begin(), f_tris.end());
 
+    size_t st_size = seed_tris.size();
     while (seed_tris.size()) {
 	triangle_t seed = *seed_tris.begin();
 
@@ -661,6 +662,13 @@ cmesh_t::repair()
 	}
 
 	tris_plot("mesh_post_patch.plot3");
+
+	if (seed_tris.size() >= st_size) {
+	    std::cerr << "Error - failed to process seed triangle!\n";
+	    break;
+	}
+
+	st_size = seed_tris.size();
     }
 
     // Now that the out-and-out problem triangles have been handled,
@@ -670,6 +678,7 @@ cmesh_t::repair()
     std::vector<triangle_t> s_tris = this->singularity_triangles();
     seed_tris.insert(s_tris.begin(), s_tris.end());
 
+    st_size = seed_tris.size();
     while (seed_tris.size()) {
 	triangle_t seed = *seed_tris.begin();
 
@@ -717,6 +726,13 @@ cmesh_t::repair()
 	}
 
 	tris_plot("mesh_post_pretty.plot3");
+
+	if (seed_tris.size() >= st_size) {
+	    std::cerr << "Error - failed to process seed triangle!\n";
+	    break;
+	}
+
+	st_size = seed_tris.size();
     }
 
 }
