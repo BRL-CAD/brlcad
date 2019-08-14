@@ -1063,6 +1063,19 @@ csweep_t::polygon_tris(double angle, bool brep_norm)
     return result;
 }
 
+bool
+ctriangle_vect_cmp(std::vector<ctriangle_t> &v1, std::vector<ctriangle_t> &v2)
+{
+    if (v1.size() != v2.size()) return false;
+
+    for (size_t i = 0; i < v1.size(); i++) {
+	for (int j = 0; j < 3; j++) {
+	    if (v1[i].v[j] != v2[i].v[j]) return false;
+	}
+    }
+
+    return true;
+}
 
 
 long
@@ -1221,6 +1234,14 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 	    // of the stack (i.e. the first ones tried.  polygon_tris is responsible
 	    // for sorting in priority order.
 	    std::vector<struct ctriangle_t> ntris = polygon_tris(angle, stop_on_contained);
+
+	    if (ctriangle_vect_cmp(ptris, ntris)) {
+		std::cout << "Error - new triangle set from polygon edge is the same as the previous triangle set.  Infinite loop error!\n";
+		return -1;
+	    }
+	    ptris.clear();
+	    ptris = ntris;
+
 	    for (size_t i = 0; i < ntris.size(); i++) {
 		ts.push(ntris[i]);
 	    }
