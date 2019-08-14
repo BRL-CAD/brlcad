@@ -239,9 +239,7 @@ public:
     bool brep_edge_pnt(long v);
 
     // Trigger mesh repair logic
-    void repair();
-
-    int op_cnt;
+    bool repair();
 
 private:
     // For situations where we need to process using Brep data

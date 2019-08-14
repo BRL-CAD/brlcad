@@ -590,7 +590,7 @@ cmesh_t::process_seed_tri(triangle_t &seed, bool repair, double deg)
 
 }
 
-void
+bool
 cmesh_t::repair()
 {
     // If we have edges with > 2 triangles and 3 or more of those triangles are
@@ -605,7 +605,7 @@ cmesh_t::repair()
     if (this->self_intersecting_mesh()) {
 	std::cerr << "self intersecting mesh\n";
 	tris_plot("self_intersecting_mesh.plot3");
-	exit(1);
+	return false;
     }
 
     // *Wrong* triangles: problem edge and/or flipped normal triangles.  Handle
@@ -657,6 +657,11 @@ cmesh_t::repair()
 	tris_plot("mesh_post_pretty.plot3");
     }
 
+    boundary_edges_update();
+    if (problem_edges.size() > 0) {
+	return false;
+    }
+    return true;
 }
 
 void cmesh_t::plot_uedge(struct uedge_t &ue, FILE* plot_file)

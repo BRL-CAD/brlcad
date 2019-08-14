@@ -162,91 +162,11 @@ refine_triangulation(struct ON_Brep_CDT_Face_State *f, int cnt, int rebuild)
     bu_vls_sprintf(&pname, "%srefine_tri-%d-02_after_slim_edge-iteration_cmesh_3d.plot3", bu_vls_cstr(&f->face_root), cnt);
     f->fmesh.tris_plot(bu_vls_cstr(&pname));
 
-    // If we're starting from scratch (one way or another) build up our initial
-    // set of triangles to work with
-    if (cnt == 0 || rebuild) {
-	// Singularity areas are bad news.  Remesh in those areas, if present
-	if (f->has_singular_trims) {
-	    std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
-	    std::set<p2t::Triangle *>::iterator tr_it;
-
-	    // Identify any triangles using singular points
-	    for (tr_it = f->tris->begin(); tr_it != f->tris->end(); tr_it++) {
-		p2t::Triangle *t = *tr_it;
-		for (size_t j = 0; j < 3; j++) {
-		    ON_3dPoint *p3d = (*pointmap)[t->GetPoint(j)];
-		    if (f->s_cdt->singular_vert_to_norms->find(p3d) != f->s_cdt->singular_vert_to_norms->end()) {
-			active_tris.insert(t);
-		    }
-		}
-	    }
-
-	    std::set<ON_3dPoint *>::iterator s_it;
-	    int singularity_cnt = 0;
-	    for (s_it = f->singularities->begin(); s_it != f->singularities->end(); s_it++) {
-		ON_3dPoint *p3d = (*s_it);
-		long s_ind = f->fmesh.p2ind[p3d];
-		bu_vls_sprintf(&pname, "%srefine_tri-%d-03_singularity_%d-cmesh_3d.plot3", bu_vls_cstr(&f->face_root), cnt, singularity_cnt);
-		std::vector<cmesh::triangle_t> stri = f->fmesh.vertex_face_neighbors(s_ind);
-		active_ctris.insert(stri.begin(), stri.end());
-		f->fmesh.vertex_face_neighbors_plot(s_ind, bu_vls_cstr(&pname));
-		singularity_cnt++;
-	    }
-
-	}
-	std::vector<cmesh::triangle_t> ntri = f->fmesh.interior_incorrect_normals();
-	if (ntri.size()) {
-	    bu_vls_sprintf(&pname, "%srefine_tri-%d-04_interior_bad_normals-cmesh_3d.plot3", bu_vls_cstr(&f->face_root), cnt);
-	    f->fmesh.interior_incorrect_normals_plot(bu_vls_cstr(&pname));
-	    active_ctris.insert(ntri.begin(), ntri.end());
-	}
-
-	bu_vls_sprintf(&pname, "%srefine_tri-%d-05_all_seed_tris-cmesh_3d.plot3", bu_vls_cstr(&f->face_root), cnt);
-	f->fmesh.tris_set_plot(active_ctris, bu_vls_cstr(&pname));
-
-	// Any triangle not having an edge on the mesh boundary polyline with
-	// an incorrect triangle face normal is a seed for local remeshing
-	ret = triangles_incorrect_normals(f, &active_tris);
-	if (ret == -1) {
-	    bu_log("unexpected edge triangle issues\n");
-	}
-    }
-
     // Now, the hard part - create local subsets, remesh them, and replace the original
     // triangles with the new ones.
-    f->fmesh.op_cnt = 0;
-    f->fmesh.repair();
-    //exit(1);
+    ret = (f->fmesh.repair()) ? 1 : -1;
+
 #if 0
-    int rcnt = 0;
-    while (active_ctris.size()) {
-	cmesh::triangle_t seed_tri = *(active_ctris.begin());
-	Remesh_Near_cTri(f, seed_tri, &active_ctris, rcnt);
-	rcnt++;
-    }
-
-    // Locally remesh in the area of triangles identified by above steps
-    // We don't want to do any more remeshing than we have to, so if a
-    // seed triangle incorporates other seed triangles into its remeshing
-    // process, we'll pull them out of the work queue
-    if (active_tris.size()) {
-	std::set<p2t::Triangle *> wq;
-	std::set<p2t::Triangle *>::iterator a_it;
-	wq.insert(active_tris.begin(), active_tris.end());
-	int remesh_cnt = 0;
-	while (wq.size()) {
-	    a_it = wq.begin();
-	    p2t::Triangle *t = *a_it;
-	    // Because the mesh probably changes after each Remesh pass, we need to rebuild
-	    // the trimesh half edge structure each time we iterate
-	    Remesh_Near_Tri(f, t, &wq);
-
-	    struct trimesh_info *tm_w = CDT_Face_Build_Halfedge(f->tris);
-	    bu_vls_sprintf(&pname, "%srefine_tri-%d-06_iteration-workedtri_%d-tmesh_2d.plot3", bu_vls_cstr(&f->face_root), cnt, remesh_cnt);
-	    plot_trimesh_2d(tm_w->triangles, bu_vls_cstr(&pname));
-	}
-    }
-
     // Identify zero area triangles
     triangles_degenerate_area(f);
 
@@ -265,7 +185,6 @@ refine_triangulation(struct ON_Brep_CDT_Face_State *f, int cnt, int rebuild)
 	bu_log("Fatal failure on edge checking\n");
 	return -1;
     }
-#endif
 
     if (!ret) {
 	// Flag zero area triangles for subsequent handling (potentially
@@ -273,6 +192,12 @@ refine_triangulation(struct ON_Brep_CDT_Face_State *f, int cnt, int rebuild)
 	// until we're done locally)
 	triangles_degenerate_area_notify(f);
 	bu_log("Face %d: successful triangulation after %d passes\n", f->ind, cnt);
+    }
+#endif
+    if (ret > 0) {
+	bu_log("Face %d: successful triangulation after %d passes\n", f->ind, cnt);
+    } else {
+	bu_log("Face %d: triangulation FAILED!\n", f->ind);
     }
     return ret;
 }
