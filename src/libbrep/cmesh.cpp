@@ -593,6 +593,56 @@ cmesh_t::max_angle_delta(triangle_t &seed, std::vector<triangle_t> &s_tris)
 }
 
 void
+cmesh_t::process_seed_tri(triangle_t &seed, bool repair, double deg)
+{
+    // We use the Brep normal for this, since the triangles are
+    // problem triangles and their normals cannot be relied upon.
+    ON_3dPoint sp = this->tcenter(seed);
+    ON_3dVector sn = this->bnorm(seed);
+
+    csweep_t sweep;
+    sweep.cmesh = this;
+    sweep.polygon.problem_edges = problem_edges;
+    sweep.build_2d_pnts(sp, sn);
+
+    // build an initial loop from a nearby valid triangle
+    bool tcnt = sweep.build_initial_loop(seed, repair);
+
+    if (!tcnt && repair) {
+	std::cerr << "Could not build initial valid loop\n";
+	exit(1);
+    }
+
+
+    // Grow until we contain the seed and its associated problem data
+    long tri_cnt = sweep.grow_loop(deg, repair);
+    if (tri_cnt < 0) {
+	std::cerr << "grow_loop failure\n";
+	exit(1);
+    }
+
+    // If nothing to do at the seed, we don't change the mesh
+    if (tri_cnt == 0) {
+	return;
+    }
+
+    // Remove everything the patch claimed
+    std::set<triangle_t>::iterator v_it;
+    for (v_it = sweep.visited_triangles.begin(); v_it != sweep.visited_triangles.end(); v_it++) {
+	triangle_t vt = *v_it;
+	seed_tris.erase(vt);
+	tri_remove(vt);
+    }
+
+    // Add in the replacement triangles
+    for (v_it = sweep.polygon.tris.begin(); v_it != sweep.polygon.tris.end(); v_it++) {
+	triangle_t vt = *v_it;
+	tri_add(vt);
+    }
+
+}
+
+void
 cmesh_t::repair()
 {
     // If we have edges with > 2 triangles and 3 or more of those triangles are
@@ -622,53 +672,16 @@ cmesh_t::repair()
     while (seed_tris.size()) {
 	triangle_t seed = *seed_tris.begin();
 
-	// We use the Brep normal for this, since the triangles are
-	// problem triangles and their normals cannot be relied upon.
-	ON_3dPoint sp = this->tcenter(seed);
-	ON_3dVector sn = this->bnorm(seed);
-
-	csweep_t sweep;
-	sweep.cmesh = this;
-	sweep.polygon.problem_edges = problem_edges;
-	sweep.build_2d_pnts(sp, sn);
-
-	// build an initial loop from a nearby valid triangle
-	bool tcnt = sweep.build_initial_loop(seed, true);
-
-	if (!tcnt) {
-	    std::cerr << "Could not build initial valid loop\n";
-	    exit(1);
-	}
-
-	// Grow until we contain the seed and its associated problem data
-
-	if (sweep.grow_loop(170, true) < 0) {
-	    std::cerr << "Couldn't handle mesh repair\n";
-	    exit(1);
-	}
-
-	// Remove everything the patch claimed
-	std::set<triangle_t>::iterator v_it;
-	for (v_it = sweep.visited_triangles.begin(); v_it != sweep.visited_triangles.end(); v_it++) {
-	    triangle_t vt = *v_it;
-	    seed_tris.erase(vt);
-	    tri_remove(vt);
-	}
-
-	// Add in the replacement triangles
-	for (v_it = sweep.polygon.tris.begin(); v_it != sweep.polygon.tris.end(); v_it++) {
-	    triangle_t vt = *v_it;
-	    tri_add(vt);
-	}
-
-	tris_plot("mesh_post_patch.plot3");
+	process_seed_tri(seed, true, 170.0);
 
 	if (seed_tris.size() >= st_size) {
-	    std::cerr << "Error - failed to process seed triangle!\n";
+	    std::cerr << "Error - failed to process repair seed triangle!\n";
 	    break;
 	}
 
 	st_size = seed_tris.size();
+
+	tris_plot("mesh_post_patch.plot3");
     }
 
     // Now that the out-and-out problem triangles have been handled,
@@ -682,57 +695,17 @@ cmesh_t::repair()
     while (seed_tris.size()) {
 	triangle_t seed = *seed_tris.begin();
 
-	ON_3dPoint sp = this->tcenter(seed);
-	ON_3dVector sn = this->tnorm(seed);
-
-	csweep_t sweep;
-	sweep.cmesh = this;
-	sweep.polygon.problem_edges = problem_edges;
-	sweep.build_2d_pnts(sp, sn);
-
-	// build an initial loop from the seed
-	bool tcnt = sweep.build_initial_loop(seed, false);
-
-	if (!tcnt) {
-	    std::cerr << "Could not build initial valid loop\n";
-	    exit(1);
-	}
-
-	// Grow the loop
 	double deg = max_angle_delta(seed, s_tris);
-	long tri_cnt = sweep.grow_loop(deg, false);
-	if (tri_cnt < 0) {
-	    std::cerr << "Couldn't handle mesh rebuild\n";
-	    exit(1);
-	}
-
-	// If nothing to do at the singularity, we don't change the mesh
-	if (tri_cnt == 0) {
-	    return;
-	}
-
-	// Remove everything the patch claimed
-	std::set<triangle_t>::iterator v_it;
-	for (v_it = sweep.visited_triangles.begin(); v_it != sweep.visited_triangles.end(); v_it++) {
-	    triangle_t vt = *v_it;
-	    seed_tris.erase(vt);
-	    tri_remove(vt);
-	}
-
-	// Add in the replacement triangles
-	for (v_it = sweep.polygon.tris.begin(); v_it != sweep.polygon.tris.end(); v_it++) {
-	    triangle_t vt = *v_it;
-	    tri_add(vt);
-	}
-
-	tris_plot("mesh_post_pretty.plot3");
+	process_seed_tri(seed, false, deg);
 
 	if (seed_tris.size() >= st_size) {
-	    std::cerr << "Error - failed to process seed triangle!\n";
+	    std::cerr << "Error - failed to process refinement seed triangle!\n";
 	    break;
 	}
 
 	st_size = seed_tris.size();
+
+	tris_plot("mesh_post_pretty.plot3");
     }
 
 }

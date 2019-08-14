@@ -315,18 +315,11 @@ cpolygon_t::self_intersecting()
 	    } else {
 		self_isect_edges.insert(ue1);
 		self_isect_edges.insert(ue2);
-		//std::cout << "a: " << a << ", b: " << b << "\n";
 	    }
 
 	    self_isect = true;
 	}
     }
-#if 1
-    if (self_isect) {
-	std::cout << "Polygon reports self-intersecting\n";
-	polygon_plot("self_isect.plot3");
-    }
-#endif
 
     return self_isect;
 }
@@ -422,8 +415,7 @@ cpolygon_t::point_in_polygon(long v, bool flip)
     }
 #endif
 
-    polygon_plot("poly_2d.plot3");
-    bg_polygon_plot_2d("pnt_in_poly_loop.plot3", polypnts, pind, 255, 0, 0);
+    //bg_polygon_plot_2d("bg_pnt_in_poly_loop.plot3", polypnts, pind, 255, 0, 0);
 
     point2d_t test_pnt;
     V2MOVE(test_pnt, pnts_2d[v]);
@@ -512,14 +504,6 @@ cpolygon_t::cdt()
     return result;
 }
 
-// TODO - there is another case we need to handle here - when the candidate
-// triangle OVERLAPS an existing visited triangle in the projection, but
-// its normal indicates it should not (i.e. it's not overlapping in the
-// projection by "wrapping around" the mesh on the other side of the object.)
-// In that case we mark it as visited and either a. keep going if all the
-// triangle verts are on the polygon already or b. mark it's non-polygon
-// vert as uncontained - that vertex is something we need to contain before
-// the polygon is viable.
 long
 cpolygon_t::tri_process(std::set<edge_t> *ne, std::set<edge_t> *se, long *nv, triangle_t &t)
 {
@@ -955,13 +939,11 @@ csweep_t::polygon_tris(double angle, bool brep_norm)
 	    double dprd = ON_DotProduct(pdir, tn);
 	    double dang = (NEAR_EQUAL(dprd, 1.0, ON_ZERO_TOLERANCE)) ? 0 : acos(dprd);
 	    if (dang > angle) {
-		std::cerr << "Angle rejection (" << dang << "," << angle << ")\n";
 		continue;
 	    }
 	    initial_set.insert(*t_it);
 	}
     }
-    std::cout << "Pre_sort: ";
 
     // Now that we have the triangles, characterize them.
     struct ctriangle_t **ctris = (struct ctriangle_t **)bu_calloc(initial_set.size()+1, sizeof(ctriangle_t *), "sortable ctris");
@@ -985,7 +967,6 @@ csweep_t::polygon_tris(double angle, bool brep_norm)
 	ue[1].set(t.v[1], t.v[2]);
 	ue[2].set(t.v[2], t.v[0]);
 
-	std::cout << "(" << t.v[0] << "," << t.v[1] << "," << t.v[2] << ") ";
 	nct->isect_edge = false;
 	nct->uses_uncontained = false;
 	nct->contains_uncontained = false;
@@ -1052,20 +1033,16 @@ csweep_t::polygon_tris(double angle, bool brep_norm)
 	    unusable_triangles.erase(*f_it);
 	}
     }
-    std::cout << "\n";
 
     // Now that we have the characterized triangles, sort them.
     bu_sort(ctris, ctris_cnt, sizeof(struct ctriangle_t *), ctriangle_cmp, NULL);
 
-    std::cout << "Post_sort: ";
 
     // Push the final sorted results into the vector, free the ctris entries and array
     std::vector<ctriangle_t> result;
     for (long i = 0; i < ctris_cnt; i++) {
-	std::cout << "(" << ctris[i]->v[0] << "," << ctris[i]->v[1] << "," << ctris[i]->v[2] << ") ";
 	result.push_back(*ctris[i]);
     }
-    std::cout << "\n";
     for (long i = 0; i < ctris_cnt; i++) {
 	bu_free(ctris[i], "ctri");
     }
@@ -1086,7 +1063,6 @@ ctriangle_vect_cmp(std::vector<ctriangle_t> &v1, std::vector<ctriangle_t> &v2)
 
     return true;
 }
-
 
 long
 csweep_t::grow_loop(double deg, bool stop_on_contained)
@@ -1129,8 +1105,8 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 	ctriangle_t cct = ts.top();
 	ts.pop();
 	triangle_t ct(cct.v[0], cct.v[1], cct.v[2]);
-	polygon.polygon_plot("poly_2d.plot3");
-	polygon.polygon_plot_in_plane("poly_3d.plot3");
+
+	//polygon.polygon_plot_in_plane("poly_3d.plot3");
 
 	// A triangle will introduce at most one new point into the loop.  If
 	// the triangle is bad, it will define uncontained interior points and
@@ -1172,12 +1148,7 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 		// make a mess out of the polygon (i.e. make it self intersecting.)
 		// Tag it so we know we can't trust point_in_polygon until we've grown
 		// the vertex out of flipped_face (remove_edge will handle that.)
-
-		// If we have a flipped triangle vert involving a brep edge vertex... um...
 		if (cmesh->brep_edge_pnt(vert)) {
-		    ON_3dPoint *p = cmesh->pnts[vert];
-		    std::cerr << "URK! flipped face vertex " << vert << " (" << p->x << " " << p->y << " " << p->z  << ")  on edge!\n";
-		    cmesh->tri_plot(ct, "flipped_face_vert_on_edge.plot3");
 		    // We can't flag brep edge points as uncontained, so if we hit this case
 		    // flag all the verts except the edge verts as flipped face problem cases.
 		    for (int i = 0; i < 3; i++) {
@@ -1186,9 +1157,7 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 			}
 		    }
 		} else {
-		    if (!cmesh->brep_edge_pnt(vert)) {
-			polygon.flipped_face.insert(vert);
-		    }
+		    polygon.flipped_face.insert(vert);
 		}
 	    }
 
@@ -1206,6 +1175,9 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 
 	    if (new_edge_cnt <= 0 || new_edge_cnt > 2) {
 		std::cerr << "fatal loop growth error!\n";
+		polygon.polygon_plot_in_plane("fatal_loop_growth_poly_3d.plot3");
+		cmesh->tris_set_plot(visited_triangles, "fatal_loop_growth_visited_tris.plot3");
+		cmesh->tri_plot(ct, "fatal_loop_growth_bad_tri.plot3");
 		return -1;
 	    }
 
@@ -1218,18 +1190,10 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 	bool h_uc = polygon.have_uncontained();
 
 	if (stop_on_contained && !h_uc && polygon.poly.size() > 3) {
-	    std::cout << "In principle, we now have a workable subset\n";
-
-	    //polygon.polygon_plot("poly_2d.plot3");
-	    //
 	    polygon.cdt();
-
-	    //cmesh->tris_set_plot(polygon.tris, "tri_2d.plot3");
-
+	    cmesh->tris_set_plot(polygon.tris, "patch.plot3");
 	    return (long)cmesh->tris.size();
 	}
-
-	//polygon.polygon_plot("poly_2d.plot3");
 
 	if (ts.empty()) {
 	    // That's all the triangles from this ring - if we haven't
@@ -1264,12 +1228,8 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 		// per the current angle criteria we've got everything, and we're
 		// not concerned with contained points so this isn't an indication
 		// of an error condition.  Generate triangles.
-		std::cout << "In principle, we now have a workable patch\n";
-
 		polygon.cdt();
 		cmesh->tris_set_plot(polygon.tris, "patch.plot3");
-
-
 		return (long)cmesh->tris.size();
 	    }
 
@@ -1488,8 +1448,6 @@ void csweep_t::vertex_face_neighbors_plot(long vind, const char *filename)
     pd_point(plot_file, p[X], p[Y]);
     fclose(plot_file);
 }
-
-
 
 }
 

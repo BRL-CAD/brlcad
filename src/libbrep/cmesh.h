@@ -259,6 +259,7 @@ private:
     // Submesh building
     bool tri_problem_edges(triangle_t &t);
     double max_angle_delta(triangle_t &seed, std::vector<triangle_t> &s_tris);
+    void process_seed_tri(triangle_t &seed, bool repair, double deg);
 
     // Mesh manipulation functions
     bool tri_add(triangle_t &atris);
