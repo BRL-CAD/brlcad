@@ -524,6 +524,7 @@ cpolygon_t::tri_process(std::set<edge_t> *ne, std::set<edge_t> *se, long *nv, tr
     ue[1].set(t.v[1], t.v[2]);
     ue[2].set(t.v[2], t.v[0]);
 
+    // Check the polygon edges against the triangle edges
     for (int i = 0; i < 3; i++) {
 	for (pe_it = poly.begin(); pe_it != poly.end(); pe_it++) {
 	    cpolyedge_t *pe = *pe_it;
@@ -535,6 +536,7 @@ cpolygon_t::tri_process(std::set<edge_t> *ne, std::set<edge_t> *se, long *nv, tr
 	}
     }
 
+    // Count categories and file edges in the appropriate output sets
     long shared_cnt = 0;
     for (int i = 0; i < 3; i++) {
 	if (e_shared[i]) {
@@ -581,37 +583,19 @@ cpolygon_t::tri_process(std::set<edge_t> *ne, std::set<edge_t> *se, long *nv, tr
     }
 
     if (shared_cnt == 1) {
-	bool v_shared[3];
-	for (int i = 0; i < 3; i++) {
-	    v_shared[i] = false;
-	}
 	// If we've got only one shared edge, there should be a vertex not currently
 	// involved with the loop - verify that, and if it's true report it.
-	int vshared_cnt = 0;
-	for (int i = 0; i < 3; i++) {
-	    for (pe_it = poly.begin(); pe_it != poly.end(); pe_it++) {
-		cpolyedge_t *pe = *pe_it;
-		if (pe->v[0] == t.v[i] || pe->v[1] == t.v[i]) {
-		    v_shared[i] = true;
-		    vshared_cnt++;
-		    break;
-		}
-	    }
-	}
-	if (vshared_cnt == 2) {
-	    for (int i = 0; i < 3; i++) {
-		if (v_shared[i] == false) {
-		    (*nv) = t.v[i];
-		    break;
-		}
-	    }
+	long unshared_vert = unshared_vertex(t);
+
+	if (unshared_vert != -1) {
+	    (*nv) = unshared_vert;
 
 	    // If the uninvolved point is associated with bad edges, we can't use
 	    // any of this to build the loop - it gets added to the uncontained
 	    // points set, and we move on.
 	    int bad_edge_cnt = 0;
 	    for (int i = 0; i < 3; i++) {
-		if (ue[i].v[0] == *nv || ue[i].v[1] == *nv ) {
+		if (ue[i].v[0] == unshared_vert || ue[i].v[1] == unshared_vert) {
 		    if (problem_edges.find(ue[i]) != problem_edges.end()) {
 			bad_edge_cnt++;
 		    }
