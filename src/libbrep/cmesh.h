@@ -191,12 +191,9 @@ public:
     std::vector<ON_3dPoint *> pnts;
     std::map<ON_3dPoint *, long> p2ind;
     std::set<triangle_t> tris;
-    std::map<long, std::set<edge_t>> v2edges;
-    std::map<long, std::set<triangle_t>> v2tris;
-    std::map<edge_t, triangle_t> edges2tris;
     std::map<uedge_t, std::set<triangle_t>> uedges2tris;
 
-    /* Setup */
+    /* Setup / Repair */
     void build(std::set<p2t::Triangle *> *cdttri, std::map<p2t::Point *, ON_3dPoint *> *pointmap);
     void set_brep_data(
 	    bool brev,
@@ -204,19 +201,26 @@ public:
 	    std::set<ON_3dPoint *> *s,
 	    std::map<ON_3dPoint *, ON_3dPoint *> *n
 	    );
+    bool repair();
+    bool valid();
 
-    /* Mesh data sets */
+    /* Mesh data set accessors */
     std::set<uedge_t> get_boundary_edges();
     std::set<uedge_t> get_problem_edges();
     std::vector<triangle_t> face_neighbors(const triangle_t &f);
     std::vector<triangle_t> vertex_face_neighbors(long vind);
 
-    std::vector<triangle_t> singularity_triangles();
-
-    std::vector<triangle_t> interior_incorrect_normals();
-    std::vector<triangle_t> problem_edge_tris();
+    /* Tests */
     bool self_intersecting_mesh();
+    bool brep_edge_pnt(long v);
 
+    // Triangle geometry information
+    ON_3dPoint tcenter(const triangle_t &t);
+    ON_3dVector bnorm(const triangle_t &t);
+    ON_3dVector tnorm(const triangle_t &t);
+    std::set<uedge_t> uedges(const triangle_t &t);
+
+    /* Working data set shared with sweep/polygon */
     std::set<triangle_t> seed_tris;
 
     // Plot3 generation routines for debugging
@@ -230,18 +234,12 @@ public:
     void tris_plot(const char *filename);
     void tri_plot(triangle_t &tri, const char *filename);
 
-    // Triangle geometry information
-    ON_3dPoint tcenter(const triangle_t &t);
-    ON_3dVector bnorm(const triangle_t &t);
-    ON_3dVector tnorm(const triangle_t &t);
-    std::set<uedge_t> uedges(const triangle_t &t);
-
-    bool brep_edge_pnt(long v);
-
-    // Trigger mesh repair logic
-    bool repair();
-
 private:
+    /* Data containers */
+    std::map<long, std::set<edge_t>> v2edges;
+    std::map<long, std::set<triangle_t>> v2tris;
+    std::map<edge_t, triangle_t> edges2tris;
+
     // For situations where we need to process using Brep data
     std::set<ON_3dPoint *> *edge_pnts;
     std::set<ON_3dPoint *> *singularities;
@@ -257,7 +255,10 @@ private:
     edge_t find_boundary_oriented_edge(uedge_t &ue);
 
     // Submesh building
+    std::vector<triangle_t> singularity_triangles();
+    std::vector<triangle_t> problem_edge_tris();
     bool tri_problem_edges(triangle_t &t);
+    std::vector<triangle_t> interior_incorrect_normals();
     double max_angle_delta(triangle_t &seed, std::vector<triangle_t> &s_tris);
     void process_seed_tri(triangle_t &seed, bool repair, double deg);
 

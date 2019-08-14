@@ -165,6 +165,11 @@ refine_triangulation(struct ON_Brep_CDT_Face_State *f, int cnt, int rebuild)
     // Now, the hard part - create local subsets, remesh them, and replace the original
     // triangles with the new ones.
     ret = (f->fmesh.repair()) ? 1 : -1;
+    if (ret == -1) {
+	bu_log("Face %d: triangulation FAILED!\n", f->ind);
+	return -1;
+    }
+    ret = (f->fmesh.valid()) ? 1 : -1;
 
 #if 0
     // Identify zero area triangles
@@ -197,7 +202,7 @@ refine_triangulation(struct ON_Brep_CDT_Face_State *f, int cnt, int rebuild)
     if (ret > 0) {
 	bu_log("Face %d: successful triangulation after %d passes\n", f->ind, cnt);
     } else {
-	bu_log("Face %d: triangulation FAILED!\n", f->ind);
+	bu_log("Face %d: triangulation produced invalid mesh!\n", f->ind);
     }
     return ret;
 }

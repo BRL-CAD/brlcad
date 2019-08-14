@@ -664,6 +664,29 @@ cmesh_t::repair()
     return true;
 }
 
+bool
+cmesh_t::valid()
+{
+    bool ret = true;
+    std::set<triangle_t>::iterator tr_it;
+    for (tr_it = tris.begin(); tr_it != tris.end(); tr_it++) {
+	ON_3dVector tdir = tnorm(*tr_it);
+	ON_3dVector bdir = bnorm(*tr_it);
+	if (tdir.Length() > 0 && bdir.Length() > 0 && ON_DotProduct(tdir, bdir) < 0.1) {
+	    std::cout << "Still have invalid normals in mesh, triangle (" << (*tr_it).v[0] << "," << (*tr_it).v[1] << "," << (*tr_it).v[2] << ")\n";	
+	    ret = false;
+	}
+    }
+
+    boundary_edges_update();
+    if (problem_edges.size() > 0) {
+	std::cout << "Still have problem edges in mesh\n";	
+	ret = false;
+    }
+
+    return ret;
+}
+
 void cmesh_t::plot_uedge(struct uedge_t &ue, FILE* plot_file)
 {
     ON_3dPoint *p1 = this->pnts[ue.v[0]];
