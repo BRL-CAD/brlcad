@@ -194,7 +194,7 @@ refine_triangulation(struct ON_Brep_CDT_Face_State *f, int cnt, int rebuild)
 	    }
 
 	}
-	std::vector<cmesh::triangle_t> ntri = f->fmesh.interior_incorrect_normals(1);
+	std::vector<cmesh::triangle_t> ntri = f->fmesh.interior_incorrect_normals();
 	if (ntri.size()) {
 	    bu_vls_sprintf(&pname, "%srefine_tri-%d-04_interior_bad_normals-cmesh_3d.plot3", bu_vls_cstr(&f->face_root), cnt);
 	    f->fmesh.interior_incorrect_normals_plot(bu_vls_cstr(&pname));

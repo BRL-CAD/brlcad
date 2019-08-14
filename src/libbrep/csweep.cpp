@@ -509,6 +509,8 @@ cpolygon_t::tri_process(std::set<edge_t> *ne, std::set<edge_t> *se, long *nv, tr
 {
     std::set<cpolyedge_t *>::iterator pe_it;
 
+    std::set<uedge_t> problem_edges = cmesh->get_problem_edges();
+
     bool e_shared[3];
     struct edge_t e[3];
     struct uedge_t ue[3];
@@ -549,25 +551,31 @@ cpolygon_t::tri_process(std::set<edge_t> *ne, std::set<edge_t> *se, long *nv, tr
 	// "bad" triangle that is already inside the loop due to another triangle
 	// from the same shared edge expanding the loop.  Find the triangle
 	// vertex that is the problem and mark it as an uncontained vertex.
+	std::map<long, std::set<uedge_t>> v2ue;
 	for (int i = 0; i < 3; i++) {
-	    long vert = t.v[i];
-	    if (cmesh->brep_edge_pnt(vert)) {
-		continue;
+	    if (!cmesh->brep_edge_pnt(ue[i].v[0])) {
+		v2ue[ue[i].v[0]].insert(ue[i]);
 	    }
-	    int vert_problem_cnt = 0;
-	    std::set<uedge_t>::iterator p_it;
-	    for (p_it = problem_edges.begin(); p_it != problem_edges.end(); p_it++) {
-		if (((*p_it).v[0] == vert) || ((*p_it).v[1] == vert)) {
-		    vert_problem_cnt++;
+	    if (!cmesh->brep_edge_pnt(ue[i].v[1])) {
+		v2ue[ue[i].v[1]].insert(ue[i]);
+	    }
+	}
+	std::map<long, std::set<uedge_t>>::iterator v_it;
+	for (v_it = v2ue.begin(); v_it != v2ue.end(); v_it++) {
+	    int bad_edge_cnt = 0;
+	    std::set<uedge_t>::iterator ue_it;
+	    for (ue_it = v_it->second.begin(); ue_it != v_it->second.end(); ue_it++) {
+		if (problem_edges.find(*ue_it) != problem_edges.end()) {
+		    bad_edge_cnt++;
 		}
-	    }
 
-	    if (vert_problem_cnt > 1) {
-		uncontained.insert(vert);
-		(*nv) = -1;
-		se->clear();
-		ne->clear();
-		return -2;
+		if (bad_edge_cnt > 1) {
+		    uncontained.insert(v_it->first);
+		    (*nv) = -1;
+		    se->clear();
+		    ne->clear();
+		    return -2;
+		}
 	    }
 	}
     }
@@ -601,24 +609,22 @@ cpolygon_t::tri_process(std::set<edge_t> *ne, std::set<edge_t> *se, long *nv, tr
 	    // If the uninvolved point is associated with bad edges, we can't use
 	    // any of this to build the loop - it gets added to the uncontained
 	    // points set, and we move on.
-	    int vert_problem_cnt = 0;
-	    std::set<uedge_t>::iterator p_it;
-	    for (p_it = problem_edges.begin(); p_it != problem_edges.end(); p_it++) {
-		if (((*p_it).v[0] == *nv) || ((*p_it).v[1] == *nv)) {
-		    vert_problem_cnt++;
+	    int bad_edge_cnt = 0;
+	    for (int i = 0; i < 3; i++) {
+		if (ue[i].v[0] == *nv || ue[i].v[1] == *nv ) {
+		    if (problem_edges.find(ue[i]) != problem_edges.end()) {
+			bad_edge_cnt++;
+		    }
+
+		    if (bad_edge_cnt > 1) {
+			uncontained.insert(*nv);
+			(*nv) = -1;
+			se->clear();
+			ne->clear();
+			return -2;
+		    }
 		}
 	    }
-
-	    if (vert_problem_cnt > 1) {
-		if (!cmesh->brep_edge_pnt(*nv)) {
-		    uncontained.insert(*nv);
-		}
-		(*nv) = -1;
-		se->clear();
-		ne->clear();
-		return -2;
-	    }
-
 	} else {
 	    // Self intersecting
 	    (*nv) = -1;
@@ -1210,12 +1216,21 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 	    std::vector<struct ctriangle_t> ntris = polygon_tris(angle, stop_on_contained);
 
 	    if (ctriangle_vect_cmp(ptris, ntris)) {
-		std::cout << "Error - new triangle set from polygon edge is the same as the previous triangle set.  Infinite loop, aborting\n";
-		std::vector<struct ctriangle_t> infinite_loop_tris = polygon_tris(angle, stop_on_contained);
-		polygon.polygon_plot("infinite_loop_poly_2d.plot3");
-		polygon.polygon_plot_in_plane("infinite_loop_poly_3d.plot3");
-		cmesh->ctris_vect_plot(infinite_loop_tris, "infinite_loop_tris.plot3");
-		return -1;
+		if (h_uc || (stop_on_contained && polygon.poly.size() <= 3)) {
+		    std::cout << "Error - new triangle set from polygon edge is the same as the previous triangle set.  Infinite loop, aborting\n";
+		    std::vector<struct ctriangle_t> infinite_loop_tris = polygon_tris(angle, stop_on_contained);
+		    polygon.polygon_plot("infinite_loop_poly_2d.plot3");
+		    polygon.polygon_plot_in_plane("infinite_loop_poly_3d.plot3");
+		    cmesh->ctris_vect_plot(infinite_loop_tris, "infinite_loop_tris.plot3");
+		    return -1;
+		} else {
+		    // We're not in a repair situation, and we've already tried
+		    // the current triangle candidate set with no polygon
+		    // change.  Generate triangles.
+		    polygon.cdt();
+		    cmesh->tris_set_plot(polygon.tris, "patch.plot3");
+		    return (long)cmesh->tris.size();
+		}
 	    }
 	    ptris.clear();
 	    ptris = ntris;

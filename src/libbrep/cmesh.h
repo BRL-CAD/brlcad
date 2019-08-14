@@ -206,13 +206,14 @@ public:
 	    );
 
     /* Mesh data sets */
-    std::set<uedge_t> boundary_edges(int use_brep_data);
+    std::set<uedge_t> get_boundary_edges();
+    std::set<uedge_t> get_problem_edges();
     std::vector<triangle_t> face_neighbors(const triangle_t &f);
     std::vector<triangle_t> vertex_face_neighbors(long vind);
 
     std::vector<triangle_t> singularity_triangles();
 
-    std::vector<triangle_t> interior_incorrect_normals(int use_brep_data);
+    std::vector<triangle_t> interior_incorrect_normals();
     std::vector<triangle_t> problem_edge_tris();
     bool self_intersecting_mesh();
 
@@ -251,9 +252,10 @@ private:
     bool m_bRev;
 
     // Boundary edge information
-    std::set<uedge_t> current_bedges;
+    std::set<uedge_t> boundary_edges;
+    bool boundary_edges_stale;
+    void boundary_edges_update();
     std::set<uedge_t> problem_edges;
-    std::map<long, std::set<edge_t>> edge_pnt_edges;
     edge_t find_boundary_oriented_edge(uedge_t &ue);
 
     // Submesh building
@@ -316,7 +318,6 @@ class cpolygon_t
 	point2d_t *pnts_2d;
 
 	std::set<uedge_t> active_edges;
-	std::set<uedge_t> problem_edges;
 	std::set<uedge_t> self_isect_edges;
 
 	ON_Plane tplane;

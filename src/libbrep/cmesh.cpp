@@ -56,8 +56,6 @@ cmesh_t::tri_add(triangle_t &tri)
     // Add the triangle
     this->tris.insert(tri);
 
-    //std::cout << "tris cnt: " << tris.size() << "\n";
-
     // Populate maps
     long i = tri.v[0];
     long j = tri.v[1];
@@ -75,57 +73,12 @@ cmesh_t::tri_add(triangle_t &tri)
 	this->v2tris[tri.v[ind]].insert(tri);
     }
 
-
-    // Now that we know the triangle count for the unordered edges: the
-    // addition of a triangle may change the boundary edge set.  Update.
-    for (int ind = 0; ind < 3; ind++) {
-	if (this->uedges2tris[ue[ind]].size() == 1) {
-	    this->current_bedges.insert(ue[ind]);
-	} else {
-	    this->current_bedges.erase(ue[ind]);
-	}
-    }
-
-    // With the addition of the new triangle, we need to update the
-    // point->edge mappings as well.
-    for (int ind = 0; ind < 3; ind++) {
-	// For the directed edge associated with the new triangle,
-	// we may need to add
-	if (this->current_bedges.find(ue[ind]) != this->current_bedges.end()) {
-	    this->edge_pnt_edges[e[ind].v[0]].insert(e[ind]);
-	    this->edge_pnt_edges[e[ind].v[1]].insert(e[ind]);
-	}
-	// For the directed edge that now (potentially) has a mate,
-	// we need to remove
-	struct edge_t oe(e[ind].v[1],e[ind].v[0]);
-	if (this->current_bedges.find(ue[ind]) == this->current_bedges.end()) {
-	    this->edge_pnt_edges[oe.v[0]].erase(oe);
-	    this->edge_pnt_edges[oe.v[1]].erase(oe);
-	}
-    }
-
-#if 0
-    std::map<uedge_t, std::set<triangle_t>>::iterator uet_it;
-    for (uet_it = uedges2tris.begin(); uet_it != uedges2tris.end(); uet_it++) {
-	std::cerr << "edge " << (*uet_it).first.v[0] << "-" << (*uet_it).first.v[1] <<  " tri cnt: " << (*uet_it).second.size() << "\n";
-    }
-#endif
-    // Update boundary edge information
-    this->boundary_edges(1);
-
-#if 0
-    op_cnt++;
-    struct bu_vls pname = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&pname, "post_tri_add_tris.plot3-%05d", op_cnt);
-    tris_plot(bu_vls_cstr(&pname));
-    bu_vls_sprintf(&pname, "post_tri_add_boundary_edge.plot3%05d", op_cnt);
-    boundary_edges_plot(bu_vls_cstr(&pname));
-    bu_vls_free(&pname);
-#endif
+    // The addition of a triangle may change the boundary edge set.  Set update
+    // flag.
+    boundary_edges_stale = true;
 
     return true;
 }
-
 
 void cmesh_t::tri_remove(triangle_t &tri)
 {
@@ -149,46 +102,8 @@ void cmesh_t::tri_remove(triangle_t &tri)
     // Remove the triangle
     this->tris.erase(tri);
 
-    // Now that we know the new triangle count for the unordered edges: the
-    // addition of a triangle may change the boundary edge set.  Update.
-    for (int ind = 0; ind < 3; ind++) {
-	if (this->uedges2tris[ue[ind]].size() == 1) {
-	    this->current_bedges.insert(ue[ind]);
-	} else {
-	    this->current_bedges.erase(ue[ind]);
-	}
-    }
-
-    // With the addition of the new triangle, we need to update the
-    // point->edge mappings as well.
-    for (int ind = 0; ind < 3; ind++) {
-	// For the directed edge associated with the new triangle,
-	// we may need to add
-	if (this->current_bedges.find(ue[ind]) == this->current_bedges.end()) {
-	    this->edge_pnt_edges[e[ind].v[0]].erase(e[ind]);
-	    this->edge_pnt_edges[e[ind].v[1]].erase(e[ind]);
-	}
-	// For the directed edge that now (potentially) no longer has a mate,
-	// we need to dd
-	struct edge_t oe(e[ind].v[1],e[ind].v[0]);
-	if (this->current_bedges.find(ue[ind]) != this->current_bedges.end()) {
-	    this->edge_pnt_edges[oe.v[0]].insert(oe);
-	    this->edge_pnt_edges[oe.v[1]].insert(oe);
-	}
-    }
-
-    // Update boundary edge information
-    this->boundary_edges(1);
-
-#if 0
-    op_cnt++;
-    struct bu_vls pname = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&pname, "post_tri_remove_tris.plot3-%05d", op_cnt);
-    tris_plot(bu_vls_cstr(&pname));
-    bu_vls_sprintf(&pname, "post_tri_remove_boundary_edge.plot3-%05d", op_cnt);
-    boundary_edges_plot(bu_vls_cstr(&pname));
-    bu_vls_free(&pname);
-#endif
+    // flag boundary edge information for updating
+    boundary_edges_stale = true;
 }
 
 std::vector<triangle_t>
@@ -229,39 +144,58 @@ cmesh_t::vertex_face_neighbors(long vind)
 }
 
 std::set<uedge_t>
-cmesh_t::boundary_edges(int use_brep_data)
+cmesh_t::get_boundary_edges()
 {
-    this->problem_edges.clear();
-    std::set<uedge_t> result;
+    if (boundary_edges_stale) {
+	boundary_edges_update();
+    }
+
+    return boundary_edges;
+}
+
+std::set<uedge_t>
+cmesh_t::get_problem_edges()
+{
+    if (boundary_edges_stale) {
+	boundary_edges_update();
+    }
+
+    return problem_edges;
+}
+
+void
+cmesh_t::boundary_edges_update()
+{
+    if (!boundary_edges_stale) return;
+    boundary_edges_stale = false;
+
+    boundary_edges.clear();
+    problem_edges.clear();
+
     std::map<uedge_t, std::set<triangle_t>>::iterator ue_it;
     for (ue_it = this->uedges2tris.begin(); ue_it != this->uedges2tris.end(); ue_it++) {
-	if ((*ue_it).second.size() == 1) {
-	    struct uedge_t ue((*ue_it).first);
-	    int skip_pnt = 0;
-	    if (use_brep_data && this->edge_pnts) {
-		// If we have extra information from the Brep, we can filter out
-		// some "bad" edges
-		for (int ind = 0; ind < 2; ind++) {
-		    ON_3dPoint *p = pnts[ue.v[ind]];
-		    if (edge_pnts->find(p) == edge_pnts->end()) {
-			// Strange edge count on a vertex not known
-			// to be a Brep edge point - not a boundary
-			// edge
-			skip_pnt = 1;
-		    }
-		}
-	    }
-
-	    if (!skip_pnt) {
-		result.insert((*ue_it).first);
-	    } else {
-		// Track these edges, as they represent places where subsequent
-		// mesh operations will require extra care
-		this->problem_edges.insert((*ue_it).first);
+	if ((*ue_it).second.size() != 1) {
+	    continue;
+	}
+	struct uedge_t ue((*ue_it).first);
+	int skip_pnt = 0;
+	for (int ind = 0; ind < 2; ind++) {
+	    ON_3dPoint *p = pnts[ue.v[ind]];
+	    if (edge_pnts->find(p) == edge_pnts->end()) {
+		// Strange edge count on a vertex not known to be a Brep
+		// edge point - not a boundary edge
+		skip_pnt = 1;
 	    }
 	}
+
+	if (!skip_pnt) {
+	    boundary_edges.insert((*ue_it).first);
+	} else {
+	    // Track these edges, as they represent places where subsequent
+	    // mesh operations will require extra care
+	    problem_edges.insert((*ue_it).first);
+	}
     }
-    return result;
 }
 
 edge_t
@@ -287,11 +221,11 @@ cmesh_t::find_boundary_oriented_edge(uedge_t &ue)
 }
 
 std::vector<triangle_t>
-cmesh_t::interior_incorrect_normals(int use_brep_data)
+cmesh_t::interior_incorrect_normals()
 {
     std::vector<triangle_t> results;
     std::set<long> bedge_pnts;
-    std::set<uedge_t> bedges = this->boundary_edges(use_brep_data);
+    std::set<uedge_t> bedges = get_boundary_edges();
     std::set<uedge_t>::iterator ue_it;
     for (ue_it = bedges.begin(); ue_it != bedges.end(); ue_it++) {
 	bedge_pnts.insert((*ue_it).v[0]);
@@ -501,6 +435,10 @@ void cmesh_t::build(std::set<p2t::Triangle *> *cdttri, std::map<p2t::Point *, ON
 bool
 cmesh_t::tri_problem_edges(triangle_t &t)
 {
+    if (boundary_edges_stale) {
+	boundary_edges_update();
+    }
+
     if (!problem_edges.size()) return false;
 
     uedge_t ue1(t.v[0], t.v[1]);
@@ -517,6 +455,11 @@ std::vector<triangle_t>
 cmesh_t::problem_edge_tris()
 {
     std::vector<triangle_t> eresults;
+
+    if (boundary_edges_stale) {
+	boundary_edges_update();
+    }
+
     if (!problem_edges.size()) return eresults;
 
     std::set<triangle_t> uresults;
@@ -539,6 +482,11 @@ cmesh_t::self_intersecting_mesh()
     std::set<triangle_t> pedge_tris;
     std::set<uedge_t>::iterator u_it;
     std::set<triangle_t>::iterator t_it;
+
+    if (boundary_edges_stale) {
+	boundary_edges_update();
+    }
+
     for (u_it = problem_edges.begin(); u_it != problem_edges.end(); u_it++) {
 	std::set<triangle_t> ptris = uedges2tris[(*u_it)];
 	for (t_it = uedges2tris[(*u_it)].begin(); t_it != uedges2tris[(*u_it)].end(); t_it++) {
@@ -602,7 +550,7 @@ cmesh_t::process_seed_tri(triangle_t &seed, bool repair, double deg)
 
     csweep_t sweep;
     sweep.cmesh = this;
-    sweep.polygon.problem_edges = problem_edges;
+    sweep.polygon.cmesh = this;
     sweep.build_2d_pnts(sp, sn);
 
     // build an initial loop from a nearby valid triangle
@@ -655,6 +603,7 @@ cmesh_t::repair()
     // for the mesh processing...
 
     if (this->self_intersecting_mesh()) {
+	std::cerr << "self intersecting mesh\n";
 	tris_plot("self_intersecting_mesh.plot3");
 	exit(1);
     }
@@ -662,7 +611,7 @@ cmesh_t::repair()
     // *Wrong* triangles: problem edge and/or flipped normal triangles.  Handle
     // those first, so the subsequent clean-up pass doesn't have to worry about
     // errors they might introduce.
-    std::vector<triangle_t> f_tris = this->interior_incorrect_normals(1);
+    std::vector<triangle_t> f_tris = this->interior_incorrect_normals();
     std::vector<triangle_t> e_tris = this->problem_edge_tris();
     seed_tris.clear();
     seed_tris.insert(e_tris.begin(), e_tris.end());
@@ -728,7 +677,7 @@ void cmesh_t::boundary_edges_plot(const char *filename)
     bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
     pl_color_buc(plot_file, &c);
 
-    std::set<uedge_t> bedges = this->boundary_edges(1);
+    std::set<uedge_t> bedges = get_boundary_edges();
     std::set<uedge_t>::iterator b_it;
     for (b_it = bedges.begin(); b_it != bedges.end(); b_it++) {
 	uedge_t ue = *b_it;
@@ -867,7 +816,7 @@ void cmesh_t::interior_incorrect_normals_plot(const char *filename)
     bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
     pl_color_buc(plot_file, &c);
 
-    std::vector<triangle_t> faces = this->interior_incorrect_normals(1);
+    std::vector<triangle_t> faces = this->interior_incorrect_normals();
     for (size_t i = 0; i < faces.size(); i++) {
 	this->plot_tri(faces[i], &c, plot_file, 0, 255, 0);
     }
