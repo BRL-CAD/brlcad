@@ -291,6 +291,28 @@ class cpolyedge_t
 class cpolygon_t
 {
     public:
+
+	// Project cmesh 3D points into a 2D point array.  Probably won't use all of
+	// them, but this way vert indices on triangles will match in 2D and 3D.
+	void build_2d_pnts(ON_3dPoint &c, ON_3dVector &n);
+
+	// An initial loop may not contain all the interior points - to ensure it does,
+	// use grow_loop with a large deg value and the stop_on_contained flag set.
+	bool build_initial_loop(triangle_t &seed, bool repair);
+
+	// To grow only until all interior points are within the polygon, supply true
+	// for stop_on_contained.  Otherwise, grow_loop will follow the triangles out
+	// until the Brep normals of the triangles are beyond the deg limit.  Note
+	// that triangles which would cause a self-intersecting polygon will be
+	// rejected, even if they satisfy deg.
+	long grow_loop(double deg, bool stop_on_contained);
+
+	std::set<triangle_t> visited_triangles;
+	std::set<triangle_t> tris;
+
+	cmesh_t *cmesh;
+
+    private:
 	bool closed();
 	bool self_intersecting();
 	bool cdt();
@@ -308,7 +330,6 @@ class cpolygon_t
 	void polygon_plot_in_plane(const char *filename);
 	void print();
 
-	std::set<triangle_t> tris;
 	std::set<cpolyedge_t *> poly;
 	std::map<long, std::set<cpolyedge_t *>> v2pe;
 	std::set<long> interior_points;
@@ -319,49 +340,13 @@ class cpolygon_t
 	std::set<uedge_t> active_edges;
 	std::set<uedge_t> self_isect_edges;
 
-	ON_Plane tplane;
-
-	cmesh_t *cmesh;
-
 	long shared_edge_cnt(triangle_t &t);
 	long unshared_vertex(triangle_t &t);
 	std::pair<long,long> shared_vertices(triangle_t &t);
 	double ucv_angle(triangle_t &t);
 
-};
-
-class csweep_t
-{
-    public:
-	cpolygon_t polygon;
-	std::set<uedge_t> interior_uedges;
-
-	// Project cmesh 3D points into a 2D point array.  Probably won't use all of
-	// them, but this way vert indices on triangles will match in 2D and 3D.
-	void build_2d_pnts(ON_3dPoint &c, ON_3dVector &n);
-
-	// An initial loop may not contain all the interior points - to ensure it does,
-	// use grow_loop with a large deg value and the stop_on_contained flag set.
-	bool build_initial_loop(triangle_t &seed, bool repair);
-
-	// To grow only until all interior points are within the polygon, supply true
-	// for stop_on_contained.  Otherwise, grow_loop will follow the triangles out
-	// until the Brep normals of the triangles are beyond the deg limit.  Note
-	// that triangles which would cause a self-intersecting polygon will be
-	// rejected, even if they satisfy deg.
-	long grow_loop(double deg, bool stop_on_contained);
-
-	cmesh_t *cmesh;
-
-	void plot_uedge(struct uedge_t &ue, FILE* plot_file);
-	void plot_tri(const triangle_t &t, struct bu_color *buc, FILE *plot, int r, int g, int b);
-	void face_neighbors_plot(const triangle_t &f, const char *filename);
-	void vertex_face_neighbors_plot(long vind, const char *filename);
-
-	std::set<triangle_t> visited_triangles;
 	std::set<triangle_t> unusable_triangles;
 
-    private:
 	ON_Plane tplane;
 	ON_3dVector pdir;
 

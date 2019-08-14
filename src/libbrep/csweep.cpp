@@ -908,15 +908,15 @@ extern "C" {
 }
 
 std::vector<struct ctriangle_t>
-csweep_t::polygon_tris(double angle, bool brep_norm)
+cpolygon_t::polygon_tris(double angle, bool brep_norm)
 {
     std::set<triangle_t> initial_set;
 
     std::set<cpolyedge_t *>::iterator p_it;
-    for (p_it = polygon.poly.begin(); p_it != polygon.poly.end(); p_it++) {
+    for (p_it = poly.begin(); p_it != poly.end(); p_it++) {
 	cpolyedge_t *pe = *p_it;
 	struct uedge_t ue(pe->v[0], pe->v[1]);
-	bool edge_isect = (polygon.self_isect_edges.find(ue) != polygon.self_isect_edges.end());
+	bool edge_isect = (self_isect_edges.find(ue) != self_isect_edges.end());
 	std::set<triangle_t> petris = cmesh->uedges2tris[ue];
 	std::set<triangle_t>::iterator t_it;
 	for (t_it = petris.begin(); t_it != petris.end(); t_it++) {
@@ -970,7 +970,7 @@ csweep_t::polygon_tris(double angle, bool brep_norm)
 	nct->angle_to_nearest_uncontained = DBL_MAX;
 
 	for (int i = 0; i < 3; i++) {
-	    if (polygon.self_isect_edges.find(ue[i]) != polygon.self_isect_edges.end()) {
+	    if (self_isect_edges.find(ue[i]) != self_isect_edges.end()) {
 		nct->isect_edge = true;
 		unusable_triangles.erase(*f_it);
 	    }
@@ -981,12 +981,12 @@ csweep_t::polygon_tris(double angle, bool brep_norm)
 
 	// If we're not on a self-intersecting edge, check for use of uncontained points
 	for (int i = 0; i < 3; i++) {
-	    if (polygon.uncontained.find((t).v[i]) != polygon.uncontained.end()) {
+	    if (uncontained.find((t).v[i]) != uncontained.end()) {
 		nct->uses_uncontained = true;
 		unusable_triangles.erase(*f_it);
 	    }
 	    if (nct->uses_uncontained) break;
-	    if (polygon.flipped_face.find((t).v[i]) != polygon.flipped_face.end()) {
+	    if (flipped_face.find((t).v[i]) != flipped_face.end()) {
 		nct->uses_uncontained = true;
 		unusable_triangles.erase(*f_it);
 	    }
@@ -997,19 +997,19 @@ csweep_t::polygon_tris(double angle, bool brep_norm)
 	// If we aren't directly using an uncontained point, see if one is inside
 	// the triangle projection
 	cpolygon_t tpoly;
-	tpoly.pnts_2d = polygon.pnts_2d;
+	tpoly.pnts_2d = pnts_2d;
 	tpoly.add_edge(e1);
 	tpoly.add_edge(e2);
 	tpoly.add_edge(e3);
 	std::set<long>::iterator u_it;
-	for (u_it = polygon.uncontained.begin(); u_it != polygon.uncontained.end(); u_it++) {
+	for (u_it = uncontained.begin(); u_it != uncontained.end(); u_it++) {
 	    if (tpoly.point_in_polygon(*u_it, false)) {
 		nct->contains_uncontained = true;
 		unusable_triangles.erase(*f_it);
 	    }
 	}
 	if (!nct->contains_uncontained) {
-	    for (u_it = polygon.flipped_face.begin(); u_it != polygon.flipped_face.end(); u_it++) {
+	    for (u_it = flipped_face.begin(); u_it != flipped_face.end(); u_it++) {
 		if (tpoly.point_in_polygon(*u_it, false)) {
 		    nct->contains_uncontained = true;
 		    unusable_triangles.erase(*f_it);
@@ -1022,9 +1022,9 @@ csweep_t::polygon_tris(double angle, bool brep_norm)
 	// share 1 edge with the polygon, see how much it points at one of the
 	// points of interest (if any) definitely outside the current polygon
 	std::set<cpolyedge_t *>::iterator pe_it;
-	long shared_cnt = polygon.shared_edge_cnt(t);
+	long shared_cnt = shared_edge_cnt(t);
 	if (shared_cnt != 1) continue;
-	double vangle = polygon.ucv_angle(t);
+	double vangle = ucv_angle(t);
 	if (vangle > 0 && nct->angle_to_nearest_uncontained > vangle) {
 	    nct->angle_to_nearest_uncontained = vangle;
 	    unusable_triangles.erase(*f_it);
@@ -1062,11 +1062,11 @@ ctriangle_vect_cmp(std::vector<ctriangle_t> &v1, std::vector<ctriangle_t> &v2)
 }
 
 long
-csweep_t::grow_loop(double deg, bool stop_on_contained)
+cpolygon_t::grow_loop(double deg, bool stop_on_contained)
 {
     double angle = deg * ON_PI/180.0;
 
-    if (stop_on_contained && !polygon.uncontained.size()) {
+    if (stop_on_contained && !uncontained.size()) {
 	return 0;
     }
 
@@ -1103,8 +1103,6 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 	ts.pop();
 	triangle_t ct(cct.v[0], cct.v[1], cct.v[2]);
 
-	//polygon.polygon_plot_in_plane("poly_3d.plot3");
-
 	// A triangle will introduce at most one new point into the loop.  If
 	// the triangle is bad, it will define uncontained interior points and
 	// potentially (if it has unmated edges) won't grow the polygon at all.
@@ -1115,7 +1113,7 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 	std::set<edge_t> shared_edges;
 	std::set<edge_t>::iterator ne_it;
 	long vert = -1;
-	long new_edge_cnt = polygon.tri_process(&new_edges, &shared_edges, &vert, ct);
+	long new_edge_cnt = tri_process(&new_edges, &shared_edges, &vert, ct);
 
 	bool process = true;
 
@@ -1150,16 +1148,16 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 		    // flag all the verts except the edge verts as flipped face problem cases.
 		    for (int i = 0; i < 3; i++) {
 			if (!cmesh->brep_edge_pnt(ct.v[i])) {
-			    polygon.flipped_face.insert(ct.v[i]);
+			    flipped_face.insert(ct.v[i]);
 			}
 		    }
 		} else {
-		    polygon.flipped_face.insert(vert);
+		    flipped_face.insert(vert);
 		}
 	    }
 
 	    int use_tri = 1;
-	    if (!(polygon.poly.size() == 3 && polygon.interior_points.size())) {
+	    if (!(poly.size() == 3 && interior_points.size())) {
 		if (stop_on_contained && new_edge_cnt == 2 && !flipped_tri) {
 		    // If this is a good triangle and we're in repair mode, don't add it unless
 		    // it uses or points in the direction of at least one uncontained point.
@@ -1172,23 +1170,23 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 
 	    if (new_edge_cnt <= 0 || new_edge_cnt > 2) {
 		std::cerr << "fatal loop growth error!\n";
-		polygon.polygon_plot_in_plane("fatal_loop_growth_poly_3d.plot3");
+		polygon_plot_in_plane("fatal_loop_growth_poly_3d.plot3");
 		cmesh->tris_set_plot(visited_triangles, "fatal_loop_growth_visited_tris.plot3");
 		cmesh->tri_plot(ct, "fatal_loop_growth_bad_tri.plot3");
 		return -1;
 	    }
 
 	    if (use_tri) {
-		polygon.replace_edges(new_edges, shared_edges);
+		replace_edges(new_edges, shared_edges);
 		visited_triangles.insert(ct);
 	    }
 	}
 
-	bool h_uc = polygon.have_uncontained();
+	bool h_uc = have_uncontained();
 
-	if (stop_on_contained && !h_uc && polygon.poly.size() > 3) {
-	    polygon.cdt();
-	    cmesh->tris_set_plot(polygon.tris, "patch.plot3");
+	if (stop_on_contained && !h_uc && poly.size() > 3) {
+	    cdt();
+	    cmesh->tris_set_plot(tris, "patch.plot3");
 	    return (long)cmesh->tris.size();
 	}
 
@@ -1207,19 +1205,19 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 	    std::vector<struct ctriangle_t> ntris = polygon_tris(angle, stop_on_contained);
 
 	    if (ctriangle_vect_cmp(ptris, ntris)) {
-		if (h_uc || (stop_on_contained && polygon.poly.size() <= 3)) {
+		if (h_uc || (stop_on_contained && poly.size() <= 3)) {
 		    std::cout << "Error - new triangle set from polygon edge is the same as the previous triangle set.  Infinite loop, aborting\n";
 		    std::vector<struct ctriangle_t> infinite_loop_tris = polygon_tris(angle, stop_on_contained);
-		    polygon.polygon_plot("infinite_loop_poly_2d.plot3");
-		    polygon.polygon_plot_in_plane("infinite_loop_poly_3d.plot3");
+		    polygon_plot("infinite_loop_poly_2d.plot3");
+		    polygon_plot_in_plane("infinite_loop_poly_3d.plot3");
 		    cmesh->ctris_vect_plot(infinite_loop_tris, "infinite_loop_tris.plot3");
 		    return -1;
 		} else {
 		    // We're not in a repair situation, and we've already tried
 		    // the current triangle candidate set with no polygon
 		    // change.  Generate triangles.
-		    polygon.cdt();
-		    cmesh->tris_set_plot(polygon.tris, "patch.plot3");
+		    cdt();
+		    cmesh->tris_set_plot(tris, "patch.plot3");
 		    return (long)cmesh->tris.size();
 		}
 	    }
@@ -1234,8 +1232,8 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 		// per the current angle criteria we've got everything, and we're
 		// not concerned with contained points so this isn't an indication
 		// of an error condition.  Generate triangles.
-		polygon.cdt();
-		cmesh->tris_set_plot(polygon.tris, "patch.plot3");
+		cdt();
+		cmesh->tris_set_plot(tris, "patch.plot3");
 		return (long)cmesh->tris.size();
 	    }
 
@@ -1243,33 +1241,30 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
     }
 
     std::cout << "Error - loop growth terminated but conditions for triangulation were never satisfied!\n";
-    polygon.polygon_plot("failed_patch_poly_2d.plot3");
-    polygon.polygon_plot_in_plane("failed_patch_poly_3d.plot3");
+    polygon_plot("failed_patch_poly_2d.plot3");
+    polygon_plot_in_plane("failed_patch_poly_3d.plot3");
     return -1;
 }
 
 void
-csweep_t::build_2d_pnts(ON_3dPoint &c, ON_3dVector &n)
+cpolygon_t::build_2d_pnts(ON_3dPoint &c, ON_3dVector &n)
 {
     pdir = n;
     ON_Plane tri_plane(c, n);
-    polygon.pnts_2d = (point2d_t *)bu_calloc(cmesh->pnts.size() + 1, sizeof(point2d_t), "2D points array");
+    pnts_2d = (point2d_t *)bu_calloc(cmesh->pnts.size() + 1, sizeof(point2d_t), "2D points array");
     for (size_t i = 0; i < cmesh->pnts.size(); i++) {
 	double u, v;
 	ON_3dPoint op3d = (*cmesh->pnts[i]);
 	tri_plane.ClosestPointTo(op3d, &u, &v);
-	polygon.pnts_2d[i][X] = u;
-	polygon.pnts_2d[i][Y] = v;
+	pnts_2d[i][X] = u;
+	pnts_2d[i][Y] = v;
     }
     tplane = tri_plane;
-
-    polygon.cmesh = cmesh;
-    polygon.tplane = tplane;
 }
 
 
 bool
-csweep_t::build_initial_loop(triangle_t &seed, bool repair)
+cpolygon_t::build_initial_loop(triangle_t &seed, bool repair)
 {
     std::set<uedge_t>::iterator u_it;
 
@@ -1284,7 +1279,7 @@ csweep_t::build_initial_loop(triangle_t &seed, bool repair)
 	    if (cmesh->brep_edge_pnt(seed.v[i])) {
 		continue;
 	    }
-	    polygon.uncontained.insert(seed.v[i]);
+	    uncontained.insert(seed.v[i]);
 	}
 
 	// We need a initial valid polygon loop to grow.  Poll the neighbor faces - if one
@@ -1296,11 +1291,11 @@ csweep_t::build_initial_loop(triangle_t &seed, bool repair)
 		struct edge_t e1(t.v[0], t.v[1]);
 		struct edge_t e2(t.v[1], t.v[2]);
 		struct edge_t e3(t.v[2], t.v[0]);
-		polygon.add_edge(e1);
-		polygon.add_edge(e2);
-		polygon.add_edge(e3);
+		add_edge(e1);
+		add_edge(e2);
+		add_edge(e3);
 		visited_triangles.insert(t);
-		return polygon.closed();
+		return closed();
 	    }
 	}
 
@@ -1313,11 +1308,11 @@ csweep_t::build_initial_loop(triangle_t &seed, bool repair)
 		    struct edge_t e1(t.v[0], t.v[1]);
 		    struct edge_t e2(t.v[1], t.v[2]);
 		    struct edge_t e3(t.v[2], t.v[0]);
-		    polygon.add_edge(e1);
-		    polygon.add_edge(e2);
-		    polygon.add_edge(e3);
+		    add_edge(e1);
+		    add_edge(e2);
+		    add_edge(e3);
 		    visited_triangles.insert(t);
-		    return polygon.closed();
+		    return closed();
 		}
 	    }
 	}
@@ -1333,126 +1328,11 @@ csweep_t::build_initial_loop(triangle_t &seed, bool repair)
     struct edge_t e1(seed.v[0], seed.v[1]);
     struct edge_t e2(seed.v[1], seed.v[2]);
     struct edge_t e3(seed.v[2], seed.v[0]);
-    polygon.add_edge(e1);
-    polygon.add_edge(e2);
-    polygon.add_edge(e3);
+    add_edge(e1);
+    add_edge(e2);
+    add_edge(e3);
     visited_triangles.insert(seed);
-    return polygon.closed();
-}
-
-void csweep_t::plot_uedge(struct uedge_t &ue, FILE* plot_file)
-{
-    point_t bnp1, bnp2;
-    VSET(bnp1, polygon.pnts_2d[ue.v[0]][X], polygon.pnts_2d[ue.v[0]][Y], 0);
-    VSET(bnp2, polygon.pnts_2d[ue.v[1]][X], polygon.pnts_2d[ue.v[1]][Y], 0);
-    pdv_3move(plot_file, bnp1);
-    pdv_3cont(plot_file, bnp2);
-}
-
-
-void csweep_t::plot_tri(const triangle_t &t, struct bu_color *buc, FILE *plot, int r, int g, int b)
-{
-    point_t p[3];
-    point_t porig;
-    point_t c = VINIT_ZERO;
-
-    for (int i = 0; i < 3; i++) {
-	VSET(p[i], polygon.pnts_2d[t.v[i]][X], polygon.pnts_2d[t.v[i]][Y], 0);
-	c[X] += p[i][X];
-	c[Y] += p[i][Y];
-    }
-    c[X] = c[X]/3.0;
-    c[Y] = c[Y]/3.0;
-    c[Z] = 0;
-
-    for (size_t i = 0; i < 3; i++) {
-	if (i == 0) {
-	    VMOVE(porig, p[i]);
-	    pdv_3move(plot, p[i]);
-	}
-	pdv_3cont(plot, p[i]);
-    }
-    pdv_3cont(plot, porig);
-
-    /* fill in the "interior" using the rgb color*/
-    pl_color(plot, r, g, b);
-    for (size_t i = 0; i < 3; i++) {
-	pdv_3move(plot, p[i]);
-	pdv_3cont(plot, c);
-    }
-
-
-    /* Plot the triangle normal */
-    pl_color(plot, 0, 255, 255);
-    {
-	ON_3dVector tn = cmesh->tnorm(t);
-	vect_t tnt;
-	VSET(tnt, tn.x, tn.y, tn.z);
-	point_t npnt;
-	VADD2(npnt, tnt, c);
-	pdv_3move(plot, c);
-	pdv_3cont(plot, npnt);
-    }
-
-    /* Plot the brep normal */
-    pl_color(plot, 0, 100, 0);
-    {
-	ON_3dVector tn = cmesh->bnorm(t);
-	tn = tn * 0.5;
-	vect_t tnt;
-	VSET(tnt, tn.x, tn.y, tn.z);
-	point_t npnt;
-	VADD2(npnt, tnt, c);
-	pdv_3move(plot, c);
-	pdv_3cont(plot, npnt);
-    }
-
-    /* restore previous color */
-    pl_color_buc(plot, buc);
-}
-
-void csweep_t::face_neighbors_plot(const triangle_t &f, const char *filename)
-{
-    FILE* plot_file = fopen(filename, "w");
-
-    struct bu_color c = BU_COLOR_INIT_ZERO;
-    bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
-    pl_color_buc(plot_file, &c);
-
-    // Origin triangle has red interior
-    std::vector<triangle_t> faces = cmesh->face_neighbors(f);
-    plot_tri(f, &c, plot_file, 255, 0, 0);
-
-    // Neighbor triangles have blue interior
-    for (size_t i = 0; i < faces.size(); i++) {
-	triangle_t tri = faces[i];
-	plot_tri(tri, &c, plot_file, 0, 0, 255);
-    }
-
-    fclose(plot_file);
-}
-
-void csweep_t::vertex_face_neighbors_plot(long vind, const char *filename)
-{
-    FILE* plot_file = fopen(filename, "w");
-
-    struct bu_color c = BU_COLOR_INIT_ZERO;
-    bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
-    pl_color_buc(plot_file, &c);
-
-    std::vector<triangle_t> faces = cmesh->vertex_face_neighbors(vind);
-
-    for (size_t i = 0; i < faces.size(); i++) {
-	triangle_t tri = faces[i];
-	plot_tri(tri, &c, plot_file, 0, 0, 255);
-    }
-
-    // Plot the vind point that is the source of the triangles
-    pl_color(plot_file, 0, 255,0);
-    point2d_t p;
-    V2MOVE(p, polygon.pnts_2d[vind]);
-    pd_point(plot_file, p[X], p[Y]);
-    fclose(plot_file);
+    return closed();
 }
 
 }
