@@ -762,12 +762,22 @@ HIDDEN int to_poly_cont_build(struct ged *gedp,
 			      ged_func_ptr func,
 			      const char *usage,
 			      int maxargs);
+HIDDEN int to_poly_cont_build_func(Tcl_Interp *interp,
+				   struct ged *gedp,
+				   struct ged_dm_view *gdvp,
+				   int argc,
+				   const char *argv[],
+				   const char *usage,
+				   int doBind);
 HIDDEN int to_poly_cont_build_end(struct ged *gedp,
 				  int argc,
 				  const char *argv[],
 				  ged_func_ptr func,
 				  const char *usage,
 				  int maxargs);
+HIDDEN int to_poly_cont_build_end_func(struct ged_dm_view *gdvp,
+				       int argc,
+				       const char *argv[]);
 HIDDEN int to_poly_ell_mode(struct ged *gedp,
 			    int argc,
 			    const char *argv[],
@@ -12222,6 +12232,36 @@ to_poly_circ_mode_func(Tcl_Interp *interp,
 }
 
 
+int
+go_poly_cont_build(Tcl_Interp *interp,
+		   struct ged *gedp,
+		   struct ged_dm_view *gdvp,
+		   int argc,
+		   const char *argv[],
+		   const char *usage)
+{
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc != 3) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    /* Don't allow go_refresh() to be called */
+    if (current_top != NULL)
+	current_top->to_gop->go_refresh_on = 0;
+
+    return to_poly_cont_build_func(interp, gedp, gdvp, argc, argv, usage, 0);
+}
+
+
 HIDDEN int
 to_poly_cont_build(struct ged *gedp,
 		   int argc,
@@ -12230,13 +12270,8 @@ to_poly_cont_build(struct ged *gedp,
 		   const char *usage,
 		   int UNUSED(maxargs))
 {
-    int ac;
-    char *av[8];
-    int x, y;
-    fastf_t fx, fy;
-    point_t v_pt, m_pt;
     struct ged_dm_view *gdvp;
-    bview_data_polygon_state *gdpsp;
+    int ret;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -12262,6 +12297,32 @@ to_poly_cont_build(struct ged *gedp,
 	return GED_ERROR;
     }
 
+    /* shift the command name to argv[1] before calling to_mouse_poly_ell_func */
+    argv[1] = argv[0];
+    ret = to_poly_cont_build_func(current_top->to_interp, gedp, gdvp, argc-1, argv+1, usage, 1);
+
+    to_refresh_view(gdvp);
+
+    return ret;
+}
+
+
+HIDDEN int
+to_poly_cont_build_func(Tcl_Interp *interp,
+			struct ged *gedp,
+			struct ged_dm_view *gdvp,
+			int UNUSED(argc),
+			const char *argv[],
+			const char *usage,
+			int doBind)
+{
+    int ac;
+    char *av[7];
+    int x, y;
+    fastf_t fx, fy;
+    point_t v_pt, m_pt;
+    bview_data_polygon_state *gdpsp;
+
     if (argv[0][0] == 's')
 	gdpsp = &gdvp->gdv_view->gv_sdata_polygons;
     else
@@ -12275,8 +12336,8 @@ to_poly_cont_build(struct ged *gedp,
 
     gedp->ged_gvp = gdvp->gdv_view;
 
-    if (bu_sscanf(argv[2], "%d", &x) != 1 ||
-	bu_sscanf(argv[3], "%d", &y) != 1) {
+    if (bu_sscanf(argv[1], "%d", &x) != 1 ||
+	bu_sscanf(argv[2], "%d", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -12294,7 +12355,6 @@ to_poly_cont_build(struct ged *gedp,
     MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, v_pt);
 
     av[0] = "data_polygons";
-    av[1] = bu_vls_addr(&gdvp->gdv_name);
     if (gdpsp->gdps_cflag == 0) {
 	struct bu_vls plist = BU_VLS_INIT_ZERO;
 	struct bu_vls bindings = BU_VLS_INIT_ZERO;
@@ -12308,20 +12368,20 @@ to_poly_cont_build(struct ged *gedp,
 	gdpsp->gdps_curr_point_i = 1;
 
 	bu_vls_printf(&plist, "{ {%lf %lf %lf} {%lf %lf %lf} }", V3ARGS(m_pt), V3ARGS(m_pt));
-	ac = 4;
-	av[2] = "append_poly";
-	av[3] = bu_vls_addr(&plist);
-	av[4] = (char *)0;
+	ac = 3;
+	av[1] = "append_poly";
+	av[2] = bu_vls_addr(&plist);
+	av[3] = (char *)0;
 
-	(void)to_data_polygons(gedp, ac, (const char **)av, (ged_func_ptr)0, "", 0);
+	(void)to_data_polygons_func(interp, gedp, gdvp, ac, (const char **)av);
 	bu_vls_free(&plist);
 
-	if (dm_get_pathname(gdvp->gdv_dmp)) {
+	if (doBind && dm_get_pathname(gdvp->gdv_dmp)) {
 	    bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_poly_cont %s %%x %%y}",
 		    bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		    bu_vls_addr(&current_top->to_gop->go_name),
 		    bu_vls_addr(&gdvp->gdv_name));
-	    Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
+	    Tcl_Eval(interp, bu_vls_addr(&bindings));
 	}
 	bu_vls_free(&bindings);
     } else {
@@ -12333,20 +12393,20 @@ to_poly_cont_build(struct ged *gedp,
 	bu_vls_printf(&k_vls, "%zu", gdpsp->gdps_curr_point_i);
 	bu_vls_printf(&plist, "%lf %lf %lf", V3ARGS(m_pt));
 
-	ac = 7;
-	av[2] = "replace_point";
-	av[3] = bu_vls_addr(&i_vls);
-	av[4] = "0";
-	av[5] = bu_vls_addr(&k_vls);
-	av[6] = bu_vls_addr(&plist);
-	av[7] = (char *)0;
-	(void)to_data_polygons(gedp, ac, (const char **)av, (ged_func_ptr)0, "", 0);
-
 	ac = 6;
-	av[2] = "append_point";
+	av[1] = "replace_point";
+	av[2] = bu_vls_addr(&i_vls);
+	av[3] = "0";
+	av[4] = bu_vls_addr(&k_vls);
 	av[5] = bu_vls_addr(&plist);
 	av[6] = (char *)0;
-	(void)to_data_polygons(gedp, ac, (const char **)av, (ged_func_ptr)0, "", 0);
+	(void)to_data_polygons_func(interp, gedp, gdvp, ac, (const char **)av);
+
+	ac = 5;
+	av[1] = "append_point";
+	av[4] = bu_vls_addr(&plist);
+	av[5] = (char *)0;
+	(void)to_data_polygons_func(interp, gedp, gdvp, ac, (const char **)av);
 	bu_vls_free(&i_vls);
 	bu_vls_free(&k_vls);
 	bu_vls_free(&plist);
@@ -12354,9 +12414,31 @@ to_poly_cont_build(struct ged *gedp,
 	++gdpsp->gdps_curr_point_i;
     }
 
-    to_refresh_view(gdvp);
-
     return GED_OK;
+}
+
+
+int
+go_poly_cont_build_end(Tcl_Interp *UNUSED(interp),
+		       struct ged *gedp,
+		       struct ged_dm_view *gdvp,
+		       int argc,
+		       const char *argv[],
+		       const char *usage)
+{
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    if (argc != 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    /* Don't allow go_refresh() to be called */
+    if (current_top != NULL)
+	current_top->to_gop->go_refresh_on = 0;
+
+    return to_poly_cont_build_end_func(gdvp, argc, argv);
 }
 
 
@@ -12369,6 +12451,7 @@ to_poly_cont_build_end(struct ged *gedp,
 		       int UNUSED(maxargs))
 {
     struct ged_dm_view *gdvp;
+    int ret;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -12394,13 +12477,24 @@ to_poly_cont_build_end(struct ged *gedp,
 	return GED_ERROR;
     }
 
+    /* shift the command name to argv[1] before calling to_poly_ell_mode_func */
+    argv[1] = argv[0];
+    ret = to_poly_cont_build_end_func(gdvp, argc-1, argv+1);
+
+    to_refresh_view(gdvp);
+    return ret;
+}
+
+
+HIDDEN int
+to_poly_cont_build_end_func(struct ged_dm_view *gdvp,
+			    int UNUSED(argc),
+			    const char *argv[])
+{
     if (argv[0][0] == 's')
 	gdvp->gdv_view->gv_sdata_polygons.gdps_cflag = 0;
     else
 	gdvp->gdv_view->gv_data_polygons.gdps_cflag = 0;
-
-    gedp->ged_gvp = gdvp->gdv_view;
-    to_refresh_view(gdvp);
 
     return GED_OK;
 }

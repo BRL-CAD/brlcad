@@ -418,6 +418,18 @@ TCLCAD_EXPORT extern int go_poly_rect_mode(Tcl_Interp *interp,
 TCLCAD_EXPORT extern int go_run_tclscript(Tcl_Interp *interp,
 					  const char *tclscript,
 					  struct bu_vls *result_str);
+TCLCAD_EXPORT extern int go_poly_cont_build(Tcl_Interp *interp,
+					    struct ged *gedp,
+					    struct ged_dm_view *gdvp,
+					    int argc,
+					    const char *argv[],
+					    const char *usage);
+TCLCAD_EXPORT extern int go_poly_cont_build_end(Tcl_Interp *UNUSED(interp),
+						struct ged *gedp,
+						struct ged_dm_view *gdvp,
+						int argc,
+						const char *argv[],
+						const char *usage);
 
 /* defined in cmdhist_obj.c */
 TCLCAD_EXPORT extern int Cho_Init(Tcl_Interp *interp);
