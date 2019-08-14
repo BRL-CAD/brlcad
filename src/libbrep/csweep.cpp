@@ -122,7 +122,7 @@ cpolygon_t::remove_edge(const struct edge_t &e)
 
     v2pe[e.v[0]].erase(cull);
     v2pe[e.v[1]].erase(cull);
-    active_edges.insert(ue);
+    active_edges.erase(ue);
 
     // An edge removal may produce a new interior point candidate - check
     // Will need to verify eventually with point_in_polygon, but topologically
