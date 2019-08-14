@@ -189,6 +189,13 @@ cpolygon_t::unshared_vertex(triangle_t &t)
 	if (v2pe.find(t.v[i]) == v2pe.end()) {
 	    return t.v[i];
 	}
+	// TODO - need to check C++ map container behavior - if the set
+	// a key points to is fully cleared, will the above test work?
+	// (if it finds the empty set successfully it doesn't do what
+	// we need...)
+	if (v2pe[t.v[i]].size() == 0) {
+	    return t.v[i];
+	}
     }
 
     return -1;
