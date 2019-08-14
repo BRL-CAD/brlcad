@@ -1237,6 +1237,10 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 
 	    if (ctriangle_vect_cmp(ptris, ntris)) {
 		std::cout << "Error - new triangle set from polygon edge is the same as the previous triangle set.  Infinite loop error!\n";
+		std::vector<struct ctriangle_t> infinite_loop_tris = polygon_tris(angle, stop_on_contained);
+		polygon.polygon_plot("infinite_loop_poly_2d.plot3");
+		polygon.polygon_plot_in_plane("infinite_loop_poly_3d.plot3");
+		cmesh->ctris_vect_plot(infinite_loop_tris, "infinite_loop_tris.plot3");
 		return -1;
 	    }
 	    ptris.clear();
@@ -1251,11 +1255,10 @@ csweep_t::grow_loop(double deg, bool stop_on_contained)
 		// not concerned with contained points so this isn't an indication
 		// of an error condition.  Generate triangles.
 		std::cout << "In principle, we now have a workable patch\n";
-		polygon.polygon_plot("poly_2d.plot3");
 
 		polygon.cdt();
-
 		cmesh->tris_set_plot(polygon.tris, "patch.plot3");
+
 
 		return (long)cmesh->tris.size();
 	    }
