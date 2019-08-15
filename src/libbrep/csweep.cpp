@@ -1206,11 +1206,16 @@ cpolygon_t::grow_loop(double deg, bool stop_on_contained)
 
 	    if (ctriangle_vect_cmp(ptris, ntris)) {
 		if (h_uc || (stop_on_contained && poly.size() <= 3)) {
+		    struct bu_vls fname = BU_VLS_INIT_ZERO;
 		    std::cout << "Error - new triangle set from polygon edge is the same as the previous triangle set.  Infinite loop, aborting\n";
 		    std::vector<struct ctriangle_t> infinite_loop_tris = polygon_tris(angle, stop_on_contained);
-		    polygon_plot("infinite_loop_poly_2d.plot3");
-		    polygon_plot_in_plane("infinite_loop_poly_3d.plot3");
-		    cmesh->ctris_vect_plot(infinite_loop_tris, "infinite_loop_tris.plot3");
+		    bu_vls_sprintf(&fname, "%d-infinite_loop_poly_2d.plot3", cmesh->f_id);
+		    polygon_plot(bu_vls_cstr(&fname));
+		    bu_vls_sprintf(&fname, "%d-infinite_loop_poly_3d.plot3", cmesh->f_id);
+		    polygon_plot_in_plane(bu_vls_cstr(&fname));
+		    bu_vls_sprintf(&fname, "%d-infinite_loop_tris.plot3", cmesh->f_id);
+		    cmesh->ctris_vect_plot(infinite_loop_tris, bu_vls_cstr(&fname));
+		    bu_vls_free(&fname);
 		    return -1;
 		} else {
 		    // We're not in a repair situation, and we've already tried
@@ -1241,8 +1246,11 @@ cpolygon_t::grow_loop(double deg, bool stop_on_contained)
     }
 
     std::cout << "Error - loop growth terminated but conditions for triangulation were never satisfied!\n";
-    polygon_plot("failed_patch_poly_2d.plot3");
-    polygon_plot_in_plane("failed_patch_poly_3d.plot3");
+    struct bu_vls fname = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&fname, "%d-failed_patch_poly_2d.plot3", cmesh->f_id);
+    polygon_plot(bu_vls_cstr(&fname));
+    bu_vls_sprintf(&fname, "%d-failed_patch_poly_3d.plot3", cmesh->f_id);
+    polygon_plot_in_plane(bu_vls_cstr(&fname));
     return -1;
 }
 

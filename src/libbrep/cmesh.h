@@ -234,6 +234,8 @@ public:
     void tris_plot(const char *filename);
     void tri_plot(triangle_t &tri, const char *filename);
 
+    int f_id;
+
 private:
     /* Data containers */
     std::map<long, std::set<edge_t>> v2edges;
