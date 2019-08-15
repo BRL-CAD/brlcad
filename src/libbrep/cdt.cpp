@@ -690,6 +690,7 @@ ON_Brep_CDT_Mesh(
 	}
     }
 
+#if 0
     /* For the non-zero-area triangles sharing an edge with a non-trivially
      * degenerate zero area triangle, we need to build new polygons from each
      * triangle and the "orphaned" points along the edge(s).  We then
@@ -705,6 +706,7 @@ ON_Brep_CDT_Mesh(
 	    triangles_rebuild_involved(f);
 	}
     }
+#endif
 
     /* We know now the final triangle set.  We need to build up the set of
      * unique points and normals to generate a mesh containing only the
@@ -714,31 +716,20 @@ ON_Brep_CDT_Mesh(
     for (size_t fi = 0; fi < active_faces.size(); fi++) {
 	struct ON_Brep_CDT_Face_State *f = (*s_cdt->faces)[active_faces[fi]];
 	if (!f) continue;
-	std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
-	std::map<p2t::Point *, ON_3dPoint *> *normalmap = f->p2t_to_on3_norm_map;
-	std::set<p2t::Triangle *>::iterator tr_it;
-	std::set<p2t::Triangle *> *tris = f->tris;
-	for (tr_it = tris->begin(); tr_it != tris->end(); tr_it++) {
-	    p2t::Triangle *t = *tr_it;
-	    ON_3dVector tdir = p2tTri_Normal(t, pointmap);
+	std::map<ON_3dPoint *, ON_3dPoint *> *normalmap = f->on3_to_norm_map;
+	std::set<cmesh::triangle_t>::iterator tr_it;
+	for (tr_it = f->fmesh.tris.begin(); tr_it != f->fmesh.tris.end(); tr_it++) {
 	    for (size_t j = 0; j < 3; j++) {
-		p2t::Point *p = t->GetPoint(j);
-		ON_3dPoint *p3d = (*pointmap)[p];
+		ON_3dPoint *p3d = f->fmesh.pnts[(*tr_it).v[j]];
 		vfpnts.insert(p3d);
-		ON_3dPoint *onorm = (*normalmap)[p];
+		ON_3dPoint *onorm = NULL;
+		if (s_cdt->singular_vert_to_norms->find(p3d) != s_cdt->singular_vert_to_norms->end()) {
+		    // Use calculated normal for singularity points
+		    onorm = (*s_cdt->singular_vert_to_norms)[p3d];
+		} else {
+		    onorm = (*normalmap)[p3d];
+		}
 		if (onorm) {
-		    double onorm_dp = ON_DotProduct(*onorm, tdir);
-		    if (ON_DotProduct(*onorm, tdir) < 0.1) {
-			if (s_cdt->singular_vert_to_norms->find(p3d) != s_cdt->singular_vert_to_norms->end()) {
-			    // Override singularity points with calculated normal, if present
-			    // and a "better" normal than onorm
-			    ON_3dPoint *cnrm = (*s_cdt->singular_vert_to_norms)[p3d];
-			    double vertnorm_dp = ON_DotProduct(*cnrm, tdir);
-			    if (vertnorm_dp > onorm_dp) {
-				onorm = cnrm;
-			    }
-			}
-		    }
 		    vfnormals.insert(onorm);
 		}
 	    }
@@ -749,7 +740,7 @@ ON_Brep_CDT_Mesh(
     for (size_t fi = 0; fi < active_faces.size(); fi++) {
 	struct ON_Brep_CDT_Face_State *f = (*s_cdt->faces)[active_faces[fi]];
 	if (!f) continue;
-	triangle_cnt += f->tris->size();
+	triangle_cnt += f->fmesh.tris.size();
     }
 
     bu_log("tri_cnt: %zd\n", triangle_cnt);
@@ -811,37 +802,21 @@ ON_Brep_CDT_Mesh(
     for (size_t fi = 0; fi < active_faces.size(); fi++) {
 	struct ON_Brep_CDT_Face_State *f = (*s_cdt->faces)[active_faces[fi]];
 	if (!f) continue;
-	std::map<p2t::Point *, ON_3dPoint *> *pointmap = f->p2t_to_on3_map;
-	std::map<p2t::Point *, ON_3dPoint *> *normalmap = f->p2t_to_on3_norm_map;
-	std::set<p2t::Triangle *>::iterator tr_it;
-	std::set<p2t::Triangle *> *tris = f->tris;
-	triangle_cnt += tris->size();
+	std::map<ON_3dPoint *, ON_3dPoint *> *normalmap = f->on3_to_norm_map;
+	std::set<cmesh::triangle_t>::iterator tr_it;
+	triangle_cnt += f->fmesh.tris.size();
 	int active_tris = 0;
-	for (tr_it = tris->begin(); tr_it != tris->end(); tr_it++) {
-	    p2t::Triangle *t = *tr_it;
-	    ON_3dVector tdir = p2tTri_Normal(t, pointmap);
+	for (tr_it = f->fmesh.tris.begin(); tr_it != f->fmesh.tris.end(); tr_it++) {
 	    active_tris++;
 	    for (size_t j = 0; j < 3; j++) {
-		p2t::Point *p = t->GetPoint(j);
-		ON_3dPoint *op = (*pointmap)[p];
+		ON_3dPoint *op = f->fmesh.pnts[(*tr_it).v[j]];
 		(*faces)[face_cnt*3 + j] = on_pnt_to_bot_pnt[op];
 		if (normals) {
-		    ON_3dPoint *onorm = (*normalmap)[p];
-		    double onorm_dp = ON_DotProduct(*onorm, tdir);
-		    if (ON_DotProduct(*onorm, tdir) < 0.1) {
-			if (s_cdt->singular_vert_to_norms->find(op) != s_cdt->singular_vert_to_norms->end()) {
-			    // Override singularity points with calculated normal, if present
-			    // and a "better" normal than onorm
-			    ON_3dPoint *cnrm = (*s_cdt->singular_vert_to_norms)[op];
-			    double vertnorm_dp = ON_DotProduct(*cnrm, tdir);
-			    if (vertnorm_dp > onorm_dp) {
-				onorm = cnrm;
-			    }
-			}
-		    }
+		    ON_3dPoint *onorm = (*normalmap)[op];
 		    (*face_normals)[face_cnt*3 + j] = on_norm_to_bot_norm[onorm];
 		}
 	    }
+#if 0
 	    // If we have a reversed face we need to adjust the triangle vertex
 	    // ordering.
 	    if (s_cdt->brep->m_F[active_faces[fi]].m_bRev) {
@@ -855,6 +830,7 @@ ON_Brep_CDT_Mesh(
 		    (*face_normals)[face_cnt*3 + 2] = fntmp;
 		}
 	    }
+#endif
 
 	    face_cnt++;
 	}

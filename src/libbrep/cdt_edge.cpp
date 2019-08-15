@@ -670,10 +670,6 @@ getEdgePoints(
 
     } else {
 
-	if (edge->m_edge_index == 542) {
-	    std::cout << "here we go\n";
-	}
-
 	SplitEdgeSegmentMidPt(root);
 
     }

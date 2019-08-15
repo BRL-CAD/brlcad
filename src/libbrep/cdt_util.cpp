@@ -664,25 +664,30 @@ ON_Brep_CDT_VList_Face(
 {
     point_t pt[3] = {VINIT_ZERO, VINIT_ZERO, VINIT_ZERO};
     vect_t nv[3] = {VINIT_ZERO, VINIT_ZERO, VINIT_ZERO};
+#if 0
     point_t pt1 = VINIT_ZERO;
     point_t pt2 = VINIT_ZERO;
+#endif
 
-    std::set<p2t::Triangle *>::iterator tr_it;
-    std::set<p2t::Triangle *> *tris = (*s->faces)[face_index]->tris;
-    std::map<p2t::Point *, ON_3dPoint *> *pointmap = (*s->faces)[face_index]->p2t_to_on3_map;
-    std::map<p2t::Point *, ON_3dPoint *> *normalmap = (*s->faces)[face_index]->p2t_to_on3_norm_map;
+    struct ON_Brep_CDT_Face_State *f = (*s->faces)[face_index];
+    std::set<cmesh::triangle_t>::iterator tr_it;
+    std::set<cmesh::triangle_t> tris = f->fmesh.tris;
+    std::map<ON_3dPoint *, ON_3dPoint *> *normalmap = f->on3_to_norm_map;
 
     switch (mode) {
 	case 0:
 	    // 3D shaded triangles
-	    for (tr_it = tris->begin(); tr_it != tris->end(); tr_it++) {
-		p2t::Triangle *t = *tr_it;
-		p2t::Point *p = NULL;
+	    for (tr_it = tris.begin(); tr_it != tris.end(); tr_it++) {
 		for (size_t j = 0; j < 3; j++) {
-		    p = t->GetPoint(j);
-		    ON_3dPoint *op = (*pointmap)[p];
-		    ON_3dPoint *onorm = (*normalmap)[p];
-		    VSET(pt[j], op->x, op->y, op->z);
+		    ON_3dPoint *p3d = f->fmesh.pnts[(*tr_it).v[j]];
+		    ON_3dPoint *onorm = NULL;
+		    if (f->s_cdt->singular_vert_to_norms->find(p3d) != f->s_cdt->singular_vert_to_norms->end()) {
+			// Use calculated normal for singularity points
+			onorm = (*f->s_cdt->singular_vert_to_norms)[p3d];
+		    } else {
+			onorm = (*normalmap)[p3d];
+		    }
+		    VSET(pt[j], p3d->x, p3d->y, p3d->z);
 		    VSET(nv[j], onorm->x, onorm->y, onorm->z);
 		}
 		//tri one
@@ -699,13 +704,10 @@ ON_Brep_CDT_VList_Face(
 	    break;
 	case 1:
 	    // 3D wireframe
-	    for (tr_it = tris->begin(); tr_it != tris->end(); tr_it++) {
-		p2t::Triangle *t = *tr_it;
-		p2t::Point *p = NULL;
+	    for (tr_it = tris.begin(); tr_it != tris.end(); tr_it++) {
 		for (size_t j = 0; j < 3; j++) {
-		    p = t->GetPoint(j);
-		    ON_3dPoint *op = (*pointmap)[p];
-		    VSET(pt[j], op->x, op->y, op->z);
+		    ON_3dPoint *p3d = f->fmesh.pnts[(*tr_it).v[j]];
+		    VSET(pt[j], p3d->x, p3d->y, p3d->z);
 		}
 		//tri one
 		BN_ADD_VLIST(vlfree, vhead, pt[0], BN_VLIST_LINE_MOVE);
@@ -715,8 +717,9 @@ ON_Brep_CDT_VList_Face(
 	    }
 	    break;
 	case 2:
+#if 0
 	    // 2D wireframe
-	    for (tr_it = tris->begin(); tr_it != tris->end(); tr_it++) {
+	    for (tr_it = tris.begin(); tr_it != tris.end(); tr_it++) {
 		p2t::Triangle *t = *tr_it;
 		p2t::Point *p = NULL;
 
@@ -737,6 +740,7 @@ ON_Brep_CDT_VList_Face(
 		    BN_ADD_VLIST(vlfree, vhead, pt2, BN_VLIST_LINE_DRAW);
 		}
 	    }
+#endif
 	    break;
 	default:
 	    return -1;
