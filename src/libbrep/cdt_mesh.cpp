@@ -94,9 +94,11 @@ class cpolygon_t
 
 	std::set<cpolyedge_t *> poly;
 	std::map<long, std::set<cpolyedge_t *>> v2pe;
+	std::set<long> used_verts; /* both interior and active points - for a quick check if a point is active */
 	std::set<long> interior_points;
 	std::set<long> uncontained;
 	std::set<long> flipped_face;
+	std::set<long> target_verts;
 	point2d_t *pnts_2d;
 
 	std::set<uedge_t> active_edges;
@@ -161,6 +163,8 @@ cpolygon_t::add_edge(const struct edge_t &e)
     v2pe[v1].insert(nedge);
     v2pe[v2].insert(nedge);
     active_edges.insert(uedge_t(le));
+    used_verts.insert(v1);
+    used_verts.insert(v2);
 
     cpolyedge_t *prev = NULL;
     cpolyedge_t *next = NULL;
@@ -354,6 +358,26 @@ cpolygon_t::ucv_angle(triangle_t &t)
 	}
     }
     for (u_it = flipped_face.begin(); u_it != flipped_face.end(); u_it++) {
+	if (point_in_polygon(*u_it, true)) {
+	    ON_2dPoint op = ON_2dPoint(pnts_2d[*u_it][X], pnts_2d[*u_it][Y]);
+	    ON_3dVector vt = op - pline;
+
+	    // If vt is almost on l2d, we want this triangle - there's an excellent chance
+	    // this triangle will contain it, but the unitized vector direction may be unreliable
+	    // if our starting vector is vanishingly short...
+	    if (vt.Length() < 0.01 * l2d.Length()) return ON_ZERO_TOLERANCE;
+
+	    // Not almost on the edge, but if it's still heading in the direction we need to go
+	    // we want to know.  Unitize and proceed.
+	    vt.Unitize();
+	    double vangle = ON_DotProduct(vu, vt);
+	    if (vangle > 0 && r_ang > vangle) {
+		r_ang = vangle;
+	    }
+	}
+    }
+
+    for (u_it = target_verts.begin(); u_it != target_verts.end(); u_it++) {
 	if (point_in_polygon(*u_it, true)) {
 	    ON_2dPoint op = ON_2dPoint(pnts_2d[*u_it][X], pnts_2d[*u_it][Y]);
 	    ON_3dVector vt = op - pline;
@@ -609,15 +633,18 @@ cpolygon_t::cdt()
 {
     if (!closed()) return false;
 
-    // We may have faces perpendicular to the original triangle face included, so
-    // calculate a best fit plane and re-project the original points.  The new plane
-    // should be close, but not exactly the same plane as the starting plane.
+    // We may have faces perpendicular to the original triangle face included,
+    // so calculate a best fit plane and re-project the original points.  The
+    // new plane should be close, but not exactly the same plane as the
+    // starting plane.  It may happen that the reprojection invalids the
+    // inside/outside categorization of points - in that case, abandon the
+    // re-fit and attempt the cdt with the original plane.
     if (!best_fit_plane()) {
 	std::cerr << "cdt(): finding the best fit plane failed.\n";
 	return false;
     }
 
-    bu_free(pnts_2d, "free old 2d points array)");
+    point2d_t *old_pnts_2d = pnts_2d;
     pnts_2d = (point2d_t *)bu_calloc(cdt_mesh->pnts.size() + 1, sizeof(point2d_t), "2D points array");
     for (size_t i = 0; i < cdt_mesh->pnts.size(); i++) {
 	double u, v;
@@ -631,26 +658,21 @@ cpolygon_t::cdt()
     // are still interior points - if not, put them back
     int valid_reprojection = 1;
     if (!closed()) {
-	std::cerr << "cdt(): Reprojected loop not closed - trying original.\n";
 	valid_reprojection = 0;
-    }
-    std::set<long>::iterator u_it;
-    for (u_it = interior_points.begin(); u_it != interior_points.end(); u_it++) {
-	if (point_in_polygon(*u_it, false)) {
-	    std::cerr << "cdt(): Reprojected loop no longer contains interior points - trying original.\n";
-	    valid_reprojection = 0;
+    } else {
+	std::set<long>::iterator u_it;
+	for (u_it = interior_points.begin(); u_it != interior_points.end(); u_it++) {
+	    if (point_in_polygon(*u_it, false)) {
+		valid_reprojection = 0;
+		break;
+	    }
 	}
     }
     if (!valid_reprojection) {
 	bu_free(pnts_2d, "free old 2d points array)");
-	pnts_2d = (point2d_t *)bu_calloc(cdt_mesh->pnts.size() + 1, sizeof(point2d_t), "2D points array");
-	for (size_t i = 0; i < cdt_mesh->pnts.size(); i++) {
-	    double u, v;
-	    ON_3dPoint op3d = (*cdt_mesh->pnts[i]);
-	    tplane.ClosestPointTo(op3d, &u, &v);
-	    pnts_2d[i][X] = u;
-	    pnts_2d[i][Y] = v;
-	}
+	pnts_2d = old_pnts_2d;
+    } else {
+	bu_free(old_pnts_2d, "free old 2d points array)");
     }
 
     int *faces = NULL;
@@ -1139,6 +1161,7 @@ cpolygon_t::have_uncontained()
     for (u_it = mvpnts.begin(); u_it != mvpnts.end(); u_it++) {
 	uncontained.erase(*u_it);
 	interior_points.insert(*u_it);
+	used_verts.insert(*u_it);
     }
 
     return (uncontained.size() > 0) ? true : false;
@@ -1299,6 +1322,7 @@ cpolygon_t::polygon_tris(double angle, bool brep_norm, int initial)
 	// If we've pulled in a face that is all edge vertices, go with it
 	if (cdt_mesh->brep_edge_pnt(t.v[0]) && cdt_mesh->brep_edge_pnt(t.v[1]) && cdt_mesh->brep_edge_pnt(t.v[2])) {
 	    nct->all_bedge = true;
+	    unusable_triangles.erase(*f_it);
 	}
 	if (nct->all_bedge) continue;
 
@@ -1357,6 +1381,14 @@ cpolygon_t::grow_loop(double deg, bool stop_on_contained, triangle_t &target)
     if (deg < 0 || deg > 170) {
 	std::cerr << "Degree error: " << deg << "\n";
 	return -1;
+    }
+
+    if (visited_triangles.find(target) == visited_triangles.end()) {
+	for (int i = 0; i < 3; i++) {
+	    if (used_verts.find(target.v[i]) == used_verts.end()) {
+		target_verts.insert(target.v[i]);
+	    }
+	}
     }
 
     unusable_triangles.clear();
