@@ -14,8 +14,9 @@
 #include "bu/color.h"
 #include "bu/sort.h"
 #include "bu/malloc.h"
-//#include "bn/mat.h" /* bn_vec_perp */
+#include "bn/mat.h" /* bn_vec_perp */
 #include "bn/plot3.h"
+#include "bn/plane.h" /* bn_fit_plane */
 #include "bg/polygon.h"
 #include "./cdt_mesh.h"
 
@@ -64,7 +65,7 @@ class cpolygon_t
 	// until the Brep normals of the triangles are beyond the deg limit.  Note
 	// that triangles which would cause a self-intersecting polygon will be
 	// rejected, even if they satisfy deg.
-	long grow_loop(double deg, bool stop_on_contained);
+	long grow_loop(double deg, bool stop_on_contained, triangle_t &target);
 
 	std::set<triangle_t> visited_triangles;
 	std::set<triangle_t> tris;
@@ -74,6 +75,7 @@ class cpolygon_t
     private:
 	bool closed();
 	bool self_intersecting();
+	bool best_fit_plane();
 	bool cdt();
 
 	bool point_in_polygon(long v, bool flip);
@@ -87,6 +89,7 @@ class cpolygon_t
 
 	void polygon_plot(const char *filename);
 	void polygon_plot_in_plane(const char *filename);
+	void plot_best_fit_plane(const char *filename);
 	void print();
 
 	std::set<cpolyedge_t *> poly;
@@ -107,6 +110,7 @@ class cpolygon_t
 	std::set<triangle_t> unusable_triangles;
 
 	ON_Plane tplane;
+	ON_Plane fit_plane;
 	ON_3dVector pdir;
 
 	std::vector<struct ctriangle_t> polygon_tris(double angle, bool brep_norm, int initial);
@@ -542,9 +546,113 @@ cpolygon_t::point_in_polygon(long v, bool flip)
 }
 
 bool
+cpolygon_t::best_fit_plane()
+{
+    // Find the best fit plane for the Brep vertices of the triangles involved with
+    // the polygon
+    std::set<long> averts;
+    int ncnt = 0;
+    
+    std::set<cpolyedge_t *>::iterator cp_it;
+    for (cp_it = poly.begin(); cp_it != poly.end(); cp_it++) {
+	cpolyedge_t *pe = *cp_it;
+	averts.insert(pe->v[0]);
+	averts.insert(pe->v[1]);
+    }
+    std::set<long>::iterator a_it;
+    for (a_it = interior_points.begin(); a_it != interior_points.end(); a_it++) {
+	averts.insert(*a_it);
+    }
+
+    ON_3dVector avgtnorm(0.0,0.0,0.0);
+    for (a_it = averts.begin(); a_it != averts.end(); a_it++) {
+	ON_3dPoint *p = cdt_mesh->pnts[*a_it];
+	ON_3dPoint *vn = (*cdt_mesh->normalmap)[p];
+	if (vn) {
+	    avgtnorm += *vn;
+	    ncnt++;
+	}
+    }
+    avgtnorm = avgtnorm * 1.0/(double)ncnt;
+
+    point_t pcenter;
+    vect_t pnorm;
+    {
+        point_t *vpnts = (point_t *)bu_calloc(averts.size()+1, sizeof(point_t), "fitting points");
+        int pnts_ind = 0;
+	for (a_it = averts.begin(); a_it != averts.end(); a_it++) {
+            ON_3dPoint *p = cdt_mesh->pnts[*a_it];
+            vpnts[pnts_ind][X] = p->x;
+            vpnts[pnts_ind][Y] = p->y;
+            vpnts[pnts_ind][Z] = p->z;
+            pnts_ind++;
+        }
+        if (bn_fit_plane(&pcenter, &pnorm, pnts_ind, vpnts)) {
+	    return false;
+	}
+        bu_free(vpnts, "fitting points");
+
+        ON_3dVector on_norm(pnorm[X], pnorm[Y], pnorm[Z]);
+        if (ON_DotProduct(on_norm, avgtnorm) < 0) {
+            VSCALE(pnorm, pnorm, -1);
+        }
+    }
+
+    ON_Plane rplane(pcenter, pnorm);
+
+    fit_plane = rplane;
+    return true;
+}
+
+bool
 cpolygon_t::cdt()
 {
     if (!closed()) return false;
+
+    // We may have faces perpendicular to the original triangle face included, so
+    // calculate a best fit plane and re-project the original points.  The new plane
+    // should be close, but not exactly the same plane as the starting plane.
+    if (!best_fit_plane()) {
+	std::cerr << "cdt(): finding the best fit plane failed.\n";
+	return false;
+    }
+
+    bu_free(pnts_2d, "free old 2d points array)");
+    pnts_2d = (point2d_t *)bu_calloc(cdt_mesh->pnts.size() + 1, sizeof(point2d_t), "2D points array");
+    for (size_t i = 0; i < cdt_mesh->pnts.size(); i++) {
+	double u, v;
+	ON_3dPoint op3d = (*cdt_mesh->pnts[i]);
+	fit_plane.ClosestPointTo(op3d, &u, &v);
+	pnts_2d[i][X] = u;
+	pnts_2d[i][Y] = v;
+    }
+
+    // Make sure the new points still form a close polygon and all the interior points
+    // are still interior points - if not, put them back
+    int valid_reprojection = 1;
+    if (!closed()) {
+	std::cerr << "cdt(): Reprojected loop not closed - trying original.\n";
+	valid_reprojection = 0;
+    }
+    std::set<long>::iterator u_it;
+    for (u_it = interior_points.begin(); u_it != interior_points.end(); u_it++) {
+	if (point_in_polygon(*u_it, false)) {
+	    std::cerr << "cdt(): Reprojected loop no longer contains interior points - trying original.\n";
+	    valid_reprojection = 0;
+	}
+    }
+    if (!valid_reprojection) {
+	bu_free(pnts_2d, "free old 2d points array)");
+	pnts_2d = (point2d_t *)bu_calloc(cdt_mesh->pnts.size() + 1, sizeof(point2d_t), "2D points array");
+	for (size_t i = 0; i < cdt_mesh->pnts.size(); i++) {
+	    double u, v;
+	    ON_3dPoint op3d = (*cdt_mesh->pnts[i]);
+	    tplane.ClosestPointTo(op3d, &u, &v);
+	    pnts_2d[i][X] = u;
+	    pnts_2d[i][Y] = v;
+	}
+    }
+
     int *faces = NULL;
     int num_faces = 0;
     int *steiner = NULL;
@@ -924,6 +1032,56 @@ void cpolygon_t::polygon_plot_in_plane(const char *filename)
     fclose(plot_file);
 }
 
+void
+cpolygon_t::plot_best_fit_plane(const char *filename)
+{
+    FILE* plot_file = fopen(filename, "w");
+    int r = int(256*drand48() + 1.0);
+    int g = int(256*drand48() + 1.0);
+    int b = int(256*drand48() + 1.0);
+    pl_color(plot_file, r, g, b);
+    ON_3dPoint ocenter = fit_plane.Origin();
+    ON_3dVector onorm = fit_plane.Normal();
+    point_t center, norm;
+
+    VSET(center, ocenter.x, ocenter.y, ocenter.z);
+    VSET(norm, onorm.x, onorm.y, onorm.z);
+
+    vect_t xbase, ybase, tip;
+    vect_t x_1, x_2, y_1, y_2;
+    bn_vec_perp(xbase, norm);
+    VCROSS(ybase, xbase, norm);
+    VUNITIZE(xbase);
+    VUNITIZE(ybase);
+    VSCALE(xbase, xbase, 10);
+    VSCALE(ybase, ybase, 10);
+    VADD2(x_1, center, xbase);
+    VSUB2(x_2, center, xbase);
+    VADD2(y_1, center, ybase);
+    VSUB2(y_2, center, ybase);
+
+    pdv_3move(plot_file, x_1);
+    pdv_3cont(plot_file, x_2);
+    pdv_3move(plot_file, y_1);
+    pdv_3cont(plot_file, y_2);
+
+    pdv_3move(plot_file, x_1);
+    pdv_3cont(plot_file, y_1);
+    pdv_3move(plot_file, x_2);
+    pdv_3cont(plot_file, y_2);
+
+    pdv_3move(plot_file, x_2);
+    pdv_3cont(plot_file, y_1);
+    pdv_3move(plot_file, x_1);
+    pdv_3cont(plot_file, y_2);
+
+    VSCALE(tip, norm, 5);
+    VADD2(tip, center, tip);
+    pdv_3move(plot_file, center);
+    pdv_3cont(plot_file, tip);
+
+    fclose(plot_file);
+}
 
 void cpolygon_t::print()
 {
@@ -999,6 +1157,8 @@ extern "C" {
 	    if (!t1->uses_uncontained && t2->uses_uncontained) return 0;
 	    if (t1->contains_uncontained && !t2->contains_uncontained) return 1;
 	    if (!t1->contains_uncontained && t2->contains_uncontained) return 0;
+	    if (t1->all_bedge && !t2->all_bedge) return 1;
+	    if (!t1->all_bedge && t2->all_bedge) return 0;
 	    if (t1->angle_to_nearest_uncontained > t2->angle_to_nearest_uncontained) return 1;
 	    if (t1->angle_to_nearest_uncontained < t2->angle_to_nearest_uncontained) return 0;
 	    bool c1 = (t1->v[0] < t2->v[0]);
@@ -1080,6 +1240,7 @@ cpolygon_t::polygon_tris(double angle, bool brep_norm, int initial)
 	ue[1].set(t.v[1], t.v[2]);
 	ue[2].set(t.v[2], t.v[0]);
 
+	nct->all_bedge = false;
 	nct->isect_edge = false;
 	nct->uses_uncontained = false;
 	nct->contains_uncontained = false;
@@ -1134,6 +1295,13 @@ cpolygon_t::polygon_tris(double angle, bool brep_norm, int initial)
 	}
 	if (nct->contains_uncontained) continue;
 
+
+	// If we've pulled in a face that is all edge vertices, go with it
+	if (cdt_mesh->brep_edge_pnt(t.v[0]) && cdt_mesh->brep_edge_pnt(t.v[1]) && cdt_mesh->brep_edge_pnt(t.v[2])) {
+	    nct->all_bedge = true;
+	}
+	if (nct->all_bedge) continue;
+
 	// If we aren't directly involved with an uncontained point and we only
 	// share 1 edge with the polygon, see how much it points at one of the
 	// points of interest (if any) definitely outside the current polygon
@@ -1178,7 +1346,7 @@ ctriangle_vect_cmp(std::vector<ctriangle_t> &v1, std::vector<ctriangle_t> &v2)
 }
 
 long
-cpolygon_t::grow_loop(double deg, bool stop_on_contained)
+cpolygon_t::grow_loop(double deg, bool stop_on_contained, triangle_t &target)
 {
     double angle = deg * ON_PI/180.0;
 
@@ -1279,6 +1447,7 @@ cpolygon_t::grow_loop(double deg, bool stop_on_contained)
 		    // If this is a good triangle and we're in repair mode, don't add it unless
 		    // it uses or points in the direction of at least one uncontained point.
 		    if (!cct.isect_edge && !cct.uses_uncontained && !cct.contains_uncontained &&
+			    !cct.all_bedge &&
 			    (cct.angle_to_nearest_uncontained > 2*ON_PI || cct.angle_to_nearest_uncontained < 0)) {
 			use_tri = 0;
 		    }
@@ -1308,7 +1477,7 @@ cpolygon_t::grow_loop(double deg, bool stop_on_contained)
 
 	bool h_uc = have_uncontained();
 
-	if (stop_on_contained && !h_uc && poly.size() > 3) {
+	if (visited_triangles.find(target) != visited_triangles.end() && stop_on_contained && !h_uc && poly.size() > 3) {
 	    bool cdt_status = cdt();
 	    if (cdt_status) {
 		cdt_mesh->tris_set_plot(tris, "patch.plot3");
@@ -2047,7 +2216,7 @@ cdt_mesh_t::process_seed_tri(triangle_t &seed, bool repair, double deg)
 
 
     // Grow until we contain the seed and its associated problem data
-    long tri_cnt = polygon.grow_loop(deg, repair);
+    long tri_cnt = polygon.grow_loop(deg, repair, seed);
     if (tri_cnt < 0) {
 	std::cerr << "grow_loop failure\n";
 	return false;

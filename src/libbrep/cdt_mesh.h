@@ -25,6 +25,7 @@
 extern "C" {
     struct ctriangle_t {
 	long v[3];
+	bool all_bedge;
 	bool isect_edge;
 	bool uses_uncontained;
 	bool contains_uncontained;
@@ -237,6 +238,9 @@ public:
 
     int f_id;
 
+    // For situations where we need to process using Brep data
+    std::map<ON_3dPoint *, ON_3dPoint *> *normalmap;
+
 private:
     /* Data containers */
     std::map<long, std::set<edge_t>> v2edges;
@@ -249,7 +253,6 @@ private:
     std::set<uedge_t> brep_edges;
     std::set<ON_3dPoint *> *singularities;
     std::set<long> sv; // Singularity vertex indices
-    std::map<ON_3dPoint *, ON_3dPoint *> *normalmap;
     bool m_bRev;
 
     // Boundary edge information
