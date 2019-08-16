@@ -1021,6 +1021,13 @@ cpolygon_t::polygon_tris(double angle, bool brep_norm)
 	// If we aren't directly involved with an uncontained point and we only
 	// share 1 edge with the polygon, see how much it points at one of the
 	// points of interest (if any) definitely outside the current polygon
+	//
+	// TODO - also need to check if the nearest uncontained point is actually ON
+	// the polygon edge - in that situation the vector length is near zero between
+	// the closest point and the uncontained point and unitizing it may give odd
+	// results.  However, we definitely still want the triangle.  Need to return
+	// a special code for a zero length closest-point-on-edge-line to uncontained
+	// so we do the right thing.
 	std::set<cpolyedge_t *>::iterator pe_it;
 	long shared_cnt = shared_edge_cnt(t);
 	if (shared_cnt != 1) continue;
