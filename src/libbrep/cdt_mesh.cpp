@@ -109,7 +109,7 @@ class cpolygon_t
 	ON_Plane tplane;
 	ON_3dVector pdir;
 
-	std::vector<struct ctriangle_t> polygon_tris(double angle, bool brep_norm);
+	std::vector<struct ctriangle_t> polygon_tris(double angle, bool brep_norm, int initial);
 
 };
 
@@ -1011,7 +1011,7 @@ extern "C" {
 }
 
 std::vector<struct ctriangle_t>
-cpolygon_t::polygon_tris(double angle, bool brep_norm)
+cpolygon_t::polygon_tris(double angle, bool brep_norm, int initial)
 {
     std::set<triangle_t> initial_set;
 
@@ -1033,6 +1033,19 @@ cpolygon_t::polygon_tris(double angle, bool brep_norm)
 	    if (edge_isect) {
 		initial_set.insert(*t_it);
 		continue;
+	    }
+
+	    // If all three verts are edge vertices and this is our first run
+	    // through, we need to try incorporating it.  We may be seeding
+	    // next to a "vertical" edge triangle, and it may be that none of
+	    // the relevant points qualified to be "uncontained" points.  If
+	    // so, our growth criteria will not result in a new polygon, but we
+	    // need to try and correct the vertical triangle.
+	    if (initial) {
+		if (cdt_mesh->brep_edge_pnt((*t_it).v[0]) && cdt_mesh->brep_edge_pnt((*t_it).v[1]) && cdt_mesh->brep_edge_pnt((*t_it).v[2])) {
+		    initial_set.insert(*t_it);
+		    continue;
+		}
 	    }
 
 	    ON_3dVector tn = (brep_norm) ? cdt_mesh->bnorm(*t_it) : cdt_mesh->tnorm(*t_it);
@@ -1169,11 +1182,12 @@ cpolygon_t::grow_loop(double deg, bool stop_on_contained)
 {
     double angle = deg * ON_PI/180.0;
 
-    if (stop_on_contained && !uncontained.size()) {
+    if (stop_on_contained && !uncontained.size() && visited_triangles.size() > 1) {
 	return 0;
     }
 
     if (deg < 0 || deg > 170) {
+	std::cerr << "Degree error: " << deg << "\n";
 	return -1;
     }
 
@@ -1185,10 +1199,10 @@ cpolygon_t::grow_loop(double deg, bool stop_on_contained)
 
     std::set<edge_t> flipped_edges;
 
-    std::vector<ctriangle_t> ptris = polygon_tris(angle, stop_on_contained);
+    std::vector<ctriangle_t> ptris = polygon_tris(angle, stop_on_contained, 1);
 
     if (!ptris.size() && stop_on_contained) {
-	std::cout << "No triangles available??\n";
+	std::cerr << "No triangles available??\n";
 	return -1;
     }
     if (!ptris.size() && !stop_on_contained) {
@@ -1321,13 +1335,13 @@ cpolygon_t::grow_loop(double deg, bool stop_on_contained)
 	    // actually using flipped or uncontained vertices to be at the top
 	    // of the stack (i.e. the first ones tried.  polygon_tris is responsible
 	    // for sorting in priority order.
-	    std::vector<struct ctriangle_t> ntris = polygon_tris(angle, stop_on_contained);
+	    std::vector<struct ctriangle_t> ntris = polygon_tris(angle, stop_on_contained, 0);
 
 	    if (ctriangle_vect_cmp(ptris, ntris)) {
 		if (h_uc || (stop_on_contained && poly.size() <= 3)) {
 		    struct bu_vls fname = BU_VLS_INIT_ZERO;
 		    std::cerr << "Error - new triangle set from polygon edge is the same as the previous triangle set.  Infinite loop, aborting\n";
-		    std::vector<struct ctriangle_t> infinite_loop_tris = polygon_tris(angle, stop_on_contained);
+		    std::vector<struct ctriangle_t> infinite_loop_tris = polygon_tris(angle, stop_on_contained, 0);
 		    bu_vls_sprintf(&fname, "%d-infinite_loop_poly_2d.plot3", cdt_mesh->f_id);
 		    polygon_plot(bu_vls_cstr(&fname));
 		    bu_vls_sprintf(&fname, "%d-infinite_loop_poly_3d.plot3", cdt_mesh->f_id);
@@ -2100,7 +2114,7 @@ cdt_mesh_t::repair()
 	    bu_vls_sprintf(&fname, "%d-failed_seed.plot3", f_id);
 	    tri_plot(seed, bu_vls_cstr(&fname));
 	    bu_vls_sprintf(&fname, "%d-failed_seed_mesh.plot3", f_id);
-	    tris_plot("mesh_post_patch.plot3");
+	    tris_plot(bu_vls_cstr(&fname));
 	    bu_vls_free(&fname);
 	    return false;
 	}
@@ -2122,15 +2136,15 @@ cdt_mesh_t::repair()
 	triangle_t seed = *seed_tris.begin();
 
 	double deg = max_angle_delta(seed, s_tris);
-	process_seed_tri(seed, false, deg);
+	bool pseed = process_seed_tri(seed, false, deg);
 
-	if (seed_tris.size() >= st_size) {
+	if (!pseed || seed_tris.size() >= st_size) {
 	    std::cerr << f_id << ":  Error - failed to process refinement seed triangle!\n";
 	    struct bu_vls fname = BU_VLS_INIT_ZERO;
 	    bu_vls_sprintf(&fname, "%d-failed_seed.plot3", f_id);
 	    tri_plot(seed, bu_vls_cstr(&fname));
 	    bu_vls_sprintf(&fname, "%d-failed_seed_mesh.plot3", f_id);
-	    tris_plot("mesh_post_patch.plot3");
+	    tris_plot(bu_vls_cstr(&fname));
 	    bu_vls_free(&fname);
 	    return false;
 	    break;
