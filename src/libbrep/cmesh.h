@@ -262,7 +262,7 @@ private:
     bool tri_problem_edges(triangle_t &t);
     std::vector<triangle_t> interior_incorrect_normals();
     double max_angle_delta(triangle_t &seed, std::vector<triangle_t> &s_tris);
-    void process_seed_tri(triangle_t &seed, bool repair, double deg);
+    bool process_seed_tri(triangle_t &seed, bool repair, double deg);
 
     // Mesh manipulation functions
     bool tri_add(triangle_t &atris);

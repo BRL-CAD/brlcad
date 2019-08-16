@@ -243,13 +243,17 @@ cmesh_t::interior_incorrect_normals()
 		epnt_cnt = (edge_pnts->find(p) == edge_pnts->end()) ? epnt_cnt : epnt_cnt + 1;
 	    }
 	    if (epnt_cnt == 2) {
-		std::cerr << "UNCULLED problem point from surface???????\n";
+		std::cerr << "UNCULLED problem point from surface???????:\n";
 		for (int i = 0; i < 3; i++) {
 		    ON_3dPoint *p = pnts[(*tr_it).v[i]];
 		    if (edge_pnts->find(p) == edge_pnts->end()) {
-			std::cout << p->x << " " << p->y << " " << p->z << "\n";
+			std::cerr << "(" << (*tr_it).v[i] << "): " << p->x << " " << p->y << " " << p->z << "\n";
 		    }
 		}
+		struct bu_vls fname = BU_VLS_INIT_ZERO;
+		bu_vls_sprintf(&fname, "%d-unculled_problem_point_mesh.plot3", f_id);
+		tris_plot(bu_vls_cstr(&fname));
+		bu_vls_free(&fname);
 		results.clear();
 		return results;
 	    }
@@ -540,7 +544,7 @@ cmesh_t::max_angle_delta(triangle_t &seed, std::vector<triangle_t> &s_tris)
     return (dmax < 170) ? dmax : 170;
 }
 
-void
+bool
 cmesh_t::process_seed_tri(triangle_t &seed, bool repair, double deg)
 {
     // We use the Brep normal for this, since the triangles are
@@ -557,7 +561,7 @@ cmesh_t::process_seed_tri(triangle_t &seed, bool repair, double deg)
 
     if (!tcnt && repair) {
 	std::cerr << "Could not build initial valid loop\n";
-	exit(1);
+	return false;
     }
 
 
@@ -565,12 +569,12 @@ cmesh_t::process_seed_tri(triangle_t &seed, bool repair, double deg)
     long tri_cnt = polygon.grow_loop(deg, repair);
     if (tri_cnt < 0) {
 	std::cerr << "grow_loop failure\n";
-	exit(1);
+	return false;
     }
 
     // If nothing to do at the seed, we don't change the mesh
     if (tri_cnt == 0) {
-	return;
+	return true;
     }
 
     // Remove everything the patch claimed
@@ -587,6 +591,7 @@ cmesh_t::process_seed_tri(triangle_t &seed, bool repair, double deg)
 	tri_add(vt);
     }
 
+    return true;
 }
 
 bool
@@ -602,7 +607,7 @@ cmesh_t::repair()
     // for the mesh processing...
 
     if (this->self_intersecting_mesh()) {
-	std::cerr << "self intersecting mesh\n";
+	std::cerr << f_id << ": self intersecting mesh\n";
 	tris_plot("self_intersecting_mesh.plot3");
 	return false;
     }
@@ -620,11 +625,17 @@ cmesh_t::repair()
     while (seed_tris.size()) {
 	triangle_t seed = *seed_tris.begin();
 
-	process_seed_tri(seed, true, 170.0);
+	bool pseed = process_seed_tri(seed, true, 170.0);
 
-	if (seed_tris.size() >= st_size) {
-	    std::cerr << "Error - failed to process repair seed triangle!\n";
-	    break;
+	if (!pseed || seed_tris.size() >= st_size) {
+	    std::cerr << f_id << ": Error - failed to process repair seed triangle!\n";
+	    struct bu_vls fname = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&fname, "%d-failed_seed.plot3", f_id);
+	    tri_plot(seed, bu_vls_cstr(&fname));
+	    bu_vls_sprintf(&fname, "%d-failed_seed_mesh.plot3", f_id);
+	    tris_plot("mesh_post_patch.plot3");
+	    bu_vls_free(&fname);
+	    return false;
 	}
 
 	st_size = seed_tris.size();
@@ -647,7 +658,14 @@ cmesh_t::repair()
 	process_seed_tri(seed, false, deg);
 
 	if (seed_tris.size() >= st_size) {
-	    std::cerr << "Error - failed to process refinement seed triangle!\n";
+	    std::cerr << f_id << ":  Error - failed to process refinement seed triangle!\n";
+	    struct bu_vls fname = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&fname, "%d-failed_seed.plot3", f_id);
+	    tri_plot(seed, bu_vls_cstr(&fname));
+	    bu_vls_sprintf(&fname, "%d-failed_seed_mesh.plot3", f_id);
+	    tris_plot("mesh_post_patch.plot3");
+	    bu_vls_free(&fname);
+	    return false;
 	    break;
 	}
 

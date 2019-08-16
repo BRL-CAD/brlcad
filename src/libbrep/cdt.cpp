@@ -109,7 +109,6 @@ full_retriangulation(struct ON_Brep_CDT_Face_State *f)
 int
 refine_triangulation(struct ON_Brep_CDT_Face_State *f, int cnt, int rebuild)
 {
-    struct bu_vls pname = BU_VLS_INIT_ZERO;
     std::set<p2t::Triangle *> active_tris;
     std::set<cmesh::triangle_t> active_ctris;
     int ret = 0;
@@ -119,11 +118,14 @@ refine_triangulation(struct ON_Brep_CDT_Face_State *f, int cnt, int rebuild)
 	return 0;
     }
 
+#if 0
+    struct bu_vls pname = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&pname, "%srefine_tri-%d-00_initial-iteration_cmesh_3d.plot3", bu_vls_cstr(&f->face_root), cnt);
     f->fmesh.tris_plot(bu_vls_cstr(&pname));
     bu_vls_sprintf(&pname, "%srefine_tri-%d-00_initial-boundary_cmesh_3d.plot3", bu_vls_cstr(&f->face_root), cnt);
     f->fmesh.boundary_edges_plot(bu_vls_cstr(&pname));
     bu_vls_sprintf(&pname, "%srefine_tri-%d-00_initial-boundary_loops_cmesh_3d.plot3", bu_vls_cstr(&f->face_root), cnt);
+#endif
 
     // If a previous pass has made changes in which points are active in the
     // surface set, we need to rebuild the whole triangulation.
@@ -135,8 +137,10 @@ refine_triangulation(struct ON_Brep_CDT_Face_State *f, int cnt, int rebuild)
 	    return -1;
 	}
 
+#if 0
 	bu_vls_sprintf(&pname, "%srefine_tri-%d-01_after_full_retri-iteration_cmesh_3d.plot3", bu_vls_cstr(&f->face_root), cnt);
 	f->fmesh.tris_plot(bu_vls_cstr(&pname));
+#endif
     }
 
     // Identify trivially degenerate triangles (a triangle defined by only two
@@ -160,8 +164,10 @@ refine_triangulation(struct ON_Brep_CDT_Face_State *f, int cnt, int rebuild)
     }
 
     // If we got here, we shouldn't have had to change the mesh - should match previous
+#if 0
     bu_vls_sprintf(&pname, "%srefine_tri-%d-02_after_slim_edge-iteration_cmesh_3d.plot3", bu_vls_cstr(&f->face_root), cnt);
     f->fmesh.tris_plot(bu_vls_cstr(&pname));
+#endif
 
     // Now, the hard part - create local subsets, remesh them, and replace the original
     // triangles with the new ones.

@@ -304,20 +304,6 @@ triangles_degenerate_area(struct ON_Brep_CDT_Face_State *f)
     }
 }
 
-static void
-plot_trimesh_tris_3d(std::set<trimesh::index_t> *faces, std::vector<trimesh::triangle_t> &farray, std::map<p2t::Point *, ON_3dPoint *> *pointmap, const char *filename)
-{
-    std::set<trimesh::index_t>::iterator f_it;
-    FILE* plot_file = fopen(filename, "w");
-    struct bu_color c = BU_COLOR_INIT_ZERO;
-    bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
-    for (f_it = faces->begin(); f_it != faces->end(); f_it++) {
-	p2t::Triangle *t = farray[*f_it].t;
-	plot_tri_3d(t, pointmap, &c, plot_file);
-    }
-    fclose(plot_file);
-}
-
 // Check boundary triangles for distortion.
 // If problem, yank the non-edge point - local impact only, and we already try
 // to avoid sampling too close to edges.
@@ -380,7 +366,7 @@ triangles_slim_edge(struct ON_Brep_CDT_Face_State *f)
 	    }
 	}
     }
-    plot_trimesh_tris_3d(&etris, tm->triangles, pointmap, "edge_tris.plot3");
+
     delete tm;
     return pntset_altered;
 }
@@ -510,7 +496,7 @@ triangles_incorrect_normals(struct ON_Brep_CDT_Face_State *f, std::set<p2t::Tria
 	    // boundary edges that survived previous passes - if we do, it's an
 	    // indication of an error
 	    if (edge_pnt_cnt == 2) {
-		bu_log("UNCULLED problem point from surface???????:\n");
+		bu_log("UNCULLED problem point from surface:\n");
 		for (int j = 0; j < 3; j++) {
 		    if (wnorm[j] == 1 && tind[j] == -1) {
 			ON_3dPoint *spt = (*pointmap)[p[j]];
