@@ -1477,7 +1477,8 @@ cpolygon_t::grow_loop(double deg, bool stop_on_contained, triangle_t &target)
 
 	bool h_uc = have_uncontained();
 
-	if (visited_triangles.find(target) != visited_triangles.end() && stop_on_contained && !h_uc && poly.size() > 3) {
+	if (visited_triangles.find(target) != visited_triangles.end() && stop_on_contained && !h_uc && 
+		(interior_points.size() > 1 || poly.size() > 3)) {
 	    bool cdt_status = cdt();
 	    if (cdt_status) {
 		cdt_mesh->tris_set_plot(tris, "patch.plot3");
