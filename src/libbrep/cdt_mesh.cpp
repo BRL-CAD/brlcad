@@ -1272,10 +1272,17 @@ cpolygon_t::grow_loop(double deg, bool stop_on_contained)
 	    }
 
 	    if (new_edge_cnt <= 0 || new_edge_cnt > 2) {
+		struct bu_vls fname = BU_VLS_INIT_ZERO;
 		std::cerr << "fatal loop growth error!\n";
-		polygon_plot_in_plane("fatal_loop_growth_poly_3d.plot3");
-		cdt_mesh->tris_set_plot(visited_triangles, "fatal_loop_growth_visited_tris.plot3");
-		cdt_mesh->tri_plot(ct, "fatal_loop_growth_bad_tri.plot3");
+		bu_vls_sprintf(&fname, "%d-fatal_loop_growth_poly_3d.plot3", cdt_mesh->f_id);
+		polygon_plot_in_plane(bu_vls_cstr(&fname));
+		bu_vls_sprintf(&fname, "%d-fatal_loop_growth_visited_tris.plot3", cdt_mesh->f_id);
+		cdt_mesh->tris_set_plot(visited_triangles, bu_vls_cstr(&fname));
+		bu_vls_sprintf(&fname, "%d-fatal_loop_growth_unusable_tris.plot3", cdt_mesh->f_id);
+		cdt_mesh->tris_set_plot(unusable_triangles, bu_vls_cstr(&fname));
+		bu_vls_sprintf(&fname, "%d-fatal_loop_growth_bad_tri.plot3", cdt_mesh->f_id);
+		cdt_mesh->tri_plot(ct, bu_vls_cstr(&fname));
+		bu_vls_free(&fname);
 		return -1;
 	    }
 
@@ -1288,9 +1295,18 @@ cpolygon_t::grow_loop(double deg, bool stop_on_contained)
 	bool h_uc = have_uncontained();
 
 	if (stop_on_contained && !h_uc && poly.size() > 3) {
-	    cdt();
-	    cdt_mesh->tris_set_plot(tris, "patch.plot3");
-	    return (long)cdt_mesh->tris.size();
+	    bool cdt_status = cdt();
+	    if (cdt_status) {
+		cdt_mesh->tris_set_plot(tris, "patch.plot3");
+		return (long)cdt_mesh->tris.size();
+	    } else {
+		struct bu_vls fname = BU_VLS_INIT_ZERO;
+		//std::cerr << "cdt() failure\n";
+		bu_vls_sprintf(&fname, "%d-cdt_failure_poly_3d.plot3", cdt_mesh->f_id);
+		polygon_plot_in_plane(bu_vls_cstr(&fname));
+		bu_vls_free(&fname);
+		return -1;
+	    }
 	}
 
 	if (ts.empty()) {
@@ -1310,7 +1326,7 @@ cpolygon_t::grow_loop(double deg, bool stop_on_contained)
 	    if (ctriangle_vect_cmp(ptris, ntris)) {
 		if (h_uc || (stop_on_contained && poly.size() <= 3)) {
 		    struct bu_vls fname = BU_VLS_INIT_ZERO;
-		    std::cout << "Error - new triangle set from polygon edge is the same as the previous triangle set.  Infinite loop, aborting\n";
+		    std::cerr << "Error - new triangle set from polygon edge is the same as the previous triangle set.  Infinite loop, aborting\n";
 		    std::vector<struct ctriangle_t> infinite_loop_tris = polygon_tris(angle, stop_on_contained);
 		    bu_vls_sprintf(&fname, "%d-infinite_loop_poly_2d.plot3", cdt_mesh->f_id);
 		    polygon_plot(bu_vls_cstr(&fname));
@@ -1324,9 +1340,18 @@ cpolygon_t::grow_loop(double deg, bool stop_on_contained)
 		    // We're not in a repair situation, and we've already tried
 		    // the current triangle candidate set with no polygon
 		    // change.  Generate triangles.
-		    cdt();
-		    cdt_mesh->tris_set_plot(tris, "patch.plot3");
-		    return (long)cdt_mesh->tris.size();
+		    bool cdt_status = cdt();
+		    if (cdt_status) {
+			//cdt_mesh->tris_set_plot(tris, "patch.plot3");
+			return (long)cdt_mesh->tris.size();
+		    } else {
+			struct bu_vls fname = BU_VLS_INIT_ZERO;
+			std::cerr << "cdt() failure\n";
+			bu_vls_sprintf(&fname, "%d-cdt_failure_poly_3d.plot3", cdt_mesh->f_id);
+			polygon_plot_in_plane(bu_vls_cstr(&fname));
+			bu_vls_free(&fname);
+			return -1;
+		    }
 		}
 	    }
 	    ptris.clear();
@@ -1340,11 +1365,19 @@ cpolygon_t::grow_loop(double deg, bool stop_on_contained)
 		// per the current angle criteria we've got everything, and we're
 		// not concerned with contained points so this isn't an indication
 		// of an error condition.  Generate triangles.
-		cdt();
-		cdt_mesh->tris_set_plot(tris, "patch.plot3");
-		return (long)cdt_mesh->tris.size();
+		bool cdt_status = cdt();
+		if (cdt_status) {
+		    //cdt_mesh->tris_set_plot(tris, "patch.plot3");
+		    return (long)cdt_mesh->tris.size();
+		} else {
+		    struct bu_vls fname = BU_VLS_INIT_ZERO;
+		    std::cerr << "cdt() failure\n";
+		    bu_vls_sprintf(&fname, "%d-cdt_failure_poly_3d.plot3", cdt_mesh->f_id);
+		    polygon_plot_in_plane(bu_vls_cstr(&fname));
+		    bu_vls_free(&fname);
+		    return -1;
+		}
 	    }
-
 	}
     }
 
