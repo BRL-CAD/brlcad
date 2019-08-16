@@ -195,6 +195,7 @@ struct ON_Brep_CDT_State {
 
     /* Edges */
     std::set<ON_3dPoint *> *edge_pnts;
+    std::set<std::pair<ON_3dPoint *, ON_3dPoint *>> fedges;
     std::map<int, double> *min_edge_seg_len;
     std::map<int, double> *max_edge_seg_len;
     std::map<ON_3dPoint *, std::set<BrepTrimPoint *>> *on_brep_edge_pnts;

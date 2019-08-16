@@ -178,17 +178,14 @@ cmesh_t::boundary_edges_update()
 	    continue;
 	}
 	struct uedge_t ue((*ue_it).first);
-	int skip_pnt = 0;
-	for (int ind = 0; ind < 2; ind++) {
-	    ON_3dPoint *p = pnts[ue.v[ind]];
-	    if (edge_pnts->find(p) == edge_pnts->end()) {
-		// Strange edge count on a vertex not known to be a Brep
-		// edge point - not a boundary edge
-		skip_pnt = 1;
-	    }
+	int problem_edge = 0;
+
+	// Only brep boundary edges are "real" boundary edges - anything else is problematic
+	if (brep_edges.find(ue) == brep_edges.end()) {
+	    problem_edge = 1;
 	}
 
-	if (!skip_pnt) {
+	if (!problem_edge) {
 	    boundary_edges.insert((*ue_it).first);
 	} else {
 	    // Track these edges, as they represent places where subsequent
@@ -285,11 +282,13 @@ void
 cmesh_t::set_brep_data(
 	bool brev,
        	std::set<ON_3dPoint *> *e,
+       	std::set<std::pair<ON_3dPoint *, ON_3dPoint *>> *original_b_edges,
        	std::set<ON_3dPoint *> *s,
        	std::map<ON_3dPoint *, ON_3dPoint *> *n)
 {
     this->m_bRev = brev;
     this->edge_pnts = e;
+    this->b_edges = original_b_edges;
     this->singularities = s;
     this->normalmap = n;
 }
@@ -434,6 +433,14 @@ void cmesh_t::build(std::set<p2t::Triangle *> *cdttri, std::map<p2t::Point *, ON
 	cmesh_t::tri_add(nt);
     }
 
+    // Define brep edge set in cmesh terms
+    std::set<std::pair<ON_3dPoint *, ON_3dPoint *>>::iterator b_it;
+    for (b_it = b_edges->begin(); b_it != b_edges->end(); b_it++) {
+	long p1_ind = p2ind[b_it->first];
+	long p2_ind = p2ind[b_it->second];
+	brep_edges.insert(uedge_t(p1_ind, p2_ind));
+    }
+    boundary_edges_update();
 }
 
 bool

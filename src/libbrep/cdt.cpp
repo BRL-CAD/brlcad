@@ -98,7 +98,7 @@ full_retriangulation(struct ON_Brep_CDT_Face_State *f)
     }
 
     // Testing new mesh container
-    f->fmesh.set_brep_data(f->s_cdt->brep->m_F[f->ind].m_bRev, f->s_cdt->edge_pnts, f->singularities, f->on3_to_norm_map);
+    f->fmesh.set_brep_data(f->s_cdt->brep->m_F[f->ind].m_bRev, f->s_cdt->edge_pnts, &f->s_cdt->fedges, f->singularities, f->on3_to_norm_map);
     f->fmesh.f_id = f->ind;
     f->fmesh.build(f->tris, f->p2t_to_on3_map);
 
@@ -274,7 +274,7 @@ do_triangulation(struct ON_Brep_CDT_Face_State *f)
     }
 
     // Testing new mesh container
-    f->fmesh.set_brep_data(f->s_cdt->brep->m_F[f->ind].m_bRev, f->s_cdt->edge_pnts, f->singularities, f->on3_to_norm_map);
+    f->fmesh.set_brep_data(f->s_cdt->brep->m_F[f->ind].m_bRev, f->s_cdt->edge_pnts, &f->s_cdt->fedges, f->singularities, f->on3_to_norm_map);
     f->fmesh.f_id = f->ind;
     f->fmesh.build(f->tris, f->p2t_to_on3_map);
 
@@ -343,6 +343,15 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_Face_State *f)
 	}
     }
 
+    // Populate fedges
+    for (int li = 0; li < loop_cnt; li++) {
+	int num_loop_points = brep_loop_points[li].Count();
+	for (int i = 1; i < num_loop_points; i++) {
+	    // map point to last entry to 3d point
+	    f->s_cdt->fedges.insert(std::make_pair((brep_loop_points[li])[i - 1].p3d, (brep_loop_points[li])[i].p3d));
+	}
+	f->s_cdt->fedges.insert(std::make_pair((brep_loop_points[li])[num_loop_points-1].p3d, (brep_loop_points[li])[0].p3d));
+    }
 
     // TODO - we may need to add 2D points on trims that the edges didn't know
     // about.  Since 3D points must be shared along edges and we're using

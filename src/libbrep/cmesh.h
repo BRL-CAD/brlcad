@@ -198,6 +198,7 @@ public:
     void set_brep_data(
 	    bool brev,
 	    std::set<ON_3dPoint *> *e,
+	    std::set<std::pair<ON_3dPoint *,ON_3dPoint *>> *original_b_edges,
 	    std::set<ON_3dPoint *> *s,
 	    std::map<ON_3dPoint *, ON_3dPoint *> *n
 	    );
@@ -244,6 +245,8 @@ private:
 
     // For situations where we need to process using Brep data
     std::set<ON_3dPoint *> *edge_pnts;
+    std::set<std::pair<ON_3dPoint *, ON_3dPoint *>> *b_edges;
+    std::set<uedge_t> brep_edges;
     std::set<ON_3dPoint *> *singularities;
     std::set<long> sv; // Singularity vertex indices
     std::map<ON_3dPoint *, ON_3dPoint *> *normalmap;

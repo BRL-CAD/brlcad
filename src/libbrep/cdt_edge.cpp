@@ -1101,6 +1101,7 @@ build_poly2tri_polylines(struct ON_Brep_CDT_Face_State *f, p2t::CDT **cdt, int i
 		(*normalmap)[p] = (brep_loop_points[li])[i].n3d;
 		(*nmap)[(*pointmap)[p]] = (brep_loop_points[li])[i].n3d;
 	    }
+
 	    if (init_rtree) {
 		for (int i = 1; i < brep_loop_points[li].Count(); i++) {
 		    ON_Line *line = new ON_Line((brep_loop_points[li])[i - 1].p2d, (brep_loop_points[li])[i].p2d);
