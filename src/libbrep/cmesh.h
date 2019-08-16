@@ -363,7 +363,7 @@ class cpolygon_t
 
 }
 
-#endif /* __trimesh_h__ */
+#endif /* __cmesh_h__ */
 
 /*
  * Local Variables:
