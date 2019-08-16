@@ -59,7 +59,7 @@
 #include "brep/util.h"
 
 #include "./trimesh.h"
-#include "./cmesh.h"
+#include "./cdt_mesh.h"
 
 #define BREP_PLANAR_TOL 0.05
 
@@ -110,7 +110,7 @@ struct ON_Brep_CDT_Face_State {
 
     struct bu_vls face_root;
 
-    cmesh::cmesh_t fmesh;
+    cdt_mesh::cdt_mesh_t fmesh;
     std::map<ON_3dPoint *, ON_3dPoint *> *on3_to_norm_map;
 
     int has_singular_trims;
@@ -312,7 +312,7 @@ Process_Loop_Edges(struct ON_Brep_CDT_Face_State *f, int li);
 struct trimesh_info *CDT_Face_Build_Halfedge(std::set<p2t::Triangle *> *triangles);
 
 int Remesh_Near_Tri(struct ON_Brep_CDT_Face_State *f, p2t::Triangle *t, std::set<p2t::Triangle *> *wq);
-int Remesh_Near_cTri(struct ON_Brep_CDT_Face_State *f, cmesh::triangle_t t, std::set<cmesh::triangle_t> *wq, int rcnt);
+int Remesh_Near_cTri(struct ON_Brep_CDT_Face_State *f, cdt_mesh::triangle_t t, std::set<cdt_mesh::triangle_t> *wq, int rcnt);
 
 /** @} */
 

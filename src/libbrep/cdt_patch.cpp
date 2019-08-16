@@ -980,7 +980,7 @@ Remesh_Near_Tri(struct ON_Brep_CDT_Face_State *f, p2t::Triangle *seed_tri, std::
 }
 
 int
-Remesh_Near_cTri(struct ON_Brep_CDT_Face_State *f, cmesh::triangle_t seed_tri, std::set<cmesh::triangle_t> *wq, int rcnt)
+Remesh_Near_cTri(struct ON_Brep_CDT_Face_State *f, cdt_mesh::triangle_t seed_tri, std::set<cdt_mesh::triangle_t> *wq, int rcnt)
 {
 #if CDT_DEBUG_PLOTS
     struct bu_vls pname = BU_VLS_INIT_ZERO;

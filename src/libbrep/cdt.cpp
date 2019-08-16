@@ -110,7 +110,7 @@ int
 refine_triangulation(struct ON_Brep_CDT_Face_State *f, int cnt, int rebuild)
 {
     std::set<p2t::Triangle *> active_tris;
-    std::set<cmesh::triangle_t> active_ctris;
+    std::set<cdt_mesh::triangle_t> active_ctris;
     int ret = 0;
 
     if (cnt > MAX_TRIANGULATION_ATTEMPTS) {
@@ -120,11 +120,11 @@ refine_triangulation(struct ON_Brep_CDT_Face_State *f, int cnt, int rebuild)
 
 #if 0
     struct bu_vls pname = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&pname, "%srefine_tri-%d-00_initial-iteration_cmesh_3d.plot3", bu_vls_cstr(&f->face_root), cnt);
+    bu_vls_sprintf(&pname, "%srefine_tri-%d-00_initial-iteration_cdt_mesh_3d.plot3", bu_vls_cstr(&f->face_root), cnt);
     f->fmesh.tris_plot(bu_vls_cstr(&pname));
-    bu_vls_sprintf(&pname, "%srefine_tri-%d-00_initial-boundary_cmesh_3d.plot3", bu_vls_cstr(&f->face_root), cnt);
+    bu_vls_sprintf(&pname, "%srefine_tri-%d-00_initial-boundary_cdt_mesh_3d.plot3", bu_vls_cstr(&f->face_root), cnt);
     f->fmesh.boundary_edges_plot(bu_vls_cstr(&pname));
-    bu_vls_sprintf(&pname, "%srefine_tri-%d-00_initial-boundary_loops_cmesh_3d.plot3", bu_vls_cstr(&f->face_root), cnt);
+    bu_vls_sprintf(&pname, "%srefine_tri-%d-00_initial-boundary_loops_cdt_mesh_3d.plot3", bu_vls_cstr(&f->face_root), cnt);
 #endif
 
     // If a previous pass has made changes in which points are active in the
@@ -138,7 +138,7 @@ refine_triangulation(struct ON_Brep_CDT_Face_State *f, int cnt, int rebuild)
 	}
 
 #if 0
-	bu_vls_sprintf(&pname, "%srefine_tri-%d-01_after_full_retri-iteration_cmesh_3d.plot3", bu_vls_cstr(&f->face_root), cnt);
+	bu_vls_sprintf(&pname, "%srefine_tri-%d-01_after_full_retri-iteration_cdt_mesh_3d.plot3", bu_vls_cstr(&f->face_root), cnt);
 	f->fmesh.tris_plot(bu_vls_cstr(&pname));
 #endif
     }
@@ -165,7 +165,7 @@ refine_triangulation(struct ON_Brep_CDT_Face_State *f, int cnt, int rebuild)
 
     // If we got here, we shouldn't have had to change the mesh - should match previous
 #if 0
-    bu_vls_sprintf(&pname, "%srefine_tri-%d-02_after_slim_edge-iteration_cmesh_3d.plot3", bu_vls_cstr(&f->face_root), cnt);
+    bu_vls_sprintf(&pname, "%srefine_tri-%d-02_after_slim_edge-iteration_cdt_mesh_3d.plot3", bu_vls_cstr(&f->face_root), cnt);
     f->fmesh.tris_plot(bu_vls_cstr(&pname));
 #endif
 
@@ -734,7 +734,7 @@ ON_Brep_CDT_Mesh(
 	struct ON_Brep_CDT_Face_State *f = (*s_cdt->faces)[active_faces[fi]];
 	if (!f) continue;
 	std::map<ON_3dPoint *, ON_3dPoint *> *normalmap = f->on3_to_norm_map;
-	std::set<cmesh::triangle_t>::iterator tr_it;
+	std::set<cdt_mesh::triangle_t>::iterator tr_it;
 	for (tr_it = f->fmesh.tris.begin(); tr_it != f->fmesh.tris.end(); tr_it++) {
 	    for (size_t j = 0; j < 3; j++) {
 		ON_3dPoint *p3d = f->fmesh.pnts[(*tr_it).v[j]];
@@ -820,7 +820,7 @@ ON_Brep_CDT_Mesh(
 	struct ON_Brep_CDT_Face_State *f = (*s_cdt->faces)[active_faces[fi]];
 	if (!f) continue;
 	std::map<ON_3dPoint *, ON_3dPoint *> *normalmap = f->on3_to_norm_map;
-	std::set<cmesh::triangle_t>::iterator tr_it;
+	std::set<cdt_mesh::triangle_t>::iterator tr_it;
 	triangle_cnt += f->fmesh.tris.size();
 	int active_tris = 0;
 	for (tr_it = f->fmesh.tris.begin(); tr_it != f->fmesh.tris.end(); tr_it++) {

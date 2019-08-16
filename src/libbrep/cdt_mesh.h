@@ -9,8 +9,8 @@
 // a good fit, but as it's derived from that source the public domain license
 // is maintained for the changes as well.
 
-#ifndef __cmesh_h__
-#define __cmesh_h__
+#ifndef __cdt_mesh_h__
+#define __cdt_mesh_h__
 
 #include "common.h"
 
@@ -32,7 +32,7 @@ extern "C" {
     };
 }
 
-namespace cmesh
+namespace cdt_mesh
 {
 
 struct edge_t {
@@ -183,7 +183,7 @@ struct triangle_t {
 
 };
 
-class cmesh_t
+class cdt_mesh_t
 {
 public:
 
@@ -297,7 +297,7 @@ class cpolygon_t
 {
     public:
 
-	// Project cmesh 3D points into a 2D point array.  Probably won't use all of
+	// Project cdt_mesh 3D points into a 2D point array.  Probably won't use all of
 	// them, but this way vert indices on triangles will match in 2D and 3D.
 	void build_2d_pnts(ON_3dPoint &c, ON_3dVector &n);
 
@@ -315,7 +315,7 @@ class cpolygon_t
 	std::set<triangle_t> visited_triangles;
 	std::set<triangle_t> tris;
 
-	cmesh_t *cmesh;
+	cdt_mesh_t *cdt_mesh;
 
     private:
 	bool closed();
@@ -363,7 +363,7 @@ class cpolygon_t
 
 }
 
-#endif /* __cmesh_h__ */
+#endif /* __cdt_mesh_h__ */
 
 /*
  * Local Variables:

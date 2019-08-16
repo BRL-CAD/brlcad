@@ -17,18 +17,18 @@
 //#include "bn/mat.h" /* bn_vec_perp */
 #include "bn/plot3.h"
 #include "bg/polygon.h"
-#include "./cmesh.h"
+#include "./cdt_mesh.h"
 
 // needed for implementation
 #include <iostream>
 #include <stack>
 
 
-namespace cmesh
+namespace cdt_mesh
 {
 
 bool
-cmesh_t::tri_add(triangle_t &tri)
+cdt_mesh_t::tri_add(triangle_t &tri)
 {
 
     // Skip degenerate triangles, but report true since this was never
@@ -84,7 +84,7 @@ cmesh_t::tri_add(triangle_t &tri)
     return true;
 }
 
-void cmesh_t::tri_remove(triangle_t &tri)
+void cdt_mesh_t::tri_remove(triangle_t &tri)
 {
     // Update edge maps
     long i = tri.v[0];
@@ -111,7 +111,7 @@ void cmesh_t::tri_remove(triangle_t &tri)
 }
 
 std::vector<triangle_t>
-cmesh_t::face_neighbors(const triangle_t &f)
+cdt_mesh_t::face_neighbors(const triangle_t &f)
 {
     std::vector<triangle_t> result;
     long i = f.v[0];
@@ -136,7 +136,7 @@ cmesh_t::face_neighbors(const triangle_t &f)
 
 
 std::vector<triangle_t>
-cmesh_t::vertex_face_neighbors(long vind)
+cdt_mesh_t::vertex_face_neighbors(long vind)
 {
     std::vector<triangle_t> result;
     std::set<triangle_t> faces = this->v2tris[vind];
@@ -148,7 +148,7 @@ cmesh_t::vertex_face_neighbors(long vind)
 }
 
 std::set<uedge_t>
-cmesh_t::get_boundary_edges()
+cdt_mesh_t::get_boundary_edges()
 {
     if (boundary_edges_stale) {
 	boundary_edges_update();
@@ -158,7 +158,7 @@ cmesh_t::get_boundary_edges()
 }
 
 std::set<uedge_t>
-cmesh_t::get_problem_edges()
+cdt_mesh_t::get_problem_edges()
 {
     if (boundary_edges_stale) {
 	boundary_edges_update();
@@ -168,7 +168,7 @@ cmesh_t::get_problem_edges()
 }
 
 void
-cmesh_t::boundary_edges_update()
+cdt_mesh_t::boundary_edges_update()
 {
     if (!boundary_edges_stale) return;
     boundary_edges_stale = false;
@@ -200,7 +200,7 @@ cmesh_t::boundary_edges_update()
 }
 
 edge_t
-cmesh_t::find_boundary_oriented_edge(uedge_t &ue)
+cdt_mesh_t::find_boundary_oriented_edge(uedge_t &ue)
 {
     // For the unordered boundary edge, there is exactly one
     // directional edge - find it
@@ -222,7 +222,7 @@ cmesh_t::find_boundary_oriented_edge(uedge_t &ue)
 }
 
 std::vector<triangle_t>
-cmesh_t::interior_incorrect_normals()
+cdt_mesh_t::interior_incorrect_normals()
 {
     std::vector<triangle_t> results;
     std::set<long> bedge_pnts;
@@ -267,7 +267,7 @@ cmesh_t::interior_incorrect_normals()
 
 
 std::vector<triangle_t>
-cmesh_t::singularity_triangles()
+cdt_mesh_t::singularity_triangles()
 {
     std::vector<triangle_t> results;
     std::set<triangle_t> uniq_tris;
@@ -283,7 +283,7 @@ cmesh_t::singularity_triangles()
 }
 
 void
-cmesh_t::set_brep_data(
+cdt_mesh_t::set_brep_data(
 	bool brev,
        	std::set<ON_3dPoint *> *e,
        	std::set<std::pair<ON_3dPoint *, ON_3dPoint *>> *original_b_edges,
@@ -298,7 +298,7 @@ cmesh_t::set_brep_data(
 }
 
 std::set<uedge_t>
-cmesh_t::uedges(const triangle_t &t)
+cdt_mesh_t::uedges(const triangle_t &t)
 {
     struct uedge_t ue[3];
     ue[0].set(t.v[0], t.v[1]);
@@ -314,7 +314,7 @@ cmesh_t::uedges(const triangle_t &t)
 }
 
 ON_3dVector
-cmesh_t::tnorm(const triangle_t &t)
+cdt_mesh_t::tnorm(const triangle_t &t)
 {
     ON_3dPoint *p1 = this->pnts[t.v[0]];
     ON_3dPoint *p2 = this->pnts[t.v[1]];
@@ -328,7 +328,7 @@ cmesh_t::tnorm(const triangle_t &t)
 }
 
 ON_3dPoint
-cmesh_t::tcenter(const triangle_t &t)
+cdt_mesh_t::tcenter(const triangle_t &t)
 {
     ON_3dPoint avgpnt(0,0,0);
 
@@ -342,7 +342,7 @@ cmesh_t::tcenter(const triangle_t &t)
 }
 
 ON_3dVector
-cmesh_t::bnorm(const triangle_t &t)
+cdt_mesh_t::bnorm(const triangle_t &t)
 {
     ON_3dPoint avgnorm(0,0,0);
 
@@ -371,7 +371,7 @@ cmesh_t::bnorm(const triangle_t &t)
 }
 
 bool
-cmesh_t::brep_edge_pnt(long v)
+cdt_mesh_t::brep_edge_pnt(long v)
 {
     ON_3dPoint *p = pnts[v];
     if (edge_pnts->find(p) != edge_pnts->end()) {
@@ -380,7 +380,7 @@ cmesh_t::brep_edge_pnt(long v)
     return false;
 }
 
-void cmesh_t::reset()
+void cdt_mesh_t::reset()
 {
     this->tris.clear();
     this->v2edges.clear();
@@ -389,7 +389,7 @@ void cmesh_t::reset()
     this->uedges2tris.clear();
 }
 
-void cmesh_t::build(std::set<p2t::Triangle *> *cdttri, std::map<p2t::Point *, ON_3dPoint *> *pointmap)
+void cdt_mesh_t::build(std::set<p2t::Triangle *> *cdttri, std::map<p2t::Point *, ON_3dPoint *> *pointmap)
 {
     if (!cdttri || !pointmap) return;
 
@@ -434,10 +434,10 @@ void cmesh_t::build(std::set<p2t::Triangle *> *cdttri, std::map<p2t::Point *, ON
 	long Bind = this->p2ind[pt_B];
 	long Cind = this->p2ind[pt_C];
 	struct triangle_t nt(Aind, Bind, Cind);
-	cmesh_t::tri_add(nt);
+	cdt_mesh_t::tri_add(nt);
     }
 
-    // Define brep edge set in cmesh terms
+    // Define brep edge set in cdt_mesh terms
     std::set<std::pair<ON_3dPoint *, ON_3dPoint *>>::iterator b_it;
     for (b_it = b_edges->begin(); b_it != b_edges->end(); b_it++) {
 	long p1_ind = p2ind[b_it->first];
@@ -448,7 +448,7 @@ void cmesh_t::build(std::set<p2t::Triangle *> *cdttri, std::map<p2t::Point *, ON
 }
 
 bool
-cmesh_t::tri_problem_edges(triangle_t &t)
+cdt_mesh_t::tri_problem_edges(triangle_t &t)
 {
     if (boundary_edges_stale) {
 	boundary_edges_update();
@@ -467,7 +467,7 @@ cmesh_t::tri_problem_edges(triangle_t &t)
 }
 
 std::vector<triangle_t>
-cmesh_t::problem_edge_tris()
+cdt_mesh_t::problem_edge_tris()
 {
     std::vector<triangle_t> eresults;
 
@@ -492,7 +492,7 @@ cmesh_t::problem_edge_tris()
 }
 
 bool
-cmesh_t::self_intersecting_mesh()
+cdt_mesh_t::self_intersecting_mesh()
 {
     std::set<triangle_t> pedge_tris;
     std::set<uedge_t>::iterator u_it;
@@ -538,7 +538,7 @@ cmesh_t::self_intersecting_mesh()
 }
 
 double
-cmesh_t::max_angle_delta(triangle_t &seed, std::vector<triangle_t> &s_tris)
+cdt_mesh_t::max_angle_delta(triangle_t &seed, std::vector<triangle_t> &s_tris)
 {
     double dmax = 0;
     ON_3dVector sn = tnorm(seed);
@@ -556,7 +556,7 @@ cmesh_t::max_angle_delta(triangle_t &seed, std::vector<triangle_t> &s_tris)
 }
 
 bool
-cmesh_t::process_seed_tri(triangle_t &seed, bool repair, double deg)
+cdt_mesh_t::process_seed_tri(triangle_t &seed, bool repair, double deg)
 {
     // We use the Brep normal for this, since the triangles are
     // problem triangles and their normals cannot be relied upon.
@@ -564,7 +564,7 @@ cmesh_t::process_seed_tri(triangle_t &seed, bool repair, double deg)
     ON_3dVector sn = this->bnorm(seed);
 
     cpolygon_t polygon;
-    polygon.cmesh = this;
+    polygon.cdt_mesh = this;
     polygon.build_2d_pnts(sp, sn);
 
     // build an initial loop from a nearby valid triangle
@@ -606,7 +606,7 @@ cmesh_t::process_seed_tri(triangle_t &seed, bool repair, double deg)
 }
 
 bool
-cmesh_t::repair()
+cdt_mesh_t::repair()
 {
     // If we have edges with > 2 triangles and 3 or more of those triangles are
     // not problem_edge triangles, we have what amounts to a self-intersecting
@@ -693,7 +693,7 @@ cmesh_t::repair()
 }
 
 bool
-cmesh_t::valid()
+cdt_mesh_t::valid()
 {
     bool ret = true;
     std::set<triangle_t>::iterator tr_it;
@@ -715,7 +715,7 @@ cmesh_t::valid()
     return ret;
 }
 
-void cmesh_t::plot_uedge(struct uedge_t &ue, FILE* plot_file)
+void cdt_mesh_t::plot_uedge(struct uedge_t &ue, FILE* plot_file)
 {
     ON_3dPoint *p1 = this->pnts[ue.v[0]];
     ON_3dPoint *p2 = this->pnts[ue.v[1]];
@@ -726,7 +726,7 @@ void cmesh_t::plot_uedge(struct uedge_t &ue, FILE* plot_file)
     pdv_3cont(plot_file, bnp2);
 }
 
-void cmesh_t::boundary_edges_plot(const char *filename)
+void cdt_mesh_t::boundary_edges_plot(const char *filename)
 {
     FILE* plot_file = fopen(filename, "w");
     struct bu_color c = BU_COLOR_INIT_ZERO;
@@ -752,9 +752,9 @@ void cmesh_t::boundary_edges_plot(const char *filename)
 }
 
 #if 0
-void cmesh_t::plot_tri(const triangle_t &t, struct bu_color *buc, FILE *plot, int r, int g, int b)
+void cdt_mesh_t::plot_tri(const triangle_t &t, struct bu_color *buc, FILE *plot, int r, int g, int b)
 #else
-void cmesh_t::plot_tri(const triangle_t &t, struct bu_color *buc, FILE *plot, int UNUSED(r), int UNUSED(g), int UNUSED(b))
+void cdt_mesh_t::plot_tri(const triangle_t &t, struct bu_color *buc, FILE *plot, int UNUSED(r), int UNUSED(g), int UNUSED(b))
 #endif
 {
     point_t p[3];
@@ -818,7 +818,7 @@ void cmesh_t::plot_tri(const triangle_t &t, struct bu_color *buc, FILE *plot, in
     pl_color_buc(plot, buc);
 }
 
-void cmesh_t::face_neighbors_plot(const triangle_t &f, const char *filename)
+void cdt_mesh_t::face_neighbors_plot(const triangle_t &f, const char *filename)
 {
     FILE* plot_file = fopen(filename, "w");
 
@@ -839,7 +839,7 @@ void cmesh_t::face_neighbors_plot(const triangle_t &f, const char *filename)
     fclose(plot_file);
 }
 
-void cmesh_t::vertex_face_neighbors_plot(long vind, const char *filename)
+void cdt_mesh_t::vertex_face_neighbors_plot(long vind, const char *filename)
 {
     FILE* plot_file = fopen(filename, "w");
 
@@ -864,7 +864,7 @@ void cmesh_t::vertex_face_neighbors_plot(long vind, const char *filename)
     fclose(plot_file);
 }
 
-void cmesh_t::interior_incorrect_normals_plot(const char *filename)
+void cdt_mesh_t::interior_incorrect_normals_plot(const char *filename)
 {
     FILE* plot_file = fopen(filename, "w");
 
@@ -879,7 +879,7 @@ void cmesh_t::interior_incorrect_normals_plot(const char *filename)
     fclose(plot_file);
 }
 
-void cmesh_t::tri_plot(triangle_t &tri, const char *filename)
+void cdt_mesh_t::tri_plot(triangle_t &tri, const char *filename)
 {
     FILE* plot_file = fopen(filename, "w");
 
@@ -892,7 +892,7 @@ void cmesh_t::tri_plot(triangle_t &tri, const char *filename)
     fclose(plot_file);
 }
 
-void cmesh_t::ctris_vect_plot(std::vector<struct ctriangle_t> &tvect, const char *filename)
+void cdt_mesh_t::ctris_vect_plot(std::vector<struct ctriangle_t> &tvect, const char *filename)
 {
     FILE* plot_file = fopen(filename, "w");
 
@@ -907,7 +907,7 @@ void cmesh_t::ctris_vect_plot(std::vector<struct ctriangle_t> &tvect, const char
     fclose(plot_file);
 }
 
-void cmesh_t::tris_vect_plot(std::vector<triangle_t> &tvect, const char *filename)
+void cdt_mesh_t::tris_vect_plot(std::vector<triangle_t> &tvect, const char *filename)
 {
     FILE* plot_file = fopen(filename, "w");
 
@@ -922,7 +922,7 @@ void cmesh_t::tris_vect_plot(std::vector<triangle_t> &tvect, const char *filenam
     fclose(plot_file);
 }
 
-void cmesh_t::tris_set_plot(std::set<triangle_t> &tset, const char *filename)
+void cdt_mesh_t::tris_set_plot(std::set<triangle_t> &tset, const char *filename)
 {
     FILE* plot_file = fopen(filename, "w");
 
@@ -939,7 +939,7 @@ void cmesh_t::tris_set_plot(std::set<triangle_t> &tset, const char *filename)
     fclose(plot_file);
 }
 
-void cmesh_t::tris_plot(const char *filename)
+void cdt_mesh_t::tris_plot(const char *filename)
 {
     this->tris_set_plot(this->tris, filename);
 }
@@ -1206,7 +1206,7 @@ cpolygon_t::self_intersecting()
     for (v_it = vecnt.begin(); v_it != vecnt.end(); v_it++) {
 	if (v_it->second > 2) {
 	    self_isect = true;
-	    if (!cmesh->brep_edge_pnt(v_it->second)) {
+	    if (!cdt_mesh->brep_edge_pnt(v_it->second)) {
 		uncontained.insert(v_it->second);
 	    }
 	}
@@ -1398,7 +1398,7 @@ cpolygon_t::cdt()
 
     bool result = (bool)!bg_nested_polygon_triangulate( &faces, &num_faces,
 	    NULL, NULL, opoly, poly.size()+1, NULL, NULL, 0, steiner,
-	    interior_points.size(), pnts_2d, cmesh->pnts.size(),
+	    interior_points.size(), pnts_2d, cdt_mesh->pnts.size(),
 	    TRI_CONSTRAINED_DELAUNAY);
 
     if (result) {
@@ -1408,8 +1408,8 @@ cpolygon_t::cdt()
 	    t.v[1] = faces[3*i+1];
 	    t.v[2] = faces[3*i+2];
 
-	    ON_3dVector tdir = cmesh->tnorm(t);
-	    ON_3dVector bdir = cmesh->bnorm(t);
+	    ON_3dVector tdir = cdt_mesh->tnorm(t);
+	    ON_3dVector bdir = cdt_mesh->bnorm(t);
 	    bool flipped_tri = (ON_DotProduct(tdir, bdir) < 0);
 	    if (flipped_tri) {
 		t.v[2] = faces[3*i+1];
@@ -1436,7 +1436,7 @@ cpolygon_t::tri_process(std::set<edge_t> *ne, std::set<edge_t> *se, long *nv, tr
 {
     std::set<cpolyedge_t *>::iterator pe_it;
 
-    std::set<uedge_t> problem_edges = cmesh->get_problem_edges();
+    std::set<uedge_t> problem_edges = cdt_mesh->get_problem_edges();
 
     bool e_shared[3];
     struct edge_t e[3];
@@ -1482,10 +1482,10 @@ cpolygon_t::tri_process(std::set<edge_t> *ne, std::set<edge_t> *se, long *nv, tr
 	// vertex that is the problem and mark it as an uncontained vertex.
 	std::map<long, std::set<uedge_t>> v2ue;
 	for (int i = 0; i < 3; i++) {
-	    if (!cmesh->brep_edge_pnt(ue[i].v[0])) {
+	    if (!cdt_mesh->brep_edge_pnt(ue[i].v[0])) {
 		v2ue[ue[i].v[0]].insert(ue[i]);
 	    }
-	    if (!cmesh->brep_edge_pnt(ue[i].v[1])) {
+	    if (!cdt_mesh->brep_edge_pnt(ue[i].v[1])) {
 		v2ue[ue[i].v[1]].insert(ue[i]);
 	    }
 	}
@@ -1837,7 +1837,7 @@ cpolygon_t::polygon_tris(double angle, bool brep_norm)
 	cpolyedge_t *pe = *p_it;
 	struct uedge_t ue(pe->v[0], pe->v[1]);
 	bool edge_isect = (self_isect_edges.find(ue) != self_isect_edges.end());
-	std::set<triangle_t> petris = cmesh->uedges2tris[ue];
+	std::set<triangle_t> petris = cdt_mesh->uedges2tris[ue];
 	std::set<triangle_t>::iterator t_it;
 	for (t_it = petris.begin(); t_it != petris.end(); t_it++) {
 
@@ -1852,7 +1852,7 @@ cpolygon_t::polygon_tris(double angle, bool brep_norm)
 		continue;
 	    }
 
-	    ON_3dVector tn = (brep_norm) ? cmesh->bnorm(*t_it) : cmesh->tnorm(*t_it);
+	    ON_3dVector tn = (brep_norm) ? cdt_mesh->bnorm(*t_it) : cdt_mesh->tnorm(*t_it);
 	    double dprd = ON_DotProduct(pdir, tn);
 	    double dang = (NEAR_EQUAL(dprd, 1.0, ON_ZERO_TOLERANCE)) ? 0 : acos(dprd);
 	    if (dang > angle) {
@@ -2061,8 +2061,8 @@ cpolygon_t::grow_loop(double deg, bool stop_on_contained)
 
 	if (process) {
 
-	    ON_3dVector tdir = cmesh->tnorm(ct);
-	    ON_3dVector bdir = cmesh->bnorm(ct);
+	    ON_3dVector tdir = cdt_mesh->tnorm(ct);
+	    ON_3dVector bdir = cdt_mesh->bnorm(ct);
 	    bool flipped_tri = (ON_DotProduct(tdir, bdir) < 0);
 
 	    if (stop_on_contained && new_edge_cnt == 2 && flipped_tri) {
@@ -2070,11 +2070,11 @@ cpolygon_t::grow_loop(double deg, bool stop_on_contained)
 		// make a mess out of the polygon (i.e. make it self intersecting.)
 		// Tag it so we know we can't trust point_in_polygon until we've grown
 		// the vertex out of flipped_face (remove_edge will handle that.)
-		if (cmesh->brep_edge_pnt(vert)) {
+		if (cdt_mesh->brep_edge_pnt(vert)) {
 		    // We can't flag brep edge points as uncontained, so if we hit this case
 		    // flag all the verts except the edge verts as flipped face problem cases.
 		    for (int i = 0; i < 3; i++) {
-			if (!cmesh->brep_edge_pnt(ct.v[i])) {
+			if (!cdt_mesh->brep_edge_pnt(ct.v[i])) {
 			    flipped_face.insert(ct.v[i]);
 			}
 		    }
@@ -2098,8 +2098,8 @@ cpolygon_t::grow_loop(double deg, bool stop_on_contained)
 	    if (new_edge_cnt <= 0 || new_edge_cnt > 2) {
 		std::cerr << "fatal loop growth error!\n";
 		polygon_plot_in_plane("fatal_loop_growth_poly_3d.plot3");
-		cmesh->tris_set_plot(visited_triangles, "fatal_loop_growth_visited_tris.plot3");
-		cmesh->tri_plot(ct, "fatal_loop_growth_bad_tri.plot3");
+		cdt_mesh->tris_set_plot(visited_triangles, "fatal_loop_growth_visited_tris.plot3");
+		cdt_mesh->tri_plot(ct, "fatal_loop_growth_bad_tri.plot3");
 		return -1;
 	    }
 
@@ -2113,8 +2113,8 @@ cpolygon_t::grow_loop(double deg, bool stop_on_contained)
 
 	if (stop_on_contained && !h_uc && poly.size() > 3) {
 	    cdt();
-	    cmesh->tris_set_plot(tris, "patch.plot3");
-	    return (long)cmesh->tris.size();
+	    cdt_mesh->tris_set_plot(tris, "patch.plot3");
+	    return (long)cdt_mesh->tris.size();
 	}
 
 	if (ts.empty()) {
@@ -2136,12 +2136,12 @@ cpolygon_t::grow_loop(double deg, bool stop_on_contained)
 		    struct bu_vls fname = BU_VLS_INIT_ZERO;
 		    std::cout << "Error - new triangle set from polygon edge is the same as the previous triangle set.  Infinite loop, aborting\n";
 		    std::vector<struct ctriangle_t> infinite_loop_tris = polygon_tris(angle, stop_on_contained);
-		    bu_vls_sprintf(&fname, "%d-infinite_loop_poly_2d.plot3", cmesh->f_id);
+		    bu_vls_sprintf(&fname, "%d-infinite_loop_poly_2d.plot3", cdt_mesh->f_id);
 		    polygon_plot(bu_vls_cstr(&fname));
-		    bu_vls_sprintf(&fname, "%d-infinite_loop_poly_3d.plot3", cmesh->f_id);
+		    bu_vls_sprintf(&fname, "%d-infinite_loop_poly_3d.plot3", cdt_mesh->f_id);
 		    polygon_plot_in_plane(bu_vls_cstr(&fname));
-		    bu_vls_sprintf(&fname, "%d-infinite_loop_tris.plot3", cmesh->f_id);
-		    cmesh->ctris_vect_plot(infinite_loop_tris, bu_vls_cstr(&fname));
+		    bu_vls_sprintf(&fname, "%d-infinite_loop_tris.plot3", cdt_mesh->f_id);
+		    cdt_mesh->ctris_vect_plot(infinite_loop_tris, bu_vls_cstr(&fname));
 		    bu_vls_free(&fname);
 		    return -1;
 		} else {
@@ -2149,8 +2149,8 @@ cpolygon_t::grow_loop(double deg, bool stop_on_contained)
 		    // the current triangle candidate set with no polygon
 		    // change.  Generate triangles.
 		    cdt();
-		    cmesh->tris_set_plot(tris, "patch.plot3");
-		    return (long)cmesh->tris.size();
+		    cdt_mesh->tris_set_plot(tris, "patch.plot3");
+		    return (long)cdt_mesh->tris.size();
 		}
 	    }
 	    ptris.clear();
@@ -2165,8 +2165,8 @@ cpolygon_t::grow_loop(double deg, bool stop_on_contained)
 		// not concerned with contained points so this isn't an indication
 		// of an error condition.  Generate triangles.
 		cdt();
-		cmesh->tris_set_plot(tris, "patch.plot3");
-		return (long)cmesh->tris.size();
+		cdt_mesh->tris_set_plot(tris, "patch.plot3");
+		return (long)cdt_mesh->tris.size();
 	    }
 
 	}
@@ -2174,9 +2174,9 @@ cpolygon_t::grow_loop(double deg, bool stop_on_contained)
 
     std::cout << "Error - loop growth terminated but conditions for triangulation were never satisfied!\n";
     struct bu_vls fname = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&fname, "%d-failed_patch_poly_2d.plot3", cmesh->f_id);
+    bu_vls_sprintf(&fname, "%d-failed_patch_poly_2d.plot3", cdt_mesh->f_id);
     polygon_plot(bu_vls_cstr(&fname));
-    bu_vls_sprintf(&fname, "%d-failed_patch_poly_3d.plot3", cmesh->f_id);
+    bu_vls_sprintf(&fname, "%d-failed_patch_poly_3d.plot3", cdt_mesh->f_id);
     polygon_plot_in_plane(bu_vls_cstr(&fname));
     return -1;
 }
@@ -2186,10 +2186,10 @@ cpolygon_t::build_2d_pnts(ON_3dPoint &c, ON_3dVector &n)
 {
     pdir = n;
     ON_Plane tri_plane(c, n);
-    pnts_2d = (point2d_t *)bu_calloc(cmesh->pnts.size() + 1, sizeof(point2d_t), "2D points array");
-    for (size_t i = 0; i < cmesh->pnts.size(); i++) {
+    pnts_2d = (point2d_t *)bu_calloc(cdt_mesh->pnts.size() + 1, sizeof(point2d_t), "2D points array");
+    for (size_t i = 0; i < cdt_mesh->pnts.size(); i++) {
 	double u, v;
-	ON_3dPoint op3d = (*cmesh->pnts[i]);
+	ON_3dPoint op3d = (*cdt_mesh->pnts[i]);
 	tri_plane.ClosestPointTo(op3d, &u, &v);
 	pnts_2d[i][X] = u;
 	pnts_2d[i][Y] = v;
@@ -2211,7 +2211,7 @@ cpolygon_t::build_initial_loop(triangle_t &seed, bool repair)
 	    seed_verts.insert(seed.v[i]);
 	    // The exception to interior categorization is Brep boundary points -
 	    // they are never interior or uncontained
-	    if (cmesh->brep_edge_pnt(seed.v[i])) {
+	    if (cdt_mesh->brep_edge_pnt(seed.v[i])) {
 		continue;
 	    }
 	    uncontained.insert(seed.v[i]);
@@ -2219,10 +2219,10 @@ cpolygon_t::build_initial_loop(triangle_t &seed, bool repair)
 
 	// We need a initial valid polygon loop to grow.  Poll the neighbor faces - if one
 	// of them is valid, it will be used to build an initial loop
-	std::vector<triangle_t> faces = cmesh->face_neighbors(seed);
+	std::vector<triangle_t> faces = cdt_mesh->face_neighbors(seed);
 	for (size_t i = 0; i < faces.size(); i++) {
 	    triangle_t t = faces[i];
-	    if (cmesh->seed_tris.find(t) == cmesh->seed_tris.end()) {
+	    if (cdt_mesh->seed_tris.find(t) == cdt_mesh->seed_tris.end()) {
 		struct edge_t e1(t.v[0], t.v[1]);
 		struct edge_t e2(t.v[1], t.v[2]);
 		struct edge_t e3(t.v[2], t.v[0]);
@@ -2236,10 +2236,10 @@ cpolygon_t::build_initial_loop(triangle_t &seed, bool repair)
 
 	// If we didn't find a valid mated edge triangle (urk?) try the vertices
 	for (int i = 0; i < 3; i++) {
-	    std::vector<triangle_t> vfaces = cmesh->vertex_face_neighbors(seed.v[i]);
+	    std::vector<triangle_t> vfaces = cdt_mesh->vertex_face_neighbors(seed.v[i]);
 	    for (size_t j = 0; j < vfaces.size(); j++) {
 		triangle_t t = vfaces[j];
-		if (cmesh->seed_tris.find(t) == cmesh->seed_tris.end()) {
+		if (cdt_mesh->seed_tris.find(t) == cdt_mesh->seed_tris.end()) {
 		    struct edge_t e1(t.v[0], t.v[1]);
 		    struct edge_t e2(t.v[1], t.v[2]);
 		    struct edge_t e3(t.v[2], t.v[0]);

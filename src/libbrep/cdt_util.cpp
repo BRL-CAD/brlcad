@@ -670,8 +670,8 @@ ON_Brep_CDT_VList_Face(
 #endif
 
     struct ON_Brep_CDT_Face_State *f = (*s->faces)[face_index];
-    std::set<cmesh::triangle_t>::iterator tr_it;
-    std::set<cmesh::triangle_t> tris = f->fmesh.tris;
+    std::set<cdt_mesh::triangle_t>::iterator tr_it;
+    std::set<cdt_mesh::triangle_t> tris = f->fmesh.tris;
     std::map<ON_3dPoint *, ON_3dPoint *> *normalmap = f->on3_to_norm_map;
 
     switch (mode) {
