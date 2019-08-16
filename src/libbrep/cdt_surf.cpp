@@ -781,6 +781,16 @@ getSurfacePoints(struct ON_Brep_CDT_Face_State *f)
 	    }
 	}
 
+	// TODO - we need to reject surface points that would be outside a brep face
+	// boundary edge in local planar projection.  Think we can do this by taking
+	// the plane from the closest edge segment's points, projecting the candidate
+	// point onto it, and checking it's vector dirction to the closest point on
+	// the segment agains the cross product of the plane and the edge segment's
+	// direction vector.  If it's outside, reject.  If it's too close to the
+	// segment in projection (< 0.1 * the segment length, for example), reject.
+	// Else OK.  Edge segments have to utterly dominate surface point behavor,
+	// because they are hard limits and we can't afford anything that would
+	// potentially produce unrepairable triangles near the face edge.
 
 	float *prand;
 	std::set<ON_BoundingBox *>::iterator b_it;
