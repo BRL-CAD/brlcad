@@ -31,7 +31,7 @@ set(LIBBREP_SOURCES
   cdt_util.cpp
   cdt_validate.cpp
   cdt.cpp
-  cmesh.cpp
+  cdt_mesh.cpp
   intersect.cpp
   libbrep_brep_tools.cpp
   opennurbs_ext.cpp
@@ -52,6 +52,7 @@ set(libbrep_ignored_files
   libbrep_brep_tools.h
   brep_except.h
   cdt.h
+  cdt_mesh.h
   opennurbs_fit.h
   opennurbs_fit.cpp
   PullbackCurve.h
