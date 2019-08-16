@@ -334,6 +334,14 @@ cpolygon_t::ucv_angle(triangle_t &t)
 	if (point_in_polygon(*u_it, true)) {
 	    ON_2dPoint op = ON_2dPoint(pnts_2d[*u_it][X], pnts_2d[*u_it][Y]);
 	    ON_3dVector vt = op - pline;
+
+	    // If vt is almost on l2d, we want this triangle - there's an excellent chance
+	    // this triangle will contain it, but the unitized vector direction may be unreliable
+	    // if our starting vector is vanishingly short...
+	    if (vt.Length() < 0.01 * l2d.Length()) return ON_ZERO_TOLERANCE;
+
+	    // Not almost on the edge, but if it's still heading in the direction we need to go
+	    // we want to know.  Unitize and proceed.
 	    vt.Unitize();
 	    double vangle = ON_DotProduct(vu, vt);
 	    if (vangle > 0 && r_ang > vangle) {
@@ -345,6 +353,14 @@ cpolygon_t::ucv_angle(triangle_t &t)
 	if (point_in_polygon(*u_it, true)) {
 	    ON_2dPoint op = ON_2dPoint(pnts_2d[*u_it][X], pnts_2d[*u_it][Y]);
 	    ON_3dVector vt = op - pline;
+
+	    // If vt is almost on l2d, we want this triangle - there's an excellent chance
+	    // this triangle will contain it, but the unitized vector direction may be unreliable
+	    // if our starting vector is vanishingly short...
+	    if (vt.Length() < 0.01 * l2d.Length()) return ON_ZERO_TOLERANCE;
+
+	    // Not almost on the edge, but if it's still heading in the direction we need to go
+	    // we want to know.  Unitize and proceed.
 	    vt.Unitize();
 	    double vangle = ON_DotProduct(vu, vt);
 	    if (vangle > 0 && r_ang > vangle) {
@@ -1108,13 +1124,6 @@ cpolygon_t::polygon_tris(double angle, bool brep_norm)
 	// If we aren't directly involved with an uncontained point and we only
 	// share 1 edge with the polygon, see how much it points at one of the
 	// points of interest (if any) definitely outside the current polygon
-	//
-	// TODO - also need to check if the nearest uncontained point is actually ON
-	// the polygon edge - in that situation the vector length is near zero between
-	// the closest point and the uncontained point and unitizing it may give odd
-	// results.  However, we definitely still want the triangle.  Need to return
-	// a special code for a zero length closest-point-on-edge-line to uncontained
-	// so we do the right thing.
 	std::set<cpolyedge_t *>::iterator pe_it;
 	long shared_cnt = shared_edge_cnt(t);
 	if (shared_cnt != 1) continue;
