@@ -317,10 +317,23 @@ filter_surface_edge_pnts(struct ON_Brep_CDT_Face_State *f)
 	    }
 	}
     }
+
     for (osp_it = rm_pnts.begin(); osp_it != rm_pnts.end(); osp_it++) {
 	const ON_2dPoint *p = *osp_it;
 	f->on_surf_points->erase((ON_2dPoint *)p);
     }
+
+
+    // TODO - In addition to removing points on the line in 2D, we don't want points that
+    // would be outside the edge polygon in projection. Find the "close" trims (if any)
+    // for the candidate 3D point, then use the normals of the Brep edge points and
+    // the edge direction to do a local "inside/outside" test.  Not sure yet exactly how
+    // to do this - possibilities include rtree search for the area around each surface
+    // point, or a nanoflann based nearest lookup for the edge points to get candidates
+    // near each edge in turn - in the latter case, look for points common to the result
+    // sets for both edge points to localize on that particular segment.
+
+
 }
 
 static bool
