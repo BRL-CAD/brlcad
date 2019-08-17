@@ -576,7 +576,7 @@ cpolygon_t::best_fit_plane()
     // the polygon
     std::set<long> averts;
     int ncnt = 0;
-    
+
     std::set<cpolyedge_t *>::iterator cp_it;
     for (cp_it = poly.begin(); cp_it != poly.end(); cp_it++) {
 	cpolyedge_t *pe = *cp_it;
@@ -590,8 +590,7 @@ cpolygon_t::best_fit_plane()
 
     ON_3dVector avgtnorm(0.0,0.0,0.0);
     for (a_it = averts.begin(); a_it != averts.end(); a_it++) {
-	ON_3dPoint *p = cdt_mesh->pnts[*a_it];
-	ON_3dPoint *vn = (*cdt_mesh->normalmap)[p];
+	ON_3dPoint *vn = cdt_mesh->normals[cdt_mesh->nmap[*a_it]];
 	if (vn) {
 	    avgtnorm += *vn;
 	    ncnt++;
@@ -1897,13 +1896,6 @@ std::vector<triangle_t>
 cdt_mesh_t::interior_incorrect_normals()
 {
     std::vector<triangle_t> results;
-    std::set<long> bedge_pnts;
-    std::set<uedge_t> bedges = get_boundary_edges();
-    std::set<uedge_t>::iterator ue_it;
-    for (ue_it = bedges.begin(); ue_it != bedges.end(); ue_it++) {
-	bedge_pnts.insert((*ue_it).v[0]);
-	bedge_pnts.insert((*ue_it).v[1]);
-    }
 
     std::set<triangle_t>::iterator tr_it;
     for (tr_it = this->tris.begin(); tr_it != this->tris.end(); tr_it++) {
@@ -1912,14 +1904,13 @@ cdt_mesh_t::interior_incorrect_normals()
 	if (tdir.Length() > 0 && bdir.Length() > 0 && ON_DotProduct(tdir, bdir) < 0.1) {
 	    int epnt_cnt = 0;
 	    for (int i = 0; i < 3; i++) {
-		ON_3dPoint *p = pnts[(*tr_it).v[i]];
-		epnt_cnt = (edge_pnts->find(p) == edge_pnts->end()) ? epnt_cnt : epnt_cnt + 1;
+		epnt_cnt = (ep.find((*tr_it).v[i]) == ep.end()) ? epnt_cnt : epnt_cnt + 1;
 	    }
 	    if (epnt_cnt == 2) {
 		std::cerr << "UNCULLED problem point from surface???????:\n";
 		for (int i = 0; i < 3; i++) {
-		    ON_3dPoint *p = pnts[(*tr_it).v[i]];
-		    if (edge_pnts->find(p) == edge_pnts->end()) {
+		    if (ep.find((*tr_it).v[i]) == ep.end()) {
+			ON_3dPoint *p = pnts[(*tr_it).v[i]];
 			std::cerr << "(" << (*tr_it).v[i] << "): " << p->x << " " << p->y << " " << p->z << "\n";
 		    }
 		}
@@ -2045,11 +2036,7 @@ cdt_mesh_t::bnorm(const triangle_t &t)
 bool
 cdt_mesh_t::brep_edge_pnt(long v)
 {
-    ON_3dPoint *p = pnts[v];
-    if (edge_pnts->find(p) != edge_pnts->end()) {
-	return true;
-    }
-    return false;
+    return (ep.find(v) != ep.end());
 }
 
 void cdt_mesh_t::reset()
@@ -2068,6 +2055,7 @@ void cdt_mesh_t::build(std::set<p2t::Triangle *> *cdttri, std::map<p2t::Point *,
     this->reset();
     this->pnts.clear();
     this->p2ind.clear();
+    this->n2ind.clear();
     this->sv.clear();
 
     std::set<p2t::Triangle*>::iterator s_it;
@@ -2090,6 +2078,20 @@ void cdt_mesh_t::build(std::set<p2t::Triangle *> *cdttri, std::map<p2t::Point *,
 	}
     }
 
+    // Populate normals
+    std::set<ON_3dPoint *> uniq_n3d;
+    std::map<ON_3dPoint *, ON_3dPoint *>::iterator n_it;
+    for (n_it = normalmap->begin(); n_it != normalmap->end(); n_it++) {
+	uniq_n3d.insert(n_it->second);
+    }
+    for (u_it = uniq_n3d.begin(); u_it != uniq_n3d.end(); u_it++) {
+	this->normals.push_back(*u_it);
+	this->n2ind[*u_it] = this->normals.size() - 1;
+    }
+    for (u_it = uniq_p3d.begin(); u_it != uniq_p3d.end(); u_it++) {
+	nmap[p2ind[*u_it]] = n2ind[(*normalmap)[*u_it]];
+    }
+
     // From the triangles, populate the containers
     for (s_it = cdttri->begin(); s_it != cdttri->end(); s_it++) {
 	p2t::Triangle *t = *s_it;
@@ -2107,6 +2109,12 @@ void cdt_mesh_t::build(std::set<p2t::Triangle *> *cdttri, std::map<p2t::Point *,
 	long Cind = this->p2ind[pt_C];
 	struct triangle_t nt(Aind, Bind, Cind);
 	cdt_mesh_t::tri_add(nt);
+    }
+
+    // Populate cdt_mesh edge point set
+    std::set<ON_3dPoint *>::iterator ep_it;
+    for (ep_it = edge_pnts->begin(); ep_it != edge_pnts->end(); ep_it++) {
+	ep.insert(p2ind[*ep_it]);
     }
 
     // Define brep edge set in cdt_mesh terms

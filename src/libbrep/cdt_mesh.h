@@ -191,6 +191,9 @@ public:
     /* Data containers */
     std::vector<ON_3dPoint *> pnts;
     std::map<ON_3dPoint *, long> p2ind;
+    std::vector<ON_3dPoint *> normals;
+    std::map<ON_3dPoint *, long> n2ind;
+    std::map<long, long> nmap;
     std::set<triangle_t> tris;
     std::map<uedge_t, std::set<triangle_t>> uedges2tris;
 
@@ -238,9 +241,6 @@ public:
 
     int f_id;
 
-    // For situations where we need to process using Brep data
-    std::map<ON_3dPoint *, ON_3dPoint *> *normalmap;
-
 private:
     /* Data containers */
     std::map<long, std::set<edge_t>> v2edges;
@@ -250,8 +250,12 @@ private:
     // For situations where we need to process using Brep data
     std::set<ON_3dPoint *> *edge_pnts;
     std::set<std::pair<ON_3dPoint *, ON_3dPoint *>> *b_edges;
-    std::set<uedge_t> brep_edges;
     std::set<ON_3dPoint *> *singularities;
+    std::map<ON_3dPoint *, ON_3dPoint *> *normalmap;
+
+    // cdt_mesh index versions of Brep data
+    std::set<uedge_t> brep_edges;
+    std::set<long> ep; // Brep edge point vertex indices
     std::set<long> sv; // Singularity vertex indices
     bool m_bRev;
 
