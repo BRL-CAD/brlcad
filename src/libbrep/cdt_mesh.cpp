@@ -2685,6 +2685,8 @@ cdt_mesh_t::serialize(const char *fname)
     int m_bRev_digit = (m_bRev) ? 1 : 0;
     sfile << "m_bRev " << m_bRev_digit << "\n";
 
+    sfile << "FACE_ID " << f_id << "\n";
+
     sfile << "SINGULARITIES " << sv.size() << "\n";
     std::set<long>::iterator v_it;
     for (v_it = sv.begin(); v_it != sv.end(); v_it++) {
@@ -2856,6 +2858,11 @@ cdt_mesh_t::deserialize(const char *fname)
 
 	if (dtype == std::string("m_bRev")) {
 	    m_bRev = (lcnt) ? true : false;
+	    continue;
+	}
+
+	if (dtype == std::string("FACE_ID")) {
+	    f_id = lcnt;
 	    continue;
 	}
 
