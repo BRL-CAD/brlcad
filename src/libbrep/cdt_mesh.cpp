@@ -22,6 +22,10 @@
 
 // needed for implementation
 #include <iostream>
+#include <fstream>
+#include <iomanip>
+#include <sstream>
+#include <limits>
 #include <stack>
 
 
@@ -1549,6 +1553,8 @@ cpolygon_t::grow_loop(double deg, bool stop_on_contained, triangle_t &target)
 		    polygon_plot_in_plane(bu_vls_cstr(&fname));
 		    bu_vls_sprintf(&fname, "%d-infinite_loop_tris.plot3", cdt_mesh->f_id);
 		    cdt_mesh->ctris_vect_plot(infinite_loop_tris, bu_vls_cstr(&fname));
+		    bu_vls_sprintf(&fname, "%d-infinite_loop.cdtmesh", cdt_mesh->f_id);
+		    cdt_mesh->serialize(bu_vls_cstr(&fname));
 		    bu_vls_free(&fname);
 		    return -1;
 		} else {
@@ -2010,17 +2016,16 @@ cdt_mesh_t::bnorm(const triangle_t &t)
     ON_3dPoint avgnorm(0,0,0);
 
     // Can't calculate this without some key Brep data
-    if (!this->normalmap) return avgnorm;
+    if (!nmap.size()) return avgnorm;
 
     double norm_cnt = 0.0;
 
     for (size_t i = 0; i < 3; i++) {
-	ON_3dPoint *p3d = this->pnts[t.v[i]];
-	if (singularities->find(p3d) != singularities->end()) {
+	if (sv.find(t.v[i]) != sv.end()) {
 	    // singular vert norms are a product of multiple faces - not useful for this
 	    continue;
 	}
-	ON_3dPoint onrm(*(*normalmap)[p3d]);
+	ON_3dPoint onrm = *normals[nmap[t.v[i]]];
 	if (this->m_bRev) {
 	    onrm = onrm * -1;
 	}
@@ -2325,6 +2330,8 @@ cdt_mesh_t::repair()
 	    tri_plot(seed, bu_vls_cstr(&fname));
 	    bu_vls_sprintf(&fname, "%d-failed_seed_mesh.plot3", f_id);
 	    tris_plot(bu_vls_cstr(&fname));
+	    bu_vls_sprintf(&fname, "%d-failed_seed.cdtmesh", f_id);
+	    serialize(bu_vls_cstr(&fname));
 	    bu_vls_free(&fname);
 	    return false;
 	}
@@ -2355,6 +2362,8 @@ cdt_mesh_t::repair()
 	    tri_plot(seed, bu_vls_cstr(&fname));
 	    bu_vls_sprintf(&fname, "%d-failed_seed_mesh.plot3", f_id);
 	    tris_plot(bu_vls_cstr(&fname));
+	    bu_vls_sprintf(&fname, "%d-failed_seed.cdtmesh", f_id);
+	    serialize(bu_vls_cstr(&fname));
 	    bu_vls_free(&fname);
 	    return false;
 	    break;
@@ -2625,7 +2634,276 @@ void cdt_mesh_t::tris_plot(const char *filename)
 }
 
 
+/* Very simple dump of the cdt_mesh state */
+bool
+cdt_mesh_t::serialize(const char *fname)
+{
+    std::ofstream sfile(fname);
+
+    if (!sfile.is_open()) {
+	std::cerr << "Could not open file " << fname << " for writing, serialization failed\n";
+	return false;
+    }
+
+    sfile << "V1\n";
+
+    sfile << "POINTS " << pnts.size() << "\n";
+
+    for (size_t i = 0; i < pnts.size(); i++) {
+	sfile << std::fixed << std::setprecision(std::numeric_limits<double>::max_digits10) << pnts[i]->x << " ";
+	sfile << std::fixed << std::setprecision(std::numeric_limits<double>::max_digits10) << pnts[i]->y << " ";
+	sfile << std::fixed << std::setprecision(std::numeric_limits<double>::max_digits10) << pnts[i]->z;
+	sfile << "\n";
+    }
+
+
+    sfile << "NORMALS " << normals.size() << "\n";
+
+    for (size_t i = 0; i < normals.size(); i++) {
+	sfile << std::fixed << std::setprecision(std::numeric_limits<double>::max_digits10) << normals[i]->x << " ";
+	sfile << std::fixed << std::setprecision(std::numeric_limits<double>::max_digits10) << normals[i]->y << " ";
+	sfile << std::fixed << std::setprecision(std::numeric_limits<double>::max_digits10) << normals[i]->z;
+	sfile << "\n";
+    }
+
+
+    sfile << "NORMALMAP " << nmap.size() << "\n";
+
+    std::map<long, long>::iterator m_it;
+    for (m_it = nmap.begin(); m_it != nmap.end(); m_it++) {
+	sfile << m_it->first << "," << m_it->second << "\n";
+    }
+
+
+    sfile << "TRIANGLES " << tris.size() << "\n";
+
+    std::set<triangle_t>::iterator t_it;
+    for (t_it = tris.begin(); t_it != tris.end(); t_it++) {
+	sfile << (*t_it).v[0] << "," << (*t_it).v[1] << "," << (*t_it).v[2] << "\n";
+    }
+
+    int m_bRev_digit = (m_bRev) ? 1 : 0;
+    sfile << "m_bRev " << m_bRev_digit << "\n";
+
+    sfile << "SINGULARITIES " << sv.size() << "\n";
+    std::set<long>::iterator v_it;
+    for (v_it = sv.begin(); v_it != sv.end(); v_it++) {
+	sfile << *v_it << "\n";
+    }
+
+    sfile << "BREP_EDGE_POINTS " << ep.size() << "\n";
+    for (v_it = ep.begin(); v_it != ep.end(); v_it++) {
+	sfile << *v_it << "\n";
+    }
+
+
+    sfile << "BREP_EDGES " << brep_edges.size() << "\n";
+    std::set<uedge_t>::iterator b_it;
+    for (b_it = brep_edges.begin(); b_it != brep_edges.end(); b_it++) {
+	sfile << (*b_it).v[0] << "," << (*b_it).v[1] << "\n";
+    }
+
+    sfile.close();
+    return true;
 }
+
+static double
+str2d(std::string s)
+{
+    double d;
+    std::stringstream ss(s);
+    ss >> std::setprecision(std::numeric_limits<double>::max_digits10) >> std::fixed >> d;
+    return d;
+}
+
+bool
+cdt_mesh_t::deserialize(const char *fname)
+{
+    std::ifstream sfile(fname);
+
+    if (!sfile.is_open()) {
+	std::cerr << "Could not open file " << fname << " for reading, deserialization failed\n";
+	return false;
+    }
+
+    int version = -1;
+    std::string switch_line;
+
+    // First line has to be serialization format version string
+    if (std::getline(sfile,switch_line)) {
+	if (switch_line == std::string("V1")) {
+	    version = 1;
+	}
+    }
+    if (version < 1 || version > 1) {
+	std::cerr << "Invalid deserialization file - format version " << switch_line << "\n";
+	return false;
+    }
+
+    pnts.clear();
+    p2ind.clear();
+    normals.clear();
+    n2ind.clear();
+    nmap.clear();
+    tris.clear();
+
+    uedges2tris.clear();
+    seed_tris.clear();
+
+    v2edges.clear();
+    v2tris.clear();
+    edges2tris.clear();
+
+    // When loading a serialization, we don't have a parent Brep structure
+    edge_pnts = NULL;
+    b_edges = NULL;
+    singularities = NULL;
+    normalmap = NULL;
+
+    brep_edges.clear();
+    ep.clear();
+    sv.clear();
+
+    boundary_edges.clear();
+    boundary_edges_stale = true;
+    problem_edges.clear();
+
+    while (std::getline(sfile,switch_line)) {
+	std::cout << switch_line << "\n";
+	size_t spos = switch_line.find_first_of(' ');
+	std::string dtype = switch_line.substr(0, spos);
+	switch_line.erase(0, spos+1);
+	long lcnt = std::stol(switch_line);
+
+	if (dtype == std::string("POINTS")) {
+	    for (long i = 0; i < lcnt; i++) {
+		std::string pline;
+		std::getline(sfile,pline);
+		spos = pline.find_first_of(' ');
+		std::string xstr = pline.substr(0, spos);
+		pline.erase(0, spos+1);
+		spos = pline.find_first_of(' ');
+		std::string ystr = pline.substr(0, spos);
+		pline.erase(0, spos+1);
+		std::string zstr = pline;
+		double xval, yval, zval;
+		xval = str2d(xstr);
+		yval = str2d(ystr);
+		zval = str2d(zstr);
+		ON_3dPoint *p3d = new ON_3dPoint(xval, yval, zval);
+		pnts.push_back(p3d);
+		p2ind[p3d] = pnts.size() - 1;
+	    }
+	    continue;
+	}
+
+	if (dtype == std::string("NORMALS")) {
+	    for (long i = 0; i < lcnt; i++) {
+		std::string nline;
+		std::getline(sfile,nline);
+		spos = nline.find_first_of(' ');
+		std::string xstr = nline.substr(0, spos);
+		nline.erase(0, spos+1);
+		spos = nline.find_first_of(' ');
+		std::string ystr = nline.substr(0, spos);
+		nline.erase(0, spos+1);
+		std::string zstr = nline;
+		double xval, yval, zval;
+		xval = str2d(xstr);
+		yval = str2d(ystr);
+		zval = str2d(zstr);
+		ON_3dPoint *n3d = new ON_3dPoint(xval, yval, zval);
+		normals.push_back(n3d);
+		n2ind[n3d] = normals.size() - 1;
+	    }
+	    continue;
+	}
+
+	if (dtype == std::string("NORMALMAP")) {
+	    for (long i = 0; i < lcnt; i++) {
+		std::string nmline;
+		std::getline(sfile,nmline);
+		spos = nmline.find_first_of(',');
+		std::string kstr = nmline.substr(0, spos);
+		nmline.erase(0, spos+1);
+		std::string vstr = nmline;
+		long key = std::stol(kstr);
+		long val = std::stol(vstr);
+		nmap[key] = val;
+	    }
+	    continue;
+	}
+
+	if (dtype == std::string("TRIANGLES")) {
+	    for (long i = 0; i < lcnt; i++) {
+		std::string tline;
+		std::getline(sfile,tline);
+		spos = tline.find_first_of(',');
+		std::string v1str = tline.substr(0, spos);
+		tline.erase(0, spos+1);
+		spos = tline.find_first_of(',');
+		std::string v2str = tline.substr(0, spos);
+		tline.erase(0, spos+1);
+		std::string v3str = tline;
+		long v1 = std::stol(v1str);
+		long v2 = std::stol(v2str);
+		long v3 = std::stol(v3str);
+		triangle_t t(v1, v2, v3);
+		tri_add(t);
+	    }
+	    continue;
+	}
+
+	if (dtype == std::string("m_bRev")) {
+	    m_bRev = (lcnt) ? true : false;
+	    continue;
+	}
+
+	if (dtype == std::string("SINGULARITIES")) {
+	    for (long i = 0; i < lcnt; i++) {
+		std::string sline;
+		std::getline(sfile,sline);
+		long sval = std::stol(sline);
+		sv.insert(sval);
+	    }
+	    continue;
+	}
+
+	if (dtype == std::string("BREP_EDGE_POINTS")) {
+	    for (long i = 0; i < lcnt; i++) {
+		std::string bepline;
+		std::getline(sfile,bepline);
+		long epval = std::stol(bepline);
+		ep.insert(epval);
+	    }
+	    continue;
+	}
+
+	if (dtype == std::string("BREP_EDGES")) {
+	    for (long i = 0; i < lcnt; i++) {
+		std::string beline;
+		std::getline(sfile,beline);
+		spos = beline.find_first_of(',');
+		std::string kstr = beline.substr(0, spos);
+		beline.erase(0, spos+1);
+		std::string vstr = beline;
+		long v1 = std::stol(kstr);
+		long v2 = std::stol(vstr);
+		brep_edges.insert(uedge_t(v1, v2));
+	    }
+	    continue;
+	}
+
+	std::cerr << "Unexpected line:\n" << switch_line << "\nSerialization import failed.\n";
+	return false;
+    }
+
+    boundary_edges_update();
+
+    return true;
+}
+
+} // close namespace cdt_mesh
 
 // Local Variables:
 // tab-width: 8

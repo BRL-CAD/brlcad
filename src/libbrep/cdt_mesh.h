@@ -208,6 +208,8 @@ public:
 	    );
     bool repair();
     bool valid();
+    bool serialize(const char *fname);
+    bool deserialize(const char *fname);
 
     /* Mesh data set accessors */
     std::set<uedge_t> get_boundary_edges();
