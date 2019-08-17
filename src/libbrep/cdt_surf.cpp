@@ -154,83 +154,26 @@ singular_trim_norm(struct cdt_surf_info *sinfo, fastf_t uc, fastf_t vc)
  * This approach generates too many unnecessary triangles and is actually a
  * problem when a globally fine edge seg forces the surface to be fine at a
  * course edge. */
-bool involves_trims(double *min_edge, struct ON_Brep_CDT_State *s_cdt, struct cdt_surf_info *sinfo, fastf_t u1, fastf_t u2, fastf_t v1, fastf_t v2, ON_3dPoint &p1, ON_3dPoint &p2)
+bool involves_trims(double *min_edge, struct cdt_surf_info *sinfo, ON_3dPoint &p1, ON_3dPoint &p2)
 {
-    bool found_trims = false;
-    ON_SimpleArray<ON_RTreeLeaf> results;
-    ON_2dPoint pmin(u1, v1);
-    ON_2dPoint pmax(u2, v2);
-    found_trims = sinfo->rt_trims->Search2d((const double *) &pmin, (const double *) &pmax, results);
-    if (!min_edge) {
-	return found_trims;
-    }
-
-    double rtree_min_edge_dist = 0.0;
-    double min_edge_dist = sinfo->max_edge;
-
-    if (found_trims) {
-	ON_SimpleArray<ON_RTreeLeaf> results_3d;
-	bool found_trims_3d = sinfo->rt_trims_3d->Search((const double *) &p1, (const double *) &p2, results_3d);
-	if (!found_trims_3d) {
-	    std::cout << "2d hit but not 3d hit\n";
-	}
+    double rtree_min_edge_dist = sinfo->max_edge;
+    ON_SimpleArray<ON_RTreeLeaf> results_3d;
+    bool found_trims_3d = sinfo->rt_trims_3d->Search((const double *) &p1, (const double *) &p2, results_3d);
+    if (found_trims_3d) {
 	//std::cout << "edge_cnt: " << results.Count() << "\n";
-        rtree_min_edge_dist = sinfo->max_edge;
-        for (int i = 0; i < results_3d.Count(); i++) {
-            ON_3dPoint ep1(results_3d[i].m_rect.m_min);
-            ON_3dPoint ep2(results_3d[i].m_rect.m_max);
-            fastf_t dist = ep1.DistanceTo(ep2);
-            if ((dist > SMALL_FASTF) && (dist < min_edge_dist))  {
-                rtree_min_edge_dist = dist;
-            }
-        }
-    }
-
-    if (results.Count() > 0) {
-	ON_BoundingBox uvbb(ON_2dPoint(u1,v1),ON_2dPoint(u2,v2));
-
-	ON_SimpleArray<BrepTrimPoint> *brep_loop_points = (*s_cdt->faces)[sinfo->f->m_face_index]->face_loop_points;
-	if (!brep_loop_points) {
-	    (*min_edge) = min_edge_dist;
-	    return found_trims;
-	}
-#if 0
-	for (int li = 0; li < sinfo->f->LoopCount(); li++) {
-	    int num_loop_points = brep_loop_points[li].Count();
-	    if (num_loop_points > 1) {
-		ON_3dPoint *ep1 = (brep_loop_points[li])[0].p3d;
-		ON_3dPoint *ep2 = NULL;
-		const ON_2dPoint *p2d1 = &(brep_loop_points[li])[0].p2d;
-		const ON_2dPoint *p2d2 = NULL;
-		for (int i = 1; i < num_loop_points; i++) {
-		    ep2 = ep1;
-		    ep1 = (brep_loop_points[li])[i].p3d;
-		    p2d2 = p2d1;
-		    p2d1 = &(brep_loop_points[li])[i].p2d;
-		    // Overlaps bbox? 
-		    if (uvbb.IsPointIn(*p2d1, false) || uvbb.IsPointIn(*p2d2, false)) {
-			fastf_t dist = ep1->DistanceTo(*ep2);
-			if ((dist > SMALL_FASTF) && (dist < min_edge_dist))  {
-			    min_edge_dist = dist;
-			}
-		    }
-		}
+	for (int i = 0; i < results_3d.Count(); i++) {
+	    ON_3dPoint ep1(results_3d[i].m_rect.m_min);
+	    ON_3dPoint ep2(results_3d[i].m_rect.m_max);
+	    fastf_t dist = ep1.DistanceTo(ep2);
+	    if ((dist > SMALL_FASTF) && (dist < rtree_min_edge_dist))  {
+		rtree_min_edge_dist = dist;
 	    }
 	}
-#endif
-
-//	(*min_edge) = min_edge_dist;
     }
 
-#if 0
-    if (found_trims && !NEAR_ZERO(min_edge_dist - rtree_min_edge_dist, ON_ZERO_TOLERANCE)) {
-	bu_log("Face %d rtree minedge: %f\n", sinfo->f->m_face_index, rtree_min_edge_dist);
-	bu_log("Face %d loop minedge: %f\n\n", sinfo->f->m_face_index, min_edge_dist);
-    }
-#endif
     (*min_edge) = rtree_min_edge_dist;
 
-    return found_trims;
+    return found_trims_3d;
 }
 
 /* flags identifying which side of the surface we're calculating
@@ -382,7 +325,6 @@ filter_surface_edge_pnts(struct ON_Brep_CDT_Face_State *f)
 
 static bool
 getSurfacePoint(
-	         struct ON_Brep_CDT_Face_State *f,
 	         struct cdt_surf_info *sinfo,
 		 SPatch &sp,
 		 std::queue<SPatch> &nq
@@ -458,7 +400,7 @@ getSurfacePoint(
 		&& (surface_EvNormal(sinfo->s, u2, v2, p[2], norm[2]))) {
 
 	    double min_edge_len;
-	    if (involves_trims(&min_edge_len, f->s_cdt, sinfo, u1, u2, v1, v2, p[0], p[2])) {
+	    if (involves_trims(&min_edge_len, sinfo, p[0], p[2])) {
 		if (uavg > min_edge_len && vavg > min_edge_len) {
 		    split_u = 1;
 		}
@@ -800,7 +742,7 @@ getSurfacePoints(struct ON_Brep_CDT_Face_State *f)
 	while (!wq->empty()) {
 	    SPatch sp = wq->front();
 	    wq->pop();
-	    if (!getSurfacePoint(f, &sinfo, sp, *nq)) {
+	    if (!getSurfacePoint(&sinfo, sp, *nq)) {
 		ON_BoundingBox bb(ON_2dPoint(sp.umin,sp.vmin),ON_2dPoint(sp.umax, sp.vmax));
 		sinfo.leaf_bboxes.insert(new ON_BoundingBox(bb));
 	    }
