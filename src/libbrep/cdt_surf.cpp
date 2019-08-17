@@ -170,7 +170,7 @@ bool involves_trims(double *min_edge, struct ON_Brep_CDT_State *s_cdt, struct cd
 
     if (found_trims) {
 	ON_SimpleArray<ON_RTreeLeaf> results_3d;
-	bool found_trims_3d = sinfo->rt_trims->Search((const double *) &p1, (const double *) &p2, results_3d);
+	bool found_trims_3d = sinfo->rt_trims_3d->Search((const double *) &p1, (const double *) &p2, results_3d);
 	if (!found_trims_3d) {
 	    std::cout << "2d hit but not 3d hit\n";
 	}
@@ -558,6 +558,7 @@ getSurfacePoints(struct ON_Brep_CDT_Face_State *f)
 	sinfo.s = s;
 	sinfo.f = &face;
 	sinfo.rt_trims = f->rt_trims;
+	sinfo.rt_trims_3d = f->rt_trims_3d;
 	sinfo.strim_pnts = f->strim_pnts;
 	sinfo.strim_norms = f->strim_norms;
 	double t1, t2;

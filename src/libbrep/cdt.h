@@ -217,6 +217,7 @@ struct cdt_surf_info {
     const ON_Surface *s;
     const ON_BrepFace *f;
     ON_RTree *rt_trims;
+    ON_RTree *rt_trims_3d;
     std::map<int,ON_3dPoint *> *strim_pnts;
     std::map<int,ON_3dPoint *> *strim_norms;
     double u1, u2, v1, v2;
