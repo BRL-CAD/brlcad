@@ -97,12 +97,6 @@ full_retriangulation(struct ON_Brep_CDT_Face_State *f)
 	}
     }
 
-    // Testing new mesh container
-    f->fmesh.set_brep_data(f->s_cdt->brep->m_F[f->ind].m_bRev, f->s_cdt->edge_pnts, &f->s_cdt->fedges, f->singularities, f->on3_to_norm_map);
-    f->fmesh.f_id = f->ind;
-    f->fmesh.build(f->tris, f->p2t_to_on3_map);
-
-
     return 0;
 }
 
@@ -118,15 +112,6 @@ refine_triangulation(struct ON_Brep_CDT_Face_State *f, int cnt, int rebuild)
 	return 0;
     }
 
-#if 0
-    struct bu_vls pname = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&pname, "%srefine_tri-%d-00_initial-iteration_cdt_mesh_3d.plot3", bu_vls_cstr(&f->face_root), cnt);
-    f->fmesh.tris_plot(bu_vls_cstr(&pname));
-    bu_vls_sprintf(&pname, "%srefine_tri-%d-00_initial-boundary_cdt_mesh_3d.plot3", bu_vls_cstr(&f->face_root), cnt);
-    f->fmesh.boundary_edges_plot(bu_vls_cstr(&pname));
-    bu_vls_sprintf(&pname, "%srefine_tri-%d-00_initial-boundary_loops_cdt_mesh_3d.plot3", bu_vls_cstr(&f->face_root), cnt);
-#endif
-
     // If a previous pass has made changes in which points are active in the
     // surface set, we need to rebuild the whole triangulation.
 
@@ -136,41 +121,23 @@ refine_triangulation(struct ON_Brep_CDT_Face_State *f, int cnt, int rebuild)
 	    bu_log("Fatal failure attempting full retriangulation of face\n");
 	    return -1;
 	}
-
-#if 0
-	bu_vls_sprintf(&pname, "%srefine_tri-%d-01_after_full_retri-iteration_cdt_mesh_3d.plot3", bu_vls_cstr(&f->face_root), cnt);
-	f->fmesh.tris_plot(bu_vls_cstr(&pname));
-#endif
     }
-
-    // Identify trivially degenerate triangles (a triangle defined by only two
-    // points).
-    // NOTE - for the new fmesh container this and duplicate filtering are handled by
-    // the build routine
-    triangles_degenerate_trivial(f);
 
     // Check the triangles around edges first - these may require
     // the removal of points from the surface set
     ret = triangles_check_edge_tris(f);
-    int esret = triangles_slim_edge(f);
-    if (esret < 0) {
-	bu_log("Fatal failure on slim edge checking\n");
-	return -1;
-    }
-    ret += esret;
     if (ret) {
 	bu_log("Pass %d: surface points removed, need full retriangulation\n", cnt);
 	return refine_triangulation(f, cnt+1, 1);
     }
 
-    // If we got here, we shouldn't have had to change the mesh - should match previous
-#if 0
-    bu_vls_sprintf(&pname, "%srefine_tri-%d-02_after_slim_edge-iteration_cdt_mesh_3d.plot3", bu_vls_cstr(&f->face_root), cnt);
-    f->fmesh.tris_plot(bu_vls_cstr(&pname));
-#endif
-
     // Now, the hard part - create local subsets, remesh them, and replace the original
     // triangles with the new ones.
+
+    f->fmesh.set_brep_data(f->s_cdt->brep->m_F[f->ind].m_bRev, f->s_cdt->edge_pnts, &f->s_cdt->fedges, f->singularities, f->on3_to_norm_map);
+    f->fmesh.f_id = f->ind;
+    f->fmesh.build(f->tris, f->p2t_to_on3_map);
+
     ret = (f->fmesh.repair()) ? 1 : -1;
     if (ret == -1) {
 	bu_log("Face %d: triangulation FAILED!\n", f->ind);
@@ -178,34 +145,6 @@ refine_triangulation(struct ON_Brep_CDT_Face_State *f, int cnt, int rebuild)
     }
     ret = (f->fmesh.valid()) ? 1 : -1;
 
-#if 0
-    // Identify zero area triangles
-    triangles_degenerate_area(f);
-
-    // Remove degenerate triangles
-    std::set<p2t::Triangle *>::iterator tr_it;
-    for (tr_it = f->degen_tris->begin(); tr_it != f->degen_tris->end(); tr_it++) {
-	p2t::Triangle *t = *tr_it;
-	f->tris->erase(t);
-	delete t;
-    }
-
-    // Validate based on edges.  If we get a return > 0, something went very
-    // wrong.
-    int eret = triangles_check_edges(f);
-    if (eret < 0) {
-	bu_log("Fatal failure on edge checking\n");
-	return -1;
-    }
-
-    if (!ret) {
-	// Flag zero area triangles for subsequent handling (potentially
-	// involves localized changes to multiple faces, don't notify them
-	// until we're done locally)
-	triangles_degenerate_area_notify(f);
-	bu_log("Face %d: successful triangulation after %d passes\n", f->ind, cnt);
-    }
-#endif
     if (ret > 0) {
 	bu_log("Face %d: successful triangulation after %d passes\n", f->ind, cnt);
     } else {
@@ -272,11 +211,6 @@ do_triangulation(struct ON_Brep_CDT_Face_State *f)
 	    }
 	}
     }
-
-    // Testing new mesh container
-    f->fmesh.set_brep_data(f->s_cdt->brep->m_F[f->ind].m_bRev, f->s_cdt->edge_pnts, &f->s_cdt->fedges, f->singularities, f->on3_to_norm_map);
-    f->fmesh.f_id = f->ind;
-    f->fmesh.build(f->tris, f->p2t_to_on3_map);
 
     /* The poly2tri triangulation is not guaranteed to have all the properties
      * we want out of the box - trigger a series of checks */
