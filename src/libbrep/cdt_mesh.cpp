@@ -1150,11 +1150,12 @@ bool
 cpolygon_t::have_uncontained()
 {
     std::set<long>::iterator u_it;
+
+    if (!closed()) return true;
+
     if (!uncontained.size()) return false;
 
     std::set<long> mvpnts;
-
-    if (!closed()) return true;
 
     for (u_it = uncontained.begin(); u_it != uncontained.end(); u_it++) {
 	if (point_in_polygon(*u_it, false)) {
