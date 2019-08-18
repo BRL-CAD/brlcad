@@ -233,6 +233,9 @@ class cpolygon_t
 
 	cdt_mesh_t *cdt_mesh;
 
+	void polygon_plot(const char *filename);
+	void print();
+
     private:
 	bool closed();
 	bool self_intersecting();
@@ -245,10 +248,8 @@ class cpolygon_t
 
 	long tri_process(std::set<edge_t> *ne, std::set<edge_t> *se, long *nv, triangle_t &t);
 
-	void polygon_plot(const char *filename);
 	void polygon_plot_in_plane(const char *filename);
 	void plot_best_fit_plane(const char *filename);
-	void print();
 
 	std::set<cpolyedge_t *> poly;
 	std::map<long, std::set<cpolyedge_t *>> v2pe;

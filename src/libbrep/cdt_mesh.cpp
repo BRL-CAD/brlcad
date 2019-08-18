@@ -36,6 +36,15 @@ namespace cdt_mesh
 /* CPolygon implementation */
 /***************************/
 
+long
+cpolygon_t::add_point(ON_2dPoint *on_2dp)
+{
+    std::pair<double, double> proj_2d;
+    proj_2d.first = on_2dp->x;
+    proj_2d.second = on_2dp->y;
+    pnts_2d.push_back(proj_2d);
+    return (long)(pnts_2d.size() - 1);
+}
 
 long
 cpolygon_t::add_edge(const struct edge_t &e)
@@ -1042,12 +1051,16 @@ void cpolygon_t::print()
     // Walk the loop - an infinite loop is not closed
     while (first != next) {
 	ecnt++;
+	if (!next) {
+	    std::cout << "\nERROR next pointer unset\n";
+	    break;
+	}
 	std::cout << "->" << next->v[0];
 	visited.insert(next);
 	next = next->next;
 	if (ecnt > poly.size()) {
-	    std::cout << " ERROR infinite loop\n";
-	    return;
+	    std::cout << "\nERROR infinite loop\n";
+	    break;
 	}
     }
 

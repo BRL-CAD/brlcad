@@ -245,6 +245,38 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_Face_State *f)
     }
 
 
+    // EXPERIMENT - see if we can generate polygons from the loops 
+    for (int li = 0; li < loop_cnt; li++) {
+	const ON_BrepLoop *loop = face.Loop(li);
+	int trim_count = loop->TrimCount();
+
+	cdt_mesh::cpolygon_t cpoly;
+
+	ON_2dPoint cp;
+	long cv, pv, fv;
+	for (int lti = 0; lti < trim_count; lti++) {
+	    ON_BrepTrim *trim = loop->Trim(lti);
+	    if (lti == 0) {
+		cp = trim->PointAt(0);
+		pv = cpoly.add_point(&cp);
+		fv = pv;
+	    } else {
+		pv = cv;	
+	    }
+	    cp = trim->PointAt(1);
+	    cv = cpoly.add_point(&cp);	
+	    struct cdt_mesh::edge_t lseg(pv, cv);
+	    cpoly.add_edge(lseg);
+	    cpoly.print();
+	}
+	struct cdt_mesh::edge_t last_seg(cv, fv);
+	cpoly.add_edge(last_seg);
+	cpoly.print();
+
+	cpoly.polygon_plot("poly_2d.plot3");
+    }
+
+
     // Use the edge curves and loops to generate an initial set of trim polygons.
     for (int li = 0; li < loop_cnt; li++) {
 	Process_Loop_Edges(f, li);
