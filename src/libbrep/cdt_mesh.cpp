@@ -1921,10 +1921,6 @@ cdt_mesh_t::interior_incorrect_normals()
 			std::cerr << "(" << (*tr_it).v[i] << "): " << p->x << " " << p->y << " " << p->z << "\n";
 		    }
 		}
-		struct bu_vls fname = BU_VLS_INIT_ZERO;
-		bu_vls_sprintf(&fname, "%d-unculled_problem_point_mesh.plot3", f_id);
-		tris_plot(bu_vls_cstr(&fname));
-		bu_vls_free(&fname);
 		results.clear();
 		return results;
 	    }
@@ -2385,24 +2381,46 @@ cdt_mesh_t::repair()
 bool
 cdt_mesh_t::valid()
 {
-    bool ret = true;
+    struct bu_vls fname = BU_VLS_INIT_ZERO;
+    bool nret = true;
+    bool eret = true;
     std::set<triangle_t>::iterator tr_it;
     for (tr_it = tris.begin(); tr_it != tris.end(); tr_it++) {
 	ON_3dVector tdir = tnorm(*tr_it);
 	ON_3dVector bdir = bnorm(*tr_it);
 	if (tdir.Length() > 0 && bdir.Length() > 0 && ON_DotProduct(tdir, bdir) < 0.1) {
 	    std::cout << "Still have invalid normals in mesh, triangle (" << (*tr_it).v[0] << "," << (*tr_it).v[1] << "," << (*tr_it).v[2] << ")\n";	
-	    ret = false;
+	    bu_vls_sprintf(&fname, "%d-invalid_normal_tri_%ld_%ld_%ld.plot3", f_id, (*tr_it).v[0], (*tr_it).v[1], (*tr_it).v[2]);
+	    tri_plot(*tr_it, bu_vls_cstr(&fname));
+	    nret = false;
 	}
+    }
+
+    if (!nret) {
+	bu_vls_sprintf(&fname, "%d-invalid_normals_mesh.plot3", f_id);
+	tris_plot(bu_vls_cstr(&fname));
+	bu_vls_sprintf(&fname, "%d-invalid_normals.cdtmesh", f_id);
+	serialize(bu_vls_cstr(&fname));
     }
 
     boundary_edges_update();
     if (problem_edges.size() > 0) {
 	std::cout << "Still have problem edges in mesh\n";	
-	ret = false;
+	eret = false;
     }
 
-    return ret;
+    if (!eret) {
+	bu_vls_sprintf(&fname, "%d-invalid_normals_mesh.plot3", f_id);
+	tris_plot(bu_vls_cstr(&fname));
+	bu_vls_sprintf(&fname, "%d-invalid_edges.cdtmesh", f_id);
+	serialize(bu_vls_cstr(&fname));
+	bu_vls_sprintf(&fname, "%d-invalid_edges_boundary.plot3", f_id);
+	boundary_edges_plot(bu_vls_cstr(&fname));
+    }
+
+
+    bu_vls_free(&fname);
+    return (nret && eret);
 }
 
 void cdt_mesh_t::plot_uedge(struct uedge_t &ue, FILE* plot_file)
@@ -2569,7 +2587,7 @@ void cdt_mesh_t::interior_incorrect_normals_plot(const char *filename)
     fclose(plot_file);
 }
 
-void cdt_mesh_t::tri_plot(triangle_t &tri, const char *filename)
+void cdt_mesh_t::tri_plot(const triangle_t &tri, const char *filename)
 {
     FILE* plot_file = fopen(filename, "w");
 

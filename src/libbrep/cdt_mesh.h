@@ -239,7 +239,7 @@ public:
     void tris_vect_plot(std::vector<triangle_t> &tvect, const char *filename);
     void ctris_vect_plot(std::vector<struct ctriangle_t> &tvect, const char *filename);
     void tris_plot(const char *filename);
-    void tri_plot(triangle_t &tri, const char *filename);
+    void tri_plot(const triangle_t &tri, const char *filename);
 
     int f_id;
 
