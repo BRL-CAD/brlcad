@@ -36,92 +36,6 @@ namespace cdt_mesh
 /* CPolygon implementation */
 /***************************/
 
-class cpolyedge_t
-{
-    public:
-	cpolyedge_t *prev;
-	cpolyedge_t *next;
-
-	long v[2];
-
-	cpolyedge_t(edge_t &e){
-	    v[0] = e.v[0];
-	    v[1] = e.v[1];
-	    prev = NULL;
-	    next = NULL;
-	};
-};
-
-class cpolygon_t
-{
-    public:
-
-	// Project cdt_mesh 3D points into a 2D point array.  Probably won't use all of
-	// them, but this way vert indices on triangles will match in 2D and 3D.
-	void build_2d_pnts(ON_3dPoint &c, ON_3dVector &n);
-
-	// An initial loop may not contain all the interior points - to ensure it does,
-	// use grow_loop with a large deg value and the stop_on_contained flag set.
-	bool build_initial_loop(triangle_t &seed, bool repair);
-
-	// To grow only until all interior points are within the polygon, supply true
-	// for stop_on_contained.  Otherwise, grow_loop will follow the triangles out
-	// until the Brep normals of the triangles are beyond the deg limit.  Note
-	// that triangles which would cause a self-intersecting polygon will be
-	// rejected, even if they satisfy deg.
-	long grow_loop(double deg, bool stop_on_contained, triangle_t &target);
-
-	std::set<triangle_t> visited_triangles;
-	std::set<triangle_t> tris;
-
-	cdt_mesh_t *cdt_mesh;
-
-    private:
-	bool closed();
-	bool self_intersecting();
-	bool best_fit_plane();
-	bool cdt();
-
-	bool point_in_polygon(long v, bool flip);
-	// Apply the point-in-polygon test to all uncontained points, moving any inside the loop into interior_points
-	bool have_uncontained();
-
-	long tri_process(std::set<edge_t> *ne, std::set<edge_t> *se, long *nv, triangle_t &t);
-	long add_edge(const struct edge_t &e);
-	void remove_edge(const struct edge_t &e);
-	long replace_edges(std::set<edge_t> &new_edges, std::set<edge_t> &old_edges);
-
-	void polygon_plot(const char *filename);
-	void polygon_plot_in_plane(const char *filename);
-	void plot_best_fit_plane(const char *filename);
-	void print();
-
-	std::set<cpolyedge_t *> poly;
-	std::map<long, std::set<cpolyedge_t *>> v2pe;
-	std::set<long> used_verts; /* both interior and active points - for a quick check if a point is active */
-	std::set<long> interior_points;
-	std::set<long> uncontained;
-	std::set<long> flipped_face;
-	std::set<long> target_verts;
-	point2d_t *pnts_2d;
-
-	std::set<uedge_t> active_edges;
-	std::set<uedge_t> self_isect_edges;
-
-	long shared_edge_cnt(triangle_t &t);
-	long unshared_vertex(triangle_t &t);
-	std::pair<long,long> shared_vertices(triangle_t &t);
-	double ucv_angle(triangle_t &t);
-
-	std::set<triangle_t> unusable_triangles;
-
-	ON_Plane tplane;
-	ON_Plane fit_plane;
-	ON_3dVector pdir;
-
-	std::vector<struct ctriangle_t> polygon_tris(double angle, bool brep_norm, int initial);
-
-};
 
 long
 cpolygon_t::add_edge(const struct edge_t &e)
@@ -334,9 +248,9 @@ cpolygon_t::ucv_angle(triangle_t &t)
     std::pair<long, long> s_vert = shared_vertices(t);
     if (s_vert.first == -1 || s_vert.second == -1) return -1;
 
-    ON_3dPoint ep1 = ON_3dPoint(pnts_2d[s_vert.first][X], pnts_2d[s_vert.first][Y], 0);
-    ON_3dPoint ep2 = ON_3dPoint(pnts_2d[s_vert.second][X], pnts_2d[s_vert.second][Y], 0);
-    ON_3dPoint pnew = ON_3dPoint(pnts_2d[nv][X], pnts_2d[nv][Y], 0);
+    ON_3dPoint ep1 = ON_3dPoint(pnts_2d[s_vert.first].first, pnts_2d[s_vert.first].second, 0);
+    ON_3dPoint ep2 = ON_3dPoint(pnts_2d[s_vert.second].first, pnts_2d[s_vert.second].second, 0);
+    ON_3dPoint pnew = ON_3dPoint(pnts_2d[nv].first, pnts_2d[nv].second, 0);
     ON_Line l2d(ep1,ep2);
     ON_3dPoint pline = l2d.ClosestPointTo(pnew);
     ON_3dVector vu = pnew - pline;
@@ -344,7 +258,7 @@ cpolygon_t::ucv_angle(triangle_t &t)
 
     for (u_it = uncontained.begin(); u_it != uncontained.end(); u_it++) {
 	if (point_in_polygon(*u_it, true)) {
-	    ON_2dPoint op = ON_2dPoint(pnts_2d[*u_it][X], pnts_2d[*u_it][Y]);
+	    ON_2dPoint op = ON_2dPoint(pnts_2d[*u_it].first, pnts_2d[*u_it].second);
 	    ON_3dVector vt = op - pline;
 
 	    // If vt is almost on l2d, we want this triangle - there's an excellent chance
@@ -363,7 +277,7 @@ cpolygon_t::ucv_angle(triangle_t &t)
     }
     for (u_it = flipped_face.begin(); u_it != flipped_face.end(); u_it++) {
 	if (point_in_polygon(*u_it, true)) {
-	    ON_2dPoint op = ON_2dPoint(pnts_2d[*u_it][X], pnts_2d[*u_it][Y]);
+	    ON_2dPoint op = ON_2dPoint(pnts_2d[*u_it].first, pnts_2d[*u_it].second);
 	    ON_3dVector vt = op - pline;
 
 	    // If vt is almost on l2d, we want this triangle - there's an excellent chance
@@ -383,7 +297,7 @@ cpolygon_t::ucv_angle(triangle_t &t)
 
     for (u_it = target_verts.begin(); u_it != target_verts.end(); u_it++) {
 	if (point_in_polygon(*u_it, true)) {
-	    ON_2dPoint op = ON_2dPoint(pnts_2d[*u_it][X], pnts_2d[*u_it][Y]);
+	    ON_2dPoint op = ON_2dPoint(pnts_2d[*u_it].first, pnts_2d[*u_it].second);
 	    ON_3dVector vt = op - pline;
 
 	    // If vt is almost on l2d, we want this triangle - there's an excellent chance
@@ -432,8 +346,8 @@ cpolygon_t::self_intersecting()
     std::vector<cpolyedge_t *> pv(poly.begin(), poly.end());
     for (size_t i = 0; i < pv.size(); i++) {
 	cpolyedge_t *pe1 = pv[i];
-	ON_2dPoint p1_1(pnts_2d[pe1->v[0]][X], pnts_2d[pe1->v[0]][Y]);
-	ON_2dPoint p1_2(pnts_2d[pe1->v[1]][X], pnts_2d[pe1->v[1]][Y]);
+	ON_2dPoint p1_1(pnts_2d[pe1->v[0]].first, pnts_2d[pe1->v[0]].second);
+	ON_2dPoint p1_2(pnts_2d[pe1->v[1]].first, pnts_2d[pe1->v[1]].second);
 	struct uedge_t ue1(pe1->v[0], pe1->v[1]);
 	// if we already know this segment intersects at least one other segment, we
 	// don't need to re-test it - it's already "active"
@@ -441,8 +355,8 @@ cpolygon_t::self_intersecting()
 	ON_Line e1(p1_1, p1_2);
 	for (size_t j = i+1; j < pv.size(); j++) {
 	    cpolyedge_t *pe2 = pv[j];
-	    ON_2dPoint p2_1(pnts_2d[pe2->v[0]][X], pnts_2d[pe2->v[0]][Y]);
-	    ON_2dPoint p2_2(pnts_2d[pe2->v[1]][X], pnts_2d[pe2->v[1]][Y]);
+	    ON_2dPoint p2_1(pnts_2d[pe2->v[0]].first, pnts_2d[pe2->v[0]].second);
+	    ON_2dPoint p2_2(pnts_2d[pe2->v[1]].first, pnts_2d[pe2->v[1]].second);
 	    struct uedge_t ue2(pe2->v[0], pe2->v[1]);
 	    ON_Line e2(p2_1, p2_2);
 
@@ -531,9 +445,9 @@ cpolygon_t::point_in_polygon(long v, bool flip)
 	return false;
     }
 
-    V2MOVE(polypnts[pind], pnts_2d[pe->v[0]]);
+    V2SET(polypnts[pind], pnts_2d[pe->v[0]].first, pnts_2d[pe->v[0]].second);
     pind++;
-    V2MOVE(polypnts[pind], pnts_2d[pe->v[1]]);
+    V2SET(polypnts[pind], pnts_2d[pe->v[1]].first, pnts_2d[pe->v[1]].second);
 
     // Walk the loop
     while (first != next) {
@@ -542,7 +456,7 @@ cpolygon_t::point_in_polygon(long v, bool flip)
 	    bu_free(polypnts, "polyline");
 	    return false;
 	}
-	V2MOVE(polypnts[pind], pnts_2d[next->v[1]]);
+	V2SET(polypnts[pind], pnts_2d[next->v[1]].first, pnts_2d[next->v[1]].second);
 	next = next->next;
     }
 
@@ -560,7 +474,7 @@ cpolygon_t::point_in_polygon(long v, bool flip)
     //bg_polygon_plot_2d("bg_pnt_in_poly_loop.plot3", polypnts, pind, 255, 0, 0);
 
     point2d_t test_pnt;
-    V2MOVE(test_pnt, pnts_2d[v]);
+    V2SET(test_pnt, pnts_2d[v].first, pnts_2d[v].second);
 
     bool result = (bool)bg_pt_in_polygon(pind, (const point2d_t *)polypnts, (const point2d_t *)&test_pnt);
 
@@ -647,14 +561,13 @@ cpolygon_t::cdt()
 	return false;
     }
 
-    point2d_t *old_pnts_2d = pnts_2d;
-    pnts_2d = (point2d_t *)bu_calloc(cdt_mesh->pnts.size() + 1, sizeof(point2d_t), "2D points array");
+    point2d_t *bgp_2d = (point2d_t *)bu_calloc(cdt_mesh->pnts.size() + 1, sizeof(point2d_t), "2D points array");
     for (size_t i = 0; i < cdt_mesh->pnts.size(); i++) {
 	double u, v;
 	ON_3dPoint op3d = (*cdt_mesh->pnts[i]);
 	fit_plane.ClosestPointTo(op3d, &u, &v);
-	pnts_2d[i][X] = u;
-	pnts_2d[i][Y] = v;
+	bgp_2d[i][X] = u;
+	bgp_2d[i][Y] = v;
     }
 
     // Make sure the new points still form a close polygon and all the interior points
@@ -672,10 +585,9 @@ cpolygon_t::cdt()
 	}
     }
     if (!valid_reprojection) {
-	bu_free(pnts_2d, "free old 2d points array)");
-	pnts_2d = old_pnts_2d;
-    } else {
-	bu_free(old_pnts_2d, "free old 2d points array)");
+	for (size_t i = 0; i < cdt_mesh->pnts.size(); i++) {
+	    V2SET(bgp_2d[i], pnts_2d[i].first, pnts_2d[i].second);
+	}
     }
 
     int *faces = NULL;
@@ -707,6 +619,7 @@ cpolygon_t::cdt()
 	opoly[vcnt] = next->v[1];
 	next = next->next;
     	if (vcnt > poly.size()) {
+	    bu_free(bgp_2d, "free libbg 2d points array)");
 	    std::cerr << "cdt attempt on infinite loop (shouldn't be possible - closed() test failed to detect this somehow...)\n";
 	    return false;
 	}
@@ -714,7 +627,7 @@ cpolygon_t::cdt()
 
     bool result = (bool)!bg_nested_polygon_triangulate( &faces, &num_faces,
 	    NULL, NULL, opoly, poly.size()+1, NULL, NULL, 0, steiner,
-	    interior_points.size(), pnts_2d, cdt_mesh->pnts.size(),
+	    interior_points.size(), bgp_2d, cdt_mesh->pnts.size(),
 	    TRI_CONSTRAINED_DELAUNAY);
 
     if (result) {
@@ -738,6 +651,7 @@ cpolygon_t::cdt()
 	bu_free(faces, "faces array");
     }
 
+    bu_free(bgp_2d, "free libbg 2d points array)");
     bu_free(opoly, "polygon points");
 
     if (steiner) {
@@ -897,20 +811,24 @@ void cpolygon_t::polygon_plot(const char *filename)
     cpolyedge_t *ecurr = NULL;
 
     point_t bnp;
-    VSET(bnp, pnts_2d[efirst->v[0]][X], pnts_2d[efirst->v[0]][Y], 0);
+    VSET(bnp, pnts_2d[efirst->v[0]].first, pnts_2d[efirst->v[0]].second, 0);
     pdv_3move(plot_file, bnp);
-    VSET(bnp, pnts_2d[efirst->v[1]][X], pnts_2d[efirst->v[1]][Y], 0);
+    VSET(bnp, pnts_2d[efirst->v[1]].first, pnts_2d[efirst->v[1]].second, 0);
     pdv_3cont(plot_file, bnp);
 
-    V2MINMAX(pmin, pmax, pnts_2d[efirst->v[0]]);
-    V2MINMAX(pmin, pmax, pnts_2d[efirst->v[1]]);
+    point2d_t wpnt;
+    V2SET(wpnt, pnts_2d[efirst->v[0]].first, pnts_2d[efirst->v[0]].second);
+    V2MINMAX(pmin, pmax, wpnt);
+    V2SET(wpnt, pnts_2d[efirst->v[1]].first, pnts_2d[efirst->v[1]].second);
+    V2MINMAX(pmin, pmax, wpnt);
 
     size_t ecnt = 1;
     while (ecurr != efirst && ecnt < poly.size()+1) {
         ecurr = (!ecurr) ? efirst->next : ecurr->next;
-        VSET(bnp, pnts_2d[ecurr->v[1]][X], pnts_2d[ecurr->v[1]][Y], 0);
-        pdv_3cont(plot_file, bnp);
-        V2MINMAX(pmin, pmax, pnts_2d[efirst->v[1]]);
+        VSET(bnp, pnts_2d[ecurr->v[1]].first, pnts_2d[ecurr->v[1]].second, 0);
+	pdv_3cont(plot_file, bnp);
+	V2SET(wpnt, pnts_2d[ecurr->v[1]].first, pnts_2d[ecurr->v[1]].second);
+	V2MINMAX(pmin, pmax, wpnt);
     	if (ecnt > poly.size()) {
 	    break;
 	}
@@ -924,18 +842,18 @@ void cpolygon_t::polygon_plot(const char *filename)
     pl_color(plot_file, 0, 255, 0);
     for (p_it = interior_points.begin(); p_it != interior_points.end(); p_it++) {
         point_t origin;
-        VSET(origin, pnts_2d[*p_it][X], pnts_2d[*p_it][Y], 0);
+        VSET(origin, pnts_2d[*p_it].first, pnts_2d[*p_it].second, 0);
         pdv_3move(plot_file, origin);
-        VSET(bnp, pnts_2d[*p_it][X]+r, pnts_2d[*p_it][Y]+r, 0);
+        VSET(bnp, pnts_2d[*p_it].first+r, pnts_2d[*p_it].second+r, 0);
         pdv_3cont(plot_file, bnp);
         pdv_3cont(plot_file, origin);
-        VSET(bnp, pnts_2d[*p_it][X]+r, pnts_2d[*p_it][Y]-r, 0);
+        VSET(bnp, pnts_2d[*p_it].first+r, pnts_2d[*p_it].second-r, 0);
         pdv_3cont(plot_file, bnp);
         pdv_3cont(plot_file, origin);
-        VSET(bnp, pnts_2d[*p_it][X]-r, pnts_2d[*p_it][Y]-r, 0);
+        VSET(bnp, pnts_2d[*p_it].first-r, pnts_2d[*p_it].second-r, 0);
         pdv_3cont(plot_file, bnp);
         pdv_3cont(plot_file, origin);
-        VSET(bnp, pnts_2d[*p_it][X]-r, pnts_2d[*p_it][Y]+r, 0);
+        VSET(bnp, pnts_2d[*p_it].first-r, pnts_2d[*p_it].second+r, 0);
         pdv_3cont(plot_file, bnp);
         pdv_3cont(plot_file, origin);
     }
@@ -944,18 +862,18 @@ void cpolygon_t::polygon_plot(const char *filename)
     pl_color(plot_file, 255, 0, 0);
     for (p_it = uncontained.begin(); p_it != uncontained.end(); p_it++) {
         point_t origin;
-        VSET(origin, pnts_2d[*p_it][X], pnts_2d[*p_it][Y], 0);
+        VSET(origin, pnts_2d[*p_it].first, pnts_2d[*p_it].second, 0);
         pdv_3move(plot_file, origin);
-        VSET(bnp, pnts_2d[*p_it][X]+r, pnts_2d[*p_it][Y]+r, 0);
+        VSET(bnp, pnts_2d[*p_it].first+r, pnts_2d[*p_it].second+r, 0);
         pdv_3cont(plot_file, bnp);
         pdv_3cont(plot_file, origin);
-        VSET(bnp, pnts_2d[*p_it][X]+r, pnts_2d[*p_it][Y]-r, 0);
+        VSET(bnp, pnts_2d[*p_it].first+r, pnts_2d[*p_it].second-r, 0);
         pdv_3cont(plot_file, bnp);
         pdv_3cont(plot_file, origin);
-        VSET(bnp, pnts_2d[*p_it][X]-r, pnts_2d[*p_it][Y]-r, 0);
+        VSET(bnp, pnts_2d[*p_it].first-r, pnts_2d[*p_it].second-r, 0);
         pdv_3cont(plot_file, bnp);
         pdv_3cont(plot_file, origin);
-        VSET(bnp, pnts_2d[*p_it][X]-r, pnts_2d[*p_it][Y]+r, 0);
+        VSET(bnp, pnts_2d[*p_it].first-r, pnts_2d[*p_it].second+r, 0);
         pdv_3cont(plot_file, bnp);
         pdv_3cont(plot_file, origin);
     }
@@ -979,11 +897,11 @@ void cpolygon_t::polygon_plot_in_plane(const char *filename)
     cpolyedge_t *efirst = *(poly.begin());
     cpolyedge_t *ecurr = NULL;
 
-    ppnt = tplane.PointAt(pnts_2d[efirst->v[0]][X], pnts_2d[efirst->v[0]][Y]);
+    ppnt = tplane.PointAt(pnts_2d[efirst->v[0]].first, pnts_2d[efirst->v[0]].second);
     VSET(bnp, ppnt.x, ppnt.y, ppnt.z);
     pdv_3move(plot_file, bnp);
     VMINMAX(pmin, pmax, bnp);
-    ppnt = tplane.PointAt(pnts_2d[efirst->v[1]][X], pnts_2d[efirst->v[1]][Y]);
+    ppnt = tplane.PointAt(pnts_2d[efirst->v[1]].first, pnts_2d[efirst->v[1]].second);
     VSET(bnp, ppnt.x, ppnt.y, ppnt.z);
     pdv_3cont(plot_file, bnp);
     VMINMAX(pmin, pmax, bnp);
@@ -991,7 +909,7 @@ void cpolygon_t::polygon_plot_in_plane(const char *filename)
     size_t ecnt = 1;
     while (ecurr != efirst && ecnt < poly.size()+1) {
 	ecurr = (!ecurr) ? efirst->next : ecurr->next;
-	ppnt = tplane.PointAt(pnts_2d[ecurr->v[1]][X], pnts_2d[ecurr->v[1]][Y]);
+	ppnt = tplane.PointAt(pnts_2d[ecurr->v[1]].first, pnts_2d[ecurr->v[1]].second);
 	VSET(bnp, ppnt.x, ppnt.y, ppnt.z);
 	pdv_3cont(plot_file, bnp);
 	VMINMAX(pmin, pmax, bnp);
@@ -1008,22 +926,22 @@ void cpolygon_t::polygon_plot_in_plane(const char *filename)
     pl_color(plot_file, 0, 255, 0);
     for (p_it = interior_points.begin(); p_it != interior_points.end(); p_it++) {
 	point_t origin;
-	ppnt = tplane.PointAt(pnts_2d[*p_it][X], pnts_2d[*p_it][Y]);
+	ppnt = tplane.PointAt(pnts_2d[*p_it].first, pnts_2d[*p_it].second);
 	VSET(origin, ppnt.x, ppnt.y, ppnt.z);
 	pdv_3move(plot_file, origin);
-	ppnt = tplane.PointAt(pnts_2d[*p_it][X]+r, pnts_2d[*p_it][Y]+r);
+	ppnt = tplane.PointAt(pnts_2d[*p_it].first+r, pnts_2d[*p_it].second+r);
 	VSET(bnp, ppnt.x, ppnt.y, ppnt.z);
 	pdv_3cont(plot_file, bnp);
 	pdv_3cont(plot_file, origin);
-	ppnt = tplane.PointAt(pnts_2d[*p_it][X]+r, pnts_2d[*p_it][Y]-r);
+	ppnt = tplane.PointAt(pnts_2d[*p_it].first+r, pnts_2d[*p_it].second-r);
 	VSET(bnp, ppnt.x, ppnt.y, ppnt.z);
 	pdv_3cont(plot_file, bnp);
 	pdv_3cont(plot_file, origin);
-	ppnt = tplane.PointAt(pnts_2d[*p_it][X]-r, pnts_2d[*p_it][Y]-r);
+	ppnt = tplane.PointAt(pnts_2d[*p_it].first-r, pnts_2d[*p_it].second-r);
 	VSET(bnp, ppnt.x, ppnt.y, ppnt.z);
 	pdv_3cont(plot_file, bnp);
 	pdv_3cont(plot_file, origin);
-	ppnt = tplane.PointAt(pnts_2d[*p_it][X]-r, pnts_2d[*p_it][Y]+r);
+	ppnt = tplane.PointAt(pnts_2d[*p_it].first-r, pnts_2d[*p_it].second+r);
 	VSET(bnp, ppnt.x, ppnt.y, ppnt.z);
 	pdv_3cont(plot_file, bnp);
 	pdv_3cont(plot_file, origin);
@@ -1033,22 +951,22 @@ void cpolygon_t::polygon_plot_in_plane(const char *filename)
     pl_color(plot_file, 255, 0, 0);
     for (p_it = uncontained.begin(); p_it != uncontained.end(); p_it++) {
 	point_t origin;
-	ppnt = tplane.PointAt(pnts_2d[*p_it][X], pnts_2d[*p_it][Y]);
+	ppnt = tplane.PointAt(pnts_2d[*p_it].first, pnts_2d[*p_it].second);
 	VSET(origin, ppnt.x, ppnt.y, ppnt.z);
 	pdv_3move(plot_file, origin);
-	ppnt = tplane.PointAt(pnts_2d[*p_it][X]+r, pnts_2d[*p_it][Y]+r);
+	ppnt = tplane.PointAt(pnts_2d[*p_it].first+r, pnts_2d[*p_it].second+r);
 	VSET(bnp, ppnt.x, ppnt.y, ppnt.z);
 	pdv_3cont(plot_file, bnp);
 	pdv_3cont(plot_file, origin);
-	ppnt = tplane.PointAt(pnts_2d[*p_it][X]+r, pnts_2d[*p_it][Y]-r);
+	ppnt = tplane.PointAt(pnts_2d[*p_it].first+r, pnts_2d[*p_it].second-r);
 	VSET(bnp, ppnt.x, ppnt.y, ppnt.z);
 	pdv_3cont(plot_file, bnp);
 	pdv_3cont(plot_file, origin);
-	ppnt = tplane.PointAt(pnts_2d[*p_it][X]-r, pnts_2d[*p_it][Y]-r);
+	ppnt = tplane.PointAt(pnts_2d[*p_it].first-r, pnts_2d[*p_it].second-r);
 	VSET(bnp, ppnt.x, ppnt.y, ppnt.z);
 	pdv_3cont(plot_file, bnp);
 	pdv_3cont(plot_file, origin);
-	ppnt = tplane.PointAt(pnts_2d[*p_it][X]-r, pnts_2d[*p_it][Y]+r);
+	ppnt = tplane.PointAt(pnts_2d[*p_it].first-r, pnts_2d[*p_it].second+r);
 	VSET(bnp, ppnt.x, ppnt.y, ppnt.z);
 	pdv_3cont(plot_file, bnp);
 	pdv_3cont(plot_file, origin);
@@ -1617,13 +1535,14 @@ cpolygon_t::build_2d_pnts(ON_3dPoint &c, ON_3dVector &n)
 {
     pdir = n;
     ON_Plane tri_plane(c, n);
-    pnts_2d = (point2d_t *)bu_calloc(cdt_mesh->pnts.size() + 1, sizeof(point2d_t), "2D points array");
     for (size_t i = 0; i < cdt_mesh->pnts.size(); i++) {
 	double u, v;
 	ON_3dPoint op3d = (*cdt_mesh->pnts[i]);
 	tri_plane.ClosestPointTo(op3d, &u, &v);
-	pnts_2d[i][X] = u;
-	pnts_2d[i][Y] = v;
+	std::pair<double, double> proj_2d;
+	proj_2d.first = u;
+	proj_2d.second = v;
+	pnts_2d.push_back(proj_2d);
     }
     tplane = tri_plane;
 }

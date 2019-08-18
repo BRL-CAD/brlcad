@@ -184,6 +184,100 @@ struct triangle_t {
 
 };
 
+class cpolyedge_t
+{
+    public:
+	cpolyedge_t *prev;
+	cpolyedge_t *next;
+
+	long v[2];
+
+	cpolyedge_t(edge_t &e){
+	    v[0] = e.v[0];
+	    v[1] = e.v[1];
+	    prev = NULL;
+	    next = NULL;
+	};
+};
+
+class cdt_mesh_t;
+
+class cpolygon_t
+{
+    public:
+
+	// Project cdt_mesh 3D points into a 2D point array.  Probably won't use all of
+	// them, but this way vert indices on triangles will match in 2D and 3D.
+	void build_2d_pnts(ON_3dPoint &c, ON_3dVector &n);
+
+	// An initial loop may not contain all the interior points - to ensure it does,
+	// use grow_loop with a large deg value and the stop_on_contained flag set.
+	bool build_initial_loop(triangle_t &seed, bool repair);
+
+	// To grow only until all interior points are within the polygon, supply true
+	// for stop_on_contained.  Otherwise, grow_loop will follow the triangles out
+	// until the Brep normals of the triangles are beyond the deg limit.  Note
+	// that triangles which would cause a self-intersecting polygon will be
+	// rejected, even if they satisfy deg.
+	long grow_loop(double deg, bool stop_on_contained, triangle_t &target);
+
+	std::set<triangle_t> visited_triangles;
+	std::set<triangle_t> tris;
+
+	long add_edge(const struct edge_t &e);
+	void remove_edge(const struct edge_t &e);
+	long replace_edges(std::set<edge_t> &new_edges, std::set<edge_t> &old_edges);
+
+	// Means to update the point array if we're incrementally building
+	long add_point(ON_2dPoint *on_2dp);
+
+	cdt_mesh_t *cdt_mesh;
+
+    private:
+	bool closed();
+	bool self_intersecting();
+	bool best_fit_plane();
+	bool cdt();
+
+	bool point_in_polygon(long v, bool flip);
+	// Apply the point-in-polygon test to all uncontained points, moving any inside the loop into interior_points
+	bool have_uncontained();
+
+	long tri_process(std::set<edge_t> *ne, std::set<edge_t> *se, long *nv, triangle_t &t);
+
+	void polygon_plot(const char *filename);
+	void polygon_plot_in_plane(const char *filename);
+	void plot_best_fit_plane(const char *filename);
+	void print();
+
+	std::set<cpolyedge_t *> poly;
+	std::map<long, std::set<cpolyedge_t *>> v2pe;
+	std::set<long> used_verts; /* both interior and active points - for a quick check if a point is active */
+	std::set<long> interior_points;
+	std::set<long> uncontained;
+	std::set<long> flipped_face;
+	std::set<long> target_verts;
+	std::vector<std::pair<double, double> > pnts_2d;
+
+	std::set<uedge_t> active_edges;
+	std::set<uedge_t> self_isect_edges;
+
+	long shared_edge_cnt(triangle_t &t);
+	long unshared_vertex(triangle_t &t);
+	std::pair<long,long> shared_vertices(triangle_t &t);
+	double ucv_angle(triangle_t &t);
+
+	std::set<triangle_t> unusable_triangles;
+
+	ON_Plane tplane;
+	ON_Plane fit_plane;
+	ON_3dVector pdir;
+
+	std::vector<struct ctriangle_t> polygon_tris(double angle, bool brep_norm, int initial);
+
+};
+
+
 class cdt_mesh_t
 {
 public:
@@ -242,6 +336,12 @@ public:
     void tri_plot(const triangle_t &tri, const char *filename);
 
     int f_id;
+
+    cpolygon_t outer_loop;
+    std::map<int, cpolygon_t> inner_loops;
+    std::set<long> interior_pnts;
+    bool initialize_interior_pnts(std::set<ON_2dPoint *>);
+    bool cdt();
 
 private:
     /* Data containers */
