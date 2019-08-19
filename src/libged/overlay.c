@@ -28,7 +28,6 @@
 
 #include "./ged_private.h"
 
-
 int
 ged_overlay(struct ged *gedp, int argc, const char *argv[])
 {
@@ -68,13 +67,37 @@ ged_overlay(struct ged *gedp, int argc, const char *argv[])
 	name = (char *)argv[3];
 
     if ((fp = fopen(argv[1], "rb")) == NULL) {
-	bu_vls_printf(gedp->ged_result_str, "ged_overlay: failed to open file - %s\n", argv[1]);
-	return GED_ERROR;
+	char **files = NULL;
+	size_t count = bu_file_list(".", argv[1], &files);
+	if (count <= 0) {
+	    bu_vls_printf(gedp->ged_result_str, "ged_overlay: failed to open file - %s\n", argv[1]);
+	    return GED_ERROR;
+	} else {
+	    vbp = rt_vlblock_init();
+	    for (size_t i = 0; i < count; i++) {
+		if ((fp = fopen(files[i], "rb")) == NULL) {
+		    bu_vls_printf(gedp->ged_result_str, "ged_overlay: failed to open file - %s\n", files[i]);
+		    bu_argv_free(count, files);
+		    return GED_ERROR;
+		}
+		ret = rt_uplot_to_vlist(vbp, fp, char_size, gedp->ged_gdp->gd_uplotOutputMode);
+		fclose(fp);
+		if (ret < 0) {
+		    bn_vlblock_free(vbp);
+		    bu_argv_free(count, files);
+		    return GED_ERROR;
+		}
+	    }
+	    bu_argv_free(count, files);
+	    _ged_cvt_vlblock_to_solids(gedp, vbp, name, 0);
+	    bn_vlblock_free(vbp);
+	    return GED_OK;
+	}
+    } else {
+	vbp = rt_vlblock_init();
+	ret = rt_uplot_to_vlist(vbp, fp, char_size, gedp->ged_gdp->gd_uplotOutputMode);
+	fclose(fp);
     }
-
-    vbp = rt_vlblock_init();
-    ret = rt_uplot_to_vlist(vbp, fp, char_size, gedp->ged_gdp->gd_uplotOutputMode);
-    fclose(fp);
 
     if (ret < 0) {
 	bn_vlblock_free(vbp);
