@@ -542,7 +542,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	    }
 	}
 
-#if 1
+#if 0
 	// EXPERIMENT - see if we can generate polygons from the loops 
 	// For all faces, and each face loop in those faces, build the
 	// initial polygons strictly based on trim start/end points
@@ -607,7 +607,10 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 			// to be assigned that particular pointer.  For tests which are concerned with 3D point
 			// uniqueness, a 2d->ind->3d->ind lookup will be needed to "canonicalize"
 			// the 3D index value.  (TODO In particular, this will be needed for triangle
-			// comparisons.)
+			// operations when we're moving from a full (re)triangulation into the cmesh tris
+			// array - the 2D polygon points will need to be mapped to a unique 3D index shared
+			// by all 2D points having the same 3D projection, not just an index that holds
+			// the correct pointer.)
 			cv = cpoly.add_point(&cp);
 			s_cdt->fmeshes[face_index].add_point(cp3d);
 		    } else {

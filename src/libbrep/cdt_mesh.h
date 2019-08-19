@@ -206,6 +206,15 @@ class cpolygon_t
 {
     public:
 
+	cpolygon_t()
+	{
+	    // Out of the gate, use the local arrays.  However, we may want to
+	    // use a shared array for this, hence the use of public pointers so
+	    // we can override at need.
+	    pnts_2d = &pnts_2d_local;
+	    p2ind = &p2ind_local;
+	}
+
 	// Project cdt_mesh 3D points into a 2D point array.  Probably won't use all of
 	// them, but this way vert indices on triangles will match in 2D and 3D.
 	void build_2d_pnts(ON_3dPoint &c, ON_3dVector &n);
@@ -238,6 +247,9 @@ class cpolygon_t
 	void polygon_plot_3d(const char *filename);
 	void print();
 
+	std::vector<std::pair<double, double> > *pnts_2d;
+	std::map<std::pair<double, double>, long> *p2ind;
+
     private:
 	bool closed();
 	bool self_intersecting();
@@ -260,8 +272,9 @@ class cpolygon_t
 	std::set<long> uncontained;
 	std::set<long> flipped_face;
 	std::set<long> target_verts;
-	std::vector<std::pair<double, double> > pnts_2d;
-	std::map<std::pair<double, double>, long> p2ind;
+
+	std::vector<std::pair<double, double> > pnts_2d_local;
+	std::map<std::pair<double, double>, long> p2ind_local;
 
 	std::set<uedge_t> active_edges;
 	std::set<uedge_t> self_isect_edges;

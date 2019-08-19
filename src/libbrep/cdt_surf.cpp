@@ -168,6 +168,8 @@ bool involves_trims(double *min_edge, struct cdt_surf_info *sinfo, ON_3dPoint &p
 	ON_BoundingBox uvbb;
 	uvbb.Set(wp1, true);
 	uvbb.Set(wp2, true);
+	plot_rtree_3d(sinfo->rt_trims_3d, "rtree.plot3");
+	plot_on_bbox(uvbb, "uvbb.plot3");
 	ON_RTreeIterator rit(*sinfo->rt_trims_3d);
 	const ON_RTreeBranch* rtree_leaf;
 	for ( rit.First(); 0 != (rtree_leaf = rit.Value()); rit.Next() ) {
@@ -451,6 +453,8 @@ getSurfacePoint(
 		    if (min_edge_len > 0 && uavg > min_edge_len && vavg > min_edge_len) {
 			split_v = 1;
 		    }
+		} else {
+		    std::cout << "doesn't involve trims\n";
 		}
 
 		ev_success = true;
