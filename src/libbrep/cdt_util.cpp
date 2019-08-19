@@ -118,6 +118,19 @@ plot_bbox(point_t m_min, point_t m_max, const char *filename)
 }
 
 void
+plot_on_bbox(ON_BoundingBox &bb, const char *filename)
+{
+    FILE* plot_file = fopen(filename, "w");
+    struct bu_color c = BU_COLOR_INIT_ZERO;
+    bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
+    pl_color_buc(plot_file, &c);
+
+    BB_PLOT(bb.m_min, bb.m_max);
+
+    fclose(plot_file);
+}
+
+void
 plot_polyline(std::vector<p2t::Point *> *pnts, const char *filename)
 {
     FILE *plot = fopen(filename, "w");

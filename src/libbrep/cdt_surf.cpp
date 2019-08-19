@@ -147,45 +147,42 @@ singular_trim_norm(struct cdt_surf_info *sinfo, fastf_t uc, fastf_t vc)
 }
 
 /* If we've got trimming curves involved, we need to be more careful about respecting
- * the min edge distance.
- *
- * TODO - rather than blanket assuming the min edge distance, we should go one
- * better and find the min edge segment length for the involved edge segments.
- * This approach generates too many unnecessary triangles and is actually a
- * problem when a globally fine edge seg forces the surface to be fine at a
- * course edge. */
+ * the min edge distance. */
 bool involves_trims(double *min_edge, struct cdt_surf_info *sinfo, ON_3dPoint &p1, ON_3dPoint &p2)
 {
-    double rtree_min_edge_dist = sinfo->max_edge;
-    ON_SimpleArray<ON_RTreeLeaf> results_3d;
+    double min_edge_dist = sinfo->max_edge;
     ON_3dPoint wpc = (p1+p2) * 0.5;
     ON_3dVector vec1 = p1 - wpc;
     ON_3dVector vec2 = p2 - wpc;
     ON_3dPoint wp1 = wpc + (vec1 * 1.1);
     ON_3dPoint wp2 = wpc + (vec2 * 1.1);
-    bool found_trims_3d = sinfo->rt_trims_3d->Search((const double *) &wp1, (const double *) &wp2, results_3d);
-    if (found_trims_3d && results_3d.Count() == 0) {
-	std::cout << "huh?: found trims but results empty???\n";
-	plot_rtree_3d(sinfo->rt_trims_3d, "rtree.plot3");
-	point_t mmin, mmax;
-	VSET(mmin, wp1.x, wp1.y, wp1.z);
-	VSET(mmax, wp2.x, wp2.y, wp2.z);
-	plot_bbox(mmin, mmax, "box.plot3");
-	return false;
-    }
+
+    // NOTE - appearances nonwithstanding, Search doesn't appear to return anything in the results set.
+    // We need to iterate over the tree ourselves to find the overlapping edges.
+    ON_SimpleArray<void *> dummy;
+    bool found_trims_3d = sinfo->rt_trims_3d->Search((const double *) &wp1, (const double *) &wp2, dummy);
     if (found_trims_3d) {
-	for (int i = 0; i < results_3d.Count(); i++) {
-	    ON_3dPoint ep1(results_3d[i].m_rect.m_min);
-	    ON_3dPoint ep2(results_3d[i].m_rect.m_max);
-	    fastf_t dist = ep1.DistanceTo(ep2);
-	    std::cout << "rtree_min_edge_dist: " << rtree_min_edge_dist << ", rtree dist: " << dist << "\n";
-	    if ((dist > SMALL_FASTF) && (dist < rtree_min_edge_dist))  {
-		rtree_min_edge_dist = dist;
+	ON_BoundingBox uvbb;
+	uvbb.Set(wp1, true);
+	uvbb.Set(wp2, true);
+	ON_RTreeIterator rit(*sinfo->rt_trims_3d);
+	const ON_RTreeBranch* rtree_leaf;
+	for ( rit.First(); 0 != (rtree_leaf = rit.Value()); rit.Next() ) {
+	    ON_3dPoint m_min(rtree_leaf->m_rect.m_min);
+	    ON_3dPoint m_max(rtree_leaf->m_rect.m_max);
+	    ON_BoundingBox lbb;
+	    lbb.Set(m_min, true);
+	    lbb.Set(m_max, true);
+	    if (!uvbb.IsDisjoint(lbb)) {
+		fastf_t dist = m_min.DistanceTo(m_max);
+		if ((dist > SMALL_FASTF) && (dist < min_edge_dist))  {
+		    min_edge_dist = dist;
+		}
 	    }
 	}
     }
 
-    (*min_edge) = rtree_min_edge_dist;
+    (*min_edge) = min_edge_dist;
 
     return found_trims_3d;
 }
