@@ -159,12 +159,21 @@ bool involves_trims(double *min_edge, struct cdt_surf_info *sinfo, ON_3dPoint &p
     double rtree_min_edge_dist = sinfo->max_edge;
     ON_SimpleArray<ON_RTreeLeaf> results_3d;
     bool found_trims_3d = sinfo->rt_trims_3d->Search((const double *) &p1, (const double *) &p2, results_3d);
+    if (found_trims_3d && results_3d.Count() == 0) {
+	std::cout << "huh?: found trims but results empty???\n";
+	plot_rtree_3d(sinfo->rt_trims_3d, "rtree.plot3");
+	point_t mmin, mmax;
+	VSET(mmin, p1.x, p1.y, p1.z);
+	VSET(mmax, p2.x, p2.y, p2.z);
+	plot_bbox(mmin, mmax, "box.plot3");
+	return false;
+    }
     if (found_trims_3d) {
-	//std::cout << "edge_cnt: " << results.Count() << "\n";
 	for (int i = 0; i < results_3d.Count(); i++) {
 	    ON_3dPoint ep1(results_3d[i].m_rect.m_min);
 	    ON_3dPoint ep2(results_3d[i].m_rect.m_max);
 	    fastf_t dist = ep1.DistanceTo(ep2);
+	    std::cout << "rtree_min_edge_dist: " << rtree_min_edge_dist << ", rtree dist: " << dist << "\n";
 	    if ((dist > SMALL_FASTF) && (dist < rtree_min_edge_dist))  {
 		rtree_min_edge_dist = dist;
 	    }

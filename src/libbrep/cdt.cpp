@@ -244,7 +244,7 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_Face_State *f)
 	}
     }
 
-
+#if 0
     // EXPERIMENT - see if we can generate polygons from the loops 
     for (int li = 0; li < loop_cnt; li++) {
 	const ON_BrepLoop *loop = face.Loop(li);
@@ -275,6 +275,7 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_Face_State *f)
 
 	cpoly.polygon_plot("poly_2d.plot3");
     }
+#endif
 
 
     // Use the edge curves and loops to generate an initial set of trim polygons.

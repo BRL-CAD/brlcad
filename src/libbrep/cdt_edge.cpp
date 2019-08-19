@@ -1039,42 +1039,6 @@ Get_Edge_Points(struct ON_Brep_CDT_State *s_cdt)
 }
 
 
-void
-plot_rtree_2d(ON_RTree *rtree, const char *filename)
-{
-    FILE* plot_file = fopen(filename, "w");
-    struct bu_color c = BU_COLOR_INIT_ZERO;
-    bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
-    pl_color_buc(plot_file, &c);
-
-    ON_RTreeIterator rit(*rtree);
-    const ON_RTreeBranch *rtree_leaf;
-    for (rit.First(); 0 != (rtree_leaf = rit.Value()); rit.Next())
-    {
-	BB_PLOT_2D(rtree_leaf->m_rect.m_min, rtree_leaf->m_rect.m_max);
-    }
-
-    fclose(plot_file);
-}
-
-void
-plot_rtree_3d(ON_RTree *rtree, const char *filename)
-{
-    FILE* plot_file = fopen(filename, "w");
-    struct bu_color c = BU_COLOR_INIT_ZERO;
-    bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
-    pl_color_buc(plot_file, &c);
-
-    ON_RTreeIterator rit(*rtree);
-    const ON_RTreeBranch *rtree_leaf;
-    for (rit.First(); 0 != (rtree_leaf = rit.Value()); rit.Next())
-    {
-	BB_PLOT(rtree_leaf->m_rect.m_min, rtree_leaf->m_rect.m_max);
-    }
-
-    fclose(plot_file);
-}
-
 bool
 build_poly2tri_polylines(struct ON_Brep_CDT_Face_State *f, p2t::CDT **cdt, int init_rtree)
 {

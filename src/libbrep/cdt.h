@@ -260,6 +260,12 @@ void
 ON_Brep_CDT_Face_Destroy(struct ON_Brep_CDT_Face_State *fcdt);
 
 void
+plot_rtree_2d(ON_RTree *rtree, const char *filename);
+void
+plot_rtree_3d(ON_RTree *rtree, const char *filename);
+void
+plot_bbox(point_t m_min, point_t m_max, const char *filename);
+void
 plot_polyline(std::vector<p2t::Point *> *pnts, const char *filename);
 void
 plot_tri(p2t::Triangle *t, const char *filename);
