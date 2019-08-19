@@ -61,10 +61,8 @@ rt_pos_flag(int *pos_flag, int p_hor, int p_ver)
 	    break;
 	case 3:
 	    *pos_flag = RT_ANNOT_POS_BL;
-	    goto case2;
 	}
-	goto case2;
-case2:
+    break;
     case 2:
 	switch(p_hor) {
 	case 1:
@@ -75,10 +73,8 @@ case2:
 	    break;
 	case 3:
 	    *pos_flag = RT_ANNOT_POS_ML;
-	    goto case3;
 	}
-	goto case3;
-case3:
+    break;
     case 3:
 	switch(p_hor) {
 	case 1:
@@ -128,6 +124,87 @@ rt_check_pos(const struct txt_seg *tsg, char **rel_pos)
 	    break;
     }
 
+    return 0;
+}
+
+
+int
+ant_label_dimensions(struct txt_seg* tsg, hpoint_t ref_pt, fastf_t* length, fastf_t* hight)
+{
+    point_t bmin, bmax;
+    vect_t D;
+    hpoint_t temp = HINIT_ZERO;
+    struct bu_list vhead;
+
+    VSET(bmin, INFINITY, INFINITY, INFINITY);
+    VSET(bmax, -INFINITY, -INFINITY, -INFINITY);
+    BU_LIST_INIT(&vhead);
+    VSETALL(D, 0);
+
+    V2ADD2(temp, D, ref_pt);
+    bn_vlist_2string(&vhead, &RTG.rtg_vlfree, tsg->label.vls_str, temp[0], temp[1], 5, 0);
+    bn_vlist_bbox(&vhead, &bmin, &bmax, NULL);
+
+    *length = abs(bmin[0] - bmax[0]) + 1;
+    *hight = abs(bmin[1] - bmax[1]) + 1;
+    return 0;
+}
+
+
+static int
+ant_pos_adjs(struct txt_seg* tsg, struct rt_annot_internal* annot_ip)
+{
+    vect_t D;
+    hpoint_t pt = HINIT_ZERO;
+    fastf_t lenght = 0;
+    fastf_t hight = 0;
+
+    VSETALL(D, 0);
+    ant_label_dimensions(tsg, annot_ip->verts[tsg->ref_pt], &lenght, &hight);
+
+    if (tsg->pt_rel_pos == RT_ANNOT_POS_BL) {
+	VMOVE(pt, annot_ip->verts[tsg->ref_pt]);
+	pt[0] = pt[0] + 1;
+	VMOVE(annot_ip->verts[tsg->ref_pt], pt);
+    }else if (tsg->pt_rel_pos == RT_ANNOT_POS_BC) {
+	VMOVE(pt, annot_ip->verts[tsg->ref_pt]);
+	pt[0] = pt[0] - (lenght / 2);
+	VMOVE(annot_ip->verts[tsg->ref_pt], pt);
+    }else if (tsg->pt_rel_pos == RT_ANNOT_POS_BR) {
+	VMOVE(pt, annot_ip->verts[tsg->ref_pt]);
+	pt[0] = pt[0] - lenght;
+	VMOVE(annot_ip->verts[tsg->ref_pt], pt);
+    }else if (tsg->pt_rel_pos == RT_ANNOT_POS_ML) {
+	VMOVE(pt, annot_ip->verts[tsg->ref_pt]);
+	pt[0] = pt[0] + 1;
+	pt[1] = pt[1] - (hight / 2);
+	VMOVE(annot_ip->verts[tsg->ref_pt], pt);
+    }else if (tsg->pt_rel_pos == RT_ANNOT_POS_MC) {
+	VMOVE(pt, annot_ip->verts[tsg->ref_pt]);
+	pt[0] = pt[0] - (lenght / 2);
+	pt[1] = pt[1] - (hight / 2);
+	VMOVE(annot_ip->verts[tsg->ref_pt], pt);
+    }else if (tsg->pt_rel_pos == RT_ANNOT_POS_MR) {
+	VMOVE(pt, annot_ip->verts[tsg->ref_pt]);
+	pt[1] = pt[1] - (hight / 2);
+	pt[0] = pt[0] - lenght;
+	VMOVE(annot_ip->verts[tsg->ref_pt], pt);
+    }else if (tsg->pt_rel_pos == RT_ANNOT_POS_TL) {
+	VMOVE(pt, annot_ip->verts[tsg->ref_pt]);
+	pt[1] = pt[1] - hight;
+	VMOVE(annot_ip->verts[tsg->ref_pt], pt);
+    }else if (tsg->pt_rel_pos == RT_ANNOT_POS_TC) {
+	VMOVE(pt, annot_ip->verts[tsg->ref_pt]);
+	pt[0] = pt[0] - (lenght / 2);
+	pt[1] = pt[1] - hight;
+	VMOVE(annot_ip->verts[tsg->ref_pt], pt);
+    }else {
+	//this is the case of TR
+	VMOVE(pt, annot_ip->verts[tsg->ref_pt]);
+	pt[0] = pt[0] - lenght;
+	pt[1] = pt[1] - hight;
+	VMOVE(annot_ip->verts[tsg->ref_pt], pt);
+    }
     return 0;
 }
 
@@ -365,6 +442,7 @@ seg_to_vlist(struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, 
 		ret++;
 		break;
 	    }
+	    ant_pos_adjs(tsg, annot_ip);
 	    V2ADD2(pt, V, annot_ip->verts[tsg->ref_pt]);
 	    bn_vlist_2string(vhead, &RTG.rtg_vlfree, tsg->label.vls_str, pt[0], pt[1], 5, 0);
 	    break;
