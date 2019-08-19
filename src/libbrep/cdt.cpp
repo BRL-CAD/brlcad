@@ -285,7 +285,8 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_Face_State *f)
 
     // Handle a variety of situations that complicate loop handling on closed surfaces
     if (s->IsClosed(0) || s->IsClosed(1)) {
-	PerformClosedSurfaceChecks(s_cdt, s, face, brep_loop_points, BREP_SAME_POINT_TOLERANCE);
+	bool verbose = true;
+	PerformClosedSurfaceChecks(s_cdt, s, face, brep_loop_points, BREP_SAME_POINT_TOLERANCE, verbose);
     }
 
     // Find for this face, find the minimum and maximum edge polyline segment lengths

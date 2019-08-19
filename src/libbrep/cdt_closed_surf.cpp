@@ -358,13 +358,14 @@ extend_over_seam_crossings(const ON_Surface *surf,  ON_SimpleArray<BrepTrimPoint
 }
 
 /* force near seam points to seam */
-static void
+static bool
 ForceNearSeamPointsToSeam(
 	const ON_Surface *s,
 	const ON_BrepFace &face,
 	ON_SimpleArray<BrepTrimPoint> *brep_loop_points,
 	double same_point_tolerance)
 {
+    bool ret = false;
     int loop_cnt = face.LoopCount();
     for (int li = 0; li < loop_cnt; li++) {
 	int num_loop_points = brep_loop_points[li].Count();
@@ -373,19 +374,22 @@ ForceNearSeamPointsToSeam(
 		ON_2dPoint &p = brep_loop_points[li][i].p2d;
 		if (IsAtSeam(s, p, same_point_tolerance)) {
 		    ForceToClosestSeam(s, p, same_point_tolerance);
+		    ret = true;
 		}
 	    }
 	}
     }
+    return ret;
 }
 
 
-static void
+static bool 
 ExtendPointsOverClosedSeam(
 	const ON_Surface *s,
 	const ON_BrepFace &face,
 	ON_SimpleArray<BrepTrimPoint> *brep_loop_points)
 {
+    bool ret = false;
     int loop_cnt = face.LoopCount();
     // extend loop points over seam if needed.
     for (int li = 0; li < loop_cnt; li++) {
@@ -393,20 +397,24 @@ ExtendPointsOverClosedSeam(
 	if (num_loop_points > 1) {
 	    if (!extend_over_seam_crossings(s, brep_loop_points[li])) {
 		std::cerr << "Error: Face(" << face.m_face_index << ") cannot extend loops over closed seams." << std::endl;
+	    } else {
+		ret = true;
 	    }
 	}
     }
+    return ret;
 }
 
 
 // process through loops checking for straddle condition.
-static void
+static bool
 ShiftLoopsThatStraddleSeam(
 	const ON_Surface *s,
 	const ON_BrepFace &face,
 	ON_SimpleArray<BrepTrimPoint> *brep_loop_points,
 	double same_point_tolerance)
 {
+    bool ret = false;
     int loop_cnt = face.LoopCount();
     for (int li = 0; li < loop_cnt; li++) {
 	int num_loop_points = brep_loop_points[li].Count();
@@ -418,15 +426,17 @@ ShiftLoopsThatStraddleSeam(
 		if (LoopStraddlesDomain(s, brep_loop_points[li])) {
 		    // reorder loop points
 		    shift_loop_straddled_over_seam(s, brep_loop_points[li], same_point_tolerance);
+		    ret = true;
 		}
 	    }
 	}
     }
+    return ret;
 }
 
 
 // process through closing open loops that begin and end on closed seam
-static void
+static bool
 CloseOpenLoops(
 	struct ON_Brep_CDT_State *s_cdt,
 	const ON_Surface *s,
@@ -434,6 +444,7 @@ CloseOpenLoops(
 	ON_SimpleArray<BrepTrimPoint> *brep_loop_points,
 	double same_point_tolerance)
 {
+    bool ret = false;
     std::list<std::map<double, ON_3dPoint *> *> bridgePoints;
     int loop_cnt = face.LoopCount();
     for (int li = 0; li < loop_cnt; li++) {
@@ -451,6 +462,7 @@ CloseOpenLoops(
 		if ((seam_begin = IsAtSeam(s, brep_loop_begin, same_point_tolerance)) &&
 		    (seam_end = IsAtSeam(s, brep_loop_end, same_point_tolerance))) {
 		    bool loop_not_closed = true;
+		    ret = true;
 		    if ((li + 1) < loop_cnt) {
 			// close using remaining loops
 			for (int rli = li + 1; rli < loop_cnt; rli++) {
@@ -672,6 +684,7 @@ CloseOpenLoops(
 	    }
 	}
     }
+    return ret;
 }
 
 
@@ -714,12 +727,13 @@ ShiftPoints(ON_SimpleArray<BrepTrimPoint> &brep_loop_points, double ushift, doub
 // process through to make sure inner hole loops are actually inside of outer polygon
 // need to make sure that any hole polygons are properly shifted over correct closed seams
 // going to try and do an inside test on hole vertex
-static void
+static bool
 ShiftInnerLoops(
 	const ON_Surface *s,
 	const ON_BrepFace &face,
 	ON_SimpleArray<BrepTrimPoint> *brep_loop_points)
 {
+    bool ret = false;
     int loop_cnt = face.LoopCount();
     if (loop_cnt > 1) { // has inner loops or holes
 	for( int li = 1; li < loop_cnt; li++) {
@@ -738,6 +752,7 @@ ShiftInnerLoops(
 			if (PointInPolygon(sftd_pt, brep_loop_points[0])) {
 			    // shift all U accordingly
 			    ShiftPoints(brep_loop_points[li], ushift, 0.0);
+			    ret = true;
 			    break;
 			}
 		    }
@@ -748,6 +763,7 @@ ShiftInnerLoops(
 			if (PointInPolygon(sftd_pt, brep_loop_points[0])) {
 			    // shift all V accordingly
 			    ShiftPoints(brep_loop_points[li], 0.0, vshift);
+			    ret = true;
 			    break;
 			}
 		    }
@@ -761,6 +777,7 @@ ShiftInnerLoops(
 			    if (PointInPolygon(sftd_pt, brep_loop_points[0])) {
 				// shift all U & V accordingly
 				ShiftPoints(brep_loop_points[li], ushift, vshift);
+				ret = true;
 				break;
 			    }
 			}
@@ -773,6 +790,7 @@ ShiftInnerLoops(
 			if (PointInPolygon(sftd_pt, brep_loop_points[0])) {
 			    // shift all U accordingly
 			    ShiftPoints(brep_loop_points[li], ushift, 0.0);
+			    ret = true;
 			    break;
 			}
 		    }
@@ -784,6 +802,7 @@ ShiftInnerLoops(
 			if (PointInPolygon(sftd_pt, brep_loop_points[0])) {
 			    // shift all V accordingly
 			    ShiftPoints(brep_loop_points[li], 0.0, vshift);
+			    ret = true;
 			    break;
 			}
 		    }
@@ -791,6 +810,8 @@ ShiftInnerLoops(
 	    }
 	}
     }
+
+    return ret;
 }
 
 
@@ -800,23 +821,42 @@ PerformClosedSurfaceChecks(
 	const ON_Surface *s,
 	const ON_BrepFace &face,
 	ON_SimpleArray<BrepTrimPoint> *brep_loop_points,
-	double same_point_tolerance)
+	double same_point_tolerance,
+	bool verbose)
 {
     // force near seam points to seam.
-    ForceNearSeamPointsToSeam(s, face, brep_loop_points, same_point_tolerance);
+    bool fnspto = ForceNearSeamPointsToSeam(s, face, brep_loop_points, same_point_tolerance);
+    if (verbose && fnspto) {
+	std::cout << "ForceNearSeamPointsToSeam changed data!\n";
+    }
 
     // extend loop points over closed seam if needed.
-    ExtendPointsOverClosedSeam(s, face, brep_loop_points);
+    bool epocs = ExtendPointsOverClosedSeam(s, face, brep_loop_points);
+    if (verbose && epocs) {
+	std::cout << "ExtendPointsOverClosedSeam changed data!\n";
+    }
+
 
     // shift open loops that straddle a closed seam with the intent of closure at the surface boundary.
-    ShiftLoopsThatStraddleSeam(s, face, brep_loop_points, same_point_tolerance);
+    bool sltss = ShiftLoopsThatStraddleSeam(s, face, brep_loop_points, same_point_tolerance);
+    if (verbose && sltss) {
+	std::cout << "ShiftLoopsThatStraddleSeam changed data!\n";
+    }
+
 
     // process through closing open loops that begin and end on closed seam
-    CloseOpenLoops(s_cdt, s, face, brep_loop_points, same_point_tolerance);
+    bool b_col = CloseOpenLoops(s_cdt, s, face, brep_loop_points, same_point_tolerance);
+    if (verbose && b_col) {
+	std::cout << "CloseOpenLoops changed data!\n";
+    }
+
 
     // process through to make sure inner hole loops are actually inside of outer polygon
     // need to make sure that any hole polygons are properly shifted over correct closed seams
-    ShiftInnerLoops(s, face, brep_loop_points);
+    bool b_sil = ShiftInnerLoops(s, face, brep_loop_points);
+    if (verbose && b_sil) {
+	std::cout << "ShiftInnerLoops changed data!\n";
+    }
 }
 
 /** @} */

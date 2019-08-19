@@ -243,7 +243,8 @@ PerformClosedSurfaceChecks(
 	const ON_Surface *s,
 	const ON_BrepFace &face,
 	ON_SimpleArray<BrepTrimPoint> *brep_loop_points,
-	double same_point_tolerance);
+	double same_point_tolerance,
+	bool verbose);
 
 void
 Get_Edge_Points(struct ON_Brep_CDT_State *s_cdt);
