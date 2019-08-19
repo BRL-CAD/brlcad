@@ -244,39 +244,6 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_Face_State *f)
 	}
     }
 
-#if 0
-    // EXPERIMENT - see if we can generate polygons from the loops 
-    for (int li = 0; li < loop_cnt; li++) {
-	const ON_BrepLoop *loop = face.Loop(li);
-	int trim_count = loop->TrimCount();
-
-	cdt_mesh::cpolygon_t cpoly;
-
-	ON_2dPoint cp;
-	long cv, pv, fv;
-	for (int lti = 0; lti < trim_count; lti++) {
-	    ON_BrepTrim *trim = loop->Trim(lti);
-	    if (lti == 0) {
-		cp = trim->PointAt(0);
-		pv = cpoly.add_point(&cp);
-		fv = pv;
-	    } else {
-		pv = cv;	
-	    }
-	    cp = trim->PointAt(1);
-	    cv = cpoly.add_point(&cp);	
-	    struct cdt_mesh::edge_t lseg(pv, cv);
-	    cpoly.add_edge(lseg);
-	    cpoly.print();
-	}
-	struct cdt_mesh::edge_t last_seg(cv, fv);
-	cpoly.add_edge(last_seg);
-	cpoly.print();
-
-	cpoly.polygon_plot("poly_2d.plot3");
-    }
-#endif
-
 
     // Use the edge curves and loops to generate an initial set of trim polygons.
     for (int li = 0; li < loop_cnt; li++) {
@@ -285,7 +252,7 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_Face_State *f)
 
     // Handle a variety of situations that complicate loop handling on closed surfaces
     if (s->IsClosed(0) || s->IsClosed(1)) {
-	bool verbose = true;
+	bool verbose = false;
 	PerformClosedSurfaceChecks(s_cdt, s, face, brep_loop_points, BREP_SAME_POINT_TOLERANCE, verbose);
     }
 
@@ -574,6 +541,94 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 		calc_singular_vert_norm(s_cdt, v2->m_vertex_index);
 	    }
 	}
+
+#if 1
+	// EXPERIMENT - see if we can generate polygons from the loops 
+	// For all faces, and each face loop in those faces, build the
+	// initial polygons strictly based on trim start/end points
+
+	// First, get all the vertices we care about for this face into the associated cdt_mesh
+	for (int face_index = 0; face_index < brep->m_F.Count(); face_index++) {
+	    ON_BrepFace &face = s_cdt->brep->m_F[face_index];
+	    int loop_cnt = face.LoopCount();
+	    std::set<ON_3dPoint *> vpnts;
+
+	    for (int li = 0; li < loop_cnt; li++) {
+		const ON_BrepLoop *loop = face.Loop(li);
+		int trim_count = loop->TrimCount();
+		for (int lti = 0; lti < trim_count; lti++) {
+		    ON_BrepTrim *trim = loop->Trim(lti);
+		    ON_3dPoint *p1 = (*s_cdt->vert_pnts)[trim->Vertex(0)->m_vertex_index];
+		    ON_3dPoint *p2 = (*s_cdt->vert_pnts)[trim->Vertex(1)->m_vertex_index];
+		    vpnts.insert(p1);
+		    vpnts.insert(p2);
+		}
+	    }
+
+	    std::set<ON_3dPoint *>::iterator v_it;
+	    for (v_it = vpnts.begin(); v_it != vpnts.end(); v_it++) {
+		s_cdt->fmeshes[face_index].add_point(*v_it);
+	    }
+	}
+
+	// Next, define the initial polygons using the vert points
+	for (int face_index = 0; face_index < brep->m_F.Count(); face_index++) {
+	    ON_BrepFace &face = s_cdt->brep->m_F[face_index];
+	    int loop_cnt = face.LoopCount();
+
+	    for (int li = 0; li < loop_cnt; li++) {
+		const ON_BrepLoop *loop = face.Loop(li);
+		int trim_count = loop->TrimCount();
+
+		std::cout << "Face " << face_index << ", loop " << li << "\n";
+
+		cdt_mesh::cpolygon_t cpoly;
+		cpoly.cdt_mesh = &s_cdt->fmeshes[face_index];
+
+		ON_2dPoint cp;
+		long cv, pv, fv;
+		for (int lti = 0; lti < trim_count; lti++) {
+		    ON_BrepTrim *trim = loop->Trim(lti);
+		    ON_3dPoint *op3d = (*s_cdt->vert_pnts)[trim->Vertex(0)->m_vertex_index];
+		    if (lti == 0) {
+			cp = trim->PointAt(0);
+			pv = cpoly.add_point_at_pos(s_cdt->fmeshes[face_index].p2ind[op3d], &cp);
+			fv = pv;
+		    } else {
+			pv = cv;
+		    }
+		    cp = trim->PointAt(1);
+		    ON_3dPoint *cp3d = (*s_cdt->vert_pnts)[trim->Vertex(1)->m_vertex_index];
+		    if (op3d == cp3d) {
+			// Singularities have a segment in 2D but not 3D - need to add extra
+			// points in the arrays to deal with this non-uniqueness to keep a 1-1 relationship
+			// between the two arrays.  For the 3D p2ind mapping, this will mean that the
+			// ON_3dPoint pointer will always point to the highest index value in the vector
+			// to be assigned that particular pointer.  For tests which are concerned with 3D point
+			// uniqueness, a 2d->ind->3d->ind lookup will be needed to "canonicalize"
+			// the 3D index value.  (TODO In particular, this will be needed for triangle
+			// comparisons.)
+			cv = cpoly.add_point(&cp);
+			s_cdt->fmeshes[face_index].add_point(cp3d);
+		    } else {
+			cv = cpoly.add_point_at_pos(s_cdt->fmeshes[face_index].p2ind[cp3d], &cp);
+		    }
+		    struct cdt_mesh::edge_t lseg(pv, cv);
+		    cpoly.add_edge(lseg);
+		    cpoly.print();
+		}
+		struct cdt_mesh::edge_t last_seg(cv, fv);
+		cpoly.add_edge(last_seg);
+		cpoly.print();
+
+		struct bu_vls fname = BU_VLS_INIT_ZERO;
+		bu_vls_sprintf(&fname, "%d-%d-poly3d.plot3", face_index, li);
+		cpoly.polygon_plot_3d(bu_vls_cstr(&fname));
+		bu_vls_free(&fname);
+	    }
+	}
+#endif
+
 
 	/* To generate watertight meshes, the faces *must* share 3D edge points.  To ensure
 	 * a uniform set of edge points, we first sample all the edges and build their

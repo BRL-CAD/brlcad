@@ -230,10 +230,12 @@ class cpolygon_t
 
 	// Means to update the point array if we're incrementally building
 	long add_point(ON_2dPoint *on_2dp);
+	long add_point_at_pos(long ind, ON_2dPoint *on_2dp);
 
 	cdt_mesh_t *cdt_mesh;
 
 	void polygon_plot(const char *filename);
+	void polygon_plot_3d(const char *filename);
 	void print();
 
     private:
@@ -259,6 +261,7 @@ class cpolygon_t
 	std::set<long> flipped_face;
 	std::set<long> target_verts;
 	std::vector<std::pair<double, double> > pnts_2d;
+	std::map<std::pair<double, double>, long> p2ind;
 
 	std::set<uedge_t> active_edges;
 	std::set<uedge_t> self_isect_edges;
@@ -293,6 +296,8 @@ public:
     std::map<uedge_t, std::set<triangle_t>> uedges2tris;
 
     /* Setup / Repair */
+    long add_point(ON_3dPoint *on_3dp);
+    long add_point_at_pos(long ind, ON_3dPoint *on_3dp);
     void build(std::set<p2t::Triangle *> *cdttri, std::map<p2t::Point *, ON_3dPoint *> *pointmap);
     void set_brep_data(
 	    bool brev,

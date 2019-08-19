@@ -208,6 +208,8 @@ struct ON_Brep_CDT_State {
     /* Face specific data */
     std::map<int, struct ON_Brep_CDT_Face_State *> *faces;
 
+    std::map<int, cdt_mesh::cdt_mesh_t> fmeshes;
+
 
     /* Mesh data */
     std::map<p2t::Triangle*, int> *tri_brep_face;
