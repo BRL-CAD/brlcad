@@ -152,6 +152,8 @@ bool involves_trims(double *min_edge, struct cdt_surf_info *sinfo, ON_3dPoint &p
 {
     double min_edge_dist = sinfo->max_edge;
 
+    // Bump out the intersection box a bit - we want to be aggressive when adapting to local
+    // trimming curve segments
     ON_3dPoint wpc = (p1+p2) * 0.5;
     ON_3dVector vec1 = p1 - wpc;
     ON_3dVector vec2 = p2 - wpc;
@@ -181,11 +183,8 @@ bool involves_trims(double *min_edge, struct cdt_surf_info *sinfo, ON_3dPoint &p
 		}
 	    }
 	}
+	(*min_edge) = min_edge_dist;
     }
-
-    // Right now, always setting this is capping how big the "filler" triangles are in planar
-    // faces.  Unintential side effect originally, but does produce a nice looking mesh...
-    (*min_edge) = min_edge_dist;
 
     return found_trims_3d;
 }
@@ -418,29 +417,47 @@ getSurfacePoint(
 
     ON_3dPoint p[4] = {ON_3dPoint(), ON_3dPoint(), ON_3dPoint(), ON_3dPoint()};
     ON_3dVector norm[4] = {ON_3dVector(), ON_3dVector(), ON_3dVector(), ON_3dVector()};
-    bool ev_success = true;
+    bool ev_success = false;
 
     if (!split_u || !split_v) {
 	// Don't know if we're splitting in at least one direction - check if we're close
 	// enough to trims to need to worry about edges
-	if ((surface_EvNormal(sinfo->s, u1, v1, p[0], norm[0]))
-		&& (surface_EvNormal(sinfo->s, u2, v2, p[2], norm[2]))) {
 
-	    double min_edge_len;
-	    if (involves_trims(&min_edge_len, sinfo, p[0], p[2])) {
-		if (uavg > min_edge_len && vavg > min_edge_len) {
-		    split_u = 1;
-		}
+	double min_edge_len = -1.0;
 
-		if (uavg > min_edge_len && vavg > min_edge_len) {
-		    split_v = 1;
-		}
+	// If we're dealing with a curved surface, don't get bigger than max_edge
+	if (!sinfo->s->IsPlanar(NULL, BN_TOL_DIST)) {
+	    min_edge_len = sinfo->max_edge;
+	    if (uavg > min_edge_len && vavg > min_edge_len) {
+		split_u = 1;
 	    }
 
-	} else {
-	    ev_success = false;
+	    if (uavg > min_edge_len && vavg > min_edge_len) {
+		split_v = 1;
+	    }
+	}
+
+	// If the above test didn't resolve things, keep going
+	if (!split_u || !split_v) {
+	    if ((surface_EvNormal(sinfo->s, u1, v1, p[0], norm[0]))
+		    && (surface_EvNormal(sinfo->s, u2, v2, p[2], norm[2]))) {
+
+		if (involves_trims(&min_edge_len, sinfo, p[0], p[2])) {
+
+		    if (min_edge_len > 0 && uavg > min_edge_len && vavg > min_edge_len) {
+			split_u = 1;
+		    }
+
+		    if (min_edge_len > 0 && uavg > min_edge_len && vavg > min_edge_len) {
+			split_v = 1;
+		    }
+		}
+
+		ev_success = true;
+	    }
 	}
     }
+
 
     if (ev_success && (!split_u || !split_v)) {
 	// Don't know if we're splitting in at least one direction - check dot products
