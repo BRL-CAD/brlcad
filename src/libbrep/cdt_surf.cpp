@@ -151,6 +151,7 @@ singular_trim_norm(struct cdt_surf_info *sinfo, fastf_t uc, fastf_t vc)
 bool involves_trims(double *min_edge, struct cdt_surf_info *sinfo, ON_3dPoint &p1, ON_3dPoint &p2)
 {
     double min_edge_dist = sinfo->max_edge;
+
     ON_3dPoint wpc = (p1+p2) * 0.5;
     ON_3dVector vec1 = p1 - wpc;
     ON_3dVector vec2 = p2 - wpc;
@@ -175,13 +176,15 @@ bool involves_trims(double *min_edge, struct cdt_surf_info *sinfo, ON_3dPoint &p
 	    lbb.Set(m_max, true);
 	    if (!uvbb.IsDisjoint(lbb)) {
 		fastf_t dist = m_min.DistanceTo(m_max);
-		if ((dist > SMALL_FASTF) && (dist < min_edge_dist))  {
+		if ((dist > BN_TOL_DIST) && (dist < min_edge_dist))  {
 		    min_edge_dist = dist;
 		}
 	    }
 	}
     }
 
+    // Right now, always setting this is capping how big the "filler" triangles are in planar
+    // faces.  Unintential side effect originally, but does produce a nice looking mesh...
     (*min_edge) = min_edge_dist;
 
     return found_trims_3d;
