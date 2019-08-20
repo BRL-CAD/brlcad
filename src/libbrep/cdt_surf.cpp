@@ -186,8 +186,7 @@ bool involves_trims(double *min_edge, struct cdt_surf_info *sinfo, ON_3dPoint &p
 
     std::set<struct BrepEdgeSegment *> segs;
     size_t nhits = sinfo->s_cdt->edge_segs_3d[sinfo->f->m_face_index].Search(fMin, fMax, EdgeSegCallback, (void *)&segs);
-    bu_log("new tree found %zu boxes and %zu segments\n", nhits, segs.size());
-
+    //bu_log("new tree found %zu boxes and %zu segments\n", nhits, segs.size());
 
     if (!nhits) {
 	return false;
