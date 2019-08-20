@@ -559,9 +559,9 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	    e2polysegs[edge.m_edge_index].insert(bseg);
 	}
 
-	// Next, for each face and each loop in each face define the initial loop polygons using the
-	// previously added vert points.  Note there is no splitting of edges at this point - we are
-	// simply establishing the initial closed polygons.
+	// Next, for each face and each loop in each face define the initial
+	// loop polygons.  Note there is no splitting of edges at this point -
+	// we are simply establishing the initial closed polygons.
 	for (int face_index = 0; face_index < brep->m_F.Count(); face_index++) {
 	    ON_BrepFace &face = s_cdt->brep->m_F[face_index];
 	    int loop_cnt = face.LoopCount();
@@ -580,8 +580,6 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 		cpoly->cdt_mesh = fmesh;
 		int trim_count = loop->TrimCount();
 
-		std::cout << "Face " << face_index << ", loop " << li << "\n";
-
 		ON_2dPoint cp(0,0);
 
 		long cv, pv, fv;
@@ -589,27 +587,51 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 		    ON_BrepTrim *trim = loop->Trim(lti);
 		    ON_Interval range = trim->Domain();
 		    if (lti == 0) {
+			// Polygon first
 			cp = trim->PointAt(range.m_t[0]);
 			pv = cpoly->add_point(cp);
 			ON_3dPoint *op3d = (*s_cdt->vert_pnts)[trim->Vertex(0)->m_vertex_index];
 			cpoly->add_point(op3d);
 			fv = pv;
+
+			// Let cdt_mesh know about new information
+			ON_3dVector norm = ON_3dVector::UnsetVector;
+			if (trim->m_type != ON_BrepTrim::singular) {
+			    ON_3dPoint tmp1;
+			    surface_EvNormal(trim->SurfaceOf(), cp.x, cp.y, tmp1, norm);
+			}
+			fmesh->add_point(cp);
+			fmesh->add_point(op3d);
+			fmesh->add_normal(new ON_3dPoint(norm));
+
 		    } else {
 			pv = cv;
 		    }
 
 		    // NOTE: Singularities have a segment in 2D but not 3D - we're adding extra copies of pointers to
 		    // points in the arrays to deal with this non-uniqueness to keep a 1-1 relationship
-		    // between the two array indices in the cdt_mesh.  For the 3D p2ind mapping, this will mean that the
+		    // between the two array indices in the polygon.  For the 3D p2ind mapping, this will mean that the
 		    // ON_3dPoint pointer will always point to the highest index value in the vector
 		    // to be assigned that particular pointer.  For tests which are concerned with 3D point
 		    // uniqueness, a 2d->ind->3d->ind lookup will be needed to "canonicalize"
 		    // the 3D index value.  (TODO In particular, this will be needed for triangle
 		    // comparisons.)
+		    //
+		    //
 		    cp = trim->PointAt(range.m_t[1]);
 		    cv = cpoly->add_point(cp);
 		    ON_3dPoint *cp3d = (*s_cdt->vert_pnts)[trim->Vertex(1)->m_vertex_index];
 		    cpoly->add_point(cp3d);
+
+		    // Let cdt_mesh know about new information
+		    ON_3dVector norm = ON_3dVector::UnsetVector;
+		    if (trim->m_type != ON_BrepTrim::singular) {
+			ON_3dPoint tmp1;
+			surface_EvNormal(trim->SurfaceOf(), cp.x, cp.y, tmp1, norm);
+		    }
+		    fmesh->add_point(cp);
+		    fmesh->add_point(cp3d);
+		    fmesh->add_normal(new ON_3dPoint(norm));
 
 		    struct cdt_mesh::edge_t lseg(pv, cv);
 		    cdt_mesh::cpolyedge_t *ne = cpoly->add_edge(lseg);

@@ -1690,11 +1690,30 @@ cpolygon_t::build_initial_loop(triangle_t &seed, bool repair)
 /***************************/
 
 long
+cdt_mesh_t::add_point(ON_2dPoint &on_2dp)
+{
+    std::pair<double, double> proj_2d;
+    proj_2d.first = on_2dp.x;
+    proj_2d.second = on_2dp.y;
+    pnts_2d.push_back(proj_2d);
+    p2d2ind[proj_2d] = pnts_2d.size() - 1;
+    return (long)(pnts_2d.size() - 1);
+}
+
+long
 cdt_mesh_t::add_point(ON_3dPoint *on_3dp)
 {
     pnts.push_back(on_3dp);
     p2ind[on_3dp] = pnts.size() - 1;
     return (long)(pnts.size() - 1);
+}
+
+long
+cdt_mesh_t::add_normal(ON_3dPoint *on_3dn)
+{
+    normals.push_back(on_3dn);
+    n2ind[on_3dn] = normals.size() - 1;
+    return (long)(normals.size() - 1);
 }
 
 bool
