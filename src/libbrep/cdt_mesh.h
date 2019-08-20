@@ -184,6 +184,25 @@ struct triangle_t {
 
 };
 
+
+class cpolyedge_t;
+
+class bedge_seg_t {
+    public:
+	bedge_seg_t() {
+	    tseg1 = NULL;
+	    tseg2 = NULL;
+	};
+
+	cpolyedge_t *tseg1;
+	cpolyedge_t *tseg2;
+	double edge_start;
+	double edge_end;
+	ON_3dVector tan_start;
+	ON_3dVector tan_end;
+	int edge_ind;
+};
+
 class cpolyedge_t
 {
     public:
@@ -201,14 +220,10 @@ class cpolyedge_t
 
 	/* For those instance when we're working
 	 * Brep edge polygons */
-	int edge_ind;
-	double edge_start;
-	double edge_end;
 	int trim_ind;
 	double trim_start;
 	double trim_end;
-	ON_3dVector tan_start;
-	ON_3dVector tan_end;
+	bedge_seg_t *eseg;
 };
 
 class cdt_mesh_t;
@@ -240,8 +255,8 @@ class cpolygon_t
 	std::set<cpolyedge_t *> replace_edges(std::set<edge_t> &new_edges, std::set<edge_t> &old_edges);
 
 	// Means to update the point array if we're incrementally building
-	long add_point(ON_2dPoint *on_2dp);
-	long add_point_at_pos(long ind, ON_2dPoint *on_2dp);
+	long add_point(ON_2dPoint &on_2dp);
+	long add_point(ON_3dPoint *on_3dp);
 
 	cdt_mesh_t *cdt_mesh;
 
@@ -250,6 +265,10 @@ class cpolygon_t
 	void print();
 
 	std::set<cpolyedge_t *> poly;
+
+	std::vector<std::pair<double, double> > pnts_2d;
+	std::vector<ON_3dPoint *> pnts;
+	std::map<std::pair<double, double>, long> p2ind;
 
     private:
 	bool closed();
@@ -272,8 +291,6 @@ class cpolygon_t
 	std::set<long> uncontained;
 	std::set<long> flipped_face;
 	std::set<long> target_verts;
-	std::vector<std::pair<double, double> > pnts_2d;
-	std::map<std::pair<double, double>, long> p2ind;
 
 	std::set<uedge_t> active_edges;
 	std::set<uedge_t> self_isect_edges;
@@ -309,7 +326,6 @@ public:
 
     /* Setup / Repair */
     long add_point(ON_3dPoint *on_3dp);
-    long add_point_at_pos(long ind, ON_3dPoint *on_3dp);
     void build(std::set<p2t::Triangle *> *cdttri, std::map<p2t::Point *, ON_3dPoint *> *pointmap);
     void set_brep_data(
 	    bool brev,
@@ -356,7 +372,7 @@ public:
     int f_id;
 
     cpolygon_t outer_loop;
-    std::map<int, cpolygon_t> inner_loops;
+    std::map<int, cpolygon_t*> inner_loops;
     std::set<long> interior_pnts;
     bool initialize_interior_pnts(std::set<ON_2dPoint *>);
     bool cdt();

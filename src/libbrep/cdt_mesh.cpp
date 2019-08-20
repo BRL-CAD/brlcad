@@ -37,30 +37,22 @@ namespace cdt_mesh
 /***************************/
 
 long
-cpolygon_t::add_point(ON_2dPoint *on_2dp)
+cpolygon_t::add_point(ON_2dPoint &on_2dp)
 {
     std::pair<double, double> proj_2d;
-    proj_2d.first = on_2dp->x;
-    proj_2d.second = on_2dp->y;
+    proj_2d.first = on_2dp.x;
+    proj_2d.second = on_2dp.y;
     pnts_2d.push_back(proj_2d);
     p2ind[proj_2d] = pnts_2d.size() - 1;
     return (long)(pnts_2d.size() - 1);
 }
 
 long
-cpolygon_t::add_point_at_pos(long ind, ON_2dPoint *on_2dp)
+cpolygon_t::add_point(ON_3dPoint *on_3dp)
 {
-    if (ind > (long)pnts_2d.capacity() - 1) {
-	pnts_2d.reserve(ind+1);
-    }
-    std::pair<double, double> proj_2d;
-    proj_2d.first = on_2dp->x;
-    proj_2d.second = on_2dp->y;
-    pnts_2d[ind] = proj_2d;
-    p2ind[proj_2d] = ind;
-    return ind;
+    pnts.push_back(on_3dp);
+    return (long)(pnts.size() - 1);
 }
-
 
 cpolyedge_t *
 cpolygon_t::add_edge(const struct edge_t &e)
@@ -1011,7 +1003,7 @@ void cpolygon_t::polygon_plot_3d(const char *filename)
     bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
     pl_color_buc(plot_file, &c);
 
-    ON_3dPoint ppnt;
+    ON_3dPoint *ppnt;
     point_t pmin, pmax;
     point_t bnp;
     VSET(pmin, DBL_MAX, DBL_MAX, DBL_MAX);
@@ -1020,12 +1012,12 @@ void cpolygon_t::polygon_plot_3d(const char *filename)
     cpolyedge_t *efirst = *(poly.begin());
     cpolyedge_t *ecurr = NULL;
 
-    ppnt = *cdt_mesh->pnts[efirst->v[0]];
-    VSET(bnp, ppnt.x, ppnt.y, ppnt.z);
+    ppnt = pnts[efirst->v[0]];
+    VSET(bnp, ppnt->x, ppnt->y, ppnt->z);
     pdv_3move(plot_file, bnp);
     VMINMAX(pmin, pmax, bnp);
-    ppnt = *cdt_mesh->pnts[efirst->v[1]];
-    VSET(bnp, ppnt.x, ppnt.y, ppnt.z);
+    ppnt = pnts[efirst->v[1]];
+    VSET(bnp, ppnt->x, ppnt->y, ppnt->z);
     pdv_3cont(plot_file, bnp);
     VMINMAX(pmin, pmax, bnp);
 
@@ -1033,8 +1025,8 @@ void cpolygon_t::polygon_plot_3d(const char *filename)
     while (ecurr != efirst && ecnt < poly.size()+1) {
 	ecnt++;
 	ecurr = (!ecurr) ? efirst->next : ecurr->next;
-	ppnt = *cdt_mesh->pnts[ecurr->v[1]];
-	VSET(bnp, ppnt.x, ppnt.y, ppnt.z);
+	ppnt = pnts[ecurr->v[1]];
+	VSET(bnp, ppnt->x, ppnt->y, ppnt->z);
 	pdv_3cont(plot_file, bnp);
 	VMINMAX(pmin, pmax, bnp);
        	if (ecnt > poly.size()) {
@@ -1113,7 +1105,6 @@ void cpolygon_t::print()
     while (first != next) {
 	ecnt++;
 	if (!next) {
-	    std::cout << "\nERROR next pointer unset\n";
 	    break;
 	}
 	std::cout << "->" << next->v[0];
@@ -1704,17 +1695,6 @@ cdt_mesh_t::add_point(ON_3dPoint *on_3dp)
     pnts.push_back(on_3dp);
     p2ind[on_3dp] = pnts.size() - 1;
     return (long)(pnts.size() - 1);
-}
-
-long
-cdt_mesh_t::add_point_at_pos(long ind, ON_3dPoint *on_3dp)
-{
-    if (ind > (long)pnts.capacity() - 1) {
-	pnts.reserve(ind+1);
-    }
-    pnts.push_back(on_3dp);
-    p2ind[on_3dp] = ind;
-    return ind;
 }
 
 bool
