@@ -195,16 +195,6 @@
 
 #define RT_PART_NUBSPT  0
 
-/*
- *  * Replacements for definitions from vmath.h
- *   */
-#undef V2PRINT
-#undef VPRINT
-#undef HPRINT
-#define V2PRINT(a, b) bu_log("%s (%g, %g)\n", a, (b)[0], (b)[1]);
-#define VPRINT(a, b) bu_log("%s (%g, %g, %g)\n", a, (b)[0], (b)[1], (b)[2])
-#define HPRINT(a, b) bu_log("%s (%g, %g, %g, %g)\n", a, (b)[0], (b)[1], (b)[2], (b)[3])
-
 #endif /* RT_DEFINES_H */
 
 /** @} */
