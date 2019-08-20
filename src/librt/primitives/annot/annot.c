@@ -50,41 +50,54 @@
 int
 rt_pos_flag(int *pos_flag, int p_hor, int p_ver)
 {
+    if (!pos_flag)
+	return 1;
+
+    /* sanity bounding */
+    if (p_hor < 1)
+	p_hor = 1;
+    if (p_hor > 3)
+	p_hor = 3;
+    if (p_ver < 1)
+	p_ver = 1;
+    if (p_ver > 3)
+	p_ver = 3;
+
     switch (p_ver) {
 	case 1:
 	    switch(p_hor) {
 		case 1:
-		    *pos_flag = RT_ANNOT_POS_BR;
+		    *pos_flag = RT_TXT_POS_BR;
 		    break;
 		case 2:
-		    *pos_flag = RT_ANNOT_POS_BC;
+		    *pos_flag = RT_TXT_POS_BC;
 		    break;
 		case 3:
-		    *pos_flag = RT_ANNOT_POS_BL;
+		    *pos_flag = RT_TXT_POS_BL;
 	    }
 	    break;
 	case 2:
 	    switch(p_hor) {
 		case 1:
-		    *pos_flag = RT_ANNOT_POS_MR;
+		    *pos_flag = RT_TXT_POS_MR;
 		    break;
 		case 2:
-		    *pos_flag = RT_ANNOT_POS_MC;
+		    *pos_flag = RT_TXT_POS_MC;
 		    break;
 		case 3:
-		    *pos_flag = RT_ANNOT_POS_ML;
+		    *pos_flag = RT_TXT_POS_ML;
 	    }
 	    break;
 	case 3:
 	    switch(p_hor) {
 		case 1:
-		    *pos_flag = RT_ANNOT_POS_TR;
+		    *pos_flag = RT_TXT_POS_TR;
 		    break;
 		case 2:
-		    *pos_flag = RT_ANNOT_POS_TC;
+		    *pos_flag = RT_TXT_POS_TC;
 		    break;
 		case 3:
-		    *pos_flag = RT_ANNOT_POS_TL;
+		    *pos_flag = RT_TXT_POS_TL;
 	    }
     }
     return 0;
@@ -95,31 +108,31 @@ static int
 ant_check_pos(const struct txt_seg *tsg, char **rel_pos)
 {
     switch (tsg->pt_rel_pos) {
-	case RT_ANNOT_POS_BL:
+	case RT_TXT_POS_BL:
 	    *rel_pos = "bottom left";
 	    break;
-	case RT_ANNOT_POS_BC:
+	case RT_TXT_POS_BC:
 	    *rel_pos = "bottom center";
 	    break;
-	case RT_ANNOT_POS_BR:
+	case RT_TXT_POS_BR:
 	    *rel_pos = "bottom right";
 	    break;
-	case RT_ANNOT_POS_ML:
+	case RT_TXT_POS_ML:
 	    *rel_pos = "middle left";
 	    break;
-	case RT_ANNOT_POS_MC:
+	case RT_TXT_POS_MC:
 	    *rel_pos = "middle center";
 	    break;
-	case RT_ANNOT_POS_MR:
+	case RT_TXT_POS_MR:
 	    *rel_pos = "middle right";
 	    break;
-	case RT_ANNOT_POS_TL:
+	case RT_TXT_POS_TL:
 	    *rel_pos = "top left";
 	    break;
-	case RT_ANNOT_POS_TC:
+	case RT_TXT_POS_TC:
 	    *rel_pos = "top center";
 	    break;
-	case RT_ANNOT_POS_TR:
+	case RT_TXT_POS_TR:
 	    *rel_pos = "top right";
 	    break;
     }
@@ -155,38 +168,38 @@ ant_pos_adjs(struct txt_seg* tsg, struct rt_annot_internal* annot_ip)
 
     ant_label_dimensions(tsg, annot_ip->verts[tsg->ref_pt], &length, &height);
 
-    if (tsg->pt_rel_pos == RT_ANNOT_POS_BL) {
+    if (tsg->pt_rel_pos == RT_TXT_POS_BL) {
 	V2MOVE(pt, annot_ip->verts[tsg->ref_pt]);
 	pt[0] = pt[0] + 1;
 	V2MOVE(annot_ip->verts[tsg->ref_pt], pt);
-    }else if (tsg->pt_rel_pos == RT_ANNOT_POS_BC) {
+    }else if (tsg->pt_rel_pos == RT_TXT_POS_BC) {
 	V2MOVE(pt, annot_ip->verts[tsg->ref_pt]);
 	pt[0] = pt[0] - (length / 2);
 	V2MOVE(annot_ip->verts[tsg->ref_pt], pt);
-    }else if (tsg->pt_rel_pos == RT_ANNOT_POS_BR) {
+    }else if (tsg->pt_rel_pos == RT_TXT_POS_BR) {
 	V2MOVE(pt, annot_ip->verts[tsg->ref_pt]);
 	pt[0] = pt[0] - length;
 	V2MOVE(annot_ip->verts[tsg->ref_pt], pt);
-    }else if (tsg->pt_rel_pos == RT_ANNOT_POS_ML) {
+    }else if (tsg->pt_rel_pos == RT_TXT_POS_ML) {
 	V2MOVE(pt, annot_ip->verts[tsg->ref_pt]);
 	pt[0] = pt[0] + 1;
 	pt[1] = pt[1] - (height / 2);
 	V2MOVE(annot_ip->verts[tsg->ref_pt], pt);
-    }else if (tsg->pt_rel_pos == RT_ANNOT_POS_MC) {
+    }else if (tsg->pt_rel_pos == RT_TXT_POS_MC) {
 	V2MOVE(pt, annot_ip->verts[tsg->ref_pt]);
 	pt[0] = pt[0] - (length / 2);
 	pt[1] = pt[1] - (height / 2);
 	V2MOVE(annot_ip->verts[tsg->ref_pt], pt);
-    }else if (tsg->pt_rel_pos == RT_ANNOT_POS_MR) {
+    }else if (tsg->pt_rel_pos == RT_TXT_POS_MR) {
 	V2MOVE(pt, annot_ip->verts[tsg->ref_pt]);
 	pt[1] = pt[1] - (height / 2);
 	pt[0] = pt[0] - length;
 	V2MOVE(annot_ip->verts[tsg->ref_pt], pt);
-    }else if (tsg->pt_rel_pos == RT_ANNOT_POS_TL) {
+    }else if (tsg->pt_rel_pos == RT_TXT_POS_TL) {
 	V2MOVE(pt, annot_ip->verts[tsg->ref_pt]);
 	pt[1] = pt[1] - height;
 	V2MOVE(annot_ip->verts[tsg->ref_pt], pt);
-    }else if (tsg->pt_rel_pos == RT_ANNOT_POS_TC) {
+    }else if (tsg->pt_rel_pos == RT_TXT_POS_TC) {
 	V2MOVE(pt, annot_ip->verts[tsg->ref_pt]);
 	pt[0] = pt[0] - (length / 2);
 	pt[1] = pt[1] - height;

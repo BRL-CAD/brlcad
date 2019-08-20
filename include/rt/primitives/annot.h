@@ -33,8 +33,6 @@
 
 __BEGIN_DECLS
 
-RT_EXPORT int rt_pos_flag(int *pos_flag, int p_hor, int p_ver);
-
 RT_EXPORT extern struct rt_annot_internal *rt_copy_annot(const struct rt_annot_internal *annot_ip);
 
 __END_DECLS

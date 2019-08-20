@@ -42,6 +42,7 @@
 #include "bu/mapped_file.h"
 #include "bu/vls.h"
 #include "vmath.h"
+#include "rt/defines.h"
 
 #include "../nmg.h" /* (temporarily?) needed for knot_vector */
 #include "brep.h"
@@ -954,12 +955,15 @@ struct rt_pnts_internal {
 /*
  * ID_ANNO
  *
- * Annotations are used to provide labels in-scene when viewing geometry. Leaders connect labels
- * to geometry objects or fixed points in space.
+ * Annotations are used to provide labels in-scene when viewing
+ * geometry. Leaders connect labels to geometry objects or fixed
+ * points in space.
  *
- * container for the annotation primitive
  */
 
+/**
+ * container for the annotation primitive
+ */
 struct rt_ant {
     size_t count;			/**< @brief number of segments in the annotation */
     int *reverse;			/**< array of boolean flags indicating if the
@@ -968,9 +972,8 @@ struct rt_ant {
 };
 
 /**
- * used by the annotation primitive
+ * text labels used by the annotation primitive
  */
-
 struct txt_seg {
     uint32_t magic;
     int ref_pt;				/** reference point */
@@ -978,6 +981,28 @@ struct txt_seg {
     struct bu_vls label;
 };
 
+/**
+ * placement flags
+ */
+#define RT_TXT_POS_BL 1
+#define RT_TXT_POS_BC 2
+#define RT_TXT_POS_BR 3
+#define RT_TXT_POS_ML 4
+#define RT_TXT_POS_MC 5
+#define RT_TXT_POS_MR 6
+#define RT_TXT_POS_TL 7
+#define RT_TXT_POS_TC 8
+#define RT_TXT_POS_TR 9
+
+/**
+ * set a position flag to the corresponding placement value given
+ * numeric settings (1=left/top, 2=middle/center, 3=right/bottom).
+ */
+RT_EXPORT int rt_pos_flag(int *pos_flag, int horizontal, int vertical);
+
+/**
+ * internal representation of an annotation object
+ */
 struct rt_annot_internal
 {
     uint32_t magic;
@@ -987,19 +1012,6 @@ struct rt_annot_internal
     struct rt_ant ant;			/**< @brief segments in the annotation */
 };
 
-/**
- * placement flags
- */
-
-#define RT_ANNOT_POS_BL 1
-#define RT_ANNOT_POS_BC 2
-#define RT_ANNOT_POS_BR 3
-#define RT_ANNOT_POS_ML 4
-#define RT_ANNOT_POS_MC 5
-#define RT_ANNOT_POS_MR 6
-#define RT_ANNOT_POS_TL 7
-#define RT_ANNOT_POS_TC 8
-#define RT_ANNOT_POS_TR 9
 
 
 #define RT_ANNOT_CK_MAGIC(_p) BU_CKMAG(_p, RT_ANNOT_INTERNAL_MAGIC, "rt_annot_internal")
