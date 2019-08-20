@@ -51,41 +51,41 @@ int
 rt_pos_flag(int *pos_flag, int p_hor, int p_ver)
 {
     switch (p_ver) {
-    case 1:
-	switch(p_hor) {
 	case 1:
-	    *pos_flag = RT_ANNOT_POS_BR;
+	    switch(p_hor) {
+		case 1:
+		    *pos_flag = RT_ANNOT_POS_BR;
+		    break;
+		case 2:
+		    *pos_flag = RT_ANNOT_POS_BC;
+		    break;
+		case 3:
+		    *pos_flag = RT_ANNOT_POS_BL;
+	    }
 	    break;
 	case 2:
-	    *pos_flag = RT_ANNOT_POS_BC;
+	    switch(p_hor) {
+		case 1:
+		    *pos_flag = RT_ANNOT_POS_MR;
+		    break;
+		case 2:
+		    *pos_flag = RT_ANNOT_POS_MC;
+		    break;
+		case 3:
+		    *pos_flag = RT_ANNOT_POS_ML;
+	    }
 	    break;
 	case 3:
-	    *pos_flag = RT_ANNOT_POS_BL;
-	}
-    break;
-    case 2:
-	switch(p_hor) {
-	case 1:
-	    *pos_flag = RT_ANNOT_POS_MR;
-	    break;
-	case 2:
-	    *pos_flag = RT_ANNOT_POS_MC;
-	    break;
-	case 3:
-	    *pos_flag = RT_ANNOT_POS_ML;
-	}
-    break;
-    case 3:
-	switch(p_hor) {
-	case 1:
-	    *pos_flag = RT_ANNOT_POS_TR;
-	    break;
-	case 2:
-	    *pos_flag = RT_ANNOT_POS_TC;
-	    break;
-	case 3:
-	    *pos_flag = RT_ANNOT_POS_TL;
-	}
+	    switch(p_hor) {
+		case 1:
+		    *pos_flag = RT_ANNOT_POS_TR;
+		    break;
+		case 2:
+		    *pos_flag = RT_ANNOT_POS_TC;
+		    break;
+		case 3:
+		    *pos_flag = RT_ANNOT_POS_TL;
+	    }
     }
     return 0;
 }
@@ -191,7 +191,7 @@ ant_pos_adjs(struct txt_seg* tsg, struct rt_annot_internal* annot_ip)
 	pt[0] = pt[0] - (length / 2);
 	pt[1] = pt[1] - height;
 	V2MOVE(annot_ip->verts[tsg->ref_pt], pt);
-    }else {
+    } else {
 	//this is the case of TR
 	V2MOVE(pt, annot_ip->verts[tsg->ref_pt]);
 	pt[0] = pt[0] - length;
@@ -1732,11 +1732,11 @@ rt_annot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbo
 	    case ANN_TSEG_MAGIC:
 		tsg = (struct txt_seg *)annot_ip->ant.segments[seg_no];
 		if((size_t)tsg->ref_pt >= annot_ip->vert_count) {
-		    sprintf(buf, "\t\tReference point vertex #%d\n",tsg->ref_pt);
+		    sprintf(buf, "\t\tReference point vertex #%d\n", tsg->ref_pt);
 		}
 		else {
 		    sprintf(buf, "\t\tReference point (%g %g)\n",
-				V2INTCLAMPARGS(annot_ip->verts[tsg->ref_pt]));
+			    V2INTCLAMPARGS(annot_ip->verts[tsg->ref_pt]));
 		}
 		bu_vls_strcat(str, buf);
 		ant_check_pos(tsg, &rel_pos);
@@ -2185,7 +2185,7 @@ rt_annot_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const c
 static int
 ant_get_tcl(struct bu_vls *logstr, struct rt_ant *ant, const char *argv1)
 {
-	int count;
+    int count;
     int j;
     const char **seg_list = NULL;
 
@@ -2234,26 +2234,26 @@ ant_get_tcl(struct bu_vls *logstr, struct rt_ant *ant, const char *argv1)
 	    lsg->magic = CURVE_LSEG_MAGIC;
 	    ant->segments[j] = (void *)lsg;
 	} else if (BU_STR_EQUAL(seg_argv[0], "txt")) {
-		struct txt_seg *tsg;
+	    struct txt_seg *tsg;
 
-		BU_ALLOC(tsg, struct txt_seg);
-		for (k=1; k<seg_argc; k+= 2) {
-		    elem = seg_argv[k];
-		    sval = seg_argv[k+1];
-		    switch (*elem){
-			case 'R': /* ref point */
-			    (void)bu_opt_int(NULL, 1, &sval, (void *)&tsg->ref_pt);
-			    break;
-			case 'P': /* position relative */
-			    (void)bu_opt_int(NULL, 1, &sval, (void *)&tsg->pt_rel_pos);
-			    break;
-			case 'L': /* label text */
-			    (void)bu_opt_vls(NULL, 1, &sval, (void *)&tsg->label);
-			    break;
-		    }
+	    BU_ALLOC(tsg, struct txt_seg);
+	    for (k=1; k<seg_argc; k+= 2) {
+		elem = seg_argv[k];
+		sval = seg_argv[k+1];
+		switch (*elem) {
+		    case 'R': /* ref point */
+			(void)bu_opt_int(NULL, 1, &sval, (void *)&tsg->ref_pt);
+			break;
+		    case 'P': /* position relative */
+			(void)bu_opt_int(NULL, 1, &sval, (void *)&tsg->pt_rel_pos);
+			break;
+		    case 'L': /* label text */
+			(void)bu_opt_vls(NULL, 1, &sval, (void *)&tsg->label);
+			break;
 		}
-		tsg->magic = ANN_TSEG_MAGIC;
-		ant->segments[j] = (void *)tsg;
+	    }
+	    tsg->magic = ANN_TSEG_MAGIC;
+	    ant->segments[j] = (void *)tsg;
 	} else if (BU_STR_EQUAL(seg_argv[0], "bezier")) {
 	    struct bezier_seg *bsg;
 	    int num_points;
