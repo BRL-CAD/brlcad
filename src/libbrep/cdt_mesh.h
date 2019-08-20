@@ -276,8 +276,9 @@ class cpolygon_t
 	std::map<long, long> p2f;
 
 	bool cdt();
-    private:
+
 	bool closed();
+    private:
 	bool self_intersecting();
 	bool best_fit_plane();
 
@@ -347,6 +348,7 @@ public:
 	    std::set<ON_3dPoint *> *s,
 	    std::map<ON_3dPoint *, ON_3dPoint *> *n
 	    );
+    bool cdt();
     bool repair();
     bool valid();
     bool serialize(const char *fname);
@@ -388,7 +390,6 @@ public:
     std::map<int, cpolygon_t*> inner_loops;
     std::set<long> interior_pnts;
     bool initialize_interior_pnts(std::set<ON_2dPoint *>);
-    bool cdt();
 
 private:
     /* Data containers */

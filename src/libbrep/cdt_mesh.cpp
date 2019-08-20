@@ -2345,6 +2345,126 @@ cdt_mesh_t::process_seed_tri(triangle_t &seed, bool repair, double deg)
     return true;
 }
 
+// TODO - should be a function provided by cpolygon_t...
+int *
+loop_to_bgpoly(const cpolygon_t *loop)
+{
+    int *opoly = (int *)bu_calloc(loop->poly.size()+1, sizeof(int), "polygon points");
+
+    size_t vcnt = 1;
+    cpolyedge_t *pe = (*loop->poly.begin());
+    cpolyedge_t *first = pe;
+    cpolyedge_t *next = pe->next;
+
+    opoly[vcnt-1] = pe->v[0];
+    opoly[vcnt] = pe->v[1];
+
+    while (first != next) {
+	vcnt++;
+	opoly[vcnt] = next->v[1];
+	next = next->next;
+	if (vcnt > loop->poly.size()) {
+	    bu_free(opoly, "free libbg 2d points array)");
+	    std::cerr << "cdt attempt on infinite loop in outer loop (shouldn't be possible - closed() test failed to detect this somehow...)\n";
+	    return NULL;
+	}
+    }
+
+    return opoly;
+}
+
+bool
+cdt_mesh_t::cdt()
+{
+    if (!outer_loop.closed()) return false;
+    std::map<int, cpolygon_t*>::iterator il_it;
+    for (il_it = inner_loops.begin(); il_it != inner_loops.end(); il_it++) {
+	cpolygon_t *il = il_it->second;
+	if (!il->closed()) return false;
+    }
+
+    point2d_t *bgp_2d = (point2d_t *)bu_calloc(pnts_2d.size() + 1, sizeof(point2d_t), "2D points array");
+    for (size_t i = 0; i < pnts_2d.size(); i++) {
+	bgp_2d[i][X] = pnts_2d[i].first;
+	bgp_2d[i][Y] = pnts_2d[i].second;
+    }
+
+    int *faces = NULL;
+    int num_faces = 0;
+    int *steiner = NULL;
+    if (interior_pnts.size()) {
+	steiner = (int *)bu_calloc(interior_pnts.size(), sizeof(int), "interior points");
+	std::set<long>::iterator p_it;
+	int vind = 0;
+	for (p_it = interior_pnts.begin(); p_it != interior_pnts.end(); p_it++) {
+	    steiner[vind] = (int)*p_it;
+	    vind++;
+	}
+    }
+
+    // Walk the outer loop and build the libbg polygon
+    int *opoly = loop_to_bgpoly(&outer_loop);
+    if (!opoly) {
+	return false;
+    }
+
+    const int **holes_array = NULL;
+    size_t *holes_npts = NULL;
+    if (inner_loops.size()) {
+	holes_array = (const int **)bu_calloc(inner_loops.size()+1, sizeof(int *), "holes array");
+	holes_npts = (size_t *)bu_calloc(inner_loops.size()+1, sizeof(size_t), "hole pntcnt array");
+	int loop_cnt = 0;
+	for (il_it = inner_loops.begin(); il_it != inner_loops.end(); il_it++) {
+	    cpolygon_t *inl = il_it->second;
+	    holes_array[loop_cnt] = loop_to_bgpoly(inl);
+	    holes_npts[loop_cnt] = inl->poly.size()+1;
+	}
+    }
+
+    bool result = (bool)!bg_nested_polygon_triangulate( &faces, &num_faces,
+	    NULL, NULL, opoly, outer_loop.poly.size()+1, holes_array, holes_npts, inner_loops.size(),
+	    steiner, interior_pnts.size(), bgp_2d, pnts_2d.size(),
+	    TRI_CONSTRAINED_DELAUNAY);
+
+    if (result) {
+	for (int i = 0; i < num_faces; i++) {
+	    triangle_t t;
+	    t.v[0] = faces[3*i+0];
+	    t.v[1] = faces[3*i+1];
+	    t.v[2] = faces[3*i+2];
+
+	    ON_3dVector tdir = tnorm(t);
+	    ON_3dVector bdir = bnorm(t);
+	    bool flipped_tri = (ON_DotProduct(tdir, bdir) < 0);
+	    if (flipped_tri) {
+		t.v[2] = faces[3*i+1];
+		t.v[1] = faces[3*i+2];
+	    }
+
+	    tri_add(t);
+	}
+
+	bu_free(faces, "faces array");
+    }
+
+    bu_free(bgp_2d, "free libbg 2d points array)");
+    bu_free(opoly, "polygon points");
+
+    if (inner_loops.size()) {
+	for (size_t i = 0; i < inner_loops.size(); i++) {
+	    bu_free((void *)holes_array[i], "hole array");
+	}
+	bu_free((void *)holes_array, "holes array");
+	bu_free(holes_npts, "holes array");
+    }
+
+    if (steiner) {
+	bu_free(steiner, "faces array");
+    }
+
+    return result;
+}
+
 bool
 cdt_mesh_t::repair()
 {
