@@ -1607,14 +1607,6 @@ typedef enum vmath_matrix_component_ {
 #define HINTCLAMPPRINT(a, b)	\
 	fprintf(stderr, "%s (%g, %g, %g, %g)\n", a, V4INTCLAMPARGS(b));
 
-#ifdef __cplusplus
-#define CPP_V3PRINT(_os, _title, _p)	(_os) << (_title) << "=(" << \
-	(_p)[X] << ", " << (_p)[Y] << ")\n";
-#define CPP_VPRINT(_os, _title, _p)	(_os) << (_title) << "=(" << \
-	(_p)[X] << ", " << (_p)[Y] << ", " << (_p)[Z] << ")\n";
-#define CPP_HPRINT(_os, _title, _p)	(_os) << (_title) << "=(" << \
-	(_p)[X] << ", " << (_p)[Y] << ", " << (_p)[Z] << ", " << (_p)[W]<< ")\n";
-#endif
 
 /** @brief Vector element multiplication.  Really: diagonal matrix X vect. */
 #define VELMUL(o, a, b) do { \
