@@ -48,7 +48,7 @@
 
 
 int
-rt_pos_flag(int *pos_flag, int p_hor, int p_ver)
+rt_txt_pos_flag(int *pos_flag, int p_hor, int p_ver)
 {
     if (!pos_flag)
 	return 1;

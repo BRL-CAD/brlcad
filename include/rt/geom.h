@@ -998,7 +998,7 @@ struct txt_seg {
  * set a position flag to the corresponding placement value given
  * numeric settings (1=left/top, 2=middle/center, 3=right/bottom).
  */
-RT_EXPORT int rt_pos_flag(int *pos_flag, int horizontal, int vertical);
+RT_EXPORT int rt_txt_pos_flag(int *pos_flag, int horizontal, int vertical);
 
 /**
  * internal representation of an annotation object

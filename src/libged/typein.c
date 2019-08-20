@@ -3066,7 +3066,7 @@ annot_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern
 
     p_hor = atoi(cmd_argvs[9]);
     p_ver = atoi(cmd_argvs[10]);
-    rt_pos_flag(&tsg->rel_pos, p_hor, p_ver);
+    rt_txt_pos_flag(&tsg->rel_pos, p_hor, p_ver);
 
     anip->ant.segments = (void **)bu_calloc(anip->ant.count, sizeof(void *), "segs");
     anip->ant.reverse = (int *)bu_calloc(anip->ant.count, sizeof(int), "rev");
