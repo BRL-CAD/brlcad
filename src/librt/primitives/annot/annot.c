@@ -67,37 +67,37 @@ rt_pos_flag(int *pos_flag, int p_hor, int p_ver)
 	case 1:
 	    switch(p_hor) {
 		case 1:
-		    *pos_flag = RT_TXT_POS_BR;
+		    *pos_flag = RT_TXT_POS_BL;
 		    break;
 		case 2:
 		    *pos_flag = RT_TXT_POS_BC;
 		    break;
 		case 3:
-		    *pos_flag = RT_TXT_POS_BL;
+		    *pos_flag = RT_TXT_POS_BR;
 	    }
 	    break;
 	case 2:
 	    switch(p_hor) {
 		case 1:
-		    *pos_flag = RT_TXT_POS_MR;
+		    *pos_flag = RT_TXT_POS_ML;
 		    break;
 		case 2:
 		    *pos_flag = RT_TXT_POS_MC;
 		    break;
 		case 3:
-		    *pos_flag = RT_TXT_POS_ML;
+		    *pos_flag = RT_TXT_POS_MR;
 	    }
 	    break;
 	case 3:
 	    switch(p_hor) {
 		case 1:
-		    *pos_flag = RT_TXT_POS_TR;
+		    *pos_flag = RT_TXT_POS_TL;
 		    break;
 		case 2:
 		    *pos_flag = RT_TXT_POS_TC;
 		    break;
 		case 3:
-		    *pos_flag = RT_TXT_POS_TL;
+		    *pos_flag = RT_TXT_POS_TR;
 	    }
     }
     return 0;

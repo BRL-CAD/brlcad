@@ -633,10 +633,10 @@ static char *p_annot[] = {
     "Enter Y: ",
     "Enter Z: ",
     "Enter the text label: ",
-    "Enter X,Y for the text placement: ",
+    "Enter X, Y for the text placement: ",
     "Enter Y: ",
-    "Enter the relative horizontal position(1->right, 2->center, 3->left): ",
-    "Enter the relative vertical position(1->bottom, 2->middle, 3->top): "
+    "Enter relative horizontal position (1->left, 2->center, 3->right): ",
+    "Enter relative vertical position (1->bottom, 2->middle, 3->top): "
 };
 
 
