@@ -1037,6 +1037,53 @@ void cpolygon_t::polygon_plot_3d(const char *filename)
     fclose(plot_file);
 }
 
+void cpolygon_t::plot_tri(const triangle_t &t, struct bu_color *buc, FILE *plot)
+{
+    point_t p[3];
+    point_t porig;
+    point_t c = VINIT_ZERO;
+    for (int i = 0; i < 3; i++) {
+	ON_3dPoint *p3d = pnts[t.v[i]];
+	VSET(p[i], p3d->x, p3d->y, p3d->z);
+	c[X] += p3d->x;
+	c[Y] += p3d->y;
+	c[Z] += p3d->z;
+    }
+    c[X] = c[X]/3.0;
+    c[Y] = c[Y]/3.0;
+    c[Z] = c[Z]/3.0;
+
+    for (size_t i = 0; i < 3; i++) {
+	if (i == 0) {
+	    VMOVE(porig, p[i]);
+	    pdv_3move(plot, p[i]);
+	}
+	pdv_3cont(plot, p[i]);
+    }
+    pdv_3cont(plot, porig);
+
+    /* restore previous color */
+    pl_color_buc(plot, buc);
+}
+
+void cpolygon_t::tris_set_plot(std::set<triangle_t> &tset, const char *filename)
+{
+    FILE* plot_file = fopen(filename, "w");
+
+    struct bu_color c = BU_COLOR_INIT_ZERO;
+    bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
+    pl_color_buc(plot_file, &c);
+
+    std::set<triangle_t>::iterator s_it;
+
+    for (s_it = tset.begin(); s_it != tset.end(); s_it++) {
+	triangle_t tri = (*s_it);
+	plot_tri(tri, &c, plot_file);
+    }
+    fclose(plot_file);
+}
+
+
 void
 cpolygon_t::plot_best_fit_plane(const char *filename)
 {

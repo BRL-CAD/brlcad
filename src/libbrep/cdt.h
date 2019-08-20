@@ -203,6 +203,7 @@ struct ON_Brep_CDT_State {
     std::map<ON_3dPoint *, std::set<BrepTrimPoint *>> *on_brep_edge_pnts;
     std::map<int, struct BrepEdgeSegment *> *etrees;
     std::map<int, RTree<void *, double, 3>> edge_segs_3d;
+    std::map<int, std::set<cdt_mesh::bedge_seg_t *>> e2polysegs;
 
     /* Audit data */
     std::map<int, ON_3dPoint *> *bot_pnt_to_on_pnt;

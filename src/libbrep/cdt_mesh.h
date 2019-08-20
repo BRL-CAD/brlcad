@@ -262,6 +262,7 @@ class cpolygon_t
 
 	void polygon_plot(const char *filename);
 	void polygon_plot_3d(const char *filename);
+	void tris_set_plot(std::set<triangle_t> &tset, const char *filename);
 	void print();
 
 	std::set<cpolyedge_t *> poly;
@@ -269,6 +270,10 @@ class cpolygon_t
 	std::vector<std::pair<double, double> > pnts_2d;
 	std::vector<ON_3dPoint *> pnts;
 	std::map<std::pair<double, double>, long> p2ind;
+
+
+	/* Map from pnts_2d points in polygon to the same points in the cdt_mesh */
+	std::map<long, long> p2f;
 
 	bool cdt();
     private:
@@ -307,7 +312,7 @@ class cpolygon_t
 	ON_3dVector pdir;
 
 	std::vector<struct ctriangle_t> polygon_tris(double angle, bool brep_norm, int initial);
-
+	void plot_tri(const triangle_t &t, struct bu_color *buc, FILE *plot);
 };
 
 

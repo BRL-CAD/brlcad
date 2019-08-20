@@ -551,12 +551,11 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	// ordering is not the job of these containers - that's handled by the trim loop
 	// polygons.  These containers maintain the association between trims in different
 	// faces and the 3D edge curve information used to drive shared points.
-	std::map<int, std::set<cdt_mesh::bedge_seg_t *>> e2polysegs;
 	for (int index = 0; index < brep->m_E.Count(); index++) {
 	    ON_BrepEdge& edge = brep->m_E[index];
 	    cdt_mesh::bedge_seg_t *bseg = new cdt_mesh::bedge_seg_t;
 	    bseg->edge_ind = edge.m_edge_index;
-	    e2polysegs[edge.m_edge_index].insert(bseg);
+	    s_cdt->e2polysegs[edge.m_edge_index].insert(bseg);
 	}
 
 	// Next, for each face and each loop in each face define the initial
@@ -632,9 +631,11 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 			ON_3dPoint tmp1;
 			surface_EvNormal(trim->SurfaceOf(), cp.x, cp.y, tmp1, norm);
 		    }
-		    fmesh->add_point(cp);
+		    long find = fmesh->add_point(cp);
 		    fmesh->add_point(cp3d);
 		    fmesh->add_normal(new ON_3dPoint(norm));
+
+		    cpoly->p2f[cv] = find;
 
 		    struct cdt_mesh::edge_t lseg(pv, cv);
 		    cdt_mesh::cpolyedge_t *ne = cpoly->add_edge(lseg);
@@ -642,7 +643,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 		    ne->trim_start = range.m_t[0];
 		    ne->trim_end = range.m_t[1];
 		    if (trim->m_ei >= 0) {
-			cdt_mesh::bedge_seg_t *eseg = *e2polysegs[trim->m_ei].begin();
+			cdt_mesh::bedge_seg_t *eseg = *s_cdt->e2polysegs[trim->m_ei].begin();
 			if (eseg->tseg1 && eseg->tseg2) {
 			    bu_log("error - more than two trims associated with an edge\n");
 			    return -1;
@@ -670,7 +671,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 
 	    const ON_Curve* crv = edge.EdgeCurveOf();
 	    if (!crv->IsLinear(BN_TOL_DIST)) {
-		std::set<cdt_mesh::bedge_seg_t *> &epsegs = e2polysegs[edge.m_edge_index];
+		std::set<cdt_mesh::bedge_seg_t *> &epsegs = s_cdt->e2polysegs[edge.m_edge_index];
 		std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
 		for (e_it = epsegs.begin(); e_it != epsegs.end(); e_it++) {
 		    cdt_mesh::bedge_seg_t *b = *e_it;
