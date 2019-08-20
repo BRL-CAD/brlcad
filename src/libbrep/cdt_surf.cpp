@@ -186,7 +186,7 @@ bool involves_trims(double *min_edge, struct cdt_surf_info *sinfo, ON_3dPoint &p
 
     std::set<struct BrepEdgeSegment *> segs;
     size_t nhits = sinfo->s_cdt->edge_segs_3d[sinfo->f->m_face_index].Search(fMin, fMax, EdgeSegCallback, (void *)&segs);
-    std::cout << "new tree found " << nhits << " boxes and " << segs.size() << " segments\n";
+    bu_log("new tree found %zu boxes and %zu segments\n", nhits, segs.size());
 
 
     if (!nhits) {
@@ -468,9 +468,19 @@ getSurfacePoint(
 	// If the above test didn't resolve things, keep going
 	if (!split_u || !split_v) {
 	    if ((surface_EvNormal(sinfo->s, u1, v1, p[0], norm[0]))
-		    && (surface_EvNormal(sinfo->s, u2, v2, p[2], norm[2]))) {
+		    && (surface_EvNormal(sinfo->s, u2, v1, p[1], norm[1]))
+		    && (surface_EvNormal(sinfo->s, u2, v2, p[2], norm[2]))
+		    && (surface_EvNormal(sinfo->s, u1, v2, p[3], norm[3]))) {
 
-		if (involves_trims(&min_edge_len, sinfo, p[0], p[2])) {
+		ON_BoundingBox uvbb;
+		for (int i = 0; i < 4; i++) {
+		    uvbb.Set(p[i], true);
+		}
+		plot_on_bbox(uvbb, "uvbb.plot3");
+
+		ON_3dPoint pmin = uvbb.Min();
+		ON_3dPoint pmax = uvbb.Max();
+		if (involves_trims(&min_edge_len, sinfo, pmin, pmax)) {
 
 		    if (min_edge_len > 0 && uavg > min_edge_len && vavg > min_edge_len) {
 			split_u = 1;

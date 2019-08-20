@@ -912,6 +912,11 @@ Get_Edge_Points(struct ON_Brep_CDT_State *s_cdt)
     // from them to handle the linear edges
     for (int index = 0; index < brep->m_E.Count(); index++) {
 	ON_BrepEdge& edge = brep->m_E[index];
+
+	if (edge.m_edge_index > 138 && edge.m_edge_index < 193) {
+	    bu_log("Should involve face 27...\n");
+	}
+
 	const ON_Curve* crv = edge.EdgeCurveOf();
 	if (!crv->IsLinear(BN_TOL_DIST)) {
 	    fastf_t max_dist, min_dist;
@@ -949,6 +954,10 @@ Get_Edge_Points(struct ON_Brep_CDT_State *s_cdt)
 	    ON_BrepTrim *t = loop.Trim(j);
 	    ON_BrepEdge *e = t->Edge();
 	    if (!e) continue;
+
+	    if (e->m_edge_index > 138 && e->m_edge_index < 193) {
+		bu_log("Should involve face 27...\n");
+	    }
 	    const ON_Curve* crv = e->EdgeCurveOf();
 	    if (crv && !crv->IsLinear(BN_TOL_DIST)) {
 		double cavg = (*s_cdt->etrees)[e->m_edge_index]->avg_seg_len;
@@ -970,6 +979,11 @@ Get_Edge_Points(struct ON_Brep_CDT_State *s_cdt)
     // edge, the more it's average segment length counts (curved edges only!).
     for (int index = 0; index < brep->m_E.Count(); index++) {
 	ON_BrepEdge& edge = brep->m_E[index];
+
+	if (edge.m_edge_index > 138 && edge.m_edge_index < 193) {
+	    bu_log("Should involve face 27...\n");
+	}
+
 	const ON_Curve* crv = edge.EdgeCurveOf();
 	if (crv->IsLinear(BN_TOL_DIST)) {
 	    fastf_t max_dist, min_dist;
@@ -977,7 +991,7 @@ Get_Edge_Points(struct ON_Brep_CDT_State *s_cdt)
 	    double smallest_curve_avg_seg = DBL_MAX;
 	    ON_BrepLoop *l[2];
 	    for (int i = 0; i < 2; i++) {
-		ON_BrepTrim& trim = brep->m_T[edge.Trim(0)->m_trim_index];
+		ON_BrepTrim& trim = brep->m_T[edge.Trim(i)->m_trim_index];
 		l[i] = trim.Loop();
 	    }
 	    for (int i = 0; i < 2; i++) {
