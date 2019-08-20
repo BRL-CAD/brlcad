@@ -37,6 +37,7 @@
 #include <utility>
 
 #include "poly2tri/poly2tri.h"
+#include "RTree.h"
 
 #include "assert.h"
 
@@ -103,6 +104,28 @@ struct brep_cdt_tol {
 };
 #define BREP_CDT_TOL_ZERO {0.0, 0.0, 0.0}
 
+struct BrepEdgeSegment;
+struct BrepEdgeSegment {
+    struct ON_Brep_CDT_State *s_cdt;
+    ON_BrepEdge *edge;
+    ON_NurbsCurve *nc;
+    const ON_BrepTrim *trim1;
+    const ON_BrepTrim *trim2;
+    BrepTrimPoint *sbtp1;
+    BrepTrimPoint *ebtp1;
+    BrepTrimPoint *sbtp2;
+    BrepTrimPoint *ebtp2;
+    std::map<double, BrepTrimPoint *> *trim1_param_points;
+    std::map<double, BrepTrimPoint *> *trim2_param_points;
+    std::set<struct BrepEdgeSegment *> children;
+    struct BrepEdgeSegment *parent;
+    struct brep_cdt_tol cdt_tol;
+    /* Average length of the child segments below the current segment */
+    double avg_seg_len;
+    /* Distance used when deciding to refine edges */
+    double loop_min_dist;
+};
+
 struct ON_Brep_CDT_State;
 
 struct ON_Brep_CDT_Face_State {
@@ -148,27 +171,6 @@ struct ON_Brep_CDT_Face_State {
     std::set<p2t::Point *> *ext_degen_pnts;
 };
 
-struct BrepEdgeSegment;
-struct BrepEdgeSegment {
-    struct ON_Brep_CDT_State *s_cdt;
-    ON_BrepEdge *edge;
-    ON_NurbsCurve *nc;
-    const ON_BrepTrim *trim1;
-    const ON_BrepTrim *trim2;
-    BrepTrimPoint *sbtp1;
-    BrepTrimPoint *ebtp1;
-    BrepTrimPoint *sbtp2;
-    BrepTrimPoint *ebtp2;
-    std::map<double, BrepTrimPoint *> *trim1_param_points;
-    std::map<double, BrepTrimPoint *> *trim2_param_points;
-    std::set<struct BrepEdgeSegment *> children;
-    struct BrepEdgeSegment *parent;
-    struct brep_cdt_tol cdt_tol;
-    /* Average length of the child segments below the current segment */
-    double avg_seg_len;
-    /* Distance used when deciding to refine edges */
-    double loop_min_dist;
-};
 
 struct ON_Brep_CDT_State {
 
@@ -200,6 +202,7 @@ struct ON_Brep_CDT_State {
     std::map<int, double> *max_edge_seg_len;
     std::map<ON_3dPoint *, std::set<BrepTrimPoint *>> *on_brep_edge_pnts;
     std::map<int, struct BrepEdgeSegment *> *etrees;
+    std::map<int, RTree<void *, double, 3>> edge_segs_3d;
 
     /* Audit data */
     std::map<int, ON_3dPoint *> *bot_pnt_to_on_pnt;
@@ -216,6 +219,7 @@ struct ON_Brep_CDT_State {
 };
 
 struct cdt_surf_info {
+    struct ON_Brep_CDT_State *s_cdt;
     const ON_Surface *s;
     const ON_BrepFace *f;
     ON_RTree *rt_trims;
@@ -265,7 +269,7 @@ ON_Brep_CDT_Face_Destroy(struct ON_Brep_CDT_Face_State *fcdt);
 void
 plot_rtree_2d(ON_RTree *rtree, const char *filename);
 void
-plot_rtree_3d(ON_RTree *rtree, const char *filename);
+plot_rtree_3d(RTree<void *, double, 3> &rtree, const char *filename);
 void
 plot_bbox(point_t m_min, point_t m_max, const char *filename);
 void

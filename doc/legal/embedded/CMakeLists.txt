@@ -32,6 +32,7 @@ set(embedded_licenses
   qsort.txt
   randmt.txt
   realpath.txt
+  RTree.txt
   scriptsort.txt
   search.txt
   sh_wood.txt

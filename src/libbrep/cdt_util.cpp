@@ -87,18 +87,25 @@ plot_rtree_2d(ON_RTree *rtree, const char *filename)
 }
 
 void
-plot_rtree_3d(ON_RTree *rtree, const char *filename)
+plot_rtree_3d(RTree<void *, double, 3> &rtree, const char *filename)
 {
     FILE* plot_file = fopen(filename, "w");
     struct bu_color c = BU_COLOR_INIT_ZERO;
     bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
     pl_color_buc(plot_file, &c);
 
-    ON_RTreeIterator rit(*rtree);
-    const ON_RTreeBranch *rtree_leaf;
-    for (rit.First(); 0 != (rtree_leaf = rit.Value()); rit.Next())
-    {
-	BB_PLOT(rtree_leaf->m_rect.m_min, rtree_leaf->m_rect.m_max);
+
+    RTree<void *, double, 3>::Iterator tree_it;
+    for (rtree.GetFirst(tree_it); rtree.IsNull(tree_it); rtree.GetNext(tree_it)) {
+	struct BrepEdgeSegment *bseg = (struct BrepEdgeSegment *)rtree.GetAt(tree_it);
+	point_t m_min, m_max;
+	m_min[X] = bseg->sbtp1->p3d->x;
+	m_min[Y] = bseg->sbtp1->p3d->y;
+	m_min[Z] = bseg->sbtp1->p3d->z;
+	m_max[X] = bseg->sbtp2->p3d->x;
+	m_max[Y] = bseg->sbtp2->p3d->y;
+	m_max[Z] = bseg->sbtp2->p3d->z;
+	BB_PLOT(m_min, m_max);
     }
 
     fclose(plot_file);

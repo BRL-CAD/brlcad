@@ -146,6 +146,13 @@ singular_trim_norm(struct cdt_surf_info *sinfo, fastf_t uc, fastf_t vc)
     return NULL;
 }
 
+bool EdgeSegCallback(void *data, void *a_context) {
+    struct BrepEdgeSegment *eseg = (struct BrepEdgeSegment *)data;
+    std::set<struct BrepEdgeSegment *> *segs = (std::set<struct BrepEdgeSegment *> *)a_context;
+    segs->insert(eseg);
+    return true;
+}
+
 /* If we've got trimming curves involved, we need to be more careful about respecting
  * the min edge distance. */
 bool involves_trims(double *min_edge, struct cdt_surf_info *sinfo, ON_3dPoint &p1, ON_3dPoint &p2)
@@ -160,35 +167,54 @@ bool involves_trims(double *min_edge, struct cdt_surf_info *sinfo, ON_3dPoint &p
     ON_3dPoint wp1 = wpc + (vec1 * 1.1);
     ON_3dPoint wp2 = wpc + (vec2 * 1.1);
 
-    // NOTE - appearances nonwithstanding, Search doesn't appear to return anything in the results set.
-    // We need to iterate over the tree ourselves to find the overlapping edges.
-    ON_SimpleArray<void *> dummy;
-    bool found_trims_3d = sinfo->rt_trims_3d->Search((const double *) &wp1, (const double *) &wp2, dummy);
-    if (found_trims_3d) {
-	ON_BoundingBox uvbb;
-	uvbb.Set(wp1, true);
-	uvbb.Set(wp2, true);
-	plot_rtree_3d(sinfo->rt_trims_3d, "rtree.plot3");
-	plot_on_bbox(uvbb, "uvbb.plot3");
-	ON_RTreeIterator rit(*sinfo->rt_trims_3d);
-	const ON_RTreeBranch* rtree_leaf;
-	for ( rit.First(); 0 != (rtree_leaf = rit.Value()); rit.Next() ) {
-	    ON_3dPoint m_min(rtree_leaf->m_rect.m_min);
-	    ON_3dPoint m_max(rtree_leaf->m_rect.m_max);
-	    ON_BoundingBox lbb;
-	    lbb.Set(m_min, true);
-	    lbb.Set(m_max, true);
-	    if (!uvbb.IsDisjoint(lbb)) {
-		fastf_t dist = m_min.DistanceTo(m_max);
-		if ((dist > BN_TOL_DIST) && (dist < min_edge_dist))  {
-		    min_edge_dist = dist;
-		}
-	    }
-	}
-	(*min_edge) = min_edge_dist;
+    ON_BoundingBox uvbb;
+    uvbb.Set(wp1, true);
+    uvbb.Set(wp2, true);
+
+    plot_on_bbox(uvbb, "uvbb.plot3");
+
+    plot_rtree_3d(sinfo->s_cdt->edge_segs_3d[sinfo->f->m_face_index], "rtree.plot3");
+
+    double fMin[3];
+    fMin[0] = wp1.x;
+    fMin[1] = wp1.y;
+    fMin[2] = wp1.z;
+    double fMax[3];
+    fMax[0] = wp2.x;
+    fMax[1] = wp2.y;
+    fMax[2] = wp2.z;
+
+    std::set<struct BrepEdgeSegment *> segs;
+    size_t nhits = sinfo->s_cdt->edge_segs_3d[sinfo->f->m_face_index].Search(fMin, fMax, EdgeSegCallback, (void *)&segs);
+    std::cout << "new tree found " << nhits << " boxes and " << segs.size() << " segments\n";
+
+
+    if (!nhits) {
+	return false;
     }
 
-    return found_trims_3d;
+    if (nhits > 40) {
+	// Lot of edges, probably a high level box - just return max_edge
+	(*min_edge) = min_edge_dist;
+	return true;
+    }
+
+    std::set<struct BrepEdgeSegment *>::iterator s_it;
+    for (s_it = segs.begin(); s_it != segs.end(); s_it++) {
+	struct BrepEdgeSegment *seg = *s_it;
+	ON_BoundingBox lbb;
+	lbb.Set(*seg->sbtp1->p3d, true);
+	lbb.Set(*seg->ebtp1->p3d, true);
+	if (!uvbb.IsDisjoint(lbb)) {
+	    fastf_t dist = lbb.Diagonal().Length();
+	    if ((dist > BN_TOL_DIST) && (dist < min_edge_dist))  {
+		min_edge_dist = dist;
+	    }
+	}
+    }
+    (*min_edge) = min_edge_dist;
+
+    return true;
 }
 
 /* flags identifying which side of the surface we're calculating
@@ -453,8 +479,6 @@ getSurfacePoint(
 		    if (min_edge_len > 0 && uavg > min_edge_len && vavg > min_edge_len) {
 			split_v = 1;
 		    }
-		} else {
-		    std::cout << "doesn't involve trims\n";
 		}
 
 		ev_success = true;
@@ -545,6 +569,7 @@ getSurfacePoints(struct ON_Brep_CDT_Face_State *f)
 	}
 
 	struct cdt_surf_info sinfo;
+	sinfo.s_cdt = f->s_cdt;
 	sinfo.s = s;
 	sinfo.f = &face;
 	sinfo.rt_trims = f->rt_trims;

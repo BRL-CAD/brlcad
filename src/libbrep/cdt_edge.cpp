@@ -361,7 +361,21 @@ SplitEdgeSegmentMidPt(struct BrepEdgeSegment *bseg)
 	(void)Add_BrepTrimPoint(bseg->s_cdt, bseg->trim2_param_points, nsptp, NULL, v_unset, ON_UNSET_VALUE, t2s2d, v_unset, trim2_seam_t, bseg->trim2->m_trim_index);
     }
 
-    bseg->avg_seg_len = line3d.Length(); 
+    bseg->avg_seg_len = line3d.Length();
+
+    // This is a leaf - put it in the rtrees
+
+    double p1[3];
+    p1[0] = bseg->sbtp1->p3d->x;
+    p1[1] = bseg->sbtp1->p3d->y;
+    p1[2] = bseg->sbtp1->p3d->z;
+    double p2[3];
+    p2[0] = bseg->ebtp1->p3d->x;
+    p2[1] = bseg->ebtp1->p3d->y;
+    p2[2] = bseg->ebtp1->p3d->z;
+
+    bseg->s_cdt->edge_segs_3d[bseg->trim1->Face()->m_face_index].Insert(p1, p2, (void *)bseg);
+    bseg->s_cdt->edge_segs_3d[bseg->trim2->Face()->m_face_index].Insert(p1, p2, (void *)bseg);
 }
 
 
@@ -405,6 +419,8 @@ getEdgePoints(
 	trim1_param_points = (std::map<double, BrepTrimPoint *> *) trim1->m_trim_user.p;
 	return (*s_cdt->etrees)[edge->m_edge_index]->avg_seg_len;
     }
+
+
 
     /* Normalize the domain of the curve to the ControlPolygonLength() of the
      * NURBS form of the curve to attempt to minimize distortion in 3D to
@@ -1124,7 +1140,6 @@ build_poly2tri_polylines(struct ON_Brep_CDT_Face_State *f, p2t::CDT **cdt, int i
 		}
 
 		plot_rtree_2d(f->rt_trims, "rtree_2d.plot3");
-		plot_rtree_3d(f->rt_trims_3d, "rtree_3d.plot3");
 	    }
 	    if (outer) {
 		if (f->tris->size() > 0) {
