@@ -1,6 +1,8 @@
 #ifndef RTREE_H
 #define RTREE_H
 
+#include "common.h"
+
 #include <cassert>
 #include <algorithm>
 #include <functional>
