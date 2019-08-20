@@ -660,11 +660,6 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 		}
 		struct cdt_mesh::edge_t last_seg(cv, fv);
 		cpoly->add_edge(last_seg);
-
-		struct bu_vls fname = BU_VLS_INIT_ZERO;
-		bu_vls_sprintf(&fname, "%d-%d-poly3d.plot3", face_index, li);
-		cpoly->polygon_plot_3d(bu_vls_cstr(&fname));
-		bu_vls_free(&fname);
 	    }
 	}
 
@@ -702,6 +697,15 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 		}
 		std::cout << "Face: " << face_index << ", Loop: " << li << "\n";
 		cpoly->print();
+
+		struct bu_vls fname = BU_VLS_INIT_ZERO;
+		bu_vls_sprintf(&fname, "%d-%d-poly3d.plot3", face_index, li);
+		cpoly->polygon_plot_3d(bu_vls_cstr(&fname));
+		cpoly->cdt();
+		bu_vls_sprintf(&fname, "%d-%d-cdt.plot3", face_index, li);
+		cpoly->cdt_mesh->tris_set_plot(cpoly->tris, bu_vls_cstr(&fname));
+		bu_vls_free(&fname);
+
 	    }
 	}
 #endif

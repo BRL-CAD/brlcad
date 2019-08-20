@@ -270,11 +270,11 @@ class cpolygon_t
 	std::vector<ON_3dPoint *> pnts;
 	std::map<std::pair<double, double>, long> p2ind;
 
+	bool cdt();
     private:
 	bool closed();
 	bool self_intersecting();
 	bool best_fit_plane();
-	bool cdt();
 
 	bool point_in_polygon(long v, bool flip);
 	// Apply the point-in-polygon test to all uncontained points, moving any inside the loop into interior_points
