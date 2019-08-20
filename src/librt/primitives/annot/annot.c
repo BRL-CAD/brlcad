@@ -91,8 +91,8 @@ rt_pos_flag(int *pos_flag, int p_hor, int p_ver)
 }
 
 
-int
-rt_check_pos(const struct txt_seg *tsg, char **rel_pos)
+static int
+ant_check_pos(const struct txt_seg *tsg, char **rel_pos)
 {
     switch (tsg->pt_rel_pos) {
 	case RT_ANNOT_POS_BL:
@@ -128,21 +128,16 @@ rt_check_pos(const struct txt_seg *tsg, char **rel_pos)
 }
 
 
-int
+static int
 ant_label_dimensions(struct txt_seg* tsg, hpoint_t ref_pt, fastf_t* length, fastf_t* hight)
 {
     point_t bmin, bmax;
-    vect_t D;
-    hpoint_t temp = HINIT_ZERO;
-    struct bu_list vhead;
+    struct bu_list vhead = BU_LIST_INIT_ZERO;
 
     VSET(bmin, INFINITY, INFINITY, INFINITY);
     VSET(bmax, -INFINITY, -INFINITY, -INFINITY);
-    BU_LIST_INIT(&vhead);
-    VSETALL(D, 0);
 
-    V2ADD2(temp, D, ref_pt);
-    bn_vlist_2string(&vhead, &RTG.rtg_vlfree, tsg->label.vls_str, temp[0], temp[1], 5, 0);
+    bn_vlist_2string(&vhead, &RTG.rtg_vlfree, tsg->label.vls_str, ref_pt[0], ref_pt[1], 5, 0);
     bn_vlist_bbox(&vhead, &bmin, &bmax, NULL);
 
     *length = fabs(bmin[0] - bmax[0]) + 1;
@@ -154,12 +149,10 @@ ant_label_dimensions(struct txt_seg* tsg, hpoint_t ref_pt, fastf_t* length, fast
 static int
 ant_pos_adjs(struct txt_seg* tsg, struct rt_annot_internal* annot_ip)
 {
-    vect_t D;
     point2d_t pt = V2INIT_ZERO;
     fastf_t length = 0;
     fastf_t height = 0;
 
-    VSETALL(D, 0);
     ant_label_dimensions(tsg, annot_ip->verts[tsg->ref_pt], &length, &height);
 
     if (tsg->pt_rel_pos == RT_ANNOT_POS_BL) {
@@ -209,8 +202,10 @@ ant_pos_adjs(struct txt_seg* tsg, struct rt_annot_internal* annot_ip)
 }
 
 
-int
-rt_check_ant(const struct rt_ant *ant, const struct rt_annot_internal *annot_ip, int noisy)
+/* FIXME: Unused? */
+#if 0
+static int
+ant_check(const struct rt_ant *ant, const struct rt_annot_internal *annot_ip, int noisy)
 {
     size_t i, j;
     int ret=0;
@@ -282,6 +277,7 @@ rt_check_ant(const struct rt_ant *ant, const struct rt_annot_internal *annot_ip,
 	bu_log("annotation references non-existent vertices!\n");
     return ret;
 }
+#endif
 
 
 /**
@@ -1743,7 +1739,7 @@ rt_annot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbo
 				V2INTCLAMPARGS(annot_ip->verts[tsg->ref_pt]));
 		}
 		bu_vls_strcat(str, buf);
-		rt_check_pos(tsg, &rel_pos);
+		ant_check_pos(tsg, &rel_pos);
 		sprintf(buf, "\t\tRelative position: %s\n", rel_pos);
 		bu_vls_strcat(str, buf);
 		sprintf(buf, "\tLabel text: %s\n", bu_vls_addr(&tsg->label));
@@ -1955,8 +1951,8 @@ rt_annot_ifree(struct rt_db_internal *ip)
 }
 
 
-void
-rt_copy_ant(struct rt_ant *ant_out, const struct rt_ant *ant_in)
+static void
+ant_copy(struct rt_ant *ant_out, const struct rt_ant *ant_in)
 {
     size_t i, j;
 
@@ -2025,7 +2021,7 @@ rt_copy_ant(struct rt_ant *ant_out, const struct rt_ant *ant_in)
 		}
 		break;
 	    default:
-		bu_bomb("rt_copy_annot: ERROR: unrecognized segment type!\n");
+		bu_bomb("ERROR: unrecognized segment type enountered while copying annotation\n");
 	}
     }
 
@@ -2053,13 +2049,13 @@ rt_copy_annot(const struct rt_annot_internal *annot_ip)
 
     ant_out = &out->ant;
     if (ant_out)
-	rt_copy_ant(ant_out, &annot_ip->ant);
+	ant_copy(ant_out, &annot_ip->ant);
 
     return out;
 }
 
 
-int
+static int
 ant_to_tcl_list(struct bu_vls *vls, struct rt_ant *ant)
 {
     size_t i, j;
@@ -2077,7 +2073,7 @@ ant_to_tcl_list(struct bu_vls *vls, struct rt_ant *ant)
 	    case ANN_TSEG_MAGIC:
 		{
 		    struct txt_seg *tsg = (struct txt_seg *)ant->segments[j];
-		    rt_check_pos(tsg, &rel_pos);
+		    ant_check_pos(tsg, &rel_pos);
 		    bu_vls_printf(vls, " { label %s ref_pt %d position %s }", bu_vls_addr(&tsg->label), tsg->ref_pt, rel_pos);
 		}
 		break;
@@ -2125,7 +2121,8 @@ ant_to_tcl_list(struct bu_vls *vls, struct rt_ant *ant)
 }
 
 
-int rt_annot_form(struct bu_vls *logstr, const struct rt_functab *ftp)
+int
+rt_annot_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 {
     BU_CK_VLS(logstr);
     RT_CK_FUNCTAB(ftp);
@@ -2185,8 +2182,8 @@ rt_annot_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const c
 }
 
 
-int
-get_tcl_ant(struct bu_vls *logstr, struct rt_ant *ant, const char *argv1)
+static int
+ant_get_tcl(struct bu_vls *logstr, struct rt_ant *ant, const char *argv1)
 {
 	int count;
     int j;
@@ -2413,7 +2410,7 @@ rt_annot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, 
 	    ant->reverse = (int *)NULL;
 	    ant->segments = (void **)NULL;
 
-	    if ((ret=get_tcl_ant(logstr, ant, argv[1])) != 0)
+	    if ((ret=ant_get_tcl(logstr, ant, argv[1])) != 0)
 		return ret;
 	} else if (*argv[0] == 'V' && isdigit((int)*(argv[0]+1))) {
 	    /* changing a specific vertex */
