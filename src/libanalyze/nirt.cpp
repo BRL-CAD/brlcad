@@ -649,7 +649,10 @@ _nirt_digits(fastf_t ftol)
 {
     int tol = 1;
     fastf_t tt = ftol;
-    if (tt < SMALL_FASTF) return 1;
+
+    if (tt < SMALL_FASTF)
+	return 1;
+
     while (tt < 1 && tol < 17) {
 	tol++;
 	tt = tt * 10;
@@ -668,11 +671,11 @@ HIDDEN std::string
 _nirt_dbl_to_str(double d, size_t p)
 {
     size_t prec = (p) ? p : std::numeric_limits<double>::max_digits10;
-    bu_log("prec: %zu\n",prec);
+    //bu_log("prec: %zu\n",prec);
     std::ostringstream ss;
     ss << std::fixed << std::setprecision(prec) << d;
     std::string sd = ss.str();
-    bu_log("sd: %s\n", sd.c_str());
+    //bu_log("sd: %s\n", sd.c_str());
     return sd;
 }
 
