@@ -2351,17 +2351,19 @@ loop_to_bgpoly(const cpolygon_t *loop)
 {
     int *opoly = (int *)bu_calloc(loop->poly.size()+1, sizeof(int), "polygon points");
 
+    std::map<long, long> p2f = loop->p2f;
+
     size_t vcnt = 1;
     cpolyedge_t *pe = (*loop->poly.begin());
     cpolyedge_t *first = pe;
     cpolyedge_t *next = pe->next;
 
-    opoly[vcnt-1] = pe->v[0];
-    opoly[vcnt] = pe->v[1];
+    opoly[vcnt-1] = p2f[pe->v[0]];
+    opoly[vcnt] = p2f[pe->v[1]];
 
     while (first != next) {
 	vcnt++;
-	opoly[vcnt] = next->v[1];
+	opoly[vcnt] = p2f[next->v[1]];
 	next = next->next;
 	if (vcnt > loop->poly.size()) {
 	    bu_free(opoly, "free libbg 2d points array)");
@@ -2410,19 +2412,21 @@ cdt_mesh_t::cdt()
 
     const int **holes_array = NULL;
     size_t *holes_npts = NULL;
-    if (inner_loops.size()) {
-	holes_array = (const int **)bu_calloc(inner_loops.size()+1, sizeof(int *), "holes array");
-	holes_npts = (size_t *)bu_calloc(inner_loops.size()+1, sizeof(size_t), "hole pntcnt array");
+    int holes_cnt = inner_loops.size();
+    if (holes_cnt) {
+	holes_array = (const int **)bu_calloc(holes_cnt+1, sizeof(int *), "holes array");
+	holes_npts = (size_t *)bu_calloc(holes_cnt+1, sizeof(size_t), "hole pntcnt array");
 	int loop_cnt = 0;
 	for (il_it = inner_loops.begin(); il_it != inner_loops.end(); il_it++) {
 	    cpolygon_t *inl = il_it->second;
 	    holes_array[loop_cnt] = loop_to_bgpoly(inl);
 	    holes_npts[loop_cnt] = inl->poly.size()+1;
+	    loop_cnt++;
 	}
     }
 
     bool result = (bool)!bg_nested_polygon_triangulate( &faces, &num_faces,
-	    NULL, NULL, opoly, outer_loop.poly.size()+1, holes_array, holes_npts, inner_loops.size(),
+	    NULL, NULL, opoly, outer_loop.poly.size()+1, holes_array, holes_npts, holes_cnt,
 	    steiner, interior_pnts.size(), bgp_2d, pnts_2d.size(),
 	    TRI_CONSTRAINED_DELAUNAY);
 
@@ -2450,8 +2454,8 @@ cdt_mesh_t::cdt()
     bu_free(bgp_2d, "free libbg 2d points array)");
     bu_free(opoly, "polygon points");
 
-    if (inner_loops.size()) {
-	for (size_t i = 0; i < inner_loops.size(); i++) {
+    if (holes_cnt) {
+	for (int i = 0; i < holes_cnt; i++) {
 	    bu_free((void *)holes_array[i], "hole array");
 	}
 	bu_free((void *)holes_array, "holes array");

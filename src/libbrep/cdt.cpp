@@ -599,9 +599,11 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 			    ON_3dPoint tmp1;
 			    surface_EvNormal(trim->SurfaceOf(), cp.x, cp.y, tmp1, norm);
 			}
-			fmesh->add_point(cp);
+			long find = fmesh->add_point(cp);
 			fmesh->add_point(op3d);
 			fmesh->add_normal(new ON_3dPoint(norm));
+
+			cpoly->p2f[fv] = find;
 
 		    } else {
 			pv = cv;
@@ -688,6 +690,8 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	    cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[face_index];
 	    cdt_mesh::cpolygon_t *cpoly = NULL;
 
+	    if (face_index != 17) continue;
+
 	    for (int li = 0; li < loop_cnt; li++) {
 		const ON_BrepLoop *loop = face.Loop(li);
 		bool is_outer = (face.OuterLoop()->m_loop_index == loop->m_loop_index) ? true : false;
@@ -708,6 +712,12 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 		bu_vls_free(&fname);
 
 	    }
+
+	    fmesh->cdt();
+	    struct bu_vls fname = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&fname, "%d-tris.plot3", face_index);
+	    fmesh->tris_plot(bu_vls_cstr(&fname));
+	    bu_vls_free(&fname);
 	}
 #endif
 
