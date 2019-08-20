@@ -96,16 +96,18 @@ plot_rtree_3d(RTree<void *, double, 3> &rtree, const char *filename)
 
 
     RTree<void *, double, 3>::Iterator tree_it;
-    for (rtree.GetFirst(tree_it); rtree.IsNull(tree_it); rtree.GetNext(tree_it)) {
+    rtree.GetFirst(tree_it);
+    while (!tree_it.IsNull()) {
 	struct BrepEdgeSegment *bseg = (struct BrepEdgeSegment *)rtree.GetAt(tree_it);
 	point_t m_min, m_max;
 	m_min[X] = bseg->sbtp1->p3d->x;
 	m_min[Y] = bseg->sbtp1->p3d->y;
 	m_min[Z] = bseg->sbtp1->p3d->z;
-	m_max[X] = bseg->sbtp2->p3d->x;
-	m_max[Y] = bseg->sbtp2->p3d->y;
-	m_max[Z] = bseg->sbtp2->p3d->z;
+	m_max[X] = bseg->ebtp1->p3d->x;
+	m_max[Y] = bseg->ebtp1->p3d->y;
+	m_max[Z] = bseg->ebtp1->p3d->z;
 	BB_PLOT(m_min, m_max);
+	++tree_it;
     }
 
     fclose(plot_file);
