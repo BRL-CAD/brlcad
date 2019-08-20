@@ -156,11 +156,11 @@ ant_pos_adjs(struct txt_seg* tsg, struct rt_annot_internal* annot_ip)
 {
     vect_t D;
     point2d_t pt = V2INIT_ZERO;
-    fastf_t lenght = 0;
-    fastf_t hight = 0;
+    fastf_t length = 0;
+    fastf_t height = 0;
 
     VSETALL(D, 0);
-    ant_label_dimensions(tsg, annot_ip->verts[tsg->ref_pt], &lenght, &hight);
+    ant_label_dimensions(tsg, annot_ip->verts[tsg->ref_pt], &length, &height);
 
     if (tsg->pt_rel_pos == RT_ANNOT_POS_BL) {
 	V2MOVE(pt, annot_ip->verts[tsg->ref_pt]);
@@ -168,41 +168,41 @@ ant_pos_adjs(struct txt_seg* tsg, struct rt_annot_internal* annot_ip)
 	V2MOVE(annot_ip->verts[tsg->ref_pt], pt);
     }else if (tsg->pt_rel_pos == RT_ANNOT_POS_BC) {
 	V2MOVE(pt, annot_ip->verts[tsg->ref_pt]);
-	pt[0] = pt[0] - (lenght / 2);
+	pt[0] = pt[0] - (length / 2);
 	V2MOVE(annot_ip->verts[tsg->ref_pt], pt);
     }else if (tsg->pt_rel_pos == RT_ANNOT_POS_BR) {
 	V2MOVE(pt, annot_ip->verts[tsg->ref_pt]);
-	pt[0] = pt[0] - lenght;
+	pt[0] = pt[0] - length;
 	V2MOVE(annot_ip->verts[tsg->ref_pt], pt);
     }else if (tsg->pt_rel_pos == RT_ANNOT_POS_ML) {
 	V2MOVE(pt, annot_ip->verts[tsg->ref_pt]);
 	pt[0] = pt[0] + 1;
-	pt[1] = pt[1] - (hight / 2);
+	pt[1] = pt[1] - (height / 2);
 	V2MOVE(annot_ip->verts[tsg->ref_pt], pt);
     }else if (tsg->pt_rel_pos == RT_ANNOT_POS_MC) {
 	V2MOVE(pt, annot_ip->verts[tsg->ref_pt]);
-	pt[0] = pt[0] - (lenght / 2);
-	pt[1] = pt[1] - (hight / 2);
+	pt[0] = pt[0] - (length / 2);
+	pt[1] = pt[1] - (height / 2);
 	V2MOVE(annot_ip->verts[tsg->ref_pt], pt);
     }else if (tsg->pt_rel_pos == RT_ANNOT_POS_MR) {
 	V2MOVE(pt, annot_ip->verts[tsg->ref_pt]);
-	pt[1] = pt[1] - (hight / 2);
-	pt[0] = pt[0] - lenght;
+	pt[1] = pt[1] - (height / 2);
+	pt[0] = pt[0] - length;
 	V2MOVE(annot_ip->verts[tsg->ref_pt], pt);
     }else if (tsg->pt_rel_pos == RT_ANNOT_POS_TL) {
 	V2MOVE(pt, annot_ip->verts[tsg->ref_pt]);
-	pt[1] = pt[1] - hight;
+	pt[1] = pt[1] - height;
 	V2MOVE(annot_ip->verts[tsg->ref_pt], pt);
     }else if (tsg->pt_rel_pos == RT_ANNOT_POS_TC) {
 	V2MOVE(pt, annot_ip->verts[tsg->ref_pt]);
-	pt[0] = pt[0] - (lenght / 2);
-	pt[1] = pt[1] - hight;
+	pt[0] = pt[0] - (length / 2);
+	pt[1] = pt[1] - height;
 	V2MOVE(annot_ip->verts[tsg->ref_pt], pt);
     }else {
 	//this is the case of TR
 	V2MOVE(pt, annot_ip->verts[tsg->ref_pt]);
-	pt[0] = pt[0] - lenght;
-	pt[1] = pt[1] - hight;
+	pt[0] = pt[0] - length;
+	pt[1] = pt[1] - height;
 	V2MOVE(annot_ip->verts[tsg->ref_pt], pt);
     }
     return 0;
