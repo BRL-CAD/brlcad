@@ -977,7 +977,7 @@ struct rt_ant {
 struct txt_seg {
     uint32_t magic;
     int ref_pt;				/** reference point */
-    int pt_rel_pos;			/** flag describing the position relative to the ref_point */
+    int rel_pos;			/** flag describing position relative to ref_pt */
     struct bu_vls label;
 };
 

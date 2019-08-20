@@ -107,7 +107,7 @@ rt_pos_flag(int *pos_flag, int p_hor, int p_ver)
 static int
 ant_check_pos(const struct txt_seg *tsg, char **rel_pos)
 {
-    switch (tsg->pt_rel_pos) {
+    switch (tsg->rel_pos) {
 	case RT_TXT_POS_BL:
 	    *rel_pos = "bottom left";
 	    break;
@@ -168,38 +168,38 @@ ant_pos_adjs(struct txt_seg* tsg, struct rt_annot_internal* annot_ip)
 
     ant_label_dimensions(tsg, annot_ip->verts[tsg->ref_pt], &length, &height);
 
-    if (tsg->pt_rel_pos == RT_TXT_POS_BL) {
+    if (tsg->rel_pos == RT_TXT_POS_BL) {
 	V2MOVE(pt, annot_ip->verts[tsg->ref_pt]);
 	pt[0] = pt[0] + 1;
 	V2MOVE(annot_ip->verts[tsg->ref_pt], pt);
-    }else if (tsg->pt_rel_pos == RT_TXT_POS_BC) {
+    }else if (tsg->rel_pos == RT_TXT_POS_BC) {
 	V2MOVE(pt, annot_ip->verts[tsg->ref_pt]);
 	pt[0] = pt[0] - (length / 2);
 	V2MOVE(annot_ip->verts[tsg->ref_pt], pt);
-    }else if (tsg->pt_rel_pos == RT_TXT_POS_BR) {
+    }else if (tsg->rel_pos == RT_TXT_POS_BR) {
 	V2MOVE(pt, annot_ip->verts[tsg->ref_pt]);
 	pt[0] = pt[0] - length;
 	V2MOVE(annot_ip->verts[tsg->ref_pt], pt);
-    }else if (tsg->pt_rel_pos == RT_TXT_POS_ML) {
+    }else if (tsg->rel_pos == RT_TXT_POS_ML) {
 	V2MOVE(pt, annot_ip->verts[tsg->ref_pt]);
 	pt[0] = pt[0] + 1;
 	pt[1] = pt[1] - (height / 2);
 	V2MOVE(annot_ip->verts[tsg->ref_pt], pt);
-    }else if (tsg->pt_rel_pos == RT_TXT_POS_MC) {
+    }else if (tsg->rel_pos == RT_TXT_POS_MC) {
 	V2MOVE(pt, annot_ip->verts[tsg->ref_pt]);
 	pt[0] = pt[0] - (length / 2);
 	pt[1] = pt[1] - (height / 2);
 	V2MOVE(annot_ip->verts[tsg->ref_pt], pt);
-    }else if (tsg->pt_rel_pos == RT_TXT_POS_MR) {
+    }else if (tsg->rel_pos == RT_TXT_POS_MR) {
 	V2MOVE(pt, annot_ip->verts[tsg->ref_pt]);
 	pt[1] = pt[1] - (height / 2);
 	pt[0] = pt[0] - length;
 	V2MOVE(annot_ip->verts[tsg->ref_pt], pt);
-    }else if (tsg->pt_rel_pos == RT_TXT_POS_TL) {
+    }else if (tsg->rel_pos == RT_TXT_POS_TL) {
 	V2MOVE(pt, annot_ip->verts[tsg->ref_pt]);
 	pt[1] = pt[1] - height;
 	V2MOVE(annot_ip->verts[tsg->ref_pt], pt);
-    }else if (tsg->pt_rel_pos == RT_TXT_POS_TC) {
+    }else if (tsg->rel_pos == RT_TXT_POS_TC) {
 	V2MOVE(pt, annot_ip->verts[tsg->ref_pt]);
 	pt[0] = pt[0] - (length / 2);
 	pt[1] = pt[1] - height;
@@ -275,7 +275,7 @@ ant_check(const struct rt_ant *ant, const struct rt_annot_internal *annot_ip, in
 		tsg = (struct txt_seg *)lng;
 		if((size_t)tsg->ref_pt >= annot_ip->vert_count)
 		    ret++;
-		if((size_t)tsg->pt_rel_pos > 9 || (size_t)tsg->pt_rel_pos < 1)
+		if((size_t)tsg->rel_pos > 9 || (size_t)tsg->rel_pos < 1)
 		    ret++;
 		break;
 	    default:
@@ -447,7 +447,7 @@ seg_to_vlist(struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, 
 		ret++;
 		break;
 	    }
-	    if((size_t)tsg->pt_rel_pos > 9 || (size_t)tsg->pt_rel_pos < 1) {
+	    if((size_t)tsg->rel_pos > 9 || (size_t)tsg->rel_pos < 1) {
 		ret++;
 		break;
 	    }
@@ -950,7 +950,7 @@ rt_annot_import4(struct rt_db_internal *ip, const struct bu_external *ep, const 
 		tsg->magic = magic;
 		tsg->ref_pt = ntohl(*(uint32_t *)ptr);
 		ptr += SIZEOF_NETWORK_LONG;
-		tsg->pt_rel_pos = ntohl(*(uint32_t *)ptr);
+		tsg->rel_pos = ntohl(*(uint32_t *)ptr);
 		ptr += SIZEOF_NETWORK_LONG;
 		tsg->label.vls_offset = ntohl(*(uint32_t *)ptr);
 		ptr += SIZEOF_NETWORK_LONG;
@@ -1175,7 +1175,7 @@ rt_annot_export4(struct bu_external *ep, const struct rt_db_internal *ip, double
 		ptr += SIZEOF_NETWORK_LONG;
 		*(uint32_t *)ptr = htonl(tseg->ref_pt);
 		ptr += SIZEOF_NETWORK_LONG;
-		*(uint32_t *)ptr = htonl(tseg->pt_rel_pos);
+		*(uint32_t *)ptr = htonl(tseg->rel_pos);
 		ptr += SIZEOF_NETWORK_LONG;
 		*(uint32_t *)ptr = htonl(tseg->label.vls_offset);
 		ptr += SIZEOF_NETWORK_LONG;
@@ -1353,7 +1353,7 @@ rt_annot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const 
 		tsg->magic = magic;
 		tsg->ref_pt = ntohl(*(uint32_t *)ptr);
 		ptr += SIZEOF_NETWORK_LONG;
-		tsg->pt_rel_pos = ntohl(*(uint32_t *)ptr);
+		tsg->rel_pos = ntohl(*(uint32_t *)ptr);
 		ptr += SIZEOF_NETWORK_LONG;
 		bu_vls_init(&tsg->label);
 		tsg->label.vls_str = bu_strdup((const char *)ptr);
@@ -1585,7 +1585,7 @@ rt_annot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
 		cp += SIZEOF_NETWORK_LONG;
 		*(uint32_t *)cp = htonl(tseg->ref_pt);
 		cp += SIZEOF_NETWORK_LONG;
-		*(uint32_t *)cp = htonl(tseg->pt_rel_pos);
+		*(uint32_t *)cp = htonl(tseg->rel_pos);
 		cp += SIZEOF_NETWORK_LONG;
 
 		bu_strlcpy((char *)cp, bu_vls_addr(&tseg->label), bu_vls_strlen(&tseg->label) + 1);
@@ -2258,7 +2258,7 @@ ant_get_tcl(struct bu_vls *logstr, struct rt_ant *ant, const char *argv1)
 			(void)bu_opt_int(NULL, 1, &sval, (void *)&tsg->ref_pt);
 			break;
 		    case 'P': /* position relative */
-			(void)bu_opt_int(NULL, 1, &sval, (void *)&tsg->pt_rel_pos);
+			(void)bu_opt_int(NULL, 1, &sval, (void *)&tsg->rel_pos);
 			break;
 		    case 'L': /* label text */
 			(void)bu_opt_vls(NULL, 1, &sval, (void *)&tsg->label);

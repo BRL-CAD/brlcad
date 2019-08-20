@@ -620,7 +620,7 @@ static char *p_datum[] = {
     "Enter Z: ",
     "Enter X, Y, Z for the datum plane direction vector: ",
     "Enter Y: ",
-    "Enter Z: ",
+    "Enter Z: "
 };
 
 
@@ -635,8 +635,8 @@ static char *p_annot[] = {
     "Enter the text label: ",
     "Enter X,Y for the text placement: ",
     "Enter Y: ",
-    "Enter the relative vertical position(1->bottom, 2->middle, 3->top): ",
-    "Enter the relative horizontal position(1->right, 2->center, 3->left): "
+    "Enter the relative horizontal position(1->right, 2->center, 3->left): ",
+    "Enter the relative vertical position(1->bottom, 2->middle, 3->top): "
 };
 
 
@@ -645,7 +645,7 @@ static char *p_annot[] = {
  * add support
  */
 static char *p_script[] = {
-    "Enter the script type: ",
+    "Enter the script type: "
 };
 
 /**
@@ -3064,10 +3064,10 @@ annot_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern
     for (i = 0; i<ELEMENTS_PER_POINT2D; i++)
 	anip->verts[0][i] = atof(cmd_argvs[7+i]) * gedp->ged_wdbp->dbip->dbi_local2base;
 
-    p_ver = atoi(cmd_argvs[9]);
-    p_hor = atoi(cmd_argvs[10]);
+    p_hor = atoi(cmd_argvs[9]);
+    p_ver = atoi(cmd_argvs[10]);
+    rt_pos_flag(&tsg->rel_pos, p_hor, p_ver);
 
-    rt_pos_flag(&tsg->pt_rel_pos, p_hor, p_ver);
     anip->ant.segments = (void **)bu_calloc(anip->ant.count, sizeof(void *), "segs");
     anip->ant.reverse = (int *)bu_calloc(anip->ant.count, sizeof(int), "rev");
 
