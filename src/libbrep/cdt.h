@@ -256,6 +256,9 @@ void
 Get_Edge_Points(struct ON_Brep_CDT_State *s_cdt);
 
 void
+Refine_Edges(struct ON_Brep_CDT_State *s_cdt);
+
+void
 getSurfacePoints(struct ON_Brep_CDT_Face_State *f);
 
 

@@ -26,6 +26,7 @@ set(LIBBREP_SOURCES
   boolean.cpp
   cdt_closed_surf.cpp
   cdt_edge.cpp
+  #cdt_edge2.cpp
   cdt_patch.cpp
   cdt_surf.cpp
   cdt_util.cpp

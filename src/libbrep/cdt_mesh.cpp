@@ -61,10 +61,11 @@ cpolygon_t::add_point_at_pos(long ind, ON_2dPoint *on_2dp)
     return ind;
 }
 
-long
+
+cpolyedge_t *
 cpolygon_t::add_edge(const struct edge_t &e)
 {
-    if (e.v[0] == -1) return -1;
+    if (e.v[0] == -1) return NULL;
 
     int v1 = -1;
     int v2 = -1;
@@ -136,7 +137,7 @@ cpolygon_t::add_edge(const struct edge_t &e)
     }
 
 
-    return 0;
+    return nedge;
 }
 
 void
@@ -186,19 +187,21 @@ cpolygon_t::remove_edge(const struct edge_t &e)
     delete cull;
 }
 
-long
+std::set<cpolyedge_t *>
 cpolygon_t::replace_edges(std::set<edge_t> &new_edges, std::set<edge_t> &old_edges)
 {
+    std::set<cpolyedge_t *> nedges;
 
     std::set<edge_t>::iterator e_it;
     for (e_it = old_edges.begin(); e_it != old_edges.end(); e_it++) {
 	remove_edge(*e_it);
     }
     for (e_it = new_edges.begin(); e_it != new_edges.end(); e_it++) {
-	add_edge(*e_it);
+	cpolyedge_t *ne = add_edge(*e_it);
+	nedges.insert(ne);
     }
 
-    return 0;
+    return nedges;
 }
 
 long
@@ -1506,7 +1509,7 @@ cpolygon_t::grow_loop(double deg, bool stop_on_contained, triangle_t &target)
 		(interior_points.size() > 1 || poly.size() > 3)) {
 	    bool cdt_status = cdt();
 	    if (cdt_status) {
-		cdt_mesh->tris_set_plot(tris, "patch.plot3");
+		//cdt_mesh->tris_set_plot(tris, "patch.plot3");
 		return (long)cdt_mesh->tris.size();
 	    } else {
 		struct bu_vls fname = BU_VLS_INIT_ZERO;
@@ -2344,7 +2347,7 @@ cdt_mesh_t::repair()
 
 	st_size = seed_tris.size();
 
-	tris_plot("mesh_post_patch.plot3");
+	//tris_plot("mesh_post_patch.plot3");
     }
 
     // Now that the out-and-out problem triangles have been handled,
@@ -2377,7 +2380,7 @@ cdt_mesh_t::repair()
 
 	st_size = seed_tris.size();
 
-	tris_plot("mesh_post_pretty.plot3");
+	//tris_plot("mesh_post_pretty.plot3");
     }
 
     boundary_edges_update();
@@ -2398,7 +2401,7 @@ cdt_mesh_t::valid()
 	ON_3dVector tdir = tnorm(*tr_it);
 	ON_3dVector bdir = bnorm(*tr_it);
 	if (tdir.Length() > 0 && bdir.Length() > 0 && ON_DotProduct(tdir, bdir) < 0.1) {
-	    std::cout << "Still have invalid normals in mesh, triangle (" << (*tr_it).v[0] << "," << (*tr_it).v[1] << "," << (*tr_it).v[2] << ")\n";	
+	    std::cout << "Still have invalid normals in mesh, triangle (" << (*tr_it).v[0] << "," << (*tr_it).v[1] << "," << (*tr_it).v[2] << ")\n";
 	    bu_vls_sprintf(&fname, "%d-invalid_normal_tri_%ld_%ld_%ld.plot3", f_id, (*tr_it).v[0], (*tr_it).v[1], (*tr_it).v[2]);
 	    tri_plot(*tr_it, bu_vls_cstr(&fname));
 	    nret = false;
@@ -2414,7 +2417,7 @@ cdt_mesh_t::valid()
 
     boundary_edges_update();
     if (problem_edges.size() > 0) {
-	std::cout << "Still have problem edges in mesh\n";	
+	std::cout << "Still have problem edges in mesh\n";
 	eret = false;
     }
 

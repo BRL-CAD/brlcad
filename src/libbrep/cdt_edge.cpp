@@ -1142,7 +1142,7 @@ build_poly2tri_polylines(struct ON_Brep_CDT_Face_State *f, p2t::CDT **cdt, int i
 		    f->rt_trims_3d->Insert(bb.Min(), bb.Max(), line);
 		}
 
-		plot_rtree_2d(f->rt_trims, "rtree_2d.plot3");
+		//plot_rtree_2d(f->rt_trims, "rtree_2d.plot3");
 	    }
 	    if (outer) {
 		if (f->tris->size() > 0) {

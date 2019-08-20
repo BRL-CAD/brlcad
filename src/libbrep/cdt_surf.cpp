@@ -171,9 +171,9 @@ bool involves_trims(double *min_edge, struct cdt_surf_info *sinfo, ON_3dPoint &p
     uvbb.Set(wp1, true);
     uvbb.Set(wp2, true);
 
-    plot_on_bbox(uvbb, "uvbb.plot3");
+    //plot_on_bbox(uvbb, "uvbb.plot3");
 
-    plot_rtree_3d(sinfo->s_cdt->edge_segs_3d[sinfo->f->m_face_index], "rtree.plot3");
+    //plot_rtree_3d(sinfo->s_cdt->edge_segs_3d[sinfo->f->m_face_index], "rtree.plot3");
 
     double fMin[3];
     fMin[0] = wp1.x;
@@ -475,7 +475,7 @@ getSurfacePoint(
 		for (int i = 0; i < 4; i++) {
 		    uvbb.Set(p[i], true);
 		}
-		plot_on_bbox(uvbb, "uvbb.plot3");
+		//plot_on_bbox(uvbb, "uvbb.plot3");
 
 		ON_3dPoint pmin = uvbb.Min();
 		ON_3dPoint pmax = uvbb.Max();

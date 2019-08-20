@@ -198,6 +198,17 @@ class cpolyedge_t
 	    prev = NULL;
 	    next = NULL;
 	};
+
+	/* For those instance when we're working
+	 * Brep edge polygons */
+	int edge_ind;
+	double edge_start;
+	double edge_end;
+	int trim_ind;
+	double trim_start;
+	double trim_end;
+	ON_3dVector tan_start;
+	ON_3dVector tan_end;
 };
 
 class cdt_mesh_t;
@@ -224,9 +235,9 @@ class cpolygon_t
 	std::set<triangle_t> visited_triangles;
 	std::set<triangle_t> tris;
 
-	long add_edge(const struct edge_t &e);
+	cpolyedge_t *add_edge(const struct edge_t &e);
 	void remove_edge(const struct edge_t &e);
-	long replace_edges(std::set<edge_t> &new_edges, std::set<edge_t> &old_edges);
+	std::set<cpolyedge_t *> replace_edges(std::set<edge_t> &new_edges, std::set<edge_t> &old_edges);
 
 	// Means to update the point array if we're incrementally building
 	long add_point(ON_2dPoint *on_2dp);
@@ -237,6 +248,8 @@ class cpolygon_t
 	void polygon_plot(const char *filename);
 	void polygon_plot_3d(const char *filename);
 	void print();
+
+	std::set<cpolyedge_t *> poly;
 
     private:
 	bool closed();
@@ -253,7 +266,6 @@ class cpolygon_t
 	void polygon_plot_in_plane(const char *filename);
 	void plot_best_fit_plane(const char *filename);
 
-	std::set<cpolyedge_t *> poly;
 	std::map<long, std::set<cpolyedge_t *>> v2pe;
 	std::set<long> used_verts; /* both interior and active points - for a quick check if a point is active */
 	std::set<long> interior_points;

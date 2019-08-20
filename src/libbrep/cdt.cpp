@@ -542,7 +542,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	    }
 	}
 
-#if 0
+#if 1
 	// EXPERIMENT - see if we can generate polygons from the loops 
 	// For all faces, and each face loop in those faces, build the
 	// initial polygons strictly based on trim start/end points
@@ -571,28 +571,37 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	    }
 	}
 
+	std::map<int, std::set<cdt_mesh::cpolyedge_t *>> e2polysegs;
+
 	// Next, define the initial polygons using the vert points
 	for (int face_index = 0; face_index < brep->m_F.Count(); face_index++) {
 	    ON_BrepFace &face = s_cdt->brep->m_F[face_index];
 	    int loop_cnt = face.LoopCount();
+	    cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[face_index];
+	    cdt_mesh::cpolygon_t *cpoly = NULL;
 
 	    for (int li = 0; li < loop_cnt; li++) {
 		const ON_BrepLoop *loop = face.Loop(li);
+		bool is_outer = (face.OuterLoop()->m_loop_index == loop->m_loop_index) ? true : false;
+		if (is_outer) {
+		    cpoly = &fmesh->outer_loop;
+		} else {
+		    cpoly = &fmesh->inner_loops[li];
+		}
+		cpoly->cdt_mesh = fmesh;
 		int trim_count = loop->TrimCount();
 
 		std::cout << "Face " << face_index << ", loop " << li << "\n";
-
-		cdt_mesh::cpolygon_t cpoly;
-		cpoly.cdt_mesh = &s_cdt->fmeshes[face_index];
 
 		ON_2dPoint cp;
 		long cv, pv, fv;
 		for (int lti = 0; lti < trim_count; lti++) {
 		    ON_BrepTrim *trim = loop->Trim(lti);
+		    ON_Interval range = trim->Domain();
 		    ON_3dPoint *op3d = (*s_cdt->vert_pnts)[trim->Vertex(0)->m_vertex_index];
 		    if (lti == 0) {
 			cp = trim->PointAt(0);
-			pv = cpoly.add_point_at_pos(s_cdt->fmeshes[face_index].p2ind[op3d], &cp);
+			pv = cpoly->add_point_at_pos(fmesh->p2ind[op3d], &cp);
 			fv = pv;
 		    } else {
 			pv = cv;
@@ -607,26 +616,35 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 			// to be assigned that particular pointer.  For tests which are concerned with 3D point
 			// uniqueness, a 2d->ind->3d->ind lookup will be needed to "canonicalize"
 			// the 3D index value.  (TODO In particular, this will be needed for triangle
-			// operations when we're moving from a full (re)triangulation into the cmesh tris
-			// array - the 2D polygon points will need to be mapped to a unique 3D index shared
-			// by all 2D points having the same 3D projection, not just an index that holds
-			// the correct pointer.)
-			cv = cpoly.add_point(&cp);
-			s_cdt->fmeshes[face_index].add_point(cp3d);
+			// comparisons.)
+			cv = cpoly->add_point(&cp);
+			fmesh->add_point(cp3d);
 		    } else {
-			cv = cpoly.add_point_at_pos(s_cdt->fmeshes[face_index].p2ind[cp3d], &cp);
+			cv = cpoly->add_point_at_pos(fmesh->p2ind[cp3d], &cp);
 		    }
 		    struct cdt_mesh::edge_t lseg(pv, cv);
-		    cpoly.add_edge(lseg);
-		    cpoly.print();
+		    cdt_mesh::cpolyedge_t *ne = cpoly->add_edge(lseg);
+		    ne->trim_ind = trim->m_trim_index;
+		    ne->trim_start = 0;
+		    ne->trim_end = 1;
+		    ne->edge_ind = trim->m_ei;
+		    // These two parameters are driven from the ON_NurbsCurve the refinement creates later.
+		    // They will also need to factor in whether the trim is flipped relative to the edge
+		    // or not.
+		    ne->edge_start = -1;
+		    ne->edge_end = -1;
+		    if (trim->m_ei >= 0) {
+			e2polysegs[trim->m_ei].insert(ne);
+		    }
+		    cpoly->print();
 		}
 		struct cdt_mesh::edge_t last_seg(cv, fv);
-		cpoly.add_edge(last_seg);
-		cpoly.print();
+		cpoly->add_edge(last_seg);
+		cpoly->print();
 
 		struct bu_vls fname = BU_VLS_INIT_ZERO;
 		bu_vls_sprintf(&fname, "%d-%d-poly3d.plot3", face_index, li);
-		cpoly.polygon_plot_3d(bu_vls_cstr(&fname));
+		cpoly->polygon_plot_3d(bu_vls_cstr(&fname));
 		bu_vls_free(&fname);
 	    }
 	}
