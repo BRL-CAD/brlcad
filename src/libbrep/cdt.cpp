@@ -626,6 +626,9 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 		    // Let cdt_mesh know about new information
 		    ON_3dVector norm = ON_3dVector::UnsetVector;
 		    if (trim->m_type != ON_BrepTrim::singular) {
+			// 3D points are globally unique, but normals are not - the same edge point may
+			// have different normals from two faces at a sharp edge.  Calculate the
+			// face normal for this point on this surface.
 			ON_3dPoint tmp1;
 			surface_EvNormal(trim->SurfaceOf(), cp.x, cp.y, tmp1, norm);
 		    }
