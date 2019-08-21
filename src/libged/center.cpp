@@ -79,7 +79,45 @@ ged_center(struct ged *gedp, int argc, const char *argv[])
 
     /* set view center */
     if (argc == 2) {
+	int success = 1;
 	if (bn_decode_vect(center, argv[1]) != 3) {
+	    success = 0;
+	}
+	if (!success) {
+	    success = 1;
+	    std::string vline(argv[1]);
+	    size_t spos = vline.find_first_of(",:");
+	    std::string xstr = vline.substr(0, spos);
+	    vline.erase(0, spos+1);
+	    spos = vline.find_first_of(",:");
+	    std::string ystr = vline.substr(0, spos);
+	    vline.erase(0, spos+1);
+	    std::string zstr = vline;
+	    struct bu_vls xvalstr = BU_VLS_INIT_ZERO;
+	    struct bu_vls yvalstr = BU_VLS_INIT_ZERO;
+	    struct bu_vls zvalstr = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&xvalstr, "%s", xstr.c_str());
+	    bu_vls_sprintf(&yvalstr, "%s", ystr.c_str());
+	    bu_vls_sprintf(&zvalstr, "%s", zstr.c_str());
+	    bu_vls_trimspace(&xvalstr);
+	    bu_vls_trimspace(&yvalstr);
+	    bu_vls_trimspace(&zvalstr);
+	    fastf_t xval, yval, zval;
+	    const char *xstrptr = bu_vls_cstr(&xvalstr);
+	    const char *ystrptr = bu_vls_cstr(&yvalstr);
+	    const char *zstrptr = bu_vls_cstr(&zvalstr);
+	    if (bu_opt_fastf_t(NULL, 1, (const char **)&xstrptr, (void *)&xval) < 0) {
+		success = 0;
+	    }
+	    if (bu_opt_fastf_t(NULL, 1, (const char **)&ystrptr, (void *)&yval) < 0) {
+		success = 0;
+	    }
+	    if (bu_opt_fastf_t(NULL, 1, (const char **)&zstrptr, (void *)&zval) < 0) {
+		success = 0;
+	    }
+	    VSET(center, xval, yval, zval);
+	}
+	if (!success) {
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	    return GED_ERROR;
 	}
