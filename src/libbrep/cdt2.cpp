@@ -33,6 +33,217 @@
 // For all faces, and each face loop in those faces, build the
 // initial polygons strictly based on trim start/end points
 
+ON_3dVector
+bseg_tangent(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, double eparam, double t1param, double t2param)
+{
+    ON_3dPoint tmp;
+    ON_3dVector tangent = ON_3dVector::UnsetVector;
+    if (!bseg->nc->EvTangent(eparam, tmp, tangent)) {
+	if (t1param < DBL_MAX && t2param < DBL_MAX) {
+	    // If the edge curve failed, average tangents from trims
+	    ON_BrepEdge& edge = s_cdt->brep->m_E[bseg->edge_ind];
+	    ON_BrepTrim *trim1 = edge.Trim(0);
+	    ON_BrepTrim *trim2 = edge.Trim(1);
+	    int evals = 0;
+	    ON_3dPoint tmp1, tmp2;
+	    ON_3dVector trim1_tangent, trim2_tangent;
+	    evals += (trim1->EvTangent(t1param, tmp1, trim1_tangent)) ? 1 : 0;
+	    evals += (trim2->EvTangent(t2param, tmp2, trim2_tangent)) ? 1 : 0;
+	    if (evals == 2) {
+		tangent = (trim1_tangent + trim2_tangent) / 2;
+	    } else {
+		tangent = ON_3dVector::UnsetVector;
+	    }
+	}
+    } else {
+	tangent = ON_3dVector::UnsetVector;
+    }
+
+    return tangent;
+}
+
+
+double
+midpnt_binary_search(fastf_t *tmid, const ON_BrepTrim &trim, double tstart, double tend, ON_3dPoint &edge_mid_3d, double tol, int verbose)
+{
+    double tcmid = (tstart + tend) / 2.0;
+    ON_3dPoint trim_mid_2d = trim.PointAt(tcmid);
+    const ON_Surface *s = trim.SurfaceOf();
+    ON_3dPoint trim_mid_3d = s->PointAt(trim_mid_2d.x, trim_mid_2d.y);
+    double dist = edge_mid_3d.DistanceTo(trim_mid_3d);
+
+    if (dist > tol) {
+	ON_3dPoint trim_start_2d = trim.PointAt(tstart);
+	ON_3dPoint trim_end_2d = trim.PointAt(tend);
+	ON_3dPoint trim_start_3d = s->PointAt(trim_start_2d.x, trim_start_2d.y);
+	ON_3dPoint trim_end_3d = s->PointAt(trim_end_2d.x, trim_end_2d.y);
+
+	ON_3dVector v1 = edge_mid_3d - trim_start_3d;
+	ON_3dVector v2 = edge_mid_3d - trim_end_3d;
+
+	if (verbose) {
+	    bu_log("start point (%f %f %f) and end point (%f %f %f)\n", trim_start_3d.x, trim_start_3d.y, trim_start_3d.z, trim_end_3d.x, trim_end_3d.y, trim_end_3d.z);
+	    bu_log("Note (%f:%f)%f - edge point (%f %f %f) and trim point (%f %f %f): %f, %f\n", tstart, tend, ON_DotProduct(v1,v2), edge_mid_3d.x, edge_mid_3d.y, edge_mid_3d.z, trim_mid_3d.x, trim_mid_3d.y, trim_mid_3d.z, dist, tol);
+	}
+
+	if (ON_DotProduct(v1,v2) < 0) {
+	    if (verbose)
+		bu_log("(%f - %f - %f (%f): searching left and right subspans\n", tstart, tcmid, tend, ON_DotProduct(v1,v2));
+	    double tlmid, trmid;
+	    double fldist = midpnt_binary_search(&tlmid, trim, tstart, tcmid, edge_mid_3d, tol, 0);
+	    double frdist = midpnt_binary_search(&trmid, trim, tcmid, tend, edge_mid_3d, tol, 0);
+	    if (fldist >= 0 && frdist < -1) {
+		if (verbose)
+		    bu_log("(%f - %f - %f: going with fldist: %f\n", tstart, tcmid, tend, fldist);
+		(*tmid) = tlmid;
+		return fldist;
+	    }
+	    if (frdist >= 0 && fldist < -1) {
+		if (verbose)
+		    bu_log("(%f - %f - %f: going with frdist: %f\n", tstart, tcmid, tend, frdist);
+		(*tmid) = trmid;
+		return frdist;
+	    }
+	    if (fldist < -1 && frdist < -1) {
+		if (verbose)
+		    bu_log("(%f - %f: point not in either subspan (%f)\n", tstart, tend, ON_DotProduct(v1,v2));
+		return -2;
+	    }
+	} else {
+	    // Not in this span
+	    if (verbose)
+		bu_log("(%f - %f: point not in span (dot-product: %f)\n", tstart, tend, ON_DotProduct(v1,v2));
+	    return -2;
+	}
+    }
+
+    // close enough - this works
+    if (verbose)
+	bu_log("Workable (%f:%f) - edge point (%f %f %f) and trim point (%f %f %f): %f, %f\n", tstart, tend, edge_mid_3d.x, edge_mid_3d.y, edge_mid_3d.z, trim_mid_3d.x, trim_mid_3d.y, trim_mid_3d.z, dist, tol);
+
+    (*tmid) = tcmid;
+    return dist;
+}
+
+ON_2dPoint
+get_trim_midpt(fastf_t *t, struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe, ON_3dPoint &edge_mid_3d, double elen)
+{
+    int verbose = 1;
+    double tol = (elen < BN_TOL_DIST) ? 0.01*elen : 0.1*BN_TOL_DIST;
+    ON_BrepTrim& trim = s_cdt->brep->m_T[pe->trim_ind];
+    double tmid;
+    double dist = midpnt_binary_search(&tmid, trim, pe->trim_start, pe->trim_end, edge_mid_3d, tol, 1);
+    if (dist < 0) {
+        if (verbose) {
+            bu_log("Warning - could not find suitable trim point\n");
+	}
+        tmid = (pe->trim_start + pe->trim_end) / 2.0;
+    } else {
+	if (verbose && (dist > tol)) {
+	    bu_log("going with distance %f greater than desired tolerance %f\n", dist, tol);
+	}
+    }
+    ON_2dPoint trim_mid_2d = trim.PointAt(tmid);
+    (*t) = tmid;
+    return trim_mid_2d;
+}
+
+std::set<cdt_mesh::bedge_seg_t *>
+split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *e)
+{
+    std::set<cdt_mesh::bedge_seg_t *> nedges;
+
+    if (!e->tseg1 || !e->tseg2 || !e->nc) return nedges;
+
+    ON_BrepEdge& edge = s_cdt->brep->m_E[e->edge_ind];
+
+    ON_BrepTrim *trim1 = edge.Trim(0);
+    ON_BrepTrim *trim2 = edge.Trim(1);
+
+    if (!trim1 || !trim2) return nedges;
+
+    ON_3dPoint edge_mid_3d = ON_3dPoint::UnsetPoint;
+    ON_3dVector edge_mid_tang = ON_3dVector::UnsetVector;
+
+    // Get the 3D midpoint (and tangent, if we can) from the edge curve
+    fastf_t emid = (e->edge_start + e->edge_end) / 2.0;
+    bool evtangent_status = e->nc->EvTangent(emid, edge_mid_3d, edge_mid_tang);
+    if (!evtangent_status) {
+        // EvTangent call failed, get 3d point
+        edge_mid_3d = e->nc->PointAt(emid);
+    }
+
+#if 0
+    // edge_mid_3d is a new point in the cdt and the fmesh - add it
+    ON_3dPoint *mid_3d = new ON_3dPoint(edge_mid_3d);
+    long p_ind = s_cdt->fmesh->add_point(mid_3d
+
+    double elen = (e->nc->PointAt(e->edge_start)).DistanceTo(e->nc->PointAt(e->edge_end));
+
+    fastf_t t1mid, t2mid;
+    ON_3dPoint trim1_mid_2d, trim2_mid_2d;
+    trim1_mid_2d = get_trim_midpt(&t1mid, s_cdt, e->tseg1, edge_mid_3d, elen);
+    trim2_mid_2d = get_trim_midpt(&t2mid, s_cdt, e->tseg2, edge_mid_3d, elen);
+
+    // add new points to the cpolygons in preparation for replacing polygon edges
+
+
+    // replace bseg with new bsegs and cpolygon edge with new edges in both faces
+    cdt_mesh::bedge_seg_t *bseg1 = new cdt_mesh::bedge_seg_t;
+    cdt_mesh::bedge_seg_t *bseg2 = new cdt_mesh::bedge_seg_t;
+#endif
+
+    return nedges;
+}
+
+// There are a couple of edge splitting operations that have to happen in the
+// beginning regardless of tolerance settings.  Do them up front so the subsequent
+// working set has consistent properties.
+bool
+initialize_edge_segs(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *e)
+{
+    ON_BrepEdge& edge = s_cdt->brep->m_E[e->edge_ind];
+    // TODO - another point where this won't work if we don't have a 1->2 edge to trims relationship
+    ON_BrepTrim *trim1 = edge.Trim(0);
+    ON_BrepTrim *trim2 = edge.Trim(1);
+    std::set<cdt_mesh::bedge_seg_t *> esegs_closed;
+
+    // 1.  Any edges with at least 1 closed trim are split.
+    if (trim1->IsClosed() || trim2->IsClosed()) {
+	esegs_closed = split_edge_seg(s_cdt, e);
+	if (!esegs_closed.size()) {
+	    // split failed??
+	    return false;
+	}
+    } else {
+	esegs_closed.insert(e);
+    }
+
+    // 2.  Any edges with a non-linear edge curve are split.  (If non-linear
+    // and closed, split again - a curved, closed curve must be split twice
+    // to have chance of producing a non-degenerate polygon.)
+    std::set<cdt_mesh::bedge_seg_t *> esegs_csplit;
+    const ON_Curve* crv = edge.EdgeCurveOf();
+    if (!crv->IsLinear(BN_TOL_DIST)) {
+	std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
+	for (e_it = esegs_closed.begin(); e_it != esegs_closed.end(); e_it++) {
+	    std::set<cdt_mesh::bedge_seg_t *> etmp = split_edge_seg(s_cdt, *e_it);
+	    if (!etmp.size()) {
+		// split failed??
+		return false;
+	    }
+	    esegs_csplit.insert(etmp.begin(), etmp.end());
+	}
+    } else {
+	esegs_csplit = esegs_closed;
+    }
+
+    s_cdt->e2polysegs[edge.m_edge_index].clear();
+    s_cdt->e2polysegs[edge.m_edge_index].insert(esegs_csplit.begin(), esegs_csplit.end());
+
+    return true;
+}
+
 int
 ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 {
@@ -46,6 +257,29 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	ON_BrepEdge& edge = brep->m_E[index];
 	cdt_mesh::bedge_seg_t *bseg = new cdt_mesh::bedge_seg_t;
 	bseg->edge_ind = edge.m_edge_index;
+
+	// Provide a normalize edge NURBS curve
+	const ON_Curve* crv = edge.EdgeCurveOf();
+	bseg->nc = crv->NurbsCurve();
+	double cplen = bseg->nc->ControlPolygonLength();
+	bseg->nc->SetDomain(0.0, cplen);
+
+	// Set the initial edge curve t parameter values
+	bseg->edge_start = 0.0;
+	bseg->edge_end = cplen;
+
+	// Get the trims and normalize their domains as well.
+	// TODO - another point where this won't work if we don't have a 1->2 edge to trims relationship
+	ON_BrepTrim *trim1 = edge.Trim(0);
+	ON_BrepTrim *trim2 = edge.Trim(1);
+	s_cdt->brep->m_T[trim1->TrimCurveIndexOf()].SetDomain(bseg->edge_start, bseg->edge_end);
+	s_cdt->brep->m_T[trim2->TrimCurveIndexOf()].SetDomain(bseg->edge_start, bseg->edge_end);
+
+	ON_3dPoint tmp;
+	// The 3D start and endpoints will be vertex points (they are shared with other edges).
+	bseg->e_start = (*s_cdt->vert_pnts)[edge.Vertex(0)->m_vertex_index];
+	bseg->e_end = (*s_cdt->vert_pnts)[edge.Vertex(1)->m_vertex_index];
+
 	s_cdt->e2polysegs[edge.m_edge_index].insert(bseg);
     }
 
@@ -153,6 +387,36 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	    cpoly->add_edge(last_seg);
 	}
     }
+
+
+    // Initialize the tangents.
+    std::map<int, std::set<cdt_mesh::bedge_seg_t *>>::iterator epoly_it;
+    for (epoly_it = s_cdt->e2polysegs.begin(); epoly_it != s_cdt->e2polysegs.end(); epoly_it++) {
+	std::set<cdt_mesh::bedge_seg_t *>::iterator seg_it;
+	for (seg_it = epoly_it->second.begin(); seg_it != epoly_it->second.end(); seg_it++) {
+	    cdt_mesh::bedge_seg_t *bseg = *seg_it;
+	    ON_BrepTrim &trim1 = s_cdt->brep->m_T[bseg->tseg1->trim_ind];
+	    ON_BrepTrim &trim2 = s_cdt->brep->m_T[bseg->tseg2->trim_ind];
+	    double ts1 = (trim1.m_bRev3d) ? bseg->tseg1->trim_end : bseg->tseg1->trim_start;
+	    double ts2 = (trim2.m_bRev3d) ? bseg->tseg2->trim_end : bseg->tseg2->trim_start;
+	    bseg->tan_start = bseg_tangent(s_cdt, bseg, bseg->edge_start, ts1, ts2);
+
+	    double te1 = (trim1.m_bRev3d) ? bseg->tseg1->trim_start : bseg->tseg1->trim_end;
+	    double te2 = (trim2.m_bRev3d) ? bseg->tseg2->trim_start : bseg->tseg2->trim_end;
+	    bseg->tan_end = bseg_tangent(s_cdt, bseg, bseg->edge_end, te1, te2);
+	}
+    }
+
+    // Do the non-tolerance based initializations
+    for (epoly_it = s_cdt->e2polysegs.begin(); epoly_it != s_cdt->e2polysegs.end(); epoly_it++) {
+	std::set<cdt_mesh::bedge_seg_t *>::iterator seg_it;
+	for (seg_it = epoly_it->second.begin(); seg_it != epoly_it->second.end(); seg_it++) {
+	    cdt_mesh::bedge_seg_t *bseg = *seg_it;
+	    if (!initialize_edge_segs(s_cdt, bseg)) {
+		std::cout << "Initialization failed for edge " << epoly_it->first << "\n";
+	    }
+	}
+    }	
 
     // Process the non-linear edges first - we will need information
     // from them to handle the linear edges

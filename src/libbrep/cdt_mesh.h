@@ -194,10 +194,14 @@ class bedge_seg_t {
 	    tseg2 = NULL;
 	};
 
+	ON_NurbsCurve *nc;
+
 	cpolyedge_t *tseg1;
 	cpolyedge_t *tseg2;
 	double edge_start;
 	double edge_end;
+	ON_3dPoint *e_start;
+	ON_3dPoint *e_end;
 	ON_3dVector tan_start;
 	ON_3dVector tan_end;
 	int edge_ind;
