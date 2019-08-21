@@ -275,8 +275,8 @@ class cpolygon_t
 	bool cdt();
 
 	bool closed();
-    private:
 	bool self_intersecting();
+    private:
 	bool best_fit_plane();
 
 	bool point_in_polygon(long v, bool flip);

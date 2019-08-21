@@ -12,6 +12,7 @@
 #include "common.h"
 
 #include "bu/color.h"
+#include "bu/log.h"
 #include "bu/sort.h"
 #include "bu/malloc.h"
 #include "bn/mat.h" /* bn_vec_perp */
@@ -2318,11 +2319,17 @@ loop_to_bgpoly(const cpolygon_t *loop)
 bool
 cdt_mesh_t::cdt()
 {
-    if (!outer_loop.closed()) return false;
+    if (outer_loop.self_intersecting()) {
+	bu_log("outer loop reports self intersecting!\n");
+	//return false;
+    }
     std::map<int, cpolygon_t*>::iterator il_it;
     for (il_it = inner_loops.begin(); il_it != inner_loops.end(); il_it++) {
 	cpolygon_t *il = il_it->second;
-	if (!il->closed()) return false;
+	if (il->self_intersecting()) {
+	    bu_log("inner loop reports self intersecting!\n");
+	    //return false;
+	}
     }
 
     point2d_t *bgp_2d = (point2d_t *)bu_calloc(pnts_2d.size() + 1, sizeof(point2d_t), "2D points array");
