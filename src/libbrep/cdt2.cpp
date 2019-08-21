@@ -195,7 +195,9 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg)
     s_cdt->edge_pnts->insert(mid_3d);
 
     // Find the 2D points
-    double elen = (bseg->nc->PointAt(bseg->edge_start)).DistanceTo(bseg->nc->PointAt(bseg->edge_end));
+    double elen1 = (bseg->nc->PointAt(bseg->edge_start)).DistanceTo(bseg->nc->PointAt(emid));
+    double elen2 = (bseg->nc->PointAt(emid)).DistanceTo(bseg->nc->PointAt(bseg->edge_end));
+    double elen = (elen1 + elen2) * 0.5;
     fastf_t t1mid, t2mid;
     ON_2dPoint trim1_mid_2d, trim2_mid_2d;
     trim1_mid_2d = get_trim_midpt(&t1mid, s_cdt, bseg->tseg1, edge_mid_3d, elen);
@@ -291,8 +293,8 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg)
     }
     // The new trim segments are then associated with the new bounding edge segments
     bseg1->tseg1 = (trim1->m_bRev3d) ? poly1_ne2 : poly1_ne1;
-    bseg1->tseg2 = (trim1->m_bRev3d) ? poly1_ne1 : poly1_ne2;
-    bseg2->tseg1 = (trim2->m_bRev3d) ? poly2_ne2 : poly2_ne1;
+    bseg1->tseg2 = (trim2->m_bRev3d) ? poly2_ne2 : poly2_ne1;
+    bseg2->tseg1 = (trim1->m_bRev3d) ? poly1_ne1 : poly1_ne2;
     bseg2->tseg2 = (trim2->m_bRev3d) ? poly2_ne1 : poly2_ne2;
 
     nedges.insert(bseg1);
@@ -436,8 +438,10 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 			surface_EvNormal(trim->SurfaceOf(), cp.x, cp.y, tmp1, norm);
 		    }
 		    ON_3dPoint *op3d = (*s_cdt->vert_pnts)[trim->Vertex(0)->m_vertex_index];
-		    fmesh->add_point(op3d);
-		    fmesh->add_normal(new ON_3dPoint(norm));
+		    long f3ind = fmesh->add_point(op3d);
+		    long fnind = fmesh->add_normal(new ON_3dPoint(norm));
+		    fmesh->p2d2ind[find] = f3ind;
+		    fmesh->nmap[f3ind] = fnind;
 
 		} else {
 		    pv = cv;
@@ -468,9 +472,10 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 		    surface_EvNormal(trim->SurfaceOf(), cp.x, cp.y, tmp1, norm);
 		}
 		ON_3dPoint *cp3d = (*s_cdt->vert_pnts)[trim->Vertex(1)->m_vertex_index];
-		fmesh->add_point(cp3d);
-		fmesh->add_normal(new ON_3dPoint(norm));
-
+		long f3ind = fmesh->add_point(cp3d);
+		long fnind = fmesh->add_normal(new ON_3dPoint(norm));
+		fmesh->p2d2ind[find] = f3ind;
+		fmesh->nmap[f3ind] = fnind;
 
 		struct cdt_mesh::edge_t lseg(pv, cv);
 		cdt_mesh::cpolyedge_t *ne = cpoly->add_edge(lseg);
