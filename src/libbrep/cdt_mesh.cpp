@@ -365,21 +365,36 @@ cpolygon_t::self_intersecting()
 	// if we already know this segment intersects at least one other segment, we
 	// don't need to re-test it - it's already "active"
 	if (self_isect_edges.find(ue1) != self_isect_edges.end()) continue;
+	ON_BoundingBox e1b(p1_1, p1_2);
 	ON_Line e1(p1_1, p1_2);
 	for (size_t j = i+1; j < pv.size(); j++) {
 	    cpolyedge_t *pe2 = pv[j];
 	    ON_2dPoint p2_1(pnts_2d[pe2->v[0]].first, pnts_2d[pe2->v[0]].second);
 	    ON_2dPoint p2_2(pnts_2d[pe2->v[1]].first, pnts_2d[pe2->v[1]].second);
 	    struct uedge_t ue2(pe2->v[0], pe2->v[1]);
+	    ON_BoundingBox e2b(p2_1, p2_2);
 	    ON_Line e2(p2_1, p2_2);
+
+	    if (e1b.IsDisjoint(e2b)) {
+		continue;
+	    }
 
 	    double a, b = 0;
 	    if (!ON_IntersectLineLine(e1, e2, &a, &b, 0.0, false)) {
 		continue;
 	    }
 
-	    if ((a < 0 || NEAR_ZERO(a, SMALL_FASTF) || a > 1 || NEAR_ZERO(1-a, SMALL_FASTF)) ||
-		    (b < 0 || NEAR_ZERO(b, SMALL_FASTF) || b > 1 || NEAR_ZERO(1-b, SMALL_FASTF))) {
+#if 0
+	    // Weed out nearly parallel lines
+	    double angle_tolerance_radians = 0.5*ON_PI/180.0;
+	    double parallel_tol = cos(angle_tolerance_radians);
+	    if ( fabs(e1.Tangent()*e2.Tangent()) >= parallel_tol ) {
+		continue;
+	    }
+#endif
+
+	    if ((a < 0 || NEAR_ZERO(a, ON_ZERO_TOLERANCE) || a > 1 || NEAR_ZERO(1-a, ON_ZERO_TOLERANCE)) ||
+		    (b < 0 || NEAR_ZERO(b, ON_ZERO_TOLERANCE) || b > 1 || NEAR_ZERO(1-b, ON_ZERO_TOLERANCE))) {
 		continue;
 	    } else {
 		std::cout << "Isect: a = " << a << ", b = " << b << ":\n";
