@@ -306,7 +306,7 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 
 	    ON_2dPoint cp(0,0);
 
-	    long cv, pv, fv;
+	    long cv, pv, fv = -1;
 	    for (int lti = 0; lti < trim_count; lti++) {
 		ON_BrepTrim *trim = loop->Trim(lti);
 		ON_Interval range = trim->Domain();
@@ -388,7 +388,7 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	}
     }
 
-
+#if 0
     // Initialize the tangents.
     std::map<int, std::set<cdt_mesh::bedge_seg_t *>>::iterator epoly_it;
     for (epoly_it = s_cdt->e2polysegs.begin(); epoly_it != s_cdt->e2polysegs.end(); epoly_it++) {
@@ -416,7 +416,8 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 		std::cout << "Initialization failed for edge " << epoly_it->first << "\n";
 	    }
 	}
-    }	
+    }
+#endif
 
     // Process the non-linear edges first - we will need information
     // from them to handle the linear edges
