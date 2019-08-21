@@ -190,10 +190,32 @@ class cpolyedge_t;
 class bedge_seg_t {
     public:
 	bedge_seg_t() {
+	    edge_ind = -1;
+	    nc = NULL;
 	    tseg1 = NULL;
 	    tseg2 = NULL;
+	    edge_start = DBL_MAX;
+	    edge_end = DBL_MAX;
+	    e_start = NULL;
+	    e_end = NULL;
+	    tan_start = ON_3dVector::UnsetVector;
+	    tan_end = ON_3dVector::UnsetVector;
 	};
 
+	bedge_seg_t(bedge_seg_t *other) {
+	    edge_ind = other->edge_ind;
+	    nc = other->nc;
+	    tseg1 = NULL;
+	    tseg2 = NULL;
+	    edge_start = DBL_MAX;
+	    edge_end = DBL_MAX;
+	    e_start = NULL;
+	    e_end = NULL;
+	    tan_start = ON_3dVector::UnsetVector;
+	    tan_end = ON_3dVector::UnsetVector;
+	};
+
+	int edge_ind;
 	ON_NurbsCurve *nc;
 
 	cpolyedge_t *tseg1;
@@ -204,12 +226,14 @@ class bedge_seg_t {
 	ON_3dPoint *e_end;
 	ON_3dVector tan_start;
 	ON_3dVector tan_end;
-	int edge_ind;
 };
+
+class cpolygon_t;
 
 class cpolyedge_t
 {
     public:
+	cpolygon_t *polygon;
 	cpolyedge_t *prev;
 	cpolyedge_t *next;
 

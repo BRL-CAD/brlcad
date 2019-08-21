@@ -53,6 +53,7 @@ cpolygon_t::add_edge(const struct edge_t &e)
 {
     if (e.v[0] == -1) return NULL;
 
+
     int v1 = -1;
     int v2 = -1;
 
@@ -88,6 +89,8 @@ cpolygon_t::add_edge(const struct edge_t &e)
     struct edge_t le(v1, v2);
     cpolyedge_t *nedge = new cpolyedge_t(le);
     poly.insert(nedge);
+
+    nedge->polygon = this;
 
     v2pe[v1].insert(nedge);
     v2pe[v2].insert(nedge);
