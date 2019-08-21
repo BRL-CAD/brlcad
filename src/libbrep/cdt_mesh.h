@@ -256,19 +256,16 @@ class cpolygon_t
 
 	// Means to update the point array if we're incrementally building
 	long add_point(ON_2dPoint &on_2dp);
-	long add_point(ON_3dPoint *on_3dp);
 
 	cdt_mesh_t *cdt_mesh;
 
 	void polygon_plot(const char *filename);
 	void polygon_plot_3d(const char *filename);
-	void tris_set_plot(std::set<triangle_t> &tset, const char *filename);
 	void print();
 
 	std::set<cpolyedge_t *> poly;
 
 	std::vector<std::pair<double, double> > pnts_2d;
-	std::vector<ON_3dPoint *> pnts;
 	std::map<std::pair<double, double>, long> p2ind;
 
 
@@ -313,7 +310,6 @@ class cpolygon_t
 	ON_3dVector pdir;
 
 	std::vector<struct ctriangle_t> polygon_tris(double angle, bool brep_norm, int initial);
-	void plot_tri(const triangle_t &t, struct bu_color *buc, FILE *plot);
 };
 
 

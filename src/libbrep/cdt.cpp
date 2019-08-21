@@ -589,8 +589,8 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 			// Polygon first
 			cp = trim->PointAt(range.m_t[0]);
 			pv = cpoly->add_point(cp);
-			ON_3dPoint *op3d = (*s_cdt->vert_pnts)[trim->Vertex(0)->m_vertex_index];
-			cpoly->add_point(op3d);
+			long find = fmesh->add_point(cp);
+			cpoly->p2f[pv] = find;
 			fv = pv;
 
 			// Let cdt_mesh know about new information
@@ -599,11 +599,9 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 			    ON_3dPoint tmp1;
 			    surface_EvNormal(trim->SurfaceOf(), cp.x, cp.y, tmp1, norm);
 			}
-			long find = fmesh->add_point(cp);
+			ON_3dPoint *op3d = (*s_cdt->vert_pnts)[trim->Vertex(0)->m_vertex_index];
 			fmesh->add_point(op3d);
 			fmesh->add_normal(new ON_3dPoint(norm));
-
-			cpoly->p2f[fv] = find;
 
 		    } else {
 			pv = cv;
@@ -621,10 +619,10 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 		    //
 		    cp = trim->PointAt(range.m_t[1]);
 		    cv = cpoly->add_point(cp);
-		    ON_3dPoint *cp3d = (*s_cdt->vert_pnts)[trim->Vertex(1)->m_vertex_index];
-		    cpoly->add_point(cp3d);
+		    long find = fmesh->add_point(cp);
+		    cpoly->p2f[cv] = find;
 
-		    // Let cdt_mesh know about new information
+		    // Let cdt_mesh know about the 3D information as well
 		    ON_3dVector norm = ON_3dVector::UnsetVector;
 		    if (trim->m_type != ON_BrepTrim::singular) {
 			// 3D points are globally unique, but normals are not - the same edge point may
@@ -633,11 +631,10 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 			ON_3dPoint tmp1;
 			surface_EvNormal(trim->SurfaceOf(), cp.x, cp.y, tmp1, norm);
 		    }
-		    long find = fmesh->add_point(cp);
+		    ON_3dPoint *cp3d = (*s_cdt->vert_pnts)[trim->Vertex(1)->m_vertex_index];
 		    fmesh->add_point(cp3d);
 		    fmesh->add_normal(new ON_3dPoint(norm));
 
-		    cpoly->p2f[cv] = find;
 
 		    struct cdt_mesh::edge_t lseg(pv, cv);
 		    cdt_mesh::cpolyedge_t *ne = cpoly->add_edge(lseg);
@@ -690,7 +687,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	    cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[face_index];
 	    cdt_mesh::cpolygon_t *cpoly = NULL;
 
-	    if (face_index != 17) continue;
+	    if (face_index != 27) continue;
 
 	    for (int li = 0; li < loop_cnt; li++) {
 		const ON_BrepLoop *loop = face.Loop(li);
