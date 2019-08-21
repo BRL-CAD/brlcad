@@ -147,6 +147,8 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* overlay command needs to accept multiple file arguments
+
 * Bounding Boxes
 
   * make the bb command default to calculating a tighter-fitting
