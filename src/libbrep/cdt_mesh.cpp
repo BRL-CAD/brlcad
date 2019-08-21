@@ -49,9 +49,9 @@ cpolygon_t::add_point(ON_2dPoint &on_2dp)
 }
 
 cpolyedge_t *
-cpolygon_t::add_edge(const struct edge_t &e)
+cpolygon_t::add_edge(const struct uedge_t &ue)
 {
-    if (e.v[0] == -1) return NULL;
+    if (ue.v[0] == -1) return NULL;
 
 
     int v1 = -1;
@@ -61,29 +61,29 @@ cpolygon_t::add_edge(const struct edge_t &e)
     for (cp_it = poly.begin(); cp_it != poly.end(); cp_it++) {
 	cpolyedge_t *pe = *cp_it;
 
-	if (pe->v[1] == e.v[0]) {
-	    v1 = e.v[0];
+	if (pe->v[1] == ue.v[0]) {
+	    v1 = ue.v[0];
 	}
 
-	if (pe->v[1] == e.v[1]) {
-	    v1 = e.v[1];
+	if (pe->v[1] == ue.v[1]) {
+	    v1 = ue.v[1];
 	}
 
-	if (pe->v[0] == e.v[0]) {
-	    v2 = e.v[0];
+	if (pe->v[0] == ue.v[0]) {
+	    v2 = ue.v[0];
 	}
 
-	if (pe->v[0] == e.v[1]) {
-	    v2 = e.v[1];
+	if (pe->v[0] == ue.v[1]) {
+	    v2 = ue.v[1];
 	}
     }
 
     if (v1 == -1) {
-	v1 = (e.v[0] == v2) ? e.v[1] : e.v[0];
+	v1 = (ue.v[0] == v2) ? ue.v[1] : ue.v[0];
     }
 
     if (v2 == -1) {
-	v2 = (e.v[0] == v1) ? e.v[1] : e.v[0];
+	v2 = (ue.v[0] == v1) ? ue.v[1] : ue.v[0];
     }
 
     struct edge_t le(v1, v2);
@@ -130,9 +130,8 @@ cpolygon_t::add_edge(const struct edge_t &e)
 }
 
 void
-cpolygon_t::remove_edge(const struct edge_t &e)
+cpolygon_t::remove_edge(const struct uedge_t &ue)
 {
-    struct uedge_t ue(e);
     cpolyedge_t *cull = NULL;
     std::set<cpolyedge_t *>::iterator cp_it;
     for (cp_it = poly.begin(); cp_it != poly.end(); cp_it++) {
@@ -147,19 +146,19 @@ cpolygon_t::remove_edge(const struct edge_t &e)
 
     if (!cull) return;
 
-    v2pe[e.v[0]].erase(cull);
-    v2pe[e.v[1]].erase(cull);
+    v2pe[ue.v[0]].erase(cull);
+    v2pe[ue.v[1]].erase(cull);
     active_edges.erase(ue);
 
     // An edge removal may produce a new interior point candidate - check
     // Will need to verify eventually with point_in_polygon, but topologically
     // it may be cut loose
     for (int i = 0; i < 2; i++) {
-	if (!v2pe[e.v[i]].size()) {
-	    if (flipped_face.find(e.v[i]) != flipped_face.end()) {
-		flipped_face.erase(e.v[i]);
+	if (!v2pe[ue.v[i]].size()) {
+	    if (flipped_face.find(ue.v[i]) != flipped_face.end()) {
+		flipped_face.erase(ue.v[i]);
 	    }
-	    uncontained.insert(e.v[i]);
+	    uncontained.insert(ue.v[i]);
 	}
     }
 
@@ -177,11 +176,11 @@ cpolygon_t::remove_edge(const struct edge_t &e)
 }
 
 std::set<cpolyedge_t *>
-cpolygon_t::replace_edges(std::set<edge_t> &new_edges, std::set<edge_t> &old_edges)
+cpolygon_t::replace_edges(std::set<uedge_t> &new_edges, std::set<uedge_t> &old_edges)
 {
     std::set<cpolyedge_t *> nedges;
 
-    std::set<edge_t>::iterator e_it;
+    std::set<uedge_t>::iterator e_it;
     for (e_it = old_edges.begin(); e_it != old_edges.end(); e_it++) {
 	remove_edge(*e_it);
     }
@@ -705,7 +704,7 @@ cpolygon_t::cdt()
 }
 
 long
-cpolygon_t::tri_process(std::set<edge_t> *ne, std::set<edge_t> *se, long *nv, triangle_t &t)
+cpolygon_t::tri_process(std::set<uedge_t> *ne, std::set<uedge_t> *se, long *nv, triangle_t &t)
 {
     std::set<cpolyedge_t *>::iterator pe_it;
 
@@ -741,9 +740,9 @@ cpolygon_t::tri_process(std::set<edge_t> *ne, std::set<edge_t> *se, long *nv, tr
     for (int i = 0; i < 3; i++) {
 	if (e_shared[i]) {
 	    shared_cnt++;
-	    se->insert(e[i]);
+	    se->insert(ue[i]);
 	} else {
-	    ne->insert(e[i]);
+	    ne->insert(ue[i]);
 	}
     }
 
@@ -822,7 +821,7 @@ cpolygon_t::tri_process(std::set<edge_t> *ne, std::set<edge_t> *se, long *nv, tr
 	// We've got one vert shared by both of the shared edges - it's probably
 	// about to become an interior point
 	std::map<long, int> vcnt;
-	std::set<edge_t>::iterator se_it;
+	std::set<uedge_t>::iterator se_it;
 	for (se_it = se->begin(); se_it != se->end(); se_it++) {
 	    vcnt[(*se_it).v[0]]++;
 	    vcnt[(*se_it).v[1]]++;
@@ -1152,7 +1151,26 @@ void cpolygon_t::print()
     }
 
     std::cout << "\n";
-    
+
+
+    std::set<cpolyedge_t *>::iterator pd_it;
+    std::cout << "poly data:\n";
+    for (pd_it = poly.begin(); pd_it != poly.end(); pd_it++) {
+	std::cout << "entry:  ";
+	if ((*pd_it)->prev) {
+	    std::cout << "(" << (*pd_it)->prev->v[0] << "->" << (*pd_it)->prev->v[1] << ")";
+	} else {
+	    std::cout << "NULL";
+	}
+	std::cout << "<-(" << (*pd_it)->v[0] << "->" << (*pd_it)->v[1] << ")->";
+	if ((*pd_it)->next) {
+	    std::cout << "(" << (*pd_it)->next->v[0] << "->" << (*pd_it)->next->v[1] << ")";
+	} else {
+	    std::cout << "NULL";
+	}
+	std::cout << "\n";
+    }
+
     ON_3dPoint *p;
 
     self_intersecting();
@@ -1484,9 +1502,8 @@ cpolygon_t::grow_loop(double deg, bool stop_on_contained, triangle_t &target)
 
 	// The first thing to do is find out of the triangle shares one or two
 	// edges with the loop.  (0 or 3 would indicate something Very Wrong...)
-	std::set<edge_t> new_edges;
-	std::set<edge_t> shared_edges;
-	std::set<edge_t>::iterator ne_it;
+	std::set<uedge_t> new_edges;
+	std::set<uedge_t> shared_edges;
 	long vert = -1;
 	long new_edge_cnt = tri_process(&new_edges, &shared_edges, &vert, ct);
 

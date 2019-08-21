@@ -278,9 +278,9 @@ class cpolygon_t
 	std::set<triangle_t> visited_triangles;
 	std::set<triangle_t> tris;
 
-	cpolyedge_t *add_edge(const struct edge_t &e);
-	void remove_edge(const struct edge_t &e);
-	std::set<cpolyedge_t *> replace_edges(std::set<edge_t> &new_edges, std::set<edge_t> &old_edges);
+	cpolyedge_t *add_edge(const struct uedge_t &e);
+	void remove_edge(const struct uedge_t &e);
+	std::set<cpolyedge_t *> replace_edges(std::set<uedge_t> &new_edges, std::set<uedge_t> &old_edges);
 
 	// Means to update the point array if we're incrementally building
 	long add_point(ON_2dPoint &on_2dp);
@@ -311,7 +311,7 @@ class cpolygon_t
 	// Apply the point-in-polygon test to all uncontained points, moving any inside the loop into interior_points
 	bool have_uncontained();
 
-	long tri_process(std::set<edge_t> *ne, std::set<edge_t> *se, long *nv, triangle_t &t);
+	long tri_process(std::set<uedge_t> *ne, std::set<uedge_t> *se, long *nv, triangle_t &t);
 
 	void polygon_plot_in_plane(const char *filename);
 	void plot_best_fit_plane(const char *filename);

@@ -245,18 +245,21 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg)
     cdt_mesh::cpolyedge_t *poly1_ne1, *poly1_ne2, *poly2_ne1, *poly2_ne2;
     {
 	cdt_mesh::cpolygon_t *poly1 = bseg->tseg1->polygon;
+	int v[2];
+	v[0] = bseg->tseg1->v[0];
+	v[1] = bseg->tseg1->v[1];
 	int trim_ind = bseg->tseg1->trim_ind;
 	double old_trim_start = bseg->tseg1->trim_start;
 	double old_trim_end = bseg->tseg1->trim_end;
-	poly1->remove_edge(cdt_mesh::edge_t(bseg->tseg1->v[0], bseg->tseg1->v[1]));
+	poly1->remove_edge(cdt_mesh::edge_t(v[0], v[1]));
 	long poly1_2dind = poly1->add_point(trim1_mid_2d);
 	poly1->p2f[poly1_2dind] = f1_ind2d;
-	struct cdt_mesh::edge_t poly1_edge1(bseg->tseg1->v[0], poly1_2dind);
+	struct cdt_mesh::edge_t poly1_edge1(v[0], poly1_2dind);
 	poly1_ne1 = poly1->add_edge(poly1_edge1);
 	poly1_ne1->trim_ind = trim_ind;
 	poly1_ne1->trim_start = old_trim_start;
 	poly1_ne1->trim_end = t1mid;
-	struct cdt_mesh::edge_t poly1_edge2(poly1_2dind, bseg->tseg1->v[1]);
+	struct cdt_mesh::edge_t poly1_edge2(poly1_2dind, v[1]);
 	poly1_ne2 = poly1->add_edge(poly1_edge2);
     	poly1_ne2->trim_ind = trim_ind;
 	poly1_ne2->trim_start = t1mid;
@@ -264,18 +267,21 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg)
     }
     {
 	cdt_mesh::cpolygon_t *poly2 = bseg->tseg2->polygon;
+	int v[2];
+	v[0] = bseg->tseg2->v[0];
+	v[1] = bseg->tseg2->v[1];
 	int trim_ind = bseg->tseg2->trim_ind;
 	double old_trim_start = bseg->tseg2->trim_start;
 	double old_trim_end = bseg->tseg2->trim_end;
-	poly2->remove_edge(cdt_mesh::edge_t(bseg->tseg2->v[0], bseg->tseg2->v[1]));
+	poly2->remove_edge(cdt_mesh::edge_t(v[0], v[1]));
 	long poly2_2dind = poly2->add_point(trim2_mid_2d);
 	poly2->p2f[poly2_2dind] = f2_ind2d;
-	struct cdt_mesh::edge_t poly2_edge1(bseg->tseg2->v[0], poly2_2dind);
+	struct cdt_mesh::edge_t poly2_edge1(v[0], poly2_2dind);
 	poly2_ne1 = poly2->add_edge(poly2_edge1);
 	poly2_ne1->trim_ind = trim_ind;
 	poly2_ne1->trim_start = old_trim_start;
 	poly2_ne1->trim_end = t1mid;
-	struct cdt_mesh::edge_t poly2_edge2(poly2_2dind, bseg->tseg2->v[1]);
+	struct cdt_mesh::edge_t poly2_edge2(poly2_2dind, v[1]);
 	poly2_ne2 = poly2->add_edge(poly2_edge2);
    	poly2_ne2->trim_ind = trim_ind;
 	poly2_ne2->trim_start = t1mid;
@@ -289,6 +295,7 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg)
 
     nedges.insert(bseg1);
     nedges.insert(bseg2);
+    delete bseg;
     return nedges;
 }
 
