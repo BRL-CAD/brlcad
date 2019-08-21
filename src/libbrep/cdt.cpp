@@ -687,7 +687,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	    cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[face_index];
 	    cdt_mesh::cpolygon_t *cpoly = NULL;
 
-	    if (face_index != 27) continue;
+	    //if (face_index != 27) continue;
 
 	    for (int li = 0; li < loop_cnt; li++) {
 		const ON_BrepLoop *loop = face.Loop(li);

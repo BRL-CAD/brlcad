@@ -905,10 +905,21 @@ void cpolygon_t::polygon_plot_3d(const char *filename)
     cpolyedge_t *efirst = *(poly.begin());
     cpolyedge_t *ecurr = NULL;
 
+    self_intersecting();
+
     point_t bnp;
     ON_3dPoint *p;
     p = cdt_mesh->pnts[p2f[efirst->v[0]]];
     VSET(bnp, p->x, p->y, p->z);
+
+    struct uedge_t ue;
+    ue = uedge_t(efirst->v[0], efirst->v[1]);
+    if (self_isect_edges.find(ue) != self_isect_edges.end()) {
+	pl_color(plot_file, 255, 0, 0);
+    } else {
+	pl_color_buc(plot_file, &c);
+    }
+
     pdv_3move(plot_file, bnp);
     p = cdt_mesh->pnts[p2f[efirst->v[1]]];
     VSET(bnp, p->x, p->y, p->z);
@@ -918,6 +929,12 @@ void cpolygon_t::polygon_plot_3d(const char *filename)
     while (ecurr != efirst && ecnt < poly.size()+1) {
 	ecnt++;
         ecurr = (!ecurr) ? efirst->next : ecurr->next;
+	ue = uedge_t(ecurr->v[0], ecurr->v[1]);
+	if (self_isect_edges.find(ue) != self_isect_edges.end()) {
+	    pl_color(plot_file, 255, 0, 0);
+	} else {
+	    pl_color_buc(plot_file, &c);
+	}
 	p = cdt_mesh->pnts[p2f[ecurr->v[1]]];
 	VSET(bnp, p->x, p->y, p->z);
 	pdv_3cont(plot_file, bnp);
