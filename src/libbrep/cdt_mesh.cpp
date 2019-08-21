@@ -396,7 +396,9 @@ cpolygon_t::self_intersecting()
 	    if ((a < 0 || NEAR_ZERO(a, ON_ZERO_TOLERANCE) || a > 1 || NEAR_ZERO(1-a, ON_ZERO_TOLERANCE)) ||
 		    (b < 0 || NEAR_ZERO(b, ON_ZERO_TOLERANCE) || b > 1 || NEAR_ZERO(1-b, ON_ZERO_TOLERANCE))) {
 		continue;
-	    } else {
+	    }
+#if 0
+	    else {
 		std::cout << "Isect: a = " << a << ", b = " << b << ":\n";
 		ON_2dPoint p2d;
 		self_isect_edges.insert(ue1);
@@ -410,7 +412,7 @@ cpolygon_t::self_intersecting()
 		p2d = ON_2dPoint(pnts_2d[ue2.v[1]].first, pnts_2d[ue2.v[1]].second);
 		std::cout << ue2.v[1] << "(" << p2d.x << "," << p2d.y << ")\n";
 	    }
-
+#endif
 	    self_isect = true;
 	}
     }
@@ -2397,16 +2399,16 @@ loop_to_bgpoly(const cpolygon_t *loop)
 bool
 cdt_mesh_t::cdt()
 {
-    if (outer_loop.self_intersecting()) {
-	bu_log("outer loop reports self intersecting!\n");
-	//return false;
+    if (!outer_loop.closed()) {
+	bu_log("outer loop reports not closed!\n");
+	return false;
     }
     std::map<int, cpolygon_t*>::iterator il_it;
     for (il_it = inner_loops.begin(); il_it != inner_loops.end(); il_it++) {
 	cpolygon_t *il = il_it->second;
-	if (il->self_intersecting()) {
-	    bu_log("inner loop reports self intersecting!\n");
-	    //return false;
+	if (!il->closed()) {
+	    bu_log("inner loop reports not closed!\n");
+	    return false;
 	}
     }
 
