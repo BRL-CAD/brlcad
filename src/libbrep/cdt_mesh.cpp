@@ -378,12 +378,22 @@ cpolygon_t::self_intersecting()
 		continue;
 	    }
 
-	    if ((a < 0 || NEAR_ZERO(a, ON_ZERO_TOLERANCE) || a > 1 || NEAR_ZERO(1-a, ON_ZERO_TOLERANCE)) ||
-		    (b < 0 || NEAR_ZERO(b, ON_ZERO_TOLERANCE) || b > 1 || NEAR_ZERO(1-b, ON_ZERO_TOLERANCE))) {
+	    if ((a < 0 || NEAR_ZERO(a, SMALL_FASTF) || a > 1 || NEAR_ZERO(1-a, SMALL_FASTF)) ||
+		    (b < 0 || NEAR_ZERO(b, SMALL_FASTF) || b > 1 || NEAR_ZERO(1-b, SMALL_FASTF))) {
 		continue;
 	    } else {
+		std::cout << "Isect: a = " << a << ", b = " << b << ":\n";
+		ON_2dPoint p2d;
 		self_isect_edges.insert(ue1);
+		p2d = ON_2dPoint(pnts_2d[ue1.v[0]].first, pnts_2d[ue1.v[0]].second);
+		std::cout << ue1.v[0] << "(" << p2d.x << "," << p2d.y << ")<->";
+		p2d = ON_2dPoint(pnts_2d[ue1.v[1]].first, pnts_2d[ue1.v[1]].second);
+		std::cout << ue1.v[1] << "(" << p2d.x << "," << p2d.y << ") isects with ";
 		self_isect_edges.insert(ue2);
+		p2d = ON_2dPoint(pnts_2d[ue2.v[0]].first, pnts_2d[ue2.v[0]].second);
+		std::cout << ue2.v[0] << "(" << p2d.x << "," << p2d.y << ")<->";
+		p2d = ON_2dPoint(pnts_2d[ue2.v[1]].first, pnts_2d[ue2.v[1]].second);
+		std::cout << ue2.v[1] << "(" << p2d.x << "," << p2d.y << ")\n";
 	    }
 
 	    self_isect = true;
@@ -1122,6 +1132,42 @@ void cpolygon_t::print()
     }
 
     std::cout << "\n";
+    
+    ON_3dPoint *p;
+
+    self_intersecting();
+    std::set<uedge_t>::iterator sie_it;
+    if (self_isect_edges.size()) {
+	std::cout << "Self-intersecting edges from polygon:\n";
+	for (sie_it = self_isect_edges.begin(); sie_it != self_isect_edges.end(); sie_it++) {
+	    p = cdt_mesh->pnts[p2f[sie_it->v[0]]];
+	    std::cout << sie_it->v[0] << "(" << p->x << "," << p->y << "," << p->z << ")<->";
+	    p = cdt_mesh->pnts[p2f[sie_it->v[1]]];
+	    std::cout << sie_it->v[1] << "(" << p->x << "," << p->y << "," << p->z << ")\n";
+	}
+    }
+
+    // Print the 3D points
+    next = first->next;
+    p = cdt_mesh->pnts[p2f[first->v[0]]];
+    std::cout << "(" << p->x << "," << p->y << "," << p->z << ")->";
+    ecnt = 1;
+    while (first != next) {
+	ecnt++;
+	if (!next) {
+	    break;
+	}
+	p = cdt_mesh->pnts[p2f[next->v[0]]];
+	std::cout << "(" << p->x << "," << p->y << "," << p->z << ")->";
+	visited.insert(next);
+	next = next->next;
+	if (ecnt > poly.size()) {
+	    std::cout << "\nERROR infinite loop\n";
+	    break;
+	}
+    }
+    p = cdt_mesh->pnts[p2f[first->v[0]]];
+    std::cout << "(" << p->x << "," << p->y << "," << p->z << ")\n";
 
     if (visited.size() != poly.size()) {
 	std::cout << "Missing edges:\n";
