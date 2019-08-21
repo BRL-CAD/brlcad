@@ -358,7 +358,7 @@ public:
      * 3d point and normal in the same indices in the above
      * 3d point/normal vectors */
     std::vector<std::pair<double, double> > pnts_2d;
-    std::map<std::pair<double, double>, int> p2d2ind;
+    std::map<long, long> p2d2ind;
 
     /* Setup / Repair */
     long add_point(ON_2dPoint &on_2dp);

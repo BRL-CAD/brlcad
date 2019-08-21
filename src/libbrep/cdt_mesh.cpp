@@ -550,7 +550,7 @@ cpolygon_t::best_fit_plane()
 
     ON_3dVector avgtnorm(0.0,0.0,0.0);
     for (a_it = averts.begin(); a_it != averts.end(); a_it++) {
-	ON_3dPoint *vn = cdt_mesh->normals[cdt_mesh->nmap[*a_it]];
+	ON_3dPoint *vn = cdt_mesh->normals[cdt_mesh->nmap[cdt_mesh->p2d2ind[p2f[*a_it]]]];
 	if (vn) {
 	    avgtnorm += *vn;
 	    ncnt++;
@@ -564,7 +564,7 @@ cpolygon_t::best_fit_plane()
         point_t *vpnts = (point_t *)bu_calloc(averts.size()+1, sizeof(point_t), "fitting points");
         int pnts_ind = 0;
 	for (a_it = averts.begin(); a_it != averts.end(); a_it++) {
-            ON_3dPoint *p = cdt_mesh->pnts[*a_it];
+            ON_3dPoint *p = cdt_mesh->pnts[cdt_mesh->p2d2ind[p2f[*a_it]]];
             vpnts[pnts_ind][X] = p->x;
             vpnts[pnts_ind][Y] = p->y;
             vpnts[pnts_ind][Z] = p->z;
@@ -938,7 +938,7 @@ void cpolygon_t::polygon_plot_3d(const char *filename)
 
     point_t bnp;
     ON_3dPoint *p;
-    p = cdt_mesh->pnts[p2f[efirst->v[0]]];
+    p = cdt_mesh->pnts[cdt_mesh->p2d2ind[p2f[efirst->v[0]]]];
     VSET(bnp, p->x, p->y, p->z);
 
     struct uedge_t ue;
@@ -950,7 +950,7 @@ void cpolygon_t::polygon_plot_3d(const char *filename)
     }
 
     pdv_3move(plot_file, bnp);
-    p = cdt_mesh->pnts[p2f[efirst->v[1]]];
+    p = cdt_mesh->pnts[cdt_mesh->p2d2ind[p2f[efirst->v[1]]]];
     VSET(bnp, p->x, p->y, p->z);
     pdv_3cont(plot_file, bnp);
 
@@ -964,7 +964,7 @@ void cpolygon_t::polygon_plot_3d(const char *filename)
 	} else {
 	    pl_color_buc(plot_file, &c);
 	}
-	p = cdt_mesh->pnts[p2f[ecurr->v[1]]];
+	p = cdt_mesh->pnts[cdt_mesh->p2d2ind[p2f[ecurr->v[1]]]];
 	VSET(bnp, p->x, p->y, p->z);
 	pdv_3cont(plot_file, bnp);
     	if (ecnt > poly.size()) {
@@ -1178,16 +1178,16 @@ void cpolygon_t::print()
     if (self_isect_edges.size()) {
 	std::cout << "Self-intersecting edges from polygon:\n";
 	for (sie_it = self_isect_edges.begin(); sie_it != self_isect_edges.end(); sie_it++) {
-	    p = cdt_mesh->pnts[p2f[sie_it->v[0]]];
+	    p = cdt_mesh->pnts[cdt_mesh->p2d2ind[p2f[sie_it->v[0]]]];
 	    std::cout << sie_it->v[0] << "(" << p->x << "," << p->y << "," << p->z << ")<->";
-	    p = cdt_mesh->pnts[p2f[sie_it->v[1]]];
+	    p = cdt_mesh->pnts[cdt_mesh->p2d2ind[p2f[sie_it->v[1]]]];
 	    std::cout << sie_it->v[1] << "(" << p->x << "," << p->y << "," << p->z << ")\n";
 	}
     }
 
     // Print the 3D points
     next = first->next;
-    p = cdt_mesh->pnts[p2f[first->v[0]]];
+    p = cdt_mesh->pnts[cdt_mesh->p2d2ind[p2f[first->v[0]]]];
     std::cout << "(" << p->x << "," << p->y << "," << p->z << ")->";
     ecnt = 1;
     while (first != next) {
@@ -1195,7 +1195,7 @@ void cpolygon_t::print()
 	if (!next) {
 	    break;
 	}
-	p = cdt_mesh->pnts[p2f[next->v[0]]];
+	p = cdt_mesh->pnts[cdt_mesh->p2d2ind[p2f[next->v[0]]]];
 	std::cout << "(" << p->x << "," << p->y << "," << p->z << ")->";
 	visited.insert(next);
 	next = next->next;
@@ -1204,7 +1204,7 @@ void cpolygon_t::print()
 	    break;
 	}
     }
-    p = cdt_mesh->pnts[p2f[first->v[0]]];
+    p = cdt_mesh->pnts[cdt_mesh->p2d2ind[p2f[first->v[0]]]];
     std::cout << "(" << p->x << "," << p->y << "," << p->z << ")\n";
 
     if (visited.size() != poly.size()) {
@@ -1784,7 +1784,6 @@ cdt_mesh_t::add_point(ON_2dPoint &on_2dp)
     proj_2d.first = on_2dp.x;
     proj_2d.second = on_2dp.y;
     pnts_2d.push_back(proj_2d);
-    p2d2ind[proj_2d] = pnts_2d.size() - 1;
     return (long)(pnts_2d.size() - 1);
 }
 
@@ -2081,9 +2080,9 @@ cdt_mesh_t::uedges(const triangle_t &t)
 ON_3dVector
 cdt_mesh_t::tnorm(const triangle_t &t)
 {
-    ON_3dPoint *p1 = this->pnts[t.v[0]];
-    ON_3dPoint *p2 = this->pnts[t.v[1]];
-    ON_3dPoint *p3 = this->pnts[t.v[2]];
+    ON_3dPoint *p1 = this->pnts[p2d2ind[t.v[0]]];
+    ON_3dPoint *p2 = this->pnts[p2d2ind[t.v[1]]];
+    ON_3dPoint *p3 = this->pnts[p2d2ind[t.v[2]]];
 
     ON_3dVector e1 = *p2 - *p1;
     ON_3dVector e2 = *p3 - *p1;
@@ -2098,7 +2097,7 @@ cdt_mesh_t::tcenter(const triangle_t &t)
     ON_3dPoint avgpnt(0,0,0);
 
     for (size_t i = 0; i < 3; i++) {
-	ON_3dPoint *p3d = this->pnts[t.v[i]];
+	ON_3dPoint *p3d = this->pnts[p2d2ind[t.v[i]]];
 	avgpnt = avgpnt + *p3d;
     }
 
@@ -2121,7 +2120,7 @@ cdt_mesh_t::bnorm(const triangle_t &t)
 	    // singular vert norms are a product of multiple faces - not useful for this
 	    continue;
 	}
-	ON_3dPoint onrm = *normals[nmap[t.v[i]]];
+	ON_3dPoint onrm = *normals[nmap[p2d2ind[t.v[i]]]];
 	if (this->m_bRev) {
 	    onrm = onrm * -1;
 	}
@@ -2698,7 +2697,7 @@ void cdt_mesh_t::plot_tri(const triangle_t &t, struct bu_color *buc, FILE *plot,
     point_t porig;
     point_t c = VINIT_ZERO;
     for (int i = 0; i < 3; i++) {
-	ON_3dPoint *p3d = this->pnts[t.v[i]];
+	ON_3dPoint *p3d = this->pnts[p2d2ind[t.v[i]]];
 	VSET(p[i], p3d->x, p3d->y, p3d->z);
 	c[X] += p3d->x;
 	c[Y] += p3d->y;

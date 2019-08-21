@@ -208,11 +208,13 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg)
     cdt_mesh::cdt_mesh_t *fmesh1 = &s_cdt->fmeshes[face1->m_face_index];
     cdt_mesh::cdt_mesh_t *fmesh2 = &s_cdt->fmeshes[face2->m_face_index];
 
+    // Update the 2D and 2D->3D info in the fmeshes
     long f1_ind2d = fmesh1->add_point(trim1_mid_2d);
-    long f2_ind2d = fmesh2->add_point(trim2_mid_2d);
-
     long f1_ind3d = fmesh1->add_point(mid_3d);
+    fmesh1->p2d2ind[f1_ind2d] = f1_ind3d;
+    long f2_ind2d = fmesh2->add_point(trim2_mid_2d);
     long f2_ind3d = fmesh2->add_point(mid_3d);
+    fmesh2->p2d2ind[f2_ind2d] = f2_ind3d;
 
     ON_3dVector norm1 = trim_normal(trim1, trim1_mid_2d);
     fmesh1->normals.push_back(new ON_3dPoint(norm1));
