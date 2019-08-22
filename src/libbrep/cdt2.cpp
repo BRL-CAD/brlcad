@@ -223,6 +223,11 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg)
 	edge_mid_tan = ON_3dVector::UnsetVector;
     }
 
+    // TODO - unless we're forcing a split (need a flag for that) this is the point
+    // at which we should be doing tolerance based testing to determine whether to
+    // proceed with the split or hault.
+
+
     // edge_mid_3d is a new point in the cdt and the fmesh, as well as a new
     // edge point - add it to the appropriate containers
     ON_3dPoint *mid_3d = new ON_3dPoint(edge_mid_3d);
