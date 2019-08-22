@@ -5533,8 +5533,8 @@ to_data_move_point_mode_func(struct ged *gedp,
 
     gedp->ged_gvp = gdvp->gdv_view;
 
-    if (bu_sscanf(argv[2], "%d", &x) != 1 ||
-	bu_sscanf(argv[3], "%d", &y) != 1) {
+    if (bu_sscanf(argv[1], "%d", &x) != 1 ||
+	bu_sscanf(argv[2], "%d", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
