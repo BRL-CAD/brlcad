@@ -193,6 +193,36 @@ get_trim_midpt(fastf_t *t, struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_
     return trim_mid_2d;
 }
 
+bool
+tol_need_split(struct ON_Brep_CDT_State *UNUSED(s_cdt), cdt_mesh::bedge_seg_t *bseg, ON_3dPoint &edge_mid_3d)
+{
+    int dosplit = 0;
+
+    ON_Line line3d(*(bseg->e_start), *(bseg->e_end));
+    double dist3d = edge_mid_3d.DistanceTo(line3d.ClosestPointTo(edge_mid_3d));
+#if 0
+    dosplit += (line3d.Length() > bseg->cdt_tol.max_dist) ? 1 : 0;
+    dosplit += (dist3d > (bseg->cdt_tol.within_dist + ON_ZERO_TOLERANCE)) ? 1 : 0;
+    dosplit += (dist3d > 2*bseg->loop_min_dist) ? 1 : 0;
+
+    if ((dist3d > bseg->cdt_tol.min_dist + ON_ZERO_TOLERANCE)) {
+	if (!dosplit) {
+	    dosplit += ((bseg->sbtp1->tangent * bseg->ebtp1->tangent) < bseg->s_cdt->cos_within_ang - ON_ZERO_TOLERANCE) ? 1 : 0;
+	}
+
+	if (!dosplit && bseg->sbtp1->normal != ON_3dVector::UnsetVector && bseg->ebtp1->normal != ON_3dVector::UnsetVector) {
+	    dosplit += ((bseg->sbtp1->normal * bseg->ebtp1->normal) < bseg->s_cdt->cos_within_ang - ON_ZERO_TOLERANCE) ? 1 : 0;
+	}
+
+	if (!dosplit && bseg->sbtp2->normal != ON_3dVector::UnsetVector && bseg->ebtp2->normal != ON_3dVector::UnsetVector) {
+	    dosplit += ((bseg->sbtp2->normal * bseg->ebtp2->normal) < bseg->s_cdt->cos_within_ang - ON_ZERO_TOLERANCE) ? 1 : 0;
+	}
+    }
+#endif
+
+    return (dist3d > 0 && dosplit > 0);
+}
+
 std::set<cdt_mesh::bedge_seg_t *>
 split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int force)
 {
@@ -221,13 +251,11 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int
 	edge_mid_tan = ON_3dVector::UnsetVector;
     }
 
-    // TODO - unless we're forcing a split (need a flag for that) this is the point
-    // at which we should be doing tolerance based testing to determine whether to
-    // proceed with the split or halt.
-    if (!force) {
-	std::cout << "TODO - tol testing\n";
+    // Unless we're forcing a split this is the point at which we do tolerance
+    // based testing to determine whether to proceed with the split or halt.
+    if (!force && !tol_need_split(s_cdt, bseg, edge_mid_3d)) {
+	return nedges;
     }
-
 
     // edge_mid_3d is a new point in the cdt and the fmesh, as well as a new
     // edge point - add it to the appropriate containers
