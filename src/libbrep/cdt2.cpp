@@ -78,7 +78,7 @@ trim_normal(ON_BrepTrim *trim, ON_2dPoint &cp)
 
 
 double
-midpnt_binary_search(fastf_t *tmid, const ON_BrepTrim &trim, double tstart, double tend, ON_3dPoint &edge_mid_3d, double tol, int verbose)
+midpnt_binary_search(fastf_t *tmid, const ON_BrepTrim &trim, double tstart, double tend, ON_3dPoint &edge_mid_3d, double tol, int verbose, int depth, int force)
 {
     double tcmid = (tstart + tend) / 2.0;
     ON_3dPoint trim_mid_2d = trim.PointAt(tcmid);
@@ -86,7 +86,7 @@ midpnt_binary_search(fastf_t *tmid, const ON_BrepTrim &trim, double tstart, doub
     ON_3dPoint trim_mid_3d = s->PointAt(trim_mid_2d.x, trim_mid_2d.y);
     double dist = edge_mid_3d.DistanceTo(trim_mid_3d);
 
-    if (dist > tol) {
+    if (dist > tol && !force) {
 	ON_3dPoint trim_start_2d = trim.PointAt(tstart);
 	ON_3dPoint trim_end_2d = trim.PointAt(tend);
 	ON_3dPoint trim_start_3d = s->PointAt(trim_start_2d.x, trim_start_2d.y);
@@ -94,59 +94,89 @@ midpnt_binary_search(fastf_t *tmid, const ON_BrepTrim &trim, double tstart, doub
 
 	ON_3dVector v1 = edge_mid_3d - trim_start_3d;
 	ON_3dVector v2 = edge_mid_3d - trim_end_3d;
+	double sedist = trim_start_3d.DistanceTo(trim_end_3d);
 
 	if (verbose) {
-	    bu_log("start point (%f %f %f) and end point (%f %f %f)\n", trim_start_3d.x, trim_start_3d.y, trim_start_3d.z, trim_end_3d.x, trim_end_3d.y, trim_end_3d.z);
-	    bu_log("Note (%f:%f)%f - edge point (%f %f %f) and trim point (%f %f %f): %f, %f\n", tstart, tend, ON_DotProduct(v1,v2), edge_mid_3d.x, edge_mid_3d.y, edge_mid_3d.z, trim_mid_3d.x, trim_mid_3d.y, trim_mid_3d.z, dist, tol);
+	    //bu_log("start point (%f %f %f) and end point (%f %f %f)\n", trim_start_3d.x, trim_start_3d.y, trim_start_3d.z, trim_end_3d.x, trim_end_3d.y, trim_end_3d.z);
 	}
 
-	if (ON_DotProduct(v1,v2) < 0) {
-	    if (verbose)
-		bu_log("(%f - %f - %f (%f): searching left and right subspans\n", tstart, tcmid, tend, ON_DotProduct(v1,v2));
+	double vdot = ON_DotProduct(v1,v2);
+
+	if (vdot < 0) {
+	    //if (verbose)
+	    //	bu_log("(%f - %f - %f (%f): searching left and right subspans\n", tstart, tcmid, tend, ON_DotProduct(v1,v2));
 	    double tlmid, trmid;
-	    double fldist = midpnt_binary_search(&tlmid, trim, tstart, tcmid, edge_mid_3d, tol, 0);
-	    double frdist = midpnt_binary_search(&trmid, trim, tcmid, tend, edge_mid_3d, tol, 0);
+	    double fldist = midpnt_binary_search(&tlmid, trim, tstart, tcmid, edge_mid_3d, tol, verbose, depth+1, 0);
+	    double frdist = midpnt_binary_search(&trmid, trim, tcmid, tend, edge_mid_3d, tol, verbose, depth+1, 0);
 	    if (fldist >= 0 && frdist < -1) {
-		if (verbose)
-		    bu_log("(%f - %f - %f: going with fldist: %f\n", tstart, tcmid, tend, fldist);
+		//	if (verbose)
+		//	    bu_log("(%f - %f - %f: going with fldist: %f\n", tstart, tcmid, tend, fldist);
 		(*tmid) = tlmid;
 		return fldist;
 	    }
 	    if (frdist >= 0 && fldist < -1) {
-		if (verbose)
-		    bu_log("(%f - %f - %f: going with frdist: %f\n", tstart, tcmid, tend, frdist);
+		//	if (verbose)
+		//	    bu_log("(%f - %f - %f: going with frdist: %f\n", tstart, tcmid, tend, frdist);
 		(*tmid) = trmid;
 		return frdist;
 	    }
 	    if (fldist < -1 && frdist < -1) {
-		if (verbose)
-		    bu_log("(%f - %f: point not in either subspan (%f)\n", tstart, tend, ON_DotProduct(v1,v2));
-		return -2;
+		fldist = midpnt_binary_search(&tlmid, trim, tstart, tcmid, edge_mid_3d, tol, verbose, depth+1, 1);
+		frdist = midpnt_binary_search(&trmid, trim, tcmid, tend, edge_mid_3d, tol, verbose, depth+1, 1);
+		if (verbose) {
+		    bu_log("Trim %d: point not in either subspan according to dot product (distances are %f and %f, distance between sampling segment ends is %f), forcing the issue\n", trim.m_trim_index, fldist, frdist, sedist);
+		}
+
+		if ((fldist < frdist) && (fldist < dist)) {
+		    (*tmid) = tlmid;
+		    return fldist;
+		}
+		if ((frdist < fldist) && (frdist < dist)) {
+		    (*tmid) = trmid;
+		    return frdist;
+		}
+		(*tmid) = tcmid;
+		return dist;
+
 	    }
+	} else if (NEAR_ZERO(vdot, ON_ZERO_TOLERANCE)) {
+	    (*tmid) = tcmid;
+	    return dist;
 	} else {
 	    // Not in this span
-	    if (verbose)
-		bu_log("(%f - %f: point not in span (dot-product: %f)\n", tstart, tend, ON_DotProduct(v1,v2));
-	    return -2;
+	    if (verbose && depth < 2) {
+		//bu_log("Trim %d: (%f:%f)%f - edge point (%f %f %f) and trim point (%f %f %f): distance between them is %f, tol is %f, search seg length: %f\n", trim.m_trim_index, tstart, tend, ON_DotProduct(v1,v2), edge_mid_3d.x, edge_mid_3d.y, edge_mid_3d.z, trim_mid_3d.x, trim_mid_3d.y, trim_mid_3d.z, dist, tol, sedist);
+	    }
+	    if (depth == 0) {
+		(*tmid) = tcmid;
+		return dist;
+	    } else {
+		return -2;
+	    }
 	}
     }
 
     // close enough - this works
-    if (verbose)
-	bu_log("Workable (%f:%f) - edge point (%f %f %f) and trim point (%f %f %f): %f, %f\n", tstart, tend, edge_mid_3d.x, edge_mid_3d.y, edge_mid_3d.z, trim_mid_3d.x, trim_mid_3d.y, trim_mid_3d.z, dist, tol);
+    //if (verbose)
+    //	bu_log("Workable (%f:%f) - edge point (%f %f %f) and trim point (%f %f %f): %f, %f\n", tstart, tend, edge_mid_3d.x, edge_mid_3d.y, edge_mid_3d.z, trim_mid_3d.x, trim_mid_3d.y, trim_mid_3d.z, dist, tol);
 
     (*tmid) = tcmid;
     return dist;
 }
 
 ON_2dPoint
-get_trim_midpt(fastf_t *t, struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe, ON_3dPoint &edge_mid_3d, double elen)
+get_trim_midpt(fastf_t *t, struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe, ON_3dPoint &edge_mid_3d, double elen, double brep_edge_tol)
 {
-    int verbose = 1;
-    double tol = (elen < BN_TOL_DIST) ? 0.01*elen : 0.1*BN_TOL_DIST;
+    int verbose = 0;
+    double tol;
+    if (!NEAR_EQUAL(brep_edge_tol, ON_UNSET_VALUE, ON_ZERO_TOLERANCE)) {
+	tol = brep_edge_tol;
+    } else {
+	tol = (elen < BN_TOL_DIST) ? 0.01*elen : 0.1*BN_TOL_DIST;
+    }
     ON_BrepTrim& trim = s_cdt->brep->m_T[pe->trim_ind];
     double tmid;
-    double dist = midpnt_binary_search(&tmid, trim, pe->trim_start, pe->trim_end, edge_mid_3d, tol, 1);
+    double dist = midpnt_binary_search(&tmid, trim, pe->trim_start, pe->trim_end, edge_mid_3d, tol, 0, 0, 0);
     if (dist < 0) {
         if (verbose) {
             bu_log("Warning - could not find suitable trim point\n");
@@ -155,6 +185,9 @@ get_trim_midpt(fastf_t *t, struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_
     } else {
 	if (verbose && (dist > tol)) {
 	    bu_log("going with distance %f greater than desired tolerance %f\n", dist, tol);
+	    if (dist > 10*tol) {
+		dist = midpnt_binary_search(&tmid, trim, pe->trim_start, pe->trim_end, edge_mid_3d, tol, 0, 0, 0);
+	    }
 	}
     }
     ON_2dPoint trim_mid_2d = trim.PointAt(tmid);
@@ -168,6 +201,8 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg)
     std::set<cdt_mesh::bedge_seg_t *> nedges;
 
     if (!bseg->tseg1 || !bseg->tseg2 || !bseg->nc) return nedges;
+
+    //std::cout << "splitting edge " << bseg->edge_ind << "\n";
 
     ON_BrepEdge& edge = s_cdt->brep->m_E[bseg->edge_ind];
 
@@ -200,8 +235,8 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg)
     double elen = (elen1 + elen2) * 0.5;
     fastf_t t1mid, t2mid;
     ON_2dPoint trim1_mid_2d, trim2_mid_2d;
-    trim1_mid_2d = get_trim_midpt(&t1mid, s_cdt, bseg->tseg1, edge_mid_3d, elen);
-    trim2_mid_2d = get_trim_midpt(&t2mid, s_cdt, bseg->tseg2, edge_mid_3d, elen);
+    trim1_mid_2d = get_trim_midpt(&t1mid, s_cdt, bseg->tseg1, edge_mid_3d, elen, edge.m_tolerance);
+    trim2_mid_2d = get_trim_midpt(&t2mid, s_cdt, bseg->tseg2, edge_mid_3d, elen, edge.m_tolerance);
 
     // Let the fmeshes know about the new information, and find the normals for the
     // new point on each face.
@@ -570,8 +605,8 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	    } else {
 		cpoly = fmesh->inner_loops[li];
 	    }
-	    std::cout << "Face: " << face_index << ", Loop: " << li << "\n";
-	    cpoly->print();
+	    //std::cout << "Face: " << face_index << ", Loop: " << li << "\n";
+	    //cpoly->print();
 
 	    struct bu_vls fname = BU_VLS_INIT_ZERO;
 	    bu_vls_sprintf(&fname, "%d-%d-poly3d.plot3", face_index, li);
