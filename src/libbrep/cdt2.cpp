@@ -55,8 +55,6 @@ bseg_tangent(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, doubl
 		tangent = ON_3dVector::UnsetVector;
 	    }
 	}
-    } else {
-	tangent = ON_3dVector::UnsetVector;
     }
 
     return tangent;
