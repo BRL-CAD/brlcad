@@ -196,7 +196,7 @@ get_trim_midpt(fastf_t *t, struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_
 }
 
 std::set<cdt_mesh::bedge_seg_t *>
-split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg)
+split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int force)
 {
     std::set<cdt_mesh::bedge_seg_t *> nedges;
 
@@ -225,7 +225,10 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg)
 
     // TODO - unless we're forcing a split (need a flag for that) this is the point
     // at which we should be doing tolerance based testing to determine whether to
-    // proceed with the split or hault.
+    // proceed with the split or halt.
+    if (!force) {
+	std::cout << "TODO - tol testing\n";
+    }
 
 
     // edge_mid_3d is a new point in the cdt and the fmesh, as well as a new
@@ -361,7 +364,7 @@ initialize_edge_segs(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *e)
 
     // 1.  Any edges with at least 1 closed trim are split.
     if (trim1->IsClosed() || trim2->IsClosed()) {
-	esegs_closed = split_edge_seg(s_cdt, e);
+	esegs_closed = split_edge_seg(s_cdt, e, 1);
 	if (!esegs_closed.size()) {
 	    // split failed??
 	    return false;
@@ -378,7 +381,7 @@ initialize_edge_segs(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *e)
     if (!crv->IsLinear(BN_TOL_DIST)) {
 	std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
 	for (e_it = esegs_closed.begin(); e_it != esegs_closed.end(); e_it++) {
-	    std::set<cdt_mesh::bedge_seg_t *> etmp = split_edge_seg(s_cdt, *e_it);
+	    std::set<cdt_mesh::bedge_seg_t *> etmp = split_edge_seg(s_cdt, *e_it, 1);
 	    if (!etmp.size()) {
 		// split failed??
 		return false;
@@ -408,6 +411,7 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	ON_BrepEdge& edge = brep->m_E[index];
 	cdt_mesh::bedge_seg_t *bseg = new cdt_mesh::bedge_seg_t;
 	bseg->edge_ind = edge.m_edge_index;
+	bseg->brep = s_cdt->brep;
 
 	// Provide a normalize edge NURBS curve
 	const ON_Curve* crv = edge.EdgeCurveOf();
@@ -524,6 +528,8 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 		ne->trim_end = range.m_t[1];
 		if (trim->m_ei >= 0) {
 		    cdt_mesh::bedge_seg_t *eseg = *s_cdt->e2polysegs[trim->m_ei].begin();
+		    // Associate the edge segment with the trim segment and vice versa
+		    ne->eseg = eseg;
 		    if (eseg->tseg1 && eseg->tseg2) {
 			bu_log("error - more than two trims associated with an edge\n");
 			return -1;
@@ -545,7 +551,7 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
     }
 
     std::map<int, std::set<cdt_mesh::bedge_seg_t *>>::iterator epoly_it;
-#if 0
+#if 1
     // Initialize the tangents.
     for (epoly_it = s_cdt->e2polysegs.begin(); epoly_it != s_cdt->e2polysegs.end(); epoly_it++) {
 	std::set<cdt_mesh::bedge_seg_t *>::iterator seg_it;

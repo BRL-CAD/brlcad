@@ -19,6 +19,7 @@
 #include "bn/plot3.h"
 #include "bn/plane.h" /* bn_fit_plane */
 #include "bg/polygon.h"
+#include "brep.h"
 #include "./cdt_mesh.h"
 
 // needed for implementation
@@ -32,6 +33,168 @@
 
 namespace cdt_mesh
 {
+
+void
+plot_pnt_3d(FILE *plot_file, ON_3dPoint *p, double r, int dir)
+{
+    point_t origin, bnp;
+    VSET(origin, p->x, p->y, p->z);
+    pdv_3move(plot_file, origin);
+
+    if (dir == 0) {
+	VSET(bnp, p->x+r, p->y, p->z);
+	pdv_3cont(plot_file, bnp);
+	pdv_3cont(plot_file, origin);
+	VSET(bnp, p->x-r, p->y, p->z);
+	pdv_3cont(plot_file, bnp);
+	pdv_3cont(plot_file, origin);
+	VSET(bnp, p->x, p->y+r, p->z);
+	pdv_3cont(plot_file, bnp);
+	pdv_3cont(plot_file, origin);
+	VSET(bnp, p->x, p->y-r, p->z);
+	pdv_3cont(plot_file, bnp);
+	pdv_3cont(plot_file, origin);
+	VSET(bnp, p->x, p->y, p->z+r);
+	pdv_3cont(plot_file, bnp);
+	pdv_3cont(plot_file, origin);
+	VSET(bnp, p->x, p->y, p->z-r);
+	pdv_3cont(plot_file, bnp);
+	pdv_3cont(plot_file, origin);
+    }
+    if (dir == 1) {
+	VSET(bnp, p->x+r, p->y+r, p->z+r);
+	pdv_3cont(plot_file, bnp);
+	pdv_3cont(plot_file, origin);
+	VSET(bnp, p->x+r, p->y-r, p->z+r);
+	pdv_3cont(plot_file, bnp);
+	pdv_3cont(plot_file, origin);
+	VSET(bnp, p->x-r, p->y+r, p->z+r);
+	pdv_3cont(plot_file, bnp);
+	pdv_3cont(plot_file, origin);
+	VSET(bnp, p->x-r, p->y-r, p->z+r);
+	pdv_3cont(plot_file, bnp);
+	pdv_3cont(plot_file, origin);
+
+	VSET(bnp, p->x+r, p->y+r, p->z-r);
+	pdv_3cont(plot_file, bnp);
+	pdv_3cont(plot_file, origin);
+	VSET(bnp, p->x+r, p->y-r, p->z-r);
+	pdv_3cont(plot_file, bnp);
+	pdv_3cont(plot_file, origin);
+	VSET(bnp, p->x-r, p->y+r, p->z-r);
+	pdv_3cont(plot_file, bnp);
+	pdv_3cont(plot_file, origin);
+	VSET(bnp, p->x-r, p->y-r, p->z-r);
+	pdv_3cont(plot_file, bnp);
+	pdv_3cont(plot_file, origin);
+    }
+}
+
+void
+plot_vec_3d(FILE *plot_file, ON_3dPoint *p, ON_3dVector *v, double elen)
+{
+    point_t origin, bnp;
+    VSET(origin, p->x, p->y, p->z);
+    pdv_3move(plot_file, origin);
+
+    ON_3dVector vp = *v;
+    vp.Unitize();
+    vp = vp * elen;
+    ON_3dPoint np = *p + vp;
+
+    VSET(bnp, np.x, np.y, np.z);
+    pdv_3cont(plot_file, bnp);
+}
+
+
+void
+plot_seg_3d(FILE *plot_file, ON_3dPoint *p1, ON_3dPoint *p2)
+{
+    point_t origin, bnp;
+    VSET(origin, p1->x, p1->y, p1->z);
+    pdv_3move(plot_file, origin);
+    VSET(bnp, p2->x, p2->y, p2->z);
+    pdv_3cont(plot_file, bnp);
+}
+
+void
+cpolyedge_t::plot3d(const char *fname, int mappings)
+{
+    // What the Brep says
+    if (!mappings) {
+	if (eseg) {
+	    ON_Brep *brep = eseg->brep;
+	    ON_BrepTrim& trim = brep->m_T[trim_ind];
+	    ON_3dPoint trim_s_2d = trim.PointAt(trim_start);
+	    ON_3dPoint trim_e_2d = trim.PointAt(trim_end);
+	    ON_3dPoint trim_s_3d, trim_e_3d;
+	    ON_3dVector trim_s_norm, trim_e_norm;
+	    surface_EvNormal(trim.SurfaceOf(), trim_s_2d.x, trim_s_2d.y, trim_s_3d, trim_s_norm);
+	    surface_EvNormal(trim.SurfaceOf(), trim_e_2d.x, trim_e_2d.y, trim_e_3d, trim_e_norm);
+	    double slen = trim_s_3d.DistanceTo(trim_e_3d);
+
+	    FILE* plot_file = fopen(fname, "w");
+
+	    pl_color(plot_file, 0, 0, 255);
+	    plot_seg_3d(plot_file, &trim_s_3d, &trim_e_3d);
+
+	    pl_color(plot_file, 255, 0, 0);
+	    plot_pnt_3d(plot_file, &trim_s_3d, 0.05*slen, 0);
+	    plot_vec_3d(plot_file, &trim_s_3d, &trim_s_norm, 0.2*slen);
+	    pl_color(plot_file, 0, 255, 0);
+	    plot_pnt_3d(plot_file, &trim_e_3d, 0.05*slen, 0);
+	    plot_vec_3d(plot_file, &trim_e_3d, &trim_e_norm, 0.2*slen);
+
+	    fclose(plot_file);
+	} else {
+	    std::cout << "no brep information available on trim segment\n";
+	}
+
+	return;
+    }
+
+    // What the indices and mappings say
+    ON_3dPoint *t_s = polygon->cdt_mesh->pnts[polygon->cdt_mesh->p2d2ind[polygon->p2f[v[0]]]];
+    ON_3dPoint *t_e = polygon->cdt_mesh->pnts[polygon->cdt_mesh->p2d2ind[polygon->p2f[v[1]]]];
+    ON_3dPoint *t_sn = polygon->cdt_mesh->normals[polygon->cdt_mesh->nmap[polygon->cdt_mesh->p2d2ind[polygon->p2f[v[0]]]]];
+    ON_3dPoint *t_en = polygon->cdt_mesh->normals[polygon->cdt_mesh->nmap[polygon->cdt_mesh->p2d2ind[polygon->p2f[v[1]]]]];
+    double slen = t_s->DistanceTo(*t_e);
+    ON_3dVector t_sv(*t_sn);
+    ON_3dVector t_ev(*t_en);
+
+    FILE* plot_file = fopen(fname, "w");
+    pl_color(plot_file, 0, 0, 254);
+    plot_seg_3d(plot_file, t_s, t_e);
+
+    pl_color(plot_file, 254, 0, 0);
+    plot_pnt_3d(plot_file, t_s, 0.05*slen, 1);
+    plot_vec_3d(plot_file, t_s, &t_sv, 0.2*slen);
+    pl_color(plot_file, 0, 254, 0);
+    plot_pnt_3d(plot_file, t_e, 0.05*slen, 1);
+    plot_vec_3d(plot_file, t_e, &t_ev, 0.2*slen);
+
+    fclose(plot_file);
+}
+
+void
+bedge_seg_t::plot(const char *fname)
+{
+    FILE* plot_file = fopen(fname, "w");
+
+    double slen = e_start->DistanceTo(*e_end);
+    double plen = 0.05*slen;
+
+    pl_color(plot_file, 0, 0, 255);
+    plot_seg_3d(plot_file, e_start, e_end);
+    pl_color(plot_file, 255, 0, 0);
+    plot_pnt_3d(plot_file, e_start, plen, 0);
+    plot_vec_3d(plot_file, e_start, &tan_start, 0.2*slen);
+    pl_color(plot_file, 0, 255, 0);
+    plot_pnt_3d(plot_file, e_end, plen, 0);
+    plot_vec_3d(plot_file, e_end, &tan_end, 0.2*slen);
+
+    fclose(plot_file);
+}
 
 /***************************/
 /* CPolygon implementation */

@@ -192,6 +192,7 @@ class bedge_seg_t {
 	bedge_seg_t() {
 	    edge_ind = -1;
 	    nc = NULL;
+	    brep = NULL;
 	    tseg1 = NULL;
 	    tseg2 = NULL;
 	    edge_start = DBL_MAX;
@@ -204,6 +205,7 @@ class bedge_seg_t {
 
 	bedge_seg_t(bedge_seg_t *other) {
 	    edge_ind = other->edge_ind;
+	    brep = other->brep;
 	    nc = other->nc;
 	    tseg1 = NULL;
 	    tseg2 = NULL;
@@ -215,8 +217,11 @@ class bedge_seg_t {
 	    tan_end = ON_3dVector::UnsetVector;
 	};
 
+	void plot(const char *fname);
+
 	int edge_ind;
 	ON_NurbsCurve *nc;
+	ON_Brep *brep;
 
 	cpolyedge_t *tseg1;
 	cpolyedge_t *tseg2;
@@ -246,12 +251,16 @@ class cpolyedge_t
 	    next = NULL;
 	};
 
+	void plot3d(const char *fname, int mappings);
+
 	/* For those instance when we're working
 	 * Brep edge polygons */
 	int trim_ind;
 	double trim_start;
 	double trim_end;
 	bedge_seg_t *eseg;
+
+	void plot(const char *fname);
 };
 
 class cdt_mesh_t;
