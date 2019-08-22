@@ -309,6 +309,9 @@ class cpolygon_t
 	/* Map from pnts_2d points in polygon to the same points in the cdt_mesh */
 	std::map<long, long> p2f;
 
+	/* Method to get 3D point corresponding to polygon point */
+	ON_3dPoint *p3d(long ind);
+
 	bool cdt();
 
 	bool closed();
@@ -416,6 +419,11 @@ public:
     void ctris_vect_plot(std::vector<struct ctriangle_t> &tvect, const char *filename);
     void tris_plot(const char *filename);
     void tri_plot(const triangle_t &tri, const char *filename);
+
+    /* Method to get 3D point corresponding to 2D point */
+    ON_3dPoint *p3d(long ind);
+    /* Method to get 3D normal corresponding to 2D point */
+    ON_3dPoint *n3d(long ind);
 
     int f_id;
 

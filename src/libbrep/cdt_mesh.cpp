@@ -154,10 +154,10 @@ cpolyedge_t::plot3d(const char *fname, int mappings)
     }
 
     // What the indices and mappings say
-    ON_3dPoint *t_s = polygon->cdt_mesh->pnts[polygon->cdt_mesh->p2d2ind[polygon->p2f[v[0]]]];
-    ON_3dPoint *t_e = polygon->cdt_mesh->pnts[polygon->cdt_mesh->p2d2ind[polygon->p2f[v[1]]]];
-    ON_3dPoint *t_sn = polygon->cdt_mesh->normals[polygon->cdt_mesh->nmap[polygon->cdt_mesh->p2d2ind[polygon->p2f[v[0]]]]];
-    ON_3dPoint *t_en = polygon->cdt_mesh->normals[polygon->cdt_mesh->nmap[polygon->cdt_mesh->p2d2ind[polygon->p2f[v[1]]]]];
+    ON_3dPoint *t_s = polygon->p3d(v[0]);
+    ON_3dPoint *t_e = polygon->p3d(v[1]);
+    ON_3dPoint *t_sn = polygon->cdt_mesh->n3d(polygon->p2f[v[0]]);
+    ON_3dPoint *t_en = polygon->cdt_mesh->n3d(polygon->p2f[v[1]]);
     double slen = t_s->DistanceTo(*t_e);
     ON_3dVector t_sv(*t_sn);
     ON_3dVector t_ev(*t_en);
@@ -199,6 +199,12 @@ bedge_seg_t::plot(const char *fname)
 /***************************/
 /* CPolygon implementation */
 /***************************/
+
+ON_3dPoint *
+cpolygon_t::p3d(long ind)
+{
+    return cdt_mesh->p3d(p2f[ind]);
+}
 
 long
 cpolygon_t::add_point(ON_2dPoint &on_2dp)
@@ -1939,6 +1945,19 @@ cpolygon_t::build_initial_loop(triangle_t &seed, bool repair)
 /***************************/
 /* CDT_Mesh implementation */
 /***************************/
+
+ON_3dPoint *
+cdt_mesh_t::p3d(long ind)
+{
+    return pnts[p2d2ind[ind]];
+}
+
+ON_3dPoint *
+cdt_mesh_t::n3d(long ind)
+{
+    return normals[nmap[p2d2ind[ind]]];
+}
+
 
 long
 cdt_mesh_t::add_point(ON_2dPoint &on_2dp)
