@@ -594,6 +594,12 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	}
     }
 
+    // TODO - move the nonlinear and linear edge splitting based on tolerances back in.
+
+    // TODO - build RTree of bsegs for edge aware surface point building
+
+    // TODO - adapt surface point sampling to new setup
+
     for (int face_index = 0; face_index < brep->m_F.Count(); face_index++) {
 	ON_BrepFace &face = s_cdt->brep->m_F[face_index];
 	int loop_cnt = face.LoopCount();
