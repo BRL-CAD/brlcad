@@ -543,7 +543,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	}
 
 	// EXPERIMENT
-	//ON_Brep_CDT_Tessellate2(s_cdt);
+	ON_Brep_CDT_Tessellate2(s_cdt);
 
 	/* To generate watertight meshes, the faces *must* share 3D edge points.  To ensure
 	 * a uniform set of edge points, we first sample all the edges and build their

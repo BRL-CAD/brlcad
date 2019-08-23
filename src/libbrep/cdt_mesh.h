@@ -356,14 +356,9 @@ class cdt_mesh_t
 {
 public:
 
-    /* Data containers */
-    std::vector<ON_3dPoint *> pnts;
-    std::map<ON_3dPoint *, long> p2ind;
-    std::vector<ON_3dPoint *> normals;
-    std::map<ON_3dPoint *, long> n2ind;
-    std::map<long, long> nmap;
+    /* The 3D triangle set (defined by index values) and it associated points array */
     std::set<triangle_t> tris;
-    std::map<uedge_t, std::set<triangle_t>> uedges2tris;
+    std::vector<ON_3dPoint *> pnts;
 
     /* Setup / Repair */
     long add_point(ON_2dPoint &on_2dp);
@@ -382,12 +377,7 @@ public:
     bool serialize(const char *fname);
     bool deserialize(const char *fname);
 
-
-    /* Brep UV space information - every point in here should have its
-     * 3d point and normal in the same indices in the above
-     * 3d point/normal vectors.  The tris_2d triangles are defined
-     * in terms of pnts_2d and are not guaranteed to map to unique
-     * 3D triangles. */
+    /* Triangulation related functions and data. */
     bool cdt();
     std::set<triangle_t> tris_2d;
     std::vector<std::pair<double, double> > m_pnts_2d;
@@ -396,7 +386,6 @@ public:
     std::map<int, cpolygon_t*> inner_loops;
     std::set<long> m_interior_pnts;
     bool initialize_interior_pnts(std::set<ON_2dPoint *>);
-
 
     /* Mesh data set accessors */
     std::set<uedge_t> get_boundary_edges();
@@ -414,9 +403,6 @@ public:
     ON_3dVector tnorm(const triangle_t &t);
     std::set<uedge_t> uedges(const triangle_t &t);
 
-    /* Working data set shared with sweep/polygon */
-    std::set<triangle_t> seed_tris;
-
     // Plot3 generation routines for debugging
     void boundary_edges_plot(const char *filename);
     void face_neighbors_plot(const triangle_t &f, const char *filename);
@@ -429,6 +415,13 @@ public:
     void tri_plot(const triangle_t &tri, const char *filename);
 
     int f_id;
+
+    /* Data containers */
+    std::map<ON_3dPoint *, long> p2ind;
+    std::vector<ON_3dPoint *> normals;
+    std::map<ON_3dPoint *, long> n2ind;
+    std::map<long, long> nmap;
+    std::map<uedge_t, std::set<triangle_t>> uedges2tris;
 
 private:
     /* Data containers */
@@ -496,6 +489,9 @@ private:
 
     void polygon_plot_2d(cpolygon_t *polygon, const char *filename);
     void polygon_plot_3d(cpolygon_t *polygon, const char *filename);
+
+    /* Working polygon sweeping seed triangle set */
+    std::set<triangle_t> seed_tris;
 
 };
 

@@ -2218,6 +2218,7 @@ cdt_mesh_t::cdt()
 		  steiner, m_interior_pnts.size(), bgp_2d, m_pnts_2d.size(),
 		  TRI_CONSTRAINED_DELAUNAY);
 
+    tris_2d.clear();
     if (result) {
 	for (int i = 0; i < num_faces; i++) {
 	    triangle_t t;
@@ -2244,6 +2245,18 @@ cdt_mesh_t::cdt()
 
     if (steiner) {
 	bu_free(steiner, "faces array");
+    }
+
+    // Use the 2D triangles to create the face 3D triangle mesh
+    reset();
+    std::set<triangle_t>::iterator tr_it;
+    for (tr_it = tris_2d.begin(); tr_it != tris_2d.end(); tr_it++) {
+	triangle_t tri2d = *tr_it;
+	triangle_t tri3d;
+	tri3d.v[0] = p2ind[pnts[p2d3d[tri2d.v[0]]]];
+	tri3d.v[1] = p2ind[pnts[p2d3d[tri2d.v[1]]]];
+	tri3d.v[2] = p2ind[pnts[p2d3d[tri2d.v[2]]]];
+	tri_add(tri3d);
     }
 
     return result;
