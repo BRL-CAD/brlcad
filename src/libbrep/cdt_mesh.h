@@ -278,21 +278,6 @@ class cpolygon_t
 {
     public:
 
-	// Project cdt_mesh 3D points into a 2D point array.  Probably won't use all of
-	// them, but this way vert indices on triangles will match in 2D and 3D.
-	void build_2d_pnts(ON_3dPoint &c, ON_3dVector &n);
-
-	// An initial loop may not contain all the interior points - to ensure it does,
-	// use grow_loop with a large deg value and the stop_on_contained flag set.
-	bool build_initial_loop(triangle_t &seed, bool repair);
-
-	// To grow only until all interior points are within the polygon, supply true
-	// for stop_on_contained.  Otherwise, grow_loop will follow the triangles out
-	// until the Brep normals of the triangles are beyond the deg limit.  Note
-	// that triangles which would cause a self-intersecting polygon will be
-	// rejected, even if they satisfy deg.
-	long grow_loop(double deg, bool stop_on_contained, triangle_t &target);
-
 	std::set<triangle_t> visited_triangles;
 	std::set<triangle_t> tris;
 
@@ -303,10 +288,7 @@ class cpolygon_t
 	// Means to update the point array if we're incrementally building
 	long add_point(ON_2dPoint &on_2dp);
 
-	cdt_mesh_t *cdt_mesh;
-
 	void polygon_plot(const char *filename);
-	void polygon_plot_3d(const char *filename);
 	void print();
 
 	std::set<cpolyedge_t *> poly;
@@ -322,16 +304,12 @@ class cpolygon_t
 	bool closed();
 	bool self_intersecting();
 
-	bool best_fit_plane();
-
 	bool point_in_polygon(long v, bool flip);
+
 	// Apply the point-in-polygon test to all uncontained points, moving any inside the loop into interior_points
 	bool have_uncontained();
 
-	long tri_process(std::set<uedge_t> *ne, std::set<uedge_t> *se, long *nv, triangle_t &t);
-
 	void polygon_plot_in_plane(const char *filename);
-	void plot_best_fit_plane(const char *filename);
 
 	std::map<long, std::set<cpolyedge_t *>> v2pe;
 	std::set<long> used_verts; /* both interior and active points - for a quick check if a point is active */
@@ -342,6 +320,8 @@ class cpolygon_t
 
 	std::set<uedge_t> active_edges;
 	std::set<uedge_t> self_isect_edges;
+
+	std::set<long> brep_edge_pnts;
 
 	long shared_edge_cnt(triangle_t &t);
 	long unshared_vertex(triangle_t &t);
@@ -354,7 +334,8 @@ class cpolygon_t
 	ON_Plane fit_plane;
 	ON_3dVector pdir;
 
-	std::vector<struct ctriangle_t> polygon_tris(double angle, bool brep_norm, int initial);
+
+	std::set<triangle_t> ltris;
 };
 
 
@@ -396,17 +377,17 @@ public:
      * 3D triangles. */
     bool cdt();
     std::set<triangle_t> tris_2d;
-    std::vector<std::pair<double, double> > pnts_2d;
+    std::vector<std::pair<double, double> > m_pnts_2d;
     std::map<long, long> p2d3d;
     cpolygon_t outer_loop;
     std::map<int, cpolygon_t*> inner_loops;
-    std::set<long> interior_pnts;
+    std::set<long> m_interior_pnts;
     bool initialize_interior_pnts(std::set<ON_2dPoint *>);
 
 
     /* Mesh data set accessors */
     std::set<uedge_t> get_boundary_edges();
-    std::set<uedge_t> get_problem_edges();
+    void update_problem_edges();
     std::vector<triangle_t> face_neighbors(const triangle_t &f);
     std::vector<triangle_t> vertex_face_neighbors(long vind);
 
@@ -477,6 +458,32 @@ private:
     // Plotting utility functions
     void plot_tri(const triangle_t &t, struct bu_color *buc, FILE *plot, int r, int g, int b);
     void plot_uedge(struct uedge_t &ue, FILE* plot_file);
+
+
+    // Repair functionality using cpolygon
+
+    // Use the seed triangle and build an initial loop.  If repair is set, find a nearby triangle that is
+    // valid and use that instead.
+    cpolygon_t *build_initial_loop(triangle_t &seed, bool repair);
+
+    std::vector<struct ctriangle_t> polygon_tris(cpolygon_t *polygon, double angle, bool brep_norm, int initial);
+
+    // To grow only until all interior points are within the polygon, supply true
+    // for stop_on_contained.  Otherwise, grow_loop will follow the triangles out
+    // until the Brep normals of the triangles are beyond the deg limit.  Note
+    // that triangles which would cause a self-intersecting polygon will be
+    // rejected, even if they satisfy deg.
+    long grow_loop(cpolygon_t *polygon, double deg, bool stop_on_contained, triangle_t &target);
+
+    bool best_fit_plane_reproject(cpolygon_t *polygon);
+
+    long tri_process(cpolygon_t *polygon, std::set<uedge_t> *ne, std::set<uedge_t> *se, long *nv, triangle_t &t);
+
+    bool oriented_polycdt(cpolygon_t *polygon);
+
+    void polygon_plot_2d(cpolygon_t *polygon, const char *filename);
+    void polygon_plot_3d(cpolygon_t *polygon, const char *filename);
+
 };
 
 }
