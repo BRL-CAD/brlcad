@@ -251,7 +251,7 @@ class cpolyedge_t
 	    next = NULL;
 	};
 
-	void plot3d(const char *fname, int mappings);
+	void plot3d(const char *fname);
 
 	/* For those instance when we're working
 	 * Brep edge polygons */
@@ -260,7 +260,6 @@ class cpolyedge_t
 	double trim_end;
 	bedge_seg_t *eseg;
 
-	void plot(const char *fname);
 };
 
 class cdt_mesh_t;
@@ -268,6 +267,10 @@ class cdt_mesh_t;
 class cpolygon_t
 {
     public:
+
+	cpolygon_t() {
+	    pnts_type = 0;
+	};
 
 	// Project cdt_mesh 3D points into a 2D point array.  Probably won't use all of
 	// them, but this way vert indices on triangles will match in 2D and 3D.
@@ -297,7 +300,6 @@ class cpolygon_t
 	cdt_mesh_t *cdt_mesh;
 
 	void polygon_plot(const char *filename);
-	void polygon_plot_3d(const char *filename);
 	void print();
 
 	std::set<cpolyedge_t *> poly;
@@ -305,12 +307,10 @@ class cpolygon_t
 	std::vector<std::pair<double, double> > pnts_2d;
 	std::map<std::pair<double, double>, long> p2ind;
 
-
-	/* Map from pnts_2d points in polygon to the same points in the cdt_mesh */
-	std::map<long, long> p2f;
-
-	/* Method to get 3D point corresponding to polygon point */
-	ON_3dPoint *p3d(long ind);
+	/* 0 = 3D (default), 1 = 2D */
+	int pnts_type;
+	/* Map from points in polygon to the same points in the source data */
+	std::map<long, long> p2o;
 
 	bool cdt();
 
@@ -366,12 +366,6 @@ public:
     std::set<triangle_t> tris;
     std::map<uedge_t, std::set<triangle_t>> uedges2tris;
 
-    /* Brep UV points - every point in here should have its
-     * 3d point and normal in the same indices in the above
-     * 3d point/normal vectors */
-    std::vector<std::pair<double, double> > pnts_2d;
-    std::map<long, long> p2d2ind;
-
     /* Setup / Repair */
     long add_point(ON_2dPoint &on_2dp);
     long add_point(ON_3dPoint *on_3dp);
@@ -384,11 +378,26 @@ public:
 	    std::set<ON_3dPoint *> *s,
 	    std::map<ON_3dPoint *, ON_3dPoint *> *n
 	    );
-    bool cdt();
     bool repair();
     bool valid();
     bool serialize(const char *fname);
     bool deserialize(const char *fname);
+
+
+    /* Brep UV space information - every point in here should have its
+     * 3d point and normal in the same indices in the above
+     * 3d point/normal vectors.  The tris_2d triangles are defined
+     * in terms of pnts_2d and are not guaranteed to map to unique
+     * 3D triangles. */
+    bool cdt();
+    std::set<triangle_t> tris_2d;
+    std::vector<std::pair<double, double> > pnts_2d;
+    std::map<long, long> p2d3d;
+    cpolygon_t outer_loop;
+    std::map<int, cpolygon_t*> inner_loops;
+    std::set<long> interior_pnts;
+    bool initialize_interior_pnts(std::set<ON_2dPoint *>);
+
 
     /* Mesh data set accessors */
     std::set<uedge_t> get_boundary_edges();
@@ -426,11 +435,6 @@ public:
     ON_3dPoint *n3d(long ind);
 
     int f_id;
-
-    cpolygon_t outer_loop;
-    std::map<int, cpolygon_t*> inner_loops;
-    std::set<long> interior_pnts;
-    bool initialize_interior_pnts(std::set<ON_2dPoint *>);
 
 private:
     /* Data containers */

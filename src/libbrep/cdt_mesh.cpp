@@ -118,10 +118,10 @@ plot_seg_3d(FILE *plot_file, ON_3dPoint *p1, ON_3dPoint *p2)
 }
 
 void
-cpolyedge_t::plot3d(const char *fname, int mappings)
+cpolyedge_t::plot3d(const char *fname)
 {
-    // What the Brep says
-    if (!mappings) {
+    // If our polygon is in 2D, use the Brep to calculate 3D info
+    if (polygon->pnts_type == 1) {
 	if (eseg) {
 	    ON_Brep *brep = eseg->brep;
 	    ON_BrepTrim& trim = brep->m_T[trim_ind];
@@ -153,11 +153,11 @@ cpolyedge_t::plot3d(const char *fname, int mappings)
 	return;
     }
 
-    // What the indices and mappings say
-    ON_3dPoint *t_s = polygon->p3d(v[0]);
-    ON_3dPoint *t_e = polygon->p3d(v[1]);
-    ON_3dPoint *t_sn = polygon->cdt_mesh->n3d(polygon->p2f[v[0]]);
-    ON_3dPoint *t_en = polygon->cdt_mesh->n3d(polygon->p2f[v[1]]);
+    // Polygon indicates we're using 3D point indices - go with what the indices and mappings define
+    ON_3dPoint *t_s = polygon->cdt_mesh->pnts[polygon->p2o[v[0]]];
+    ON_3dPoint *t_e = polygon->cdt_mesh->pnts[polygon->p2o[v[1]]];
+    ON_3dPoint *t_sn = polygon->cdt_mesh->n3d(polygon->cdt_mesh->nmap[polygon->p2o[v[0]]]);
+    ON_3dPoint *t_en = polygon->cdt_mesh->n3d(polygon->cdt_mesh->nmap[polygon->p2o[v[1]]]);
     double slen = t_s->DistanceTo(*t_e);
     ON_3dVector t_sv(*t_sn);
     ON_3dVector t_ev(*t_en);
@@ -199,12 +199,6 @@ bedge_seg_t::plot(const char *fname)
 /***************************/
 /* CPolygon implementation */
 /***************************/
-
-ON_3dPoint *
-cpolygon_t::p3d(long ind)
-{
-    return cdt_mesh->p3d(p2f[ind]);
-}
 
 long
 cpolygon_t::add_point(ON_2dPoint &on_2dp)
@@ -706,6 +700,8 @@ cpolygon_t::best_fit_plane()
     std::set<long> averts;
     int ncnt = 0;
 
+    if (pnts_type == 1) return false;
+
     std::set<cpolyedge_t *>::iterator cp_it;
     for (cp_it = poly.begin(); cp_it != poly.end(); cp_it++) {
 	cpolyedge_t *pe = *cp_it;
@@ -719,7 +715,7 @@ cpolygon_t::best_fit_plane()
 
     ON_3dVector avgtnorm(0.0,0.0,0.0);
     for (a_it = averts.begin(); a_it != averts.end(); a_it++) {
-	ON_3dPoint *vn = cdt_mesh->normals[cdt_mesh->nmap[cdt_mesh->p2d2ind[p2f[*a_it]]]];
+	ON_3dPoint *vn = cdt_mesh->normals[cdt_mesh->nmap[p2o[*a_it]]];
 	if (vn) {
 	    avgtnorm += *vn;
 	    ncnt++;
@@ -733,7 +729,7 @@ cpolygon_t::best_fit_plane()
         point_t *vpnts = (point_t *)bu_calloc(averts.size()+1, sizeof(point_t), "fitting points");
         int pnts_ind = 0;
 	for (a_it = averts.begin(); a_it != averts.end(); a_it++) {
-            ON_3dPoint *p = cdt_mesh->pnts[cdt_mesh->p2d2ind[p2f[*a_it]]];
+            ON_3dPoint *p = cdt_mesh->pnts[p2o[*a_it]];
             vpnts[pnts_ind][X] = p->x;
             vpnts[pnts_ind][Y] = p->y;
             vpnts[pnts_ind][Z] = p->z;
@@ -761,49 +757,61 @@ cpolygon_t::cdt()
 {
     if (!closed()) return false;
 
-    // We may have faces perpendicular to the original triangle face included,
-    // so calculate a best fit plane and re-project the original points.  The
-    // new plane should be close, but not exactly the same plane as the
-    // starting plane.  It may happen that the reprojection invalids the
-    // inside/outside categorization of points - in that case, abandon the
-    // re-fit and attempt the cdt with the original plane.
-    if (!best_fit_plane()) {
-	std::cerr << "cdt(): finding the best fit plane failed.\n";
-	return false;
-    }
-
-    point2d_t *bgp_2d = (point2d_t *)bu_calloc(cdt_mesh->pnts.size() + 1, sizeof(point2d_t), "2D points array");
-    for (size_t i = 0; i < cdt_mesh->pnts.size(); i++) {
-	double u, v;
-	ON_3dPoint op3d = (*cdt_mesh->pnts[i]);
-	fit_plane.ClosestPointTo(op3d, &u, &v);
-	bgp_2d[i][X] = u;
-	bgp_2d[i][Y] = v;
-    }
-
-    // Make sure the new points still form a close polygon and all the interior points
-    // are still interior points - if not, put them back
-    int valid_reprojection = 1;
-    if (!closed()) {
-	valid_reprojection = 0;
-    } else {
-	std::set<long>::iterator u_it;
-	for (u_it = interior_points.begin(); u_it != interior_points.end(); u_it++) {
-	    if (point_in_polygon(*u_it, false)) {
-		valid_reprojection = 0;
-		break;
-	    }
-	}
-    }
-    if (!valid_reprojection) {
-	for (size_t i = 0; i < cdt_mesh->pnts.size(); i++) {
-	    V2SET(bgp_2d[i], pnts_2d[i].first, pnts_2d[i].second);
-	}
-    }
-
     int *faces = NULL;
     int num_faces = 0;
     int *steiner = NULL;
+    point2d_t *bgp_2d;
+
+    if (pnts_type == 0) {
+	// In 3D we may have faces perpendicular to the original triangle face included,
+	// so calculate a best fit plane and re-project the original points.  The
+	// new plane should be close, but not exactly the same plane as the
+	// starting plane.  It may happen that the reprojection invalids the
+	// inside/outside categorization of points - in that case, abandon the
+	// re-fit and attempt the cdt with the original plane.
+	if (!best_fit_plane()) {
+	    std::cerr << "cdt(): finding the best fit plane failed.\n";
+	    return false;
+	}
+
+	bgp_2d = (point2d_t *)bu_calloc(cdt_mesh->pnts.size() + 1, sizeof(point2d_t), "2D points array");
+	for (size_t i = 0; i < cdt_mesh->pnts.size(); i++) {
+	    double u, v;
+	    ON_3dPoint op3d = (*cdt_mesh->pnts[i]);
+	    fit_plane.ClosestPointTo(op3d, &u, &v);
+	    bgp_2d[i][X] = u;
+	    bgp_2d[i][Y] = v;
+	}
+
+	// Make sure the new points still form a close polygon and all the interior points
+	// are still interior points - if not, put them back
+	int valid_reprojection = 1;
+	if (!closed()) {
+	    valid_reprojection = 0;
+	} else {
+	    std::set<long>::iterator u_it;
+	    for (u_it = interior_points.begin(); u_it != interior_points.end(); u_it++) {
+		if (point_in_polygon(*u_it, false)) {
+		    valid_reprojection = 0;
+		    break;
+		}
+	    }
+	}
+	if (!valid_reprojection) {
+	    for (size_t i = 0; i < cdt_mesh->pnts.size(); i++) {
+		V2SET(bgp_2d[i], pnts_2d[i].first, pnts_2d[i].second);
+	    }
+	}
+
+    } else {
+	// 2D polygons w
+	bgp_2d = (point2d_t *)bu_calloc(cdt_mesh->pnts.size() + 1, sizeof(point2d_t), "2D points array");
+	for (size_t i = 0; i < pnts_2d.size(); i++) {
+	    bgp_2d[i][X] = pnts_2d[i].first;
+	    bgp_2d[i][Y] = pnts_2d[i].second;
+	}
+    }
+
     if (interior_points.size()) {
 	steiner = (int *)bu_calloc(interior_points.size(), sizeof(int), "interior points");
 	std::set<long>::iterator p_it;
@@ -848,12 +856,14 @@ cpolygon_t::cdt()
 	    t.v[1] = faces[3*i+1];
 	    t.v[2] = faces[3*i+2];
 
-	    ON_3dVector tdir = cdt_mesh->tnorm(t);
-	    ON_3dVector bdir = cdt_mesh->bnorm(t);
-	    bool flipped_tri = (ON_DotProduct(tdir, bdir) < 0);
-	    if (flipped_tri) {
-		t.v[2] = faces[3*i+1];
-		t.v[1] = faces[3*i+2];
+	    if (pnts_type == 0) {
+		ON_3dVector tdir = cdt_mesh->tnorm(t);
+		ON_3dVector bdir = cdt_mesh->bnorm(t);
+		bool flipped_tri = (ON_DotProduct(tdir, bdir) < 0);
+		if (flipped_tri) {
+		    t.v[2] = faces[3*i+1];
+		    t.v[1] = faces[3*i+2];
+		}
 	    }
 
 	    tris.insert(t);
@@ -1093,57 +1103,6 @@ void cpolygon_t::polygon_plot(const char *filename)
     fclose(plot_file);
 }
 
-void cpolygon_t::polygon_plot_3d(const char *filename)
-{
-    FILE* plot_file = fopen(filename, "w");
-    struct bu_color c = BU_COLOR_INIT_ZERO;
-    bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
-    pl_color_buc(plot_file, &c);
-
-    cpolyedge_t *efirst = *(poly.begin());
-    cpolyedge_t *ecurr = NULL;
-
-    self_intersecting();
-
-    point_t bnp;
-    ON_3dPoint *p;
-    p = cdt_mesh->pnts[cdt_mesh->p2d2ind[p2f[efirst->v[0]]]];
-    VSET(bnp, p->x, p->y, p->z);
-
-    struct uedge_t ue;
-    ue = uedge_t(efirst->v[0], efirst->v[1]);
-    if (self_isect_edges.find(ue) != self_isect_edges.end()) {
-	pl_color(plot_file, 255, 0, 0);
-    } else {
-	pl_color_buc(plot_file, &c);
-    }
-
-    pdv_3move(plot_file, bnp);
-    p = cdt_mesh->pnts[cdt_mesh->p2d2ind[p2f[efirst->v[1]]]];
-    VSET(bnp, p->x, p->y, p->z);
-    pdv_3cont(plot_file, bnp);
-
-    size_t ecnt = 1;
-    while (ecurr != efirst && ecnt < poly.size()+1) {
-	ecnt++;
-        ecurr = (!ecurr) ? efirst->next : ecurr->next;
-	ue = uedge_t(ecurr->v[0], ecurr->v[1]);
-	if (self_isect_edges.find(ue) != self_isect_edges.end()) {
-	    pl_color(plot_file, 255, 0, 0);
-	} else {
-	    pl_color_buc(plot_file, &c);
-	}
-	p = cdt_mesh->pnts[cdt_mesh->p2d2ind[p2f[ecurr->v[1]]]];
-	VSET(bnp, p->x, p->y, p->z);
-	pdv_3cont(plot_file, bnp);
-    	if (ecnt > poly.size()) {
-	    break;
-	}
-    }
-
-    fclose(plot_file);
-}
-
 
 void cpolygon_t::polygon_plot_in_plane(const char *filename)
 {
@@ -1347,34 +1306,36 @@ void cpolygon_t::print()
     if (self_isect_edges.size()) {
 	std::cout << "Self-intersecting edges from polygon:\n";
 	for (sie_it = self_isect_edges.begin(); sie_it != self_isect_edges.end(); sie_it++) {
-	    p = cdt_mesh->pnts[cdt_mesh->p2d2ind[p2f[sie_it->v[0]]]];
+	    p = cdt_mesh->pnts[p2o[sie_it->v[0]]];
 	    std::cout << sie_it->v[0] << "(" << p->x << "," << p->y << "," << p->z << ")<->";
-	    p = cdt_mesh->pnts[cdt_mesh->p2d2ind[p2f[sie_it->v[1]]]];
+	    p = cdt_mesh->pnts[p2o[sie_it->v[1]]];
 	    std::cout << sie_it->v[1] << "(" << p->x << "," << p->y << "," << p->z << ")\n";
 	}
     }
 
     // Print the 3D points
-    next = first->next;
-    p = cdt_mesh->pnts[cdt_mesh->p2d2ind[p2f[first->v[0]]]];
-    std::cout << "(" << p->x << "," << p->y << "," << p->z << ")->";
-    ecnt = 1;
-    while (first != next) {
-	ecnt++;
-	if (!next) {
-	    break;
-	}
-	p = cdt_mesh->pnts[cdt_mesh->p2d2ind[p2f[next->v[0]]]];
+    if (pnts_type == 0) {
+	next = first->next;
+	p = cdt_mesh->pnts[p2o[first->v[0]]];
 	std::cout << "(" << p->x << "," << p->y << "," << p->z << ")->";
-	visited.insert(next);
-	next = next->next;
-	if (ecnt > poly.size()) {
-	    std::cout << "\nERROR infinite loop\n";
-	    break;
+	ecnt = 1;
+	while (first != next) {
+	    ecnt++;
+	    if (!next) {
+		break;
+	    }
+	    p = cdt_mesh->pnts[p2o[next->v[0]]];
+	    std::cout << "(" << p->x << "," << p->y << "," << p->z << ")->";
+	    visited.insert(next);
+	    next = next->next;
+	    if (ecnt > poly.size()) {
+		std::cout << "\nERROR infinite loop\n";
+		break;
+	    }
 	}
+	p = cdt_mesh->pnts[p2o[first->v[0]]];
+	std::cout << "(" << p->x << "," << p->y << "," << p->z << ")\n";
     }
-    p = cdt_mesh->pnts[cdt_mesh->p2d2ind[p2f[first->v[0]]]];
-    std::cout << "(" << p->x << "," << p->y << "," << p->z << ")\n";
 
     if (visited.size() != poly.size()) {
 	std::cout << "Missing edges:\n";
@@ -1865,6 +1826,7 @@ cpolygon_t::build_2d_pnts(ON_3dPoint &c, ON_3dVector &n)
 	proj_2d.first = u;
 	proj_2d.second = v;
 	pnts_2d.push_back(proj_2d);
+	p2o[i] = i;
     }
     tplane = tri_plane;
 }
@@ -1945,19 +1907,6 @@ cpolygon_t::build_initial_loop(triangle_t &seed, bool repair)
 /***************************/
 /* CDT_Mesh implementation */
 /***************************/
-
-ON_3dPoint *
-cdt_mesh_t::p3d(long ind)
-{
-    return pnts[p2d2ind[ind]];
-}
-
-ON_3dPoint *
-cdt_mesh_t::n3d(long ind)
-{
-    return normals[nmap[p2d2ind[ind]]];
-}
-
 
 long
 cdt_mesh_t::add_point(ON_2dPoint &on_2dp)
@@ -2262,9 +2211,9 @@ cdt_mesh_t::uedges(const triangle_t &t)
 ON_3dVector
 cdt_mesh_t::tnorm(const triangle_t &t)
 {
-    ON_3dPoint *p1 = this->pnts[p2d2ind[t.v[0]]];
-    ON_3dPoint *p2 = this->pnts[p2d2ind[t.v[1]]];
-    ON_3dPoint *p3 = this->pnts[p2d2ind[t.v[2]]];
+    ON_3dPoint *p1 = this->pnts[t.v[0]];
+    ON_3dPoint *p2 = this->pnts[t.v[1]];
+    ON_3dPoint *p3 = this->pnts[t.v[2]];
 
     ON_3dVector e1 = *p2 - *p1;
     ON_3dVector e2 = *p3 - *p1;
@@ -2279,7 +2228,7 @@ cdt_mesh_t::tcenter(const triangle_t &t)
     ON_3dPoint avgpnt(0,0,0);
 
     for (size_t i = 0; i < 3; i++) {
-	ON_3dPoint *p3d = this->pnts[p2d2ind[t.v[i]]];
+	ON_3dPoint *p3d = this->pnts[t.v[i]];
 	avgpnt = avgpnt + *p3d;
     }
 
@@ -2302,7 +2251,7 @@ cdt_mesh_t::bnorm(const triangle_t &t)
 	    // singular vert norms are a product of multiple faces - not useful for this
 	    continue;
 	}
-	ON_3dPoint onrm = *normals[nmap[p2d2ind[t.v[i]]]];
+	ON_3dPoint onrm = *normals[nmap[t.v[i]]];
 	if (this->m_bRev) {
 	    onrm = onrm * -1;
 	}
@@ -2573,7 +2522,7 @@ loop_to_bgpoly(const cpolygon_t *loop)
 {
     int *opoly = (int *)bu_calloc(loop->poly.size()+1, sizeof(int), "polygon points");
 
-    std::map<long, long> p2f = loop->p2f;
+    std::map<long, long> p2f = loop->p2o;
 
     size_t vcnt = 1;
     cpolyedge_t *pe = (*loop->poly.begin());
@@ -2665,15 +2614,7 @@ cdt_mesh_t::cdt()
 	    t.v[1] = faces[3*i+1];
 	    t.v[2] = faces[3*i+2];
 
-	    ON_3dVector tdir = tnorm(t);
-	    ON_3dVector bdir = bnorm(t);
-	    bool flipped_tri = (ON_DotProduct(tdir, bdir) < 0);
-	    if (flipped_tri) {
-		t.v[2] = faces[3*i+1];
-		t.v[1] = faces[3*i+2];
-	    }
-
-	    tri_add(t);
+	    tris_2d.insert(t);
 	}
 
 	bu_free(faces, "faces array");
@@ -2879,7 +2820,7 @@ void cdt_mesh_t::plot_tri(const triangle_t &t, struct bu_color *buc, FILE *plot,
     point_t porig;
     point_t c = VINIT_ZERO;
     for (int i = 0; i < 3; i++) {
-	ON_3dPoint *p3d = this->pnts[p2d2ind[t.v[i]]];
+	ON_3dPoint *p3d = this->pnts[t.v[i]];
 	VSET(p[i], p3d->x, p3d->y, p3d->z);
 	c[X] += p3d->x;
 	c[Y] += p3d->y;

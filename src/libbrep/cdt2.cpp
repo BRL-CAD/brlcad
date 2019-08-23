@@ -282,10 +282,10 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int
     // Update the 2D and 2D->3D info in the fmeshes
     long f1_ind2d = fmesh1->add_point(trim1_mid_2d);
     long f1_ind3d = fmesh1->add_point(mid_3d);
-    fmesh1->p2d2ind[f1_ind2d] = f1_ind3d;
+    fmesh1->p2d3d[f1_ind2d] = f1_ind3d;
     long f2_ind2d = fmesh2->add_point(trim2_mid_2d);
     long f2_ind3d = fmesh2->add_point(mid_3d);
-    fmesh2->p2d2ind[f2_ind2d] = f2_ind3d;
+    fmesh2->p2d3d[f2_ind2d] = f2_ind3d;
 
     ON_3dVector norm1 = trim_normal(trim1, trim1_mid_2d);
     fmesh1->normals.push_back(new ON_3dPoint(norm1));
@@ -326,7 +326,7 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int
 	double old_trim_end = bseg->tseg1->trim_end;
 	poly1->remove_edge(cdt_mesh::edge_t(v[0], v[1]));
 	long poly1_2dind = poly1->add_point(trim1_mid_2d);
-	poly1->p2f[poly1_2dind] = f1_ind2d;
+	poly1->p2o[poly1_2dind] = f1_ind2d;
 	struct cdt_mesh::edge_t poly1_edge1(v[0], poly1_2dind);
 	poly1_ne1 = poly1->add_edge(poly1_edge1);
 	poly1_ne1->trim_ind = trim_ind;
@@ -348,7 +348,7 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int
 	double old_trim_end = bseg->tseg2->trim_end;
 	poly2->remove_edge(cdt_mesh::edge_t(v[0], v[1]));
 	long poly2_2dind = poly2->add_point(trim2_mid_2d);
-	poly2->p2f[poly2_2dind] = f2_ind2d;
+	poly2->p2o[poly2_2dind] = f2_ind2d;
 	struct cdt_mesh::edge_t poly2_edge1(v[0], poly2_2dind);
 	poly2_ne1 = poly2->add_edge(poly2_edge1);
 	poly2_ne1->trim_ind = trim_ind;
@@ -480,6 +480,7 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 		cpoly = &fmesh->outer_loop;
 	    } else {
 		cpoly = new cdt_mesh::cpolygon_t;
+		cpoly->pnts_type = 1;
 		fmesh->inner_loops[li] = cpoly;
 	    }
 	    cpoly->cdt_mesh = fmesh;
@@ -498,7 +499,7 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 		    cp = trim->PointAt(range.m_t[0]);
 		    pv = cpoly->add_point(cp);
 		    long find = fmesh->add_point(cp);
-		    cpoly->p2f[pv] = find;
+		    cpoly->p2o[pv] = find;
 		    fv = pv;
 
 		    // Let cdt_mesh know about new information
@@ -510,7 +511,7 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 		    ON_3dPoint *op3d = (*s_cdt->vert_pnts)[trim->Vertex(0)->m_vertex_index];
 		    long f3ind = fmesh->add_point(op3d);
 		    long fnind = fmesh->add_normal(new ON_3dPoint(norm));
-		    fmesh->p2d2ind[find] = f3ind;
+		    fmesh->p2d3d[find] = f3ind;
 		    fmesh->nmap[f3ind] = fnind;
 
 		} else {
@@ -530,7 +531,7 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 		cp = trim->PointAt(range.m_t[1]);
 		cv = cpoly->add_point(cp);
 		long find = fmesh->add_point(cp);
-		cpoly->p2f[cv] = find;
+		cpoly->p2o[cv] = find;
 
 		// Let cdt_mesh know about the 3D information as well
 		ON_3dVector norm = ON_3dVector::UnsetVector;
@@ -544,7 +545,7 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 		ON_3dPoint *cp3d = (*s_cdt->vert_pnts)[trim->Vertex(1)->m_vertex_index];
 		long f3ind = fmesh->add_point(cp3d);
 		long fnind = fmesh->add_normal(new ON_3dPoint(norm));
-		fmesh->p2d2ind[find] = f3ind;
+		fmesh->p2d3d[find] = f3ind;
 		fmesh->nmap[f3ind] = fnind;
 
 		struct cdt_mesh::edge_t lseg(pv, cv);
@@ -652,8 +653,8 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	    //cpoly->print();
 
 	    struct bu_vls fname = BU_VLS_INIT_ZERO;
-	    bu_vls_sprintf(&fname, "%d-%d-poly3d.plot3", face_index, li);
-	    cpoly->polygon_plot_3d(bu_vls_cstr(&fname));
+	    /*bu_vls_sprintf(&fname, "%d-%d-poly3d.plot3", face_index, li);
+	    cpoly->polygon_plot_3d(bu_vls_cstr(&fname));*/
 	    cpoly->cdt();
 	    bu_vls_sprintf(&fname, "%d-%d-cdt.plot3", face_index, li);
 	    cpoly->cdt_mesh->tris_set_plot(cpoly->tris, bu_vls_cstr(&fname));
