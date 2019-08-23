@@ -278,10 +278,6 @@ class cpolygon_t
 {
     public:
 
-	cpolygon_t() {
-	    pnts_type = 0;
-	};
-
 	// Project cdt_mesh 3D points into a 2D point array.  Probably won't use all of
 	// them, but this way vert indices on triangles will match in 2D and 3D.
 	void build_2d_pnts(ON_3dPoint &c, ON_3dVector &n);
@@ -310,6 +306,7 @@ class cpolygon_t
 	cdt_mesh_t *cdt_mesh;
 
 	void polygon_plot(const char *filename);
+	void polygon_plot_3d(const char *filename);
 	void print();
 
 	std::set<cpolyedge_t *> poly;
@@ -317,8 +314,6 @@ class cpolygon_t
 	std::vector<std::pair<double, double> > pnts_2d;
 	std::map<std::pair<double, double>, long> p2ind;
 
-	/* 0 = 3D (default), 1 = 2D */
-	int pnts_type;
 	/* Map from points in polygon to the same points in the source data */
 	std::map<long, long> p2o;
 
@@ -326,7 +321,7 @@ class cpolygon_t
 
 	bool closed();
 	bool self_intersecting();
-    private:
+
 	bool best_fit_plane();
 
 	bool point_in_polygon(long v, bool flip);
@@ -438,11 +433,6 @@ public:
     void ctris_vect_plot(std::vector<struct ctriangle_t> &tvect, const char *filename);
     void tris_plot(const char *filename);
     void tri_plot(const triangle_t &tri, const char *filename);
-
-    /* Method to get 3D point corresponding to 2D point */
-    ON_3dPoint *p3d(long ind);
-    /* Method to get 3D normal corresponding to 2D point */
-    ON_3dPoint *n3d(long ind);
 
     int f_id;
 

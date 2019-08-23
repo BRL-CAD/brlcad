@@ -26,13 +26,12 @@ set(LIBBREP_SOURCES
   boolean.cpp
   cdt_closed_surf.cpp
   cdt_edge.cpp
-  #cdt_edge2.cpp
   cdt_patch.cpp
   cdt_surf.cpp
   cdt_util.cpp
   cdt_validate.cpp
   cdt.cpp
-  cdt2.cpp
+  #cdt2.cpp
   cdt_mesh.cpp
   intersect.cpp
   libbrep_brep_tools.cpp
