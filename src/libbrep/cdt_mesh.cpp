@@ -1821,9 +1821,7 @@ cdt_mesh_t::oriented_polycdt(cpolygon_t *polygon)
 {
     std::set<triangle_t> otris;
 
-    if (!best_fit_plane_reproject(polygon)) {
-	std::cout << "FAILED plane fit\n";
-    }
+    best_fit_plane_reproject(polygon);
 
     if (!polygon->cdt()) return false;
     std::set<triangle_t>::iterator tr_it;
@@ -2253,6 +2251,22 @@ cdt_mesh_t::cdt()
     for (tr_it = tris_2d.begin(); tr_it != tris_2d.end(); tr_it++) {
 	triangle_t tri2d = *tr_it;
 	triangle_t tri3d;
+
+	// NOTE: There may be multiple instances of 3D points in the pnts array
+	// if different 2D points map to the same 3D point.  For 3D triangle we
+	// want all of them pointing to one index for the same point,
+	// regardless of which copy they were originally mapped to.  The 3D
+	// pointer to 3D index p2ind map is updated every time a point is
+	// added, which means the map value for a specific ON_3dPoint pointer
+	// key will always point to the highest index value in the vector to be
+	// assigned that particular pointer. This means that if we get the
+	// ON_3dPoint pointer via the p2d3d index map and the pnts vector, then
+	// use that ON_3dPoint pointer and p2ind to get an index value, we will
+	// always end up with the same index value.
+	//
+	// In essence, the multiple lookups below are used to give us the same
+	// 3D index uniqueness guarantee we already have for 3D point pointer
+	// values.
 	tri3d.v[0] = p2ind[pnts[p2d3d[tri2d.v[0]]]];
 	tri3d.v[1] = p2ind[pnts[p2d3d[tri2d.v[1]]]];
 	tri3d.v[2] = p2ind[pnts[p2d3d[tri2d.v[2]]]];

@@ -491,15 +491,18 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 		ON_BrepTrim *trim = loop->Trim(lti);
 		ON_Interval range = trim->Domain();
 		if (lti == 0) {
-		    // Polygon first
+		    // Get the 2D point, add it to the mesh and current polygon
 		    cp = trim->PointAt(range.m_t[0]);
 		    long find = fmesh->add_point(cp);
 		    pv = cpoly->add_point(cp, find);
 		    fv = pv;
 
-		    // Let cdt_mesh know about new information
+		    // Let cdt_mesh know about new 3D information
 		    ON_3dVector norm = ON_3dVector::UnsetVector;
 		    if (trim->m_type != ON_BrepTrim::singular) {
+			// 3D points are globally unique, but normals are not - the same edge point may
+			// have different normals from two faces at a sharp edge.  Calculate the
+			// face normal for this point on this surface.
 			ON_3dPoint tmp1;
 			surface_EvNormal(trim->SurfaceOf(), cp.x, cp.y, tmp1, norm);
 		    }
@@ -513,21 +516,12 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 		    pv = cv;
 		}
 
-		// NOTE: Singularities have a segment in 2D but not 3D - we're adding extra copies of pointers to
-		// points in the arrays to deal with this non-uniqueness to keep a 1-1 relationship
-		// between the two array indices in the polygon.  For the 3D p2ind mapping, this will mean that the
-		// ON_3dPoint pointer will always point to the highest index value in the vector
-		// to be assigned that particular pointer.  For tests which are concerned with 3D point
-		// uniqueness, a 2d->ind->3d->ind lookup will be needed to "canonicalize"
-		// the 3D index value.  (TODO In particular, this will be needed for triangle
-		// comparisons.)
-		//
-		//
+		// Get the 2D point, add it to the mesh and current polygon
 		cp = trim->PointAt(range.m_t[1]);
 		long find = fmesh->add_point(cp);
 		cv = cpoly->add_point(cp, find);
 
-		// Let cdt_mesh know about the 3D information as well
+		// Let cdt_mesh know about the 3D information
 		ON_3dVector norm = ON_3dVector::UnsetVector;
 		if (trim->m_type != ON_BrepTrim::singular) {
 		    // 3D points are globally unique, but normals are not - the same edge point may
@@ -572,7 +566,7 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
     }
 
     std::map<int, std::set<cdt_mesh::bedge_seg_t *>>::iterator epoly_it;
-#if 1
+
     // Initialize the tangents.
     for (epoly_it = s_cdt->e2polysegs.begin(); epoly_it != s_cdt->e2polysegs.end(); epoly_it++) {
 	std::set<cdt_mesh::bedge_seg_t *>::iterator seg_it;
@@ -589,7 +583,6 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	    bseg->tan_end = bseg_tangent(s_cdt, bseg, bseg->edge_end, te1, te2);
 	}
     }
-#endif
 
     // Do the non-tolerance based initializations
     for (epoly_it = s_cdt->e2polysegs.begin(); epoly_it != s_cdt->e2polysegs.end(); epoly_it++) {
