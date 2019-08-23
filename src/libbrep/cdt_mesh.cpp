@@ -1819,6 +1819,11 @@ bool
 cdt_mesh_t::oriented_polycdt(cpolygon_t *polygon)
 {
     std::set<triangle_t> otris;
+
+    if (!best_fit_plane_reproject(polygon)) {
+	std::cout << "FAILED plane fit\n";
+    }
+
     if (!polygon->cdt()) return false;
     std::set<triangle_t>::iterator tr_it;
     for (tr_it = polygon->tris.begin(); tr_it != polygon->tris.end(); tr_it++) {
@@ -3004,9 +3009,9 @@ cdt_mesh_t::best_fit_plane_reproject(cpolygon_t *polygon)
     // We may have faces perpendicular to the original triangle face included,
     // so calculate a best fit plane and re-project the original points.  The
     // new plane should be close, but not exactly the same plane as the
-    // starting plane.  It may happen that the reprojection invalids the
+    // starting plane.  It may happen that the reprojection invalidates the
     // inside/outside categorization of points - in that case, abandon the
-    // re-fit and attempt the cdt with the original plane.
+    // re-fit and restore the original points.
 
     std::set<long> averts;
     int ncnt = 0;
@@ -3075,7 +3080,7 @@ cdt_mesh_t::best_fit_plane_reproject(cpolygon_t *polygon)
     } else {
 	std::set<long>::iterator u_it;
 	for (u_it = polygon->interior_points.begin(); u_it != polygon->interior_points.end(); u_it++) {
-	    if (polygon->point_in_polygon(*u_it, false)) {
+	    if (!polygon->point_in_polygon(*u_it, false)) {
 		valid_reprojection = 0;
 		break;
 	    }
