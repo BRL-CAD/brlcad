@@ -145,6 +145,9 @@ REPODERCSDIR="$PWD/repo_dercs"
 ./svnfexport ./brlcad_full_dercs.dump account-map $REPODERCSDIR
 
 echo "Archive tags"
+#NOTE - if done incorrectly this will make a mess with orphaned commits - make
+#a backup first
+cp -r cvs_git cvs_git-pre_archiving
 cd cvs_git && ../archive_tags.sh
 
 echo "Do a file git gc --aggressive"
