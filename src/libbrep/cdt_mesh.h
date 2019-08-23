@@ -278,64 +278,77 @@ class cpolygon_t
 {
     public:
 
-	std::set<triangle_t> visited_triangles;
+	/* Perform a triangulation (populates ltris and tris) */
+	bool cdt();
+
+	/* Output triangles defined using the indexing from the p2o map (mapping polygon
+	 * point indexing back to a caller-defined source array's indexing */
 	std::set<triangle_t> tris;
 
+	/* Triangles using the local polygon indexing */
+	std::set<triangle_t> ltris;
+
+	/* Map from points in polygon to the same points in the source data. If points
+	 * are added directly without using add_point, the caller must manually ensure
+	 * that this map has the correct information to go from indexing in the parent's
+	 * original point array to the polygon pnts_2d point array.*/
+	std::map<long, long> p2o;
+
+	/* Polygon edge manipulation */
 	cpolyedge_t *add_edge(const struct uedge_t &e);
 	void remove_edge(const struct uedge_t &e);
 	std::set<cpolyedge_t *> replace_edges(std::set<uedge_t> &new_edges, std::set<uedge_t> &old_edges);
 
-	// Means to update the point array if we're incrementally building
-	long add_point(ON_2dPoint &on_2dp);
+	/* Means to update the point array if we're incrementally building. orig_index should
+	 * identify the same point in the parent's index, so cdt() knows what triangles to
+	 * write into tris */
+	long add_point(ON_2dPoint &on_2dp, long orig_index);
 
-	void polygon_plot(const char *filename);
-	void print();
-
+	/* Storage container for polygon data */
 	std::set<cpolyedge_t *> poly;
-
 	std::vector<std::pair<double, double> > pnts_2d;
 	std::map<std::pair<double, double>, long> p2ind;
 
-	/* Map from points in polygon to the same points in the source data */
-	std::map<long, long> p2o;
-
-	bool cdt();
-
+	/* Validity tests (closed also checks self_intersecting) */
 	bool closed();
 	bool self_intersecting();
 
+	/* Test if a point is inside the polygon.  Supplying flip=true will instead
+	 * report if the point is outside the polygon.
+	 * TODO - document what it does if it's ON the polygon...*/
 	bool point_in_polygon(long v, bool flip);
-
-	// Apply the point-in-polygon test to all uncontained points, moving any inside the loop into interior_points
-	bool have_uncontained();
-
+	// Debugging routines
 	void polygon_plot_in_plane(const char *filename);
+	void polygon_plot(const char *filename);
+	void print();
 
-	std::map<long, std::set<cpolyedge_t *>> v2pe;
-	std::set<long> used_verts; /* both interior and active points - for a quick check if a point is active */
-	std::set<long> interior_points;
-	std::set<long> uncontained;
-	std::set<long> flipped_face;
-	std::set<long> target_verts;
+	/**********************************************************************/
+	/* Internal state information and functionality related to loop growth,
+	 * which is driven by cdt_mesh routines */
+	/**********************************************************************/
 
-	std::set<uedge_t> active_edges;
-	std::set<uedge_t> self_isect_edges;
-
-	std::set<long> brep_edge_pnts;
-
+	// Apply the point-in-polygon test to all uncontained points using the currently
+	// defined polygon, moving any inside the loop into interior_points.  Returns true
+	// if there are active uncontained points reported by the current polygon.
+	bool update_uncontained();
+	double ucv_angle(triangle_t &t);
 	long shared_edge_cnt(triangle_t &t);
 	long unshared_vertex(triangle_t &t);
+	std::map<long, std::set<cpolyedge_t *>> v2pe;
 	std::pair<long,long> shared_vertices(triangle_t &t);
-	double ucv_angle(triangle_t &t);
-
+	std::set<long> brep_edge_pnts;
+	std::set<long> flipped_face;
+	std::set<long> interior_points;
+	std::set<long> target_verts;
+	std::set<long> uncontained;
+	std::set<long> used_verts; /* both interior and active points - for a quick check if a point is active */
 	std::set<triangle_t> unusable_triangles;
-
+	std::set<triangle_t> visited_triangles;
+	std::set<uedge_t> active_edges;
+	std::set<uedge_t> self_isect_edges;
 	ON_Plane tplane;
 	ON_Plane fit_plane;
 	ON_3dVector pdir;
-
-
-	std::set<triangle_t> ltris;
 };
 
 

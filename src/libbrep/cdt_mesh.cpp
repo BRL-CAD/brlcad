@@ -227,13 +227,14 @@ bedge_seg_t::plot(const char *fname)
 /***************************/
 
 long
-cpolygon_t::add_point(ON_2dPoint &on_2dp)
+cpolygon_t::add_point(ON_2dPoint &on_2dp, long orig_index)
 {
     std::pair<double, double> proj_2d;
     proj_2d.first = on_2dp.x;
     proj_2d.second = on_2dp.y;
     pnts_2d.push_back(proj_2d);
     p2ind[proj_2d] = pnts_2d.size() - 1;
+    p2o[pnts_2d.size() - 1] = orig_index;
     return (long)(pnts_2d.size() - 1);
 }
 
@@ -1029,7 +1030,7 @@ void cpolygon_t::print()
 }
 
 bool
-cpolygon_t::have_uncontained()
+cpolygon_t::update_uncontained()
 {
     std::set<long>::iterator u_it;
 
@@ -1980,7 +1981,7 @@ cdt_mesh_t::grow_loop(cpolygon_t *polygon, double deg, bool stop_on_contained, t
 	    }
 	}
 
-	bool h_uc = polygon->have_uncontained();
+	bool h_uc = polygon->update_uncontained();
 
 	if (polygon->visited_triangles.find(target) != polygon->visited_triangles.end() && stop_on_contained && !h_uc &&
 	    (polygon->interior_points.size() > 1 || polygon->poly.size() > 3)) {
