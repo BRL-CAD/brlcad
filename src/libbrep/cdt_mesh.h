@@ -9,6 +9,16 @@
 // a good fit, but as it's derived from that source the public domain license
 // is maintained for the changes as well.
 
+
+// TODO - I've got the wrong conceptual separation here - cpolygon_t needs to be concerned
+// ONLY with polygons, not with the cdt_mesh.  Any cdt_mesh using functions need to be
+// moved up to the cdt_mesh structure, operating on a cpolygon object using the cdt_mesh
+// information, rather than having cpolygon_t operations using information from cdt_mesh.
+//
+// That should resolve a lot of the complexities that emerged trying to used cpolygon_t
+// both for repair and for the initial triangulation.
+
+
 #ifndef __cdt_mesh_h__
 #define __cdt_mesh_h__
 
