@@ -2162,8 +2162,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* brep */
 	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_annot_import5),
 	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_annot_export5),
-	RTFUNCTAB_FUNC_IMPORT4_CAST(rt_annot_import4),
-	RTFUNCTAB_FUNC_EXPORT4_CAST(rt_annot_export4),
+	NULL, /* import4 */
+	NULL, /* export4 */
 	RTFUNCTAB_FUNC_IFREE_CAST(rt_annot_ifree),
 	RTFUNCTAB_FUNC_DESCRIBE_CAST(rt_annot_describe),
 	RTFUNCTAB_FUNC_XFORM_CAST(rt_generic_xform),

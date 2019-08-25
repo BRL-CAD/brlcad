@@ -1357,14 +1357,8 @@ rt_annot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const 
 		tsg->rel_pos = ntohl(*(uint32_t *)ptr);
 		ptr += SIZEOF_NETWORK_LONG;
 		bu_vls_init(&tsg->label);
-		tsg->label.vls_str = bu_strdup((const char *)ptr);
-		ptr += strlen(tsg->label.vls_str);
-		tsg->label.vls_offset = ntohl(*(uint32_t *)ptr);
-		ptr += SIZEOF_NETWORK_LONG;
-		tsg->label.vls_len = ntohl(*(uint32_t *)ptr);
-		ptr += SIZEOF_NETWORK_LONG;
-		tsg->label.vls_max = ntohl(*(uint32_t *)ptr);
-		ptr += SIZEOF_NETWORK_LONG;
+		bu_vls_strcpy(&tsg->label, (const char*)ptr);
+		ptr += bu_vls_strlen(&tsg->label) + 1;
 		annot_ip->ant.segments[seg_no] = (void *)tsg;
 		break;
 	    case CURVE_CARC_MAGIC:
@@ -1493,6 +1487,7 @@ rt_annot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
 	uint32_t *lng;
 	struct nurb_seg *nseg;
 	struct bezier_seg *bseg;
+	struct txt_seg *tseg;
 
 	lng = (uint32_t *)annot_ip->ant.segments[seg_no];
 	switch (*lng) {
@@ -1501,7 +1496,9 @@ rt_annot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
 		ep->ext_nbytes += 3 * SIZEOF_NETWORK_LONG;
 		break;
 	    case ANN_TSEG_MAGIC:
-		ep->ext_nbytes += 3 * SIZEOF_NETWORK_LONG + sizeof(struct bu_vls);
+		tseg = (struct txt_seg*)lng;
+		/* magic + ref_pt + pt_rel_pos + label->vls_str length + 1 for the null terminator*/
+		ep->ext_nbytes += 3 * SIZEOF_NETWORK_LONG + bu_vls_strlen(&tseg->label) + 1;
 		break;
 	    case CURVE_CARC_MAGIC:
 		/* magic + start + end + orientation + center_is_left + (double)radius*/
