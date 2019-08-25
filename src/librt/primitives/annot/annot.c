@@ -141,7 +141,7 @@ ant_check_pos(const struct txt_seg *tsg, char **rel_pos)
 }
 
 
-static int
+static void
 ant_label_dimensions(struct txt_seg* tsg, hpoint_t ref_pt, fastf_t* length, fastf_t* hight)
 {
     point_t bmin, bmax;
@@ -154,9 +154,8 @@ ant_label_dimensions(struct txt_seg* tsg, hpoint_t ref_pt, fastf_t* length, fast
     bn_vlist_2string(&vhead, &RTG.rtg_vlfree, tsg->label.vls_str, ref_pt[0], ref_pt[1], 5, 0);
     bn_vlist_bbox(&vhead, &bmin, &bmax, NULL);
 
-    *length = fabs(bmin[0] - bmax[0]) + 1;
-    *hight = fabs(bmin[1] - bmax[1]) + 1;
-    return 0;
+    *length = bmax[0] - ref_pt[0];
+    *hight = bmax[1] - ref_pt[1];
 }
 
 
