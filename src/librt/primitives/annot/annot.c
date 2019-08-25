@@ -145,8 +145,9 @@ static int
 ant_label_dimensions(struct txt_seg* tsg, hpoint_t ref_pt, fastf_t* length, fastf_t* hight)
 {
     point_t bmin, bmax;
-    struct bu_list vhead = BU_LIST_INIT_ZERO;
+    struct bu_list vhead;
 
+    BU_LIST_INIT(&vhead);
     VSET(bmin, INFINITY, INFINITY, INFINITY);
     VSET(bmax, -INFINITY, -INFINITY, -INFINITY);
 
