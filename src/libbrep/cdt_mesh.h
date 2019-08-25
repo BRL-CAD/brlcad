@@ -201,6 +201,8 @@ class bedge_seg_t {
     public:
 	bedge_seg_t() {
 	    edge_ind = -1;
+	    linear_edge = -1;
+	    cp_len = -1;
 	    nc = NULL;
 	    brep = NULL;
 	    tseg1 = NULL;
@@ -215,6 +217,8 @@ class bedge_seg_t {
 
 	bedge_seg_t(bedge_seg_t *other) {
 	    edge_ind = other->edge_ind;
+	    linear_edge = other->linear_edge;
+	    cp_len = other->cp_len;
 	    brep = other->brep;
 	    nc = other->nc;
 	    tseg1 = NULL;
@@ -223,6 +227,9 @@ class bedge_seg_t {
 	    edge_end = DBL_MAX;
 	    e_start = NULL;
 	    e_end = NULL;
+	    // TODO - see if it makes sense to initialize these from parents and override or not
+	    nlc_start = NULL;
+	    nlc_end = NULL;
 	    tan_start = ON_3dVector::UnsetVector;
 	    tan_end = ON_3dVector::UnsetVector;
 	};
@@ -230,8 +237,17 @@ class bedge_seg_t {
 	void plot(const char *fname);
 
 	int edge_ind;
+	int linear_edge;
+	double cp_len;
 	ON_NurbsCurve *nc;
 	ON_Brep *brep;
+
+	/* These are pointers to points (if any) shared beween this edge and
+	 * connected non-linear edges. Splitting decisions that involve one
+	 * of these points will also need to consider the dimensions of the
+	 * mated edge. */
+	ON_3dPoint *nlc_start;
+	ON_3dPoint *nlc_end;
 
 	cpolyedge_t *tseg1;
 	cpolyedge_t *tseg2;

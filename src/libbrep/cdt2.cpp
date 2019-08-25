@@ -427,6 +427,12 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 {
     ON_Brep* brep = s_cdt->brep;
 
+#if 0
+    // TODO - get the ON_BoundingBox of the brep and use for tolerance guidance (maybe?)
+    ON_BoundingBox bbox = brep->BoundingBox();
+    double b_len = bbox.Diagonal().Length();
+#endif
+
     // First, set up the edge containers that will manage the edge subdivision.  Loop
     // ordering is not the job of these containers - that's handled by the trim loop
     // polygons.  These containers maintain the association between trims in different
@@ -448,16 +454,22 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	bseg->edge_end = cplen;
 
 	// Get the trims and normalize their domains as well.
-	// TODO - another point where this won't work if we don't have a 1->2 edge to trims relationship
+	// NOTE - another point where this won't work if we don't have a 1->2 edge to trims relationship
 	ON_BrepTrim *trim1 = edge.Trim(0);
 	ON_BrepTrim *trim2 = edge.Trim(1);
 	s_cdt->brep->m_T[trim1->TrimCurveIndexOf()].SetDomain(bseg->edge_start, bseg->edge_end);
 	s_cdt->brep->m_T[trim2->TrimCurveIndexOf()].SetDomain(bseg->edge_start, bseg->edge_end);
 
-	ON_3dPoint tmp;
 	// The 3D start and endpoints will be vertex points (they are shared with other edges).
 	bseg->e_start = (*s_cdt->vert_pnts)[edge.Vertex(0)->m_vertex_index];
 	bseg->e_end = (*s_cdt->vert_pnts)[edge.Vertex(1)->m_vertex_index];
+
+	// Do the linearity test once, up front
+	if (!crv->IsLinear(BN_TOL_DIST)) {
+	    bseg->linear_edge = 0;
+	} else {
+	    bseg->linear_edge = 1;
+	}
 
 	s_cdt->e2polysegs[edge.m_edge_index].insert(bseg);
     }
@@ -470,6 +482,29 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	int loop_cnt = face.LoopCount();
 	cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[face_index];
 	cdt_mesh::cpolygon_t *cpoly = NULL;
+
+#if 0
+	// Get the ON_BoundingBox diagonal length of the outer face loop
+	// - this length will feed the evaluation of the local relmax and
+	// relmin tolerance decisions (maybe?).
+	//
+	// Another possible interpretation of the rel tolerance for edges is relative
+	// to the ControlPolygonLength of the individual edge, which has the result of
+	// refining each curve locally as it makes sense (in essense, each edge curve
+	// becomes a "feature".)  An abs_min would be need to prevent getting too fine
+	// for very small curves, but if we go that route the overall loop dimensions
+	// become less important.  To avoid disparate triangle sizes at edge mating
+	// points, we track when an edge segment (linear or otherwise) meets up with other
+	// edges that are non-linear via shared 3D points.  The first pass over the non
+	// linear curves will just split locally, but a second pass will check for mated
+	// segments that are close and refine the splitting accordingly.  (For linear
+	// edges, the latter is in fact the only pass - the two things that will matter
+	// for linear splitting are refining in the local neighborhood of a curve and
+	// respecting a maximum edge length filter.
+	ON_BoundingBox lbbox;
+	face.OuterLoop()->GetBoundingBox(lbbox);
+	double l_dlen = bbox.Diagonal().Length();
+#endif
 
 	for (int li = 0; li < loop_cnt; li++) {
 	    const ON_BrepLoop *loop = face.Loop(li);
