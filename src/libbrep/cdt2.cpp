@@ -193,38 +193,55 @@ get_trim_midpt(fastf_t *t, struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_
     return trim_mid_2d;
 }
 
-bool
-tol_need_split(struct ON_Brep_CDT_State *UNUSED(s_cdt), cdt_mesh::bedge_seg_t *bseg, ON_3dPoint &edge_mid_3d)
-{
-    int dosplit = 0;
+struct edge_split_tols {
+    fastf_t edge_max_allowed_dist;
+    fastf_t edge_min_allowed_dist;
+    fastf_t max_edgept_dist_from_edge;
+    fastf_t within_angle_cos;
+};
 
+bool
+tol_need_split(struct ON_Brep_CDT_State *s_cdt, struct edge_split_tols *etol, cdt_mesh::bedge_seg_t *bseg, ON_3dPoint &edge_mid_3d)
+{
     ON_Line line3d(*(bseg->e_start), *(bseg->e_end));
     double dist3d = edge_mid_3d.DistanceTo(line3d.ClosestPointTo(edge_mid_3d));
-#if 0
-    dosplit += (line3d.Length() > bseg->cdt_tol.max_dist) ? 1 : 0;
-    dosplit += (dist3d > (bseg->cdt_tol.within_dist + ON_ZERO_TOLERANCE)) ? 1 : 0;
-    dosplit += (dist3d > 2*bseg->loop_min_dist) ? 1 : 0;
 
-    if ((dist3d > bseg->cdt_tol.min_dist + ON_ZERO_TOLERANCE)) {
-	if (!dosplit) {
-	    dosplit += ((bseg->sbtp1->tangent * bseg->ebtp1->tangent) < bseg->s_cdt->cos_within_ang - ON_ZERO_TOLERANCE) ? 1 : 0;
-	}
+    if (line3d.Length() > etol->edge_max_allowed_dist) return true;
 
-	if (!dosplit && bseg->sbtp1->normal != ON_3dVector::UnsetVector && bseg->ebtp1->normal != ON_3dVector::UnsetVector) {
-	    dosplit += ((bseg->sbtp1->normal * bseg->ebtp1->normal) < bseg->s_cdt->cos_within_ang - ON_ZERO_TOLERANCE) ? 1 : 0;
-	}
+    if (line3d.Length() < etol->edge_min_allowed_dist) return false;
 
-	if (!dosplit && bseg->sbtp2->normal != ON_3dVector::UnsetVector && bseg->ebtp2->normal != ON_3dVector::UnsetVector) {
-	    dosplit += ((bseg->sbtp2->normal * bseg->ebtp2->normal) < bseg->s_cdt->cos_within_ang - ON_ZERO_TOLERANCE) ? 1 : 0;
-	}
+    if (dist3d > etol->max_edgept_dist_from_edge) return true;
+
+    if ((bseg->tan_start * bseg->tan_end) < etol->within_angle_cos) return true;
+
+    ON_3dPoint *n1, *n2;
+
+    ON_BrepEdge& edge = s_cdt->brep->m_E[bseg->edge_ind];
+    ON_BrepTrim *trim1 = edge.Trim(0);
+    ON_BrepFace *face1 = trim1->Face();
+    cdt_mesh::cdt_mesh_t *fmesh1 = &s_cdt->fmeshes[face1->m_face_index];
+    n1 = fmesh1->normals[fmesh1->nmap[fmesh1->p2ind[bseg->e_start]]];
+    n2 = fmesh1->normals[fmesh1->nmap[fmesh1->p2ind[bseg->e_end]]];
+
+    if (ON_3dVector(*n1) != ON_3dVector::UnsetVector && ON_3dVector(*n2) != ON_3dVector::UnsetVector) {
+	if ((ON_3dVector(*n1) * ON_3dVector(*n2)) < etol->within_angle_cos - ON_ZERO_TOLERANCE) return true;
     }
-#endif
 
-    return (dist3d > 0 && dosplit > 0);
+    ON_BrepTrim *trim2 = edge.Trim(1);
+    ON_BrepFace *face2 = trim2->Face();
+    cdt_mesh::cdt_mesh_t *fmesh2 = &s_cdt->fmeshes[face2->m_face_index];
+    n1 = fmesh2->normals[fmesh2->nmap[fmesh2->p2ind[bseg->e_start]]];
+    n2 = fmesh2->normals[fmesh2->nmap[fmesh2->p2ind[bseg->e_end]]];
+
+    if (ON_3dVector(*n1) != ON_3dVector::UnsetVector && ON_3dVector(*n2) != ON_3dVector::UnsetVector) {
+	if ((ON_3dVector(*n1) * ON_3dVector(*n2)) < etol->within_angle_cos - ON_ZERO_TOLERANCE) return true;
+    }
+
+    return false;
 }
 
 std::set<cdt_mesh::bedge_seg_t *>
-split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int force)
+split_edge_seg(struct ON_Brep_CDT_State *s_cdt, struct edge_split_tols *etol, cdt_mesh::bedge_seg_t *bseg)
 {
     std::set<cdt_mesh::bedge_seg_t *> nedges;
 
@@ -253,7 +270,7 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int
 
     // Unless we're forcing a split this is the point at which we do tolerance
     // based testing to determine whether to proceed with the split or halt.
-    if (!force && !tol_need_split(s_cdt, bseg, edge_mid_3d)) {
+    if (etol && !tol_need_split(s_cdt, etol, bseg, edge_mid_3d)) {
 	return nedges;
     }
 
@@ -388,7 +405,7 @@ initialize_edge_segs(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *e)
 
     // 1.  Any edges with at least 1 closed trim are split.
     if (trim1->IsClosed() || trim2->IsClosed()) {
-	esegs_closed = split_edge_seg(s_cdt, e, 1);
+	esegs_closed = split_edge_seg(s_cdt, NULL, e);
 	if (!esegs_closed.size()) {
 	    // split failed??
 	    return false;
@@ -405,7 +422,7 @@ initialize_edge_segs(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *e)
     if (!crv->IsLinear(BN_TOL_DIST)) {
 	std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
 	for (e_it = esegs_closed.begin(); e_it != esegs_closed.end(); e_it++) {
-	    std::set<cdt_mesh::bedge_seg_t *> etmp = split_edge_seg(s_cdt, *e_it, 1);
+	    std::set<cdt_mesh::bedge_seg_t *> etmp = split_edge_seg(s_cdt, NULL, *e_it);
 	    if (!etmp.size()) {
 		// split failed??
 		return false;
@@ -433,7 +450,57 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
     double b_len = bbox.Diagonal().Length();
 #endif
 
-    // First, set up the edge containers that will manage the edge subdivision.  Loop
+    // Characterize the vertices
+    std::vector<int> vert_type;
+    for (int i = 0; i < brep->m_V.Count(); i++) {
+	int has_curved_edge = 0;
+	for (int j = 0; j < brep->m_V[i].m_ei.Count(); j++) {
+	    ON_BrepEdge &edge = brep->m_E[brep->m_V[i].m_ei[j]];
+	    const ON_Curve* crv = edge.EdgeCurveOf();
+	    if (crv && !crv->IsLinear(BN_TOL_DIST)) {
+		has_curved_edge = 1;
+		break;
+	    }
+	}
+	vert_type.push_back(has_curved_edge);
+    }
+    // Charcterize the edges.  Five possibilities:
+    //
+    // 0.  Singularity
+    // 1.  Curved edge
+    // 2.  Linear edge, associated with at least 1 non-planar surface
+    // 3.  Linear edge, associated with planar surfaces but sharing one or more vertices with
+    //     curved edges.
+    // 4.  Linear edge, associated only with planar faces and linear edges.
+    std::vector<int> edge_type;
+    for (int index = 0; index < brep->m_E.Count(); index++) {
+	ON_BrepEdge& edge = brep->m_E[index];
+	const ON_Curve* crv = edge.EdgeCurveOf();
+
+	if (!crv) {
+	    edge_type.push_back(0);
+	    continue;
+	}
+
+	if (!crv->IsLinear(BN_TOL_DIST)) {
+	    edge_type.push_back(1);
+	    continue;
+	}
+
+	const ON_Surface *s1= edge.Trim(0)->SurfaceOf();
+	const ON_Surface *s2= edge.Trim(1)->SurfaceOf();
+	if (!s1->IsPlanar(NULL, BN_TOL_DIST) || !s2->IsPlanar(NULL, BN_TOL_DIST)) {
+	    edge_type.push_back(2);
+	}
+
+	if (vert_type[edge.Vertex(0)->m_vertex_index] || vert_type[edge.Vertex(1)->m_vertex_index]) {
+	    edge_type.push_back(3);
+	}
+
+	edge_type.push_back(4);
+    }
+
+    // Set up the edge containers that will manage the edge subdivision.  Loop
     // ordering is not the job of these containers - that's handled by the trim loop
     // polygons.  These containers maintain the association between trims in different
     // faces and the 3D edge curve information used to drive shared points.
@@ -446,12 +513,12 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	// Provide a normalize edge NURBS curve
 	const ON_Curve* crv = edge.EdgeCurveOf();
 	bseg->nc = crv->NurbsCurve();
-	double cplen = bseg->nc->ControlPolygonLength();
-	bseg->nc->SetDomain(0.0, cplen);
+	bseg->cp_len = bseg->nc->ControlPolygonLength();
+	bseg->nc->SetDomain(0.0, bseg->cp_len);
 
 	// Set the initial edge curve t parameter values
 	bseg->edge_start = 0.0;
-	bseg->edge_end = cplen;
+	bseg->edge_end = bseg->cp_len;
 
 	// Get the trims and normalize their domains as well.
 	// NOTE - another point where this won't work if we don't have a 1->2 edge to trims relationship
@@ -464,7 +531,7 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	bseg->e_start = (*s_cdt->vert_pnts)[edge.Vertex(0)->m_vertex_index];
 	bseg->e_end = (*s_cdt->vert_pnts)[edge.Vertex(1)->m_vertex_index];
 
-	// Do the linearity test once, up front
+	// Do the linearity test up front
 	if (!crv->IsLinear(BN_TOL_DIST)) {
 	    bseg->linear_edge = 0;
 	} else {
@@ -641,23 +708,34 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	}
     }
 
+#if 0
     // Process the non-linear edges first - we will need information
     // from them to handle the linear edges
     for (int index = 0; index < brep->m_E.Count(); index++) {
 	ON_BrepEdge& edge = brep->m_E[index];
-
 	const ON_Curve* crv = edge.EdgeCurveOf();
 	if (!crv->IsLinear(BN_TOL_DIST)) {
+	    struct edge_split_tols etols;
+	    etols.edge_max_allowed_dist = (s_cdt->tol.absmax > 0) ? s_cdt->tol.absmax : 1.1*bseg->cp_len;
+	    etols.edge_min_allowed_dist = (s_cdt->tol.rel > 0) ? s_cdt->tol.rel * bseg->cp_len : 0.0;
+	    etols.max_edgept_dist_from_edge = (s_cdt->tol.abs > 0) ? s_cdt->tol.abs : DBL_MAX;
+	    etols.within_angle_cos = s_cdt->cos_within_angle;
+
 	    std::set<cdt_mesh::bedge_seg_t *> &epsegs = s_cdt->e2polysegs[edge.m_edge_index];
 	    std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
 	    for (e_it = epsegs.begin(); e_it != epsegs.end(); e_it++) {
 		cdt_mesh::bedge_seg_t *b = *e_it;
-		if (!b->tseg1 || !b->tseg2) {
-		    std::cout << "don't have trims\n";
+		std::set<cdt_mesh::bedge_seg_t *> esegs_split;
+		esegs_split = split_edge_seg(s_cdt, &etol, e, 0);
+		if (esegs_split.size()) {
+		    s_cdt->e2polysegs[e->edge_ind].clear();
+		    s_cdt->e2polysegs[e->edge_ind].insert(esegs_split.begin(), esegs_split.end());
 		}
 	    }
 	}
     }
+#endif
+
 
     // TODO - move the nonlinear and linear edge splitting based on tolerances back in.
 

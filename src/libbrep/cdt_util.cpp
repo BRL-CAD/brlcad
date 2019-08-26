@@ -664,7 +664,7 @@ cdt_tol_global_calc(struct ON_Brep_CDT_State *s)
 	// Need some bounding box information
 	ON_BoundingBox bbox;
 	if (!s->brep->GetTightBoundingBox(bbox)) {
-	   bbox = s->brep->BoundingBox(); 
+	   bbox = s->brep->BoundingBox();
 	}
 	double len = bbox.Diagonal().Length();
 
