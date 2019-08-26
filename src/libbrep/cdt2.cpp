@@ -644,7 +644,7 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 			ON_3dPoint tmp1;
 			surface_EvNormal(trim->SurfaceOf(), cp.x, cp.y, tmp1, norm);
 		    }
-		    ON_3dPoint *op3d = (*s_cdt->vert_pnts)[trim->Vertex(0)->m_vertex_index];
+		    ON_3dPoint *op3d = (*s_cdt->vert_pnts)[trim->Vertex(sind)->m_vertex_index];
 		    long f3ind = fmesh->add_point(op3d);
 		    long fnind = fmesh->add_normal(new ON_3dPoint(norm));
 		    fmesh->p2d3d[find] = f3ind;
@@ -668,7 +668,7 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 		    ON_3dPoint tmp1;
 		    surface_EvNormal(trim->SurfaceOf(), cp.x, cp.y, tmp1, norm);
 		}
-		ON_3dPoint *cp3d = (*s_cdt->vert_pnts)[trim->Vertex(1)->m_vertex_index];
+		ON_3dPoint *cp3d = (*s_cdt->vert_pnts)[trim->Vertex(eind)->m_vertex_index];
 		long f3ind = fmesh->add_point(cp3d);
 		long fnind = fmesh->add_normal(new ON_3dPoint(norm));
 		fmesh->p2d3d[find] = f3ind;
