@@ -3138,7 +3138,7 @@ brep_command(struct bu_vls *vls, const char *solid_name, struct rt_wdb *UNUSED(w
 		}
 		ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create((void *)bs->brep, solid_name);
 
-		struct bg_tess_tol cdttol;
+		struct bg_tess_tol cdttol = BG_TESS_TOL_INIT_ZERO;
 		cdttol.abs = ttol->abs;
 		cdttol.rel = ttol->rel;
 		cdttol.norm = ttol->norm;
@@ -3161,7 +3161,7 @@ brep_command(struct bu_vls *vls, const char *solid_name, struct rt_wdb *UNUSED(w
 		}
 		ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create((void *)bs->brep, solid_name);
 
-		struct bg_tess_tol cdttol;
+		struct bg_tess_tol cdttol = BG_TESS_TOL_INIT_ZERO;
 		cdttol.abs = ttol->abs;
 		cdttol.rel = ttol->rel;
 		cdttol.norm = ttol->norm;
@@ -3184,7 +3184,7 @@ brep_command(struct bu_vls *vls, const char *solid_name, struct rt_wdb *UNUSED(w
 		}
 		ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create((void *)bs->brep, solid_name);
 
-		struct bg_tess_tol cdttol;
+		struct bg_tess_tol cdttol = BG_TESS_TOL_INIT_ZERO;
 		cdttol.abs = ttol->abs;
 		cdttol.rel = ttol->rel;
 		cdttol.norm = ttol->norm;
@@ -3200,7 +3200,7 @@ brep_command(struct bu_vls *vls, const char *solid_name, struct rt_wdb *UNUSED(w
 		bu_color_from_str(&c, "255/255/0");
 		ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create((void *)bs->brep, solid_name);
 
-		struct bg_tess_tol cdttol;
+		struct bg_tess_tol cdttol = BG_TESS_TOL_INIT_ZERO;
 		cdttol.abs = ttol->abs;
 		cdttol.rel = ttol->rel;
 		cdttol.norm = ttol->norm;
