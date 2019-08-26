@@ -368,11 +368,11 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, struct edge_split_tols *etol, cd
 	poly2_ne1 = poly2->add_edge(poly2_edge1);
 	poly2_ne1->trim_ind = trim_ind;
 	poly2_ne1->trim_start = old_trim_start;
-	poly2_ne1->trim_end = t1mid;
+	poly2_ne1->trim_end = t2mid;
 	struct cdt_mesh::edge_t poly2_edge2(poly2_2dind, v[1]);
 	poly2_ne2 = poly2->add_edge(poly2_edge2);
    	poly2_ne2->trim_ind = trim_ind;
-	poly2_ne2->trim_start = t1mid;
+	poly2_ne2->trim_start = t2mid;
 	poly2_ne2->trim_end = old_trim_end;
     }
     // The new trim segments are then associated with the new bounding edge segments
