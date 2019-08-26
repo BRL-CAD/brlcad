@@ -468,12 +468,6 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 {
     ON_Brep* brep = s_cdt->brep;
 
-#if 0
-    // TODO - get the ON_BoundingBox of the brep and use for tolerance guidance (maybe?)
-    ON_BoundingBox bbox = brep->BoundingBox();
-    double b_len = bbox.Diagonal().Length();
-#endif
-
     // Characterize the vertices
     std::vector<int> vert_type;
     for (int i = 0; i < brep->m_V.Count(); i++) {
@@ -573,39 +567,6 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	int loop_cnt = face.LoopCount();
 	cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[face_index];
 	cdt_mesh::cpolygon_t *cpoly = NULL;
-
-#if 0
-	// Get the ON_BoundingBox diagonal length of the outer face loop
-	// - this length will feed the evaluation of the local relmax and
-	// relmin tolerance decisions (maybe?).
-	//
-	// Another possible interpretation of the rel tolerance for edges is relative
-	// to the ControlPolygonLength of the individual edge, which has the result of
-	// refining each curve locally as it makes sense (in essense, each edge curve
-	// becomes a "feature".)  An abs_min would be need to prevent getting too fine
-	// for very small curves, but if we go that route the overall loop dimensions
-	// become less important.  To avoid disparate triangle sizes at edge mating
-	// points, we track when an edge segment (linear or otherwise) meets up with other
-	// edges that are non-linear via shared 3D points.  The first pass over the non
-	// linear curves will just split locally, but a second pass will check for mated
-	// segments that are close and refine the splitting accordingly.  (For linear
-	// edges, the latter is in fact the only pass - the two things that will matter
-	// for linear splitting are refining in the local neighborhood of a curve and
-	// respecting a maximum edge length filter.
-	//
-	// Note another piece of necessary information for linear edge splitting is
-	// whether either of the adjoining surfaces is non-planar.  If that's the case,
-	// the linear edges will need to be split close to the segment size of the
-	// non-linear edges in the outer surface loop, since the interior triangles
-	// will be broken down to a much finer size.  To avoid mating small interior
-	// triangle edges to long edge line segments, we need to split those types
-	// of linear edges further.  Since we don't yet know the surface interior information,
-	// the best available information will be the splits in the non-linear loop
-	// curves.
-	ON_BoundingBox lbbox;
-	face.OuterLoop()->GetBoundingBox(lbbox);
-	double l_dlen = bbox.Diagonal().Length();
-#endif
 
 	for (int li = 0; li < loop_cnt; li++) {
 	    const ON_BrepLoop *loop = face.Loop(li);
@@ -732,7 +693,6 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	}
     }
 
-#if 0
     // Process the non-linear edges first - we will need information
     // from them to handle the linear edges
     for (int index = 0; index < brep->m_E.Count(); index++) {
@@ -749,15 +709,16 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 		if (esegs_split.size()) {
 		    to_erase.insert(b);
 		    s_cdt->e2polysegs[b->edge_ind].insert(esegs_split.begin(), esegs_split.end());
+		}
 	    }
 	    for (e_it = to_erase.begin(); e_it != to_erase.end(); e_it++) {
 		cdt_mesh::bedge_seg_t *b = *e_it;
 		s_cdt->e2polysegs[b->edge_ind].erase(b);
 	    }
 	}
-	    }
-	}
+    }
 
+#if 0
     // Calculate edge median segment lengths contributed from the curved edges
     for (int index = 0; index < brep->m_E.Count(); index++) {
 	std::set<cdt_mesh::bedge_seg_t *> &epsegs = s_cdt->e2polysegs[index];
