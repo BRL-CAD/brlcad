@@ -501,6 +501,16 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	// edges, the latter is in fact the only pass - the two things that will matter
 	// for linear splitting are refining in the local neighborhood of a curve and
 	// respecting a maximum edge length filter.
+	//
+	// Note another piece of necessary information for linear edge splitting is
+	// whether either of the adjoining surfaces is non-planar.  If that's the case,
+	// the linear edges will need to be split close to the segment size of the
+	// non-linear edges in the outer surface loop, since the interior triangles
+	// will be broken down to a much finer size.  To avoid mating small interior
+	// triangle edges to long edge line segments, we need to split those types
+	// of linear edges further.  Since we don't yet know the surface interior information,
+	// the best available information will be the splits in the non-linear loop
+	// curves.
 	ON_BoundingBox lbbox;
 	face.OuterLoop()->GetBoundingBox(lbbox);
 	double l_dlen = bbox.Diagonal().Length();
