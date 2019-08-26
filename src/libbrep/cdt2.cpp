@@ -399,6 +399,7 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int
 	poly2_ne2->trim_start = t2mid;
 	poly2_ne2->trim_end = old_trim_end;
     }
+
     // The new trim segments are then associated with the new bounding edge segments
     bseg1->tseg1 = poly1_ne1;
     bseg1->tseg2 = poly2_ne1;
@@ -407,6 +408,7 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int
 
     nedges.insert(bseg1);
     nedges.insert(bseg2);
+
     delete bseg;
     return nedges;
 }
@@ -418,7 +420,6 @@ bool
 initialize_edge_segs(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *e)
 {
     ON_BrepEdge& edge = s_cdt->brep->m_E[e->edge_ind];
-    // TODO - another point where this won't work if we don't have a 1->2 edge to trims relationship
     ON_BrepTrim *trim1 = edge.Trim(0);
     ON_BrepTrim *trim2 = edge.Trim(1);
     std::set<cdt_mesh::bedge_seg_t *> esegs_closed;
@@ -468,7 +469,7 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 {
     ON_Brep* brep = s_cdt->brep;
 
-    // Characterize the vertices
+    // Characterize the vertices - are they used by non-linear edges?
     std::vector<int> vert_type;
     for (int i = 0; i < brep->m_V.Count(); i++) {
 	int has_curved_edge = 0;
@@ -482,6 +483,7 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	}
 	vert_type.push_back(has_curved_edge);
     }
+
     // Charcterize the edges.  Five possibilities:
     //
     // 0.  Singularity
@@ -495,26 +497,31 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	ON_BrepEdge& edge = brep->m_E[index];
 	const ON_Curve* crv = edge.EdgeCurveOf();
 
+	// Singularity
 	if (!crv) {
 	    edge_type.push_back(0);
 	    continue;
 	}
 
+	// Curved edge
 	if (!crv->IsLinear(BN_TOL_DIST)) {
 	    edge_type.push_back(1);
 	    continue;
 	}
 
+	// Linear edge, at least one non-planar surface
 	const ON_Surface *s1= edge.Trim(0)->SurfaceOf();
 	const ON_Surface *s2= edge.Trim(1)->SurfaceOf();
 	if (!s1->IsPlanar(NULL, BN_TOL_DIST) || !s2->IsPlanar(NULL, BN_TOL_DIST)) {
 	    edge_type.push_back(2);
 	}
 
+	// Linear edge, at least one associated non-linear edge
 	if (vert_type[edge.Vertex(0)->m_vertex_index] || vert_type[edge.Vertex(1)->m_vertex_index]) {
 	    edge_type.push_back(3);
 	}
 
+	// Linear edge, only associated with linear edges and planar faces
 	edge_type.push_back(4);
     }
 
@@ -681,7 +688,7 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	}
     }
 
-    // Do the non-tolerance based initializations
+    // Do the non-tolerance based initialization splits.
     for (epoly_it = s_cdt->e2polysegs.begin(); epoly_it != s_cdt->e2polysegs.end(); epoly_it++) {
 	std::set<cdt_mesh::bedge_seg_t *>::iterator seg_it;
 	std::set<cdt_mesh::bedge_seg_t *> wsegs = epoly_it->second;
@@ -693,12 +700,81 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	}
     }
 
-    // Process the non-linear edges first - we will need information
-    // from them to handle the linear edges
+    // On to tolerance based splitting.  Process the non-linear edges first -
+    // we will need information from them to handle the linear edges
     for (int index = 0; index < brep->m_E.Count(); index++) {
 	ON_BrepEdge& edge = brep->m_E[index];
 	const ON_Curve* crv = edge.EdgeCurveOf();
-	if (!crv->IsLinear(BN_TOL_DIST)) {
+	if (crv && !crv->IsLinear(BN_TOL_DIST)) {
+	    std::set<cdt_mesh::bedge_seg_t *> &epsegs = s_cdt->e2polysegs[edge.m_edge_index];
+	    std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
+	    std::set<cdt_mesh::bedge_seg_t *> new_segs;
+	    for (e_it = epsegs.begin(); e_it != epsegs.end(); e_it++) {
+		cdt_mesh::bedge_seg_t *b = *e_it;
+		std::set<cdt_mesh::bedge_seg_t *> esegs_split;
+		esegs_split = split_edge_seg(s_cdt, b, 0);
+		if (esegs_split.size()) {
+		    new_segs.insert(esegs_split.begin(), esegs_split.end());
+		} else {
+		    new_segs.insert(b);
+		}
+	    }
+	    s_cdt->e2polysegs[edge.m_edge_index].clear();
+	    s_cdt->e2polysegs[edge.m_edge_index].insert(new_segs.begin(), new_segs.end());
+	}
+    }
+
+    // Calculate edge median segment lengths contributed from the curved edges
+    for (int index = 0; index < brep->m_E.Count(); index++) {
+	std::set<cdt_mesh::bedge_seg_t *> &epsegs = s_cdt->e2polysegs[index];
+	if (!epsegs.size()) {
+	    // No non-linear edges, so no segments to use
+	    s_cdt->e_median_len[index] = -1;
+	} else {
+	    std::vector<double> lsegs;
+	    std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
+	    for (e_it = epsegs.begin(); e_it != epsegs.end(); e_it++) {
+		cdt_mesh::bedge_seg_t *b = *e_it;
+		double seg_dist = b->e_start->DistanceTo(*b->e_end);
+		lsegs.push_back(seg_dist);
+	    }
+	    s_cdt->e_median_len[index] = median_seg_len(lsegs);
+	    std::cout << "Median edge seg length, edge " << index << ": " << s_cdt->e_median_len[index] << "\n";
+	}
+    }
+
+    // Calculate loop median segment lengths contributed from the curved edges
+    for (int index = 0; index < brep->m_L.Count(); index++) {
+	const ON_BrepLoop &loop = brep->m_L[index];
+	std::vector<double> lsegs;
+	for (int lti = 0; lti < loop.TrimCount(); lti++) {
+	    ON_BrepTrim *trim = loop.Trim(lti);
+	    ON_BrepEdge *edge = trim->Edge();
+	    if (!edge) continue;
+	    std::set<cdt_mesh::bedge_seg_t *> &epsegs = s_cdt->e2polysegs[edge->m_edge_index];
+	    if (!epsegs.size()) continue;
+	    std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
+	    for (e_it = epsegs.begin(); e_it != epsegs.end(); e_it++) {
+		cdt_mesh::bedge_seg_t *b = *e_it;
+		double seg_dist = b->e_start->DistanceTo(*b->e_end);
+		lsegs.push_back(seg_dist);
+	    }
+	}
+	if (!lsegs.size()) {
+	    // No non-linear edges, so no segments to use
+	    s_cdt->l_median_len[index] = -1;
+	} else {
+	    s_cdt->l_median_len[index] = median_seg_len(lsegs);
+	    std::cout << "Median loop seg length, loop " << index << ": " << s_cdt->l_median_len[index] << "\n";
+	}
+    }
+
+#if 0
+    // Now, process the linear edges
+    for (int index = 0; index < brep->m_E.Count(); index++) {
+	ON_BrepEdge& edge = brep->m_E[index];
+	const ON_Curve* crv = edge.EdgeCurveOf();
+	if (crv->IsLinear(BN_TOL_DIST)) {
 	    std::set<cdt_mesh::bedge_seg_t *> to_erase;
 	    std::set<cdt_mesh::bedge_seg_t *> &epsegs = s_cdt->e2polysegs[edge.m_edge_index];
 	    std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
@@ -716,59 +792,7 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 		s_cdt->e2polysegs[b->edge_ind].erase(b);
 	    }
 	}
-    }
-
-#if 0
-    // Calculate edge median segment lengths contributed from the curved edges
-    for (int index = 0; index < brep->m_E.Count(); index++) {
-	std::set<cdt_mesh::bedge_seg_t *> &epsegs = s_cdt->e2polysegs[index];
-	if (!epsegs.size()) {
-	    // No non-linear edges, so no segments to use
-	    s_cdt->e_median_len[index] = -1;
-	} else {
-	    std::vector<double> lsegs;
-	    std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
-	    for (e_it = epsegs.begin(); e_it != epsegs.end(); e_it++) {
-		cdt_mesh::bedge_seg_t *b = *e_it;
-		double seg_dist = b->e_start->DistanceTo(*b->e_end);
-		lsegs.push_back(seg_dist);
-	    }
-	    s_cdt->e_median_len[index] = median_seg_len(lsegs);
-	}
-    }
-
-    // Calculate loop median segment lengths contributed from the curved edges
-    for (int index = 0; index < brep->m_L.Count(); index++) {
-	const ON_BrepLoop &loop = brep->m_L[index];
-	std::vector<double> lsegs;
-	for (int lti = 0; lti < loop->TrimCount(); lti++) {
-	    ON_BrepTrim *trim = loop->Trim(lti);
-	    ON_BrepEdge *edge = trim->Edge();
-	    if (!edge) continue;
-	    std::set<cdt_mesh::bedge_seg_t *> &epsegs = s_cdt->e2polysegs[edge->m_edge_index];
-	    if (!epsegs.size()) continue;
-	    std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
-	    for (e_it = epsegs.begin(); e_it != epsegs.end(); e_it++) {
-		cdt_mesh::bedge_seg_t *b = *e_it;
-		double seg_dist = b->e_start->DistanceTo(*b->e_end);
-		lsegs.push_back(seg_dist);
-	    }
-	}
-	if (!lsegs.size()) {
-	    // No non-linear edges, so no segments to use
-	    s_cdt->l_median_len[index] = -1;
-	} else {
-	    std::vector<double> lsegs;
-	    std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
-	    for (e_it = epsegs.begin(); e_it != epsegs.end(); e_it++) {
-		cdt_mesh::bedge_seg_t *b = *e_it;
-		double seg_dist = b->e_start->DistanceTo(*b->e_end);
-		lsegs.push_back(seg_dist);
-	    }
-	    s_cdt->e_median_len[index] = median_seg_len(lsegs);
-	}
-    }
-
+    }	
 #endif
 
 
@@ -787,6 +811,7 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	bu_vls_free(&fname);
     }
 
+    exit(0);
     return 0;
 
 }
