@@ -376,10 +376,10 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, struct edge_split_tols *etol, cd
 	poly2_ne2->trim_end = old_trim_end;
     }
     // The new trim segments are then associated with the new bounding edge segments
-    bseg1->tseg1 = (trim1->m_bRev3d) ? poly1_ne2 : poly1_ne1;
-    bseg1->tseg2 = (trim2->m_bRev3d) ? poly2_ne2 : poly2_ne1;
-    bseg2->tseg1 = (trim1->m_bRev3d) ? poly1_ne1 : poly1_ne2;
-    bseg2->tseg2 = (trim2->m_bRev3d) ? poly2_ne1 : poly2_ne2;
+    bseg1->tseg1 = poly1_ne1;
+    bseg1->tseg2 = poly2_ne1;
+    bseg2->tseg1 = poly1_ne2;
+    bseg2->tseg2 = poly2_ne2;
 
     nedges.insert(bseg1);
     nedges.insert(bseg2);
@@ -601,10 +601,12 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	    long fv = -1;
 	    for (int lti = 0; lti < trim_count; lti++) {
 		ON_BrepTrim *trim = loop->Trim(lti);
+		int sind = (trim->m_bRev3d) ? 1 : 0;
+		int eind = (trim->m_bRev3d) ? 0 : 1;
 		ON_Interval range = trim->Domain();
 		if (lti == 0) {
 		    // Get the 2D point, add it to the mesh and current polygon
-		    cp = trim->PointAt(range.m_t[0]);
+		    cp = trim->PointAt(range.m_t[sind]);
 		    long find = fmesh->add_point(cp);
 		    pv = cpoly->add_point(cp, find);
 		    fv = pv;
@@ -629,7 +631,7 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 		}
 
 		// Get the 2D point, add it to the mesh and current polygon
-		cp = trim->PointAt(range.m_t[1]);
+		cp = trim->PointAt(range.m_t[eind]);
 		long find = fmesh->add_point(cp);
 		cv = cpoly->add_point(cp, find);
 
@@ -651,8 +653,8 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 		struct cdt_mesh::edge_t lseg(pv, cv);
 		cdt_mesh::cpolyedge_t *ne = cpoly->add_edge(lseg);
 		ne->trim_ind = trim->m_trim_index;
-		ne->trim_start = range.m_t[0];
-		ne->trim_end = range.m_t[1];
+		ne->trim_start = range.m_t[sind];
+		ne->trim_end = range.m_t[eind];
 		if (trim->m_ei >= 0) {
 		    cdt_mesh::bedge_seg_t *eseg = *s_cdt->e2polysegs[trim->m_ei].begin();
 		    // Associate the edge segment with the trim segment and vice versa
@@ -684,14 +686,12 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	std::set<cdt_mesh::bedge_seg_t *>::iterator seg_it;
 	for (seg_it = epoly_it->second.begin(); seg_it != epoly_it->second.end(); seg_it++) {
 	    cdt_mesh::bedge_seg_t *bseg = *seg_it;
-	    ON_BrepTrim &trim1 = s_cdt->brep->m_T[bseg->tseg1->trim_ind];
-	    ON_BrepTrim &trim2 = s_cdt->brep->m_T[bseg->tseg2->trim_ind];
-	    double ts1 = (trim1.m_bRev3d) ? bseg->tseg1->trim_end : bseg->tseg1->trim_start;
-	    double ts2 = (trim2.m_bRev3d) ? bseg->tseg2->trim_end : bseg->tseg2->trim_start;
+	    double ts1 = bseg->tseg1->trim_start;
+	    double ts2 = bseg->tseg2->trim_start;
 	    bseg->tan_start = bseg_tangent(s_cdt, bseg, bseg->edge_start, ts1, ts2);
 
-	    double te1 = (trim1.m_bRev3d) ? bseg->tseg1->trim_start : bseg->tseg1->trim_end;
-	    double te2 = (trim2.m_bRev3d) ? bseg->tseg2->trim_start : bseg->tseg2->trim_end;
+	    double te1 = bseg->tseg1->trim_end;
+	    double te2 = bseg->tseg2->trim_end;
 	    bseg->tan_end = bseg_tangent(s_cdt, bseg, bseg->edge_end, te1, te2);
 	}
     }
@@ -730,10 +730,10 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 		if (esegs_split.size()) {
 		    s_cdt->e2polysegs[e->edge_ind].clear();
 		    s_cdt->e2polysegs[e->edge_ind].insert(esegs_split.begin(), esegs_split.end());
-		}
 	    }
 	}
-    }
+	    }
+	}
 #endif
 
 
