@@ -100,7 +100,7 @@ midpnt_binary_search(fastf_t *tmid, const ON_BrepTrim &trim, double tstart, doub
 
 	double vdot = ON_DotProduct(v1,v2);
 
-	if (vdot < 0) {
+	if (vdot < 0 && dist > ON_ZERO_TOLERANCE) {
 	    //if (verbose)
 	    //	bu_log("(%f - %f - %f (%f): searching left and right subspans\n", tstart, tcmid, tend, ON_DotProduct(v1,v2));
 	    double tlmid, trmid;
