@@ -201,7 +201,7 @@ class bedge_seg_t {
     public:
 	bedge_seg_t() {
 	    edge_ind = -1;
-	    linear_edge = -1;
+	    edge_type = -1;
 	    cp_len = -1;
 	    nc = NULL;
 	    brep = NULL;
@@ -211,13 +211,15 @@ class bedge_seg_t {
 	    edge_end = DBL_MAX;
 	    e_start = NULL;
 	    e_end = NULL;
+	    e_root_start = NULL;
+	    e_root_end = NULL;
 	    tan_start = ON_3dVector::UnsetVector;
 	    tan_end = ON_3dVector::UnsetVector;
 	};
 
 	bedge_seg_t(bedge_seg_t *other) {
 	    edge_ind = other->edge_ind;
-	    linear_edge = other->linear_edge;
+	    edge_type = other->edge_type;
 	    cp_len = other->cp_len;
 	    brep = other->brep;
 	    nc = other->nc;
@@ -227,6 +229,8 @@ class bedge_seg_t {
 	    edge_end = DBL_MAX;
 	    e_start = NULL;
 	    e_end = NULL;
+	    e_root_start = NULL;
+	    e_root_end = NULL;
 	    // TODO - see if it makes sense to initialize these from parents and override or not
 	    nlc_start = NULL;
 	    nlc_end = NULL;
@@ -237,7 +241,7 @@ class bedge_seg_t {
 	void plot(const char *fname);
 
 	int edge_ind;
-	int linear_edge;
+	int edge_type;
 	double cp_len;
 	ON_NurbsCurve *nc;
 	ON_Brep *brep;
@@ -255,6 +259,8 @@ class bedge_seg_t {
 	double edge_end;
 	ON_3dPoint *e_start;
 	ON_3dPoint *e_end;
+	ON_3dPoint *e_root_start;
+	ON_3dPoint *e_root_end;
 	ON_3dVector tan_start;
 	ON_3dVector tan_end;
 };

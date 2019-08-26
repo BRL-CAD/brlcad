@@ -695,10 +695,11 @@ cdt_tol_global_calc(struct ON_Brep_CDT_State *s)
     s->absmin = (s->absmax < s->absmin) ? s->absmax : s->absmin;
 
     // Get the normal based parameter as well
+    s->tol.norm = 45*ON_PI/180;
     if (s->tol.norm > ON_ZERO_TOLERANCE) {
 	s->cos_within_ang = cos(s->tol.norm);
     } else {
-	s->cos_within_ang = cos(ON_PI / 2.0);
+	s->cos_within_ang = -1.0;
     }
 }
 
@@ -720,9 +721,9 @@ ON_Brep_CDT_Tol_Set(struct ON_Brep_CDT_State *s, const struct bg_tess_tol *t)
 	s->tol.relmin = -1;
 	s->tol.rel_lmax = -1;
 	s->tol.rel_lmin = -1;
-	s->absmax = 0;
-	s->absmin = 0;
-	s->cos_within_ang = 0;
+	s->absmax = -1;
+	s->absmin = -1;
+	s->cos_within_ang = -1;
 	if (s->brep) {
 	    cdt_tol_global_calc(s);
 	}
@@ -730,9 +731,9 @@ ON_Brep_CDT_Tol_Set(struct ON_Brep_CDT_State *s, const struct bg_tess_tol *t)
     }
 
     s->tol = *t;
-    s->absmax = 0;
-    s->absmin = 0;
-    s->cos_within_ang = 0;
+    s->absmax = -1;
+    s->absmin = -1;
+    s->cos_within_ang = -1;
     if (s->brep) {
 	cdt_tol_global_calc(s);
     }

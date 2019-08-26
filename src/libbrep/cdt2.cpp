@@ -33,6 +33,30 @@
 // For all faces, and each face loop in those faces, build the
 // initial polygons strictly based on trim start/end points
 
+double
+median_seg_len(std::vector<double> &lsegs)
+{
+    // Get the median segment length (https://stackoverflow.com/a/42791986)
+    double median, e1, e2;
+    std::vector<double>::iterator v1, v2;
+    if (lsegs.size() % 2 == 0) {
+	v1 = lsegs.begin() + lsegs.size() / 2 - 1;
+	v2 = lsegs.begin() + lsegs.size() / 2;
+	std::nth_element(lsegs.begin(), v1, lsegs.end());
+	e1 = *v1;
+	std::nth_element(lsegs.begin(), v2, lsegs.end());
+	e2 = *v2;
+	median = (e1+e2)*0.5;
+    } else {
+	v2 = lsegs.begin() + lsegs.size() / 2;
+	std::nth_element(lsegs.begin(), v2, lsegs.end());
+	median = *v2;
+    }
+
+    return median;
+}
+
+
 ON_3dVector
 bseg_tangent(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, double eparam, double t1param, double t2param)
 {
@@ -193,26 +217,26 @@ get_trim_midpt(fastf_t *t, struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_
     return trim_mid_2d;
 }
 
-struct edge_split_tols {
-    fastf_t edge_max_allowed_dist;
-    fastf_t edge_min_allowed_dist;
-    fastf_t max_edgept_dist_from_edge;
-    fastf_t within_angle_cos;
-};
-
 bool
-tol_need_split(struct ON_Brep_CDT_State *s_cdt, struct edge_split_tols *etol, cdt_mesh::bedge_seg_t *bseg, ON_3dPoint &edge_mid_3d)
+tol_need_split(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, ON_3dPoint &edge_mid_3d)
 {
     ON_Line line3d(*(bseg->e_start), *(bseg->e_end));
+    double seg_len = line3d.Length();
+
+    double max_allowed = (s_cdt->tol.absmax > ON_ZERO_TOLERANCE) ? s_cdt->tol.absmax : 1.1*bseg->cp_len;
+    double min_allowed = (s_cdt->tol.rel > ON_ZERO_TOLERANCE) ? s_cdt->tol.rel * bseg->cp_len : 0.0;
+    double max_edgept_dist_from_edge = (s_cdt->tol.abs > ON_ZERO_TOLERANCE) ? s_cdt->tol.abs : seg_len;
+
+
+    if (seg_len > max_allowed) return true;
+
+    if (seg_len < min_allowed) return false;
+
     double dist3d = edge_mid_3d.DistanceTo(line3d.ClosestPointTo(edge_mid_3d));
 
-    if (line3d.Length() > etol->edge_max_allowed_dist) return true;
+    if (dist3d > max_edgept_dist_from_edge) return true;
 
-    if (line3d.Length() < etol->edge_min_allowed_dist) return false;
-
-    if (dist3d > etol->max_edgept_dist_from_edge) return true;
-
-    if ((bseg->tan_start * bseg->tan_end) < etol->within_angle_cos) return true;
+    if ((bseg->tan_start * bseg->tan_end) < s_cdt->cos_within_ang) return true;
 
     ON_3dPoint *n1, *n2;
 
@@ -224,7 +248,7 @@ tol_need_split(struct ON_Brep_CDT_State *s_cdt, struct edge_split_tols *etol, cd
     n2 = fmesh1->normals[fmesh1->nmap[fmesh1->p2ind[bseg->e_end]]];
 
     if (ON_3dVector(*n1) != ON_3dVector::UnsetVector && ON_3dVector(*n2) != ON_3dVector::UnsetVector) {
-	if ((ON_3dVector(*n1) * ON_3dVector(*n2)) < etol->within_angle_cos - ON_ZERO_TOLERANCE) return true;
+	if ((ON_3dVector(*n1) * ON_3dVector(*n2)) < s_cdt->cos_within_ang - VUNITIZE_TOL) return true;
     }
 
     ON_BrepTrim *trim2 = edge.Trim(1);
@@ -234,14 +258,14 @@ tol_need_split(struct ON_Brep_CDT_State *s_cdt, struct edge_split_tols *etol, cd
     n2 = fmesh2->normals[fmesh2->nmap[fmesh2->p2ind[bseg->e_end]]];
 
     if (ON_3dVector(*n1) != ON_3dVector::UnsetVector && ON_3dVector(*n2) != ON_3dVector::UnsetVector) {
-	if ((ON_3dVector(*n1) * ON_3dVector(*n2)) < etol->within_angle_cos - ON_ZERO_TOLERANCE) return true;
+	if ((ON_3dVector(*n1) * ON_3dVector(*n2)) < s_cdt->cos_within_ang - VUNITIZE_TOL) return true;
     }
 
     return false;
 }
 
 std::set<cdt_mesh::bedge_seg_t *>
-split_edge_seg(struct ON_Brep_CDT_State *s_cdt, struct edge_split_tols *etol, cdt_mesh::bedge_seg_t *bseg)
+split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int force)
 {
     std::set<cdt_mesh::bedge_seg_t *> nedges;
 
@@ -270,7 +294,7 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, struct edge_split_tols *etol, cd
 
     // Unless we're forcing a split this is the point at which we do tolerance
     // based testing to determine whether to proceed with the split or halt.
-    if (etol && !tol_need_split(s_cdt, etol, bseg, edge_mid_3d)) {
+    if (!force && !tol_need_split(s_cdt, bseg, edge_mid_3d)) {
 	return nedges;
     }
 
@@ -405,7 +429,7 @@ initialize_edge_segs(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *e)
 
     // 1.  Any edges with at least 1 closed trim are split.
     if (trim1->IsClosed() || trim2->IsClosed()) {
-	esegs_closed = split_edge_seg(s_cdt, NULL, e);
+	esegs_closed = split_edge_seg(s_cdt, e, 1);
 	if (!esegs_closed.size()) {
 	    // split failed??
 	    return false;
@@ -422,7 +446,7 @@ initialize_edge_segs(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *e)
     if (!crv->IsLinear(BN_TOL_DIST)) {
 	std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
 	for (e_it = esegs_closed.begin(); e_it != esegs_closed.end(); e_it++) {
-	    std::set<cdt_mesh::bedge_seg_t *> etmp = split_edge_seg(s_cdt, NULL, *e_it);
+	    std::set<cdt_mesh::bedge_seg_t *> etmp = split_edge_seg(s_cdt, *e_it, 1);
 	    if (!etmp.size()) {
 		// split failed??
 		return false;
@@ -531,12 +555,12 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	bseg->e_start = (*s_cdt->vert_pnts)[edge.Vertex(0)->m_vertex_index];
 	bseg->e_end = (*s_cdt->vert_pnts)[edge.Vertex(1)->m_vertex_index];
 
-	// Do the linearity test up front
-	if (!crv->IsLinear(BN_TOL_DIST)) {
-	    bseg->linear_edge = 0;
-	} else {
-	    bseg->linear_edge = 1;
-	}
+	// These are also the root start and end points - type 3 edges will need this information later
+	bseg->e_root_start = bseg->e_start;
+	bseg->e_root_end = bseg->e_end;
+
+	// Stash the edge type - we will need it during refinement
+	bseg->edge_type = edge_type[edge.m_edge_index];
 
 	s_cdt->e2polysegs[edge.m_edge_index].insert(bseg);
     }
@@ -715,25 +739,75 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	ON_BrepEdge& edge = brep->m_E[index];
 	const ON_Curve* crv = edge.EdgeCurveOf();
 	if (!crv->IsLinear(BN_TOL_DIST)) {
-	    struct edge_split_tols etols;
-	    etols.edge_max_allowed_dist = (s_cdt->tol.absmax > 0) ? s_cdt->tol.absmax : 1.1*bseg->cp_len;
-	    etols.edge_min_allowed_dist = (s_cdt->tol.rel > 0) ? s_cdt->tol.rel * bseg->cp_len : 0.0;
-	    etols.max_edgept_dist_from_edge = (s_cdt->tol.abs > 0) ? s_cdt->tol.abs : DBL_MAX;
-	    etols.within_angle_cos = s_cdt->cos_within_angle;
-
+	    std::set<cdt_mesh::bedge_seg_t *> to_erase;
 	    std::set<cdt_mesh::bedge_seg_t *> &epsegs = s_cdt->e2polysegs[edge.m_edge_index];
 	    std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
 	    for (e_it = epsegs.begin(); e_it != epsegs.end(); e_it++) {
 		cdt_mesh::bedge_seg_t *b = *e_it;
 		std::set<cdt_mesh::bedge_seg_t *> esegs_split;
-		esegs_split = split_edge_seg(s_cdt, &etol, e, 0);
+		esegs_split = split_edge_seg(s_cdt, b, 0);
 		if (esegs_split.size()) {
-		    s_cdt->e2polysegs[e->edge_ind].clear();
-		    s_cdt->e2polysegs[e->edge_ind].insert(esegs_split.begin(), esegs_split.end());
+		    to_erase.insert(b);
+		    s_cdt->e2polysegs[b->edge_ind].insert(esegs_split.begin(), esegs_split.end());
+	    }
+	    for (e_it = to_erase.begin(); e_it != to_erase.end(); e_it++) {
+		cdt_mesh::bedge_seg_t *b = *e_it;
+		s_cdt->e2polysegs[b->edge_ind].erase(b);
 	    }
 	}
 	    }
 	}
+
+    // Calculate edge median segment lengths contributed from the curved edges
+    for (int index = 0; index < brep->m_E.Count(); index++) {
+	std::set<cdt_mesh::bedge_seg_t *> &epsegs = s_cdt->e2polysegs[index];
+	if (!epsegs.size()) {
+	    // No non-linear edges, so no segments to use
+	    s_cdt->e_median_len[index] = -1;
+	} else {
+	    std::vector<double> lsegs;
+	    std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
+	    for (e_it = epsegs.begin(); e_it != epsegs.end(); e_it++) {
+		cdt_mesh::bedge_seg_t *b = *e_it;
+		double seg_dist = b->e_start->DistanceTo(*b->e_end);
+		lsegs.push_back(seg_dist);
+	    }
+	    s_cdt->e_median_len[index] = median_seg_len(lsegs);
+	}
+    }
+
+    // Calculate loop median segment lengths contributed from the curved edges
+    for (int index = 0; index < brep->m_L.Count(); index++) {
+	const ON_BrepLoop &loop = brep->m_L[index];
+	std::vector<double> lsegs;
+	for (int lti = 0; lti < loop->TrimCount(); lti++) {
+	    ON_BrepTrim *trim = loop->Trim(lti);
+	    ON_BrepEdge *edge = trim->Edge();
+	    if (!edge) continue;
+	    std::set<cdt_mesh::bedge_seg_t *> &epsegs = s_cdt->e2polysegs[edge->m_edge_index];
+	    if (!epsegs.size()) continue;
+	    std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
+	    for (e_it = epsegs.begin(); e_it != epsegs.end(); e_it++) {
+		cdt_mesh::bedge_seg_t *b = *e_it;
+		double seg_dist = b->e_start->DistanceTo(*b->e_end);
+		lsegs.push_back(seg_dist);
+	    }
+	}
+	if (!lsegs.size()) {
+	    // No non-linear edges, so no segments to use
+	    s_cdt->l_median_len[index] = -1;
+	} else {
+	    std::vector<double> lsegs;
+	    std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
+	    for (e_it = epsegs.begin(); e_it != epsegs.end(); e_it++) {
+		cdt_mesh::bedge_seg_t *b = *e_it;
+		double seg_dist = b->e_start->DistanceTo(*b->e_end);
+		lsegs.push_back(seg_dist);
+	    }
+	    s_cdt->e_median_len[index] = median_seg_len(lsegs);
+	}
+    }
+
 #endif
 
 
