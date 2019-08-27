@@ -4079,7 +4079,7 @@ to_data_polygons_func(Tcl_Interp *interp,
 	if (argc == 3) {
 	    size_t i;
 
-	    if (bu_sscanf(argv[2], "%lu", &i) != 1 || i > gdpsp->gdps_polygons.gp_num_polygons)
+	    if (bu_sscanf(argv[2], "%zu", &i) != 1 || i > gdpsp->gdps_polygons.gp_num_polygons)
 		goto bad;
 
 	    gdpsp->gdps_target_polygon_i = i;
@@ -4167,7 +4167,7 @@ to_data_polygons_func(Tcl_Interp *interp,
 
 	if (argc == 3) {
 	    /* Get the color for polygon i */
-	    if (bu_sscanf(argv[2], "%lu", &i) != 1 ||
+	    if (bu_sscanf(argv[2], "%zu", &i) != 1 ||
 		i >= gdpsp->gdps_polygons.gp_num_polygons)
 		goto bad;
 
@@ -4181,7 +4181,7 @@ to_data_polygons_func(Tcl_Interp *interp,
 	    int r, g, b;
 
 
-	    if (bu_sscanf(argv[2], "%lu", &i) != 1 ||
+	    if (bu_sscanf(argv[2], "%zu", &i) != 1 ||
 		i >= gdpsp->gdps_polygons.gp_num_polygons)
 		goto bad;
 
@@ -4260,7 +4260,7 @@ to_data_polygons_func(Tcl_Interp *interp,
 
 	if (argc == 3) {
 	    /* Get the line width for polygon i */
-	    if (bu_sscanf(argv[2], "%lu", &i) != 1 ||
+	    if (bu_sscanf(argv[2], "%zu", &i) != 1 ||
 		i >= gdpsp->gdps_polygons.gp_num_polygons)
 		goto bad;
 
@@ -4272,7 +4272,7 @@ to_data_polygons_func(Tcl_Interp *interp,
 	if (argc == 4) {
 	    int line_width;
 
-	    if (bu_sscanf(argv[2], "%lu", &i) != 1 ||
+	    if (bu_sscanf(argv[2], "%zu", &i) != 1 ||
 		i >= gdpsp->gdps_polygons.gp_num_polygons)
 		goto bad;
 
@@ -4336,7 +4336,7 @@ to_data_polygons_func(Tcl_Interp *interp,
 
 	if (argc == 3) {
 	    /* Get the line style for polygon i */
-	    if (bu_sscanf(argv[2], "%lu", &i) != 1 ||
+	    if (bu_sscanf(argv[2], "%zu", &i) != 1 ||
 		i >= gdpsp->gdps_polygons.gp_num_polygons)
 		goto bad;
 
@@ -4348,7 +4348,7 @@ to_data_polygons_func(Tcl_Interp *interp,
 	if (argc == 4) {
 	    int line_style;
 
-	    if (bu_sscanf(argv[2], "%lu", &i) != 1 ||
+	    if (bu_sscanf(argv[2], "%zu", &i) != 1 ||
 		i >= gdpsp->gdps_polygons.gp_num_polygons)
 		goto bad;
 
@@ -4465,14 +4465,14 @@ to_data_polygons_func(Tcl_Interp *interp,
 	    goto bad;
 
 	if (argc > 2) {
-	    if (bu_sscanf(argv[2], "%lu", &i) != 1 ||
+	    if (bu_sscanf(argv[2], "%zu", &i) != 1 ||
 		i >= gdpsp->gdps_polygons.gp_num_polygons)
 		goto bad;
 	} else
 	    i = gdpsp->gdps_target_polygon_i;
 
 	if (argc > 3) {
-	    if (bu_sscanf(argv[3], "%lu", &j) != 1 ||
+	    if (bu_sscanf(argv[3], "%zu", &j) != 1 ||
 		j >= gdpsp->gdps_polygons.gp_num_polygons)
 		goto bad;
 	} else
@@ -4533,7 +4533,7 @@ to_data_polygons_func(Tcl_Interp *interp,
 	if (argc != 4)
 	    goto bad;
 
-	if (bu_sscanf(argv[2], "%lu", &i) != 1 ||
+	if (bu_sscanf(argv[2], "%zu", &i) != 1 ||
 	    i >= gdpsp->gdps_polygons.gp_num_polygons)
 	    goto bad;
 
@@ -4582,7 +4582,7 @@ to_data_polygons_func(Tcl_Interp *interp,
 	if (argc != 5)
 	    goto bad;
 
-	if (bu_sscanf(argv[2], "%lu", &i) != 1 ||
+	if (bu_sscanf(argv[2], "%zu", &i) != 1 ||
 	    i >= gdpsp->gdps_polygons.gp_num_polygons)
 	    goto bad;
 
@@ -4612,7 +4612,7 @@ to_data_polygons_func(Tcl_Interp *interp,
 	if (argc != 3)
 	    goto bad;
 
-	if (bu_sscanf(argv[2], "%lu", &i) != 1 ||
+	if (bu_sscanf(argv[2], "%zu", &i) != 1 ||
 	    i >= gdpsp->gdps_polygons.gp_num_polygons)
 	    goto bad;
 
@@ -4634,11 +4634,11 @@ to_data_polygons_func(Tcl_Interp *interp,
 	if (argc != 4)
 	    goto bad;
 
-	if (bu_sscanf(argv[2], "%lu", &i) != 1 ||
+	if (bu_sscanf(argv[2], "%zu", &i) != 1 ||
 	    i >= gdpsp->gdps_polygons.gp_num_polygons)
 	    goto bad;
 
-	if (bu_sscanf(argv[3], "%lu", &j) != 1 ||
+	if (bu_sscanf(argv[3], "%zu", &j) != 1 ||
 	    j >= gdpsp->gdps_polygons.gp_num_polygons)
 	    goto bad;
 
@@ -4738,7 +4738,7 @@ to_data_polygons_func(Tcl_Interp *interp,
 	if (argc != 4)
 	    goto bad;
 
-	if (bu_sscanf(argv[2], "%lu", &i) != 1 ||
+	if (bu_sscanf(argv[2], "%zu", &i) != 1 ||
 	    i >= gdpsp->gdps_polygons.gp_num_polygons)
 	    goto bad;
 
@@ -4777,11 +4777,11 @@ to_data_polygons_func(Tcl_Interp *interp,
 	if (argc != 5)
 	    goto bad;
 
-	if (bu_sscanf(argv[2], "%lu", &i) != 1 ||
+	if (bu_sscanf(argv[2], "%zu", &i) != 1 ||
 	    i >= gdpsp->gdps_polygons.gp_num_polygons)
 	    goto bad;
 
-	if (bu_sscanf(argv[3], "%lu", &j) != 1 ||
+	if (bu_sscanf(argv[3], "%zu", &j) != 1 ||
 	    j >= gdpsp->gdps_polygons.gp_polygon[i].gp_num_contours)
 	    goto bad;
 
@@ -4808,15 +4808,15 @@ to_data_polygons_func(Tcl_Interp *interp,
 	if (argc != 5)
 	    goto bad;
 
-	if (bu_sscanf(argv[2], "%lu", &i) != 1 ||
+	if (bu_sscanf(argv[2], "%zu", &i) != 1 ||
 	    i >= gdpsp->gdps_polygons.gp_num_polygons)
 	    goto bad;
 
-	if (bu_sscanf(argv[3], "%lu", &j) != 1 ||
+	if (bu_sscanf(argv[3], "%zu", &j) != 1 ||
 	    j >= gdpsp->gdps_polygons.gp_polygon[i].gp_num_contours)
 	    goto bad;
 
-	if (bu_sscanf(argv[4], "%lu", &k) != 1 ||
+	if (bu_sscanf(argv[4], "%zu", &k) != 1 ||
 	    k >= gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_num_points)
 	    goto bad;
 
@@ -4835,15 +4835,15 @@ to_data_polygons_func(Tcl_Interp *interp,
 	if (argc != 6)
 	    goto bad;
 
-	if (bu_sscanf(argv[2], "%lu", &i) != 1 ||
+	if (bu_sscanf(argv[2], "%zu", &i) != 1 ||
 	    i >= gdpsp->gdps_polygons.gp_num_polygons)
 	    goto bad;
 
-	if (bu_sscanf(argv[3], "%lu", &j) != 1 ||
+	if (bu_sscanf(argv[3], "%zu", &j) != 1 ||
 	    j >= gdpsp->gdps_polygons.gp_polygon[i].gp_num_contours)
 	    goto bad;
 
-	if (bu_sscanf(argv[4], "%lu", &k) != 1 ||
+	if (bu_sscanf(argv[4], "%zu", &k) != 1 ||
 	    k >= gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_num_points)
 	    goto bad;
 
@@ -4974,7 +4974,7 @@ to_data_move_func(struct ged *gedp,
 	size_t i, j, k;
 	bview_data_polygon_state *gdpsp = &gdvp->gdv_view->gv_data_polygons;
 
-	if (bu_sscanf(argv[2], "%lu %lu %lu", &i, &j, &k) != 3)
+	if (bu_sscanf(argv[2], "%zu %zu %zu", &i, &j, &k) != 3)
 	    goto bad;
 
 	/* Silently ignore */
@@ -6472,8 +6472,8 @@ to_fit_png_image(struct ged *gedp,
     }
 
     if (argc != 6 ||
-	bu_sscanf(argv[2], "%lu", &o_w_requested) != 1 ||
-	bu_sscanf(argv[3], "%lu", &o_n_requested) != 1 ||
+	bu_sscanf(argv[2], "%zu", &o_w_requested) != 1 ||
+	bu_sscanf(argv[3], "%zu", &o_n_requested) != 1 ||
 	bu_sscanf(argv[4], "%lf", &sf) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
@@ -8908,7 +8908,7 @@ to_mouse_move_botpt(struct ged *gedp,
 	    return GED_ERROR;
 	}
 
-	if (bu_sscanf(argv[3], "%lu", &vertex_i) != 1) {
+	if (bu_sscanf(argv[3], "%zu", &vertex_i) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: bad bot vertex index - %s", cmd, argv[3]);
 	    return GED_ERROR;
 	}
