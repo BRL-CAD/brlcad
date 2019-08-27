@@ -1865,19 +1865,13 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
     size_t nhits = hits.size();
     if (nhits > 0) {
 
-#ifdef KODDHIT //ugly debugging hack to raytrace single surface and not worry about odd hits
-	static fastf_t diststep = 0.0;
-	bool hit_it = !hits.empty();
-#else
 	bool hit_it = hits.size() % 2 == 0;
-#endif
+
 	if (hit_it && bs->is_solid) {
 	    // take each pair as a segment
 	    for (std::list<brep_hit>::const_iterator i = hits.begin(); i != hits.end(); ++i) {
 		const brep_hit& in = *i;
-#ifndef KODDHIT  //ugly debugging hack to raytrace single surface and not worry about odd hits
 		i++;
-#endif
 		const brep_hit& out = *i;
 
 		struct seg* segp;
@@ -1886,11 +1880,8 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 
 		VMOVE(segp->seg_in.hit_point, in.point);
 		VMOVE(segp->seg_in.hit_normal, in.normal);
-#ifdef KODDHIT //ugly debugging hack to raytrace single surface and not worry about odd hits
-		segp->seg_in.hit_dist = diststep + 1.0;
-#else
 		segp->seg_in.hit_dist = in.dist;
-#endif
+
 		segp->seg_in.hit_surfno = in.face.m_face_index;
 		VSET(segp->seg_in.hit_vpriv, in.uv[0], in.uv[1], 0.0);
 
