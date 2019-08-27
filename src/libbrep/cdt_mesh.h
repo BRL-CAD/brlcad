@@ -436,6 +436,9 @@ public:
     void tris_plot(const char *filename);
     void tri_plot(const triangle_t &tri, const char *filename);
 
+    void tris_set_plot_2d(std::set<triangle_t> &tset, const char *filename);
+    void tris_plot_2d(const char *filename);
+
     int f_id;
 
     /* Data containers */
@@ -486,6 +489,7 @@ private:
     // Plotting utility functions
     void plot_tri(const triangle_t &t, struct bu_color *buc, FILE *plot, int r, int g, int b);
     void plot_uedge(struct uedge_t &ue, FILE* plot_file);
+    void plot_tri_2d(const triangle_t &t, struct bu_color *buc, FILE *plot);
 
 
     // Repair functionality using cpolygon

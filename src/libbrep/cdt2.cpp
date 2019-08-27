@@ -849,22 +849,21 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	ON_BrepEdge& edge = brep->m_E[index];
 	const ON_Curve* crv = edge.EdgeCurveOf();
 	if (crv->IsLinear(BN_TOL_DIST)) {
-	    std::set<cdt_mesh::bedge_seg_t *> to_erase;
 	    std::set<cdt_mesh::bedge_seg_t *> &epsegs = s_cdt->e2polysegs[edge.m_edge_index];
 	    std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
+	    std::set<cdt_mesh::bedge_seg_t *> new_segs;
 	    for (e_it = epsegs.begin(); e_it != epsegs.end(); e_it++) {
 		cdt_mesh::bedge_seg_t *b = *e_it;
 		std::set<cdt_mesh::bedge_seg_t *> esegs_split;
 		esegs_split = split_edge_seg(s_cdt, b, 0);
 		if (esegs_split.size()) {
-		    to_erase.insert(b);
-		    s_cdt->e2polysegs[b->edge_ind].insert(esegs_split.begin(), esegs_split.end());
+		    new_segs.insert(esegs_split.begin(), esegs_split.end());
+		} else {
+		    new_segs.insert(b);
 		}
 	    }
-	    for (e_it = to_erase.begin(); e_it != to_erase.end(); e_it++) {
-		cdt_mesh::bedge_seg_t *b = *e_it;
-		s_cdt->e2polysegs[b->edge_ind].erase(b);
-	    }
+	    s_cdt->e2polysegs[edge.m_edge_index].clear();
+	    s_cdt->e2polysegs[edge.m_edge_index].insert(new_segs.begin(), new_segs.end());
 	}
     }
 
@@ -881,6 +880,8 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	struct bu_vls fname = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&fname, "%d-tris.plot3", face_index);
 	fmesh->tris_plot(bu_vls_cstr(&fname));
+	bu_vls_sprintf(&fname, "%d-tris_2d.plot3", face_index);
+	fmesh->tris_plot_2d(bu_vls_cstr(&fname));
 	bu_vls_free(&fname);
     }
 

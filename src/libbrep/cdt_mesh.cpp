@@ -2641,6 +2641,50 @@ void cdt_mesh_t::tris_plot(const char *filename)
     this->tris_set_plot(this->tris, filename);
 }
 
+void cdt_mesh_t::plot_tri_2d(const triangle_t &t, struct bu_color *buc, FILE *plot)
+{
+    point_t p[3];
+    point_t porig;
+
+    for (int i = 0; i < 3; i++) {
+	VSET(p[i], m_pnts_2d[t.v[i]].first, m_pnts_2d[t.v[i]].second, 0);
+    }
+
+    for (size_t i = 0; i < 3; i++) {
+	if (i == 0) {
+	    VMOVE(porig, p[i]);
+	    pdv_3move(plot, p[i]);
+	}
+	pdv_3cont(plot, p[i]);
+    }
+    pdv_3cont(plot, porig);
+
+    /* restore previous color */
+    pl_color_buc(plot, buc);
+}
+
+void cdt_mesh_t::tris_set_plot_2d(std::set<triangle_t> &tset, const char *filename)
+{
+    FILE* plot_file = fopen(filename, "w");
+
+    struct bu_color c = BU_COLOR_INIT_ZERO;
+    bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
+    pl_color_buc(plot_file, &c);
+
+    std::set<triangle_t>::iterator s_it;
+
+    for (s_it = tset.begin(); s_it != tset.end(); s_it++) {
+	triangle_t tri = (*s_it);
+	this->plot_tri_2d(tri, &c, plot_file);
+    }
+    fclose(plot_file);
+}
+
+void cdt_mesh_t::tris_plot_2d(const char *filename)
+{
+    tris_set_plot_2d(tris_2d, filename);
+}
+
 
 /* Very simple dump of the cdt_mesh state */
 bool
