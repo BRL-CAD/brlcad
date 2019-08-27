@@ -659,7 +659,7 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 		ON_Interval range = trim->Domain();
 		if (lti == 0) {
 		    // Get the 2D point, add it to the mesh and current polygon
-		    cp = trim->PointAt(range.m_t[sind]);
+		    cp = trim->PointAt(range.m_t[0]);
 		    long find = fmesh->add_point(cp);
 		    pv = cpoly->add_point(cp, find);
 		    fv = pv;
@@ -684,7 +684,7 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 		}
 
 		// Get the 2D point, add it to the mesh and current polygon
-		cp = trim->PointAt(range.m_t[eind]);
+		cp = trim->PointAt(range.m_t[1]);
 		long find = fmesh->add_point(cp);
 		cv = cpoly->add_point(cp, find);
 
@@ -706,8 +706,8 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 		struct cdt_mesh::edge_t lseg(pv, cv);
 		cdt_mesh::cpolyedge_t *ne = cpoly->add_edge(lseg);
 		ne->trim_ind = trim->m_trim_index;
-		ne->trim_start = range.m_t[sind];
-		ne->trim_end = range.m_t[eind];
+		ne->trim_start = range.m_t[0];
+		ne->trim_end = range.m_t[1];
 		if (trim->m_ei >= 0) {
 		    cdt_mesh::bedge_seg_t *eseg = *s_cdt->e2polysegs[trim->m_ei].begin();
 		    // Associate the edge segment with the trim segment and vice versa
