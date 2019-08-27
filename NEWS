@@ -31,6 +31,7 @@ changes made.  See document footer for additional details.
 --- 2019-04-03  Release 7.30.2                                     ---
 ----------------------------------------------------------------------
 
+* fixed memory leak during obj-g and gcv import - Bojian Wu
 * added new manual page for the clone command - Sean Morrison
 * fixed crash calculating dsp bounding boxes - Sean Morrison
 * fixed Windows temporary file removal for MGED commands (red, etc.)
