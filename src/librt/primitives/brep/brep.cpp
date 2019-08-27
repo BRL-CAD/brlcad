@@ -704,6 +704,10 @@ rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
     ON_TextLog tl(stderr);
     if (!bs->brep->IsValid(&tl))
 	bu_log("brep is NOT valid\n");
+    else {
+	bs->is_solid = bs->brep->IsSolid();
+	bu_log("brep %s solid\n", (bs->is_solid) ? "is" : "is NOT");
+    }
 
     //start = bu_gettime();
     /* do the majority of real work here */
@@ -1490,7 +1494,8 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
     std::list<const BBNode*> inters;
     ON_Ray r = toXRay(rp);
     bs->bvh->intersectsHierarchy(r, inters);
-    if (inters.empty()) return 0; // MISS
+    if (inters.empty())
+	return 0; // MISS
 
     // find all the hits (XXX very inefficient right now!)
     std::list<brep_hit> all_hits; // record all hits
@@ -1552,7 +1557,7 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 		    // Next point doesn't satisfy pair criteria, reset
 		    p1 = -1;
 		    continue;
-		} 
+		}
 	    }
 	}
 
@@ -1586,6 +1591,7 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 	std::list<brep_hit>::iterator prev;
 	std::list<brep_hit>::const_iterator next;
 	std::list<brep_hit>::iterator curr = hits.begin();
+
 	while (curr != hits.end()) {
 	    const brep_hit &curr_hit = *curr;
 	    if (curr_hit.hit == brep_hit::NEAR_MISS) {
@@ -1780,7 +1786,6 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 	}
     }
 
-
     if (!hits.empty()) {
 	// we should have "valid" points now, remove duplicates or grazes(same point with in/out sign change)
 	std::list<brep_hit>::iterator last = hits.begin();
@@ -1857,17 +1862,16 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 	}
     }
 
-    bool hit = false;
-    if (hits.size() > 1) {
+    size_t nhits = hits.size();
+    if (nhits > 0) {
 
-//#define KODDHIT
 #ifdef KODDHIT //ugly debugging hack to raytrace single surface and not worry about odd hits
 	static fastf_t diststep = 0.0;
 	bool hit_it = !hits.empty();
 #else
 	bool hit_it = hits.size() % 2 == 0;
 #endif
-	if (hit_it) {
+	if (hit_it && bs->is_solid) {
 	    // take each pair as a segment
 	    for (std::list<brep_hit>::const_iterator i = hits.begin(); i != hits.end(); ++i) {
 		const brep_hit& in = *i;
@@ -1898,8 +1902,53 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 
 		BU_LIST_INSERT(&(seghead->l), &(segp->l));
 	    }
-	    hit = true;
+	    nhits /= 2;
+
 	} else {
+
+	    /* NON-SOLID CASE */
+
+	    double los = bs->brep->m_brep_user.d; // FIXME: currently packing a single global thickness
+	    if (los < 0)
+		los = -los;
+
+	    /* iterate over all hit points assuming a plate-mode shell */
+	    for (std::list<brep_hit>::const_iterator i = hits.begin(); i != hits.end(); ++i) {
+		const brep_hit& in = *i;
+		const brep_hit& out = *i;
+
+		struct seg* segp;
+		RT_GET_SEG(segp, ap->a_resource);
+		segp->seg_stp = stp;
+
+		/* set in hit */
+		segp->seg_in.hit_dist = in.dist - (los*0.5); // segment
+							     // is
+							     // centered
+							     // on the
+							     // hit
+							     // point
+		segp->seg_in.hit_surfno = in.face.m_face_index;
+		VSET(segp->seg_in.hit_vpriv, in.uv[0], in.uv[1], 0.0);
+		VMOVE(segp->seg_in.hit_normal, in.normal);
+		VJOIN1(segp->seg_in.hit_point, rp->r_pt, in.dist, rp->r_dir);
+
+		VMOVE(segp->seg_out.hit_point, out.point);
+		VMOVE(segp->seg_out.hit_normal, out.normal);
+		segp->seg_out.hit_dist = out.dist;
+
+		/* set out hit */
+		segp->seg_out.hit_dist = out.dist + (los*0.5); // centered
+                segp->seg_out.hit_surfno = out.face.m_face_index;
+                VSET(segp->seg_out.hit_vpriv, out.uv[0], out.uv[1], 0.0);
+		VREVERSE(segp->seg_out.hit_normal, out.normal);
+		VJOIN1(segp->seg_out.hit_point, rp->r_pt, out.dist, rp->r_dir);
+
+                BU_LIST_INSERT(&(seghead->l), &(segp->l));
+	    }
+
+/* Disable odd hit debugging in preparation for non-solid brep */
+#if 0
 	    //TRACE2("screen xy: " << ap->a_x << ", " << ap->a_y);
 	    bu_log("**** ERROR odd number of hits: %lu\n", static_cast<unsigned long>(hits.size()));
 	    bu_log("xyz %g %g %g \n", rp->r_pt[0], rp->r_pt[1], rp->r_pt[2]);
@@ -1913,10 +1962,11 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 	    //log_hits(orig, debug_output);
 
 	    bu_log("\n**********************\n");
+#endif
 	}
     }
 
-    return (hit) ? (int)hits.size() : 0; // MISS
+    return nhits;
 }
 
 
@@ -3427,6 +3477,7 @@ rt_brep_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, stru
 	stp->st_specific = specific;
 	std::swap(specific->brep, static_cast<rt_brep_internal *>(ip->idb_ptr)->brep);
 	specific->bvh = new BBNode(specific->brep->BoundingBox());
+	specific->is_solid = specific->brep->IsSolid(); // recompute solidity
 
 	Deserializer deserializer(*external);
 	const uint32_t num_children = deserializer.read_uint32();
