@@ -77,7 +77,7 @@ static ON_Surface* CreateNurbsSurface(
 {
     ON_NurbsSurface* pNurbsSurface = new ON_NurbsSurface(
 	3,     /* dimension (>= 1) */
-	FALSE, /* not rational */
+	false, /* not rational */
 	2,     /* "u" order (>= 2) */
 	2,     /* "v" order (>= 2) */
 	2,     /* number of control vertices in "u" dir (>= order) */
