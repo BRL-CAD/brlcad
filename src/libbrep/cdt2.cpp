@@ -729,8 +729,13 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
     // Calculate edge median segment lengths contributed from the curved edges
     for (int index = 0; index < brep->m_E.Count(); index++) {
 	std::set<cdt_mesh::bedge_seg_t *> &epsegs = s_cdt->e2polysegs[index];
+	const ON_Curve* crv = brep->m_E[index].EdgeCurveOf();
+	if (!crv || crv->IsLinear(BN_TOL_DIST)) {
+	    s_cdt->e_median_len[index] = -1;
+	    continue;
+	}
 	if (!epsegs.size()) {
-	    // No non-linear edges, so no segments to use
+	    // No segments to use
 	    s_cdt->e_median_len[index] = -1;
 	} else {
 	    std::vector<double> lsegs;
@@ -753,6 +758,10 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	    ON_BrepTrim *trim = loop.Trim(lti);
 	    ON_BrepEdge *edge = trim->Edge();
 	    if (!edge) continue;
+	    const ON_Curve* crv = edge->EdgeCurveOf();
+	    if (!crv || crv->IsLinear(BN_TOL_DIST)) {
+		continue;
+	    }
 	    std::set<cdt_mesh::bedge_seg_t *> &epsegs = s_cdt->e2polysegs[edge->m_edge_index];
 	    if (!epsegs.size()) continue;
 	    std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
