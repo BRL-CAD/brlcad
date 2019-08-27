@@ -99,6 +99,12 @@ trim_normal(ON_BrepTrim *trim, ON_2dPoint &cp)
 }
 
 
+/* TODO - need to take into account whether the trim is reversed when reporting
+ * the parameter, if possible - For flipped curves we're getting back 2D points that
+ * are close to the specified point but result in triangulations that don't point
+ * to the right 3D vertex.  We need a 2D point that will result in a tessellation
+ * that points to the right 3D point, not necessarily one that will evaluate to
+ * the specified 3D point if we evaluated the PointAt 2D value on the trim. */
 double
 pnt_binary_search(fastf_t *tparam, const ON_BrepTrim &trim, double tstart, double tend, ON_3dPoint &edge_3d, double tol, int verbose, int depth, int force)
 {
