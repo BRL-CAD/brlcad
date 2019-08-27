@@ -226,11 +226,70 @@ tol_need_split(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, ON_
     double max_allowed = (s_cdt->tol.absmax > ON_ZERO_TOLERANCE) ? s_cdt->tol.absmax : 1.1*bseg->cp_len;
     double min_allowed = (s_cdt->tol.rel > ON_ZERO_TOLERANCE) ? s_cdt->tol.rel * bseg->cp_len : 0.0;
     double max_edgept_dist_from_edge = (s_cdt->tol.abs > ON_ZERO_TOLERANCE) ? s_cdt->tol.abs : seg_len;
+    ON_BrepLoop *l1 = NULL;
+    ON_BrepLoop *l2 = NULL;
+    double len_1 = -1;
+    double len_2 = -1;
+    double s_len;
+
+    switch (bseg->edge_type) {
+	case 0:
+	    // singularity splitting is handled in a separate step, since it isn't based
+	    // on 3D information
+	    return false;
+	case 1:
+	    // Curved edge - default assigned values are correct.
+	    break;
+	case 2:
+	    // Linear edge on non-planar surface - use the median segment lengths
+	    // from the two trims associated with this edge
+	    l1 = s_cdt->brep->m_T[bseg->tseg1->trim_ind].Loop();
+	    l2 = s_cdt->brep->m_T[bseg->tseg2->trim_ind].Loop();
+	    len_1 = s_cdt->l_median_len[l1->m_loop_index];
+	    len_2 = s_cdt->l_median_len[l2->m_loop_index];
+	    if (len_1 < 0 && len_2 < 0) {
+		bu_log("Error - both loops report invalid median lengths\n");
+		return false;
+	    }
+	    s_len = (len_1 > 0) ? len_1 : len_2;
+	    s_len = (len_2 > 0 && len_2 < s_len) ? len_2 : s_len;
+	    max_allowed = 5*s_len;
+	    min_allowed = 0.2*s_len;
+	    break;
+	case 3:
+	    // Linear edge connected to one or more non-linear edges.  If the start or end points
+	    // are the same as the root start or end points, use the median edge length of the
+	    // connected edge per the vert lookup.
+	    if (bseg->e_start == bseg->e_root_start || bseg->e_end == bseg->e_root_start) {
+		len_1 = s_cdt->v_min_seg_len[bseg->e_root_start];
+	    }
+	    if (bseg->e_start == bseg->e_root_end || bseg->e_end == bseg->e_root_end) {
+		len_2 = s_cdt->v_min_seg_len[bseg->e_root_end];
+	    }
+	    if (len_1 < 0 && len_2 < 0) {
+		bu_log("Error - verts report invalid lengths on type 3 line segment\n");
+		return false;
+	    }
+	    s_len = (len_1 > 0) ? len_1 : len_2;
+	    s_len = (len_2 > 0 && len_2 < s_len) ? len_2 : s_len;
+	    max_allowed = 2*s_len;
+	    min_allowed = 0.5*s_len;
+	    break;
+	case 4:
+	    // Linear segment, no curves involved
+	    break;
+	default:
+	    bu_log("Error - invalid edge type: %d\n", bseg->edge_type);
+	    return false;
+    }
 
 
     if (seg_len > max_allowed) return true;
 
     if (seg_len < min_allowed) return false;
+
+    // If we're linear and not already split, tangents and normals won't change that
+    if (bseg->edge_type > 1) return false;
 
     double dist3d = edge_mid_3d.DistanceTo(line3d.ClosestPointTo(edge_mid_3d));
 
@@ -726,28 +785,33 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	}
     }
 
-    // Calculate edge median segment lengths contributed from the curved edges
-    for (int index = 0; index < brep->m_E.Count(); index++) {
-	std::set<cdt_mesh::bedge_seg_t *> &epsegs = s_cdt->e2polysegs[index];
-	const ON_Curve* crv = brep->m_E[index].EdgeCurveOf();
-	if (!crv || crv->IsLinear(BN_TOL_DIST)) {
-	    s_cdt->e_median_len[index] = -1;
+    // Calculate for each vertex involved with curved edges the minimum individual bedge_seg
+    // length involved.
+    for (int i = 0; i < brep->m_V.Count(); i++) {
+	ON_3dPoint *p3d = (*s_cdt->vert_pnts)[i];
+	// If no curved edges, we don't need this
+	if (!vert_type[i]) {
+	    s_cdt->v_min_seg_len[p3d] = -1;
 	    continue;
 	}
-	if (!epsegs.size()) {
-	    // No segments to use
-	    s_cdt->e_median_len[index] = -1;
-	} else {
-	    std::vector<double> lsegs;
+	double emin = DBL_MAX;
+	for (int j = 0; j < brep->m_V[i].m_ei.Count(); j++) {
+	    ON_BrepEdge &edge = brep->m_E[brep->m_V[i].m_ei[j]];
+	    std::set<cdt_mesh::bedge_seg_t *> &epsegs = s_cdt->e2polysegs[edge.m_edge_index];
 	    std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
 	    for (e_it = epsegs.begin(); e_it != epsegs.end(); e_it++) {
 		cdt_mesh::bedge_seg_t *b = *e_it;
-		double seg_dist = b->e_start->DistanceTo(*b->e_end);
-		lsegs.push_back(seg_dist);
+		if (b->e_start == p3d || b->e_end == p3d) {
+		    ON_Line line3d(*(b->e_start), *(b->e_end));
+		    double seg_len = line3d.Length();
+		    if (seg_len < emin) {
+			emin = seg_len;
+		    }
+		}
 	    }
-	    s_cdt->e_median_len[index] = median_seg_len(lsegs);
-	    std::cout << "Median edge seg length, edge " << index << ": " << s_cdt->e_median_len[index] << "\n";
 	}
+	s_cdt->v_min_seg_len[p3d] = emin;
+	std::cout << "Minimum vert seg length, vert " << i << ": " << s_cdt->v_min_seg_len[p3d] << "\n";
     }
 
     // Calculate loop median segment lengths contributed from the curved edges
@@ -780,7 +844,6 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	}
     }
 
-#if 0
     // Now, process the linear edges
     for (int index = 0; index < brep->m_E.Count(); index++) {
 	ON_BrepEdge& edge = brep->m_E[index];
@@ -803,8 +866,7 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 		s_cdt->e2polysegs[b->edge_ind].erase(b);
 	    }
 	}
-    }	
-#endif
+    }
 
 
     // TODO - move the nonlinear and linear edge splitting based on tolerances back in.
