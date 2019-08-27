@@ -514,11 +514,13 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	const ON_Surface *s2= edge.Trim(1)->SurfaceOf();
 	if (!s1->IsPlanar(NULL, BN_TOL_DIST) || !s2->IsPlanar(NULL, BN_TOL_DIST)) {
 	    edge_type.push_back(2);
+	    continue;
 	}
 
 	// Linear edge, at least one associated non-linear edge
 	if (vert_type[edge.Vertex(0)->m_vertex_index] || vert_type[edge.Vertex(1)->m_vertex_index]) {
 	    edge_type.push_back(3);
+	    continue;
 	}
 
 	// Linear edge, only associated with linear edges and planar faces
