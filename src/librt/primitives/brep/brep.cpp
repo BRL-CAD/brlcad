@@ -75,29 +75,29 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-int rt_brep_bbox(struct rt_db_internal* ip, point_t *min, point_t *max, const struct bn_tol *tol);
-int rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip);
-void rt_brep_print(const struct soltab *stp);
-int rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead);
-void rt_brep_norm(struct hit *hitp, struct soltab *stp, struct xray *rp);
-void rt_brep_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp);
-void rt_brep_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp);
-void rt_brep_free(struct soltab *stp);
-int rt_brep_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info);
-int rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct rt_view_info *UNUSED(info));
-int rt_brep_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol);
-int rt_brep_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr);
-int rt_brep_adjust(struct bu_vls *logstr, const struct rt_db_internal *intern, int argc, const char **argv);
-int rt_brep_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip);
-int rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip);
-void rt_brep_ifree(struct rt_db_internal *ip);
-int rt_brep_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local);
-int rt_brep_params(struct pc_pc_set *, const struct rt_db_internal *ip);
-RT_EXPORT extern int rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, db_op_t operation);
-struct rt_selection_set *rt_brep_find_selections(const struct rt_db_internal *ip, const struct rt_selection_query *query);
-int rt_brep_process_selection(struct rt_db_internal *ip, struct db_i *dbip, const struct rt_selection *selection, const struct rt_selection_operation *op);
-int rt_brep_valid(struct bu_vls *log, struct rt_db_internal *ip, int flags);
-int rt_brep_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, struct bu_external *external, size_t *version);
+    int rt_brep_bbox(struct rt_db_internal* ip, point_t *min, point_t *max, const struct bn_tol *tol);
+    int rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip);
+    void rt_brep_print(const struct soltab *stp);
+    int rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead);
+    void rt_brep_norm(struct hit *hitp, struct soltab *stp, struct xray *rp);
+    void rt_brep_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp);
+    void rt_brep_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp);
+    void rt_brep_free(struct soltab *stp);
+    int rt_brep_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info);
+    int rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct rt_view_info *UNUSED(info));
+    int rt_brep_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol);
+    int rt_brep_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr);
+    int rt_brep_adjust(struct bu_vls *logstr, const struct rt_db_internal *intern, int argc, const char **argv);
+    int rt_brep_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip);
+    int rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip);
+    void rt_brep_ifree(struct rt_db_internal *ip);
+    int rt_brep_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local);
+    int rt_brep_params(struct pc_pc_set *, const struct rt_db_internal *ip);
+    RT_EXPORT extern int rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, db_op_t operation);
+    struct rt_selection_set *rt_brep_find_selections(const struct rt_db_internal *ip, const struct rt_selection_query *query);
+    int rt_brep_process_selection(struct rt_db_internal *ip, struct db_i *dbip, const struct rt_selection *selection, const struct rt_selection_operation *op);
+    int rt_brep_valid(struct bu_vls *log, struct rt_db_internal *ip, int flags);
+    int rt_brep_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, struct bu_external *external, size_t *version);
 #ifdef __cplusplus
 }
 #endif
@@ -230,6 +230,7 @@ public:
     }
 };
 
+
 const char *brep_hit_type_str(int hit)
 {
     static const char *terr  = "!!ERROR!!";
@@ -238,13 +239,14 @@ const char *brep_hit_type_str(int hit)
     static const char *near_hit   = "_NH_";
     static const char *near_miss  = "_NM_";
     static const char *crack_hit  = "_CRACK_";
-    if (hit == brep_hit::CLEAN_HIT)  return clean_hit;
+    if (hit == brep_hit::CLEAN_HIT) return clean_hit;
     if (hit == brep_hit::CLEAN_MISS) return clean_miss;
-    if (hit == brep_hit::CRACK_HIT)  return crack_hit;
-    if (hit == brep_hit::NEAR_HIT)   return near_hit;
-    if (hit == brep_hit::NEAR_MISS)  return near_miss;
+    if (hit == brep_hit::CRACK_HIT) return crack_hit;
+    if (hit == brep_hit::NEAR_HIT) return near_hit;
+    if (hit == brep_hit::NEAR_MISS) return near_miss;
     return terr;
 }
+
 
 void log_key(struct bu_vls *logstr)
 {
@@ -253,6 +255,7 @@ void log_key(struct bu_vls *logstr)
     bu_vls_printf(logstr,  "      [1] = face reversed (m_bRev true); [0] = face not reversed (m_bRev false)\n");
     bu_vls_printf(logstr,  "      <#> = distance from previous point to next hit point\n\n");
 }
+
 
 void log_hits(std::list<brep_hit> &hits, int UNUSED(verbosity))
 {
@@ -266,17 +269,18 @@ void log_hits(std::list<brep_hit> &hits, int UNUSED(verbosity))
 	if (i != hits.begin()) {
 	    bu_vls_printf(&logstr, "<%g>", DIST_PT_PT(out.point, prev));
 	}
-	bu_vls_printf(&logstr,"{");
-	bu_vls_printf(&logstr,"%s(%d)", brep_hit_type_str((int)out.hit), out.face.m_face_index);
-	if (out.direction == brep_hit::ENTERING) bu_vls_printf(&logstr,"+");
-	if (out.direction == brep_hit::LEAVING) bu_vls_printf(&logstr,"-");
-	bu_vls_printf(&logstr,"[%d]", out.sbv->get_face().m_bRev);
-	bu_vls_printf(&logstr,"}");
+	bu_vls_printf(&logstr, "{");
+	bu_vls_printf(&logstr, "%s(%d)", brep_hit_type_str((int)out.hit), out.face.m_face_index);
+	if (out.direction == brep_hit::ENTERING) bu_vls_printf(&logstr, "+");
+	if (out.direction == brep_hit::LEAVING) bu_vls_printf(&logstr, "-");
+	bu_vls_printf(&logstr, "[%d]", out.sbv->get_face().m_bRev);
+	bu_vls_printf(&logstr, "}");
 	VMOVE(prev, out.point);
     }
     bu_log("%s\n", bu_vls_addr(&logstr));
     bu_vls_free(&logstr);
 }
+
 
 #if 0
 void log_subset(std::vector<brep_hit*> &hits, size_t min, size_t max, brep_hit *pprev)
@@ -288,12 +292,12 @@ void log_subset(std::vector<brep_hit*> &hits, size_t min, size_t max, brep_hit *
 	if (prev) {
 	    bu_vls_printf(&logstr, "<%g>", DIST_PT_PT(hits[i]->point, prev->point));
 	}
-	bu_vls_printf(&logstr,"{");
-	bu_vls_printf(&logstr,"%s(%d)", brep_hit_type_str((int)hits[i]->hit), hits[i]->face.m_face_index);
-	if (hits[i]->direction == brep_hit::ENTERING) bu_vls_printf(&logstr,"+");
-	if (hits[i]->direction == brep_hit::LEAVING) bu_vls_printf(&logstr,"-");
-	bu_vls_printf(&logstr,"[%d]", hits[i]->sbv->get_face().m_bRev);
-	bu_vls_printf(&logstr,"}");
+	bu_vls_printf(&logstr, "{");
+	bu_vls_printf(&logstr, "%s(%d)", brep_hit_type_str((int)hits[i]->hit), hits[i]->face.m_face_index);
+	if (hits[i]->direction == brep_hit::ENTERING) bu_vls_printf(&logstr, "+");
+	if (hits[i]->direction == brep_hit::LEAVING) bu_vls_printf(&logstr, "-");
+	bu_vls_printf(&logstr, "[%d]", hits[i]->sbv->get_face().m_bRev);
+	bu_vls_printf(&logstr, "}");
 	prev = hits[i];
     }
     if (bu_vls_strlen(&logstr) > 0) {
@@ -301,6 +305,7 @@ void log_subset(std::vector<brep_hit*> &hits, size_t min, size_t max, brep_hit *
     }
     bu_vls_free(&logstr);
 }
+
 
 void log_subsets(std::vector<brep_hit*> &hits, std::vector<std::pair<long int, long int>> &hp)
 {
@@ -540,6 +545,7 @@ struct brep_build_bvh_parallel {
     SurfaceTree**faces;
 };
 
+
 static void
 brep_build_bvh_surface_tree(int cpu, void *data)
 {
@@ -584,12 +590,6 @@ brep_build_bvh(struct brep_specific* bs)
     if (brep == NULL) {
 	bu_log("NULL Brep");
 	return -1;
-    } else {
-#if 0
-	start = bu_gettime();
-	if (!brep->IsValid(&tl)) bu_log("brep is NOT valid\n");
-	bu_log("!!! BREP ISVALID: %.2f sec\n", (bu_gettime() - start) / 1000000.0);
-#endif
     }
 
     /* Initialize the top level Bounding Box node for the entire
@@ -701,9 +701,12 @@ rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
 	stp->st_specific = (void *)bs;
     }
 
-    /* The workhorse routines of BREP prep are called by brep_build_bvh
-     */
+    ON_TextLog tl(stderr);
+    if (!bs->brep->IsValid(&tl))
+	bu_log("brep is NOT valid\n");
+
     //start = bu_gettime();
+    /* do the majority of real work here */
     if (brep_build_bvh(bs) < 0) {
 	return -1;
     }
@@ -908,7 +911,7 @@ utah_newton_solver(const BBNode* sbv, const ON_Surface* surf, const ON_Ray& r, O
 
     ON_2dPoint uv0(uv);
     surf->Ev1Der(uv.x, uv.y, S, Su, Sv);
-    //surf->Ev2Der( uv.x, uv.y, S, Su, Sv, Suu, Suv, Svv);
+    //surf->Ev2Der(uv.x, uv.y, S, Su, Sv, Suu, Suv, Svv);
 
     utah_F(S, p1, p1d, p2, p2d, f, g);
     rootdist = fabs(f) + fabs(g);
@@ -1198,7 +1201,7 @@ utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface
 	for (int i = 0; i < numhits; i++) {
 	    double closesttrim;
 	    const BRNode* trimBR = NULL;
-	    int trim_status = sbv->isTrimmed(ouv[i], &trimBR, closesttrim,BREP_EDGE_MISS_TOLERANCE);
+	    int trim_status = sbv->isTrimmed(ouv[i], &trimBR, closesttrim, BREP_EDGE_MISS_TOLERANCE);
 	    if (trim_status != 1) {
 		ON_3dPoint _pt;
 		ON_3dVector _norm(N[i]);
@@ -1306,6 +1309,7 @@ containsNearHit(const std::list<brep_hit> *hits)
     return false;
 }
 
+
 #if 0
 bool
 rcontainsNearMiss(const std::list<brep_hit> *hits, size_t rmin, size_t rmax)
@@ -1330,6 +1334,7 @@ rcontainsNearHit(const std::list<brep_hit> *hits, size_t rmin, size_t rmax)
     return false;
 }
 
+
 long int next_active(std::vector<brep_hit *> &hits, long int rmin, long int rmax)
 {
     if (rmin < 0 || rmax < 0) return -1;
@@ -1338,6 +1343,7 @@ long int next_active(std::vector<brep_hit *> &hits, long int rmin, long int rmax
     }
     return -1;
 }
+
 
 long int prev_active(std::vector<brep_hit *> &hits, long int rmin, long int rmax)
 {
@@ -1361,7 +1367,7 @@ void deactivate_same_dir_near_miss(std::vector<brep_hit *> &hits, long int rmin,
     while (c_act > 0) {
 	if (hits[c_act]->hit == brep_hit::NEAR_MISS) {
 	    if ((hits[p_act]->hit != brep_hit::NEAR_MISS) &&
-		    (hits[p_act]->direction == hits[c_act]->direction)) {
+		(hits[p_act]->direction == hits[c_act]->direction)) {
 		hits[c_act]->active = 0;
 		// rewind and start again
 		p_act = next_active(hits, rmin, rmax);
@@ -1370,7 +1376,7 @@ void deactivate_same_dir_near_miss(std::vector<brep_hit *> &hits, long int rmin,
 		continue;
 	    }
 	    if (n_act > 0 && (hits[n_act]->hit != brep_hit::NEAR_MISS) &&
-		    (hits[n_act]->direction == hits[c_act]->direction)) {
+		(hits[n_act]->direction == hits[c_act]->direction)) {
 		hits[c_act]->active = 0;
 		// rewind and start again
 		p_act = next_active(hits, rmin, rmax);
@@ -1384,6 +1390,7 @@ void deactivate_same_dir_near_miss(std::vector<brep_hit *> &hits, long int rmin,
 	n_act = next_active(hits, c_act; rmax);
     }
 }
+
 
 void check_for_face_cracks(std::vector<brep_hit *> &hits, long int rmin, long int rmax)
 {
@@ -1413,7 +1420,7 @@ void check_for_face_cracks(std::vector<brep_hit *> &hits, long int rmin, long in
 	    }
 	} else {
 	    if ((hits[c_act]->hit == brep_hit::CLEAN_HIT || hits[c_act]->hit == brep_hit::NEAR_HIT) &&
-		    hits[p_act]->hit == brep_hit::NEAR_MISS) {
+		hits[p_act]->hit == brep_hit::NEAR_MISS) {
 		if (hits[c_act]->direction == brep_hit::ENTERING) {
 		    // Remove only remaining near miss
 		    hits[p_act]->active = 0;
@@ -1426,6 +1433,7 @@ void check_for_face_cracks(std::vector<brep_hit *> &hits, long int rmin, long in
 	c_act = next_active(hits, c_act; rmax);
     }
 }
+
 
 void brep_hits_process_subset(std::vector<brep_hit *> &hits, long int rmin, long int rmax)
 {
@@ -1565,8 +1573,8 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 			lend = hard_pairs[i].first - 1;
 			brep_hits_process_subset(hits, lstart, lend);
 			lstart = hard_pairs[i].second + 1;
-	  }
-	  }
+		    }
+		}
 	    }
 	}
     }
@@ -1746,7 +1754,6 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 
     all_hits.clear();
     all_hits = hits;
-
 
 
     if (!hits.empty()) {
@@ -2035,6 +2042,7 @@ plot_bbnode(BBNode* node, struct bu_list* vhead, int depth, int start, int limit
     }
 }
 
+
 double
 find_next_trimming_point(const ON_Curve* crv, const ON_Surface* s, double startdomval, double increment, double tolerance, int stepcount)
 {
@@ -2083,13 +2091,13 @@ plot_sum_surface(struct bu_list *vhead, const ON_Surface *surf, int isocurveres,
 	    double ut = (double)u / (double)gridres;
 	    double vt = (double)(v - 1) / (double)isocurveres;
 	    ON_3dPoint p = surf->PointAt(udom.ParameterAt(ut),
-		    vdom.ParameterAt(vt));
+					 vdom.ParameterAt(vt));
 	    VMOVE(pt1, p);
 
 	    ut = (double) u / (double) gridres;
 	    vt = (double) v / (double) isocurveres;
 	    p = surf->PointAt(udom.ParameterAt(ut),
-		    vdom.ParameterAt(vt));
+			      vdom.ParameterAt(vt));
 	    VMOVE(pt2, p);
 	    RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
 	    RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
@@ -2102,8 +2110,8 @@ plot_sum_surface(struct bu_list *vhead, const ON_Surface *surf, int isocurveres,
 	    double vt = (double)v / (double)gridres;
 
 	    ON_3dPoint p = surf->PointAt(
-		    udom.ParameterAt((double)(u - 1) / (double) isocurveres),
-		    vdom.ParameterAt((double) v / (double) gridres));
+		udom.ParameterAt((double)(u - 1) / (double) isocurveres),
+		vdom.ParameterAt((double) v / (double) gridres));
 	    VMOVE(pt1, p);
 
 	    ut = (double)u / (double)isocurveres;
@@ -2243,7 +2251,7 @@ plotisoVCheckForTrim(struct bu_list *vhead, const SurfaceTree* st, fastf_t from,
     int cnt = 1;
     trim_hits.clear();
     for (std::list<const BRNode*>::const_iterator i = m_trims_above.begin(); i
-	 != m_trims_above.end(); i++, cnt++) {
+	     != m_trims_above.end(); i++, cnt++) {
 	const BRNode* br = *i;
 
 	point_t bmin, bmax;
@@ -2389,9 +2397,9 @@ plot_BBNode(struct bu_list *vhead, SurfaceTree* st, const BBNode * node, int iso
 	    return;
 	}
     } else {
-	    for (std::vector<BBNode*>::const_iterator childnode = node->get_children().begin(); childnode != node->get_children().end(); ++childnode) {
-		plot_BBNode(vhead, st, *childnode, isocurveres, gridres);
-	    }
+	for (std::vector<BBNode*>::const_iterator childnode = node->get_children().begin(); childnode != node->get_children().end(); ++childnode) {
+	    plot_BBNode(vhead, st, *childnode, isocurveres, gridres);
+	}
     }
 }
 
@@ -2429,7 +2437,7 @@ plot_face_trim(struct bu_list *vhead, const ON_BrepFace &face, int plotres, bool
 	    // XXX todo: dynamically sample the curve
 	    for (int k = 1; k <= plotres; k++) {
 		ON_3dPoint p = trimCurve->PointAt(dom.ParameterAt((double)(k
-						  - 1) / (double) plotres));
+									   - 1) / (double) plotres));
 		if (dim3d)
 		    p = surf->PointAt(p.x, p.y);
 		VMOVE(pt1, p);
@@ -2517,7 +2525,7 @@ rt_brep_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info
 	    // achieved and the distance between the end of the last
 	    // segment and the endpoint is within point spacing
 	    for (int nsegs = 0; (nsegs < min_linear_seg_count) ||
-		 (DIST_PT_PT(pt1, endpt) > info->point_spacing); ++nsegs) {
+		     (DIST_PT_PT(pt1, endpt) > info->point_spacing); ++nsegs) {
 		p = crv->PointAt(dom.ParameterAt(t2));
 		VMOVE(pt2, p);
 
@@ -2746,7 +2754,7 @@ RT_MemoryArchive::RT_MemoryArchive()
 
 RT_MemoryArchive::RT_MemoryArchive(const void *memory, size_t len)
     : ON_BinaryArchive(ON::read3dm), pos(0),
-    m_buffer((char *)memory, (char *)memory + len)
+      m_buffer((char *)memory, (char *)memory + len)
 {
 }
 
@@ -2895,6 +2903,7 @@ rt_brep_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const ch
     return -1;
 }
 
+
 int
 rt_brep_adjust(struct bu_vls *logstr, const struct rt_db_internal *intern, int argc, const char **argv)
 {
@@ -2916,6 +2925,7 @@ rt_brep_adjust(struct bu_vls *logstr, const struct rt_db_internal *intern, int a
     }
     return -1;
 }
+
 
 int
 rt_brep_export5(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *dbip)
@@ -2983,9 +2993,9 @@ rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
 	}
     }
     /*
-    if ((ip->idb_avs.magic == BU_AVS_MAGIC) && bu_avs_get(&ip->idb_avs, "plate_mode") != NULL) {
-	bu_log("plate mode brep\n");
-    }
+      if ((ip->idb_avs.magic == BU_AVS_MAGIC) && bu_avs_get(&ip->idb_avs, "plate_mode") != NULL) {
+      bu_log("plate mode brep\n");
+      }
     */
     return 0;
     //} else {
@@ -3045,6 +3055,7 @@ rt_brep_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbos
     return 0;
 }
 
+
 int
 rt_brep_params(struct pc_pc_set *, const struct rt_db_internal *)
 {
@@ -3102,6 +3113,7 @@ rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, co
     return 0;
 }
 
+
 struct brep_selectable_cv {
     int face_index;
     int i;
@@ -3110,15 +3122,18 @@ struct brep_selectable_cv {
     double sqdist_to_line;
 };
 
+
 struct brep_cv {
     int face_index;
     int i;
     int j;
 };
 
+
 struct brep_selection {
     std::list<brep_cv *> *control_vertexes; /**< brep_cv_list */
 };
+
 
 bool
 cmp_cv_startdist(const brep_selectable_cv *c1, const brep_selectable_cv *c2)
@@ -3129,6 +3144,7 @@ cmp_cv_startdist(const brep_selectable_cv *c1, const brep_selectable_cv *c2)
 
     return false;
 }
+
 
 static void
 brep_free_selection(struct rt_selection *s)
@@ -3146,6 +3162,7 @@ brep_free_selection(struct rt_selection *s)
     delete bs;
     BU_FREE(s, struct rt_selection);
 }
+
 
 struct rt_selection *
 new_cv_selection(brep_selectable_cv *s)
@@ -3168,6 +3185,7 @@ new_cv_selection(brep_selectable_cv *s)
 
     return selection;
 }
+
 
 struct rt_selection_set *
 rt_brep_find_selections(const struct rt_db_internal *ip, const struct rt_selection_query *query)
@@ -3250,6 +3268,7 @@ rt_brep_find_selections(const struct rt_db_internal *ip, const struct rt_selecti
     return selection_set;
 }
 
+
 int
 rt_brep_process_selection(struct rt_db_internal *ip, struct db_i *UNUSED(dbip), const struct rt_selection *selection, const struct rt_selection_operation *op)
 {
@@ -3293,6 +3312,7 @@ rt_brep_process_selection(struct rt_db_internal *ip, struct db_i *UNUSED(dbip), 
 
     return 0;
 }
+
 
 static void brep_log(struct bu_vls *log, const char *fmt, ...)
 {
