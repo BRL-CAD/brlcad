@@ -1965,18 +1965,10 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
-rt_brep_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
+rt_brep_norm(struct hit *UNUSED(hitp), struct soltab *UNUSED(stp), struct xray *UNUSED(rp))
 {
-    struct brep_specific* bs;
-
-    if (!hitp || !stp || !rp)
-	return;
-    RT_CK_SOLTAB(stp);
-    bs = (struct brep_specific*)stp->st_specific;
-    if (!bs)
-	return;
-
-    /* XXX todo */
+    /* normal was computed during shot, resides in hitp->hit_normal */
+    return;
 }
 
 
