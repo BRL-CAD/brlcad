@@ -56,9 +56,6 @@
 #include "./brep_debug.h"
 
 
-#define BN_VMATH_PREFIX_INDICES 1
-#define ROOT_TOL 1.E-7
-
 /* define to enable output of debug hit information */
 /* #define DEBUG_HITS 1 */
 
@@ -746,8 +743,8 @@ utah_newton_solver(const BBNode* sbv, const ON_Surface* surf, const ON_Ray& r, O
 	rootdist = fabs(f) + fabs(g);
 	int halve_count = 0;
 
-	/* FIXME: all constants should be documented, why this
-	 * value?  what's the sensitivity/impact?
+	/* iterate at most 3 times just because. might be worth trying
+	 * additional depths or refining adaptively.
 	 */
 	while ((halve_count++ < 3) && (oldrootdist < rootdist)) {
 	    // divide current UV step
@@ -763,9 +760,8 @@ utah_newton_solver(const BBNode* sbv, const ON_Surface* surf, const ON_Ray& r, O
 
 	if (oldrootdist <= rootdist) {
 
-	    /* FIXME: all constants should be documented. why this
-	     * value? must it coincide with the constant in the
-	     * preceding loop?
+	    /* if we're not getting any better after 3 tries, give up
+	     * and return what was found.  no particular reason for 3.
 	     */
 	    if (errantcount > 3) {
 		return intersects;
@@ -773,6 +769,12 @@ utah_newton_solver(const BBNode* sbv, const ON_Surface* surf, const ON_Ray& r, O
 		errantcount++;
 	    }
 	}
+
+/* if we get this close to a root, good enough.  No particular
+ * significance other than it's below our typical distance tol and
+ * above double precision tol.
+ */
+#define ROOT_TOL 1.E-7
 
 	if (rootdist < ROOT_TOL) {
 	    int ulow = (sbv->m_u.m_t[0] <= sbv->m_u.m_t[1]) ? 0 : 1;
