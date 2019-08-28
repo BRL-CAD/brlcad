@@ -806,7 +806,9 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
     }
 
     // Calculate for each vertex involved with curved edges the minimum individual bedge_seg
-    // length involved.
+    // length involved.  TODO - probably want this even for non-curved edges really, since
+    // a very long edge attached to a very small edge will produce extreme triangles even
+    // in the linear case...
     for (int i = 0; i < brep->m_V.Count(); i++) {
 	ON_3dPoint *p3d = (*s_cdt->vert_pnts)[i];
 	// If no curved edges, we don't need this
@@ -886,9 +888,6 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	    s_cdt->e2polysegs[edge.m_edge_index].insert(new_segs.begin(), new_segs.end());
 	}
     }
-
-
-    // TODO - move the nonlinear and linear edge splitting based on tolerances back in.
 
     // TODO - build RTree of bsegs for edge aware surface point building
 
