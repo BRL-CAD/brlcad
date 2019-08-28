@@ -99,12 +99,6 @@ trim_normal(ON_BrepTrim *trim, ON_2dPoint &cp)
 }
 
 
-/* TODO - need to take into account whether the trim is reversed when reporting
- * the parameter, if possible - For flipped curves we're getting back 2D points that
- * are close to the specified point but result in triangulations that don't point
- * to the right 3D vertex.  We need a 2D point that will result in a tessellation
- * that points to the right 3D point, not necessarily one that will evaluate to
- * the specified 3D point if we evaluated the PointAt 2D value on the trim. */
 double
 pnt_binary_search(fastf_t *tparam, const ON_BrepTrim &trim, double tstart, double tend, ON_3dPoint &edge_3d, double tol, int verbose, int depth, int force)
 {
@@ -192,6 +186,12 @@ pnt_binary_search(fastf_t *tparam, const ON_BrepTrim &trim, double tstart, doubl
     return dist;
 }
 
+/* TODO - need to take into account whether the trim is reversed when reporting
+ * the parameter, if possible - For flipped curves we're getting back 2D points that
+ * are close to the specified point but result in triangulations that don't point
+ * to the right 3D vertex.  We need a 2D point that will result in a tessellation
+ * that points to the right 3D point, not necessarily one that will evaluate to
+ * the specified 3D point if we evaluated the PointAt 2D value on the trim. */
 ON_2dPoint
 get_trim_midpt(fastf_t *t, struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe, ON_3dPoint &edge_mid_3d, double elen, double brep_edge_tol)
 {
@@ -204,6 +204,7 @@ get_trim_midpt(fastf_t *t, struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_
     }
     ON_BrepTrim& trim = s_cdt->brep->m_T[pe->trim_ind];
     double tmid;
+    // TODO - reverse search inputs if the trim is reversed
     double dist = pnt_binary_search(&tmid, trim, pe->trim_start, pe->trim_end, edge_mid_3d, tol, 0, 0, 0);
     if (dist < 0) {
         if (verbose) {
@@ -218,6 +219,7 @@ get_trim_midpt(fastf_t *t, struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_
 	    }
 	}
     }
+    // TODO - reverse search output if the trim is reversed
     ON_2dPoint trim_mid_2d = trim.PointAt(tmid);
     (*t) = tmid;
     return trim_mid_2d;
