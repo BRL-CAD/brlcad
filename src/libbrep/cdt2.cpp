@@ -469,10 +469,6 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int
     bseg2->tan_start = edge_mid_tan;
     bseg2->tan_end = bseg->tan_end;
 
-    if (bseg->edge_ind == 402 || bseg->edge_ind == 403 || bseg->edge_ind == 398 || bseg->edge_ind == 140 ) {
-	std::cout << "face 117 edge of interest\n";
-    }
-
     // Using the 2d mid points, update the polygons associated with tseg1 and tseg2.
     cdt_mesh::cpolyedge_t *poly1_ne1, *poly1_ne2, *poly2_ne1, *poly2_ne2;
     {
