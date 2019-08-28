@@ -33,6 +33,53 @@
 // For all faces, and each face loop in those faces, build the
 // initial polygons strictly based on trim start/end points
 
+void
+rtree_bbox_2d(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
+{
+    ON_BrepTrim& trim = s_cdt->brep->m_T[pe->trim_ind];
+    ON_2dPoint p2d1 = trim.PointAt(pe->trim_start);
+    ON_2dPoint p2d2 = trim.PointAt(pe->trim_end);
+    ON_Line line(p2d1, p2d2);
+    ON_BoundingBox bb = line.BoundingBox();
+    bb.m_max.x = bb.m_max.x + ON_ZERO_TOLERANCE;
+    bb.m_max.y = bb.m_max.y + ON_ZERO_TOLERANCE;
+    bb.m_min.x = bb.m_min.x - ON_ZERO_TOLERANCE;
+    bb.m_min.y = bb.m_min.y - ON_ZERO_TOLERANCE;
+    double p1[2];
+    p1[0] = bb.Min().x;
+    p1[1] = bb.Min().y;
+    double p2[2];
+    p2[0] = bb.Max().x;
+    p2[1] = bb.Max().y;
+    s_cdt->trim_segs[trim.Face()->m_face_index].Insert(p1, p2, (void *)pe);
+}
+
+void
+rtree_bbox_3d(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
+{
+    if (!pe->eseg) return;
+    ON_BrepTrim& trim = s_cdt->brep->m_T[pe->trim_ind];
+    ON_3dPoint *p3d1 = pe->eseg->e_start;
+    ON_3dPoint *p3d2 = pe->eseg->e_end;
+    ON_Line line(*p3d1, *p3d2);
+    ON_BoundingBox bb = line.BoundingBox();
+    bb.m_max.x = bb.m_max.x + ON_ZERO_TOLERANCE;
+    bb.m_max.y = bb.m_max.y + ON_ZERO_TOLERANCE;
+    bb.m_max.z = bb.m_max.z + ON_ZERO_TOLERANCE;
+    bb.m_min.x = bb.m_min.x - ON_ZERO_TOLERANCE;
+    bb.m_min.y = bb.m_min.y - ON_ZERO_TOLERANCE;
+    bb.m_min.z = bb.m_min.z - ON_ZERO_TOLERANCE;
+    double p1[3];
+    p1[0] = bb.Min().x;
+    p1[1] = bb.Min().y;
+    p1[2] = bb.Min().z;
+    double p2[3];
+    p2[0] = bb.Max().x;
+    p2[1] = bb.Max().y;
+    p2[2] = bb.Max().z;
+    s_cdt->edge_segs_3d[trim.Face()->m_face_index].Insert(p1, p2, (void *)pe);
+}
+
 double
 median_seg_len(std::vector<double> &lsegs)
 {
@@ -439,11 +486,13 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int
 	poly1_ne1->trim_ind = trim_ind;
 	poly1_ne1->trim_start = old_trim_start;
 	poly1_ne1->trim_end = t1mid;
+	poly1_ne1->eseg = bseg1;
 	struct cdt_mesh::edge_t poly1_edge2(poly1_2dind, v[1]);
 	poly1_ne2 = poly1->add_edge(poly1_edge2);
     	poly1_ne2->trim_ind = trim_ind;
 	poly1_ne2->trim_start = t1mid;
 	poly1_ne2->trim_end = old_trim_end;
+	poly1_ne2->eseg = bseg2;
     }
     {
 	cdt_mesh::cpolygon_t *poly2 = bseg->tseg2->polygon;
@@ -460,11 +509,13 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int
 	poly2_ne1->trim_ind = trim_ind;
 	poly2_ne1->trim_start = old_trim_start;
 	poly2_ne1->trim_end = t2mid;
+	poly2_ne1->eseg = bseg1;
 	struct cdt_mesh::edge_t poly2_edge2(poly2_2dind, v[1]);
 	poly2_ne2 = poly2->add_edge(poly2_edge2);
    	poly2_ne2->trim_ind = trim_ind;
 	poly2_ne2->trim_start = t2mid;
 	poly2_ne2->trim_end = old_trim_end;
+	poly2_ne2->eseg = bseg2;
     }
 
     // The new trim segments are then associated with the new bounding edge segments
@@ -889,7 +940,27 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	}
     }
 
-    // TODO - build RTree of bsegs for edge aware surface point building
+    // TODO - split singularity trims in 2D
+
+
+    // Build RTrees of 2D and 3D edge segments for edge aware processing
+    for (int index = 0; index < brep->m_E.Count(); index++) {
+	std::set<cdt_mesh::bedge_seg_t *> &epsegs = s_cdt->e2polysegs[index];
+	std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
+	for (e_it = epsegs.begin(); e_it != epsegs.end(); e_it++) {
+	    cdt_mesh::bedge_seg_t *b = *e_it;
+	    rtree_bbox_2d(s_cdt, b->tseg1);
+	    rtree_bbox_2d(s_cdt, b->tseg2);
+	    rtree_bbox_3d(s_cdt, b->tseg1);
+	    rtree_bbox_3d(s_cdt, b->tseg2);
+	}
+
+	struct bu_vls fname = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&fname, "%d-rtree_2d.plot3", index);
+	plot_rtree_2d2(s_cdt->trim_segs[index], bu_vls_cstr(&fname));
+	bu_vls_sprintf(&fname, "%d-rtree_3d.plot3", index);
+	plot_rtree_3d(s_cdt->edge_segs_3d[index], bu_vls_cstr(&fname));
+    }
 
     // TODO - adapt surface point sampling to new setup
 

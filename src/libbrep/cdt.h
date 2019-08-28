@@ -203,6 +203,7 @@ struct ON_Brep_CDT_State {
     std::map<ON_3dPoint *, std::set<BrepTrimPoint *>> *on_brep_edge_pnts;
     std::map<int, struct BrepEdgeSegment *> *etrees;
     std::map<int, RTree<void *, double, 3>> edge_segs_3d;
+    std::map<int, RTree<void *, double, 2>> trim_segs;
     std::map<int, std::set<cdt_mesh::bedge_seg_t *>> e2polysegs;
     std::map<ON_3dPoint *, double> v_min_seg_len;
     std::map<int, double> l_median_len;
@@ -272,8 +273,8 @@ ON_Brep_CDT_Face_Reset(struct ON_Brep_CDT_Face_State *fcdt, int full_surface_sam
 void
 ON_Brep_CDT_Face_Destroy(struct ON_Brep_CDT_Face_State *fcdt);
 
-void
-plot_rtree_2d(ON_RTree *rtree, const char *filename);
+void plot_rtree_2d(ON_RTree *rtree, const char *filename);
+void plot_rtree_2d2(RTree<void *, double, 2> &rtree, const char *filename);
 void
 plot_rtree_3d(RTree<void *, double, 3> &rtree, const char *filename);
 void
