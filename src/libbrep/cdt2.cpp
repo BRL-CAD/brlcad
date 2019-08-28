@@ -195,7 +195,7 @@ pnt_binary_search(fastf_t *tparam, const ON_BrepTrim &trim, double tstart, doubl
 ON_2dPoint
 get_trim_midpt(fastf_t *t, struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe, ON_3dPoint &edge_mid_3d, double elen, double brep_edge_tol)
 {
-    int verbose = 0;
+    int verbose = 1;
     double tol;
     if (!NEAR_EQUAL(brep_edge_tol, ON_UNSET_VALUE, ON_ZERO_TOLERANCE)) {
 	tol = brep_edge_tol;
@@ -203,23 +203,42 @@ get_trim_midpt(fastf_t *t, struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_
 	tol = (elen < BN_TOL_DIST) ? 0.01*elen : 0.1*BN_TOL_DIST;
     }
     ON_BrepTrim& trim = s_cdt->brep->m_T[pe->trim_ind];
+
     double tmid;
     // TODO - reverse search inputs if the trim is reversed
-    double dist = pnt_binary_search(&tmid, trim, pe->trim_start, pe->trim_end, edge_mid_3d, tol, 0, 0, 0);
+    double tstart = pe->trim_start;
+    double tend = pe->trim_end;
+    ON_Interval range = trim.Domain();
+#if 1
+    if (trim.m_bRev3d) {
+	tstart = range.m_t[1] - pe->trim_start;
+	tend = range.m_t[1] - pe->trim_end;
+    }
+#endif
+    double dist = pnt_binary_search(&tmid, trim, tstart, tend, edge_mid_3d, tol, 0, 0, 0);
     if (dist < 0) {
         if (verbose) {
             bu_log("Warning - could not find suitable trim point\n");
 	}
         tmid = (pe->trim_start + pe->trim_end) / 2.0;
     } else {
-	if (verbose && (dist > tol)) {
-	    bu_log("going with distance %f greater than desired tolerance %f\n", dist, tol);
+	if (verbose && (dist > BN_TOL_DIST) && (dist > tol)) {
+	    if (trim.m_bRev3d) {
+		bu_log("Reversed trim: going with distance %f greater than desired tolerance %f\n", dist, tol);
+	    } else {
+		bu_log("Non-reversed trim: going with distance %f greater than desired tolerance %f\n", dist, tol);
+	    }
 	    if (dist > 10*tol) {
 		dist = pnt_binary_search(&tmid, trim, pe->trim_start, pe->trim_end, edge_mid_3d, tol, 0, 0, 0);
 	    }
 	}
     }
     // TODO - reverse search output if the trim is reversed
+#if 1
+    if (trim.m_bRev3d) {
+	tmid = range.m_t[1] - tmid;
+    }
+#endif
     ON_2dPoint trim_mid_2d = trim.PointAt(tmid);
     (*t) = tmid;
     return trim_mid_2d;
