@@ -693,6 +693,7 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	ON_BrepFace &face = s_cdt->brep->m_F[face_index];
 	int loop_cnt = face.LoopCount();
 	cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[face_index];
+	fmesh->f_id = face_index;
 	cdt_mesh::cpolygon_t *cpoly = NULL;
 
 	for (int li = 0; li < loop_cnt; li++) {
@@ -1001,7 +1002,9 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	    rtree_bbox_3d(s_cdt, b->tseg1);
 	    rtree_bbox_3d(s_cdt, b->tseg2);
 	}
+    }
 
+    for (int index = 0; index < brep->m_F.Count(); index++) {
 	struct bu_vls fname = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&fname, "%d-rtree_2d.plot3", index);
 	plot_rtree_2d2(s_cdt->trim_segs[index], bu_vls_cstr(&fname));
