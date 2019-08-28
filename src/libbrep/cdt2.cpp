@@ -469,6 +469,10 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int
     bseg2->tan_start = edge_mid_tan;
     bseg2->tan_end = bseg->tan_end;
 
+    if (bseg->edge_ind == 402 || bseg->edge_ind == 403 || bseg->edge_ind == 398 || bseg->edge_ind == 140 ) {
+	std::cout << "face 117 edge of interest\n";
+    }
+
     // Using the 2d mid points, update the polygons associated with tseg1 and tseg2.
     cdt_mesh::cpolyedge_t *poly1_ne1, *poly1_ne2, *poly2_ne1, *poly2_ne2;
     {
@@ -507,14 +511,14 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int
 	struct cdt_mesh::edge_t poly2_edge1(v[0], poly2_2dind);
 	poly2_ne1 = poly2->add_edge(poly2_edge1);
 	poly2_ne1->trim_ind = trim_ind;
-	poly2_ne1->trim_start = (trim1->m_bRev3d) ? old_trim_end : old_trim_start;
+	poly2_ne1->trim_start = (trim2->m_bRev3d) ? old_trim_end : old_trim_start;
 	poly2_ne1->trim_end = t2mid;
 	poly2_ne1->eseg = bseg1;
 	struct cdt_mesh::edge_t poly2_edge2(poly2_2dind, v[1]);
 	poly2_ne2 = poly2->add_edge(poly2_edge2);
    	poly2_ne2->trim_ind = trim_ind;
 	poly2_ne2->trim_start = t2mid;
-	poly2_ne2->trim_end = (trim1->m_bRev3d) ? old_trim_start : old_trim_end;
+	poly2_ne2->trim_end = (trim2->m_bRev3d) ? old_trim_start : old_trim_end;
 	poly2_ne2->eseg = bseg2;
     }
 
@@ -696,10 +700,6 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	fmesh->f_id = face_index;
 	cdt_mesh::cpolygon_t *cpoly = NULL;
 
-	if (face_index == 34) {
-	    std::cout << "face 34\n";
-	}
-
 	for (int li = 0; li < loop_cnt; li++) {
 	    const ON_BrepLoop *loop = face.Loop(li);
 	    bool is_outer = (face.OuterLoop()->m_loop_index == loop->m_loop_index) ? true : false;
@@ -805,9 +805,6 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	    }
 	    struct cdt_mesh::edge_t last_seg(cv, fv);
 	    cpoly->add_edge(last_seg);
-	    if (face_index == 34) {
-		std::cout << "face 34 initial loop build done\n";
-	    }
 	}
 
 
@@ -837,10 +834,6 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	for (seg_it = wsegs.begin(); seg_it != wsegs.end(); seg_it++) {
 	    cdt_mesh::bedge_seg_t *bseg = *seg_it;
 
-	    if (bseg->edge_ind > 92 && bseg->edge_ind < 97) {
-		std::cout << "face 34 edge of interest\n";
-	    }
-
 	    if (!initialize_edge_segs(s_cdt, bseg)) {
 		std::cout << "Initialization failed for edge " << epoly_it->first << "\n";
 	    }
@@ -853,11 +846,6 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	ON_BrepEdge& edge = brep->m_E[index];
 	const ON_Curve* crv = edge.EdgeCurveOf();
 	if (crv && !crv->IsLinear(BN_TOL_DIST)) {
-
-	    if (index > 92 && index < 97) {
-		std::cout << "face 34 edge of interest\n";
-	    }
-
 	    std::set<cdt_mesh::bedge_seg_t *> &epsegs = s_cdt->e2polysegs[edge.m_edge_index];
 	    std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
 	    std::set<cdt_mesh::bedge_seg_t *> new_segs;
