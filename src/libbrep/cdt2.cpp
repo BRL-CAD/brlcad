@@ -242,7 +242,7 @@ pnt_binary_search(fastf_t *tparam, const ON_BrepTrim &trim, double tstart, doubl
 ON_2dPoint
 get_trim_midpt(fastf_t *t, struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe, ON_3dPoint &edge_mid_3d, double elen, double brep_edge_tol)
 {
-    int verbose = 1;
+    int verbose = 0;
     double tol;
     if (!NEAR_EQUAL(brep_edge_tol, ON_UNSET_VALUE, ON_ZERO_TOLERANCE)) {
 	tol = brep_edge_tol;
@@ -484,14 +484,14 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int
 	struct cdt_mesh::edge_t poly1_edge1(v[0], poly1_2dind);
 	poly1_ne1 = poly1->add_edge(poly1_edge1);
 	poly1_ne1->trim_ind = trim_ind;
-	poly1_ne1->trim_start = old_trim_start;
+	poly1_ne1->trim_start = (trim1->m_bRev3d) ? old_trim_end : old_trim_start;
 	poly1_ne1->trim_end = t1mid;
 	poly1_ne1->eseg = bseg1;
 	struct cdt_mesh::edge_t poly1_edge2(poly1_2dind, v[1]);
 	poly1_ne2 = poly1->add_edge(poly1_edge2);
     	poly1_ne2->trim_ind = trim_ind;
 	poly1_ne2->trim_start = t1mid;
-	poly1_ne2->trim_end = old_trim_end;
+	poly1_ne2->trim_end = (trim1->m_bRev3d) ? old_trim_start : old_trim_end;
 	poly1_ne2->eseg = bseg2;
     }
     {
@@ -507,14 +507,14 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int
 	struct cdt_mesh::edge_t poly2_edge1(v[0], poly2_2dind);
 	poly2_ne1 = poly2->add_edge(poly2_edge1);
 	poly2_ne1->trim_ind = trim_ind;
-	poly2_ne1->trim_start = old_trim_start;
+	poly2_ne1->trim_start = (trim1->m_bRev3d) ? old_trim_end : old_trim_start;
 	poly2_ne1->trim_end = t2mid;
 	poly2_ne1->eseg = bseg1;
 	struct cdt_mesh::edge_t poly2_edge2(poly2_2dind, v[1]);
 	poly2_ne2 = poly2->add_edge(poly2_edge2);
    	poly2_ne2->trim_ind = trim_ind;
 	poly2_ne2->trim_start = t2mid;
-	poly2_ne2->trim_end = old_trim_end;
+	poly2_ne2->trim_end = (trim1->m_bRev3d) ? old_trim_start : old_trim_end;
 	poly2_ne2->eseg = bseg2;
     }
 
@@ -696,6 +696,10 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	fmesh->f_id = face_index;
 	cdt_mesh::cpolygon_t *cpoly = NULL;
 
+	if (face_index == 34) {
+	    std::cout << "face 34\n";
+	}
+
 	for (int li = 0; li < loop_cnt; li++) {
 	    const ON_BrepLoop *loop = face.Loop(li);
 	    bool is_outer = (face.OuterLoop()->m_loop_index == loop->m_loop_index) ? true : false;
@@ -801,7 +805,12 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	    }
 	    struct cdt_mesh::edge_t last_seg(cv, fv);
 	    cpoly->add_edge(last_seg);
+	    if (face_index == 34) {
+		std::cout << "face 34 initial loop build done\n";
+	    }
 	}
+
+
     }
 
     std::map<int, std::set<cdt_mesh::bedge_seg_t *>>::iterator epoly_it;
@@ -827,6 +836,11 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	std::set<cdt_mesh::bedge_seg_t *> wsegs = epoly_it->second;
 	for (seg_it = wsegs.begin(); seg_it != wsegs.end(); seg_it++) {
 	    cdt_mesh::bedge_seg_t *bseg = *seg_it;
+
+	    if (bseg->edge_ind > 92 && bseg->edge_ind < 97) {
+		std::cout << "face 34 edge of interest\n";
+	    }
+
 	    if (!initialize_edge_segs(s_cdt, bseg)) {
 		std::cout << "Initialization failed for edge " << epoly_it->first << "\n";
 	    }
@@ -839,6 +853,11 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	ON_BrepEdge& edge = brep->m_E[index];
 	const ON_Curve* crv = edge.EdgeCurveOf();
 	if (crv && !crv->IsLinear(BN_TOL_DIST)) {
+
+	    if (index > 92 && index < 97) {
+		std::cout << "face 34 edge of interest\n";
+	    }
+
 	    std::set<cdt_mesh::bedge_seg_t *> &epsegs = s_cdt->e2polysegs[edge.m_edge_index];
 	    std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
 	    std::set<cdt_mesh::bedge_seg_t *> new_segs;
@@ -885,7 +904,7 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	    }
 	}
 	s_cdt->v_min_seg_len[p3d] = emin;
-	std::cout << "Minimum vert seg length, vert " << i << ": " << s_cdt->v_min_seg_len[p3d] << "\n";
+	//std::cout << "Minimum vert seg length, vert " << i << ": " << s_cdt->v_min_seg_len[p3d] << "\n";
     }
 
     // Calculate loop median segment lengths contributed from the curved edges
@@ -914,7 +933,7 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	    s_cdt->l_median_len[index] = -1;
 	} else {
 	    s_cdt->l_median_len[index] = median_seg_len(lsegs);
-	    std::cout << "Median loop seg length, loop " << index << ": " << s_cdt->l_median_len[index] << "\n";
+	    //std::cout << "Median loop seg length, loop " << index << ": " << s_cdt->l_median_len[index] << "\n";
 	}
     }
 
@@ -955,6 +974,10 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 		cpoly = &fmesh->outer_loop;
 	    } else {
 		cpoly = fmesh->inner_loops[li];
+	    }
+
+	    if (!cpoly->closed()) {
+		bu_log("error - loop for %d-%d isn't closed!\n", face_index, li);
 	    }
 
 	    size_t ecnt = 1;
