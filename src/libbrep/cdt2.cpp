@@ -242,7 +242,7 @@ pnt_binary_search(fastf_t *tparam, const ON_BrepTrim &trim, double tstart, doubl
 ON_2dPoint
 get_trim_midpt(fastf_t *t, struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe, ON_3dPoint &edge_mid_3d, double elen, double brep_edge_tol)
 {
-    int verbose = 0;
+    int verbose = 1;
     double tol;
     if (!NEAR_EQUAL(brep_edge_tol, ON_UNSET_VALUE, ON_ZERO_TOLERANCE)) {
 	tol = brep_edge_tol;
@@ -484,14 +484,14 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int
 	struct cdt_mesh::edge_t poly1_edge1(v[0], poly1_2dind);
 	poly1_ne1 = poly1->add_edge(poly1_edge1);
 	poly1_ne1->trim_ind = trim_ind;
-	poly1_ne1->trim_start = (trim1->m_bRev3d) ? old_trim_end : old_trim_start;
+	poly1_ne1->trim_start = old_trim_start;
 	poly1_ne1->trim_end = t1mid;
 	poly1_ne1->eseg = bseg1;
 	struct cdt_mesh::edge_t poly1_edge2(poly1_2dind, v[1]);
 	poly1_ne2 = poly1->add_edge(poly1_edge2);
     	poly1_ne2->trim_ind = trim_ind;
 	poly1_ne2->trim_start = t1mid;
-	poly1_ne2->trim_end = (trim1->m_bRev3d) ? old_trim_start : old_trim_end;
+	poly1_ne2->trim_end = old_trim_end;
 	poly1_ne2->eseg = bseg2;
     }
     {
@@ -507,14 +507,14 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int
 	struct cdt_mesh::edge_t poly2_edge1(v[0], poly2_2dind);
 	poly2_ne1 = poly2->add_edge(poly2_edge1);
 	poly2_ne1->trim_ind = trim_ind;
-	poly2_ne1->trim_start = (trim2->m_bRev3d) ? old_trim_end : old_trim_start;
+	poly2_ne1->trim_start = old_trim_start;
 	poly2_ne1->trim_end = t2mid;
 	poly2_ne1->eseg = bseg1;
 	struct cdt_mesh::edge_t poly2_edge2(poly2_2dind, v[1]);
 	poly2_ne2 = poly2->add_edge(poly2_edge2);
    	poly2_ne2->trim_ind = trim_ind;
 	poly2_ne2->trim_start = t2mid;
-	poly2_ne2->trim_end = (trim2->m_bRev3d) ? old_trim_start : old_trim_end;
+	poly2_ne2->trim_end = old_trim_end;
 	poly2_ne2->eseg = bseg2;
     }
 
@@ -733,7 +733,7 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 			ON_3dPoint tmp1;
 			surface_EvNormal(trim->SurfaceOf(), cp.x, cp.y, tmp1, norm);
 		    }
-		    ON_3dPoint *op3d = (*s_cdt->vert_pnts)[trim->Vertex(0)->m_vertex_index];
+		    ON_3dPoint *op3d = (*s_cdt->vert_pnts)[trim->Vertex(sind)->m_vertex_index];
 		    long f3ind = fmesh->add_point(op3d);
 		    long fnind = fmesh->add_normal(new ON_3dPoint(norm));
 		    fmesh->p2d3d[find] = f3ind;
@@ -757,7 +757,7 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 		    ON_3dPoint tmp1;
 		    surface_EvNormal(trim->SurfaceOf(), cp.x, cp.y, tmp1, norm);
 		}
-		ON_3dPoint *cp3d = (*s_cdt->vert_pnts)[trim->Vertex(1)->m_vertex_index];
+		ON_3dPoint *cp3d = (*s_cdt->vert_pnts)[trim->Vertex(eind)->m_vertex_index];
 		long f3ind = fmesh->add_point(cp3d);
 		long fnind = fmesh->add_normal(new ON_3dPoint(norm));
 		fmesh->p2d3d[find] = f3ind;
@@ -802,8 +802,6 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	    struct cdt_mesh::edge_t last_seg(cv, fv);
 	    cpoly->add_edge(last_seg);
 	}
-
-
     }
 
     std::map<int, std::set<cdt_mesh::bedge_seg_t *>>::iterator epoly_it;
@@ -829,7 +827,6 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	std::set<cdt_mesh::bedge_seg_t *> wsegs = epoly_it->second;
 	for (seg_it = wsegs.begin(); seg_it != wsegs.end(); seg_it++) {
 	    cdt_mesh::bedge_seg_t *bseg = *seg_it;
-
 	    if (!initialize_edge_segs(s_cdt, bseg)) {
 		std::cout << "Initialization failed for edge " << epoly_it->first << "\n";
 	    }
@@ -960,10 +957,6 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 		cpoly = fmesh->inner_loops[li];
 	    }
 
-	    if (!cpoly->closed()) {
-		bu_log("error - loop for %d-%d isn't closed!\n", face_index, li);
-	    }
-
 	    size_t ecnt = 1;
 	    if (!cpoly->poly.size()) continue;  // Shouldn't be possible?...
 	    cdt_mesh::cpolyedge_t *pe = (*cpoly->poly.begin());
@@ -974,7 +967,7 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	    visited.insert(first);
 
 	    if (!first->eseg) {
-		std::cout << face_index << "," << li << ": have singularity\n";
+		//std::cout << face_index << "," << li << ": have singularity\n";
 	    }
 
 	    // Walk the loop - an infinite loop is not closed
@@ -984,7 +977,7 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 		    break;
 		}
 		if (!next->eseg) {
-		    std::cout << face_index << "," << li << ": have singularity\n";
+		    //std::cout << face_index << "," << li << ": have singularity\n";
 		}
 		visited.insert(next);
 		next = next->next;
