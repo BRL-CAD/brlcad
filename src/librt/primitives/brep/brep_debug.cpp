@@ -1809,7 +1809,12 @@ brep_surface_cv_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_bre
 
 
 /* a binary predicate for std:list implemented as a function */
-extern bool near_equal (double first, double second);
+static bool
+near_equal(double first, double second)
+{
+    /* FIXME: arbitrary nearness tolerance */
+    return NEAR_EQUAL(first, second, 1e-6);
+}
 
 
 void
