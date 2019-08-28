@@ -55,16 +55,6 @@
 #include "./brep_local.h"
 #include "./brep_debug.h"
 
-/* undefine "min" and "max" macros, if they exist, to prevent name
- * conflicts with functions "std::min" and "std::max".
- */
-#ifdef max
-#  undef max
-#endif
-
-#ifdef min
-#  undef min
-#endif
 
 #define BN_VMATH_PREFIX_INDICES 1
 #define ROOT_TOL 1.E-7
