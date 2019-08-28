@@ -992,6 +992,7 @@ void cpolygon_t::print()
 {
 
     size_t ecnt = 1;
+    if (!poly.size()) return;
     cpolyedge_t *pe = (*poly.begin());
     cpolyedge_t *first = pe;
     cpolyedge_t *next = pe->next;
@@ -1017,6 +1018,32 @@ void cpolygon_t::print()
     }
 
     std::cout << "\n";
+
+    visited.clear();
+
+    pe = (*poly.begin());
+    first = pe;
+    next = pe->next;
+    visited.insert(first);
+    std::cout << "(" << pnts_2d[first->v[0]].first << "," << pnts_2d[first->v[0]].second << ")" ;
+    ecnt = 1;
+    // Walk the loop - an infinite loop is not closed
+    while (first != next) {
+	ecnt++;
+	if (!next) {
+	    break;
+	}
+	std::cout << "->";
+	std::cout << "(" << pnts_2d[next->v[0]].first << "," << pnts_2d[next->v[0]].second << ")" ;
+	visited.insert(next);
+	next = next->next;
+	if (ecnt > poly.size()) {
+	    std::cout << "\nERROR infinite loop\n";
+	    break;
+	}
+    }
+    std::cout << "\n";
+
 
     if (visited.size() != poly.size()) {
 	std::cout << "Missing edges:\n";
