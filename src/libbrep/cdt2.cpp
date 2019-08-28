@@ -205,17 +205,7 @@ get_trim_midpt(fastf_t *t, struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_
     ON_BrepTrim& trim = s_cdt->brep->m_T[pe->trim_ind];
 
     double tmid;
-    // TODO - reverse search inputs if the trim is reversed
-    double tstart = pe->trim_start;
-    double tend = pe->trim_end;
-    ON_Interval range = trim.Domain();
-#if 1
-    if (trim.m_bRev3d) {
-	tstart = range.m_t[1] - pe->trim_start;
-	tend = range.m_t[1] - pe->trim_end;
-    }
-#endif
-    double dist = pnt_binary_search(&tmid, trim, tstart, tend, edge_mid_3d, tol, 0, 0, 0);
+    double dist = pnt_binary_search(&tmid, trim, pe->trim_start, pe->trim_end, edge_mid_3d, tol, 0, 0, 0);
     if (dist < 0) {
         if (verbose) {
             bu_log("Warning - could not find suitable trim point\n");
@@ -233,12 +223,6 @@ get_trim_midpt(fastf_t *t, struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_
 	    }
 	}
     }
-    // TODO - reverse search output if the trim is reversed
-#if 1
-    if (trim.m_bRev3d) {
-	tmid = range.m_t[1] - tmid;
-    }
-#endif
     ON_2dPoint trim_mid_2d = trim.PointAt(tmid);
     (*t) = tmid;
     return trim_mid_2d;
@@ -355,21 +339,25 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int
 {
     std::set<cdt_mesh::bedge_seg_t *> nedges;
 
+    // If we don't have associated segments, we can't do anything
     if (!bseg->tseg1 || !bseg->tseg2 || !bseg->nc) return nedges;
 
-    //std::cout << "splitting edge " << bseg->edge_ind << "\n";
-
     ON_BrepEdge& edge = s_cdt->brep->m_E[bseg->edge_ind];
-
     ON_BrepTrim *trim1 = edge.Trim(0);
     ON_BrepTrim *trim2 = edge.Trim(1);
 
+    // If we don't have associated trims, we can't do anything
     if (!trim1 || !trim2) return nedges;
 
-    ON_3dPoint edge_mid_3d = ON_3dPoint::UnsetPoint;
-    ON_3dVector edge_mid_tan = ON_3dVector::UnsetVector;
+    ON_BrepFace *face1 = trim1->Face();
+    ON_BrepFace *face2 = trim2->Face();
+    cdt_mesh::cdt_mesh_t *fmesh1 = &s_cdt->fmeshes[face1->m_face_index];
+    cdt_mesh::cdt_mesh_t *fmesh2 = &s_cdt->fmeshes[face2->m_face_index];
+
 
     // Get the 3D midpoint (and tangent, if we can) from the edge curve
+    ON_3dPoint edge_mid_3d = ON_3dPoint::UnsetPoint;
+    ON_3dVector edge_mid_tan = ON_3dVector::UnsetVector;
     fastf_t emid = (bseg->edge_start + bseg->edge_end) / 2.0;
     bool evtangent_status = bseg->nc->EvTangent(emid, edge_mid_3d, edge_mid_tan);
     if (!evtangent_status) {
@@ -399,13 +387,6 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int
     trim1_mid_2d = get_trim_midpt(&t1mid, s_cdt, bseg->tseg1, edge_mid_3d, elen, edge.m_tolerance);
     trim2_mid_2d = get_trim_midpt(&t2mid, s_cdt, bseg->tseg2, edge_mid_3d, elen, edge.m_tolerance);
 
-    // Let the fmeshes know about the new information, and find the normals for the
-    // new point on each face.
-    ON_BrepFace *face1 = trim1->Face();
-    ON_BrepFace *face2 = trim2->Face();
-    cdt_mesh::cdt_mesh_t *fmesh1 = &s_cdt->fmeshes[face1->m_face_index];
-    cdt_mesh::cdt_mesh_t *fmesh2 = &s_cdt->fmeshes[face2->m_face_index];
-
     // Update the 2D and 2D->3D info in the fmeshes
     long f1_ind2d = fmesh1->add_point(trim1_mid_2d);
     long f1_ind3d = fmesh1->add_point(mid_3d);
@@ -414,11 +395,11 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int
     long f2_ind3d = fmesh2->add_point(mid_3d);
     fmesh2->p2d3d[f2_ind2d] = f2_ind3d;
 
+    // Trims get their own normals
     ON_3dVector norm1 = trim_normal(trim1, trim1_mid_2d);
     fmesh1->normals.push_back(new ON_3dPoint(norm1));
     long f1_nind = fmesh1->normals.size() - 1;
     fmesh1->nmap[f1_ind3d] = f1_nind;
-
     ON_3dVector norm2 = trim_normal(trim2, trim2_mid_2d);
     fmesh2->normals.push_back(new ON_3dPoint(norm2));
     long f2_nind = fmesh2->normals.size() - 1;
@@ -686,7 +667,7 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 		ON_Interval range = trim->Domain();
 		if (lti == 0) {
 		    // Get the 2D point, add it to the mesh and current polygon
-		    cp = trim->PointAt(range.m_t[0]);
+		    cp = trim->PointAt(range.m_t[0]); // Note: deliberately not using sind here
 		    long find = fmesh->add_point(cp);
 		    pv = cpoly->add_point(cp, find);
 		    fv = pv;
@@ -711,7 +692,7 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 		}
 
 		// Get the 2D point, add it to the mesh and current polygon
-		cp = trim->PointAt(range.m_t[1]);
+		cp = trim->PointAt(range.m_t[1]); // Note: deliberately not using eind here
 		long find = fmesh->add_point(cp);
 		cv = cpoly->add_point(cp, find);
 
@@ -733,8 +714,20 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 		struct cdt_mesh::edge_t lseg(pv, cv);
 		cdt_mesh::cpolyedge_t *ne = cpoly->add_edge(lseg);
 		ne->trim_ind = trim->m_trim_index;
-		ne->trim_start = range.m_t[0];
-		ne->trim_end = range.m_t[1];
+
+		// When breaking down a reversed-in-3D trim, the driving edge
+		// segment will be referencing the opposite side of the flipped
+		// edge compared to what the loop expects.  For edge driven
+		// splitting, we need to think about the domain of the trim in
+		// reverse.  The initial trim edge (pv and cv) we set up in the
+		// correct numerical order rather than using sind/eind and
+		// handle the 3D flip by linking to the opposite 3D vertex
+		// points (since the vertex points are a special case anyway)
+		// but for subsequent splitting operations we need to reverse
+		// our notions of where the trim curve starts and ends.
+		ne->trim_start = range.m_t[sind];
+		ne->trim_end = range.m_t[eind];
+
 		if (trim->m_ei >= 0) {
 		    cdt_mesh::bedge_seg_t *eseg = *s_cdt->e2polysegs[trim->m_ei].begin();
 		    // Associate the edge segment with the trim segment and vice versa
