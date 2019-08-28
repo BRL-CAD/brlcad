@@ -941,6 +941,53 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
     }
 
     // TODO - split singularity trims in 2D
+    for (int face_index = 0; face_index < brep->m_F.Count(); face_index++) {
+	ON_BrepFace &face = s_cdt->brep->m_F[face_index];
+	int loop_cnt = face.LoopCount();
+	cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[face_index];
+	cdt_mesh::cpolygon_t *cpoly = NULL;
+
+	for (int li = 0; li < loop_cnt; li++) {
+	    const ON_BrepLoop *loop = face.Loop(li);
+	    bool is_outer = (face.OuterLoop()->m_loop_index == loop->m_loop_index) ? true : false;
+	    if (is_outer) {
+		cpoly = &fmesh->outer_loop;
+	    } else {
+		cpoly = fmesh->inner_loops[li];
+	    }
+
+	    size_t ecnt = 1;
+	    if (!cpoly->poly.size()) continue;  // Shouldn't be possible?...
+	    cdt_mesh::cpolyedge_t *pe = (*cpoly->poly.begin());
+	    cdt_mesh::cpolyedge_t *first = pe;
+	    cdt_mesh::cpolyedge_t *next = pe->next;
+
+	    std::set<cdt_mesh::cpolyedge_t *> visited;
+	    visited.insert(first);
+
+	    if (!first->eseg) {
+		std::cout << face_index << "," << li << ": have singularity\n";
+	    }
+
+	    // Walk the loop - an infinite loop is not closed
+	    while (first != next) {
+		ecnt++;
+		if (!next) {
+		    break;
+		}
+		if (!next->eseg) {
+		    std::cout << face_index << "," << li << ": have singularity\n";
+		}
+		visited.insert(next);
+		next = next->next;
+		if (ecnt > cpoly->poly.size()) {
+		    std::cout << "\nERROR infinite loop\n";
+		    break;
+		}
+	    }
+	}
+
+    }
 
 
     // Build RTrees of 2D and 3D edge segments for edge aware processing

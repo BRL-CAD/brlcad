@@ -2186,7 +2186,7 @@ bool
 cdt_mesh_t::cdt()
 {
     if (!outer_loop.closed()) {
-	bu_log("outer loop reports not closed!\n");
+	bu_log("%d: outer loop reports not closed!\n", f_id);
 	return false;
     }
     std::map<int, cpolygon_t*>::iterator il_it;
