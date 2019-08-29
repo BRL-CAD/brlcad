@@ -251,20 +251,28 @@ get_trim_midpt(fastf_t *t, struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_
     }
     ON_BrepTrim& trim = s_cdt->brep->m_T[pe->trim_ind];
 
-    if (trim.m_trim_index > 149 && trim.m_trim_index < 154) {
-	std::cout << "get_trim_midpt: working face 34 trim " << trim.m_trim_index << "\n";
-    }
-
     double tstart = pe->trim_start;
     double tend = pe->trim_end;
 
+    ON_Interval range = trim.Domain();
+    if (trim.m_trim_index > 149 && trim.m_trim_index < 154) {
+	std::cout << "get_trim_midpt: working face 34 edge " << pe->eseg->edge_ind << " trim " << trim.m_trim_index << "\n";
+    	ON_2dPoint p2s = trim.PointAt(range.m_t[0]);
+	ON_2dPoint p2e = trim.PointAt(range.m_t[1]);
+	ON_3dPoint p3s = trim.SurfaceOf()->PointAt(p2s.x, p2s.y);
+	ON_3dPoint p3e = trim.SurfaceOf()->PointAt(p2e.x, p2e.y);
+	std::cout << "   trim " << trim.m_trim_index << " t(0,1): (" << range.m_t[0] << "," << range.m_t[1] << ")\n";
+	std::cout << "   start point: p2d(x,y): " << p2s.x << "," << p2s.y << ") p3d(x,y,z): (" << p3s.x << "," << p3s.y << "," << p3s.z << ")\n";
+	std::cout << "   end point  : p2d(x,y): " << p2e.x << "," << p2e.y << ") p3d(x,y,z): (" << p3e.x << "," << p3e.y << "," << p3e.z << ")\n";
+    }
+#if 0
     if (trim.m_bRev3d) {
-	ON_Interval range = trim.Domain();
 	double tsdist = range.Mid() - tstart;
 	double tedist = range.Mid() - tend;
 	tstart = range.Mid() + tsdist;
 	tend = range.Mid() + tedist;
     }
+#endif
 
     double tmid;
     double dist = pnt_binary_search(&tmid, trim, tstart, tend, edge_mid_3d, tol, 0, 0, 0);
@@ -276,7 +284,9 @@ get_trim_midpt(fastf_t *t, struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_
     } else {
 	if (verbose && (dist > BN_TOL_DIST) && (dist > tol)) {
 	    if (trim.m_bRev3d) {
-		bu_log("Reversed trim: going with distance %f greater than desired tolerance %f\n", dist, tol);
+		if (trim.m_trim_index > 149 && trim.m_trim_index < 154) {
+		    bu_log("Reversed trim: going with distance %f greater than desired tolerance %f\n", dist, tol);
+		}
 	    } else {
 		//bu_log("Non-reversed trim: going with distance %f greater than desired tolerance %f\n", dist, tol);
 	    }
@@ -286,20 +296,29 @@ get_trim_midpt(fastf_t *t, struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_
 	}
     }
 
+#if 0
     // Try mirroring tmid across trim.Mid()
     if (trim.m_bRev3d) {
-	ON_Interval range = trim.Domain();
 	double tmid_orig = tmid;
 	double tdist = range.Mid() - tmid;
 	tmid = range.Mid() + tdist;
-	if (!NEAR_ZERO(tmid-tmid_orig, ON_ZERO_TOLERANCE)) {
-	    //std::cout << "tmid initial: " << tmid_orig << "\n";
-	    //std::cout << "tmid mirrored: " << tmid << "\n";
+	if (trim.m_trim_index > 149 && trim.m_trim_index < 154) {
+	    if (!NEAR_ZERO(tmid-tmid_orig, ON_ZERO_TOLERANCE)) {
+		std::cout << "tmid initial: " << tmid_orig << "\n";
+		std::cout << "tmid mirrored: " << tmid << "\n";
+	    }
 	}
     }
+#endif
 
     ON_2dPoint trim_mid_2d = trim.PointAt(tmid);
     (*t) = tmid;
+    
+    if (trim.m_trim_index > 149 && trim.m_trim_index < 154) {
+	ON_3dPoint p3m = trim.SurfaceOf()->PointAt(trim_mid_2d.x, trim_mid_2d.y);
+	std::cout << "   mid point  : p2d(x,y): " << trim_mid_2d.x << "," << trim_mid_2d.y << ") p3d(x,y,z): (" << p3m.x << "," << p3m.y << "," << p3m.z << ")\n";
+    }
+
     return trim_mid_2d;
 }
 
@@ -430,6 +449,7 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int
     cdt_mesh::cdt_mesh_t *fmesh2 = &s_cdt->fmeshes[face2->m_face_index];
 
 
+
     // Get the 3D midpoint (and tangent, if we can) from the edge curve
     ON_3dPoint edge_mid_3d = ON_3dPoint::UnsetPoint;
     ON_3dVector edge_mid_tan = ON_3dVector::UnsetVector;
@@ -461,6 +481,23 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int
     ON_2dPoint trim1_mid_2d, trim2_mid_2d;
     trim1_mid_2d = get_trim_midpt(&t1mid, s_cdt, bseg->tseg1, edge_mid_3d, elen, edge.m_tolerance);
     trim2_mid_2d = get_trim_midpt(&t2mid, s_cdt, bseg->tseg2, edge_mid_3d, elen, edge.m_tolerance);
+
+    if (edge.m_edge_index > 92 && edge.m_edge_index < 97) {
+	std::cout << "splitting face 34 edge " << bseg->edge_ind << " verts(0,1): (" << edge.Vertex(0)->m_vertex_index << "," << edge.Vertex(1)->m_vertex_index << ")\n";
+	ON_BrepTrim *ftrim = (trim1->Face()->m_face_index == 34) ? trim1 : trim2;
+	ON_2dPoint trim_mid_2d = (trim1->Face()->m_face_index == 34) ? trim1_mid_2d: trim2_mid_2d;
+	ON_Interval range = ftrim->Domain();
+	ON_2dPoint p2s = ftrim->PointAt(range.m_t[0]);
+	ON_2dPoint p2e = ftrim->PointAt(range.m_t[1]);
+	ON_3dPoint p3s = ftrim->SurfaceOf()->PointAt(p2s.x, p2s.y);
+	ON_3dPoint p3e = ftrim->SurfaceOf()->PointAt(p2e.x, p2e.y);
+	ON_3dPoint p3m = ftrim->SurfaceOf()->PointAt(trim_mid_2d.x, trim_mid_2d.y);
+	std::cout << "   trim " << ftrim->m_trim_index << " t(0,1): (" << range.m_t[0] << "," << range.m_t[1] << ")\n";
+	std::cout << "   start point: p2d(x,y): " << p2s.x << "," << p2s.y << ") p3d(x,y,z): (" << p3s.x << "," << p3s.y << "," << p3s.z << ")\n";
+	std::cout << "   end point  : p2d(x,y): " << p2e.x << "," << p2e.y << ") p3d(x,y,z): (" << p3e.x << "," << p3e.y << "," << p3e.z << ")\n";
+	std::cout << "   mid point  : p2d(x,y): " << trim_mid_2d.x << "," << trim_mid_2d.y << ") p3d(x,y,z): (" << p3m.x << "," << p3m.y << "," << p3m.z << ")\n";
+    }
+
 
     // Update the 2D and 2D->3D info in the fmeshes
     long f1_ind2d = fmesh1->add_point(trim1_mid_2d);
@@ -559,6 +596,8 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int
     return nedges;
 }
 
+int debug_ecnt;
+
 // There are a couple of edge splitting operations that have to happen in the
 // beginning regardless of tolerance settings.  Do them up front so the subsequent
 // working set has consistent properties.
@@ -606,6 +645,26 @@ initialize_edge_segs(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *e)
 
     s_cdt->e2polysegs[edge.m_edge_index].clear();
     s_cdt->e2polysegs[edge.m_edge_index].insert(esegs_csplit.begin(), esegs_csplit.end());
+
+    if (edge.m_edge_index > 92 && edge.m_edge_index < 97) {
+	cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[34];
+	std::cout << "generating post-initial-split plots for Face 34, edge " << edge.m_edge_index << "...\n";
+	cdt_mesh::cpolygon_t *cpoly = (s_cdt->brep->m_T[(*esegs_csplit.begin())->tseg1->trim_ind].Face()->m_face_index == 34) ? (*esegs_csplit.begin())->tseg1->polygon : (*esegs_csplit.begin())->tseg2->polygon;
+	cpoly->print();
+	fmesh->polygon_print_3d(cpoly);
+	struct bu_vls fname = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&fname, "34-01-%d-poly2d.p3", debug_ecnt);
+	fmesh->polygon_plot_2d(cpoly, bu_vls_cstr(&fname));
+	bu_vls_sprintf(&fname, "34-01-%d-poly3d.p3", debug_ecnt);
+	fmesh->polygon_plot_3d(cpoly, bu_vls_cstr(&fname));
+	fmesh->cdt();
+	bu_vls_sprintf(&fname, "34-01-%d-tris_2d.p3", debug_ecnt);
+	fmesh->tris_plot_2d(bu_vls_cstr(&fname));
+	bu_vls_sprintf(&fname, "34-01-%d-tris.p3", debug_ecnt);
+	fmesh->tris_plot(bu_vls_cstr(&fname));
+	debug_ecnt++;
+    }
+
 
     return true;
 }
@@ -763,8 +822,8 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	    long fv = -1;
 	    for (int lti = 0; lti < trim_count; lti++) {
 		ON_BrepTrim *trim = loop->Trim(lti);
-		int sind = (trim->m_bRev3d) ? 1 : 0;
-		int eind = (trim->m_bRev3d) ? 0 : 1;
+		//int sind = (trim->m_bRev3d) ? 1 : 0;
+		//int eind = (trim->m_bRev3d) ? 0 : 1;
 		ON_Interval range = trim->Domain();
 		if (lti == 0) {
 		    // Get the 2D point, add it to the mesh and current polygon
@@ -782,7 +841,7 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 			ON_3dPoint tmp1;
 			surface_EvNormal(trim->SurfaceOf(), cp.x, cp.y, tmp1, norm);
 		    }
-		    ON_3dPoint *op3d = (*s_cdt->vert_pnts)[trim->Vertex(sind)->m_vertex_index];
+		    ON_3dPoint *op3d = (*s_cdt->vert_pnts)[trim->Vertex(0)->m_vertex_index];
 		    long f3ind = fmesh->add_point(op3d);
 		    long fnind = fmesh->add_normal(new ON_3dPoint(norm));
 		    fmesh->p2d3d[find] = f3ind;
@@ -806,7 +865,7 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 		    ON_3dPoint tmp1;
 		    surface_EvNormal(trim->SurfaceOf(), cp.x, cp.y, tmp1, norm);
 		}
-		ON_3dPoint *cp3d = (*s_cdt->vert_pnts)[trim->Vertex(eind)->m_vertex_index];
+		ON_3dPoint *cp3d = (*s_cdt->vert_pnts)[trim->Vertex(1)->m_vertex_index];
 		long f3ind = fmesh->add_point(cp3d);
 		long fnind = fmesh->add_normal(new ON_3dPoint(norm));
 		fmesh->p2d3d[find] = f3ind;
@@ -854,6 +913,7 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	    if (face_index == 34) {
 		std::cout << "generating pre-split plots for Face 34, loop " << li << "...\n";
 		cpoly->print();
+		fmesh->polygon_print_3d(cpoly);
 		struct bu_vls fname = BU_VLS_INIT_ZERO;
 		bu_vls_sprintf(&fname, "%d-00-poly2d.p3", face_index);
 		fmesh->polygon_plot_2d(cpoly, bu_vls_cstr(&fname));
@@ -886,6 +946,7 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
     }
 
     // Do the non-tolerance based initialization splits.
+    debug_ecnt = 1;
     for (epoly_it = s_cdt->e2polysegs.begin(); epoly_it != s_cdt->e2polysegs.end(); epoly_it++) {
 	std::set<cdt_mesh::bedge_seg_t *>::iterator seg_it;
 	std::set<cdt_mesh::bedge_seg_t *> wsegs = epoly_it->second;
@@ -899,6 +960,7 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 
     // On to tolerance based splitting.  Process the non-linear edges first -
     // we will need information from them to handle the linear edges
+    debug_ecnt = 1;
     for (int index = 0; index < brep->m_E.Count(); index++) {
 	ON_BrepEdge& edge = brep->m_E[index];
 	const ON_Curve* crv = edge.EdgeCurveOf();
@@ -918,6 +980,25 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	    }
 	    s_cdt->e2polysegs[edge.m_edge_index].clear();
 	    s_cdt->e2polysegs[edge.m_edge_index].insert(new_segs.begin(), new_segs.end());
+
+	    if (edge.m_edge_index > 92 && edge.m_edge_index < 97) {
+		cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[34];
+		std::cout << "generating post-curved_tol-split plots for Face 34, edge " << edge.m_edge_index << "...\n";
+		cdt_mesh::cpolygon_t *cpoly = (s_cdt->brep->m_T[(*new_segs.begin())->tseg1->trim_ind].Face()->m_face_index == 34) ? (*new_segs.begin())->tseg1->polygon : (*new_segs.begin())->tseg2->polygon;
+		cpoly->print();
+		fmesh->polygon_print_3d(cpoly);
+		struct bu_vls fname = BU_VLS_INIT_ZERO;
+		bu_vls_sprintf(&fname, "34-02-%d-poly2d.p3", debug_ecnt);
+		fmesh->polygon_plot_2d(cpoly, bu_vls_cstr(&fname));
+		bu_vls_sprintf(&fname, "34-02-%d-poly3d.p3", debug_ecnt);
+		fmesh->polygon_plot_3d(cpoly, bu_vls_cstr(&fname));
+		fmesh->cdt();
+		bu_vls_sprintf(&fname, "34-02-%d-tris_2d.p3", debug_ecnt);
+		fmesh->tris_plot_2d(bu_vls_cstr(&fname));
+		bu_vls_sprintf(&fname, "34-02-%d-tris.p3", debug_ecnt);
+		fmesh->tris_plot(bu_vls_cstr(&fname));
+		debug_ecnt++;
+	    }
 	}
     }
 

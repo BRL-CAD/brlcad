@@ -3416,6 +3416,65 @@ void cdt_mesh_t::polygon_plot_3d(cpolygon_t *polygon, const char *filename)
 }
 
 
+void cdt_mesh_t::polygon_print_3d(cpolygon_t *polygon)
+{
+    size_t ecnt = 1;
+    if (!polygon->poly.size()) return;
+    cpolyedge_t *pe = (*polygon->poly.begin());
+    cpolyedge_t *first = pe;
+    cpolyedge_t *next = pe->next;
+
+    std::set<cpolyedge_t *> visited;
+    visited.insert(first);
+
+    std::cout << first->v[0];
+
+    // Walk the loop - an infinite loop is not closed
+    while (first != next) {
+	ecnt++;
+	if (!next) {
+	    break;
+	}
+	std::cout << "->" << next->v[0];
+	visited.insert(next);
+	next = next->next;
+	if (ecnt > polygon->poly.size()) {
+	    std::cout << "\nERROR infinite loop\n";
+	    break;
+	}
+    }
+
+    std::cout << "\n";
+
+    visited.clear();
+
+    pe = (*polygon->poly.begin());
+    first = pe;
+    next = pe->next;
+    visited.insert(first);
+    ON_3dPoint *p = pnts[p2d3d[polygon->p2o[first->v[0]]]];
+    std::cout << "(" << p->x << "," << p->y << "," << p->z << ")" ;
+    ecnt = 1;
+    // Walk the loop - an infinite loop is not closed
+    while (first != next) {
+	ecnt++;
+	if (!next) {
+	    break;
+	}
+	std::cout << "->";
+	p = pnts[p2d3d[polygon->p2o[first->v[0]]]];
+	std::cout << "(" << p->x << "," << p->y << "," << p->z << ")" ;
+	visited.insert(next);
+	next = next->next;
+	if (ecnt > polygon->poly.size()) {
+	    std::cout << "\nERROR infinite loop\n";
+	    break;
+	}
+    }
+    std::cout << "\n";
+}
+
+
 } // close namespace cdt_mesh
 
 // Local Variables:

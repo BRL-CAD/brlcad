@@ -441,6 +441,7 @@ public:
 
     void polygon_plot_2d(cpolygon_t *polygon, const char *filename);
     void polygon_plot_3d(cpolygon_t *polygon, const char *filename);
+    void polygon_print_3d(cpolygon_t *polygon);
 
 
     int f_id;
