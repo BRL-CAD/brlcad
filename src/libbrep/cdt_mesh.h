@@ -439,6 +439,10 @@ public:
     void tris_set_plot_2d(std::set<triangle_t> &tset, const char *filename);
     void tris_plot_2d(const char *filename);
 
+    void polygon_plot_2d(cpolygon_t *polygon, const char *filename);
+    void polygon_plot_3d(cpolygon_t *polygon, const char *filename);
+
+
     int f_id;
 
     /* Data containers */
@@ -512,9 +516,6 @@ private:
     long tri_process(cpolygon_t *polygon, std::set<uedge_t> *ne, std::set<uedge_t> *se, long *nv, triangle_t &t);
 
     bool oriented_polycdt(cpolygon_t *polygon);
-
-    void polygon_plot_2d(cpolygon_t *polygon, const char *filename);
-    void polygon_plot_3d(cpolygon_t *polygon, const char *filename);
 
     /* Working polygon sweeping seed triangle set */
     std::set<triangle_t> seed_tris;

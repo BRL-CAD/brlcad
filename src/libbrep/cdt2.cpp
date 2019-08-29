@@ -251,8 +251,23 @@ get_trim_midpt(fastf_t *t, struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_
     }
     ON_BrepTrim& trim = s_cdt->brep->m_T[pe->trim_ind];
 
+    if (trim.m_trim_index > 149 && trim.m_trim_index < 154) {
+	std::cout << "get_trim_midpt: working face 34 trim " << trim.m_trim_index << "\n";
+    }
+
+    double tstart = pe->trim_start;
+    double tend = pe->trim_end;
+
+    if (trim.m_bRev3d) {
+	ON_Interval range = trim.Domain();
+	double tsdist = range.Mid() - tstart;
+	double tedist = range.Mid() - tend;
+	tstart = range.Mid() + tsdist;
+	tend = range.Mid() + tedist;
+    }
+
     double tmid;
-    double dist = pnt_binary_search(&tmid, trim, pe->trim_start, pe->trim_end, edge_mid_3d, tol, 0, 0, 0);
+    double dist = pnt_binary_search(&tmid, trim, tstart, tend, edge_mid_3d, tol, 0, 0, 0);
     if (dist < 0) {
         if (verbose) {
             bu_log("Warning - could not find suitable trim point\n");
@@ -263,13 +278,26 @@ get_trim_midpt(fastf_t *t, struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_
 	    if (trim.m_bRev3d) {
 		bu_log("Reversed trim: going with distance %f greater than desired tolerance %f\n", dist, tol);
 	    } else {
-		bu_log("Non-reversed trim: going with distance %f greater than desired tolerance %f\n", dist, tol);
+		//bu_log("Non-reversed trim: going with distance %f greater than desired tolerance %f\n", dist, tol);
 	    }
 	    if (dist > 10*tol) {
 		dist = pnt_binary_search(&tmid, trim, pe->trim_start, pe->trim_end, edge_mid_3d, tol, 0, 0, 0);
 	    }
 	}
     }
+
+    // Try mirroring tmid across trim.Mid()
+    if (trim.m_bRev3d) {
+	ON_Interval range = trim.Domain();
+	double tmid_orig = tmid;
+	double tdist = range.Mid() - tmid;
+	tmid = range.Mid() + tdist;
+	if (!NEAR_ZERO(tmid-tmid_orig, ON_ZERO_TOLERANCE)) {
+	    //std::cout << "tmid initial: " << tmid_orig << "\n";
+	    //std::cout << "tmid mirrored: " << tmid << "\n";
+	}
+    }
+
     ON_2dPoint trim_mid_2d = trim.PointAt(tmid);
     (*t) = tmid;
     return trim_mid_2d;
@@ -590,6 +618,12 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
     // Characterize the vertices - are they used by non-linear edges?
     std::vector<int> vert_type;
     for (int i = 0; i < brep->m_V.Count(); i++) {
+
+    if (i > 61 && i < 66) {
+	ON_3dPoint p = brep->m_V[i].Point();
+	std::cout << "vert " << i << " from face 34: (" << p.x << "," << p.y << "," << p.z << ")\n";
+    }
+
 	int has_curved_edge = 0;
 	for (int j = 0; j < brep->m_V[i].m_ei.Count(); j++) {
 	    ON_BrepEdge &edge = brep->m_E[brep->m_V[i].m_ei[j]];
@@ -675,6 +709,21 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	// The 3D start and endpoints will be vertex points (they are shared with other edges).
 	bseg->e_start = (*s_cdt->vert_pnts)[edge.Vertex(0)->m_vertex_index];
 	bseg->e_end = (*s_cdt->vert_pnts)[edge.Vertex(1)->m_vertex_index];
+
+
+	if (edge.m_edge_index > 92 && edge.m_edge_index < 97) {
+	    std::cout << "initializing face 34 edge " << edge.m_edge_index << " verts(0,1): (" << edge.Vertex(0)->m_vertex_index << "," << edge.Vertex(1)->m_vertex_index << ")\n";
+	    ON_BrepTrim *ftrim = (trim1->Face()->m_face_index == 34) ? trim1 : trim2;
+	    ON_Interval range = ftrim->Domain();
+	    ON_2dPoint p2s = ftrim->PointAt(range.m_t[0]);
+	    ON_2dPoint p2e = ftrim->PointAt(range.m_t[1]);
+	    ON_3dPoint p3s = ftrim->SurfaceOf()->PointAt(p2s.x, p2s.y);
+	    ON_3dPoint p3e = ftrim->SurfaceOf()->PointAt(p2e.x, p2e.y);
+	    std::cout << "   trim " << ftrim->m_trim_index << " t(0,1): (" << range.m_t[0] << "," << range.m_t[1] << ")\n";
+	    std::cout << "   start point: p2d(x,y): " << p2s.x << "," << p2s.y << ") p3d(x,y,z): (" << p3s.x << "," << p3s.y << "," << p3s.z << ")\n";
+	    std::cout << "   end point  : p2d(x,y): " << p2e.x << "," << p2e.y << ") p3d(x,y,z): (" << p3e.x << "," << p3e.y << "," << p3e.z << ")\n";
+	}
+
 
 	// These are also the root start and end points - type 3 edges will need this information later
 	bseg->e_root_start = bseg->e_start;
@@ -777,8 +826,8 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 		// points (since the vertex points are a special case anyway)
 		// but for subsequent splitting operations we need to reverse
 		// our notions of where the trim curve starts and ends.
-		ne->trim_start = range.m_t[sind];
-		ne->trim_end = range.m_t[eind];
+		ne->trim_start = range.m_t[0];
+		ne->trim_end = range.m_t[1];
 
 		if (trim->m_ei >= 0) {
 		    cdt_mesh::bedge_seg_t *eseg = *s_cdt->e2polysegs[trim->m_ei].begin();
@@ -801,6 +850,21 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	    }
 	    struct cdt_mesh::edge_t last_seg(cv, fv);
 	    cpoly->add_edge(last_seg);
+
+	    if (face_index == 34) {
+		std::cout << "generating pre-split plots for Face 34, loop " << li << "...\n";
+		cpoly->print();
+		struct bu_vls fname = BU_VLS_INIT_ZERO;
+		bu_vls_sprintf(&fname, "%d-00-poly2d.p3", face_index);
+		fmesh->polygon_plot_2d(cpoly, bu_vls_cstr(&fname));
+		bu_vls_sprintf(&fname, "%d-00-poly3d.p3", face_index);
+		fmesh->polygon_plot_3d(cpoly, bu_vls_cstr(&fname));
+		fmesh->cdt();
+		bu_vls_sprintf(&fname, "%d-00-tris_2d.p3", face_index);
+		fmesh->tris_plot_2d(bu_vls_cstr(&fname));
+		bu_vls_sprintf(&fname, "%d-00-tris.p3", face_index);
+		fmesh->tris_plot(bu_vls_cstr(&fname));
+	    }
 	}
     }
 
