@@ -2286,10 +2286,7 @@ rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
     //archive.Dump3dmChunk(dump);
     model.Read(archive, &dump);
 
-    //if (model.IsValid(&dump)) {
     ONX_Model_Object mo = model.m_object_table[0];
-    // XXX does openNURBS force us to copy? it seems the answer is
-    // YES due to the const-ness
     bi->brep = ON_Brep::New(*ON_Brep::Cast(mo.m_object));
     if (mat) {
 	ON_Xform xform(mat);
