@@ -484,6 +484,7 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int
 
     if (edge.m_edge_index > 92 && edge.m_edge_index < 97) {
 	std::cout << "splitting face 34 edge " << bseg->edge_ind << " verts(0,1): (" << edge.Vertex(0)->m_vertex_index << "," << edge.Vertex(1)->m_vertex_index << ")\n";
+	std::cout << "   target 3D edge point (x,y,z): (" << edge_mid_3d.x << "," << edge_mid_3d.y << "," << edge_mid_3d.z << ")\n";
 	ON_BrepTrim *ftrim = (trim1->Face()->m_face_index == 34) ? trim1 : trim2;
 	ON_2dPoint trim_mid_2d = (trim1->Face()->m_face_index == 34) ? trim1_mid_2d: trim2_mid_2d;
 	ON_Interval range = ftrim->Domain();
@@ -974,31 +975,32 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 		esegs_split = split_edge_seg(s_cdt, b, 0);
 		if (esegs_split.size()) {
 		    new_segs.insert(esegs_split.begin(), esegs_split.end());
+
+		    if (edge.m_edge_index > 92 && edge.m_edge_index < 97) {
+			cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[34];
+			std::cout << "34-02-" << debug_ecnt << ": generating post-curved_tol-split plots for Face 34, edge " << edge.m_edge_index << "...\n";
+			cdt_mesh::cpolygon_t *cpoly = (s_cdt->brep->m_T[(*new_segs.begin())->tseg1->trim_ind].Face()->m_face_index == 34) ? (*new_segs.begin())->tseg1->polygon : (*new_segs.begin())->tseg2->polygon;
+			cpoly->print();
+			fmesh->polygon_print_3d(cpoly);
+			struct bu_vls fname = BU_VLS_INIT_ZERO;
+			bu_vls_sprintf(&fname, "34-02-%d-poly2d.p3", debug_ecnt);
+			fmesh->polygon_plot_2d(cpoly, bu_vls_cstr(&fname));
+			bu_vls_sprintf(&fname, "34-02-%d-poly3d.p3", debug_ecnt);
+			fmesh->polygon_plot_3d(cpoly, bu_vls_cstr(&fname));
+			fmesh->cdt();
+			bu_vls_sprintf(&fname, "34-02-%d-tris_2d.p3", debug_ecnt);
+			fmesh->tris_plot_2d(bu_vls_cstr(&fname));
+			bu_vls_sprintf(&fname, "34-02-%d-tris.p3", debug_ecnt);
+			fmesh->tris_plot(bu_vls_cstr(&fname));
+			debug_ecnt++;
+		    }
+
 		} else {
 		    new_segs.insert(b);
 		}
 	    }
 	    s_cdt->e2polysegs[edge.m_edge_index].clear();
 	    s_cdt->e2polysegs[edge.m_edge_index].insert(new_segs.begin(), new_segs.end());
-
-	    if (edge.m_edge_index > 92 && edge.m_edge_index < 97) {
-		cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[34];
-		std::cout << "generating post-curved_tol-split plots for Face 34, edge " << edge.m_edge_index << "...\n";
-		cdt_mesh::cpolygon_t *cpoly = (s_cdt->brep->m_T[(*new_segs.begin())->tseg1->trim_ind].Face()->m_face_index == 34) ? (*new_segs.begin())->tseg1->polygon : (*new_segs.begin())->tseg2->polygon;
-		cpoly->print();
-		fmesh->polygon_print_3d(cpoly);
-		struct bu_vls fname = BU_VLS_INIT_ZERO;
-		bu_vls_sprintf(&fname, "34-02-%d-poly2d.p3", debug_ecnt);
-		fmesh->polygon_plot_2d(cpoly, bu_vls_cstr(&fname));
-		bu_vls_sprintf(&fname, "34-02-%d-poly3d.p3", debug_ecnt);
-		fmesh->polygon_plot_3d(cpoly, bu_vls_cstr(&fname));
-		fmesh->cdt();
-		bu_vls_sprintf(&fname, "34-02-%d-tris_2d.p3", debug_ecnt);
-		fmesh->tris_plot_2d(bu_vls_cstr(&fname));
-		bu_vls_sprintf(&fname, "34-02-%d-tris.p3", debug_ecnt);
-		fmesh->tris_plot(bu_vls_cstr(&fname));
-		debug_ecnt++;
-	    }
 	}
     }
 
