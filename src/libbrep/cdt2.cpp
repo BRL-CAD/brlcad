@@ -780,6 +780,7 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
     // Next, for each face and each loop in each face define the initial
     // loop polygons.  Note there is no splitting of edges at this point -
     // we are simply establishing the initial closed polygons.
+    std::set<cdt_mesh::cpolyedge_t *> singular_edges;
     for (int face_index = 0; face_index < brep->m_F.Count(); face_index++) {
 	ON_BrepFace &face = s_cdt->brep->m_F[face_index];
 	int loop_cnt = face.LoopCount();
@@ -803,14 +804,13 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	    long cv = -1;
 	    long pv = -1;
 	    long fv = -1;
+
 	    for (int lti = 0; lti < trim_count; lti++) {
 		ON_BrepTrim *trim = loop->Trim(lti);
-		//int sind = (trim->m_bRev3d) ? 1 : 0;
-		//int eind = (trim->m_bRev3d) ? 0 : 1;
 		ON_Interval range = trim->Domain();
 		if (lti == 0) {
 		    // Get the 2D point, add it to the mesh and current polygon
-		    cp = trim->PointAt(range.m_t[0]); // Note: deliberately not using sind here
+		    cp = trim->PointAt(range.m_t[0]);
 		    long find = fmesh->add_point(cp);
 		    pv = cpoly->add_point(cp, find);
 		    fv = pv;
@@ -835,39 +835,35 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 		}
 
 		// Get the 2D point, add it to the mesh and current polygon
-		cp = trim->PointAt(range.m_t[1]); // Note: deliberately not using eind here
-		long find = fmesh->add_point(cp);
-		cv = cpoly->add_point(cp, find);
+		cp = trim->PointAt(range.m_t[1]);
+		if (lti == trim_count - 1) {
+		    cv = fv;
+		} else {
+		    long find;
+		    find = fmesh->add_point(cp);
+		    cv = cpoly->add_point(cp, find);
 
-		// Let cdt_mesh know about the 3D information
-		ON_3dVector norm = ON_3dVector::UnsetVector;
-		if (trim->m_type != ON_BrepTrim::singular) {
-		    // 3D points are globally unique, but normals are not - the same edge point may
-		    // have different normals from two faces at a sharp edge.  Calculate the
-		    // face normal for this point on this surface.
-		    ON_3dPoint tmp1;
-		    surface_EvNormal(trim->SurfaceOf(), cp.x, cp.y, tmp1, norm);
+		    // Let cdt_mesh know about the 3D information
+		    ON_3dVector norm = ON_3dVector::UnsetVector;
+		    if (trim->m_type != ON_BrepTrim::singular) {
+			// 3D points are globally unique, but normals are not - the same edge point may
+			// have different normals from two faces at a sharp edge.  Calculate the
+			// face normal for this point on this surface.
+			ON_3dPoint tmp1;
+			surface_EvNormal(trim->SurfaceOf(), cp.x, cp.y, tmp1, norm);
+		    }
+
+		    ON_3dPoint *cp3d = (*s_cdt->vert_pnts)[trim->Vertex(1)->m_vertex_index];
+		    long f3ind = fmesh->add_point(cp3d);
+		    long fnind = fmesh->add_normal(new ON_3dPoint(norm));
+		    fmesh->p2d3d[find] = f3ind;
+		    fmesh->nmap[f3ind] = fnind;
 		}
-		ON_3dPoint *cp3d = (*s_cdt->vert_pnts)[trim->Vertex(1)->m_vertex_index];
-		long f3ind = fmesh->add_point(cp3d);
-		long fnind = fmesh->add_normal(new ON_3dPoint(norm));
-		fmesh->p2d3d[find] = f3ind;
-		fmesh->nmap[f3ind] = fnind;
 
 		struct cdt_mesh::edge_t lseg(pv, cv);
 		cdt_mesh::cpolyedge_t *ne = cpoly->add_edge(lseg);
 		ne->trim_ind = trim->m_trim_index;
 
-		// When breaking down a reversed-in-3D trim, the driving edge
-		// segment will be referencing the opposite side of the flipped
-		// edge compared to what the loop expects.  For edge driven
-		// splitting, we need to think about the domain of the trim in
-		// reverse.  The initial trim edge (pv and cv) we set up in the
-		// correct numerical order rather than using sind/eind and
-		// handle the 3D flip by linking to the opposite 3D vertex
-		// points (since the vertex points are a special case anyway)
-		// but for subsequent splitting operations we need to reverse
-		// our notions of where the trim curve starts and ends.
 		ne->trim_start = range.m_t[0];
 		ne->trim_end = range.m_t[1];
 
@@ -888,10 +884,14 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 		    // A null eseg will indicate a singularity and a need for special case
 		    // splitting of the 2D edge only
 		    ne->eseg = NULL;
+		    singular_edges.insert(ne);
 		}
 	    }
-	    struct cdt_mesh::edge_t last_seg(cv, fv);
-	    cpoly->add_edge(last_seg);
+
+	    if (!cpoly->closed()) {
+		std::cerr << "Failed to create valid loop!\n";
+	    }
+	    cpoly->print();
 	}
     }
 
@@ -1033,39 +1033,6 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
     }
 
     // TODO - split singularity trims in 2D
-    std::set<cdt_mesh::cpolyedge_t *> singular_edges;
-    for (int face_index = 0; face_index < brep->m_F.Count(); face_index++) {
-	ON_BrepFace &face = s_cdt->brep->m_F[face_index];
-	int loop_cnt = face.LoopCount();
-	cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[face_index];
-	cdt_mesh::cpolygon_t *cpoly = NULL;
-
-
-	for (int li = 0; li < loop_cnt; li++) {
-	    const ON_BrepLoop *loop = face.Loop(li);
-	    bool is_outer = (face.OuterLoop()->m_loop_index == loop->m_loop_index) ? true : false;
-	    cpoly =  (is_outer) ? &fmesh->outer_loop :fmesh->inner_loops[li];
-	    if (!cpoly->poly.size()) continue;  // Shouldn't be possible?...
-	    cdt_mesh::cpolyedge_t *pe = (*cpoly->poly.begin());
-	    cdt_mesh::cpolyedge_t *first = pe;
-	    cdt_mesh::cpolyedge_t *next = pe->next;
-
-	    if (!first->eseg) singular_edges.insert(first);
-
-	    // Walk the loop - an infinite loop is not closed
-	    size_t ecnt = 1;
-	    while (first != next) {
-		ecnt++;
-		if (!next) break;
-		if (!next->eseg) singular_edges.insert(next);
-		next = next->next;
-		if (ecnt > cpoly->poly.size()) {
-		    std::cout << "\nERROR infinite loop\n";
-		    break;
-		}
-	    }
-	}
-    }
     if (singular_edges.size()) {
 	std::cout << "Have " << singular_edges.size() << " singular edges\n";
     }

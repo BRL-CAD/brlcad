@@ -274,11 +274,20 @@ class cpolyedge_t
 	cpolyedge_t *prev;
 	cpolyedge_t *next;
 
+	cpolyedge_t() {
+	    v[0] = -1;
+	    v[1] = -1;
+	    polygon = NULL;
+	    prev = NULL;
+	    next = NULL;
+	};
+
 	long v[2];
 
 	cpolyedge_t(edge_t &e){
 	    v[0] = e.v[0];
 	    v[1] = e.v[1];
+	    polygon = NULL;
 	    prev = NULL;
 	    next = NULL;
 	};
