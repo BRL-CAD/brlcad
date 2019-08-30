@@ -362,7 +362,9 @@ cpolygon_t::remove_edge(const struct uedge_t &ue)
 	}
     }
     poly.erase(cull);
-    delete cull;
+    // TODO - deleting this when there's only one entry present is messing up
+    // the memory, but not sure why yet.
+    //delete cull;
 }
 
 std::set<cpolyedge_t *>
