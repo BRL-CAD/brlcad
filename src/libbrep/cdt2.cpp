@@ -1033,44 +1033,31 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
     }
 
     // TODO - split singularity trims in 2D
+    std::set<cdt_mesh::cpolyedge_t *> singular_edges;
     for (int face_index = 0; face_index < brep->m_F.Count(); face_index++) {
 	ON_BrepFace &face = s_cdt->brep->m_F[face_index];
 	int loop_cnt = face.LoopCount();
 	cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[face_index];
 	cdt_mesh::cpolygon_t *cpoly = NULL;
 
+
 	for (int li = 0; li < loop_cnt; li++) {
 	    const ON_BrepLoop *loop = face.Loop(li);
 	    bool is_outer = (face.OuterLoop()->m_loop_index == loop->m_loop_index) ? true : false;
-	    if (is_outer) {
-		cpoly = &fmesh->outer_loop;
-	    } else {
-		cpoly = fmesh->inner_loops[li];
-	    }
-
-	    size_t ecnt = 1;
+	    cpoly =  (is_outer) ? &fmesh->outer_loop :fmesh->inner_loops[li];
 	    if (!cpoly->poly.size()) continue;  // Shouldn't be possible?...
 	    cdt_mesh::cpolyedge_t *pe = (*cpoly->poly.begin());
 	    cdt_mesh::cpolyedge_t *first = pe;
 	    cdt_mesh::cpolyedge_t *next = pe->next;
 
-	    std::set<cdt_mesh::cpolyedge_t *> visited;
-	    visited.insert(first);
-
-	    if (!first->eseg) {
-		//std::cout << face_index << "," << li << ": have singularity\n";
-	    }
+	    if (!first->eseg) singular_edges.insert(first);
 
 	    // Walk the loop - an infinite loop is not closed
+	    size_t ecnt = 1;
 	    while (first != next) {
 		ecnt++;
-		if (!next) {
-		    break;
-		}
-		if (!next->eseg) {
-		    //std::cout << face_index << "," << li << ": have singularity\n";
-		}
-		visited.insert(next);
+		if (!next) break;
+		if (!next->eseg) singular_edges.insert(next);
 		next = next->next;
 		if (ecnt > cpoly->poly.size()) {
 		    std::cout << "\nERROR infinite loop\n";
@@ -1078,9 +1065,10 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 		}
 	    }
 	}
-
     }
-
+    if (singular_edges.size()) {
+	std::cout << "Have " << singular_edges.size() << " singular edges\n";
+    }
 
     // Build RTrees of 2D and 3D edge segments for edge aware processing
     for (int index = 0; index < brep->m_E.Count(); index++) {
