@@ -596,7 +596,13 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int
 	poly2_ne2->eseg = bseg2;
     }
 
-    // The new trim segments are then associated with the new bounding edge segments
+    // The new trim segments are then associated with the new bounding edge
+    // segments.
+    // NOTE: the m_bRev3d logic below is CRITICALLY important when it comes to
+    // associating the correct portion of the edge curve with the correct part
+    // of the polygon in parametric space.  If this is NOT correct, the 3D
+    // polycurves manifested by the 2D polygon will be self intersecting, as
+    // will the 3D triangles generated from the 2D CDT.
     bseg1->tseg1 = (trim1->m_bRev3d) ? poly1_ne2 : poly1_ne1;
     bseg1->tseg2 = (trim2->m_bRev3d) ? poly2_ne2 : poly2_ne1;
     bseg2->tseg1 = (trim1->m_bRev3d) ? poly1_ne1 : poly1_ne2;
