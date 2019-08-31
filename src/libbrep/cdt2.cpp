@@ -26,6 +26,9 @@
  */
 
 #include "common.h"
+
+#include <queue>
+
 #include "bg/chull.h"
 #include "./cdt.h"
 
@@ -627,6 +630,54 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int
     return nedges;
 }
 
+std::set<cdt_mesh::cpolyedge_t *>
+split_singular_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *ce)
+{
+    std::set<cdt_mesh::cpolyedge_t *> nedges;
+    cdt_mesh::cpolygon_t *poly = ce->polygon;
+    int trim_ind = ce->trim_ind;
+
+    ON_BrepTrim& trim = s_cdt->brep->m_T[ce->trim_ind];
+    double tcparam = (ce->trim_start + ce->trim_end) / 2.0;
+    ON_3dPoint trim_mid_2d_ev = trim.PointAt(tcparam);
+    ON_2dPoint trim_mid_2d(trim_mid_2d_ev.x, trim_mid_2d_ev.y);
+
+    ON_BrepFace *face = trim.Face();
+    cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[face->m_face_index];
+    long f_ind2d = fmesh->add_point(trim_mid_2d);
+
+    // Singularity - new 2D point points to the same 3D point as both of the existing
+    // vertices 
+    fmesh->p2d3d[f_ind2d] = fmesh->p2d3d[poly->p2o[ce->v[0]]];
+
+    // Using the 2d mid points, update the polygons associated with tseg1 and tseg2.
+    cdt_mesh::cpolyedge_t *poly_ne1, *poly_ne2;
+    int v[2];
+    v[0] = ce->v[0];
+    v[1] = ce->v[1];
+    double old_trim_start = ce->trim_start;
+    double old_trim_end = ce->trim_end;
+    poly->remove_edge(cdt_mesh::edge_t(v[0], v[1]));
+    long poly_2dind = poly->add_point(trim_mid_2d, f_ind2d);
+    struct cdt_mesh::edge_t poly_edge1(v[0], poly_2dind);
+    poly_ne1 = poly->add_edge(poly_edge1);
+    poly_ne1->trim_ind = trim_ind;
+    poly_ne1->trim_start = old_trim_start;
+    poly_ne1->trim_end = tcparam;
+    poly_ne1->eseg = NULL;
+    struct cdt_mesh::edge_t poly_edge2(poly_2dind, v[1]);
+    poly_ne2 = poly->add_edge(poly_edge2);
+    poly_ne2->trim_ind = trim_ind;
+    poly_ne2->trim_start = tcparam;
+    poly_ne2->trim_end = old_trim_end;
+    poly_ne2->eseg = NULL;
+
+    nedges.insert(poly_ne1);
+    nedges.insert(poly_ne2);
+
+    return nedges;
+}
+
 
 // There are a couple of edge splitting operations that have to happen in the
 // beginning regardless of tolerance settings.  Do them up front so the subsequent
@@ -1043,6 +1094,47 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
     // TODO - split singularity trims in 2D
     if (singular_edges.size()) {
 	std::cout << "Have " << singular_edges.size() << " singular edges\n";
+	std::set<cdt_mesh::cpolyedge_t *>::iterator s_it;
+	size_t scnt = 0;
+	for (s_it = singular_edges.begin(); s_it != singular_edges.end(); s_it++) {
+	    cdt_mesh::cpolyedge_t *edge = *s_it;
+	    ON_BrepTrim& trim = s_cdt->brep->m_T[edge->trim_ind];
+	    ON_BrepFace *face = trim.Face();
+	    cdt_mesh::cpolygon_t *pg = edge->polygon;
+	    struct bu_vls fname = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&fname, "singularity-%zu-poly2d.p3", scnt);
+	    pg->polygon_plot(bu_vls_cstr(&fname));
+	    std::cout << "Pre-split polygon: ";
+	    pg->print();
+	    std::queue<cdt_mesh::cpolyedge_t *> w1, w2;
+	    std::queue<cdt_mesh::cpolyedge_t *> *wq, *nq, *tmpq;
+	    int cnt = 0;
+	    wq = &w1;
+	    nq = &w2;
+	    nq->push(edge);
+	    while (cnt < 6) {
+		cnt = 0;
+		tmpq = wq;
+		wq = nq;
+		nq = tmpq;
+		while (!wq->empty()) {
+		    cdt_mesh::cpolyedge_t *ce = wq->front();
+		    wq->pop();
+		    std::set<cdt_mesh::cpolyedge_t *> nedges = split_singular_seg(s_cdt, ce);
+		    std::set<cdt_mesh::cpolyedge_t *>::iterator n_it;
+		    for (n_it = nedges.begin(); n_it != nedges.end(); n_it++) {
+			nq->push(*n_it);
+			cnt++;
+		    }
+		}
+	    }
+	    std::cout << "Post-split polygon: ";
+	    pg->print();
+	    bu_vls_sprintf(&fname, "singularity-%d-%zu-post_split-poly2d.p3", face->m_face_index, scnt);
+	    pg->polygon_plot(bu_vls_cstr(&fname));
+	    bu_vls_free(&fname);
+	    scnt++;
+	}
     }
 
     // Build RTrees of 2D and 3D edge segments for edge aware processing
