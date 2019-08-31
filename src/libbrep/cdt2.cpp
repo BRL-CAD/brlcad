@@ -696,7 +696,6 @@ initialize_edge_segs(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *e)
 
     // 1.  Any edges with at least 1 closed trim are split.
     if (trim1->IsClosed() || trim2->IsClosed()) {
-	std::cout << "ec split : \n";
 	esegs_closed = split_edge_seg(s_cdt, e, 1);
 	if (!esegs_closed.size()) {
 	    // split failed??
@@ -1006,14 +1005,26 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	    std::set<cdt_mesh::bedge_seg_t *> &epsegs = s_cdt->e2polysegs[edge.m_edge_index];
 	    std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
 	    std::set<cdt_mesh::bedge_seg_t *> new_segs;
+	    std::set<cdt_mesh::bedge_seg_t *> ws1, ws2;
+	    std::set<cdt_mesh::bedge_seg_t *> *ws = &ws1;
+	    std::set<cdt_mesh::bedge_seg_t *> *ns = &ws2;
 	    for (e_it = epsegs.begin(); e_it != epsegs.end(); e_it++) {
 		cdt_mesh::bedge_seg_t *b = *e_it;
-		std::set<cdt_mesh::bedge_seg_t *> esegs_split;
-		esegs_split = split_edge_seg(s_cdt, b, 0);
+		ws->insert(b);
+	    }
+	    while (ws->size()) {
+		cdt_mesh::bedge_seg_t *b = *ws->begin();
+		ws->erase(ws->begin());
+		std::set<cdt_mesh::bedge_seg_t *> esegs_split = split_edge_seg(s_cdt, b, 0);
 		if (esegs_split.size()) {
-		    new_segs.insert(esegs_split.begin(), esegs_split.end());
+		    ns->insert(esegs_split.begin(), esegs_split.end());
 		} else {
 		    new_segs.insert(b);
+		}
+		if (!ws->size() && ns->size()) {
+		    std::set<cdt_mesh::bedge_seg_t *> *tmp = ws;
+		    ws = ns;
+		    ns = tmp;
 		}
 	    }
 	    s_cdt->e2polysegs[edge.m_edge_index].clear();
@@ -1086,18 +1097,30 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
     for (int index = 0; index < brep->m_E.Count(); index++) {
 	ON_BrepEdge& edge = brep->m_E[index];
 	const ON_Curve* crv = edge.EdgeCurveOf();
-	if (crv->IsLinear(BN_TOL_DIST)) {
+	if (crv && crv->IsLinear(BN_TOL_DIST)) {
 	    std::set<cdt_mesh::bedge_seg_t *> &epsegs = s_cdt->e2polysegs[edge.m_edge_index];
 	    std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
 	    std::set<cdt_mesh::bedge_seg_t *> new_segs;
+	    std::set<cdt_mesh::bedge_seg_t *> ws1, ws2;
+	    std::set<cdt_mesh::bedge_seg_t *> *ws = &ws1;
+	    std::set<cdt_mesh::bedge_seg_t *> *ns = &ws2;
 	    for (e_it = epsegs.begin(); e_it != epsegs.end(); e_it++) {
 		cdt_mesh::bedge_seg_t *b = *e_it;
-		std::set<cdt_mesh::bedge_seg_t *> esegs_split;
-		esegs_split = split_edge_seg(s_cdt, b, 0);
+		ws->insert(b);
+	    }
+	    while (ws->size()) {
+		cdt_mesh::bedge_seg_t *b = *ws->begin();
+		ws->erase(ws->begin());
+		std::set<cdt_mesh::bedge_seg_t *> esegs_split = split_edge_seg(s_cdt, b, 0);
 		if (esegs_split.size()) {
-		    new_segs.insert(esegs_split.begin(), esegs_split.end());
+		    ns->insert(esegs_split.begin(), esegs_split.end());
 		} else {
 		    new_segs.insert(b);
+		}
+		if (!ws->size() && ns->size()) {
+		    std::set<cdt_mesh::bedge_seg_t *> *tmp = ws;
+		    ws = ns;
+		    ns = tmp;
 		}
 	    }
 	    s_cdt->e2polysegs[edge.m_edge_index].clear();
