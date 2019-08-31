@@ -371,6 +371,9 @@ _cdt_get_uv_edge_3d_len(struct cdt_surf_info_2 *sinfo, int c1, int c2)
 void
 filter_surface_edge_pnts_2(struct cdt_surf_info_2 *sinfo)
 {
+
+    // Points on 
+    
     // TODO - it's looking like a 2D check isn't going to be enough - we probably
     // need BOTH a 2D and a 3D check to make sure none of the points are in a
     // position that will cause trouble.  Will need to build a 3D RTree of the line
@@ -398,6 +401,18 @@ filter_surface_edge_pnts_2(struct cdt_surf_info_2 *sinfo)
 	const ON_2dPoint *p = *osp_it;
 	sinfo->on_surf_points.erase((ON_2dPoint *)p);
     }
+
+    // Next check the face loops with the point in polygon test.  If it's
+    // outside the outer loop or inside one of the interior trimming loops,
+    // it's out.  For the inner loops, check the bbox of the loop first to see
+    // if we need to care... in theory we probably should be using an RTree of
+    // the loops to filter this, but I'm guessing that might be premature
+    // optimization at this point...  Could combine with the above and have one
+    // rtree per loop rather than one per face, and "zero in" for testing per
+    // loop as needed.  The tree hierarchy might be worth doing anyway, as
+    // those trees may be needed for overlap detection of edge polycurves
+    // between breps...
+
 
 
     // TODO - In addition to removing points on the line in 2D, we don't want points that
