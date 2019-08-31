@@ -416,14 +416,18 @@ tol_need_split(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, ON_
 	    if (bseg->e_start == bseg->e_root_end || bseg->e_end == bseg->e_root_end) {
 		len_2 = s_cdt->v_min_seg_len[bseg->e_root_end];
 	    }
-	    if (len_1 < 0 && len_2 < 0) {
-		bu_log("Error - verts report invalid lengths on type 3 line segment\n");
-		return false;
+	    if (bseg->e_start == bseg->e_root_start || bseg->e_end == bseg->e_root_start) {
+		if (len_1 < 0 && len_2 < 0) {
+		    bu_log("Error - verts report invalid lengths on type 3 line segment\n");
+		    return false;
+		}
 	    }
 	    s_len = (len_1 > 0) ? len_1 : len_2;
 	    s_len = (len_2 > 0 && len_2 < s_len) ? len_2 : s_len;
-	    max_allowed = 2*s_len;
-	    min_allowed = 0.5*s_len;
+	    if (s_len > 0) {
+		max_allowed = 2*s_len;
+		min_allowed = 0.5*s_len;
+	    }
 	    break;
 	case 4:
 	    // Linear segment, no curves involved
@@ -1033,16 +1037,9 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
     }
 
     // Calculate for each vertex involved with curved edges the minimum individual bedge_seg
-    // length involved.  TODO - probably want this even for non-curved edges really, since
-    // a very long edge attached to a very small edge will produce extreme triangles even
-    // in the linear case...
+    // length involved.
     for (int i = 0; i < brep->m_V.Count(); i++) {
 	ON_3dPoint *p3d = (*s_cdt->vert_pnts)[i];
-	// If no curved edges, we don't need this
-	if (!vert_type[i]) {
-	    s_cdt->v_min_seg_len[p3d] = -1;
-	    continue;
-	}
 	double emin = DBL_MAX;
 	for (int j = 0; j < brep->m_V[i].m_ei.Count(); j++) {
 	    ON_BrepEdge &edge = brep->m_E[brep->m_V[i].m_ei[j]];
@@ -1098,6 +1095,7 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	ON_BrepEdge& edge = brep->m_E[index];
 	const ON_Curve* crv = edge.EdgeCurveOf();
 	if (crv && crv->IsLinear(BN_TOL_DIST)) {
+	    std::cout << "Processing edge " << edge.m_edge_index << "\n";
 	    std::set<cdt_mesh::bedge_seg_t *> &epsegs = s_cdt->e2polysegs[edge.m_edge_index];
 	    std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
 	    std::set<cdt_mesh::bedge_seg_t *> new_segs;
