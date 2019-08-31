@@ -28,6 +28,7 @@ set(LIBBREP_SOURCES
   cdt_edge.cpp
   cdt_patch.cpp
   cdt_surf.cpp
+  cdt_surf2.cpp
   cdt_util.cpp
   cdt_validate.cpp
   cdt.cpp
