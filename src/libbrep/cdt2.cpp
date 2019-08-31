@@ -1091,27 +1091,18 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	}
     }
 
-    // TODO - split singularity trims in 2D
+    // Split singularity trims in 2D to provide an easier input to the 2D CDT logic.  NOTE: these
+    // splits will produce degenerate (zero area, two identical vertex) triangles in 3D that have
+    // to be cleaned up.
     if (singular_edges.size()) {
-	std::cout << "Have " << singular_edges.size() << " singular edges\n";
 	std::set<cdt_mesh::cpolyedge_t *>::iterator s_it;
-	size_t scnt = 0;
 	for (s_it = singular_edges.begin(); s_it != singular_edges.end(); s_it++) {
-	    cdt_mesh::cpolyedge_t *edge = *s_it;
-	    ON_BrepTrim& trim = s_cdt->brep->m_T[edge->trim_ind];
-	    ON_BrepFace *face = trim.Face();
-	    cdt_mesh::cpolygon_t *pg = edge->polygon;
-	    struct bu_vls fname = BU_VLS_INIT_ZERO;
-	    bu_vls_sprintf(&fname, "singularity-%zu-poly2d.p3", scnt);
-	    pg->polygon_plot(bu_vls_cstr(&fname));
-	    std::cout << "Pre-split polygon: ";
-	    pg->print();
 	    std::queue<cdt_mesh::cpolyedge_t *> w1, w2;
 	    std::queue<cdt_mesh::cpolyedge_t *> *wq, *nq, *tmpq;
 	    int cnt = 0;
 	    wq = &w1;
 	    nq = &w2;
-	    nq->push(edge);
+	    nq->push(*s_it);
 	    while (cnt < 6) {
 		cnt = 0;
 		tmpq = wq;
@@ -1128,12 +1119,6 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 		    }
 		}
 	    }
-	    std::cout << "Post-split polygon: ";
-	    pg->print();
-	    bu_vls_sprintf(&fname, "singularity-%d-%zu-post_split-poly2d.p3", face->m_face_index, scnt);
-	    pg->polygon_plot(bu_vls_cstr(&fname));
-	    bu_vls_free(&fname);
-	    scnt++;
 	}
     }
 
