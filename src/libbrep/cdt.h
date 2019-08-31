@@ -202,8 +202,6 @@ struct ON_Brep_CDT_State {
     std::map<int, double> *max_edge_seg_len;
     std::map<ON_3dPoint *, std::set<BrepTrimPoint *>> *on_brep_edge_pnts;
     std::map<int, struct BrepEdgeSegment *> *etrees;
-    std::map<int, RTree<void *, double, 3>> edge_segs_3d;
-    std::map<int, RTree<void *, double, 2>> trim_segs;
     std::map<int, std::set<cdt_mesh::bedge_seg_t *>> e2polysegs;
     std::map<ON_3dPoint *, double> v_min_seg_len;
     std::map<int, double> l_median_len;
@@ -214,6 +212,10 @@ struct ON_Brep_CDT_State {
 
     /* Face specific data */
     std::map<int, struct ON_Brep_CDT_Face_State *> *faces;
+    std::map<int, RTree<void *, double, 3>> edge_segs_3d;
+    std::map<int, RTree<void *, double, 2>> trim_segs;
+    std::map<int, std::map<int,ON_3dPoint *>> strim_pnts;
+    std::map<int, std::map<int,ON_3dPoint *>> strim_norms;
 
     std::map<int, cdt_mesh::cdt_mesh_t> fmeshes;
 
@@ -264,6 +266,9 @@ Refine_Edges(struct ON_Brep_CDT_State *s_cdt);
 
 void
 getSurfacePoints(struct ON_Brep_CDT_Face_State *f);
+
+void
+GetInteriorPoints(struct ON_Brep_CDT_State *s_cdt, int face_index);
 
 
 struct ON_Brep_CDT_Face_State *

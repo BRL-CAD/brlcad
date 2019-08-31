@@ -880,6 +880,7 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 		    fv = pv;
 
 		    // Let cdt_mesh know about new 3D information
+		    ON_3dPoint *op3d = (*s_cdt->vert_pnts)[trim->Vertex(0)->m_vertex_index];
 		    ON_3dVector norm = ON_3dVector::UnsetVector;
 		    if (trim->m_type != ON_BrepTrim::singular) {
 			// 3D points are globally unique, but normals are not - the same edge point may
@@ -887,8 +888,14 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 			// face normal for this point on this surface.
 			ON_3dPoint tmp1;
 			surface_EvNormal(trim->SurfaceOf(), cp.x, cp.y, tmp1, norm);
+		    } else {
+			// Surface sampling will need some information about singularities
+			s_cdt->strim_pnts[face_index][trim->m_trim_index] = op3d;
+			ON_3dPoint *sn3d = (*s_cdt->vert_avg_norms)[trim->Vertex(0)->m_vertex_index];
+			if (sn3d) {
+			    s_cdt->strim_norms[face_index][trim->m_trim_index] = sn3d;
+			}
 		    }
-		    ON_3dPoint *op3d = (*s_cdt->vert_pnts)[trim->Vertex(0)->m_vertex_index];
 		    long f3ind = fmesh->add_point(op3d);
 		    long fnind = fmesh->add_normal(new ON_3dPoint(norm));
 		    fmesh->p2d3d[find] = f3ind;
@@ -908,6 +915,7 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 		    cv = cpoly->add_point(cp, find);
 
 		    // Let cdt_mesh know about the 3D information
+		    ON_3dPoint *cp3d = (*s_cdt->vert_pnts)[trim->Vertex(1)->m_vertex_index];
 		    ON_3dVector norm = ON_3dVector::UnsetVector;
 		    if (trim->m_type != ON_BrepTrim::singular) {
 			// 3D points are globally unique, but normals are not - the same edge point may
@@ -915,9 +923,15 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 			// face normal for this point on this surface.
 			ON_3dPoint tmp1;
 			surface_EvNormal(trim->SurfaceOf(), cp.x, cp.y, tmp1, norm);
+		    } else {
+			// Surface sampling will need some information about singularities
+			s_cdt->strim_pnts[face_index][trim->m_trim_index] = cp3d;
+			ON_3dPoint *sn3d = (*s_cdt->vert_avg_norms)[trim->Vertex(1)->m_vertex_index];
+			if (sn3d) {
+			    s_cdt->strim_norms[face_index][trim->m_trim_index] = sn3d;
+			}
 		    }
 
-		    ON_3dPoint *cp3d = (*s_cdt->vert_pnts)[trim->Vertex(1)->m_vertex_index];
 		    long f3ind = fmesh->add_point(cp3d);
 		    long fnind = fmesh->add_normal(new ON_3dPoint(norm));
 		    fmesh->p2d3d[find] = f3ind;
@@ -1144,6 +1158,8 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
     }
 
     // TODO - adapt surface point sampling to new setup
+    for (int index = 0; index < brep->m_F.Count(); index++) {
+    }
 
     for (int face_index = 0; face_index < brep->m_F.Count(); face_index++) {
 	cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[face_index];
