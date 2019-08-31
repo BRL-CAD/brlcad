@@ -70,7 +70,7 @@ debug_plot(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolygon_t *cpoly, int m_f
     std::cout << "\n";
 }
 #endif
-#if 0
+#if 1
 void
 debug_bseg(cdt_mesh::bedge_seg_t *bseg, int seg_id)
 {
@@ -154,11 +154,14 @@ rtree_bbox_2d(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
 void
 rtree_bbox_3d(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
 {
-    if (!pe->eseg) return;
     ON_BrepTrim& trim = s_cdt->brep->m_T[pe->trim_ind];
-    ON_3dPoint *p3d1 = pe->eseg->e_start;
-    ON_3dPoint *p3d2 = pe->eseg->e_end;
-    ON_Line line(*p3d1, *p3d2);
+    if (trim.m_type == ON_BrepTrim::singular) return;
+    const ON_Surface *s = trim.Face()->SurfaceOf();
+    ON_2dPoint pt_s = trim.PointAt(pe->trim_start);
+    ON_2dPoint pt_e = trim.PointAt(pe->trim_end);
+    ON_3dPoint p3d1 = s->PointAt(pt_s.x, pt_s.y);
+    ON_3dPoint p3d2 = s->PointAt(pt_e.x, pt_e.y);
+    ON_Line line(p3d1, p3d2);
     ON_BoundingBox bb = line.BoundingBox();
     bb.m_max.x = bb.m_max.x + ON_ZERO_TOLERANCE;
     bb.m_max.y = bb.m_max.y + ON_ZERO_TOLERANCE;
@@ -583,13 +586,13 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int
 	poly1_ne1->trim_ind = trim_ind;
 	poly1_ne1->trim_start = old_trim_start;
 	poly1_ne1->trim_end = t1mid;
-	poly1_ne1->eseg = bseg1;
+	poly1_ne1->brep = s_cdt->brep;
 	struct cdt_mesh::edge_t poly1_edge2(poly1_2dind, v[1]);
 	poly1_ne2 = poly1->add_ordered_edge(poly1_edge2);
     	poly1_ne2->trim_ind = trim_ind;
 	poly1_ne2->trim_start = t1mid;
 	poly1_ne2->trim_end = old_trim_end;
-	poly1_ne2->eseg = bseg2;
+	poly1_ne2->brep = s_cdt->brep;
     }
     {
 	cdt_mesh::cpolygon_t *poly2 = bseg->tseg2->polygon;
@@ -606,13 +609,13 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int
 	poly2_ne1->trim_ind = trim_ind;
 	poly2_ne1->trim_start = old_trim_start;
 	poly2_ne1->trim_end = t2mid;
-	poly2_ne1->eseg = bseg1;
+	poly2_ne1->brep = s_cdt->brep;
 	struct cdt_mesh::edge_t poly2_edge2(poly2_2dind, v[1]);
 	poly2_ne2 = poly2->add_ordered_edge(poly2_edge2);
    	poly2_ne2->trim_ind = trim_ind;
 	poly2_ne2->trim_start = t2mid;
 	poly2_ne2->trim_end = old_trim_end;
-	poly2_ne2->eseg = bseg2;
+	poly2_ne2->brep = s_cdt->brep;
     }
 
     // The new trim segments are then associated with the new bounding edge
@@ -631,6 +634,10 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int
     nedges.insert(bseg2);
 
     delete bseg;
+
+    //debug_bseg(bseg1, 1);
+    //debug_bseg(bseg2, 2);
+
     return nedges;
 }
 
@@ -668,13 +675,13 @@ split_singular_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *ce)
     poly_ne1->trim_ind = trim_ind;
     poly_ne1->trim_start = old_trim_start;
     poly_ne1->trim_end = tcparam;
-    poly_ne1->eseg = NULL;
+    poly_ne1->brep = s_cdt->brep;
     struct cdt_mesh::edge_t poly_edge2(poly_2dind, v[1]);
     poly_ne2 = poly->add_edge(poly_edge2);
     poly_ne2->trim_ind = trim_ind;
     poly_ne2->trim_start = tcparam;
     poly_ne2->trim_end = old_trim_end;
-    poly_ne2->eseg = NULL;
+    poly_ne2->brep = s_cdt->brep;
 
     nedges.insert(poly_ne1);
     nedges.insert(poly_ne2);
@@ -951,7 +958,6 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 		if (trim->m_ei >= 0) {
 		    cdt_mesh::bedge_seg_t *eseg = *s_cdt->e2polysegs[trim->m_ei].begin();
 		    // Associate the edge segment with the trim segment and vice versa
-		    ne->eseg = eseg;
 		    if (eseg->tseg1 && eseg->tseg2) {
 			bu_log("error - more than two trims associated with an edge\n");
 			return -1;
@@ -964,9 +970,9 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 		} else {
 		    // A null eseg will indicate a singularity and a need for special case
 		    // splitting of the 2D edge only
-		    ne->eseg = NULL;
 		    singular_edges.insert(ne);
 		}
+		ne->brep = s_cdt->brep;
 	    }
 	}
     }

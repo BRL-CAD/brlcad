@@ -299,7 +299,7 @@ class cpolyedge_t
 	int trim_ind;
 	double trim_start;
 	double trim_end;
-	bedge_seg_t *eseg;
+	ON_Brep *brep;
 
 };
 
