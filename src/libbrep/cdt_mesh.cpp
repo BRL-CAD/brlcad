@@ -238,6 +238,85 @@ cpolygon_t::add_point(ON_2dPoint &on_2dp, long orig_index)
     return (long)(pnts_2d.size() - 1);
 }
 
+
+cpolyedge_t *
+cpolygon_t::add_ordered_edge(const struct edge_t &e)
+{
+    if (e.v[0] == -1) return NULL;
+
+    struct edge_t ne(e);
+    cpolyedge_t *nedge = new cpolyedge_t(ne);
+    poly.insert(nedge);
+
+    nedge->polygon = this;
+
+    v2pe[e.v[0]].insert(nedge);
+    v2pe[e.v[1]].insert(nedge);
+
+    cpolyedge_t *prev = NULL;
+    cpolyedge_t *next = NULL;
+
+    std::set<cpolyedge_t *>::iterator cp_it;
+    for (cp_it = poly.begin(); cp_it != poly.end(); cp_it++) {
+	cpolyedge_t *pe = *cp_it;
+
+	if (pe == nedge) continue;
+
+	if (pe->v[1] == nedge->v[0]) {
+	    prev = pe;
+	}
+
+	if (pe->v[0] == nedge->v[1]) {
+	    next = pe;
+	}
+    }
+
+    if (prev) {
+	prev->next = nedge;
+	nedge->prev = prev;
+    }
+
+    if (next) {
+	next->prev = nedge;
+	nedge->next = next;
+    }
+
+    return nedge;
+}
+
+void
+cpolygon_t::remove_ordered_edge(const struct edge_t &e)
+{
+    cpolyedge_t *cull = NULL;
+    std::set<cpolyedge_t *>::iterator cp_it;
+    for (cp_it = poly.begin(); cp_it != poly.end(); cp_it++) {
+	cpolyedge_t *pe = *cp_it;
+	struct edge_t oe(pe->v[0], pe->v[1]);
+	if (e == oe) {
+	    // Existing segment with this ending vertex exists
+	    cull = pe;
+	    break;
+	}
+    }
+
+    if (!cull) return;
+
+    v2pe[e.v[0]].erase(cull);
+    v2pe[e.v[1]].erase(cull);
+
+    for (cp_it = poly.begin(); cp_it != poly.end(); cp_it++) {
+	cpolyedge_t *pe = *cp_it;
+	if (pe->prev == cull) {
+	    pe->prev = NULL;
+	}
+	if (pe->next == cull) {
+	    pe->next = NULL;
+	}
+    }
+    poly.erase(cull);
+    delete cull;
+}
+
 cpolyedge_t *
 cpolygon_t::add_edge(const struct uedge_t &ue)
 {
@@ -362,9 +441,7 @@ cpolygon_t::remove_edge(const struct uedge_t &ue)
 	}
     }
     poly.erase(cull);
-    // TODO - deleting this when there's only one entry present is messing up
-    // the memory, but not sure why yet.
-    //delete cull;
+    delete cull;
 }
 
 std::set<cpolyedge_t *>

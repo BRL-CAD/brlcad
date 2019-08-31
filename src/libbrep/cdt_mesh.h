@@ -326,6 +326,9 @@ class cpolygon_t
 	std::map<long, long> p2o;
 
 	/* Polygon edge manipulation */
+	cpolyedge_t *add_ordered_edge(const struct edge_t &e);
+	void remove_ordered_edge(const struct edge_t &e);
+
 	cpolyedge_t *add_edge(const struct uedge_t &e);
 	void remove_edge(const struct uedge_t &e);
 	std::set<cpolyedge_t *> replace_edges(std::set<uedge_t> &new_edges, std::set<uedge_t> &old_edges);
