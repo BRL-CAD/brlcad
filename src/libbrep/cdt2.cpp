@@ -1093,6 +1093,10 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	}
     }
 
+    // TODO - there is one other situation where we may need to break edges down further - when a long edge
+    // segment is in close proximity (relative to it's length) to an interior loop that is more finely broken
+    // down than its neighbor.
+
     // Now, process the linear edges
     for (int index = 0; index < brep->m_E.Count(); index++) {
 	ON_BrepEdge& edge = brep->m_E[index];
