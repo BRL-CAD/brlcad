@@ -177,6 +177,32 @@ rtree_bbox_3d(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
     s_cdt->edge_segs_3d[trim.Face()->m_face_index].Insert(p1, p2, (void *)pe);
 }
 
+// Used for finding "close" loops that might require further edge splitting
+void
+rtree_loop_2d(struct ON_Brep_CDT_State *s_cdt, int loop_index)
+{
+    ON_BrepLoop& loop = s_cdt->brep->m_L[loop_index];
+    //ON_BrepFace *face = loop.Face();
+
+    ON_BoundingBox lbbox;
+    loop.GetBoundingBox(lbbox);
+
+    //s_cdt->loop_rtree_2d[face->m_face_index].Insert(p1, p2, (void *)bbox);
+}
+
+// Used for finding "close" loops that might require further edge splitting
+void
+rtree_loop_3d(struct ON_Brep_CDT_State *s_cdt, int loop_index)
+{
+    ON_BrepLoop& loop = s_cdt->brep->m_L[loop_index];
+    ON_BrepFace *face = loop.Face();
+
+    // TODO - Build bbox of the 3D edge curves associated with the loop
+    if (!face) return;
+
+    //s_cdt->loop_rtree_3d[face->m_face_index].Insert(p1, p2, (void *)bbox);
+}
+
 double
 median_seg_len(std::vector<double> &lsegs)
 {
