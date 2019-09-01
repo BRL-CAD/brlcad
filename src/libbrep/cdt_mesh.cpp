@@ -171,28 +171,35 @@ plot_best_fit_plane(ON_Plane &fit_plane, const char *filename)
 void
 cpolyedge_t::plot3d(const char *fname)
 {
-    ON_BrepTrim& trim = brep->m_T[trim_ind];
-    ON_3dPoint trim_s_2d = trim.PointAt(trim_start);
-    ON_3dPoint trim_e_2d = trim.PointAt(trim_end);
-    ON_3dPoint trim_s_3d, trim_e_3d;
-    ON_3dVector trim_s_norm, trim_e_norm;
-    surface_EvNormal(trim.SurfaceOf(), trim_s_2d.x, trim_s_2d.y, trim_s_3d, trim_s_norm);
-    surface_EvNormal(trim.SurfaceOf(), trim_e_2d.x, trim_e_2d.y, trim_e_3d, trim_e_norm);
-    double slen = trim_s_3d.DistanceTo(trim_e_3d);
+    // If our polygon is in 2D, use the Brep to calculate 3D info
+    if (eseg) {
+	ON_Brep *brep = eseg->brep;
+	ON_BrepTrim& trim = brep->m_T[trim_ind];
+	ON_3dPoint trim_s_2d = trim.PointAt(trim_start);
+	ON_3dPoint trim_e_2d = trim.PointAt(trim_end);
+	ON_3dPoint trim_s_3d, trim_e_3d;
+	ON_3dVector trim_s_norm, trim_e_norm;
+	surface_EvNormal(trim.SurfaceOf(), trim_s_2d.x, trim_s_2d.y, trim_s_3d, trim_s_norm);
+	surface_EvNormal(trim.SurfaceOf(), trim_e_2d.x, trim_e_2d.y, trim_e_3d, trim_e_norm);
+	double slen = trim_s_3d.DistanceTo(trim_e_3d);
 
-    FILE* plot_file = fopen(fname, "w");
+	FILE* plot_file = fopen(fname, "w");
 
-    pl_color(plot_file, 0, 0, 255);
-    plot_seg_3d(plot_file, &trim_s_3d, &trim_e_3d);
+	pl_color(plot_file, 0, 0, 255);
+	plot_seg_3d(plot_file, &trim_s_3d, &trim_e_3d);
 
-    pl_color(plot_file, 255, 0, 0);
-    plot_pnt_3d(plot_file, &trim_s_3d, 0.05*slen, 0);
-    plot_vec_3d(plot_file, &trim_s_3d, &trim_s_norm, 0.2*slen);
-    pl_color(plot_file, 0, 255, 0);
-    plot_pnt_3d(plot_file, &trim_e_3d, 0.05*slen, 0);
-    plot_vec_3d(plot_file, &trim_e_3d, &trim_e_norm, 0.2*slen);
+	pl_color(plot_file, 255, 0, 0);
+	plot_pnt_3d(plot_file, &trim_s_3d, 0.05*slen, 0);
+	plot_vec_3d(plot_file, &trim_s_3d, &trim_s_norm, 0.2*slen);
+	pl_color(plot_file, 0, 255, 0);
+	plot_pnt_3d(plot_file, &trim_e_3d, 0.05*slen, 0);
+	plot_vec_3d(plot_file, &trim_e_3d, &trim_e_norm, 0.2*slen);
 
-    fclose(plot_file);
+	fclose(plot_file);
+    } else {
+	std::cout << "no brep information available on trim segment\n";
+    }
+
 }
 
 void
