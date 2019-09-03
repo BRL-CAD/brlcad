@@ -212,6 +212,7 @@ struct ON_Brep_CDT_State {
 
     /* Face specific data */
     std::map<int, struct ON_Brep_CDT_Face_State *> *faces;
+    std::map<int, RTree<void *, double, 2>> loops_2d;
     std::map<int, RTree<void *, double, 3>> edge_segs_3d;
     std::map<int, RTree<void *, double, 2>> trim_segs;
     std::map<int, std::map<int,ON_3dPoint *>> strim_pnts;

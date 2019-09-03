@@ -177,30 +177,59 @@ rtree_bbox_3d(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
     s_cdt->edge_segs_3d[trim.Face()->m_face_index].Insert(p1, p2, (void *)pe);
 }
 
+struct rtree_loop_leaf {
+    struct ON_Brep_CDT_State *s_cdt;
+    int loop_index;
+};
+
 // Used for finding "close" loops that might require further edge splitting
-void
+static void
 rtree_loop_2d(struct ON_Brep_CDT_State *s_cdt, int loop_index)
-{
-    ON_BrepLoop& loop = s_cdt->brep->m_L[loop_index];
-    //ON_BrepFace *face = loop.Face();
-
-    ON_BoundingBox lbbox;
-    loop.GetBoundingBox(lbbox);
-
-    //s_cdt->loop_rtree_2d[face->m_face_index].Insert(p1, p2, (void *)bbox);
-}
-
-// Used for finding "close" loops that might require further edge splitting
-void
-rtree_loop_3d(struct ON_Brep_CDT_State *s_cdt, int loop_index)
 {
     ON_BrepLoop& loop = s_cdt->brep->m_L[loop_index];
     ON_BrepFace *face = loop.Face();
 
-    // TODO - Build bbox of the 3D edge curves associated with the loop
-    if (!face) return;
+    struct rtree_loop_leaf *leaf = new struct rtree_loop_leaf;
 
-    //s_cdt->loop_rtree_3d[face->m_face_index].Insert(p1, p2, (void *)bbox);
+    leaf->s_cdt = s_cdt;
+    leaf->loop_index = loop_index;
+
+    ON_BoundingBox bb;
+    loop.GetBoundingBox(bb);
+    bb.m_max.x = bb.m_max.x + ON_ZERO_TOLERANCE;
+    bb.m_max.y = bb.m_max.y + ON_ZERO_TOLERANCE;
+    bb.m_min.x = bb.m_min.x - ON_ZERO_TOLERANCE;
+    bb.m_min.y = bb.m_min.y - ON_ZERO_TOLERANCE;
+    double p1[2];
+    p1[0] = bb.Min().x;
+    p1[1] = bb.Min().y;
+    double p2[2];
+    p2[0] = bb.Max().x;
+    p2[1] = bb.Max().y;
+    s_cdt->loops_2d[face->m_face_index].Insert(p1, p2, (void *)leaf);
+}
+
+struct rtree_loop_context {
+    double seg_len;
+    bool *split_edge;
+    double target_len;
+};
+
+static bool Loop2dCallback(void *data, void *a_context) {
+    struct rtree_loop_leaf *ldata = (struct rtree_loop_leaf *)data;
+    struct rtree_loop_context *edata = (struct rtree_loop_context *)a_context;
+
+    // Get loop's median distance
+    double lmed = ldata->s_cdt->l_median_len[ldata->loop_index];
+    if (edata->seg_len > 5*lmed) {
+	*edata->split_edge = true;
+    }
+    if (edata->target_len > 5*lmed) {
+	edata->target_len = 5*lmed;
+    }
+
+    // Keep checking for other loops - we want the smallest target length
+    return true;
 }
 
 double
@@ -1119,16 +1148,11 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	}
     }
 
-    // TODO - there is one other situation where we may need to break edges down further - when a long edge
-    // segment is in close proximity (relative to it's length) to an interior loop that is more finely broken
-    // down than its neighbor.
-
     // Now, process the linear edges
     for (int index = 0; index < brep->m_E.Count(); index++) {
 	ON_BrepEdge& edge = brep->m_E[index];
 	const ON_Curve* crv = edge.EdgeCurveOf();
 	if (crv && crv->IsLinear(BN_TOL_DIST)) {
-	    std::cout << "Processing edge " << edge.m_edge_index << "\n";
 	    std::set<cdt_mesh::bedge_seg_t *> &epsegs = s_cdt->e2polysegs[edge.m_edge_index];
 	    std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
 	    std::set<cdt_mesh::bedge_seg_t *> new_segs;
@@ -1158,6 +1182,116 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	    s_cdt->e2polysegs[edge.m_edge_index].insert(new_segs.begin(), new_segs.end());
 	}
     }
+
+    // Do another pass to break down edges that are close to other loops and have segment
+    // lengths that are large compared to the nearby loop polygons
+
+    // First, build the loop rtree and get the median lengths again.  This time we use all loop
+    // segments, not just curved segments.
+    for (int index = 0; index < brep->m_L.Count(); index++) {
+
+	// Build the rtree leaf
+	rtree_loop_2d(s_cdt, index);
+
+	// Get inclusive median length
+	const ON_BrepLoop &loop = brep->m_L[index];
+	std::vector<double> lsegs;
+	for (int lti = 0; lti < loop.TrimCount(); lti++) {
+	    ON_BrepTrim *trim = loop.Trim(lti);
+	    ON_BrepEdge *edge = trim->Edge();
+	    if (!edge) continue;
+	    const ON_Curve* crv = edge->EdgeCurveOf();
+	    if (!crv) continue;
+	    std::set<cdt_mesh::bedge_seg_t *> &epsegs = s_cdt->e2polysegs[edge->m_edge_index];
+	    if (!epsegs.size()) continue;
+	    std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
+	    for (e_it = epsegs.begin(); e_it != epsegs.end(); e_it++) {
+		cdt_mesh::bedge_seg_t *b = *e_it;
+		double seg_dist = b->e_start->DistanceTo(*b->e_end);
+		lsegs.push_back(seg_dist);
+	    }
+	}
+	s_cdt->l_median_len[index] = median_seg_len(lsegs);
+    }
+
+    // Now, check all the edge segments to see if we are close to a loop with
+    // smaller segments (or if our own loop has a median segment length smaller
+    // than the current segment.)  If so, split.
+    for (int index = 0; index < brep->m_E.Count(); index++) {
+	ON_BrepEdge& edge = brep->m_E[index];
+	const ON_Curve* crv = edge.EdgeCurveOf();
+	if (!crv) continue;
+	std::set<cdt_mesh::bedge_seg_t *> &epsegs = s_cdt->e2polysegs[edge.m_edge_index];
+	std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
+	std::set<cdt_mesh::bedge_seg_t *> new_segs;
+	std::set<cdt_mesh::bedge_seg_t *> ws1, ws2;
+	std::set<cdt_mesh::bedge_seg_t *> *ws = &ws1;
+	std::set<cdt_mesh::bedge_seg_t *> *ns = &ws2;
+	for (e_it = epsegs.begin(); e_it != epsegs.end(); e_it++) {
+	    cdt_mesh::bedge_seg_t *b = *e_it;
+	    ws->insert(b);
+	}
+	while (ws->size()) {
+	    cdt_mesh::bedge_seg_t *b = *ws->begin();
+	    ws->erase(ws->begin());
+	    bool split_edge = false;
+	    double target_len = DBL_MAX;
+	    for (int i = 0; i < 2; i++) {
+		ON_BrepTrim *trim = edge.Trim(i);
+		ON_BrepFace *face = trim->Face();
+
+		// Get segment length - should be smaller than our target length.
+		cdt_mesh::cpolyedge_t *tseg = (b->tseg1->trim_ind == trim->m_trim_index) ? b->tseg1 : b->tseg2;
+		ON_2dPoint p2d1 = s_cdt->brep->m_T[tseg->trim_ind].PointAt(tseg->trim_start);
+		ON_2dPoint p2d2 = s_cdt->brep->m_T[tseg->trim_ind].PointAt(tseg->trim_end);
+		ON_Line l(p2d1, p2d2);
+		double slen = l.Length();
+		// Trim 2D bbox
+		ON_BoundingBox tbb(p2d1, p2d2);
+		double tMin[2];
+		double tMax[2];
+		double xbump = (fabs(tbb.Max().x - tbb.Min().x)) < 0.8*slen ? 0.4*slen : ON_ZERO_TOLERANCE;
+		double ybump = (fabs(tbb.Max().y - tbb.Min().y)) < 0.8*slen ? 0.4*slen : ON_ZERO_TOLERANCE;
+		tMin[0] = tbb.Min().x - xbump;
+		tMin[1] = tbb.Min().y - ybump;
+		tMax[0] = tbb.Max().x + xbump;
+		tMax[1] = tbb.Max().y + ybump;
+
+		// Edge context info
+		struct rtree_loop_context a_context;
+		a_context.seg_len = l.Length();
+		a_context.split_edge = &split_edge;
+		a_context.target_len = DBL_MAX;
+
+		// Do the search
+		if (!s_cdt->loops_2d[face->m_face_index].Search(tMin, tMax, Loop2dCallback, (void *)&a_context)) {
+		    continue;
+		} else {
+		    target_len = (a_context.target_len < target_len) ? a_context.target_len : target_len;
+		}
+	    }
+
+	    if (split_edge) {
+		// If we need to split, do so
+		std::set<cdt_mesh::bedge_seg_t *> esegs_split = split_edge_seg(s_cdt, b, 1);
+		if (esegs_split.size()) {
+		    ns->insert(esegs_split.begin(), esegs_split.end());
+		} else {
+		    new_segs.insert(b);
+		}
+	    } else {
+		new_segs.insert(b);
+	    }
+	    if (!ws->size() && ns->size()) {
+		std::set<cdt_mesh::bedge_seg_t *> *tmp = ws;
+		ws = ns;
+		ns = tmp;
+	    }
+	}
+	s_cdt->e2polysegs[edge.m_edge_index].clear();
+	s_cdt->e2polysegs[edge.m_edge_index].insert(new_segs.begin(), new_segs.end());
+    }
+
 
     // Split singularity trims in 2D to provide an easier input to the 2D CDT logic.  NOTE: these
     // splits will produce degenerate (zero area, two identical vertex) triangles in 3D that have
