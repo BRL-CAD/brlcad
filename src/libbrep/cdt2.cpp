@@ -1148,6 +1148,16 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	}
     }
 
+    // TODO: After the initial curve split, make another pass looking for
+    // curved edges sharing a vertex.  We want larger curves to refine close to
+    // the median segment length of the smaller ones, since this situation can be a
+    // sign that the surface will generate small triangles near large ones.
+    //
+    // One this is done, again, calculate the curved median segment lengths for use
+    // by the linear edges
+
+
+
     // Now, process the linear edges
     for (int index = 0; index < brep->m_E.Count(); index++) {
 	ON_BrepEdge& edge = brep->m_E[index];
