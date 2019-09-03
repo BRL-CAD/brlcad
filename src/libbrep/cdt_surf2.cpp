@@ -165,8 +165,8 @@ singular_trim_norm(struct cdt_surf_info_2 *sinfo, fastf_t uc, fastf_t vc)
 }
 
 static bool EdgeSegCallback(void *data, void *a_context) {
-    struct BrepEdgeSegment *eseg = (struct BrepEdgeSegment *)data;
-    std::set<struct BrepEdgeSegment *> *segs = (std::set<struct BrepEdgeSegment *> *)a_context;
+    cdt_mesh::cpolyedge_t *eseg = (cdt_mesh::cpolyedge_t *)data;
+    std::set<cdt_mesh::cpolyedge_t *> *segs = (std::set<cdt_mesh::cpolyedge_t *> *)a_context;
     segs->insert(eseg);
     return true;
 }
@@ -226,7 +226,7 @@ static bool involves_trims(double *min_edge, struct cdt_surf_info_2 *sinfo, ON_3
     fMax[1] = wp2.y;
     fMax[2] = wp2.z;
 
-    std::set<struct BrepEdgeSegment *> segs;
+    std::set<cdt_mesh::cpolyedge_t *> segs;
     size_t nhits = sinfo->s_cdt->edge_segs_3d[sinfo->f->m_face_index].Search(fMin, fMax, EdgeSegCallback, (void *)&segs);
     //bu_log("new tree found %zu boxes and %zu segments\n", nhits, segs.size());
 
@@ -240,12 +240,12 @@ static bool involves_trims(double *min_edge, struct cdt_surf_info_2 *sinfo, ON_3
 	return true;
     }
 
-    std::set<struct BrepEdgeSegment *>::iterator s_it;
+    std::set<cdt_mesh::cpolyedge_t *>::iterator s_it;
     for (s_it = segs.begin(); s_it != segs.end(); s_it++) {
-	struct BrepEdgeSegment *seg = *s_it;
+	cdt_mesh::cpolyedge_t *seg = *s_it;
 	ON_BoundingBox lbb;
-	lbb.Set(*seg->sbtp1->p3d, true);
-	lbb.Set(*seg->ebtp1->p3d, true);
+	lbb.Set(*seg->eseg->e_start, true);
+	lbb.Set(*seg->eseg->e_end, true);
 	if (!uvbb.IsDisjoint(lbb)) {
 	    fastf_t dist = lbb.Diagonal().Length();
 	    if ((dist > BN_TOL_DIST) && (dist < min_edge_dist))  {
@@ -618,7 +618,7 @@ getSurfacePoint(
 }
 
 void
-GetInteriorPnts(struct ON_Brep_CDT_State *s_cdt, int face_index)
+GetInteriorPoints(struct ON_Brep_CDT_State *s_cdt, int face_index)
 {
     double surface_width, surface_height;
 
@@ -880,6 +880,7 @@ GetInteriorPnts(struct ON_Brep_CDT_State *s_cdt, int face_index)
 	std::queue<SPatch> *nq = &spq2;
 	int split_depth = 0;
 
+
 	while (!wq->empty()) {
 	    SPatch sp = wq->front();
 	    wq->pop();
@@ -896,6 +897,7 @@ GetInteriorPnts(struct ON_Brep_CDT_State *s_cdt, int face_index)
 		nq = tq;
 		// Let the counter know we're going deeper
 		split_depth++;
+		std::cout << "split_depth: " << split_depth << "\n";
 	    }
 	}
 

@@ -1347,6 +1347,33 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 
     // TODO - adapt surface point sampling to new setup
     for (int index = 0; index < brep->m_F.Count(); index++) {
+	ON_BrepFace &face = s_cdt->brep->m_F[index];
+	int loop_cnt = face.LoopCount();
+	double min_edge_seg_len = DBL_MAX;
+	double max_edge_seg_len = 0;
+	for (int li = 0; li < loop_cnt; li++) {
+	    const ON_BrepLoop *loop = face.Loop(li);
+	    for (int lti = 0; lti < loop->TrimCount(); lti++) {
+		ON_BrepTrim *trim = loop->Trim(lti);
+		ON_BrepEdge *edge = trim->Edge();
+		if (!edge) continue;
+		const ON_Curve* crv = edge->EdgeCurveOf();
+		if (!crv) continue;
+		std::set<cdt_mesh::bedge_seg_t *> &epsegs = s_cdt->e2polysegs[edge->m_edge_index];
+		if (!epsegs.size()) continue;
+		std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
+		for (e_it = epsegs.begin(); e_it != epsegs.end(); e_it++) {
+		    cdt_mesh::bedge_seg_t *b = *e_it;
+		    double seg_dist = b->e_start->DistanceTo(*b->e_end);
+		    min_edge_seg_len = (min_edge_seg_len > seg_dist) ? seg_dist : min_edge_seg_len;
+		    max_edge_seg_len = (max_edge_seg_len < seg_dist) ? seg_dist : max_edge_seg_len;
+		}
+	    }
+	}
+	(*s_cdt->min_edge_seg_len)[index] = min_edge_seg_len;
+	(*s_cdt->max_edge_seg_len)[index] = max_edge_seg_len;
+
+	GetInteriorPoints(s_cdt, index);
     }
 
     for (int face_index = 0; face_index < brep->m_F.Count(); face_index++) {
