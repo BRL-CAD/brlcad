@@ -431,8 +431,10 @@ tol_need_split(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, ON_
     double max_allowed = (s_cdt->tol.absmax > ON_ZERO_TOLERANCE) ? s_cdt->tol.absmax : 1.1*bseg->cp_len;
     double min_allowed = (s_cdt->tol.rel > ON_ZERO_TOLERANCE) ? s_cdt->tol.rel * bseg->cp_len : 0.0;
     double max_edgept_dist_from_edge = (s_cdt->tol.abs > ON_ZERO_TOLERANCE) ? s_cdt->tol.abs : seg_len;
-    ON_BrepLoop *l1 = NULL;
-    ON_BrepLoop *l2 = NULL;
+    ON_BrepLoop *l1 = s_cdt->brep->m_T[bseg->tseg1->trim_ind].Loop();
+    ON_BrepLoop *l2 = s_cdt->brep->m_T[bseg->tseg2->trim_ind].Loop();
+    const ON_Surface *s1= l1->SurfaceOf();
+    const ON_Surface *s2= l2->SurfaceOf();
     double len_1 = -1;
     double len_2 = -1;
     double s_len;
@@ -447,11 +449,9 @@ tol_need_split(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, ON_
 	    break;
 	case 2:
 	    // Linear edge on non-planar surface - use the median segment lengths
-	    // from the two trims associated with this edge
-	    l1 = s_cdt->brep->m_T[bseg->tseg1->trim_ind].Loop();
-	    l2 = s_cdt->brep->m_T[bseg->tseg2->trim_ind].Loop();
-	    len_1 = s_cdt->l_median_len[l1->m_loop_index];
-	    len_2 = s_cdt->l_median_len[l2->m_loop_index];
+	    // from the trims from non-planar faces associated with this edge
+	    len_1 = (!s1->IsPlanar(NULL, BN_TOL_DIST)) ? s_cdt->l_median_len[l1->m_loop_index] : -1;
+	    len_2 = (!s2->IsPlanar(NULL, BN_TOL_DIST)) ? s_cdt->l_median_len[l2->m_loop_index] : -1;
 	    if (len_1 < 0 && len_2 < 0) {
 		bu_log("Error - both loops report invalid median lengths\n");
 		return false;
