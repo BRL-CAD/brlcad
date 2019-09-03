@@ -1250,8 +1250,8 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 		ON_BoundingBox tbb(p2d1, p2d2);
 		double tMin[2];
 		double tMax[2];
-		double xbump = (fabs(tbb.Max().x - tbb.Min().x)) < 0.8*slen ? 0.4*slen : ON_ZERO_TOLERANCE;
-		double ybump = (fabs(tbb.Max().y - tbb.Min().y)) < 0.8*slen ? 0.4*slen : ON_ZERO_TOLERANCE;
+		double xbump = (fabs(tbb.Max().x - tbb.Min().x)) < slen ? 0.8*slen : ON_ZERO_TOLERANCE;
+		double ybump = (fabs(tbb.Max().y - tbb.Min().y)) < slen ? 0.8*slen : ON_ZERO_TOLERANCE;
 		tMin[0] = tbb.Min().x - xbump;
 		tMin[1] = tbb.Min().y - ybump;
 		tMax[0] = tbb.Max().x + xbump;
@@ -1275,7 +1275,7 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 		// If we need to split, do so
 		std::set<cdt_mesh::bedge_seg_t *> esegs_split = split_edge_seg(s_cdt, b, 1);
 		if (esegs_split.size()) {
-		    ns->insert(esegs_split.begin(), esegs_split.end());
+		    ws->insert(esegs_split.begin(), esegs_split.end());
 		} else {
 		    new_segs.insert(b);
 		}
