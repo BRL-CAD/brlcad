@@ -1458,7 +1458,7 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	plot_rtree_3d(s_cdt->edge_segs_3d[index], bu_vls_cstr(&fname));
     }
 
-    // TODO - adapt surface point sampling to new setup
+#if 0
     for (int index = 0; index < brep->m_F.Count(); index++) {
 	ON_BrepFace &face = s_cdt->brep->m_F[index];
 	int loop_cnt = face.LoopCount();
@@ -1491,7 +1491,6 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 
     for (int face_index = 0; face_index < brep->m_F.Count(); face_index++) {
 	cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[face_index];
-	std::cout << "Processing " << face_index << "\n";
 	fmesh->cdt();
 	struct bu_vls fname = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&fname, "%d-tris.plot3", face_index);
@@ -1500,8 +1499,8 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	fmesh->tris_plot_2d(bu_vls_cstr(&fname));
 	bu_vls_free(&fname);
     }
+#endif
 
-    exit(0);
     return 0;
 
 }

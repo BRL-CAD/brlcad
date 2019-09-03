@@ -464,6 +464,7 @@ public:
     std::map<ON_3dPoint *, long> n2ind;
     std::map<long, long> nmap;
     std::map<uedge_t, std::set<triangle_t>> uedges2tris;
+    std::map<ON_3dPoint *, ON_3dPoint *> *normalmap;
 
 private:
     /* Data containers */
@@ -475,7 +476,6 @@ private:
     std::set<ON_3dPoint *> *edge_pnts;
     std::set<std::pair<ON_3dPoint *, ON_3dPoint *>> *b_edges;
     std::set<ON_3dPoint *> *singularities;
-    std::map<ON_3dPoint *, ON_3dPoint *> *normalmap;
 
     // cdt_mesh index versions of Brep data
     std::set<uedge_t> brep_edges;

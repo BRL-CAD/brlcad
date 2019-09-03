@@ -217,7 +217,7 @@ do_triangulation(struct ON_Brep_CDT_Face_State *f)
     return refine_triangulation(f, 0, 0);
 }
 
-static int
+int
 ON_Brep_CDT_Face(struct ON_Brep_CDT_Face_State *f)
 {
     struct ON_Brep_CDT_State *s_cdt = f->s_cdt;
@@ -545,11 +545,13 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	// EXPERIMENT
 	ON_Brep_CDT_Tessellate2(s_cdt);
 
+#if 0
 	/* To generate watertight meshes, the faces *must* share 3D edge points.  To ensure
 	 * a uniform set of edge points, we first sample all the edges and build their
 	 * point sets */
 
 	Get_Edge_Points(s_cdt);
+#endif
 
     } else {
 	/* Clear the mesh state, if this container was previously used */
@@ -564,14 +566,45 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
     for (int i = 0; i < fc; i++) {
 	int fi = ((face_cnt == 0) || !faces) ? i : faces[i];
 	if (fi < s_cdt->brep->m_F.Count()) {
-	    if (s_cdt->faces->find(fi) == s_cdt->faces->end()) {
-		struct ON_Brep_CDT_Face_State *f = ON_Brep_CDT_Face_Create(s_cdt, fi);
-		(*s_cdt->faces)[fi] = f;
+	    ON_BrepFace &face = s_cdt->brep->m_F[fi];
+	    int loop_cnt = face.LoopCount();
+	    double min_edge_seg_len = DBL_MAX;
+	    double max_edge_seg_len = 0;
+	    for (int li = 0; li < loop_cnt; li++) {
+		const ON_BrepLoop *loop = face.Loop(li);
+		for (int lti = 0; lti < loop->TrimCount(); lti++) {
+		    ON_BrepTrim *trim = loop->Trim(lti);
+		    ON_BrepEdge *edge = trim->Edge();
+		    if (!edge) continue;
+		    const ON_Curve* crv = edge->EdgeCurveOf();
+		    if (!crv) continue;
+		    std::set<cdt_mesh::bedge_seg_t *> &epsegs = s_cdt->e2polysegs[edge->m_edge_index];
+		    if (!epsegs.size()) continue;
+		    std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
+		    for (e_it = epsegs.begin(); e_it != epsegs.end(); e_it++) {
+			cdt_mesh::bedge_seg_t *b = *e_it;
+			double seg_dist = b->e_start->DistanceTo(*b->e_end);
+			min_edge_seg_len = (min_edge_seg_len > seg_dist) ? seg_dist : min_edge_seg_len;
+			max_edge_seg_len = (max_edge_seg_len < seg_dist) ? seg_dist : max_edge_seg_len;
+		    }
+		}
 	    }
-	    if (ON_Brep_CDT_Face((*s_cdt->faces)[fi])) {
+	    (*s_cdt->min_edge_seg_len)[face.m_face_index] = min_edge_seg_len;
+	    (*s_cdt->max_edge_seg_len)[face.m_face_index] = max_edge_seg_len;
+
+	    GetInteriorPoints(s_cdt, face.m_face_index);
+
+	    cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[face.m_face_index];
+	    if (!fmesh->cdt()) {
 		face_failures++;
 	    } else {
 		face_successes++;
+		struct bu_vls fname = BU_VLS_INIT_ZERO;
+		bu_vls_sprintf(&fname, "%d-tris.plot3", face.m_face_index);
+		fmesh->tris_plot(bu_vls_cstr(&fname));
+		bu_vls_sprintf(&fname, "%d-tris_2d.plot3", face.m_face_index);
+		fmesh->tris_plot_2d(bu_vls_cstr(&fname));
+		bu_vls_free(&fname);
 	    }
 	}
     }
@@ -669,14 +702,14 @@ ON_Brep_CDT_Mesh(
     std::set<ON_3dPoint *> vfpnts;
     std::set<ON_3dPoint *> vfnormals;
     for (size_t fi = 0; fi < active_faces.size(); fi++) {
-	struct ON_Brep_CDT_Face_State *f = (*s_cdt->faces)[active_faces[fi]];
-	if (!f) continue;
-	std::map<ON_3dPoint *, ON_3dPoint *> *normalmap = f->on3_to_norm_map;
+	cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[fi];
+	//std::map<ON_3dPoint *, ON_3dPoint *> *normalmap = fmesh->normalmap;
 	std::set<cdt_mesh::triangle_t>::iterator tr_it;
-	for (tr_it = f->fmesh.tris.begin(); tr_it != f->fmesh.tris.end(); tr_it++) {
+	for (tr_it = fmesh->tris.begin(); tr_it != fmesh->tris.end(); tr_it++) {
 	    for (size_t j = 0; j < 3; j++) {
-		ON_3dPoint *p3d = f->fmesh.pnts[(*tr_it).v[j]];
+		ON_3dPoint *p3d = fmesh->pnts[(*tr_it).v[j]];
 		vfpnts.insert(p3d);
+#if 0
 		ON_3dPoint *onorm = NULL;
 		if (s_cdt->singular_vert_to_norms->find(p3d) != s_cdt->singular_vert_to_norms->end()) {
 		    // Use calculated normal for singularity points
@@ -687,15 +720,15 @@ ON_Brep_CDT_Mesh(
 		if (onorm) {
 		    vfnormals.insert(onorm);
 		}
+#endif
 	    }
 	}
     }
 
     // Get the final triangle count
     for (size_t fi = 0; fi < active_faces.size(); fi++) {
-	struct ON_Brep_CDT_Face_State *f = (*s_cdt->faces)[active_faces[fi]];
-	if (!f) continue;
-	triangle_cnt += f->fmesh.tris.size();
+	cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[fi];
+	triangle_cnt += fmesh->tris.size();
     }
 
     bu_log("tri_cnt: %zd\n", triangle_cnt);
@@ -755,21 +788,22 @@ ON_Brep_CDT_Mesh(
     int face_cnt = 0;
     triangle_cnt = 0;
     for (size_t fi = 0; fi < active_faces.size(); fi++) {
-	struct ON_Brep_CDT_Face_State *f = (*s_cdt->faces)[active_faces[fi]];
-	if (!f) continue;
-	std::map<ON_3dPoint *, ON_3dPoint *> *normalmap = f->on3_to_norm_map;
+	cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[fi];
+	//std::map<ON_3dPoint *, ON_3dPoint *> *normalmap = fmesh->normalmap;
 	std::set<cdt_mesh::triangle_t>::iterator tr_it;
-	triangle_cnt += f->fmesh.tris.size();
+	triangle_cnt += fmesh->tris.size();
 	int active_tris = 0;
-	for (tr_it = f->fmesh.tris.begin(); tr_it != f->fmesh.tris.end(); tr_it++) {
+	for (tr_it = fmesh->tris.begin(); tr_it != fmesh->tris.end(); tr_it++) {
 	    active_tris++;
 	    for (size_t j = 0; j < 3; j++) {
-		ON_3dPoint *op = f->fmesh.pnts[(*tr_it).v[j]];
+		ON_3dPoint *op = fmesh->pnts[(*tr_it).v[j]];
 		(*faces)[face_cnt*3 + j] = on_pnt_to_bot_pnt[op];
+#if 0
 		if (normals) {
 		    ON_3dPoint *onorm = (*normalmap)[op];
 		    (*face_normals)[face_cnt*3 + j] = on_norm_to_bot_norm[onorm];
 		}
+#endif
 	    }
 #if 0
 	    // If we have a reversed face we need to adjust the triangle vertex
