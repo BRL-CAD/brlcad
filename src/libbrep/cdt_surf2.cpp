@@ -431,8 +431,18 @@ filter_surface_edge_pnts_2(struct cdt_surf_info_2 *sinfo)
 	long f_ind2d = fmesh->add_point(n2dp);
 	fmesh->m_interior_pnts.insert(f_ind2d);
 
+
 	// Add new 3D point and normal values to the fmesh as well TODO - store these during
 	// the build-down in sinfo and then just look them up here...
+	ON_3dPoint p3d;
+	ON_3dVector norm = ON_3dVector::UnsetVector;
+	if (!surface_EvNormal(sinfo->s, n2dp.x, n2dp.y, p3d, norm)) {
+	    p3d = sinfo->s->PointAt(n2dp.x, n2dp.y);
+	}
+	long f3ind = fmesh->add_point(new ON_3dPoint(p3d)); 
+	long fnind = fmesh->add_normal(new ON_3dPoint(norm)); 
+	fmesh->p2d3d[f_ind2d] = f3ind;
+	fmesh->nmap[f3ind] = fnind;
     }
 }
 
@@ -906,13 +916,13 @@ GetInteriorPoints(struct ON_Brep_CDT_State *s_cdt, int face_index)
 	/* We want to jitter sampled 2D points out of linearity */
 	bn_rand_init(prand, 0);
 	for (b_it = sinfo.leaf_bboxes.begin(); b_it != sinfo.leaf_bboxes.end(); b_it++) {
-	    ON_3dPoint p3d = (*b_it)->Center();
+	    ON_3dPoint p2d = (*b_it)->Center();
 	    ON_3dPoint pmax = (*b_it)->Max();
 	    ON_3dPoint pmin = (*b_it)->Min();
 	    double ulen = pmax.x - pmin.x;
 	    double vlen = pmax.y - pmin.y;
-	    double px = p3d.x + (bn_rand_half(prand) * 0.3*ulen);
-	    double py = p3d.y + (bn_rand_half(prand) * 0.3*vlen);
+	    double px = p2d.x + (bn_rand_half(prand) * 0.3*ulen);
+	    double py = p2d.y + (bn_rand_half(prand) * 0.3*vlen);
 	    sinfo.on_surf_points.insert(new ON_2dPoint(px,py));
 	}
 
