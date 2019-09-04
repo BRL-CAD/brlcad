@@ -54,6 +54,7 @@
 #include "common.h"
 #include "./cdt.h"
 
+#if 0
 typedef std::pair<ON_3dPoint *, ON_3dPoint *> Edge;
 typedef std::map<Edge, std::set<p2t::Triangle*> > EdgeToTri;
 
@@ -769,6 +770,8 @@ triangles_rebuild_involved(struct ON_Brep_CDT_Face_State *f)
     triangles_rebuild_involved_pnts(f, f->ext_degen_pnts);
 }
 
+#endif
+
 void
 trimesh_error_report(struct ON_Brep_CDT_State *s_cdt, int valid_fcnt, int UNUSED(valid_vcnt), int *valid_faces, fastf_t *valid_vertices, struct bg_trimesh_solid_errors *se)
 {
@@ -896,7 +899,6 @@ trimesh_error_report(struct ON_Brep_CDT_State *s_cdt, int valid_fcnt, int UNUSED
     }
 
 }
-
 
 /** @} */
 

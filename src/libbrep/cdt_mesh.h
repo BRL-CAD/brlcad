@@ -1,22 +1,34 @@
+/*                      C D T _ M E S H . H
+ * BRL-CAD
+ *
+ * Copyright (c) 2019 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file cdt_mesh.h
+ *
+ * Mesh routines in support of Constrained Delaunay Triangulation of NURBS
+ * B-Rep objects
+ *
+ */
+
 // This evolved from the original trimesh halfedge data structure code:
 
 // Author: Yotam Gingold <yotam (strudel) yotamgingold.com>
 // License: Public Domain.  (I, Yotam Gingold, the author, release this code into the public domain.)
 // GitHub: https://github.com/yig/halfedge
-//
-// It ended up rather different, as we are concerned with somewhat different
-// mesh properties for CDT and the halfedge data structure didn't end up being
-// a good fit, but as it's derived from that source the public domain license
-// is maintained for the changes as well.
-
-
-// TODO - I've got the wrong conceptual separation here - cpolygon_t needs to be concerned
-// ONLY with polygons, not with the cdt_mesh.  Any cdt_mesh using functions need to be
-// moved up to the cdt_mesh structure, operating on a cpolygon object using the cdt_mesh
-// information, rather than having cpolygon_t operations using information from cdt_mesh.
-//
-// That should resolve a lot of the complexities that emerged trying to used cpolygon_t
-// both for repair and for the initial triangulation.
 
 
 #ifndef __cdt_mesh_h__
@@ -524,6 +536,7 @@ private:
     long grow_loop(cpolygon_t *polygon, double deg, bool stop_on_contained, triangle_t &target);
 
     bool best_fit_plane_reproject(cpolygon_t *polygon);
+    void best_fit_plane_plot(point_t *center, vect_t *norm, const char *fname);
 
     long tri_process(cpolygon_t *polygon, std::set<uedge_t> *ne, std::set<uedge_t> *se, long *nv, triangle_t &t);
 

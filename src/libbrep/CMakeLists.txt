@@ -24,10 +24,6 @@ set(LIBBREP_SOURCES
   Subcurve.cpp
   Subsurface.cpp
   boolean.cpp
-  cdt_closed_surf.cpp
-  cdt_edge.cpp
-  cdt_patch.cpp
-  cdt_surf.cpp
   cdt_surf2.cpp
   cdt_util.cpp
   cdt_validate.cpp
@@ -46,7 +42,6 @@ set(LIBBREP_SOURCES
   shape_recognition_sphere.cpp
   shape_recognition_util.cpp
   ssx_event.cpp
-  trimesh.cpp
   #opennurbs_fit.cpp
   )
 
@@ -55,13 +50,13 @@ set(libbrep_ignored_files
   brep_except.h
   cdt.h
   cdt_mesh.h
+  cdt_closed_surf.cpp
   opennurbs_fit.h
   opennurbs_fit.cpp
   PullbackCurve.h
   shape_recognition.h
   shape_recognition_torus.cpp
   surface_tree_queue_tests.patch
-  trimesh.h
   )
 CMAKEFILES(${libbrep_ignored_files})
 

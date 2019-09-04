@@ -1,13 +1,34 @@
+/*                    C D T _ M E S H . C P P
+ * BRL-CAD
+ *
+ * Copyright (c) 2019 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file cdt_mesh.cpp
+ *
+ * Mesh routines in support of Constrained Delaunay Triangulation of NURBS
+ * B-Rep objects
+ *
+ */
+
 // This evolved from the original trimesh halfedge data structure code:
 
 // Author: Yotam Gingold <yotam (strudel) yotamgingold.com>
 // License: Public Domain.  (I, Yotam Gingold, the author, release this code into the public domain.)
 // GitHub: https://github.com/yig/halfedge
-//
-// It ended up rather different, as we are concerned with somewhat different
-// mesh properties for CDT and the halfedge data structure didn't end up being
-// a good fit, but as it's derived from that source the public domain license
-// is maintained for the changes as well.
 
 #include "common.h"
 
@@ -3175,6 +3196,52 @@ cdt_mesh_t::build_initial_loop(triangle_t &seed, bool repair)
     delete polygon;
     return NULL;
 }
+
+void
+cdt_mesh_t::best_fit_plane_plot(point_t *center, vect_t *norm, const char *fname)
+{
+    FILE* plot_file = fopen(fname, "w");
+    int r = int(256*drand48() + 1.0);
+    int g = int(256*drand48() + 1.0);
+    int b = int(256*drand48() + 1.0);
+    pl_color(plot_file, r, g, b);
+
+    vect_t xbase, ybase, tip;
+    vect_t x_1, x_2, y_1, y_2;
+    bn_vec_perp(xbase, *norm);
+    VCROSS(ybase, xbase, *norm);
+    VUNITIZE(xbase);
+    VUNITIZE(ybase);
+    VSCALE(xbase, xbase, 10);
+    VSCALE(ybase, ybase, 10);
+    VADD2(x_1, *center, xbase);
+    VSUB2(x_2, *center, xbase);
+    VADD2(y_1, *center, ybase);
+    VSUB2(y_2, *center, ybase);
+
+    pdv_3move(plot_file, x_1);
+    pdv_3cont(plot_file, x_2);
+    pdv_3move(plot_file, y_1);
+    pdv_3cont(plot_file, y_2);
+
+    pdv_3move(plot_file, x_1);
+    pdv_3cont(plot_file, y_1);
+    pdv_3move(plot_file, x_2);
+    pdv_3cont(plot_file, y_2);
+
+    pdv_3move(plot_file, x_2);
+    pdv_3cont(plot_file, y_1);
+    pdv_3move(plot_file, x_1);
+    pdv_3cont(plot_file, y_2);
+
+    VSCALE(tip, *norm, 5);
+    VADD2(tip, *center, tip);
+    pdv_3move(plot_file, *center);
+    pdv_3cont(plot_file, tip);
+
+    fclose(plot_file);
+}
+
 
 bool
 cdt_mesh_t::best_fit_plane_reproject(cpolygon_t *polygon)
