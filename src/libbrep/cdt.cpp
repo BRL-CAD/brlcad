@@ -32,6 +32,7 @@
 #define BREP_PLANAR_TOL 0.05
 #define MAX_TRIANGULATION_ATTEMPTS 5
 
+#if 0
 static int
 full_retriangulation(struct ON_Brep_CDT_Face_State *f)
 {
@@ -99,30 +100,27 @@ full_retriangulation(struct ON_Brep_CDT_Face_State *f)
 
     return 0;
 }
+#endif
 
-int
-refine_triangulation(struct ON_Brep_CDT_Face_State *f, int cnt, int rebuild)
+bool
+refine_triangulation(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cdt_mesh_t *fmesh, int cnt, int rebuild)
 {
-    std::set<p2t::Triangle *> active_tris;
-    std::set<cdt_mesh::triangle_t> active_ctris;
-    int ret = 0;
+    if (!s_cdt || !fmesh) return false;
 
     if (cnt > MAX_TRIANGULATION_ATTEMPTS) {
-	std::cerr << "Error: even after " << MAX_TRIANGULATION_ATTEMPTS << " iterations could not successfully refine triangulate face " << f->ind << " for solidity criteria\n";
-	return 0;
+	std::cerr << "Error: even after " << MAX_TRIANGULATION_ATTEMPTS << " iterations could not successfully refine triangulate face " << fmesh->f_id << " for solidity criteria\n";
+	return false;
     }
 
     // If a previous pass has made changes in which points are active in the
     // surface set, we need to rebuild the whole triangulation.
 
-    if (rebuild) {
-	ret = full_retriangulation(f);
-	if (ret < 0) {
-	    bu_log("Fatal failure attempting full retriangulation of face\n");
-	    return -1;
-	}
+    if (rebuild && !fmesh->cdt()) {
+	bu_log("Fatal failure attempting full retriangulation of face\n");
+	return false;
     }
 
+#if 0
     // Check the triangles around edges first - these may require
     // the removal of points from the surface set
     ret = triangles_check_edge_tris(f);
@@ -130,11 +128,13 @@ refine_triangulation(struct ON_Brep_CDT_Face_State *f, int cnt, int rebuild)
 	bu_log("Pass %d: surface points removed, need full retriangulation\n", cnt);
 	return refine_triangulation(f, cnt+1, 1);
     }
+#endif
 
     // Now, the hard part - create local subsets, remesh them, and replace the original
     // triangles with the new ones.
 
-    f->fmesh.set_brep_data(f->s_cdt->brep->m_F[f->ind].m_bRev, f->s_cdt->edge_pnts, &f->s_cdt->fedges, f->singularities, f->on3_to_norm_map);
+#if 0
+    f->fmesh.set_brep_data(s_cdt->brep->m_F[fmesh->f_id].m_bRev, s_cdt->edge_pnts, &f->s_cdt->fedges, f->singularities, f->on3_to_norm_map);
     f->fmesh.f_id = f->ind;
     f->fmesh.build(f->tris, f->p2t_to_on3_map);
 
@@ -151,72 +151,64 @@ refine_triangulation(struct ON_Brep_CDT_Face_State *f, int cnt, int rebuild)
 	bu_log("Face %d: triangulation produced invalid mesh!\n", f->ind);
     }
     return ret;
+#endif
+
+    return true;
 }
 
-static int
-do_triangulation(struct ON_Brep_CDT_Face_State *f)
+static bool
+do_triangulation(struct ON_Brep_CDT_State *s_cdt, int fi)
 {
-    ON_Brep_CDT_Face_Reset(f, 1);
+    ON_BrepFace &face = s_cdt->brep->m_F[fi];
 
-    // Build the polylines in the poly2tri data container
-    p2t::CDT *cdt = NULL;
-    bool outer = build_poly2tri_polylines(f, &cdt, 1);
-    if (outer) {
-	std::cerr << "Error: Face(" << f->ind << ") cannot evaluate its outer loop and will not be facetized." << std::endl;
-	return -1;
-    }
-
-    // Sample the surface, independent of the trimming curves, to get points that
-    // will tie the mesh to the interior surface.
-    getSurfacePoints(f);
-    std::set<ON_2dPoint *>::iterator p_it;
-    for (p_it = f->on_surf_points->begin(); p_it != f->on_surf_points->end(); p_it++) {
-	ON_2dPoint *p = *p_it;
-	p2t::Point *tp = new p2t::Point(p->x, p->y);
-	(*f->p2t_to_on2_map)[tp] = p;
-	cdt->AddPoint(tp);
-    }
-
-    // All preliminary steps are complete, perform the initial triangulation
-    // using Poly2Tri's triangulation.  NOTE: it is important that the inputs
-    // to Poly2Tri satisfy its constraints - failure here could cause a crash.
-
-    // TODO - wrap all this inside of a libbg routine that catches the crash and
-    // bails out more gracefully...
-    cdt->Triangulate(true, -1);
-
-    // Copy generated triangles to set for easier manipulation
-    std::vector<p2t::Triangle*> cdt_tris = cdt->GetTriangles();
-    for (size_t i = 0; i < cdt_tris.size(); i++) {
-	p2t::Triangle *t = cdt_tris[i];
-	f->tris->insert(new p2t::Triangle(*t));
-    }
-    delete cdt;
-
-    /* Calculate any 3D points we don't already have */
-    populate_3d_pnts(f);
-
-
-    // Identify any singular 3D points
-    f->singularities->clear();
-    if (f->has_singular_trims) {
-	std::set<p2t::Triangle *>::iterator tr_it;
-	for (tr_it = f->tris->begin(); tr_it != f->tris->end(); tr_it++) {
-	    p2t::Triangle *t = *tr_it;
-	    for (size_t j = 0; j < 3; j++) {
-		ON_3dPoint *p3d = (*f->p2t_to_on3_map)[t->GetPoint(j)];
-		if (f->s_cdt->singular_vert_to_norms->find(p3d) != f->s_cdt->singular_vert_to_norms->end()) {
-		    f->singularities->insert(p3d);
-		}
+    // Document the min and max segment lengths - used to guide surface sampling
+    int loop_cnt = face.LoopCount();
+    double min_edge_seg_len = DBL_MAX;
+    double max_edge_seg_len = 0;
+    for (int li = 0; li < loop_cnt; li++) {
+	const ON_BrepLoop *loop = face.Loop(li);
+	for (int lti = 0; lti < loop->TrimCount(); lti++) {
+	    ON_BrepTrim *trim = loop->Trim(lti);
+	    ON_BrepEdge *edge = trim->Edge();
+	    if (!edge) continue;
+	    const ON_Curve* crv = edge->EdgeCurveOf();
+	    if (!crv) continue;
+	    std::set<cdt_mesh::bedge_seg_t *> &epsegs = s_cdt->e2polysegs[edge->m_edge_index];
+	    if (!epsegs.size()) continue;
+	    std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
+	    for (e_it = epsegs.begin(); e_it != epsegs.end(); e_it++) {
+		cdt_mesh::bedge_seg_t *b = *e_it;
+		double seg_dist = b->e_start->DistanceTo(*b->e_end);
+		min_edge_seg_len = (min_edge_seg_len > seg_dist) ? seg_dist : min_edge_seg_len;
+		max_edge_seg_len = (max_edge_seg_len < seg_dist) ? seg_dist : max_edge_seg_len;
 	    }
 	}
     }
+    (*s_cdt->min_edge_seg_len)[face.m_face_index] = min_edge_seg_len;
+    (*s_cdt->max_edge_seg_len)[face.m_face_index] = max_edge_seg_len;
 
-    /* The poly2tri triangulation is not guaranteed to have all the properties
+    // Sample the surface, independent of the trimming curves, to get points that
+    // will tie the mesh to the interior surface.
+    GetInteriorPoints(s_cdt, face.m_face_index);
+
+    cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[face.m_face_index];
+    if (fmesh->cdt()) {
+	struct bu_vls fname = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&fname, "%d-tris.plot3", face.m_face_index);
+	fmesh->tris_plot(bu_vls_cstr(&fname));
+	bu_vls_sprintf(&fname, "%d-tris_2d.plot3", face.m_face_index);
+	fmesh->tris_plot_2d(bu_vls_cstr(&fname));
+	bu_vls_free(&fname);
+    } else {
+	return false;
+    }
+
+    /* The libbg triangulation is not guaranteed to have all the properties
      * we want out of the box - trigger a series of checks */
-    return refine_triangulation(f, 0, 0);
+    return refine_triangulation(s_cdt, fmesh, 0, 0);
 }
 
+#if 0
 int
 ON_Brep_CDT_Face(struct ON_Brep_CDT_Face_State *f)
 {
@@ -304,6 +296,7 @@ ON_Brep_CDT_Face(struct ON_Brep_CDT_Face_State *f)
 
     return do_triangulation(f);
 }
+#endif
 
 static ON_3dVector
 calc_trim_vnorm(ON_BrepVertex& v, ON_BrepTrim *trim)
@@ -545,17 +538,8 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	// EXPERIMENT
 	ON_Brep_CDT_Tessellate2(s_cdt);
 
-#if 0
-	/* To generate watertight meshes, the faces *must* share 3D edge points.  To ensure
-	 * a uniform set of edge points, we first sample all the edges and build their
-	 * point sets */
-
-	Get_Edge_Points(s_cdt);
-#endif
-
     } else {
 	/* Clear the mesh state, if this container was previously used */
-	s_cdt->tri_brep_face->clear();
     }
 
     // Process all of the faces we have been instructed to process, or (default) all faces.
@@ -566,45 +550,10 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
     for (int i = 0; i < fc; i++) {
 	int fi = ((face_cnt == 0) || !faces) ? i : faces[i];
 	if (fi < s_cdt->brep->m_F.Count()) {
-	    ON_BrepFace &face = s_cdt->brep->m_F[fi];
-	    int loop_cnt = face.LoopCount();
-	    double min_edge_seg_len = DBL_MAX;
-	    double max_edge_seg_len = 0;
-	    for (int li = 0; li < loop_cnt; li++) {
-		const ON_BrepLoop *loop = face.Loop(li);
-		for (int lti = 0; lti < loop->TrimCount(); lti++) {
-		    ON_BrepTrim *trim = loop->Trim(lti);
-		    ON_BrepEdge *edge = trim->Edge();
-		    if (!edge) continue;
-		    const ON_Curve* crv = edge->EdgeCurveOf();
-		    if (!crv) continue;
-		    std::set<cdt_mesh::bedge_seg_t *> &epsegs = s_cdt->e2polysegs[edge->m_edge_index];
-		    if (!epsegs.size()) continue;
-		    std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
-		    for (e_it = epsegs.begin(); e_it != epsegs.end(); e_it++) {
-			cdt_mesh::bedge_seg_t *b = *e_it;
-			double seg_dist = b->e_start->DistanceTo(*b->e_end);
-			min_edge_seg_len = (min_edge_seg_len > seg_dist) ? seg_dist : min_edge_seg_len;
-			max_edge_seg_len = (max_edge_seg_len < seg_dist) ? seg_dist : max_edge_seg_len;
-		    }
-		}
-	    }
-	    (*s_cdt->min_edge_seg_len)[face.m_face_index] = min_edge_seg_len;
-	    (*s_cdt->max_edge_seg_len)[face.m_face_index] = max_edge_seg_len;
-
-	    GetInteriorPoints(s_cdt, face.m_face_index);
-
-	    cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[face.m_face_index];
-	    if (!fmesh->cdt()) {
-		face_failures++;
-	    } else {
+	    if (do_triangulation(s_cdt, fi)) {
 		face_successes++;
-		struct bu_vls fname = BU_VLS_INIT_ZERO;
-		bu_vls_sprintf(&fname, "%d-tris.plot3", face.m_face_index);
-		fmesh->tris_plot(bu_vls_cstr(&fname));
-		bu_vls_sprintf(&fname, "%d-tris_2d.plot3", face.m_face_index);
-		fmesh->tris_plot_2d(bu_vls_cstr(&fname));
-		bu_vls_free(&fname);
+	    } else {
+		face_failures++;
 	    }
 	}
     }
