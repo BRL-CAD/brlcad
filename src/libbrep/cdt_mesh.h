@@ -423,6 +423,7 @@ public:
 
     /* Mesh data set accessors */
     std::set<uedge_t> get_boundary_edges();
+    void boundary_edges_update();
     void update_problem_edges();
     std::vector<triangle_t> face_neighbors(const triangle_t &f);
     std::vector<triangle_t> vertex_face_neighbors(long vind);
@@ -464,7 +465,12 @@ public:
     std::map<ON_3dPoint *, long> n2ind;
     std::map<long, long> nmap;
     std::map<uedge_t, std::set<triangle_t>> uedges2tris;
-    std::map<ON_3dPoint *, ON_3dPoint *> *normalmap;
+
+    // cdt_mesh index versions of Brep data
+    std::set<uedge_t> brep_edges;
+    std::set<long> ep; // Brep edge point vertex indices
+    std::set<long> sv; // Singularity vertex indices
+    bool m_bRev;
 
 private:
     /* Data containers */
@@ -477,16 +483,9 @@ private:
     std::set<std::pair<ON_3dPoint *, ON_3dPoint *>> *b_edges;
     std::set<ON_3dPoint *> *singularities;
 
-    // cdt_mesh index versions of Brep data
-    std::set<uedge_t> brep_edges;
-    std::set<long> ep; // Brep edge point vertex indices
-    std::set<long> sv; // Singularity vertex indices
-    bool m_bRev;
-
     // Boundary edge information
     std::set<uedge_t> boundary_edges;
     bool boundary_edges_stale;
-    void boundary_edges_update();
     std::set<uedge_t> problem_edges;
     edge_t find_boundary_oriented_edge(uedge_t &ue);
 

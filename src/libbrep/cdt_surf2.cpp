@@ -907,7 +907,7 @@ GetInteriorPoints(struct ON_Brep_CDT_State *s_cdt, int face_index)
 		nq = tq;
 		// Let the counter know we're going deeper
 		split_depth++;
-		std::cout << "split_depth: " << split_depth << "\n";
+		//std::cout << "split_depth: " << split_depth << "\n";
 	    }
 	}
 

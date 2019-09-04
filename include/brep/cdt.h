@@ -92,7 +92,7 @@ ON_Brep_CDT_VList(
     struct bu_list *vlfree,
     struct bu_color *c,
     int mode,
-    const struct ON_Brep_CDT_State *s);
+    struct ON_Brep_CDT_State *s);
 
 #if 0
 /* Given two or more triangulation states, refine them to clear any face

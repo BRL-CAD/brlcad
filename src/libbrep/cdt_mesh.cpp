@@ -1477,13 +1477,12 @@ cdt_mesh_t::set_brep_data(
     std::set<ON_3dPoint *> *e,
     std::set<std::pair<ON_3dPoint *, ON_3dPoint *>> *original_b_edges,
     std::set<ON_3dPoint *> *s,
-    std::map<ON_3dPoint *, ON_3dPoint *> *n)
+    std::map<ON_3dPoint *, ON_3dPoint *> *UNUSED(n))
 {
     this->m_bRev = brev;
     this->edge_pnts = e;
     this->b_edges = original_b_edges;
     this->singularities = s;
-    this->normalmap = n;
 }
 
 std::set<uedge_t>
@@ -1603,19 +1602,9 @@ void cdt_mesh_t::build(std::set<p2t::Triangle *> *cdttri, std::map<p2t::Point *,
 	}
     }
 
-    // Populate normals
-    std::set<ON_3dPoint *> uniq_n3d;
-    std::map<ON_3dPoint *, ON_3dPoint *>::iterator n_it;
-    for (n_it = normalmap->begin(); n_it != normalmap->end(); n_it++) {
-	uniq_n3d.insert(n_it->second);
-    }
-    for (u_it = uniq_n3d.begin(); u_it != uniq_n3d.end(); u_it++) {
-	this->normals.push_back(*u_it);
-	this->n2ind[*u_it] = this->normals.size() - 1;
-    }
-    for (u_it = uniq_p3d.begin(); u_it != uniq_p3d.end(); u_it++) {
-	nmap[p2ind[*u_it]] = n2ind[(*normalmap)[*u_it]];
-    }
+    //for (u_it = uniq_p3d.begin(); u_it != uniq_p3d.end(); u_it++) {
+//	nmap[p2ind[*u_it]] = n2ind[(*normalmap)[*u_it]];
+ //   }
 
     // From the triangles, populate the containers
     for (s_it = cdttri->begin(); s_it != cdttri->end(); s_it++) {
@@ -2376,6 +2365,13 @@ cdt_mesh_t::cdt()
 	tri3d.v[0] = p2ind[pnts[p2d3d[tri2d.v[0]]]];
 	tri3d.v[1] = p2ind[pnts[p2d3d[tri2d.v[1]]]];
 	tri3d.v[2] = p2ind[pnts[p2d3d[tri2d.v[2]]]];
+
+	if (m_bRev) {
+	    long tmp = tri3d.v[1];
+	    tri3d.v[1] = tri3d.v[2];
+	    tri3d.v[2] = tmp;
+	}
+
 	tri_add(tri3d);
     }
 
@@ -2918,7 +2914,6 @@ cdt_mesh_t::deserialize(const char *fname)
     edge_pnts = NULL;
     b_edges = NULL;
     singularities = NULL;
-    normalmap = NULL;
 
     brep_edges.clear();
     ep.clear();

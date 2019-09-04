@@ -783,7 +783,7 @@ ON_Brep_CDT_VList_Face(
 	struct bu_list *vlfree,
 	int face_index,
 	int mode,
-	const struct ON_Brep_CDT_State *s)
+	struct ON_Brep_CDT_State *s)
 {
     point_t pt[3] = {VINIT_ZERO, VINIT_ZERO, VINIT_ZERO};
     vect_t nv[3] = {VINIT_ZERO, VINIT_ZERO, VINIT_ZERO};
@@ -792,23 +792,22 @@ ON_Brep_CDT_VList_Face(
     point_t pt2 = VINIT_ZERO;
 #endif
 
-    struct ON_Brep_CDT_Face_State *f = (*s->faces)[face_index];
+    cdt_mesh::cdt_mesh_t *fmesh = &(s->fmeshes[face_index]);
     std::set<cdt_mesh::triangle_t>::iterator tr_it;
-    std::set<cdt_mesh::triangle_t> tris = f->fmesh.tris;
-    std::map<ON_3dPoint *, ON_3dPoint *> *normalmap = f->on3_to_norm_map;
+    std::set<cdt_mesh::triangle_t> tris = fmesh->tris;
 
     switch (mode) {
 	case 0:
 	    // 3D shaded triangles
 	    for (tr_it = tris.begin(); tr_it != tris.end(); tr_it++) {
 		for (size_t j = 0; j < 3; j++) {
-		    ON_3dPoint *p3d = f->fmesh.pnts[(*tr_it).v[j]];
+		    ON_3dPoint *p3d = fmesh->pnts[(*tr_it).v[j]];
 		    ON_3dPoint *onorm = NULL;
-		    if (f->s_cdt->singular_vert_to_norms->find(p3d) != f->s_cdt->singular_vert_to_norms->end()) {
+		    if (s->singular_vert_to_norms->find(p3d) != s->singular_vert_to_norms->end()) {
 			// Use calculated normal for singularity points
-			onorm = (*f->s_cdt->singular_vert_to_norms)[p3d];
+			onorm = (*s->singular_vert_to_norms)[p3d];
 		    } else {
-			onorm = (*normalmap)[p3d];
+			onorm = fmesh->normals[fmesh->nmap[(*tr_it).v[j]]];
 		    }
 		    VSET(pt[j], p3d->x, p3d->y, p3d->z);
 		    VSET(nv[j], onorm->x, onorm->y, onorm->z);
@@ -829,7 +828,7 @@ ON_Brep_CDT_VList_Face(
 	    // 3D wireframe
 	    for (tr_it = tris.begin(); tr_it != tris.end(); tr_it++) {
 		for (size_t j = 0; j < 3; j++) {
-		    ON_3dPoint *p3d = f->fmesh.pnts[(*tr_it).v[j]];
+		    ON_3dPoint *p3d = fmesh->pnts[(*tr_it).v[j]];
 		    VSET(pt[j], p3d->x, p3d->y, p3d->z);
 		}
 		//tri one
@@ -877,7 +876,7 @@ int ON_Brep_CDT_VList(
 	struct bu_list *vlfree,
 	struct bu_color *c,
 	int mode,
-	const struct ON_Brep_CDT_State *s)
+	struct ON_Brep_CDT_State *s)
 {
     int r, g, b;
     struct bu_list *vhead = NULL;
@@ -900,7 +899,7 @@ int ON_Brep_CDT_VList(
    }
 
    for (int i = 0; i < s->brep->m_F.Count(); i++) {
-       if ((*s->faces)[i] && (*s->faces)[i]->tris->size()) {
+       if (s->fmeshes[i].tris.size()) {
 	   (void)ON_Brep_CDT_VList_Face(vhead, vlfree, i, mode, s);
        }
    }

@@ -132,28 +132,46 @@ refine_triangulation(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cdt_mesh_t *fmes
 
     // Now, the hard part - create local subsets, remesh them, and replace the original
     // triangles with the new ones.
-
-#if 0
-    f->fmesh.set_brep_data(s_cdt->brep->m_F[fmesh->f_id].m_bRev, s_cdt->edge_pnts, &f->s_cdt->fedges, f->singularities, f->on3_to_norm_map);
-    f->fmesh.f_id = f->ind;
-    f->fmesh.build(f->tris, f->p2t_to_on3_map);
-
-    ret = (f->fmesh.repair()) ? 1 : -1;
-    if (ret == -1) {
-	bu_log("Face %d: triangulation FAILED!\n", f->ind);
-	return -1;
+    if (!fmesh->repair()) {
+	bu_log("Face %d: repair FAILED!\n", fmesh->f_id);
+	return false;
     }
-    ret = (f->fmesh.valid()) ? 1 : -1;
 
-    if (ret > 0) {
-	bu_log("Face %d: successful triangulation after %d passes\n", f->ind, cnt);
+    if (fmesh->valid()) {
+	bu_log("Face %d: successful triangulation after %d passes\n", fmesh->f_id, cnt);
     } else {
-	bu_log("Face %d: triangulation produced invalid mesh!\n", f->ind);
+	bu_log("Face %d: triangulation produced invalid mesh!\n", fmesh->f_id);
     }
-    return ret;
-#endif
-
     return true;
+}
+
+void
+loop_edges(cdt_mesh::cdt_mesh_t *fmesh, cdt_mesh::cpolygon_t *loop)
+{
+    size_t vcnt = 1;
+    cdt_mesh::cpolyedge_t *pe = (*loop->poly.begin());
+    cdt_mesh::cpolyedge_t *first = pe;
+    cdt_mesh::cpolyedge_t *next = pe->next;
+
+    long p1_ind = fmesh->p2ind[fmesh->pnts[fmesh->p2d3d[loop->p2o[pe->v[0]]]]];
+    long p2_ind = fmesh->p2ind[fmesh->pnts[fmesh->p2d3d[loop->p2o[pe->v[1]]]]];
+    fmesh->ep.insert(p1_ind);
+    fmesh->ep.insert(p2_ind);
+    fmesh->brep_edges.insert(cdt_mesh::uedge_t(p1_ind, p2_ind));
+
+    while (first != next) {
+	vcnt++;
+	p1_ind = fmesh->p2ind[fmesh->pnts[fmesh->p2d3d[loop->p2o[next->v[0]]]]];
+	p2_ind = fmesh->p2ind[fmesh->pnts[fmesh->p2d3d[loop->p2o[next->v[1]]]]];
+	fmesh->ep.insert(p1_ind);
+	fmesh->ep.insert(p2_ind);
+	fmesh->brep_edges.insert(cdt_mesh::uedge_t(p1_ind, p2_ind));
+	next = next->next;
+	if (vcnt > loop->poly.size()) {
+	    std::cerr << "infinite loop when reading loop edges\n";
+	    return;
+	}
+    }
 }
 
 static bool
@@ -192,6 +210,8 @@ do_triangulation(struct ON_Brep_CDT_State *s_cdt, int fi)
     GetInteriorPoints(s_cdt, face.m_face_index);
 
     cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[face.m_face_index];
+    fmesh->f_id = face.m_face_index;
+    fmesh->m_bRev = face.m_bRev;
     if (fmesh->cdt()) {
 	struct bu_vls fname = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&fname, "%d-tris.plot3", face.m_face_index);
@@ -202,6 +222,22 @@ do_triangulation(struct ON_Brep_CDT_State *s_cdt, int fi)
     } else {
 	return false;
     }
+
+    // List singularities
+    for (size_t i = 0; i < fmesh->pnts.size(); i++) {
+	ON_3dPoint *p3d = fmesh->pnts[i];
+	if (s_cdt->singular_vert_to_norms->find(p3d) != s_cdt->singular_vert_to_norms->end()) {
+	    fmesh->sv.insert(fmesh->p2ind[p3d]);
+	}
+    }
+
+    // List edges
+    loop_edges(fmesh, &fmesh->outer_loop);
+    std::map<int, cdt_mesh::cpolygon_t*>::iterator i_it;
+    for (i_it = fmesh->inner_loops.begin(); i_it != fmesh->inner_loops.end(); i_it++) {
+	loop_edges(fmesh, i_it->second);
+    }
+    fmesh->boundary_edges_update();
 
     /* The libbg triangulation is not guaranteed to have all the properties
      * we want out of the box - trigger a series of checks */

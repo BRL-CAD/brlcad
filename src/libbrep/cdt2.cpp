@@ -1458,49 +1458,6 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt)
 	plot_rtree_3d(s_cdt->edge_segs_3d[index], bu_vls_cstr(&fname));
     }
 
-#if 0
-    for (int index = 0; index < brep->m_F.Count(); index++) {
-	ON_BrepFace &face = s_cdt->brep->m_F[index];
-	int loop_cnt = face.LoopCount();
-	double min_edge_seg_len = DBL_MAX;
-	double max_edge_seg_len = 0;
-	for (int li = 0; li < loop_cnt; li++) {
-	    const ON_BrepLoop *loop = face.Loop(li);
-	    for (int lti = 0; lti < loop->TrimCount(); lti++) {
-		ON_BrepTrim *trim = loop->Trim(lti);
-		ON_BrepEdge *edge = trim->Edge();
-		if (!edge) continue;
-		const ON_Curve* crv = edge->EdgeCurveOf();
-		if (!crv) continue;
-		std::set<cdt_mesh::bedge_seg_t *> &epsegs = s_cdt->e2polysegs[edge->m_edge_index];
-		if (!epsegs.size()) continue;
-		std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
-		for (e_it = epsegs.begin(); e_it != epsegs.end(); e_it++) {
-		    cdt_mesh::bedge_seg_t *b = *e_it;
-		    double seg_dist = b->e_start->DistanceTo(*b->e_end);
-		    min_edge_seg_len = (min_edge_seg_len > seg_dist) ? seg_dist : min_edge_seg_len;
-		    max_edge_seg_len = (max_edge_seg_len < seg_dist) ? seg_dist : max_edge_seg_len;
-		}
-	    }
-	}
-	(*s_cdt->min_edge_seg_len)[index] = min_edge_seg_len;
-	(*s_cdt->max_edge_seg_len)[index] = max_edge_seg_len;
-
-	GetInteriorPoints(s_cdt, index);
-    }
-
-    for (int face_index = 0; face_index < brep->m_F.Count(); face_index++) {
-	cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[face_index];
-	fmesh->cdt();
-	struct bu_vls fname = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&fname, "%d-tris.plot3", face_index);
-	fmesh->tris_plot(bu_vls_cstr(&fname));
-	bu_vls_sprintf(&fname, "%d-tris_2d.plot3", face_index);
-	fmesh->tris_plot_2d(bu_vls_cstr(&fname));
-	bu_vls_free(&fname);
-    }
-#endif
-
     return 0;
 
 }
