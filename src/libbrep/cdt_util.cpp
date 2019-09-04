@@ -471,15 +471,18 @@ ON_Brep_CDT_VList_Face(
 	    for (tr_it = tris.begin(); tr_it != tris.end(); tr_it++) {
 		for (size_t j = 0; j < 3; j++) {
 		    ON_3dPoint *p3d = fmesh->pnts[(*tr_it).v[j]];
-		    ON_3dPoint *onorm = NULL;
+		    ON_3dPoint onorm;
 		    if (s->singular_vert_to_norms->find(p3d) != s->singular_vert_to_norms->end()) {
 			// Use calculated normal for singularity points
-			onorm = (*s->singular_vert_to_norms)[p3d];
+			onorm = *(*s->singular_vert_to_norms)[p3d];
 		    } else {
-			onorm = fmesh->normals[fmesh->nmap[(*tr_it).v[j]]];
+			onorm = *fmesh->normals[fmesh->nmap[(*tr_it).v[j]]];
 		    }
 		    VSET(pt[j], p3d->x, p3d->y, p3d->z);
-		    VSET(nv[j], onorm->x, onorm->y, onorm->z);
+		    if (fmesh->m_bRev) {
+			onorm = -1 * onorm;
+		    }
+		    VSET(nv[j], onorm.x, onorm.y, onorm.z);
 		}
 		//tri one
 		BN_ADD_VLIST(vlfree, vhead, nv[0], BN_VLIST_TRI_START);
