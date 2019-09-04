@@ -1186,12 +1186,6 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	// Characterize the vertices - are they used by non-linear edges?
 	std::vector<int> vert_type;
 	for (int i = 0; i < brep->m_V.Count(); i++) {
-
-	    if (i > 61 && i < 66) {
-		ON_3dPoint p = brep->m_V[i].Point();
-		std::cout << "vert " << i << " from face 34: (" << p.x << "," << p.y << "," << p.z << ")\n";
-	    }
-
 	    int has_curved_edge = 0;
 	    for (int j = 0; j < brep->m_V[i].m_ei.Count(); j++) {
 		ON_BrepEdge &edge = brep->m_E[brep->m_V[i].m_ei[j]];
