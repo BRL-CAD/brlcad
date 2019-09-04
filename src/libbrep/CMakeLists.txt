@@ -24,11 +24,10 @@ set(LIBBREP_SOURCES
   Subcurve.cpp
   Subsurface.cpp
   boolean.cpp
-  cdt_surf2.cpp
+  cdt_surf.cpp
   cdt_util.cpp
   cdt_validate.cpp
   cdt.cpp
-  cdt2.cpp
   cdt_mesh.cpp
   intersect.cpp
   libbrep_brep_tools.cpp
