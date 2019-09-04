@@ -1912,49 +1912,32 @@ ON_Brep_CDT_Mesh(
 	}
     }
 
-#if 0
-    /* For the non-zero-area triangles sharing an edge with a non-trivially
-     * degenerate zero area triangle, we need to build new polygons from each
-     * triangle and the "orphaned" points along the edge(s).  We then
-     * re-tessellate in the triangle's parametric space.
-     *
-     * An "involved" triangle is a triangle with two of its three points in the
-     * face's degen_pnts set (i.e. it shares an edge with a non-trivially
-     * degenerate zero-area triangle.)
-     */
-    for (int fi = 0; fi != s_cdt->brep->m_F.Count(); fi++) {
-	struct ON_Brep_CDT_Face_State *f = (*s_cdt->faces)[fi];
-	if (f) {
-	    triangles_rebuild_involved(f);
-	}
-    }
-#endif
-
     /* We know now the final triangle set.  We need to build up the set of
      * unique points and normals to generate a mesh containing only the
      * information actually used by the final triangle set. */
     std::set<ON_3dPoint *> vfpnts;
     std::set<ON_3dPoint *> vfnormals;
+    std::set<ON_3dPoint *> flip_normals;
     for (size_t fi = 0; fi < active_faces.size(); fi++) {
 	cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[fi];
-	//std::map<ON_3dPoint *, ON_3dPoint *> *normalmap = fmesh->normalmap;
 	std::set<cdt_mesh::triangle_t>::iterator tr_it;
 	for (tr_it = fmesh->tris.begin(); tr_it != fmesh->tris.end(); tr_it++) {
 	    for (size_t j = 0; j < 3; j++) {
 		ON_3dPoint *p3d = fmesh->pnts[(*tr_it).v[j]];
 		vfpnts.insert(p3d);
-#if 0
 		ON_3dPoint *onorm = NULL;
 		if (s_cdt->singular_vert_to_norms->find(p3d) != s_cdt->singular_vert_to_norms->end()) {
 		    // Use calculated normal for singularity points
 		    onorm = (*s_cdt->singular_vert_to_norms)[p3d];
 		} else {
-		    onorm = (*normalmap)[p3d];
+		    onorm = fmesh->normals[fmesh->nmap[(*tr_it).v[j]]];
 		}
 		if (onorm) {
 		    vfnormals.insert(onorm);
+		    if (fmesh->m_bRev) {
+			flip_normals.insert(onorm);
+		    }
 		}
-#endif
 	    }
 	}
     }
@@ -2009,9 +1992,13 @@ ON_Brep_CDT_Mesh(
     if (normals) {
 	for (p_it = vfnormals.begin(); p_it != vfnormals.end(); p_it++) {
 	    ON_3dPoint *vn = *p_it;
-	    (*normals)[norm_ind*3] = vn->x;
-	    (*normals)[norm_ind*3+1] = vn->y;
-	    (*normals)[norm_ind*3+2] = vn->z;
+	    ON_3dVector vnf(*vn);
+	    if (flip_normals.find(vn) != flip_normals.end()) {
+		vnf = -1 *vnf;
+	    }
+	    (*normals)[norm_ind*3] = vnf.x;
+	    (*normals)[norm_ind*3+1] = vnf.y;
+	    (*normals)[norm_ind*3+2] = vnf.z;
 	    on_norm_to_bot_norm[vn] = norm_ind;
 	    norm_ind++;
 	}
@@ -2032,28 +2019,19 @@ ON_Brep_CDT_Mesh(
 	    for (size_t j = 0; j < 3; j++) {
 		ON_3dPoint *op = fmesh->pnts[(*tr_it).v[j]];
 		(*faces)[face_cnt*3 + j] = on_pnt_to_bot_pnt[op];
-#if 0
+
 		if (normals) {
-		    ON_3dPoint *onorm = (*normalmap)[op];
+		    ON_3dPoint *onorm;
+		    if (s_cdt->singular_vert_to_norms->find(op) != s_cdt->singular_vert_to_norms->end()) {
+			// Use calculated normal for singularity points
+			onorm = (*s_cdt->singular_vert_to_norms)[op];
+		    } else {
+			onorm = fmesh->normals[fmesh->nmap[fmesh->p2ind[op]]];
+		    }
+
 		    (*face_normals)[face_cnt*3 + j] = on_norm_to_bot_norm[onorm];
 		}
-#endif
 	    }
-#if 0
-	    // If we have a reversed face we need to adjust the triangle vertex
-	    // ordering.
-	    if (s_cdt->brep->m_F[active_faces[fi]].m_bRev) {
-		int ftmp = (*faces)[face_cnt*3 + 1];
-		(*faces)[face_cnt*3 + 1] = (*faces)[face_cnt*3 + 2];
-		(*faces)[face_cnt*3 + 2] = ftmp;
-		if (normals) {
-		    // Keep the normals in sync with the vertex points
-		    int fntmp = (*face_normals)[face_cnt*3 + 1];
-		    (*face_normals)[face_cnt*3 + 1] = (*face_normals)[face_cnt*3 + 2];
-		    (*face_normals)[face_cnt*3 + 2] = fntmp;
-		}
-	    }
-#endif
 
 	    face_cnt++;
 	}
