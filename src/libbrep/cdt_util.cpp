@@ -380,7 +380,6 @@ cdt_tol_global_calc(struct ON_Brep_CDT_State *s)
     s->absmin = (s->absmax < s->absmin) ? s->absmax : s->absmin;
 
     // Get the normal based parameter as well
-    s->tol.norm = 40*ON_PI/180;
     if (s->tol.norm > ON_ZERO_TOLERANCE) {
 	s->cos_within_ang = cos(s->tol.norm);
     } else {
