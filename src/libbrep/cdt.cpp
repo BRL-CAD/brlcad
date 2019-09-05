@@ -1327,8 +1327,10 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 			    // 3D points are globally unique, but normals are not - the same edge point may
 			    // have different normals from two faces at a sharp edge.  Calculate the
 			    // face normal for this point on this surface.
-			    ON_3dPoint tmp1;
-			    surface_EvNormal(trim->SurfaceOf(), cp.x, cp.y, tmp1, norm);
+			    norm = calc_trim_vnorm(*trim->Vertex(0), trim);
+			    if (face.m_bRev) {
+				norm = -1 * norm;
+			    }
 			} else {
 			    // Surface sampling will need some information about singularities
 			    s_cdt->strim_pnts[face_index][trim->m_trim_index] = op3d;
@@ -1362,8 +1364,10 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 			    // 3D points are globally unique, but normals are not - the same edge point may
 			    // have different normals from two faces at a sharp edge.  Calculate the
 			    // face normal for this point on this surface.
-			    ON_3dPoint tmp1;
-			    surface_EvNormal(trim->SurfaceOf(), cp.x, cp.y, tmp1, norm);
+			    norm = calc_trim_vnorm(*trim->Vertex(1), trim);
+			    if (face.m_bRev) {
+				norm = -1 * norm;
+			    }
 			} else {
 			    // Surface sampling will need some information about singularities
 			    s_cdt->strim_pnts[face_index][trim->m_trim_index] = cp3d;
