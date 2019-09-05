@@ -664,15 +664,7 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int
 	double old_trim_start = bseg->tseg2->trim_start;
 	double old_trim_end = bseg->tseg2->trim_end;
 	poly2->remove_ordered_edge(cdt_mesh::edge_t(v[0], v[1]));
-	size_t csize = poly2->pnts_2d.size();
 	long poly2_2dind = poly2->add_point(trim2_mid_2d, f2_ind2d);
-	if (fmesh2->f_id == 24) {
-	    if (csize >= poly2->pnts_2d.size()) {
-		std::cout << "add_point FAILED!\n";
-	    } else {
-		std::cout << "Adding point " << poly2_2dind << "\n";
-	    }
-	}
 	struct cdt_mesh::edge_t poly2_edge1(v[0], poly2_2dind);
 	poly2_ne1 = poly2->add_ordered_edge(poly2_edge1);
 	poly2_ne1->trim_ind = trim_ind;
@@ -1415,10 +1407,6 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 		    }
 		}
 	    }
-	    if (fmesh->f_id == 24) {
-		fmesh->polygon_plot_2d(&fmesh->outer_loop, "oloop_orig.plot3");
-		std::cout << "Polygon point count: " << fmesh->outer_loop.pnts_2d.size() << "\n";
-	    }
 	}
 
 	std::map<int, std::set<cdt_mesh::bedge_seg_t *>>::iterator epoly_it;
@@ -1445,25 +1433,9 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	    for (seg_it = wsegs.begin(); seg_it != wsegs.end(); seg_it++) {
 		cdt_mesh::bedge_seg_t *bseg = *seg_it;
 
-		bool doplot = false;
-		if ((s_cdt->brep->m_T[bseg->tseg1->trim_ind].Face()->m_face_index == 24) || 
-			(s_cdt->brep->m_T[bseg->tseg2->trim_ind].Face()->m_face_index == 24)) {
-		    cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[24];
-		    std::cout << "Polygon point count: " << fmesh->outer_loop.pnts_2d.size() << "\n";
-		    fmesh->polygon_plot_2d(&fmesh->outer_loop, "oloop.plot3");
-		    doplot = true;
-		}
-
 		if (!initialize_edge_segs(s_cdt, bseg)) {
 		    std::cout << "Initialization failed for edge " << epoly_it->first << "\n";
 		}
-
-		if (doplot) {
-		    cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[24];
-		    std::cout << "Polygon point count: " << fmesh->outer_loop.pnts_2d.size() << "\n";
-		    fmesh->polygon_plot_2d(&fmesh->outer_loop, "oloop.plot3");
-		}
-
 	    }
 	}
 
@@ -1475,11 +1447,6 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	    fmesh->f_id = face.m_face_index;
 	    fmesh->m_bRev = face.m_bRev;
 
-	    if (fmesh->f_id == 24) {
-		fmesh->outer_loop.print();
-		fmesh->polygon_plot_2d(&fmesh->outer_loop, "oloop.plot3");
-	    }
-	
 	    if (!fmesh->outer_loop.closed()) {
 		std::cout << "Warning - loop not closed\n";
 	    }
@@ -1509,7 +1476,6 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	    }
 
 	}
-exit(0);
 
 	// On to tolerance based splitting.  Process the non-linear edges first -
 	// we will need information from them to handle the linear edges
