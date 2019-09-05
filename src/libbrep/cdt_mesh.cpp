@@ -3534,13 +3534,13 @@ void cdt_mesh_t::polygon_plot_2d(cpolygon_t *polygon, const char *filename)
     cpolyedge_t *efirst = *(polygon->poly.begin());
     cpolyedge_t *ecurr = NULL;
 
-    ppnt.x = polygon->pnts_2d[efirst->v[0]].first;
-    ppnt.y = polygon->pnts_2d[efirst->v[0]].second;
+    ppnt.x = m_pnts_2d[polygon->p2o[efirst->v[0]]].first;
+    ppnt.y = m_pnts_2d[polygon->p2o[efirst->v[0]]].second;
     VSET(bnp, ppnt.x, ppnt.y, 0);
     pdv_3move(plot_file, bnp);
     VMINMAX(pmin, pmax, bnp);
-    ppnt.x = polygon->pnts_2d[efirst->v[1]].first;
-    ppnt.y = polygon->pnts_2d[efirst->v[1]].second;
+    ppnt.x = m_pnts_2d[polygon->p2o[efirst->v[1]]].first;
+    ppnt.y = m_pnts_2d[polygon->p2o[efirst->v[1]]].second;
     VSET(bnp, ppnt.x, ppnt.y, 0);
     pdv_3cont(plot_file, bnp);
     VMINMAX(pmin, pmax, bnp);
@@ -3549,8 +3549,8 @@ void cdt_mesh_t::polygon_plot_2d(cpolygon_t *polygon, const char *filename)
     while (ecurr != efirst && ecnt < polygon->poly.size()+1) {
 	ecnt++;
 	ecurr = (!ecurr) ? efirst->next : ecurr->next;
-	ppnt.x = polygon->pnts_2d[polygon->p2o[ecurr->v[1]]].first;
-	ppnt.y = polygon->pnts_2d[polygon->p2o[ecurr->v[1]]].second;
+	ppnt.x = m_pnts_2d[polygon->p2o[ecurr->v[1]]].first;
+	ppnt.y = m_pnts_2d[polygon->p2o[ecurr->v[1]]].second;
 	VSET(bnp, ppnt.x, ppnt.y, 0);
 	pdv_3cont(plot_file, bnp);
 	VMINMAX(pmin, pmax, bnp);
