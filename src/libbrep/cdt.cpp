@@ -1440,6 +1440,8 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 
 	// On to tolerance based splitting.  Process the non-linear edges first -
 	// we will need information from them to handle the linear edges
+	//
+	// TODO - investigate behavior of NIST2 edge 613
 	for (int index = 0; index < brep->m_E.Count(); index++) {
 	    ON_BrepEdge& edge = brep->m_E[index];
 	    const ON_Curve* crv = edge.EdgeCurveOf();
