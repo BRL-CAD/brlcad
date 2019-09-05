@@ -303,8 +303,18 @@ trim_normal(ON_BrepTrim *trim, ON_2dPoint &cp)
 	// 3D points are globally unique, but normals are not - the same edge point may
 	// have different normals from two faces at a sharp edge.  Calculate the
 	// face normal for this point on this surface.
-	ON_3dPoint tmp1;
-	surface_EvNormal(trim->SurfaceOf(), cp.x, cp.y, tmp1, norm);
+	ON_Plane fplane;
+	const ON_Surface *s = trim->SurfaceOf();
+	if (s->IsPlanar(&fplane, BREP_PLANAR_TOL)) {
+	    norm = fplane.Normal();
+	} else {
+	    ON_3dPoint tmp1;
+	    surface_EvNormal(trim->SurfaceOf(), cp.x, cp.y, tmp1, norm);
+	}
+	if (trim->Face()->m_bRev) {
+	    norm = -1 * norm;
+	}
+	//std::cout << "Face " << trim->Face()->m_face_index << ", Loop " << trim->Loop()->m_loop_index << " norm: " << norm.x << "," << norm.y << "," << norm.z << "\n";
     }
     return norm;
 }
@@ -1328,9 +1338,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 			    // have different normals from two faces at a sharp edge.  Calculate the
 			    // face normal for this point on this surface.
 			    norm = calc_trim_vnorm(*trim->Vertex(0), trim);
-			    if (face.m_bRev) {
-				norm = -1 * norm;
-			    }
+			    //std::cout << "Face " << face.m_face_index << ", Loop " << loop->m_loop_index << ", Vert " << trim->Vertex(0)->m_vertex_index << " norm: " << norm.x << "," << norm.y << "," << norm.z << "\n";
 			} else {
 			    // Surface sampling will need some information about singularities
 			    s_cdt->strim_pnts[face_index][trim->m_trim_index] = op3d;
@@ -1365,9 +1373,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 			    // have different normals from two faces at a sharp edge.  Calculate the
 			    // face normal for this point on this surface.
 			    norm = calc_trim_vnorm(*trim->Vertex(1), trim);
-			    if (face.m_bRev) {
-				norm = -1 * norm;
-			    }
+			    //std::cout << "Face " << face.m_face_index << ", Loop " << loop->m_loop_index << ", Vert " << trim->Vertex(1)->m_vertex_index << " norm: " << norm.x << "," << norm.y << "," << norm.z << "\n";
 			} else {
 			    // Surface sampling will need some information about singularities
 			    s_cdt->strim_pnts[face_index][trim->m_trim_index] = cp3d;

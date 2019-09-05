@@ -1581,6 +1581,9 @@ cdt_mesh_t::tnorm(const triangle_t &t)
     ON_3dVector e2 = *p3 - *p1;
     ON_3dVector tdir = ON_CrossProduct(e1, e2);
     tdir.Unitize();
+    if (m_bRev) {
+	tdir = -1 * tdir;
+    }
     return tdir;
 }
 

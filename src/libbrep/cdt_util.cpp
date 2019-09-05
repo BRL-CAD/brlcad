@@ -479,9 +479,6 @@ ON_Brep_CDT_VList_Face(
 			onorm = *fmesh->normals[fmesh->nmap[(*tr_it).v[j]]];
 		    }
 		    VSET(pt[j], p3d->x, p3d->y, p3d->z);
-		    if (fmesh->m_bRev) {
-			onorm = -1 * onorm;
-		    }
 		    VSET(nv[j], onorm.x, onorm.y, onorm.z);
 		}
 		//tri one

@@ -435,8 +435,13 @@ filter_surface_edge_pnts_2(struct cdt_surf_info_2 *sinfo)
 	if (!surface_EvNormal(sinfo->s, n2dp.x, n2dp.y, p3d, norm)) {
 	    p3d = sinfo->s->PointAt(n2dp.x, n2dp.y);
 	}
-	long f3ind = fmesh->add_point(new ON_3dPoint(p3d)); 
-	long fnind = fmesh->add_normal(new ON_3dPoint(norm)); 
+	if (fmesh->m_bRev) {
+	    norm = -1 * norm;
+	}
+	//std::cout << "Face " << fmesh->f_id << " norm: " << norm.x << "," << norm.y << "," << norm.z << "\n";
+
+	long f3ind = fmesh->add_point(new ON_3dPoint(p3d));
+	long fnind = fmesh->add_normal(new ON_3dPoint(norm));
 	fmesh->p2d3d[f_ind2d] = f3ind;
 	fmesh->nmap[f3ind] = fnind;
     }
