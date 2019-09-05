@@ -934,6 +934,7 @@ do_triangulation(struct ON_Brep_CDT_State *s_cdt, int fi)
     }
 
     // List edges
+    fmesh->brep_edges.clear();
     loop_edges(fmesh, &fmesh->outer_loop);
     std::map<int, cdt_mesh::cpolygon_t*>::iterator i_it;
     for (i_it = fmesh->inner_loops.begin(); i_it != fmesh->inner_loops.end(); i_it++) {
@@ -1437,6 +1438,42 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 		}
 	    }
 	}
+
+	// Check the CDT meshing - at this point, we should be able to produce a valid
+	// triangulation for all faces.  If not, refine the larger curved edges until we can.
+	for (int index = 0; index < brep->m_F.Count(); index++) {
+	    ON_BrepFace &face = s_cdt->brep->m_F[index];
+	    cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[face.m_face_index];
+	    fmesh->f_id = face.m_face_index;
+	    fmesh->m_bRev = face.m_bRev;
+
+	    if (fmesh->cdt()) {
+
+		// List singularities
+		for (size_t i = 0; i < fmesh->pnts.size(); i++) {
+		    ON_3dPoint *p3d = fmesh->pnts[i];
+		    if (s_cdt->singular_vert_to_norms->find(p3d) != s_cdt->singular_vert_to_norms->end()) {
+			fmesh->sv.insert(fmesh->p2ind[p3d]);
+		    }
+		}
+
+		// List edges
+		fmesh->brep_edges.clear();
+		loop_edges(fmesh, &fmesh->outer_loop);
+		std::map<int, cdt_mesh::cpolygon_t*>::iterator i_it;
+		for (i_it = fmesh->inner_loops.begin(); i_it != fmesh->inner_loops.end(); i_it++) {
+		    loop_edges(fmesh, i_it->second);
+		}
+		fmesh->boundary_edges_update();
+		if (!fmesh->valid()) {
+		    std::cout << "Face " << face.m_face_index << " base mesh CDT invalid\n";
+		}
+	    } else {
+		std::cout << "Face " << face.m_face_index << " base mesh CDT failed\n";
+	    }
+
+	}
+exit(0);
 
 	// On to tolerance based splitting.  Process the non-linear edges first -
 	// we will need information from them to handle the linear edges
