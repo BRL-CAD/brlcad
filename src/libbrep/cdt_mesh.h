@@ -423,6 +423,7 @@ public:
 	    std::map<ON_3dPoint *, ON_3dPoint *> *n
 	    );
     bool repair();
+    void reset();
     bool valid();
     bool serialize(const char *fname);
     bool deserialize(const char *fname);
@@ -516,7 +517,6 @@ private:
     // Mesh manipulation functions
     bool tri_add(triangle_t &atris);
     void tri_remove(triangle_t &etris);
-    void reset();
 
     // Plotting utility functions
     void plot_tri(const triangle_t &t, struct bu_color *buc, FILE *plot, int r, int g, int b);

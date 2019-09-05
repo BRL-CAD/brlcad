@@ -1474,6 +1474,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	    } else {
 		std::cout << "Face " << face.m_face_index << " base mesh CDT failed\n";
 	    }
+	    fmesh->reset();
 
 	}
 
