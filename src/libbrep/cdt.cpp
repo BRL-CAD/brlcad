@@ -553,8 +553,8 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int
     if (!bseg->tseg1 || !bseg->tseg2 || !bseg->nc) return nedges;
 
     ON_BrepEdge& edge = s_cdt->brep->m_E[bseg->edge_ind];
-    ON_BrepTrim *trim1 = edge.Trim(0);
-    ON_BrepTrim *trim2 = edge.Trim(1);
+    ON_BrepTrim *trim1 = &s_cdt->brep->m_T[bseg->tseg1->trim_ind];
+    ON_BrepTrim *trim2 = &s_cdt->brep->m_T[bseg->tseg2->trim_ind];
 
     // If we don't have associated trims, we can't do anything
     if (!trim1 || !trim2) return nedges;
@@ -563,7 +563,6 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int
     ON_BrepFace *face2 = trim2->Face();
     cdt_mesh::cdt_mesh_t *fmesh1 = &s_cdt->fmeshes[face1->m_face_index];
     cdt_mesh::cdt_mesh_t *fmesh2 = &s_cdt->fmeshes[face2->m_face_index];
-
 
 
     // Get the 3D midpoint (and tangent, if we can) from the edge curve
