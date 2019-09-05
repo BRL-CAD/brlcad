@@ -363,6 +363,10 @@ class cpolygon_t
 	 * report if the point is outside the polygon.
 	 * TODO - document what it does if it's ON the polygon...*/
 	bool point_in_polygon(long v, bool flip);
+
+	/* Process a set of points and filter out those in (or out, if flip is set) of the polygon */
+	void rm_points_in_polygon(std::set<ON_2dPoint *> *pnts, bool flip);
+
 	// Debugging routines
 	void polygon_plot_in_plane(const char *filename);
 	void polygon_plot(const char *filename);

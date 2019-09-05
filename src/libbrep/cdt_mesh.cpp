@@ -819,6 +819,54 @@ cpolygon_t::point_in_polygon(long v, bool flip)
     return result;
 }
 
+void
+cpolygon_t::rm_points_in_polygon(std::set<ON_2dPoint *> *pnts, bool flip)
+{
+    if (!closed() || !pnts || !pnts->size()) return;
+
+    point2d_t *polypnts = (point2d_t *)bu_calloc(poly.size()+1, sizeof(point2d_t), "polyline");
+
+    size_t pind = 0;
+
+    cpolyedge_t *pe = (*poly.begin());
+    cpolyedge_t *first = pe;
+    cpolyedge_t *next = pe->next;
+
+    V2SET(polypnts[pind], pnts_2d[pe->v[0]].first, pnts_2d[pe->v[0]].second);
+    pind++;
+    V2SET(polypnts[pind], pnts_2d[pe->v[1]].first, pnts_2d[pe->v[1]].second);
+
+    // Walk the loop
+    while (first != next) {
+	pind++;
+	V2SET(polypnts[pind], pnts_2d[next->v[1]].first, pnts_2d[next->v[1]].second);
+	next = next->next;
+    }
+
+    std::set<ON_2dPoint *> rm_pnts;
+    std::set<ON_2dPoint *>::iterator p_it;
+
+    for (p_it = pnts->begin(); p_it != pnts->end(); p_it++) {
+	ON_2dPoint *p2d = *p_it;
+	point2d_t test_pnt;
+	V2SET(test_pnt, p2d->x, p2d->y);
+
+	bool result = (bool)bg_pt_in_polygon(pind, (const point2d_t *)polypnts, (const point2d_t *)&test_pnt);
+
+	if (flip) {
+	    result = (result) ? false : true;
+	}
+
+	if (result) {
+	    rm_pnts.insert(p2d);
+	}
+    }
+    for (p_it = rm_pnts.begin(); p_it != rm_pnts.end(); p_it++) {
+	pnts->erase(*p_it);
+    }
+
+    bu_free(polypnts, "polyline");
+}
 
 bool
 cpolygon_t::cdt()

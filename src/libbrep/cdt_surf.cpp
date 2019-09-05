@@ -404,16 +404,13 @@ filter_surface_edge_pnts_2(struct cdt_surf_info_2 *sinfo)
 
     // Next check the face loops with the point in polygon test.  If it's
     // outside the outer loop or inside one of the interior trimming loops,
-    // it's out.  For the inner loops, check the bbox of the loop first to see
-    // if we need to care... in theory we probably should be using an RTree of
-    // the loops to filter this, but I'm guessing that might be premature
-    // optimization at this point...  Could combine with the above and have one
-    // rtree per loop rather than one per face, and "zero in" for testing per
-    // loop as needed.  The tree hierarchy might be worth doing anyway, as
-    // those trees may be needed for overlap detection of edge polycurves
-    // between breps...
-
-
+    // it's out.
+    cdt_mesh::cdt_mesh_t *fmesh = &sinfo->s_cdt->fmeshes[sinfo->f->m_face_index];
+    fmesh->outer_loop.rm_points_in_polygon(&sinfo->on_surf_points, true);
+    std::map<int, cdt_mesh::cpolygon_t*>::iterator i_it;
+    for (i_it = fmesh->inner_loops.begin(); i_it != fmesh->inner_loops.end(); i_it++) {
+	i_it->second->rm_points_in_polygon(&sinfo->on_surf_points, false);
+    }
 
     // TODO - In addition to removing points on the line in 2D, we don't want points that
     // would be outside the edge polygon in projection. Find the "close" trims (if any)
@@ -425,7 +422,6 @@ filter_surface_edge_pnts_2(struct cdt_surf_info_2 *sinfo)
     // sets for both edge points to localize on that particular segment.
 
     // Populate m_interior_pnts with the final set
-    cdt_mesh::cdt_mesh_t *fmesh = &sinfo->s_cdt->fmeshes[sinfo->f->m_face_index];
     for (osp_it = sinfo->on_surf_points.begin(); osp_it != sinfo->on_surf_points.end(); osp_it++) {
 	ON_2dPoint n2dp(**osp_it);
 	long f_ind2d = fmesh->add_point(n2dp);
