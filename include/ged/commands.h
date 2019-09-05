@@ -171,6 +171,26 @@ GED_EXPORT extern int ged_list(struct ged *gedp, int argc, const char *argv[]);
 GED_EXPORT extern int ged_make_name(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+ * Multiply a point by a 4x4 matrix yielding the transformed point
+ */
+GED_EXPORT extern int ged_mat4x3pnt(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Create a matrix given an azimuth and elevation
+ */
+GED_EXPORT extern int ged_mat_ae(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Create a matrix that is the result of multiplying the two specified matrices
+ */
+GED_EXPORT extern int ged_mat_mul(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Create a matrix that will scale about a given point
+ */
+GED_EXPORT extern int ged_mat_scale_about_pt(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  * Modify material information.
  */
 GED_EXPORT extern int ged_mater(struct ged *gedp, int argc, const char *argv[]);
