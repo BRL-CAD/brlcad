@@ -475,6 +475,7 @@ public:
 
 
     int f_id;
+    bool has_singularities;
 
     /* Data containers */
     std::map<ON_3dPoint *, long> p2ind;

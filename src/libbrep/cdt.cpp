@@ -175,7 +175,6 @@ rtree_bbox_3d(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
     s_cdt->edge_segs_3d[trim.Face()->m_face_index].Insert(p1, p2, (void *)pe);
 }
 
-#if 0
 struct rtree_loop_leaf {
     struct ON_Brep_CDT_State *s_cdt;
     int loop_index;
@@ -230,7 +229,6 @@ static bool Loop2dCallback(void *data, void *a_context) {
     // Keep checking for other loops - we want the smallest target length
     return true;
 }
-#endif
 
 double
 median_seg_len(std::vector<double> &lsegs)
@@ -947,12 +945,10 @@ refine_triangulation(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cdt_mesh_t *fmes
 
     // Now, the hard part - create local subsets, remesh them, and replace the original
     // triangles with the new ones.
-#if 1
     if (!fmesh->repair()) {
 	bu_log("Face %d: repair FAILED!\n", fmesh->f_id);
 	return false;
     }
-#endif
 
     if (fmesh->valid(1)) {
 	bu_log("Face %d: successful triangulation after %d passes\n", fmesh->f_id, cnt);
@@ -1024,7 +1020,7 @@ do_triangulation(struct ON_Brep_CDT_State *s_cdt, int fi)
 
     // Sample the surface, independent of the trimming curves, to get points that
     // will tie the mesh to the interior surface.
-    //GetInteriorPoints(s_cdt, face.m_face_index);
+    GetInteriorPoints(s_cdt, face.m_face_index);
 
     cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[face.m_face_index];
     fmesh->f_id = face.m_face_index;
@@ -1411,6 +1407,8 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	    int loop_cnt = face.LoopCount();
 	    cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[face_index];
 	    fmesh->f_id = face_index;
+	    fmesh->m_bRev = face.m_bRev;
+	    fmesh->has_singularities = false;
 	    cdt_mesh::cpolygon_t *cpoly = NULL;
 
 	    for (int li = 0; li < loop_cnt; li++) {
@@ -1524,6 +1522,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 			// splitting of the 2D edge only
 			ne->eseg = NULL;
 			singular_edges.insert(ne);
+			fmesh->has_singularities = true;
 		    }
 		}
 	    }
@@ -1569,11 +1568,13 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	// in combination with the above this should give us the sparsest valid
 	// triangulation we can return and provide a solid basis on which to
 	// build.
+	//
+	// Note that while the face will report individually valid, without
+	// surface point sampling near the edges odd things may still happen in
+	// the final mesh.
 	for (int index = 0; index < brep->m_F.Count(); index++) {
 	    ON_BrepFace &face = s_cdt->brep->m_F[index];
 	    cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[face.m_face_index];
-	    fmesh->f_id = face.m_face_index;
-	    fmesh->m_bRev = face.m_bRev;
 	    // List singularities
 	    for (size_t i = 0; i < fmesh->pnts.size(); i++) {
 		ON_3dPoint *p3d = fmesh->pnts[i];
@@ -1627,7 +1628,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	    fmesh->reset();
 
 	}
-#if 0
+
 	// On to tolerance based splitting.  Process the non-linear edges first -
 	// we will need information from them to handle the linear edges
 	//
@@ -1961,7 +1962,6 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	    s_cdt->e2polysegs[edge.m_edge_index].clear();
 	    s_cdt->e2polysegs[edge.m_edge_index].insert(new_segs.begin(), new_segs.end());
 	}
-#endif
 
 	// Split singularity trims in 2D to provide an easier input to the 2D CDT logic.  NOTE: these
 	// splits will produce degenerate (zero area, two identical vertex) triangles in 3D that have
@@ -2007,6 +2007,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	    }
 	}
 
+#if 0
 	for (int index = 0; index < brep->m_F.Count(); index++) {
 	    struct bu_vls fname = BU_VLS_INIT_ZERO;
 	    bu_vls_sprintf(&fname, "%d-rtree_2d.plot3", index);
@@ -2014,6 +2015,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	    bu_vls_sprintf(&fname, "%d-rtree_3d.plot3", index);
 	    plot_rtree_3d(s_cdt->edge_segs_3d[index], bu_vls_cstr(&fname));
 	}
+#endif
 
     } else {
 	/* Clear the mesh state, if this container was previously used */

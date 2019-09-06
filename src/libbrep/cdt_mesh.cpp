@@ -2437,8 +2437,10 @@ cdt_mesh_t::cdt()
 	tri3d.v[0] = p2ind[pnts[p2d3d[tri2d.v[0]]]];
 	tri3d.v[1] = p2ind[pnts[p2d3d[tri2d.v[1]]]];
 	tri3d.v[2] = p2ind[pnts[p2d3d[tri2d.v[2]]]];
-
-	if (m_bRev) {
+	
+	ON_3dVector tdir = tnorm(tri3d);
+	ON_3dVector bdir = bnorm(tri3d);
+	if (tdir.Length() > 0 && bdir.Length() > 0 && ON_DotProduct(tdir, bdir) < 0.1) {
 	    long tmp = tri3d.v[1];
 	    tri3d.v[1] = tri3d.v[2];
 	    tri3d.v[2] = tmp;
@@ -2505,33 +2507,35 @@ cdt_mesh_t::repair()
     // remesh near singularities to try and produce more reasonable
     // triangles.
 
-    std::vector<triangle_t> s_tris = this->singularity_triangles();
-    seed_tris.insert(s_tris.begin(), s_tris.end());
-
-    st_size = seed_tris.size();
-    while (seed_tris.size()) {
-	triangle_t seed = *seed_tris.begin();
-
-	double deg = max_angle_delta(seed, s_tris);
-	bool pseed = process_seed_tri(seed, false, deg);
-
-	if (!pseed || seed_tris.size() >= st_size) {
-	    std::cerr << f_id << ":  Error - failed to process refinement seed triangle!\n";
-	    struct bu_vls fname = BU_VLS_INIT_ZERO;
-	    bu_vls_sprintf(&fname, "%d-failed_seed.plot3", f_id);
-	    tri_plot(seed, bu_vls_cstr(&fname));
-	    bu_vls_sprintf(&fname, "%d-failed_seed_mesh.plot3", f_id);
-	    tris_plot(bu_vls_cstr(&fname));
-	    bu_vls_sprintf(&fname, "%d-failed_seed.cdtmesh", f_id);
-	    serialize(bu_vls_cstr(&fname));
-	    bu_vls_free(&fname);
-	    return false;
-	    break;
-	}
+    if (has_singularities) {
+	std::vector<triangle_t> s_tris = this->singularity_triangles();
+	seed_tris.insert(s_tris.begin(), s_tris.end());
 
 	st_size = seed_tris.size();
+	while (seed_tris.size()) {
+	    triangle_t seed = *seed_tris.begin();
 
-	//tris_plot("mesh_post_pretty.plot3");
+	    double deg = max_angle_delta(seed, s_tris);
+	    bool pseed = process_seed_tri(seed, false, deg);
+
+	    if (!pseed || seed_tris.size() >= st_size) {
+		std::cerr << f_id << ":  Error - failed to process refinement seed triangle!\n";
+		struct bu_vls fname = BU_VLS_INIT_ZERO;
+		bu_vls_sprintf(&fname, "%d-failed_seed.plot3", f_id);
+		tri_plot(seed, bu_vls_cstr(&fname));
+		bu_vls_sprintf(&fname, "%d-failed_seed_mesh.plot3", f_id);
+		tris_plot(bu_vls_cstr(&fname));
+		bu_vls_sprintf(&fname, "%d-failed_seed.cdtmesh", f_id);
+		serialize(bu_vls_cstr(&fname));
+		bu_vls_free(&fname);
+		return false;
+		break;
+	    }
+
+	    st_size = seed_tris.size();
+
+	    //tris_plot("mesh_post_pretty.plot3");
+	}
     }
 
     boundary_edges_update();
