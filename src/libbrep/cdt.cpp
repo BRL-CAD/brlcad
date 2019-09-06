@@ -175,6 +175,7 @@ rtree_bbox_3d(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
     s_cdt->edge_segs_3d[trim.Face()->m_face_index].Insert(p1, p2, (void *)pe);
 }
 
+#if 0
 struct rtree_loop_leaf {
     struct ON_Brep_CDT_State *s_cdt;
     int loop_index;
@@ -229,6 +230,7 @@ static bool Loop2dCallback(void *data, void *a_context) {
     // Keep checking for other loops - we want the smallest target length
     return true;
 }
+#endif
 
 double
 median_seg_len(std::vector<double> &lsegs)
@@ -1020,7 +1022,7 @@ do_triangulation(struct ON_Brep_CDT_State *s_cdt, int fi)
 
     // Sample the surface, independent of the trimming curves, to get points that
     // will tie the mesh to the interior surface.
-    GetInteriorPoints(s_cdt, face.m_face_index);
+    //GetInteriorPoints(s_cdt, face.m_face_index);
 
     cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[face.m_face_index];
     fmesh->f_id = face.m_face_index;
@@ -1629,6 +1631,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 
 	}
 
+#if 0
 	// On to tolerance based splitting.  Process the non-linear edges first -
 	// we will need information from them to handle the linear edges
 	//
@@ -1962,6 +1965,8 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	    s_cdt->e2polysegs[edge.m_edge_index].clear();
 	    s_cdt->e2polysegs[edge.m_edge_index].insert(new_segs.begin(), new_segs.end());
 	}
+
+#endif
 
 	// Split singularity trims in 2D to provide an easier input to the 2D CDT logic.  NOTE: these
 	// splits will produce degenerate (zero area, two identical vertex) triangles in 3D that have
