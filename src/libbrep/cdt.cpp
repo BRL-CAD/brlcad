@@ -31,6 +31,7 @@
 #include "bg/chull.h"
 #include "./cdt.h"
 
+#define BREP_PLANAR_TOL 0.05
 #define MAX_TRIANGULATION_ATTEMPTS 5
 
 #if 0
@@ -308,6 +309,7 @@ trim_normal(ON_BrepTrim *trim, ON_2dPoint &cp)
 	ON_Plane fplane;
 	const ON_Surface *s = trim->SurfaceOf();
 	double ptol = s->BoundingBox().Diagonal().Length()*0.001;
+	ptol = (ptol < BREP_PLANAR_TOL) ? ptol : BREP_PLANAR_TOL;
 	if (s->IsPlanar(&fplane, ptol)) {
 	    norm = fplane.Normal();
 	} else {
@@ -1075,6 +1077,7 @@ calc_trim_vnorm(ON_BrepVertex& v, ON_BrepTrim *trim)
     ON_Plane fplane;
     const ON_Surface *s = trim->SurfaceOf();
     double ptol = s->BoundingBox().Diagonal().Length()*0.001;
+    ptol = (ptol < BREP_PLANAR_TOL) ? ptol : BREP_PLANAR_TOL;
     if (s->IsPlanar(&fplane, ptol)) {
 	trim_norm = fplane.Normal();
 	if (trim->Face()->m_bRev) {
