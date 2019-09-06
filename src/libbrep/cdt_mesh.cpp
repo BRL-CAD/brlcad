@@ -2542,7 +2542,7 @@ cdt_mesh_t::repair()
 }
 
 bool
-cdt_mesh_t::valid()
+cdt_mesh_t::valid(int verbose)
 {
     struct bu_vls fname = BU_VLS_INIT_ZERO;
     bool nret = true;
@@ -2552,14 +2552,18 @@ cdt_mesh_t::valid()
 	ON_3dVector tdir = tnorm(*tr_it);
 	ON_3dVector bdir = bnorm(*tr_it);
 	if (tdir.Length() > 0 && bdir.Length() > 0 && ON_DotProduct(tdir, bdir) < 0.1) {
-	    std::cout << "Still have invalid normals in mesh, triangle (" << (*tr_it).v[0] << "," << (*tr_it).v[1] << "," << (*tr_it).v[2] << ")\n";
-	    bu_vls_sprintf(&fname, "%d-invalid_normal_tri_%ld_%ld_%ld.plot3", f_id, (*tr_it).v[0], (*tr_it).v[1], (*tr_it).v[2]);
-	    tri_plot(*tr_it, bu_vls_cstr(&fname));
+	    if (verbose > 0) {
+		std::cout << "Still have invalid normals in mesh, triangle (" << (*tr_it).v[0] << "," << (*tr_it).v[1] << "," << (*tr_it).v[2] << ")\n";
+	    }
+	    if (verbose > 1) {
+		bu_vls_sprintf(&fname, "%d-invalid_normal_tri_%ld_%ld_%ld.plot3", f_id, (*tr_it).v[0], (*tr_it).v[1], (*tr_it).v[2]);
+		tri_plot(*tr_it, bu_vls_cstr(&fname));
+	    }
 	    nret = false;
 	}
     }
 
-    if (!nret) {
+    if (!nret && verbose > 1) {
 	bu_vls_sprintf(&fname, "%d-invalid_normals_mesh.plot3", f_id);
 	tris_plot(bu_vls_cstr(&fname));
 	bu_vls_sprintf(&fname, "%d-invalid_normals.cdtmesh", f_id);
@@ -2568,11 +2572,13 @@ cdt_mesh_t::valid()
 
     boundary_edges_update();
     if (problem_edges.size() > 0) {
-	std::cout << "Still have problem edges in mesh\n";
+	if (verbose > 0) {
+	    std::cout << "Still have problem edges in mesh\n";
+	}
 	eret = false;
     }
 
-    if (!eret) {
+    if (!eret && verbose > 1) {
 	bu_vls_sprintf(&fname, "%d-invalid_normals_mesh.plot3", f_id);
 	tris_plot(bu_vls_cstr(&fname));
 	bu_vls_sprintf(&fname, "%d-invalid_edges.cdtmesh", f_id);
@@ -2580,7 +2586,6 @@ cdt_mesh_t::valid()
 	bu_vls_sprintf(&fname, "%d-invalid_edges_boundary.plot3", f_id);
 	boundary_edges_plot(bu_vls_cstr(&fname));
     }
-
 
     bu_vls_free(&fname);
     return (nret && eret);

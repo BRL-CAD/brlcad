@@ -27,6 +27,7 @@
 
 #include "common.h"
 #include <queue>
+#include <numeric>
 #include "bg/chull.h"
 #include "./cdt.h"
 
@@ -174,6 +175,7 @@ rtree_bbox_3d(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
     s_cdt->edge_segs_3d[trim.Face()->m_face_index].Insert(p1, p2, (void *)pe);
 }
 
+#if 0
 struct rtree_loop_leaf {
     struct ON_Brep_CDT_State *s_cdt;
     int loop_index;
@@ -228,6 +230,7 @@ static bool Loop2dCallback(void *data, void *a_context) {
     // Keep checking for other loops - we want the smallest target length
     return true;
 }
+#endif
 
 double
 median_seg_len(std::vector<double> &lsegs)
@@ -713,6 +716,88 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int
     return nedges;
 }
 
+// Calculate loop avg segment length
+static double
+loop_avg_seg_len(struct ON_Brep_CDT_State *s_cdt, int loop_index)
+{
+    const ON_BrepLoop &loop = s_cdt->brep->m_L[loop_index];
+    std::vector<double> lsegs;
+    for (int lti = 0; lti < loop.TrimCount(); lti++) {
+	ON_BrepTrim *trim = loop.Trim(lti);
+	ON_BrepEdge *edge = trim->Edge();
+	if (!edge) continue;
+	const ON_Curve* crv = edge->EdgeCurveOf();
+	if (!crv) continue;
+	std::set<cdt_mesh::bedge_seg_t *> &epsegs = s_cdt->e2polysegs[edge->m_edge_index];
+	if (!epsegs.size()) continue;
+	std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
+	for (e_it = epsegs.begin(); e_it != epsegs.end(); e_it++) {
+	    cdt_mesh::bedge_seg_t *b = *e_it;
+	    double seg_dist = b->e_start->DistanceTo(*b->e_end);
+	    lsegs.push_back(seg_dist);
+	}
+    }
+    return (std::accumulate(lsegs.begin(), lsegs.end(), 0.0)/lsegs.size());
+}
+
+static void
+split_long_edges(struct ON_Brep_CDT_State *s_cdt, int face_index)
+{
+    ON_BrepFace &face = s_cdt->brep->m_F[face_index];
+    int loop_cnt = face.LoopCount();
+    
+    for (int li = 0; li < loop_cnt; li++) {
+	const ON_BrepLoop *loop = face.Loop(li);
+	double avg_seg_len = loop_avg_seg_len(s_cdt, loop->m_loop_index);
+	int trim_count = loop->TrimCount();
+	for (int lti = 0; lti < trim_count; lti++) {
+	    ON_BrepTrim *trim = loop->Trim(lti);
+	    ON_BrepEdge *edge = trim->Edge();
+	    if (!edge) continue;
+	    const ON_Curve* crv = edge->EdgeCurveOf();
+	    if (!crv || crv->IsLinear(BN_TOL_DIST)) {
+		continue;
+	    }
+	    std::set<cdt_mesh::bedge_seg_t *> &epsegs = s_cdt->e2polysegs[edge->m_edge_index];
+	    if (!epsegs.size()) continue;
+	    std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
+	    std::set<cdt_mesh::bedge_seg_t *> new_segs;
+	    std::set<cdt_mesh::bedge_seg_t *> ws1, ws2;
+	    std::set<cdt_mesh::bedge_seg_t *> *ws = &ws1;
+	    std::set<cdt_mesh::bedge_seg_t *> *ns = &ws2;
+	    for (e_it = epsegs.begin(); e_it != epsegs.end(); e_it++) {
+		cdt_mesh::bedge_seg_t *b = *e_it;
+		ws->insert(b);
+	    }
+	    while (ws->size()) {
+		cdt_mesh::bedge_seg_t *b = *ws->begin();
+		ws->erase(ws->begin());
+		double seg_dist = b->e_start->DistanceTo(*b->e_end);
+		if (seg_dist > 0.5*avg_seg_len) {
+		    std::set<cdt_mesh::bedge_seg_t *> esegs_split = split_edge_seg(s_cdt, b, 1);
+		    if (esegs_split.size()) {
+			ns->insert(esegs_split.begin(), esegs_split.end());
+		    } else {
+			new_segs.insert(b);
+		    }
+		} else {
+		    new_segs.insert(b);
+		}
+		if (!ws->size() && ns->size()) {
+		    std::set<cdt_mesh::bedge_seg_t *> *tmp = ws;
+		    ws = ns;
+		    ns = tmp;
+		}
+	    }
+	    s_cdt->e2polysegs[edge->m_edge_index].clear();
+	    s_cdt->e2polysegs[edge->m_edge_index].insert(new_segs.begin(), new_segs.end());
+	}
+    }
+}
+
+
+
+
 std::set<cdt_mesh::cpolyedge_t *>
 split_singular_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *ce)
 {
@@ -843,12 +928,14 @@ refine_triangulation(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cdt_mesh_t *fmes
 
     // Now, the hard part - create local subsets, remesh them, and replace the original
     // triangles with the new ones.
+#if 0 
     if (!fmesh->repair()) {
 	bu_log("Face %d: repair FAILED!\n", fmesh->f_id);
 	return false;
     }
+#endif
 
-    if (fmesh->valid()) {
+    if (fmesh->valid(1)) {
 	bu_log("Face %d: successful triangulation after %d passes\n", fmesh->f_id, cnt);
     } else {
 	bu_log("Face %d: triangulation produced invalid mesh!\n", fmesh->f_id);
@@ -918,7 +1005,7 @@ do_triangulation(struct ON_Brep_CDT_State *s_cdt, int fi)
 
     // Sample the surface, independent of the trimming curves, to get points that
     // will tie the mesh to the interior surface.
-    GetInteriorPoints(s_cdt, face.m_face_index);
+    //GetInteriorPoints(s_cdt, face.m_face_index);
 
     cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[face.m_face_index];
     fmesh->f_id = face.m_face_index;
@@ -1451,45 +1538,73 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	    }
 	}
 
-	// Check the CDT meshing - at this point, we should be able to produce a valid
-	// triangulation for all faces.  If not, refine the larger curved edges until we can.
+	// Check the CDT meshing - at this point, we should be able to produce
+	// a valid triangulation for all faces.  If not, refine the larger
+	// curved edges until we can.
+	//
+	// In theory this is an expensive test, but as we are at the very
+	// beginning of the process triangle counts should be relatively low
+	// and all of these operations should be very fast.  More critically,
+	// in combination with the above this should give us the sparsest valid
+	// triangulation we can return and provide a solid basis on which to
+	// build.
 	for (int index = 0; index < brep->m_F.Count(); index++) {
 	    ON_BrepFace &face = s_cdt->brep->m_F[index];
 	    cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[face.m_face_index];
 	    fmesh->f_id = face.m_face_index;
 	    fmesh->m_bRev = face.m_bRev;
-
-	    if (!fmesh->outer_loop.closed()) {
-		std::cout << "Warning - loop not closed\n";
+	    // List singularities
+	    for (size_t i = 0; i < fmesh->pnts.size(); i++) {
+		ON_3dPoint *p3d = fmesh->pnts[i];
+		if (s_cdt->singular_vert_to_norms->find(p3d) != s_cdt->singular_vert_to_norms->end()) {
+		    fmesh->sv.insert(fmesh->p2ind[p3d]);
+		}
 	    }
-	    if (fmesh->cdt()) {
 
-		// List singularities
-		for (size_t i = 0; i < fmesh->pnts.size(); i++) {
-		    ON_3dPoint *p3d = fmesh->pnts[i];
-		    if (s_cdt->singular_vert_to_norms->find(p3d) != s_cdt->singular_vert_to_norms->end()) {
-			fmesh->sv.insert(fmesh->p2ind[p3d]);
+	    // List edges
+	    fmesh->brep_edges.clear();
+	    loop_edges(fmesh, &fmesh->outer_loop);
+	    std::map<int, cdt_mesh::cpolygon_t*>::iterator i_it;
+	    for (i_it = fmesh->inner_loops.begin(); i_it != fmesh->inner_loops.end(); i_it++) {
+		loop_edges(fmesh, i_it->second);
+	    }
+
+	    bool success = (fmesh->cdt() && fmesh->valid(0));
+
+	    if (!success) {
+	
+		// Start iterating
+		int cnt = 0;
+		while (!fmesh->valid(0)) {
+		    //std::cout << "Face " << face.m_face_index << " , iteration " << cnt << ": base mesh CDT invalid\n";
+		    fmesh->reset();
+		    split_long_edges(s_cdt, index);
+
+		    // Replace old edge list with new edges
+		    fmesh->brep_edges.clear();
+		    loop_edges(fmesh, &fmesh->outer_loop);
+		    for (i_it = fmesh->inner_loops.begin(); i_it != fmesh->inner_loops.end(); i_it++) {
+			loop_edges(fmesh, i_it->second);
 		    }
-		}
+		    fmesh->boundary_edges_update();
 
-		// List edges
-		fmesh->brep_edges.clear();
-		loop_edges(fmesh, &fmesh->outer_loop);
-		std::map<int, cdt_mesh::cpolygon_t*>::iterator i_it;
-		for (i_it = fmesh->inner_loops.begin(); i_it != fmesh->inner_loops.end(); i_it++) {
-		    loop_edges(fmesh, i_it->second);
+		    fmesh->cdt();
+
+		    cnt++;
+#if 0
+		    struct bu_vls fname = BU_VLS_INIT_ZERO;
+		    bu_vls_sprintf(&fname, "iteration-%d-tris.p3", cnt);
+		    fmesh->tris_plot(bu_vls_cstr(&fname));
+		    bu_vls_free(&fname);
+#endif
 		}
-		fmesh->boundary_edges_update();
-		if (!fmesh->valid()) {
-		    std::cout << "Face " << face.m_face_index << " base mesh CDT invalid\n";
-		}
-	    } else {
-		std::cout << "Face " << face.m_face_index << " base mesh CDT failed\n";
 	    }
+
+	    // Unless we're doing NO additional refinement, this is not our final mesh
 	    fmesh->reset();
 
 	}
-
+#if 0
 	// On to tolerance based splitting.  Process the non-linear edges first -
 	// we will need information from them to handle the linear edges
 	//
@@ -1823,7 +1938,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	    s_cdt->e2polysegs[edge.m_edge_index].clear();
 	    s_cdt->e2polysegs[edge.m_edge_index].insert(new_segs.begin(), new_segs.end());
 	}
-
+#endif
 
 	// Split singularity trims in 2D to provide an easier input to the 2D CDT logic.  NOTE: these
 	// splits will produce degenerate (zero area, two identical vertex) triangles in 3D that have

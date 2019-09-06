@@ -424,7 +424,7 @@ public:
 	    );
     bool repair();
     void reset();
-    bool valid();
+    bool valid(int verbose);
     bool serialize(const char *fname);
     bool deserialize(const char *fname);
 
