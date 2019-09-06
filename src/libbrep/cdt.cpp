@@ -31,7 +31,6 @@
 #include "bg/chull.h"
 #include "./cdt.h"
 
-#define BREP_PLANAR_TOL 0.05
 #define MAX_TRIANGULATION_ATTEMPTS 5
 
 #if 0
@@ -308,7 +307,8 @@ trim_normal(ON_BrepTrim *trim, ON_2dPoint &cp)
 	// face normal for this point on this surface.
 	ON_Plane fplane;
 	const ON_Surface *s = trim->SurfaceOf();
-	if (s->IsPlanar(&fplane, BREP_PLANAR_TOL)) {
+	double ptol = s->BoundingBox().Diagonal().Length()*0.001;
+	if (s->IsPlanar(&fplane, ptol)) {
 	    norm = fplane.Normal();
 	} else {
 	    ON_3dPoint tmp1;
@@ -745,7 +745,7 @@ split_long_edges(struct ON_Brep_CDT_State *s_cdt, int face_index)
 {
     ON_BrepFace &face = s_cdt->brep->m_F[face_index];
     int loop_cnt = face.LoopCount();
-    
+
     for (int li = 0; li < loop_cnt; li++) {
 	const ON_BrepLoop *loop = face.Loop(li);
 	double avg_seg_len = loop_avg_seg_len(s_cdt, loop->m_loop_index);
@@ -945,7 +945,7 @@ refine_triangulation(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cdt_mesh_t *fmes
 
     // Now, the hard part - create local subsets, remesh them, and replace the original
     // triangles with the new ones.
-#if 0 
+#if 1
     if (!fmesh->repair()) {
 	bu_log("Face %d: repair FAILED!\n", fmesh->f_id);
 	return false;
@@ -1074,7 +1074,8 @@ calc_trim_vnorm(ON_BrepVertex& v, ON_BrepTrim *trim)
 
     ON_Plane fplane;
     const ON_Surface *s = trim->SurfaceOf();
-    if (s->IsPlanar(&fplane, BREP_PLANAR_TOL)) {
+    double ptol = s->BoundingBox().Diagonal().Length()*0.001;
+    if (s->IsPlanar(&fplane, ptol)) {
 	trim_norm = fplane.Normal();
 	if (trim->Face()->m_bRev) {
 	    trim_norm = trim_norm * -1;
@@ -1586,14 +1587,21 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 		loop_edges(fmesh, i_it->second);
 	    }
 
-	    bool success = (fmesh->cdt() && fmesh->valid(0));
+	    bool success = (fmesh->cdt() && fmesh->repair() && fmesh->valid(0));
 
 	    if (!success) {
-	
+
 		// Start iterating
 		int cnt = 0;
 		while (!fmesh->valid(0)) {
 		    //std::cout << "Face " << face.m_face_index << " , iteration " << cnt << ": base mesh CDT invalid\n";
+#if 0
+		    struct bu_vls fname = BU_VLS_INIT_ZERO;
+		    bu_vls_sprintf(&fname, "iteration-%d-tris.p3", cnt);
+		    fmesh->tris_plot(bu_vls_cstr(&fname));
+		    bu_vls_free(&fname);
+#endif
+
 		    fmesh->reset();
 		    split_long_edges(s_cdt, index);
 
@@ -1606,14 +1614,9 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 		    fmesh->boundary_edges_update();
 
 		    fmesh->cdt();
+		    fmesh->repair();
 
 		    cnt++;
-#if 0
-		    struct bu_vls fname = BU_VLS_INIT_ZERO;
-		    bu_vls_sprintf(&fname, "iteration-%d-tris.p3", cnt);
-		    fmesh->tris_plot(bu_vls_cstr(&fname));
-		    bu_vls_free(&fname);
-#endif
 		}
 	    }
 
