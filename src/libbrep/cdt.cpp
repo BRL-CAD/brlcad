@@ -42,7 +42,7 @@ debug_plot(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolygon_t *cpoly, int m_f
     if (m_edge_index > 0 && (m_edge_index < 93 || m_edge_index > 96)) return;
     cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[34];
     std::cout << "\n";
-    if (m_loop_index > 0) { 
+    if (m_loop_index > 0) {
 	std::cout << step_cnt << "-" << (*d_cnt) << ": generating plots for loop " << m_loop_index << "...\n";
     }
     if (m_edge_index > 0) {
@@ -982,19 +982,13 @@ calc_trim_vnorm(ON_BrepVertex& v, ON_BrepTrim *trim)
 	    if (trim->Face()->m_bRev) {
 		v1 = v1 * -1;
 	    }
-	    if (v.Point().DistanceTo(t1) < ON_ZERO_TOLERANCE) {
-		ev1 = 1;
-		trim_norm = v1;
-	    }
+	    ev1 = 1;
 	}
 	if (surface_EvNormal(s, t_2d2.x, t_2d2.y, t2, v2)) {
 	    if (trim->Face()->m_bRev) {
 		v2 = v2 * -1;
 	    }
-	    if (v.Point().DistanceTo(t2) < ON_ZERO_TOLERANCE) {
-		ev2 = 1;
-		trim_norm = v2;
-	    }
+	    ev2 = 1;
 	}
 	// If we got both of them, go with the closest one
 	if (ev1 && ev2) {
@@ -1006,6 +1000,14 @@ calc_trim_vnorm(ON_BrepVertex& v, ON_BrepTrim *trim)
 	    }
 #endif
 	    trim_norm = (v.Point().DistanceTo(t1) < v.Point().DistanceTo(t2)) ? v1 : v2;
+	}
+
+	if (ev1 && !ev2) {
+	    trim_norm = v1;
+	}
+
+	if (!ev1 && ev2) {
+	    trim_norm = v2;
 	}
     }
 
