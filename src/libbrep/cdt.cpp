@@ -140,6 +140,22 @@ rtree_bbox_2d(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
     bb.m_max.y = bb.m_max.y + ON_ZERO_TOLERANCE;
     bb.m_min.x = bb.m_min.x - ON_ZERO_TOLERANCE;
     bb.m_min.y = bb.m_min.y - ON_ZERO_TOLERANCE;
+
+    double dist = p2d1.DistanceTo(p2d2);
+    double bdist = 0.5*dist;
+    double xdist = bb.m_max.x - bb.m_min.x;
+    double ydist = bb.m_max.y - bb.m_min.y;
+    // If we're close to the edge, we want to know - the Search callback will
+    // check the precise distance and make a decision on what to do.
+    if (xdist < bdist) {
+	bb.m_min.x = bb.m_min.x - 0.5*bdist;
+	bb.m_max.x = bb.m_max.x + 0.5*bdist;
+    }
+    if (ydist < bdist) {
+	bb.m_min.y = bb.m_min.y - 0.5*bdist;
+	bb.m_max.y = bb.m_max.y + 0.5*bdist;
+    }
+
     double p1[2];
     p1[0] = bb.Min().x;
     p1[1] = bb.Min().y;
@@ -164,6 +180,27 @@ rtree_bbox_3d(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
     bb.m_min.x = bb.m_min.x - ON_ZERO_TOLERANCE;
     bb.m_min.y = bb.m_min.y - ON_ZERO_TOLERANCE;
     bb.m_min.z = bb.m_min.z - ON_ZERO_TOLERANCE;
+
+    double dist = p3d1->DistanceTo(*p3d2);
+    double bdist = 0.5*dist;
+    double xdist = bb.m_max.x - bb.m_min.x;
+    double ydist = bb.m_max.y - bb.m_min.y;
+    double zdist = bb.m_max.z - bb.m_min.z;
+    // If we're close to the edge, we want to know - the Search callback will
+    // check the precise distance and make a decision on what to do.
+    if (xdist < bdist) {
+	bb.m_min.x = bb.m_min.x - 0.5*bdist;
+	bb.m_max.x = bb.m_max.x + 0.5*bdist;
+    }
+    if (ydist < bdist) {
+	bb.m_min.y = bb.m_min.y - 0.5*bdist;
+	bb.m_max.y = bb.m_max.y + 0.5*bdist;
+    }
+    if (zdist < bdist) {
+	bb.m_min.z = bb.m_min.z - 0.5*bdist;
+	bb.m_max.z = bb.m_max.z + 0.5*bdist;
+    }
+
     double p1[3];
     p1[0] = bb.Min().x;
     p1[1] = bb.Min().y;
@@ -2012,9 +2049,12 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	    }
 	}
 
-#if 0
+#if 1
 	for (int index = 0; index < brep->m_F.Count(); index++) {
 	    struct bu_vls fname = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&fname, "%d-rtree_outer_polygon.plot3", index);
+	    cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[index];
+	    fmesh->polygon_plot_2d(&fmesh->outer_loop, bu_vls_cstr(&fname));
 	    bu_vls_sprintf(&fname, "%d-rtree_2d.plot3", index);
 	    plot_rtree_2d2(s_cdt->trim_segs[index], bu_vls_cstr(&fname));
 	    bu_vls_sprintf(&fname, "%d-rtree_3d.plot3", index);
