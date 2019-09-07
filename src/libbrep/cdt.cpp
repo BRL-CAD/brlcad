@@ -1606,6 +1606,10 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	// to see if any of them interfere with each other.  If they do, keep splitting
 	// until the UV polygon curve bboxes are NOT self interfering.
 	//
+	// Ideally we'll reuse the RTree and just Remove and Insert new nodes as we
+	// refine, but we need to test Remove in the RTree.h code to make sure it does
+	// what is expected - there's a TODO note in there.
+	//
 	for (int index = 0; index < brep->m_F.Count(); index++) {
 	    ON_BrepFace &face = s_cdt->brep->m_F[index];
 	    cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[face.m_face_index];
