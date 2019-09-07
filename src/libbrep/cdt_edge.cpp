@@ -913,9 +913,7 @@ initialize_edge_segs(struct ON_Brep_CDT_State *s_cdt)
 		esegs_closed.insert(e);
 	    }
 
-	    // 2.  Any edges with a non-linear edge curve are split.  (If non-linear
-	    // and closed, split again - a curved, closed curve must be split twice
-	    // to have chance of producing a non-degenerate polygon.)
+	    // 2.  Any edges with a non-linear edge curve are split.
 	    std::set<cdt_mesh::bedge_seg_t *> esegs_csplit;
 	    const ON_Curve* crv = edge.EdgeCurveOf();
 	    if (!crv->IsLinear(BN_TOL_DIST)) {
