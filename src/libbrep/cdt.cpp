@@ -1601,16 +1601,11 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	// a valid triangulation for all faces.  If not, refine the larger
 	// curved edges until we can.
 	//
-	// In theory this is an expensive test, but as we are at the very
-	// beginning of the process triangle counts should be relatively low
-	// and all of these operations should be very fast.  More critically,
-	// in combination with the above this should give us the sparsest valid
-	// triangulation we can return and provide a solid basis on which to
-	// build.
+	// TODO - the below won't work in general, since without surface points
+	// we can't guarantee validity.  Instead, check the expanded 2D RTree bboxes
+	// to see if any of them interfere with each other.  If they do, keep splitting
+	// until the UV polygon curve bboxes are NOT self interfering.
 	//
-	// Note that while the face will report individually valid, without
-	// surface point sampling near the edges odd things may still happen in
-	// the final mesh.
 	for (int index = 0; index < brep->m_F.Count(); index++) {
 	    ON_BrepFace &face = s_cdt->brep->m_F[index];
 	    cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[face.m_face_index];
