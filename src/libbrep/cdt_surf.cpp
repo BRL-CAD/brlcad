@@ -24,6 +24,35 @@
  * Constrained Delaunay Triangulation - Surface Point sampling of NURBS B-Rep
  * objects.
  *
+ *
+ * TODO - need to incorporate a specific constraint into the surface sampling.
+ * TO make sure triangulation of curved edges on curved surfaces doesn't do
+ * anything strange, we need a surface point for each edge curve that is
+ * closer to the midpoint of the polyedge than either of that polyedge's
+ * neighboring points.  (e.g. we never want the CDT to find it's third
+ * triangle point for an edge on another edge.  That will work for planar
+ * faces, (and we might be able to allow it there) but for NON planar faces
+ * that produces line segments which may be far away from the surface itself
+ * as they jump around the arc of the edge curve.
+ *
+ * For each spatch that overlaps 2D rtree boxes, check if it's midpoint would
+ * satisfy the above criteria for all edge segments it overlaps with.  (Note
+ * the candate point must also be within the outer and not trimmed by the
+ * inner polygons, and not be TOO close to any polyedge - too close causes
+ * other problems.  An initial guess would be that any point inside the
+ * 2D rtree bbox can't be a satisfying point, but that may need a bit of
+ * refinement.  If an spatch midpt satisfies all uv edge bboxes it overlaps
+ * with, it becomes a leaf.  If it satisfies some but not all, keep splitting.
+ * Need to think a bit to be sure we define termination criteria that make
+ * sense - in particular, need to consider how to split in the neighborhood
+ * of trims to make sure we always terminate with the needed points.
+ *
+ * By the time we've got spatches overlapping with trim edge segments, the
+ * rest of the refinement criteria for surface patches are going to be pretty
+ * much irrelevant.  We MUST satisfy the trims to produce valid meshes, and
+ * if the trim splitting tolerances are correct they will have respected the
+ * same tolerance inputs to the extent the original brep data allows.
+ *
  */
 
 #include "common.h"
