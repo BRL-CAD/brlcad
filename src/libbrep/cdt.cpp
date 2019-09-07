@@ -269,6 +269,28 @@ static bool Loop2dCallback(void *data, void *a_context) {
 }
 #endif
 
+#if 0
+struct rtree_minsplit_context {
+    struct ON_Brep_CDT_State *s_cdt;
+    std::set<cdt_mesh::bedge_seg_t *> *split_segs;
+    cdt_mesh::cpolyedge_t *cseg;
+};
+
+static bool MinSplit2dCallback(void *data, void *a_context) {
+    cdt_mesh::cpolyedge_t *tseg = (cdt_mesh::cpolyedge_t *)data;
+    struct rtree_minsplit_context *context= (struct rtree_minsplit_context *)a_context;
+
+    // Intersecting with oneself or immediate neighbors isn't cause for splitting
+    if (tseg == cseg || tseg == cseg->prev || tseg == cseg->next) return true;
+
+    // Mark this segment down as a segment to split
+    context->split_segs->insert(tseg);
+
+    // No need to keep checking if we already know we're going to split
+    return false;
+}
+#endif
+
 double
 median_seg_len(std::vector<double> &lsegs)
 {
