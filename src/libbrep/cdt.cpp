@@ -1603,8 +1603,9 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	//
 	// TODO - the below won't work in general, since without surface points
 	// we can't guarantee validity.  Instead, check the expanded 2D RTree bboxes
-	// to see if any of them interfere with each other.  If they do, keep splitting
-	// until the UV polygon curve bboxes are NOT self interfering.
+	// for overlaps from edges other than the two edges connected to the current edge.
+	// Keep splitting any edges with such overlaps until the UV polygon
+	// curve bboxes are NOT self interfering except with their two neighbors.
 	//
 	// Ideally we'll reuse the RTree and just Remove and Insert new nodes as we
 	// refine, but we need to test Remove in the RTree.h code to make sure it does
