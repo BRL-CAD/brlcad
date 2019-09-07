@@ -510,16 +510,9 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	}
 
 	// Do the non-tolerance based initialization splits.
-	for (epoly_it = s_cdt->e2polysegs.begin(); epoly_it != s_cdt->e2polysegs.end(); epoly_it++) {
-	    std::set<cdt_mesh::bedge_seg_t *>::iterator seg_it;
-	    std::set<cdt_mesh::bedge_seg_t *> wsegs = epoly_it->second;
-	    for (seg_it = wsegs.begin(); seg_it != wsegs.end(); seg_it++) {
-		cdt_mesh::bedge_seg_t *bseg = *seg_it;
-
-		if (!initialize_edge_segs(s_cdt, bseg)) {
-		    std::cout << "Initialization failed for edge " << epoly_it->first << "\n";
-		}
-	    }
+	if (!initialize_edge_segs(s_cdt)) {
+	    std::cout << "Initialization failed for edges\n";
+	    return -1;
 	}
 
 	// Check the CDT meshing - at this point, we should be able to produce

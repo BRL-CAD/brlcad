@@ -882,66 +882,76 @@ split_singular_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *ce)
 // beginning regardless of tolerance settings.  Do them up front so the subsequent
 // working set has consistent properties.
 bool
-initialize_edge_segs(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *e)
+initialize_edge_segs(struct ON_Brep_CDT_State *s_cdt)
 {
-    ON_BrepEdge& edge = s_cdt->brep->m_E[e->edge_ind];
-    ON_BrepTrim *trim1 = edge.Trim(0);
-    ON_BrepTrim *trim2 = edge.Trim(1);
-    std::set<cdt_mesh::bedge_seg_t *> esegs_closed;
+    std::map<int, std::set<cdt_mesh::bedge_seg_t *>>::iterator epoly_it;
+    for (epoly_it = s_cdt->e2polysegs.begin(); epoly_it != s_cdt->e2polysegs.end(); epoly_it++) {
+	std::set<cdt_mesh::bedge_seg_t *>::iterator seg_it;
+	std::set<cdt_mesh::bedge_seg_t *> wsegs = epoly_it->second;
+	for (seg_it = wsegs.begin(); seg_it != wsegs.end(); seg_it++) {
+	    cdt_mesh::bedge_seg_t *e = *seg_it;
 
-    if (!trim1 || !trim2) return false;
 
-    if (trim1->m_type == ON_BrepTrim::singular || trim1->m_type == ON_BrepTrim::singular) return false;
+	    ON_BrepEdge& edge = s_cdt->brep->m_E[e->edge_ind];
+	    ON_BrepTrim *trim1 = edge.Trim(0);
+	    ON_BrepTrim *trim2 = edge.Trim(1);
+	    std::set<cdt_mesh::bedge_seg_t *> esegs_closed;
 
-    // 1.  Any edges with at least 1 closed trim are split.
-    if (trim1->IsClosed() || trim2->IsClosed()) {
-	esegs_closed = split_edge_seg(s_cdt, e, 1);
-	if (!esegs_closed.size()) {
-	    // split failed??  On a closed edge this is fatal - we must split it
-	    // to work with it at all
-	    return false;
-	}
-    } else {
-	esegs_closed.insert(e);
-    }
+	    if (!trim1 || !trim2) return false;
 
-    // 2.  Any edges with a non-linear edge curve are split.  (If non-linear
-    // and closed, split again - a curved, closed curve must be split twice
-    // to have chance of producing a non-degenerate polygon.)
-    std::set<cdt_mesh::bedge_seg_t *> esegs_csplit;
-    const ON_Curve* crv = edge.EdgeCurveOf();
-    if (!crv->IsLinear(BN_TOL_DIST)) {
-	std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
-	for (e_it = esegs_closed.begin(); e_it != esegs_closed.end(); e_it++) {
-	    std::set<cdt_mesh::bedge_seg_t *> efirst = split_edge_seg(s_cdt, *e_it, 1);
-	    if (!efirst.size()) {
-		// split failed??  On a curved edge we must split at least once to
-		// avoid potentially degenerate polygons (if we had to split a closed
-		// loop from step 1, for example;
-		return false;
+	    if (trim1->m_type == ON_BrepTrim::singular || trim1->m_type == ON_BrepTrim::singular) return false;
+
+	    // 1.  Any edges with at least 1 closed trim are split.
+	    if (trim1->IsClosed() || trim2->IsClosed()) {
+		esegs_closed = split_edge_seg(s_cdt, e, 1);
+		if (!esegs_closed.size()) {
+		    // split failed??  On a closed edge this is fatal - we must split it
+		    // to work with it at all
+		    return false;
+		}
 	    } else {
-		// To avoid representing circles with squares, split curved segments
-		// one additional time
-		std::set<cdt_mesh::bedge_seg_t *>::iterator s_it;
-		for (s_it = efirst.begin(); s_it != efirst.end(); s_it++) {
-		    std::set<cdt_mesh::bedge_seg_t *> etmp = split_edge_seg(s_cdt, *s_it, 1);
-		    if (!etmp.size()) {
-			// split failed??  This isn't good and shouldn't
-			// happen, but it's not fatal the way the previous two
-			// failure cases are...
-			esegs_csplit.insert(*s_it);
+		esegs_closed.insert(e);
+	    }
+
+	    // 2.  Any edges with a non-linear edge curve are split.  (If non-linear
+	    // and closed, split again - a curved, closed curve must be split twice
+	    // to have chance of producing a non-degenerate polygon.)
+	    std::set<cdt_mesh::bedge_seg_t *> esegs_csplit;
+	    const ON_Curve* crv = edge.EdgeCurveOf();
+	    if (!crv->IsLinear(BN_TOL_DIST)) {
+		std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
+		for (e_it = esegs_closed.begin(); e_it != esegs_closed.end(); e_it++) {
+		    std::set<cdt_mesh::bedge_seg_t *> efirst = split_edge_seg(s_cdt, *e_it, 1);
+		    if (!efirst.size()) {
+			// split failed??  On a curved edge we must split at least once to
+			// avoid potentially degenerate polygons (if we had to split a closed
+			// loop from step 1, for example;
+			return false;
 		    } else {
-			esegs_csplit.insert(etmp.begin(), etmp.end());
+			// To avoid representing circles with squares, split curved segments
+			// one additional time
+			std::set<cdt_mesh::bedge_seg_t *>::iterator s_it;
+			for (s_it = efirst.begin(); s_it != efirst.end(); s_it++) {
+			    std::set<cdt_mesh::bedge_seg_t *> etmp = split_edge_seg(s_cdt, *s_it, 1);
+			    if (!etmp.size()) {
+				// split failed??  This isn't good and shouldn't
+				// happen, but it's not fatal the way the previous two
+				// failure cases are...
+				esegs_csplit.insert(*s_it);
+			    } else {
+				esegs_csplit.insert(etmp.begin(), etmp.end());
+			    }
+			}
 		    }
 		}
+	    } else {
+		esegs_csplit = esegs_closed;
 	    }
-	}
-    } else {
-	esegs_csplit = esegs_closed;
-    }
 
-    s_cdt->e2polysegs[edge.m_edge_index].clear();
-    s_cdt->e2polysegs[edge.m_edge_index].insert(esegs_csplit.begin(), esegs_csplit.end());
+	    s_cdt->e2polysegs[edge.m_edge_index].clear();
+	    s_cdt->e2polysegs[edge.m_edge_index].insert(esegs_csplit.begin(), esegs_csplit.end());
+	}
+    }
 
     return true;
 }
