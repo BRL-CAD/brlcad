@@ -166,6 +166,44 @@ rtree_bbox_2d(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
 }
 
 void
+rtree_bbox_2d_remove(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
+{
+    ON_BrepTrim& trim = s_cdt->brep->m_T[pe->trim_ind];
+    ON_2dPoint p2d1 = trim.PointAt(pe->trim_start);
+    ON_2dPoint p2d2 = trim.PointAt(pe->trim_end);
+    ON_Line line(p2d1, p2d2);
+    ON_BoundingBox bb = line.BoundingBox();
+    bb.m_max.x = bb.m_max.x + ON_ZERO_TOLERANCE;
+    bb.m_max.y = bb.m_max.y + ON_ZERO_TOLERANCE;
+    bb.m_min.x = bb.m_min.x - ON_ZERO_TOLERANCE;
+    bb.m_min.y = bb.m_min.y - ON_ZERO_TOLERANCE;
+
+    double dist = p2d1.DistanceTo(p2d2);
+    double bdist = 0.5*dist;
+    double xdist = bb.m_max.x - bb.m_min.x;
+    double ydist = bb.m_max.y - bb.m_min.y;
+   // Be slightly more aggressive in the size of this bbox than when adding,
+   // since we want to avoid floating point weirdness when it comes to the
+   // RTree Remove routine looking for this box
+    if (xdist < bdist) {
+	bb.m_min.x = bb.m_min.x - 0.51*bdist;
+	bb.m_max.x = bb.m_max.x + 0.51*bdist;
+    }
+    if (ydist < bdist) {
+	bb.m_min.y = bb.m_min.y - 0.51*bdist;
+	bb.m_max.y = bb.m_max.y + 0.51*bdist;
+    }
+
+    double p1[2];
+    p1[0] = bb.Min().x;
+    p1[1] = bb.Min().y;
+    double p2[2];
+    p2[0] = bb.Max().x;
+    p2[1] = bb.Max().y;
+    s_cdt->trim_segs[trim.Face()->m_face_index].Remove(p1, p2, (void *)pe);
+}
+
+void
 rtree_bbox_3d(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
 {
     if (!pe->eseg) return;
