@@ -329,8 +329,8 @@ static bool MinSplit2dCallback(void *data, void *a_context) {
     double cdist = cp2d1.DistanceTo(cp2d2);
     double tdist = tp2d1.DistanceTo(tp2d2);
 
-    // If tseg is significantly longer - it should be the one to split
-    if (cdist < 2*tdist) return true;
+    // If tseg is longer - it should be the one to split
+    if (cdist < tdist && !NEAR_EQUAL(cdist, tdist, ON_ZERO_TOLERANCE)) return true;
 
     // Mark this segment down as a segment to split
     if (context->cseg->eseg) {
@@ -1675,7 +1675,7 @@ refine_close_edges(struct ON_Brep_CDT_State *s_cdt)
 	// that aren't our neighbor boxes.  For any that do, split and check again.  Keep refining until we
 	// don't have any non-neighbor overlaps.
 	int split_cnt = 0;
-	while (ws.size()) {
+	while (ws.size() && split_cnt < 10) {
 	    std::set<cdt_mesh::cpolyedge_t *> trims_to_split;
 	    std::set<cdt_mesh::bedge_seg_t *> edges_to_split;
 	    std::set<cdt_mesh::cpolyedge_t *> current_trims;
