@@ -315,6 +315,8 @@ static bool MinSplit2dCallback(void *data, void *a_context) {
     cdt_mesh::cpolyedge_t *tseg = (cdt_mesh::cpolyedge_t *)data;
     struct rtree_minsplit_context *context= (struct rtree_minsplit_context *)a_context;
 
+    plot_ce_bbox(context->s_cdt, tseg, "l.p3");
+
     // Intersecting with oneself or immediate neighbors isn't cause for splitting
     if (tseg == context->cseg || tseg == context->cseg->prev || tseg == context->cseg->next) return true;
 
@@ -1621,12 +1623,9 @@ refine_close_edges(struct ON_Brep_CDT_State *s_cdt)
     ON_Brep* brep = s_cdt->brep;
 
     for (int index = 0; index < brep->m_L.Count(); index++) {
-	std::map<int, std::set<cdt_mesh::bedge_seg_t *>> new_edge_segs;
 	const ON_BrepLoop &loop = brep->m_L[index];
 	ON_BrepFace *face = loop.Face();
-	std::set<cdt_mesh::bedge_seg_t *> ws1, ws2;
-	std::set<cdt_mesh::bedge_seg_t *> *ws = &ws1;
-	std::set<cdt_mesh::bedge_seg_t *> *ns = &ws2;
+	std::set<cdt_mesh::bedge_seg_t *> ws;
 
 	// Build the initial set to check (all edges associated with a loop trim)
 	for (int lti = 0; lti < loop.TrimCount(); lti++) {
@@ -1640,23 +1639,31 @@ refine_close_edges(struct ON_Brep_CDT_State *s_cdt)
 	    std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
 	    for (e_it = epsegs.begin(); e_it != epsegs.end(); e_it++) {
 		cdt_mesh::bedge_seg_t *b = *e_it;
-		ws->insert(b);
+		ws.insert(b);
 	    }
 	}
 
 	// Check all the edge segments associated with the loop to see if our bounding box overlaps with boxes
 	// that aren't our neighbor boxes.  For any that do, split and check again.  Keep refining until we
 	// don't have any non-neighbor overlaps.
-	while (ws->size()) {
+	int split_cnt = 0;
+	while (ws.size()) {
 	    std::set<cdt_mesh::bedge_seg_t *> to_split;
 	    std::set<cdt_mesh::bedge_seg_t *>::iterator w_it;
-	    for (w_it = ws->begin(); w_it != ws->end(); w_it++) {
+	    std::map<int, std::set<cdt_mesh::bedge_seg_t *>> curr_edge_segs;
+
+	    bool split_check = false;
+
+	    if (split_cnt) {
+		std::cout << "Face " << face->m_face_index << " loop " << loop.m_loop_index << " split_cnt " << split_cnt << "\n";
+	    }
+	    for (w_it = ws.begin(); w_it != ws.end(); w_it++) {
 		cdt_mesh::bedge_seg_t *b = *w_it;
 		// Get segment length - should be smaller than our target length.
 		cdt_mesh::cpolyedge_t *tseg = (s_cdt->brep->m_T[b->tseg1->trim_ind].Face()->m_face_index == face->m_face_index) ? b->tseg1 : b->tseg2;
 		ON_2dPoint p2d1 = s_cdt->brep->m_T[tseg->trim_ind].PointAt(tseg->trim_start);
 		ON_2dPoint p2d2 = s_cdt->brep->m_T[tseg->trim_ind].PointAt(tseg->trim_end);
-		
+
 		// Trim 2D bbox
 		ON_BoundingBox bb(p2d1, p2d2);
 		bb.m_max.x = bb.m_max.x + ON_ZERO_TOLERANCE;
@@ -1683,6 +1690,8 @@ refine_close_edges(struct ON_Brep_CDT_State *s_cdt)
 		tMax[0] = bb.Max().x;
 		tMax[1] = bb.Max().y;
 
+		plot_ce_bbox(s_cdt, tseg, "c.p3");
+
 		// Edge context info
 		struct rtree_minsplit_context a_context;
 		a_context.s_cdt = s_cdt;
@@ -1694,35 +1703,45 @@ refine_close_edges(struct ON_Brep_CDT_State *s_cdt)
 	    }
 
 	    // If we need to split, do so
-	    for (w_it = ws->begin(); w_it != ws->end(); w_it++) {
+	    for (w_it = ws.begin(); w_it != ws.end(); w_it++) {
 		cdt_mesh::bedge_seg_t *b = *w_it;
 		if (to_split.find(*w_it) != to_split.end()) {
 		    std::set<cdt_mesh::bedge_seg_t *> esegs_split = split_edge_seg(s_cdt, b, 1);
 		    if (esegs_split.size()) {
-			ns->insert(esegs_split.begin(), esegs_split.end());
+			curr_edge_segs[b->edge_ind].insert(esegs_split.begin(), esegs_split.end());
+			split_check = true;
 		    } else {
-			new_edge_segs[b->edge_ind].insert(b);
+			curr_edge_segs[b->edge_ind].insert(b);
 		    }
 		} else {
-		    new_edge_segs[b->edge_ind].insert(b);
+		    curr_edge_segs[b->edge_ind].insert(b);
 		}
 	    }
-	    ws->clear();
-	    if (ns->size()) {
-		std::set<cdt_mesh::bedge_seg_t *> *tmp = ws;
-		ws = ns;
-		ns = tmp;
+
+	    ws.clear();
+
+	    std::map<int, std::set<cdt_mesh::bedge_seg_t *>>::iterator m_it;
+	    if (split_check) {
+		for (m_it = curr_edge_segs.begin(); m_it != curr_edge_segs.end(); m_it++) {
+		    ws.insert(m_it->second.begin(), m_it->second.end());
+		}
 	    }
+	    split_cnt++;
+
+	    // Once we're done with this round of splitting, update the e2polysegs sets
+	    for (m_it = curr_edge_segs.begin(); m_it != curr_edge_segs.end(); m_it++) {
+		int m_edge_index = m_it->first;
+		s_cdt->e2polysegs[m_edge_index].clear();
+		s_cdt->e2polysegs[m_edge_index].insert(m_it->second.begin(), m_it->second.end());
+	    }
+
+	    struct bu_vls fname = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&fname, "%d-rtree_2d_split_update_%d.plot3", face->m_face_index, split_cnt);
+	    plot_rtree_2d2(s_cdt->trim_segs[face->m_face_index], bu_vls_cstr(&fname));
+	    bu_vls_free(&fname);
 	}
 
-	// Once we're done with this loop, update the e2polysegs sets
-	std::map<int, std::set<cdt_mesh::bedge_seg_t *>>::iterator m_it;
-	for (m_it = new_edge_segs.begin(); m_it != new_edge_segs.end(); m_it++) {
-	    int m_edge_index = m_it->first;
-	    s_cdt->e2polysegs[m_edge_index].clear();
-	    s_cdt->e2polysegs[m_edge_index].insert(m_it->second.begin(), m_it->second.end());
-	}
-    }	
+    }
 }
 
 
