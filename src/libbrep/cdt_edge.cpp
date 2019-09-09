@@ -1625,6 +1625,7 @@ refine_close_edges(struct ON_Brep_CDT_State *s_cdt)
     for (int index = 0; index < brep->m_L.Count(); index++) {
 	const ON_BrepLoop &loop = brep->m_L[index];
 	ON_BrepFace *face = loop.Face();
+	int face_index = face->m_face_index;
 	std::set<cdt_mesh::bedge_seg_t *> ws;
 
 	// Build the initial set to check (all edges associated with a loop trim)
@@ -1665,7 +1666,8 @@ refine_close_edges(struct ON_Brep_CDT_State *s_cdt)
 		ON_2dPoint p2d2 = s_cdt->brep->m_T[tseg->trim_ind].PointAt(tseg->trim_end);
 
 		// Trim 2D bbox
-		ON_BoundingBox bb(p2d1, p2d2);
+		ON_Line line(p2d1, p2d2);
+		ON_BoundingBox bb = line.BoundingBox();
 		bb.m_max.x = bb.m_max.x + ON_ZERO_TOLERANCE;
 		bb.m_max.y = bb.m_max.y + ON_ZERO_TOLERANCE;
 		bb.m_min.x = bb.m_min.x - ON_ZERO_TOLERANCE;
@@ -1737,7 +1739,7 @@ refine_close_edges(struct ON_Brep_CDT_State *s_cdt)
 
 	    struct bu_vls fname = BU_VLS_INIT_ZERO;
 	    bu_vls_sprintf(&fname, "%d-rtree_2d_split_update_%d.plot3", face->m_face_index, split_cnt);
-	    plot_rtree_2d2(s_cdt->trim_segs[face->m_face_index], bu_vls_cstr(&fname));
+	    plot_rtree_2d2(s_cdt->trim_segs[face_index], bu_vls_cstr(&fname));
 	    bu_vls_free(&fname);
 	}
 
