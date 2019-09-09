@@ -191,6 +191,7 @@ std::set<cdt_mesh::cpolyedge_t *>
 split_singular_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *ce);
 
 bool initialize_edge_segs(struct ON_Brep_CDT_State *s_cdt);
+void refine_close_edges(struct ON_Brep_CDT_State *s_cdt);
 std::vector<int> characterize_edges(struct ON_Brep_CDT_State *s_cdt);
 void initialize_edge_containers(struct ON_Brep_CDT_State *s_cdt);
 bool initialize_loop_polygons(struct ON_Brep_CDT_State *s_cdt, std::set<cdt_mesh::cpolyedge_t *> *singular_edges);

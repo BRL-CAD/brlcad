@@ -515,6 +515,13 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	    return -1;
 	}
 
+	// If edge segments are too close together in 2D space compared to their
+	// length, it is difficult to mesh them successfully.  Refine edges that
+	// are close to other edges.
+	refine_close_edges(s_cdt);
+
+
+#if 0
 	// Check the CDT meshing - at this point, we should be able to produce
 	// a valid triangulation for all faces.  If not, refine the larger
 	// curved edges until we can.
@@ -586,6 +593,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	    fmesh->reset();
 
 	}
+#endif
 
 #if 0
 	// On to tolerance based splitting.  Process the non-linear edges first -
