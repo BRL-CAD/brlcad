@@ -790,7 +790,7 @@ bool RTREE_QUAL::SaveRec(Node* a_node, RTFileStream& a_stream)
     {
         for (int index = 0; index < a_node->m_count; ++index)
         {
-            const auto& curBranch = a_node->m_branch[index];
+            const auto& curBranch = &a_node->m_branch[index];
 
             a_stream.WriteArray(curBranch->m_rect.m_min, kNumDimensions);
             a_stream.WriteArray(curBranch->m_rect.m_max, kNumDimensions);
