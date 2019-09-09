@@ -207,6 +207,7 @@ void plot_rtree_2d2(RTree<void *, double, 2> &rtree, const char *filename);
 void plot_rtree_3d(RTree<void *, double, 3> &rtree, const char *filename);
 void plot_bbox(point_t m_min, point_t m_max, const char *filename);
 void plot_on_bbox(ON_BoundingBox &bb, const char *filename);
+void plot_ce_bbox(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe, const char *filename);
 
 struct cdt_audit_info *
 cdt_ainfo(int fid, int vid, int tid, int eid, fastf_t x2d, fastf_t y2d, double px, double py, double pz);

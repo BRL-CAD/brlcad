@@ -104,6 +104,8 @@ plot_rtree_2d2(RTree<void *, double, 2> &rtree, const char *filename)
 	++tree_it;
     }
 
+    //rtree.Save("test.rtree");
+
     fclose(plot_file);
 }
 void
@@ -153,6 +155,53 @@ plot_on_bbox(ON_BoundingBox &bb, const char *filename)
 
     fclose(plot_file);
 }
+
+void
+plot_ce_bbox(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe, const char *filename)
+{
+    FILE* plot_file = fopen(filename, "w");
+    struct bu_color c = BU_COLOR_INIT_ZERO;
+    bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
+    pl_color_buc(plot_file, &c);
+
+    ON_BrepTrim& trim = s_cdt->brep->m_T[pe->trim_ind];
+    ON_2dPoint p2d1 = trim.PointAt(pe->trim_start);
+    ON_2dPoint p2d2 = trim.PointAt(pe->trim_end);
+    ON_Line line(p2d1, p2d2);
+    ON_BoundingBox bb = line.BoundingBox();
+    bb.m_max.x = bb.m_max.x + ON_ZERO_TOLERANCE;
+    bb.m_max.y = bb.m_max.y + ON_ZERO_TOLERANCE;
+    bb.m_min.x = bb.m_min.x - ON_ZERO_TOLERANCE;
+    bb.m_min.y = bb.m_min.y - ON_ZERO_TOLERANCE;
+
+    double dist = p2d1.DistanceTo(p2d2);
+    double bdist = 0.5*dist;
+    double xdist = bb.m_max.x - bb.m_min.x;
+    double ydist = bb.m_max.y - bb.m_min.y;
+    // If we're close to the edge, we want to know - the Search callback will
+    // check the precise distance and make a decision on what to do.
+    if (xdist < bdist) {
+	bb.m_min.x = bb.m_min.x - 0.5*bdist;
+	bb.m_max.x = bb.m_max.x + 0.5*bdist;
+    }
+    if (ydist < bdist) {
+	bb.m_min.y = bb.m_min.y - 0.5*bdist;
+	bb.m_max.y = bb.m_max.y + 0.5*bdist;
+    }
+
+    point_t m_min, m_max;
+    m_min[0] = bb.Min().x;
+    m_min[1] = bb.Min().y;
+    m_min[2] = 0;
+    m_max[0] = bb.Max().x;
+    m_max[1] = bb.Max().y;
+    m_max[2] = 0;
+
+    BB_PLOT(m_min, m_max);
+
+    fclose(plot_file);
+}
+
 
 struct cdt_audit_info *
 cdt_ainfo(int fid, int vid, int tid, int eid, fastf_t x2d, fastf_t y2d, fastf_t px, fastf_t py, fastf_t pz)
