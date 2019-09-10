@@ -128,6 +128,12 @@ debug_bseg(cdt_mesh::bedge_seg_t *bseg, int seg_id)
 }
 #endif
 
+// TODO - can we base the width of this box on how far the 3D edge curve midpoint is from
+// the midpoint of the 3D line segment?  That might relate the 2D box size to how far away
+// we need to be to avoid problematic surface points...
+//
+// Probably still want some minimum distance to avoid extremely slim triangles, even if they
+// are "valid"...
 void
 rtree_bbox_2d(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
 {
