@@ -639,7 +639,12 @@ getSurfacePoint(
 
     // Do the search
     size_t tcnt = sinfo->rtree_2d->Search(p1, p2, NULL, NULL);
-    if (tcnt) {
+    //TODO - a thought.  Could we insert points at the midpoint of
+    //each trim bbox edge inside the surface to guarantee a "suitable"
+    //point on the surface?  Would need to avoid too-close points from
+    //the main build of the surface, but that might be one way to
+    //get the points where we need them...
+    if (tcnt > 2) {
 
 	// We have trims involved.
 	split_u = 1;
