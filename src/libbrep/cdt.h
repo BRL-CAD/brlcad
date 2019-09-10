@@ -162,7 +162,7 @@ ON_3dVector
 calc_trim_vnorm(ON_BrepVertex& v, ON_BrepTrim *trim);
 
 std::set<cdt_mesh::cpolyedge_t *>
-split_singular_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *ce);
+split_singular_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *ce, int update_rtree);
 
 bool initialize_edge_segs(struct ON_Brep_CDT_State *s_cdt);
 void refine_close_edges(struct ON_Brep_CDT_State *s_cdt);
@@ -175,6 +175,7 @@ void update_loop_median_curved_edge_seg_lengths(struct ON_Brep_CDT_State *s_cdt)
 void curved_edges_refine(struct ON_Brep_CDT_State *s_cdt);
 void tol_linear_edges_split(struct ON_Brep_CDT_State *s_cdt);
 void refine_near_loops(struct ON_Brep_CDT_State *s_cdt);
+void finalize_2d_rtrees(struct ON_Brep_CDT_State *s_cdt);
 
 void plot_rtree_2d(ON_RTree *rtree, const char *filename);
 void plot_rtree_2d2(RTree<void *, double, 2> &rtree, const char *filename);

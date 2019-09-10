@@ -650,20 +650,11 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	}
 #endif
 
-#if 0
-	// Build RTrees of 2D and 3D edge segments for edge aware processing
-	for (int index = 0; index < brep->m_E.Count(); index++) {
-	    std::vector<cdt_mesh::bedge_seg_t *> &epsegs = s_cdt->e2polysegs[index];
-	    std::vector<cdt_mesh::bedge_seg_t *>::iterator e_it;
-	    for (e_it = epsegs.begin(); e_it != epsegs.end(); e_it++) {
-		cdt_mesh::bedge_seg_t *b = *e_it;
-		rtree_bbox_2d(s_cdt, b->tseg1);
-		rtree_bbox_2d(s_cdt, b->tseg2);
-		rtree_bbox_3d(s_cdt, b->tseg1);
-		rtree_bbox_3d(s_cdt, b->tseg2);
-	    }
-	}
+	// Rebuild finalized 2D RTrees for faces (needed for surface processing)
+	finalize_2d_rtrees(s_cdt);
 
+
+#if 0
 	for (int index = 0; index < brep->m_F.Count(); index++) {
 	    struct bu_vls fname = BU_VLS_INIT_ZERO;
 	    bu_vls_sprintf(&fname, "%d-rtree_outer_polygon.plot3", index);
