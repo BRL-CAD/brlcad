@@ -65,7 +65,6 @@ struct cdt_surf_info {
     const ON_Surface *s;
     const ON_BrepFace *f;
     RTree<void *, double, 2> *rt_trims;
-    RTree<void *, double, 3> *rt_trims_3d;
     std::map<int,ON_3dPoint *> *strim_pnts;
     std::map<int,ON_3dPoint *> *strim_norms;
     double u1, u2, v1, v2;
@@ -672,7 +671,7 @@ GetInteriorPoints(struct ON_Brep_CDT_State *s_cdt, int face_index)
 	double within_dist = 0.0;
 	double cos_within_ang = 0.0;
 
-	if ((surface_width < BN_TOL_DIST) || (surface_height < BN_TOL_DIST)) {
+	if ((surface_width < ON_ZERO_TOLERANCE) || (surface_height < ON_ZERO_TOLERANCE)) {
 	    return;
 	}
 
@@ -681,7 +680,6 @@ GetInteriorPoints(struct ON_Brep_CDT_State *s_cdt, int face_index)
 	sinfo.s = s;
 	sinfo.f = &face;
 	sinfo.rt_trims = &(s_cdt->trim_segs[face_index]);
-	sinfo.rt_trims_3d = &(s_cdt->edge_segs_3d[face_index]);
 	sinfo.strim_pnts = &(s_cdt->strim_pnts[face_index]);
 	sinfo.strim_norms = &(s_cdt->strim_norms[face_index]);
 	double t1, t2;
