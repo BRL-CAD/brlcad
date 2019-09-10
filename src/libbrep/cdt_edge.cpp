@@ -1648,13 +1648,21 @@ refine_close_edges(struct ON_Brep_CDT_State *s_cdt)
 
 	    ws.clear();
 
+	    split_cnt++;
+
 	    if (split_check) {
 		ws = current_trims;
 		for (w_it = ws.begin(); w_it != ws.end(); w_it++) {
-		    (*w_it)->split_status = 0;
+		    // We don't want to zero this status information if this is
+		    // our last iteration before bailing and we've still got
+		    // unresolved inputs - we will want to know about any edges
+		    // that are still overlapping with non-neighbors when doing
+		    // surface points.
+		    if (split_cnt < 10) {
+			(*w_it)->split_status = 0;
+		    }
 		}
 	    }
-	    split_cnt++;
 
 	    // Once we're done with this round of splitting, update the e2polysegs sets
 	    std::map<int, std::vector<cdt_mesh::bedge_seg_t *>>::iterator m_it;
@@ -1711,7 +1719,7 @@ finalize_2d_rtrees(struct ON_Brep_CDT_State *s_cdt)
 		rtree_bbox_2d(s_cdt, next);
 		next = next->next;
 		if (ecnt > cpoly->poly.size()) {
-		    std::cerr << "\nrefine_close_edges: ERROR! encountered infinite loop\n";
+		    std::cerr << "\nfinalize_2d_rtrees: ERROR! encountered infinite loop\n";
 		    return;
 		}
 	    }
@@ -1774,7 +1782,7 @@ cpolyedge_nearest_dists(struct ON_Brep_CDT_State *s_cdt)
 		cpolyedge_ndists(next);
 		next = next->next;
 		if (ecnt > cpoly->poly.size()) {
-		    std::cerr << "\nrefine_close_edges: ERROR! encountered infinite loop\n";
+		    std::cerr << "\ncpolyedge_nearest_dists: ERROR! encountered infinite loop\n";
 		    return;
 		}
 	    }
