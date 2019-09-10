@@ -351,6 +351,9 @@ class cpolygon_t
 	bool closed();
 	bool self_intersecting();
 
+	/* Return a libbg style polygon container */
+	long bg_polygon(point2d_t **ppnts);
+
 	/* Test if a point is inside the polygon.  Supplying flip=true will instead
 	 * report if the point is outside the polygon.
 	 * TODO - document what it does if it's ON the polygon...*/

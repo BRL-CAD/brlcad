@@ -758,24 +758,18 @@ cpolygon_t::closed()
     return true;
 }
 
-bool
-cpolygon_t::point_in_polygon(long v, bool flip)
+long
+cpolygon_t::bg_polygon(point2d_t **ppnts)
 {
-    if (v == -1) return false;
-    if (!closed()) return false;
+    if (!closed()) return -1;
 
     point2d_t *polypnts = (point2d_t *)bu_calloc(poly.size()+1, sizeof(point2d_t), "polyline");
 
-    size_t pind = 0;
+    long pind = 0;
 
     cpolyedge_t *pe = (*poly.begin());
     cpolyedge_t *first = pe;
     cpolyedge_t *next = pe->next;
-
-    if (v == pe->v[0] || v == pe->v[1]) {
-	bu_free(polypnts, "polyline");
-	return false;
-    }
 
     V2SET(polypnts[pind], pnts_2d[pe->v[0]].first, pnts_2d[pe->v[0]].second);
     pind++;
@@ -784,13 +778,34 @@ cpolygon_t::point_in_polygon(long v, bool flip)
     // Walk the loop
     while (first != next) {
 	pind++;
-	if (v == next->v[0] || v == next->v[1]) {
-	    bu_free(polypnts, "polyline");
-	    return false;
-	}
 	V2SET(polypnts[pind], pnts_2d[next->v[1]].first, pnts_2d[next->v[1]].second);
 	next = next->next;
+	if ((size_t)pind > poly.size()+1) {
+	    std::cout << "\nERROR infinite loop\n";
+	    bu_free(polypnts, "free polypnts");
+	    return -1;
+	}
     }
+
+    (*ppnts) = polypnts;
+
+    return pind;
+}
+
+bool
+cpolygon_t::point_in_polygon(long v, bool flip)
+{
+    if (v == -1) return false;
+    if (!closed()) return false;
+
+    cpolyedge_t *pe = (*poly.begin());
+    if (v == pe->v[0] || v == pe->v[1]) {
+	return -1;
+    }
+
+    point2d_t *polypnts = NULL;
+    long pind = bg_polygon(&polypnts);
+    if (pind < 0) return false;
 
 #if 0
     if (bg_polygon_direction(pind+1, pnts_2d, NULL) == BG_CCW) {
