@@ -101,11 +101,38 @@ class SPatch {
 	    vmax = v2;
 	}
 
+	void plot(const char *filename);
+
 	double umin;
 	double umax;
 	double vmin;
 	double vmax;
 };
+
+void SPatch::plot(const char *filename)
+{
+    FILE* plot_file = fopen(filename, "w");
+    struct bu_color c = BU_COLOR_INIT_ZERO;
+    bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
+    pl_color_buc(plot_file, &c);
+
+    ON_2dPoint p2dmin(umin, vmin);
+    ON_2dPoint p2dmax(umax, vmax);
+    ON_Line line(p2dmin, p2dmax);
+    ON_BoundingBox bb = line.BoundingBox();
+    fastf_t pt[4][3];                  
+    VSET(pt[0], bb.Max().x, bb.Min().y, 0);    
+    VSET(pt[1], bb.Max().x, bb.Max().y, 0);    
+    VSET(pt[2], bb.Min().x, bb.Max().y, 0);    
+    VSET(pt[3], bb.Min().x, bb.Min().y, 0);    
+    pdv_3move(plot_file, pt[0]); 
+    pdv_3cont(plot_file, pt[1]); 
+    pdv_3cont(plot_file, pt[2]); 
+    pdv_3cont(plot_file, pt[3]); 
+    pdv_3cont(plot_file, pt[0]); 
+
+    fclose(plot_file); 
+}
 
 static double
 uline_len_est(struct cdt_surf_info *sinfo, double u1, double u2, double v)
