@@ -145,31 +145,6 @@ struct ON_Brep_CDT_State {
     std::map<p2t::Triangle*, int> *tri_brep_face;
 };
 
-struct cdt_surf_info {
-    struct ON_Brep_CDT_State *s_cdt;
-    const ON_Surface *s;
-    const ON_BrepFace *f;
-    ON_RTree *rt_trims;
-    ON_RTree *rt_trims_3d;
-    std::map<int,ON_3dPoint *> *strim_pnts;
-    std::map<int,ON_3dPoint *> *strim_norms;
-    double u1, u2, v1, v2;
-    fastf_t ulen;
-    fastf_t u_lower_3dlen;
-    fastf_t u_mid_3dlen;
-    fastf_t u_upper_3dlen;
-    fastf_t vlen;
-    fastf_t v_lower_3dlen;
-    fastf_t v_mid_3dlen;
-    fastf_t v_upper_3dlen;
-    fastf_t min_edge;
-    fastf_t max_edge;
-    fastf_t min_dist;
-    fastf_t within_dist;
-    fastf_t cos_within_ang;
-    std::set<ON_BoundingBox *> leaf_bboxes;
-};
-
 #if 0
 void
 PerformClosedSurfaceChecks(

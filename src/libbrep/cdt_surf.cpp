@@ -59,7 +59,7 @@
 #include "bn/rand.h"
 #include "./cdt.h"
 
-struct cdt_surf_info_2 {
+struct cdt_surf_info {
     std::set<ON_2dPoint *> on_surf_points;
     struct ON_Brep_CDT_State *s_cdt;
     const ON_Surface *s;
@@ -104,7 +104,7 @@ class SPatch {
 };
 
 static double
-uline_len_est(struct cdt_surf_info_2 *sinfo, double u1, double u2, double v)
+uline_len_est(struct cdt_surf_info *sinfo, double u1, double u2, double v)
 {
     double t, lenfact, lenest;
     int active_half = (fabs(sinfo->v1 - v) < fabs(sinfo->v2 - v)) ? 0 : 1;
@@ -121,7 +121,7 @@ uline_len_est(struct cdt_surf_info_2 *sinfo, double u1, double u2, double v)
 
 
 static double
-vline_len_est(struct cdt_surf_info_2 *sinfo, double u, double v1, double v2)
+vline_len_est(struct cdt_surf_info *sinfo, double u, double v1, double v2)
 {
     double t, lenfact, lenest;
     int active_half = (fabs(sinfo->u1 - u) < fabs(sinfo->u2 - u)) ? 0 : 1;
@@ -137,7 +137,7 @@ vline_len_est(struct cdt_surf_info_2 *sinfo, double u, double v1, double v2)
 }
 
 static ON_3dPoint *
-singular_trim_norm(struct cdt_surf_info_2 *sinfo, fastf_t uc, fastf_t vc)
+singular_trim_norm(struct cdt_surf_info *sinfo, fastf_t uc, fastf_t vc)
 {
     if (sinfo->strim_pnts->find(sinfo->f->m_face_index) != sinfo->strim_pnts->end()) {
 	//bu_log("Face %d has singular trims\n", sinfo->f->m_face_index);
@@ -226,7 +226,7 @@ static bool TrimSegCallback(void *data, void *a_context) {
 
 /* If we've got trimming curves involved, we need to be more careful about respecting
  * the min edge distance. */
-static bool involves_trims(double *min_edge, struct cdt_surf_info_2 *sinfo, ON_3dPoint &p1, ON_3dPoint &p2)
+static bool involves_trims(double *min_edge, struct cdt_surf_info *sinfo, ON_3dPoint &p1, ON_3dPoint &p2)
 {
     double min_edge_dist = sinfo->max_edge;
 
@@ -306,7 +306,7 @@ static bool involves_trims(double *min_edge, struct cdt_surf_info_2 *sinfo, ON_3
  *                         (0,0)
  */
 static double
-_cdt_get_uv_edge_3d_len(struct cdt_surf_info_2 *sinfo, int c1, int c2)
+_cdt_get_uv_edge_3d_len(struct cdt_surf_info *sinfo, int c1, int c2)
 {
     int line_set = 0;
     double wu1, wv1, wu2, wv2, umid, vmid = 0.0;
@@ -398,7 +398,7 @@ _cdt_get_uv_edge_3d_len(struct cdt_surf_info_2 *sinfo, int c1, int c2)
 }
 
 void
-filter_surface_edge_pnts_2(struct cdt_surf_info_2 *sinfo)
+filter_surface_edge_pnts_2(struct cdt_surf_info *sinfo)
 {
 
     // Points on 
@@ -478,7 +478,7 @@ filter_surface_edge_pnts_2(struct cdt_surf_info_2 *sinfo)
 
 static bool
 getSurfacePoint(
-	         struct cdt_surf_info_2 *sinfo,
+	         struct cdt_surf_info *sinfo,
 		 SPatch &sp,
 		 std::queue<SPatch> &nq
 		 )
@@ -676,7 +676,7 @@ GetInteriorPoints(struct ON_Brep_CDT_State *s_cdt, int face_index)
 	    return;
 	}
 
-	struct cdt_surf_info_2 sinfo;
+	struct cdt_surf_info sinfo;
 	sinfo.s_cdt = s_cdt;
 	sinfo.s = s;
 	sinfo.f = &face;
