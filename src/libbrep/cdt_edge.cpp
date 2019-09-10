@@ -138,8 +138,8 @@ void
 rtree_bbox_2d(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
 {
     ON_BrepTrim& trim = s_cdt->brep->m_T[pe->trim_ind];
-    ON_2dPoint p2d1 = trim.PointAt(pe->trim_start);
-    ON_2dPoint p2d2 = trim.PointAt(pe->trim_end);
+    ON_2dPoint p2d1(pe->polygon->pnts_2d[pe->v[0]].first, pe->polygon->pnts_2d[pe->v[0]].second);
+    ON_2dPoint p2d2(pe->polygon->pnts_2d[pe->v[1]].first, pe->polygon->pnts_2d[pe->v[1]].second);
     ON_Line line(p2d1, p2d2);
     ON_BoundingBox bb = line.BoundingBox();
     bb.m_max.x = bb.m_max.x + ON_ZERO_TOLERANCE;
@@ -175,8 +175,8 @@ void
 rtree_bbox_2d_remove(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
 {
     ON_BrepTrim& trim = s_cdt->brep->m_T[pe->trim_ind];
-    ON_2dPoint p2d1 = trim.PointAt(pe->trim_start);
-    ON_2dPoint p2d2 = trim.PointAt(pe->trim_end);
+    ON_2dPoint p2d1(pe->polygon->pnts_2d[pe->v[0]].first, pe->polygon->pnts_2d[pe->v[0]].second);
+    ON_2dPoint p2d2(pe->polygon->pnts_2d[pe->v[1]].first, pe->polygon->pnts_2d[pe->v[1]].second);
     ON_Line line(p2d1, p2d2);
     ON_BoundingBox bb = line.BoundingBox();
     bb.m_max.x = bb.m_max.x + ON_ZERO_TOLERANCE;
@@ -270,10 +270,10 @@ static bool MinSplit2dCallback(void *data, void *a_context) {
     // Intersecting with oneself or immediate neighbors isn't cause for splitting
     if (tseg == context->cseg || tseg == context->cseg->prev || tseg == context->cseg->next) return true;
 
-    ON_2dPoint cp2d1 = context->s_cdt->brep->m_T[context->cseg->trim_ind].PointAt(context->cseg->trim_start);
-    ON_2dPoint cp2d2 = context->s_cdt->brep->m_T[context->cseg->trim_ind].PointAt(context->cseg->trim_end);
-    ON_2dPoint tp2d1 = context->s_cdt->brep->m_T[tseg->trim_ind].PointAt(tseg->trim_start);
-    ON_2dPoint tp2d2 = context->s_cdt->brep->m_T[tseg->trim_ind].PointAt(tseg->trim_end);
+    ON_2dPoint cp2d1(context->cseg->polygon->pnts_2d[context->cseg->v[0]].first, context->cseg->polygon->pnts_2d[context->cseg->v[0]].second);
+    ON_2dPoint cp2d2(context->cseg->polygon->pnts_2d[context->cseg->v[1]].first, context->cseg->polygon->pnts_2d[context->cseg->v[1]].second);
+    ON_2dPoint tp2d1(tseg->polygon->pnts_2d[tseg->v[0]].first, tseg->polygon->pnts_2d[tseg->v[0]].second);
+    ON_2dPoint tp2d2(tseg->polygon->pnts_2d[tseg->v[1]].first, tseg->polygon->pnts_2d[tseg->v[1]].second);
 
     double cdist = cp2d1.DistanceTo(cp2d2);
     double tdist = tp2d1.DistanceTo(tp2d2);
@@ -1542,8 +1542,8 @@ refine_close_edges(struct ON_Brep_CDT_State *s_cdt)
 	    // the initial data containers are set up
 	    for (w_it = ws.begin(); w_it != ws.end(); w_it++) {
 		cdt_mesh::cpolyedge_t *tseg = *w_it;
-		ON_2dPoint p2d1 = s_cdt->brep->m_T[tseg->trim_ind].PointAt(tseg->trim_start);
-		ON_2dPoint p2d2 = s_cdt->brep->m_T[tseg->trim_ind].PointAt(tseg->trim_end);
+		ON_2dPoint p2d1(tseg->polygon->pnts_2d[tseg->v[0]].first, tseg->polygon->pnts_2d[tseg->v[0]].second);
+		ON_2dPoint p2d2(tseg->polygon->pnts_2d[tseg->v[1]].first, tseg->polygon->pnts_2d[tseg->v[1]].second);
 
 		// Trim 2D bbox
 		ON_Line line(p2d1, p2d2);
@@ -1649,7 +1649,7 @@ refine_close_edges(struct ON_Brep_CDT_State *s_cdt)
 		std::copy(m_it->second.begin(), m_it->second.end(), std::back_inserter(s_cdt->e2polysegs[m_edge_index]));
 	    }
 
-#if 0
+#if 1
 	    struct bu_vls fname = BU_VLS_INIT_ZERO;
 	    bu_vls_sprintf(&fname, "%d-rtree_2d_split_update_%d.plot3", face.m_face_index, split_cnt);
 	    plot_rtree_2d2(s_cdt->trim_segs[face_index], bu_vls_cstr(&fname));
