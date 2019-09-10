@@ -82,6 +82,12 @@ struct cdt_surf_info {
     fastf_t within_dist;
     fastf_t cos_within_ang;
     std::set<ON_BoundingBox *> leaf_bboxes;
+
+    point2d_t *oloop_pnts;
+    size_t oloop_cnt;
+
+    std::map<int, point2d_t *>iloop_pnts;
+    std::map<int, size_t>iloop_cnt;
 };
 
 class SPatch {
@@ -424,6 +430,20 @@ sinfo_init(struct cdt_surf_info *sinfo, struct ON_Brep_CDT_State *s_cdt, int fac
     sinfo->v_upper_3dlen = _cdt_get_uv_edge_3d_len(sinfo, 2, 1);
     sinfo->min_edge = (*s_cdt->min_edge_seg_len)[face_index];
     sinfo->max_edge = (*s_cdt->max_edge_seg_len)[face_index];
+
+
+    // We don't want to malloc and free the trimming loops every time, as we may
+    // be testing a lot of points.
+    cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[face_index];
+    sinfo->oloop_cnt = fmesh->outer_loop.bg_polygon(&sinfo->oloop_pnts);
+    std::map<int, cdt_mesh::cpolygon_t*>::iterator l_it;
+    for (l_it = fmesh->inner_loops.begin(); l_it != fmesh->inner_loops.end(); l_it++) {
+	int lindex = l_it->first;
+	point2d_t *lpnts;
+	long lcnt = l_it->second->bg_polygon(&lpnts);
+	sinfo->iloop_pnts[lindex] = lpnts;
+	sinfo->iloop_cnt[lindex] = lcnt;
+    }
 
     double dist = 0.0;
     double min_dist = 0.0;
