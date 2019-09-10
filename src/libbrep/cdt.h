@@ -176,6 +176,7 @@ void curved_edges_refine(struct ON_Brep_CDT_State *s_cdt);
 void tol_linear_edges_split(struct ON_Brep_CDT_State *s_cdt);
 void refine_near_loops(struct ON_Brep_CDT_State *s_cdt);
 void finalize_2d_rtrees(struct ON_Brep_CDT_State *s_cdt);
+void cpolyedge_nearest_dists(struct ON_Brep_CDT_State *s_cdt);
 
 void plot_rtree_2d(ON_RTree *rtree, const char *filename);
 void plot_rtree_2d2(RTree<void *, double, 2> &rtree, const char *filename);

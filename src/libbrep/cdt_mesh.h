@@ -303,6 +303,8 @@ class cpolyedge_t
 	double trim_start;
 	double trim_end;
 	int split_status;
+	double v1_dist;
+	double v2_dist;
 	bedge_seg_t *eseg;
 
 };

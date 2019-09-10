@@ -203,7 +203,7 @@ do_triangulation(struct ON_Brep_CDT_State *s_cdt, int fi)
 
     // Sample the surface, independent of the trimming curves, to get points that
     // will tie the mesh to the interior surface.
-    //GetInteriorPoints(s_cdt, face.m_face_index);
+    GetInteriorPoints(s_cdt, face.m_face_index);
 
     cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[face.m_face_index];
     fmesh->f_id = face.m_face_index;
@@ -653,6 +653,9 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	// Rebuild finalized 2D RTrees for faces (needed for surface processing)
 	finalize_2d_rtrees(s_cdt);
 
+
+	// Calculate 2D neighbor distances for polyedges
+	cpolyedge_nearest_dists(s_cdt);
 
 #if 0
 	for (int index = 0; index < brep->m_F.Count(); index++) {

@@ -633,33 +633,15 @@ getSurfacePoint(
     double p2[2];
     p2[0] = bb.Max().x;
     p2[1] = bb.Max().y;
+
+    sp.plot("current_patch.plot3");
     // Do the search
-    if (sinfo->rtree_2d->Search(p1, p2, NULL, NULL)) {
+    size_t tcnt = sinfo->rtree_2d->Search(p1, p2, NULL, NULL);
+    if (tcnt) {
 
 	// We have trims involved.
-	
-	// Check the inside/outside status of the four corners of the patch.
-	//
-	// 1.  If all four are outside the outer loop, no further processing is
-	// needed.  
-	//
-	// 2.  If all four are inside an inner loop, no further processing is needed.
-	//
-	// 3.  If we have some points inside and some outside, split in u and v.
-	//
-	// 4.  If the spatch is untrimmed, check if the patch bbox is fully within
-	// any trim bbox.  If it is, unless that trim is unsatisfied (i.e. it has
-	// no associated surface patch which can provide an appropriate point) no
-	// further processing is required.  If trim is unsatisfied, list as a
-	// candidate.
-	//
-	//
-	// 5. If not fully within a trim bbox, check the distance of the center point
-	// of the patch to the center point of each associated trim and compare it
-	// to that trim's distance to it's closest neighbor.  If it is closer than
-	// than distance to all associated trims, it can satisfy those trims for
-	// tessellation.  If it can't satisfy one or more associated trims, split.
-
+	split_u = 1;
+	split_v = 1;
     } else {
 
 	// If there are no overlapping trims, we're free to consider this patch on

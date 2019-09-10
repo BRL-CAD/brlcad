@@ -1719,6 +1719,64 @@ finalize_2d_rtrees(struct ON_Brep_CDT_State *s_cdt)
     }
 }
 
+void
+cpolyedge_ndists(cdt_mesh::cpolyedge_t *pe) {
+    ON_2dPoint p2d1(pe->polygon->pnts_2d[pe->v[0]].first, pe->polygon->pnts_2d[pe->v[0]].second);
+    ON_2dPoint p2d2(pe->polygon->pnts_2d[pe->v[1]].first, pe->polygon->pnts_2d[pe->v[1]].second);
+
+    ON_2dPoint p2d1_n(pe->polygon->pnts_2d[pe->prev->v[0]].first, pe->polygon->pnts_2d[pe->prev->v[0]].second);
+    ON_2dPoint p2d2_n(pe->polygon->pnts_2d[pe->next->v[1]].first, pe->polygon->pnts_2d[pe->next->v[1]].second);
+
+    pe->v1_dist = p2d1.DistanceTo(p2d1_n);
+    pe->v2_dist = p2d2.DistanceTo(p2d2_n);
+}
+
+void
+cpolyedge_nearest_dists(struct ON_Brep_CDT_State *s_cdt)
+{
+    ON_Brep* brep = s_cdt->brep;
+    for (int face_index = 0; face_index < brep->m_F.Count(); face_index++) {
+	ON_BrepFace &face = s_cdt->brep->m_F[face_index];
+	s_cdt->face_rtrees_2d[face.m_face_index].RemoveAll();
+	cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[face.m_face_index];
+	std::cout << "Face " << face.m_face_index << " final 2D rtree build...\n";
+
+	std::vector<cdt_mesh::cpolyedge_t *> ws;
+	std::vector<cdt_mesh::cpolyedge_t *>::iterator w_it;
+
+	int loop_cnt = face.LoopCount();
+	for (int li = 0; li < loop_cnt; li++) {
+	    const ON_BrepLoop *loop = face.Loop(li);
+	    bool is_outer = (face.OuterLoop()->m_loop_index == loop->m_loop_index) ? true : false;
+	    cdt_mesh::cpolygon_t *cpoly = NULL;
+	    if (is_outer) {
+		cpoly = &fmesh->outer_loop;
+	    } else {
+		cpoly = fmesh->inner_loops[li];
+	    }
+
+	    size_t ecnt = 1;
+	    cdt_mesh::cpolyedge_t *pe = (*cpoly->poly.begin());
+	    cdt_mesh::cpolyedge_t *first = pe;
+	    cdt_mesh::cpolyedge_t *next = pe->next;
+
+	    cpolyedge_ndists(first);
+	    
+	    // Walk the loop
+	    while (first != next) {
+		ecnt++;
+		if (!next) break;
+		cpolyedge_ndists(next);
+		next = next->next;
+		if (ecnt > cpoly->poly.size()) {
+		    std::cerr << "\nrefine_close_edges: ERROR! encountered infinite loop\n";
+		    return;
+		}
+	    }
+	}
+    }
+}
+
 /** @} */
 
 // Local Variables:
