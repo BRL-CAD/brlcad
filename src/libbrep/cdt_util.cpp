@@ -104,7 +104,7 @@ plot_rtree_2d2(RTree<void *, double, 2> &rtree, const char *filename)
 	++tree_it;
     }
 
-    rtree.Save("test.rtree");
+    //rtree.Save("test.rtree");
 
     fclose(plot_file);
 }
