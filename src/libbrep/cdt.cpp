@@ -613,12 +613,11 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 
 	// Now, process the linear edges
 	tol_linear_edges_split(s_cdt);
-
-	// Do another pass to break down edges that are close to other loops and have segment
-	// lengths that are large compared to the nearby loop polygons
-	refine_near_loops(s_cdt);
 #endif
 
+#if 0
+	// TODO - this step may be redundant with the close_edge refinement...
+	//
 	// Split singularity trims in 2D to provide an easier input to the 2D CDT logic.  NOTE: these
 	// splits will produce degenerate (zero area, two identical vertex) triangles in 3D that have
 	// to be cleaned up.
@@ -649,6 +648,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 		}
 	    }
 	}
+#endif
 
 #if 0
 	// Build RTrees of 2D and 3D edge segments for edge aware processing
