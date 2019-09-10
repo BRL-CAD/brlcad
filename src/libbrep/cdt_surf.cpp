@@ -635,6 +635,8 @@ getSurfacePoint(
     p2[1] = bb.Max().y;
 
     sp.plot("current_patch.plot3");
+    plot_rtree_2d2(*sinfo->rtree_2d, "rtree.plot3");
+
     // Do the search
     size_t tcnt = sinfo->rtree_2d->Search(p1, p2, NULL, NULL);
     if (tcnt) {
