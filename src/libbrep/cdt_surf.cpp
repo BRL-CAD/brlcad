@@ -84,7 +84,6 @@ struct cdt_surf_info {
     std::set<ON_BoundingBox *> leaf_bboxes;
 };
 
-
 class SPatch {
 
     public:
@@ -396,6 +395,87 @@ _cdt_get_uv_edge_3d_len(struct cdt_surf_info *sinfo, int c1, int c2)
     return d1+d2;
 }
 
+
+static void
+sinfo_init(struct cdt_surf_info *sinfo, struct ON_Brep_CDT_State *s_cdt, int face_index)
+{
+    ON_BrepFace &face = s_cdt->brep->m_F[face_index];
+    const ON_Surface *s = face.SurfaceOf();
+    const ON_Brep *brep = face.Brep();
+
+    sinfo->s_cdt = s_cdt;
+    sinfo->s = s;
+    sinfo->f = &face;
+    sinfo->rt_trims = &(s_cdt->trim_segs[face_index]);
+    sinfo->strim_pnts = &(s_cdt->strim_pnts[face_index]);
+    sinfo->strim_norms = &(s_cdt->strim_norms[face_index]);
+    double t1, t2;
+    s->GetDomain(0, &t1, &t2);
+    sinfo->ulen = fabs(t2 - t1);
+    s->GetDomain(1, &t1, &t2);
+    sinfo->vlen = fabs(t2 - t1);
+    s->GetDomain(0, &sinfo->u1, &sinfo->u2);
+    s->GetDomain(1, &sinfo->v1, &sinfo->v2);
+    sinfo->u_lower_3dlen = _cdt_get_uv_edge_3d_len(sinfo, 0, 0);
+    sinfo->u_mid_3dlen   = _cdt_get_uv_edge_3d_len(sinfo, 1, 0);
+    sinfo->u_upper_3dlen = _cdt_get_uv_edge_3d_len(sinfo, 2, 0);
+    sinfo->v_lower_3dlen = _cdt_get_uv_edge_3d_len(sinfo, 0, 1);
+    sinfo->v_mid_3dlen   = _cdt_get_uv_edge_3d_len(sinfo, 1, 1);
+    sinfo->v_upper_3dlen = _cdt_get_uv_edge_3d_len(sinfo, 2, 1);
+    sinfo->min_edge = (*s_cdt->min_edge_seg_len)[face_index];
+    sinfo->max_edge = (*s_cdt->max_edge_seg_len)[face_index];
+
+    double dist = 0.0;
+    double min_dist = 0.0;
+    double within_dist = 0.0;
+    double cos_within_ang = 0.0;
+
+    ON_BoundingBox tight_bbox;
+    if (brep->GetTightBoundingBox(tight_bbox)) {
+	// Note: this needs to be based on the smallest dimension of the
+	// box, not the diagonal, in case we've got something really long
+	// and narrow.
+	fastf_t d1 = tight_bbox.m_max[0] - tight_bbox.m_min[0];
+	fastf_t d2 = tight_bbox.m_max[1] - tight_bbox.m_min[1];
+	dist = (d1 < d2) ? d1 : d2;
+    }
+
+    // TODO - sync this with how trim tolerances are handled!! IMPORTANT!!!
+    if (s_cdt->tol.abs < BN_TOL_DIST + ON_ZERO_TOLERANCE) {
+	min_dist = BN_TOL_DIST;
+    } else {
+	min_dist = s_cdt->tol.abs;
+    }
+
+    double rel = 0.0;
+    if (s_cdt->tol.rel > 0.0 + ON_ZERO_TOLERANCE) {
+	rel = s_cdt->tol.rel * dist;
+	within_dist = rel < min_dist ? min_dist : rel;
+	//if (s_cdt->abs < s_cdt->dist + ON_ZERO_TOLERANCE) {
+	//    min_dist = within_dist;
+	//}
+    } else if ((s_cdt->tol.abs > 0.0 + ON_ZERO_TOLERANCE)
+	    && (s_cdt->tol.norm < 0.0 + ON_ZERO_TOLERANCE)) {
+	within_dist = min_dist;
+    } else if ((s_cdt->tol.abs > 0.0 + ON_ZERO_TOLERANCE)
+	    || (s_cdt->tol.norm > 0.0 + ON_ZERO_TOLERANCE)) {
+	within_dist = dist;
+    } else {
+	within_dist = 0.01 * dist; // default to 1% minimum surface distance
+    }
+
+    if (s_cdt->tol.norm > 0.0 + ON_ZERO_TOLERANCE) {
+	cos_within_ang = cos(s_cdt->tol.norm);
+    } else {
+	cos_within_ang = cos(ON_PI / 2.0);
+    }
+
+    sinfo->min_dist = min_dist;
+    sinfo->within_dist = within_dist;
+    sinfo->cos_within_ang = cos_within_ang;
+}
+
+
 void
 filter_surface_edge_pnts_2(struct cdt_surf_info *sinfo)
 {
@@ -663,40 +743,16 @@ GetInteriorPoints(struct ON_Brep_CDT_State *s_cdt, int face_index)
 
     ON_BrepFace &face = s_cdt->brep->m_F[face_index];
     const ON_Surface *s = face.SurfaceOf();
-    const ON_Brep *brep = face.Brep();
 
     if (s->GetSurfaceSize(&surface_width, &surface_height)) {
-	double dist = 0.0;
-	double min_dist = 0.0;
-	double within_dist = 0.0;
-	double cos_within_ang = 0.0;
 
 	if ((surface_width < ON_ZERO_TOLERANCE) || (surface_height < ON_ZERO_TOLERANCE)) {
 	    return;
 	}
 
 	struct cdt_surf_info sinfo;
-	sinfo.s_cdt = s_cdt;
-	sinfo.s = s;
-	sinfo.f = &face;
-	sinfo.rt_trims = &(s_cdt->trim_segs[face_index]);
-	sinfo.strim_pnts = &(s_cdt->strim_pnts[face_index]);
-	sinfo.strim_norms = &(s_cdt->strim_norms[face_index]);
-	double t1, t2;
-	s->GetDomain(0, &t1, &t2);
-	sinfo.ulen = fabs(t2 - t1);
-	s->GetDomain(1, &t1, &t2);
-	sinfo.vlen = fabs(t2 - t1);
-	s->GetDomain(0, &sinfo.u1, &sinfo.u2);
-	s->GetDomain(1, &sinfo.v1, &sinfo.v2);
-	sinfo.u_lower_3dlen = _cdt_get_uv_edge_3d_len(&sinfo, 0, 0);
-	sinfo.u_mid_3dlen   = _cdt_get_uv_edge_3d_len(&sinfo, 1, 0);
-	sinfo.u_upper_3dlen = _cdt_get_uv_edge_3d_len(&sinfo, 2, 0);
-	sinfo.v_lower_3dlen = _cdt_get_uv_edge_3d_len(&sinfo, 0, 1);
-	sinfo.v_mid_3dlen   = _cdt_get_uv_edge_3d_len(&sinfo, 1, 1);
-	sinfo.v_upper_3dlen = _cdt_get_uv_edge_3d_len(&sinfo, 2, 1);
-	sinfo.min_edge = (*s_cdt->min_edge_seg_len)[face_index];
-	sinfo.max_edge = (*s_cdt->max_edge_seg_len)[face_index];
+	sinfo_init(&sinfo, s_cdt, face_index);
+
 
 	// may be a smaller trimmed subset of surface so worth getting
 	// face boundary
@@ -710,48 +766,6 @@ GetInteriorPoints(struct ON_Brep_CDT_State *s_cdt, int face_index)
 	    }
 	}
 
-	ON_BoundingBox tight_bbox;
-	if (brep->GetTightBoundingBox(tight_bbox)) {
-	    // Note: this needs to be based on the smallest dimension of the
-	    // box, not the diagonal, in case we've got something really long
-	    // and narrow.
-	    fastf_t d1 = tight_bbox.m_max[0] - tight_bbox.m_min[0];
-	    fastf_t d2 = tight_bbox.m_max[1] - tight_bbox.m_min[1];
-	    dist = (d1 < d2) ? d1 : d2;
-	}
-
-	if (s_cdt->tol.abs < BN_TOL_DIST + ON_ZERO_TOLERANCE) {
-	    min_dist = BN_TOL_DIST;
-	} else {
-	    min_dist = s_cdt->tol.abs;
-	}
-
-	double rel = 0.0;
-	if (s_cdt->tol.rel > 0.0 + ON_ZERO_TOLERANCE) {
-	    rel = s_cdt->tol.rel * dist;
-	    within_dist = rel < min_dist ? min_dist : rel;
-	    //if (s_cdt->abs < s_cdt->dist + ON_ZERO_TOLERANCE) {
-	    //    min_dist = within_dist;
-	    //}
-	} else if ((s_cdt->tol.abs > 0.0 + ON_ZERO_TOLERANCE)
-		&& (s_cdt->tol.norm < 0.0 + ON_ZERO_TOLERANCE)) {
-	    within_dist = min_dist;
-	} else if ((s_cdt->tol.abs > 0.0 + ON_ZERO_TOLERANCE)
-		|| (s_cdt->tol.norm > 0.0 + ON_ZERO_TOLERANCE)) {
-	    within_dist = dist;
-	} else {
-	    within_dist = 0.01 * dist; // default to 1% minimum surface distance
-	}
-
-	if (s_cdt->tol.norm > 0.0 + ON_ZERO_TOLERANCE) {
-	    cos_within_ang = cos(s_cdt->tol.norm);
-	} else {
-	    cos_within_ang = cos(ON_PI / 2.0);
-	}
-
-	sinfo.min_dist = min_dist;
-	sinfo.within_dist = within_dist;
-	sinfo.cos_within_ang = cos_within_ang;
 
 	std::queue<SPatch> spq1, spq2;
 
