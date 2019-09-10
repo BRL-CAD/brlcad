@@ -168,7 +168,7 @@ rtree_bbox_2d(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
     double p2[2];
     p2[0] = bb.Max().x;
     p2[1] = bb.Max().y;
-    s_cdt->trim_segs[trim.Face()->m_face_index].Insert(p1, p2, (void *)pe);
+    s_cdt->face_rtrees_2d[trim.Face()->m_face_index].Insert(p1, p2, (void *)pe);
 }
 
 void
@@ -206,9 +206,10 @@ rtree_bbox_2d_remove(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
     double p2[2];
     p2[0] = bb.Max().x;
     p2[1] = bb.Max().y;
-    s_cdt->trim_segs[trim.Face()->m_face_index].Remove(p1, p2, (void *)pe);
+    s_cdt->face_rtrees_2d[trim.Face()->m_face_index].Remove(p1, p2, (void *)pe);
 }
 
+#if 0
 void
 rtree_bbox_3d(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
 {
@@ -255,6 +256,7 @@ rtree_bbox_3d(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
     p2[2] = bb.Max().z;
     s_cdt->edge_segs_3d[trim.Face()->m_face_index].Insert(p1, p2, (void *)pe);
 }
+#endif
 
 struct rtree_minsplit_context {
     struct ON_Brep_CDT_State *s_cdt;
@@ -761,10 +763,10 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int
     struct bu_vls fname = BU_VLS_INIT_ZERO;
     int face_index = s_cdt->brep->m_T[bseg1->tseg1->trim_ind].Face()->m_face_index;
     bu_vls_sprintf(&fname, "%d-rtree_2d_split_update.plot3", face_index);
-    plot_rtree_2d2(s_cdt->trim_segs[face_index], bu_vls_cstr(&fname));
+    plot_rtree_2d2(s_cdt->face_rtrees_2d[face_index], bu_vls_cstr(&fname));
     face_index = s_cdt->brep->m_T[bseg2->tseg1->trim_ind].Face()->m_face_index;
     bu_vls_sprintf(&fname, "%d-rtree_2d_split_update.plot3", face_index);
-    plot_rtree_2d2(s_cdt->trim_segs[face_index], bu_vls_cstr(&fname));
+    plot_rtree_2d2(s_cdt->face_rtrees_2d[face_index], bu_vls_cstr(&fname));
     bu_vls_free(&fname);
 
     delete bseg;
@@ -1227,7 +1229,7 @@ initialize_loop_polygons(struct ON_Brep_CDT_State *s_cdt, std::set<cdt_mesh::cpo
 	}
 	struct bu_vls fname = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&fname, "%d-rtree_2d_initial.plot3", face_index);
-	plot_rtree_2d2(s_cdt->trim_segs[face_index], bu_vls_cstr(&fname));
+	plot_rtree_2d2(s_cdt->face_rtrees_2d[face_index], bu_vls_cstr(&fname));
 	bu_vls_free(&fname);
     }
     return true;
@@ -1515,7 +1517,7 @@ refine_close_edges(struct ON_Brep_CDT_State *s_cdt)
 	{
 	    struct bu_vls fname = BU_VLS_INIT_ZERO;
 	    bu_vls_sprintf(&fname, "%d-rtree_2d_split_update_0.plot3", face.m_face_index);
-	    plot_rtree_2d2(s_cdt->trim_segs[face_index], bu_vls_cstr(&fname));
+	    plot_rtree_2d2(s_cdt->face_rtrees_2d[face_index], bu_vls_cstr(&fname));
 	    bu_vls_free(&fname);
 	}
 #endif
@@ -1580,7 +1582,7 @@ refine_close_edges(struct ON_Brep_CDT_State *s_cdt)
 		a_context.cseg = tseg;
 
 		// Do the search
-		s_cdt->trim_segs[face.m_face_index].Search(tMin, tMax, MinSplit2dCallback, (void *)&a_context);
+		s_cdt->face_rtrees_2d[face.m_face_index].Search(tMin, tMax, MinSplit2dCallback, (void *)&a_context);
 	    }
 
 	    // If we need to split, do so
@@ -1652,7 +1654,7 @@ refine_close_edges(struct ON_Brep_CDT_State *s_cdt)
 #if 1
 	    struct bu_vls fname = BU_VLS_INIT_ZERO;
 	    bu_vls_sprintf(&fname, "%d-rtree_2d_split_update_%d.plot3", face.m_face_index, split_cnt);
-	    plot_rtree_2d2(s_cdt->trim_segs[face_index], bu_vls_cstr(&fname));
+	    plot_rtree_2d2(s_cdt->face_rtrees_2d[face_index], bu_vls_cstr(&fname));
 	    bu_vls_free(&fname);
 #endif
 	}

@@ -64,7 +64,7 @@ struct cdt_surf_info {
     struct ON_Brep_CDT_State *s_cdt;
     const ON_Surface *s;
     const ON_BrepFace *f;
-    RTree<void *, double, 2> *rt_trims;
+    RTree<void *, double, 2> *rtree_2d;
     std::map<int,ON_3dPoint *> *strim_pnts;
     std::map<int,ON_3dPoint *> *strim_norms;
     double u1, u2, v1, v2;
@@ -197,12 +197,14 @@ singular_trim_norm(struct cdt_surf_info *sinfo, fastf_t uc, fastf_t vc)
     return NULL;
 }
 
+#if 0
 static bool EdgeSegCallback(void *data, void *a_context) {
     cdt_mesh::cpolyedge_t *eseg = (cdt_mesh::cpolyedge_t *)data;
     std::set<cdt_mesh::cpolyedge_t *> *segs = (std::set<cdt_mesh::cpolyedge_t *> *)a_context;
     segs->insert(eseg);
     return true;
 }
+#endif
 
 struct trim_seg_context {
     const ON_2dPoint *p;
@@ -227,7 +229,7 @@ static bool TrimSegCallback(void *data, void *a_context) {
     return (sc->on_edge) ? false : true;
 }
 
-
+#if 0
 /* If we've got trimming curves involved, we need to be more careful about respecting
  * the min edge distance. */
 static bool involves_trims(double *min_edge, struct cdt_surf_info *sinfo, ON_3dPoint &p1, ON_3dPoint &p2)
@@ -290,6 +292,7 @@ static bool involves_trims(double *min_edge, struct cdt_surf_info *sinfo, ON_3dP
 
     return true;
 }
+#endif
 
 /* flags identifying which side of the surface we're calculating
  *
@@ -412,7 +415,7 @@ sinfo_init(struct cdt_surf_info *sinfo, struct ON_Brep_CDT_State *s_cdt, int fac
     sinfo->s_cdt = s_cdt;
     sinfo->s = s;
     sinfo->f = &face;
-    sinfo->rt_trims = &(s_cdt->trim_segs[face_index]);
+    sinfo->rtree_2d = &(s_cdt->face_rtrees_2d[face_index]);
     sinfo->strim_pnts = &(s_cdt->strim_pnts[face_index]);
     sinfo->strim_norms = &(s_cdt->strim_norms[face_index]);
     double t1, t2;
@@ -505,7 +508,7 @@ filter_surface_edge_pnts_2(struct cdt_surf_info *sinfo)
     // TODO - it's looking like a 2D check isn't going to be enough - we probably
     // need BOTH a 2D and a 3D check to make sure none of the points are in a
     // position that will cause trouble.  Will need to build a 3D RTree of the line
-    // segments from the edges, as well as 2D rt_trims tree.
+    // segments from the edges, as well as 2D rtree.
     std::set<ON_2dPoint *> rm_pnts;
     std::set<ON_2dPoint *>::iterator osp_it;
     for (osp_it = sinfo->on_surf_points.begin(); osp_it != sinfo->on_surf_points.end(); osp_it++) {
@@ -519,7 +522,7 @@ filter_surface_edge_pnts_2(struct cdt_surf_info *sinfo)
 	struct trim_seg_context sc;
 	sc.p = p;
 	sc.on_edge = false;
-	sinfo->rt_trims->Search(fMin, fMax, TrimSegCallback, (void *)&sc);
+	sinfo->rtree_2d->Search(fMin, fMax, TrimSegCallback, (void *)&sc);
 	if (sc.on_edge) {
 	    rm_pnts.insert((ON_2dPoint *)p);
 	}
@@ -582,6 +585,18 @@ getSurfacePoint(
 		 std::queue<SPatch> &nq
 		 )
 {
+
+
+    // TODO - rework this logic flow.  We need to start with trims - we can
+    // only check other stuff once we no longer have to satisfy the trim
+    // requirements.
+    //
+    // right now, involves_trims is checking 3D.  We probably don't want to
+    // do that given we're specifically looking to sample in such a way that
+    // the 2D trims have points within specific ranges.
+
+
+
     fastf_t u1 = sp.umin;
     fastf_t u2 = sp.umax;
     fastf_t v1 = sp.vmin;
@@ -675,7 +690,7 @@ getSurfacePoint(
 		    uvbb.Set(p[i], true);
 		}
 		//plot_on_bbox(uvbb, "uvbb.plot3");
-
+#if 0
 		ON_3dPoint pmin = uvbb.Min();
 		ON_3dPoint pmax = uvbb.Max();
 		if (involves_trims(&min_edge_len, sinfo, pmin, pmax)) {
@@ -688,6 +703,7 @@ getSurfacePoint(
 			split_v = 1;
 		    }
 		}
+#endif
 
 		ev_success = true;
 	    }
