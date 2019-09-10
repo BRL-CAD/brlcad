@@ -26,6 +26,7 @@
 
 #include "bu/malloc.h"
 #include "bu/opt.h"
+#include "bu/app.h"
 #include "../librt_private.h"
 
 
