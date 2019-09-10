@@ -1511,6 +1511,16 @@ refine_close_edges(struct ON_Brep_CDT_State *s_cdt)
 	    }
 	}
 
+#if 0
+	{
+	    struct bu_vls fname = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&fname, "%d-rtree_2d_split_update_0.plot3", face.m_face_index);
+	    plot_rtree_2d2(s_cdt->trim_segs[face_index], bu_vls_cstr(&fname));
+	    bu_vls_free(&fname);
+	}
+#endif
+
+
 	// Check all the edge segments associated with the loop to see if our bounding box overlaps with boxes
 	// that aren't our neighbor boxes.  For any that do, split and check again.  Keep refining until we
 	// don't have any non-neighbor overlaps.
@@ -1521,7 +1531,7 @@ refine_close_edges(struct ON_Brep_CDT_State *s_cdt)
 
 	    bool split_check = false;
 
-#if 0
+#if 1
 	    if (split_cnt) {
 		std::cout << "Face " << face_index << " split_cnt " << split_cnt << "\n";
 	    }
