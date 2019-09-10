@@ -585,168 +585,153 @@ getSurfacePoint(
 		 std::queue<SPatch> &nq
 		 )
 {
-
-
-    // TODO - rework this logic flow.  We need to start with trims - we can
-    // only check other stuff once we no longer have to satisfy the trim
-    // requirements.
-    //
-    // right now, involves_trims is checking 3D.  We probably don't want to
-    // do that given we're specifically looking to sample in such a way that
-    // the 2D trims have points within specific ranges.
-
-
-
+    int split_u = 0;
+    int split_v = 0;
     fastf_t u1 = sp.umin;
     fastf_t u2 = sp.umax;
     fastf_t v1 = sp.vmin;
     fastf_t v2 = sp.vmax;
-    double ldfactor = 2.0;
-    int split_u = 0;
-    int split_v = 0;
-    ON_2dPoint p2d(0.0, 0.0);
     fastf_t u = (u1 + u2) / 2.0;
     fastf_t v = (v1 + v2) / 2.0;
-    fastf_t udist = u2 - u1;
-    fastf_t vdist = v2 - v1;
 
-    if ((udist < sinfo->min_dist + ON_ZERO_TOLERANCE)
-	    || (vdist < sinfo->min_dist + ON_ZERO_TOLERANCE)) {
-	return false;
-    }
+    /* Before we do anything else, find out if this surface patch is involved with one
+     * or more trims.  If it is, we face a particular set of constraints. */
+    ON_2dPoint p2dmin(u1, v1);
+    ON_2dPoint p2dmax(u2, v2);
+    ON_Line line(p2dmin, p2dmax);
+    ON_BoundingBox bb = line.BoundingBox();
+    double p1[2];
+    p1[0] = bb.Min().x;
+    p1[1] = bb.Min().y;
+    double p2[2];
+    p2[0] = bb.Max().x;
+    p2[1] = bb.Max().y;
+    // Do the search
+    if (sinfo->rtree_2d->Search(p1, p2, NULL, NULL)) {
 
-    double est1 = uline_len_est(sinfo, u1, u2, v1);
-    double est2 = uline_len_est(sinfo, u1, u2, v2);
-    double est3 = vline_len_est(sinfo, u1, v1, v2);
-    double est4 = vline_len_est(sinfo, u2, v1, v2);
+	// We have trims involved.
+	
+	// Check the inside/outside status of the four corners of the patch.
+	//
+	// 1.  If all four are outside the outer loop, no further processing is
+	// needed.  
+	//
+	// 2.  If all four are inside an inner loop, no further processing is needed.
+	//
+	// 3.  If we have some points inside and some outside, split in u and v.
+	//
+	// 4.  If the spatch is untrimmed, check if the patch bbox is fully within
+	// any trim bbox.  If it is, unless that trim is unsatisfied (i.e. it has
+	// no associated surface patch which can provide an appropriate point) no
+	// further processing is required.  If trim is unsatisfied, list as a
+	// candidate.
+	//
+	//
+	// 5. If not fully within a trim bbox, check the distance of the center point
+	// of the patch to the center point of each associated trim and compare it
+	// to that trim's distance to it's closest neighbor.  If it is closer than
+	// than distance to all associated trims, it can satisfy those trims for
+	// tessellation.  If it can't satisfy one or more associated trims, split.
 
-    double uavg = (est1+est2)/2.0;
-    double vavg = (est3+est4)/2.0;
+    } else {
 
-#if 0
-    double umin = (est1 < est2) ? est1 : est2;
-    double vmin = (est3 < est4) ? est3 : est4;
-    double umax = (est1 > est2) ? est1 : est2;
-    double vmax = (est3 > est4) ? est3 : est4;
+	// If there are no overlapping trims, we're free to consider this patch on
+	// the basis of tolerance
+	double ldfactor = 2.0;
+	ON_2dPoint p2d(0.0, 0.0);
+	fastf_t udist = u2 - u1;
+	fastf_t vdist = v2 - v1;
 
-    bu_log("umin,vmin: %f, %f\n", umin, vmin);
-    bu_log("umax,vmax: %f, %f\n", umax, vmax);
-    bu_log("uavg,vavg: %f, %f\n", uavg, vavg);
-    bu_log("min_edge %f\n", sinfo->min_edge);
-#endif
-    if (est1 < 0.01*sinfo->within_dist && est2 < 0.01*sinfo->within_dist) {
-	//bu_log("e12 Small estimates: %f, %f\n", est1, est2);
-	return false;
-    }
-    if (est3 < 0.01*sinfo->within_dist && est4 < 0.01*sinfo->within_dist) {
-	//bu_log("e34 Small estimates: %f, %f\n", est3, est4);
-	return false;
-    }
-
-    if (uavg < sinfo->min_edge && vavg < sinfo->min_edge) {
-	return false;
-    }
-
-
-    if (uavg > ldfactor * vavg) {
-	split_u = 1;
-    }
-
-    if (vavg > ldfactor * uavg) {
-	split_v = 1;
-    }
-
-    ON_3dPoint p[4] = {ON_3dPoint(), ON_3dPoint(), ON_3dPoint(), ON_3dPoint()};
-    ON_3dVector norm[4] = {ON_3dVector(), ON_3dVector(), ON_3dVector(), ON_3dVector()};
-    bool ev_success = false;
-
-    if (!split_u || !split_v) {
-	// Don't know if we're splitting in at least one direction - check if we're close
-	// enough to trims to need to worry about edges
-
-	double min_edge_len = -1.0;
-
-	// If we're dealing with a curved surface, don't get bigger than max_edge
-	if (!sinfo->s->IsPlanar(NULL, BN_TOL_DIST)) {
-	    min_edge_len = sinfo->max_edge;
-	    if (uavg > min_edge_len && vavg > min_edge_len) {
-		split_u = 1;
-	    }
-
-	    if (uavg > min_edge_len && vavg > min_edge_len) {
-		split_v = 1;
-	    }
+	if ((udist < sinfo->min_dist + ON_ZERO_TOLERANCE)
+		|| (vdist < sinfo->min_dist + ON_ZERO_TOLERANCE)) {
+	    return false;
 	}
 
-	// If the above test didn't resolve things, keep going
+	double est1 = uline_len_est(sinfo, u1, u2, v1);
+	double est2 = uline_len_est(sinfo, u1, u2, v2);
+	double est3 = vline_len_est(sinfo, u1, v1, v2);
+	double est4 = vline_len_est(sinfo, u2, v1, v2);
+
+	double uavg = (est1+est2)/2.0;
+	double vavg = (est3+est4)/2.0;
+
+#if 0
+	double umin = (est1 < est2) ? est1 : est2;
+	double vmin = (est3 < est4) ? est3 : est4;
+	double umax = (est1 > est2) ? est1 : est2;
+	double vmax = (est3 > est4) ? est3 : est4;
+
+	bu_log("umin,vmin: %f, %f\n", umin, vmin);
+	bu_log("umax,vmax: %f, %f\n", umax, vmax);
+	bu_log("uavg,vavg: %f, %f\n", uavg, vavg);
+	bu_log("min_edge %f\n", sinfo->min_edge);
+#endif
+	if (est1 < 0.01*sinfo->within_dist && est2 < 0.01*sinfo->within_dist) {
+	    //bu_log("e12 Small estimates: %f, %f\n", est1, est2);
+	    return false;
+	}
+	if (est3 < 0.01*sinfo->within_dist && est4 < 0.01*sinfo->within_dist) {
+	    //bu_log("e34 Small estimates: %f, %f\n", est3, est4);
+	    return false;
+	}
+
+	if (uavg < sinfo->min_edge && vavg < sinfo->min_edge) {
+	    return false;
+	}
+
+
+	if (uavg > ldfactor * vavg) {
+	    split_u = 1;
+	}
+
+	if (vavg > ldfactor * uavg) {
+	    split_v = 1;
+	}
+
+	ON_3dPoint p[4] = {ON_3dPoint(), ON_3dPoint(), ON_3dPoint(), ON_3dPoint()};
+	ON_3dVector norm[4] = {ON_3dVector(), ON_3dVector(), ON_3dVector(), ON_3dVector()};
+
 	if (!split_u || !split_v) {
+	    // Don't know if we're splitting in at least one direction - check dot products
+	    ON_3dPoint mid(0.0, 0.0, 0.0);
+	    ON_3dVector norm_mid(0.0, 0.0, 0.0);
 	    if ((surface_EvNormal(sinfo->s, u1, v1, p[0], norm[0]))
 		    && (surface_EvNormal(sinfo->s, u2, v1, p[1], norm[1]))
 		    && (surface_EvNormal(sinfo->s, u2, v2, p[2], norm[2]))
-		    && (surface_EvNormal(sinfo->s, u1, v2, p[3], norm[3]))) {
+		    && (surface_EvNormal(sinfo->s, u1, v2, p[3], norm[3]))
+		    && (surface_EvNormal(sinfo->s, u2, v1, p[1], norm[1]))
+		    && (surface_EvNormal(sinfo->s, u1, v2, p[3], norm[3]))
+		    && (surface_EvNormal(sinfo->s, u, v, mid, norm_mid))) {
+		double udot;
+		double vdot;
+		ON_Line line1(p[0], p[2]);
+		ON_Line line2(p[1], p[3]);
+		double dist = mid.DistanceTo(line1.ClosestPointTo(mid));
+		V_MAX(dist, mid.DistanceTo(line2.ClosestPointTo(mid)));
 
-		ON_BoundingBox uvbb;
 		for (int i = 0; i < 4; i++) {
-		    uvbb.Set(p[i], true);
-		}
-		//plot_on_bbox(uvbb, "uvbb.plot3");
-#if 0
-		ON_3dPoint pmin = uvbb.Min();
-		ON_3dPoint pmax = uvbb.Max();
-		if (involves_trims(&min_edge_len, sinfo, pmin, pmax)) {
-
-		    if (min_edge_len > 0 && uavg > min_edge_len && vavg > min_edge_len) {
-			split_u = 1;
-		    }
-
-		    if (min_edge_len > 0 && uavg > min_edge_len && vavg > min_edge_len) {
-			split_v = 1;
+		    fastf_t uc = (i == 0 || i == 3) ? u1 : u2;
+		    fastf_t vc = (i == 0 || i == 1) ? v1 : v2;
+		    ON_3dPoint *vnorm = singular_trim_norm(sinfo, uc, vc);
+		    if (vnorm && ON_DotProduct(*vnorm, norm_mid) > 0) {
+			//bu_log("vert norm %f %f %f works\n", vnorm->x, vnorm->y, vnorm->z);
+			norm[i] = *vnorm;
 		    }
 		}
-#endif
-
-		ev_success = true;
-	    }
-	}
-    }
 
 
-    if (ev_success && (!split_u || !split_v)) {
-	// Don't know if we're splitting in at least one direction - check dot products
-	ON_3dPoint mid(0.0, 0.0, 0.0);
-	ON_3dVector norm_mid(0.0, 0.0, 0.0);
-	if ((surface_EvNormal(sinfo->s, u2, v1, p[1], norm[1])) // for u
-		&& (surface_EvNormal(sinfo->s, u1, v2, p[3], norm[3]))
-		&& (surface_EvNormal(sinfo->s, u, v, mid, norm_mid))) {
-	    double udot;
-	    double vdot;
-	    ON_Line line1(p[0], p[2]);
-	    ON_Line line2(p[1], p[3]);
-	    double dist = mid.DistanceTo(line1.ClosestPointTo(mid));
-	    V_MAX(dist, mid.DistanceTo(line2.ClosestPointTo(mid)));
-
-	    for (int i = 0; i < 4; i++) {
-		fastf_t uc = (i == 0 || i == 3) ? u1 : u2;
-		fastf_t vc = (i == 0 || i == 1) ? v1 : v2;
-		ON_3dPoint *vnorm = singular_trim_norm(sinfo, uc, vc);
-		if (vnorm && ON_DotProduct(*vnorm, norm_mid) > 0) {
-		    //bu_log("vert norm %f %f %f works\n", vnorm->x, vnorm->y, vnorm->z);
-		    norm[i] = *vnorm;
+		if (dist < sinfo->min_dist + ON_ZERO_TOLERANCE) {
+		    return false;
 		}
-	    }
 
-
-	    if (dist < sinfo->min_dist + ON_ZERO_TOLERANCE) {
-		return false;
-	    }
-
-	    udot = (VNEAR_EQUAL(norm[0], norm[1], ON_ZERO_TOLERANCE)) ? 1.0 : norm[0] * norm[1];
-	    vdot = (VNEAR_EQUAL(norm[0], norm[3], ON_ZERO_TOLERANCE)) ? 1.0 : norm[0] * norm[3];
-	    if (udot < sinfo->cos_within_ang - ON_ZERO_TOLERANCE) {
-		split_u = 1;
-	    }
-	    if (vdot < sinfo->cos_within_ang - ON_ZERO_TOLERANCE) {
-		split_v = 1;
+		udot = (VNEAR_EQUAL(norm[0], norm[1], ON_ZERO_TOLERANCE)) ? 1.0 : norm[0] * norm[1];
+		vdot = (VNEAR_EQUAL(norm[0], norm[3], ON_ZERO_TOLERANCE)) ? 1.0 : norm[0] * norm[3];
+		if (udot < sinfo->cos_within_ang - ON_ZERO_TOLERANCE) {
+		    split_u = 1;
+		}
+		if (vdot < sinfo->cos_within_ang - ON_ZERO_TOLERANCE) {
+		    split_v = 1;
+		}
 	    }
 	}
     }
