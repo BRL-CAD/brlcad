@@ -1700,7 +1700,6 @@ finalize_rtrees(struct ON_Brep_CDT_State *s_cdt)
 	ON_BrepFace &face = s_cdt->brep->m_F[face_index];
 	s_cdt->face_rtrees_2d[face.m_face_index].RemoveAll();
 	cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[face.m_face_index];
-	std::cout << "Face " << face.m_face_index << " final 2D rtree build...\n";
 
 	std::vector<cdt_mesh::cpolyedge_t *> ws;
 	std::vector<cdt_mesh::cpolyedge_t *>::iterator w_it;

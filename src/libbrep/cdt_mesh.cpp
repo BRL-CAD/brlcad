@@ -1509,9 +1509,10 @@ cdt_mesh_t::find_boundary_oriented_edge(uedge_t &ue)
 std::vector<triangle_t>
 cdt_mesh_t::interior_incorrect_normals()
 {
-    std::vector<triangle_t> results;
-
     std::set<triangle_t>::iterator tr_it;
+
+    std::set<triangle_t> flip_tris;
+
     for (tr_it = this->tris.begin(); tr_it != this->tris.end(); tr_it++) {
 	ON_3dVector tdir = this->tnorm(*tr_it);
 	ON_3dVector bdir = this->bnorm(*tr_it);
@@ -1521,16 +1522,38 @@ cdt_mesh_t::interior_incorrect_normals()
 		epnt_cnt = (ep.find((*tr_it).v[i]) == ep.end()) ? epnt_cnt : epnt_cnt + 1;
 	    }
 	    if (epnt_cnt == 2) {
-		std::cerr << "UNCULLED problem point from surface???????:\n";
+		// We're on the edge of the face - just flip this
+		flip_tris.insert(*tr_it);
+#if 0
 		for (int i = 0; i < 3; i++) {
 		    if (ep.find((*tr_it).v[i]) == ep.end()) {
 			ON_3dPoint *p = pnts[(*tr_it).v[i]];
 			std::cerr << "(" << (*tr_it).v[i] << "): " << p->x << " " << p->y << " " << p->z << "\n";
 		    }
 		}
-		results.clear();
-		return results;
+#endif
 	    }
+	}
+    }
+
+    for (tr_it = flip_tris.begin(); tr_it != flip_tris.end(); tr_it++) {
+	triangle_t t = *tr_it;
+	tris.erase(t);
+	long tmp = t.v[1];
+	t.v[1] = t.v[2];
+	t.v[2] = tmp;
+	tris.insert(t);
+	std::cerr << "Repairing flipped edge triangle\n";
+    }
+    if (flip_tris.size()) {
+	update_problem_edges();
+    }
+
+    std::vector<triangle_t> results;
+    for (tr_it = this->tris.begin(); tr_it != this->tris.end(); tr_it++) {
+	ON_3dVector tdir = this->tnorm(*tr_it);
+	ON_3dVector bdir = this->bnorm(*tr_it);
+	if (tdir.Length() > 0 && bdir.Length() > 0 && ON_DotProduct(tdir, bdir) < 0.1) {
 	    results.push_back(*tr_it);
 	}
     }
