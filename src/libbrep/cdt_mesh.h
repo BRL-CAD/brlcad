@@ -478,6 +478,8 @@ public:
     void polygon_plot_3d(cpolygon_t *polygon, const char *filename);
     void polygon_print_3d(cpolygon_t *polygon);
 
+    void cdt_inputs_plot(const char *filename);
+
 
     int f_id;
     bool has_singularities;
@@ -495,6 +497,7 @@ public:
     std::set<long> sv; // Singularity vertex indices
     bool m_bRev;
 
+    ON_Brep *brep;
 private:
     /* Data containers */
     std::map<long, std::set<edge_t>> v2edges;
@@ -528,6 +531,7 @@ private:
     void plot_tri(const triangle_t &t, struct bu_color *buc, FILE *plot, int r, int g, int b);
     void plot_uedge(struct uedge_t &ue, FILE* plot_file);
     void plot_tri_2d(const triangle_t &t, struct bu_color *buc, FILE *plot);
+    void polyplot_2d(cpolygon_t *polygon, FILE* plot_file);
 
 
     // Repair functionality using cpolygon

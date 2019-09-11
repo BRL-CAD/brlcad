@@ -206,6 +206,7 @@ do_triangulation(struct ON_Brep_CDT_State *s_cdt, int fi)
     GetInteriorPoints(s_cdt, face.m_face_index);
 
     cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[face.m_face_index];
+    fmesh->brep = s_cdt->brep;
     fmesh->f_id = face.m_face_index;
     fmesh->m_bRev = face.m_bRev;
     if (fmesh->cdt()) {

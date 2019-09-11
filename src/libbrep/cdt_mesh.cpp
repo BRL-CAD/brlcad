@@ -56,6 +56,62 @@ namespace cdt_mesh
 {
 
 void
+plot_pnt_2d(FILE *plot_file, ON_2dPoint *p, double r, int dir)
+{
+    point_t origin, bnp;
+    VSET(origin, p->x, p->y, 0);
+    pdv_3move(plot_file, origin);
+
+    if (dir == 0) {
+	VSET(bnp, p->x+r, p->y, 0);
+	pdv_3cont(plot_file, bnp);
+	pdv_3cont(plot_file, origin);
+	VSET(bnp, p->x-r, p->y, 0);
+	pdv_3cont(plot_file, bnp);
+	pdv_3cont(plot_file, origin);
+	VSET(bnp, p->x, p->y+r, 0);
+	pdv_3cont(plot_file, bnp);
+	pdv_3cont(plot_file, origin);
+	VSET(bnp, p->x, p->y-r, 0);
+	pdv_3cont(plot_file, bnp);
+	pdv_3cont(plot_file, origin);
+	VSET(bnp, p->x, p->y, 0);
+	pdv_3cont(plot_file, bnp);
+	pdv_3cont(plot_file, origin);
+	VSET(bnp, p->x, p->y, 0);
+	pdv_3cont(plot_file, bnp);
+	pdv_3cont(plot_file, origin);
+    }
+    if (dir == 1) {
+	VSET(bnp, p->x+r, p->y+r, 0);
+	pdv_3cont(plot_file, bnp);
+	pdv_3cont(plot_file, origin);
+	VSET(bnp, p->x+r, p->y-r, 0);
+	pdv_3cont(plot_file, bnp);
+	pdv_3cont(plot_file, origin);
+	VSET(bnp, p->x-r, p->y+r, 0);
+	pdv_3cont(plot_file, bnp);
+	pdv_3cont(plot_file, origin);
+	VSET(bnp, p->x-r, p->y-r, 0);
+	pdv_3cont(plot_file, bnp);
+	pdv_3cont(plot_file, origin);
+
+	VSET(bnp, p->x+r, p->y+r, 0);
+	pdv_3cont(plot_file, bnp);
+	pdv_3cont(plot_file, origin);
+	VSET(bnp, p->x+r, p->y-r, 0);
+	pdv_3cont(plot_file, bnp);
+	pdv_3cont(plot_file, origin);
+	VSET(bnp, p->x-r, p->y+r, 0);
+	pdv_3cont(plot_file, bnp);
+	pdv_3cont(plot_file, origin);
+	VSET(bnp, p->x-r, p->y-r, 0);
+	pdv_3cont(plot_file, bnp);
+	pdv_3cont(plot_file, origin);
+    }
+}
+
+void
 plot_pnt_3d(FILE *plot_file, ON_3dPoint *p, double r, int dir)
 {
     point_t origin, bnp;
@@ -2376,6 +2432,8 @@ cdt_mesh_t::cdt()
 	}
     }
 
+    cdt_inputs_plot("cdt_inputs.plot3");
+
     point2d_t *bgp_2d = (point2d_t *)bu_calloc(m_pnts_2d.size() + 1, sizeof(point2d_t), "2D points array");
     for (size_t i = 0; i < m_pnts_2d.size(); i++) {
 	bgp_2d[i][X] = m_pnts_2d[i].first;
@@ -3568,13 +3626,9 @@ cdt_mesh_t::tri_process(cpolygon_t *polygon, std::set<uedge_t> *ne, std::set<ued
     return 3 - shared_cnt;
 }
 
-void cdt_mesh_t::polygon_plot_2d(cpolygon_t *polygon, const char *filename)
+void
+cdt_mesh_t::polyplot_2d(cpolygon_t *polygon, FILE* plot_file)
 {
-    FILE* plot_file = fopen(filename, "w");
-    struct bu_color c = BU_COLOR_INIT_ZERO;
-    bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
-    pl_color_buc(plot_file, &c);
-
     ON_2dPoint ppnt;
     point_t pmin, pmax;
     point_t bnp;
@@ -3606,6 +3660,58 @@ void cdt_mesh_t::polygon_plot_2d(cpolygon_t *polygon, const char *filename)
 	VMINMAX(pmin, pmax, bnp);
 	if (ecnt > polygon->poly.size()) {
 	    break;
+	}
+    }
+}
+
+void cdt_mesh_t::polygon_plot_2d(cpolygon_t *polygon, const char *filename)
+{
+    FILE* plot_file = fopen(filename, "w");
+    struct bu_color c = BU_COLOR_INIT_ZERO;
+    bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
+    pl_color_buc(plot_file, &c);
+
+    polyplot_2d(polygon, plot_file);
+
+    fclose(plot_file);
+}
+
+
+void cdt_mesh_t::cdt_inputs_plot(const char *filename)
+{
+    FILE* plot_file = fopen(filename, "w");
+    pl_color(plot_file, 255, 0 ,0);
+
+    ON_BrepFace &face = brep->m_F[f_id];
+    ON_3dPoint min, max;
+    for (int li = 0; li < face.LoopCount(); li++) {
+	for (int ti = 0; ti < face.Loop(li)->TrimCount(); ti++) {
+	    ON_BrepTrim *trim = face.Loop(li)->Trim(ti);
+	    trim->GetBoundingBox(min, max, true);
+	}
+    }
+    double dist = min.DistanceTo(max) * 0.01;
+
+
+    polyplot_2d(&outer_loop, plot_file);
+
+    pl_color(plot_file, 0, 0 ,255);
+
+    std::map<int, cpolygon_t*>::iterator il_it;
+    for (il_it = inner_loops.begin(); il_it != inner_loops.end(); il_it++) {
+	cpolygon_t *il = il_it->second;
+	polyplot_2d(il, plot_file);
+    }	
+
+
+    if (m_interior_pnts.size()) {
+	pl_color(plot_file, 0, 255, 0);
+	std::set<long>::iterator p_it;
+	for (p_it = m_interior_pnts.begin(); p_it != m_interior_pnts.end(); p_it++) {
+	    double x = 	m_pnts_2d[*p_it].first;
+	    double y = 	m_pnts_2d[*p_it].second;
+	    ON_2dPoint p(x,y);
+	    plot_pnt_2d(plot_file, &p, dist, 0);
 	}
     }
 
