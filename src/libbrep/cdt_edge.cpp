@@ -140,34 +140,58 @@ rtree_bbox_2d(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
     ON_BrepTrim& trim = s_cdt->brep->m_T[pe->trim_ind];
     ON_2dPoint p2d1(pe->polygon->pnts_2d[pe->v[0]].first, pe->polygon->pnts_2d[pe->v[0]].second);
     ON_2dPoint p2d2(pe->polygon->pnts_2d[pe->v[1]].first, pe->polygon->pnts_2d[pe->v[1]].second);
-    ON_Line line(p2d1, p2d2);
-    ON_BoundingBox bb = line.BoundingBox();
-    bb.m_max.x = bb.m_max.x + ON_ZERO_TOLERANCE;
-    bb.m_max.y = bb.m_max.y + ON_ZERO_TOLERANCE;
-    bb.m_min.x = bb.m_min.x - ON_ZERO_TOLERANCE;
-    bb.m_min.y = bb.m_min.y - ON_ZERO_TOLERANCE;
-
     double dist = p2d1.DistanceTo(p2d2);
     double bdist = 0.5*dist;
-    double xdist = bb.m_max.x - bb.m_min.x;
-    double ydist = bb.m_max.y - bb.m_min.y;
+
+    // If we have an associated 3D edge, we need a surface point that will
+    // result in a sensible triangle near that edge.
+    if (pe->eseg) {
+	ON_3dPoint p13d(p2d1.x, p2d1.y, 0);
+	ON_3dPoint p23d(p2d2.x, p2d2.y, 0);
+	ON_3dPoint p1norm(p2d1.x, p2d1.y, 1);
+	ON_3dVector vtrim = p23d - p13d;
+	ON_3dVector vnorm = p1norm - p13d;
+	vtrim.Unitize();
+	vnorm.Unitize();
+	ON_3dVector ndir = ON_CrossProduct(vnorm, vtrim);
+	ndir.Unitize();
+	ndir = ndir * bdist;
+	ON_2dVector ndir2d(ndir.x, ndir.y);
+	ON_2dPoint p2mid = (p2d1 + p2d2) * 0.5;
+	pe->spnt = p2mid + ndir2d;
+	pe->defines_spnt = true;
+    }
+
+    ON_Line line(p2d1, p2d2);
+    pe->bb = line.BoundingBox();
+    pe->bb.m_max.x = pe->bb.m_max.x + ON_ZERO_TOLERANCE;
+    pe->bb.m_max.y = pe->bb.m_max.y + ON_ZERO_TOLERANCE;
+    pe->bb.m_min.x = pe->bb.m_min.x - ON_ZERO_TOLERANCE;
+    pe->bb.m_min.y = pe->bb.m_min.y - ON_ZERO_TOLERANCE;
+
+    double xdist = pe->bb.m_max.x - pe->bb.m_min.x;
+    double ydist = pe->bb.m_max.y - pe->bb.m_min.y;
     // If we're close to the edge, we want to know - the Search callback will
     // check the precise distance and make a decision on what to do.
     if (xdist < bdist) {
-	bb.m_min.x = bb.m_min.x - 0.5*bdist;
-	bb.m_max.x = bb.m_max.x + 0.5*bdist;
+	pe->bb.m_min.x = pe->bb.m_min.x - 0.5*bdist;
+	pe->bb.m_max.x = pe->bb.m_max.x + 0.5*bdist;
     }
     if (ydist < bdist) {
-	bb.m_min.y = bb.m_min.y - 0.5*bdist;
-	bb.m_max.y = bb.m_max.y + 0.5*bdist;
+	pe->bb.m_min.y = pe->bb.m_min.y - 0.5*bdist;
+	pe->bb.m_max.y = pe->bb.m_max.y + 0.5*bdist;
+    }
+
+    if (pe->eseg) {
+	pe->bb.Set(pe->spnt, true);
     }
 
     double p1[2];
-    p1[0] = bb.Min().x;
-    p1[1] = bb.Min().y;
+    p1[0] = pe->bb.Min().x;
+    p1[1] = pe->bb.Min().y;
     double p2[2];
-    p2[0] = bb.Max().x;
-    p2[1] = bb.Max().y;
+    p2[0] = pe->bb.Max().x;
+    p2[1] = pe->bb.Max().y;
     s_cdt->face_rtrees_2d[trim.Face()->m_face_index].Insert(p1, p2, (void *)pe);
 }
 
@@ -267,16 +291,17 @@ static bool MinSplit2dCallback(void *data, void *a_context) {
     cdt_mesh::cpolyedge_t *tseg = (cdt_mesh::cpolyedge_t *)data;
     struct rtree_minsplit_context *context= (struct rtree_minsplit_context *)a_context;
 
+
     plot_ce_bbox(context->s_cdt, tseg, "l.p3");
 
-    // Intersecting with oneself or immediate neighbors isn't cause for splitting
+    // Intersecting with oneself isn't cause for splitting
     if (tseg == context->cseg || tseg == context->cseg->prev || tseg == context->cseg->next) return true;
 
+    // Someone needs to split - figure out if it's us
     ON_2dPoint cp2d1(context->cseg->polygon->pnts_2d[context->cseg->v[0]].first, context->cseg->polygon->pnts_2d[context->cseg->v[0]].second);
     ON_2dPoint cp2d2(context->cseg->polygon->pnts_2d[context->cseg->v[1]].first, context->cseg->polygon->pnts_2d[context->cseg->v[1]].second);
     ON_2dPoint tp2d1(tseg->polygon->pnts_2d[tseg->v[0]].first, tseg->polygon->pnts_2d[tseg->v[0]].second);
     ON_2dPoint tp2d2(tseg->polygon->pnts_2d[tseg->v[1]].first, tseg->polygon->pnts_2d[tseg->v[1]].second);
-
     double cdist = cp2d1.DistanceTo(cp2d2);
     double tdist = tp2d1.DistanceTo(tp2d2);
 
@@ -988,6 +1013,15 @@ initialize_edge_segs(struct ON_Brep_CDT_State *s_cdt)
 	    std::copy(esegs_csplit.begin(), esegs_csplit.end(), std::back_inserter(s_cdt->e2polysegs[edge.m_edge_index]));
 	}
     }
+
+#if 1
+    for (int face_index = 0; face_index < s_cdt->brep->m_F.Count(); face_index++) {
+	struct bu_vls fname = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&fname, "%d-rtree_2d_after_initial_splits.plot3", face_index);
+	plot_rtree_2d2(s_cdt->face_rtrees_2d[face_index], bu_vls_cstr(&fname));
+	bu_vls_free(&fname);
+    }
+#endif
 
     return true;
 }

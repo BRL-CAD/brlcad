@@ -283,6 +283,7 @@ class cpolyedge_t
 	    polygon = NULL;
 	    prev = NULL;
 	    next = NULL;
+	    defines_spnt = false;
 	};
 
 	long v[2];
@@ -293,6 +294,7 @@ class cpolyedge_t
 	    polygon = NULL;
 	    prev = NULL;
 	    next = NULL;
+	    defines_spnt = false;
 	};
 
 	void plot3d(const char *fname);
@@ -301,6 +303,9 @@ class cpolyedge_t
 	 * Brep edge polygons */
 	int trim_ind;
 	int loop_type; /* 0 == N/A, 1 == outer, 2 == inner */
+	bool defines_spnt;
+	ON_2dPoint spnt;
+	ON_BoundingBox bb;
 	double trim_start;
 	double trim_end;
 	int split_status;
