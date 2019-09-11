@@ -1213,6 +1213,7 @@ initialize_loop_polygons(struct ON_Brep_CDT_State *s_cdt, std::set<cdt_mesh::cpo
 		cdt_mesh::cpolyedge_t *ne = cpoly->add_ordered_edge(lseg);
 
 		ne->trim_ind = trim->m_trim_index;
+		ne->loop_type = (is_outer) ? 1 : 2;
 		ne->trim_start = range.m_t[0];
 		ne->trim_end = range.m_t[1];
 
@@ -1730,7 +1731,7 @@ finalize_2d_rtrees(struct ON_Brep_CDT_State *s_cdt)
 	    plot_rtree_2d2(s_cdt->face_rtrees_2d[face_index], bu_vls_cstr(&fname));
 	    bu_vls_free(&fname);
 #endif
-	
+
     }
 }
 

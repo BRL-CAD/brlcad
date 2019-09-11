@@ -300,6 +300,7 @@ class cpolyedge_t
 	/* For those instance when we're working
 	 * Brep edge polygons */
 	int trim_ind;
+	int loop_type; /* 0 == N/A, 1 == outer, 2 == inner */
 	double trim_start;
 	double trim_end;
 	int split_status;
