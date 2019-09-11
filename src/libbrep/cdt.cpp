@@ -446,11 +446,6 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	// Reparameterize the face's surface and transform the "u" and "v"
 	// coordinates of all the face's parameter space trimming curves to
 	// minimize distortion in the map from parameter space to 3d.
-	//
-	// TODO for faces with an aspect ratio that is very far from 1:1,
-	// it might be more advantageous to stretch the narrow aspect so
-	// we can more easily/reliably sample relative to 2D distances from
-	// trim edges...
 	for (int face_index = 0; face_index < brep->m_F.Count(); face_index++) {
 	    ON_BrepFace *face = brep->Face(face_index);
 	    const ON_Surface *s = face->SurfaceOf();
