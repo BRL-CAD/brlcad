@@ -485,6 +485,8 @@ sinfo_init(struct cdt_surf_info *sinfo, struct ON_Brep_CDT_State *s_cdt, int fac
     // triangles.
     std::vector<cdt_mesh::cpolyedge_t *> ws = cdt_face_polyedges(s_cdt, face.m_face_index);
     std::vector<cdt_mesh::cpolyedge_t *>::iterator w_it;
+    float *prand;
+    bn_rand_init(prand, 0);
     for (w_it = ws.begin(); w_it != ws.end(); w_it++) {
 	cdt_mesh::cpolyedge_t *tseg = *w_it;
 	if (!tseg->defines_spnt) continue;
@@ -495,21 +497,25 @@ sinfo_init(struct cdt_surf_info *sinfo, struct ON_Brep_CDT_State *s_cdt, int fac
 	a_context.cseg = tseg;
 	a_context.use = &include_pnt;
 
+	double dlen = tseg->bb.Diagonal().Length();
+	dlen = 0.01 * dlen;
+	double px = tseg->spnt.x + (bn_rand_half(prand) * dlen);
+	double py = tseg->spnt.y + (bn_rand_half(prand) * dlen);
+
 	double tMin[2];
-	tMin[0] = tseg->spnt.x - ON_ZERO_TOLERANCE;
-	tMin[1] = tseg->spnt.y - ON_ZERO_TOLERANCE;
+	tMin[0] = px - ON_ZERO_TOLERANCE;
+	tMin[1] = py - ON_ZERO_TOLERANCE;
 	double tMax[2];
-	tMax[0] = tseg->spnt.x + ON_ZERO_TOLERANCE;
-	tMax[1] = tseg->spnt.y + ON_ZERO_TOLERANCE;
+	tMax[0] = px + ON_ZERO_TOLERANCE;
+	tMax[1] = py + ON_ZERO_TOLERANCE;
 
 	s_cdt->face_rtrees_2d[face.m_face_index].Search(tMin, tMax, UseTrimPntCallback, (void *)&a_context);
 
-	if (!include_pnt) {
-	    std::cout << "Reject\n";
-	} else {
-	    std::cout << "Accept\n";
+	if (include_pnt) {
+	    //std::cout << "Accept\n";
 	    sinfo->rtree_trim_spnts_2d.Insert(tMin, tMax, (void *)tseg);
-	    sinfo->on_surf_points.insert(new ON_2dPoint(tseg->spnt));
+
+	    sinfo->on_surf_points.insert(new ON_2dPoint(px, py));
 	}
     }
 
