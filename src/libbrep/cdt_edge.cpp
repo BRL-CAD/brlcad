@@ -233,7 +233,6 @@ rtree_bbox_2d_remove(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
     s_cdt->face_rtrees_2d[trim.Face()->m_face_index].Remove(p1, p2, (void *)pe);
 }
 
-#if 0
 void
 rtree_bbox_3d(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
 {
@@ -278,9 +277,8 @@ rtree_bbox_3d(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
     p2[0] = bb.Max().x;
     p2[1] = bb.Max().y;
     p2[2] = bb.Max().z;
-    s_cdt->edge_segs_3d[trim.Face()->m_face_index].Insert(p1, p2, (void *)pe);
+    s_cdt->face_rtrees_3d[trim.Face()->m_face_index].Insert(p1, p2, (void *)pe);
 }
-#endif
 
 struct rtree_minsplit_context {
     struct ON_Brep_CDT_State *s_cdt;
@@ -1719,7 +1717,7 @@ refine_close_edges(struct ON_Brep_CDT_State *s_cdt)
 }
 
 void
-finalize_2d_rtrees(struct ON_Brep_CDT_State *s_cdt)
+finalize_rtrees(struct ON_Brep_CDT_State *s_cdt)
 {
     ON_Brep* brep = s_cdt->brep;
     for (int face_index = 0; face_index < brep->m_F.Count(); face_index++) {
@@ -1766,6 +1764,17 @@ finalize_2d_rtrees(struct ON_Brep_CDT_State *s_cdt)
 	    bu_vls_free(&fname);
 #endif
 
+
+    }
+
+    for (int index = 0; index < brep->m_E.Count(); index++) {
+	std::vector<cdt_mesh::bedge_seg_t *> &epsegs = s_cdt->e2polysegs[index];
+	std::vector<cdt_mesh::bedge_seg_t *>::iterator e_it;
+	for (e_it = epsegs.begin(); e_it != epsegs.end(); e_it++) {
+	    cdt_mesh::bedge_seg_t *b = *e_it;
+	    rtree_bbox_3d(s_cdt, b->tseg1);
+	    rtree_bbox_3d(s_cdt, b->tseg2);
+	}
     }
 }
 

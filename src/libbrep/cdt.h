@@ -132,8 +132,8 @@ struct ON_Brep_CDT_State {
 
     /* Face specific data */
     std::map<int, struct ON_Brep_CDT_Face_State *> *faces;
-    //std::map<int, RTree<void *, double, 3>> edge_segs_3d;
     std::map<int, RTree<void *, double, 2>> face_rtrees_2d;
+    std::map<int, RTree<void *, double, 3>> face_rtrees_3d;
     std::map<int, std::map<int,ON_3dPoint *>> strim_pnts;
     std::map<int, std::map<int,ON_3dPoint *>> strim_norms;
 
@@ -175,7 +175,7 @@ void update_loop_median_curved_edge_seg_lengths(struct ON_Brep_CDT_State *s_cdt)
 void curved_edges_refine(struct ON_Brep_CDT_State *s_cdt);
 void tol_linear_edges_split(struct ON_Brep_CDT_State *s_cdt);
 void refine_near_loops(struct ON_Brep_CDT_State *s_cdt);
-void finalize_2d_rtrees(struct ON_Brep_CDT_State *s_cdt);
+void finalize_rtrees(struct ON_Brep_CDT_State *s_cdt);
 void cpolyedge_nearest_dists(struct ON_Brep_CDT_State *s_cdt);
 
 void plot_rtree_2d(ON_RTree *rtree, const char *filename);
