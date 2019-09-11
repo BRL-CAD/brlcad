@@ -644,9 +644,13 @@ getSurfacePoint(
     //point on the surface?  Would need to avoid too-close points from
     //the main build of the surface, but that might be one way to
     //get the points where we need them...
-    if (tcnt > 2) {
+    //
+    // TODO - a simple tcnt isn't enough - we need to know if part of that count is
+    // boxes that the close_edge breakdown wasn't able to resolve.  if so, we need
+    // to adjust tcnt accordingly in some fashion or this will infinite loop
+    if (tcnt > 3) {
 
-	// We have trims involved.
+	// We have more than 1 trim involved - split.
 	split_u = 1;
 	split_v = 1;
     } else {
