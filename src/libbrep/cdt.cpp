@@ -611,9 +611,6 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	tol_linear_edges_split(s_cdt);
 #endif
 
-#if 0
-	// TODO - this step may be redundant with the close_edge refinement...
-	//
 	// Split singularity trims in 2D to provide an easier input to the 2D CDT logic.  NOTE: these
 	// splits will produce degenerate (zero area, two identical vertex) triangles in 3D that have
 	// to be cleaned up.
@@ -634,7 +631,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 		    while (!wq->empty()) {
 			cdt_mesh::cpolyedge_t *ce = wq->front();
 			wq->pop();
-			std::set<cdt_mesh::cpolyedge_t *> nedges = split_singular_seg(s_cdt, ce);
+			std::set<cdt_mesh::cpolyedge_t *> nedges = split_singular_seg(s_cdt, ce, 0);
 			std::set<cdt_mesh::cpolyedge_t *>::iterator n_it;
 			for (n_it = nedges.begin(); n_it != nedges.end(); n_it++) {
 			    nq->push(*n_it);
@@ -644,7 +641,6 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 		}
 	    }
 	}
-#endif
 
 	// Rebuild finalized 2D RTrees for faces (needed for surface processing)
 	finalize_rtrees(s_cdt);

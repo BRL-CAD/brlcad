@@ -504,7 +504,7 @@ sinfo_init(struct cdt_surf_info *sinfo, struct ON_Brep_CDT_State *s_cdt, int fac
 	a_context.use = &include_pnt;
 
 	double dlen = tseg->bb.Diagonal().Length();
-	dlen = 0.01 * dlen;
+	dlen = 0.1 * dlen;
 	double px = tseg->spnt.x + (bn_rand_half(prand) * dlen);
 	double py = tseg->spnt.y + (bn_rand_half(prand) * dlen);
 
@@ -1089,12 +1089,25 @@ GetInteriorPoints(struct ON_Brep_CDT_State *s_cdt, int face_index)
 	    tMax[0] = (*b_it)->Max().x;
 	    tMax[1] = (*b_it)->Max().y;
 	    size_t nhits = sinfo.rtree_trim_spnts_2d.Search(tMin, tMax, NULL, NULL);
+	    tMin[0] = px - ON_ZERO_TOLERANCE;
+	    tMin[1] = py - ON_ZERO_TOLERANCE;
+	    tMin[0] = px + ON_ZERO_TOLERANCE;
+	    tMin[1] = py + ON_ZERO_TOLERANCE;
+	    size_t tboxhits = sinfo.rtree_2d->Search(tMin, tMax, NULL, NULL);
+	    {
+		struct bu_vls fname = BU_VLS_INIT_ZERO;
+		bu_vls_sprintf(&fname, "%d-surf_rtree.plot3", sinfo.f->m_face_index);
+		plot_rtree_2d2(sinfo.s_cdt->face_rtrees_2d[sinfo.f->m_face_index], bu_vls_cstr(&fname));
+		bu_vls_free(&fname);
 
-	    if (!nhits) {
+	    }
+
+
+	    if (!nhits && !tboxhits) {
 		sinfo.on_surf_points.insert(new ON_2dPoint(px,py));
 		std::cout << "accept pnt\n";
 	    } else {
-		std::cout << "reject - already have trim point in here\n";
+		std::cout << "reject - already have trim point in patch or point is in trim box\n";
 	    }
 	}
 
