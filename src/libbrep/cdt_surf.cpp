@@ -63,6 +63,7 @@ struct cdt_surf_info {
     std::set<ON_2dPoint *> on_surf_points;
     struct ON_Brep_CDT_State *s_cdt;
     const ON_Surface *s;
+    bool is_planar; 
     const ON_BrepFace *f;
     RTree<void *, double, 2> *rtree_2d;
     RTree<void *, double, 2> rtree_trim_spnts_2d;
@@ -458,6 +459,11 @@ sinfo_init(struct cdt_surf_info *sinfo, struct ON_Brep_CDT_State *s_cdt, int fac
 
     sinfo->s_cdt = s_cdt;
     sinfo->s = s;
+
+    double ptol = s->BoundingBox().Diagonal().Length()*0.001;
+    ptol = (ptol < BREP_PLANAR_TOL) ? ptol : BREP_PLANAR_TOL;
+    sinfo->is_planar = s->IsPlanar(NULL, ptol);
+
     sinfo->f = &face;
     sinfo->rtree_2d = &(s_cdt->face_rtrees_2d[face_index]);
     sinfo->strim_pnts = &(s_cdt->strim_pnts[face_index]);
@@ -653,19 +659,18 @@ filter_surface_pnts(struct cdt_surf_info *sinfo)
     }
 }
 
-//static bool
-bool
+static bool
 getSurfacePoint(
 	         struct cdt_surf_info *sinfo,
 		 SPatch &sp,
-		 std::queue<SPatch> &nq
+		 std::queue<SPatch> &nq,
+		 int depth
 		 )
 {
     fastf_t u1 = sp.umin;
     fastf_t u2 = sp.umax;
     fastf_t v1 = sp.vmin;
     fastf_t v2 = sp.vmax;
-    double ldfactor = 2.0;
     int split_u = 0;
     int split_v = 0;
     ON_2dPoint p2d(0.0, 0.0);
@@ -711,7 +716,21 @@ getSurfacePoint(
 	return false;
     }
 
+    if (depth == 0 && !sinfo->is_planar) {
+	split_u = 1;
+	split_v = 1;
+    }
 
+    if (depth < 2 && sinfo->s->IsClosed(0)) {
+	split_u = 1;
+    }
+
+    if (depth < 2 && sinfo->s->IsClosed(1)) {
+	split_v = 1;
+
+    }
+
+    double ldfactor = 2.0;
     if (uavg > ldfactor * vavg) {
 	split_u = 1;
     }
@@ -731,7 +750,7 @@ getSurfacePoint(
 	double min_edge_len = -1.0;
 
 	// If we're dealing with a curved surface, don't get bigger than max_edge
-	if (!sinfo->s->IsPlanar(NULL, BN_TOL_DIST)) {
+	if (!sinfo->is_planar) {
 	    min_edge_len = sinfo->max_edge;
 	    if (uavg > min_edge_len && vavg > min_edge_len) {
 		split_u = 1;
@@ -772,7 +791,6 @@ getSurfacePoint(
 	    }
 	}
     }
-
 
     if (ev_success && (!split_u || !split_v)) {
 	// Don't know if we're splitting in at least one direction - check dot products
@@ -852,7 +870,6 @@ GetInteriorPoints(struct ON_Brep_CDT_State *s_cdt, int face_index)
 	struct cdt_surf_info sinfo;
 	sinfo_init(&sinfo, s_cdt, face_index);
 
-#if 0
 	// may be a smaller trimmed subset of surface so worth getting
 	// face boundary
 	bool bGrowBox = false;
@@ -1035,7 +1052,7 @@ GetInteriorPoints(struct ON_Brep_CDT_State *s_cdt, int face_index)
 	while (!wq->empty()) {
 	    SPatch sp = wq->front();
 	    wq->pop();
-	    if (!getSurfacePoint(&sinfo, sp, *nq)) {
+	    if (!getSurfacePoint(&sinfo, sp, *nq, split_depth)) {
 		ON_BoundingBox bb(ON_2dPoint(sp.umin,sp.vmin),ON_2dPoint(sp.umax, sp.vmax));
 		sinfo.leaf_bboxes.insert(new ON_BoundingBox(bb));
 	    }
@@ -1064,9 +1081,23 @@ GetInteriorPoints(struct ON_Brep_CDT_State *s_cdt, int face_index)
 	    double vlen = pmax.y - pmin.y;
 	    double px = p2d.x + (bn_rand_half(prand) * 0.3*ulen);
 	    double py = p2d.y + (bn_rand_half(prand) * 0.3*vlen);
-	    sinfo.on_surf_points.insert(new ON_2dPoint(px,py));
+
+	    double tMin[2];
+	    tMin[0] = (*b_it)->Min().x;
+	    tMin[1] = (*b_it)->Min().y;
+	    double tMax[2];
+	    tMax[0] = (*b_it)->Max().x;
+	    tMax[1] = (*b_it)->Max().y;
+	    size_t nhits = sinfo.rtree_trim_spnts_2d.Search(tMin, tMax, NULL, NULL);
+
+	    if (!nhits) {
+		sinfo.on_surf_points.insert(new ON_2dPoint(px,py));
+		std::cout << "accept pnt\n";
+	    } else {
+		std::cout << "reject - already have trim point in here\n";
+	    }
 	}
-#endif
+
 	// Strip out points from the surface that are too close to the trimming curves.
 	filter_surface_pnts(&sinfo);
 
