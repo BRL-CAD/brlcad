@@ -1522,42 +1522,9 @@ refine_close_edges(struct ON_Brep_CDT_State *s_cdt)
 
     for (int face_index = 0; face_index < brep->m_F.Count(); face_index++) {
 	ON_BrepFace &face = s_cdt->brep->m_F[face_index];
-	cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[face_index];
 	std::cout << "Face " << face_index << " close edge check...\n";
 
-	std::vector<cdt_mesh::cpolyedge_t *> ws;
-	std::vector<cdt_mesh::cpolyedge_t *>::iterator w_it;
-
-	int loop_cnt = face.LoopCount();
-	for (int li = 0; li < loop_cnt; li++) {
-	    const ON_BrepLoop *loop = face.Loop(li);
-	    bool is_outer = (face.OuterLoop()->m_loop_index == loop->m_loop_index) ? true : false;
-	    cdt_mesh::cpolygon_t *cpoly = NULL;
-	    if (is_outer) {
-		cpoly = &fmesh->outer_loop;
-	    } else {
-		cpoly = fmesh->inner_loops[li];
-	    }
-
-	    size_t ecnt = 1;
-	    cdt_mesh::cpolyedge_t *pe = (*cpoly->poly.begin());
-	    cdt_mesh::cpolyedge_t *first = pe;
-	    cdt_mesh::cpolyedge_t *next = pe->next;
-	    first->split_status = 0;
-	    ws.push_back(first);
-	    // Walk the loop
-	    while (first != next) {
-		ecnt++;
-		if (!next) break;
-		next->split_status = 0;
-		ws.push_back(next);
-		next = next->next;
-		if (ecnt > cpoly->poly.size()) {
-		    std::cerr << "\nrefine_close_edges: ERROR! encountered infinite loop\n";
-		    return;
-		}
-	    }
-	}
+	std::vector<cdt_mesh::cpolyedge_t *> ws = cdt_face_polyedges(s_cdt, face_index);
 
 #if 0
 	{
@@ -1588,6 +1555,7 @@ refine_close_edges(struct ON_Brep_CDT_State *s_cdt)
 	    // itself, this loop should be (in principle) suitable for bu_parallel - we're not
 	    // doing any splitting at this point - searching is a read only activity once
 	    // the initial data containers are set up
+	    std::vector<cdt_mesh::cpolyedge_t *>::iterator w_it;
 	    for (w_it = ws.begin(); w_it != ws.end(); w_it++) {
 		cdt_mesh::cpolyedge_t *tseg = *w_it;
 		ON_2dPoint p2d1(tseg->polygon->pnts_2d[tseg->v[0]].first, tseg->polygon->pnts_2d[tseg->v[0]].second);
@@ -1631,16 +1599,23 @@ refine_close_edges(struct ON_Brep_CDT_State *s_cdt)
 		s_cdt->face_rtrees_2d[face.m_face_index].Search(tMin, tMax, MinSplit2dCallback, (void *)&a_context);
 	    }
 
-	    // If we need to split, do so
-	    for (w_it = ws.begin(); w_it != ws.end(); w_it++) {
-		cdt_mesh::cpolyedge_t *pe = *w_it;
+	    // If we need to split, do so.  We need to process as a set,
+	    // because an edge split on a closed face may end up removing more
+	    // than one cpolyedge_t in ws at the same time.
+	    std::set<cdt_mesh::cpolyedge_t *> ws_s(ws.begin(), ws.end());
+	    while (ws_s.size()) {
+		cdt_mesh::cpolyedge_t *pe = *ws_s.begin();
 		if (pe->eseg) {
 		    cdt_mesh::bedge_seg_t *b = pe->eseg;
+		    // Get both of them in case they're both in ws (closed face)
+		    ws_s.erase(b->tseg1);
+		    ws_s.erase(b->tseg2);
+		    int edge_ind = b->edge_ind;
 		    if (pe->split_status == 2) {
 			std::set<cdt_mesh::bedge_seg_t *> esegs_split = split_edge_seg(s_cdt, b, 1, 1);
 			if (esegs_split.size()) {
 			    split_check = true;
-			    std::copy(esegs_split.begin(), esegs_split.end(), std::back_inserter(curr_edge_segs[b->edge_ind]));
+			    std::copy(esegs_split.begin(), esegs_split.end(), std::back_inserter(curr_edge_segs[edge_ind]));
 			    // Pick up the new trim segments from the edges for the next iteration.  Only
 			    // want the ones associated with the current face.
 			    std::set<cdt_mesh::bedge_seg_t *>::iterator b_it;
@@ -1652,17 +1627,18 @@ refine_close_edges(struct ON_Brep_CDT_State *s_cdt)
 			} else {
 			    // This is probably fatal...
 			    std::cerr << "Forced edge split failed???\n";
-			    curr_edge_segs[b->edge_ind].push_back(b);
+			    curr_edge_segs[edge_ind].push_back(b);
 			    current_trims.push_back(pe);
 			}
 		    } else if (pe->split_status == 1) {
-			curr_edge_segs[b->edge_ind].push_back(b);
+			curr_edge_segs[edge_ind].push_back(b);
 			current_trims.push_back(pe);
 		    } else {
-			curr_edge_segs[b->edge_ind].push_back(b);
+			curr_edge_segs[edge_ind].push_back(b);
 		    }
 		} else {
 		    // Trim only, no edge.
+		    ws_s.erase(pe);
 		    if (pe->split_status == 2) {
 			std::set<cdt_mesh::cpolyedge_t *> ntrims = split_singular_seg(s_cdt, pe, 1);
 			if (ntrims.size()) {

@@ -203,7 +203,7 @@ do_triangulation(struct ON_Brep_CDT_State *s_cdt, int fi)
 
     // Sample the surface, independent of the trimming curves, to get points that
     // will tie the mesh to the interior surface.
-    //GetInteriorPoints(s_cdt, face.m_face_index);
+    GetInteriorPoints(s_cdt, face.m_face_index);
 
     cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[face.m_face_index];
     fmesh->f_id = face.m_face_index;

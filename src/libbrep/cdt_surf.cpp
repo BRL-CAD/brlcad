@@ -65,6 +65,7 @@ struct cdt_surf_info {
     const ON_Surface *s;
     const ON_BrepFace *f;
     RTree<void *, double, 2> *rtree_2d;
+    RTree<void *, double, 2> rtree_trim_spnts_2d;
     std::map<int,ON_3dPoint *> *strim_pnts;
     std::map<int,ON_3dPoint *> *strim_norms;
     double u1, u2, v1, v2;
@@ -422,6 +423,31 @@ _cdt_get_uv_edge_3d_len(struct cdt_surf_info *sinfo, int c1, int c2)
     return d1+d2;
 }
 
+struct rtree_trimpnt_context {
+    struct ON_Brep_CDT_State *s_cdt;
+    cdt_mesh::cpolyedge_t *cseg;
+    bool *use;
+};
+
+static bool UseTrimPntCallback(void *data, void *a_context) {
+    cdt_mesh::cpolyedge_t *tseg = (cdt_mesh::cpolyedge_t *)data;
+    struct rtree_trimpnt_context *context= (struct rtree_trimpnt_context *)a_context;
+
+    // Our own bbox isn't a problem
+    if (tseg == context->cseg) return true;
+
+    // If this is a foreign box overlap, see if spnt is inside tseg's bbox.  If it is,
+    // we can't use spnt
+    ON_BoundingBox bb(context->cseg->spnt, context->cseg->spnt);
+    if (tseg->bb.Includes(bb)) {
+	*(context->use) = false;
+	return false;
+    }
+
+    return true;
+}
+
+
 
 static void
 sinfo_init(struct cdt_surf_info *sinfo, struct ON_Brep_CDT_State *s_cdt, int face_index)
@@ -451,6 +477,43 @@ sinfo_init(struct cdt_surf_info *sinfo, struct ON_Brep_CDT_State *s_cdt, int fac
     sinfo->v_upper_3dlen = _cdt_get_uv_edge_3d_len(sinfo, 2, 1);
     sinfo->min_edge = (*s_cdt->min_edge_seg_len)[face_index];
     sinfo->max_edge = (*s_cdt->max_edge_seg_len)[face_index];
+
+
+    // If the trims will be contributing points, we need to figure out which ones
+    // and assemble an rtree for them.  We can't insert points from the general
+    // build too close to them or we run the risk of duplicate points and very small
+    // triangles.
+    std::vector<cdt_mesh::cpolyedge_t *> ws = cdt_face_polyedges(s_cdt, face.m_face_index);
+    std::vector<cdt_mesh::cpolyedge_t *>::iterator w_it;
+    for (w_it = ws.begin(); w_it != ws.end(); w_it++) {
+	cdt_mesh::cpolyedge_t *tseg = *w_it;
+	if (!tseg->defines_spnt) continue;
+	bool include_pnt = true;
+
+	struct rtree_trimpnt_context a_context;
+	a_context.s_cdt = s_cdt;
+	a_context.cseg = tseg;
+	a_context.use = &include_pnt;
+
+	double tMin[2];
+	tMin[0] = tseg->spnt.x - ON_ZERO_TOLERANCE;
+	tMin[1] = tseg->spnt.y - ON_ZERO_TOLERANCE;
+	double tMax[2];
+	tMax[0] = tseg->spnt.x + ON_ZERO_TOLERANCE;
+	tMax[1] = tseg->spnt.y + ON_ZERO_TOLERANCE;
+
+	s_cdt->face_rtrees_2d[face.m_face_index].Search(tMin, tMax, UseTrimPntCallback, (void *)&a_context);
+
+	if (!include_pnt) {
+	    std::cout << "Reject\n";
+	} else {
+	    std::cout << "Accept\n";
+	    sinfo->rtree_trim_spnts_2d.Insert(tMin, tMax, (void *)tseg);
+	    sinfo->on_surf_points.insert(new ON_2dPoint(tseg->spnt));
+	}
+    }
+
+
 
     double dist = 0.0;
     double min_dist = 0.0;
@@ -504,7 +567,7 @@ sinfo_init(struct cdt_surf_info *sinfo, struct ON_Brep_CDT_State *s_cdt, int fac
 
 
 void
-filter_surface_edge_pnts_2(struct cdt_surf_info *sinfo)
+filter_surface_pnts(struct cdt_surf_info *sinfo)
 {
 
     // Points on 
@@ -537,10 +600,11 @@ filter_surface_edge_pnts_2(struct cdt_surf_info *sinfo)
 	sinfo->on_surf_points.erase((ON_2dPoint *)p);
     }
 
+    cdt_mesh::cdt_mesh_t *fmesh = &sinfo->s_cdt->fmeshes[sinfo->f->m_face_index];
+#if 0
     // Next check the face loops with the point in polygon test.  If it's
     // outside the outer loop or inside one of the interior trimming loops,
     // it's out.
-    cdt_mesh::cdt_mesh_t *fmesh = &sinfo->s_cdt->fmeshes[sinfo->f->m_face_index];
     fmesh->outer_loop.rm_points_in_polygon(&sinfo->on_surf_points, true);
     std::map<int, cdt_mesh::cpolygon_t*>::iterator i_it;
     for (i_it = fmesh->inner_loops.begin(); i_it != fmesh->inner_loops.end(); i_it++) {
@@ -555,6 +619,7 @@ filter_surface_edge_pnts_2(struct cdt_surf_info *sinfo)
     // point, or a nanoflann based nearest lookup for the edge points to get candidates
     // near each edge in turn - in the latter case, look for points common to the result
     // sets for both edge points to localize on that particular segment.
+#endif
 
     // Populate m_interior_pnts with the final set
     for (osp_it = sinfo->on_surf_points.begin(); osp_it != sinfo->on_surf_points.end(); osp_it++) {
@@ -582,7 +647,8 @@ filter_surface_edge_pnts_2(struct cdt_surf_info *sinfo)
     }
 }
 
-static bool
+//static bool
+bool
 getSurfacePoint(
 	         struct cdt_surf_info *sinfo,
 		 SPatch &sp,
@@ -780,7 +846,7 @@ GetInteriorPoints(struct ON_Brep_CDT_State *s_cdt, int face_index)
 	struct cdt_surf_info sinfo;
 	sinfo_init(&sinfo, s_cdt, face_index);
 
-
+#if 0
 	// may be a smaller trimmed subset of surface so worth getting
 	// face boundary
 	bool bGrowBox = false;
@@ -994,12 +1060,9 @@ GetInteriorPoints(struct ON_Brep_CDT_State *s_cdt, int face_index)
 	    double py = p2d.y + (bn_rand_half(prand) * 0.3*vlen);
 	    sinfo.on_surf_points.insert(new ON_2dPoint(px,py));
 	}
-
-	// Strip out points from the surface that are on the trimming curves.  Trim
-	// points require special handling for watertightness and introducing them
-	// from the surface also runs the risk of adding duplicate 2D points, which
-	// aren't allowed for facetization.
-	filter_surface_edge_pnts_2(&sinfo);
+#endif
+	// Strip out points from the surface that are too close to the trimming curves.
+	filter_surface_pnts(&sinfo);
 
     }
 }

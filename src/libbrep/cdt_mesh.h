@@ -284,6 +284,7 @@ class cpolyedge_t
 	    prev = NULL;
 	    next = NULL;
 	    defines_spnt = false;
+	    eseg = NULL;
 	};
 
 	long v[2];
@@ -295,6 +296,7 @@ class cpolyedge_t
 	    prev = NULL;
 	    next = NULL;
 	    defines_spnt = false;
+	    eseg = NULL;
 	};
 
 	void plot3d(const char *fname);

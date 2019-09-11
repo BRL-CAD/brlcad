@@ -203,6 +203,48 @@ plot_ce_bbox(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe, const c
 }
 
 
+std::vector<cdt_mesh::cpolyedge_t *>
+cdt_face_polyedges(struct ON_Brep_CDT_State *s_cdt, int face_index)
+{
+    std::vector<cdt_mesh::cpolyedge_t *> ws;
+
+    ON_BrepFace &face = s_cdt->brep->m_F[face_index];
+    cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[face_index];
+    int loop_cnt = face.LoopCount();
+    for (int li = 0; li < loop_cnt; li++) {
+	const ON_BrepLoop *loop = face.Loop(li);
+	bool is_outer = (face.OuterLoop()->m_loop_index == loop->m_loop_index) ? true : false;
+	cdt_mesh::cpolygon_t *cpoly = NULL;
+	if (is_outer) {
+	    cpoly = &fmesh->outer_loop;
+	} else {
+	    cpoly = fmesh->inner_loops[li];
+	}
+
+	size_t ecnt = 1;
+	cdt_mesh::cpolyedge_t *pe = (*cpoly->poly.begin());
+	cdt_mesh::cpolyedge_t *first = pe;
+	cdt_mesh::cpolyedge_t *next = pe->next;
+	first->split_status = 0;
+	ws.push_back(first);
+	//Walk the loop
+	while (first != next) {
+	    ecnt++;
+	    if (!next) break;
+	    next->split_status = 0;
+	    ws.push_back(next);
+	    next = next->next;
+	    if (ecnt > cpoly->poly.size()) {
+		std::cerr << "\ncdt_face_polyedges: ERROR! encountered infinite loop\n";
+		ws.clear();
+		return ws;
+	    }
+	}
+    }
+
+    return ws;
+}
+
 struct cdt_audit_info *
 cdt_ainfo(int fid, int vid, int tid, int eid, fastf_t x2d, fastf_t y2d, fastf_t px, fastf_t py, fastf_t pz)
 {
