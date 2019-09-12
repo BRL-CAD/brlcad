@@ -479,6 +479,7 @@ public:
     void polygon_print_3d(cpolygon_t *polygon);
 
     void cdt_inputs_plot(const char *filename);
+    void cdt_inputs_print(const char *filename);
 
 
     int f_id;

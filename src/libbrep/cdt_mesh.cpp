@@ -2432,6 +2432,7 @@ cdt_mesh_t::cdt()
 	}
     }
 
+    cdt_inputs_print("cdt_inputs.c");
     cdt_inputs_plot("cdt_inputs.plot3");
 
     point2d_t *bgp_2d = (point2d_t *)bu_calloc(m_pnts_2d.size() + 1, sizeof(point2d_t), "2D points array");
@@ -3718,6 +3719,88 @@ void cdt_mesh_t::cdt_inputs_plot(const char *filename)
     fclose(plot_file);
 }
 
+void
+serialize_loop(cpolygon_t *loop, std::ofstream &sfile, const char *lname)
+{
+    size_t vcnt = 1;
+    cpolyedge_t *pe = (*loop->poly.begin());
+    cpolyedge_t *first = pe;
+    cpolyedge_t *next = pe->next;
+
+    sfile << lname << "[" << vcnt-1 << "] = " << loop->p2o[pe->v[0]] << ";\n";
+    sfile << lname << "[" << vcnt << "] = " << loop->p2o[pe->v[1]] << ";\n";
+
+    while (first != next) {
+	vcnt++;
+	sfile << lname << "[" << vcnt << "] = " << loop->p2o[next->v[1]] << ";\n";
+	next = next->next;
+	if (vcnt > loop->poly.size()) {
+	    return;
+	}
+    }
+}
+
+void cdt_mesh_t::cdt_inputs_print(const char *filename)
+{
+    std::ofstream sfile(filename);
+
+    if (!sfile.is_open()) {
+	std::cerr << "Could not open file " << filename << " for writing\n";
+	return;
+    }
+
+    sfile << "#include \"bu/malloc.h\"\n";
+    sfile << "#include \"bg/polygon.h\"\n";
+    sfile << "int main() {\n";
+    sfile << "point2d_t *pnts_2d = (point2d_t *)bu_calloc(" << m_pnts_2d.size()+1 << ", sizeof(point2d_t), \"2D points array\");\n";
+
+    for (size_t i = 0; i < m_pnts_2d.size(); i++) {
+	sfile << "pnts_2d[" << i << "][X] = ";
+	sfile << std::fixed << std::setprecision(std::numeric_limits<double>::max_digits10) << m_pnts_2d[i].first << ";\n";
+	sfile << "pnts_2d[" << i << "][Y] = ";
+	sfile << std::fixed << std::setprecision(std::numeric_limits<double>::max_digits10) << m_pnts_2d[i].second << ";\n";
+    }
+
+    sfile << "int *faces = NULL;\nint num_faces = 0;int *steiner = NULL;\n";
+
+   if (m_interior_pnts.size()) {
+      sfile << "steiner = (int *)bu_calloc(" << m_interior_pnts.size() << ", sizeof(int), \"interior points\");\n";
+      std::set<long>::iterator p_it;
+      int vind = 0;
+      for (p_it = m_interior_pnts.begin(); p_it != m_interior_pnts.end(); p_it++) {
+	  sfile << "steiner[" << vind << "] = " << *p_it << ";\n";
+	  vind++;
+      }
+   }
+
+    sfile << "int *opoly = (int *)bu_calloc(" << outer_loop.poly.size()+1 << ", sizeof(int), \"polygon points\");\n";
+
+    serialize_loop(&outer_loop, sfile, "opoly");
+
+    sfile << "const int **holes_array = NULL;\nsize_t *holes_npts = NULL;\n";
+    sfile << "int holes_cnt = " << inner_loops.size() << ";\n";
+    if (inner_loops.size()) {
+	sfile << "    holes_array = (const int **)bu_calloc(" << inner_loops.size()+1 << ", sizeof(int *), \"holes array\");\n";
+	sfile << "    holes_npts = (const int **)bu_calloc(" << inner_loops.size()+1 << ", sizeof(size_t), \"hole pntcnt array\");\n";
+	int loop_cnt = 0;
+	std::map<int, cpolygon_t*>::iterator il_it;
+	for (il_it = inner_loops.begin(); il_it != inner_loops.end(); il_it++) {
+	    struct bu_vls lname = BU_VLS_INIT_ZERO;
+	    cpolygon_t *inl = il_it->second;
+	    bu_vls_sprintf(&lname, "    holes_array[%d]", loop_cnt);
+	    serialize_loop(inl, sfile, bu_vls_cstr(&lname));
+	    sfile << "    holes_npts[" << loop_cnt << "] = " << inl->poly.size()+1 << ";\n";
+	    bu_vls_free(&lname);
+	}
+    }
+
+    sfile << "int result = !bg_nested_polygon_triangulate(&faces, &num_faces,\n";
+    sfile << "             NULL, NULL, opoly, " << outer_loop.poly.size()+1 << ", holes_array, holes_npts, holes_cnt,\n";
+    sfile << "             steiner, " << m_interior_pnts.size() << ", pnts_2d, " << m_pnts_2d.size() << ", TRI_CONSTRAINED_DELAUNAY);\n";
+    sfile << "};\n";
+
+    sfile.close();
+}
 
 void cdt_mesh_t::polygon_plot_3d(cpolygon_t *polygon, const char *filename)
 {
