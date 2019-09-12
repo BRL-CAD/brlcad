@@ -3433,6 +3433,9 @@ cdt_mesh_t::build_initial_loop(triangle_t &seed, bool repair)
 			break;
 		    }
 		}
+		if (have_valid) {
+		    break;
+		}
 	    }
 	}
 
