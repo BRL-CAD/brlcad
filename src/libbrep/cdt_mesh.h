@@ -325,6 +325,7 @@ class cpolygon_t
 
 	/* Perform a triangulation (populates ltris and tris) */
 	bool cdt();
+	void cdt_inputs_print(const char *filename);
 
 	/* Output triangles defined using the indexing from the p2o map (mapping polygon
 	 * point indexing back to a caller-defined source array's indexing */

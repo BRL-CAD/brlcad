@@ -939,6 +939,68 @@ cpolygon_t::rm_points_in_polygon(std::set<ON_2dPoint *> *pnts, bool flip)
     bu_free(polypnts, "polyline");
 }
 
+void cpolygon_t::cdt_inputs_print(const char *filename)
+{
+    std::ofstream sfile(filename);
+
+    if (!sfile.is_open()) {
+	std::cerr << "Could not open file " << filename << " for writing\n";
+	return;
+    }
+
+    sfile << "#include \"bu/malloc.h\"\n";
+    sfile << "#include \"bg/polygon.h\"\n";
+    sfile << "int main() {\n";
+    sfile << "point2d_t *pnts_2d = (point2d_t *)bu_calloc(" << pnts_2d.size()+1 << ", sizeof(point2d_t), \"2D points array\");\n";
+
+    for (size_t i = 0; i < pnts_2d.size(); i++) {
+	sfile << "pnts_2d[" << i << "][X] = ";
+	sfile << std::fixed << std::setprecision(std::numeric_limits<double>::max_digits10) << pnts_2d[i].first << ";\n";
+	sfile << "pnts_2d[" << i << "][Y] = ";
+	sfile << std::fixed << std::setprecision(std::numeric_limits<double>::max_digits10) << pnts_2d[i].second << ";\n";
+    }
+
+    sfile << "int *faces = NULL;\nint num_faces = 0;int *steiner = NULL;\n";
+
+   if (interior_points.size()) {
+      sfile << "steiner = (int *)bu_calloc(" << interior_points.size() << ", sizeof(int), \"interior points\");\n";
+      std::set<long>::iterator p_it;
+      int vind = 0;
+      for (p_it = interior_points.begin(); p_it != interior_points.end(); p_it++) {
+	  sfile << "steiner[" << vind << "] = " << *p_it << ";\n";
+	  vind++;
+      }
+   }
+
+    sfile << "int *opoly = (int *)bu_calloc(" << poly.size()+1 << ", sizeof(int), \"polygon points\");\n";
+
+    size_t vcnt = 1;
+    cpolyedge_t *pe = (*poly.begin());
+    cpolyedge_t *first = pe;
+    cpolyedge_t *next = pe->next;
+
+    sfile << "opoly[" << vcnt-1 << "] = " << pe->v[0] << ";\n";
+    sfile << "opoly[" << vcnt << "] = " << pe->v[1] << ";\n";
+
+
+    // Walk the loop
+    while (first != next) {
+	vcnt++;
+	sfile << "opoly[" << vcnt << "] = " << next->v[1] << ";\n";
+	next = next->next;
+	if (vcnt > poly.size()) {
+	    return;
+	}
+    }
+
+    sfile << "int result = !bg_nested_polygon_triangulate(&faces, &num_faces,\n";
+    sfile << "             NULL, NULL, opoly, " << poly.size()+1 << ", NULL, NULL, 0,\n";
+    sfile << "             steiner, " << interior_points.size() << ", pnts_2d, " << pnts_2d.size() << ", TRI_CONSTRAINED_DELAUNAY);\n";
+    sfile << "};\n";
+
+    sfile.close();
+}
+
 bool
 cpolygon_t::cdt()
 {
@@ -2244,6 +2306,9 @@ cdt_mesh_t::grow_loop(cpolygon_t *polygon, double deg, bool stop_on_contained, t
 
 	if (polygon->visited_triangles.find(target) != polygon->visited_triangles.end() && stop_on_contained && !h_uc &&
 	    (polygon->interior_points.size() > 1 || polygon->poly.size() > 3)) {
+	    polygon->print();
+	    polygon->cdt_inputs_print("cdt_poly.c");
+	    polygon->polygon_plot("cdt_poly.plot3");
 	    bool cdt_status = oriented_polycdt(polygon);
 	    if (cdt_status) {
 		//tris_set_plot(tris, "patch.plot3");
@@ -3684,7 +3749,8 @@ void cdt_mesh_t::cdt_inputs_plot(const char *filename)
     pl_color(plot_file, 255, 0 ,0);
 
     ON_BrepFace &face = brep->m_F[f_id];
-    ON_3dPoint min, max;
+    ON_3dPoint min = ON_3dPoint::UnsetPoint;
+    ON_3dPoint max = ON_3dPoint::UnsetPoint;
     for (int li = 0; li < face.LoopCount(); li++) {
 	for (int ti = 0; ti < face.Loop(li)->TrimCount(); ti++) {
 	    ON_BrepTrim *trim = face.Loop(li)->Trim(ti);
