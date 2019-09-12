@@ -106,18 +106,18 @@ void SPatch::plot(const char *filename)
     ON_2dPoint p2dmax(umax, vmax);
     ON_Line line(p2dmin, p2dmax);
     ON_BoundingBox bb = line.BoundingBox();
-    fastf_t pt[4][3];                  
-    VSET(pt[0], bb.Max().x, bb.Min().y, 0);    
-    VSET(pt[1], bb.Max().x, bb.Max().y, 0);    
-    VSET(pt[2], bb.Min().x, bb.Max().y, 0);    
-    VSET(pt[3], bb.Min().x, bb.Min().y, 0);    
-    pdv_3move(plot_file, pt[0]); 
-    pdv_3cont(plot_file, pt[1]); 
-    pdv_3cont(plot_file, pt[2]); 
-    pdv_3cont(plot_file, pt[3]); 
-    pdv_3cont(plot_file, pt[0]); 
+    fastf_t pt[4][3];
+    VSET(pt[0], bb.Max().x, bb.Min().y, 0);
+    VSET(pt[1], bb.Max().x, bb.Max().y, 0);
+    VSET(pt[2], bb.Min().x, bb.Max().y, 0);
+    VSET(pt[3], bb.Min().x, bb.Min().y, 0);
+    pdv_3move(plot_file, pt[0]);
+    pdv_3cont(plot_file, pt[1]);
+    pdv_3cont(plot_file, pt[2]);
+    pdv_3cont(plot_file, pt[3]);
+    pdv_3cont(plot_file, pt[0]);
 
-    fclose(plot_file); 
+    fclose(plot_file);
 }
 
 static double
