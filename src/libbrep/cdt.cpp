@@ -187,9 +187,9 @@ do_triangulation(struct ON_Brep_CDT_State *s_cdt, int fi)
 	    if (!edge) continue;
 	    const ON_Curve* crv = edge->EdgeCurveOf();
 	    if (!crv) continue;
-	    std::vector<cdt_mesh::bedge_seg_t *> &epsegs = s_cdt->e2polysegs[edge->m_edge_index];
+	    std::set<cdt_mesh::bedge_seg_t *> &epsegs = s_cdt->e2polysegs[edge->m_edge_index];
 	    if (!epsegs.size()) continue;
-	    std::vector<cdt_mesh::bedge_seg_t *>::iterator e_it;
+	    std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
 	    for (e_it = epsegs.begin(); e_it != epsegs.end(); e_it++) {
 		cdt_mesh::bedge_seg_t *b = *e_it;
 		double seg_dist = b->e_start->DistanceTo(*b->e_end);
@@ -495,9 +495,9 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	}
 
 	// Initialize the tangents.
-	std::map<int, std::vector<cdt_mesh::bedge_seg_t *>>::iterator epoly_it;
+	std::map<int, std::set<cdt_mesh::bedge_seg_t *>>::iterator epoly_it;
 	for (epoly_it = s_cdt->e2polysegs.begin(); epoly_it != s_cdt->e2polysegs.end(); epoly_it++) {
-	    std::vector<cdt_mesh::bedge_seg_t *>::iterator seg_it;
+	    std::set<cdt_mesh::bedge_seg_t *>::iterator seg_it;
 	    for (seg_it = epoly_it->second.begin(); seg_it != epoly_it->second.end(); seg_it++) {
 		cdt_mesh::bedge_seg_t *bseg = *seg_it;
 		double ts1 = bseg->tseg1->trim_start;
@@ -651,11 +651,13 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 #if 1
 	for (int index = 0; index < brep->m_F.Count(); index++) {
 	    struct bu_vls fname = BU_VLS_INIT_ZERO;
-	    bu_vls_sprintf(&fname, "%d-rtree_outer_polygon.plot3", index);
+	    bu_vls_sprintf(&fname, "%d-rtree_outer_polygon_2d.plot3", index);
 	    cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[index];
 	    fmesh->polygon_plot_2d(&fmesh->outer_loop, bu_vls_cstr(&fname));
 	    bu_vls_sprintf(&fname, "%d-rtree_2d.plot3", index);
 	    plot_rtree_2d2(s_cdt->face_rtrees_2d[index], bu_vls_cstr(&fname));
+	    bu_vls_sprintf(&fname, "%d-rtree_outer_polygon_3d.plot3", index);
+	    fmesh->polygon_plot_3d(&fmesh->outer_loop, bu_vls_cstr(&fname));
 	    // TODO - NIST2 259 3D rtree is clearly wrong
 	    bu_vls_sprintf(&fname, "%d-rtree_3d.plot3", index);
 	    plot_rtree_3d(s_cdt->face_rtrees_3d[index], bu_vls_cstr(&fname));
