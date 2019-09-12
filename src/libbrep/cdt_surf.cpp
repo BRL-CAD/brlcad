@@ -493,29 +493,17 @@ sinfo_init(struct cdt_surf_info *sinfo, struct ON_Brep_CDT_State *s_cdt, int fac
 	a_context.cseg = tseg;
 	a_context.use = &include_pnt;
 
-	ON_2dPoint p2d1(tseg->polygon->pnts_2d[tseg->v[0]].first, tseg->polygon->pnts_2d[tseg->v[0]].second);
-	ON_2dPoint p2d2(tseg->polygon->pnts_2d[tseg->v[1]].first, tseg->polygon->pnts_2d[tseg->v[1]].second);
-	double dist = p2d1.DistanceTo(p2d2);
-	double bdist = 0.3*dist * bn_rand_half(prand);
-	ON_3dPoint p13d(p2d1.x, p2d1.y, 0);
-	ON_3dPoint p23d(p2d2.x, p2d2.y, 0);
-	ON_3dPoint p1norm(p2d1.x, p2d1.y, 1);
-	ON_3dVector vtrim = p23d - p13d;
-	ON_3dVector vnorm = p1norm - p13d;
-	vtrim.Unitize();
-	vnorm.Unitize();
-	ON_3dVector ndir = ON_CrossProduct(vnorm, vtrim);
-	ndir.Unitize();
-	ndir = ndir * bdist;
-	ON_2dVector ndir2d(ndir.x, ndir.y);
-	ON_2dPoint npnt = tseg->spnt + ndir2d;
+	double dlen = tseg->bb.Diagonal().Length();
+	dlen = 0.01 * dlen;
+	double px = tseg->spnt.x + (bn_rand_half(prand) * dlen);
+	double py = tseg->spnt.y + (bn_rand_half(prand) * dlen);
 
 	double tMin[2];
-	tMin[0] = npnt.x - ON_ZERO_TOLERANCE;
-	tMin[1] = npnt.y - ON_ZERO_TOLERANCE;
+	tMin[0] = px - ON_ZERO_TOLERANCE;
+	tMin[1] = py - ON_ZERO_TOLERANCE;
 	double tMax[2];
-	tMax[0] = npnt.x + ON_ZERO_TOLERANCE;
-	tMax[1] = npnt.y + ON_ZERO_TOLERANCE;
+	tMax[0] = px + ON_ZERO_TOLERANCE;
+	tMax[1] = py + ON_ZERO_TOLERANCE;
 
 	s_cdt->face_rtrees_2d[face.m_face_index].Search(tMin, tMax, UseTrimPntCallback, (void *)&a_context);
 
@@ -523,7 +511,7 @@ sinfo_init(struct cdt_surf_info *sinfo, struct ON_Brep_CDT_State *s_cdt, int fac
 	    //std::cout << "Accept\n";
 	    sinfo->rtree_trim_spnts_2d.Insert(tMin, tMax, (void *)tseg);
 
-	    sinfo->on_surf_points.insert(new ON_2dPoint(npnt.x, npnt.y));
+	    sinfo->on_surf_points.insert(new ON_2dPoint(px, py));
 	}
     }
 
@@ -1091,25 +1079,12 @@ GetInteriorPoints(struct ON_Brep_CDT_State *s_cdt, int face_index)
 	    tMax[0] = (*b_it)->Max().x;
 	    tMax[1] = (*b_it)->Max().y;
 	    size_t nhits = sinfo.rtree_trim_spnts_2d.Search(tMin, tMax, NULL, NULL);
-	    tMin[0] = px - ON_ZERO_TOLERANCE;
-	    tMin[1] = py - ON_ZERO_TOLERANCE;
-	    tMin[0] = px + ON_ZERO_TOLERANCE;
-	    tMin[1] = py + ON_ZERO_TOLERANCE;
-	    size_t tboxhits = sinfo.rtree_2d->Search(tMin, tMax, NULL, NULL);
-	    {
-		struct bu_vls fname = BU_VLS_INIT_ZERO;
-		bu_vls_sprintf(&fname, "%d-surf_rtree.plot3", sinfo.f->m_face_index);
-		plot_rtree_2d2(sinfo.s_cdt->face_rtrees_2d[sinfo.f->m_face_index], bu_vls_cstr(&fname));
-		bu_vls_free(&fname);
 
-	    }
-
-
-	    if (!nhits && !tboxhits) {
+	    if (!nhits) {
 		sinfo.on_surf_points.insert(new ON_2dPoint(px,py));
 		std::cout << "accept pnt\n";
 	    } else {
-		std::cout << "reject - already have trim point in patch or point is in trim box\n";
+		std::cout << "reject - already have trim point in here\n";
 	    }
 	}
 
