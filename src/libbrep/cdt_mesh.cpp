@@ -2349,8 +2349,8 @@ cdt_mesh_t::grow_loop(cpolygon_t *polygon, double deg, bool stop_on_contained, t
 	if (polygon->visited_triangles.find(target) != polygon->visited_triangles.end() && stop_on_contained && !h_uc &&
 	    (polygon->interior_points.size() > 1 || polygon->poly.size() > 3)) {
 	    polygon->print();
-	    polygon->cdt_inputs_print("cdt_poly.c");
-	    polygon->polygon_plot("cdt_poly.plot3");
+	    //polygon->cdt_inputs_print("cdt_poly.c");
+	    //polygon->polygon_plot("cdt_poly.plot3");
 	    bool cdt_status = oriented_polycdt(polygon);
 	    if (cdt_status) {
 		//tris_set_plot(tris, "patch.plot3");
@@ -2539,8 +2539,8 @@ cdt_mesh_t::cdt()
 	}
     }
 
-    cdt_inputs_print("cdt_inputs.c");
-    cdt_inputs_plot("cdt_inputs.plot3");
+    //cdt_inputs_print("cdt_inputs.c");
+    //cdt_inputs_plot("cdt_inputs.plot3");
 
     point2d_t *bgp_2d = (point2d_t *)bu_calloc(m_pnts_2d.size() + 1, sizeof(point2d_t), "2D points array");
     for (size_t i = 0; i < m_pnts_2d.size(); i++) {

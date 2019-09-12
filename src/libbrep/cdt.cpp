@@ -648,16 +648,17 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	// Calculate 2D neighbor distances for polyedges
 	//cpolyedge_nearest_dists(s_cdt);
 
-#if 0
+#if 1
 	for (int index = 0; index < brep->m_F.Count(); index++) {
 	    struct bu_vls fname = BU_VLS_INIT_ZERO;
 	    bu_vls_sprintf(&fname, "%d-rtree_outer_polygon.plot3", index);
 	    cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[index];
 	    fmesh->polygon_plot_2d(&fmesh->outer_loop, bu_vls_cstr(&fname));
 	    bu_vls_sprintf(&fname, "%d-rtree_2d.plot3", index);
-	    plot_rtree_2d2(s_cdt->trim_segs[index], bu_vls_cstr(&fname));
+	    plot_rtree_2d2(s_cdt->face_rtrees_2d[index], bu_vls_cstr(&fname));
+	    // TODO - NIST2 259 3D rtree is clearly wrong
 	    bu_vls_sprintf(&fname, "%d-rtree_3d.plot3", index);
-	    plot_rtree_3d(s_cdt->edge_segs_3d[index], bu_vls_cstr(&fname));
+	    plot_rtree_3d(s_cdt->face_rtrees_3d[index], bu_vls_cstr(&fname));
 	}
 #endif
 

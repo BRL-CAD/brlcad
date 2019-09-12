@@ -240,9 +240,17 @@ rtree_bbox_3d(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
 {
     if (!pe->eseg) return;
     ON_BrepTrim& trim = s_cdt->brep->m_T[pe->trim_ind];
+    double tcparam = (pe->trim_start + pe->trim_end) / 2.0;
+    ON_3dPoint trim_2d = trim.PointAt(tcparam);
+    const ON_Surface *s = trim.SurfaceOf();
+    ON_3dPoint trim_3d = s->PointAt(trim_2d.x, trim_2d.y);
+
     ON_3dPoint *p3d1 = pe->eseg->e_start;
     ON_3dPoint *p3d2 = pe->eseg->e_end;
     ON_Line line(*p3d1, *p3d2);
+
+    double arc_dist = 2*trim_3d.DistanceTo(line.ClosestPointTo(trim_3d));
+
     ON_BoundingBox bb = line.BoundingBox();
     bb.m_max.x = bb.m_max.x + ON_ZERO_TOLERANCE;
     bb.m_max.y = bb.m_max.y + ON_ZERO_TOLERANCE;
@@ -252,7 +260,7 @@ rtree_bbox_3d(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
     bb.m_min.z = bb.m_min.z - ON_ZERO_TOLERANCE;
 
     double dist = p3d1->DistanceTo(*p3d2);
-    double bdist = 0.5*dist;
+    double bdist = (0.5*dist > arc_dist) ? 0.5*dist : arc_dist;
     double xdist = bb.m_max.x - bb.m_min.x;
     double ydist = bb.m_max.y - bb.m_min.y;
     double zdist = bb.m_max.z - bb.m_min.z;
@@ -1014,7 +1022,7 @@ initialize_edge_segs(struct ON_Brep_CDT_State *s_cdt)
 	}
     }
 
-#if 1
+#if 0
     for (int face_index = 0; face_index < s_cdt->brep->m_F.Count(); face_index++) {
 	struct bu_vls fname = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&fname, "%d-rtree_2d_after_initial_splits.plot3", face_index);
@@ -1275,10 +1283,13 @@ initialize_loop_polygons(struct ON_Brep_CDT_State *s_cdt, std::set<cdt_mesh::cpo
 		}
 	    }
 	}
+
+#if 0
 	struct bu_vls fname = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&fname, "%d-rtree_2d_initial.plot3", face_index);
 	plot_rtree_2d2(s_cdt->face_rtrees_2d[face_index], bu_vls_cstr(&fname));
 	bu_vls_free(&fname);
+#endif
     }
     return true;
 }
@@ -1683,7 +1694,7 @@ refine_close_edges(struct ON_Brep_CDT_State *s_cdt)
 		std::copy(m_it->second.begin(), m_it->second.end(), std::back_inserter(s_cdt->e2polysegs[m_edge_index]));
 	    }
 
-#if 1
+#if 0
 	    struct bu_vls fname = BU_VLS_INIT_ZERO;
 	    bu_vls_sprintf(&fname, "%d-rtree_2d_split_update_%d.plot3", face.m_face_index, split_cnt);
 	    plot_rtree_2d2(s_cdt->face_rtrees_2d[face_index], bu_vls_cstr(&fname));

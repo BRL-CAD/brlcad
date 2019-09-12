@@ -420,7 +420,7 @@ struct rtree_trimpnt_context {
     bool *use;
 };
 
-#if 0
+#if 1
 static bool UseTrimPntCallback(void *data, void *a_context) {
     cdt_mesh::cpolyedge_t *tseg = (cdt_mesh::cpolyedge_t *)data;
     struct rtree_trimpnt_context *context= (struct rtree_trimpnt_context *)a_context;
@@ -475,7 +475,7 @@ sinfo_init(struct cdt_surf_info *sinfo, struct ON_Brep_CDT_State *s_cdt, int fac
     sinfo->min_edge = (*s_cdt->min_edge_seg_len)[face_index];
     sinfo->max_edge = (*s_cdt->max_edge_seg_len)[face_index];
 
-#if 0
+#if 1
     // If the trims will be contributing points, we need to figure out which ones
     // and assemble an rtree for them.  We can't insert points from the general
     // build too close to them or we run the risk of duplicate points and very small
@@ -626,17 +626,29 @@ filter_surface_pnts(struct cdt_surf_info *sinfo)
     // Populate m_interior_pnts with the final set
     for (osp_it = sinfo->on_surf_points.begin(); osp_it != sinfo->on_surf_points.end(); osp_it++) {
 	ON_2dPoint n2dp(**osp_it);
-	long f_ind2d = fmesh->add_point(n2dp);
-	fmesh->m_interior_pnts.insert(f_ind2d);
 
-
-	// Add new 3D point and normal values to the fmesh as well TODO - store these during
-	// the build-down in sinfo and then just look them up here...
+	// Calculate the 3D point and normal values.
 	ON_3dPoint p3d;
 	ON_3dVector norm = ON_3dVector::UnsetVector;
 	if (!surface_EvNormal(sinfo->s, n2dp.x, n2dp.y, p3d, norm)) {
 	    p3d = sinfo->s->PointAt(n2dp.x, n2dp.y);
 	}
+
+	// If we're too close to an edge in 3D, the point is out.
+	double fMin[3];
+	fMin[0] = p3d.x - ON_ZERO_TOLERANCE;
+	fMin[1] = p3d.y - ON_ZERO_TOLERANCE;
+	fMin[2] = p3d.z - ON_ZERO_TOLERANCE;
+	double fMax[3];
+	fMax[0] = p3d.x + ON_ZERO_TOLERANCE;
+	fMax[1] = p3d.y + ON_ZERO_TOLERANCE;
+	fMax[2] = p3d.z + ON_ZERO_TOLERANCE;
+	size_t nhits = sinfo->s_cdt->face_rtrees_3d[sinfo->f->m_face_index].Search(fMin, fMax, NULL, NULL);
+	if (nhits) continue;
+
+
+	long f_ind2d = fmesh->add_point(n2dp);
+	fmesh->m_interior_pnts.insert(f_ind2d);
 	if (fmesh->m_bRev) {
 	    norm = -1 * norm;
 	}
@@ -1072,7 +1084,7 @@ GetInteriorPoints(struct ON_Brep_CDT_State *s_cdt, int face_index)
 	    double px = p2d.x + (bn_rand_half(prand) * 0.3*ulen);
 	    double py = p2d.y + (bn_rand_half(prand) * 0.3*vlen);
 
-#if 0
+#if 1
 	    double tMin[2];
 	    tMin[0] = (*b_it)->Min().x;
 	    tMin[1] = (*b_it)->Min().y;
@@ -1083,9 +1095,9 @@ GetInteriorPoints(struct ON_Brep_CDT_State *s_cdt, int face_index)
 
 	    if (!nhits) {
 		sinfo.on_surf_points.insert(new ON_2dPoint(px,py));
-		std::cout << "accept pnt\n";
+		//std::cout << "accept pnt\n";
 	    } else {
-		std::cout << "reject - already have trim point in here\n";
+		//std::cout << "reject - already have trim point in here\n";
 	    }
 #else
 	    sinfo.on_surf_points.insert(new ON_2dPoint(px,py));
