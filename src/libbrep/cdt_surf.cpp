@@ -420,6 +420,7 @@ struct rtree_trimpnt_context {
     bool *use;
 };
 
+#if 0
 static bool UseTrimPntCallback(void *data, void *a_context) {
     cdt_mesh::cpolyedge_t *tseg = (cdt_mesh::cpolyedge_t *)data;
     struct rtree_trimpnt_context *context= (struct rtree_trimpnt_context *)a_context;
@@ -437,7 +438,7 @@ static bool UseTrimPntCallback(void *data, void *a_context) {
 
     return true;
 }
-
+#endif
 
 
 static void
@@ -474,7 +475,7 @@ sinfo_init(struct cdt_surf_info *sinfo, struct ON_Brep_CDT_State *s_cdt, int fac
     sinfo->min_edge = (*s_cdt->min_edge_seg_len)[face_index];
     sinfo->max_edge = (*s_cdt->max_edge_seg_len)[face_index];
 
-
+#if 0
     // If the trims will be contributing points, we need to figure out which ones
     // and assemble an rtree for them.  We can't insert points from the general
     // build too close to them or we run the risk of duplicate points and very small
@@ -514,6 +515,7 @@ sinfo_init(struct cdt_surf_info *sinfo, struct ON_Brep_CDT_State *s_cdt, int fac
 	    sinfo->on_surf_points.insert(new ON_2dPoint(px, py));
 	}
     }
+#endif
 
 
 
@@ -572,8 +574,6 @@ void
 filter_surface_pnts(struct cdt_surf_info *sinfo)
 {
 
-    // Points on 
-    
     // TODO - it's looking like a 2D check isn't going to be enough - we probably
     // need BOTH a 2D and a 3D check to make sure none of the points are in a
     // position that will cause trouble.  Will need to build a 3D RTree of the line
@@ -1072,6 +1072,7 @@ GetInteriorPoints(struct ON_Brep_CDT_State *s_cdt, int face_index)
 	    double px = p2d.x + (bn_rand_half(prand) * 0.3*ulen);
 	    double py = p2d.y + (bn_rand_half(prand) * 0.3*vlen);
 
+#if 0
 	    double tMin[2];
 	    tMin[0] = (*b_it)->Min().x;
 	    tMin[1] = (*b_it)->Min().y;
@@ -1086,6 +1087,9 @@ GetInteriorPoints(struct ON_Brep_CDT_State *s_cdt, int face_index)
 	    } else {
 		std::cout << "reject - already have trim point in here\n";
 	    }
+#else
+	    sinfo.on_surf_points.insert(new ON_2dPoint(px,py));
+#endif
 	}
 
 	// Strip out points from the surface that are too close to the trimming curves.

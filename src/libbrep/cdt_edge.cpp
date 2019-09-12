@@ -135,7 +135,7 @@ debug_bseg(cdt_mesh::bedge_seg_t *bseg, int seg_id)
 // Probably still want some minimum distance to avoid extremely slim triangles, even if they
 // are "valid"...
 void
-rtree_bbox_2d(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
+rtree_bbox_2d(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe, int tight)
 {
     ON_BrepTrim& trim = s_cdt->brep->m_T[pe->trim_ind];
     ON_2dPoint p2d1(pe->polygon->pnts_2d[pe->v[0]].first, pe->polygon->pnts_2d[pe->v[0]].second);
@@ -145,7 +145,7 @@ rtree_bbox_2d(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
 
     // If we have an associated 3D edge, we need a surface point that will
     // result in a sensible triangle near that edge.
-    if (pe->eseg) {
+    if (!tight && pe->eseg) {
 	ON_3dPoint p13d(p2d1.x, p2d1.y, 0);
 	ON_3dPoint p23d(p2d2.x, p2d2.y, 0);
 	ON_3dPoint p1norm(p2d1.x, p2d1.y, 1);
@@ -169,21 +169,23 @@ rtree_bbox_2d(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
     pe->bb.m_min.x = pe->bb.m_min.x - ON_ZERO_TOLERANCE;
     pe->bb.m_min.y = pe->bb.m_min.y - ON_ZERO_TOLERANCE;
 
-    double xdist = pe->bb.m_max.x - pe->bb.m_min.x;
-    double ydist = pe->bb.m_max.y - pe->bb.m_min.y;
-    // If we're close to the edge, we want to know - the Search callback will
-    // check the precise distance and make a decision on what to do.
-    if (xdist < bdist) {
-	pe->bb.m_min.x = pe->bb.m_min.x - 0.5*bdist;
-	pe->bb.m_max.x = pe->bb.m_max.x + 0.5*bdist;
-    }
-    if (ydist < bdist) {
-	pe->bb.m_min.y = pe->bb.m_min.y - 0.5*bdist;
-	pe->bb.m_max.y = pe->bb.m_max.y + 0.5*bdist;
-    }
+    if (!tight) {
+	double xdist = pe->bb.m_max.x - pe->bb.m_min.x;
+	double ydist = pe->bb.m_max.y - pe->bb.m_min.y;
+	// If we're close to the edge, we want to know - the Search callback will
+	// check the precise distance and make a decision on what to do.
+	if (xdist < bdist) {
+	    pe->bb.m_min.x = pe->bb.m_min.x - 0.5*bdist;
+	    pe->bb.m_max.x = pe->bb.m_max.x + 0.5*bdist;
+	}
+	if (ydist < bdist) {
+	    pe->bb.m_min.y = pe->bb.m_min.y - 0.5*bdist;
+	    pe->bb.m_max.y = pe->bb.m_max.y + 0.5*bdist;
+	}
 
-    if (pe->eseg) {
-	pe->bb.Set(pe->spnt, true);
+	if (pe->eseg) {
+	    pe->bb.Set(pe->spnt, true);
+	}
     }
 
     double p1[2];
@@ -780,10 +782,10 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int
 
     // Update the rtrees with the new segments
     if (update_rtrees) {
-	rtree_bbox_2d(s_cdt, bseg1->tseg1);
-	rtree_bbox_2d(s_cdt, bseg1->tseg2);
-	rtree_bbox_2d(s_cdt, bseg2->tseg1);
-	rtree_bbox_2d(s_cdt, bseg2->tseg2);
+	rtree_bbox_2d(s_cdt, bseg1->tseg1, 0);
+	rtree_bbox_2d(s_cdt, bseg1->tseg2, 0);
+	rtree_bbox_2d(s_cdt, bseg2->tseg1, 0);
+	rtree_bbox_2d(s_cdt, bseg2->tseg2, 0);
 #if 0
 	struct bu_vls fname = BU_VLS_INIT_ZERO;
 	int face_index = s_cdt->brep->m_T[bseg1->tseg1->trim_ind].Face()->m_face_index;
@@ -931,8 +933,8 @@ split_singular_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *ce, i
     nedges.insert(poly_ne2);
 
     if (update_rtrees) {
-	rtree_bbox_2d(s_cdt, poly_ne1);
-	rtree_bbox_2d(s_cdt, poly_ne2);
+	rtree_bbox_2d(s_cdt, poly_ne1, 0);
+	rtree_bbox_2d(s_cdt, poly_ne2, 0);
     }
 
     return nedges;
@@ -1249,7 +1251,7 @@ initialize_loop_polygons(struct ON_Brep_CDT_State *s_cdt, std::set<cdt_mesh::cpo
 		ne->trim_start = range.m_t[0];
 		ne->trim_end = range.m_t[1];
 
-		rtree_bbox_2d(s_cdt, ne);
+		rtree_bbox_2d(s_cdt, ne, 0);
 
 		if (trim->m_ei >= 0) {
 		    cdt_mesh::bedge_seg_t *eseg = s_cdt->e2polysegs[trim->m_ei][0];
@@ -1719,12 +1721,12 @@ finalize_rtrees(struct ON_Brep_CDT_State *s_cdt)
 	    cdt_mesh::cpolyedge_t *pe = (*cpoly->poly.begin());
 	    cdt_mesh::cpolyedge_t *first = pe;
 	    cdt_mesh::cpolyedge_t *next = pe->next;
-	    rtree_bbox_2d(s_cdt, first);
+	    rtree_bbox_2d(s_cdt, first, 1);
 	    // Walk the loop
 	    while (first != next) {
 		ecnt++;
 		if (!next) break;
-		rtree_bbox_2d(s_cdt, next);
+		rtree_bbox_2d(s_cdt, next, 1);
 		next = next->next;
 		if (ecnt > cpoly->poly.size()) {
 		    std::cerr << "\nfinalize_2d_rtrees: ERROR! encountered infinite loop\n";
