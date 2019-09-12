@@ -2,6 +2,7 @@
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/..)
 
 set(distcheck_files
+  single_bad_edge.cdtmesh
   nurbs_csg.g
   )
 
