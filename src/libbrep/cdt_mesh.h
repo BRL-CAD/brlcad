@@ -412,6 +412,22 @@ class cdt_mesh_t
 {
 public:
 
+    cdt_mesh_t() {
+	pnts.clear();
+	p2ind.clear();
+	normals.clear();
+	n2ind.clear();
+	nmap.clear();
+	tris.clear();
+
+	uedges2tris.clear();
+	seed_tris.clear();
+
+	v2edges.clear();
+	v2tris.clear();
+	edges2tris.clear();
+    };
+
     /* The 3D triangle set (defined by index values) and it associated points array */
     std::set<triangle_t> tris;
     std::vector<ON_3dPoint *> pnts;
