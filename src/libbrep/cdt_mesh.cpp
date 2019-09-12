@@ -997,8 +997,8 @@ void cpolygon_t::cdt_inputs_print(const char *filename)
     sfile << "int result = !bg_nested_polygon_triangulate(&faces, &num_faces,\n";
     sfile << "             NULL, NULL, opoly, " << poly.size()+1 << ", NULL, NULL, 0,\n";
     sfile << "             steiner, " << interior_points.size() << ", pnts_2d, " << pnts_2d.size() << ", TRI_CONSTRAINED_DELAUNAY);\n";
-    sfile << "if (result) printf(\"success\n\");\n";
-    sfile << "if (!result) printf(\"FAIL\n\");\n";
+    sfile << "if (result) printf(\"success\\n\");\n";
+    sfile << "if (!result) printf(\"FAIL\\n\");\n";
     sfile << "return !result;\n";
     sfile << "};\n";
 
@@ -3868,8 +3868,8 @@ void cdt_mesh_t::cdt_inputs_print(const char *filename)
     sfile << "int result = !bg_nested_polygon_triangulate(&faces, &num_faces,\n";
     sfile << "             NULL, NULL, opoly, " << outer_loop.poly.size()+1 << ", holes_array, holes_npts, holes_cnt,\n";
     sfile << "             steiner, " << m_interior_pnts.size() << ", pnts_2d, " << m_pnts_2d.size() << ", TRI_CONSTRAINED_DELAUNAY);\n";
-    sfile << "if (result) printf(\"success\n\");\n";
-    sfile << "if (!result) printf(\"FAIL\n\");\n";
+    sfile << "if (result) printf(\"success\\n\");\n";
+    sfile << "if (!result) printf(\"FAIL\\n\");\n";
     sfile << "return !result;\n";
     sfile << "};\n";
 
