@@ -1703,7 +1703,7 @@ cdt_mesh_t::interior_incorrect_normals()
 	t.v[1] = t.v[2];
 	t.v[2] = tmp;
 	tris.insert(t);
-	std::cerr << "Repairing flipped edge triangle\n";
+	//std::cerr << "Repairing flipped edge triangle\n";
     }
     if (flip_tris.size()) {
 	update_problem_edges();
@@ -2381,7 +2381,7 @@ cdt_mesh_t::grow_loop(cpolygon_t *polygon, double deg, bool stop_on_contained, t
 
 	if (polygon->visited_triangles.find(target) != polygon->visited_triangles.end() && stop_on_contained && !h_uc &&
 	    (polygon->interior_points.size() > 1 || polygon->poly.size() > 3)) {
-	    polygon->print();
+	    //polygon->print();
 	    //polygon->cdt_inputs_print("cdt_poly.c");
 	    //polygon->polygon_plot("cdt_poly.plot3");
 	    bool cdt_status = oriented_polycdt(polygon);
@@ -2707,7 +2707,7 @@ cdt_mesh_t::repair()
 	return false;
     }
 
-    //remove_dangling_tris();
+    remove_dangling_tris();
 
     // *Wrong* triangles: problem edge and/or flipped normal triangles.  Handle
     // those first, so the subsequent clean-up pass doesn't have to worry about
