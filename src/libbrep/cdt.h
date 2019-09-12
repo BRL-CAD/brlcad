@@ -125,6 +125,7 @@ struct ON_Brep_CDT_State {
     std::map<int, std::set<cdt_mesh::bedge_seg_t *>> e2polysegs;
     std::map<ON_3dPoint *, double> v_min_seg_len;
     std::map<int, double> l_median_len;
+    std::set<cdt_mesh::cpolyedge_t *> unsplit_singular_edges;
 
     /* Audit data */
     std::map<int, ON_3dPoint *> *bot_pnt_to_on_pnt;
@@ -168,7 +169,7 @@ bool initialize_edge_segs(struct ON_Brep_CDT_State *s_cdt);
 void refine_close_edges(struct ON_Brep_CDT_State *s_cdt);
 std::vector<int> characterize_edges(struct ON_Brep_CDT_State *s_cdt);
 void initialize_edge_containers(struct ON_Brep_CDT_State *s_cdt);
-bool initialize_loop_polygons(struct ON_Brep_CDT_State *s_cdt, std::set<cdt_mesh::cpolyedge_t *> *singular_edges);
+bool initialize_loop_polygons(struct ON_Brep_CDT_State *s_cdt);
 void tol_curved_edges_split(struct ON_Brep_CDT_State *s_cdt);
 void update_vert_edge_seg_lengths(struct ON_Brep_CDT_State *s_cdt);
 void update_loop_median_curved_edge_seg_lengths(struct ON_Brep_CDT_State *s_cdt);

@@ -922,6 +922,8 @@ split_singular_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *ce, i
 	rtree_bbox_2d_remove(s_cdt, ce);
     }
 
+    s_cdt->unsplit_singular_edges.erase(ce);
+
     // Using the 2d mid points, update the polygons associated with tseg1 and tseg2.
     cdt_mesh::cpolyedge_t *poly_ne1, *poly_ne2;
     int v[2];
@@ -1160,7 +1162,7 @@ initialize_edge_containers(struct ON_Brep_CDT_State *s_cdt)
 // loop polygons.  Note there is no splitting of edges at this point -
 // we are simply establishing the initial closed polygons.
 bool
-initialize_loop_polygons(struct ON_Brep_CDT_State *s_cdt, std::set<cdt_mesh::cpolyedge_t *> *singular_edges)
+initialize_loop_polygons(struct ON_Brep_CDT_State *s_cdt)
 {
     ON_Brep* brep = s_cdt->brep;
     for (int face_index = 0; face_index < brep->m_F.Count(); face_index++) {
@@ -1287,7 +1289,7 @@ initialize_loop_polygons(struct ON_Brep_CDT_State *s_cdt, std::set<cdt_mesh::cpo
 		    // A null eseg will indicate a singularity and a need for special case
 		    // splitting of the 2D edge only
 		    ne->eseg = NULL;
-		    singular_edges->insert(ne);
+		    s_cdt->unsplit_singular_edges.insert(ne);
 		    fmesh->has_singularities = true;
 		}
 	    }
@@ -1544,7 +1546,7 @@ refine_close_edges(struct ON_Brep_CDT_State *s_cdt)
 
     for (int face_index = 0; face_index < brep->m_F.Count(); face_index++) {
 	ON_BrepFace &face = s_cdt->brep->m_F[face_index];
-	std::cout << "Face " << face_index << " close edge check...\n";
+	std::cout << "Face " << face_index << " of " << brep->m_F.Count() << " close edge check...\n";
 
 	std::vector<cdt_mesh::cpolyedge_t *> ws = cdt_face_polyedges(s_cdt, face_index);
 
@@ -1567,7 +1569,7 @@ refine_close_edges(struct ON_Brep_CDT_State *s_cdt)
 
 	    bool split_check = false;
 
-#if 1
+#if 0
 	    if (split_cnt) {
 		std::cout << "Face " << face_index << " split_cnt " << split_cnt << "\n";
 	    }

@@ -489,8 +489,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	// Next, for each face and each loop in each face define the initial
 	// loop polygons.  Note there is no splitting of edges at this point -
 	// we are simply establishing the initial closed polygons.
-	std::set<cdt_mesh::cpolyedge_t *> singular_edges;
-	if (!initialize_loop_polygons(s_cdt, &singular_edges)) {
+	if (!initialize_loop_polygons(s_cdt)) {
 	    return -1;
 	}
 
@@ -519,7 +518,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	// If edge segments are too close together in 2D space compared to their
 	// length, it is difficult to mesh them successfully.  Refine edges that
 	// are close to other edges.
-	//refine_close_edges(s_cdt);
+	refine_close_edges(s_cdt);
 
 #if 0
 	// On to tolerance based splitting.  Process the non-linear edges first -
@@ -539,29 +538,27 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	// Split singularity trims in 2D to provide an easier input to the 2D CDT logic.  NOTE: these
 	// splits will produce degenerate (zero area, two identical vertex) triangles in 3D that have
 	// to be cleaned up.
-	if (singular_edges.size()) {
-	    std::set<cdt_mesh::cpolyedge_t *>::iterator s_it;
-	    for (s_it = singular_edges.begin(); s_it != singular_edges.end(); s_it++) {
-		std::queue<cdt_mesh::cpolyedge_t *> w1, w2;
-		std::queue<cdt_mesh::cpolyedge_t *> *wq, *nq, *tmpq;
-		int cnt = 0;
-		wq = &w1;
-		nq = &w2;
-		nq->push(*s_it);
-		while (cnt < 6) {
-		    cnt = 0;
-		    tmpq = wq;
-		    wq = nq;
-		    nq = tmpq;
-		    while (!wq->empty()) {
-			cdt_mesh::cpolyedge_t *ce = wq->front();
-			wq->pop();
-			std::set<cdt_mesh::cpolyedge_t *> nedges = split_singular_seg(s_cdt, ce, 0);
-			std::set<cdt_mesh::cpolyedge_t *>::iterator n_it;
-			for (n_it = nedges.begin(); n_it != nedges.end(); n_it++) {
-			    nq->push(*n_it);
-			    cnt++;
-			}
+	while (s_cdt->unsplit_singular_edges.size()) {
+	    std::queue<cdt_mesh::cpolyedge_t *> w1, w2;
+	    std::queue<cdt_mesh::cpolyedge_t *> *wq, *nq, *tmpq;
+	    int cnt = 0;
+	    wq = &w1;
+	    nq = &w2;
+	    nq->push(*(s_cdt->unsplit_singular_edges.begin()));
+	    s_cdt->unsplit_singular_edges.erase(s_cdt->unsplit_singular_edges.begin());
+	    while (cnt < 6) {
+		cnt = 0;
+		tmpq = wq;
+		wq = nq;
+		nq = tmpq;
+		while (!wq->empty()) {
+		    cdt_mesh::cpolyedge_t *ce = wq->front();
+		    wq->pop();
+		    std::set<cdt_mesh::cpolyedge_t *> nedges = split_singular_seg(s_cdt, ce, 0);
+		    std::set<cdt_mesh::cpolyedge_t *>::iterator n_it;
+		    for (n_it = nedges.begin(); n_it != nedges.end(); n_it++) {
+			nq->push(*n_it);
+			cnt++;
 		    }
 		}
 	    }
