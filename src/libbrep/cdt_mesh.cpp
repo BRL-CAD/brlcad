@@ -2713,7 +2713,7 @@ cdt_mesh_t::repair()
 
     if (has_singularities) {
 	std::vector<triangle_t> s_tris = this->singularity_triangles();
-	if (stris.size() > 1) {
+	if (s_tris.size() > 1) {
 	    seed_tris.insert(s_tris.begin(), s_tris.end());
 
 	    st_size = seed_tris.size();
