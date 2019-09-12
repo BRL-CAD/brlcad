@@ -691,10 +691,12 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int
     // Trims get their own normals
     ON_3dVector norm1 = trim_normal(trim1, trim1_mid_2d);
     fmesh1->normals.push_back(new ON_3dPoint(norm1));
+    CDT_Add3DNorm(s_cdt, fmesh1->normals[fmesh1->normals.size()-1], mid_3d, fmesh1->f_id, -1, trim1->m_trim_index, bseg->edge_ind, trim1_mid_2d.x, trim1_mid_2d.y);
     long f1_nind = fmesh1->normals.size() - 1;
     fmesh1->nmap[f1_ind3d] = f1_nind;
     ON_3dVector norm2 = trim_normal(trim2, trim2_mid_2d);
     fmesh2->normals.push_back(new ON_3dPoint(norm2));
+    CDT_Add3DNorm(s_cdt, fmesh2->normals[fmesh2->normals.size()-1], mid_3d, fmesh2->f_id, -1, trim2->m_trim_index, bseg->edge_ind, trim2_mid_2d.x, trim2_mid_2d.y);
     long f2_nind = fmesh2->normals.size() - 1;
     fmesh2->nmap[f2_ind3d] = f2_nind;
 
@@ -1216,6 +1218,7 @@ initialize_loop_polygons(struct ON_Brep_CDT_State *s_cdt, std::set<cdt_mesh::cpo
 		    }
 		    long f3ind = fmesh->add_point(op3d);
 		    long fnind = fmesh->add_normal(new ON_3dPoint(norm));
+		    CDT_Add3DNorm(s_cdt, fmesh->normals[fmesh->normals.size()-1], op3d, face.m_face_index, trim->Vertex(0)->m_vertex_index, trim->m_trim_index, -1, cp.x, cp.y);
 		    fmesh->p2d3d[find] = f3ind;
 		    fmesh->nmap[f3ind] = fnind;
 
@@ -1252,6 +1255,7 @@ initialize_loop_polygons(struct ON_Brep_CDT_State *s_cdt, std::set<cdt_mesh::cpo
 
 		    long f3ind = fmesh->add_point(cp3d);
 		    long fnind = fmesh->add_normal(new ON_3dPoint(norm));
+		    CDT_Add3DNorm(s_cdt, fmesh->normals[fmesh->normals.size()-1], cp3d, face.m_face_index, trim->Vertex(1)->m_vertex_index, trim->m_trim_index, -1, cp.x, cp.y);
 		    fmesh->p2d3d[find] = f3ind;
 		    fmesh->nmap[f3ind] = fnind;
 		}

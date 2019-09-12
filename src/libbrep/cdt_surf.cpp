@@ -656,6 +656,10 @@ filter_surface_pnts(struct cdt_surf_info *sinfo)
 
 	long f3ind = fmesh->add_point(new ON_3dPoint(p3d));
 	long fnind = fmesh->add_normal(new ON_3dPoint(norm));
+
+	CDT_Add3DPnt(sinfo->s_cdt, fmesh->pnts[fmesh->pnts.size()-1], sinfo->f->m_face_index, -1, -1, -1, n2dp.x, n2dp.y);
+	CDT_Add3DNorm(sinfo->s_cdt, fmesh->normals[fmesh->normals.size()-1], fmesh->pnts[fmesh->pnts.size()-1], sinfo->f->m_face_index, -1, -1, -1, n2dp.x, n2dp.y);
+
 	fmesh->p2d3d[f_ind2d] = f3ind;
 	fmesh->nmap[f3ind] = fnind;
     }
