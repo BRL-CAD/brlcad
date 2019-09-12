@@ -1956,7 +1956,7 @@ cdt_mesh_t::remove_dangling_tris()
 	    }
 
 	    if (bedge_cnt == 1) {
-		tris.erase(t);
+		tri_remove(t);
 	    }
 	}
     }
