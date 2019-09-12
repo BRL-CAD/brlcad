@@ -519,7 +519,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	// If edge segments are too close together in 2D space compared to their
 	// length, it is difficult to mesh them successfully.  Refine edges that
 	// are close to other edges.
-	refine_close_edges(s_cdt);
+	//refine_close_edges(s_cdt);
 
 
 #if 0
