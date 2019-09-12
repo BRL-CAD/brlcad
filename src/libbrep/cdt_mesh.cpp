@@ -1930,6 +1930,38 @@ cdt_mesh_t::tri_problem_edges(triangle_t &t)
     return false;
 }
 
+// TODO If a triangle has only one bad edge, we need to figure out if we can yank it...
+void
+cdt_mesh_t::remove_dangling_tris()
+{
+    if (boundary_edges_stale) {
+	boundary_edges_update();
+    }
+
+    if (!problem_edges.size()) return;
+
+    std::set<uedge_t>::iterator u_it;
+    std::set<triangle_t>::iterator t_it;
+    for (u_it = problem_edges.begin(); u_it != problem_edges.end(); u_it++) {
+	std::set<triangle_t> ptris = uedges2tris[(*u_it)];
+	for (t_it = uedges2tris[(*u_it)].begin(); t_it != uedges2tris[(*u_it)].end(); t_it++) {
+	    triangle_t t = *t_it;
+	    std::set<uedge_t> ue = t.uedges();
+	    std::set<uedge_t>::iterator ue_it;
+	    int bedge_cnt = 0;
+	    for (ue_it = ue.begin(); ue_it != ue.end(); ue_it++) {
+		if (problem_edges.find(*ue_it) != problem_edges.end()) {
+		    bedge_cnt++;
+		}
+	    }
+
+	    if (bedge_cnt == 1) {
+		tris.erase(t);
+	    }
+	}
+    }
+}
+
 std::vector<triangle_t>
 cdt_mesh_t::problem_edge_tris()
 {
@@ -1947,7 +1979,8 @@ cdt_mesh_t::problem_edge_tris()
     for (u_it = problem_edges.begin(); u_it != problem_edges.end(); u_it++) {
 	std::set<triangle_t> ptris = uedges2tris[(*u_it)];
 	for (t_it = uedges2tris[(*u_it)].begin(); t_it != uedges2tris[(*u_it)].end(); t_it++) {
-	    uresults.insert(*t_it);
+	    triangle_t t = *t_it;
+	    uresults.insert(t);
 	}
     }
 
@@ -2673,6 +2706,8 @@ cdt_mesh_t::repair()
 	tris_plot("self_intersecting_mesh.plot3");
 	return false;
     }
+
+    //remove_dangling_tris();
 
     // *Wrong* triangles: problem edge and/or flipped normal triangles.  Handle
     // those first, so the subsequent clean-up pass doesn't have to worry about

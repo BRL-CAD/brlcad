@@ -173,6 +173,15 @@ struct triangle_t {
 	v[0] = v[1] = v[2] = -1;
     }
 
+    std::set<uedge_t> uedges()
+    {
+	std::set<uedge_t> ue;
+	ue.insert(uedge_t(v[0], v[1]));
+	ue.insert(uedge_t(v[1], v[2]));
+	ue.insert(uedge_t(v[2], v[0]));
+	return ue;
+    }
+
     bool operator<(triangle_t other) const
     {
 	std::vector<long> vca, voa;
@@ -535,6 +544,7 @@ private:
 
     // Submesh building
     std::vector<triangle_t> singularity_triangles();
+    void remove_dangling_tris();
     std::vector<triangle_t> problem_edge_tris();
     bool tri_problem_edges(triangle_t &t);
     std::vector<triangle_t> interior_incorrect_normals();
