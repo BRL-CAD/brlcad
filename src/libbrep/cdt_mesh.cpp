@@ -2713,32 +2713,34 @@ cdt_mesh_t::repair()
 
     if (has_singularities) {
 	std::vector<triangle_t> s_tris = this->singularity_triangles();
-	seed_tris.insert(s_tris.begin(), s_tris.end());
-
-	st_size = seed_tris.size();
-	while (seed_tris.size()) {
-	    triangle_t seed = *seed_tris.begin();
-
-	    double deg = max_angle_delta(seed, s_tris);
-	    bool pseed = process_seed_tri(seed, false, deg);
-
-	    if (!pseed || seed_tris.size() >= st_size) {
-		std::cerr << f_id << ":  Error - failed to process refinement seed triangle!\n";
-		struct bu_vls fname = BU_VLS_INIT_ZERO;
-		bu_vls_sprintf(&fname, "%d-failed_seed.plot3", f_id);
-		tri_plot(seed, bu_vls_cstr(&fname));
-		bu_vls_sprintf(&fname, "%d-failed_seed_mesh.plot3", f_id);
-		tris_plot(bu_vls_cstr(&fname));
-		bu_vls_sprintf(&fname, "%d-failed_seed.cdtmesh", f_id);
-		serialize(bu_vls_cstr(&fname));
-		bu_vls_free(&fname);
-		return false;
-		break;
-	    }
+	if (stris.size() > 1) {
+	    seed_tris.insert(s_tris.begin(), s_tris.end());
 
 	    st_size = seed_tris.size();
+	    while (seed_tris.size()) {
+		triangle_t seed = *seed_tris.begin();
 
-	    //tris_plot("mesh_post_pretty.plot3");
+		double deg = max_angle_delta(seed, s_tris);
+		bool pseed = process_seed_tri(seed, false, deg);
+
+		if (!pseed || seed_tris.size() >= st_size) {
+		    std::cerr << f_id << ":  Error - failed to process refinement seed triangle!\n";
+		    struct bu_vls fname = BU_VLS_INIT_ZERO;
+		    bu_vls_sprintf(&fname, "%d-failed_seed.plot3", f_id);
+		    tri_plot(seed, bu_vls_cstr(&fname));
+		    bu_vls_sprintf(&fname, "%d-failed_seed_mesh.plot3", f_id);
+		    tris_plot(bu_vls_cstr(&fname));
+		    bu_vls_sprintf(&fname, "%d-failed_seed.cdtmesh", f_id);
+		    serialize(bu_vls_cstr(&fname));
+		    bu_vls_free(&fname);
+		    return false;
+		    break;
+		}
+
+		st_size = seed_tris.size();
+
+		//tris_plot("mesh_post_pretty.plot3");
+	    }
 	}
     }
 
