@@ -963,15 +963,7 @@ void cpolygon_t::cdt_inputs_print(const char *filename)
 
     sfile << "int *faces = NULL;\nint num_faces = 0;int *steiner = NULL;\n";
 
-   if (interior_points.size()) {
-      sfile << "steiner = (int *)bu_calloc(" << interior_points.size() << ", sizeof(int), \"interior points\");\n";
-      std::set<long>::iterator p_it;
-      int vind = 0;
-      for (p_it = interior_points.begin(); p_it != interior_points.end(); p_it++) {
-	  sfile << "steiner[" << vind << "] = " << *p_it << ";\n";
-	  vind++;
-      }
-   }
+    std::set<long> oloop_pnts;
 
     sfile << "int *opoly = (int *)bu_calloc(" << poly.size()+1 << ", sizeof(int), \"polygon points\");\n";
 
@@ -982,17 +974,44 @@ void cpolygon_t::cdt_inputs_print(const char *filename)
 
     sfile << "opoly[" << vcnt-1 << "] = " << pe->v[0] << ";\n";
     sfile << "opoly[" << vcnt << "] = " << pe->v[1] << ";\n";
-
+    oloop_pnts.insert(pe->v[0]);
+    oloop_pnts.insert(pe->v[1]);
 
     // Walk the loop
     while (first != next) {
 	vcnt++;
 	sfile << "opoly[" << vcnt << "] = " << next->v[1] << ";\n";
+	oloop_pnts.insert(next->v[1]);
 	next = next->next;
 	if (vcnt > poly.size()) {
 	    return;
 	}
     }
+
+    if (interior_points.size()) {
+	std::set<long> erase;
+	std::set<long>::iterator p_it;
+	for (p_it = interior_points.begin(); p_it != interior_points.end(); p_it++) {
+	    if (oloop_pnts.find(*p_it) != oloop_pnts.end()) {
+		erase.insert(*p_it);
+	    }
+	}
+	for (p_it = erase.begin(); p_it != erase.end(); p_it++) {
+	    interior_points.erase(*p_it);
+	}
+    }
+
+    size_t steiner_cnt = interior_points.size();
+    if (steiner_cnt) {
+	sfile << "steiner = (int *)bu_calloc(" << interior_points.size() << ", sizeof(int), \"interior points\");\n";
+	std::set<long>::iterator p_it;
+	int vind = 0;
+	for (p_it = interior_points.begin(); p_it != interior_points.end(); p_it++) {
+	    sfile << "steiner[" << vind << "] = " << *p_it << ";\n";
+	    vind++;
+	}
+    }
+
 
     sfile << "int result = !bg_nested_polygon_triangulate(&faces, &num_faces,\n";
     sfile << "             NULL, NULL, opoly, " << poly.size()+1 << ", NULL, NULL, 0,\n";
@@ -1018,15 +1037,7 @@ cpolygon_t::cdt()
     int *faces = NULL;
     int num_faces = 0;
     int *steiner = NULL;
-    if (interior_points.size()) {
-	steiner = (int *)bu_calloc(interior_points.size(), sizeof(int), "interior points");
-	std::set<long>::iterator p_it;
-	int vind = 0;
-	for (p_it = interior_points.begin(); p_it != interior_points.end(); p_it++) {
-	    steiner[vind] = (int)*p_it;
-	    vind++;
-	}
-    }
+    std::set<long> oloop_pnts;
 
     int *opoly = (int *)bu_calloc(poly.size()+1, sizeof(int), "polygon points");
 
@@ -1037,11 +1048,14 @@ cpolygon_t::cdt()
 
     opoly[vcnt-1] = pe->v[0];
     opoly[vcnt] = pe->v[1];
+    oloop_pnts.insert(pe->v[0]);
+    oloop_pnts.insert(pe->v[1]);
 
     // Walk the loop
     while (first != next) {
 	vcnt++;
 	opoly[vcnt] = next->v[1];
+	oloop_pnts.insert(next->v[1]);
 	next = next->next;
 	if (vcnt > poly.size()) {
 	    bu_free(bgp_2d, "free libbg 2d points array)");
@@ -1050,9 +1064,33 @@ cpolygon_t::cdt()
 	}
     }
 
+   if (interior_points.size()) {
+       std::set<long> erase;
+       std::set<long>::iterator p_it;
+       for (p_it = interior_points.begin(); p_it != interior_points.end(); p_it++) {
+	  if (oloop_pnts.find(*p_it) != oloop_pnts.end()) {
+	      erase.insert(*p_it);
+	  }
+       }
+       for (p_it = erase.begin(); p_it != erase.end(); p_it++) {
+	   interior_points.erase(*p_it);
+      }
+   }
+
+   size_t steiner_cnt = interior_points.size();
+   if (steiner_cnt) {
+       steiner = (int *)bu_calloc(steiner_cnt, sizeof(int), "interior points");
+       std::set<long>::iterator p_it;
+       int vind = 0;
+       for (p_it = interior_points.begin(); p_it != interior_points.end(); p_it++) {
+	   steiner[vind] = (int)*p_it;
+	   vind++;
+       }
+   }
+
     bool result = (bool)!bg_nested_polygon_triangulate(&faces, &num_faces,
 		  NULL, NULL, opoly, poly.size()+1, NULL, NULL, 0, steiner,
-		  interior_points.size(), bgp_2d, pnts_2d.size(),
+		  steiner_cnt, bgp_2d, pnts_2d.size(),
 		  TRI_CONSTRAINED_DELAUNAY);
 
     if (result) {
