@@ -49,6 +49,11 @@
 #include "bn/rand.h"
 #include "./cdt.h"
 
+// TODO - investigate patch breakdown - getting a few cases where the surface
+// is sparse near a relatively finely broken down edge.  Some decision criteria
+// are saying skip the breakdown when we should keep going - maybe need to be
+// more selective about which 3D bboxes we're checking?
+
 struct cdt_surf_info {
     std::set<ON_2dPoint *> on_surf_points;
     struct ON_Brep_CDT_State *s_cdt;
