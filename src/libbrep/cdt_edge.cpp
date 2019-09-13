@@ -235,6 +235,10 @@ rtree_bbox_2d_remove(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
     s_cdt->face_rtrees_2d[trim.Face()->m_face_index].Remove(p1, p2, (void *)pe);
 }
 
+// TODO - we need to bump the boxes out to also cover the area near the vertex
+// points themselves, or else make a vertex box based on the local edge distances.
+// Have an example in NIST2 where a point "slipped in" between two edge boxes, so we
+// clearly need to filter out that volume.
 void
 rtree_bbox_3d(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
 {
@@ -1546,7 +1550,7 @@ refine_close_edges(struct ON_Brep_CDT_State *s_cdt)
 
     for (int face_index = 0; face_index < brep->m_F.Count(); face_index++) {
 	ON_BrepFace &face = s_cdt->brep->m_F[face_index];
-	std::cout << "Face " << face_index << " of " << brep->m_F.Count() << " close edge check...\n";
+	std::cout << "Face " << face_index << " of " << brep->m_F.Count()-1 << " close edge check...\n";
 
 	std::vector<cdt_mesh::cpolyedge_t *> ws = cdt_face_polyedges(s_cdt, face_index);
 

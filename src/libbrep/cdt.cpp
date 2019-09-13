@@ -34,6 +34,11 @@
 #define BREP_PLANAR_TOL 0.05
 #define MAX_TRIANGULATION_ATTEMPTS 5
 
+// TODO - get rid of all BN_TOL_DIST-only tolerances - if the object is
+// very small, that distance is too big (e.g. for linearity testing).
+
+// TODO get a profiler on this to see where we're slowest...
+
 #if 0
 int debug_ecnt;
 
@@ -520,7 +525,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	// are close to other edges.
 	refine_close_edges(s_cdt);
 
-#if 0
+#if 1
 	// On to tolerance based splitting.  Process the non-linear edges first -
 	// we will need information from them to handle the linear edges
 	tol_curved_edges_split(s_cdt);
@@ -570,7 +575,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	// Calculate 2D neighbor distances for polyedges
 	//cpolyedge_nearest_dists(s_cdt);
 
-#if 1
+#if 0
 	for (int index = 0; index < brep->m_F.Count(); index++) {
 	    struct bu_vls fname = BU_VLS_INIT_ZERO;
 	    bu_vls_sprintf(&fname, "%d-rtree_outer_polygon_2d.plot3", index);
@@ -580,7 +585,6 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	    plot_rtree_2d2(s_cdt->face_rtrees_2d[index], bu_vls_cstr(&fname));
 	    bu_vls_sprintf(&fname, "%d-rtree_outer_polygon_3d.plot3", index);
 	    fmesh->polygon_plot_3d(&fmesh->outer_loop, bu_vls_cstr(&fname));
-	    // TODO - NIST2 259 3D rtree is clearly wrong
 	    bu_vls_sprintf(&fname, "%d-rtree_3d.plot3", index);
 	    plot_rtree_3d(s_cdt->face_rtrees_3d[index], bu_vls_cstr(&fname));
 	}
