@@ -49,11 +49,6 @@
 #include "bn/rand.h"
 #include "./cdt.h"
 
-// TODO - investigate patch breakdown - getting a few cases where the surface
-// is sparse near a relatively finely broken down edge.  Some decision criteria
-// are saying skip the breakdown when we should keep going - maybe need to be
-// more selective about which 3D bboxes we're checking?
-
 struct cdt_surf_info {
     std::set<ON_2dPoint *> on_surf_points;
     std::set<ON_2dPoint *> on_trim_points;
@@ -308,8 +303,8 @@ static bool involves_trims(double *min_edge, struct cdt_surf_info *sinfo, ON_3dP
     }
 
     if (nhits > 40) {
-	// Lot of edges, probably a high level box - just return max_edge
-	(*min_edge) = min_edge_dist;
+	// Lot of edges, probably a high level box we need to split - just return the overall min_edge
+	(*min_edge) = sinfo->min_edge;
 	return true;
     }
 
@@ -762,6 +757,8 @@ getSurfacePoint(
     fastf_t v = (v1 + v2) / 2.0;
     fastf_t udist = u2 - u1;
     fastf_t vdist = v2 - v1;
+
+    //sp.plot("spatch.p3");
 
     if ((udist < sinfo->min_dist + ON_ZERO_TOLERANCE)
 	    || (vdist < sinfo->min_dist + ON_ZERO_TOLERANCE)) {
