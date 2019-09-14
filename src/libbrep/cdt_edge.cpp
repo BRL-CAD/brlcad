@@ -292,6 +292,17 @@ rtree_bbox_3d(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
     p2[1] = bb.Max().y;
     p2[2] = bb.Max().z;
     s_cdt->face_rtrees_3d[trim.Face()->m_face_index].Insert(p1, p2, (void *)pe);
+
+    // Also put a box around the start point - otherwise there are occasionally
+    // 'holes' in a curved loop's bbox coverage where sampling can get very
+    // close to the loop right near the edge points without getting rejected.
+    p1[0] = p3d1->x - 0.5*bdist;
+    p1[1] = p3d1->y - 0.5*bdist;
+    p1[2] = p3d1->z - 0.5*bdist;
+    p2[0] = p3d1->x + 0.5*bdist;
+    p2[1] = p3d1->y + 0.5*bdist;
+    p2[2] = p3d1->z + 0.5*bdist;
+    s_cdt->face_rtrees_3d[trim.Face()->m_face_index].Insert(p1, p2, (void *)pe);
 }
 
 struct rtree_minsplit_context {
