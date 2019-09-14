@@ -714,6 +714,7 @@ filter_surface_pnts(struct cdt_surf_info *sinfo)
 	fmesh->nmap[f3ind] = fnind;
     }
 
+    // Points from trims are handled separately
     for (osp_it = sinfo->on_trim_points.begin(); osp_it != sinfo->on_trim_points.end(); osp_it++) {
 	ON_2dPoint n2dp(**osp_it);
 
@@ -724,25 +725,11 @@ filter_surface_pnts(struct cdt_surf_info *sinfo)
 	    p3d = sinfo->s->PointAt(n2dp.x, n2dp.y);
 	}
 
-	// If we're too close to an edge in 3D, the point is out.
-	double fMin[3];
-	fMin[0] = p3d.x - ON_ZERO_TOLERANCE;
-	fMin[1] = p3d.y - ON_ZERO_TOLERANCE;
-	fMin[2] = p3d.z - ON_ZERO_TOLERANCE;
-	double fMax[3];
-	fMax[0] = p3d.x + ON_ZERO_TOLERANCE;
-	fMax[1] = p3d.y + ON_ZERO_TOLERANCE;
-	fMax[2] = p3d.z + ON_ZERO_TOLERANCE;
-	size_t nhits = sinfo->s_cdt->face_rtrees_3d[sinfo->f->m_face_index].Search(fMin, fMax, NULL, NULL);
-	if (nhits) continue;
-
-
 	long f_ind2d = fmesh->add_point(n2dp);
 	fmesh->m_interior_pnts.insert(f_ind2d);
 	if (fmesh->m_bRev) {
 	    norm = -1 * norm;
 	}
-	//std::cout << "Face " << fmesh->f_id << " norm: " << norm.x << "," << norm.y << "," << norm.z << "\n";
 
 	long f3ind = fmesh->add_point(new ON_3dPoint(p3d));
 	long fnind = fmesh->add_normal(new ON_3dPoint(norm));
