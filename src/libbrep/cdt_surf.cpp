@@ -56,9 +56,10 @@
 
 struct cdt_surf_info {
     std::set<ON_2dPoint *> on_surf_points;
+    std::set<ON_2dPoint *> on_trim_points;
     struct ON_Brep_CDT_State *s_cdt;
     const ON_Surface *s;
-    bool is_planar; 
+    bool is_planar;
     const ON_BrepFace *f;
     RTree<void *, double, 2> *rtree_2d;
     RTree<void *, double, 2> rtree_trim_spnts_2d;
@@ -227,6 +228,7 @@ struct trim_seg_context {
     bool on_edge;
 };
 
+#if 0
 static bool TrimSegCallback(void *data, void *a_context) {
     cdt_mesh::cpolyedge_t *pe = (cdt_mesh::cpolyedge_t *)data;
     struct trim_seg_context *sc = (struct trim_seg_context *)a_context;
@@ -244,7 +246,27 @@ static bool TrimSegCallback(void *data, void *a_context) {
     }
     return (sc->on_edge) ? false : true;
 }
+#endif
 
+static bool SPntCallback(void *data, void *a_context) {
+    cdt_mesh::cpolyedge_t *pe = (cdt_mesh::cpolyedge_t *)data;
+    struct trim_seg_context *sc = (struct trim_seg_context *)a_context;
+    ON_2dPoint p2d1(pe->polygon->pnts_2d[pe->v[0]].first, pe->polygon->pnts_2d[pe->v[0]].second);
+    ON_2dPoint p2d2(pe->polygon->pnts_2d[pe->v[1]].first, pe->polygon->pnts_2d[pe->v[1]].second);
+    ON_Line l(p2d1, p2d2);
+    double t;
+    if (l.ClosestPointTo(*sc->p, &t)) {
+	// If the closest point on the line isn't in the line segment, skip
+	if (t < 0 || t > 1) return true;
+    }
+
+    double mdist = l.MinimumDistanceTo(pe->spnt);
+    double dist = l.MinimumDistanceTo(*sc->p);
+    if (dist < mdist) {
+	sc->on_edge = true;
+    }
+    return (sc->on_edge) ? false : true;
+}
 
 /* If we've got trimming curves involved, we need to be more careful about respecting
  * the min edge distance. */
@@ -517,9 +539,26 @@ sinfo_init(struct cdt_surf_info *sinfo, struct ON_Brep_CDT_State *s_cdt, int fac
 	    //std::cout << "Accept\n";
 	    sinfo->rtree_trim_spnts_2d.Insert(tMin, tMax, (void *)tseg);
 
-	    sinfo->on_surf_points.insert(new ON_2dPoint(px, py));
+	    sinfo->on_trim_points.insert(new ON_2dPoint(px, py));
 	}
+
+	// While we're at it, put boxes around the trim points too
+	const ON_BrepTrim &trim = brep->m_T[tseg->trim_ind];
+	ON_2dPoint pstart = trim.PointAt(tseg->trim_start);
+	dlen = 0.25*tseg->bb.Diagonal().Length();
+    	tMin[0] = pstart.x - dlen;
+	tMin[1] = pstart.y - dlen;
+	tMax[0] = pstart.x + dlen;
+	tMax[1] = pstart.y + dlen;
+	sinfo->rtree_trim_spnts_2d.Insert(tMin, tMax, (void *)tseg);
+
     }
+#if 1
+    struct bu_vls fname = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&fname, "%d-rtree_2d_trim_pnts.plot3", sinfo->f->m_face_index);
+    plot_rtree_2d2(sinfo->rtree_trim_spnts_2d, bu_vls_cstr(&fname));
+    bu_vls_free(&fname);
+#endif
 #endif
 
 
@@ -593,12 +632,18 @@ filter_surface_pnts(struct cdt_surf_info *sinfo)
 	fMin[1] = p->y - ON_ZERO_TOLERANCE;
 	fMax[0] = p->x + ON_ZERO_TOLERANCE;
 	fMax[1] = p->y + ON_ZERO_TOLERANCE;
-	struct trim_seg_context sc;
-	sc.p = p;
-	sc.on_edge = false;
-	sinfo->rtree_2d->Search(fMin, fMax, TrimSegCallback, (void *)&sc);
-	if (sc.on_edge) {
+
+	if (sinfo->rtree_trim_spnts_2d.Search(fMin, fMax, NULL, NULL)) {
 	    rm_pnts.insert((ON_2dPoint *)p);
+	} else {
+	    struct trim_seg_context sc;
+	    sc.p = p;
+	    sc.on_edge = false;
+
+	    sinfo->rtree_2d->Search(fMin, fMax, SPntCallback, (void *)&sc);
+	    if (sc.on_edge) {
+		rm_pnts.insert((ON_2dPoint *)p);
+	    }
 	}
     }
 
@@ -668,6 +713,47 @@ filter_surface_pnts(struct cdt_surf_info *sinfo)
 	fmesh->p2d3d[f_ind2d] = f3ind;
 	fmesh->nmap[f3ind] = fnind;
     }
+
+    for (osp_it = sinfo->on_trim_points.begin(); osp_it != sinfo->on_trim_points.end(); osp_it++) {
+	ON_2dPoint n2dp(**osp_it);
+
+	// Calculate the 3D point and normal values.
+	ON_3dPoint p3d;
+	ON_3dVector norm = ON_3dVector::UnsetVector;
+	if (!surface_EvNormal(sinfo->s, n2dp.x, n2dp.y, p3d, norm)) {
+	    p3d = sinfo->s->PointAt(n2dp.x, n2dp.y);
+	}
+
+	// If we're too close to an edge in 3D, the point is out.
+	double fMin[3];
+	fMin[0] = p3d.x - ON_ZERO_TOLERANCE;
+	fMin[1] = p3d.y - ON_ZERO_TOLERANCE;
+	fMin[2] = p3d.z - ON_ZERO_TOLERANCE;
+	double fMax[3];
+	fMax[0] = p3d.x + ON_ZERO_TOLERANCE;
+	fMax[1] = p3d.y + ON_ZERO_TOLERANCE;
+	fMax[2] = p3d.z + ON_ZERO_TOLERANCE;
+	size_t nhits = sinfo->s_cdt->face_rtrees_3d[sinfo->f->m_face_index].Search(fMin, fMax, NULL, NULL);
+	if (nhits) continue;
+
+
+	long f_ind2d = fmesh->add_point(n2dp);
+	fmesh->m_interior_pnts.insert(f_ind2d);
+	if (fmesh->m_bRev) {
+	    norm = -1 * norm;
+	}
+	//std::cout << "Face " << fmesh->f_id << " norm: " << norm.x << "," << norm.y << "," << norm.z << "\n";
+
+	long f3ind = fmesh->add_point(new ON_3dPoint(p3d));
+	long fnind = fmesh->add_normal(new ON_3dPoint(norm));
+
+	CDT_Add3DPnt(sinfo->s_cdt, fmesh->pnts[fmesh->pnts.size()-1], sinfo->f->m_face_index, -1, -1, -1, n2dp.x, n2dp.y);
+	CDT_Add3DNorm(sinfo->s_cdt, fmesh->normals[fmesh->normals.size()-1], fmesh->pnts[fmesh->pnts.size()-1], sinfo->f->m_face_index, -1, -1, -1, n2dp.x, n2dp.y);
+
+	fmesh->p2d3d[f_ind2d] = f3ind;
+	fmesh->nmap[f3ind] = fnind;
+    }
+
 }
 
 static bool
