@@ -1474,6 +1474,11 @@ cdt_mesh_t::add_normal(ON_3dPoint *on_3dn)
     return (long)(normals.size() - 1);
 }
 
+// TODO - perf reports a huge percentage of time is spend dealing with
+// tri_add - we should only need the uniqueness guarantee for triangles
+// associated with singularities, so it might be worth trying to make this
+// more nuanced and see if we can avoid the need for a general set container
+// for all triangles.
 bool
 cdt_mesh_t::tri_add(triangle_t &tri)
 {
