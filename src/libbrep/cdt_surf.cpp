@@ -302,7 +302,10 @@ static bool involves_trims(double *min_edge, struct cdt_surf_info *sinfo, ON_3dP
 	return false;
     }
 
-    if (nhits > 40) {
+    // The nhits threshold is basically indirectly determining how many triangles
+    // from the edge we're willing to have point to a single interior point. Too
+    // many and we'll end up with a lot of long, thin triangles.
+    if (nhits > 5) {
 	// Lot of edges, probably a high level box we need to split - just return the overall min_edge
 	(*min_edge) = sinfo->min_edge;
 	return true;
