@@ -1,7 +1,7 @@
 #                     C M A K E L I S T S . T X T
 # BRL-CAD
 #
-# Copyright (c) 2010-2019 United States Government as represented by
+# Copyright (c) 2010-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -1134,19 +1134,6 @@ if(NOT BRLCAD_BUNDLED_LIBS MATCHES "AUTO" AND NOT BRLCAD_BUNDLED_LIBS MATCHES "B
   set(BRLCAD_BUNDLED_LIBS "AUTO" CACHE STRING "Build bundled libraries." FORCE)
 endif(NOT BRLCAD_BUNDLED_LIBS MATCHES "AUTO" AND NOT BRLCAD_BUNDLED_LIBS MATCHES "BUNDLED" AND NOT BRLCAD_BUNDLED_LIBS MATCHES "SYSTEM")
 
-# Single flag for disabling GUI instead of 5.
-option(BRLCAD_ENABLE_MINIMAL "Skip GUI support and docs. Faster builds." OFF)
-mark_as_advanced(BRLCAD_ENABLE_MINIMAL)
-
-if(BRLCAD_ENABLE_MINIMAL)
-  set(BRLCAD_ENABLE_OPENGL "OFF")
-  set(BRLCAD_ENABLE_X11 "OFF")
-  set(BRLCAD_ENABLE_TK "OFF")
-  set(BRLCAD_ENABLE_QT "OFF")
-  set(BRLCAD_ENABLE_AQUA "OFF")
-  set(BRLCAD_EXTRADOCS "OFF")
-endif(BRLCAD_ENABLE_MINIMAL)
-
 # Enable Aqua widgets on Mac OSX.  This impacts Tcl/Tk building and OpenGL
 # building. Not currently working - needs work in at least Tk
 # CMake logic (probably more), and the display manager/framebuffer codes are known to depend
@@ -1159,15 +1146,9 @@ option(BRLCAD_INSTALL_EXAMPLE_GEOMETRY "Install the example BRL-CAD geometry fil
 
 # test for X11 on all platforms since we don't know when/where we'll find it, unless
 # we've indicated we *don't* want an X11 build
-if(NOT BRLCAD_ENABLE_AQUA AND NOT BRLCAD_ENABLE_MINIMAL)
+if(NOT BRLCAD_ENABLE_AQUA)
   include(FindX11)
-endif(NOT BRLCAD_ENABLE_AQUA AND NOT BRLCAD_ENABLE_MINIMAL)
-
-# make sure Xi is included in the list of X11 libs
-# (Xext is automatically added during FindX11)
-if(X11_Xi_FOUND)
-    set(X11_LIBRARIES ${X11_LIBRARIES} ${X11_Xi_LIB})
-endif(X11_Xi_FOUND)
+endif(NOT BRLCAD_ENABLE_AQUA)
 
 # Set whether X11 is enabled or disabled by default
 if(WIN32)
@@ -1178,12 +1159,11 @@ elseif(BRLCAD_ENABLE_AQUA)
   option(BRLCAD_ENABLE_X11 "Use X11." OFF)
 else(WIN32)
   # make everywhere else depend on whether we found a suitable X11
-  # X11_Xext_LIB AND X11_Xi_LIB AND
-  if(X11_FOUND AND NOT BRLCAD_ENABLE_MINIMAL)
+  if(X11_X11_LIB AND X11_Xext_LIB AND X11_Xi_LIB AND X11_Xlib_INCLUDE_PATH)
     option(BRLCAD_ENABLE_X11 "Use X11." ON)
-  else(X11_FOUND AND NOT BRLCAD_ENABLE_MINIMAL)
+  else(X11_X11_LIB AND X11_Xext_LIB AND X11_Xi_LIB AND X11_Xlib_INCLUDE_PATH)
     option(BRLCAD_ENABLE_X11 "Use X11." OFF)
-  endif(X11_FOUND AND NOT BRLCAD_ENABLE_MINIMAL)
+  endif(X11_X11_LIB AND X11_Xext_LIB AND X11_Xi_LIB AND X11_Xlib_INCLUDE_PATH)
 endif(WIN32)
 mark_as_advanced(BRLCAD_ENABLE_X11)
 
@@ -2289,28 +2269,24 @@ BRLCAD_CHECK_LIBRARY(BSD c daemon)
 # Check for CoreFoundation and Cocoa on Apple
 if(APPLE)
   include(CMakeFindFrameworks)
-  CMAKE_FIND_FRAMEWORKS(Foundation)
-  if(Foundation_FRAMEWORKS)
-    set(Foundation_LIBRARIES "-framework Foundation" CACHE FILEPATH "Foundation framework" FORCE)
-    CONFIG_H_APPEND(BRLCAD "#define HAVE_FOUNDATION_FOUNDATION_H 1\n")
-  endif(Foundation_FRAMEWORKS)
+  CMAKE_FIND_FRAMEWORKS(CoreFoundation)
+  if(CoreFoundation_FRAMEWORKS)
+    set(CoreFoundation_LIBRARIES "-framework CoreFoundation" CACHE FILEPATH "CoreFoundation framework" FORCE)
+  endif(CoreFoundation_FRAMEWORKS)
+  CMAKE_FIND_FRAMEWORKS(Cocoa)
+  if(Cocoa_FRAMEWORKS)
+    set(Cocoa_LIBRARIES "-framework Cocoa" CACHE FILEPATH "Cocoa framework" FORCE)
+  endif(Cocoa_FRAMEWORKS)
   mark_as_advanced(CMAKE_OSX_ARCHITECTURES CMAKE_OSX_DEPLOYMENT_TARGET CMAKE_OSX_SYSROOT)
-  mark_as_advanced(Foundation_LIBRARIES)
+  mark_as_advanced(CoreFoundation_LIBRARIES Cocoa_LIBRARIES)
 endif(APPLE)
 
 # Mark X11 as available if it is enabled and we find Xlib.h
 if(BRLCAD_ENABLE_X11)
-  message("X11 detected and enabled")
-  if(X11_Xlib_INCLUDE_PATH)
+  if(X11_Xlib_INCLUDE_PATH AND CONFIG_H_FILE)
     set(HAVE_X11_XLIB_H 1)
     CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_X11_XLIB_H 1\n")
-    message("Defining HAVE_X11_XLIB_H")
-  endif(X11_Xlib_INCLUDE_PATH)
-  if(X11_Xi_INCLUDE_PATH)
-    set(HAVE_X11_EXTENSIONS_XINPUT_H 1)
-    CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_X11_EXTENSIONS_XINPUT_H 1\n")
-    message("Defining HAVE_X11_EXTENSIONS_XINPUT_H")
-  endif(X11_Xi_INCLUDE_PATH)
+  endif(X11_Xlib_INCLUDE_PATH AND CONFIG_H_FILE)
 endif(BRLCAD_ENABLE_X11)
 
 # math library
