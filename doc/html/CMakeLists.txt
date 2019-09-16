@@ -336,10 +336,11 @@ ADD_DOC(relnotes_5_summary_HTML html/ReleaseNotes/Rel5.0/Summary)
 
 ADD_DOC(ReleaseNotes/Rel6.0/index.html html/ReleaseNotes/Rel6.0)
 
+add_subdirectory(manuals/mged/animmate)
+
 set(html_ignore_files
-  ReleaseNotes/Rel6.0
-  manuals/mged/animmate
-  manuals/shaders
+  ReleaseNotes/Rel6.0/index.html
+  manuals/shaders/camo.html
   manuals/small-eagleCAD.ico
   )
 CMAKEFILES(${html_ignore_files})

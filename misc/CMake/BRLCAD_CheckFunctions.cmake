@@ -274,19 +274,12 @@ macro(BRLCAD_CHECK_LIBRARY targetname lname func)
 endmacro(BRLCAD_CHECK_LIBRARY lname func)
 
 
-# Special purpose macros
-
-# Load local variation on CHECK_C_SOURCE_RUNS that will accept a
-# C file as well as the actual C code - some tests are easier to
-# define in separate files.  This feature has been submitted back
-# to the CMake project, but as of CMake 2.8.7 is not part of the
-# default CHECK_C_SOURCE_RUNS functionality.
-include(CheckCSourceRuns)
+# Special purpose functions
 
 ###
 # Undocumented.
 ###
-macro(BRLCAD_CHECK_BASENAME)
+function(BRLCAD_CHECK_BASENAME)
   set(CMAKE_C_FLAGS_TMP "${CMAKE_C_FLAGS}")
   set(CMAKE_C_FLAGS "")
   set(BASENAME_SRC "
@@ -302,12 +295,12 @@ return 0;
     CONFIG_H_APPEND(BRLCAD "#define HAVE_BASENAME 1\n")
   endif(HAVE_BASENAME)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_TMP}")
-endmacro(BRLCAD_CHECK_BASENAME var)
+endfunction(BRLCAD_CHECK_BASENAME var)
 
 ###
 # Undocumented.
 ###
-macro(BRLCAD_CHECK_DIRNAME)
+function(BRLCAD_CHECK_DIRNAME)
   set(CMAKE_C_FLAGS_TMP "${CMAKE_C_FLAGS}")
   set(CMAKE_C_FLAGS "")
   set(DIRNAME_SRC "
@@ -323,33 +316,84 @@ return 0;
     CONFIG_H_APPEND(BRLCAD "#define HAVE_DIRNAME 1\n")
   endif(HAVE_DIRNAME)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_TMP}")
-endmacro(BRLCAD_CHECK_DIRNAME var)
+endfunction(BRLCAD_CHECK_DIRNAME var)
 
 ###
 # Undocumented.
 # Based on AC_HEADER_SYS_WAIT
 ###
-macro(BRLCAD_HEADER_SYS_WAIT)
+function(BRLCAD_HEADER_SYS_WAIT)
   set(CMAKE_C_FLAGS_TMP "${CMAKE_C_FLAGS}")
   set(CMAKE_C_FLAGS "")
+  set(SYS_WAIT_SRC "
+#include <sys/types.h>
+#include <sys/wait.h>
+#ifndef WEXITSTATUS
+# define WEXITSTATUS(stat_val) ((unsigned int) (stat_val) >> 8)
+#endif
+#ifndef WIFEXITED
+# define WIFEXITED(stat_val) (((stat_val) & 255) == 0)
+#endif
+int main() {
+  int s;
+  wait(&s);
+  s = WIFEXITED(s) ? WEXITSTATUS(s) : 1;
+  return 0;
+}")
   if(NOT DEFINED WORKING_SYS_WAIT)
-    CHECK_C_SOURCE_RUNS("${CMAKE_SOURCE_DIR}/misc/CMake/test_srcs/sys_wait_test.c" WORKING_SYS_WAIT)
+    CHECK_C_SOURCE_RUNS("${SYS_WAIT_SRC}" WORKING_SYS_WAIT)
   endif(NOT DEFINED WORKING_SYS_WAIT)
   if(WORKING_SYS_WAIT)
     CONFIG_H_APPEND(BRLCAD "#define HAVE_SYS_WAIT_H 1\n")
   endif(WORKING_SYS_WAIT)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_TMP}")
-endmacro(BRLCAD_HEADER_SYS_WAIT)
+endfunction(BRLCAD_HEADER_SYS_WAIT)
 
 ###
 # Undocumented.
 # Based on AC_FUNC_ALLOCA
 ###
-macro(BRLCAD_ALLOCA)
+function(BRLCAD_ALLOCA)
   set(CMAKE_C_FLAGS_TMP "${CMAKE_C_FLAGS}")
   set(CMAKE_C_FLAGS "")
+  set(ALLOCA_HEADER_SRC "
+#include <alloca.h>
+int main() {
+   char *p = (char *) alloca (2 * sizeof (int));
+   if (p) return 0;
+   ;
+   return 0;
+}")
+  set(ALLOCA_TEST_SRC "
+#ifdef __GNUC__
+# define alloca __builtin_alloca
+#else
+# ifdef _MSC_VER
+#  include <malloc.h>
+#  define alloca _alloca
+# else
+#  ifdef HAVE_ALLOCA_H
+#   include <alloca.h>
+#  else
+#   ifdef _AIX
+ #pragma alloca
+#   else
+#    ifndef alloca /* predefined by HP cc +Olibcalls */
+char *alloca ();
+#    endif
+#   endif
+#  endif
+# endif
+#endif
+
+int main() {
+   char *p = (char *) alloca (1);
+   if (p) return 0;
+   ;
+   return 0;
+}")
   if(WORKING_ALLOC_H STREQUAL "")
-    CHECK_C_SOURCE_RUNS("${CMAKE_SOURCE_DIR}/misc/CMake/test_srcs/alloca_header_test.c" WORKING_ALLOCA_H)
+    CHECK_C_SOURCE_RUNS("${ALLOCA_HEADER_SRC}" WORKING_ALLOCA_H)
     set(WORKING_ALLOCA_H ${WORKING_ALLOCA_H} CACHE INTERNAL "alloca_h test")
   endif(WORKING_ALLOC_H STREQUAL "")
   if(WORKING_ALLOCA_H)
@@ -357,20 +401,19 @@ macro(BRLCAD_ALLOCA)
     set(FILE_RUN_DEFINITIONS "-DHAVE_ALLOCA_H")
   endif(WORKING_ALLOCA_H)
   if(NOT DEFINED WORKING_ALLOCA)
-    CHECK_C_SOURCE_RUNS("${CMAKE_SOURCE_DIR}/misc/CMake/test_srcs/alloca_test.c" WORKING_ALLOCA)
+    CHECK_C_SOURCE_RUNS("${ALLOCA_TEST_SRC}" WORKING_ALLOCA)
   endif(NOT DEFINED WORKING_ALLOCA)
   if(WORKING_ALLOCA)
     CONFIG_H_APPEND(BRLCAD "#define HAVE_ALLOCA 1\n")
   endif(WORKING_ALLOCA)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_TMP}")
-endmacro(BRLCAD_ALLOCA)
-
+endfunction(BRLCAD_ALLOCA)
 
 ###
 # See if the compiler supports the C99 %z print specifier for size_t.
 # Sets -DHAVE_STDINT_H=1 as global preprocessor flag if found.
 ###
-macro(BRLCAD_CHECK_C99_FORMAT_SPECIFIERS)
+function(BRLCAD_CHECK_C99_FORMAT_SPECIFIERS)
   set(CMAKE_C_FLAGS_TMP "${CMAKE_C_FLAGS}")
   set(CMAKE_C_FLAGS "")
   set(CMAKE_REQUIRED_DEFINITIONS_BAK ${CMAKE_REQUIRED_DEFINITIONS})
@@ -402,10 +445,10 @@ int main(int ac, char *av[])
   endif(HAVE_C99_FORMAT_SPECIFIERS)
   set(CMAKE_REQUIRED_DEFINITIONS ${CMAKE_REQUIRED_DEFINITIONS_BAK})
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_TMP}")
-endmacro(BRLCAD_CHECK_C99_FORMAT_SPECIFIERS)
+endfunction(BRLCAD_CHECK_C99_FORMAT_SPECIFIERS)
 
 
-macro(BRLCAD_CHECK_STATIC_ARRAYS)
+function(BRLCAD_CHECK_STATIC_ARRAYS)
   set(CHECK_STATIC_ARRAYS_SRC "
 #include <stdio.h>
 #include <string.h>
@@ -430,7 +473,7 @@ int main(int ac, char *av[])
   if(HAVE_STATIC_ARRAYS)
     CONFIG_H_APPEND(BRLCAD "#define HAVE_STATIC_ARRAYS 1\n")
   endif(HAVE_STATIC_ARRAYS)
-endmacro(BRLCAD_CHECK_STATIC_ARRAYS)
+endfunction(BRLCAD_CHECK_STATIC_ARRAYS)
 
 # Local Variables:
 # tab-width: 8

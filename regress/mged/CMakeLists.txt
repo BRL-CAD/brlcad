@@ -113,6 +113,13 @@ add_custom_target(regress-mged-cmds DEPENDS ${MGED_TEST_LIST})
 set_target_properties(regress-mged-cmds PROPERTIES FOLDER "BRL-CAD Regression Tests")
 set_target_properties(regress-mged-cmds PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
 
+CMAKEFILES(
+  mged.tcl
+  regression_resources.tcl
+  run_test
+  ${MGED_TESTS}
+  )
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

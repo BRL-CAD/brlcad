@@ -1,0 +1,103 @@
+set(d_bindings_ignore_files
+  BP.pm
+  CExtract.pm
+  D.g4.txt
+  D.pm
+  DS.pm
+  F.pm
+  G.pm
+  HACKING
+  HObj.pm
+  Parse-RecDescent-master-demo/README.demo_dot.txt
+  Parse-RecDescent-master-demo/README.demo_undumper.txt
+  Parse-RecDescent-master-demo/Run-demos.pl
+  Parse-RecDescent-master-demo/demo.c
+  Parse-RecDescent-master-demo/demo.pl
+  Parse-RecDescent-master-demo/demo_Cgrammar.pl
+  Parse-RecDescent-master-demo/demo_Cgrammar_v2.pl
+  Parse-RecDescent-master-demo/demo_LaTeXish.pl
+  Parse-RecDescent-master-demo/demo_LaTeXish_autoact.pl
+  Parse-RecDescent-master-demo/demo_NL2SQL.pl
+  Parse-RecDescent-master-demo/demo_OOautoparsetree.pl
+  Parse-RecDescent-master-demo/demo_OOparsetree.pl
+  Parse-RecDescent-master-demo/demo_PerlCSV.pl
+  Parse-RecDescent-master-demo/demo_another_Cgrammar.pl
+  Parse-RecDescent-master-demo/demo_arithmetic.pl
+  Parse-RecDescent-master-demo/demo_autorule.pl
+  Parse-RecDescent-master-demo/demo_autoscoresep.pl
+  Parse-RecDescent-master-demo/demo_autostub.pl
+  Parse-RecDescent-master-demo/demo_bad.pl
+  Parse-RecDescent-master-demo/demo_buildcalc.pl
+  Parse-RecDescent-master-demo/demo_calc.pl
+  Parse-RecDescent-master-demo/demo_codeblock.pl
+  Parse-RecDescent-master-demo/demo_cpp.pl
+  Parse-RecDescent-master-demo/demo_decomment.pl
+  Parse-RecDescent-master-demo/demo_decomment_nonlocal.pl
+  Parse-RecDescent-master-demo/demo_delete.pl
+  Parse-RecDescent-master-demo/demo_derived.pl
+  Parse-RecDescent-master-demo/demo_dot.pl
+  Parse-RecDescent-master-demo/demo_embedding.pl
+  Parse-RecDescent-master-demo/demo_errors.pl
+  Parse-RecDescent-master-demo/demo_eval.pl
+  Parse-RecDescent-master-demo/demo_implicit.pl
+  Parse-RecDescent-master-demo/demo_itemhash.pl
+  Parse-RecDescent-master-demo/demo_language.pl
+  Parse-RecDescent-master-demo/demo_leftassoc.pl
+  Parse-RecDescent-master-demo/demo_leftop.pl
+  Parse-RecDescent-master-demo/demo_lexer.pl
+  Parse-RecDescent-master-demo/demo_lisplike.pl
+  Parse-RecDescent-master-demo/demo_logic.pl
+  Parse-RecDescent-master-demo/demo_matchrule.pl
+  Parse-RecDescent-master-demo/demo_matchrule2.pl
+  Parse-RecDescent-master-demo/demo_mccoy.pl
+  Parse-RecDescent-master-demo/demo_metaRD.pm
+  Parse-RecDescent-master-demo/demo_methods.pl
+  Parse-RecDescent-master-demo/demo_operator.pl
+  Parse-RecDescent-master-demo/demo_opreps.pl
+  Parse-RecDescent-master-demo/demo_parsetree.pl
+  Parse-RecDescent-master-demo/demo_perlparsing.pl
+  Parse-RecDescent-master-demo/demo_piecewise.pl
+  Parse-RecDescent-master-demo/demo_precalc.pl
+  Parse-RecDescent-master-demo/demo_quicklist.pl
+  Parse-RecDescent-master-demo/demo_randomsentence.pl
+  Parse-RecDescent-master-demo/demo_recipe.pl
+  Parse-RecDescent-master-demo/demo_restructure_easy.pl
+  Parse-RecDescent-master-demo/demo_restructure_painful.pl
+  Parse-RecDescent-master-demo/demo_scoredsep.pl
+  Parse-RecDescent-master-demo/demo_selfmod.pl
+  Parse-RecDescent-master-demo/demo_separators.pl
+  Parse-RecDescent-master-demo/demo_simple.pl
+  Parse-RecDescent-master-demo/demo_simpleXML.pl
+  Parse-RecDescent-master-demo/demo_simplequery.pl
+  Parse-RecDescent-master-demo/demo_skipcomment.pl
+  Parse-RecDescent-master-demo/demo_street.pl
+  Parse-RecDescent-master-demo/demo_template.pl
+  Parse-RecDescent-master-demo/demo_textgen.pl
+  Parse-RecDescent-master-demo/demo_tokens.pl
+  Parse-RecDescent-master-demo/demo_undumper.pl
+  Parse-RecDescent-master-demo/demo_whoson.pl
+  ParsePPCHeader.pm
+  Phobos.pm
+  R.pm
+  TODO
+  c-grammar.txt
+  c-grammar2.txt
+  convert-grammar.pl
+  convert-h2d.pl
+  examples/demo_Cgrammar_v2.pl
+  examples/recdecent-example.pl
+  gen-cgrammar-modules.sh
+  makefile
+  test_bu.d
+  test_hdr.h
+  )
+CMAKEFILES(${d_bindings_ignore_files})
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8
+
+

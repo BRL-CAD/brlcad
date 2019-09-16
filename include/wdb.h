@@ -506,6 +506,14 @@ WDB_EXPORT int mk_sketch(
     const struct rt_sketch_internal *skt );
 
 /**
+ * Make a annotation
+ */
+WDB_EXPORT int mk_annot(
+    struct rt_wdb *fp,
+    const char *name,
+    const struct rt_annot_internal *ann );
+
+/**
  * Make an extrusion solid
  */
 WDB_EXPORT int mk_extrusion(

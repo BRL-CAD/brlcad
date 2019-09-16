@@ -2356,7 +2356,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
  * Apply modeling transformations as well.
  */
 int
-rt_extrude_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip, struct resource *resp)
+rt_extrude_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_extrude_internal *extrude_ip;
     struct rt_db_internal tmp_ip;
@@ -2393,7 +2393,11 @@ rt_extrude_import4(struct rt_db_internal *ip, const struct bu_external *ep, cons
 	       sketch_name, rp->extr.ex_name);
 	extrude_ip->skt = (struct rt_sketch_internal *)NULL;
     } else {
-	if (rt_db_get_internal(&tmp_ip, dp, dbip, bn_mat_identity, resp) != ID_SKETCH) {
+	/* initialize before our first use */
+	if (rt_uniresource.re_magic != RESOURCE_MAGIC)
+	    rt_init_resource(&rt_uniresource, 0, NULL);
+
+	if (rt_db_get_internal(&tmp_ip, dp, dbip, bn_mat_identity, &rt_uniresource) != ID_SKETCH) {
 	    bu_log("rt_extrude_import4: ERROR: Cannot import sketch (%.16s) for extrusion (%.16s)\n",
 		   sketch_name, rp->extr.ex_name);
 	    bu_free(ip->idb_ptr, "extrusion");
@@ -2524,7 +2528,7 @@ rt_extrude_export5(struct bu_external *ep, const struct rt_db_internal *ip, doub
  * Apply modeling transformations as well.
  */
 int
-rt_extrude_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp)
+rt_extrude_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip)
 {
     struct rt_extrude_internal *extrude_ip;
     struct rt_db_internal tmp_ip;
@@ -2555,7 +2559,11 @@ rt_extrude_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
 	       sketch_name);
 	extrude_ip->skt = (struct rt_sketch_internal *)NULL;
     } else {
-	if (rt_db_get_internal(&tmp_ip, dp, dbip, bn_mat_identity, resp) != ID_SKETCH) {
+	/* initialize before our first use */
+	if (rt_uniresource.re_magic != RESOURCE_MAGIC)
+	    rt_init_resource(&rt_uniresource, 0, NULL);
+
+	if (rt_db_get_internal(&tmp_ip, dp, dbip, bn_mat_identity, &rt_uniresource) != ID_SKETCH) {
 	    bu_log("rt_extrude_import4: ERROR: Cannot import sketch (%s) for extrusion\n",
 		   sketch_name);
 	    bu_free(ip->idb_ptr, "extrusion");

@@ -38,6 +38,8 @@
 #include "bn/plane.h"
 #include "nmg.h"
 
+/* TODO - do we need this? */
+#if 0
 /**
  * Determine if T lies within angle AB, such that A < T < B.
  * The angle B is expected to be "more ccw" than A.
@@ -73,6 +75,7 @@ nmg_is_angle_in_wedge(double a, double b, double t)
     if (t > b) return 0;
     return 1;
 }
+#endif
 
 
 /**

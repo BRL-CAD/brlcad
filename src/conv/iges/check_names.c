@@ -328,8 +328,8 @@ Get_csg_name(int entityno)
 {
     int sol_num;
     int i, j, k;
-    int num;
     int skip;
+    int num = 0;
     int no_of_assoc = 0;
     int no_of_props = 0;
     int name_de = 0;
@@ -474,7 +474,7 @@ void
 Get_subfig_name(size_t entityno)
 {
     int i;
-    int entity_type;
+    int entity_type = 0;
     char *name;
 
     if (entityno >= totentities)

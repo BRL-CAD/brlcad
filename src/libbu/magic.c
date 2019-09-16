@@ -96,6 +96,8 @@ bu_identify_magic(register uint32_t magic)
 	    /*
 	     * Primitives
 	     */
+	case RT_ANNOT_INTERNAL_MAGIC:
+	    return "rt_annot_internal";
 	case RT_ARBN_INTERNAL_MAGIC:
 	    return "rt_arbn_internal";
 	case RT_ARB_INTERNAL_MAGIC:
@@ -276,6 +278,8 @@ bu_identify_magic(register uint32_t magic)
 	     */
 	case ANIMATE_MAGIC:
 	    return "librt animate";
+	case ANN_TSEG_MAGIC:
+	    return "ann_tseg";
 	case CURVE_BEZIER_MAGIC:
 	    return "curve_bezier";
 	case CURVE_CARC_MAGIC:
@@ -283,7 +287,7 @@ bu_identify_magic(register uint32_t magic)
 	case CURVE_LSEG_MAGIC:
 	    return "curve_lseg";
 	case CURVE_NURB_MAGIC:
-	    return "curve_nurb";
+	    return "curve_nurb"; 
 	case DB5_RAW_INTERNAL_MAGIC:
 	    return "db5 raw internal";
 	case DBI_MAGIC:

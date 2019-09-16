@@ -37,9 +37,12 @@
 HIDDEN void
 _bn_unit_sph_sample(point_t pnt)
 {
-    fastf_t px, py, pz, S;
-    fastf_t V1 = 0;
-    fastf_t V2 = 0;
+    fastf_t px = 0.0;
+    fastf_t py = 0.0;
+    fastf_t pz = 0.0;
+    fastf_t S = 0.0;
+    fastf_t V1 = 0.0;
+    fastf_t V2 = 0.0;
     int have_rand_1 = 0;
     int have_rand_2 = 0;
 

@@ -381,23 +381,6 @@ rt_hlf_free(struct soltab *stp)
 
 
 /**
- * Classify this halfspace against a bounding RPP.  Since this is an
- * infinite solid, it is very important that this function properly.
- *
- */
-int
-rt_hlf_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, const struct bn_tol *tol)
-{
-    if (stp) RT_CK_SOLTAB(stp);
-    if (tol) BN_CK_TOL(tol);
-    if (!min) return 0;
-    if (!max) return 0;
-
-    return 0;
-}
-
-
-/**
  * The representation of a halfspace is an OUTWARD pointing normal
  * vector, and the distance of the plane from the origin.
  *

@@ -624,7 +624,7 @@ out:
     if (lvl == 0) bu_log("\n");
 }
 
-
+#ifdef USE_OPENCL
 /**
  * Produce representations of this bit bool tree
  */
@@ -683,7 +683,7 @@ rt_pr_bit_tree(const struct bit_tree *btp, int idx, int lvl)
     }
     if (lvl == 0) bu_log("\n");
 }
-
+#endif
 
 void
 rt_pr_fallback_angle(struct bu_vls *str, const char *prefix, const double *angles)

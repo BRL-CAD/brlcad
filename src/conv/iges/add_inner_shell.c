@@ -25,8 +25,8 @@ struct shell *
 Add_inner_shell(struct nmgregion *r, int entityno)
 {
 
-    int sol_num;		/* IGES solid type number */
-    int no_of_faces;		/* Number of faces in shell */
+    int sol_num = 0;		/* IGES solid type number */
+    int no_of_faces = 0;	/* Number of faces in shell */
     int face_count = 0;		/* Actual number of faces made */
     int *face_de;		/* Directory sequence numbers for faces */
     int *face_orient;		/* Orientation of faces */

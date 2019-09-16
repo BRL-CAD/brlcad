@@ -58,7 +58,7 @@ FB_EXPORT extern fb remote_interface; /* not in list[] */
 
 /* Always included */
 FB_EXPORT extern fb debug_interface, disk_interface, stk_interface;
-FB_EXPORT extern fb memory_interface, null_interface;
+FB_EXPORT extern fb memory_interface, fb_null_interface;
 
 
 /* Shared memory (shmget et. al.) key common to multiple framebuffers */

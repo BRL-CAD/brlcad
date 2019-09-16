@@ -34,7 +34,7 @@
 
 extern int Debug;
 extern int Levels;
-extern int width;
+extern long int width;
 extern struct bn_unif *RandomFlag;
 
 /*	tone_floyd	floyd-steinberg dispersed error method.

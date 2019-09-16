@@ -308,7 +308,7 @@ predictor_frame(void)
  * Called from set.c when the predictor variables are modified.
  */
 void
-predictor_hook(void)
+predictor_hook(const struct bu_structparse *UNUSED(sp), const char *UNUSED(c1), void *UNUSED(v1), const char *UNUSED(c2), void *UNUSED(v2))
 {
     if (mged_variables->mv_predictor > 0)
 	predictor_init();

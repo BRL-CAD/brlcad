@@ -1,9 +1,3 @@
-if(MSVC)
-  add_definitions(
-    -DON_DLL_IMPORTS
-    )
-endif(MSVC)
-
 add_definitions(
   -D_CONSOLE
   -DBRLCAD_DLL
@@ -172,7 +166,6 @@ set(conv_ignore_files
   dbclean.sh
   dxf/dxf.h
   intaval-g.py
-  off
   patch/patch-g.h
   patch/pull_comp.sh
   patch/pull_solidsub.sh

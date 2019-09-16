@@ -45,7 +45,7 @@ typedef struct ug_tol {
 extern ug_tol ugtol;
 
 extern int debug;
-#define dprintf if (debug) printf
+#define ugdprintf if (debug) printf
 
 #endif /* EXTERNAL_UNIGRAPHICS_CONV_H */
 

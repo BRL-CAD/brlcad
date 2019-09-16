@@ -108,6 +108,68 @@ extern int rt_seg_planeclip(struct seg *out_hd, struct seg *in_hd,
     ((unsigned char *)((_eip)->mp->apbuf))[ ((_yy)+BIT_YWIDEN)*((_eip)->xdim + BIT_XWIDEN*2)+(_xx)+BIT_XWIDEN ]
 
 
+#ifdef USE_OPENCL
+/* largest data members first */
+struct clt_ebm_specific {
+    cl_double ebm_xnorm[3];	/* local +X norm in model coords */
+    cl_double ebm_ynorm[3];
+    cl_double ebm_znorm[3];
+    cl_double ebm_cellsize[3];	/* ideal coords: size of each cell */
+    cl_double ebm_origin[3];	/* local coords of grid origin (0, 0, 0) for now */
+    cl_double ebm_large[3];	/* local coords of XYZ max */
+    cl_double ebm_mat[16];	/* model to ideal space */
+
+    cl_double tallness;		/**< @brief Z dimension (mm) */
+    cl_uint xdim;		/**< @brief X dimension (w cells) */
+    cl_uint ydim;		/**< @brief Y dimension (n cells) */
+    cl_uchar apbuf[];
+};
+
+size_t
+clt_ebm_pack(struct bu_pool *pool, struct soltab *stp)
+{
+    struct rt_ebm_specific *ebm =
+        (struct rt_ebm_specific *)stp->st_specific;
+    struct clt_ebm_specific *args;
+
+    struct rt_ebm_internal *eip = &ebm->ebm_i;
+    unsigned int x, y, id;
+
+    const size_t npixels =
+	(eip->xdim+BIT_XWIDEN*2)*(eip->ydim+BIT_YWIDEN*2);
+    const size_t nbytes = ((npixels/8+1)/8)*8+8;
+    size_t size = sizeof(*args);
+
+    size += nbytes;
+    args = (struct clt_ebm_specific*)bu_pool_alloc(pool, 1, size);
+
+    VMOVE(args->ebm_xnorm, ebm->ebm_xnorm);
+    VMOVE(args->ebm_ynorm, ebm->ebm_ynorm);
+    VMOVE(args->ebm_znorm, ebm->ebm_znorm);
+    VMOVE(args->ebm_cellsize, ebm->ebm_cellsize);
+    VMOVE(args->ebm_origin, ebm->ebm_origin);
+    VMOVE(args->ebm_large, ebm->ebm_large);
+    MAT_COPY(args->ebm_mat, ebm->ebm_mat);
+
+    args->tallness = eip->tallness;
+    args->xdim = eip->xdim;
+    args->ydim = eip->ydim;
+    memset(args->apbuf, 0, nbytes);
+
+    for (y = 0; y < eip->ydim; y++) {
+	for (x = 0; x < eip->xdim; x++) {
+	    if (BIT(eip, x, y) != 0) {
+		id = (y+BIT_YWIDEN)*(eip->xdim + BIT_XWIDEN*2)+x+BIT_XWIDEN; 
+		args->apbuf[(id >> 3)] |= (1 << (id & 7));
+	    }
+	}
+    }
+    return size;
+}
+
+#endif /* USE_OPENCL */
+
+
 /**
  * Computes centroid of an extruded bitmap
  */

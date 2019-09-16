@@ -899,9 +899,24 @@ rhino_read(gcv_context *context, const gcv_opts *gcv_options,
     return 1;
 }
 
+HIDDEN int
+rhino_can_read(const char *source_path)
+{
+    int fv;
+    ON_String mSC;
+    ON_3dmProperties mprop;
+    if (!source_path) return 0;
+    FILE *fp = ON::OpenFile(source_path,"rb");
+    if (!fp) return 0;
+    ON_BinaryFile file(ON::read3dm,fp);
+    if (!file.Read3dmStartSection(&fv, mSC)) return 0;
+    if (!file.Read3dmProperties(mprop)) return 0;
+    return 1;
+}
+
 
 struct gcv_filter gcv_conv_rhino_read = {
-    "Rhino Reader", GCV_FILTER_READ, BU_MIME_MODEL_VND_RHINO,
+    "Rhino Reader", GCV_FILTER_READ, BU_MIME_MODEL_VND_RHINO, rhino_can_read,
     NULL, NULL, rhino_read
 };
 

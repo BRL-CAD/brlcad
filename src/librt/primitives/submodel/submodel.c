@@ -607,18 +607,6 @@ rt_submodel_free(struct soltab *stp)
 }
 
 
-int
-rt_submodel_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, const struct bn_tol *tol)
-{
-    if (stp) RT_CK_SOLTAB(stp);
-    if (tol) BN_CK_TOL(tol);
-    if (!min) return 0;
-    if (!max) return 0;
-
-    return 0;
-}
-
-
 struct goodies {
     struct db_i *dbip;
     struct bu_list *vheadp;

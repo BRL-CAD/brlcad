@@ -40,9 +40,6 @@
 #include "bn/plot3.h"
 
 
-#ifdef RT_MULTISPECTRAL
-#  include "spectrum.h"
-#endif
 
 
 /**
@@ -74,13 +71,8 @@ pr_shadework(const char *str, const struct shadework *swp)
     bu_log(" sw_reflect %f\n", swp->sw_reflect);
     bu_log(" sw_refract_index %f\n", swp->sw_refrac_index);
     bu_log(" sw_extinction %f\n", swp->sw_extinction);
-#ifdef RT_MULTISPECTRAL
-    bn_pr_tabdata("msw_color", swp->msw_color);
-    bn_pr_tabdata("msw_basecolor", swp->msw_basecolor);
-#else
     VPRINT(" sw_color", swp->sw_color);
     VPRINT(" sw_basecolor", swp->sw_basecolor);
-#endif
     bu_log(" sw_uv  %f %f\n", swp->sw_uv.uv_u, swp->sw_uv.uv_v);
     bu_log(" sw_dudv  %f %f\n", swp->sw_uv.uv_du, swp->sw_uv.uv_dv);
     bu_log(" sw_xmitonly %d\n", swp->sw_xmitonly);
@@ -88,18 +80,10 @@ pr_shadework(const char *str, const struct shadework *swp)
     if (swp->sw_inputs & MFI_LIGHT) for (i=0; i < SW_NLIGHTS; i++) {
 	    if (swp->sw_visible[i] == (struct light_specific *)NULL) continue;
 	    RT_CK_LIGHT(swp->sw_visible[i]);
-#ifdef RT_MULTISPECTRAL
-	    bu_log("   light %d visible, dir=(%g, %g, %g)\n",
-		   i,
-		   V3ARGS(&swp->sw_tolight[i*3]));
-	    BN_CK_TABDATA(swp->msw_intensity[i]);
-	    bn_pr_tabdata("light intensity", swp->msw_intensity[i]);
-#else
 	    bu_log("   light %d visible, intensity=%g, dir=(%g, %g, %g)\n",
 		   i,
 		   swp->sw_intensity[i],
 		   V3ARGS(&swp->sw_tolight[i*3]));
-#endif
 	}
 }
 
@@ -216,14 +200,7 @@ hit pt: %g %g %g end pt: %g %g %g\n",
 		   OBJ[pp->pt_inseg->seg_stp->st_id].ft_name,
 		   pp->pt_inhit->hit_surfno,
 		   ap->a_x, ap->a_y);
-#ifdef RT_MULTISPECTRAL
-	    {
-		static const float green[3] = {0.0f, 9.0f, 0.0f};
-		rt_spect_reflectance_rgb(swp->msw_color, green);
-	    }
-#else
 	    VSET(swp->sw_color, 0, 9, 0);	/* Hyper-Green */
-#endif
 
 	    return;
 	}
@@ -291,21 +268,11 @@ viewshade(struct application *ap, const struct partition *pp, struct shadework *
 
     swp->sw_hit = *(pp->pt_inhit);		/* struct copy */
 
-#ifdef RT_MULTISPECTRAL
-    /* XXX where does region get reflectance?  Default temperature? */
-    BN_CK_TABDATA(swp->msw_color);
-    BN_CK_TABDATA(swp->msw_basecolor);
-    if (rp->reg_mater.ma_color_valid) {
-	rt_spect_reflectance_rgb(swp->msw_color, rp->reg_mater.ma_color);
-    }
-    bn_tabdata_copy(swp->msw_basecolor, swp->msw_color);
-#else
     /* Default color is white (uncolored) */
     if (rp->reg_mater.ma_color_valid) {
 	VMOVE(swp->sw_color, rp->reg_mater.ma_color);
     }
     VMOVE(swp->sw_basecolor, swp->sw_color);
-#endif
 
     if (swp->sw_hit.hit_dist < 0.0)
 	swp->sw_hit.hit_dist = 0.0;	/* Eye inside solid */

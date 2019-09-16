@@ -144,6 +144,7 @@ set mged_help_data(delay)	{{sec usec}	{delay for the specified amount of time}}
 set mged_help_data(dm)		{{set var [val]}	{do display-manager specific command}}
 set mged_help_data(dmtype)	{{{set dmtype}}	{Without argument, display current display manager type.  With 'set dmtype' changes display manager instances to new type.}}
 set mged_help_data(draw)	$helplib_data(dgo_draw)
+set mged_help_data(dsp)         {{obj [command]} {work with DSP primitives}}
 set mged_help_data(dump)	$helplib_data(wdb_dump)
 set mged_help_data(dup)		$helplib_data(wdb_dup)
 set mged_help_data(E)		$helplib_data(dgo_E)

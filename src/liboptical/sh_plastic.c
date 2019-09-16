@@ -38,9 +38,6 @@
 #include "optical/plastic.h"
 #include "photonmap.h"
 
-#ifdef RT_MULTISPECTRAL
-#  include "spectrum.h"
-#endif
 
 
 /* Fast approximation to specular term */
@@ -268,12 +265,10 @@ HIDDEN int
 phong_render(register struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 {
     struct light_specific *lp;
-#ifndef RT_MULTISPECTRAL
     fastf_t *intensity;
     fastf_t dist;
     point_t pt;
     vect_t color;
-#endif
     fastf_t *to_light;
     fastf_t cosine;
     fastf_t refl;
@@ -281,11 +276,7 @@ phong_render(register struct application *ap, const struct partition *pp, struct
     vect_t reflected;
     vect_t work;
 
-#ifdef RT_MULTISPECTRAL
-    struct bn_tabdata *ms_matcolor = BN_TABDATA_NULL;
-#else
     point_t matcolor;		/* Material color */
-#endif
     struct phong_specific *ps =
 	(struct phong_specific *)dp;
 
@@ -315,22 +306,14 @@ phong_render(register struct application *ap, const struct partition *pp, struct
     }
 
 
-#ifdef RT_MULTISPECTRAL
-    ms_matcolor = bn_tabdata_dup(swp->msw_color);
-#else
     VMOVE(matcolor, swp->sw_color);
-#endif
 
     /* Photon Mapping */
-#ifndef RT_MULTISPECTRAL
     color[0]= swp->sw_color[0];
     color[1]= swp->sw_color[1];
     color[2]= swp->sw_color[2];
-#endif
 
-#ifndef RT_MULTISPECTRAL
     if (!PM_Visualize)
-#endif
     {
 	/* Diffuse reflectance from "Ambient" light source (at eye) */
 	if ((cosine = -VDOT(swp->sw_hit.hit_normal, ap->a_ray.r_dir)) > 0.0) {
@@ -346,35 +329,13 @@ phong_render(register struct application *ap, const struct partition *pp, struct
 	    }
 	    cosine *= AmbientIntensity;
 
-#ifdef RT_MULTISPECTRAL
-	    bn_tabdata_scale(swp->msw_color, ms_matcolor, cosine);
-#else
 	    VSCALE(swp->sw_color, matcolor, cosine);
-#endif
 	} else {
-#ifdef RT_MULTISPECTRAL
-	    bn_tabdata_constval(swp->msw_color, 0.0);
-#else
 	    VSETALL(swp->sw_color, 0);
-#endif
 	}
 
 	/* Emission.  0..1 is normal range, -1..0 sucks light out, like OpenGL */
-#ifdef RT_MULTISPECTRAL
-	{
-	    float emission[3];
-	    struct bn_tabdata *ms_emission = BN_TABDATA_NULL;
-	    VMOVE(emission, ps->emission);
-
-	    /* XXX Really should get a curve at prep, not expand RGB samples */
-	    BN_GET_TABDATA(ms_emission, spectrum);
-	    rt_spect_reflectance_rgb(ms_emission, emission);
-	    bn_tabdata_add(swp->msw_color, swp->msw_color, ms_emission);
-	    bn_tabdata_free(ms_emission);
-	}
-#else
 	VADD2(swp->sw_color, swp->sw_color, ps->emission);
-#endif
 
 	/* With the advent of procedural shaders, the caller can no longer
 	 * provide us reliable light visibility information.  The hit point
@@ -395,9 +356,7 @@ phong_render(register struct application *ap, const struct partition *pp, struct
 	    }
 
 	    /* Light is not shadowed -- add this contribution */
-#ifndef RT_MULTISPECTRAL
 	    intensity = swp->sw_intensity+3*i;
-#endif
 	    to_light = swp->sw_tolight+3*i;
 
 	    /* Diffuse reflectance from this light source. */
@@ -408,7 +367,6 @@ phong_render(register struct application *ap, const struct partition *pp, struct
 		    cosine = 1;
 		}
 		/* Get Obj Hit Point For Attenuation */
-#ifndef RT_MULTISPECTRAL
 		if (PM_Activated) {
 		    VJOIN1(pt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist, ap->a_ray.r_dir);
 		    dist= sqrt((pt[0]-lp->lt_pos[0])*(pt[0]-lp->lt_pos[0]) + (pt[1]-lp->lt_pos[1])*(pt[1]-lp->lt_pos[1]) + (pt[2]-lp->lt_pos[2])*(pt[2]-lp->lt_pos[2]))/1000.0;
@@ -416,21 +374,12 @@ phong_render(register struct application *ap, const struct partition *pp, struct
 		    refl= dist * ps->wgt_diffuse * cosine * swp->sw_lightfract[i] * lp->lt_intensity;
 		    /* bu_log("pt: [%.3f][%.3f, %.3f, %.3f]\n", dist, pt[0], pt[1], pt[2]);*/
 		} else
-#endif
 		{
 		    refl= ps->wgt_diffuse * swp->sw_lightfract[i] * cosine * lp->lt_fraction;
 		}
 
-#ifdef RT_MULTISPECTRAL
-		bn_tabdata_incr_mul3_scale(swp->msw_color,
-					   lp->lt_spectrum,
-					   swp->msw_intensity[i],
-					   ms_matcolor,
-					   refl);
-#else
 		VELMUL3(work, matcolor, lp->lt_color, intensity);
 		VJOIN1(swp->sw_color, swp->sw_color, refl, work);
-#endif
 	    }
 
 	    /* Calculate specular reflectance.
@@ -460,19 +409,11 @@ phong_render(register struct application *ap, const struct partition *pp, struct
 #else
 		phg_ipow(cosine, ps->shine);
 #endif /* PHAST_PHONG */
-#ifdef RT_MULTISPECTRAL
-		bn_tabdata_incr_mul2_scale(swp->msw_color,
-					   lp->lt_spectrum,
-					   swp->msw_intensity[i],
-					   refl);
-#else
 		VELMUL(work, lp->lt_color, intensity);
 		VJOIN1(swp->sw_color, swp->sw_color, refl, work);
-#endif
 	    }
 	}
 
-#ifndef RT_MULTISPECTRAL
 	if (PM_Activated) {
 	    IrradianceEstimate(ap, work, swp->sw_hit.hit_point, swp->sw_hit.hit_normal);
 	    VELMUL(work, work, color);
@@ -492,16 +433,12 @@ phong_render(register struct application *ap, const struct partition *pp, struct
 	    if (swp->sw_color[1] > 1.0) swp->sw_color[1]= 1.0;
 	    if (swp->sw_color[2] > 1.0) swp->sw_color[2]= 1.0;
 	}
-#endif
     }
 
 
     if (swp->sw_reflect > 0 || swp->sw_transmit > 0)
 	(void)rr_render(ap, pp, swp);
 
-#ifdef RT_MULTISPECTRAL
-    bn_tabdata_free(ms_matcolor);
-#endif
     return 1;
 }
 

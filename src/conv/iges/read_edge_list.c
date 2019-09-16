@@ -26,7 +26,7 @@ Read_edge_list(struct iges_edge_use *edge)
 {
     struct iges_edge_list *edge_list;
     int entityno;
-    int sol_num;
+    int sol_num = 0;
     int i;
 
     entityno = (edge->edge_de - 1)/2;

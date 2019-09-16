@@ -233,7 +233,7 @@ fbserv_new_client_handler(ClientData clientData,
 
 
 void
-fbserv_set_port(void)
+fbserv_set_port(const struct bu_structparse *UNUSED(sp), const char *UNUSED(c1), void *UNUSED(v1), const char *UNUSED(c2), void *UNUSED(v2))
 {
     int i;
     int save_port;
@@ -409,7 +409,7 @@ fbserv_new_client_handler(ClientData clientData, int UNUSED(mask))
 
 
 void
-fbserv_set_port(void)
+fbserv_set_port(const struct bu_structparse *UNUSED(sp), const char *UNUSED(c1), void *UNUSED(v1), const char *UNUSED(c2), void *UNUSED(v2))
 {
     int i;
     int save_port;

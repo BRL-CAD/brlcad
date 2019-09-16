@@ -3541,9 +3541,34 @@ obj_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const 
     return 1;
 }
 
+HIDDEN int
+obj_can_read(const char *source_path)
+{
+    FILE *fp;
+    int ret;
+    obj_contents_t contents; /* obj_fparse */
+    obj_parser_t parser;     /* obj_parser_create */
+
+    if (obj_parser_create(&parser)) {
+	obj_parser_destroy(parser);
+	return 0;
+    }
+    if (!(fp = fopen(source_path, "r"))) {
+	obj_parser_destroy(parser);
+	return 0;
+    }
+
+    ret = !obj_fparse(fp, parser, &contents);
+    obj_contents_destroy(contents);
+    obj_parser_destroy(parser);
+    fclose(fp);
+    return ret;
+}
+
+
 
 static const struct gcv_filter gcv_conv_obj_read = {
-    "OBJ Reader", GCV_FILTER_READ, BU_MIME_MODEL_OBJ,
+    "OBJ Reader", GCV_FILTER_READ, BU_MIME_MODEL_OBJ, obj_can_read,
     obj_read_create_opts, obj_read_free_opts, obj_read
 };
 

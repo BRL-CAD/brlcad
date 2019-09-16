@@ -8,12 +8,12 @@
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- *  * Redistributions of source code must retain the above copyright
+ * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- *  * Redistributions in binary form must reproduce the above copyright
+ * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- *  * Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -29,16 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)regexec.c	8.3 (Berkeley) 3/20/94
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)regexec.c	8.3 (Berkeley) 3/20/94";
-#else
-static char rcsid[] = "$NetBSD: regexec.c,v 1.6 1995/02/27 13:29:48 cgd Exp $";
-#endif
-#endif /* LIBC_SCCS and not lint */
 
 /*
  * the outer shell of regexec()
@@ -48,11 +39,12 @@ static char rcsid[] = "$NetBSD: regexec.c,v 1.6 1995/02/27 13:29:48 cgd Exp $";
  * representations for state sets.
  */
 
-#include "regex.h"
+#include "./regex.h"
 #include "./utils.h"
 #include "./regex2.h"
 
-static int nope = 0;		/* for use in asserts; shuts lint up */
+/* for use in asserts; shuts lint up */
+static int nope = 0;
 
 /* macros for manipulating states, small version */
 #define	states ssize_t
@@ -69,7 +61,7 @@ static int nope = 0;		/* for use in asserts; shuts lint up */
 #define	SETUP(v)	((v) = 0)
 #define	onestate	ssize_t
 #define	INIT(o, n)	((o) = (size_t)1 << (n))
-#define	INC(o)	((o) <<= 1)
+#define	INC(o)		((o) <<= 1)
 #define	ISSTATEIN(v, o)	(((v) & (o)) != 0)
 /* some abbreviations; note that some of these know variable names! */
 /* do "if I'm here, I can also be there" etc without branches */
@@ -132,28 +124,16 @@ static int nope = 0;		/* for use in asserts; shuts lint up */
 
 /*
  - regexec - interface for matching
- = extern int regexec(const regex_t *, const char *, size_t, \
- =					regmatch_t [], int);
- = #define	REG_NOTBOL	00001
- = #define	REG_NOTEOL	00002
- = #define	REG_STARTEND	00004
- = #define	REG_TRACE	00400	// tracing of execution
- = #define	REG_LARGE	01000	// force large representation
- = #define	REG_BACKR	02000	// force use of backref code
  *
  * We put this here so we can exploit knowledge of the state representation
  * when choosing which matcher to call.  Also, by this point the matchers
  * have been prototyped.
  */
 int				/* 0 success, REG_NOMATCH failure */
-regexec(preg, string, nmatch, pmatch, eflags)
-const regex_t *preg;
-const char *string;
-size_t nmatch;
-regmatch_t pmatch[];
-int eflags;
+regexec(const regex_t *preg, const char *string, size_t nmatch,
+    regmatch_t pmatch[], int eflags)
 {
-	register struct re_guts *g = preg->re_g;
+	struct re_guts *g = preg->re_g;
 #ifdef REDEBUG
 #	define	GOODFLAGS(f)	(f)
 #else
@@ -167,8 +147,7 @@ int eflags;
 		return(REG_BADPAT);
 	eflags = GOODFLAGS(eflags);
 
-	if (g->nstates <= (int)(CHAR_BIT*sizeof(states1))
-	    && !(eflags&REG_LARGE))
+	if (g->nstates <= (int)(CHAR_BIT*sizeof(states1)) && !(eflags&REG_LARGE))
 		return(smatcher(g, (char *)string, nmatch, pmatch, eflags));
 	else
 		return(lmatcher(g, (char *)string, nmatch, pmatch, eflags));

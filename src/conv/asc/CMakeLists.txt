@@ -1,9 +1,3 @@
-if(MSVC)
-  add_definitions(
-    -DON_DLL_IMPORTS
-    )
-endif(MSVC)
-
 add_definitions(
   -D_CONSOLE
   -DBRLCAD_DLL

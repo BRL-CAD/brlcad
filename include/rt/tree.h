@@ -254,6 +254,7 @@ struct rt_tree_array
 
 #define TREE_LIST_NULL  ((struct tree_list *)0)
 
+#ifdef USE_OPENCL
 /**
  * Flattened version of the infix union tree.
  */
@@ -282,6 +283,20 @@ struct bit_tree {
     uint val;
 };
 
+struct cl_tree_bit {
+    cl_uint val;
+};
+
+/* Print a bit expr tree */
+RT_EXPORT extern void rt_pr_bit_tree(const struct bit_tree *btp,
+                                     int idx,
+                                     int lvl);
+
+RT_EXPORT extern void rt_bit_tree(struct bit_tree *btp,
+                                  const union tree *tp,
+                                  size_t *len);
+#endif
+
 /* Print an expr tree */
 RT_EXPORT extern void rt_pr_tree(const union tree *tp,
 	                         int lvl);
@@ -293,10 +308,6 @@ struct partition; /* forward declaration */
 RT_EXPORT extern void rt_pr_tree_val(const union tree *tp,
                                      const struct partition *partp,
                                      int pr_name,
-                                     int lvl);
-/* Print a bit expr tree */
-RT_EXPORT extern void rt_pr_bit_tree(const struct bit_tree *btp,
-                                     int idx,
                                      int lvl);
 
 /**
@@ -783,10 +794,6 @@ RT_EXPORT extern union tree *db_mkgift_tree(struct rt_tree_array *trees,
 
 RT_EXPORT extern void rt_optim_tree(union tree *tp,
 	                            struct resource *resp);
-
-RT_EXPORT extern void rt_bit_tree(struct bit_tree *btp,
-                                  const union tree *tp,
-                                  size_t *len);
 
 
 

@@ -481,6 +481,11 @@ GED_EXPORT extern int ged_cpi(struct ged *gedp, int argc, const char *argv[]);
 GED_EXPORT extern int ged_delete_pipept(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+ * DSP utility command
+ */
+GED_EXPORT extern int ged_dsp(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  * Arb specific edits.
  */
 GED_EXPORT extern int ged_edarb(struct ged *gedp, int argc, const char *argv[]);

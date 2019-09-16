@@ -1030,19 +1030,6 @@ rt_find_solid(const struct rt_i *rtip, const char *name)
 }
 
 
-HIDDEN void
-rt_bool_growstack(struct resource *resp)
-{
-    if (resp->re_boolstack == (union tree **)0 || resp->re_boolslen <= 0) {
-	resp->re_boolslen = 128;	/* default len */
-	resp->re_boolstack = (union tree **)bu_malloc(sizeof(union tree *) * resp->re_boolslen,	"initial boolstack");
-    } else {
-	resp->re_boolslen <<= 1;
-	resp->re_boolstack = (union tree **)bu_realloc((char *)resp->re_boolstack, sizeof(union tree *) * resp->re_boolslen, "extend boolstack");
-    }
-}
-
-
 void
 rt_optim_tree(union tree *tp, struct resource *resp)
 {
@@ -1105,6 +1092,7 @@ rt_optim_tree(union tree *tp, struct resource *resp)
 }
 
 
+#ifdef USE_OPENCL
 void
 rt_bit_tree(struct bit_tree *btp, const union tree *tp, size_t *len)
 {
@@ -1146,6 +1134,7 @@ rt_bit_tree(struct bit_tree *btp, const union tree *tp, size_t *len)
 
     rt_bit_tree(btp, tp->tr_b.tb_right, len);
 }
+#endif
 
 
 /*

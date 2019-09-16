@@ -138,8 +138,8 @@ proc default_key_bindings { w } {
     bind $w o "winset $w; press oill; break"
     bind $w q "winset $w; press reject; break"
     bind $w A "winset $w; press accept; break"
-    bind $w P "winset $w; sed_apply; break"
-    bind $w S "winset $w; sed_reset; break"
+    bind $w P "winset $w; catch {sed_apply}; break"
+    bind $w S "winset $w; catch {sed_reset}; break"
     bind $w u "winset $w; svb; break"
     bind $w <F1> "winset $w; dm set depthcue !; update_gui $w depthcue \[dm set depthcue\]; break"
     bind $w <F2> "winset $w; dm set zclip !; update_gui $w zclip \[dm set zclip\]; break"
@@ -235,6 +235,10 @@ proc forward_key_bindings { w } {
     bind $w o {}
     bind $w q {}
     bind $w u {}
+    bind $w c {}
+    bind $w A {}
+    bind $w P {}
+    bind $w S {}
     bind $w <F1> {}
     bind $w <F2> {}
     bind $w <F3> {}

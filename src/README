@@ -41,7 +41,6 @@ libfb - a 2D framebuffer library
 libfft - a fast Fourier transform library
 libged - the geometry editor library
 libgcv - the geometry conversion library
-libmultispectral - a multispectral ray-tracing optics library
 liboptical - an optics library for raster image ray-tracing
 libpkg - a network package transport library
 librt - the BRL-CAD ray-trace library
@@ -54,7 +53,6 @@ other - 3rd party code optionally utilized by BRL-CAD
 proc-db - tools for procedurally creating geometry models
 remrt - remote distributed ray-trace tools, a client and server
 rt - the BRL-CAD ray-tracers, various analytic and visual ray-trace-based tools
-rttherm - a thermal energy (heat) ray-tracer
 shapes - tools for creating various common geometry objects (bolts, handles, windows, etc.)
 sig - signal processing tools, data conversion and manipulation of raw data
 tab - table processing tools, used primarily in conjunction with animation tools

@@ -214,7 +214,7 @@ InterpolateCombinedAirfoil(struct fortran_array *x, struct fortran_array *yt, st
     int k;
     int n, nn;
     int nupper, nlower;
-    fastf_t sbar;
+    fastf_t sbar = 0.0;
     const fastf_t TOL = 1e-6;
     struct fortran_array *xupper, *yupper, *xlower, *ylower;
     struct fortran_array *xupper_short, *yupper_short, *xlower_short, *ylower_short;
@@ -330,7 +330,7 @@ InterpolateUpperAndLower(struct fortran_array *xupper, struct fortran_array *yup
     int k;
     int nn;
     int nupper, nlower;
-    fastf_t sbar;
+    fastf_t sbar = 0.0;
     const fastf_t TOL = 1e-6;
     struct fortran_array *xupperCopy, *yupperCopy, *xlowerCopy, *ylowerCopy;
     struct fortran_array *xupperCopy_short, *yupperCopy_short, *xlowerCopy_short, *ylowerCopy_short;
@@ -1043,7 +1043,7 @@ Thickness6(int family, fastf_t toc, struct fortran_array *x,
     const fastf_t TOL = 1e-6;
     int errCode;
     int k, n;
-    fastf_t sx;
+    fastf_t sx = 0.0;
     struct fortran_array *xt, *yt;
     struct fortran_array *minus_yt;
     struct fortran_array *xLocal, *yLocal, *sLocal, *xpLocal, *ypLocal;

@@ -72,6 +72,8 @@
 #include "brlcad_ident.h"
 
 
+
+
 #ifndef HAVE_VFORK
 #  ifdef HAVE_FORK
 #    define vfork fork
@@ -133,13 +135,10 @@
 #  define MAXSERVERS NFD		/* No relay function yet */
 #endif
 
-
-/* Needed to satisfy the reference created by including ../rt/opt.o */
-struct command_tab rt_cmdtab[] = {
-    {(char *)0, (char *)0, (char *)0,
-     0,		0, 0}	/* END */
-};
-
+/* NOTE: satisfies linkage with do.c command parsing.  possibly wrong
+ * to stub empty... might hinder remrt's ability to read rt commands.
+ */
+struct command_tab rt_cmdtab[] = {{NULL, NULL, NULL, 0, 0, 0}};
 
 struct frame {
     struct frame *fr_forw;

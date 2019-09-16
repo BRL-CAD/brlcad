@@ -601,7 +601,6 @@ Libraries:
     fft
     gcv
     ged
-    multispectral
     optical
     pkg
     rt
@@ -4805,25 +4804,6 @@ Usage: rtsrv [-d] control-host tcp-port [cmd]
 
 ----- end usage -----------------------------------
 ***** end rtsrv ***********************************
-***** begin rttherm ***********************************
-	result : (usage)
-	file(s):
-	error  : 3:exit status: exit code 1
------ begin usage -----------------------------------
-
-BRL-CAD Release 7.24.1  Thermal Multi-Spectral RT
-    Tue, 03 Sep 2013 17:24:09 -0500, Compilation 14
-    tbrowde@juvat:/usr/brlcad/dev-7.24.1
-BRL-CAD Release 7.24.1  The BRL-CAD Ray-Tracing Library
-    Tue, 03 Sep 2013 17:24:09 -0500, Compilation 14
-    tbrowde@juvat:/usr/brlcad/dev-7.24.1
-BRL-CAD Release 7.24.1  The BRL-CAD Numerical Computation Library
-    Tue, 03 Sep 2013 17:24:09 -0500, Compilation 14
-    tbrowde@juvat:/usr/brlcad/dev-7.24.1
-(snip...)
-
------ end usage -----------------------------------
-***** end rttherm ***********************************
 ***** begin rtwalk ***********************************
 	result : (usage)
 	file(s):
@@ -5019,46 +4999,6 @@ Usage: spm-fb [-h -s] [-F framebuffer]
 
 ----- end usage -----------------------------------
 ***** end spm-fb ***********************************
-***** begin ssamp-bw ***********************************
-	result : (usage)
-	file(s):
-	error  : 3:exit status: exit code 1
------ begin usage -----------------------------------
-
-Usage: ssamp-bw [-s squarefilesize] [-w file_width] [-n file_height]
-		[-l lower_wavelen] [-u upper_wavelen] [-v]
-		[-m minval] [-M maxval]
-		file.ssamp
-
------ end usage -----------------------------------
-***** end ssamp-bw ***********************************
-***** begin ssampview ***********************************
-	result : (usage)
-	file(s):
-	error  : 3:exit status: exit code 1
------ begin usage -----------------------------------
-
-white_rgb (i) (1, 1, 1)
-white_xyz (o) (0.951368, 1, 1.08815)
-white_xyz (i) (0.313, 0.329, 0.358)
-white_rgb (o) (0.329, 0.329, 0.329)
-red_rgb (i) (1, 0, 0)
-red_xyz (o) (0.589316, 0.29026, 0)
-red_xyz (i) (0.67, 0.33, 0)
-red_rgb (o) (1.13691, 0, -1.38778e-17)
-grn_rgb (i) (0, 1, 0)
-grn_xyz (o) (0.178982, 0.605128, 0.0681835)
-grn_xyz (i) (0.21, 0.71, 0.08)
-grn_rgb (o) (2.08167e-17, 1.1733, -2.77556e-17)
-blu_rgb (i) (0, 0, 1)
-blu_xyz (o) (0.18307, 0.104612, 1.01996)
-blu_xyz (i) (0.14, 0.08, 0.78)
-blu_rgb (o) (-5.55112e-17, 1.73472e-17, 0.764734)
-Usage: ssampview [-t] [-s squarefilesize] [-w file_width] [-n file_height]
-		file.ssamp
-
------ end usage -----------------------------------
-***** end ssampview ***********************************
 ***** begin step-g ***********************************
 	result : (usage)
 	file(s):

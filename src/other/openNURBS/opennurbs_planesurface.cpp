@@ -589,7 +589,7 @@ ON_BOOL32 ON_PlaneSurface::GetLocalClosestPoint( const ON_3dPoint& test_point, /
         const ON_Interval* tdomain  // second parameter sub_domain
         ) const
 {
-  // for planes, global serach is fast and returns same answer as local search
+  // for planes, global search is fast and returns same answer as local search
   return GetClosestPoint(test_point,s,t,0.0,sdomain,tdomain);
 }
 

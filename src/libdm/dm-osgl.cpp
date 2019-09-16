@@ -1429,6 +1429,7 @@ osgl_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
     register int mflag = 1;
     static float black[4] = {0.0, 0.0, 0.0, 0.0};
     GLfloat originalPointSize, originalLineWidth;
+    GLfloat m[16];
 
     glGetFloatv(GL_POINT_SIZE, &originalPointSize);
     glGetFloatv(GL_LINE_WIDTH, &originalLineWidth);
@@ -1475,6 +1476,17 @@ osgl_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
 
 		    glBegin(GL_LINE_STRIP);
 		    glVertex3dv(dpt);
+		    break;
+		case BN_VLIST_MODEL_MAT:
+		    glMatrixMode(GL_PROJECTION);
+		    glLoadIdentity();
+		    glLoadMatrixf(m);
+		    break;
+		case BN_VLIST_DISPLAY_MAT:
+		    glMatrixMode(GL_PROJECTION);
+		    glGetFloatv (GL_PROJECTION_MATRIX, m);
+		    glPopMatrix();
+		    glLoadIdentity();
 		    break;
 		case BN_VLIST_POLY_START:
 		case BN_VLIST_TRI_START:
@@ -1602,48 +1614,48 @@ osgl_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
     int nverts = 0;
     first = 1;
     for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
-        int i;
-        int nused = tvp->nused;
-        int *cmd = tvp->cmd;
-        point_t *pt = tvp->pt;
-        for (i = 0; i < nused; i++, cmd++, pt++) {
-            switch (*cmd) {
-                case BN_VLIST_LINE_MOVE:
-                    /* Move, start line */
-                    if (first == 0) {
-                        geom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINE_STRIP,begin,nverts));
+	int i;
+	int nused = tvp->nused;
+	int *cmd = tvp->cmd;
+	point_t *pt = tvp->pt;
+	for (i = 0; i < nused; i++, cmd++, pt++) {
+	    switch (*cmd) {
+		case BN_VLIST_LINE_MOVE:
+		    /* Move, start line */
+		    if (first == 0) {
+			geom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINE_STRIP,begin,nverts));
 
-                    } else
-                        first = 0;
+		    } else
+			first = 0;
 
-                    vertices->push_back(osg::Vec3d((*pt)[X], (*pt)[Y], (*pt)[Z]));
-                    normals->push_back(osg::Vec3(0.0f,0.0f,1.0f));
-                    begin += nverts;
-                    nverts = 1;
-                    break;
-                case BN_VLIST_POLY_START:
-                    normals->push_back(osg::Vec3d((*pt)[X], (*pt)[Y], (*pt)[Z]));
-                    begin += nverts;
-                    nverts = 0;
-                    break;
-                case BN_VLIST_LINE_DRAW:
-                case BN_VLIST_POLY_MOVE:
-                case BN_VLIST_POLY_DRAW:
-                    vertices->push_back(osg::Vec3d((*pt)[X], (*pt)[Y], (*pt)[Z]));
-                    ++nverts;
-                    break;
-                case BN_VLIST_POLY_END:
-                    geom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::POLYGON,begin,nverts));
-                    first = 1;
-                    break;
-                case BN_VLIST_POLY_VERTNORM:
-                    break;
-            }
-        }
+		    vertices->push_back(osg::Vec3d((*pt)[X], (*pt)[Y], (*pt)[Z]));
+		    normals->push_back(osg::Vec3(0.0f,0.0f,1.0f));
+		    begin += nverts;
+		    nverts = 1;
+		    break;
+		case BN_VLIST_POLY_START:
+		    normals->push_back(osg::Vec3d((*pt)[X], (*pt)[Y], (*pt)[Z]));
+		    begin += nverts;
+		    nverts = 0;
+		    break;
+		case BN_VLIST_LINE_DRAW:
+		case BN_VLIST_POLY_MOVE:
+		case BN_VLIST_POLY_DRAW:
+		    vertices->push_back(osg::Vec3d((*pt)[X], (*pt)[Y], (*pt)[Z]));
+		    ++nverts;
+		    break;
+		case BN_VLIST_POLY_END:
+		    geom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::POLYGON,begin,nverts));
+		    first = 1;
+		    break;
+		case BN_VLIST_POLY_VERTNORM:
+		    break;
+	    }
+	}
     }
 
     if (first == 0) {
-        geom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINE_STRIP,begin,nverts));
+	geom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINE_STRIP,begin,nverts));
     }
 
     geom->setVertexArray(vertices);

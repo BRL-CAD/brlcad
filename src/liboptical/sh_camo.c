@@ -43,9 +43,6 @@
 #include "raytrace.h"
 #include "optical.h"
 
-#ifdef RT_MULTISPECTRAL
-#  include "spectrum.h"
-#endif
 
 #define SMOOTHSTEP(x)  ((x)*(x)*(3 - 2*(x)))
 
@@ -299,9 +296,6 @@ camo_render(struct application *ap, const struct partition *pp, struct shadework
 	(struct camo_specific *)dp;
     point_t pt;
     double val;
-#ifdef RT_MULTISPECTRAL
-    float fcolor[3];
-#endif
 
     RT_AP_CHECK(ap);
     RT_CHECK_PT(pp);
@@ -320,19 +314,6 @@ camo_render(struct application *ap, const struct partition *pp, struct shadework
     val = bn_noise_fbm(pt, camo_sp->noise_h_val,
 		       camo_sp->noise_lacunarity, camo_sp->noise_octaves);
 
-#ifdef RT_MULTISPECTRAL
-    BN_CK_TABDATA(swp->msw_color);
-    if (val < camo_sp->t1) {
-	VMOVE(fcolor, camo_sp->c1);
-	rt_spect_reflectance_rgb(swp->msw_color, fcolor);
-    } else if (val < camo_sp->t2) {
-	VMOVE(fcolor, camo_sp->c2);
-	rt_spect_reflectance_rgb(swp->msw_color, fcolor);
-    } else {
-	VMOVE(fcolor, camo_sp->c3);
-	rt_spect_reflectance_rgb(swp->msw_color, fcolor);
-    }
-#else
     if (val < camo_sp->t1) {
 	VMOVE(swp->sw_color, camo_sp->c1);
     } else if (val < camo_sp->t2) {
@@ -340,7 +321,6 @@ camo_render(struct application *ap, const struct partition *pp, struct shadework
     } else {
 	VMOVE(swp->sw_color, camo_sp->c3);
     }
-#endif
 
     return 1;
 }
@@ -367,9 +347,6 @@ marble_render(struct application *ap, const struct partition *pp, struct shadewo
 	(struct camo_specific *)dp;
     point_t pt;
     double val, inv_val;
-#ifdef RT_MULTISPECTRAL
-    float fcolor[3];
-#endif
 
     RT_AP_CHECK(ap);
     RT_CHECK_PT(pp);
@@ -392,23 +369,7 @@ marble_render(struct application *ap, const struct partition *pp, struct shadewo
 
     inv_val = 1.0 - val;
 
-#ifdef RT_MULTISPECTRAL
-    {
-	struct bn_tabdata *tcolor;
-
-	BN_CK_TABDATA(swp->msw_color);
-	BN_GET_TABDATA(tcolor, spectrum);
-
-	VMOVE(fcolor, camo_sp->c2);
-
-	rt_spect_reflectance_rgb(tcolor, fcolor);
-	bn_tabdata_blend2(swp->msw_color, val, swp->msw_color,
-			  inv_val, tcolor);
-	bn_tabdata_free(tcolor);
-    }
-#else
     VCOMB2(swp->sw_color, val, swp->sw_color, inv_val, camo_sp->c2);
-#endif
 
     return 1;
 }

@@ -61,11 +61,7 @@ struct light_specific {
     int	lt_exaim;	/**< @brief !0 if explicit aim in lt_target */
     fastf_t lt_obscure;	/**< @brief percentage obscuration of light */
     /* Internal fields */
-#ifdef RT_MULTISPECTRAL
-    struct bn_tabdata *lt_spectrum;	/**< @brief Units?  mw*sr ? */
-#else
     vect_t	lt_color;	/**< @brief RGB, as 0..1 */
-#endif
     fastf_t	lt_radius;	/**< @brief approximate radius of spherical light */
     fastf_t	lt_cosangle;	/**< @brief cos of lt_angle */
     vect_t	lt_pos;		/**< @brief location in space of light */

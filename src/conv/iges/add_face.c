@@ -25,10 +25,10 @@ struct faceuse *
 Add_face_to_shell(struct shell *s, int entityno, int face_orient)
 {
 
-    int sol_num;		/* IGES solid type number */
-    int surf_de;		/* Directory sequence number for underlying surface */
-    int no_of_loops;		/* Number of loops in face */
-    int outer_loop_flag;	/* Indicates if first loop is an the outer loop */
+    int sol_num = 0;		/* IGES solid type number */
+    int surf_de = 0;		/* Directory sequence number for underlying surface */
+    int no_of_loops = 0;		/* Number of loops in face */
+    int outer_loop_flag = 0;	/* Indicates if first loop is an the outer loop */
     int *loop_de;		/* Directory sequence numbers for loops */
     int loop;
     int planar = 0;

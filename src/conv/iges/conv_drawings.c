@@ -108,7 +108,7 @@ Getstrg(char **str, char *id)
 void
 Note_to_vlist(int entno, struct bu_list *vhead)
 {
-    int entity_type;
+    int entity_type = 0;
     int nstrings = 0;
     int i;
 
@@ -132,7 +132,8 @@ Note_to_vlist(int entno, struct bu_list *vhead)
 	int internal_rot = 0;
 	double local_scale;
 	char one_char[2];
-	point_t loc, tmp;
+	point_t loc = VINIT_ZERO;
+	point_t tmp = VINIT_ZERO;
 	char *str = NULL;
 
 	Readint(&str_len, "");
@@ -198,7 +199,7 @@ Note_to_vlist(int entno, struct bu_list *vhead)
 void
 Get_plane(plane_t pl, int entno)
 {
-    int entity_type;
+    int entity_type = 0;
     int i;
 
     Readrec(dir[entno]->param);
@@ -242,7 +243,9 @@ Leader_to_vlist(int entno, struct bu_list *vhead)
     int entity_type;
     int npts, i;
     point_t tmp, tmp2, tmp3, center;
-    vect_t v1, v2, v3;
+    vect_t v1;
+    vect_t v2;
+    vect_t v3 = VINIT_ZERO;
     fastf_t a, b, c;
 
     Readrec(dir[entno]->param);
@@ -503,9 +506,9 @@ Draw_entities(struct model *m, int de_list[], size_t no_of_des, fastf_t x, fastf
 struct views_visible *
 Get_views_visible(int entno)
 {
-    int entity_type;
-    int no_of_views;
-    int no_of_entities;
+    int entity_type = 0;
+    int no_of_views = 0;
+    int no_of_entities = 0;
     size_t i;
     size_t j;
     int junk;
@@ -548,7 +551,7 @@ Do_view(struct model *m, struct bu_ptbl *view_vis_list, int entno,
 	fastf_t x, fastf_t y, fastf_t ang)
 {
     int view_de;
-    int entity_type;
+    int entity_type = 0;
     struct views_visible *vv;
     size_t vv_count = 0;
     int *de_list;			/* list of possible view field entries for this view */
@@ -647,7 +650,7 @@ Do_view(struct model *m, struct bu_ptbl *view_vis_list, int entno,
 void
 Get_drawing(int entno, struct bu_ptbl *view_vis_list)
 {
-    int entity_type;
+    int entity_type = 0;
     int no_of_views;
     int *view_entno;
     int i;

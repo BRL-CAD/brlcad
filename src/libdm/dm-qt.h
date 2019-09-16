@@ -68,7 +68,9 @@ struct qt_vars {
     QPixmap *pix;
     QPainter *painter;
     QFont *font;
-    mat_t qmat;
+    fastf_t *qmat;
+    mat_t mod_mat;      /* default model transformation matrix */
+    mat_t disp_mat;     /* display transformation matrix */
     QImage *img;
     int drawFb;
 };

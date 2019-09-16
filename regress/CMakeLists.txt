@@ -84,7 +84,10 @@ CMAKEFILES(
   analyze.asc
   asc2dsp.sh
   bots.sh
-  burst
+  burst/ktank_crit.ids
+  burst/ktank.b
+  burst/ktank_armor.ids
+  burst/ktank_air.ids
   comgeom.sh
   dsp.sh
   dsp/asc2dsp-new.asc
@@ -112,7 +115,6 @@ CMAKEFILES(
   flawfinder.sh
   g-dot.sh
   g-nff.sh
-  gcv
   gqa.sh
   iges.sh
   library.sh
@@ -120,7 +122,6 @@ CMAKEFILES(
   lights_ref.asc
   master_fetch.sh
   master_prep.sh
-  mged
   mged.sh
   mged_test.sh
   moss.sh

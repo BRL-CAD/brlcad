@@ -45,8 +45,6 @@ struct region {
     struct bu_list      l;              /**< @brief magic # and doubly linked list */
     const char *        reg_name;       /**< @brief Identifying string */
     union tree *        reg_treetop;    /**< @brief Pointer to boolean tree */
-    struct bit_tree *   reg_btree;      /**< @brief Pointer to bit boolean tree */
-    size_t              reg_nbtree;     /**< @brief number of elements in btree */
     int                 reg_bit;        /**< @brief constant index into Regions[] */
     int                 reg_regionid;   /**< @brief Region ID code.  If <=0, use reg_aircode */
     int                 reg_aircode;    /**< @brief Region ID AIR code */
@@ -68,10 +66,6 @@ struct region {
 #define RT_CK_REGION(_p) BU_CKMAG(_p, RT_REGION_MAGIC, "struct region")
 
 #ifdef USE_OPENCL
-struct cl_tree_bit {
-    cl_uint val;
-};
-
 struct cl_bool_region {
     cl_uint btree_offset;           /**< @brief index to the start of the bit tree */
     cl_int reg_aircode;             /**< @brief Region ID AIR code */
@@ -86,7 +80,7 @@ struct cl_bool_region {
 #define SH_PHONG	1
 
 
-struct clt_phong_specific {
+struct cl_phong_specific {
     cl_double wgt_specular;
     cl_double wgt_diffuse;
     cl_int shine;
@@ -95,11 +89,11 @@ struct clt_phong_specific {
 /**
  * The region structure.
  */
-struct clt_region {
+struct cl_region {
     cl_float color[3];		/**< @brief explicit color:  0..1  */
     cl_int mf_id;
     union {
-	struct clt_phong_specific phg_spec;
+	struct cl_phong_specific phg_spec;
     }udata;
 };
 

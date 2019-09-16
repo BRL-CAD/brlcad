@@ -376,7 +376,7 @@ shoal_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_shoal_data *data, 
 
     // Find a suitable seed vert
     int seed_vert = -1;
-    const ON_BrepEdge *first_edge;
+    const ON_BrepEdge *first_edge = NULL;
     for (se_it = shoal_edges.begin(); se_it != shoal_edges.end(); se_it++) {
 	first_edge = &(brep->m_E[(int)(*se_it)]);
 	if (ignored_verts.find(first_edge->Vertex(0)->m_vertex_index) == ignored_verts.end()) {
@@ -399,7 +399,7 @@ shoal_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_shoal_data *data, 
     int curr_edge = -1;
     int prev_edge = -1;
     //bu_log("first edge: %d\n", first_edge->m_edge_index);
-    while (curr_edge != first_edge->m_edge_index && curr_vert != seed_vert) {
+    while (first_edge && curr_edge != first_edge->m_edge_index && curr_vert != seed_vert) {
 	// Once we're past the first edge, initialize our terminating condition if not already set.
 	if (curr_edge == -1) curr_edge = first_edge->m_edge_index;
 	if (curr_vert == -1) curr_vert = seed_vert;

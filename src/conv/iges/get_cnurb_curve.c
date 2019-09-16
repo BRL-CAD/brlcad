@@ -39,8 +39,8 @@ Get_cnurb_curve(int curve_de, int *linear)
     switch (dir[curve]->type) {
 	case 110: {
 	    /* line */
-	    int pt_type;
-	    int type;
+	    int pt_type = 0;
+	    int type = 0;
 	    point_t pt1;
 	    point_t start_pt, end_pt;
 

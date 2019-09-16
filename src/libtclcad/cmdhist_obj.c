@@ -84,7 +84,7 @@ _tclcad_cmdhist_record(struct tclcad_cmdhist_obj *chop, struct bu_vls *cmdp, str
 
 
 HIDDEN int
-cmdhist_timediff(struct timeval *tvdiff, struct timeval *start, struct timeval *finish)
+_tclcad_cmdhist_timediff(struct timeval *tvdiff, struct timeval *start, struct timeval *finish)
 {
     if (UNLIKELY(finish->tv_sec == 0 && finish->tv_usec == 0))
 	return -1;
@@ -152,7 +152,7 @@ tclcad_cmdhist_history(void *data, int argc, const char *argv[])
 	bu_vls_trunc(&str, 0);
 	hp_prev = BU_LIST_PREV(tclcad_cmdhist, &hp->l);
 	if (with_delays && BU_LIST_NOT_HEAD(hp_prev, &chop->cho_head.l)) {
-	    if (cmdhist_timediff(&tvdiff, &(hp_prev->h_finish), &(hp->h_start)) >= 0)
+	    if (_tclcad_cmdhist_timediff(&tvdiff, &(hp_prev->h_finish), &(hp->h_start)) >= 0)
 		bu_vls_printf(&str, "delay %ld %ld\n", (long)tvdiff.tv_sec,
 			      (long)tvdiff.tv_usec);
 

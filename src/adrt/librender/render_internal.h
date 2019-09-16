@@ -29,6 +29,8 @@
 #ifndef RENDER_EXPORT
 #  if defined(RENDER_DLL_EXPORTS) && defined(RENDER_DLL_IMPORTS)
 #    error "Only RENDER_DLL_EXPORTS or RENDER_DLL_IMPORTS can be defined, not both."
+#  elif defined(STATIC_BUILD)
+#    define RENDER_EXPORT
 #  elif defined(RENDER_DLL_EXPORTS)
 #    define RENDER_EXPORT __declspec(dllexport)
 #  elif defined(RENDER_DLL_IMPORTS)

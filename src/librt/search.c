@@ -92,6 +92,7 @@
 #  undef __restrict
 #endif
 #define __restrict /* quell gcc 4.1.2 system regex.h -pedantic-errors */
+#include <sys/types.h> /* for mingw regex.h->stdio.h types */
 #include <regex.h>
 
 #include "bu/cmd.h"
@@ -140,27 +141,6 @@ struct list_client_data_t {
     struct bu_ptbl *full_paths;
     int flags;
 };
-
-
-HIDDEN void
-print_path_with_bools(struct db_full_path *full_path)
-{
-    struct bu_vls vls1 = BU_VLS_INIT_ZERO;
-    struct bu_vls vls2 = BU_VLS_INIT_ZERO;
-    struct db_full_path *newpath;
-    BU_ALLOC(newpath, struct db_full_path);
-    db_full_path_init(newpath);
-    db_dup_full_path(newpath, full_path);
-    while (newpath->fp_len > 0) {
-	struct directory *dp = DB_FULL_PATH_CUR_DIR(newpath);
-	int curr_bool = DB_FULL_PATH_CUR_BOOL(newpath);
-	bu_vls_sprintf(&vls1, "/%s(%d)%s", dp->d_namep, curr_bool, bu_vls_addr(&vls2));
-	bu_vls_sprintf(&vls2, "%s", bu_vls_addr(&vls1));
-	DB_FULL_PATH_POP(newpath);
-    }
-    bu_log("%s", bu_vls_addr(&vls2));
-    db_free_full_path(newpath);
-}
 
 
 /**
@@ -1079,7 +1059,7 @@ f_type(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
      * be updated manually unless/until some functionality is added to generate it */
     if (!bu_fnmatch(plan->type_data, "shape", 0) &&
 	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_COMBINATION &&
-	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_ANNOTATION &&
+	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_ANNOT &&
 	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_CONSTRAINT &&
 	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_GRIP &&
 	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_JOINT

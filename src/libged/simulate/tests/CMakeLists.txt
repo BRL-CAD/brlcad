@@ -1,7 +1,7 @@
-if(BULLET_LIBRARIES)
-  BRLCAD_ADDEXEC(simulate_test "simulate_test.cpp" "libged;${BULLET_LIBRARIES}" TEST)
+if(BRLCAD_ENABLE_BULLET)
+  BRLCAD_ADDEXEC(simulate_test "simulate_test.cpp" "libged" TEST)
   add_test(NAME simulate_test COMMAND simulate_test)
-endif(BULLET_LIBRARIES)
+endif(BRLCAD_ENABLE_BULLET)
 
 CMAKEFILES(simulate_test.cpp)
 

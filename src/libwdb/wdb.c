@@ -629,6 +629,7 @@ mk_binunif (
     wdb_binunif data_type,
     long count)
 {
+    struct rt_db_internal intern;
     struct rt_binunif_internal *binunif;
     unsigned int minor_type = 0;
     int from_file = 0;
@@ -819,8 +820,15 @@ mk_binunif (
     binunif->magic = RT_BINUNIF_INTERNAL_MAGIC;
     binunif->type = minor_type;
     binunif->count = count;
+    binunif->u.int8 = (char *)bu_malloc(count * bytes, "init binunif container");
+
+    RT_DB_INTERNAL_INIT(&intern);
+    intern.idb_major_type = DB5_MAJORTYPE_BINARY_UNIF;
+    intern.idb_type = minor_type;
+    intern.idb_ptr = (void*)binunif;
+    intern.idb_meth = &OBJ[ID_BINUNIF];
     memcpy(binunif->u.int8, data, count * bytes);
-    return wdb_export(wdbp, name, (void *)binunif, ID_BINUNIF, mk_conv2mm);
+    return wdb_put_internal(wdbp, name, &intern, mk_conv2mm);
 }
 
 

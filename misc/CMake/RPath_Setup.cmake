@@ -36,29 +36,49 @@
 # Documentation of these options is available at
 # http://www.cmake.org/Wiki/CMake_RPATH_handling
 
-# use, i.e. don't skip the full RPATH for the build tree
-set(CMAKE_SKIP_BUILD_RPATH FALSE)
+if(NOT COMMAND cmake_set_rpath)
 
-# when building, don't use the install RPATH already
-# (but later on when installing)
-set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+  function(cmake_set_rpath)
 
-# the RPATH/INSTALL_NAME_DIR to be used when installing
-if(NOT APPLE)
-  set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}:\$ORIGIN/../${LIB_DIR}")
-else(NOT APPLE)
-  set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR};@loader_path/../${LIB_DIR}")
-endif(NOT APPLE)
-# On OSX, we need to set INSTALL_NAME_DIR instead of RPATH for CMake < 3.0
-# http://www.cmake.org/cmake/help/cmake-2-8-docs.html#variable:CMAKE_INSTALL_NAME_DIR
-# http://www.cmake.org/cmake/help/v3.2/policy/CMP0042.html
-if ("${CMAKE_VERSION}" VERSION_LESS 3.0)
-  set(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}")
-endif ("${CMAKE_VERSION}" VERSION_LESS 3.0)
+    if(NOT CMAKE_RPATH_SET)
 
-# add the automatically determined parts of the RPATH which point to
-# directories outside the build tree to the install RPATH
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+      # We want the full RPATH set in the build tree so we can run programs without
+      # needing to set LD_LIBRARY_PATH
+      set(CMAKE_SKIP_BUILD_RPATH FALSE PARENT_SCOPE)
+
+      # We DON'T want the final install directory RPATH set in the build directory
+      # - it should only be set to the installation value when actually installed.
+      set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE PARENT_SCOPE)
+
+      # Set RPATH value to use when installing.  This should be set to always
+      # prefer the version in the installed path when possible, but fall back on a
+      # location relative to the loading file's path if the installed version is
+      # not present.  How to do so is platform specific.
+      if(NOT APPLE)
+	set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}:\$ORIGIN/../${LIB_DIR}" PARENT_SCOPE)
+      else(NOT APPLE)
+	set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR};@loader_path/../${LIB_DIR}" PARENT_SCOPE)
+      endif(NOT APPLE)
+
+      # On OSX, we need to set INSTALL_NAME_DIR instead of RPATH for CMake < 3.0
+      # http://www.cmake.org/cmake/help/cmake-2-8-docs.html#variable:CMAKE_INSTALL_NAME_DIR
+      # http://www.cmake.org/cmake/help/v3.2/policy/CMP0042.html
+      if ("${CMAKE_VERSION}" VERSION_LESS 3.0)
+	set(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}" PARENT_SCOPE)
+      endif ("${CMAKE_VERSION}" VERSION_LESS 3.0)
+
+      # Add the automatically determined parts of the RPATH which point to
+      # directories outside the build tree to the install RPATH
+      set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE PARENT_SCOPE)
+
+      # RPATH setup is now complete
+      set(CMAKE_RPATH_SET 1 PARENT_SCOPE)
+
+    endif(NOT CMAKE_RPATH_SET)
+
+  endfunction(cmake_set_rpath)
+
+endif(NOT COMMAND cmake_set_rpath)
 
 # Local Variables:
 # tab-width: 8

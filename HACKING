@@ -285,13 +285,6 @@ libfft: The Fast-Fourier Transform library is a signal processing
 library for performing FFTs or inverse FFTs efficiently.
 	Depends on: libm
 
-libmultispectral: The multispectral optics library is a separate
-compilation mode of the optics library where support for additional
-bands of energy are added.  By providing a defined spectrum of energy,
-the raytrace library will produce different signal analyses for a
-given set of geometry.
-	Depends on: librt libbn libbu libtcl
-
 liboptical: The optical library is the basis for BRL-CAD's shaders.
 This includes shaders such as the Phong and Cook-Torrence lighting
 models, as well as various visual effects such as texturing, marble,

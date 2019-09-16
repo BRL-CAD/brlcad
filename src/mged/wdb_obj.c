@@ -1036,7 +1036,7 @@ wdb_vls_long_dpp(struct rt_wdb *wdbp,
     const char *type=NULL;
     int max_nam_len = 0;
     int max_type_len = 0;
-    struct directory *dp;
+    struct directory *dp = NULL;
 
     bu_sort((void *)list_of_names,
 	    (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
@@ -2533,6 +2533,9 @@ wdb_get_type_cmd(struct rt_wdb *wdbp,
 	    break;
 	case DB5_MINORTYPE_BRLCAD_SKETCH:
 	    Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, "sketch", (char *)NULL);
+	    break;
+	case DB5_MINORTYPE_BRLCAD_ANNOT:
+	    Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, "annot", (char *)NULL);
 	    break;
 	case DB5_MINORTYPE_BRLCAD_EXTRUDE:
 	    Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, "extrude", (char *)NULL);

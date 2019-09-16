@@ -44,8 +44,9 @@
 
 /* defined in read.c */
 extern int get_line(char *cp, int buflen, char *title);
-extern int getint(char *cp, int start, int len);
 extern void namecvt(int n, char **cp, int c);
+extern int getint(char *cp, int start, size_t len);
+extern double getdouble(char *cp, int start, size_t len);
 
 /* defined in cvt.c */
 extern void col_pr(char *str);
@@ -57,7 +58,6 @@ extern struct rt_wdb *outfp;
 extern int version;
 extern int verbose;
 
-extern double getdouble(char *cp, int start, int len);
 extern int sol_total, sol_work;
 
 char scard[132];			/* Solid card buffer area */

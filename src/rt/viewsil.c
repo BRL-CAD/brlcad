@@ -40,9 +40,9 @@
 #include "./rtuif.h"
 
 
-extern	FILE	*outfp;
-extern	int	width, height;
-static	unsigned char *scanbuf;
+extern FILE *outfp;
+extern size_t width, height;
+static unsigned char *scanbuf;
 
 /*
  *  Viewing module specific "set" variables.

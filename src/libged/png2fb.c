@@ -57,7 +57,7 @@ Usage: png2fb [-H -i -c -v -z -1] [-m #lines]\n\
 	[-x file_xoff] [-y file_yoff] [-X scr_xoff] [-Y scr_yoff]\n\
 	[-S squarescrsize] [file.png]\n";
 
-int
+static int
 get_args(int argc, char **argv)
 {
     int c;

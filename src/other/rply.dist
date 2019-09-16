@@ -1,4 +1,6 @@
 set(rply_ignore_files
+CMakeLists.txt
 LICENSE
+rply.c
 rply.h
 )

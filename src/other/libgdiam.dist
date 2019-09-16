@@ -1,7 +1,9 @@
-SET(libgdiam_ignore_files
-README
+set(libgdiam_ignore_files
+CMakeLists.txt
 LICENSE.GPL2
 LICENSE.LGPL21
+README
+gdiam.cpp
 gdiam.hpp
 gdiam_test.cpp
 )

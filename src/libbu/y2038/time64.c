@@ -322,40 +322,6 @@ Time64_T timegm64(const struct TM *date) {
     return(seconds);
 }
 
-
-static int check_tm(struct TM *tm)
-{
-    /* Don't forget leap seconds */
-    assert(tm->tm_sec >= 0);
-    assert(tm->tm_sec <= 61);
-
-    assert(tm->tm_min >= 0);
-    assert(tm->tm_min <= 59);
-
-    assert(tm->tm_hour >= 0);
-    assert(tm->tm_hour <= 23);
-
-    assert(tm->tm_mday >= 1);
-    assert(tm->tm_mday <= days_in_month[IS_LEAP(tm->tm_year)][tm->tm_mon]);
-
-    assert(tm->tm_mon  >= 0);
-    assert(tm->tm_mon  <= 11);
-
-    assert(tm->tm_wday >= 0);
-    assert(tm->tm_wday <= 6);
-
-    assert(tm->tm_yday >= 0);
-    assert(tm->tm_yday <= length_of_year[IS_LEAP(tm->tm_year)]);
-
-#ifdef HAS_TM_TM_GMTOFF
-    assert(tm->tm_gmtoff >= -24 * 60 * 60);
-    assert(tm->tm_gmtoff <=  24 * 60 * 60);
-#endif
-
-    return 1;
-}
-
-
 /* The exceptional centuries without leap years cause the cycle to
    shift by 16
 */
@@ -630,7 +596,6 @@ struct TM *gmtime64_r (const Time64_T *in_time, struct TM *p)
         GMTIME_R(&safe_time, &safe_date);
 
         copy_tm_to_TM64(&safe_date, p);
-        assert(check_tm(p));
 
         return p;
     }
@@ -732,8 +697,6 @@ struct TM *gmtime64_r (const Time64_T *in_time, struct TM *p)
     p->tm_mon  = v_tm_mon;
     p->tm_wday = v_tm_wday;
 
-    assert(check_tm(p));
-
     return p;
 }
 
@@ -757,7 +720,6 @@ struct TM *localtime64_r (const Time64_T *ytime, struct TM *local_tm)
         LOCALTIME_R(&safe_time, &safe_date);
 
         copy_tm_to_TM64(&safe_date, local_tm);
-        assert(check_tm(local_tm));
 
         return local_tm;
     }
@@ -821,8 +783,6 @@ struct TM *localtime64_r (const Time64_T *ytime, struct TM *local_tm)
     */
     if( !IS_LEAP(local_tm->tm_year) && local_tm->tm_yday == 365 )
         local_tm->tm_yday--;
-
-    assert(check_tm(local_tm));
 
     return local_tm;
 }

@@ -33,7 +33,6 @@
 #include "tcl.h"
 
 /* external sp_hook functions */
-extern void fbserv_set_port(const struct bu_structparse *, const char *, void *, const char *, void *);
 extern void predictor_hook(const struct bu_structparse *, const char *, void *, const char *, void *);
 
 /* exported sp_hook functions */

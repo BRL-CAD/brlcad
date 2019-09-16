@@ -1,3 +1,5 @@
+if(DOXYGEN_FOUND)
+
 set(lib_inputs "INPUT += \"${CMAKE_SOURCE_DIR}/include/common.h\"")
 set(lib_inputs "${lib_inputs}
 INPUT += \"${CMAKE_BINARY_DIR}/CMakeTmp/features.dox\"")
@@ -36,7 +38,6 @@ set(DOX_LIBS
   libwdb
   librt
   liboptical
-  libmultispectral
   libgcv
   libanalyze
   libged
@@ -86,13 +87,6 @@ INPUT += \"${CMAKE_SOURCE_DIR}/include/nmg.h\"
     ")
   endif("${libname}" STREQUAL "librt")
 
-  # libmultispectral header doesn't fit the template
-  if("${libname}" STREQUAL "libmultispectral")
-    set(INPUTS "${INPUTS}
-INPUT += \"${CMAKE_SOURCE_DIR}/include/spectrum.h\"
-    ")
-  endif("${libname}" STREQUAL "libmultispectral")
-
   # libtermio header doesn't fit the template
   if("${libname}" STREQUAL "libtermio")
     set(INPUTS "${INPUTS}
@@ -132,13 +126,6 @@ INPUT += \"${CMAKE_SOURCE_DIR}/include/raytrace.h\"
 INPUT += \"${CMAKE_SOURCE_DIR}/include/nmg.h\"
     ")
   endif("${libname}" STREQUAL "librt")
-
-  # libmultispectral header doesn't fit the template
-  if("${libname}" STREQUAL "libmultispectral")
-    set(lib_inputs "${lib_inputs}
-INPUT += \"${CMAKE_SOURCE_DIR}/include/spectrum.h\"
-    ")
-  endif("${libname}" STREQUAL "libmultispectral")
 
   # libtermio header doesn't fit the template
   if("${libname}" STREQUAL "libtermio")
@@ -180,12 +167,38 @@ add_custom_command(
 add_custom_target(dox     DEPENDS "${CMAKE_BINARY_DIR}/doc/doxygen_output/html/index.html")
 add_custom_target(doxygen DEPENDS "${CMAKE_BINARY_DIR}/doc/doxygen_output/html/index.html")
 
+endif(DOXYGEN_FOUND)
+
 set(doxygen_ignore_files
+  CMakeLists.txt
   Doxyfile.in
-  intro.dox
   bview.dox
+  common.dox
+  images/README.txt
+  images/rt_pattern_circ_spiral.png
+  images/rt_pattern_rect_orthogrid.png
+  intro.dox
+  libanalyze.dox
+  libbg.dox
+  libbn.dox
+  libbrep.dox
+  libbu.dox
+  libcursor.dox
+  libdm.dox
+  libfb.dox
+  libfft.dox
+  libgcv.dox
+  libged.dox
+  libicv.dox
+  libnmg.dox
+  liboptical.dox
+  libpc.dox
+  libpkg.dox
+  librt.dox
+  libtclcad.dox
+  libtermio.dox
+  libwdb.dox
   vmath.dox
-  images
   )
 CMAKEFILES(${doxygen_ignore_files})
 
@@ -195,3 +208,4 @@ CMAKEFILES(${doxygen_ignore_files})
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
+

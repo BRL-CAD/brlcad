@@ -97,7 +97,8 @@ CMAKEFILES(
   cornell.rt
   cube.rt
   db.php
-  include
+  include/ctype.inc
+  include/debug.inc
 )
 
 # Local Variables:

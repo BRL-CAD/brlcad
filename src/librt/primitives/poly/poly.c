@@ -756,7 +756,7 @@ rt_pg_export4(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 	}
 
 	rec[rno].q.q_id = ID_P_DATA;
-	rec[rno].q.q_count = pp->npts;
+	rec[rno].q.q_count = (char)pp->npts;
 	for (i=0; i < pp->npts; i++) {
 	    /* NOTE: type conversion to dbfloat_t */
 	    VSCALE(rec[rno].q.q_verts[i],

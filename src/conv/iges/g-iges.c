@@ -79,7 +79,7 @@ extern void count_refs(struct db_i *dbip, struct directory *dp, void *ptr);
 extern int nmgregion_to_tsurf(char *name, struct nmgregion *r, FILE *fp_dir, FILE *fp_param);
 extern int write_solid_instance(int orig_de, mat_t mat, FILE *fp_dir, FILE *fp_param);
 extern void get_props(struct iges_properties *props, struct rt_comb_internal *comb);
-extern int comb_to_iges(struct rt_comb_internal *comb, int length, int dependent, struct iges_properties *props, int de_pointers[], FILE *fp_dir, FILE *fp_param);
+extern int comb_to_iges(struct rt_comb_internal *comb, size_t length, int dependent, struct iges_properties *props, int de_pointers[], FILE *fp_dir, FILE *fp_param);
 
 static void
 usage(const char *argv0)
@@ -778,7 +778,7 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, void *UNUSED(ptr))
     props.color[2] = 0;
     get_props(&props, comb);
 
-    dp->d_uses = (-comb_to_iges(comb, (int)comb_len, dependent, &props, de_pointers, fp_dir, fp_param));
+    dp->d_uses = (-comb_to_iges(comb, comb_len, dependent, &props, de_pointers, fp_dir, fp_param));
 
     if (!dp->d_uses) {
 	comb_error++;

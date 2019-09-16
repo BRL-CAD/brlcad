@@ -153,7 +153,7 @@ qt_loadMatrix(dm *dmp, fastf_t *mat, int UNUSED(which_eye))
 	bu_log("qt_loadMatrix\n");
     }
 
-    MAT_COPY(privars->qmat, mat);
+    MAT_COPY(privars->mod_mat, mat);
 
     return 0;
 }
@@ -263,6 +263,7 @@ qt_drawVList(dm *dmp, struct bn_vlist *vp)
 	int nused = tvp->nused;
 	int *cmd = tvp->cmd;
 	point_t *pt = tvp->pt;
+	point_t tlate;
 	fastf_t dist;
 
 	for (i = 0; i < nused; i++, cmd++, pt++) {
@@ -271,6 +272,16 @@ qt_drawVList(dm *dmp, struct bn_vlist *vp)
 		case BN_VLIST_POLY_VERTNORM:
 		case BN_VLIST_TRI_START:
 		case BN_VLIST_TRI_VERTNORM:
+		    continue;
+		case BN_VLIST_MODEL_MAT:
+		    privars->qmat = &(privars->mod_mat[0]);
+		    continue;
+		case BN_VLIST_DISPLAY_MAT:
+		    MAT4X3PNT(tlate, (privars->mod_mat), *pt);
+		    privars->disp_mat[3] = tlate[0];
+		    privars->disp_mat[7] = tlate[1];
+		    privars->disp_mat[11] = tlate[2];
+		    privars->qmat = &(privars->disp_mat[0]);
 		    continue;
 		case BN_VLIST_POLY_MOVE:
 		case BN_VLIST_LINE_MOVE:
@@ -928,8 +939,10 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
 
     qt_configureWin(dmp, 1);
 
-    MAT_IDN(privars->qmat);
+    MAT_IDN(privars->mod_mat);
+    MAT_IDN(privars->disp_mat);
 
+    privars->qmat = &(privars->mod_mat[0]);
     /* inputs and outputs assume POSIX/C locale settings */
     setlocale(LC_ALL, "POSIX");
 

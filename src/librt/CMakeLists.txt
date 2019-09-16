@@ -13,7 +13,7 @@ set(RT_INCLUDE_DIRS
 
 if(BRLCAD_ENABLE_OPENCL)
   add_definitions(-DUSE_OPENCL)
-  set(RT_INCLUDE_DIRS ${RT_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS})
+  set(RT_INCLUDE_DIRS ${RT_INCLUDE_DIRS} ${OPENCL_INCLUDE_DIRS})
 endif (BRLCAD_ENABLE_OPENCL)
 
 # locally used but not needed by users of the library
@@ -77,6 +77,7 @@ set(LIBRT_SOURCES
   op.c
   pr.c
   prep.c
+  primitives/annot/annot.c
   primitives/arb8/arb8.c
   primitives/arb8/arb8_brep.cpp
   primitives/arb8/arb8_mirror.c
@@ -207,7 +208,7 @@ set(LIBRT_SOURCES
   primitives/superell/superell.c
   primitives/superell/superell_brep.cpp
   primitives/superell/superell_mirror.c
-  primitives/table.c
+  primitives/table.cpp
   primitives/tgc/tgc.c
   primitives/tgc/tgc_brep.cpp
   primitives/tgc/tgc_mirror.c
@@ -225,7 +226,6 @@ set(LIBRT_SOURCES
   screened_poisson.cpp
   search.c
   shoot.c
-  spectrum.c
   tol.c
   transform.c
   tree.c
@@ -240,9 +240,7 @@ set(librt_ignored_files
   columnparse.c
   librt_private.h
   prcomb.c
-  primitives/arb8/arb8_shot.cl
   primitives/bot/bot_edge.h
-  primitives/bot/bot_shot.cl
   primitives/bot/bot_wireframe.cpp
   primitives/bot/btg.h
   primitives/bot/g_bot_include.c
@@ -261,28 +259,35 @@ set(librt_ignored_files
   primitives/bot/tieprivate.h
   primitives/brep/brep_debug.h
   primitives/brep/brep_local.h
-  primitives/common.cl
   primitives/datum/datum.h
   primitives/dsp/dsp.h
+  primitives/fixpt.h
+  primitives/metaball/metaball.h
+  primitives/revolve/revolve.h
+  primitives/sph/benchmark.sh
+  primitives/xxx/xxx.h
+
+  primitives/bool.cl
+  primitives/common.cl
+  primitives/rt.cl
+  primitives/solver.cl
+
+  primitives/arb8/arb8_shot.cl
+  primitives/bot/bot_shot.cl
+  primitives/ebm/ebm_shot.cl
   primitives/ehy/ehy_shot.cl
   primitives/ell/ell_shot.cl
   primitives/epa/epa_shot.cl
   primitives/eto/eto_shot.cl
-  primitives/fixpt.h
-  primitives/metaball/metaball.h
+  primitives/hrt/hrt_shot.cl
   primitives/part/part_shot.cl
   primitives/rec/rec_shot.cl
-  primitives/revolve/revolve.h
-  primitives/rt.cl
-  primitives/solver.cl
-  primitives/bool.cl
-  primitives/sph/benchmark.sh
+  primitives/rhc/rhc_shot.cl
+  primitives/rpc/rpc_shot.cl
   primitives/sph/sph_shot.cl
   primitives/tgc/tgc_shot.cl
   primitives/tor/tor_shot.cl
-  primitives/rhc/rhc_shot.cl
-  primitives/rpc/rpc_shot.cl
-  primitives/xxx/xxx.h
+
   search.h
   subd_test_bot.asc
   test_bot2nurbs.cpp
@@ -297,24 +302,26 @@ set(librt_ignored_files
 CMAKEFILES(${librt_ignored_files})
 
 set(CL_FILES
+  primitives/bool.cl
   primitives/common.cl
   primitives/rt.cl
   primitives/solver.cl
-  primitives/bool.cl
 
   primitives/arb8/arb8_shot.cl
   primitives/bot/bot_shot.cl
+  primitives/ebm/ebm_shot.cl
   primitives/ehy/ehy_shot.cl
   primitives/ell/ell_shot.cl
   primitives/epa/epa_shot.cl
   primitives/eto/eto_shot.cl
-  primitives/sph/sph_shot.cl
+  primitives/hrt/hrt_shot.cl
   primitives/part/part_shot.cl
   primitives/rec/rec_shot.cl
-  primitives/tgc/tgc_shot.cl
-  primitives/tor/tor_shot.cl
   primitives/rhc/rhc_shot.cl
   primitives/rpc/rpc_shot.cl
+  primitives/sph/sph_shot.cl
+  primitives/tgc/tgc_shot.cl
+  primitives/tor/tor_shot.cl
   )
 
 BRLCAD_ADDDATA(nurb_example.c sample_applications)
@@ -328,7 +335,7 @@ else(MSVC)
 endif(MSVC)
 
 if(BRLCAD_ENABLE_OPENCL)
-  set(OPENCL_LIBS ${OpenCL_LIBRARIES})
+  set(OPENCL_LIBS ${OPENCL_LIBRARIES})
 endif(BRLCAD_ENABLE_OPENCL)
 
 if(BRLCAD_ENABLE_SPR)

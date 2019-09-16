@@ -5447,7 +5447,7 @@ main(int ac, char *av[])
 	if (ugpart) UF_PART_close(ugpart, 1, 1);
 
 	cset = ugpart = 0;
-	dprintf("%s closed\n", av[i]);
+	ugdprintf("%s closed\n", av[i]);
 
 	UF_terminate();
 

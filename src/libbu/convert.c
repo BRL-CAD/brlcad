@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
+#include <limits.h>
 
 #include "bu/cv.h"
 #include "bu/endian.h"

@@ -1,11 +1,5 @@
 # Minimum required version of CMake
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
-if(COMMAND CMAKE_POLICY)
-  CMAKE_POLICY(SET CMP0003 NEW)
-  if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-    CMAKE_POLICY(SET CMP0026 OLD)
-  endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-endif(COMMAND CMAKE_POLICY)
+cmake_minimum_required(VERSION 3.0.2)
 
 # Set CMake project name
 project(Poly2Tri)
@@ -55,9 +49,6 @@ if(NOT BIN_DIR)
   set(BIN_DIR bin)
 endif(NOT BIN_DIR)
 
-if(MSVC)
-  add_definitions("-DP2T_DLL_EXPORTS")
-endif(MSVC)
 add_definitions("-DP2T_NO_GLFW")
 
 add_library(${P2T_LIB_NAME} ${LIBP2T_SOURCES} ${LIBP2T_PUBLIC_HDRS} ${LIBP2T_PRIVATE_HDRS})
@@ -66,6 +57,7 @@ if(MSVC)
   # msvc does not append 'lib' - do it here to have consistent name
   set_target_properties(${P2T_LIB_NAME} PROPERTIES PREFIX "lib")
   set_target_properties(${P2T_LIB_NAME} PROPERTIES IMPORT_PREFIX "lib")
+  set_property(TARGET ${P2T_LIB_NAME} APPEND PROPERTY COMPILE_DEFINITIONS "P2T_DLL_EXPORTS")
 endif()
 target_link_libraries(${P2T_LIB_NAME} ${ZLIB_LIBRARY} ${M_LIBRARY})
 install(TARGETS ${P2T_LIB_NAME}
@@ -79,13 +71,9 @@ if(BUILD_STATIC_LIBS)
   if(MSVC)
     # msvc does not append 'lib' - do it here to have consistent name
     set_target_properties(${P2T_LIB_NAME_STATIC} PROPERTIES PREFIX "lib")
-  endif()
-
-  if(BRLCAD_ENABLE_BRLCAD_LIBRARY AND ${CMAKE_PROJECT_NAME}_ZLIB_BUILD AND NOT ${CMAKE_PROJECT_NAME}-ENABLE_SYSTEM_LIBS_ONLY)
-    target_link_libraries(${P2T_LIB_NAME_STATIC} zlib-static ${M_LIBRARY})
-  else(BRLCAD_ENABLE_BRLCAD_LIBRARY AND ${CMAKE_PROJECT_NAME}_ZLIB_BUILD AND NOT ${CMAKE_PROJECT_NAME}-ENABLE_SYSTEM_LIBS_ONLY)
-    target_link_libraries(${P2T_LIB_NAME_STATIC} ${ZLIB_LIBRARY} ${M_LIBRARY})
-  endif(BRLCAD_ENABLE_BRLCAD_LIBRARY AND ${CMAKE_PROJECT_NAME}_ZLIB_BUILD AND NOT ${CMAKE_PROJECT_NAME}-ENABLE_SYSTEM_LIBS_ONLY)
+  else(MSVC)
+    set_target_properties(${P2T_LIB_NAME_STATIC} PROPERTIES OUTPUT_NAME "${P2T_LIB_NAME}")
+  endif(MSVC)
 
   install(TARGETS ${P2T_LIB_NAME_STATIC}
     RUNTIME DESTINATION ${BIN_DIR}

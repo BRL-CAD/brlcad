@@ -288,6 +288,10 @@ FastImportRepository::FastImportRepository(const Rules::Repository &rule)
             init.setWorkingDirectory(name);
             init.start("git", QStringList() << "--bare" << "init");
             init.waitForFinished(-1);
+            QProcess casesensitive;
+            casesensitive.setWorkingDirectory(name);
+            casesensitive.start("git", QStringList() << "config" << "core.ignorecase" << "false");
+            casesensitive.waitForFinished(-1);
             // Write description
             if (!rule.description.isEmpty()) {
                 QFile fDesc(QDir(name).filePath("description"));

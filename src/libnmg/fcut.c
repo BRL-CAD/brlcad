@@ -55,6 +55,11 @@
 
 #define PLOT_BOTH_FACES 1
 
+#define VAVERAGE(a, b, c) { \
+	(a)[X] = ((b)[X] + (c)[X]) * 0.5;\
+	(a)[Y] = ((b)[Y] + (c)[Y]) * 0.5;\
+	(a)[Z] = ((b)[Z] + (c)[Z]) * 0.5;\
+    }
 
 /* States of the state machine */
 #define NMG_STATE_ERROR		0
@@ -64,6 +69,7 @@
 #define NMG_STATE_ON_B		4
 #define NMG_STATE_ON_N		5
 #define NMG_STATE_IN		6
+#if 0
 static const char *nmg_state_names[] = {
     "*ERROR*",
     "out",
@@ -174,7 +180,7 @@ static const char *action_names[] = {
     "CUTJOIN",
     "*TOOBIG*"
 };
-
+#endif
 
 /* The "ray" here is the intersection line between two faces */
 struct nmg_ray_state {
@@ -204,12 +210,14 @@ struct loop_cuts {
     struct vertexuse *vu2;
 };
 
+#if 0
 HIDDEN int
 nmg_face_state_transition(struct nmg_ray_state *rs,
 			  int pos,
 			  int multi,
 			  int other_rs_state,
 			  struct bu_list *vlfree);
+#endif
 
 /**
  * Sort list of hit points (vertexuse's) in fu1 (bu_ptbl 'b') on plane
@@ -399,6 +407,7 @@ top:
     return ret;
 }
 
+#if 0
 
 /**
  * Given a vertexuse from a loop which lies in a plane,
@@ -1879,7 +1888,7 @@ nmg_sanitize_fu(struct faceuse *fu)
 	lu = lunext;
     }
 }
-
+#endif
 
 /**
  * Set up nmg_ray_state structure.
@@ -1986,13 +1995,8 @@ nmg_face_rs_init(struct nmg_ray_state *rs, struct bu_ptbl *b, struct faceuse *fu
     VREVERSE(rs->ang_x_dir, dir);
     VREVERSE(rs->ang_y_dir, rs->left);
 }
+#if 0
 
-
-#define VAVERAGE(a, b, c) { \
-	(a)[X] = ((b)[X] + (c)[X]) * 0.5;\
-	(a)[Y] = ((b)[Y] + (c)[Y]) * 0.5;\
-	(a)[Z] = ((b)[Z] + (c)[Z]) * 0.5;\
-    }
 /**
  * Force the geometry structure for a given edge to be that of
  * the intersection line between the two faces.
@@ -2063,7 +2067,7 @@ out:
 	       (void *)eu, (void *)eu->g.magic_p, (void *)rs->eg_p);
     }
 }
-
+#endif
 
 HIDDEN struct bu_ptbl *
 find_loop_to_cut(int *index1, int *index2, size_t prior_start, size_t prior_end, size_t next_start, size_t next_end, fastf_t *mid_pt, struct nmg_ray_state *rs, struct bu_list *vlfree)
@@ -2575,7 +2579,6 @@ find_best_vu(int start, int end, struct vertex *other_vp, struct nmg_ray_state *
     return best_index;
 }
 
-
 HIDDEN void
 #if PLOT_BOTH_FACES
 nmg_fcut_face(struct nmg_ray_state *rs, struct bu_list *vlfree)
@@ -2935,6 +2938,7 @@ nmg_fcut_face(struct nmg_ray_state *rs, struct bu_list *UNUSED(vlfree))
 	nmg_pr_fu_briefly(rs->fu1, "");
 }
 
+#if 0
 
 void
 nmg_unlist_v(struct bu_ptbl *b, fastf_t *mag, struct vertex *v)
@@ -3054,7 +3058,7 @@ nmg_onon_fix(struct nmg_ray_state *rs, struct bu_ptbl *b, struct bu_ptbl *ob, fa
 
     return 0;
 }
-
+#endif
 
 /**
  * The main face cut handler.
@@ -3196,7 +3200,6 @@ top:
     return rs1.eg_p;
 }
 
-
 void
 nmg_fcut_face_2d(struct bu_ptbl *vu_list, fastf_t *UNUSED(mag), struct faceuse *fu1, struct faceuse *fu2, struct bu_list *vlfree, struct bn_tol *tol)
 {
@@ -3219,6 +3222,7 @@ nmg_fcut_face_2d(struct bu_ptbl *vu_list, fastf_t *UNUSED(mag), struct faceuse *
     nmg_fcut_face(&rs, vlfree);
 }
 
+#if 0
 
 /*
  * State machine transition tables
@@ -3811,7 +3815,7 @@ nmg_face_state_transition(struct nmg_ray_state *rs, int pos, int multi, int othe
     if (rs->eg_p) NMG_CK_EDGE_G_LSEG(rs->eg_p);
     return 0;
 }
-
+#endif
 
 /*
  * Local Variables:

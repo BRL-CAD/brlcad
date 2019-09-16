@@ -30,7 +30,7 @@ void
 Get_att()
 {
     size_t i;
-    int j;
+    int j = 0;
     char *str;
 
     for (i = 0; i < totentities; i++) {

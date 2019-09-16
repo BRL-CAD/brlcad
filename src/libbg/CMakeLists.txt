@@ -18,7 +18,7 @@ set(LIBBG_SOURCES
   util.c
   )
 
-BRLCAD_ADDLIB(libbg "${LIBBG_SOURCES}" libbn libbu)
+BRLCAD_ADDLIB(libbg "${LIBBG_SOURCES}" "libbn;libbu")
 set_target_properties(libbg PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)

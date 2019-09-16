@@ -163,13 +163,13 @@ open_part(char *p_name, int level)
     UF_func(UF_PART_open(p_name, &ugpart, &error_status));
     if (error_status.n_parts > 0) {
 
-	dprintf("%*sPART_open status: failed:%d user_abort:%d n_parts:%d\n",
+	ugdprintf("%*sPART_open status: failed:%d user_abort:%d n_parts:%d\n",
 		level, "",
 		error_status.failed,
 		error_status.user_abort,
 		error_status.n_parts);
 	for (e_part = 0; e_part < error_status.n_parts; e_part++) {
-	    dprintf("%*sPart %s status %d\n",
+	    ugdprintf("%*sPart %s status %d\n",
 		    level, "",
 		    error_status.file_names[e_part],
 		    error_status.statuses[e_part]);
@@ -260,13 +260,13 @@ Lee_open_part(char *p_name, int level)
 
     if (error_status.n_parts > 0) {
 
-	dprintf("%*sPART_open status: failed:%d user_abort:%d n_parts:%d\n",
+	ugdprintf("%*sPART_open status: failed:%d user_abort:%d n_parts:%d\n",
 		level, "",
 		error_status.failed,
 		error_status.user_abort,
 		error_status.n_parts);
 	for (e_part = 0; e_part < error_status.n_parts; e_part++) {
-	    dprintf("%*sPart %s status %d\n",
+	    ugdprintf("%*sPart %s status %d\n",
 		    level, "",
 		    error_status.file_names[e_part],
 		    error_status.statuses[e_part]);

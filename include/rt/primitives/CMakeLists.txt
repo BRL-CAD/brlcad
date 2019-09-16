@@ -1,5 +1,6 @@
 set(primitives_headers
   arb8.h
+  annot.h
   bot.h
   brep.h
   cline.h

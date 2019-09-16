@@ -37,19 +37,15 @@
 # *******************************************************************
 
 # Minimum required version of CMake
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
-IF(COMMAND CMAKE_POLICY)
-  CMAKE_POLICY(SET CMP0003 NEW)
-  if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-	  CMAKE_POLICY(SET CMP0026 OLD)
-  endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-  if ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
+cmake_minimum_required(VERSION 3.0.2)
+if(COMMAND CMAKE_POLICY)
+  if("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
 	  CMAKE_POLICY(SET CMP0054 NEW)
-  endif ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
-ENDIF(COMMAND CMAKE_POLICY)
+  endif("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
+endif(COMMAND CMAKE_POLICY)
 
 # set CMake project name
-PROJECT(TK)
+project(TK)
 
 # Without Tcl libraries AND sources, we can't build Tk.  Use TCL_SRC_PREFIX
 # and TCL_BIN_PREFIX to identify the location of the Tcl we are to use.
@@ -100,10 +96,18 @@ ENDIF(WIN32)
 
 #---------------------------------------------------------------------
 # The following logic is what allows binaries to run successfully in
-# the build directory AND install directory.  Thanks to plplot for
-# identifying the necessity of setting CMAKE_INSTALL_NAME_DIR on OSX.
+# the build directory AND install directory.
 
-include(${CMAKE_CURRENT_SOURCE_DIR}/CMake/RPath_Setup.cmake)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CMake/RPath_Setup.cmake")
+  include("${CMAKE_CURRENT_SOURCE_DIR}/CMake/RPath_Setup.cmake")
+  if(COMMAND cmake_set_rpath)
+    cmake_set_rpath()
+  endif(COMMAND cmake_set_rpath)
+else(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CMake/RPath_Setup.cmake")
+  if(NOT HAVE_PARENT_BUILD)
+    message(FATAL_ERROR "Not building as a subbuild, but CMake/RPath_Setup.cmake not found.  To build as a stand-alone build, add RPath_Setup.cmake to the CMake directory.")
+  endif(NOT HAVE_PARENT_BUILD)
+endif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CMake/RPath_Setup.cmake")
 
 #----------------------------------------------------------------------------
 # The location in which to install Tcl.  Only do this if CMAKE_INSTALL_PREFIX 

@@ -2325,6 +2325,16 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 		*strp = "V";
 		break;
 	    }
+	case ID_ANNOT:
+	    {
+		struct rt_annot_internal *ann =
+		    (struct rt_annot_internal *)ip->idb_ptr;
+		RT_ANNOT_CK_MAGIC(ann);
+
+		VMOVE(mpt, ann->V);
+		*strp = "V";
+		break;
+	    }
 	case ID_EXTRUDE:
 	    {
 		struct rt_extrude_internal *extr =
@@ -4677,7 +4687,7 @@ sedit(void)
 		es_peqn[es_menu][W]=VDOT(&es_peqn[es_menu][0], work);
 		/* find new vertices, put in record in vector notation */
 
-                (void)rt_arb_calc_points(arb, es_type, (const plane_t *)es_peqn, &mged_tol);
+		(void)rt_arb_calc_points(arb, es_type, (const plane_t *)es_peqn, &mged_tol);
 	    }
 	    break;
 	case ECMD_ARB_SETUP_ROTFACE:

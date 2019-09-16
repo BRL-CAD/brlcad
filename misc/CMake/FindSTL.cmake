@@ -44,6 +44,8 @@
 #
 #=============================================================================
 
+include(CheckCSourceRuns)
+
 set(stl_test_src "
 int
 main(int ac, char *av[])
@@ -61,7 +63,7 @@ if(NOT DEFINED STL_LIB_TEST)
 
   # first try with no library
   set(CMAKE_REQUIRED_LIBRARIES "")
-  CHECK_C_SOURCE_RUNS("${stl_test_src}" STL_LIB_TEST)
+  check_c_source_runs("${stl_test_src}" STL_LIB_TEST)
 
   if("${STL_LIB_TEST}" EQUAL 1)
     # succeeded - no STL needed
@@ -73,7 +75,7 @@ if(NOT DEFINED STL_LIB_TEST)
     endif(NOT STDCXX_LIBRARIES)
 
     set(CMAKE_REQUIRED_LIBRARIES "${STDCXX_LIBRARIES}")
-    CHECK_C_SOURCE_RUNS("${stl_test_src}" STL_LIB_TEST)
+    check_c_source_runs("${stl_test_src}" STL_LIB_TEST)
 
     if("${STL_LIB_TEST}" EQUAL 1)
       set(STDCXX_LIBRARIES "${STDCXX_LIBRARIES}" CACHE STRING "STL found" FORCE)

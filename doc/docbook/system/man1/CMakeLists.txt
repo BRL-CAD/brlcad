@@ -219,7 +219,6 @@ set(man1_EN
   rtregis.xml
   rtscale.xml
   rtshot.xml
-  rttherm.xml
   rtwalk.xml
   rtweight.xml
   rtwizard.xml
@@ -229,7 +228,6 @@ set(man1_EN
   shapefact.xml
   showshot.xml
   showtherm.xml
-  ssamp-bw.xml
   stl-g.xml
   sun-pix.xml
   tabinterp.xml

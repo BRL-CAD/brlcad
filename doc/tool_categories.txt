@@ -24,7 +24,6 @@ rtscale
 rtshot
 rtsil
 rtsrv
-rttherm
 rtwalk
 rtweight
 rtwizard (GUI)
@@ -150,7 +149,6 @@ pix-yuv
 png-bw
 png-pix
 rle-pix
-ssamp-bw
 sun-pix
 u-a
 u-bw
@@ -292,7 +290,6 @@ random
 script-tab
 scriptsort
 smod
-ssampview (GUI)
 syn
 tabinterp
 tabsub

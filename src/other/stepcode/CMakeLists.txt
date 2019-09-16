@@ -38,7 +38,7 @@
 # This file contains the top level CMakeLists.txt logic for the
 # SC software package.
 
-PROJECT(SC)
+project(SC)
 
 # SC version
 SET(SC_VERSION_MAJOR 0)
@@ -55,12 +55,8 @@ SET(SC_ABI_SOVERSION 2)
 SET(SC_ABI_VERSION ${SC_ABI_SOVERSION}.0.0)
 
 # Minimum required version of CMake
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8.8)
+cmake_minimum_required(VERSION 3.0.2)
 IF(COMMAND CMAKE_POLICY)
-  CMAKE_POLICY(SET CMP0003 NEW)
-  if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-	  CMAKE_POLICY(SET CMP0026 OLD)
-  endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
   if ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
 	  CMAKE_POLICY(SET CMP0054 NEW)
   endif ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
@@ -180,12 +176,17 @@ ENDIF(SC_ENABLE_TESTING)
 
 #---------------------------------------------------------------------
 # The following logic is what allows binaries to run successfully in
-# the build directory AND install directory.  Thanks to plplot for
-# identifying the necessity of setting CMAKE_INSTALL_NAME_DIR on OSX.
-# Documentation of these options is available at
-# http://www.cmake.org/Wiki/CMake_RPATH_handling
-
-include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/RPath_Setup.cmake)
+# the build directory AND install directory.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/cmake/RPath_Setup.cmake")
+  include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/RPath_Setup.cmake")
+  if(COMMAND cmake_set_rpath)
+    cmake_set_rpath()
+  endif(COMMAND cmake_set_rpath)
+else(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/cmake/RPath_Setup.cmake")
+  if(NOT HAVE_PARENT_BUILD)
+    message(FATAL_ERROR "Not building as a subbuild, but cmake/RPath_Setup.cmake not found.  To build as a stand-alone build, add RPath_Setup.cmake to the CMake directory.")
+  endif(NOT HAVE_PARENT_BUILD)
+endif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/cmake/RPath_Setup.cmake")
 
 #-----------------------------------------------------------------------------
 # Output directories.

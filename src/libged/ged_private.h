@@ -332,7 +332,7 @@ extern void _ged_setup_rt(struct ged *gedp,
 
 /* defined in red.c */
 
-extern char _ged_tmpfil[MAXPATHLEN];
+extern char _ged_tmpfil[];
 
 
 /* defined in rt.c */

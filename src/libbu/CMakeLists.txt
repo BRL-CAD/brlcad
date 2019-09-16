@@ -34,13 +34,16 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/mime.cmake)
 # We do want to install the mime header
 install(FILES ${BU_MIME_H_FILE} DESTINATION ${INCLUDE_DIR}/brlcad/bu)
 
-# Year 2038+ support lib
-BRLCAD_ADDLIB(y2038 "y2038/time64.c" "")
-if(CPP_DLL_DEFINES)
-  set_property(TARGET y2038 APPEND PROPERTY COMPILE_DEFINITIONS "Y2038_DLL_EXPORTS")
-endif(CPP_DLL_DEFINES)
+# Year 2038+ support
+set_property(SOURCE y2038/time64.c PROPERTY EXTERNAL 1)
+include(CheckCCompilerFlag)
+check_c_compiler_flag(-fPIC HAVE_FPIC)
+if(HAVE_FPIC)
+  set_property(SOURCE y2038/time64.c APPEND PROPERTY COMPILE_FLAGS "-fPIC")
+endif(HAVE_FPIC)
 
 set(LIBBU_SOURCES
+  y2038/time64.c
   affinity.c
   argv.c
   avs.c
@@ -89,7 +92,6 @@ set(LIBBU_SOURCES
   mappedfile.c
   ${BU_MIME_C_FILE}
   mread.c
-  namegen.c
   observer.c
   opt.c
   parallel.c
@@ -122,11 +124,8 @@ set(LIBBU_SOURCES
   xdr.c
   )
 
-BRLCAD_ADDLIB(libbu "${LIBBU_SOURCES}" "${CMAKE_THREAD_LIBS_INIT};${DL_LIBRARY};${WINSOCK_LIB};${PSAPI_LIB};${BSON_LIBRARIES};${UUID_LIBRARIES};${REGEX_LIBRARY};${M_LIBRARY};y2038")
+BRLCAD_ADDLIB(libbu "${LIBBU_SOURCES}" "${CMAKE_THREAD_LIBS_INIT};${DL_LIBRARY};${WINSOCK_LIB};${PSAPI_LIB};${BSON_LIBRARIES};${UUID_LIBRARIES};${REGEX_LIBRARY};${M_LIBRARY}")
 set_target_properties(libbu PROPERTIES VERSION 20.0.1 SOVERSION 20)
-if(CPP_DLL_DEFINES)
-  set_property(TARGET libbu APPEND PROPERTY COMPILE_DEFINITIONS "Y2038_DLL_IMPORTS")
-endif(CPP_DLL_DEFINES)
 
 BRLCAD_ADDDATA(fix.6r vfont)
 BRLCAD_ADDDATA(nonie.r.12 vfont)

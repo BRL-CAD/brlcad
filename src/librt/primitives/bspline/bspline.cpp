@@ -119,7 +119,7 @@ rt_nurb_grans(struct face_g_snurb *srf)
  * Calculate the bounding RPP of a bspline
  */
 int
-rt_nurb_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+rt_nurb_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     int i;
     struct nurb_specific *nurbs = NULL;
     struct nurb_specific *next;
@@ -558,13 +558,6 @@ rt_nurb_free(register struct soltab *stp)
     }
     return;
 #endif /* CONVERT_TO_BREP */
-}
-
-
-int
-rt_nurb_class(void)
-{
-    return 0;
 }
 
 

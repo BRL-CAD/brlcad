@@ -53,14 +53,14 @@ Get_nurb_surf(int entityno, struct model *m)
 {
     struct face_g_snurb *srf;
     point_t pt;
-    int entity_type;
+    int entity_type = 0;
     int i;
     int rational;
     int ncoords;
     int n_rows, n_cols, u_order, v_order;
     int n_u, n_v;
     int pt_type;
-    double a;
+    double a = 0.0;
 
     /* Acquiring Data */
 
@@ -226,17 +226,20 @@ struct edge_g_cnurb *
 Get_cnurb(int entity_no)
 {
     struct edge_g_cnurb *crv;
-    point_t pt, pt2;
-    int entity_type;
-    int num_pts;
-    int degree;
-    int i;
-    int planar;
-    int rational;
-    int pt_type;
-    int ncoords;
-    double a;
-    double x, y, z;
+    double a = 0.0;
+    double x = 0.0;
+    double y = 0.0;
+    double z = 0.0;
+    int degree = 0;
+    int entity_type = 0;
+    int i = 0;
+    int ncoords = 0;
+    int num_pts = 0;
+    int planar = 0;
+    int pt_type = 0;
+    int rational = 0;
+    point_t pt = VINIT_ZERO;
+    point_t pt2 = VINIT_ZERO;
 
     if (dir[entity_no]->param <= pstart) {
 	bu_log("Get_cnurb: Illegal parameter pointer for entity D%07d (%s)\n" ,
@@ -530,10 +533,13 @@ Make_trim_loop(int entity_no, int orientation, struct face_g_snurb *srf, struct 
     struct edgeuse *eu;
     struct edgeuse *new_eu;
     struct vertex *vp;
-    int entity_type;
-    int ncoords;
-    double x, y, z;
-    fastf_t u, v;
+    int entity_type = 0;
+    int ncoords = 0;
+    double x = 0.0;
+    double y = 0.0;
+    double z = 0.0;
+    fastf_t u = 0.0;
+    fastf_t v = 0.0;
     int i;
 
     NMG_CK_SNURB(srf);
@@ -712,9 +718,11 @@ struct loopuse *
 Make_loop(int entity_no, int orientation, int on_surf_de, struct face_g_snurb *srf, struct faceuse *fu)
 {
     struct loopuse *lu;
-    int entity_type;
-    int surf_de, param_curve_de, model_curve_de;
-    int i;
+    int entity_type = 0;
+    int surf_de = 0;
+    int param_curve_de = 0;
+    int model_curve_de = 0;
+    int i = 0;
 
     NMG_CK_SNURB(srf);
     NMG_CK_FACEUSE(fu);
@@ -897,8 +905,8 @@ trim_surf(int entityno, struct shell *s)
     struct loopuse *lu;
     struct loopuse *kill_lu;
     struct vertex *verts[3];
-    int entity_type;
-    int surf_de;
+    int entity_type = 0;
+    int surf_de = 0;
     int has_outer_boundary, inner_loop_count, outer_loop;
     int *inner_loop = NULL;
     int i;

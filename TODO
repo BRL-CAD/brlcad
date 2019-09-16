@@ -18,11 +18,37 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* TBD
-
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
+
+* move the rt_*_timer timing facilities to libbu and rework to allow
+  contexts, allowing for more than one timer to be active.  Make sure
+  the old librt API can be obsoleted cleanly.
+
+* check that dbconcat supports objects created with the bo cmd
+
+* libgcv should add objects to an existing .g if one is specified
+  as the output target - right now it's overwriting the old file
+
+* consolidate dbconcat, clone, make_name, and any other .g I/O
+  routines that need to autogenerate names to use the new
+  bu_vls_incr/bu_vls_simplify functions.
+
+* Explicitly list the CMakeLists.txt files rather than adding
+  them automatically in the add_subdirectory override, now that
+  we are listing all files explicitly - preserve the new simplicity
+
+* renamed zlib and libpng when building bundled to avoid conflicting
+  with system-installed libs.  e.g., default to ENABLE_Z_PREFIX=ON
+  with name z_brlcad (perhaps as a post-compile rename custom command)
+  and png_brlcad respectively.
+
+* investigate possibility of using simple, compact libs
+  like miniz and lodepng to replace the complexity of
+  managing zlib and libpng in src/other.  These have been
+  a source of ongoing annoyance, particularly (but not
+  exclusively) on OSX.
 
 * f_dbopen in MGED doesn't seem to be reporting failure
   if a non-.g file is fed to opendb.  That doesn't seem
@@ -60,8 +86,6 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 * make sure TIE can raytrace all of the various BoT modes
 
-* turn on Bullet code (simulate command) unconditionally
-
 * metaball in command input needs sanity checks and better
   validation.
 
@@ -89,6 +113,18 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* mater command does not validate its arguments - fix that.  Also
+  properly document using "." to skip specifying something - not in
+  the man page currently.
+
+* bullet integration - need to expose restitution as an
+  object parameter so we can configure behavior:
+  http://www.bulletphysics.org/Bullet/phpBB3/viewtopic.php?p=&f=&t=3248
+
+* afl on libged/mged/rt/...
+
+* moodycamel as libbu queue/list/ptbl implementation
 
 * reinstate 'stat' and search -size, see r67636 through r67646
 
@@ -246,14 +282,10 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   parallel.  This would be a way to easily parallelize existing code
   without needing to create wrapper functions for bu_parallel().
 
-* Post 7.26.0 release, need to look at migrating CMake logic off of
-  the OLD behavior for policy 0026 (using LOCATION property.)  Now
-  that Debian stable is using CMake >=3.0 we should be OK to require
-  the more modern CMake.  Another TODO once we require the newer CMake
-  is retiring our custom time stamping code in favor of using
-  the CMake time stamp mechanism.  Also get rid of the fallback in
-  src/libgcv/plugins/CMakeLists.txt (and any others that have crept
-  in over the years...)
+* Now that we have >3.0 CMake required, look into replacing our custom
+  time stamping code in favor of using  the CMake time stamp mechanism.
+  Also get rid of the fallback in src/libgcv/plugins/CMakeLists.txt
+  (and any others that have crept in over the years...)
 
 * convert usages of Tcl_InitHashTable() and friends to libbu
   containers (see src/conv/enf-g.c for example usage)
@@ -822,12 +854,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * clean up new rt -l8 heat graph lighting model so that it works in
   parallel and with no "splotches"
 
-* make rt_prep_timer() take or return a context that gets subsequently
-  passed to rt_get_timer() calls for returning the elapsed time.  this
-  will allow multiple overlapping timers instead of just one global
-  timers.  move the timing facilities to libbu as part of the process
-  so API can be obsoleted cleanly.
-
 * separation of stderr from stdout within libbu, particularly for
   MGED, so that there is a clean separation of result output from
   diagnostic output.  this is a fairly separate idea from having log
@@ -1130,11 +1156,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   for airfoil/wing shapes.  Interesting possibilities with boolean
   combinations of these primitives, provided their continuity at the
   ends ensures continuity all along "seams" - something to consider.
-
-* look into embedding both rgb[3] and complex[n] data types in a union
-  to allow unification of libmultispectral and liboptical APIs to a
-  single more general liboptical.  Need to be careful about
-  performance and maintainability concerns.
 
 * we need to define a libbu api for option handling that supports more
   features than getopt:
@@ -1846,10 +1867,7 @@ pl-dm      (possibly X11 specific)
 pp-fb      (TERMLIB)
 remrt      (remrt dir commented out for WIN32 in src/CMakeLists.txt)
 rtsrv      (remrt dir commented out for WIN32 in src/CMakeLists.txt)
-rttherm    (rttherm dir commented out for WIN32 in src/CMakeLists.txt)
 scriptsort (lex)
-ssamp-bw   (rttherm dir commented out for WIN32 in src/CMakeLists.txt)
-ssampview  (rttherm dir commented out for WIN32 in src/CMakeLists.txt)
 ttcp       (not ported)
 
 The MGED points support doesn't appear as an executable, but it is

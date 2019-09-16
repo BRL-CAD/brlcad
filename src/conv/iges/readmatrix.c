@@ -33,7 +33,8 @@
 void
 Readmatrix(int xform, mat_t rot)
 {
-    int i, j;
+    int i = 0;
+    int j = 0;
 
     /* read the actual transformation matrix and store */
 

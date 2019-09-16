@@ -1,5 +1,7 @@
-SET(clipper_ignore_files
-README
+set(clipper_ignore_files
+CMakeLists.txt
 License.txt
+README
+clipper.cpp
 clipper.hpp
 )

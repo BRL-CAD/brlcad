@@ -1001,7 +1001,7 @@ cmd_setup(Tcl_Interp *interp, struct cmdtab commands[])
     struct cmdtab *ctp;
 
     for (ctp = commands; ctp->ct_name; ctp++) {
-	(void)Tcl_CreateCommand(interp, ctp->ct_name, ctp->ct_func,
+	(void)Tcl_CreateCommand(interp, ctp->ct_name, (Tcl_CmdProc *)ctp->ct_func,
 				(ClientData)ctp, (Tcl_CmdDeleteProc *)NULL);
     }
 }

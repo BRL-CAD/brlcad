@@ -42,3 +42,20 @@ compiled as libpng.so).  If this happens, it likely indicates a problem
 with the CMake build logic and should be reported as a bug - you may also
 need to install a shared version of the library.  Another possibility
 would be to add -mipure-text to the linker flags.
+
+OpenIndiana
+-----------
+
+To build with gcc and CMake on OpenIndiana, you need to install the
+following packages:
+
+pkg install pkg:/developer/gcc-7
+pkg install pkg:/developer/build/cmake
+pkg install pkg:/developer/versioning/subversion
+pkg install pkg:/system/header
+pkg install pkg:/developer/lexer/flex
+
+(Note that gcc-7 building doesn't work as of 2017-08-23 - the above
+install list is a starting point, but the repo currently doesn't
+build and isn't close to building.  It may be an older gcc would
+have better luck...)

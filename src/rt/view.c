@@ -154,7 +154,7 @@ int ibackground[3] = {0};		/* integer 0..255 version */
 int inonbackground[3] = {0};	/* integer non-background */
 
 #ifdef RTSRV
-extern int srv_startpix;		/* offset for view_pixel */
+extern int srv_startpix;	/* offset for view_pixel */
 extern int srv_scanlen;		/* BUFMODE_RTSRV buffer length */
 #endif
 
@@ -1759,8 +1759,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
 	    break;
 #ifdef RTSRV
 	case BUFMODE_RTSRV:
-	    scanbuf = bu_malloc(srv_scanlen*pwidth + sizeof(long),
-				"scanbuf [multi-line]");
+	    scanbuf = (unsigned char *)bu_malloc(srv_scanlen*pwidth + sizeof(long), "scanbuf [multi-line]");
 	    break;
 #endif
 	case BUFMODE_INCR:

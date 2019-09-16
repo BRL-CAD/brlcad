@@ -47,10 +47,11 @@ add_subdirectory(articles)
 add_subdirectory(books)
 add_subdirectory(lessons)
 add_subdirectory(presentations)
+add_subdirectory(resources)
 add_subdirectory(specifications)
 add_subdirectory(system)
 
-CMAKEFILES(README fop.xconf.in log4j.properties resources)
+CMAKEFILES(README fop.xconf.in log4j.properties)
 CMAKEFILES(README.DB_authors_notes)
 CMAKEFILES(css/brlcad.css)
 

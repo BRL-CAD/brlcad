@@ -25,10 +25,10 @@ int
 Add_nurb_loop_to_face(struct shell *s, struct faceuse *fu, int loop_entityno)
 {
     int i, j, k;
-    int entity_type;
-    int no_of_edges;
-    int no_of_param_curves;
-    int vert_no;
+    int entity_type = 0;
+    int no_of_edges = 0;
+    int no_of_param_curves = 0;
+    int vert_no = 0;
     struct face *f;
     struct face_g_snurb *srf;
     struct faceuse *fu_ret;

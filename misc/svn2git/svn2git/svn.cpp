@@ -42,6 +42,7 @@
 #include <svn_pools.h>
 #include <svn_repos.h>
 #include <svn_types.h>
+#include <svn_version.h>
 
 #include <QFile>
 #include <QDebug>
@@ -50,6 +51,10 @@
 
 #undef SVN_ERR
 #define SVN_ERR(expr) SVN_INT_ERR(expr)
+
+#if SVN_VER_MAJOR == 1 && SVN_VER_MINOR < 9
+#define svn_stream_read_full svn_stream_read
+#endif
 
 typedef QList<Rules::Match> MatchRuleList;
 typedef QHash<QString, Repository *> RepositoryHash;
@@ -174,10 +179,10 @@ int SvnPrivate::openRepository(const QString &pathToRepository)
     QString path = pathToRepository;
     while (path.endsWith('/')) // no trailing slash allowed
         path = path.mid(0, path.length()-1);
-#ifndef USE_SVN_REPOS_OPEN
-    SVN_ERR(svn_repos_open3(&repos, QFile::encodeName(path), NULL, global_pool, scratch_pool));
+#if SVN_VER_MAJOR == 1 && SVN_VER_MINOR < 9
+    SVN_ERR(svn_repos_open2(&repos, QFile::encodeName(path), NULL, global_pool));
 #else
-    SVN_ERR(svn_repos_open(&repos, QFile::encodeName(path), global_pool));
+    SVN_ERR(svn_repos_open3(&repos, QFile::encodeName(path), NULL, global_pool, scratch_pool));
 #endif
     fs = svn_repos_fs(repos);
 
@@ -270,11 +275,7 @@ static int dumpBlob(Repository::Transaction *txn, svn_fs_root_t *fs_root,
         if (!CommandLineParser::instance()->contains("dry-run")) {
             QByteArray buf;
             buf.reserve(len);
-#ifndef USE_SVN_STREAM_READ
             SVN_ERR(svn_stream_read_full(in_stream, buf.data(), &len));
-#else
-	    SVN_ERR(svn_stream_read(in_stream, buf.data(), &len));
-#endif
             if (len == strlen("link ") && strncmp(buf, "link ", len) == 0) {
                 mode = 0120000;
                 stream_length -= len;
@@ -293,13 +294,7 @@ static int dumpBlob(Repository::Transaction *txn, svn_fs_root_t *fs_root,
     if (!CommandLineParser::instance()->contains("dry-run")) {
         // open a generic svn_stream_t for the QIODevice
         out_stream = streamForDevice(io, dumppool);
-#ifndef USE_SVN_STREAM_COPY
         SVN_ERR(svn_stream_copy3(in_stream, out_stream, NULL, NULL, dumppool));
-#else
-	SVN_ERR(svn_stream_copy(in_stream, out_stream, dumppool));
-	svn_stream_close(out_stream);
-	svn_stream_close(in_stream);
-#endif
 
         // print an ending newline
         io->putChar('\n');
@@ -310,7 +305,9 @@ static int dumpBlob(Repository::Transaction *txn, svn_fs_root_t *fs_root,
 
 static int recursiveDumpDir(Repository::Transaction *txn, svn_fs_root_t *fs_root,
                             const QByteArray &pathname, const QString &finalPathName,
-                            apr_pool_t *pool)
+                            apr_pool_t *pool, svn_revnum_t revnum,
+                            const Rules::Match &rule, const MatchRuleList &matchRules,
+                            bool ruledebug)
 {
     // get the dir listing
     apr_hash_t *entries;
@@ -337,7 +334,19 @@ static int recursiveDumpDir(Repository::Transaction *txn, svn_fs_root_t *fs_root
 
         if (i.value() == svn_node_dir) {
             entryFinalName += '/';
-            if (recursiveDumpDir(txn, fs_root, entryName, entryFinalName, dirpool) == EXIT_FAILURE)
+            QString entryNameQString = entryName + '/';
+
+            MatchRuleList::ConstIterator match = findMatchRule(matchRules, revnum, entryNameQString);
+            if (match == matchRules.constEnd()) continue; // no match of parent repo? (should not happen)
+
+            const Rules::Match &matchedRule = *match;
+            if (matchedRule.action != Rules::Match::Export || matchedRule.repository != rule.repository) {
+                if (ruledebug)
+                    qDebug() << "recursiveDumpDir:" << entryNameQString << "skip entry for different/ignored repository";
+                continue;
+            }
+
+            if (recursiveDumpDir(txn, fs_root, entryName, entryFinalName, dirpool, revnum, rule, matchRules, ruledebug) == EXIT_FAILURE)
                 return EXIT_FAILURE;
         } else if (i.value() == svn_node_file) {
             printf("+");
@@ -832,7 +841,7 @@ int SvnRevision::exportInternal(const char *key, const svn_fs_path_change2_t *ch
                 if(ruledebug)
                     qDebug() << "Create a true SVN copy of branch (" << key << "->" << branch << path << ")";
                 txn->deleteFile(path);
-                recursiveDumpDir(txn, fs_root, key, path, pool);
+                recursiveDumpDir(txn, fs_root, key, path, pool, revnum, rule, matchRules, ruledebug);
             }
             if (rule.annotate) {
                 // create an annotated tag
@@ -916,7 +925,7 @@ int SvnRevision::exportInternal(const char *key, const svn_fs_path_change2_t *ch
         if (ignoreSet == false) {
             txn->deleteFile(path);
         }
-        recursiveDumpDir(txn, fs_root, key, path, pool);
+        recursiveDumpDir(txn, fs_root, key, path, pool, revnum, rule, matchRules, ruledebug);
     }
 
     return EXIT_SUCCESS;
