@@ -51,9 +51,10 @@ struct cdt_surf_info {
     fastf_t v_upper_3dlen;
     fastf_t min_edge;
     fastf_t max_edge;
-    fastf_t min_dist;
     fastf_t within_dist;
     fastf_t cos_within_ang;
+    double surface_width;
+    double surface_height;
     std::set<ON_BoundingBox *> leaf_bboxes;
 };
 
@@ -66,6 +67,7 @@ cpolyedge_fdists(struct cdt_surf_info *s, cdt_mesh::cdt_mesh_t *fmesh, cdt_mesh:
     ON_3dPoint *p3d1 = fmesh->pnts[fmesh->p2d3d[pe->polygon->p2o[pe->v[0]]]];
     ON_3dPoint *p3d2 = fmesh->pnts[fmesh->p2d3d[pe->polygon->p2o[pe->v[1]]]];
 
+
     double dist = p3d1->DistanceTo(*p3d2);
 
     s->min_edge = (s->min_edge > dist) ? dist : s->min_edge;
@@ -74,13 +76,11 @@ cpolyedge_fdists(struct cdt_surf_info *s, cdt_mesh::cdt_mesh_t *fmesh, cdt_mesh:
     // Only want the next bit if we're dealing with non-linear edges
     if (pe->eseg->edge_type != 1 || !pe->next->eseg || pe->next->eseg->edge_type != 1) return;
 
-    ON_3dPoint *p3dn = fmesh->pnts[fmesh->p2d3d[pe->next->polygon->p2o[pe->next->v[1]]]];
-    ON_3dVector v1 = *p3d2 - *p3d1;
-    ON_3dVector v2 = *p3dn - *p3d2;
-    v1.Unitize();
-    v2.Unitize();
-    double cos_within_ang = v1 * v2;
-    s->cos_within_ang = (cos_within_ang > s->cos_within_ang) ? cos_within_ang : s->cos_within_ang;
+    ON_Line line3d(*p3d1, *p3d2);
+    fastf_t emid = (pe->eseg->edge_start + pe->eseg->edge_end) / 2.0;
+    ON_3dPoint edge_mid_3d = pe->eseg->nc->PointAt(emid);
+    double wdist = edge_mid_3d.DistanceTo(line3d.ClosestPointTo(edge_mid_3d));
+    s->within_dist = (s->within_dist > wdist) ? s->within_dist : wdist;
 }
 
 // Calculate edge-based tolerance information to use for surface breakdowns, based on
@@ -93,7 +93,7 @@ void sinfo_tol_calc(struct cdt_surf_info *s)
 
     s->min_edge = DBL_MAX;
     s->max_edge = -DBL_MAX;
-    s->cos_within_ang = 0;
+    s->within_dist = -DBL_MAX;
 
     size_t ecnt = 1;
     cdt_mesh::cpolyedge_t *pe = (*cpoly->poly.begin());
@@ -114,14 +114,10 @@ void sinfo_tol_calc(struct cdt_surf_info *s)
 	}
     }
 
-    // Don't let anything get smaller than .2 * the smallest edge length.
-    s->min_dist = 0.2*s->min_edge;
-
 #if 0
     std::cout << "max_edge: " << s->max_edge << "\n";
     std::cout << "min_edge: " << s->min_edge << "\n";
-    std::cout << "cos_within_ang: " << s->cos_within_ang << "\n";
-    std::cout << "min_dist: " << s->min_dist << "\n";
+    std::cout << "within_dist: " << s->within_dist << "\n";
 #endif
 }
 
@@ -203,6 +199,7 @@ vline_len_est(struct cdt_surf_info *sinfo, double u, double v1, double v2)
     return lenest;
 }
 
+#if 0
 static ON_3dPoint *
 singular_trim_norm(struct cdt_surf_info *sinfo, fastf_t uc, fastf_t vc)
 {
@@ -259,6 +256,7 @@ singular_trim_norm(struct cdt_surf_info *sinfo, fastf_t uc, fastf_t vc)
     }
     return NULL;
 }
+#endif
 
 static bool EdgeSegCallback(void *data, void *a_context) {
     cdt_mesh::cpolyedge_t *eseg = (cdt_mesh::cpolyedge_t *)data;
@@ -718,10 +716,8 @@ getSurfacePoint(
     ON_2dPoint p2d(0.0, 0.0);
     fastf_t u = (u1 + u2) / 2.0;
     fastf_t v = (v1 + v2) / 2.0;
-    fastf_t udist = u2 - u1;
-    fastf_t vdist = v2 - v1;
 
-    //sp.plot("spatch.p3");
+    sp.plot("spatch.p3");
 
     double est1 = uline_len_est(sinfo, u1, u2, v1);
     double est2 = uline_len_est(sinfo, u1, u2, v2);
@@ -765,16 +761,9 @@ getSurfacePoint(
 	split_v = 1;
     }
 
-    ON_3dPoint p[4] = {ON_3dPoint(), ON_3dPoint(), ON_3dPoint(), ON_3dPoint()};
-    ON_3dVector norm[4] = {ON_3dVector(), ON_3dVector(), ON_3dVector(), ON_3dVector()};
-    bool ev_success = false;
+    double min_edge_len = -1.0;
 
     if (!split_u || !split_v) {
-	// Don't know if we're splitting in at least one direction - check if we're close
-	// enough to trims to need to worry about edges
-
-	double min_edge_len = -1.0;
-
 	// If we're dealing with a curved surface, don't get bigger than max_edge
 	if (!sinfo->is_planar) {
 	    min_edge_len = sinfo->max_edge;
@@ -786,83 +775,63 @@ getSurfacePoint(
 		split_v = 1;
 	    }
 	}
-
-	// If the above test didn't resolve things, keep going
-	if (!split_u || !split_v) {
-	    if ((surface_EvNormal(sinfo->s, u1, v1, p[0], norm[0]))
-		    && (surface_EvNormal(sinfo->s, u2, v1, p[1], norm[1]))
-		    && (surface_EvNormal(sinfo->s, u2, v2, p[2], norm[2]))
-		    && (surface_EvNormal(sinfo->s, u1, v2, p[3], norm[3]))) {
-
-		ON_BoundingBox uvbb;
-		for (int i = 0; i < 4; i++) {
-		    uvbb.Set(p[i], true);
-		}
-		//plot_on_bbox(uvbb, "uvbb.plot3");
-
-		ON_3dPoint pmin = uvbb.Min();
-		ON_3dPoint pmax = uvbb.Max();
-		if (involves_trims(&min_edge_len, sinfo, pmin, pmax)) {
-
-		    if (min_edge_len > 0 && uavg > min_edge_len && vavg > min_edge_len) {
-			split_u = 1;
-		    }
-
-		    if (min_edge_len > 0 && uavg > min_edge_len && vavg > min_edge_len) {
-			split_v = 1;
-		    }
-		}
-
-		ev_success = true;
-	    }
-	}
     }
 
-    if (!split_u && !split_v) {
-	// We're not involved with trims - i.e. we're sure we're not near any
-	// inner trimming loops that might have fine edges - don't go smaller
-	// than min_dist (which is based on the outer loop edge dimensions)
-	if ((udist < sinfo->min_dist + ON_ZERO_TOLERANCE)
-		|| (vdist < sinfo->min_dist + ON_ZERO_TOLERANCE)) {
-	    return false;
-	}
-    }
+    if (!split_u || !split_v) {
+	// Don't know if we're splitting in at least one direction - check if we're close
+	// enough to trims to need to worry about edges
+	ON_3dPoint p[4] = {ON_3dPoint(), ON_3dPoint(), ON_3dPoint(), ON_3dPoint()};
+	ON_3dVector norm[4] = {ON_3dVector(), ON_3dVector(), ON_3dVector(), ON_3dVector()};
 
-    if (ev_success && (!split_u || !split_v)) {
-	// Don't know if we're splitting in at least one direction - check dot products
-	ON_3dPoint mid(0.0, 0.0, 0.0);
-	ON_3dVector norm_mid(0.0, 0.0, 0.0);
-	if ((surface_EvNormal(sinfo->s, u2, v1, p[1], norm[1])) // for u
-		&& (surface_EvNormal(sinfo->s, u1, v2, p[3], norm[3]))
-		&& (surface_EvNormal(sinfo->s, u, v, mid, norm_mid))) {
-	    double udot;
-	    double vdot;
-	    ON_Line line1(p[0], p[2]);
-	    ON_Line line2(p[1], p[3]);
-	    double dist = mid.DistanceTo(line1.ClosestPointTo(mid));
-	    V_MAX(dist, mid.DistanceTo(line2.ClosestPointTo(mid)));
+	if ((surface_EvNormal(sinfo->s, u1, v1, p[0], norm[0]))
+		&& (surface_EvNormal(sinfo->s, u2, v1, p[1], norm[1]))
+		&& (surface_EvNormal(sinfo->s, u2, v2, p[2], norm[2]))
+		&& (surface_EvNormal(sinfo->s, u1, v2, p[3], norm[3]))) {
 
+
+	    ON_BoundingBox uvbb;
 	    for (int i = 0; i < 4; i++) {
-		fastf_t uc = (i == 0 || i == 3) ? u1 : u2;
-		fastf_t vc = (i == 0 || i == 1) ? v1 : v2;
-		ON_3dPoint *vnorm = singular_trim_norm(sinfo, uc, vc);
-		if (vnorm && ON_DotProduct(*vnorm, norm_mid) > 0) {
-		    //bu_log("vert norm %f %f %f works\n", vnorm->x, vnorm->y, vnorm->z);
-		    norm[i] = *vnorm;
+		uvbb.Set(p[i], true);
+	    }
+	    //plot_on_bbox(uvbb, "uvbb.plot3");
+
+	    ON_3dPoint pmin = uvbb.Min();
+	    ON_3dPoint pmax = uvbb.Max();
+	    if (involves_trims(&min_edge_len, sinfo, pmin, pmax)) {
+
+		if (min_edge_len > 0 && uavg > min_edge_len && vavg > min_edge_len) {
+		    split_u = 1;
+		}
+
+		if (min_edge_len > 0 && uavg > min_edge_len && vavg > min_edge_len) {
+		    split_v = 1;
 		}
 	    }
+	}
+    }
 
+    // If we still don't completely know what we're doing, check how far in U and V our
+    // midpoint is from the line between the midpoints in that direction.
+    if (!sinfo->is_planar && (!split_u || !split_v)) {
+	ON_3dPoint p[5] = {ON_3dPoint(), ON_3dPoint(), ON_3dPoint(), ON_3dPoint(), ON_3dPoint()};
+	ON_3dVector norm[5] = {ON_3dVector(), ON_3dVector(), ON_3dVector(), ON_3dVector(), ON_3dVector()};
 
-	    if (dist < sinfo->min_dist + ON_ZERO_TOLERANCE) {
-		return false;
-	    }
+	if ((surface_EvNormal(sinfo->s, u, v1, p[0], norm[0]))
+		&& (surface_EvNormal(sinfo->s, u, v2, p[1], norm[1]))
+		&& (surface_EvNormal(sinfo->s, u1, v, p[2], norm[2]))
+		&& (surface_EvNormal(sinfo->s, u2, v, p[3], norm[3]))
+		&& (surface_EvNormal(sinfo->s, u, v, p[4], norm[4]))
+		) {
+	    ON_Line uline(p[2], p[3]);
+	    ON_Line vline(p[0], p[1]);
+	    double uldist = p[4].DistanceTo(uline.ClosestPointTo(p[4]));
+	    double vldist = p[4].DistanceTo(vline.ClosestPointTo(p[4]));
 
-	    udot = (VNEAR_EQUAL(norm[0], norm[1], ON_ZERO_TOLERANCE)) ? 1.0 : norm[0] * norm[1];
-	    vdot = (VNEAR_EQUAL(norm[0], norm[3], ON_ZERO_TOLERANCE)) ? 1.0 : norm[0] * norm[3];
-	    if (udot < sinfo->cos_within_ang - ON_ZERO_TOLERANCE) {
+	    if (uldist > sinfo->within_dist) {
 		split_u = 1;
 	    }
-	    if (vdot < sinfo->cos_within_ang - ON_ZERO_TOLERANCE) {
+
+	    if (vldist > sinfo->within_dist) {
 		split_v = 1;
 	    }
 	}
@@ -892,33 +861,25 @@ getSurfacePoint(
 void
 GetInteriorPoints(struct ON_Brep_CDT_State *s_cdt, int face_index)
 {
-    double surface_width, surface_height;
-
     ON_BrepFace &face = s_cdt->brep->m_F[face_index];
     const ON_Surface *s = face.SurfaceOf();
+    struct cdt_surf_info sinfo;
 
-    if (s->GetSurfaceSize(&surface_width, &surface_height)) {
+    if (s->GetSurfaceSize(&sinfo.surface_width, &sinfo.surface_height)) {
 
-	if ((surface_width < ON_ZERO_TOLERANCE) || (surface_height < ON_ZERO_TOLERANCE)) {
+	if ((sinfo.surface_width < ON_ZERO_TOLERANCE) || (sinfo.surface_height < ON_ZERO_TOLERANCE)) {
 	    return;
 	}
 
-	struct cdt_surf_info sinfo;
 	sinfo_init(&sinfo, s_cdt, face_index);
 
 	// Get the min and max dimensions in UV that will kick off the sampling
 	// process.  May be a smaller trimmed subset of surface so worth
 	// getting face boundary
-	bool bGrowBox = false;
-	ON_3dPoint min, max;
-	for (int li = 0; li < face.LoopCount(); li++) {
-	    for (int ti = 0; ti < face.Loop(li)->TrimCount(); ti++) {
-		const ON_BrepTrim *trim = face.Loop(li)->Trim(ti);
-		trim->GetBoundingBox(min, max, bGrowBox);
-		bGrowBox = true;
-	    }
-	}
-
+	ON_BoundingBox lbox;
+	face.OuterLoop()->GetBoundingBox(lbox);
+	ON_3dPoint min = lbox.Min();
+	ON_3dPoint max = lbox.Max();
 
 	std::queue<SPatch> spq1, spq2;
 
