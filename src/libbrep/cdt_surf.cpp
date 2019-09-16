@@ -23,26 +23,6 @@
  *
  * Constrained Delaunay Triangulation - Surface Point sampling of NURBS B-Rep
  * objects.
- *
- * TODO - assuming the p2t crashing with current inputs isn't the
- * fault of a problem on our end, what we may have to do is:
- *
- * 1.  randomize the selection of where along the line segment
- *     the surface point from the trim is selected - right now
- *     we're always using the midpt, which can be very symmetric.
- *
- * 2.  If that doesn't help by itself, we can also construct the
- *     CDT polygons from the edge points and the inner trim surface
- *     points - two segments for every trim with an associated surface
- *     point.  We then manually create the edge triangles and let the
- *     CDT "fill in" the interior.  This might actually be worth doing
- *     anyway just to avoid the problem of highly colinear trim points
- *     sampled along lines in 2D...
- *
- * That would also let us avoid culling all patch points overlapping with
- * the trim bboxes, since we'd be constructing the loops in such a way that
- * the area of the edge triangles would be outside for the CDT  - what
- * we're doing now may be a tad aggressive...
  */
 
 #include "common.h"
@@ -76,6 +56,75 @@ struct cdt_surf_info {
     fastf_t cos_within_ang;
     std::set<ON_BoundingBox *> leaf_bboxes;
 };
+
+void
+cpolyedge_fdists(struct cdt_surf_info *s, cdt_mesh::cdt_mesh_t *fmesh, cdt_mesh::cpolyedge_t *pe)
+{
+
+    if (!pe->eseg) return;
+
+    ON_3dPoint *p3d1 = fmesh->pnts[fmesh->p2d3d[pe->polygon->p2o[pe->v[0]]]];
+    ON_3dPoint *p3d2 = fmesh->pnts[fmesh->p2d3d[pe->polygon->p2o[pe->v[1]]]];
+
+    double dist = p3d1->DistanceTo(*p3d2);
+
+    s->min_edge = (s->min_edge > dist) ? dist : s->min_edge;
+    s->max_edge = (s->max_edge < dist) ? dist : s->max_edge;
+
+    // Only want the next bit if we're dealing with non-linear edges
+    if (pe->eseg->edge_type != 1 || !pe->next->eseg || pe->next->eseg->edge_type != 1) return;
+
+    ON_3dPoint *p3dn = fmesh->pnts[fmesh->p2d3d[pe->next->polygon->p2o[pe->next->v[1]]]];
+    ON_3dVector v1 = *p3d2 - *p3d1;
+    ON_3dVector v2 = *p3dn - *p3d2;
+    v1.Unitize();
+    v2.Unitize();
+    double cos_within_ang = v1 * v2;
+    s->cos_within_ang = (cos_within_ang > s->cos_within_ang) ? cos_within_ang : s->cos_within_ang;
+}
+
+// Calculate edge-based tolerance information to use for surface breakdowns, based on
+// the outer trimming loop's polygon.
+void sinfo_tol_calc(struct cdt_surf_info *s)
+{
+    const ON_BrepFace *face = s->f;
+    cdt_mesh::cdt_mesh_t *fmesh = &s->s_cdt->fmeshes[face->m_face_index];
+    cdt_mesh::cpolygon_t *cpoly = &fmesh->outer_loop;
+
+    s->min_edge = DBL_MAX;
+    s->max_edge = -DBL_MAX;
+    s->cos_within_ang = 0;
+
+    size_t ecnt = 1;
+    cdt_mesh::cpolyedge_t *pe = (*cpoly->poly.begin());
+    cdt_mesh::cpolyedge_t *first = pe;
+    cdt_mesh::cpolyedge_t *next = pe->next;
+
+    cpolyedge_fdists(s, fmesh, first);
+
+    // Walk the loop
+    while (first != next) {
+	ecnt++;
+	if (!next) break;
+	cpolyedge_fdists(s, fmesh, next);
+	next = next->next;
+	if (ecnt > cpoly->poly.size()) {
+	    std::cerr << "\nsinfo_tol_calc: ERROR! encountered infinite loop\n";
+	    return;
+	}
+    }
+
+    // Don't let anything get smaller than .2 * the smallest edge length.
+    s->min_dist = 0.2*s->min_edge;
+
+#if 0
+    std::cout << "max_edge: " << s->max_edge << "\n";
+    std::cout << "min_edge: " << s->min_edge << "\n";
+    std::cout << "cos_within_ang: " << s->cos_within_ang << "\n";
+    std::cout << "min_dist: " << s->min_dist << "\n";
+#endif
+}
+
 
 class SPatch {
 
@@ -222,26 +271,6 @@ struct trim_seg_context {
     const ON_2dPoint *p;
     bool on_edge;
 };
-
-#if 0
-static bool TrimSegCallback(void *data, void *a_context) {
-    cdt_mesh::cpolyedge_t *pe = (cdt_mesh::cpolyedge_t *)data;
-    struct trim_seg_context *sc = (struct trim_seg_context *)a_context;
-    ON_2dPoint p2d1(pe->polygon->pnts_2d[pe->v[0]].first, pe->polygon->pnts_2d[pe->v[0]].second);
-    ON_2dPoint p2d2(pe->polygon->pnts_2d[pe->v[1]].first, pe->polygon->pnts_2d[pe->v[1]].second);
-    ON_Line l(p2d1, p2d2);
-    double t;
-    if (l.ClosestPointTo(*sc->p, &t)) {
-	// If the closest point on the line isn't in the line segment, skip
-	if (t < 0 || t > 1) return true;
-    }
-    double dist = l.MinimumDistanceTo(*sc->p);
-    if (NEAR_ZERO(dist, BN_TOL_DIST)) {
-	sc->on_edge = true;
-    }
-    return (sc->on_edge) ? false : true;
-}
-#endif
 
 static bool SPntCallback(void *data, void *a_context) {
     cdt_mesh::cpolyedge_t *pe = (cdt_mesh::cpolyedge_t *)data;
@@ -500,7 +529,6 @@ sinfo_init(struct cdt_surf_info *sinfo, struct ON_Brep_CDT_State *s_cdt, int fac
     sinfo->min_edge = (*s_cdt->min_edge_seg_len)[face_index];
     sinfo->max_edge = (*s_cdt->max_edge_seg_len)[face_index];
 
-#if 1
     // If the trims will be contributing points, we need to figure out which ones
     // and assemble an rtree for them.  We can't insert points from the general
     // build too close to them or we run the risk of duplicate points and very small
@@ -557,58 +585,12 @@ sinfo_init(struct cdt_surf_info *sinfo, struct ON_Brep_CDT_State *s_cdt, int fac
     plot_rtree_2d2(sinfo->rtree_trim_spnts_2d, bu_vls_cstr(&fname));
     bu_vls_free(&fname);
 #endif
-#endif
 
+    // Calculate edge-based tolerance information to use for surface breakdowns -
+    // we want the surface interiors to reflect the edges so they aren't too
+    // dissimilar.
+    sinfo_tol_calc(sinfo);
 
-
-    double dist = 0.0;
-    double min_dist = 0.0;
-    double within_dist = 0.0;
-    double cos_within_ang = 0.0;
-
-    ON_BoundingBox tight_bbox;
-    if (brep->GetTightBoundingBox(tight_bbox)) {
-	// Note: this needs to be based on the smallest dimension of the
-	// box, not the diagonal, in case we've got something really long
-	// and narrow.
-	fastf_t d1 = tight_bbox.m_max[0] - tight_bbox.m_min[0];
-	fastf_t d2 = tight_bbox.m_max[1] - tight_bbox.m_min[1];
-	dist = (d1 < d2) ? d1 : d2;
-    }
-
-    // TODO - sync this with how trim tolerances are handled!! IMPORTANT!!!
-    if (s_cdt->tol.abs < BN_TOL_DIST + ON_ZERO_TOLERANCE) {
-	min_dist = BN_TOL_DIST;
-    } else {
-	min_dist = s_cdt->tol.abs;
-    }
-
-    double rel = 0.0;
-    if (s_cdt->tol.rel > 0.0 + ON_ZERO_TOLERANCE) {
-	rel = s_cdt->tol.rel * dist;
-	within_dist = rel < min_dist ? min_dist : rel;
-	//if (s_cdt->abs < s_cdt->dist + ON_ZERO_TOLERANCE) {
-	//    min_dist = within_dist;
-	//}
-    } else if ((s_cdt->tol.abs > 0.0 + ON_ZERO_TOLERANCE)
-	    && (s_cdt->tol.norm < 0.0 + ON_ZERO_TOLERANCE)) {
-	within_dist = min_dist;
-    } else if ((s_cdt->tol.abs > 0.0 + ON_ZERO_TOLERANCE)
-	    || (s_cdt->tol.norm > 0.0 + ON_ZERO_TOLERANCE)) {
-	within_dist = dist;
-    } else {
-	within_dist = 0.01 * dist; // default to 1% minimum surface distance
-    }
-
-    if (s_cdt->tol.norm > 0.0 + ON_ZERO_TOLERANCE) {
-	cos_within_ang = cos(s_cdt->tol.norm);
-    } else {
-	cos_within_ang = cos(ON_PI / 2.0);
-    }
-
-    sinfo->min_dist = min_dist;
-    sinfo->within_dist = within_dist;
-    sinfo->cos_within_ang = cos_within_ang;
 }
 
 
@@ -616,10 +598,7 @@ void
 filter_surface_pnts(struct cdt_surf_info *sinfo)
 {
 
-    // TODO - it's looking like a 2D check isn't going to be enough - we probably
-    // need BOTH a 2D and a 3D check to make sure none of the points are in a
-    // position that will cause trouble.  Will need to build a 3D RTree of the line
-    // segments from the edges, as well as 2D rtree.
+    // Remove points that are troublesome per 2D filtering criteria
     std::set<ON_2dPoint *> rm_pnts;
     std::set<ON_2dPoint *>::iterator osp_it;
     for (osp_it = sinfo->on_surf_points.begin(); osp_it != sinfo->on_surf_points.end(); osp_it++) {
@@ -651,25 +630,6 @@ filter_surface_pnts(struct cdt_surf_info *sinfo)
     }
 
     cdt_mesh::cdt_mesh_t *fmesh = &sinfo->s_cdt->fmeshes[sinfo->f->m_face_index];
-#if 0
-    // Next check the face loops with the point in polygon test.  If it's
-    // outside the outer loop or inside one of the interior trimming loops,
-    // it's out.
-    fmesh->outer_loop.rm_points_in_polygon(&sinfo->on_surf_points, true);
-    std::map<int, cdt_mesh::cpolygon_t*>::iterator i_it;
-    for (i_it = fmesh->inner_loops.begin(); i_it != fmesh->inner_loops.end(); i_it++) {
-	i_it->second->rm_points_in_polygon(&sinfo->on_surf_points, false);
-    }
-
-    // TODO - In addition to removing points on the line in 2D, we don't want points that
-    // would be outside the edge polygon in projection. Find the "close" trims (if any)
-    // for the candidate 3D point, then use the normals of the Brep edge points and
-    // the edge direction to do a local "inside/outside" test.  Not sure yet exactly how
-    // to do this - possibilities include rtree search for the area around each surface
-    // point, or a nanoflann based nearest lookup for the edge points to get candidates
-    // near each edge in turn - in the latter case, look for points common to the result
-    // sets for both edge points to localize on that particular segment.
-#endif
 
     // Populate m_interior_pnts with the final set
     for (osp_it = sinfo->on_surf_points.begin(); osp_it != sinfo->on_surf_points.end(); osp_it++) {
@@ -682,7 +642,8 @@ filter_surface_pnts(struct cdt_surf_info *sinfo)
 	    p3d = sinfo->s->PointAt(n2dp.x, n2dp.y);
 	}
 
-	// If we're too close to an edge in 3D, the point is out.
+	// Last filtering pass before insertion: if we're too close to an edge
+	// in 3D, the point is out.
 	double fMin[3];
 	fMin[0] = p3d.x - ON_ZERO_TOLERANCE;
 	fMin[1] = p3d.y - ON_ZERO_TOLERANCE;
@@ -700,7 +661,6 @@ filter_surface_pnts(struct cdt_surf_info *sinfo)
 	if (fmesh->m_bRev) {
 	    norm = -1 * norm;
 	}
-	//std::cout << "Face " << fmesh->f_id << " norm: " << norm.x << "," << norm.y << "," << norm.z << "\n";
 
 	long f3ind = fmesh->add_point(new ON_3dPoint(p3d));
 	long fnind = fmesh->add_normal(new ON_3dPoint(norm));
@@ -763,11 +723,6 @@ getSurfacePoint(
 
     //sp.plot("spatch.p3");
 
-    if ((udist < sinfo->min_dist + ON_ZERO_TOLERANCE)
-	    || (vdist < sinfo->min_dist + ON_ZERO_TOLERANCE)) {
-	return false;
-    }
-
     double est1 = uline_len_est(sinfo, u1, u2, v1);
     double est2 = uline_len_est(sinfo, u1, u2, v2);
     double est3 = vline_len_est(sinfo, u1, v1, v2);
@@ -776,23 +731,10 @@ getSurfacePoint(
     double uavg = (est1+est2)/2.0;
     double vavg = (est3+est4)/2.0;
 
-#if 0
-    double umin = (est1 < est2) ? est1 : est2;
-    double vmin = (est3 < est4) ? est3 : est4;
-    double umax = (est1 > est2) ? est1 : est2;
-    double vmax = (est3 > est4) ? est3 : est4;
-
-    bu_log("umin,vmin: %f, %f\n", umin, vmin);
-    bu_log("umax,vmax: %f, %f\n", umax, vmax);
-    bu_log("uavg,vavg: %f, %f\n", uavg, vavg);
-    bu_log("min_edge %f\n", sinfo->min_edge);
-#endif
     if (est1 < 0.01*sinfo->within_dist && est2 < 0.01*sinfo->within_dist) {
-	//bu_log("e12 Small estimates: %f, %f\n", est1, est2);
 	return false;
     }
     if (est3 < 0.01*sinfo->within_dist && est4 < 0.01*sinfo->within_dist) {
-	//bu_log("e34 Small estimates: %f, %f\n", est3, est4);
 	return false;
     }
 
@@ -876,6 +818,16 @@ getSurfacePoint(
 	}
     }
 
+    if (!split_u && !split_v) {
+	// We're not involved with trims - i.e. we're sure we're not near any
+	// inner trimming loops that might have fine edges - don't go smaller
+	// than min_dist (which is based on the outer loop edge dimensions)
+	if ((udist < sinfo->min_dist + ON_ZERO_TOLERANCE)
+		|| (vdist < sinfo->min_dist + ON_ZERO_TOLERANCE)) {
+	    return false;
+	}
+    }
+
     if (ev_success && (!split_u || !split_v)) {
 	// Don't know if we're splitting in at least one direction - check dot products
 	ON_3dPoint mid(0.0, 0.0, 0.0);
@@ -954,8 +906,9 @@ GetInteriorPoints(struct ON_Brep_CDT_State *s_cdt, int face_index)
 	struct cdt_surf_info sinfo;
 	sinfo_init(&sinfo, s_cdt, face_index);
 
-	// may be a smaller trimmed subset of surface so worth getting
-	// face boundary
+	// Get the min and max dimensions in UV that will kick off the sampling
+	// process.  May be a smaller trimmed subset of surface so worth
+	// getting face boundary
 	bool bGrowBox = false;
 	ON_3dPoint min, max;
 	for (int li = 0; li < face.LoopCount(); li++) {
@@ -1166,7 +1119,6 @@ GetInteriorPoints(struct ON_Brep_CDT_State *s_cdt, int face_index)
 	    double px = p2d.x + (bn_rand_half(prand) * 0.3*ulen);
 	    double py = p2d.y + (bn_rand_half(prand) * 0.3*vlen);
 
-#if 1
 	    double tMin[2];
 	    tMin[0] = (*b_it)->Min().x;
 	    tMin[1] = (*b_it)->Min().y;
@@ -1177,13 +1129,7 @@ GetInteriorPoints(struct ON_Brep_CDT_State *s_cdt, int face_index)
 
 	    if (!nhits) {
 		sinfo.on_surf_points.insert(new ON_2dPoint(px,py));
-		//std::cout << "accept pnt\n";
-	    } else {
-		//std::cout << "reject - already have trim point in here\n";
 	    }
-#else
-	    sinfo.on_surf_points.insert(new ON_2dPoint(px,py));
-#endif
 	}
 
 	// Strip out points from the surface that are too close to the trimming curves.

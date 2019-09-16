@@ -1854,6 +1854,8 @@ cpolyedge_ndists(cdt_mesh::cpolyedge_t *pe) {
     pe->v2_dist = p2d2.DistanceTo(p2d2_n);
 }
 
+// NOTE - not using this right now, but will need this info when we get back to triangle insertion
+// improvements along the trims.
 void
 cpolyedge_nearest_dists(struct ON_Brep_CDT_State *s_cdt)
 {
@@ -1882,7 +1884,7 @@ cpolyedge_nearest_dists(struct ON_Brep_CDT_State *s_cdt)
 	    cdt_mesh::cpolyedge_t *next = pe->next;
 
 	    cpolyedge_ndists(first);
-	    
+
 	    // Walk the loop
 	    while (first != next) {
 		ecnt++;
