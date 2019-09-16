@@ -128,6 +128,71 @@ debug_bseg(cdt_mesh::bedge_seg_t *bseg, int seg_id)
 }
 #endif
 
+#if 0
+// If we have an associated 3D edge, we need a surface point that will
+// result in a sensible triangle near that edge.  Construct and evaluate
+// the proposed 3D triangle, and use that to evaluate the suitability of
+// the proposed surface point 
+bool
+candidate_surf_pnt(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
+{
+    if (!pe->eseg) return false;
+
+    // TODO - find the smallest angle between this segment and the prev/next
+    // segs - that may (will?) constrain how far out into the surface we can
+    // safely go.  If we're unconstrained try for equilateral, else bisect the
+    // angle and intersect that vector with the vector off the midpoint.  (i.e.
+    // use trig to get the length to which to scale ndir)
+    //
+    // If we're unconstrained, we'll still need to check the candidate point
+    // against the rtree to see if we're closer to another edge elsewhere in
+    // the loop than we our to pe.  if we are, shorten the distance until we
+    // either make the triangle too narrow or we get an unusable triangle in
+    // 3D.  if either of those happen, this edge can't supply a trim point.
+    //
+    // This has the potential to allow for sparser minimal splitting than the
+    // box overlap test, since as long as we can produce a usable associated
+    // surface point we are OK to use a trim without further splitting.
+    //
+    // Note the candidate must also be closer to the midpoint than either of
+    // the neighboring segment points - if that distance is shorter than the
+    // equilateral distance, it's our start just as an angle constraint limits
+    // our start...
+
+
+    // TODO - do we ever need to flip these?
+    ON_3dPoint *p1 = pe->eseg->e_start;
+    ON_3dPoint *p2 = pe->eseg->e_end;
+
+    ON_BrepTrim& trim = s_cdt->brep->m_T[pe->trim_ind];
+    ON_2dPoint p2d1(pe->polygon->pnts_2d[pe->v[0]].first, pe->polygon->pnts_2d[pe->v[0]].second);
+    ON_2dPoint p2d2(pe->polygon->pnts_2d[pe->v[1]].first, pe->polygon->pnts_2d[pe->v[1]].second);
+
+    ON_3dPoint p13d(p2d1.x, p2d1.y, 0);
+    ON_3dPoint p23d(p2d2.x, p2d2.y, 0);
+    ON_3dPoint p1norm(p2d1.x, p2d1.y, 1);
+    ON_3dVector vtrim = p23d - p13d;
+    ON_3dVector vnorm = p1norm - p13d;
+    vtrim.Unitize();
+    vnorm.Unitize();
+    ON_3dVector ndir = ON_CrossProduct(vnorm, vtrim);
+    ndir.Unitize();
+
+
+    double dist = p2d1.DistanceTo(p2d2);
+    double bdist = 0.5*dist;
+    ndir = ndir * bdist;
+    ON_2dVector ndir2d(ndir.x, ndir.y);
+    ON_2dPoint p2mid = (p2d1 + p2d2) * 0.5;
+    pe->spnt = p2mid + ndir2d;
+    pe->defines_spnt = true;
+
+
+}
+#endif
+
+
+
 // TODO - can we base the width of this box on how far the 3D edge curve midpoint is from
 // the midpoint of the 3D line segment?  That might relate the 2D box size to how far away
 // we need to be to avoid problematic surface points...
