@@ -41,6 +41,7 @@
 #include <set>
 #include <map>
 #include "poly2tri/poly2tri.h"
+#include "RTree.h"
 #include "opennurbs.h"
 #include "bu/color.h"
 
@@ -439,6 +440,7 @@ public:
 
     /* The 3D triangle set (defined by index values) and it associated points array */
     std::set<triangle_t> tris;
+    RTree<size_t, double, 3> tri_tree;
     std::vector<ON_3dPoint *> pnts;
 
     /* Setup / Repair */
