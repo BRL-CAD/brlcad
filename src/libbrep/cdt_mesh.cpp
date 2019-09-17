@@ -2633,7 +2633,7 @@ cdt_mesh_t::cdt()
 	    t.v[1] = faces[3*i+1];
 	    t.v[2] = faces[3*i+2];
 
-	    tris_2d.insert(t);
+	    tris_2d.push_back(t);
 	}
 
 	bu_free(faces, "faces array");
@@ -2656,7 +2656,7 @@ cdt_mesh_t::cdt()
 
     // Use the 2D triangles to create the face 3D triangle mesh
     reset();
-    std::set<triangle_t>::iterator tr_it;
+    std::vector<triangle_t>::iterator tr_it;
     for (tr_it = tris_2d.begin(); tr_it != tris_2d.end(); tr_it++) {
 	triangle_t tri2d = *tr_it;
 	triangle_t tri3d;
@@ -2679,7 +2679,7 @@ cdt_mesh_t::cdt()
 	tri3d.v[0] = p2ind[pnts[p2d3d[tri2d.v[0]]]];
 	tri3d.v[1] = p2ind[pnts[p2d3d[tri2d.v[1]]]];
 	tri3d.v[2] = p2ind[pnts[p2d3d[tri2d.v[2]]]];
-	
+
 	ON_3dVector tdir = tnorm(tri3d);
 	ON_3dVector bdir = bnorm(tri3d);
 	if (tdir.Length() > 0 && bdir.Length() > 0 && ON_DotProduct(tdir, bdir) < 0.1) {
@@ -3092,7 +3092,7 @@ void cdt_mesh_t::plot_tri_2d(const triangle_t &t, struct bu_color *buc, FILE *pl
     pl_color_buc(plot, buc);
 }
 
-void cdt_mesh_t::tris_set_plot_2d(std::set<triangle_t> &tset, const char *filename)
+void cdt_mesh_t::tris_vect_plot_2d(std::vector<triangle_t> &tset, const char *filename)
 {
     FILE* plot_file = fopen(filename, "w");
 
@@ -3100,7 +3100,7 @@ void cdt_mesh_t::tris_set_plot_2d(std::set<triangle_t> &tset, const char *filena
     bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
     pl_color_buc(plot_file, &c);
 
-    std::set<triangle_t>::iterator s_it;
+    std::vector<triangle_t>::iterator s_it;
 
     for (s_it = tset.begin(); s_it != tset.end(); s_it++) {
 	triangle_t tri = (*s_it);
@@ -3111,7 +3111,7 @@ void cdt_mesh_t::tris_set_plot_2d(std::set<triangle_t> &tset, const char *filena
 
 void cdt_mesh_t::tris_plot_2d(const char *filename)
 {
-    tris_set_plot_2d(tris_2d, filename);
+    tris_vect_plot_2d(tris_2d, filename);
 }
 
 

@@ -461,7 +461,7 @@ public:
 
     /* Triangulation related functions and data. */
     bool cdt();
-    std::set<triangle_t> tris_2d;
+    std::vector<triangle_t> tris_2d;
     std::vector<std::pair<double, double> > m_pnts_2d;
     std::map<long, long> p2d3d;
     cpolygon_t outer_loop;
@@ -497,7 +497,7 @@ public:
     void tris_plot(const char *filename);
     void tri_plot(const triangle_t &tri, const char *filename);
 
-    void tris_set_plot_2d(std::set<triangle_t> &tset, const char *filename);
+    void tris_vect_plot_2d(std::vector<triangle_t> &tset, const char *filename);
     void tris_plot_2d(const char *filename);
 
     void polygon_plot_2d(cpolygon_t *polygon, const char *filename);
