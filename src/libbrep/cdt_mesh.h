@@ -428,6 +428,7 @@ public:
 	n2ind.clear();
 	nmap.clear();
 	tris.clear();
+	tris_tree.RemoveAll();
 
 	uedges2tris.clear();
 	seed_tris.clear();
@@ -439,7 +440,7 @@ public:
 
     /* The 3D triangle set (defined by index values) and it associated points array */
     std::set<triangle_t> tris;
-    RTree<size_t, double, 3> tri_tree;
+    RTree<size_t, double, 3> tris_tree;
     std::vector<ON_3dPoint *> pnts;
 
     /* Setup / Repair */
