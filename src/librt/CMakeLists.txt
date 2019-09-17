@@ -220,6 +220,7 @@ set(LIBRT_SOURCES
   tol.c
   transform.c
   tree.c
+  uv.c
   vers.c
   vlist.c
   vshoot.c
