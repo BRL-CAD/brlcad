@@ -71,8 +71,7 @@ ged_mat_mul(struct ged *gedp,
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    if (argc < 3 || bn_decode_mat(a, argv[1]) < 16 ||
-	    bn_decode_mat(b, argv[2]) < 16) {
+    if (argc < 3 || bn_decode_mat(a, argv[1]) < 16 || bn_decode_mat(b, argv[2]) < 16) {
 	bu_vls_printf(gedp->ged_result_str, "usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -89,14 +88,12 @@ ged_mat4x3pnt(struct ged *gedp,
 	      int argc,
 	      const char *argv[])
 {
-    mat_t m;
+    mat_t m = MAT_INIT_ZERO;
     point_t i, o;
-    static const char *usage = "mat pt";
+    static const char *usage = "matrix point";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
-
-    MAT_ZERO(m);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -122,7 +119,7 @@ ged_mat_scale_about_pt(struct ged *gedp,
     mat_t o;
     vect_t v;
     double scale;
-    static const char *usage = "pt scale";
+    static const char *usage = "point scale";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);

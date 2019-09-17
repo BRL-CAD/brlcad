@@ -502,20 +502,6 @@ bn_quat_distance_wrapper(double *dp, mat_t q1, mat_t q2)
 }
 
 
-void
-bn_mat_scale_about_pt_wrapper(int *statusp, mat_t mat, const point_t pt, const double scale)
-{
-    *statusp = bn_mat_scale_about_pt(mat, pt, scale);
-}
-
-
-static void
-bn_mat4x3pnt(fastf_t *o, mat_t m, point_t i)
-{
-    MAT4X3PNT(o, m, i);
-}
-
-
 static void
 bn_mat4x3vec(fastf_t *o, mat_t m, vect_t i)
 {
@@ -696,31 +682,8 @@ error:
     Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
     bu_vls_free(&result);
     return TCL_ERROR;
-} 
-
-
-static int
-tclcad_bn_mat_mul(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
-{
-    struct bu_vls result = BU_VLS_INIT_ZERO;
-    mat_t o, a, b;
-    if (argc < 3 || bn_decode_mat(a, argv[1]) < 16 ||
-	    bn_decode_mat(b, argv[2]) < 16) {
-	bu_vls_printf(&result, "usage: %s matA matB", argv[0]);
-	goto error;
-    }
-    bn_mat_mul(o, a, b);
-    bn_encode_mat(&result, o, 1);
-
-    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
-    bu_vls_free(&result);
-    return TCL_OK;
-
-error:
-    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
-    bu_vls_free(&result);
-    return TCL_ERROR;
 }
+
 
 static int
 tclcad_bn_mat_inv(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
@@ -822,30 +785,6 @@ error:
     return TCL_ERROR;
 }
 
-static int
-tclcad_bn_mat4x3pnt(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
-{
-    struct bu_vls result = BU_VLS_INIT_ZERO;
-    mat_t m;
-    point_t i, o;
-    MAT_ZERO(m);
-    if (argc < 3 || bn_decode_mat(m, argv[1]) < 16 ||
-	    bn_decode_vect(i, argv[2]) < 3) {
-	bu_vls_printf(&result, "usage: %s mat point", argv[0]);
-	goto error;
-    }
-    bn_mat4x3pnt(o, m, i);
-    bn_encode_vect(&result, o, 1);
-
-    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
-    bu_vls_free(&result);
-    return TCL_OK;
-
-error:
-    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
-    bu_vls_free(&result);
-    return TCL_ERROR;
-}
 
 static int
 tclcad_bn_hdivide(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
@@ -1234,39 +1173,6 @@ error:
 
 
 static int
-tclcad_bn_mat_scale_about_pt_wrapper(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
-{
-    struct bu_vls result = BU_VLS_INIT_ZERO;
-    mat_t o;
-    vect_t v;
-    double scale;
-    int status;
-
-    if (argc < 3 || bn_decode_vect(v, argv[1]) < 3) {
-	bu_vls_printf(&result, "usage: %s pt scale", argv[0]);
-	goto error;
-    }
-    if (Tcl_GetDouble(interp, argv[2], &scale) != TCL_OK) goto error;
-
-    bn_mat_scale_about_pt_wrapper(&status, o, v, scale);
-    if (status != 0) {
-	bu_vls_printf(&result, "error performing calculation");
-	goto error;
-    }
-    bn_encode_mat(&result, o, 1);
-
-    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
-    bu_vls_free(&result);
-    return TCL_OK;
-
-error:
-    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
-    bu_vls_free(&result);
-    return TCL_ERROR;
-}
-
-
-static int
 tclcad_bn_mat_xform_about_pt(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
@@ -1595,15 +1501,14 @@ static struct math_func_link {
     const char *name;
     int (*func)(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv);
 } math_funcs[] = {
+    /* FIXME: migrate these all to libged */
     {"bn_dist_pt2_lseg2",	 BN_FUNC_TCL_CAST(tclcad_bn_dist_pt2_lseg2) },
     {"bn_isect_line2_line2",	 BN_FUNC_TCL_CAST(tclcad_bn_isect_line2_line2) },
     {"bn_isect_line3_line3",	 BN_FUNC_TCL_CAST(tclcad_bn_isect_line3_line3) },
-    {"mat_mul",                  BN_FUNC_TCL_CAST(tclcad_bn_mat_mul) },
     {"mat_inv",                  BN_FUNC_TCL_CAST(tclcad_bn_mat_inv) },
     {"mat_trn",                  BN_FUNC_TCL_CAST(tclcad_bn_mat_trn) },
     {"matXvec",                  BN_FUNC_TCL_CAST(tclcad_bn_matXvec) },
     {"mat4x3vec",                BN_FUNC_TCL_CAST(tclcad_bn_mat4x3vec) },
-    {"mat4x3pnt",                BN_FUNC_TCL_CAST(tclcad_bn_mat4x3pnt) },
     {"hdivide",                  BN_FUNC_TCL_CAST(tclcad_bn_hdivide) },
     {"vjoin1",	                 BN_FUNC_TCL_CAST(tclcad_bn_vjoin1) },
     {"vblend",	                 BN_FUNC_TCL_CAST(tclcad_bn_vblend) },
@@ -1618,7 +1523,6 @@ static struct math_func_link {
     {"mat_lookat",               BN_FUNC_TCL_CAST(tclcad_bn_mat_lookat) },
     {"mat_vec_ortho",            BN_FUNC_TCL_CAST(tclcad_bn_vec_ortho) },
     {"mat_vec_perp",             BN_FUNC_TCL_CAST(tclcad_bn_vec_perp) },
-    {"mat_scale_about_pt",       BN_FUNC_TCL_CAST(tclcad_bn_mat_scale_about_pt_wrapper) },
     {"mat_xform_about_pt",       BN_FUNC_TCL_CAST(tclcad_bn_mat_xform_about_pt) },
     {"mat_arb_rot",              BN_FUNC_TCL_CAST(tclcad_bn_mat_arb_rot) },
     {"quat_mat2quat",            BN_FUNC_TCL_CAST(tclcad_bn_quat_mat2quat) },
