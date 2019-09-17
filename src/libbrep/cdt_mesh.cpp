@@ -3482,6 +3482,12 @@ cdt_mesh_t::best_fit_plane_plot(point_t *center, vect_t *norm, const char *fname
     fclose(plot_file);
 }
 
+/* TODO - best fit plane is good/preferable when the brep area we are
+ * approximating is locally semi-planar, but if the repair area is not one
+ * that can be projected into a plane without introducing self intersections,
+ * we will need something more sophisticated.  Take a look at
+ * https://github.com/jpcy/xatlas to see if it might be a good starting point.
+ */
 
 bool
 cdt_mesh_t::best_fit_plane_reproject(cpolygon_t *polygon)
