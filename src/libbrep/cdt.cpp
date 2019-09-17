@@ -684,17 +684,22 @@ ON_Brep_CDT_Mesh(
     std::set<ON_3dPoint *> flip_normals;
     for (size_t fi = 0; fi < active_faces.size(); fi++) {
 	cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[fi];
-	std::set<cdt_mesh::triangle_t>::iterator tr_it;
-	for (tr_it = fmesh->tris.begin(); tr_it != fmesh->tris.end(); tr_it++) {
+	RTree<size_t, double, 3>::Iterator tree_it;
+	fmesh->tris_tree.GetFirst(tree_it);
+	size_t t_ind;
+	cdt_mesh::triangle_t tri;
+	while (!tree_it.IsNull()) {
+	    t_ind = *tree_it;
+	    tri = fmesh->tris_vect[t_ind];
 	    for (size_t j = 0; j < 3; j++) {
-		ON_3dPoint *p3d = fmesh->pnts[(*tr_it).v[j]];
+		ON_3dPoint *p3d = fmesh->pnts[tri.v[j]];
 		vfpnts.insert(p3d);
 		ON_3dPoint *onorm = NULL;
 		if (s_cdt->singular_vert_to_norms->find(p3d) != s_cdt->singular_vert_to_norms->end()) {
 		    // Use calculated normal for singularity points
 		    onorm = (*s_cdt->singular_vert_to_norms)[p3d];
 		} else {
-		    onorm = fmesh->normals[fmesh->nmap[(*tr_it).v[j]]];
+		    onorm = fmesh->normals[fmesh->nmap[tri.v[j]]];
 		}
 		if (onorm) {
 		    vfnormals.insert(onorm);
@@ -703,13 +708,9 @@ ON_Brep_CDT_Mesh(
 		    }
 		}
 	    }
+	    triangle_cnt++;;
+	    ++tree_it;
 	}
-    }
-
-    // Get the final triangle count
-    for (size_t fi = 0; fi < active_faces.size(); fi++) {
-	cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[fi];
-	triangle_cnt += fmesh->tris.size();
     }
 
     bu_log("tri_cnt: %zd\n", triangle_cnt);
@@ -774,14 +775,15 @@ ON_Brep_CDT_Mesh(
     triangle_cnt = 0;
     for (size_t fi = 0; fi < active_faces.size(); fi++) {
 	cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[fi];
-	//std::map<ON_3dPoint *, ON_3dPoint *> *normalmap = fmesh->normalmap;
-	std::set<cdt_mesh::triangle_t>::iterator tr_it;
-	triangle_cnt += fmesh->tris.size();
-	int active_tris = 0;
-	for (tr_it = fmesh->tris.begin(); tr_it != fmesh->tris.end(); tr_it++) {
-	    active_tris++;
+	RTree<size_t, double, 3>::Iterator tree_it;
+	fmesh->tris_tree.GetFirst(tree_it);
+	size_t t_ind;
+	cdt_mesh::triangle_t tri;
+	while (!tree_it.IsNull()) {
+	    t_ind = *tree_it;
+	    tri = fmesh->tris_vect[t_ind];
 	    for (size_t j = 0; j < 3; j++) {
-		ON_3dPoint *op = fmesh->pnts[(*tr_it).v[j]];
+		ON_3dPoint *op = fmesh->pnts[tri.v[j]];
 		(*faces)[face_cnt*3 + j] = on_pnt_to_bot_pnt[op];
 
 		if (normals) {
@@ -798,10 +800,9 @@ ON_Brep_CDT_Mesh(
 	    }
 
 	    face_cnt++;
+	    ++tree_it;
 	}
     }
-    //bu_log("tri_cnt_1: %zd\n", triangle_cnt);
-    //bu_log("face_cnt: %d\n", face_cnt);
 
     return 0;
 }

@@ -446,7 +446,6 @@ public:
 	normals.clear();
 	n2ind.clear();
 	nmap.clear();
-	tris.clear();
 	tris_tree.RemoveAll();
 
 	uedges2tris.clear();
@@ -458,7 +457,7 @@ public:
     };
 
     /* The 3D triangle set (defined by index values) and it associated points array */
-    std::set<triangle_t> tris;
+    //std::set<triangle_t> tris;
     std::vector<triangle_t> tris_vect;
     RTree<size_t, double, 3> tris_tree;
     std::vector<ON_3dPoint *> pnts;
@@ -571,7 +570,6 @@ private:
     std::vector<triangle_t> interior_incorrect_normals();
     double max_angle_delta(triangle_t &seed, std::vector<triangle_t> &s_tris);
     bool process_seed_tri(triangle_t &seed, bool repair, double deg);
-    //bool polygon_tri_to_mesh_tri(triangle_t *mtri, triangle_t &pt);
 
     // Mesh manipulation functions
     bool tri_add(triangle_t &atris);
@@ -597,7 +595,7 @@ private:
     // until the Brep normals of the triangles are beyond the deg limit.  Note
     // that triangles which would cause a self-intersecting polygon will be
     // rejected, even if they satisfy deg.
-    long grow_loop(cpolygon_t *polygon, double deg, bool stop_on_contained, triangle_t &target);
+    int grow_loop(cpolygon_t *polygon, double deg, bool stop_on_contained, triangle_t &target);
 
     bool best_fit_plane_reproject(cpolygon_t *polygon);
     void best_fit_plane_plot(point_t *center, vect_t *norm, const char *fname);

@@ -551,21 +551,25 @@ ON_Brep_CDT_VList_Face(
 #endif
 
     cdt_mesh::cdt_mesh_t *fmesh = &(s->fmeshes[face_index]);
-    std::set<cdt_mesh::triangle_t>::iterator tr_it;
-    std::set<cdt_mesh::triangle_t> tris = fmesh->tris;
+    RTree<size_t, double, 3>::Iterator tree_it;
+    fmesh->tris_tree.GetFirst(tree_it);
+    size_t t_ind;
+    cdt_mesh::triangle_t tri;
 
     switch (mode) {
 	case 0:
 	    // 3D shaded triangles
-	    for (tr_it = tris.begin(); tr_it != tris.end(); tr_it++) {
+	    while (!tree_it.IsNull()) {
+		t_ind = *tree_it;
+		tri = fmesh->tris_vect[t_ind];
 		for (size_t j = 0; j < 3; j++) {
-		    ON_3dPoint *p3d = fmesh->pnts[(*tr_it).v[j]];
+		    ON_3dPoint *p3d = fmesh->pnts[tri.v[j]];
 		    ON_3dPoint onorm;
 		    if (s->singular_vert_to_norms->find(p3d) != s->singular_vert_to_norms->end()) {
 			// Use calculated normal for singularity points
 			onorm = *(*s->singular_vert_to_norms)[p3d];
 		    } else {
-			onorm = *fmesh->normals[fmesh->nmap[(*tr_it).v[j]]];
+			onorm = *fmesh->normals[fmesh->nmap[tri.v[j]]];
 		    }
 		    VSET(pt[j], p3d->x, p3d->y, p3d->z);
 		    VSET(nv[j], onorm.x, onorm.y, onorm.z);
@@ -580,13 +584,16 @@ ON_Brep_CDT_VList_Face(
 		BN_ADD_VLIST(vlfree, vhead, pt[2], BN_VLIST_TRI_DRAW);
 		BN_ADD_VLIST(vlfree, vhead, pt[0], BN_VLIST_TRI_END);
 		//bu_log("Face %d, Tri %zd: %f/%f/%f-%f/%f/%f -> %f/%f/%f-%f/%f/%f -> %f/%f/%f-%f/%f/%f\n", face_index, i, V3ARGS(pt[0]), V3ARGS(nv[0]), V3ARGS(pt[1]), V3ARGS(nv[1]), V3ARGS(pt[2]), V3ARGS(nv[2]));
+		++tree_it;
 	    }
 	    break;
 	case 1:
 	    // 3D wireframe
-	    for (tr_it = tris.begin(); tr_it != tris.end(); tr_it++) {
+	    while (!tree_it.IsNull()) {
+		t_ind = *tree_it;
+		tri = fmesh->tris_vect[t_ind];
 		for (size_t j = 0; j < 3; j++) {
-		    ON_3dPoint *p3d = fmesh->pnts[(*tr_it).v[j]];
+		    ON_3dPoint *p3d = fmesh->pnts[tri.v[j]];
 		    VSET(pt[j], p3d->x, p3d->y, p3d->z);
 		}
 		//tri one
@@ -594,32 +601,21 @@ ON_Brep_CDT_VList_Face(
 		BN_ADD_VLIST(vlfree, vhead, pt[1], BN_VLIST_LINE_DRAW);
 		BN_ADD_VLIST(vlfree, vhead, pt[2], BN_VLIST_LINE_DRAW);
 		BN_ADD_VLIST(vlfree, vhead, pt[0], BN_VLIST_LINE_DRAW);
+		++tree_it;
 	    }
 	    break;
 	case 2:
 #if 0
 	    // 2D wireframe
-	    for (tr_it = tris.begin(); tr_it != tris.end(); tr_it++) {
-		p2t::Triangle *t = *tr_it;
-		p2t::Point *p = NULL;
-
-		for (size_t j = 0; j < 3; j++) {
-		    if (j == 0) {
-			p = t->GetPoint(2);
-		    } else {
-			p = t->GetPoint(j - 1);
-		    }
-		    pt1[0] = p->x;
-		    pt1[1] = p->y;
-		    pt1[2] = 0.0;
-		    p = t->GetPoint(j);
-		    pt2[0] = p->x;
-		    pt2[1] = p->y;
-		    pt2[2] = 0.0;
-		    BN_ADD_VLIST(vlfree, vhead, pt1, BN_VLIST_LINE_MOVE);
-		    BN_ADD_VLIST(vlfree, vhead, pt2, BN_VLIST_LINE_DRAW);
-		}
-	    }
+	    pt1[0] = p->x;
+	    pt1[1] = p->y;
+	    pt1[2] = 0.0;
+	    p = t->GetPoint(j);
+	    pt2[0] = p->x;
+	    pt2[1] = p->y;
+	    pt2[2] = 0.0;
+	    BN_ADD_VLIST(vlfree, vhead, pt1, BN_VLIST_LINE_MOVE);
+	    BN_ADD_VLIST(vlfree, vhead, pt2, BN_VLIST_LINE_DRAW);
 #endif
 	    break;
 	default:
@@ -657,7 +653,7 @@ int ON_Brep_CDT_VList(
    }
 
    for (int i = 0; i < s->brep->m_F.Count(); i++) {
-       if (s->fmeshes[i].tris.size()) {
+       if (s->fmeshes[i].tris_vect.size()) {
 	   (void)ON_Brep_CDT_VList_Face(vhead, vlfree, i, mode, s);
        }
    }

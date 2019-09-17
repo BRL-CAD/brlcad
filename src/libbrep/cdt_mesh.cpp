@@ -1513,7 +1513,6 @@ cdt_mesh_t::tri_add(triangle_t &tri)
     fMax[1] = bb.Max().y;
     fMax[2] = bb.Max().z;
 
-#if 1
     std::set<size_t> near_tris;
     size_t nhits = tris_tree.Search(fMin, fMax, NearTrisCallback, &near_tris);
 
@@ -1529,7 +1528,6 @@ cdt_mesh_t::tri_add(triangle_t &tri)
 		// processing.
 		std::cout << "Dup: orig: " << orig.v[0] << "," << orig.v[1] << "," << orig.v[2] << "\n";
 		std::cout << "Dup:  new: " << tri.v[0] << "," << tri.v[1] << "," << tri.v[2] << "\n";
-#if 0
 		ON_3dVector torig_dir = tnorm(orig);
 		ON_3dVector tnew_dir = tnorm(tri);
 		ON_3dVector bdir = tnorm(orig);
@@ -1542,40 +1540,12 @@ cdt_mesh_t::tri_add(triangle_t &tri)
 		    std::cout << "skip dup\n";
 		    return true;
 		}
-#endif
 		break;
 	    }
 	}
     }
-#endif
-
-#if 1
-    // Skip duplicate triangles, but report true as this triangle is in the mesh
-    // already
-    if (this->tris.find(tri) != this->tris.end()) {
-	std::cout << "Have dup!\n";
-	// Check the normal of the included duplicate and the candidate.
-	// If the original is flipped and the new one isn't, swap them out - this
-	// will help with subsequent processing.
-	triangle_t orig = (*this->tris.find(tri));
-	ON_3dVector torig_dir = tnorm(orig);
-	ON_3dVector tnew_dir = tnorm(tri);
-	ON_3dVector bdir = tnorm(orig);
-	bool f1 = (ON_DotProduct(torig_dir, bdir) < 0);
-	bool f2 = (ON_DotProduct(tnew_dir, bdir) < 0);
-	if (f1 && !f2) {
-	    tri_remove(orig);
-	    std::cout << "remove dup\n";
-	} else {
-	    std::cout << "skip dup\n";
-	    return true;
-	}
-    }
-#endif
 
     // Add the triangle
-    this->tris.insert(tri);
-
     tri.ind = tris_vect.size();
     tris_vect.push_back(tri);
     tris_tree.Insert(fMin, fMax, tri.ind);
@@ -1623,11 +1593,7 @@ void cdt_mesh_t::tri_remove(triangle_t &tri)
 	this->v2tris[tri.v[ind]].erase(tri);
     }
 
-    // Remove the triangle
-    this->tris.erase(tri);
-
-
-    // Remove from the tree
+    // Remove the triangle from the tree
     ON_3dPoint *p3d = pnts[tri.v[0]];
     ON_BoundingBox bb(*p3d, *p3d);
     for (int ind = 1; ind < 3; ind++) {
@@ -1644,10 +1610,6 @@ void cdt_mesh_t::tri_remove(triangle_t &tri)
     fMax[1] = bb.Max().y;
     fMax[2] = bb.Max().z;
     tris_tree.Remove(fMin, fMax, tri.ind);
-
-    if (tris.size() != (size_t)tris_tree.Count()) {
-	std::cout << "out of sync!\n";
-    }
 
     // flag boundary edge information for updating
     boundary_edges_stale = true;
@@ -1765,40 +1727,37 @@ cdt_mesh_t::find_boundary_oriented_edge(uedge_t &ue)
 std::vector<triangle_t>
 cdt_mesh_t::interior_incorrect_normals()
 {
-    std::set<triangle_t>::iterator tr_it;
 
-    std::set<triangle_t> flip_tris;
+    RTree<size_t, double, 3>::Iterator tree_it;
+    size_t t_ind;
+    cdt_mesh::triangle_t tri;
+    std::set<size_t> flip_tris;
 
-    for (tr_it = this->tris.begin(); tr_it != this->tris.end(); tr_it++) {
-	ON_3dVector tdir = this->tnorm(*tr_it);
-	ON_3dVector bdir = this->bnorm(*tr_it);
+    tris_tree.GetFirst(tree_it);
+    while (!tree_it.IsNull()) {
+	t_ind = *tree_it;
+	tri = tris_vect[t_ind];
+
+	ON_3dVector tdir = tnorm(tri);
+	ON_3dVector bdir = bnorm(tri);
 	if (tdir.Length() > 0 && bdir.Length() > 0 && ON_DotProduct(tdir, bdir) < 0.1) {
 	    int epnt_cnt = 0;
 	    for (int i = 0; i < 3; i++) {
-		epnt_cnt = (ep.find((*tr_it).v[i]) == ep.end()) ? epnt_cnt : epnt_cnt + 1;
+		epnt_cnt = (ep.find((tri).v[i]) == ep.end()) ? epnt_cnt : epnt_cnt + 1;
 	    }
 	    if (epnt_cnt == 2) {
 		// We're on the edge of the face - just flip this
-		flip_tris.insert(*tr_it);
-#if 0
-		for (int i = 0; i < 3; i++) {
-		    if (ep.find((*tr_it).v[i]) == ep.end()) {
-			ON_3dPoint *p = pnts[(*tr_it).v[i]];
-			std::cerr << "(" << (*tr_it).v[i] << "): " << p->x << " " << p->y << " " << p->z << "\n";
-		    }
-		}
-#endif
+		flip_tris.insert(tri.ind);
 	    }
 	}
+	++tree_it;
     }
 
+    std::set<size_t>::iterator tr_it;
     for (tr_it = flip_tris.begin(); tr_it != flip_tris.end(); tr_it++) {
-	triangle_t t = *tr_it;
-	tris.erase(t);
-	long tmp = t.v[1];
-	t.v[1] = t.v[2];
-	t.v[2] = tmp;
-	tris.insert(t);
+	long tmp = tris_vect[*tr_it].v[1];
+	tris_vect[*tr_it].v[1] = tris_vect[*tr_it].v[2];
+	tris_vect[*tr_it].v[2] = tmp;
 	//std::cerr << "Repairing flipped edge triangle\n";
     }
     if (flip_tris.size()) {
@@ -1806,12 +1765,16 @@ cdt_mesh_t::interior_incorrect_normals()
     }
 
     std::vector<triangle_t> results;
-    for (tr_it = this->tris.begin(); tr_it != this->tris.end(); tr_it++) {
-	ON_3dVector tdir = this->tnorm(*tr_it);
-	ON_3dVector bdir = this->bnorm(*tr_it);
+    tris_tree.GetFirst(tree_it);
+    while (!tree_it.IsNull()) {
+	t_ind = *tree_it;
+	tri = tris_vect[t_ind];
+	ON_3dVector tdir = tnorm(tri);
+	ON_3dVector bdir = bnorm(tri);
 	if (tdir.Length() > 0 && bdir.Length() > 0 && ON_DotProduct(tdir, bdir) < 0.1) {
-	    results.push_back(*tr_it);
+	    results.push_back(tri);
 	}
+	++tree_it;
     }
 
     return results;
@@ -1931,7 +1894,8 @@ cdt_mesh_t::brep_edge_pnt(long v)
 
 void cdt_mesh_t::reset()
 {
-    this->tris.clear();
+    this->tris_vect.clear();
+    this->tris_tree.RemoveAll();
     this->v2edges.clear();
     this->v2tris.clear();
     this->edges2tris.clear();
@@ -2268,7 +2232,7 @@ cdt_mesh_t::oriented_polycdt(cpolygon_t *polygon)
     return true;
 }
 
-long
+int
 cdt_mesh_t::grow_loop(cpolygon_t *polygon, double deg, bool stop_on_contained, triangle_t &target)
 {
     double angle = deg * ON_PI/180.0;
@@ -2462,7 +2426,7 @@ cdt_mesh_t::grow_loop(cpolygon_t *polygon, double deg, bool stop_on_contained, t
 		    bool cdt_status = oriented_polycdt(polygon);
 		    if (cdt_status) {
 			//tris_set_plot(tris, "patch.plot3");
-			return (long)tris.size();
+			return 1;
 		    } else {
 			struct bu_vls fname = BU_VLS_INIT_ZERO;
 			std::cerr << "cdt() failure\n";
@@ -2488,7 +2452,7 @@ cdt_mesh_t::grow_loop(cpolygon_t *polygon, double deg, bool stop_on_contained, t
 		bool cdt_status = oriented_polycdt(polygon);
 		if (cdt_status) {
 		    //tris_set_plot(tris, "patch.plot3");
-		    return (long)tris.size();
+		    return 1;
 		} else {
 		    struct bu_vls fname = BU_VLS_INIT_ZERO;
 		    std::cerr << "cdt() failure\n";
@@ -2510,45 +2474,6 @@ cdt_mesh_t::grow_loop(cpolygon_t *polygon, double deg, bool stop_on_contained, t
     return -1;
 }
 
-#if 0
-bool
-cdt_mesh_t::polygon_tri_to_mesh_tri(triangle_t *mtri, triangle_t &pt)
-{
-    ON_3dPoint *p3d = pnts[pt.v[0]];
-    ON_BoundingBox bb(*p3d, *p3d);
-    for (int i = 1; i < 3; i++) {
-	p3d = pnts[pt.v[i]];
-	bb.Set(*p3d, true);
-    }
-
-    double fMin[3];
-    fMin[0] = bb.Min().x;
-    fMin[1] = bb.Min().y;
-    fMin[2] = bb.Min().z;
-    double fMax[3];
-    fMax[0] = bb.Max().x;
-    fMax[1] = bb.Max().y;
-    fMax[2] = bb.Max().z;
-
-    std::set<size_t> near_tris;
-    size_t nhits = tris_tree.Search(fMin, fMax, NearTrisCallback, &near_tris);
-
-    if (nhits) {
-	// We've got something nearby, see if any of them are duplicates
-	std::set<size_t>::iterator t_it;
-	for (t_it = near_tris.begin(); t_it != near_tris.end(); t_it++) {
-	    triangle_t orig = tris_vect[*t_it];
-	    if (pt == orig) {
-		(*mtri) = orig;
-		return true;
-	    }
-	}
-    }
-
-    return false;
-}
-#endif
-
 bool
 cdt_mesh_t::process_seed_tri(triangle_t &seed, bool repair, double deg)
 {
@@ -2561,7 +2486,7 @@ cdt_mesh_t::process_seed_tri(triangle_t &seed, bool repair, double deg)
     }
 
     // Grow until we contain the seed and its associated problem data
-    long tri_cnt = grow_loop(polygon, deg, repair, seed);
+    int tri_cnt = !grow_loop(polygon, deg, repair, seed);
     if (tri_cnt < 0) {
 	std::cerr << "grow_loop failure\n";
 	delete polygon;
@@ -2578,18 +2503,8 @@ cdt_mesh_t::process_seed_tri(triangle_t &seed, bool repair, double deg)
     std::set<triangle_t>::iterator v_it;
     for (v_it = polygon->visited_triangles.begin(); v_it != polygon->visited_triangles.end(); v_it++) {
 	triangle_t vt = *v_it;
-#if 0
-	triangle_t ovt;
-       	if (!polygon_tri_to_mesh_tri(&ovt, vt)) {
-	    std::cerr << "Could not associate polygon triangle with mesh triangle!\n";
-	    return false;
-	}
-	seed_tris.erase(ovt);
-	tri_remove(ovt);
-#else
 	seed_tris.erase(vt);
 	tri_remove(vt);
-#endif
     }
 
     // Add in the replacement triangles
@@ -2868,20 +2783,27 @@ cdt_mesh_t::valid(int verbose)
     struct bu_vls fname = BU_VLS_INIT_ZERO;
     bool nret = true;
     bool eret = true;
-    std::set<triangle_t>::iterator tr_it;
-    for (tr_it = tris.begin(); tr_it != tris.end(); tr_it++) {
-	ON_3dVector tdir = tnorm(*tr_it);
-	ON_3dVector bdir = bnorm(*tr_it);
+
+    RTree<size_t, double, 3>::Iterator tree_it;
+    tris_tree.GetFirst(tree_it);
+    size_t t_ind;
+    cdt_mesh::triangle_t tri;
+    while (!tree_it.IsNull()) {
+	t_ind = *tree_it;
+	tri = tris_vect[t_ind];
+	ON_3dVector tdir = tnorm(tri);
+	ON_3dVector bdir = bnorm(tri);
 	if (tdir.Length() > 0 && bdir.Length() > 0 && ON_DotProduct(tdir, bdir) < 0.1) {
 	    if (verbose > 0) {
-		std::cout << "Still have invalid normals in mesh, triangle (" << (*tr_it).v[0] << "," << (*tr_it).v[1] << "," << (*tr_it).v[2] << ")\n";
+		std::cout << "Still have invalid normals in mesh, triangle (" << tri.v[0] << "," << tri.v[1] << "," << tri.v[2] << ")\n";
 	    }
 	    if (verbose > 1) {
-		bu_vls_sprintf(&fname, "%d-invalid_normal_tri_%ld_%ld_%ld.plot3", f_id, (*tr_it).v[0], (*tr_it).v[1], (*tr_it).v[2]);
-		tri_plot(*tr_it, bu_vls_cstr(&fname));
+		bu_vls_sprintf(&fname, "%d-invalid_normal_tri_%ld_%ld_%ld.plot3", f_id, tri.v[0], tri.v[1], tri.v[2]);
+		tri_plot(tri, bu_vls_cstr(&fname));
 	    }
 	    nret = false;
 	}
+	++tree_it;
     }
 
     if (!nret && verbose > 1) {
@@ -3138,7 +3060,25 @@ void cdt_mesh_t::tris_set_plot(std::set<triangle_t> &tset, const char *filename)
 
 void cdt_mesh_t::tris_plot(const char *filename)
 {
-    this->tris_set_plot(this->tris, filename);
+    FILE* plot_file = fopen(filename, "w");
+
+    struct bu_color c = BU_COLOR_INIT_ZERO;
+    bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
+    pl_color_buc(plot_file, &c);
+
+    RTree<size_t, double, 3>::Iterator tree_it;
+    size_t t_ind;
+    cdt_mesh::triangle_t tri;
+    std::set<size_t> flip_tris;
+
+    tris_tree.GetFirst(tree_it);
+    while (!tree_it.IsNull()) {
+	t_ind = *tree_it;
+	tri = tris_vect[t_ind];
+	plot_tri(tri, &c, plot_file, 255, 0, 0);
+	++tree_it;
+    }
+    fclose(plot_file);
 }
 
 void cdt_mesh_t::plot_tri_2d(const triangle_t &t, struct bu_color *buc, FILE *plot)
@@ -3197,7 +3137,7 @@ cdt_mesh_t::serialize(const char *fname)
 	return false;
     }
 
-    sfile << "V1\n";
+    sfile << "V2\n";
 
     sfile << "POINTS " << pnts.size() << "\n";
 
@@ -3226,12 +3166,33 @@ cdt_mesh_t::serialize(const char *fname)
 	sfile << m_it->first << "," << m_it->second << "\n";
     }
 
+    sfile << "TRIANGLES_VECT" << tris_vect.size() << "\n";
+    std::vector<triangle_t>::iterator t_it;
+    for (t_it = tris_vect.begin(); t_it != tris_vect.end(); t_it++) {
+	sfile << (*t_it).v[0] << "," << (*t_it).v[1] << "," << (*t_it).v[2] << "," << (*t_it).ind << "\n";
+    }
 
-    sfile << "TRIANGLES " << tris.size() << "\n";
+    sfile << "TRIANGLES_TREE" << tris_tree.Count() << "\n";
+    RTree<size_t, double, 3>::Iterator tree_it;
+    size_t t_ind;
+    cdt_mesh::triangle_t tri;
+    std::set<size_t> flip_tris;
 
-    std::set<triangle_t>::iterator t_it;
-    for (t_it = tris.begin(); t_it != tris.end(); t_it++) {
-	sfile << (*t_it).v[0] << "," << (*t_it).v[1] << "," << (*t_it).v[2] << "\n";
+    tris_tree.GetFirst(tree_it);
+    while (!tree_it.IsNull()) {
+	double m_min[3];
+	double m_max[3];
+	tree_it.GetBounds(m_min, m_max);
+	sfile << std::fixed << std::setprecision(std::numeric_limits<double>::max_digits10) << m_min[0] << " ";
+	sfile << std::fixed << std::setprecision(std::numeric_limits<double>::max_digits10) << m_min[1] << " ";
+	sfile << std::fixed << std::setprecision(std::numeric_limits<double>::max_digits10) << m_min[2] << " ";
+	sfile << std::fixed << std::setprecision(std::numeric_limits<double>::max_digits10) << m_max[0] << " ";
+	sfile << std::fixed << std::setprecision(std::numeric_limits<double>::max_digits10) << m_max[1] << " ";
+	sfile << std::fixed << std::setprecision(std::numeric_limits<double>::max_digits10) << m_max[2] << " ";
+	t_ind = *tree_it;
+	tri = tris_vect[t_ind];
+	sfile << tri.ind << "\n";
+	++tree_it;
     }
 
     int m_bRev_digit = (m_bRev) ? 1 : 0;
@@ -3299,7 +3260,8 @@ cdt_mesh_t::deserialize(const char *fname)
     normals.clear();
     n2ind.clear();
     nmap.clear();
-    tris.clear();
+    tris_vect.clear();
+    tris_tree.RemoveAll();
 
     uedges2tris.clear();
     seed_tris.clear();
@@ -3387,7 +3349,7 @@ cdt_mesh_t::deserialize(const char *fname)
 	    continue;
 	}
 
-	if (dtype == std::string("TRIANGLES")) {
+	if (dtype == std::string("TRIANGLES_VECT")) {
 	    for (long i = 0; i < lcnt; i++) {
 		std::string tline;
 		std::getline(sfile,tline);
@@ -3401,9 +3363,68 @@ cdt_mesh_t::deserialize(const char *fname)
 		long v1 = std::stol(v1str);
 		long v2 = std::stol(v2str);
 		long v3 = std::stol(v3str);
-		triangle_t t(v1, v2, v3);
-		tri_add(t);
+		triangle_t tri(v1, v2, v3);
+		// The tree is loaded separately - just do the basic population
+		tri.ind = tris_vect.size();
+		tris_vect.push_back(tri);
 	    }
+	    continue;
+	}
+
+	if (dtype == std::string("TRIANGLES_TREE")) {
+	    for (long i = 0; i < lcnt; i++) {
+
+		std::string pline;
+		std::getline(sfile,pline);
+		spos = pline.find_first_of(' ');
+		std::string m_min0_str = pline.substr(0, spos);
+		pline.erase(0, spos+1);
+		spos = pline.find_first_of(' ');
+		std::string m_min1_str = pline.substr(0, spos);
+		pline.erase(0, spos+1);
+		spos = pline.find_first_of(' ');
+		std::string m_min2_str = pline.substr(0, spos);
+		pline.erase(0, spos+1);
+		spos = pline.find_first_of(' ');
+		std::string m_max0_str = pline.substr(0, spos);
+		pline.erase(0, spos+1);
+		spos = pline.find_first_of(' ');
+		std::string m_max1_str = pline.substr(0, spos);
+		pline.erase(0, spos+1);
+		spos = pline.find_first_of(' ');
+		std::string m_max2_str = pline.substr(0, spos);
+		pline.erase(0, spos+1);
+		std::string tindstr = pline;
+		double m_min[3], m_max[3];
+		m_min[0] = str2d(m_min0_str);
+		m_min[1] = str2d(m_min1_str);
+		m_min[2] = str2d(m_min2_str);
+		m_max[0] = str2d(m_max0_str);
+		m_max[1] = str2d(m_max1_str);
+		m_max[2] = str2d(m_max2_str);
+		size_t tind = (size_t)std::stol(tindstr);
+		tris_tree.Insert(m_min, m_max, tind);
+
+		// Populate maps - this triangle is in the tree and thus active
+		triangle_t tri = tris_vect[tind];
+		long ti = tri.v[0];
+		long tj = tri.v[1];
+		long tk = tri.v[2];
+		struct edge_t e[3];
+		struct uedge_t ue[3];
+		e[0].set(ti, tj);
+		e[1].set(tj, tk);
+		e[2].set(tk, ti);
+		for (int ind = 0; ind < 3; ind++) {
+		    ue[ind].set(e[ind].v[0], e[ind].v[1]);
+		    edges2tris[e[ind]] = tri;
+		    uedges2tris[uedge_t(e[ind])].insert(tri);
+		    v2edges[e[ind].v[0]].insert(e[ind]);
+		    v2tris[tri.v[ind]].insert(tri);
+		}
+
+	    }
+	    boundary_edges_stale = true;
 	    continue;
 	}
 
