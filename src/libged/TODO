@@ -5,7 +5,7 @@ Be specific.
 
 --- REFACTORING ---
 
-* merge prcolor and color commands
+* merge prcolor, color, hsv_to_rgb, and rgb_to_hsv commands
 
 * merge bot_* commands into bot command subcommands
 
@@ -88,7 +88,7 @@ Be specific.
   forethought on how batch interfacts with the search and repeat
   commands.
 
-* 'cal' command: geometry calculator for scalar values, points,
+* 'calc' command: geometry calculator for scalar values, points,
   vectors, and maybe matrices.  units aware with options for
   converting between units, angles, with support for std funcs like
   sin, cos, log, abs.  also supporting view values, points on a line,
@@ -97,7 +97,49 @@ Be specific.
   calculate a distance between two nirt rays, or something that always
   prints mm, or a command that print radians instead of
   degrees). basically a geometric version of 'expr'.  alternate names
-  include calc, gcalc, expr, gexpr, gc.
+  include calc, gcalc, expr, gexpr, gc.  merge with "units_conversion"
+  command.
+
+  List of calc-related commands currently supported that may need to
+  become sub-commands:
+
+    bn_dist_pt2_lseg2
+    bn_isect_line2_line2
+    bn_isect_line3_line3
+    mat_mul
+    mat_inv
+    mat_trn
+    matXvec
+    mat4x3vec
+    mat4x3pnt
+    hdivide
+    vjoin1
+    vblend
+    mat_ae
+    mat_ae_vec
+    mat_aet_vec
+    mat_angles
+    mat_eigen2x2
+    mat_fromto
+    mat_xrot
+    mat_yrot
+    mat_zrot
+    mat_lookat
+    mat_vec_ortho
+    mat_vec_perp
+    mat_scale_about_pt
+    mat_xform_about_pt
+    mat_arb_rot
+    quat_mat2quat
+    quat_quat2mat
+    quat_distance
+    quat_double
+    quat_bisect
+    quat_make_nearest
+    quat_slerp
+    quat_sberp
+    quat_exp
+    quat_log
 
 * 'cg' command: "compile" i.e., evaluate and cache results of geometry
   computations for improved performance.  this could be a variety of
@@ -138,13 +180,16 @@ Be specific.
   need subcommand(s) to move geometry to/from layers, perhaps
   implemented as combs with a special flag like regions.
 
-* 'memory' command: reports memory and disk usage statistics.  for
+* 'env' command.  Reports bu_dir style path information, memory, user,
+  date/time information.
+
+  'memory' sub-command: reports memory and disk usage statistics.  for
   out-of-core memory (disk), report amount of available disk space,
   cache object / scratch space, and geometry file size.  for in-core
   memory, report virtual memory allocation size, % resident, total
   memory available, swap size, page faults, swap writes, etc.
-  Obviously need a lot of libbu infrastructure for many of these
-  features.
+  Obviously need libbu infrastructure for many of these features.
+  merge prmem command.
 
 * 'menu' command: to load/unload menu descriptions from a file
   (e.g. file.mnu) where we bind text, icons, images, descriptions, and
