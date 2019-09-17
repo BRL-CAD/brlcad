@@ -35,7 +35,7 @@ ged_mat_ae(struct ged *gedp,
 {
     mat_t o;
     double az, el;
-    static const char *usage = "az el";
+    static const char *usage = "azimuth elevation";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
