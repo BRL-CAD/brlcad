@@ -213,6 +213,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"match", cmd_ged_plain_wrapper, ged_match},
     {"mater", cmd_ged_plain_wrapper, ged_mater},
     {"matpick", f_matpick, GED_FUNC_PTR_NULL},
+    {"mat_ae", cmd_ged_plain_wrapper, ged_mat_ae},
     {"mged_update", f_update, GED_FUNC_PTR_NULL},
     {"mged_wait", f_wait, GED_FUNC_PTR_NULL},
     {"mirface", f_mirface, GED_FUNC_PTR_NULL},

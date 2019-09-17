@@ -930,33 +930,6 @@ error:
 }
 
 static int
-tclcad_bn_mat_ae(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
-{
-    struct bu_vls result = BU_VLS_INIT_ZERO;
-    mat_t o;
-    double az, el;
-
-    if (argc < 3) {
-	bu_vls_printf(&result, "usage: %s azimuth elevation", argv[0]);
-	goto error;
-    }
-    if (Tcl_GetDouble(interp, argv[1], &az) != TCL_OK) goto error;
-    if (Tcl_GetDouble(interp, argv[2], &el) != TCL_OK) goto error;
-
-    bn_mat_ae(o, (fastf_t)az, (fastf_t)el);
-    bn_encode_mat(&result, o, 1);
-
-    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
-    bu_vls_free(&result);
-    return TCL_OK;
-
-error:
-    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
-    bu_vls_free(&result);
-    return TCL_ERROR;
-}
-
-static int
 tclcad_bn_ae_vec(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
@@ -1634,7 +1607,6 @@ static struct math_func_link {
     {"hdivide",                  BN_FUNC_TCL_CAST(tclcad_bn_hdivide) },
     {"vjoin1",	                 BN_FUNC_TCL_CAST(tclcad_bn_vjoin1) },
     {"vblend",	                 BN_FUNC_TCL_CAST(tclcad_bn_vblend) },
-    {"mat_ae",                   BN_FUNC_TCL_CAST(tclcad_bn_mat_ae) },
     {"mat_ae_vec",               BN_FUNC_TCL_CAST(tclcad_bn_ae_vec) },
     {"mat_aet_vec",              BN_FUNC_TCL_CAST(tclcad_bn_aet_vec) },
     {"mat_angles",               BN_FUNC_TCL_CAST(tclcad_bn_mat_angles) },
