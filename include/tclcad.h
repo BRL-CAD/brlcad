@@ -229,7 +229,6 @@ TCLCAD_EXPORT extern int tclcad_rt_import_from_path(Tcl_Interp *interp,
  * of this power.
  */
 TCLCAD_EXPORT extern void tclcad_rt_setup(Tcl_Interp *interp);
-TCLCAD_EXPORT extern int Sysv_Init(Tcl_Interp *interp);
 
 
 /**
