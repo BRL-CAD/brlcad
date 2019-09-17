@@ -47,6 +47,7 @@
 extern "C" {
     struct ctriangle_t {
 	long v[3];
+	size_t ind;
 	bool all_bedge;
 	bool isect_edge;
 	bool uses_uncontained;
@@ -153,6 +154,7 @@ struct uedge_t {
 
 struct triangle_t {
     long v[3];
+    size_t ind;
 
     long& i() { return v[0]; }
     const long& i() const { return v[0]; }
@@ -168,9 +170,26 @@ struct triangle_t {
 	v[2] = k;
     }
 
+    triangle_t(long i, long j, long k, size_t pind)
+    {
+	v[0] = i;
+	v[1] = j;
+	v[2] = k;
+	ind = pind;
+    }
+
     triangle_t()
     {
 	v[0] = v[1] = v[2] = -1;
+	ind = LONG_MAX;
+    }
+
+    triangle_t(const triangle_t &other)
+    {
+	v[0] = other.v[0];
+	v[1] = other.v[1];
+	v[2] = other.v[2];
+	ind = other.ind;
     }
 
     std::set<uedge_t> uedges()
@@ -440,6 +459,7 @@ public:
 
     /* The 3D triangle set (defined by index values) and it associated points array */
     std::set<triangle_t> tris;
+    std::vector<triangle_t> tris_vect;
     RTree<size_t, double, 3> tris_tree;
     std::vector<ON_3dPoint *> pnts;
 
@@ -551,6 +571,7 @@ private:
     std::vector<triangle_t> interior_incorrect_normals();
     double max_angle_delta(triangle_t &seed, std::vector<triangle_t> &s_tris);
     bool process_seed_tri(triangle_t &seed, bool repair, double deg);
+    //bool polygon_tri_to_mesh_tri(triangle_t *mtri, triangle_t &pt);
 
     // Mesh manipulation functions
     bool tri_add(triangle_t &atris);

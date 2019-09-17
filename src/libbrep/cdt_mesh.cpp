@@ -1114,7 +1114,7 @@ cpolygon_t::cdt()
     }
 
     // Map the local polygon triangles to triangles described using the
-    // original point indices (may be an identify operation) if the polygon
+    // original point indices (may be an identify operation if the polygon
     // expresses all the original points in the same order).
     std::set<triangle_t>::iterator tr_it;
     for (tr_it = ltris.begin(); tr_it != ltris.end(); tr_it++) {
@@ -1474,6 +1474,14 @@ cdt_mesh_t::add_normal(ON_3dPoint *on_3dn)
     return (long)(normals.size() - 1);
 }
 
+#if 1
+static bool NearTrisCallback(size_t data, void *a_context) {
+    std::set<size_t> *near_tris = (std::set<size_t> *)a_context;
+    near_tris->insert(data);
+    return true;
+}
+#endif
+
 // TODO - perf reports a huge percentage of time is spend dealing with
 // tri_add - we should only need the uniqueness guarantee for triangles
 // associated with singularities, so it might be worth trying to make this
@@ -1489,9 +1497,63 @@ cdt_mesh_t::tri_add(triangle_t &tri)
 	return true;
     }
 
+    ON_3dPoint *p3d = pnts[tri.v[0]];
+    ON_BoundingBox bb(*p3d, *p3d);
+    for (int i = 1; i < 3; i++) {
+	p3d = pnts[tri.v[i]];
+	bb.Set(*p3d, true);
+    }
+
+    double fMin[3];
+    fMin[0] = bb.Min().x;
+    fMin[1] = bb.Min().y;
+    fMin[2] = bb.Min().z;
+    double fMax[3];
+    fMax[0] = bb.Max().x;
+    fMax[1] = bb.Max().y;
+    fMax[2] = bb.Max().z;
+
+#if 1
+    std::set<size_t> near_tris;
+    size_t nhits = tris_tree.Search(fMin, fMax, NearTrisCallback, &near_tris);
+
+    if (nhits) {
+	// We've got something nearby, see if any of them are duplicates
+	std::set<size_t>::iterator t_it;
+	for (t_it = near_tris.begin(); t_it != near_tris.end(); t_it++) {
+	    triangle_t orig = tris_vect[*t_it];
+	    if (tri == orig) {
+		// Duplicate.  Check the normals of the original and the
+		// candidate.  If the original is flipped and the new one
+		// isn't, swap them out - this will help with subsequent
+		// processing.
+		std::cout << "Dup: orig: " << orig.v[0] << "," << orig.v[1] << "," << orig.v[2] << "\n";
+		std::cout << "Dup:  new: " << tri.v[0] << "," << tri.v[1] << "," << tri.v[2] << "\n";
+#if 0
+		ON_3dVector torig_dir = tnorm(orig);
+		ON_3dVector tnew_dir = tnorm(tri);
+		ON_3dVector bdir = tnorm(orig);
+		bool f1 = (ON_DotProduct(torig_dir, bdir) < 0);
+		bool f2 = (ON_DotProduct(tnew_dir, bdir) < 0);
+		if (f1 && !f2) {
+		    tri_remove(orig);
+		    std::cout << "remove dup\n";
+		} else {
+		    std::cout << "skip dup\n";
+		    return true;
+		}
+#endif
+		break;
+	    }
+	}
+    }
+#endif
+
+#if 1
     // Skip duplicate triangles, but report true as this triangle is in the mesh
     // already
     if (this->tris.find(tri) != this->tris.end()) {
+	std::cout << "Have dup!\n";
 	// Check the normal of the included duplicate and the candidate.
 	// If the original is flipped and the new one isn't, swap them out - this
 	// will help with subsequent processing.
@@ -1503,14 +1565,20 @@ cdt_mesh_t::tri_add(triangle_t &tri)
 	bool f2 = (ON_DotProduct(tnew_dir, bdir) < 0);
 	if (f1 && !f2) {
 	    tri_remove(orig);
+	    std::cout << "remove dup\n";
 	} else {
+	    std::cout << "skip dup\n";
 	    return true;
 	}
     }
-
+#endif
 
     // Add the triangle
     this->tris.insert(tri);
+
+    tri.ind = tris_vect.size();
+    tris_vect.push_back(tri);
+    tris_tree.Insert(fMin, fMax, tri.ind);
 
     // Populate maps
     long i = tri.v[0];
@@ -1557,6 +1625,29 @@ void cdt_mesh_t::tri_remove(triangle_t &tri)
 
     // Remove the triangle
     this->tris.erase(tri);
+
+
+    // Remove from the tree
+    ON_3dPoint *p3d = pnts[tri.v[0]];
+    ON_BoundingBox bb(*p3d, *p3d);
+    for (int ind = 1; ind < 3; ind++) {
+	p3d = pnts[tri.v[ind]];
+	bb.Set(*p3d, true);
+    }
+
+    double fMin[3];
+    fMin[0] = bb.Min().x;
+    fMin[1] = bb.Min().y;
+    fMin[2] = bb.Min().z;
+    double fMax[3];
+    fMax[0] = bb.Max().x;
+    fMax[1] = bb.Max().y;
+    fMax[2] = bb.Max().z;
+    tris_tree.Remove(fMin, fMax, tri.ind);
+
+    if (tris.size() != (size_t)tris_tree.Count()) {
+	std::cout << "out of sync!\n";
+    }
 
     // flag boundary edge information for updating
     boundary_edges_stale = true;
@@ -2050,6 +2141,7 @@ cdt_mesh_t::polygon_tris(cpolygon_t *polygon, double angle, bool brep_norm, int 
 	nct->v[0] = t.v[0];
 	nct->v[1] = t.v[1];
 	nct->v[2] = t.v[2];
+	nct->ind = t.ind;
 	struct edge_t e1(t.v[0], t.v[1]);
 	struct edge_t e2(t.v[1], t.v[2]);
 	struct edge_t e3(t.v[2], t.v[0]);
@@ -2225,7 +2317,7 @@ cdt_mesh_t::grow_loop(cpolygon_t *polygon, double deg, bool stop_on_contained, t
 
 	ctriangle_t cct = ts.top();
 	ts.pop();
-	triangle_t ct(cct.v[0], cct.v[1], cct.v[2]);
+	triangle_t ct(cct.v[0], cct.v[1], cct.v[2], cct.ind);
 
 	// A triangle will introduce at most one new point into the loop.  If
 	// the triangle is bad, it will define uncontained interior points and
@@ -2418,6 +2510,44 @@ cdt_mesh_t::grow_loop(cpolygon_t *polygon, double deg, bool stop_on_contained, t
     return -1;
 }
 
+#if 0
+bool
+cdt_mesh_t::polygon_tri_to_mesh_tri(triangle_t *mtri, triangle_t &pt)
+{
+    ON_3dPoint *p3d = pnts[pt.v[0]];
+    ON_BoundingBox bb(*p3d, *p3d);
+    for (int i = 1; i < 3; i++) {
+	p3d = pnts[pt.v[i]];
+	bb.Set(*p3d, true);
+    }
+
+    double fMin[3];
+    fMin[0] = bb.Min().x;
+    fMin[1] = bb.Min().y;
+    fMin[2] = bb.Min().z;
+    double fMax[3];
+    fMax[0] = bb.Max().x;
+    fMax[1] = bb.Max().y;
+    fMax[2] = bb.Max().z;
+
+    std::set<size_t> near_tris;
+    size_t nhits = tris_tree.Search(fMin, fMax, NearTrisCallback, &near_tris);
+
+    if (nhits) {
+	// We've got something nearby, see if any of them are duplicates
+	std::set<size_t>::iterator t_it;
+	for (t_it = near_tris.begin(); t_it != near_tris.end(); t_it++) {
+	    triangle_t orig = tris_vect[*t_it];
+	    if (pt == orig) {
+		(*mtri) = orig;
+		return true;
+	    }
+	}
+    }
+
+    return false;
+}
+#endif
 
 bool
 cdt_mesh_t::process_seed_tri(triangle_t &seed, bool repair, double deg)
@@ -2448,8 +2578,18 @@ cdt_mesh_t::process_seed_tri(triangle_t &seed, bool repair, double deg)
     std::set<triangle_t>::iterator v_it;
     for (v_it = polygon->visited_triangles.begin(); v_it != polygon->visited_triangles.end(); v_it++) {
 	triangle_t vt = *v_it;
+#if 0
+	triangle_t ovt;
+       	if (!polygon_tri_to_mesh_tri(&ovt, vt)) {
+	    std::cerr << "Could not associate polygon triangle with mesh triangle!\n";
+	    return false;
+	}
+	seed_tris.erase(ovt);
+	tri_remove(ovt);
+#else
 	seed_tris.erase(vt);
 	tri_remove(vt);
+#endif
     }
 
     // Add in the replacement triangles
