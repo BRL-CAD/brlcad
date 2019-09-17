@@ -139,10 +139,6 @@ struct ON_Brep_CDT_State {
     std::map<int, std::map<int,ON_3dPoint *>> strim_norms;
 
     std::map<int, cdt_mesh::cdt_mesh_t> fmeshes;
-
-
-    /* Mesh data */
-    std::map<p2t::Triangle*, int> *tri_brep_face;
 };
 
 #if 0

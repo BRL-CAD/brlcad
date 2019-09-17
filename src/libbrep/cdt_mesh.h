@@ -40,7 +40,6 @@
 #include <vector>
 #include <set>
 #include <map>
-#include "poly2tri/poly2tri.h"
 #include "RTree.h"
 #include "opennurbs.h"
 #include "bu/color.h"
@@ -447,7 +446,6 @@ public:
     long add_point(ON_2dPoint &on_2dp);
     long add_point(ON_3dPoint *on_3dp);
     long add_normal(ON_3dPoint *on_3dn);
-    void build(std::set<p2t::Triangle *> *cdttri, std::map<p2t::Point *, ON_3dPoint *> *pointmap);
     void set_brep_data(
 	    bool brev,
 	    std::set<ON_3dPoint *> *e,
