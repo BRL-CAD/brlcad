@@ -102,6 +102,9 @@ public:
     /// \return Returns the number of entries found
     int Search(const Element& a_min, const Element& a_max, std::function<bool(const DataType&, void *)> callback, void *a_context) const;
 
+    // Find the overlapping leaves between this rtree and another rtree
+    bool Overlaps(RTree &other, double tolerance, std::function<bool(const DataType&, const DataType&, void *)> callback, void *a_context);
+
     /// Remove all entries from tree
     void RemoveAll();
 
@@ -1642,6 +1645,16 @@ bool RTREE_QUAL::Search(Node* a_node, Rect* a_rect, int& a_foundCount, std::func
     return true; // Continue searching
 }
 
+
+
+// Based on the idea from the openNURBS code to search two R-trees for all pairs elements whose bounding boxes overlap.
+RTREE_TEMPLATE
+bool RTREE_QUAL::Overlaps(RTree &other, double tolerance, std::function<bool(const DataType&, const DataType&, void *)> callback, void *a_context)
+{
+    if (!m_root || !other.m_root) return false;
+    if (tolerance < 0) return false;
+    return true;
+}
 
 #undef RTREE_TEMPLATE
 #undef RTREE_QUAL
