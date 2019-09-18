@@ -456,7 +456,13 @@ public:
 	edges2tris.clear();
     };
 
-    /* The 3D triangle set (defined by index values) and it associated points array */
+    /* The 3D triangle set (defined by index values) and it associated points array.
+     *
+     * TODO - need to get perf on this - it's not trivially clear the RTree is
+     * actually faster than the set yet just adding individual triangle boxes
+     * to it - might need to nest RTrees with some upper limit on how many
+     * triangles are in each cell before subdividing, to keep each local RTree
+     * easier to handle? */
     //std::set<triangle_t> tris;
     std::vector<triangle_t> tris_vect;
     RTree<size_t, double, 3> tris_tree;
