@@ -1485,7 +1485,6 @@ bool RTREE_QUAL::RemoveRect(Rect* a_rect, const DataType& a_id, Node** a_root)
 
             for (int index = 0; index < tempNode->m_count; ++index)
             {
-                // TODO go over this code. should I use (tempNode->m_level - 1)?
                 InsertRect(tempNode->m_branch[index],
                     a_root,
                     tempNode->m_level);
