@@ -1733,6 +1733,10 @@ cdt_mesh_t::interior_incorrect_normals()
     cdt_mesh::triangle_t tri;
     std::set<size_t> flip_tris;
 
+    // TODO - just flipping these edge triangles may introduce edge problems - now that
+    // we're keeping points away from the edges, see if we can just handle all flipped
+    // faces through the repair logic.
+#if 0
     tris_tree.GetFirst(tree_it);
     while (!tree_it.IsNull()) {
 	t_ind = *tree_it;
@@ -1763,6 +1767,7 @@ cdt_mesh_t::interior_incorrect_normals()
     if (flip_tris.size()) {
 	update_problem_edges();
     }
+#endif
 
     std::vector<triangle_t> results;
     tris_tree.GetFirst(tree_it);
