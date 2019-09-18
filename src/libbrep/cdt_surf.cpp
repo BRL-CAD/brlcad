@@ -577,7 +577,7 @@ sinfo_init(struct cdt_surf_info *sinfo, struct ON_Brep_CDT_State *s_cdt, int fac
 	sinfo->rtree_trim_spnts_2d.Insert(tMin, tMax, (void *)tseg);
 
     }
-#if 1
+#if 0
     struct bu_vls fname = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&fname, "%d-rtree_2d_trim_pnts.plot3", sinfo->f->m_face_index);
     plot_rtree_2d2(sinfo->rtree_trim_spnts_2d, bu_vls_cstr(&fname));
@@ -717,7 +717,7 @@ getSurfacePoint(
     fastf_t u = (u1 + u2) / 2.0;
     fastf_t v = (v1 + v2) / 2.0;
 
-    sp.plot("spatch.p3");
+    //sp.plot("spatch.p3");
 
     double est1 = uline_len_est(sinfo, u1, u2, v1);
     double est2 = uline_len_est(sinfo, u1, u2, v2);

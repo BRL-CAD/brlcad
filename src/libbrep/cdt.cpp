@@ -214,15 +214,18 @@ do_triangulation(struct ON_Brep_CDT_State *s_cdt, int fi)
     fmesh->brep = s_cdt->brep;
     fmesh->f_id = face.m_face_index;
     fmesh->m_bRev = face.m_bRev;
-    if (fmesh->cdt()) {
+
+    if (!fmesh->cdt()) {
+	return false;
+    } else {
+#if 0
 	struct bu_vls fname = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&fname, "%d-tris.plot3", face.m_face_index);
 	fmesh->tris_plot(bu_vls_cstr(&fname));
 	bu_vls_sprintf(&fname, "%d-tris_2d.plot3", face.m_face_index);
 	fmesh->tris_plot_2d(bu_vls_cstr(&fname));
 	bu_vls_free(&fname);
-    } else {
-	return false;
+#endif
     }
 
     // List singularities
@@ -572,7 +575,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	// Rebuild finalized 2D RTrees for faces (needed for surface processing)
 	finalize_rtrees(s_cdt);
 
-#if 1
+#if 0
 	for (int index = 0; index < brep->m_F.Count(); index++) {
 	    struct bu_vls fname = BU_VLS_INIT_ZERO;
 	    bu_vls_sprintf(&fname, "%d-rtree_outer_polygon_2d.plot3", index);

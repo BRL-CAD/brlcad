@@ -380,7 +380,7 @@ static bool MinSplit2dCallback(void *data, void *a_context) {
     struct rtree_minsplit_context *context= (struct rtree_minsplit_context *)a_context;
 
 
-    plot_ce_bbox(context->s_cdt, tseg, "l.p3");
+    //plot_ce_bbox(context->s_cdt, tseg, "l.p3");
 
     // Intersecting with oneself isn't cause for splitting
     if (tseg == context->cseg || tseg == context->cseg->prev || tseg == context->cseg->next) return true;
@@ -1691,7 +1691,7 @@ refine_close_edges(struct ON_Brep_CDT_State *s_cdt)
 		tMax[0] = bb.Max().x;
 		tMax[1] = bb.Max().y;
 
-		plot_ce_bbox(s_cdt, tseg, "c.p3");
+		//plot_ce_bbox(s_cdt, tseg, "c.p3");
 
 		// Edge context info
 		struct rtree_minsplit_context a_context;
