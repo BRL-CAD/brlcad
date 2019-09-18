@@ -8,6 +8,7 @@
 #include <functional>
 #include <type_traits>
 #include <cmath>
+#include <set>
 #include "opennurbs.h"
 
 #define RTreeAssert assert // RTree uses RTreeAssert( condition )
@@ -102,8 +103,9 @@ template<class _DataType, class _ElementType, int _NumDimensions,
     /// \return Returns the number of entries found
     int Search(const Element& a_min, const Element& a_max, std::function<bool(const DataType&, void *)> callback, void *a_context) const;
 
-    // Find the overlapping leaves between this rtree and another rtree
-    bool Overlaps(RTree &other, double tolerance, std::function<bool(const DataType&, const DataType&, void *)> callback, void *a_context);
+    // Find the overlapping leaves between this rtree and another rtree, returning the data from each
+    // leaf in the respective a and b result sets.
+    size_t Overlaps(RTree &other, std::set<DataType> *a_result, std::set<DataType> *b_result);
 
     /// Remove all entries from tree
     void RemoveAll();
@@ -373,6 +375,8 @@ template<class _DataType, class _ElementType, int _NumDimensions,
     bool SaveRec(Node* a_node, RTFileStream& a_stream);
     bool LoadRec(Node* a_node, RTFileStream& a_stream);
     void CopyRec(Node* current, Node* other);
+
+    size_t CheckNodes(Node *a_nodeA, Node *a_nodeB, std::set<DataType> *a_result, std::set<DataType> *b_result);
 
     Node* m_root = nullptr;                                         ///< Root of tree
     ElementTypeReal m_unitSphereVolume = kElementTypeRealZero;      ///< Unit sphere constant for required number of dimensions
@@ -1645,15 +1649,39 @@ bool RTREE_QUAL::Search(Node* a_node, Rect* a_rect, int& a_foundCount, std::func
     return true; // Continue searching
 }
 
-
-
-// Based on the idea from the openNURBS code to search two R-trees for all pairs elements whose bounding boxes overlap.
 RTREE_TEMPLATE
-bool RTREE_QUAL::Overlaps(RTree &other, double tolerance, std::function<bool(const DataType&, const DataType&, void *)> callback, void *a_context)
+size_t RTREE_QUAL::CheckNodes(Node *a_nodeA, Node *a_nodeB, std::set<DataType> *a_result, std::set<DataType> *b_result)
 {
-    if (!m_root || !other.m_root) return false;
-    if (tolerance < 0) return false;
-    return true;
+    size_t ocnt = 0;
+    for (int index = 0; index < a_nodeA.m_count; ++index) {
+	for (int index2 = 0; index2 < a_nodeB.m_count; ++index2) {
+	    if (Overlap(&(a_nodeA->m_branch[index].m_rect), &(a_nodeB->m_branch[index2].m_rect))) {
+		if (a_nodeA->m_level > 0) {
+		    if ( a_nodeB->m_level > 0 ) {
+			ocnt += CheckNodes(a_nodeA->m_branch[index].m_child, a_nodeB->m_branch[index2].m_child, a_result, b_result);
+		    } else {
+			ocnt += CheckNodes(a_nodeA->m_branch[index].m_child, a_nodeB->m_branch[index2], a_result, b_result);
+		    }
+		} else if ( a_nodeB->m_level > 0 ) {
+		    ocnt += CheckNodes(a_nodeA->m_branch[index], a_nodeB->m_branch[index2].m_child, a_result, b_result);
+		} else {
+		    a_result->insert(a_nodeA->m_branch[index].m_data);
+		    b_result->insert(a_nodeB->m_branch[index2].m_data);
+		    ocnt++;
+		}
+	    }
+	}
+    }
+    return ocnt;
+}
+
+// Loosely based on the idea from the openNURBS code to search two R-trees for all pairs elements whose bounding boxes overlap.
+RTREE_TEMPLATE
+size_t RTREE_QUAL::Overlaps(RTree &other, std::set<DataType> *a_result, std::set<DataType> *b_result)
+{
+    if (!m_root || !other.m_root) return 0;
+    size_t ovlp_cnt = CheckNodes(m_root, other.m_root, a_result, b_result);
+    return ovlp_cnt;
 }
 
 #undef RTREE_TEMPLATE
