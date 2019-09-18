@@ -94,7 +94,6 @@ ON_Brep_CDT_VList(
     int mode,
     struct ON_Brep_CDT_State *s);
 
-#if 0
 /* Given two or more triangulation states, refine them to clear any face
  * overlaps introduced by the triangulation.  If any of the states are
  * un-tessellated, first perform the tessellation indicated by the state
@@ -108,6 +107,7 @@ ON_Brep_CDT_VList(
 extern BREP_EXPORT int
 ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt);
 
+#if 0
 /* Report the number of other tessellation states which manifest unresolvable
  * overlaps with state s.  If the ovlps argument is non-null, populate with
  * the problematic states.  If no resolve step was performed on s, return -1 */

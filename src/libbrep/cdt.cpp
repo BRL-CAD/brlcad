@@ -644,6 +644,48 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 
 }
 
+int
+ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
+{
+    if (!s_a) return -1;
+    if (s_cnt < 2) return 0;
+    std::vector<std::set<size_t> *> ovlp_tris;
+    for (int i = 0; i < s_cnt; i++) {
+	ovlp_tris.push_back(new std::set<size_t>);
+    }
+
+    for (int i = 0; i < s_cnt; i++) {
+	struct ON_Brep_CDT_State *s_i = s_a[i];
+	for (int i_fi = 0; i_fi < s_i->brep->m_F.Count(); i_fi++) {
+	    const ON_BrepFace *i_face = s_i->brep->Face(i_fi);
+	    ON_BoundingBox i_fbb = i_face->BoundingBox();
+	    cdt_mesh::cdt_mesh_t &i_fmesh = s_i->fmeshes[i_fi];
+	    for (int j = i+1; j < s_cnt; j++) {
+		struct ON_Brep_CDT_State *s_j = s_a[j];
+		for (int j_fi = 0; j_fi < s_j->brep->m_F.Count(); j_fi++) {
+		    const ON_BrepFace *j_face = s_j->brep->Face(j_fi);
+		    ON_BoundingBox j_fbb = j_face->BoundingBox();
+		    if (!i_fbb.IsDisjoint(j_fbb)) {
+			cdt_mesh::cdt_mesh_t &j_fmesh = s_j->fmeshes[j_fi];
+			std::cout << "Checking " << i << " face " << i_fi << " against " << j << " face " << j_fi << "\n";
+			size_t ovlp_cnt = i_fmesh.tris_tree.Overlaps(j_fmesh.tris_tree, ovlp_tris[i], ovlp_tris[j]);
+			if (ovlp_cnt) {
+			    std::cout << "   found " << ovlp_cnt << " overlaps\n";
+			} else {
+			    std::cout << "RTREE_ISECT_EMPTY: " << i << " face " << i_fi << " and " << j << " face " << j_fi << "\n";
+			}
+		    } else {
+			std::cout << "DISJOINT: " << i << " face " << i_fi << " and " << j << " face " << j_fi << "\n";
+		    }
+		}
+	    }
+	}
+    }
+    for (int i = 0; i < s_cnt; i++) {
+	delete ovlp_tris[i];
+    }
+    return 0;
+}
 
 // Generate a BoT with normals.
 int

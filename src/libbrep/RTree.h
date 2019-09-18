@@ -1653,17 +1653,17 @@ RTREE_TEMPLATE
 size_t RTREE_QUAL::CheckNodes(Node *a_nodeA, Node *a_nodeB, std::set<DataType> *a_result, std::set<DataType> *b_result)
 {
     size_t ocnt = 0;
-    for (int index = 0; index < a_nodeA.m_count; ++index) {
-	for (int index2 = 0; index2 < a_nodeB.m_count; ++index2) {
+    for (int index = 0; index < a_nodeA->m_count; ++index) {
+	for (int index2 = 0; index2 < a_nodeB->m_count; ++index2) {
 	    if (Overlap(&(a_nodeA->m_branch[index].m_rect), &(a_nodeB->m_branch[index2].m_rect))) {
 		if (a_nodeA->m_level > 0) {
 		    if ( a_nodeB->m_level > 0 ) {
 			ocnt += CheckNodes(a_nodeA->m_branch[index].m_child, a_nodeB->m_branch[index2].m_child, a_result, b_result);
 		    } else {
-			ocnt += CheckNodes(a_nodeA->m_branch[index].m_child, a_nodeB->m_branch[index2], a_result, b_result);
+			ocnt += CheckNodes(a_nodeA->m_branch[index].m_child, a_nodeB, a_result, b_result);
 		    }
 		} else if ( a_nodeB->m_level > 0 ) {
-		    ocnt += CheckNodes(a_nodeA->m_branch[index], a_nodeB->m_branch[index2].m_child, a_result, b_result);
+		    ocnt += CheckNodes(a_nodeA, a_nodeB->m_branch[index2].m_child, a_result, b_result);
 		} else {
 		    a_result->insert(a_nodeA->m_branch[index].m_data);
 		    b_result->insert(a_nodeB->m_branch[index2].m_data);
