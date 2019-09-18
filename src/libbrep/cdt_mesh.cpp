@@ -2486,7 +2486,7 @@ cdt_mesh_t::process_seed_tri(triangle_t &seed, bool repair, double deg)
     }
 
     // Grow until we contain the seed and its associated problem data
-    int tri_cnt = !grow_loop(polygon, deg, repair, seed);
+    int tri_cnt = grow_loop(polygon, deg, repair, seed);
     if (tri_cnt < 0) {
 	std::cerr << "grow_loop failure\n";
 	delete polygon;
