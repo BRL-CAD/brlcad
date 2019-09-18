@@ -667,6 +667,7 @@ filter_surface_pnts(struct cdt_surf_info *sinfo)
 	CDT_Add3DNorm(sinfo->s_cdt, fmesh->normals[fmesh->normals.size()-1], fmesh->pnts[fmesh->pnts.size()-1], sinfo->f->m_face_index, -1, -1, -1, n2dp.x, n2dp.y);
 
 	fmesh->p2d3d[f_ind2d] = f3ind;
+	fmesh->p3d2d[f3ind] = f_ind2d;
 	fmesh->nmap[f3ind] = fnind;
     }
 
@@ -694,6 +695,7 @@ filter_surface_pnts(struct cdt_surf_info *sinfo)
 	CDT_Add3DNorm(sinfo->s_cdt, fmesh->normals[fmesh->normals.size()-1], fmesh->pnts[fmesh->pnts.size()-1], sinfo->f->m_face_index, -1, -1, -1, n2dp.x, n2dp.y);
 
 	fmesh->p2d3d[f_ind2d] = f3ind;
+	fmesh->p3d2d[f3ind] = f_ind2d;
 	fmesh->nmap[f3ind] = fnind;
     }
 

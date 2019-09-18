@@ -490,6 +490,7 @@ public:
     std::vector<triangle_t> tris_2d;
     std::vector<std::pair<double, double> > m_pnts_2d;
     std::map<long, long> p2d3d;
+    std::map<long, long> p3d2d;
     cpolygon_t outer_loop;
     std::map<int, cpolygon_t*> inner_loops;
     std::set<long> m_interior_pnts;
