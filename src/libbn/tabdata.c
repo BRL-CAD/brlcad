@@ -1170,7 +1170,7 @@ bn_table_interval_num_samples(const struct bn_table *tabp, double low, double hi
 }
 
 size_t
-bn_table_delete_sample_pts(struct bn_table *tabp, size_t i, size_t j)
+bn_table_delete_sample_pnts(struct bn_table *tabp, size_t i, size_t j)
 {
     size_t tokill;
     size_t k;
@@ -1181,14 +1181,14 @@ bn_table_delete_sample_pts(struct bn_table *tabp, size_t i, size_t j)
     BN_CK_TABLE(tabp);
 
     if (i >= tabp->nx || j >= tabp->nx)
-	bu_bomb("bn_table_delete_sample_pts() index out of range\n");
+	bu_bomb("bn_table_delete_sample_pnts() index out of range\n");
 
     tokill = j - i + 1;
 
     if (tokill < 1)
-	bu_bomb("bn_table_delete_sample_pts(): nothing to delete\n");
+	bu_bomb("bn_table_delete_sample_pnts(): nothing to delete\n");
     if (tokill >= tabp->nx)
-	bu_bomb("bn_table_delete_sample_pts(): you can't kill 'em all!\n");
+	bu_bomb("bn_table_delete_sample_pnts(): you can't kill 'em all!\n");
 
     tabp->nx -= tokill;
 

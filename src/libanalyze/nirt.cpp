@@ -348,7 +348,7 @@ struct nirt_output_record {
  *
  * Transition points:
  *
- * 1.  DIST_PT_PT - if there is a transition on either path that does not align
+ * 1.  DIST_PNT_PNT - if there is a transition on either path that does not align
  *     within the specified distance tolerance with a transition on the other
  *     path, the transition is unmatched and reported as a difference.
  * 2.  Obliquity delta - if two transition points align within the distance
@@ -787,7 +787,7 @@ HIDDEN double _nirt_backout(struct nirt_state *nss)
      */
     VADD2SCALE(center_bsphere, nss->i->ap->a_rt_i->mdl_max, nss->i->ap->a_rt_i->mdl_min, 0.5);
 
-    dist_to_target = DIST_PT_PT(center_bsphere, ray_point);
+    dist_to_target = DIST_PNT_PNT(center_bsphere, ray_point);
 
     VSUB2(dvec, ray_point, center_bsphere);
     VUNITIZE(dvec);
@@ -849,8 +849,8 @@ _nirt_partition_diff(struct nirt_state *nss, struct nirt_seg *left, struct nirt_
     int have_diff = 0;
     struct nirt_seg_diff *sd;
     if (!nss || !nss->i->diff_settings) return NULL;
-    fastf_t in_delta = DIST_PT_PT(left->in, right->in);
-    fastf_t out_delta = DIST_PT_PT(left->in, right->in);
+    fastf_t in_delta = DIST_PNT_PNT(left->in, right->in);
+    fastf_t out_delta = DIST_PNT_PNT(left->in, right->in);
     fastf_t los_delta = fabs(left->los - right->los);
     fastf_t scaled_los_delta = fabs(left->scaled_los - right->scaled_los);
     fastf_t obliq_in_delta = fabs(left->obliq_in - right->obliq_in);
@@ -883,8 +883,8 @@ _nirt_overlap_diff(struct nirt_state *nss, struct nirt_seg *left, struct nirt_se
     int have_diff = 0;
     struct nirt_seg_diff *sd;
     if (!nss || !nss->i->diff_settings) return NULL;
-    fastf_t ov_in_delta = DIST_PT_PT(left->ov_in, right->ov_in);
-    fastf_t ov_out_delta = DIST_PT_PT(left->ov_out, right->ov_out);
+    fastf_t ov_in_delta = DIST_PNT_PNT(left->ov_in, right->ov_in);
+    fastf_t ov_out_delta = DIST_PNT_PNT(left->ov_out, right->ov_out);
     fastf_t ov_los_delta = fabs(left->ov_los - right->ov_los);
     if (bu_vls_strcmp(left->ov_reg1_name, right->ov_reg1_name)) have_diff = 1;
     if (bu_vls_strcmp(left->ov_reg2_name, right->ov_reg2_name)) have_diff = 1;
@@ -909,7 +909,7 @@ _nirt_gap_diff(struct nirt_state *nss, struct nirt_seg *left, struct nirt_seg *r
     int have_diff = 0;
     struct nirt_seg_diff *sd;
     if (!nss || !nss->i->diff_settings) return NULL;
-    fastf_t gap_in_delta = DIST_PT_PT(left->gap_in, right->gap_in);
+    fastf_t gap_in_delta = DIST_PNT_PNT(left->gap_in, right->gap_in);
     fastf_t gap_los_delta = fabs(left->gap_los - right->gap_los);
     if (gap_in_delta > nss->i->diff_settings->dist_delta_tol) have_diff = 1;
     if (gap_los_delta > nss->i->diff_settings->los_delta_tol) have_diff = 1;
@@ -1028,12 +1028,12 @@ _nirt_diff_report(struct nirt_state *nss)
 		    }
 		    if (sd->in_delta > nss->i->diff_settings->dist_delta_tol && nss->i->diff_settings->report_partition_dists) {
 			std::string oval = _nirt_dbl_to_str(sd->in_delta, _nirt_digits(nss->i->diff_settings->dist_delta_tol));
-			bu_vls_printf(&dreport, "    DIST_PT_PT(in_old,in_new): %s\n", oval.c_str());
+			bu_vls_printf(&dreport, "    DIST_PNT_PNT(in_old,in_new): %s\n", oval.c_str());
 			reporting_diff = 1;
 		    }
 		    if (sd->out_delta > nss->i->diff_settings->dist_delta_tol && nss->i->diff_settings->report_partition_dists) {
 			std::string oval = _nirt_dbl_to_str(sd->out_delta, _nirt_digits(nss->i->diff_settings->dist_delta_tol));
-			bu_vls_printf(&dreport, "    DIST_PT_PT(out_old,out_new): %s\n", oval.c_str());
+			bu_vls_printf(&dreport, "    DIST_PNT_PNT(out_old,out_new): %s\n", oval.c_str());
 			reporting_diff = 1;
 		    }
 		    if (sd->los_delta > nss->i->diff_settings->los_delta_tol && nss->i->diff_settings->report_partition_dists) {
@@ -1062,7 +1062,7 @@ _nirt_diff_report(struct nirt_state *nss)
 		    bu_vls_printf(&dreport, "  Segment difference(%s)[%zu]:\n", _nirt_seg_string(sd->left->type), j);
 		    if (sd->gap_in_delta > nss->i->diff_settings->dist_delta_tol && nss->i->diff_settings->report_gap_dists) {
 			std::string oval = _nirt_dbl_to_str(sd->gap_in_delta, _nirt_digits(nss->i->diff_settings->dist_delta_tol));
-			bu_vls_printf(&dreport, "    DIST_PT_PT(gap_in_old,gap_in_new): %s\n", oval.c_str());
+			bu_vls_printf(&dreport, "    DIST_PNT_PNT(gap_in_old,gap_in_new): %s\n", oval.c_str());
 			reporting_diff = 1;
 		    }
 		    if (sd->gap_los_delta > nss->i->diff_settings->los_delta_tol && nss->i->diff_settings->report_gap_dists) {
@@ -1092,12 +1092,12 @@ _nirt_diff_report(struct nirt_state *nss)
 		    }
 		    if (sd->ov_in_delta > nss->i->diff_settings->dist_delta_tol && nss->i->diff_settings->report_overlap_dists) {
 			std::string oval = _nirt_dbl_to_str(sd->ov_in_delta, _nirt_digits(nss->i->diff_settings->dist_delta_tol));
-			bu_vls_printf(&dreport, "    DIST_PT_PT(ov_in_old, ov_in_new): %s\n", oval.c_str());
+			bu_vls_printf(&dreport, "    DIST_PNT_PNT(ov_in_old, ov_in_new): %s\n", oval.c_str());
 			reporting_diff = 1;
 		    }
 		    if (sd->ov_out_delta > nss->i->diff_settings->dist_delta_tol && nss->i->diff_settings->report_overlap_dists) {
 			std::string oval = _nirt_dbl_to_str(sd->ov_out_delta, _nirt_digits(nss->i->diff_settings->dist_delta_tol));
-			bu_vls_printf(&dreport, "    DIST_PT_PT(ov_out_old, ov_out_new): %s\n", oval.c_str());
+			bu_vls_printf(&dreport, "    DIST_PNT_PNT(ov_out_old, ov_out_new): %s\n", oval.c_str());
 			reporting_diff = 1;
 		    }
 		    if (sd->ov_los_delta > nss->i->diff_settings->los_delta_tol && nss->i->diff_settings->report_overlap_dists) {

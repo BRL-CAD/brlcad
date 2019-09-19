@@ -305,13 +305,11 @@ RT_EXPORT extern void rt_pr_tree_val(const union tree *tp,
 				     const struct partition *partp,
 				     int pr_name, int lvl);
 /* Print a partition */
-RT_EXPORT extern void rt_pr_pt(const struct rt_i *rtip,
-			       const struct partition *pp);
-RT_EXPORT extern void rt_pr_pt_vls(struct bu_vls *v,
+RT_EXPORT extern void rt_pr_partition(const struct rt_i *rtip,
+				      const struct partition *pp);
+RT_EXPORT extern void rt_pr_partition_vls(struct bu_vls *v,
 				   const struct rt_i *rtip,
 				   const struct partition *pp);
-RT_EXPORT extern void rt_pr_pt(const struct rt_i *rtip,
-			       const struct partition *pp);
 
 
 /**

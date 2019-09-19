@@ -1753,8 +1753,8 @@ fix_halfs(struct _ged_client_data *dgcdp)
 
 	HMOVE(haf_pl, hp->half_eqn);
 
-	if (DIST_PT_PLANE(max, haf_pl) >= -tol->dist &&
-	    DIST_PT_PLANE(min, haf_pl) >= -tol->dist)
+	if (DIST_PNT_PLANE(max, haf_pl) >= -tol->dist &&
+	    DIST_PNT_PLANE(min, haf_pl) >= -tol->dist)
 	    continue;
 
 	/* make an NMG the size of our model bounding box */
@@ -1879,7 +1879,7 @@ fix_halfs(struct _ged_client_data *dgcdp)
 		if (eu->vu_p->v_p == vcut[0]->v_p || eu->vu_p->v_p == vcut[1]->v_p)
 		    continue;
 
-		if (DIST_PT_PLANE(eu->vu_p->v_p->vg_p->coord, haf_pl) > tol->dist) {
+		if (DIST_PNT_PLANE(eu->vu_p->v_p->vg_p->coord, haf_pl) > tol->dist) {
 		    nmg_klu(lu);
 		    break;
 		} else {
@@ -1921,7 +1921,7 @@ fix_halfs(struct _ged_client_data *dgcdp)
 
 		    vg = eu->vu_p->v_p->vg_p;
 
-		    if (DIST_PT_PLANE(vg->coord, haf_pl) > tol->dist) {
+		    if (DIST_PNT_PLANE(vg->coord, haf_pl) > tol->dist) {
 			killit = 1;
 			break;
 		    }

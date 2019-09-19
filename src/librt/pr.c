@@ -109,7 +109,7 @@ rt_pr_partitions(const struct rt_i *rtip, register const struct partition *phead
 
     for (pp = phead->pt_forw; pp != phead; pp = pp->pt_forw) {
 	RT_CHECK_PT(pp);
-	rt_pr_pt_vls(&v, rtip, pp);
+	rt_pr_partition_vls(&v, rtip, pp);
     }
     bu_log_indent_delta(-2);
     bu_log_indent_vls(&v);
@@ -121,7 +121,7 @@ rt_pr_partitions(const struct rt_i *rtip, register const struct partition *phead
 
 
 void
-rt_pr_pt_vls(struct bu_vls *v, const struct rt_i *rtip, register const struct partition *pp)
+rt_pr_partition_vls(struct bu_vls *v, const struct rt_i *rtip, register const struct partition *pp)
 {
     register const struct soltab *stp;
     register struct seg **segpp;
@@ -181,13 +181,13 @@ rt_pr_pt_vls(struct bu_vls *v, const struct rt_i *rtip, register const struct pa
 
 
 void
-rt_pr_pt(const struct rt_i *rtip, register const struct partition *pp)
+rt_pr_partition(const struct rt_i *rtip, register const struct partition *pp)
 {
     struct bu_vls v = BU_VLS_INIT_ZERO;
 
     RT_CHECK_RTI(rtip);
     RT_CHECK_PT(pp);
-    rt_pr_pt_vls(&v, rtip, pp);
+    rt_pr_partition_vls(&v, rtip, pp);
     bu_log("%s", bu_vls_addr(&v));
     bu_vls_free(&v);
 }

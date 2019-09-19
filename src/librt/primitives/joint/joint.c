@@ -239,9 +239,9 @@ rt_joint_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_
     jip = (struct rt_joint_internal *)ip->idb_ptr;
     RT_JOINT_CK_MAGIC(jip);
 
-    rt_ell_16pts(top, jip->location, a, b);
-    rt_ell_16pts(bottom, jip->location, b, c);
-    rt_ell_16pts(middle, jip->location, a, c);
+    rt_ell_16pnts(top, jip->location, a, b);
+    rt_ell_16pnts(bottom, jip->location, b, c);
+    rt_ell_16pnts(middle, jip->location, a, c);
 
     RT_ADD_VLIST(vhead, &top[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
     for (i = 0; i < 16; i++) {
@@ -552,7 +552,7 @@ rt_joint_find_selections(
      * the view plane that intersects the location)
      */
     BN_TOL_INIT(&tol);
-    (void)bn_dist_pt3_line3(dist, qline_pt, qstart, qdir, jip->location, &tol);
+    (void)bn_dist_pnt3_line3(dist, qline_pt, qstart, qdir, jip->location, &tol);
     VJOIN1(joint_selection->start, qline_pt, -1.0, jip->location);
 
 #if 0
@@ -584,12 +584,12 @@ rt_joint_find_selections(
 	BU_GET(joint_selection, struct joint_selection);
 	if (dist_sq1 <= dist_sq2) {
 	    /* closer to v1 than v2 */
-	    distsq_to_loc = DIST_PT_PT_SQ(joint_v1pt, jip->location);
+	    distsq_to_loc = DIST_PNT_PNT_SQ(joint_v1pt, jip->location);
 	    max_vdist = .1 * MAGSQ(jip->vector1);
 	    joint_selection->what = JOINT_SELECT_V1;
 	} else {
 	    /* closer to v2 than v1 */
-	    distsq_to_loc = DIST_PT_PT_SQ(joint_v2pt, jip->location);
+	    distsq_to_loc = DIST_PNT_PNT_SQ(joint_v2pt, jip->location);
 	    max_vdist = .1 * MAGSQ(jip->vector2);
 	    joint_selection->what = JOINT_SELECT_V2;
 	}

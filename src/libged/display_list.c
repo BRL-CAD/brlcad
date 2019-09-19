@@ -800,7 +800,7 @@ solid_point_spacing(struct bview *gvp, fastf_t solid_width)
     }
     p2[X] = sqrt((radius * radius) - (p2[Y] * p2[Y]));
 
-    return DIST_PT2_PT2(p1, p2);
+    return DIST_PNT2_PNT2(p1, p2);
 }
 
 

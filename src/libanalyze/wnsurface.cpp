@@ -285,7 +285,7 @@ wn_calc_coeff(struct octree *t, std::map<struct pnt_normal *, fastf_t> *va)
     fastf_t r = -DBL_MAX;
     for (npnts_it = t->npnts->begin(); npnts_it != t->npnts->end(); npnts_it++) {
 	struct pnt_normal *cp = *npnts_it;
-	fastf_t dpp = DIST_PT_PT(cp->v, t->p_center);
+	fastf_t dpp = DIST_PNT_PNT(cp->v, t->p_center);
 	if (dpp > r) r = dpp;
     }
     t->r = r;
@@ -412,7 +412,7 @@ wn_calc(struct octree *t, struct pnt_normal *q, double beta, std::map<struct pnt
 
     // If the query point is far enough away from the weighted avg. pnt,
     // calculate the approximation
-    if (DIST_PT_PT(q->v, t->p_center) > t->r * beta) {
+    if (DIST_PNT_PNT(q->v, t->p_center) > t->r * beta) {
 	vect_t *g1pq = calc_g1(&(q->v), &(t->p_wavg));
 	fastf_t *g2pq = calc_g2(&(q->v), &(t->p_wavg));
 	fastf_t *g3pq = calc_g3(&(q->v), &(t->p_wavg));
@@ -454,7 +454,7 @@ struct NF_Adaptor {
     NF_Adaptor(const struct NF_PC &obj_) : obj(obj_) { }
     inline const struct NF_PC& derived() const {return obj;}
     inline size_t kdtree_get_point_count() const { return derived().pts.size(); }
-    inline fastf_t kdtree_get_pt(const size_t idx, int dim) const
+    inline fastf_t kdtree_get_pnt(const size_t idx, int dim) const
     {
 	if (dim == 0) return derived().pts[idx]->v[X];
 	if (dim == 1) return derived().pts[idx]->v[Y];

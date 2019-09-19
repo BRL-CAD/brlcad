@@ -2,7 +2,7 @@
  * Translation to libbn data types of Franklin's point-in-polygon test.
  * See https://wrf.ecse.rpi.edu//Research/Short_Notes/pnpoly.html
  * for a discussion of the subtleties involved with the inequality tests.
- * The below copyright applies to just the function bg_pt_in_polygon,
+ * The below copyright applies to just the function bg_pnt_in_polygon,
  * not the whole of polygon.c
  *
  * Copyright (c) 1970-2003, Wm. Randolph Franklin
@@ -37,7 +37,7 @@
 #include "bg/polygon.h"
 
 int
-bg_pt_in_polygon(size_t nvert, const point2d_t *pnts, const point2d_t *test)
+bg_pnt_in_polygon(size_t nvert, const point2d_t *pnts, const point2d_t *test)
 {
     size_t i = 0;
     size_t j = 0;

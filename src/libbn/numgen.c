@@ -141,7 +141,7 @@ bn_numgen_next_doubles(double *l, size_t cnt, bn_numgen ngen)
 }
 
 size_t
-bn_sph_pts(point_t *pnts, size_t cnt, bn_numgen n)
+bn_sph_pnts(point_t *pnts, size_t cnt, bn_numgen n)
 {
     size_t i = 0;
     size_t ret = 0;

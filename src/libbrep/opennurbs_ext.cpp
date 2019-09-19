@@ -429,7 +429,7 @@ CurveTree::getLeavesAbove(std::list<const BRNode*>& out_leaves, const ON_Interva
 	const BRNode* br = *i;
 	br->GetBBox(bmin, bmax);
 
-	dist = BREP_UV_DIST_FUZZ;//0.03*DIST_PT_PT(bmin, bmax);
+	dist = BREP_UV_DIST_FUZZ;//0.03*DIST_PNT_PNT(bmin, bmax);
 	if (bmax[X]+dist < u[0])
 	    continue;
 	if (bmin[X]-dist < u[1]) {
@@ -469,7 +469,7 @@ CurveTree::getLeavesRight(std::list<const BRNode*>& out_leaves, const ON_Interva
 	const BRNode* br = *i;
 	br->GetBBox(bmin, bmax);
 
-	dist = BREP_UV_DIST_FUZZ;//0.03*DIST_PT_PT(bmin, bmax);
+	dist = BREP_UV_DIST_FUZZ;//0.03*DIST_PNT_PNT(bmin, bmax);
 	if (bmax[Y]+dist < v[0])
 	    continue;
 	if (bmin[Y]-dist < v[1]) {
@@ -648,8 +648,8 @@ CurveTree::isLinear(const ON_Curve* curve, double min, double max) const
     point_t a, b;
     VSET(a, u[0], v[0], 0.0);
     VSET(b, u[1], v[1], 0.0);
-    double dd = DIST_PT_PT(a, b);
-    double cd = DIST_PT_PT(pmin, pmax);
+    double dd = DIST_PNT_PNT(a, b);
+    double cd = DIST_PNT_PNT(pmin, pmax);
 
     if (cd > BREP_TRIM_SUB_FACTOR*dd)
 	return false;

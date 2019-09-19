@@ -191,10 +191,10 @@ int bg_tri_tri_isect_coplanar(point_t V0, point_t V1, point_t V2,
     };
 
     /* compute plane of triangle (V0, V1, V2) */
-    ret = bn_mk_plane_3pts(P1, V0, V1, V2, &tol);
+    ret = bn_make_plane_3pnts(P1, V0, V1, V2, &tol);
     if (ret) return -1;
     /* compute plane of triangle (U0, U1, U2) */
-    ret = bn_mk_plane_3pts(P2, U0, U1, U2, &tol);
+    ret = bn_make_plane_3pnts(P2, U0, U1, U2, &tol);
     if (ret) return -1;
     /* verify that triangles are coplanar */
     if (bn_coplanar(P1, P2, &tol) <= 0) return -1;

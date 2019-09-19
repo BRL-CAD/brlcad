@@ -94,10 +94,10 @@ ged_sphgroup(struct ged *gedp, int argc, const char *argv[])
 		  VMOVE(testpts[6], rpp_max);
 		  VSET(testpts[7], rpp_max[X], rpp_max[Y], rpp_min[Z]);
 		  for (j = 0; j < 8; j++) {
-		  if (DIST_PT_PT(testpts[j], bsph->v) <= MAGNITUDE(bsph->a)) inside_flag = 1;
+		  if (DIST_PNT_PNT(testpts[j], bsph->v) <= MAGNITUDE(bsph->a)) inside_flag = 1;
 		  }*/
 		VSET(centerpt, (rpp_min[0] + rpp_max[0])*0.5, (rpp_min[1] + rpp_max[1])*0.5, (rpp_min[2] + rpp_max[2])*0.5);
-		if (DIST_PT_PT(centerpt, bsph->v) <= MAGNITUDE(bsph->a)) inside_flag = 1;
+		if (DIST_PNT_PNT(centerpt, bsph->v) <= MAGNITUDE(bsph->a)) inside_flag = 1;
 		if (inside_flag == 1) {
 		    if (_ged_combadd(gedp, dp, (char *)argv[1], 0, WMOP_UNION, 0, 0) == RT_DIR_NULL) return GED_ERROR;
 		    inside_flag = 0;

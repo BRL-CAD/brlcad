@@ -106,7 +106,7 @@ nxt_spc(char *cp)
 
 
 int
-incr_ars_pt(void)
+incr_ars_pnt(void)
 {
     int ret=0;
 
@@ -919,7 +919,7 @@ arsbbld(void)
 	if (ars_curve > 0 || ars_pt > 0)
 	    VADD2(&ars_curves[ars_curve][ars_pt*3], &ars_curves[ars_curve][ars_pt*3], &ars_curves[0][0]);
 
-	incr_ret = incr_ars_pt();
+	incr_ret = incr_ars_pnt();
 	if (incr_ret == 2) {
 	    /* finished, write out the ARS solid */
 	    if (mk_ars(ofp, ars_name, ars_ncurves, ars_ptspercurve, ars_curves)) {
@@ -1288,7 +1288,7 @@ pipebld(void)
     char name[NAME_LEN];
     char *cp;
     char *np;
-    struct wdb_pipept *sp;
+    struct wdb_pipe_pnt *sp;
     struct bu_list head;
 
     /* Process the first buffer */
@@ -1311,7 +1311,7 @@ pipebld(void)
     while (bu_strncmp (buf, "END_PIPE", 8)) {
 	double id, od, x, y, z, bendradius;
 
-	BU_ALLOC(sp, struct wdb_pipept);
+	BU_ALLOC(sp, struct wdb_pipe_pnt);
 
 	sscanf(buf, "%le %le %le %le %le %le",
 	       &id, &od,

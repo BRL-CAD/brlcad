@@ -345,7 +345,7 @@ _obj_to_pnts(struct ged *gedp, int argc, const char **argv)
 	ged_get_obj_bounds(gedp, 1, (const char **)&obj_name, 0, obj_min, obj_max);
 	VMINMAX(rpp_min, rpp_max, (double *)obj_min);
 	VMINMAX(rpp_min, rpp_max, (double *)obj_max);
-	len_tol = DIST_PT_PT(rpp_max, rpp_min) * 0.01;
+	len_tol = DIST_PNT_PNT(rpp_max, rpp_min) * 0.01;
 	bu_log("Note - no tolerance specified, using %f\n", len_tol);
     }
     btol.dist = len_tol;

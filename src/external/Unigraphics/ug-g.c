@@ -588,7 +588,7 @@ make_curve_particles( tag_t guide_curve, fastf_t outer_diam, fastf_t inner_diam,
 	while ( BU_LIST_NOT_HEAD( &next->l, &pt_head.l ) ) {
 
 	    /* check for collinearity */
-	    if ( bn_3pts_collinear( prev->pt, pt->pt, next->pt, &tol ) ) {
+	    if ( bn_3pnts_collinear( prev->pt, pt->pt, next->pt, &tol ) ) {
 		/* remove middle point */
 		BU_LIST_DEQUEUE( &pt->l );
 		bu_free( (char *)pt, "pt_list" );
@@ -620,7 +620,7 @@ make_curve_particles( tag_t guide_curve, fastf_t outer_diam, fastf_t inner_diam,
 	    VSCALE( tmp_pt, tmp_pt, units_conv );
 	    MAT4X3PNT( this_pt, curr_xform, tmp_pt );
 
-	    if ( bn_3pts_collinear( cur->pt, this_pt, next->pt, &tol ) ) {
+	    if ( bn_3pnts_collinear( cur->pt, this_pt, next->pt, &tol ) ) {
 		continue;
 	    }
 

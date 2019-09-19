@@ -451,8 +451,8 @@ rt_cline_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_
     VSCALE(a, unit_a, cline_ip->radius);
     VSCALE(b, unit_b, cline_ip->radius);
 
-    rt_ell_16pts(bottom, cline_ip->v, a, b);
-    rt_ell_16pts(top, top_pt, a, b);
+    rt_ell_16pnts(bottom, cline_ip->v, a, b);
+    rt_ell_16pnts(top, top_pt, a, b);
 
     /* Draw the top */
     RT_ADD_VLIST(vhead, &top[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
@@ -480,8 +480,8 @@ rt_cline_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_
 	VSCALE(a, unit_a, inner_radius);
 	VSCALE(b, unit_b, inner_radius);
 
-	rt_ell_16pts(bottom, cline_ip->v, a, b);
-	rt_ell_16pts(top, top_pt, a, b);
+	rt_ell_16pnts(bottom, cline_ip->v, a, b);
+	rt_ell_16pnts(top, top_pt, a, b);
 
 	/* Draw the top */
 	RT_ADD_VLIST(vhead, &top[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
@@ -1096,7 +1096,7 @@ int
 rt_cline_to_pipe(struct rt_pipe_internal *pipep, const struct rt_db_internal *ip)
 {
     struct rt_cline_internal *cip;
-    struct wdb_pipept *point, *point2;
+    struct wdb_pipe_pnt *point, *point2;
 
     if (!ip)
 	return -1;
@@ -1112,7 +1112,7 @@ rt_cline_to_pipe(struct rt_pipe_internal *pipep, const struct rt_db_internal *ip
     pipep->pipe_count = 1;
 
     BU_LIST_INIT(&pipep->pipe_segs_head);
-    BU_ALLOC(point, struct wdb_pipept);
+    BU_ALLOC(point, struct wdb_pipe_pnt);
     point->pp_bendradius = 0.0;
     VMOVE(point->pp_coord, cip->v);
     point->l.magic = WDB_PIPESEG_MAGIC;
@@ -1120,7 +1120,7 @@ rt_cline_to_pipe(struct rt_pipe_internal *pipep, const struct rt_db_internal *ip
     point->pp_id = (cip->radius - cip->thickness) * 2;
     BU_LIST_APPEND(&pipep->pipe_segs_head, &point->l);
 
-    BU_ALLOC(point2, struct wdb_pipept);
+    BU_ALLOC(point2, struct wdb_pipe_pnt);
     point2->pp_bendradius = 0.0;
     VADD2(point2->pp_coord, cip->v, cip->h);
     point2->l.magic = WDB_PIPESEG_MAGIC;

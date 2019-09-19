@@ -455,7 +455,7 @@ BN_EXPORT extern size_t bn_table_interval_num_samples(const struct bn_table *tab
  *  Don't bother freeing the tiny bit of storage at the end of the array.
  *  Returns number of points removed.
  */
-BN_EXPORT extern size_t bn_table_delete_sample_pts(struct bn_table *tabp,
+BN_EXPORT extern size_t bn_table_delete_sample_pnts(struct bn_table *tabp,
 						   size_t i,
 						   size_t j);
 

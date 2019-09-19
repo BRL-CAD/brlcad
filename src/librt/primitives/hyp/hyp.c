@@ -708,7 +708,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     mat_t SoR = MAT_INIT_IDN;
     struct rt_hyp_internal *iip;
     struct hyp_specific *xip;
-    struct rt_pt_node *pos_a, *pos_b, *pts_a, *pts_b;
+    struct rt_pnt_node *pos_a, *pos_b, *pts_a, *pts_b;
     struct shell *s;
     struct faceuse **outfaceuses = NULL;
     struct faceuse *fu_top;
@@ -770,15 +770,15 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
      */
 
     /* calculate major axis hyperbola */
-    BU_ALLOC(pts_a, struct rt_pt_node);
+    BU_ALLOC(pts_a, struct rt_pnt_node);
 
     /* set base, center, and top points */
     pos_a = pts_a;
     VSET(pos_a->p, sqrt((mag_h*mag_h) * (c*c) + (r1*r1)), 0, -mag_h);
-    BU_ALLOC(pos_a->next, struct rt_pt_node);
+    BU_ALLOC(pos_a->next, struct rt_pnt_node);
     pos_a = pos_a->next;
     VSET(pos_a->p, r1, 0, 0);
-    BU_ALLOC(pos_a->next, struct rt_pt_node);
+    BU_ALLOC(pos_a->next, struct rt_pnt_node);
     pos_a = pos_a->next;
     VSET(pos_a->p, sqrt((mag_h*mag_h) * (c*c) + (r1*r1)), 0, mag_h);
     pos_a->next = NULL;
@@ -790,7 +790,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	fastf_t mm, len, dist, ang0, ang2;
 	vect_t v01, v02; /* vectors from p0->p1 and p0->p2 */
 	vect_t nLine, nHyp;
-	struct rt_pt_node *add;
+	struct rt_pnt_node *add;
 
 	while (i) {
 	    pos_a = pts_a;
@@ -830,7 +830,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 		if (dist > dtol || ang0 > ntol || ang2 > ntol) {
 		    /* split segment */
-		    BU_ALLOC(add, struct rt_pt_node);
+		    BU_ALLOC(add, struct rt_pnt_node);
 		    VMOVE(add->p, p1);
 		    add->next = pos_a->next;
 		    pos_a->next = add;
@@ -844,7 +844,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* calculate minor axis hyperbola */
-    BU_ALLOC(pts_b, struct rt_pt_node);
+    BU_ALLOC(pts_b, struct rt_pnt_node);
 
     pos_a = pts_a;
     pos_b = pts_b;
@@ -855,7 +855,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	pos_b->p[Y] = r2 * sqrt(pos_b->p[Z] * pos_b->p[Z]/(r3*r3) + 1.0);
 	pos_a = pos_a->next;
 	if (pos_a) {
-	    BU_ALLOC(pos_b->next, struct rt_pt_node);
+	    BU_ALLOC(pos_b->next, struct rt_pnt_node);
 	    pos_b = pos_b->next;
 	} else {
 	    pos_b->next = NULL;

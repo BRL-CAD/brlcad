@@ -68,7 +68,7 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
     point_t center, min, max;
     fastf_t i, j, k, finalstep = +INFINITY;
     struct bu_vls times = BU_VLS_INIT_ZERO;
-    struct wdb_metaballpt *mbpt;
+    struct wdb_metaball_pnt *mbpt;
     struct shell *s;
     int numtri = 0;
 
@@ -86,7 +86,7 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 
     /* since this geometry isn't necessarily prepped, we have to figure out the
      * finalstep and bounding box manually. */
-    for (BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head))
+    for (BU_LIST_FOR(mbpt, wdb_metaball_pnt, &mb->metaball_ctrl_head))
 	V_MIN(finalstep, mbpt->fldstr);
     finalstep /= (fastf_t)1e5;
 

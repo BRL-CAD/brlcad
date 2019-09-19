@@ -706,18 +706,18 @@ rpc_parabola_y(fastf_t p, fastf_t z)
  * vertex at (0, -|B|), multiplying the z values by -1 gives corresponding
  * distances along the rpc breadth vector B.
  */
-static struct rt_pt_node *
+static struct rt_pnt_node *
 rpc_parabolic_curve(fastf_t mag_b, fastf_t r, int num_points)
 {
     int count;
-    struct rt_pt_node *curve;
+    struct rt_pnt_node *curve;
 
     if (num_points < 2) {
 	return NULL;
     }
 
-    BU_ALLOC(curve, struct rt_pt_node);
-    BU_ALLOC(curve->next, struct rt_pt_node);
+    BU_ALLOC(curve, struct rt_pnt_node);
+    BU_ALLOC(curve->next, struct rt_pnt_node);
 
     curve->next->next = NULL;
     VSET(curve->p,       0.0, 0.0, -mag_b);
@@ -743,13 +743,13 @@ static void
 rpc_plot_parabolic_curve(
 	struct bu_list *vhead,
 	struct rpc_specific *rpc,
-	struct rt_pt_node *pts,
+	struct rt_pnt_node *pts,
 	vect_t rpc_H,
 	fastf_t rscale)
 {
     vect_t t, Ru, Bu;
     point_t p;
-    struct rt_pt_node *node;
+    struct rt_pnt_node *node;
 
     VADD2(t, rpc->rpc_V, rpc_H);
     VMOVE(Ru, rpc->rpc_Runit);
@@ -771,7 +771,7 @@ static void
 rpc_plot_parabolas(
 	struct bu_list *vhead,
 	struct rt_rpc_internal *rpc,
-	struct rt_pt_node *pts)
+	struct rt_pnt_node *pts)
 {
     vect_t rpc_H;
     struct rpc_specific rpc_s;
@@ -856,7 +856,7 @@ rpc_curve_points(
     VSET(p0, 0.0, 0.0, height);
     VSET(p1, 0.0, halfwidth, 0.0);
 
-    est_curve_length = 2.0 * DIST_PT_PT(p0, p1);
+    est_curve_length = 2.0 * DIST_PNT_PNT(p0, p1);
 
     return est_curve_length / info->point_spacing;
 }
@@ -868,7 +868,7 @@ rt_rpc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     vect_t rpc_R;
     int num_curve_points, num_connections;
     struct rt_rpc_internal *rpc;
-    struct rt_pt_node *pts, *node, *tmp;
+    struct rt_pnt_node *pts, *node, *tmp;
 
     BU_CK_LIST_HEAD(info->vhead);
     RT_CK_DB_INTERNAL(ip);
@@ -896,7 +896,7 @@ rt_rpc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 	tmp = node;
 	node = node->next;
 
-	bu_free(tmp, "rt_pt_node");
+	bu_free(tmp, "rt_pnt_node");
     }
 
     /* connect both halves of the parabolic contours of the opposing faces */
@@ -934,7 +934,7 @@ rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     fastf_t *back;
     fastf_t b, dtol, ntol, rh;
     int i, n;
-    struct rt_pt_node *old, *pos, *pts;
+    struct rt_pnt_node *old, *pos, *pts;
     vect_t Bu, Hu, Ru, B, R;
 
     BU_CK_LIST_HEAD(vhead);
@@ -970,8 +970,8 @@ rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 	ntol = M_PI;
 
     /* initial parabola approximation is a single segment */
-    BU_ALLOC(pts, struct rt_pt_node);
-    BU_ALLOC(pts->next, struct rt_pt_node);
+    BU_ALLOC(pts, struct rt_pnt_node);
+    BU_ALLOC(pts->next, struct rt_pnt_node);
 
     pts->next->next = NULL;
     VSET(pts->p,       0.0, -rh, 0.0);
@@ -1005,7 +1005,7 @@ rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 	i += 3;
 	old = pos;
 	pos = pos->next;
-	bu_free((char *)old, "rt_pt_node");
+	bu_free((char *)old, "rt_pnt_node");
     }
 
     /* Draw the front */
@@ -1042,13 +1042,13 @@ rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
  * to this routine until each segment is within tolerance.
  */
 int
-rt_mk_parabola(struct rt_pt_node *pts, fastf_t r, fastf_t b, fastf_t dtol, fastf_t ntol)
+rt_mk_parabola(struct rt_pnt_node *pts, fastf_t r, fastf_t b, fastf_t dtol, fastf_t ntol)
 {
     fastf_t dist, intr, m, theta0, theta1;
     int n;
     point_t mpt, p0, p1;
     vect_t norm_line, norm_parab;
-    struct rt_pt_node *newpt;
+    struct rt_pnt_node *newpt;
 
 #define RPC_TOL .0001
     /* endpoints of segment approximating parabola */
@@ -1079,7 +1079,7 @@ rt_mk_parabola(struct rt_pt_node *pts, fastf_t r, fastf_t b, fastf_t dtol, fastf
     /* split segment at widest point if not within error tolerances */
     if (dist > dtol || theta0 > ntol || theta1 > ntol) {
 	/* split segment */
-	BU_ALLOC(newpt, struct rt_pt_node);
+	BU_ALLOC(newpt, struct rt_pnt_node);
 	VMOVE(newpt->p, mpt);
 	newpt->next = pts->next;
 	pts->next = newpt;
@@ -1110,7 +1110,7 @@ rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     mat_t R;
     mat_t invR;
     struct rt_rpc_internal *xip;
-    struct rt_pt_node *old, *pos, *pts;
+    struct rt_pnt_node *old, *pos, *pts;
     struct shell *s;
     struct faceuse **outfaceuses;
     struct vertex **vfront, **vback, **vtemp, *vertlist[4];
@@ -1160,8 +1160,8 @@ rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	ntol = M_PI;
 
     /* initial parabola approximation is a single segment */
-    BU_ALLOC(pts, struct rt_pt_node);
-    BU_ALLOC(pts->next, struct rt_pt_node);
+    BU_ALLOC(pts, struct rt_pnt_node);
+    BU_ALLOC(pts->next, struct rt_pnt_node);
 
     pts->next->next = NULL;
     VSET(pts->p,       0.0, -rh, 0.0);
@@ -1201,7 +1201,7 @@ rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	j++;
 	old = pos;
 	pos = pos->next;
-	bu_free((char *)old, "rt_pt_node");
+	bu_free((char *)old, "rt_pnt_node");
     }
 
     *r = nmg_mrsv(m);	/* Make region, empty shell, vertex */

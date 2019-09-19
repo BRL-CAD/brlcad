@@ -527,9 +527,9 @@ extern int newedge;	/* new edge for arb editing */
 
 /* edars.c */
 #if defined(SEEN_RTGEOM_H)
-void find_nearest_ars_pt(int *crv, int *col, struct rt_ars_internal *ars, point_t pick_pt, vect_t dir);
+void find_ars_nearest_pnt(int *crv, int *col, struct rt_ars_internal *ars, point_t pick_pt, vect_t dir);
 #else
-void find_nearest_ars_pt();
+void find_ars_nearest_pnt();
 #endif
 
 /* mged.c */
@@ -637,15 +637,15 @@ int scroll_display(int y_top);
 /* edpipe.c */
 void pipe_scale_od(struct rt_db_internal *, fastf_t);
 void pipe_scale_id(struct rt_db_internal *, fastf_t);
-void pipe_seg_scale_od(struct wdb_pipept *, fastf_t);
-void pipe_seg_scale_id(struct wdb_pipept *, fastf_t);
-void pipe_seg_scale_radius(struct wdb_pipept *, fastf_t);
+void pipe_seg_scale_od(struct wdb_pipe_pnt *, fastf_t);
+void pipe_seg_scale_id(struct wdb_pipe_pnt *, fastf_t);
+void pipe_seg_scale_radius(struct wdb_pipe_pnt *, fastf_t);
 void pipe_scale_radius(struct rt_db_internal *, fastf_t);
-struct wdb_pipept *find_pipept_nearest_pt(const struct bu_list *, const point_t);
-struct wdb_pipept *add_pipept(struct rt_pipe_internal *, struct wdb_pipept *, const point_t);
-void ins_pipept(struct rt_pipe_internal *, struct wdb_pipept *, const point_t);
-struct wdb_pipept *del_pipept(struct wdb_pipept *);
-void move_pipept(struct rt_pipe_internal *, struct wdb_pipept *, const point_t);
+struct wdb_pipe_pnt *find_pipe_pnt_nearest_pnt(const struct bu_list *, const point_t);
+struct wdb_pipe_pnt *pipe_add_pnt(struct rt_pipe_internal *, struct wdb_pipe_pnt *, const point_t);
+void pipe_ins_pnt(struct rt_pipe_internal *, struct wdb_pipe_pnt *, const point_t);
+struct wdb_pipe_pnt *pipe_del_pnt(struct wdb_pipe_pnt *);
+void pipe_move_pnt(struct rt_pipe_internal *, struct wdb_pipe_pnt *, const point_t);
 
 /* vparse.c */
 extern void mged_vls_struct_parse(struct bu_vls *vls, const char *title, struct bu_structparse *how_to_parse, const char *structp, int argc, const char *argv[]); /* defined in vparse.c */

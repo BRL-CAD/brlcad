@@ -684,14 +684,14 @@ epa_parabola_p(fastf_t r, fastf_t mag_h)
  * vertex at (0, -|H|), multiplying the z values by -1 gives corresponding
  * distances along the epa height vector H.
  */
-static struct rt_pt_node *
+static struct rt_pnt_node *
 epa_parabolic_curve(fastf_t mag_h, fastf_t r, int num_points)
 {
     int count;
-    struct rt_pt_node *curve;
+    struct rt_pnt_node *curve;
 
-    BU_ALLOC(curve, struct rt_pt_node);
-    BU_ALLOC(curve->next, struct rt_pt_node);
+    BU_ALLOC(curve, struct rt_pnt_node);
+    BU_ALLOC(curve->next, struct rt_pnt_node);
 
     curve->next->next = NULL;
     VSET(curve->p,       0, 0, -mag_h);
@@ -764,14 +764,14 @@ static void
 epa_plot_parabola(
 	struct bu_list *vhead,
 	struct rt_epa_internal *epa,
-	struct rt_pt_node *pts,
+	struct rt_pnt_node *pts,
 	vect_t Ru,
 	fastf_t r)
 {
     point_t p;
     vect_t epa_V, Hu;
     fastf_t mag_H, z;
-    struct rt_pt_node *node;
+    struct rt_pnt_node *node;
 
     VMOVE(epa_V, epa->epa_V);
     mag_H = MAGNITUDE(epa->epa_H);
@@ -805,7 +805,7 @@ epa_curve_points(
     VADD2(p1, epa->epa_V, epa->epa_H);
     VJOIN1(p2, epa->epa_V, avg_r, epa->epa_Au);
 
-    approx_curve_len = 2.0 * DIST_PT_PT(p1, p2);
+    approx_curve_len = 2.0 * DIST_PNT_PNT(p1, p2);
 
     return approx_curve_len / info->point_spacing;
 }
@@ -830,7 +830,7 @@ rt_epa_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     fastf_t mag_H, z, z_step, r1, r2;
     int i, num_curve_points, num_ellipse_points, num_curves;
     struct rt_epa_internal *epa;
-    struct rt_pt_node *pts_r1, *pts_r2, *node, *node1, *node2;
+    struct rt_pnt_node *pts_r1, *pts_r2, *node, *node1, *node2;
 
     BU_CK_LIST_HEAD(info->vhead);
     RT_CK_DB_INTERNAL(ip);
@@ -894,11 +894,11 @@ rt_epa_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     for (i = 0; i < num_curve_points; ++i) {
 	node = node1;
 	node1 = node1->next;
-	bu_free(node, "rt_pt_node");
+	bu_free(node, "rt_pnt_node");
 
 	node = node2;
 	node2 = node2->next;
-	bu_free(node, "rt_pt_node");
+	bu_free(node, "rt_pnt_node");
     }
 
     return 0;
@@ -915,7 +915,7 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     mat_t invR;
     struct rt_epa_internal *xip;
     point_t p1;
-    struct rt_pt_node *pos_a, *pos_b, *pts_a, *pts_b;
+    struct rt_pnt_node *pos_a, *pos_b, *pts_a, *pts_b;
     vect_t A, Au, B, Bu, Hu, V, Work;
 
     BU_CK_LIST_HEAD(vhead);
@@ -958,8 +958,8 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
      */
 
     /* approximate positive half of parabola along semi-minor axis */
-    BU_ALLOC(pts_b, struct rt_pt_node);
-    BU_ALLOC(pts_b->next, struct rt_pt_node);
+    BU_ALLOC(pts_b, struct rt_pnt_node);
+    BU_ALLOC(pts_b->next, struct rt_pnt_node);
 
     pts_b->next->next = NULL;
     VSET(pts_b->p,       0, 0, -mag_h);
@@ -974,14 +974,14 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     /* construct positive half of parabola along semi-major axis of
      * epa using same z coords as parab along semi-minor axis
      */
-    BU_ALLOC(pts_a, struct rt_pt_node);
+    BU_ALLOC(pts_a, struct rt_pnt_node);
     VMOVE(pts_a->p, pts_b->p);	/* 1st pt is the apex */
     pts_a->next = NULL;
     pos_b = pts_b->next;
     pos_a = pts_a;
     while (pos_b) {
 	/* copy node from b_parabola to a_parabola */
-	BU_ALLOC(pos_a->next, struct rt_pt_node);
+	BU_ALLOC(pos_a->next, struct rt_pnt_node);
 	pos_a = pos_a->next;
 	pos_a->p[Z] = pos_b->p[Z];
 	/* at given z, find y on parabola */
@@ -1008,24 +1008,24 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 	/* free mem for old approximation of parabola */
 	pos_b = pts_b;
 	while (pos_b) {
-	    struct rt_pt_node *next;
+	    struct rt_pnt_node *next;
 
 	    /* get next node before freeing */
 	    next = pos_b->next;
-	    bu_free((char *)pos_b, "rt_pt_node");
+	    bu_free((char *)pos_b, "rt_pnt_node");
 	    pos_b = next;
 	}
 	/* construct parabola along semi-major axis of epa using same
 	 * z coords as parab along semi-minor axis
 	 */
-	BU_ALLOC(pts_b, struct rt_pt_node);
+	BU_ALLOC(pts_b, struct rt_pnt_node);
 	pts_b->p[Z] = pts_a->p[Z];
 	pts_b->next = NULL;
 	pos_a = pts_a->next;
 	pos_b = pts_b;
 	while (pos_a) {
 	    /* copy node from a_parabola to b_parabola */
-	    BU_ALLOC(pos_b->next, struct rt_pt_node);
+	    BU_ALLOC(pos_b->next, struct rt_pnt_node);
 	    pos_b = pos_b->next;
 	    pos_b->p[Z] = pos_a->p[Z];
 	    /* at given z, find y on parabola */
@@ -1202,7 +1202,7 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     mat_t invR;
     struct rt_epa_internal *xip;
     point_t p1;
-    struct rt_pt_node *pos_a, *pos_b, *pts_a, *pts_b;
+    struct rt_pnt_node *pos_a, *pos_b, *pts_a, *pts_b;
     struct shell *s;
     struct faceuse **outfaceuses = NULL;
     struct vertex *vertp[3];
@@ -1257,8 +1257,8 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
      */
 
     /* approximate positive half of parabola along semi-minor axis */
-    BU_ALLOC(pts_b, struct rt_pt_node);
-    BU_ALLOC(pts_b->next, struct rt_pt_node);
+    BU_ALLOC(pts_b, struct rt_pnt_node);
+    BU_ALLOC(pts_b->next, struct rt_pnt_node);
 
     pts_b->next->next = NULL;
     VSET(pts_b->p,       0, 0, -mag_h);
@@ -1272,14 +1272,14 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* construct positive half of parabola along semi-major axis of
      * epa using same z coords as parab along semi-minor axis
      */
-    BU_ALLOC(pts_a, struct rt_pt_node);
+    BU_ALLOC(pts_a, struct rt_pnt_node);
     VMOVE(pts_a->p, pts_b->p);	/* 1st pt is the apex */
     pts_a->next = NULL;
     pos_b = pts_b->next;
     pos_a = pts_a;
     while (pos_b) {
 	/* copy node from b_parabola to a_parabola */
-	BU_ALLOC(pos_a->next, struct rt_pt_node);
+	BU_ALLOC(pos_a->next, struct rt_pnt_node);
 	pos_a = pos_a->next;
 	pos_a->p[Z] = pos_b->p[Z];
 	/* at given z, find y on parabola */
@@ -1306,23 +1306,23 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	/* free mem for old approximation of parabola */
 	pos_b = pts_b;
 	while (pos_b) {
-	    struct rt_pt_node *tmp;
+	    struct rt_pnt_node *tmp;
 
 	    tmp = pos_b->next;
-	    bu_free((char *)pos_b, "rt_pt_node");
+	    bu_free((char *)pos_b, "rt_pnt_node");
 	    pos_b = tmp;
 	}
 	/* construct parabola along semi-major axis of epa
 	 * using same z coords as parab along semi-minor axis
 	 */
-	BU_ALLOC(pts_b, struct rt_pt_node);
+	BU_ALLOC(pts_b, struct rt_pnt_node);
 	pts_b->p[Z] = pts_a->p[Z];
 	pts_b->next = NULL;
 	pos_a = pts_a->next;
 	pos_b = pts_b;
 	while (pos_a) {
 	    /* copy node from a_parabola to b_parabola */
-	    BU_ALLOC(pos_b->next, struct rt_pt_node);
+	    BU_ALLOC(pos_b->next, struct rt_pnt_node);
 	    pos_b = pos_b->next;
 	    pos_b->p[Z] = pos_a->p[Z];
 	    /* at given z, find y on parabola */

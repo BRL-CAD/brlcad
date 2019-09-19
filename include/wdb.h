@@ -616,7 +616,7 @@ WDB_EXPORT void mk_pipe_free(struct bu_list *headp);
 /**
  * Add another pipe segment to the linked list of pipe segments.
  */
-WDB_EXPORT void mk_add_pipe_pt(
+WDB_EXPORT void mk_add_pipe_pnt(
     struct bu_list *headp,
     const point_t coord,
     double od,

@@ -197,7 +197,7 @@ getEdgePoints(ON_BrepTrim &trim,
 
     /* Establish tolerances */
     if (trim.GetBoundingBox(min, max, bGrowBox)) {
-	dist = DIST_PT_PT(min, max);
+	dist = DIST_PNT_PNT(min, max);
     }
     CDT_Tol_Set(&cdt_tol, dist, max_dist, ttol, tol);
 
@@ -527,7 +527,7 @@ getSurfacePoints(const ON_BrepFace &face,
 
 	ON_BoundingBox tight_bbox;
 	if (brep->GetTightBoundingBox(tight_bbox)) {
-	    dist = DIST_PT_PT(tight_bbox.m_min, tight_bbox.m_max);
+	    dist = DIST_PNT_PNT(tight_bbox.m_min, tight_bbox.m_max);
 	}
 
 	if (ttol->abs < tol->dist + ON_ZERO_TOLERANCE) {
@@ -770,7 +770,7 @@ getUVCurveSamples(const ON_Surface *surf,
     bool bGrowBox = false;
     ON_3dPoint min, max;
     if (curve->GetBoundingBox(min, max, bGrowBox)) {
-	dist = DIST_PT_PT(min, max);
+	dist = DIST_PNT_PNT(min, max);
     }
 
     if (ttol->abs < tol->dist + ON_ZERO_TOLERANCE) {

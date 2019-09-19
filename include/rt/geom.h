@@ -166,7 +166,7 @@ struct rt_metaball_internal {
     struct bu_list metaball_ctrl_head;
 };
 #define RT_METABALL_CK_MAGIC(_p) BU_CKMAG(_p, RT_METABALL_INTERNAL_MAGIC, "rt_metaball_internal")
-struct wdb_metaballpt {
+struct wdb_metaball_pnt {
     struct bu_list l;
     int type;
     fastf_t fldstr; /**< @brief  field strength */
@@ -176,7 +176,7 @@ struct wdb_metaballpt {
 };
 #define WDB_METABALLPT_TYPE_POINT 0x0
 #define WDB_METABALLPT_TYPE_LINE 0x1
-#define WDB_METABALLPT_NULL	((struct wdb_metaballpt *)0)
+#define WDB_METABALL_PNT_NULL	((struct wdb_metaball_pnt *)0)
 /** @} */
 
 
@@ -416,7 +416,7 @@ struct rt_pipe_internal {
     int pipe_count;
 };
 #define RT_PIPE_CK_MAGIC(_p) BU_CKMAG(_p, RT_PIPE_INTERNAL_MAGIC, "rt_pipe_internal")
-struct wdb_pipept {
+struct wdb_pipe_pnt {
     struct bu_list l;      /**< @brief  doubly linked list support */
     point_t pp_coord;      /**< @brief  "control" point for pipe solid */
     fastf_t pp_id;         /**< @brief  inner diam, <=0 if solid (wire) */

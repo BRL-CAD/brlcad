@@ -145,8 +145,8 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 
     ON_Plane bottom_plane(plane_origin, plane_x_dir, plane_y_dir);
     ON_PlaneSurface bottom_surf(bottom_plane);
-    bottom_surf.SetDomain(0, 0.0, DIST_PT_PT(p_origin, p2));
-    bottom_surf.SetDomain(1, 0.0, DIST_PT_PT(p_origin, p3));
+    bottom_surf.SetDomain(0, 0.0, DIST_PNT_PNT(p_origin, p2));
+    bottom_surf.SetDomain(1, 0.0, DIST_PNT_PNT(p_origin, p3));
     bottom_surf.SetExtents(0, bottom_surf.Domain(0));
     bottom_surf.SetExtents(1, bottom_surf.Domain(1));
     ON_BrepFace *bottomface = (*b)->NewFace(bottom_surf);

@@ -314,12 +314,12 @@ struct arbn_rec {
     /* Note that eqn granules are in "network" byte order */
 }; /* struct arbn_rec */
 
-struct exported_pipept  {
+struct exported_pipe_pnt  {
     unsigned char	epp_coord[8*3];
     unsigned char	epp_bendradius[8];
     unsigned char	epp_id[8];
     unsigned char	epp_od[8];
-}; /* exported_pipept */
+}; /* exported_pipe_pnt */
 
 struct pipewire_rec {
     char	pwr_id;			/* DBID_PIPE */
@@ -327,7 +327,7 @@ struct pipewire_rec {
     char	pwr_name[NAMESIZE];
     unsigned char	pwr_pt_count[4]; /* number of points in this pipe solid */
     unsigned char	pwr_count[4];	/* # additional granules */
-    struct exported_pipept pwr_data[1];			/* mach indep segments */
+    struct exported_pipe_pnt pwr_data[1];			/* mach indep segments */
 }; /* struct pipewire_rec */
 
 struct particle_rec {

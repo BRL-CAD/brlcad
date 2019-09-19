@@ -1171,7 +1171,7 @@ nmg_find_e_pt2_handler(uint32_t *lp, void *state, int UNUSED(unused))
     MAT4X3PNT(a2, sp->mat, va->vg_p->coord);
     MAT4X3PNT(b2, sp->mat, vb->vg_p->coord);
 
-    code = bn_dist_pt2_lseg2(&dist_sq, pca, a2, b2, sp->pt2, sp->tol);
+    code = bn_dist_pnt2_lseg2(&dist_sq, pca, a2, b2, sp->pt2, sp->tol);
 
     if (code == 0) dist_sq = 0;
 
@@ -1555,7 +1555,7 @@ nmg_find_v_in_shell(const struct vertex *v, const struct shell *s, int edges_onl
  * (struct vertexuse *) A matching vertexuse from that loopuse.
  */
 struct vertexuse *
-nmg_find_pt_in_lu(const struct loopuse *lu, const fastf_t *pt, const struct bn_tol *tol)
+nmg_find_pnt_in_lu(const struct loopuse *lu, const fastf_t *pt, const struct bn_tol *tol)
 {
     register struct edgeuse *eu;
     register struct vertex_g *vg;
@@ -1569,13 +1569,13 @@ nmg_find_pt_in_lu(const struct loopuse *lu, const fastf_t *pt, const struct bn_t
 	if (!vg) {
 	    return (struct vertexuse *)NULL;
 	}
-	if (bn_pt3_pt3_equal(vg->coord, pt, tol)) {
+	if (bn_pnt3_pnt3_equal(vg->coord, pt, tol)) {
 	    return vu;
 	}
 	return (struct vertexuse *)NULL;
     }
     if (magic1 != NMG_EDGEUSE_MAGIC) {
-	bu_bomb("nmg_find_pt_in_lu() Bogus child of loop\n");
+	bu_bomb("nmg_find_pnt_in_lu() Bogus child of loop\n");
     }
 
     for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
@@ -1583,7 +1583,7 @@ nmg_find_pt_in_lu(const struct loopuse *lu, const fastf_t *pt, const struct bn_t
 	if (!vg) {
 	    continue;
 	}
-	if (bn_pt3_pt3_equal(vg->coord, pt, tol)) {
+	if (bn_pnt3_pnt3_equal(vg->coord, pt, tol)) {
 	    return eu->vu_p;
 	}
     }
@@ -1601,7 +1601,7 @@ nmg_find_pt_in_lu(const struct loopuse *lu, const fastf_t *pt, const struct bn_t
  * (struct vertexuse *) A matching vertexuse from that face.
  */
 struct vertexuse *
-nmg_find_pt_in_face(const struct faceuse *fu, const fastf_t *pt, const struct bn_tol *tol)
+nmg_find_pnt_in_face(const struct faceuse *fu, const fastf_t *pt, const struct bn_tol *tol)
 {
     register struct loopuse *lu;
     struct vertexuse *vu;
@@ -1610,7 +1610,7 @@ nmg_find_pt_in_face(const struct faceuse *fu, const fastf_t *pt, const struct bn
     BN_CK_TOL(tol);
 
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-	vu = nmg_find_pt_in_lu(lu, pt, tol);
+	vu = nmg_find_pnt_in_lu(lu, pt, tol);
 	if (vu)
 	    return vu;
     }
@@ -1634,7 +1634,7 @@ nmg_find_pt_in_face(const struct faceuse *fu, const fastf_t *pt, const struct bn
  * XXX Why does this return a vertex, while its helpers return a vertexuse?
  */
 struct vertex *
-nmg_find_pt_in_shell(const struct shell *s, const fastf_t *pt, const struct bn_tol *tol)
+nmg_find_pnt_in_shell(const struct shell *s, const fastf_t *pt, const struct bn_tol *tol)
 {
     const struct faceuse *fu;
     const struct loopuse *lu;
@@ -1649,7 +1649,7 @@ nmg_find_pt_in_shell(const struct shell *s, const fastf_t *pt, const struct bn_t
     fu = BU_LIST_FIRST(faceuse, &s->fu_hd);
     while (BU_LIST_NOT_HEAD(fu, &s->fu_hd)) {
 	/* Shell has faces */
-	vu = nmg_find_pt_in_face(fu, pt, tol);
+	vu = nmg_find_pnt_in_face(fu, pt, tol);
 	if (vu)
 	    return vu->v_p;
 
@@ -1662,7 +1662,7 @@ nmg_find_pt_in_shell(const struct shell *s, const fastf_t *pt, const struct bn_t
     /* Wire loopuses */
     lu = BU_LIST_FIRST(loopuse, &s->lu_hd);
     while (BU_LIST_NOT_HEAD(lu, &s->lu_hd)) {
-	vu = nmg_find_pt_in_lu(lu, pt, tol);
+	vu = nmg_find_pnt_in_lu(lu, pt, tol);
 	if (vu)
 	    return vu->v_p;
 
@@ -1679,7 +1679,7 @@ nmg_find_pt_in_shell(const struct shell *s, const fastf_t *pt, const struct bn_t
 	vg = v->vg_p;
 
 	if (vg) {
-	    if (bn_pt3_pt3_equal(vg->coord, pt, tol)) {
+	    if (bn_pnt3_pnt3_equal(vg->coord, pt, tol)) {
 		return v;
 	    }
 	}
@@ -1692,7 +1692,7 @@ nmg_find_pt_in_shell(const struct shell *s, const fastf_t *pt, const struct bn_t
 	vg = v->vg_p;
 
 	if (vg) {
-	    if (bn_pt3_pt3_equal(vg->coord, pt, tol)) {
+	    if (bn_pnt3_pnt3_equal(vg->coord, pt, tol)) {
 		return v;
 	    }
 	}
@@ -1708,7 +1708,7 @@ nmg_find_pt_in_shell(const struct shell *s, const fastf_t *pt, const struct bn_t
  * XXX first match within tolerance?
  */
 struct vertex *
-nmg_find_pt_in_model(const struct model *m, const fastf_t *pt, const struct bn_tol *tol)
+nmg_find_pnt_in_model(const struct model *m, const fastf_t *pt, const struct bn_tol *tol)
 {
     struct nmgregion *r;
     struct shell *s;
@@ -1719,7 +1719,7 @@ nmg_find_pt_in_model(const struct model *m, const fastf_t *pt, const struct bn_t
 
     for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
 	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
-	    v = nmg_find_pt_in_shell(s, pt, tol);
+	    v = nmg_find_pnt_in_shell(s, pt, tol);
 	    if (v) {
 		return v;
 	    }
@@ -2333,10 +2333,10 @@ nmg_line_handler(uint32_t *longp, void *state, int UNUSED(unused))
 	0.9 * MAGNITUDE(eu->g.lseg_p->e_dir) * MAGNITUDE(sp->dir))
 	return;
 
-    if (bn_distsq_line3_pt3(sp->pt, sp->dir, eu->vu_p->v_p->vg_p->coord)
+    if (bn_distsq_line3_pnt3(sp->pt, sp->dir, eu->vu_p->v_p->vg_p->coord)
 	> sp->tol.dist_sq)
 	return;
-    if (bn_distsq_line3_pt3(sp->pt, sp->dir, eu->eumate_p->vu_p->v_p->vg_p->coord)
+    if (bn_distsq_line3_pnt3(sp->pt, sp->dir, eu->eumate_p->vu_p->v_p->vg_p->coord)
 	> sp->tol.dist_sq)
 	return;
 
@@ -2493,11 +2493,11 @@ nmg_2edgeuse_g_coincident(const struct edgeuse *eu1, const struct edgeuse *eu2, 
     }
 
     /* Ensure that vertices on edge 2 are within tol of e1 */
-    if (bn_distsq_line3_pt3(eg1->e_pt, eg1->e_dir,
+    if (bn_distsq_line3_pnt3(eg1->e_pt, eg1->e_dir,
 			    eu2->vu_p->v_p->vg_p->coord) > tol->dist_sq) {
 	return 0;
     }
-    if (bn_distsq_line3_pt3(eg1->e_pt, eg1->e_dir,
+    if (bn_distsq_line3_pnt3(eg1->e_pt, eg1->e_dir,
 			    eu2->eumate_p->vu_p->v_p->vg_p->coord) > tol->dist_sq) {
 	return 0;
     }

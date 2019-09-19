@@ -3510,7 +3510,7 @@ mged_vrot(char origin, fastf_t *newrot)
 	    MAT4X3PNT(rot_pt, view_state->vs_gvp->gv_model2view, new_origin);  /* point to rotate around */
 	}
 
-	bn_mat_xform_about_pt(viewchg, newrot, rot_pt);
+	bn_mat_xform_about_pnt(viewchg, newrot, rot_pt);
 	bn_mat_inv(viewchginv, viewchg);
 
 	/* Convert origin in new (viewchg) coords back to old view coords */

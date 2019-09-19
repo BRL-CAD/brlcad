@@ -466,7 +466,7 @@ test_bn_mat_zrot(int argc, char *argv[])
 }
 
 static int
-test_bn_mat_scale_about_pt(int argc, char *argv[])
+test_bn_mat_scale_about_pnt(int argc, char *argv[])
 {
     mat_t expected, actual;
     point_t p;
@@ -482,12 +482,12 @@ test_bn_mat_scale_about_pt(int argc, char *argv[])
     sscanf(argv[4], "%d", &expected_error);
     scan_mat_args(argv, 5, &expected);
 
-    error = bn_mat_scale_about_pt(actual, p, s);
+    error = bn_mat_scale_about_pnt(actual, p, s);
     return !(mat_equal(expected, actual) && error == expected_error);
 }
 
 static int
-test_bn_mat_xform_about_pt(int argc, char *argv[])
+test_bn_mat_xform_about_pnt(int argc, char *argv[])
 {
     mat_t xform, expected, actual;
     point_t p;
@@ -500,7 +500,7 @@ test_bn_mat_xform_about_pt(int argc, char *argv[])
     sscanf(argv[3], "%lg,%lg,%lg", &p[0], &p[1], &p[2]);
     scan_mat_args(argv, 4, &expected);
 
-    bn_mat_xform_about_pt(actual, xform, p);
+    bn_mat_xform_about_pnt(actual, xform, p);
     return !mat_equal(expected, actual);
 }
 
@@ -591,9 +591,9 @@ mat_main(int argc, char *argv[])
 	case 23:
 	    return test_bn_mat_zrot(argc, argv);
 	case 24:
-	    return test_bn_mat_scale_about_pt(argc, argv);
+	    return test_bn_mat_scale_about_pnt(argc, argv);
 	case 25:
-	    return test_bn_mat_xform_about_pt(argc, argv);
+	    return test_bn_mat_xform_about_pnt(argc, argv);
 	case 26:
 	    return test_bn_mat_ck(argc, argv);
 	case 27:

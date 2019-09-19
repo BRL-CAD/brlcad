@@ -77,7 +77,7 @@ BG_EXPORT extern int bg_polygon_direction(size_t npts, const point2d_t *pts, con
  * @return 0 if point is outside polygon
  * @return 1 if point is inside polygon
  */
-BG_EXPORT extern int bg_pt_in_polygon(size_t npts, const point2d_t *pts, const point2d_t *test_pt);
+BG_EXPORT extern int bg_pnt_in_polygon(size_t npts, const point2d_t *pts, const point2d_t *test_pt);
 
 /**
  * Triangulation is the process of finding a set of triangles that as a set cover
@@ -233,7 +233,7 @@ BG_EXPORT extern int bg_3d_polygon_sort_ccw(size_t npts, point_t *pts, plane_t c
  * @return 0 if calculation was successful
  * @return 1 if calculation failed, e.g. because one parameter is a NULL-Pointer
  */
-BG_EXPORT extern int bg_3d_polygon_mk_pts_planes(size_t *npts, point_t **pts, size_t neqs, const plane_t *eqs);
+BG_EXPORT extern int bg_3d_polygon_make_pnts_planes(size_t *npts, point_t **pts, size_t neqs, const plane_t *eqs);
 
 
 

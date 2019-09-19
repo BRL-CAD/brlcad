@@ -783,18 +783,18 @@ rhc_hyperbola_y(fastf_t b, fastf_t c, fastf_t z)
  * asymptote origin at (0, -|B| + c), multiplying the z values by -1 gives
  * corresponding distances along the rhc breadth vector B.
  */
-static struct rt_pt_node *
+static struct rt_pnt_node *
 rhc_hyperbolic_curve(fastf_t mag_b, fastf_t c, fastf_t r, int num_points)
 {
     int count;
-    struct rt_pt_node *curve;
+    struct rt_pnt_node *curve;
 
     if (num_points < 2) {
 	return NULL;
     }
 
-    BU_ALLOC(curve, struct rt_pt_node);
-    BU_ALLOC(curve->next, struct rt_pt_node);
+    BU_ALLOC(curve, struct rt_pnt_node);
+    BU_ALLOC(curve->next, struct rt_pnt_node);
 
     curve->next->next = NULL;
     VSET(curve->p,       0, 0, -mag_b);
@@ -821,13 +821,13 @@ static void
 rhc_plot_hyperbolic_curve(
     struct bu_list *vhead,
     struct rhc_specific *rhc,
-    struct rt_pt_node *pts,
+    struct rt_pnt_node *pts,
     vect_t rhc_H,
     fastf_t rscale)
 {
     vect_t t, Ru, Bu;
     point_t p;
-    struct rt_pt_node *node;
+    struct rt_pnt_node *node;
 
     VADD2(t, rhc->rhc_V, rhc_H);
     VMOVE(Ru, rhc->rhc_Runit);
@@ -850,7 +850,7 @@ static void
 rhc_plot_hyperbolas(
     struct bu_list *vhead,
     struct rt_rhc_internal *rhc,
-    struct rt_pt_node *pts)
+    struct rt_pnt_node *pts)
 {
     vect_t rhc_H = VINIT_ZERO;
     struct rhc_specific rhc_s;
@@ -937,7 +937,7 @@ rhc_curve_points(
     VSET(p0, 0, 0, height);
     VSET(p1, 0, halfwidth, 0);
 
-    est_curve_length = 2.0 * DIST_PT_PT(p0, p1);
+    est_curve_length = 2.0 * DIST_PNT_PNT(p0, p1);
 
     return est_curve_length / info->point_spacing;
 }
@@ -950,7 +950,7 @@ rt_rhc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     vect_t rhc_R;
     int num_curve_points, num_connections;
     struct rt_rhc_internal *rhc;
-    struct rt_pt_node *pts, *node, *tmp;
+    struct rt_pnt_node *pts, *node, *tmp;
 
     BU_CK_LIST_HEAD(info->vhead);
     RT_CK_DB_INTERNAL(ip);
@@ -978,7 +978,7 @@ rt_rhc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 	tmp = node;
 	node = node->next;
 
-	bu_free(tmp, "rt_pt_node");
+	bu_free(tmp, "rt_pnt_node");
     }
 
     /* connect both halves of the hyperbolic contours of the opposing faces */
@@ -1019,7 +1019,7 @@ rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     mat_t R;
     mat_t invR;
     struct rt_rhc_internal *xip;
-    struct rt_pt_node *old, *pos, *pts;
+    struct rt_pnt_node *old, *pos, *pts;
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
@@ -1063,8 +1063,8 @@ rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     }
 
     /* initial hyperbola approximation is a single segment */
-    BU_ALLOC(pts, struct rt_pt_node);
-    BU_ALLOC(pts->next, struct rt_pt_node);
+    BU_ALLOC(pts, struct rt_pnt_node);
+    BU_ALLOC(pts->next, struct rt_pnt_node);
 
     pts->next->next = NULL;
     VSET(pts->p,       0, -rh, 0);
@@ -1092,7 +1092,7 @@ rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 	i += 3;
 	old = pos;
 	pos = pos->next;
-	bu_free ((char *)old, "rt_pt_node");
+	bu_free ((char *)old, "rt_pnt_node");
     }
 
     /* Draw the front */
@@ -1130,13 +1130,13 @@ rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
   c: distance to asymptote origin
 */
 int
-rt_mk_hyperbola(struct rt_pt_node *pts, fastf_t r, fastf_t b, fastf_t c, fastf_t dtol, fastf_t ntol)
+rt_mk_hyperbola(struct rt_pnt_node *pts, fastf_t r, fastf_t b, fastf_t c, fastf_t dtol, fastf_t ntol)
 {
     fastf_t A, B, C, discr, dist, intr, j, k, m, theta0, theta1, z0;
     int n;
     point_t mpt, p0, p1;
     vect_t norm_line, norm_hyperb;
-    struct rt_pt_node *newpt;
+    struct rt_pnt_node *newpt;
 
 #define RHC_TOL .0001
     /* endpoints of segment approximating hyperbola */
@@ -1193,7 +1193,7 @@ rt_mk_hyperbola(struct rt_pt_node *pts, fastf_t r, fastf_t b, fastf_t c, fastf_t
     /* split segment at widest point if not within error tolerances */
     if (dist > dtol || theta0 > ntol || theta1 > ntol) {
 	/* split segment */
-	BU_ALLOC(newpt, struct rt_pt_node);
+	BU_ALLOC(newpt, struct rt_pnt_node);
 	VMOVE(newpt->p, mpt);
 	newpt->next = pts->next;
 	pts->next = newpt;
@@ -1226,7 +1226,7 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     mat_t R;
     mat_t invR;
     struct rt_rhc_internal *xip;
-    struct rt_pt_node *old, *pos, *pts;
+    struct rt_pnt_node *old, *pos, *pts;
     struct shell *s;
     struct faceuse **outfaceuses;
     struct vertex **vfront, **vback, **vtemp, *vertlist[4];
@@ -1279,8 +1279,8 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* initial hyperbola approximation is a single segment */
-    BU_ALLOC(pts, struct rt_pt_node);
-    BU_ALLOC(pts->next, struct rt_pt_node);
+    BU_ALLOC(pts, struct rt_pnt_node);
+    BU_ALLOC(pts->next, struct rt_pnt_node);
 
     pts->next->next = NULL;
     VSET(pts->p,       0, -rh, 0);
@@ -1330,7 +1330,7 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	j++;
 	old = pos;
 	pos = pos->next;
-	bu_free ((char *)old, "rt_pt_node");
+	bu_free ((char *)old, "rt_pnt_node");
     }
 
     *r = nmg_mrsv(m);	/* Make region, empty shell, vertex */

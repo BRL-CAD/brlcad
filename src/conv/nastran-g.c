@@ -132,7 +132,7 @@ static struct bn_tol tol;		/* tolerance for NMG's */
 static int polysolids=1;		/* flag for outputting NMG's rather than BOT's */
 
 HIDDEN int get_next_record(FILE *fp, int call_input, int write_flag);
-HIDDEN int convert_pt(const point_t pt, struct coord_sys *cs, point_t out_pt);
+HIDDEN int convert_pnt(const point_t pt, struct coord_sys *cs, point_t out_pt);
 
 #define INPUT_OK 0
 #define INPUT_NULL 1
@@ -551,13 +551,13 @@ convert_cs(struct coord_sys *cs)
 	bu_exit(1, "A coordinate system is defined in terms of a non-existent coordinate system!!!\n");
     }
 
-    if (convert_pt(cs->origin, cs2, tmp_orig))
+    if (convert_pnt(cs->origin, cs2, tmp_orig))
 	return 1;
 
-    if (convert_pt(cs->v1, cs2, tmp_pt1))
+    if (convert_pnt(cs->v1, cs2, tmp_pt1))
 	return 1;
 
-    if (convert_pt(cs->v2, cs2, tmp_pt2))
+    if (convert_pnt(cs->v2, cs2, tmp_pt2))
 	return 1;
 
     VMOVE(cs->origin, tmp_orig);
@@ -573,7 +573,7 @@ convert_cs(struct coord_sys *cs)
 
 
 HIDDEN int
-convert_pt(const point_t pt, struct coord_sys *cs, point_t out_pt)
+convert_pnt(const point_t pt, struct coord_sys *cs, point_t out_pt)
 {
     point_t tmp_pt;
     fastf_t c1, c2, c3, c4;
@@ -639,7 +639,7 @@ convert_grid(int idx)
 	bu_exit(1, "No coordinate system defined for grid point #%d!\n", g_pts[idx].gid);
     }
 
-    if (convert_pt(g_pts[idx].pt, cs, tmp_pt))
+    if (convert_pnt(g_pts[idx].pt, cs, tmp_pt))
 	return 1;
 
     VMOVE(g_pts[idx].pt, tmp_pt);

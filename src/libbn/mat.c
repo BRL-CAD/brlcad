@@ -891,7 +891,7 @@ bn_vec_ortho(register vect_t out, register const vect_t in)
 
 
 int
-bn_mat_scale_about_pt(mat_t mat, const point_t pt, const double scale)
+bn_mat_scale_about_pnt(mat_t mat, const point_t pt, const double scale)
 {
     mat_t xlate;
     mat_t s;
@@ -916,7 +916,7 @@ bn_mat_scale_about_pt(mat_t mat, const point_t pt, const double scale)
 
 
 void
-bn_mat_xform_about_pt(mat_t mat, const mat_t xform, const point_t pt)
+bn_mat_xform_about_pnt(mat_t mat, const mat_t xform, const point_t pt)
 {
     mat_t xlate;
     mat_t tmp;

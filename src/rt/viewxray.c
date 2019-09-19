@@ -220,7 +220,7 @@ xrayhit(register struct application *ap, struct partition *PartHeadp, struct seg
     }
 
     if (R_DEBUG&RDEBUG_HITS)  {
-	rt_pr_pt( ap->a_rt_i, pp );
+	rt_pr_partition(ap->a_rt_i, pp );
     }
 
     hitp = pp->pt_inhit;
@@ -233,7 +233,7 @@ xrayhit(register struct application *ap, struct partition *PartHeadp, struct seg
 	/* XXX */
 	bu_log("xrayhit:  Eye inside solid (%g)\n", hitp->hit_dist );
 	for ( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
-	    rt_pr_pt( ap->a_rt_i, pp );
+	    rt_pr_partition( ap->a_rt_i, pp );
 	return 0;
     }
 

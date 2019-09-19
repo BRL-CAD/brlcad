@@ -122,7 +122,7 @@ BN_EXPORT int bn_numgen_next_doubles(double *l, size_t cnt, bn_numgen ngen);
  * supply pseudo or quasi-random numbers to bg_sph_sample - different
  * types of inputs may be needed depending on the application.
  */
-BN_EXPORT extern void bn_sph_pts(point_t *pnts, size_t cnt, bn_numgen n);
+BN_EXPORT extern void bn_sph_pnts(point_t *pnts, size_t cnt, bn_numgen n);
 
 
 

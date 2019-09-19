@@ -391,7 +391,7 @@ copy_v5_solid(struct db_i *dbip, struct directory *proto, struct ged_clone_state
 	if (!ZERO(state->rpnt[W])) {
 	    mat_t m3;
 
-	    bn_mat_xform_about_pt(m3, m2, state->rpnt);
+	    bn_mat_xform_about_pnt(m3, m2, state->rpnt);
 	    bn_mat_mul(t, matrix, m3);
 	} else
 	    bn_mat_mul(t, matrix, m2);

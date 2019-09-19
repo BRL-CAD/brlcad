@@ -988,19 +988,19 @@ rt_part_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_t
 	VSET(b, 0, pip->part_vrad, 0);
 	VSET(c, 0, 0, pip->part_vrad);
 
-	rt_ell_16pts(&sphere_rim[0][X], pip->part_V, a, b);
+	rt_ell_16pnts(&sphere_rim[0][X], pip->part_V, a, b);
 	RT_ADD_VLIST(vhead, sphere_rim[15], BN_VLIST_LINE_MOVE);
 	for (i=0; i<16; i++) {
 	    RT_ADD_VLIST(vhead, sphere_rim[i], BN_VLIST_LINE_DRAW);
 	}
 
-	rt_ell_16pts(&sphere_rim[0][X], pip->part_V, b, c);
+	rt_ell_16pnts(&sphere_rim[0][X], pip->part_V, b, c);
 	RT_ADD_VLIST(vhead, sphere_rim[15], BN_VLIST_LINE_MOVE);
 	for (i=0; i<16; i++) {
 	    RT_ADD_VLIST(vhead, sphere_rim[i], BN_VLIST_LINE_DRAW);
 	}
 
-	rt_ell_16pts(&sphere_rim[0][X], pip->part_V, a, c);
+	rt_ell_16pnts(&sphere_rim[0][X], pip->part_V, a, c);
 	RT_ADD_VLIST(vhead, sphere_rim[15], BN_VLIST_LINE_MOVE);
 	for (i=0; i<16; i++) {
 	    RT_ADD_VLIST(vhead, sphere_rim[i], BN_VLIST_LINE_DRAW);

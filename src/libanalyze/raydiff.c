@@ -129,7 +129,7 @@ raydiff_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNU
     for (part = PartHeadp->pt_forw; part != PartHeadp; part = part->pt_forw) {
 	VJOIN1(in_pt, ap->a_ray.r_pt, part->pt_inhit->hit_dist, ap->a_ray.r_dir);
 	VJOIN1(out_pt, ap->a_ray.r_pt, part->pt_outhit->hit_dist, ap->a_ray.r_dir);
-	part_len = DIST_PT_PT(in_pt, out_pt);
+	part_len = DIST_PNT_PNT(in_pt, out_pt);
 	if (part_len > state->tol) {
 	    state->have_diffs = 1;
 	    if (state->left && !bu_strncmp(part->pt_regionp->reg_name+1, state->left_name, strlen(state->left_name))) {
@@ -166,7 +166,7 @@ raydiff_overlap(struct application *ap,
     VJOIN1(in_pt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist, ap->a_ray.r_dir);
     VJOIN1(out_pt, ap->a_ray.r_pt, pp->pt_outhit->hit_dist, ap->a_ray.r_dir);
 
-    overlap_len = DIST_PT_PT(in_pt, out_pt);
+    overlap_len = DIST_PNT_PNT(in_pt, out_pt);
 
     if (overlap_len > state->tol) {
 	RDIFF_ADD_DSEG(state->both, in_pt, out_pt);

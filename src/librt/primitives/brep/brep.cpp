@@ -276,7 +276,7 @@ log_hits(std::list<brep_hit> &hits, int UNUSED(verbosity))
 	const brep_hit &out = *i;
 
 	if (i != hits.begin()) {
-	    bu_vls_printf(&logstr, "<%g>", DIST_PT_PT(out.point, prev));
+	    bu_vls_printf(&logstr, "<%g>", DIST_PNT_PNT(out.point, prev));
 	}
 	bu_vls_printf(&logstr, "{");
 	bu_vls_printf(&logstr, "%s(%d)", brep_hit_type_str((int)out.hit), out.face.m_face_index);
@@ -299,7 +299,7 @@ log_subset(std::vector<brep_hit*> &hits, size_t min, size_t max, brep_hit *pprev
     for (size_t i = min; i < max; i++) {
 	if (!hits[i]->active) continue;
 	if (prev) {
-	    bu_vls_printf(&logstr, "<%g>", DIST_PT_PT(hits[i]->point, prev->point));
+	    bu_vls_printf(&logstr, "<%g>", DIST_PNT_PNT(hits[i]->point, prev->point));
 	}
 	bu_vls_printf(&logstr, "{");
 	bu_vls_printf(&logstr, "%s(%d)", brep_hit_type_str((int)hits[i]->hit), hits[i]->face.m_face_index);
@@ -1831,14 +1831,14 @@ rt_brep_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info
 	    // achieved and the distance between the end of the last
 	    // segment and the endpoint is within point spacing
 	    for (int nsegs = 0; (nsegs < min_linear_seg_count) ||
-		     (DIST_PT_PT(pt1, endpt) > info->point_spacing); ++nsegs) {
+		     (DIST_PNT_PNT(pt1, endpt) > info->point_spacing); ++nsegs) {
 		p = crv->PointAt(dom.ParameterAt(t2));
 		VMOVE(pt2, p);
 
 		// bring t2 increasingly closer to t1 until target
 		// point spacing is achieved
 		double step = t2 - t1;
-		while (DIST_PT_PT(pt1, pt2) > info->point_spacing) {
+		while (DIST_PNT_PNT(pt1, pt2) > info->point_spacing) {
 		    step /= 2.0;
 		    t2 = t1 + step;
 		    p = crv->PointAt(dom.ParameterAt(t2));
@@ -2531,9 +2531,9 @@ rt_brep_find_selections(const struct rt_db_internal *ip, const struct rt_selecti
 		scv->face_index = face_index;
 		scv->i = i;
 		scv->j = j;
-		scv->sqdist_to_start = DIST_PT_PT_SQ(query->start, cv);
+		scv->sqdist_to_start = DIST_PNT_PNT_SQ(query->start, cv);
 		scv->sqdist_to_line =
-		    bn_distsq_line3_pt3(query->start, query->dir, cv);
+		    bn_distsq_line3_pnt3(query->start, query->dir, cv);
 
 		selectable.push_back(scv);
 

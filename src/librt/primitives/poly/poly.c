@@ -595,7 +595,7 @@ rt_pg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, con
 
 	/* Locate these points, if previously mentioned */
 	for (i=0; i < pp->npts; i++) {
-	    verts[i] = nmg_find_pt_in_shell(s,
+	    verts[i] = nmg_find_pnt_in_shell(s,
 					    &pp->verts[3*i], tol);
 	}
 

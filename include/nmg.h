@@ -122,7 +122,7 @@ __BEGIN_DECLS
 #define DEBUG_RT_SEGS     0x00400000	/**< @brief 23 nmg_rt_segs: */
 #define DEBUG_RT_ISECT    0x00800000	/**< @brief 24 nmg_rt_isect: */
 #define DEBUG_TRI         0x01000000	/**< @brief 25 nmg_tri */
-#define DEBUG_PT_FU       0x02000000	/**< @brief 26 nmg_pt_fu */
+#define DEBUG_PNT_FU       0x02000000	/**< @brief 26 nmg_pt_fu */
 #define DEBUG_MANIF       0x04000000	/**< @brief 27 nmg_manif */
 #define NMG_DEBUG_UNUSED2 0x08000000	/**< @brief 28 UNUSED */
 #define NMG_DEBUG_UNUSED3 0x10000000	/**< @brief 29 UNUSED */
@@ -1553,16 +1553,16 @@ NMG_EXPORT extern struct vertexuse *nmg_find_v_in_face(const struct vertex *,
 NMG_EXPORT extern struct vertexuse *nmg_find_v_in_shell(const struct vertex *v,
 							const struct shell *s,
 							int edges_only);
-NMG_EXPORT extern struct vertexuse *nmg_find_pt_in_lu(const struct loopuse *lu,
+NMG_EXPORT extern struct vertexuse *nmg_find_pnt_in_lu(const struct loopuse *lu,
 						      const point_t pt,
 						      const struct bn_tol *tol);
-NMG_EXPORT extern struct vertexuse *nmg_find_pt_in_face(const struct faceuse *fu,
+NMG_EXPORT extern struct vertexuse *nmg_find_pnt_in_face(const struct faceuse *fu,
 							const point_t pt,
 							const struct bn_tol *tol);
-NMG_EXPORT extern struct vertex *nmg_find_pt_in_shell(const struct shell *s,
+NMG_EXPORT extern struct vertex *nmg_find_pnt_in_shell(const struct shell *s,
 						      const point_t pt,
 						      const struct bn_tol *tol);
-NMG_EXPORT extern struct vertex *nmg_find_pt_in_model(const struct model *m,
+NMG_EXPORT extern struct vertex *nmg_find_pnt_in_model(const struct model *m,
 						      const point_t pt,
 						      const struct bn_tol *tol);
 NMG_EXPORT extern int nmg_is_vertex_in_edgelist(const struct vertex *v,
@@ -1830,9 +1830,9 @@ NMG_EXPORT extern int nmg_bad_face_normals(const struct shell *s,
 					   const struct bn_tol *tol);
 NMG_EXPORT extern int nmg_faces_are_radial(const struct faceuse *fu1,
 					   const struct faceuse *fu2);
-NMG_EXPORT extern int nmg_move_edge_thru_pt(struct edgeuse *mv_eu,
-					    const point_t pt,
-					    const struct bn_tol *tol);
+NMG_EXPORT extern int nmg_move_edge_thru_pnt(struct edgeuse *mv_eu,
+					     const point_t pt,
+					     const struct bn_tol *tol);
 NMG_EXPORT extern void nmg_vlist_to_wire_edges(struct shell *s,
 					       const struct bu_list *vhead);
 NMG_EXPORT extern void nmg_follow_free_edges_to_vertex(const struct vertex *vpa,
@@ -2111,7 +2111,7 @@ NMG_EXPORT extern void nmg_visit(const uint32_t		*magicp,
 
 
 /* nmg_class.c */
-NMG_EXPORT extern int nmg_classify_pt_loop(const point_t pt,
+NMG_EXPORT extern int nmg_classify_pnt_loop(const point_t pt,
 					   const struct loopuse *lu,
 					   struct bu_list *vlfree,
 					   const struct bn_tol *tol);
@@ -2126,10 +2126,10 @@ NMG_EXPORT extern int nmg_classify_lu_lu(const struct loopuse *lu1,
 					 struct bu_list *vlfree,
 					 const struct bn_tol *tol);
 
-NMG_EXPORT extern int nmg_class_pt_f(const point_t pt,
+NMG_EXPORT extern int nmg_class_pnt_f(const point_t pt,
 				     const struct faceuse *fu,
 				     const struct bn_tol *tol);
-NMG_EXPORT extern int nmg_class_pt_s(const point_t pt,
+NMG_EXPORT extern int nmg_class_pnt_s(const point_t pt,
 				     const struct shell *s,
 				     const int in_or_out_only,
 				     struct bu_list *vlfree,
@@ -2138,13 +2138,13 @@ NMG_EXPORT extern int nmg_class_pt_s(const point_t pt,
 /* From nmg_pt_fu.c */
 NMG_EXPORT extern int nmg_eu_is_part_of_crack(const struct edgeuse *eu);
 
-NMG_EXPORT extern int nmg_class_pt_lu_except(point_t             pt,
+NMG_EXPORT extern int nmg_class_pnt_lu_except(point_t             pt,
 					     const struct loopuse        *lu,
 					     const struct edge           *e_p,
 					     struct bu_list *vlfree,
 					     const struct bn_tol *tol);
 
-NMG_EXPORT extern int nmg_class_pt_fu_except(const point_t pt,
+NMG_EXPORT extern int nmg_class_pnt_fu_except(const point_t pt,
 					     const struct faceuse *fu,
 					     const struct loopuse *ignore_lu,
 					     void (*eu_func)(struct edgeuse *, point_t, const char *, struct bu_list *),
@@ -2858,7 +2858,7 @@ NMG_EXPORT extern void nmg_nurb_c_print(const struct edge_g_cnurb *crv);
 NMG_EXPORT extern void nmg_nurb_s_print(char *c, const struct face_g_snurb *srf);
 NMG_EXPORT extern void nmg_nurb_pr_kv(const struct knot_vector *kv);
 NMG_EXPORT extern void nmg_nurb_pr_mesh(const struct face_g_snurb *m);
-NMG_EXPORT extern void nmg_nurb_print_pt_type(int c);
+NMG_EXPORT extern void nmg_nurb_print_pnt_type(int c);
 NMG_EXPORT extern void nmg_nurb_clean_cnurb(struct edge_g_cnurb *crv);
 
 /* nurb_xsplit.c */

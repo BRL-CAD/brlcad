@@ -4255,7 +4255,7 @@ rt_nmg_faces_area(struct poly_face* faces, struct shell* s)
 	tmp_pts[i] = faces[i].pts;
 	HMOVE(eqs[i], faces[i].plane_eqn);
     }
-    bg_3d_polygon_mk_pts_planes(npts, tmp_pts, num_faces, (const plane_t *)eqs);
+    bg_3d_polygon_make_pnts_planes(npts, tmp_pts, num_faces, (const plane_t *)eqs);
     for (i = 0; i < num_faces; i++) {
 	faces[i].npts = npts[i];
 	bg_3d_polygon_sort_ccw(faces[i].npts, faces[i].pts, faces[i].plane_eqn);

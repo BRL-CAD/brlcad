@@ -508,7 +508,7 @@ rt_superell_shot(struct soltab *stp, struct xray *rp, struct application *ap, st
 		short n;
 		short lim;
 
-		/* Inline rt_pt_sort().  Sorts realRoot[] into descending order. */
+		/* Inline rt_pnt_sort().  Sorts realRoot[] into descending order. */
 		for (lim = i-1; lim > 0; lim--) {
 		    for (n = 0; n < lim; n++) {
 			fastf_t u;
@@ -1193,8 +1193,8 @@ superell_surf_area_general(const struct rt_superell_internal *sip, vect_t mags, 
 	 */
 	for (v = - M_PI_2; v < M_PI_2 - side_length; v += side_length, idx++) {
 	    area +=
-		bn_dist_pt3_pt3(row1[idx], row1[idx + 1]) *
-		bn_dist_pt3_pt3(row1[idx], row2[idx]);
+		bn_dist_pnt3_pnt3(row1[idx], row1[idx + 1]) *
+		bn_dist_pnt3_pnt3(row1[idx], row2[idx]);
 	}
 
 	memcpy(row1, row2, row_length);

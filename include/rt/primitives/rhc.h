@@ -31,7 +31,7 @@
 __BEGIN_DECLS
 
 /* rhc.c */
-RT_EXPORT extern int rt_mk_hyperbola(struct rt_pt_node *pts,
+RT_EXPORT extern int rt_mk_hyperbola(struct rt_pnt_node *pts,
 				     fastf_t r,
 				     fastf_t b,
 				     fastf_t c,

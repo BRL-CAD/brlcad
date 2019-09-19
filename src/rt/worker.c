@@ -135,7 +135,7 @@ static struct jitter_pattern pt_pats[] = {
  * fire each ray in a specific sub-section of the pixel.
  */
 static void
-jitter_start_pt(vect_t point, struct application *a, int samplenum, int pat_num)
+jitter_start_pnt(vect_t point, struct application *a, int samplenum, int pat_num)
 {
     fastf_t dx, dy;
 
@@ -264,7 +264,7 @@ do_pixel(int cpu, int pat_num, int pixelnum)
 	/****************/
 
 	if (jitter & JITTER_CELL) {
-	    jitter_start_pt(point, &a, samplenum, pat_num);
+	    jitter_start_pnt(point, &a, samplenum, pat_num);
 	}
 
 	if (a.a_rt_i->rti_prismtrace) {
@@ -344,7 +344,7 @@ do_pixel(int cpu, int pat_num, int pixelnum)
 	    /**********************/
 
 	    if (jitter & JITTER_CELL) {
-		jitter_start_pt(point, &a, samplenum, pat_num);
+		jitter_start_pnt(point, &a, samplenum, pat_num);
 	    }
 
 	    if (a.a_rt_i->rti_prismtrace) {

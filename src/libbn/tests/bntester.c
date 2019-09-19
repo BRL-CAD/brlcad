@@ -389,7 +389,7 @@ main(int argc, char **argv)
 		     * function to be tested.
 		     */
 		    switch (u[0]) {
-			case 1: /* function 'bn_distsq_line3_pt3' */
+			case 1: /* function 'bn_distsq_line3_pnt3' */
 			    bu_strlcpy(dt_fmt, "dddddddddd", sizeof(dt_fmt)); /* defines parameter data types */
 			    if (parse_case(buf_p, i, l, d, u, dt_fmt, line_num, stream)) {
 				/* Parse failed, skipping test case */
@@ -398,7 +398,7 @@ main(int argc, char **argv)
 				double result;
 				if (!BU_SETJUMP) {
 				    /* try */
-				    result = bn_distsq_line3_pt3(&d[0], &d[3], &d[6]);
+				    result = bn_distsq_line3_pnt3(&d[0], &d[3], &d[6]);
 				    if (!NEAR_EQUAL(result, d[9], VUNITIZE_TOL)) {
 					ret = 1;
 					failed_cnt++;

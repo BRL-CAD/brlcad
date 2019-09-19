@@ -32,11 +32,11 @@
 
 __BEGIN_DECLS
 
-RT_EXPORT extern void rt_vls_pipept(struct bu_vls *vp,
+RT_EXPORT extern void rt_vls_pipe_pnt(struct bu_vls *vp,
 				    int seg_no,
 				    const struct rt_db_internal *ip,
 				    double mm2local);
-RT_EXPORT extern void rt_pipept_print(const struct wdb_pipept *pipept, double mm2local);
+RT_EXPORT extern void rt_pipe_pnt_print(const struct wdb_pipe_pnt *pipe_pnt, double mm2local);
 RT_EXPORT extern int rt_pipe_ck(const struct bu_list *headp);
 
 /** @} */

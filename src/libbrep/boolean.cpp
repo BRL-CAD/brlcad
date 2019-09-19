@@ -1629,7 +1629,7 @@ public:
 	    double max[3] = {0.0, 0.0, 0.0};
 
 	    seg_curve->GetBBox(min, max, true);
-	    length = DIST_PT_PT(min, max);
+	    length = DIST_PNT_PNT(min, max);
 	}
 	delete seg_curve;
 	return length < INTERSECTION_TOL;

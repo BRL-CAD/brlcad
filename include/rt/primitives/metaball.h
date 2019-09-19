@@ -32,11 +32,11 @@
 __BEGIN_DECLS
 
 struct rt_metaball_internal;
-RT_EXPORT extern void rt_vls_metaballpt(struct bu_vls *vp,
+RT_EXPORT extern void rt_vls_metaball_pnt(struct bu_vls *vp,
 					const int pt_no,
 					const struct rt_db_internal *ip,
 					const double mm2local);
-RT_EXPORT extern void rt_metaballpt_print(const struct wdb_metaballpt *metaball, double mm2local);
+RT_EXPORT extern void rt_metaball_pnt_print(const struct wdb_metaball_pnt *metaball, double mm2local);
 RT_EXPORT extern int rt_metaball_ck(const struct bu_list *headp);
 RT_EXPORT extern fastf_t rt_metaball_point_value(const point_t *p,
 						 const struct rt_metaball_internal *mb);

@@ -629,7 +629,7 @@ rt_ell_free(register struct soltab *stp)
  */
 #define ELLOUT(n) ov+(n-1)*3
 void
-rt_ell_16pts(fastf_t *ov,
+rt_ell_16pnts(fastf_t *ov,
 	     fastf_t *V,
 	     fastf_t *A,
 	     fastf_t *B)
@@ -829,9 +829,9 @@ rt_ell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     eip = (struct rt_ell_internal *)ip->idb_ptr;
     RT_ELL_CK_MAGIC(eip);
 
-    rt_ell_16pts(top, eip->v, eip->a, eip->b);
-    rt_ell_16pts(bottom, eip->v, eip->b, eip->c);
-    rt_ell_16pts(middle, eip->v, eip->a, eip->c);
+    rt_ell_16pnts(top, eip->v, eip->a, eip->b);
+    rt_ell_16pnts(bottom, eip->v, eip->b, eip->c);
+    rt_ell_16pnts(middle, eip->v, eip->a, eip->c);
 
     RT_ADD_VLIST(vhead, &top[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
     for (i = 0; i < 16; i++) {

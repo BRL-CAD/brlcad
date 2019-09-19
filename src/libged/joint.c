@@ -611,7 +611,7 @@ hold_eval(struct ged *gedp, struct hold *hp)
 	}
 	return 0.0;
     }
-    value = hp->weight * DIST_PT_PT(e_loc, o_loc);
+    value = hp->weight * DIST_PNT_PNT(e_loc, o_loc);
     if (J_DEBUG & DEBUG_J_EVAL) {
 	bu_vls_printf(gedp->ged_result_str, "hold_eval: PT->PT of %s is %g\n", hp->name, value);
     }

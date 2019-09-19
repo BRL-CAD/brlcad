@@ -147,7 +147,7 @@ nmg_region_v_unique(struct nmgregion *r1, struct bu_list *vlfree, const struct b
 	    vj = (struct vertex *)BU_PTBL_GET(&t, j);
 	    NMG_CK_VERTEX(vj);
 	    if (!vj->vg_p) continue;
-	    if (!bn_pt3_pt3_equal(vi->vg_p->coord, vj->vg_p->coord, tol))
+	    if (!bn_pnt3_pnt3_equal(vi->vg_p->coord, vj->vg_p->coord, tol))
 		continue;
 	    /* They are the same */
 	    bu_log("nmg_region_v_unique():  2 verts are the same, within tolerance\n");
@@ -284,7 +284,7 @@ nmg_region_both_vfuse(struct bu_ptbl *t1, struct bu_ptbl *t2, const struct bn_to
 	    if (!vj) continue;
 	    NMG_CK_VERTEX(vj);
 	    if (!vj->vg_p) continue;
-	    if (!bn_pt3_pt3_equal(vi->vg_p->coord, vj->vg_p->coord, tol))
+	    if (!bn_pnt3_pnt3_equal(vi->vg_p->coord, vj->vg_p->coord, tol))
 		continue;
 	    /* They are the same, fuse vj into vi */
 	    nmg_jv(vi, vj);
@@ -546,7 +546,7 @@ nmg_snurb_is_planar(const struct face_g_snurb *srf, const struct bn_tol *tol)
 
 	pt = &srf->ctl_points[ i*coords ];
 
-	dist = DIST_PT_PLANE(pt, pl);
+	dist = DIST_PNT_PLANE(pt, pl);
 	if (dist > tol->dist)
 	    goto out;
     }
@@ -867,7 +867,7 @@ nmg_cnurb_lseg_coincident(const struct edgeuse *eu1, const struct edge_g_cnurb *
 
 	    nmg_eval_linear_trim_curve(snrb, uvw, xyz);
 
-	    if (bn_dist_pt3_lseg3(&dist, pca, pt1, pt2, xyz, tol) > 2) {
+	    if (bn_dist_pnt3_lseg3(&dist, pca, pt1, pt2, xyz, tol) > 2) {
 		coincident = 0;
 		break;
 	    }
@@ -891,7 +891,7 @@ nmg_cnurb_lseg_coincident(const struct edgeuse *eu1, const struct edge_g_cnurb *
 
 	nmg_eval_trim_curve(cnrb, snrb, t, xyz);
 
-	if (bn_dist_pt3_lseg3(&dist, pca, pt1, pt2, xyz, tol) > 2) {
+	if (bn_dist_pnt3_lseg3(&dist, pca, pt1, pt2, xyz, tol) > 2) {
 	    coincident = 0;
 	    break;
 	}
@@ -1451,7 +1451,7 @@ nmg_ck_fu_verts(struct faceuse *fu1, struct face *f2, const struct bn_tol *tol)
 	    NMG_CK_VERTEX_G(vg);
 
 	    /* Geometry check */
-	    dist = DIST_PT_PLANE(vg->coord, pl2);
+	    dist = DIST_PNT_PLANE(vg->coord, pl2);
 	    if (!NEAR_ZERO(dist, tol->dist)) {
 		if (nmg_debug & DEBUG_MESH) {
 		    bu_log("nmg_ck_fu_verts(%p, %p) v %p off face by %e\n",
@@ -1481,7 +1481,7 @@ nmg_ck_fu_verts(struct faceuse *fu1, struct face *f2, const struct bn_tol *tol)
 		NMG_CK_VERTEX_G(vg);
 
 		/* Geometry check */
-		dist = DIST_PT_PLANE(vg->coord, pl2);
+		dist = DIST_PNT_PLANE(vg->coord, pl2);
 		if (!NEAR_ZERO(dist, tol->dist)) {
 		    if (nmg_debug & DEBUG_MESH) {
 			bu_log("nmg_ck_fu_verts(%p, %p) v %p off face by %e\n",
@@ -1753,17 +1753,17 @@ nmg_break_all_es_on_v(uint32_t *magic_p, struct vertex *v, struct bu_list *vlfre
 	va = eu->vu_p->v_p;
 	vb = eu->eumate_p->vu_p->v_p;
 
-	if (va == v || bn_pt3_pt3_equal(va->vg_p->coord, v->vg_p->coord, tol)) {
+	if (va == v || bn_pnt3_pnt3_equal(va->vg_p->coord, v->vg_p->coord, tol)) {
 	    continue;
 	}
-	if (vb == v || bn_pt3_pt3_equal(vb->vg_p->coord, v->vg_p->coord, tol)) {
+	if (vb == v || bn_pnt3_pnt3_equal(vb->vg_p->coord, v->vg_p->coord, tol)) {
 	    continue;
 	}
-	if (UNLIKELY(va == vb || bn_pt3_pt3_equal(va->vg_p->coord, vb->vg_p->coord, tol))) {
+	if (UNLIKELY(va == vb || bn_pnt3_pnt3_equal(va->vg_p->coord, vb->vg_p->coord, tol))) {
 	    bu_bomb("nmg_break_all_es_on_v(): found zero length edgeuse");
 	}
 
-	code = bn_isect_pt_lseg(&dist, va->vg_p->coord, vb->vg_p->coord,
+	code = bn_isect_pnt_lseg(&dist, va->vg_p->coord, vb->vg_p->coord,
 				v->vg_p->coord, tol);
 
 	if (code < 1) continue;	/* missed */
@@ -1851,11 +1851,11 @@ nmg_break_e_on_v(const uint32_t *magic_p, struct bu_list *vlfree, const struct b
 		if (va == v) continue;
 		if (vb == v) continue;
 
-		if (V3PT_OUT_RPP_TOL(v->vg_p->coord, e_min_pt, e_max_pt, tol->dist)) {
+		if (V3PNT_OUT_RPP_TOL(v->vg_p->coord, e_min_pt, e_max_pt, tol->dist)) {
 		    continue;
 		}
 
-		code = bn_isect_pt_lseg(&dist,
+		code = bn_isect_pnt_lseg(&dist,
 					va->vg_p->coord,
 					vb->vg_p->coord,
 					v->vg_p->coord, tol);
@@ -2453,9 +2453,9 @@ nmg_is_crack_outie(const struct edgeuse *eu, struct bu_list *vlfree, const struc
 	fu = lu->up.fu_p;
 	NMG_CK_FACEUSE(fu);
 	NMG_GET_FU_PLANE(pl, fu);
-	dist = DIST_PT_PLANE(midpt, pl);
+	dist = DIST_PNT_PLANE(midpt, pl);
 	VJOIN1(midpt, midpt, -dist, pl);
-	dist = fabs(DIST_PT_PLANE(midpt, pl));
+	dist = fabs(DIST_PNT_PLANE(midpt, pl));
 	if (dist > SMALL_FASTF) {
 	    tmp_tol.dist = dist*2.0;
 	    tmp_tol.dist_sq = tmp_tol.dist * tmp_tol.dist;
@@ -2463,7 +2463,7 @@ nmg_is_crack_outie(const struct edgeuse *eu, struct bu_list *vlfree, const struc
 	    tmp_tol.dist = SMALL_FASTF;
 	    tmp_tol.dist_sq = SMALL_FASTF * SMALL_FASTF;
 	}
-	nmg_class = nmg_class_pt_lu_except(midpt, lu, e, vlfree, &tmp_tol);
+	nmg_class = nmg_class_pnt_lu_except(midpt, lu, e, vlfree, &tmp_tol);
     }
     if (nmg_debug & DEBUG_BASIC) {
 	bu_log("nmg_is_crack_outie(eu=%p) lu=%p, e=%p, nmg_class=%s\n",
@@ -2490,7 +2490,7 @@ nmg_is_crack_outie(const struct edgeuse *eu, struct bu_list *vlfree, const struc
 	   nmg_class_name(nmg_class),
 	   V3ARGS(midpt));
     nmg_pr_lu_briefly(lu, 0);
-    bu_bomb("nmg_is_crack_outie() got unexpected midpt classification from nmg_class_pt_lu_except()\n");
+    bu_bomb("nmg_is_crack_outie() got unexpected midpt classification from nmg_class_pnt_lu_except()\n");
 
     return -1; /* make the compiler happy */
 }
@@ -3218,7 +3218,7 @@ nmg_radial_join_eu_NEW(struct edgeuse *eu1, struct edgeuse *eu2, const struct bn
 
     if (eu1->vu_p->v_p == eu1->eumate_p->vu_p->v_p) bu_bomb("nmg_radial_join_eu_NEW(): 0 length edge (topology)\n");
 
-    if (bn_pt3_pt3_equal(eu1->vu_p->v_p->vg_p->coord,
+    if (bn_pnt3_pnt3_equal(eu1->vu_p->v_p->vg_p->coord,
 			 eu1->eumate_p->vu_p->v_p->vg_p->coord, tol))
 	bu_bomb("nmg_radial_join_eu_NEW(): 0 length edge (geometry)\n");
 

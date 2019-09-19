@@ -55,7 +55,7 @@ extern float modff(float x, float *iptr);
 #endif
 
 double
-bn_dist_pt3_pt3(const fastf_t *a, const fastf_t *b)
+bn_dist_pnt3_pnt3(const fastf_t *a, const fastf_t *b)
 {
     vect_t diff;
 
@@ -65,7 +65,7 @@ bn_dist_pt3_pt3(const fastf_t *a, const fastf_t *b)
 
 
 int
-bn_pt3_pt3_equal(const fastf_t *a, const fastf_t *b, const struct bn_tol *tol)
+bn_pnt3_pnt3_equal(const fastf_t *a, const fastf_t *b, const struct bn_tol *tol)
 {
     fastf_t tmp = tol->dist_sq;
     fastf_t ab, abx, aby, abz;
@@ -95,7 +95,7 @@ bn_pt3_pt3_equal(const fastf_t *a, const fastf_t *b, const struct bn_tol *tol)
  * @return 0	if the two points are not "the same"
  */
 int
-bn_pt2_pt2_equal(const fastf_t *a, const fastf_t *b, const struct bn_tol *tol)
+bn_pnt2_pnt2_equal(const fastf_t *a, const fastf_t *b, const struct bn_tol *tol)
 {
     vect_t diff;
 
@@ -107,7 +107,7 @@ bn_pt2_pt2_equal(const fastf_t *a, const fastf_t *b, const struct bn_tol *tol)
 
 
 int
-bn_3pts_collinear(fastf_t *a, fastf_t *b, fastf_t *c, const struct bn_tol *tol)
+bn_3pnts_collinear(fastf_t *a, fastf_t *b, fastf_t *c, const struct bn_tol *tol)
 {
     fastf_t mag_ab, mag_bc, mag_ca, max_len, dist_sq;
     fastf_t cos_a, cos_b, cos_c;
@@ -162,7 +162,7 @@ bn_3pts_collinear(fastf_t *a, fastf_t *b, fastf_t *c, const struct bn_tol *tol)
 
 
 int
-bn_3pts_distinct(const fastf_t *a, const fastf_t *b, const fastf_t *c, const struct bn_tol *tol)
+bn_3pnts_distinct(const fastf_t *a, const fastf_t *b, const fastf_t *c, const struct bn_tol *tol)
 {
     vect_t B_A;
     vect_t C_A;
@@ -180,7 +180,7 @@ bn_3pts_distinct(const fastf_t *a, const fastf_t *b, const fastf_t *c, const str
 
 
 int
-bn_npts_distinct(const int npt, const point_t *pts, const struct bn_tol *tol)
+bn_npnts_distinct(const int npt, const point_t *pts, const struct bn_tol *tol)
 {
     int i, j;
     point_t r;
@@ -198,7 +198,7 @@ bn_npts_distinct(const int npt, const point_t *pts, const struct bn_tol *tol)
 
 
 int
-bn_mk_plane_3pts(fastf_t *plane,
+bn_make_plane_3pnts(fastf_t *plane,
 		 const fastf_t *a,
 		 const fastf_t *b,
 		 const fastf_t *c,
@@ -235,7 +235,7 @@ bn_mk_plane_3pts(fastf_t *plane,
 
 
 int
-bn_mkpoint_3planes(fastf_t *pt, const fastf_t *a, const fastf_t *b, const fastf_t *c)
+bn_make_pnt_3planes(fastf_t *pt, const fastf_t *a, const fastf_t *b, const fastf_t *c)
 {
     vect_t v1;
     fastf_t dot;
@@ -313,14 +313,14 @@ bn_2line3_colinear(const fastf_t *p1,
     if (fabs(VDOT(d1, d2)) < 0.9 * mag1 * mag2) goto fail;
 
     /* See if start points are within tolerance of other line */
-    if (bn_distsq_line3_pt3(p1, d1, p2) > tol->dist_sq) goto fail;
-    if (bn_distsq_line3_pt3(p2, d2, p1) > tol->dist_sq) goto fail;
+    if (bn_distsq_line3_pnt3(p1, d1, p2) > tol->dist_sq) goto fail;
+    if (bn_distsq_line3_pnt3(p2, d2, p1) > tol->dist_sq) goto fail;
 
     VJOIN1(tail, p1, range/mag1, d1);
-    if (bn_distsq_line3_pt3(p2, d2, tail) > tol->dist_sq) goto fail;
+    if (bn_distsq_line3_pnt3(p2, d2, tail) > tol->dist_sq) goto fail;
 
     VJOIN1(tail, p2, range/mag2, d2);
-    if (bn_distsq_line3_pt3(p1, d1, tail) > tol->dist_sq) goto fail;
+    if (bn_distsq_line3_pnt3(p1, d1, tail) > tol->dist_sq) goto fail;
 
     if (bu_debug & BU_DEBUG_MATH) {
 	bu_log("bn_2line3colinear(range=%g) ret=1\n", range);
@@ -335,7 +335,7 @@ fail:
 
 
 int
-bn_dist_pt3_line3(fastf_t *dist, fastf_t *pca, const fastf_t *a, const fastf_t *dir, const fastf_t *p, const struct bn_tol *tol)
+bn_dist_pnt3_line3(fastf_t *dist, fastf_t *pca, const fastf_t *a, const fastf_t *dir, const fastf_t *p, const struct bn_tol *tol)
 {
     vect_t AtoP;	/* P-A */
     vect_t unit_dir;	/* unitized dir vector */
@@ -344,7 +344,7 @@ bn_dist_pt3_line3(fastf_t *dist, fastf_t *pca, const fastf_t *a, const fastf_t *
     fastf_t dsq;	/* square of distance from p to line */
 
     if (UNLIKELY(bu_debug & BU_DEBUG_MATH))
-	bu_log("bn_dist_pt3_line3(a=(%f %f %f), dir=(%f %f %f), p=(%f %f %f)\n" ,
+	bu_log("bn_dist_pnt3_line3(a=(%f %f %f), dir=(%f %f %f), p=(%f %f %f)\n" ,
 	       V3ARGS(a), V3ARGS(dir), V3ARGS(p));
 
     BN_CK_TOL(tol);
@@ -417,7 +417,7 @@ bn_dist_line3_line3(fastf_t *dist, const fastf_t *p1, const fastf_t *d1, const f
     d1_d2 = VDOT(d1, d2);
 
     if (BN_VECT_ARE_PARALLEL(d1_d2, tol)) {
-	if (bn_dist_line3_pt3(p1, d1, p2) > tol_dist)
+	if (bn_dist_line3_pnt3(p1, d1, p2) > tol_dist)
 	    return -2; /* parallel, but not collinear */
 	else
 	    return -1; /* parallel and collinear */
@@ -607,7 +607,7 @@ bn_isect_2planes(fastf_t *pt,
     }
 
     /* Intersection of the 3 planes defines ray start point */
-    if (bn_mkpoint_3planes(pt, pl, a, b) < 0) {
+    if (bn_make_pnt_3planes(pt, pl, a, b) < 0) {
 	return -3;  /* error, should be intersection but unable to find */
     }
 
@@ -809,11 +809,11 @@ bn_isect_line2_lseg2(fastf_t *dist,
 	(ctol=bn_distsq_line2_point2(p, d, b)) <= tol->dist_sq) {
 	if (bu_debug & BU_DEBUG_MATH) {
 	    bu_log("b=(%g, %g), b_dist_sq=%g\n", V2ARGS(b), ctol);
-	    bu_log("bn_isect_line2_lseg2() pts A and B within tol of line\n");
+	    bu_log("bn_isect_line2_lseg2() pnts A and B within tol of line\n");
 	}
 	/* Find the parametric distance along the ray */
-	dist[0] = bn_dist_pt2_along_line2(p, d, a);
-	dist[1] = bn_dist_pt2_along_line2(p, d, b);
+	dist[0] = bn_dist_pnt2_along_line2(p, d, a);
+	dist[1] = bn_dist_pnt2_along_line2(p, d, b);
 	ret = 0;		/* Collinear */
 	goto out;
     }
@@ -856,22 +856,22 @@ bn_isect_line2_lseg2(fastf_t *dist,
 	V2JOIN1(hit_pt, p, dist[0], d);
 	V2JOIN1(hit2, a, dist[1], c);
 	/* Check both hit point value calculations */
-	if (bn_pt2_pt2_equal(a, hit_pt, tol) ||
-	    bn_pt2_pt2_equal(a, hit2, tol)) {
+	if (bn_pnt2_pnt2_equal(a, hit_pt, tol) ||
+	    bn_pnt2_pnt2_equal(a, hit2, tol)) {
 	    dist[1] = 0;
 	}
-	if (bn_pt2_pt2_equal(b, hit_pt, tol) ||
-	    bn_pt2_pt2_equal(b, hit_pt, tol)) {
+	if (bn_pnt2_pnt2_equal(b, hit_pt, tol) ||
+	    bn_pnt2_pnt2_equal(b, hit_pt, tol)) {
 	    dist[1] = 1;
 	}
 
-	ret = bn_isect_pt2_lseg2(&ab_dist, a, b, hit_pt, tol);
+	ret = bn_isect_pnt2_lseg2(&ab_dist, a, b, hit_pt, tol);
 	if (bu_debug & BU_DEBUG_MATH) {
 	    /* XXX This is temporary */
 	    V2PRINT("a", a);
 	    V2PRINT("hit", hit_pt);
 	    V2PRINT("b", b);
-	    bu_log("bn_isect_pt2_lseg2() hit2d=(%g, %g) ab_dist=%g, ret=%d\n", hit_pt[X], hit_pt[Y], ab_dist, ret);
+	    bu_log("bn_isect_pnt2_lseg2() hit2d=(%g, %g) ab_dist=%g, ret=%d\n", hit_pt[X], hit_pt[Y], ab_dist, ret);
 	    bu_log("\tother hit2d=(%g, %g)\n", hit2[X], hit2[Y]);
 	}
 	if (ret <= 0) {
@@ -1224,10 +1224,10 @@ bn_isect_line3_line3(fastf_t *pdist,        /* see above */
 
     if (bn_lseg3_lseg3_parallel(p0, p1, q0, q1, tol)) {
 	parallel = 1;
-	d1 = bn_distsq_line3_pt3(q0,qdir,p0);
-	d2 = bn_distsq_line3_pt3(q0,qdir,p1);
-	d3 = bn_distsq_line3_pt3(p0,pdir,q0);
-	d4 = bn_distsq_line3_pt3(p0,pdir,q1);
+	d1 = bn_distsq_line3_pnt3(q0,qdir,p0);
+	d2 = bn_distsq_line3_pnt3(q0,qdir,p1);
+	d3 = bn_distsq_line3_pnt3(p0,pdir,q0);
+	d4 = bn_distsq_line3_pnt3(p0,pdir,q1);
 	if (NEAR_ZERO(d1, tol->dist_sq) && NEAR_ZERO(d2, tol->dist_sq) &&
 	    NEAR_ZERO(d3, tol->dist_sq) && NEAR_ZERO(d4, tol->dist_sq)) {
 	    colinear = 1;
@@ -1378,8 +1378,8 @@ bn_isect_line_lseg(fastf_t *t, const fastf_t *p, const fastf_t *d, const fastf_t
      * distance tolerance of the infinite line associated with
      * the line segment.
      */
-    d1 = bn_distsq_line3_pt3(p,d,a); /* distance of point a to ray */
-    d2 = bn_distsq_line3_pt3(p,d,b); /* distance of point b to ray */
+    d1 = bn_distsq_line3_pnt3(p,d,a); /* distance of point a to ray */
+    d2 = bn_distsq_line3_pnt3(p,d,b); /* distance of point b to ray */
 
     colinear = 0;
     if (NEAR_ZERO(d1, tol->dist_sq) && NEAR_ZERO(d2, tol->dist_sq)) {
@@ -1521,7 +1521,7 @@ bn_isect_line_lseg(fastf_t *t, const fastf_t *p, const fastf_t *d, const fastf_t
 
 
 double
-bn_dist_line3_pt3(const fastf_t *pt, const fastf_t *dir, const fastf_t *a)
+bn_dist_line3_pnt3(const fastf_t *pt, const fastf_t *dir, const fastf_t *a)
 {
     vect_t f;
     fastf_t FdotD;
@@ -1540,14 +1540,14 @@ bn_dist_line3_pt3(const fastf_t *pt, const fastf_t *dir, const fastf_t *a)
     FdotD = sqrt(FdotD);
 out:
     if (bu_debug & BU_DEBUG_MATH) {
-	bu_log("bn_dist_line3_pt3() ret=%g\n", FdotD);
+	bu_log("bn_dist_line3_pnt3() ret=%g\n", FdotD);
     }
     return FdotD;
 }
 
 
 double
-bn_distsq_line3_pt3(const fastf_t *pt, const fastf_t *dir, const fastf_t *a)
+bn_distsq_line3_pnt3(const fastf_t *pt, const fastf_t *dir, const fastf_t *a)
 {
     vect_t f;
     fastf_t FdotD;
@@ -1565,7 +1565,7 @@ bn_distsq_line3_pt3(const fastf_t *pt, const fastf_t *dir, const fastf_t *a)
     }
 out:
     if (UNLIKELY(bu_debug & BU_DEBUG_MATH)) {
-	bu_log("bn_distsq_line3_pt3() ret=%g\n", FdotD);
+	bu_log("bn_distsq_line3_pnt3() ret=%g\n", FdotD);
     }
     return FdotD;
 }
@@ -1586,7 +1586,7 @@ bn_dist_line_origin(const fastf_t *pt, const fastf_t *dir)
 
 
 double
-bn_dist_line2_point2(const fastf_t *pt, const fastf_t *dir, const fastf_t *a)
+bn_dist_line2_pnt2(const fastf_t *pt, const fastf_t *dir, const fastf_t *a)
 {
     vect_t f;
     fastf_t FdotD;
@@ -1641,11 +1641,11 @@ bn_area_of_triangle(const fastf_t *a, const fastf_t *b, const fastf_t *c)
 
 
 int
-bn_isect_pt_lseg(fastf_t *dist,
-		 const fastf_t *a,
-		 const fastf_t *b,
-		 const fastf_t *p,
-		 const struct bn_tol *tol)
+bn_isect_pnt_lseg(fastf_t *dist,
+		  const fastf_t *a,
+		  const fastf_t *b,
+		  const fastf_t *p,
+		  const struct bn_tol *tol)
 {
     vect_t AtoP, BtoP, AtoB, ABunit; /* unit vector from A to B */
     fastf_t APprABunit;	/* Mag of projection of AtoP onto ABunit */
@@ -1669,8 +1669,8 @@ bn_isect_pt_lseg(fastf_t *dist,
     distsq = 1/sqrt(distsq);
     VSCALE(ABunit, ABunit, distsq);
 
-    /* Similar to bn_dist_line_pt, except we never actually have to do
-     * the sqrt that the other routine does.
+    /* Similar to bn_dist_line_pnt(), except we never actually have to
+     * do the sqrt that the other routine does.
      */
 
     /* find dist as a function of ABunit, actually the projection of
@@ -1681,7 +1681,7 @@ bn_isect_pt_lseg(fastf_t *dist,
     /* because of pythgorean theorem ... */
     distsq = MAGSQ(AtoP) - APprABunit * APprABunit;
     if (distsq > tol->dist_sq)
-	return -1;	/* dist pt to line too large */
+	return -1;	/* dist pnt to line too large */
 
     /* Distance from the point to the line is within tolerance. */
     *dist = VDOT(AtoP, AtoB) / MAGSQ(AtoB);
@@ -1701,7 +1701,7 @@ bn_isect_pt_lseg(fastf_t *dist,
  * @param tol contains the tolerances used for calculations
  */
 int
-bn_isect_pt2_lseg2(fastf_t *dist, const fastf_t *a, const fastf_t *b, const fastf_t *p, const struct bn_tol *tol)
+bn_isect_pnt2_lseg2(fastf_t *dist, const fastf_t *a, const fastf_t *b, const fastf_t *p, const struct bn_tol *tol)
 {
     vect_t AtoP,
 	BtoP,
@@ -1763,7 +1763,7 @@ bn_isect_pt2_lseg2(fastf_t *dist, const fastf_t *a, const fastf_t *b, const fast
 
 /**
  * This is a support function for the test function
- * "bn_distsq_pt3_lseg3_v2".
+ * "bn_distsq_pnt3_lseg3_v2".
  */
 HIDDEN int
 are_equal(fastf_t a_in, fastf_t b_in, fastf_t t)
@@ -1801,7 +1801,7 @@ are_equal(fastf_t a_in, fastf_t b_in, fastf_t t)
 
 
 int
-bn_distsq_pt3_lseg3_v2(fastf_t *dist_sq_out, const fastf_t *a, const fastf_t *b, const fastf_t *p, const struct bn_tol *tol)
+bn_distsq_pnt3_lseg3_v2(fastf_t *dist_sq_out, const fastf_t *a, const fastf_t *b, const fastf_t *p, const struct bn_tol *tol)
 {
     vect_t AtoB, BtoP;
     vect_t AtoP = VINIT_ZERO;
@@ -1813,9 +1813,9 @@ bn_distsq_pt3_lseg3_v2(fastf_t *dist_sq_out, const fastf_t *a, const fastf_t *b,
     dt = tol->dist_sq;
 
     flip = 0;
-    if (bn_pt3_pt3_equal(a, b, tol)) {
+    if (bn_pnt3_pnt3_equal(a, b, tol)) {
 	/* (A=B) */
-	if (bn_pt3_pt3_equal(a, p, tol)) {
+	if (bn_pnt3_pnt3_equal(a, p, tol)) {
 	    /* (A=B) (A=P) (B=P) */
 	    dist_sq = 0.0;
 	    ret = 1;
@@ -1826,11 +1826,11 @@ bn_distsq_pt3_lseg3_v2(fastf_t *dist_sq_out, const fastf_t *a, const fastf_t *b,
 	}
     } else {
 	/* (A!=B) */
-	if (bn_pt3_pt3_equal(a, p, tol)) {
+	if (bn_pnt3_pnt3_equal(a, p, tol)) {
 	    /* (A!=B) (A=P) */
 	    dist_sq = 0.0;
 	    ret = 1;
-	} else if (bn_pt3_pt3_equal(b, p, tol)) {
+	} else if (bn_pnt3_pnt3_equal(b, p, tol)) {
 	    /* (A!=B) (B=P) */
 	    dist_sq = 0.0;
 	    ret = 2;
@@ -1852,7 +1852,7 @@ bn_distsq_pt3_lseg3_v2(fastf_t *dist_sq_out, const fastf_t *a, const fastf_t *b,
 		flip = 1;
 	    }
 	    if (ZERO(dot)) {
-		bu_bomb("bn_distsq_pt3_lseg3_v2(): failed");
+		bu_bomb("bn_distsq_pnt3_lseg3_v2(): failed");
 	    }
 
 	    AtoB_mag_sq = MAGSQ(AtoB);
@@ -1919,7 +1919,7 @@ bn_distsq_pt3_lseg3_v2(fastf_t *dist_sq_out, const fastf_t *a, const fastf_t *b,
 
 
 int
-bn_dist_pt3_lseg3(fastf_t *dist,
+bn_dist_pnt3_lseg3(fastf_t *dist,
 		  fastf_t *pca,
 		  const fastf_t *a,
 		  const fastf_t *b,
@@ -1937,7 +1937,7 @@ bn_dist_pt3_lseg3(fastf_t *dist,
     BN_CK_TOL(tol);
 
     if (UNLIKELY(bu_debug & BU_DEBUG_MATH)) {
-	bu_log("bn_dist_pt3_lseg3() a=(%g, %g, %g) b=(%g, %g, %g)\n\tp=(%g, %g, %g), tol->dist=%g sq=%g\n",
+	bu_log("bn_dist_pnt3_lseg3() a=(%g, %g, %g) b=(%g, %g, %g)\n\tp=(%g, %g, %g), tol->dist=%g sq=%g\n",
 	       V3ARGS(a),
 	       V3ARGS(b),
 	       V3ARGS(p),
@@ -1972,7 +1972,7 @@ bn_dist_pt3_lseg3(fastf_t *dist,
      */
     t = VDOT(PtoA, AtoB) / B_A;
     if (UNLIKELY(bu_debug & BU_DEBUG_MATH)) {
-	bu_log("bn_dist_pt3_lseg3() B_A=%g, t=%g\n",
+	bu_log("bn_dist_pnt3_lseg3() B_A=%g, t=%g\n",
 	       B_A, t);
     }
 
@@ -2012,7 +2012,7 @@ bn_dist_pt3_lseg3(fastf_t *dist,
 
 
 int
-bn_dist_pt2_lseg2(fastf_t *dist_sq, fastf_t *pca, const fastf_t *a, const fastf_t *b, const fastf_t *p, const struct bn_tol *tol)
+bn_dist_pnt2_lseg2(fastf_t *dist_sq, fastf_t *pca, const fastf_t *a, const fastf_t *b, const fastf_t *p, const struct bn_tol *tol)
 {
     vect_t PtoA;		/* P-A */
     vect_t PtoB;		/* P-B */
@@ -2025,7 +2025,7 @@ bn_dist_pt2_lseg2(fastf_t *dist_sq, fastf_t *pca, const fastf_t *a, const fastf_
     BN_CK_TOL(tol);
 
     if (bu_debug & BU_DEBUG_MATH) {
-	bu_log("bn_dist_pt3_lseg3() a=(%g, %g, %g) b=(%g, %g, %g)\n\tp=(%g, %g, %g), tol->dist=%g sq=%g\n",
+	bu_log("bn_dist_pnt3_lseg3() a=(%g, %g, %g) b=(%g, %g, %g)\n\tp=(%g, %g, %g), tol->dist=%g sq=%g\n",
 	       V3ARGS(a),
 	       V3ARGS(b),
 	       V3ARGS(p),
@@ -2061,7 +2061,7 @@ bn_dist_pt2_lseg2(fastf_t *dist_sq, fastf_t *pca, const fastf_t *a, const fastf_
      */
     t = V2DOT(PtoA, AtoB) / B_A;
     if (bu_debug & BU_DEBUG_MATH) {
-	bu_log("bn_dist_pt3_lseg3() B_A=%g, t=%g\n",
+	bu_log("bn_dist_pnt3_lseg3() B_A=%g, t=%g\n",
 	       B_A, t);
     }
 
@@ -2168,7 +2168,7 @@ bn_coplanar(const fastf_t *a, const fastf_t *b, const struct bn_tol *tol)
 
     /* parallel is when dot is within tol->perp of either -1 or 1 */
     if ((dot <= -SMALL_FASTF) ? (NEAR_EQUAL(dot, -1.0, tol->perp)) : (NEAR_EQUAL(dot, 1.0, tol->perp))) {
-	if (bn_pt3_pt3_equal(pt_a, pt_b, tol)) {
+	if (bn_pnt3_pnt3_equal(pt_a, pt_b, tol)) {
 	    /* true when planes are coplanar */
 	    if (dot >= SMALL_FASTF) {
 		/* true when plane normals in same direction */
@@ -2213,7 +2213,7 @@ bn_angle_measure(fastf_t *vec, const fastf_t *x_dir, const fastf_t *y_dir)
 
 
 double
-bn_dist_pt3_along_line3(const fastf_t *p, const fastf_t *d, const fastf_t *x)
+bn_dist_pnt3_along_line3(const fastf_t *p, const fastf_t *d, const fastf_t *x)
 {
     vect_t x_p;
 
@@ -2223,7 +2223,7 @@ bn_dist_pt3_along_line3(const fastf_t *p, const fastf_t *d, const fastf_t *x)
 
 
 double
-bn_dist_pt2_along_line2(const fastf_t *p, const fastf_t *d, const fastf_t *x)
+bn_dist_pnt2_along_line2(const fastf_t *p, const fastf_t *d, const fastf_t *x)
 {
     vect_t x_p;
     double ret;
@@ -2231,7 +2231,7 @@ bn_dist_pt2_along_line2(const fastf_t *p, const fastf_t *d, const fastf_t *x)
     V2SUB2(x_p, x, p);
     ret = V2DOT(x_p, d);
     if (bu_debug & BU_DEBUG_MATH) {
-	bu_log("bn_dist_pt2_along_line2() p=(%g, %g), d=(%g, %g), x=(%g, %g) ret=%g\n",
+	bu_log("bn_dist_pnt2_along_line2() p=(%g, %g), d=(%g, %g), x=(%g, %g) ret=%g\n",
 	       V2ARGS(p),
 	       V2ARGS(d),
 	       V2ARGS(x),

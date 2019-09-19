@@ -188,7 +188,7 @@ GED_EXPORT extern int ged_mat_mul(struct ged *gedp, int argc, const char *argv[]
 /**
  * Create a matrix that will scale about a given point
  */
-GED_EXPORT extern int ged_mat_scale_about_pt(struct ged *gedp, int argc, const char *argv[]);
+GED_EXPORT extern int ged_mat_scale_about_pnt(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Modify material information.
@@ -268,7 +268,7 @@ GED_EXPORT extern int ged_annotate(struct ged *gedp, int argc, const char *argv[
 /**
  * Append a pipe point.
  */
-GED_EXPORT extern int ged_append_pipept(struct ged *gedp, int argc, const char *argv[]);
+GED_EXPORT extern int ged_pipe_append_pnt(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Allow editing of the matrix, etc., along an arc.
@@ -430,7 +430,7 @@ GED_EXPORT extern int ged_cpi(struct ged *gedp, int argc, const char *argv[]);
 /**
  * Delete the specified pipe point.
  */
-GED_EXPORT extern int ged_delete_pipept(struct ged *gedp, int argc, const char *argv[]);
+GED_EXPORT extern int ged_pipe_delete_pnt(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * DSP utility command
@@ -462,42 +462,42 @@ GED_EXPORT extern int ged_facetize(struct ged *gedp, int argc, const char *argv[
 /**
  * Find the arb edge nearest the specified point in view coordinates.
  */
-GED_EXPORT extern int ged_find_arb_edge_nearest_pt(struct ged *gedp, int argc, const char *argv[]);
+GED_EXPORT extern int ged_find_arb_edge_nearest_pnt(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Find the bot edge nearest the specified point in view coordinates.
  */
-GED_EXPORT extern int ged_find_bot_edge_nearest_pt(struct ged *gedp, int argc, const char *argv[]);
+GED_EXPORT extern int ged_find_bot_edge_nearest_pnt(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Find the bot point nearest the specified point in view coordinates.
  */
-GED_EXPORT extern int ged_find_botpt_nearest_pt(struct ged *gedp, int argc, const char *argv[]);
+GED_EXPORT extern int ged_find_bot_pnt_nearest_pnt(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Add a metaball point.
  */
-GED_EXPORT extern int ged_add_metaballpt(struct ged *gedp, int argc, const char *argv[]);
+GED_EXPORT extern int ged_metaball_add_pnt(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Delete a metaball point.
  */
-GED_EXPORT extern int ged_delete_metaballpt(struct ged *gedp, int argc, const char *argv[]);
+GED_EXPORT extern int ged_metaball_delete_pnt(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Find the metaball point nearest the specified point in model coordinates.
  */
-GED_EXPORT extern int ged_find_metaballpt_nearest_pt(struct ged *gedp, int argc, const char *argv[]);
+GED_EXPORT extern int ged_find_metaball_pnt_nearest_pnt(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Move a metaball point.
  */
-GED_EXPORT extern int ged_move_metaballpt(struct ged *gedp, int argc, const char *argv[]);
+GED_EXPORT extern int ged_metaball_move_pnt(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Find the pipe point nearest the specified point in model coordinates.
  */
-GED_EXPORT extern int ged_find_pipept_nearest_pt(struct ged *gedp, int argc, const char *argv[]);
+GED_EXPORT extern int ged_find_pipe_pnt_nearest_pnt(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Given an NMG solid, break it up into several NMG solids, each
@@ -602,17 +602,17 @@ GED_EXPORT extern int ged_move_arb_face(struct ged *gedp, int argc, const char *
 /**
  * Move the specified bot point. This can be relative or absolute.
  */
-GED_EXPORT extern int ged_move_botpt(struct ged *gedp, int argc, const char *argv[]);
+GED_EXPORT extern int ged_bot_move_pnt(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Move the specified bot points. This movement is always relative.
  */
-GED_EXPORT extern int ged_move_botpts(struct ged *gedp, int argc, const char *argv[]);
+GED_EXPORT extern int ged_bot_move_pnts(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Move the specified pipe point.
  */
-GED_EXPORT extern int ged_move_pipept(struct ged *gedp, int argc, const char *argv[]);
+GED_EXPORT extern int ged_pipe_move_pnt(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * NMG command with subcommands for altering NMG datastructure.
@@ -662,7 +662,7 @@ GED_EXPORT extern int ged_prefix(struct ged *gedp, int argc, const char *argv[])
 /**
  * Prepend a pipe point.
  */
-GED_EXPORT extern int ged_prepend_pipept(struct ged *gedp, int argc, const char *argv[]);
+GED_EXPORT extern int ged_pipe_prepend_pnt(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Rotate obj's attributes by rvec.
@@ -705,7 +705,7 @@ GED_EXPORT extern int ged_putmat(struct ged *gedp, int argc, const char *argv[])
 GED_EXPORT extern int ged_region(struct ged *gedp, int argc, const char *argv[]);
 
 /**
- * Makes and arb given a point, 2 coord of 3 pts, rot, fb and thickness.
+ * Makes and arb given a point, 2 coord of 3 pnts, rot, fb and thickness.
  */
 GED_EXPORT extern int ged_rfarb(struct ged *gedp, int argc, const char *argv[]);
 

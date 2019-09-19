@@ -146,12 +146,12 @@ BN_EXPORT extern int bn_distsq_line3_line3(fastf_t dist[3],
  * TODO: For efficiency, a version of this routine that provides the
  * distance squared would be faster.
  */
-BN_EXPORT extern int bn_dist_pt3_line3(fastf_t *dist,
-				       point_t pca,
-				       const point_t a,
-				       const point_t p,
-				       const vect_t dir,
-				       const struct bn_tol *tol);
+BN_EXPORT extern int bn_dist_pnt3_line3(fastf_t *dist,
+					point_t pca,
+					const point_t a,
+					const point_t p,
+					const vect_t dir,
+					const struct bn_tol *tol);
 
 /**
  * calculate intersection or closest approach of a line and a line
@@ -233,17 +233,17 @@ BN_EXPORT extern int bn_dist_line3_line3(fastf_t dist[2],
  * @return 4	P is to the "right" of point B.  *dist=|P-B|, pca=B.
  * @return 5	P is "above/below" lseg AB.  *dist=|PCA-P|, pca=computed.
  *
- * This routine was formerly called bn_dist_pt_lseg().
+ * This routine was formerly called bn_dist_pnt_lseg().
  *
  * XXX For efficiency, a version of this routine that provides the
  * XXX distance squared would be faster.
  */
-BN_EXPORT extern int bn_dist_pt3_lseg3(fastf_t *dist,
-				       point_t pca,
-				       const point_t a,
-				       const point_t b,
-				       const point_t p,
-				       const struct bn_tol *tol);
+BN_EXPORT extern int bn_dist_pnt3_lseg3(fastf_t *dist,
+					point_t pca,
+					const point_t a,
+					const point_t b,
+					const point_t p,
+					const struct bn_tol *tol);
 
 /**
  * PRIVATE: This is a new API and should be considered unpublished.
@@ -278,14 +278,14 @@ BN_EXPORT extern int bn_dist_pt3_lseg3(fastf_t *dist,
  *	3	PCA is to the left of A.  *dist = |P-A|**2.
  *	4	PCA is to the right of B. *dist = |P-B|**2.
  *
- * This function is a test version of "bn_distsq_pt3_lseg3".
+ * This function is a test version of "bn_distsq_pnt3_lseg3".
  *
  */
-BN_EXPORT extern int bn_distsq_pt3_lseg3_v2(fastf_t *distsq,
-					    const fastf_t *a,
-					    const fastf_t *b,
-					    const fastf_t *p,
-					    const struct bn_tol *tol);
+BN_EXPORT extern int bn_distsq_pnt3_lseg3_v2(fastf_t *distsq,
+					     const fastf_t *a,
+					     const fastf_t *b,
+					     const fastf_t *p,
+					     const struct bn_tol *tol);
 
 /**
  * @brief
@@ -297,7 +297,7 @@ BN_EXPORT extern int bn_distsq_pt3_lseg3_v2(fastf_t *distsq,
  * @return 1	If 3 points are collinear
  * @return 0	If they are not
  */
-BN_EXPORT extern int bn_3pts_collinear(point_t a,
+BN_EXPORT extern int bn_3pnts_collinear(point_t a,
 				       point_t b,
 				       point_t c,
 				       const struct bn_tol *tol);
@@ -306,9 +306,9 @@ BN_EXPORT extern int bn_3pts_collinear(point_t a,
  * @return 1	if the two points are equal, within the tolerance
  * @return 0	if the two points are not "the same"
  */
-BN_EXPORT extern int bn_pt3_pt3_equal(const point_t a,
-				      const point_t b,
-				      const struct bn_tol *tol);
+BN_EXPORT extern int bn_pnt3_pnt3_equal(const point_t a,
+					const point_t b,
+					const struct bn_tol *tol);
 
 /**
  *@brief
@@ -336,14 +336,14 @@ BN_EXPORT extern int bn_pt3_pt3_equal(const point_t a,
  * @return 5	P is "above/below" lseg AB.  *dist=|PCA-P|**2, pca=computed.
  *
  *
- * Patterned after bn_dist_pt3_lseg3().
+ * Patterned after bn_dist_pnt3_lseg3().
  */
-BN_EXPORT extern int bn_dist_pt2_lseg2(fastf_t *dist_sq,
-				       fastf_t pca[2],
-				       const point_t a,
-				       const point_t b,
-				       const point_t p,
-				       const struct bn_tol *tol);
+BN_EXPORT extern int bn_dist_pnt2_lseg2(fastf_t *dist_sq,
+					fastf_t pca[2],
+					const point_t a,
+					const point_t b,
+					const point_t p,
+					const struct bn_tol *tol);
 
 /**
  *@brief
@@ -484,11 +484,11 @@ BN_EXPORT extern int bn_2line3_colinear(const point_t p1,
  dist = distance from A to P'
  @endverbatim
 */
-BN_EXPORT extern int bn_isect_pt2_lseg2(fastf_t *dist,
-					const point_t a,
-					const point_t b,
-					const point_t p,
-					const struct bn_tol *tol);
+BN_EXPORT extern int bn_isect_pnt2_lseg2(fastf_t *dist,
+					 const point_t a,
+					 const point_t b,
+					 const point_t p,
+					 const struct bn_tol *tol);
 
 /**
  *@brief
@@ -621,8 +621,8 @@ BN_EXPORT extern int bn_isect_line2_line2(fastf_t *dist,
  * @brief
  * Returns distance between two points.
  */
-BN_EXPORT extern double bn_dist_pt3_pt3(const point_t a,
-					const point_t b);
+BN_EXPORT extern double bn_dist_pnt3_pnt3(const point_t a,
+					  const point_t b);
 
 /**
  * Check to see if three points are all distinct, i.e., ensure that
@@ -632,7 +632,7 @@ BN_EXPORT extern double bn_dist_pt3_pt3(const point_t a,
  * @return 1 If all three points are distinct
  * @return 0 If two or more points are closer together than dist_tol_sq
  */
-BN_EXPORT extern int bn_3pts_distinct(const point_t a,
+BN_EXPORT extern int bn_3pnts_distinct(const point_t a,
 				      const point_t b,
 				      const point_t c,
 				      const struct bn_tol *tol);
@@ -645,7 +645,7 @@ BN_EXPORT extern int bn_3pts_distinct(const point_t a,
  * @return 1 If all the points are distinct
  * @return 0 If two or more points are closer together than dist_tol_sq
  */
-BN_EXPORT extern int bn_npts_distinct(const int npts,
+BN_EXPORT extern int bn_npnts_distinct(const int npts,
 				      const point_t *pts,
 				      const struct bn_tol *tol);
 
@@ -691,11 +691,11 @@ BN_EXPORT extern int bn_npts_distinct(const int npts,
  * @param[in]	c	point 3
  * @param[in]	tol	Tolerance values for doing calculation
  */
-BN_EXPORT extern int bn_mk_plane_3pts(plane_t plane,
-				      const point_t a,
-				      const point_t b,
-				      const point_t c,
-				      const struct bn_tol *tol);
+BN_EXPORT extern int bn_make_plane_3pnts(plane_t plane,
+					const point_t a,
+					const point_t b,
+					const point_t c,
+					const struct bn_tol *tol);
 
 /**
  *@brief
@@ -725,10 +725,10 @@ BN_EXPORT extern int bn_mk_plane_3pts(plane_t plane,
  * @param	c	plane 3
  */
 
-BN_EXPORT extern int bn_mkpoint_3planes(point_t pt,
-					const plane_t a,
-					const plane_t b,
-					const plane_t c);
+BN_EXPORT extern int bn_make_pnt_3planes(point_t pt,
+					 const plane_t a,
+					 const plane_t b,
+					 const plane_t c);
 
 /**
  * Intersect an infinite line (specified in point and direction vector
@@ -842,9 +842,9 @@ BN_EXPORT extern int bn_isect_line_lseg(fastf_t *t, const point_t p,
  * Return -
  * Distance
  */
-BN_EXPORT extern double bn_dist_line3_pt3(const point_t pt,
-					  const vect_t dir,
-					  const point_t a);
+BN_EXPORT extern double bn_dist_line3_pnt3(const point_t pt,
+					   const vect_t dir,
+					   const point_t a);
 
 /**
  * Given a parametric line defined by PT + t * DIR and a point A,
@@ -856,9 +856,9 @@ BN_EXPORT extern double bn_dist_line3_pt3(const point_t pt,
  * Return -
  * Distance squared
  */
-BN_EXPORT extern double bn_distsq_line3_pt3(const point_t pt,
-					    const vect_t dir,
-					    const point_t a);
+BN_EXPORT extern double bn_distsq_line3_pnt3(const point_t pt,
+					     const vect_t dir,
+					     const point_t a);
 
 /**
  *@brief
@@ -940,17 +940,17 @@ BN_EXPORT extern double bn_area_of_triangle(const point_t a,
  * @param tol	tolerance values
  * @param[out] dist	parametric distance from A to P' (in terms of A to B)
  */
-BN_EXPORT extern int bn_isect_pt_lseg(fastf_t *dist,
-				      const point_t a,
-				      const point_t b,
-				      const point_t p,
-				      const struct bn_tol *tol);
+BN_EXPORT extern int bn_isect_pnt_lseg(fastf_t *dist,
+				       const point_t a,
+				       const point_t b,
+				       const point_t p,
+				       const struct bn_tol *tol);
 
-BN_EXPORT extern double bn_dist_pt_lseg(point_t pca,
-					const point_t a,
-					const point_t b,
-					const point_t p,
-					const struct bn_tol *tol);
+BN_EXPORT extern double bn_dist_pnt_lseg(point_t pca,
+					 const point_t a,
+					 const point_t b,
+					 const point_t p,
+					 const struct bn_tol *tol);
 
 /**
  *@brief
@@ -1027,9 +1027,9 @@ BN_EXPORT extern double bn_angle_measure(vect_t vec,
  * the line, then t is the distance of the perpendicular projection of
  * point X onto the line.
  */
-BN_EXPORT extern double bn_dist_pt3_along_line3(const point_t p,
-						const vect_t d,
-						const point_t x);
+BN_EXPORT extern double bn_dist_pnt3_along_line3(const point_t p,
+						 const vect_t d,
+						 const point_t x);
 
 /**
  *@brief
@@ -1038,9 +1038,9 @@ BN_EXPORT extern double bn_dist_pt3_along_line3(const point_t p,
  * the line, then t is the distance of the perpendicular projection of
  * point X onto the line.
  */
-BN_EXPORT extern double bn_dist_pt2_along_line2(const point_t p,
-						const vect_t d,
-						const point_t x);
+BN_EXPORT extern double bn_dist_pnt2_along_line2(const point_t p,
+						 const vect_t d,
+						 const point_t x);
 
 /**
  *

@@ -71,13 +71,13 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 	case ID_PIPE:
 	    {
 		struct rt_pipe_internal *pipeip;
-		struct wdb_pipept *pipe_seg;
+		struct wdb_pipe_pnt *pipe_seg;
 
 		pipeip = (struct rt_pipe_internal *)ip->idb_ptr;
 
 		RT_PIPE_CK_MAGIC(pipeip);
 
-		pipe_seg = BU_LIST_FIRST(wdb_pipept, &pipeip->pipe_segs_head);
+		pipe_seg = BU_LIST_FIRST(wdb_pipe_pnt, &pipeip->pipe_segs_head);
 		VMOVE(mpt, pipe_seg->pp_coord);
 		break;
 	    }
@@ -85,14 +85,14 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 	    {
 		struct rt_metaball_internal *metaball =
 		    (struct rt_metaball_internal *)ip->idb_ptr;
-		struct wdb_metaballpt *metaballpt;
+		struct wdb_metaball_pnt *metaball_pnt;
 
 		RT_METABALL_CK_MAGIC(metaball);
 
 		VSETALL(mpt, 0.0);
-		metaballpt = BU_LIST_FIRST(wdb_metaballpt,
+		metaball_pnt = BU_LIST_FIRST(wdb_metaball_pnt,
 					   &metaball->metaball_ctrl_head);
-		VMOVE(mpt, metaballpt->coord);
+		VMOVE(mpt, metaball_pnt->coord);
 		break;
 	    }
 	case ID_ARBN:
@@ -106,7 +106,7 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 		for (i = 0; i < arbn->neqn; i++) {
 		    for (j = i + 1; j < arbn->neqn; j++) {
 			for (k = j + 1; k < arbn->neqn; k++) {
-			    if (!bn_mkpoint_3planes(mpt, arbn->eqn[i],
+			    if (!bn_make_pnt_3planes(mpt, arbn->eqn[i],
 						    arbn->eqn[j],
 						    arbn->eqn[k])) {
 				size_t l;
@@ -116,7 +116,7 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 				    if (l == i || l == j || l == k)
 					continue;
 
-				    if (DIST_PT_PLANE(mpt,
+				    if (DIST_PNT_PLANE(mpt,
 					arbn->eqn[l]) >
 					gedp->ged_wdbp->wdb_tol.dist) {
 					good_vert = 0;

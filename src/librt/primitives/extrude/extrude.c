@@ -873,8 +873,8 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
     dot_pl1 = VDOT(rp->r_dir, extr->pl1);
     if (ZERO(dot_pl1)) {
 	/* ray is parallel to top and bottom faces */
-	dist_bottom = DIST_PT_PLANE(rp->r_pt, extr->pl1);
-	dist_top = DIST_PT_PLANE(rp->r_pt, extr->pl2);
+	dist_bottom = DIST_PNT_PLANE(rp->r_pt, extr->pl1);
+	dist_top = DIST_PNT_PLANE(rp->r_pt, extr->pl2);
 	if (dist_bottom < 0.0 && dist_top < 0.0)
 	    return 0;
 	if (dist_bottom > 0.0 && dist_top > 0.0)
@@ -882,9 +882,9 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 	dist_bottom = -MAX_FASTF;
 	dist_top = MAX_FASTF;
     } else {
-	dist_bottom = -DIST_PT_PLANE(rp->r_pt, extr->pl1)/dot_pl1;
+	dist_bottom = -DIST_PNT_PLANE(rp->r_pt, extr->pl1)/dot_pl1;
 	to_bottom = dist_bottom;				/* need to remember this */
-	dist_top = -DIST_PT_PLANE(rp->r_pt, extr->pl2)/dot_pl1;	/* pl1 and pl2 are parallel */
+	dist_top = -DIST_PNT_PLANE(rp->r_pt, extr->pl2)/dot_pl1;	/* pl1 and pl2 are parallel */
 	if (dist_bottom > dist_top) {
 	    fastf_t tmp1;
 
@@ -1278,7 +1278,7 @@ rt_extrude_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 	    break;
 	case CARC_SEG:
 	case -CARC_SEG:
-	    alpha = DIST_PT_PLANE(hitp->hit_point, extr->pl1) / VDOT(extr->unit_h, extr->pl1);
+	    alpha = DIST_PNT_PLANE(hitp->hit_point, extr->pl1) / VDOT(extr->unit_h, extr->pl1);
 	    VJOIN1(hit_in_plane, hitp->hit_point, -alpha, extr->unit_h);
 	    VSUB2(tmp, hit_in_plane, hitp->hit_vpriv);
 	    VCROSS(tmp2, extr->pl1, tmp);

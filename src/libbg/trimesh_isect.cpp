@@ -143,17 +143,17 @@ bg_trimesh_isect(
 
     for (int i = 0; i < num_faces_1; i++) {
 
-	if (V3PT_IN_RPP(vertices_1[faces_1[3*i]], bb2min, bb2max)) {
+	if (V3PNT_IN_RPP(vertices_1[faces_1[3*i]], bb2min, bb2max)) {
 	    m1_working_faces.push_back(i);
 	    continue;
 	}
 
-	if (V3PT_IN_RPP(vertices_1[faces_1[3*i+1]], bb2min, bb2max)) {
+	if (V3PNT_IN_RPP(vertices_1[faces_1[3*i+1]], bb2min, bb2max)) {
 	    m1_working_faces.push_back(i);
 	    continue;
 	}
 
-	if (V3PT_IN_RPP(vertices_1[faces_1[3*i+2]], bb2min, bb2max)) {
+	if (V3PNT_IN_RPP(vertices_1[faces_1[3*i+2]], bb2min, bb2max)) {
 	    m1_working_faces.push_back(i);
 	    continue;
 	}
@@ -162,17 +162,17 @@ bg_trimesh_isect(
 
     for (int i = 0; i < num_faces_2; i++) {
 
-	if (V3PT_IN_RPP(vertices_2[faces_2[3*i]], bb1min, bb1max)) {
+	if (V3PNT_IN_RPP(vertices_2[faces_2[3*i]], bb1min, bb1max)) {
 	    m2_working_faces.push_back(i);
 	    continue;
 	}
 
-	if (V3PT_IN_RPP(vertices_2[faces_2[3*i+1]], bb1min, bb1max)) {
+	if (V3PNT_IN_RPP(vertices_2[faces_2[3*i+1]], bb1min, bb1max)) {
 	    m2_working_faces.push_back(i);
 	    continue;
 	}
 
-	if (V3PT_IN_RPP(vertices_2[faces_2[3*i+2]], bb1min, bb1max)) {
+	if (V3PNT_IN_RPP(vertices_2[faces_2[3*i+2]], bb1min, bb1max)) {
 	    m2_working_faces.push_back(i);
 	    continue;
 	}

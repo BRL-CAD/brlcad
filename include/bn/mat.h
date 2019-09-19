@@ -385,17 +385,17 @@ BN_EXPORT extern void bn_vec_ortho(vect_t out,
  *
  * FIXME: make tolerance configurable
  */
-BN_EXPORT extern int bn_mat_scale_about_pt(mat_t mat,
-					   const point_t pt,
-					   const double scale);
+BN_EXPORT extern int bn_mat_scale_about_pnt(mat_t mat,
+					    const point_t pnt,
+					    const double scale);
 
 /**
  * Build a matrix to apply arbitrary 4x4 transformation around a given
  * point.
  */
-BN_EXPORT extern void bn_mat_xform_about_pt(mat_t mat,
+BN_EXPORT extern void bn_mat_xform_about_pnt(mat_t mat,
 					    const mat_t xform,
-					    const point_t pt);
+					    const point_t pnt);
 
 /**
  * @return 0 When matrices are not equal

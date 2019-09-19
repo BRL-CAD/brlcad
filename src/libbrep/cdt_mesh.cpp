@@ -879,7 +879,7 @@ cpolygon_t::point_in_polygon(long v, bool flip)
     point2d_t test_pnt;
     V2SET(test_pnt, pnts_2d[v].first, pnts_2d[v].second);
 
-    bool result = (bool)bg_pt_in_polygon(pind, (const point2d_t *)polypnts, (const point2d_t *)&test_pnt);
+    bool result = (bool)bg_pnt_in_polygon(pind, (const point2d_t *)polypnts, (const point2d_t *)&test_pnt);
 
     if (flip) {
 	result = (result) ? false : true;
@@ -922,7 +922,7 @@ cpolygon_t::rm_points_in_polygon(std::set<ON_2dPoint *> *pnts, bool flip)
 	point2d_t test_pnt;
 	V2SET(test_pnt, p2d->x, p2d->y);
 
-	bool result = (bool)bg_pt_in_polygon(pind, (const point2d_t *)polypnts, (const point2d_t *)&test_pnt);
+	bool result = (bool)bg_pnt_in_polygon(pind, (const point2d_t *)polypnts, (const point2d_t *)&test_pnt);
 
 	if (flip) {
 	    result = (result) ? false : true;
@@ -1169,7 +1169,7 @@ void cpolygon_t::polygon_plot(const char *filename)
     }
 
     // Plot interior and uncontained points as well
-    double r = DIST_PT2_PT2(pmin, pmax) * 0.01;
+    double r = DIST_PNT2_PNT2(pmin, pmax) * 0.01;
     std::set<long>::iterator p_it;
 
     // Interior
@@ -1255,7 +1255,7 @@ void cpolygon_t::polygon_plot_in_plane(const char *filename)
     }
 
     // Plot interior and uncontained points as well
-    double r = DIST_PT_PT(pmin, pmax) * 0.01;
+    double r = DIST_PNT_PNT(pmin, pmax) * 0.01;
     std::set<long>::iterator p_it;
 
     // Interior

@@ -112,7 +112,7 @@ ged_mat4x3pnt(struct ged *gedp,
 
 
 int
-ged_mat_scale_about_pt(struct ged *gedp,
+ged_mat_scale_about_pnt(struct ged *gedp,
 		       int argc,
 		       const char *argv[])
 {
@@ -133,7 +133,7 @@ ged_mat_scale_about_pt(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    if (bn_mat_scale_about_pt(o, v, scale) != 0) {
+    if (bn_mat_scale_about_pnt(o, v, scale) != 0) {
 	bu_vls_printf(gedp->ged_result_str, "error performing calculation");
 	return GED_ERROR;
     }

@@ -356,8 +356,8 @@ db_parse_1anim(struct db_i *dbip, int argc, const char *argv[])
 		 atof(argv[5+1]),
 		 atof(argv[5+2]));
 	    scale = atof(argv[5+3]);
-	    if (bn_mat_scale_about_pt(anp->an_u.anu_m.anm_mat,
-				      pt, scale) < 0) {
+	    if (bn_mat_scale_about_pnt(anp->an_u.anu_m.anm_mat,
+				       pt, scale) < 0) {
 		bu_log("db_parse_1anim: matrix %s scale_about (%g, %g, %g) scale=%g failed\n",
 		       argv[3], V3ARGS(pt), scale);
 		goto bad;

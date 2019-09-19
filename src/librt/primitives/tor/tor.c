@@ -518,7 +518,7 @@ rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 		register short n;
 		register short lim;
 
-		/* Inline rt_pt_sort().  Sorts k[] into descending order. */
+		/* Inline rt_pnt_sort().  Sorts k[] into descending order. */
 		for (lim = i-1; lim > 0; lim--) {
 		    for (n = 0; n < lim; n++) {
 			fastf_t u;
@@ -787,7 +787,7 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	tor = (struct tor_specific *)stp[i]->st_specific;
 
 	/* Sort most distant to least distant. */
-	rt_pt_sort(C[i].cf, 4);
+	rt_pnt_sort(C[i].cf, 4);
 	/* Now, t[0] > t[npts-1] */
 
 	/* segp[i].seg_in.hit_normal holds dprime */

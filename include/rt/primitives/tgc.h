@@ -31,7 +31,7 @@
 __BEGIN_DECLS
 
 /* TODO - should this be in libbn? */
-RT_EXPORT extern void rt_pt_sort(fastf_t t[],
+RT_EXPORT extern void rt_pnt_sort(fastf_t t[],
 				 int npts);
 
 

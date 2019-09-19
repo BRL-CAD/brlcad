@@ -186,7 +186,7 @@ nmg_nurb_c_print(const struct edge_g_cnurb *crv)
 
     bu_log("\n\t}\n");
     bu_log("\t");
-    nmg_nurb_print_pt_type(crv->pt_type);
+    nmg_nurb_print_pnt_type(crv->pt_type);
     bu_log("\tmesh = {\n");
     for (ptr = &crv->ctl_points[0], i= 0;
 	 i < crv->c_size; i++, ptr += RT_NURB_EXTRACT_COORDS(crv->pt_type))
@@ -267,7 +267,7 @@ nmg_nurb_pr_mesh(const struct face_g_snurb *m)
 
 
 void
-nmg_nurb_print_pt_type(int c)
+nmg_nurb_print_pnt_type(int c)
 {
     int rat;
 

@@ -128,9 +128,9 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
 {
     struct rt_pipe_internal *pip;
 
-    struct wdb_pipept *prevp;
-    struct wdb_pipept *curp;
-    struct wdb_pipept *nextp;
+    struct wdb_pipe_pnt *prevp;
+    struct wdb_pipe_pnt *curp;
+    struct wdb_pipe_pnt *nextp;
     point_t current_point;
     vect_t x_dir, y_dir, pipe_dir;
 
@@ -151,25 +151,25 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     RT_PIPE_CK_MAGIC(pip);
 
     // delete duplicated points
-    curp = BU_LIST_FIRST(wdb_pipept, &pip->pipe_segs_head);
+    curp = BU_LIST_FIRST(wdb_pipe_pnt, &pip->pipe_segs_head);
     while (!(BU_LIST_NEXT_IS_HEAD(&curp->l, &pip->pipe_segs_head))) {
 	vect_t delta;
-	nextp = BU_LIST_NEXT(wdb_pipept, &curp->l);
+	nextp = BU_LIST_NEXT(wdb_pipe_pnt, &curp->l);
 	VSUB2(delta, curp->pp_coord, nextp->pp_coord);
 	if (VNEAR_ZERO(delta, RT_LEN_TOL)) {
 	    prevp = curp;
-	    curp = BU_LIST_NEXT(wdb_pipept, &curp->l);
+	    curp = BU_LIST_NEXT(wdb_pipe_pnt, &curp->l);
 	    BU_LIST_DEQUEUE(&prevp->l);
 	} else {
-	    curp = BU_LIST_NEXT(wdb_pipept, &curp->l);
+	    curp = BU_LIST_NEXT(wdb_pipe_pnt, &curp->l);
 	}
     }
 
     // make the first plane surface
     if (BU_LIST_IS_EMPTY(&pip->pipe_segs_head)) return;
-    prevp = BU_LIST_FIRST(wdb_pipept, &pip->pipe_segs_head);
-    curp = BU_LIST_NEXT(wdb_pipept, &prevp->l);
-    nextp = BU_LIST_NEXT(wdb_pipept, &curp->l);
+    prevp = BU_LIST_FIRST(wdb_pipe_pnt, &pip->pipe_segs_head);
+    curp = BU_LIST_NEXT(wdb_pipe_pnt, &prevp->l);
+    nextp = BU_LIST_NEXT(wdb_pipe_pnt, &curp->l);
     if (BU_LIST_IS_HEAD(&curp->l, &pip->pipe_segs_head)) return;
 
     VMOVE(current_point, curp->pp_coord);
@@ -306,7 +306,7 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
 	}
 	prevp = curp;
 	curp = nextp;
-	nextp = BU_LIST_NEXT(wdb_pipept, &curp->l);
+	nextp = BU_LIST_NEXT(wdb_pipe_pnt, &curp->l);
     }
     // In the case of the final segment, also create the end face.
     endoutercurves.Empty();

@@ -42,7 +42,7 @@
  * viewing direction (for vertex selection in MGED)
  */
 void
-find_nearest_ars_pt(
+find_ars_nearest_pnt(
     int *crv,
     int *col,
     struct rt_ars_internal *ars,
@@ -61,7 +61,7 @@ find_nearest_ars_pt(
 	for (j=0; j<ars->pts_per_curve; j++) {
 	    fastf_t dist_sq;
 
-	    dist_sq = bn_distsq_line3_pt3(pick_pt, dir, &ars->curves[i][j*3]);
+	    dist_sq = bn_distsq_line3_pnt3(pick_pt, dir, &ars->curves[i][j*3]);
 	    if (dist_sq < min_dist_sq) {
 		min_dist_sq = dist_sq;
 		closest_i = i;

@@ -30,7 +30,7 @@
 
 __BEGIN_DECLS
 
-RT_EXPORT extern int rt_mk_parabola(struct rt_pt_node *pts,
+RT_EXPORT extern int rt_mk_parabola(struct rt_pnt_node *pts,
 				    fastf_t r,
 				    fastf_t b,
 				    fastf_t dtol,

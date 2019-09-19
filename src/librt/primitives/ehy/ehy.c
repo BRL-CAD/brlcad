@@ -711,14 +711,14 @@ ehy_hyperbola_b(fastf_t mag_h, fastf_t c, fastf_t r)
  * asymptote origin at (0, -|H| + c), multiplying the z values by -1 gives
  * corresponding distances along the ehy height vector H.
  */
-static struct rt_pt_node *
+static struct rt_pnt_node *
 ehy_hyperbolic_curve(fastf_t mag_h, fastf_t c, fastf_t r, int num_points)
 {
     int count;
-    struct rt_pt_node *curve;
+    struct rt_pnt_node *curve;
 
-    BU_ALLOC(curve, struct rt_pt_node);
-    BU_ALLOC(curve->next, struct rt_pt_node);
+    BU_ALLOC(curve, struct rt_pnt_node);
+    BU_ALLOC(curve->next, struct rt_pnt_node);
 
     curve->next->next = NULL;
     VSET(curve->p,       0, 0, -mag_h);
@@ -800,14 +800,14 @@ static void
 ehy_plot_hyperbola(
     struct bu_list *vhead,
     struct rt_ehy_internal *ehy,
-    struct rt_pt_node *pts,
+    struct rt_pnt_node *pts,
     vect_t Ru,
     fastf_t r)
 {
     point_t p;
     vect_t ehy_V, Hu;
     fastf_t mag_H, c, z;
-    struct rt_pt_node *node;
+    struct rt_pnt_node *node;
 
     VMOVE(ehy_V, ehy->ehy_V);
     mag_H = MAGNITUDE(ehy->ehy_H);
@@ -843,7 +843,7 @@ ehy_curve_points(
     VADD2(p1, ehy->ehy_V, ehy->ehy_H);
     VJOIN1(p2, ehy->ehy_V, avg_r, ehy->ehy_Au);
 
-    approx_curve_len = 2.0 * DIST_PT_PT(p1, p2);
+    approx_curve_len = 2.0 * DIST_PNT_PNT(p1, p2);
 
     return approx_curve_len / info->point_spacing;
 }
@@ -870,7 +870,7 @@ rt_ehy_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     fastf_t mag_H, z, z_step, c, r1, r2;
     int i, num_curve_points, num_ellipse_points, num_curves;
     struct rt_ehy_internal *ehy;
-    struct rt_pt_node *pts_r1, *pts_r2, *node, *node1, *node2;
+    struct rt_pnt_node *pts_r1, *pts_r2, *node, *node1, *node2;
 
     BU_CK_LIST_HEAD(info->vhead);
     RT_CK_DB_INTERNAL(ip);
@@ -930,11 +930,11 @@ rt_ehy_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     for (i = 0; i < num_curve_points; ++i) {
 	node = node1;
 	node1 = node1->next;
-	bu_free(node, "rt_pt_node");
+	bu_free(node, "rt_pnt_node");
 
 	node = node2;
 	node2 = node2->next;
-	bu_free(node, "rt_pt_node");
+	bu_free(node, "rt_pnt_node");
     }
 
     return 0;
@@ -952,7 +952,7 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     mat_t R;
     mat_t invR;
     point_t p1;
-    struct rt_pt_node *pos_a, *pos_b, *pts_a, *pts_b;
+    struct rt_pnt_node *pos_a, *pos_b, *pts_a, *pts_b;
     struct rt_ehy_internal *xip;
     vect_t A, Au, B, Bu, Hu, V, Work;
 
@@ -995,8 +995,8 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
      */
 
     /* approximate positive half of hyperbola along semi-minor axis */
-    BU_ALLOC(pts_b, struct rt_pt_node);
-    BU_ALLOC(pts_b->next, struct rt_pt_node);
+    BU_ALLOC(pts_b, struct rt_pnt_node);
+    BU_ALLOC(pts_b->next, struct rt_pnt_node);
 
     pts_b->next->next = NULL;
     VSET(pts_b->p,       0, 0, -mag_h);
@@ -1010,14 +1010,14 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     /* construct positive half of hyperbola along semi-major axis of
      * ehy using same z coords as hyperbola along semi-minor axis
      */
-    BU_ALLOC(pts_a, struct rt_pt_node);
+    BU_ALLOC(pts_a, struct rt_pnt_node);
     VMOVE(pts_a->p, pts_b->p);	/* 1st pt is the apex */
     pts_a->next = NULL;
     pos_b = pts_b->next;
     pos_a = pts_a;
     while (pos_b) {
 	/* copy node from b_hyperbola to a_hyperbola */
-	BU_ALLOC(pos_a->next, struct rt_pt_node);
+	BU_ALLOC(pos_a->next, struct rt_pnt_node);
 	pos_a = pos_a->next;
 	pos_a->p[Z] = pos_b->p[Z];
 	/* at given z, find y on hyperbola */
@@ -1048,24 +1048,24 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 	/* free mem for old approximation of hyperbola */
 	pos_b = pts_b;
 	while (pos_b) {
-	    struct rt_pt_node *next;
+	    struct rt_pnt_node *next;
 
 	    /* get next node before freeing */
 	    next = pos_b->next;
-	    bu_free((char *)pos_b, "rt_pt_node");
+	    bu_free((char *)pos_b, "rt_pnt_node");
 	    pos_b = next;
 	}
 	/* construct hyperbola along semi-major axis of ehy using same
 	 * z coords as parab along semi-minor axis
 	 */
-	BU_ALLOC(pts_b, struct rt_pt_node);
+	BU_ALLOC(pts_b, struct rt_pnt_node);
 	pts_b->p[Z] = pts_a->p[Z];
 	pts_b->next = NULL;
 	pos_a = pts_a->next;
 	pos_b = pts_b;
 	while (pos_a) {
 	    /* copy node from a_hyperbola to b_hyperbola */
-	    BU_ALLOC(pos_b->next, struct rt_pt_node);
+	    BU_ALLOC(pos_b->next, struct rt_pnt_node);
 	    pos_b = pos_b->next;
 	    pos_b->p[Z] = pos_a->p[Z];
 	    /* at given z, find y on hyperbola */
@@ -1204,7 +1204,7 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     mat_t SoR;
     struct rt_ehy_internal *xip;
     point_t p1;
-    struct rt_pt_node *pos_a, *pos_b, *pts_a, *pts_b;
+    struct rt_pnt_node *pos_a, *pos_b, *pts_a, *pts_b;
     struct shell *s;
     struct faceuse **outfaceuses = NULL;
     struct faceuse *fu_top;
@@ -1264,8 +1264,8 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
      */
 
     /* approximate positive half of hyperbola along semi-minor axis */
-    BU_ALLOC(pts_b, struct rt_pt_node);
-    BU_ALLOC(pts_b->next, struct rt_pt_node);
+    BU_ALLOC(pts_b, struct rt_pnt_node);
+    BU_ALLOC(pts_b->next, struct rt_pnt_node);
 
     pts_b->next->next = NULL;
     VSET(pts_b->p,       0, 0, -mag_h);
@@ -1279,14 +1279,14 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* construct positive half of hyperbola along semi-major axis of
      * ehy using same z coords as parab along semi-minor axis
      */
-    BU_ALLOC(pts_a, struct rt_pt_node);
+    BU_ALLOC(pts_a, struct rt_pnt_node);
     VMOVE(pts_a->p, pts_b->p);	/* 1st pt is the apex */
     pts_a->next = NULL;
     pos_b = pts_b->next;
     pos_a = pts_a;
     while (pos_b) {
 	/* copy node from b_hyperbola to a_hyperbola */
-	BU_ALLOC(pos_a->next, struct rt_pt_node);
+	BU_ALLOC(pos_a->next, struct rt_pnt_node);
 	pos_a = pos_a->next;
 	pos_a->p[Z] = pos_b->p[Z];
 	/* at given z, find y on hyperbola */
@@ -1317,23 +1317,23 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	/* free mem for old approximation of hyperbola */
 	pos_b = pts_b;
 	while (pos_b) {
-	    struct rt_pt_node *tmp;
+	    struct rt_pnt_node *tmp;
 
 	    tmp = pos_b->next;
-	    bu_free((char *)pos_b, "rt_pt_node");
+	    bu_free((char *)pos_b, "rt_pnt_node");
 	    pos_b = tmp;
 	}
 	/* construct hyperbola along semi-major axis of ehy using same
 	 * z coords as parab along semi-minor axis
 	 */
-	BU_ALLOC(pts_b, struct rt_pt_node);
+	BU_ALLOC(pts_b, struct rt_pnt_node);
 	pts_b->p[Z] = pts_a->p[Z];
 	pts_b->next = NULL;
 	pos_a = pts_a->next;
 	pos_b = pts_b;
 	while (pos_a) {
 	    /* copy node from a_hyperbola to b_hyperbola */
-	    BU_ALLOC(pos_b->next, struct rt_pt_node);
+	    BU_ALLOC(pos_b->next, struct rt_pnt_node);
 	    pos_b = pos_b->next;
 	    pos_b->p[Z] = pos_a->p[Z];
 	    /* at given z, find y on hyperbola */

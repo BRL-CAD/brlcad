@@ -107,7 +107,7 @@ BRNode::BRNode(
 	}
 	m_slope = (m_end[Y] - m_start[Y]) / (m_end[X] - m_start[X]);
     }
-    m_bb_diag = DIST_PT_PT(m_start, m_end);
+    m_bb_diag = DIST_PNT_PNT(m_start, m_end);
 }
 
 

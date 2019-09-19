@@ -104,7 +104,7 @@ outer_pnts_hit(struct application *ap, struct partition *PartHeadp, struct seg *
 	RT_HIT_NORMAL(out_pt->pt->n, out_part->pt_outhit, ostp, &(app->a_ray), out_part->pt_outflip);
 	bu_ptbl_ins(pnset, (long *)out_pt);
 
-	thickness = DIST_PT_PT(in_pt->pt->v, out_pt->pt->v) * 0.5;
+	thickness = DIST_PNT_PNT(in_pt->pt->v, out_pt->pt->v) * 0.5;
 	in_pt->thickness = thickness;
 	out_pt->thickness = thickness;
     }
@@ -143,7 +143,7 @@ all_pnts_hit(struct application *app, struct partition *partH, struct seg *UNUSE
 	    RT_HIT_NORMAL(out_pt->pt->n, pp->pt_outhit, stp, &(app->a_ray), pp->pt_outflip);
 	    bu_ptbl_ins(pnset, (long *)out_pt);
 
-	    thickness = DIST_PT_PT(in_pt->pt->v, out_pt->pt->v) * 0.5;
+	    thickness = DIST_PNT_PNT(in_pt->pt->v, out_pt->pt->v) * 0.5;
 	    in_pt->thickness = thickness;
 	    out_pt->thickness = thickness;
 	}

@@ -233,7 +233,7 @@ bad_edge:
 
 
 int
-ged_find_arb_edge_nearest_pt(struct ged *gedp, int argc, const char *argv[])
+ged_find_arb_edge_nearest_pnt(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "arb view_xyz ptol";
     struct rt_db_internal intern;

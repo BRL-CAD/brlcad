@@ -114,13 +114,13 @@ pnt2d_array_get_dimension(const point2d_t *pnts, int pnt_cnt, point2d_t *p_cente
 
     /* find the min A and max B with the greatest distance between them */
     dmax = 0.0;
-    dist_minmax = DIST_PT2_PT2(min_x_pt, max_x_pt);
+    dist_minmax = DIST_PNT2_PNT2(min_x_pt, max_x_pt);
     if (dist_minmax > dmax) {
 	V2MOVE(A, min_x_pt);
 	V2MOVE(B, min_x_pt);
     }
 #define MAXDIST_AB(_minpt, _maxpt) { \
-	fastf_t md_dist = DIST_PT2_PT2(_minpt, _maxpt); \
+	fastf_t md_dist = DIST_PNT2_PNT2(_minpt, _maxpt); \
 	if (md_dist > dmax) { \
 	    dmax = md_dist; \
 	    V2MOVE(A, _minpt); \
@@ -146,7 +146,7 @@ pnt2d_array_get_dimension(const point2d_t *pnts, int pnt_cnt, point2d_t *p_cente
 	V2MOVE(curr_pnt, pnts[i]);
 	VSET(curr_pnt_3D, curr_pnt[0], curr_pnt[1], 0.0);
 	/* If we're off the line, it's 2D. */
-	if (bn_dist_pt2_lseg2(&dist_sq, pca, A_3D, B_3D, curr_pnt_3D, &tol) > 2)
+	if (bn_dist_pnt2_lseg2(&dist_sq, pca, A_3D, B_3D, curr_pnt_3D, &tol) > 2)
 	    return 2;
     }
     /* If we've got a line, make sure p1 and p2 are the extreme points */

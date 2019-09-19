@@ -663,7 +663,7 @@ nmg_assoc_void_shells(const struct nmgregion *r, struct bu_ptbl *shells, struct 
 		    for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd)) {
 			int nmg_class;
 
-			nmg_class = nmg_class_pt_s(eu->vu_p->v_p->vg_p->coord, outer_shell, 0, vlfree, ttol);
+			nmg_class = nmg_class_pnt_s(eu->vu_p->v_p->vg_p->coord, outer_shell, 0, vlfree, ttol);
 
 			if (nmg_class == NMG_CLASS_AoutB) {
 			    breakout = 1;
@@ -1763,7 +1763,7 @@ nmg_calc_face_plane(struct faceuse *fu_in, fastf_t *pl, struct bu_list *vlfree)
 	v = (struct vertex *)BU_PTBL_GET(&verts, i);
 	vg = v->vg_p;
 
-	dist = DIST_PT_PLANE(vg->coord, pl);
+	dist = DIST_PNT_PLANE(vg->coord, pl);
 	if (dist > max_dist)
 	    max_dist = dist;
 	if (dist < min_dist)
@@ -2345,7 +2345,7 @@ nmg_close_shell(struct shell *s, struct bu_list *vlfree, const struct bn_tol *to
 		eu = (struct edgeuse *)BU_PTBL_GET(&eu_tbl, idx[i]);
 		VMOVE(pt[i-start_idx], eu->vu_p->v_p->vg_p->coord);
 	    }
-	    while (bn_mk_plane_3pts(pl1, pt[0], pt[1], pt[2], tol) && end_idx<loop_size) {
+	    while (bn_make_plane_3pnts(pl1, pt[0], pt[1], pt[2], tol) && end_idx<loop_size) {
 		start_idx++;
 		end_idx++;
 		for (i=start_idx; i<end_idx; i++) {
@@ -2402,7 +2402,7 @@ nmg_close_shell(struct shell *s, struct bu_list *vlfree, const struct bn_tol *to
 
 		/* if these three points make a plane, is it coplanar with
 		 * our first one??? */
-		if (!bn_mk_plane_3pts(pl2, pt[0], pt[1], pt[2], tol)) {
+		if (!bn_make_plane_3pnts(pl2, pt[0], pt[1], pt[2], tol)) {
 		    if ((i=bn_coplanar(pl1, pl2, tol)) < 1)
 			coplanar = 0;
 		}
@@ -2485,7 +2485,7 @@ nmg_close_shell(struct shell *s, struct bu_list *vlfree, const struct bn_tol *to
 
 		edges_used = 2;
 		/* if the edges are collinear, we can't make a face */
-		while (bn_3pts_collinear(
+		while (bn_3pnts_collinear(
 			   eu1->vu_p->v_p->vg_p->coord,
 			   eu2->vu_p->v_p->vg_p->coord,
 			   eu2->eumate_p->vu_p->v_p->vg_p->coord,
@@ -2595,7 +2595,7 @@ nmg_close_shell(struct shell *s, struct bu_list *vlfree, const struct bn_tol *to
 	    eu2 = (struct edgeuse *)BU_PTBL_GET(&eu_tbl, idx[1]);
 	    (void)bu_ptbl_ins(&vert_tbl, (long *)&eu2->vu_p->v_p);
 	    (void)bu_ptbl_ins(&vert_tbl, (long *)&eu2->eumate_p->vu_p->v_p);
-	    if (!bn_3pts_collinear(
+	    if (!bn_3pnts_collinear(
 		    ((*(struct vertex **)BU_PTBL_GET(&vert_tbl, 0)))->vg_p->coord,
 		    ((*(struct vertex **)BU_PTBL_GET(&vert_tbl, 1)))->vg_p->coord,
 		    ((*(struct vertex **)BU_PTBL_GET(&vert_tbl, 2)))->vg_p->coord,
@@ -2631,7 +2631,7 @@ nmg_close_shell(struct shell *s, struct bu_list *vlfree, const struct bn_tol *to
 	    (void)bu_ptbl_ins(&vert_tbl, (long *)&eu->vu_p->v_p);
 	}
 
-	if (!bn_3pts_collinear(
+	if (!bn_3pnts_collinear(
 		((*(struct vertex **)BU_PTBL_GET(&vert_tbl, 0)))->vg_p->coord,
 		((*(struct vertex **)BU_PTBL_GET(&vert_tbl, 1)))->vg_p->coord,
 		((*(struct vertex **)BU_PTBL_GET(&vert_tbl, 2)))->vg_p->coord,
@@ -3751,7 +3751,7 @@ nmg_break_long_edges(struct shell *s, const struct bn_tol *tol)
 		    eu1 = eu1->eumate_p;
 
 		    /* make sure it is collinear with "eu" */
-		    if (bn_3pts_collinear(eu->vu_p->v_p->vg_p->coord ,
+		    if (bn_3pnts_collinear(eu->vu_p->v_p->vg_p->coord ,
 					  eu->eumate_p->vu_p->v_p->vg_p->coord ,
 					  eu1->vu_p->v_p->vg_p->coord, tol))
 		    {
@@ -4799,7 +4799,7 @@ nmg_simple_vertex_solve(struct vertex *new_v, const struct bu_ptbl *faces, const
 
 	case 1:		/* just move the vertex to the plane */
 	    fp1 = (struct face *)BU_PTBL_GET(faces, 0);
-	    vert_move_len = DIST_PT_PLANE(vg->coord, fp1->g.plane_p->N);
+	    vert_move_len = DIST_PNT_PLANE(vg->coord, fp1->g.plane_p->N);
 	    VJOIN1(vg->coord, vg->coord, -vert_move_len, fp1->g.plane_p->N);
 	    break;
 
@@ -4812,8 +4812,8 @@ nmg_simple_vertex_solve(struct vertex *new_v, const struct bu_ptbl *faces, const
 		vect_t move_vect;
 
 		/* treat as a single plane */
-		vert_move_len = (DIST_PT_PLANE(vg->coord, fp1->g.plane_p->N)
-				 + DIST_PT_PLANE(vg->coord, fp2->g.plane_p->N))/2.0;
+		vert_move_len = (DIST_PNT_PLANE(vg->coord, fp1->g.plane_p->N)
+				 + DIST_PNT_PLANE(vg->coord, fp2->g.plane_p->N))/2.0;
 		VADD2(move_vect, fp1->g.plane_p->N, fp2->g.plane_p->N);
 		VUNITIZE(move_vect);
 		VJOIN1(vg->coord, vg->coord, -vert_move_len, move_vect);
@@ -4824,7 +4824,7 @@ nmg_simple_vertex_solve(struct vertex *new_v, const struct bu_ptbl *faces, const
 
 		VUNITIZE(pl1);
 		pl1[W] = VDOT(vg->coord, pl1);
-		if (bn_mkpoint_3planes(vg->coord, fp1->g.plane_p->N, fp2->g.plane_p->N, pl1)) {
+		if (bn_make_pnt_3planes(vg->coord, fp1->g.plane_p->N, fp2->g.plane_p->N, pl1)) {
 		    bu_log("nmg_simple_vertex_solve: Cannot find new coords for two planes\n");
 		    bu_log("\tplanes are (%f %f %f %f) and (%f %f %f %f)\n",
 			   V4ARGS(fp1->g.plane_p->N) ,
@@ -4840,7 +4840,7 @@ nmg_simple_vertex_solve(struct vertex *new_v, const struct bu_ptbl *faces, const
 	    fp1 = (struct face *)BU_PTBL_GET(faces, 0);
 	    fp2 = (struct face *)BU_PTBL_GET(faces, 1);
 	    fp3 = (struct face *)BU_PTBL_GET(faces, 2);
-	    if (bn_mkpoint_3planes(vg->coord, fp1->g.plane_p->N, fp2->g.plane_p->N, fp3->g.plane_p->N)) {
+	    if (bn_make_pnt_3planes(vg->coord, fp1->g.plane_p->N, fp2->g.plane_p->N, fp3->g.plane_p->N)) {
 		bu_log("nmg_simple_vertex_solve: failed for 3 planes:\n");
 		bu_log("\t(%f %f %f %f)\n", V4ARGS(fp1->g.plane_p->N));
 		bu_log("\t(%f %f %f %f)\n", V4ARGS(fp2->g.plane_p->N));
@@ -4901,7 +4901,7 @@ nmg_ck_vert_on_fus(const struct vertex *v, const struct bn_tol *tol)
 	 * do not need to call them here
 	 */
 	NMG_GET_FU_PLANE(pl, fu);
-	dist = fabs(DIST_PT_PLANE(v->vg_p->coord, pl));
+	dist = fabs(DIST_PNT_PLANE(v->vg_p->coord, pl));
 	if (dist > tol->dist) {
 	    ret_val = 1;
 	    if (dist > max_dist) {
@@ -5103,7 +5103,7 @@ nmg_get_edge_lines(struct vertex *new_v, struct bu_ptbl *int_faces, const struct
 	    VSUB2(i_fus->dir, eu->vu_p->v_p->vg_p->coord, eu->eumate_p->vu_p->v_p->vg_p->coord);
 	    VUNITIZE(i_fus->dir);
 	    NMG_GET_FU_PLANE(pl, fu);
-	    VJOIN1(i_fus->start, vg->coord, (-DIST_PT_PLANE(vg->coord, pl)), pl);
+	    VJOIN1(i_fus->start, vg->coord, (-DIST_PNT_PLANE(vg->coord, pl)), pl);
 
 	    /* Save this info in the int_faces table */
 	    bu_ptbl_ins(int_faces, (long *)i_fus);
@@ -5215,7 +5215,7 @@ nmg_get_edge_lines(struct vertex *new_v, struct bu_ptbl *int_faces, const struct
 		bu_bomb("Can't find plane intersection\n");
 	    }
 	    /* Make the start point at closest approach to old vertex */
-	    (void)bn_dist_pt3_line3(&dist, start, start, dir, new_v->vg_p->coord, tol);
+	    (void)bn_dist_pnt3_line3(&dist, start, start, dir, new_v->vg_p->coord, tol);
 
 	    /* Make sure the calculated direction is away from the vertex */
 	    if (VDOT(eu_dir, dir) < 0.0)
@@ -5234,7 +5234,7 @@ nmg_get_edge_lines(struct vertex *new_v, struct bu_ptbl *int_faces, const struct
 	    VMOVE(i_fus->dir, eu_dir);
 	    VUNITIZE(i_fus->dir);
 
-	    VJOIN1(i_fus->start, vg->coord, (-DIST_PT_PLANE(vg->coord, pl)), pl);
+	    VJOIN1(i_fus->start, vg->coord, (-DIST_PNT_PLANE(vg->coord, pl)), pl);
 
 	}
 
@@ -5520,7 +5520,7 @@ nmg_split_edges_at_pts(const struct vertex *new_v, struct bu_ptbl *int_faces, co
 	if (i_fus->fu[0] && i_fus->fu[1] && i_fus->fu[0]->f_p == i_fus->fu[1]->f_p)
 	    continue;
 
-	if (bn_pt3_pt3_equal(new_v->vg_p->coord, i_fus->pt, tol)) {
+	if (bn_pnt3_pnt3_equal(new_v->vg_p->coord, i_fus->pt, tol)) {
 	    /* if pt is within tolerance of new_v, don't split the edge */
 	    i_fus->vp = (struct vertex *)NULL;
 	    VMOVE(i_fus->pt, new_v->vg_p->coord);
@@ -5624,7 +5624,7 @@ nmg_remove_short_eus_inter(struct vertex *new_v, struct bu_ptbl *int_faces, cons
 	if (!edge_fus->vp)
 	    continue;
 
-	if (!bn_pt3_pt3_equal(new_v->vg_p->coord, edge_fus->vp->vg_p->coord, tol))
+	if (!bn_pnt3_pnt3_equal(new_v->vg_p->coord, edge_fus->vp->vg_p->coord, tol))
 	    continue;
 
 	nmg_jv(new_v, edge_fus->vp);
@@ -5685,7 +5685,7 @@ nmg_remove_short_eus_inter(struct vertex *new_v, struct bu_ptbl *int_faces, cons
 		    bad_loop = nmg_keu(eu);
 		}
 		/* kill edges with length less than tol->dist */
-		else if (bn_pt3_pt3_equal(eu->vu_p->v_p->vg_p->coord, eu->eumate_p->vu_p->v_p->vg_p->coord, tol)) {
+		else if (bn_pnt3_pnt3_equal(eu->vu_p->v_p->vg_p->coord, eu->eumate_p->vu_p->v_p->vg_p->coord, tol)) {
 		    struct edgeuse *prev_eu;
 
 		    prev_eu = BU_LIST_PPREV_CIRC(edgeuse, &eu->l);
@@ -5801,11 +5801,11 @@ nmg_simplify_inter(const struct vertex *new_v, struct bu_ptbl *int_faces, const 
 	if (i_fus->vp == j_fus->vp) {
 	    nmg_fuse_inters(i_fus, j_fus, int_faces, tol);
 	    continue;
-	} else if (bn_pt3_pt3_equal(i_fus->vp->vg_p->coord, j_fus->vp->vg_p->coord, tol)) {
+	} else if (bn_pnt3_pnt3_equal(i_fus->vp->vg_p->coord, j_fus->vp->vg_p->coord, tol)) {
 	    nmg_jv(i_fus->vp, j_fus->vp);
 	    nmg_fuse_inters(i_fus, j_fus, int_faces, tol);
 	    continue;
-	} else if (bn_3pts_collinear(i_fus->vp->vg_p->coord, j_fus->vp->vg_p->coord, new_v->vg_p->coord, tol)) {
+	} else if (bn_3pnts_collinear(i_fus->vp->vg_p->coord, j_fus->vp->vg_p->coord, new_v->vg_p->coord, tol)) {
 	    fastf_t i_dist, j_dist;
 	    vect_t i_dist_to_new_v, j_dist_to_new_v;
 
@@ -5976,7 +5976,7 @@ nmg_make_faces_at_vert(struct vertex *new_v, struct bu_ptbl *int_faces, struct b
 	NMG_CK_EDGEUSE(j_fus->eu);
 
 	/* don't make degenerate faces */
-	if (bn_3pts_collinear(i_fus->vp->vg_p->coord, j_fus->vp->vg_p->coord, new_v->vg_p->coord, tol)) {
+	if (bn_3pnts_collinear(i_fus->vp->vg_p->coord, j_fus->vp->vg_p->coord, new_v->vg_p->coord, tol)) {
 	    edge_no++;
 	    continue;
 	}
@@ -6079,7 +6079,7 @@ nmg_make_faces_at_vert(struct vertex *new_v, struct bu_ptbl *int_faces, struct b
 	if (nmg_calc_face_g(new_fu,vlfree)) {
 	    bu_log("nmg_make_faces_at_vert: Failed to calculate plane eqn for face:\n ");
 	    bu_log("\tnew_v is %p at (%f %f %f)\n", (void *)new_v, V3ARGS(new_v->vg_p->coord));
-	    if (bn_3pts_collinear(new_v->vg_p->coord,
+	    if (bn_3pnts_collinear(new_v->vg_p->coord,
 				  vu1->v_p->vg_p->coord, vu2->v_p->vg_p->coord,
 				  tol))
 		bu_log("\tPoints are collinear\n");
@@ -6240,8 +6240,8 @@ nmg_dist_to_cross(const struct intersect_fus *i_fus, const struct intersect_fus 
      * project the endpoints onto the face plane
      */
     if (i_fus->fu[1]) {
-	VJOIN1(i_end_pt, i_end->vg_p->coord, -(DIST_PT_PLANE(i_end->vg_p->coord, pl)), pl);
-	VJOIN1(j_end_pt, j_end->vg_p->coord, -(DIST_PT_PLANE(j_end->vg_p->coord, pl)), pl);
+	VJOIN1(i_end_pt, i_end->vg_p->coord, -(DIST_PNT_PLANE(i_end->vg_p->coord, pl)), pl);
+	VJOIN1(j_end_pt, j_end->vg_p->coord, -(DIST_PNT_PLANE(j_end->vg_p->coord, pl)), pl);
     } else {
 	VMOVE(i_end_pt, i_end->vg_p->coord);
 	VMOVE(j_end_pt, j_end->vg_p->coord);
@@ -6309,7 +6309,7 @@ nmg_dist_to_cross(const struct intersect_fus *i_fus, const struct intersect_fus 
 		NMG_GET_FU_PLANE(pl2, i_fus->fu[0]);
 		VCROSS(pl3, pl1, pl2);
 		pl3[W] = VDOT(pl3, i_fus->vp->vg_p->coord);
-		bn_mkpoint_3planes(new_pt, pl1, pl2, pl3);
+		bn_make_pnt_3planes(new_pt, pl1, pl2, pl3);
 
 		return dist[0];
 	    } else
@@ -6442,7 +6442,7 @@ nmg_fix_crossed_loops(struct vertex *new_v, struct bu_ptbl *int_faces, const str
 	    }
 
 	    /* if both intersections are at the same point, merge all three */
-	    if (bn_pt3_pt3_equal(pt1, pt2, tol)) {
+	    if (bn_pnt3_pnt3_equal(pt1, pt2, tol)) {
 		if (nmg_debug & DEBUG_BASIC)
 		    bu_log("\tMerging all three points to pt1\n");
 
@@ -6603,13 +6603,13 @@ nmg_calc_new_v(struct vertex *new_v, const struct bu_ptbl *int_faces, const stru
 	fastf_t vert_move_len;
 
 	/* move the vertex to the plane */
-	vert_move_len = DIST_PT_PLANE(new_v->vg_p->coord, planes[0]);
+	vert_move_len = DIST_PNT_PLANE(new_v->vg_p->coord, planes[0]);
 	VJOIN1(new_v->vg_p->coord, new_v->vg_p->coord, -vert_move_len, planes[0]);
     } else if (pl_count == 2) {
 	VCROSS(planes[2], planes[0], planes[1]);
 	planes[2][H] = VDOT(new_v->vg_p->coord, planes[2]);
 	pl_count = 3;
-	if (bn_mkpoint_3planes(new_v->vg_p->coord, planes[0], planes[1], planes[2])) {
+	if (bn_make_pnt_3planes(new_v->vg_p->coord, planes[0], planes[1], planes[2])) {
 	    bu_log("nmg_cacl_new_v: 3 planes do not intersect at a point\n");
 	    nmg_free((char *)planes, "nmg_calc_new_v: planes");
 	    return 1;
@@ -6632,7 +6632,7 @@ nmg_calc_new_v(struct vertex *new_v, const struct bu_ptbl *int_faces, const stru
 
 	fus = (struct intersect_fus *)BU_PTBL_GET(int_faces, i);
 
-	(void)bn_dist_pt3_line3(&dist, fus->start, fus->start, fus->dir, new_v->vg_p->coord, tol);
+	(void)bn_dist_pnt3_line3(&dist, fus->start, fus->start, fus->dir, new_v->vg_p->coord, tol);
     }
 
     if (nmg_debug & DEBUG_BASIC) {
@@ -6941,7 +6941,7 @@ nmg_faces_are_radial(const struct faceuse *fu1, const struct faceuse *fu2)
  * 	0 - success
  */
 int
-nmg_move_edge_thru_pt(struct edgeuse *mv_eu, const fastf_t *pt, const struct bn_tol *tol)
+nmg_move_edge_thru_pnt(struct edgeuse *mv_eu, const fastf_t *pt, const struct bn_tol *tol)
 {
     struct faceuse *fu, *fu1;
     struct edgeuse *eu, *eu1;
@@ -6955,7 +6955,7 @@ nmg_move_edge_thru_pt(struct edgeuse *mv_eu, const fastf_t *pt, const struct bn_
     long *flags;
 
     if (nmg_debug & DEBUG_BASIC)
-	bu_log("nmg_move_edge_thru_pt(mv_eu=%p, pt=(%f %f %f))\n", (void *)mv_eu, V3ARGS(pt));
+	bu_log("nmg_move_edge_thru_pnt(mv_eu=%p, pt=(%f %f %f))\n", (void *)mv_eu, V3ARGS(pt));
 
     NMG_CK_EDGEUSE(mv_eu);
     BN_CK_TOL(tol);
@@ -7056,7 +7056,7 @@ nmg_move_edge_thru_pt(struct edgeuse *mv_eu, const fastf_t *pt, const struct bn_
     if (nmg_find_isect_faces(v1, &tmp_faces[0], &count, tol) > 3 ||
 	nmg_find_isect_faces(v2, &tmp_faces[1], &count, tol) > 3)
     {
-	bu_log("nmg_move_edge_thru_pt: cannot handle complex vertices yet\n");
+	bu_log("nmg_move_edge_thru_pnt: cannot handle complex vertices yet\n");
 	bu_ptbl_free(&tmp_faces[0]);
 	bu_ptbl_free(&tmp_faces[1]);
 	return 1;
@@ -7103,7 +7103,7 @@ nmg_move_edge_thru_pt(struct edgeuse *mv_eu, const fastf_t *pt, const struct bn_
 
 	    /* check if we have circled the entire loop */
 	    if (eu_next == eu) {
-		bu_log("nmg_move_edge_thru_pt: cannot calculate new plane eqn\n");
+		bu_log("nmg_move_edge_thru_pnt: cannot calculate new plane eqn\n");
 		return 1;
 	    }
 
@@ -7151,7 +7151,7 @@ nmg_move_edge_thru_pt(struct edgeuse *mv_eu, const fastf_t *pt, const struct bn_
      * could be lots of them
      */
 
-    flags = (long *)nmg_calloc(m->maxindex, sizeof(long), "nmg_move_edge_thru_pt: flags");
+    flags = (long *)nmg_calloc(m->maxindex, sizeof(long), "nmg_move_edge_thru_pnt: flags");
     bu_ptbl_init(&faces, 64, " &faces ");
 
     eu1 = mv_eu;
@@ -7179,7 +7179,7 @@ nmg_move_edge_thru_pt(struct edgeuse *mv_eu, const fastf_t *pt, const struct bn_
 
 		    if (nmg_simple_vertex_solve(vu->v_p, &faces, tol)) {
 			/* failed */
-			bu_log("nmg_move_edge_thru_pt: Could not solve simple vertex\n");
+			bu_log("nmg_move_edge_thru_pnt: Could not solve simple vertex\n");
 			bu_ptbl_free(&faces);
 			nmg_free((char *)flags, "mg_move_edge_thru_pt: flags");
 			return 1;
@@ -7222,7 +7222,7 @@ nmg_move_edge_thru_pt(struct edgeuse *mv_eu, const fastf_t *pt, const struct bn_
 		    } else {
 			if (nmg_simple_vertex_solve(vu->v_p, &faces, tol)) {
 			    /* failed */
-			    bu_log("nmg_move_edge_thru_pt: Could not solve simple vertex\n");
+			    bu_log("nmg_move_edge_thru_pnt: Could not solve simple vertex\n");
 			    bu_ptbl_free(&faces);
 			    nmg_free((char *)flags, "mg_move_edge_thru_pt: flags");
 			    return 1;
@@ -7609,7 +7609,7 @@ nmg_make_connect_faces(struct shell *dst, struct vertex *vpa, struct vertex *vpb
 	made_face = 0;
 
 	/* if the current points are all collinear, add another vertex */
-	while (bn_3pts_collinear(face_verts[0]->vg_p->coord,
+	while (bn_3pnts_collinear(face_verts[0]->vg_p->coord,
 				 face_verts[1]->vg_p->coord,
 				 face_verts[verts_in_face - 1]->vg_p->coord, tol))
 	{
@@ -7975,7 +7975,7 @@ nmg_open_shells_connect(struct shell *dst, struct shell *src, const long int **c
 		    for (k=0; k<4; k++) {
 			if (k == i || k == j)
 			    continue;
-			if (bn_dist_pt3_lseg3(&dist, pca,
+			if (bn_dist_pnt3_lseg3(&dist, pca,
 					      verts[i]->vg_p->coord,
 					      verts[j]->vg_p->coord,
 					      verts[k]->vg_p->coord,  tol))
@@ -9004,7 +9004,7 @@ nmg_break_edge_at_verts(struct edge *e, struct bu_ptbl *verts, const struct bn_t
 	    if (v == va || v == vb)
 		continue;
 
-	    if (bn_dist_pt3_lseg3(&dist, pca, va->vg_p->coord, vb->vg_p->coord, v->vg_p->coord, tol)) {
+	    if (bn_dist_pnt3_lseg3(&dist, pca, va->vg_p->coord, vb->vg_p->coord, v->vg_p->coord, tol)) {
 		/* non-zero means we're not within tol distance of the edge */
 		continue;
 	    }
@@ -9096,7 +9096,7 @@ nmg_lu_is_convex(struct loopuse *lu, struct bu_list *vlfree, const struct bn_tol
 
 	VBLEND2(mid_pt, 0.5, vg1->coord, 0.5, vg3->coord);
 
-	nmg_class = nmg_class_pt_lu_except(mid_pt, lu, NULL, vlfree, tol);
+	nmg_class = nmg_class_pnt_lu_except(mid_pt, lu, NULL, vlfree, tol);
 
 	if ((nmg_class == NMG_CLASS_AoutB && lu->orientation == OT_SAME) ||
 	    (nmg_class == NMG_CLASS_AinB  && lu->orientation == OT_OPPOSITE))
@@ -9215,9 +9215,9 @@ nmg_simplify_shell_edges(struct shell *s, const struct bn_tol *tol)
 		VSUB2(dir_next, vg3->coord, vg2->coord);
 
 		skip = 1;
-		if (bn_dist_pt3_line3(&dist, pca, vg1->coord, dir_eu, vg3->coord, tol) < 2)
+		if (bn_dist_pnt3_line3(&dist, pca, vg1->coord, dir_eu, vg3->coord, tol) < 2)
 		    skip = 0;
-		else if (bn_dist_pt3_line3(&dist, pca, vg2->coord, dir_next, vg1->coord, tol) < 2)
+		else if (bn_dist_pnt3_line3(&dist, pca, vg2->coord, dir_next, vg1->coord, tol) < 2)
 		    skip = 0;
 
 		if (skip) {
@@ -9579,7 +9579,7 @@ nmg_edge_collapse(struct model *m, const struct bn_tol *tol, const fastf_t tol_c
 		    VUNITIZE(normb);
 		    normb[W] = VDOT(normb, v2->vg_p->coord);
 
-		    dist = fabs(DIST_PT_PLANE(v1->vg_p->coord, normb));
+		    dist = fabs(DIST_PNT_PLANE(v1->vg_p->coord, normb));
 #if EDGE_COLLAPSE_DEBUG
 		    bu_log("\t\t\tdist = %g\n", dist);
 #endif
@@ -9668,7 +9668,7 @@ nmg_edge_collapse(struct model *m, const struct bn_tol *tol, const fastf_t tol_c
 		    VUNITIZE(normb);
 		    normb[W] = VDOT(normb, v1->vg_p->coord);
 
-		    dist = fabs(DIST_PT_PLANE(v2->vg_p->coord, normb));
+		    dist = fabs(DIST_PNT_PLANE(v2->vg_p->coord, normb));
 #if EDGE_COLLAPSE_DEBUG
 		    bu_log("\t\t\tdist = %g\n", dist);
 #endif

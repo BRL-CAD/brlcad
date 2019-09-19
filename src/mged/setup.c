@@ -216,7 +216,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"mat_ae", cmd_ged_plain_wrapper, ged_mat_ae},
     {"mat_mul", cmd_ged_plain_wrapper, ged_mat_mul},
     {"mat4x3pnt", cmd_ged_plain_wrapper, ged_mat4x3pnt},
-    {"mat_scale_about_pt", cmd_ged_plain_wrapper, ged_mat_scale_about_pt},
+    {"mat_scale_about_pnt", cmd_ged_plain_wrapper, ged_mat_scale_about_pnt},
     {"mged_update", f_update, GED_FUNC_PTR_NULL},
     {"mged_wait", f_wait, GED_FUNC_PTR_NULL},
     {"mirface", f_mirface, GED_FUNC_PTR_NULL},

@@ -578,7 +578,7 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
                 short n;
                 short lim;
 
-                /* Inline rt_pt_sort().  Sorts real[] into descending order. */
+                /* Inline rt_pnt_sort().  Sorts real[] into descending order. */
                 for (lim = i-1; lim > 0; lim--) {
                     for (n = 0; n < lim; n++) {
                         fastf_t u;
@@ -596,7 +596,7 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
                 short num;
                 short limit;
 
-                /* Inline rt_pt_sort().  Sorts real[] into descending order. */
+                /* Inline rt_pnt_sort().  Sorts real[] into descending order. */
                 for (limit = i-1; limit > 0; limit--) {
                     for (num = 0; num < limit; num++) {
                         fastf_t u;
@@ -889,7 +889,7 @@ rt_hrt_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	hrt = (struct hrt_specific *)stp[i]->st_specific;
 
 	/* Sort most distant to least distant */
-	rt_pt_sort(S[i].cf, 4);
+	rt_pnt_sort(S[i].cf, 4);
 	/* Now, t[0] > t[npts - 1] */
 	/* segp[i].seg_in.hit_normal holds dprime */
 	VMOVE(dprime, segp[i].seg_out.hit_normal);
@@ -914,7 +914,7 @@ rt_hrt_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	hrt = (struct hrt_specific *)stp[i]->st_specific;
 
 	/* Sort most distant to least distant */
-	rt_pt_sort(S[i].cf, 6);
+	rt_pnt_sort(S[i].cf, 6);
 	/* Now, t[0] > t[npts - 1] */
 	/* segp[i].seg_in.hit_normal holds dprime */
 	VMOVE(dprime, segp[i].seg_out.hit_normal);
@@ -1057,7 +1057,7 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct bg_tes
     mat_t R;
     mat_t invR;
     point_t p1;
-    struct rt_pt_node *pos_a, *pos_b, *pts_a, *pts_b;
+    struct rt_pnt_node *pos_a, *pos_b, *pts_a, *pts_b;
     vect_t A, Au, B, Bu, Cu;
     vect_t V, Work;
     vect_t lower_cusp, upper_cusp, upper_cusp_xdir;
@@ -1315,8 +1315,8 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct bg_tes
      */
 
     /* approximate positive half of hyperbola along semi-minor axis */
-    BU_ALLOC(pts_b, struct rt_pt_node);
-    BU_ALLOC(pts_b->next, struct rt_pt_node);
+    BU_ALLOC(pts_b, struct rt_pnt_node);
+    BU_ALLOC(pts_b->next, struct rt_pnt_node);
 
     pts_b->next->next = NULL;
     VSET(pts_b->p,       0, 0, 0);
@@ -1332,14 +1332,14 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct bg_tes
      * ehy using same z coords as hyperbola along semi-minor axis
      */
 
-    BU_ALLOC(pts_a, struct rt_pt_node);
+    BU_ALLOC(pts_a, struct rt_pnt_node);
     VMOVE(pts_a->p, pts_b->p);	/* 1st pt is the apex */
     pts_a->next = NULL;
     pos_b = pts_b->next;
     pos_a = pts_a;
     while (pos_b) {
 	/* copy node from b_hyperbola to a_hyperbola */
-	BU_ALLOC(pos_a->next, struct rt_pt_node);
+	BU_ALLOC(pos_a->next, struct rt_pnt_node);
 	pos_a = pos_a->next;
 	pos_a->p[Z] = pos_b->p[Z];
 	/* at given z, find y on hyperbola */
@@ -1368,25 +1368,25 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct bg_tes
 	/* free mem for old approximation of hyperbola */
 	pos_b = pts_b;
 	while (pos_b) {
-	    struct rt_pt_node *next;
+	    struct rt_pnt_node *next;
 
 	    /* get next node before freeing */
 	    next = pos_b->next;
-	    bu_free((char *)pos_b, "rt_pt_node");
+	    bu_free((char *)pos_b, "rt_pnt_node");
 	    pos_b = next;
     }
 
     /* construct hyperbola along semi-major axis of ehy using same
      * z coords as parabola along semi-minor axis
      */
-    BU_ALLOC(pts_b, struct rt_pt_node);
+    BU_ALLOC(pts_b, struct rt_pnt_node);
     pts_b->p[Z] = pts_a->p[Z];
     pts_b->next = NULL;
     pos_a = pts_a->next;
     pos_b = pts_b;
     while (pos_a) {
 	/* copy node from a_hyperbola to b_hyperbola */
-	BU_ALLOC(pos_b->next, struct rt_pt_node);
+	BU_ALLOC(pos_b->next, struct rt_pnt_node);
 	pos_b = pos_b->next;
 	pos_b->p[Z] = pos_a->p[Z];
 	/* at given z, find y on hyperbola */

@@ -4813,11 +4813,11 @@ swap_cell_pts(int A[3],
  *	   C	A--B	C	B--A
  */
 int
-project_pt(point_t out,
-	   int A[3],
-	   int B[3],
-	   int C[3],
-	   point_t pt)
+project_pnt(point_t out,
+	    int A[3],
+	    int B[3],
+	    int C[3],
+	    point_t pt)
 {
     int dx, dy;
     fastf_t alpha, beta, x, y;
@@ -4936,8 +4936,8 @@ dsp_pos(point_t out, /* return value */
 	bu_log(" D: %d %d %d\n", V3ARGS(D));
     }
 
-    if (project_pt(tri_pt, B, A, D, pt)) {
-	if (project_pt(tri_pt, C, D, A, pt)) {
+    if (project_pnt(tri_pt, B, A, D, pt)) {
+	if (project_pnt(tri_pt, C, D, A, pt)) {
 	    bu_log("Now what???\n");
 	}
     }

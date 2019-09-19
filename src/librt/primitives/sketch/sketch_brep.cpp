@@ -102,7 +102,7 @@ void FindLoops(ON_Brep **b) {
 	double currdist;
 	VSET(minpt, lbbox.m_min[0], lbbox.m_min[1], lbbox.m_min[2]);
 	VSET(maxpt, lbbox.m_max[0], lbbox.m_max[1], lbbox.m_max[2]);
-	currdist = DIST_PT_PT(minpt, maxpt);
+	currdist = DIST_PNT_PNT(minpt, maxpt);
 	if (currdist > maxdist) {
 	    maxdist = currdist;
 	    largest_loop_index = i;

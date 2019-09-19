@@ -372,7 +372,7 @@ main(int argc, char** argv)
     write_out(outfp, &tmp_internal, "eto", &tol);
 
     bu_log("PIPE\n");
-    struct wdb_pipept pipe1[] = {
+    struct wdb_pipe_pnt pipe1[] = {
 	{
 	    {WDB_PIPESEG_MAGIC, 0, 0},
 	    {0, 1000, 0},
@@ -394,7 +394,7 @@ main(int argc, char** argv)
 	    50, 100, 100
 	}
     };
-    int pipe1_npts = sizeof(pipe1)/sizeof(struct wdb_pipept);
+    int pipe1_npts = sizeof(pipe1)/sizeof(struct wdb_pipe_pnt);
 
     struct rt_pipe_internal pipe;
     BU_LIST_INIT(&pipe.pipe_segs_head);

@@ -72,7 +72,7 @@ static void rt_tgc_scale(fastf_t a, fastf_t b, fastf_t h, fastf_t *Scl, fastf_t 
 static void nmg_tgc_disk(struct faceuse *fu, fastf_t *rmat, fastf_t height, int flip);
 static void nmg_tgc_nurb_cyl(struct faceuse *fu, fastf_t *top_mat, fastf_t *bot_mat);
 
-void rt_pt_sort(register fastf_t *t, int npts);
+void rt_pnt_sort(register fastf_t *t, int npts);
 
 
 #define VLARGE 1000000.0
@@ -893,7 +893,7 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	}
     }
 
-    /* Sort Most distant to least distant: rt_pt_sort(k, npts) */
+    /* Sort Most distant to least distant: rt_pnt_sort(k, npts) */
     /* TODO: USE A SORTING NETWORK */
     {
 	register fastf_t u;
@@ -1261,7 +1261,7 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 	}
 
 	/* Most distant to least distant */
-	rt_pt_sort(k, npts);
+	rt_pnt_sort(k, npts);
 
 	/* Now, k[0] > k[npts-1] */
 
@@ -1450,7 +1450,7 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
  * TODO: CONVERT THIS TO A FIXED SIZE SORTING NETWORK
  */
 void
-rt_pt_sort(fastf_t t[], int npts)
+rt_pnt_sort(fastf_t t[], int npts)
 {
     fastf_t u;
     short lim, n;
@@ -2089,9 +2089,9 @@ rt_tgc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     tip = (struct rt_tgc_internal *)ip->idb_ptr;
     RT_TGC_CK_MAGIC(tip);
 
-    rt_ell_16pts(bottom, tip->v, tip->a, tip->b);
+    rt_ell_16pnts(bottom, tip->v, tip->a, tip->b);
     VADD2(work, tip->v, tip->h);
-    rt_ell_16pts(top, work, tip->c, tip->d);
+    rt_ell_16pnts(top, work, tip->c, tip->d);
 
     /* Draw the top */
     RT_ADD_VLIST(vhead, &top[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);

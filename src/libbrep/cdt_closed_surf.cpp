@@ -97,7 +97,7 @@ getUVCurveSamples(struct ON_Brep_CDT_State *s_cdt,
     bool bGrowBox = false;
     ON_3dPoint min, max;
     if (curve->GetBoundingBox(min, max, bGrowBox)) {
-	dist = DIST_PT_PT(min, max);
+	dist = DIST_PNT_PNT(min, max);
     }
 
     if (s_cdt->tol.abs < BN_TOL_DIST + ON_ZERO_TOLERANCE) {

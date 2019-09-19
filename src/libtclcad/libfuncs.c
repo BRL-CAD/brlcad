@@ -516,7 +516,7 @@ bn_hdivide(fastf_t *o, const mat_t i)
 }
 
 static int
-tclcad_bn_dist_pt2_lseg2(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+tclcad_bn_dist_pnt2_lseg2(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
     point_t ptA, ptB, pca;
@@ -529,26 +529,26 @@ tclcad_bn_dist_pt2_lseg2(ClientData UNUSED(clientData), Tcl_Interp *interp, int 
 
     if (argc != 4) {
 	bu_vls_printf(&result,
-		"Usage: bn_dist_pt2_lseg2 ptA ptB pt (%d args specified)", argc-1);
+		"Usage: bn_dist_pnt2_lseg2 pntA pntB pnt (%d args specified)", argc-1);
 	goto error;
     }
 
     if (bn_decode_vect(ptA, argv[1]) < 2) {
-	bu_vls_printf(&result, "bn_dist_pt2_lseg2 no ptA: %s\n", argv[0]);
+	bu_vls_printf(&result, "bn_dist_pnt2_lseg2 no pntA: %s\n", argv[0]);
 	goto error;
     }
 
     if (bn_decode_vect(ptB, argv[2]) < 2) {
-	bu_vls_printf(&result, "bn_dist_pt2_lseg2 no ptB: %s\n", argv[0]);
+	bu_vls_printf(&result, "bn_dist_pnt2_lseg2 no pntB: %s\n", argv[0]);
 	goto error;
     }
 
     if (bn_decode_vect(pt, argv[3]) < 2) {
-	bu_vls_printf(&result, "bn_dist_pt2_lseg2 no pt: %s\n", argv[0]);
+	bu_vls_printf(&result, "bn_dist_pnt2_lseg2 no pnt: %s\n", argv[0]);
 	goto error;
     }
 
-    ret = bn_dist_pt2_lseg2(&dist, pca, ptA, ptB, pt, &tol);
+    ret = bn_dist_pnt2_lseg2(&dist, pca, ptA, ptB, pt, &tol);
     switch (ret) {
 	case 0:
 	case 1:
@@ -1173,7 +1173,7 @@ error:
 
 
 static int
-tclcad_bn_mat_xform_about_pt(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+tclcad_bn_mat_xform_about_pnt(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
     mat_t o, xform;
@@ -1185,7 +1185,7 @@ tclcad_bn_mat_xform_about_pt(ClientData UNUSED(clientData), Tcl_Interp *interp, 
 	goto error;
     }
 
-    bn_mat_xform_about_pt(o, xform, v);
+    bn_mat_xform_about_pnt(o, xform, v);
     bn_encode_mat(&result, o, 1);
 
     Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
@@ -1502,7 +1502,7 @@ static struct math_func_link {
     int (*func)(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv);
 } math_funcs[] = {
     /* FIXME: migrate these all to libged */
-    {"bn_dist_pt2_lseg2",	 BN_FUNC_TCL_CAST(tclcad_bn_dist_pt2_lseg2) },
+    {"bn_dist_pnt2_lseg2",	 BN_FUNC_TCL_CAST(tclcad_bn_dist_pnt2_lseg2) },
     {"bn_isect_line2_line2",	 BN_FUNC_TCL_CAST(tclcad_bn_isect_line2_line2) },
     {"bn_isect_line3_line3",	 BN_FUNC_TCL_CAST(tclcad_bn_isect_line3_line3) },
     {"mat_inv",                  BN_FUNC_TCL_CAST(tclcad_bn_mat_inv) },
@@ -1523,7 +1523,7 @@ static struct math_func_link {
     {"mat_lookat",               BN_FUNC_TCL_CAST(tclcad_bn_mat_lookat) },
     {"mat_vec_ortho",            BN_FUNC_TCL_CAST(tclcad_bn_vec_ortho) },
     {"mat_vec_perp",             BN_FUNC_TCL_CAST(tclcad_bn_vec_perp) },
-    {"mat_xform_about_pt",       BN_FUNC_TCL_CAST(tclcad_bn_mat_xform_about_pt) },
+    {"mat_xform_about_pnt",      BN_FUNC_TCL_CAST(tclcad_bn_mat_xform_about_pnt) },
     {"mat_arb_rot",              BN_FUNC_TCL_CAST(tclcad_bn_mat_arb_rot) },
     {"quat_mat2quat",            BN_FUNC_TCL_CAST(tclcad_bn_quat_mat2quat) },
     {"quat_quat2mat",            BN_FUNC_TCL_CAST(tclcad_bn_quat_quat2mat) },

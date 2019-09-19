@@ -177,7 +177,7 @@ extern fastf_t primitive_diagonal_samples(
 	const struct rt_view_info *info);
 
 extern int approximate_parabolic_curve(
-	struct rt_pt_node *pts,
+	struct rt_pnt_node *pts,
 	fastf_t p,
 	int num_new_points);
 
@@ -186,7 +186,7 @@ extern fastf_t primitive_curve_count(
 	const struct rt_view_info *info);
 
 extern int approximate_hyperbolic_curve(
-	struct rt_pt_node *pts,
+	struct rt_pnt_node *pts,
 	fastf_t a,
 	fastf_t b,
 	int num_new_points);

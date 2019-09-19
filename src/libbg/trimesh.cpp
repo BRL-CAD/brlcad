@@ -724,7 +724,7 @@ distance_point_to_edge(int UNUSED(num_vertices), fastf_t *vertices, int point, i
     tol.perp = SMALL_FASTF;
     tol.para = 1 - SMALL_FASTF;
 
-    rc = bn_dist_pt3_lseg3(&dist, pca, edge_pts[0], edge_pts[1], pt, &tol);
+    rc = bn_dist_pnt3_lseg3(&dist, pca, edge_pts[0], edge_pts[1], pt, &tol);
 
     return rc ? dist : 0.0;
 }

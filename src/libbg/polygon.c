@@ -41,7 +41,7 @@ bg_3d_polygon_area(fastf_t *area, size_t npts, const point_t *pts)
 	return 1;
     BN_TOL_INIT(&tol);
     tol.dist_sq = BN_TOL_DIST * BN_TOL_DIST;
-    if (bn_mk_plane_3pts(plane_eqn, pts[0], pts[1], pts[2], &tol) == -1)
+    if (bn_make_plane_3pnts(plane_eqn, pts[0], pts[1], pts[2], &tol) == -1)
 	return 1;
 
     switch (npts) {
@@ -139,7 +139,7 @@ bg_3d_polygon_centroid(point_t *cent, size_t npts, const point_t *pts)
 
 
 int
-bg_3d_polygon_mk_pts_planes(size_t *npts, point_t **pts, size_t neqs, const plane_t *eqs)
+bg_3d_polygon_make_pnts_planes(size_t *npts, point_t **pts, size_t neqs, const plane_t *eqs)
 {
     size_t i, j, k, l;
     if (!npts || !pts || neqs < 4 || !eqs)
@@ -150,13 +150,13 @@ bg_3d_polygon_mk_pts_planes(size_t *npts, point_t **pts, size_t neqs, const plan
 	    for (k = j + 1; k < neqs; k++) {
 		point_t pt;
 		int keep_point = 1;
-		if (bn_mkpoint_3planes(pt, eqs[i], eqs[j], eqs[k]) < 0)
+		if (bn_make_pnt_3planes(pt, eqs[i], eqs[j], eqs[k]) < 0)
 		    continue;
 		/* discard pt if it is outside the polyhedron */
 		for (l = 0; l < neqs; l++) {
 		    if (l == i || l == j || l == k)
 			continue;
-		    if (DIST_PT_PLANE(pt, eqs[l]) > BN_TOL_DIST) {
+		    if (DIST_PNT_PLANE(pt, eqs[l]) > BN_TOL_DIST) {
 			keep_point = 0;
 			break;
 		    }
@@ -219,8 +219,10 @@ bg_polygon_direction(size_t npts, const point2d_t *pts, const int *pt_indices)
     }
 
     /* clean up and evaluate results */
-    if (tmp_pt_order) bu_free(tmp_pt_order, "free tmp_pt_order");
-    if (NEAR_ZERO(sum, SMALL_FASTF)) return 0;
+    if (tmp_pt_order)
+	bu_free(tmp_pt_order, "free tmp_pt_order");
+    if (NEAR_ZERO(sum, SMALL_FASTF))
+	return 0;
     return (sum > 0) ? BG_CW : BG_CCW;
 }
 
