@@ -2754,25 +2754,25 @@ cdt_mesh_t::repair()
 	//tris_plot("mesh_post_patch.plot3");
     }
 
-#if 0
+#if 1
     // For each edge, check if it is a boundary edge.  If not, it's mirror
     // edge should have an associated triangle that is different from the
     // current triangle.  If not, we need to resolve the issue...
-    std::map<edge_t, triangle_t>::iterator e_it;
+    std::map<edge_t, size_t>::iterator e_it;
     for (e_it = edges2tris.begin(); e_it != edges2tris.end(); e_it++) {
 	edge_t e_1 = e_it->first;
 	uedge_t ue(e_1);
 	if (boundary_edges.find(ue) != boundary_edges.end()) continue;
-	triangle_t t1 = e_it->second;
+	size_t t1 = e_it->second;
 	edge_t e_2(e_1.v[1], e_1.v[0]);
-	triangle_t t2 = edges2tris[e_2];
+	size_t t2 = edges2tris[e_2];
 	if (t1 == t2) {
 	    // directional edges both point to the same triangle - problem
 	    std::cout << "directional edge pair referencing same triangle!\n";
 	    for (int i = 0; i < 3; i++) {
 		// Every triangle on one of the vertices of this triangle is
 		// suspect and has to be considered
-		std::vector<triangle_t> faces = vertex_face_neighbors(t1.v[i]);
+		std::vector<triangle_t> faces = vertex_face_neighbors(tris_vect[t1].v[i]);
 		seed_tris.insert(faces.begin(), faces.end());
 	    }
 	}
