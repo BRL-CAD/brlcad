@@ -1474,13 +1474,11 @@ cdt_mesh_t::add_normal(ON_3dPoint *on_3dn)
     return (long)(normals.size() - 1);
 }
 
-#if 1
 static bool NearTrisCallback(size_t data, void *a_context) {
-    std::set<size_t> *near_tris = (std::set<size_t> *)a_context;
-    near_tris->insert(data);
+    std::vector<size_t> *near_tris = (std::vector<size_t> *)a_context;
+    near_tris->push_back(data);
     return true;
 }
-#endif
 
 // TODO - perf reports a huge percentage of time is spend dealing with
 // tri_add - we should only need the uniqueness guarantee for triangles
@@ -1513,12 +1511,12 @@ cdt_mesh_t::tri_add(triangle_t &tri)
     fMax[1] = bb.Max().y;
     fMax[2] = bb.Max().z;
 
-    std::set<size_t> near_tris;
+    std::vector<size_t> near_tris;
     size_t nhits = tris_tree.Search(fMin, fMax, NearTrisCallback, &near_tris);
 
     if (nhits) {
 	// We've got something nearby, see if any of them are duplicates
-	std::set<size_t>::iterator t_it;
+	std::vector<size_t>::iterator t_it;
 	for (t_it = near_tris.begin(); t_it != near_tris.end(); t_it++) {
 	    triangle_t orig = tris_vect[*t_it];
 	    if (tri == orig) {
