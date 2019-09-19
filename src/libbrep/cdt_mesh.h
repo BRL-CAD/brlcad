@@ -543,7 +543,7 @@ public:
     std::vector<ON_3dPoint *> normals;
     std::map<ON_3dPoint *, long> n2ind;
     std::map<long, long> nmap;
-    std::map<uedge_t, std::set<triangle_t>> uedges2tris;
+    std::map<uedge_t, std::set<size_t>> uedges2tris;
 
     // cdt_mesh index versions of Brep data
     std::set<uedge_t> brep_edges;

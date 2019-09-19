@@ -1560,7 +1560,7 @@ cdt_mesh_t::tri_add(triangle_t &tri)
     for (int ind = 0; ind < 3; ind++) {
 	ue[ind].set(e[ind].v[0], e[ind].v[1]);
 	this->edges2tris[e[ind]] = tri;
-	this->uedges2tris[uedge_t(e[ind])].insert(tri);
+	uedges2tris[uedge_t(e[ind])].insert(tri.ind);
 	this->v2edges[e[ind].v[0]].insert(e[ind]);
 	this->v2tris[tri.v[ind]].insert(tri);
     }
@@ -1586,7 +1586,7 @@ void cdt_mesh_t::tri_remove(triangle_t &tri)
     for (int ind = 0; ind < 3; ind++) {
 	ue[ind].set(e[ind].v[0], e[ind].v[1]);
 	this->edges2tris[e[ind]];
-	this->uedges2tris[uedge_t(e[ind])].erase(tri);
+	uedges2tris[uedge_t(e[ind])].erase(tri.ind);
 	this->v2edges[e[ind].v[0]].erase(e[ind]);
 	this->v2tris[tri.v[ind]].erase(tri);
     }
@@ -1625,11 +1625,11 @@ cdt_mesh_t::face_neighbors(const triangle_t &f)
     e[1].set(j, k);
     e[2].set(k, i);
     for (int ind = 0; ind < 3; ind++) {
-	std::set<triangle_t> faces = this->uedges2tris[e[ind]];
-	std::set<triangle_t>::iterator f_it;
+	std::set<size_t> faces = uedges2tris[e[ind]];
+	std::set<size_t>::iterator f_it;
 	for (f_it = faces.begin(); f_it != faces.end(); f_it++) {
-	    if (*f_it != f) {
-		result.push_back(*f_it);
+	    if (tris_vect[*f_it] != f) {
+		result.push_back(tris_vect[*f_it]);
 	    }
 	}
     }
@@ -1695,8 +1695,8 @@ cdt_mesh_t::boundary_edges_update()
     boundary_edges.clear();
     problem_edges.clear();
 
-    std::map<uedge_t, std::set<triangle_t>>::iterator ue_it;
-    for (ue_it = this->uedges2tris.begin(); ue_it != this->uedges2tris.end(); ue_it++) {
+    std::map<uedge_t, std::set<size_t>>::iterator ue_it;
+    for (ue_it = uedges2tris.begin(); ue_it != uedges2tris.end(); ue_it++) {
 	if ((*ue_it).second.size() != 1) {
 	    continue;
 	}
@@ -1953,11 +1953,11 @@ cdt_mesh_t::remove_dangling_tris()
     if (!problem_edges.size()) return;
 
     std::set<uedge_t>::iterator u_it;
-    std::set<triangle_t>::iterator t_it;
+    std::set<size_t>::iterator t_it;
     for (u_it = problem_edges.begin(); u_it != problem_edges.end(); u_it++) {
-	std::set<triangle_t> ptris = uedges2tris[(*u_it)];
+	std::set<size_t> ptris = uedges2tris[(*u_it)];
 	for (t_it = uedges2tris[(*u_it)].begin(); t_it != uedges2tris[(*u_it)].end(); t_it++) {
-	    triangle_t t = *t_it;
+	    triangle_t t = tris_vect[*t_it];
 	    std::set<uedge_t> ue = t.uedges();
 	    std::set<uedge_t>::iterator ue_it;
 	    int bedge_cnt = 0;
@@ -1987,11 +1987,11 @@ cdt_mesh_t::problem_edge_tris()
 
     std::set<triangle_t> uresults;
     std::set<uedge_t>::iterator u_it;
-    std::set<triangle_t>::iterator t_it;
+    std::set<size_t>::iterator t_it;
     for (u_it = problem_edges.begin(); u_it != problem_edges.end(); u_it++) {
-	std::set<triangle_t> ptris = uedges2tris[(*u_it)];
+	std::set<size_t> ptris = uedges2tris[(*u_it)];
 	for (t_it = uedges2tris[(*u_it)].begin(); t_it != uedges2tris[(*u_it)].end(); t_it++) {
-	    triangle_t t = *t_it;
+	    triangle_t t = tris_vect[*t_it];
 	    uresults.insert(t);
 	}
     }
@@ -2005,26 +2005,26 @@ cdt_mesh_t::self_intersecting_mesh()
 {
     std::set<triangle_t> pedge_tris;
     std::set<uedge_t>::iterator u_it;
-    std::set<triangle_t>::iterator t_it;
+    std::set<size_t>::iterator t_it;
 
     if (boundary_edges_stale) {
 	boundary_edges_update();
     }
 
     for (u_it = problem_edges.begin(); u_it != problem_edges.end(); u_it++) {
-	std::set<triangle_t> ptris = uedges2tris[(*u_it)];
+	std::set<size_t> ptris = uedges2tris[(*u_it)];
 	for (t_it = uedges2tris[(*u_it)].begin(); t_it != uedges2tris[(*u_it)].end(); t_it++) {
-	    pedge_tris.insert(*t_it);
+	    pedge_tris.insert(tris_vect[*t_it]);
 	}
     }
 
-    std::map<uedge_t, std::set<triangle_t>>::iterator et_it;
+    std::map<uedge_t, std::set<size_t>>::iterator et_it;
     for (et_it = uedges2tris.begin(); et_it != uedges2tris.end(); et_it++) {
-	std::set<triangle_t> uetris = et_it->second;
+	std::set<size_t> uetris = et_it->second;
 	if (uetris.size() > 2) {
 	    size_t valid_cnt = 0;
 	    for (t_it = uetris.begin(); t_it != uetris.end(); t_it++) {
-		triangle_t t = *t_it;
+		triangle_t t = tris_vect[*t_it];
 		if (pedge_tris.find(t) == pedge_tris.end()) {
 		    valid_cnt++;
 		}
@@ -2074,18 +2074,18 @@ cdt_mesh_t::polygon_tris(cpolygon_t *polygon, double angle, bool brep_norm, int 
 	cpolyedge_t *pe = *p_it;
 	struct uedge_t ue(pe->v[0], pe->v[1]);
 	bool edge_isect = (polygon->self_isect_edges.find(ue) != polygon->self_isect_edges.end());
-	std::set<triangle_t> petris = uedges2tris[ue];
-	std::set<triangle_t>::iterator t_it;
+	std::set<size_t> petris = uedges2tris[ue];
+	std::set<size_t>::iterator t_it;
 	for (t_it = petris.begin(); t_it != petris.end(); t_it++) {
 
-	    if (polygon->visited_triangles.find(*t_it) != polygon->visited_triangles.end()) {
+	    if (polygon->visited_triangles.find(tris_vect[*t_it]) != polygon->visited_triangles.end()) {
 		continue;
 	    }
 
 	    // If the triangle is involved with a self intersecting edge in the
 	    // polygon and we haven't already see it, we have to try incorporating it
 	    if (edge_isect) {
-		initial_set.insert(*t_it);
+		initial_set.insert(tris_vect[*t_it]);
 		continue;
 	    }
 
@@ -2096,19 +2096,19 @@ cdt_mesh_t::polygon_tris(cpolygon_t *polygon, double angle, bool brep_norm, int 
 	    // so, our growth criteria will not result in a new polygon, but we
 	    // need to try and correct the vertical triangle.
 	    if (initial) {
-		if (brep_edge_pnt((*t_it).v[0]) && brep_edge_pnt((*t_it).v[1]) && brep_edge_pnt((*t_it).v[2])) {
-		    initial_set.insert(*t_it);
+		if (brep_edge_pnt(tris_vect[*t_it].v[0]) && brep_edge_pnt(tris_vect[*t_it].v[1]) && brep_edge_pnt(tris_vect[*t_it].v[2])) {
+		    initial_set.insert(tris_vect[*t_it]);
 		    continue;
 		}
 	    }
 
-	    ON_3dVector tn = (brep_norm) ? bnorm(*t_it) : tnorm(*t_it);
+	    ON_3dVector tn = (brep_norm) ? bnorm(tris_vect[*t_it]) : tnorm(tris_vect[*t_it]);
 	    double dprd = ON_DotProduct(polygon->pdir, tn);
 	    double dang = (NEAR_EQUAL(dprd, 1.0, ON_ZERO_TOLERANCE)) ? 0 : acos(dprd);
 	    if (dang > angle) {
 		continue;
 	    }
-	    initial_set.insert(*t_it);
+	    initial_set.insert(tris_vect[*t_it]);
 	}
     }
 
@@ -3494,7 +3494,7 @@ cdt_mesh_t::deserialize(const char *fname)
 		for (int ind = 0; ind < 3; ind++) {
 		    ue[ind].set(e[ind].v[0], e[ind].v[1]);
 		    edges2tris[e[ind]] = tri;
-		    uedges2tris[uedge_t(e[ind])].insert(tri);
+		    uedges2tris[uedge_t(e[ind])].insert(tind);
 		    v2edges[e[ind].v[0]].insert(e[ind]);
 		    v2tris[tri.v[ind]].insert(tri);
 		}
