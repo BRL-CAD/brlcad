@@ -654,6 +654,9 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	ovlp_tris.push_back(new std::set<size_t>);
     }
 
+    // TODO - really should build rtrees for the face bboxes and use them
+    // for the initial cull as well - for situations where we have to check
+    // a LOT of faces in particular...
     for (int i = 0; i < s_cnt; i++) {
 	struct ON_Brep_CDT_State *s_i = s_a[i];
 	for (int i_fi = 0; i_fi < s_i->brep->m_F.Count(); i_fi++) {
