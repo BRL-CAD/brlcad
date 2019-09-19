@@ -33,8 +33,7 @@ bu_cmd(const struct bu_cmdtab *cmds, int argc, const char **argv, int cmd_index,
 
     /* sanity */
     if (UNLIKELY(cmd_index >= argc)) {
-	bu_log("missing command; must be one of:");
-	goto missing_cmd;
+	return BRLCAD_ERROR;
     }
 
     for (ctp = cmds; ctp->ct_name != (char *)NULL; ctp++) {
@@ -50,7 +49,6 @@ bu_cmd(const struct bu_cmdtab *cmds, int argc, const char **argv, int cmd_index,
 
     bu_log("unknown command: %s; must be one of: ", argv[cmd_index]);
 
-missing_cmd:
     for (ctp = cmds; ctp->ct_name != (char *)NULL; ctp++) {
 	bu_log(" %s", ctp->ct_name);
     }
