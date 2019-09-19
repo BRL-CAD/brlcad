@@ -1562,7 +1562,7 @@ cdt_mesh_t::tri_add(triangle_t &tri)
 	this->edges2tris[e[ind]] = tri;
 	uedges2tris[uedge_t(e[ind])].insert(tri.ind);
 	this->v2edges[e[ind].v[0]].insert(e[ind]);
-	this->v2tris[tri.v[ind]].insert(tri);
+	v2tris[tri.v[ind]].insert(tri.ind);
     }
 
     // The addition of a triangle may change the boundary edge set.  Set update
@@ -1588,7 +1588,7 @@ void cdt_mesh_t::tri_remove(triangle_t &tri)
 	this->edges2tris[e[ind]];
 	uedges2tris[uedge_t(e[ind])].erase(tri.ind);
 	this->v2edges[e[ind].v[0]].erase(e[ind]);
-	this->v2tris[tri.v[ind]].erase(tri);
+	v2tris[tri.v[ind]].erase(tri.ind);
     }
 
     // Remove the triangle from the tree
@@ -1642,10 +1642,10 @@ std::vector<triangle_t>
 cdt_mesh_t::vertex_face_neighbors(long vind)
 {
     std::vector<triangle_t> result;
-    std::set<triangle_t> faces = this->v2tris[vind];
-    std::set<triangle_t>::iterator f_it;
+    std::set<size_t> faces = v2tris[vind];
+    std::set<size_t>::iterator f_it;
     for (f_it = faces.begin(); f_it != faces.end(); f_it++) {
-	result.push_back(*f_it);
+	result.push_back(tris_vect[*f_it]);
     }
     return result;
 }
@@ -3496,7 +3496,7 @@ cdt_mesh_t::deserialize(const char *fname)
 		    edges2tris[e[ind]] = tri;
 		    uedges2tris[uedge_t(e[ind])].insert(tind);
 		    v2edges[e[ind].v[0]].insert(e[ind]);
-		    v2tris[tri.v[ind]].insert(tri);
+		    v2tris[tri.v[ind]].insert(tind);
 		}
 
 	    }
