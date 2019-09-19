@@ -2754,6 +2754,61 @@ cdt_mesh_t::repair()
 	//tris_plot("mesh_post_patch.plot3");
     }
 
+#if 0
+    // For each edge, check if it is a boundary edge.  If not, it's mirror
+    // edge should have an associated triangle that is different from the
+    // current triangle.  If not, we need to resolve the issue...
+    std::map<edge_t, triangle_t>::iterator e_it;
+    for (e_it = edges2tris.begin(); e_it != edges2tris.end(); e_it++) {
+	edge_t e_1 = e_it->first;
+	uedge_t ue(e_1);
+	if (boundary_edges.find(ue) != boundary_edges.end()) continue;
+	triangle_t t1 = e_it->second;
+	edge_t e_2(e_1.v[1], e_1.v[0]);
+	triangle_t t2 = edges2tris[e_2];
+	if (t1 == t2) {
+	    // directional edges both point to the same triangle - problem
+	    std::cout << "directional edge pair referencing same triangle!\n";
+	    for (int i = 0; i < 3; i++) {
+		// Every triangle on one of the vertices of this triangle is
+		// suspect and has to be considered
+		std::vector<triangle_t> faces = vertex_face_neighbors(t1.v[i]);
+		seed_tris.insert(faces.begin(), faces.end());
+	    }
+	}
+    }
+
+    size_t try_cnt = 0;
+    std::set<triangle_t>::iterator s_it = seed_tris.begin();
+    while (seed_tris.size()) {
+	triangle_t seed = *s_it;
+
+	bool pseed = process_seed_tri(seed, true, 170.0);
+
+	if (seed_tris.size() >= st_size) {
+	    s_it++;
+	} else {
+	    s_it = seed_tris.begin();
+	}
+
+	if (!pseed && try_cnt > seed_tris.size()) {
+	    std::cerr << f_id << ": Error - failed to process repair seed triangle!\n";
+	    struct bu_vls fname = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&fname, "%d-failed_seed.plot3", f_id);
+	    tri_plot(seed, bu_vls_cstr(&fname));
+	    bu_vls_sprintf(&fname, "%d-failed_seed_mesh.plot3", f_id);
+	    tris_plot(bu_vls_cstr(&fname));
+	    bu_vls_sprintf(&fname, "%d-failed_seed.cdtmesh", f_id);
+	    serialize(bu_vls_cstr(&fname));
+	    bu_vls_free(&fname);
+	    return false;
+	}
+
+	try_cnt++;
+	//tris_plot("mesh_post_patch.plot3");
+    }
+#endif
+
     // Now that the out-and-out problem triangles have been handled,
     // remesh near singularities to try and produce more reasonable
     // triangles.

@@ -1634,7 +1634,7 @@ refine_close_edges(struct ON_Brep_CDT_State *s_cdt)
 
     for (int face_index = 0; face_index < brep->m_F.Count(); face_index++) {
 	ON_BrepFace &face = s_cdt->brep->m_F[face_index];
-	std::cout << "Face " << face_index << " of " << brep->m_F.Count()-1 << " close edge check...\n";
+	//std::cout << "Face " << face_index << " of " << brep->m_F.Count()-1 << " close edge check...\n";
 
 	std::vector<cdt_mesh::cpolyedge_t *> ws = cdt_face_polyedges(s_cdt, face_index);
 
