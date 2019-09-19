@@ -552,6 +552,8 @@ public:
     bool m_bRev;
 
     ON_Brep *brep;
+    const char *name;
+    void *p_cdt;
 private:
     /* Data containers */
     std::map<long, std::set<edge_t>> v2edges;

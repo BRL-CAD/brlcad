@@ -97,8 +97,7 @@ struct ON_Brep_CDT_State {
     int status;
     ON_Brep *orig_brep;
     ON_Brep *brep;
-
-    struct bu_vls brep_root;
+    const char *name;
 
     /* Tolerances */
     struct bg_tess_tol tol;

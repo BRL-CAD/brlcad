@@ -304,12 +304,9 @@ ON_Brep_CDT_Create(void *bv, const char *objname)
 {
     struct ON_Brep_CDT_State *cdt = new struct ON_Brep_CDT_State;
 
-    cdt->brep_root = BU_VLS_INIT_ZERO;
-    if (objname) {
-	bu_vls_sprintf(&cdt->brep_root, "%s_", objname);
-    } else {
-	bu_vls_trunc(&cdt->brep_root, 0);
-    }
+    static const char *nname = "(NULL)";
+
+    cdt->name = (objname) ? objname : nname;
 
     /* Set status to "never evaluated" */
     cdt->status = BREP_CDT_UNTESSELLATED;

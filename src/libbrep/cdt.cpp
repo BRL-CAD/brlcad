@@ -212,6 +212,8 @@ do_triangulation(struct ON_Brep_CDT_State *s_cdt, int fi)
 
     cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[face.m_face_index];
     fmesh->brep = s_cdt->brep;
+    fmesh->p_cdt = (void *)s_cdt;
+    fmesh->name = s_cdt->name;
     fmesh->f_id = face.m_face_index;
     fmesh->m_bRev = face.m_bRev;
 
@@ -644,49 +646,98 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 
 }
 
+struct nf_info {
+    std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> *check_pairs;
+    cdt_mesh::cdt_mesh_t *cmesh;
+};
+
+static bool NearFacesCallback(void *data, void *a_context) {
+    struct nf_info *nf = (struct nf_info *)a_context;
+    cdt_mesh::cdt_mesh_t *omesh = (cdt_mesh::cdt_mesh_t *)data;
+    std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *> p1(nf->cmesh, omesh);
+    std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *> p2(omesh, nf->cmesh);
+    if ((nf->check_pairs->find(p1) == nf->check_pairs->end()) && (nf->check_pairs->find(p1) == nf->check_pairs->end())) {
+	nf->check_pairs->insert(p1);
+    }
+    return true;
+}
+
+
 int
 ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 {
     if (!s_a) return -1;
-    if (s_cnt < 2) return 0;
-    std::vector<std::set<size_t> *> ovlp_tris;
+    if (s_cnt < 1) return 0;
+    std::map<struct ON_Brep_CDT_State *, std::map<int, std::set<size_t>*>> ovlp_tris;
     for (int i = 0; i < s_cnt; i++) {
-	ovlp_tris.push_back(new std::set<size_t>);
+	struct ON_Brep_CDT_State *s_i = s_a[i];
+	for (int i_fi = 0; i_fi < s_i->brep->m_F.Count(); i_fi++) {
+	    ovlp_tris[s_i][i_fi] = new std::set<size_t>;
+	}
     }
 
-    // TODO - really should build rtrees for the face bboxes and use them
-    // for the initial cull as well - for situations where we have to check
-    // a LOT of faces in particular...
+    // Get the bounding boxes of all faces of all breps in s_a, and
+    std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> check_pairs;
+    RTree<void *, double, 3> rtree_fmeshes;
     for (int i = 0; i < s_cnt; i++) {
 	struct ON_Brep_CDT_State *s_i = s_a[i];
 	for (int i_fi = 0; i_fi < s_i->brep->m_F.Count(); i_fi++) {
 	    const ON_BrepFace *i_face = s_i->brep->Face(i_fi);
-	    ON_BoundingBox i_fbb = i_face->BoundingBox();
-	    cdt_mesh::cdt_mesh_t &i_fmesh = s_i->fmeshes[i_fi];
-	    for (int j = i+1; j < s_cnt; j++) {
-		struct ON_Brep_CDT_State *s_j = s_a[j];
-		for (int j_fi = 0; j_fi < s_j->brep->m_F.Count(); j_fi++) {
-		    const ON_BrepFace *j_face = s_j->brep->Face(j_fi);
-		    ON_BoundingBox j_fbb = j_face->BoundingBox();
-		    if (!i_fbb.IsDisjoint(j_fbb)) {
-			cdt_mesh::cdt_mesh_t &j_fmesh = s_j->fmeshes[j_fi];
-			std::cout << "Checking " << i << " face " << i_fi << " against " << j << " face " << j_fi << "\n";
-			size_t ovlp_cnt = i_fmesh.tris_tree.Overlaps(j_fmesh.tris_tree, ovlp_tris[i], ovlp_tris[j]);
-			if (ovlp_cnt) {
-			    std::cout << "   found " << ovlp_cnt << " overlaps\n";
-			} else {
-			    std::cout << "RTREE_ISECT_EMPTY: " << i << " face " << i_fi << " and " << j << " face " << j_fi << "\n";
-			}
-		    } else {
-			std::cout << "DISJOINT: " << i << " face " << i_fi << " and " << j << " face " << j_fi << "\n";
-		    }
-		}
-	    }
+	    ON_BoundingBox bb = i_face->BoundingBox();
+	    cdt_mesh::cdt_mesh_t *fmesh = &s_i->fmeshes[i_fi];
+	    struct nf_info nf;
+	    nf.cmesh = fmesh;
+	    nf.check_pairs = &check_pairs;
+	    double fMin[3];
+	    fMin[0] = bb.Min().x;
+	    fMin[1] = bb.Min().y;
+	    fMin[2] = bb.Min().z;
+	    double fMax[3];
+	    fMax[0] = bb.Max().x;
+	    fMax[1] = bb.Max().y;
+	    fMax[2] = bb.Max().z;
+	    // Check the new box against the existing tree, and add any new
+	    // interaction pairs to check_pairs
+	    rtree_fmeshes.Search(fMin, fMax, NearFacesCallback, (void *)&nf);
+	    // Add the new box to the tree so any additional boxes can check
+	    // against it as well
+	    rtree_fmeshes.Insert(fMin, fMax, (void *)fmesh);
 	}
     }
-    for (int i = 0; i < s_cnt; i++) {
-	delete ovlp_tris[i];
+
+    std::cout << "check_pairs: " << check_pairs.size() << "\n";
+    std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>>::iterator cp_it;
+    for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
+	cdt_mesh::cdt_mesh_t *fmesh1 = cp_it->first;
+	cdt_mesh::cdt_mesh_t *fmesh2 = cp_it->second;
+	struct ON_Brep_CDT_State *s_cdt1 = (struct ON_Brep_CDT_State *)fmesh1->p_cdt;
+	struct ON_Brep_CDT_State *s_cdt2 = (struct ON_Brep_CDT_State *)fmesh2->p_cdt;
+	if (s_cdt1 != s_cdt2) {
+	    std::cout << "Checking " << fmesh1->name << " face " << fmesh1->f_id << " against " << fmesh2->name << " face " << fmesh2->f_id << "\n";
+	    size_t ovlp_cnt = fmesh1->tris_tree.Overlaps(fmesh2->tris_tree, ovlp_tris[s_cdt1][fmesh1->f_id], ovlp_tris[s_cdt2][fmesh2->f_id]);
+	    if (ovlp_cnt) {
+		std::cout << "   found " << ovlp_cnt << " overlaps\n";
+	    } else {
+		std::cout << "RTREE_ISECT_EMPTY: " << fmesh1->name << " face " << fmesh1->f_id << " and " << fmesh2->name << " face " << fmesh2->f_id << "\n";
+	    }
+	} else {
+	    // TODO: In principle we should be checking for self intersections
+	    // - it can happen, particularly in sparse tessellations. That's
+	    // why the above doesn't filter out same-object face overlaps, but
+	    // for now ignore it.  We need to be able to ignore neighboring
+	    // faces according to the brep topology, and that'll be a bit of
+	    // work to set up correctly - we'll have to follow the edges around
+	    // from the loops and build the neighboring face sets.
+	}
     }
+
+    for (int i = 0; i < s_cnt; i++) {
+	struct ON_Brep_CDT_State *s_i = s_a[i];
+	for (int i_fi = 0; i_fi < s_i->brep->m_F.Count(); i_fi++) {
+	    delete ovlp_tris[s_i][i_fi];
+	}
+    }
+
     return 0;
 }
 
