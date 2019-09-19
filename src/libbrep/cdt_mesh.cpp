@@ -1559,7 +1559,7 @@ cdt_mesh_t::tri_add(triangle_t &tri)
     e[2].set(k, i);
     for (int ind = 0; ind < 3; ind++) {
 	ue[ind].set(e[ind].v[0], e[ind].v[1]);
-	this->edges2tris[e[ind]] = tri;
+	edges2tris[e[ind]] = tri;
 	uedges2tris[uedge_t(e[ind])].insert(tri.ind);
 	this->v2edges[e[ind].v[0]].insert(e[ind]);
 	v2tris[tri.v[ind]].insert(tri.ind);
@@ -1585,7 +1585,7 @@ void cdt_mesh_t::tri_remove(triangle_t &tri)
     e[2].set(k, i);
     for (int ind = 0; ind < 3; ind++) {
 	ue[ind].set(e[ind].v[0], e[ind].v[1]);
-	this->edges2tris[e[ind]];
+	edges2tris.erase(e[ind]);
 	uedges2tris[uedge_t(e[ind])].erase(tri.ind);
 	this->v2edges[e[ind].v[0]].erase(e[ind]);
 	v2tris[tri.v[ind]].erase(tri.ind);
