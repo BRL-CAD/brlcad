@@ -556,7 +556,7 @@ private:
     /* Data containers */
     std::map<long, std::set<edge_t>> v2edges;
     std::map<long, std::set<size_t>> v2tris;
-    std::map<edge_t, triangle_t> edges2tris;
+    std::map<edge_t, size_t> edges2tris;
 
     // For situations where we need to process using Brep data
     std::set<ON_3dPoint *> *edge_pnts;

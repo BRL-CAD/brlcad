@@ -1559,7 +1559,7 @@ cdt_mesh_t::tri_add(triangle_t &tri)
     e[2].set(k, i);
     for (int ind = 0; ind < 3; ind++) {
 	ue[ind].set(e[ind].v[0], e[ind].v[1]);
-	edges2tris[e[ind]] = tri;
+	edges2tris[e[ind]] = tri.ind;
 	uedges2tris[uedge_t(e[ind])].insert(tri.ind);
 	this->v2edges[e[ind].v[0]].insert(e[ind]);
 	v2tris[tri.v[ind]].insert(tri.ind);
@@ -3493,7 +3493,7 @@ cdt_mesh_t::deserialize(const char *fname)
 		e[2].set(tk, ti);
 		for (int ind = 0; ind < 3; ind++) {
 		    ue[ind].set(e[ind].v[0], e[ind].v[1]);
-		    edges2tris[e[ind]] = tri;
+		    edges2tris[e[ind]] = tind;
 		    uedges2tris[uedge_t(e[ind])].insert(tind);
 		    v2edges[e[ind].v[0]].insert(e[ind]);
 		    v2tris[tri.v[ind]].insert(tind);
