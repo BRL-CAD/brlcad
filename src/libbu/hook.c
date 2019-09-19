@@ -47,10 +47,9 @@ bu_hook_list_init(struct bu_hook_list *hlp)
 void
 bu_hook_add(struct bu_hook_list *hlp, bu_hook_t func, void *clientdata)
 {
-    if (!func) {
-	/* Nothing to add, done */
+    if (UNLIKELY(!hlp))
 	return;
-    }
+
     if (!hlp->capacity) {
 	/* If we don't have *anything* and we're adding, malloc */
 	hlp->hooks = (struct bu_hook *)bu_malloc(sizeof(struct bu_hook), "first hook");
@@ -59,10 +58,7 @@ bu_hook_add(struct bu_hook_list *hlp, bu_hook_t func, void *clientdata)
     }
     if (hlp->size == hlp->capacity) {
 	hlp->capacity = (hlp->capacity > 0) ? hlp->capacity * 2 : 1;
-	hlp->hooks = (struct bu_hook *)bu_realloc(
-	    hlp->hooks,
-	    sizeof (struct bu_hook) * hlp->capacity,
-	    "resize hooks");
+	hlp->hooks = (struct bu_hook *)bu_realloc(hlp->hooks, sizeof (struct bu_hook) * hlp->capacity, "resize hooks");
     }
 
     hlp->hooks[hlp->size].hookfunc = func;
@@ -76,6 +72,9 @@ bu_hook_delete(struct bu_hook_list *hlp, bu_hook_t func, void *clientdata)
 {
     struct bu_hook *crt;
     size_t i;
+
+    if (UNLIKELY(!hlp))
+	return;
 
     for (i = 0; i < hlp->size; i++) {
 	crt = &hlp->hooks[i];
@@ -93,10 +92,13 @@ bu_hook_call(struct bu_hook_list *hlp, void *buf)
     struct bu_hook *call_hook;
     size_t i;
 
+    if (UNLIKELY(!hlp))
+	return;
+
     for (i = 0; i < hlp->size; i++) {
 	call_hook = &hlp->hooks[i];
 	if (UNLIKELY(!(call_hook->hookfunc))) {
-	    exit(EXIT_FAILURE);	/* don't call through 0! */
+	    continue;
 	}
 	call_hook->hookfunc(call_hook->clientdata, buf);
     }
@@ -108,6 +110,9 @@ bu_hook_save_all(struct bu_hook_list *from, struct bu_hook_list *to)
 {
     size_t i;
 
+    if (UNLIKELY(!from))
+	return;
+
     for (i = 0; i < from->size; i++) {
 	bu_hook_add(to, from->hooks[i].hookfunc, from->hooks[i].clientdata);
     }
@@ -117,7 +122,11 @@ bu_hook_save_all(struct bu_hook_list *from, struct bu_hook_list *to)
 void
 bu_hook_delete_all(struct bu_hook_list *hlp)
 {
-    if (hlp->hooks) bu_free(hlp->hooks, "free hooks");
+    if (UNLIKELY(!hlp))
+	return;
+
+    if (hlp->hooks)
+	bu_free(hlp->hooks, "free hooks");
     hlp->hooks = NULL;
     hlp->size = hlp->capacity = 0;
 }
