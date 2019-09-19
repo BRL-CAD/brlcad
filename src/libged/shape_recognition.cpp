@@ -1090,7 +1090,17 @@ _ged_breps_to_bots(struct ged *gedp, int obj_cnt, const char **obj_names, const 
 	ON_Brep_CDT_Tessellate(ss_cdt[i], 0, NULL);
     }
 
-    // Make meshes
+    // Do comparison/resolution
+    struct ON_Brep_CDT_State **s_a = (struct ON_Brep_CDT_State **)bu_calloc(ss_cdt.size(), sizeof(struct ON_Brep_CDT_State *), "state array");
+    for (size_t i = 0; i < ss_cdt.size(); i++) {
+	s_a[i] = ss_cdt[i];
+    }
+    if (ON_Brep_CDT_Ovlp_Resolve(s_a, obj_cnt) < 0) {
+	bu_vls_printf(gedp->ged_result_str, "Error: RESOLVE fail.");
+	return GED_ERROR;
+    }
+
+    // Make final meshes
     for (int i = 0; i < obj_cnt; i++) {
 	int fcnt, fncnt, ncnt, vcnt;
 	int *faces = NULL;
