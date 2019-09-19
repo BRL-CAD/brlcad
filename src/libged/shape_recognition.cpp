@@ -1043,6 +1043,93 @@ _ged_brep_to_bot(struct ged *gedp, const char *obj_name, const struct rt_brep_in
     return GED_OK;
 }
 
+// TODO - this doesn't belong here, just convenient for now since we need to crack the ON_Brep for this
+//
+// Right now this is just a quick and dirty function to exercise the libbrep logic...
+extern "C" int
+_ged_breps_to_bots(struct ged *gedp, int obj_cnt, const char **obj_names, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
+{
+    if (!gedp || obj_cnt <= 0 || !obj_names || !ttol || !tol) return GED_ERROR;
+
+    struct bg_tess_tol cdttol;
+    cdttol.abs = ttol->abs;
+    cdttol.rel = ttol->rel;
+    cdttol.norm = ttol->norm;
+
+    std::vector<ON_Brep_CDT_State *> ss_cdt;
+    std::vector<std::string> bot_names;
+    std::vector<struct rt_brep_internal *> o_bi;
+
+    // Set up
+    for (int i = 0; i < obj_cnt; i++) {
+	struct directory *dp;
+	struct rt_db_internal intern;
+	struct rt_brep_internal* bi;
+	if ((dp = db_lookup(gedp->ged_wdbp->dbip, obj_names[i], LOOKUP_NOISY)) == RT_DIR_NULL) {
+	    bu_vls_printf(gedp->ged_result_str, "Error: %s is not a solid or does not exist in database", obj_names[i]);
+	    return GED_ERROR;
+	}
+	GED_DB_GET_INTERNAL(gedp, &intern, dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
+	RT_CK_DB_INTERNAL(&intern);
+	bi = (struct rt_brep_internal*)intern.idb_ptr;
+	if (!RT_BREP_TEST_MAGIC(bi)) {
+	    bu_vls_printf(gedp->ged_result_str, "Error: %s is not a brep solid", obj_names[i]);
+	    return GED_ERROR;
+	}
+
+	std::string bname = std::string(obj_names[i]) + std::string("-bot");
+	ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create((void *)bi->brep, obj_names[i]);
+	ON_Brep_CDT_Tol_Set(s_cdt, &cdttol);
+	o_bi.push_back(bi);
+	ss_cdt.push_back(s_cdt);
+	bot_names.push_back(bname);
+    }
+
+    // Do tessellations
+    for (int i = 0; i < obj_cnt; i++) {
+	ON_Brep_CDT_Tessellate(ss_cdt[i], 0, NULL);
+    }
+
+    // Make meshes
+    for (int i = 0; i < obj_cnt; i++) {
+	int fcnt, fncnt, ncnt, vcnt;
+	int *faces = NULL;
+	fastf_t *vertices = NULL;
+	int *face_normals = NULL;
+	fastf_t *normals = NULL;
+
+	ON_Brep_CDT_Mesh(&faces, &fcnt, &vertices, &vcnt, &face_normals, &fncnt, &normals, &ncnt, ss_cdt[i], 0, NULL);
+	ON_Brep_CDT_Destroy(ss_cdt[i]);
+
+	struct bu_vls bot_name = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&bot_name, "%s", bot_names[i].c_str());
+
+	struct rt_bot_internal *bot;
+	BU_GET(bot, struct rt_bot_internal);
+	bot->magic = RT_BOT_INTERNAL_MAGIC;
+	bot->mode = RT_BOT_SOLID;
+	bot->orientation = RT_BOT_CCW;
+	bot->bot_flags = 0;
+	bot->num_vertices = vcnt;
+	bot->num_faces = fcnt;
+	bot->vertices = vertices;
+	bot->faces = faces;
+	bot->thickness = NULL;
+	bot->face_mode = (struct bu_bitv *)NULL;
+	bot->num_normals = ncnt;
+	bot->num_face_normals = fncnt;
+	bot->normals = normals;
+	bot->face_normals = face_normals;
+
+	if (wdb_export(gedp->ged_wdbp, bu_vls_cstr(&bot_name), (void *)bot, ID_BOT, 1.0)) {
+	    return GED_ERROR;
+	}
+	bu_vls_free(&bot_name);
+    }
+
+    return GED_OK;
+}
+
 // Local Variables:
 // tab-width: 8
 // mode: C++

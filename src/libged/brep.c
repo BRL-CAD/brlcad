@@ -348,6 +348,20 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	return bret;
     }
 
+    if (BU_STR_EQUAL(argv[2], "bots")) {
+	/* Call bot conversion routine */
+	int bret = GED_ERROR;
+	const char **av = (const char **)bu_calloc(argc, sizeof(char *), "new argv");
+	av[0] = argv[1];
+	for (int iav = 3; iav < argc; iav++) {
+	    av[iav-2] = argv[iav];
+	}
+	bret = _ged_breps_to_bots(gedp, argc-2, av, (const struct bg_tess_tol *)&gedp->ged_wdbp->wdb_ttol, &gedp->ged_wdbp->wdb_tol);
+	bu_free(av, "av");
+	return bret;
+    }
+
+
     if (BU_STR_EQUAL(argv[2], "csgv")) {
 	/* Call csg conversion routine */
 	struct bu_vls bname_csg;
