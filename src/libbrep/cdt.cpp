@@ -724,10 +724,8 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	    // TODO: In principle we should be checking for self intersections
 	    // - it can happen, particularly in sparse tessellations. That's
 	    // why the above doesn't filter out same-object face overlaps, but
-	    // for now ignore it.  We need to be able to ignore neighboring
-	    // faces according to the brep topology, and that'll be a bit of
-	    // work to set up correctly - we'll have to follow the edges around
-	    // from the loops and build the neighboring face sets.
+	    // for now ignore it.  We need to be able to ignore triangles that
+	    // only share a 3D edge.
 	}
     }
 
