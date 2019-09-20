@@ -727,9 +727,19 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 		    VSET(T2_V[0], fmesh2->pnts[t2.v[0]]->x, fmesh2->pnts[t2.v[0]]->y, fmesh2->pnts[t2.v[0]]->z);
 		    VSET(T2_V[1], fmesh2->pnts[t2.v[1]]->x, fmesh2->pnts[t2.v[1]]->y, fmesh2->pnts[t2.v[1]]->z);
 		    VSET(T2_V[2], fmesh2->pnts[t2.v[2]]->x, fmesh2->pnts[t2.v[2]]->y, fmesh2->pnts[t2.v[2]]->z);
-		    if (bg_tri_tri_isect(T1_V[0], T1_V[1], T1_V[2], T2_V[0], T2_V[1], T2_V[2])) {
-			ovlp_tris[s_cdt1][fmesh1->f_id].insert(t1.ind);
-			ovlp_tris[s_cdt2][fmesh2->f_id].insert(t2.ind);
+		    int coplanar = 0;
+		    point_t isectpt1 = {MAX_FASTF, MAX_FASTF, MAX_FASTF};
+		    point_t isectpt2 = {MAX_FASTF, MAX_FASTF, MAX_FASTF};
+		    if (bg_tri_tri_isect_with_line(T1_V[0], T1_V[1], T1_V[2], T2_V[0], T2_V[1], T2_V[2], &coplanar, &isectpt1, &isectpt2)) {
+			ON_3dPoint p1(isectpt1[X], isectpt1[Y], isectpt1[Z]);
+			ON_3dPoint p2(isectpt2[X], isectpt2[Y], isectpt2[Z]);
+			if (p1.DistanceTo(p2) < ON_ZERO_TOLERANCE) {
+			    std::cout << "skipping pnt isect(" << coplanar << "): " << isectpt1[X] << "," << isectpt1[Y] << "," << isectpt1[Z] << "\n";
+			} else {
+			    std::cout << "isect(" << coplanar << "): " << isectpt1[X] << "," << isectpt1[Y] << "," << isectpt1[Z] << " -> " << isectpt2[X] << "," << isectpt2[Y] << "," << isectpt2[Z] << "\n";
+			    ovlp_tris[s_cdt1][fmesh1->f_id].insert(t1.ind);
+			    ovlp_tris[s_cdt2][fmesh2->f_id].insert(t2.ind);
+			}
 		    }
 		}
 		if (ovlp_tris[s_cdt1][fmesh1->f_id].size()) {
