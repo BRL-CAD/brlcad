@@ -29,6 +29,7 @@
 #include <queue>
 #include <numeric>
 #include "bg/chull.h"
+#include "bg/tri_tri.h"
 #include "./cdt.h"
 
 #define BREP_PLANAR_TOL 0.05
@@ -668,13 +669,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 {
     if (!s_a) return -1;
     if (s_cnt < 1) return 0;
-    std::map<struct ON_Brep_CDT_State *, std::map<int, std::set<size_t>*>> ovlp_tris;
-    for (int i = 0; i < s_cnt; i++) {
-	struct ON_Brep_CDT_State *s_i = s_a[i];
-	for (int i_fi = 0; i_fi < s_i->brep->m_F.Count(); i_fi++) {
-	    ovlp_tris[s_i][i_fi] = new std::set<size_t>;
-	}
-    }
+    std::map<struct ON_Brep_CDT_State *, std::map<int, std::set<size_t>>> ovlp_tris;
 
     // Get the bounding boxes of all faces of all breps in s_a, and
     std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> check_pairs;
@@ -682,6 +677,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
     for (int i = 0; i < s_cnt; i++) {
 	struct ON_Brep_CDT_State *s_i = s_a[i];
 	for (int i_fi = 0; i_fi < s_i->brep->m_F.Count(); i_fi++) {
+	    ovlp_tris[s_i][i_fi].clear();
 	    const ON_BrepFace *i_face = s_i->brep->Face(i_fi);
 	    ON_BoundingBox bb = i_face->BoundingBox();
 	    cdt_mesh::cdt_mesh_t *fmesh = &s_i->fmeshes[i_fi];
@@ -714,9 +710,31 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	struct ON_Brep_CDT_State *s_cdt2 = (struct ON_Brep_CDT_State *)fmesh2->p_cdt;
 	if (s_cdt1 != s_cdt2) {
 	    std::cout << "Checking " << fmesh1->name << " face " << fmesh1->f_id << " against " << fmesh2->name << " face " << fmesh2->f_id << "\n";
-	    size_t ovlp_cnt = fmesh1->tris_tree.Overlaps(fmesh2->tris_tree, ovlp_tris[s_cdt1][fmesh1->f_id], ovlp_tris[s_cdt2][fmesh2->f_id]);
+	    std::set<std::pair<size_t, size_t>> tris_prelim;
+	    size_t ovlp_cnt = fmesh1->tris_tree.Overlaps(fmesh2->tris_tree, &tris_prelim);
 	    if (ovlp_cnt) {
-		std::cout << "   found " << ovlp_cnt << " overlaps\n";
+		std::cout << "   found " << ovlp_cnt << " box overlaps\n";
+		std::set<std::pair<size_t, size_t>>::iterator tb_it;
+		for (tb_it = tris_prelim.begin(); tb_it != tris_prelim.end(); tb_it++) {
+		    // Unpack the actual 3D triangle vertices
+		    point_t T1_V[3];
+		    point_t T2_V[3];
+		    cdt_mesh::triangle_t t1 = fmesh1->tris_vect[tb_it->first];
+		    VSET(T1_V[0], fmesh1->pnts[t1.v[0]]->x, fmesh1->pnts[t1.v[0]]->y, fmesh1->pnts[t1.v[0]]->z);
+		    VSET(T1_V[1], fmesh1->pnts[t1.v[1]]->x, fmesh1->pnts[t1.v[1]]->y, fmesh1->pnts[t1.v[1]]->z);
+		    VSET(T1_V[2], fmesh1->pnts[t1.v[2]]->x, fmesh1->pnts[t1.v[2]]->y, fmesh1->pnts[t1.v[2]]->z);
+		    cdt_mesh::triangle_t t2 = fmesh2->tris_vect[tb_it->second];
+		    VSET(T2_V[0], fmesh2->pnts[t2.v[0]]->x, fmesh2->pnts[t2.v[0]]->y, fmesh2->pnts[t2.v[0]]->z);
+		    VSET(T2_V[1], fmesh2->pnts[t2.v[1]]->x, fmesh2->pnts[t2.v[1]]->y, fmesh2->pnts[t2.v[1]]->z);
+		    VSET(T2_V[2], fmesh2->pnts[t2.v[2]]->x, fmesh2->pnts[t2.v[2]]->y, fmesh2->pnts[t2.v[2]]->z);
+		    if (bg_tri_tri_isect(T1_V[0], T1_V[1], T1_V[2], T2_V[0], T2_V[1], T2_V[2])) {
+			ovlp_tris[s_cdt1][fmesh1->f_id].insert(t1.ind);
+			ovlp_tris[s_cdt2][fmesh2->f_id].insert(t2.ind);
+		    }
+		}
+		if (ovlp_tris[s_cdt1][fmesh1->f_id].size()) {
+		    std::cout << "   found " << ovlp_tris[s_cdt1][fmesh1->f_id].size() << " triangle overlaps\n";
+		}
 	    } else {
 		std::cout << "RTREE_ISECT_EMPTY: " << fmesh1->name << " face " << fmesh1->f_id << " and " << fmesh2->name << " face " << fmesh2->f_id << "\n";
 	    }
@@ -729,11 +747,18 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	}
     }
 
-    for (int i = 0; i < s_cnt; i++) {
-	struct ON_Brep_CDT_State *s_i = s_a[i];
-	for (int i_fi = 0; i_fi < s_i->brep->m_F.Count(); i_fi++) {
-	    delete ovlp_tris[s_i][i_fi];
+    std::map<struct ON_Brep_CDT_State *, std::map<int, std::set<size_t>>>::iterator o_it;
+    for (o_it = ovlp_tris.begin(); o_it != ovlp_tris.end(); o_it++) {
+	struct bu_vls fname = BU_VLS_INIT_ZERO;
+	std::map<int, std::set<size_t>>::iterator f_it;
+	for (f_it = o_it->second.begin(); f_it != o_it->second.end(); f_it++) {
+	    if (f_it->second.size()) {
+		std::cout << o_it->first->name << " face " << f_it->first << " overlap tri cnt " << f_it->second.size() << "\n";
+		bu_vls_sprintf(&fname, "%s-%d_ovlp_tris.plot3", o_it->first->name, f_it->first);
+		o_it->first->fmeshes[f_it->first].tris_ind_set_plot(f_it->second, bu_vls_cstr(&fname));
+	    }
 	}
+	bu_vls_free(&fname);
     }
 
     return 0;

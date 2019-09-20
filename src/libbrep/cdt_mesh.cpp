@@ -3135,6 +3135,18 @@ void cdt_mesh_t::tris_set_plot(std::set<triangle_t> &tset, const char *filename)
     fclose(plot_file);
 }
 
+void cdt_mesh_t::tris_ind_set_plot(std::set<size_t> &tset, const char *filename)
+{
+    std::vector<triangle_t> ts_vect;
+
+    std::set<size_t>::iterator ts_it;
+    for (ts_it = tset.begin(); ts_it != tset.end(); ts_it++) {
+	ts_vect.push_back(tris_vect[*ts_it]);
+    }
+
+    tris_vect_plot(ts_vect, filename);
+}
+
 void cdt_mesh_t::tris_plot(const char *filename)
 {
     FILE* plot_file = fopen(filename, "w");

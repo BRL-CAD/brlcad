@@ -522,6 +522,7 @@ public:
     void vertex_face_neighbors_plot(long vind, const char *filename);
     void interior_incorrect_normals_plot(const char *filename);
     void tris_set_plot(std::set<triangle_t> &tset, const char *filename);
+    void tris_ind_set_plot(std::set<size_t> &tset, const char *filename);
     void tris_vect_plot(std::vector<triangle_t> &tvect, const char *filename);
     void ctris_vect_plot(std::vector<struct ctriangle_t> &tvect, const char *filename);
     void tris_plot(const char *filename);
