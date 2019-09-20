@@ -152,9 +152,12 @@ struct uedge_t {
     }
 };
 
+class cdt_mesh_t;
+
 struct triangle_t {
     long v[3];
     size_t ind;
+    cdt_mesh_t *mesh;
 
     long& i() { return v[0]; }
     const long& i() const { return v[0]; }

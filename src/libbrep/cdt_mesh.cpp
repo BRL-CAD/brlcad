@@ -1545,6 +1545,7 @@ cdt_mesh_t::tri_add(triangle_t &tri)
 
     // Add the triangle
     tri.ind = tris_vect.size();
+    tri.mesh = this;
     tris_vect.push_back(tri);
     tris_tree.Insert(fMin, fMax, tri.ind);
 
