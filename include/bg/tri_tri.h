@@ -56,6 +56,11 @@ BG_EXPORT extern int bg_tri_tri_isect(point_t V0,
 				      point_t U1,
 				      point_t U2);
 
+/* Return 1 if the triangles intersect, else 0.  coplanar flag
+ * is set if the triangles are coplanar, and isectpts are set
+ * to the start and end points of the line segment describing
+ * the triangle intersections.  If the intersection is a point,
+ * isectpt2 will be the same point as isectpt1. */
 BG_EXPORT extern int bg_tri_tri_isect_with_line(point_t V0,
 						point_t V1,
 						point_t V2,
@@ -64,7 +69,7 @@ BG_EXPORT extern int bg_tri_tri_isect_with_line(point_t V0,
 						point_t U2,
 						int *coplanar,
 						point_t *isectpt1,
-						point_t *isectp2);
+						point_t *isectpt2);
 
 __END_DECLS
 
