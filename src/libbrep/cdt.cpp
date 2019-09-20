@@ -743,12 +743,15 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 			    // Using triangle planes, determine which point(s) from the opposite triangle are
 			    // "inside" the meshes.  Those are the points we will need to try to get closest point
 			    // from to refine the mesh.
+			    std::set<size_t> fmesh1_interior_pnts;
+			    std::set<size_t> fmesh2_interior_pnts;
 			    ON_Plane plane1 = fmesh1->tplane(t1);
 			    for (int i = 0; i < 3; i++) {
 				ON_3dPoint tp = *fmesh2->pnts[t2.v[i]];
 				double dist = plane1.DistanceTo(tp);
 				if (dist < 0 && fabs(dist) > ON_ZERO_TOLERANCE) {
 				    std::cout << "face " << fmesh1->f_id << " new interior point from face " << fmesh2->f_id << ": " << tp.x << "," << tp.y << "," << tp.z << "\n";
+				    fmesh2_interior_pnts.insert(t2.v[i]);
 				}
 			    }
 
@@ -758,11 +761,27 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 				double dist = plane2.DistanceTo(tp);
 				if (dist < 0 && fabs(dist) > ON_ZERO_TOLERANCE) {
 				    std::cout << "face " << fmesh2->f_id << " new interior point from face " << fmesh1->f_id << ": " << tp.x << "," << tp.y << "," << tp.z << "\n";
+				    fmesh1_interior_pnts.insert(t1.v[i]);
 				}
 			    }
 
-			    // TODO: If any "inside" points are from face edges, we need to start with those - they involve
+			    // If any "inside" points are from face edges, we need to start with those - they involve
 			    // finding the closest edge point and updating two faces
+			    std::set<size_t>::iterator s_it;
+			    for (s_it = fmesh1_interior_pnts.begin(); s_it != fmesh1_interior_pnts.end(); s_it++) {
+				if (fmesh1->brep_edge_pnt(*s_it)) {
+				    std::cout << "EDGE pnt: face " << fmesh1->f_id << " interior point " << *s_it << "\n";
+				} else {
+				    std::cout << "NOT EDGE pnt: face " << fmesh1->f_id << " interior point " << *s_it << "\n";
+				}
+			    }
+			    for (s_it = fmesh2_interior_pnts.begin(); s_it != fmesh2_interior_pnts.end(); s_it++) {
+				if (fmesh2->brep_edge_pnt(*s_it)) {
+				    std::cout << "EDGE pnt: face " << fmesh2->f_id << " interior point " << *s_it << "\n";
+				} else {
+				    std::cout << "NOT EDGE pnt: face " << fmesh2->f_id << " interior point " << *s_it << "\n";
+				}
+			    }
 			}
 		    }
 		}
