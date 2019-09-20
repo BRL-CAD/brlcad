@@ -736,9 +736,33 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 			if (p1.DistanceTo(p2) < ON_ZERO_TOLERANCE) {
 			    std::cout << "skipping pnt isect(" << coplanar << "): " << isectpt1[X] << "," << isectpt1[Y] << "," << isectpt1[Z] << "\n";
 			} else {
-			    std::cout << "isect(" << coplanar << "): " << isectpt1[X] << "," << isectpt1[Y] << "," << isectpt1[Z] << " -> " << isectpt2[X] << "," << isectpt2[Y] << "," << isectpt2[Z] << "\n";
+			    //std::cout << "isect(" << coplanar << "): " << isectpt1[X] << "," << isectpt1[Y] << "," << isectpt1[Z] << " -> " << isectpt2[X] << "," << isectpt2[Y] << "," << isectpt2[Z] << "\n";
 			    ovlp_tris[s_cdt1][fmesh1->f_id].insert(t1.ind);
 			    ovlp_tris[s_cdt2][fmesh2->f_id].insert(t2.ind);
+
+			    // Using triangle planes, determine which point(s) from the opposite triangle are
+			    // "inside" the meshes.  Those are the points we will need to try to get closest point
+			    // from to refine the mesh.
+			    ON_Plane plane1 = fmesh1->tplane(t1);
+			    for (int i = 0; i < 3; i++) {
+				ON_3dPoint tp = *fmesh2->pnts[t2.v[i]];
+				double dist = plane1.DistanceTo(tp);
+				if (dist < 0 && fabs(dist) > ON_ZERO_TOLERANCE) {
+				    std::cout << "face " << fmesh1->f_id << " new interior point from face " << fmesh2->f_id << ": " << tp.x << "," << tp.y << "," << tp.z << "\n";
+				}
+			    }
+
+			    ON_Plane plane2 = fmesh2->tplane(t2);
+			    for (int i = 0; i < 3; i++) {
+				ON_3dPoint tp = *fmesh1->pnts[t1.v[i]];
+				double dist = plane2.DistanceTo(tp);
+				if (dist < 0 && fabs(dist) > ON_ZERO_TOLERANCE) {
+				    std::cout << "face " << fmesh2->f_id << " new interior point from face " << fmesh1->f_id << ": " << tp.x << "," << tp.y << "," << tp.z << "\n";
+				}
+			    }
+
+			    // TODO: If any "inside" points are from face edges, we need to start with those - they involve
+			    // finding the closest edge point and updating two faces
 			}
 		    }
 		}

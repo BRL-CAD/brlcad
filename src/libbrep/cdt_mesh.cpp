@@ -1880,6 +1880,14 @@ cdt_mesh_t::tcenter(const triangle_t &t)
     return cpnt;
 }
 
+ON_Plane
+cdt_mesh_t::tplane(const triangle_t &t)
+{
+    ON_3dPoint tc = tcenter(t);
+    ON_3dVector tn = tnorm(t);
+    return ON_Plane(tc, tn);
+}
+
 ON_3dVector
 cdt_mesh_t::bnorm(const triangle_t &t)
 {
