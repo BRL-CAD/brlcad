@@ -765,8 +765,10 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 				}
 			    }
 
-			    // If any "inside" points are from face edges, we need to start with those - they involve
-			    // finding the closest edge point and updating two faces
+			    // Actually, edge aware splitting probably needs not the awareness defined below but an
+			    // awareness of when the OTHER mesh will need to split its edge.  That means checking
+			    // the triangle bboxes against the 3D edge rtree and flagging them there, so we know
+			    // to do a closest-point-on-edge attempt in addition to the surface point attempt.
 			    std::set<size_t>::iterator s_it;
 			    for (s_it = fmesh1_interior_pnts.begin(); s_it != fmesh1_interior_pnts.end(); s_it++) {
 				if (fmesh1->brep_edge_pnt(*s_it)) {
