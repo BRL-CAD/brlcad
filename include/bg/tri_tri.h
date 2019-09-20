@@ -48,6 +48,7 @@ BG_EXPORT extern int bg_tri_tri_isect_coplanar(point_t V0,
 					       point_t U2,
 					       int area_flag);
 
+/* Return 1 if the triangles intersect, else 0 */
 BG_EXPORT extern int bg_tri_tri_isect(point_t V0,
 				      point_t V1,
 				      point_t V2,
