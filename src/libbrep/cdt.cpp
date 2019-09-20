@@ -663,6 +663,16 @@ static bool NearFacesCallback(void *data, void *a_context) {
     return true;
 }
 
+struct ne_info {
+    std::map<int, std::set<cdt_mesh::cpolyedge_t *>> *tris_to_edges;
+    size_t tind;
+};
+static bool NearEdgesCallback(void *data, void *a_context) {
+    struct ne_info *ne = (struct ne_info *)a_context;
+    cdt_mesh::cpolyedge_t *pe  = (cdt_mesh::cpolyedge_t *)data;
+    (*ne->tris_to_edges)[ne->tind].insert(pe);
+    return true;
+}
 
 int
 ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
@@ -711,6 +721,8 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	if (s_cdt1 != s_cdt2) {
 	    std::cout << "Checking " << fmesh1->name << " face " << fmesh1->f_id << " against " << fmesh2->name << " face " << fmesh2->f_id << "\n";
 	    std::set<std::pair<size_t, size_t>> tris_prelim;
+	    std::map<int, std::set<cdt_mesh::cpolyedge_t *>> tris_to_opp_face_edges_1;
+	    std::map<int, std::set<cdt_mesh::cpolyedge_t *>> tris_to_opp_face_edges_2;
 	    size_t ovlp_cnt = fmesh1->tris_tree.Overlaps(fmesh2->tris_tree, &tris_prelim);
 	    if (ovlp_cnt) {
 		std::cout << "   found " << ovlp_cnt << " box overlaps\n";
@@ -736,6 +748,58 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 			if (p1.DistanceTo(p2) < ON_ZERO_TOLERANCE) {
 			    std::cout << "skipping pnt isect(" << coplanar << "): " << isectpt1[X] << "," << isectpt1[Y] << "," << isectpt1[Z] << "\n";
 			} else {
+
+			    // Determine if the triangle in question needs to be checked against the other brep's edges
+			    // We need awareness of when the OTHER mesh will need to split its edge.  That means checking
+			    // the triangle bboxes against the 3D edge rtree and flagging them there, so we know
+			    // to do a closest-point-on-edge calculation in addition to the surface point attempt.  We
+			    // don't want to be too reluctant to split edges or we'll end up sampling surface points too
+			    // close to sparse edges.  Probably need to use the same reject criteria we use in that sampling,
+			    // and trigger an edge split if we can't get a suitable surface point...  For coplanar problem
+			    // cases there's no ambiguity - we have to split the edge.
+			    double fMin[3]; double fMax[3];
+			    ON_3dPoint *p3d = fmesh1->pnts[t1.v[0]];
+			    ON_BoundingBox bb1(*p3d, *p3d);
+			    for (int i = 1; i < 3; i++) {
+				p3d = fmesh1->pnts[t1.v[i]];
+				bb1.Set(*p3d, true);
+			    }
+			    fMin[0] = bb1.Min().x;
+			    fMin[1] = bb1.Min().y;
+			    fMin[2] = bb1.Min().z;
+			    fMax[0] = bb1.Max().x;
+			    fMax[1] = bb1.Max().y;
+			    fMax[2] = bb1.Max().z;
+			    struct ne_info ne1;
+			    ne1.tris_to_edges = &tris_to_opp_face_edges_1;
+			    ne1.tind = t1.ind;
+			    size_t nhits1 = s_cdt2->face_rtrees_3d[fmesh2->f_id].Search(fMin, fMax, NearEdgesCallback, &ne1);
+			    if (nhits1) {
+				std::cout << "Face " << fmesh1->f_id << " has potential edge curve interaction with " << fmesh2->f_id << "\n";
+			    }
+
+
+			    p3d = fmesh2->pnts[t2.v[0]];
+			    ON_BoundingBox bb2(*p3d, *p3d);
+			    for (int i = 1; i < 3; i++) {
+				p3d = fmesh2->pnts[t2.v[i]];
+				bb2.Set(*p3d, true);
+			    }
+			    fMin[0] = bb2.Min().x;
+			    fMin[1] = bb2.Min().y;
+			    fMin[2] = bb2.Min().z;
+			    fMax[0] = bb2.Max().x;
+			    fMax[1] = bb2.Max().y;
+			    fMax[2] = bb2.Max().z;
+			    struct ne_info ne2;
+			    ne2.tris_to_edges = &tris_to_opp_face_edges_2;
+			    ne2.tind = t2.ind;
+			    size_t nhits2 = s_cdt1->face_rtrees_3d[fmesh1->f_id].Search(fMin, fMax, NearEdgesCallback, &ne2);
+			    if (nhits2) {
+				std::cout << "Face " << fmesh2->f_id << " has potential edge curve interaction with " << fmesh1->f_id << "\n";
+			    }
+
+
 			    //std::cout << "isect(" << coplanar << "): " << isectpt1[X] << "," << isectpt1[Y] << "," << isectpt1[Z] << " -> " << isectpt2[X] << "," << isectpt2[Y] << "," << isectpt2[Z] << "\n";
 			    ovlp_tris[s_cdt1][fmesh1->f_id].insert(t1.ind);
 			    ovlp_tris[s_cdt2][fmesh2->f_id].insert(t2.ind);
@@ -765,25 +829,6 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 				}
 			    }
 
-			    // Actually, edge aware splitting probably needs not the awareness defined below but an
-			    // awareness of when the OTHER mesh will need to split its edge.  That means checking
-			    // the triangle bboxes against the 3D edge rtree and flagging them there, so we know
-			    // to do a closest-point-on-edge attempt in addition to the surface point attempt.
-			    std::set<size_t>::iterator s_it;
-			    for (s_it = fmesh1_interior_pnts.begin(); s_it != fmesh1_interior_pnts.end(); s_it++) {
-				if (fmesh1->brep_edge_pnt(*s_it)) {
-				    std::cout << "EDGE pnt: face " << fmesh1->f_id << " interior point " << *s_it << "\n";
-				} else {
-				    std::cout << "NOT EDGE pnt: face " << fmesh1->f_id << " interior point " << *s_it << "\n";
-				}
-			    }
-			    for (s_it = fmesh2_interior_pnts.begin(); s_it != fmesh2_interior_pnts.end(); s_it++) {
-				if (fmesh2->brep_edge_pnt(*s_it)) {
-				    std::cout << "EDGE pnt: face " << fmesh2->f_id << " interior point " << *s_it << "\n";
-				} else {
-				    std::cout << "NOT EDGE pnt: face " << fmesh2->f_id << " interior point " << *s_it << "\n";
-				}
-			    }
 			}
 		    }
 		}
