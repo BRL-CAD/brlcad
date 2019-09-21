@@ -91,10 +91,16 @@ struct brep_cdt_tol {
 };
 #define BREP_CDT_TOL_ZERO {0.0, 0.0, 0.0}
 
+struct ON_Brep_CDT_State;
+
 struct brep_face_ovlp_instance {
-    cdt_mesh::cdt_mesh_t *intruding_pnt_src_mesh;
+    struct ON_Brep_CDT_State *intruding_pnt_s_cdt;
+    int intruding_pnt_face_ind;
+    int intruding_pnt_tri_ind;
     long intruding_pnt;
-    size_t local_intersected_triangle;
+    struct ON_Brep_CDT_State *intersected_tri_s_cdt;
+    int intersected_tri_face_ind;
+    int intersected_tri_ind;
     bool coplanar_intersection;
 };
 
@@ -188,6 +194,7 @@ void plot_rtree_3d(RTree<void *, double, 3> &rtree, const char *filename);
 void plot_bbox(point_t m_min, point_t m_max, const char *filename);
 void plot_on_bbox(ON_BoundingBox &bb, const char *filename);
 void plot_ce_bbox(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe, const char *filename);
+void plot_pnt_3d(FILE *plot_file, ON_3dPoint *p, double r, int dir);
 
 
 std::vector<cdt_mesh::cpolyedge_t *>

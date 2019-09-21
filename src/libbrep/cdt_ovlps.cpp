@@ -35,21 +35,52 @@
 #include "bg/tri_tri.h"
 #include "./cdt.h"
 
-struct nf_info {
-    std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> *check_pairs;
-    cdt_mesh::cdt_mesh_t *cmesh;
-};
+static void
+plot_ovlp(struct brep_face_ovlp_instance *ovlp, FILE *plot)
+{
+    if (!ovlp) return;
+    cdt_mesh::cdt_mesh_t &imesh = ovlp->intruding_pnt_s_cdt->fmeshes[ovlp->intruding_pnt_face_ind];
+    cdt_mesh::cdt_mesh_t &cmesh = ovlp->intersected_tri_s_cdt->fmeshes[ovlp->intersected_tri_face_ind];
+    cdt_mesh::triangle_t i_tri = imesh.tris_vect[ovlp->intruding_pnt_tri_ind];
+    cdt_mesh::triangle_t c_tri = cmesh.tris_vect[ovlp->intersected_tri_ind];
+    ON_3dPoint *i_p = imesh.pnts[ovlp->intruding_pnt];
 
-static bool NearFacesCallback(void *data, void *a_context) {
-    struct nf_info *nf = (struct nf_info *)a_context;
-    cdt_mesh::cdt_mesh_t *omesh = (cdt_mesh::cdt_mesh_t *)data;
-    std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *> p1(nf->cmesh, omesh);
-    std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *> p2(omesh, nf->cmesh);
-    if ((nf->check_pairs->find(p1) == nf->check_pairs->end()) && (nf->check_pairs->find(p1) == nf->check_pairs->end())) {
-	nf->check_pairs->insert(p1);
+    ON_3dPoint *p3d = imesh.pnts[i_tri.v[0]];
+    ON_BoundingBox bb1(*p3d, *p3d);
+    for (int i = 1; i < 3; i++) {
+	p3d = imesh.pnts[i_tri.v[i]];
+	bb1.Set(*p3d, true);
     }
-    return true;
+    double bb1d = bb1.Diagonal().Length();
+    p3d = cmesh.pnts[c_tri.v[0]];
+    ON_BoundingBox bb2(*p3d, *p3d);
+    for (int i = 1; i < 3; i++) {
+	p3d = cmesh.pnts[c_tri.v[i]];
+	bb2.Set(*p3d, true);
+    }
+    double bb2d = bb2.Diagonal().Length();
+    double pnt_r = (bb1d < bb2d) ? bb1d * 0.05 : bb2d * 0.05;
+
+    pl_color(plot, 0, 0, 255);
+    cmesh.plot_tri(c_tri, NULL, plot, 0, 0, 0);
+    //pl_color(plot, 255, 0, 0);
+    //imesh.plot_tri(i_tri, NULL, plot, 0, 0, 0);
+    pl_color(plot, 255, 0, 0);
+    plot_pnt_3d(plot, i_p, pnt_r, 0);
 }
+
+static void
+plot_ovlps(struct ON_Brep_CDT_State *s_cdt, int fi)
+{
+    struct bu_vls fname = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&fname, "%s_%d_ovlps.plot3", s_cdt->name, fi);
+    FILE* plot_file = fopen(bu_vls_cstr(&fname), "w");
+    for (size_t i = 0; i < s_cdt->face_ovlps[fi].size(); i++) {
+	plot_ovlp(s_cdt->face_ovlps[fi][i], plot_file);
+    }
+    fclose(plot_file);
+}
+
 
 // Return 0 if no intersection, 1 if coplanar intersection, 2 if non-coplanar intersection
 static int
@@ -148,6 +179,21 @@ void edge_check() {
 #endif
 }
 
+struct nf_info {
+    std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> *check_pairs;
+    cdt_mesh::cdt_mesh_t *cmesh;
+};
+
+static bool NearFacesCallback(void *data, void *a_context) {
+    struct nf_info *nf = (struct nf_info *)a_context;
+    cdt_mesh::cdt_mesh_t *omesh = (cdt_mesh::cdt_mesh_t *)data;
+    std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *> p1(nf->cmesh, omesh);
+    std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *> p2(omesh, nf->cmesh);
+    if ((nf->check_pairs->find(p1) == nf->check_pairs->end()) && (nf->check_pairs->find(p1) == nf->check_pairs->end())) {
+	nf->check_pairs->insert(p1);
+    }
+    return true;
+}
 int
 ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 {
@@ -220,9 +266,15 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 			    if (dist < 0 && fabs(dist) > ON_ZERO_TOLERANCE) {
 				//std::cout << "face " << fmesh1->f_id << " new interior point from face " << fmesh2->f_id << ": " << tp.x << "," << tp.y << "," << tp.z << "\n";
 				struct brep_face_ovlp_instance *ovlp = new struct brep_face_ovlp_instance;
-				ovlp->intruding_pnt_src_mesh = fmesh2;
+				ovlp->intruding_pnt_s_cdt = s_cdt2;
+				ovlp->intruding_pnt_face_ind = fmesh2->f_id;
+				ovlp->intruding_pnt_tri_ind = t2.ind;
 				ovlp->intruding_pnt = t2.v[i];
-				ovlp->local_intersected_triangle = t1.ind;
+
+				ovlp->intersected_tri_s_cdt = s_cdt1;
+				ovlp->intersected_tri_face_ind = fmesh1->f_id;
+				ovlp->intersected_tri_ind = t1.ind;
+
 				ovlp->coplanar_intersection = (isect == 1) ? true : false;
 				s_cdt1->face_ovlps[fmesh1->f_id].push_back(ovlp);
 			    }
@@ -236,9 +288,15 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 				//std::cout << "face " << fmesh2->f_id << " new interior point from face " << fmesh1->f_id << ": " << tp.x << "," << tp.y << "," << tp.z << "\n";
 				fmesh1_interior_pnts.insert(t1.v[i]);
 				struct brep_face_ovlp_instance *ovlp = new struct brep_face_ovlp_instance;
-				ovlp->intruding_pnt_src_mesh = fmesh1;
+				ovlp->intruding_pnt_s_cdt = s_cdt1;
+				ovlp->intruding_pnt_face_ind = fmesh1->f_id;
+				ovlp->intruding_pnt_tri_ind = t1.ind;
 				ovlp->intruding_pnt = t1.v[i];
-				ovlp->local_intersected_triangle = t2.ind;
+
+				ovlp->intersected_tri_s_cdt = s_cdt2;
+				ovlp->intersected_tri_face_ind = fmesh2->f_id;
+				ovlp->intersected_tri_ind = t2.ind;
+
 				ovlp->coplanar_intersection = (isect == 1) ? true : false;
 				s_cdt2->face_ovlps[fmesh2->f_id].push_back(ovlp);
 			    }
@@ -263,6 +321,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	for (int i_fi = 0; i_fi < s_i->brep->m_F.Count(); i_fi++) {
 	    if (s_i->face_ovlps[i_fi].size()) {
 		std::cout << s_i->name << " face " << i_fi << " overlap instance cnt " << s_i->face_ovlps[i_fi].size() << "\n";
+		plot_ovlps(s_i, i_fi);
 	    }
 	}
     }

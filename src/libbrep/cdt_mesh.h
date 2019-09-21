@@ -527,6 +527,7 @@ public:
     void ctris_vect_plot(std::vector<struct ctriangle_t> &tvect, const char *filename);
     void tris_plot(const char *filename);
     void tri_plot(const triangle_t &tri, const char *filename);
+    void plot_tri(const triangle_t &t, struct bu_color *buc, FILE *plot, int r, int g, int b);
 
     void tris_vect_plot_2d(std::vector<triangle_t> &tset, const char *filename);
     void tris_plot_2d(const char *filename);
@@ -589,7 +590,6 @@ private:
     void tri_remove(triangle_t &etris);
 
     // Plotting utility functions
-    void plot_tri(const triangle_t &t, struct bu_color *buc, FILE *plot, int r, int g, int b);
     void plot_uedge(struct uedge_t &ue, FILE* plot_file);
     void plot_tri_2d(const triangle_t &t, struct bu_color *buc, FILE *plot);
     void polyplot_2d(cpolygon_t *polygon, FILE* plot_file);

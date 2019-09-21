@@ -42,6 +42,7 @@
 #include "bg/polygon.h"
 #include "brep.h"
 #include "./cdt_mesh.h"
+#include "./cdt.h"
 
 // needed for implementation
 #include <iostream>
@@ -106,62 +107,6 @@ plot_pnt_2d(FILE *plot_file, ON_2dPoint *p, double r, int dir)
 	pdv_3cont(plot_file, bnp);
 	pdv_3cont(plot_file, origin);
 	VSET(bnp, p->x-r, p->y-r, 0);
-	pdv_3cont(plot_file, bnp);
-	pdv_3cont(plot_file, origin);
-    }
-}
-
-void
-plot_pnt_3d(FILE *plot_file, ON_3dPoint *p, double r, int dir)
-{
-    point_t origin, bnp;
-    VSET(origin, p->x, p->y, p->z);
-    pdv_3move(plot_file, origin);
-
-    if (dir == 0) {
-	VSET(bnp, p->x+r, p->y, p->z);
-	pdv_3cont(plot_file, bnp);
-	pdv_3cont(plot_file, origin);
-	VSET(bnp, p->x-r, p->y, p->z);
-	pdv_3cont(plot_file, bnp);
-	pdv_3cont(plot_file, origin);
-	VSET(bnp, p->x, p->y+r, p->z);
-	pdv_3cont(plot_file, bnp);
-	pdv_3cont(plot_file, origin);
-	VSET(bnp, p->x, p->y-r, p->z);
-	pdv_3cont(plot_file, bnp);
-	pdv_3cont(plot_file, origin);
-	VSET(bnp, p->x, p->y, p->z+r);
-	pdv_3cont(plot_file, bnp);
-	pdv_3cont(plot_file, origin);
-	VSET(bnp, p->x, p->y, p->z-r);
-	pdv_3cont(plot_file, bnp);
-	pdv_3cont(plot_file, origin);
-    }
-    if (dir == 1) {
-	VSET(bnp, p->x+r, p->y+r, p->z+r);
-	pdv_3cont(plot_file, bnp);
-	pdv_3cont(plot_file, origin);
-	VSET(bnp, p->x+r, p->y-r, p->z+r);
-	pdv_3cont(plot_file, bnp);
-	pdv_3cont(plot_file, origin);
-	VSET(bnp, p->x-r, p->y+r, p->z+r);
-	pdv_3cont(plot_file, bnp);
-	pdv_3cont(plot_file, origin);
-	VSET(bnp, p->x-r, p->y-r, p->z+r);
-	pdv_3cont(plot_file, bnp);
-	pdv_3cont(plot_file, origin);
-
-	VSET(bnp, p->x+r, p->y+r, p->z-r);
-	pdv_3cont(plot_file, bnp);
-	pdv_3cont(plot_file, origin);
-	VSET(bnp, p->x+r, p->y-r, p->z-r);
-	pdv_3cont(plot_file, bnp);
-	pdv_3cont(plot_file, origin);
-	VSET(bnp, p->x-r, p->y+r, p->z-r);
-	pdv_3cont(plot_file, bnp);
-	pdv_3cont(plot_file, origin);
-	VSET(bnp, p->x-r, p->y-r, p->z-r);
 	pdv_3cont(plot_file, bnp);
 	pdv_3cont(plot_file, origin);
     }
@@ -3018,7 +2963,9 @@ void cdt_mesh_t::plot_tri(const triangle_t &t, struct bu_color *buc, FILE *plot,
     }
 #endif
     /* restore previous color */
-    pl_color_buc(plot, buc);
+    if (buc) {
+	pl_color_buc(plot, buc);
+    }
 }
 
 void cdt_mesh_t::face_neighbors_plot(const triangle_t &f, const char *filename)

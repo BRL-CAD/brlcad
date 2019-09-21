@@ -202,6 +202,61 @@ plot_ce_bbox(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe, const c
     fclose(plot_file);
 }
 
+void
+plot_pnt_3d(FILE *plot_file, ON_3dPoint *p, double r, int dir)
+{
+    point_t origin, bnp;
+    VSET(origin, p->x, p->y, p->z);
+    pdv_3move(plot_file, origin);
+
+    if (dir == 0) {
+	VSET(bnp, p->x+r, p->y, p->z);
+	pdv_3cont(plot_file, bnp);
+	pdv_3cont(plot_file, origin);
+	VSET(bnp, p->x-r, p->y, p->z);
+	pdv_3cont(plot_file, bnp);
+	pdv_3cont(plot_file, origin);
+	VSET(bnp, p->x, p->y+r, p->z);
+	pdv_3cont(plot_file, bnp);
+	pdv_3cont(plot_file, origin);
+	VSET(bnp, p->x, p->y-r, p->z);
+	pdv_3cont(plot_file, bnp);
+	pdv_3cont(plot_file, origin);
+	VSET(bnp, p->x, p->y, p->z+r);
+	pdv_3cont(plot_file, bnp);
+	pdv_3cont(plot_file, origin);
+	VSET(bnp, p->x, p->y, p->z-r);
+	pdv_3cont(plot_file, bnp);
+	pdv_3cont(plot_file, origin);
+    }
+    if (dir == 1) {
+	VSET(bnp, p->x+r, p->y+r, p->z+r);
+	pdv_3cont(plot_file, bnp);
+	pdv_3cont(plot_file, origin);
+	VSET(bnp, p->x+r, p->y-r, p->z+r);
+	pdv_3cont(plot_file, bnp);
+	pdv_3cont(plot_file, origin);
+	VSET(bnp, p->x-r, p->y+r, p->z+r);
+	pdv_3cont(plot_file, bnp);
+	pdv_3cont(plot_file, origin);
+	VSET(bnp, p->x-r, p->y-r, p->z+r);
+	pdv_3cont(plot_file, bnp);
+	pdv_3cont(plot_file, origin);
+
+	VSET(bnp, p->x+r, p->y+r, p->z-r);
+	pdv_3cont(plot_file, bnp);
+	pdv_3cont(plot_file, origin);
+	VSET(bnp, p->x+r, p->y-r, p->z-r);
+	pdv_3cont(plot_file, bnp);
+	pdv_3cont(plot_file, origin);
+	VSET(bnp, p->x-r, p->y+r, p->z-r);
+	pdv_3cont(plot_file, bnp);
+	pdv_3cont(plot_file, origin);
+	VSET(bnp, p->x-r, p->y-r, p->z-r);
+	pdv_3cont(plot_file, bnp);
+	pdv_3cont(plot_file, origin);
+    }
+}
 
 std::vector<cdt_mesh::cpolyedge_t *>
 cdt_face_polyedges(struct ON_Brep_CDT_State *s_cdt, int face_index)
