@@ -91,6 +91,12 @@ struct brep_cdt_tol {
 };
 #define BREP_CDT_TOL_ZERO {0.0, 0.0, 0.0}
 
+struct brep_face_ovlp_instance {
+    cdt_mesh::cdt_mesh_t *intruding_pnt_src_mesh;
+    long intruding_pnt;
+    size_t local_intersected_triangle;
+    bool coplanar_intersection;
+};
 
 struct ON_Brep_CDT_State {
 
@@ -131,13 +137,16 @@ struct ON_Brep_CDT_State {
     std::map<ON_3dPoint *, struct cdt_audit_info *> *pnt_audit_info;
 
     /* Face specific data */
+    std::map<int, cdt_mesh::cdt_mesh_t> fmeshes;
     std::map<int, struct ON_Brep_CDT_Face_State *> *faces;
     std::map<int, RTree<void *, double, 2>> face_rtrees_2d;
     std::map<int, RTree<void *, double, 3>> face_rtrees_3d;
     std::map<int, std::map<int,ON_3dPoint *>> strim_pnts;
     std::map<int, std::map<int,ON_3dPoint *>> strim_norms;
 
-    std::map<int, cdt_mesh::cdt_mesh_t> fmeshes;
+
+    std::map<int, std::vector<struct brep_face_ovlp_instance *>> face_ovlps;
+    std::set<int> faces_to_update;
 };
 
 #if 0

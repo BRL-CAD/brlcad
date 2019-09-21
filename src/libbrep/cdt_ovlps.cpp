@@ -51,6 +51,37 @@ static bool NearFacesCallback(void *data, void *a_context) {
     return true;
 }
 
+// Return 0 if no intersection, 1 if coplanar intersection, 2 if non-coplanar intersection
+static int 
+tri_isect(cdt_mesh::cdt_mesh_t *fmesh1, cdt_mesh::triangle_t &t1, cdt_mesh::cdt_mesh_t *fmesh2, cdt_mesh::triangle_t &t2)
+{
+    int coplanar = 0;
+    point_t isectpt1 = {MAX_FASTF, MAX_FASTF, MAX_FASTF};
+    point_t isectpt2 = {MAX_FASTF, MAX_FASTF, MAX_FASTF};
+    
+    point_t T1_V[3];
+    point_t T2_V[3];
+    VSET(T1_V[0], fmesh1->pnts[t1.v[0]]->x, fmesh1->pnts[t1.v[0]]->y, fmesh1->pnts[t1.v[0]]->z);
+    VSET(T1_V[1], fmesh1->pnts[t1.v[1]]->x, fmesh1->pnts[t1.v[1]]->y, fmesh1->pnts[t1.v[1]]->z);
+    VSET(T1_V[2], fmesh1->pnts[t1.v[2]]->x, fmesh1->pnts[t1.v[2]]->y, fmesh1->pnts[t1.v[2]]->z);
+    VSET(T2_V[0], fmesh2->pnts[t2.v[0]]->x, fmesh2->pnts[t2.v[0]]->y, fmesh2->pnts[t2.v[0]]->z);
+    VSET(T2_V[1], fmesh2->pnts[t2.v[1]]->x, fmesh2->pnts[t2.v[1]]->y, fmesh2->pnts[t2.v[1]]->z);
+    VSET(T2_V[2], fmesh2->pnts[t2.v[2]]->x, fmesh2->pnts[t2.v[2]]->y, fmesh2->pnts[t2.v[2]]->z);
+    if (bg_tri_tri_isect_with_line(T1_V[0], T1_V[1], T1_V[2], T2_V[0], T2_V[1], T2_V[2], &coplanar, &isectpt1, &isectpt2)) {
+	ON_3dPoint p1(isectpt1[X], isectpt1[Y], isectpt1[Z]);
+	ON_3dPoint p2(isectpt2[X], isectpt2[Y], isectpt2[Z]);
+	if (p1.DistanceTo(p2) < ON_ZERO_TOLERANCE) {
+	    std::cout << "skipping pnt isect(" << coplanar << "): " << isectpt1[X] << "," << isectpt1[Y] << "," << isectpt1[Z] << "\n";
+	    return 0;
+	}
+
+	return (coplanar) ? 1 : 2;
+    }
+
+    return 0;
+}
+
+#if 0
 struct ne_info {
     std::map<int, std::set<cdt_mesh::cpolyedge_t *>> *tris_to_edges;
     size_t tind;
@@ -61,13 +92,67 @@ static bool NearEdgesCallback(void *data, void *a_context) {
     (*ne->tris_to_edges)[ne->tind].insert(pe);
     return true;
 }
+#endif
+
+void edge_check() {
+    // Determine if the triangle in question needs to be checked against the other brep's edges
+    // We need awareness of when the OTHER mesh will need to split its edge.  That means checking
+    // the triangle bboxes against the 3D edge rtree and flagging them there, so we know
+    // to do a closest-point-on-edge calculation in addition to the surface point attempt.  We
+    // don't want to be too reluctant to split edges or we'll end up sampling surface points too
+    // close to sparse edges.  Probably need to use the same reject criteria we use in that sampling,
+    // and trigger an edge split if we can't get a suitable surface point...  For coplanar problem
+    // cases there's no ambiguity - we have to split the edge.
+#if 0
+    double fMin[3]; double fMax[3];
+    ON_3dPoint *p3d = fmesh1->pnts[t1.v[0]];
+    ON_BoundingBox bb1(*p3d, *p3d);
+    for (int i = 1; i < 3; i++) {
+	p3d = fmesh1->pnts[t1.v[i]];
+	bb1.Set(*p3d, true);
+    }
+    fMin[0] = bb1.Min().x;
+    fMin[1] = bb1.Min().y;
+    fMin[2] = bb1.Min().z;
+    fMax[0] = bb1.Max().x;
+    fMax[1] = bb1.Max().y;
+    fMax[2] = bb1.Max().z;
+    struct ne_info ne1;
+    ne1.tris_to_edges = &tris_to_opp_face_edges_1;
+    ne1.tind = t1.ind;
+    size_t nhits1 = s_cdt2->face_rtrees_3d[fmesh2->f_id].Search(fMin, fMax, NearEdgesCallback, &ne1);
+    if (nhits1) {
+	std::cout << "Face " << fmesh1->f_id << " has potential edge curve interaction with " << fmesh2->f_id << "\n";
+    }
+
+
+    p3d = fmesh2->pnts[t2.v[0]];
+    ON_BoundingBox bb2(*p3d, *p3d);
+    for (int i = 1; i < 3; i++) {
+	p3d = fmesh2->pnts[t2.v[i]];
+	bb2.Set(*p3d, true);
+    }
+    fMin[0] = bb2.Min().x;
+    fMin[1] = bb2.Min().y;
+    fMin[2] = bb2.Min().z;
+    fMax[0] = bb2.Max().x;
+    fMax[1] = bb2.Max().y;
+    fMax[2] = bb2.Max().z;
+    struct ne_info ne2;
+    ne2.tris_to_edges = &tris_to_opp_face_edges_2;
+    ne2.tind = t2.ind;
+    size_t nhits2 = s_cdt1->face_rtrees_3d[fmesh1->f_id].Search(fMin, fMax, NearEdgesCallback, &ne2);
+    if (nhits2) {
+	std::cout << "Face " << fmesh2->f_id << " has potential edge curve interaction with " << fmesh1->f_id << "\n";
+    }
+#endif
+}
 
 int
 ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 {
     if (!s_a) return -1;
     if (s_cnt < 1) return 0;
-    std::map<struct ON_Brep_CDT_State *, std::map<int, std::set<size_t>>> ovlp_tris;
 
     // Get the bounding boxes of all faces of all breps in s_a, and
     std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> check_pairs;
@@ -75,7 +160,6 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
     for (int i = 0; i < s_cnt; i++) {
 	struct ON_Brep_CDT_State *s_i = s_a[i];
 	for (int i_fi = 0; i_fi < s_i->brep->m_F.Count(); i_fi++) {
-	    ovlp_tris[s_i][i_fi].clear();
 	    const ON_BrepFace *i_face = s_i->brep->Face(i_fi);
 	    ON_BoundingBox bb = i_face->BoundingBox();
 	    cdt_mesh::cdt_mesh_t *fmesh = &s_i->fmeshes[i_fi];
@@ -116,112 +200,51 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 		std::cout << "   found " << ovlp_cnt << " box overlaps\n";
 		std::set<std::pair<size_t, size_t>>::iterator tb_it;
 		for (tb_it = tris_prelim.begin(); tb_it != tris_prelim.end(); tb_it++) {
-		    // Unpack the actual 3D triangle vertices
-		    point_t T1_V[3];
-		    point_t T2_V[3];
 		    cdt_mesh::triangle_t t1 = fmesh1->tris_vect[tb_it->first];
-		    VSET(T1_V[0], fmesh1->pnts[t1.v[0]]->x, fmesh1->pnts[t1.v[0]]->y, fmesh1->pnts[t1.v[0]]->z);
-		    VSET(T1_V[1], fmesh1->pnts[t1.v[1]]->x, fmesh1->pnts[t1.v[1]]->y, fmesh1->pnts[t1.v[1]]->z);
-		    VSET(T1_V[2], fmesh1->pnts[t1.v[2]]->x, fmesh1->pnts[t1.v[2]]->y, fmesh1->pnts[t1.v[2]]->z);
 		    cdt_mesh::triangle_t t2 = fmesh2->tris_vect[tb_it->second];
-		    VSET(T2_V[0], fmesh2->pnts[t2.v[0]]->x, fmesh2->pnts[t2.v[0]]->y, fmesh2->pnts[t2.v[0]]->z);
-		    VSET(T2_V[1], fmesh2->pnts[t2.v[1]]->x, fmesh2->pnts[t2.v[1]]->y, fmesh2->pnts[t2.v[1]]->z);
-		    VSET(T2_V[2], fmesh2->pnts[t2.v[2]]->x, fmesh2->pnts[t2.v[2]]->y, fmesh2->pnts[t2.v[2]]->z);
-		    int coplanar = 0;
-		    point_t isectpt1 = {MAX_FASTF, MAX_FASTF, MAX_FASTF};
-		    point_t isectpt2 = {MAX_FASTF, MAX_FASTF, MAX_FASTF};
-		    if (bg_tri_tri_isect_with_line(T1_V[0], T1_V[1], T1_V[2], T2_V[0], T2_V[1], T2_V[2], &coplanar, &isectpt1, &isectpt2)) {
-			ON_3dPoint p1(isectpt1[X], isectpt1[Y], isectpt1[Z]);
-			ON_3dPoint p2(isectpt2[X], isectpt2[Y], isectpt2[Z]);
-			if (p1.DistanceTo(p2) < ON_ZERO_TOLERANCE) {
-			    std::cout << "skipping pnt isect(" << coplanar << "): " << isectpt1[X] << "," << isectpt1[Y] << "," << isectpt1[Z] << "\n";
-			} else {
+		    int isect = tri_isect(fmesh1, t1, fmesh2, t2);
+		    if (isect) {
 
-			    // Determine if the triangle in question needs to be checked against the other brep's edges
-			    // We need awareness of when the OTHER mesh will need to split its edge.  That means checking
-			    // the triangle bboxes against the 3D edge rtree and flagging them there, so we know
-			    // to do a closest-point-on-edge calculation in addition to the surface point attempt.  We
-			    // don't want to be too reluctant to split edges or we'll end up sampling surface points too
-			    // close to sparse edges.  Probably need to use the same reject criteria we use in that sampling,
-			    // and trigger an edge split if we can't get a suitable surface point...  For coplanar problem
-			    // cases there's no ambiguity - we have to split the edge.
-			    double fMin[3]; double fMax[3];
-			    ON_3dPoint *p3d = fmesh1->pnts[t1.v[0]];
-			    ON_BoundingBox bb1(*p3d, *p3d);
-			    for (int i = 1; i < 3; i++) {
-				p3d = fmesh1->pnts[t1.v[i]];
-				bb1.Set(*p3d, true);
+
+			//std::cout << "isect(" << coplanar << "): " << isectpt1[X] << "," << isectpt1[Y] << "," << isectpt1[Z] << " -> " << isectpt2[X] << "," << isectpt2[Y] << "," << isectpt2[Z] << "\n";
+
+			// Using triangle planes, determine which point(s) from the opposite triangle are
+			// "inside" the meshes.  Each of these points is an "overlap instance" that the
+			// opposite mesh will have to try and adjust itself to to resolve.
+			std::set<size_t> fmesh1_interior_pnts;
+			std::set<size_t> fmesh2_interior_pnts;
+			ON_Plane plane1 = fmesh1->tplane(t1);
+			for (int i = 0; i < 3; i++) {
+			    ON_3dPoint tp = *fmesh2->pnts[t2.v[i]];
+			    double dist = plane1.DistanceTo(tp);
+			    if (dist < 0 && fabs(dist) > ON_ZERO_TOLERANCE) {
+				std::cout << "face " << fmesh1->f_id << " new interior point from face " << fmesh2->f_id << ": " << tp.x << "," << tp.y << "," << tp.z << "\n";
+				struct brep_face_ovlp_instance *ovlp = new struct brep_face_ovlp_instance;
+				ovlp->intruding_pnt_src_mesh = fmesh2;
+				ovlp->intruding_pnt = t2.v[i];
+				ovlp->local_intersected_triangle = t1.ind;
+				ovlp->coplanar_intersection = (isect == 1) ? true : false;
+				s_cdt1->face_ovlps[fmesh1->f_id].push_back(ovlp);
 			    }
-			    fMin[0] = bb1.Min().x;
-			    fMin[1] = bb1.Min().y;
-			    fMin[2] = bb1.Min().z;
-			    fMax[0] = bb1.Max().x;
-			    fMax[1] = bb1.Max().y;
-			    fMax[2] = bb1.Max().z;
-			    struct ne_info ne1;
-			    ne1.tris_to_edges = &tris_to_opp_face_edges_1;
-			    ne1.tind = t1.ind;
-			    size_t nhits1 = s_cdt2->face_rtrees_3d[fmesh2->f_id].Search(fMin, fMax, NearEdgesCallback, &ne1);
-			    if (nhits1) {
-				std::cout << "Face " << fmesh1->f_id << " has potential edge curve interaction with " << fmesh2->f_id << "\n";
-			    }
-
-
-			    p3d = fmesh2->pnts[t2.v[0]];
-			    ON_BoundingBox bb2(*p3d, *p3d);
-			    for (int i = 1; i < 3; i++) {
-				p3d = fmesh2->pnts[t2.v[i]];
-				bb2.Set(*p3d, true);
-			    }
-			    fMin[0] = bb2.Min().x;
-			    fMin[1] = bb2.Min().y;
-			    fMin[2] = bb2.Min().z;
-			    fMax[0] = bb2.Max().x;
-			    fMax[1] = bb2.Max().y;
-			    fMax[2] = bb2.Max().z;
-			    struct ne_info ne2;
-			    ne2.tris_to_edges = &tris_to_opp_face_edges_2;
-			    ne2.tind = t2.ind;
-			    size_t nhits2 = s_cdt1->face_rtrees_3d[fmesh1->f_id].Search(fMin, fMax, NearEdgesCallback, &ne2);
-			    if (nhits2) {
-				std::cout << "Face " << fmesh2->f_id << " has potential edge curve interaction with " << fmesh1->f_id << "\n";
-			    }
-
-
-			    //std::cout << "isect(" << coplanar << "): " << isectpt1[X] << "," << isectpt1[Y] << "," << isectpt1[Z] << " -> " << isectpt2[X] << "," << isectpt2[Y] << "," << isectpt2[Z] << "\n";
-			    ovlp_tris[s_cdt1][fmesh1->f_id].insert(t1.ind);
-			    ovlp_tris[s_cdt2][fmesh2->f_id].insert(t2.ind);
-
-			    // Using triangle planes, determine which point(s) from the opposite triangle are
-			    // "inside" the meshes.  Those are the points we will need to try to get closest point
-			    // from to refine the mesh.
-			    std::set<size_t> fmesh1_interior_pnts;
-			    std::set<size_t> fmesh2_interior_pnts;
-			    ON_Plane plane1 = fmesh1->tplane(t1);
-			    for (int i = 0; i < 3; i++) {
-				ON_3dPoint tp = *fmesh2->pnts[t2.v[i]];
-				double dist = plane1.DistanceTo(tp);
-				if (dist < 0 && fabs(dist) > ON_ZERO_TOLERANCE) {
-				    std::cout << "face " << fmesh1->f_id << " new interior point from face " << fmesh2->f_id << ": " << tp.x << "," << tp.y << "," << tp.z << "\n";
-				    fmesh2_interior_pnts.insert(t2.v[i]);
-				}
-			    }
-
-			    ON_Plane plane2 = fmesh2->tplane(t2);
-			    for (int i = 0; i < 3; i++) {
-				ON_3dPoint tp = *fmesh1->pnts[t1.v[i]];
-				double dist = plane2.DistanceTo(tp);
-				if (dist < 0 && fabs(dist) > ON_ZERO_TOLERANCE) {
-				    std::cout << "face " << fmesh2->f_id << " new interior point from face " << fmesh1->f_id << ": " << tp.x << "," << tp.y << "," << tp.z << "\n";
-				    fmesh1_interior_pnts.insert(t1.v[i]);
-				}
-			    }
-
 			}
+
+			ON_Plane plane2 = fmesh2->tplane(t2);
+			for (int i = 0; i < 3; i++) {
+			    ON_3dPoint tp = *fmesh1->pnts[t1.v[i]];
+			    double dist = plane2.DistanceTo(tp);
+			    if (dist < 0 && fabs(dist) > ON_ZERO_TOLERANCE) {
+				std::cout << "face " << fmesh2->f_id << " new interior point from face " << fmesh1->f_id << ": " << tp.x << "," << tp.y << "," << tp.z << "\n";
+				fmesh1_interior_pnts.insert(t1.v[i]);
+				struct brep_face_ovlp_instance *ovlp = new struct brep_face_ovlp_instance;
+				ovlp->intruding_pnt_src_mesh = fmesh1;
+				ovlp->intruding_pnt = t1.v[i];
+				ovlp->local_intersected_triangle = t2.ind;
+				ovlp->coplanar_intersection = (isect == 1) ? true : false;
+				s_cdt2->face_ovlps[fmesh2->f_id].push_back(ovlp);
+			    }
+			}
+
 		    }
-		}
-		if (ovlp_tris[s_cdt1][fmesh1->f_id].size()) {
-		    std::cout << "   found " << ovlp_tris[s_cdt1][fmesh1->f_id].size() << " triangle overlaps\n";
 		}
 	    } else {
 		std::cout << "RTREE_ISECT_EMPTY: " << fmesh1->name << " face " << fmesh1->f_id << " and " << fmesh2->name << " face " << fmesh2->f_id << "\n";
@@ -235,18 +258,13 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	}
     }
 
-    std::map<struct ON_Brep_CDT_State *, std::map<int, std::set<size_t>>>::iterator o_it;
-    for (o_it = ovlp_tris.begin(); o_it != ovlp_tris.end(); o_it++) {
-	struct bu_vls fname = BU_VLS_INIT_ZERO;
-	std::map<int, std::set<size_t>>::iterator f_it;
-	for (f_it = o_it->second.begin(); f_it != o_it->second.end(); f_it++) {
-	    if (f_it->second.size()) {
-		std::cout << o_it->first->name << " face " << f_it->first << " overlap tri cnt " << f_it->second.size() << "\n";
-		bu_vls_sprintf(&fname, "%s-%d_ovlp_tris.plot3", o_it->first->name, f_it->first);
-		o_it->first->fmeshes[f_it->first].tris_ind_set_plot(f_it->second, bu_vls_cstr(&fname));
+    for (int i = 0; i < s_cnt; i++) {
+	struct ON_Brep_CDT_State *s_i = s_a[i];
+	for (int i_fi = 0; i_fi < s_i->brep->m_F.Count(); i_fi++) {
+	    if (s_i->face_ovlps[i_fi].size()) {
+		std::cout << s_i->name << " face " << i_fi << " overlap cnt " << s_i->face_ovlps[i_fi].size() << "\n";
 	    }
 	}
-	bu_vls_free(&fname);
     }
 
     return 0;
