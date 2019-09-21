@@ -52,13 +52,13 @@ static bool NearFacesCallback(void *data, void *a_context) {
 }
 
 // Return 0 if no intersection, 1 if coplanar intersection, 2 if non-coplanar intersection
-static int 
+static int
 tri_isect(cdt_mesh::cdt_mesh_t *fmesh1, cdt_mesh::triangle_t &t1, cdt_mesh::cdt_mesh_t *fmesh2, cdt_mesh::triangle_t &t2)
 {
     int coplanar = 0;
     point_t isectpt1 = {MAX_FASTF, MAX_FASTF, MAX_FASTF};
     point_t isectpt2 = {MAX_FASTF, MAX_FASTF, MAX_FASTF};
-    
+
     point_t T1_V[3];
     point_t T2_V[3];
     VSET(T1_V[0], fmesh1->pnts[t1.v[0]]->x, fmesh1->pnts[t1.v[0]]->y, fmesh1->pnts[t1.v[0]]->z);
@@ -71,7 +71,7 @@ tri_isect(cdt_mesh::cdt_mesh_t *fmesh1, cdt_mesh::triangle_t &t1, cdt_mesh::cdt_
 	ON_3dPoint p1(isectpt1[X], isectpt1[Y], isectpt1[Z]);
 	ON_3dPoint p2(isectpt2[X], isectpt2[Y], isectpt2[Z]);
 	if (p1.DistanceTo(p2) < ON_ZERO_TOLERANCE) {
-	    std::cout << "skipping pnt isect(" << coplanar << "): " << isectpt1[X] << "," << isectpt1[Y] << "," << isectpt1[Z] << "\n";
+	    //std::cout << "skipping pnt isect(" << coplanar << "): " << isectpt1[X] << "," << isectpt1[Y] << "," << isectpt1[Z] << "\n";
 	    return 0;
 	}
 
@@ -154,7 +154,8 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
     if (!s_a) return -1;
     if (s_cnt < 1) return 0;
 
-    // Get the bounding boxes of all faces of all breps in s_a, and
+    // Get the bounding boxes of all faces of all breps in s_a, and find
+    // possible interactions
     std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> check_pairs;
     RTree<void *, double, 3> rtree_fmeshes;
     for (int i = 0; i < s_cnt; i++) {
@@ -183,7 +184,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	}
     }
 
-    std::cout << "check_pairs: " << check_pairs.size() << "\n";
+    std::cout << "Found " << check_pairs.size() << " potentially interfering face pairs\n";
     std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>>::iterator cp_it;
     for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
 	cdt_mesh::cdt_mesh_t *fmesh1 = cp_it->first;
@@ -191,13 +192,12 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	struct ON_Brep_CDT_State *s_cdt1 = (struct ON_Brep_CDT_State *)fmesh1->p_cdt;
 	struct ON_Brep_CDT_State *s_cdt2 = (struct ON_Brep_CDT_State *)fmesh2->p_cdt;
 	if (s_cdt1 != s_cdt2) {
-	    std::cout << "Checking " << fmesh1->name << " face " << fmesh1->f_id << " against " << fmesh2->name << " face " << fmesh2->f_id << "\n";
 	    std::set<std::pair<size_t, size_t>> tris_prelim;
 	    std::map<int, std::set<cdt_mesh::cpolyedge_t *>> tris_to_opp_face_edges_1;
 	    std::map<int, std::set<cdt_mesh::cpolyedge_t *>> tris_to_opp_face_edges_2;
 	    size_t ovlp_cnt = fmesh1->tris_tree.Overlaps(fmesh2->tris_tree, &tris_prelim);
 	    if (ovlp_cnt) {
-		std::cout << "   found " << ovlp_cnt << " box overlaps\n";
+		std::cout << "Checking " << fmesh1->name << " face " << fmesh1->f_id << " against " << fmesh2->name << " face " << fmesh2->f_id << " found " << ovlp_cnt << " box overlaps\n";
 		std::set<std::pair<size_t, size_t>>::iterator tb_it;
 		for (tb_it = tris_prelim.begin(); tb_it != tris_prelim.end(); tb_it++) {
 		    cdt_mesh::triangle_t t1 = fmesh1->tris_vect[tb_it->first];
@@ -218,7 +218,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 			    ON_3dPoint tp = *fmesh2->pnts[t2.v[i]];
 			    double dist = plane1.DistanceTo(tp);
 			    if (dist < 0 && fabs(dist) > ON_ZERO_TOLERANCE) {
-				std::cout << "face " << fmesh1->f_id << " new interior point from face " << fmesh2->f_id << ": " << tp.x << "," << tp.y << "," << tp.z << "\n";
+				//std::cout << "face " << fmesh1->f_id << " new interior point from face " << fmesh2->f_id << ": " << tp.x << "," << tp.y << "," << tp.z << "\n";
 				struct brep_face_ovlp_instance *ovlp = new struct brep_face_ovlp_instance;
 				ovlp->intruding_pnt_src_mesh = fmesh2;
 				ovlp->intruding_pnt = t2.v[i];
@@ -233,7 +233,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 			    ON_3dPoint tp = *fmesh1->pnts[t1.v[i]];
 			    double dist = plane2.DistanceTo(tp);
 			    if (dist < 0 && fabs(dist) > ON_ZERO_TOLERANCE) {
-				std::cout << "face " << fmesh2->f_id << " new interior point from face " << fmesh1->f_id << ": " << tp.x << "," << tp.y << "," << tp.z << "\n";
+				//std::cout << "face " << fmesh2->f_id << " new interior point from face " << fmesh1->f_id << ": " << tp.x << "," << tp.y << "," << tp.z << "\n";
 				fmesh1_interior_pnts.insert(t1.v[i]);
 				struct brep_face_ovlp_instance *ovlp = new struct brep_face_ovlp_instance;
 				ovlp->intruding_pnt_src_mesh = fmesh1;
@@ -262,7 +262,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	struct ON_Brep_CDT_State *s_i = s_a[i];
 	for (int i_fi = 0; i_fi < s_i->brep->m_F.Count(); i_fi++) {
 	    if (s_i->face_ovlps[i_fi].size()) {
-		std::cout << s_i->name << " face " << i_fi << " overlap cnt " << s_i->face_ovlps[i_fi].size() << "\n";
+		std::cout << s_i->name << " face " << i_fi << " overlap instance cnt " << s_i->face_ovlps[i_fi].size() << "\n";
 	    }
 	}
     }
