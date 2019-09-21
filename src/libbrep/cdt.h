@@ -102,6 +102,7 @@ struct brep_face_ovlp_instance {
     int intersected_tri_face_ind;
     int intersected_tri_ind;
     bool coplanar_intersection;
+    std::set<cdt_mesh::cpolyedge_t *> involved_edge_segs;
 };
 
 struct ON_Brep_CDT_State {

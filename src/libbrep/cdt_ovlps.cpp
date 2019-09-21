@@ -112,34 +112,22 @@ tri_isect(cdt_mesh::cdt_mesh_t *fmesh1, cdt_mesh::triangle_t &t1, cdt_mesh::cdt_
     return 0;
 }
 
-#if 0
-struct ne_info {
-    std::map<int, std::set<cdt_mesh::cpolyedge_t *>> *tris_to_edges;
-    size_t tind;
-};
 static bool NearEdgesCallback(void *data, void *a_context) {
-    struct ne_info *ne = (struct ne_info *)a_context;
+    std::set<cdt_mesh::cpolyedge_t *> *edges = (std::set<cdt_mesh::cpolyedge_t *> *)a_context;
     cdt_mesh::cpolyedge_t *pe  = (cdt_mesh::cpolyedge_t *)data;
-    (*ne->tris_to_edges)[ne->tind].insert(pe);
+    edges->insert(pe);
     return true;
 }
-#endif
 
-void edge_check() {
-    // Determine if the triangle in question needs to be checked against the other brep's edges
-    // We need awareness of when the OTHER mesh will need to split its edge.  That means checking
-    // the triangle bboxes against the 3D edge rtree and flagging them there, so we know
-    // to do a closest-point-on-edge calculation in addition to the surface point attempt.  We
-    // don't want to be too reluctant to split edges or we'll end up sampling surface points too
-    // close to sparse edges.  Probably need to use the same reject criteria we use in that sampling,
-    // and trigger an edge split if we can't get a suitable surface point...  For coplanar problem
-    // cases there's no ambiguity - we have to split the edge.
-#if 0
+void edge_check(struct brep_face_ovlp_instance *ovlp) {
+
+    cdt_mesh::cdt_mesh_t &fmesh = ovlp->intersected_tri_s_cdt->fmeshes[ovlp->intersected_tri_face_ind];
+    cdt_mesh::triangle_t tri = fmesh.tris_vect[ovlp->intersected_tri_ind];
     double fMin[3]; double fMax[3];
-    ON_3dPoint *p3d = fmesh1->pnts[t1.v[0]];
+    ON_3dPoint *p3d = fmesh.pnts[tri.v[0]];
     ON_BoundingBox bb1(*p3d, *p3d);
     for (int i = 1; i < 3; i++) {
-	p3d = fmesh1->pnts[t1.v[i]];
+	p3d = fmesh.pnts[tri.v[i]];
 	bb1.Set(*p3d, true);
     }
     fMin[0] = bb1.Min().x;
@@ -148,35 +136,10 @@ void edge_check() {
     fMax[0] = bb1.Max().x;
     fMax[1] = bb1.Max().y;
     fMax[2] = bb1.Max().z;
-    struct ne_info ne1;
-    ne1.tris_to_edges = &tris_to_opp_face_edges_1;
-    ne1.tind = t1.ind;
-    size_t nhits1 = s_cdt2->face_rtrees_3d[fmesh2->f_id].Search(fMin, fMax, NearEdgesCallback, &ne1);
-    if (nhits1) {
-	std::cout << "Face " << fmesh1->f_id << " has potential edge curve interaction with " << fmesh2->f_id << "\n";
+    size_t nhits = ovlp->intersected_tri_s_cdt->face_rtrees_3d[fmesh.f_id].Search(fMin, fMax, NearEdgesCallback, (void *)&ovlp->involved_edge_segs);
+    if (nhits) {
+	std::cout << "Face " << fmesh.f_id << " tri " << tri.ind << " has potential edge curve interaction\n";
     }
-
-
-    p3d = fmesh2->pnts[t2.v[0]];
-    ON_BoundingBox bb2(*p3d, *p3d);
-    for (int i = 1; i < 3; i++) {
-	p3d = fmesh2->pnts[t2.v[i]];
-	bb2.Set(*p3d, true);
-    }
-    fMin[0] = bb2.Min().x;
-    fMin[1] = bb2.Min().y;
-    fMin[2] = bb2.Min().z;
-    fMax[0] = bb2.Max().x;
-    fMax[1] = bb2.Max().y;
-    fMax[2] = bb2.Max().z;
-    struct ne_info ne2;
-    ne2.tris_to_edges = &tris_to_opp_face_edges_2;
-    ne2.tind = t2.ind;
-    size_t nhits2 = s_cdt1->face_rtrees_3d[fmesh1->f_id].Search(fMin, fMax, NearEdgesCallback, &ne2);
-    if (nhits2) {
-	std::cout << "Face " << fmesh2->f_id << " has potential edge curve interaction with " << fmesh1->f_id << "\n";
-    }
-#endif
 }
 
 struct nf_info {
@@ -322,6 +285,9 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	    if (s_i->face_ovlps[i_fi].size()) {
 		std::cout << s_i->name << " face " << i_fi << " overlap instance cnt " << s_i->face_ovlps[i_fi].size() << "\n";
 		plot_ovlps(s_i, i_fi);
+		for (size_t j = 0; j < s_i->face_ovlps[i_fi].size(); j++) {
+		    edge_check(s_i->face_ovlps[i_fi][j]);
+		}
 	    }
 	}
     }
