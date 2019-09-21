@@ -292,6 +292,8 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	}
     }
 
+    // TODO - maybe a good first heuristic would be to split any triangles not involved in an event with a larger triangle?
+
     return 0;
 }
 
