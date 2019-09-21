@@ -341,8 +341,6 @@ ON_Brep_CDT_Create(void *bv, const char *objname)
 
     cdt->pnt_audit_info = new std::map<ON_3dPoint *, struct cdt_audit_info *>;
 
-    cdt->faces = new std::map<int, struct ON_Brep_CDT_Face_State *>;
-
     cdt->bot_pnt_to_on_pnt = new std::map<int, ON_3dPoint *>;
 
     return cdt;
@@ -376,7 +374,6 @@ ON_Brep_CDT_Destroy(struct ON_Brep_CDT_State *s_cdt)
     delete s_cdt->etrees;
 
     delete s_cdt->pnt_audit_info;
-    delete s_cdt->faces;
 
     delete s_cdt->bot_pnt_to_on_pnt;
 
