@@ -294,6 +294,11 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 
     // TODO - maybe a good first heuristic would be to split any triangles not involved in an event with a larger triangle?
 
+    // TODO!!! - start simpler than the above logic implies - for a first cut, just split the edge of any edge tri and add the
+    // barycentric center point of any non-edge tri involved in an overlap.  For the inside points, check the distance to the
+    // triangle plane as an initial cut at how far "inside" the mesh the point is.
+
+
     return 0;
 }
 
