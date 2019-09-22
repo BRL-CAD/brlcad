@@ -135,6 +135,22 @@ refine_ovlp_tris(struct ON_Brep_CDT_State *s_cdt, int face_index)
 		break;
 	    }
 	}
+
+	// TODO - yank the overlapping tri and split, either with center point
+	// only (SURF_TRI) or shared edge and center (EDGE_TRI).  The EDGE_TRI
+	// case will require a matching split from the triangle on the opposite
+	// face to maintain watertightness, and it may be convenient just to do
+	// make the polygon, insert a steiner point (plus splitting the polygon
+	// edge in the edge tri case) and do a mini-CDT to make the new
+	// triangles (similar to the cdt_mesh repair operation's replacment for
+	// bad patches).  However, if we end up with any colinearity issues we
+	// might just fall back on manually constructing the three (or 5 in the
+	// edge case) triangles rather than risk a CDT going wrong.
+	//
+	// It may make sense, depending on the edge triangle's shape, to ONLY
+	// split the edge in some situations.  However, we dont' want to get
+	// into a situation where we keep refining the edge and we end up with
+	// a whole lot of crazy-slim triangles going to one surface point...
 	if (have_face_edge) {
 	    std::cout << "EDGE_TRI: refining " << s_cdt->name << " face " << fmesh.f_id << " tri " << *t_it << "\n";
 	} else {
