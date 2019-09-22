@@ -151,6 +151,7 @@ struct ON_Brep_CDT_State {
     std::map<int, std::map<int,ON_3dPoint *>> strim_norms;
 
 
+    std::map<int, std::set<size_t>> face_ovlp_tris;
     std::map<int, std::vector<struct brep_face_ovlp_instance *>> face_ovlps;
     std::set<int> faces_to_update;
 };

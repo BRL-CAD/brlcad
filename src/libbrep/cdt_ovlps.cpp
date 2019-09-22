@@ -240,6 +240,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 
 				ovlp->coplanar_intersection = (isect == 1) ? true : false;
 				s_cdt1->face_ovlps[fmesh1->f_id].push_back(ovlp);
+				s_cdt1->face_ovlp_tris[fmesh1->f_id].insert(t1.ind);
 			    }
 			}
 
@@ -262,6 +263,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 
 				ovlp->coplanar_intersection = (isect == 1) ? true : false;
 				s_cdt2->face_ovlps[fmesh2->f_id].push_back(ovlp);
+				s_cdt1->face_ovlp_tris[fmesh2->f_id].insert(t2.ind);
 			    }
 			}
 
