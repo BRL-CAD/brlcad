@@ -1763,20 +1763,6 @@ cdt_mesh_t::singularity_triangles()
     return results;
 }
 
-void
-cdt_mesh_t::set_brep_data(
-    bool brev,
-    std::set<ON_3dPoint *> *e,
-    std::set<std::pair<ON_3dPoint *, ON_3dPoint *>> *original_b_edges,
-    std::set<ON_3dPoint *> *s,
-    std::map<ON_3dPoint *, ON_3dPoint *> *UNUSED(n))
-{
-    this->m_bRev = brev;
-    this->edge_pnts = e;
-    this->b_edges = original_b_edges;
-    this->singularities = s;
-}
-
 std::set<uedge_t>
 cdt_mesh_t::uedges(const triangle_t &t)
 {

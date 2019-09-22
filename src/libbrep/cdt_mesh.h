@@ -474,13 +474,6 @@ public:
     long add_point(ON_2dPoint &on_2dp);
     long add_point(ON_3dPoint *on_3dp);
     long add_normal(ON_3dPoint *on_3dn);
-    void set_brep_data(
-	    bool brev,
-	    std::set<ON_3dPoint *> *e,
-	    std::set<std::pair<ON_3dPoint *,ON_3dPoint *>> *original_b_edges,
-	    std::set<ON_3dPoint *> *s,
-	    std::map<ON_3dPoint *, ON_3dPoint *> *n
-	    );
     bool repair();
     void reset();
     bool valid(int verbose);
