@@ -112,6 +112,38 @@ tri_isect(cdt_mesh::cdt_mesh_t *fmesh1, cdt_mesh::triangle_t &t1, cdt_mesh::cdt_
     return 0;
 }
 
+
+static void
+refine_ovlp_tris(struct ON_Brep_CDT_State *s_cdt, int face_index)
+{
+    std::map<int, std::set<size_t>>::iterator m_it;
+    cdt_mesh::cdt_mesh_t &fmesh = s_cdt->fmeshes[face_index];
+    std::set<size_t> &tri_inds = s_cdt->face_ovlp_tris[face_index];
+    std::set<size_t>::iterator t_it;
+    for (t_it = tri_inds.begin(); t_it != tri_inds.end(); t_it++) {
+	cdt_mesh::triangle_t tri = fmesh.tris_vect[*t_it];
+	bool have_face_edge = false;
+	cdt_mesh::uedge_t ue;
+	cdt_mesh::uedge_t t_ue[3];
+	t_ue[0].set(tri.v[0], tri.v[1]);
+	t_ue[1].set(tri.v[1], tri.v[2]);
+	t_ue[2].set(tri.v[2], tri.v[0]);
+	for (int i = 0; i < 3; i++) {
+	    if (fmesh.brep_edges.find(t_ue[i]) != fmesh.brep_edges.end()) {
+		ue = t_ue[i];
+		have_face_edge = true;
+		break;
+	    }
+	}
+	if (have_face_edge) {
+	    std::cout << "EDGE_TRI: refining " << s_cdt->name << " face " << fmesh.f_id << " tri " << *t_it << "\n";
+	} else {
+	    std::cout << "SURF_TRI: refining " << s_cdt->name << " face " << fmesh.f_id << " tri " << *t_it << "\n";
+	}
+    }
+}
+
+
 static bool NearEdgesCallback(void *data, void *a_context) {
     std::set<cdt_mesh::cpolyedge_t *> *edges = (std::set<cdt_mesh::cpolyedge_t *> *)a_context;
     cdt_mesh::cpolyedge_t *pe  = (cdt_mesh::cpolyedge_t *)data;
@@ -138,7 +170,7 @@ void edge_check(struct brep_face_ovlp_instance *ovlp) {
     fMax[2] = bb1.Max().z;
     size_t nhits = ovlp->intersected_tri_s_cdt->face_rtrees_3d[fmesh.f_id].Search(fMin, fMax, NearEdgesCallback, (void *)&ovlp->involved_edge_segs);
     if (nhits) {
-	std::cout << "Face " << fmesh.f_id << " tri " << tri.ind << " has potential edge curve interaction\n";
+	//std::cout << "Face " << fmesh.f_id << " tri " << tri.ind << " has potential edge curve interaction\n";
     }
 }
 
@@ -263,7 +295,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 
 				ovlp->coplanar_intersection = (isect == 1) ? true : false;
 				s_cdt2->face_ovlps[fmesh2->f_id].push_back(ovlp);
-				s_cdt1->face_ovlp_tris[fmesh2->f_id].insert(t2.ind);
+				s_cdt2->face_ovlp_tris[fmesh2->f_id].insert(t2.ind);
 			    }
 			}
 
@@ -290,6 +322,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 		for (size_t j = 0; j < s_i->face_ovlps[i_fi].size(); j++) {
 		    edge_check(s_i->face_ovlps[i_fi][j]);
 		}
+		refine_ovlp_tris(s_i, i_fi);
 	    }
 	}
     }
