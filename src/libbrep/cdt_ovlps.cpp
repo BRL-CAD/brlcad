@@ -112,6 +112,105 @@ tri_isect(cdt_mesh::cdt_mesh_t *fmesh1, cdt_mesh::triangle_t &t1, cdt_mesh::cdt_
     return 0;
 }
 
+cdt_mesh::cpolygon_t *
+tri_refine_polygon(cdt_mesh::cdt_mesh_t &fmesh, cdt_mesh::triangle_t &t)
+{
+    struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh.p_cdt;
+    cdt_mesh::cpolygon_t *polygon = new cdt_mesh::cpolygon_t;
+
+
+    // Add triangle center point, from the 2D center point of the triangle
+    // points (this is where p3d2d is needed).  Singularities are going to be a
+    // particular problem. We'll probably NEED the closest 2D point to the 3D
+    // triangle center point in that case, but for now just find the shortest
+    // distance from the midpoint of the 2 non-singular points to the singular
+    // trim and insert the new point some fraction of that distance off of the
+    // midpoint towards the singularity. For other cases let's try the 2D
+    // center point and see how it works - we may need the all-up closest
+    // point calculation there too...
+    ON_2dPoint p2d[3] = {ON_2dPoint::UnsetPoint, ON_2dPoint::UnsetPoint, ON_2dPoint::UnsetPoint};
+    bool have_singular_vert = false;
+    for (int i = 0; i < 3; i++) {
+	if (fmesh.sv.find(t.v[i]) != fmesh.sv.end()) {
+	    have_singular_vert = true;
+	}
+    }
+
+    if (!have_singular_vert) {
+
+	// Find the 2D center point.  NOTE - this definitely won't work
+	// if the point is trimmed in the parent brep - really need to
+	// try the GetClosestPoint routine...  may also want to do this after
+	// the edge split?
+	for (int i = 0; i < 3; i++) {
+	    p2d[i] = ON_2dPoint(fmesh.m_pnts_2d[fmesh.p3d2d[t.v[i]]].first, fmesh.m_pnts_2d[fmesh.p3d2d[t.v[i]]].second);
+	}
+	ON_2dPoint cpnt = p2d[0];
+	for (int i = 1; i < 3; i++) {
+	    cpnt += p2d[i];
+	}
+	cpnt = cpnt/3.0;
+
+	// Calculate the 3D point and normal values.
+	ON_3dPoint p3d;
+	ON_3dVector norm = ON_3dVector::UnsetVector;
+	if (!surface_EvNormal(s_cdt->brep->m_F[fmesh.f_id].SurfaceOf(), cpnt.x, cpnt.y, p3d, norm)) {
+	    p3d = s_cdt->brep->m_F[fmesh.f_id].SurfaceOf()->PointAt(cpnt.x, cpnt.y);
+	}
+
+	long f_ind2d = fmesh.add_point(cpnt);
+	fmesh.m_interior_pnts.insert(f_ind2d);
+	if (fmesh.m_bRev) {
+	    norm = -1 * norm;
+	}
+	long f3ind = fmesh.add_point(new ON_3dPoint(p3d));
+	long fnind = fmesh.add_normal(new ON_3dPoint(norm));
+
+        CDT_Add3DPnt(s_cdt, fmesh.pnts[fmesh.pnts.size()-1], fmesh.f_id, -1, -1, -1, cpnt.x, cpnt.y);
+        CDT_Add3DNorm(s_cdt, fmesh.normals[fmesh.normals.size()-1], fmesh.pnts[fmesh.pnts.size()-1], fmesh.f_id, -1, -1, -1, cpnt.x, cpnt.y);
+	fmesh.p2d3d[f_ind2d] = f3ind;
+	fmesh.p3d2d[f3ind] = f_ind2d;
+	fmesh.nmap[f3ind] = fnind;
+
+	// As we do in the repair, project all the mesh points to the plane and
+	// add them so the point indices are the same.  Eventually we can be
+	// more sophisticated about this, but for now it avoids potential
+	// bookkeeping problems.
+	ON_3dPoint sp = fmesh.tcenter(t);
+	ON_3dVector sn = fmesh.bnorm(t);
+	ON_Plane tri_plane(sp, sn);
+	for (size_t i = 0; i < fmesh.pnts.size(); i++) {
+	    double u, v;
+	    ON_3dPoint op3d = (*fmesh.pnts[i]);
+	    tri_plane.ClosestPointTo(op3d, &u, &v);
+	    std::pair<double, double> proj_2d;
+	    proj_2d.first = u;
+	    proj_2d.second = v;
+	    polygon->pnts_2d.push_back(proj_2d);
+	    if (fmesh.brep_edge_pnt(i)) {
+		polygon->brep_edge_pnts.insert(i);
+	    }
+	    polygon->p2o[i] = i;
+	}
+	struct cdt_mesh::edge_t e1(t.v[0], t.v[1]);
+	struct cdt_mesh::edge_t e2(t.v[1], t.v[2]);
+	struct cdt_mesh::edge_t e3(t.v[2], t.v[0]);
+	polygon->add_edge(e1);
+	polygon->add_edge(e2);
+	polygon->add_edge(e3);
+
+	// Let the polygon know it's got an interior (center) point.  We won't
+	// do the cdt yet, because we may need to also split an edge
+	polygon->interior_points.insert(f3ind);
+
+    } else {
+	// TODO - have singular vertex
+	std::cout << "singular vertex in triangle\n";
+    }
+
+    return polygon;
+}
+
 
 static void
 refine_ovlp_tris(struct ON_Brep_CDT_State *s_cdt, int face_index)
@@ -151,10 +250,16 @@ refine_ovlp_tris(struct ON_Brep_CDT_State *s_cdt, int face_index)
 	// split the edge in some situations.  However, we dont' want to get
 	// into a situation where we keep refining the edge and we end up with
 	// a whole lot of crazy-slim triangles going to one surface point...
+	cdt_mesh::cpolygon_t *polygon = tri_refine_polygon(fmesh, tri);
+
 	if (have_face_edge) {
 	    std::cout << "EDGE_TRI: refining " << s_cdt->name << " face " << fmesh.f_id << " tri " << *t_it << "\n";
 	} else {
 	    std::cout << "SURF_TRI: refining " << s_cdt->name << " face " << fmesh.f_id << " tri " << *t_it << "\n";
+	}
+
+	if (!polygon) {
+	    std::cout << "Error - couldn't build polygon loop for triangle refinement\n";
 	}
     }
 }
