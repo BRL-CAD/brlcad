@@ -448,11 +448,61 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	}
     }
 
-    // TODO - maybe a good first heuristic would be to split any triangles not involved in an event with a larger triangle?
+    // The challenge with splitting triangles is to not introduce badly distorted triangles into the mesh,
+    // while making sure we perform splits that work towards refining overlap areas.  In the diagrams
+    // below, "*" represents the edge of the triangle under consideration, "-" represents the edge of a
+    // surrounding triangle, and + represents a new candidate point from an intersecting triangle.
+    // % represents an edge on a triangle from another face
+    //
+    // ______________________   ______________________   ______________________   ______________________
+    // \         **         /   \         **         /   \         **         /   \         **         /
+    //  \       *  *       /     \       *  *       /     \       *  *       /     \       *  *       /
+    //   \     *    *     /       \     *    *     /       \     *    *     /       \     *    *     /
+    //    \   *  +   *   /         \   *      *   /         \   *      *   /         \   *  +   *   /
+    //     \ *        * /           \ *        * /           \ *    +   * /           \ *        * /
+    //      \**********/             \*****+****/             \**********/             \******+***/
+    //       \        /               \        /               \        /               \        /
+    //        \      /                 \      /                 \      /                 \      /
+    //         \    /                   \    /                   \    /                   \    /
+    //          \  /                     \  /                     \  /                     \  /
+    // 1         \/             2         \/             3         \/             4         \/
+    // ______________________   ______________________   ______________________   ______________________
+    // \         **         /   \         **         /   \         **         /   \         **         /
+    //  \       *  *       /     \       *  *       /     \       *  *       /     \       *  *       /
+    //   \     *    *     /       \     +    *     /       \     +    *     /       \     +    +     /
+    //    \   *      *   /         \   *      *   /         \   *   +  *   /         \   *      *   /
+    //     \ *     +  * /           \ *        * /           \ *        * /           \ *        * /
+    //      \******+***/             \*****+****/             \*****+****/             \*****+****/
+    //       \        /               \        /               \        /               \        /
+    //        \      /                 \      /                 \      /                 \      /
+    //         \    /                   \    /                   \    /                   \    /
+    //          \  /                     \  /                     \  /                     \  /
+    // 5         \/             6         \/             7         \/             8         \/
+    // ______________________   ______________________   ______________________   ______________________
+    // \         **         /   \         **         /   \         **         /   \         **         /
+    //  \       *  *       /     \       *  *       /     \       *  *       /     \       *  *       /
+    //   \     *    *     /       \     *    *     /       \     *    *     /       \     *    *     /
+    //    \   *  +   *   /         \   *      *   /         \   *      *   /         \   *  +   *   /
+    //     \ *        * /           \ *        * /           \ *    +   * /           \ *        * /
+    //      \**********/             \*****+****/             \**********/             \******+***/
+    //       %        %               %        %               %        %               %        %
+    //        %      %                 %      %                 %      %                 %      %
+    //         %    %                   %    %                   %    %                   %    %
+    //          %  %                     %  %                     %  %                     %  %
+    // 9         %%             10        %%             11        %%             12        %%
+    // ______________________   ______________________   ______________________   ______________________
+    // \         **         /   \         **         /   \         **         /   \         **         /
+    //  \       *  *       /     \       *  *       /     \       *  *       /     \       *  *       /
+    //   \     *    *     /       \     +    *     /       \     +    *     /       \     +    +     /
+    //    \   *      *   /         \   *      *   /         \   *   +  *   /         \   *      *   /
+    //     \ *     +  * /           \ *        * /           \ *        * /           \ *        * /
+    //      \******+***/             \*****+****/             \*****+****/             \*****+****/
+    //       %        %               %        %               %        %               %        %
+    //        %      %                 %      %                 %      %                 %      %
+    //         %    %                   %    %                   %    %                   %    %
+    //          %  %                     %  %                     %  %                     %  %
+    // 13        %%             14        %%             15        %%             16        %%
 
-    // TODO!!! - start simpler than the above logic implies - for a first cut, just split the edge of any edge tri and add the
-    // barycentric center point of any non-edge tri involved in an overlap.  For the inside points, check the distance to the
-    // triangle plane as an initial cut at how far "inside" the mesh the point is.
 
 
     return 0;
