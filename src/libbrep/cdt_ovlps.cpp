@@ -452,7 +452,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
     // while making sure we perform splits that work towards refining overlap areas.  In the diagrams
     // below, "*" represents the edge of the triangle under consideration, "-" represents the edge of a
     // surrounding triangle, and + represents a new candidate point from an intersecting triangle.
-    // % represents an edge on a triangle from another face
+    // % represents an edge on a triangle from another face.
     //
     // ______________________   ______________________   ______________________   ______________________
     // \         **         /   \         **         /   \         **         /   \         **         /
@@ -502,7 +502,29 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
     //         %    %                   %    %                   %    %                   %    %
     //          %  %                     %  %                     %  %                     %  %
     // 13        %%             14        %%             15        %%             16        %%
-
+    //
+    //
+    // Initial thoughts:
+    //
+    // 1. If all new candidate points are far from the triangle edges, (cases 1 and 9) we can simply
+    // replace the current triangle with the CDT of its interior.
+    //
+    // 2. Any time a new point is anywhere near an edge, we risk creating a long, slim triangle.  In
+    // those situations, we want to remove both the active triangle and the triangle sharing that edge,
+    // and CDT the resulting point set to make new triangles to replace both.  (cases other than 1 and 9)
+    //
+    // 3. If a candidate triangle has multiple edges with candidate points near them, perform the
+    // above operation for each edge - i.e. the replacement triangles from the first CDT that share the
+    // original un-replaced triangle edges should be used as the basis for CDTs per step 2 with
+    // their neighbors.  This is true both for the "current" triangle and the triangle pulled in for
+    // the pair processing, if the latter is an overlapping triangle.  (cases 6-8)
+    //
+    // 4. If we can't remove the edge in that fashion (i.e. we're on the edge of the face) but have a
+    // candidate point close to that edge, we need to split the edge (maybe near that point if we can
+    // manage it... right now we've only got a midpoint split...), reject any new candidate points that
+    // are too close to the new edges, and re- CDT the resulting set.  Any remaining overlaps will need
+    // to be resolved in a subsequent pass, since the same "not-too-close-to-the-edge" sampling
+    // constraints we deal with in the initial surface sampling will also be needed here. (cases 10-16)
 
 
     return 0;
