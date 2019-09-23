@@ -525,6 +525,10 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
     // are too close to the new edges, and re- CDT the resulting set.  Any remaining overlaps will need
     // to be resolved in a subsequent pass, since the same "not-too-close-to-the-edge" sampling
     // constraints we deal with in the initial surface sampling will also be needed here. (cases 10-16)
+    //
+    // 5. We'll probably want some sort of filter to avoid splitting very tiny triangles interfering with
+    // much larger triangles - otherwise we may end up with a lot of unnecessary splits of triangles
+    // that would have been "cleared" anyway by the breakup of the larger triangle...
 
 
     return 0;
