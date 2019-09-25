@@ -36,6 +36,7 @@ test_bu_hook_basic_hook(void *cdata, void *UNUSED(buf))
     return 0;
 }
 
+
 static int
 test_bu_hook_basic(void)
 {
@@ -45,11 +46,11 @@ test_bu_hook_basic(void)
     bu_hook_list_init(&hl);
 
     /**
-     * Don't add hook if the function is NULL.
+     * Add a NULL hook
      */
     bu_hook_add(&hl, NULL, NULL);
 
-    if (hl.capacity != 0 || hl.size != 0 || hl.hooks != NULL) {
+    if (hl.capacity < 1 || hl.size != 1) {
 	printf("\nbu_hook_basic FAILED");
 	return BRLCAD_ERROR;
     }
@@ -59,7 +60,7 @@ test_bu_hook_basic(void)
      */
     bu_hook_add(&hl, test_bu_hook_basic_hook, &which_hook);
 
-    if (hl.capacity == 0 || hl.size == 0 || hl.hooks == NULL) {
+    if (hl.capacity < 2 || hl.size != 2 || hl.hooks == NULL) {
 	printf("\nbu_hook_basic FAILED");
 	return BRLCAD_ERROR;
     }
@@ -88,6 +89,7 @@ test_bu_hook_basic(void)
     printf("\nbu_hook_basic PASSED");
     return BRLCAD_OK;
 }
+
 
 static int
 test_bu_hook_multiadd(void)
@@ -132,6 +134,7 @@ test_bu_hook_multiadd(void)
     return BRLCAD_OK;
 }
 
+
 static int
 test_bu_hook_saverestore(void)
 {
@@ -161,7 +164,6 @@ test_bu_hook_saverestore(void)
     }
 
     bu_hook_restore_all(&from_hl, &to_hl);
-
     bu_hook_call(&from_hl, NULL);
 
     for (i = 0; i < NUM_TEST_HOOKS; i++) {
@@ -174,6 +176,7 @@ test_bu_hook_saverestore(void)
     printf("\nbu_hook_saverestore PASSED");
     return BRLCAD_OK;
 }
+
 
 int
 main(int argc, char *argv[])
@@ -193,6 +196,7 @@ main(int argc, char *argv[])
     bu_log("\nERROR: Unknown hook test '%s'", argv[1]);
     return BRLCAD_ERROR;
 }
+
 
 /*
  * Local Variables:
