@@ -431,6 +431,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	    // why the above doesn't filter out same-object face overlaps, but
 	    // for now ignore it.  We need to be able to ignore triangles that
 	    // only share a 3D edge.
+	    std::cout << "SELF_ISECT\n";
 	}
     }
 
@@ -502,7 +503,18 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
     //         %    %                   %    %                   %    %                   %    %
     //          %  %                     %  %                     %  %                     %  %
     // 13        %%             14        %%             15        %%             16        %%
-    //
+    // ______________________   ______________________   ______________________   ______________________
+    // \         **         /   \         **         /   \         **         /   \         **         /
+    //  \       *  *       /     \       *  *       /     \       *  *       /     \       *  *       /
+    //   \     *    *     /       \     *    *     /       \     *    *     /       \     *    *     /
+    //    \   *      *   /         \   *      *   /         \   *      *   /         \   *      *   /
+    //     \ *+       * /           \ *+      +* /           \ *+       * /           \ *+      +* /
+    //      \**********/             \**********/             \*****+****/             \******+***/
+    //       \        /               \        /               \        /               \        /
+    //        \      /                 \      /                 \      /                 \      /
+    //         \    /                   \    /                   \    /                   \    /
+    //          \  /                     \  /                     \  /                     \  /
+    // 17        \/             18        \/             19        \/             20        \/
     //
     // Initial thoughts:
     //
@@ -525,6 +537,11 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
     // are too close to the new edges, and re- CDT the resulting set.  Any remaining overlaps will need
     // to be resolved in a subsequent pass, since the same "not-too-close-to-the-edge" sampling
     // constraints we deal with in the initial surface sampling will also be needed here. (cases 10-16)
+    //
+    // 5. A point close to an existing vertex will probably need to be rejected or consolidate into the
+    // existing vertex, depending on how the triangles work out.  We don't want to introduce very tiny
+    // triangles trying to resolve "close" points - in that situation we probably want to "collapse" the
+    // close points into a single point with the properties we need.
     //
     // 5. We'll probably want some sort of filter to avoid splitting very tiny triangles interfering with
     // much larger triangles - otherwise we may end up with a lot of unnecessary splits of triangles
