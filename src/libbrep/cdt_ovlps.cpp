@@ -551,27 +551,35 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
     // Each triangle looks like it breaks down into regions:
     //
     //                         /\
-    //                        /!!\
-    //                       /****\
-    //                      / **** \
-    //                     /   **   \
+    //                        /44\
+    //                       /3333\
+    //                      / 3333 \
+    //                     /   33   \
     //                    /    /\    \
     //                   /    /  \    \
     //                  /    /    \    \
     //                 /    /      \    \
-    //                /    /        \    \
+    //                / 2  /        \ 2  \
     //               /    /          \    \
     //              /    /            \    \
-    //             /    /              \    \
+    //             /    /       1      \    \
     //            /    /                \    \
     //           /    /                  \    \
-    //          /*** /                    \ ***\
-    //         /*****_____________________ *****\
-    //        /!****                        ****!\
-    //        ------------------------------------
+    //          /333 /                    \ 333\
+    //         /33333______________________33333\
+    //        /43333            2           33334\
+    //       --------------------------------------
     //
     // Whether points are in any of the above defined regions after the get-closest-points pass will
-    // determine how the triangle is handled.
+    // determine how the triangle is handled:
+    //
+    // Points in region 1 and none of the others - split just this triangle.
+    // Points in region 2 and not 3/4, remove associated edge and triangulate with pair.
+    // Points in region 3 and not 4, remove (one after the other) both associated edges and triangulate with pairs.
+    // Points in region 4 - remove candidate new point - too close to existing vertex.  "Too close" will probably
+    // have to be based on the relative triangle dimensions, both of the interloper and the intruded-upon triangles...
+    // If we have a large and a small triangle interacting, should probably just break the large one down.  If we
+    // hit this situation with comparably sized triangles, probably need to look at a point averaging/merge of some sort.
 
 
 
