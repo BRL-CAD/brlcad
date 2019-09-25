@@ -546,6 +546,36 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
     // 5. We'll probably want some sort of filter to avoid splitting very tiny triangles interfering with
     // much larger triangles - otherwise we may end up with a lot of unnecessary splits of triangles
     // that would have been "cleared" anyway by the breakup of the larger triangle...
+    //
+    //
+    // Each triangle looks like it breaks down into regions:
+    //
+    //                         /\
+    //                        /!!\
+    //                       /****\
+    //                      / **** \
+    //                     /   **   \
+    //                    /    /\    \
+    //                   /    /  \    \
+    //                  /    /    \    \
+    //                 /    /      \    \
+    //                /    /        \    \
+    //               /    /          \    \
+    //              /    /            \    \
+    //             /    /              \    \
+    //            /    /                \    \
+    //           /    /                  \    \
+    //          /*** /                    \ ***\
+    //         /*****_____________________ *****\
+    //        /!****                        ****!\
+    //        ------------------------------------
+    //
+    // Whether points are in any of the above defined regions after the get-closest-points pass will
+    // determine how the triangle is handled.
+
+
+
+
 
 
     return 0;
