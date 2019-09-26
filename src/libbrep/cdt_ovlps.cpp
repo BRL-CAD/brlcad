@@ -482,6 +482,10 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 		    struct brep_face_ovlp_instance *ovlp = *o_it;
 		    face_pnts.insert(std::make_pair(ovlp->intruding_pnt_face_ind, ovlp->intruding_pnt));
 		}
+
+		// TODO - surface_GetClosestPoint3dFirstOrder and trim_GetClosestPoint3dFirstOrder look like the
+		// places to start.  Need to see if we can make a copy of the face surface and replace its
+		// loops with the 2D triangle edges as the outer loop to get the closed point on the triangle...
 	    }
 	}
     }
