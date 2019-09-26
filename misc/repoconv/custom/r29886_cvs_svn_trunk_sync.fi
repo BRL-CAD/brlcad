@@ -40383,7 +40383,7 @@ mark :1111129886
 committer CVS SVN Sync <cvs_svn_sync@brlcad.org> 1199132714 +0000
 data 77
 Sync CVS repo contents for r29886 to match the SVN contents at that revision.
-from 0eeb974bd6ba4496159d1b9cc50f59cc42505aaa
+from 5c05c018bc844875038bfa929e1769d68b69c005
 M 100644 83b8558509908be85f9c61948c8d8d5ef18672b4 ".cvsignore"
 M 100644 aa08223bbc2674f1928bfeda5d917a4f40884c6f "misc/nsis/brlcad.nsi"
 M 100755 9cac74ad0e4037cc903df32f28bc7cdbec8b0e10 "misc/win32-msvc8/tclsh/library/installTree.tcl"
