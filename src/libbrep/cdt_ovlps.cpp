@@ -417,6 +417,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 				ovlp->coplanar_intersection = (isect == 1) ? true : false;
 				s_cdt1->face_ovlps[fmesh1->f_id].push_back(ovlp);
 				s_cdt1->face_ovlp_tris[fmesh1->f_id].insert(t1.ind);
+				s_cdt1->face_tri_ovlps[fmesh1->f_id][t1.ind].insert(ovlp);
 			    }
 			}
 
@@ -440,6 +441,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 				ovlp->coplanar_intersection = (isect == 1) ? true : false;
 				s_cdt2->face_ovlps[fmesh2->f_id].push_back(ovlp);
 				s_cdt2->face_ovlp_tris[fmesh2->f_id].insert(t2.ind);
+				s_cdt2->face_tri_ovlps[fmesh2->f_id][t2.ind].insert(ovlp);
 			    }
 			}
 
@@ -468,6 +470,18 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 		    edge_check(s_i->face_ovlps[i_fi][j]);
 		}
 		refine_ovlp_tris(s_i, i_fi);
+	    }
+	}
+
+	std::map<size_t, std::set<struct brep_face_ovlp_instance *>>::iterator to_it;
+	for (int i_fi = 0; i_fi < s_i->brep->m_F.Count(); i_fi++) {
+	    for (to_it = s_i->face_tri_ovlps[i_fi].begin(); to_it != s_i->face_tri_ovlps[i_fi].end(); to_it++) {
+		std::set<struct brep_face_ovlp_instance *>::iterator o_it;
+		std::set<std::pair<int, long>> face_pnts;
+		for (o_it = to_it->second.begin(); o_it != to_it->second.end(); o_it++) {
+		    struct brep_face_ovlp_instance *ovlp = *o_it;
+		    face_pnts.insert(std::make_pair(ovlp->intruding_pnt_face_ind, ovlp->intruding_pnt));
+		}
 	    }
 	}
     }
