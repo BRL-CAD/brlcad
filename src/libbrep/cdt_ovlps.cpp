@@ -28,6 +28,29 @@
  *
  */
 
+
+/* TODO list:
+ *
+ * 1.  set up get-closest-point calculation options, either using the all-up surface gcp or projections on triangles
+ * depending on what looks to be necessary/practical.
+ *
+ * 2.  Visualize the gcp results in 2D and 3D.
+ *
+ * 3.  Identify triangles fully contained inside another mesh, based on walking the intersecting triangles by vertex
+ * nearest neighbors for all the vertices that are categorized as intruding.  Any triangle that is connected to such
+ * a vertex but doesn't itself intersect the mesh is entirely interior, and we'll need to find closest points for
+ * its vertices as well.
+ *
+ * 4.  If the points from #3 involve triangle meshes for splitting that weren't directly interfering, update the
+ * necessary data sets so we know which triangles to split (probably a 2D triangle/point search of some sort, since
+ * unlike the tri/tri intersection tests we can't immediately localize such points on the intruding triangle mesh
+ * if they're coming from a NURBS surface based gcp...)
+ *
+ * 5.  Do a categorization pass as outlined below so we know what specifically we need to do with each triangle.
+ *
+ * 6.  Set up the replacement CDT problems and update the mesh.  Identify termination criteria and check for them.
+ */
+
 #include "common.h"
 #include <queue>
 #include <numeric>
