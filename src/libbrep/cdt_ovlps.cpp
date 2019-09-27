@@ -127,6 +127,28 @@ tri_isect(cdt_mesh::cdt_mesh_t *fmesh1, cdt_mesh::triangle_t &t1, cdt_mesh::cdt_
 	    //std::cout << "skipping pnt isect(" << coplanar << "): " << (*isectpt1)[X] << "," << (*isectpt1)[Y] << "," << (*isectpt1)[Z] << "\n";
 	    return 0;
 	}
+	ON_Line e1(*fmesh1->pnts[t1.v[0]], *fmesh1->pnts[t1.v[1]]);
+	ON_Line e2(*fmesh1->pnts[t1.v[1]], *fmesh1->pnts[t1.v[2]]);
+	ON_Line e3(*fmesh1->pnts[t1.v[2]], *fmesh1->pnts[t1.v[0]]);
+	double p1_d1 = p1.DistanceTo(e1.ClosestPointTo(p1));
+	double p1_d2 = p1.DistanceTo(e2.ClosestPointTo(p1));
+	double p1_d3 = p1.DistanceTo(e3.ClosestPointTo(p1));
+	double p2_d1 = p2.DistanceTo(e1.ClosestPointTo(p2));
+	double p2_d2 = p2.DistanceTo(e2.ClosestPointTo(p2));
+	double p2_d3 = p2.DistanceTo(e3.ClosestPointTo(p2));
+	// If both points are on the same edge, it's an edge-only intersect - skip
+	if (NEAR_ZERO(p1_d1, ON_ZERO_TOLERANCE) &&  NEAR_ZERO(p2_d1, ON_ZERO_TOLERANCE)) {
+	    std::cout << "edge-only intersect - e1\n";
+	    return 0;
+	}
+	if (NEAR_ZERO(p1_d2, ON_ZERO_TOLERANCE) &&  NEAR_ZERO(p2_d2, ON_ZERO_TOLERANCE)) {
+	    std::cout << "edge-only intersect - e2\n";
+	    return 0;
+	}
+	if (NEAR_ZERO(p1_d3, ON_ZERO_TOLERANCE) &&  NEAR_ZERO(p2_d3, ON_ZERO_TOLERANCE)) {
+	    std::cout << "edge-only intersect - e3\n";
+	    return 0;
+	}
 
 	return (coplanar) ? 1 : 2;
     }
