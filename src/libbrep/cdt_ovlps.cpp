@@ -58,6 +58,20 @@
 #include "bg/tri_tri.h"
 #include "./cdt.h"
 
+double
+tri_pnt_r(cdt_mesh::cdt_mesh_t &fmesh, long tri_ind)
+{
+    cdt_mesh::triangle_t tri = fmesh.tris_vect[tri_ind];
+    ON_3dPoint *p3d = fmesh.pnts[tri.v[0]];
+    ON_BoundingBox bb(*p3d, *p3d);
+    for (int i = 1; i < 3; i++) {
+	p3d = fmesh.pnts[tri.v[i]];
+	bb.Set(*p3d, true);
+    }
+    double bbd = bb.Diagonal().Length();
+    return bbd * 0.05;
+}
+
 static void
 plot_ovlp(struct brep_face_ovlp_instance *ovlp, FILE *plot)
 {
@@ -68,21 +82,9 @@ plot_ovlp(struct brep_face_ovlp_instance *ovlp, FILE *plot)
     cdt_mesh::triangle_t c_tri = cmesh.tris_vect[ovlp->intersected_tri_ind];
     ON_3dPoint *i_p = imesh.pnts[ovlp->intruding_pnt];
 
-    ON_3dPoint *p3d = imesh.pnts[i_tri.v[0]];
-    ON_BoundingBox bb1(*p3d, *p3d);
-    for (int i = 1; i < 3; i++) {
-	p3d = imesh.pnts[i_tri.v[i]];
-	bb1.Set(*p3d, true);
-    }
-    double bb1d = bb1.Diagonal().Length();
-    p3d = cmesh.pnts[c_tri.v[0]];
-    ON_BoundingBox bb2(*p3d, *p3d);
-    for (int i = 1; i < 3; i++) {
-	p3d = cmesh.pnts[c_tri.v[i]];
-	bb2.Set(*p3d, true);
-    }
-    double bb2d = bb2.Diagonal().Length();
-    double pnt_r = (bb1d < bb2d) ? bb1d * 0.05 : bb2d * 0.05;
+    double bb1d = tri_pnt_r(imesh, i_tri.ind);
+    double bb2d = tri_pnt_r(cmesh, c_tri.ind);
+    double pnt_r = (bb1d < bb2d) ? bb1d : bb2d;
 
     pl_color(plot, 0, 0, 255);
     cmesh.plot_tri(c_tri, NULL, plot, 0, 0, 0);
@@ -475,12 +477,45 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 
 	std::map<size_t, std::set<struct brep_face_ovlp_instance *>>::iterator to_it;
 	for (int i_fi = 0; i_fi < s_i->brep->m_F.Count(); i_fi++) {
+	    cdt_mesh::cdt_mesh_t &cmesh = s_i->fmeshes[i_fi];
 	    for (to_it = s_i->face_tri_ovlps[i_fi].begin(); to_it != s_i->face_tri_ovlps[i_fi].end(); to_it++) {
 		std::set<struct brep_face_ovlp_instance *>::iterator o_it;
-		std::set<std::pair<int, long>> face_pnts;
+		std::set<ON_3dPoint *> face_pnts;
 		for (o_it = to_it->second.begin(); o_it != to_it->second.end(); o_it++) {
 		    struct brep_face_ovlp_instance *ovlp = *o_it;
-		    face_pnts.insert(std::make_pair(ovlp->intruding_pnt_face_ind, ovlp->intruding_pnt));
+		    ON_3dPoint *p = ovlp->intruding_pnt_s_cdt->fmeshes[ovlp->intruding_pnt_face_ind].pnts[ovlp->intruding_pnt];
+		    face_pnts.insert(p);
+		}
+
+		if (face_pnts.size()) {
+		    std::cout << s_i->name << " face " << i_fi << " triangle " << to_it->first << " interior point cnt: " << face_pnts.size() << "\n";
+		    std::set<ON_3dPoint *>::iterator f_it;
+		    for (f_it = face_pnts.begin(); f_it != face_pnts.end(); f_it++) {
+			std::cout << "       " << (*f_it)->x << "," << (*f_it)->y << "," << (*f_it)->z << "\n";
+		    }
+		    struct bu_vls fname = BU_VLS_INIT_ZERO;
+		    bu_vls_sprintf(&fname, "%s_%d_%ld_tri.plot3", s_i->name, i_fi, to_it->first);
+		    FILE* plot_file = fopen(bu_vls_cstr(&fname), "w");
+
+		    pl_color(plot_file, 0, 0, 255);
+		    cmesh.plot_tri(cmesh.tris_vect[to_it->first], NULL, plot_file, 0, 0, 0);
+		    double pnt_r = tri_pnt_r(cmesh, to_it->first);
+		    for (f_it = face_pnts.begin(); f_it != face_pnts.end(); f_it++) {
+			pl_color(plot_file, 255, 0, 0);
+			plot_pnt_3d(plot_file, *f_it, pnt_r, 0);
+		    }
+		    fclose(plot_file);
+		
+		    bu_vls_sprintf(&fname, "%s_%d_%ld_ovlps.plot3", s_i->name, i_fi, to_it->first);
+		    FILE* plot_file_2 = fopen(bu_vls_cstr(&fname), "w");
+		    for (o_it = to_it->second.begin(); o_it != to_it->second.end(); o_it++) {
+			struct brep_face_ovlp_instance *ovlp = *o_it;
+			cdt_mesh::cdt_mesh_t &imesh = ovlp->intruding_pnt_s_cdt->fmeshes[ovlp->intruding_pnt_face_ind];
+			cdt_mesh::triangle_t i_tri = imesh.tris_vect[ovlp->intruding_pnt_tri_ind];
+			pl_color(plot_file_2, 0, 255, 0);
+			imesh.plot_tri(i_tri, NULL, plot_file_2, 0, 0, 0);
+		    }
+		    fclose(plot_file_2);
 		}
 
 		// TODO - surface_GetClosestPoint3dFirstOrder and trim_GetClosestPoint3dFirstOrder look like the
