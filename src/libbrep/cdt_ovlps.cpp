@@ -59,6 +59,142 @@
  * 6.  Set up the replacement CDT problems and update the mesh.  Identify termination criteria and check for them.
  */
 
+// The challenge with splitting triangles is to not introduce badly distorted triangles into the mesh,
+// while making sure we perform splits that work towards refining overlap areas.  In the diagrams
+// below, "*" represents the edge of the triangle under consideration, "-" represents the edge of a
+// surrounding triangle, and + represents a new candidate point from an intersecting triangle.
+// % represents an edge on a triangle from another face.
+//
+// ______________________   ______________________   ______________________   ______________________
+// \         **         /   \         **         /   \         **         /   \         **         /
+//  \       *  *       /     \       *  *       /     \       *  *       /     \       *  *       /
+//   \     *    *     /       \     *    *     /       \     *    *     /       \     *    *     /
+//    \   *  +   *   /         \   *      *   /         \   *      *   /         \   *  +   *   /
+//     \ *        * /           \ *        * /           \ *    +   * /           \ *        * /
+//      \**********/             \*****+****/             \**********/             \******+***/
+//       \        /               \        /               \        /               \        /
+//        \      /                 \      /                 \      /                 \      /
+//         \    /                   \    /                   \    /                   \    /
+//          \  /                     \  /                     \  /                     \  /
+// 1         \/             2         \/             3         \/             4         \/
+// ______________________   ______________________   ______________________   ______________________
+// \         **         /   \         **         /   \         **         /   \         **         /
+//  \       *  *       /     \       *  *       /     \       *  *       /     \       *  *       /
+//   \     *    *     /       \     +    *     /       \     +    *     /       \     +    +     /
+//    \   *      *   /         \   *      *   /         \   *   +  *   /         \   *      *   /
+//     \ *     +  * /           \ *        * /           \ *        * /           \ *        * /
+//      \******+***/             \*****+****/             \*****+****/             \*****+****/
+//       \        /               \        /               \        /               \        /
+//        \      /                 \      /                 \      /                 \      /
+//         \    /                   \    /                   \    /                   \    /
+//          \  /                     \  /                     \  /                     \  /
+// 5         \/             6         \/             7         \/             8         \/
+// ______________________   ______________________   ______________________   ______________________
+// \         **         /   \         **         /   \         **         /   \         **         /
+//  \       *  *       /     \       *  *       /     \       *  *       /     \       *  *       /
+//   \     *    *     /       \     *    *     /       \     *    *     /       \     *    *     /
+//    \   *  +   *   /         \   *      *   /         \   *      *   /         \   *  +   *   /
+//     \ *        * /           \ *        * /           \ *    +   * /           \ *        * /
+//      \**********/             \*****+****/             \**********/             \******+***/
+//       %        %               %        %               %        %               %        %
+//        %      %                 %      %                 %      %                 %      %
+//         %    %                   %    %                   %    %                   %    %
+//          %  %                     %  %                     %  %                     %  %
+// 9         %%             10        %%             11        %%             12        %%
+// ______________________   ______________________   ______________________   ______________________
+// \         **         /   \         **         /   \         **         /   \         **         /
+//  \       *  *       /     \       *  *       /     \       *  *       /     \       *  *       /
+//   \     *    *     /       \     +    *     /       \     +    *     /       \     +    +     /
+//    \   *      *   /         \   *      *   /         \   *   +  *   /         \   *      *   /
+//     \ *     +  * /           \ *        * /           \ *        * /           \ *        * /
+//      \******+***/             \*****+****/             \*****+****/             \*****+****/
+//       %        %               %        %               %        %               %        %
+//        %      %                 %      %                 %      %                 %      %
+//         %    %                   %    %                   %    %                   %    %
+//          %  %                     %  %                     %  %                     %  %
+// 13        %%             14        %%             15        %%             16        %%
+// ______________________   ______________________   ______________________   ______________________
+// \         **         /   \         **         /   \         **         /   \         **         /
+//  \       *  *       /     \       *  *       /     \       *  *       /     \       *  *       /
+//   \     *    *     /       \     *    *     /       \     *    *     /       \     *    *     /
+//    \   *      *   /         \   *      *   /         \   *      *   /         \   *      *   /
+//     \ *+       * /           \ *+      +* /           \ *+       * /           \ *+      +* /
+//      \**********/             \**********/             \*****+****/             \******+***/
+//       \        /               \        /               \        /               \        /
+//        \      /                 \      /                 \      /                 \      /
+//         \    /                   \    /                   \    /                   \    /
+//          \  /                     \  /                     \  /                     \  /
+// 17        \/             18        \/             19        \/             20        \/
+//
+// Initial thoughts:
+//
+// 1. If all new candidate points are far from the triangle edges, (cases 1 and 9) we can simply
+// replace the current triangle with the CDT of its interior.
+//
+// 2. Any time a new point is anywhere near an edge, we risk creating a long, slim triangle.  In
+// those situations, we want to remove both the active triangle and the triangle sharing that edge,
+// and CDT the resulting point set to make new triangles to replace both.  (cases other than 1 and 9)
+//
+// 3. If a candidate triangle has multiple edges with candidate points near them, perform the
+// above operation for each edge - i.e. the replacement triangles from the first CDT that share the
+// original un-replaced triangle edges should be used as the basis for CDTs per step 2 with
+// their neighbors.  This is true both for the "current" triangle and the triangle pulled in for
+// the pair processing, if the latter is an overlapping triangle.  (cases 6-8)
+//
+// 4. If we can't remove the edge in that fashion (i.e. we're on the edge of the face) but have a
+// candidate point close to that edge, we need to split the edge (maybe near that point if we can
+// manage it... right now we've only got a midpoint split...), reject any new candidate points that
+// are too close to the new edges, and re- CDT the resulting set.  Any remaining overlaps will need
+// to be resolved in a subsequent pass, since the same "not-too-close-to-the-edge" sampling
+// constraints we deal with in the initial surface sampling will also be needed here. (cases 10-16)
+//
+// 5. A point close to an existing vertex will probably need to be rejected or consolidate into the
+// existing vertex, depending on how the triangles work out.  We don't want to introduce very tiny
+// triangles trying to resolve "close" points - in that situation we probably want to "collapse" the
+// close points into a single point with the properties we need.
+//
+// 5. We'll probably want some sort of filter to avoid splitting very tiny triangles interfering with
+// much larger triangles - otherwise we may end up with a lot of unnecessary splits of triangles
+// that would have been "cleared" anyway by the breakup of the larger triangle...
+//
+//
+// Each triangle looks like it breaks down into regions:
+/*
+ *
+ *                         /\
+ *                        /44\
+ *                       /3333\
+ *                      / 3333 \
+ *                     /   33   \
+ *                    /    /\    \
+ *                   /    /  \    \
+ *                  /    /    \    \
+ *                 /    /      \    \
+ *                / 2  /        \ 2  \
+ *               /    /          \    \
+ *              /    /            \    \
+ *             /    /       1      \    \
+ *            /    /                \    \
+ *           /    /                  \    \
+ *          /333 /                    \ 333\
+ *         /33333______________________33333\
+ *        /43333            2           33334\
+ *       --------------------------------------
+ */
+//
+// Whether points are in any of the above defined regions after the get-closest-points pass will
+// determine how the triangle is handled:
+//
+// Points in region 1 and none of the others - split just this triangle.
+// Points in region 2 and not 3/4, remove associated edge and triangulate with pair.
+// Points in region 3 and not 4, remove (one after the other) both associated edges and triangulate with pairs.
+// Points in region 4 - remove candidate new point - too close to existing vertex.  "Too close" will probably
+// have to be based on the relative triangle dimensions, both of the interloper and the intruded-upon triangles...
+// If we have a large and a small triangle interacting, should probably just break the large one down.  If we
+// hit this situation with comparably sized triangles, probably need to look at a point averaging/merge of some sort.
+
+
+
 #include "common.h"
 #include <queue>
 #include <numeric>
@@ -373,11 +509,23 @@ static bool NearFacesCallback(void *data, void *a_context) {
     }
     return true;
 }
+
+struct mvert_info {
+    struct ON_Brep_CDT_State *s_cdt;
+    int f_id;
+    size_t p_id;
+    ON_BoundingBox bb;
+    std::set<struct mvert_info *> interactions;
+};
+
 int
 ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 {
     if (!s_a) return -1;
     if (s_cnt < 1) return 0;
+
+
+
 
     // Get the bounding boxes of all faces of all breps in s_a, and find
     // possible interactions
@@ -411,6 +559,33 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 
     std::cout << "Found " << check_pairs.size() << " potentially interfering face pairs\n";
     std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>>::iterator cp_it;
+
+    // Get the bounding boxes of all vertices of all meshes of all breps in
+    // s_a that might have possible interactions, and find close point sets
+    std::set<cdt_mesh::cdt_mesh_t *> fmeshes;
+    for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
+	cdt_mesh::cdt_mesh_t *fmesh1 = cp_it->first;
+	cdt_mesh::cdt_mesh_t *fmesh2 = cp_it->second;
+	fmeshes.insert(fmesh1);
+	fmeshes.insert(fmesh2);
+    }
+    std::set<struct mvert_info *> mverts;
+    std::set<cdt_mesh::cdt_mesh_t *>::iterator f_it;
+    for (f_it = fmeshes.begin(); f_it != fmeshes.end(); f_it++) {
+	cdt_mesh::cdt_mesh_t *fmesh = *f_it;
+	for (size_t i = 0; i < fmesh->pnts.size(); i++) {
+	    // 0.  Initialize mvert object.
+	    // 1.  Get pnt triangles.
+	    // 2.  find the shortest edge associated with pnt
+	    // 3.  create a bbox around pnt using length ~20% of the shortest edge length.
+	    // 4.  insert result into mverts;
+	}
+    }
+    RTree<void *, double, 3> rtree_mpnts;
+    // Iterate over mverts, checking for nearby pnts in a fashion similar to the
+    // NearFacesCallback search above.  For each mvert, note potentially interfering
+    // mverts - this will tell us what we need to adjust.
+
     for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
 	cdt_mesh::cdt_mesh_t *fmesh1 = cp_it->first;
 	cdt_mesh::cdt_mesh_t *fmesh2 = cp_it->second;
@@ -537,9 +712,9 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 
 		if (face_pnts.size()) {
 		    std::cout << s_i->name << " face " << i_fi << " triangle " << to_it->first << " interior point cnt: " << face_pnts.size() << "\n";
-		    std::set<ON_3dPoint *>::iterator f_it;
-		    for (f_it = face_pnts.begin(); f_it != face_pnts.end(); f_it++) {
-			std::cout << "       " << (*f_it)->x << "," << (*f_it)->y << "," << (*f_it)->z << "\n";
+		    std::set<ON_3dPoint *>::iterator fp_it;
+		    for (fp_it = face_pnts.begin(); fp_it != face_pnts.end(); fp_it++) {
+			std::cout << "       " << (*fp_it)->x << "," << (*fp_it)->y << "," << (*fp_it)->z << "\n";
 		    }
 		    struct bu_vls fname = BU_VLS_INIT_ZERO;
 		    bu_vls_sprintf(&fname, "%s_%d_%ld_tri.plot3", s_i->name, i_fi, to_it->first);
@@ -548,9 +723,9 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 		    pl_color(plot_file, 0, 0, 255);
 		    cmesh.plot_tri(cmesh.tris_vect[to_it->first], NULL, plot_file, 0, 0, 0);
 		    double pnt_r = tri_pnt_r(cmesh, to_it->first);
-		    for (f_it = face_pnts.begin(); f_it != face_pnts.end(); f_it++) {
+		    for (fp_it = face_pnts.begin(); fp_it != face_pnts.end(); fp_it++) {
 			pl_color(plot_file, 255, 0, 0);
-			plot_pnt_3d(plot_file, *f_it, pnt_r, 0);
+			plot_pnt_3d(plot_file, *fp_it, pnt_r, 0);
 		    }
 		    fclose(plot_file);
 
@@ -586,141 +761,6 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	    }
 	}
     }
-
-    // The challenge with splitting triangles is to not introduce badly distorted triangles into the mesh,
-    // while making sure we perform splits that work towards refining overlap areas.  In the diagrams
-    // below, "*" represents the edge of the triangle under consideration, "-" represents the edge of a
-    // surrounding triangle, and + represents a new candidate point from an intersecting triangle.
-    // % represents an edge on a triangle from another face.
-    //
-    // ______________________   ______________________   ______________________   ______________________
-    // \         **         /   \         **         /   \         **         /   \         **         /
-    //  \       *  *       /     \       *  *       /     \       *  *       /     \       *  *       /
-    //   \     *    *     /       \     *    *     /       \     *    *     /       \     *    *     /
-    //    \   *  +   *   /         \   *      *   /         \   *      *   /         \   *  +   *   /
-    //     \ *        * /           \ *        * /           \ *    +   * /           \ *        * /
-    //      \**********/             \*****+****/             \**********/             \******+***/
-    //       \        /               \        /               \        /               \        /
-    //        \      /                 \      /                 \      /                 \      /
-    //         \    /                   \    /                   \    /                   \    /
-    //          \  /                     \  /                     \  /                     \  /
-    // 1         \/             2         \/             3         \/             4         \/
-    // ______________________   ______________________   ______________________   ______________________
-    // \         **         /   \         **         /   \         **         /   \         **         /
-    //  \       *  *       /     \       *  *       /     \       *  *       /     \       *  *       /
-    //   \     *    *     /       \     +    *     /       \     +    *     /       \     +    +     /
-    //    \   *      *   /         \   *      *   /         \   *   +  *   /         \   *      *   /
-    //     \ *     +  * /           \ *        * /           \ *        * /           \ *        * /
-    //      \******+***/             \*****+****/             \*****+****/             \*****+****/
-    //       \        /               \        /               \        /               \        /
-    //        \      /                 \      /                 \      /                 \      /
-    //         \    /                   \    /                   \    /                   \    /
-    //          \  /                     \  /                     \  /                     \  /
-    // 5         \/             6         \/             7         \/             8         \/
-    // ______________________   ______________________   ______________________   ______________________
-    // \         **         /   \         **         /   \         **         /   \         **         /
-    //  \       *  *       /     \       *  *       /     \       *  *       /     \       *  *       /
-    //   \     *    *     /       \     *    *     /       \     *    *     /       \     *    *     /
-    //    \   *  +   *   /         \   *      *   /         \   *      *   /         \   *  +   *   /
-    //     \ *        * /           \ *        * /           \ *    +   * /           \ *        * /
-    //      \**********/             \*****+****/             \**********/             \******+***/
-    //       %        %               %        %               %        %               %        %
-    //        %      %                 %      %                 %      %                 %      %
-    //         %    %                   %    %                   %    %                   %    %
-    //          %  %                     %  %                     %  %                     %  %
-    // 9         %%             10        %%             11        %%             12        %%
-    // ______________________   ______________________   ______________________   ______________________
-    // \         **         /   \         **         /   \         **         /   \         **         /
-    //  \       *  *       /     \       *  *       /     \       *  *       /     \       *  *       /
-    //   \     *    *     /       \     +    *     /       \     +    *     /       \     +    +     /
-    //    \   *      *   /         \   *      *   /         \   *   +  *   /         \   *      *   /
-    //     \ *     +  * /           \ *        * /           \ *        * /           \ *        * /
-    //      \******+***/             \*****+****/             \*****+****/             \*****+****/
-    //       %        %               %        %               %        %               %        %
-    //        %      %                 %      %                 %      %                 %      %
-    //         %    %                   %    %                   %    %                   %    %
-    //          %  %                     %  %                     %  %                     %  %
-    // 13        %%             14        %%             15        %%             16        %%
-    // ______________________   ______________________   ______________________   ______________________
-    // \         **         /   \         **         /   \         **         /   \         **         /
-    //  \       *  *       /     \       *  *       /     \       *  *       /     \       *  *       /
-    //   \     *    *     /       \     *    *     /       \     *    *     /       \     *    *     /
-    //    \   *      *   /         \   *      *   /         \   *      *   /         \   *      *   /
-    //     \ *+       * /           \ *+      +* /           \ *+       * /           \ *+      +* /
-    //      \**********/             \**********/             \*****+****/             \******+***/
-    //       \        /               \        /               \        /               \        /
-    //        \      /                 \      /                 \      /                 \      /
-    //         \    /                   \    /                   \    /                   \    /
-    //          \  /                     \  /                     \  /                     \  /
-    // 17        \/             18        \/             19        \/             20        \/
-    //
-    // Initial thoughts:
-    //
-    // 1. If all new candidate points are far from the triangle edges, (cases 1 and 9) we can simply
-    // replace the current triangle with the CDT of its interior.
-    //
-    // 2. Any time a new point is anywhere near an edge, we risk creating a long, slim triangle.  In
-    // those situations, we want to remove both the active triangle and the triangle sharing that edge,
-    // and CDT the resulting point set to make new triangles to replace both.  (cases other than 1 and 9)
-    //
-    // 3. If a candidate triangle has multiple edges with candidate points near them, perform the
-    // above operation for each edge - i.e. the replacement triangles from the first CDT that share the
-    // original un-replaced triangle edges should be used as the basis for CDTs per step 2 with
-    // their neighbors.  This is true both for the "current" triangle and the triangle pulled in for
-    // the pair processing, if the latter is an overlapping triangle.  (cases 6-8)
-    //
-    // 4. If we can't remove the edge in that fashion (i.e. we're on the edge of the face) but have a
-    // candidate point close to that edge, we need to split the edge (maybe near that point if we can
-    // manage it... right now we've only got a midpoint split...), reject any new candidate points that
-    // are too close to the new edges, and re- CDT the resulting set.  Any remaining overlaps will need
-    // to be resolved in a subsequent pass, since the same "not-too-close-to-the-edge" sampling
-    // constraints we deal with in the initial surface sampling will also be needed here. (cases 10-16)
-    //
-    // 5. A point close to an existing vertex will probably need to be rejected or consolidate into the
-    // existing vertex, depending on how the triangles work out.  We don't want to introduce very tiny
-    // triangles trying to resolve "close" points - in that situation we probably want to "collapse" the
-    // close points into a single point with the properties we need.
-    //
-    // 5. We'll probably want some sort of filter to avoid splitting very tiny triangles interfering with
-    // much larger triangles - otherwise we may end up with a lot of unnecessary splits of triangles
-    // that would have been "cleared" anyway by the breakup of the larger triangle...
-    //
-    //
-    // Each triangle looks like it breaks down into regions:
-    /*
-     *
-     *                         /\
-     *                        /44\
-     *                       /3333\
-     *                      / 3333 \
-     *                     /   33   \
-     *                    /    /\    \
-     *                   /    /  \    \
-     *                  /    /    \    \
-     *                 /    /      \    \
-     *                / 2  /        \ 2  \
-     *               /    /          \    \
-     *              /    /            \    \
-     *             /    /       1      \    \
-     *            /    /                \    \
-     *           /    /                  \    \
-     *          /333 /                    \ 333\
-     *         /33333______________________33333\
-     *        /43333            2           33334\
-     *       --------------------------------------
-     */
-    //
-    // Whether points are in any of the above defined regions after the get-closest-points pass will
-    // determine how the triangle is handled:
-    //
-    // Points in region 1 and none of the others - split just this triangle.
-    // Points in region 2 and not 3/4, remove associated edge and triangulate with pair.
-    // Points in region 3 and not 4, remove (one after the other) both associated edges and triangulate with pairs.
-    // Points in region 4 - remove candidate new point - too close to existing vertex.  "Too close" will probably
-    // have to be based on the relative triangle dimensions, both of the interloper and the intruded-upon triangles...
-    // If we have a large and a small triangle interacting, should probably just break the large one down.  If we
-    // hit this situation with comparably sized triangles, probably need to look at a point averaging/merge of some sort.
-
 
 
 
