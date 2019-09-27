@@ -129,16 +129,42 @@ barycentric_tri_surf_pnt(cdt_mesh::cdt_mesh_t &fmesh, long tri_ind, ON_3dPoint *
     double w = (d1 * d5 - d2 * d4) / denom;
     double u = 1.0 - v - w;
 
+    std::cout << "tri p1: " << p0->x << "," << p0->y << "," << p0->z << "\n";
+    std::cout << "tri p2: " << p1->x << "," << p1->y << "," << p1->z << "\n";
+    std::cout << "tri p3: " << p2->x << "," << p2->y << "," << p2->z << "\n";
+
+    std::cout << "u: " << u << ", v: " << v << ", w: " << w << "\n";
+
+    double x3d = u * p0->x + v * p1->x + w * p2->x; 
+    double y3d = u * p0->y + v * p1->y + w * p2->y; 
+    double z3d = u * p0->z + v * p1->z + w * p2->z; 
+
+    std::cout << "p : " << p->x << "," << p->y << "," << p->z << "\n";
+    std::cout << "p2: " << x3d << "," << y3d << "," << z3d << "\n";
+
     // Find the 2D surface point corresponding to that triangle coordinate in the
     // 2D version of the triangle in the surface parametric domain.  (NOTE - we'll
     // have to do something else when a singularity is involved...)
     ON_2dPoint p2d[3] = {ON_2dPoint::UnsetPoint, ON_2dPoint::UnsetPoint, ON_2dPoint::UnsetPoint};
+    ON_3dPoint p3ds[3] = {ON_3dPoint::UnsetPoint, ON_3dPoint::UnsetPoint, ON_3dPoint::UnsetPoint};
     for (int i = 0; i < 3; i++) {
 	p2d[i] = ON_2dPoint(fmesh.m_pnts_2d[fmesh.p3d2d[tri.v[i]]].first, fmesh.m_pnts_2d[fmesh.p3d2d[tri.v[i]]].second);
+	p3ds[i] = *fmesh.pnts[tri.v[i]];
     }
 
-    double x = v * p2d[0].x + w * p2d[1].x + u * p2d[2].x;
-    double y = v * p2d[0].y + w * p2d[1].y + u * p2d[2].y;
+    std::cout << "tri p12d: " << p2d[0].x << "," << p2d[0].y << "\n";
+    std::cout << "tri p22d: " << p2d[1].x << "," << p2d[1].y << "\n";
+    std::cout << "tri p32d: " << p2d[2].x << "," << p2d[2].y << "\n";
+
+    std::cout << "tri p13d: " << p3ds[0].x << "," << p3ds[0].y << "," << p3ds[0].z << "\n";
+    std::cout << "tri p23d: " << p3ds[1].x << "," << p3ds[1].y << "," << p3ds[1].z << "\n";
+    std::cout << "tri p33d: " << p3ds[2].x << "," << p3ds[2].y << "," << p3ds[2].z << "\n";
+
+
+    double x = u * p2d[0].x + v * p2d[1].x + w * p2d[2].x;
+    double y = u * p2d[0].y + v * p2d[1].y + w * p2d[2].y;
+
+    std::cout << "x: " << x << ", y: " << y << "\n";
 
     // Evaluate the surface at that point to find the corresponding 3D point
     ON_3dPoint p3d;
@@ -147,6 +173,7 @@ barycentric_tri_surf_pnt(cdt_mesh::cdt_mesh_t &fmesh, long tri_ind, ON_3dPoint *
     if (!surface_EvNormal(s_cdt->brep->m_F[fmesh.f_id].SurfaceOf(), x, y, p3d, norm)) {
 	p3d = s_cdt->brep->m_F[fmesh.f_id].SurfaceOf()->PointAt(x, y);
     }
+    std::cout << "p3: " << p3d.x << "," << p3d.y << "," << p3d.z << "\n";
 
     return p3d;
 }
