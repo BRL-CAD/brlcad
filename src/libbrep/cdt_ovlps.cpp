@@ -109,12 +109,9 @@ plot_ovlps(struct ON_Brep_CDT_State *s_cdt, int fi)
 
 // Return 0 if no intersection, 1 if coplanar intersection, 2 if non-coplanar intersection
 static int
-tri_isect(cdt_mesh::cdt_mesh_t *fmesh1, cdt_mesh::triangle_t &t1, cdt_mesh::cdt_mesh_t *fmesh2, cdt_mesh::triangle_t &t2)
+tri_isect(cdt_mesh::cdt_mesh_t *fmesh1, cdt_mesh::triangle_t &t1, cdt_mesh::cdt_mesh_t *fmesh2, cdt_mesh::triangle_t &t2, point_t *isectpt1, point_t *isectpt2)
 {
     int coplanar = 0;
-    point_t isectpt1 = {MAX_FASTF, MAX_FASTF, MAX_FASTF};
-    point_t isectpt2 = {MAX_FASTF, MAX_FASTF, MAX_FASTF};
-
     point_t T1_V[3];
     point_t T2_V[3];
     VSET(T1_V[0], fmesh1->pnts[t1.v[0]]->x, fmesh1->pnts[t1.v[0]]->y, fmesh1->pnts[t1.v[0]]->z);
@@ -123,11 +120,11 @@ tri_isect(cdt_mesh::cdt_mesh_t *fmesh1, cdt_mesh::triangle_t &t1, cdt_mesh::cdt_
     VSET(T2_V[0], fmesh2->pnts[t2.v[0]]->x, fmesh2->pnts[t2.v[0]]->y, fmesh2->pnts[t2.v[0]]->z);
     VSET(T2_V[1], fmesh2->pnts[t2.v[1]]->x, fmesh2->pnts[t2.v[1]]->y, fmesh2->pnts[t2.v[1]]->z);
     VSET(T2_V[2], fmesh2->pnts[t2.v[2]]->x, fmesh2->pnts[t2.v[2]]->y, fmesh2->pnts[t2.v[2]]->z);
-    if (bg_tri_tri_isect_with_line(T1_V[0], T1_V[1], T1_V[2], T2_V[0], T2_V[1], T2_V[2], &coplanar, &isectpt1, &isectpt2)) {
-	ON_3dPoint p1(isectpt1[X], isectpt1[Y], isectpt1[Z]);
-	ON_3dPoint p2(isectpt2[X], isectpt2[Y], isectpt2[Z]);
+    if (bg_tri_tri_isect_with_line(T1_V[0], T1_V[1], T1_V[2], T2_V[0], T2_V[1], T2_V[2], &coplanar, isectpt1, isectpt2)) {
+	ON_3dPoint p1((*isectpt1)[X], (*isectpt1)[Y], (*isectpt1)[Z]);
+	ON_3dPoint p2((*isectpt2)[X], (*isectpt2)[Y], (*isectpt2)[Z]);
 	if (p1.DistanceTo(p2) < ON_ZERO_TOLERANCE) {
-	    //std::cout << "skipping pnt isect(" << coplanar << "): " << isectpt1[X] << "," << isectpt1[Y] << "," << isectpt1[Z] << "\n";
+	    //std::cout << "skipping pnt isect(" << coplanar << "): " << (*isectpt1)[X] << "," << (*isectpt1)[Y] << "," << (*isectpt1)[Z] << "\n";
 	    return 0;
 	}
 
@@ -389,7 +386,9 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 		for (tb_it = tris_prelim.begin(); tb_it != tris_prelim.end(); tb_it++) {
 		    cdt_mesh::triangle_t t1 = fmesh1->tris_vect[tb_it->first];
 		    cdt_mesh::triangle_t t2 = fmesh2->tris_vect[tb_it->second];
-		    int isect = tri_isect(fmesh1, t1, fmesh2, t2);
+		    point_t isectpt1 = {MAX_FASTF, MAX_FASTF, MAX_FASTF};
+		    point_t isectpt2 = {MAX_FASTF, MAX_FASTF, MAX_FASTF};
+		    int isect = tri_isect(fmesh1, t1, fmesh2, t2, &isectpt1, &isectpt2);
 		    if (isect) {
 
 
@@ -407,6 +406,10 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 			    if (dist < 0 && fabs(dist) > ON_ZERO_TOLERANCE) {
 				//std::cout << "face " << fmesh1->f_id << " new interior point from face " << fmesh2->f_id << ": " << tp.x << "," << tp.y << "," << tp.z << "\n";
 				struct brep_face_ovlp_instance *ovlp = new struct brep_face_ovlp_instance;
+
+				VMOVE(ovlp->isect1_3d, isectpt1);
+				VMOVE(ovlp->isect2_3d, isectpt2);
+
 				ovlp->intruding_pnt_s_cdt = s_cdt2;
 				ovlp->intruding_pnt_face_ind = fmesh2->f_id;
 				ovlp->intruding_pnt_tri_ind = t2.ind;
@@ -431,6 +434,10 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 				//std::cout << "face " << fmesh2->f_id << " new interior point from face " << fmesh1->f_id << ": " << tp.x << "," << tp.y << "," << tp.z << "\n";
 				fmesh1_interior_pnts.insert(t1.v[i]);
 				struct brep_face_ovlp_instance *ovlp = new struct brep_face_ovlp_instance;
+
+				VMOVE(ovlp->isect1_3d, isectpt1);
+				VMOVE(ovlp->isect2_3d, isectpt2);
+
 				ovlp->intruding_pnt_s_cdt = s_cdt1;
 				ovlp->intruding_pnt_face_ind = fmesh1->f_id;
 				ovlp->intruding_pnt_tri_ind = t1.ind;
@@ -514,6 +521,11 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 			cdt_mesh::triangle_t i_tri = imesh.tris_vect[ovlp->intruding_pnt_tri_ind];
 			pl_color(plot_file_2, 0, 255, 0);
 			imesh.plot_tri(i_tri, NULL, plot_file_2, 0, 0, 0);
+			ON_3dPoint p1(ovlp->isect1_3d[X], ovlp->isect1_3d[Y], ovlp->isect1_3d[Z]);
+			ON_3dPoint p2(ovlp->isect2_3d[X], ovlp->isect2_3d[Y], ovlp->isect2_3d[Z]);
+			pl_color(plot_file_2, 255, 255, 0);
+			plot_pnt_3d(plot_file_2, &p1, pnt_r, 1);
+			plot_pnt_3d(plot_file_2, &p2, pnt_r, 1);
 		    }
 		    fclose(plot_file_2);
 		}
