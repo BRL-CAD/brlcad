@@ -31,10 +31,18 @@
 
 /* TODO list:
  *
- * 1.  set up get-closest-point calculation options, either using the all-up surface gcp or projections on triangles
- * depending on what looks to be necessary/practical.
+ * 1.  As a first step, build an rtree in 3D of the mesh vertex points, basing their bbox size on the dimensions
+ * of the smallest of the triangles connected to them.  Look for any points from other meshes whose boxes overlap.
+ * These points are "close" and rather than producing the set of small triangles trying to resolve them while
+ * leaving the original vertices in place would entail, instead take the average of those points and for each
+ * vertex replace its point xyz values with the closest point on the associated surface for that avg point.  What
+ * that should do is locally adjust each mesh to not overlap near vertices.  Then we calculate the triangle rtree
+ * and proceed with overlap testing.
  *
- * 2.  Visualize the gcp results in 2D and 3D.
+ * Note that vertices on face edges will probably require different handling...
+ *
+ * 2.  Given closest point calculations for intersections, associate them with either edges or faces (if not near
+ * an edge.)
  *
  * 3.  Identify triangles fully contained inside another mesh, based on walking the intersecting triangles by vertex
  * nearest neighbors for all the vertices that are categorized as intruding.  Any triangle that is connected to such
@@ -46,7 +54,7 @@
  * unlike the tri/tri intersection tests we can't immediately localize such points on the intruding triangle mesh
  * if they're coming from a NURBS surface based gcp...)
  *
- * 5.  Do a categorization pass as outlined below so we know what specifically we need to do with each triangle.
+ * 5.  Do a categorization passes as outlined below so we know what specifically we need to do with each edge/triangle.
  *
  * 6.  Set up the replacement CDT problems and update the mesh.  Identify termination criteria and check for them.
  */
@@ -110,80 +118,10 @@ ON_3dPoint
 closest_surf_pnt(cdt_mesh::cdt_mesh_t &fmesh, ON_3dPoint *p)
 {
     struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh.p_cdt;
-#if 0
-    // Find barycentric coordinate of p on tri_ind with Cramer's rule:
-    // https://gamedev.stackexchange.com/a/23745
-    cdt_mesh::triangle_t tri = fmesh.tris_vect[tri_ind];
-    ON_3dPoint *p0 = fmesh.pnts[tri.v[0]];
-    ON_3dPoint *p1 = fmesh.pnts[tri.v[1]];
-    ON_3dPoint *p2 = fmesh.pnts[tri.v[2]];
-
-    ON_3dVector v0 = *p1 - *p0;
-    ON_3dVector v1 = *p2 - *p0;
-    ON_3dVector vp = *p - *p0;
-    double d1 = ON_DotProduct(v0, v0); 
-    double d2 = ON_DotProduct(v0, v1); 
-    double d3 = ON_DotProduct(v1, v1); 
-    double d4 = ON_DotProduct(vp, v0); 
-    double d5 = ON_DotProduct(vp, v1); 
-    double denom = d1 * d3 - d2 * d2;
-    double v = (d3 * d4 - d2 * d5) / denom;
-    double w = (d1 * d5 - d2 * d4) / denom;
-    double u = 1.0 - v - w;
-
-    std::cout << "tri p1: " << p0->x << "," << p0->y << "," << p0->z << "\n";
-    std::cout << "tri p2: " << p1->x << "," << p1->y << "," << p1->z << "\n";
-    std::cout << "tri p3: " << p2->x << "," << p2->y << "," << p2->z << "\n";
-
-    std::cout << "u: " << u << ", v: " << v << ", w: " << w << "\n";
-
-    double x3d = u * p0->x + v * p1->x + w * p2->x; 
-    double y3d = u * p0->y + v * p1->y + w * p2->y; 
-    double z3d = u * p0->z + v * p1->z + w * p2->z; 
-
-    std::cout << "p : " << p->x << "," << p->y << "," << p->z << "\n";
-    std::cout << "p2: " << x3d << "," << y3d << "," << z3d << "\n";
-
-    // Find the 2D surface point corresponding to that triangle coordinate in the
-    // 2D version of the triangle in the surface parametric domain.  (NOTE - we'll
-    // have to do something else when a singularity is involved...)
-    ON_2dPoint p2d[3] = {ON_2dPoint::UnsetPoint, ON_2dPoint::UnsetPoint, ON_2dPoint::UnsetPoint};
-    ON_3dPoint p3ds[3] = {ON_3dPoint::UnsetPoint, ON_3dPoint::UnsetPoint, ON_3dPoint::UnsetPoint};
-    for (int i = 0; i < 3; i++) {
-	p2d[i] = ON_2dPoint(fmesh.m_pnts_2d[fmesh.p3d2d[tri.v[i]]].first, fmesh.m_pnts_2d[fmesh.p3d2d[tri.v[i]]].second);
-	p3ds[i] = *fmesh.pnts[tri.v[i]];
-    }
-
-    std::cout << "tri p12d: " << p2d[0].x << "," << p2d[0].y << "\n";
-    std::cout << "tri p22d: " << p2d[1].x << "," << p2d[1].y << "\n";
-    std::cout << "tri p32d: " << p2d[2].x << "," << p2d[2].y << "\n";
-
-    std::cout << "tri p13d: " << p3ds[0].x << "," << p3ds[0].y << "," << p3ds[0].z << "\n";
-    std::cout << "tri p23d: " << p3ds[1].x << "," << p3ds[1].y << "," << p3ds[1].z << "\n";
-    std::cout << "tri p33d: " << p3ds[2].x << "," << p3ds[2].y << "," << p3ds[2].z << "\n";
-
-
-    double x = u * p2d[0].x + v * p2d[1].x + w * p2d[2].x;
-    double y = u * p2d[0].y + v * p2d[1].y + w * p2d[2].y;
-
-    std::cout << "x: " << x << ", y: " << y << "\n";
-
-    // Evaluate the surface at that point to find the corresponding 3D point
-    ON_3dPoint p3d;
-    ON_3dVector norm = ON_3dVector::UnsetVector;
-    if (!surface_EvNormal(s_cdt->brep->m_F[fmesh.f_id].SurfaceOf(), x, y, p3d, norm)) {
-	p3d = s_cdt->brep->m_F[fmesh.f_id].SurfaceOf()->PointAt(x, y);
-    }
-    std::cout << "p3: " << p3d.x << "," << p3d.y << "," << p3d.z << "\n";
-#endif
     ON_2dPoint surf_p2d;
-    ON_3dPoint surf_p3d;
+    ON_3dPoint surf_p3d = ON_3dPoint::UnsetPoint;
     double cdist;
-    if (surface_GetClosestPoint3dFirstOrder(s_cdt->brep->m_F[fmesh.f_id].SurfaceOf(), *p, surf_p2d, surf_p3d, cdist)) {
-	std::cout << "closest 2d: " << surf_p2d.x << "," << surf_p2d.y << "\n";
-	std::cout << "closest 3d: " << surf_p3d.x << "," << surf_p3d.y << "," << surf_p3d.z << "\n";
-    }
-
+    surface_GetClosestPoint3dFirstOrder(s_cdt->brep->m_F[fmesh.f_id].SurfaceOf(), *p, surf_p2d, surf_p3d, cdist);
     return surf_p3d;
 }
 
@@ -627,14 +565,17 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 			ON_3dPoint p1(ovlp->isect1_3d[X], ovlp->isect1_3d[Y], ovlp->isect1_3d[Z]);
 			ON_3dPoint p2(ovlp->isect2_3d[X], ovlp->isect2_3d[Y], ovlp->isect2_3d[Z]);
 			pl_color(plot_file_2, 255, 255, 0);
-			plot_pnt_3d(plot_file_2, &p1, pnt_r, 1);
-			plot_pnt_3d(plot_file_2, &p2, pnt_r, 1);
-
-			ON_3dPoint p1s = closest_surf_pnt(cmesh, &p1);
-			ON_3dPoint p2s = closest_surf_pnt(cmesh, &p2);
+			ON_3dPoint pavg = (p1+p2)*0.5;
+			/* 
+			   plot_pnt_3d(plot_file_2, &p1, pnt_r, 1);
+			   plot_pnt_3d(plot_file_2, &p2, pnt_r, 1);
+			   */
+			//ON_3dPoint p1s = closest_surf_pnt(cmesh, &p1);
+			//ON_3dPoint p2s = closest_surf_pnt(cmesh, &p2);
+			ON_3dPoint p1s = closest_surf_pnt(cmesh, &pavg);
 			pl_color(plot_file_2, 0, 255, 255);
 			plot_pnt_3d(plot_file_2, &p1s, pnt_r, 1);
-			plot_pnt_3d(plot_file_2, &p2s, pnt_r, 1);
+			//plot_pnt_3d(plot_file_2, &p2s, pnt_r, 1);
 		    }
 		    fclose(plot_file_2);
 		}
