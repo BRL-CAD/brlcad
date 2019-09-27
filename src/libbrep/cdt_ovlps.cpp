@@ -107,8 +107,10 @@ plot_ovlps(struct ON_Brep_CDT_State *s_cdt, int fi)
 }
 
 ON_3dPoint
-barycentric_tri_surf_pnt(cdt_mesh::cdt_mesh_t &fmesh, long tri_ind, ON_3dPoint *p)
+closest_surf_pnt(cdt_mesh::cdt_mesh_t &fmesh, ON_3dPoint *p)
 {
+    struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh.p_cdt;
+#if 0
     // Find barycentric coordinate of p on tri_ind with Cramer's rule:
     // https://gamedev.stackexchange.com/a/23745
     cdt_mesh::triangle_t tri = fmesh.tris_vect[tri_ind];
@@ -169,13 +171,20 @@ barycentric_tri_surf_pnt(cdt_mesh::cdt_mesh_t &fmesh, long tri_ind, ON_3dPoint *
     // Evaluate the surface at that point to find the corresponding 3D point
     ON_3dPoint p3d;
     ON_3dVector norm = ON_3dVector::UnsetVector;
-    struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh.p_cdt;
     if (!surface_EvNormal(s_cdt->brep->m_F[fmesh.f_id].SurfaceOf(), x, y, p3d, norm)) {
 	p3d = s_cdt->brep->m_F[fmesh.f_id].SurfaceOf()->PointAt(x, y);
     }
     std::cout << "p3: " << p3d.x << "," << p3d.y << "," << p3d.z << "\n";
+#endif
+    ON_2dPoint surf_p2d;
+    ON_3dPoint surf_p3d;
+    double cdist;
+    if (surface_GetClosestPoint3dFirstOrder(s_cdt->brep->m_F[fmesh.f_id].SurfaceOf(), *p, surf_p2d, surf_p3d, cdist)) {
+	std::cout << "closest 2d: " << surf_p2d.x << "," << surf_p2d.y << "\n";
+	std::cout << "closest 3d: " << surf_p3d.x << "," << surf_p3d.y << "," << surf_p3d.z << "\n";
+    }
 
-    return p3d;
+    return surf_p3d;
 }
 
 
@@ -621,8 +630,8 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 			plot_pnt_3d(plot_file_2, &p1, pnt_r, 1);
 			plot_pnt_3d(plot_file_2, &p2, pnt_r, 1);
 
-			ON_3dPoint p1s = barycentric_tri_surf_pnt(cmesh, to_it->first, &p1);
-			ON_3dPoint p2s = barycentric_tri_surf_pnt(cmesh, to_it->first, &p2);
+			ON_3dPoint p1s = closest_surf_pnt(cmesh, &p1);
+			ON_3dPoint p2s = closest_surf_pnt(cmesh, &p2);
 			pl_color(plot_file_2, 0, 255, 255);
 			plot_pnt_3d(plot_file_2, &p1s, pnt_r, 1);
 			plot_pnt_3d(plot_file_2, &p2s, pnt_r, 1);
