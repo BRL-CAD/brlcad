@@ -69,7 +69,7 @@ tri_pnt_r(cdt_mesh::cdt_mesh_t &fmesh, long tri_ind)
 	bb.Set(*p3d, true);
     }
     double bbd = bb.Diagonal().Length();
-    return bbd * 0.05;
+    return bbd * 0.01;
 }
 
 static void
@@ -106,6 +106,51 @@ plot_ovlps(struct ON_Brep_CDT_State *s_cdt, int fi)
     fclose(plot_file);
 }
 
+ON_3dPoint
+barycentric_tri_surf_pnt(cdt_mesh::cdt_mesh_t &fmesh, long tri_ind, ON_3dPoint *p)
+{
+    // Find barycentric coordinate of p on tri_ind with Cramer's rule:
+    // https://gamedev.stackexchange.com/a/23745
+    cdt_mesh::triangle_t tri = fmesh.tris_vect[tri_ind];
+    ON_3dPoint *p0 = fmesh.pnts[tri.v[0]];
+    ON_3dPoint *p1 = fmesh.pnts[tri.v[1]];
+    ON_3dPoint *p2 = fmesh.pnts[tri.v[2]];
+
+    ON_3dVector v0 = *p1 - *p0;
+    ON_3dVector v1 = *p2 - *p0;
+    ON_3dVector vp = *p - *p0;
+    double d1 = ON_DotProduct(v0, v0); 
+    double d2 = ON_DotProduct(v0, v1); 
+    double d3 = ON_DotProduct(v1, v1); 
+    double d4 = ON_DotProduct(vp, v0); 
+    double d5 = ON_DotProduct(vp, v1); 
+    double denom = d1 * d3 - d2 * d2;
+    double v = (d3 * d4 - d2 * d5) / denom;
+    double w = (d1 * d5 - d2 * d4) / denom;
+    double u = 1.0 - v - w;
+
+    // Find the 2D surface point corresponding to that triangle coordinate in the
+    // 2D version of the triangle in the surface parametric domain.  (NOTE - we'll
+    // have to do something else when a singularity is involved...)
+    ON_2dPoint p2d[3] = {ON_2dPoint::UnsetPoint, ON_2dPoint::UnsetPoint, ON_2dPoint::UnsetPoint};
+    for (int i = 0; i < 3; i++) {
+	p2d[i] = ON_2dPoint(fmesh.m_pnts_2d[fmesh.p3d2d[tri.v[i]]].first, fmesh.m_pnts_2d[fmesh.p3d2d[tri.v[i]]].second);
+    }
+
+    double x = v * p2d[0].x + w * p2d[1].x + u * p2d[2].x;
+    double y = v * p2d[0].y + w * p2d[1].y + u * p2d[2].y;
+
+    // Evaluate the surface at that point to find the corresponding 3D point
+    ON_3dPoint p3d;
+    ON_3dVector norm = ON_3dVector::UnsetVector;
+    struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh.p_cdt;
+    if (!surface_EvNormal(s_cdt->brep->m_F[fmesh.f_id].SurfaceOf(), x, y, p3d, norm)) {
+	p3d = s_cdt->brep->m_F[fmesh.f_id].SurfaceOf()->PointAt(x, y);
+    }
+
+    return p3d;
+}
+
 
 // Return 0 if no intersection, 1 if coplanar intersection, 2 if non-coplanar intersection
 static int
@@ -138,15 +183,15 @@ tri_isect(cdt_mesh::cdt_mesh_t *fmesh1, cdt_mesh::triangle_t &t1, cdt_mesh::cdt_
 	double p2_d3 = p2.DistanceTo(e3.ClosestPointTo(p2));
 	// If both points are on the same edge, it's an edge-only intersect - skip
 	if (NEAR_ZERO(p1_d1, ON_ZERO_TOLERANCE) &&  NEAR_ZERO(p2_d1, ON_ZERO_TOLERANCE)) {
-	    std::cout << "edge-only intersect - e1\n";
+	    //std::cout << "edge-only intersect - e1\n";
 	    return 0;
 	}
 	if (NEAR_ZERO(p1_d2, ON_ZERO_TOLERANCE) &&  NEAR_ZERO(p2_d2, ON_ZERO_TOLERANCE)) {
-	    std::cout << "edge-only intersect - e2\n";
+	    //std::cout << "edge-only intersect - e2\n";
 	    return 0;
 	}
 	if (NEAR_ZERO(p1_d3, ON_ZERO_TOLERANCE) &&  NEAR_ZERO(p2_d3, ON_ZERO_TOLERANCE)) {
-	    std::cout << "edge-only intersect - e3\n";
+	    //std::cout << "edge-only intersect - e3\n";
 	    return 0;
 	}
 
@@ -534,7 +579,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 			plot_pnt_3d(plot_file, *f_it, pnt_r, 0);
 		    }
 		    fclose(plot_file);
-		
+
 		    bu_vls_sprintf(&fname, "%s_%d_%ld_ovlps.plot3", s_i->name, i_fi, to_it->first);
 		    FILE* plot_file_2 = fopen(bu_vls_cstr(&fname), "w");
 		    for (o_it = to_it->second.begin(); o_it != to_it->second.end(); o_it++) {
@@ -548,6 +593,12 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 			pl_color(plot_file_2, 255, 255, 0);
 			plot_pnt_3d(plot_file_2, &p1, pnt_r, 1);
 			plot_pnt_3d(plot_file_2, &p2, pnt_r, 1);
+
+			ON_3dPoint p1s = barycentric_tri_surf_pnt(cmesh, to_it->first, &p1);
+			ON_3dPoint p2s = barycentric_tri_surf_pnt(cmesh, to_it->first, &p2);
+			pl_color(plot_file_2, 0, 255, 255);
+			plot_pnt_3d(plot_file_2, &p1s, pnt_r, 1);
+			plot_pnt_3d(plot_file_2, &p2s, pnt_r, 1);
 		    }
 		    fclose(plot_file_2);
 		}
