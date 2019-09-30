@@ -281,7 +281,7 @@ plot_ovlps(struct ON_Brep_CDT_State *s_cdt, int fi)
 }
 
 bool
-closest_surf_pnt(ON_3dPoint &s_p, ON_3dVector &s_norm, cdt_mesh::cdt_mesh_t &fmesh, ON_3dPoint *p)
+closest_surf_pnt(ON_3dPoint &s_p, ON_3dVector &s_norm, cdt_mesh::cdt_mesh_t &fmesh, ON_3dPoint *p, double tol)
 {
     struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh.p_cdt;
     ON_2dPoint surf_p2d;
@@ -289,7 +289,11 @@ closest_surf_pnt(ON_3dPoint &s_p, ON_3dVector &s_norm, cdt_mesh::cdt_mesh_t &fme
     s_p = ON_3dPoint::UnsetPoint;
     s_norm = ON_3dVector::UnsetVector;
     double cdist;
-    surface_GetClosestPoint3dFirstOrder(s_cdt->brep->m_F[fmesh.f_id].SurfaceOf(), *p, surf_p2d, surf_p3d, cdist);
+    if (tol <= 0) {
+	surface_GetClosestPoint3dFirstOrder(s_cdt->brep->m_F[fmesh.f_id].SurfaceOf(), *p, surf_p2d, surf_p3d, cdist);
+    } else {
+	surface_GetClosestPoint3dFirstOrder(s_cdt->brep->m_F[fmesh.f_id].SurfaceOf(), *p, surf_p2d, surf_p3d, cdist, 0, ON_ZERO_TOLERANCE, tol);
+    }
     if (NEAR_EQUAL(cdist, DBL_MAX, ON_ZERO_TOLERANCE)) return false;
     return surface_EvNormal(s_cdt->brep->m_F[fmesh.f_id].SurfaceOf(), surf_p2d.x, surf_p2d.y, s_p, s_norm);
 }
@@ -603,11 +607,12 @@ adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t
 	cdt_mesh::cdt_mesh_t fmesh2 = s_cdt2->fmeshes[vpair.second->f_id];
 	ON_3dPoint p1 = *fmesh1.pnts[vpair.first->p_id];
 	ON_3dPoint p2 = *fmesh2.pnts[vpair.second->p_id];
+	double pdist = p1.DistanceTo(p2);
 	ON_3dPoint pavg = (p1 + p2) * 0.5;
 	ON_3dPoint s1_p, s2_p;
 	ON_3dVector s1_n, s2_n;
-	bool f1_eval = closest_surf_pnt(s1_p, s1_n, fmesh1, &pavg);
-	bool f2_eval = closest_surf_pnt(s2_p, s2_n, fmesh2, &pavg);
+	bool f1_eval = closest_surf_pnt(s1_p, s1_n, fmesh1, &pavg, pdist);
+	bool f2_eval = closest_surf_pnt(s2_p, s2_n, fmesh2, &pavg, pdist);
 	if (f1_eval && f2_eval) {
 	    (*fmesh1.pnts[vpair.first->p_id]) = s1_p;
 	    (*fmesh1.normals[fmesh1.nmap[vpair.first->p_id]]) = s1_n;
@@ -1008,7 +1013,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 			//ON_3dPoint p2s = closest_surf_pnt(cmesh, &p2);
 			ON_3dPoint p1s;
 			ON_3dVector p1norm;
-		       	closest_surf_pnt(p1s, p1norm, cmesh, &pavg);
+		       	closest_surf_pnt(p1s, p1norm, cmesh, &pavg, 0);
 			pl_color(plot_file_2, 0, 255, 255);
 			plot_pnt_3d(plot_file_2, &p1s, pnt_r, 1);
 			//plot_pnt_3d(plot_file_2, &p2s, pnt_r, 1);
