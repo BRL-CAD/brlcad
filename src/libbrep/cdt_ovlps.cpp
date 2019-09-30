@@ -280,15 +280,18 @@ plot_ovlps(struct ON_Brep_CDT_State *s_cdt, int fi)
     fclose(plot_file);
 }
 
-ON_3dPoint
-closest_surf_pnt(cdt_mesh::cdt_mesh_t &fmesh, ON_3dPoint *p)
+bool
+closest_surf_pnt(ON_3dPoint &s_p, ON_3dVector &s_norm, cdt_mesh::cdt_mesh_t &fmesh, ON_3dPoint *p)
 {
     struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh.p_cdt;
     ON_2dPoint surf_p2d;
     ON_3dPoint surf_p3d = ON_3dPoint::UnsetPoint;
+    s_p = ON_3dPoint::UnsetPoint;
+    s_norm = ON_3dVector::UnsetVector;
     double cdist;
     surface_GetClosestPoint3dFirstOrder(s_cdt->brep->m_F[fmesh.f_id].SurfaceOf(), *p, surf_p2d, surf_p3d, cdist);
-    return surf_p3d;
+    if (NEAR_EQUAL(cdist, DBL_MAX, ON_ZERO_TOLERANCE)) return false;
+    return surface_EvNormal(s_cdt->brep->m_F[fmesh.f_id].SurfaceOf(), surf_p2d.x, surf_p2d.y, s_p, s_norm);
 }
 
 /*****************************************************************************
@@ -410,7 +413,6 @@ struct mvert_info {
     int f_id;
     long p_id;
     ON_BoundingBox bb;
-    std::set<struct mvert_info *> interactions;
 };
 
 void
@@ -457,7 +459,6 @@ adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t
 	    mvert->s_cdt = s_cdt;
 	    mvert->f_id = fmesh->f_id;
 	    mvert->p_id = *a_it;
-	    mvert->interactions.clear();
 	    // 1.  Get pnt's associated edges.
 	    std::set<cdt_mesh::edge_t> edges = fmesh->v2edges[*a_it];
 	    // 2.  find the shortest edge associated with pnt
@@ -574,7 +575,7 @@ adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t
     // 2.  > 2 boxes interacting.  Average all the points interacting with a given point.  if
     // that candidate point is viable, use it - can such a naive approach work?.
 
-    std::queue<struct mvert_info *> vq;
+    std::queue<std::pair<struct mvert_info *, struct mvert_info *>> vq;
     std::queue<struct mvert_info *> vq_multi;
     for (vo_it = vert_ovlps.begin(); vo_it != vert_ovlps.end(); vo_it++) {
 	struct mvert_info *v = vo_it->first;
@@ -589,12 +590,34 @@ adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t
 	    continue;
 	}
 	// Both v and it's companion only have one overlapping point
-	vq.push(v);
+	vq.push(std::make_pair(v,v_other));
     }
 
     while (!vq.empty()) {
 	std::cout << "Have " << vq.size() << " simple interactions\n";
-	break;
+	std::pair<struct mvert_info *, struct mvert_info *> vpair = vq.front();
+	vq.pop();
+	struct ON_Brep_CDT_State *s_cdt1 = vpair.first->s_cdt;
+	cdt_mesh::cdt_mesh_t fmesh1 = s_cdt1->fmeshes[vpair.first->f_id];
+	struct ON_Brep_CDT_State *s_cdt2 = vpair.second->s_cdt;
+	cdt_mesh::cdt_mesh_t fmesh2 = s_cdt2->fmeshes[vpair.second->f_id];
+	ON_3dPoint p1 = *fmesh1.pnts[vpair.first->p_id];
+	ON_3dPoint p2 = *fmesh2.pnts[vpair.second->p_id];
+	ON_3dPoint pavg = (p1 + p2) * 0.5;
+	ON_3dPoint s1_p, s2_p;
+	ON_3dVector s1_n, s2_n;
+	closest_surf_pnt(s1_p, s1_n, fmesh1, &pavg);
+	closest_surf_pnt(s2_p, s2_n, fmesh2, &pavg);
+	(*fmesh1.pnts[vpair.first->p_id]) = s1_p;
+	(*fmesh1.normals[fmesh1.nmap[vpair.first->p_id]]) = s1_n;
+	(*fmesh2.pnts[vpair.second->p_id]) = s2_p;
+	(*fmesh2.normals[fmesh2.nmap[vpair.second->p_id]]) = s2_n;
+
+	std::cout << "pavg: " << pavg.x << "," << pavg.y << "," << pavg.z << "\n";
+	std::cout << s_cdt1->name << " face " << fmesh1.f_id << " pnt " << vpair.first->p_id << " move: " << p1.x << "," << p1.y << "," << p1.z << " -> " << s1_p.x << "," << s1_p.y << "," << s1_p.z << "\n";
+	std::cout << s_cdt2->name << " face " << fmesh2.f_id << " pnt " << vpair.second->p_id << " move: " << p2.x << "," << p2.y << "," << p2.z << " -> " << s2_p.x << "," << s2_p.y << "," << s2_p.z << "\n";
+
+	//break;
     }
 
 
@@ -973,7 +996,9 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 			   */
 			//ON_3dPoint p1s = closest_surf_pnt(cmesh, &p1);
 			//ON_3dPoint p2s = closest_surf_pnt(cmesh, &p2);
-			ON_3dPoint p1s = closest_surf_pnt(cmesh, &pavg);
+			ON_3dPoint p1s;
+			ON_3dVector p1norm;
+		       	closest_surf_pnt(p1s, p1norm, cmesh, &pavg);
 			pl_color(plot_file_2, 0, 255, 255);
 			plot_pnt_3d(plot_file_2, &p1s, pnt_r, 1);
 			//plot_pnt_3d(plot_file_2, &p2s, pnt_r, 1);
