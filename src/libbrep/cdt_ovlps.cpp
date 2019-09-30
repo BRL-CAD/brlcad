@@ -370,6 +370,86 @@ possibly_interfering_face_pairs(struct ON_Brep_CDT_State **s_a, int s_cnt)
     return check_pairs;
 }
 
+/******************************************************************************
+ * For nearby vertices that meet certain criteria, we can adjust the vertices
+ * to instead use closest points from the various surfaces and eliminate
+ * what would otherwise be rather thorny triangle intersection cases.
+ ******************************************************************************/
+struct mvert_info {
+    struct ON_Brep_CDT_State *s_cdt;
+    int f_id;
+    long p_id;
+    ON_BoundingBox bb;
+    std::set<struct mvert_info *> interactions;
+};
+
+void
+adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> &check_pairs)
+{
+    // Get the bounding boxes of all vertices of all meshes of all breps in
+    // s_a that might have possible interactions, and find close point sets
+    std::set<cdt_mesh::cdt_mesh_t *> fmeshes;
+    std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>>::iterator cp_it;
+    for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
+	cdt_mesh::cdt_mesh_t *fmesh1 = cp_it->first;
+	cdt_mesh::cdt_mesh_t *fmesh2 = cp_it->second;
+	fmeshes.insert(fmesh1);
+	fmeshes.insert(fmesh2);
+    }
+    std::vector<struct mvert_info *> mverts;
+    std::set<cdt_mesh::cdt_mesh_t *>::iterator f_it;
+    for (f_it = fmeshes.begin(); f_it != fmeshes.end(); f_it++) {
+	cdt_mesh::cdt_mesh_t *fmesh = *f_it;
+	struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh->p_cdt;
+
+	// Walk the fmesh's rtree holding the active triangles to get all
+	// vertices active in the face
+	std::set<long> averts;
+	RTree<size_t, double, 3>::Iterator tree_it;
+	size_t t_ind;
+	cdt_mesh::triangle_t tri;
+	fmesh->tris_tree.GetFirst(tree_it);
+	while (!tree_it.IsNull()) {
+	    t_ind = *tree_it;
+	    tri = fmesh->tris_vect[t_ind];
+	    averts.insert(tri.v[0]);
+	    averts.insert(tri.v[1]);
+	    averts.insert(tri.v[2]);
+	    ++tree_it;
+	}
+
+	std::set<long>::iterator a_it;
+	for (a_it = averts.begin(); a_it != averts.end(); a_it++) {
+	    // 0.  Initialize mvert object.
+	    struct mvert_info *mvert = new struct mvert_info;
+	    mvert->s_cdt = s_cdt;
+	    mvert->f_id = fmesh->f_id;
+	    mvert->p_id = *a_it;
+	    mvert->interactions.clear();
+	    // 1.  Get pnt's associated edges.
+	    std::set<cdt_mesh::edge_t> edges = fmesh->v2edges[*a_it];
+	    // 2.  find the shortest edge associated with pnt
+	    std::set<cdt_mesh::edge_t>::iterator e_it;
+	    double elen = DBL_MAX;
+	    for (e_it = edges.begin(); e_it != edges.end(); e_it++) {
+		ON_3dPoint *p1 = fmesh->pnts[(*e_it).v[0]];
+		ON_3dPoint *p2 = fmesh->pnts[(*e_it).v[1]];
+		double dist = p1->DistanceTo(*p2);
+		elen = (dist < elen) ? dist : elen;
+	    }
+	    std::cout << "Min edge len: " << elen << "\n";
+	    // 3.  create a bbox around pnt using length ~20% of the shortest edge length.
+	    // 4.  insert result into mverts;
+	}
+    }
+    RTree<void *, double, 3> rtree_mpnts;
+    // Iterate over mverts, checking for nearby pnts in a fashion similar to the
+    // NearFacesCallback search above.  For each mvert, note potentially interfering
+    // mverts - this will tell us what we need to adjust.
+
+}
+
+
 /**************************************************************************
  * TODO - implement the various ways to refine a triangle polygon.
  **************************************************************************/
@@ -561,14 +641,6 @@ void edge_check(struct brep_face_ovlp_instance *ovlp) {
     }
 }
 
-struct mvert_info {
-    struct ON_Brep_CDT_State *s_cdt;
-    int f_id;
-    size_t p_id;
-    ON_BoundingBox bb;
-    std::set<struct mvert_info *> interactions;
-};
-
 int
 ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 {
@@ -581,34 +653,10 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
     check_pairs = possibly_interfering_face_pairs(s_a, s_cnt);
 
     std::cout << "Found " << check_pairs.size() << " potentially interfering face pairs\n";
+
+    adjustable_verts(check_pairs);
+
     std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>>::iterator cp_it;
-
-    // Get the bounding boxes of all vertices of all meshes of all breps in
-    // s_a that might have possible interactions, and find close point sets
-    std::set<cdt_mesh::cdt_mesh_t *> fmeshes;
-    for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
-	cdt_mesh::cdt_mesh_t *fmesh1 = cp_it->first;
-	cdt_mesh::cdt_mesh_t *fmesh2 = cp_it->second;
-	fmeshes.insert(fmesh1);
-	fmeshes.insert(fmesh2);
-    }
-    std::set<struct mvert_info *> mverts;
-    std::set<cdt_mesh::cdt_mesh_t *>::iterator f_it;
-    for (f_it = fmeshes.begin(); f_it != fmeshes.end(); f_it++) {
-	cdt_mesh::cdt_mesh_t *fmesh = *f_it;
-	for (size_t i = 0; i < fmesh->pnts.size(); i++) {
-	    // 0.  Initialize mvert object.
-	    // 1.  Get pnt triangles.
-	    // 2.  find the shortest edge associated with pnt
-	    // 3.  create a bbox around pnt using length ~20% of the shortest edge length.
-	    // 4.  insert result into mverts;
-	}
-    }
-    RTree<void *, double, 3> rtree_mpnts;
-    // Iterate over mverts, checking for nearby pnts in a fashion similar to the
-    // NearFacesCallback search above.  For each mvert, note potentially interfering
-    // mverts - this will tell us what we need to adjust.
-
     for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
 	cdt_mesh::cdt_mesh_t *fmesh1 = cp_it->first;
 	cdt_mesh::cdt_mesh_t *fmesh2 = cp_it->second;

@@ -542,6 +542,7 @@ public:
     std::map<ON_3dPoint *, long> n2ind;
     std::map<long, long> nmap;
     std::map<uedge_t, std::set<size_t>> uedges2tris;
+    std::map<long, std::set<edge_t>> v2edges;
 
     // cdt_mesh index versions of Brep data
     std::set<uedge_t> brep_edges;
@@ -554,7 +555,6 @@ public:
     void *p_cdt;
 private:
     /* Data containers */
-    std::map<long, std::set<edge_t>> v2edges;
     std::map<long, std::set<size_t>> v2tris;
     std::map<edge_t, size_t> edges2tris;
 
