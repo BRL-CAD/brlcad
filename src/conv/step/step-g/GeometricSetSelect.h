@@ -41,7 +41,7 @@ public:
 	POINT,
 	CURVE,
 	SURFACE,
-	UNKNOWN
+	GEOMETRIC_SET_SELECT_UNKNOWN
     };
 
 private:

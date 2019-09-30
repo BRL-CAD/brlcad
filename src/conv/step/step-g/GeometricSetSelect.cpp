@@ -41,14 +41,14 @@ GeometricSetSelect::GeometricSetSelect() {
     step = NULL;
     id = 0;
     element = NULL;
-    type = GeometricSetSelect::UNKNOWN;
+    type = GeometricSetSelect::GEOMETRIC_SET_SELECT_UNKNOWN;
 }
 
 GeometricSetSelect::GeometricSetSelect(STEPWrapper *sw,int step_id) {
     step = sw;
     id = step_id;
     element = NULL;
-    type = GeometricSetSelect::UNKNOWN;
+    type = GeometricSetSelect::GEOMETRIC_SET_SELECT_UNKNOWN;
 }
 
 GeometricSetSelect::~GeometricSetSelect() {
@@ -92,7 +92,7 @@ GeometricSetSelect::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
 	    type = GeometricSetSelect::SURFACE;
 	    element = aSurface;
 	} else {
-	    type = GeometricSetSelect::UNKNOWN;
+	    type = GeometricSetSelect::GEOMETRIC_SET_SELECT_UNKNOWN;
 	    element = NULL;
 	}
     }
@@ -134,7 +134,7 @@ GeometricSetSelect::Print(int level) {
 	    TAB(level+2); std::cout << "SURFACE == NULL" << std::endl;
 	}
     } else {
-	std::cout << "UNKNOWN" << std::endl;
+	std::cout << "GEOMETRIC_SET_SELECT_UNKNOWN" << std::endl;
     }
 }
 

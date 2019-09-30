@@ -40,7 +40,7 @@ public:
 	ELLIPSE,
 	HYPERBOLA,
 	PARABOLA,
-	UNKNOWN_CONIC
+	CONIC_UNKNOWN
     };
 
 private:
@@ -66,7 +66,7 @@ public:
 	return CONIC;
     };
     virtual conic_type ConicType() {
-	return UNKNOWN_CONIC;
+	return CONIC_UNKNOWN;
     };
 
     //static methods

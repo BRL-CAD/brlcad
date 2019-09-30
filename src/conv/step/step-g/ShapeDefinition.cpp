@@ -40,14 +40,14 @@ ShapeDefinition::ShapeDefinition() {
     step = NULL;
     id = 0;
     definition = NULL;
-    type = ShapeDefinition::UNKNOWN;
+    type = ShapeDefinition::SHAPE_DEFINITION_UNKNOWN;
 }
 
 ShapeDefinition::ShapeDefinition(STEPWrapper *sw,int step_id) {
     step = sw;
     id = step_id;
     definition = NULL;
-    type = ShapeDefinition::UNKNOWN;
+    type = ShapeDefinition::SHAPE_DEFINITION_UNKNOWN;
 }
 
 ShapeDefinition::~ShapeDefinition() {
@@ -88,7 +88,7 @@ ShapeDefinition::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
 	    definition = dynamic_cast<ShapeAspectRelationship *>(Factory::CreateObject(sw, (SDAI_Application_instance *)sar));
 	    if (!definition) return false;
 	} else {
-	    type = ShapeDefinition::UNKNOWN;
+	    type = ShapeDefinition::SHAPE_DEFINITION_UNKNOWN;
 	    definition = NULL;
 	}
     }
@@ -129,7 +129,7 @@ ShapeDefinition::Print(int level) {
 	    TAB(level+2); std::cout << "SHAPE_ASPECT_RELATIONSHIP == NULL" << std::endl;
 	}
     } else {
-	std::cout << "UNKNOWN" << std::endl;
+	std::cout << "SHAPE_DEFINITION_UNKNOWN" << std::endl;
     }
 
 }

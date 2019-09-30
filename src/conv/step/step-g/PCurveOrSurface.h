@@ -38,7 +38,7 @@ public:
     enum pcurve_or_surface_type {
 	PCURVE,
 	SURFACE,
-	UNKNOWN
+	PCURVE_OR_SURFACE_UNKNOWN
     };
 
 private:

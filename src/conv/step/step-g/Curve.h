@@ -41,7 +41,7 @@ public:
 	OFFSET_CURVE_2D,
 	OFFSET_CURVE_3D,
 	CURVE_REPLICA,
-	UNKNOWN_CURVE
+	CURVE_UNKNOWN
     };
 
 private:
@@ -62,7 +62,7 @@ public:
     Curve();
     virtual ~Curve();
     virtual curve_type CurveType() {
-	return UNKNOWN_CURVE;
+	return CURVE_UNKNOWN;
     };
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual bool LoadONBrep(ON_Brep *brep);
