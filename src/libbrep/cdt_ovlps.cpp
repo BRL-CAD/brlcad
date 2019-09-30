@@ -261,8 +261,12 @@ closest_surf_pnt(cdt_mesh::cdt_mesh_t &fmesh, ON_3dPoint *p)
     return surf_p3d;
 }
 
-
-// Return 0 if no intersection, 1 if coplanar intersection, 2 if non-coplanar intersection
+/*****************************************************************************
+ * We're only concerned with specific categories of intersections between
+ * triangles, so filter accordingly.
+ * Return 0 if no intersection, 1 if coplanar intersection, 2 if non-coplanar
+ * intersection.
+ *****************************************************************************/
 static int
 tri_isect(cdt_mesh::cdt_mesh_t *fmesh1, cdt_mesh::triangle_t &t1, cdt_mesh::cdt_mesh_t *fmesh2, cdt_mesh::triangle_t &t2, point_t *isectpt1, point_t *isectpt2)
 {
@@ -310,6 +314,65 @@ tri_isect(cdt_mesh::cdt_mesh_t *fmesh1, cdt_mesh::triangle_t &t1, cdt_mesh::cdt_
 
     return 0;
 }
+
+/******************************************************************************
+ * As a first step, use the face bboxes to narrow down where we have potential
+ * interactions between breps
+ ******************************************************************************/
+
+struct nf_info {
+    std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> *check_pairs;
+    cdt_mesh::cdt_mesh_t *cmesh;
+};
+
+static bool NearFacesCallback(void *data, void *a_context) {
+    struct nf_info *nf = (struct nf_info *)a_context;
+    cdt_mesh::cdt_mesh_t *omesh = (cdt_mesh::cdt_mesh_t *)data;
+    std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *> p1(nf->cmesh, omesh);
+    std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *> p2(omesh, nf->cmesh);
+    if ((nf->check_pairs->find(p1) == nf->check_pairs->end()) && (nf->check_pairs->find(p1) == nf->check_pairs->end())) {
+	nf->check_pairs->insert(p1);
+    }
+    return true;
+}
+
+std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>>
+possibly_interfering_face_pairs(struct ON_Brep_CDT_State **s_a, int s_cnt)
+{
+    std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> check_pairs;
+    RTree<void *, double, 3> rtree_fmeshes;
+    for (int i = 0; i < s_cnt; i++) {
+	struct ON_Brep_CDT_State *s_i = s_a[i];
+	for (int i_fi = 0; i_fi < s_i->brep->m_F.Count(); i_fi++) {
+	    const ON_BrepFace *i_face = s_i->brep->Face(i_fi);
+	    ON_BoundingBox bb = i_face->BoundingBox();
+	    cdt_mesh::cdt_mesh_t *fmesh = &s_i->fmeshes[i_fi];
+	    struct nf_info nf;
+	    nf.cmesh = fmesh;
+	    nf.check_pairs = &check_pairs;
+	    double fMin[3];
+	    fMin[0] = bb.Min().x;
+	    fMin[1] = bb.Min().y;
+	    fMin[2] = bb.Min().z;
+	    double fMax[3];
+	    fMax[0] = bb.Max().x;
+	    fMax[1] = bb.Max().y;
+	    fMax[2] = bb.Max().z;
+	    // Check the new box against the existing tree, and add any new
+	    // interaction pairs to check_pairs
+	    rtree_fmeshes.Search(fMin, fMax, NearFacesCallback, (void *)&nf);
+	    // Add the new box to the tree so any additional boxes can check
+	    // against it as well
+	    rtree_fmeshes.Insert(fMin, fMax, (void *)fmesh);
+	}
+    }
+
+    return check_pairs;
+}
+
+/**************************************************************************
+ * TODO - implement the various ways to refine a triangle polygon.
+ **************************************************************************/
 
 cdt_mesh::cpolygon_t *
 tri_refine_polygon(cdt_mesh::cdt_mesh_t &fmesh, cdt_mesh::triangle_t &t)
@@ -463,6 +526,10 @@ refine_ovlp_tris(struct ON_Brep_CDT_State *s_cdt, int face_index)
     }
 }
 
+/**************************************************************************
+ * TODO - we're going to need near-edge awareness, but not sure yet in what
+ * form.
+ **************************************************************************/
 
 static bool NearEdgesCallback(void *data, void *a_context) {
     std::set<cdt_mesh::cpolyedge_t *> *edges = (std::set<cdt_mesh::cpolyedge_t *> *)a_context;
@@ -494,22 +561,6 @@ void edge_check(struct brep_face_ovlp_instance *ovlp) {
     }
 }
 
-struct nf_info {
-    std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> *check_pairs;
-    cdt_mesh::cdt_mesh_t *cmesh;
-};
-
-static bool NearFacesCallback(void *data, void *a_context) {
-    struct nf_info *nf = (struct nf_info *)a_context;
-    cdt_mesh::cdt_mesh_t *omesh = (cdt_mesh::cdt_mesh_t *)data;
-    std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *> p1(nf->cmesh, omesh);
-    std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *> p2(omesh, nf->cmesh);
-    if ((nf->check_pairs->find(p1) == nf->check_pairs->end()) && (nf->check_pairs->find(p1) == nf->check_pairs->end())) {
-	nf->check_pairs->insert(p1);
-    }
-    return true;
-}
-
 struct mvert_info {
     struct ON_Brep_CDT_State *s_cdt;
     int f_id;
@@ -524,38 +575,10 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
     if (!s_a) return -1;
     if (s_cnt < 1) return 0;
 
-
-
-
     // Get the bounding boxes of all faces of all breps in s_a, and find
     // possible interactions
     std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> check_pairs;
-    RTree<void *, double, 3> rtree_fmeshes;
-    for (int i = 0; i < s_cnt; i++) {
-	struct ON_Brep_CDT_State *s_i = s_a[i];
-	for (int i_fi = 0; i_fi < s_i->brep->m_F.Count(); i_fi++) {
-	    const ON_BrepFace *i_face = s_i->brep->Face(i_fi);
-	    ON_BoundingBox bb = i_face->BoundingBox();
-	    cdt_mesh::cdt_mesh_t *fmesh = &s_i->fmeshes[i_fi];
-	    struct nf_info nf;
-	    nf.cmesh = fmesh;
-	    nf.check_pairs = &check_pairs;
-	    double fMin[3];
-	    fMin[0] = bb.Min().x;
-	    fMin[1] = bb.Min().y;
-	    fMin[2] = bb.Min().z;
-	    double fMax[3];
-	    fMax[0] = bb.Max().x;
-	    fMax[1] = bb.Max().y;
-	    fMax[2] = bb.Max().z;
-	    // Check the new box against the existing tree, and add any new
-	    // interaction pairs to check_pairs
-	    rtree_fmeshes.Search(fMin, fMax, NearFacesCallback, (void *)&nf);
-	    // Add the new box to the tree so any additional boxes can check
-	    // against it as well
-	    rtree_fmeshes.Insert(fMin, fMax, (void *)fmesh);
-	}
-    }
+    check_pairs = possibly_interfering_face_pairs(s_a, s_cnt);
 
     std::cout << "Found " << check_pairs.size() << " potentially interfering face pairs\n";
     std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>>::iterator cp_it;
