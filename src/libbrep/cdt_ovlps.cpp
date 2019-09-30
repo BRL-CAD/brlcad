@@ -202,6 +202,36 @@
 #include "bg/tri_tri.h"
 #include "./cdt.h"
 
+#define TREE_LEAF_FACE_3D(pf, valp, a, b, c, d)  \
+    pdv_3move(pf, pt[a]); \
+    pdv_3cont(pf, pt[b]); \
+    pdv_3cont(pf, pt[c]); \
+    pdv_3cont(pf, pt[d]); \
+    pdv_3cont(pf, pt[a]); \
+
+#define BBOX_PLOT(pf, bb) {                 \
+    fastf_t pt[8][3];                       \
+    point_t min, max;		    	    \
+    min[0] = bb.Min().x;                    \
+    min[1] = bb.Min().y;                    \
+    min[2] = bb.Min().z;		    \
+    max[0] = bb.Max().x;		    \
+    max[1] = bb.Max().y;		    \
+    max[2] = bb.Max().z;		    \
+    VSET(pt[0], max[X], min[Y], min[Z]);    \
+    VSET(pt[1], max[X], max[Y], min[Z]);    \
+    VSET(pt[2], max[X], max[Y], max[Z]);    \
+    VSET(pt[3], max[X], min[Y], max[Z]);    \
+    VSET(pt[4], min[X], min[Y], min[Z]);    \
+    VSET(pt[5], min[X], max[Y], min[Z]);    \
+    VSET(pt[6], min[X], max[Y], max[Z]);    \
+    VSET(pt[7], min[X], min[Y], max[Z]);    \
+    TREE_LEAF_FACE_3D(pf, pt, 0, 1, 2, 3);      \
+    TREE_LEAF_FACE_3D(pf, pt, 4, 0, 3, 7);      \
+    TREE_LEAF_FACE_3D(pf, pt, 5, 4, 7, 6);      \
+    TREE_LEAF_FACE_3D(pf, pt, 1, 5, 6, 2);      \
+}
+
 double
 tri_pnt_r(cdt_mesh::cdt_mesh_t &fmesh, long tri_ind)
 {
@@ -484,25 +514,65 @@ adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t
     // Iterate over mverts, checking for nearby pnts in a fashion similar to the
     // NearFacesCallback search above.  For each mvert, note potentially interfering
     // mverts - this will tell us what we need to adjust.
+    std::map<struct mvert_info *, std::set<struct mvert_info *>> vert_ovlps;
     for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
 	cdt_mesh::cdt_mesh_t *fmesh1 = cp_it->first;
 	cdt_mesh::cdt_mesh_t *fmesh2 = cp_it->second;
 	struct ON_Brep_CDT_State *s_cdt1 = (struct ON_Brep_CDT_State *)fmesh1->p_cdt;
 	struct ON_Brep_CDT_State *s_cdt2 = (struct ON_Brep_CDT_State *)fmesh2->p_cdt;
 	if (s_cdt1 != s_cdt2) {
-	    std::set<std::pair<void *, void *>> verts_pairs;
-	    size_t ovlp_cnt = rtrees_mpnts[std::make_pair(s_cdt1,fmesh1->f_id)].Overlaps(rtrees_mpnts[std::make_pair(s_cdt2,fmesh2->f_id)], &verts_pairs);
+	    std::set<std::pair<void *, void *>> vert_pairs;
+	    size_t ovlp_cnt = rtrees_mpnts[std::make_pair(s_cdt1,fmesh1->f_id)].Overlaps(rtrees_mpnts[std::make_pair(s_cdt2,fmesh2->f_id)], &vert_pairs);
 	    if (ovlp_cnt) {
-		std::cout << "Checking " << fmesh1->name << " face " << fmesh1->f_id << " against " << fmesh2->name << " face " << fmesh2->f_id << " found " << ovlp_cnt << " vertex box overlaps\n";
 		struct bu_vls fname = BU_VLS_INIT_ZERO;
-		bu_vls_sprintf(&fname, "%s-verts_%d.plot3", fmesh1->name, fmesh1->f_id);
+		bu_vls_sprintf(&fname, "%s-all_verts_%d.plot3", fmesh1->name, fmesh1->f_id);
 		plot_rtree_3d(rtrees_mpnts[std::make_pair(s_cdt1,fmesh1->f_id)], bu_vls_cstr(&fname));
-		bu_vls_sprintf(&fname, "%s-verts_%d.plot3", fmesh2->name, fmesh2->f_id);
+		bu_vls_sprintf(&fname, "%s-all_verts_%d.plot3", fmesh2->name, fmesh2->f_id);
 		plot_rtree_3d(rtrees_mpnts[std::make_pair(s_cdt2,fmesh2->f_id)], bu_vls_cstr(&fname));
+
+		std::set<std::pair<void *, void *>>::iterator v_it;
+		for (v_it = vert_pairs.begin(); v_it != vert_pairs.end(); v_it++) {
+		    struct mvert_info *v_first = (struct mvert_info *)v_it->first;
+		    struct mvert_info *v_second = (struct mvert_info *)v_it->second;
+		    vert_ovlps[v_first].insert(v_second);
+		    vert_ovlps[v_second].insert(v_first);
+		}
 		bu_vls_free(&fname);
 	    }
 	}
     }
+    std::cout << "Found " << vert_ovlps.size() << " vertex box overlaps\n";
+
+    std::map<struct mvert_info *, std::set<struct mvert_info *>>::iterator vo_it;
+    for (vo_it = vert_ovlps.begin(); vo_it != vert_ovlps.end(); vo_it++) {
+	struct bu_vls fname = BU_VLS_INIT_ZERO;
+	struct mvert_info *v_curr= vo_it->first;
+	bu_vls_sprintf(&fname, "%s-%d-%ld_ovlp_verts.plot3", v_curr->s_cdt->name, v_curr->f_id, v_curr->p_id);
+	FILE* plot_file = fopen(bu_vls_cstr(&fname), "w");
+	pl_color(plot_file, 0, 0, 255);
+	BBOX_PLOT(plot_file, v_curr->bb);
+	pl_color(plot_file, 255, 0, 0);
+	std::set<struct mvert_info *>::iterator vs_it;
+	for (vs_it = vo_it->second.begin(); vs_it != vo_it->second.end(); vs_it++) {
+	    struct mvert_info *v_ovlp= *vs_it;
+	    BBOX_PLOT(plot_file, v_ovlp->bb);
+	}
+	fclose(plot_file);
+    }
+
+
+    // If we're going to alter points we need to resolve our course of action.
+    //
+    // 0.  Visual inspection indicates the closeness test is picking up interior vertices
+    // when it's actually a brep face edge that needs to be split - may have to have a filter to
+    // spot that.
+    //
+    // 1.  The simple case - two boxes.  If the closest surface points to the average of the
+    // two 3d points are less than 0.5 * the smallest edge length associated with each
+    // point, switch them.
+    //
+    // 2.  > 2 boxes interacting.  Average all the points interacting with a given point.  if
+    // that candidate point is viable, use it - can such a naive approach work?.
 }
 
 /**************************************************************************
