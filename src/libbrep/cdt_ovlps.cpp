@@ -606,16 +606,26 @@ adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t
 	ON_3dPoint pavg = (p1 + p2) * 0.5;
 	ON_3dPoint s1_p, s2_p;
 	ON_3dVector s1_n, s2_n;
-	closest_surf_pnt(s1_p, s1_n, fmesh1, &pavg);
-	closest_surf_pnt(s2_p, s2_n, fmesh2, &pavg);
-	(*fmesh1.pnts[vpair.first->p_id]) = s1_p;
-	(*fmesh1.normals[fmesh1.nmap[vpair.first->p_id]]) = s1_n;
-	(*fmesh2.pnts[vpair.second->p_id]) = s2_p;
-	(*fmesh2.normals[fmesh2.nmap[vpair.second->p_id]]) = s2_n;
+	bool f1_eval = closest_surf_pnt(s1_p, s1_n, fmesh1, &pavg);
+	bool f2_eval = closest_surf_pnt(s2_p, s2_n, fmesh2, &pavg);
+	if (f1_eval && f2_eval) {
+	    (*fmesh1.pnts[vpair.first->p_id]) = s1_p;
+	    (*fmesh1.normals[fmesh1.nmap[vpair.first->p_id]]) = s1_n;
+	    (*fmesh2.pnts[vpair.second->p_id]) = s2_p;
+	    (*fmesh2.normals[fmesh2.nmap[vpair.second->p_id]]) = s2_n;
 
-	std::cout << "pavg: " << pavg.x << "," << pavg.y << "," << pavg.z << "\n";
-	std::cout << s_cdt1->name << " face " << fmesh1.f_id << " pnt " << vpair.first->p_id << " move: " << p1.x << "," << p1.y << "," << p1.z << " -> " << s1_p.x << "," << s1_p.y << "," << s1_p.z << "\n";
-	std::cout << s_cdt2->name << " face " << fmesh2.f_id << " pnt " << vpair.second->p_id << " move: " << p2.x << "," << p2.y << "," << p2.z << " -> " << s2_p.x << "," << s2_p.y << "," << s2_p.z << "\n";
+	    std::cout << "pavg: " << pavg.x << "," << pavg.y << "," << pavg.z << "\n";
+	    std::cout << s_cdt1->name << " face " << fmesh1.f_id << " pnt " << vpair.first->p_id << " move: " << p1.x << "," << p1.y << "," << p1.z << " -> " << s1_p.x << "," << s1_p.y << "," << s1_p.z << "\n";
+	    std::cout << s_cdt2->name << " face " << fmesh2.f_id << " pnt " << vpair.second->p_id << " move: " << p2.x << "," << p2.y << "," << p2.z << " -> " << s2_p.x << "," << s2_p.y << "," << s2_p.z << "\n";
+	} else {
+	    std::cout << "pavg: " << pavg.x << "," << pavg.y << "," << pavg.z << "\n";
+	    if (!f1_eval) {
+		std::cout << s_cdt1->name << " face " << fmesh1.f_id << " closest point eval failure\n";
+	    }
+	    if (!f2_eval) {
+		std::cout << s_cdt2->name << " face " << fmesh2.f_id << " closest point eval failure\n";
+	    }
+	}
 
 	//break;
     }
