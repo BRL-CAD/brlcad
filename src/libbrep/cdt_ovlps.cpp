@@ -620,8 +620,8 @@ adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t
 	    (*fmesh2.normals[fmesh2.nmap[vpair.second->p_id]]) = s2_n;
 
 	    std::cout << "pavg: " << pavg.x << "," << pavg.y << "," << pavg.z << "\n";
-	    std::cout << s_cdt1->name << " face " << fmesh1.f_id << " pnt " << vpair.first->p_id << " move: " << p1.x << "," << p1.y << "," << p1.z << " -> " << s1_p.x << "," << s1_p.y << "," << s1_p.z << "\n";
-	    std::cout << s_cdt2->name << " face " << fmesh2.f_id << " pnt " << vpair.second->p_id << " move: " << p2.x << "," << p2.y << "," << p2.z << " -> " << s2_p.x << "," << s2_p.y << "," << s2_p.z << "\n";
+	    std::cout << s_cdt1->name << " face " << fmesh1.f_id << " pnt " << vpair.first->p_id << " moved " << p1.DistanceTo(s1_p) << ": " << p1.x << "," << p1.y << "," << p1.z << " -> " << s1_p.x << "," << s1_p.y << "," << s1_p.z << "\n";
+	    std::cout << s_cdt2->name << " face " << fmesh2.f_id << " pnt " << vpair.second->p_id << " moved " << p2.DistanceTo(s2_p) << ": " << p2.x << "," << p2.y << "," << p2.z << " -> " << s2_p.x << "," << s2_p.y << "," << s2_p.z << "\n";
 	} else {
 	    std::cout << "pavg: " << pavg.x << "," << pavg.y << "," << pavg.z << "\n";
 	    if (!f1_eval) {
