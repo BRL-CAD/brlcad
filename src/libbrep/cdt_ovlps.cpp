@@ -417,6 +417,7 @@ struct mvert_info {
     int f_id;
     long p_id;
     ON_BoundingBox bb;
+    double e_minlen;
 };
 
 void
@@ -474,6 +475,7 @@ adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t
 		double dist = p1->DistanceTo(*p2);
 		elen = (dist < elen) ? dist : elen;
 	    }
+	    mvert->e_minlen = elen;
 	    //std::cout << "Min edge len: " << elen << "\n";
 	    // 3.  create a bbox around pnt using length ~20% of the shortest edge length.
 	    ON_3dPoint vpnt = *fmesh->pnts[(*a_it)];
@@ -609,6 +611,9 @@ adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t
 	ON_3dPoint p2 = *fmesh2.pnts[vpair.second->p_id];
 	double pdist = p1.DistanceTo(p2);
 	ON_3dPoint pavg = (p1 + p2) * 0.5;
+	if ((p1.DistanceTo(pavg) > vpair.first->e_minlen*0.5) || (p2.DistanceTo(pavg) > vpair.second->e_minlen*0.5)) {
+	    std::cout << "WARNING: large point shift compared to triangle edge length.\n";
+	}
 	ON_3dPoint s1_p, s2_p;
 	ON_3dVector s1_n, s2_n;
 	bool f1_eval = closest_surf_pnt(s1_p, s1_n, fmesh1, &pavg, pdist);
