@@ -396,8 +396,9 @@ adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t
 	fmeshes.insert(fmesh1);
 	fmeshes.insert(fmesh2);
     }
-    std::vector<struct mvert_info *> mverts;
+    std::vector<struct mvert_info *> all_mverts;
     std::set<cdt_mesh::cdt_mesh_t *>::iterator f_it;
+    std::map<std::pair<struct ON_Brep_CDT_State *, int>, RTree<void *, double, 3>> rtrees_mpnts;
     for (f_it = fmeshes.begin(); f_it != fmeshes.end(); f_it++) {
 	cdt_mesh::cdt_mesh_t *fmesh = *f_it;
 	struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh->p_cdt;
@@ -418,6 +419,7 @@ adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t
 	    ++tree_it;
 	}
 
+	std::vector<struct mvert_info *> mverts;
 	std::set<long>::iterator a_it;
 	for (a_it = averts.begin(); a_it != averts.end(); a_it++) {
 	    // 0.  Initialize mvert object.
@@ -437,18 +439,71 @@ adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t
 		double dist = p1->DistanceTo(*p2);
 		elen = (dist < elen) ? dist : elen;
 	    }
-	    std::cout << "Min edge len: " << elen << "\n";
+	    //std::cout << "Min edge len: " << elen << "\n";
 	    // 3.  create a bbox around pnt using length ~20% of the shortest edge length.
+	    ON_3dPoint vpnt = *fmesh->pnts[(*a_it)];
+	    ON_BoundingBox bb(vpnt, vpnt);
+	    ON_3dPoint npnt;
+	    npnt = vpnt;
+	    double lfactor = 0.2;
+	    npnt.x = npnt.x + lfactor*elen;
+	    bb.Set(npnt, true);
+	    npnt = vpnt;
+	    npnt.x = npnt.x - lfactor*elen;
+	    bb.Set(npnt, true);
+	    npnt = vpnt;
+	    npnt.y = npnt.y + lfactor*elen;
+	    bb.Set(npnt, true);
+	    npnt = vpnt;
+	    npnt.y = npnt.y - lfactor*elen;
+	    bb.Set(npnt, true);
+	    npnt = vpnt;
+	    npnt.z = npnt.z + lfactor*elen;
+	    bb.Set(npnt, true);
+	    npnt = vpnt;
+	    npnt.z = npnt.z - lfactor*elen;
+	    bb.Set(npnt, true);
+	    mvert->bb = bb;
 	    // 4.  insert result into mverts;
+	    mverts.push_back(mvert);
 	}
+	for (size_t i = 0; i < mverts.size(); i++) {
+	    double fMin[3];
+	    fMin[0] = mverts[i]->bb.Min().x;
+	    fMin[1] = mverts[i]->bb.Min().y;
+	    fMin[2] = mverts[i]->bb.Min().z;
+	    double fMax[3];
+	    fMax[0] = mverts[i]->bb.Max().x;
+	    fMax[1] = mverts[i]->bb.Max().y;
+	    fMax[2] = mverts[i]->bb.Max().z;
+	    rtrees_mpnts[std::make_pair(s_cdt,fmesh->f_id)].Insert(fMin, fMax, (void *)mverts[i]);
+	}
+	all_mverts.insert(all_mverts.end(), mverts.begin(), mverts.end());
     }
-    RTree<void *, double, 3> rtree_mpnts;
+
     // Iterate over mverts, checking for nearby pnts in a fashion similar to the
     // NearFacesCallback search above.  For each mvert, note potentially interfering
     // mverts - this will tell us what we need to adjust.
-
+    for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
+	cdt_mesh::cdt_mesh_t *fmesh1 = cp_it->first;
+	cdt_mesh::cdt_mesh_t *fmesh2 = cp_it->second;
+	struct ON_Brep_CDT_State *s_cdt1 = (struct ON_Brep_CDT_State *)fmesh1->p_cdt;
+	struct ON_Brep_CDT_State *s_cdt2 = (struct ON_Brep_CDT_State *)fmesh2->p_cdt;
+	if (s_cdt1 != s_cdt2) {
+	    std::set<std::pair<void *, void *>> verts_pairs;
+	    size_t ovlp_cnt = rtrees_mpnts[std::make_pair(s_cdt1,fmesh1->f_id)].Overlaps(rtrees_mpnts[std::make_pair(s_cdt2,fmesh2->f_id)], &verts_pairs);
+	    if (ovlp_cnt) {
+		std::cout << "Checking " << fmesh1->name << " face " << fmesh1->f_id << " against " << fmesh2->name << " face " << fmesh2->f_id << " found " << ovlp_cnt << " vertex box overlaps\n";
+		struct bu_vls fname = BU_VLS_INIT_ZERO;
+		bu_vls_sprintf(&fname, "%s-verts_%d.plot3", fmesh1->name, fmesh1->f_id);
+		plot_rtree_3d(rtrees_mpnts[std::make_pair(s_cdt1,fmesh1->f_id)], bu_vls_cstr(&fname));
+		bu_vls_sprintf(&fname, "%s-verts_%d.plot3", fmesh2->name, fmesh2->f_id);
+		plot_rtree_3d(rtrees_mpnts[std::make_pair(s_cdt2,fmesh2->f_id)], bu_vls_cstr(&fname));
+		bu_vls_free(&fname);
+	    }
+	}
+    }
 }
-
 
 /**************************************************************************
  * TODO - implement the various ways to refine a triangle polygon.
@@ -595,9 +650,9 @@ refine_ovlp_tris(struct ON_Brep_CDT_State *s_cdt, int face_index)
 	cdt_mesh::cpolygon_t *polygon = tri_refine_polygon(fmesh, tri);
 
 	if (have_face_edge) {
-	    std::cout << "EDGE_TRI: refining " << s_cdt->name << " face " << fmesh.f_id << " tri " << *t_it << "\n";
+	    //std::cout << "EDGE_TRI: refining " << s_cdt->name << " face " << fmesh.f_id << " tri " << *t_it << "\n";
 	} else {
-	    std::cout << "SURF_TRI: refining " << s_cdt->name << " face " << fmesh.f_id << " tri " << *t_it << "\n";
+	    //std::cout << "SURF_TRI: refining " << s_cdt->name << " face " << fmesh.f_id << " tri " << *t_it << "\n";
 	}
 
 	if (!polygon) {
@@ -668,7 +723,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	    std::map<int, std::set<cdt_mesh::cpolyedge_t *>> tris_to_opp_face_edges_2;
 	    size_t ovlp_cnt = fmesh1->tris_tree.Overlaps(fmesh2->tris_tree, &tris_prelim);
 	    if (ovlp_cnt) {
-		std::cout << "Checking " << fmesh1->name << " face " << fmesh1->f_id << " against " << fmesh2->name << " face " << fmesh2->f_id << " found " << ovlp_cnt << " box overlaps\n";
+		//std::cout << "Checking " << fmesh1->name << " face " << fmesh1->f_id << " against " << fmesh2->name << " face " << fmesh2->f_id << " found " << ovlp_cnt << " box overlaps\n";
 		std::set<std::pair<size_t, size_t>>::iterator tb_it;
 		for (tb_it = tris_prelim.begin(); tb_it != tris_prelim.end(); tb_it++) {
 		    cdt_mesh::triangle_t t1 = fmesh1->tris_vect[tb_it->first];
@@ -744,7 +799,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 		    }
 		}
 	    } else {
-		std::cout << "RTREE_ISECT_EMPTY: " << fmesh1->name << " face " << fmesh1->f_id << " and " << fmesh2->name << " face " << fmesh2->f_id << "\n";
+		//std::cout << "RTREE_ISECT_EMPTY: " << fmesh1->name << " face " << fmesh1->f_id << " and " << fmesh2->name << " face " << fmesh2->f_id << "\n";
 	    }
 	} else {
 	    // TODO: In principle we should be checking for self intersections
@@ -752,7 +807,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	    // why the above doesn't filter out same-object face overlaps, but
 	    // for now ignore it.  We need to be able to ignore triangles that
 	    // only share a 3D edge.
-	    std::cout << "SELF_ISECT\n";
+	    //std::cout << "SELF_ISECT\n";
 	}
     }
 
@@ -760,7 +815,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	struct ON_Brep_CDT_State *s_i = s_a[i];
 	for (int i_fi = 0; i_fi < s_i->brep->m_F.Count(); i_fi++) {
 	    if (s_i->face_ovlps[i_fi].size()) {
-		std::cout << s_i->name << " face " << i_fi << " overlap instance cnt " << s_i->face_ovlps[i_fi].size() << "\n";
+		//std::cout << s_i->name << " face " << i_fi << " overlap instance cnt " << s_i->face_ovlps[i_fi].size() << "\n";
 		plot_ovlps(s_i, i_fi);
 		for (size_t j = 0; j < s_i->face_ovlps[i_fi].size(); j++) {
 		    edge_check(s_i->face_ovlps[i_fi][j]);
@@ -782,10 +837,10 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 		}
 
 		if (face_pnts.size()) {
-		    std::cout << s_i->name << " face " << i_fi << " triangle " << to_it->first << " interior point cnt: " << face_pnts.size() << "\n";
+		    //std::cout << s_i->name << " face " << i_fi << " triangle " << to_it->first << " interior point cnt: " << face_pnts.size() << "\n";
 		    std::set<ON_3dPoint *>::iterator fp_it;
 		    for (fp_it = face_pnts.begin(); fp_it != face_pnts.end(); fp_it++) {
-			std::cout << "       " << (*fp_it)->x << "," << (*fp_it)->y << "," << (*fp_it)->z << "\n";
+			//std::cout << "       " << (*fp_it)->x << "," << (*fp_it)->y << "," << (*fp_it)->z << "\n";
 		    }
 		    struct bu_vls fname = BU_VLS_INIT_ZERO;
 		    bu_vls_sprintf(&fname, "%s_%d_%ld_tri.plot3", s_i->name, i_fi, to_it->first);
