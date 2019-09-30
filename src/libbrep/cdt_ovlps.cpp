@@ -541,7 +541,7 @@ adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t
 	    }
 	}
     }
-    std::cout << "Found " << vert_ovlps.size() << " vertex box overlaps\n";
+    std::cout << "Found " << vert_ovlps.size() << " vertices with box overlaps\n";
 
     std::map<struct mvert_info *, std::set<struct mvert_info *>>::iterator vo_it;
     for (vo_it = vert_ovlps.begin(); vo_it != vert_ovlps.end(); vo_it++) {
@@ -573,6 +573,36 @@ adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t
     //
     // 2.  > 2 boxes interacting.  Average all the points interacting with a given point.  if
     // that candidate point is viable, use it - can such a naive approach work?.
+
+    std::queue<struct mvert_info *> vq;
+    std::queue<struct mvert_info *> vq_multi;
+    for (vo_it = vert_ovlps.begin(); vo_it != vert_ovlps.end(); vo_it++) {
+	struct mvert_info *v = vo_it->first;
+	if (vo_it->second.size() > 1) {
+	    vq_multi.push(v);
+	    continue;
+	}
+	struct mvert_info *v_other = *vo_it->second.begin();
+	if (vert_ovlps[v_other].size() > 1) {
+	    // The other point has multiple overlapping points
+	    vq_multi.push(v);
+	    continue;
+	}
+	// Both v and it's companion only have one overlapping point
+	vq.push(v);
+    }
+
+    while (!vq.empty()) {
+	std::cout << "Have " << vq.size() << " simple interactions\n";
+	break;
+    }
+
+
+    while (!vq_multi.empty()) {
+	std::cout << "Have " << vq_multi.size() << " complex interactions\n";
+	break;
+    }
+
 }
 
 /**************************************************************************
