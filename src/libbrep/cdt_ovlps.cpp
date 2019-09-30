@@ -420,6 +420,106 @@ struct mvert_info {
     double e_minlen;
 };
 
+// If the average point for all the verts in the set works for every vertex
+// in the group, we can in principle collapse the whole group.
+bool
+all_overlapping(std::set<struct mvert_info *> &vq_multi, std::map<struct mvert_info *, std::set<struct mvert_info *>> &vert_ovlps, struct mvert_info *l) {
+    ON_3dPoint pavg(0.0, 0.0, 0.0);
+    std::set<struct mvert_info *> &verts = vert_ovlps[l];
+    if (verts.size() <= 1) return false;
+    std::set<struct mvert_info *>::iterator v_it;
+    for (v_it = verts.begin(); v_it != verts.end(); v_it++) {
+	struct mvert_info *v = *v_it;
+	struct ON_Brep_CDT_State *s_cdt = v->s_cdt;
+	cdt_mesh::cdt_mesh_t fmesh = s_cdt->fmeshes[v->f_id];
+	ON_3dPoint p = *fmesh.pnts[v->p_id];
+	pavg = pavg + p;
+    }
+    pavg = pavg / (double)(verts.size());
+
+    std::map<struct mvert_info *, ON_3dPoint> cp;
+    std::map<struct mvert_info *, ON_3dVector> cn;
+    for (v_it = verts.begin(); v_it != verts.end(); v_it++) {
+	struct mvert_info *v = *v_it;
+	struct ON_Brep_CDT_State *s_cdt = v->s_cdt;
+	cdt_mesh::cdt_mesh_t fmesh = s_cdt->fmeshes[v->f_id];
+	ON_3dPoint p = *fmesh.pnts[v->p_id];
+	ON_3dPoint s_p;
+	ON_3dVector s_n;
+	double pdist = p.DistanceTo(pavg);
+	bool f_eval = closest_surf_pnt(s_p, s_n, fmesh, &pavg, pdist);
+	cp[v] = s_p;
+	cn[v] = s_n;
+	if (!f_eval) {
+	    // evaluation failure
+	    return false;
+	}
+	double dist = s_p.DistanceTo(p);
+	if (dist > v->e_minlen*0.5) {
+	    // pavg is too far from this point - can't fully consolidate
+	    return false;
+	}
+    }
+
+    // If we got this far, we can merge all of them
+    std::cout << "pavg: " << pavg.x << "," << pavg.y << "," << pavg.z << "\n";
+    std::set<struct mvert_info *> lverts = vert_ovlps[l];
+    for (v_it = lverts.begin(); v_it != lverts.end(); v_it++) {
+	struct mvert_info *v = *v_it;
+	vq_multi.erase(v);
+	vert_ovlps[l].erase(v);
+	vert_ovlps[v].erase(l);
+	struct ON_Brep_CDT_State *s_cdt = v->s_cdt;
+	cdt_mesh::cdt_mesh_t fmesh = s_cdt->fmeshes[v->f_id];
+	ON_3dPoint p = *fmesh.pnts[v->p_id];
+	(*fmesh.pnts[v->p_id]) = cp[v];
+	(*fmesh.normals[fmesh.nmap[v->p_id]]) = cn[v];
+	std::cout << "MULTI: " << s_cdt->name << " face " << fmesh.f_id << " pnt " << v->p_id << " moved " << p.DistanceTo(cp[v]) << ": " << p.x << "," << p.y << "," << p.z << " -> " << cp[v].x << "," << cp[v].y << "," << cp[v].z << "\n";
+    }
+    return true; 
+}
+
+struct mvert_info *
+get_largest_mvert(std::set<struct mvert_info *> &verts) 
+{
+    double elen = 0;
+    struct mvert_info *l = NULL;
+    std::set<struct mvert_info *>::iterator v_it;
+    for (v_it = verts.begin(); v_it != verts.end(); v_it++) {
+	struct mvert_info *v = *v_it;
+	if (v->e_minlen > elen) {
+	    elen = v->e_minlen;
+	    l = v;
+	}
+    }
+    verts.erase(l);
+    return l;
+}
+
+struct mvert_info *
+closest_mvert(std::set<struct mvert_info *> &verts, struct mvert_info *v) 
+{
+    struct mvert_info *closest = NULL;
+    double dist = DBL_MAX;
+    struct ON_Brep_CDT_State *s_cdt1 = v->s_cdt;
+    cdt_mesh::cdt_mesh_t fmesh1 = s_cdt1->fmeshes[v->f_id];
+    ON_3dPoint p1 = *fmesh1.pnts[v->p_id];
+    std::set<struct mvert_info *>::iterator v_it;
+    for (v_it = verts.begin(); v_it != verts.end(); v_it++) {
+	struct mvert_info *c = *v_it;
+	struct ON_Brep_CDT_State *s_cdt2 = c->s_cdt;
+	cdt_mesh::cdt_mesh_t fmesh2 = s_cdt2->fmeshes[c->f_id];
+	ON_3dPoint p2 = *fmesh2.pnts[c->p_id];
+	double d = p1.DistanceTo(p2);
+	if (dist > d) {
+	    closest = c;
+	    dist = d;
+	}
+    }
+    return closest;
+}
+
+
 void
 adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> &check_pairs)
 {
@@ -582,17 +682,17 @@ adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t
     // that candidate point is viable, use it - can such a naive approach work?.
 
     std::queue<std::pair<struct mvert_info *, struct mvert_info *>> vq;
-    std::queue<struct mvert_info *> vq_multi;
+    std::set<struct mvert_info *> vq_multi;
     for (vo_it = vert_ovlps.begin(); vo_it != vert_ovlps.end(); vo_it++) {
 	struct mvert_info *v = vo_it->first;
 	if (vo_it->second.size() > 1) {
-	    vq_multi.push(v);
+	    vq_multi.insert(v);
 	    continue;
 	}
 	struct mvert_info *v_other = *vo_it->second.begin();
 	if (vert_ovlps[v_other].size() > 1) {
 	    // The other point has multiple overlapping points
-	    vq_multi.push(v);
+	    vq_multi.insert(v);
 	    continue;
 	}
 	// Both v and it's companion only have one overlapping point
@@ -613,6 +713,8 @@ adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t
 	ON_3dPoint pavg = (p1 + p2) * 0.5;
 	if ((p1.DistanceTo(pavg) > vpair.first->e_minlen*0.5) || (p2.DistanceTo(pavg) > vpair.second->e_minlen*0.5)) {
 	    std::cout << "WARNING: large point shift compared to triangle edge length.\n";
+	    // TODO - in this situation, see if one of the points has enough freedom to move to its
+	    // closest point to the second point...
 	}
 	ON_3dPoint s1_p, s2_p;
 	ON_3dVector s1_n, s2_n;
@@ -636,14 +738,59 @@ adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t
 		std::cout << s_cdt2->name << " face " << fmesh2.f_id << " closest point eval failure\n";
 	    }
 	}
-
-	//break;
     }
 
-
-    while (!vq_multi.empty()) {
+    // If the box structure is more complicated, we need to be a bit selective
+    while (vq_multi.size()) {
 	std::cout << "Have " << vq_multi.size() << " complex interactions\n";
-	break;
+
+	struct mvert_info *l = get_largest_mvert(vq_multi);
+	if (all_overlapping(vq_multi, vert_ovlps, l)) {
+	    continue;
+	}
+
+	struct mvert_info *c = closest_mvert(vert_ovlps[l], l);
+	vert_ovlps[l].erase(c);
+	vert_ovlps[c].erase(l);
+	vq_multi.erase(c);
+
+	struct ON_Brep_CDT_State *s_cdt1 = l->s_cdt;
+	cdt_mesh::cdt_mesh_t fmesh1 = s_cdt1->fmeshes[l->f_id];
+	struct ON_Brep_CDT_State *s_cdt2 = c->s_cdt;
+	cdt_mesh::cdt_mesh_t fmesh2 = s_cdt2->fmeshes[c->f_id];
+	ON_3dPoint p1 = *fmesh1.pnts[l->p_id];
+	ON_3dPoint p2 = *fmesh2.pnts[c->p_id];
+	double pdist = p1.DistanceTo(p2);
+	ON_3dPoint pavg = (p1 + p2) * 0.5;
+	if ((p1.DistanceTo(pavg) > l->e_minlen*0.5) || (p2.DistanceTo(pavg) > c->e_minlen*0.5)) {
+	    std::cout << "WARNING: large point shift compared to triangle edge length.\n";
+	    // TODO - in this situation, see if one of the points has enough freedom to move to its
+	    // closest point to the second point...
+	}
+
+	ON_3dPoint s1_p, s2_p;
+	ON_3dVector s1_n, s2_n;
+	bool f1_eval = closest_surf_pnt(s1_p, s1_n, fmesh1, &pavg, pdist);
+	bool f2_eval = closest_surf_pnt(s2_p, s2_n, fmesh2, &pavg, pdist);
+	if (f1_eval && f2_eval) {
+	    (*fmesh1.pnts[l->p_id]) = s1_p;
+	    (*fmesh1.normals[fmesh1.nmap[l->p_id]]) = s1_n;
+	    (*fmesh2.pnts[c->p_id]) = s2_p;
+	    (*fmesh2.normals[fmesh2.nmap[c->p_id]]) = s2_n;
+
+	    std::cout << "COMPLEX pavg: " << pavg.x << "," << pavg.y << "," << pavg.z << "\n";
+	    std::cout << s_cdt1->name << " face " << fmesh1.f_id << " pnt " << l->p_id << " moved " << p1.DistanceTo(s1_p) << ": " << p1.x << "," << p1.y << "," << p1.z << " -> " << s1_p.x << "," << s1_p.y << "," << s1_p.z << "\n";
+	    std::cout << s_cdt2->name << " face " << fmesh2.f_id << " pnt " << c->p_id << " moved " << p2.DistanceTo(s2_p) << ": " << p2.x << "," << p2.y << "," << p2.z << " -> " << s2_p.x << "," << s2_p.y << "," << s2_p.z << "\n";
+	} else {
+	    std::cout << "COMPLEX pavg: " << pavg.x << "," << pavg.y << "," << pavg.z << "\n";
+	    if (!f1_eval) {
+		std::cout << s_cdt1->name << " face " << fmesh1.f_id << " closest point eval failure\n";
+	    }
+	    if (!f2_eval) {
+		std::cout << s_cdt2->name << " face " << fmesh2.f_id << " closest point eval failure\n";
+	    }
+	}
+
     }
 
 }
