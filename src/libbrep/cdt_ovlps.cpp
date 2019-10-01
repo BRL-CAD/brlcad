@@ -472,68 +472,6 @@ mvert_update_all_edge_minlens(struct mvert_info *v)
     }
 }
 
-// If the average point for all the verts in the set works for every vertex
-// in the group, we can in principle collapse the whole group.
-//
-// TODO - do we need this, or will this fall out of repeated application of
-// the pairwise movements?
-bool
-all_overlapping(std::set<struct mvert_info *> &vq_multi, std::map<struct mvert_info *, std::set<struct mvert_info *>> &vert_ovlps, struct mvert_info *l) {
-    ON_3dPoint pavg(0.0, 0.0, 0.0);
-    std::set<struct mvert_info *> &verts = vert_ovlps[l];
-    if (verts.size() <= 1) return false;
-    std::set<struct mvert_info *>::iterator v_it;
-    for (v_it = verts.begin(); v_it != verts.end(); v_it++) {
-	struct mvert_info *v = *v_it;
-	struct ON_Brep_CDT_State *s_cdt = v->s_cdt;
-	cdt_mesh::cdt_mesh_t fmesh = s_cdt->fmeshes[v->f_id];
-	ON_3dPoint p = *fmesh.pnts[v->p_id];
-	pavg = pavg + p;
-    }
-    pavg = pavg / (double)(verts.size());
-
-    std::map<struct mvert_info *, ON_3dPoint> cp;
-    std::map<struct mvert_info *, ON_3dVector> cn;
-    for (v_it = verts.begin(); v_it != verts.end(); v_it++) {
-	struct mvert_info *v = *v_it;
-	struct ON_Brep_CDT_State *s_cdt = v->s_cdt;
-	cdt_mesh::cdt_mesh_t fmesh = s_cdt->fmeshes[v->f_id];
-	ON_3dPoint p = *fmesh.pnts[v->p_id];
-	ON_3dPoint s_p;
-	ON_3dVector s_n;
-	double pdist = p.DistanceTo(pavg);
-	bool f_eval = closest_surf_pnt(s_p, s_n, fmesh, &pavg, pdist);
-	cp[v] = s_p;
-	cn[v] = s_n;
-	if (!f_eval) {
-	    // evaluation failure
-	    return false;
-	}
-	double dist = s_p.DistanceTo(p);
-	if (dist > v->e_minlen*0.5) {
-	    // pavg is too far from this point - can't fully consolidate
-	    return false;
-	}
-    }
-
-    // If we got this far, we can merge all of them
-    std::cout << "pavg: " << pavg.x << "," << pavg.y << "," << pavg.z << "\n";
-    std::set<struct mvert_info *> lverts = vert_ovlps[l];
-    for (v_it = lverts.begin(); v_it != lverts.end(); v_it++) {
-	struct mvert_info *v = *v_it;
-	vq_multi.erase(v);
-	vert_ovlps[l].erase(v);
-	vert_ovlps[v].erase(l);
-	struct ON_Brep_CDT_State *s_cdt = v->s_cdt;
-	cdt_mesh::cdt_mesh_t fmesh = s_cdt->fmeshes[v->f_id];
-	ON_3dPoint p = *fmesh.pnts[v->p_id];
-	(*fmesh.pnts[v->p_id]) = cp[v];
-	(*fmesh.normals[fmesh.nmap[v->p_id]]) = cn[v];
-	std::cout << "MULTI: " << s_cdt->name << " face " << fmesh.f_id << " pnt " << v->p_id << " moved " << p.DistanceTo(cp[v]) << ": " << p.x << "," << p.y << "," << p.z << " -> " << cp[v].x << "," << cp[v].y << "," << cp[v].z << "\n";
-    }
-    return true; 
-}
-
 struct mvert_info *
 get_largest_mvert(std::set<struct mvert_info *> &verts) 
 {
@@ -807,16 +745,11 @@ adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t
 	std::cout << "Have " << vq_multi.size() << " complex interactions\n";
 
 	struct mvert_info *l = get_largest_mvert(vq_multi);
-	vq_multi.erase(l);
-
-	if (all_overlapping(vq_multi, vert_ovlps, l)) {
-	    continue;
-	}
-
 	struct mvert_info *c = closest_mvert(vert_ovlps[l], l);
+	vq_multi.erase(l);
+	vq_multi.erase(c);
 	vert_ovlps[l].erase(c);
 	vert_ovlps[c].erase(l);
-	vq_multi.erase(c);
 	std::cout << "COMPLEX - adjusting 1 pair only:\n";
 	adjust_mvert_pair(l, c);
     }
