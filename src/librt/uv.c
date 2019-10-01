@@ -25,10 +25,14 @@
 
 #include "common.h"
 
+#include "rt/uv.h"
+
+#include "rt/debug.h"
+#include "rt/defines.h"
+#include "rt/global.h"
 #include "rt/db_internal.h"
 #include "rt/db_io.h"
 #include "rt/nongeom.h"
-#include "rt/uv.h"
 
 
 int
@@ -112,6 +116,202 @@ rt_texture_load(struct rt_texture *texture, const char *name, struct db_i *dbip)
     }
 
     bu_log("done.\n");
+
+    return 0;
+}
+
+
+int
+rt_texture_lookup(fastf_t *data, const struct rt_texture *tp, const struct uvcoord *uvp)
+{
+    fastf_t r, g, b;
+    fastf_t xmin, xmax, ymin, ymax;
+    int dx, dy;
+    long tmp;
+    struct uvcoord uvc;
+    char color_warn = 0;
+
+    uvc = *uvp; /* struct copy */
+
+    /* take care of scaling U, V coordinates to get the desired amount
+     * of replication of the texture
+     */
+    uvc.uv_u *= tp->tx_scale[X];
+    tmp = uvc.uv_u;
+    uvc.uv_u -= tmp;
+    if (tp->tx_mirror && (tmp & 1))
+	uvc.uv_u = 1.0 - uvc.uv_u;
+
+    uvc.uv_v *= tp->tx_scale[Y];
+    tmp = uvc.uv_v;
+    uvc.uv_v -= tmp;
+    if (tp->tx_mirror && (tmp & 1))
+	uvc.uv_v = 1.0 - uvc.uv_v;
+
+    uvc.uv_du /= tp->tx_scale[X];
+    uvc.uv_dv /= tp->tx_scale[Y];
+
+    /*
+     * If no texture file present, or if
+     * texture isn't and can't be read, give debug colors
+     */
+
+    if ((bu_vls_strlen(&tp->tx_name) <= 0) || (!tp->tx_mp && !tp->tx_binunifp)) {
+	bu_log("WARNING: texture [%s] could not be read\n", bu_vls_addr(&tp->tx_name));
+    }
+
+    /* u is left->right index, v is line number bottom->top */
+    /* Don't filter more than 1/8 of the texture for 1 pixel! */
+    if (uvc.uv_du > 0.125)
+	uvc.uv_du = 0.125;
+    if (uvc.uv_dv > 0.125)
+	uvc.uv_dv = 0.125;
+    if (uvc.uv_du < 0 || uvc.uv_dv < 0) {
+	uvc.uv_du = uvc.uv_dv = 0;
+    }
+
+    xmin = uvc.uv_u - uvc.uv_du;
+    xmax = uvc.uv_u + uvc.uv_du;
+    ymin = uvc.uv_v - uvc.uv_dv;
+    ymax = uvc.uv_v + uvc.uv_dv;
+    if (xmin < 0)
+	xmin = 0;
+    if (ymin < 0)
+	ymin = 0;
+    if (xmax > 1)
+	xmax = 1;
+    if (ymax > 1)
+	ymax = 1;
+
+    dx = (int)(xmax * (tp->tx_w-1)) - (int)(xmin * (tp->tx_w-1));
+    dy = (int)(ymax * (tp->tx_n-1)) - (int)(ymin * (tp->tx_n-1));
+
+    if (dx == 0 && dy == 0) {
+	/* No averaging necessary */
+
+	register unsigned char *cp=NULL;
+	unsigned int offset;
+
+	offset = (int)(ymin * (tp->tx_n-1)) * tp->tx_w * 3 + (int)(xmin * (tp->tx_w-1)) * 3;
+	if (tp->tx_mp) {
+	    if (offset >= tp->tx_mp->buflen) {
+		offset %= tp->tx_mp->buflen;
+		color_warn = 1;
+	    }
+	    cp = ((unsigned char *)(tp->tx_mp->buf)) + offset;
+	} else if (tp->tx_binunifp) {
+	    if (offset >= tp->tx_binunifp->count) {
+		offset %= tp->tx_binunifp->count;
+		color_warn = 1;
+	    }
+	    cp = ((unsigned char *)(tp->tx_binunifp->u.uint8)) + offset;
+	} else {
+	    bu_bomb("sh_text.c -- No texture data found\n");
+	}
+	r = *cp++;
+	g = *cp++;
+	b = *cp;
+    } else {
+	/* Calculate weighted average of cells in footprint */
+
+	fastf_t tot_area = 0.0;
+	fastf_t cell_area;
+	int start_line, stop_line, line;
+	int start_col, stop_col, col;
+	fastf_t xstart, xstop, ystart, ystop;
+	unsigned int max_offset;
+
+	xstart = xmin * (tp->tx_w-1);
+	xstop = xmax * (tp->tx_w-1);
+	ystart = ymin * (tp->tx_n-1);
+	ystop = ymax * (tp->tx_n-1);
+
+	start_line = ystart;
+	stop_line = ystop;
+	start_col = xstart;
+	stop_col = xstop;
+
+	r = g = b = 0.0;
+
+	if (RT_G_DEBUG) {
+	    bu_log("\thit in texture space = (%g %g)\n", uvc.uv_u * (tp->tx_w-1), uvc.uv_v * (tp->tx_n-1));
+	    bu_log("\t averaging from  (%g %g) to (%g %g)\n", xstart, ystart, xstop, ystop);
+	    bu_log("\tcontributions to average:\n");
+	}
+
+	max_offset = stop_line * tp->tx_w * 3 + (int)(xstart) * 3 + (dx + 1) * 3;
+	if (tp->tx_mp) {
+	    if (max_offset > tp->tx_mp->buflen) {
+		color_warn = 1;
+	    }
+	} else if (tp->tx_binunifp) {
+	    if (max_offset > tp->tx_binunifp->count) {
+		color_warn = 1;
+	    }
+	}
+
+	for (line = start_line; line <= stop_line; line++) {
+	    register unsigned char *cp=NULL;
+	    fastf_t line_factor;
+	    fastf_t line_upper, line_lower;
+	    unsigned int offset;
+
+	    line_upper = line + 1.0;
+	    if (line_upper > ystop)
+		line_upper = ystop;
+	    line_lower = line;
+	    if (line_lower < ystart)
+		line_lower = ystart;
+	    line_factor = line_upper - line_lower;
+
+	    offset = line * tp->tx_w * 3 + (int)(xstart) * 3;
+	    if (tp->tx_mp) {
+		if (offset >= tp->tx_mp->buflen) {
+		    offset %= tp->tx_mp->buflen;
+		}
+		cp = ((unsigned char *)(tp->tx_mp->buf)) + offset;
+	    } else if (tp->tx_binunifp) {
+		if (offset >= tp->tx_binunifp->count) {
+		    offset %= tp->tx_binunifp->count;
+                }
+		cp = ((unsigned char *)(tp->tx_binunifp->u.uint8)) + offset;
+	    } else {
+		/* not reachable */
+		bu_bomb("sh_text.c -- Unable to read datasource\n");
+	    }
+
+	    for (col = start_col; col <= stop_col; col++) {
+		fastf_t col_upper, col_lower;
+
+		col_upper = col + 1.0;
+		if (col_upper > xstop) col_upper = xstop;
+		col_lower = col;
+		if (col_lower < xstart) col_lower = xstart;
+
+		cell_area = line_factor * (col_upper - col_lower);
+		tot_area += cell_area;
+
+		if (RT_G_DEBUG)
+		    bu_log("\t %d %d %d weight=%g (from col=%d line=%d)\n", *cp, *(cp+1), *(cp+2), cell_area, col, line);
+
+		r += (*cp++) * cell_area;
+		g += (*cp++) * cell_area;
+		b += (*cp++) * cell_area;
+	    }
+
+	}
+	r /= tot_area;
+	g /= tot_area;
+	b /= tot_area;
+    }
+
+    if (RT_G_DEBUG)
+	bu_log(" average: %g %g %g\n", r, g, b);
+
+    /* FIXME: assumes caller provided enough memory */
+    data[0] = r;
+    data[1] = g;
+    data[2] = b;
 
     return 0;
 }
