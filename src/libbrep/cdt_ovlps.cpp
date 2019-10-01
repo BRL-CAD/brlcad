@@ -492,7 +492,6 @@ get_largest_mvert(std::set<struct mvert_info *> &verts)
 	    l = v;
 	}
     }
-    verts.erase(l);
     return l;
 }
 
@@ -519,6 +518,45 @@ closest_mvert(std::set<struct mvert_info *> &verts, struct mvert_info *v)
     return closest;
 }
 
+void
+adjust_mvert_pair(struct mvert_info *v1, struct mvert_info *v2)
+{
+    struct ON_Brep_CDT_State *s_cdt1 = v1->s_cdt;
+    cdt_mesh::cdt_mesh_t fmesh1 = s_cdt1->fmeshes[v1->f_id];
+    struct ON_Brep_CDT_State *s_cdt2 = v2->s_cdt;
+    cdt_mesh::cdt_mesh_t fmesh2 = s_cdt2->fmeshes[v2->f_id];
+    ON_3dPoint p1 = *fmesh1.pnts[v1->p_id];
+    ON_3dPoint p2 = *fmesh2.pnts[v2->p_id];
+    double pdist = p1.DistanceTo(p2);
+    ON_3dPoint pavg = (p1 + p2) * 0.5;
+    if ((p1.DistanceTo(pavg) > v1->e_minlen*0.5) || (p2.DistanceTo(pavg) > v2->e_minlen*0.5)) {
+	std::cout << "WARNING: large point shift compared to triangle edge length.\n";
+	// TODO - in this situation, see if one of the points has enough freedom to move to its
+	// closest point to the second point...
+    }
+    ON_3dPoint s1_p, s2_p;
+    ON_3dVector s1_n, s2_n;
+    bool f1_eval = closest_surf_pnt(s1_p, s1_n, fmesh1, &pavg, pdist);
+    bool f2_eval = closest_surf_pnt(s2_p, s2_n, fmesh2, &pavg, pdist);
+    if (f1_eval && f2_eval) {
+	(*fmesh1.pnts[v1->p_id]) = s1_p;
+	(*fmesh1.normals[fmesh1.nmap[v1->p_id]]) = s1_n;
+	(*fmesh2.pnts[v2->p_id]) = s2_p;
+	(*fmesh2.normals[fmesh2.nmap[v2->p_id]]) = s2_n;
+
+	std::cout << "pavg: " << pavg.x << "," << pavg.y << "," << pavg.z << "\n";
+	std::cout << s_cdt1->name << " face " << fmesh1.f_id << " pnt " << v1->p_id << " moved " << p1.DistanceTo(s1_p) << ": " << p1.x << "," << p1.y << "," << p1.z << " -> " << s1_p.x << "," << s1_p.y << "," << s1_p.z << "\n";
+	std::cout << s_cdt2->name << " face " << fmesh2.f_id << " pnt " << v2->p_id << " moved " << p2.DistanceTo(s2_p) << ": " << p2.x << "," << p2.y << "," << p2.z << " -> " << s2_p.x << "," << s2_p.y << "," << s2_p.z << "\n";
+    } else {
+	std::cout << "pavg: " << pavg.x << "," << pavg.y << "," << pavg.z << "\n";
+	if (!f1_eval) {
+	    std::cout << s_cdt1->name << " face " << fmesh1.f_id << " closest point eval failure\n";
+	}
+	if (!f2_eval) {
+	    std::cout << s_cdt2->name << " face " << fmesh2.f_id << " closest point eval failure\n";
+	}
+    }
+}
 
 void
 adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> &check_pairs)
@@ -703,41 +741,8 @@ adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t
 	std::cout << "Have " << vq.size() << " simple interactions\n";
 	std::pair<struct mvert_info *, struct mvert_info *> vpair = vq.front();
 	vq.pop();
-	struct ON_Brep_CDT_State *s_cdt1 = vpair.first->s_cdt;
-	cdt_mesh::cdt_mesh_t fmesh1 = s_cdt1->fmeshes[vpair.first->f_id];
-	struct ON_Brep_CDT_State *s_cdt2 = vpair.second->s_cdt;
-	cdt_mesh::cdt_mesh_t fmesh2 = s_cdt2->fmeshes[vpair.second->f_id];
-	ON_3dPoint p1 = *fmesh1.pnts[vpair.first->p_id];
-	ON_3dPoint p2 = *fmesh2.pnts[vpair.second->p_id];
-	double pdist = p1.DistanceTo(p2);
-	ON_3dPoint pavg = (p1 + p2) * 0.5;
-	if ((p1.DistanceTo(pavg) > vpair.first->e_minlen*0.5) || (p2.DistanceTo(pavg) > vpair.second->e_minlen*0.5)) {
-	    std::cout << "WARNING: large point shift compared to triangle edge length.\n";
-	    // TODO - in this situation, see if one of the points has enough freedom to move to its
-	    // closest point to the second point...
-	}
-	ON_3dPoint s1_p, s2_p;
-	ON_3dVector s1_n, s2_n;
-	bool f1_eval = closest_surf_pnt(s1_p, s1_n, fmesh1, &pavg, pdist);
-	bool f2_eval = closest_surf_pnt(s2_p, s2_n, fmesh2, &pavg, pdist);
-	if (f1_eval && f2_eval) {
-	    (*fmesh1.pnts[vpair.first->p_id]) = s1_p;
-	    (*fmesh1.normals[fmesh1.nmap[vpair.first->p_id]]) = s1_n;
-	    (*fmesh2.pnts[vpair.second->p_id]) = s2_p;
-	    (*fmesh2.normals[fmesh2.nmap[vpair.second->p_id]]) = s2_n;
 
-	    std::cout << "pavg: " << pavg.x << "," << pavg.y << "," << pavg.z << "\n";
-	    std::cout << s_cdt1->name << " face " << fmesh1.f_id << " pnt " << vpair.first->p_id << " moved " << p1.DistanceTo(s1_p) << ": " << p1.x << "," << p1.y << "," << p1.z << " -> " << s1_p.x << "," << s1_p.y << "," << s1_p.z << "\n";
-	    std::cout << s_cdt2->name << " face " << fmesh2.f_id << " pnt " << vpair.second->p_id << " moved " << p2.DistanceTo(s2_p) << ": " << p2.x << "," << p2.y << "," << p2.z << " -> " << s2_p.x << "," << s2_p.y << "," << s2_p.z << "\n";
-	} else {
-	    std::cout << "pavg: " << pavg.x << "," << pavg.y << "," << pavg.z << "\n";
-	    if (!f1_eval) {
-		std::cout << s_cdt1->name << " face " << fmesh1.f_id << " closest point eval failure\n";
-	    }
-	    if (!f2_eval) {
-		std::cout << s_cdt2->name << " face " << fmesh2.f_id << " closest point eval failure\n";
-	    }
-	}
+	adjust_mvert_pair(vpair.first, vpair.second);
     }
 
     // If the box structure is more complicated, we need to be a bit selective
@@ -745,6 +750,8 @@ adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t
 	std::cout << "Have " << vq_multi.size() << " complex interactions\n";
 
 	struct mvert_info *l = get_largest_mvert(vq_multi);
+	vq_multi.erase(l);
+
 	if (all_overlapping(vq_multi, vert_ovlps, l)) {
 	    continue;
 	}
@@ -753,44 +760,8 @@ adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t
 	vert_ovlps[l].erase(c);
 	vert_ovlps[c].erase(l);
 	vq_multi.erase(c);
-
-	struct ON_Brep_CDT_State *s_cdt1 = l->s_cdt;
-	cdt_mesh::cdt_mesh_t fmesh1 = s_cdt1->fmeshes[l->f_id];
-	struct ON_Brep_CDT_State *s_cdt2 = c->s_cdt;
-	cdt_mesh::cdt_mesh_t fmesh2 = s_cdt2->fmeshes[c->f_id];
-	ON_3dPoint p1 = *fmesh1.pnts[l->p_id];
-	ON_3dPoint p2 = *fmesh2.pnts[c->p_id];
-	double pdist = p1.DistanceTo(p2);
-	ON_3dPoint pavg = (p1 + p2) * 0.5;
-	if ((p1.DistanceTo(pavg) > l->e_minlen*0.5) || (p2.DistanceTo(pavg) > c->e_minlen*0.5)) {
-	    std::cout << "WARNING: large point shift compared to triangle edge length.\n";
-	    // TODO - in this situation, see if one of the points has enough freedom to move to its
-	    // closest point to the second point...
-	}
-
-	ON_3dPoint s1_p, s2_p;
-	ON_3dVector s1_n, s2_n;
-	bool f1_eval = closest_surf_pnt(s1_p, s1_n, fmesh1, &pavg, pdist);
-	bool f2_eval = closest_surf_pnt(s2_p, s2_n, fmesh2, &pavg, pdist);
-	if (f1_eval && f2_eval) {
-	    (*fmesh1.pnts[l->p_id]) = s1_p;
-	    (*fmesh1.normals[fmesh1.nmap[l->p_id]]) = s1_n;
-	    (*fmesh2.pnts[c->p_id]) = s2_p;
-	    (*fmesh2.normals[fmesh2.nmap[c->p_id]]) = s2_n;
-
-	    std::cout << "COMPLEX pavg: " << pavg.x << "," << pavg.y << "," << pavg.z << "\n";
-	    std::cout << s_cdt1->name << " face " << fmesh1.f_id << " pnt " << l->p_id << " moved " << p1.DistanceTo(s1_p) << ": " << p1.x << "," << p1.y << "," << p1.z << " -> " << s1_p.x << "," << s1_p.y << "," << s1_p.z << "\n";
-	    std::cout << s_cdt2->name << " face " << fmesh2.f_id << " pnt " << c->p_id << " moved " << p2.DistanceTo(s2_p) << ": " << p2.x << "," << p2.y << "," << p2.z << " -> " << s2_p.x << "," << s2_p.y << "," << s2_p.z << "\n";
-	} else {
-	    std::cout << "COMPLEX pavg: " << pavg.x << "," << pavg.y << "," << pavg.z << "\n";
-	    if (!f1_eval) {
-		std::cout << s_cdt1->name << " face " << fmesh1.f_id << " closest point eval failure\n";
-	    }
-	    if (!f2_eval) {
-		std::cout << s_cdt2->name << " face " << fmesh2.f_id << " closest point eval failure\n";
-	    }
-	}
-
+	std::cout << "COMPLEX - adjusting 1 pair only:\n";
+	adjust_mvert_pair(l, c);
     }
 
 }
