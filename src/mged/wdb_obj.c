@@ -10188,6 +10188,9 @@ wdb_newcmds_tcl(void *clientData,
     struct bu_vls vls;
     int ret = GED_ERROR;
 
+    if (argc-1 <= 0)
+	return TCL_ERROR;
+
     /*XXX Eventually the clientData will be a "struct ged".
      * In the meantime ...
      */
@@ -10345,7 +10348,6 @@ wdb_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     /* look for the new libged commands before trying one of the old ones */
     GED_INIT(&ged, wdbp);
 
-    bu_hook_list_init(&save_hook_list);
     bu_log_hook_save_all(&save_hook_list);
 
     /* suppress bu_log output because we don't care if the command
