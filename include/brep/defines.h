@@ -36,6 +36,8 @@ extern "C++" {
 /* Note - We aren't (yet) including opennurbs in our Doxygen output. Until we
  * do, use cond to hide the opennurbs header from Doxygen. */
 /* @cond */
+#define read on_read
+#define write on_write
 #include "opennurbs.h"
 /* @endcond */
 }
