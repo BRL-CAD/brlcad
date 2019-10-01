@@ -79,6 +79,12 @@ struct rt_texture {
 
 
 /**
+ * initialize an rt_texture to zero
+ */
+#define RT_TEXTURE_INIT_ZERO {{0,0,0}, BU_VLS_INIT_ZERO, 0, 0, 0, {0.0, 0.0}, 0, 0, NULL, NULL}
+
+
+/**
  * loads a texture from either a file or database object.
  *
  * TODO: replace txt_load_datasource in liboptical
