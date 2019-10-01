@@ -454,13 +454,17 @@ mvert_update_all_edge_minlens(struct mvert_info *v)
     // 1.  Get pnt's associated edges.
     std::set<cdt_mesh::edge_t> edges = fmesh.v2edges[v->p_id];
     
-    // 2.  find the shortest edge associated with pnt
+    // 2.  Collect all the vertices associated with all the edges
+    // connected to the original point - these are the mvert_info
+    // structures that may have a new minimum edge length after
+    // the change.
     std::set<cdt_mesh::edge_t>::iterator e_it;
     for (e_it = edges.begin(); e_it != edges.end(); e_it++) {
 	verts.insert((*e_it).v[0]);
 	verts.insert((*e_it).v[1]);
     }
 
+    // 3.  Update each mvert_info minimum edge length
     std::set<long>::iterator v_it;
     for (v_it = verts.begin(); v_it != verts.end(); v_it++) {
 	struct mvert_info *vu = (*v->map)[*v_it];
