@@ -308,6 +308,10 @@ rt_texture_lookup(fastf_t *data, const struct rt_texture *tp, const struct uvcoo
     if (RT_G_DEBUG)
 	bu_log(" average: %g %g %g\n", r, g, b);
 
+    if (color_warn) {
+	bu_log("color warn set\n");
+    }
+
     /* FIXME: assumes caller provided enough memory */
     data[0] = r;
     data[1] = g;
