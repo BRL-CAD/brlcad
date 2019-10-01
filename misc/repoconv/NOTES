@@ -130,7 +130,7 @@ https://git-scm.com/docs/git-config#_conditional_includes
 # gitk --branches="*"
 
 # Nifty trick for getting commit counts per committer (https://stackoverflow.com/a/9839491)
-# git shortlog -s -n --all
+# git shortlog -s -n --branches="*"
 
 # Good way to get a quick overview of branch/tag structure:
 # tig --all --simplify-by-decoration
