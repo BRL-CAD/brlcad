@@ -511,6 +511,12 @@ closest_mvert(std::set<struct mvert_info *> &verts, struct mvert_info *v)
     return closest;
 }
 
+// TODO - need to be aware when one of the mvert vertices is on
+// a brep face edge.  In that situation it has much less freedom
+// to move, so we need to try and adjust the other point more
+// aggressively.  If they're both edge points we can try this,
+// but there's a decent chance we'll need a different refinement
+// in that case.
 void
 adjust_mvert_pair(struct mvert_info *v1, struct mvert_info *v2)
 {
@@ -563,7 +569,8 @@ adjust_mvert_pair(struct mvert_info *v1, struct mvert_info *v2)
     }
 }
 
-void
+// return the set of verts that was adjusted - we shouldn't need to move them again
+std::set<struct mvert_info *>
 adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> &check_pairs)
 {
     // Get the bounding boxes of all vertices of all meshes of all breps in
@@ -702,20 +709,6 @@ adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t
 	fclose(plot_file);
     }
 
-
-    // If we're going to alter points we need to resolve our course of action.
-    //
-    // 0.  Visual inspection indicates the closeness test is picking up interior vertices
-    // when it's actually a brep face edge that needs to be split - may have to have a filter to
-    // spot that.
-    //
-    // 1.  The simple case - two boxes.  If the closest surface points to the average of the
-    // two 3d points are less than 0.5 * the smallest edge length associated with each
-    // point, switch them.
-    //
-    // 2.  > 2 boxes interacting.  Average all the points interacting with a given point.  if
-    // that candidate point is viable, use it - can such a naive approach work?.
-
     std::queue<std::pair<struct mvert_info *, struct mvert_info *>> vq;
     std::set<struct mvert_info *> vq_multi;
     for (vo_it = vert_ovlps.begin(); vo_it != vert_ovlps.end(); vo_it++) {
@@ -734,12 +727,16 @@ adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t
 	vq.push(std::make_pair(v,v_other));
     }
 
+    std::set<struct mvert_info *> adjusted;
+
     std::cout << "Have " << vq.size() << " simple interactions\n";
     while (!vq.empty()) {
 	std::pair<struct mvert_info *, struct mvert_info *> vpair = vq.front();
 	vq.pop();
 
 	adjust_mvert_pair(vpair.first, vpair.second);
+	adjusted.insert(vpair.first);
+	adjusted.insert(vpair.second);
     }
 
     std::cout << "Have " << vq_multi.size() << " complex interactions\n";
@@ -754,9 +751,19 @@ adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t
 	vert_ovlps[c].erase(l);
 	//std::cout << "COMPLEX - adjusting 1 pair only:\n";
 	adjust_mvert_pair(l, c);
+	adjusted.insert(l);
+	adjusted.insert(c);
     }
 
+    return adjusted;
 }
+
+#if 0
+void
+split_brep_face_edges(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> &check_pairs, std::set<struct mvert_info *> &adjusted_verts)
+{
+}
+#endif
 
 /**************************************************************************
  * TODO - implement the various ways to refine a triangle polygon.
@@ -961,8 +968,9 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
     check_pairs = possibly_interfering_face_pairs(s_a, s_cnt);
 
     std::cout << "Found " << check_pairs.size() << " potentially interfering face pairs\n";
+    std::set<struct mvert_info *> adjusted_verts = adjustable_verts(check_pairs);
 
-    adjustable_verts(check_pairs);
+    //split_brep_face_edges(check_pairs, adjusted_verts);
 
     std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>>::iterator cp_it;
     for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
