@@ -528,27 +528,33 @@ adjust_mvert_pair(struct mvert_info *v1, struct mvert_info *v2)
     ON_3dPoint p1 = *fmesh1.pnts[v1->p_id];
     ON_3dPoint p2 = *fmesh2.pnts[v2->p_id];
     double pdist = p1.DistanceTo(p2);
-    ON_3dPoint pavg = (p1 + p2) * 0.5;
-    if ((p1.DistanceTo(pavg) > v1->e_minlen*0.5) || (p2.DistanceTo(pavg) > v2->e_minlen*0.5)) {
+    ON_Line l(p1,p2);
+    // Weight the t parameter on the line so we are closer to the vertex
+    // with the shorter edge length (i.e. less freedom to move without
+    // introducing locally severe mesh distortions.)
+    double t = 1 - (v2->e_minlen / (v1->e_minlen + v2->e_minlen));
+    ON_3dPoint p_wavg = l.PointAt(t);
+    if ((p1.DistanceTo(p_wavg) > v1->e_minlen*0.5) || (p2.DistanceTo(p_wavg) > v2->e_minlen*0.5)) {
 	std::cout << "WARNING: large point shift compared to triangle edge length.\n";
-	// TODO - in this situation, see if one of the points has enough freedom to move to its
-	// closest point to the second point...
     }
     ON_3dPoint s1_p, s2_p;
     ON_3dVector s1_n, s2_n;
-    bool f1_eval = closest_surf_pnt(s1_p, s1_n, fmesh1, &pavg, pdist);
-    bool f2_eval = closest_surf_pnt(s2_p, s2_n, fmesh2, &pavg, pdist);
+    bool f1_eval = closest_surf_pnt(s1_p, s1_n, fmesh1, &p_wavg, pdist);
+    bool f2_eval = closest_surf_pnt(s2_p, s2_n, fmesh2, &p_wavg, pdist);
     if (f1_eval && f2_eval) {
 	(*fmesh1.pnts[v1->p_id]) = s1_p;
 	(*fmesh1.normals[fmesh1.nmap[v1->p_id]]) = s1_n;
 	(*fmesh2.pnts[v2->p_id]) = s2_p;
 	(*fmesh2.normals[fmesh2.nmap[v2->p_id]]) = s2_n;
 
-	std::cout << "pavg: " << pavg.x << "," << pavg.y << "," << pavg.z << "\n";
-	std::cout << s_cdt1->name << " face " << fmesh1.f_id << " pnt " << v1->p_id << " moved " << p1.DistanceTo(s1_p) << ": " << p1.x << "," << p1.y << "," << p1.z << " -> " << s1_p.x << "," << s1_p.y << "," << s1_p.z << "\n";
-	std::cout << s_cdt2->name << " face " << fmesh2.f_id << " pnt " << v2->p_id << " moved " << p2.DistanceTo(s2_p) << ": " << p2.x << "," << p2.y << "," << p2.z << " -> " << s2_p.x << "," << s2_p.y << "," << s2_p.z << "\n";
+	// TODO - we just changed the vertex point values - need to update all the mvert_info
+	// edge lengths which might be impacted...
+
+	std::cout << "p_wavg: " << p_wavg.x << "," << p_wavg.y << "," << p_wavg.z << "\n";
+	std::cout << s_cdt1->name << " face " << fmesh1.f_id << " pnt " << v1->p_id << " (elen: " << v1->e_minlen << ") moved " << p1.DistanceTo(s1_p) << ": " << p1.x << "," << p1.y << "," << p1.z << " -> " << s1_p.x << "," << s1_p.y << "," << s1_p.z << "\n";
+	std::cout << s_cdt2->name << " face " << fmesh2.f_id << " pnt " << v2->p_id << " (elen: " << v2->e_minlen << ") moved " << p2.DistanceTo(s2_p) << ": " << p2.x << "," << p2.y << "," << p2.z << " -> " << s2_p.x << "," << s2_p.y << "," << s2_p.z << "\n";
     } else {
-	std::cout << "pavg: " << pavg.x << "," << pavg.y << "," << pavg.z << "\n";
+	std::cout << "p_wavg: " << p_wavg.x << "," << p_wavg.y << "," << p_wavg.z << "\n";
 	if (!f1_eval) {
 	    std::cout << s_cdt1->name << " face " << fmesh1.f_id << " closest point eval failure\n";
 	}
