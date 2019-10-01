@@ -418,10 +418,61 @@ struct mvert_info {
     long p_id;
     ON_BoundingBox bb;
     double e_minlen;
+    std::map<long, struct mvert_info *> *map;
 };
+
+void
+mvert_update_edge_minlen(struct mvert_info *v)
+{
+    struct ON_Brep_CDT_State *s_cdt = v->s_cdt;
+    cdt_mesh::cdt_mesh_t &fmesh = s_cdt->fmeshes[v->f_id];
+
+    // 1.  Get pnt's associated edges.
+    std::set<cdt_mesh::edge_t> edges = fmesh.v2edges[v->p_id];
+    
+    // 2.  find the shortest edge associated with pnt
+    std::set<cdt_mesh::edge_t>::iterator e_it;
+    double elen = DBL_MAX;
+    for (e_it = edges.begin(); e_it != edges.end(); e_it++) {
+	ON_3dPoint *p1 = fmesh.pnts[(*e_it).v[0]];
+	ON_3dPoint *p2 = fmesh.pnts[(*e_it).v[1]];
+	double dist = p1->DistanceTo(*p2);
+	elen = (dist < elen) ? dist : elen;
+    }
+    v->e_minlen = elen;
+    //std::cout << "Min edge len: " << elen << "\n";
+}
+
+void
+mvert_update_all_edge_minlens(struct mvert_info *v)
+{
+    struct ON_Brep_CDT_State *s_cdt = v->s_cdt;
+    cdt_mesh::cdt_mesh_t &fmesh = s_cdt->fmeshes[v->f_id];
+
+    std::set<long> verts;
+
+    // 1.  Get pnt's associated edges.
+    std::set<cdt_mesh::edge_t> edges = fmesh.v2edges[v->p_id];
+    
+    // 2.  find the shortest edge associated with pnt
+    std::set<cdt_mesh::edge_t>::iterator e_it;
+    for (e_it = edges.begin(); e_it != edges.end(); e_it++) {
+	verts.insert((*e_it).v[0]);
+	verts.insert((*e_it).v[1]);
+    }
+
+    std::set<long>::iterator v_it;
+    for (v_it = verts.begin(); v_it != verts.end(); v_it++) {
+	struct mvert_info *vu = (*v->map)[*v_it];
+	mvert_update_edge_minlen(vu);
+    }
+}
 
 // If the average point for all the verts in the set works for every vertex
 // in the group, we can in principle collapse the whole group.
+//
+// TODO - do we need this, or will this fall out of repeated application of
+// the pairwise movements?
 bool
 all_overlapping(std::set<struct mvert_info *> &vq_multi, std::map<struct mvert_info *, std::set<struct mvert_info *>> &vert_ovlps, struct mvert_info *l) {
     ON_3dPoint pavg(0.0, 0.0, 0.0);
@@ -522,9 +573,9 @@ void
 adjust_mvert_pair(struct mvert_info *v1, struct mvert_info *v2)
 {
     struct ON_Brep_CDT_State *s_cdt1 = v1->s_cdt;
-    cdt_mesh::cdt_mesh_t fmesh1 = s_cdt1->fmeshes[v1->f_id];
+    cdt_mesh::cdt_mesh_t &fmesh1 = s_cdt1->fmeshes[v1->f_id];
     struct ON_Brep_CDT_State *s_cdt2 = v2->s_cdt;
-    cdt_mesh::cdt_mesh_t fmesh2 = s_cdt2->fmeshes[v2->f_id];
+    cdt_mesh::cdt_mesh_t &fmesh2 = s_cdt2->fmeshes[v2->f_id];
     ON_3dPoint p1 = *fmesh1.pnts[v1->p_id];
     ON_3dPoint p2 = *fmesh2.pnts[v2->p_id];
     double pdist = p1.DistanceTo(p2);
@@ -547,12 +598,16 @@ adjust_mvert_pair(struct mvert_info *v1, struct mvert_info *v2)
 	(*fmesh2.pnts[v2->p_id]) = s2_p;
 	(*fmesh2.normals[fmesh2.nmap[v2->p_id]]) = s2_n;
 
-	// TODO - we just changed the vertex point values - need to update all the mvert_info
+	// We just changed the vertex point values - need to update all the mvert_info
 	// edge lengths which might be impacted...
+	double e1 = v1->e_minlen;
+	double e2 = v2->e_minlen;
+	mvert_update_all_edge_minlens(v1);
+	mvert_update_all_edge_minlens(v2);
 
 	std::cout << "p_wavg: " << p_wavg.x << "," << p_wavg.y << "," << p_wavg.z << "\n";
-	std::cout << s_cdt1->name << " face " << fmesh1.f_id << " pnt " << v1->p_id << " (elen: " << v1->e_minlen << ") moved " << p1.DistanceTo(s1_p) << ": " << p1.x << "," << p1.y << "," << p1.z << " -> " << s1_p.x << "," << s1_p.y << "," << s1_p.z << "\n";
-	std::cout << s_cdt2->name << " face " << fmesh2.f_id << " pnt " << v2->p_id << " (elen: " << v2->e_minlen << ") moved " << p2.DistanceTo(s2_p) << ": " << p2.x << "," << p2.y << "," << p2.z << " -> " << s2_p.x << "," << s2_p.y << "," << s2_p.z << "\n";
+	std::cout << s_cdt1->name << " face " << fmesh1.f_id << " pnt " << v1->p_id << " (elen: " << e1 << "->" << v1->e_minlen << ") moved " << p1.DistanceTo(s1_p) << ": " << p1.x << "," << p1.y << "," << p1.z << " -> " << s1_p.x << "," << s1_p.y << "," << s1_p.z << "\n";
+	std::cout << s_cdt2->name << " face " << fmesh2.f_id << " pnt " << v2->p_id << " (elen: " << e2 << "->" << v2->e_minlen << ") moved " << p2.DistanceTo(s2_p) << ": " << p2.x << "," << p2.y << "," << p2.z << " -> " << s2_p.x << "," << s2_p.y << "," << s2_p.z << "\n";
     } else {
 	std::cout << "p_wavg: " << p_wavg.x << "," << p_wavg.y << "," << p_wavg.z << "\n";
 	if (!f1_eval) {
@@ -580,6 +635,7 @@ adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t
     std::vector<struct mvert_info *> all_mverts;
     std::set<cdt_mesh::cdt_mesh_t *>::iterator f_it;
     std::map<std::pair<struct ON_Brep_CDT_State *, int>, RTree<void *, double, 3>> rtrees_mpnts;
+    std::map<std::pair<struct ON_Brep_CDT_State *, int>, std::map<long, struct mvert_info *>> mpnt_maps;
     for (f_it = fmeshes.begin(); f_it != fmeshes.end(); f_it++) {
 	cdt_mesh::cdt_mesh_t *fmesh = *f_it;
 	struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh->p_cdt;
@@ -608,25 +664,15 @@ adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t
 	    mvert->s_cdt = s_cdt;
 	    mvert->f_id = fmesh->f_id;
 	    mvert->p_id = *a_it;
-	    // 1.  Get pnt's associated edges.
-	    std::set<cdt_mesh::edge_t> edges = fmesh->v2edges[*a_it];
-	    // 2.  find the shortest edge associated with pnt
-	    std::set<cdt_mesh::edge_t>::iterator e_it;
-	    double elen = DBL_MAX;
-	    for (e_it = edges.begin(); e_it != edges.end(); e_it++) {
-		ON_3dPoint *p1 = fmesh->pnts[(*e_it).v[0]];
-		ON_3dPoint *p2 = fmesh->pnts[(*e_it).v[1]];
-		double dist = p1->DistanceTo(*p2);
-		elen = (dist < elen) ? dist : elen;
-	    }
-	    mvert->e_minlen = elen;
-	    //std::cout << "Min edge len: " << elen << "\n";
-	    // 3.  create a bbox around pnt using length ~20% of the shortest edge length.
+	    mvert->map = &(mpnt_maps[std::make_pair(s_cdt,fmesh->f_id)]);
+	    mvert_update_edge_minlen(mvert);
+	    // 1.  create a bbox around pnt using length ~20% of the shortest edge length.
 	    ON_3dPoint vpnt = *fmesh->pnts[(*a_it)];
 	    ON_BoundingBox bb(vpnt, vpnt);
 	    ON_3dPoint npnt;
 	    npnt = vpnt;
 	    double lfactor = 0.2;
+	    double elen = mvert->e_minlen;
 	    npnt.x = npnt.x + lfactor*elen;
 	    bb.Set(npnt, true);
 	    npnt = vpnt;
@@ -645,7 +691,7 @@ adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t
 	    npnt.z = npnt.z - lfactor*elen;
 	    bb.Set(npnt, true);
 	    mvert->bb = bb;
-	    // 4.  insert result into mverts;
+	    // 2.  insert result into mverts;
 	    mverts.push_back(mvert);
 	}
 	for (size_t i = 0; i < mverts.size(); i++) {
@@ -658,6 +704,7 @@ adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t
 	    fMax[1] = mverts[i]->bb.Max().y;
 	    fMax[2] = mverts[i]->bb.Max().z;
 	    rtrees_mpnts[std::make_pair(s_cdt,fmesh->f_id)].Insert(fMin, fMax, (void *)mverts[i]);
+	    (*mverts[i]->map)[mverts[i]->p_id] = mverts[i];
 	}
 	all_mverts.insert(all_mverts.end(), mverts.begin(), mverts.end());
     }
