@@ -922,8 +922,14 @@ split_brep_face_edges(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_m
 	    int f_id2 = s_cdt_edge->brep->m_T[eseg->tseg2->trim_ind].Face()->m_face_index;
 	    cdt_mesh::cdt_mesh_t &fmesh_f1 = s_cdt_edge->fmeshes[f_id1];
 	    cdt_mesh::cdt_mesh_t &fmesh_f2 = s_cdt_edge->fmeshes[f_id2];
-	    std::set<size_t> f1_tris = fmesh_f1.uedges2tris[cdt_mesh::uedge_t(eseg->tseg1->v[0], eseg->tseg1->v[1])];
-	    std::set<size_t> f2_tris = fmesh_f2.uedges2tris[cdt_mesh::uedge_t(eseg->tseg2->v[0], eseg->tseg2->v[1])];
+	    // Translate the tseg verts to their parent indices in order to get
+	    // valid triangle lookups
+	    cdt_mesh::cpolygon_t *poly1 = eseg->tseg1->polygon;
+	    cdt_mesh::cpolygon_t *poly2 = eseg->tseg2->polygon;
+	    cdt_mesh::uedge_t ue1(poly1->p2o[eseg->tseg1->v[0]], poly1->p2o[eseg->tseg1->v[1]]);
+	    cdt_mesh::uedge_t ue2(poly2->p2o[eseg->tseg2->v[0]], poly2->p2o[eseg->tseg2->v[1]]);
+	    std::set<size_t> f1_tris = fmesh_f1.uedges2tris[ue1];
+	    std::set<size_t> f2_tris = fmesh_f2.uedges2tris[ue2];
 
 	    if (f1_tris.size() != 1) {
 		std::cout << "don't have 1 tri??: " << f1_tris.size() << "\n";
