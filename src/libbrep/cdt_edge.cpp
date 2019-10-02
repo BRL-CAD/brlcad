@@ -1203,6 +1203,7 @@ initialize_edge_containers(struct ON_Brep_CDT_State *s_cdt)
 	cdt_mesh::bedge_seg_t *bseg = new cdt_mesh::bedge_seg_t;
 	bseg->edge_ind = edge.m_edge_index;
 	bseg->brep = s_cdt->brep;
+	bseg->p_cdt= (void *)s_cdt;
 
 	// Provide a normalize edge NURBS curve
 	const ON_Curve* crv = edge.EdgeCurveOf();

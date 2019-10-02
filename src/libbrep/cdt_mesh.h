@@ -247,6 +247,7 @@ class bedge_seg_t {
 	    cp_len = -1;
 	    nc = NULL;
 	    brep = NULL;
+	    p_cdt = NULL;
 	    tseg1 = NULL;
 	    tseg2 = NULL;
 	    edge_start = DBL_MAX;
@@ -264,6 +265,7 @@ class bedge_seg_t {
 	    edge_type = other->edge_type;
 	    cp_len = other->cp_len;
 	    brep = other->brep;
+	    p_cdt = other->p_cdt;
 	    nc = other->nc;
 	    tseg1 = NULL;
 	    tseg2 = NULL;
@@ -284,6 +286,7 @@ class bedge_seg_t {
 	double cp_len;
 	ON_NurbsCurve *nc;
 	ON_Brep *brep;
+	void *p_cdt;
 
 	cpolyedge_t *tseg1;
 	cpolyedge_t *tseg2;
