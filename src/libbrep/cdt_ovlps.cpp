@@ -232,6 +232,52 @@
     TREE_LEAF_FACE_3D(pf, pt, 1, 5, 6, 2);      \
 }
 
+ON_BoundingBox
+edge_bbox(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
+{
+    ON_BrepTrim& trim = s_cdt->brep->m_T[pe->trim_ind];
+    double tcparam = (pe->trim_start + pe->trim_end) / 2.0;
+    ON_3dPoint trim_2d = trim.PointAt(tcparam);
+    const ON_Surface *s = trim.SurfaceOf();
+    ON_3dPoint trim_3d = s->PointAt(trim_2d.x, trim_2d.y);
+
+    ON_3dPoint *p3d1 = pe->eseg->e_start;
+    ON_3dPoint *p3d2 = pe->eseg->e_end;
+    ON_Line line(*p3d1, *p3d2);
+
+    double arc_dist = 2*trim_3d.DistanceTo(line.ClosestPointTo(trim_3d));
+
+    ON_BoundingBox bb = line.BoundingBox();
+    bb.m_max.x = bb.m_max.x + ON_ZERO_TOLERANCE;
+    bb.m_max.y = bb.m_max.y + ON_ZERO_TOLERANCE;
+    bb.m_max.z = bb.m_max.z + ON_ZERO_TOLERANCE;
+    bb.m_min.x = bb.m_min.x - ON_ZERO_TOLERANCE;
+    bb.m_min.y = bb.m_min.y - ON_ZERO_TOLERANCE;
+    bb.m_min.z = bb.m_min.z - ON_ZERO_TOLERANCE;
+
+    double dist = p3d1->DistanceTo(*p3d2);
+    double bdist = (0.5*dist > arc_dist) ? 0.5*dist : arc_dist;
+    double xdist = bb.m_max.x - bb.m_min.x;
+    double ydist = bb.m_max.y - bb.m_min.y;
+    double zdist = bb.m_max.z - bb.m_min.z;
+    // If we're close to the edge, we want to know - the Search callback will
+    // check the precise distance and make a decision on what to do.
+    if (xdist < bdist) {
+        bb.m_min.x = bb.m_min.x - 0.5*bdist;
+        bb.m_max.x = bb.m_max.x + 0.5*bdist;
+    }
+    if (ydist < bdist) {
+        bb.m_min.y = bb.m_min.y - 0.5*bdist;
+        bb.m_max.y = bb.m_max.y + 0.5*bdist;
+    }
+    if (zdist < bdist) {
+        bb.m_min.z = bb.m_min.z - 0.5*bdist;
+        bb.m_max.z = bb.m_max.z + 0.5*bdist;
+    }
+
+    return bb;
+}
+
 double
 tri_pnt_r(cdt_mesh::cdt_mesh_t &fmesh, long tri_ind)
 {
@@ -670,7 +716,7 @@ std::set<struct mvert_info *>
 adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> &check_pairs)
 {
     // Get the bounding boxes of all vertices of all meshes of all breps
-    // that might have possible interactions, and find close point sets
+    // that might have possible interactions
     std::vector<struct mvert_info *> all_mverts;
     std::map<std::pair<struct ON_Brep_CDT_State *, int>, RTree<void *, double, 3>> rtrees_mpnts;
     std::map<std::pair<struct ON_Brep_CDT_State *, int>, std::map<long, struct mvert_info *>> mpnt_maps;
@@ -775,12 +821,51 @@ adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t
     return adjusted;
 }
 
-#if 0
 void
-split_brep_face_edges(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> &check_pairs, std::set<struct mvert_info *> &adjusted_verts)
+split_brep_face_edges(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> &check_pairs)
 {
+    // Get the bounding boxes of all vertices of all meshes of all breps
+    // that might have possible interactions, and find close point sets
+    std::vector<struct mvert_info *> all_mverts;
+    std::map<std::pair<struct ON_Brep_CDT_State *, int>, RTree<void *, double, 3>> rtrees_mpnts;
+    std::map<std::pair<struct ON_Brep_CDT_State *, int>, std::map<long, struct mvert_info *>> mpnt_maps;
+    vert_bboxes(&all_mverts, &rtrees_mpnts, &mpnt_maps, check_pairs); 
+
+    // Iterate over mverts, checking for nearby edges.
+    std::map<struct mvert_info *, std::set<cdt_mesh::bedge_seg_t *>> vert_edge_ovlps;
+    std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>>::iterator cp_it;
+    struct bu_vls fname = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&fname, "vert_edge_pairs.plot3");
+    FILE* plot_file = fopen(bu_vls_cstr(&fname), "w");
+    for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
+	cdt_mesh::cdt_mesh_t *fmesh1 = cp_it->first;
+	cdt_mesh::cdt_mesh_t *fmesh2 = cp_it->second;
+	struct ON_Brep_CDT_State *s_cdt1 = (struct ON_Brep_CDT_State *)fmesh1->p_cdt;
+	struct ON_Brep_CDT_State *s_cdt2 = (struct ON_Brep_CDT_State *)fmesh2->p_cdt;
+	if (s_cdt1 != s_cdt2) {
+	    std::set<std::pair<void *, void *>> vert_edge_pairs;
+	    size_t ovlp_cnt = rtrees_mpnts[std::make_pair(s_cdt1,fmesh1->f_id)].Overlaps(s_cdt2->face_rtrees_3d[fmesh2->f_id], &vert_edge_pairs);
+	    if (ovlp_cnt && vert_edge_pairs.size()) {
+		std::cout << "ovlp_cnt: " << vert_edge_pairs.size() << "\n";
+		std::set<std::pair<void *, void *>>::iterator v_it;
+		for (v_it = vert_edge_pairs.begin(); v_it != vert_edge_pairs.end(); v_it++) {
+		    struct mvert_info *v = (struct mvert_info *)v_it->first;
+		    cdt_mesh::cpolyedge_t *pe = (cdt_mesh::cpolyedge_t *)v_it->second;
+		    vert_edge_ovlps[v].insert(pe->eseg);
+		    pl_color(plot_file, 255, 0, 0);
+		    BBOX_PLOT(plot_file, v->bb);
+		    pl_color(plot_file, 0, 0, 255);
+		    ON_3dPoint *p3d1 = pe->eseg->e_start;
+		    ON_3dPoint *p3d2 = pe->eseg->e_end;
+		    ON_Line line(*p3d1, *p3d2);
+		    ON_BoundingBox edge_bb = edge_bbox(s_cdt2, pe);
+		    BBOX_PLOT(plot_file, edge_bb);
+		}
+	    }
+	}
+    }
+    fclose(plot_file);
 }
-#endif
 
 /**************************************************************************
  * TODO - implement the various ways to refine a triangle polygon.
@@ -987,7 +1072,11 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
     std::cout << "Found " << check_pairs.size() << " potentially interfering face pairs\n";
     std::set<struct mvert_info *> adjusted_verts = adjustable_verts(check_pairs);
 
-    //split_brep_face_edges(check_pairs, adjusted_verts);
+    if (adjusted_verts.size()) {
+	std::cout << "Adjusted " << adjusted_verts.size() << " vertices\n";
+    }
+
+    split_brep_face_edges(check_pairs);
 
     std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>>::iterator cp_it;
     for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
