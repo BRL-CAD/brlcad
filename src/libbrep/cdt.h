@@ -178,6 +178,9 @@ calc_trim_vnorm(ON_BrepVertex& v, ON_BrepTrim *trim);
 std::set<cdt_mesh::cpolyedge_t *>
 split_singular_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *ce, int update_rtree);
 
+std::set<cdt_mesh::bedge_seg_t *>
+split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int force, double *t, int update_rtrees);
+
 bool initialize_edge_segs(struct ON_Brep_CDT_State *s_cdt);
 void refine_close_edges(struct ON_Brep_CDT_State *s_cdt);
 std::vector<int> characterize_edges(struct ON_Brep_CDT_State *s_cdt);

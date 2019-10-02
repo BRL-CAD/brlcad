@@ -704,7 +704,7 @@ tol_need_split(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, ON_
 }
 
 std::set<cdt_mesh::bedge_seg_t *>
-split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int force, int update_rtrees)
+split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int force, double *t, int update_rtrees)
 {
     std::set<cdt_mesh::bedge_seg_t *> nedges;
 
@@ -727,7 +727,7 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int
     // Get the 3D midpoint (and tangent, if we can) from the edge curve
     ON_3dPoint edge_mid_3d = ON_3dPoint::UnsetPoint;
     ON_3dVector edge_mid_tan = ON_3dVector::UnsetVector;
-    fastf_t emid = (bseg->edge_start + bseg->edge_end) / 2.0;
+    fastf_t emid = (t) ? *t : (bseg->edge_start + bseg->edge_end) / 2.0;
     bool evtangent_status = bseg->nc->EvTangent(emid, edge_mid_3d, edge_mid_tan);
     if (!evtangent_status) {
 	// EvTangent call failed, get 3d point
@@ -1061,7 +1061,7 @@ initialize_edge_segs(struct ON_Brep_CDT_State *s_cdt)
 
 	    // 1.  Any edges with at least 1 closed trim are split.
 	    if (trim1->IsClosed() || trim2->IsClosed()) {
-		esegs_closed = split_edge_seg(s_cdt, e, 1, 1);
+		esegs_closed = split_edge_seg(s_cdt, e, 1, NULL, 1);
 		if (!esegs_closed.size()) {
 		    // split failed??  On a closed edge this is fatal - we must split it
 		    // to work with it at all
@@ -1077,7 +1077,7 @@ initialize_edge_segs(struct ON_Brep_CDT_State *s_cdt)
 	    if (!crv->IsLinear(BN_TOL_DIST)) {
 		std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
 		for (e_it = esegs_closed.begin(); e_it != esegs_closed.end(); e_it++) {
-		    std::set<cdt_mesh::bedge_seg_t *> efirst = split_edge_seg(s_cdt, *e_it, 1, 1);
+		    std::set<cdt_mesh::bedge_seg_t *> efirst = split_edge_seg(s_cdt, *e_it, 1, NULL, 1);
 		    if (!efirst.size()) {
 			// split failed??  On a curved edge we must split at least once to
 			// avoid potentially degenerate polygons (if we had to split a closed
@@ -1088,7 +1088,7 @@ initialize_edge_segs(struct ON_Brep_CDT_State *s_cdt)
 			// one additional time
 			std::set<cdt_mesh::bedge_seg_t *>::iterator s_it;
 			for (s_it = efirst.begin(); s_it != efirst.end(); s_it++) {
-			    std::set<cdt_mesh::bedge_seg_t *> etmp = split_edge_seg(s_cdt, *s_it, 1, 1);
+			    std::set<cdt_mesh::bedge_seg_t *> etmp = split_edge_seg(s_cdt, *s_it, 1, NULL, 1);
 			    if (!etmp.size()) {
 				// split failed??  This isn't good and shouldn't
 				// happen, but it's not fatal the way the previous two
@@ -1413,7 +1413,7 @@ tol_curved_edges_split(struct ON_Brep_CDT_State *s_cdt)
 	    while (ws->size()) {
 		cdt_mesh::bedge_seg_t *b = *ws->begin();
 		ws->erase(ws->begin());
-		std::set<cdt_mesh::bedge_seg_t *> esegs_split = split_edge_seg(s_cdt, b, 0, 0);
+		std::set<cdt_mesh::bedge_seg_t *> esegs_split = split_edge_seg(s_cdt, b, 0, NULL, 0);
 		if (esegs_split.size()) {
 		    ns->insert(esegs_split.begin(), esegs_split.end());
 		} else {
@@ -1557,7 +1557,7 @@ void curved_edges_refine(struct ON_Brep_CDT_State *s_cdt)
 	    bool split_edge = (b->e_start->DistanceTo(*b->e_end) > split_tol);
 	    if (split_edge) {
 		// If we need to split, do so
-		std::set<cdt_mesh::bedge_seg_t *> esegs_split = split_edge_seg(s_cdt, b, 1, 0);
+		std::set<cdt_mesh::bedge_seg_t *> esegs_split = split_edge_seg(s_cdt, b, 1, NULL, 0);
 		if (esegs_split.size()) {
 		    ws->insert(esegs_split.begin(), esegs_split.end());
 		} else {
@@ -1604,7 +1604,7 @@ tol_linear_edges_split(struct ON_Brep_CDT_State *s_cdt)
 	    while (ws->size()) {
 		cdt_mesh::bedge_seg_t *b = *ws->begin();
 		ws->erase(ws->begin());
-		std::set<cdt_mesh::bedge_seg_t *> esegs_split = split_edge_seg(s_cdt, b, 0, 0);
+		std::set<cdt_mesh::bedge_seg_t *> esegs_split = split_edge_seg(s_cdt, b, 0, NULL, 0);
 		if (esegs_split.size()) {
 		    ns->insert(esegs_split.begin(), esegs_split.end());
 		} else {
@@ -1718,7 +1718,7 @@ refine_close_edges(struct ON_Brep_CDT_State *s_cdt)
 		    ws_s.erase(b->tseg1);
 		    ws_s.erase(b->tseg2);
 		    if (pe->split_status == 2) {
-			std::set<cdt_mesh::bedge_seg_t *> esegs_split = split_edge_seg(s_cdt, b, 1, 1);
+			std::set<cdt_mesh::bedge_seg_t *> esegs_split = split_edge_seg(s_cdt, b, 1, NULL, 1);
 			if (esegs_split.size()) {
 			    split_check = true;
 			    // Pick up the new trim segments from the edges for the next iteration.  Only

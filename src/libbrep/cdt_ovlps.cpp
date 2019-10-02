@@ -832,7 +832,7 @@ split_brep_face_edges(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_m
     vert_bboxes(&all_mverts, &rtrees_mpnts, &mpnt_maps, check_pairs);
 
     // Iterate over mverts, checking for nearby edges.
-    std::map<cdt_mesh::bedge_seg_t *, struct mvert_info *> edge_vert;
+    std::map<std::pair<struct ON_Brep_CDT_State *, cdt_mesh::bedge_seg_t *>, struct mvert_info *> edge_vert;
     std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>>::iterator cp_it;
     struct bu_vls fname = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&fname, "vert_edge_pairs.plot3");
@@ -861,16 +861,16 @@ split_brep_face_edges(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_m
 		    double dline = 2*p.DistanceTo(line.ClosestPointTo(p));
 		    if (d1 > dline && d2 > dline) {
 			std::cout << "ACCEPT: d1: " << d1 << ", d2: " << d2 << ", dline: " << dline << "\n";
-			if (edge_vert.find(pe->eseg) != edge_vert.end()) {
+			if (edge_vert.find(std::make_pair(s_cdt2, pe->eseg)) != edge_vert.end()) {
 			    struct ON_Brep_CDT_State *s_cdtv = v->s_cdt;
 			    cdt_mesh::cdt_mesh_t fmeshv = s_cdtv->fmeshes[v->f_id];
 			    ON_3dPoint pv = *fmeshv.pnts[v->p_id];
 			    double dv = pv.DistanceTo(line.ClosestPointTo(pv));
 			    if (dv > dline) {
-				edge_vert[pe->eseg] = v;
+				edge_vert[std::make_pair(s_cdt2, pe->eseg)] = v;
 			    }
 			} else {
-			    edge_vert[pe->eseg] = v;
+			    edge_vert[std::make_pair(s_cdt2, pe->eseg)] = v;
 			    used_verts++;
 			}
 			pl_color(plot_file, 255, 0, 0);
@@ -892,25 +892,50 @@ split_brep_face_edges(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_m
     // 2.  Find the point on the edge nearest to the vert point.  (TODO - need to think about how to
     // handle multiple verts associated with same edge - may want to iterate starting with the closest
     // and see if splitting clears the others...)
-    std::map<cdt_mesh::bedge_seg_t *, struct mvert_info *>::iterator ev_it;
+    std::map<std::pair<struct ON_Brep_CDT_State *, cdt_mesh::bedge_seg_t *>, struct mvert_info *>::iterator ev_it;
     for (ev_it = edge_vert.begin(); ev_it != edge_vert.end(); ev_it++) {
-	cdt_mesh::bedge_seg_t *eseg = ev_it->first;
+	struct ON_Brep_CDT_State *s_cdt_edge = ev_it->first.first;
+	cdt_mesh::bedge_seg_t *eseg = ev_it->first.second;
 	struct mvert_info *v = ev_it->second;
 
 	ON_NurbsCurve *nc = eseg->nc;
 	ON_Interval domain(eseg->edge_start, eseg->edge_end);
 	struct ON_Brep_CDT_State *s_cdt = v->s_cdt;
-	cdt_mesh::cdt_mesh_t fmesh = s_cdt->fmeshes[v->f_id];
+	cdt_mesh::cdt_mesh_t &fmesh = s_cdt->fmeshes[v->f_id];
 	ON_3dPoint p = *fmesh.pnts[v->p_id];
 	double t;
 	ON_NurbsCurve_GetClosestPoint(&t, nc, p, 0.0, &domain);
 	ON_3dPoint cep = nc->PointAt(t);
 	std::cout << "Distance: " << cep.DistanceTo(p) << "\n";
-    }
+	double epdist1 = eseg->e_start->DistanceTo(cep);
+	double epdist2 = eseg->e_end->DistanceTo(cep);
+	double lseg_check = 0.1 * eseg->e_start->DistanceTo(*eseg->e_end);
+	std::cout << "d1: " << epdist1 << ", d2: " << epdist2 << ", lseg_check: " << lseg_check << "\n";
+	if (epdist1 > lseg_check && epdist2 > lseg_check) {
+	    // If the point is not close to a start/end point on the edge then split the edge, replace old tris
+	    // with new tris in both faces, add add new mvert_info point.  Distribute any existing verts still
+	    // in the associated set with the old edge to the new edges, based on which one they're closer to.
 
-    // 3.  If the point from #2 is not close to a start/end point on the edge, split, replace old tris
-    // with new tris in both faces, add add new mvert_info point.  Distribute any existing verts still
-    // in the associated set with the old edge to the new edges, based on which one they're closer to.
+	    // 1.  Get the triangle from each face associated with the edge segment to be split (should only
+	    // be one per face, since we're working with boundary edges.)
+	    int f_id1 = s_cdt_edge->brep->m_T[eseg->tseg1->trim_ind].Face()->m_face_index;
+	    int f_id2 = s_cdt_edge->brep->m_T[eseg->tseg2->trim_ind].Face()->m_face_index;
+	    cdt_mesh::cdt_mesh_t &fmesh_f1 = s_cdt_edge->fmeshes[f_id1];
+	    cdt_mesh::cdt_mesh_t &fmesh_f2 = s_cdt_edge->fmeshes[f_id2];
+	    std::set<size_t> f1_tris = fmesh_f1.uedges2tris[cdt_mesh::uedge_t(eseg->tseg1->v[0], eseg->tseg1->v[1])];
+	    std::set<size_t> f2_tris = fmesh_f2.uedges2tris[cdt_mesh::uedge_t(eseg->tseg2->v[0], eseg->tseg2->v[1])];
+
+	    if (f1_tris.size() != 1) {
+		std::cout << "don't have 1 tri??: " << f1_tris.size() << "\n";
+	    }
+
+	    if (f2_tris.size() != 1) {
+		std::cout << "don't have 1 tri??: " << f2_tris.size() << "\n";
+	    }
+
+	    //std::set<cdt_mesh::bedge_seg_t *> esegs_split = split_edge_seg(s_cdt_edge, eseg, 1, &t, 1);
+	}
+    }
 }
 
 /**************************************************************************
