@@ -829,10 +829,10 @@ split_brep_face_edges(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_m
     std::vector<struct mvert_info *> all_mverts;
     std::map<std::pair<struct ON_Brep_CDT_State *, int>, RTree<void *, double, 3>> rtrees_mpnts;
     std::map<std::pair<struct ON_Brep_CDT_State *, int>, std::map<long, struct mvert_info *>> mpnt_maps;
-    vert_bboxes(&all_mverts, &rtrees_mpnts, &mpnt_maps, check_pairs); 
+    vert_bboxes(&all_mverts, &rtrees_mpnts, &mpnt_maps, check_pairs);
 
     // Iterate over mverts, checking for nearby edges.
-    std::map<struct mvert_info *, std::set<cdt_mesh::bedge_seg_t *>> vert_edge_ovlps;
+    std::map<cdt_mesh::bedge_seg_t *, struct mvert_info *> edge_vert;
     std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>>::iterator cp_it;
     struct bu_vls fname = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&fname, "vert_edge_pairs.plot3");
@@ -845,26 +845,72 @@ split_brep_face_edges(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_m
 	if (s_cdt1 != s_cdt2) {
 	    std::set<std::pair<void *, void *>> vert_edge_pairs;
 	    size_t ovlp_cnt = rtrees_mpnts[std::make_pair(s_cdt1,fmesh1->f_id)].Overlaps(s_cdt2->face_rtrees_3d[fmesh2->f_id], &vert_edge_pairs);
+	    int used_verts = 0;
 	    if (ovlp_cnt && vert_edge_pairs.size()) {
-		std::cout << "ovlp_cnt: " << vert_edge_pairs.size() << "\n";
 		std::set<std::pair<void *, void *>>::iterator v_it;
 		for (v_it = vert_edge_pairs.begin(); v_it != vert_edge_pairs.end(); v_it++) {
 		    struct mvert_info *v = (struct mvert_info *)v_it->first;
+		    ON_3dPoint p = *fmesh1->pnts[v->p_id];
 		    cdt_mesh::cpolyedge_t *pe = (cdt_mesh::cpolyedge_t *)v_it->second;
-		    vert_edge_ovlps[v].insert(pe->eseg);
-		    pl_color(plot_file, 255, 0, 0);
-		    BBOX_PLOT(plot_file, v->bb);
-		    pl_color(plot_file, 0, 0, 255);
+
 		    ON_3dPoint *p3d1 = pe->eseg->e_start;
 		    ON_3dPoint *p3d2 = pe->eseg->e_end;
 		    ON_Line line(*p3d1, *p3d2);
-		    ON_BoundingBox edge_bb = edge_bbox(s_cdt2, pe);
-		    BBOX_PLOT(plot_file, edge_bb);
+		    double d1 = p3d1->DistanceTo(p);
+		    double d2 = p3d2->DistanceTo(p);
+		    double dline = 2*p.DistanceTo(line.ClosestPointTo(p));
+		    if (d1 > dline && d2 > dline) {
+			std::cout << "ACCEPT: d1: " << d1 << ", d2: " << d2 << ", dline: " << dline << "\n";
+			if (edge_vert.find(pe->eseg) != edge_vert.end()) {
+			    struct ON_Brep_CDT_State *s_cdtv = v->s_cdt;
+			    cdt_mesh::cdt_mesh_t fmeshv = s_cdtv->fmeshes[v->f_id];
+			    ON_3dPoint pv = *fmeshv.pnts[v->p_id];
+			    double dv = pv.DistanceTo(line.ClosestPointTo(pv));
+			    if (dv > dline) {
+				edge_vert[pe->eseg] = v;
+			    }
+			} else {
+			    edge_vert[pe->eseg] = v;
+			    used_verts++;
+			}
+			pl_color(plot_file, 255, 0, 0);
+			BBOX_PLOT(plot_file, v->bb);
+			pl_color(plot_file, 0, 0, 255);
+			ON_BoundingBox edge_bb = edge_bbox(s_cdt2, pe);
+			BBOX_PLOT(plot_file, edge_bb);
+		    } else {
+			std::cout << "REJECT: d1: " << d1 << ", d2: " << d2 << ", dline: " << dline << "\n";
+		    }
 		}
+		std::cout << "used_verts: " << used_verts << "\n";
 	    }
 	}
     }
     fclose(plot_file);
+
+
+    // 2.  Find the point on the edge nearest to the vert point.  (TODO - need to think about how to
+    // handle multiple verts associated with same edge - may want to iterate starting with the closest
+    // and see if splitting clears the others...)
+    std::map<cdt_mesh::bedge_seg_t *, struct mvert_info *>::iterator ev_it;
+    for (ev_it = edge_vert.begin(); ev_it != edge_vert.end(); ev_it++) {
+	cdt_mesh::bedge_seg_t *eseg = ev_it->first;
+	struct mvert_info *v = ev_it->second;
+
+	ON_NurbsCurve *nc = eseg->nc;
+	ON_Interval domain(eseg->edge_start, eseg->edge_end);
+	struct ON_Brep_CDT_State *s_cdt = v->s_cdt;
+	cdt_mesh::cdt_mesh_t fmesh = s_cdt->fmeshes[v->f_id];
+	ON_3dPoint p = *fmesh.pnts[v->p_id];
+	double t;
+	ON_NurbsCurve_GetClosestPoint(&t, nc, p, 0.0, &domain);
+	ON_3dPoint cep = nc->PointAt(t);
+	std::cout << "Distance: " << cep.DistanceTo(p) << "\n";
+    }
+
+    // 3.  If the point from #2 is not close to a start/end point on the edge, split, replace old tris
+    // with new tris in both faces, add add new mvert_info point.  Distribute any existing verts still
+    // in the associated set with the old edge to the new edges, based on which one they're closer to.
 }
 
 /**************************************************************************

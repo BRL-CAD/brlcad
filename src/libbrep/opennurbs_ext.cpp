@@ -176,6 +176,76 @@ ON_Brep_Report_Faces(struct bu_vls *log, void *bp, const vect_t center, const ve
     return 0;
 }
 
+/* Implement the algorithm from https://github.com/pboyer/verb - specifically:
+ * verb/src/verb/eval/Tess.hx 
+ * verb/src/verb/eval/Analyze.hx 
+ */
+bool
+ON_NurbsCurve_GetClosestPoint(
+	double *t,
+	const ON_NurbsCurve *nc,
+	const ON_3dPoint &p,
+	double maximum_distance = 0.0,
+	const ON_Interval *sub_domain = NULL
+	)
+{
+    ON_Interval domain = (sub_domain) ? *sub_domain : nc->Domain();
+    size_t init_sample_cnt = nc->CVCount() * nc->Degree();
+    double span = 1.0/(double)(init_sample_cnt);
+
+    // Get an initial sampling of uniform points along the active
+    // curve domain
+    std::vector<ON_3dPoint> pnts;
+    for (size_t i = 0; i < init_sample_cnt; i++) {
+	double st = domain.ParameterAt(i * span);
+	pnts.push_back(nc->PointAt(st));
+    }
+
+    // Find an initial guess based on the breakdown into segments
+    double d1 = domain.Min();
+    double d2 = domain.Max();
+    double u = 0.0;
+    double vmin = DBL_MAX;
+    for (size_t i = 0; i < pnts.size() - 1; i++) {
+	ON_Line l(pnts[i], pnts[i+1]);
+	double lt;
+	l.ClosestPointTo(p, &lt);
+	ON_3dPoint pl = l.PointAt(lt);
+	if (pl.DistanceTo(p) < vmin) {
+	    vmin = pl.DistanceTo(p);
+	    d1 = domain.ParameterAt(i*span);
+	    d2 = domain.ParameterAt((i+1)*span);
+	    //u = d1 + (d2 - d1)*lt;
+	}
+    }
+
+    // TODO - verb uses Newton iteration, and so should we - for the moment,
+    // this is a quick and dirty (and undoubtedly slower) binary search
+    double vdist = DBL_MAX;
+    double vmin_delta = DBL_MAX;
+    double vmin_prev = vmin;
+    ON_3dPoint p1 = nc->PointAt(d1);
+    ON_3dPoint p2 = nc->PointAt(d2);
+    while (vmin_delta > ON_ZERO_TOLERANCE) {
+	u = (d1 + d2) * 0.5;
+	if (p1.DistanceTo(p) < p2.DistanceTo(p)) {
+	    d2 = u;
+	    p2 = nc->PointAt(u);
+	} else {
+	    d1 = u;
+	    p1 = nc->PointAt(u);
+	}
+	vdist = (p.DistanceTo(nc->PointAt(u)));
+	vmin_delta = fabs(vmin_prev - vmin);
+	vmin_prev = vmin;
+    }
+
+    (*t) = u;
+
+    if (maximum_distance > 0 && vdist > maximum_distance) return false;
+
+    return true;
+}
 
 namespace brlcad {
 
