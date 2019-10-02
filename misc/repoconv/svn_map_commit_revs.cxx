@@ -138,7 +138,7 @@ void write_note(long int rev, std::string gsha1, long int commit_time)
     outfile << "data " << svn_id_str.length() << "\n";
     outfile << svn_id_str << "\n";
     outfile << "commit refs/notes/commits" << "\n";
-    outfile << "committer CVS_SVN_GIT Mapper <cvs_svn_git@brlcad.org> " <<  commit_time << " +0000\n";
+    outfile << "committer CVS_SVN_GIT Mapper <cvs_svn_git> " <<  commit_time << " +0000\n";
 
     std::string svn_id_commit_msg = std::string("Note SVN revision ") + std::to_string(rev);
     outfile << "data " << svn_id_commit_msg.length() << "\n";
