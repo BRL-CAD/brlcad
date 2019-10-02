@@ -747,7 +747,7 @@ data 115
 package ifneeded Iwidgets 3.0.0 [list source [file join $dir iwidgets.tcl]]
 commit refs/heads/rel-5-1-branch
 mark :1111229886
-committer CVS SVN Sync <cvs_svn_sync@brlcad.org> 1199132714 +0000
+committer CVS SVN Sync <cvs_svn_sync> 1199132714 +0000
 data 77
 Sync CVS repo contents for r29886 to match the SVN contents at that revision.
 from 76a3f8ff0835dc4d1730305d39ac8f536e8340a2

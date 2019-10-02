@@ -1755,7 +1755,7 @@ reset refs/heads/cjohnson-mac-hack
 from 30a8b974a8d9c7924db820668ab69cb5a492271e
 commit refs/heads/cjohnson-mac-hack
 mark :1111329886
-committer CVS SVN Sync <cvs_svn_sync@brlcad.org> 625826938 +0000
+committer CVS SVN Sync <cvs_svn_sync> 625826938 +0000
 data 24
 Chris Johnson's Mac Hack
 from 30a8b974a8d9c7924db820668ab69cb5a492271e

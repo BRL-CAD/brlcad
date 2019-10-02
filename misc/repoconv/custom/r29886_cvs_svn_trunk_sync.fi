@@ -40380,7 +40380,7 @@ SOURCE=.\tcl.c
 # End Project
 commit refs/heads/master
 mark :1111129886
-committer CVS SVN Sync <cvs_svn_sync@brlcad.org> 1199132714 +0000
+committer CVS SVN Sync <cvs_svn_sync> 1199132714 +0000
 data 77
 Sync CVS repo contents for r29886 to match the SVN contents at that revision.
 from 5c05c018bc844875038bfa929e1769d68b69c005
