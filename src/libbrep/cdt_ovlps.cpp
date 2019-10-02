@@ -569,9 +569,14 @@ adjust_mvert_pair(struct mvert_info *v1, struct mvert_info *v2)
     }
 }
 
-// return the set of verts that was adjusted - we shouldn't need to move them again
-std::set<struct mvert_info *>
-adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> &check_pairs)
+// Get the bounding boxes of all vertices of all meshes of all breps in the
+// pairs sets that might have possible interactions
+void
+vert_bboxes(
+	std::vector<struct mvert_info *> *all_mverts,
+	std::map<std::pair<struct ON_Brep_CDT_State *, int>, RTree<void *, double, 3>> *rtrees_mpnts,
+	std::map<std::pair<struct ON_Brep_CDT_State *, int>, std::map<long, struct mvert_info *>> *mpnt_maps,
+	std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> &check_pairs)
 {
     // Get the bounding boxes of all vertices of all meshes of all breps in
     // s_a that might have possible interactions, and find close point sets
@@ -583,10 +588,7 @@ adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t
 	fmeshes.insert(fmesh1);
 	fmeshes.insert(fmesh2);
     }
-    std::vector<struct mvert_info *> all_mverts;
     std::set<cdt_mesh::cdt_mesh_t *>::iterator f_it;
-    std::map<std::pair<struct ON_Brep_CDT_State *, int>, RTree<void *, double, 3>> rtrees_mpnts;
-    std::map<std::pair<struct ON_Brep_CDT_State *, int>, std::map<long, struct mvert_info *>> mpnt_maps;
     for (f_it = fmeshes.begin(); f_it != fmeshes.end(); f_it++) {
 	cdt_mesh::cdt_mesh_t *fmesh = *f_it;
 	struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh->p_cdt;
@@ -615,7 +617,7 @@ adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t
 	    mvert->s_cdt = s_cdt;
 	    mvert->f_id = fmesh->f_id;
 	    mvert->p_id = *a_it;
-	    mvert->map = &(mpnt_maps[std::make_pair(s_cdt,fmesh->f_id)]);
+	    mvert->map = &((*mpnt_maps)[std::make_pair(s_cdt,fmesh->f_id)]);
 	    mvert_update_edge_minlen(mvert);
 	    // 1.  create a bbox around pnt using length ~20% of the shortest edge length.
 	    ON_3dPoint vpnt = *fmesh->pnts[(*a_it)];
@@ -654,16 +656,31 @@ adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t
 	    fMax[0] = mverts[i]->bb.Max().x;
 	    fMax[1] = mverts[i]->bb.Max().y;
 	    fMax[2] = mverts[i]->bb.Max().z;
-	    rtrees_mpnts[std::make_pair(s_cdt,fmesh->f_id)].Insert(fMin, fMax, (void *)mverts[i]);
+	    (*rtrees_mpnts)[std::make_pair(s_cdt,fmesh->f_id)].Insert(fMin, fMax, (void *)mverts[i]);
 	    (*mverts[i]->map)[mverts[i]->p_id] = mverts[i];
 	}
-	all_mverts.insert(all_mverts.end(), mverts.begin(), mverts.end());
+	all_mverts->insert(all_mverts->end(), mverts.begin(), mverts.end());
     }
+}
+ 
 
+
+// return the set of verts that was adjusted - we shouldn't need to move them again
+std::set<struct mvert_info *>
+adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> &check_pairs)
+{
+    // Get the bounding boxes of all vertices of all meshes of all breps
+    // that might have possible interactions, and find close point sets
+    std::vector<struct mvert_info *> all_mverts;
+    std::map<std::pair<struct ON_Brep_CDT_State *, int>, RTree<void *, double, 3>> rtrees_mpnts;
+    std::map<std::pair<struct ON_Brep_CDT_State *, int>, std::map<long, struct mvert_info *>> mpnt_maps;
+    vert_bboxes(&all_mverts, &rtrees_mpnts, &mpnt_maps, check_pairs); 
+   
     // Iterate over mverts, checking for nearby pnts in a fashion similar to the
     // NearFacesCallback search above.  For each mvert, note potentially interfering
     // mverts - this will tell us what we need to adjust.
     std::map<struct mvert_info *, std::set<struct mvert_info *>> vert_ovlps;
+    std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>>::iterator cp_it;
     for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
 	cdt_mesh::cdt_mesh_t *fmesh1 = cp_it->first;
 	cdt_mesh::cdt_mesh_t *fmesh2 = cp_it->second;
