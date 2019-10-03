@@ -1088,14 +1088,32 @@ split_brep_face_edges_near_edges(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_
 
 		    ON_3dPoint *p1_3d_1 = pe1->eseg->e_start;
 		    ON_3dPoint *p1_3d_2 = pe1->eseg->e_end;
-		    ON_Line line1(*p1_3d_1, *p1_3d_2);
 		    ON_3dPoint *p2_3d_1 = pe2->eseg->e_start;
 		    ON_3dPoint *p2_3d_2 = pe2->eseg->e_end;
+
+		    double d1_1, d1_2, d2_2;
+		    d1_1 = p1_3d_1->DistanceTo(*p2_3d_1);
+		    d1_2 = p1_3d_1->DistanceTo(*p2_3d_2);
+		    d2_2 = p2_3d_1->DistanceTo(*p1_3d_2);
+		    std::cout << "d1_1: " << d1_1 << " d1_2: " << d1_2 << " d2_2: " << d2_2 << "\n";
+		    bool p1_close = (NEAR_ZERO(d1_1, ON_ZERO_TOLERANCE) || NEAR_ZERO(d1_2, ON_ZERO_TOLERANCE));
+		    bool p2_close = (NEAR_ZERO(d1_2, ON_ZERO_TOLERANCE) || NEAR_ZERO(d2_2, ON_ZERO_TOLERANCE));
+
+		    if (p1_close && p2_close) {
+			std::cout << "parallel\n";
+			continue;
+		    }
+
+		    ON_Line line1(*p1_3d_1, *p1_3d_2);
 		    ON_Line line2(*p2_3d_1, *p2_3d_2);
 		    double a, b;
 		    ON_Intersect(line1, line2, &a, &b);
-		    ON_Line chord(line1.PointAt(a), line2.PointAt(b));
+		    ON_3dPoint cp1 = line1.PointAt(a);
+		    ON_3dPoint cp2 = line2.PointAt(b);
+		    ON_Line chord(cp1, cp2);
 		    std::cout << "Linear seg pair closest dist: " << chord.Length() << "\n";
+		    ON_3dPoint cmid = chord.PointAt(0.5);
+		    std::cout << "Linear seg pair chord mid: " << cmid.x << "," << cmid.y << "," << cmid.z << "\n";
 		}
 	    }
 	}
