@@ -1068,11 +1068,6 @@ split_brep_face_edges_near_edges(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_
 {
     int replaced_tris = 0;
 
-    std::vector<struct mvert_info *> all_mverts;
-    std::map<std::pair<struct ON_Brep_CDT_State *, int>, RTree<void *, double, 3>> rtrees_mpnts;
-    std::map<std::pair<struct ON_Brep_CDT_State *, int>, std::map<long, struct mvert_info *>> mpnt_maps;
-    vert_bboxes(&all_mverts, &rtrees_mpnts, &mpnt_maps, check_pairs);
-
     // Iterate over edges, checking for nearby edges.
     std::map<cdt_mesh::bedge_seg_t *, cdt_mesh::bedge_seg_t *> edge_edge;
     std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>>::iterator cp_it;
@@ -1096,45 +1091,41 @@ split_brep_face_edges_near_edges(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_
 		    ON_3dPoint *p2_3d_1 = pe2->eseg->e_start;
 		    ON_3dPoint *p2_3d_2 = pe2->eseg->e_end;
 
-		    double d1_1, d1_2, d2_2;
-		    d1_1 = p1_3d_1->DistanceTo(*p2_3d_1);
-		    d1_2 = p1_3d_1->DistanceTo(*p2_3d_2);
-		    d2_2 = p2_3d_1->DistanceTo(*p1_3d_2);
-		    std::cout << "d1_1: " << d1_1 << " d1_2: " << d1_2 << " d2_2: " << d2_2 << "\n";
-		    bool p1_close = (NEAR_ZERO(d1_1, ON_ZERO_TOLERANCE) || NEAR_ZERO(d1_2, ON_ZERO_TOLERANCE));
-		    bool p2_close = (NEAR_ZERO(d1_2, ON_ZERO_TOLERANCE) || NEAR_ZERO(d2_2, ON_ZERO_TOLERANCE));
+		    ON_3dVector v1 = *p1_3d_2 - *p1_3d_1;
+		    ON_3dVector v2 = *p2_3d_2 - *p2_3d_1;
 
-		    if (p1_close && p2_close) {
-			std::cout << "parallel\n";
-			continue;
-		    }
+		    if (v1.IsParallelTo(v2)) {
+			// If they're parallel, take the average of all four points
+			// and see if the closest point on each line is within the segment
+		    } else {
+			ON_Line line1(*p1_3d_1, *p1_3d_2);
+			ON_Line line2(*p2_3d_1, *p2_3d_2);
+			double a, b;
+			if (ON_IntersectLineLine(line1, line2, &a, &b, 0, true)) {
+			    ON_3dPoint cp1 = line1.PointAt(a);
+			    ON_3dPoint cp2 = line2.PointAt(b);
+			    ON_Line chord(cp1, cp2);
+			    ON_3dPoint cmid = chord.PointAt(0.5);
 
-		    ON_Line line1(*p1_3d_1, *p1_3d_2);
-		    ON_Line line2(*p2_3d_1, *p2_3d_2);
-		    double a, b;
-		    if (ON_IntersectLineLine(line1, line2, &a, &b, 0, true)) {
-			ON_3dPoint cp1 = line1.PointAt(a);
-			ON_3dPoint cp2 = line2.PointAt(b);
-			ON_Line chord(cp1, cp2);
-			ON_3dPoint cmid = chord.PointAt(0.5);
+			    ON_3dPoint l1p = line1.ClosestPointTo(cmid);
+			    ON_3dPoint l2p = line2.ClosestPointTo(cmid);
 
-			double fMin[3]; double fMax[3];
-			fMin[0] = cmid.x-ON_ZERO_TOLERANCE;
-			fMin[1] = cmid.y-ON_ZERO_TOLERANCE;
-			fMin[2] = cmid.z-ON_ZERO_TOLERANCE;
-			fMax[0] = cmid.x+ON_ZERO_TOLERANCE;
-			fMax[1] = cmid.y+ON_ZERO_TOLERANCE;
-			fMax[2] = cmid.z+ON_ZERO_TOLERANCE;
-			int f_id1 = s_cdt1->brep->m_T[pe1->trim_ind].Face()->m_face_index;
-			size_t nhits1 = rtrees_mpnts[std::make_pair(s_cdt1, f_id1)].Search(fMin, fMax, NULL, NULL);
-			int f_id2 = s_cdt2->brep->m_T[pe2->trim_ind].Face()->m_face_index;
-			size_t nhits2 = rtrees_mpnts[std::make_pair(s_cdt2, f_id2)].Search(fMin, fMax, NULL, NULL);
-			if (!nhits1 && !nhits2) {
-			    std::cout << "Linear seg pair closest dist: " << chord.Length() << "\n";
+			    bool c1 = (p1_3d_1->DistanceTo(l1p) < line1.Length()*0.1) || (p1_3d_2->DistanceTo(l1p) < line1.Length()*0.1);
+			    bool c2 = (p2_3d_1->DistanceTo(l2p) < line2.Length()*0.1) || (p2_3d_2->DistanceTo(l2p) < line2.Length()*0.1);
+
 			    std::cout << "Linear seg pair chord mid: " << cmid.x << "," << cmid.y << "," << cmid.z << "\n";
-			} else {
-			    std::cout << "chord near vertex\n";
-}
+			    std::cout << "Linear seg pair closest dist: " << chord.Length() << "\n";
+			    std::cout << "l1 : " << p1_3d_1->x << "," << p1_3d_1->y << "," << p1_3d_1->z << " -> " << p1_3d_2->x << "," << p1_3d_2->y << "," << p1_3d_2->z << "\n";
+			    std::cout << "l1 length: " << line1.Length() << "\n";
+			    std::cout << "l2 : " << p2_3d_1->x << "," << p2_3d_1->y << "," << p2_3d_1->z << " -> " << p2_3d_2->x << "," << p2_3d_2->y << "," << p2_3d_2->z << "\n";
+			    std::cout << "l2 length: " << line2.Length() << "\n";
+
+			    if (c1 || c2) {
+				std::cout << "SKIP: chord mid is too close to vert point\n";
+			    }
+			    std::cout << "\n";
+
+			}
 		    }
 		}
 	    }
