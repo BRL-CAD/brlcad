@@ -854,6 +854,8 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int
     if (update_rtrees) {
 	rtree_bbox_2d_remove(s_cdt, bseg->tseg1);
 	rtree_bbox_2d_remove(s_cdt, bseg->tseg2);
+	rtree_bbox_3d_remove(s_cdt, bseg->tseg1);
+	rtree_bbox_3d_remove(s_cdt, bseg->tseg2);
     }
 
     // Using the 2d mid points, update the polygons associated with tseg1 and tseg2.
@@ -929,6 +931,10 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int
 	rtree_bbox_2d(s_cdt, bseg1->tseg2, 0);
 	rtree_bbox_2d(s_cdt, bseg2->tseg1, 0);
 	rtree_bbox_2d(s_cdt, bseg2->tseg2, 0);
+	rtree_bbox_3d(s_cdt, bseg1->tseg1);
+	rtree_bbox_3d(s_cdt, bseg1->tseg2);
+	rtree_bbox_3d(s_cdt, bseg2->tseg1);
+	rtree_bbox_3d(s_cdt, bseg2->tseg2);
 #if 0
 	struct bu_vls fname = BU_VLS_INIT_ZERO;
 	int face_index = s_cdt->brep->m_T[bseg1->tseg1->trim_ind].Face()->m_face_index;
@@ -1053,6 +1059,7 @@ split_singular_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *ce, i
 
     if (update_rtrees) {
 	rtree_bbox_2d_remove(s_cdt, ce);
+	rtree_bbox_3d_remove(s_cdt, ce);
     }
 
     s_cdt->unsplit_singular_edges.erase(ce);

@@ -904,6 +904,8 @@ ovlp_split_edge(cdt_mesh::bedge_seg_t *eseg, double t)
     cdt_mesh::cpolygon_t *poly2 = pe2->polygon;
     cdt_mesh::uedge_t ue1(poly1->p2o[eseg->tseg1->v[0]], poly1->p2o[eseg->tseg1->v[1]]);
     cdt_mesh::uedge_t ue2(poly2->p2o[eseg->tseg2->v[0]], poly2->p2o[eseg->tseg2->v[1]]);
+    fmesh_f1.brep_edges.erase(ue1); 
+    fmesh_f2.brep_edges.erase(ue2); 
     ON_3dPoint ue1_p1 = *fmesh_f1.pnts[ue1.v[0]];
     ON_3dPoint ue1_p2 = *fmesh_f1.pnts[ue1.v[1]];
     std::cout << f_id1 << " ue1: " << ue1.v[0] << "," << ue1.v[1] << ": " << ue1_p1.x << "," << ue1_p1.y << "," << ue1_p1.z << " -> " << ue1_p2.x << "," << ue1_p2.y << "," << ue1_p2.z << "\n";
@@ -916,8 +918,6 @@ ovlp_split_edge(cdt_mesh::bedge_seg_t *eseg, double t)
     int eind = eseg->edge_ind;
     std::set<cdt_mesh::bedge_seg_t *> epsegs = s_cdt_edge->e2polysegs[eind];
     epsegs.erase(eseg);
-    rtree_bbox_3d_remove(s_cdt_edge, pe1);
-    rtree_bbox_3d_remove(s_cdt_edge, pe2);
     std::set<cdt_mesh::bedge_seg_t *> esegs_split = split_edge_seg(s_cdt_edge, eseg, 1, &t, 1);
     if (!esegs_split.size()) return -1;
 
@@ -927,8 +927,18 @@ ovlp_split_edge(cdt_mesh::bedge_seg_t *eseg, double t)
     std::set<cdt_mesh::bedge_seg_t *>::iterator es_it;
     for (es_it = esegs_split.begin(); es_it != esegs_split.end(); es_it++) {
 	cdt_mesh::bedge_seg_t *es = *es_it;
-	rtree_bbox_3d(s_cdt_edge, es->tseg1); 
-	rtree_bbox_3d(s_cdt_edge, es->tseg2); 
+	int fid1 = s_cdt_edge->brep->m_T[es->tseg1->trim_ind].Face()->m_face_index;
+	int fid2 = s_cdt_edge->brep->m_T[es->tseg2->trim_ind].Face()->m_face_index;
+	cdt_mesh::cdt_mesh_t &f1 = s_cdt_edge->fmeshes[fid1];
+	cdt_mesh::cdt_mesh_t &f2 = s_cdt_edge->fmeshes[fid2];
+	cdt_mesh::cpolyedge_t *pe_1 = es->tseg1;
+	cdt_mesh::cpolyedge_t *pe_2 = es->tseg2;
+	cdt_mesh::cpolygon_t *poly_1 = pe_1->polygon;
+	cdt_mesh::cpolygon_t *poly_2 = pe_2->polygon;
+	cdt_mesh::uedge_t ue_1(poly_1->p2o[es->tseg1->v[0]], poly_1->p2o[es->tseg1->v[1]]);
+	cdt_mesh::uedge_t ue_2(poly_2->p2o[es->tseg2->v[0]], poly_2->p2o[es->tseg2->v[1]]);
+	f1.brep_edges.insert(ue_1); 
+	f2.brep_edges.insert(ue_2); 
     }
     if (f_id1 == f_id2) {
 	std::set<size_t> ftris;
@@ -941,6 +951,7 @@ ovlp_split_edge(cdt_mesh::bedge_seg_t *eseg, double t)
 	    std::cout << "edge is only on 1 face, but don't have 2 tri??: " << ftris.size() << "\n";
 	} else {
 	    long np_id = fmesh_f1.pnts.size() - 1;
+	    fmesh_f1.ep.insert(np_id);
 	    for (tr_it = ftris.begin(); tr_it != ftris.end(); tr_it++) {
 		replace_edge_split_tri(fmesh_f1, *tr_it, np_id, ue);
 		replaced_tris++;
@@ -952,6 +963,7 @@ ovlp_split_edge(cdt_mesh::bedge_seg_t *eseg, double t)
 	    std::cout << "don't have 1 tri??: " << f1_tris.size() << "\n";
 	} else {
 	    long np_id = fmesh_f1.pnts.size() - 1;
+	    fmesh_f1.ep.insert(np_id);
 	    replace_edge_split_tri(fmesh_f1, *f1_tris.begin(), np_id, ue1);
 	    replaced_tris++;
 	    //std::cout << "face valid: " << fmesh_f1.valid(1) << "\n";
@@ -961,6 +973,7 @@ ovlp_split_edge(cdt_mesh::bedge_seg_t *eseg, double t)
 	    std::cout << "don't have 1 tri??: " << f2_tris.size() << "\n";
 	} else {
 	    long np_id = fmesh_f2.pnts.size() - 1;
+	    fmesh_f2.ep.insert(np_id);
 	    replace_edge_split_tri(fmesh_f2, *f2_tris.begin(), np_id, ue2);
 	    replaced_tris++;
 	    //std::cout << "face valid: " << fmesh_f2.valid(1) << "\n";
