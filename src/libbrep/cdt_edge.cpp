@@ -366,6 +366,62 @@ rtree_bbox_3d(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
     s_cdt->face_rtrees_3d[trim.Face()->m_face_index].Insert(p1, p2, (void *)pe);
 }
 
+void
+rtree_bbox_3d_remove(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
+{
+    if (!pe->eseg) return;
+    ON_BrepTrim& trim = s_cdt->brep->m_T[pe->trim_ind];
+    double tcparam = (pe->trim_start + pe->trim_end) / 2.0;
+    ON_3dPoint trim_2d = trim.PointAt(tcparam);
+    const ON_Surface *s = trim.SurfaceOf();
+    ON_3dPoint trim_3d = s->PointAt(trim_2d.x, trim_2d.y);
+
+    ON_3dPoint *p3d1 = pe->eseg->e_start;
+    ON_3dPoint *p3d2 = pe->eseg->e_end;
+    ON_Line line(*p3d1, *p3d2);
+
+    double arc_dist = 2*trim_3d.DistanceTo(line.ClosestPointTo(trim_3d));
+
+    ON_BoundingBox bb = line.BoundingBox();
+    bb.m_max.x = bb.m_max.x + ON_ZERO_TOLERANCE;
+    bb.m_max.y = bb.m_max.y + ON_ZERO_TOLERANCE;
+    bb.m_max.z = bb.m_max.z + ON_ZERO_TOLERANCE;
+    bb.m_min.x = bb.m_min.x - ON_ZERO_TOLERANCE;
+    bb.m_min.y = bb.m_min.y - ON_ZERO_TOLERANCE;
+    bb.m_min.z = bb.m_min.z - ON_ZERO_TOLERANCE;
+
+    double dist = p3d1->DistanceTo(*p3d2);
+    double bdist = (0.5*dist > arc_dist) ? 0.5*dist : arc_dist;
+    double xdist = bb.m_max.x - bb.m_min.x;
+    double ydist = bb.m_max.y - bb.m_min.y;
+    double zdist = bb.m_max.z - bb.m_min.z;
+    // If we're close to the edge, we want to know - the Search callback will
+    // check the precise distance and make a decision on what to do.
+    if (xdist < bdist) {
+	bb.m_min.x = bb.m_min.x - 0.5*bdist;
+	bb.m_max.x = bb.m_max.x + 0.5*bdist;
+    }
+    if (ydist < bdist) {
+	bb.m_min.y = bb.m_min.y - 0.5*bdist;
+	bb.m_max.y = bb.m_max.y + 0.5*bdist;
+    }
+    if (zdist < bdist) {
+	bb.m_min.z = bb.m_min.z - 0.5*bdist;
+	bb.m_max.z = bb.m_max.z + 0.5*bdist;
+    }
+
+    double p1[3];
+    p1[0] = bb.Min().x;
+    p1[1] = bb.Min().y;
+    p1[2] = bb.Min().z;
+    double p2[3];
+    p2[0] = bb.Max().x;
+    p2[1] = bb.Max().y;
+    p2[2] = bb.Max().z;
+
+    s_cdt->face_rtrees_3d[trim.Face()->m_face_index].Remove(p1, p2, (void *)pe);
+}
+
 struct rtree_minsplit_context {
     struct ON_Brep_CDT_State *s_cdt;
     cdt_mesh::cpolyedge_t *cseg;

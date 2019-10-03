@@ -224,6 +224,8 @@ trimesh_error_report(struct ON_Brep_CDT_State *s_cdt, int valid_fcnt, int valid_
 int
 ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt);
 
+void rtree_bbox_3d_remove(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe);
+void rtree_bbox_3d(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe);
 
 /** @} */
 

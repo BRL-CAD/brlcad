@@ -563,6 +563,9 @@ closest_mvert(std::set<struct mvert_info *> &verts, struct mvert_info *v)
 // aggressively.  If they're both edge points we can try this,
 // but there's a decent chance we'll need a different refinement
 // in that case.
+//
+// TODO - for edge points, should really be searching edge closest
+// point rather than surface closest point...
 void
 adjust_mvert_pair(struct mvert_info *v1, struct mvert_info *v2)
 {
@@ -875,7 +878,7 @@ replace_edge_split_tri(cdt_mesh::cdt_mesh_t &fmesh, size_t t_id, long np_id, cdt
 }
 
 int
-split_brep_face_edges(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> &check_pairs)
+split_brep_face_edges_near_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> &check_pairs)
 {
     int replaced_tris = 0;
 
@@ -980,8 +983,10 @@ split_brep_face_edges(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_m
 	    cdt_mesh::cdt_mesh_t &fmesh_f2 = s_cdt_edge->fmeshes[f_id2];
 	    // Translate the tseg verts to their parent indices in order to get
 	    // valid triangle lookups
-	    cdt_mesh::cpolygon_t *poly1 = eseg->tseg1->polygon;
-	    cdt_mesh::cpolygon_t *poly2 = eseg->tseg2->polygon;
+	    cdt_mesh::cpolyedge_t *pe1 = eseg->tseg1;
+	    cdt_mesh::cpolyedge_t *pe2 = eseg->tseg2;
+	    cdt_mesh::cpolygon_t *poly1 = pe1->polygon;
+	    cdt_mesh::cpolygon_t *poly2 = pe2->polygon;
 	    cdt_mesh::uedge_t ue1(poly1->p2o[eseg->tseg1->v[0]], poly1->p2o[eseg->tseg1->v[1]]);
 	    cdt_mesh::uedge_t ue2(poly2->p2o[eseg->tseg2->v[0]], poly2->p2o[eseg->tseg2->v[1]]);
 	    ON_3dPoint ue1_p1 = *fmesh_f1.pnts[ue1.v[0]];
@@ -992,48 +997,107 @@ split_brep_face_edges(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_m
 	    std::cout << f_id2 << " ue2: " << ue2.v[0] << "," << ue2.v[1] << ": " << ue2_p1.x << "," << ue2_p1.y << "," << ue2_p1.z << " -> " << ue2_p2.x << "," << ue2_p2.y << "," << ue2_p2.z << "\n";
 	    std::set<size_t> f1_tris = fmesh_f1.uedges2tris[ue1];
 	    std::set<size_t> f2_tris = fmesh_f2.uedges2tris[ue2];
-	    if (f_id1 == f_id2) {
-		std::set<size_t> ftris;
-		std::set<size_t>::iterator tr_it;
-		cdt_mesh::uedge_t ue;
-		ue = (f1_tris.size()) ? ue1 : ue2;
-		ftris.insert(f1_tris.begin(), f1_tris.end());
-		ftris.insert(f2_tris.begin(), f2_tris.end());
-		std::set<cdt_mesh::bedge_seg_t *> esegs_split = split_edge_seg(s_cdt_edge, eseg, 1, &t, 1);
-		if (ftris.size() != 2) {
-		    std::cout << "edge is only on 1 face, but don't have 2 tri??: " << ftris.size() << "\n";
+
+	    int eind = eseg->edge_ind;
+	    std::set<cdt_mesh::bedge_seg_t *> epsegs = s_cdt_edge->e2polysegs[eind];
+	    epsegs.erase(eseg);
+	    std::set<cdt_mesh::bedge_seg_t *> esegs_split = split_edge_seg(s_cdt_edge, eseg, 1, &t, 1);
+	    if (esegs_split.size()) {
+		epsegs.insert(esegs_split.begin(), esegs_split.end());
+		s_cdt_edge->e2polysegs[eind].clear();
+		s_cdt_edge->e2polysegs[eind] = epsegs;
+		rtree_bbox_3d_remove(s_cdt_edge, pe1);
+		rtree_bbox_3d_remove(s_cdt_edge, pe2);
+		std::set<cdt_mesh::bedge_seg_t *>::iterator es_it;
+		for (es_it = esegs_split.begin(); es_it != esegs_split.end(); es_it++) {
+		    cdt_mesh::bedge_seg_t *es = *es_it;
+		    rtree_bbox_3d(s_cdt_edge, es->tseg1); 
+		    rtree_bbox_3d(s_cdt_edge, es->tseg2); 
+		}
+		if (f_id1 == f_id2) {
+		    std::set<size_t> ftris;
+		    std::set<size_t>::iterator tr_it;
+		    cdt_mesh::uedge_t ue;
+		    ue = (f1_tris.size()) ? ue1 : ue2;
+		    ftris.insert(f1_tris.begin(), f1_tris.end());
+		    ftris.insert(f2_tris.begin(), f2_tris.end());
+		    if (ftris.size() != 2) {
+			std::cout << "edge is only on 1 face, but don't have 2 tri??: " << ftris.size() << "\n";
+		    } else {
+			long np_id = fmesh_f1.pnts.size() - 1;
+			for (tr_it = ftris.begin(); tr_it != ftris.end(); tr_it++) {
+			    replace_edge_split_tri(fmesh_f1, *tr_it, np_id, ue);
+			    replaced_tris++;
+			}
+		    }
 		} else {
-		    long np_id = fmesh_f1.pnts.size() - 1;
-		    for (tr_it = ftris.begin(); tr_it != ftris.end(); tr_it++) {
-			replace_edge_split_tri(fmesh_f1, *tr_it, np_id, ue);
+		    if (f1_tris.size() != 1) {
+			std::cout << "don't have 1 tri??: " << f1_tris.size() << "\n";
+		    } else {
+			long np_id = fmesh_f1.pnts.size() - 1;
+			replace_edge_split_tri(fmesh_f1, *f1_tris.begin(), np_id, ue1);
 			replaced_tris++;
 		    }
+
+		    if (f2_tris.size() != 1) {
+			std::cout << "don't have 1 tri??: " << f2_tris.size() << "\n";
+		    } else {
+			long np_id = fmesh_f2.pnts.size() - 1;
+			replace_edge_split_tri(fmesh_f2, *f2_tris.begin(), np_id, ue2);
+			replaced_tris++;
+		    }
+
 		}
+		struct bu_vls fename = BU_VLS_INIT_ZERO;
+		bu_vls_sprintf(&fename, "%s-%d_post_edge_tris.plot3", s_cdt_edge->name, fmesh_f1.f_id);
+		fmesh_f1.tris_plot(bu_vls_cstr(&fename));
+		bu_vls_sprintf(&fename, "%s-%d_post_edge_tris.plot3", s_cdt_edge->name, fmesh_f2.f_id);
+		fmesh_f2.tris_plot(bu_vls_cstr(&fename));
+		bu_vls_free(&fename);
 	    } else {
-		std::set<cdt_mesh::bedge_seg_t *> esegs_split = split_edge_seg(s_cdt_edge, eseg, 1, &t, 1);
-		if (f1_tris.size() != 1) {
-		    std::cout << "don't have 1 tri??: " << f1_tris.size() << "\n";
-		} else {
-		    long np_id = fmesh_f1.pnts.size() - 1;
-		    replace_edge_split_tri(fmesh_f1, *f1_tris.begin(), np_id, ue1);
-		    replaced_tris++;
-		}
-
-		if (f2_tris.size() != 1) {
-		    std::cout << "don't have 1 tri??: " << f2_tris.size() << "\n";
-		} else {
-		    long np_id = fmesh_f2.pnts.size() - 1;
-		    replace_edge_split_tri(fmesh_f2, *f2_tris.begin(), np_id, ue2);
-		    replaced_tris++;
-		}
-
+		std::cout << "split failed\n";
 	    }
-	    struct bu_vls fename = BU_VLS_INIT_ZERO;
-	    bu_vls_sprintf(&fename, "%s-%d_post_edge_tris.plot3", s_cdt_edge->name, fmesh_f1.f_id);
-	    fmesh_f1.tris_plot(bu_vls_cstr(&fename));
-	    bu_vls_sprintf(&fename, "%s-%d_post_edge_tris.plot3", s_cdt_edge->name, fmesh_f2.f_id);
-	    fmesh_f2.tris_plot(bu_vls_cstr(&fename));
-	    bu_vls_free(&fename);
+	}
+    }
+
+    return replaced_tris;
+}
+
+int
+split_brep_face_edges_near_edges(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> &check_pairs)
+{
+    int replaced_tris = 0;
+
+    // Iterate over edges, checking for nearby edges.
+    std::map<cdt_mesh::bedge_seg_t *, cdt_mesh::bedge_seg_t *> edge_edge;
+    std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>>::iterator cp_it;
+    for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
+	cdt_mesh::cdt_mesh_t *fmesh1 = cp_it->first;
+	cdt_mesh::cdt_mesh_t *fmesh2 = cp_it->second;
+	struct ON_Brep_CDT_State *s_cdt1 = (struct ON_Brep_CDT_State *)fmesh1->p_cdt;
+	struct ON_Brep_CDT_State *s_cdt2 = (struct ON_Brep_CDT_State *)fmesh2->p_cdt;
+	if (s_cdt1 != s_cdt2) {
+	    std::set<std::pair<void *, void *>> edge_edge_pairs;
+	    size_t ovlp_cnt = s_cdt1->face_rtrees_3d[fmesh1->f_id].Overlaps(s_cdt2->face_rtrees_3d[fmesh2->f_id], &edge_edge_pairs);
+	    if (ovlp_cnt && edge_edge_pairs.size()) {
+		std::set<std::pair<void *, void *>>::iterator e_it;
+		for (e_it = edge_edge_pairs.begin(); e_it != edge_edge_pairs.end(); e_it++) {
+		    cdt_mesh::cpolyedge_t *pe1 = (cdt_mesh::cpolyedge_t *)e_it->first;
+		    cdt_mesh::cpolyedge_t *pe2 = (cdt_mesh::cpolyedge_t *)e_it->second;
+		    if (pe1->eseg == pe2->eseg) continue;
+
+		    ON_3dPoint *p1_3d_1 = pe1->eseg->e_start;
+		    ON_3dPoint *p1_3d_2 = pe1->eseg->e_end;
+		    ON_Line line1(*p1_3d_1, *p1_3d_2);
+		    ON_3dPoint *p2_3d_1 = pe2->eseg->e_start;
+		    ON_3dPoint *p2_3d_2 = pe2->eseg->e_end;
+		    ON_Line line2(*p2_3d_1, *p2_3d_2);
+		    double a, b;
+		    ON_Intersect(line1, line2, &a, &b);
+		    ON_Line chord(line1.PointAt(a), line2.PointAt(b));
+		    std::cout << "Linear seg pair closest dist: " << chord.Length() << "\n";
+		}
+	    }
 	}
     }
 
@@ -1249,10 +1313,16 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	std::cout << "Adjusted " << adjusted_verts.size() << " vertices\n";
     }
 
-    int sbftri_cnt = split_brep_face_edges(check_pairs);
-    if (sbftri_cnt) {
-	std::cout << "Replaced " << sbftri_cnt << " triangles by splitting edges near vertices\n";
+    int sbfvtri_cnt = split_brep_face_edges_near_verts(check_pairs);
+    if (sbfvtri_cnt) {
+	std::cout << "Replaced " << sbfvtri_cnt << " triangles by splitting edges near vertices\n";
     }
+
+    int sbfetri_cnt = split_brep_face_edges_near_edges(check_pairs);
+    if (sbfetri_cnt) {
+	std::cout << "Replaced " << sbfetri_cnt << " triangles by splitting edges near edges\n";
+    }
+
 
     std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>>::iterator cp_it;
     for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
