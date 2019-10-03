@@ -874,9 +874,11 @@ replace_edge_split_tri(cdt_mesh::cdt_mesh_t &fmesh, size_t t_id, long np_id, cdt
     fmesh.tri_add(ntri2);
 }
 
-void
+int
 split_brep_face_edges(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> &check_pairs)
 {
+    int replaced_tris = 0;
+
     // Get the bounding boxes of all vertices of all meshes of all breps
     // that might have possible interactions, and find close point sets
     std::vector<struct mvert_info *> all_mverts;
@@ -1004,6 +1006,7 @@ split_brep_face_edges(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_m
 		    long np_id = fmesh_f1.pnts.size() - 1;
 		    for (tr_it = ftris.begin(); tr_it != ftris.end(); tr_it++) {
 			replace_edge_split_tri(fmesh_f1, *tr_it, np_id, ue);
+			replaced_tris++;
 		    }
 		}
 	    } else {
@@ -1013,6 +1016,7 @@ split_brep_face_edges(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_m
 		} else {
 		    long np_id = fmesh_f1.pnts.size() - 1;
 		    replace_edge_split_tri(fmesh_f1, *f1_tris.begin(), np_id, ue1);
+		    replaced_tris++;
 		}
 
 		if (f2_tris.size() != 1) {
@@ -1020,6 +1024,7 @@ split_brep_face_edges(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_m
 		} else {
 		    long np_id = fmesh_f2.pnts.size() - 1;
 		    replace_edge_split_tri(fmesh_f2, *f2_tris.begin(), np_id, ue2);
+		    replaced_tris++;
 		}
 
 	    }
@@ -1031,6 +1036,8 @@ split_brep_face_edges(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_m
 	    bu_vls_free(&fename);
 	}
     }
+
+    return replaced_tris;
 }
 
 /**************************************************************************
@@ -1242,7 +1249,10 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	std::cout << "Adjusted " << adjusted_verts.size() << " vertices\n";
     }
 
-    split_brep_face_edges(check_pairs);
+    int sbftri_cnt = split_brep_face_edges(check_pairs);
+    if (sbftri_cnt) {
+	std::cout << "Replaced " << sbftri_cnt << " triangles by splitting edges near vertices\n";
+    }
 
     std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>>::iterator cp_it;
     for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
