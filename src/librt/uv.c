@@ -35,6 +35,32 @@
 #include "rt/nongeom.h"
 
 
+static void
+texture_init(struct rt_texture *texture)
+{
+    if (!texture)
+	return;
+
+    bu_vls_init(&texture->tx_name);
+
+    /* defaults */
+    texture->tx_w = -1;
+    texture->tx_n = -1;
+    texture->tx_trans_valid = 0;
+    texture->tx_transp[X] = 0;
+    texture->tx_transp[Y] = 0;
+    texture->tx_transp[Z] = 0;
+    texture->tx_scale[X] = 1.0;
+    texture->tx_scale[Y] = 1.0;
+    texture->tx_mirror = 0;
+    texture->tx_datasrc = TXT_SRC_AUTO;
+
+    /* internal state */
+    texture->tx_binunifp = NULL;
+    texture->tx_mp = NULL;
+}
+
+
 int
 rt_texture_load(struct rt_texture *texture, const char *name, struct db_i *dbip)
 {
@@ -45,6 +71,8 @@ rt_texture_load(struct rt_texture *texture, const char *name, struct db_i *dbip)
 
     if (!name || !texture)
 	return 0;
+
+    texture_init(texture);
 
     bu_log("Loading texture %s [%s]...", texture->tx_datasrc==TXT_SRC_AUTO?"from auto-determined datasource":texture->tx_datasrc==TXT_SRC_OBJECT?"from a database object":texture->tx_datasrc==TXT_SRC_FILE?"from a file":"from an unknown source (ERROR)", bu_vls_addr(&texture->tx_name));
 
