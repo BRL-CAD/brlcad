@@ -297,7 +297,15 @@ rtree_bbox_2d_remove(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
     double p2[2];
     p2[0] = bb.Max().x;
     p2[1] = bb.Max().y;
-    s_cdt->face_rtrees_2d[trim.Face()->m_face_index].Remove(p1, p2, (void *)pe);
+    int rtree_cnt = s_cdt->face_rtrees_2d[trim.Face()->m_face_index].Count();
+    if (rtree_cnt) {
+	s_cdt->face_rtrees_2d[trim.Face()->m_face_index].Remove(p1, p2, (void *)pe);
+	int rtree_cnt_after = s_cdt->face_rtrees_2d[trim.Face()->m_face_index].Count();
+	if (rtree_cnt_after != rtree_cnt - 1) {
+	    std::cout << "2D count before: " << s_cdt->face_rtrees_2d[trim.Face()->m_face_index].Count() << "\n";
+	    std::cout << "2D count after: " << s_cdt->face_rtrees_2d[trim.Face()->m_face_index].Count() << "\n";
+	}
+    }
 }
 
 void
@@ -394,19 +402,20 @@ rtree_bbox_3d_remove(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
     double xdist = bb.m_max.x - bb.m_min.x;
     double ydist = bb.m_max.y - bb.m_min.y;
     double zdist = bb.m_max.z - bb.m_min.z;
-    // If we're close to the edge, we want to know - the Search callback will
-    // check the precise distance and make a decision on what to do.
+    // Be slightly more aggressive in the size of this bbox than when adding,
+    // since we want to avoid floating point weirdness when it comes to the
+    // RTree Remove routine looking for this box
     if (xdist < bdist) {
-	bb.m_min.x = bb.m_min.x - 0.5*bdist;
-	bb.m_max.x = bb.m_max.x + 0.5*bdist;
+	bb.m_min.x = bb.m_min.x - 0.51*bdist;
+	bb.m_max.x = bb.m_max.x + 0.51*bdist;
     }
     if (ydist < bdist) {
-	bb.m_min.y = bb.m_min.y - 0.5*bdist;
-	bb.m_max.y = bb.m_max.y + 0.5*bdist;
+	bb.m_min.y = bb.m_min.y - 0.51*bdist;
+	bb.m_max.y = bb.m_max.y + 0.51*bdist;
     }
     if (zdist < bdist) {
-	bb.m_min.z = bb.m_min.z - 0.5*bdist;
-	bb.m_max.z = bb.m_max.z + 0.5*bdist;
+	bb.m_min.z = bb.m_min.z - 0.51*bdist;
+	bb.m_max.z = bb.m_max.z + 0.51*bdist;
     }
 
     double p1[3];
@@ -418,7 +427,17 @@ rtree_bbox_3d_remove(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
     p2[1] = bb.Max().y;
     p2[2] = bb.Max().z;
 
-    s_cdt->face_rtrees_3d[trim.Face()->m_face_index].Remove(p1, p2, (void *)pe);
+    int rtree_cnt = s_cdt->face_rtrees_3d[trim.Face()->m_face_index].Count();
+    if (rtree_cnt) {
+	s_cdt->face_rtrees_3d[trim.Face()->m_face_index].Remove(p1, p2, (void *)pe);
+	int rtree_cnt_after = s_cdt->face_rtrees_3d[trim.Face()->m_face_index].Count();
+	if (rtree_cnt_after != rtree_cnt - 1) {
+	    std::cout << "Rtree count 3D before: " << rtree_cnt << "\n";
+	    std::cout << "Rtree count 3D after: " << s_cdt->face_rtrees_3d[trim.Face()->m_face_index].Count() << "\n";
+	} else {
+	    std::cout << "Rtree 3D removal OK\n";
+	}
+    }
 }
 
 struct rtree_minsplit_context {
