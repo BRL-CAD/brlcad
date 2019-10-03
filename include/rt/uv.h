@@ -62,17 +62,19 @@
  * TODO: replace txt_specific in liboptical
  */
 struct rt_texture {
-    int tx_transp[3];	/* RGB for transparency */
     struct bu_vls tx_name;  /* name of object or file (depending on tx_datasrc flag) */
     int tx_w;		/* Width of texture in pixels */
     int tx_n;		/* Number of scanlines */
     int tx_trans_valid;	/* boolean: is tx_transp valid ? */
+    int tx_transp[3];	/* RGB for transparency */
     fastf_t tx_scale[2];	/* replication factors in U, V */
     int tx_mirror;	/* flag: repetitions are mirrored */
 #define TXT_SRC_FILE 'f'
 #define TXT_SRC_OBJECT 'o'
 #define TXT_SRC_AUTO 0
     char tx_datasrc; /* which type of datasource */
+
+    /* internal state */
     struct rt_binunif_internal *tx_binunifp;  /* db internal object when TXT_SRC_OBJECT */
     struct bu_mapped_file *tx_mp;    /* mapped file when TXT_SRC_FILE */
 };
