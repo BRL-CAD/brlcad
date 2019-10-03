@@ -939,6 +939,7 @@ ovlp_split_edge(cdt_mesh::bedge_seg_t *eseg, double t)
 		replaced_tris++;
 	    }
 	}
+	//std::cout << "face valid: " << fmesh_f1.valid(1) << "\n";
     } else {
 	if (f1_tris.size() != 1) {
 	    std::cout << "don't have 1 tri??: " << f1_tris.size() << "\n";
@@ -946,6 +947,7 @@ ovlp_split_edge(cdt_mesh::bedge_seg_t *eseg, double t)
 	    long np_id = fmesh_f1.pnts.size() - 1;
 	    replace_edge_split_tri(fmesh_f1, *f1_tris.begin(), np_id, ue1);
 	    replaced_tris++;
+	    //std::cout << "face valid: " << fmesh_f1.valid(1) << "\n";
 	}
 
 	if (f2_tris.size() != 1) {
@@ -954,6 +956,7 @@ ovlp_split_edge(cdt_mesh::bedge_seg_t *eseg, double t)
 	    long np_id = fmesh_f2.pnts.size() - 1;
 	    replace_edge_split_tri(fmesh_f2, *f2_tris.begin(), np_id, ue2);
 	    replaced_tris++;
+	    //std::cout << "face valid: " << fmesh_f2.valid(1) << "\n";
 	}
 
     }
@@ -1060,20 +1063,17 @@ split_brep_face_edges_near_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_
 	    int f_id2 = s_cdt_edge->brep->m_T[eseg->tseg2->trim_ind].Face()->m_face_index;
 	    cdt_mesh::cdt_mesh_t &fmesh_f1 = s_cdt_edge->fmeshes[f_id1];
 	    cdt_mesh::cdt_mesh_t &fmesh_f2 = s_cdt_edge->fmeshes[f_id2];
-	    struct bu_vls s_cdtname = BU_VLS_INIT_ZERO;
-	    bu_vls_sprintf(&s_cdtname, "%s", s_cdt_edge->name);
 	    replaced_tris = ovlp_split_edge(eseg, t);
 	    if (replaced_tris >= 0) {
 		struct bu_vls fename = BU_VLS_INIT_ZERO;
-		bu_vls_sprintf(&fename, "%s-%d_post_edge_tris.plot3", bu_vls_cstr(&s_cdtname), fmesh_f1.f_id);
+		bu_vls_sprintf(&fename, "%s-%d_post_edge_tris.plot3", s_cdt_edge->name, fmesh_f1.f_id);
 		fmesh_f1.tris_plot(bu_vls_cstr(&fename));
-		bu_vls_sprintf(&fename, "%s-%d_post_edge_tris.plot3", bu_vls_cstr(&s_cdtname), fmesh_f2.f_id);
+		bu_vls_sprintf(&fename, "%s-%d_post_edge_tris.plot3", s_cdt_edge->name, fmesh_f2.f_id);
 		fmesh_f2.tris_plot(bu_vls_cstr(&fename));
 		bu_vls_free(&fename);
 	    } else {
 		std::cout << "split failed\n";
 	    }
-	    bu_vls_free(&s_cdtname);
 	}
     }
 
@@ -1085,73 +1085,121 @@ split_brep_face_edges_near_edges(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_
 {
     int replaced_tris = 0;
 
-    // Iterate over edges, checking for nearby edges.
-    std::map<cdt_mesh::bedge_seg_t *, cdt_mesh::bedge_seg_t *> edge_edge;
-    std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>>::iterator cp_it;
-    for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
-	cdt_mesh::cdt_mesh_t *fmesh1 = cp_it->first;
-	cdt_mesh::cdt_mesh_t *fmesh2 = cp_it->second;
-	struct ON_Brep_CDT_State *s_cdt1 = (struct ON_Brep_CDT_State *)fmesh1->p_cdt;
-	struct ON_Brep_CDT_State *s_cdt2 = (struct ON_Brep_CDT_State *)fmesh2->p_cdt;
-	if (s_cdt1 != s_cdt2) {
-	    std::set<std::pair<void *, void *>> edge_edge_pairs;
-	    size_t ovlp_cnt = s_cdt1->face_rtrees_3d[fmesh1->f_id].Overlaps(s_cdt2->face_rtrees_3d[fmesh2->f_id], &edge_edge_pairs);
-	    if (ovlp_cnt && edge_edge_pairs.size()) {
-		std::set<std::pair<void *, void *>>::iterator e_it;
-		for (e_it = edge_edge_pairs.begin(); e_it != edge_edge_pairs.end(); e_it++) {
-		    cdt_mesh::cpolyedge_t *pe1 = (cdt_mesh::cpolyedge_t *)e_it->first;
-		    cdt_mesh::cpolyedge_t *pe2 = (cdt_mesh::cpolyedge_t *)e_it->second;
-		    if (pe1->eseg == pe2->eseg) continue;
+    int repeat = 1;
 
-		    ON_3dPoint *p1_3d_1 = pe1->eseg->e_start;
-		    ON_3dPoint *p1_3d_2 = pe1->eseg->e_end;
-		    ON_3dPoint *p2_3d_1 = pe2->eseg->e_start;
-		    ON_3dPoint *p2_3d_2 = pe2->eseg->e_end;
+    while (repeat) {
+	// Iterate over edges, checking for nearby edges.
+	std::map<cdt_mesh::bedge_seg_t *, cdt_mesh::bedge_seg_t *> edge_edge;
+	std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>>::iterator cp_it;
 
-		    ON_3dVector v1 = *p1_3d_2 - *p1_3d_1;
-		    ON_3dVector v2 = *p2_3d_2 - *p2_3d_1;
+	std::set<cdt_mesh::bedge_seg_t *> split_segs;
+	std::map<cdt_mesh::bedge_seg_t *, ON_3dPoint> cmid_pnts;
+	for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
+	    cdt_mesh::cdt_mesh_t *fmesh1 = cp_it->first;
+	    cdt_mesh::cdt_mesh_t *fmesh2 = cp_it->second;
+	    struct ON_Brep_CDT_State *s_cdt1 = (struct ON_Brep_CDT_State *)fmesh1->p_cdt;
+	    struct ON_Brep_CDT_State *s_cdt2 = (struct ON_Brep_CDT_State *)fmesh2->p_cdt;
+	    if (s_cdt1 != s_cdt2) {
+		std::set<std::pair<void *, void *>> edge_edge_pairs;
+		size_t ovlp_cnt = s_cdt1->face_rtrees_3d[fmesh1->f_id].Overlaps(s_cdt2->face_rtrees_3d[fmesh2->f_id], &edge_edge_pairs);
+		if (ovlp_cnt && edge_edge_pairs.size()) {
+		    std::set<std::pair<void *, void *>>::iterator e_it;
+		    for (e_it = edge_edge_pairs.begin(); e_it != edge_edge_pairs.end(); e_it++) {
+			cdt_mesh::cpolyedge_t *pe1 = (cdt_mesh::cpolyedge_t *)e_it->first;
+			cdt_mesh::cpolyedge_t *pe2 = (cdt_mesh::cpolyedge_t *)e_it->second;
+			if (pe1->eseg == pe2->eseg) continue;
 
-		    if (v1.IsParallelTo(v2)) {
-			// If they're parallel, take the average of all four points
-			// and see if the closest point on each line is within the segment
-		    } else {
-			ON_Line line1(*p1_3d_1, *p1_3d_2);
-			ON_Line line2(*p2_3d_1, *p2_3d_2);
-			double a, b;
-			if (ON_IntersectLineLine(line1, line2, &a, &b, 0, true)) {
-			    ON_3dPoint cp1 = line1.PointAt(a);
-			    ON_3dPoint cp2 = line2.PointAt(b);
-			    ON_Line chord(cp1, cp2);
-			    ON_3dPoint cmid = chord.PointAt(0.5);
+			ON_3dPoint *p1_3d_1 = pe1->eseg->e_start;
+			ON_3dPoint *p1_3d_2 = pe1->eseg->e_end;
+			ON_3dPoint *p2_3d_1 = pe2->eseg->e_start;
+			ON_3dPoint *p2_3d_2 = pe2->eseg->e_end;
 
-			    ON_3dPoint l1p = line1.ClosestPointTo(cmid);
-			    ON_3dPoint l2p = line2.ClosestPointTo(cmid);
+			ON_3dVector v1 = *p1_3d_2 - *p1_3d_1;
+			ON_3dVector v2 = *p2_3d_2 - *p2_3d_1;
 
-			    bool c1 = (p1_3d_1->DistanceTo(l1p) < line1.Length()*0.1) || (p1_3d_2->DistanceTo(l1p) < line1.Length()*0.1);
-			    bool c2 = (p2_3d_1->DistanceTo(l2p) < line2.Length()*0.1) || (p2_3d_2->DistanceTo(l2p) < line2.Length()*0.1);
+			if (v1.IsParallelTo(v2)) {
+			    // If they're parallel, take the average of all four points
+			    // and see if the closest point on each line is within the segment
+			} else {
+			    ON_Line line1(*p1_3d_1, *p1_3d_2);
+			    ON_Line line2(*p2_3d_1, *p2_3d_2);
+			    double a, b;
+			    if (ON_IntersectLineLine(line1, line2, &a, &b, 0, true)) {
+				ON_3dPoint cp1 = line1.PointAt(a);
+				ON_3dPoint cp2 = line2.PointAt(b);
+				ON_Line chord(cp1, cp2);
+				ON_3dPoint cmid = chord.PointAt(0.5);
 
-			    std::cout << "Linear seg pair chord mid: " << cmid.x << "," << cmid.y << "," << cmid.z << "\n";
-			    std::cout << "Linear seg pair closest dist: " << chord.Length() << "\n";
-			    std::cout << "l1 : " << p1_3d_1->x << "," << p1_3d_1->y << "," << p1_3d_1->z << " -> " << p1_3d_2->x << "," << p1_3d_2->y << "," << p1_3d_2->z << "\n";
-			    std::cout << "l1 length: " << line1.Length() << "\n";
-			    std::cout << "l2 : " << p2_3d_1->x << "," << p2_3d_1->y << "," << p2_3d_1->z << " -> " << p2_3d_2->x << "," << p2_3d_2->y << "," << p2_3d_2->z << "\n";
-			    std::cout << "l2 length: " << line2.Length() << "\n";
+				ON_3dPoint l1p = line1.ClosestPointTo(cmid);
+				ON_3dPoint l2p = line2.ClosestPointTo(cmid);
 
-			    if (c1 || c2) {
-				std::cout << "SKIP: chord mid is too close to vert point\n\n";
-				continue;
-			    } else {
+				bool c1 = (p1_3d_1->DistanceTo(l1p) < line1.Length()*0.1) || (p1_3d_2->DistanceTo(l1p) < line1.Length()*0.1);
+				bool c2 = (p2_3d_1->DistanceTo(l2p) < line2.Length()*0.1) || (p2_3d_2->DistanceTo(l2p) < line2.Length()*0.1);
+
+#if 0
+				std::cout << "Linear seg pair chord mid: " << cmid.x << "," << cmid.y << "," << cmid.z << "\n";
+				std::cout << "Linear seg pair closest dist: " << chord.Length() << "\n";
+				std::cout << "l1 : " << p1_3d_1->x << "," << p1_3d_1->y << "," << p1_3d_1->z << " -> " << p1_3d_2->x << "," << p1_3d_2->y << "," << p1_3d_2->z << "\n";
+				std::cout << "l1 length: " << line1.Length() << "\n";
+				std::cout << "l2 : " << p2_3d_1->x << "," << p2_3d_1->y << "," << p2_3d_1->z << " -> " << p2_3d_2->x << "," << p2_3d_2->y << "," << p2_3d_2->z << "\n";
+				std::cout << "l2 length: " << line2.Length() << "\n";
+#endif
+				if (c1 || c2) {
+				    //std::cout << "SKIP: chord mid is too close to vert point\n\n";
+				    continue;
+				} else {
+				    if (split_segs.find(pe1->eseg) != split_segs.end()) {
+					std::cout << "multiedge split\n";
+				    }
+				    if ((pe1->eseg != pe2->eseg) && (split_segs.find(pe2->eseg) != split_segs.end())) {
+					std::cout << "2nd multiedge split\n";
+				    }
+				    split_segs.insert(pe1->eseg);
+				    split_segs.insert(pe2->eseg);
+				    cmid_pnts[pe1->eseg] = cmid;
+				    cmid_pnts[pe2->eseg] = cmid;
+				}
 			    }
-
-
-
-			    std::cout << "\n";
-
 			}
 		    }
 		}
 	    }
 	}
+
+	//repeat = (split_segs.size()) ? 1 : 0;
+	repeat = 0;
+#if 1
+
+	std::set<cdt_mesh::bedge_seg_t *>::iterator s_it;
+	for (s_it = split_segs.begin(); s_it != split_segs.end(); s_it++) {
+	    cdt_mesh::bedge_seg_t *eseg = *s_it;
+	    struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)eseg->p_cdt;
+	    int f_id1 = s_cdt->brep->m_T[eseg->tseg1->trim_ind].Face()->m_face_index;
+	    int f_id2 = s_cdt->brep->m_T[eseg->tseg2->trim_ind].Face()->m_face_index;
+	    cdt_mesh::cdt_mesh_t &fmesh_f1 = s_cdt->fmeshes[f_id1];
+	    cdt_mesh::cdt_mesh_t &fmesh_f2 = s_cdt->fmeshes[f_id2];
+	    double t;
+	    ON_NurbsCurve *nc = eseg->nc;
+	    ON_Interval domain(eseg->edge_start, eseg->edge_end);
+	    ON_NurbsCurve_GetClosestPoint(&t, nc, cmid_pnts[eseg], 0.0, &domain);
+	    ON_3dPoint cep = nc->PointAt(t);
+	    std::cout << "cep: " << cep.x << "," << cep.y << "," << cep.z << "\n";
+	    std::cout << "Distance: " << cep.DistanceTo(cmid_pnts[eseg]) << "\n";
+	    int rtris = ovlp_split_edge(eseg, t);
+	    if (rtris >= 0) {
+		replaced_tris += rtris;
+
+		struct bu_vls fename = BU_VLS_INIT_ZERO;
+		bu_vls_sprintf(&fename, "%s-%d_post_edge_tris.plot3", s_cdt->name, f_id1);
+		fmesh_f1.tris_plot(bu_vls_cstr(&fename));
+		bu_vls_sprintf(&fename, "%s-%d_post_edge_tris.plot3", s_cdt->name, f_id2);
+		fmesh_f2.tris_plot(bu_vls_cstr(&fename));
+		bu_vls_free(&fename);
+	    } else {
+		std::cout << "split failed\n";
+	    }
+	}
+#endif
     }
 
     return replaced_tris;
@@ -1351,6 +1399,7 @@ void edge_check(struct brep_face_ovlp_instance *ovlp) {
 int
 ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 {
+    std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>>::iterator cp_it;
     if (!s_a) return -1;
     if (s_cnt < 1) return 0;
 
@@ -1360,10 +1409,24 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
     check_pairs = possibly_interfering_face_pairs(s_a, s_cnt);
 
     std::cout << "Found " << check_pairs.size() << " potentially interfering face pairs\n";
-    std::set<struct mvert_info *> adjusted_verts = adjustable_verts(check_pairs);
 
+    for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
+	cdt_mesh::cdt_mesh_t *fmesh1 = cp_it->first;
+	cdt_mesh::cdt_mesh_t *fmesh2 = cp_it->second;
+	std::cout << "face " << fmesh1->f_id << " validity: " << fmesh1->valid(1) << "\n";
+	std::cout << "face " << fmesh2->f_id << " validity: " << fmesh2->valid(1) << "\n";
+    }
+
+    std::set<struct mvert_info *> adjusted_verts = adjustable_verts(check_pairs);
     if (adjusted_verts.size()) {
 	std::cout << "Adjusted " << adjusted_verts.size() << " vertices\n";
+    }
+
+    for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
+	cdt_mesh::cdt_mesh_t *fmesh1 = cp_it->first;
+	cdt_mesh::cdt_mesh_t *fmesh2 = cp_it->second;
+	std::cout << "face " << fmesh1->f_id << " validity: " << fmesh1->valid(1) << "\n";
+	std::cout << "face " << fmesh2->f_id << " validity: " << fmesh2->valid(1) << "\n";
     }
 
     int sbfvtri_cnt = split_brep_face_edges_near_verts(check_pairs);
@@ -1371,13 +1434,26 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	std::cout << "Replaced " << sbfvtri_cnt << " triangles by splitting edges near vertices\n";
     }
 
+    for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
+	cdt_mesh::cdt_mesh_t *fmesh1 = cp_it->first;
+	cdt_mesh::cdt_mesh_t *fmesh2 = cp_it->second;
+	std::cout << "face " << fmesh1->f_id << " validity: " << fmesh1->valid(1) << "\n";
+	std::cout << "face " << fmesh2->f_id << " validity: " << fmesh2->valid(1) << "\n";
+    }
+
     int sbfetri_cnt = split_brep_face_edges_near_edges(check_pairs);
     if (sbfetri_cnt) {
 	std::cout << "Replaced " << sbfetri_cnt << " triangles by splitting edges near edges\n";
     }
 
+    for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
+	cdt_mesh::cdt_mesh_t *fmesh1 = cp_it->first;
+	cdt_mesh::cdt_mesh_t *fmesh2 = cp_it->second;
+	std::cout << "face " << fmesh1->f_id << " validity: " << fmesh1->valid(1) << "\n";
+	std::cout << "face " << fmesh2->f_id << " validity: " << fmesh2->valid(1) << "\n";
+    }
 
-    std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>>::iterator cp_it;
+
     for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
 	cdt_mesh::cdt_mesh_t *fmesh1 = cp_it->first;
 	cdt_mesh::cdt_mesh_t *fmesh2 = cp_it->second;
