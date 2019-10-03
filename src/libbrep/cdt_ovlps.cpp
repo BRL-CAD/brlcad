@@ -1070,8 +1070,9 @@ split_brep_face_edges_near_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_
 	    int f_id2 = s_cdt_edge->brep->m_T[eseg->tseg2->trim_ind].Face()->m_face_index;
 	    cdt_mesh::cdt_mesh_t &fmesh_f1 = s_cdt_edge->fmeshes[f_id1];
 	    cdt_mesh::cdt_mesh_t &fmesh_f2 = s_cdt_edge->fmeshes[f_id2];
-	    replaced_tris = ovlp_split_edge(eseg, t);
-	    if (replaced_tris >= 0) {
+	    int rtris = ovlp_split_edge(eseg, t);
+	    if (rtris >= 0) {
+		replaced_tris += rtris;
 		struct bu_vls fename = BU_VLS_INIT_ZERO;
 		bu_vls_sprintf(&fename, "%s-%d_post_edge_tris.plot3", s_cdt_edge->name, fmesh_f1.f_id);
 		fmesh_f1.tris_plot(bu_vls_cstr(&fename));
@@ -1403,6 +1404,24 @@ void edge_check(struct brep_face_ovlp_instance *ovlp) {
     }
 }
 
+void
+check_faces_validity(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> &check_pairs)
+{
+    std::set<cdt_mesh::cdt_mesh_t *> fmeshes;
+    std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>>::iterator cp_it;
+    for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
+	cdt_mesh::cdt_mesh_t *fmesh1 = cp_it->first;
+	cdt_mesh::cdt_mesh_t *fmesh2 = cp_it->second;
+	fmeshes.insert(fmesh1);
+	fmeshes.insert(fmesh2);
+    }
+    std::set<cdt_mesh::cdt_mesh_t *>::iterator f_it;
+    for (f_it = fmeshes.begin(); f_it != fmeshes.end(); f_it++) {
+	cdt_mesh::cdt_mesh_t *fmesh = *f_it;
+	std::cout << "face " << fmesh->f_id << " validity: " << fmesh->valid(1) << "\n";
+    }
+}
+
 int
 ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 {
@@ -1417,49 +1436,25 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 
     std::cout << "Found " << check_pairs.size() << " potentially interfering face pairs\n";
 
-    for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
-	cdt_mesh::cdt_mesh_t *fmesh1 = cp_it->first;
-	cdt_mesh::cdt_mesh_t *fmesh2 = cp_it->second;
-	std::cout << "face " << fmesh1->f_id << " validity: " << fmesh1->valid(1) << "\n";
-	std::cout << "face " << fmesh2->f_id << " validity: " << fmesh2->valid(1) << "\n";
-    }
+    check_faces_validity(check_pairs);
 
     std::set<struct mvert_info *> adjusted_verts = adjustable_verts(check_pairs);
     if (adjusted_verts.size()) {
 	std::cout << "Adjusted " << adjusted_verts.size() << " vertices\n";
-    }
-
-    for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
-	cdt_mesh::cdt_mesh_t *fmesh1 = cp_it->first;
-	cdt_mesh::cdt_mesh_t *fmesh2 = cp_it->second;
-	std::cout << "face " << fmesh1->f_id << " validity: " << fmesh1->valid(1) << "\n";
-	std::cout << "face " << fmesh2->f_id << " validity: " << fmesh2->valid(1) << "\n";
+	check_faces_validity(check_pairs);
     }
 
     int sbfvtri_cnt = split_brep_face_edges_near_verts(check_pairs);
     if (sbfvtri_cnt) {
 	std::cout << "Replaced " << sbfvtri_cnt << " triangles by splitting edges near vertices\n";
-    }
-
-    for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
-	cdt_mesh::cdt_mesh_t *fmesh1 = cp_it->first;
-	cdt_mesh::cdt_mesh_t *fmesh2 = cp_it->second;
-	std::cout << "face " << fmesh1->f_id << " validity: " << fmesh1->valid(1) << "\n";
-	std::cout << "face " << fmesh2->f_id << " validity: " << fmesh2->valid(1) << "\n";
+	check_faces_validity(check_pairs);
     }
 
     int sbfetri_cnt = split_brep_face_edges_near_edges(check_pairs);
     if (sbfetri_cnt) {
 	std::cout << "Replaced " << sbfetri_cnt << " triangles by splitting edges near edges\n";
+	check_faces_validity(check_pairs);
     }
-
-    for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
-	cdt_mesh::cdt_mesh_t *fmesh1 = cp_it->first;
-	cdt_mesh::cdt_mesh_t *fmesh2 = cp_it->second;
-	std::cout << "face " << fmesh1->f_id << " validity: " << fmesh1->valid(1) << "\n";
-	std::cout << "face " << fmesh2->f_id << " validity: " << fmesh2->valid(1) << "\n";
-    }
-
 
     for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
 	cdt_mesh::cdt_mesh_t *fmesh1 = cp_it->first;
