@@ -958,6 +958,7 @@ split_brep_face_edges(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_m
 	double t;
 	ON_NurbsCurve_GetClosestPoint(&t, nc, p, 0.0, &domain);
 	ON_3dPoint cep = nc->PointAt(t);
+	std::cout << "cep: " << cep.x << "," << cep.y << "," << cep.z << "\n";
 	std::cout << "Distance: " << cep.DistanceTo(p) << "\n";
 	double epdist1 = eseg->e_start->DistanceTo(cep);
 	double epdist2 = eseg->e_end->DistanceTo(cep);
@@ -997,7 +998,7 @@ split_brep_face_edges(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_m
 		ftris.insert(f1_tris.begin(), f1_tris.end());
 		ftris.insert(f2_tris.begin(), f2_tris.end());
 		std::set<cdt_mesh::bedge_seg_t *> esegs_split = split_edge_seg(s_cdt_edge, eseg, 1, &t, 1);
-		if (f1_tris.size() != 2) {
+		if (ftris.size() != 2) {
 		    std::cout << "edge is only on 1 face, but don't have 2 tri??: " << ftris.size() << "\n";
 		} else {
 		    long np_id = fmesh_f1.pnts.size() - 1;
@@ -1022,7 +1023,12 @@ split_brep_face_edges(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_m
 		}
 
 	    }
-
+	    struct bu_vls fename = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&fename, "%s-%d_post_edge_tris.plot3", s_cdt_edge->name, fmesh_f1.f_id);
+	    fmesh_f1.tris_plot(bu_vls_cstr(&fename));
+	    bu_vls_sprintf(&fename, "%s-%d_post_edge_tris.plot3", s_cdt_edge->name, fmesh_f2.f_id);
+	    fmesh_f2.tris_plot(bu_vls_cstr(&fename));
+	    bu_vls_free(&fename);
 	}
     }
 }
