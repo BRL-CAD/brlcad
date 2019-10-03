@@ -928,6 +928,12 @@ split_brep_face_edges(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_m
 	    cdt_mesh::cpolygon_t *poly2 = eseg->tseg2->polygon;
 	    cdt_mesh::uedge_t ue1(poly1->p2o[eseg->tseg1->v[0]], poly1->p2o[eseg->tseg1->v[1]]);
 	    cdt_mesh::uedge_t ue2(poly2->p2o[eseg->tseg2->v[0]], poly2->p2o[eseg->tseg2->v[1]]);
+	    ON_3dPoint ue1_p1 = *fmesh_f1.pnts[ue1.v[0]];
+	    ON_3dPoint ue1_p2 = *fmesh_f1.pnts[ue1.v[1]];
+	    std::cout << f_id1 << " ue1: " << ue1.v[0] << "," << ue1.v[1] << ": " << ue1_p1.x << "," << ue1_p1.y << "," << ue1_p1.z << " -> " << ue1_p2.x << "," << ue1_p2.y << "," << ue1_p2.z << "\n";
+	    ON_3dPoint ue2_p1 = *fmesh_f2.pnts[ue2.v[0]];
+	    ON_3dPoint ue2_p2 = *fmesh_f2.pnts[ue2.v[1]];
+	    std::cout << f_id2 << " ue2: " << ue2.v[0] << "," << ue2.v[1] << ": " << ue2_p1.x << "," << ue2_p1.y << "," << ue2_p1.z << " -> " << ue2_p2.x << "," << ue2_p2.y << "," << ue2_p2.z << "\n";
 	    std::set<size_t> f1_tris = fmesh_f1.uedges2tris[ue1];
 	    std::set<size_t> f2_tris = fmesh_f2.uedges2tris[ue2];
 
