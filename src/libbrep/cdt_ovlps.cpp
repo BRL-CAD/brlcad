@@ -936,13 +936,21 @@ split_brep_face_edges(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_m
 	    std::cout << f_id2 << " ue2: " << ue2.v[0] << "," << ue2.v[1] << ": " << ue2_p1.x << "," << ue2_p1.y << "," << ue2_p1.z << " -> " << ue2_p2.x << "," << ue2_p2.y << "," << ue2_p2.z << "\n";
 	    std::set<size_t> f1_tris = fmesh_f1.uedges2tris[ue1];
 	    std::set<size_t> f2_tris = fmesh_f2.uedges2tris[ue2];
+	    if (f_id1 == f_id2) {
+		std::set<size_t> ftris;
+		ftris.insert(f1_tris.begin(), f1_tris.end());
+		ftris.insert(f2_tris.begin(), f2_tris.end());
+		if (f1_tris.size() != 2) {
+		    std::cout << "edge is only on 1 face, but don't have 2 tri??: " << ftris.size() << "\n";
+		}
+	    } else {
+		if (f1_tris.size() != 1) {
+		    std::cout << "don't have 1 tri??: " << f1_tris.size() << "\n";
+		}
 
-	    if (f1_tris.size() != 1) {
-		std::cout << "don't have 1 tri??: " << f1_tris.size() << "\n";
-	    }
-
-	    if (f2_tris.size() != 1) {
-		std::cout << "don't have 1 tri??: " << f2_tris.size() << "\n";
+		if (f2_tris.size() != 1) {
+		    std::cout << "don't have 1 tri??: " << f2_tris.size() << "\n";
+		}
 	    }
 
 	    //std::set<cdt_mesh::bedge_seg_t *> esegs_split = split_edge_seg(s_cdt_edge, eseg, 1, &t, 1);
