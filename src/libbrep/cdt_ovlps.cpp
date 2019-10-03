@@ -1068,6 +1068,11 @@ split_brep_face_edges_near_edges(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_
 {
     int replaced_tris = 0;
 
+    std::vector<struct mvert_info *> all_mverts;
+    std::map<std::pair<struct ON_Brep_CDT_State *, int>, RTree<void *, double, 3>> rtrees_mpnts;
+    std::map<std::pair<struct ON_Brep_CDT_State *, int>, std::map<long, struct mvert_info *>> mpnt_maps;
+    vert_bboxes(&all_mverts, &rtrees_mpnts, &mpnt_maps, check_pairs);
+
     // Iterate over edges, checking for nearby edges.
     std::map<cdt_mesh::bedge_seg_t *, cdt_mesh::bedge_seg_t *> edge_edge;
     std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>>::iterator cp_it;
@@ -1107,13 +1112,30 @@ split_brep_face_edges_near_edges(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_
 		    ON_Line line1(*p1_3d_1, *p1_3d_2);
 		    ON_Line line2(*p2_3d_1, *p2_3d_2);
 		    double a, b;
-		    ON_Intersect(line1, line2, &a, &b);
-		    ON_3dPoint cp1 = line1.PointAt(a);
-		    ON_3dPoint cp2 = line2.PointAt(b);
-		    ON_Line chord(cp1, cp2);
-		    std::cout << "Linear seg pair closest dist: " << chord.Length() << "\n";
-		    ON_3dPoint cmid = chord.PointAt(0.5);
-		    std::cout << "Linear seg pair chord mid: " << cmid.x << "," << cmid.y << "," << cmid.z << "\n";
+		    if (ON_IntersectLineLine(line1, line2, &a, &b, 0, true)) {
+			ON_3dPoint cp1 = line1.PointAt(a);
+			ON_3dPoint cp2 = line2.PointAt(b);
+			ON_Line chord(cp1, cp2);
+			ON_3dPoint cmid = chord.PointAt(0.5);
+
+			double fMin[3]; double fMax[3];
+			fMin[0] = cmid.x-ON_ZERO_TOLERANCE;
+			fMin[1] = cmid.y-ON_ZERO_TOLERANCE;
+			fMin[2] = cmid.z-ON_ZERO_TOLERANCE;
+			fMax[0] = cmid.x+ON_ZERO_TOLERANCE;
+			fMax[1] = cmid.y+ON_ZERO_TOLERANCE;
+			fMax[2] = cmid.z+ON_ZERO_TOLERANCE;
+			int f_id1 = s_cdt1->brep->m_T[pe1->trim_ind].Face()->m_face_index;
+			size_t nhits1 = rtrees_mpnts[std::make_pair(s_cdt1, f_id1)].Search(fMin, fMax, NULL, NULL);
+			int f_id2 = s_cdt2->brep->m_T[pe2->trim_ind].Face()->m_face_index;
+			size_t nhits2 = rtrees_mpnts[std::make_pair(s_cdt2, f_id2)].Search(fMin, fMax, NULL, NULL);
+			if (!nhits1 && !nhits2) {
+			    std::cout << "Linear seg pair closest dist: " << chord.Length() << "\n";
+			    std::cout << "Linear seg pair chord mid: " << cmid.x << "," << cmid.y << "," << cmid.z << "\n";
+			} else {
+			    std::cout << "chord near vertex\n";
+}
+		    }
 		}
 	    }
 	}
