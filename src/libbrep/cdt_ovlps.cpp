@@ -822,6 +822,59 @@ adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t
 }
 
 void
+orient_tri(cdt_mesh::cdt_mesh_t &fmesh, cdt_mesh::triangle_t &t)
+{
+    ON_3dVector tdir = fmesh.tnorm(t);
+    ON_3dVector bdir = fmesh.bnorm(t);
+    bool flipped_tri = (ON_DotProduct(tdir, bdir) < 0);
+    if (flipped_tri) {
+	long tmp = t.v[2];
+	t.v[2] = t.v[1];
+	t.v[1] = tmp;
+    }
+} 
+
+void
+replace_edge_split_tri(cdt_mesh::cdt_mesh_t &fmesh, size_t t_id, long np_id, cdt_mesh::uedge_t &split_edge)
+{
+    cdt_mesh::triangle_t &t = fmesh.tris_vect[t_id];
+
+    // Find the two triangle edges that weren't split - these are the starting points for the
+    // new triangles
+    cdt_mesh::edge_t e1, e2;
+    int ecnt = 0;
+    for (int i = 0; i < 3; i++) {
+	long v0 = t.v[i];
+	long v1 = (i < 2) ? t.v[i + 1] : t.v[0];
+	cdt_mesh::edge_t ec(v0, v1);
+	cdt_mesh::uedge_t uec(ec);
+	if (uec != split_edge) {
+	    if (!ecnt) {
+		e1 = ec;
+	    } else {
+		e2 = ec;
+	    }
+	    ecnt++;
+	}
+    }
+
+    cdt_mesh::triangle_t ntri1, ntri2;
+    ntri1.v[0] = e1.v[0];
+    ntri1.v[1] = np_id;
+    ntri1.v[2] = e1.v[1];
+    orient_tri(fmesh, ntri1);
+
+    ntri2.v[0] = e2.v[0];
+    ntri2.v[1] = np_id;
+    ntri2.v[2] = e2.v[1];
+    orient_tri(fmesh, ntri2);
+
+    fmesh.tri_remove(t);
+    fmesh.tri_add(ntri1);
+    fmesh.tri_add(ntri2);
+}
+
+void
 split_brep_face_edges(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> &check_pairs)
 {
     // Get the bounding boxes of all vertices of all meshes of all breps
@@ -938,22 +991,38 @@ split_brep_face_edges(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_m
 	    std::set<size_t> f2_tris = fmesh_f2.uedges2tris[ue2];
 	    if (f_id1 == f_id2) {
 		std::set<size_t> ftris;
+		std::set<size_t>::iterator tr_it;
+		cdt_mesh::uedge_t ue;
+		ue = (f1_tris.size()) ? ue1 : ue2;
 		ftris.insert(f1_tris.begin(), f1_tris.end());
 		ftris.insert(f2_tris.begin(), f2_tris.end());
+		std::set<cdt_mesh::bedge_seg_t *> esegs_split = split_edge_seg(s_cdt_edge, eseg, 1, &t, 1);
 		if (f1_tris.size() != 2) {
 		    std::cout << "edge is only on 1 face, but don't have 2 tri??: " << ftris.size() << "\n";
+		} else {
+		    long np_id = fmesh_f1.pnts.size() - 1;
+		    for (tr_it = ftris.begin(); tr_it != ftris.end(); tr_it++) {
+			replace_edge_split_tri(fmesh_f1, *tr_it, np_id, ue);
+		    }
 		}
 	    } else {
+		std::set<cdt_mesh::bedge_seg_t *> esegs_split = split_edge_seg(s_cdt_edge, eseg, 1, &t, 1);
 		if (f1_tris.size() != 1) {
 		    std::cout << "don't have 1 tri??: " << f1_tris.size() << "\n";
+		} else {
+		    long np_id = fmesh_f1.pnts.size() - 1;
+		    replace_edge_split_tri(fmesh_f1, *f1_tris.begin(), np_id, ue1);
 		}
 
 		if (f2_tris.size() != 1) {
 		    std::cout << "don't have 1 tri??: " << f2_tris.size() << "\n";
+		} else {
+		    long np_id = fmesh_f2.pnts.size() - 1;
+		    replace_edge_split_tri(fmesh_f2, *f2_tris.begin(), np_id, ue2);
 		}
+
 	    }
 
-	    //std::set<cdt_mesh::bedge_seg_t *> esegs_split = split_edge_seg(s_cdt_edge, eseg, 1, &t, 1);
 	}
     }
 }

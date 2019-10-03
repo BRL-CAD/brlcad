@@ -553,6 +553,10 @@ public:
     std::set<long> sv; // Singularity vertex indices
     bool m_bRev;
 
+    // Mesh manipulation functions
+    bool tri_add(triangle_t &atris);
+    void tri_remove(triangle_t &etris);
+
     ON_Brep *brep;
     const char *name;
     void *p_cdt;
@@ -580,10 +584,6 @@ private:
     std::vector<triangle_t> interior_incorrect_normals();
     double max_angle_delta(triangle_t &seed, std::vector<triangle_t> &s_tris);
     bool process_seed_tri(triangle_t &seed, bool repair, double deg);
-
-    // Mesh manipulation functions
-    bool tri_add(triangle_t &atris);
-    void tri_remove(triangle_t &etris);
 
     // Plotting utility functions
     void plot_uedge(struct uedge_t &ue, FILE* plot_file);
