@@ -369,7 +369,6 @@ rtree_bbox_3d(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
 void
 rtree_bbox_3d_remove(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
 {
-    if (!pe->eseg) return;
     ON_BrepTrim& trim = s_cdt->brep->m_T[pe->trim_ind];
     double tcparam = (pe->trim_start + pe->trim_end) / 2.0;
     ON_3dPoint trim_2d = trim.PointAt(tcparam);

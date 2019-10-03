@@ -1001,13 +1001,13 @@ split_brep_face_edges_near_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_
 	    int eind = eseg->edge_ind;
 	    std::set<cdt_mesh::bedge_seg_t *> epsegs = s_cdt_edge->e2polysegs[eind];
 	    epsegs.erase(eseg);
+	    rtree_bbox_3d_remove(s_cdt_edge, pe1);
+	    rtree_bbox_3d_remove(s_cdt_edge, pe2);
 	    std::set<cdt_mesh::bedge_seg_t *> esegs_split = split_edge_seg(s_cdt_edge, eseg, 1, &t, 1);
 	    if (esegs_split.size()) {
 		epsegs.insert(esegs_split.begin(), esegs_split.end());
 		s_cdt_edge->e2polysegs[eind].clear();
 		s_cdt_edge->e2polysegs[eind] = epsegs;
-		rtree_bbox_3d_remove(s_cdt_edge, pe1);
-		rtree_bbox_3d_remove(s_cdt_edge, pe2);
 		std::set<cdt_mesh::bedge_seg_t *>::iterator es_it;
 		for (es_it = esegs_split.begin(); es_it != esegs_split.end(); es_it++) {
 		    cdt_mesh::bedge_seg_t *es = *es_it;
