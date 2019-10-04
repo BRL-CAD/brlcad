@@ -361,15 +361,7 @@ rtree_bbox_3d(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
     p2[1] = bb.Max().y;
     p2[2] = bb.Max().z;
 
-    int rtree_cnt = s_cdt->face_rtrees_3d[trim.Face()->m_face_index].Count();
     s_cdt->face_rtrees_3d[trim.Face()->m_face_index].Insert(p1, p2, (void *)pe);
-    int rtree_cnt_after = s_cdt->face_rtrees_3d[trim.Face()->m_face_index].Count();
-    if (rtree_cnt_after != rtree_cnt + 1) {
-	std::cout << "FAILED insert: Rtree count 3D before: " << rtree_cnt << "\n";
-	std::cout << "FAILED insert: Rtree count 3D after: " << rtree_cnt_after << "\n";
-    } else {
-	std::cout << "INSERT OK\n";
-    }
 
     // Also put a box around the start point - otherwise there are occasionally
     // 'holes' in a curved loop's bbox coverage where sampling can get very
@@ -380,13 +372,8 @@ rtree_bbox_3d(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
     p2[0] = p3d1->x + 0.5*bdist;
     p2[1] = p3d1->y + 0.5*bdist;
     p2[2] = p3d1->z + 0.5*bdist;
-    rtree_cnt = s_cdt->face_rtrees_3d[trim.Face()->m_face_index].Count();
+
     s_cdt->face_rtrees_3d[trim.Face()->m_face_index].Insert(p1, p2, (void *)pe);
-    rtree_cnt_after = s_cdt->face_rtrees_3d[trim.Face()->m_face_index].Count();
-    if (rtree_cnt_after != rtree_cnt + 1) {
-	std::cout << "FAILED pnt insert: Rtree count 3D before: " << rtree_cnt << "\n";
-	std::cout << "FAILED pnt insert: Rtree count 3D after: " << rtree_cnt_after << "\n";
-    }
 }
 
 void
@@ -443,19 +430,7 @@ rtree_bbox_3d_remove(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
     p2[1] = bb.Max().y;
     p2[2] = bb.Max().z;
 
-    int rtree_cnt = s_cdt->face_rtrees_3d[trim.Face()->m_face_index].Count();
-    if (rtree_cnt) {
-	s_cdt->face_rtrees_3d[trim.Face()->m_face_index].Remove(p1, p2, (void *)pe);
-	int rtree_cnt_after = s_cdt->face_rtrees_3d[trim.Face()->m_face_index].Count();
-	if (rtree_cnt_after != rtree_cnt - 1) {
-	    std::cout << "Rtree count 3D before: " << rtree_cnt << "\n";
-	    std::cout << "Rtree count 3D after: " << s_cdt->face_rtrees_3d[trim.Face()->m_face_index].Count() << "\n";
-	    plot_on_bbox(bb, "cbbox.plot3");
-	    plot_rtree_3d(s_cdt->face_rtrees_3d[trim.Face()->m_face_index], "rtree.plot3");
-	} else {
-	    std::cout << "Rtree 3D removal OK\n";
-	}
-    }
+    s_cdt->face_rtrees_3d[trim.Face()->m_face_index].Remove(p1, p2, (void *)pe);
 
     // Also remove box around the start point - if we don't a stale (deleted)
     // cpolyedge may crop up in subsequent processing...
@@ -466,20 +441,7 @@ rtree_bbox_3d_remove(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
     p2[1] = p3d1->y + 0.5*bdist;
     p2[2] = p3d1->z + 0.5*bdist;
 
-    rtree_cnt = s_cdt->face_rtrees_3d[trim.Face()->m_face_index].Count();
-    if (rtree_cnt) {
-	s_cdt->face_rtrees_3d[trim.Face()->m_face_index].Remove(p1, p2, (void *)pe);
-	int rtree_cnt_after = s_cdt->face_rtrees_3d[trim.Face()->m_face_index].Count();
-	if (rtree_cnt_after != rtree_cnt - 1) {
-	    std::cout << "pnt Rtree count 3D before: " << rtree_cnt << "\n";
-	    std::cout << "pnt Rtree count 3D after: " << s_cdt->face_rtrees_3d[trim.Face()->m_face_index].Count() << "\n";
-	    ON_BoundingBox bbp(p1, p2);
-	    plot_on_bbox(bbp, "cbbox.plot3");
-	    plot_rtree_3d(s_cdt->face_rtrees_3d[trim.Face()->m_face_index], "rtree.plot3");
-	} else {
-	    std::cout << "Rtree 3D pnt removal OK\n";
-	}
-    }
+    s_cdt->face_rtrees_3d[trim.Face()->m_face_index].Remove(p1, p2, (void *)pe);
 }
 
 struct rtree_minsplit_context {
