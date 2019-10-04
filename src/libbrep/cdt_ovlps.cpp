@@ -1451,11 +1451,13 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	check_faces_validity(check_pairs);
     }
 
+#if 0
     int sbfetri_cnt = split_brep_face_edges_near_edges(check_pairs);
     if (sbfetri_cnt) {
 	std::cout << "Replaced " << sbfetri_cnt << " triangles by splitting edges near edges\n";
 	check_faces_validity(check_pairs);
     }
+#endif
 
     for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
 	cdt_mesh::cdt_mesh_t *fmesh1 = cp_it->first;
