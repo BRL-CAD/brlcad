@@ -919,7 +919,10 @@ ovlp_split_edge(cdt_mesh::bedge_seg_t *eseg, double t)
     std::set<cdt_mesh::bedge_seg_t *> epsegs = s_cdt_edge->e2polysegs[eind];
     epsegs.erase(eseg);
     std::set<cdt_mesh::bedge_seg_t *> esegs_split = split_edge_seg(s_cdt_edge, eseg, 1, &t, 1);
-    if (!esegs_split.size()) return -1;
+    if (!esegs_split.size()) {
+	std::cerr << "SPLIT FAILED!\n";
+	return -1;
+    }
 
     epsegs.insert(esegs_split.begin(), esegs_split.end());
     s_cdt_edge->e2polysegs[eind].clear();
@@ -940,6 +943,8 @@ ovlp_split_edge(cdt_mesh::bedge_seg_t *eseg, double t)
 	f1.brep_edges.insert(ue_1); 
 	f2.brep_edges.insert(ue_2); 
     }
+
+    long np_id;
     if (f_id1 == f_id2) {
 	std::set<size_t> ftris;
 	std::set<size_t>::iterator tr_it;
@@ -947,38 +952,21 @@ ovlp_split_edge(cdt_mesh::bedge_seg_t *eseg, double t)
 	ue = (f1_tris.size()) ? ue1 : ue2;
 	ftris.insert(f1_tris.begin(), f1_tris.end());
 	ftris.insert(f2_tris.begin(), f2_tris.end());
-	if (ftris.size() != 2) {
-	    std::cout << "edge is only on 1 face, but don't have 2 tri??: " << ftris.size() << "\n";
-	} else {
-	    long np_id = fmesh_f1.pnts.size() - 1;
-	    fmesh_f1.ep.insert(np_id);
-	    for (tr_it = ftris.begin(); tr_it != ftris.end(); tr_it++) {
-		replace_edge_split_tri(fmesh_f1, *tr_it, np_id, ue);
-		replaced_tris++;
-	    }
+	np_id = fmesh_f1.pnts.size() - 1;
+	fmesh_f1.ep.insert(np_id);
+	for (tr_it = ftris.begin(); tr_it != ftris.end(); tr_it++) {
+	    replace_edge_split_tri(fmesh_f1, *tr_it, np_id, ue);
+	    replaced_tris++;
 	}
-	//std::cout << "face valid: " << fmesh_f1.valid(1) << "\n";
     } else {
-	if (f1_tris.size() != 1) {
-	    std::cout << "don't have 1 tri??: " << f1_tris.size() << "\n";
-	} else {
-	    long np_id = fmesh_f1.pnts.size() - 1;
-	    fmesh_f1.ep.insert(np_id);
-	    replace_edge_split_tri(fmesh_f1, *f1_tris.begin(), np_id, ue1);
-	    replaced_tris++;
-	    //std::cout << "face valid: " << fmesh_f1.valid(1) << "\n";
-	}
-
-	if (f2_tris.size() != 1) {
-	    std::cout << "don't have 1 tri??: " << f2_tris.size() << "\n";
-	} else {
-	    long np_id = fmesh_f2.pnts.size() - 1;
-	    fmesh_f2.ep.insert(np_id);
-	    replace_edge_split_tri(fmesh_f2, *f2_tris.begin(), np_id, ue2);
-	    replaced_tris++;
-	    //std::cout << "face valid: " << fmesh_f2.valid(1) << "\n";
-	}
-
+	np_id = fmesh_f1.pnts.size() - 1;
+	fmesh_f1.ep.insert(np_id);
+	replace_edge_split_tri(fmesh_f1, *f1_tris.begin(), np_id, ue1);
+	replaced_tris++;
+	np_id = fmesh_f2.pnts.size() - 1;
+	fmesh_f2.ep.insert(np_id);
+	replace_edge_split_tri(fmesh_f2, *f2_tris.begin(), np_id, ue2);
+	replaced_tris++;
     }
 
     return replaced_tris;
@@ -1187,8 +1175,8 @@ split_brep_face_edges_near_edges(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_
 	    }
 	}
 
-	//repeat = (split_segs.size()) ? 1 : 0;
-	repeat = 0;
+	repeat = (split_segs.size()) ? 1 : 0;
+	//repeat = 0;
 #if 1
 
 	std::set<cdt_mesh::bedge_seg_t *>::iterator s_it;
