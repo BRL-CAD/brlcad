@@ -351,6 +351,21 @@ closest_surf_pnt(ON_3dPoint &s_p, ON_3dVector &s_norm, cdt_mesh::cdt_mesh_t &fme
     return true;
 }
 
+ON_3dPoint
+lseg_closest_pnt(ON_Line &l, ON_3dPoint &p)
+{
+    double t;
+    l.ClosestPointTo(p, &t);
+    if (t > 0 && t < 1) {
+	return l.PointAt(t);
+    } else {
+	double d1 = l.from.DistanceTo(p);
+	double d2 = l.to.DistanceTo(p);
+	return (d2 < d1) ? l.to : l.from;
+    }
+}
+
+
 /*****************************************************************************
  * We're only concerned with specific categories of intersections between
  * triangles, so filter accordingly.
@@ -460,6 +475,54 @@ possibly_interfering_face_pairs(struct ON_Brep_CDT_State **s_a, int s_cnt)
     return check_pairs;
 }
 
+
+double
+tri_shortest_edge(cdt_mesh::cdt_mesh_t *fmesh, long t_ind)
+{
+    cdt_mesh::triangle_t t = fmesh->tris_vect[t_ind];
+    double len = DBL_MAX;
+    for (int i = 0; i < 3; i++) {
+	long v0 = t.v[i];
+	long v1 = (i < 2) ? t.v[i + 1] : t.v[0];
+	ON_3dPoint *p1 = fmesh->pnts[v0];
+	ON_3dPoint *p2 = fmesh->pnts[v1];
+	double d = p1->DistanceTo(*p2);
+	len = (d < len) ? d : len;
+    }
+
+    return len;
+}
+
+void
+add_ntri_pnt(
+    std::map<std::pair<cdt_mesh::cdt_mesh_t *, long>, RTree<void *, double, 3>> &tris_npnts,
+    std::vector<ON_3dPoint *> &npnts,
+    cdt_mesh::cdt_mesh_t *fmesh,
+    long t_ind,
+    ON_3dPoint &p3d)
+{
+    double tlen = tri_shortest_edge(fmesh, t_ind);
+    double p1[3];
+    double p2[3];
+    p1[0] = p3d.x - 0.1*tlen;
+    p1[1] = p3d.y - 0.1*tlen;
+    p1[2] = p3d.z - 0.1*tlen;
+    p2[0] = p3d.x + 0.1*tlen;
+    p2[1] = p3d.y + 0.1*tlen;
+    p2[2] = p3d.z + 0.1*tlen;
+
+    size_t nhits = tris_npnts[std::make_pair(fmesh, t_ind)].Search(p1, p2, NULL, NULL);
+
+    if (!nhits) {
+	ON_3dPoint *n3d = new ON_3dPoint(p3d);
+	npnts.push_back(n3d);
+	tris_npnts[std::make_pair(fmesh, t_ind)].Insert(p1, p2, (void *)n3d);
+	std::cout << "ADDED\n";
+    } else {
+	std::cout << "SKIP: too close to existing triangle point\n";
+    }
+}
+
 /******************************************************************************
  * For nearby vertices that meet certain criteria, we can adjust the vertices
  * to instead use closest points from the various surfaces and eliminate
@@ -482,7 +545,7 @@ mvert_update_edge_minlen(struct mvert_info *v)
 
     // 1.  Get pnt's associated edges.
     std::set<cdt_mesh::edge_t> edges = fmesh.v2edges[v->p_id];
-    
+
     // 2.  find the shortest edge associated with pnt
     std::set<cdt_mesh::edge_t>::iterator e_it;
     double elen = DBL_MAX;
@@ -1089,6 +1152,7 @@ split_brep_face_edges_near_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_
     return replaced_tris;
 }
 
+#if 0
 int
 split_brep_face_edges_near_edges(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> &check_pairs)
 {
@@ -1213,6 +1277,7 @@ split_brep_face_edges_near_edges(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_
 
     return replaced_tris;
 }
+#endif
 
 /**************************************************************************
  * TODO - implement the various ways to refine a triangle polygon.
@@ -1418,8 +1483,8 @@ check_faces_validity(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_me
     }
     std::set<cdt_mesh::cdt_mesh_t *>::iterator f_it;
     for (f_it = fmeshes.begin(); f_it != fmeshes.end(); f_it++) {
-	cdt_mesh::cdt_mesh_t *fmesh = *f_it;
-	std::cout << "face " << fmesh->f_id << " validity: " << fmesh->valid(1) << "\n";
+	//cdt_mesh::cdt_mesh_t *fmesh = *f_it;
+	//std::cout << "face " << fmesh->f_id << " validity: " << fmesh->valid(1) << "\n";
     }
 }
 
@@ -1459,6 +1524,8 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
     }
 #endif
 
+    std::map<std::pair<cdt_mesh::cdt_mesh_t *, long>, RTree<void *, double, 3>> tris_npnts;
+    std::vector<ON_3dPoint *> npnts;
     for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
 	cdt_mesh::cdt_mesh_t *fmesh1 = cp_it->first;
 	cdt_mesh::cdt_mesh_t *fmesh2 = cp_it->second;
@@ -1479,70 +1546,19 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 		    point_t isectpt2 = {MAX_FASTF, MAX_FASTF, MAX_FASTF};
 		    int isect = tri_isect(fmesh1, t1, fmesh2, t2, &isectpt1, &isectpt2);
 		    if (isect) {
-
-
-			//std::cout << "isect(" << coplanar << "): " << isectpt1[X] << "," << isectpt1[Y] << "," << isectpt1[Z] << " -> " << isectpt2[X] << "," << isectpt2[Y] << "," << isectpt2[Z] << "\n";
-
-			// Using triangle planes, determine which point(s) from the opposite triangle are
-			// "inside" the meshes.  Each of these points is an "overlap instance" that the
-			// opposite mesh will have to try and adjust itself to to resolve.
-			std::set<size_t> fmesh1_interior_pnts;
-			std::set<size_t> fmesh2_interior_pnts;
-			ON_Plane plane1 = fmesh1->tplane(t1);
-			for (int i = 0; i < 3; i++) {
-			    ON_3dPoint tp = *fmesh2->pnts[t2.v[i]];
-			    double dist = plane1.DistanceTo(tp);
-			    if (dist < 0 && fabs(dist) > ON_ZERO_TOLERANCE) {
-				//std::cout << "face " << fmesh1->f_id << " new interior point from face " << fmesh2->f_id << ": " << tp.x << "," << tp.y << "," << tp.z << "\n";
-				struct brep_face_ovlp_instance *ovlp = new struct brep_face_ovlp_instance;
-
-				VMOVE(ovlp->isect1_3d, isectpt1);
-				VMOVE(ovlp->isect2_3d, isectpt2);
-
-				ovlp->intruding_pnt_s_cdt = s_cdt2;
-				ovlp->intruding_pnt_face_ind = fmesh2->f_id;
-				ovlp->intruding_pnt_tri_ind = t2.ind;
-				ovlp->intruding_pnt = t2.v[i];
-
-				ovlp->intersected_tri_s_cdt = s_cdt1;
-				ovlp->intersected_tri_face_ind = fmesh1->f_id;
-				ovlp->intersected_tri_ind = t1.ind;
-
-				ovlp->coplanar_intersection = (isect == 1) ? true : false;
-				s_cdt1->face_ovlps[fmesh1->f_id].push_back(ovlp);
-				s_cdt1->face_ovlp_tris[fmesh1->f_id].insert(t1.ind);
-				s_cdt1->face_tri_ovlps[fmesh1->f_id][t1.ind].insert(ovlp);
-			    }
-			}
-
-			ON_Plane plane2 = fmesh2->tplane(t2);
-			for (int i = 0; i < 3; i++) {
-			    ON_3dPoint tp = *fmesh1->pnts[t1.v[i]];
-			    double dist = plane2.DistanceTo(tp);
-			    if (dist < 0 && fabs(dist) > ON_ZERO_TOLERANCE) {
-				//std::cout << "face " << fmesh2->f_id << " new interior point from face " << fmesh1->f_id << ": " << tp.x << "," << tp.y << "," << tp.z << "\n";
-				fmesh1_interior_pnts.insert(t1.v[i]);
-				struct brep_face_ovlp_instance *ovlp = new struct brep_face_ovlp_instance;
-
-				VMOVE(ovlp->isect1_3d, isectpt1);
-				VMOVE(ovlp->isect2_3d, isectpt2);
-
-				ovlp->intruding_pnt_s_cdt = s_cdt1;
-				ovlp->intruding_pnt_face_ind = fmesh1->f_id;
-				ovlp->intruding_pnt_tri_ind = t1.ind;
-				ovlp->intruding_pnt = t1.v[i];
-
-				ovlp->intersected_tri_s_cdt = s_cdt2;
-				ovlp->intersected_tri_face_ind = fmesh2->f_id;
-				ovlp->intersected_tri_ind = t2.ind;
-
-				ovlp->coplanar_intersection = (isect == 1) ? true : false;
-				s_cdt2->face_ovlps[fmesh2->f_id].push_back(ovlp);
-				s_cdt2->face_ovlp_tris[fmesh2->f_id].insert(t2.ind);
-				s_cdt2->face_tri_ovlps[fmesh2->f_id][t2.ind].insert(ovlp);
-			    }
-			}
-
+			ON_3dPoint isp1(isectpt1);
+			ON_3dPoint isp2(isectpt2);
+			ON_Line il(isp1, isp2);
+			ON_3dPoint ispavg = (isp1 + isp2) * 0.5;
+			std::cout << "ispavg: " << ispavg.x << "," << ispavg.y << "," << ispavg.z << "\n";
+			ON_3dPoint sp1, sp2;
+			ON_3dVector sn1, sn2;
+			closest_surf_pnt(sp1, sn1, *fmesh1, &ispavg, 2*il.Length());
+			closest_surf_pnt(sp2, sn2, *fmesh2, &ispavg, 2*il.Length());
+			std::cout << "sp1: " << sp1.x << "," << sp1.y << "," << sp1.z << "\n";
+			std::cout << "sp2: " << sp2.x << "," << sp2.y << "," << sp2.z << "\n";
+			add_ntri_pnt(tris_npnts, npnts, fmesh1, t1.ind, sp1);
+			add_ntri_pnt(tris_npnts, npnts, fmesh2, t2.ind, sp2);
 		    }
 		}
 	    } else {
