@@ -448,7 +448,6 @@ rtree_bbox_3d_remove(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
 	if (rtree_cnt_after != rtree_cnt - 1) {
 	    std::cout << "Rtree count 3D before: " << rtree_cnt << "\n";
 	    std::cout << "Rtree count 3D after: " << s_cdt->face_rtrees_3d[trim.Face()->m_face_index].Count() << "\n";
-	    plot_ce_bbox(s_cdt, pe, "pbbox.plot3");
 	    plot_on_bbox(bb, "cbbox.plot3");
 	    plot_rtree_3d(s_cdt->face_rtrees_3d[trim.Face()->m_face_index], "rtree.plot3");
 	} else {
