@@ -1094,7 +1094,6 @@ split_singular_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *ce, i
 
     if (update_rtrees) {
 	rtree_bbox_2d_remove(s_cdt, ce);
-	rtree_bbox_3d_remove(s_cdt, ce);
     }
 
     s_cdt->unsplit_singular_edges.erase(ce);
@@ -1467,6 +1466,8 @@ initialize_loop_polygons(struct ON_Brep_CDT_State *s_cdt)
 		    } else {
 			eseg->tseg1 = ne;
 		    }
+
+		    rtree_bbox_3d(s_cdt, ne);
 		} else {
 		    // A null eseg will indicate a singularity and a need for special case
 		    // splitting of the 2D edge only
@@ -1933,6 +1934,10 @@ finalize_rtrees(struct ON_Brep_CDT_State *s_cdt)
 
     }
 
+    for (int face_index = 0; face_index < brep->m_F.Count(); face_index++) {
+	ON_BrepFace &face = s_cdt->brep->m_F[face_index];
+	s_cdt->face_rtrees_3d[face.m_face_index].RemoveAll();
+    }	
     for (int index = 0; index < brep->m_E.Count(); index++) {
 	std::set<cdt_mesh::bedge_seg_t *> &epsegs = s_cdt->e2polysegs[index];
 	std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
