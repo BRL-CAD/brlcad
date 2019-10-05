@@ -493,6 +493,120 @@ tri_shortest_edge(cdt_mesh::cdt_mesh_t *fmesh, long t_ind)
     return len;
 }
 
+
+// Characterize the point position relative to the triangles'
+// structure as follows:
+/*
+ *
+ *                         /\
+ *                        /33\
+ *                       /3333\
+ *                      / 3333 \
+ *                     /   33   \
+ *                    /    /\    \
+ *                   /    /  \    \
+ *                  /    /    \    \
+ *                 /    /      \    \
+ *                / 2  /        \ 2  \
+ *               /    /          \    \
+ *              /    /            \    \
+ *             /    /       1      \    \
+ *            /    /                \    \
+ *           /    /                  \    \
+ *          /333 /                    \ 333\
+ *         /33333______________________33333\
+ *        /33333            2           33333\
+ *       --------------------------------------
+ */
+// For the moment, we're defining the distance away
+// from the vert and edge structures as .1 * the
+// shortest triangle edge.
+void
+characterize_avgpnt(
+	int *t1_type, int *t2_type,
+       	cdt_mesh::triangle_t &t1,
+	cdt_mesh::cdt_mesh_t *fmesh1,
+	cdt_mesh::triangle_t &t2,
+	cdt_mesh::cdt_mesh_t *fmesh2,
+	ON_3dPoint &avgpnt
+	)
+{
+    double t1_se = tri_shortest_edge(fmesh1, t1.ind);
+    double t2_se = tri_shortest_edge(fmesh2, t2.ind);
+    ON_3dPoint t1_pnts[3];
+    ON_3dPoint t2_pnts[3];
+    ON_Line t1_edges[3];
+    ON_Line t2_edges[3];
+    for (int i = 0; i < 3; i++) {
+	t1_pnts[i] = *fmesh1->pnts[t1.v[i]];
+	t2_pnts[i] = *fmesh2->pnts[t2.v[i]];
+    }
+    for (int i = 0; i < 3; i++) {
+	int j = (i < 2) ? i+1 : 0;
+	t1_edges[i] = ON_Line(t1_pnts[i], t1_pnts[j]);
+	t2_edges[i] = ON_Line(t2_pnts[i], t2_pnts[j]);
+    }
+
+    double t1_dpnts[3] = {DBL_MAX, DBL_MAX, DBL_MAX};
+    double t2_dpnts[3] = {DBL_MAX, DBL_MAX, DBL_MAX};
+    double t1_dedges[3] = {DBL_MAX, DBL_MAX, DBL_MAX};
+    double t2_dedges[3] = {DBL_MAX, DBL_MAX, DBL_MAX};
+
+    for (int i = 0; i < 3; i++) {
+	t1_dpnts[i] = t1_pnts[i].DistanceTo(avgpnt);
+	t2_dpnts[i] = t2_pnts[i].DistanceTo(avgpnt);
+	t1_dedges[i] = avgpnt.DistanceTo(t1_edges[i].ClosestPointTo(avgpnt));
+	t2_dedges[i] = avgpnt.DistanceTo(t2_edges[i].ClosestPointTo(avgpnt));
+    }
+
+    double t1_dpmin = DBL_MAX;
+    double t2_dpmin = DBL_MAX;
+    double t1_demin = DBL_MAX;
+    double t2_demin = DBL_MAX;
+    for (int i = 0; i < 3; i++) {
+	t1_dpmin = (t1_dpnts[i] < t1_dpmin) ? t1_dpnts[i] : t1_dpmin;
+	t2_dpmin = (t2_dpnts[i] < t2_dpmin) ? t2_dpnts[i] : t2_dpmin;
+	t1_demin = (t1_dedges[i] < t1_demin) ? t1_dedges[i] : t1_demin;
+	t2_demin = (t2_dedges[i] < t2_demin) ? t2_dedges[i] : t2_demin;
+    }
+
+    bool t1_close_to_vert = (t1_dpmin < 0.1 * t1_se);
+    bool t2_close_to_vert = (t2_dpmin < 0.1 * t2_se);
+    bool t1_close_to_edge = (t1_demin < 0.1 * t1_se);
+    bool t2_close_to_edge = (t2_demin < 0.1 * t2_se);
+
+    if (t1_close_to_vert) {
+	(*t1_type) = 3;
+    }
+    if (t2_close_to_vert) {
+	(*t2_type) = 3;
+    }
+
+    if (!t1_close_to_vert && t1_close_to_edge) {
+	(*t1_type) = 2;
+    }
+    if (!t2_close_to_vert && t2_close_to_edge) {
+	(*t2_type) = 2;
+    }
+
+    if (!t1_close_to_vert && !t1_close_to_edge) {
+	(*t1_type) = 1;
+    }
+    if (!t2_close_to_vert && !t2_close_to_edge) {
+	(*t2_type) = 1;
+    }
+
+    if ((*t1_type) == 3 && (*t2_type) == 3) {
+	std::cout << "Near a vert on both triangles.\n";
+	std::cout << "t1 dist: " << t1_dpmin << "\n";
+	std::cout << "t2 dist: " << t2_dpmin << "\n";
+    }
+
+}
+
+
+
+
 void
 add_ntri_pnt(
     std::map<std::pair<cdt_mesh::cdt_mesh_t *, long>, RTree<void *, double, 3>> &tris_npnts,
@@ -1551,6 +1665,11 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 			ON_Line il(isp1, isp2);
 			ON_3dPoint ispavg = (isp1 + isp2) * 0.5;
 			std::cout << "ispavg: " << ispavg.x << "," << ispavg.y << "," << ispavg.z << "\n";
+
+			int t1_type, t2_type;
+			characterize_avgpnt(&t1_type, &t2_type, t1, fmesh1, t2, fmesh2, ispavg);
+			std::cout << "t1 type: " << t1_type << ", t2_type: " << t2_type << "\n";
+
 			ON_3dPoint sp1, sp2;
 			ON_3dVector sn1, sn2;
 			closest_surf_pnt(sp1, sn1, *fmesh1, &ispavg, 2*il.Length());
