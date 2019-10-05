@@ -633,9 +633,11 @@ characterize_avgpnt(
 void
 add_ntri_pnt(
     std::map<std::pair<cdt_mesh::cdt_mesh_t *, long>, RTree<void *, double, 3>> &tris_npnts,
+    std::map<std::pair<cdt_mesh::cdt_mesh_t *, long>, std::vector<int>> &tris_pnttypes,
     std::vector<ON_3dPoint *> &npnts,
     cdt_mesh::cdt_mesh_t *fmesh,
     long t_ind,
+    int t_type,
     ON_3dPoint &p3d)
 {
     double tlen = tri_shortest_edge(fmesh, t_ind);
@@ -654,6 +656,7 @@ add_ntri_pnt(
 	ON_3dPoint *n3d = new ON_3dPoint(p3d);
 	npnts.push_back(n3d);
 	tris_npnts[std::make_pair(fmesh, t_ind)].Insert(p1, p2, (void *)n3d);
+	tris_pnttypes[std::make_pair(fmesh, t_ind)].push_back(t_type);
 	//std::cout << "ADDED\n";
     } else {
 	//std::cout << "SKIP: too close to existing triangle point\n";
@@ -1716,9 +1719,6 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 				std::cerr << "Unknown case?: " << pair_type << "," << t1_type << "," << t2_type << "\n";
 			}
 
-			tris_pnttypes[std::make_pair(fmesh1, t1.ind)].push_back(t1_type);
-			tris_pnttypes[std::make_pair(fmesh2, t2.ind)].push_back(t1_type);
-
 			//std::cout << "t1 type: " << t1_type << ", t2_type: " << t2_type << "\n";
 
 			ON_3dPoint sp1, sp2;
@@ -1727,8 +1727,8 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 			closest_surf_pnt(sp2, sn2, *fmesh2, &ispavg, 2*il.Length());
 			//std::cout << "sp1: " << sp1.x << "," << sp1.y << "," << sp1.z << "\n";
 			//std::cout << "sp2: " << sp2.x << "," << sp2.y << "," << sp2.z << "\n";
-			add_ntri_pnt(tris_npnts, npnts, fmesh1, t1.ind, sp1);
-			add_ntri_pnt(tris_npnts, npnts, fmesh2, t2.ind, sp2);
+			add_ntri_pnt(tris_npnts, tris_pnttypes, npnts, fmesh1, t1.ind, t1_type, sp1);
+			add_ntri_pnt(tris_npnts, tris_pnttypes, npnts, fmesh2, t2.ind, t2_type, sp2);
 		    }
 		}
 	    } else {
