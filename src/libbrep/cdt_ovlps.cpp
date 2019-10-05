@@ -521,7 +521,7 @@ tri_shortest_edge(cdt_mesh::cdt_mesh_t *fmesh, long t_ind)
 // For the moment, we're defining the distance away
 // from the vert and edge structures as .1 * the
 // shortest triangle edge.
-void
+int
 characterize_avgpnt(
 	int *t1_type, int *t2_type,
        	cdt_mesh::triangle_t &t1,
@@ -598,26 +598,33 @@ characterize_avgpnt(
 
 
     if ((*t1_type) == 1 && (*t2_type) == 1) {
-	std::cout << "CASE 1: Near middle on both triangles.\n";
+	return 1;
     }
 
     if (((*t1_type) == 1 && (*t2_type) == 2) ||  ((*t1_type) == 2 && (*t2_type) == 1)) {
-	std::cout << "CASE 2: Near edge on 1 triangle, middle on second.\n";
+	return 2;
+    }
+
+    if (((*t1_type) == 2 && (*t2_type) == 2)) {
+	return 3;
     }
 
     if (((*t1_type) == 1 && (*t2_type) == 3) ||  ((*t1_type) == 3 && (*t2_type) == 1)) {
-	std::cout << "CASE 3: Near vert on 1 triangle, middle on second.\n";
+	return 4;
     }
 
     if (((*t1_type) == 2 && (*t2_type) == 3) ||  ((*t1_type) == 3 && (*t2_type) == 2)) {
-	std::cout << "CASE 4: Near edge on 1 triangle, vert on second.\n";
+	return 5;
     }
 
     if ((*t1_type) == 3 && (*t2_type) == 3) {
-	std::cout << "CASE 5: Near a vert on both triangles.\n";
+	std::cout << "CASE 6 distances:\n";
 	std::cout << "t1 dist: " << t1_dpmin << "\n";
 	std::cout << "t2 dist: " << t2_dpmin << "\n";
+	return 6;
     }
+
+    return 0;
 }
 
 
@@ -1683,7 +1690,31 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 			//std::cout << "ispavg: " << ispavg.x << "," << ispavg.y << "," << ispavg.z << "\n";
 
 			int t1_type, t2_type;
-			characterize_avgpnt(&t1_type, &t2_type, t1, fmesh1, t2, fmesh2, ispavg);
+			int pair_type = characterize_avgpnt(&t1_type, &t2_type, t1, fmesh1, t2, fmesh2, ispavg);
+		
+			switch (pair_type) {
+			    case 1:
+				std::cout << "CASE 1: Near middle on both triangles.\n";
+				break;
+			    case 2:
+				std::cout << "CASE 2: Near edge on 1 triangle, middle on second.\n";
+				break;
+			    case 3:
+				std::cout << "CASE 3: Near edge on both triangles.\n";
+				break;
+			    case 4:
+				std::cout << "CASE 4: Near vert on 1 triangle, middle on second.\n";
+				break;
+			    case 5:
+				std::cout << "CASE 5: Near edge on 1 triangle, vert on second.\n";
+				break;
+			    case 6:
+				std::cout << "CASE 6: Near a vert on both triangles.\n";
+				break;
+			    default:
+				std::cerr << "Unknown case?: " << pair_type << "," << t1_type << "," << t2_type << "\n";
+			}
+
 			//std::cout << "t1 type: " << t1_type << ", t2_type: " << t2_type << "\n";
 
 			ON_3dPoint sp1, sp2;
