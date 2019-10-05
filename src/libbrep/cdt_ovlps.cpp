@@ -315,6 +315,29 @@ plot_ovlp(struct brep_face_ovlp_instance *ovlp, FILE *plot)
 }
 
 static void
+plot_tri_npnts(
+	cdt_mesh::cdt_mesh_t *fmesh,
+	long t_ind,
+	RTree<void *, double, 3> &rtree,
+	FILE *plot)
+{
+    cdt_mesh::triangle_t tri = fmesh->tris_vect[t_ind];
+    double pnt_r = tri_pnt_r(*fmesh, t_ind);
+
+    pl_color(plot, 0, 0, 255);
+    fmesh->plot_tri(tri, NULL, plot, 0, 0, 0);
+
+    pl_color(plot, 255, 0, 0);
+    RTree<void *, double, 3>::Iterator tree_it;
+    rtree.GetFirst(tree_it);
+    while (!tree_it.IsNull()) {
+	ON_3dPoint *n3d = (ON_3dPoint *)*tree_it;
+	plot_pnt_3d(plot, n3d, pnt_r, 0);
+	++tree_it;
+    }
+}
+
+static void
 plot_ovlps(struct ON_Brep_CDT_State *s_cdt, int fi)
 {
     struct bu_vls fname = BU_VLS_INIT_ZERO;
@@ -1856,6 +1879,23 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	    }
 	}
     }
+
+    std::map<std::pair<cdt_mesh::cdt_mesh_t *, long>, RTree<void *, double, 3>>::iterator npt_it;
+    FILE *plot_all = fopen("all_tripnts.plot3", "w");
+    for (npt_it = tris_npnts.begin(); npt_it != tris_npnts.end(); npt_it++) {
+	cdt_mesh::cdt_mesh_t *fmesh = npt_it->first.first;
+	struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh->p_cdt;
+	long t_ind = npt_it->first.second;
+	RTree<void *, double, 3> &rtree = npt_it->second;
+	struct bu_vls fname = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&fname, "%s-%d-%ld_tripnts.plot3", s_cdt->name, fmesh->f_id, t_ind);
+	FILE *plot = fopen(bu_vls_cstr(&fname), "w");
+	plot_tri_npnts(fmesh, t_ind, rtree, plot);
+	plot_tri_npnts(fmesh, t_ind, rtree, plot_all);
+	fclose(plot);
+	bu_vls_free(&fname);
+    }
+    fclose(plot_all);
 
     for (int i = 0; i < s_cnt; i++) {
 	struct ON_Brep_CDT_State *s_i = s_a[i];
