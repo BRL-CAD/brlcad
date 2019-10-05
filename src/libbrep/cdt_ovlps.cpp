@@ -1803,6 +1803,14 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 		    point_t isectpt2 = {MAX_FASTF, MAX_FASTF, MAX_FASTF};
 		    int isect = tri_isect(fmesh1, t1, fmesh2, t2, &isectpt1, &isectpt2);
 		    if (isect) {
+
+			// TODO - need to try switching back to intruding point.  Build a set of intruding
+			// points for each triangle, then look for the closest surface point to the
+			// intruding point.  Using the intersection data directly will produce lots
+			// of close points when a lot of triangles interfere with another triangle
+			// via the same vertex - in that case we want only one split on the intruding
+			// vertex, not a whole bunch of new small triangles...
+
 			ON_3dPoint isp1(isectpt1);
 			ON_3dPoint isp2(isectpt2);
 			ON_Line il(isp1, isp2);
