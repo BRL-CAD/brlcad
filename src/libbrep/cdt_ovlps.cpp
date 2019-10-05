@@ -1793,7 +1793,8 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 
 			int t1_type, t2_type;
 			int pair_type = characterize_avgpnt(&t1_type, &t2_type, t1, fmesh1, t2, fmesh2, sp1, sp2);
-		
+	
+			std::cout << "(" << s_cdt1->name << "-" << fmesh1->f_id << "-" << t1.ind << "_" << s_cdt2->name << "-" << fmesh2->f_id << "-" << t2.ind << "): ";
 			switch (pair_type) {
 			    case 1:
 				std::cout << "CASE 1: Near middle on both triangles.\n";
