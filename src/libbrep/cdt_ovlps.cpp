@@ -493,6 +493,45 @@ tri_shortest_edge(cdt_mesh::cdt_mesh_t *fmesh, long t_ind)
     return len;
 }
 
+bool
+projects_inside_tri(
+	cdt_mesh::cdt_mesh_t *fmesh,
+       	cdt_mesh::triangle_t &t,
+	ON_3dPoint &sp)
+{
+    ON_3dVector tdir = fmesh->tnorm(t);
+    ON_3dPoint pcenter(*fmesh->pnts[t.v[0]]);
+    for (int i = 1; i < 3; i++) {
+	pcenter += *fmesh->pnts[t.v[i]];
+    }
+    pcenter = pcenter / 3;
+    ON_Plane tplane(pcenter, tdir);
+    cdt_mesh::cpolygon_t polygon;
+    for (int i = 0; i < 3; i++) {
+	double u, v;
+	ON_3dPoint op3d = *fmesh->pnts[t.v[i]];
+	tplane.ClosestPointTo(op3d, &u, &v);
+	std::pair<double, double> proj_2d;
+	proj_2d.first = u;
+	proj_2d.second = v;
+	polygon.pnts_2d.push_back(proj_2d);
+    }
+    for (int i = 0; i < 3; i++) {
+	long v1 = (i < 2) ? i + 1 : 0;
+	struct cdt_mesh::edge_t e(i, v1);
+	polygon.add_edge(e);
+    }
+
+    double un, vn;
+    tplane.ClosestPointTo(sp, &un, &vn);
+    std::pair<double, double> n2d;
+    n2d.first = un;
+    n2d.second = vn;
+    polygon.pnts_2d.push_back(n2d);
+
+    return polygon.point_in_polygon(polygon.pnts_2d.size() - 1, false);
+}
+
 
 // Characterize the point position relative to the triangles'
 // structure as follows:
@@ -528,11 +567,27 @@ characterize_avgpnt(
 	cdt_mesh::cdt_mesh_t *fmesh1,
 	cdt_mesh::triangle_t &t2,
 	cdt_mesh::cdt_mesh_t *fmesh2,
-	ON_3dPoint &avgpnt
+	ON_3dPoint &sp1,
+	ON_3dPoint &sp2
 	)
 {
     double t1_se = tri_shortest_edge(fmesh1, t1.ind);
     double t2_se = tri_shortest_edge(fmesh2, t2.ind);
+
+    // Make sure both points project to points inside their respective
+    // triangles - if they don't, we've got a problem
+    bool t1_projects = projects_inside_tri(fmesh1, t1, sp1);
+    bool t2_projects = projects_inside_tri(fmesh2, t2, sp2);
+
+    if (!t1_projects) {
+	std::cout << "ERROR - t1 closest point doesn't project into triangle!\n";
+    }
+
+    if (!t2_projects) {
+	std::cout << "ERROR - t2 closest point doesn't project into triangle!\n";
+    }
+
+
     ON_3dPoint t1_pnts[3];
     ON_3dPoint t2_pnts[3];
     ON_Line t1_edges[3];
@@ -553,10 +608,10 @@ characterize_avgpnt(
     double t2_dedges[3] = {DBL_MAX, DBL_MAX, DBL_MAX};
 
     for (int i = 0; i < 3; i++) {
-	t1_dpnts[i] = t1_pnts[i].DistanceTo(avgpnt);
-	t2_dpnts[i] = t2_pnts[i].DistanceTo(avgpnt);
-	t1_dedges[i] = avgpnt.DistanceTo(t1_edges[i].ClosestPointTo(avgpnt));
-	t2_dedges[i] = avgpnt.DistanceTo(t2_edges[i].ClosestPointTo(avgpnt));
+	t1_dpnts[i] = t1_pnts[i].DistanceTo(sp1);
+	t2_dpnts[i] = t2_pnts[i].DistanceTo(sp2);
+	t1_dedges[i] = sp1.DistanceTo(t1_edges[i].ClosestPointTo(sp1));
+	t2_dedges[i] = sp2.DistanceTo(t2_edges[i].ClosestPointTo(sp2));
     }
 
     double t1_dpmin = DBL_MAX;
@@ -1693,8 +1748,13 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 			ON_3dPoint ispavg = (isp1 + isp2) * 0.5;
 			//std::cout << "ispavg: " << ispavg.x << "," << ispavg.y << "," << ispavg.z << "\n";
 
+			ON_3dPoint sp1, sp2;
+			ON_3dVector sn1, sn2;
+			closest_surf_pnt(sp1, sn1, *fmesh1, &ispavg, 2*il.Length());
+			closest_surf_pnt(sp2, sn2, *fmesh2, &ispavg, 2*il.Length());
+
 			int t1_type, t2_type;
-			int pair_type = characterize_avgpnt(&t1_type, &t2_type, t1, fmesh1, t2, fmesh2, ispavg);
+			int pair_type = characterize_avgpnt(&t1_type, &t2_type, t1, fmesh1, t2, fmesh2, sp1, sp2);
 		
 			switch (pair_type) {
 			    case 1:
@@ -1721,10 +1781,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 
 			//std::cout << "t1 type: " << t1_type << ", t2_type: " << t2_type << "\n";
 
-			ON_3dPoint sp1, sp2;
-			ON_3dVector sn1, sn2;
-			closest_surf_pnt(sp1, sn1, *fmesh1, &ispavg, 2*il.Length());
-			closest_surf_pnt(sp2, sn2, *fmesh2, &ispavg, 2*il.Length());
+
 			//std::cout << "sp1: " << sp1.x << "," << sp1.y << "," << sp1.z << "\n";
 			//std::cout << "sp2: " << sp2.x << "," << sp2.y << "," << sp2.z << "\n";
 			add_ntri_pnt(tris_npnts, tris_pnttypes, npnts, fmesh1, t1.ind, t1_type, sp1);
