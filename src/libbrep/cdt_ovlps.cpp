@@ -596,12 +596,28 @@ characterize_avgpnt(
 	(*t2_type) = 1;
     }
 
+
+    if ((*t1_type) == 1 && (*t2_type) == 1) {
+	std::cout << "CASE 1: Near middle on both triangles.\n";
+    }
+
+    if (((*t1_type) == 1 && (*t2_type) == 2) ||  ((*t1_type) == 2 && (*t2_type) == 1)) {
+	std::cout << "CASE 2: Near edge on 1 triangle, middle on second.\n";
+    }
+
+    if (((*t1_type) == 1 && (*t2_type) == 3) ||  ((*t1_type) == 3 && (*t2_type) == 1)) {
+	std::cout << "CASE 3: Near vert on 1 triangle, middle on second.\n";
+    }
+
+    if (((*t1_type) == 2 && (*t2_type) == 3) ||  ((*t1_type) == 3 && (*t2_type) == 2)) {
+	std::cout << "CASE 4: Near edge on 1 triangle, vert on second.\n";
+    }
+
     if ((*t1_type) == 3 && (*t2_type) == 3) {
-	std::cout << "Near a vert on both triangles.\n";
+	std::cout << "CASE 5: Near a vert on both triangles.\n";
 	std::cout << "t1 dist: " << t1_dpmin << "\n";
 	std::cout << "t2 dist: " << t2_dpmin << "\n";
     }
-
 }
 
 
@@ -631,9 +647,9 @@ add_ntri_pnt(
 	ON_3dPoint *n3d = new ON_3dPoint(p3d);
 	npnts.push_back(n3d);
 	tris_npnts[std::make_pair(fmesh, t_ind)].Insert(p1, p2, (void *)n3d);
-	std::cout << "ADDED\n";
+	//std::cout << "ADDED\n";
     } else {
-	std::cout << "SKIP: too close to existing triangle point\n";
+	//std::cout << "SKIP: too close to existing triangle point\n";
     }
 }
 
@@ -1083,12 +1099,12 @@ ovlp_split_edge(cdt_mesh::bedge_seg_t *eseg, double t)
     cdt_mesh::uedge_t ue2(poly2->p2o[eseg->tseg2->v[0]], poly2->p2o[eseg->tseg2->v[1]]);
     fmesh_f1.brep_edges.erase(ue1); 
     fmesh_f2.brep_edges.erase(ue2); 
-    ON_3dPoint ue1_p1 = *fmesh_f1.pnts[ue1.v[0]];
-    ON_3dPoint ue1_p2 = *fmesh_f1.pnts[ue1.v[1]];
-    std::cout << f_id1 << " ue1: " << ue1.v[0] << "," << ue1.v[1] << ": " << ue1_p1.x << "," << ue1_p1.y << "," << ue1_p1.z << " -> " << ue1_p2.x << "," << ue1_p2.y << "," << ue1_p2.z << "\n";
-    ON_3dPoint ue2_p1 = *fmesh_f2.pnts[ue2.v[0]];
-    ON_3dPoint ue2_p2 = *fmesh_f2.pnts[ue2.v[1]];
-    std::cout << f_id2 << " ue2: " << ue2.v[0] << "," << ue2.v[1] << ": " << ue2_p1.x << "," << ue2_p1.y << "," << ue2_p1.z << " -> " << ue2_p2.x << "," << ue2_p2.y << "," << ue2_p2.z << "\n";
+    //ON_3dPoint ue1_p1 = *fmesh_f1.pnts[ue1.v[0]];
+    //ON_3dPoint ue1_p2 = *fmesh_f1.pnts[ue1.v[1]];
+    //std::cout << f_id1 << " ue1: " << ue1.v[0] << "," << ue1.v[1] << ": " << ue1_p1.x << "," << ue1_p1.y << "," << ue1_p1.z << " -> " << ue1_p2.x << "," << ue1_p2.y << "," << ue1_p2.z << "\n";
+    //ON_3dPoint ue2_p1 = *fmesh_f2.pnts[ue2.v[0]];
+    //ON_3dPoint ue2_p2 = *fmesh_f2.pnts[ue2.v[1]];
+    //std::cout << f_id2 << " ue2: " << ue2.v[0] << "," << ue2.v[1] << ": " << ue2_p1.x << "," << ue2_p1.y << "," << ue2_p1.z << " -> " << ue2_p2.x << "," << ue2_p2.y << "," << ue2_p2.z << "\n";
     std::set<size_t> f1_tris = fmesh_f1.uedges2tris[ue1];
     std::set<size_t> f2_tris = fmesh_f2.uedges2tris[ue2];
 
@@ -1190,7 +1206,7 @@ split_brep_face_edges_near_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_
 		    double d2 = p3d2->DistanceTo(p);
 		    double dline = 2*p.DistanceTo(line.ClosestPointTo(p));
 		    if (d1 > dline && d2 > dline) {
-			std::cout << "ACCEPT: d1: " << d1 << ", d2: " << d2 << ", dline: " << dline << "\n";
+			//std::cout << "ACCEPT: d1: " << d1 << ", d2: " << d2 << ", dline: " << dline << "\n";
 			if (edge_vert.find(pe->eseg) != edge_vert.end()) {
 			    struct ON_Brep_CDT_State *s_cdtv = v->s_cdt;
 			    cdt_mesh::cdt_mesh_t fmeshv = s_cdtv->fmeshes[v->f_id];
@@ -1209,10 +1225,10 @@ split_brep_face_edges_near_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_
 			ON_BoundingBox edge_bb = edge_bbox(s_cdt2, pe);
 			BBOX_PLOT(plot_file, edge_bb);
 		    } else {
-			std::cout << "REJECT: d1: " << d1 << ", d2: " << d2 << ", dline: " << dline << "\n";
+			//std::cout << "REJECT: d1: " << d1 << ", d2: " << d2 << ", dline: " << dline << "\n";
 		    }
 		}
-		std::cout << "used_verts: " << used_verts << "\n";
+		//std::cout << "used_verts: " << used_verts << "\n";
 	    }
 	}
     }
@@ -1235,12 +1251,12 @@ split_brep_face_edges_near_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_
 	double t;
 	ON_NurbsCurve_GetClosestPoint(&t, nc, p, 0.0, &domain);
 	ON_3dPoint cep = nc->PointAt(t);
-	std::cout << "cep: " << cep.x << "," << cep.y << "," << cep.z << "\n";
-	std::cout << "Distance: " << cep.DistanceTo(p) << "\n";
+	//std::cout << "cep: " << cep.x << "," << cep.y << "," << cep.z << "\n";
+	//std::cout << "Distance: " << cep.DistanceTo(p) << "\n";
 	double epdist1 = eseg->e_start->DistanceTo(cep);
 	double epdist2 = eseg->e_end->DistanceTo(cep);
 	double lseg_check = 0.1 * eseg->e_start->DistanceTo(*eseg->e_end);
-	std::cout << "d1: " << epdist1 << ", d2: " << epdist2 << ", lseg_check: " << lseg_check << "\n";
+	//std::cout << "d1: " << epdist1 << ", d2: " << epdist2 << ", lseg_check: " << lseg_check << "\n";
 	if (epdist1 > lseg_check && epdist2 > lseg_check) {
 	    // If the point is not close to a start/end point on the edge then split the edge.
 	    struct ON_Brep_CDT_State *s_cdt_edge = (struct ON_Brep_CDT_State *)eseg->p_cdt;
@@ -1664,18 +1680,18 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 			ON_3dPoint isp2(isectpt2);
 			ON_Line il(isp1, isp2);
 			ON_3dPoint ispavg = (isp1 + isp2) * 0.5;
-			std::cout << "ispavg: " << ispavg.x << "," << ispavg.y << "," << ispavg.z << "\n";
+			//std::cout << "ispavg: " << ispavg.x << "," << ispavg.y << "," << ispavg.z << "\n";
 
 			int t1_type, t2_type;
 			characterize_avgpnt(&t1_type, &t2_type, t1, fmesh1, t2, fmesh2, ispavg);
-			std::cout << "t1 type: " << t1_type << ", t2_type: " << t2_type << "\n";
+			//std::cout << "t1 type: " << t1_type << ", t2_type: " << t2_type << "\n";
 
 			ON_3dPoint sp1, sp2;
 			ON_3dVector sn1, sn2;
 			closest_surf_pnt(sp1, sn1, *fmesh1, &ispavg, 2*il.Length());
 			closest_surf_pnt(sp2, sn2, *fmesh2, &ispavg, 2*il.Length());
-			std::cout << "sp1: " << sp1.x << "," << sp1.y << "," << sp1.z << "\n";
-			std::cout << "sp2: " << sp2.x << "," << sp2.y << "," << sp2.z << "\n";
+			//std::cout << "sp1: " << sp1.x << "," << sp1.y << "," << sp1.z << "\n";
+			//std::cout << "sp2: " << sp2.x << "," << sp2.y << "," << sp2.z << "\n";
 			add_ntri_pnt(tris_npnts, npnts, fmesh1, t1.ind, sp1);
 			add_ntri_pnt(tris_npnts, npnts, fmesh2, t2.ind, sp2);
 		    }
