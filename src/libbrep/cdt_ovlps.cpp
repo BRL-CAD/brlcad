@@ -1843,10 +1843,11 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
     std::map<std::pair<cdt_mesh::cdt_mesh_t *, long>, std::vector<int>>::iterator pt_it;
     for (pt_it = tris_pnttypes.begin(); pt_it != tris_pnttypes.end(); pt_it++) {
 	cdt_mesh::cdt_mesh_t *fmesh = pt_it->first.first;
+	struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh->p_cdt;
 	long t_ind = pt_it->first.second;
 	std::vector<int> pnt_types = pt_it->second;
 	std::sort(pnt_types.begin(), pnt_types.end());
-	std::cout << fmesh->f_id << ":" << t_ind << " ";
+	std::cout << s_cdt->name << "-" << fmesh->f_id << "-" << t_ind << ": ";
 	for (size_t i = 0; i < pnt_types.size(); i++) {
 	    if (i < pnt_types.size() - 1) {
 		std::cout << pnt_types[i] << ",";
