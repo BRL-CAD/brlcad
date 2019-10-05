@@ -1662,6 +1662,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 #endif
 
     std::map<std::pair<cdt_mesh::cdt_mesh_t *, long>, RTree<void *, double, 3>> tris_npnts;
+    std::map<std::pair<cdt_mesh::cdt_mesh_t *, long>, std::vector<int>> tris_pnttypes;
     std::vector<ON_3dPoint *> npnts;
     for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
 	cdt_mesh::cdt_mesh_t *fmesh1 = cp_it->first;
@@ -1715,6 +1716,9 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 				std::cerr << "Unknown case?: " << pair_type << "," << t1_type << "," << t2_type << "\n";
 			}
 
+			tris_pnttypes[std::make_pair(fmesh1, t1.ind)].push_back(t1_type);
+			tris_pnttypes[std::make_pair(fmesh2, t2.ind)].push_back(t1_type);
+
 			//std::cout << "t1 type: " << t1_type << ", t2_type: " << t2_type << "\n";
 
 			ON_3dPoint sp1, sp2;
@@ -1737,6 +1741,22 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	    // for now ignore it.  We need to be able to ignore triangles that
 	    // only share a 3D edge.
 	    //std::cout << "SELF_ISECT\n";
+	}
+    }
+
+    std::map<std::pair<cdt_mesh::cdt_mesh_t *, long>, std::vector<int>>::iterator pt_it;
+    for (pt_it = tris_pnttypes.begin(); pt_it != tris_pnttypes.end(); pt_it++) {
+	cdt_mesh::cdt_mesh_t *fmesh = pt_it->first.first;
+	long t_ind = pt_it->first.second;
+	std::vector<int> pnt_types = pt_it->second;
+	std::sort(pnt_types.begin(), pnt_types.end());
+	std::cout << fmesh->f_id << ":" << t_ind << " ";
+	for (size_t i = 0; i < pnt_types.size(); i++) {
+	    if (i < pnt_types.size() - 1) {
+		std::cout << pnt_types[i] << ",";
+	    } else {
+		std::cout << pnt_types[i] << "\n";
+	    }
 	}
     }
 
