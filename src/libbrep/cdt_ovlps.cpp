@@ -618,6 +618,7 @@ characterize_avgpnt(
     double t2_dpmin = DBL_MAX;
     double t1_demin = DBL_MAX;
     double t2_demin = DBL_MAX;
+
     for (int i = 0; i < 3; i++) {
 	t1_dpmin = (t1_dpnts[i] < t1_dpmin) ? t1_dpnts[i] : t1_dpmin;
 	t2_dpmin = (t2_dpnts[i] < t2_dpmin) ? t2_dpnts[i] : t2_dpmin;
@@ -629,6 +630,31 @@ characterize_avgpnt(
     bool t2_close_to_vert = (t2_dpmin < 0.1 * t2_se);
     bool t1_close_to_edge = (t1_demin < 0.1 * t1_se);
     bool t2_close_to_edge = (t2_demin < 0.1 * t2_se);
+
+    bool t1_close_to_face_edge = false;
+    if (t1_close_to_edge) {
+	for (int i = 0; i < 3; i++) {
+	    if (NEAR_EQUAL(t1_dedges[i], t1_demin, ON_ZERO_TOLERANCE)) {;
+		int j = (i < 2) ? i+1 : 0;
+		struct cdt_mesh::uedge_t ue(t1.v[i], t1.v[j]);
+		if (fmesh1->brep_edges.find(ue) != fmesh1->brep_edges.find(ue)) {
+		    t1_close_to_face_edge = true;
+		}
+	    }
+	}
+    }
+    bool t2_close_to_face_edge = false;
+    if (t2_close_to_edge) {
+	for (int i = 0; i < 3; i++) {
+	    if (NEAR_EQUAL(t2_dedges[i], t2_demin, ON_ZERO_TOLERANCE)) {;
+		int j = (i < 2) ? i+1 : 0;
+		struct cdt_mesh::uedge_t ue(t2.v[i], t2.v[j]);
+		if (fmesh2->brep_edges.find(ue) != fmesh2->brep_edges.find(ue)) {
+		    t2_close_to_face_edge = true;
+		}
+	    }
+	}
+    }
 
     if (t1_close_to_vert) {
 	(*t1_type) = 3;
@@ -657,10 +683,22 @@ characterize_avgpnt(
     }
 
     if (((*t1_type) == 1 && (*t2_type) == 2) ||  ((*t1_type) == 2 && (*t2_type) == 1)) {
+	if (t1_close_to_face_edge) {
+	    std::cout << "t1 close to face edge\n";
+	}
+	if (t2_close_to_face_edge) {
+	    std::cout << "t2 close to face edge\n";
+	}
 	return 2;
     }
 
     if (((*t1_type) == 2 && (*t2_type) == 2)) {
+	if (t1_close_to_face_edge) {
+	    std::cout << "t1 close to face edge\n";
+	}
+	if (t2_close_to_face_edge) {
+	    std::cout << "t2 close to face edge\n";
+	}
 	return 3;
     }
 
