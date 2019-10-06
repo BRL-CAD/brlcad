@@ -235,7 +235,7 @@ https://marc.info/?l=git&m=156653998201710
 #
 # git config notes.rewriteRef refs/notes/commits  (see https://stackoverflow.com/a/43785538)
 # git checkout 7cffbab2a734e3cf
-# GIT_COMMITTER_DATE="Fri Oct 3 06:46:53 1986 +0000" git commit --amend --author "root <root@brlcad.org>" --date="Fri Oct 3 06:46:53 1986 +0000"
+# GIT_COMMITTER_DATE="Fri Oct 3 06:46:53 1986 +0000" git commit --amend --author "root <root>" --date="Fri Oct 3 06:46:53 1986 +0000"
 # git checkout master
 # git replace 7cffbab2a73 e166ad7454
 # git filter-branch \
