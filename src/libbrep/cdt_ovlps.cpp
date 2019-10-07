@@ -1804,12 +1804,39 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 		    int isect = tri_isect(fmesh1, t1, fmesh2, t2, &isectpt1, &isectpt2);
 		    if (isect) {
 
+			// Using triangle planes, determine which point(s) from the opposite triangle are
+			// "inside" the meshes.  Each of these points is an "overlap instance" that the
+			// opposite mesh will have to try and adjust itself to to resolve.
+			std::set<ON_3dPoint> fmesh1_interior_pnts;
+			std::set<ON_3dPoint> fmesh2_interior_pnts;
+			ON_Plane plane1 = fmesh1->tplane(t1);
+			for (int i = 0; i < 3; i++) {
+			    ON_3dPoint tp = *fmesh2->pnts[t2.v[i]];
+			    double dist = plane1.DistanceTo(tp);
+			    if (dist < 0 && fabs(dist) > ON_ZERO_TOLERANCE) {
+				//std::cout << "face " << fmesh1->f_id << " new interior point from face " << fmesh2->f_id << ": " << tp.x << "," << tp.y << "," << tp.z << "\n";
+				fmesh1_interior_pnts.insert(tp);
+			    }
+			}
+
+			ON_Plane plane2 = fmesh2->tplane(t2);
+			for (int i = 0; i < 3; i++) {
+			    ON_3dPoint tp = *fmesh1->pnts[t1.v[i]];
+			    double dist = plane2.DistanceTo(tp);
+			    if (dist < 0 && fabs(dist) > ON_ZERO_TOLERANCE) {
+				//std::cout << "face " << fmesh2->f_id << " new interior point from face " << fmesh1->f_id << ": " << tp.x << "," << tp.y << "," << tp.z << "\n";
+				fmesh2_interior_pnts.insert(tp);
+			    }
+			}
+
 			// TODO - need to try switching back to intruding point.  Build a set of intruding
 			// points for each triangle, then look for the closest surface point to the
 			// intruding point.  Using the intersection data directly will produce lots
 			// of close points when a lot of triangles interfere with another triangle
 			// via the same vertex - in that case we want only one split on the intruding
-			// vertex, not a whole bunch of new small triangles...
+			// vertex, not a whole bunch of new small triangles...  Need to just associated the
+			// entire set of closest points to intersecting vertices with the face, then go back
+			// and assign triangles for refinement once the set is built up
 
 			ON_3dPoint isp1(isectpt1);
 			ON_3dPoint isp2(isectpt2);
