@@ -516,6 +516,23 @@ tri_shortest_edge(cdt_mesh::cdt_mesh_t *fmesh, long t_ind)
     return len;
 }
 
+double
+tri_longest_edge(cdt_mesh::cdt_mesh_t *fmesh, long t_ind)
+{
+    cdt_mesh::triangle_t t = fmesh->tris_vect[t_ind];
+    double len = -DBL_MAX;
+    for (int i = 0; i < 3; i++) {
+	long v0 = t.v[i];
+	long v1 = (i < 2) ? t.v[i + 1] : t.v[0];
+	ON_3dPoint *p1 = fmesh->pnts[v0];
+	ON_3dPoint *p2 = fmesh->pnts[v1];
+	double d = p1->DistanceTo(*p2);
+	len = (d > len) ? d : len;
+    }
+
+    return len;
+}
+
 bool
 projects_inside_tri(
 	cdt_mesh::cdt_mesh_t *fmesh,
@@ -1744,6 +1761,14 @@ check_faces_validity(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_me
     }
 }
 
+struct p_mvert_info {
+    struct ON_Brep_CDT_State *s_cdt;
+    int f_id;
+    ON_3dPoint p;
+    ON_3dVector n;
+    ON_BoundingBox bb;
+};
+
 int
 ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 {
@@ -1780,6 +1805,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
     }
 #endif
 
+    std::map<cdt_mesh::cdt_mesh_t *, std::set<struct p_mvert_info *>> face_npnts;
     std::map<std::pair<cdt_mesh::cdt_mesh_t *, long>, RTree<void *, double, 3>> tris_npnts;
     std::map<std::pair<cdt_mesh::cdt_mesh_t *, long>, std::vector<int>> tris_pnttypes;
     std::vector<ON_3dPoint *> npnts;
@@ -1804,18 +1830,24 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 		    int isect = tri_isect(fmesh1, t1, fmesh2, t2, &isectpt1, &isectpt2);
 		    if (isect) {
 
+			double t1_longest = tri_longest_edge(fmesh1, t1.ind);
+			double t2_longest = tri_longest_edge(fmesh2, t2.ind);
+
 			// Using triangle planes, determine which point(s) from the opposite triangle are
 			// "inside" the meshes.  Each of these points is an "overlap instance" that the
 			// opposite mesh will have to try and adjust itself to to resolve.
-			std::set<ON_3dPoint> fmesh1_interior_pnts;
-			std::set<ON_3dPoint> fmesh2_interior_pnts;
 			ON_Plane plane1 = fmesh1->tplane(t1);
 			for (int i = 0; i < 3; i++) {
 			    ON_3dPoint tp = *fmesh2->pnts[t2.v[i]];
 			    double dist = plane1.DistanceTo(tp);
 			    if (dist < 0 && fabs(dist) > ON_ZERO_TOLERANCE) {
 				//std::cout << "face " << fmesh1->f_id << " new interior point from face " << fmesh2->f_id << ": " << tp.x << "," << tp.y << "," << tp.z << "\n";
-				fmesh1_interior_pnts.insert(tp);
+				struct p_mvert_info *np = new struct p_mvert_info;
+				np->s_cdt = s_cdt1;
+				np->f_id = fmesh1->f_id;
+				closest_surf_pnt(np->p, np->n, *fmesh1, &tp, 2*t1_longest);
+				// TODO - bbox
+				face_npnts[fmesh1].insert(np);
 			    }
 			}
 
@@ -1825,68 +1857,16 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 			    double dist = plane2.DistanceTo(tp);
 			    if (dist < 0 && fabs(dist) > ON_ZERO_TOLERANCE) {
 				//std::cout << "face " << fmesh2->f_id << " new interior point from face " << fmesh1->f_id << ": " << tp.x << "," << tp.y << "," << tp.z << "\n";
-				fmesh2_interior_pnts.insert(tp);
+				struct p_mvert_info *np = new struct p_mvert_info;
+				np->s_cdt = s_cdt2;
+				np->f_id = fmesh2->f_id;
+				closest_surf_pnt(np->p, np->n, *fmesh2, &tp, 2*t2_longest);
+				// TODO - bbox
+				face_npnts[fmesh2].insert(np);
 			    }
 			}
-
-			// TODO - need to try switching back to intruding point.  Build a set of intruding
-			// points for each triangle, then look for the closest surface point to the
-			// intruding point.  Using the intersection data directly will produce lots
-			// of close points when a lot of triangles interfere with another triangle
-			// via the same vertex - in that case we want only one split on the intruding
-			// vertex, not a whole bunch of new small triangles...  Need to just associated the
-			// entire set of closest points to intersecting vertices with the face, then go back
-			// and assign triangles for refinement once the set is built up
-
-			ON_3dPoint isp1(isectpt1);
-			ON_3dPoint isp2(isectpt2);
-			ON_Line il(isp1, isp2);
-			ON_3dPoint ispavg = (isp1 + isp2) * 0.5;
-			//std::cout << "ispavg: " << ispavg.x << "," << ispavg.y << "," << ispavg.z << "\n";
-
-			ON_3dPoint sp1, sp2;
-			ON_3dVector sn1, sn2;
-			closest_surf_pnt(sp1, sn1, *fmesh1, &ispavg, 2*il.Length());
-			closest_surf_pnt(sp2, sn2, *fmesh2, &ispavg, 2*il.Length());
-
-			int t1_type, t2_type;
-			int pair_type = characterize_avgpnt(&t1_type, &t2_type, t1, fmesh1, t2, fmesh2, sp1, sp2);
-	
-			std::cout << "(" << s_cdt1->name << "-" << fmesh1->f_id << "-" << t1.ind << "_" << s_cdt2->name << "-" << fmesh2->f_id << "-" << t2.ind << "): ";
-			switch (pair_type) {
-			    case 1:
-				std::cout << "CASE 1: Near middle on both triangles.\n";
-				break;
-			    case 2:
-				std::cout << "CASE 2: Near edge on 1 triangle, middle on second.\n";
-				break;
-			    case 3:
-				std::cout << "CASE 3: Near edge on both triangles.\n";
-				break;
-			    case 4:
-				std::cout << "CASE 4: Near vert on 1 triangle, middle on second.\n";
-				break;
-			    case 5:
-				std::cout << "CASE 5: Near edge on 1 triangle, vert on second.\n";
-				break;
-			    case 6:
-				std::cout << "CASE 6: Near a vert on both triangles.\n";
-				break;
-			    default:
-				std::cerr << "Unknown case?: " << pair_type << "," << t1_type << "," << t2_type << "\n";
-			}
-
-			//std::cout << "t1 type: " << t1_type << ", t2_type: " << t2_type << "\n";
-
-
-			//std::cout << "sp1: " << sp1.x << "," << sp1.y << "," << sp1.z << "\n";
-			//std::cout << "sp2: " << sp2.x << "," << sp2.y << "," << sp2.z << "\n";
-			add_ntri_pnt(tris_npnts, tris_pnttypes, npnts, fmesh1, t1.ind, t1_type, sp1);
-			add_ntri_pnt(tris_npnts, tris_pnttypes, npnts, fmesh2, t2.ind, t2_type, sp2);
 		    }
 		}
-	    } else {
-		//std::cout << "RTREE_ISECT_EMPTY: " << fmesh1->name << " face " << fmesh1->f_id << " and " << fmesh2->name << " face " << fmesh2->f_id << "\n";
 	    }
 	} else {
 	    // TODO: In principle we should be checking for self intersections
@@ -1897,6 +1877,56 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	    //std::cout << "SELF_ISECT\n";
 	}
     }
+    std::map<cdt_mesh::cdt_mesh_t *, std::set<struct p_mvert_info *>>::iterator f_it;
+    for (f_it = face_npnts.begin(); f_it != face_npnts.end(); f_it++) {
+	// Need bbox for p - probably should make an mvert above and assign the
+	// bbox based on the intersecting triangle size, which will give use
+	// some idea how big a box we need around the point to intersect faces
+	// on the mesh.
+
+	// TODO - do a search of 3D brep face edges to see if the new point is
+	// near any of them.  If it is, we'll need to split that edge.  If the
+	// point is actually ON the edge (to within some close tolerance) we'll
+	// be introducing a new point on the edge AT that point, and no additional
+	// work is needed on that point.  Otherwise, it stays "live" and feeds into
+	// the next step...
+
+	// TODO -  after the edge pass, search face triangle Rtree for closest
+	// triangles, and find the closest one where it can produce a valid
+	// projection into the triangle plane.  Associate the point with the
+	// triangle.  The set of points associated with the triangles will then
+	// be characterized, and as appropriate indiviual or pairs of triangles
+	// will be re-tessellated and replacted to incorporate the new points.
+    }
+
+#if 0
+    int t1_type, t2_type;
+    int pair_type = characterize_avgpnt(&t1_type, &t2_type, t1, fmesh1, t2, fmesh2, sp1, sp2);
+
+    std::cout << "(" << s_cdt1->name << "-" << fmesh1->f_id << "-" << t1.ind << "_" << s_cdt2->name << "-" << fmesh2->f_id << "-" << t2.ind << "): ";
+    switch (pair_type) {
+	case 1:
+	    std::cout << "CASE 1: Near middle on both triangles.\n";
+	    break;
+	case 2:
+	    std::cout << "CASE 2: Near edge on 1 triangle, middle on second.\n";
+	    break;
+	case 3:
+	    std::cout << "CASE 3: Near edge on both triangles.\n";
+	    break;
+	case 4:
+	    std::cout << "CASE 4: Near vert on 1 triangle, middle on second.\n";
+	    break;
+	case 5:
+	    std::cout << "CASE 5: Near edge on 1 triangle, vert on second.\n";
+	    break;
+	case 6:
+	    std::cout << "CASE 6: Near a vert on both triangles.\n";
+	    break;
+	default:
+	    std::cerr << "Unknown case?: " << pair_type << "," << t1_type << "," << t2_type << "\n";
+    }
+#endif
 
     std::map<std::pair<cdt_mesh::cdt_mesh_t *, long>, std::vector<int>>::iterator pt_it;
     for (pt_it = tris_pnttypes.begin(); pt_it != tris_pnttypes.end(); pt_it++) {
