@@ -453,7 +453,7 @@ struct nf_info {
     cdt_mesh::cdt_mesh_t *cmesh;
 };
 
-static bool NearFacesCallback(void *data, void *a_context) {
+static bool NearFacesPairsCallback(void *data, void *a_context) {
     struct nf_info *nf = (struct nf_info *)a_context;
     cdt_mesh::cdt_mesh_t *omesh = (cdt_mesh::cdt_mesh_t *)data;
     std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *> p1(nf->cmesh, omesh);
@@ -461,6 +461,13 @@ static bool NearFacesCallback(void *data, void *a_context) {
     if ((nf->check_pairs->find(p1) == nf->check_pairs->end()) && (nf->check_pairs->find(p1) == nf->check_pairs->end())) {
 	nf->check_pairs->insert(p1);
     }
+    return true;
+}
+
+static bool NearFacesCallback(size_t data, void *a_context) {
+    std::set<size_t> *faces = (std::set<size_t> *)a_context;
+    size_t f_id = data;
+    faces->insert(f_id);
     return true;
 }
 
@@ -488,7 +495,7 @@ possibly_interfering_face_pairs(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	    fMax[2] = bb.Max().z;
 	    // Check the new box against the existing tree, and add any new
 	    // interaction pairs to check_pairs
-	    rtree_fmeshes.Search(fMin, fMax, NearFacesCallback, (void *)&nf);
+	    rtree_fmeshes.Search(fMin, fMax, NearFacesPairsCallback, (void *)&nf);
 	    // Add the new box to the tree so any additional boxes can check
 	    // against it as well
 	    rtree_fmeshes.Insert(fMin, fMax, (void *)fmesh);
@@ -1069,7 +1076,7 @@ adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t
     vert_bboxes(&all_mverts, &rtrees_mpnts, &mpnt_maps, check_pairs); 
    
     // Iterate over mverts, checking for nearby pnts in a fashion similar to the
-    // NearFacesCallback search above.  For each mvert, note potentially interfering
+    // NearFacesPairsCallback search above.  For each mvert, note potentially interfering
     // mverts - this will tell us what we need to adjust.
     std::map<struct mvert_info *, std::set<struct mvert_info *>> vert_ovlps;
     std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>>::iterator cp_it;
@@ -1221,7 +1228,7 @@ replace_edge_split_tri(cdt_mesh::cdt_mesh_t &fmesh, size_t t_id, long np_id, cdt
 }
 
 int
-ovlp_split_edge(cdt_mesh::bedge_seg_t *eseg, double t)
+ovlp_split_edge(std::set<cdt_mesh::bedge_seg_t *> *nsegs, cdt_mesh::bedge_seg_t *eseg, double t)
 {
     int replaced_tris = 0;
 
@@ -1258,6 +1265,10 @@ ovlp_split_edge(cdt_mesh::bedge_seg_t *eseg, double t)
     if (!esegs_split.size()) {
 	std::cerr << "SPLIT FAILED!\n";
 	return -1;
+    }
+
+    if (nsegs) {
+	(*nsegs).insert(esegs_split.begin(), esegs_split.end());
     }
 
     epsegs.insert(esegs_split.begin(), esegs_split.end());
@@ -1407,7 +1418,7 @@ split_brep_face_edges_near_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_
 	    int f_id2 = s_cdt_edge->brep->m_T[eseg->tseg2->trim_ind].Face()->m_face_index;
 	    cdt_mesh::cdt_mesh_t &fmesh_f1 = s_cdt_edge->fmeshes[f_id1];
 	    cdt_mesh::cdt_mesh_t &fmesh_f2 = s_cdt_edge->fmeshes[f_id2];
-	    int rtris = ovlp_split_edge(eseg, t);
+	    int rtris = ovlp_split_edge(NULL, eseg, t);
 	    if (rtris >= 0) {
 		replaced_tris += rtris;
 		struct bu_vls fename = BU_VLS_INIT_ZERO;
@@ -1531,7 +1542,7 @@ split_brep_face_edges_near_edges(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_
 	    ON_3dPoint cep = nc->PointAt(t);
 	    std::cout << "cep: " << cep.x << "," << cep.y << "," << cep.z << "\n";
 	    std::cout << "Distance: " << cep.DistanceTo(cmid_pnts[eseg]) << "\n";
-	    int rtris = ovlp_split_edge(eseg, t);
+	    int rtris = ovlp_split_edge(NULL, eseg, t);
 	    if (rtris >= 0) {
 		replaced_tris += rtris;
 
@@ -1767,6 +1778,7 @@ struct p_mvert_info {
     ON_3dPoint p;
     ON_3dVector n;
     ON_BoundingBox bb;
+    bool edge_split_only;
 };
 
 int
@@ -1845,6 +1857,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 				struct p_mvert_info *np = new struct p_mvert_info;
 				np->s_cdt = s_cdt1;
 				np->f_id = fmesh1->f_id;
+				np->edge_split_only = false;
 				closest_surf_pnt(np->p, np->n, *fmesh1, &tp, 2*t1_longest);
 				ON_BoundingBox bb(np->p, np->p);
 				bb.m_max.x = bb.m_max.x + t1_longest;
@@ -1928,6 +1941,8 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 		    // closest point is very close to the closest surface
 		    // point, this is an edge split.
 		    if (ecdist < 0.1*lseg_dist) {
+			double etol = s_cdt->brep->m_E[eseg->edge_ind].m_tolerance;
+			etol = (etol > 0) ? etol : ON_ZERO_TOLERANCE;
 			// TODO - If the point is actually ON the
 			// edge (to within ON_ZERO_TOLERANCE or the brep edge's
 			// tolerance) we'll be introducing a new point on the
@@ -1937,6 +1952,9 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 			if (closest_dist < ecdist) {
 			    closest_dist = ecdist;
 			    closest_edge = eseg;
+			    if (ecdist <= etol) {
+				pmv->edge_split_only = true;
+			    }
 			}
 
 		    }
@@ -1945,13 +1963,72 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 		    esplits[closest_edge].insert(pmv);
 		}
 	    }
+	}
+    }
+    std::map<cdt_mesh::bedge_seg_t *, std::set<struct p_mvert_info *>>::iterator es_it;
+    for (es_it = esplits.begin(); es_it != esplits.end(); es_it++) {
+	std::set<cdt_mesh::bedge_seg_t *> asegs;
+	asegs.insert(es_it->first);
+	// If we have multiple p_mvert points associated with this edge, we'll need
+	// multiple splits.  Probably will have to work it with a queue set -
+	// queue up the points and after each split remove the old eseg from
+	// the set, add the new ones, grab the next point, and find the new
+	// eseg from the split that's closest to the next point.  Split it, repeat until
+	// all points have a split.
+	//
+	// This is where p_mverts graduate to real mverts in the mesh - make sure we
+	// bookkeep accordingly
+	std::set<struct p_mvert_info *>::iterator pm_it;
+	for (pm_it = es_it->second.begin(); pm_it != es_it->second.end(); pm_it++) {
+	    cdt_mesh::bedge_seg_t *closest_edge = NULL;
+	    double split_t;
+	    double closest_dist = DBL_MAX;
+	    std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
+	    for (e_it = asegs.begin(); e_it != asegs.end(); e_it++) {
+		cdt_mesh::bedge_seg_t *eseg = *e_it;
+		ON_NurbsCurve *nc = eseg->nc;
+		ON_Interval domain(eseg->edge_start, eseg->edge_end);
+		double t;
+		ON_NurbsCurve_GetClosestPoint(&t, nc, (*pm_it)->p, 0.0, &domain);
+		ON_3dPoint cep = nc->PointAt(t);
+		double ecdist = cep.DistanceTo((*pm_it)->p);
+		if (closest_dist < ecdist) {
+		    closest_dist = ecdist;
+		    closest_edge = eseg;
+		    split_t = t;
+		}
+	    }
 
+	    asegs.erase(closest_edge);
+	    std::set<cdt_mesh::bedge_seg_t *> nsegs;
+	    ovlp_split_edge(&nsegs, closest_edge, split_t);
+	    asegs.insert(nsegs.begin(), nsegs.end());
+	}
+    }
+
+    for (f_it = face_npnts.begin(); f_it != face_npnts.end(); f_it++) {
+	cdt_mesh::cdt_mesh_t *fmesh = f_it->first;
+	//struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh->p_cdt;
+	std::set<struct p_mvert_info *>::iterator pm_it;
+	for (pm_it = f_it->second.begin(); pm_it != f_it->second.end(); pm_it++) {
+
+	    if ((*pm_it)->edge_split_only) continue;
 	    // TODO -  after the edge pass, search face triangle Rtree for closest
 	    // triangles, and find the closest one where it can produce a valid
 	    // projection into the triangle plane.  Associate the point with the
 	    // triangle.  The set of points associated with the triangles will then
 	    // be characterized, and as appropriate indiviual or pairs of triangles
-	    // will be re-tessellated and replacted to incorporate the new points.
+	    // will be re-tessellated and replaced to incorporate the new points.
+	    double fMin[3];
+	    fMin[0] = (*pm_it)->bb.Min().x;
+	    fMin[1] = (*pm_it)->bb.Min().y;
+	    fMin[2] = (*pm_it)->bb.Min().z;
+	    double fMax[3];
+	    fMax[0] = (*pm_it)->bb.Max().x;
+	    fMax[1] = (*pm_it)->bb.Max().y;
+	    fMax[2] = (*pm_it)->bb.Max().z;
+	    std::set<size_t> near_faces;
+	    fmesh->tris_tree.Search(fMin, fMax, NearFacesCallback, (void *)&near_faces);
 	}
     }
 
