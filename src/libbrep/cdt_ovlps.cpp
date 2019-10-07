@@ -1891,6 +1891,8 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	    //std::cout << "SELF_ISECT\n";
 	}
     }
+
+    std::map<cdt_mesh::bedge_seg_t *, std::set<struct p_mvert_info *>> esplits;
     std::map<cdt_mesh::cdt_mesh_t *, std::set<struct p_mvert_info *>>::iterator f_it;
     for (f_it = face_npnts.begin(); f_it != face_npnts.end(); f_it++) {
 	cdt_mesh::cdt_mesh_t *fmesh = f_it->first;
@@ -1911,24 +1913,36 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 
 	    if (nhits) {
 		std::set<cdt_mesh::cpolyedge_t *>::iterator n_it;
-		cdt_mesh::cpolyedge_t *closest_edge = NULL;
+		cdt_mesh::bedge_seg_t *closest_edge = NULL;
 		double closest_dist = DBL_MAX;
 		for (n_it = nedges.begin(); n_it != nedges.end(); n_it++) {
-		    // TODO - check closest point to edge for each segment.  If
+		    cdt_mesh::bedge_seg_t *eseg = (*n_it)->eseg;
+		    double lseg_dist = eseg->e_start->DistanceTo(*eseg->e_end);
+		    ON_NurbsCurve *nc = eseg->nc;
+		    ON_Interval domain(eseg->edge_start, eseg->edge_end);
+		    double t;
+		    ON_NurbsCurve_GetClosestPoint(&t, nc, pmv->p, 0.0, &domain);
+		    ON_3dPoint cep = nc->PointAt(t);
+		    double ecdist = cep.DistanceTo(pmv->p);
+		    // Check closest point to edge for each segment.  If
 		    // closest point is very close to the closest surface
-		    // point, this is an edge split. If it is, we'll need to
-		    // split that edge.  If the point is actually ON the edge
-		    // (to within some close tolerance) we'll be introducing a
-		    // new point on the edge AT that point, and no additional
-		    // work is needed on that point.  Otherwise, it stays
-		    // "live" and feeds into the next step...
-		    double cdist = 0.0;
-		    if (closest_dist < cdist) {
-			closest_dist = cdist;
+		    // point, this is an edge split.
+		    if (ecdist < 0.1*lseg_dist) {
+			// TODO - If the point is actually ON the
+			// edge (to within ON_ZERO_TOLERANCE or the brep edge's
+			// tolerance) we'll be introducing a new point on the
+			// edge AT that point, and no additional work is needed
+			// on that point.  Otherwise, it stays "live" and feeds
+			// into the next step...  need to flag that somehow...
+			if (closest_dist < ecdist) {
+			    closest_dist = ecdist;
+			    closest_edge = eseg;
+			}
+
 		    }
 		}
 		if (closest_edge) {
-		    to_split[closest_edge] = pmv;
+		    esplits[closest_edge].insert(pmv);
 		}
 	    }
 
