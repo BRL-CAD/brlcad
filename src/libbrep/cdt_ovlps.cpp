@@ -1846,7 +1846,14 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 				np->s_cdt = s_cdt1;
 				np->f_id = fmesh1->f_id;
 				closest_surf_pnt(np->p, np->n, *fmesh1, &tp, 2*t1_longest);
-				// TODO - bbox
+				ON_BoundingBox bb(np->p, np->p);
+				bb.m_max.x = bb.m_max.x + t1_longest;
+				bb.m_max.y = bb.m_max.y + t1_longest;
+				bb.m_max.z = bb.m_max.z + t1_longest;
+				bb.m_min.x = bb.m_min.x - t1_longest;
+				bb.m_min.y = bb.m_min.y - t1_longest;
+				bb.m_min.z = bb.m_min.z - t1_longest;
+				np->bb = bb;
 				face_npnts[fmesh1].insert(np);
 			    }
 			}
@@ -1861,7 +1868,14 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 				np->s_cdt = s_cdt2;
 				np->f_id = fmesh2->f_id;
 				closest_surf_pnt(np->p, np->n, *fmesh2, &tp, 2*t2_longest);
-				// TODO - bbox
+				ON_BoundingBox bb(np->p, np->p);
+				bb.m_max.x = bb.m_max.x + t2_longest;
+				bb.m_max.y = bb.m_max.y + t2_longest;
+				bb.m_max.z = bb.m_max.z + t2_longest;
+				bb.m_min.x = bb.m_min.x - t2_longest;
+				bb.m_min.y = bb.m_min.y - t2_longest;
+				bb.m_min.z = bb.m_min.z - t2_longest;
+				np->bb = bb;
 				face_npnts[fmesh2].insert(np);
 			    }
 			}
@@ -1879,24 +1893,52 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
     }
     std::map<cdt_mesh::cdt_mesh_t *, std::set<struct p_mvert_info *>>::iterator f_it;
     for (f_it = face_npnts.begin(); f_it != face_npnts.end(); f_it++) {
-	// Need bbox for p - probably should make an mvert above and assign the
-	// bbox based on the intersecting triangle size, which will give use
-	// some idea how big a box we need around the point to intersect faces
-	// on the mesh.
+	cdt_mesh::cdt_mesh_t *fmesh = f_it->first;
+	struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh->p_cdt;
+	std::set<struct p_mvert_info *>::iterator pm_it;
+	std::map<cdt_mesh::cpolyedge_t *, struct p_mvert_info *> to_split;
+	for (pm_it = f_it->second.begin(); pm_it != f_it->second.end(); pm_it++) {
+	    struct p_mvert_info *pmv = *pm_it;
+	    double fMin[3]; double fMax[3];
+	    fMin[0] = pmv->bb.Min().x;
+	    fMin[1] = pmv->bb.Min().y;
+	    fMin[2] = pmv->bb.Min().z;
+	    fMax[0] = pmv->bb.Max().x;
+	    fMax[1] = pmv->bb.Max().y;
+	    fMax[2] = pmv->bb.Max().z;
+	    std::set<cdt_mesh::cpolyedge_t *> nedges;
+	    size_t nhits = s_cdt->face_rtrees_3d[fmesh->f_id].Search(fMin, fMax, NearEdgesCallback, (void *)&nedges);
 
-	// TODO - do a search of 3D brep face edges to see if the new point is
-	// near any of them.  If it is, we'll need to split that edge.  If the
-	// point is actually ON the edge (to within some close tolerance) we'll
-	// be introducing a new point on the edge AT that point, and no additional
-	// work is needed on that point.  Otherwise, it stays "live" and feeds into
-	// the next step...
+	    if (nhits) {
+		std::set<cdt_mesh::cpolyedge_t *>::iterator n_it;
+		cdt_mesh::cpolyedge_t *closest_edge = NULL;
+		double closest_dist = DBL_MAX;
+		for (n_it = nedges.begin(); n_it != nedges.end(); n_it++) {
+		    // TODO - check closest point to edge for each segment.  If
+		    // closest point is very close to the closest surface
+		    // point, this is an edge split. If it is, we'll need to
+		    // split that edge.  If the point is actually ON the edge
+		    // (to within some close tolerance) we'll be introducing a
+		    // new point on the edge AT that point, and no additional
+		    // work is needed on that point.  Otherwise, it stays
+		    // "live" and feeds into the next step...
+		    double cdist = 0.0;
+		    if (closest_dist < cdist) {
+			closest_dist = cdist;
+		    }
+		}
+		if (closest_edge) {
+		    to_split[closest_edge] = pmv;
+		}
+	    }
 
-	// TODO -  after the edge pass, search face triangle Rtree for closest
-	// triangles, and find the closest one where it can produce a valid
-	// projection into the triangle plane.  Associate the point with the
-	// triangle.  The set of points associated with the triangles will then
-	// be characterized, and as appropriate indiviual or pairs of triangles
-	// will be re-tessellated and replacted to incorporate the new points.
+	    // TODO -  after the edge pass, search face triangle Rtree for closest
+	    // triangles, and find the closest one where it can produce a valid
+	    // projection into the triangle plane.  Associate the point with the
+	    // triangle.  The set of points associated with the triangles will then
+	    // be characterized, and as appropriate indiviual or pairs of triangles
+	    // will be re-tessellated and replacted to incorporate the new points.
+	}
     }
 
 #if 0
