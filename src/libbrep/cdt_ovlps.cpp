@@ -1981,7 +1981,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	std::set<struct p_mvert_info *>::iterator pm_it;
 	for (pm_it = es_it->second.begin(); pm_it != es_it->second.end(); pm_it++) {
 	    cdt_mesh::bedge_seg_t *closest_edge = NULL;
-	    double split_t;
+	    double split_t = -1.0;
 	    double closest_dist = DBL_MAX;
 	    std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
 	    for (e_it = asegs.begin(); e_it != asegs.end(); e_it++) {
@@ -1999,10 +1999,12 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 		}
 	    }
 
-	    asegs.erase(closest_edge);
-	    std::set<cdt_mesh::bedge_seg_t *> nsegs;
-	    ovlp_split_edge(&nsegs, closest_edge, split_t);
-	    asegs.insert(nsegs.begin(), nsegs.end());
+	    if (closest_edge) {
+		asegs.erase(closest_edge);
+		std::set<cdt_mesh::bedge_seg_t *> nsegs;
+		ovlp_split_edge(&nsegs, closest_edge, split_t);
+		asegs.insert(nsegs.begin(), nsegs.end());
+	    }
 	}
     }
 
