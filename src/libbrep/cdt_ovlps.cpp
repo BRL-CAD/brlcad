@@ -1871,14 +1871,18 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 		    // segment length, we need to split the edge curve to keep
 		    // its approximating polyline as far as possible from the
 		    // new point.
-		    if (ecdist < 0.1*lseg_dist) {
+		    //
+		    if (ecdist < 0.2*lseg_dist) {
 			double etol = s_cdt->brep->m_E[eseg->edge_ind].m_tolerance;
 			etol = (etol > 0) ? etol : ON_ZERO_TOLERANCE;
-			std::cout << "etol,closest_dist,ecdist: " << etol << "," << closest_dist << "," << ecdist << "\n";
+			std::cout << "etol,closest_dist,ecdist,lseg_dist: " << etol << "," << closest_dist << "," << ecdist << "," << lseg_dist << "\n";
 			if (closest_dist > ecdist) {
 			    closest_dist = ecdist;
 			    closest_edge = eseg;
-			    if (ecdist <= etol) {
+			    // TODO - probably should base this on what kind of triangle would
+			    // get created if we don't settle for only splitting the edge, if that's
+			    // practical...
+			    if (ecdist <= etol || ecdist < 0.02*lseg_dist) {
 				// If the point is actually ON the edge (to
 				// within ON_ZERO_TOLERANCE or the brep edge's
 				// tolerance) we'll be introducing a new point
@@ -1886,6 +1890,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 				// work is needed on that point.  If that's the
 				// case set the flag, otherwise, the point
 				// stays "live" and feeds into the next step.
+				std::cout << "edge split only\n";
 				pmv->edge_split_only = true;
 			    }
 			}
