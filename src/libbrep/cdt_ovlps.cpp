@@ -669,7 +669,7 @@ characterize_avgpnt(
 	    if (NEAR_EQUAL(t_dedges[i], t_demin, ON_ZERO_TOLERANCE)) {;
 		int j = (i < 2) ? i+1 : 0;
 		struct cdt_mesh::uedge_t ue(t.v[i], t.v[j]);
-		if (fmesh->brep_edges.find(ue) != fmesh->brep_edges.find(ue)) {
+		if (fmesh->brep_edges.find(ue) != fmesh->brep_edges.end()) {
 		    t_close_to_face_edge = true;
 		    break;
 		}
@@ -1874,7 +1874,8 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 		    if (ecdist < 0.1*lseg_dist) {
 			double etol = s_cdt->brep->m_E[eseg->edge_ind].m_tolerance;
 			etol = (etol > 0) ? etol : ON_ZERO_TOLERANCE;
-			if (closest_dist < ecdist) {
+			std::cout << "etol,closest_dist,ecdist: " << etol << "," << closest_dist << "," << ecdist << "\n";
+			if (closest_dist > ecdist) {
 			    closest_dist = ecdist;
 			    closest_edge = eseg;
 			    if (ecdist <= etol) {
@@ -1923,7 +1924,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 		ON_NurbsCurve_GetClosestPoint(&t, nc, (*pm_it)->p, 0.0, &domain);
 		ON_3dPoint cep = nc->PointAt(t);
 		double ecdist = cep.DistanceTo((*pm_it)->p);
-		if (closest_dist < ecdist) {
+		if (closest_dist > ecdist) {
 		    closest_dist = ecdist;
 		    closest_edge = eseg;
 		    split_t = t;
@@ -1934,6 +1935,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 		asegs.erase(closest_edge);
 		std::set<cdt_mesh::bedge_seg_t *> nsegs;
 		ovlp_split_edge(&nsegs, closest_edge, split_t);
+		std::cout << "edge split\n";
 		asegs.insert(nsegs.begin(), nsegs.end());
 	    }
 	}
