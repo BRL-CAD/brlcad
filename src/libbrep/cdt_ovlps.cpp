@@ -544,7 +544,8 @@ bool
 projects_inside_tri(
 	cdt_mesh::cdt_mesh_t *fmesh,
        	cdt_mesh::triangle_t &t,
-	ON_3dPoint &sp)
+	ON_3dPoint &sp,
+	double *dist)
 {
     ON_3dVector tdir = fmesh->tnorm(t);
     ON_3dPoint pcenter(*fmesh->pnts[t.v[0]]);
@@ -553,6 +554,9 @@ projects_inside_tri(
     }
     pcenter = pcenter / 3;
     ON_Plane tplane(pcenter, tdir);
+
+    (*dist) = sp.DistanceTo(tplane.ClosestPointTo(sp));
+
     cdt_mesh::cpolygon_t polygon;
     for (int i = 0; i < 3; i++) {
 	double u, v;
@@ -592,7 +596,7 @@ projects_inside_tri(
  *                    /    /\    \
  *                   /    /  \    \
  *                  /    /    \    \
- *                 /    /      \    \
+ *             4   /    /      \    \  4
  *                / 2  /        \ 2  \
  *               /    /          \    \
  *              /    /            \    \
@@ -603,168 +607,93 @@ projects_inside_tri(
  *         /33333______________________33333\
  *        /33333            2           33333\
  *       --------------------------------------
+ *          
+ *                          4
+ *
+ *  If a type 2 point is also near a brep face edge, it is
+ *  elevated to type 5.
  */
 // For the moment, we're defining the distance away
 // from the vert and edge structures as .1 * the
 // shortest triangle edge.
 int
 characterize_avgpnt(
-	int *t1_type, int *t2_type,
-       	cdt_mesh::triangle_t &t1,
-	cdt_mesh::cdt_mesh_t *fmesh1,
-	cdt_mesh::triangle_t &t2,
-	cdt_mesh::cdt_mesh_t *fmesh2,
-	ON_3dPoint &sp1,
-	ON_3dPoint &sp2
+	cdt_mesh::triangle_t &t,
+	cdt_mesh::cdt_mesh_t *fmesh,
+	ON_3dPoint &sp,
+	double *dist
 	)
 {
-    double t1_se = tri_shortest_edge(fmesh1, t1.ind);
-    double t2_se = tri_shortest_edge(fmesh2, t2.ind);
+    double t_se = tri_shortest_edge(fmesh, t.ind);
 
-    // Make sure both points project to points inside their respective
-    // triangles - if they don't, we've got a problem
-    bool t1_projects = projects_inside_tri(fmesh1, t1, sp1);
-    bool t2_projects = projects_inside_tri(fmesh2, t2, sp2);
+    // Make sure the point projects inside the triangle - if it doesn't
+    // it's a category 4 point
+    bool t_projects = projects_inside_tri(fmesh, t, sp, dist);
 
-    if (!t1_projects) {
-	std::cout << "ERROR - t1 closest point doesn't project into triangle!\n";
-    }
-
-    if (!t2_projects) {
-	std::cout << "ERROR - t2 closest point doesn't project into triangle!\n";
-    }
-
-
-    ON_3dPoint t1_pnts[3];
-    ON_3dPoint t2_pnts[3];
-    ON_Line t1_edges[3];
-    ON_Line t2_edges[3];
-    for (int i = 0; i < 3; i++) {
-	t1_pnts[i] = *fmesh1->pnts[t1.v[i]];
-	t2_pnts[i] = *fmesh2->pnts[t2.v[i]];
-    }
-    for (int i = 0; i < 3; i++) {
-	int j = (i < 2) ? i+1 : 0;
-	t1_edges[i] = ON_Line(t1_pnts[i], t1_pnts[j]);
-	t2_edges[i] = ON_Line(t2_pnts[i], t2_pnts[j]);
-    }
-
-    double t1_dpnts[3] = {DBL_MAX, DBL_MAX, DBL_MAX};
-    double t2_dpnts[3] = {DBL_MAX, DBL_MAX, DBL_MAX};
-    double t1_dedges[3] = {DBL_MAX, DBL_MAX, DBL_MAX};
-    double t2_dedges[3] = {DBL_MAX, DBL_MAX, DBL_MAX};
-
-    for (int i = 0; i < 3; i++) {
-	t1_dpnts[i] = t1_pnts[i].DistanceTo(sp1);
-	t2_dpnts[i] = t2_pnts[i].DistanceTo(sp2);
-	t1_dedges[i] = sp1.DistanceTo(t1_edges[i].ClosestPointTo(sp1));
-	t2_dedges[i] = sp2.DistanceTo(t2_edges[i].ClosestPointTo(sp2));
-    }
-
-    double t1_dpmin = DBL_MAX;
-    double t2_dpmin = DBL_MAX;
-    double t1_demin = DBL_MAX;
-    double t2_demin = DBL_MAX;
-
-    for (int i = 0; i < 3; i++) {
-	t1_dpmin = (t1_dpnts[i] < t1_dpmin) ? t1_dpnts[i] : t1_dpmin;
-	t2_dpmin = (t2_dpnts[i] < t2_dpmin) ? t2_dpnts[i] : t2_dpmin;
-	t1_demin = (t1_dedges[i] < t1_demin) ? t1_dedges[i] : t1_demin;
-	t2_demin = (t2_dedges[i] < t2_demin) ? t2_dedges[i] : t2_demin;
-    }
-
-    bool t1_close_to_vert = (t1_dpmin < 0.1 * t1_se);
-    bool t2_close_to_vert = (t2_dpmin < 0.1 * t2_se);
-    bool t1_close_to_edge = (t1_demin < 0.1 * t1_se);
-    bool t2_close_to_edge = (t2_demin < 0.1 * t2_se);
-
-    bool t1_close_to_face_edge = false;
-    if (t1_close_to_edge) {
-	for (int i = 0; i < 3; i++) {
-	    if (NEAR_EQUAL(t1_dedges[i], t1_demin, ON_ZERO_TOLERANCE)) {;
-		int j = (i < 2) ? i+1 : 0;
-		struct cdt_mesh::uedge_t ue(t1.v[i], t1.v[j]);
-		if (fmesh1->brep_edges.find(ue) != fmesh1->brep_edges.find(ue)) {
-		    t1_close_to_face_edge = true;
-		}
-	    }
-	}
-    }
-    bool t2_close_to_face_edge = false;
-    if (t2_close_to_edge) {
-	for (int i = 0; i < 3; i++) {
-	    if (NEAR_EQUAL(t2_dedges[i], t2_demin, ON_ZERO_TOLERANCE)) {;
-		int j = (i < 2) ? i+1 : 0;
-		struct cdt_mesh::uedge_t ue(t2.v[i], t2.v[j]);
-		if (fmesh2->brep_edges.find(ue) != fmesh2->brep_edges.find(ue)) {
-		    t2_close_to_face_edge = true;
-		}
-	    }
-	}
-    }
-
-    if (t1_close_to_vert) {
-	(*t1_type) = 3;
-    }
-    if (t2_close_to_vert) {
-	(*t2_type) = 3;
-    }
-
-    if (!t1_close_to_vert && t1_close_to_edge) {
-	(*t1_type) = 2;
-    }
-    if (!t2_close_to_vert && t2_close_to_edge) {
-	(*t2_type) = 2;
-    }
-
-    if (!t1_close_to_vert && !t1_close_to_edge) {
-	(*t1_type) = 1;
-    }
-    if (!t2_close_to_vert && !t2_close_to_edge) {
-	(*t2_type) = 1;
-    }
-
-
-    if ((*t1_type) == 1 && (*t2_type) == 1) {
-	return 1;
-    }
-
-    if (((*t1_type) == 1 && (*t2_type) == 2) ||  ((*t1_type) == 2 && (*t2_type) == 1)) {
-	if (t1_close_to_face_edge) {
-	    std::cout << "t1 close to face edge\n";
-	}
-	if (t2_close_to_face_edge) {
-	    std::cout << "t2 close to face edge\n";
-	}
-	return 2;
-    }
-
-    if (((*t1_type) == 2 && (*t2_type) == 2)) {
-	if (t1_close_to_face_edge) {
-	    std::cout << "t1 close to face edge\n";
-	}
-	if (t2_close_to_face_edge) {
-	    std::cout << "t2 close to face edge\n";
-	}
-	return 3;
-    }
-
-    if (((*t1_type) == 1 && (*t2_type) == 3) ||  ((*t1_type) == 3 && (*t2_type) == 1)) {
+    if (!t_projects) {
 	return 4;
     }
 
-    if (((*t1_type) == 2 && (*t2_type) == 3) ||  ((*t1_type) == 3 && (*t2_type) == 2)) {
-	return 5;
+    ON_3dPoint t_pnts[3];
+    ON_Line t_edges[3];
+    for (int i = 0; i < 3; i++) {
+	t_pnts[i] = *fmesh->pnts[t.v[i]];
+    }
+    for (int i = 0; i < 3; i++) {
+	int j = (i < 2) ? i+1 : 0;
+	t_edges[i] = ON_Line(t_pnts[i], t_pnts[j]);
     }
 
-    if ((*t1_type) == 3 && (*t2_type) == 3) {
-	std::cout << "CASE 6 distances:\n";
-	std::cout << "t1 dist: " << t1_dpmin << "\n";
-	std::cout << "t2 dist: " << t2_dpmin << "\n";
-	return 6;
+    double t_dpnts[3] = {DBL_MAX, DBL_MAX, DBL_MAX};
+    double t_dedges[3] = {DBL_MAX, DBL_MAX, DBL_MAX};
+
+    for (int i = 0; i < 3; i++) {
+	t_dpnts[i] = t_pnts[i].DistanceTo(sp);
+	t_dedges[i] = sp.DistanceTo(t_edges[i].ClosestPointTo(sp));
     }
 
-    return 0;
+    double t_dpmin = DBL_MAX;
+    double t_demin = DBL_MAX;
+
+    for (int i = 0; i < 3; i++) {
+	t_dpmin = (t_dpnts[i] < t_dpmin) ? t_dpnts[i] : t_dpmin;
+	t_demin = (t_dedges[i] < t_demin) ? t_dedges[i] : t_demin;
+    }
+
+    bool t_close_to_vert = (t_dpmin < 0.1 * t_se);
+    bool t_close_to_edge = (t_demin < 0.1 * t_se);
+
+    bool t_close_to_face_edge = false;
+    if (t_close_to_edge) {
+	for (int i = 0; i < 3; i++) {
+	    if (NEAR_EQUAL(t_dedges[i], t_demin, ON_ZERO_TOLERANCE)) {;
+		int j = (i < 2) ? i+1 : 0;
+		struct cdt_mesh::uedge_t ue(t.v[i], t.v[j]);
+		if (fmesh->brep_edges.find(ue) != fmesh->brep_edges.find(ue)) {
+		    t_close_to_face_edge = true;
+		    break;
+		}
+	    }
+	}
+    }
+
+    int rtype = 0;
+
+    if (t_close_to_vert) {
+	rtype = 3;
+    }
+    if (!t_close_to_vert && t_close_to_edge) {
+	rtype = 2;
+    }
+    if (!t_close_to_vert && !t_close_to_edge) {
+	rtype = 1;
+    }
+
+    if (rtype == 2 && t_close_to_face_edge) {
+	rtype = 5;
+    }
+
+    return rtype;
 }
 
 
@@ -1938,21 +1867,24 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 		    ON_3dPoint cep = nc->PointAt(t);
 		    double ecdist = cep.DistanceTo(pmv->p);
 		    // Check closest point to edge for each segment.  If
-		    // closest point is very close to the closest surface
-		    // point, this is an edge split.
+		    // closest edge point is close to the edge per the line
+		    // segment length, we need to split the edge curve to keep
+		    // its approximating polyline as far as possible from the
+		    // new point.
 		    if (ecdist < 0.1*lseg_dist) {
 			double etol = s_cdt->brep->m_E[eseg->edge_ind].m_tolerance;
 			etol = (etol > 0) ? etol : ON_ZERO_TOLERANCE;
-			// TODO - If the point is actually ON the
-			// edge (to within ON_ZERO_TOLERANCE or the brep edge's
-			// tolerance) we'll be introducing a new point on the
-			// edge AT that point, and no additional work is needed
-			// on that point.  Otherwise, it stays "live" and feeds
-			// into the next step...  need to flag that somehow...
 			if (closest_dist < ecdist) {
 			    closest_dist = ecdist;
 			    closest_edge = eseg;
 			    if (ecdist <= etol) {
+				// If the point is actually ON the edge (to
+				// within ON_ZERO_TOLERANCE or the brep edge's
+				// tolerance) we'll be introducing a new point
+				// on the edge AT that point, and no additional
+				// work is needed on that point.  If that's the
+				// case set the flag, otherwise, the point
+				// stays "live" and feeds into the next step.
 				pmv->edge_split_only = true;
 			    }
 			}
@@ -1970,14 +1902,13 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	std::set<cdt_mesh::bedge_seg_t *> asegs;
 	asegs.insert(es_it->first);
 	// If we have multiple p_mvert points associated with this edge, we'll need
-	// multiple splits.  Probably will have to work it with a queue set -
-	// queue up the points and after each split remove the old eseg from
-	// the set, add the new ones, grab the next point, and find the new
-	// eseg from the split that's closest to the next point.  Split it, repeat until
-	// all points have a split.
+	// multiple splits on that edge - or, more precisely, we'll need to identify
+	// the closest of the new edges that replaced the original after the first split
+	// and split that one.
 	//
-	// This is where p_mverts graduate to real mverts in the mesh - make sure we
-	// bookkeep accordingly
+	// We initialize the active segments set with the initial segment, and then
+	// maintain the set with all unsplit segments that have replaced the original
+	// edge segment or one of its replacements.
 	std::set<struct p_mvert_info *>::iterator pm_it;
 	for (pm_it = es_it->second.begin(); pm_it != es_it->second.end(); pm_it++) {
 	    cdt_mesh::bedge_seg_t *closest_edge = NULL;
@@ -2031,6 +1962,38 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	    fMax[2] = (*pm_it)->bb.Max().z;
 	    std::set<size_t> near_faces;
 	    fmesh->tris_tree.Search(fMin, fMax, NearFacesCallback, (void *)&near_faces);
+	    std::set<size_t>::iterator n_it;
+	    long close[3] = {-1};
+	    double cdist[3] = {DBL_MAX};
+	    for (n_it = near_faces.begin(); n_it != near_faces.end(); n_it++) {
+		double dist;
+		cdt_mesh::triangle_t tri = fmesh->tris_vect[*n_it];
+		int ptype = characterize_avgpnt(tri, fmesh, (*pm_it)->p, &dist);
+		std::cout << "Point/tri characterization: " << ptype << "\n";
+		if (ptype != 1) {
+		    // TODO - When we've got points close to multiple triangles,
+		    // we need to build up the set of the two or three closest
+		    // so we know which triangles to use for a re-tessellation.
+		    bool assigned = false;
+		    for (int i = 0; i < 3; i++) {
+			if (!close[i]) {
+			    close[i] = (*n_it);
+			    cdist[i] = dist;
+			    assigned = true;
+			    break;
+			}
+		    }
+		    if (!assigned) {
+			for (int i = 0; i < 3; i++) {
+			    if (cdist[i] > dist) {
+				close[i] = (*n_it);
+				cdist[i] = dist;
+				break;
+			    }
+			}
+		    }
+		}
+	    }
 	}
     }
 
