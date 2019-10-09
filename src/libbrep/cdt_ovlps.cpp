@@ -596,7 +596,7 @@ projects_inside_tri(
  *                    /    /\    \
  *                   /    /  \    \
  *                  /    /    \    \
- *             4   /    /      \    \  4
+ *             0   /    /      \    \  0
  *                / 2  /        \ 2  \
  *               /    /          \    \
  *              /    /            \    \
@@ -608,10 +608,10 @@ projects_inside_tri(
  *        /33333            2           33333\
  *       --------------------------------------
  *          
- *                          4
+ *                          0
  *
  *  If a type 2 point is also near a brep face edge, it is
- *  elevated to type 5.
+ *  elevated to type 4.
  */
 // For the moment, we're defining the distance away
 // from the vert and edge structures as .1 * the
@@ -631,7 +631,7 @@ characterize_avgpnt(
     bool t_projects = projects_inside_tri(fmesh, t, sp, dist);
 
     if (!t_projects) {
-	return 4;
+	return 0;
     }
 
     ON_3dPoint t_pnts[3];
@@ -690,7 +690,7 @@ characterize_avgpnt(
     }
 
     if (rtype == 2 && t_close_to_face_edge) {
-	rtype = 5;
+	rtype = 4;
     }
 
     return rtype;
@@ -1965,34 +1965,37 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	    std::set<size_t>::iterator n_it;
 	    long close[3] = {-1};
 	    double cdist[3] = {DBL_MAX};
+	    int point_type = 0;
 	    for (n_it = near_faces.begin(); n_it != near_faces.end(); n_it++) {
 		double dist;
 		cdt_mesh::triangle_t tri = fmesh->tris_vect[*n_it];
 		int ptype = characterize_avgpnt(tri, fmesh, (*pm_it)->p, &dist);
-		std::cout << "Point/tri characterization: " << ptype << "\n";
-		if (ptype != 1) {
-		    // TODO - When we've got points close to multiple triangles,
-		    // we need to build up the set of the two or three closest
-		    // so we know which triangles to use for a re-tessellation.
-		    bool assigned = false;
+		// When we've got points close to multiple triangles,
+		// we need to build up the set of the two or three closest
+		// so we know which triangles to use for a re-tessellation.
+		bool assigned = false;
+		for (int i = 0; i < 3; i++) {
+		    if (!close[i]) {
+			close[i] = (*n_it);
+			cdist[i] = dist;
+			assigned = true;
+			break;
+		    }
+		}
+		if (!assigned) {
 		    for (int i = 0; i < 3; i++) {
-			if (!close[i]) {
+			if (cdist[i] > dist) {
 			    close[i] = (*n_it);
 			    cdist[i] = dist;
-			    assigned = true;
 			    break;
 			}
 		    }
-		    if (!assigned) {
-			for (int i = 0; i < 3; i++) {
-			    if (cdist[i] > dist) {
-				close[i] = (*n_it);
-				cdist[i] = dist;
-				break;
-			    }
-			}
-		    }
 		}
+		if (ptype > point_type) {
+		    point_type = ptype;
+		    std::cout << "Point/tri characterization: " << ptype << "\n";
+		}
+
 	    }
 	}
     }
