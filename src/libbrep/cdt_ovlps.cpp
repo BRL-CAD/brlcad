@@ -1882,6 +1882,10 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 			    // TODO - probably should base this on what kind of triangle would
 			    // get created if we don't settle for only splitting the edge, if that's
 			    // practical...
+			    //
+			    // Alternately (and maybe better), can we adjust
+			    // the intruding vertex to use the point that will
+			    // come from the split?
 			    if (ecdist <= etol || ecdist < 0.02*lseg_dist) {
 				// If the point is actually ON the edge (to
 				// within ON_ZERO_TOLERANCE or the brep edge's
