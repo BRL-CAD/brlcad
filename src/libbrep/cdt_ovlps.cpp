@@ -1707,7 +1707,7 @@ struct p_mvert_info {
     ON_3dPoint p;
     ON_3dVector n;
     ON_BoundingBox bb;
-    bool edge_split_only;
+    bool deactivate;
 };
 
 int
@@ -1786,7 +1786,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 				struct p_mvert_info *np = new struct p_mvert_info;
 				np->s_cdt = s_cdt1;
 				np->f_id = fmesh1->f_id;
-				np->edge_split_only = false;
+				np->deactivate = false;
 				closest_surf_pnt(np->p, np->n, *fmesh1, &tp, 2*t1_longest);
 				ON_BoundingBox bb(np->p, np->p);
 				bb.m_max.x = bb.m_max.x + t1_longest;
@@ -1866,39 +1866,68 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 		    ON_NurbsCurve_GetClosestPoint(&t, nc, pmv->p, 0.0, &domain);
 		    ON_3dPoint cep = nc->PointAt(t);
 		    double ecdist = cep.DistanceTo(pmv->p);
-		    // Check closest point to edge for each segment.  If
-		    // closest edge point is close to the edge per the line
-		    // segment length, we need to split the edge curve to keep
-		    // its approximating polyline as far as possible from the
-		    // new point.
-		    //
-		    if (ecdist < 0.2*lseg_dist) {
-			double etol = s_cdt->brep->m_E[eseg->edge_ind].m_tolerance;
-			etol = (etol > 0) ? etol : ON_ZERO_TOLERANCE;
-			std::cout << "etol,closest_dist,ecdist,lseg_dist: " << etol << "," << closest_dist << "," << ecdist << "," << lseg_dist << "\n";
-			if (closest_dist > ecdist) {
-			    closest_dist = ecdist;
-			    closest_edge = eseg;
-			    // TODO - probably should base this on what kind of triangle would
-			    // get created if we don't settle for only splitting the edge, if that's
-			    // practical...
-			    //
-			    // Alternately (and maybe better), can we adjust
-			    // the intruding vertex to use the point that will
-			    // come from the split?
-			    if (ecdist <= etol || ecdist < 0.02*lseg_dist) {
-				// If the point is actually ON the edge (to
-				// within ON_ZERO_TOLERANCE or the brep edge's
-				// tolerance) we'll be introducing a new point
-				// on the edge AT that point, and no additional
-				// work is needed on that point.  If that's the
-				// case set the flag, otherwise, the point
-				// stays "live" and feeds into the next step.
-				std::cout << "edge split only\n";
-				pmv->edge_split_only = true;
-			    }
-			}
+		    double epdist1 = eseg->e_start->DistanceTo(cep);
+		    double epdist2 = eseg->e_end->DistanceTo(cep);
+		    double lseg_check = 0.05 * lseg_dist;
+		    if (epdist1 > lseg_check && epdist2 > lseg_check) {
+			// If the point is not close to a start/end point on the edge then split the edge.
+			// Check closest point to edge for each segment.  If
+			// closest edge point is close to the edge per the line
+			// segment length, we need to split the edge curve to keep
+			// its approximating polyline as far as possible from the
+			// new point.
+			//
+			if (ecdist < 0.2*lseg_dist) {
+			    double etol = s_cdt->brep->m_E[eseg->edge_ind].m_tolerance;
+			    etol = (etol > 0) ? etol : ON_ZERO_TOLERANCE;
+			    std::cout << "etol,closest_dist,ecdist,lseg_dist: " << etol << "," << closest_dist << "," << ecdist << "," << lseg_dist << "\n";
 
+			    if (closest_dist > ecdist) {
+				closest_dist = ecdist;
+				closest_edge = eseg;
+				// TODO - probably should base this on what kind of triangle would
+				// get created if we don't settle for only splitting the edge, if that's
+				// practical...
+				//
+				// Alternately (and maybe better), can we adjust
+				// the intruding vertex to use the point that will
+				// come from the split?
+				FILE* plot_file;
+				if (ecdist <= etol || ecdist < 0.02*lseg_dist) {
+				    // If the point is actually ON the edge (to
+				    // within ON_ZERO_TOLERANCE or the brep edge's
+				    // tolerance) we'll be introducing a new point
+				    // on the edge AT that point, and no additional
+				    // work is needed on that point.  If that's the
+				    // case set the flag, otherwise, the point
+				    // stays "live" and feeds into the next step.
+				    std::cout << "edge split only\n";
+				    pmv->deactivate = true;
+				    plot_file = fopen("edge_mvert_eonly.plot3", "w");
+				} else {
+				    plot_file = fopen("edge_mvert.plot3", "w");
+				}
+				pl_color(plot_file, 0, 0, 255);
+				point_t bnp1, bnp2;
+				VSET(bnp1, eseg->e_start->x, eseg->e_start->y, eseg->e_start->z);
+				VSET(bnp2, eseg->e_end->x, eseg->e_end->y, eseg->e_end->z);
+				pdv_3move(plot_file, bnp1);
+				pdv_3cont(plot_file, bnp2);
+				pl_color(plot_file, 255, 0, 0);
+				plot_pnt_3d(plot_file, &cep, 0.03*lseg_dist, 0);
+				pl_color(plot_file, 0, 255, 0);
+				plot_pnt_3d(plot_file, &pmv->p, 0.03*lseg_dist, 0);
+				fclose(plot_file);
+			    }
+
+			}
+		    } else {
+#if 0
+			std::cout << "too close to existing edge point...\n";
+			std::cout << "closest_dist,ecdist,lseg_dist: " << closest_dist << "," << ecdist << "," << lseg_dist << "\n";
+			std::cout << "d1: " << epdist1 << ", d2: " << epdist2 << ", lseg_check: " << lseg_check << "\n";
+#endif
+			pmv->deactivate = true;
 		    }
 		}
 		if (closest_edge) {
@@ -1956,7 +1985,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	std::set<struct p_mvert_info *>::iterator pm_it;
 	for (pm_it = f_it->second.begin(); pm_it != f_it->second.end(); pm_it++) {
 
-	    if ((*pm_it)->edge_split_only) continue;
+	    if ((*pm_it)->deactivate) continue;
 	    // TODO -  after the edge pass, search face triangle Rtree for closest
 	    // triangles, and find the closest one where it can produce a valid
 	    // projection into the triangle plane.  Associate the point with the
