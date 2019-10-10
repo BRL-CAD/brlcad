@@ -118,7 +118,14 @@
    </literallayout>
 
     <para>
-      The table is typically created in an external file using a text editor.
+      The table is typically created in an external file using a text editor,
+      but may also be built up within MGED directly using the <command>mater -d set</command> command.
+      To import an existing density file into the database, use the <command>mater -d import</command>
+      command:
+    </para>
+
+    <para>
+      <prompt>mged&gt; </prompt><userinput>mater -d import <replaceable>filename</replaceable></userinput>
     </para>
 
     <para>
@@ -133,19 +140,6 @@
       material index set to something other than the default.
     </para>
 
-    <para>
-      The user will typically want to run <command>gqa</command> and verify the results using the
-      <option>-f</option> option (see below) before importing the table into the database.
-      For example, if a material index is left out of the table, it is easier to rectify
-      the situation using the external file. Once the table has been verified as correct
-      and complete, it is imported to the database as the binary object
-      <emphasis remap="B" role="bold">_DENSITIES</emphasis> .
-      To import the text file into the database, the following command is used:
-    </para>
-
-    <para>
-      <prompt>mged&gt; </prompt><userinput>bo -i u c _DENSITIES <replaceable>filename</replaceable></userinput>
-    </para>
   </refsection>
 
   <refsection xml:id="geometry_error_detection"><title>GEOMETRY ERROR DETECTION</title>
