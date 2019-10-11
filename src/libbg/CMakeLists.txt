@@ -19,6 +19,7 @@ set(LIBBG_SOURCES
   polygon_triangulate.cpp
   polygon_point_in.c
   spsr.c
+  tri_pt.c
   tri_ray.c
   tri_tri.c
   trimesh.cpp

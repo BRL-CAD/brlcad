@@ -43,6 +43,7 @@ set(embedded_licenses
   tcl.txt
   tinythread.txt
   tkcon.txt
+  tri_pt.txt
   uce_dirent.txt
   x24.txt
   y2038.txt

@@ -4,6 +4,7 @@ set(bg_headers
   obr.h
   polygon.h
   spsr.h
+  tri_pt.h
   tri_ray.h
   tri_tri.h
   trimesh.h
