@@ -199,6 +199,7 @@
 #include <queue>
 #include <numeric>
 #include "bg/chull.h"
+#include "bg/tri_pt.h"
 #include "bg/tri_tri.h"
 #include "./cdt.h"
 
@@ -559,8 +560,8 @@ bool
 projects_inside_tri(
 	cdt_mesh::cdt_mesh_t *fmesh,
        	cdt_mesh::triangle_t &t,
-	ON_3dPoint &sp,
-	double *dist)
+	ON_3dPoint &sp
+	)
 {
     ON_3dVector tdir = fmesh->tnorm(t);
     ON_3dPoint pcenter(*fmesh->pnts[t.v[0]]);
@@ -569,8 +570,6 @@ projects_inside_tri(
     }
     pcenter = pcenter / 3;
     ON_Plane tplane(pcenter, tdir);
-
-    (*dist) = sp.DistanceTo(tplane.ClosestPointTo(sp));
 
     cdt_mesh::cpolygon_t polygon;
     for (int i = 0; i < 3; i++) {
@@ -622,7 +621,7 @@ projects_inside_tri(
  *         /33333______________________33333\
  *        /33333            2           33333\
  *       --------------------------------------
- *          
+ *
  *                          0
  *
  *  If a type 2 point is also near a brep face edge, it is
@@ -641,9 +640,17 @@ characterize_avgpnt(
 {
     double t_se = tri_shortest_edge(fmesh, t.ind);
 
+    // Figure out how far away the triangle is from the point in question
+    point_t tp, v0, v1, v2;
+    VSET(tp, sp.x, sp.y, sp.z);
+    VSET(v0, fmesh->pnts[t.v[0]]->x, fmesh->pnts[t.v[0]]->y, fmesh->pnts[t.v[0]]->z);
+    VSET(v1, fmesh->pnts[t.v[1]]->x, fmesh->pnts[t.v[1]]->y, fmesh->pnts[t.v[1]]->z);
+    VSET(v2, fmesh->pnts[t.v[2]]->x, fmesh->pnts[t.v[2]]->y, fmesh->pnts[t.v[2]]->z);
+    (*dist) = bg_tri_pt_dist(tp, v0, v1, v2);
+
     // Make sure the point projects inside the triangle - if it doesn't
     // it's a category 0 point
-    bool t_projects = projects_inside_tri(fmesh, t, sp, dist);
+    bool t_projects = projects_inside_tri(fmesh, t, sp);
 
     if (!t_projects) {
 	return 0;
