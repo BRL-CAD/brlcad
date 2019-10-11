@@ -1873,6 +1873,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 		    double epdist1 = eseg->e_start->DistanceTo(cep);
 		    double epdist2 = eseg->e_end->DistanceTo(cep);
 		    double lseg_check = 0.05 * lseg_dist;
+		    FILE *plot_file = NULL;
 		    if (epdist1 > lseg_check && epdist2 > lseg_check) {
 			// If the point is not close to a start/end point on the edge then split the edge.
 			// Check closest point to edge for each segment.  If
@@ -1880,7 +1881,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 			// segment length, we need to split the edge curve to keep
 			// its approximating polyline as far as possible from the
 			// new point.
-			//
+
 			if (ecdist < 0.2*lseg_dist) {
 			    double etol = s_cdt->brep->m_E[eseg->edge_ind].m_tolerance;
 			    etol = (etol > 0) ? etol : ON_ZERO_TOLERANCE;
@@ -1896,7 +1897,6 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 				// Alternately (and maybe better), can we adjust
 				// the intruding vertex to use the point that will
 				// come from the split?
-				//FILE* plot_file;
 				if (ecdist <= etol || ecdist < 0.02*lseg_dist) {
 				    // If the point is actually ON the edge (to
 				    // within ON_ZERO_TOLERANCE or the brep edge's
@@ -1907,25 +1907,12 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 				    // stays "live" and feeds into the next step.
 				    pmv->edge_split_only = true;
 				    std::cout << "edge split only\n";
-				    //plot_file = fopen("edge_mvert_eonly.plot3", "w");
+				    plot_file = fopen("edge_mvert_eonly.plot3", "w");
 				} else {
-				    //plot_file = fopen("edge_mvert.plot3", "w");
+				    plot_file = fopen("edge_mvert.plot3", "w");
 				}
-#if 0
-				pl_color(plot_file, 0, 0, 255);
-				point_t bnp1, bnp2;
-				VSET(bnp1, eseg->e_start->x, eseg->e_start->y, eseg->e_start->z);
-				VSET(bnp2, eseg->e_end->x, eseg->e_end->y, eseg->e_end->z);
-				pdv_3move(plot_file, bnp1);
-				pdv_3cont(plot_file, bnp2);
-				pl_color(plot_file, 255, 0, 0);
-				plot_pnt_3d(plot_file, &cep, 0.03*lseg_dist, 0);
-				pl_color(plot_file, 0, 255, 0);
-				plot_pnt_3d(plot_file, &pmv->p, 0.03*lseg_dist, 0);
-				fclose(plot_file);
-#endif
-			    }
 
+			    }
 			}
 		    } else {
 			std::cout << "too close to existing edge point...\n";
@@ -1934,7 +1921,25 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 			std::cout << "d1: " << epdist1 << ", d2: " << epdist2 << ", lseg_check: " << lseg_check << "\n";
 #endif
 			pmv->deactivate = true;
+			plot_file = fopen("edge_mvert_deactivate.plot3", "w");
 		    }
+
+		    if (plot_file) {
+#if 1
+			pl_color(plot_file, 0, 0, 255);
+			point_t bnp1, bnp2;
+			VSET(bnp1, eseg->e_start->x, eseg->e_start->y, eseg->e_start->z);
+			VSET(bnp2, eseg->e_end->x, eseg->e_end->y, eseg->e_end->z);
+			pdv_3move(plot_file, bnp1);
+			pdv_3cont(plot_file, bnp2);
+			pl_color(plot_file, 255, 0, 0);
+			plot_pnt_3d(plot_file, &cep, 0.03*lseg_dist, 0);
+			pl_color(plot_file, 0, 255, 0);
+			plot_pnt_3d(plot_file, &pmv->p, 0.03*lseg_dist, 0);
+#endif
+			fclose(plot_file);
+		    }
+
 		}
 		if (closest_edge) {
 		    esplits[closest_edge].insert(pmv);
