@@ -1845,6 +1845,8 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	std::map<cdt_mesh::cpolyedge_t *, struct p_mvert_info *> to_split;
 	for (pm_it = f_it->second.begin(); pm_it != f_it->second.end(); pm_it++) {
 	    struct p_mvert_info *pmv = *pm_it;
+	    // If this point is already off there's no point in looking again
+	    if (pmv->deactivate) continue;
 	    double fMin[3]; double fMax[3];
 	    fMin[0] = pmv->bb.Min().x;
 	    fMin[1] = pmv->bb.Min().y;
@@ -1991,7 +1993,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	std::set<struct p_mvert_info *>::iterator pm_it;
 	for (pm_it = f_it->second.begin(); pm_it != f_it->second.end(); pm_it++) {
 
-	    if ((*pm_it)->deactivate) continue;
+	    if ((*pm_it)->deactivate || (*pm_it)->edge_split_only) continue;
 	    // TODO -  after the edge pass, search face triangle Rtree for closest
 	    // triangles, and find the closest one where it can produce a valid
 	    // projection into the triangle plane.  Associate the point with the
