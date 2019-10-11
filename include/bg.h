@@ -53,6 +53,7 @@
 #include "bg/chull.h"
 #include "bg/obr.h"
 #include "bg/polygon.h"
+#include "bg/tri_pt.h"
 #include "bg/tri_ray.h"
 #include "bg/tri_tri.h"
 #include "bg/trimesh.h"

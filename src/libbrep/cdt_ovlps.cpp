@@ -349,6 +349,21 @@ plot_ovlps(struct ON_Brep_CDT_State *s_cdt, int fi)
     fclose(plot_file);
 }
 
+class tri_dist {
+public:
+    tri_dist(double idist, long iind) {
+	dist = idist;
+	ind = iind;
+    }
+    bool operator< (const tri_dist &b) const {
+	return dist < b.dist;
+    }
+    double dist;
+    long ind;
+};
+
+
+
 bool
 closest_surf_pnt(ON_3dPoint &s_p, ON_3dVector &s_norm, cdt_mesh::cdt_mesh_t &fmesh, ON_3dPoint *p, double tol)
 {
@@ -627,7 +642,7 @@ characterize_avgpnt(
     double t_se = tri_shortest_edge(fmesh, t.ind);
 
     // Make sure the point projects inside the triangle - if it doesn't
-    // it's a category 4 point
+    // it's a category 0 point
     bool t_projects = projects_inside_tri(fmesh, t, sp, dist);
 
     if (!t_projects) {
@@ -1947,6 +1962,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	    }
 	}
     }
+
     std::map<cdt_mesh::bedge_seg_t *, std::set<struct p_mvert_info *>>::iterator es_it;
     for (es_it = esplits.begin(); es_it != esplits.end(); es_it++) {
 	std::set<cdt_mesh::bedge_seg_t *> asegs;
@@ -2016,13 +2032,18 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	    std::set<size_t> near_faces;
 	    fmesh->tris_tree.Search(fMin, fMax, NearFacesCallback, (void *)&near_faces);
 	    std::set<size_t>::iterator n_it;
-	    long close[3] = {-1};
-	    double cdist[3] = {DBL_MAX};
+	    std::set<tri_dist> atris;
+	    //long close[3] = {-1};
+	    //double cdist[3] = {DBL_MAX};
 	    int point_type = 0;
 	    for (n_it = near_faces.begin(); n_it != near_faces.end(); n_it++) {
 		double dist;
 		cdt_mesh::triangle_t tri = fmesh->tris_vect[*n_it];
 		int ptype = characterize_avgpnt(tri, fmesh, (*pm_it)->p, &dist);
+		if (dist > 0) {
+		    atris.insert(tri_dist(dist, tri.ind));
+		}
+#if 0
 		// When we've got points close to multiple triangles,
 		// we need to build up the set of the two or three closest
 		// so we know which triangles to use for a re-tessellation.
@@ -2044,43 +2065,37 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 			}
 		    }
 		}
+#endif
 		if (ptype > point_type) {
 		    point_type = ptype;
 		    std::cout << "Point/tri characterization: " << ptype << "\n";
 		}
 
 	    }
+
+	    if (point_type == 4) {
+	    // Plot point and neighborhood triangles
+	    FILE *plot = fopen("tri_neighborhood.plot3", "w");
+	    double fpnt_r = -1.0;
+	    int cnt = 0;
+	    std::set<tri_dist>::iterator a_it;
+	    for (a_it = atris.begin(); a_it != atris.end(); a_it++) {
+		//if (cnt > 2) break;
+		if (point_type <= 3 && cnt == 1) break;
+		//if (point_type == 4 && cnt == 2) break;
+		std::cout << "dist: " << a_it->dist << "\n";
+		pl_color(plot, 0, 0, 255);
+		fmesh->plot_tri(fmesh->tris_vect[a_it->ind], NULL, plot, 0, 0, 0);
+		double pnt_r = tri_pnt_r(*fmesh, a_it->ind);
+		fpnt_r = (pnt_r > fpnt_r) ? pnt_r : fpnt_r;
+		cnt++;
+	    }
+	    pl_color(plot, 255, 0, 0);
+	    plot_pnt_3d(plot, &((*pm_it)->p), fpnt_r, 0);
+	    fclose(plot);
+	    }
 	}
     }
-
-#if 0
-    int t1_type, t2_type;
-    int pair_type = characterize_avgpnt(&t1_type, &t2_type, t1, fmesh1, t2, fmesh2, sp1, sp2);
-
-    std::cout << "(" << s_cdt1->name << "-" << fmesh1->f_id << "-" << t1.ind << "_" << s_cdt2->name << "-" << fmesh2->f_id << "-" << t2.ind << "): ";
-    switch (pair_type) {
-	case 1:
-	    std::cout << "CASE 1: Near middle on both triangles.\n";
-	    break;
-	case 2:
-	    std::cout << "CASE 2: Near edge on 1 triangle, middle on second.\n";
-	    break;
-	case 3:
-	    std::cout << "CASE 3: Near edge on both triangles.\n";
-	    break;
-	case 4:
-	    std::cout << "CASE 4: Near vert on 1 triangle, middle on second.\n";
-	    break;
-	case 5:
-	    std::cout << "CASE 5: Near edge on 1 triangle, vert on second.\n";
-	    break;
-	case 6:
-	    std::cout << "CASE 6: Near a vert on both triangles.\n";
-	    break;
-	default:
-	    std::cerr << "Unknown case?: " << pair_type << "," << t1_type << "," << t2_type << "\n";
-    }
-#endif
 
     std::map<std::pair<cdt_mesh::cdt_mesh_t *, long>, std::vector<int>>::iterator pt_it;
     for (pt_it = tris_pnttypes.begin(); pt_it != tris_pnttypes.end(); pt_it++) {
