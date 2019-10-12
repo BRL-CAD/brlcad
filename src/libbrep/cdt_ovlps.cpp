@@ -1989,19 +1989,18 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	    }
 	    //std::cout << "Point/tri characterization: " << point_type << "\n";
 
-	    if (point_type == 4) {
 	    // Plot point and neighborhood triangles
 	    struct bu_vls fname = BU_VLS_INIT_ZERO;
-		bu_vls_sprintf(&fname, "%s_tri_neighborhood_%d.plot3", s_cdt->name, tneigh_cnt);
+	    bu_vls_sprintf(&fname, "%s_tri_neighborhood-type_%d_%d.plot3", s_cdt->name, point_type, tneigh_cnt);
 	    FILE *plot = fopen(bu_vls_cstr(&fname), "w");
 	    bu_vls_free(&fname);
 	    double fpnt_r = -1.0;
 	    int cnt = 0;
 	    std::set<tri_dist>::iterator a_it;
 	    for (a_it = atris.begin(); a_it != atris.end(); a_it++) {
-		    //if (cnt > 2) break;
-		    if (point_type <= 3 && cnt == 1) break;
-		    //if (point_type == 4 && cnt == 2) break;
+		if (point_type == 1 && cnt == 1) break;
+		if ((point_type == 2 || point_type == 4) && cnt == 2) break;
+		if (point_type == 1 && cnt == 3) break;
 		//std::cout << "dist: " << a_it->dist << "\n";
 		pl_color(plot, 0, 0, 255);
 		fmesh->plot_tri(fmesh->tris_vect[a_it->ind], NULL, plot, 0, 0, 0);
@@ -2014,7 +2013,6 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	    fclose(plot);
 	    tneigh_cnt++;
 	}
-    }
     }
 
 
