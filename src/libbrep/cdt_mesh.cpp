@@ -970,7 +970,7 @@ void cpolygon_t::cdt_inputs_print(const char *filename)
 }
 
 bool
-cpolygon_t::cdt()
+cpolygon_t::cdt(triangulation_t ttype)
 {
     if (!closed()) return false;
 
@@ -1036,7 +1036,7 @@ cpolygon_t::cdt()
     bool result = (bool)!bg_nested_polygon_triangulate(&faces, &num_faces,
 		  NULL, NULL, opoly, poly.size()+1, NULL, NULL, 0, steiner,
 		  steiner_cnt, bgp_2d, pnts_2d.size(),
-		  TRI_CONSTRAINED_DELAUNAY);
+		  ttype);
 
     if (result) {
 	for (int i = 0; i < num_faces; i++) {

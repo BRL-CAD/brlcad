@@ -357,7 +357,7 @@ class cpolygon_t
     public:
 
 	/* Perform a triangulation (populates ltris and tris) */
-	bool cdt();
+	bool cdt(triangulation_t ttype = TRI_CONSTRAINED_DELAUNAY);
 	void cdt_inputs_print(const char *filename);
 
 	/* Output triangles defined using the indexing from the p2o map (mapping polygon
