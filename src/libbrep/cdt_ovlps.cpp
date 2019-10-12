@@ -1145,6 +1145,7 @@ replace_edge_split_tri(cdt_mesh::cdt_mesh_t &fmesh, size_t t_id, long np_id, cdt
 {
     cdt_mesh::triangle_t &t = fmesh.tris_vect[t_id];
 
+    fmesh.tri_plot(t, "replacing.plot3");
     // Find the two triangle edges that weren't split - these are the starting points for the
     // new triangles
     cdt_mesh::edge_t e1, e2;
@@ -1178,6 +1179,9 @@ replace_edge_split_tri(cdt_mesh::cdt_mesh_t &fmesh, size_t t_id, long np_id, cdt
     fmesh.tri_remove(t);
     fmesh.tri_add(ntri1);
     fmesh.tri_add(ntri2);
+
+    fmesh.tri_plot(ntri1, "nt1.plot3");
+    fmesh.tri_plot(ntri2, "nt2.plot3");
 }
 
 int
@@ -2071,12 +2075,14 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 		double dist;
 		cdt_mesh::triangle_t tri = fmesh->tris_vect[*n_it];
 		int ptype = characterize_avgpnt(tri, fmesh, (*pm_it)->p, &dist);
-		if (dist > 0) {
+		if (dist >= 0) {
 		    atris.insert(tri_dist(dist, tri.ind));
 		} else {
 		    std::cout << "odd distance: " << dist << "\n";
 		    std::cout << "TP: " << (*pm_it)->p.x << "," << (*pm_it)->p.y << "," << (*pm_it)->p.z << "\n";
 		    cdt_mesh::triangle_t otri = fmesh->tris_vect[*n_it];
+		    fmesh->tri_plot(otri, "otri.plot3");
+
 		    std::cout << "V0: " << fmesh->pnts[otri.v[0]]->x << "," << fmesh->pnts[otri.v[0]]->y << "," << fmesh->pnts[otri.v[0]]->z << "\n";
 		    std::cout << "V1: " << fmesh->pnts[otri.v[1]]->x << "," << fmesh->pnts[otri.v[1]]->y << "," << fmesh->pnts[otri.v[1]]->z << "\n";
 		    std::cout << "V2: " << fmesh->pnts[otri.v[2]]->x << "," << fmesh->pnts[otri.v[2]]->y << "," << fmesh->pnts[otri.v[2]]->z << "\n";
