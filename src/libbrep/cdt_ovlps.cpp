@@ -1994,6 +1994,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	}
     }
 
+    int tneigh_cnt = 0;
     for (f_it = face_npnts.begin(); f_it != face_npnts.end(); f_it++) {
 	cdt_mesh::cdt_mesh_t *fmesh = f_it->first;
 	//struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh->p_cdt;
@@ -2029,39 +2030,16 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 		if (dist > 0) {
 		    atris.insert(tri_dist(dist, tri.ind));
 		}
-#if 0
-		// When we've got points close to multiple triangles,
-		// we need to build up the set of the two or three closest
-		// so we know which triangles to use for a re-tessellation.
-		bool assigned = false;
-		for (int i = 0; i < 3; i++) {
-		    if (!close[i]) {
-			close[i] = (*n_it);
-			cdist[i] = dist;
-			assigned = true;
-			break;
-		    }
-		}
-		if (!assigned) {
-		    for (int i = 0; i < 3; i++) {
-			if (cdist[i] > dist) {
-			    close[i] = (*n_it);
-			    cdist[i] = dist;
-			    break;
-			}
-		    }
-		}
-#endif
-		if (ptype > point_type) {
-		    point_type = ptype;
-		    std::cout << "Point/tri characterization: " << ptype << "\n";
-		}
-
+		point_type = (ptype > point_type) ? ptype : point_type;
 	    }
+	    std::cout << "Point/tri characterization: " << point_type << "\n";
 
 	    if (point_type == 4) {
 		// Plot point and neighborhood triangles
-	    FILE *plot = fopen("tri_neighborhood.plot3", "w");
+		struct bu_vls fname = BU_VLS_INIT_ZERO;
+		bu_vls_sprintf(&fname, "tri_neighborhood_%d.plot3", tneigh_cnt);
+		FILE *plot = fopen(bu_vls_cstr(&fname), "w");
+		bu_vls_free(&fname);
 		double fpnt_r = -1.0;
 		int cnt = 0;
 		std::set<tri_dist>::iterator a_it;
@@ -2079,6 +2057,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 		pl_color(plot, 255, 0, 0);
 		plot_pnt_3d(plot, &((*pm_it)->p), fpnt_r, 0);
 		fclose(plot);
+		tneigh_cnt++;
 	    }
 	}
     }
