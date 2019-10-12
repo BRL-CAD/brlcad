@@ -293,7 +293,7 @@ tri_pnt_r(cdt_mesh::cdt_mesh_t &fmesh, long tri_ind)
     return bbd * 0.01;
 }
 
-static void
+void
 plot_ovlp(struct brep_face_ovlp_instance *ovlp, FILE *plot)
 {
     if (!ovlp) return;
@@ -315,7 +315,7 @@ plot_ovlp(struct brep_face_ovlp_instance *ovlp, FILE *plot)
     plot_pnt_3d(plot, i_p, pnt_r, 0);
 }
 
-static void
+void
 plot_tri_npnts(
 	cdt_mesh::cdt_mesh_t *fmesh,
 	long t_ind,
@@ -338,7 +338,7 @@ plot_tri_npnts(
     }
 }
 
-static void
+void
 plot_ovlps(struct ON_Brep_CDT_State *s_cdt, int fi)
 {
     struct bu_vls fname = BU_VLS_INIT_ZERO;
@@ -1364,11 +1364,11 @@ split_brep_face_edges_near_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_
 	//std::cout << "d1: " << epdist1 << ", d2: " << epdist2 << ", lseg_check: " << lseg_check << "\n";
 	if (epdist1 > lseg_check && epdist2 > lseg_check) {
 	    // If the point is not close to a start/end point on the edge then split the edge.
-	    struct ON_Brep_CDT_State *s_cdt_edge = (struct ON_Brep_CDT_State *)eseg->p_cdt;
-	    int f_id1 = s_cdt_edge->brep->m_T[eseg->tseg1->trim_ind].Face()->m_face_index;
-	    int f_id2 = s_cdt_edge->brep->m_T[eseg->tseg2->trim_ind].Face()->m_face_index;
-	    cdt_mesh::cdt_mesh_t &fmesh_f1 = s_cdt_edge->fmeshes[f_id1];
-	    cdt_mesh::cdt_mesh_t &fmesh_f2 = s_cdt_edge->fmeshes[f_id2];
+		struct ON_Brep_CDT_State *s_cdt_edge = (struct ON_Brep_CDT_State *)eseg->p_cdt;
+		int f_id1 = s_cdt_edge->brep->m_T[eseg->tseg1->trim_ind].Face()->m_face_index;
+		int f_id2 = s_cdt_edge->brep->m_T[eseg->tseg2->trim_ind].Face()->m_face_index;
+		cdt_mesh::cdt_mesh_t &fmesh_f1 = s_cdt_edge->fmeshes[f_id1];
+		cdt_mesh::cdt_mesh_t &fmesh_f2 = s_cdt_edge->fmeshes[f_id2];
 	    int rtris = ovlp_split_edge(NULL, eseg, t);
 	    if (rtris >= 0) {
 		replaced_tris += rtris;
@@ -1618,7 +1618,7 @@ tri_refine_polygon(cdt_mesh::cdt_mesh_t &fmesh, cdt_mesh::triangle_t &t)
 }
 
 
-static void
+void
 refine_ovlp_tris(struct ON_Brep_CDT_State *s_cdt, int face_index)
 {
     std::map<int, std::set<size_t>>::iterator m_it;
@@ -2081,25 +2081,25 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	    }
 
 	    if (point_type == 4) {
-	    // Plot point and neighborhood triangles
+		// Plot point and neighborhood triangles
 	    FILE *plot = fopen("tri_neighborhood.plot3", "w");
-	    double fpnt_r = -1.0;
-	    int cnt = 0;
-	    std::set<tri_dist>::iterator a_it;
-	    for (a_it = atris.begin(); a_it != atris.end(); a_it++) {
-		//if (cnt > 2) break;
-		if (point_type <= 3 && cnt == 1) break;
-		//if (point_type == 4 && cnt == 2) break;
-		std::cout << "dist: " << a_it->dist << "\n";
-		pl_color(plot, 0, 0, 255);
-		fmesh->plot_tri(fmesh->tris_vect[a_it->ind], NULL, plot, 0, 0, 0);
-		double pnt_r = tri_pnt_r(*fmesh, a_it->ind);
-		fpnt_r = (pnt_r > fpnt_r) ? pnt_r : fpnt_r;
-		cnt++;
-	    }
-	    pl_color(plot, 255, 0, 0);
-	    plot_pnt_3d(plot, &((*pm_it)->p), fpnt_r, 0);
-	    fclose(plot);
+		double fpnt_r = -1.0;
+		int cnt = 0;
+		std::set<tri_dist>::iterator a_it;
+		for (a_it = atris.begin(); a_it != atris.end(); a_it++) {
+		    //if (cnt > 2) break;
+		    if (point_type <= 3 && cnt == 1) break;
+		    //if (point_type == 4 && cnt == 2) break;
+		    std::cout << "dist: " << a_it->dist << "\n";
+		    pl_color(plot, 0, 0, 255);
+		    fmesh->plot_tri(fmesh->tris_vect[a_it->ind], NULL, plot, 0, 0, 0);
+		    double pnt_r = tri_pnt_r(*fmesh, a_it->ind);
+		    fpnt_r = (pnt_r > fpnt_r) ? pnt_r : fpnt_r;
+		    cnt++;
+		}
+		pl_color(plot, 255, 0, 0);
+		plot_pnt_3d(plot, &((*pm_it)->p), fpnt_r, 0);
+		fclose(plot);
 	    }
 	}
     }
