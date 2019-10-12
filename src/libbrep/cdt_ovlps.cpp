@@ -751,42 +751,6 @@ characterize_avgpnt(
     return rtype;
 }
 
-
-
-
-void
-add_ntri_pnt(
-    std::map<std::pair<cdt_mesh::cdt_mesh_t *, long>, RTree<void *, double, 3>> &tris_npnts,
-    std::map<std::pair<cdt_mesh::cdt_mesh_t *, long>, std::vector<int>> &tris_pnttypes,
-    std::vector<ON_3dPoint *> &npnts,
-    cdt_mesh::cdt_mesh_t *fmesh,
-    long t_ind,
-    int t_type,
-    ON_3dPoint &p3d)
-{
-    double tlen = tri_shortest_edge(fmesh, t_ind);
-    double p1[3];
-    double p2[3];
-    p1[0] = p3d.x - 0.1*tlen;
-    p1[1] = p3d.y - 0.1*tlen;
-    p1[2] = p3d.z - 0.1*tlen;
-    p2[0] = p3d.x + 0.1*tlen;
-    p2[1] = p3d.y + 0.1*tlen;
-    p2[2] = p3d.z + 0.1*tlen;
-
-    size_t nhits = tris_npnts[std::make_pair(fmesh, t_ind)].Search(p1, p2, NULL, NULL);
-
-    if (!nhits) {
-	ON_3dPoint *n3d = new ON_3dPoint(p3d);
-	npnts.push_back(n3d);
-	tris_npnts[std::make_pair(fmesh, t_ind)].Insert(p1, p2, (void *)n3d);
-	tris_pnttypes[std::make_pair(fmesh, t_ind)].push_back(t_type);
-	//std::cout << "ADDED\n";
-    } else {
-	//std::cout << "SKIP: too close to existing triangle point\n";
-    }
-}
-
 /******************************************************************************
  * For nearby vertices that meet certain criteria, we can adjust the vertices
  * to instead use closest points from the various surfaces and eliminate
@@ -1719,11 +1683,6 @@ refine_ovlp_tris(struct ON_Brep_CDT_State *s_cdt, int face_index)
     }
 }
 
-/**************************************************************************
- * TODO - we're going to need near-edge awareness, but not sure yet in what
- * form.
- **************************************************************************/
-
 static bool NearEdgesCallback(void *data, void *a_context) {
     std::set<cdt_mesh::cpolyedge_t *> *edges = (std::set<cdt_mesh::cpolyedge_t *> *)a_context;
     cdt_mesh::cpolyedge_t *pe  = (cdt_mesh::cpolyedge_t *)data;
@@ -1759,52 +1718,11 @@ struct p_mvert_info {
     bool deactivate;
 };
 
-int
-ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
+std::map<cdt_mesh::cdt_mesh_t *, std::set<struct p_mvert_info *>> *
+get_intruding_points(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> &check_pairs)
 {
+    std::map<cdt_mesh::cdt_mesh_t *, std::set<struct p_mvert_info *>> *face_npnts = new std::map<cdt_mesh::cdt_mesh_t *, std::set<struct p_mvert_info *>>;
     std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>>::iterator cp_it;
-    if (!s_a) return -1;
-    if (s_cnt < 1) return 0;
-
-    // Get the bounding boxes of all faces of all breps in s_a, and find
-    // possible interactions
-    std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> check_pairs;
-    check_pairs = possibly_interfering_face_pairs(s_a, s_cnt);
-
-    //std::cout << "Found " << check_pairs.size() << " potentially interfering face pairs\n";
-
-    check_faces_validity(check_pairs);
-
-    std::cout << "Initial overlap cnt: " << face_ovlps_cnt(s_a, s_cnt) << "\n";
-
-    std::set<struct mvert_info *> adjusted_verts = adjustable_verts(check_pairs);
-    if (adjusted_verts.size()) {
-	std::cout << "Adjusted " << adjusted_verts.size() << " vertices\n";
-	check_faces_validity(check_pairs);
-    }
-
-    std::cout << "Post vert adjustment overlap cnt: " << face_ovlps_cnt(s_a, s_cnt) << "\n";
-
-    int sbfvtri_cnt = split_brep_face_edges_near_verts(check_pairs);
-    if (sbfvtri_cnt) {
-	std::cout << "Replaced " << sbfvtri_cnt << " triangles by splitting edges near vertices\n";
-	check_faces_validity(check_pairs);
-    }
-
-    std::cout << "Post edges-near-verts split overlap cnt: " << face_ovlps_cnt(s_a, s_cnt) << "\n";
-
-#if 0
-    int sbfetri_cnt = split_brep_face_edges_near_edges(check_pairs);
-    if (sbfetri_cnt) {
-	std::cout << "Replaced " << sbfetri_cnt << " triangles by splitting edges near edges\n";
-	check_faces_validity(check_pairs);
-    }
-#endif
-
-    std::map<cdt_mesh::cdt_mesh_t *, std::set<struct p_mvert_info *>> face_npnts;
-    std::map<std::pair<cdt_mesh::cdt_mesh_t *, long>, RTree<void *, double, 3>> tris_npnts;
-    std::map<std::pair<cdt_mesh::cdt_mesh_t *, long>, std::vector<int>> tris_pnttypes;
-    std::vector<ON_3dPoint *> npnts;
     for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
 	cdt_mesh::cdt_mesh_t *fmesh1 = cp_it->first;
 	cdt_mesh::cdt_mesh_t *fmesh2 = cp_it->second;
@@ -1852,7 +1770,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 				bb.m_min.y = bb.m_min.y - t1_longest;
 				bb.m_min.z = bb.m_min.z - t1_longest;
 				np->bb = bb;
-				face_npnts[fmesh1].insert(np);
+				(*face_npnts)[fmesh1].insert(np);
 			    }
 			}
 
@@ -1876,7 +1794,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 				bb.m_min.y = bb.m_min.y - t2_longest;
 				bb.m_min.z = bb.m_min.z - t2_longest;
 				np->bb = bb;
-				face_npnts[fmesh2].insert(np);
+				(*face_npnts)[fmesh2].insert(np);
 			    }
 			}
 		    }
@@ -1892,9 +1810,15 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	}
     }
 
+    return face_npnts;
+}
+
+void
+process_near_edge_pnts(std::map<cdt_mesh::cdt_mesh_t *, std::set<struct p_mvert_info *>> *face_npnts)
+{
     std::map<cdt_mesh::bedge_seg_t *, std::set<struct p_mvert_info *>> esplits;
     std::map<cdt_mesh::cdt_mesh_t *, std::set<struct p_mvert_info *>>::iterator f_it;
-    for (f_it = face_npnts.begin(); f_it != face_npnts.end(); f_it++) {
+    for (f_it = face_npnts->begin(); f_it != face_npnts->end(); f_it++) {
 	cdt_mesh::cdt_mesh_t *fmesh = f_it->first;
 	struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh->p_cdt;
 	std::set<struct p_mvert_info *>::iterator pm_it;
@@ -2079,9 +2003,64 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	    }
 	}
     }
+}
+/**************************************************************************
+ * TODO - we're going to need near-edge awareness, but not sure yet in what
+ * form.
+ **************************************************************************/
+
+int
+ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
+{
+    std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>>::iterator cp_it;
+    if (!s_a) return -1;
+    if (s_cnt < 1) return 0;
+
+    // Get the bounding boxes of all faces of all breps in s_a, and find
+    // possible interactions
+    std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> check_pairs;
+    check_pairs = possibly_interfering_face_pairs(s_a, s_cnt);
+
+    //std::cout << "Found " << check_pairs.size() << " potentially interfering face pairs\n";
+
+    check_faces_validity(check_pairs);
+
+    std::cout << "Initial overlap cnt: " << face_ovlps_cnt(s_a, s_cnt) << "\n";
+
+    std::set<struct mvert_info *> adjusted_verts = adjustable_verts(check_pairs);
+    if (adjusted_verts.size()) {
+	std::cout << "Adjusted " << adjusted_verts.size() << " vertices\n";
+	check_faces_validity(check_pairs);
+    }
+
+    std::cout << "Post vert adjustment overlap cnt: " << face_ovlps_cnt(s_a, s_cnt) << "\n";
+
+    int sbfvtri_cnt = split_brep_face_edges_near_verts(check_pairs);
+    if (sbfvtri_cnt) {
+	std::cout << "Replaced " << sbfvtri_cnt << " triangles by splitting edges near vertices\n";
+	check_faces_validity(check_pairs);
+    }
+
+    std::cout << "Post edges-near-verts split overlap cnt: " << face_ovlps_cnt(s_a, s_cnt) << "\n";
+
+#if 0
+    int sbfetri_cnt = split_brep_face_edges_near_edges(check_pairs);
+    if (sbfetri_cnt) {
+	std::cout << "Replaced " << sbfetri_cnt << " triangles by splitting edges near edges\n";
+	check_faces_validity(check_pairs);
+    }
+#endif
+
+    std::map<cdt_mesh::cdt_mesh_t *, std::set<struct p_mvert_info *>> *face_npnts;
+    face_npnts = get_intruding_points(check_pairs);
+
+    process_near_edge_pnts(face_npnts);
+
+    std::cout << "Post interior-near-edge split overlap cnt: " << face_ovlps_cnt(s_a, s_cnt) << "\n";
 
     int tneigh_cnt = 0;
-    for (f_it = face_npnts.begin(); f_it != face_npnts.end(); f_it++) {
+    std::map<cdt_mesh::cdt_mesh_t *, std::set<struct p_mvert_info *>>::iterator f_it;
+    for (f_it = face_npnts->begin(); f_it != face_npnts->end(); f_it++) {
 	cdt_mesh::cdt_mesh_t *fmesh = f_it->first;
 	struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh->p_cdt;
 	std::set<struct p_mvert_info *>::iterator pm_it;
@@ -2158,120 +2137,6 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	}
     }
 
-    std::map<std::pair<cdt_mesh::cdt_mesh_t *, long>, std::vector<int>>::iterator pt_it;
-    for (pt_it = tris_pnttypes.begin(); pt_it != tris_pnttypes.end(); pt_it++) {
-	cdt_mesh::cdt_mesh_t *fmesh = pt_it->first.first;
-	struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh->p_cdt;
-	long t_ind = pt_it->first.second;
-	std::vector<int> pnt_types = pt_it->second;
-	std::sort(pnt_types.begin(), pnt_types.end());
-	std::cout << s_cdt->name << "-" << fmesh->f_id << "-" << t_ind << ": ";
-	for (size_t i = 0; i < pnt_types.size(); i++) {
-	    if (i < pnt_types.size() - 1) {
-		std::cout << pnt_types[i] << ",";
-	    } else {
-		std::cout << pnt_types[i] << "\n";
-	    }
-	}
-    }
-
-    std::map<std::pair<cdt_mesh::cdt_mesh_t *, long>, RTree<void *, double, 3>>::iterator npt_it;
-    FILE *plot_all = fopen("all_tripnts.plot3", "w");
-    for (npt_it = tris_npnts.begin(); npt_it != tris_npnts.end(); npt_it++) {
-	cdt_mesh::cdt_mesh_t *fmesh = npt_it->first.first;
-	struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh->p_cdt;
-	long t_ind = npt_it->first.second;
-	RTree<void *, double, 3> &rtree = npt_it->second;
-	struct bu_vls fname = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&fname, "%s-%d-%ld_tripnts.plot3", s_cdt->name, fmesh->f_id, t_ind);
-	FILE *plot = fopen(bu_vls_cstr(&fname), "w");
-	plot_tri_npnts(fmesh, t_ind, rtree, plot);
-	plot_tri_npnts(fmesh, t_ind, rtree, plot_all);
-	fclose(plot);
-	bu_vls_free(&fname);
-    }
-    fclose(plot_all);
-
-#if 0
-    for (int i = 0; i < s_cnt; i++) {
-	struct ON_Brep_CDT_State *s_i = s_a[i];
-	for (int i_fi = 0; i_fi < s_i->brep->m_F.Count(); i_fi++) {
-	    if (s_i->face_ovlps[i_fi].size()) {
-		std::cout << s_i->name << " face " << i_fi << " overlap instance cnt " << s_i->face_ovlps[i_fi].size() << "\n";
-		plot_ovlps(s_i, i_fi);
-		for (size_t j = 0; j < s_i->face_ovlps[i_fi].size(); j++) {
-		    edge_check(s_i->face_ovlps[i_fi][j]);
-		}
-		refine_ovlp_tris(s_i, i_fi);
-	    }
-	}
-
-	std::map<size_t, std::set<struct brep_face_ovlp_instance *>>::iterator to_it;
-	for (int i_fi = 0; i_fi < s_i->brep->m_F.Count(); i_fi++) {
-	    cdt_mesh::cdt_mesh_t &cmesh = s_i->fmeshes[i_fi];
-	    for (to_it = s_i->face_tri_ovlps[i_fi].begin(); to_it != s_i->face_tri_ovlps[i_fi].end(); to_it++) {
-		std::set<struct brep_face_ovlp_instance *>::iterator o_it;
-		std::set<ON_3dPoint *> face_pnts;
-		for (o_it = to_it->second.begin(); o_it != to_it->second.end(); o_it++) {
-		    struct brep_face_ovlp_instance *ovlp = *o_it;
-		    ON_3dPoint *p = ovlp->intruding_pnt_s_cdt->fmeshes[ovlp->intruding_pnt_face_ind].pnts[ovlp->intruding_pnt];
-		    face_pnts.insert(p);
-		}
-
-		if (face_pnts.size()) {
-		    //std::cout << s_i->name << " face " << i_fi << " triangle " << to_it->first << " interior point cnt: " << face_pnts.size() << "\n";
-		    std::set<ON_3dPoint *>::iterator fp_it;
-		    for (fp_it = face_pnts.begin(); fp_it != face_pnts.end(); fp_it++) {
-			//std::cout << "       " << (*fp_it)->x << "," << (*fp_it)->y << "," << (*fp_it)->z << "\n";
-		    }
-		    struct bu_vls fname = BU_VLS_INIT_ZERO;
-		    bu_vls_sprintf(&fname, "%s_%d_%ld_tri.plot3", s_i->name, i_fi, to_it->first);
-		    FILE* plot_file = fopen(bu_vls_cstr(&fname), "w");
-
-		    pl_color(plot_file, 0, 0, 255);
-		    cmesh.plot_tri(cmesh.tris_vect[to_it->first], NULL, plot_file, 0, 0, 0);
-		    double pnt_r = tri_pnt_r(cmesh, to_it->first);
-		    for (fp_it = face_pnts.begin(); fp_it != face_pnts.end(); fp_it++) {
-			pl_color(plot_file, 255, 0, 0);
-			plot_pnt_3d(plot_file, *fp_it, pnt_r, 0);
-		    }
-		    fclose(plot_file);
-
-		    bu_vls_sprintf(&fname, "%s_%d_%ld_ovlps.plot3", s_i->name, i_fi, to_it->first);
-		    FILE* plot_file_2 = fopen(bu_vls_cstr(&fname), "w");
-		    for (o_it = to_it->second.begin(); o_it != to_it->second.end(); o_it++) {
-			struct brep_face_ovlp_instance *ovlp = *o_it;
-			cdt_mesh::cdt_mesh_t &imesh = ovlp->intruding_pnt_s_cdt->fmeshes[ovlp->intruding_pnt_face_ind];
-			cdt_mesh::triangle_t i_tri = imesh.tris_vect[ovlp->intruding_pnt_tri_ind];
-			pl_color(plot_file_2, 0, 255, 0);
-			imesh.plot_tri(i_tri, NULL, plot_file_2, 0, 0, 0);
-			ON_3dPoint p1(ovlp->isect1_3d[X], ovlp->isect1_3d[Y], ovlp->isect1_3d[Z]);
-			ON_3dPoint p2(ovlp->isect2_3d[X], ovlp->isect2_3d[Y], ovlp->isect2_3d[Z]);
-			pl_color(plot_file_2, 255, 255, 0);
-			ON_3dPoint pavg = (p1+p2)*0.5;
-			/* 
-			   plot_pnt_3d(plot_file_2, &p1, pnt_r, 1);
-			   plot_pnt_3d(plot_file_2, &p2, pnt_r, 1);
-			   */
-			//ON_3dPoint p1s = closest_surf_pnt(cmesh, &p1);
-			//ON_3dPoint p2s = closest_surf_pnt(cmesh, &p2);
-			ON_3dPoint p1s;
-			ON_3dVector p1norm;
-		       	closest_surf_pnt(p1s, p1norm, cmesh, &pavg, 0);
-			pl_color(plot_file_2, 0, 255, 255);
-			plot_pnt_3d(plot_file_2, &p1s, pnt_r, 1);
-			//plot_pnt_3d(plot_file_2, &p2s, pnt_r, 1);
-		    }
-		    fclose(plot_file_2);
-		}
-
-		// TODO - surface_GetClosestPoint3dFirstOrder and trim_GetClosestPoint3dFirstOrder look like the
-		// places to start.  Need to see if we can make a copy of the face surface and replace its
-		// loops with the 2D triangle edges as the outer loop to get the closed point on the triangle...
-	    }
-	}
-    }
-#endif
 
     return 0;
 }
