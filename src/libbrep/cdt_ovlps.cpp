@@ -1424,8 +1424,8 @@ check_faces_validity(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_me
     }
     std::set<cdt_mesh::cdt_mesh_t *>::iterator f_it;
     for (f_it = fmeshes.begin(); f_it != fmeshes.end(); f_it++) {
-	//cdt_mesh::cdt_mesh_t *fmesh = *f_it;
-	//std::cout << "face " << fmesh->f_id << " validity: " << fmesh->valid(1) << "\n";
+	cdt_mesh::cdt_mesh_t *fmesh = *f_it;
+	std::cout << "face " << fmesh->f_id << " validity: " << fmesh->valid(1) << "\n";
     }
 }
 
@@ -1805,7 +1805,7 @@ tri_retessellate(cdt_mesh::cdt_mesh_t *fmesh, long t_ind, std::set<struct p_mver
 
     fmesh->tri_plot(t, "tremove.plot3");
 
-    polygon->cdt();
+    polygon->cdt(TRI_DELAUNAY);
 
     std::cout << "cdt tris cnt: " << polygon->tris.size() << "\n";
 
@@ -1815,6 +1815,7 @@ tri_retessellate(cdt_mesh::cdt_mesh_t *fmesh, long t_ind, std::set<struct p_mver
 	std::set<cdt_mesh::triangle_t>::iterator v_it;
 	for (v_it = polygon->tris.begin(); v_it != polygon->tris.end(); v_it++) {
 	    cdt_mesh::triangle_t vt = *v_it;
+	    orient_tri(*fmesh, vt);
 	    fmesh->tri_add(vt);
 	    fmesh->tri_plot(vt, "tadd.plot3");
 	}
@@ -1965,6 +1966,8 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 
     }
 
+    std::cout << "Post tri split overlap cnt: " << face_ovlps_cnt(s_a, s_cnt) << "\n";
+    check_faces_validity(check_pairs);
 
     return 0;
 }

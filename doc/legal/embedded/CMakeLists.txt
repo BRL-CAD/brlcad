@@ -7,6 +7,7 @@ set(embedded_licenses
   db_faa-info.txt
   db_nist-info.txt
   dehumanize.txt
+  delaunator.txt
   DejaVu_Fonts.txt
   earcut.txt
   Eigen.txt

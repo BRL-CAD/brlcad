@@ -48,6 +48,8 @@
 #  pragma clang diagnostic pop
 #endif
 
+#include "delaunator.hpp"
+
 #include "poly2tri/poly2tri.h"
 
 #include "bu/malloc.h"
@@ -167,11 +169,31 @@ bg_nested_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, 
 	if (!holes_array || !holes_npts) return 1;
     }
 
-    if (type == TRI_DELAUNAY && (!out_pts || !num_outpts)) return 1;
+    //if (type == TRI_DELAUNAY && (!out_pts || !num_outpts)) return 1;
 
     if (type == TRI_ANY || type == TRI_CONSTRAINED_DELAUNAY) {
 	int p2t_ret = bg_poly2tri(faces, num_faces, out_pts, num_outpts, poly, poly_pnts, holes_array, holes_npts, nholes, steiner, steiner_npts, pts);
 	return p2t_ret;
+    }
+
+    if (type == TRI_DELAUNAY) {
+	std::vector<double> coords;
+	for (size_t i = 0; i < npts; i++) {
+	    coords.push_back(pts[i][X]);
+	    coords.push_back(pts[i][Y]);
+	}
+	delaunator::Delaunator d(coords);
+
+	(*num_faces) = d.triangles.size()/3;
+	(*faces) = (int *)bu_calloc(d.triangles.size(), sizeof(int), "faces");
+
+	for (size_t i = 0; i < d.triangles.size()/3; i++) {
+	    (*faces)[3*i] = (int)d.triangles[3*i];
+	    (*faces)[3*i+1] = (int)d.triangles[3*i+1];
+	    (*faces)[3*i+2] = (int)d.triangles[3*i+2];
+	}
+
+	return 0;
     }
 
     if (type == TRI_EAR_CLIPPING) {
