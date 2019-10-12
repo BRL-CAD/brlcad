@@ -1040,12 +1040,14 @@ adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t
 	    std::set<std::pair<void *, void *>> vert_pairs;
 	    size_t ovlp_cnt = rtrees_mpnts[std::make_pair(s_cdt1,fmesh1->f_id)].Overlaps(rtrees_mpnts[std::make_pair(s_cdt2,fmesh2->f_id)], &vert_pairs);
 	    if (ovlp_cnt) {
+#if 0
 		struct bu_vls fname = BU_VLS_INIT_ZERO;
 		bu_vls_sprintf(&fname, "%s-all_verts_%d.plot3", fmesh1->name, fmesh1->f_id);
 		plot_rtree_3d(rtrees_mpnts[std::make_pair(s_cdt1,fmesh1->f_id)], bu_vls_cstr(&fname));
 		bu_vls_sprintf(&fname, "%s-all_verts_%d.plot3", fmesh2->name, fmesh2->f_id);
 		plot_rtree_3d(rtrees_mpnts[std::make_pair(s_cdt2,fmesh2->f_id)], bu_vls_cstr(&fname));
-
+		bu_vls_free(&fname);
+#endif
 		std::set<std::pair<void *, void *>>::iterator v_it;
 		for (v_it = vert_pairs.begin(); v_it != vert_pairs.end(); v_it++) {
 		    struct mvert_info *v_first = (struct mvert_info *)v_it->first;
@@ -1053,13 +1055,12 @@ adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t
 		    vert_ovlps[v_first].insert(v_second);
 		    vert_ovlps[v_second].insert(v_first);
 		}
-		bu_vls_free(&fname);
 	    }
 	}
     }
     std::cout << "Found " << vert_ovlps.size() << " vertices with box overlaps\n";
-
     std::map<struct mvert_info *, std::set<struct mvert_info *>>::iterator vo_it;
+#if 0
     for (vo_it = vert_ovlps.begin(); vo_it != vert_ovlps.end(); vo_it++) {
 	struct bu_vls fname = BU_VLS_INIT_ZERO;
 	struct mvert_info *v_curr= vo_it->first;
@@ -1075,6 +1076,7 @@ adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t
 	}
 	fclose(plot_file);
     }
+#endif
 
     std::queue<std::pair<struct mvert_info *, struct mvert_info *>> vq;
     std::set<struct mvert_info *> vq_multi;
@@ -1682,29 +1684,6 @@ static bool NearEdgesCallback(void *data, void *a_context) {
     return true;
 }
 
-void edge_check(struct brep_face_ovlp_instance *ovlp) {
-
-    cdt_mesh::cdt_mesh_t &fmesh = ovlp->intersected_tri_s_cdt->fmeshes[ovlp->intersected_tri_face_ind];
-    cdt_mesh::triangle_t tri = fmesh.tris_vect[ovlp->intersected_tri_ind];
-    double fMin[3]; double fMax[3];
-    ON_3dPoint *p3d = fmesh.pnts[tri.v[0]];
-    ON_BoundingBox bb1(*p3d, *p3d);
-    for (int i = 1; i < 3; i++) {
-	p3d = fmesh.pnts[tri.v[i]];
-	bb1.Set(*p3d, true);
-    }
-    fMin[0] = bb1.Min().x;
-    fMin[1] = bb1.Min().y;
-    fMin[2] = bb1.Min().z;
-    fMax[0] = bb1.Max().x;
-    fMax[1] = bb1.Max().y;
-    fMax[2] = bb1.Max().z;
-    size_t nhits = ovlp->intersected_tri_s_cdt->face_rtrees_3d[fmesh.f_id].Search(fMin, fMax, NearEdgesCallback, (void *)&ovlp->involved_edge_segs);
-    if (nhits) {
-	//std::cout << "Face " << fmesh.f_id << " tri " << tri.ind << " has potential edge curve interaction\n";
-    }
-}
-
 void
 check_faces_validity(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> &check_pairs)
 {
@@ -1929,9 +1908,9 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 				    // stays "live" and feeds into the next step.
 				    pmv->edge_split_only = true;
 				    std::cout << "edge split only\n";
-				    plot_file = fopen("edge_mvert_eonly.plot3", "w");
+				    //plot_file = fopen("edge_mvert_eonly.plot3", "w");
 				} else {
-				    plot_file = fopen("edge_mvert.plot3", "w");
+				    //plot_file = fopen("edge_mvert.plot3", "w");
 				}
 
 			    }
@@ -1943,7 +1922,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 			std::cout << "d1: " << epdist1 << ", d2: " << epdist2 << ", lseg_check: " << lseg_check << "\n";
 #endif
 			pmv->deactivate = true;
-			plot_file = fopen("edge_mvert_deactivate.plot3", "w");
+			//plot_file = fopen("edge_mvert_deactivate.plot3", "w");
 		    }
 
 		    if (plot_file) {
@@ -2138,6 +2117,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
     }
     fclose(plot_all);
 
+#if 0
     for (int i = 0; i < s_cnt; i++) {
 	struct ON_Brep_CDT_State *s_i = s_a[i];
 	for (int i_fi = 0; i_fi < s_i->brep->m_F.Count(); i_fi++) {
@@ -2216,10 +2196,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	    }
 	}
     }
-
-
-
-
+#endif
 
     return 0;
 }
