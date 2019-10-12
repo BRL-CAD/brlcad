@@ -1402,130 +1402,6 @@ split_brep_face_edges_near_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_
     return replaced_tris;
 }
 
-#if 0
-int
-split_brep_face_edges_near_edges(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> &check_pairs)
-{
-    int replaced_tris = 0;
-
-    int repeat = 1;
-
-    while (repeat) {
-	// Iterate over edges, checking for nearby edges.
-	std::map<cdt_mesh::bedge_seg_t *, cdt_mesh::bedge_seg_t *> edge_edge;
-	std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>>::iterator cp_it;
-
-	std::set<cdt_mesh::bedge_seg_t *> split_segs;
-	std::map<cdt_mesh::bedge_seg_t *, ON_3dPoint> cmid_pnts;
-	for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
-	    cdt_mesh::cdt_mesh_t *fmesh1 = cp_it->first;
-	    cdt_mesh::cdt_mesh_t *fmesh2 = cp_it->second;
-	    struct ON_Brep_CDT_State *s_cdt1 = (struct ON_Brep_CDT_State *)fmesh1->p_cdt;
-	    struct ON_Brep_CDT_State *s_cdt2 = (struct ON_Brep_CDT_State *)fmesh2->p_cdt;
-	    if (s_cdt1 != s_cdt2) {
-		std::set<std::pair<void *, void *>> edge_edge_pairs;
-		size_t ovlp_cnt = s_cdt1->face_rtrees_3d[fmesh1->f_id].Overlaps(s_cdt2->face_rtrees_3d[fmesh2->f_id], &edge_edge_pairs);
-		if (ovlp_cnt && edge_edge_pairs.size()) {
-		    std::set<std::pair<void *, void *>>::iterator e_it;
-		    for (e_it = edge_edge_pairs.begin(); e_it != edge_edge_pairs.end(); e_it++) {
-			cdt_mesh::cpolyedge_t *pe1 = (cdt_mesh::cpolyedge_t *)e_it->first;
-			cdt_mesh::cpolyedge_t *pe2 = (cdt_mesh::cpolyedge_t *)e_it->second;
-			if (pe1->eseg == pe2->eseg) continue;
-
-			ON_3dPoint *p1_3d_1 = pe1->eseg->e_start;
-			ON_3dPoint *p1_3d_2 = pe1->eseg->e_end;
-			ON_3dPoint *p2_3d_1 = pe2->eseg->e_start;
-			ON_3dPoint *p2_3d_2 = pe2->eseg->e_end;
-
-			ON_3dVector v1 = *p1_3d_2 - *p1_3d_1;
-			ON_3dVector v2 = *p2_3d_2 - *p2_3d_1;
-
-			if (v1.IsParallelTo(v2)) {
-			    // If they're parallel, take the average of all four points
-			    // and see if the closest point on each line is within the segment
-			} else {
-			    ON_Line line1(*p1_3d_1, *p1_3d_2);
-			    ON_Line line2(*p2_3d_1, *p2_3d_2);
-			    double a, b;
-			    if (ON_IntersectLineLine(line1, line2, &a, &b, 0, true)) {
-				ON_3dPoint cp1 = line1.PointAt(a);
-				ON_3dPoint cp2 = line2.PointAt(b);
-				ON_Line chord(cp1, cp2);
-				ON_3dPoint cmid = chord.PointAt(0.5);
-
-				ON_3dPoint l1p = line1.ClosestPointTo(cmid);
-				ON_3dPoint l2p = line2.ClosestPointTo(cmid);
-
-				bool c1 = (p1_3d_1->DistanceTo(l1p) < line1.Length()*0.1) || (p1_3d_2->DistanceTo(l1p) < line1.Length()*0.1);
-				bool c2 = (p2_3d_1->DistanceTo(l2p) < line2.Length()*0.1) || (p2_3d_2->DistanceTo(l2p) < line2.Length()*0.1);
-
-#if 0
-				std::cout << "Linear seg pair chord mid: " << cmid.x << "," << cmid.y << "," << cmid.z << "\n";
-				std::cout << "Linear seg pair closest dist: " << chord.Length() << "\n";
-				std::cout << "l1 : " << p1_3d_1->x << "," << p1_3d_1->y << "," << p1_3d_1->z << " -> " << p1_3d_2->x << "," << p1_3d_2->y << "," << p1_3d_2->z << "\n";
-				std::cout << "l1 length: " << line1.Length() << "\n";
-				std::cout << "l2 : " << p2_3d_1->x << "," << p2_3d_1->y << "," << p2_3d_1->z << " -> " << p2_3d_2->x << "," << p2_3d_2->y << "," << p2_3d_2->z << "\n";
-				std::cout << "l2 length: " << line2.Length() << "\n";
-#endif
-				if (c1 || c2) {
-				    //std::cout << "SKIP: chord mid is too close to vert point\n\n";
-				    continue;
-				} else {
-				    if (split_segs.find(pe1->eseg) != split_segs.end()) {
-					std::cout << "multiedge split\n";
-				    }
-				    if ((pe1->eseg != pe2->eseg) && (split_segs.find(pe2->eseg) != split_segs.end())) {
-					std::cout << "2nd multiedge split\n";
-				    }
-				    split_segs.insert(pe1->eseg);
-				    split_segs.insert(pe2->eseg);
-				    cmid_pnts[pe1->eseg] = cmid;
-				    cmid_pnts[pe2->eseg] = cmid;
-				}
-			    }
-			}
-		    }
-		}
-	    }
-	}
-
-	repeat = (split_segs.size()) ? 1 : 0;
-	//repeat = 0;
-
-	std::set<cdt_mesh::bedge_seg_t *>::iterator s_it;
-	for (s_it = split_segs.begin(); s_it != split_segs.end(); s_it++) {
-	    cdt_mesh::bedge_seg_t *eseg = *s_it;
-	    struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)eseg->p_cdt;
-	    int f_id1 = s_cdt->brep->m_T[eseg->tseg1->trim_ind].Face()->m_face_index;
-	    int f_id2 = s_cdt->brep->m_T[eseg->tseg2->trim_ind].Face()->m_face_index;
-	    cdt_mesh::cdt_mesh_t &fmesh_f1 = s_cdt->fmeshes[f_id1];
-	    cdt_mesh::cdt_mesh_t &fmesh_f2 = s_cdt->fmeshes[f_id2];
-	    double t;
-	    ON_NurbsCurve *nc = eseg->nc;
-	    ON_Interval domain(eseg->edge_start, eseg->edge_end);
-	    ON_NurbsCurve_GetClosestPoint(&t, nc, cmid_pnts[eseg], 0.0, &domain);
-	    ON_3dPoint cep = nc->PointAt(t);
-	    std::cout << "cep: " << cep.x << "," << cep.y << "," << cep.z << "\n";
-	    std::cout << "Distance: " << cep.DistanceTo(cmid_pnts[eseg]) << "\n";
-	    int rtris = ovlp_split_edge(NULL, eseg, t);
-	    if (rtris >= 0) {
-		replaced_tris += rtris;
-
-		struct bu_vls fename = BU_VLS_INIT_ZERO;
-		bu_vls_sprintf(&fename, "%s-%d_post_edge_tris.plot3", s_cdt->name, f_id1);
-		fmesh_f1.tris_plot(bu_vls_cstr(&fename));
-		bu_vls_sprintf(&fename, "%s-%d_post_edge_tris.plot3", s_cdt->name, f_id2);
-		fmesh_f2.tris_plot(bu_vls_cstr(&fename));
-		bu_vls_free(&fename);
-	    } else {
-		std::cout << "split failed\n";
-	    }
-	}
-    }
-
-    return replaced_tris;
-}
-#endif
 
 /**************************************************************************
  * TODO - implement the various ways to refine a triangle polygon.
@@ -1717,6 +1593,8 @@ struct p_mvert_info {
     bool edge_split_only;
     bool deactivate;
 };
+
+
 
 std::map<cdt_mesh::cdt_mesh_t *, std::set<struct p_mvert_info *>> *
 get_intruding_points(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> &check_pairs)
@@ -2058,7 +1936,11 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 
     std::cout << "Post interior-near-edge split overlap cnt: " << face_ovlps_cnt(s_a, s_cnt) << "\n";
 
+
+
+
     int tneigh_cnt = 0;
+
     std::map<cdt_mesh::cdt_mesh_t *, std::set<struct p_mvert_info *>>::iterator f_it;
     for (f_it = face_npnts->begin(); f_it != face_npnts->end(); f_it++) {
 	cdt_mesh::cdt_mesh_t *fmesh = f_it->first;
@@ -2085,8 +1967,6 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	    fmesh->tris_tree.Search(fMin, fMax, NearFacesCallback, (void *)&near_faces);
 	    std::set<size_t>::iterator n_it;
 	    std::set<tri_dist> atris;
-	    //long close[3] = {-1};
-	    //double cdist[3] = {DBL_MAX};
 	    int point_type = 0;
 	    fmesh->tris_ind_set_plot(near_faces, "near_faces.plot3");
 	    for (n_it = near_faces.begin(); n_it != near_faces.end(); n_it++) {
@@ -2110,31 +1990,31 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	    //std::cout << "Point/tri characterization: " << point_type << "\n";
 
 	    if (point_type == 4) {
-		// Plot point and neighborhood triangles
-		struct bu_vls fname = BU_VLS_INIT_ZERO;
+	    // Plot point and neighborhood triangles
+	    struct bu_vls fname = BU_VLS_INIT_ZERO;
 		bu_vls_sprintf(&fname, "%s_tri_neighborhood_%d.plot3", s_cdt->name, tneigh_cnt);
-		FILE *plot = fopen(bu_vls_cstr(&fname), "w");
-		bu_vls_free(&fname);
-		double fpnt_r = -1.0;
-		int cnt = 0;
-		std::set<tri_dist>::iterator a_it;
-		for (a_it = atris.begin(); a_it != atris.end(); a_it++) {
+	    FILE *plot = fopen(bu_vls_cstr(&fname), "w");
+	    bu_vls_free(&fname);
+	    double fpnt_r = -1.0;
+	    int cnt = 0;
+	    std::set<tri_dist>::iterator a_it;
+	    for (a_it = atris.begin(); a_it != atris.end(); a_it++) {
 		    //if (cnt > 2) break;
 		    if (point_type <= 3 && cnt == 1) break;
 		    //if (point_type == 4 && cnt == 2) break;
-		    //std::cout << "dist: " << a_it->dist << "\n";
-		    pl_color(plot, 0, 0, 255);
-		    fmesh->plot_tri(fmesh->tris_vect[a_it->ind], NULL, plot, 0, 0, 0);
-		    double pnt_r = tri_pnt_r(*fmesh, a_it->ind);
-		    fpnt_r = (pnt_r > fpnt_r) ? pnt_r : fpnt_r;
-		    cnt++;
-		}
-		pl_color(plot, 255, 0, 0);
-		plot_pnt_3d(plot, &((*pm_it)->p), fpnt_r, 0);
-		fclose(plot);
-		tneigh_cnt++;
+		//std::cout << "dist: " << a_it->dist << "\n";
+		pl_color(plot, 0, 0, 255);
+		fmesh->plot_tri(fmesh->tris_vect[a_it->ind], NULL, plot, 0, 0, 0);
+		double pnt_r = tri_pnt_r(*fmesh, a_it->ind);
+		fpnt_r = (pnt_r > fpnt_r) ? pnt_r : fpnt_r;
+		cnt++;
 	    }
+	    pl_color(plot, 255, 0, 0);
+	    plot_pnt_3d(plot, &((*pm_it)->p), fpnt_r, 0);
+	    fclose(plot);
+	    tneigh_cnt++;
 	}
+    }
     }
 
 
