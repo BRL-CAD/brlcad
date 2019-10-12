@@ -1366,20 +1366,27 @@ split_brep_face_edges_near_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_
 	//std::cout << "d1: " << epdist1 << ", d2: " << epdist2 << ", lseg_check: " << lseg_check << "\n";
 	if (epdist1 > lseg_check && epdist2 > lseg_check) {
 	    // If the point is not close to a start/end point on the edge then split the edge.
-		struct ON_Brep_CDT_State *s_cdt_edge = (struct ON_Brep_CDT_State *)eseg->p_cdt;
-		int f_id1 = s_cdt_edge->brep->m_T[eseg->tseg1->trim_ind].Face()->m_face_index;
-		int f_id2 = s_cdt_edge->brep->m_T[eseg->tseg2->trim_ind].Face()->m_face_index;
-		cdt_mesh::cdt_mesh_t &fmesh_f1 = s_cdt_edge->fmeshes[f_id1];
-		cdt_mesh::cdt_mesh_t &fmesh_f2 = s_cdt_edge->fmeshes[f_id2];
+
+#if 0
+	    /* NOTE - need to get this information before ovlp_split_edge invalidates eseg */
+	    struct ON_Brep_CDT_State *s_cdt_edge = (struct ON_Brep_CDT_State *)eseg->p_cdt;
+	    int f_id1 = s_cdt_edge->brep->m_T[eseg->tseg1->trim_ind].Face()->m_face_index;
+	    int f_id2 = s_cdt_edge->brep->m_T[eseg->tseg2->trim_ind].Face()->m_face_index;
+#endif
+
 	    int rtris = ovlp_split_edge(NULL, eseg, t);
 	    if (rtris >= 0) {
 		replaced_tris += rtris;
+#if 0
+		cdt_mesh::cdt_mesh_t &fmesh_f1 = s_cdt_edge->fmeshes[f_id1];
+		cdt_mesh::cdt_mesh_t &fmesh_f2 = s_cdt_edge->fmeshes[f_id2];
 		struct bu_vls fename = BU_VLS_INIT_ZERO;
 		bu_vls_sprintf(&fename, "%s-%d_post_edge_tris.plot3", s_cdt_edge->name, fmesh_f1.f_id);
 		fmesh_f1.tris_plot(bu_vls_cstr(&fename));
 		bu_vls_sprintf(&fename, "%s-%d_post_edge_tris.plot3", s_cdt_edge->name, fmesh_f2.f_id);
 		fmesh_f2.tris_plot(bu_vls_cstr(&fename));
 		bu_vls_free(&fename);
+#endif
 	    } else {
 		std::cout << "split failed\n";
 	    }
@@ -1812,6 +1819,8 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 				struct p_mvert_info *np = new struct p_mvert_info;
 				np->s_cdt = s_cdt2;
 				np->f_id = fmesh2->f_id;
+				np->edge_split_only = false;
+				np->deactivate = false;
 				closest_surf_pnt(np->p, np->n, *fmesh2, &tp, 2*t2_longest);
 				ON_BoundingBox bb(np->p, np->p);
 				bb.m_max.x = bb.m_max.x + t2_longest;
