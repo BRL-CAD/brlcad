@@ -1785,11 +1785,14 @@ tri_retessellate(cdt_mesh::cdt_mesh_t *fmesh, long t_ind, std::set<struct p_mver
     polygon->add_edge(e2);
     polygon->add_edge(e3);
 
-    // Let the polygon know got interior points
+    // Let the polygon know we've got interior points
     std::map<struct p_mvert_info *, long>::iterator f_it;
     for (f_it = pmv2f.begin(); f_it != pmv2f.end(); f_it++) {
 	polygon->interior_points.insert(f_it->second);
     }
+
+    polygon->polygon_plot("poly2d.plot3");
+    fmesh->polygon_plot_3d(polygon, "poly3d.plot3");
 
     polygon->cdt();
     fmesh->tri_remove(t);
@@ -1940,7 +1943,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	// Points assigned to triangles - retessellate and replace
 	std::map<long, std::set<struct p_mvert_info *>>::iterator tp_it;
 	for (tp_it = tri_npnts.begin(); tp_it != tri_npnts.end(); tp_it++) {
-	    //tri_retessellate(fmesh, tp_it->first, tp_it->second);
+	    tri_retessellate(fmesh, tp_it->first, tp_it->second);
 	}
 
     }
