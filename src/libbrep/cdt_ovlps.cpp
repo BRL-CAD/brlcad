@@ -521,6 +521,39 @@ possibly_interfering_face_pairs(struct ON_Brep_CDT_State **s_a, int s_cnt)
     return check_pairs;
 }
 
+size_t
+face_ovlps_cnt(struct ON_Brep_CDT_State **s_a, int s_cnt)
+{
+    size_t tri_isects = 0;
+    std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> check_pairs;
+    check_pairs = possibly_interfering_face_pairs(s_a, s_cnt);
+
+    std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>>::iterator cp_it;
+    for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
+	cdt_mesh::cdt_mesh_t *fmesh1 = cp_it->first;
+	cdt_mesh::cdt_mesh_t *fmesh2 = cp_it->second;
+	struct ON_Brep_CDT_State *s_cdt1 = (struct ON_Brep_CDT_State *)fmesh1->p_cdt;
+	struct ON_Brep_CDT_State *s_cdt2 = (struct ON_Brep_CDT_State *)fmesh2->p_cdt;
+	if (s_cdt1 != s_cdt2) {
+	    std::set<std::pair<size_t, size_t>> tris_prelim;
+	    size_t ovlp_cnt = fmesh1->tris_tree.Overlaps(fmesh2->tris_tree, &tris_prelim);
+	    if (ovlp_cnt) {
+		std::set<std::pair<size_t, size_t>>::iterator tb_it;
+		for (tb_it = tris_prelim.begin(); tb_it != tris_prelim.end(); tb_it++) {
+		    cdt_mesh::triangle_t t1 = fmesh1->tris_vect[tb_it->first];
+		    cdt_mesh::triangle_t t2 = fmesh2->tris_vect[tb_it->second];
+		    point_t isectpt1 = {MAX_FASTF, MAX_FASTF, MAX_FASTF};
+		    point_t isectpt2 = {MAX_FASTF, MAX_FASTF, MAX_FASTF};
+		    int isect = tri_isect(fmesh1, t1, fmesh2, t2, &isectpt1, &isectpt2);
+		    if (isect) {
+			tri_isects++;
+		    }
+		}
+	    }
+	}
+    }
+    return tri_isects;
+}
 
 double
 tri_shortest_edge(cdt_mesh::cdt_mesh_t *fmesh, long t_ind)
@@ -1738,9 +1771,11 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
     std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> check_pairs;
     check_pairs = possibly_interfering_face_pairs(s_a, s_cnt);
 
-    std::cout << "Found " << check_pairs.size() << " potentially interfering face pairs\n";
+    //std::cout << "Found " << check_pairs.size() << " potentially interfering face pairs\n";
 
     check_faces_validity(check_pairs);
+
+    std::cout << "Initial overlap cnt: " << face_ovlps_cnt(s_a, s_cnt) << "\n";
 
     std::set<struct mvert_info *> adjusted_verts = adjustable_verts(check_pairs);
     if (adjusted_verts.size()) {
@@ -1748,11 +1783,15 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	check_faces_validity(check_pairs);
     }
 
+    std::cout << "Post vert adjustment overlap cnt: " << face_ovlps_cnt(s_a, s_cnt) << "\n";
+
     int sbfvtri_cnt = split_brep_face_edges_near_verts(check_pairs);
     if (sbfvtri_cnt) {
 	std::cout << "Replaced " << sbfvtri_cnt << " triangles by splitting edges near vertices\n";
 	check_faces_validity(check_pairs);
     }
+
+    std::cout << "Post edges-near-verts split overlap cnt: " << face_ovlps_cnt(s_a, s_cnt) << "\n";
 
 #if 0
     int sbfetri_cnt = split_brep_face_edges_near_edges(check_pairs);
