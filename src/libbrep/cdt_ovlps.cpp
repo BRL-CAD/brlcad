@@ -1797,18 +1797,19 @@ tri_retessellate(cdt_mesh::cdt_mesh_t *fmesh, long t_ind, std::set<struct p_mver
 	proj_2d.second = v;
 	polygon->pnts_2d.push_back(proj_2d);
 	polygon->p2o[polygon->pnts_2d.size() - 1] = f_it->second;
-	//polygon->interior_points.insert(f_it->second);
+	polygon->interior_points.insert(polygon->pnts_2d.size() - 1);
     }
 
     polygon->polygon_plot("poly2d.plot3");
     fmesh->polygon_plot_3d(polygon, "poly3d.plot3");
+
+    fmesh->tri_plot(t, "tremove.plot3");
 
     polygon->cdt();
 
     std::cout << "cdt tris cnt: " << polygon->tris.size() << "\n";
 
     if (polygon->tris.size()) {
-	fmesh->tri_plot(t, "tremove.plot3");
 	fmesh->tri_remove(t);
 
 	std::set<cdt_mesh::triangle_t>::iterator v_it;
