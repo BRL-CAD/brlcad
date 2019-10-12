@@ -1599,6 +1599,9 @@ struct p_mvert_info {
 std::map<cdt_mesh::cdt_mesh_t *, std::set<struct p_mvert_info *>> *
 get_intruding_points(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> &check_pairs)
 {
+
+    std::map<cdt_mesh::cdt_mesh_t *, std::set<std::pair<cdt_mesh::cdt_mesh_t *, long>>> added_verts;
+
     std::map<cdt_mesh::cdt_mesh_t *, std::set<struct p_mvert_info *>> *face_npnts = new std::map<cdt_mesh::cdt_mesh_t *, std::set<struct p_mvert_info *>>;
     std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>>::iterator cp_it;
     for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
@@ -1630,6 +1633,7 @@ get_intruding_points(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_me
 			// opposite mesh will have to try and adjust itself to to resolve.
 			ON_Plane plane1 = fmesh1->tplane(t1);
 			for (int i = 0; i < 3; i++) {
+			    if (added_verts[fmesh1].find(std::make_pair(fmesh2, t2.v[i])) != added_verts[fmesh1].end()) continue;
 			    ON_3dPoint tp = *fmesh2->pnts[t2.v[i]];
 			    double dist = plane1.DistanceTo(tp);
 			    if (dist < 0 && fabs(dist) > ON_ZERO_TOLERANCE) {
@@ -1649,12 +1653,14 @@ get_intruding_points(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_me
 				bb.m_min.z = bb.m_min.z - t1_longest;
 				np->bb = bb;
 				(*face_npnts)[fmesh1].insert(np);
+				added_verts[fmesh1].insert(std::make_pair(fmesh2, t2.v[i]));
 			    }
 			}
 
 			ON_Plane plane2 = fmesh2->tplane(t2);
 			for (int i = 0; i < 3; i++) {
 			    ON_3dPoint tp = *fmesh1->pnts[t1.v[i]];
+			    if (added_verts[fmesh2].find(std::make_pair(fmesh1, t1.v[i])) != added_verts[fmesh2].end()) continue;
 			    double dist = plane2.DistanceTo(tp);
 			    if (dist < 0 && fabs(dist) > ON_ZERO_TOLERANCE) {
 				//std::cout << "face " << fmesh2->f_id << " new interior point from face " << fmesh1->f_id << ": " << tp.x << "," << tp.y << "," << tp.z << "\n";
@@ -1673,6 +1679,7 @@ get_intruding_points(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_me
 				bb.m_min.z = bb.m_min.z - t2_longest;
 				np->bb = bb;
 				(*face_npnts)[fmesh2].insert(np);
+				added_verts[fmesh2].insert(std::make_pair(fmesh1, t1.v[i]));
 			    }
 			}
 		    }
