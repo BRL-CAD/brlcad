@@ -1403,161 +1403,6 @@ split_brep_face_edges_near_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_
 }
 
 
-/**************************************************************************
- * TODO - implement the various ways to refine a triangle polygon.
- **************************************************************************/
-
-cdt_mesh::cpolygon_t *
-tri_refine_polygon(cdt_mesh::cdt_mesh_t &fmesh, cdt_mesh::triangle_t &t)
-{
-    struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh.p_cdt;
-    cdt_mesh::cpolygon_t *polygon = new cdt_mesh::cpolygon_t;
-
-
-    // Add triangle center point, from the 2D center point of the triangle
-    // points (this is where p3d2d is needed).  Singularities are going to be a
-    // particular problem. We'll probably NEED the closest 2D point to the 3D
-    // triangle center point in that case, but for now just find the shortest
-    // distance from the midpoint of the 2 non-singular points to the singular
-    // trim and insert the new point some fraction of that distance off of the
-    // midpoint towards the singularity. For other cases let's try the 2D
-    // center point and see how it works - we may need the all-up closest
-    // point calculation there too...
-    ON_2dPoint p2d[3] = {ON_2dPoint::UnsetPoint, ON_2dPoint::UnsetPoint, ON_2dPoint::UnsetPoint};
-    bool have_singular_vert = false;
-    for (int i = 0; i < 3; i++) {
-	if (fmesh.sv.find(t.v[i]) != fmesh.sv.end()) {
-	    have_singular_vert = true;
-	}
-    }
-
-    if (!have_singular_vert) {
-
-	// Find the 2D center point.  NOTE - this definitely won't work
-	// if the point is trimmed in the parent brep - really need to
-	// try the GetClosestPoint routine...  may also want to do this after
-	// the edge split?
-	for (int i = 0; i < 3; i++) {
-	    p2d[i] = ON_2dPoint(fmesh.m_pnts_2d[fmesh.p3d2d[t.v[i]]].first, fmesh.m_pnts_2d[fmesh.p3d2d[t.v[i]]].second);
-	}
-	ON_2dPoint cpnt = p2d[0];
-	for (int i = 1; i < 3; i++) {
-	    cpnt += p2d[i];
-	}
-	cpnt = cpnt/3.0;
-
-	// Calculate the 3D point and normal values.
-	ON_3dPoint p3d;
-	ON_3dVector norm = ON_3dVector::UnsetVector;
-	if (!surface_EvNormal(s_cdt->brep->m_F[fmesh.f_id].SurfaceOf(), cpnt.x, cpnt.y, p3d, norm)) {
-	    p3d = s_cdt->brep->m_F[fmesh.f_id].SurfaceOf()->PointAt(cpnt.x, cpnt.y);
-	}
-
-	long f_ind2d = fmesh.add_point(cpnt);
-	fmesh.m_interior_pnts.insert(f_ind2d);
-	if (fmesh.m_bRev) {
-	    norm = -1 * norm;
-	}
-	long f3ind = fmesh.add_point(new ON_3dPoint(p3d));
-	long fnind = fmesh.add_normal(new ON_3dPoint(norm));
-
-        CDT_Add3DPnt(s_cdt, fmesh.pnts[fmesh.pnts.size()-1], fmesh.f_id, -1, -1, -1, cpnt.x, cpnt.y);
-        CDT_Add3DNorm(s_cdt, fmesh.normals[fmesh.normals.size()-1], fmesh.pnts[fmesh.pnts.size()-1], fmesh.f_id, -1, -1, -1, cpnt.x, cpnt.y);
-	fmesh.p2d3d[f_ind2d] = f3ind;
-	fmesh.p3d2d[f3ind] = f_ind2d;
-	fmesh.nmap[f3ind] = fnind;
-
-	// As we do in the repair, project all the mesh points to the plane and
-	// add them so the point indices are the same.  Eventually we can be
-	// more sophisticated about this, but for now it avoids potential
-	// bookkeeping problems.
-	ON_3dPoint sp = fmesh.tcenter(t);
-	ON_3dVector sn = fmesh.bnorm(t);
-	ON_Plane tri_plane(sp, sn);
-	for (size_t i = 0; i < fmesh.pnts.size(); i++) {
-	    double u, v;
-	    ON_3dPoint op3d = (*fmesh.pnts[i]);
-	    tri_plane.ClosestPointTo(op3d, &u, &v);
-	    std::pair<double, double> proj_2d;
-	    proj_2d.first = u;
-	    proj_2d.second = v;
-	    polygon->pnts_2d.push_back(proj_2d);
-	    if (fmesh.brep_edge_pnt(i)) {
-		polygon->brep_edge_pnts.insert(i);
-	    }
-	    polygon->p2o[i] = i;
-	}
-	struct cdt_mesh::edge_t e1(t.v[0], t.v[1]);
-	struct cdt_mesh::edge_t e2(t.v[1], t.v[2]);
-	struct cdt_mesh::edge_t e3(t.v[2], t.v[0]);
-	polygon->add_edge(e1);
-	polygon->add_edge(e2);
-	polygon->add_edge(e3);
-
-	// Let the polygon know it's got an interior (center) point.  We won't
-	// do the cdt yet, because we may need to also split an edge
-	polygon->interior_points.insert(f3ind);
-
-    } else {
-	// TODO - have singular vertex
-	std::cout << "singular vertex in triangle\n";
-    }
-
-    return polygon;
-}
-
-
-void
-refine_ovlp_tris(struct ON_Brep_CDT_State *s_cdt, int face_index)
-{
-    std::map<int, std::set<size_t>>::iterator m_it;
-    cdt_mesh::cdt_mesh_t &fmesh = s_cdt->fmeshes[face_index];
-    std::set<size_t> &tri_inds = s_cdt->face_ovlp_tris[face_index];
-    std::set<size_t>::iterator t_it;
-    for (t_it = tri_inds.begin(); t_it != tri_inds.end(); t_it++) {
-	cdt_mesh::triangle_t tri = fmesh.tris_vect[*t_it];
-	bool have_face_edge = false;
-	cdt_mesh::uedge_t ue;
-	cdt_mesh::uedge_t t_ue[3];
-	t_ue[0].set(tri.v[0], tri.v[1]);
-	t_ue[1].set(tri.v[1], tri.v[2]);
-	t_ue[2].set(tri.v[2], tri.v[0]);
-	for (int i = 0; i < 3; i++) {
-	    if (fmesh.brep_edges.find(t_ue[i]) != fmesh.brep_edges.end()) {
-		ue = t_ue[i];
-		have_face_edge = true;
-		break;
-	    }
-	}
-
-	// TODO - yank the overlapping tri and split, either with center point
-	// only (SURF_TRI) or shared edge and center (EDGE_TRI).  The EDGE_TRI
-	// case will require a matching split from the triangle on the opposite
-	// face to maintain watertightness, and it may be convenient just to do
-	// make the polygon, insert a steiner point (plus splitting the polygon
-	// edge in the edge tri case) and do a mini-CDT to make the new
-	// triangles (similar to the cdt_mesh repair operation's replacment for
-	// bad patches).  However, if we end up with any colinearity issues we
-	// might just fall back on manually constructing the three (or 5 in the
-	// edge case) triangles rather than risk a CDT going wrong.
-	//
-	// It may make sense, depending on the edge triangle's shape, to ONLY
-	// split the edge in some situations.  However, we dont' want to get
-	// into a situation where we keep refining the edge and we end up with
-	// a whole lot of crazy-slim triangles going to one surface point...
-	cdt_mesh::cpolygon_t *polygon = tri_refine_polygon(fmesh, tri);
-
-	if (have_face_edge) {
-	    //std::cout << "EDGE_TRI: refining " << s_cdt->name << " face " << fmesh.f_id << " tri " << *t_it << "\n";
-	} else {
-	    //std::cout << "SURF_TRI: refining " << s_cdt->name << " face " << fmesh.f_id << " tri " << *t_it << "\n";
-	}
-
-	if (!polygon) {
-	    std::cout << "Error - couldn't build polygon loop for triangle refinement\n";
-	}
-    }
-}
 
 static bool NearEdgesCallback(void *data, void *a_context) {
     std::set<cdt_mesh::cpolyedge_t *> *edges = (std::set<cdt_mesh::cpolyedge_t *> *)a_context;
@@ -1889,10 +1734,72 @@ process_near_edge_pnts(std::map<cdt_mesh::cdt_mesh_t *, std::set<struct p_mvert_
 	}
     }
 }
-/**************************************************************************
- * TODO - we're going to need near-edge awareness, but not sure yet in what
- * form.
- **************************************************************************/
+
+void
+tri_retessellate(cdt_mesh::cdt_mesh_t *fmesh, long t_ind, std::set<struct p_mvert_info *> &npnts)
+{
+    cdt_mesh::triangle_t t = fmesh->tris_vect[t_ind];
+    struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh->p_cdt;
+    cdt_mesh::cpolygon_t *polygon = new cdt_mesh::cpolygon_t;
+
+    std::map<struct p_mvert_info *, long> pmv2f;
+
+    std::set<struct p_mvert_info *>::iterator pmv_it;
+    for (pmv_it = npnts.begin(); pmv_it != npnts.end(); pmv_it++) {
+	struct p_mvert_info *pmv = *pmv_it;
+	long f3ind = fmesh->add_point(new ON_3dPoint(pmv->p));
+	long fnind = fmesh->add_normal(new ON_3dPoint(pmv->n));
+
+        CDT_Add3DPnt(s_cdt, fmesh->pnts[fmesh->pnts.size()-1], fmesh->f_id, -1, -1, -1, 0, 0);
+        CDT_Add3DNorm(s_cdt, fmesh->normals[fmesh->normals.size()-1], fmesh->pnts[fmesh->pnts.size()-1], fmesh->f_id, -1, -1, -1, 0, 0);
+	//fmesh.p2d3d[f_ind2d] = f3ind;  for now, we're not putting in 2D versions of overlap points...
+	//fmesh.p3d2d[f3ind] = f_ind2d;
+	fmesh->nmap[f3ind] = fnind;
+	pmv2f[pmv] = f3ind;
+    }
+
+    // As we do in the repair, project all the mesh points to the plane and
+    // add them so the point indices are the same.  Eventually we can be
+    // more sophisticated about this, but for now it avoids potential
+    // bookkeeping problems.
+    ON_3dPoint sp = fmesh->tcenter(t);
+    ON_3dVector sn = fmesh->bnorm(t);
+    ON_Plane tri_plane(sp, sn);
+    for (size_t i = 0; i < fmesh->pnts.size(); i++) {
+	double u, v;
+	ON_3dPoint op3d = (*fmesh->pnts[i]);
+	tri_plane.ClosestPointTo(op3d, &u, &v);
+	std::pair<double, double> proj_2d;
+	proj_2d.first = u;
+	proj_2d.second = v;
+	polygon->pnts_2d.push_back(proj_2d);
+	if (fmesh->brep_edge_pnt(i)) {
+	    polygon->brep_edge_pnts.insert(i);
+	}
+	polygon->p2o[i] = i;
+    }
+    struct cdt_mesh::edge_t e1(t.v[0], t.v[1]);
+    struct cdt_mesh::edge_t e2(t.v[1], t.v[2]);
+    struct cdt_mesh::edge_t e3(t.v[2], t.v[0]);
+    polygon->add_edge(e1);
+    polygon->add_edge(e2);
+    polygon->add_edge(e3);
+
+    // Let the polygon know got interior points
+    std::map<struct p_mvert_info *, long>::iterator f_it;
+    for (f_it = pmv2f.begin(); f_it != pmv2f.end(); f_it++) {
+	polygon->interior_points.insert(f_it->second);
+    }
+
+    polygon->cdt();
+    fmesh->tri_remove(t);
+
+    std::set<cdt_mesh::triangle_t>::iterator v_it;
+    for (v_it = polygon->tris.begin(); v_it != polygon->tris.end(); v_it++) {
+	cdt_mesh::triangle_t vt = *v_it;
+	fmesh->tri_add(vt);
+    }
+}
 
 int
 ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
@@ -1953,9 +1860,13 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	cdt_mesh::cdt_mesh_t *fmesh = f_it->first;
 	struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh->p_cdt;
 	std::set<struct p_mvert_info *>::iterator pm_it;
-	for (pm_it = f_it->second.begin(); pm_it != f_it->second.end(); pm_it++) {
 
-	    if ((*pm_it)->deactivate || (*pm_it)->edge_split_only) continue;
+	std::map<long, std::set<struct p_mvert_info *>> tri_npnts;
+
+	for (pm_it = f_it->second.begin(); pm_it != f_it->second.end(); pm_it++) {
+	    struct p_mvert_info *pmv = *pm_it;
+
+	    if (pmv->deactivate || pmv->edge_split_only) continue;
 	    // TODO -  after the edge pass, search face triangle Rtree for closest
 	    // triangles, and find the closest one where it can produce a valid
 	    // projection into the triangle plane.  Associate the point with the
@@ -1963,13 +1874,13 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	    // be characterized, and as appropriate indiviual or pairs of triangles
 	    // will be re-tessellated and replaced to incorporate the new points.
 	    double fMin[3];
-	    fMin[0] = (*pm_it)->bb.Min().x;
-	    fMin[1] = (*pm_it)->bb.Min().y;
-	    fMin[2] = (*pm_it)->bb.Min().z;
+	    fMin[0] = pmv->bb.Min().x;
+	    fMin[1] = pmv->bb.Min().y;
+	    fMin[2] = pmv->bb.Min().z;
 	    double fMax[3];
-	    fMax[0] = (*pm_it)->bb.Max().x;
-	    fMax[1] = (*pm_it)->bb.Max().y;
-	    fMax[2] = (*pm_it)->bb.Max().z;
+	    fMax[0] = pmv->bb.Max().x;
+	    fMax[1] = pmv->bb.Max().y;
+	    fMax[2] = pmv->bb.Max().z;
 	    std::set<size_t> near_faces;
 	    fmesh->tris_tree.Search(fMin, fMax, NearFacesCallback, (void *)&near_faces);
 	    std::set<size_t>::iterator n_it;
@@ -1979,12 +1890,12 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	    for (n_it = near_faces.begin(); n_it != near_faces.end(); n_it++) {
 		double dist;
 		cdt_mesh::triangle_t tri = fmesh->tris_vect[*n_it];
-		int ptype = characterize_avgpnt(tri, fmesh, (*pm_it)->p, &dist);
+		int ptype = characterize_avgpnt(tri, fmesh, (pmv)->p, &dist);
 		if (dist >= 0) {
 		    atris.insert(tri_dist(dist, tri.ind));
 		} else {
 		    std::cout << "odd distance: " << dist << "\n";
-		    std::cout << "TP: " << (*pm_it)->p.x << "," << (*pm_it)->p.y << "," << (*pm_it)->p.z << "\n";
+		    std::cout << "TP: " << (pmv)->p.x << "," << (pmv)->p.y << "," << (pmv)->p.z << "\n";
 		    cdt_mesh::triangle_t otri = fmesh->tris_vect[*n_it];
 		    fmesh->tri_plot(otri, "otri.plot3");
 
@@ -2016,10 +1927,22 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 		cnt++;
 	    }
 	    pl_color(plot, 255, 0, 0);
-	    plot_pnt_3d(plot, &((*pm_it)->p), fpnt_r, 0);
+	    plot_pnt_3d(plot, &((pmv)->p), fpnt_r, 0);
 	    fclose(plot);
 	    tneigh_cnt++;
+
+	    // For now, just assign the point to its closest triangle.  Eventually we'll want to incorporate
+	    // the type/edge information above for better triangulations.
+	    tri_npnts[atris.begin()->ind].insert(pmv);
 	}
+
+
+	// Points assigned to triangles - retessellate and replace
+	std::map<long, std::set<struct p_mvert_info *>>::iterator tp_it;
+	for (tp_it = tri_npnts.begin(); tp_it != tri_npnts.end(); tp_it++) {
+	    //tri_retessellate(fmesh, tp_it->first, tp_it->second);
+	}
+
     }
 
 
