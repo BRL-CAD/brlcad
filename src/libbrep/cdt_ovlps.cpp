@@ -1805,18 +1805,19 @@ tri_retessellate(cdt_mesh::cdt_mesh_t *fmesh, long t_ind, std::set<struct p_mver
 
     polygon->cdt();
 
-    fmesh->tri_plot(t, "tremove.plot3");
-#if 1
-    fmesh->tri_remove(t);
-
     std::cout << "cdt tris cnt: " << polygon->tris.size() << "\n";
-    std::set<cdt_mesh::triangle_t>::iterator v_it;
-    for (v_it = polygon->tris.begin(); v_it != polygon->tris.end(); v_it++) {
-	cdt_mesh::triangle_t vt = *v_it;
-	fmesh->tri_add(vt);
-	fmesh->tri_plot(vt, "tadd.plot3");
+
+    if (polygon->tris.size()) {
+	fmesh->tri_plot(t, "tremove.plot3");
+	fmesh->tri_remove(t);
+
+	std::set<cdt_mesh::triangle_t>::iterator v_it;
+	for (v_it = polygon->tris.begin(); v_it != polygon->tris.end(); v_it++) {
+	    cdt_mesh::triangle_t vt = *v_it;
+	    fmesh->tri_add(vt);
+	    fmesh->tri_plot(vt, "tadd.plot3");
+	}
     }
-#endif
 }
 
 int
