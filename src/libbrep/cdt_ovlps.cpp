@@ -1791,8 +1791,7 @@ tri_retessellate(cdt_mesh::cdt_mesh_t *fmesh, long t_ind, std::set<struct p_mver
     std::map<struct p_mvert_info *, long>::iterator f_it;
     for (f_it = pmv2f.begin(); f_it != pmv2f.end(); f_it++) {
 	double u, v;
-	ON_3dPoint op3d = (*fmesh->pnts[f_it->second]);
-	tri_plane.ClosestPointTo(op3d, &u, &v);
+	tri_plane.ClosestPointTo(f_it->first->p, &u, &v);
 	std::pair<double, double> proj_2d;
 	proj_2d.first = u;
 	proj_2d.second = v;
@@ -1805,18 +1804,17 @@ tri_retessellate(cdt_mesh::cdt_mesh_t *fmesh, long t_ind, std::set<struct p_mver
     fmesh->polygon_plot_3d(polygon, "poly3d.plot3");
 
     polygon->cdt();
-#if 0
+
+    fmesh->tri_plot(t, "tremove.plot3");
+#if 1
     fmesh->tri_remove(t);
 
     std::cout << "cdt tris cnt: " << polygon->tris.size() << "\n";
     std::set<cdt_mesh::triangle_t>::iterator v_it;
     for (v_it = polygon->tris.begin(); v_it != polygon->tris.end(); v_it++) {
 	cdt_mesh::triangle_t vt = *v_it;
-	cdt_mesh::triangle_t nt;
-	nt.v[0] = polygon->p2o[vt.v[0]];
-	nt.v[1] = polygon->p2o[vt.v[1]];
-	nt.v[2] = polygon->p2o[vt.v[2]];
-	fmesh->tri_add(nt);
+	fmesh->tri_add(vt);
+	fmesh->tri_plot(vt, "tadd.plot3");
     }
 #endif
 }
