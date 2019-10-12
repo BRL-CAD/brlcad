@@ -1765,22 +1765,24 @@ tri_retessellate(cdt_mesh::cdt_mesh_t *fmesh, long t_ind, std::set<struct p_mver
     ON_3dPoint sp = fmesh->tcenter(t);
     ON_3dVector sn = fmesh->bnorm(t);
     ON_Plane tri_plane(sp, sn);
-    for (size_t i = 0; i < fmesh->pnts.size(); i++) {
+    std::map<long, long> t2p;
+    for (size_t i = 0; i < 3; i++) {
 	double u, v;
-	ON_3dPoint op3d = (*fmesh->pnts[i]);
+	ON_3dPoint op3d = (*fmesh->pnts[t.v[i]]);
 	tri_plane.ClosestPointTo(op3d, &u, &v);
 	std::pair<double, double> proj_2d;
 	proj_2d.first = u;
 	proj_2d.second = v;
 	polygon->pnts_2d.push_back(proj_2d);
-	if (fmesh->brep_edge_pnt(i)) {
+	if (fmesh->brep_edge_pnt(t.v[i])) {
 	    polygon->brep_edge_pnts.insert(i);
 	}
-	polygon->p2o[i] = i;
+	polygon->p2o[i] = t.v[i];
+	t2p[t.v[i]] = i;
     }
-    struct cdt_mesh::edge_t e1(t.v[0], t.v[1]);
-    struct cdt_mesh::edge_t e2(t.v[1], t.v[2]);
-    struct cdt_mesh::edge_t e3(t.v[2], t.v[0]);
+    struct cdt_mesh::edge_t e1(t2p[t.v[0]], t2p[t.v[1]]);
+    struct cdt_mesh::edge_t e2(t2p[t.v[1]], t2p[t.v[2]]);
+    struct cdt_mesh::edge_t e3(t2p[t.v[2]], t2p[t.v[0]]);
     polygon->add_edge(e1);
     polygon->add_edge(e2);
     polygon->add_edge(e3);
@@ -1788,20 +1790,35 @@ tri_retessellate(cdt_mesh::cdt_mesh_t *fmesh, long t_ind, std::set<struct p_mver
     // Let the polygon know we've got interior points
     std::map<struct p_mvert_info *, long>::iterator f_it;
     for (f_it = pmv2f.begin(); f_it != pmv2f.end(); f_it++) {
-	polygon->interior_points.insert(f_it->second);
+	double u, v;
+	ON_3dPoint op3d = (*fmesh->pnts[f_it->second]);
+	tri_plane.ClosestPointTo(op3d, &u, &v);
+	std::pair<double, double> proj_2d;
+	proj_2d.first = u;
+	proj_2d.second = v;
+	polygon->pnts_2d.push_back(proj_2d);
+	polygon->p2o[polygon->pnts_2d.size() - 1] = f_it->second;
+	//polygon->interior_points.insert(f_it->second);
     }
 
     polygon->polygon_plot("poly2d.plot3");
     fmesh->polygon_plot_3d(polygon, "poly3d.plot3");
 
     polygon->cdt();
+#if 0
     fmesh->tri_remove(t);
 
+    std::cout << "cdt tris cnt: " << polygon->tris.size() << "\n";
     std::set<cdt_mesh::triangle_t>::iterator v_it;
     for (v_it = polygon->tris.begin(); v_it != polygon->tris.end(); v_it++) {
 	cdt_mesh::triangle_t vt = *v_it;
-	fmesh->tri_add(vt);
+	cdt_mesh::triangle_t nt;
+	nt.v[0] = polygon->p2o[vt.v[0]];
+	nt.v[1] = polygon->p2o[vt.v[1]];
+	nt.v[2] = polygon->p2o[vt.v[2]];
+	fmesh->tri_add(nt);
     }
+#endif
 }
 
 int
