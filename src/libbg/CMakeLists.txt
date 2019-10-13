@@ -40,8 +40,10 @@ set(bg_ignore
   QuickHull.hpp
   bg_private.h
   clipper.hpp
+  delaunator.hpp
   earcut.hpp
   pointgen.c
+  trimesh_pt_in.c
   )
 
 CMAKEFILES(${bg_ignore})
