@@ -43,7 +43,7 @@ set(bg_ignore
   delaunator.hpp
   earcut.hpp
   pointgen.c
-  trimesh_pt_in.c
+  trimesh_pt_in.cpp
   )
 
 CMAKEFILES(${bg_ignore})
