@@ -43,6 +43,7 @@
 #include "RTree.h"
 #include "opennurbs.h"
 #include "bu/color.h"
+#include "bg/polygon.h"
 
 extern "C" {
     struct ctriangle_t {
