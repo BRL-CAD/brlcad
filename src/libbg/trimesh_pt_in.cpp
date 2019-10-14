@@ -330,7 +330,8 @@ static int ptm_triangle_sign(point_t P, point_t Q, point_t R, point_t TP, int *e
 }
 
 /* Return the contribution of this triangle to the winding number. */
-static int ptm_triangle_chain(point_t v1, point_t v2, point_t v3, point_t tp, int *exact_flag)
+extern "C" int
+bg_ptm_triangle_chain(point_t v1, point_t v2, point_t v3, point_t tp, int *exact_flag)
 {
     int ef = 0;
     int v1sign = ptm_vertex_sign(v1, tp, &ef);
@@ -407,7 +408,7 @@ bg_trimesh_pt_in(point_t tp, int num_faces, int *faces, int num_vertices, point_
 	VMOVE(v1, pts[faces[3*i+0]]);
 	VMOVE(v2, pts[faces[3*i+1]]);
 	VMOVE(v3, pts[faces[3*i+2]]);
-	wn_out += ptm_triangle_chain(v1, v2, v3, opnt, &exact);
+	wn_out += bg_ptm_triangle_chain(v1, v2, v3, opnt, &exact);
     }
 
     int wn = 0;
@@ -417,7 +418,7 @@ bg_trimesh_pt_in(point_t tp, int num_faces, int *faces, int num_vertices, point_
 	VMOVE(v1, pts[faces[3*i+0]]);
 	VMOVE(v2, pts[faces[3*i+1]]);
 	VMOVE(v3, pts[faces[3*i+2]]);
-	wn += ptm_triangle_chain(v1, v2, v3, tp, &exact);
+	wn += bg_ptm_triangle_chain(v1, v2, v3, tp, &exact);
 	if (exact) return 2;
     }
 

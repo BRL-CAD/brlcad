@@ -505,6 +505,8 @@ public:
     /* Tests */
     bool self_intersecting_mesh();
     bool brep_edge_pnt(long v);
+    bool point_inside(ON_3dPoint *p);
+    bool point_inside(point_t p);
 
     // Triangle geometry information
     ON_3dPoint tcenter(const triangle_t &t);

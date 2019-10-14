@@ -174,6 +174,15 @@ BG_EXPORT extern int bg_trimesh_3d_gc(int **ofaces, int *n_ofaces, point_t **opn
 
 /**
  * @brief
+ * Low level per-face contribution to inside/outside test, used if
+ * calling codes prefer to construct their own test with their own
+ * mesh containers.
+ */
+BG_EXPORT int
+bg_ptm_triangle_chain(point_t v1, point_t v2, point_t v3, point_t tp, int *exact_flag);
+
+/**
+ * @brief
  * Report if point tp is inside or outside of the trimesh.
  */
 BG_EXPORT int

@@ -1476,18 +1476,19 @@ get_intruding_points(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_me
 			// Using triangle planes, determine which point(s) from the opposite triangle are
 			// "inside" the meshes.  Each of these points is an "overlap instance" that the
 			// opposite mesh will have to try and adjust itself to to resolve.
-			//
-			// TODO - this really should be backed up by a proper point-in-mesh test to verify
-			// that the vertex in question actually is relevant - very large triangles with
-			// vertices well beyond the face can end up introducing points this way... maybe
-			// look at https://github.com/mdickinson/polyhedron/blob/master/polyhedron.py
 			ON_Plane plane1 = fmesh1->tplane(t1);
 			for (int i = 0; i < 3; i++) {
 			    if (added_verts[fmesh1].find(std::make_pair(fmesh2, t2.v[i])) != added_verts[fmesh1].end()) continue;
 			    ON_3dPoint tp = *fmesh2->pnts[t2.v[i]];
 			    double dist = plane1.DistanceTo(tp);
 			    if (dist < 0 && fabs(dist) > ON_ZERO_TOLERANCE) {
-				//std::cout << "face " << fmesh1->f_id << " new interior point from face " << fmesh2->f_id << ": " << tp.x << "," << tp.y << "," << tp.z << "\n";
+				bool pinside = fmesh1->point_inside(&tp);
+				if (pinside) {
+				    std::cout << "test point inside\n";
+				} else {
+				    std::cout << "test point outside\n";
+				}
+				    //std::cout << "face " << fmesh1->f_id << " new interior point from face " << fmesh2->f_id << ": " << tp.x << "," << tp.y << "," << tp.z << "\n";
 				struct p_mvert_info *np = new struct p_mvert_info;
 				np->s_cdt = s_cdt1;
 				np->f_id = fmesh1->f_id;
