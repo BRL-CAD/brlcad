@@ -85,6 +85,57 @@ main(int argc, char **argv)
 	return 0;
     }
 
+    // Flip the triangles from test 1
+    if (test_num == 2) {
+	int status = -1;
+	point_t TP = VINIT_ZERO;
+	int num_faces = 4;
+	int num_verts = 4;
+	int *faces = (int *)bu_calloc(num_faces * 3, sizeof(int), "faces array");
+	point_t *verts = (point_t *)bu_calloc(num_verts, sizeof(point_t), "vertices array");
+
+	VSET(verts[0], -1, -1, -1);
+	VSET(verts[1], 1, -1, -1);
+	VSET(verts[2], 0, 1, -1);
+	VSET(verts[3], 0, 0, 1);
+
+	faces[0*3+0] = 3;
+	faces[0*3+1] = 0;
+	faces[0*3+2] = 2;
+
+	faces[1*3+0] = 1;
+	faces[1*3+1] = 0;
+	faces[1*3+2] = 3;
+
+	faces[2*3+0] = 2;
+	faces[2*3+1] = 1;
+	faces[2*3+2] = 3;
+
+	faces[3*3+0] = 0;
+	faces[3*3+1] = 1;
+	faces[3*3+2] = 2;
+
+	VSET(TP, 0, 0, 2);
+	status = bg_trimesh_pt_in(TP, num_faces, faces, num_verts, verts);
+
+	if (status == -1) {
+	    bu_exit(-1, "Fatal error - mesh validity test failed\n");
+	} else {
+	    bu_log("Status: %s\n", (status) ? "inside" : "outside");
+	}
+
+	VSET(TP, 0, 0, 0);
+	status = bg_trimesh_pt_in(TP, num_faces, faces, num_verts, verts);
+
+	if (status == -1) {
+	    bu_exit(-1, "Fatal error - mesh validity test failed\n");
+	} else {
+	    bu_log("Status: %s\n", (status) ? "inside" : "outside");
+	}
+
+	return 0;
+    }
+
     bu_log("Error: unknown test number %d\n", test_num);
     return -1;
 }
