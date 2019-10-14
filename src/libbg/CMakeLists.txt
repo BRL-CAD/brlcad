@@ -24,6 +24,7 @@ set(LIBBG_SOURCES
   tri_tri.c
   trimesh.cpp
   trimesh_isect.cpp
+  trimesh_pt_in.cpp
   util.c
   )
 
@@ -43,7 +44,6 @@ set(bg_ignore
   delaunator.hpp
   earcut.hpp
   pointgen.c
-  trimesh_pt_in.cpp
   )
 
 CMAKEFILES(${bg_ignore})

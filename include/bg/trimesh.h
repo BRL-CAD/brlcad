@@ -172,6 +172,13 @@ BG_EXPORT extern int bg_trimesh_3d_gc(int **ofaces, int *n_ofaces, point_t **opn
 	const int *ifaces, int n_ifaces, const point_t *ipnts);
 
 
+/**
+ * @brief
+ * Report if point tp is inside or outside of the trimesh.
+ */
+BG_EXPORT int
+bg_trimesh_pt_in(point_t tp, int num_faces, int *faces, int num_vertices, point_t *pts);
+
 __END_DECLS
 
 #endif  /* BG_TRIMESH_H */

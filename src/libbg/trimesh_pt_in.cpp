@@ -362,7 +362,7 @@ static int ptm_triangle_chain(point_t v1, point_t v2, point_t v3, point_t tp, in
 }
 
 
-int
+extern "C" int
 bg_trimesh_pt_in(point_t tp, int num_faces, int *faces, int num_vertices, point_t *pts)
 {
     int exact = 0;
@@ -380,7 +380,7 @@ bg_trimesh_pt_in(point_t tp, int num_faces, int *faces, int num_vertices, point_
     point_t cpnt = VINIT_ZERO;
     int pcnt = 0;
     std::set<int> pind;
-    for (int i = 0; i < num_faces*3; i++) {
+    for (int i = 0; i < num_faces; i++) {
 	pind.insert(faces[3*i+0]);
 	pind.insert(faces[3*i+1]);
 	pind.insert(faces[3*i+2]);
@@ -402,7 +402,7 @@ bg_trimesh_pt_in(point_t tp, int num_faces, int *faces, int num_vertices, point_
     opnt[Z] = opnt[Z] + 1.1*r;
 
     int wn_out = 0;
-    for (int i = 0; i < num_faces*3; i++) {
+    for (int i = 0; i < num_faces; i++) {
 	point_t v1, v2, v3;
 	VMOVE(v1, pts[faces[3*i+0]]);
 	VMOVE(v2, pts[faces[3*i+1]]);
@@ -410,20 +410,17 @@ bg_trimesh_pt_in(point_t tp, int num_faces, int *faces, int num_vertices, point_
 	wn_out += ptm_triangle_chain(v1, v2, v3, opnt, &exact);
     }
 
-    bu_log("wn_out: %d\n", wn_out);
-
     int wn = 0;
     exact = 0;
-    for (int i = 0; i < num_faces*3; i++) {
+    for (int i = 0; i < num_faces; i++) {
 	point_t v1, v2, v3;
 	VMOVE(v1, pts[faces[3*i+0]]);
 	VMOVE(v2, pts[faces[3*i+1]]);
 	VMOVE(v3, pts[faces[3*i+2]]);
 	wn += ptm_triangle_chain(v1, v2, v3, tp, &exact);
-	if (exact) return 1;
+	if (exact) return 2;
     }
 
-    if (!wn) return 2;
     if (wn == wn_out) return 0;
     return 1;
 }

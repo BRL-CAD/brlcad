@@ -28,6 +28,7 @@ set(embedded_licenses
   osl.txt
   pbrt.txt
   point_in_polygon.txt
+  point_in_polyhedron.txt
   polygonizer.txt
   pstdint.txt
   qsort.txt
