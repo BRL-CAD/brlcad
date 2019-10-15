@@ -986,7 +986,8 @@ f4_do_name(struct conversion_state *pstate)
 	return;
     }
 
-    /* eliminate leading and trailing blanks */
+    /* Eliminate leading and trailing blanks.  Note - the 56 offset is based on the
+     * fastgen file format definition - the name will be after that point. */
     bu_vls_sprintf(&comp_name, "%s", &pstate->line[56]);
     bu_vls_trimspace(&comp_name);
     if (!bu_vls_strlen(&comp_name)) {
