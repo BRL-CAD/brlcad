@@ -114,7 +114,7 @@ add_test(NAME bg_tri_pt_dist_coplanar_vert_closest   COMMAND bg_tri_pt_dist -2,-
 
 BRLCAD_ADDEXEC(bg_trimesh_pt_in trimesh_pt_in.c "libbg;libbn;libbu" TEST)
 
-add_test(NAME bg_trimesh_pt_in_basic   COMMAND bg_tri_pt_dist 1)
+add_test(NAME bg_trimesh_pt_in_basic   COMMAND bg_trimesh_pt_in 1)
 
 CMAKEFILES(CMakeLists.txt)
 
