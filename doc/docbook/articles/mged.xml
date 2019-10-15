@@ -2974,12 +2974,6 @@ rt -s 512 -F :1
     <para xml:id="AnimMateControlPanel">
       <emphasis role="strong">AnimMate Control Panel</emphasis>
     </para>
-    <para>
-      The <emphasis>Animmate Control Panel</emphasis> is a tool for
-      building animation scripts. The
-      AnimMate tutorial is a
-      good place to learn about this control panel.
-    </para>
     <para xml:id="SolidEditor">
       <emphasis role="strong">Solid Editor</emphasis>
     </para>
@@ -4721,13 +4715,6 @@ rt -s 512 -F :1
             </para>
           </listitem>
           <listitem>
-            <para xml:id="AnimMateControlPanel2">
-              <link linkend="AnimMateControlPanel">Animmate
-              Control Panel</link> - pops up for building animation
-              scripts.
-            </para>
-          </listitem>
-          <listitem>
             <para xml:id="SolidEditor3">
               <link linkend="SolidEditor">Solid
               Editor</link> - pops up a tool for creating and editing
@@ -5504,9 +5491,6 @@ x 					delete character
     <link linkend="rmater">rmater</link>
   </entry>
   <entry>
-    <link linkend="rmats">rmats</link>
-  </entry>
-  <entry>
     <link linkend="rot">rot</link>
   </entry>
   <entry>
@@ -5531,9 +5515,6 @@ x 					delete character
   </entry>
   </row>
 <row>
-  <entry>
-    <link linkend="savekey">savekey</link>
-  </entry>
   <entry>
     <link linkend="saveview">saveview</link>
   </entry>
@@ -14069,40 +14050,6 @@ foo.r_xpand/R
   <para>
     <emphasis role="strong"></emphasis>
   </para>
-  <variablelist xml:id="rmats">
-    <varlistentry>
-      <term>
-        rmats file
-      </term>
-      <listitem>
-        <para>
-          The <quote>rmats</quote> command reads the specified
-          <emphasis>file</emphasis> and sets the current MGED view to
-          agree with the parameters in the <emphasis>file</emphasis>.
-          The format of the file is expected to be as produced by the
-          <link linkend="savekey">savekey</link> command.
-        </para>
-      </listitem>
-    </varlistentry>
-    <varlistentry>
-      <term>
-        Examples:
-      </term>
-      <listitem>
-        <para>
-          mged&gt; rmats key_file
-        </para>
-      </listitem>
-    </varlistentry>
-  </variablelist>
-  <para>
-    – Read the file named <emphasis>key_file</emphasis> and set the
-    current MGED viewing direction according to the parameters found
-    there.
-  </para>
-  <para>
-    <emphasis role="strong"></emphasis>
-  </para>
   <variablelist>
     <varlistentry>
       <term>
@@ -14429,51 +14376,6 @@ foo.r_xpand/R
   <variablelist>
     <varlistentry>
       <term>
-				savekey <emphasis>file</emphasis>
-        [<emphasis>time</emphasis>]
-      </term>
-      <listitem>
-        <para xml:id="savekey">
-          The <quote>savekey</quote> command saves the current viewing
-          parameters in the specified <emphasis>file</emphasis> in the
-          format expected by the <link linkend="rmats">rmats</link>
-          command. If a <emphasis>time</emphasis> is included, it will
-          also be written to the specified <emphasis>file</emphasis>. If
-          the <emphasis>file</emphasis> already exists, the information
-          will be appended to its end. The parameters saved this way are
-          useful as keypoints in constructing an animation. The
-          <emphasis>BRL-CAD</emphasis> <emphasis>anim_keyread</emphasis>
-          program will read a <emphasis>file</emphasis> constructed by
-          using the <emphasis>savekey</emphasis> command with some
-          number of different views in MGED with sequential times
-          specified. The <emphasis>anim_keyread</emphasis> program will
-          produce a table of keyframes suitable for use with other
-          <emphasis>BRL-CAD</emphasis> animation tools.
-        </para>
-      </listitem>
-    </varlistentry>
-    <varlistentry>
-      <term>
-        Examples:
-      </term>
-      <listitem>
-        <para>
-          mged&gt; savekey key_file 5
-        </para>
-      </listitem>
-    </varlistentry>
-  </variablelist>
-  <para>
-    – Append the current viewing parameters to
-    <emphasis>key_file</emphasis> and tag this as the key frame at 5
-    seconds.
-  </para>
-  <para>
-    <emphasis role="strong"></emphasis>
-  </para>
-  <variablelist>
-    <varlistentry>
-      <term>
         saveview <emphasis>file</emphasis> [<emphasis>args</emphasis>]
       </term>
       <listitem>
@@ -14537,13 +14439,6 @@ EOF
     <link linkend="orientation">orientation</link>, and
     <link linkend="eye_pt">eye_pt</link> lines from the
     <emphasis>saveview</emphasis> file into MGED.
-  </para>
-  <para>
-    Related MGED commands are <link linkend="preview">preview</link>,
-    for viewing the effects of an entire animation script, and
-    <link linkend="savekey">savekey</link>. Related
-    <emphasis>BRL-CAD</emphasis> programs are
-    <emphasis>tabsub</emphasis> and <emphasis>tabinterp</emphasis>.
   </para>
   <variablelist>
     <varlistentry>

@@ -8,13 +8,6 @@ set(mann_EN
   ae.xml
   all_sf.xml
   analyze.xml
-  anim_cascade.xml
-  anim_fly.xml
-  anim_hardtrack.xml
-  anim_keyread.xml
-  anim_lookat.xml
-  anim_offset.xml
-  anim_orient.xml
   animmate.xml
   apropos.xml
   aproposdevel.xml
@@ -180,7 +173,6 @@ set(mann_EN
   rfarb.xml
   rm.xml
   rmater.xml
-  rmats.xml
   rot.xml
   rotobj.xml
   rpp-arch.xml
@@ -189,7 +181,6 @@ set(mann_EN
   rt.xml
   rtarea.xml
   rtcheck.xml
-  savekey.xml
   saveview.xml
   sca.xml
   search.xml
