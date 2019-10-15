@@ -10,7 +10,6 @@ endif(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
 
 # locally used but not needed by users of the library
 set(BU_LOCAL_INCLUDE_DIRS
-  ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/y2038
   ${REGEX_INCLUDE_DIR}
   )
