@@ -110,6 +110,15 @@
     </variablelist>
 
     <para>
+      This information may be stored in the .g file or as a separate density file.
+    </para>
+
+    <para>
+      To check if the .g file you are using has a density table, use the <command>mater -d get *</command> command to see if any information is already defined (if no density information is found, an error message will be returned.)  If no pre-existing information is available, a density table may be defined in an external file using a text editor.
+      (Alternately, it may also be built up within MGED directly using the <command>mater -d set</command> command.)
+      </para>
+
+    <para>
       An example file might look like the following:
     </para>
 
@@ -117,15 +126,18 @@
 <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../../../misc/GQA_SAMPLE_DENSITIES" parse="text"/>
    </literallayout>
 
-    <para>
-      The table is typically created in an external file using a text editor,
-      but may also be built up within MGED directly using the <command>mater -d set</command> command.
+
+      <para>
       To import an existing density file into the database, use the <command>mater -d import</command>
       command:
     </para>
 
     <para>
       <prompt>mged&gt; </prompt><userinput>mater -d import <replaceable>filename</replaceable></userinput>
+    </para>
+
+    <para>
+	    If existing density values need to be corrected in the .g file, the <command>mater -d set</command> command may be used to alter them.  For more about density information manipulation, see the <citerefentry><refentrytitle>mater</refentrytitle><manvolnum>N</manvolnum></citerefentry> manual page.
     </para>
 
     <para>
