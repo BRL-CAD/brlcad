@@ -958,6 +958,7 @@ f4_do_groups(struct conversion_state *pstate)
 HIDDEN void
 f4_do_name(struct conversion_state *pstate)
 {
+    int foundr = 0;
     int g_id;
     int c_id;
     struct bu_vls comp_name = BU_VLS_INIT_ZERO;
@@ -998,8 +999,14 @@ f4_do_name(struct conversion_state *pstate)
     /* Simplify */
     bu_vls_simplify(&comp_name, NULL, NULL, NULL);
 
-    /* reserve this name for group name */
-    make_unique_name(&comp_name, pstate);
+    /* Reserve this name for group name. If we've already seen this region_id before,
+     * go with the existing name rather than making a new unique name. */
+    Search_ident(pstate->name_root, pstate->region_id, &foundr);
+    if (!foundr) {
+	make_unique_name(&comp_name, pstate);
+    } else {
+	bu_log("Already encountered region id %d - reusing name\n", pstate->region_id);
+    }
     Insert_region_name(pstate, bu_vls_cstr(&comp_name), pstate->region_id);
 
     pstate->name_count = 0;
