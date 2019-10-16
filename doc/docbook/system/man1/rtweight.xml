@@ -32,13 +32,22 @@ operates on the indicated
 in
 <emphasis remap='I'>model.g</emphasis>
 to calculate the volume and centroid of each region encountered along
-rays.  An auxiliary density file
+rays.  Material density information
 and region line of sight (LOS) thickness estimates are used to calculate
 the mass for each region.
-<command>rtweight</command> reads the density
-file specified by the <option>-d</option>.
-The file must contain lines with the material number, density in g/cc,
-and material name, each separated by some white space.</para>
+</para>
+
+<para>
+	<command>rtweight</command> can either use density information stored
+	directly in a .g database or read a density
+	file specified by the <option>-d</option> option.
+</para>
+<para>
+	If using a density file the file must contain lines with the material
+	number, density in g/cc, and material name, each separated by some
+	white space.  See the <citerefentry><refentrytitle>gqa</refentrytitle><manvolnum>1</manvolnum></citerefentry> manual page for more information about defining
+	and managing density information.
+</para>
 
 <para>The following options are recognized.</para>
 <variablelist remap='TP'>
