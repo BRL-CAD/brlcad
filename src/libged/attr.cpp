@@ -1,4 +1,4 @@
-/*                         A T T R . C
+/*                       A T T R . C P P
  * BRL-CAD
  *
  * Copyright (c) 2008-2019 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/attr.c
+/** @file libged/attr.cpp
  *
  * The attr command.
  *
@@ -672,12 +672,11 @@ ged_attr_memfree:
 }
 
 
-/*
- * Local Variables:
- * tab-width: 8
- * mode: C
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
