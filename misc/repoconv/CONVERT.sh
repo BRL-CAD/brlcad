@@ -153,6 +153,10 @@ cd cvs_git && ../archive_tags.sh
 echo "Do a file git gc --aggressive"
 git gc --aggressive
 
+echo "Clean up the one commit from CVS that never made it to the svn history"
+git reflog expire --expire-unreachable=now --all
+git gc --prune=now
+
 echo "Make the final tar.gz file (NOTE!!! we can't use git bundle for this, it drops all the notes with the svn rev info)"
 mkdir brlcad-git
 mv .git brlcad-git
