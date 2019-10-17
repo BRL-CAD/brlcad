@@ -25,9 +25,12 @@
 
 #include "common.h"
 
+#include <set>
 #include <string.h>
+#include <stdlib.h>
 
 #include "bu/getopt.h"
+#include "bu/path.h"
 #include "bu/sort.h"
 #include "./ged_private.h"
 
@@ -146,6 +149,94 @@ attr_cmd(const char* arg)
     else
 	return ATTR_UNKNOWN;
 }
+
+struct avsncmp {
+    bool operator () (const std::pair<std::string, std::string> &p_left, const std::pair<std::string, std::string> &p_right)
+    {
+	long l1, l2;
+	char *endptr = NULL;
+	if (p_left.first != p_right.first) {
+	    return p_left < p_right;
+	}
+	errno = 0;
+	endptr = NULL;
+	l1 = strtol(p_left.second.c_str(), &endptr, 0);
+	if (endptr != NULL && strlen(endptr) > 0) {
+	    return p_left < p_right;
+	}
+	errno = 0;
+	endptr = NULL;
+	l2 = strtol(p_right.second.c_str(), &endptr, 0);
+	if (endptr != NULL && strlen(endptr) > 0) {
+	    return p_left < p_right;
+	}
+	return l1 < l2;
+    }
+};
+
+static int
+attr_list(struct ged *gedp, size_t path_cnt, struct directory **paths, int argc, const char **argv)
+{
+    if (argc > 2) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: attr list obj_pattern [key_pattern [value_pattern]]");
+	return GED_HELP;
+    }
+    struct bu_attribute_value_pair *avpp;
+    std::set<std::pair<std::string, std::string>, avsncmp> uniq_avp;
+    for (size_t i = 0; i < path_cnt; i++) {
+	struct directory *dp = paths[i];
+	struct bu_attribute_value_set lavs;
+	bu_avs_init_empty(&lavs);
+	if (db5_get_attributes(gedp->ged_wdbp->dbip, &lavs, dp)) {
+	    bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
+	    bu_avs_free(&lavs);
+	    return GED_ERROR;
+	}
+	size_t j = 0;
+	for (j = 0, avpp = lavs.avp; j < lavs.count; j++, avpp++) {
+	    /* If we have a key-only filter, filter printing based on matching
+	     * to that filter.  If we also have a value filter, print the value as well according to value
+	     * matches. */
+	    if (!argc) {
+		uniq_avp.insert(std::make_pair(std::string(avpp->name), std::string("")));
+		continue;
+	    }
+	    if (argc == 1) {
+		if (!bu_path_match(argv[0], avpp->name, 0)) {
+		    uniq_avp.insert(std::make_pair(std::string(avpp->name), std::string("")));
+		}
+		continue;
+	    }
+	    if (argc == 2) {
+		if (!bu_path_match(argv[0], avpp->name, 0) && !bu_path_match(argv[1], avpp->value, 0)) {
+		    uniq_avp.insert(std::make_pair(std::string(avpp->name), std::string(avpp->value)));
+		}
+		continue;
+	    }
+	}
+	bu_avs_free(&lavs);
+    }
+    /* List all the attributes. */
+    std::set<std::pair<std::string, std::string>>::iterator u_it;
+    for (u_it = uniq_avp.begin(); u_it != uniq_avp.end(); u_it++) {
+	if (!argc) {
+	    bu_vls_printf(gedp->ged_result_str, "%s\n", u_it->first.c_str());
+	    continue;
+	}
+	if (argc == 1) {
+	    bu_vls_printf(gedp->ged_result_str, "%s\n", u_it->first.c_str());
+	    continue;
+	}
+	if (argc == 2) {
+	    bu_vls_printf(gedp->ged_result_str, "%s=%s\n", u_it->first.c_str(), u_it->second.c_str());
+	    continue;
+	}
+    }
+
+    return GED_OK;
+}
+ 
+
 
 HIDDEN void
 attr_print(struct ged *gedp, struct bu_attribute_value_set *avs, int argc, const char **argv)
@@ -437,28 +528,9 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	    }
 	}
     } else if (scmd == ATTR_LIST) {
-	struct bu_attribute_value_set avs;
-	bu_avs_init_empty(&avs);
 
-	for (i = 0; i < path_cnt; i++) {
-	    struct bu_attribute_value_set lavs;
-	    bu_avs_init_empty(&lavs);
-	    dp = paths[i];
-	    if (db5_get_attributes(gedp->ged_wdbp->dbip, &lavs, dp)) {
-		bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
-		ret = GED_ERROR;
-		goto ged_attr_memfree;
-	    }
-	    bu_avs_merge(&avs, &lavs);
-	    bu_avs_free(&lavs);
-	}
-	/* Now that we have them all, sort */
-	bu_sort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), attr_cmp, NULL);
-	/* list all the attributes */
-	for (i = 0, avpp = avs.avp; i < avs.count; i++, avpp++) {
-	    bu_vls_printf(gedp->ged_result_str, "%s\n", avpp->name);
-	}
-	bu_avs_free(&avs);
+	return attr_list(gedp, path_cnt, paths, argc - 3, &(argv[3]));
+
     } else if (scmd == ATTR_COPY) {
 	const char *oattr, *nattr;
 
