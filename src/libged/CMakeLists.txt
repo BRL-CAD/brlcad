@@ -45,7 +45,7 @@ set(LIBGED_SOURCES
   arb.c
   arced.c
   arot.c
-  attr.c
+  attr.cpp
   autoview.c
   bb.c
   bev.c
