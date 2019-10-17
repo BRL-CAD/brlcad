@@ -67,7 +67,6 @@ branches=(
 	"rel-5-1-patches"
 	"rel-5-2"
 	"rel-5-3"
-	"rel-5-4"
 	"rel-6-0"
 	"rel-6-0-1"
 	"rel-6-0-1-branch"
