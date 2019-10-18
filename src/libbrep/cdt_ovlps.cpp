@@ -1489,8 +1489,8 @@ get_intruding_points(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_me
 				// TODO - this is backwards of what I would expect, but the other way
 				// increases the overlapping triangles... did I flip the test somehow?
 				// Need to print out some point sets...
-				if (!pinside) {
-				    std::cout << "test point outside\n";
+				if (pinside) {
+				    std::cout << "test point inside\n";
 				    //std::cout << "face " << fmesh1->f_id << " new interior point from face " << fmesh2->f_id << ": " << tp.x << "," << tp.y << "," << tp.z << "\n";
 				    struct p_mvert_info *np = new struct p_mvert_info;
 				    np->s_cdt = s_cdt1;
@@ -1509,7 +1509,7 @@ get_intruding_points(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_me
 				    (*face_npnts)[fmesh1].insert(np);
 				    added_verts[fmesh1].insert(std::make_pair(fmesh2, t2.v[i]));
 				} else {
-				    std::cout << "test point inside\n";
+				    std::cout << "test point outside\n";
 				}
 			    }
 			}
