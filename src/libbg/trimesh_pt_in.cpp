@@ -1,4 +1,4 @@
-/* This is a C++ translation of Mark Dickinson's point-in-polyhedron test from
+/* This is a C translation of Mark Dickinson's point-in-polyhedron test from
  * https://github.com/mdickinson/polyhedron/ */
 
 /*
@@ -259,8 +259,6 @@
 
 #include "common.h"
 
-#include <set>
-
 #include "vmath.h"
 #include "bu/log.h"
 #include "bg/trimesh.h"
@@ -373,44 +371,6 @@ bg_trimesh_pt_in(point_t tp, int num_faces, int *faces, int num_vertices, point_
 	return -1;
     }
 
-    // Construct bounding sphere, bump it out, take the maximum Z point, and
-    // test if that point is inside or outside.  Since we know it is outside,
-    // the answer we get from the logic tells us if we need to invert the
-    // answer when we test the real point, thus making us independent of
-    // triangle CW/CCW issues.
-    point_t cpnt = VINIT_ZERO;
-    int pcnt = 0;
-    std::set<int> pind;
-    for (int i = 0; i < num_faces; i++) {
-	pind.insert(faces[3*i+0]);
-	pind.insert(faces[3*i+1]);
-	pind.insert(faces[3*i+2]);
-    }
-    std::set<int>::iterator p_it;
-    for (p_it = pind.begin(); p_it != pind.end(); p_it++) {
-	VADD2(cpnt, cpnt, pts[*p_it]);
-	pcnt++;
-    }
-    VSCALE(cpnt, cpnt, 1/(double)pcnt);
-    double r = 0;
-    for (p_it = pind.begin(); p_it != pind.end(); p_it++) {
-	double dsq = DIST_PNT_PNT_SQ(cpnt, pts[*p_it]);
-	r = (r > dsq) ? r : dsq;
-    }
-    r = sqrt(r);
-    point_t opnt;
-    VMOVE(opnt, cpnt);
-    opnt[Z] = opnt[Z] + 1.1*r;
-
-    int wn_out = 0;
-    for (int i = 0; i < num_faces; i++) {
-	point_t v1, v2, v3;
-	VMOVE(v1, pts[faces[3*i+0]]);
-	VMOVE(v2, pts[faces[3*i+1]]);
-	VMOVE(v3, pts[faces[3*i+2]]);
-	wn_out += bg_ptm_triangle_chain(v1, v2, v3, opnt, &exact);
-    }
-
     int wn = 0;
     exact = 0;
     for (int i = 0; i < num_faces; i++) {
@@ -422,8 +382,7 @@ bg_trimesh_pt_in(point_t tp, int num_faces, int *faces, int num_vertices, point_
 	if (exact) return 2;
     }
 
-    if (wn == wn_out) return 0;
-    return 1;
+    return wn;
 }
 
 // Local Variables:
