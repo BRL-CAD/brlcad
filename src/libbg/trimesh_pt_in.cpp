@@ -274,13 +274,14 @@ static int ptm_sign(double x)
 /* Sign of the vertex P with respect to O, as defined above. */
 static int ptm_vertex_sign(point_t V, point_t TP, int *exact_flag)
 {
-    int rx = ptm_sign(V[X] - TP[X]);
+    int rx,ry, rz;
+    rx = ptm_sign(V[X] - TP[X]);
     if (rx) return rx;
 
-    int ry = ptm_sign(V[Y] - TP[Y]);
+    ry = ptm_sign(V[Y] - TP[Y]);
     if (ry) return ry;
 
-    int rz = ptm_sign(V[Z] - TP[Z]);
+    rz = ptm_sign(V[Z] - TP[Z]);
     if (rz) return rz;
 
     (*exact_flag) = 1;
@@ -291,13 +292,14 @@ static int ptm_vertex_sign(point_t V, point_t TP, int *exact_flag)
 /* Sign of the edge PQ with respect to O, as defined above. */
 static int ptm_edge_sign(point_t P, point_t Q, point_t TP, int *exact_flag)
 {
-    int r1 = ptm_sign((P[Y] - TP[Y]) * (Q[X] - TP[X]) - (P[X] - TP[X]) * (Q[Y] - TP[Y]));
+    int r1, r2, r3;
+    r1 = ptm_sign((P[Y] - TP[Y]) * (Q[X] - TP[X]) - (P[X] - TP[X]) * (Q[Y] - TP[Y]));
     if (r1) return r1;
 
-    int r2 = ptm_sign((P[Z] - TP[Z]) * (Q[X] - TP[X]) - (P[X] - TP[X]) * (Q[Z] - TP[Z]));
+    r2 = ptm_sign((P[Z] - TP[Z]) * (Q[X] - TP[X]) - (P[X] - TP[X]) * (Q[Z] - TP[Z]));
     if (r2) return r2;
 
-    int r3 = ptm_sign((P[Z] - TP[Z]) * (Q[Y] - TP[Y]) - (P[Y] - TP[Y]) * (Q[Z] - TP[Z]));
+    r3 = ptm_sign((P[Z] - TP[Z]) * (Q[Y] - TP[Y]) - (P[Y] - TP[Y]) * (Q[Z] - TP[Z]));
     if (r3) return r3;
 
     (*exact_flag) = 1;
