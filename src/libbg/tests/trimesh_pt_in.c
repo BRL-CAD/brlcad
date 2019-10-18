@@ -71,6 +71,9 @@ main(int argc, char **argv)
 	    bu_exit(-1, "Fatal error - mesh validity test failed\n");
 	} else {
 	    bu_log("Status: %s\n", (status) ? "inside" : "outside");
+	    if (status) {
+		bu_exit(-1, "Fatal error - test point is outside mesh, but reported inside\n");
+	    }
 	}
 
 	VSET(TP, 0, 0, 0);
@@ -80,6 +83,9 @@ main(int argc, char **argv)
 	    bu_exit(-1, "Fatal error - mesh validity test failed\n");
 	} else {
 	    bu_log("Status: %s\n", (status) ? "inside" : "outside");
+	    if (!status) {
+		bu_exit(-1, "Fatal error - test point is inside mesh, but reported outside\n");
+	    }
 	}
 
 	return 0;
