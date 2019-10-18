@@ -2954,6 +2954,7 @@ void cdt_mesh_t::plot_tri(const triangle_t &t, struct bu_color *buc, FILE *plot,
     }
 #endif
 
+#if 0
     /* Plot the triangle normal */
     pl_color(plot, 0, 255, 255);
     {
@@ -2965,6 +2966,7 @@ void cdt_mesh_t::plot_tri(const triangle_t &t, struct bu_color *buc, FILE *plot,
 	pdv_3move(plot, c);
 	pdv_3cont(plot, npnt);
     }
+#endif
 
 #if 0
     /* Plot the brep normal */

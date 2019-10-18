@@ -1412,7 +1412,7 @@ static bool NearEdgesCallback(void *data, void *a_context) {
 }
 
 void
-check_faces_validity(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> &check_pairs)
+check_faces_validity(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> &check_pairs, int id)
 {
     std::set<cdt_mesh::cdt_mesh_t *> fmeshes;
     std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>>::iterator cp_it;
@@ -1426,6 +1426,9 @@ check_faces_validity(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_me
     for (f_it = fmeshes.begin(); f_it != fmeshes.end(); f_it++) {
 	cdt_mesh::cdt_mesh_t *fmesh = *f_it;
 	std::cout << "face " << fmesh->f_id << " validity: " << fmesh->valid(1) << "\n";
+	struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh->p_cdt;
+	std::string fpname = std::to_string(id) + std::string("_") + std::string(s_cdt->name) + std::string("_face_") + std::to_string(fmesh->f_id) + std::string(".plot3");
+	fmesh->tris_plot(fpname.c_str());
     }
 }
 
@@ -1483,28 +1486,31 @@ get_intruding_points(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_me
 			    double dist = plane1.DistanceTo(tp);
 			    if (dist < 0 && fabs(dist) > ON_ZERO_TOLERANCE) {
 				bool pinside = fmesh1->point_inside(&tp);
-				if (pinside) {
-				    std::cout << "test point inside\n";
-				} else {
+				// TODO - this is backwards of what I would expect, but the other way
+				// increases the overlapping triangles... did I flip the test somehow?
+				// Need to print out some point sets...
+				if (!pinside) {
 				    std::cout << "test point outside\n";
-				}
 				    //std::cout << "face " << fmesh1->f_id << " new interior point from face " << fmesh2->f_id << ": " << tp.x << "," << tp.y << "," << tp.z << "\n";
-				struct p_mvert_info *np = new struct p_mvert_info;
-				np->s_cdt = s_cdt1;
-				np->f_id = fmesh1->f_id;
-				np->edge_split_only = false;
-				np->deactivate = false;
-				closest_surf_pnt(np->p, np->n, *fmesh1, &tp, 2*t1_longest);
-				ON_BoundingBox bb(np->p, np->p);
-				bb.m_max.x = bb.m_max.x + t1_longest;
-				bb.m_max.y = bb.m_max.y + t1_longest;
-				bb.m_max.z = bb.m_max.z + t1_longest;
-				bb.m_min.x = bb.m_min.x - t1_longest;
-				bb.m_min.y = bb.m_min.y - t1_longest;
-				bb.m_min.z = bb.m_min.z - t1_longest;
-				np->bb = bb;
-				(*face_npnts)[fmesh1].insert(np);
-				added_verts[fmesh1].insert(std::make_pair(fmesh2, t2.v[i]));
+				    struct p_mvert_info *np = new struct p_mvert_info;
+				    np->s_cdt = s_cdt1;
+				    np->f_id = fmesh1->f_id;
+				    np->edge_split_only = false;
+				    np->deactivate = false;
+				    closest_surf_pnt(np->p, np->n, *fmesh1, &tp, 2*t1_longest);
+				    ON_BoundingBox bb(np->p, np->p);
+				    bb.m_max.x = bb.m_max.x + t1_longest;
+				    bb.m_max.y = bb.m_max.y + t1_longest;
+				    bb.m_max.z = bb.m_max.z + t1_longest;
+				    bb.m_min.x = bb.m_min.x - t1_longest;
+				    bb.m_min.y = bb.m_min.y - t1_longest;
+				    bb.m_min.z = bb.m_min.z - t1_longest;
+				    np->bb = bb;
+				    (*face_npnts)[fmesh1].insert(np);
+				    added_verts[fmesh1].insert(std::make_pair(fmesh2, t2.v[i]));
+				} else {
+				    std::cout << "test point inside\n";
+				}
 			    }
 			}
 
@@ -1842,14 +1848,14 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 
     //std::cout << "Found " << check_pairs.size() << " potentially interfering face pairs\n";
 
-    check_faces_validity(check_pairs);
+    check_faces_validity(check_pairs, 0);
 
     std::cout << "Initial overlap cnt: " << face_ovlps_cnt(s_a, s_cnt) << "\n";
 
     std::set<struct mvert_info *> adjusted_verts = adjustable_verts(check_pairs);
     if (adjusted_verts.size()) {
 	std::cout << "Adjusted " << adjusted_verts.size() << " vertices\n";
-	check_faces_validity(check_pairs);
+	check_faces_validity(check_pairs, 1);
     }
 
     std::cout << "Post vert adjustment overlap cnt: " << face_ovlps_cnt(s_a, s_cnt) << "\n";
@@ -1857,7 +1863,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
     int sbfvtri_cnt = split_brep_face_edges_near_verts(check_pairs);
     if (sbfvtri_cnt) {
 	std::cout << "Replaced " << sbfvtri_cnt << " triangles by splitting edges near vertices\n";
-	check_faces_validity(check_pairs);
+	check_faces_validity(check_pairs, 2);
     }
 
     std::cout << "Post edges-near-verts split overlap cnt: " << face_ovlps_cnt(s_a, s_cnt) << "\n";
@@ -1866,7 +1872,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
     int sbfetri_cnt = split_brep_face_edges_near_edges(check_pairs);
     if (sbfetri_cnt) {
 	std::cout << "Replaced " << sbfetri_cnt << " triangles by splitting edges near edges\n";
-	check_faces_validity(check_pairs);
+	check_faces_validity(check_pairs, 3);
     }
 #endif
 
@@ -1973,7 +1979,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
     }
 
     std::cout << "Post tri split overlap cnt: " << face_ovlps_cnt(s_a, s_cnt) << "\n";
-    check_faces_validity(check_pairs);
+    check_faces_validity(check_pairs, 4);
 
     return 0;
 }
