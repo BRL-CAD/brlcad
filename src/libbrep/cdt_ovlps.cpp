@@ -218,7 +218,8 @@ class overt_t {
 	omesh_t *omesh;
 	long p_id;
 
-	double mlen();
+	double min_len();
+	double max_len();
 	ON_BoundingBox bb;
 
 	size_t closest_uedge;
@@ -263,9 +264,16 @@ class omesh_t
 	// containers.
 	void vert_add(ON_3dPoint *p, ON_3dVector *v);
 
+	// Find close vertices
 	std::set<size_t> overts_search(ON_BoundingBox &bb);
+
+	// Find close face boundary edges
 	std::set<cdt_mesh::cpolyedge_t *> boundary_edges_search(ON_BoundingBox &bb);
+
+	// Find close (non-face-boundary) edges
 	std::set<size_t> interior_uedges_search(ON_BoundingBox &bb);
+
+	// Find close triangles
 	std::set<size_t> tris_search(ON_BoundingBox &bb);
 
 	void retessellate(std::set<size_t> &ov);
@@ -282,7 +290,95 @@ class omesh_t
 	void add_tri(cdt_mesh::triangle_t &t);
 };
 
+double
+overt_t::min_len() {
+    return v_min_edge_len;
+}
 
+void
+overt_t::update() {
+    // 1.  Get pnt's associated edges.
+    std::set<cdt_mesh::edge_t> edges = omesh->fmesh->v2edges[p_id];
+
+    // 2.  find the shortest edge associated with pnt
+    std::set<cdt_mesh::edge_t>::iterator e_it;
+    double elen = DBL_MAX;
+    for (e_it = edges.begin(); e_it != edges.end(); e_it++) {
+	ON_3dPoint *p1 = omesh->fmesh->pnts[(*e_it).v[0]];
+	ON_3dPoint *p2 = omesh->fmesh->pnts[(*e_it).v[1]];
+	double dist = p1->DistanceTo(*p2);
+	elen = (dist < elen) ? dist : elen;
+    }
+    v_min_edge_len = elen;
+
+    // create a bbox around pnt using length ~20% of the shortest edge length.
+    ON_3dPoint vpnt = *omesh->fmesh->pnts[p_id];
+    ON_BoundingBox init_bb(vpnt, vpnt);
+    bb = init_bb;
+    ON_3dPoint npnt = vpnt;
+    double lfactor = 0.2;
+    npnt.x = npnt.x + lfactor*elen;
+    bb.Set(npnt, true);
+    npnt = vpnt;
+    npnt.x = npnt.x - lfactor*elen;
+    bb.Set(npnt, true);
+    npnt = vpnt;
+    npnt.y = npnt.y + lfactor*elen;
+    bb.Set(npnt, true);
+    npnt = vpnt;
+    npnt.y = npnt.y - lfactor*elen;
+    bb.Set(npnt, true);
+    npnt = vpnt;
+    npnt.z = npnt.z + lfactor*elen;
+    bb.Set(npnt, true);
+    npnt = vpnt;
+    npnt.z = npnt.z - lfactor*elen;
+    bb.Set(npnt, true);
+
+    double mindist = DBL_MAX;
+    closest_uedge = -1;
+    std::set<size_t> close_edges = omesh->interior_uedges_search(bb);
+    std::set<size_t>::iterator c_it;
+    for (c_it = close_edges.begin(); c_it != close_edges.end(); c_it++) {
+	cdt_mesh::uedge_t ue = omesh->interior_uedges[*c_it];
+	ON_3dPoint *p3d1 = omesh->fmesh->pnts[ue.v[0]];
+	ON_3dPoint *p3d2 = omesh->fmesh->pnts[ue.v[1]];
+	ON_Line line(*p3d1, *p3d2);
+	double dline = vpnt.DistanceTo(line.ClosestPointTo(vpnt));
+	if (mindist > dline) {
+	    closest_uedge = *c_it;
+	    mindist = dline;
+	}
+    }
+}
+
+
+static bool NearIntEdgesCallback(size_t data, void *a_context) {
+    std::set<size_t> *edges = (std::set<size_t> *)a_context;
+    edges->insert(data);
+    return true;
+}
+std::set<size_t>
+omesh_t::interior_uedges_search(ON_BoundingBox &bb)
+{
+    double fMin[3]; double fMax[3];
+    fMin[0] = bb.Min().x;
+    fMin[1] = bb.Min().y;
+    fMin[2] = bb.Min().z;
+    fMax[0] = bb.Max().x;
+    fMax[1] = bb.Max().y;
+    fMax[2] = bb.Max().z;
+    std::set<size_t> nedges;
+    size_t nhits = iuetree.Search(fMin, fMax, NearIntEdgesCallback, (void *)&nedges);
+
+    if (!nhits) {
+	// TODO - if we've got nothing, try triangles - if we're close to any of those,
+	// iterate through them and find the closest edge
+	std::cout << "not real close to edge...\n";
+    }
+
+    return nedges;
+}
 
 
 
