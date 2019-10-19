@@ -1442,7 +1442,16 @@ struct p_mvert_info {
     bool deactivate;
 };
 
-
+void plot_mvert_set(double r, std::set<struct p_mvert_info *> &pv)
+{
+    FILE *plot = fopen("mvert.plot3", "w");
+    pl_color(plot, 255, 0, 0);
+    std::set<struct p_mvert_info *>::iterator pm_it;
+    for (pm_it = pv.begin(); pm_it != pv.end(); pm_it++) {
+	plot_pnt_3d(plot, &((*pm_it)->p), r, 0);
+    }
+    fclose(plot);
+}
 
 std::map<cdt_mesh::cdt_mesh_t *, std::set<struct p_mvert_info *>> *
 get_intruding_points(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> &check_pairs)
@@ -1486,9 +1495,6 @@ get_intruding_points(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_me
 			    double dist = plane1.DistanceTo(tp);
 			    if (dist < 0 && fabs(dist) > ON_ZERO_TOLERANCE) {
 				bool pinside = fmesh1->point_inside(&tp);
-				// TODO - this is backwards of what I would expect, but the other way
-				// increases the overlapping triangles... did I flip the test somehow?
-				// Need to print out some point sets...
 				if (pinside) {
 				    std::cout << "test point inside\n";
 				    //std::cout << "face " << fmesh1->f_id << " new interior point from face " << fmesh2->f_id << ": " << tp.x << "," << tp.y << "," << tp.z << "\n";
@@ -1506,6 +1512,8 @@ get_intruding_points(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_me
 				    bb.m_min.y = bb.m_min.y - t1_longest;
 				    bb.m_min.z = bb.m_min.z - t1_longest;
 				    np->bb = bb;
+				    // TODO - check if this point is too close to an existing vert
+				    // point to insert. If so, tweak the vert point to match this point
 				    (*face_npnts)[fmesh1].insert(np);
 				    added_verts[fmesh1].insert(std::make_pair(fmesh2, t2.v[i]));
 				} else {
@@ -1521,22 +1529,29 @@ get_intruding_points(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_me
 			    double dist = plane2.DistanceTo(tp);
 			    if (dist < 0 && fabs(dist) > ON_ZERO_TOLERANCE) {
 				//std::cout << "face " << fmesh2->f_id << " new interior point from face " << fmesh1->f_id << ": " << tp.x << "," << tp.y << "," << tp.z << "\n";
-				struct p_mvert_info *np = new struct p_mvert_info;
-				np->s_cdt = s_cdt2;
-				np->f_id = fmesh2->f_id;
-				np->edge_split_only = false;
-				np->deactivate = false;
-				closest_surf_pnt(np->p, np->n, *fmesh2, &tp, 2*t2_longest);
-				ON_BoundingBox bb(np->p, np->p);
-				bb.m_max.x = bb.m_max.x + t2_longest;
-				bb.m_max.y = bb.m_max.y + t2_longest;
-				bb.m_max.z = bb.m_max.z + t2_longest;
-				bb.m_min.x = bb.m_min.x - t2_longest;
-				bb.m_min.y = bb.m_min.y - t2_longest;
-				bb.m_min.z = bb.m_min.z - t2_longest;
-				np->bb = bb;
-				(*face_npnts)[fmesh2].insert(np);
-				added_verts[fmesh2].insert(std::make_pair(fmesh1, t1.v[i]));
+				bool pinside = fmesh2->point_inside(&tp);
+				if (pinside) {
+				    struct p_mvert_info *np = new struct p_mvert_info;
+				    np->s_cdt = s_cdt2;
+				    np->f_id = fmesh2->f_id;
+				    np->edge_split_only = false;
+				    np->deactivate = false;
+				    closest_surf_pnt(np->p, np->n, *fmesh2, &tp, 2*t2_longest);
+				    ON_BoundingBox bb(np->p, np->p);
+				    bb.m_max.x = bb.m_max.x + t2_longest;
+				    bb.m_max.y = bb.m_max.y + t2_longest;
+				    bb.m_max.z = bb.m_max.z + t2_longest;
+				    bb.m_min.x = bb.m_min.x - t2_longest;
+				    bb.m_min.y = bb.m_min.y - t2_longest;
+				    bb.m_min.z = bb.m_min.z - t2_longest;
+				    np->bb = bb;
+				    // TODO - check if this point is too close to an existing vert
+				    // point to insert. If so, tweak the vert point to match this point
+				    (*face_npnts)[fmesh2].insert(np);
+				    added_verts[fmesh2].insert(std::make_pair(fmesh1, t1.v[i]));
+				} else {
+				    std::cout << "test point outside\n";
+				}
 			    }
 			}
 		    }
@@ -1892,9 +1907,13 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
     for (f_it = face_npnts->begin(); f_it != face_npnts->end(); f_it++) {
 	cdt_mesh::cdt_mesh_t *fmesh = f_it->first;
 	struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh->p_cdt;
+	std::cout << "Refining " << s_cdt->name << " face " << fmesh->f_id << " with " << f_it->second.size() << " points.\n";
 	std::set<struct p_mvert_info *>::iterator pm_it;
 
 	std::map<long, std::set<struct p_mvert_info *>> tri_npnts;
+
+	fmesh->tris_plot("face.plot3");
+	plot_mvert_set(0.1,f_it->second);
 
 	for (pm_it = f_it->second.begin(); pm_it != f_it->second.end(); pm_it++) {
 	    struct p_mvert_info *pmv = *pm_it;
@@ -1938,7 +1957,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 		}
 		point_type = (ptype > point_type) ? ptype : point_type;
 	    }
-	    //std::cout << "Point/tri characterization: " << point_type << "\n";
+	    std::cout << "Point/tri characterization: " << point_type << "\n";
 
 	    // Plot point and neighborhood triangles
 	    struct bu_vls fname = BU_VLS_INIT_ZERO;
