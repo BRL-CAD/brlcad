@@ -203,6 +203,89 @@
 #include "bg/tri_tri.h"
 #include "./cdt.h"
 
+class omesh_t;
+class overt_t {
+    public:
+
+	overt_t(omesh_t *om, long p)
+	{
+	    omesh = om;
+	    p_id = p;
+	    assigned = false;
+	    update();
+	}
+
+	omesh_t *omesh;
+	long p_id;
+
+	double mlen();
+	ON_BoundingBox bb;
+
+	size_t closest_uedge;
+	bool assigned;
+	void update();
+    private:
+	double v_min_edge_len;
+};
+
+class omesh_t
+{
+    public:
+	omesh_t(cdt_mesh::cdt_mesh_t *m)
+	{
+	    fmesh = m;
+	    init_edges();
+	    init_verts();
+	};
+
+	// We don't remove vertices during overlap resolution - just add and
+	// update them - so a vector works as a container.
+	cdt_mesh::cdt_mesh_t *fmesh;
+	std::vector<class overt_t> overts;
+	RTree<size_t, double, 3> vtree;
+
+	// Interior edges we add and remove. Because we don't want to store the whole
+	// uedge_t class in the rtree, store them in two maps to support both
+	// adding/removing them and looking them up from either triangles or
+	// the tree.
+	std::map<cdt_mesh::uedge_t, size_t> interior_uedge_ids;
+	std::map<size_t, cdt_mesh::uedge_t> interior_uedges;
+	RTree<size_t, double, 3> iuetree;
+
+	// We we consider a vertex near an edge (i.e. we're going to yank that edge
+	// and retessellate) all the other unassigned overts that have this as their
+	std::map<size_t, std::set<size_t>> iue_close_overts;
+
+	void vert_adjust(long p_ind, ON_3dPoint *p, ON_3dVector *v);
+	// Add a vertex both the fmesh and the overts array.  Note - the
+	// index in the fmesh pnts array needs to match with the corresponding
+	// overts index, so the same index refers to the same point in both
+	// containers.
+	void vert_add(ON_3dPoint *p, ON_3dVector *v);
+
+	std::set<size_t> overts_search(ON_BoundingBox &bb);
+	std::set<cdt_mesh::cpolyedge_t *> boundary_edges_search(ON_BoundingBox &bb);
+	std::set<size_t> interior_uedges_search(ON_BoundingBox &bb);
+	std::set<size_t> tris_search(ON_BoundingBox &bb);
+
+	void retessellate(std::set<size_t> &ov);
+
+    private:
+	void verts_one_ring_update(long p_ind);
+	void init_verts();
+	void init_edges();
+
+	void remove_edge(cdt_mesh::uedge_t &ue);
+	void add_edge(cdt_mesh::uedge_t &ue);
+
+	void remove_edge_tris(cdt_mesh::uedge_t &ue);
+	void add_tri(cdt_mesh::triangle_t &t);
+};
+
+
+
+
+
 #define TREE_LEAF_FACE_3D(pf, valp, a, b, c, d)  \
     pdv_3move(pf, pt[a]); \
     pdv_3cont(pf, pt[b]); \
