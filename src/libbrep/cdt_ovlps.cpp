@@ -235,7 +235,7 @@ class omesh_t
 	omesh_t(cdt_mesh::cdt_mesh_t *m)
 	{
 	    fmesh = m;
-	    init_edges();
+	    init_edges(); // Need this first - init_verts uses this information
 	    init_verts();
 	};
 
@@ -256,12 +256,14 @@ class omesh_t
 	// and retessellate) all the other unassigned overts that have this as their
 	std::map<size_t, std::set<size_t>> iue_close_overts;
 
-	void vert_adjust(long p_ind, ON_3dPoint *p, ON_3dVector *v);
+	void vert_adjust(long p_id, ON_3dPoint *p, ON_3dVector *v);
+
 	// Add a vertex both the fmesh and the overts array.  Note - the
 	// index in the fmesh pnts array needs to match with the corresponding
 	// overts index, so the same index refers to the same point in both
-	// containers.
-	void vert_add(ON_3dPoint *p, ON_3dVector *v);
+	// containers.  The 2D point is only there for debugging information -
+	// it is not (currently) wired back into the fmesh maps.
+	void vert_add(ON_3dPoint *p, ON_3dVector *v, ON_2dPoint &n2dp);
 
 	// Find close vertices
 	std::set<size_t> overts_search(ON_BoundingBox &bb);
@@ -279,15 +281,16 @@ class omesh_t
 
 	cdt_mesh::cdt_mesh_t *fmesh;
     private:
-	void verts_one_ring_update(long p_ind);
+	void verts_one_ring_update(long p_id);
 	void init_verts();
 	void init_edges();
 
-	void remove_edge(cdt_mesh::uedge_t &ue);
-	void add_edge(cdt_mesh::uedge_t &ue);
+	void edge_add(cdt_mesh::uedge_t &ue, int update_verts);
+	void edge_remove(cdt_mesh::uedge_t &ue, int update_verts);
 
-	void remove_edge_tris(cdt_mesh::uedge_t &ue);
-	void add_tri(cdt_mesh::triangle_t &t);
+	void tri_add(cdt_mesh::triangle_t &t, int update_verts);
+	void tri_remove(cdt_mesh::triangle_t &t, int update_verts);
+	void edge_tris_remove(cdt_mesh::uedge_t &ue);
 };
 
 double
@@ -365,54 +368,49 @@ omesh_t::init_edges()
     while (!tree_it.IsNull()) {
 	t_ind = *tree_it;
 	tri = fmesh->tris_vect[t_ind];
-	uedges.insert(cdt_mesh::uedge_t(tri.v[0], tri.v[1]));
-	uedges.insert(cdt_mesh::uedge_t(tri.v[1], tri.v[2]));
-	uedges.insert(cdt_mesh::uedge_t(tri.v[2], tri.v[0]));
+	cdt_mesh::uedge_t ue;
+	ue = cdt_mesh::uedge_t(tri.v[0], tri.v[1]);
+	edge_add(ue, 0);
+	ue = cdt_mesh::uedge_t(tri.v[1], tri.v[2]);
+	edge_add(ue, 0);
+	ue = cdt_mesh::uedge_t(tri.v[2], tri.v[0]);
+	edge_add(ue, 0);
 	++tree_it;
     }
-    std::set<cdt_mesh::uedge_t>::iterator u_it;
-    bool first_edge = true;
-    for (u_it = uedges.begin(); u_it != uedges.end(); u_it++) {
-	if (fmesh->brep_edges.find(*u_it) != fmesh->brep_edges.end()) {
-	    continue;
-	}
-	size_t nind = 0;
-	if (!first_edge) {
-	    nind = interior_uedges.rbegin()->first + 1;
-	} else {
-	    first_edge = false;
-	}
-	interior_uedges[nind] = *u_it;
-	interior_uedge_ids[*u_it] = nind;
-	ON_3dPoint *p3d1 = fmesh->pnts[(*u_it).v[0]];
-	ON_3dPoint *p3d2 = fmesh->pnts[(*u_it).v[1]];
-	ON_Line l(*p3d1, *p3d2);
-	ON_BoundingBox ebb = l.BoundingBox();
-	double dist = 0.5*l.Length();
-	double xdist = ebb.m_max.x - ebb.m_min.x;
-	double ydist = ebb.m_max.y - ebb.m_min.y;
-	double zdist = ebb.m_max.z - ebb.m_min.z;
-	if (xdist < dist) {
-	    ebb.m_min.x = ebb.m_min.x - 0.5*dist;
-	    ebb.m_max.x = ebb.m_max.x + 0.5*dist;
-	}
-	if (ydist < dist) {
-	    ebb.m_min.y = ebb.m_min.y - 0.5*dist;
-	    ebb.m_max.y = ebb.m_max.y + 0.5*dist;
-	}
-	if (zdist < dist) {
-	    ebb.m_min.z = ebb.m_min.z - 0.5*dist;
-	    ebb.m_max.z = ebb.m_max.z + 0.5*dist;
-	}
-	double fMin[3];
-	fMin[0] = ebb.Min().x;
-	fMin[1] = ebb.Min().y;
-	fMin[2] = ebb.Min().z;
+}
+
+void
+omesh_t::init_verts()
+{
+    // Walk the fmesh's rtree holding the active triangles to get all
+    // vertices active in the face
+    std::set<long> averts;
+    RTree<size_t, double, 3>::Iterator tree_it;
+    size_t t_ind;
+    cdt_mesh::triangle_t tri;
+    fmesh->tris_tree.GetFirst(tree_it);
+    while (!tree_it.IsNull()) {
+	t_ind = *tree_it;
+	tri = fmesh->tris_vect[t_ind];
+	averts.insert(tri.v[0]);
+	averts.insert(tri.v[1]);
+	averts.insert(tri.v[2]);
+	++tree_it;
+    }
+
+    std::set<long>::iterator a_it;
+    for (a_it = averts.begin(); a_it != averts.end(); a_it++) {
+	overt_t vert(this, *a_it);
+	overts.push_back(vert);
+    	double fMin[3];
+	fMin[0] = vert.bb.Min().x;
+	fMin[1] = vert.bb.Min().y;
+	fMin[2] = vert.bb.Min().z;
 	double fMax[3];
-	fMax[0] = ebb.Max().x;
-	fMax[1] = ebb.Max().y;
-	fMax[2] = ebb.Max().z;
-	iuetree.Insert(fMin, fMax, nind);
+	fMax[0] = vert.bb.Max().x;
+	fMax[1] = vert.bb.Max().y;
+	fMax[2] = vert.bb.Max().z;
+	vtree.Insert(fMin, fMax, overts.size() - 1);
     }
 }
 
@@ -463,12 +461,231 @@ omesh_t::interior_uedges_search(ON_BoundingBox &bb)
     if (!nhits) {
 	// TODO - if we've got nothing, try triangles - if we're close to any of those,
 	// iterate through them and find the closest edge
-	std::cout << "not real close to edge...\n";
-	return std::set<size_t>();
+	std::set<size_t> ntris = tris_search(bb);
+	if (!ntris.size()) {
+	    std::cout << "not close to edge or triangles...\n";
+	    return std::set<size_t>();
+	} else {
+	    long closest_tri = -1;
+	    double cdist = DBL_MAX;
+	    std::set<size_t>::iterator tr_it;
+	    for (tr_it = ntris.begin(); tr_it != ntris.end(); tr_it++) {
+		cdt_mesh::triangle_t t = fmesh->tris_vect[*tr_it];
+		// Figure out how far away the triangle is from the point in question
+		point_t tp, v0, v1, v2;
+		VSET(tp, bb.Center().x, bb.Center().y, bb.Center().z);
+		VSET(v0, fmesh->pnts[t.v[0]]->x, fmesh->pnts[t.v[0]]->y, fmesh->pnts[t.v[0]]->z);
+		VSET(v1, fmesh->pnts[t.v[1]]->x, fmesh->pnts[t.v[1]]->y, fmesh->pnts[t.v[1]]->z);
+		VSET(v2, fmesh->pnts[t.v[2]]->x, fmesh->pnts[t.v[2]]->y, fmesh->pnts[t.v[2]]->z);
+		double tdist = bg_tri_pt_dist(tp, v0, v1, v2);
+		if (cdist > tdist) {
+		    cdist = tdist;
+		    closest_tri = *tr_it;
+		}
+	    }
+	    // For the closest triangle, find the closest edge from that triangle
+	    double ecdist = DBL_MAX;
+	    int cedge = -1;
+	    cdt_mesh::uedge_t uedges[3];
+	    for (int i = 0; i < 3; i++) {
+		int v1 = i;
+		int v2 = (i == 2) ? 0 : i + 1;
+		uedges[i] = cdt_mesh::uedge_t(fmesh->tris_vect[closest_tri].v[v1], fmesh->tris_vect[closest_tri].v[v2]);
+	    }
+	    for (int i = 0; i < 3; i++) {
+		ON_3dPoint *p3d1 = fmesh->pnts[uedges[i].v[0]];
+		ON_3dPoint *p3d2 = fmesh->pnts[uedges[i].v[1]];
+		ON_Line line(*p3d1, *p3d2);
+		double dline = bb.Center().DistanceTo(line.ClosestPointTo(bb.Center()));
+		if (ecdist > dline) {
+		    cedge = i;
+		    ecdist = dline;
+		}
+	    }
+	    nedges.insert(interior_uedge_ids[uedges[cedge]]);
+	}
     }
 
     return nedges;
 }
+
+
+static bool NearTrisCallback(size_t data, void *a_context) {
+    std::set<size_t> *ntris = (std::set<size_t> *)a_context;
+    size_t f_id = data;
+    ntris->insert(f_id);
+    return true;
+}
+std::set<size_t>
+omesh_t::tris_search(ON_BoundingBox &bb)
+{
+    double fMin[3], fMax[3];
+    fMin[0] = bb.Min().x;
+    fMin[1] = bb.Min().y;
+    fMin[2] = bb.Min().z;
+    fMax[0] = bb.Max().x;
+    fMax[1] = bb.Max().y;
+    fMax[2] = bb.Max().z;
+    std::set<size_t> near_tris;
+    size_t nhits = fmesh->tris_tree.Search(fMin, fMax, NearTrisCallback, (void *)&near_tris);
+
+    if (!nhits) {
+	std::cout << "No nearby triangles\n";
+	return std::set<size_t>();
+    }
+
+    return near_tris;
+}
+
+void
+omesh_t::verts_one_ring_update(long p_id)
+{
+    std::set<long> mod_verts;
+
+    // 1.  Get pnt's associated edges.
+    std::set<cdt_mesh::edge_t> edges = fmesh->v2edges[p_id];
+
+    // 2.  Collect all the vertices associated with all the edges
+    // connected to the original point - these are the mvert_info
+    // structures that may have a new minimum edge length after
+    // the change.
+    std::set<cdt_mesh::edge_t>::iterator e_it;
+    for (e_it = edges.begin(); e_it != edges.end(); e_it++) {
+	mod_verts.insert((*e_it).v[0]);
+	mod_verts.insert((*e_it).v[1]);
+    }
+
+    // 3.  Update each vertex
+    std::set<long>::iterator v_it;
+    for (v_it = mod_verts.begin(); v_it != mod_verts.end(); v_it++) {
+	overts[*v_it].update();
+    }
+}
+
+void
+omesh_t::vert_adjust(long p_id, ON_3dPoint *p, ON_3dVector *v)
+{
+    (*fmesh->pnts[p_id]) = *p;
+    (*fmesh->normals[fmesh->nmap[p_id]]) = *v;
+    verts_one_ring_update(p_id);
+}
+
+
+void
+omesh_t::vert_add(ON_3dPoint *p, ON_3dVector *v, ON_2dPoint &n2dp)
+{
+    struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh->p_cdt;
+    long f3ind = fmesh->add_point(new ON_3dPoint(*p));
+    long fnind = fmesh->add_normal(new ON_3dPoint(*v));
+    CDT_Add3DPnt(s_cdt, fmesh->pnts[f3ind], fmesh->f_id, -1, -1, -1, n2dp.x, n2dp.y);
+    CDT_Add3DNorm(s_cdt, fmesh->normals[fnind], fmesh->pnts[f3ind], fmesh->f_id, -1, -1, -1, n2dp.x, n2dp.y);
+    fmesh->nmap[f3ind] = fnind;
+
+    overt_t vert(this, fmesh->pnts.size()-1);
+    overts.push_back(vert);
+    double fMin[3];
+    fMin[0] = vert.bb.Min().x;
+    fMin[1] = vert.bb.Min().y;
+    fMin[2] = vert.bb.Min().z;
+    double fMax[3];
+    fMax[0] = vert.bb.Max().x;
+    fMax[1] = vert.bb.Max().y;
+    fMax[2] = vert.bb.Max().z;
+    vtree.Insert(fMin, fMax, overts.size() - 1);
+
+}
+
+void
+omesh_t::edge_add(cdt_mesh::uedge_t &ue, int update_verts)
+{
+    if (interior_uedge_ids.find(ue) != interior_uedge_ids.end()) {
+	return;
+    }
+
+    size_t nind = 0;
+    if (interior_uedges.size()) {
+	nind = interior_uedges.rbegin()->first + 1;
+    }
+    interior_uedges[nind] = ue;
+    interior_uedge_ids[ue] = nind;
+    ON_3dPoint *p3d1 = fmesh->pnts[ue.v[0]];
+    ON_3dPoint *p3d2 = fmesh->pnts[ue.v[1]];
+    ON_Line l(*p3d1, *p3d2);
+    ON_BoundingBox ebb = l.BoundingBox();
+    double dist = 0.5*l.Length();
+    double xdist = ebb.m_max.x - ebb.m_min.x;
+    double ydist = ebb.m_max.y - ebb.m_min.y;
+    double zdist = ebb.m_max.z - ebb.m_min.z;
+    if (xdist < dist) {
+	ebb.m_min.x = ebb.m_min.x - 0.5*dist;
+	ebb.m_max.x = ebb.m_max.x + 0.5*dist;
+    }
+    if (ydist < dist) {
+	ebb.m_min.y = ebb.m_min.y - 0.5*dist;
+	ebb.m_max.y = ebb.m_max.y + 0.5*dist;
+    }
+    if (zdist < dist) {
+	ebb.m_min.z = ebb.m_min.z - 0.5*dist;
+	ebb.m_max.z = ebb.m_max.z + 0.5*dist;
+    }
+    double fMin[3];
+    fMin[0] = ebb.Min().x;
+    fMin[1] = ebb.Min().y;
+    fMin[2] = ebb.Min().z;
+    double fMax[3];
+    fMax[0] = ebb.Max().x;
+    fMax[1] = ebb.Max().y;
+    fMax[2] = ebb.Max().z;
+    iuetree.Insert(fMin, fMax, nind);
+
+    if (update_verts) {
+	overts[ue.v[0]].update();
+	overts[ue.v[1]].update();
+    }
+}
+
+void
+omesh_t::edge_remove(cdt_mesh::uedge_t &ue, int update_verts)
+{
+    size_t ue_id = interior_uedge_ids[ue];
+    ON_3dPoint *p3d1 = fmesh->pnts[ue.v[0]];
+    ON_3dPoint *p3d2 = fmesh->pnts[ue.v[1]];
+    ON_Line l(*p3d1, *p3d2);
+    ON_BoundingBox ebb = l.BoundingBox();
+    double dist = 0.5*l.Length();
+    double xdist = ebb.m_max.x - ebb.m_min.x;
+    double ydist = ebb.m_max.y - ebb.m_min.y;
+    double zdist = ebb.m_max.z - ebb.m_min.z;
+    if (xdist < dist) {
+	ebb.m_min.x = ebb.m_min.x - 0.5*dist;
+	ebb.m_max.x = ebb.m_max.x + 0.5*dist;
+    }
+    if (ydist < dist) {
+	ebb.m_min.y = ebb.m_min.y - 0.5*dist;
+	ebb.m_max.y = ebb.m_max.y + 0.5*dist;
+    }
+    if (zdist < dist) {
+	ebb.m_min.z = ebb.m_min.z - 0.5*dist;
+	ebb.m_max.z = ebb.m_max.z + 0.5*dist;
+    }
+    double fMin[3];
+    fMin[0] = ebb.Min().x;
+    fMin[1] = ebb.Min().y;
+    fMin[2] = ebb.Min().z;
+    double fMax[3];
+    fMax[0] = ebb.Max().x;
+    fMax[1] = ebb.Max().y;
+    fMax[2] = ebb.Max().z;
+
+    iuetree.Remove(fMin, fMax, ue_id);
+
+    if (update_verts) {
+	overts[ue.v[0]].update();
+	overts[ue.v[1]].update();
+    }
+}
+
+
 
 
 
