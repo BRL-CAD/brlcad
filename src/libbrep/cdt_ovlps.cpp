@@ -203,6 +203,36 @@
 #include "bg/tri_tri.h"
 #include "./cdt.h"
 
+#define TREE_LEAF_FACE_3D(pf, valp, a, b, c, d)  \
+    pdv_3move(pf, pt[a]); \
+    pdv_3cont(pf, pt[b]); \
+    pdv_3cont(pf, pt[c]); \
+    pdv_3cont(pf, pt[d]); \
+    pdv_3cont(pf, pt[a]); \
+
+#define BBOX_PLOT(pf, bb) {                 \
+    fastf_t pt[8][3];                       \
+    point_t min, max;		    	    \
+    min[0] = bb.Min().x;                    \
+    min[1] = bb.Min().y;                    \
+    min[2] = bb.Min().z;		    \
+    max[0] = bb.Max().x;		    \
+    max[1] = bb.Max().y;		    \
+    max[2] = bb.Max().z;		    \
+    VSET(pt[0], max[X], min[Y], min[Z]);    \
+    VSET(pt[1], max[X], max[Y], min[Z]);    \
+    VSET(pt[2], max[X], max[Y], max[Z]);    \
+    VSET(pt[3], max[X], min[Y], max[Z]);    \
+    VSET(pt[4], min[X], min[Y], min[Z]);    \
+    VSET(pt[5], min[X], max[Y], min[Z]);    \
+    VSET(pt[6], min[X], max[Y], max[Z]);    \
+    VSET(pt[7], min[X], min[Y], max[Z]);    \
+    TREE_LEAF_FACE_3D(pf, pt, 0, 1, 2, 3);      \
+    TREE_LEAF_FACE_3D(pf, pt, 4, 0, 3, 7);      \
+    TREE_LEAF_FACE_3D(pf, pt, 5, 4, 7, 6);      \
+    TREE_LEAF_FACE_3D(pf, pt, 1, 5, 6, 2);      \
+}
+
 class omesh_t;
 class overt_t {
     public:
@@ -226,6 +256,9 @@ class overt_t {
 	long closest_uedge;
 	bool t_ind;
 	void update();
+
+	void plot(FILE *plot);
+
     private:
 	double v_min_edge_len;
 };
@@ -244,6 +277,7 @@ class omesh_t
 	// update them - so a vector works as a container.
 	std::vector<class overt_t> overts;
 	RTree<size_t, double, 3> vtree;
+	void plot_vtree(const char *fname);
 
 	// Interior edges we add and remove. Because we don't want to store the whole
 	// uedge_t class in the rtree, store them in two maps to support both
@@ -363,6 +397,16 @@ overt_t::update() {
 }
 
 void
+overt_t::plot(FILE *plot)
+{
+    ON_3dPoint *i_p = omesh->fmesh->pnts[p_id];
+    BBOX_PLOT(plot, bb);
+    double r = 0.05*bb.Diagonal().Length();
+    pl_color(plot, 0, 255, 0);
+    plot_pnt_3d(plot, i_p, r, 0);
+}
+
+void
 omesh_t::init_edges()
 {
     // Walk the fmesh's rtree holding the active triangles to get all
@@ -419,6 +463,22 @@ omesh_t::init_verts()
 	fMax[2] = vert.bb.Max().z;
 	vtree.Insert(fMin, fMax, overts.size() - 1);
     }
+}
+
+void
+omesh_t::plot_vtree(const char *fname)
+{
+    FILE *plot = fopen(fname, "w");
+    RTree<size_t, double, 3>::Iterator tree_it;
+    size_t v_ind;
+    vtree.GetFirst(tree_it);
+    while (!tree_it.IsNull()) {
+	v_ind = *tree_it;
+	pl_color(plot, 255, 0, 0);
+	overts[v_ind].plot(plot);
+	++tree_it;
+    }
+    fclose(plot);
 }
 
 static bool NearVertCallback(size_t data, void *a_context) {
@@ -734,35 +794,7 @@ omesh_t::edge_remove(cdt_mesh::uedge_t &ue, int update_verts)
 }
 
 
-#define TREE_LEAF_FACE_3D(pf, valp, a, b, c, d)  \
-    pdv_3move(pf, pt[a]); \
-    pdv_3cont(pf, pt[b]); \
-    pdv_3cont(pf, pt[c]); \
-    pdv_3cont(pf, pt[d]); \
-    pdv_3cont(pf, pt[a]); \
 
-#define BBOX_PLOT(pf, bb) {                 \
-    fastf_t pt[8][3];                       \
-    point_t min, max;		    	    \
-    min[0] = bb.Min().x;                    \
-    min[1] = bb.Min().y;                    \
-    min[2] = bb.Min().z;		    \
-    max[0] = bb.Max().x;		    \
-    max[1] = bb.Max().y;		    \
-    max[2] = bb.Max().z;		    \
-    VSET(pt[0], max[X], min[Y], min[Z]);    \
-    VSET(pt[1], max[X], max[Y], min[Z]);    \
-    VSET(pt[2], max[X], max[Y], max[Z]);    \
-    VSET(pt[3], max[X], min[Y], max[Z]);    \
-    VSET(pt[4], min[X], min[Y], min[Z]);    \
-    VSET(pt[5], min[X], max[Y], min[Z]);    \
-    VSET(pt[6], min[X], max[Y], max[Z]);    \
-    VSET(pt[7], min[X], min[Y], max[Z]);    \
-    TREE_LEAF_FACE_3D(pf, pt, 0, 1, 2, 3);      \
-    TREE_LEAF_FACE_3D(pf, pt, 4, 0, 3, 7);      \
-    TREE_LEAF_FACE_3D(pf, pt, 5, 4, 7, 6);      \
-    TREE_LEAF_FACE_3D(pf, pt, 1, 5, 6, 2);      \
-}
 
 ON_BoundingBox
 edge_bbox(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
@@ -1541,8 +1573,38 @@ vert_bboxes(
     }
 }
  
-
-
+void
+adjust_close_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs)
+{
+    std::map<overt_t *, std::set<overt_t*>> vert_ovlps;
+    std::set<std::pair<omesh_t *, omesh_t *>>::iterator cp_it;
+    for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
+   	omesh_t *omesh1 = cp_it->first;
+	omesh_t *omesh2 = cp_it->second;
+	struct ON_Brep_CDT_State *s_cdt1 = (struct ON_Brep_CDT_State *)omesh1->fmesh->p_cdt;
+	struct ON_Brep_CDT_State *s_cdt2 = (struct ON_Brep_CDT_State *)omesh2->fmesh->p_cdt;
+	if (s_cdt1 == s_cdt2) continue;
+	struct bu_vls fname = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&fname, "%s-%d-vtree.plot3", s_cdt1->name, omesh1->fmesh->f_id);
+	omesh1->plot_vtree(bu_vls_cstr(&fname));
+	bu_vls_sprintf(&fname, "%s-%d-vtree.plot3", s_cdt2->name, omesh2->fmesh->f_id);
+	omesh2->plot_vtree(bu_vls_cstr(&fname));
+	bu_vls_free(&fname);
+	std::set<std::pair<size_t, size_t>> vert_pairs;
+	omesh1->vtree.Overlaps(omesh2->vtree, &vert_pairs);
+	std::cout << "(" << s_cdt1->name << "," << omesh1->fmesh->f_id << ")+(" << s_cdt2->name << "," << omesh2->fmesh->f_id << "): " << vert_pairs.size() << " vert box overlaps\n";
+	std::set<std::pair<size_t, size_t>>::iterator v_it;
+	for (v_it = vert_pairs.begin(); v_it != vert_pairs.end(); v_it++) {
+	    size_t v_first = (size_t)v_it->first;
+	    size_t v_second = (size_t)v_it->second;
+	    overt_t *v1 = &(omesh1->overts[v_first]);
+	    overt_t *v2 = &(omesh1->overts[v_second]);
+	    vert_ovlps[v1].insert(v2);
+	    vert_ovlps[v2].insert(v1);
+	}
+    }
+    std::cout << "Found " << vert_ovlps.size() << " vertices with box overlaps\n";
+}
 // return the set of verts that was adjusted - we shouldn't need to move them again
 std::set<struct mvert_info *>
 adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> &check_pairs)
@@ -1576,6 +1638,8 @@ adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t
 		plot_rtree_3d(rtrees_mpnts[std::make_pair(s_cdt2,fmesh2->f_id)], bu_vls_cstr(&fname));
 		bu_vls_free(&fname);
 #endif
+
+	std::cout << "(" << s_cdt1->name << "," << fmesh1->f_id << ")+(" << s_cdt2->name << "," << fmesh2->f_id << "): " << vert_pairs.size() << " vert box overlaps\n";
 		std::set<std::pair<void *, void *>>::iterator v_it;
 		for (v_it = vert_pairs.begin(); v_it != vert_pairs.end(); v_it++) {
 		    struct mvert_info *v_first = (struct mvert_info *)v_it->first;
@@ -2427,6 +2491,30 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
     check_faces_validity(check_pairs, 0);
 
     std::cout << "Initial overlap cnt: " << face_ovlps_cnt(s_a, s_cnt) << "\n";
+
+    // Make omesh containers for all the cdt_meshes in play
+    std::set<cdt_mesh::cdt_mesh_t *> afmeshes;
+    std::vector<omesh_t *> omeshes;
+    std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> f2omap;
+    std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>>::iterator p_it;
+    for (p_it = check_pairs.begin(); p_it != check_pairs.end(); p_it++) {
+	afmeshes.insert(p_it->first);
+	afmeshes.insert(p_it->second);
+    }
+    std::set<cdt_mesh::cdt_mesh_t *>::iterator af_it;
+    for (af_it = afmeshes.begin(); af_it != afmeshes.end(); af_it++) {
+	cdt_mesh::cdt_mesh_t *fmesh = *af_it;
+	omeshes.push_back(new omesh_t(fmesh));
+	f2omap[fmesh] = omeshes[omeshes.size() - 1];
+    }
+    std::set<std::pair<omesh_t *, omesh_t *>> ocheck_pairs;
+    for (p_it = check_pairs.begin(); p_it != check_pairs.end(); p_it++) {
+	omesh_t *o1 = f2omap[p_it->first];
+	omesh_t *o2 = f2omap[p_it->second];
+	ocheck_pairs.insert(std::make_pair(o1, o2));
+    }
+
+    adjust_close_verts(ocheck_pairs);
 
     std::set<struct mvert_info *> adjusted_verts = adjustable_verts(check_pairs);
     if (adjusted_verts.size()) {
