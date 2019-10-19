@@ -253,8 +253,10 @@ class omesh_t
 	std::map<size_t, cdt_mesh::uedge_t> interior_uedges;
 	RTree<size_t, double, 3> iuetree;
 
-	// We we consider a vertex near an edge (i.e. we're going to yank that edge
-	// and retessellate) all the other unassigned overts that have this as their
+	// When we consider a vertex near an edge (i.e. we're going to yank that edge
+	// and retessellate) all the other unassigned overts that have that edge as
+	// their assigned closest edge need to find a new one.  Make it easy to find
+	// out which vertices need to do that work.
 	std::map<size_t, std::set<size_t>> iue_close_overts;
 
 	void vert_adjust(long p_id, ON_3dPoint *p, ON_3dVector *v);
@@ -689,8 +691,8 @@ omesh_t::edge_remove(cdt_mesh::uedge_t &ue, int update_verts)
     fMax[1] = ebb.Max().y;
     fMax[2] = ebb.Max().z;
 
-    interior_uedge_ids.erase(ue_id);
-    interior_uedge.erase(ue);
+    interior_uedge_ids.erase(ue);
+    interior_uedges.erase(ue_id);
     iuetree.Remove(fMin, fMax, ue_id);
 
     if (update_verts) {
