@@ -355,7 +355,9 @@ overt_t::update() {
 	    mindist = dline;
 	}
     }
-    omesh->iue_close_overts[closest_uedge].insert(p_id);
+    if (closest_uedge >= 0) {
+	omesh->iue_close_overts[closest_uedge].insert(p_id);
+    }
 }
 
 void
