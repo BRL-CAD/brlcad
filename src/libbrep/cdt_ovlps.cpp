@@ -1598,7 +1598,7 @@ adjust_close_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs)
 	    size_t v_first = (size_t)v_it->first;
 	    size_t v_second = (size_t)v_it->second;
 	    overt_t *v1 = &(omesh1->overts[v_first]);
-	    overt_t *v2 = &(omesh1->overts[v_second]);
+	    overt_t *v2 = &(omesh2->overts[v_second]);
 	    vert_ovlps[v1].insert(v2);
 	    vert_ovlps[v2].insert(v1);
 	}
