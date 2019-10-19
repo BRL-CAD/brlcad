@@ -1453,9 +1453,22 @@ void plot_mvert_set(double r, std::set<struct p_mvert_info *> &pv)
     fclose(plot);
 }
 
+static bool NearVertsCallback(void *data, void *a_context) {
+    std::set<long> *cpnts = (std::set<long> *)a_context;
+    struct mvert_info *mv = (struct mvert_info *)data;
+    cpnts->insert(mv->p_id);
+    return true;
+}
+
 std::map<cdt_mesh::cdt_mesh_t *, std::set<struct p_mvert_info *>> *
 get_intruding_points(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> &check_pairs)
 {
+    // Get the bounding boxes of all vertices of all meshes of all breps
+    // that might have possible interactions
+    std::vector<struct mvert_info *> all_mverts;
+    std::map<std::pair<struct ON_Brep_CDT_State *, int>, RTree<void *, double, 3>> rtrees_mpnts;
+    std::map<std::pair<struct ON_Brep_CDT_State *, int>, std::map<long, struct mvert_info *>> mpnt_maps;
+    vert_bboxes(&all_mverts, &rtrees_mpnts, &mpnt_maps, check_pairs);
 
     std::map<cdt_mesh::cdt_mesh_t *, std::set<std::pair<cdt_mesh::cdt_mesh_t *, long>>> added_verts;
 
@@ -1514,8 +1527,27 @@ get_intruding_points(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_me
 				    np->bb = bb;
 				    // TODO - check if this point is too close to an existing vert
 				    // point to insert. If so, tweak the vert point to match this point
-				    (*face_npnts)[fmesh1].insert(np);
-				    added_verts[fmesh1].insert(std::make_pair(fmesh2, t2.v[i]));
+				    double fMin[3]; double fMax[3];
+				    fMin[0] = bb.Min().x;
+				    fMin[1] = bb.Min().y;
+				    fMin[2] = bb.Min().z;
+				    fMax[0] = bb.Max().x;
+				    fMax[1] = bb.Max().y;
+				    fMax[2] = bb.Max().z;
+				    std::set<long> cpnts;
+				    bool add_pnt = true;
+				    size_t npnts = rtrees_mpnts[std::make_pair(s_cdt1,fmesh1->f_id)].Search(fMin, fMax, NearVertsCallback, (void *)&cpnts);
+				    if (npnts) {
+					std::set<long>::iterator c_it;
+					for (c_it = cpnts.begin(); c_it != cpnts.end(); c_it++) {
+					    ON_3dPoint *p = fmesh1->pnts[*c_it];
+					    std::cout << p->DistanceTo(np->p) << "\n";
+					}
+				    }
+				    if (add_pnt) {
+					(*face_npnts)[fmesh1].insert(np);
+					added_verts[fmesh1].insert(std::make_pair(fmesh2, t2.v[i]));
+				    }
 				} else {
 				    std::cout << "test point outside\n";
 				}
