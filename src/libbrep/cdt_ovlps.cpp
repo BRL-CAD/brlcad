@@ -421,6 +421,32 @@ omesh_t::init_verts()
     }
 }
 
+static bool NearVertCallback(size_t data, void *a_context) {
+    std::set<size_t> *nverts = (std::set<size_t> *)a_context;
+    nverts->insert(data);
+    return true;
+}
+std::set<size_t>
+omesh_t::overts_search(ON_BoundingBox &bb)
+{
+    double fMin[3], fMax[3];
+    fMin[0] = bb.Min().x;
+    fMin[1] = bb.Min().y;
+    fMin[2] = bb.Min().z;
+    fMax[0] = bb.Max().x;
+    fMax[1] = bb.Max().y;
+    fMax[2] = bb.Max().z;
+    std::set<size_t> near_overts;
+    size_t nhits = fmesh->tris_tree.Search(fMin, fMax, NearVertCallback, (void *)&near_overts);
+
+    if (!nhits) {
+	std::cout << "No nearby vertices\n";
+	return std::set<size_t>();
+    }
+
+    return near_overts;
+}
+
 static bool NearBoundaryEdgesCallback(void *data, void *a_context) {
     std::set<cdt_mesh::cpolyedge_t *> *edges = (std::set<cdt_mesh::cpolyedge_t *> *)a_context;
     cdt_mesh::cpolyedge_t *pe  = (cdt_mesh::cpolyedge_t *)data;
@@ -519,8 +545,7 @@ omesh_t::interior_uedges_search(ON_BoundingBox &bb)
 
 static bool NearTrisCallback(size_t data, void *a_context) {
     std::set<size_t> *ntris = (std::set<size_t> *)a_context;
-    size_t f_id = data;
-    ntris->insert(f_id);
+    ntris->insert(data);
     return true;
 }
 std::set<size_t>
