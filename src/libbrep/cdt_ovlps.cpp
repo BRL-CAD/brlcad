@@ -1604,7 +1604,60 @@ adjust_close_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs)
 	}
     }
     std::cout << "Found " << vert_ovlps.size() << " vertices with box overlaps\n";
+
+
+    std::queue<std::pair<overt_t *, overt_t *>> vq;
+    std::set<overt_t *> vq_multi;
+    std::map<overt_t *, std::set<overt_t*>>::iterator vo_it;
+    for (vo_it = vert_ovlps.begin(); vo_it != vert_ovlps.end(); vo_it++) {
+	overt_t *v = vo_it->first;
+	if (vo_it->second.size() > 1) {
+	    vq_multi.insert(v);
+	    continue;
+	}
+	overt_t *v_other = *vo_it->second.begin();
+	if (vert_ovlps[v_other].size() > 1) {
+	    // The other point has multiple overlapping points
+	    vq_multi.insert(v);
+	    continue;
+	}
+	// Both v and it's companion only have one overlapping point
+	vq.push(std::make_pair(v,v_other));
+    }
+
+    std::cout << "Have " << vq.size() << " simple interactions\n";
+    std::cout << "Have " << vq_multi.size() << " complex interactions\n";
+#if 0
+    std::set<struct mvert_info *> adjusted;
+
+    while (!vq.empty()) {
+	std::pair<struct mvert_info *, struct mvert_info *> vpair = vq.front();
+	vq.pop();
+
+	adjust_mvert_pair(vpair.first, vpair.second);
+	adjusted.insert(vpair.first);
+	adjusted.insert(vpair.second);
+    }
+
+    // If the box structure is more complicated, we need to be a bit selective
+    while (vq_multi.size()) {
+
+	struct mvert_info *l = get_largest_mvert(vq_multi);
+	struct mvert_info *c = closest_mvert(vert_ovlps[l], l);
+	vq_multi.erase(l);
+	vq_multi.erase(c);
+	vert_ovlps[l].erase(c);
+	vert_ovlps[c].erase(l);
+	//std::cout << "COMPLEX - adjusting 1 pair only:\n";
+	adjust_mvert_pair(l, c);
+	adjusted.insert(l);
+	adjusted.insert(c);
+    }
+
+    return adjusted;
+#endif
 }
+
 // return the set of verts that was adjusted - we shouldn't need to move them again
 std::set<struct mvert_info *>
 adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> &check_pairs)
