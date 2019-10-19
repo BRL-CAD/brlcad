@@ -211,6 +211,7 @@ class overt_t {
 	{
 	    omesh = om;
 	    p_id = p;
+	    closest_uedge = -1;
 	    assigned = false;
 	    update();
 	}
@@ -222,7 +223,7 @@ class overt_t {
 	double max_len();
 	ON_BoundingBox bb;
 
-	size_t closest_uedge;
+	long closest_uedge;
 	bool assigned;
 	void update();
     private:
@@ -288,8 +289,6 @@ class omesh_t
 	void edge_add(cdt_mesh::uedge_t &ue, int update_verts);
 	void edge_remove(cdt_mesh::uedge_t &ue, int update_verts);
 
-	void tri_add(cdt_mesh::triangle_t &t, int update_verts);
-	void tri_remove(cdt_mesh::triangle_t &t, int update_verts);
 	void edge_tris_remove(cdt_mesh::uedge_t &ue);
 };
 
@@ -339,6 +338,9 @@ overt_t::update() {
     bb.Set(npnt, true);
 
     double mindist = DBL_MAX;
+    if (closest_uedge >= 0) {
+	omesh->iue_close_overts[closest_uedge].erase(p_id);
+    }
     closest_uedge = -1;
     std::set<size_t> close_edges = omesh->interior_uedges_search(bb);
     std::set<size_t>::iterator c_it;
@@ -353,6 +355,7 @@ overt_t::update() {
 	    mindist = dline;
 	}
     }
+    omesh->iue_close_overts[closest_uedge].insert(p_id);
 }
 
 void
@@ -641,6 +644,11 @@ omesh_t::edge_add(cdt_mesh::uedge_t &ue, int update_verts)
     if (update_verts) {
 	overts[ue.v[0]].update();
 	overts[ue.v[1]].update();
+	std::set<size_t> nearby_verts = overts_search(ebb);
+	std::set<size_t>::iterator n_it;
+	for (n_it = nearby_verts.begin(); n_it != nearby_verts.end(); n_it++) {
+	    overts[*n_it].update();
+	}
     }
 }
 
@@ -682,11 +690,13 @@ omesh_t::edge_remove(cdt_mesh::uedge_t &ue, int update_verts)
     if (update_verts) {
 	overts[ue.v[0]].update();
 	overts[ue.v[1]].update();
+	std::set<size_t> close_verts = iue_close_overts[ue_id];
+	std::set<size_t>::iterator c_it;
+	for (c_it = close_verts.begin(); c_it != close_verts.end(); c_it++) {
+	    overts[*c_it].update();
+	}
     }
 }
-
-
-
 
 
 #define TREE_LEAF_FACE_3D(pf, valp, a, b, c, d)  \
