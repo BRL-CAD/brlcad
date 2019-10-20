@@ -1,4 +1,5 @@
 set(Eigen_ignore_files
+Eigen/CMakeLists.txt
 Eigen/StdVector
 Eigen/OrderingMethods
 Eigen/Eigen

@@ -82,6 +82,7 @@ set(misc_ignore_files
   external_build_testing/CMake/rpath_replace.cxx.in
   external_build_testing/CMake/RPath_Setup.cmake
   external_build_testing/CMake/ExternalProject_Target.cmake
+  external_build_testing/NOTES
   flawfinder
   hawaii_islands.sh
   jove.emacs
@@ -201,6 +202,8 @@ set(misc_ignore_files
   repoconv/custom/73059-commit.fi
   repoconv/custom/r29886_branches.fi
   repoconv/custom/r29886_cjohnson_mac_hack.fi
+  repoconv/custom/r29886_cvs_svn_rel-5-1-branch_sync.fi
+  repoconv/custom/r29886_cvs_svn_trunk_sync.fi
   repoconv/custom/r29886_tags.fi
   repoconv/cvs_authormap
   repoconv/cvs_repaired/sphflake.pix,v
@@ -208,6 +211,40 @@ set(misc_ignore_files
   repoconv/manual_merge_info.tar.gz
   repoconv/md5.hpp
   repoconv/sha1.hpp
+  repoconv/svn2git/README
+  repoconv/svn2git/account-map
+  repoconv/svn2git/archive_branches.sh
+  repoconv/svn2git/rules
+  repoconv/svn2git/rules-geomcore
+  repoconv/svn2git/svn-fast-export/CMake/FindAPR.cmake
+  repoconv/svn2git/svn-fast-export/CMake/FindSubversionLibrary.cmake
+  repoconv/svn2git/svn-fast-export/CMakeLists.txt
+  repoconv/svn2git/svn-fast-export/CommandLineParser.cpp
+  repoconv/svn2git/svn-fast-export/CommandLineParser.h
+  repoconv/svn2git/svn-fast-export/LICENSE
+  repoconv/svn2git/svn-fast-export/README.md
+  repoconv/svn2git/svn-fast-export/main.cpp
+  repoconv/svn2git/svn-fast-export/repository.cpp
+  repoconv/svn2git/svn-fast-export/repository.h
+  repoconv/svn2git/svn-fast-export/ruleparser.cpp
+  repoconv/svn2git/svn-fast-export/ruleparser.h
+  repoconv/svn2git/svn-fast-export/samples/ignore-branch.rules
+  repoconv/svn2git/svn-fast-export/samples/merged-branches-tags.rules
+  repoconv/svn2git/svn-fast-export/samples/min-max-revision.rules
+  repoconv/svn2git/svn-fast-export/samples/recurse.rules
+  repoconv/svn2git/svn-fast-export/samples/standardlayout.rules
+  repoconv/svn2git/svn-fast-export/samples/two-projects.rules
+  repoconv/svn2git/svn-fast-export/svn.cpp
+  repoconv/svn2git/svn-fast-export/svn.h
+  repoconv/svn2git/svn2git_gitignore_files-r29886_to_r72245.tar.gz
+  repoconv/svn_date.cxx
+  repoconv/svn_date.h
+  repoconv/svn_de-rcs.cxx
+  repoconv/svn_map_commit_revs.cxx
+  repoconv/svn_msgs.cxx
+  repoconv/svnfexport.cxx
+  repoconv/svnfexport_git.cxx
+  repoconv/svnfexport_svn.cxx
   repoconv/sync_commit.sh
   repoconv/sync_commit_trunk.sh
   repoconv/terra.dsp

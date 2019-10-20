@@ -103,6 +103,8 @@ if (BRLCAD_ENABLE_OPENVDB)
   BRLCAD_ADDEXEC(g-vdb g-vdb.cpp "librt;libbu;libwdb;libanalyze;${OpenVDB_LIBRARIES};${IlmBase_LIBRARIES};${Tbb_LIBRARIES}")
   # warnings off due to unfixable errors in boost and Ilmbase/half headers
   set_property(SOURCE g-vdb.cpp APPEND PROPERTY COMPILE_FLAGS "${OpenVDB_DEFINITIONS} -w")
+else (BRLCAD_ENABLE_OPENVDB)
+  CMAKEFILES(g-vdb.cpp)
 endif (BRLCAD_ENABLE_OPENVDB)
 
 BRLCAD_ADDEXEC(patch-g patch/patch-g.c "libwdb;librt;libnmg;libbu;${M_LIBRARY}")

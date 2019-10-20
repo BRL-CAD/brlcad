@@ -55,6 +55,7 @@ set(libbrep_ignored_files
   opennurbs_fit.h
   opennurbs_fit.cpp
   PullbackCurve.h
+  RTree.h
   shape_recognition.h
   shape_recognition_torus.cpp
   surface_tree_queue_tests.patch
