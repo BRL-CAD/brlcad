@@ -248,3 +248,32 @@ https://marc.info/?l=git&m=156653998201710
            --env-filter 'export GIT_COMMITTER_DATE="$GIT_AUTHOR_DATE"' -- --all
 # git replace -d 7cffbab2a734e3cf
 
+
+
+################################################################################
+
+Uploading to github:
+
+After creating a new repository via the github website:
+
+git remote add origin git@github.com:brlcad/brlcad.git
+git push -u origin master
+git push --all
+git push --tags
+git push origin refs/notes/commits
+
+# We then download it back from github:
+git clone git@github.com:brlcad/brlcad.git
+cd brlcad
+# Verify all the branches and tags are there:
+git branch -a
+git tag
+#When cloning the repo from github, you also have to manually fetch the notes:
+git fetch origin refs/notes/commits:refs/notes/commits
+
+To make this automatic, add a section to your .git/config:
+https://gist.github.com/topheman/ec8cde7c54e24a785e52
+
+# To pull a backup, use --mirror (this seems to get the notes):
+git clone --mirror git@github.com:brlcad/brlcad.git
+
