@@ -151,7 +151,6 @@ struct ON_Brep_CDT_State {
     std::map<int, std::map<int,ON_3dPoint *>> strim_pnts;
     std::map<int, std::map<int,ON_3dPoint *>> strim_norms;
 
-
     std::map<int, std::map<size_t, std::set<struct brep_face_ovlp_instance *>>> face_tri_ovlps;
     std::map<int, std::set<size_t>> face_ovlp_tris;
     std::map<int, std::vector<struct brep_face_ovlp_instance *>> face_ovlps;
@@ -194,6 +193,8 @@ void tol_linear_edges_split(struct ON_Brep_CDT_State *s_cdt);
 void refine_near_loops(struct ON_Brep_CDT_State *s_cdt);
 void finalize_rtrees(struct ON_Brep_CDT_State *s_cdt);
 void cpolyedge_nearest_dists(struct ON_Brep_CDT_State *s_cdt);
+bool point_inside(struct ON_Brep_CDT_State *s_cdt, point_t p);
+bool on_point_inside(struct ON_Brep_CDT_State *s_cdt, ON_3dPoint *p);
 
 void plot_rtree_2d(ON_RTree *rtree, const char *filename);
 void plot_rtree_2d2(RTree<void *, double, 2> &rtree, const char *filename);

@@ -1985,38 +1985,6 @@ cdt_mesh_t::self_intersecting_mesh()
     return false;
 }
 
-bool
-cdt_mesh_t::point_inside(point_t p)
-{
-    int wn = 0;
-    int exact = 0;
-    RTree<size_t, double, 3>::Iterator tree_it;
-    tris_tree.GetFirst(tree_it);
-    size_t t_ind;
-    cdt_mesh::triangle_t tri;
-    while (!tree_it.IsNull()) {
-	t_ind = *tree_it;
-	tri = tris_vect[t_ind];
-	point_t v1, v2, v3;
-	VSET(v1, pnts[tri.v[0]]->x, pnts[tri.v[0]]->y, pnts[tri.v[0]]->z);
-	VSET(v2, pnts[tri.v[1]]->x, pnts[tri.v[1]]->y, pnts[tri.v[1]]->z);
-	VSET(v3, pnts[tri.v[2]]->x, pnts[tri.v[2]]->y, pnts[tri.v[2]]->z);
-	wn += bg_ptm_triangle_chain(v1, v2, v3, p, &exact);
-	if (exact) return true;
-	++tree_it;
-    }
-
-    return (wn) ? true : false;
-}
-
-bool
-cdt_mesh_t::point_inside(ON_3dPoint *p)
-{
-    point_t tp;
-    VSET(tp, p->x, p->y, p->z);
-    return point_inside(tp);
-}
-
 double
 cdt_mesh_t::max_angle_delta(triangle_t &seed, std::vector<triangle_t> &s_tris)
 {

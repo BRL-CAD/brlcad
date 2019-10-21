@@ -2131,7 +2131,7 @@ get_intruding_points(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs)
 		if (omesh1->intruding_pnts.find(omesh2->overts[t2.v[i]]) != omesh1->intruding_pnts.end()) continue;
 		ON_3dPoint tp = *omesh2->fmesh->pnts[t2.v[i]];
 		double dist = plane1.DistanceTo(tp);
-		if (dist < 0 && fabs(dist) > ON_ZERO_TOLERANCE && omesh1->fmesh->point_inside(&tp)) {
+		if (dist < 0 && fabs(dist) > ON_ZERO_TOLERANCE && on_point_inside(s_cdt1, &tp)) {
 		    std::cout << s_cdt1->name << " face " << omesh1->fmesh->f_id << " test point inside:\n";
 		    std::cout << "tp: " << tp.x << "," << tp.y << "," << tp.z << "\n";
 		    std::cout << "ip: " << omesh2->overts[t2.v[i]]->vpnt().x << "," << omesh2->overts[t2.v[i]]->vpnt().y << "," << omesh2->overts[t2.v[i]]->vpnt().z << "\n";
@@ -2178,7 +2178,10 @@ get_intruding_points(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs)
 		if (omesh2->intruding_pnts.find(omesh1->overts[t1.v[i]]) != omesh2->intruding_pnts.end()) continue;
 		ON_3dPoint tp = *omesh1->fmesh->pnts[t1.v[i]];
 		double dist = plane2.DistanceTo(tp);
-		if (dist < 0 && fabs(dist) > ON_ZERO_TOLERANCE && omesh2->fmesh->point_inside(&tp)) {
+		if (dist < 0 && fabs(dist) > ON_ZERO_TOLERANCE && on_point_inside(s_cdt2, &tp)) {
+		    std::cout << s_cdt2->name << " face " << omesh2->fmesh->f_id << " test point inside:\n";
+		    std::cout << "tp: " << tp.x << "," << tp.y << "," << tp.z << "\n";
+		    std::cout << "ip: " << omesh1->overts[t1.v[i]]->vpnt().x << "," << omesh1->overts[t1.v[i]]->vpnt().y << "," << omesh1->overts[t1.v[i]]->vpnt().z << "\n";
 		    omesh2->intruding_pnts.insert(omesh1->overts[t1.v[i]]);
 		}
 	    }

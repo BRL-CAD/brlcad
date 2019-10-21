@@ -258,6 +258,42 @@ plot_pnt_3d(FILE *plot_file, ON_3dPoint *p, double r, int dir)
     }
 }
 
+
+bool
+point_inside(struct ON_Brep_CDT_State *s_cdt, point_t p)
+{
+    int wn = 0;
+    int exact = 0;
+    std::map<int, cdt_mesh::cdt_mesh_t>::iterator f_it;
+    for (f_it = s_cdt->fmeshes.begin(); f_it != s_cdt->fmeshes.end(); f_it++) {
+	RTree<size_t, double, 3>::Iterator tree_it;
+	f_it->second.tris_tree.GetFirst(tree_it);
+	size_t t_ind;
+	cdt_mesh::triangle_t tri;
+	while (!tree_it.IsNull()) {
+	    t_ind = *tree_it;
+	    tri = f_it->second.tris_vect[t_ind];
+	    point_t v1, v2, v3;
+	    VSET(v1, f_it->second.pnts[tri.v[0]]->x, f_it->second.pnts[tri.v[0]]->y, f_it->second.pnts[tri.v[0]]->z);
+	    VSET(v2, f_it->second.pnts[tri.v[1]]->x, f_it->second.pnts[tri.v[1]]->y, f_it->second.pnts[tri.v[1]]->z);
+	    VSET(v3, f_it->second.pnts[tri.v[2]]->x, f_it->second.pnts[tri.v[2]]->y, f_it->second.pnts[tri.v[2]]->z);
+	    wn += bg_ptm_triangle_chain(v1, v2, v3, p, &exact);
+	    if (exact) return true;
+	    ++tree_it;
+	}
+    }
+
+    return (wn) ? true : false;
+}
+
+bool
+on_point_inside(struct ON_Brep_CDT_State *s_cdt, ON_3dPoint *p)
+{
+    point_t tp;
+    VSET(tp, p->x, p->y, p->z);
+    return point_inside(s_cdt, tp);
+}
+
 std::vector<cdt_mesh::cpolyedge_t *>
 cdt_face_polyedges(struct ON_Brep_CDT_State *s_cdt, int face_index)
 {
