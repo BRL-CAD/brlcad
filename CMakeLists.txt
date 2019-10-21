@@ -3503,6 +3503,9 @@ if(NOT BRLCAD_IS_SUBBUILD)
     CTestConfig.cmake
     )
   CMAKEFILES(${toplevel_ignore_files})
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.gitignore)
+    CMAKEFILES(.gitignore)
+  endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.gitignore)
 
   # Handle some toplevel distclean listings
   DISTCLEAN("${CMAKE_BINARY_DIR}/CMakeCache.txt")
