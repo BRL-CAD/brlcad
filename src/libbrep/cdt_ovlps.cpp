@@ -1647,120 +1647,6 @@ adjust_close_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs)
     return adjusted.size();
 }
 
-// return the set of verts that was adjusted - we shouldn't need to move them again
-std::set<struct mvert_info *>
-adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> &check_pairs)
-{
-    // Get the bounding boxes of all vertices of all meshes of all breps
-    // that might have possible interactions
-    std::vector<struct mvert_info *> all_mverts;
-    std::map<std::pair<struct ON_Brep_CDT_State *, int>, RTree<void *, double, 3>> rtrees_mpnts;
-    std::map<std::pair<struct ON_Brep_CDT_State *, int>, std::map<long, struct mvert_info *>> mpnt_maps;
-    vert_bboxes(&all_mverts, &rtrees_mpnts, &mpnt_maps, check_pairs); 
-   
-    // Iterate over mverts, checking for nearby pnts in a fashion similar to the
-    // NearFacesPairsCallback search above.  For each mvert, note potentially interfering
-    // mverts - this will tell us what we need to adjust.
-    std::map<struct mvert_info *, std::set<struct mvert_info *>> vert_ovlps;
-    std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>>::iterator cp_it;
-    for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
-	cdt_mesh::cdt_mesh_t *fmesh1 = cp_it->first;
-	cdt_mesh::cdt_mesh_t *fmesh2 = cp_it->second;
-	struct ON_Brep_CDT_State *s_cdt1 = (struct ON_Brep_CDT_State *)fmesh1->p_cdt;
-	struct ON_Brep_CDT_State *s_cdt2 = (struct ON_Brep_CDT_State *)fmesh2->p_cdt;
-	if (s_cdt1 != s_cdt2) {
-	    std::set<std::pair<void *, void *>> vert_pairs;
-	    size_t ovlp_cnt = rtrees_mpnts[std::make_pair(s_cdt1,fmesh1->f_id)].Overlaps(rtrees_mpnts[std::make_pair(s_cdt2,fmesh2->f_id)], &vert_pairs);
-	    if (ovlp_cnt) {
-#if 0
-		struct bu_vls fname = BU_VLS_INIT_ZERO;
-		bu_vls_sprintf(&fname, "%s-all_verts_%d.plot3", fmesh1->name, fmesh1->f_id);
-		plot_rtree_3d(rtrees_mpnts[std::make_pair(s_cdt1,fmesh1->f_id)], bu_vls_cstr(&fname));
-		bu_vls_sprintf(&fname, "%s-all_verts_%d.plot3", fmesh2->name, fmesh2->f_id);
-		plot_rtree_3d(rtrees_mpnts[std::make_pair(s_cdt2,fmesh2->f_id)], bu_vls_cstr(&fname));
-		bu_vls_free(&fname);
-#endif
-
-	std::cout << "(" << s_cdt1->name << "," << fmesh1->f_id << ")+(" << s_cdt2->name << "," << fmesh2->f_id << "): " << vert_pairs.size() << " vert box overlaps\n";
-		std::set<std::pair<void *, void *>>::iterator v_it;
-		for (v_it = vert_pairs.begin(); v_it != vert_pairs.end(); v_it++) {
-		    struct mvert_info *v_first = (struct mvert_info *)v_it->first;
-		    struct mvert_info *v_second = (struct mvert_info *)v_it->second;
-		    vert_ovlps[v_first].insert(v_second);
-		    vert_ovlps[v_second].insert(v_first);
-		}
-	    }
-	}
-    }
-    std::cout << "Found " << vert_ovlps.size() << " vertices with box overlaps\n";
-    std::map<struct mvert_info *, std::set<struct mvert_info *>>::iterator vo_it;
-#if 0
-    for (vo_it = vert_ovlps.begin(); vo_it != vert_ovlps.end(); vo_it++) {
-	struct bu_vls fname = BU_VLS_INIT_ZERO;
-	struct mvert_info *v_curr= vo_it->first;
-	bu_vls_sprintf(&fname, "%s-%d-%ld_ovlp_verts.plot3", v_curr->s_cdt->name, v_curr->f_id, v_curr->p_id);
-	FILE* plot_file = fopen(bu_vls_cstr(&fname), "w");
-	pl_color(plot_file, 0, 0, 255);
-	BBOX_PLOT(plot_file, v_curr->bb);
-	pl_color(plot_file, 255, 0, 0);
-	std::set<struct mvert_info *>::iterator vs_it;
-	for (vs_it = vo_it->second.begin(); vs_it != vo_it->second.end(); vs_it++) {
-	    struct mvert_info *v_ovlp= *vs_it;
-	    BBOX_PLOT(plot_file, v_ovlp->bb);
-	}
-	fclose(plot_file);
-    }
-#endif
-
-    std::queue<std::pair<struct mvert_info *, struct mvert_info *>> vq;
-    std::set<struct mvert_info *> vq_multi;
-    for (vo_it = vert_ovlps.begin(); vo_it != vert_ovlps.end(); vo_it++) {
-	struct mvert_info *v = vo_it->first;
-	if (vo_it->second.size() > 1) {
-	    vq_multi.insert(v);
-	    continue;
-	}
-	struct mvert_info *v_other = *vo_it->second.begin();
-	if (vert_ovlps[v_other].size() > 1) {
-	    // The other point has multiple overlapping points
-	    vq_multi.insert(v);
-	    continue;
-	}
-	// Both v and it's companion only have one overlapping point
-	vq.push(std::make_pair(v,v_other));
-    }
-
-    std::set<struct mvert_info *> adjusted;
-#if 0
-    std::cout << "Have " << vq.size() << " simple interactions\n";
-    while (!vq.empty()) {
-	std::pair<struct mvert_info *, struct mvert_info *> vpair = vq.front();
-	vq.pop();
-
-	adjust_mvert_pair(vpair.first, vpair.second);
-	adjusted.insert(vpair.first);
-	adjusted.insert(vpair.second);
-    }
-    std::cout << "Have " << vq_multi.size() << " complex interactions\n";
-    // If the box structure is more complicated, we need to be a bit selective
-    while (vq_multi.size()) {
-
-	struct mvert_info *l = get_largest_mvert(vq_multi);
-	struct mvert_info *c = closest_mvert(vert_ovlps[l], l);
-	vq_multi.erase(l);
-	vq_multi.erase(c);
-	vert_ovlps[l].erase(c);
-	vert_ovlps[c].erase(l);
-	//std::cout << "COMPLEX - adjusting 1 pair only:\n";
-	adjust_mvert_pair(l, c);
-	adjusted.insert(l);
-	adjusted.insert(c);
-    }
-#endif
-
-    return adjusted;
-}
-
 void
 orient_tri(cdt_mesh::cdt_mesh_t &fmesh, cdt_mesh::triangle_t &t)
 {
@@ -2556,11 +2442,10 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	ocheck_pairs.insert(std::make_pair(o1, o2));
     }
 
-    adjust_close_verts(ocheck_pairs);
+    size_t avcnt = adjust_close_verts(ocheck_pairs);
 
-    std::set<struct mvert_info *> adjusted_verts = adjustable_verts(check_pairs);
-    if (adjusted_verts.size()) {
-	std::cout << "Adjusted " << adjusted_verts.size() << " vertices\n";
+    if (avcnt) {
+	std::cout << "Adjusted " << avcnt << " vertices\n";
 	check_faces_validity(check_pairs, 1);
     }
 
