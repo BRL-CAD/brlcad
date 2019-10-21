@@ -288,7 +288,7 @@ class omesh_t
 	std::map<cdt_mesh::uedge_t, long> interior_uedge_ids;
 	std::map<long, cdt_mesh::uedge_t> interior_uedges;
 	RTree<long, double, 3> iedge_tree;
-	
+
 	// When we consider a vertex near an edge (i.e. we're going to yank that edge
 	// and retessellate) all the other unassigned overts that have that edge as
 	// their assigned closest edge need to find a new one.  Make it easy to find
@@ -315,7 +315,11 @@ class omesh_t
 
 	void retessellate(std::set<size_t> &ov);
 
+	std::set<long> ovlping_tris;
 	cdt_mesh::cdt_mesh_t *fmesh;
+
+	void plot(const char *fname);
+	void plot();
 
 	void verts_one_ring_update(long p_id);
     private:
@@ -495,6 +499,49 @@ omesh_t::plot_vtree(const char *fname)
     }
     fclose(plot);
 }
+
+void
+omesh_t::plot(const char *fname)
+{
+    struct bu_color c = BU_COLOR_INIT_ZERO;
+    unsigned char rgb[3] = {0,0,255};
+    FILE *plot = fopen(fname, "w");
+
+    RTree<size_t, double, 3>::Iterator tree_it;
+    size_t t_ind;
+    cdt_mesh::triangle_t tri;
+
+    bu_color_from_rgb_chars(&c, (const unsigned char *)rgb);
+
+    fmesh->tris_tree.GetFirst(tree_it);
+    while (!tree_it.IsNull()) {
+	t_ind = *tree_it;
+	tri = fmesh->tris_vect[t_ind];
+	fmesh->plot_tri(tri, &c, plot, 255, 0, 0);
+	++tree_it;
+    }
+
+    bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
+    pl_color_buc(plot, &c);
+    std::set<long>::iterator ts_it;
+    for (ts_it = ovlping_tris.begin(); ts_it != ovlping_tris.end(); ts_it++) {
+	tri = fmesh->tris_vect[*ts_it];
+	fmesh->plot_tri(tri, &c, plot, 255, 0, 0);
+    }
+
+    fclose(plot);
+}
+
+void
+omesh_t::plot()
+{
+    struct bu_vls fname = BU_VLS_INIT_ZERO;
+    struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh->p_cdt;
+    bu_vls_sprintf(&fname, "%s-%d_ovlps.plot3", s_cdt->name, fmesh->f_id);
+    plot(bu_vls_cstr(&fname));
+    bu_vls_free(&fname);
+}
+
 
 static bool NearVertCallback(long data, void *a_context) {
     std::set<long> *nverts = (std::set<long> *)a_context;
@@ -1023,12 +1070,14 @@ static bool NearFacesPairsCallback(void *data, void *a_context) {
     return true;
 }
 
+#if 0
 static bool NearFacesCallback(size_t data, void *a_context) {
     std::set<size_t> *faces = (std::set<size_t> *)a_context;
     size_t f_id = data;
     faces->insert(f_id);
     return true;
 }
+#endif
 
 std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>>
 possibly_interfering_face_pairs(struct ON_Brep_CDT_State **s_a, int s_cnt)
@@ -1065,12 +1114,9 @@ possibly_interfering_face_pairs(struct ON_Brep_CDT_State **s_a, int s_cnt)
 }
 
 size_t
-face_ovlps_cnt(struct ON_Brep_CDT_State **s_a, int s_cnt)
+face_fmesh_ovlps(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> check_pairs)
 {
     size_t tri_isects = 0;
-    std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> check_pairs;
-    check_pairs = possibly_interfering_face_pairs(s_a, s_cnt);
-
     std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>>::iterator cp_it;
     for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
 	cdt_mesh::cdt_mesh_t *fmesh1 = cp_it->first;
@@ -1097,6 +1143,49 @@ face_ovlps_cnt(struct ON_Brep_CDT_State **s_a, int s_cnt)
     }
     return tri_isects;
 }
+
+size_t
+face_omesh_ovlps(std::set<std::pair<omesh_t *, omesh_t *>> check_pairs)
+{
+    size_t tri_isects = 0;
+    std::set<std::pair<omesh_t *, omesh_t *>>::iterator cp_it;
+    for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
+	cp_it->first->ovlping_tris.clear();
+	cp_it->second->ovlping_tris.clear();
+    }
+    for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
+	cdt_mesh::cdt_mesh_t *fmesh1 = cp_it->first->fmesh;
+	cdt_mesh::cdt_mesh_t *fmesh2 = cp_it->second->fmesh;
+	struct ON_Brep_CDT_State *s_cdt1 = (struct ON_Brep_CDT_State *)fmesh1->p_cdt;
+	struct ON_Brep_CDT_State *s_cdt2 = (struct ON_Brep_CDT_State *)fmesh2->p_cdt;
+	if (s_cdt1 != s_cdt2) {
+	    std::set<std::pair<size_t, size_t>> tris_prelim;
+	    size_t ovlp_cnt = fmesh1->tris_tree.Overlaps(fmesh2->tris_tree, &tris_prelim);
+	    if (ovlp_cnt) {
+		std::set<std::pair<size_t, size_t>>::iterator tb_it;
+		for (tb_it = tris_prelim.begin(); tb_it != tris_prelim.end(); tb_it++) {
+		    cdt_mesh::triangle_t t1 = fmesh1->tris_vect[tb_it->first];
+		    cdt_mesh::triangle_t t2 = fmesh2->tris_vect[tb_it->second];
+		    point_t isectpt1 = {MAX_FASTF, MAX_FASTF, MAX_FASTF};
+		    point_t isectpt2 = {MAX_FASTF, MAX_FASTF, MAX_FASTF};
+		    int isect = tri_isect(fmesh1, t1, fmesh2, t2, &isectpt1, &isectpt2);
+		    if (isect) {
+			cp_it->first->ovlping_tris.insert(t1.ind);
+			cp_it->second->ovlping_tris.insert(t2.ind);
+			tri_isects++;
+		    }
+		}
+	    }
+	}
+    }
+    for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
+	cp_it->first->plot();
+	cp_it->second->plot();
+    }
+ 
+    return tri_isects;
+}
+
 
 double
 tri_shortest_edge(cdt_mesh::cdt_mesh_t *fmesh, long t_ind)
@@ -1937,7 +2026,7 @@ static bool NearEdgesCallback(void *data, void *a_context) {
 }
 
 void
-check_faces_validity(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> &check_pairs, int id)
+check_faces_validity(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> &check_pairs, int UNUSED(id))
 {
     std::set<cdt_mesh::cdt_mesh_t *> fmeshes;
     std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>>::iterator cp_it;
@@ -1951,9 +2040,11 @@ check_faces_validity(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_me
     for (f_it = fmeshes.begin(); f_it != fmeshes.end(); f_it++) {
 	cdt_mesh::cdt_mesh_t *fmesh = *f_it;
 	std::cout << "face " << fmesh->f_id << " validity: " << fmesh->valid(1) << "\n";
+#if 0
 	struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh->p_cdt;
 	std::string fpname = std::to_string(id) + std::string("_") + std::string(s_cdt->name) + std::string("_face_") + std::to_string(fmesh->f_id) + std::string(".plot3");
 	fmesh->tris_plot(fpname.c_str());
+#endif
     }
 }
 
@@ -2419,10 +2510,11 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
     check_pairs = possibly_interfering_face_pairs(s_a, s_cnt);
 
     //std::cout << "Found " << check_pairs.size() << " potentially interfering face pairs\n";
+    if (!check_pairs.size()) return 0;
 
     check_faces_validity(check_pairs, 0);
 
-    int face_ov_cnt = face_ovlps_cnt(s_a, s_cnt);
+    int face_ov_cnt = face_fmesh_ovlps(check_pairs);
     std::cout << "Initial overlap cnt: " << face_ov_cnt << "\n";
     if (!face_ov_cnt) return 0;
 
@@ -2446,6 +2538,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	omesh_t *o2 = f2omap[p_it->second];
 	ocheck_pairs.insert(std::make_pair(o1, o2));
     }
+    face_ov_cnt = face_omesh_ovlps(ocheck_pairs);
 
     size_t avcnt = adjust_close_verts(ocheck_pairs);
 
@@ -2454,7 +2547,8 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	check_faces_validity(check_pairs, 1);
     }
 
-    std::cout << "Post vert adjustment overlap cnt: " << face_ovlps_cnt(s_a, s_cnt) << "\n";
+    face_ov_cnt = face_omesh_ovlps(ocheck_pairs);
+    std::cout << "Post vert adjustment overlap cnt: " << face_ov_cnt << "\n";
 
 
     // Boundary edges are handled at a brep object level, not a face level - handle
@@ -2468,7 +2562,8 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
     if (sbfvtri_cnt) {
 	std::cout << "Replaced " << sbfvtri_cnt << " triangles by splitting edges near vertices\n";
 	check_faces_validity(check_pairs, 2);
-	std::cout << "Post edges-near-verts split overlap cnt: " << face_ovlps_cnt(s_a, s_cnt) << "\n";
+	face_ov_cnt = face_omesh_ovlps(ocheck_pairs);
+	std::cout << "Post edges-near-verts split overlap cnt: " << face_ov_cnt << "\n";
     }
 
 #if 0
@@ -2484,9 +2579,10 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 
     process_near_edge_pnts(face_npnts);
 
-    std::cout << "Post interior-near-edge split overlap cnt: " << face_ovlps_cnt(s_a, s_cnt) << "\n";
+    face_ov_cnt = face_omesh_ovlps(ocheck_pairs);
+    std::cout << "Post interior-near-edge split overlap cnt: " << face_ov_cnt << "\n";
 
-
+#if 0
 
 
     int tneigh_cnt = 0;
@@ -2584,8 +2680,10 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	}
 
     }
+#endif
 
-    std::cout << "Post tri split overlap cnt: " << face_ovlps_cnt(s_a, s_cnt) << "\n";
+    face_ov_cnt = face_omesh_ovlps(ocheck_pairs);
+    std::cout << "Post tri split overlap cnt: " << face_ov_cnt << "\n";
     check_faces_validity(check_pairs, 4);
 
     return 0;
