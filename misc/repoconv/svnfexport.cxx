@@ -154,7 +154,7 @@ int main(int argc, const char **argv)
 
     std::ifstream infile(argv[1]);
 
-    for (i = starting_rev+1; i < mrev; i++) {
+    for (i = starting_rev+1; i <= mrev; i++) {
 	rev_fast_export(infile, i);
 	get_rev_sha1s(i);
 	update_starting_rev(i);
