@@ -250,7 +250,7 @@ class overt_t {
 	long p_id;
 
 	double min_len();
-	double max_len();
+	//double max_len();
 	ON_BoundingBox bb;
 
 	long closest_uedge;
@@ -273,10 +273,10 @@ class omesh_t
 	    init_verts();
 	};
 
-	// We don't remove vertices during overlap resolution - just add and
-	// update them - so a vector works as a container.
-	std::vector<class overt_t> overts;
-	RTree<size_t, double, 3> vtree;
+	// The fmesh pnts array may have inactive vertices - we only want the
+	// active verts for this portion of the processing.
+	std::map<long, class overt_t *> overts;
+	RTree<long, double, 3> vtree;
 	void plot_vtree(const char *fname);
 
 	// Interior edges we add and remove. Because we don't want to store the whole
@@ -291,7 +291,7 @@ class omesh_t
 	// and retessellate) all the other unassigned overts that have that edge as
 	// their assigned closest edge need to find a new one.  Make it easy to find
 	// out which vertices need to do that work.
-	std::map<size_t, std::set<size_t>> iue_close_overts;
+	std::map<size_t, std::set<long>> iue_close_overts;
 
 	void vert_adjust(long p_id, ON_3dPoint *p, ON_3dVector *v);
 
@@ -303,7 +303,7 @@ class omesh_t
 	void vert_add(ON_3dPoint *p, ON_3dVector *v, ON_2dPoint &n2dp);
 
 	// Find close vertices
-	std::set<size_t> overts_search(ON_BoundingBox &bb);
+	std::set<long> overts_search(ON_BoundingBox &bb);
 
 	// Find close face boundary edges
 	std::set<cdt_mesh::cpolyedge_t *> boundary_edges_search(ON_BoundingBox &bb);
@@ -317,8 +317,9 @@ class omesh_t
 	void retessellate(std::set<size_t> &ov);
 
 	cdt_mesh::cdt_mesh_t *fmesh;
-    private:
+
 	void verts_one_ring_update(long p_id);
+    private:
 	void init_verts();
 	void init_edges();
 
@@ -451,17 +452,16 @@ omesh_t::init_verts()
 
     std::set<long>::iterator a_it;
     for (a_it = averts.begin(); a_it != averts.end(); a_it++) {
-	overt_t vert(this, *a_it);
-	overts.push_back(vert);
+	overts[*a_it] = new overt_t(this, *a_it);
     	double fMin[3];
-	fMin[0] = vert.bb.Min().x;
-	fMin[1] = vert.bb.Min().y;
-	fMin[2] = vert.bb.Min().z;
+	fMin[0] = overts[*a_it]->bb.Min().x;
+	fMin[1] = overts[*a_it]->bb.Min().y;
+	fMin[2] = overts[*a_it]->bb.Min().z;
 	double fMax[3];
-	fMax[0] = vert.bb.Max().x;
-	fMax[1] = vert.bb.Max().y;
-	fMax[2] = vert.bb.Max().z;
-	vtree.Insert(fMin, fMax, overts.size() - 1);
+	fMax[0] = overts[*a_it]->bb.Max().x;
+	fMax[1] = overts[*a_it]->bb.Max().y;
+	fMax[2] = overts[*a_it]->bb.Max().z;
+	vtree.Insert(fMin, fMax, *a_it);
     }
 }
 
@@ -469,24 +469,24 @@ void
 omesh_t::plot_vtree(const char *fname)
 {
     FILE *plot = fopen(fname, "w");
-    RTree<size_t, double, 3>::Iterator tree_it;
-    size_t v_ind;
+    RTree<long, double, 3>::Iterator tree_it;
+    long v_ind;
     vtree.GetFirst(tree_it);
     while (!tree_it.IsNull()) {
 	v_ind = *tree_it;
 	pl_color(plot, 255, 0, 0);
-	overts[v_ind].plot(plot);
+	overts[v_ind]->plot(plot);
 	++tree_it;
     }
     fclose(plot);
 }
 
-static bool NearVertCallback(size_t data, void *a_context) {
-    std::set<size_t> *nverts = (std::set<size_t> *)a_context;
+static bool NearVertCallback(long data, void *a_context) {
+    std::set<long> *nverts = (std::set<long> *)a_context;
     nverts->insert(data);
     return true;
 }
-std::set<size_t>
+std::set<long>
 omesh_t::overts_search(ON_BoundingBox &bb)
 {
     double fMin[3], fMax[3];
@@ -496,12 +496,12 @@ omesh_t::overts_search(ON_BoundingBox &bb)
     fMax[0] = bb.Max().x;
     fMax[1] = bb.Max().y;
     fMax[2] = bb.Max().z;
-    std::set<size_t> near_overts;
+    std::set<long> near_overts;
     size_t nhits = fmesh->tris_tree.Search(fMin, fMax, NearVertCallback, (void *)&near_overts);
 
     if (!nhits) {
 	std::cout << "No nearby vertices\n";
-	return std::set<size_t>();
+	return std::set<long>();
     }
 
     return near_overts;
@@ -650,7 +650,7 @@ omesh_t::verts_one_ring_update(long p_id)
     // 3.  Update each vertex
     std::set<long>::iterator v_it;
     for (v_it = mod_verts.begin(); v_it != mod_verts.end(); v_it++) {
-	overts[*v_it].update();
+	overts[*v_it]->update();
     }
 }
 
@@ -673,17 +673,16 @@ omesh_t::vert_add(ON_3dPoint *p, ON_3dVector *v, ON_2dPoint &n2dp)
     CDT_Add3DNorm(s_cdt, fmesh->normals[fnind], fmesh->pnts[f3ind], fmesh->f_id, -1, -1, -1, n2dp.x, n2dp.y);
     fmesh->nmap[f3ind] = fnind;
 
-    overt_t vert(this, fmesh->pnts.size()-1);
-    overts.push_back(vert);
+    overts[f3ind] = new overt_t(this, f3ind);
     double fMin[3];
-    fMin[0] = vert.bb.Min().x;
-    fMin[1] = vert.bb.Min().y;
-    fMin[2] = vert.bb.Min().z;
+    fMin[0] = overts[f3ind]->bb.Min().x;
+    fMin[1] = overts[f3ind]->bb.Min().y;
+    fMin[2] = overts[f3ind]->bb.Min().z;
     double fMax[3];
-    fMax[0] = vert.bb.Max().x;
-    fMax[1] = vert.bb.Max().y;
-    fMax[2] = vert.bb.Max().z;
-    vtree.Insert(fMin, fMax, overts.size() - 1);
+    fMax[0] = overts[f3ind]->bb.Max().x;
+    fMax[1] = overts[f3ind]->bb.Max().y;
+    fMax[2] = overts[f3ind]->bb.Max().z;
+    vtree.Insert(fMin, fMax, f3ind);
 
 }
 
@@ -731,14 +730,14 @@ omesh_t::edge_add(cdt_mesh::uedge_t &ue, int update_verts)
     iuetree.Insert(fMin, fMax, nind);
 
     if (update_verts) {
-	overts[ue.v[0]].update();
-	overts[ue.v[1]].update();
+	overts[ue.v[0]]->update();
+	overts[ue.v[1]]->update();
 	// Anything close to the new edges needs to assess if this edge is closer
 	// than the previously selected one
-	std::set<size_t> nearby_verts = overts_search(ebb);
-	std::set<size_t>::iterator n_it;
+	std::set<long> nearby_verts = overts_search(ebb);
+	std::set<long>::iterator n_it;
 	for (n_it = nearby_verts.begin(); n_it != nearby_verts.end(); n_it++) {
-	    overts[*n_it].update();
+	    overts[*n_it]->update();
 	}
     }
 }
@@ -781,14 +780,14 @@ omesh_t::edge_remove(cdt_mesh::uedge_t &ue, int update_verts)
     iuetree.Remove(fMin, fMax, ue_id);
 
     if (update_verts) {
-	overts[ue.v[0]].update();
-	overts[ue.v[1]].update();
+	overts[ue.v[0]]->update();
+	overts[ue.v[1]]->update();
 	// The verts who where referencing this as their closest edge need to
 	// pick a new one
-	std::set<size_t> close_verts = iue_close_overts[ue_id];
-	std::set<size_t>::iterator c_it;
+	std::set<long> close_verts = iue_close_overts[ue_id];
+	std::set<long>::iterator c_it;
 	for (c_it = close_verts.begin(); c_it != close_verts.end(); c_it++) {
-	    overts[*c_it].update();
+	    overts[*c_it]->update();
 	}
     }
 }
@@ -1379,36 +1378,32 @@ mvert_update_all_edge_minlens(struct mvert_info *v)
     }
 }
 
-struct mvert_info *
-get_largest_mvert(std::set<struct mvert_info *> &verts) 
+overt_t *
+get_largest_mvert(std::set<overt_t *> &verts) 
 {
     double elen = 0;
-    struct mvert_info *l = NULL;
-    std::set<struct mvert_info *>::iterator v_it;
+    overt_t *l = NULL;
+    std::set<overt_t *>::iterator v_it;
     for (v_it = verts.begin(); v_it != verts.end(); v_it++) {
-	struct mvert_info *v = *v_it;
-	if (v->e_minlen > elen) {
-	    elen = v->e_minlen;
+	overt_t *v = *v_it;
+	if (v->min_len() > elen) {
+	    elen = v->min_len();
 	    l = v;
 	}
     }
     return l;
 }
 
-struct mvert_info *
-closest_mvert(std::set<struct mvert_info *> &verts, struct mvert_info *v) 
+overt_t *
+closest_mvert(std::set<overt_t *> &verts, overt_t *v) 
 {
-    struct mvert_info *closest = NULL;
+    overt_t *closest = NULL;
     double dist = DBL_MAX;
-    struct ON_Brep_CDT_State *s_cdt1 = v->s_cdt;
-    cdt_mesh::cdt_mesh_t fmesh1 = s_cdt1->fmeshes[v->f_id];
-    ON_3dPoint p1 = *fmesh1.pnts[v->p_id];
-    std::set<struct mvert_info *>::iterator v_it;
+    ON_3dPoint p1 = *v->omesh->fmesh->pnts[v->p_id];
+    std::set<overt_t *>::iterator v_it;
     for (v_it = verts.begin(); v_it != verts.end(); v_it++) {
-	struct mvert_info *c = *v_it;
-	struct ON_Brep_CDT_State *s_cdt2 = c->s_cdt;
-	cdt_mesh::cdt_mesh_t fmesh2 = s_cdt2->fmeshes[c->f_id];
-	ON_3dPoint p2 = *fmesh2.pnts[c->p_id];
+	overt_t *c = *v_it;
+	ON_3dPoint p2 = *c->omesh->fmesh->pnts[c->p_id];
 	double d = p1.DistanceTo(p2);
 	if (dist > d) {
 	    closest = c;
@@ -1428,40 +1423,34 @@ closest_mvert(std::set<struct mvert_info *> &verts, struct mvert_info *v)
 // TODO - for edge points, should really be searching edge closest
 // point rather than surface closest point...
 void
-adjust_mvert_pair(struct mvert_info *v1, struct mvert_info *v2)
+adjust_mvert_pair(overt_t *v1, overt_t *v2)
 {
-    struct ON_Brep_CDT_State *s_cdt1 = v1->s_cdt;
-    cdt_mesh::cdt_mesh_t &fmesh1 = s_cdt1->fmeshes[v1->f_id];
-    struct ON_Brep_CDT_State *s_cdt2 = v2->s_cdt;
-    cdt_mesh::cdt_mesh_t &fmesh2 = s_cdt2->fmeshes[v2->f_id];
-    ON_3dPoint p1 = *fmesh1.pnts[v1->p_id];
-    ON_3dPoint p2 = *fmesh2.pnts[v2->p_id];
+    ON_3dPoint p1 = *v1->omesh->fmesh->pnts[v1->p_id];
+    ON_3dPoint p2 = *v2->omesh->fmesh->pnts[v2->p_id];
     double pdist = p1.DistanceTo(p2);
     ON_Line l(p1,p2);
     // Weight the t parameter on the line so we are closer to the vertex
     // with the shorter edge length (i.e. less freedom to move without
     // introducing locally severe mesh distortions.)
-    double t = 1 - (v2->e_minlen / (v1->e_minlen + v2->e_minlen));
+    double t = 1 - (v2->min_len() / (v1->min_len() + v2->min_len()));
     ON_3dPoint p_wavg = l.PointAt(t);
-    if ((p1.DistanceTo(p_wavg) > v1->e_minlen*0.5) || (p2.DistanceTo(p_wavg) > v2->e_minlen*0.5)) {
+    if ((p1.DistanceTo(p_wavg) > v1->min_len()*0.5) || (p2.DistanceTo(p_wavg) > v2->min_len()*0.5)) {
 	std::cout << "WARNING: large point shift compared to triangle edge length.\n";
     }
     ON_3dPoint s1_p, s2_p;
     ON_3dVector s1_n, s2_n;
-    bool f1_eval = closest_surf_pnt(s1_p, s1_n, fmesh1, &p_wavg, pdist);
-    bool f2_eval = closest_surf_pnt(s2_p, s2_n, fmesh2, &p_wavg, pdist);
+    bool f1_eval = closest_surf_pnt(s1_p, s1_n, *v1->omesh->fmesh, &p_wavg, pdist);
+    bool f2_eval = closest_surf_pnt(s2_p, s2_n, *v2->omesh->fmesh, &p_wavg, pdist);
     if (f1_eval && f2_eval) {
-	(*fmesh1.pnts[v1->p_id]) = s1_p;
-	(*fmesh1.normals[fmesh1.nmap[v1->p_id]]) = s1_n;
-	(*fmesh2.pnts[v2->p_id]) = s2_p;
-	(*fmesh2.normals[fmesh2.nmap[v2->p_id]]) = s2_n;
+	(*v1->omesh->fmesh->pnts[v1->p_id]) = s1_p;
+	(*v1->omesh->fmesh->normals[v1->omesh->fmesh->nmap[v1->p_id]]) = s1_n;
+	(*v2->omesh->fmesh->pnts[v2->p_id]) = s2_p;
+	(*v2->omesh->fmesh->normals[v2->omesh->fmesh->nmap[v2->p_id]]) = s2_n;
 
 	// We just changed the vertex point values - need to update all the mvert_info
 	// edge lengths which might be impacted...
-	//double e1 = v1->e_minlen;
-	//double e2 = v2->e_minlen;
-	mvert_update_all_edge_minlens(v1);
-	mvert_update_all_edge_minlens(v2);
+	v1->omesh->verts_one_ring_update(v1->p_id);
+	v2->omesh->verts_one_ring_update(v2->p_id);
 
 #if 0
 	std::cout << "p_wavg: " << p_wavg.x << "," << p_wavg.y << "," << p_wavg.z << "\n";
@@ -1469,12 +1458,14 @@ adjust_mvert_pair(struct mvert_info *v1, struct mvert_info *v2)
 	std::cout << s_cdt2->name << " face " << fmesh2.f_id << " pnt " << v2->p_id << " (elen: " << e2 << "->" << v2->e_minlen << ") moved " << p2.DistanceTo(s2_p) << ": " << p2.x << "," << p2.y << "," << p2.z << " -> " << s2_p.x << "," << s2_p.y << "," << s2_p.z << "\n";
 #endif
     } else {
+	struct ON_Brep_CDT_State *s_cdt1 = (struct ON_Brep_CDT_State *)v1->omesh->fmesh->p_cdt;
+	struct ON_Brep_CDT_State *s_cdt2 = (struct ON_Brep_CDT_State *)v2->omesh->fmesh->p_cdt;
 	std::cout << "p_wavg: " << p_wavg.x << "," << p_wavg.y << "," << p_wavg.z << "\n";
 	if (!f1_eval) {
-	    std::cout << s_cdt1->name << " face " << fmesh1.f_id << " closest point eval failure\n";
+	    std::cout << s_cdt1->name << " face " << v1->omesh->fmesh->f_id << " closest point eval failure\n";
 	}
 	if (!f2_eval) {
-	    std::cout << s_cdt2->name << " face " << fmesh2.f_id << " closest point eval failure\n";
+	    std::cout << s_cdt2->name << " face " << v2->omesh->fmesh->f_id << " closest point eval failure\n";
 	}
     }
 }
@@ -1573,7 +1564,7 @@ vert_bboxes(
     }
 }
  
-void
+size_t
 adjust_close_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs)
 {
     std::map<overt_t *, std::set<overt_t*>> vert_ovlps;
@@ -1590,15 +1581,15 @@ adjust_close_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs)
 	bu_vls_sprintf(&fname, "%s-%d-vtree.plot3", s_cdt2->name, omesh2->fmesh->f_id);
 	omesh2->plot_vtree(bu_vls_cstr(&fname));
 	bu_vls_free(&fname);
-	std::set<std::pair<size_t, size_t>> vert_pairs;
+	std::set<std::pair<long, long>> vert_pairs;
 	omesh1->vtree.Overlaps(omesh2->vtree, &vert_pairs);
 	std::cout << "(" << s_cdt1->name << "," << omesh1->fmesh->f_id << ")+(" << s_cdt2->name << "," << omesh2->fmesh->f_id << "): " << vert_pairs.size() << " vert box overlaps\n";
-	std::set<std::pair<size_t, size_t>>::iterator v_it;
+	std::set<std::pair<long, long>>::iterator v_it;
 	for (v_it = vert_pairs.begin(); v_it != vert_pairs.end(); v_it++) {
-	    size_t v_first = (size_t)v_it->first;
-	    size_t v_second = (size_t)v_it->second;
-	    overt_t *v1 = &(omesh1->overts[v_first]);
-	    overt_t *v2 = &(omesh2->overts[v_second]);
+	    long v_first = (long)v_it->first;
+	    long v_second = (long)v_it->second;
+	    overt_t *v1 = omesh1->overts[v_first];
+	    overt_t *v2 = omesh2->overts[v_second];
 	    vert_ovlps[v1].insert(v2);
 	    vert_ovlps[v2].insert(v1);
 	}
@@ -1627,11 +1618,10 @@ adjust_close_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs)
 
     std::cout << "Have " << vq.size() << " simple interactions\n";
     std::cout << "Have " << vq_multi.size() << " complex interactions\n";
-#if 0
-    std::set<struct mvert_info *> adjusted;
+    std::set<overt_t *> adjusted;
 
     while (!vq.empty()) {
-	std::pair<struct mvert_info *, struct mvert_info *> vpair = vq.front();
+	std::pair<overt_t *, overt_t *> vpair = vq.front();
 	vq.pop();
 
 	adjust_mvert_pair(vpair.first, vpair.second);
@@ -1642,8 +1632,8 @@ adjust_close_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs)
     // If the box structure is more complicated, we need to be a bit selective
     while (vq_multi.size()) {
 
-	struct mvert_info *l = get_largest_mvert(vq_multi);
-	struct mvert_info *c = closest_mvert(vert_ovlps[l], l);
+	overt_t *l = get_largest_mvert(vq_multi);
+	overt_t *c = closest_mvert(vert_ovlps[l], l);
 	vq_multi.erase(l);
 	vq_multi.erase(c);
 	vert_ovlps[l].erase(c);
@@ -1654,8 +1644,7 @@ adjust_close_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs)
 	adjusted.insert(c);
     }
 
-    return adjusted;
-#endif
+    return adjusted.size();
 }
 
 // return the set of verts that was adjusted - we shouldn't need to move them again
@@ -1742,7 +1731,7 @@ adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t
     }
 
     std::set<struct mvert_info *> adjusted;
-
+#if 0
     std::cout << "Have " << vq.size() << " simple interactions\n";
     while (!vq.empty()) {
 	std::pair<struct mvert_info *, struct mvert_info *> vpair = vq.front();
@@ -1752,7 +1741,6 @@ adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t
 	adjusted.insert(vpair.first);
 	adjusted.insert(vpair.second);
     }
-
     std::cout << "Have " << vq_multi.size() << " complex interactions\n";
     // If the box structure is more complicated, we need to be a bit selective
     while (vq_multi.size()) {
@@ -1768,6 +1756,7 @@ adjustable_verts(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t
 	adjusted.insert(l);
 	adjusted.insert(c);
     }
+#endif
 
     return adjusted;
 }
