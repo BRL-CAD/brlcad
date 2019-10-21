@@ -1779,11 +1779,39 @@ ovlp_split_edge(std::set<cdt_mesh::bedge_seg_t *> *nsegs, cdt_mesh::bedge_seg_t 
 
 int
 split_brep_face_edges_near_verts(
-	std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs,
-	std::map<long, cdt_mesh::bedge_seg_t *> &b_edges,
-	RTree<long, double, 3> &bedge_tree
+	std::set<struct ON_Brep_CDT_State *> &a_cdt,
+	std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs
 	)
 {
+    std::map<long, cdt_mesh::bedge_seg_t *> b_edges;
+    RTree<long, double, 3> bedge_tree;
+    long ecnt = 0;
+    {
+	std::set<struct ON_Brep_CDT_State *>::iterator a_it;
+	for (a_it = a_cdt.begin(); a_it != a_cdt.end(); a_it++) {
+	    struct ON_Brep_CDT_State *s_cdt = *a_it;
+	    std::map<int, std::set<cdt_mesh::bedge_seg_t *>>::iterator ep_it;
+	    for (ep_it = s_cdt->e2polysegs.begin(); ep_it != s_cdt->e2polysegs.end(); ep_it++) {
+		std::set<cdt_mesh::bedge_seg_t *>::iterator bs_it;
+		for (bs_it = ep_it->second.begin(); bs_it != ep_it->second.end(); bs_it++) {
+		    cdt_mesh::bedge_seg_t *bseg = *bs_it;
+		    b_edges[ecnt] = bseg;
+		    ON_BoundingBox bb = edge_bbox(bseg);
+		    double fMin[3];
+		    fMin[0] = bb.Min().x;
+		    fMin[1] = bb.Min().y;
+		    fMin[2] = bb.Min().z;
+		    double fMax[3];
+		    fMax[0] = bb.Max().x;
+		    fMax[1] = bb.Max().y;
+		    fMax[2] = bb.Max().z;
+		    bedge_tree.Insert(fMin, fMax, ecnt);
+		    ecnt++;
+		}
+	    }
+	}
+    }
+
     std::set<std::pair<omesh_t *, omesh_t *>>::iterator cp_it;
     int replaced_tris = 0;
 
@@ -1818,7 +1846,7 @@ split_brep_face_edges_near_verts(
 		double d2 = p3d2->DistanceTo(p);
 		double dline = 2*p.DistanceTo(line.ClosestPointTo(p));
 		if (d1 > dline && d2 > dline) {
-		    std::cout << "ACCEPT: d1: " << d1 << ", d2: " << d2 << ", dline: " << dline << "\n";
+		    //std::cout << "ACCEPT: d1: " << d1 << ", d2: " << d2 << ", dline: " << dline << "\n";
 		    if (edge_vert.find(eseg) != edge_vert.end()) {
 			ON_3dPoint pv = edge_vert[eseg]->vpnt();
 			double dv = pv.DistanceTo(line.ClosestPointTo(pv));
@@ -1835,7 +1863,7 @@ split_brep_face_edges_near_verts(
 		    ON_BoundingBox edge_bb = edge_bbox(eseg);
 		    BBOX_PLOT(plot_file, edge_bb);
 		} else {
-		    std::cout << "REJECT: d1: " << d1 << ", d2: " << d2 << ", dline: " << dline << "\n";
+		    //std::cout << "REJECT: d1: " << d1 << ", d2: " << d2 << ", dline: " << dline << "\n";
 		}
 	    }
 	    //std::cout << "used_verts: " << used_verts << "\n";
@@ -1860,7 +1888,7 @@ split_brep_face_edges_near_verts(
 	ON_3dPoint cep = nc->PointAt(t);
 	//ON_3dPoint concern(2.599,7.821, 23.563);
 	//if (cep.DistanceTo(concern) < 0.01) {
-	    std::cout << "cep: " << cep.x << "," << cep.y << "," << cep.z << "\n";
+	    //std::cout << "cep: " << cep.x << "," << cep.y << "," << cep.z << "\n";
 	//    std::cout << "Distance: " << cep.DistanceTo(p) << "\n";
 	//}
 	double epdist1 = eseg->e_start->DistanceTo(cep);
@@ -2431,45 +2459,15 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 
     // Boundary edges are handled at a brep object level, not a face level - handle
     // them as an independent process
-    {
-	std::map<long, cdt_mesh::bedge_seg_t *> b_edges;
-	RTree<long, double, 3> bedge_tree;
-	std::set<struct ON_Brep_CDT_State *> a_cdt;
-	for (p_it = check_pairs.begin(); p_it != check_pairs.end(); p_it++) {
-	    a_cdt.insert((struct ON_Brep_CDT_State *)p_it->first->p_cdt);
-	    a_cdt.insert((struct ON_Brep_CDT_State *)p_it->second->p_cdt);
-	}
-	long ecnt = 0;
-	std::set<struct ON_Brep_CDT_State *>::iterator a_it;
-	for (a_it = a_cdt.begin(); a_it != a_cdt.end(); a_it++) {
-	    struct ON_Brep_CDT_State *s_cdt = *a_it;
-	    std::map<int, std::set<cdt_mesh::bedge_seg_t *>>::iterator ep_it;
-	    for (ep_it = s_cdt->e2polysegs.begin(); ep_it != s_cdt->e2polysegs.end(); ep_it++) {
-		std::set<cdt_mesh::bedge_seg_t *>::iterator bs_it;
-		for (bs_it = ep_it->second.begin(); bs_it != ep_it->second.end(); bs_it++) {
-		    cdt_mesh::bedge_seg_t *bseg = *bs_it;
-		    b_edges[ecnt] = bseg;
-		    ON_BoundingBox bb = edge_bbox(bseg);
-		    double fMin[3];
-		    fMin[0] = bb.Min().x;
-		    fMin[1] = bb.Min().y;
-		    fMin[2] = bb.Min().z;
-		    double fMax[3];
-		    fMax[0] = bb.Max().x;
-		    fMax[1] = bb.Max().y;
-		    fMax[2] = bb.Max().z;
-		    bedge_tree.Insert(fMin, fMax, ecnt);
-		    ecnt++;
-		}
-	    }
-	}
-
-	int sbfvtri_cnt = split_brep_face_edges_near_verts(ocheck_pairs, b_edges, bedge_tree);
-	if (sbfvtri_cnt) {
-	    std::cout << "Replaced " << sbfvtri_cnt << " triangles by splitting edges near vertices\n";
-	    check_faces_validity(check_pairs, 2);
-	}
-
+    std::set<struct ON_Brep_CDT_State *> a_cdt;
+    for (p_it = check_pairs.begin(); p_it != check_pairs.end(); p_it++) {
+	a_cdt.insert((struct ON_Brep_CDT_State *)p_it->first->p_cdt);
+	a_cdt.insert((struct ON_Brep_CDT_State *)p_it->second->p_cdt);
+    }
+    int sbfvtri_cnt = split_brep_face_edges_near_verts(a_cdt, ocheck_pairs);
+    if (sbfvtri_cnt) {
+	std::cout << "Replaced " << sbfvtri_cnt << " triangles by splitting edges near vertices\n";
+	check_faces_validity(check_pairs, 2);
 	std::cout << "Post edges-near-verts split overlap cnt: " << face_ovlps_cnt(s_a, s_cnt) << "\n";
     }
 
