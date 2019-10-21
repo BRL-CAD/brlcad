@@ -233,6 +233,20 @@
     TREE_LEAF_FACE_3D(pf, pt, 1, 5, 6, 2);      \
 }
 
+double
+tri_pnt_r(cdt_mesh::cdt_mesh_t &fmesh, long tri_ind)
+{
+    cdt_mesh::triangle_t tri = fmesh.tris_vect[tri_ind];
+    ON_3dPoint *p3d = fmesh.pnts[tri.v[0]];
+    ON_BoundingBox bb(*p3d, *p3d);
+    for (int i = 1; i < 3; i++) {
+	p3d = fmesh.pnts[tri.v[i]];
+	bb.Set(*p3d, true);
+    }
+    double bbd = bb.Diagonal().Length();
+    return bbd * 0.01;
+}
+
 class omesh_t;
 class overt_t {
     public:
@@ -316,6 +330,9 @@ class omesh_t
 	void retessellate(std::set<size_t> &ov);
 
 	std::set<long> ovlping_tris;
+
+	std::set<overt_t*> intruding_pnts;
+
 	cdt_mesh::cdt_mesh_t *fmesh;
 
 	void plot(const char *fname);
@@ -521,12 +538,24 @@ omesh_t::plot(const char *fname)
 	++tree_it;
     }
 
+    double tri_r = 0;
+
     bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
     pl_color_buc(plot, &c);
     std::set<long>::iterator ts_it;
     for (ts_it = ovlping_tris.begin(); ts_it != ovlping_tris.end(); ts_it++) {
 	tri = fmesh->tris_vect[*ts_it];
+	double tr = tri_pnt_r(*fmesh, tri.ind);
+	tri_r = (tr > tri_r) ? tr : tri_r;
 	fmesh->plot_tri(tri, &c, plot, 255, 0, 0);
+    }
+
+    pl_color(plot, 255, 0, 0);
+    std::set<overt_t*>::iterator i_it;
+    for (i_it = intruding_pnts.begin(); i_it != intruding_pnts.end(); i_it++) {
+	overt_t *iv = *i_it;
+	ON_3dPoint vp = iv->vpnt();
+	plot_pnt_3d(plot, &vp, tri_r, 0);
     }
 
     fclose(plot);
@@ -867,20 +896,6 @@ edge_bbox(cdt_mesh::bedge_seg_t *eseg)
     }
 
     return bb;
-}
-
-double
-tri_pnt_r(cdt_mesh::cdt_mesh_t &fmesh, long tri_ind)
-{
-    cdt_mesh::triangle_t tri = fmesh.tris_vect[tri_ind];
-    ON_3dPoint *p3d = fmesh.pnts[tri.v[0]];
-    ON_BoundingBox bb(*p3d, *p3d);
-    for (int i = 1; i < 3; i++) {
-	p3d = fmesh.pnts[tri.v[i]];
-	bb.Set(*p3d, true);
-    }
-    double bbd = bb.Diagonal().Length();
-    return bbd * 0.01;
 }
 
 void
@@ -2069,153 +2084,106 @@ void plot_mvert_set(double r, std::set<struct p_mvert_info *> &pv)
     fclose(plot);
 }
 
+#if 0
 static bool NearVertsCallback(void *data, void *a_context) {
     std::set<long> *cpnts = (std::set<long> *)a_context;
     struct mvert_info *mv = (struct mvert_info *)data;
     cpnts->insert(mv->p_id);
     return true;
 }
+#endif
 
-std::map<cdt_mesh::cdt_mesh_t *, std::set<struct p_mvert_info *>> *
-get_intruding_points(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> &check_pairs)
+void
+get_intruding_points(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs)
 {
-    // Get the bounding boxes of all vertices of all meshes of all breps
-    // that might have possible interactions
-    std::vector<struct mvert_info *> all_mverts;
-    std::map<std::pair<struct ON_Brep_CDT_State *, int>, RTree<void *, double, 3>> rtrees_mpnts;
-    std::map<std::pair<struct ON_Brep_CDT_State *, int>, std::map<long, struct mvert_info *>> mpnt_maps;
-    vert_bboxes(&all_mverts, &rtrees_mpnts, &mpnt_maps, check_pairs);
-
-    std::map<cdt_mesh::cdt_mesh_t *, std::set<std::pair<cdt_mesh::cdt_mesh_t *, long>>> added_verts;
-
-    std::map<cdt_mesh::cdt_mesh_t *, std::set<struct p_mvert_info *>> *face_npnts = new std::map<cdt_mesh::cdt_mesh_t *, std::set<struct p_mvert_info *>>;
-    std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>>::iterator cp_it;
+    std::set<std::pair<omesh_t *, omesh_t *>>::iterator cp_it;
     for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
-	cdt_mesh::cdt_mesh_t *fmesh1 = cp_it->first;
-	cdt_mesh::cdt_mesh_t *fmesh2 = cp_it->second;
-	struct ON_Brep_CDT_State *s_cdt1 = (struct ON_Brep_CDT_State *)fmesh1->p_cdt;
-	struct ON_Brep_CDT_State *s_cdt2 = (struct ON_Brep_CDT_State *)fmesh2->p_cdt;
-	if (s_cdt1 != s_cdt2) {
-	    std::set<std::pair<size_t, size_t>> tris_prelim;
-	    std::map<int, std::set<cdt_mesh::cpolyedge_t *>> tris_to_opp_face_edges_1;
-	    std::map<int, std::set<cdt_mesh::cpolyedge_t *>> tris_to_opp_face_edges_2;
-	    size_t ovlp_cnt = fmesh1->tris_tree.Overlaps(fmesh2->tris_tree, &tris_prelim);
-	    if (ovlp_cnt) {
-		//std::cout << "Checking " << fmesh1->name << " face " << fmesh1->f_id << " against " << fmesh2->name << " face " << fmesh2->f_id << " found " << ovlp_cnt << " box overlaps\n";
-		std::set<std::pair<size_t, size_t>>::iterator tb_it;
-		for (tb_it = tris_prelim.begin(); tb_it != tris_prelim.end(); tb_it++) {
-		    cdt_mesh::triangle_t t1 = fmesh1->tris_vect[tb_it->first];
-		    cdt_mesh::triangle_t t2 = fmesh2->tris_vect[tb_it->second];
-		    point_t isectpt1 = {MAX_FASTF, MAX_FASTF, MAX_FASTF};
-		    point_t isectpt2 = {MAX_FASTF, MAX_FASTF, MAX_FASTF};
-		    int isect = tri_isect(fmesh1, t1, fmesh2, t2, &isectpt1, &isectpt2);
-		    if (isect) {
+	omesh_t *omesh1 = cp_it->first;
+	omesh_t *omesh2 = cp_it->second;
+	struct ON_Brep_CDT_State *s_cdt1 = (struct ON_Brep_CDT_State *)omesh1->fmesh->p_cdt;
+	struct ON_Brep_CDT_State *s_cdt2 = (struct ON_Brep_CDT_State *)omesh2->fmesh->p_cdt;
+	if (s_cdt1 == s_cdt2) {
+	    // TODO: In principle we should be checking for self intersections
+	    // - it can happen, particularly in sparse tessellations - but
+	    // for now ignore it.
+	    //std::cout << "SELF_ISECT\n";
+	    continue;
+	}
 
-			double t1_longest = tri_longest_edge(fmesh1, t1.ind);
-			double t2_longest = tri_longest_edge(fmesh2, t2.ind);
+	std::set<std::pair<size_t, size_t>> tris_prelim;
+	size_t ovlp_cnt = omesh1->fmesh->tris_tree.Overlaps(omesh2->fmesh->tris_tree, &tris_prelim);
+	if (!ovlp_cnt) continue;
+	std::set<std::pair<size_t, size_t>>::iterator tb_it;
+	for (tb_it = tris_prelim.begin(); tb_it != tris_prelim.end(); tb_it++) {
+	    cdt_mesh::triangle_t t1 = omesh1->fmesh->tris_vect[tb_it->first];
+	    cdt_mesh::triangle_t t2 = omesh2->fmesh->tris_vect[tb_it->second];
+	    point_t isectpt1 = {MAX_FASTF, MAX_FASTF, MAX_FASTF};
+	    point_t isectpt2 = {MAX_FASTF, MAX_FASTF, MAX_FASTF};
+	    int isect = tri_isect(omesh1->fmesh, t1, omesh2->fmesh, t2, &isectpt1, &isectpt2);
+	    if (!isect) continue;
 
-			// Using triangle planes, determine which point(s) from the opposite triangle are
-			// "inside" the meshes.  Each of these points is an "overlap instance" that the
-			// opposite mesh will have to try and adjust itself to to resolve.
-			ON_Plane plane1 = fmesh1->tplane(t1);
-			for (int i = 0; i < 3; i++) {
-			    if (added_verts[fmesh1].find(std::make_pair(fmesh2, t2.v[i])) != added_verts[fmesh1].end()) continue;
-			    ON_3dPoint tp = *fmesh2->pnts[t2.v[i]];
-			    double dist = plane1.DistanceTo(tp);
-			    if (dist < 0 && fabs(dist) > ON_ZERO_TOLERANCE) {
-				bool pinside = fmesh1->point_inside(&tp);
-				if (pinside) {
-				    std::cout << "test point inside\n";
-				    //std::cout << "face " << fmesh1->f_id << " new interior point from face " << fmesh2->f_id << ": " << tp.x << "," << tp.y << "," << tp.z << "\n";
-				    struct p_mvert_info *np = new struct p_mvert_info;
-				    np->s_cdt = s_cdt1;
-				    np->f_id = fmesh1->f_id;
-				    np->edge_split_only = false;
-				    np->deactivate = false;
-				    closest_surf_pnt(np->p, np->n, *fmesh1, &tp, 2*t1_longest);
-				    ON_BoundingBox bb(np->p, np->p);
-				    bb.m_max.x = bb.m_max.x + t1_longest;
-				    bb.m_max.y = bb.m_max.y + t1_longest;
-				    bb.m_max.z = bb.m_max.z + t1_longest;
-				    bb.m_min.x = bb.m_min.x - t1_longest;
-				    bb.m_min.y = bb.m_min.y - t1_longest;
-				    bb.m_min.z = bb.m_min.z - t1_longest;
-				    np->bb = bb;
-				    // TODO - check if this point is too close to an existing vert
-				    // point to insert. If so, tweak the vert point to match this point
-				    double fMin[3]; double fMax[3];
-				    fMin[0] = bb.Min().x;
-				    fMin[1] = bb.Min().y;
-				    fMin[2] = bb.Min().z;
-				    fMax[0] = bb.Max().x;
-				    fMax[1] = bb.Max().y;
-				    fMax[2] = bb.Max().z;
-				    std::set<long> cpnts;
-				    bool add_pnt = true;
-				    size_t npnts = rtrees_mpnts[std::make_pair(s_cdt1,fmesh1->f_id)].Search(fMin, fMax, NearVertsCallback, (void *)&cpnts);
-				    if (npnts) {
-					std::set<long>::iterator c_it;
-					for (c_it = cpnts.begin(); c_it != cpnts.end(); c_it++) {
-					    ON_3dPoint *p = fmesh1->pnts[*c_it];
-					    std::cout << p->DistanceTo(np->p) << "\n";
-					}
-				    }
-				    if (add_pnt) {
-					(*face_npnts)[fmesh1].insert(np);
-					added_verts[fmesh1].insert(std::make_pair(fmesh2, t2.v[i]));
-				    }
-				} else {
-				    std::cout << "test point outside\n";
-				}
+	    // Using triangle planes and then an inside/outside test, determine
+	    // which point(s) from the opposite triangle are "inside" the
+	    // meshes.  Each of these points is an "overlap instance" that the
+	    // opposite mesh will have to try and adjust itself to to resolve.
+	    ON_Plane plane1 = omesh1->fmesh->tplane(t1);
+	    for (int i = 0; i < 3; i++) {
+		if (omesh1->intruding_pnts.find(omesh2->overts[t2.v[i]]) != omesh1->intruding_pnts.end()) continue;
+		ON_3dPoint tp = *omesh2->fmesh->pnts[t2.v[i]];
+		double dist = plane1.DistanceTo(tp);
+		if (dist < 0 && fabs(dist) > ON_ZERO_TOLERANCE && omesh1->fmesh->point_inside(&tp)) {
+		    std::cout << s_cdt1->name << " face " << omesh1->fmesh->f_id << " test point inside:\n";
+		    std::cout << "tp: " << tp.x << "," << tp.y << "," << tp.z << "\n";
+		    std::cout << "ip: " << omesh2->overts[t2.v[i]]->vpnt().x << "," << omesh2->overts[t2.v[i]]->vpnt().y << "," << omesh2->overts[t2.v[i]]->vpnt().z << "\n";
+		    omesh1->intruding_pnts.insert(omesh2->overts[t2.v[i]]);
+#if 0
+			closest_surf_pnt(np->p, np->n, *fmesh1, &tp, 2*t1_longest);
+			ON_BoundingBox bb(np->p, np->p);
+			bb.m_max.x = bb.m_max.x + t1_longest;
+			bb.m_max.y = bb.m_max.y + t1_longest;
+			bb.m_max.z = bb.m_max.z + t1_longest;
+			bb.m_min.x = bb.m_min.x - t1_longest;
+			bb.m_min.y = bb.m_min.y - t1_longest;
+			bb.m_min.z = bb.m_min.z - t1_longest;
+			np->bb = bb;
+			// TODO - check if this point is too close to an existing vert
+			// point to insert. If so, tweak the vert point to match this point
+			double fMin[3]; double fMax[3];
+			fMin[0] = bb.Min().x;
+			fMin[1] = bb.Min().y;
+			fMin[2] = bb.Min().z;
+			fMax[0] = bb.Max().x;
+			fMax[1] = bb.Max().y;
+			fMax[2] = bb.Max().z;
+			std::set<long> cpnts;
+			bool add_pnt = true;
+			size_t npnts = rtrees_mpnts[std::make_pair(s_cdt1,fmesh1->f_id)].Search(fMin, fMax, NearVertsCallback, (void *)&cpnts);
+			if (npnts) {
+			    std::set<long>::iterator c_it;
+			    for (c_it = cpnts.begin(); c_it != cpnts.end(); c_it++) {
+				ON_3dPoint *p = fmesh1->pnts[*c_it];
+				std::cout << p->DistanceTo(np->p) << "\n";
 			    }
 			}
-
-			ON_Plane plane2 = fmesh2->tplane(t2);
-			for (int i = 0; i < 3; i++) {
-			    ON_3dPoint tp = *fmesh1->pnts[t1.v[i]];
-			    if (added_verts[fmesh2].find(std::make_pair(fmesh1, t1.v[i])) != added_verts[fmesh2].end()) continue;
-			    double dist = plane2.DistanceTo(tp);
-			    if (dist < 0 && fabs(dist) > ON_ZERO_TOLERANCE) {
-				//std::cout << "face " << fmesh2->f_id << " new interior point from face " << fmesh1->f_id << ": " << tp.x << "," << tp.y << "," << tp.z << "\n";
-				bool pinside = fmesh2->point_inside(&tp);
-				if (pinside) {
-				    struct p_mvert_info *np = new struct p_mvert_info;
-				    np->s_cdt = s_cdt2;
-				    np->f_id = fmesh2->f_id;
-				    np->edge_split_only = false;
-				    np->deactivate = false;
-				    closest_surf_pnt(np->p, np->n, *fmesh2, &tp, 2*t2_longest);
-				    ON_BoundingBox bb(np->p, np->p);
-				    bb.m_max.x = bb.m_max.x + t2_longest;
-				    bb.m_max.y = bb.m_max.y + t2_longest;
-				    bb.m_max.z = bb.m_max.z + t2_longest;
-				    bb.m_min.x = bb.m_min.x - t2_longest;
-				    bb.m_min.y = bb.m_min.y - t2_longest;
-				    bb.m_min.z = bb.m_min.z - t2_longest;
-				    np->bb = bb;
-				    // TODO - check if this point is too close to an existing vert
-				    // point to insert. If so, tweak the vert point to match this point
-				    (*face_npnts)[fmesh2].insert(np);
-				    added_verts[fmesh2].insert(std::make_pair(fmesh1, t1.v[i]));
-				} else {
-				    std::cout << "test point outside\n";
-				}
-			    }
+			if (add_pnt) {
+			    (*face_npnts)[fmesh1].insert(np);
+			    added_verts[fmesh1].insert(std::make_pair(fmesh2, t2.v[i]));
 			}
-		    }
+#endif
 		}
 	    }
-	} else {
-	    // TODO: In principle we should be checking for self intersections
-	    // - it can happen, particularly in sparse tessellations. That's
-	    // why the above doesn't filter out same-object face overlaps, but
-	    // for now ignore it.  We need to be able to ignore triangles that
-	    // only share a 3D edge.
-	    //std::cout << "SELF_ISECT\n";
+
+	    ON_Plane plane2 = omesh2->fmesh->tplane(t2);
+	    for (int i = 0; i < 3; i++) {
+		if (omesh2->intruding_pnts.find(omesh1->overts[t1.v[i]]) != omesh2->intruding_pnts.end()) continue;
+		ON_3dPoint tp = *omesh1->fmesh->pnts[t1.v[i]];
+		double dist = plane2.DistanceTo(tp);
+		if (dist < 0 && fabs(dist) > ON_ZERO_TOLERANCE && omesh2->fmesh->point_inside(&tp)) {
+		    omesh2->intruding_pnts.insert(omesh1->overts[t1.v[i]]);
+		}
+	    }
 	}
     }
-
-    return face_npnts;
 }
 
 void
@@ -2574,13 +2542,12 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
     }
 #endif
 
-    std::map<cdt_mesh::cdt_mesh_t *, std::set<struct p_mvert_info *>> *face_npnts;
-    face_npnts = get_intruding_points(check_pairs);
+    get_intruding_points(ocheck_pairs);
 
-    process_near_edge_pnts(face_npnts);
+    //process_near_edge_pnts(face_npnts);
 
     face_ov_cnt = face_omesh_ovlps(ocheck_pairs);
-    std::cout << "Post interior-near-edge split overlap cnt: " << face_ov_cnt << "\n";
+    //std::cout << "Post interior-near-edge split overlap cnt: " << face_ov_cnt << "\n";
 
 #if 0
 
