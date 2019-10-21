@@ -180,7 +180,10 @@ if(EXISTS "@CMAKE_SOURCE_DIR@/.git")
       WORKING_DIRECTORY "@CMAKE_SOURCE_DIR@"
       OUTPUT_VARIABLE GIT_STDOUT
       ERROR_VARIABLE GIT_STDERR)
-    string(REGEX REPLACE "\r?\n" ";" GIT_STATUS "${GIT_STDOUT}")
+    set(GIT_STATUS)
+    foreach(ITEM ${GIT_STDOUT})
+      list(APPEND GIT_STATUS ${ITEM})
+    endforeach(ITEM ${GIT_STDOUT})
     foreach(ITEM ${GIT_STATUS})
       if(${ITEM} MATCHES "^\\?\\?")
 	string(REGEX REPLACE "^[?][?][\\t\\ ]*" "" item_path "${ITEM}")
