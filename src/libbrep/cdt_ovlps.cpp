@@ -753,8 +753,10 @@ omesh_t::edge_add(cdt_mesh::uedge_t &ue, int update_verts)
     if (interior_uedges.size()) {
 	nind = interior_uedges.rbegin()->first + 1;
     }
+    //std::cout << "Setting ue " << nind << " to ue(" << ue.v[0] << "," << ue.v[1] << "\n";
     interior_uedges[nind] = ue;
     interior_uedge_ids[ue] = nind;
+    //std::cout << "interior_uedges.size(): " << interior_uedges.size() << "\n";
     ON_3dPoint *p3d1 = fmesh->pnts[ue.v[0]];
     ON_3dPoint *p3d2 = fmesh->pnts[ue.v[1]];
     ON_Line l(*p3d1, *p3d2);
@@ -784,6 +786,7 @@ omesh_t::edge_add(cdt_mesh::uedge_t &ue, int update_verts)
     fMax[1] = ebb.Max().y;
     fMax[2] = ebb.Max().z;
     iedge_tree.Insert(fMin, fMax, nind);
+    //std::cout << "Adding edge " << nind << "\n";
 
     if (update_verts) {
 	overts[ue.v[0]]->update();
@@ -801,26 +804,31 @@ omesh_t::edge_add(cdt_mesh::uedge_t &ue, int update_verts)
 void
 omesh_t::edge_remove(cdt_mesh::uedge_t &ue, int update_verts)
 {
+    // If we're being asked to remove an edge that's not in the working
+    // set, skip
+    if (interior_uedge_ids.find(ue) == interior_uedge_ids.end()) {
+	return;
+    }
     size_t ue_id = interior_uedge_ids[ue];
     ON_3dPoint *p3d1 = fmesh->pnts[ue.v[0]];
     ON_3dPoint *p3d2 = fmesh->pnts[ue.v[1]];
     ON_Line l(*p3d1, *p3d2);
     ON_BoundingBox ebb = l.BoundingBox();
-    double dist = 0.5*l.Length();
+    double dist = 0.51*l.Length();
     double xdist = ebb.m_max.x - ebb.m_min.x;
     double ydist = ebb.m_max.y - ebb.m_min.y;
     double zdist = ebb.m_max.z - ebb.m_min.z;
     if (xdist < dist) {
-	ebb.m_min.x = ebb.m_min.x - 0.5*dist;
-	ebb.m_max.x = ebb.m_max.x + 0.5*dist;
+	ebb.m_min.x = ebb.m_min.x - 0.51*dist;
+	ebb.m_max.x = ebb.m_max.x + 0.51*dist;
     }
     if (ydist < dist) {
-	ebb.m_min.y = ebb.m_min.y - 0.5*dist;
-	ebb.m_max.y = ebb.m_max.y + 0.5*dist;
+	ebb.m_min.y = ebb.m_min.y - 0.51*dist;
+	ebb.m_max.y = ebb.m_max.y + 0.51*dist;
     }
     if (zdist < dist) {
-	ebb.m_min.z = ebb.m_min.z - 0.5*dist;
-	ebb.m_max.z = ebb.m_max.z + 0.5*dist;
+	ebb.m_min.z = ebb.m_min.z - 0.51*dist;
+	ebb.m_max.z = ebb.m_max.z + 0.51*dist;
     }
     double fMin[3];
     fMin[0] = ebb.Min().x;
@@ -834,6 +842,7 @@ omesh_t::edge_remove(cdt_mesh::uedge_t &ue, int update_verts)
     interior_uedge_ids.erase(ue);
     interior_uedges.erase(ue_id);
     iedge_tree.Remove(fMin, fMax, ue_id);
+    //std::cout << "Removing edge " << ue_id << "\n";
 
     if (update_verts) {
 	overts[ue.v[0]]->update();
@@ -1806,6 +1815,7 @@ replace_edge_split_tri(cdt_mesh::cdt_mesh_t &fmesh, size_t t_id, long np_id,
     std::set<cdt_mesh::uedge_t>::iterator n_it;
     for (n_it = nedges.begin(); n_it != nedges.end(); n_it++) {
 	cdt_mesh::uedge_t ne = *n_it;
+	//std::cout << "Adding new interior edge " << ne.v[0] << "," << ne.v[1] << "\n";
 	f2omap[&fmesh]->edge_add(ne, 0);
     }
 
@@ -2172,21 +2182,32 @@ characterize_tri_intersections(std::set<std::pair<omesh_t *, omesh_t *>> &check_
 	    // which point(s) from the opposite triangle are "inside" the
 	    // meshes.  Each of these points is an "overlap instance" that the
 	    // opposite mesh will have to try and adjust itself to to resolve.
+	    //
+	    // If a vertex is not inside, we still may want to alter the mesh to
+	    // incorporate its closest neighbor if it projects cleanly into the
+	    // triangle (i.e it is "local").
 	    ON_Plane plane1 = omesh1->fmesh->tplane(t1);
 	    for (int i = 0; i < 3; i++) {
-		//if (omesh1->intruding_pnts.find(omesh2->overts[t2.v[i]]) != omesh1->intruding_pnts.end()) continue;
 		ON_3dPoint tp = *omesh2->fmesh->pnts[t2.v[i]];
-		double dist = plane1.DistanceTo(tp);
-		if (dist < 0 && fabs(dist) > ON_ZERO_TOLERANCE && on_point_inside(s_cdt1, &tp)) {
-#if 0
-		    std::cout << s_cdt1->name << " face " << omesh1->fmesh->f_id << " test point inside from " << s_cdt2->name << " face " << omesh2->fmesh->f_id << ":\n";
-		    std::cout << "ip: " << omesh2->overts[t2.v[i]]->vpnt().x << "," << omesh2->overts[t2.v[i]]->vpnt().y << "," << omesh2->overts[t2.v[i]]->vpnt().z << "\n";
-		    std::cout << "dist: " << dist << "\n";
-		    std::cout << "isectpt1: " << isectpt1[X] << "," << isectpt1[Y] << "," << isectpt1[Z] << "\n";
-		    std::cout << "isectpt2: " << isectpt2[X] << "," << isectpt2[Y] << "," << isectpt2[Z] << "\n";
-#endif
-		    omesh1->intruding_pnts.insert(omesh2->overts[t2.v[i]]);
+		overt_t *v = omesh2->overts[t2.v[i]];
+		if (!v) {
+		    std::cout << "WARNING: - no overt for vertex??\n";
+		}
+		if (projects_inside_tri(omesh1->fmesh, t1, tp)) {
+		    omesh1->intruding_pnts.insert(v);
 		    have_interior_pnt = true;
+		} else {
+		    double dist = plane1.DistanceTo(tp);
+		    if (dist < 0 && fabs(dist) > ON_ZERO_TOLERANCE && on_point_inside(s_cdt1, &tp)) {
+#if 0
+			std::cout << s_cdt1->name << " face " << omesh1->fmesh->f_id << " test point inside from " << s_cdt2->name << " face " << omesh2->fmesh->f_id << ":\n";
+			std::cout << "ip: " << omesh2->overts[t2.v[i]]->vpnt().x << "," << omesh2->overts[t2.v[i]]->vpnt().y << "," << omesh2->overts[t2.v[i]]->vpnt().z << "\n";
+			std::cout << "dist: " << dist << "\n";
+			std::cout << "isectpt1: " << isectpt1[X] << "," << isectpt1[Y] << "," << isectpt1[Z] << "\n";
+			std::cout << "isectpt2: " << isectpt2[X] << "," << isectpt2[Y] << "," << isectpt2[Z] << "\n";
+#endif
+			omesh1->intruding_pnts.insert(omesh2->overts[t2.v[i]]);
+			have_interior_pnt = true;
 #if 0
 			closest_surf_pnt(np->p, np->n, *fmesh1, &tp, 2*t1_longest);
 			ON_BoundingBox bb(np->p, np->p);
@@ -2221,24 +2242,34 @@ characterize_tri_intersections(std::set<std::pair<omesh_t *, omesh_t *>> &check_
 			    added_verts[fmesh1].insert(std::make_pair(fmesh2, t2.v[i]));
 			}
 #endif
+		    }
 		}
 	    }
 
 	    ON_Plane plane2 = omesh2->fmesh->tplane(t2);
 	    for (int i = 0; i < 3; i++) {
-		//if (omesh2->intruding_pnts.find(omesh1->overts[t1.v[i]]) != omesh2->intruding_pnts.end()) continue;
 		ON_3dPoint tp = *omesh1->fmesh->pnts[t1.v[i]];
-		double dist = plane2.DistanceTo(tp);
-		if (dist < 0 && fabs(dist) > ON_ZERO_TOLERANCE && on_point_inside(s_cdt2, &tp)) {
-#if 0
-		    std::cout << s_cdt2->name << " face " << omesh2->fmesh->f_id << " test point inside from " << s_cdt1->name << " face " << omesh1->fmesh->f_id << ":\n";
-		    std::cout << "ip: " << omesh1->overts[t1.v[i]]->vpnt().x << "," << omesh1->overts[t1.v[i]]->vpnt().y << "," << omesh1->overts[t1.v[i]]->vpnt().z << "\n";
-		    std::cout << "dist: " << dist << "\n";
-		    std::cout << "isectpt1: " << isectpt1[X] << "," << isectpt1[Y] << "," << isectpt1[Z] << "\n";
-		    std::cout << "isectpt2: " << isectpt2[X] << "," << isectpt2[Y] << "," << isectpt2[Z] << "\n";
-#endif
-		    omesh2->intruding_pnts.insert(omesh1->overts[t1.v[i]]);
+		overt_t *v = omesh1->overts[t1.v[i]];
+		if (!v) {
+		    std::cout << "WARNING: - no overt for vertex??\n";
+		}
+		if (projects_inside_tri(omesh2->fmesh, t2, tp)) {
+		    omesh2->intruding_pnts.insert(v);
 		    have_interior_pnt = true;
+		} else {
+
+		    double dist = plane2.DistanceTo(tp);
+		    if (dist < 0 && fabs(dist) > ON_ZERO_TOLERANCE && on_point_inside(s_cdt2, &tp)) {
+#if 0
+			std::cout << s_cdt2->name << " face " << omesh2->fmesh->f_id << " test point inside from " << s_cdt1->name << " face " << omesh1->fmesh->f_id << ":\n";
+			std::cout << "ip: " << omesh1->overts[t1.v[i]]->vpnt().x << "," << omesh1->overts[t1.v[i]]->vpnt().y << "," << omesh1->overts[t1.v[i]]->vpnt().z << "\n";
+			std::cout << "dist: " << dist << "\n";
+			std::cout << "isectpt1: " << isectpt1[X] << "," << isectpt1[Y] << "," << isectpt1[Z] << "\n";
+			std::cout << "isectpt2: " << isectpt2[X] << "," << isectpt2[Y] << "," << isectpt2[Z] << "\n";
+#endif
+			omesh2->intruding_pnts.insert(omesh1->overts[t1.v[i]]);
+			have_interior_pnt = true;
+		    }
 		}
 	    }
 	    if (!have_interior_pnt) {
@@ -2310,6 +2341,7 @@ refine_omeshes(
     }
 
     std::cout << "Split " << brep_edges_to_split.size() << " brep edges\n";
+
     while (brep_edges_to_split.size()) {
 	cdt_mesh::bedge_seg_t *bseg = *brep_edges_to_split.begin();
 	brep_edges_to_split.erase(brep_edges_to_split.begin());
@@ -2322,6 +2354,7 @@ refine_omeshes(
 
     for (o_it = omeshes.begin(); o_it != omeshes.end(); o_it++) {
 	omesh_t *omesh = *o_it;
+
 	std::set<cdt_mesh::uedge_t>::iterator u_it;
 	for (u_it = omesh->split_edges.begin(); u_it != omesh->split_edges.end(); u_it++) {
 	    cdt_mesh::uedge_t ue = *u_it;
@@ -2332,11 +2365,20 @@ refine_omeshes(
 	    ON_3dPoint spnt;
 	    ON_3dVector sn;
 	    closest_surf_pnt(spnt, sn, *omesh->fmesh, &pmid, 2*dist);
+	    long f3ind = omesh->fmesh->add_point(new ON_3dPoint(spnt));
+	    long fnind = omesh->fmesh->add_normal(new ON_3dPoint(sn));
+	    struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)omesh->fmesh->p_cdt;
+	    CDT_Add3DPnt(s_cdt, omesh->fmesh->pnts[f3ind], omesh->fmesh->f_id, -1, -1, -1, 0, 0);
+	    CDT_Add3DNorm(s_cdt, omesh->fmesh->normals[fnind], omesh->fmesh->pnts[f3ind], omesh->fmesh->f_id, -1, -1, -1, 0, 0);
+	    omesh->fmesh->nmap[f3ind] = fnind;
+	    std::set<size_t> rtris = omesh->fmesh->uedges2tris[ue];
+	    std::set<size_t>::iterator r_it;
+	    for (r_it = rtris.begin(); r_it != rtris.end(); r_it++) {
+		replace_edge_split_tri(*omesh->fmesh, *r_it, f3ind, ue, f2omap);
+	    }
+	    omesh->vert_add(f3ind);
 	}
     }
-
-
-
 }
 
 void
@@ -2698,6 +2740,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 
     while (characterize_tri_intersections(ocheck_pairs) == 2) {
 	refine_omeshes(ocheck_pairs, f2omap);
+	face_ov_cnt = face_omesh_ovlps(ocheck_pairs);
     }
 
     //process_near_edge_pnts(face_npnts);
