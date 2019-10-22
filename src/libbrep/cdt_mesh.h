@@ -550,6 +550,7 @@ public:
 
     // cdt_mesh index versions of Brep data
     std::set<uedge_t> brep_edges;
+    std::map<uedge_t, bedge_seg_t *> ue2b_map;
     std::set<long> ep; // Brep edge point vertex indices
     std::set<long> sv; // Singularity vertex indices
     bool m_bRev;

@@ -333,6 +333,8 @@ class omesh_t
 
 	std::set<overt_t*> intruding_pnts;
 
+	std::set<cdt_mesh::uedge_t> split_edges;
+
 	cdt_mesh::cdt_mesh_t *fmesh;
 
 	void plot(const char *fname);
@@ -1808,7 +1810,8 @@ replace_edge_split_tri(cdt_mesh::cdt_mesh_t &fmesh, size_t t_id, long np_id, cdt
 }
 
 int
-ovlp_split_edge(std::set<cdt_mesh::bedge_seg_t *> *nsegs, cdt_mesh::bedge_seg_t *eseg, double t)
+ovlp_split_edge(std::set<cdt_mesh::bedge_seg_t *> *nsegs, cdt_mesh::bedge_seg_t *eseg, double t,
+    std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap)
 {
     int replaced_tris = 0;
 
@@ -1829,6 +1832,8 @@ ovlp_split_edge(std::set<cdt_mesh::bedge_seg_t *> *nsegs, cdt_mesh::bedge_seg_t 
     cdt_mesh::uedge_t ue2(poly2->p2o[eseg->tseg2->v[0]], poly2->p2o[eseg->tseg2->v[1]]);
     fmesh_f1.brep_edges.erase(ue1); 
     fmesh_f2.brep_edges.erase(ue2); 
+    fmesh_f1.ue2b_map.erase(ue1); 
+    fmesh_f2.ue2b_map.erase(ue2); 
     //ON_3dPoint ue1_p1 = *fmesh_f1.pnts[ue1.v[0]];
     //ON_3dPoint ue1_p2 = *fmesh_f1.pnts[ue1.v[1]];
     //std::cout << f_id1 << " ue1: " << ue1.v[0] << "," << ue1.v[1] << ": " << ue1_p1.x << "," << ue1_p1.y << "," << ue1_p1.z << " -> " << ue1_p2.x << "," << ue1_p2.y << "," << ue1_p2.z << "\n";
@@ -1869,6 +1874,8 @@ ovlp_split_edge(std::set<cdt_mesh::bedge_seg_t *> *nsegs, cdt_mesh::bedge_seg_t 
 	cdt_mesh::uedge_t ue_2(poly_2->p2o[es->tseg2->v[0]], poly_2->p2o[es->tseg2->v[1]]);
 	f1.brep_edges.insert(ue_1); 
 	f2.brep_edges.insert(ue_2); 
+	f1.ue2b_map[ue_1] = es; 
+	f2.ue2b_map[ue_2] = es; 
     }
 
     long np_id;
@@ -1896,13 +1903,20 @@ ovlp_split_edge(std::set<cdt_mesh::bedge_seg_t *> *nsegs, cdt_mesh::bedge_seg_t 
 	replaced_tris++;
     }
 
+    // TODO - add edges and vertices introduced into the mesh by the split to the omesh
+    // containers
+    if (f2omap.size()) {
+	std::cout << "TODO - didn't update omesh correctly after split!\n";
+    }
+
     return replaced_tris;
 }
 
 int
 split_brep_face_edges_near_verts(
 	std::set<struct ON_Brep_CDT_State *> &a_cdt,
-	std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs
+	std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs,
+	std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap
 	)
 {
     std::map<long, cdt_mesh::bedge_seg_t *> b_edges;
@@ -2026,10 +2040,11 @@ split_brep_face_edges_near_verts(
 	    int f_id1 = s_cdt_edge->brep->m_T[eseg->tseg1->trim_ind].Face()->m_face_index;
 	    int f_id2 = s_cdt_edge->brep->m_T[eseg->tseg2->trim_ind].Face()->m_face_index;
 #endif
-
-	    int rtris = ovlp_split_edge(NULL, eseg, t);
+	    int rtris = ovlp_split_edge(NULL, eseg, t, f2omap);
 	    if (rtris >= 0) {
 		replaced_tris += rtris;
+
+
 #if 0
 		cdt_mesh::cdt_mesh_t &fmesh_f1 = s_cdt_edge->fmeshes[f_id1];
 		cdt_mesh::cdt_mesh_t &fmesh_f2 = s_cdt_edge->fmeshes[f_id2];
@@ -2111,9 +2126,10 @@ static bool NearVertsCallback(void *data, void *a_context) {
 }
 #endif
 
-void
-get_intruding_points(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs)
+int
+characterize_tri_intersections(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs)
 {
+    int ret = 0;
     std::set<std::pair<omesh_t *, omesh_t *>>::iterator cp_it;
     for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
 	omesh_t *omesh1 = cp_it->first;
@@ -2152,11 +2168,13 @@ get_intruding_points(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs)
 		ON_3dPoint tp = *omesh2->fmesh->pnts[t2.v[i]];
 		double dist = plane1.DistanceTo(tp);
 		if (dist < 0 && fabs(dist) > ON_ZERO_TOLERANCE && on_point_inside(s_cdt1, &tp)) {
+#if 0
 		    std::cout << s_cdt1->name << " face " << omesh1->fmesh->f_id << " test point inside from " << s_cdt2->name << " face " << omesh2->fmesh->f_id << ":\n";
 		    std::cout << "ip: " << omesh2->overts[t2.v[i]]->vpnt().x << "," << omesh2->overts[t2.v[i]]->vpnt().y << "," << omesh2->overts[t2.v[i]]->vpnt().z << "\n";
 		    std::cout << "dist: " << dist << "\n";
 		    std::cout << "isectpt1: " << isectpt1[X] << "," << isectpt1[Y] << "," << isectpt1[Z] << "\n";
 		    std::cout << "isectpt2: " << isectpt2[X] << "," << isectpt2[Y] << "," << isectpt2[Z] << "\n";
+#endif
 		    omesh1->intruding_pnts.insert(omesh2->overts[t2.v[i]]);
 		    have_interior_pnt = true;
 #if 0
@@ -2202,24 +2220,118 @@ get_intruding_points(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs)
 		ON_3dPoint tp = *omesh1->fmesh->pnts[t1.v[i]];
 		double dist = plane2.DistanceTo(tp);
 		if (dist < 0 && fabs(dist) > ON_ZERO_TOLERANCE && on_point_inside(s_cdt2, &tp)) {
+#if 0
 		    std::cout << s_cdt2->name << " face " << omesh2->fmesh->f_id << " test point inside from " << s_cdt1->name << " face " << omesh1->fmesh->f_id << ":\n";
 		    std::cout << "ip: " << omesh1->overts[t1.v[i]]->vpnt().x << "," << omesh1->overts[t1.v[i]]->vpnt().y << "," << omesh1->overts[t1.v[i]]->vpnt().z << "\n";
 		    std::cout << "dist: " << dist << "\n";
 		    std::cout << "isectpt1: " << isectpt1[X] << "," << isectpt1[Y] << "," << isectpt1[Z] << "\n";
 		    std::cout << "isectpt2: " << isectpt2[X] << "," << isectpt2[Y] << "," << isectpt2[Z] << "\n";
+#endif
 		    omesh2->intruding_pnts.insert(omesh1->overts[t1.v[i]]);
 		    have_interior_pnt = true;
 		}
 	    }
 	    if (!have_interior_pnt) {
 		std::cout << "PROBLEM - intersecting triangles but no vertex points are interior!\n";
+		// Strategy here - queue up all the unordered edges on both triangles in their
+		// respective omeshes for midpoint splitting.
+		{
+		    // Mesh 1, triangle 1
+		    std::set<cdt_mesh::uedge_t> uedges = omesh1->fmesh->uedges(t1);
+		    omesh1->split_edges.insert(uedges.begin(), uedges.end());
+		}
+		{
+		    // Mesh 2, triangle 2
+		    std::set<cdt_mesh::uedge_t> uedges = omesh2->fmesh->uedges(t2);
+		    omesh2->split_edges.insert(uedges.begin(), uedges.end());
+		}
+		ret = 2;
 	    }
 	}
     }
+
+    if (ret == 2) {
+	// If we need to refine (i.e. change the mesh) we're going to have to go through
+	// the interior identification process again.
+	for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
+	    cp_it->first->intruding_pnts.clear();
+	    cp_it->second->intruding_pnts.clear();
+	}
+    }
+
+    return ret;
 }
 
 void
-process_near_edge_pnts(std::map<cdt_mesh::cdt_mesh_t *, std::set<struct p_mvert_info *>> *face_npnts)
+refine_omeshes(
+	std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs,
+	std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap
+	)
+{
+    std::set<omesh_t *> omeshes;
+    std::set<std::pair<omesh_t *, omesh_t *>>::iterator cp_it;
+    for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
+	omesh_t *omesh1 = cp_it->first;
+	omesh_t *omesh2 = cp_it->second;
+	if (omesh1->split_edges.size()) {
+	    omeshes.insert(omesh1);
+	}
+	if (omesh2->split_edges.size()) {
+	    omeshes.insert(omesh2);
+	}
+    }
+    std::cout << "Need to refine " << omeshes.size() << " meshes\n";
+    // Filter out brep face edges - they must be handled first in a face independent split
+    std::queue<cdt_mesh::bedge_seg_t *> brep_edges_to_split;
+    std::set<omesh_t *>::iterator o_it;
+    for (o_it = omeshes.begin(); o_it != omeshes.end(); o_it++) {
+	omesh_t *omesh = *o_it;
+	std::set<cdt_mesh::uedge_t> bedges;
+	std::set<cdt_mesh::uedge_t>::iterator u_it;
+	for (u_it = omesh->split_edges.begin(); u_it != omesh->split_edges.end(); u_it++) {
+	    if (omesh->fmesh->brep_edges.find(*u_it) != omesh->fmesh->brep_edges.end()) {
+		brep_edges_to_split.push(omesh->fmesh->ue2b_map[*u_it]); 
+		bedges.insert(*u_it);
+	    }
+	}
+	for (u_it = bedges.begin(); u_it != bedges.end(); u_it++) {
+	    omesh->split_edges.erase(*u_it);
+	}
+    }
+
+    std::cout << "Split " << brep_edges_to_split.size() << " brep edges\n";
+    while (!brep_edges_to_split.empty()) {
+	cdt_mesh::bedge_seg_t *bseg = brep_edges_to_split.front();
+	brep_edges_to_split.pop();
+	double tmid = (bseg->edge_start + bseg->edge_end) * 0.5;
+	int rtris = ovlp_split_edge(NULL, bseg, tmid, f2omap);
+	if (rtris <= 0) {
+	    std::cout << "edge split failed!\n";
+	}
+    }
+
+    for (o_it = omeshes.begin(); o_it != omeshes.end(); o_it++) {
+	omesh_t *omesh = *o_it;
+	std::set<cdt_mesh::uedge_t>::iterator u_it;
+	for (u_it = omesh->split_edges.begin(); u_it != omesh->split_edges.end(); u_it++) {
+	    cdt_mesh::uedge_t ue = *u_it;
+	    ON_3dPoint p1 = *omesh->fmesh->pnts[ue.v[0]];
+	    ON_3dPoint p2 = *omesh->fmesh->pnts[ue.v[1]];
+	    double dist = p1.DistanceTo(p2);
+	    ON_3dPoint pmid = (p1 + p2) * 0.5;
+	    ON_3dPoint spnt;
+	    ON_3dVector sn;
+	    closest_surf_pnt(spnt, sn, *omesh->fmesh, &pmid, 2*dist);
+	}
+    }
+
+
+
+}
+
+void
+process_near_edge_pnts(std::map<cdt_mesh::cdt_mesh_t *, std::set<struct p_mvert_info *>> *face_npnts, 
+    std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap)
 {
     std::map<cdt_mesh::bedge_seg_t *, std::set<struct p_mvert_info *>> esplits;
     std::map<cdt_mesh::cdt_mesh_t *, std::set<struct p_mvert_info *>>::iterator f_it;
@@ -2390,7 +2502,7 @@ process_near_edge_pnts(std::map<cdt_mesh::cdt_mesh_t *, std::set<struct p_mvert_
 		int f_id1 = s_cdt_edge->brep->m_T[closest_edge->tseg1->trim_ind].Face()->m_face_index;
 		int f_id2 = s_cdt_edge->brep->m_T[closest_edge->tseg2->trim_ind].Face()->m_face_index;
 #endif
-		ovlp_split_edge(&nsegs, closest_edge, split_t);
+		ovlp_split_edge(&nsegs, closest_edge, split_t, f2omap);
 #if 1
 		cdt_mesh::cdt_mesh_t &fmesh_f1 = s_cdt_edge->fmeshes[f_id1];
 		cdt_mesh::cdt_mesh_t &fmesh_f2 = s_cdt_edge->fmeshes[f_id2];
@@ -2558,7 +2670,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	a_cdt.insert((struct ON_Brep_CDT_State *)p_it->first->p_cdt);
 	a_cdt.insert((struct ON_Brep_CDT_State *)p_it->second->p_cdt);
     }
-    int sbfvtri_cnt = split_brep_face_edges_near_verts(a_cdt, ocheck_pairs);
+    int sbfvtri_cnt = split_brep_face_edges_near_verts(a_cdt, ocheck_pairs, f2omap);
     if (sbfvtri_cnt) {
 	std::cout << "Replaced " << sbfvtri_cnt << " triangles by splitting edges near vertices\n";
 	check_faces_validity(check_pairs, 2);
@@ -2574,7 +2686,9 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
     }
 #endif
 
-    get_intruding_points(ocheck_pairs);
+    while (characterize_tri_intersections(ocheck_pairs) == 2) {
+	refine_omeshes(ocheck_pairs, f2omap);
+    }
 
     //process_near_edge_pnts(face_npnts);
 

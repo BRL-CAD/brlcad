@@ -160,6 +160,7 @@ loop_edges(cdt_mesh::cdt_mesh_t *fmesh, cdt_mesh::cpolygon_t *loop)
     fmesh->ep.insert(p1_ind);
     fmesh->ep.insert(p2_ind);
     fmesh->brep_edges.insert(cdt_mesh::uedge_t(p1_ind, p2_ind));
+    fmesh->ue2b_map[cdt_mesh::uedge_t(p1_ind, p2_ind)] = pe->eseg;
 
     while (first != next) {
 	vcnt++;
@@ -168,6 +169,7 @@ loop_edges(cdt_mesh::cdt_mesh_t *fmesh, cdt_mesh::cpolygon_t *loop)
 	fmesh->ep.insert(p1_ind);
 	fmesh->ep.insert(p2_ind);
 	fmesh->brep_edges.insert(cdt_mesh::uedge_t(p1_ind, p2_ind));
+	fmesh->ue2b_map[cdt_mesh::uedge_t(p1_ind, p2_ind)] = next->eseg;
 	next = next->next;
 	if (vcnt > loop->poly.size()) {
 	    std::cerr << "infinite loop when reading loop edges\n";
@@ -241,6 +243,7 @@ do_triangulation(struct ON_Brep_CDT_State *s_cdt, int fi)
 
     // List edges
     fmesh->brep_edges.clear();
+    fmesh->ue2b_map.clear();
     loop_edges(fmesh, &fmesh->outer_loop);
     std::map<int, cdt_mesh::cpolygon_t*>::iterator i_it;
     for (i_it = fmesh->inner_loops.begin(); i_it != fmesh->inner_loops.end(); i_it++) {
