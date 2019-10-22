@@ -311,12 +311,8 @@ class omesh_t
 
 	void vert_adjust(long p_id, ON_3dPoint *p, ON_3dVector *v);
 
-	// Add a vertex both the fmesh and the overts array.  Note - the
-	// index in the fmesh pnts array needs to match with the corresponding
-	// overts index, so the same index refers to the same point in both
-	// containers.  The 2D point is only there for debugging information -
-	// it is not (currently) wired back into the fmesh maps.
-	void vert_add(ON_3dPoint *p, ON_3dVector *v, ON_2dPoint &n2dp);
+	// Add an fmesh vertex to the overts array and tree.
+	void vert_add(long);
 
 	// Find close vertices
 	std::set<long> overts_search(ON_BoundingBox &bb);
@@ -731,15 +727,8 @@ omesh_t::vert_adjust(long p_id, ON_3dPoint *p, ON_3dVector *v)
 
 
 void
-omesh_t::vert_add(ON_3dPoint *p, ON_3dVector *v, ON_2dPoint &n2dp)
+omesh_t::vert_add(long f3ind)
 {
-    struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh->p_cdt;
-    long f3ind = fmesh->add_point(new ON_3dPoint(*p));
-    long fnind = fmesh->add_normal(new ON_3dPoint(*v));
-    CDT_Add3DPnt(s_cdt, fmesh->pnts[f3ind], fmesh->f_id, -1, -1, -1, n2dp.x, n2dp.y);
-    CDT_Add3DNorm(s_cdt, fmesh->normals[fnind], fmesh->pnts[f3ind], fmesh->f_id, -1, -1, -1, n2dp.x, n2dp.y);
-    fmesh->nmap[f3ind] = fnind;
-
     overts[f3ind] = new overt_t(this, f3ind);
     double fMin[3];
     fMin[0] = overts[f3ind]->bb.Min().x;
@@ -750,7 +739,6 @@ omesh_t::vert_add(ON_3dPoint *p, ON_3dVector *v, ON_2dPoint &n2dp)
     fMax[1] = overts[f3ind]->bb.Max().y;
     fMax[2] = overts[f3ind]->bb.Max().z;
     vtree.Insert(fMin, fMax, f3ind);
-
 }
 
 void
@@ -1860,6 +1848,8 @@ ovlp_split_edge(std::set<cdt_mesh::bedge_seg_t *> *nsegs, cdt_mesh::bedge_seg_t 
     s_cdt_edge->e2polysegs[eind].clear();
     s_cdt_edge->e2polysegs[eind] = epsegs;
     std::set<cdt_mesh::bedge_seg_t *>::iterator es_it;
+    std::set<cdt_mesh::uedge_t> f1_new_ue;
+    std::set<cdt_mesh::uedge_t> f2_new_ue;
     for (es_it = esegs_split.begin(); es_it != esegs_split.end(); es_it++) {
 	cdt_mesh::bedge_seg_t *es = *es_it;
 	int fid1 = s_cdt_edge->brep->m_T[es->tseg1->trim_ind].Face()->m_face_index;
@@ -1874,6 +1864,8 @@ ovlp_split_edge(std::set<cdt_mesh::bedge_seg_t *> *nsegs, cdt_mesh::bedge_seg_t 
 	cdt_mesh::uedge_t ue_2(poly_2->p2o[es->tseg2->v[0]], poly_2->p2o[es->tseg2->v[1]]);
 	f1.brep_edges.insert(ue_1); 
 	f2.brep_edges.insert(ue_2); 
+	f1_new_ue.insert(ue_1);
+	f2_new_ue.insert(ue_2);
 	f1.ue2b_map[ue_1] = es; 
 	f2.ue2b_map[ue_2] = es; 
     }
@@ -1892,21 +1884,32 @@ ovlp_split_edge(std::set<cdt_mesh::bedge_seg_t *> *nsegs, cdt_mesh::bedge_seg_t 
 	    replace_edge_split_tri(fmesh_f1, *tr_it, np_id, ue);
 	    replaced_tris++;
 	}
+
+
+	// TODO - update edges
+	
+	f2omap[&fmesh_f1]->vert_add(np_id);
+	
     } else {
 	np_id = fmesh_f1.pnts.size() - 1;
 	fmesh_f1.ep.insert(np_id);
 	replace_edge_split_tri(fmesh_f1, *f1_tris.begin(), np_id, ue1);
 	replaced_tris++;
+
+	// TODO - update edges
+
+	f2omap[&fmesh_f1]->vert_add(np_id);
+
+
+
 	np_id = fmesh_f2.pnts.size() - 1;
 	fmesh_f2.ep.insert(np_id);
 	replace_edge_split_tri(fmesh_f2, *f2_tris.begin(), np_id, ue2);
 	replaced_tris++;
-    }
 
-    // TODO - add edges and vertices introduced into the mesh by the split to the omesh
-    // containers
-    if (f2omap.size()) {
-	std::cout << "TODO - didn't update omesh correctly after split!\n";
+	// TODO - update edges
+
+	f2omap[&fmesh_f2]->vert_add(np_id);
     }
 
     return replaced_tris;
