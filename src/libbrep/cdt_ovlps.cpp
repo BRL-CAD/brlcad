@@ -337,12 +337,13 @@ class omesh_t
 	void plot();
 
 	void verts_one_ring_update(long p_id);
-    private:
-	void init_verts();
-	void init_edges();
 
 	void edge_add(cdt_mesh::uedge_t &ue, int update_verts);
 	void edge_remove(cdt_mesh::uedge_t &ue, int update_verts);
+
+    private:
+	void init_verts();
+	void init_edges();
 
 	void edge_tris_remove(cdt_mesh::uedge_t &ue);
 
@@ -1754,7 +1755,9 @@ orient_tri(cdt_mesh::cdt_mesh_t &fmesh, cdt_mesh::triangle_t &t)
 } 
 
 void
-replace_edge_split_tri(cdt_mesh::cdt_mesh_t &fmesh, size_t t_id, long np_id, cdt_mesh::uedge_t &split_edge)
+replace_edge_split_tri(cdt_mesh::cdt_mesh_t &fmesh, size_t t_id, long np_id,
+       	cdt_mesh::uedge_t &split_edge, std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> f2omap
+	)
 {
     cdt_mesh::triangle_t &t = fmesh.tris_vect[t_id];
 
@@ -1768,6 +1771,7 @@ replace_edge_split_tri(cdt_mesh::cdt_mesh_t &fmesh, size_t t_id, long np_id, cdt
 	long v1 = (i < 2) ? t.v[i + 1] : t.v[0];
 	cdt_mesh::edge_t ec(v0, v1);
 	cdt_mesh::uedge_t uec(ec);
+	f2omap[&fmesh]->edge_remove(uec, 0);
 	if (uec != split_edge) {
 	    if (!ecnt) {
 		e1 = ec;
@@ -1777,6 +1781,7 @@ replace_edge_split_tri(cdt_mesh::cdt_mesh_t &fmesh, size_t t_id, long np_id, cdt
 	    ecnt++;
 	}
     }
+
 
     cdt_mesh::triangle_t ntri1, ntri2;
     ntri1.v[0] = e1.v[0];
@@ -1792,6 +1797,17 @@ replace_edge_split_tri(cdt_mesh::cdt_mesh_t &fmesh, size_t t_id, long np_id, cdt
     fmesh.tri_remove(t);
     fmesh.tri_add(ntri1);
     fmesh.tri_add(ntri2);
+
+    std::set<cdt_mesh::uedge_t> nedges;
+    std::set<cdt_mesh::uedge_t> n1 = fmesh.uedges(ntri1);
+    std::set<cdt_mesh::uedge_t> n2 = fmesh.uedges(ntri2);
+    nedges.insert(n1.begin(), n1.end());
+    nedges.insert(n2.begin(), n2.end());
+    std::set<cdt_mesh::uedge_t>::iterator n_it;
+    for (n_it = nedges.begin(); n_it != nedges.end(); n_it++) {
+	cdt_mesh::uedge_t ne = *n_it;
+	f2omap[&fmesh]->edge_add(ne, 0);
+    }
 
     fmesh.tri_plot(ntri1, "nt1.plot3");
     fmesh.tri_plot(ntri2, "nt2.plot3");
@@ -1881,33 +1897,24 @@ ovlp_split_edge(std::set<cdt_mesh::bedge_seg_t *> *nsegs, cdt_mesh::bedge_seg_t 
 	np_id = fmesh_f1.pnts.size() - 1;
 	fmesh_f1.ep.insert(np_id);
 	for (tr_it = ftris.begin(); tr_it != ftris.end(); tr_it++) {
-	    replace_edge_split_tri(fmesh_f1, *tr_it, np_id, ue);
+	    replace_edge_split_tri(fmesh_f1, *tr_it, np_id, ue, f2omap);
 	    replaced_tris++;
 	}
 
-
-	// TODO - update edges
-	
 	f2omap[&fmesh_f1]->vert_add(np_id);
 	
     } else {
 	np_id = fmesh_f1.pnts.size() - 1;
 	fmesh_f1.ep.insert(np_id);
-	replace_edge_split_tri(fmesh_f1, *f1_tris.begin(), np_id, ue1);
+	replace_edge_split_tri(fmesh_f1, *f1_tris.begin(), np_id, ue1, f2omap);
 	replaced_tris++;
-
-	// TODO - update edges
 
 	f2omap[&fmesh_f1]->vert_add(np_id);
 
-
-
 	np_id = fmesh_f2.pnts.size() - 1;
 	fmesh_f2.ep.insert(np_id);
-	replace_edge_split_tri(fmesh_f2, *f2_tris.begin(), np_id, ue2);
+	replace_edge_split_tri(fmesh_f2, *f2_tris.begin(), np_id, ue2, f2omap);
 	replaced_tris++;
-
-	// TODO - update edges
 
 	f2omap[&fmesh_f2]->vert_add(np_id);
     }
@@ -2285,7 +2292,7 @@ refine_omeshes(
     }
     std::cout << "Need to refine " << omeshes.size() << " meshes\n";
     // Filter out brep face edges - they must be handled first in a face independent split
-    std::queue<cdt_mesh::bedge_seg_t *> brep_edges_to_split;
+    std::set<cdt_mesh::bedge_seg_t *> brep_edges_to_split;
     std::set<omesh_t *>::iterator o_it;
     for (o_it = omeshes.begin(); o_it != omeshes.end(); o_it++) {
 	omesh_t *omesh = *o_it;
@@ -2293,7 +2300,7 @@ refine_omeshes(
 	std::set<cdt_mesh::uedge_t>::iterator u_it;
 	for (u_it = omesh->split_edges.begin(); u_it != omesh->split_edges.end(); u_it++) {
 	    if (omesh->fmesh->brep_edges.find(*u_it) != omesh->fmesh->brep_edges.end()) {
-		brep_edges_to_split.push(omesh->fmesh->ue2b_map[*u_it]); 
+		brep_edges_to_split.insert(omesh->fmesh->ue2b_map[*u_it]); 
 		bedges.insert(*u_it);
 	    }
 	}
@@ -2303,9 +2310,9 @@ refine_omeshes(
     }
 
     std::cout << "Split " << brep_edges_to_split.size() << " brep edges\n";
-    while (!brep_edges_to_split.empty()) {
-	cdt_mesh::bedge_seg_t *bseg = brep_edges_to_split.front();
-	brep_edges_to_split.pop();
+    while (brep_edges_to_split.size()) {
+	cdt_mesh::bedge_seg_t *bseg = *brep_edges_to_split.begin();
+	brep_edges_to_split.erase(brep_edges_to_split.begin());
 	double tmid = (bseg->edge_start + bseg->edge_end) * 0.5;
 	int rtris = ovlp_split_edge(NULL, bseg, tmid, f2omap);
 	if (rtris <= 0) {
