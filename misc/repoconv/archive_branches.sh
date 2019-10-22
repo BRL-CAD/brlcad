@@ -123,7 +123,9 @@ branches=(
 for i in "${branches[@]}"
 do
 	echo "Archiving $i"
-	git tag archived/$i refs/heads/$i
+	git checkout refs/heads/$i
+	GIT_COMMITTER_DATE="$(git show --format=%ad | head -1)"	GIT_AUTHOR_DATE="$(git show --format=%ad | head -1)" git tag -a archived_$i -m "Archiving branch $i"
+	git checkout master
 	git branch -D $i
 done
 
