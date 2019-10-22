@@ -1058,6 +1058,24 @@ tri_isect(cdt_mesh::cdt_mesh_t *fmesh1, cdt_mesh::triangle_t &t1, cdt_mesh::cdt_
 	    return 0;
 	}
 
+	FILE *plot = fopen("tri_pair.plot3", "w");
+	double fpnt_r = -1.0;
+	double pnt_r = -1.0;
+	pl_color(plot, 0, 0, 255);
+	fmesh1->plot_tri(fmesh1->tris_vect[t1.ind], NULL, plot, 0, 0, 0);
+	pnt_r = tri_pnt_r(*fmesh1, t1.ind);
+	fpnt_r = (pnt_r > fpnt_r) ? pnt_r : fpnt_r;
+	pl_color(plot, 255, 0, 0);
+	fmesh2->plot_tri(fmesh2->tris_vect[t2.ind], NULL, plot, 0, 0, 0);
+	pnt_r = tri_pnt_r(*fmesh2, t2.ind);
+	fpnt_r = (pnt_r > fpnt_r) ? pnt_r : fpnt_r;
+	pl_color(plot, 255, 255, 255);
+	plot_pnt_3d(plot, &p1, fpnt_r, 0);
+	plot_pnt_3d(plot, &p2, fpnt_r, 0);
+	pdv_3move(plot, *isectpt1);
+	pdv_3cont(plot, *isectpt2);
+	fclose(plot);
+
 	return (coplanar) ? 1 : 2;
     }
 
@@ -2122,20 +2140,25 @@ get_intruding_points(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs)
 	    int isect = tri_isect(omesh1->fmesh, t1, omesh2->fmesh, t2, &isectpt1, &isectpt2);
 	    if (!isect) continue;
 
+	    bool have_interior_pnt = false;
+
 	    // Using triangle planes and then an inside/outside test, determine
 	    // which point(s) from the opposite triangle are "inside" the
 	    // meshes.  Each of these points is an "overlap instance" that the
 	    // opposite mesh will have to try and adjust itself to to resolve.
 	    ON_Plane plane1 = omesh1->fmesh->tplane(t1);
 	    for (int i = 0; i < 3; i++) {
-		if (omesh1->intruding_pnts.find(omesh2->overts[t2.v[i]]) != omesh1->intruding_pnts.end()) continue;
+		//if (omesh1->intruding_pnts.find(omesh2->overts[t2.v[i]]) != omesh1->intruding_pnts.end()) continue;
 		ON_3dPoint tp = *omesh2->fmesh->pnts[t2.v[i]];
 		double dist = plane1.DistanceTo(tp);
 		if (dist < 0 && fabs(dist) > ON_ZERO_TOLERANCE && on_point_inside(s_cdt1, &tp)) {
-		    std::cout << s_cdt1->name << " face " << omesh1->fmesh->f_id << " test point inside:\n";
-		    std::cout << "tp: " << tp.x << "," << tp.y << "," << tp.z << "\n";
+		    std::cout << s_cdt1->name << " face " << omesh1->fmesh->f_id << " test point inside from " << s_cdt2->name << " face " << omesh2->fmesh->f_id << ":\n";
 		    std::cout << "ip: " << omesh2->overts[t2.v[i]]->vpnt().x << "," << omesh2->overts[t2.v[i]]->vpnt().y << "," << omesh2->overts[t2.v[i]]->vpnt().z << "\n";
+		    std::cout << "dist: " << dist << "\n";
+		    std::cout << "isectpt1: " << isectpt1[X] << "," << isectpt1[Y] << "," << isectpt1[Z] << "\n";
+		    std::cout << "isectpt2: " << isectpt2[X] << "," << isectpt2[Y] << "," << isectpt2[Z] << "\n";
 		    omesh1->intruding_pnts.insert(omesh2->overts[t2.v[i]]);
+		    have_interior_pnt = true;
 #if 0
 			closest_surf_pnt(np->p, np->n, *fmesh1, &tp, 2*t1_longest);
 			ON_BoundingBox bb(np->p, np->p);
@@ -2175,15 +2198,21 @@ get_intruding_points(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs)
 
 	    ON_Plane plane2 = omesh2->fmesh->tplane(t2);
 	    for (int i = 0; i < 3; i++) {
-		if (omesh2->intruding_pnts.find(omesh1->overts[t1.v[i]]) != omesh2->intruding_pnts.end()) continue;
+		//if (omesh2->intruding_pnts.find(omesh1->overts[t1.v[i]]) != omesh2->intruding_pnts.end()) continue;
 		ON_3dPoint tp = *omesh1->fmesh->pnts[t1.v[i]];
 		double dist = plane2.DistanceTo(tp);
 		if (dist < 0 && fabs(dist) > ON_ZERO_TOLERANCE && on_point_inside(s_cdt2, &tp)) {
-		    std::cout << s_cdt2->name << " face " << omesh2->fmesh->f_id << " test point inside:\n";
-		    std::cout << "tp: " << tp.x << "," << tp.y << "," << tp.z << "\n";
+		    std::cout << s_cdt2->name << " face " << omesh2->fmesh->f_id << " test point inside from " << s_cdt1->name << " face " << omesh1->fmesh->f_id << ":\n";
 		    std::cout << "ip: " << omesh1->overts[t1.v[i]]->vpnt().x << "," << omesh1->overts[t1.v[i]]->vpnt().y << "," << omesh1->overts[t1.v[i]]->vpnt().z << "\n";
+		    std::cout << "dist: " << dist << "\n";
+		    std::cout << "isectpt1: " << isectpt1[X] << "," << isectpt1[Y] << "," << isectpt1[Z] << "\n";
+		    std::cout << "isectpt2: " << isectpt2[X] << "," << isectpt2[Y] << "," << isectpt2[Z] << "\n";
 		    omesh2->intruding_pnts.insert(omesh1->overts[t1.v[i]]);
+		    have_interior_pnt = true;
 		}
+	    }
+	    if (!have_interior_pnt) {
+		std::cout << "PROBLEM - intersecting triangles but no vertex points are interior!\n";
 	    }
 	}
     }
