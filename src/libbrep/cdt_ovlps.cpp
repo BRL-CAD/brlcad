@@ -2306,6 +2306,8 @@ characterize_tri_intersections(std::set<std::pair<omesh_t *, omesh_t *>> &check_
 		std::cout << "PROBLEM - intersecting triangles but no vertex points are refinement candidates!\n";
 		// Strategy here - queue up all the unordered edges on both triangles in their
 		// respective omeshes for midpoint splitting.
+		//
+		// TODO - may want to do just the longest edge, rather than all three...
 		{
 		    // Mesh 1, triangle 1
 		    std::set<cdt_mesh::uedge_t> uedges = omesh1->fmesh->uedges(t1);
@@ -2824,12 +2826,14 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
     // enough freedom of movement (per triangle edge length) that we can shift
     // the two close neighbors to surface points that are both the respective
     // closest points to a center point between the two originals.
+    int close_vert_checks = 1;
     int avcnt = adjust_close_verts(ocheck_pairs);
     if (avcnt) {
-	std::cout << "1: Adjusted " << avcnt << " vertices\n";
+	std::cout << close_vert_checks << ": Adjusted " << avcnt << " vertices\n";
 	check_faces_validity(check_pairs, 1);
 	face_ov_cnt = face_omesh_ovlps(ocheck_pairs);
-	std::cout << "Post vert adjustment 1 overlap cnt: " << face_ov_cnt << "\n";
+	std::cout << "Post vert adjustment " << close_vert_checks << " overlap cnt: " << face_ov_cnt << "\n";
+	close_vert_checks++;
     }
 
     // Next up are Brep boundary edges, which have to be handled at a brep
@@ -2849,10 +2853,11 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	// If we split edges, do the close vert check again
 	avcnt = adjust_close_verts(ocheck_pairs);
 	if (avcnt) {
-	    std::cout << "2: Adjusted " << avcnt << " vertices\n";
+	    std::cout << close_vert_checks << ": Adjusted " << avcnt << " vertices\n";
 	    check_faces_validity(check_pairs, 1);
 	    face_ov_cnt = face_omesh_ovlps(ocheck_pairs);
-	    std::cout << "Post vert adjustment 2 overlap cnt: " << face_ov_cnt << "\n";
+	    std::cout << "Post vert adjustment " << close_vert_checks << " overlap cnt: " << face_ov_cnt << "\n";
+	    close_vert_checks++;
 	}
     }
 
@@ -2862,6 +2867,16 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	refine_omeshes(ocheck_pairs, f2omap);
 	face_ov_cnt = face_omesh_ovlps(ocheck_pairs);
     }
+
+    avcnt = adjust_close_verts(ocheck_pairs);
+    if (avcnt) {
+	std::cout << close_vert_checks << ": Adjusted " << avcnt << " vertices\n";
+	check_faces_validity(check_pairs, 1);
+	face_ov_cnt = face_omesh_ovlps(ocheck_pairs);
+	std::cout << "Post vert adjustment " << close_vert_checks << " overlap cnt: " << face_ov_cnt << "\n";
+	close_vert_checks++;
+    }
+
 
     // Calculate omesh refinement point closest surf points
     //
