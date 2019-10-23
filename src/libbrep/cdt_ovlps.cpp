@@ -2134,6 +2134,60 @@ static bool NearVertsCallback(void *data, void *a_context) {
 }
 #endif
 
+
+// Using triangle planes and then an inside/outside test, determine
+// which point(s) from the opposite triangle are "inside" the
+// meshes.  Each of these points is an "overlap instance" that the
+// opposite mesh will have to try and adjust itself to to resolve.
+//
+// If a vertex is not inside, we still may want to alter the mesh to
+// incorporate its closest neighbor if it projects cleanly into the
+// triangle (i.e it is "local").
+bool
+characterize_tri_verts(omesh_t *omesh1, omesh_t *omesh2, cdt_mesh::triangle_t &t1, cdt_mesh::triangle_t &t2)
+{
+    bool have_interior_pnt = false;
+    ON_Plane plane1 = omesh1->fmesh->tplane(t1);
+    for (int i = 0; i < 3; i++) {
+	ON_3dPoint tp = *omesh2->fmesh->pnts[t2.v[i]];
+	overt_t *v = omesh2->overts[t2.v[i]];
+	if (!v) {
+	    std::cout << "WARNING: - no overt for vertex??\n";
+	}
+	if (projects_inside_tri(omesh1->fmesh, t1, tp)) {
+	    // Figure out how far away the triangle is from the point in question
+	    point_t btp, v0, v1, v2;
+	    VSET(btp, tp.x, tp.y, tp.z);
+	    VSET(v0, omesh1->fmesh->pnts[t1.v[0]]->x, omesh1->fmesh->pnts[t1.v[0]]->y, omesh1->fmesh->pnts[t1.v[0]]->z);
+	    VSET(v1, omesh1->fmesh->pnts[t1.v[1]]->x, omesh1->fmesh->pnts[t1.v[1]]->y, omesh1->fmesh->pnts[t1.v[1]]->z);
+	    VSET(v2, omesh1->fmesh->pnts[t1.v[2]]->x, omesh1->fmesh->pnts[t1.v[2]]->y, omesh1->fmesh->pnts[t1.v[2]]->z);
+	    double tdist = bg_tri_pt_dist(btp, v0, v1, v2);
+	    ON_3dPoint *p3d = omesh1->fmesh->pnts[t1.v[0]];
+	    ON_BoundingBox bb(*p3d, *p3d);
+	    for (int j = 1; j < 3; j++) {
+		p3d = omesh1->fmesh->pnts[t1.v[j]];
+		bb.Set(*p3d, true);
+	    }
+	    double bbd = 0.5*bb.Diagonal().Length();
+
+	    if (tdist < bbd) {
+		omesh1->intruding_pnts.insert(v);
+		have_interior_pnt = true;
+	    }
+	} else {
+	    double dist = plane1.DistanceTo(tp);
+	    struct ON_Brep_CDT_State *s_cdt1 = (struct ON_Brep_CDT_State *)omesh1->fmesh->p_cdt;
+	    if (dist < 0 && fabs(dist) > ON_ZERO_TOLERANCE && on_point_inside(s_cdt1, &tp)) {
+		omesh1->intruding_pnts.insert(omesh2->overts[t2.v[i]]);
+		have_interior_pnt = true;
+	    }
+	}
+    }
+
+    return have_interior_pnt;
+}
+
+
 int
 characterize_tri_intersections(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs)
 {
@@ -2164,136 +2218,10 @@ characterize_tri_intersections(std::set<std::pair<omesh_t *, omesh_t *>> &check_
 	    int isect = tri_isect(omesh1->fmesh, t1, omesh2->fmesh, t2, &isectpt1, &isectpt2);
 	    if (!isect) continue;
 
-	    bool have_interior_pnt = false;
+	    bool h_ip_1 = characterize_tri_verts(omesh1, omesh2, t1, t2);
+	    bool h_ip_2 = characterize_tri_verts(omesh2, omesh1, t2, t1);
+	    bool have_interior_pnt = (h_ip_1 || h_ip_2);
 
-	    // Using triangle planes and then an inside/outside test, determine
-	    // which point(s) from the opposite triangle are "inside" the
-	    // meshes.  Each of these points is an "overlap instance" that the
-	    // opposite mesh will have to try and adjust itself to to resolve.
-	    //
-	    // If a vertex is not inside, we still may want to alter the mesh to
-	    // incorporate its closest neighbor if it projects cleanly into the
-	    // triangle (i.e it is "local").
-	    ON_Plane plane1 = omesh1->fmesh->tplane(t1);
-	    for (int i = 0; i < 3; i++) {
-		ON_3dPoint tp = *omesh2->fmesh->pnts[t2.v[i]];
-		overt_t *v = omesh2->overts[t2.v[i]];
-		if (!v) {
-		    std::cout << "WARNING: - no overt for vertex??\n";
-		}
-		if (projects_inside_tri(omesh1->fmesh, t1, tp)) {
-		    // Figure out how far away the triangle is from the point in question
-		    point_t btp, v0, v1, v2;
-		    VSET(btp, tp.x, tp.y, tp.z);
-		    VSET(v0, omesh1->fmesh->pnts[t1.v[0]]->x, omesh1->fmesh->pnts[t1.v[0]]->y, omesh1->fmesh->pnts[t1.v[0]]->z);
-		    VSET(v1, omesh1->fmesh->pnts[t1.v[1]]->x, omesh1->fmesh->pnts[t1.v[1]]->y, omesh1->fmesh->pnts[t1.v[1]]->z);
-		    VSET(v2, omesh1->fmesh->pnts[t1.v[2]]->x, omesh1->fmesh->pnts[t1.v[2]]->y, omesh1->fmesh->pnts[t1.v[2]]->z);
-		    double tdist = bg_tri_pt_dist(btp, v0, v1, v2);
-		    ON_3dPoint *p3d = omesh1->fmesh->pnts[t1.v[0]];
-		    ON_BoundingBox bb(*p3d, *p3d);
-		    for (int j = 1; j < 3; j++) {
-			p3d = omesh1->fmesh->pnts[t1.v[j]];
-			bb.Set(*p3d, true);
-		    }
-		    double bbd = 0.5*bb.Diagonal().Length();
-
-		    if (tdist < bbd) {
-			omesh1->intruding_pnts.insert(v);
-			have_interior_pnt = true;
-		    }
-		} else {
-		    double dist = plane1.DistanceTo(tp);
-		    if (dist < 0 && fabs(dist) > ON_ZERO_TOLERANCE && on_point_inside(s_cdt1, &tp)) {
-#if 0
-			std::cout << s_cdt1->name << " face " << omesh1->fmesh->f_id << " test point inside from " << s_cdt2->name << " face " << omesh2->fmesh->f_id << ":\n";
-			std::cout << "ip: " << omesh2->overts[t2.v[i]]->vpnt().x << "," << omesh2->overts[t2.v[i]]->vpnt().y << "," << omesh2->overts[t2.v[i]]->vpnt().z << "\n";
-			std::cout << "dist: " << dist << "\n";
-			std::cout << "isectpt1: " << isectpt1[X] << "," << isectpt1[Y] << "," << isectpt1[Z] << "\n";
-			std::cout << "isectpt2: " << isectpt2[X] << "," << isectpt2[Y] << "," << isectpt2[Z] << "\n";
-#endif
-			omesh1->intruding_pnts.insert(omesh2->overts[t2.v[i]]);
-			have_interior_pnt = true;
-#if 0
-			closest_surf_pnt(np->p, np->n, *fmesh1, &tp, 2*t1_longest);
-			ON_BoundingBox bb(np->p, np->p);
-			bb.m_max.x = bb.m_max.x + t1_longest;
-			bb.m_max.y = bb.m_max.y + t1_longest;
-			bb.m_max.z = bb.m_max.z + t1_longest;
-			bb.m_min.x = bb.m_min.x - t1_longest;
-			bb.m_min.y = bb.m_min.y - t1_longest;
-			bb.m_min.z = bb.m_min.z - t1_longest;
-			np->bb = bb;
-			// TODO - check if this point is too close to an existing vert
-			// point to insert. If so, tweak the vert point to match this point
-			double fMin[3]; double fMax[3];
-			fMin[0] = bb.Min().x;
-			fMin[1] = bb.Min().y;
-			fMin[2] = bb.Min().z;
-			fMax[0] = bb.Max().x;
-			fMax[1] = bb.Max().y;
-			fMax[2] = bb.Max().z;
-			std::set<long> cpnts;
-			bool add_pnt = true;
-			size_t npnts = rtrees_mpnts[std::make_pair(s_cdt1,fmesh1->f_id)].Search(fMin, fMax, NearVertsCallback, (void *)&cpnts);
-			if (npnts) {
-			    std::set<long>::iterator c_it;
-			    for (c_it = cpnts.begin(); c_it != cpnts.end(); c_it++) {
-				ON_3dPoint *p = fmesh1->pnts[*c_it];
-				std::cout << p->DistanceTo(np->p) << "\n";
-			    }
-			}
-			if (add_pnt) {
-			    (*face_npnts)[fmesh1].insert(np);
-			    added_verts[fmesh1].insert(std::make_pair(fmesh2, t2.v[i]));
-			}
-#endif
-		    }
-		}
-	    }
-
-	    ON_Plane plane2 = omesh2->fmesh->tplane(t2);
-	    for (int i = 0; i < 3; i++) {
-		ON_3dPoint tp = *omesh1->fmesh->pnts[t1.v[i]];
-		overt_t *v = omesh1->overts[t1.v[i]];
-		if (!v) {
-		    std::cout << "WARNING: - no overt for vertex??\n";
-		}
-		if (projects_inside_tri(omesh2->fmesh, t2, tp)) {
-		    // Figure out how far away the triangle is from the point in question
-		    point_t btp, v0, v1, v2;
-		    VSET(btp, tp.x, tp.y, tp.z);
-		    VSET(v0, omesh2->fmesh->pnts[t2.v[0]]->x, omesh2->fmesh->pnts[t2.v[0]]->y, omesh2->fmesh->pnts[t2.v[0]]->z);
-		    VSET(v1, omesh2->fmesh->pnts[t2.v[1]]->x, omesh2->fmesh->pnts[t2.v[1]]->y, omesh2->fmesh->pnts[t2.v[1]]->z);
-		    VSET(v2, omesh2->fmesh->pnts[t2.v[2]]->x, omesh2->fmesh->pnts[t2.v[2]]->y, omesh2->fmesh->pnts[t2.v[2]]->z);
-		    double tdist = bg_tri_pt_dist(btp, v0, v1, v2);
-		    ON_3dPoint *p3d = omesh2->fmesh->pnts[t2.v[0]];
-		    ON_BoundingBox bb(*p3d, *p3d);
-		    for (int j = 1; j < 3; j++) {
-			p3d = omesh2->fmesh->pnts[t2.v[j]];
-			bb.Set(*p3d, true);
-		    }
-		    double bbd = 0.5*bb.Diagonal().Length();
-
-		    if (tdist < bbd) {
-			omesh2->intruding_pnts.insert(v);
-			have_interior_pnt = true;
-		    }
-		} else {
-
-		    double dist = plane2.DistanceTo(tp);
-		    if (dist < 0 && fabs(dist) > ON_ZERO_TOLERANCE && on_point_inside(s_cdt2, &tp)) {
-#if 0
-			std::cout << s_cdt2->name << " face " << omesh2->fmesh->f_id << " test point inside from " << s_cdt1->name << " face " << omesh1->fmesh->f_id << ":\n";
-			std::cout << "ip: " << omesh1->overts[t1.v[i]]->vpnt().x << "," << omesh1->overts[t1.v[i]]->vpnt().y << "," << omesh1->overts[t1.v[i]]->vpnt().z << "\n";
-			std::cout << "dist: " << dist << "\n";
-			std::cout << "isectpt1: " << isectpt1[X] << "," << isectpt1[Y] << "," << isectpt1[Z] << "\n";
-			std::cout << "isectpt2: " << isectpt2[X] << "," << isectpt2[Y] << "," << isectpt2[Z] << "\n";
-#endif
-			omesh2->intruding_pnts.insert(omesh1->overts[t1.v[i]]);
-			have_interior_pnt = true;
-		    }
-		}
-	    }
 	    if (!have_interior_pnt) {
 		std::cout << "PROBLEM - intersecting triangles but no vertex points are interior!\n";
 		// Strategy here - queue up all the unordered edges on both triangles in their
