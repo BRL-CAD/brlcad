@@ -2146,44 +2146,34 @@ static bool NearVertsCallback(void *data, void *a_context) {
 bool
 characterize_tri_verts(omesh_t *omesh1, omesh_t *omesh2, cdt_mesh::triangle_t &t1, cdt_mesh::triangle_t &t2)
 {
-    bool have_interior_pnt = false;
+    bool have_refinement_pnt = false;
     ON_Plane plane1 = omesh1->fmesh->tplane(t1);
     for (int i = 0; i < 3; i++) {
-	ON_3dPoint tp = *omesh2->fmesh->pnts[t2.v[i]];
 	overt_t *v = omesh2->overts[t2.v[i]];
 	if (!v) {
 	    std::cout << "WARNING: - no overt for vertex??\n";
 	}
-	if (projects_inside_tri(omesh1->fmesh, t1, tp)) {
-	    // If we've got more than one triangle from the other mesh breaking through
-	    // this triangle and sharing this vertex, list it as a point worth splitting
-	    // at the nearest surface point
-	    std::set<size_t> vtris = omesh2->fmesh->v2tris[t2.v[i]];
-	    int tri_isect_cnt = 0;
-	    std::set<size_t>::iterator vt_it;
-	    for (vt_it = vtris.begin(); vt_it != vtris.end(); vt_it++) {
-		cdt_mesh::triangle_t ttri = omesh2->fmesh->tris_vect[*vt_it];
-		point_t isectpt1, isectpt2;
-		if (tri_isect(omesh1->fmesh, t1, omesh2->fmesh, ttri, &isectpt1, &isectpt2)) {
-		    tri_isect_cnt++;
-		}
-		if (tri_isect_cnt > 1) {
-		    omesh1->refinement_pnts.insert(v);
-		    have_interior_pnt = true;
-		    break;
-		}
+	// If we've got more than one triangle from the other mesh breaking through
+	// this triangle and sharing this vertex, list it as a point worth splitting
+	// at the nearest surface point
+	std::set<size_t> vtris = omesh2->fmesh->v2tris[t2.v[i]];
+	int tri_isect_cnt = 0;
+	std::set<size_t>::iterator vt_it;
+	for (vt_it = vtris.begin(); vt_it != vtris.end(); vt_it++) {
+	    cdt_mesh::triangle_t ttri = omesh2->fmesh->tris_vect[*vt_it];
+	    point_t isectpt1, isectpt2;
+	    if (tri_isect(omesh1->fmesh, t1, omesh2->fmesh, ttri, &isectpt1, &isectpt2)) {
+		tri_isect_cnt++;
 	    }
-	} else {
-	    double dist = plane1.DistanceTo(tp);
-	    struct ON_Brep_CDT_State *s_cdt1 = (struct ON_Brep_CDT_State *)omesh1->fmesh->p_cdt;
-	    if (dist < 0 && fabs(dist) > ON_ZERO_TOLERANCE && on_point_inside(s_cdt1, &tp)) {
-		omesh1->refinement_pnts.insert(omesh2->overts[t2.v[i]]);
-		have_interior_pnt = true;
+	    if (tri_isect_cnt > 1) {
+		omesh1->refinement_pnts.insert(v);
+		have_refinement_pnt = true;
+		break;
 	    }
 	}
     }
 
-    return have_interior_pnt;
+    return have_refinement_pnt;
 }
 
 
