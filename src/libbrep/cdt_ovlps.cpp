@@ -1262,10 +1262,14 @@ adjust_overt_pair(overt_t *v1, overt_t *v2)
 	(*v2->omesh->fmesh->pnts[v2->p_id]) = s2_p;
 	(*v2->omesh->fmesh->normals[v2->omesh->fmesh->nmap[v2->p_id]]) = s2_n;
 
-	// We just changed the vertex point values - need to update all the mvert_info
-	// edge lengths which might be impacted...
+	// We just changed the vertex point values - need to update all the
+	// edge edges which might be impacted...
 	v1->omesh->verts_one_ring_update(v1->p_id);
 	v2->omesh->verts_one_ring_update(v2->p_id);
+
+	// If we're refining, adjustment is all we're going to do with these verts
+	v1->omesh->refine_pnt_remove(v1);
+	v2->omesh->refine_pnt_remove(v2);
 
 #if 0
 	std::cout << "p_wavg: " << p_wavg.x << "," << p_wavg.y << "," << p_wavg.z << "\n";
@@ -1748,52 +1752,68 @@ refine_edges_near_verts(
 
     // Iterate over verts, checking for nearby edges.
     std::map<cdt_mesh::bedge_seg_t *, overt_t *> edge_vert;
-#if 0
     std::set<omesh_t *>::iterator a_it;
     for (a_it = ameshes.begin(); a_it != ameshes.end(); a_it++) {
 	omesh_t *omesh = *a_it;
+	std::set<overt_t *> used_overts;
 	std::set<std::pair<long, long>> vert_edge_pairs;
-	size_t ovlp_cnt = omesh->vtree.Overlaps(bedge_tree, &vert_edge_pairs);
+	size_t ovlp_cnt = omesh->refine_tree.Overlaps(bedge_tree, &vert_edge_pairs);
 	int used_verts = 0;
 	if (ovlp_cnt && vert_edge_pairs.size()) {
 	    std::set<std::pair<long, long>>::iterator v_it;
 	    for (v_it = vert_edge_pairs.begin(); v_it != vert_edge_pairs.end(); v_it++) {
-		overt_t *v = omesh->overts[v_it->first];
+		overt_t *v = omesh->refinement_overts[v_it->first];
+		if (!v) {
+		    std::cout << "invalid overt??\n";
+		    continue;
+		}
 		ON_3dPoint p = v->vpnt();
+		ON_3dPoint s1_p;
+		ON_3dVector s1_n;
+		closest_surf_pnt(s1_p, s1_n, *omesh->fmesh, &p, v->bb.Diagonal().Length());
 		cdt_mesh::bedge_seg_t *eseg = b_edges[v_it->second];
 
 		ON_3dPoint *p3d1 = eseg->e_start;
 		ON_3dPoint *p3d2 = eseg->e_end;
 		ON_Line line(*p3d1, *p3d2);
-		double d1 = p3d1->DistanceTo(p);
-		double d2 = p3d2->DistanceTo(p);
-		double dline = 2*p.DistanceTo(line.ClosestPointTo(p));
+		double d1 = p3d1->DistanceTo(s1_p);
+		double d2 = p3d2->DistanceTo(s1_p);
+		double dline = 2*p.DistanceTo(line.ClosestPointTo(s1_p));
 		if (d1 > dline && d2 > dline) {
-		    //std::cout << "ACCEPT: d1: " << d1 << ", d2: " << d2 << ", dline: " << dline << "\n";
+		    std::cout << "ACCEPT: d1: " << d1 << ", d2: " << d2 << ", dline: " << dline << "\n";
 		    if (edge_vert.find(eseg) != edge_vert.end()) {
 			ON_3dPoint pv = edge_vert[eseg]->vpnt();
-			double dv = pv.DistanceTo(line.ClosestPointTo(pv));
+			closest_surf_pnt(s1_p, s1_n, *omesh->fmesh, &pv, edge_vert[eseg]->bb.Diagonal().Length());
+			double dv = s1_p.DistanceTo(line.ClosestPointTo(s1_p));
 			if (dv > dline) {
+			    used_overts.erase(edge_vert[eseg]);
 			    edge_vert[eseg] = v;
+			    used_overts.insert(v);
 			}
 		    } else {
 			edge_vert[eseg] = v;
+			used_overts.insert(v);
 			used_verts++;
 		    }
+#if 0
 		    pl_color(plot_file, 255, 0, 0);
 		    BBOX_PLOT(plot_file, v->bb);
 		    pl_color(plot_file, 0, 0, 255);
 		    ON_BoundingBox edge_bb = edge_bbox(eseg);
 		    BBOX_PLOT(plot_file, edge_bb);
+#endif
 		} else {
-		    //std::cout << "REJECT: d1: " << d1 << ", d2: " << d2 << ", dline: " << dline << "\n";
+		    std::cout << "REJECT: d1: " << d1 << ", d2: " << d2 << ", dline: " << dline << "\n";
 		}
 	    }
 	    //std::cout << "used_verts: " << used_verts << "\n";
 	}
+
+	std::set<overt_t *>::iterator v_it;
+	for (v_it = used_overts.begin(); v_it != used_overts.end(); v_it++) {
+	    omesh->refine_pnt_remove(*v_it);
+	}
     }
-    fclose(plot_file);
-#endif
     return bedge_split_near_vert(edge_vert, f2omap);
 }
 
@@ -2293,6 +2313,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	close_vert_checks++;
     }
 
+    refine_edges_near_verts(a_cdt, ocheck_pairs, f2omap);
 
     // Calculate omesh refinement point closest surf points
     //
