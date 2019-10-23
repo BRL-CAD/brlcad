@@ -321,7 +321,7 @@ class omesh_t
 
 	std::set<long> ovlping_tris;
 
-	std::set<overt_t*> intruding_pnts;
+	std::set<overt_t*> refinement_pnts;
 
 	std::set<cdt_mesh::uedge_t> split_edges;
 
@@ -546,7 +546,7 @@ omesh_t::plot(const char *fname)
 
     pl_color(plot, 255, 0, 0);
     std::set<overt_t*>::iterator i_it;
-    for (i_it = intruding_pnts.begin(); i_it != intruding_pnts.end(); i_it++) {
+    for (i_it = refinement_pnts.begin(); i_it != refinement_pnts.end(); i_it++) {
 	overt_t *iv = *i_it;
 	ON_3dPoint vp = iv->vpnt();
 	plot_pnt_3d(plot, &vp, tri_r, 0);
@@ -2155,30 +2155,29 @@ characterize_tri_verts(omesh_t *omesh1, omesh_t *omesh2, cdt_mesh::triangle_t &t
 	    std::cout << "WARNING: - no overt for vertex??\n";
 	}
 	if (projects_inside_tri(omesh1->fmesh, t1, tp)) {
-	    // Figure out how far away the triangle is from the point in question
-	    point_t btp, v0, v1, v2;
-	    VSET(btp, tp.x, tp.y, tp.z);
-	    VSET(v0, omesh1->fmesh->pnts[t1.v[0]]->x, omesh1->fmesh->pnts[t1.v[0]]->y, omesh1->fmesh->pnts[t1.v[0]]->z);
-	    VSET(v1, omesh1->fmesh->pnts[t1.v[1]]->x, omesh1->fmesh->pnts[t1.v[1]]->y, omesh1->fmesh->pnts[t1.v[1]]->z);
-	    VSET(v2, omesh1->fmesh->pnts[t1.v[2]]->x, omesh1->fmesh->pnts[t1.v[2]]->y, omesh1->fmesh->pnts[t1.v[2]]->z);
-	    double tdist = bg_tri_pt_dist(btp, v0, v1, v2);
-	    ON_3dPoint *p3d = omesh1->fmesh->pnts[t1.v[0]];
-	    ON_BoundingBox bb(*p3d, *p3d);
-	    for (int j = 1; j < 3; j++) {
-		p3d = omesh1->fmesh->pnts[t1.v[j]];
-		bb.Set(*p3d, true);
-	    }
-	    double bbd = 0.5*bb.Diagonal().Length();
-
-	    if (tdist < bbd) {
-		omesh1->intruding_pnts.insert(v);
-		have_interior_pnt = true;
+	    // If we've got more than one triangle from the other mesh breaking through
+	    // this triangle and sharing this vertex, list it as a point worth splitting
+	    // at the nearest surface point
+	    std::set<size_t> vtris = omesh2->fmesh->v2tris[t2.v[i]];
+	    int tri_isect_cnt = 0;
+	    std::set<size_t>::iterator vt_it;
+	    for (vt_it = vtris.begin(); vt_it != vtris.end(); vt_it++) {
+		cdt_mesh::triangle_t ttri = omesh2->fmesh->tris_vect[*vt_it];
+		point_t isectpt1, isectpt2;
+		if (tri_isect(omesh1->fmesh, t1, omesh2->fmesh, ttri, &isectpt1, &isectpt2)) {
+		    tri_isect_cnt++;
+		}
+		if (tri_isect_cnt > 1) {
+		    omesh1->refinement_pnts.insert(v);
+		    have_interior_pnt = true;
+		    break;
+		}
 	    }
 	} else {
 	    double dist = plane1.DistanceTo(tp);
 	    struct ON_Brep_CDT_State *s_cdt1 = (struct ON_Brep_CDT_State *)omesh1->fmesh->p_cdt;
 	    if (dist < 0 && fabs(dist) > ON_ZERO_TOLERANCE && on_point_inside(s_cdt1, &tp)) {
-		omesh1->intruding_pnts.insert(omesh2->overts[t2.v[i]]);
+		omesh1->refinement_pnts.insert(omesh2->overts[t2.v[i]]);
 		have_interior_pnt = true;
 	    }
 	}
@@ -2245,8 +2244,8 @@ characterize_tri_intersections(std::set<std::pair<omesh_t *, omesh_t *>> &check_
 	// If we need to refine (i.e. change the mesh) we're going to have to go through
 	// the interior identification process again.
 	for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
-	    cp_it->first->intruding_pnts.clear();
-	    cp_it->second->intruding_pnts.clear();
+	    cp_it->first->refinement_pnts.clear();
+	    cp_it->second->refinement_pnts.clear();
 	}
     }
 
@@ -2358,7 +2357,7 @@ split_omeshes(
 	std::map<long, std::set<std::pair<ON_3dPoint,ON_3dVector>>> edge_sets;
 
 	std::set<overt_t*>::iterator i_t;
-	for (i_t = omesh->intruding_pnts.begin(); i_t != omesh->intruding_pnts.end(); i_t++) {
+	for (i_t = omesh->refinement_pnts.begin(); i_t != omesh->refinement_pnts.end(); i_t++) {
 	    overt_t* ov = *i_t;
 	    ON_3dPoint spnt;
 	    ON_3dVector sn;
