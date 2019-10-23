@@ -1209,7 +1209,7 @@ face_omesh_ovlps(std::set<std::pair<omesh_t *, omesh_t *>> check_pairs)
 
 
 double
-tri_shortest_edge(cdt_mesh::cdt_mesh_t *fmesh, long t_ind)
+tri_shortest_edge_len(cdt_mesh::cdt_mesh_t *fmesh, long t_ind)
 {
     cdt_mesh::triangle_t t = fmesh->tris_vect[t_ind];
     double len = DBL_MAX;
@@ -1226,7 +1226,7 @@ tri_shortest_edge(cdt_mesh::cdt_mesh_t *fmesh, long t_ind)
 }
 
 double
-tri_longest_edge(cdt_mesh::cdt_mesh_t *fmesh, long t_ind)
+tri_longest_edge_len(cdt_mesh::cdt_mesh_t *fmesh, long t_ind)
 {
     cdt_mesh::triangle_t t = fmesh->tris_vect[t_ind];
     double len = -DBL_MAX;
@@ -1240,6 +1240,26 @@ tri_longest_edge(cdt_mesh::cdt_mesh_t *fmesh, long t_ind)
     }
 
     return len;
+}
+
+cdt_mesh::uedge_t
+tri_longest_edge(cdt_mesh::cdt_mesh_t *fmesh, long t_ind)
+{
+    cdt_mesh::uedge_t ue;
+    cdt_mesh::triangle_t t = fmesh->tris_vect[t_ind];
+    double len = -DBL_MAX;
+    for (int i = 0; i < 3; i++) {
+	long v0 = t.v[i];
+	long v1 = (i < 2) ? t.v[i + 1] : t.v[0];
+	ON_3dPoint *p1 = fmesh->pnts[v0];
+	ON_3dPoint *p2 = fmesh->pnts[v1];
+	double d = p1->DistanceTo(*p2);
+	if (d > len) {
+	    len = d;
+	    ue = cdt_mesh::uedge_t(v0, v1);
+	}
+    }
+    return ue;
 }
 
 bool
@@ -1324,7 +1344,7 @@ characterize_avgpnt(
 	double *dist
 	)
 {
-    double t_se = tri_shortest_edge(fmesh, t.ind);
+    double t_se = tri_shortest_edge_len(fmesh, t.ind);
 
     // Figure out how far away the triangle is from the point in question
     point_t tp, v0, v1, v2;
@@ -2310,13 +2330,13 @@ characterize_tri_intersections(std::set<std::pair<omesh_t *, omesh_t *>> &check_
 		// TODO - may want to do just the longest edge, rather than all three...
 		{
 		    // Mesh 1, triangle 1
-		    std::set<cdt_mesh::uedge_t> uedges = omesh1->fmesh->uedges(t1);
-		    omesh1->split_edges.insert(uedges.begin(), uedges.end());
+		    cdt_mesh::uedge_t ue = tri_longest_edge(omesh1->fmesh, t1.ind);
+		    omesh1->split_edges.insert(ue);
 		}
 		{
 		    // Mesh 2, triangle 2
-		    std::set<cdt_mesh::uedge_t> uedges = omesh2->fmesh->uedges(t2);
-		    omesh2->split_edges.insert(uedges.begin(), uedges.end());
+		    cdt_mesh::uedge_t ue = tri_longest_edge(omesh2->fmesh, t2.ind);
+		    omesh2->split_edges.insert(ue);
 		}
 		ret = 2;
 	    }
