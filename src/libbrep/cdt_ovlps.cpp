@@ -321,7 +321,12 @@ class omesh_t
 
 	std::set<long> ovlping_tris;
 
-	std::set<overt_t*> refinement_pnts;
+	std::map<overt_t *, long> refinement_overts_ids;
+	std::map<long, overt_t *> refinement_overts;
+	RTree<long, double, 3> refine_tree;
+	void refine_pnt_add(overt_t *);
+	void refine_pnt_remove(overt_t *);
+	void refine_pnts_clear();
 
 	std::set<cdt_mesh::uedge_t> split_edges;
 
@@ -545,11 +550,13 @@ omesh_t::plot(const char *fname)
     }
 
     pl_color(plot, 255, 0, 0);
-    std::set<overt_t*>::iterator i_it;
-    for (i_it = refinement_pnts.begin(); i_it != refinement_pnts.end(); i_it++) {
-	overt_t *iv = *i_it;
+    RTree<long, double, 3>::Iterator rtree_it;
+    refine_tree.GetFirst(rtree_it);
+    while (!rtree_it.IsNull()) {
+	overt_t *iv = refinement_overts[*rtree_it];
 	ON_3dPoint vp = iv->vpnt();
 	plot_pnt_3d(plot, &vp, tri_r, 0);
+	++rtree_it;
     }
 
     fclose(plot);
@@ -735,6 +742,55 @@ omesh_t::vert_add(long f3ind)
     fMax[1] = overts[f3ind]->bb.Max().y;
     fMax[2] = overts[f3ind]->bb.Max().z;
     vtree.Insert(fMin, fMax, f3ind);
+}
+
+void
+omesh_t::refine_pnt_add(overt_t *v)
+{
+
+    size_t nind = 0;
+    if (refinement_overts.size()) {
+	nind = refinement_overts.rbegin()->first + 1;
+    }
+    refinement_overts[nind] = v;
+    refinement_overts_ids[v] = nind;
+
+    double fMin[3];
+    fMin[0] = v->bb.Min().x;
+    fMin[1] = v->bb.Min().y;
+    fMin[2] = v->bb.Min().z;
+    double fMax[3];
+    fMax[0] = v->bb.Max().x;
+    fMax[1] = v->bb.Max().y;
+    fMax[2] = v->bb.Max().z;
+    refine_tree.Insert(fMin, fMax, nind);
+}
+
+void
+omesh_t::refine_pnt_remove(overt_t *v)
+{
+    if (refinement_overts_ids.find(v) == refinement_overts_ids.end()) return;
+    size_t nind = refinement_overts_ids[v];
+    refinement_overts.erase(nind);
+    refinement_overts_ids.erase(v);
+
+    double fMin[3];
+    fMin[0] = v->bb.Min().x-ON_ZERO_TOLERANCE;
+    fMin[1] = v->bb.Min().y-ON_ZERO_TOLERANCE;
+    fMin[2] = v->bb.Min().z-ON_ZERO_TOLERANCE;
+    double fMax[3];
+    fMax[0] = v->bb.Max().x+ON_ZERO_TOLERANCE;
+    fMax[1] = v->bb.Max().y+ON_ZERO_TOLERANCE;
+    fMax[2] = v->bb.Max().z+ON_ZERO_TOLERANCE;
+    refine_tree.Remove(fMin, fMax, nind);
+}
+
+void
+omesh_t::refine_pnts_clear()
+{
+    refinement_overts.clear();
+    refinement_overts_ids.clear();
+    refine_tree.RemoveAll();
 }
 
 void
@@ -2277,7 +2333,7 @@ characterize_tri_verts(omesh_t *omesh1, omesh_t *omesh2, cdt_mesh::triangle_t &t
 		tri_isect_cnt++;
 	    }
 	    if (tri_isect_cnt > 1) {
-		omesh1->refinement_pnts.insert(v);
+		omesh1->refine_pnt_add(v);
 		have_refinement_pnt = true;
 		break;
 	    }
@@ -2347,8 +2403,8 @@ characterize_tri_intersections(std::set<std::pair<omesh_t *, omesh_t *>> &check_
 	// If we need to refine (i.e. change the mesh) we're going to have to go through
 	// the interior identification process again.
 	for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
-	    cp_it->first->refinement_pnts.clear();
-	    cp_it->second->refinement_pnts.clear();
+	    cp_it->first->refine_pnts_clear();
+	    cp_it->second->refine_pnts_clear();
 	}
     }
 
