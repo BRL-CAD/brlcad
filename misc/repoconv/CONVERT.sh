@@ -147,8 +147,10 @@ REPODERCSDIR="$PWD/repo_dercs"
 echo "Archive old branches"
 #NOTE - if done incorrectly this will make a mess with orphaned commits - make
 #a backup first
-cp -r cvs_git cvs_git-pre_archiving
-cd cvs_git && ../archive_branches.sh
+mkdir brlcad_git && cd brlcad_git
+git clone --mirror file://$PWD/cvs_git .git
+git init
+../archive_branches.sh
 
 echo "Do a file git gc --aggressive"
 git gc --aggressive
@@ -158,10 +160,8 @@ git reflog expire --expire-unreachable=now --all
 git gc --prune=now
 
 echo "Make the final tar.gz file (NOTE!!! we can't use git bundle for this, it drops all the notes with the svn rev info)"
-mkdir brlcad-git
 mv .git brlcad-git
 tar -czf ../brlcad-git.tar.gz brlcad-git
-mv brlcad-git/.git .git
-rmdir brlcad-git
+mv brlcad-git .git
 
 echo "Be aware that by default a checkout of the repo won't get the notes - it requires an extra step, see https://stackoverflow.com/questions/37941650/fetch-git-notes-when-cloning"
