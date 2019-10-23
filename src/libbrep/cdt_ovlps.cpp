@@ -1921,6 +1921,72 @@ ovlp_split_edge(std::set<cdt_mesh::bedge_seg_t *> *nsegs, cdt_mesh::bedge_seg_t 
 }
 
 int
+bedge_split_near_vert(
+	std::map<cdt_mesh::bedge_seg_t *, overt_t *> &edge_vert,
+	std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap
+	)
+{
+    int replaced_tris = 0;
+    // 2.  Find the point on the edge nearest to the vert point.  (TODO - need to think about how to
+    // handle multiple verts associated with same edge - may want to iterate starting with the closest
+    // and see if splitting clears the others...)
+    std::map<cdt_mesh::bedge_seg_t *, overt_t *>::iterator ev_it;
+    for (ev_it = edge_vert.begin(); ev_it != edge_vert.end(); ev_it++) {
+	cdt_mesh::bedge_seg_t *eseg = ev_it->first;
+	overt_t *v = ev_it->second;
+
+	ON_NurbsCurve *nc = eseg->nc;
+	ON_Interval domain(eseg->edge_start, eseg->edge_end);
+	ON_3dPoint p = v->vpnt();
+	double t;
+	ON_NurbsCurve_GetClosestPoint(&t, nc, p, 0.0, &domain);
+	ON_3dPoint cep = nc->PointAt(t);
+	//ON_3dPoint concern(2.599,7.821, 23.563);
+	//if (cep.DistanceTo(concern) < 0.01) {
+	//std::cout << "cep: " << cep.x << "," << cep.y << "," << cep.z << "\n";
+	//    std::cout << "Distance: " << cep.DistanceTo(p) << "\n";
+	//}
+	double epdist1 = eseg->e_start->DistanceTo(cep);
+	double epdist2 = eseg->e_end->DistanceTo(cep);
+	double lseg_check = 0.1 * eseg->e_start->DistanceTo(*eseg->e_end);
+	//std::cout << "d1: " << epdist1 << ", d2: " << epdist2 << ", lseg_check: " << lseg_check << "\n";
+	if (epdist1 > lseg_check && epdist2 > lseg_check) {
+	    // If the point is not close to a start/end point on the edge then split the edge.
+
+#if 0
+	    /* NOTE - need to get this information before ovlp_split_edge invalidates eseg */
+	    struct ON_Brep_CDT_State *s_cdt_edge = (struct ON_Brep_CDT_State *)eseg->p_cdt;
+	    int f_id1 = s_cdt_edge->brep->m_T[eseg->tseg1->trim_ind].Face()->m_face_index;
+	    int f_id2 = s_cdt_edge->brep->m_T[eseg->tseg2->trim_ind].Face()->m_face_index;
+#endif
+	    int rtris = ovlp_split_edge(NULL, eseg, t, f2omap);
+	    if (rtris >= 0) {
+		replaced_tris += rtris;
+
+
+#if 0
+		cdt_mesh::cdt_mesh_t &fmesh_f1 = s_cdt_edge->fmeshes[f_id1];
+		cdt_mesh::cdt_mesh_t &fmesh_f2 = s_cdt_edge->fmeshes[f_id2];
+		//std::cout << s_cdt_edge->name << " face " << fmesh_f1.f_id << " validity: " << fmesh_f1.valid(1) << "\n";
+		//std::cout << s_cdt_edge->name << " face " << fmesh_f2.f_id << " validity: " << fmesh_f2.valid(1) << "\n";
+		struct bu_vls fename = BU_VLS_INIT_ZERO;
+		bu_vls_sprintf(&fename, "%s-%d_post_edge_tris.plot3", s_cdt_edge->name, fmesh_f1.f_id);
+		fmesh_f1.tris_plot(bu_vls_cstr(&fename));
+		bu_vls_sprintf(&fename, "%s-%d_post_edge_tris.plot3", s_cdt_edge->name, fmesh_f2.f_id);
+		fmesh_f2.tris_plot(bu_vls_cstr(&fename));
+		bu_vls_free(&fename);
+#endif
+	    } else {
+		std::cout << "split failed\n";
+	    }
+	}
+    }
+    return replaced_tris;
+}
+
+
+
+int
 split_brep_face_edges_near_verts(
 	std::set<struct ON_Brep_CDT_State *> &a_cdt,
 	std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs,
@@ -1957,7 +2023,6 @@ split_brep_face_edges_near_verts(
     }
 
     std::set<std::pair<omesh_t *, omesh_t *>>::iterator cp_it;
-    int replaced_tris = 0;
 
     std::set<omesh_t *> ameshes;
     for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
@@ -2015,63 +2080,7 @@ split_brep_face_edges_near_verts(
     }
     fclose(plot_file);
 
-
-    // 2.  Find the point on the edge nearest to the vert point.  (TODO - need to think about how to
-    // handle multiple verts associated with same edge - may want to iterate starting with the closest
-    // and see if splitting clears the others...)
-    std::map<cdt_mesh::bedge_seg_t *, overt_t *>::iterator ev_it;
-    for (ev_it = edge_vert.begin(); ev_it != edge_vert.end(); ev_it++) {
-	cdt_mesh::bedge_seg_t *eseg = ev_it->first;
-	overt_t *v = ev_it->second;
-
-	ON_NurbsCurve *nc = eseg->nc;
-	ON_Interval domain(eseg->edge_start, eseg->edge_end);
-	ON_3dPoint p = v->vpnt();
-	double t;
-	ON_NurbsCurve_GetClosestPoint(&t, nc, p, 0.0, &domain);
-	ON_3dPoint cep = nc->PointAt(t);
-	//ON_3dPoint concern(2.599,7.821, 23.563);
-	//if (cep.DistanceTo(concern) < 0.01) {
-	    //std::cout << "cep: " << cep.x << "," << cep.y << "," << cep.z << "\n";
-	//    std::cout << "Distance: " << cep.DistanceTo(p) << "\n";
-	//}
-	double epdist1 = eseg->e_start->DistanceTo(cep);
-	double epdist2 = eseg->e_end->DistanceTo(cep);
-	double lseg_check = 0.1 * eseg->e_start->DistanceTo(*eseg->e_end);
-	//std::cout << "d1: " << epdist1 << ", d2: " << epdist2 << ", lseg_check: " << lseg_check << "\n";
-	if (epdist1 > lseg_check && epdist2 > lseg_check) {
-	    // If the point is not close to a start/end point on the edge then split the edge.
-
-#if 0
-	    /* NOTE - need to get this information before ovlp_split_edge invalidates eseg */
-	    struct ON_Brep_CDT_State *s_cdt_edge = (struct ON_Brep_CDT_State *)eseg->p_cdt;
-	    int f_id1 = s_cdt_edge->brep->m_T[eseg->tseg1->trim_ind].Face()->m_face_index;
-	    int f_id2 = s_cdt_edge->brep->m_T[eseg->tseg2->trim_ind].Face()->m_face_index;
-#endif
-	    int rtris = ovlp_split_edge(NULL, eseg, t, f2omap);
-	    if (rtris >= 0) {
-		replaced_tris += rtris;
-
-
-#if 0
-		cdt_mesh::cdt_mesh_t &fmesh_f1 = s_cdt_edge->fmeshes[f_id1];
-		cdt_mesh::cdt_mesh_t &fmesh_f2 = s_cdt_edge->fmeshes[f_id2];
-	//std::cout << s_cdt_edge->name << " face " << fmesh_f1.f_id << " validity: " << fmesh_f1.valid(1) << "\n";
-	//std::cout << s_cdt_edge->name << " face " << fmesh_f2.f_id << " validity: " << fmesh_f2.valid(1) << "\n";
-		struct bu_vls fename = BU_VLS_INIT_ZERO;
-		bu_vls_sprintf(&fename, "%s-%d_post_edge_tris.plot3", s_cdt_edge->name, fmesh_f1.f_id);
-		fmesh_f1.tris_plot(bu_vls_cstr(&fename));
-		bu_vls_sprintf(&fename, "%s-%d_post_edge_tris.plot3", s_cdt_edge->name, fmesh_f2.f_id);
-		fmesh_f2.tris_plot(bu_vls_cstr(&fename));
-		bu_vls_free(&fename);
-#endif
-	    } else {
-		std::cout << "split failed\n";
-	    }
-	}
-    }
-
-    return replaced_tris;
+    return bedge_split_near_vert(edge_vert, f2omap);
 }
 
 static bool NearEdgesCallback(void *data, void *a_context) {
@@ -2212,7 +2221,7 @@ characterize_tri_intersections(std::set<std::pair<omesh_t *, omesh_t *>> &check_
 	    bool have_interior_pnt = (h_ip_1 || h_ip_2);
 
 	    if (!have_interior_pnt) {
-		std::cout << "PROBLEM - intersecting triangles but no vertex points are interior!\n";
+		std::cout << "PROBLEM - intersecting triangles but no vertex points are refinement candidates!\n";
 		// Strategy here - queue up all the unordered edges on both triangles in their
 		// respective omeshes for midpoint splitting.
 		{
