@@ -1779,6 +1779,27 @@ cdt_mesh_t::uedges(const triangle_t &t)
     return uedges;
 }
 
+
+uedge_t
+cdt_mesh_t::closest_uedge(const triangle_t &t, ON_3dPoint &p)
+{
+    uedge_t result;
+    std::set<uedge_t> ue_s = uedges(t);
+    std::set<uedge_t>::iterator u_it;
+    double mdist = DBL_MAX;
+    for (u_it = ue_s.begin(); u_it != ue_s.end(); u_it++) { 
+	uedge_t ue = *u_it;
+	ON_Line l(*pnts[ue.v[0]], *pnts[ue.v[1]]);
+	double dline = p.DistanceTo(l.ClosestPointTo(p));
+	if (dline < mdist) {
+	    mdist = dline;
+	    result = ue;
+	}
+    }
+    return result;
+}
+
+
 ON_3dVector
 cdt_mesh_t::tnorm(const triangle_t &t)
 {

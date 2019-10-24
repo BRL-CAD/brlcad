@@ -602,7 +602,10 @@ omesh_t::refine_pnt_add(overt_t *v)
 void
 omesh_t::refine_pnt_remove(overt_t *v)
 {
-    if (refinement_overts_ids.find(v) == refinement_overts_ids.end()) return;
+    if (!refinement_overts_ids.size()) return;
+    if (refinement_overts_ids.find(v) == refinement_overts_ids.end()) {
+	return;
+    }
     size_t nind = refinement_overts_ids[v];
     refinement_overts.erase(nind);
     refinement_overts_ids.erase(v);
@@ -1268,8 +1271,8 @@ adjust_overt_pair(overt_t *v1, overt_t *v2)
 	v2->omesh->verts_one_ring_update(v2->p_id);
 
 	// If we're refining, adjustment is all we're going to do with these verts
-	v1->omesh->refine_pnt_remove(v1);
-	v2->omesh->refine_pnt_remove(v2);
+	v1->omesh->refine_pnt_remove(v2);
+	v2->omesh->refine_pnt_remove(v1);
 
 #if 0
 	std::cout << "p_wavg: " << p_wavg.x << "," << p_wavg.y << "," << p_wavg.z << "\n";
@@ -1352,14 +1355,15 @@ adjust_close_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs)
 	std::pair<overt_t *, overt_t *> vpair = vq.front();
 	vq.pop();
 
-	adjust_overt_pair(vpair.first, vpair.second);
-	adjusted.insert(vpair.first);
-	adjusted.insert(vpair.second);
+	if (adjusted.find(vpair.first) == adjusted.end() && adjusted.find(vpair.second) == adjusted.end()) {
+	    adjust_overt_pair(vpair.first, vpair.second);
+	    adjusted.insert(vpair.first);
+	    adjusted.insert(vpair.second);
+	}
     }
 
     // If the box structure is more complicated, we need to be a bit selective
     while (vq_multi.size()) {
-
 	overt_t *l = get_largest_overt(vq_multi);
 	overt_t *c = closest_overt(vert_ovlps[l], l);
 	vq_multi.erase(l);
@@ -1367,9 +1371,11 @@ adjust_close_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs)
 	vert_ovlps[l].erase(c);
 	vert_ovlps[c].erase(l);
 	//std::cout << "COMPLEX - adjusting 1 pair only:\n";
-	adjust_overt_pair(l, c);
-	adjusted.insert(l);
-	adjusted.insert(c);
+	if (adjusted.find(l) == adjusted.end() && adjusted.find(c) == adjusted.end()) {
+	    adjust_overt_pair(l, c);
+	    adjusted.insert(l);
+	    adjusted.insert(c);
+	}
     }
 
     return adjusted.size();
@@ -1558,8 +1564,8 @@ ovlp_split_edge(std::set<cdt_mesh::bedge_seg_t *> *nsegs, cdt_mesh::bedge_seg_t 
 }
 
 int
-bedge_split_near_vert(
-	std::map<cdt_mesh::bedge_seg_t *, overt_t *> &edge_vert,
+bedge_split_near_pnt(
+	std::map<cdt_mesh::bedge_seg_t *, ON_3dPoint> &edge_pnt,
 	std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap
 	)
 {
@@ -1567,26 +1573,18 @@ bedge_split_near_vert(
     // 2.  Find the point on the edge nearest to the vert point.  (TODO - need to think about how to
     // handle multiple verts associated with same edge - may want to iterate starting with the closest
     // and see if splitting clears the others...)
-    std::map<cdt_mesh::bedge_seg_t *, overt_t *>::iterator ev_it;
-    for (ev_it = edge_vert.begin(); ev_it != edge_vert.end(); ev_it++) {
-	cdt_mesh::bedge_seg_t *eseg = ev_it->first;
-	overt_t *v = ev_it->second;
-
+    std::map<cdt_mesh::bedge_seg_t *, ON_3dPoint>::iterator ep_it;
+    for (ep_it = edge_pnt.begin(); ep_it != edge_pnt.end(); ep_it++) {
+	cdt_mesh::bedge_seg_t *eseg = ep_it->first;
+	ON_3dPoint p = ep_it->second;
 	ON_NurbsCurve *nc = eseg->nc;
 	ON_Interval domain(eseg->edge_start, eseg->edge_end);
-	ON_3dPoint p = v->vpnt();
 	double t;
 	ON_NurbsCurve_GetClosestPoint(&t, nc, p, 0.0, &domain);
 	ON_3dPoint cep = nc->PointAt(t);
-	//ON_3dPoint concern(2.599,7.821, 23.563);
-	//if (cep.DistanceTo(concern) < 0.01) {
-	//std::cout << "cep: " << cep.x << "," << cep.y << "," << cep.z << "\n";
-	//    std::cout << "Distance: " << cep.DistanceTo(p) << "\n";
-	//}
 	double epdist1 = eseg->e_start->DistanceTo(cep);
 	double epdist2 = eseg->e_end->DistanceTo(cep);
 	double lseg_check = 0.1 * eseg->e_start->DistanceTo(*eseg->e_end);
-	//std::cout << "d1: " << epdist1 << ", d2: " << epdist2 << ", lseg_check: " << lseg_check << "\n";
 	if (epdist1 > lseg_check && epdist2 > lseg_check) {
 	    // If the point is not close to a start/end point on the edge then split the edge.
 
@@ -1599,8 +1597,6 @@ bedge_split_near_vert(
 	    int rtris = ovlp_split_edge(NULL, eseg, t, f2omap);
 	    if (rtris >= 0) {
 		replaced_tris += rtris;
-
-
 #if 0
 		cdt_mesh::cdt_mesh_t &fmesh_f1 = s_cdt_edge->fmeshes[f_id1];
 		cdt_mesh::cdt_mesh_t &fmesh_f2 = s_cdt_edge->fmeshes[f_id2];
@@ -1621,6 +1617,25 @@ bedge_split_near_vert(
     return replaced_tris;
 }
 
+// Find the point on the edge nearest to the vert point.  (TODO - need to think about how to
+// handle multiple verts associated with same edge - may want to iterate starting with the closest
+// and see if splitting clears the others...)
+int
+bedge_split_near_vert(
+	std::map<cdt_mesh::bedge_seg_t *, overt_t *> &edge_vert,
+	std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap
+	)
+{
+    std::map<cdt_mesh::bedge_seg_t *, ON_3dPoint> edge_pnt;
+    std::map<cdt_mesh::bedge_seg_t *, overt_t *>::iterator ev_it;
+    for (ev_it = edge_vert.begin(); ev_it != edge_vert.end(); ev_it++) {
+	cdt_mesh::bedge_seg_t *eseg = ev_it->first;
+	overt_t *v = ev_it->second;
+	ON_3dPoint p = v->vpnt();
+	edge_pnt[eseg] = p;
+    }
+    return bedge_split_near_pnt(edge_pnt, f2omap);
+}
 
 void
 bedges_rtree(
@@ -1752,6 +1767,7 @@ refine_edges_near_verts(
 
     // Iterate over verts, checking for nearby edges.
     std::map<cdt_mesh::bedge_seg_t *, overt_t *> edge_vert;
+    std::map<cdt_mesh::bedge_seg_t *, ON_3dPoint> edge_pnt;
     std::set<omesh_t *>::iterator a_it;
     for (a_it = ameshes.begin(); a_it != ameshes.end(); a_it++) {
 	omesh_t *omesh = *a_it;
@@ -1788,10 +1804,12 @@ refine_edges_near_verts(
 			if (dv > dline) {
 			    used_overts.erase(edge_vert[eseg]);
 			    edge_vert[eseg] = v;
+			    edge_pnt[eseg] = s1_p;
 			    used_overts.insert(v);
 			}
 		    } else {
 			edge_vert[eseg] = v;
+			edge_pnt[eseg] = s1_p;
 			used_overts.insert(v);
 			used_verts++;
 		    }
@@ -1814,7 +1832,7 @@ refine_edges_near_verts(
 	    omesh->refine_pnt_remove(*v_it);
 	}
     }
-    return bedge_split_near_vert(edge_vert, f2omap);
+    return bedge_split_near_pnt(edge_pnt, f2omap);
 }
 
 #if 0
@@ -1858,7 +1876,10 @@ check_faces_validity(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_me
 // incorporate its closest neighbor if it projects cleanly into the
 // triangle (i.e it is "local").
 bool
-characterize_tri_verts(omesh_t *omesh1, omesh_t *omesh2, cdt_mesh::triangle_t &t1, cdt_mesh::triangle_t &t2)
+characterize_tri_verts(
+	omesh_t *omesh1, omesh_t *omesh2, cdt_mesh::triangle_t &t1, cdt_mesh::triangle_t &t2,
+	std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> &edge_verts
+	)
 {
     bool have_refinement_pnt = false;
     ON_Plane plane1 = omesh1->fmesh->tplane(t1);
@@ -1872,7 +1893,8 @@ characterize_tri_verts(omesh_t *omesh1, omesh_t *omesh2, cdt_mesh::triangle_t &t
 	// at the nearest surface point
 	std::set<size_t> vtris = omesh2->fmesh->v2tris[t2.v[i]];
 	int tri_isect_cnt = 0;
-	std::set<size_t>::iterator vt_it;
+	std::set<cdt_mesh::uedge_t> face_edges;
+	std::set<size_t>::iterator vt_it, ve_it;
 	for (vt_it = vtris.begin(); vt_it != vtris.end(); vt_it++) {
 	    cdt_mesh::triangle_t ttri = omesh2->fmesh->tris_vect[*vt_it];
 	    point_t isectpt1, isectpt2;
@@ -1882,6 +1904,20 @@ characterize_tri_verts(omesh_t *omesh1, omesh_t *omesh2, cdt_mesh::triangle_t &t
 	    if (tri_isect_cnt > 1) {
 		omesh1->refine_pnt_add(v);
 		have_refinement_pnt = true;
+
+		// If this point is also close to a brep face edge, list that edge/vert
+		// combination for splitting
+		ON_3dPoint vp = v->vpnt();
+		cdt_mesh::uedge_t closest_edge = omesh1->fmesh->closest_uedge(t1, vp);
+		if (omesh1->fmesh->brep_edges.find(closest_edge) != omesh1->fmesh->brep_edges.end()) {
+		    cdt_mesh::bedge_seg_t *bseg = omesh1->fmesh->ue2b_map[closest_edge];
+		    if (!bseg) {
+			std::cout << "couldn't find bseg pointer??\n";
+		    } else {
+			edge_verts[bseg].insert(v);
+		    }
+		}
+
 		break;
 	    }
 	}
@@ -1892,7 +1928,10 @@ characterize_tri_verts(omesh_t *omesh1, omesh_t *omesh2, cdt_mesh::triangle_t &t
 
 
 int
-characterize_tri_intersections(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs)
+characterize_tri_intersections(
+	std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs,
+	std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> &edge_verts
+	)
 {
     int ret = 0;
     std::set<std::pair<omesh_t *, omesh_t *>>::iterator cp_it;
@@ -1921,8 +1960,8 @@ characterize_tri_intersections(std::set<std::pair<omesh_t *, omesh_t *>> &check_
 	    int isect = tri_isect(omesh1->fmesh, t1, omesh2->fmesh, t2, &isectpt1, &isectpt2);
 	    if (!isect) continue;
 
-	    bool h_ip_1 = characterize_tri_verts(omesh1, omesh2, t1, t2);
-	    bool h_ip_2 = characterize_tri_verts(omesh2, omesh1, t2, t1);
+	    bool h_ip_1 = characterize_tri_verts(omesh1, omesh2, t1, t2, edge_verts);
+	    bool h_ip_2 = characterize_tri_verts(omesh2, omesh1, t2, t1, edge_verts);
 	    bool have_interior_pnt = (h_ip_1 || h_ip_2);
 
 	    if (!have_interior_pnt) {
@@ -2299,9 +2338,12 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 
     // Examine the triangle intersections, performing initial breakdown and finding points
     // that need to be handled by neighboring meshes.
-    while (characterize_tri_intersections(ocheck_pairs) == 2) {
+    std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> edge_verts;
+    edge_verts.clear();
+    while (characterize_tri_intersections(ocheck_pairs, edge_verts) == 2) {
 	refine_omeshes(ocheck_pairs, f2omap);
 	face_ov_cnt = face_omesh_ovlps(ocheck_pairs);
+	edge_verts.clear();
     }
 
     avcnt = adjust_close_verts(ocheck_pairs);
@@ -2330,6 +2372,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 
     //process_near_edge_pnts(face_npnts);
 
+    check_faces_validity(check_pairs, 1);
     face_ov_cnt = face_omesh_ovlps(ocheck_pairs);
     //std::cout << "Post interior-near-edge split overlap cnt: " << face_ov_cnt << "\n";
 

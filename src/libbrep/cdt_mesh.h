@@ -513,6 +513,10 @@ public:
     ON_Plane tplane(const triangle_t &t);
     std::set<uedge_t> uedges(const triangle_t &t);
 
+    // Find the edge of the triangle that is closest to the
+    // specified point
+    uedge_t closest_uedge(const triangle_t &t, ON_3dPoint &p);
+
     // Plot3 generation routines for debugging
     void boundary_edges_plot(const char *filename);
     void face_neighbors_plot(const triangle_t &f, const char *filename);
