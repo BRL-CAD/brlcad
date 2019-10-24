@@ -1563,58 +1563,66 @@ ovlp_split_edge(std::set<cdt_mesh::bedge_seg_t *> *nsegs, cdt_mesh::bedge_seg_t 
     return replaced_tris;
 }
 
+// Find the point on the edge nearest to the point, and split the edge at that point.
 int
-bedge_split_near_pnt(
-	std::map<cdt_mesh::bedge_seg_t *, ON_3dPoint> &edge_pnt,
-	std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap
+bedge_split_at_t(
+	cdt_mesh::bedge_seg_t *eseg, double t,
+	std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap,
+	std::set<cdt_mesh::bedge_seg_t *> *nsegs
 	)
 {
     int replaced_tris = 0;
-    // 2.  Find the point on the edge nearest to the vert point.  (TODO - need to think about how to
-    // handle multiple verts associated with same edge - may want to iterate starting with the closest
-    // and see if splitting clears the others...)
-    std::map<cdt_mesh::bedge_seg_t *, ON_3dPoint>::iterator ep_it;
-    for (ep_it = edge_pnt.begin(); ep_it != edge_pnt.end(); ep_it++) {
-	cdt_mesh::bedge_seg_t *eseg = ep_it->first;
-	ON_3dPoint p = ep_it->second;
-	ON_NurbsCurve *nc = eseg->nc;
-	ON_Interval domain(eseg->edge_start, eseg->edge_end);
-	double t;
-	ON_NurbsCurve_GetClosestPoint(&t, nc, p, 0.0, &domain);
-	ON_3dPoint cep = nc->PointAt(t);
-	double epdist1 = eseg->e_start->DistanceTo(cep);
-	double epdist2 = eseg->e_end->DistanceTo(cep);
-	double lseg_check = 0.1 * eseg->e_start->DistanceTo(*eseg->e_end);
-	if (epdist1 > lseg_check && epdist2 > lseg_check) {
-	    // If the point is not close to a start/end point on the edge then split the edge.
+    ON_NurbsCurve *nc = eseg->nc;
+    ON_3dPoint cep = nc->PointAt(t);
+    double epdist1 = eseg->e_start->DistanceTo(cep);
+    double epdist2 = eseg->e_end->DistanceTo(cep);
+    double lseg_check = 0.1 * eseg->e_start->DistanceTo(*eseg->e_end);
+    if (epdist1 > lseg_check && epdist2 > lseg_check) {
+	// If the point is not close to a start/end point on the edge then split the edge.
 
 #if 0
-	    /* NOTE - need to get this information before ovlp_split_edge invalidates eseg */
-	    struct ON_Brep_CDT_State *s_cdt_edge = (struct ON_Brep_CDT_State *)eseg->p_cdt;
-	    int f_id1 = s_cdt_edge->brep->m_T[eseg->tseg1->trim_ind].Face()->m_face_index;
-	    int f_id2 = s_cdt_edge->brep->m_T[eseg->tseg2->trim_ind].Face()->m_face_index;
+	/* NOTE - need to get this information before ovlp_split_edge invalidates eseg */
+	struct ON_Brep_CDT_State *s_cdt_edge = (struct ON_Brep_CDT_State *)eseg->p_cdt;
+	int f_id1 = s_cdt_edge->brep->m_T[eseg->tseg1->trim_ind].Face()->m_face_index;
+	int f_id2 = s_cdt_edge->brep->m_T[eseg->tseg2->trim_ind].Face()->m_face_index;
 #endif
-	    int rtris = ovlp_split_edge(NULL, eseg, t, f2omap);
-	    if (rtris >= 0) {
-		replaced_tris += rtris;
+	int rtris = ovlp_split_edge(nsegs, eseg, t, f2omap);
+	if (rtris >= 0) {
+	    replaced_tris += rtris;
 #if 0
-		cdt_mesh::cdt_mesh_t &fmesh_f1 = s_cdt_edge->fmeshes[f_id1];
-		cdt_mesh::cdt_mesh_t &fmesh_f2 = s_cdt_edge->fmeshes[f_id2];
-		//std::cout << s_cdt_edge->name << " face " << fmesh_f1.f_id << " validity: " << fmesh_f1.valid(1) << "\n";
-		//std::cout << s_cdt_edge->name << " face " << fmesh_f2.f_id << " validity: " << fmesh_f2.valid(1) << "\n";
-		struct bu_vls fename = BU_VLS_INIT_ZERO;
-		bu_vls_sprintf(&fename, "%s-%d_post_edge_tris.plot3", s_cdt_edge->name, fmesh_f1.f_id);
-		fmesh_f1.tris_plot(bu_vls_cstr(&fename));
-		bu_vls_sprintf(&fename, "%s-%d_post_edge_tris.plot3", s_cdt_edge->name, fmesh_f2.f_id);
-		fmesh_f2.tris_plot(bu_vls_cstr(&fename));
-		bu_vls_free(&fename);
+	    cdt_mesh::cdt_mesh_t &fmesh_f1 = s_cdt_edge->fmeshes[f_id1];
+	    cdt_mesh::cdt_mesh_t &fmesh_f2 = s_cdt_edge->fmeshes[f_id2];
+	    //std::cout << s_cdt_edge->name << " face " << fmesh_f1.f_id << " validity: " << fmesh_f1.valid(1) << "\n";
+	    //std::cout << s_cdt_edge->name << " face " << fmesh_f2.f_id << " validity: " << fmesh_f2.valid(1) << "\n";
+	    struct bu_vls fename = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&fename, "%s-%d_post_edge_tris.plot3", s_cdt_edge->name, fmesh_f1.f_id);
+	    fmesh_f1.tris_plot(bu_vls_cstr(&fename));
+	    bu_vls_sprintf(&fename, "%s-%d_post_edge_tris.plot3", s_cdt_edge->name, fmesh_f2.f_id);
+	    fmesh_f2.tris_plot(bu_vls_cstr(&fename));
+	    bu_vls_free(&fename);
 #endif
-	    } else {
-		std::cout << "split failed\n";
-	    }
+	} else {
+	    std::cout << "split failed\n";
 	}
+    } else {
+	std::cout << "split point too close to vertices - skip\n";
     }
     return replaced_tris;
+}
+
+// Find the point on the edge nearest to the point, and split the edge at that point.
+int
+bedge_split_near_pnt(
+	cdt_mesh::bedge_seg_t *eseg, ON_3dPoint &p,
+	std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap,
+	std::set<cdt_mesh::bedge_seg_t *> *nsegs
+	)
+{
+    ON_NurbsCurve *nc = eseg->nc;
+    ON_Interval domain(eseg->edge_start, eseg->edge_end);
+    double t;
+    ON_NurbsCurve_GetClosestPoint(&t, nc, p, 0.0, &domain);
+    return bedge_split_at_t(eseg, t, f2omap, nsegs);
 }
 
 // Find the point on the edge nearest to the vert point.  (TODO - need to think about how to
@@ -1626,15 +1634,66 @@ bedge_split_near_vert(
 	std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap
 	)
 {
-    std::map<cdt_mesh::bedge_seg_t *, ON_3dPoint> edge_pnt;
+    int replaced_tris = 0;
     std::map<cdt_mesh::bedge_seg_t *, overt_t *>::iterator ev_it;
     for (ev_it = edge_vert.begin(); ev_it != edge_vert.end(); ev_it++) {
 	cdt_mesh::bedge_seg_t *eseg = ev_it->first;
 	overt_t *v = ev_it->second;
 	ON_3dPoint p = v->vpnt();
-	edge_pnt[eseg] = p;
+	replaced_tris += bedge_split_near_pnt(eseg, p, f2omap, NULL);
     }
-    return bedge_split_near_pnt(edge_pnt, f2omap);
+    return replaced_tris;
+}
+
+int
+bedge_split_near_verts(
+	std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> &edge_verts,
+	std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap
+	)
+{
+    int replaced_tris = 0;
+    std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>>::iterator ev_it;
+    for (ev_it = edge_verts.begin(); ev_it != edge_verts.end(); ev_it++) {
+	std::set<overt_t *> verts = ev_it->second;
+	std::set<cdt_mesh::bedge_seg_t *> segs;
+	segs.insert(ev_it->first);
+	while (verts.size()) {
+	    overt_t *v = *verts.begin();
+	    ON_3dPoint p = v->vpnt();
+	    verts.erase(v);
+
+	    cdt_mesh::bedge_seg_t *eseg = NULL;
+	    double split_t = -1.0;
+	    double closest_dist = DBL_MAX;
+	    std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
+	    std::cout << "segs size: " << segs.size() << "\n";
+	    for (e_it = segs.begin(); e_it != segs.end(); e_it++) {
+		eseg = *e_it;
+		ON_NurbsCurve *nc = eseg->nc;
+		ON_Interval domain(eseg->edge_start, eseg->edge_end);
+		double t;
+		ON_NurbsCurve_GetClosestPoint(&t, nc, p, 0.0, &domain);
+		ON_3dPoint cep = nc->PointAt(t);
+		double ecdist = cep.DistanceTo(p);
+		if (closest_dist > ecdist) {
+		    std::cout << "closest_dist: " << closest_dist << "\n";
+		    std::cout << "ecdist: " << ecdist << "\n";
+		    closest_dist = ecdist;
+		    eseg = eseg;
+		    split_t = t;
+		}
+	    }
+
+	    std::set<cdt_mesh::bedge_seg_t *> nsegs;
+	    int ntri_cnt = bedge_split_at_t(eseg, split_t, f2omap, &nsegs);
+	    if (ntri_cnt) {
+		segs.erase(eseg);
+		replaced_tris += ntri_cnt; 
+		segs.insert(nsegs.begin(), nsegs.end());
+	    }
+	}
+    }
+    return replaced_tris;
 }
 
 void
@@ -1742,97 +1801,6 @@ split_brep_face_edges_near_verts(
     fclose(plot_file);
 
     return bedge_split_near_vert(edge_vert, f2omap);
-}
-
-
-int
-refine_edges_near_verts(
-	std::set<struct ON_Brep_CDT_State *> &a_cdt,
-	std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs,
-	std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap
-	)
-{
-    // TODO - shouldn't be rebuilding this every time - maintain and add/remove
-    // edges during splitting...
-    std::map<long, cdt_mesh::bedge_seg_t *> b_edges;
-    RTree<long, double, 3> bedge_tree;
-    bedges_rtree(&bedge_tree, &b_edges, a_cdt);
-
-    std::set<std::pair<omesh_t *, omesh_t *>>::iterator cp_it;
-    std::set<omesh_t *> ameshes;
-    for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
-	ameshes.insert(cp_it->first);
-	ameshes.insert(cp_it->second);
-    }
-
-    // Iterate over verts, checking for nearby edges.
-    std::map<cdt_mesh::bedge_seg_t *, overt_t *> edge_vert;
-    std::map<cdt_mesh::bedge_seg_t *, ON_3dPoint> edge_pnt;
-    std::set<omesh_t *>::iterator a_it;
-    for (a_it = ameshes.begin(); a_it != ameshes.end(); a_it++) {
-	omesh_t *omesh = *a_it;
-	std::set<overt_t *> used_overts;
-	std::set<std::pair<long, long>> vert_edge_pairs;
-	size_t ovlp_cnt = omesh->refine_tree.Overlaps(bedge_tree, &vert_edge_pairs);
-	int used_verts = 0;
-	if (ovlp_cnt && vert_edge_pairs.size()) {
-	    std::set<std::pair<long, long>>::iterator v_it;
-	    for (v_it = vert_edge_pairs.begin(); v_it != vert_edge_pairs.end(); v_it++) {
-		overt_t *v = omesh->refinement_overts[v_it->first];
-		if (!v) {
-		    std::cout << "invalid overt??\n";
-		    continue;
-		}
-		ON_3dPoint p = v->vpnt();
-		ON_3dPoint s1_p;
-		ON_3dVector s1_n;
-		closest_surf_pnt(s1_p, s1_n, *omesh->fmesh, &p, v->bb.Diagonal().Length());
-		cdt_mesh::bedge_seg_t *eseg = b_edges[v_it->second];
-
-		ON_3dPoint *p3d1 = eseg->e_start;
-		ON_3dPoint *p3d2 = eseg->e_end;
-		ON_Line line(*p3d1, *p3d2);
-		double d1 = p3d1->DistanceTo(s1_p);
-		double d2 = p3d2->DistanceTo(s1_p);
-		double dline = 2*p.DistanceTo(line.ClosestPointTo(s1_p));
-		if (d1 > dline && d2 > dline) {
-		    std::cout << "ACCEPT: d1: " << d1 << ", d2: " << d2 << ", dline: " << dline << "\n";
-		    if (edge_vert.find(eseg) != edge_vert.end()) {
-			ON_3dPoint pv = edge_vert[eseg]->vpnt();
-			closest_surf_pnt(s1_p, s1_n, *omesh->fmesh, &pv, edge_vert[eseg]->bb.Diagonal().Length());
-			double dv = s1_p.DistanceTo(line.ClosestPointTo(s1_p));
-			if (dv > dline) {
-			    used_overts.erase(edge_vert[eseg]);
-			    edge_vert[eseg] = v;
-			    edge_pnt[eseg] = s1_p;
-			    used_overts.insert(v);
-			}
-		    } else {
-			edge_vert[eseg] = v;
-			edge_pnt[eseg] = s1_p;
-			used_overts.insert(v);
-			used_verts++;
-		    }
-#if 0
-		    pl_color(plot_file, 255, 0, 0);
-		    BBOX_PLOT(plot_file, v->bb);
-		    pl_color(plot_file, 0, 0, 255);
-		    ON_BoundingBox edge_bb = edge_bbox(eseg);
-		    BBOX_PLOT(plot_file, edge_bb);
-#endif
-		} else {
-		    std::cout << "REJECT: d1: " << d1 << ", d2: " << d2 << ", dline: " << dline << "\n";
-		}
-	    }
-	    //std::cout << "used_verts: " << used_verts << "\n";
-	}
-
-	std::set<overt_t *>::iterator v_it;
-	for (v_it = used_overts.begin(); v_it != used_overts.end(); v_it++) {
-	    omesh->refine_pnt_remove(*v_it);
-	}
-    }
-    return bedge_split_near_pnt(edge_pnt, f2omap);
 }
 
 #if 0
@@ -2355,7 +2323,12 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	close_vert_checks++;
     }
 
-    refine_edges_near_verts(a_cdt, ocheck_pairs, f2omap);
+    std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>>::iterator e_it;
+    for (e_it = edge_verts.begin(); e_it != edge_verts.end(); e_it++) {
+	std::cout << "Edge curve has " << e_it->second.size() << " verts\n";
+    }
+
+    bedge_split_near_verts(edge_verts, f2omap);
 
     // Calculate omesh refinement point closest surf points
     //
