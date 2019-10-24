@@ -151,7 +151,6 @@ mkdir brlcad_git && cd brlcad_git
 git clone --mirror file://$PWD/cvs_git .git
 git init
 git remote rm origin
-../archive_branches.sh
 
 echo "Do a file git gc --aggressive"
 git gc --aggressive

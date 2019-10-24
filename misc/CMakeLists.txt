@@ -113,7 +113,6 @@ set(misc_ignore_files
   repoconv/NOTES
   repoconv/RESUME.sh
   repoconv/account-map
-  repoconv/archive_branches.sh
   repoconv/audit_merges/audit_merges.cxx
   repoconv/audit_merges/commit_list.txt
   repoconv/checkout_dercs.sh
