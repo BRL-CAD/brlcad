@@ -1530,6 +1530,10 @@ ovlp_split_edge(std::set<cdt_mesh::bedge_seg_t *> *nsegs, cdt_mesh::bedge_seg_t 
     // TODO !!!!!! some bug here (or in replace_edge_split_tri)
     // that is introducing incorrect triangles.  Perhaps the "closest"
     // point isn't ending up between the triangle vertices properly?)
+    //
+    // May also be messing with the triangles by "adjusting" edge points, which will
+    // disassociate them from their edge curve parameter - need to try
+    // try locking those and only allowing interior vertices to move...
     long np_id;
     if (f_id1 == f_id2) {
 	std::set<size_t> ftris;
