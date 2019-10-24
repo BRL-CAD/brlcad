@@ -96,8 +96,10 @@ class overt_t {
 	omesh_t *omesh;
 	long p_id;
 
+	bool edge_vert();
+
 	double min_len();
-	//double max_len();
+
 	ON_BoundingBox bb;
 
 	long closest_uedge;
@@ -190,6 +192,11 @@ ON_3dPoint
 overt_t::vpnt() {
     ON_3dPoint vp = *(omesh->fmesh->pnts[p_id]);
     return vp;
+}
+
+bool
+overt_t::edge_vert() {
+    return (omesh->fmesh->ep.find(p_id) != omesh->fmesh->ep.end());
 }
 
 void
@@ -1243,10 +1250,66 @@ closest_overt(std::set<overt_t *> &verts, overt_t *v)
 void
 adjust_overt_pair(overt_t *v1, overt_t *v2)
 {
+    // If we've got two edge vertices, no dice
+    if (v1->edge_vert() && v2->edge_vert()) return;
+
     ON_3dPoint p1 = v1->vpnt();
     ON_3dPoint p2 = v2->vpnt();
     double pdist = p1.DistanceTo(p2);
-    ON_Line l(p1,p2);
+    ON_3dPoint s1_p, s2_p;
+    ON_3dVector s1_n, s2_n;
+
+    if (v1->edge_vert()) {
+	if (pdist > v2->min_len()*0.5) {
+	    // It's all up to v2 - if we're too far away, skip it
+	    return;
+	}
+	bool f2_eval = closest_surf_pnt(s2_p, s2_n, *v2->omesh->fmesh, &p1, pdist);
+	if (f2_eval) {
+	    (*v2->omesh->fmesh->pnts[v2->p_id]) = s2_p;
+	    (*v2->omesh->fmesh->normals[v2->omesh->fmesh->nmap[v2->p_id]]) = s2_n;
+
+	    // We just changed the vertex point values - need to update all the
+	    // edge edges which might be impacted...
+	    v2->omesh->verts_one_ring_update(v2->p_id);
+
+	    // If we're refining, adjustment is all we're going to do with these verts
+	    v1->omesh->refine_pnt_remove(v2);
+	    v2->omesh->refine_pnt_remove(v1);
+	    return;
+	} else {
+	    struct ON_Brep_CDT_State *s_cdt2 = (struct ON_Brep_CDT_State *)v2->omesh->fmesh->p_cdt;
+	    std::cout << s_cdt2->name << " face " << v2->omesh->fmesh->f_id << " closest point eval failure\n";
+	}
+	return;
+    }
+
+    if (v2->edge_vert()) {
+	if (pdist > v1->min_len()*0.5) {
+	    // It's all up to v1 - if we're too far away, skip it
+	    return;
+	}
+	bool f1_eval = closest_surf_pnt(s1_p, s1_n, *v1->omesh->fmesh, &p2, pdist);
+	if (f1_eval) {
+	    (*v1->omesh->fmesh->pnts[v1->p_id]) = s1_p;
+	    (*v1->omesh->fmesh->normals[v1->omesh->fmesh->nmap[v1->p_id]]) = s1_n;
+
+	    // We just changed the vertex point values - need to update all the
+	    // edge edges which might be impacted...
+	    v1->omesh->verts_one_ring_update(v1->p_id);
+
+	    // If we're refining, adjustment is all we're going to do with these verts
+	    v1->omesh->refine_pnt_remove(v2);
+	    v2->omesh->refine_pnt_remove(v1);
+	    return;
+	} else {
+	    struct ON_Brep_CDT_State *s_cdt1 = (struct ON_Brep_CDT_State *)v1->omesh->fmesh->p_cdt;
+	    std::cout << s_cdt1->name << " face " << v1->omesh->fmesh->f_id << " closest point eval failure\n";
+	}
+	return;
+    }
+
+   ON_Line l(p1,p2);
     // Weight the t parameter on the line so we are closer to the vertex
     // with the shorter edge length (i.e. less freedom to move without
     // introducing locally severe mesh distortions.)
@@ -1255,8 +1318,6 @@ adjust_overt_pair(overt_t *v1, overt_t *v2)
     if ((p1.DistanceTo(p_wavg) > v1->min_len()*0.5) || (p2.DistanceTo(p_wavg) > v2->min_len()*0.5)) {
 	std::cout << "WARNING: large point shift compared to triangle edge length.\n";
     }
-    ON_3dPoint s1_p, s2_p;
-    ON_3dVector s1_n, s2_n;
     bool f1_eval = closest_surf_pnt(s1_p, s1_n, *v1->omesh->fmesh, &p_wavg, pdist);
     bool f2_eval = closest_surf_pnt(s2_p, s2_n, *v2->omesh->fmesh, &p_wavg, pdist);
     if (f1_eval && f2_eval) {
@@ -1274,11 +1335,6 @@ adjust_overt_pair(overt_t *v1, overt_t *v2)
 	v1->omesh->refine_pnt_remove(v2);
 	v2->omesh->refine_pnt_remove(v1);
 
-#if 0
-	std::cout << "p_wavg: " << p_wavg.x << "," << p_wavg.y << "," << p_wavg.z << "\n";
-	std::cout << s_cdt1->name << " face " << fmesh1.f_id << " pnt " << v1->p_id << " (elen: " << e1 << "->" << v1->e_minlen << ") moved " << p1.DistanceTo(s1_p) << ": " << p1.x << "," << p1.y << "," << p1.z << " -> " << s1_p.x << "," << s1_p.y << "," << s1_p.z << "\n";
-	std::cout << s_cdt2->name << " face " << fmesh2.f_id << " pnt " << v2->p_id << " (elen: " << e2 << "->" << v2->e_minlen << ") moved " << p2.DistanceTo(s2_p) << ": " << p2.x << "," << p2.y << "," << p2.z << " -> " << s2_p.x << "," << s2_p.y << "," << s2_p.z << "\n";
-#endif
     } else {
 	struct ON_Brep_CDT_State *s_cdt1 = (struct ON_Brep_CDT_State *)v1->omesh->fmesh->p_cdt;
 	struct ON_Brep_CDT_State *s_cdt2 = (struct ON_Brep_CDT_State *)v2->omesh->fmesh->p_cdt;
