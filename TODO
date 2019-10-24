@@ -18,6 +18,9 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* rtedge.sh regression script is seriously unhappy about paths with
+  spaces in them - odd pathnames distcheck is failing
+
 * implement uv-mapping callback so we can texture-map BoT, NMG, and
   NURBS geometry
 
