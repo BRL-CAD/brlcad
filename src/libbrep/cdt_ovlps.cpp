@@ -1527,6 +1527,9 @@ ovlp_split_edge(std::set<cdt_mesh::bedge_seg_t *> *nsegs, cdt_mesh::bedge_seg_t 
 	f2.ue2b_map[ue_2] = es; 
     }
 
+    // TODO !!!!!! some bug here (or in replace_edge_split_tri)
+    // that is introducing incorrect triangles.  Perhaps the "closest"
+    // point isn't ending up between the triangle vertices properly?)
     long np_id;
     if (f_id1 == f_id2) {
 	std::set<size_t> ftris;
