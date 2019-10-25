@@ -1161,6 +1161,13 @@ tri_longest_edge(cdt_mesh::cdt_mesh_t *fmesh, long t_ind)
     return ue;
 }
 
+// TODO - need to update this to use the bn_fit_plane on two
+// triangles selected by an edge and check that projection,
+// not just the triangle - a point near an interior edge may not
+// project onto either triangle but will be in the middle of the
+// polygon defined by both triangles.  This will basically be a
+// more specialized version of the repair logic in cdt_mesh that
+// builds a polygon for cdt.
 bool
 projects_inside_tri(
 	cdt_mesh::cdt_mesh_t *fmesh,
@@ -1583,13 +1590,6 @@ ovlp_split_edge(std::set<cdt_mesh::bedge_seg_t *> *nsegs, cdt_mesh::bedge_seg_t 
 	f2.ue2b_map[ue_2] = es; 
     }
 
-    // TODO !!!!!! some bug here (or in replace_edge_split_tri)
-    // that is introducing incorrect triangles.  Perhaps the "closest"
-    // point isn't ending up between the triangle vertices properly?)
-    //
-    // May also be messing with the triangles by "adjusting" edge points, which will
-    // disassociate them from their edge curve parameter - need to try
-    // try locking those and only allowing interior vertices to move...
     long np_id;
     if (f_id1 == f_id2) {
 	std::set<size_t> ftris;
@@ -1931,12 +1931,6 @@ characterize_tri_verts(
 	    std::cout << "WARNING: - no overt for vertex??\n";
 	}
 
-	ON_3dPoint p = v->vpnt();
-	ON_3dPoint prob_pnt(3.04789,7.50032,22.93);
-	if (p.DistanceTo(prob_pnt) < 0.01) {
-	    std::cout << "problem\n";
-	}
-
 	// If we've got more than one triangle from the other mesh breaking through
 	// this triangle and sharing this vertex, list it as a point worth splitting
 	// at the nearest surface point
@@ -2131,63 +2125,62 @@ refine_omeshes(
     }
 }
 
-#if 0
 void
-split_omeshes(
-	std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs,
-	std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap
-	)
+omesh_interior_edge_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs)
 {
     std::set<omesh_t *> omeshes;
     std::set<std::pair<omesh_t *, omesh_t *>>::iterator cp_it;
     for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
 	omesh_t *omesh1 = cp_it->first;
 	omesh_t *omesh2 = cp_it->second;
-	if (omesh1->split_edges.size()) {
+	if (omesh1->refinement_overts.size()) {
 	    omeshes.insert(omesh1);
 	}
-	if (omesh2->split_edges.size()) {
+	if (omesh2->refinement_overts.size()) {
 	    omeshes.insert(omesh2);
 	}
     }
     std::cout << "Need to split triangles in " << omeshes.size() << " meshes\n";
 
+    std::set<omesh_t *>::iterator o_it;
     for (o_it = omeshes.begin(); o_it != omeshes.end(); o_it++) {
 	omesh_t *omesh = *o_it;
 
 	std::map<long, std::set<std::pair<ON_3dPoint,ON_3dVector>>> edge_sets;
 
-	std::set<overt_t*>::iterator i_t;
-	for (i_t = omesh->refinement_pnts.begin(); i_t != omesh->refinement_pnts.end(); i_t++) {
-	    overt_t* ov = *i_t;
+	std::map<long, overt_t*>::iterator i_t;
+	for (i_t = omesh->refinement_overts.begin(); i_t != omesh->refinement_overts.end(); i_t++) {
+
+	    overt_t *ov = i_t->second;
+	    ON_3dPoint ovpnt = ov->vpnt();
 	    ON_3dPoint spnt;
 	    ON_3dVector sn;
 	    double dist = ov->bb.Diagonal().Length() * 10;
-	    closest_surf_pnt(spnt, sn, *omesh->fmesh, ov->omesh->fmesh->pnts[ov->p_id], 2*dist);
+	    closest_surf_pnt(spnt, sn, *omesh->fmesh, &ovpnt, 2*dist);
 
-	    // Find the closest edge to the closest surface point, and associate the point with that edge	    
-
+	    // Find the closest edges
 	    std::set<size_t> close_edges = omesh->interior_uedges_search(ov->bb);
-	    
-	    closest_uedge = -1;
+
+	    double mindist = DBL_MAX; 
+	    long closest_uedge = -1;
 	    std::set<size_t>::iterator c_it;
 	    for (c_it = close_edges.begin(); c_it != close_edges.end(); c_it++) {
 		cdt_mesh::uedge_t ue = omesh->interior_uedges[*c_it];
-		ON_3dPoint *p3d1 = omesh->fmesh->pnts[ue.v[0]];
-		ON_3dPoint *p3d2 = omesh->fmesh->pnts[ue.v[1]];
-		ON_Line line(*p3d1, *p3d2);
-		double dline = vpnt.DistanceTo(line.ClosestPointTo(vpnt));
+		double dline = omesh->fmesh->uedge_dist(ue, spnt);
 		if (mindist > dline) {
 		    closest_uedge = *c_it;
 		    mindist = dline;
 		}
 	    }
 
-	    edge_sets[ov->closest_edge].insert(ov);
+	    edge_sets[closest_uedge].insert(std::make_pair(spnt, sn));
 	}
+
+	struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)omesh->fmesh->p_cdt;
+	std::cout << s_cdt->name << " face " << omesh->fmesh->f_id << " has " << edge_sets.size() << " sets.\n";
     }
 
-
+#if 0
 	std::set<>::iterator u_it;
 	for (u_it = omesh->split_edges.begin(); u_it != omesh->split_edges.end(); u_it++) {
 	    cdt_mesh::uedge_t ue = *u_it;
@@ -2212,8 +2205,8 @@ split_omeshes(
 	    omesh->vert_add(f3ind);
 	}
     }
-}
 #endif
+}
 
 #if 0
 void
@@ -2398,6 +2391,16 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	edge_verts.clear();
     }
 
+    // If a refinement point has as its closest edge in the opposite mesh triangle a
+    // brep face edge, split that edge at the point closest to the refinement point.
+    // Doing this to produce good mesh behavior when we're close to edges.
+    std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>>::iterator e_it;
+    for (e_it = edge_verts.begin(); e_it != edge_verts.end(); e_it++) {
+	std::cout << "Edge curve has " << e_it->second.size() << " verts\n";
+    }
+
+    bedge_split_near_verts(edge_verts, f2omap);
+
     avcnt = adjust_close_verts(ocheck_pairs);
     if (avcnt) {
 	std::cout << close_vert_checks << ": Adjusted " << avcnt << " vertices\n";
@@ -2407,12 +2410,8 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	close_vert_checks++;
     }
 
-    std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>>::iterator e_it;
-    for (e_it = edge_verts.begin(); e_it != edge_verts.end(); e_it++) {
-	std::cout << "Edge curve has " << e_it->second.size() << " verts\n";
-    }
 
-    bedge_split_near_verts(edge_verts, f2omap);
+    omesh_interior_edge_verts(ocheck_pairs);
 
     // Calculate omesh refinement point closest surf points
     //

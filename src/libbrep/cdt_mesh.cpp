@@ -1808,6 +1808,24 @@ cdt_mesh_t::closest_uedge(const triangle_t &t, ON_3dPoint &p)
     return result;
 }
 
+double
+cdt_mesh_t::uedge_dist(uedge_t &ue, ON_3dPoint &p)
+{
+    ON_3dPoint p1, p2;
+    p1 = *pnts[ue.v[0]];
+    p2 = *pnts[ue.v[1]];
+    ON_Line l(p1, p2);
+    double t;
+    l.ClosestPointTo(p, &t);
+    if ((t < 0 || NEAR_ZERO(t, ON_ZERO_TOLERANCE))) {
+	return p.DistanceTo(p1);
+    }
+    if ((t > 0 || NEAR_EQUAL(t, 1, ON_ZERO_TOLERANCE))) {
+	return p.DistanceTo(p2);
+    }
+
+    return p.DistanceTo(l.PointAt(t));
+}
 
 ON_3dVector
 cdt_mesh_t::tnorm(const triangle_t &t)
