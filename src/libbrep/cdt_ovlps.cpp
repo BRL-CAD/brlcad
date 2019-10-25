@@ -1720,18 +1720,29 @@ bedge_split_near_verts(
 	std::set<overt_t *> verts = ev_it->second;
 	std::set<cdt_mesh::bedge_seg_t *> segs;
 	segs.insert(ev_it->first);
+#if 0
+	ON_3dPoint problem(3.44525,7.67444,22.9198);
+	std::set<overt_t *>::iterator v_it;
+	for (v_it = verts.begin(); v_it != verts.end(); v_it++) {
+	    overt_t *v = *v_it;
+	    ON_3dPoint p = v->vpnt();
+	    if (problem.DistanceTo(p) < 0.01) {
+		std::cout << "problem\n";
+	    }
+	}
+#endif
 	while (verts.size()) {
 	    overt_t *v = *verts.begin();
 	    ON_3dPoint p = v->vpnt();
 	    verts.erase(v);
 
-	    cdt_mesh::bedge_seg_t *eseg = NULL;
+	    cdt_mesh::bedge_seg_t *eseg_split = NULL;
 	    double split_t = -1.0;
 	    double closest_dist = DBL_MAX;
 	    std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
 	    std::cout << "segs size: " << segs.size() << "\n";
 	    for (e_it = segs.begin(); e_it != segs.end(); e_it++) {
-		eseg = *e_it;
+		cdt_mesh::bedge_seg_t *eseg = *e_it;
 		ON_NurbsCurve *nc = eseg->nc;
 		ON_Interval domain(eseg->edge_start, eseg->edge_end);
 		double t;
@@ -1742,15 +1753,15 @@ bedge_split_near_verts(
 		    std::cout << "closest_dist: " << closest_dist << "\n";
 		    std::cout << "ecdist: " << ecdist << "\n";
 		    closest_dist = ecdist;
-		    eseg = eseg;
+		    eseg_split = eseg;
 		    split_t = t;
 		}
 	    }
 
 	    std::set<cdt_mesh::bedge_seg_t *> nsegs;
-	    int ntri_cnt = bedge_split_at_t(eseg, split_t, f2omap, &nsegs);
+	    int ntri_cnt = bedge_split_at_t(eseg_split, split_t, f2omap, &nsegs);
 	    if (ntri_cnt) {
-		segs.erase(eseg);
+		segs.erase(eseg_split);
 		replaced_tris += ntri_cnt; 
 		segs.insert(nsegs.begin(), nsegs.end());
 	    }
@@ -1888,8 +1899,8 @@ check_faces_validity(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_me
     }
     std::set<cdt_mesh::cdt_mesh_t *>::iterator f_it;
     for (f_it = fmeshes.begin(); f_it != fmeshes.end(); f_it++) {
-	cdt_mesh::cdt_mesh_t *fmesh = *f_it;
-	std::cout << "face " << fmesh->f_id << " validity: " << fmesh->valid(1) << "\n";
+	//cdt_mesh::cdt_mesh_t *fmesh = *f_it;
+	//std::cout << "face " << fmesh->f_id << " validity: " << fmesh->valid(1) << "\n";
 #if 0
 	struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh->p_cdt;
 	std::string fpname = std::to_string(id) + std::string("_") + std::string(s_cdt->name) + std::string("_face_") + std::to_string(fmesh->f_id) + std::string(".plot3");
