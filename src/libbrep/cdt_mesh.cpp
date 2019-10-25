@@ -40,6 +40,7 @@
 #include "bn/plot3.h"
 #include "bn/plane.h" /* bn_fit_plane */
 #include "bg/polygon.h"
+#include "bg/tri_pt.h"
 #include "brep.h"
 #include "./cdt_mesh.h"
 #include "./cdt.h"
@@ -1787,11 +1788,19 @@ cdt_mesh_t::closest_uedge(const triangle_t &t, ON_3dPoint &p)
     std::set<uedge_t> ue_s = uedges(t);
     std::set<uedge_t>::iterator u_it;
     double mdist = DBL_MAX;
+
+    point_t tp, v0, v1, v2;
+    VSET(tp, p.x, p.y, p.z);
+    VSET(v0, pnts[t.v[0]]->x, pnts[t.v[0]]->y, pnts[t.v[0]]->z);
+    VSET(v1, pnts[t.v[1]]->x, pnts[t.v[1]]->y, pnts[t.v[1]]->z);
+    VSET(v2, pnts[t.v[2]]->x, pnts[t.v[2]]->y, pnts[t.v[2]]->z);
+    double tdist = bg_tri_closest_pt(NULL, tp, v0, v1, v2);
+
     for (u_it = ue_s.begin(); u_it != ue_s.end(); u_it++) { 
 	uedge_t ue = *u_it;
 	ON_Line l(*pnts[ue.v[0]], *pnts[ue.v[1]]);
 	double dline = p.DistanceTo(l.ClosestPointTo(p));
-	if (dline < mdist) {
+	if (dline < mdist && dline >= tdist) {
 	    mdist = dline;
 	    result = ue;
 	}

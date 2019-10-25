@@ -39,11 +39,14 @@
 
 __BEGIN_DECLS
 
-BG_EXPORT extern double bg_tri_pt_dist(
-	point_t TP,
-	point_t V0,
-	point_t V1,
-	point_t V2
+/* The parameter closest_pt is optional = if supplied, it will hold the closest point found.
+ * The return value is the stance between TP and closest_pt */
+BG_EXPORT extern double bg_tri_closest_pt(
+	point_t *closest_pt,
+	const point_t TP,
+	const point_t V0,
+	const point_t V1,
+	const point_t V2
 	);
 
 __END_DECLS

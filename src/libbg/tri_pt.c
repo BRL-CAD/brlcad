@@ -52,7 +52,7 @@ static void GetMinInterior(vect2d_t *p,
     V2ADD2(*p, t0, t1);
 }
 
-double bg_tri_pt_dist(point_t tp, point_t V0, point_t V1, point_t V2)
+double bg_tri_closest_pt(point_t *closest_pt, const point_t tp, const point_t V0, const point_t V1, const point_t V2)
 {
     vect_t diff, edge0, edge1;
     vect_t e0scaled, e1scaled;
@@ -169,6 +169,9 @@ double bg_tri_pt_dist(point_t tp, point_t V0, point_t V1, point_t V2)
     VSCALE(e0scaled, edge0, p[0]);
     VSCALE(e1scaled, edge1, p[1]);
     VADD3(closest, V0, e0scaled, e1scaled);
+    if (closest_pt) {
+	VMOVE(*closest_pt, closest);
+    }
     return DIST_PNT_PNT(tp, closest);
 }
 

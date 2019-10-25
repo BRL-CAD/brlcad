@@ -476,7 +476,7 @@ omesh_t::interior_uedges_search(ON_BoundingBox &bb)
 		VSET(v0, fmesh->pnts[t.v[0]]->x, fmesh->pnts[t.v[0]]->y, fmesh->pnts[t.v[0]]->z);
 		VSET(v1, fmesh->pnts[t.v[1]]->x, fmesh->pnts[t.v[1]]->y, fmesh->pnts[t.v[1]]->z);
 		VSET(v2, fmesh->pnts[t.v[2]]->x, fmesh->pnts[t.v[2]]->y, fmesh->pnts[t.v[2]]->z);
-		double tdist = bg_tri_pt_dist(tp, v0, v1, v2);
+		double tdist = bg_tri_closest_pt(NULL, tp, v0, v1, v2);
 		if (cdist > tdist) {
 		    cdist = tdist;
 		    closest_tri = *tr_it;
@@ -1930,6 +1930,13 @@ characterize_tri_verts(
 	if (!v) {
 	    std::cout << "WARNING: - no overt for vertex??\n";
 	}
+
+	ON_3dPoint p = v->vpnt();
+	ON_3dPoint prob_pnt(3.04789,7.50032,22.93);
+	if (p.DistanceTo(prob_pnt) < 0.01) {
+	    std::cout << "problem\n";
+	}
+
 	// If we've got more than one triangle from the other mesh breaking through
 	// this triangle and sharing this vertex, list it as a point worth splitting
 	// at the nearest surface point
@@ -1944,8 +1951,12 @@ characterize_tri_verts(
 		tri_isect_cnt++;
 	    }
 	    if (tri_isect_cnt > 1) {
-		omesh1->refine_pnt_add(v);
 		have_refinement_pnt = true;
+
+		// TODO - if this point doesn't project into any triangle pair, it's
+		// an edge-point-split-only point.  Need to either filter it here or
+		// in the eventual mesh processing...
+		omesh1->refine_pnt_add(v);
 
 		// If this point is also close to a brep face edge, list that edge/vert
 		// combination for splitting
@@ -1959,7 +1970,6 @@ characterize_tri_verts(
 			edge_verts[bseg].insert(v);
 		    }
 		}
-
 		break;
 	    }
 	}
