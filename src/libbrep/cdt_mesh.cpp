@@ -1855,7 +1855,7 @@ cdt_mesh_t::uedge_dist(uedge_t &ue, ON_3dPoint &p)
     if ((t < 0 || NEAR_ZERO(t, ON_ZERO_TOLERANCE))) {
 	return p.DistanceTo(p1);
     }
-    if ((t > 0 || NEAR_EQUAL(t, 1, ON_ZERO_TOLERANCE))) {
+    if ((t > 1 || NEAR_EQUAL(t, 1, ON_ZERO_TOLERANCE))) {
 	return p.DistanceTo(p2);
     }
 
