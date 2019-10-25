@@ -103,12 +103,12 @@ add_test(NAME bg_tri_tri_isect_cp_full   COMMAND bg_tri_tri_isect  0,0,0 1,0,0 1
 add_test(NAME bg_tri_tri_isect_null   COMMAND bg_tri_tri_isect  0,0,0 1,0,0 1,1,0  1,0,1 1,0,1 1,1,1  0)
 
 
-#  ************ tri_pt_dist.c tests ***********
+#  ************ tri_closest_pt.c tests ***********
 
-BRLCAD_ADDEXEC(bg_tri_pt_dist tri_pt_dist.c "libbg;libbn;libbu" TEST)
+BRLCAD_ADDEXEC(bg_tri_closest_pt tri_closest_pt.c "libbg;libbn;libbu" TEST)
 
-add_test(NAME bg_tri_pt_dist_coplanar_center   COMMAND bg_tri_pt_dist  0,0,0 -1,-1,0 1,-1,0 0,1,0 0)
-add_test(NAME bg_tri_pt_dist_coplanar_vert_closest   COMMAND bg_tri_pt_dist -2,-1,0 -1,-1,0 1,-1,0 0,1,0 1)
+add_test(NAME bg_tri_pt_dist_coplanar_center   COMMAND bg_tri_closest_pt  0,0,0 -1,-1,0 1,-1,0 0,1,0 0)
+add_test(NAME bg_tri_pt_dist_coplanar_vert_closest   COMMAND bg_tri_closest_pt -2,-1,0 -1,-1,0 1,-1,0 0,1,0 1)
 
 #  ************ trimesh_pt_in.cpp tests ***********
 
