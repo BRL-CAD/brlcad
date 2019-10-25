@@ -1780,6 +1780,29 @@ cdt_mesh_t::uedges(const triangle_t &t)
     return uedges;
 }
 
+ON_BoundingBox
+cdt_mesh_t::bbox()
+{
+    RTree<size_t, double, 3>::Iterator tree_it;
+    tris_tree.GetFirst(tree_it);
+
+    if (tree_it.IsNull()) return ON_BoundingBox();
+
+    ON_3dPoint *p3d = pnts[tris_vect[*tree_it].v[0]];
+    ON_BoundingBox bb(*p3d, *p3d);
+
+    while (!tree_it.IsNull()) {
+	p3d = pnts[tris_vect[*tree_it].v[0]];
+	bb.Set(*p3d, true);
+	p3d = pnts[tris_vect[*tree_it].v[1]];
+	bb.Set(*p3d, true);
+	p3d = pnts[tris_vect[*tree_it].v[2]];
+	bb.Set(*p3d, true);
+	++tree_it;
+    }
+
+    return bb;
+}
 
 uedge_t
 cdt_mesh_t::closest_uedge(const triangle_t &t, ON_3dPoint &p)
@@ -1789,19 +1812,31 @@ cdt_mesh_t::closest_uedge(const triangle_t &t, ON_3dPoint &p)
     std::set<uedge_t>::iterator u_it;
     double mdist = DBL_MAX;
 
-    point_t tp, v0, v1, v2;
-    VSET(tp, p.x, p.y, p.z);
-    VSET(v0, pnts[t.v[0]]->x, pnts[t.v[0]]->y, pnts[t.v[0]]->z);
-    VSET(v1, pnts[t.v[1]]->x, pnts[t.v[1]]->y, pnts[t.v[1]]->z);
-    VSET(v2, pnts[t.v[2]]->x, pnts[t.v[2]]->y, pnts[t.v[2]]->z);
-    double tdist = bg_tri_closest_pt(NULL, tp, v0, v1, v2);
+    for (u_it = ue_s.begin(); u_it != ue_s.end(); u_it++) {
+	uedge_t ue = *u_it;
+	double dedge = uedge_dist(ue, p);
+	if (dedge < mdist) {
+	    mdist = dedge;
+	    result = ue;
+	}
+    }
+    return result;
+}
+
+uedge_t
+cdt_mesh_t::closest_interior_uedge(const triangle_t &t, ON_3dPoint &p)
+{
+    uedge_t result;
+    std::set<uedge_t> ue_s = uedges(t);
+    std::set<uedge_t>::iterator u_it;
+    double mdist = DBL_MAX;
 
     for (u_it = ue_s.begin(); u_it != ue_s.end(); u_it++) {
 	uedge_t ue = *u_it;
-	ON_Line l(*pnts[ue.v[0]], *pnts[ue.v[1]]);
-	double dline = p.DistanceTo(l.ClosestPointTo(p));
-	if (dline < mdist && (dline > tdist || NEAR_EQUAL(dline, tdist, ON_ZERO_TOLERANCE))) {
-	    mdist = dline;
+	if (brep_edges.find(ue) != brep_edges.end()) continue;
+	double dedge = uedge_dist(ue, p);
+	if (dedge < mdist) {
+	    mdist = dedge;
 	    result = ue;
 	}
     }

@@ -513,12 +513,19 @@ public:
     ON_Plane tplane(const triangle_t &t);
     std::set<uedge_t> uedges(const triangle_t &t);
 
+    ON_BoundingBox bbox();
+
     // Find the edge of the triangle that is closest to the
     // specified point
     uedge_t closest_uedge(const triangle_t &t, ON_3dPoint &p);
 
+    // Find the edge of the triangle that is closest to the
+    // specified point and not a brep face edge
+    uedge_t closest_interior_uedge(const triangle_t &t, ON_3dPoint &p);
+
     // Find the distance to the closest point on a uedge
     double uedge_dist(uedge_t &ue, ON_3dPoint &p);
+
 
     // Plot3 generation routines for debugging
     void boundary_edges_plot(const char *filename);
