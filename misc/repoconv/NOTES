@@ -51,6 +51,9 @@ https://github.com/barisione/clang-format-hooks
 https://github.com/mellowcandle/astyle_precommit_hook
 https://github.com/Sarcasm/run-clang-format
 
+Possibly useful notes for OSX/Windows users:
+https://stackoverflow.com/questions/8904327/case-sensitivity-in-git
+
 
 ################# .gitconfig helpers ###################
 
