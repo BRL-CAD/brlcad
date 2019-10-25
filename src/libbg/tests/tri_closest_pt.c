@@ -1,4 +1,4 @@
-/*                   T R I _ P T _ D I S T . C
+/*                 T R I _ C L O S E S T _ P T . C
  * BRL-CAD
  *
  * Copyright (c) 2011-2019 United States Government as represented by
