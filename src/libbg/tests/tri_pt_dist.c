@@ -54,7 +54,7 @@ main(int argc, char **argv)
 
     sscanf(argv[5], "%d", &expected_result);
 
-    actual_result = bg_tri_pt_dist(TP, V0, V1, V2);
+    actual_result = bg_tri_closest_pt(NULL, TP, V0, V1, V2);
 
     bu_log("result: %d\n", actual_result);
 
