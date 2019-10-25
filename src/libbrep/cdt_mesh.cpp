@@ -1796,11 +1796,11 @@ cdt_mesh_t::closest_uedge(const triangle_t &t, ON_3dPoint &p)
     VSET(v2, pnts[t.v[2]]->x, pnts[t.v[2]]->y, pnts[t.v[2]]->z);
     double tdist = bg_tri_closest_pt(NULL, tp, v0, v1, v2);
 
-    for (u_it = ue_s.begin(); u_it != ue_s.end(); u_it++) { 
+    for (u_it = ue_s.begin(); u_it != ue_s.end(); u_it++) {
 	uedge_t ue = *u_it;
 	ON_Line l(*pnts[ue.v[0]], *pnts[ue.v[1]]);
 	double dline = p.DistanceTo(l.ClosestPointTo(p));
-	if (dline < mdist && dline >= tdist) {
+	if (dline < mdist && (dline > tdist || NEAR_EQUAL(dline, tdist, ON_ZERO_TOLERANCE))) {
 	    mdist = dline;
 	    result = ue;
 	}
