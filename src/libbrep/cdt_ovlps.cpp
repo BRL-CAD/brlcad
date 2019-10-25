@@ -143,6 +143,9 @@ class omesh_t
 	// Find close triangles
 	std::set<size_t> tris_search(ON_BoundingBox &bb);
 
+	// Find close vertices
+	std::set<overt_t *> vert_search(ON_BoundingBox &bb);
+
 	void retessellate(std::set<size_t> &ov);
 
 	std::set<long> ovlping_tris;
@@ -433,6 +436,37 @@ omesh_t::tris_search(ON_BoundingBox &bb)
     return near_tris;
 }
 
+static bool NearVertsCallback(long data, void *a_context) {
+    std::set<long> *nverts = (std::set<long> *)a_context;
+    nverts->insert(data);
+    return true;
+}
+std::set<overt_t *>
+omesh_t::vert_search(ON_BoundingBox &bb)
+{
+    double fMin[3], fMax[3];
+    fMin[0] = bb.Min().x;
+    fMin[1] = bb.Min().y;
+    fMin[2] = bb.Min().z;
+    fMax[0] = bb.Max().x;
+    fMax[1] = bb.Max().y;
+    fMax[2] = bb.Max().z;
+    std::set<long> near_verts;
+    size_t nhits = vtree.Search(fMin, fMax, NearVertsCallback, (void *)&near_verts);
+
+    if (!nhits) {
+	return std::set<overt_t *>();
+    }
+
+    std::set<overt_t *> near_overts;
+    std::set<long>::iterator n_it;
+    for (n_it = near_verts.begin(); n_it != near_verts.end(); n_it++) {
+	near_overts.insert(overts[*n_it]);    
+    }
+
+    return near_overts;
+}
+
 void
 omesh_t::verts_one_ring_update(long p_id)
 {
@@ -485,11 +519,15 @@ omesh_t::vert_add(long f3ind)
 void
 omesh_t::refine_pnt_add(overt_t *v)
 {
+    if (refinement_overts_ids.find(v) != refinement_overts_ids.end()) {
+	return;
+    }
 
     size_t nind = 0;
     if (refinement_overts.size()) {
 	nind = refinement_overts.rbegin()->first + 1;
     }
+
     refinement_overts[nind] = v;
     refinement_overts_ids[v] = nind;
 
@@ -1927,8 +1965,9 @@ omesh_interior_edge_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs
 
 	std::map<cdt_mesh::uedge_t, std::set<std::pair<ON_3dPoint,ON_3dVector>>> edge_sets;
 
+	std::map<long, overt_t*> roverts = omesh->refinement_overts;
 	std::map<long, overt_t*>::iterator i_t;
-	for (i_t = omesh->refinement_overts.begin(); i_t != omesh->refinement_overts.end(); i_t++) {
+	for (i_t = roverts.begin(); i_t != roverts.end(); i_t++) {
 
 	    overt_t *ov = i_t->second;
 	    ON_3dPoint ovpnt = ov->vpnt();
@@ -1941,12 +1980,39 @@ omesh_interior_edge_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs
 	    // extremely close to an existing vertex, we don't want to split
 	    // and create extremely tiny triangles - vertex adjustment should
 	    // handle super-close points...
-	    //
+	    ON_BoundingBox pbb(spnt, spnt);
+	    std::set<overt_t *> cverts = omesh->vert_search(pbb);
+	    std::cout << "Found " << cverts.size() << " close verts\n";
 	    // Maybe try something like this - if we're close to a vertex, find
 	    // the vertices from the other mesh that overlap with that vertex.
 	    // If there are none (can that happen?) adjust the vertex.  If
 	    // there are, if the surface point is closer than the closest vert
 	    // from the other mesh, adjust, otherwise skip.
+	    if (cverts.size()) {
+		double spdist = ovpnt.DistanceTo(spnt);
+		if (spdist < ON_ZERO_TOLERANCE) {
+		    omesh->refine_pnt_remove(ov);
+		    continue;
+		}
+		double vdist = DBL_MAX;
+		double bbdiag;
+		std::set<overt_t *>::iterator v_it;
+		for (v_it = cverts.begin(); v_it != cverts.end(); v_it++) {
+		    ON_3dPoint cvpnt = (*v_it)->vpnt();
+		    double cvdist = ovpnt.DistanceTo(cvpnt);
+		    if (cvdist < vdist) {
+			vdist = cvdist;
+			bbdiag = (*v_it)->bb.Diagonal().Length() * 0.1;
+		    }
+		}
+
+		if (spdist < bbdiag) {
+		    omesh->refine_pnt_remove(ov);
+		    continue;
+		}
+		std::cout << "spdist: " << spdist << "\n";
+		std::cout << "bbdiag: " << bbdiag << "\n";
+	    }
 
 	    // Find the closest edges
 	    std::set<cdt_mesh::uedge_t> close_edges = omesh->interior_uedges_search(ov->bb);
