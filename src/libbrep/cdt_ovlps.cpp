@@ -380,28 +380,19 @@ omesh_t::interior_uedges_search(ON_BoundingBox &bb)
 
     ON_BoundingBox fbbox = fmesh->bbox();
 
-    struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh->p_cdt;
-    std::cout << s_cdt->name << " face " << fmesh->f_id << " check:\n";
-    if (fmesh->f_id == 4) {
-	std::cout << "problem\n";
-    }
-
     // Find close triangles, iterate through them and
     // find the closest interior edge
     ON_BoundingBox s_bb = bb;
     std::set<size_t> ntris = tris_search(s_bb);
     while (!ntris.size()) {
-	std::cout << "not close to any triangles, expanding box...\n";
 	ON_3dVector vmin = s_bb.Min() - s_bb.Center();
 	ON_3dVector vmax = s_bb.Max() - s_bb.Center();
 	vmin = vmin * 2;
 	vmax = vmax * 2;
 	s_bb.m_min = s_bb.Center() + vmin;
 	s_bb.m_max = s_bb.Center() + vmax;
-	std::cout << "fbbox length: " << fbbox.Diagonal().Length() << "\n";
-	std::cout << "s_bb length: " << s_bb.Diagonal().Length() << "\n";
 	if (s_bb.Diagonal().Length() > fbbox.Diagonal().Length()) {
-	    std::cout << "not close to any triangles in this face, terminating search.\n";
+	    return uedges;
 	}
 	ntris = tris_search(s_bb);
     }
@@ -411,10 +402,6 @@ omesh_t::interior_uedges_search(ON_BoundingBox &bb)
 	cdt_mesh::triangle_t t = fmesh->tris_vect[*tr_it];
 	ON_3dPoint tp = bb.Center();
 	cdt_mesh::uedge_t ue = fmesh->closest_interior_uedge(t, tp);
-	if (ue.v[0] == -1) {
-	    std::cout << "PROBLEM!\n";
-	    ue = fmesh->closest_interior_uedge(t, tp);
-	}    
 	uedges.insert(ue);
     }
 
@@ -1950,6 +1937,17 @@ omesh_interior_edge_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs
 	    double dist = ov->bb.Diagonal().Length() * 10;
 	    closest_surf_pnt(spnt, sn, *omesh->fmesh, &ovpnt, 2*dist);
 
+	    // TODO - check this point against the mesh vert tree - if we're
+	    // extremely close to an existing vertex, we don't want to split
+	    // and create extremely tiny triangles - vertex adjustment should
+	    // handle super-close points...
+	    //
+	    // Maybe try something like this - if we're close to a vertex, find
+	    // the vertices from the other mesh that overlap with that vertex.
+	    // If there are none (can that happen?) adjust the vertex.  If
+	    // there are, if the surface point is closer than the closest vert
+	    // from the other mesh, adjust, otherwise skip.
+
 	    // Find the closest edges
 	    std::set<cdt_mesh::uedge_t> close_edges = omesh->interior_uedges_search(ov->bb);
 
@@ -1969,7 +1967,12 @@ omesh_interior_edge_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs
 	}
 
 	struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)omesh->fmesh->p_cdt;
-	std::cout << s_cdt->name << " face " << omesh->fmesh->f_id << " has " << edge_sets.size() << " sets.\n";
+	std::cout << s_cdt->name << " face " << omesh->fmesh->f_id << " has " << edge_sets.size() << " edge/point sets:\n";
+	std::map<cdt_mesh::uedge_t, std::set<std::pair<ON_3dPoint,ON_3dVector>>>::iterator es_it;
+	for (es_it = edge_sets.begin(); es_it != edge_sets.end(); es_it++) {
+	    cdt_mesh::uedge_t ue = es_it->first;
+	    std::cout << "Edge: " << ue.v[0] << "<->" << ue.v[1] << ": " << es_it->second.size() << " points\n";
+	}
     }
 
 #if 0
