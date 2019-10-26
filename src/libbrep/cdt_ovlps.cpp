@@ -1538,7 +1538,7 @@ bedge_split_near_verts(
 	std::set<cdt_mesh::bedge_seg_t *> segs;
 	segs.insert(ev_it->first);
 #if 0
-	ON_3dPoint problem(3.44525,7.67444,22.9198);
+	ON_3dPoint problem(3.06294,7.5,24.2775);
 	std::set<overt_t *>::iterator v_it;
 	for (v_it = verts.begin(); v_it != verts.end(); v_it++) {
 	    overt_t *v = *v_it;
@@ -1772,6 +1772,14 @@ characterize_tri_verts(
 		// If this point is also close to a brep face edge, list that edge/vert
 		// combination for splitting
 		ON_3dPoint vp = v->vpnt();
+
+#if 1
+		ON_3dPoint problem(3.06294,7.5,24.2775);
+		if (problem.DistanceTo(vp) < 0.01) {
+		    std::cout << "problem\n";
+		}
+#endif
+
 		cdt_mesh::uedge_t closest_edge = omesh1->fmesh->closest_uedge(t1, vp);
 		if (omesh1->fmesh->brep_edges.find(closest_edge) != omesh1->fmesh->brep_edges.end()) {
 		    cdt_mesh::bedge_seg_t *bseg = omesh1->fmesh->ue2b_map[closest_edge];
@@ -1976,26 +1984,31 @@ omesh_interior_edge_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs
 	    double dist = ov->bb.Diagonal().Length() * 10;
 	    closest_surf_pnt(spnt, sn, *omesh->fmesh, &ovpnt, 2*dist);
 
-	    // TODO - check this point against the mesh vert tree - if we're
+	    // Check this point against the mesh vert tree - if we're
 	    // extremely close to an existing vertex, we don't want to split
 	    // and create extremely tiny triangles - vertex adjustment should
 	    // handle super-close points...
 	    ON_BoundingBox pbb(spnt, spnt);
 	    std::set<overt_t *> cverts = omesh->vert_search(pbb);
-	    std::cout << "Found " << cverts.size() << " close verts\n";
-	    // Maybe try something like this - if we're close to a vertex, find
-	    // the vertices from the other mesh that overlap with that vertex.
-	    // If there are none (can that happen?) adjust the vertex.  If
-	    // there are, if the surface point is closer than the closest vert
-	    // from the other mesh, adjust, otherwise skip.
+
+	    // If we're close to a vertex, find the vertices from the other
+	    // mesh that overlap with that vertex.  If there are, and if the
+	    // surface point is close to them per the vert bbox dimension,
+	    // skip that point as a refinement point in this step.
 	    if (cverts.size()) {
 		double spdist = ovpnt.DistanceTo(spnt);
+		
 		if (spdist < ON_ZERO_TOLERANCE) {
+		    // If we're on the vertex point, we don't need to check
+		    // further - we're not splitting there.
 		    omesh->refine_pnt_remove(ov);
 		    continue;
 		}
+
+		// Find the closest vertex, and use its bounding box size as a
+		// gauge for how close is too close for the surface point
 		double vdist = DBL_MAX;
-		double bbdiag;
+		double bbdiag = DBL_MAX;
 		std::set<overt_t *>::iterator v_it;
 		for (v_it = cverts.begin(); v_it != cverts.end(); v_it++) {
 		    ON_3dPoint cvpnt = (*v_it)->vpnt();
@@ -2010,11 +2023,9 @@ omesh_interior_edge_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs
 		    omesh->refine_pnt_remove(ov);
 		    continue;
 		}
-		std::cout << "spdist: " << spdist << "\n";
-		std::cout << "bbdiag: " << bbdiag << "\n";
 	    }
 
-	    // Find the closest edges
+	    // If we passed the above filter, find the closest edges
 	    std::set<cdt_mesh::uedge_t> close_edges = omesh->interior_uedges_search(ov->bb);
 
 	    double mindist = DBL_MAX; 

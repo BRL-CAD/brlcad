@@ -176,10 +176,37 @@ ON_Brep_Report_Faces(struct bu_vls *log, void *bp, const vect_t center, const ve
     return 0;
 }
 
-/* Implement the algorithm from https://github.com/pboyer/verb - specifically:
+
+/* Implement the closest point on curve algorithm from
+ * https://github.com/pboyer/verb - specifically:
+ *
  * verb/src/verb/eval/Tess.hx 
  * verb/src/verb/eval/Analyze.hx 
  */
+
+struct curve_search_args {
+    const ON_NurbsCurve *nc;
+    ON_3dPoint tp;
+};
+
+int
+curve_closest_search_func(void *farg, double t, double *ft, double *dft)
+{
+    struct curve_search_args *cargs = (struct curve_search_args *)farg;
+    const ON_NurbsCurve *nc = cargs->nc;
+    ON_3dPoint tp = cargs->tp;
+    ON_3dPoint crv_pnt;
+    ON_3dVector crv_d1;
+    ON_3dVector crv_d2;
+    if (!nc->Ev2Der(t, crv_pnt, crv_d1, crv_d2)) return -1;
+    ON_3dVector fparam2 = crv_pnt - tp;
+    *ft = ON_DotProduct(crv_d1, fparam2);
+    *dft = ON_DotProduct(crv_d2, fparam2) + ON_DotProduct(crv_d1, crv_d1);
+
+    if (*ft < ON_ZERO_TOLERANCE) return 1;
+    return 0;
+}
+
 bool
 ON_NurbsCurve_GetClosestPoint(
 	double *t,
@@ -201,46 +228,66 @@ ON_NurbsCurve_GetClosestPoint(
 	pnts.push_back(nc->PointAt(st));
     }
 
-    // Find an initial guess based on the breakdown into segments
+    // Find an initial domain subset based on the breakdown into segments
     double d1 = domain.Min();
     double d2 = domain.Max();
-    double u = 0.0;
     double vmin = DBL_MAX;
     for (size_t i = 0; i < pnts.size() - 1; i++) {
 	ON_Line l(pnts[i], pnts[i+1]);
 	double lt;
 	l.ClosestPointTo(p, &lt);
 	ON_3dPoint pl = l.PointAt(lt);
+	if ((lt < 0 || NEAR_ZERO(lt, ON_ZERO_TOLERANCE))) {
+	    pl = l.PointAt(0);
+	}
+	if ((lt > 1 || NEAR_EQUAL(lt, 1, ON_ZERO_TOLERANCE))) {
+	    pl = l.PointAt(1);
+	}
 	if (pl.DistanceTo(p) < vmin) {
 	    vmin = pl.DistanceTo(p);
 	    d1 = domain.ParameterAt(i*span);
 	    d2 = domain.ParameterAt((i+1)*span);
-	    //u = d1 + (d2 - d1)*lt;
 	}
     }
 
-    // TODO - verb uses Newton iteration, and so should we - for the moment,
-    // this is a quick and dirty (and undoubtedly slower) binary search
+    // Iterate to find the closest point
     double vdist = DBL_MAX;
-    double vmin_delta = DBL_MAX;
-    double vmin_prev = vmin;
-    ON_3dPoint p1 = nc->PointAt(d1);
-    ON_3dPoint p2 = nc->PointAt(d2);
-    while (vmin_delta > ON_ZERO_TOLERANCE) {
-	u = (d1 + d2) * 0.5;
-	if (p1.DistanceTo(p) < p2.DistanceTo(p)) {
-	    d2 = u;
-	    p2 = nc->PointAt(u);
-	} else {
-	    d1 = u;
-	    p1 = nc->PointAt(u);
-	}
-	vdist = (p.DistanceTo(nc->PointAt(u)));
-	vmin_delta = fabs(vmin_prev - vmin);
-	vmin_prev = vmin;
-    }
+    double u = (d1 + d2) * 0.5;
+    struct curve_search_args cargs;
+    cargs.nc = nc;
+    cargs.tp = p;
+    double st;
+    int osearch = ON_FindLocalMinimum(curve_closest_search_func, &cargs, d1, u, d2, ON_EPSILON, 0.5*ON_ZERO_TOLERANCE, 100, &st);
 
-    (*t) = u;
+    if (osearch == 1) {
+
+	(*t) = st;
+	vdist = (p.DistanceTo(nc->PointAt(st)));
+
+    } else {
+
+	// ON_FindLocalMinimum failed, fall back on binary search
+	double vmin_delta = DBL_MAX;
+	double vmin_prev = vmin;
+	ON_3dPoint p1 = nc->PointAt(d1);
+	ON_3dPoint p2 = nc->PointAt(d2);
+	while (vmin_delta > ON_ZERO_TOLERANCE) {
+	    u = (d1 + d2) * 0.5;
+	    if (p1.DistanceTo(p) < p2.DistanceTo(p)) {
+		d2 = u;
+		p2 = nc->PointAt(u);
+	    } else {
+		d1 = u;
+		p1 = nc->PointAt(u);
+	    }
+	    vdist = (p.DistanceTo(nc->PointAt(u)));
+	    vmin_delta = fabs(vmin_prev - vmin);
+	    vmin_prev = vmin;
+	}
+
+	(*t) = u;
+
+    }
 
     if (maximum_distance > 0 && vdist > maximum_distance) return false;
 
