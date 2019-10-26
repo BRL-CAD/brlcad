@@ -1034,6 +1034,127 @@ projects_inside_tri(
     return polygon.point_in_polygon(polygon.pnts_2d.size() - 1, false);
 }
 
+void
+refine_edge_vert_sets (
+	omesh_t *omesh,
+	std::map<cdt_mesh::uedge_t, std::set<std::pair<ON_3dPoint,ON_3dVector>>> &edge_sets
+)
+{
+    //struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)omesh->fmesh->p_cdt;
+    std::map<cdt_mesh::uedge_t, std::set<std::pair<ON_3dPoint,ON_3dVector>>>::iterator es_it;
+    for (es_it = edge_sets.begin(); es_it != edge_sets.end(); es_it++) {
+	std::map<cdt_mesh::uedge_t, std::set<std::pair<ON_3dPoint,ON_3dVector>>> updated_esets;
+	cdt_mesh::uedge_t ue = es_it->first;
+	std::set<std::pair<ON_3dPoint,ON_3dVector>> epnts = es_it->second;
+
+	// Find the two triangles that we will be using to form the outer polygon
+	std::set<size_t> rtris = omesh->fmesh->uedges2tris[ue];
+	if (rtris.size() != 2) {
+	    std::cout << "Error - could not associate uedge with two triangles??\n";
+	}
+	// For the involved triangle edges that are not the edge to be removed, we will
+	// need to reassess their closest edge assignment after new edges are added.
+	// Build up the set of those uedges for later processing.  While we are looping,
+	// get initial data for the polygon build.
+	std::map<int, long> t_pts;
+	std::map<long, int> t_pts_map;
+	std::set<cdt_mesh::uedge_t> pnt_reassignment_edges;
+	int pnts_ind = 0;
+	std::set<size_t>::iterator r_it;
+	for (r_it = rtris.begin(); r_it != rtris.end(); r_it++) {
+	    cdt_mesh::triangle_t tri = omesh->fmesh->tris_vect[*r_it];
+	    for (int i = 0; i < 3; i++) {
+		if (t_pts_map.find(tri.v[i]) == t_pts_map.end()) {
+		    pnts_ind = (int)t_pts_map.size();
+		    t_pts[pnts_ind] = tri.v[i];
+		    t_pts_map[tri.v[i]] = pnts_ind;
+		}
+	    }
+	    std::set<cdt_mesh::uedge_t> tuedges = omesh->fmesh->uedges(tri);
+	    pnt_reassignment_edges.insert(tuedges.begin(), tuedges.end());
+	}
+	pnt_reassignment_edges.erase(ue);
+
+	if (t_pts.size() != 4) {
+	    std::cout << "Error - found " << t_pts.size() << " triangle points??\n";
+	}
+
+	point_t pcenter;
+	vect_t pnorm;
+	point_t *fpnts = (point_t *)bu_calloc(pnts_ind+1, sizeof(point_t), "fitting points");
+	std::map<int, long>::iterator p_it;
+	for (p_it = t_pts.begin(); p_it != t_pts.end(); p_it++) {
+	    ON_3dPoint *p = omesh->fmesh->pnts[p_it->second];
+	    fpnts[p_it->first][X] = p->x;
+	    fpnts[p_it->first][Y] = p->y;
+	    fpnts[p_it->first][Z] = p->z;
+	}
+	if (bn_fit_plane(&pcenter, &pnorm, pnts_ind+1, fpnts)) {
+	    std::cout << "fitting plane failed!\n";
+	}
+	bu_free(fpnts, "fitting points");
+
+	ON_Plane fit_plane(pcenter, pnorm);
+
+	// Build our polygon out of the two triangles
+	cdt_mesh::cpolygon_t *polygon = new cdt_mesh::cpolygon_t;
+	polygon->pdir = fit_plane.Normal();
+	polygon->tplane = fit_plane;
+	for (p_it = t_pts.begin(); p_it != t_pts.end(); p_it++) {
+	    double u, v;
+	    long pind = p_it->second;
+	    ON_3dPoint *p = omesh->fmesh->pnts[pind];
+	    fit_plane.ClosestPointTo(*p, &u, &v);
+	    std::pair<double, double> proj_2d;
+	    proj_2d.first = u;
+	    proj_2d.second = v;
+	    polygon->pnts_2d.push_back(proj_2d);
+	    polygon->p2o[polygon->pnts_2d.size() - 1] = pind;
+	}	
+
+	cdt_mesh::triangle_t tri = omesh->fmesh->tris_vect[*(rtris.begin())];
+	rtris.erase(rtris.begin());
+	struct cdt_mesh::edge_t e1(t_pts_map[tri.v[0]], t_pts_map[tri.v[1]]);
+	struct cdt_mesh::edge_t e2(t_pts_map[tri.v[1]], t_pts_map[tri.v[2]]);
+	struct cdt_mesh::edge_t e3(t_pts_map[tri.v[2]], t_pts_map[tri.v[0]]);
+	polygon->add_edge(e1);
+	polygon->add_edge(e2);
+	polygon->add_edge(e3);
+	std::set<cdt_mesh::uedge_t> new_edges;
+	std::set<cdt_mesh::uedge_t> shared_edges;
+	tri = omesh->fmesh->tris_vect[*(rtris.begin())];
+	rtris.erase(rtris.begin());
+	std::set<cdt_mesh::uedge_t> nuedges = omesh->fmesh->uedges(tri);
+	std::set<cdt_mesh::uedge_t>::iterator n_it;
+	for (n_it = nuedges.begin(); n_it != nuedges.end(); n_it++) {
+	    cdt_mesh::uedge_t nue = *n_it;
+	    if (nue != ue) {
+		new_edges.insert(nue);
+	    } else {
+		shared_edges.insert(nue);
+	    }
+	}
+	polygon->replace_edges(new_edges, shared_edges);
+
+	std::set<std::pair<ON_3dPoint,ON_3dVector>>::iterator ep_it;
+	for (ep_it = epnts.begin(); ep_it != epnts.end(); ep_it++) {
+	    ON_3dPoint p = ep_it->first;
+	    //ON_3dVector n = ep_it->second;
+	    double u, v;
+	    fit_plane.ClosestPointTo(p, &u, &v);
+	    std::pair<double, double> proj_2d;
+	    proj_2d.first = u;
+	    proj_2d.second = v;
+	    polygon->pnts_2d.push_back(proj_2d);
+	    bool inside = polygon->point_in_polygon(polygon->pnts_2d.size() - 1, false);
+	    std::cout << "Point in polygon test result: " << inside << "\n";
+	    polygon->pnts_2d.pop_back();
+	}
+    
+    }
+}
+
+
 overt_t *
 get_largest_overt(std::set<overt_t *> &verts)
 {
@@ -2050,6 +2171,9 @@ omesh_interior_edge_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs
 	    cdt_mesh::uedge_t ue = es_it->first;
 	    std::cout << "Edge: " << ue.v[0] << "<->" << ue.v[1] << ": " << es_it->second.size() << " points\n";
 	}
+
+	refine_edge_vert_sets(omesh, edge_sets);
+
     }
 
 #if 0
