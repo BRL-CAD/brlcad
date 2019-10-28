@@ -1046,7 +1046,27 @@ cpolygon_t::cdt(triangulation_t ttype)
 	    t.v[1] = faces[3*i+1];
 	    t.v[2] = faces[3*i+2];
 
-	    ltris.insert(t);
+	    bool inside = true;
+	    if (ttype == TRI_DELAUNAY) {
+		double u = 0;
+		double v = 0;
+		for (int j = 0; j < 3; j++) {
+		    u = u + pnts_2d[t.v[j]].first;
+		    v = v + pnts_2d[t.v[j]].second;
+		}
+		u = u / 3.0;
+		v = v / 3.0;
+		std::pair<double, double> center_2d;
+		center_2d.first = u; 
+		center_2d.second = v;
+		pnts_2d.push_back(center_2d);
+		inside = point_in_polygon(pnts_2d.size() - 1, false);
+		pnts_2d.pop_back();
+	    }
+
+	    if (inside) {
+		ltris.insert(t);
+	    }
 	}
 
 	bu_free(faces, "faces array");
@@ -1779,6 +1799,20 @@ cdt_mesh_t::uedges(const triangle_t &t)
 
     return uedges;
 }
+
+bool
+cdt_mesh_t::face_edge_tri(const triangle_t &t)
+{
+    int edge_pts = 0;
+    for (int i = 0; i < 3; i++) {
+	if (ep.find(t.v[i]) != ep.end()) {
+	    edge_pts++;
+	}
+    }
+
+    return (edge_pts > 1);
+}
+
 
 ON_BoundingBox
 cdt_mesh_t::bbox()

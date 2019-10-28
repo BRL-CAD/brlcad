@@ -513,6 +513,8 @@ public:
     ON_Plane tplane(const triangle_t &t);
     std::set<uedge_t> uedges(const triangle_t &t);
 
+    bool face_edge_tri(const triangle_t &t);
+
     ON_BoundingBox bbox();
 
     // Find the edge of the triangle that is closest to the
