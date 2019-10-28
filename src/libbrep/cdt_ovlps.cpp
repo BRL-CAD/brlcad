@@ -1833,6 +1833,15 @@ bedges_rtree(
     }
 }
 
+// TODO - need a refinement here.  We also need to split edges when there is
+// an intersection on the face interior, to make sure we don't end up with
+// the polygon tessellation taking what should have been edge points and
+// creating "hanging" triangles that are entirely inside the opposite mesh.
+//
+// Perhaps rather than doing the up-front edge detection to try to clear
+// overlaps in advance, we should instead be using the triangle intersections
+// and using those to guide ALL brep face splitting - accept the higher initial
+// cnt of overlapping triangles to arrive at a general solution later.
 int
 split_brep_face_edges_near_verts(
 	std::set<struct ON_Brep_CDT_State *> &a_cdt,
@@ -1907,15 +1916,6 @@ split_brep_face_edges_near_verts(
     return bedge_split_near_vert(edge_vert, f2omap);
 }
 
-#if 0
-static bool NearEdgesCallback(void *data, void *a_context) {
-    std::set<cdt_mesh::cpolyedge_t *> *edges = (std::set<cdt_mesh::cpolyedge_t *> *)a_context;
-    cdt_mesh::cpolyedge_t *pe  = (cdt_mesh::cpolyedge_t *)data;
-    edges->insert(pe);
-    return true;
-}
-#endif
-
 void
 check_faces_validity(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> &check_pairs, int UNUSED(id))
 {
@@ -1977,9 +1977,6 @@ characterize_tri_verts(
 	    if (tri_isect_cnt > 1) {
 		have_refinement_pnt = true;
 
-		// TODO - if this point doesn't project into any triangle pair, it's
-		// an edge-point-split-only point.  Need to either filter it here or
-		// in the eventual mesh processing...
 		omesh1->refine_pnt_add(v);
 
 		// If this point is also close to a brep face edge, list that edge/vert
@@ -2271,123 +2268,8 @@ omesh_interior_edge_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs
 	refine_edge_vert_sets(omesh, &edge_sets);
 
     }
-
-#if 0
-	std::set<>::iterator u_it;
-	for (u_it = omesh->split_edges.begin(); u_it != omesh->split_edges.end(); u_it++) {
-	    cdt_mesh::uedge_t ue = *u_it;
-	    ON_3dPoint p1 = *omesh->fmesh->pnts[ue.v[0]];
-	    ON_3dPoint p2 = *omesh->fmesh->pnts[ue.v[1]];
-	    double dist = p1.DistanceTo(p2);
-	    ON_3dPoint pmid = (p1 + p2) * 0.5;
-	    ON_3dPoint spnt;
-	    ON_3dVector sn;
-	    closest_surf_pnt(spnt, sn, *omesh->fmesh, &pmid, 2*dist);
-	    long f3ind = omesh->fmesh->add_point(new ON_3dPoint(spnt));
-	    long fnind = omesh->fmesh->add_normal(new ON_3dPoint(sn));
-	    struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)omesh->fmesh->p_cdt;
-	    CDT_Add3DPnt(s_cdt, omesh->fmesh->pnts[f3ind], omesh->fmesh->f_id, -1, -1, -1, 0, 0);
-	    CDT_Add3DNorm(s_cdt, omesh->fmesh->normals[fnind], omesh->fmesh->pnts[f3ind], omesh->fmesh->f_id, -1, -1, -1, 0, 0);
-	    omesh->fmesh->nmap[f3ind] = fnind;
-	    std::set<size_t> rtris = omesh->fmesh->uedges2tris[ue];
-	    std::set<size_t>::iterator r_it;
-	    for (r_it = rtris.begin(); r_it != rtris.end(); r_it++) {
-		replace_edge_split_tri(*omesh->fmesh, *r_it, f3ind, ue);
-	    }
-	    omesh->vert_add(f3ind);
-	}
-    }
-#endif
 }
 
-#if 0
-void
-tri_retessellate(cdt_mesh::cdt_mesh_t *fmesh, long t_ind, std::set<struct p_mvert_info *> &npnts)
-{
-    cdt_mesh::triangle_t t = fmesh->tris_vect[t_ind];
-    struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh->p_cdt;
-    cdt_mesh::cpolygon_t *polygon = new cdt_mesh::cpolygon_t;
-
-    std::map<struct p_mvert_info *, long> pmv2f;
-
-    std::set<struct p_mvert_info *>::iterator pmv_it;
-    for (pmv_it = npnts.begin(); pmv_it != npnts.end(); pmv_it++) {
-	struct p_mvert_info *pmv = *pmv_it;
-	long f3ind = fmesh->add_point(new ON_3dPoint(pmv->p));
-	long fnind = fmesh->add_normal(new ON_3dPoint(pmv->n));
-
-        CDT_Add3DPnt(s_cdt, fmesh->pnts[fmesh->pnts.size()-1], fmesh->f_id, -1, -1, -1, 0, 0);
-        CDT_Add3DNorm(s_cdt, fmesh->normals[fmesh->normals.size()-1], fmesh->pnts[fmesh->pnts.size()-1], fmesh->f_id, -1, -1, -1, 0, 0);
-	//fmesh.p2d3d[f_ind2d] = f3ind;  for now, we're not putting in 2D versions of overlap points...
-	//fmesh.p3d2d[f3ind] = f_ind2d;
-	fmesh->nmap[f3ind] = fnind;
-	pmv2f[pmv] = f3ind;
-    }
-
-    // As we do in the repair, project all the mesh points to the plane and
-    // add them so the point indices are the same.  Eventually we can be
-    // more sophisticated about this, but for now it avoids potential
-    // bookkeeping problems.
-    ON_3dPoint sp = fmesh->tcenter(t);
-    ON_3dVector sn = fmesh->bnorm(t);
-    ON_Plane tri_plane(sp, sn);
-    std::map<long, long> t2p;
-    for (size_t i = 0; i < 3; i++) {
-	double u, v;
-	ON_3dPoint op3d = (*fmesh->pnts[t.v[i]]);
-	tri_plane.ClosestPointTo(op3d, &u, &v);
-	std::pair<double, double> proj_2d;
-	proj_2d.first = u;
-	proj_2d.second = v;
-	polygon->pnts_2d.push_back(proj_2d);
-	if (fmesh->brep_edge_pnt(t.v[i])) {
-	    polygon->brep_edge_pnts.insert(i);
-	}
-	polygon->p2o[i] = t.v[i];
-	t2p[t.v[i]] = i;
-    }
-    struct cdt_mesh::edge_t e1(t2p[t.v[0]], t2p[t.v[1]]);
-    struct cdt_mesh::edge_t e2(t2p[t.v[1]], t2p[t.v[2]]);
-    struct cdt_mesh::edge_t e3(t2p[t.v[2]], t2p[t.v[0]]);
-    polygon->add_edge(e1);
-    polygon->add_edge(e2);
-    polygon->add_edge(e3);
-
-    // Let the polygon know we've got interior points
-    std::map<struct p_mvert_info *, long>::iterator f_it;
-    for (f_it = pmv2f.begin(); f_it != pmv2f.end(); f_it++) {
-	double u, v;
-	tri_plane.ClosestPointTo(f_it->first->p, &u, &v);
-	std::pair<double, double> proj_2d;
-	proj_2d.first = u;
-	proj_2d.second = v;
-	polygon->pnts_2d.push_back(proj_2d);
-	polygon->p2o[polygon->pnts_2d.size() - 1] = f_it->second;
-	polygon->interior_points.insert(polygon->pnts_2d.size() - 1);
-    }
-
-    polygon->polygon_plot("poly2d.plot3");
-    fmesh->polygon_plot_3d(polygon, "poly3d.plot3");
-
-    fmesh->tri_plot(t, "tremove.plot3");
-
-    polygon->cdt(TRI_DELAUNAY);
-
-    std::cout << "cdt tris cnt: " << polygon->tris.size() << "\n";
-
-    if (polygon->tris.size()) {
-	fmesh->tri_remove(t);
-
-	std::set<cdt_mesh::triangle_t>::iterator v_it;
-	for (v_it = polygon->tris.begin(); v_it != polygon->tris.end(); v_it++) {
-	    cdt_mesh::triangle_t vt = *v_it;
-	    orient_tri(*fmesh, vt);
-	    fmesh->tri_add(vt);
-	    fmesh->tri_plot(vt, "tadd.plot3");
-	}
-    }
-}
-#endif
 
 int
 ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
