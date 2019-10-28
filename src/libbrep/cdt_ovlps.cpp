@@ -1034,6 +1034,19 @@ projects_inside_tri(
     return polygon.point_in_polygon(polygon.pnts_2d.size() - 1, false);
 }
 
+void
+orient_tri(cdt_mesh::cdt_mesh_t &fmesh, cdt_mesh::triangle_t &t)
+{
+    ON_3dVector tdir = fmesh.tnorm(t);
+    ON_3dVector bdir = fmesh.bnorm(t);
+    bool flipped_tri = (ON_DotProduct(tdir, bdir) < 0);
+    if (flipped_tri) {
+	long tmp = t.v[2];
+	t.v[2] = t.v[1];
+	t.v[1] = tmp;
+    }
+}
+
 class revt_pt_t {
     public:
 	ON_3dPoint spnt;
@@ -1124,6 +1137,7 @@ refine_edge_vert_sets (
 	}	
 
 	cdt_mesh::triangle_t tri = omesh->fmesh->tris_vect[*(rtris.begin())];
+	omesh->fmesh->tri_remove(tri);
 	rtris.erase(rtris.begin());
 	struct cdt_mesh::edge_t e1(t_pts_map[tri.v[0]], t_pts_map[tri.v[1]]);
 	struct cdt_mesh::edge_t e2(t_pts_map[tri.v[1]], t_pts_map[tri.v[2]]);
@@ -1138,6 +1152,7 @@ refine_edge_vert_sets (
 	std::set<cdt_mesh::uedge_t> new_edges;
 	std::set<cdt_mesh::uedge_t> shared_edges;
 	tri = omesh->fmesh->tris_vect[*(rtris.begin())];
+	omesh->fmesh->tri_remove(tri);
 	rtris.erase(rtris.begin());
 
 	for (int i = 0; i < 3; i++) {
@@ -1181,14 +1196,33 @@ refine_edge_vert_sets (
 		proj_2d.first = u;
 		proj_2d.second = v;
 		polygon->pnts_2d.push_back(proj_2d);
+		size_t p2dind = polygon->pnts_2d.size() - 1;
 
-		// TODO - add new 3D point to CDT
+		// We're going to use it - add new 3D point to CDT
+		long f3ind = omesh->fmesh->add_point(new ON_3dPoint(epnts[i].spnt));
+		long fnind = omesh->fmesh->add_normal(new ON_3dPoint(epnts[i].sn));
+		CDT_Add3DPnt(s_cdt, omesh->fmesh->pnts[f3ind], omesh->fmesh->f_id, -1, -1, -1, 0, 0);
+		CDT_Add3DNorm(s_cdt, omesh->fmesh->normals[fnind], omesh->fmesh->pnts[f3ind], omesh->fmesh->f_id, -1, -1, -1, 0, 0);
+		polygon->p2o[p2dind] = f3ind;
+		polygon->interior_points.insert(p2dind);
 	    } 
 
 	    bu_file_delete("tri_replace_pair.plot3");
 	    polygon->polygon_plot_in_plane("tri_replace_pair.plot3");
 	}
-    
+
+	polygon->cdt(TRI_DELAUNAY);
+
+	if (polygon->tris.size()) {
+	    std::set<cdt_mesh::triangle_t>::iterator v_it;
+	    for (v_it = polygon->tris.begin(); v_it != polygon->tris.end(); v_it++) {
+		cdt_mesh::triangle_t vt = *v_it;
+		std::cout << "new triangle: " << vt.v[0] << "," << vt.v[1] << "," << vt.v[2] << "\n";
+		orient_tri(*omesh->fmesh, vt);
+		omesh->fmesh->tri_add(vt);
+		omesh->fmesh->tri_plot(vt, "tadd.plot3");
+	    }
+	}
     }
 }
 
@@ -1428,18 +1462,6 @@ adjust_close_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs)
     return adjusted.size();
 }
 
-void
-orient_tri(cdt_mesh::cdt_mesh_t &fmesh, cdt_mesh::triangle_t &t)
-{
-    ON_3dVector tdir = fmesh.tnorm(t);
-    ON_3dVector bdir = fmesh.bnorm(t);
-    bool flipped_tri = (ON_DotProduct(tdir, bdir) < 0);
-    if (flipped_tri) {
-	long tmp = t.v[2];
-	t.v[2] = t.v[1];
-	t.v[1] = tmp;
-    }
-}
 
 void
 replace_edge_split_tri(cdt_mesh::cdt_mesh_t &fmesh, size_t t_id, long np_id, cdt_mesh::uedge_t &split_edge)
