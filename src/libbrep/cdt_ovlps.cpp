@@ -1125,7 +1125,10 @@ refine_edge_vert_sets (
 
 	ON_Plane fit_plane(pcenter, pnorm);
 
-	// Build our polygon out of the two triangles
+	// Build our polygon out of the two triangles.
+	//
+	// First step, add the 2D projection of the triangle vertices to the
+	// polygon data structure.
 	cdt_mesh::cpolygon_t *polygon = new cdt_mesh::cpolygon_t;
 	polygon->pdir = fit_plane.Normal();
 	polygon->tplane = fit_plane;
@@ -1141,44 +1144,37 @@ refine_edge_vert_sets (
 	    polygon->p2o[polygon->pnts_2d.size() - 1] = pind;
 	}	
 
-	cdt_mesh::triangle_t tri = omesh->fmesh->tris_vect[*(rtris.begin())];
-	omesh->fmesh->tri_remove(tri);
+	// Initialize the polygon edges with one of the triangles.
+	cdt_mesh::triangle_t tri1 = omesh->fmesh->tris_vect[*(rtris.begin())];
 	rtris.erase(rtris.begin());
-	struct cdt_mesh::edge_t e1(t_pts_map[tri.v[0]], t_pts_map[tri.v[1]]);
-	struct cdt_mesh::edge_t e2(t_pts_map[tri.v[1]], t_pts_map[tri.v[2]]);
-	struct cdt_mesh::edge_t e3(t_pts_map[tri.v[2]], t_pts_map[tri.v[0]]);
+	struct cdt_mesh::edge_t e1(t_pts_map[tri1.v[0]], t_pts_map[tri1.v[1]]);
+	struct cdt_mesh::edge_t e2(t_pts_map[tri1.v[1]], t_pts_map[tri1.v[2]]);
+	struct cdt_mesh::edge_t e3(t_pts_map[tri1.v[2]], t_pts_map[tri1.v[0]]);
 	polygon->add_edge(e1);
 	polygon->add_edge(e2);
 	polygon->add_edge(e3);
 
-	bu_file_delete("tri_replace_pair.plot3");
-	polygon->polygon_plot_in_plane("tri_replace_pair.plot3");
-
+	// Grow the polygon with the other triangle.
 	std::set<cdt_mesh::uedge_t> new_edges;
 	std::set<cdt_mesh::uedge_t> shared_edges;
-	tri = omesh->fmesh->tris_vect[*(rtris.begin())];
-	omesh->fmesh->tri_remove(tri);
+	cdt_mesh::triangle_t tri2 = omesh->fmesh->tris_vect[*(rtris.begin())];
+	omesh->fmesh->tri_remove(tri2);
 	rtris.erase(rtris.begin());
-
 	for (int i = 0; i < 3; i++) {
 	    int v1 = i;
 	    int v2 = (i < 2) ? i + 1 : 0;
-	    cdt_mesh::uedge_t ue1(tri.v[v1], tri.v[v2]);
-	    cdt_mesh::uedge_t nue1(t_pts_map[tri.v[v1]], t_pts_map[tri.v[v2]]);
+	    cdt_mesh::uedge_t ue1(tri2.v[v1], tri2.v[v2]);
+	    cdt_mesh::uedge_t nue1(t_pts_map[tri2.v[v1]], t_pts_map[tri2.v[v2]]);
 	    if (ue1 != ue) {
 		new_edges.insert(nue1);
 	    } else {
 		shared_edges.insert(nue1);
 	    }
 	}
-	
 	polygon->replace_edges(new_edges, shared_edges);
 
-	bu_file_delete("tri_replace_pair.plot3");
-	polygon->polygon_plot_in_plane("tri_replace_pair.plot3");
-
-	//ON_Xform xf;
-	//xf.PlanarProjection(fit_plane);
+	// Grow the polygon with the other triangle.
+	bool have_inside = false;
 	for (size_t i = 0; i < epnts.size(); i++) {
 	    bool inside = false;
 	    {
@@ -1190,7 +1186,6 @@ refine_edge_vert_sets (
 		proj_2d.second = v;
 		polygon->pnts_2d.push_back(proj_2d);
 		inside = polygon->point_in_polygon(polygon->pnts_2d.size() - 1, false);
-		std::cout << "Point in polygon test result: " << inside << "\n";
 		polygon->pnts_2d.pop_back();
 	    }
 	    if (inside) {
@@ -1210,24 +1205,36 @@ refine_edge_vert_sets (
 		CDT_Add3DNorm(s_cdt, omesh->fmesh->normals[fnind], omesh->fmesh->pnts[f3ind], omesh->fmesh->f_id, -1, -1, -1, 0, 0);
 		polygon->p2o[p2dind] = f3ind;
 		polygon->interior_points.insert(p2dind);
+
+		have_inside = true;
 	    } 
 
-	    bu_file_delete("tri_replace_pair.plot3");
-	    polygon->polygon_plot_in_plane("tri_replace_pair.plot3");
+	}
+
+	if (!have_inside) {
+	    // No point in doing this if none of the points are interior
+	    delete polygon;
+	    continue;
 	}
 
 	polygon->cdt(TRI_DELAUNAY);
 
 	if (polygon->tris.size()) {
+	    omesh->fmesh->tri_remove(tri1);
+	    omesh->fmesh->tri_remove(tri2);
 	    std::set<cdt_mesh::triangle_t>::iterator v_it;
 	    for (v_it = polygon->tris.begin(); v_it != polygon->tris.end(); v_it++) {
 		cdt_mesh::triangle_t vt = *v_it;
-		std::cout << "new triangle: " << vt.v[0] << "," << vt.v[1] << "," << vt.v[2] << "\n";
 		orient_tri(*omesh->fmesh, vt);
 		omesh->fmesh->tri_add(vt);
-		omesh->fmesh->tri_plot(vt, "tadd.plot3");
 	    }
+	} else {
+	    std::cout << "polygon cdt failed!\n";
+	    bu_file_delete("tri_replace_pair_fail.plot3");
+	    polygon->polygon_plot_in_plane("tri_replace_pair_fail.plot3");
 	}
+
+	delete polygon;
 
 	// Reassign points to their new closest edge (may be the same edge, but we need
 	// to check)
@@ -1914,6 +1921,21 @@ split_brep_face_edges_near_verts(
     fclose(plot_file);
 
     return bedge_split_near_vert(edge_vert, f2omap);
+
+    // Now that we've done the initial split, find triangle intersections involving
+    // triangles on brep face edges.  For the points that project onto those triangles,
+    // do another round of splitting to make sure the edges are "pulled in" towards
+    // those intersections.
+#if 0
+    std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> edge_verts;
+    edge_verts.clear();
+    while (characterize_tri_intersections(ocheck_pairs, edge_verts) == 2) {
+	refine_omeshes(ocheck_pairs, f2omap);
+	face_ov_cnt = face_omesh_ovlps(ocheck_pairs);
+	edge_verts.clear();
+    }
+#endif
+
 }
 
 void
