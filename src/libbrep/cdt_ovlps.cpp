@@ -1058,18 +1058,23 @@ class revt_pt_t {
 void
 refine_edge_vert_sets (
 	omesh_t *omesh,
-	std::map<cdt_mesh::uedge_t, std::vector<revt_pt_t>> &edge_sets
+	std::map<cdt_mesh::uedge_t, std::vector<revt_pt_t>> *edge_sets
 )
 {
     struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)omesh->fmesh->p_cdt;
 
     std::cout << "Processing " << s_cdt->name << " face " << omesh->fmesh->f_id << ":\n";
 
+    // TODO - should be a while loop - we're going to be yanking things from this map
+    // as they're completed, and adding new edges with associated points as the triangles
+    // shift around.
     std::map<cdt_mesh::uedge_t, std::vector<revt_pt_t>>::iterator es_it;
-    for (es_it = edge_sets.begin(); es_it != edge_sets.end(); es_it++) {
+    while (edge_sets->size()) {
 	std::map<cdt_mesh::uedge_t, std::vector<revt_pt_t>> updated_esets;
-	cdt_mesh::uedge_t ue = es_it->first;
-	std::vector<revt_pt_t> epnts = es_it->second;
+	
+	cdt_mesh::uedge_t ue = edge_sets->begin()->first;
+	std::vector<revt_pt_t> epnts = edge_sets->begin()->second;
+	edge_sets->erase(edge_sets->begin());
 
 	// Find the two triangles that we will be using to form the outer polygon
 	std::set<size_t> rtris = omesh->fmesh->uedges2tris[ue];
@@ -1221,6 +1226,33 @@ refine_edge_vert_sets (
 		orient_tri(*omesh->fmesh, vt);
 		omesh->fmesh->tri_add(vt);
 		omesh->fmesh->tri_plot(vt, "tadd.plot3");
+	    }
+	}
+
+	// Reassign points to their new closest edge (may be the same edge, but we need
+	// to check)
+	std::set<cdt_mesh::uedge_t>::iterator pre_it;
+	for (pre_it = pnt_reassignment_edges.begin(); pre_it != pnt_reassignment_edges.end(); pre_it++) {
+	    cdt_mesh::uedge_t rue = *pre_it;
+	    std::vector<revt_pt_t> old_epnts = (*edge_sets)[rue];
+	    std::map<cdt_mesh::uedge_t, std::vector<revt_pt_t>>::iterator er_it = edge_sets->find(rue);
+	    edge_sets->erase(er_it);
+	    for (size_t i = 0; i < old_epnts.size(); i++) {
+		overt_t *ov = old_epnts[i].ov;
+		std::set<cdt_mesh::uedge_t> close_edges = omesh->interior_uedges_search(ov->bb);
+		double mindist = DBL_MAX; 
+		cdt_mesh::uedge_t closest_uedge;
+		std::set<cdt_mesh::uedge_t>::iterator c_it;
+		for (c_it = close_edges.begin(); c_it != close_edges.end(); c_it++) {
+		    cdt_mesh::uedge_t cue = *c_it;
+		    double dline = omesh->fmesh->uedge_dist(cue, old_epnts[i].spnt);
+		    if (mindist > dline) {
+			closest_uedge = cue;
+			mindist = dline;
+		    }
+		}
+
+		(*edge_sets)[closest_uedge].push_back(old_epnts[i]);
 	    }
 	}
     }
@@ -2236,7 +2268,7 @@ omesh_interior_edge_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs
 	    std::cout << "Edge: " << ue.v[0] << "<->" << ue.v[1] << ": " << es_it->second.size() << " points\n";
 	}
 
-	refine_edge_vert_sets(omesh, edge_sets);
+	refine_edge_vert_sets(omesh, &edge_sets);
 
     }
 
@@ -2470,131 +2502,15 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	close_vert_checks++;
     }
 
-
-    omesh_interior_edge_verts(ocheck_pairs);
-
-    // Calculate omesh refinement point closest surf points
-    //
-    // If any surf closest points are close to existing verts, adjust instead of splitting
-    //
-    // Check for any close surf points that are on face edge curves - those need an edge split,
-    // not a face split
-    //
     // Once edge splits are handled, use remaining closest points and find nearest interior
     // edge curve, building sets of points near each interior edge.  Then, for all interior
     // edges, yank the two triangles associated with that edge, build a polygon with interior
-    // points and tessellate.  For refinement points involved with the outer edges of the
-    // tessellation polygon, reassign them to new closest edges.
+    // points and tessellate.
+    omesh_interior_edge_verts(ocheck_pairs);
 
-    //process_near_edge_pnts(face_npnts);
-
-    check_faces_validity(check_pairs, 1);
-    face_ov_cnt = face_omesh_ovlps(ocheck_pairs);
-    //std::cout << "Post interior-near-edge split overlap cnt: " << face_ov_cnt << "\n";
-
-#if 0
-
-
-    int tneigh_cnt = 0;
-
-    std::map<cdt_mesh::cdt_mesh_t *, std::set<struct p_mvert_info *>>::iterator f_it;
-    for (f_it = face_npnts->begin(); f_it != face_npnts->end(); f_it++) {
-	cdt_mesh::cdt_mesh_t *fmesh = f_it->first;
-	struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh->p_cdt;
-	std::cout << "Refining " << s_cdt->name << " face " << fmesh->f_id << " with " << f_it->second.size() << " points.\n";
-	std::set<struct p_mvert_info *>::iterator pm_it;
-
-	std::map<long, std::set<struct p_mvert_info *>> tri_npnts;
-
-	fmesh->tris_plot("face.plot3");
-	plot_mvert_set(0.1,f_it->second);
-
-	for (pm_it = f_it->second.begin(); pm_it != f_it->second.end(); pm_it++) {
-	    struct p_mvert_info *pmv = *pm_it;
-
-	    if (pmv->deactivate || pmv->edge_split_only) continue;
-	    // TODO -  after the edge pass, search face triangle Rtree for closest
-	    // triangles, and find the closest one where it can produce a valid
-	    // projection into the triangle plane.  Associate the point with the
-	    // triangle.  The set of points associated with the triangles will then
-	    // be characterized, and as appropriate indiviual or pairs of triangles
-	    // will be re-tessellated and replaced to incorporate the new points.
-	    double fMin[3];
-	    fMin[0] = pmv->bb.Min().x;
-	    fMin[1] = pmv->bb.Min().y;
-	    fMin[2] = pmv->bb.Min().z;
-	    double fMax[3];
-	    fMax[0] = pmv->bb.Max().x;
-	    fMax[1] = pmv->bb.Max().y;
-	    fMax[2] = pmv->bb.Max().z;
-	    std::set<size_t> near_faces;
-	    fmesh->tris_tree.Search(fMin, fMax, NearFacesCallback, (void *)&near_faces);
-	    std::set<size_t>::iterator n_it;
-	    std::set<tri_dist> atris;
-	    int point_type = 0;
-	    fmesh->tris_ind_set_plot(near_faces, "near_faces.plot3");
-	    for (n_it = near_faces.begin(); n_it != near_faces.end(); n_it++) {
-		double dist;
-		cdt_mesh::triangle_t tri = fmesh->tris_vect[*n_it];
-		int ptype = characterize_avgpnt(tri, fmesh, (pmv)->p, &dist);
-		if (dist >= 0) {
-		    atris.insert(tri_dist(dist, tri.ind));
-		} else {
-		    std::cout << "odd distance: " << dist << "\n";
-		    std::cout << "TP: " << (pmv)->p.x << "," << (pmv)->p.y << "," << (pmv)->p.z << "\n";
-		    cdt_mesh::triangle_t otri = fmesh->tris_vect[*n_it];
-		    fmesh->tri_plot(otri, "otri.plot3");
-
-		    std::cout << "V0: " << fmesh->pnts[otri.v[0]]->x << "," << fmesh->pnts[otri.v[0]]->y << "," << fmesh->pnts[otri.v[0]]->z << "\n";
-		    std::cout << "V1: " << fmesh->pnts[otri.v[1]]->x << "," << fmesh->pnts[otri.v[1]]->y << "," << fmesh->pnts[otri.v[1]]->z << "\n";
-		    std::cout << "V2: " << fmesh->pnts[otri.v[2]]->x << "," << fmesh->pnts[otri.v[2]]->y << "," << fmesh->pnts[otri.v[2]]->z << "\n";
-		}
-		point_type = (ptype > point_type) ? ptype : point_type;
-	    }
-	    std::cout << "Point/tri characterization: " << point_type << "\n";
-
-	    // Plot point and neighborhood triangles
-	    struct bu_vls fname = BU_VLS_INIT_ZERO;
-	    bu_vls_sprintf(&fname, "%s_tri_neighborhood-type_%d_%d.plot3", s_cdt->name, point_type, tneigh_cnt);
-	    FILE *plot = fopen(bu_vls_cstr(&fname), "w");
-	    bu_vls_free(&fname);
-	    double fpnt_r = -1.0;
-	    int cnt = 0;
-	    std::set<tri_dist>::iterator a_it;
-	    for (a_it = atris.begin(); a_it != atris.end(); a_it++) {
-		if (point_type == 1 && cnt == 1) break;
-		if ((point_type == 2 || point_type == 4) && cnt == 2) break;
-		if (point_type == 1 && cnt == 3) break;
-		//std::cout << "dist: " << a_it->dist << "\n";
-		pl_color(plot, 0, 0, 255);
-		fmesh->plot_tri(fmesh->tris_vect[a_it->ind], NULL, plot, 0, 0, 0);
-		double pnt_r = tri_pnt_r(*fmesh, a_it->ind);
-		fpnt_r = (pnt_r > fpnt_r) ? pnt_r : fpnt_r;
-		cnt++;
-	    }
-	    pl_color(plot, 255, 0, 0);
-	    plot_pnt_3d(plot, &((pmv)->p), fpnt_r, 0);
-	    fclose(plot);
-	    tneigh_cnt++;
-
-	    // For now, just assign the point to its closest triangle.  Eventually we'll want to incorporate
-	    // the type/edge information above for better triangulations.
-	    tri_npnts[atris.begin()->ind].insert(pmv);
-	}
-
-
-	// Points assigned to triangles - retessellate and replace
-	std::map<long, std::set<struct p_mvert_info *>>::iterator tp_it;
-	for (tp_it = tri_npnts.begin(); tp_it != tri_npnts.end(); tp_it++) {
-	    tri_retessellate(fmesh, tp_it->first, tp_it->second);
-	}
-
-    }
-#endif
-
+    check_faces_validity(check_pairs, 4);
     face_ov_cnt = face_omesh_ovlps(ocheck_pairs);
     std::cout << "Post tri split overlap cnt: " << face_ov_cnt << "\n";
-    check_faces_validity(check_pairs, 4);
 
     return 0;
 }
