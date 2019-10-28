@@ -1034,21 +1034,29 @@ projects_inside_tri(
     return polygon.point_in_polygon(polygon.pnts_2d.size() - 1, false);
 }
 
+class revt_pt_t {
+    public:
+	ON_3dPoint spnt;
+	ON_3dVector sn;
+	overt_t *ov;
+};
+
+
 void
 refine_edge_vert_sets (
 	omesh_t *omesh,
-	std::map<cdt_mesh::uedge_t, std::set<std::pair<ON_3dPoint,ON_3dVector>>> &edge_sets
+	std::map<cdt_mesh::uedge_t, std::vector<revt_pt_t>> &edge_sets
 )
 {
     struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)omesh->fmesh->p_cdt;
 
     std::cout << "Processing " << s_cdt->name << " face " << omesh->fmesh->f_id << ":\n";
 
-    std::map<cdt_mesh::uedge_t, std::set<std::pair<ON_3dPoint,ON_3dVector>>>::iterator es_it;
+    std::map<cdt_mesh::uedge_t, std::vector<revt_pt_t>>::iterator es_it;
     for (es_it = edge_sets.begin(); es_it != edge_sets.end(); es_it++) {
-	std::map<cdt_mesh::uedge_t, std::set<std::pair<ON_3dPoint,ON_3dVector>>> updated_esets;
+	std::map<cdt_mesh::uedge_t, std::vector<revt_pt_t>> updated_esets;
 	cdt_mesh::uedge_t ue = es_it->first;
-	std::set<std::pair<ON_3dPoint,ON_3dVector>> epnts = es_it->second;
+	std::vector<revt_pt_t> epnts = es_it->second;
 
 	// Find the two triangles that we will be using to form the outer polygon
 	std::set<size_t> rtris = omesh->fmesh->uedges2tris[ue];
@@ -1149,19 +1157,36 @@ refine_edge_vert_sets (
 	bu_file_delete("tri_replace_pair.plot3");
 	polygon->polygon_plot_in_plane("tri_replace_pair.plot3");
 
-	std::set<std::pair<ON_3dPoint,ON_3dVector>>::iterator ep_it;
-	for (ep_it = epnts.begin(); ep_it != epnts.end(); ep_it++) {
-	    ON_3dPoint p = ep_it->first;
-	    //ON_3dVector n = ep_it->second;
-	    double u, v;
-	    fit_plane.ClosestPointTo(p, &u, &v);
-	    std::pair<double, double> proj_2d;
-	    proj_2d.first = u;
-	    proj_2d.second = v;
-	    polygon->pnts_2d.push_back(proj_2d);
-	    bool inside = polygon->point_in_polygon(polygon->pnts_2d.size() - 1, false);
-	    std::cout << "Point in polygon test result: " << inside << "\n";
-	    polygon->pnts_2d.pop_back();
+	//ON_Xform xf;
+	//xf.PlanarProjection(fit_plane);
+	for (size_t i = 0; i < epnts.size(); i++) {
+	    bool inside = false;
+	    {
+		ON_3dPoint ovpnt = epnts[i].ov->vpnt();
+		double u, v;
+		fit_plane.ClosestPointTo(ovpnt, &u, &v);
+		std::pair<double, double> proj_2d;
+		proj_2d.first = u;
+		proj_2d.second = v;
+		polygon->pnts_2d.push_back(proj_2d);
+		inside = polygon->point_in_polygon(polygon->pnts_2d.size() - 1, false);
+		std::cout << "Point in polygon test result: " << inside << "\n";
+		polygon->pnts_2d.pop_back();
+	    }
+	    if (inside) {
+		ON_3dPoint p = epnts[i].spnt;
+		double u, v;
+		fit_plane.ClosestPointTo(p, &u, &v);
+		std::pair<double, double> proj_2d;
+		proj_2d.first = u;
+		proj_2d.second = v;
+		polygon->pnts_2d.push_back(proj_2d);
+
+		// TODO - add new 3D point to CDT
+	    } 
+
+	    bu_file_delete("tri_replace_pair.plot3");
+	    polygon->polygon_plot_in_plane("tri_replace_pair.plot3");
 	}
     
     }
@@ -2105,7 +2130,7 @@ omesh_interior_edge_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs
     for (o_it = omeshes.begin(); o_it != omeshes.end(); o_it++) {
 	omesh_t *omesh = *o_it;
 
-	std::map<cdt_mesh::uedge_t, std::set<std::pair<ON_3dPoint,ON_3dVector>>> edge_sets;
+	std::map<cdt_mesh::uedge_t, std::vector<revt_pt_t>> edge_sets;
 
 	std::map<long, overt_t*> roverts = omesh->refinement_overts;
 	std::map<long, overt_t*>::iterator i_t;
@@ -2174,12 +2199,16 @@ omesh_interior_edge_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs
 		}
 	    }
 
-	    edge_sets[closest_uedge].insert(std::make_pair(spnt, sn));
+	    revt_pt_t rpt;
+	    rpt.spnt = spnt;
+	    rpt.sn = sn;
+	    rpt.ov = ov;
+	    edge_sets[closest_uedge].push_back(rpt);
 	}
 
 	struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)omesh->fmesh->p_cdt;
 	std::cout << s_cdt->name << " face " << omesh->fmesh->f_id << " has " << edge_sets.size() << " edge/point sets:\n";
-	std::map<cdt_mesh::uedge_t, std::set<std::pair<ON_3dPoint,ON_3dVector>>>::iterator es_it;
+	std::map<cdt_mesh::uedge_t, std::vector<revt_pt_t>>::iterator es_it;
 	for (es_it = edge_sets.begin(); es_it != edge_sets.end(); es_it++) {
 	    cdt_mesh::uedge_t ue = es_it->first;
 	    std::cout << "Edge: " << ue.v[0] << "<->" << ue.v[1] << ": " << es_it->second.size() << " points\n";
