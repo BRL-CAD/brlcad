@@ -1040,7 +1040,10 @@ refine_edge_vert_sets (
 	std::map<cdt_mesh::uedge_t, std::set<std::pair<ON_3dPoint,ON_3dVector>>> &edge_sets
 )
 {
-    //struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)omesh->fmesh->p_cdt;
+    struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)omesh->fmesh->p_cdt;
+
+    std::cout << "Processing " << s_cdt->name << " face " << omesh->fmesh->f_id << ":\n";
+
     std::map<cdt_mesh::uedge_t, std::set<std::pair<ON_3dPoint,ON_3dVector>>>::iterator es_it;
     for (es_it = edge_sets.begin(); es_it != edge_sets.end(); es_it++) {
 	std::map<cdt_mesh::uedge_t, std::set<std::pair<ON_3dPoint,ON_3dVector>>> updated_esets;
@@ -1120,21 +1123,31 @@ refine_edge_vert_sets (
 	polygon->add_edge(e1);
 	polygon->add_edge(e2);
 	polygon->add_edge(e3);
+
+	bu_file_delete("tri_replace_pair.plot3");
+	polygon->polygon_plot_in_plane("tri_replace_pair.plot3");
+
 	std::set<cdt_mesh::uedge_t> new_edges;
 	std::set<cdt_mesh::uedge_t> shared_edges;
 	tri = omesh->fmesh->tris_vect[*(rtris.begin())];
 	rtris.erase(rtris.begin());
-	std::set<cdt_mesh::uedge_t> nuedges = omesh->fmesh->uedges(tri);
-	std::set<cdt_mesh::uedge_t>::iterator n_it;
-	for (n_it = nuedges.begin(); n_it != nuedges.end(); n_it++) {
-	    cdt_mesh::uedge_t nue = *n_it;
-	    if (nue != ue) {
-		new_edges.insert(nue);
+
+	for (int i = 0; i < 3; i++) {
+	    int v1 = i;
+	    int v2 = (i < 2) ? i + 1 : 0;
+	    cdt_mesh::uedge_t ue1(tri.v[v1], tri.v[v2]);
+	    cdt_mesh::uedge_t nue1(t_pts_map[tri.v[v1]], t_pts_map[tri.v[v2]]);
+	    if (ue1 != ue) {
+		new_edges.insert(nue1);
 	    } else {
-		shared_edges.insert(nue);
+		shared_edges.insert(nue1);
 	    }
 	}
+	
 	polygon->replace_edges(new_edges, shared_edges);
+
+	bu_file_delete("tri_replace_pair.plot3");
+	polygon->polygon_plot_in_plane("tri_replace_pair.plot3");
 
 	std::set<std::pair<ON_3dPoint,ON_3dVector>>::iterator ep_it;
 	for (ep_it = epnts.begin(); ep_it != epnts.end(); ep_it++) {
