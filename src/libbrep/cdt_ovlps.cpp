@@ -2230,16 +2230,21 @@ omesh_interior_edge_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs
 	    omeshes.insert(omesh2);
 	}
     }
-
-    std::cout << "TODO check nverts:" << nverts.size() << "\n";
-
     std::cout << "Need to split triangles in " << omeshes.size() << " meshes\n";
 
     std::set<omesh_t *>::iterator o_it;
     for (o_it = omeshes.begin(); o_it != omeshes.end(); o_it++) {
 	omesh_t *omesh = *o_it;
-
+	
 	std::map<cdt_mesh::uedge_t, std::vector<revt_pt_t>> edge_sets;
+
+	std::set<overt_t *>::iterator nv_it;
+	for (nv_it = nverts.begin(); nv_it != nverts.end(); nv_it++) {
+	    overt_t *v = *nv_it;
+	    if (v->omesh != omesh) {
+		omesh->refine_pnt_add(v);
+	    }
+	}
 
 	std::map<long, overt_t*> roverts = omesh->refinement_overts;
 	std::map<long, overt_t*>::iterator i_t;
@@ -2250,7 +2255,12 @@ omesh_interior_edge_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs
 	    ON_3dPoint spnt;
 	    ON_3dVector sn;
 	    double dist = ov->bb.Diagonal().Length() * 10;
-	    closest_surf_pnt(spnt, sn, *omesh->fmesh, &ovpnt, 2*dist);
+
+	    if (!closest_surf_pnt(spnt, sn, *omesh->fmesh, &ovpnt, 200*dist)) {
+		std::cout << "closest point failed\n";
+		omesh->refine_pnt_remove(ov);
+		continue;
+	    }
 
 #if 0
 	    ON_3dPoint problem(3.40645986967497638,8.36595332610066045,23.99999898083232353);
@@ -2323,6 +2333,12 @@ omesh_interior_edge_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs
 		    closest_uedge = ue;
 		    mindist = dline;
 		}
+	    }
+
+	    if (closest_uedge.v[0] == -1) {
+		std::cout << "problem\n";
+		omesh->refine_pnt_remove(ov);
+		continue;
 	    }
 
 	    revt_pt_t rpt;
