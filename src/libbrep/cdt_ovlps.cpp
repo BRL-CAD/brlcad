@@ -1159,7 +1159,6 @@ refine_edge_vert_sets (
 	std::set<cdt_mesh::uedge_t> new_edges;
 	std::set<cdt_mesh::uedge_t> shared_edges;
 	cdt_mesh::triangle_t tri2 = omesh->fmesh->tris_vect[*(rtris.begin())];
-	omesh->fmesh->tri_remove(tri2);
 	rtris.erase(rtris.begin());
 	for (int i = 0; i < 3; i++) {
 	    int v1 = i;
@@ -1221,9 +1220,13 @@ refine_edge_vert_sets (
 	    continue;
 	}
 
-	polygon->cdt(TRI_DELAUNAY);
+	polygon->cdt();
+	//omesh->fmesh->boundary_edges_plot("bedges.plot3");
 
 	if (polygon->tris.size()) {
+	    unsigned char rgb[3] = {0,255,255};
+	    struct bu_color c = BU_COLOR_INIT_ZERO;
+	    bu_color_from_rgb_chars(&c, (const unsigned char *)rgb);
 	    omesh->fmesh->tri_remove(tri1);
 	    omesh->fmesh->tri_remove(tri2);
 	    std::set<cdt_mesh::triangle_t>::iterator v_it;
@@ -1232,6 +1235,8 @@ refine_edge_vert_sets (
 		orient_tri(*omesh->fmesh, vt);
 		omesh->fmesh->tri_add(vt);
 	    }
+	    //omesh->fmesh->tris_set_plot(polygon->tris, "poly_tris.plot3");
+	    //polygon->polygon_plot_in_plane("poly.plot3");
 	} else {
 	    std::cout << "polygon cdt failed!\n";
 	    bu_file_delete("tri_replace_pair_fail.plot3");
@@ -1771,17 +1776,7 @@ bedge_split_near_verts(
 	std::set<overt_t *> verts = ev_it->second;
 	std::set<cdt_mesh::bedge_seg_t *> segs;
 	segs.insert(ev_it->first);
-#if 0
-	ON_3dPoint problem(3.06294,7.5,24.2775);
-	std::set<overt_t *>::iterator v_it;
-	for (v_it = verts.begin(); v_it != verts.end(); v_it++) {
-	    overt_t *v = *v_it;
-	    ON_3dPoint p = v->vpnt();
-	    if (problem.DistanceTo(p) < 0.01) {
-		std::cout << "problem\n";
-	    }
-	}
-#endif
+
 	while (verts.size()) {
 	    overt_t *v = *verts.begin();
 	    ON_3dPoint p = v->vpnt();
@@ -2230,6 +2225,13 @@ omesh_interior_edge_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs
 	    double dist = ov->bb.Diagonal().Length() * 10;
 	    closest_surf_pnt(spnt, sn, *omesh->fmesh, &ovpnt, 2*dist);
 
+#if 0
+	    ON_3dPoint problem(3.40645986967497638,8.36595332610066045,23.99999898083232353);
+	    if (problem.DistanceTo(spnt) < 0.01) {
+		std::cout << "problem\n";
+	    }
+#endif
+
 	    // Check this point against the mesh vert tree - if we're
 	    // extremely close to an existing vertex, we don't want to split
 	    // and create extremely tiny triangles - vertex adjustment should
@@ -2247,6 +2249,9 @@ omesh_interior_edge_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs
 		if (spdist < ON_ZERO_TOLERANCE) {
 		    // If we're on the vertex point, we don't need to check
 		    // further - we're not splitting there.
+		    //
+		    // TODO - this may be wrong - I might have intended to
+		    // be doing the cvpnt vs spnt check here instead...
 		    omesh->refine_pnt_remove(ov);
 		    continue;
 		}
@@ -2255,17 +2260,24 @@ omesh_interior_edge_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs
 		// gauge for how close is too close for the surface point
 		double vdist = DBL_MAX;
 		double bbdiag = DBL_MAX;
+		bool skip = false;
 		std::set<overt_t *>::iterator v_it;
 		for (v_it = cverts.begin(); v_it != cverts.end(); v_it++) {
 		    ON_3dPoint cvpnt = (*v_it)->vpnt();
+		    double cvbbdiag = (*v_it)->bb.Diagonal().Length() * 0.1;
+		    if (cvpnt.DistanceTo(spnt) < cvbbdiag) {
+			// Too close to a vertex in the current mesh, skip
+			skip = true;
+			break;
+		    }
 		    double cvdist = ovpnt.DistanceTo(cvpnt);
 		    if (cvdist < vdist) {
 			vdist = cvdist;
-			bbdiag = (*v_it)->bb.Diagonal().Length() * 0.1;
+			bbdiag = cvbbdiag;
 		    }
 		}
 
-		if (spdist < bbdiag) {
+		if (skip || spdist < bbdiag) {
 		    omesh->refine_pnt_remove(ov);
 		    continue;
 		}
