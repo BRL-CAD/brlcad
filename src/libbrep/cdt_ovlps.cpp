@@ -1574,8 +1574,12 @@ replace_edge_split_tri(cdt_mesh::cdt_mesh_t &fmesh, size_t t_id, long np_id, cdt
 }
 
 int
-ovlp_split_edge(std::set<cdt_mesh::bedge_seg_t *> *nsegs, cdt_mesh::bedge_seg_t *eseg, double t,
-    std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap)
+ovlp_split_edge(
+	std::set<cdt_mesh::bedge_seg_t *> *nsegs,
+	std::set<overt_t *> *nverts,
+	cdt_mesh::bedge_seg_t *eseg, double t,
+	std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap
+	)
 {
     int replaced_tris = 0;
 
@@ -1646,6 +1650,12 @@ ovlp_split_edge(std::set<cdt_mesh::bedge_seg_t *> *nsegs, cdt_mesh::bedge_seg_t 
 	f2.ue2b_map[ue_2] = es; 
     }
 
+    // TODO - need to return one of the inserted verts from this
+    // process - we need to check if that point is going to require
+    // any splitting on any other objects' faces.  Any triangle
+    // from another object "close" to the new point should have
+    // a vertex that can be adjusted, or if not one needs to be
+    // introduced.
     long np_id;
     if (f_id1 == f_id2) {
 	std::set<size_t> ftris;
@@ -1661,15 +1671,22 @@ ovlp_split_edge(std::set<cdt_mesh::bedge_seg_t *> *nsegs, cdt_mesh::bedge_seg_t 
 	    replaced_tris++;
 	}
 
-	f2omap[&fmesh_f1]->vert_add(np_id);
-	
+	overt_t *nv = f2omap[&fmesh_f1]->vert_add(np_id);
+	if (nverts) {
+	    nverts->insert(nv);	
+	}
     } else {
 	np_id = fmesh_f1.pnts.size() - 1;
 	fmesh_f1.ep.insert(np_id);
 	replace_edge_split_tri(fmesh_f1, *f1_tris.begin(), np_id, ue1);
 	replaced_tris++;
 
-	f2omap[&fmesh_f1]->vert_add(np_id);
+	// Doesn't matter which overt we pick to return - they're both the same
+	// 3D point - return the first one
+	overt_t *nv = f2omap[&fmesh_f1]->vert_add(np_id);
+	if (nverts) {
+	    nverts->insert(nv);	
+	}
 
 	np_id = fmesh_f2.pnts.size() - 1;
 	fmesh_f2.ep.insert(np_id);
@@ -1687,7 +1704,8 @@ int
 bedge_split_at_t(
 	cdt_mesh::bedge_seg_t *eseg, double t,
 	std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap,
-	std::set<cdt_mesh::bedge_seg_t *> *nsegs
+	std::set<cdt_mesh::bedge_seg_t *> *nsegs,
+	std::set<overt_t *> *nverts
 	)
 {
     int replaced_tris = 0;
@@ -1705,7 +1723,7 @@ bedge_split_at_t(
 	int f_id1 = s_cdt_edge->brep->m_T[eseg->tseg1->trim_ind].Face()->m_face_index;
 	int f_id2 = s_cdt_edge->brep->m_T[eseg->tseg2->trim_ind].Face()->m_face_index;
 #endif
-	int rtris = ovlp_split_edge(nsegs, eseg, t, f2omap);
+	int rtris = ovlp_split_edge(nsegs, nverts, eseg, t, f2omap);
 	if (rtris >= 0) {
 	    replaced_tris += rtris;
 #if 0
@@ -1734,14 +1752,15 @@ int
 bedge_split_near_pnt(
 	cdt_mesh::bedge_seg_t *eseg, ON_3dPoint &p,
 	std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap,
-	std::set<cdt_mesh::bedge_seg_t *> *nsegs
+	std::set<cdt_mesh::bedge_seg_t *> *nsegs,
+	std::set<overt_t *> *nverts
 	)
 {
     ON_NurbsCurve *nc = eseg->nc;
     ON_Interval domain(eseg->edge_start, eseg->edge_end);
     double t;
     ON_NurbsCurve_GetClosestPoint(&t, nc, p, 0.0, &domain);
-    return bedge_split_at_t(eseg, t, f2omap, nsegs);
+    return bedge_split_at_t(eseg, t, f2omap, nsegs, nverts);
 }
 
 // Find the point on the edge nearest to the vert point.  (TODO - need to think about how to
@@ -1749,6 +1768,7 @@ bedge_split_near_pnt(
 // and see if splitting clears the others...)
 int
 bedge_split_near_vert(
+	std::set<overt_t *> *nverts,
 	std::map<cdt_mesh::bedge_seg_t *, overt_t *> &edge_vert,
 	std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap
 	)
@@ -1759,13 +1779,14 @@ bedge_split_near_vert(
 	cdt_mesh::bedge_seg_t *eseg = ev_it->first;
 	overt_t *v = ev_it->second;
 	ON_3dPoint p = v->vpnt();
-	replaced_tris += bedge_split_near_pnt(eseg, p, f2omap, NULL);
+	replaced_tris += bedge_split_near_pnt(eseg, p, f2omap, NULL, nverts);
     }
     return replaced_tris;
 }
 
 int
 bedge_split_near_verts(
+	std::set<overt_t *> *nverts,
 	std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> &edge_verts,
 	std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap
 	)
@@ -1805,14 +1826,15 @@ bedge_split_near_verts(
 	    }
 
 	    std::set<cdt_mesh::bedge_seg_t *> nsegs;
-	    int ntri_cnt = bedge_split_at_t(eseg_split, split_t, f2omap, &nsegs);
+	    int ntri_cnt = bedge_split_at_t(eseg_split, split_t, f2omap, &nsegs, nverts);
 	    if (ntri_cnt) {
 		segs.erase(eseg_split);
-		replaced_tris += ntri_cnt; 
+		replaced_tris += ntri_cnt;
 		segs.insert(nsegs.begin(), nsegs.end());
 	    }
 	}
     }
+
     return replaced_tris;
 }
 
@@ -1860,6 +1882,7 @@ bedges_rtree(
 // cnt of overlapping triangles to arrive at a general solution later.
 int
 split_brep_face_edges_near_verts(
+	std::set<overt_t *> *nverts,
 	std::set<struct ON_Brep_CDT_State *> &a_cdt,
 	std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs,
 	std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap
@@ -1929,7 +1952,8 @@ split_brep_face_edges_near_verts(
     }
     fclose(plot_file);
 
-    return bedge_split_near_vert(edge_vert, f2omap);
+    int ret = bedge_split_near_vert(nverts, edge_vert, f2omap);
+    return ret;
 
     // Now that we've done the initial split, find triangle intersections involving
     // triangles on brep face edges.  For the points that project onto those triangles,
@@ -2150,7 +2174,7 @@ refine_omeshes(
 	cdt_mesh::bedge_seg_t *bseg = *brep_edges_to_split.begin();
 	brep_edges_to_split.erase(brep_edges_to_split.begin());
 	double tmid = (bseg->edge_start + bseg->edge_end) * 0.5;
-	int rtris = ovlp_split_edge(NULL, bseg, tmid, f2omap);
+	int rtris = ovlp_split_edge(NULL, NULL, bseg, tmid, f2omap);
 	if (rtris <= 0) {
 	    std::cout << "edge split failed!\n";
 	}
@@ -2192,7 +2216,7 @@ refine_omeshes(
 }
 
 void
-omesh_interior_edge_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs)
+omesh_interior_edge_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs, std::set<overt_t *> &nverts)
 {
     std::set<omesh_t *> omeshes;
     std::set<std::pair<omesh_t *, omesh_t *>>::iterator cp_it;
@@ -2206,6 +2230,9 @@ omesh_interior_edge_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs
 	    omeshes.insert(omesh2);
 	}
     }
+
+    std::cout << "TODO check nverts:" << nverts.size() << "\n";
+
     std::cout << "Need to split triangles in " << omeshes.size() << " meshes\n";
 
     std::set<omesh_t *>::iterator o_it;
@@ -2380,6 +2407,9 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 
     int iterations = 0;
     while (face_ov_cnt) {
+
+	std::set<overt_t *> nverts;
+
 	iterations++;
 	if (iterations > 1) break;
 
@@ -2390,7 +2420,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	    a_cdt.insert((struct ON_Brep_CDT_State *)p_it->first->p_cdt);
 	    a_cdt.insert((struct ON_Brep_CDT_State *)p_it->second->p_cdt);
 	}
-	int sbfvtri_cnt = split_brep_face_edges_near_verts(a_cdt, ocheck_pairs, f2omap);
+	int sbfvtri_cnt = split_brep_face_edges_near_verts(&nverts, a_cdt, ocheck_pairs, f2omap);
 	if (sbfvtri_cnt) {
 	    std::cout << "Replaced " << sbfvtri_cnt << " triangles by splitting edges near vertices\n";
 	    check_faces_validity(check_pairs, 2);
@@ -2406,6 +2436,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 		std::cout << "Post vert adjustment " << close_vert_checks << " overlap cnt: " << face_ov_cnt << "\n";
 		close_vert_checks++;
 	    }
+	    std::cout << "New pnt cnt: " << nverts.size() << "\n";
 	}
 
 	// Examine the triangle intersections, performing initial breakdown and finding points
@@ -2426,7 +2457,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	    std::cout << "Edge curve has " << e_it->second.size() << " verts\n";
 	}
 
-	bedge_split_near_verts(edge_verts, f2omap);
+	bedge_split_near_verts(&nverts, edge_verts, f2omap);
 
 	avcnt = adjust_close_verts(ocheck_pairs);
 	if (avcnt) {
@@ -2436,12 +2467,14 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	    std::cout << "Post vert adjustment " << close_vert_checks << " overlap cnt: " << face_ov_cnt << "\n";
 	    close_vert_checks++;
 	}
+    
+	std::cout << "New vert pnt cnt: " << nverts.size() << "\n";
 
 	// Once edge splits are handled, use remaining closest points and find nearest interior
 	// edge curve, building sets of points near each interior edge.  Then, for all interior
 	// edges, yank the two triangles associated with that edge, build a polygon with interior
 	// points and tessellate.
-	omesh_interior_edge_verts(ocheck_pairs);
+	omesh_interior_edge_verts(ocheck_pairs, nverts);
 
 	check_faces_validity(check_pairs, 4);
 	face_ov_cnt = face_omesh_ovlps(ocheck_pairs);
