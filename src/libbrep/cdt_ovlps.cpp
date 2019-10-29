@@ -379,6 +379,8 @@ omesh_t::interior_uedges_search(ON_BoundingBox &bb)
     std::set<cdt_mesh::uedge_t> uedges;
     uedges.clear();
 
+    ON_3dPoint opnt = bb.Center();
+
     if (!fmesh->pnts.size()) return uedges;
 
     ON_BoundingBox fbbox = fmesh->bbox();
@@ -387,15 +389,18 @@ omesh_t::interior_uedges_search(ON_BoundingBox &bb)
     // find the closest interior edge
     ON_BoundingBox s_bb = bb;
     std::set<size_t> ntris = tris_search(s_bb);
-    while (!ntris.size()) {
+    bool last_try = false;
+    while (!ntris.size() && !last_try) {
 	ON_3dVector vmin = s_bb.Min() - s_bb.Center();
 	ON_3dVector vmax = s_bb.Max() - s_bb.Center();
-	vmin = vmin * 2;
-	vmax = vmax * 2;
-	s_bb.m_min = s_bb.Center() + vmin;
-	s_bb.m_max = s_bb.Center() + vmax;
-	if (s_bb.Diagonal().Length() > fbbox.Diagonal().Length()) {
-	    return uedges;
+	vmin.Unitize();
+	vmax.Unitize();
+	vmin = vmin * s_bb.Diagonal().Length() * 2;
+	vmax = vmax * s_bb.Diagonal().Length() * 2;
+	s_bb.m_min = opnt + vmin;
+	s_bb.m_max = opnt + vmax;
+	if (s_bb.Includes(fbbox, true)) {
+	    last_try = true;
 	}
 	ntris = tris_search(s_bb);
     }
@@ -2235,7 +2240,9 @@ omesh_interior_edge_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs
     std::set<omesh_t *>::iterator o_it;
     for (o_it = omeshes.begin(); o_it != omeshes.end(); o_it++) {
 	omesh_t *omesh = *o_it;
-	
+
+	omesh->fmesh->valid(1);
+
 	std::map<cdt_mesh::uedge_t, std::vector<revt_pt_t>> edge_sets;
 
 	std::set<overt_t *>::iterator nv_it;
@@ -2256,7 +2263,7 @@ omesh_interior_edge_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs
 	    ON_3dVector sn;
 	    double dist = ov->bb.Diagonal().Length() * 10;
 
-	    if (!closest_surf_pnt(spnt, sn, *omesh->fmesh, &ovpnt, 200*dist)) {
+	    if (!closest_surf_pnt(spnt, sn, *omesh->fmesh, &ovpnt, 2*dist)) {
 		std::cout << "closest point failed\n";
 		omesh->refine_pnt_remove(ov);
 		continue;
@@ -2358,6 +2365,7 @@ omesh_interior_edge_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs
 
 	refine_edge_vert_sets(omesh, &edge_sets);
 
+	omesh->fmesh->valid(1);
     }
 }
 
