@@ -2927,7 +2927,7 @@ cdt_mesh_t::valid(int verbose)
 	ON_3dVector bdir = bnorm(tri);
 	if (tdir.Length() > 0 && bdir.Length() > 0 && ON_DotProduct(tdir, bdir) < 0.1) {
 	    if (verbose > 0) {
-		std::cout << "Still have invalid normals in mesh, triangle (" << tri.v[0] << "," << tri.v[1] << "," << tri.v[2] << ")\n";
+		std::cout << name << " face " << f_id << ": invalid normals in mesh, triangle (" << tri.v[0] << "," << tri.v[1] << "," << tri.v[2] << ")\n";
 	    }
 	    if (verbose > 1) {
 		bu_vls_sprintf(&fname, "%d-invalid_normal_tri_%ld_%ld_%ld.plot3", f_id, tri.v[0], tri.v[1], tri.v[2]);
@@ -2948,7 +2948,7 @@ cdt_mesh_t::valid(int verbose)
     boundary_edges_update();
     if (problem_edges.size() > 0) {
 	if (verbose > 0) {
-	    std::cout << name << " face " << f_id << ": still have problem edges in mesh\n";
+	    std::cout << name << " face " << f_id << ": problem edges in mesh\n";
 	}
 	eret = false;
     }
@@ -2963,6 +2963,11 @@ cdt_mesh_t::valid(int verbose)
     }
 
     bu_vls_free(&fname);
+
+    if ((nret && eret) && verbose > 0) {
+	std::cout << name << " face " << f_id << ": valid\n";
+    }
+
     return (nret && eret);
 }
 

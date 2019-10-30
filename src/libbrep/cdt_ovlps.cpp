@@ -1977,8 +1977,9 @@ split_brep_face_edges_near_verts(
 }
 
 void
-check_faces_validity(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> &check_pairs, int UNUSED(id))
+check_faces_validity(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> &check_pairs)
 {
+    int verbosity = 1;
     std::set<cdt_mesh::cdt_mesh_t *> fmeshes;
     std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>>::iterator cp_it;
     for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
@@ -1987,10 +1988,11 @@ check_faces_validity(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_me
 	fmeshes.insert(fmesh1);
 	fmeshes.insert(fmesh2);
     }
+    std::cout << "Full face validity check results:\n";
     std::set<cdt_mesh::cdt_mesh_t *>::iterator f_it;
     for (f_it = fmeshes.begin(); f_it != fmeshes.end(); f_it++) {
 	cdt_mesh::cdt_mesh_t *fmesh = *f_it;
-	std::cout << "face " << fmesh->f_id << " validity: " << fmesh->valid(1) << "\n";
+	fmesh->valid(verbosity);
 #if 0
 	struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh->p_cdt;
 	std::string fpname = std::to_string(id) + std::string("_") + std::string(s_cdt->name) + std::string("_face_") + std::to_string(fmesh->f_id) + std::string(".plot3");
@@ -2362,6 +2364,7 @@ omesh_interior_edge_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs
 	    cdt_mesh::uedge_t ue = es_it->first;
 	    std::cout << "Edge: " << ue.v[0] << "<->" << ue.v[1] << ": " << es_it->second.size() << " points\n";
 	}
+	omesh->fmesh->valid(1);
 
 	refine_edge_vert_sets(omesh, &edge_sets);
 
@@ -2386,7 +2389,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
     if (!check_pairs.size()) return 0;
 
     // Sanity check - are we valid?
-    check_faces_validity(check_pairs, 0);
+    check_faces_validity(check_pairs);
 
     // Report our starting overlap count
     int face_ov_cnt = face_fmesh_ovlps(check_pairs);
@@ -2423,7 +2426,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
     int avcnt = adjust_close_verts(ocheck_pairs);
     if (avcnt) {
 	std::cout << close_vert_checks << ": Adjusted " << avcnt << " vertices\n";
-	check_faces_validity(check_pairs, 1);
+	check_faces_validity(check_pairs);
 	face_ov_cnt = face_omesh_ovlps(ocheck_pairs);
 	std::cout << "Post vert adjustment " << close_vert_checks << " overlap cnt: " << face_ov_cnt << "\n";
 	close_vert_checks++;
@@ -2447,7 +2450,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	int sbfvtri_cnt = split_brep_face_edges_near_verts(&nverts, a_cdt, ocheck_pairs, f2omap);
 	if (sbfvtri_cnt) {
 	    std::cout << "Replaced " << sbfvtri_cnt << " triangles by splitting edges near vertices\n";
-	    check_faces_validity(check_pairs, 2);
+	    check_faces_validity(check_pairs);
 	    face_ov_cnt = face_omesh_ovlps(ocheck_pairs);
 	    std::cout << "Post edges-near-verts split overlap cnt: " << face_ov_cnt << "\n";
 
@@ -2455,7 +2458,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	    avcnt = adjust_close_verts(ocheck_pairs);
 	    if (avcnt) {
 		std::cout << close_vert_checks << ": Adjusted " << avcnt << " vertices\n";
-		check_faces_validity(check_pairs, 1);
+		check_faces_validity(check_pairs);
 		face_ov_cnt = face_omesh_ovlps(ocheck_pairs);
 		std::cout << "Post vert adjustment " << close_vert_checks << " overlap cnt: " << face_ov_cnt << "\n";
 		close_vert_checks++;
@@ -2486,7 +2489,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	avcnt = adjust_close_verts(ocheck_pairs);
 	if (avcnt) {
 	    std::cout << close_vert_checks << ": Adjusted " << avcnt << " vertices\n";
-	    check_faces_validity(check_pairs, 1);
+	    check_faces_validity(check_pairs);
 	    face_ov_cnt = face_omesh_ovlps(ocheck_pairs);
 	    std::cout << "Post vert adjustment " << close_vert_checks << " overlap cnt: " << face_ov_cnt << "\n";
 	    close_vert_checks++;
@@ -2500,7 +2503,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	// points and tessellate.
 	omesh_interior_edge_verts(ocheck_pairs, nverts);
 
-	check_faces_validity(check_pairs, 4);
+	check_faces_validity(check_pairs);
 	face_ov_cnt = face_omesh_ovlps(ocheck_pairs);
 	std::cout << "Iteration " << iterations << " post tri split overlap cnt: " << face_ov_cnt << "\n";
     }
