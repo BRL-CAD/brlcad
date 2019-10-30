@@ -144,9 +144,9 @@ echo "Start main conversion"
 REPODERCSDIR="$PWD/repo_dercs"
 ./svnfexport ./brlcad_full_dercs.dump account-map $REPODERCSDIR
 
-echo "Archive old branches"
-#NOTE - if done incorrectly this will make a mess with orphaned commits - make
-#a backup first
+# Clone the repo via a mirror (gets us a copy without internal git conversion
+# logs taking up space)
+echo "Mirroring to brlcad_git directory"
 mkdir brlcad_git && cd brlcad_git
 git clone --mirror file://$PWD/cvs_git .git
 git init
