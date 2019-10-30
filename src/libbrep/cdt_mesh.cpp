@@ -2948,7 +2948,7 @@ cdt_mesh_t::valid(int verbose)
     boundary_edges_update();
     if (problem_edges.size() > 0) {
 	if (verbose > 0) {
-	    std::cout << "Still have problem edges in mesh\n";
+	    std::cout << name << " face " << f_id << ": still have problem edges in mesh\n";
 	}
 	eret = false;
     }
