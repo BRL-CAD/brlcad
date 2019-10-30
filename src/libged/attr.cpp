@@ -25,9 +25,10 @@
 
 #include "common.h"
 
+#include <utility>
+#include <string>
 #include <set>
-#include <string.h>
-#include <stdlib.h>
+#include <cstdlib>
 
 #include "bu/getopt.h"
 #include "bu/path.h"
@@ -151,7 +152,7 @@ attr_cmd(const char* arg)
 }
 
 struct avsncmp {
-    bool operator () (const std::pair<std::string, std::string> &p_left, const std::pair<std::string, std::string> &p_right)
+    bool operator () (const std::pair<std::string, std::string> &p_left, const std::pair<std::string, std::string> &p_right) const
     {
 	long l1, l2;
 	char *endptr = NULL;
