@@ -125,14 +125,15 @@ class omesh_t
 
 	// The fmesh pnts array may have inactive vertices - we only want the
 	// active verts for this portion of the processing.
-	std::map<long, class overt_t *> overts;
+	std::map<long, overt_t *> overts;
 	RTree<long, double, 3> vtree;
+	void rebuild_vtree();
 	void plot_vtree(const char *fname);
 
 	void vert_adjust(long p_id, ON_3dPoint *p, ON_3dVector *v);
 
 	// Add an fmesh vertex to the overts array and tree.
-	overt_t *vert_add(long);
+	overt_t *vert_add(long, ON_BoundingBox *bb = NULL);
 
 	// Find close vertices
 	std::set<long> overts_search(ON_BoundingBox &bb);
@@ -262,15 +263,29 @@ omesh_t::init_verts()
     std::set<long>::iterator a_it;
     for (a_it = averts.begin(); a_it != averts.end(); a_it++) {
 	overts[*a_it] = new overt_t(this, *a_it);
-    	double fMin[3];
-	fMin[0] = overts[*a_it]->bb.Min().x;
-	fMin[1] = overts[*a_it]->bb.Min().y;
-	fMin[2] = overts[*a_it]->bb.Min().z;
+    }
+
+    rebuild_vtree();
+}
+void
+omesh_t::rebuild_vtree()
+{
+    std::map<long, class overt_t *>::iterator o_it;
+
+    vtree.RemoveAll();
+
+    for (o_it = overts.begin(); o_it != overts.end(); o_it++) {
+	long ind = o_it->first;
+	overt_t *ov = o_it->second;
+	double fMin[3];
+	fMin[0] = ov->bb.Min().x;
+	fMin[1] = ov->bb.Min().y;
+	fMin[2] = ov->bb.Min().z;
 	double fMax[3];
-	fMax[0] = overts[*a_it]->bb.Max().x;
-	fMax[1] = overts[*a_it]->bb.Max().y;
-	fMax[2] = overts[*a_it]->bb.Max().z;
-	vtree.Insert(fMin, fMax, *a_it);
+	fMax[0] = ov->bb.Max().x;
+	fMax[1] = ov->bb.Max().y;
+	fMax[2] = ov->bb.Max().z;
+	vtree.Insert(fMin, fMax, ind);
     }
 }
 
@@ -450,12 +465,12 @@ std::set<overt_t *>
 omesh_t::vert_search(ON_BoundingBox &bb)
 {
     double fMin[3], fMax[3];
-    fMin[0] = bb.Min().x;
-    fMin[1] = bb.Min().y;
-    fMin[2] = bb.Min().z;
-    fMax[0] = bb.Max().x;
-    fMax[1] = bb.Max().y;
-    fMax[2] = bb.Max().z;
+    fMin[0] = bb.Min().x - ON_ZERO_TOLERANCE;
+    fMin[1] = bb.Min().y - ON_ZERO_TOLERANCE;
+    fMin[2] = bb.Min().z - ON_ZERO_TOLERANCE;
+    fMax[0] = bb.Max().x + ON_ZERO_TOLERANCE;
+    fMax[1] = bb.Max().y + ON_ZERO_TOLERANCE;
+    fMax[2] = bb.Max().z + ON_ZERO_TOLERANCE;
     std::set<long> near_verts;
     size_t nhits = vtree.Search(fMin, fMax, NearVertsCallback, (void *)&near_verts);
 
@@ -507,9 +522,13 @@ omesh_t::vert_adjust(long p_id, ON_3dPoint *p, ON_3dVector *v)
 
 
 overt_t *
-omesh_t::vert_add(long f3ind)
+omesh_t::vert_add(long f3ind, ON_BoundingBox *bb)
 {
     overts[f3ind] = new overt_t(this, f3ind);
+    if (bb) {
+	overts[f3ind]->bb = *bb;
+    }
+#if 0
     double fMin[3];
     fMin[0] = overts[f3ind]->bb.Min().x;
     fMin[1] = overts[f3ind]->bb.Min().y;
@@ -519,6 +538,12 @@ omesh_t::vert_add(long f3ind)
     fMax[1] = overts[f3ind]->bb.Max().y;
     fMax[2] = overts[f3ind]->bb.Max().z;
     vtree.Insert(fMin, fMax, f3ind);
+#endif
+    // TODO Ew.  Shouldn't (I don't think?) have to do a full recreation of the
+    // rtree after every point, but just doing the insertion above doesn't
+    // result in a successful vert search (see area around line 1214).  Really
+    // need to dig into why.
+    rebuild_vtree();
     return overts[f3ind];
 }
 
@@ -1077,7 +1102,7 @@ refine_edge_vert_sets (
     std::map<cdt_mesh::uedge_t, std::vector<revt_pt_t>>::iterator es_it;
     while (edge_sets->size()) {
 	std::map<cdt_mesh::uedge_t, std::vector<revt_pt_t>> updated_esets;
-	
+
 	cdt_mesh::uedge_t ue = edge_sets->begin()->first;
 	std::vector<revt_pt_t> epnts = edge_sets->begin()->second;
 	edge_sets->erase(edge_sets->begin());
@@ -1148,7 +1173,7 @@ refine_edge_vert_sets (
 	    proj_2d.second = v;
 	    polygon->pnts_2d.push_back(proj_2d);
 	    polygon->p2o[polygon->pnts_2d.size() - 1] = pind;
-	}	
+	}
 
 	// Initialize the polygon edges with one of the triangles.
 	cdt_mesh::triangle_t tri1 = omesh->fmesh->tris_vect[*(rtris.begin())];
@@ -1182,6 +1207,31 @@ refine_edge_vert_sets (
 	std::set<overt_t *> new_overts;
 	bool have_inside = false;
 	for (size_t i = 0; i < epnts.size(); i++) {
+	    bool skip_epnt = false;
+#if 0
+	    if (BU_STR_EQUAL(omesh->fmesh->name, "p.s")) {
+		ON_3dPoint problem(3.4452740189190436,7.674473756016984,22.999999999999989);
+		if (problem.DistanceTo(epnts[i].spnt) < 0.1) {
+		    std::cout << "search problem\n";
+		}
+	    }
+#endif
+	    std::set <overt_t *> nv = omesh->vert_search(epnts[i].ov->bb);
+	    std::set<overt_t *>::iterator v_it;
+	    for (v_it = nv.begin(); v_it != nv.end(); v_it++) {
+		ON_3dPoint cvpnt = (*v_it)->vpnt();
+		double cvbbdiag = (*v_it)->bb.Diagonal().Length() * 0.1;
+		if (cvpnt.DistanceTo(epnts[i].spnt) < cvbbdiag) {
+		    // Too close to a vertex in the current mesh, skip
+		    std::cout << "skip epnt, too close to vert\n";
+		    skip_epnt = true;
+		    break;
+		}
+	    }
+	    if (skip_epnt) {
+		continue;
+	    }
+
 	    bool inside = false;
 	    {
 		ON_3dPoint ovpnt = epnts[i].ov->vpnt();
@@ -1210,12 +1260,13 @@ refine_edge_vert_sets (
 		CDT_Add3DPnt(s_cdt, omesh->fmesh->pnts[f3ind], omesh->fmesh->f_id, -1, -1, -1, 0, 0);
 		CDT_Add3DNorm(s_cdt, omesh->fmesh->normals[fnind], omesh->fmesh->pnts[f3ind], omesh->fmesh->f_id, -1, -1, -1, 0, 0);
 		omesh->fmesh->nmap[f3ind] = fnind;
-		new_overts.insert(omesh->vert_add(f3ind));
+		overt_t *nvrt = omesh->vert_add(f3ind, &(epnts[i].ov->bb));
+		new_overts.insert(nvrt);
 		polygon->p2o[p2dind] = f3ind;
 		polygon->interior_points.insert(p2dind);
 
 		have_inside = true;
-	    } 
+	    }
 
 	}
 
@@ -1988,7 +2039,9 @@ check_faces_validity(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_me
 	fmeshes.insert(fmesh1);
 	fmeshes.insert(fmesh2);
     }
-    std::cout << "Full face validity check results:\n";
+    if (verbosity > 0) {
+	std::cout << "Full face validity check results:\n";
+    }
     std::set<cdt_mesh::cdt_mesh_t *>::iterator f_it;
     for (f_it = fmeshes.begin(); f_it != fmeshes.end(); f_it++) {
 	cdt_mesh::cdt_mesh_t *fmesh = *f_it;
@@ -2216,6 +2269,7 @@ refine_omeshes(
 	    for (r_it = rtris.begin(); r_it != rtris.end(); r_it++) {
 		replace_edge_split_tri(*omesh->fmesh, *r_it, f3ind, ue);
 	    }
+
 	    omesh->vert_add(f3ind);
 	}
 	omesh->split_edges.clear();
@@ -2272,10 +2326,12 @@ omesh_interior_edge_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs
 	    }
 
 #if 0
-	    ON_3dPoint problem(3.40645986967497638,8.36595332610066045,23.99999898083232353);
+	if (BU_STR_EQUAL(omesh->fmesh->name, "p.s")) {
+	    ON_3dPoint problem(3.4452740189190436,7.674473756016984,22.999999999999989);
 	    if (problem.DistanceTo(spnt) < 0.01) {
 		std::cout << "problem\n";
 	    }
+	}
 #endif
 
 	    // Check this point against the mesh vert tree - if we're
@@ -2291,7 +2347,7 @@ omesh_interior_edge_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs
 	    // skip that point as a refinement point in this step.
 	    if (cverts.size()) {
 		double spdist = ovpnt.DistanceTo(spnt);
-		
+
 		if (spdist < ON_ZERO_TOLERANCE) {
 		    // If we're on the vertex point, we don't need to check
 		    // further - we're not splitting there.
@@ -2345,7 +2401,7 @@ omesh_interior_edge_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs
 	    }
 
 	    if (closest_uedge.v[0] == -1) {
-		std::cout << "problem\n";
+		std::cout << "uedge problem\n";
 		omesh->refine_pnt_remove(ov);
 		continue;
 	    }
