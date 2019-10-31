@@ -638,6 +638,23 @@ private:
 
 }
 
+// PImpl exposure of some mesh operations for use in tests
+#if defined(__cplusplus)
+extern "C" {
+#endif
+    struct cdt_bmesh_impl;
+    struct cdt_bmesh {
+	    struct cdt_bmesh_impl *i;
+    };
+    int cdt_bmesh_create(struct cdt_bmesh **m);
+    void cdt_bmesh_destroy(struct cdt_bmesh *m);
+
+    int cdt_bmesh_deserialize(const char *fname, struct cdt_bmesh *m);
+    int cdt_bmesh_repair(struct cdt_bmesh *m);
+#if defined(__cplusplus)
+}
+#endif
+
 #endif /* __cdt_mesh_h__ */
 
 /*

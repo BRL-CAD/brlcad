@@ -4313,6 +4313,46 @@ void cdt_mesh_t::polygon_print_3d(cpolygon_t *polygon)
 
 } // close namespace cdt_mesh
 
+// PImpl exposure of some mesh operations for use in tests
+struct cdt_bmesh_impl {
+    cdt_mesh::cdt_mesh_t fmesh;
+};
+
+int
+cdt_bmesh_create(struct cdt_bmesh **m)
+{
+    if (!m) return -1;
+    (*m) = new cdt_bmesh;
+    (*m)->i = new cdt_bmesh_impl;
+    return (!(*m)->i) ? -1 : 0;
+}
+
+void
+cdt_bmesh_destroy(struct cdt_bmesh *m)
+{
+    if (!m) return;
+    delete m->i;
+    delete m;
+}
+
+int
+cdt_bmesh_deserialize(const char *fname, struct cdt_bmesh *m)
+{
+    if (!fname || !m) return -1;
+    if (!bu_file_exists(fname, NULL)) return -1;
+    m->i->fmesh.deserialize(fname);
+    return 0;
+}
+
+int
+cdt_bmesh_repair(struct cdt_bmesh *m)
+{
+    if (!m) return -1;
+    bool rsuccess = m->i->fmesh.repair();
+    return (rsuccess) ? 0 : 1;
+}
+
+
 // Local Variables:
 // tab-width: 8
 // mode: C++

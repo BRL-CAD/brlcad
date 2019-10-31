@@ -30,10 +30,18 @@ main(int argc, const char **argv)
     if (argc != 2) {
 	std::cerr << "brep_cdt_mesh <serialization_file>\n";
     }
-    cdt_mesh::cdt_mesh_t fmesh;
-    fmesh.deserialize(argv[1]);
-    fmesh.repair();
+    struct cdt_bmesh *fmesh;
+    if (cdt_bmesh_create(&fmesh)) return -1;
+    if (cdt_bmesh_deserialize(argv[1], fmesh)) {
+	cdt_bmesh_destroy(fmesh);
+	return -1;
+    }
+    if (cdt_bmesh_repair(fmesh)) {
+	cdt_bmesh_destroy(fmesh);
+	return -1;
+    }
 
+    cdt_bmesh_destroy(fmesh);
     return 0;
 }
 
