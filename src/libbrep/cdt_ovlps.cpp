@@ -781,23 +781,38 @@ tri_isect(cdt_mesh::cdt_mesh_t *fmesh1, cdt_mesh::triangle_t &t1, cdt_mesh::cdt_
 	ON_Line e1(*fmesh1->pnts[t1.v[0]], *fmesh1->pnts[t1.v[1]]);
 	ON_Line e2(*fmesh1->pnts[t1.v[1]], *fmesh1->pnts[t1.v[2]]);
 	ON_Line e3(*fmesh1->pnts[t1.v[2]], *fmesh1->pnts[t1.v[0]]);
+	double elen_min = DBL_MAX;
+	elen_min = (elen_min > e1.Length()) ? e1.Length() : elen_min;
+	elen_min = (elen_min > e2.Length()) ? e2.Length() : elen_min;
+	elen_min = (elen_min > e3.Length()) ? e3.Length() : elen_min;
 	double p1_d1 = p1.DistanceTo(e1.ClosestPointTo(p1));
 	double p1_d2 = p1.DistanceTo(e2.ClosestPointTo(p1));
 	double p1_d3 = p1.DistanceTo(e3.ClosestPointTo(p1));
 	double p2_d1 = p2.DistanceTo(e1.ClosestPointTo(p2));
 	double p2_d2 = p2.DistanceTo(e2.ClosestPointTo(p2));
 	double p2_d3 = p2.DistanceTo(e3.ClosestPointTo(p2));
+	double etol = 0.0001*elen_min;
 	// If both points are on the same edge, it's an edge-only intersect - skip
-	if (NEAR_ZERO(p1_d1, ON_ZERO_TOLERANCE) &&  NEAR_ZERO(p2_d1, ON_ZERO_TOLERANCE)) {
+	// unless the point not involved is inside the opposing mesh
+	bool near_edge = false;
+	ON_Line nedge;
+	if (NEAR_ZERO(p1_d1, etol) &&  NEAR_ZERO(p2_d1, etol)) {
 	    //std::cout << "edge-only intersect - e1\n";
-	    return 0;
+	    nedge = e1;
+	    near_edge = true;
 	}
-	if (NEAR_ZERO(p1_d2, ON_ZERO_TOLERANCE) &&  NEAR_ZERO(p2_d2, ON_ZERO_TOLERANCE)) {
+	if (NEAR_ZERO(p1_d2, etol) &&  NEAR_ZERO(p2_d2, etol)) {
 	    //std::cout << "edge-only intersect - e2\n";
-	    return 0;
+	    nedge = e2;
+	    near_edge = true;
 	}
-	if (NEAR_ZERO(p1_d3, ON_ZERO_TOLERANCE) &&  NEAR_ZERO(p2_d3, ON_ZERO_TOLERANCE)) {
+	if (NEAR_ZERO(p1_d3, etol) &&  NEAR_ZERO(p2_d3, etol)) {
 	    //std::cout << "edge-only intersect - e3\n";
+	    nedge = e3;
+	    near_edge = true;
+	}
+
+	if (near_edge) {
 	    return 0;
 	}
 
@@ -818,6 +833,48 @@ tri_isect(cdt_mesh::cdt_mesh_t *fmesh1, cdt_mesh::triangle_t &t1, cdt_mesh::cdt_
 	pdv_3move(plot, *isectpt1);
 	pdv_3cont(plot, *isectpt2);
 	fclose(plot);
+
+#if 0
+	    bool found_pt_2 = false;
+	    ON_3dPoint fpoint1, fpoint2;
+	    for (int i = 0; i < 3; i++) {
+		ON_3dPoint *tp = fmesh2->pnts[t2.v[i]];
+		if (tp->DistanceTo(nedge.ClosestPointTo(*tp)) > etol) {
+		    found_pt_2 = true;
+		    fpoint2 = *tp;
+		}
+	    }
+	    bool found_pt_1 = false;
+	    for (int i = 0; i < 3; i++) {
+		ON_3dPoint *tp = fmesh1->pnts[t1.v[i]];
+		if (tp->DistanceTo(nedge.ClosestPointTo(*tp)) > etol) {
+		    found_pt_1 = true;
+		    fpoint1 = *tp;
+		}
+	    }
+	    if (!found_pt_1 && !found_pt_2) {
+		// Degenerate?
+		return 0;
+	    }
+
+	    bool inside_pt = false;
+	    if (found_pt_2) {
+		ON_Plane bplane = fmesh1->bplane(t1);
+		if (bplane.DistanceTo(fpoint2) < 0) {
+		    inside_pt = true;
+		}
+	    }
+	    if (found_pt_1) {
+		ON_Plane bplane = fmesh2->bplane(t2);
+		if (bplane.DistanceTo(fpoint1) < 0) {
+		    inside_pt = true;
+		}
+	    }
+	    if (!inside_pt) {
+		return 0;
+	    }
+	}
+#endif
 
 	return (coplanar) ? 1 : 2;
     }
@@ -2069,7 +2126,6 @@ characterize_tri_verts(
 	)
 {
     bool have_refinement_pnt = false;
-    ON_Plane plane1 = omesh1->fmesh->tplane(t1);
     for (int i = 0; i < 3; i++) {
 	overt_t *v = omesh2->overts[t2.v[i]];
 	if (!v) {
@@ -2562,6 +2618,9 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	check_faces_validity(check_pairs);
 	face_ov_cnt = face_omesh_ovlps(ocheck_pairs);
 	std::cout << "Iteration " << iterations << " post tri split overlap cnt: " << face_ov_cnt << "\n";
+
+
+
     }
 
     return 0;

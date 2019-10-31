@@ -1963,6 +1963,14 @@ cdt_mesh_t::bnorm(const triangle_t &t)
     return anrm;
 }
 
+ON_Plane
+cdt_mesh_t::bplane(const triangle_t &t)
+{
+    ON_3dPoint tc = tcenter(t);
+    ON_3dVector tn = bnorm(t);
+    return ON_Plane(tc, tn);
+}
+
 bool
 cdt_mesh_t::brep_edge_pnt(long v)
 {
