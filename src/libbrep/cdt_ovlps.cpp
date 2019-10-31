@@ -2380,6 +2380,9 @@ last_ditch_edge_splits(
 	    if (t1len < t2len) split_t1 = false;
 	    if (t2len < t1len) split_t2 = false;
 
+	    // TODO -need to sort the uedges by longest edge length for this, if possible (probably
+	    // should be doing that anyway...)  Want to get the longest edges first
+
 	    // Mesh 1, triangle 1
 	    if (split_t1) {
 		std::set<cdt_mesh::uedge_t> uedges1 = omesh1->fmesh->uedges(t1);
