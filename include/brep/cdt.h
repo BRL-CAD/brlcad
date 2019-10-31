@@ -131,6 +131,16 @@ ON_Brep_CDT_Mesh(
     );
 
 
+/* PImpl exposure of some mesh operations for use in tests - not to be considered public API */
+struct cdt_bmesh_impl;
+struct cdt_bmesh {
+    struct cdt_bmesh_impl *i;
+};
+extern BREP_EXPORT int cdt_bmesh_create(struct cdt_bmesh **m);
+extern BREP_EXPORT void cdt_bmesh_destroy(struct cdt_bmesh *m);
+extern BREP_EXPORT int cdt_bmesh_deserialize(const char *fname, struct cdt_bmesh *m);
+extern BREP_EXPORT int cdt_bmesh_repair(struct cdt_bmesh *m);
+
 
 /* TODO - this doesn't belong here.  Don't consider this public. */
 extern BREP_EXPORT int

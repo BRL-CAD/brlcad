@@ -21,7 +21,7 @@
 #include "common.h"
 
 #include <iostream>
-#include "../cdt_mesh.h"
+#include "brep/cdt.h"
 
 int
 main(int argc, const char **argv)
