@@ -1763,12 +1763,11 @@ ovlp_split_edge(
 	f2.ue2b_map[ue_2] = es; 
     }
 
-    // TODO - need to return one of the inserted verts from this
-    // process - we need to check if that point is going to require
-    // any splitting on any other objects' faces.  Any triangle
-    // from another object "close" to the new point should have
-    // a vertex that can be adjusted, or if not one needs to be
-    // introduced.
+    // Need to return one of the inserted verts from this process - we need to
+    // check if that point is going to require any splitting on any other
+    // objects' faces.  Any triangle from another object "close" to the new
+    // point should have a vertex that can be adjusted, or if not one needs to
+    // be introduced.
     long np_id;
     if (f_id1 == f_id2) {
 	std::set<size_t> ftris;
@@ -2001,8 +2000,6 @@ split_brep_face_edges_near_verts(
 	std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap
 	)
 {
-    // TODO - shouldn't be rebuilding this every time - maintain and add/remove
-    // edges during splitting...
     std::map<long, cdt_mesh::bedge_seg_t *> b_edges;
     RTree<long, double, 3> bedge_tree;
     bedges_rtree(&bedge_tree, &b_edges, a_cdt);
@@ -2332,6 +2329,80 @@ refine_omeshes(
     }
 }
 
+bool
+last_ditch_edge_splits(
+	std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs,
+	std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap
+	)
+{
+    std::set<std::pair<omesh_t *, omesh_t *>>::iterator cp_it;
+    for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
+	omesh_t *omesh1 = cp_it->first;
+	omesh_t *omesh2 = cp_it->second;
+	struct ON_Brep_CDT_State *s_cdt1 = (struct ON_Brep_CDT_State *)omesh1->fmesh->p_cdt;
+	struct ON_Brep_CDT_State *s_cdt2 = (struct ON_Brep_CDT_State *)omesh2->fmesh->p_cdt;
+	if (s_cdt1 == s_cdt2) {
+	    continue;
+	}
+	omesh1->split_edges.clear();
+	omesh2->split_edges.clear();
+    }
+
+    bool done = true;
+    for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
+	omesh_t *omesh1 = cp_it->first;
+	omesh_t *omesh2 = cp_it->second;
+	struct ON_Brep_CDT_State *s_cdt1 = (struct ON_Brep_CDT_State *)omesh1->fmesh->p_cdt;
+	struct ON_Brep_CDT_State *s_cdt2 = (struct ON_Brep_CDT_State *)omesh2->fmesh->p_cdt;
+	if (s_cdt1 == s_cdt2) {
+	    continue;
+	}
+
+	std::set<std::pair<size_t, size_t>> tris_prelim;
+	size_t ovlp_cnt = omesh1->fmesh->tris_tree.Overlaps(omesh2->fmesh->tris_tree, &tris_prelim);
+	if (!ovlp_cnt) continue;
+	std::set<std::pair<size_t, size_t>>::iterator tb_it;
+	for (tb_it = tris_prelim.begin(); tb_it != tris_prelim.end(); tb_it++) {
+	    cdt_mesh::triangle_t t1 = omesh1->fmesh->tris_vect[tb_it->first];
+	    cdt_mesh::triangle_t t2 = omesh2->fmesh->tris_vect[tb_it->second];
+	    point_t isectpt1 = {MAX_FASTF, MAX_FASTF, MAX_FASTF};
+	    point_t isectpt2 = {MAX_FASTF, MAX_FASTF, MAX_FASTF};
+	    int isect = tri_isect(omesh1->fmesh, t1, omesh2->fmesh, t2, &isectpt1, &isectpt2);
+	    if (!isect) continue;
+
+	    done = false;
+
+	    std::set<cdt_mesh::uedge_t>::iterator ue_it;
+	    bool split_t1 = true;
+	    bool split_t2 = true;
+	    double t1len = tri_longest_edge_len(omesh1->fmesh, t1.ind);
+	    double t2len = tri_longest_edge_len(omesh2->fmesh, t2.ind);
+	    if (t1len < t2len) split_t1 = false;
+	    if (t2len < t1len) split_t2 = false;
+
+	    // Mesh 1, triangle 1
+	    if (split_t1) {
+		std::set<cdt_mesh::uedge_t> uedges1 = omesh1->fmesh->uedges(t1);
+		for (ue_it = uedges1.begin(); ue_it != uedges1.end(); ue_it++) {
+		    omesh1->split_edges.insert(*ue_it);
+		}
+	    }
+	    // Mesh 2, triangle 2
+	    if (split_t2) {
+		std::set<cdt_mesh::uedge_t> uedges2 = omesh2->fmesh->uedges(t2);
+		for (ue_it = uedges2.begin(); ue_it != uedges2.end(); ue_it++) {
+		    omesh2->split_edges.insert(*ue_it);
+		}
+	    }
+	}
+    }
+    if (done) return false;
+
+    refine_omeshes(check_pairs, f2omap);
+
+    return true;
+}
+
 void
 omesh_interior_edge_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs, std::set<overt_t *> &nverts)
 {
@@ -2512,7 +2583,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
     while (face_ov_cnt) {
 
 	iterations++;
-	if (iterations > 1) break;
+	if (iterations > 2) break;
 
 	// Make omesh containers for all the cdt_meshes in play
 	std::set<cdt_mesh::cdt_mesh_t *> afmeshes;
@@ -2606,7 +2677,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	    std::cout << "Post vert adjustment " << close_vert_checks << " overlap cnt: " << face_ov_cnt << "\n";
 	    close_vert_checks++;
 	}
-    
+
 	std::cout << "New vert pnt cnt: " << nverts.size() << "\n";
 
 	// Once edge splits are handled, use remaining closest points and find nearest interior
@@ -2619,7 +2690,14 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	face_ov_cnt = face_omesh_ovlps(ocheck_pairs);
 	std::cout << "Iteration " << iterations << " post tri split overlap cnt: " << face_ov_cnt << "\n";
 
-
+	// Anything that has lasted this far, just chop all its edges in half for the next
+	// iteration
+	if (last_ditch_edge_splits(ocheck_pairs, f2omap)) {
+	    std::cout << "Not done yet\n";
+	    check_faces_validity(check_pairs);
+	    face_ov_cnt = face_omesh_ovlps(ocheck_pairs);
+	    std::cout << "Iteration " << iterations << " post last ditch split overlap cnt: " << face_ov_cnt << "\n";
+	}
 
     }
 
