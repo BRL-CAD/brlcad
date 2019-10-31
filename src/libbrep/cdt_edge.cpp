@@ -28,6 +28,7 @@
 #include "common.h"
 #include <queue>
 #include <numeric>
+#include <iterator>
 #include "bg/chull.h"
 #include "./cdt.h"
 
