@@ -1896,6 +1896,45 @@ cdt_mesh_t::uedge_dist(uedge_t &ue, ON_3dPoint &p)
     return p.DistanceTo(l.PointAt(t));
 }
 
+class uedge_dist_t
+{
+    public:
+	uedge_t ue;
+	double dist;
+
+	bool operator < (const uedge_dist_t& other) const
+	{
+	    return (dist < other.dist);
+	}
+};
+
+std::vector<uedge_t>
+cdt_mesh_t::sorted_uedges_l_to_s(std::set<uedge_t> &uedges)
+{
+    std::vector<uedge_dist_t> ued_vect;
+    std::set<uedge_t>::iterator ue_it;
+    for (ue_it = uedges.begin(); ue_it != uedges.end(); ue_it++) {
+	uedge_dist_t ued;
+	ued.ue = *ue_it;
+	ON_3dPoint p1, p2;
+	p1 = *pnts[ued.ue.v[0]];
+	p2 = *pnts[ued.ue.v[1]];
+	ued.dist = p1.DistanceTo(p2);
+	ued_vect.push_back(ued);
+    }
+
+    std::sort(ued_vect.begin(), ued_vect.end());
+    std::reverse(ued_vect.begin(), ued_vect.end());
+
+    std::vector<uedge_t> ue_sorted;
+    for (size_t i = 0; i < ued_vect.size(); i++) {
+	uedge_t ue = ued_vect[i].ue;
+	ue_sorted.push_back(ue);
+    }
+
+    return ue_sorted;
+}
+
 ON_3dVector
 cdt_mesh_t::tnorm(const triangle_t &t)
 {

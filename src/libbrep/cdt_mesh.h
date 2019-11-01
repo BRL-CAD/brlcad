@@ -529,6 +529,8 @@ public:
     // Find the distance to the closest point on a uedge
     double uedge_dist(uedge_t &ue, ON_3dPoint &p);
 
+    // Length sorted (longest to shortest) array of uedges in set.
+    std::vector<uedge_t> sorted_uedges_l_to_s(std::set<uedge_t> &uedges);
 
     // Plot3 generation routines for debugging
     void boundary_edges_plot(const char *filename);

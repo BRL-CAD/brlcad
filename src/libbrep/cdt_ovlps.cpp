@@ -129,6 +129,7 @@ class omesh_t
 	RTree<long, double, 3> vtree;
 	void rebuild_vtree();
 	void plot_vtree(const char *fname);
+	void save_vtree(const char *fname);
 
 	void vert_adjust(long p_id, ON_3dPoint *p, ON_3dVector *v);
 
@@ -303,6 +304,12 @@ omesh_t::plot_vtree(const char *fname)
 	++tree_it;
     }
     fclose(plot);
+}
+
+void
+omesh_t::save_vtree(const char *fname)
+{
+    vtree.Save(fname);
 }
 
 void
@@ -1067,6 +1074,26 @@ tri_longest_edge(cdt_mesh::cdt_mesh_t *fmesh, long t_ind)
 	ON_3dPoint *p2 = fmesh->pnts[v1];
 	double d = p1->DistanceTo(*p2);
 	if (d > len) {
+	    len = d;
+	    ue = cdt_mesh::uedge_t(v0, v1);
+	}
+    }
+    return ue;
+}
+
+cdt_mesh::uedge_t
+tri_shortest_edge(cdt_mesh::cdt_mesh_t *fmesh, long t_ind)
+{
+    cdt_mesh::uedge_t ue;
+    cdt_mesh::triangle_t t = fmesh->tris_vect[t_ind];
+    double len = DBL_MAX;
+    for (int i = 0; i < 3; i++) {
+	long v0 = t.v[i];
+	long v1 = (i < 2) ? t.v[i + 1] : t.v[0];
+	ON_3dPoint *p1 = fmesh->pnts[v0];
+	ON_3dPoint *p2 = fmesh->pnts[v1];
+	double d = p1->DistanceTo(*p2);
+	if (d < len) {
 	    len = d;
 	    ue = cdt_mesh::uedge_t(v0, v1);
 	}
@@ -2293,12 +2320,17 @@ refine_omeshes(
 	}
     }
 
+    // TODO -need to sort the uedges by longest edge length. Want to get the
+    // longest edges first, to push the new triangles towards equilateral
+    // status - long thin triangles are always trouble...
+
     for (o_it = omeshes.begin(); o_it != omeshes.end(); o_it++) {
 	omesh_t *omesh = *o_it;
 
-	std::set<cdt_mesh::uedge_t>::iterator u_it;
-	for (u_it = omesh->split_edges.begin(); u_it != omesh->split_edges.end(); u_it++) {
-	    cdt_mesh::uedge_t ue = *u_it;
+	std::vector<cdt_mesh::uedge_t> sorted_uedges = omesh->fmesh->sorted_uedges_l_to_s(omesh->split_edges);
+
+	for (size_t i = 0; i < sorted_uedges.size(); i++) {
+	    cdt_mesh::uedge_t ue = sorted_uedges[i];
 	    ON_3dPoint p1 = *omesh->fmesh->pnts[ue.v[0]];
 	    ON_3dPoint p2 = *omesh->fmesh->pnts[ue.v[1]];
 	    double dist = p1.DistanceTo(p2);
@@ -2380,21 +2412,24 @@ last_ditch_edge_splits(
 	    if (t1len < t2len) split_t1 = false;
 	    if (t2len < t1len) split_t2 = false;
 
-	    // TODO -need to sort the uedges by longest edge length for this, if possible (probably
-	    // should be doing that anyway...)  Want to get the longest edges first
-
-	    // Mesh 1, triangle 1
+	    // Mesh 1, triangle 1 longest edges
 	    if (split_t1) {
+		cdt_mesh::uedge_t sedge = tri_shortest_edge(omesh1->fmesh, t1.ind);
 		std::set<cdt_mesh::uedge_t> uedges1 = omesh1->fmesh->uedges(t1);
 		for (ue_it = uedges1.begin(); ue_it != uedges1.end(); ue_it++) {
-		    omesh1->split_edges.insert(*ue_it);
+		    if (*ue_it != sedge) {
+			omesh1->split_edges.insert(*ue_it);
+		    }
 		}
 	    }
-	    // Mesh 2, triangle 2
+	    // Mesh 2, triangle 2 longest edges
 	    if (split_t2) {
+		cdt_mesh::uedge_t sedge = tri_shortest_edge(omesh2->fmesh, t2.ind);
 		std::set<cdt_mesh::uedge_t> uedges2 = omesh2->fmesh->uedges(t2);
 		for (ue_it = uedges2.begin(); ue_it != uedges2.end(); ue_it++) {
-		    omesh2->split_edges.insert(*ue_it);
+		    if (*ue_it != sedge) {
+			omesh2->split_edges.insert(*ue_it);
+		    }
 		}
 	    }
 	}
@@ -2586,43 +2621,43 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
     while (face_ov_cnt) {
 
 	iterations++;
-	if (iterations > 2) break;
+	if (iterations > 1) break;
 
-	// Make omesh containers for all the cdt_meshes in play
-	std::set<cdt_mesh::cdt_mesh_t *> afmeshes;
-	std::vector<omesh_t *> omeshes;
-	std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> f2omap;
-	for (p_it = check_pairs.begin(); p_it != check_pairs.end(); p_it++) {
-	    afmeshes.insert(p_it->first);
-	    afmeshes.insert(p_it->second);
-	}
-	std::set<cdt_mesh::cdt_mesh_t *>::iterator af_it;
-	for (af_it = afmeshes.begin(); af_it != afmeshes.end(); af_it++) {
-	    cdt_mesh::cdt_mesh_t *fmesh = *af_it;
-	    omeshes.push_back(new omesh_t(fmesh));
-	    f2omap[fmesh] = omeshes[omeshes.size() - 1];
-	}
-	std::set<std::pair<omesh_t *, omesh_t *>> ocheck_pairs;
-	for (p_it = check_pairs.begin(); p_it != check_pairs.end(); p_it++) {
-	    omesh_t *o1 = f2omap[p_it->first];
-	    omesh_t *o2 = f2omap[p_it->second];
-	    ocheck_pairs.insert(std::make_pair(o1, o2));
-	}
+    // Make omesh containers for all the cdt_meshes in play
+    std::set<cdt_mesh::cdt_mesh_t *> afmeshes;
+    std::vector<omesh_t *> omeshes;
+    std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> f2omap;
+    for (p_it = check_pairs.begin(); p_it != check_pairs.end(); p_it++) {
+	afmeshes.insert(p_it->first);
+	afmeshes.insert(p_it->second);
+    }
+    std::set<cdt_mesh::cdt_mesh_t *>::iterator af_it;
+    for (af_it = afmeshes.begin(); af_it != afmeshes.end(); af_it++) {
+	cdt_mesh::cdt_mesh_t *fmesh = *af_it;
+	omeshes.push_back(new omesh_t(fmesh));
+	f2omap[fmesh] = omeshes[omeshes.size() - 1];
+    }
+    std::set<std::pair<omesh_t *, omesh_t *>> ocheck_pairs;
+    for (p_it = check_pairs.begin(); p_it != check_pairs.end(); p_it++) {
+	omesh_t *o1 = f2omap[p_it->first];
+	omesh_t *o2 = f2omap[p_it->second];
+	ocheck_pairs.insert(std::make_pair(o1, o2));
+    }
+    face_ov_cnt = face_omesh_ovlps(ocheck_pairs);
+
+    // The simplest operation is to find vertices close to each other with
+    // enough freedom of movement (per triangle edge length) that we can shift
+    // the two close neighbors to surface points that are both the respective
+    // closest points to a center point between the two originals.
+    int close_vert_checks = 1;
+    int avcnt = adjust_close_verts(ocheck_pairs);
+    if (avcnt) {
+	std::cout << close_vert_checks << ": Adjusted " << avcnt << " vertices\n";
+	check_faces_validity(check_pairs);
 	face_ov_cnt = face_omesh_ovlps(ocheck_pairs);
-
-	// The simplest operation is to find vertices close to each other with
-	// enough freedom of movement (per triangle edge length) that we can shift
-	// the two close neighbors to surface points that are both the respective
-	// closest points to a center point between the two originals.
-	int close_vert_checks = 1;
-	int avcnt = adjust_close_verts(ocheck_pairs);
-	if (avcnt) {
-	    std::cout << close_vert_checks << ": Adjusted " << avcnt << " vertices\n";
-	    check_faces_validity(check_pairs);
-	    face_ov_cnt = face_omesh_ovlps(ocheck_pairs);
-	    std::cout << "Post vert adjustment " << close_vert_checks << " overlap cnt: " << face_ov_cnt << "\n";
-	    close_vert_checks++;
-	}
+	std::cout << "Post vert adjustment " << close_vert_checks << " overlap cnt: " << face_ov_cnt << "\n";
+	close_vert_checks++;
+    }
 
 	std::set<overt_t *> nverts;
 
