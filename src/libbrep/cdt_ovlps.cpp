@@ -2621,7 +2621,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
     while (face_ov_cnt) {
 
 	iterations++;
-	if (iterations > 1) break;
+	if (iterations > 3) break;
 
     // Make omesh containers for all the cdt_meshes in play
     std::set<cdt_mesh::cdt_mesh_t *> afmeshes;
@@ -2645,18 +2645,22 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
     }
     face_ov_cnt = face_omesh_ovlps(ocheck_pairs);
 
-    // The simplest operation is to find vertices close to each other with
-    // enough freedom of movement (per triangle edge length) that we can shift
-    // the two close neighbors to surface points that are both the respective
-    // closest points to a center point between the two originals.
-    int close_vert_checks = 1;
-    int avcnt = adjust_close_verts(ocheck_pairs);
-    if (avcnt) {
-	std::cout << close_vert_checks << ": Adjusted " << avcnt << " vertices\n";
-	check_faces_validity(check_pairs);
-	face_ov_cnt = face_omesh_ovlps(ocheck_pairs);
-	std::cout << "Post vert adjustment " << close_vert_checks << " overlap cnt: " << face_ov_cnt << "\n";
-	close_vert_checks++;
+    int close_vert_checks = 0;
+    int avcnt = 0;
+    if (iterations < 2) {
+	// The simplest operation is to find vertices close to each other with
+	// enough freedom of movement (per triangle edge length) that we can shift
+	// the two close neighbors to surface points that are both the respective
+	// closest points to a center point between the two originals.
+	close_vert_checks = 1;
+	avcnt = adjust_close_verts(ocheck_pairs);
+	if (avcnt) {
+	    std::cout << close_vert_checks << ": Adjusted " << avcnt << " vertices\n";
+	    check_faces_validity(check_pairs);
+	    face_ov_cnt = face_omesh_ovlps(ocheck_pairs);
+	    std::cout << "Post vert adjustment " << close_vert_checks << " overlap cnt: " << face_ov_cnt << "\n";
+	    close_vert_checks++;
+	}
     }
 
 	std::set<overt_t *> nverts;
