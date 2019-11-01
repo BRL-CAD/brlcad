@@ -121,6 +121,12 @@ template<class _DataType, class _ElementType, int _NumDimensions,
     /// Load tree contents from stream
     bool Load(RTFileStream& a_stream);
 
+    // TODO - make an ASCII version of this stream, or find some other way
+    // to interactively debug the tree structure.  Getting some unexpected
+    // results from tree opertions, and need to rule out incremental
+    // insertion/removal bugs in RTree... probably in my code, but in at
+    // least one case a vertex tree missed an intersect test and then found
+    // it after a full tree rebuild with no other data changes...
 
     /// Save tree contents to file
     bool Save(const char* a_fileName);
