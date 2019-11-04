@@ -31,6 +31,7 @@
 #include "common.h"
 #include <queue>
 #include <numeric>
+#include "bu/str.h"
 #include "bg/chull.h"
 #include "bg/tri_pt.h"
 #include "bg/tri_tri.h"
@@ -1338,12 +1339,29 @@ refine_edge_vert_sets (
 	}
 	polygon->replace_edges(new_edges, shared_edges);
 
+	{
+	FILE *t1plot = fopen("t1.plot", "w");
+	struct bu_color c = BU_COLOR_INIT_ZERO;
+	unsigned char rgb[3] = {0,0,255};
+	bu_color_from_rgb_chars(&c, (const unsigned char *)rgb);
+	omesh->fmesh->plot_tri(tri1, &c, t1plot, 255, 0, 0);
+	fclose(t1plot);
+	}
+	{
+	FILE *t2plot = fopen("t2.plot", "w");
+	struct bu_color c = BU_COLOR_INIT_ZERO;
+	unsigned char rgb[3] = {0,0,255};
+	bu_color_from_rgb_chars(&c, (const unsigned char *)rgb);
+	omesh->fmesh->plot_tri(tri2, &c, t2plot, 255, 0, 0);
+	fclose(t2plot);
+	}
+
 	// Grow the polygon with the other triangle.
 	std::set<overt_t *> new_overts;
 	bool have_inside = false;
 	for (size_t i = 0; i < epnts.size(); i++) {
 	    bool skip_epnt = false;
-#if 0
+#if 1
 	    if (BU_STR_EQUAL(omesh->fmesh->name, "p.s")) {
 		ON_3dPoint problem(3.4452740189190436,7.674473756016984,22.999999999999989);
 		if (problem.DistanceTo(epnts[i].spnt) < 0.1) {
@@ -1443,6 +1461,10 @@ refine_edge_vert_sets (
 	    polygon->polygon_plot_in_plane("tri_replace_pair_fail.plot3");
 	}
 
+	if (!omesh->fmesh->valid(1)) {
+	    std::cout << "CDT broke mesh!\n";
+	    polygon->polygon_plot_in_plane("poly.plot3");
+	}
 	delete polygon;
 
 	// Have new triangles, update new overts
@@ -2238,7 +2260,7 @@ characterize_tri_verts(
 		// combination for splitting
 		ON_3dPoint vp = v->vpnt();
 
-#if 1
+#if 0
 		ON_3dPoint problem(3.06294,7.5,24.2775);
 		if (problem.DistanceTo(vp) < 0.01) {
 		    std::cout << "problem\n";
@@ -2550,11 +2572,13 @@ omesh_interior_edge_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs
 		continue;
 	    }
 
-#if 0
+#if 1
+	    int problem_flag = 0;
 	if (BU_STR_EQUAL(omesh->fmesh->name, "p.s")) {
 	    ON_3dPoint problem(3.4452740189190436,7.674473756016984,22.999999999999989);
 	    if (problem.DistanceTo(spnt) < 0.01) {
 		std::cout << "problem\n";
+		problem_flag = 1;
 	    }
 	}
 #endif
@@ -2565,6 +2589,9 @@ omesh_interior_edge_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs
 	    // handle super-close points...
 	    ON_BoundingBox pbb(spnt, spnt);
 	    std::set<overt_t *> cverts = omesh->vert_search(pbb);
+	    if (problem_flag && !cverts.size()) {
+		cverts = omesh->vert_search(pbb);
+	    }
 
 	    // If we're close to a vertex, find the vertices from the other
 	    // mesh that overlap with that vertex.  If there are, and if the
@@ -2681,7 +2708,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
     while (face_ov_cnt) {
 
 	iterations++;
-	if (iterations > 3) break;
+	if (iterations > 1) break;
 
     // Make omesh containers for all the cdt_meshes in play
     std::set<cdt_mesh::cdt_mesh_t *> afmeshes;
