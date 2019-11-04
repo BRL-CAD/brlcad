@@ -129,6 +129,7 @@ class omesh_t
 	RTree<long, double, 3> vtree;
 	void rebuild_vtree();
 	void plot_vtree(const char *fname);
+	bool validate_vtree();
 	void save_vtree(const char *fname);
 
 	void vert_adjust(long p_id, ON_3dPoint *p, ON_3dVector *v);
@@ -304,6 +305,29 @@ omesh_t::plot_vtree(const char *fname)
 	++tree_it;
     }
     fclose(plot);
+}
+
+bool
+omesh_t::validate_vtree()
+{
+    RTree<long, double, 3>::Iterator tree_it;
+    long v_ind;
+    vtree.GetFirst(tree_it);
+    while (!tree_it.IsNull()) {
+	v_ind = *tree_it;
+	overt_t *ov = overts[v_ind];
+	std::set<overt_t *> search_verts = vert_search(ov->bb);
+	if (!search_verts.size()) {
+	    std::cout << "Error: no nearby verts for vert " << v_ind << "??\n";
+	    return false;
+	}
+	if (search_verts.find(ov) == search_verts.end()) {
+	    std::cout << "Error: vert in tree, but search couldn't find: " << v_ind << "\n";
+	    return false;
+	}
+	++tree_it;
+    }
+    return true;
 }
 
 void
@@ -535,7 +559,7 @@ omesh_t::vert_add(long f3ind, ON_BoundingBox *bb)
     if (bb) {
 	overts[f3ind]->bb = *bb;
     }
-#if 0
+#if 1
     double fMin[3];
     fMin[0] = overts[f3ind]->bb.Min().x;
     fMin[1] = overts[f3ind]->bb.Min().y;
@@ -545,12 +569,16 @@ omesh_t::vert_add(long f3ind, ON_BoundingBox *bb)
     fMax[1] = overts[f3ind]->bb.Max().y;
     fMax[2] = overts[f3ind]->bb.Max().z;
     vtree.Insert(fMin, fMax, f3ind);
+
+    validate_vtree();
 #endif
+#if 0
     // TODO Ew.  Shouldn't (I don't think?) have to do a full recreation of the
     // rtree after every point, but just doing the insertion above doesn't
     // result in a successful vert search (see area around line 1214).  Really
     // need to dig into why.
     rebuild_vtree();
+#endif
     return overts[f3ind];
 }
 
