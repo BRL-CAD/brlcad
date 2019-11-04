@@ -131,6 +131,7 @@ class omesh_t
 	void plot_vtree(const char *fname);
 	bool validate_vtree();
 	void save_vtree(const char *fname);
+	void load_vtree(const char *fname);
 
 	void vert_adjust(long p_id, ON_3dPoint *p, ON_3dVector *v);
 
@@ -323,12 +324,22 @@ omesh_t::validate_vtree()
 	}
 	if (search_verts.find(ov) == search_verts.end()) {
 	    std::cout << "Error: vert in tree, but search couldn't find: " << v_ind << "\n";
-	    vert_search(ov->bb);
+	    std::set<overt_t *> s2 = vert_search(ov->bb);
+	    if (s2.find(ov) == s2.end()) {
+		std::cout << "Second try didn't work: " << v_ind << "\n";
+	    }
 	    return false;
 	}
 	++tree_it;
     }
     return true;
+}
+
+void
+omesh_t::load_vtree(const char *fname)
+{
+    vtree.RemoveAll();
+    vtree.Load(fname);
 }
 
 void
@@ -1384,7 +1395,16 @@ refine_edge_vert_sets (
 		CDT_Add3DPnt(s_cdt, omesh->fmesh->pnts[f3ind], omesh->fmesh->f_id, -1, -1, -1, 0, 0);
 		CDT_Add3DNorm(s_cdt, omesh->fmesh->normals[fnind], omesh->fmesh->pnts[f3ind], omesh->fmesh->f_id, -1, -1, -1, 0, 0);
 		omesh->fmesh->nmap[f3ind] = fnind;
-		overt_t *nvrt = omesh->vert_add(f3ind, &(epnts[i].ov->bb));
+		ON_BoundingBox sbb(epnts[i].spnt,epnts[i].spnt);
+		ON_3dVector vmin = epnts[i].ov->bb.Min() - epnts[i].ov->bb.Center();
+		ON_3dVector vmax = epnts[i].ov->bb.Max() - epnts[i].ov->bb.Center();
+		vmin.Unitize();
+		vmax.Unitize();
+		vmin = vmin * epnts[i].ov->bb.Diagonal().Length() * 0.5;
+		vmax = vmax * epnts[i].ov->bb.Diagonal().Length() * 0.5;
+		sbb.m_min = epnts[i].spnt + vmin;
+		sbb.m_max = epnts[i].spnt + vmax;
+		overt_t *nvrt = omesh->vert_add(f3ind, &sbb);
 		new_overts.insert(nvrt);
 		polygon->p2o[p2dind] = f3ind;
 		polygon->interior_points.insert(p2dind);
