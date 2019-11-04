@@ -67,6 +67,14 @@
     TREE_LEAF_FACE_3D(pf, pt, 1, 5, 6, 2);      \
 }
 
+void
+ovlp_plot_bbox(ON_BoundingBox &bb)
+{
+    FILE *plot = fopen ("bb.plot3", "w");
+    BBOX_PLOT(plot, bb);
+    fclose(plot);
+}
+
 double
 tri_pnt_r(cdt_mesh::cdt_mesh_t &fmesh, long tri_ind)
 {
@@ -318,6 +326,11 @@ omesh_t::validate_vtree()
     while (!tree_it.IsNull()) {
 	v_ind = *tree_it;
 	overt_t *ov = overts[v_ind];
+	ON_3dPoint vp = ov->vpnt();
+	ON_3dPoint problem(3.4452740189190436,7.674473756016984,22.999999999999989);
+	if (vp.DistanceTo(problem) < 0.1) {
+	    std::cout << "Looking for trouble...\n";
+	}
 	std::set<overt_t *> search_verts = vert_search(ov->bb);
 	if (!search_verts.size()) {
 	    std::cout << "Error: no nearby verts for vert " << v_ind << "??\n";
@@ -1379,6 +1392,13 @@ refine_edge_vert_sets (
 		    std::set <overt_t *> nv2 = omesh->vert_search(sbb);
 		    if (!nv2.size()) {
 			std::cout << "search problem set empty\n";
+		    }
+		    ON_3dPoint ovp1(3.3727905675885448,7.6019903046864856,22.927516548669491);
+		    ON_3dPoint ovp2(3.5177574702495424,7.7469572073474824,23.072483451330488);
+		    ON_BoundingBox ovbb(ovp1, ovp2);
+		    std::set <overt_t *> nv3 = omesh->vert_search(ovbb);
+		    if (nv3.size()) {
+			std::cout << "found existing vert...\n";
 		    }
 		}
 	    }
