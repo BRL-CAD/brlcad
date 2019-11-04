@@ -323,6 +323,7 @@ omesh_t::validate_vtree()
 	}
 	if (search_verts.find(ov) == search_verts.end()) {
 	    std::cout << "Error: vert in tree, but search couldn't find: " << v_ind << "\n";
+	    vert_search(ov->bb);
 	    return false;
 	}
 	++tree_it;
@@ -559,6 +560,13 @@ omesh_t::vert_add(long f3ind, ON_BoundingBox *bb)
     if (bb) {
 	overts[f3ind]->bb = *bb;
     }
+
+    if (validate_vtree()) {
+	save_vtree("last_valid.vtree");
+    } else {
+	save_vtree("invalid.vtree");
+    }
+
 #if 1
     double fMin[3];
     fMin[0] = overts[f3ind]->bb.Min().x;
@@ -570,7 +578,11 @@ omesh_t::vert_add(long f3ind, ON_BoundingBox *bb)
     fMax[2] = overts[f3ind]->bb.Max().z;
     vtree.Insert(fMin, fMax, f3ind);
 
-    validate_vtree();
+    if (validate_vtree()) {
+	save_vtree("last_valid.vtree");
+    } else {
+	save_vtree("invalid.vtree");
+    }
 #endif
 #if 0
     // TODO Ew.  Shouldn't (I don't think?) have to do a full recreation of the
