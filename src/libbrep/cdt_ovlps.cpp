@@ -1361,15 +1361,29 @@ refine_edge_vert_sets (
 	bool have_inside = false;
 	for (size_t i = 0; i < epnts.size(); i++) {
 	    bool skip_epnt = false;
+	    ON_BoundingBox sbb(epnts[i].spnt,epnts[i].spnt);
+	    ON_3dVector vmin = epnts[i].ov->bb.Min() - epnts[i].ov->bb.Center();
+	    ON_3dVector vmax = epnts[i].ov->bb.Max() - epnts[i].ov->bb.Center();
+	    vmin.Unitize();
+	    vmax.Unitize();
+	    vmin = vmin * epnts[i].ov->bb.Diagonal().Length() * 0.5;
+	    vmax = vmax * epnts[i].ov->bb.Diagonal().Length() * 0.5;
+	    sbb.m_min = epnts[i].spnt + vmin;
+	    sbb.m_max = epnts[i].spnt + vmax;
+
 #if 1
 	    if (BU_STR_EQUAL(omesh->fmesh->name, "p.s")) {
 		ON_3dPoint problem(3.4452740189190436,7.674473756016984,22.999999999999989);
 		if (problem.DistanceTo(epnts[i].spnt) < 0.1) {
 		    std::cout << "search problem\n";
+		    std::set <overt_t *> nv2 = omesh->vert_search(sbb);
+		    if (!nv2.size()) {
+			std::cout << "search problem set empty\n";
+		    }
 		}
 	    }
 #endif
-	    std::set <overt_t *> nv = omesh->vert_search(epnts[i].ov->bb);
+	    std::set <overt_t *> nv = omesh->vert_search(sbb);
 	    std::set<overt_t *>::iterator v_it;
 	    for (v_it = nv.begin(); v_it != nv.end(); v_it++) {
 		ON_3dPoint cvpnt = (*v_it)->vpnt();
@@ -1413,15 +1427,6 @@ refine_edge_vert_sets (
 		CDT_Add3DPnt(s_cdt, omesh->fmesh->pnts[f3ind], omesh->fmesh->f_id, -1, -1, -1, 0, 0);
 		CDT_Add3DNorm(s_cdt, omesh->fmesh->normals[fnind], omesh->fmesh->pnts[f3ind], omesh->fmesh->f_id, -1, -1, -1, 0, 0);
 		omesh->fmesh->nmap[f3ind] = fnind;
-		ON_BoundingBox sbb(epnts[i].spnt,epnts[i].spnt);
-		ON_3dVector vmin = epnts[i].ov->bb.Min() - epnts[i].ov->bb.Center();
-		ON_3dVector vmax = epnts[i].ov->bb.Max() - epnts[i].ov->bb.Center();
-		vmin.Unitize();
-		vmax.Unitize();
-		vmin = vmin * epnts[i].ov->bb.Diagonal().Length() * 0.5;
-		vmax = vmax * epnts[i].ov->bb.Diagonal().Length() * 0.5;
-		sbb.m_min = epnts[i].spnt + vmin;
-		sbb.m_max = epnts[i].spnt + vmax;
 		overt_t *nvrt = omesh->vert_add(f3ind, &sbb);
 		new_overts.insert(nvrt);
 		polygon->p2o[p2dind] = f3ind;
