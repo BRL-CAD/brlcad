@@ -176,8 +176,9 @@ should_be_same ( ) {
     elif test "x`diff $1 $2`" != "x" ; then
 	log "ERROR: comparison failed  ($1 and $2 are different, expected no change)"
 	# display diff in the log
-	log "Differences:"
+	log "BEGIN displaying differences ..."
 	run diff -u $1 $2
+	log "... DONE displaying differences."
 	ret=1
     fi
 
