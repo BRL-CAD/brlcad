@@ -57,7 +57,7 @@ if test ! -f "$MGED" ; then
     exit 1
 fi
 
-FAILURES=0
+STATUS=0
 
 
 # make our starting database
@@ -114,8 +114,8 @@ should_be_different ( ) {
     fi
     if test "x`diff $1 $2`" = "x" ; then
 	log "ERROR: comparison failed  ($1 and $2 are identical, expected change)"
-	FAILURES="`expr $FAILURES + 1`"
-	export FAILURES
+	STATUS="`expr $STATUS + 1`"
+	export STATUS
     fi
 }
 
@@ -136,8 +136,8 @@ should_be_same ( ) {
     if test "x`diff $1 $2`" != "x" ; then
 	log "ERROR: comparison failed  ($1 and $2 are different, expected no change)"
 	run diff -u $1 $2
-	FAILURES="`expr $FAILURES + 1`"
-	export FAILURES
+	STATUS="`expr $STATUS + 1`"
+	export STATUS
     fi
 }
 
@@ -531,13 +531,13 @@ edit_and_dump sph_rot.c $REDFILE.new
 should_be_same $MATRIX $REDFILE.new
 
 
-if test $FAILURES -eq 0 ; then
+if test $STATUS -eq 0 ; then
     log "-> mged 'red' check succeeded"
 else
     log "-> mged 'red' check FAILED, see $LOGFILE"
 fi
 
-exit $FAILED
+exit $STATUS
 
 
 # Local Variables:
