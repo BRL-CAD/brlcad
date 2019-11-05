@@ -108,22 +108,22 @@ run ( ) {
 
 
 ###
-# should_be_different file1 file2
+# files_differ file1 file2
 #
 # comparison function returns success (zero) if the two specified
-# files differ or either doesn't exist, error otherwise.  Increments
-# STATUS global.
-should_be_different ( ) {
+# files differ or either doesn't exist, returns error otherwise.
+# Increments STATUS global.
+files_differ ( ) {
     if test $# -ne 2 ; then
-	log "INTERNAL ERROR: should_be_different has wrong arg count ($# -ne 2)"
+	log "INTERNAL ERROR: files_differ has wrong arg count ($# -ne 2)"
 	exit 1
     fi
     if test "x$2" = "x" ; then
-	log "INTERNAL ERROR: should_be_different is missing filename #2"
+	log "INTERNAL ERROR: files_differ is missing filename #2"
 	exit 1
     fi
     if test "x$1" = "x" ; then
-	log "INTERNAL ERROR: should_be_different is missing filename #1"
+	log "INTERNAL ERROR: files_differ is missing filename #1"
 	exit 1
     fi
 
@@ -148,21 +148,22 @@ should_be_different ( ) {
 
 
 ###
-# should_be_same file1 file2
+# files_match file1 file2
 #
-# comparison function returns true if two specified files both exist
-# and are the same, false otherwise.  Increments STATUS global.
-should_be_same ( ) {
+# comparison function returns success (zero) if two specified files
+# both exist and have the same contents, returns failure otherwise.
+# Increments STATUS global.
+files_match ( ) {
     if test $# -ne 2 ; then
-	log "INTERNAL ERROR: should_be_same has wrong arg count ($# -ne 2)"
+	log "INTERNAL ERROR: files_match has wrong arg count ($# -ne 2)"
 	exit 1
     fi
     if test "x$2" = "x" ; then
-	log "INTERNAL ERROR: should_be_same is missing filename #2"
+	log "INTERNAL ERROR: files_match is missing filename #2"
 	exit 1
     fi
     if test "x$1" = "x" ; then
-	log "INTERNAL ERROR: should_be_same is missing filename #1"
+	log "INTERNAL ERROR: files_match is missing filename #1"
 	exit 1
     fi
 
