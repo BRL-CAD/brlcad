@@ -107,46 +107,85 @@ run ( ) {
 }
 
 
+###
+# should_be_different file1 file2
+#
+# comparison function returns success (zero) if the two specified
+# files differ or either doesn't exist, error otherwise.  Increments
+# STATUS global.
 should_be_different ( ) {
     if test $# -ne 2 ; then
 	log "INTERNAL ERROR: should_be_different has wrong arg count ($# -ne 2)"
 	exit 1
     fi
-    if test "x$1" = "x" ; then
-	log "INTERNAL ERROR: should_be_different has empty file #1"
-	exit 1
-    fi
     if test "x$2" = "x" ; then
-	log "INTERNAL ERROR: should_be_different has empty file #2"
+	log "INTERNAL ERROR: should_be_different is missing filename #2"
 	exit 1
     fi
-    if test "x`diff $1 $2`" = "x" ; then
+    if test "x$1" = "x" ; then
+	log "INTERNAL ERROR: should_be_different is missing filename #1"
+	exit 1
+    fi
+
+    ret=0
+    if test ! -f "$2" ; then
+	log "ERROR: $2 does not exist"
+	ret=1
+    elif test ! -f "$1" ; then
+	log "ERROR: $1 does not exist"
+	ret=1
+    elif test "x`diff $1 $2`" = "x" ; then
 	log "ERROR: comparison failed  ($1 and $2 are identical, expected change)"
+	ret=1
+    fi
+
+    if test $ret -ne 0 ; then
 	STATUS="`expr $STATUS + 1`"
 	export STATUS
     fi
+    return $ret
 }
 
 
+###
+# should_be_same file1 file2
+#
+# comparison function returns true if two specified files both exist
+# and are the same, false otherwise.  Increments STATUS global.
 should_be_same ( ) {
     if test $# -ne 2 ; then
 	log "INTERNAL ERROR: should_be_same has wrong arg count ($# -ne 2)"
 	exit 1
     fi
-    if test "x$1" = "x" ; then
-	log "INTERNAL ERROR: should_be_same has empty file #1"
-	exit 1
-    fi
     if test "x$2" = "x" ; then
-	log "INTERNAL ERROR: should_be_same has empty file #2"
+	log "INTERNAL ERROR: should_be_same is missing filename #2"
 	exit 1
     fi
-    if test "x`diff $1 $2`" != "x" ; then
+    if test "x$1" = "x" ; then
+	log "INTERNAL ERROR: should_be_same is missing filename #1"
+	exit 1
+    fi
+
+    ret=0
+    if test ! -f "$2" ; then
+	log "ERROR: $2 does not exist"
+	ret=1
+    elif test ! -f "$1" ; then
+	log "ERROR: $1 does not exist"
+	ret=1
+    elif test "x`diff $1 $2`" != "x" ; then
 	log "ERROR: comparison failed  ($1 and $2 are different, expected no change)"
+	# display diff in the log
+	log "Differences:"
 	run diff -u $1 $2
+	ret=1
+    fi
+
+    if test $ret -ne 0 ; then
 	STATUS="`expr $STATUS + 1`"
 	export STATUS
     fi
+    return $ret
 }
 
 
