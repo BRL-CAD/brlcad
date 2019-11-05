@@ -113,7 +113,7 @@ should_be_different ( ) {
 	exit 1
     fi
     if test "x`diff $1 $2`" = "x" ; then
-	log "ERROR: 'red' failed  ($1 and $2 are identical, expected change)"
+	log "ERROR: comparison failed  ($1 and $2 are identical, expected change)"
 	FAILURES="`expr $FAILURES + 1`"
 	export FAILURES
     fi
@@ -134,7 +134,7 @@ should_be_same ( ) {
 	exit 1
     fi
     if test "x`diff $1 $2`" != "x" ; then
-	log "ERROR: 'red' failed  ($1 and $2 are different, expected no change)"
+	log "ERROR: comparison failed  ($1 and $2 are different, expected no change)"
 	run diff -u $1 $2
 	FAILURES="`expr $FAILURES + 1`"
 	export FAILURES
