@@ -44,7 +44,7 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 
 if test "x$LOGFILE" = "x" ; then
     LOGFILE=`pwd`/iges.log
-    rm -f $LOGFILE
+    rm -f "$LOGFILE"
 fi
 log "=== TESTING iges conversion ==="
 
@@ -69,10 +69,13 @@ fi
 
 STATUS=0
 
-log "... running mged to create facetized geometry (iges.g)"
-rm -f iges.g
-$MGED -c >> $LOGFILE 2>&1 <<EOF
-opendb iges.g y
+# CREATE G
+
+output=iges.g
+rm -f "$output"
+log "... running mged to create facetized geometry ($output)"
+$MGED -c >> "$LOGFILE" 2>&1 <<EOF
+opendb $output y
 
 units mm
 size 1000
@@ -81,37 +84,83 @@ facetize -n box.nmg box.s
 kill box.s
 q
 EOF
+if [ ! -f "$output" ] ; then
+    log "ERROR: mged failed to create $output"
+    log "-> iges.sh FAILED, see $LOGFILE"
+    exit 1
+fi
 
-TFILS='iges.log iges.g iges_file.iges iges_stdout_new.g iges_new.g iges_stdout.iges iges_file.iges'
-TFILS="$TFILS iges_file2.iges iges_file3.iges iges.m35.asc iges.m35.g"
+# G TO IGES
 
-# .g to iges:
-# these two commands should produce almost identical output
-rm -f iges.export.iges
-run $GIGES -o iges.export.iges iges.g box.nmg
-run $GIGES iges.g box.nmg
+# test G -> IGES via -o
+output="iges.export.iges"
+rm -f "$output"
+run $GIGES -o "$output" iges.g box.nmg
+if [ ! -f "$output" ] ; then
+    log "ERROR: g-iges failed to create $output"
+    log "-> iges.sh FAILED, see $LOGFILE"
+    exit 1
+fi
 
-# convert back to .g
-rm -f iges.import.g
-run $IGESG -o iges.import.g -p -N box.nmg iges.export.iges
+# test G -> IGES via stdout (can't use 'run')
+output="iges.export.stdout.iges"
+rm -f "$output"
+log "... running $GIGES iges.g box.nmg > $output"
+$GIGES iges.g box.nmg > $output 2>> "$LOGFILE"
+if [ ! -f "$output" ] ; then
+    log "ERROR: g-iges failed to create $output"
+    log "-> iges.sh FAILED, see $LOGFILE"
+    exit 1
+fi
 
-# check round trip back to iges: vertex permutation?
-# these two commands should produce almost identical output
-rm -f iges.export2.g
-run $GIGES -o iges.export2.iges iges.import.g box.nmg
-run $GIGES iges.import.g box.nmg
+# G TO IGES TO G
 
-# these two files should be identical
-#    iges_file.iges
-#    iges_file2.iges
+# test IGES -> G
+output="iges.import.g"
+rm -f "$output"
+run $IGESG -o "$output" -p -N box.nmg iges.export.iges
+if [ ! -f "$output" ] ; then
+    log "ERROR: iges-g failed to create $output"
+    log "-> iges.sh FAILED, see $LOGFILE"
+    exit 1
+fi
 
-# these two files should be identical
-#    iges_stdout.iges
-#    iges_stdout2.iges
+# G TO IGES TO G TO IGES (ROUND TRIP)
 
-$IGESG -o iges_stdout_new.g -p iges_stdout.iges 2>> iges.log
+# make sure we don't permute vertices or introduce some other
+# unintended change.
+
+# test G -> IGES #2 via -o
+output="iges.export2.iges"
+rm -f "$output"
+run $GIGES -o "$output" iges.import.g box.nmg
+if [ ! -f "$output" ] ; then
+    log "ERROR: g-iges failed to create $output"
+    log "-> iges.sh FAILED, see $LOGFILE"
+    exit 1
+fi
+
+# test G -> IGES #2 via stdout (can't use 'run')
+output="iges.export2.stdout.iges"
+$GIGES iges.import.g box.nmg > "$output" 2>> "$LOGFILE"
+if [ ! -f "$output" ] ; then
+    log "ERROR: g-iges failed to create $output"
+    log "-> iges.sh FAILED, see $LOGFILE"
+    exit 1
+fi
+
+# FIXME: test that these two files are identical
+#    iges.export.iges
+#    iges.export2.iges
+
+# FIXME: test that these two files are identical
+#    iges.export.stdout.iges
+#    iges.export2.stdout.iges
+
+# test IGES -> G #3 with -p (output nmg, not bot)
+run $IGESG -o iges.export3.stdout.g -p iges.export.stdout.iges
 if [ $? != 0 ] ; then
-    log "...iges-g (2) FAILED"
+    log "...iges-g (2) FAILED, see $LOGFILE"
     STATUS=1
 else
     log "...iges-g (2) succeeded"
