@@ -92,7 +92,7 @@ log ( ) {
 # the return status.  reads LOGFILE global, increments STATUS global.
 run ( ) {
     log "... running $@"
-    "$@" >> $LOGFILE 2>&1
+    "$@" >> "$LOGFILE" 2>&1
     ret=$?
     case "x$STATUS" in
 	'x'|*[!0-9]*)
@@ -104,6 +104,49 @@ run ( ) {
 	    ;;
     esac
     return $ret
+}
+
+
+should_be_different ( ) {
+    if test $# -ne 2 ; then
+	log "INTERNAL ERROR: should_be_different has wrong arg count ($# -ne 2)"
+	exit 1
+    fi
+    if test "x$1" = "x" ; then
+	log "INTERNAL ERROR: should_be_different has empty file #1"
+	exit 1
+    fi
+    if test "x$2" = "x" ; then
+	log "INTERNAL ERROR: should_be_different has empty file #2"
+	exit 1
+    fi
+    if test "x`diff $1 $2`" = "x" ; then
+	log "ERROR: comparison failed  ($1 and $2 are identical, expected change)"
+	STATUS="`expr $STATUS + 1`"
+	export STATUS
+    fi
+}
+
+
+should_be_same ( ) {
+    if test $# -ne 2 ; then
+	log "INTERNAL ERROR: should_be_same has wrong arg count ($# -ne 2)"
+	exit 1
+    fi
+    if test "x$1" = "x" ; then
+	log "INTERNAL ERROR: should_be_same has empty file #1"
+	exit 1
+    fi
+    if test "x$2" = "x" ; then
+	log "INTERNAL ERROR: should_be_same has empty file #2"
+	exit 1
+    fi
+    if test "x`diff $1 $2`" != "x" ; then
+	log "ERROR: comparison failed  ($1 and $2 are different, expected no change)"
+	run diff -u $1 $2
+	STATUS="`expr $STATUS + 1`"
+	export STATUS
+    fi
 }
 
 

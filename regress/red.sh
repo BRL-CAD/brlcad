@@ -99,49 +99,6 @@ assert_different ( ) {
 }
 
 
-should_be_different ( ) {
-    if test $# -ne 2 ; then
-	log "INTERNAL ERROR: should_be_different has wrong arg count ($# -ne 2)"
-	exit 1
-    fi
-    if test "x$1" = "x" ; then
-	log "INTERNAL ERROR: should_be_different has empty file #1"
-	exit 1
-    fi
-    if test "x$2" = "x" ; then
-	log "INTERNAL ERROR: should_be_different has empty file #2"
-	exit 1
-    fi
-    if test "x`diff $1 $2`" = "x" ; then
-	log "ERROR: comparison failed  ($1 and $2 are identical, expected change)"
-	STATUS="`expr $STATUS + 1`"
-	export STATUS
-    fi
-}
-
-
-should_be_same ( ) {
-    if test $# -ne 2 ; then
-	log "INTERNAL ERROR: should_be_same has wrong arg count ($# -ne 2)"
-	exit 1
-    fi
-    if test "x$1" = "x" ; then
-	log "INTERNAL ERROR: should_be_same has empty file #1"
-	exit 1
-    fi
-    if test "x$2" = "x" ; then
-	log "INTERNAL ERROR: should_be_same has empty file #2"
-	exit 1
-    fi
-    if test "x`diff $1 $2`" != "x" ; then
-	log "ERROR: comparison failed  ($1 and $2 are different, expected no change)"
-	run diff -u $1 $2
-	STATUS="`expr $STATUS + 1`"
-	export STATUS
-    fi
-}
-
-
 dump ( ) {
     if test $# -ne 2 ; then
 	log "INTERNAL ERROR: dump has wrong arg count ($# -ne 2)"
