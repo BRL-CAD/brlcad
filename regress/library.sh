@@ -108,14 +108,14 @@ run ( ) {
 
 
 ###
-# files_differ file1 file2
+# files_differ file1 file2 [diff args]
 #
 # comparison function returns success (zero) if the two specified
 # files differ or either doesn't exist, returns error otherwise.
 # Increments STATUS global.
 files_differ ( ) {
-    if test $# -ne 2 ; then
-	log "INTERNAL ERROR: files_differ has wrong arg count ($# -ne 2)"
+    if test $# -lt 2 ; then
+	log "INTERNAL ERROR: files_differ has wrong arg count ($# < 2)"
 	exit 1
     fi
     if test "x$2" = "x" ; then
@@ -134,9 +134,15 @@ files_differ ( ) {
     elif test ! -f "$1" ; then
 	log "ERROR: $1 does not exist"
 	ret=1
-    elif test "x`diff $1 $2`" = "x" ; then
-	log "ERROR: comparison failed  ($1 and $2 are identical, expected change)"
-	ret=1
+    else
+	file1="$1"
+	file2="$2"
+	shift 2
+	log "... running diff $* $file1 $file2"
+	if test "x`diff $* $file1 $file2`" = "x" ; then
+	    log "ERROR: comparison failed  ($file1 and $file2 are identical, expected change)"
+	    ret=1
+	fi
     fi
 
     if test $ret -ne 0 ; then
@@ -148,14 +154,14 @@ files_differ ( ) {
 
 
 ###
-# files_match file1 file2
+# files_match file1 file2 [diff args]
 #
 # comparison function returns success (zero) if two specified files
 # both exist and have the same contents, returns failure otherwise.
 # Increments STATUS global.
 files_match ( ) {
-    if test $# -ne 2 ; then
-	log "INTERNAL ERROR: files_match has wrong arg count ($# -ne 2)"
+    if test $# -lt 2 ; then
+	log "INTERNAL ERROR: files_match has wrong arg count ($# < 2)"
 	exit 1
     fi
     if test "x$2" = "x" ; then
@@ -174,13 +180,19 @@ files_match ( ) {
     elif test ! -f "$1" ; then
 	log "ERROR: $1 does not exist"
 	ret=1
-    elif test "x`diff $1 $2`" != "x" ; then
-	log "ERROR: comparison failed  ($1 and $2 are different, expected no change)"
-	# display diff in the log
-	log "BEGIN displaying differences ..."
-	run diff -u $1 $2
-	log "... DONE displaying differences."
-	ret=1
+    else
+	file1="$1"
+	file2="$2"
+	shift 2
+	log "... running diff $* $file1 $file2"
+	if test "x`diff $* $file1 $file2`" != "x" ; then
+	    log "ERROR: comparison failed  ($file1 and $file2 are different, expected no change)"
+	    # display diff in the log
+	    log "BEGIN logging differences:"
+	    run diff -u $* $file1 $file2
+	    log "DONE logging differences."
+	    ret=1
+	fi
     fi
 
     if test $ret -ne 0 ; then
