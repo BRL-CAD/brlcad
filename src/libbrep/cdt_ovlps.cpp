@@ -1854,18 +1854,23 @@ ovlp_split_edge(
     int f_id2 = s_cdt_edge->brep->m_T[eseg->tseg2->trim_ind].Face()->m_face_index;
     cdt_mesh::cdt_mesh_t &fmesh_f1 = s_cdt_edge->fmeshes[f_id1];
     cdt_mesh::cdt_mesh_t &fmesh_f2 = s_cdt_edge->fmeshes[f_id2];
+
     // Translate the tseg verts to their parent indices in order to get
     // valid triangle lookups
     cdt_mesh::cpolyedge_t *pe1 = eseg->tseg1;
     cdt_mesh::cpolyedge_t *pe2 = eseg->tseg2;
     cdt_mesh::cpolygon_t *poly1 = pe1->polygon;
     cdt_mesh::cpolygon_t *poly2 = pe2->polygon;
-    cdt_mesh::uedge_t ue1(poly1->p2o[eseg->tseg1->v[0]], poly1->p2o[eseg->tseg1->v[1]]);
-    cdt_mesh::uedge_t ue2(poly2->p2o[eseg->tseg2->v[0]], poly2->p2o[eseg->tseg2->v[1]]);
-    fmesh_f1.brep_edges.erase(ue1); 
-    fmesh_f2.brep_edges.erase(ue2); 
-    fmesh_f1.ue2b_map.erase(ue1); 
-    fmesh_f2.ue2b_map.erase(ue2); 
+    long ue1_1 = fmesh_f1.p2d3d[poly1->p2o[eseg->tseg1->v[0]]];
+    long ue1_2 = fmesh_f1.p2d3d[poly1->p2o[eseg->tseg1->v[1]]];
+    cdt_mesh::uedge_t ue1(ue1_1, ue1_2);
+    long ue2_1 = fmesh_f2.p2d3d[poly2->p2o[eseg->tseg2->v[0]]];
+    long ue2_2 = fmesh_f2.p2d3d[poly2->p2o[eseg->tseg2->v[1]]];
+    cdt_mesh::uedge_t ue2(ue2_1, ue2_2);
+    fmesh_f1.brep_edges.erase(ue1);
+    fmesh_f2.brep_edges.erase(ue2);
+    fmesh_f1.ue2b_map.erase(ue1);
+    fmesh_f2.ue2b_map.erase(ue2);
     //ON_3dPoint ue1_p1 = *fmesh_f1.pnts[ue1.v[0]];
     //ON_3dPoint ue1_p2 = *fmesh_f1.pnts[ue1.v[1]];
     //std::cout << f_id1 << " ue1: " << ue1.v[0] << "," << ue1.v[1] << ": " << ue1_p1.x << "," << ue1_p1.y << "," << ue1_p1.z << " -> " << ue1_p2.x << "," << ue1_p2.y << "," << ue1_p2.z << "\n";
@@ -1882,11 +1887,6 @@ ovlp_split_edge(
     if (!esegs_split.size()) {
 	std::cerr << "SPLIT FAILED!\n";
 	return -1;
-    }
-    if (!fmesh_f1.valid(1) || !fmesh_f2.valid(1)) {
-	fmesh_f1.boundary_edges_plot("fmesh_f1_bedges.plot3");
-	fmesh_f2.boundary_edges_plot("fmesh_f2_bedges.plot3");
-	bu_exit(1, "split broke mesh!\n");
     }
 
     if (nsegs) {
@@ -1909,14 +1909,18 @@ ovlp_split_edge(
 	cdt_mesh::cpolyedge_t *pe_2 = es->tseg2;
 	cdt_mesh::cpolygon_t *poly_1 = pe_1->polygon;
 	cdt_mesh::cpolygon_t *poly_2 = pe_2->polygon;
-	cdt_mesh::uedge_t ue_1(poly_1->p2o[es->tseg1->v[0]], poly_1->p2o[es->tseg1->v[1]]);
-	cdt_mesh::uedge_t ue_2(poly_2->p2o[es->tseg2->v[0]], poly_2->p2o[es->tseg2->v[1]]);
-	f1.brep_edges.insert(ue_1); 
-	f2.brep_edges.insert(ue_2); 
+	long nue1_1 = fmesh_f1.p2d3d[poly_1->p2o[es->tseg1->v[0]]];
+	long nue1_2 = fmesh_f1.p2d3d[poly_1->p2o[es->tseg1->v[1]]];
+	cdt_mesh::uedge_t ue_1(nue1_1, nue1_2);
+	long nue2_1 = fmesh_f2.p2d3d[poly_2->p2o[es->tseg2->v[0]]];
+	long nue2_2 = fmesh_f2.p2d3d[poly_2->p2o[es->tseg2->v[1]]];
+	cdt_mesh::uedge_t ue_2(nue2_1, nue2_2);
+	f1.brep_edges.insert(ue_1);
+	f2.brep_edges.insert(ue_2);
 	f1_new_ue.insert(ue_1);
 	f2_new_ue.insert(ue_2);
-	f1.ue2b_map[ue_1] = es; 
-	f2.ue2b_map[ue_2] = es; 
+	f1.ue2b_map[ue_1] = es;
+	f2.ue2b_map[ue_2] = es;
     }
 
     // Need to return one of the inserted verts from this process - we need to
@@ -1991,6 +1995,7 @@ bedge_split_at_t(
 	int f_id1 = s_cdt_edge->brep->m_T[eseg->tseg1->trim_ind].Face()->m_face_index;
 	int f_id2 = s_cdt_edge->brep->m_T[eseg->tseg2->trim_ind].Face()->m_face_index;
 #endif
+
 	int rtris = ovlp_split_edge(nsegs, nverts, eseg, t, f2omap);
 	if (rtris >= 0) {
 	    replaced_tris += rtris;
