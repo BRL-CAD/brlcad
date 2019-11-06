@@ -220,11 +220,12 @@ overt_t::update() {
     // create a bbox around pnt using length ~20% of the shortest edge length.
     ON_3dPoint vpnt = *omesh->fmesh->pnts[p_id];
 
-
+#if 0
     ON_3dPoint problem(3.4781932643130933,7.5707323832445113,24);
     if (vpnt.DistanceTo(problem) < 0.1) {
 	std::cout << "Bounding trouble...\n";
     }
+#endif
 
     ON_BoundingBox init_bb(vpnt, vpnt);
     bb = init_bb;
@@ -312,11 +313,13 @@ omesh_t::init_verts()
     for (a_it = averts.begin(); a_it != averts.end(); a_it++) {
 	overts[*a_it] = new overt_t(this, *a_it);
 
+#if 0
 	ON_3dPoint problem(3.4781932643130933,7.5707323832445113,24);
 	ON_3dPoint vp = overts[*a_it]->vpnt();
 	if (vp.DistanceTo(problem) < 0.1) {
 	    std::cout << "Initing trouble...\n";
 	}
+#endif
 
 	add_vtree_vert(overts[*a_it]);
     }
@@ -606,28 +609,16 @@ omesh_t::vert_add(long f3ind, ON_BoundingBox *bb)
 	overts[f3ind]->bb = *bb;
     }
 
+#if 0
     ON_3dPoint problem(3.4781932643130933,7.5707323832445113,24);
     ON_3dPoint vp = *fmesh->pnts[f3ind];
     if (vp.DistanceTo(problem) < 0.1) {
 	std::cout << "Adding trouble...\n";
     }
-
-    if (validate_vtree()) {
-	save_vtree("last_valid.vtree");
-    } else {
-	save_vtree("invalid.vtree");
-    }
-
-#if 1
-    add_vtree_vert(overts[f3ind]);
-    
-    if (validate_vtree()) {
-	save_vtree("last_valid.vtree");
-    } else {
-	save_vtree("invalid.vtree");
-    }
 #endif
 
+    add_vtree_vert(overts[f3ind]);
+    
     return overts[f3ind];
 }
 
@@ -1892,6 +1883,11 @@ ovlp_split_edge(
 	std::cerr << "SPLIT FAILED!\n";
 	return -1;
     }
+    if (!fmesh_f1.valid(1) || !fmesh_f2.valid(1)) {
+	fmesh_f1.boundary_edges_plot("fmesh_f1_bedges.plot3");
+	fmesh_f2.boundary_edges_plot("fmesh_f2_bedges.plot3");
+	bu_exit(1, "split broke mesh!\n");
+    }
 
     if (nsegs) {
 	(*nsegs).insert(esegs_split.begin(), esegs_split.end());
@@ -2079,7 +2075,7 @@ bedge_split_near_verts(
 	    double split_t = -1.0;
 	    double closest_dist = DBL_MAX;
 	    std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
-	    std::cout << "segs size: " << segs.size() << "\n";
+	    //std::cout << "segs size: " << segs.size() << "\n";
 	    for (e_it = segs.begin(); e_it != segs.end(); e_it++) {
 		cdt_mesh::bedge_seg_t *eseg = *e_it;
 		ON_NurbsCurve *nc = eseg->nc;
@@ -2089,8 +2085,8 @@ bedge_split_near_verts(
 		ON_3dPoint cep = nc->PointAt(t);
 		double ecdist = cep.DistanceTo(p);
 		if (closest_dist > ecdist) {
-		    std::cout << "closest_dist: " << closest_dist << "\n";
-		    std::cout << "ecdist: " << ecdist << "\n";
+		    //std::cout << "closest_dist: " << closest_dist << "\n";
+		    //std::cout << "ecdist: " << ecdist << "\n";
 		    closest_dist = ecdist;
 		    eseg_split = eseg;
 		    split_t = t;
@@ -2142,6 +2138,40 @@ bedges_rtree(
 	}
     }
 }
+
+void
+check_faces_validity(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> &check_pairs)
+{
+    int verbosity = 1;
+    std::set<cdt_mesh::cdt_mesh_t *> fmeshes;
+    std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>>::iterator cp_it;
+    for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
+	cdt_mesh::cdt_mesh_t *fmesh1 = cp_it->first;
+	cdt_mesh::cdt_mesh_t *fmesh2 = cp_it->second;
+	fmeshes.insert(fmesh1);
+	fmeshes.insert(fmesh2);
+    }
+    if (verbosity > 0) {
+	std::cout << "Full face validity check results:\n";
+    }
+    bool valid = true;
+    std::set<cdt_mesh::cdt_mesh_t *>::iterator f_it;
+    for (f_it = fmeshes.begin(); f_it != fmeshes.end(); f_it++) {
+	cdt_mesh::cdt_mesh_t *fmesh = *f_it;
+	if (!fmesh->valid(verbosity)) {
+	    valid = false;
+	}
+#if 0
+	struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh->p_cdt;
+	std::string fpname = std::to_string(id) + std::string("_") + std::string(s_cdt->name) + std::string("_face_") + std::to_string(fmesh->f_id) + std::string(".plot3");
+	fmesh->tris_plot(fpname.c_str());
+#endif
+    }
+    if (!valid) {
+	bu_exit(1, "fatal mesh damage");
+    }
+}
+
 
 // TODO - need a refinement here.  We also need to split edges when there is
 // an intersection on the face interior, to make sure we don't end up with
@@ -2241,32 +2271,6 @@ split_brep_face_edges_near_verts(
 
 }
 
-void
-check_faces_validity(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> &check_pairs)
-{
-    int verbosity = 1;
-    std::set<cdt_mesh::cdt_mesh_t *> fmeshes;
-    std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>>::iterator cp_it;
-    for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
-	cdt_mesh::cdt_mesh_t *fmesh1 = cp_it->first;
-	cdt_mesh::cdt_mesh_t *fmesh2 = cp_it->second;
-	fmeshes.insert(fmesh1);
-	fmeshes.insert(fmesh2);
-    }
-    if (verbosity > 0) {
-	std::cout << "Full face validity check results:\n";
-    }
-    std::set<cdt_mesh::cdt_mesh_t *>::iterator f_it;
-    for (f_it = fmeshes.begin(); f_it != fmeshes.end(); f_it++) {
-	cdt_mesh::cdt_mesh_t *fmesh = *f_it;
-	fmesh->valid(verbosity);
-#if 0
-	struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh->p_cdt;
-	std::string fpname = std::to_string(id) + std::string("_") + std::string(s_cdt->name) + std::string("_face_") + std::to_string(fmesh->f_id) + std::string(".plot3");
-	fmesh->tris_plot(fpname.c_str());
-#endif
-    }
-}
 
 // Using triangle planes and then an inside/outside test, determine
 // which point(s) from the opposite triangle are "inside" the
@@ -2759,7 +2763,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
     while (face_ov_cnt) {
 
 	iterations++;
-	if (iterations > 1) break;
+	if (iterations > 2) break;
 
     // Make omesh containers for all the cdt_meshes in play
     std::set<cdt_mesh::cdt_mesh_t *> afmeshes;
