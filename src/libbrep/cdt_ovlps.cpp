@@ -331,19 +331,27 @@ omesh_t::validate_vtree()
 	if (vp.DistanceTo(problem) < 0.1) {
 	    std::cout << "Looking for trouble...\n";
 	}
-	std::set<overt_t *> search_verts = vert_search(ov->bb);
-	if (!search_verts.size()) {
-	    std::cout << "Error: no nearby verts for vert " << v_ind << "??\n";
+	std::set<overt_t *> search_vert_bb = vert_search(ov->bb);
+	if (!search_vert_bb.size()) {
+	    std::cout << "Error: no nearby verts for vert bb " << v_ind << "??\n";
 	    return false;
 	}
-	if (search_verts.find(ov) == search_verts.end()) {
-	    std::cout << "Error: vert in tree, but search couldn't find: " << v_ind << "\n";
+	if (search_vert_bb.find(ov) == search_vert_bb.end()) {
+	    std::cout << "Error: vert in tree, but bb search couldn't find: " << v_ind << "\n";
 	    std::set<overt_t *> s2 = vert_search(ov->bb);
 	    if (s2.find(ov) == s2.end()) {
 		std::cout << "Second try didn't work: " << v_ind << "\n";
 	    }
 	    return false;
 	}
+
+	ON_BoundingBox pbb(vp, vp);
+	std::set<overt_t *> search_vert = vert_search(pbb);
+	if (!search_vert.size()) {
+	    std::cout << "Error: vert point not contained by tree box?? " << v_ind << "??\n";
+	    return false;
+	}
+
 	++tree_it;
     }
     return true;

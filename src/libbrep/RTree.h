@@ -449,6 +449,9 @@ void RTREE_QUAL::plot(Rect *a_rect, const char *fname)
     ON_3dPoint p2(a_rect->m_max[0], a_rect->m_max[1], a_rect->m_max[2]);
     ON_BoundingBox bb(p1, p2);
     FILE *p = fopen(fname, "w");
+    struct bu_color c = BU_COLOR_INIT_ZERO;
+    bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
+    pl_color_buc(p, &c);
     RECT_BBOX_PLOT(p, bb);
     fclose(p);
 }
