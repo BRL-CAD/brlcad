@@ -136,13 +136,12 @@ class omesh_t
 	// active verts for this portion of the processing.
 	std::map<long, overt_t *> overts;
 	RTree<long, double, 3> vtree;
-	void rebuild_vtree();
+	void add_vtree_vert(overt_t *v);
+	void remove_vtree_vert(overt_t *v);
 	void plot_vtree(const char *fname);
 	bool validate_vtree();
 	void save_vtree(const char *fname);
 	void load_vtree(const char *fname);
-
-	void vert_adjust(long p_id, ON_3dPoint *p, ON_3dVector *v);
 
 	// Add an fmesh vertex to the overts array and tree.
 	overt_t *vert_add(long, ON_BoundingBox *bb = NULL);
@@ -220,6 +219,13 @@ overt_t::update() {
 
     // create a bbox around pnt using length ~20% of the shortest edge length.
     ON_3dPoint vpnt = *omesh->fmesh->pnts[p_id];
+
+
+    ON_3dPoint problem(3.4781932643130933,7.5707323832445113,24);
+    if (vpnt.DistanceTo(problem) < 0.1) {
+	std::cout << "Bounding trouble...\n";
+    }
+
     ON_BoundingBox init_bb(vpnt, vpnt);
     bb = init_bb;
     ON_3dPoint npnt = vpnt;
@@ -254,6 +260,36 @@ overt_t::plot(FILE *plot)
 }
 
 void
+omesh_t::add_vtree_vert(overt_t *v)
+{
+    remove_vtree_vert(v);
+    v->update();
+    double fMin[3];
+    fMin[0] = v->bb.Min().x;
+    fMin[1] = v->bb.Min().y;
+    fMin[2] = v->bb.Min().z;
+    double fMax[3];
+    fMax[0] = v->bb.Max().x;
+    fMax[1] = v->bb.Max().y;
+    fMax[2] = v->bb.Max().z;
+    vtree.Insert(fMin, fMax, v->p_id);
+}
+
+void
+omesh_t::remove_vtree_vert(overt_t *v)
+{
+    double fMin[3];
+    fMin[0] = v->bb.Min().x-ON_ZERO_TOLERANCE;
+    fMin[1] = v->bb.Min().y-ON_ZERO_TOLERANCE;
+    fMin[2] = v->bb.Min().z-ON_ZERO_TOLERANCE;
+    double fMax[3];
+    fMax[0] = v->bb.Max().x+ON_ZERO_TOLERANCE;
+    fMax[1] = v->bb.Max().y+ON_ZERO_TOLERANCE;
+    fMax[2] = v->bb.Max().z+ON_ZERO_TOLERANCE;
+    vtree.Remove(fMin, fMax, v->p_id);
+}
+
+void
 omesh_t::init_verts()
 {
     // Walk the fmesh's rtree holding the active triangles to get all
@@ -275,29 +311,14 @@ omesh_t::init_verts()
     std::set<long>::iterator a_it;
     for (a_it = averts.begin(); a_it != averts.end(); a_it++) {
 	overts[*a_it] = new overt_t(this, *a_it);
-    }
 
-    rebuild_vtree();
-}
-void
-omesh_t::rebuild_vtree()
-{
-    std::map<long, class overt_t *>::iterator o_it;
+	ON_3dPoint problem(3.4781932643130933,7.5707323832445113,24);
+	ON_3dPoint vp = overts[*a_it]->vpnt();
+	if (vp.DistanceTo(problem) < 0.1) {
+	    std::cout << "Initing trouble...\n";
+	}
 
-    vtree.RemoveAll();
-
-    for (o_it = overts.begin(); o_it != overts.end(); o_it++) {
-	long ind = o_it->first;
-	overt_t *ov = o_it->second;
-	double fMin[3];
-	fMin[0] = ov->bb.Min().x;
-	fMin[1] = ov->bb.Min().y;
-	fMin[2] = ov->bb.Min().z;
-	double fMax[3];
-	fMax[0] = ov->bb.Max().x;
-	fMax[1] = ov->bb.Max().y;
-	fMax[2] = ov->bb.Max().z;
-	vtree.Insert(fMin, fMax, ind);
+	add_vtree_vert(overts[*a_it]);
     }
 }
 
@@ -327,10 +348,6 @@ omesh_t::validate_vtree()
 	v_ind = *tree_it;
 	overt_t *ov = overts[v_ind];
 	ON_3dPoint vp = ov->vpnt();
-	ON_3dPoint problem(3.4452740189190436,7.674473756016984,22.999999999999989);
-	if (vp.DistanceTo(problem) < 0.1) {
-	    std::cout << "Looking for trouble...\n";
-	}
 	std::set<overt_t *> search_vert_bb = vert_search(ov->bb);
 	if (!search_vert_bb.size()) {
 	    std::cout << "Error: no nearby verts for vert bb " << v_ind << "??\n";
@@ -349,6 +366,10 @@ omesh_t::validate_vtree()
 	std::set<overt_t *> search_vert = vert_search(pbb);
 	if (!search_vert.size()) {
 	    std::cout << "Error: vert point not contained by tree box?? " << v_ind << "??\n";
+	    std::set<overt_t *> sv2 = vert_search(pbb);
+	    if (sv2.find(ov) == sv2.end()) {
+		std::cout << "Second try didn't work: " << v_ind << "\n";
+	    }
 	    return false;
 	}
 
@@ -570,21 +591,12 @@ omesh_t::verts_one_ring_update(long p_id)
 	mod_verts.insert((*e_it).v[1]);
     }
 
-    // 3.  Update each vertex
+    // 3.  Update each vertex (both itself and in the vtree
     std::set<long>::iterator v_it;
     for (v_it = mod_verts.begin(); v_it != mod_verts.end(); v_it++) {
-	overts[*v_it]->update();
+	add_vtree_vert(overts[*v_it]);
     }
 }
-
-void
-omesh_t::vert_adjust(long p_id, ON_3dPoint *p, ON_3dVector *v)
-{
-    (*fmesh->pnts[p_id]) = *p;
-    (*fmesh->normals[fmesh->nmap[p_id]]) = *v;
-    verts_one_ring_update(p_id);
-}
-
 
 overt_t *
 omesh_t::vert_add(long f3ind, ON_BoundingBox *bb)
@@ -594,6 +606,12 @@ omesh_t::vert_add(long f3ind, ON_BoundingBox *bb)
 	overts[f3ind]->bb = *bb;
     }
 
+    ON_3dPoint problem(3.4781932643130933,7.5707323832445113,24);
+    ON_3dPoint vp = *fmesh->pnts[f3ind];
+    if (vp.DistanceTo(problem) < 0.1) {
+	std::cout << "Adding trouble...\n";
+    }
+
     if (validate_vtree()) {
 	save_vtree("last_valid.vtree");
     } else {
@@ -601,29 +619,15 @@ omesh_t::vert_add(long f3ind, ON_BoundingBox *bb)
     }
 
 #if 1
-    double fMin[3];
-    fMin[0] = overts[f3ind]->bb.Min().x;
-    fMin[1] = overts[f3ind]->bb.Min().y;
-    fMin[2] = overts[f3ind]->bb.Min().z;
-    double fMax[3];
-    fMax[0] = overts[f3ind]->bb.Max().x;
-    fMax[1] = overts[f3ind]->bb.Max().y;
-    fMax[2] = overts[f3ind]->bb.Max().z;
-    vtree.Insert(fMin, fMax, f3ind);
-
+    add_vtree_vert(overts[f3ind]);
+    
     if (validate_vtree()) {
 	save_vtree("last_valid.vtree");
     } else {
 	save_vtree("invalid.vtree");
     }
 #endif
-#if 0
-    // TODO Ew.  Shouldn't (I don't think?) have to do a full recreation of the
-    // rtree after every point, but just doing the insertion above doesn't
-    // result in a successful vert search (see area around line 1214).  Really
-    // need to dig into why.
-    rebuild_vtree();
-#endif
+
     return overts[f3ind];
 }
 
@@ -1602,16 +1606,19 @@ adjust_overt_pair(overt_t *v1, overt_t *v2)
 	}
 	bool f2_eval = closest_surf_pnt(s2_p, s2_n, *v2->omesh->fmesh, &p1, pdist);
 	if (f2_eval) {
-	    (*v2->omesh->fmesh->pnts[v2->p_id]) = s2_p;
-	    (*v2->omesh->fmesh->normals[v2->omesh->fmesh->nmap[v2->p_id]]) = s2_n;
-
-	    // We just changed the vertex point values - need to update all the
-	    // edge edges which might be impacted...
-	    v2->omesh->verts_one_ring_update(v2->p_id);
 
 	    // If we're refining, adjustment is all we're going to do with these verts
 	    v1->omesh->refine_pnt_remove(v2);
 	    v2->omesh->refine_pnt_remove(v1);
+
+	    v2->omesh->remove_vtree_vert(v2);
+	    (*v2->omesh->fmesh->pnts[v2->p_id]) = s2_p;
+	    (*v2->omesh->fmesh->normals[v2->omesh->fmesh->nmap[v2->p_id]]) = s2_n;
+	    v2->omesh->add_vtree_vert(v2);
+
+	    // We just changed the vertex point values - need to update all the
+	    // connected vertices which might be impacted...
+	    v2->omesh->verts_one_ring_update(v2->p_id);
 	    return;
 	} else {
 	    struct ON_Brep_CDT_State *s_cdt2 = (struct ON_Brep_CDT_State *)v2->omesh->fmesh->p_cdt;
@@ -1627,16 +1634,18 @@ adjust_overt_pair(overt_t *v1, overt_t *v2)
 	}
 	bool f1_eval = closest_surf_pnt(s1_p, s1_n, *v1->omesh->fmesh, &p2, pdist);
 	if (f1_eval) {
-	    (*v1->omesh->fmesh->pnts[v1->p_id]) = s1_p;
-	    (*v1->omesh->fmesh->normals[v1->omesh->fmesh->nmap[v1->p_id]]) = s1_n;
-
-	    // We just changed the vertex point values - need to update all the
-	    // edge edges which might be impacted...
-	    v1->omesh->verts_one_ring_update(v1->p_id);
-
 	    // If we're refining, adjustment is all we're going to do with these verts
 	    v1->omesh->refine_pnt_remove(v2);
 	    v2->omesh->refine_pnt_remove(v1);
+
+	    v1->omesh->remove_vtree_vert(v1);
+	    (*v1->omesh->fmesh->pnts[v1->p_id]) = s1_p;
+	    (*v1->omesh->fmesh->normals[v1->omesh->fmesh->nmap[v1->p_id]]) = s1_n;
+	    v1->omesh->add_vtree_vert(v1);
+
+	    // We just changed the vertex point values - need to update all the
+	    // connected vertices which might be impacted...
+	    v1->omesh->verts_one_ring_update(v1->p_id);
 	    return;
 	} else {
 	    struct ON_Brep_CDT_State *s_cdt1 = (struct ON_Brep_CDT_State *)v1->omesh->fmesh->p_cdt;
@@ -1657,19 +1666,26 @@ adjust_overt_pair(overt_t *v1, overt_t *v2)
     bool f1_eval = closest_surf_pnt(s1_p, s1_n, *v1->omesh->fmesh, &p_wavg, pdist);
     bool f2_eval = closest_surf_pnt(s2_p, s2_n, *v2->omesh->fmesh, &p_wavg, pdist);
     if (f1_eval && f2_eval) {
+	// If we're refining, adjustment is all we're going to do with these verts
+	v1->omesh->refine_pnt_remove(v2);
+	v2->omesh->refine_pnt_remove(v1);
+
+
+	v1->omesh->remove_vtree_vert(v1);
+	v2->omesh->remove_vtree_vert(v2);
+
 	(*v1->omesh->fmesh->pnts[v1->p_id]) = s1_p;
 	(*v1->omesh->fmesh->normals[v1->omesh->fmesh->nmap[v1->p_id]]) = s1_n;
 	(*v2->omesh->fmesh->pnts[v2->p_id]) = s2_p;
 	(*v2->omesh->fmesh->normals[v2->omesh->fmesh->nmap[v2->p_id]]) = s2_n;
 
+	v1->omesh->add_vtree_vert(v1);
+	v2->omesh->add_vtree_vert(v2);
+
 	// We just changed the vertex point values - need to update all the
 	// edge edges which might be impacted...
 	v1->omesh->verts_one_ring_update(v1->p_id);
 	v2->omesh->verts_one_ring_update(v2->p_id);
-
-	// If we're refining, adjustment is all we're going to do with these verts
-	v1->omesh->refine_pnt_remove(v2);
-	v2->omesh->refine_pnt_remove(v1);
 
     } else {
 	struct ON_Brep_CDT_State *s_cdt1 = (struct ON_Brep_CDT_State *)v1->omesh->fmesh->p_cdt;
