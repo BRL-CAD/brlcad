@@ -1386,6 +1386,8 @@ refine_edge_vert_sets (
 
 #if 1
 	    if (BU_STR_EQUAL(omesh->fmesh->name, "p.s")) {
+		RTree<long, double, 3>::Rect r;
+		omesh->vtree.plot(&r, NULL);
 		ON_3dPoint problem(3.4452740189190436,7.674473756016984,22.999999999999989);
 		if (problem.DistanceTo(epnts[i].spnt) < 0.1) {
 		    std::cout << "search problem\n";
