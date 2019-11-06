@@ -418,7 +418,7 @@ main(int argc, char *argv[])
     }
 
     /* Print some statistics */
-    Print_stats(stdout);
+    Print_stats(stderr);
 
     /* report on the success rate for facetizing regions */
     if (mode == FACET_MODE || mode == TRIMMED_SURF_MODE) {
