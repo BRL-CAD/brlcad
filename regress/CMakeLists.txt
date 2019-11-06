@@ -233,14 +233,17 @@ set(regress_outfiles
   gqa.overlaps.plot3
   gqa.volume.plot3
   iges.export.iges
-  iges.export2.iges
+  iges.export.stdout.iges
   iges.g
+  iges.import.export.iges
   iges.import.g
+  iges.import2.export.iges
+  iges.import2.g
+  iges.import3.export.iges
+  iges.import3.g
   iges.log
   iges.m35.asc
   iges.m35.g
-  iges_file3.iges
-  iges_stdout_new.g
   lights.asc
   lights.diff.pix
   lights.g
