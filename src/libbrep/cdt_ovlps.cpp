@@ -860,8 +860,10 @@ lseg_closest_pnt(ON_Line &l, ON_3dPoint &p)
  * intersection.
  *****************************************************************************/
 static int
-tri_isect(cdt_mesh::cdt_mesh_t *fmesh1, cdt_mesh::triangle_t &t1, cdt_mesh::cdt_mesh_t *fmesh2, cdt_mesh::triangle_t &t2, point_t *isectpt1, point_t *isectpt2)
+tri_isect(omesh_t *omesh1, cdt_mesh::triangle_t &t1, omesh_t *omesh2, cdt_mesh::triangle_t &t2, point_t *isectpt1, point_t *isectpt2)
 {
+    cdt_mesh::cdt_mesh_t *fmesh1 = omesh1->fmesh; 
+    cdt_mesh::cdt_mesh_t *fmesh2 = omesh2->fmesh; 
     int coplanar = 0;
     point_t T1_V[3];
     point_t T2_V[3];
@@ -882,15 +884,35 @@ tri_isect(cdt_mesh::cdt_mesh_t *fmesh1, cdt_mesh::triangle_t &t1, cdt_mesh::cdt_
 	}
 
 	ON_3dPoint problem(3.52639798477575539,8.19444914069358887,23.32079103474493209);
-	if (fmesh1->pnts[t1.v[0]]->DistanceTo(problem) < 0.1 || 
-		fmesh1->pnts[t1.v[1]]->DistanceTo(problem) < 0.1 ||
-		fmesh1->pnts[t1.v[2]]->DistanceTo(problem) < 0.1 ||
-		fmesh2->pnts[t2.v[0]]->DistanceTo(problem) < 0.1 || 
-		fmesh2->pnts[t2.v[1]]->DistanceTo(problem) < 0.1 ||
-		fmesh2->pnts[t2.v[2]]->DistanceTo(problem) < 0.1)
+	if (fmesh1->pnts[t1.v[0]]->DistanceTo(problem) < 0.01 || 
+		fmesh1->pnts[t1.v[1]]->DistanceTo(problem) < 0.01 ||
+		fmesh1->pnts[t1.v[2]]->DistanceTo(problem) < 0.01 ||
+		fmesh2->pnts[t2.v[0]]->DistanceTo(problem) < 0.01 || 
+		fmesh2->pnts[t2.v[1]]->DistanceTo(problem) < 0.01 ||
+		fmesh2->pnts[t2.v[2]]->DistanceTo(problem) < 0.01)
 	{
 	    std::cout << "isecting problem tri!\n";
-	}
+
+	
+	FILE *plot = fopen("tri_pair.plot3", "w");
+	double fpnt_r = -1.0;
+	double pnt_r = -1.0;
+	pl_color(plot, 0, 0, 255);
+	fmesh1->plot_tri(fmesh1->tris_vect[t1.ind], NULL, plot, 0, 0, 0);
+	pnt_r = tri_pnt_r(*fmesh1, t1.ind);
+	fpnt_r = (pnt_r > fpnt_r) ? pnt_r : fpnt_r;
+	pl_color(plot, 255, 0, 0);
+	fmesh2->plot_tri(fmesh2->tris_vect[t2.ind], NULL, plot, 0, 0, 0);
+	pnt_r = tri_pnt_r(*fmesh2, t2.ind);
+	fpnt_r = (pnt_r > fpnt_r) ? pnt_r : fpnt_r;
+	pl_color(plot, 255, 255, 255);
+	plot_pnt_3d(plot, &p1, fpnt_r, 0);
+	plot_pnt_3d(plot, &p2, fpnt_r, 0);
+	pdv_3move(plot, *isectpt1);
+	pdv_3cont(plot, *isectpt2);
+	fclose(plot);
+}
+
 
 	ON_Line e1(*fmesh1->pnts[t1.v[0]], *fmesh1->pnts[t1.v[1]]);
 	ON_Line e2(*fmesh1->pnts[t1.v[1]], *fmesh1->pnts[t1.v[2]]);
@@ -927,7 +949,7 @@ tri_isect(cdt_mesh::cdt_mesh_t *fmesh1, cdt_mesh::triangle_t &t1, cdt_mesh::cdt_
 	}
 
 	if (near_edge) {
-#if 0
+#if 1
 	    // For both triangles, check that the point furthest from the
 	    // edge in question is outside the opposite mesh
 	    ON_3dPoint t1_f, t2_f;
@@ -949,15 +971,56 @@ tri_isect(cdt_mesh::cdt_mesh_t *fmesh1, cdt_mesh::triangle_t &t1, cdt_mesh::cdt_
 		    cdist = tdist;
 		}
 	    }
-	    struct ON_Brep_CDT_State *s_cdt1 = (struct ON_Brep_CDT_State *)fmesh1->p_cdt;
-	    struct ON_Brep_CDT_State *s_cdt2 = (struct ON_Brep_CDT_State *)fmesh2->p_cdt;
-	    bool t1_f_i = on_point_inside(s_cdt2, &t1_f);
-	    bool t2_f_i = on_point_inside(s_cdt1, &t2_f);
 
-	    if (!t1_f_i && !t2_f_i) {
-		//std::cout << "edge intersect\n";
-		return 0;
-	    } else {
+	    // If the vert tree tells us a point is very close to a
+	    // point on the opposite mesh, don't count it as an intruding
+	    // point.
+	    bool t1_f_i = true;
+	    bool t2_f_i = true;
+
+	    ON_BoundingBox t1_bb(t1_f, t1_f);
+	    std::set<overt_t *> cverts1 = omesh2->vert_search(t1_bb);
+	    if (cverts1.size()) {
+		// Find the closest vertex, and use its bounding box size as a
+		// gauge for how close is too close for the surface point
+		std::set<overt_t *>::iterator v_it;
+		for (v_it = cverts1.begin(); v_it != cverts1.end(); v_it++) {
+		    ON_3dPoint cvpnt = (*v_it)->vpnt();
+		    if (cvpnt.DistanceTo(t1_f) < etol) {
+			// Too close to a vertex
+			t1_f_i = false;
+			break;
+		    }
+		}
+	    }
+
+	    ON_BoundingBox t2_bb(t2_f, t2_f);
+	    std::set<overt_t *> cverts2 = omesh1->vert_search(t2_bb);
+	    if (cverts2.size()) {
+		// Find the closest vertex, and use its bounding box size as a
+		// gauge for how close is too close for the surface point
+		std::set<overt_t *>::iterator v_it;
+		for (v_it = cverts2.begin(); v_it != cverts2.end(); v_it++) {
+		    ON_3dPoint cvpnt = (*v_it)->vpnt();
+		    if (cvpnt.DistanceTo(t2_f) < etol) {
+			// Too close to a vertex
+			t2_f_i = false;
+			break;
+		    }
+		}
+	    }
+
+	    if (t1_f_i) {
+		struct ON_Brep_CDT_State *s_cdt2 = (struct ON_Brep_CDT_State *)fmesh2->p_cdt;
+		t1_f_i = on_point_inside(s_cdt2, &t1_f);
+	    }
+
+	    if (t2_f_i) {
+		struct ON_Brep_CDT_State *s_cdt1 = (struct ON_Brep_CDT_State *)fmesh1->p_cdt;
+		t2_f_i = on_point_inside(s_cdt1, &t2_f);
+	    }
+
+	    if (!t1_f_i || !t2_f_i) {
 		if (t1_f_i) {
 		    ON_Plane t2plane = fmesh2->bplane(t2);
 		    double dist = t2plane.DistanceTo(t1_f);
@@ -976,11 +1039,11 @@ tri_isect(cdt_mesh::cdt_mesh_t *fmesh1, cdt_mesh::triangle_t &t1, cdt_mesh::cdt_
 			std::cout << "inside per local triangle plane: " << dist << ", etol: " << etol << "\n";
 		    }
 		}
-		if (!t1_f_i && !t2_f_i) {
-		    //std::cout << "edge intersect\n";
-		    return 0;
-		}
 		std::cout << "edge intersect, but opposite point reporting inside\n";
+		// TODO - for edge intersections, we need to know which triangle
+		// or triangles have interior points in the other mesh.
+	    } else {
+		return 0;
 	    }
 #else
 	    return 0;
@@ -989,24 +1052,6 @@ tri_isect(cdt_mesh::cdt_mesh_t *fmesh1, cdt_mesh::triangle_t &t1, cdt_mesh::cdt_
 
 
 
-
-	FILE *plot = fopen("tri_pair.plot3", "w");
-	double fpnt_r = -1.0;
-	double pnt_r = -1.0;
-	pl_color(plot, 0, 0, 255);
-	fmesh1->plot_tri(fmesh1->tris_vect[t1.ind], NULL, plot, 0, 0, 0);
-	pnt_r = tri_pnt_r(*fmesh1, t1.ind);
-	fpnt_r = (pnt_r > fpnt_r) ? pnt_r : fpnt_r;
-	pl_color(plot, 255, 0, 0);
-	fmesh2->plot_tri(fmesh2->tris_vect[t2.ind], NULL, plot, 0, 0, 0);
-	pnt_r = tri_pnt_r(*fmesh2, t2.ind);
-	fpnt_r = (pnt_r > fpnt_r) ? pnt_r : fpnt_r;
-	pl_color(plot, 255, 255, 255);
-	plot_pnt_3d(plot, &p1, fpnt_r, 0);
-	plot_pnt_3d(plot, &p2, fpnt_r, 0);
-	pdv_3move(plot, *isectpt1);
-	pdv_3cont(plot, *isectpt2);
-	fclose(plot);
 
 #if 0
 	    bool found_pt_2 = false;
@@ -1121,37 +1166,6 @@ possibly_interfering_face_pairs(struct ON_Brep_CDT_State **s_a, int s_cnt)
 }
 
 size_t
-face_fmesh_ovlps(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> check_pairs)
-{
-    size_t tri_isects = 0;
-    std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>>::iterator cp_it;
-    for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
-	cdt_mesh::cdt_mesh_t *fmesh1 = cp_it->first;
-	cdt_mesh::cdt_mesh_t *fmesh2 = cp_it->second;
-	struct ON_Brep_CDT_State *s_cdt1 = (struct ON_Brep_CDT_State *)fmesh1->p_cdt;
-	struct ON_Brep_CDT_State *s_cdt2 = (struct ON_Brep_CDT_State *)fmesh2->p_cdt;
-	if (s_cdt1 != s_cdt2) {
-	    std::set<std::pair<size_t, size_t>> tris_prelim;
-	    size_t ovlp_cnt = fmesh1->tris_tree.Overlaps(fmesh2->tris_tree, &tris_prelim);
-	    if (ovlp_cnt) {
-		std::set<std::pair<size_t, size_t>>::iterator tb_it;
-		for (tb_it = tris_prelim.begin(); tb_it != tris_prelim.end(); tb_it++) {
-		    cdt_mesh::triangle_t t1 = fmesh1->tris_vect[tb_it->first];
-		    cdt_mesh::triangle_t t2 = fmesh2->tris_vect[tb_it->second];
-		    point_t isectpt1 = {MAX_FASTF, MAX_FASTF, MAX_FASTF};
-		    point_t isectpt2 = {MAX_FASTF, MAX_FASTF, MAX_FASTF};
-		    int isect = tri_isect(fmesh1, t1, fmesh2, t2, &isectpt1, &isectpt2);
-		    if (isect) {
-			tri_isects++;
-		    }
-		}
-	    }
-	}
-    }
-    return tri_isects;
-}
-
-size_t
 face_omesh_ovlps(std::set<std::pair<omesh_t *, omesh_t *>> check_pairs)
 {
     size_t tri_isects = 0;
@@ -1161,8 +1175,10 @@ face_omesh_ovlps(std::set<std::pair<omesh_t *, omesh_t *>> check_pairs)
 	cp_it->second->ovlping_tris.clear();
     }
     for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
-	cdt_mesh::cdt_mesh_t *fmesh1 = cp_it->first->fmesh;
-	cdt_mesh::cdt_mesh_t *fmesh2 = cp_it->second->fmesh;
+	omesh_t *omesh1 = cp_it->first;
+	omesh_t *omesh2 = cp_it->second;
+	cdt_mesh::cdt_mesh_t *fmesh1 = omesh1->fmesh;
+	cdt_mesh::cdt_mesh_t *fmesh2 = omesh2->fmesh;
 	struct ON_Brep_CDT_State *s_cdt1 = (struct ON_Brep_CDT_State *)fmesh1->p_cdt;
 	struct ON_Brep_CDT_State *s_cdt2 = (struct ON_Brep_CDT_State *)fmesh2->p_cdt;
 	if (s_cdt1 != s_cdt2) {
@@ -1175,7 +1191,7 @@ face_omesh_ovlps(std::set<std::pair<omesh_t *, omesh_t *>> check_pairs)
 		    cdt_mesh::triangle_t t2 = fmesh2->tris_vect[tb_it->second];
 		    point_t isectpt1 = {MAX_FASTF, MAX_FASTF, MAX_FASTF};
 		    point_t isectpt2 = {MAX_FASTF, MAX_FASTF, MAX_FASTF};
-		    int isect = tri_isect(fmesh1, t1, fmesh2, t2, &isectpt1, &isectpt2);
+		    int isect = tri_isect(omesh1, t1, omesh2, t2, &isectpt1, &isectpt2);
 		    if (isect) {
 			cp_it->first->ovlping_tris.insert(t1.ind);
 			cp_it->second->ovlping_tris.insert(t2.ind);
@@ -1189,7 +1205,7 @@ face_omesh_ovlps(std::set<std::pair<omesh_t *, omesh_t *>> check_pairs)
 	cp_it->first->plot();
 	cp_it->second->plot();
     }
- 
+
     return tri_isects;
 }
 
@@ -2441,7 +2457,7 @@ characterize_tri_verts(
 	for (vt_it = vtris.begin(); vt_it != vtris.end(); vt_it++) {
 	    cdt_mesh::triangle_t ttri = omesh2->fmesh->tris_vect[*vt_it];
 	    point_t isectpt1, isectpt2;
-	    if (tri_isect(omesh1->fmesh, t1, omesh2->fmesh, ttri, &isectpt1, &isectpt2)) {
+	    if (tri_isect(omesh1, t1, omesh2, ttri, &isectpt1, &isectpt2)) {
 		tri_isect_cnt++;
 	    }
 	    if (tri_isect_cnt > 1) {
@@ -2508,7 +2524,7 @@ characterize_tri_intersections(
 	    cdt_mesh::triangle_t t2 = omesh2->fmesh->tris_vect[tb_it->second];
 	    point_t isectpt1 = {MAX_FASTF, MAX_FASTF, MAX_FASTF};
 	    point_t isectpt2 = {MAX_FASTF, MAX_FASTF, MAX_FASTF};
-	    int isect = tri_isect(omesh1->fmesh, t1, omesh2->fmesh, t2, &isectpt1, &isectpt2);
+	    int isect = tri_isect(omesh1, t1, omesh2, t2, &isectpt1, &isectpt2);
 	    if (!isect) continue;
 
 	    bool h_ip_1 = characterize_tri_verts(omesh1, omesh2, t1, t2, edge_verts);
@@ -2674,7 +2690,7 @@ last_ditch_edge_splits(
 	    cdt_mesh::triangle_t t2 = omesh2->fmesh->tris_vect[tb_it->second];
 	    point_t isectpt1 = {MAX_FASTF, MAX_FASTF, MAX_FASTF};
 	    point_t isectpt2 = {MAX_FASTF, MAX_FASTF, MAX_FASTF};
-	    int isect = tri_isect(omesh1->fmesh, t1, omesh2->fmesh, t2, &isectpt1, &isectpt2);
+	    int isect = tri_isect(omesh1, t1, omesh2, t2, &isectpt1, &isectpt2);
 	    if (!isect) continue;
 
 	    done = false;
@@ -2894,12 +2910,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 
     // Sanity check - are we valid?
     check_faces_validity(check_pairs);
-
-    // Report our starting overlap count
-    int face_ov_cnt = face_fmesh_ovlps(check_pairs);
-    std::cout << "Initial overlap cnt: " << face_ov_cnt << "\n";
-    if (!face_ov_cnt) return 0;
-
+    int face_ov_cnt = 1;
     int iterations = 0;
     while (face_ov_cnt) {
 
@@ -2926,7 +2937,11 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	omesh_t *o2 = f2omap[p_it->second];
 	ocheck_pairs.insert(std::make_pair(o1, o2));
     }
+    // Report our starting overlap count
     face_ov_cnt = face_omesh_ovlps(ocheck_pairs);
+    std::cout << "Initial overlap cnt: " << face_ov_cnt << "\n";
+    if (!face_ov_cnt) return 0;
+
 
     int close_vert_checks = 0;
     int avcnt = 0;
