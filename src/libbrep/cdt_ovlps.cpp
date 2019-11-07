@@ -865,6 +865,8 @@ tri_isect(cdt_mesh::cdt_mesh_t *fmesh1, cdt_mesh::triangle_t &t1, cdt_mesh::cdt_
     int coplanar = 0;
     point_t T1_V[3];
     point_t T2_V[3];
+
+
     VSET(T1_V[0], fmesh1->pnts[t1.v[0]]->x, fmesh1->pnts[t1.v[0]]->y, fmesh1->pnts[t1.v[0]]->z);
     VSET(T1_V[1], fmesh1->pnts[t1.v[1]]->x, fmesh1->pnts[t1.v[1]]->y, fmesh1->pnts[t1.v[1]]->z);
     VSET(T1_V[2], fmesh1->pnts[t1.v[2]]->x, fmesh1->pnts[t1.v[2]]->y, fmesh1->pnts[t1.v[2]]->z);
@@ -878,6 +880,18 @@ tri_isect(cdt_mesh::cdt_mesh_t *fmesh1, cdt_mesh::triangle_t &t1, cdt_mesh::cdt_
 	    //std::cout << "skipping pnt isect(" << coplanar << "): " << (*isectpt1)[X] << "," << (*isectpt1)[Y] << "," << (*isectpt1)[Z] << "\n";
 	    return 0;
 	}
+
+	ON_3dPoint problem(3.52639798477575539,8.19444914069358887,23.32079103474493209);
+	if (fmesh1->pnts[t1.v[0]]->DistanceTo(problem) < 0.1 || 
+		fmesh1->pnts[t1.v[1]]->DistanceTo(problem) < 0.1 ||
+		fmesh1->pnts[t1.v[2]]->DistanceTo(problem) < 0.1 ||
+		fmesh2->pnts[t2.v[0]]->DistanceTo(problem) < 0.1 || 
+		fmesh2->pnts[t2.v[1]]->DistanceTo(problem) < 0.1 ||
+		fmesh2->pnts[t2.v[2]]->DistanceTo(problem) < 0.1)
+	{
+	    std::cout << "isecting problem tri!\n";
+	}
+
 	ON_Line e1(*fmesh1->pnts[t1.v[0]], *fmesh1->pnts[t1.v[1]]);
 	ON_Line e2(*fmesh1->pnts[t1.v[1]], *fmesh1->pnts[t1.v[2]]);
 	ON_Line e3(*fmesh1->pnts[t1.v[2]], *fmesh1->pnts[t1.v[0]]);
@@ -913,8 +927,68 @@ tri_isect(cdt_mesh::cdt_mesh_t *fmesh1, cdt_mesh::triangle_t &t1, cdt_mesh::cdt_
 	}
 
 	if (near_edge) {
+#if 0
+	    // For both triangles, check that the point furthest from the
+	    // edge in question is outside the opposite mesh
+	    ON_3dPoint t1_f, t2_f;
+	    double cdist = -DBL_MAX;
+	    for (int i = 0; i < 3; i++) {
+		ON_3dPoint tp = *fmesh1->pnts[t1.v[i]];
+		double tdist = tp.DistanceTo(nedge.ClosestPointTo(tp));
+		if (tdist > cdist) {
+		    t1_f = tp;
+		    cdist = tdist;
+		}
+	    }
+	    cdist = -DBL_MAX;
+	    for (int i = 0; i < 3; i++) {
+		ON_3dPoint tp = *fmesh2->pnts[t2.v[i]];
+		double tdist = tp.DistanceTo(nedge.ClosestPointTo(tp));
+		if (tdist > cdist) {
+		    t2_f = tp;
+		    cdist = tdist;
+		}
+	    }
+	    struct ON_Brep_CDT_State *s_cdt1 = (struct ON_Brep_CDT_State *)fmesh1->p_cdt;
+	    struct ON_Brep_CDT_State *s_cdt2 = (struct ON_Brep_CDT_State *)fmesh2->p_cdt;
+	    bool t1_f_i = on_point_inside(s_cdt2, &t1_f);
+	    bool t2_f_i = on_point_inside(s_cdt1, &t2_f);
+
+	    if (!t1_f_i && !t2_f_i) {
+		//std::cout << "edge intersect\n";
+		return 0;
+	    } else {
+		if (t1_f_i) {
+		    ON_Plane t2plane = fmesh2->bplane(t2);
+		    double dist = t2plane.DistanceTo(t1_f);
+		    if (dist > 0) {
+			t1_f_i = false;
+		    } else {
+			std::cout << "inside per local triangle plane: " << dist << ", etol: " << etol << "\n";
+		    }
+		}
+		if (t2_f_i) {
+		    ON_Plane t1plane = fmesh1->bplane(t1);
+		    double dist = t1plane.DistanceTo(t2_f);
+		    if (dist > 0) {
+			t2_f_i = false;
+		    } else {
+			std::cout << "inside per local triangle plane: " << dist << ", etol: " << etol << "\n";
+		    }
+		}
+		if (!t1_f_i && !t2_f_i) {
+		    //std::cout << "edge intersect\n";
+		    return 0;
+		}
+		std::cout << "edge intersect, but opposite point reporting inside\n";
+	    }
+#else
 	    return 0;
+#endif
 	}
+
+
+
 
 	FILE *plot = fopen("tri_pair.plot3", "w");
 	double fpnt_r = -1.0;

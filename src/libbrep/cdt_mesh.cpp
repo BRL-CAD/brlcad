@@ -41,6 +41,7 @@
 #include "bn/plane.h" /* bn_fit_plane */
 #include "bg/polygon.h"
 #include "bg/tri_pt.h"
+#include "bg/trimesh.h"
 #include "brep.h"
 #include "./cdt_mesh.h"
 #include "./cdt.h"
