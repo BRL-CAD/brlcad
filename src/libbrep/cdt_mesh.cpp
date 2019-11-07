@@ -1800,6 +1800,21 @@ cdt_mesh_t::uedges(const triangle_t &t)
     return uedges;
 }
 
+std::set<uedge_t>
+cdt_mesh_t::b_uedges(const triangle_t &t)
+{
+    std::set<uedge_t> b_ue;
+    std::set<uedge_t> ue = uedges(t);
+    std::set<uedge_t>::iterator u_it;
+    for (u_it = ue.begin(); u_it != ue.end(); u_it++) {
+	if (brep_edges.find(*u_it) != brep_edges.end()) {
+	    b_ue.insert(*u_it);
+	}
+    }
+
+    return b_ue;
+}
+
 bool
 cdt_mesh_t::face_edge_tri(const triangle_t &t)
 {

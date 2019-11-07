@@ -609,8 +609,8 @@ omesh_t::vert_add(long f3ind, ON_BoundingBox *bb)
 	overts[f3ind]->bb = *bb;
     }
 
-#if 0
-    ON_3dPoint problem(3.4781932643130933,7.5707323832445113,24);
+#if 1
+    ON_3dPoint problem(2.5989674496614925,7.8208160252273471,23.158125750337142);
     ON_3dPoint vp = *fmesh->pnts[f3ind];
     if (vp.DistanceTo(problem) < 0.1) {
 	std::cout << "Adding trouble...\n";
@@ -1423,9 +1423,43 @@ refine_edge_vert_sets (
 	    if (skip_epnt) {
 		continue;
 	    }
+	    // If the point is too close to a brep face edge,
+	    // we also need to reject it to avoid creating degenerate
+	    // triangles
+	    std::set<cdt_mesh::uedge_t>::iterator ue_it;
+	    std::set<cdt_mesh::uedge_t> b_ue_1 = omesh->fmesh->b_uedges(tri1);
+	    for (ue_it = b_ue_1.begin(); ue_it != b_ue_1.end(); ue_it++) {
+		cdt_mesh::uedge_t lue = *ue_it;
+		double epdist = omesh->fmesh->uedge_dist(lue, epnts[i].spnt);
+		ON_Line lline(*omesh->fmesh->pnts[lue.v[0]], *omesh->fmesh->pnts[lue.v[1]]);
+		if (epdist < 0.001 * lline.Length()) {
+		    std::cout << "Close to brep face edge\n";
+		    skip_epnt = true;
+		    break;
+		}
+	    }
+	    if (skip_epnt) {
+		continue;
+	    }
+	    std::set<cdt_mesh::uedge_t> b_ue_2 = omesh->fmesh->b_uedges(tri2);
+	    for (ue_it = b_ue_2.begin(); ue_it != b_ue_2.end(); ue_it++) {
+		cdt_mesh::uedge_t lue = *ue_it;
+		double epdist = omesh->fmesh->uedge_dist(lue, epnts[i].spnt);
+		ON_Line lline(*omesh->fmesh->pnts[lue.v[0]], *omesh->fmesh->pnts[lue.v[1]]);
+		if (epdist < 0.001 * lline.Length()) {
+		    std::cout << "Close to brep face edge\n";
+		    skip_epnt = true;
+		    break;
+		}
+	    }
+	    if (skip_epnt) {
+		continue;
+	    }
 
 	    bool inside = false;
 	    {
+	        // Use the overt point for this - the closest surface point will
+	        // always pass, so it's not usable for rejection.
 		ON_3dPoint ovpnt = epnts[i].ov->vpnt();
 		double u, v;
 		fit_plane.ClosestPointTo(ovpnt, &u, &v);
