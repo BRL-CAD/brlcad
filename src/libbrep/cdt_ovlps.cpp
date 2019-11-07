@@ -180,6 +180,7 @@ class omesh_t
 
     private:
 	void init_verts();
+	void rebuild_vtree();
 
 	void edge_tris_remove(cdt_mesh::uedge_t &ue);
 
@@ -274,6 +275,8 @@ omesh_t::add_vtree_vert(overt_t *v)
     fMax[1] = v->bb.Max().y;
     fMax[2] = v->bb.Max().z;
     vtree.Insert(fMin, fMax, v->p_id);
+
+    rebuild_vtree();
 }
 
 void
@@ -322,6 +325,28 @@ omesh_t::init_verts()
 #endif
 
 	add_vtree_vert(overts[*a_it]);
+    }
+}
+
+void
+omesh_t::rebuild_vtree()
+{
+    std::map<long, class overt_t *>::iterator o_it;
+
+    vtree.RemoveAll();
+
+    for (o_it = overts.begin(); o_it != overts.end(); o_it++) {
+	long ind = o_it->first;
+	overt_t *ov = o_it->second;
+	double fMin[3];
+	fMin[0] = ov->bb.Min().x;
+	fMin[1] = ov->bb.Min().y;
+	fMin[2] = ov->bb.Min().z;
+	double fMax[3];
+	fMax[0] = ov->bb.Max().x;
+	fMax[1] = ov->bb.Max().y;
+	fMax[2] = ov->bb.Max().z;
+	vtree.Insert(fMin, fMax, ind);
     }
 }
 
@@ -2581,15 +2606,17 @@ last_ditch_edge_splits(
 	    done = false;
 
 	    std::set<cdt_mesh::uedge_t>::iterator ue_it;
+#if 0
 	    bool split_t1 = true;
 	    bool split_t2 = true;
 	    double t1len = tri_longest_edge_len(omesh1->fmesh, t1.ind);
 	    double t2len = tri_longest_edge_len(omesh2->fmesh, t2.ind);
 	    if (t1len < t2len) split_t1 = false;
 	    if (t2len < t1len) split_t2 = false;
-
+#endif
 	    // Mesh 1, triangle 1 longest edges
-	    if (split_t1) {
+	    //if (split_t1) {
+	    {
 		cdt_mesh::uedge_t sedge = tri_shortest_edge(omesh1->fmesh, t1.ind);
 		std::set<cdt_mesh::uedge_t> uedges1 = omesh1->fmesh->uedges(t1);
 		for (ue_it = uedges1.begin(); ue_it != uedges1.end(); ue_it++) {
@@ -2599,7 +2626,8 @@ last_ditch_edge_splits(
 		}
 	    }
 	    // Mesh 2, triangle 2 longest edges
-	    if (split_t2) {
+	    //if (split_t2) {
+	    {
 		cdt_mesh::uedge_t sedge = tri_shortest_edge(omesh2->fmesh, t2.ind);
 		std::set<cdt_mesh::uedge_t> uedges2 = omesh2->fmesh->uedges(t2);
 		for (ue_it = uedges2.begin(); ue_it != uedges2.end(); ue_it++) {
@@ -2802,7 +2830,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
     while (face_ov_cnt) {
 
 	iterations++;
-	if (iterations > 2) break;
+	if (iterations > 10) break;
 
     // Make omesh containers for all the cdt_meshes in play
     std::set<cdt_mesh::cdt_mesh_t *> afmeshes;
