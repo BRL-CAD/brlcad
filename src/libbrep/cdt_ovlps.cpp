@@ -635,7 +635,7 @@ omesh_t::vert_add(long f3ind, ON_BoundingBox *bb)
     }
 
 #if 1
-    ON_3dPoint problem(2.5989674496614925,7.8208160252273471,23.158125750337142);
+    ON_3dPoint problem(3.52639798477575539,8.19444914069358887,23.32079103474493209);
     ON_3dPoint vp = *fmesh->pnts[f3ind];
     if (vp.DistanceTo(problem) < 0.1) {
 	std::cout << "Adding trouble...\n";
