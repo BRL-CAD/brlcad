@@ -244,6 +244,7 @@ set(regress_outfiles
   iges.log
   iges.m35.asc
   iges.m35.g
+  iges.m35.r516.iges
   lights.asc
   lights.diff.pix
   lights.g
