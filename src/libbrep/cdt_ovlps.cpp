@@ -1064,6 +1064,19 @@ tri_isect(
 	    if (!v) {
 		std::cout << "WARNING: - no overt for vertex??\n";
 	    } else {
+		if (vert_edge_cnts) {
+		    ON_3dPoint p = v->vpnt();
+		    cdt_mesh::uedge_t closest_edge = fmesh2->closest_uedge(t2, p);
+		    if (fmesh2->brep_edges.find(closest_edge) != fmesh2->brep_edges.end()) {
+			cdt_mesh::bedge_seg_t *bseg = fmesh2->ue2b_map[closest_edge];
+			if (!bseg) {
+			    std::cout << "couldn't find bseg pointer??\n";
+			} else {
+			    (*vert_edge_cnts)[v][bseg]++;
+			}	
+		    }
+		}
+
 		omesh2->refinement_overts[v].insert(t1.ind);
 		omesh1->intruding_overts[v].insert(t1.ind);
 		omesh1->intruding_tris.insert(t1.ind);
@@ -1079,6 +1092,18 @@ tri_isect(
 	    if (!v) {
 		std::cout << "WARNING: - no overt for vertex??\n";
 	    } else {
+		if (vert_edge_cnts) {
+		    ON_3dPoint p = v->vpnt();
+		    cdt_mesh::uedge_t closest_edge = fmesh1->closest_uedge(t2, p);
+		    if (fmesh1->brep_edges.find(closest_edge) != fmesh1->brep_edges.end()) {
+			cdt_mesh::bedge_seg_t *bseg = fmesh1->ue2b_map[closest_edge];
+			if (!bseg) {
+			    std::cout << "couldn't find bseg pointer??\n";
+			} else {
+			    (*vert_edge_cnts)[v][bseg]++;
+			}	
+		    }
+		}
 		omesh1->refinement_overts[v].insert(t2.ind);
 		omesh2->intruding_overts[v].insert(t2.ind);
 		omesh2->intruding_tris.insert(t2.ind);
