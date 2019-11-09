@@ -905,8 +905,18 @@ edge_only_isect(ON_Line *nedge, long *t1_f, long *t2_f,
     double p2_d3 = p2.DistanceTo(e3.ClosestPointTo(p2));
     double etol = 0.0001*elen_min;
 
-    // If both points are on the same edge, it's an edge-only intersect - skip
-    // unless the point not involved is inside the opposing mesh
+    // If both points are on the same edge, it's an edge-only intersect.
+    // 
+    // There are two potential items of interest here:
+    //
+    // Verts from one triangle that are interior to an edge on the
+    // other - i.e., an edge intersection but with one triangle's
+    // edge not precisely lining up with the other.  In that case
+    // we want the edge vertices, because we may need those degrees
+    // of freedom in the mesh to clear sliver overlaps along edges.
+    //
+    // If the non-edge point of one of the triangles is clearly inside
+    // the other mesh, we still have an overlap case
     bool near_edge = false;
     if (NEAR_ZERO(p1_d1, etol) &&  NEAR_ZERO(p2_d1, etol)) {
 	//std::cout << "edge-only intersect - e1\n";
@@ -946,6 +956,12 @@ edge_only_isect(ON_Line *nedge, long *t1_f, long *t2_f,
 	    }
 	}
     }
+
+    // TODO - characterize the triangle vert positions relative to each other
+    // along the shared line.
+
+    // TODO - move the 3rd point handling logic here - might as well deal with
+    // this case entirely in this function
 
     return near_edge;
 }
