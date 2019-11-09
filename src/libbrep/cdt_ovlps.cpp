@@ -174,8 +174,8 @@ class omesh_t
 
 	cdt_mesh::cdt_mesh_t *fmesh;
 
-	void plot(const char *fname);
-	void plot();
+	void plot(const char *fname, std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> *ev);
+	void plot(std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> *ev);
 
 	void verts_one_ring_update(long p_id);
 
@@ -425,7 +425,7 @@ omesh_t::save_vtree(const char *fname)
 }
 
 void
-omesh_t::plot(const char *fname)
+omesh_t::plot(const char *fname, std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> *ev)
 {
     struct bu_color c = BU_COLOR_INIT_ZERO;
     unsigned char rgb[3] = {0,0,255};
@@ -468,7 +468,7 @@ omesh_t::plot(const char *fname)
     }
 
     std::map<overt_t *, std::set<long>>::iterator iv_it;
-    
+
     pl_color(plot, 255, 0, 0);
     for (iv_it = refinement_overts.begin(); iv_it != refinement_overts.end(); iv_it++) {
 	if (iv_it->second.size() > 1) {
@@ -487,16 +487,32 @@ omesh_t::plot(const char *fname)
 	}
     }
 
+    if (ev) {
+	std::set<cdt_mesh::uedge_t>::iterator b_it;
+	pl_color(plot, 0, 255, 255);
+	for (b_it = fmesh->brep_edges.begin(); b_it != fmesh->brep_edges.end(); b_it++) {
+	    cdt_mesh::bedge_seg_t *bseg = fmesh->ue2b_map[*b_it];
+	    if (ev->find(bseg) != ev->end()) {
+		std::set<overt_t *>::iterator v_it;
+		for (v_it = ((*ev)[bseg]).begin(); v_it != ((*ev)[bseg]).end(); v_it++) {
+		    overt_t *iv = *v_it;
+		    ON_3dPoint vp = iv->vpnt();
+		    plot_pnt_3d(plot, &vp, tri_r, 0);
+		}
+	    }
+	}
+    }
+
     fclose(plot);
 }
 
 void
-omesh_t::plot()
+omesh_t::plot(std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> *ev)
 {
     struct bu_vls fname = BU_VLS_INIT_ZERO;
     struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh->p_cdt;
     bu_vls_sprintf(&fname, "%s-%d_ovlps.plot3", s_cdt->name, fmesh->f_id);
-    plot(bu_vls_cstr(&fname));
+    plot(bu_vls_cstr(&fname), ev);
     bu_vls_free(&fname);
 }
 
@@ -789,63 +805,6 @@ edge_bbox(cdt_mesh::bedge_seg_t *eseg)
     return bb;
 }
 
-void
-plot_ovlp(struct brep_face_ovlp_instance *ovlp, FILE *plot)
-{
-    if (!ovlp) return;
-    cdt_mesh::cdt_mesh_t &imesh = ovlp->intruding_pnt_s_cdt->fmeshes[ovlp->intruding_pnt_face_ind];
-    cdt_mesh::cdt_mesh_t &cmesh = ovlp->intersected_tri_s_cdt->fmeshes[ovlp->intersected_tri_face_ind];
-    cdt_mesh::triangle_t i_tri = imesh.tris_vect[ovlp->intruding_pnt_tri_ind];
-    cdt_mesh::triangle_t c_tri = cmesh.tris_vect[ovlp->intersected_tri_ind];
-    ON_3dPoint *i_p = imesh.pnts[ovlp->intruding_pnt];
-
-    double bb1d = tri_pnt_r(imesh, i_tri.ind);
-    double bb2d = tri_pnt_r(cmesh, c_tri.ind);
-    double pnt_r = (bb1d < bb2d) ? bb1d : bb2d;
-
-    pl_color(plot, 0, 0, 255);
-    cmesh.plot_tri(c_tri, NULL, plot, 0, 0, 0);
-    //pl_color(plot, 255, 0, 0);
-    //imesh.plot_tri(i_tri, NULL, plot, 0, 0, 0);
-    pl_color(plot, 255, 0, 0);
-    plot_pnt_3d(plot, i_p, pnt_r, 0);
-}
-
-void
-plot_tri_npnts(
-	cdt_mesh::cdt_mesh_t *fmesh,
-	long t_ind,
-	RTree<void *, double, 3> &rtree,
-	FILE *plot)
-{
-    cdt_mesh::triangle_t tri = fmesh->tris_vect[t_ind];
-    double pnt_r = tri_pnt_r(*fmesh, t_ind);
-
-    pl_color(plot, 0, 0, 255);
-    fmesh->plot_tri(tri, NULL, plot, 0, 0, 0);
-
-    pl_color(plot, 255, 0, 0);
-    RTree<void *, double, 3>::Iterator tree_it;
-    rtree.GetFirst(tree_it);
-    while (!tree_it.IsNull()) {
-	ON_3dPoint *n3d = (ON_3dPoint *)*tree_it;
-	plot_pnt_3d(plot, n3d, pnt_r, 0);
-	++tree_it;
-    }
-}
-
-void
-plot_ovlps(struct ON_Brep_CDT_State *s_cdt, int fi)
-{
-    struct bu_vls fname = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&fname, "%s_%d_ovlps.plot3", s_cdt->name, fi);
-    FILE* plot_file = fopen(bu_vls_cstr(&fname), "w");
-    for (size_t i = 0; i < s_cdt->face_ovlps[fi].size(); i++) {
-	plot_ovlp(s_cdt->face_ovlps[fi][i], plot_file);
-    }
-    fclose(plot_file);
-}
-
 class tri_dist {
 public:
     tri_dist(double idist, long iind) {
@@ -1120,10 +1079,6 @@ tri_isect(
 
     // If we're not in an edge intersect situation, all three vertices go into the
     // refinement pot.
-   
-    // For each point in each triangle, check if the closest edge in the
-    // opposite triangle is a brep face edge.  If so, it's a candidate to drive
-    // edge splitting 
   
     for (int i = 0; i < 3; i++) {
 	overt_t *v = omesh1->overts[t1.v[i]];
@@ -1298,8 +1253,8 @@ face_omesh_ovlps(std::set<std::pair<omesh_t *, omesh_t *>> check_pairs)
     }
 
     for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
-	cp_it->first->plot();
-	cp_it->second->plot();
+	cp_it->first->plot(&edge_verts);
+	cp_it->second->plot(&edge_verts);
     }
 
     return tri_isects;
