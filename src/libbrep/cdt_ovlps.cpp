@@ -1276,8 +1276,23 @@ face_omesh_ovlps(std::set<std::pair<omesh_t *, omesh_t *>> check_pairs)
     }
     for (a_it = a_omesh.begin(); a_it != a_omesh.end(); a_it++) {
 	omesh_t *om = *a_it;
+	std::set<overt_t *> ev;
+	std::map<overt_t *, std::set<long>>::iterator r_it;
+	for (r_it = om->refinement_overts.begin(); r_it != om->refinement_overts.end(); r_it++) {
+	    if (r_it->second.size() == 1) {
+		ev.insert(r_it->first);
+	    }
+	}
+	std::set<overt_t *>::iterator ev_it;
+	for (ev_it = ev.begin(); ev_it != ev.end(); ev_it++) {
+	    om->refinement_overts.erase(*ev_it);
+	}
+    }
+
+    for (a_it = a_omesh.begin(); a_it != a_omesh.end(); a_it++) {
+	omesh_t *om = *a_it;
 	if (om->refinement_overts.size()) {
-	    std::cout << "mesh has " << om->refinement_overts.size() << " interior refinement pnts\n";
+	    std::cout << "mesh has " << om->refinement_overts.size() << " interior edge refinement pnts\n";
 	}
     }
 
