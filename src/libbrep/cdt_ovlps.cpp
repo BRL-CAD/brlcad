@@ -282,7 +282,7 @@ omesh_t::add_vtree_vert(overt_t *v)
 	std::cout << "Bad vert box!\n";
     }
     vtree.Insert(fMin, fMax, v->p_id);
-    rebuild_vtree();
+    //rebuild_vtree();
 }
 
 void
@@ -998,7 +998,11 @@ edge_only_isect(ON_Line *nedge, long *t1_f, long *t2_f,
  * intersection.
  *****************************************************************************/
 static int
-tri_isect(omesh_t *omesh1, cdt_mesh::triangle_t &t1, omesh_t *omesh2, cdt_mesh::triangle_t &t2)
+tri_isect(
+	omesh_t *omesh1, cdt_mesh::triangle_t &t1,
+       	omesh_t *omesh2, cdt_mesh::triangle_t &t2,
+	std::map<overt_t *, std::map<cdt_mesh::bedge_seg_t *, int>> *vert_edge_cnts
+	)
 {
     cdt_mesh::cdt_mesh_t *fmesh1 = omesh1->fmesh; 
     cdt_mesh::cdt_mesh_t *fmesh2 = omesh2->fmesh; 
@@ -1087,11 +1091,28 @@ tri_isect(omesh_t *omesh1, cdt_mesh::triangle_t &t1, omesh_t *omesh2, cdt_mesh::
 
     // If we're not in an edge intersect situation, all three vertices go into the
     // refinement pot.
+   
+    // For each point in each triangle, check if the closest edge in the
+    // opposite triangle is a brep face edge.  If so, it's a candidate to drive
+    // edge splitting 
+  
     for (int i = 0; i < 3; i++) {
 	overt_t *v = omesh1->overts[t1.v[i]];
 	if (!v) {
 	    std::cout << "WARNING: - no overt for vertex??\n";
 	    continue;
+	}
+	if (vert_edge_cnts) {
+	    ON_3dPoint p = v->vpnt();
+	    cdt_mesh::uedge_t closest_edge = fmesh2->closest_uedge(t2, p);
+	    if (fmesh2->brep_edges.find(closest_edge) != fmesh2->brep_edges.end()) {
+		cdt_mesh::bedge_seg_t *bseg = fmesh2->ue2b_map[closest_edge];
+		if (!bseg) {
+		    std::cout << "couldn't find bseg pointer??\n";
+		} else {
+		    (*vert_edge_cnts)[v][bseg]++;
+		}	
+	    }
 	}
 	omesh2->refinement_overts[v].insert(t1.ind);
 	omesh1->intruding_overts[v].insert(t1.ind);
@@ -1102,6 +1123,18 @@ tri_isect(omesh_t *omesh1, cdt_mesh::triangle_t &t1, omesh_t *omesh2, cdt_mesh::
 	if (!v) {
 	    std::cout << "WARNING: - no overt for vertex??\n";
 	    continue;
+	}
+	if (vert_edge_cnts) {
+	    ON_3dPoint p = v->vpnt();
+	    cdt_mesh::uedge_t closest_edge = fmesh1->closest_uedge(t2, p);
+	    if (fmesh1->brep_edges.find(closest_edge) != fmesh1->brep_edges.end()) {
+		cdt_mesh::bedge_seg_t *bseg = fmesh1->ue2b_map[closest_edge];
+		if (!bseg) {
+		    std::cout << "couldn't find bseg pointer??\n";
+		} else {
+		    (*vert_edge_cnts)[v][bseg]++;
+		}	
+	    }
 	}
 	omesh1->refinement_overts[v].insert(t2.ind);
 	omesh2->intruding_overts[v].insert(t2.ind);
@@ -1179,11 +1212,15 @@ size_t
 face_omesh_ovlps(std::set<std::pair<omesh_t *, omesh_t *>> check_pairs)
 {
     size_t tri_isects = 0;
+    std::set<omesh_t *> a_omesh;
     std::set<std::pair<omesh_t *, omesh_t *>>::iterator cp_it;
     for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
 	cp_it->first->refinement_clear();
 	cp_it->second->refinement_clear();
+	a_omesh.insert(cp_it->first);
+	a_omesh.insert(cp_it->second);
     }
+    std::map<overt_t *, std::map<cdt_mesh::bedge_seg_t *, int>> vert_edge_cnts;
     for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
 	omesh_t *omesh1 = cp_it->first;
 	omesh_t *omesh2 = cp_it->second;
@@ -1197,7 +1234,7 @@ face_omesh_ovlps(std::set<std::pair<omesh_t *, omesh_t *>> check_pairs)
 		for (tb_it = tris_prelim.begin(); tb_it != tris_prelim.end(); tb_it++) {
 		    cdt_mesh::triangle_t t1 = omesh1->fmesh->tris_vect[tb_it->first];
 		    cdt_mesh::triangle_t t2 = omesh2->fmesh->tris_vect[tb_it->second];
-		    int isect = tri_isect(omesh1, t1, omesh2, t2);
+		    int isect = tri_isect(omesh1, t1, omesh2, t2, &vert_edge_cnts);
 		    if (isect) {
 			tri_isects++;
 		    }
@@ -1205,6 +1242,45 @@ face_omesh_ovlps(std::set<std::pair<omesh_t *, omesh_t *>> check_pairs)
 	    }
 	}
     }
+
+    // Process the close-to-edge cases
+    std::set<overt_t *> everts;
+    std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> edge_verts;
+    std::map<overt_t *, std::map<cdt_mesh::bedge_seg_t *, int>>::iterator ov_it;
+    for (ov_it = vert_edge_cnts.begin(); ov_it != vert_edge_cnts.end(); ov_it++) {
+	std::map<cdt_mesh::bedge_seg_t *, int>::iterator s_it;
+	int cnt = 0;
+	for (s_it = ov_it->second.begin(); s_it != ov_it->second.end(); s_it++) {
+	    if (s_it->second > 1) {
+		edge_verts[s_it->first].insert(ov_it->first);
+		everts.insert(ov_it->first);
+		cnt++;
+	    }
+	}
+    }
+    std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>>::iterator e_it;
+    for (e_it = edge_verts.begin(); e_it != edge_verts.end(); e_it++) {
+	std::cout << "found " << e_it->second.size() << " edge splits\n";
+    }
+    std::set<omesh_t *>::iterator a_it;
+    for (a_it = a_omesh.begin(); a_it != a_omesh.end(); a_it++) {
+	std::set<overt_t *>::iterator v_it;
+	omesh_t *om = *a_it;
+	for (v_it = everts.begin(); v_it != everts.end(); v_it++) {
+	    overt_t *v = *v_it;
+	    if (om->refinement_overts.find(v) != om->refinement_overts.end()) {
+		std::cout << "erasing edge split from regular refinement\n";
+		om->refinement_overts.erase(v);
+	    }
+	}
+    }
+    for (a_it = a_omesh.begin(); a_it != a_omesh.end(); a_it++) {
+	omesh_t *om = *a_it;
+	if (om->refinement_overts.size()) {
+	    std::cout << "mesh has " << om->refinement_overts.size() << " interior refinement pnts\n";
+	}
+    }
+
     for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
 	cp_it->first->plot();
 	cp_it->second->plot();
@@ -2335,9 +2411,9 @@ split_brep_face_edges_near_verts(
 			edge_vert[eseg] = v;
 			used_verts++;
 		    }
-		    pl_color(plot_file, 255, 0, 0);
+		    pl_color(plot_file, 100, 0, 0);
 		    BBOX_PLOT(plot_file, v->bb);
-		    pl_color(plot_file, 0, 0, 255);
+		    pl_color(plot_file, 0, 0, 100);
 		    ON_BoundingBox edge_bb = edge_bbox(eseg);
 		    BBOX_PLOT(plot_file, edge_bb);
 		} else {
@@ -2479,7 +2555,7 @@ last_ditch_edge_splits(
 	for (tb_it = tris_prelim.begin(); tb_it != tris_prelim.end(); tb_it++) {
 	    cdt_mesh::triangle_t t1 = omesh1->fmesh->tris_vect[tb_it->first];
 	    cdt_mesh::triangle_t t2 = omesh2->fmesh->tris_vect[tb_it->second];
-	    int isect = tri_isect(omesh1, t1, omesh2, t2);
+	    int isect = tri_isect(omesh1, t1, omesh2, t2, NULL);
 	    if (!isect) continue;
 
 	    done = false;
