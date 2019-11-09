@@ -279,7 +279,6 @@ omesh_t::add_vtree_vert(overt_t *v)
     fMax[1] = v->bb.Max().y;
     fMax[2] = v->bb.Max().z;
     vtree.Insert(fMin, fMax, v->p_id);
-
     rebuild_vtree();
 }
 
@@ -1772,8 +1771,8 @@ adjust_overt_pair(overt_t *v1, overt_t *v2)
 	(*v2->omesh->fmesh->pnts[v2->p_id]) = s2_p;
 	(*v2->omesh->fmesh->normals[v2->omesh->fmesh->nmap[v2->p_id]]) = s2_n;
 
-	v1->omesh->add_vtree_vert(v1);
-	v2->omesh->add_vtree_vert(v2);
+	v1->omesh->vupdate(v1);
+	v2->omesh->vupdate(v2);
 
 	// We just changed the vertex point values - need to update all the
 	// edge edges which might be impacted...
@@ -1942,7 +1941,8 @@ replace_edge_split_tri(cdt_mesh::cdt_mesh_t &fmesh, size_t t_id, long np_id, cdt
 int
 ovlp_split_edge(
 	std::set<cdt_mesh::bedge_seg_t *> *nsegs,
-	cdt_mesh::bedge_seg_t *eseg, double t
+	cdt_mesh::bedge_seg_t *eseg, double t,
+	std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap
 	)
 {
     int replaced_tris = 0;
@@ -2038,6 +2038,8 @@ ovlp_split_edge(
 	ftris.insert(f2_tris.begin(), f2_tris.end());
 	np_id = fmesh_f1.pnts.size() - 1;
 	fmesh_f1.ep.insert(np_id);
+	omesh_t *om = f2omap[&fmesh_f1];
+	om->vert_add(np_id);
 	for (tr_it = ftris.begin(); tr_it != ftris.end(); tr_it++) {
 	    replace_edge_split_tri(fmesh_f1, *tr_it, np_id, ue);
 	    replaced_tris++;
@@ -2045,11 +2047,15 @@ ovlp_split_edge(
     } else {
 	np_id = fmesh_f1.pnts.size() - 1;
 	fmesh_f1.ep.insert(np_id);
+	omesh_t *om1 = f2omap[&fmesh_f1];
+	om1->vert_add(np_id);
 	replace_edge_split_tri(fmesh_f1, *f1_tris.begin(), np_id, ue1);
 	replaced_tris++;
 
 	np_id = fmesh_f2.pnts.size() - 1;
 	fmesh_f2.ep.insert(np_id);
+	omesh_t *om2 = f2omap[&fmesh_f2];
+	om2->vert_add(np_id);
 	replace_edge_split_tri(fmesh_f2, *f2_tris.begin(), np_id, ue2);
 	replaced_tris++;
     }
@@ -2061,7 +2067,8 @@ ovlp_split_edge(
 int
 bedge_split_at_t(
 	cdt_mesh::bedge_seg_t *eseg, double t,
-	std::set<cdt_mesh::bedge_seg_t *> *nsegs
+	std::set<cdt_mesh::bedge_seg_t *> *nsegs,
+	std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap
 	)
 {
     int replaced_tris = 0;
@@ -2080,7 +2087,7 @@ bedge_split_at_t(
 	int f_id2 = s_cdt_edge->brep->m_T[eseg->tseg2->trim_ind].Face()->m_face_index;
 #endif
 
-	int rtris = ovlp_split_edge(nsegs, eseg, t);
+	int rtris = ovlp_split_edge(nsegs, eseg, t, f2omap);
 	if (rtris >= 0) {
 	    replaced_tris += rtris;
 #if 0
@@ -2108,14 +2115,15 @@ bedge_split_at_t(
 int
 bedge_split_near_pnt(
 	cdt_mesh::bedge_seg_t *eseg, ON_3dPoint &p,
-	std::set<cdt_mesh::bedge_seg_t *> *nsegs
+	std::set<cdt_mesh::bedge_seg_t *> *nsegs,
+	std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap
 	)
 {
     ON_NurbsCurve *nc = eseg->nc;
     ON_Interval domain(eseg->edge_start, eseg->edge_end);
     double t;
     ON_NurbsCurve_GetClosestPoint(&t, nc, p, 0.0, &domain);
-    return bedge_split_at_t(eseg, t, nsegs);
+    return bedge_split_at_t(eseg, t, nsegs, f2omap);
 }
 
 // Find the point on the edge nearest to the vert point.  (TODO - need to think about how to
@@ -2123,7 +2131,8 @@ bedge_split_near_pnt(
 // and see if splitting clears the others...)
 int
 bedge_split_near_vert(
-	std::map<cdt_mesh::bedge_seg_t *, overt_t *> &edge_vert
+	std::map<cdt_mesh::bedge_seg_t *, overt_t *> &edge_vert,
+	std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap
 	)
 {
     int replaced_tris = 0;
@@ -2132,14 +2141,15 @@ bedge_split_near_vert(
 	cdt_mesh::bedge_seg_t *eseg = ev_it->first;
 	overt_t *v = ev_it->second;
 	ON_3dPoint p = v->vpnt();
-	replaced_tris += bedge_split_near_pnt(eseg, p, NULL);
+	replaced_tris += bedge_split_near_pnt(eseg, p, NULL, f2omap);
     }
     return replaced_tris;
 }
 
 int
 bedge_split_near_verts(
-	std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> &edge_verts
+	std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> &edge_verts,
+	std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap
 	)
 {
     int replaced_tris = 0;
@@ -2177,7 +2187,7 @@ bedge_split_near_verts(
 	    }
 
 	    std::set<cdt_mesh::bedge_seg_t *> nsegs;
-	    int ntri_cnt = bedge_split_at_t(eseg_split, split_t, &nsegs);
+	    int ntri_cnt = bedge_split_at_t(eseg_split, split_t, &nsegs, f2omap);
 	    if (ntri_cnt) {
 		segs.erase(eseg_split);
 		replaced_tris += ntri_cnt;
@@ -2268,7 +2278,8 @@ check_faces_validity(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_me
 int
 split_brep_face_edges_near_verts(
 	std::set<struct ON_Brep_CDT_State *> &a_cdt,
-	std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs
+	std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs,
+	std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap
 	)
 {
     std::map<long, cdt_mesh::bedge_seg_t *> b_edges;
@@ -2333,13 +2344,14 @@ split_brep_face_edges_near_verts(
     }
     fclose(plot_file);
 
-    int ret = bedge_split_near_vert(edge_vert);
+    int ret = bedge_split_near_vert(edge_vert, f2omap);
     return ret;
 }
 
 void
 refine_omeshes(
-	std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs
+	std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs,
+	std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap
 	)
 {
     std::set<omesh_t *> omeshes;
@@ -2379,7 +2391,7 @@ refine_omeshes(
 	cdt_mesh::bedge_seg_t *bseg = *brep_edges_to_split.begin();
 	brep_edges_to_split.erase(brep_edges_to_split.begin());
 	double tmid = (bseg->edge_start + bseg->edge_end) * 0.5;
-	int rtris = ovlp_split_edge(NULL, bseg, tmid);
+	int rtris = ovlp_split_edge(NULL, bseg, tmid, f2omap);
 	if (rtris <= 0) {
 	    std::cout << "edge split failed!\n";
 	}
@@ -2428,7 +2440,8 @@ refine_omeshes(
 
 bool
 last_ditch_edge_splits(
-	std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs
+	std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs,
+	std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap
 	)
 {
     std::set<std::pair<omesh_t *, omesh_t *>>::iterator cp_it;
@@ -2501,7 +2514,7 @@ last_ditch_edge_splits(
     }
     if (done) return false;
 
-    refine_omeshes(check_pairs);
+    refine_omeshes(check_pairs, f2omap);
 
     return true;
 }
@@ -2726,7 +2739,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	    a_cdt.insert((struct ON_Brep_CDT_State *)p_it->first->p_cdt);
 	    a_cdt.insert((struct ON_Brep_CDT_State *)p_it->second->p_cdt);
 	}
-	int sbfvtri_cnt = split_brep_face_edges_near_verts(a_cdt, ocheck_pairs);
+	int sbfvtri_cnt = split_brep_face_edges_near_verts(a_cdt, ocheck_pairs, f2omap);
 	if (sbfvtri_cnt) {
 	    std::cout << "Replaced " << sbfvtri_cnt << " triangles by splitting edges near vertices\n";
 	    check_faces_validity(check_pairs);
@@ -2792,7 +2805,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 		std::cout << "Edge curve has " << e_it->second.size() << " verts\n";
 	    }
 
-	    bedge_split_near_verts(edge_verts);
+	    bedge_split_near_verts(edge_verts, f2omap);
 	    iterations++;
 	    continue;
 	}
@@ -2809,7 +2822,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 
 	// Anything that has lasted this far, just chop all its edges in half for the next
 	// iteration
-	if (last_ditch_edge_splits(ocheck_pairs)) {
+	if (last_ditch_edge_splits(ocheck_pairs, f2omap)) {
 	    std::cout << "Not done yet\n";
 	    check_faces_validity(check_pairs);
 	    face_ov_cnt = face_omesh_ovlps(ocheck_pairs);
