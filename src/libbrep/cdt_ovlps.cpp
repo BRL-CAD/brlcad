@@ -890,20 +890,63 @@ edge_only_isect(ON_Line *nedge, long *t1_f, long *t2_f,
 	ON_3dPoint &p1, ON_3dPoint &p2
 	)
 {
-    ON_Line e1(*fmesh1->pnts[t1.v[0]], *fmesh1->pnts[t1.v[1]]);
-    ON_Line e2(*fmesh1->pnts[t1.v[1]], *fmesh1->pnts[t1.v[2]]);
-    ON_Line e3(*fmesh1->pnts[t1.v[2]], *fmesh1->pnts[t1.v[0]]);
+    ON_Line t1_lines[3];
+    t1_lines[0] = ON_Line(*fmesh1->pnts[t1.v[0]], *fmesh1->pnts[t1.v[1]]);
+    t1_lines[1] = ON_Line(*fmesh1->pnts[t1.v[1]], *fmesh1->pnts[t1.v[2]]);
+    t1_lines[2] = ON_Line(*fmesh1->pnts[t1.v[2]], *fmesh1->pnts[t1.v[0]]);
+
+    ON_Line t2_lines[3];
+    t2_lines[0] = ON_Line(*fmesh2->pnts[t2.v[0]], *fmesh2->pnts[t2.v[1]]);
+    t2_lines[1] = ON_Line(*fmesh2->pnts[t2.v[1]], *fmesh2->pnts[t2.v[2]]);
+    t2_lines[2] = ON_Line(*fmesh2->pnts[t2.v[2]], *fmesh2->pnts[t2.v[0]]);
+
     double elen_min = DBL_MAX;
-    elen_min = (elen_min > e1.Length()) ? e1.Length() : elen_min;
-    elen_min = (elen_min > e2.Length()) ? e2.Length() : elen_min;
-    elen_min = (elen_min > e3.Length()) ? e3.Length() : elen_min;
-    double p1_d1 = p1.DistanceTo(e1.ClosestPointTo(p1));
-    double p1_d2 = p1.DistanceTo(e2.ClosestPointTo(p1));
-    double p1_d3 = p1.DistanceTo(e3.ClosestPointTo(p1));
-    double p2_d1 = p2.DistanceTo(e1.ClosestPointTo(p2));
-    double p2_d2 = p2.DistanceTo(e2.ClosestPointTo(p2));
-    double p2_d3 = p2.DistanceTo(e3.ClosestPointTo(p2));
+    for (int i = 0; i < 3; i++) {
+	elen_min = (elen_min > t1_lines[i].Length()) ? t1_lines[i].Length() : elen_min;
+	elen_min = (elen_min > t2_lines[i].Length()) ? t2_lines[i].Length() : elen_min;
+    }
     double etol = 0.0001*elen_min;
+
+    double p1d1[3], p1d2[3];
+    double p2d1[3], p2d2[3];
+    for (int i = 0; i < 3; i++) {
+	p1d1[i] = p1.DistanceTo(t1_lines[i].ClosestPointTo(p1));
+	p2d1[i] = p2.DistanceTo(t1_lines[i].ClosestPointTo(p2));
+    	p1d2[i] = p1.DistanceTo(t2_lines[i].ClosestPointTo(p1));
+	p2d2[i] = p2.DistanceTo(t2_lines[i].ClosestPointTo(p2));
+    }
+
+    bool nedge_1 = false;
+    ON_Line t1_nedge;
+
+    for (int i = 0; i < 3; i++) {
+	if (NEAR_ZERO(p1d1[i], etol) &&  NEAR_ZERO(p2d1[i], etol)) {
+	    //std::cout << "edge-only intersect - e1\n";
+	    t1_nedge = t1_lines[i];
+	    nedge_1 = true;
+	}
+    }
+
+    bool nedge_2 = false;
+    ON_Line t2_nedge;
+    for (int i = 0; i < 3; i++) {
+	if (NEAR_ZERO(p1d2[i], etol) &&  NEAR_ZERO(p2d2[i], etol)) {
+	    //std::cout << "edge-only intersect - e1\n";
+	    t2_nedge = t2_lines[i];
+	    nedge_2 = true;
+	}
+    }
+
+    // If either triangle thinks this isn't an edge intersect, we're done 
+    if (!nedge_1 || !nedge_2) {
+	return false;
+    }
+
+    // If the finite chords' maximum distance is too large, the edges
+    // aren't properly aligned and we need the points
+    if (t1_nedge.MaximumDistanceTo(t2_nedge) > etol) {
+	return false;
+    }
 
     // If both points are on the same edge, it's an edge-only intersect.
     // 
@@ -917,53 +960,34 @@ edge_only_isect(ON_Line *nedge, long *t1_f, long *t2_f,
     //
     // If the non-edge point of one of the triangles is clearly inside
     // the other mesh, we still have an overlap case
-    bool near_edge = false;
-    if (NEAR_ZERO(p1_d1, etol) &&  NEAR_ZERO(p2_d1, etol)) {
-	//std::cout << "edge-only intersect - e1\n";
-	(*nedge) = e1;
-	near_edge = true;
-    }
-    if (NEAR_ZERO(p1_d2, etol) &&  NEAR_ZERO(p2_d2, etol)) {
-	//std::cout << "edge-only intersect - e2\n";
-	(*nedge) = e2;
-	near_edge = true;
-    }
-    if (NEAR_ZERO(p1_d3, etol) &&  NEAR_ZERO(p2_d3, etol)) {
-	//std::cout << "edge-only intersect - e3\n";
-	(*nedge) = e3;
-	near_edge = true;
-    }
+
+    (*nedge) = t1_nedge;
 
     // If it is an edge intersect, identify the point from each triangle not
     // on the edge
-    if (near_edge) {
-	double cdist = -DBL_MAX;
-	for (int i = 0; i < 3; i++) {
-	    ON_3dPoint tp = *fmesh1->pnts[t1.v[i]];
-	    double tdist = tp.DistanceTo(nedge->ClosestPointTo(tp));
-	    if (tdist > cdist) {
-		(*t1_f) = t1.v[i];
-		cdist = tdist;
-	    }
-	}
-	cdist = -DBL_MAX;
-	for (int i = 0; i < 3; i++) {
-	    ON_3dPoint tp = *fmesh2->pnts[t2.v[i]];
-	    double tdist = tp.DistanceTo(nedge->ClosestPointTo(tp));
-	    if (tdist > cdist) {
-		(*t2_f) = t2.v[i];
-		cdist = tdist;
-	    }
+    double cdist = -DBL_MAX;
+    for (int i = 0; i < 3; i++) {
+	ON_3dPoint tp = *fmesh1->pnts[t1.v[i]];
+	double tdist = tp.DistanceTo(t1_nedge.ClosestPointTo(tp));
+	if (tdist > cdist) {
+	    (*t1_f) = t1.v[i];
+	    cdist = tdist;
 	}
     }
-
-    // TODO - characterize the triangle vert positions relative to each other
-    // along the shared line.
+    cdist = -DBL_MAX;
+    for (int i = 0; i < 3; i++) {
+	ON_3dPoint tp = *fmesh2->pnts[t2.v[i]];
+	double tdist = tp.DistanceTo(t2_nedge.ClosestPointTo(tp));
+	if (tdist > cdist) {
+	    (*t2_f) = t2.v[i];
+	    cdist = tdist;
+	}
+    }
 
     // TODO - move the 3rd point handling logic here - might as well deal with
     // this case entirely in this function
 
-    return near_edge;
+    return true;
 }
 
 
