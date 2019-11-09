@@ -278,6 +278,9 @@ omesh_t::add_vtree_vert(overt_t *v)
     fMax[0] = v->bb.Max().x;
     fMax[1] = v->bb.Max().y;
     fMax[2] = v->bb.Max().z;
+    if (fMin[0] < -0.4*DBL_MAX || fMax[0] > 0.4*DBL_MAX) {
+	std::cout << "Bad vert box!\n";
+    }
     vtree.Insert(fMin, fMax, v->p_id);
     rebuild_vtree();
 }
@@ -651,11 +654,12 @@ omesh_t::verts_one_ring_update(long p_id)
 overt_t *
 omesh_t::vert_add(long f3ind, ON_BoundingBox *bb)
 {
-    overts[f3ind] = new overt_t(this, f3ind);
+    overt_t *nv = new overt_t(this, f3ind);
     if (bb) {
-	overts[f3ind]->bb = *bb;
+	nv->bb = *bb;
     }
-    vupdate(overts[f3ind]);
+    vupdate(nv);
+    overts[f3ind] = nv;
 
 #if 1
     ON_3dPoint problem(3.52639798477575539,8.19444914069358887,23.32079103474493209);
@@ -665,7 +669,7 @@ omesh_t::vert_add(long f3ind, ON_BoundingBox *bb)
     }
 #endif
 
-    return overts[f3ind];
+    return nv;
 }
 
 void
@@ -2038,26 +2042,27 @@ ovlp_split_edge(
 	ftris.insert(f2_tris.begin(), f2_tris.end());
 	np_id = fmesh_f1.pnts.size() - 1;
 	fmesh_f1.ep.insert(np_id);
-	omesh_t *om = f2omap[&fmesh_f1];
-	om->vert_add(np_id);
 	for (tr_it = ftris.begin(); tr_it != ftris.end(); tr_it++) {
 	    replace_edge_split_tri(fmesh_f1, *tr_it, np_id, ue);
 	    replaced_tris++;
 	}
+	omesh_t *om = f2omap[&fmesh_f1];
+	om->vert_add(np_id);
+
     } else {
 	np_id = fmesh_f1.pnts.size() - 1;
 	fmesh_f1.ep.insert(np_id);
-	omesh_t *om1 = f2omap[&fmesh_f1];
-	om1->vert_add(np_id);
 	replace_edge_split_tri(fmesh_f1, *f1_tris.begin(), np_id, ue1);
 	replaced_tris++;
+	omesh_t *om1 = f2omap[&fmesh_f1];
+	om1->vert_add(np_id);
 
 	np_id = fmesh_f2.pnts.size() - 1;
 	fmesh_f2.ep.insert(np_id);
-	omesh_t *om2 = f2omap[&fmesh_f2];
-	om2->vert_add(np_id);
 	replace_edge_split_tri(fmesh_f2, *f2_tris.begin(), np_id, ue2);
 	replaced_tris++;
+    	omesh_t *om2 = f2omap[&fmesh_f2];
+	om2->vert_add(np_id);
     }
 
     return replaced_tris;
