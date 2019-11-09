@@ -944,7 +944,17 @@ edge_only_isect(ON_Line *nedge, long *t1_f, long *t2_f,
 
     // If the finite chords' maximum distance is too large, the edges
     // aren't properly aligned and we need the points
-    if (t1_nedge.MaximumDistanceTo(t2_nedge) > etol) {
+    double llen = -DBL_MAX;
+    double ll[4];
+    ll[0] = t2_nedge.PointAt(0).DistanceTo(t1_nedge.ClosestPointTo(t2_nedge.PointAt(0)));
+    ll[1] = t2_nedge.PointAt(1).DistanceTo(t1_nedge.ClosestPointTo(t2_nedge.PointAt(1)));
+    ll[2] = t1_nedge.PointAt(0).DistanceTo(t2_nedge.ClosestPointTo(t1_nedge.PointAt(0)));
+    ll[3] = t1_nedge.PointAt(1).DistanceTo(t2_nedge.ClosestPointTo(t1_nedge.PointAt(1)));
+    for (int i = 0; i < 4; i++) {
+	llen = (ll[i] > llen) ? ll[i] : llen;
+    }
+    if ( llen > etol ) {
+	std::cout << "Max dist from line too large: " << llen << "\n";
 	return false;
     }
 
@@ -1078,6 +1088,9 @@ tri_isect(
     ON_Line nedge;
     long t1_vind, t2_vind;
     bool near_edge = edge_only_isect(&nedge, &t1_vind, &t2_vind, fmesh1, t1, fmesh2, t2, p1, p2);
+
+
+    isect_plot(fmesh1, t1.ind, fmesh2, t2.ind, &isectpt1, &isectpt2);
 
     if (near_edge) {
 	// If we're in an edge intersect situation, we don't know for certain whether
