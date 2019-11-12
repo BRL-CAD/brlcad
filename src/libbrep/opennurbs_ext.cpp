@@ -223,7 +223,7 @@ ON_NurbsCurve_GetClosestPoint(
     // Get an initial sampling of uniform points along the active
     // curve domain
     std::vector<ON_3dPoint> pnts;
-    for (size_t i = 0; i < init_sample_cnt; i++) {
+    for (size_t i = 0; i <= init_sample_cnt; i++) {
 	double st = domain.ParameterAt(i * span);
 	pnts.push_back(nc->PointAt(st));
     }
@@ -257,7 +257,11 @@ ON_NurbsCurve_GetClosestPoint(
     cargs.nc = nc;
     cargs.tp = p;
     double st;
-    int osearch = ON_FindLocalMinimum(curve_closest_search_func, &cargs, d1, u, d2, ON_EPSILON, 0.5*ON_ZERO_TOLERANCE, 100, &st);
+    int osearch = 0;
+
+    if (!nc->IsLinear(TOL2)) {
+	osearch = ON_FindLocalMinimum(curve_closest_search_func, &cargs, d1, u, d2, ON_EPSILON, 0.5*ON_ZERO_TOLERANCE, 100, &st);
+    }
 
     if (osearch == 1) {
 
@@ -268,9 +272,9 @@ ON_NurbsCurve_GetClosestPoint(
 
 	// ON_FindLocalMinimum failed, fall back on binary search
 	double vmin_delta = DBL_MAX;
-	double vmin_prev = vmin;
 	ON_3dPoint p1 = nc->PointAt(d1);
 	ON_3dPoint p2 = nc->PointAt(d2);
+	double vmin_prev = (p1.DistanceTo(p) > p2.DistanceTo(p)) ? p1.DistanceTo(p) : p2.DistanceTo(p);
 	while (vmin_delta > ON_ZERO_TOLERANCE) {
 	    u = (d1 + d2) * 0.5;
 	    if (p1.DistanceTo(p) < p2.DistanceTo(p)) {
@@ -281,8 +285,8 @@ ON_NurbsCurve_GetClosestPoint(
 		p1 = nc->PointAt(u);
 	    }
 	    vdist = (p.DistanceTo(nc->PointAt(u)));
-	    vmin_delta = fabs(vmin_prev - vmin);
-	    vmin_prev = vmin;
+	    vmin_delta = fabs(vmin_prev - vdist);
+	    vmin_prev = vdist;
 	}
 
 	(*t) = u;
