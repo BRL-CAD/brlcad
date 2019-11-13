@@ -1059,9 +1059,9 @@ edge_only_isect(
     double vtol = 0.01;
 
     if (lt[0] > 0  && lt[0] < 1 && !NEAR_ZERO(lt[0], vtol) && !NEAR_EQUAL(lt[0], 1, vtol)) {
-	std::cout << "o2 o1 0 interior: " << lt[0] << "\n";
+	//std::cout << "o2 o1 0 interior: " << lt[0] << "\n";
 	overt_t *v = omesh2->overts[t2_e.v[0]];
-	VPCHECK(v, NULL);
+	//VPCHECK(v, NULL);
 
 	isect_process_vert(omesh2, v, t2, omesh1, t1, vert_edge_cnts);
 	// In these cases it is possible that the mated triangle to the edge
@@ -1072,9 +1072,9 @@ edge_only_isect(
 	process_pnt = true;
     }
     if (lt[1] > 0  && lt[1] < 1 && !NEAR_ZERO(lt[1], vtol) && !NEAR_EQUAL(lt[1], 1, vtol)) {
-	std::cout << "o2 o1 1 interior: " << lt[1] << "\n";
+	//std::cout << "o2 o1 1 interior: " << lt[1] << "\n";
 	overt_t *v = omesh2->overts[t2_e.v[1]];
-	VPCHECK(v, NULL);
+	//VPCHECK(v, NULL);
 
 	isect_process_vert(omesh2, v, t2, omesh1, t1, vert_edge_cnts);
     	// In these cases it is possible that the mated triangle to the edge
@@ -1085,9 +1085,9 @@ edge_only_isect(
 	process_pnt = true;
     }
     if (lt[2] > 0  && lt[2] < 1 && !NEAR_ZERO(lt[2], vtol) && !NEAR_EQUAL(lt[2], 1, vtol)) {
-	std::cout << "o1 o2 2 interior: " << lt[2] << "\n";
+	//std::cout << "o1 o2 2 interior: " << lt[2] << "\n";
 	overt_t *v = omesh1->overts[t1_e.v[0]];
-	VPCHECK(v, NULL);
+	//VPCHECK(v, NULL);
 
 	isect_process_vert(omesh1, v, t1, omesh2, t2, vert_edge_cnts);
     	// In these cases it is possible that the mated triangle to the edge
@@ -1098,9 +1098,9 @@ edge_only_isect(
 	process_pnt = true;
     }
     if (lt[3] > 0  && lt[3] < 1 && !NEAR_ZERO(lt[3], vtol) && !NEAR_EQUAL(lt[3], 1, vtol)) {
-	std::cout << "o1 o2 3 interior: " << lt[3] << "\n";
+	//std::cout << "o1 o2 3 interior: " << lt[3] << "\n";
 	overt_t *v = omesh1->overts[t1_e.v[1]];
-	VPCHECK(v, NULL);
+	//VPCHECK(v, NULL);
 
 	isect_process_vert(omesh1, v, t1, omesh2, t2, vert_edge_cnts);
     	// In these cases it is possible that the mated triangle to the edge
@@ -1119,7 +1119,7 @@ edge_only_isect(
     long t1_vind, t2_vind;
 
     // If it is an edge intersect, identify the point from each triangle not
-    // on the edge
+    // on the edge.
     double cdist = -DBL_MAX;
     for (int i = 0; i < 3; i++) {
 	ON_3dPoint tp = *omesh1->fmesh->pnts[t1.v[i]];
@@ -1139,14 +1139,16 @@ edge_only_isect(
 	}
     }
 
-    // If we're in an edge intersect situation, we don't know for certain whether
-    // the opposite points from the edge need to be refinement points yet - they
-    // may be either inside or outside the mesh.  If the latter we don't refine,
-    // since there is no overlap involving that vert to clear, but we do need
-    // to refine in the former case.
-
+    // If we're in an edge intersect situation, we don't know for certain
+    // whether the opposite points from the edge need to be refinement points
+    // yet - the triangle, when sharing an edge, may define a volume that is
+    // still inside the mesh.  If that's the case we do need to add the far
+    // vertex to the refinement set.  Since the far vertex may also align on
+    // a vertex (and thus report "inside" in the sense of being on the mesh)
+    // we use the triangle center point.
     struct ON_Brep_CDT_State *s_cdt2 = (struct ON_Brep_CDT_State *)omesh2->fmesh->p_cdt;
-    ON_3dPoint t1_f = *omesh1->fmesh->pnts[t1_vind];
+    //ON_3dPoint t1_f = *omesh1->fmesh->pnts[t1_vind];
+    ON_3dPoint t1_f = omesh1->fmesh->tcenter(t1);
     bool pinside = on_point_inside(s_cdt2, &t1_f);
 
     if (pinside) {
@@ -1154,20 +1156,21 @@ edge_only_isect(
 	if (!v) {
 	    std::cout << "WARNING: - no overt for vertex??\n";
 	} else {
-	    isect_process_vert(omesh1, v, t1, omesh2, t2, vert_edge_cnts);		
+	    isect_process_vert(omesh1, v, t1, omesh2, t2, vert_edge_cnts);
 	    process_pnt = true;
 	}
     }
 
     struct ON_Brep_CDT_State *s_cdt1 = (struct ON_Brep_CDT_State *)omesh1->fmesh->p_cdt;
-    ON_3dPoint t2_f = *omesh2->fmesh->pnts[t2_vind];
+    //ON_3dPoint t2_f = *omesh2->fmesh->pnts[t2_vind];
+    ON_3dPoint t2_f = omesh2->fmesh->tcenter(t2);
     pinside = on_point_inside(s_cdt1, &t2_f);
     if (pinside) {
 	overt_t *v = omesh2->overts[t2_vind];
 	if (!v) {
 	    std::cout << "WARNING: - no overt for vertex??\n";
 	} else {
-	    isect_process_vert(omesh2, v, t2, omesh1, t1, vert_edge_cnts);		
+	    isect_process_vert(omesh2, v, t2, omesh1, t1, vert_edge_cnts);
 	    process_pnt = true;
 	}
     }
@@ -1188,8 +1191,8 @@ tri_isect(
 	std::map<overt_t *, std::map<cdt_mesh::bedge_seg_t *, int>> *vert_edge_cnts
 	)
 {
-    cdt_mesh::cdt_mesh_t *fmesh1 = omesh1->fmesh; 
-    cdt_mesh::cdt_mesh_t *fmesh2 = omesh2->fmesh; 
+    cdt_mesh::cdt_mesh_t *fmesh1 = omesh1->fmesh;
+    cdt_mesh::cdt_mesh_t *fmesh2 = omesh2->fmesh;
     int coplanar = 0;
     point_t T1_V[3];
     point_t T2_V[3];
@@ -1269,12 +1272,12 @@ tri_isect(
     for (int i = 0; i < 3; i++) {
 	if (t1_i1_vdists[i] < etol && t1_i2_vdists[i] < etol) {
 	    overt_t *v = omesh1->overts[t1.v[i]];
-	    isect_process_vert(omesh1, v, t1, omesh2, t2, vert_edge_cnts);		
+	    isect_process_vert(omesh1, v, t1, omesh2, t2, vert_edge_cnts);
 	    vert_isect = true;
 	}
 	if (t2_i1_vdists[i] < etol && t2_i2_vdists[i] < etol) {
 	    overt_t *v = omesh2->overts[t2.v[i]];
-	    isect_process_vert(omesh2, v, t2, omesh1, t1, vert_edge_cnts);		
+	    isect_process_vert(omesh2, v, t2, omesh1, t1, vert_edge_cnts);
 	    vert_isect = true;
 	}
     }
