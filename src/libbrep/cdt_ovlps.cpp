@@ -68,6 +68,7 @@
     TREE_LEAF_FACE_3D(pf, pt, 1, 5, 6, 2);      \
 }
 
+
 void
 ovlp_plot_bbox(ON_BoundingBox &bb)
 {
@@ -191,6 +192,32 @@ class omesh_t
 
 };
 
+bool
+VPCHECK(overt_t *v, const char *fname)
+{
+    ON_3dPoint problem(3.04949608821376206,7.50026524346197387,22.99999971645965857);
+
+    if (fname && !BU_STR_EQUAL(v->omesh->fmesh->name, fname)) {
+	return false;
+    }
+    if (problem.DistanceTo(v->vpnt()) < 0.01) {
+	std::cout << "Saw problem point: " << v->omesh->fmesh->name << "-" << v->omesh->fmesh->f_id << "\n";
+	return true;
+    }
+    return false;
+}
+bool
+PPCHECK(ON_3dPoint &p)
+{
+    ON_3dPoint problem(3.04949608821376206,7.50026524346197387,22.99999971645965857);
+    if (problem.DistanceTo(p) < 0.01) {
+	std::cout << "Saw problem point\n";
+	return true;
+    }
+    return false;
+}
+
+
 double
 overt_t::min_len() {
     return v_min_edge_len;
@@ -225,13 +252,6 @@ omesh_t::vupdate(overt_t *v) {
 
     // create a bbox around pnt using length ~20% of the shortest edge length.
     ON_3dPoint vpnt = *fmesh->pnts[v->p_id];
-
-#if 0
-    ON_3dPoint problem(3.4781932643130933,7.5707323832445113,24);
-    if (vpnt.DistanceTo(problem) < 0.1) {
-	std::cout << "Bounding trouble...\n";
-    }
-#endif
 
     ON_BoundingBox init_bb(vpnt, vpnt);
     v->bb = init_bb;
@@ -475,6 +495,32 @@ omesh_t::plot(const char *fname,
 
     std::map<overt_t *, std::set<long>>::iterator iv_it;
 
+
+    if (ev) {
+	std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>>::iterator ev_it;
+	pl_color(plot, 128, 0, 128);
+	for (ev_it = ev->begin(); ev_it != ev->end(); ev_it++) {
+	    cdt_mesh::bedge_seg_t *eseg = ev_it->first;
+	    struct ON_Brep_CDT_State *s_cdt_edge = (struct ON_Brep_CDT_State *)eseg->p_cdt;
+	    int f_id1 = s_cdt_edge->brep->m_T[eseg->tseg1->trim_ind].Face()->m_face_index;
+	    int f_id2 = s_cdt_edge->brep->m_T[eseg->tseg2->trim_ind].Face()->m_face_index;
+	    cdt_mesh::cdt_mesh_t &fmesh_f1 = s_cdt_edge->fmeshes[f_id1];
+	    cdt_mesh::cdt_mesh_t &fmesh_f2 = s_cdt_edge->fmeshes[f_id2];
+	    omesh_t *o1 = f2omap[&fmesh_f1];
+	    omesh_t *o2 = f2omap[&fmesh_f2];
+	    if (o1 == this || o2 == this) {
+		std::set<overt_t *>::iterator v_it;
+		for (v_it = ev_it->second.begin(); v_it != ev_it->second.end(); v_it++) {
+		    overt_t *iv = *v_it;
+		    if (iv->omesh == this) continue;
+		    ON_3dPoint vp = iv->vpnt();
+		    plot_pnt_3d(plot, &vp, tri_r, 0);
+		}
+	    }
+	}
+    }
+
+
     pl_color(plot, 255, 0, 0);
     for (iv_it = refinement_overts.begin(); iv_it != refinement_overts.end(); iv_it++) {
 	if (iv_it->second.size() > 1) {
@@ -493,29 +539,6 @@ omesh_t::plot(const char *fname,
 	}
     }
 
-    if (ev) {
-	std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>>::iterator ev_it;
-	pl_color(plot, 128, 0, 128);
-	for (ev_it = ev->begin(); ev_it != ev->end(); ev_it++) {
-	    cdt_mesh::bedge_seg_t *eseg = ev_it->first;
-	    struct ON_Brep_CDT_State *s_cdt_edge = (struct ON_Brep_CDT_State *)eseg->p_cdt;
-	    int f_id1 = s_cdt_edge->brep->m_T[eseg->tseg1->trim_ind].Face()->m_face_index;
-	    int f_id2 = s_cdt_edge->brep->m_T[eseg->tseg2->trim_ind].Face()->m_face_index;
-	    cdt_mesh::cdt_mesh_t &fmesh_f1 = s_cdt_edge->fmeshes[f_id1];
-	    cdt_mesh::cdt_mesh_t &fmesh_f2 = s_cdt_edge->fmeshes[f_id2];
-	    omesh_t *o1 = f2omap[&fmesh_f1];
-	    omesh_t *o2 = f2omap[&fmesh_f2];
-	    if (o1 == this || o2 == this) {
-		std::set<overt_t *>::iterator v_it;
-		for (v_it = ev_it->second.begin(); v_it != ev_it->second.end(); v_it++) {
-		    overt_t *iv = *v_it;
-		    if (iv->omesh == this) continue;	
-		    ON_3dPoint vp = iv->vpnt();
-		    plot_pnt_3d(plot, &vp, tri_r, 0);
-		}
-	    }
-	}
-    }
 
     fclose(plot);
 }
@@ -685,6 +708,9 @@ omesh_t::verts_one_ring_update(long p_id)
 overt_t *
 omesh_t::vert_add(long f3ind, ON_BoundingBox *bb)
 {
+    if (f3ind == 60 || f3ind == 97) {
+	std::cout << "adding vert of interest\n";
+    }
     overt_t *nv = new overt_t(this, f3ind);
     if (bb) {
 	nv->bb = *bb;
@@ -1032,8 +1058,10 @@ edge_only_isect(
     double vtol = 0.01;
 
     if (lt[0] > 0  && lt[0] < 1 && !NEAR_ZERO(lt[0], vtol) && !NEAR_EQUAL(lt[0], 1, vtol)) {
-	std::cout << "interior: " << lt[0] << "\n";
+	std::cout << "o2 o1 0 interior: " << lt[0] << "\n";
 	overt_t *v = omesh2->overts[t2_e.v[0]];
+	VPCHECK(v, NULL);
+
 	isect_process_vert(omesh2, v, t2, omesh1, t1, vert_edge_cnts);
 	// In these cases it is possible that the mated triangle to the edge
 	// doesn't intrude on the opposite mesh.  Never the less we still want
@@ -1043,8 +1071,10 @@ edge_only_isect(
 	process_pnt = true;
     }
     if (lt[1] > 0  && lt[1] < 1 && !NEAR_ZERO(lt[1], vtol) && !NEAR_EQUAL(lt[1], 1, vtol)) {
-	std::cout << "interior: " << lt[1] << "\n";
+	std::cout << "o2 o1 1 interior: " << lt[1] << "\n";
 	overt_t *v = omesh2->overts[t2_e.v[1]];
+	VPCHECK(v, NULL);
+
 	isect_process_vert(omesh2, v, t2, omesh1, t1, vert_edge_cnts);
     	// In these cases it is possible that the mated triangle to the edge
 	// doesn't intrude on the opposite mesh.  Never the less we still want
@@ -1054,8 +1084,10 @@ edge_only_isect(
 	process_pnt = true;
     }
     if (lt[2] > 0  && lt[2] < 1 && !NEAR_ZERO(lt[2], vtol) && !NEAR_EQUAL(lt[2], 1, vtol)) {
-	std::cout << "interior: " << lt[2] << "\n";
+	std::cout << "o1 o2 2 interior: " << lt[2] << "\n";
 	overt_t *v = omesh1->overts[t1_e.v[0]];
+	VPCHECK(v, NULL);
+
 	isect_process_vert(omesh1, v, t1, omesh2, t2, vert_edge_cnts);
     	// In these cases it is possible that the mated triangle to the edge
 	// doesn't intrude on the opposite mesh.  Never the less we still want
@@ -1065,8 +1097,10 @@ edge_only_isect(
 	process_pnt = true;
     }
     if (lt[3] > 0  && lt[3] < 1 && !NEAR_ZERO(lt[3], vtol) && !NEAR_EQUAL(lt[3], 1, vtol)) {
-	std::cout << "interior: " << lt[3] << "\n";
+	std::cout << "o1 o2 3 interior: " << lt[3] << "\n";
 	overt_t *v = omesh1->overts[t1_e.v[1]];
+	VPCHECK(v, NULL);
+
 	isect_process_vert(omesh1, v, t1, omesh2, t2, vert_edge_cnts);
     	// In these cases it is possible that the mated triangle to the edge
 	// doesn't intrude on the opposite mesh.  Never the less we still want
@@ -1161,6 +1195,7 @@ tri_isect(
     point_t isectpt1 = {MAX_FASTF, MAX_FASTF, MAX_FASTF};
     point_t isectpt2 = {MAX_FASTF, MAX_FASTF, MAX_FASTF};
 
+
     VSET(T1_V[0], fmesh1->pnts[t1.v[0]]->x, fmesh1->pnts[t1.v[0]]->y, fmesh1->pnts[t1.v[0]]->z);
     VSET(T1_V[1], fmesh1->pnts[t1.v[1]]->x, fmesh1->pnts[t1.v[1]]->y, fmesh1->pnts[t1.v[1]]->z);
     VSET(T1_V[2], fmesh1->pnts[t1.v[2]]->x, fmesh1->pnts[t1.v[2]]->y, fmesh1->pnts[t1.v[2]]->z);
@@ -1179,6 +1214,22 @@ tri_isect(
     if (p1.DistanceTo(p2) < ON_ZERO_TOLERANCE) {
 	// Intersection is a single point - not volumetric
 	return 0;
+    }
+
+    // Trigger if our problem point of the moment is near an edge
+    bool t1_edge_problem = (
+	    PPCHECK(*fmesh1->pnts[t1.v[0]]) || PPCHECK(*fmesh1->pnts[t1.v[1]]) || PPCHECK(*fmesh1->pnts[t1.v[2]]));
+    bool t2_edge_problem = (
+	    PPCHECK(*fmesh2->pnts[t2.v[0]]) || PPCHECK(*fmesh2->pnts[t2.v[1]]) || PPCHECK(*fmesh2->pnts[t2.v[2]]));
+
+    if (t1_edge_problem || t2_edge_problem) {
+	if (t1_edge_problem) {
+	    std::cout << "t1 edge problem pnt\n";
+	}
+	if (t2_edge_problem) {
+	    std::cout << "t2 edge problem pnt\n";
+	} 
+	isect_plot(fmesh1, t1.ind, fmesh2, t2.ind, &isectpt1, &isectpt2);
     }
 
     // Past the trivial cases - we're going to have to know something about the
@@ -1229,22 +1280,8 @@ tri_isect(
 	return 1;
     }
 
-
-    // Debugging code for breaking when were near a specific point
-    ON_3dPoint problem(3.52639798477575539,8.19444914069358887,23.32079103474493209);
-    if (fmesh1->pnts[t1.v[0]]->DistanceTo(problem) < 0.01 || 
-	    fmesh1->pnts[t1.v[1]]->DistanceTo(problem) < 0.01 ||
-	    fmesh1->pnts[t1.v[2]]->DistanceTo(problem) < 0.01 ||
-	    fmesh2->pnts[t2.v[0]]->DistanceTo(problem) < 0.01 || 
-	    fmesh2->pnts[t2.v[1]]->DistanceTo(problem) < 0.01 ||
-	    fmesh2->pnts[t2.v[2]]->DistanceTo(problem) < 0.01)
-    {
-	std::cout << "isecting problem tri!\n";
-    }
-    isect_plot(fmesh1, t1.ind, fmesh2, t2.ind, &isectpt1, &isectpt2);
-
     ON_Line nedge;
-    int near_edge = edge_only_isect(omesh1, t1, omesh2, t2, p1, p2, (ON_Line *)t1_lines, (ON_Line *)t2_lines, etol, vert_edge_cnts);
+    int near_edge = edge_only_isect(omesh1, t1, omesh2, t2, p1, p2, (ON_Line *)t1_lines, (ON_Line *)t2_lines, 0.3*elen_min, vert_edge_cnts);
 
 
     if (near_edge >= 0) {
@@ -1346,6 +1383,9 @@ face_omesh_ovlps(
 	)
 {
     size_t tri_isects = 0;
+
+    edge_verts.clear();
+
     std::set<omesh_t *> a_omesh;
     std::set<std::pair<omesh_t *, omesh_t *>>::iterator cp_it;
     for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
@@ -1384,6 +1424,9 @@ face_omesh_ovlps(
 	std::set<overt_t *> ev;
 	std::map<overt_t *, std::set<long>>::iterator r_it;
 	for (r_it = om->refinement_overts.begin(); r_it != om->refinement_overts.end(); r_it++) {
+
+	    VPCHECK(r_it->first, "p.s");
+
 	    if (r_it->second.size() == 1) {
 		ev.insert(r_it->first);
 	    }
@@ -1410,6 +1453,7 @@ face_omesh_ovlps(
 	}
     }
 
+#if 0
     // Only yank points out of omeshes that correspond to the meshes associated
     // with the bedge, not all comers - will sometimes need to refine opposing
     // meshes not on the edges near another face's edge point.
@@ -1434,6 +1478,7 @@ face_omesh_ovlps(
 	    }
 	}
     }
+#endif
 
     for (a_it = a_omesh.begin(); a_it != a_omesh.end(); a_it++) {
 	omesh_t *om = *a_it;
@@ -1695,27 +1740,6 @@ refine_edge_vert_sets (
 	    sbb.m_min = epnts[i].spnt + vmin;
 	    sbb.m_max = epnts[i].spnt + vmax;
 
-#if 1
-	    if (BU_STR_EQUAL(omesh->fmesh->name, "p.s")) {
-		RTree<long, double, 3>::Rect r;
-		omesh->vtree.plot(&r, NULL);
-		ON_3dPoint problem(3.4452740189190436,7.674473756016984,22.999999999999989);
-		if (problem.DistanceTo(epnts[i].spnt) < 0.1) {
-		    std::cout << "search problem\n";
-		    std::set <overt_t *> nv2 = omesh->vert_search(sbb);
-		    if (!nv2.size()) {
-			std::cout << "search problem set empty\n";
-		    }
-		    ON_3dPoint ovp1(3.3727905675885448,7.6019903046864856,22.927516548669491);
-		    ON_3dPoint ovp2(3.5177574702495424,7.7469572073474824,23.072483451330488);
-		    ON_BoundingBox ovbb(ovp1, ovp2);
-		    std::set <overt_t *> nv3 = omesh->vert_search(ovbb);
-		    if (nv3.size()) {
-			std::cout << "found existing vert...\n";
-		    }
-		}
-	    }
-#endif
 	    std::set <overt_t *> nv = omesh->vert_search(sbb);
 	    std::set<overt_t *>::iterator v_it;
 	    for (v_it = nv.begin(); v_it != nv.end(); v_it++) {
@@ -2803,6 +2827,12 @@ omesh_interior_edge_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs
 	    overt_t *ov = *omesh_rverts.begin();
 	    omesh_rverts.erase(ov);
 	    ON_3dPoint ovpnt = ov->vpnt();
+
+	    ON_3dPoint problem(3.04948300920915738,7.50026478937354479,23.00000392533788940);
+	    if (ovpnt.DistanceTo(problem) < 0.01) {
+		std::cout << "Refining problem\n";
+	    }
+
 	    ON_3dPoint spnt;
 	    ON_3dVector sn;
 	    double dist = ov->bb.Diagonal().Length() * 10;
@@ -2987,8 +3017,8 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 
 	// Process edge_verts
 	bedge_split_near_verts(edge_verts, f2omap);
-	face_ov_cnt = face_omesh_ovlps(ocheck_pairs, edge_verts, f2omap);
-	std::cout << "Post edge adjustment " << close_vert_checks << " overlap cnt: " << face_ov_cnt << "\n";
+	//face_ov_cnt = face_omesh_ovlps(ocheck_pairs, edge_verts, f2omap);
+	//std::cout << "Post edge adjustment " << close_vert_checks << " overlap cnt: " << face_ov_cnt << "\n";
 	adjust_close_verts(ocheck_pairs);
 	close_vert_checks++;
 
@@ -3076,6 +3106,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	face_ov_cnt = face_omesh_ovlps(ocheck_pairs, edge_verts, f2omap);
 	std::cout << "Iteration " << iterations << " post tri split overlap cnt: " << face_ov_cnt << "\n";
 
+#if 0
 	// Anything that has lasted this far, just chop all its edges in half for the next
 	// iteration
 	if (last_ditch_edge_splits(ocheck_pairs, f2omap)) {
@@ -3084,7 +3115,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	    face_ov_cnt = face_omesh_ovlps(ocheck_pairs, edge_verts, f2omap);
 	    std::cout << "Iteration " << iterations << " post last ditch split overlap cnt: " << face_ov_cnt << "\n";
 	}
-
+#endif
     }
 
     return 0;
