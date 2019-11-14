@@ -170,7 +170,6 @@ class omesh_t
 
 	void refinement_clear();
 	std::set<long> refinement_split_tris();
-	void refinement_edge_splits(std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> &edge_verts);
 
 	std::set<cdt_mesh::uedge_t> split_edges;
 
@@ -194,7 +193,6 @@ class omesh_t
 };
 
 #define PPOINT 3.0550159446561063,7.5001153978277033,23.999999999999996
-
 bool
 PPCHECK(ON_3dPoint &p)
 {
@@ -347,14 +345,6 @@ omesh_t::init_verts()
     for (a_it = averts.begin(); a_it != averts.end(); a_it++) {
 	overts[*a_it] = new overt_t(this, *a_it);
 	vupdate(overts[*a_it]);
-
-#if 0
-	ON_3dPoint problem(3.4781932643130933,7.5707323832445113,24);
-	ON_3dPoint vp = overts[*a_it]->vpnt();
-	if (vp.DistanceTo(problem) < 0.1) {
-	    std::cout << "Initing trouble...\n";
-	}
-#endif
     }
 }
 
@@ -736,30 +726,19 @@ omesh_t::verts_one_ring_update(long p_id)
 overt_t *
 omesh_t::vert_add(long f3ind, ON_BoundingBox *bb)
 {
-    if (f3ind == 60 || f3ind == 97) {
-	std::cout << "adding vert of interest\n";
-    }
     overt_t *nv = new overt_t(this, f3ind);
     if (bb) {
 	nv->bb = *bb;
     }
     vupdate(nv);
     overts[f3ind] = nv;
-
-#if 1
-    ON_3dPoint problem(3.52639798477575539,8.19444914069358887,23.32079103474493209);
-    ON_3dPoint vp = *fmesh->pnts[f3ind];
-    if (vp.DistanceTo(problem) < 0.1) {
-	std::cout << "Adding trouble...\n";
-    }
-#endif
-
     return nv;
 }
 
 void
 omesh_t::refinement_clear()
 {
+    split_edges.clear();
     refinement_overts.clear();
     intruding_overts.clear();
     intruding_tris.clear();
@@ -832,45 +811,6 @@ tri_shortest_edge(cdt_mesh::cdt_mesh_t *fmesh, long t_ind)
 	}
     }
     return ue;
-}
-
-void
-omesh_t::refinement_edge_splits(std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> &edge_verts)
-{
-    std::map<overt_t *, std::set<long>>::iterator r_it;
-    for (r_it = refinement_overts.begin(); r_it != refinement_overts.end(); r_it++) {
-
-	// Only process points that are potential issues for overlapping
-	if (r_it->second.size() < 2) continue;
-
-	overt_t *v = r_it->first;
-	std::set<long> itris = r_it->second;
-
-	// If this point is also close to a brep face edge, list that edge/vert
-	// combination for splitting
-	ON_3dPoint vp = v->vpnt();
-
-#if 0
-	ON_3dPoint problem(3.06294,7.5,24.2775);
-	if (problem.DistanceTo(vp) < 0.01) {
-	    std::cout << "problem\n";
-	}
-#endif
-
-	std::set<long>::iterator l_it;
-	for (l_it = itris.begin(); l_it != itris.end(); l_it++) {
-	    cdt_mesh::triangle_t tri = fmesh->tris_vect[*l_it];
-	    cdt_mesh::uedge_t closest_edge = fmesh->closest_uedge(tri, vp);
-	    if (fmesh->brep_edges.find(closest_edge) != fmesh->brep_edges.end()) {
-		cdt_mesh::bedge_seg_t *bseg = fmesh->ue2b_map[closest_edge];
-		if (!bseg) {
-		    std::cout << "couldn't find bseg pointer??\n";
-		} else {
-		    edge_verts[bseg].insert(v);
-		}
-	    }
-	}
-    }
 }
 
 ON_BoundingBox
@@ -1014,15 +954,6 @@ isect_process_vert(
 	    if (!bseg) {
 		std::cout << "couldn't find bseg pointer??\n";
 	    } else {
-#if 0
-		if (BU_STR_EQUAL(omesh2->fmesh->name, "c.s")) {
-		    ON_3dPoint problem(3.0094116999049367,7.503185011847445,23.298231301445856);
-		    if (problem.DistanceTo(p) < 0.1) {
-			std::cout << "c.s edge_vert\n";
-			closest_edge = omesh2->fmesh->closest_uedge(t2, p);
-		    }
-		}
-#endif
 		(*vert_edge_cnts)[v][bseg]++;
 	    }
 	}
@@ -1081,6 +1012,24 @@ remote_vert_process(omesh_t *omesh1, overt_t *v, cdt_mesh::triangle_t &t1, omesh
 	}
     }
     return 1;
+}
+
+int
+near_edge_process(double t, double vtol, overt_t *v, omesh_t *omesh1, cdt_mesh::triangle_t &t1,
+	omesh_t *omesh2, cdt_mesh::triangle_t &t2, std::map<overt_t *, std::map<cdt_mesh::bedge_seg_t *, int>> *vert_edge_cnts)
+{
+    if (t > 0  && t < 1 && !NEAR_ZERO(t, vtol) && !NEAR_EQUAL(t, 1, vtol)) {
+	//VPCHECK(v, NULL);
+
+	isect_process_vert(omesh2, v, t2, omesh1, t1, vert_edge_cnts);
+	// In these cases it is possible that the mated triangle to the edge
+	// doesn't intrude on the opposite mesh.  Never the less we still want
+	// to process these points near edges, so artificially bump the tri
+	// listing for refinement_overts high enough to force processing
+	omesh1->refinement_overts[v].insert(-1);
+	return 1;
+    }
+    return 0;
 }
 
 static int
@@ -1152,8 +1101,8 @@ edge_only_isect(
     for (int i = 0; i < 4; i++) {
 	llen = (ll[i] > llen) ? ll[i] : llen;
     }
+    // Max dist from line too large
     if ( llen > etol ) {
-	std::cout << "Max dist from line too large: " << llen << "\n";
 	return -1;
     }
 
@@ -1164,61 +1113,20 @@ edge_only_isect(
     // are a possible source of overlaps
 
     int process_pnt = 0;
-
     double vtol = 0.01;
+    overt_t *v = NULL;
 
-    if (lt[0] > 0  && lt[0] < 1 && !NEAR_ZERO(lt[0], vtol) && !NEAR_EQUAL(lt[0], 1, vtol)) {
-	//std::cout << "o2 o1 0 interior: " << lt[0] << "\n";
-	overt_t *v = omesh2->overts[t2_e.v[0]];
-	//VPCHECK(v, NULL);
+    v = omesh2->overts[t2_e.v[0]];
+    process_pnt += near_edge_process(lt[0], vtol, v, omesh1, t1, omesh2, t2, vert_edge_cnts);
 
-	isect_process_vert(omesh2, v, t2, omesh1, t1, vert_edge_cnts);
-	// In these cases it is possible that the mated triangle to the edge
-	// doesn't intrude on the opposite mesh.  Never the less we still want
-	// to process these points near edges, so artificially bump the tri
-	// listing for refinement_overts high enough to force processing
-	omesh1->refinement_overts[v].insert(-1);
-	process_pnt += 1;
-    }
-    if (lt[1] > 0  && lt[1] < 1 && !NEAR_ZERO(lt[1], vtol) && !NEAR_EQUAL(lt[1], 1, vtol)) {
-	//std::cout << "o2 o1 1 interior: " << lt[1] << "\n";
-	overt_t *v = omesh2->overts[t2_e.v[1]];
-	//VPCHECK(v, NULL);
+    v = omesh2->overts[t2_e.v[1]];
+    process_pnt += near_edge_process(lt[1], vtol, v, omesh1, t1, omesh2, t2, vert_edge_cnts);
 
-	isect_process_vert(omesh2, v, t2, omesh1, t1, vert_edge_cnts);
-    	// In these cases it is possible that the mated triangle to the edge
-	// doesn't intrude on the opposite mesh.  Never the less we still want
-	// to process these points near edges, so artificially bump the tri
-	// listing for refinement_overts high enough to force processing
-	omesh1->refinement_overts[v].insert(-1);
-	process_pnt += 1;
-    }
-    if (lt[2] > 0  && lt[2] < 1 && !NEAR_ZERO(lt[2], vtol) && !NEAR_EQUAL(lt[2], 1, vtol)) {
-	//std::cout << "o1 o2 2 interior: " << lt[2] << "\n";
-	overt_t *v = omesh1->overts[t1_e.v[0]];
-	//VPCHECK(v, NULL);
-
-	isect_process_vert(omesh1, v, t1, omesh2, t2, vert_edge_cnts);
-    	// In these cases it is possible that the mated triangle to the edge
-	// doesn't intrude on the opposite mesh.  Never the less we still want
-	// to process these points near edges, so artificially bump the tri
-	// listing for refinement_overts high enough to force processing
-	omesh2->refinement_overts[v].insert(-1);
-	process_pnt += 1;
-    }
-    if (lt[3] > 0  && lt[3] < 1 && !NEAR_ZERO(lt[3], vtol) && !NEAR_EQUAL(lt[3], 1, vtol)) {
-	//std::cout << "o1 o2 3 interior: " << lt[3] << "\n";
-	overt_t *v = omesh1->overts[t1_e.v[1]];
-	//VPCHECK(v, NULL);
-
-	isect_process_vert(omesh1, v, t1, omesh2, t2, vert_edge_cnts);
-    	// In these cases it is possible that the mated triangle to the edge
-	// doesn't intrude on the opposite mesh.  Never the less we still want
-	// to process these points near edges, so artificially bump the tri
-	// listing for refinement_overts high enough to force processing
-	omesh2->refinement_overts[v].insert(-1);
-	process_pnt += 1;
-    }
+    v = omesh1->overts[t1_e.v[0]];
+    process_pnt += near_edge_process(lt[2], vtol, v, omesh2, t2, omesh1, t1, vert_edge_cnts);
+   
+    v = omesh1->overts[t1_e.v[1]];
+    process_pnt += near_edge_process(lt[3], vtol, v, omesh2, t2, omesh1, t1, vert_edge_cnts);
 
     // If the non-edge point of one of the triangles is clearly inside
     // the other mesh, we need to flag it for processing as well - there
@@ -1265,11 +1173,11 @@ edge_only_isect(
     // can use it as a refinement point.  Otherwise, we need to split
     // triangle edges.
     if (t1_pinside) {
-	overt_t *v = omesh1->overts[t1_vind];
+	v = omesh1->overts[t1_vind];
 	process_pnt += remote_vert_process(omesh1, v, t1, omesh2, t2, vert_edge_cnts);
     }
     if (t2_pinside) {
-	overt_t *v = omesh2->overts[t2_vind];
+	v = omesh2->overts[t2_vind];
 	process_pnt += remote_vert_process(omesh2, v, t2, omesh1, t1, vert_edge_cnts);
     }
 
@@ -3087,13 +2995,24 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	}
 
 	// Process edge_verts
+	//
+	// TODO - if we introduce new vertices in this step, we'll need at least
+	// one more refinement pass - return information to manage this
 	bedge_split_near_verts(edge_verts, f2omap);
 
 	// Once edge splits are handled, use remaining closest points and find nearest interior
 	// edge curve, building sets of points near each interior edge.  Then, for all interior
 	// edges, yank the two triangles associated with that edge, build a polygon with interior
-	// points and tessellate.
+	// points and tessellate.  I think we probably need this to introduce no changes
+	// to the meshes as a condition of termination...
 	omesh_interior_edge_verts(ocheck_pairs);
+
+
+	// If any edge splits were needed for overlapping triangles that already
+	// have aligned vertices, do that now.  Any changes here will require at
+	// least one more refinement pass...
+	// refine_omeshes();
+
 
 	check_faces_validity(check_pairs);
 	face_ov_cnt = face_omesh_ovlps(ocheck_pairs, edge_verts, f2omap);
