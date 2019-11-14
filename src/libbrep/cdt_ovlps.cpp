@@ -797,6 +797,45 @@ tri_shortest_edge(cdt_mesh::cdt_mesh_t *fmesh, long t_ind)
     return ue;
 }
 
+double
+tri_longest_edge_len(cdt_mesh::cdt_mesh_t *fmesh, long t_ind)
+{
+    cdt_mesh::triangle_t t = fmesh->tris_vect[t_ind];
+    double len = -DBL_MAX;
+    for (int i = 0; i < 3; i++) {
+	long v0 = t.v[i];
+	long v1 = (i < 2) ? t.v[i + 1] : t.v[0];
+	ON_3dPoint *p1 = fmesh->pnts[v0];
+	ON_3dPoint *p2 = fmesh->pnts[v1];
+	double d = p1->DistanceTo(*p2);
+	len = (d > len) ? d : len;
+    }
+
+    return len;
+}
+
+cdt_mesh::uedge_t
+tri_longest_edge(cdt_mesh::cdt_mesh_t *fmesh, long t_ind)
+{
+    cdt_mesh::uedge_t ue;
+    cdt_mesh::triangle_t t = fmesh->tris_vect[t_ind];
+    double len = -DBL_MAX;
+    for (int i = 0; i < 3; i++) {
+	long v0 = t.v[i];
+	long v1 = (i < 2) ? t.v[i + 1] : t.v[0];
+	ON_3dPoint *p1 = fmesh->pnts[v0];
+	ON_3dPoint *p2 = fmesh->pnts[v1];
+	double d = p1->DistanceTo(*p2);
+	if (d > len) {
+	    len = d;
+	    ue = cdt_mesh::uedge_t(v0, v1);
+	}
+    }
+    return ue;
+}
+
+
+
 ON_BoundingBox
 edge_bbox(cdt_mesh::bedge_seg_t *eseg)
 {
@@ -1009,6 +1048,7 @@ aligned_isect(
 	return 0;
     }
 
+#if 0
     // If we've gotten here, we've found a case where we need to split
     // some triangle edges to provide more degrees of freedom for
     // refinement
@@ -1021,6 +1061,7 @@ aligned_isect(
 	    omesh1->split_edges.insert(*ue_it);
 	}
     }
+#endif
     return 1;
 }
 
@@ -1340,6 +1381,31 @@ tri_isect(
     int a1 = aligned_isect(omesh1, t1, omesh2, t2, etol);
     int a2 = aligned_isect(omesh2, t2, omesh1, t1, etol);
 
+    if (a1 || a2) {
+#if 0
+	cdt_mesh::uedge_t sedge;
+	std::set<cdt_mesh::uedge_t>::iterator ue_it;
+	sedge = tri_shortest_edge(omesh1->fmesh, t1.ind);
+	std::set<cdt_mesh::uedge_t> uedges1 = omesh1->fmesh->uedges(t1);
+	for (ue_it = uedges1.begin(); ue_it != uedges1.end(); ue_it++) {
+	    if (*ue_it != sedge) {
+		omesh1->split_edges.insert(*ue_it);
+	    }
+	}
+	sedge = tri_shortest_edge(omesh2->fmesh, t2.ind);
+	std::set<cdt_mesh::uedge_t> uedges2 = omesh2->fmesh->uedges(t2);
+	for (ue_it = uedges2.begin(); ue_it != uedges2.end(); ue_it++) {
+	    if (*ue_it != sedge) {
+		omesh2->split_edges.insert(*ue_it);
+	    }
+	}
+#endif
+	cdt_mesh::uedge_t ue1 = tri_longest_edge(omesh1->fmesh, t1.ind);
+	omesh1->split_edges.insert(ue1);
+	cdt_mesh::uedge_t ue2 = tri_longest_edge(omesh2->fmesh, t2.ind);
+	omesh2->split_edges.insert(ue2);
+    }
+
     // If they're both aligned we're done, otherwise we need to keep checking
     if (a1 && a2) {
 	return 1;
@@ -1515,43 +1581,6 @@ face_omesh_ovlps(
     return tri_isects;
 }
 
-
-double
-tri_longest_edge_len(cdt_mesh::cdt_mesh_t *fmesh, long t_ind)
-{
-    cdt_mesh::triangle_t t = fmesh->tris_vect[t_ind];
-    double len = -DBL_MAX;
-    for (int i = 0; i < 3; i++) {
-	long v0 = t.v[i];
-	long v1 = (i < 2) ? t.v[i + 1] : t.v[0];
-	ON_3dPoint *p1 = fmesh->pnts[v0];
-	ON_3dPoint *p2 = fmesh->pnts[v1];
-	double d = p1->DistanceTo(*p2);
-	len = (d > len) ? d : len;
-    }
-
-    return len;
-}
-
-cdt_mesh::uedge_t
-tri_longest_edge(cdt_mesh::cdt_mesh_t *fmesh, long t_ind)
-{
-    cdt_mesh::uedge_t ue;
-    cdt_mesh::triangle_t t = fmesh->tris_vect[t_ind];
-    double len = -DBL_MAX;
-    for (int i = 0; i < 3; i++) {
-	long v0 = t.v[i];
-	long v1 = (i < 2) ? t.v[i + 1] : t.v[0];
-	ON_3dPoint *p1 = fmesh->pnts[v0];
-	ON_3dPoint *p2 = fmesh->pnts[v1];
-	double d = p1->DistanceTo(*p2);
-	if (d > len) {
-	    len = d;
-	    ue = cdt_mesh::uedge_t(v0, v1);
-	}
-    }
-    return ue;
-}
 
 void
 orient_tri(cdt_mesh::cdt_mesh_t &fmesh, cdt_mesh::triangle_t &t)
@@ -2758,6 +2787,11 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	// If any edge splits were needed for overlapping triangles that already
 	// have aligned vertices, do that now.  Any changes here will require at
 	// least one more refinement pass...
+
+	// TODO - need to remove any edges from the refinement set that are removed
+	// in any triangle operations above - stale edges will cause problems here
+	// by inducing splitting on the wrong edges
+
 	refine_omeshes(ocheck_pairs, f2omap);
 
 
