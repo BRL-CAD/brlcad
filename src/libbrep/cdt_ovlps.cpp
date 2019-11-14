@@ -2035,7 +2035,7 @@ adjust_close_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs)
 	std::set<std::pair<long, long>> vert_pairs;
 	vert_pairs.clear();
 	omesh1->vtree.Overlaps(omesh2->vtree, &vert_pairs);
-	std::cout << "(" << s_cdt1->name << "," << omesh1->fmesh->f_id << ")+(" << s_cdt2->name << "," << omesh2->fmesh->f_id << "): " << vert_pairs.size() << " vert box overlaps\n";
+	//std::cout << "(" << s_cdt1->name << "," << omesh1->fmesh->f_id << ")+(" << s_cdt2->name << "," << omesh2->fmesh->f_id << "): " << vert_pairs.size() << " vert box overlaps\n";
 	std::set<std::pair<long, long>>::iterator v_it;
 	for (v_it = vert_pairs.begin(); v_it != vert_pairs.end(); v_it++) {
 	    long v_first = (long)v_it->first;
@@ -2046,7 +2046,7 @@ adjust_close_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs)
 	    vert_ovlps[v2].insert(v1);
 	}
     }
-    std::cout << "Found " << vert_ovlps.size() << " vertices with box overlaps\n";
+    //std::cout << "Found " << vert_ovlps.size() << " vertices with box overlaps\n";
 
 
     std::queue<std::pair<overt_t *, overt_t *>> vq;
@@ -2068,8 +2068,8 @@ adjust_close_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs)
 	vq.push(std::make_pair(v,v_other));
     }
 
-    std::cout << "Have " << vq.size() << " simple interactions\n";
-    std::cout << "Have " << vq_multi.size() << " complex interactions\n";
+    //std::cout << "Have " << vq.size() << " simple interactions\n";
+    //std::cout << "Have " << vq_multi.size() << " complex interactions\n";
     std::set<overt_t *> adjusted;
 
     int adjusted_overts = 0;
@@ -2403,7 +2403,7 @@ bedge_split_near_verts(
 void
 check_faces_validity(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> &check_pairs)
 {
-    int verbosity = 1;
+    int verbosity = 0;
     std::set<cdt_mesh::cdt_mesh_t *> fmeshes;
     std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>>::iterator cp_it;
     for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
@@ -2452,6 +2452,9 @@ refine_omeshes(
 	}
     }
     std::cout << "Need to refine " << omeshes.size() << " meshes\n";
+
+    return;
+
     // Filter out brep face edges - they must be handled first in a face independent split
     std::set<cdt_mesh::bedge_seg_t *> brep_edges_to_split;
     std::set<omesh_t *>::iterator o_it;
@@ -2752,23 +2755,12 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	// If any edge splits were needed for overlapping triangles that already
 	// have aligned vertices, do that now.  Any changes here will require at
 	// least one more refinement pass...
-	// refine_omeshes();
+	refine_omeshes(ocheck_pairs, f2omap);
 
 
 	check_faces_validity(check_pairs);
 	face_ov_cnt = face_omesh_ovlps(ocheck_pairs, edge_verts, f2omap);
 	std::cout << "Iteration " << iterations << " post tri split overlap cnt: " << face_ov_cnt << "\n";
-
-#if 0
-	// Anything that has lasted this far, just chop all its edges in half for the next
-	// iteration
-	if (last_ditch_edge_splits(ocheck_pairs, f2omap)) {
-	    std::cout << "Not done yet\n";
-	    check_faces_validity(check_pairs);
-	    face_ov_cnt = face_omesh_ovlps(ocheck_pairs, edge_verts, f2omap);
-	    std::cout << "Iteration " << iterations << " post last ditch split overlap cnt: " << face_ov_cnt << "\n";
-	}
-#endif
     }
 
     return 0;
