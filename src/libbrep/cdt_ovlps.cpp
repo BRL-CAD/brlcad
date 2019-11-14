@@ -968,7 +968,7 @@ isect_process_vert(
 }
 
 int
-remote_vert_process(omesh_t *omesh1, overt_t *v, cdt_mesh::triangle_t &t1, omesh_t *omesh2, cdt_mesh::triangle_t &t2, std::map<overt_t *, std::map<cdt_mesh::bedge_seg_t *, int>> *vert_edge_cnts)
+remote_vert_process(bool pinside, omesh_t *omesh1, overt_t *v, cdt_mesh::triangle_t &t1, omesh_t *omesh2, cdt_mesh::triangle_t &t2, std::map<overt_t *, std::map<cdt_mesh::bedge_seg_t *, int>> *vert_edge_cnts)
 {
     if (!v) {
 	std::cout << "WARNING: - no overt for vertex??\n";
@@ -988,7 +988,11 @@ remote_vert_process(omesh_t *omesh1, overt_t *v, cdt_mesh::triangle_t &t1, omesh
     }
 
     if (!near_vert) {
-	isect_process_vert(omesh1, v, t1, omesh2, t2, vert_edge_cnts);
+	if (pinside) {
+	    isect_process_vert(omesh1, v, t1, omesh2, t2, vert_edge_cnts);
+	} else {
+	    return 0;
+	}
     } else {
 	// Remote point is close to a vertex in the opposite mesh.  If
 	// we've gotten here, we've found a case where we need to split
@@ -1003,14 +1007,8 @@ remote_vert_process(omesh_t *omesh1, overt_t *v, cdt_mesh::triangle_t &t1, omesh
 		omesh1->split_edges.insert(*ue_it);
 	    }
 	}
-	sedge = tri_shortest_edge(omesh2->fmesh, t2.ind);
-	std::set<cdt_mesh::uedge_t> uedges2 = omesh2->fmesh->uedges(t2);
-	for (ue_it = uedges2.begin(); ue_it != uedges2.end(); ue_it++) {
-	    if (*ue_it != sedge) {
-		omesh2->split_edges.insert(*ue_it);
-	    }
-	}
     }
+
     return 1;
 }
 
@@ -1158,13 +1156,17 @@ edge_only_isect(
 
     // See if the triangles are inside the mesh (center point test).  If so,
     // we have more work to do.
-
+    //
+    // We use the center point for this because we are only in this logic
+    // due to the triangle intersection reporting the intersection points close
+    // to one of the edges.  That being the case, the center should be in the
+    // direction of the inside/outside behavior of interest, and not being a
+    // vertex it is not likely to be aligned with another unrelated vertex in
+    // the opposite mesh due to prior refinement steps.
     struct ON_Brep_CDT_State *s_cdt2 = (struct ON_Brep_CDT_State *)omesh2->fmesh->p_cdt;
-    //ON_3dPoint t1_f = *omesh1->fmesh->pnts[t1_vind];
     ON_3dPoint t1_f = omesh1->fmesh->tcenter(t1);
     bool t1_pinside = on_point_inside(s_cdt2, &t1_f);
     struct ON_Brep_CDT_State *s_cdt1 = (struct ON_Brep_CDT_State *)omesh1->fmesh->p_cdt;
-    //ON_3dPoint t2_f = *omesh2->fmesh->pnts[t2_vind];
     ON_3dPoint t2_f = omesh2->fmesh->tcenter(t2);
     bool t2_pinside = on_point_inside(s_cdt1, &t2_f);
 
@@ -1172,13 +1174,11 @@ edge_only_isect(
     // opposite mesh.  If not, and it is inside the opposite mesh, we
     // can use it as a refinement point.  Otherwise, we need to split
     // triangle edges.
-    if (t1_pinside) {
+    if (t1_pinside || t2_pinside) {
 	v = omesh1->overts[t1_vind];
-	process_pnt += remote_vert_process(omesh1, v, t1, omesh2, t2, vert_edge_cnts);
-    }
-    if (t2_pinside) {
+	process_pnt += remote_vert_process(t1_pinside, omesh1, v, t1, omesh2, t2, vert_edge_cnts);
 	v = omesh2->overts[t2_vind];
-	process_pnt += remote_vert_process(omesh2, v, t2, omesh1, t1, vert_edge_cnts);
+	process_pnt += remote_vert_process(t2_pinside, omesh2, v, t2, omesh1, t1, vert_edge_cnts);
     }
 
     return (process_pnt > 0) ? 1 : 0;
