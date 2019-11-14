@@ -972,6 +972,74 @@ isect_process_vert(
     omesh1->intruding_tris.insert(t1.ind);
 }
 
+bool
+aligned_vert_detect(overt_t *v, omesh_t *omesh2)
+{
+    ON_3dPoint vp = v->vpnt();
+    double vpdiag = v->bb.Diagonal().Length() * 0.1;
+    bool near_vert = false;
+    std::set<overt_t *> cverts = omesh2->vert_search(v);
+    std::set<overt_t *>::iterator v_it;
+    for (v_it = cverts.begin(); v_it != cverts.end(); v_it++) {
+	ON_3dPoint cvpnt = (*v_it)->vpnt();
+	double cvbbdiag = (*v_it)->bb.Diagonal().Length() * 0.1;
+	double pdist = vp.DistanceTo(cvpnt);
+	if (pdist < cvbbdiag && pdist < vpdiag) {
+	    near_vert = true;
+	    break;
+	}
+    }
+
+    return near_vert;
+}
+
+static int
+aligned_isect(
+	omesh_t *omesh1, cdt_mesh::triangle_t &t1,
+	omesh_t *omesh2, cdt_mesh::triangle_t &t2,
+	double etol
+	)
+{
+    bool a[3]; 
+    for (int i = 0; i < 3; i++) {
+	overt_t *v = omesh1->overts[t1.v[i]];
+	a[i] = aligned_vert_detect(v, omesh2);
+    }
+
+    if (!a[0] || !a[1] || !a[2]) {
+	return 0;
+    }
+
+    // All vertices are close to a vertex in the opposite mesh.
+
+    // See if the center point of the triangle is inside the opposite mesh.
+    struct ON_Brep_CDT_State *s_cdt2 = (struct ON_Brep_CDT_State *)omesh2->fmesh->p_cdt;
+    ON_3dPoint t1_f = omesh1->fmesh->tcenter(t1);
+    if (!on_point_inside(s_cdt2, &t1_f)) {
+	return 0;
+    }
+
+    ON_Plane t2plane = omesh2->fmesh->tplane(t2);
+    double tdist = t2plane.DistanceTo(t1_f);
+    if (tdist < etol) {
+	return 0;
+    }
+
+    // If we've gotten here, we've found a case where we need to split
+    // some triangle edges to provide more degrees of freedom for
+    // refinement
+    cdt_mesh::uedge_t sedge;
+    std::set<cdt_mesh::uedge_t>::iterator ue_it;
+    sedge = tri_shortest_edge(omesh1->fmesh, t1.ind);
+    std::set<cdt_mesh::uedge_t> uedges1 = omesh1->fmesh->uedges(t1);
+    for (ue_it = uedges1.begin(); ue_it != uedges1.end(); ue_it++) {
+	if (*ue_it != sedge) {
+	    omesh1->split_edges.insert(*ue_it);
+	}
+    }
+    return 1;
+}
+
 int
 remote_vert_process(bool pinside, omesh_t *omesh1, overt_t *v, cdt_mesh::triangle_t &t1, omesh_t *omesh2, cdt_mesh::triangle_t &t2, std::map<overt_t *, std::map<cdt_mesh::bedge_seg_t *, int>> *vert_edge_cnts)
 {
@@ -992,29 +1060,12 @@ remote_vert_process(bool pinside, omesh_t *omesh1, overt_t *v, cdt_mesh::triangl
 	}
     }
 
-    if (!near_vert) {
-	if (pinside) {
-	    isect_process_vert(omesh1, v, t1, omesh2, t2, vert_edge_cnts);
-	} else {
-	    return 0;
-	}
-    } else {
-	// Remote point is close to a vertex in the opposite mesh.  If
-	// we've gotten here, we've found a case where we need to split
-	// some triangle edges to provide more degrees of freedom for
-	// refinement
-	cdt_mesh::uedge_t sedge;
-	std::set<cdt_mesh::uedge_t>::iterator ue_it;
-	sedge = tri_shortest_edge(omesh1->fmesh, t1.ind);
-	std::set<cdt_mesh::uedge_t> uedges1 = omesh1->fmesh->uedges(t1);
-	for (ue_it = uedges1.begin(); ue_it != uedges1.end(); ue_it++) {
-	    if (*ue_it != sedge) {
-		omesh1->split_edges.insert(*ue_it);
-	    }
-	}
+    if (!near_vert && pinside) {
+	isect_process_vert(omesh1, v, t1, omesh2, t2, vert_edge_cnts);
+	return 1;
     }
 
-    return 1;
+    return 0;
 }
 
 int
@@ -1297,18 +1348,29 @@ tri_isect(
 	return 1;
     }
 
+    // Because the edge-only test is deliberately loose, we need to check if
+    // we've got a situation where all three vertices are already closely
+    // aligned with vertices in the opposite mesh.  In that case, we don't have
+    // enough degrees of freedom to resolve the overlap, and we need to mark
+    // the edges for splitting.
+    int a1 = aligned_isect(omesh1, t1, omesh2, t2, etol);
+    int a2 = aligned_isect(omesh2, t2, omesh1, t1, etol);
+
+    // If they're both aligned we're done, otherwise we need to keep checking
+    if (a1 && a2) {
+	return 1;
+    }
+
     ON_Line nedge;
     int near_edge = edge_only_isect(omesh1, t1, omesh2, t2, p1, p2, (ON_Line *)t1_lines, (ON_Line *)t2_lines, 0.3*elen_min, vert_edge_cnts);
 
 
     if (near_edge >= 0) {
-	near_edge = edge_only_isect(omesh1, t1, omesh2, t2, p1, p2, (ON_Line *)t1_lines, (ON_Line *)t2_lines, 0.3*elen_min, vert_edge_cnts);
 	return near_edge;
     }
 
-    // If we're not in an edge intersect situation, all three vertices go into the
-    // refinement pot.
-
+    // If we're not aligned or in an edge intersect situation, all three
+    // vertices go into the refinement pot.
     for (int i = 0; i < 3; i++) {
 	overt_t *v = omesh1->overts[t1.v[i]];
 	if (!v) {
@@ -2287,6 +2349,10 @@ ovlp_split_edge(
 }
 
 // Find the point on the edge nearest to the point, and split the edge at that point.
+//
+// TODO - probably need to get more aggressive about splitting near verts as the
+// iteration count increases - if there's no other way to resolve the mesh, that's
+// what we need to do, small triangles or not...
 int
 bedge_split_at_t(
 	cdt_mesh::bedge_seg_t *eseg, double t,
@@ -2452,9 +2518,7 @@ refine_omeshes(
 	}
     }
     std::cout << "Need to refine " << omeshes.size() << " meshes\n";
-
-    return;
-
+return;
     // Filter out brep face edges - they must be handled first in a face independent split
     std::set<cdt_mesh::bedge_seg_t *> brep_edges_to_split;
     std::set<omesh_t *>::iterator o_it;
