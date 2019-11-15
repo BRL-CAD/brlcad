@@ -1603,7 +1603,7 @@ class revt_pt_t {
 };
 
 
-void
+int
 refine_edge_vert_sets (
 	omesh_t *omesh,
 	std::map<cdt_mesh::uedge_t, std::vector<revt_pt_t>> *edge_sets
@@ -1614,6 +1614,9 @@ refine_edge_vert_sets (
     std::cout << "Processing " << s_cdt->name << " face " << omesh->fmesh->f_id << ":\n";
 
     std::map<cdt_mesh::uedge_t, std::vector<revt_pt_t>>::iterator es_it;
+
+    int new_tris = 0; 
+
     while (edge_sets->size()) {
 	std::map<cdt_mesh::uedge_t, std::vector<revt_pt_t>> updated_esets;
 
@@ -1862,6 +1865,9 @@ refine_edge_vert_sets (
 		orient_tri(*omesh->fmesh, vt);
 		omesh->fmesh->tri_add(vt);
 	    }
+
+	    new_tris += polygon->tris.size();
+
 	    //omesh->fmesh->tris_set_plot(polygon->tris, "poly_tris.plot3");
 	    //polygon->polygon_plot_in_plane("poly.plot3");
 	} else {
@@ -1909,6 +1915,8 @@ refine_edge_vert_sets (
 	    }
 	}
     }
+
+    return new_tris;
 }
 
 
@@ -2554,7 +2562,7 @@ refine_omeshes(
     }
 }
 
-void
+int
 omesh_interior_edge_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs)
 {
     std::set<omesh_t *> omeshes;
@@ -2571,11 +2579,11 @@ omesh_interior_edge_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs
     }
     std::cout << "Need to split triangles in " << omeshes.size() << " meshes\n";
 
+    int rcnt = 0;
+
     std::set<omesh_t *>::iterator o_it;
     for (o_it = omeshes.begin(); o_it != omeshes.end(); o_it++) {
 	omesh_t *omesh = *o_it;
-
-	omesh->fmesh->valid(1);
 
 	std::map<cdt_mesh::uedge_t, std::vector<revt_pt_t>> edge_sets;
 
@@ -2687,12 +2695,11 @@ omesh_interior_edge_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs
 	    cdt_mesh::uedge_t ue = es_it->first;
 	    std::cout << "Edge: " << ue.v[0] << "<->" << ue.v[1] << ": " << es_it->second.size() << " points\n";
 	}
-	omesh->fmesh->valid(1);
 
-	refine_edge_vert_sets(omesh, &edge_sets);
-
-	omesh->fmesh->valid(1);
+	rcnt += refine_edge_vert_sets(omesh, &edge_sets);
     }
+
+    return rcnt;
 }
 
 static void
@@ -2759,39 +2766,50 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	std::cout << "Initial overlap cnt: " << face_ov_cnt << "\n";
 	if (!face_ov_cnt) return 0;
 
+	int bedge_replaced_tris = INT_MAX;
 
-	int avcnt = 0;
-	// The simplest operation is to find vertices close to each other with
-	// enough freedom of movement (per triangle edge length) that we can shift
-	// the two close neighbors to surface points that are both the respective
-	// closest points to a center point between the two originals.
-	avcnt = adjust_close_verts(ocheck_pairs);
-	if (avcnt) {
-	    std::cout << "Adjusted " << avcnt << " vertices\n";
+	while (bedge_replaced_tris) {
+	    int avcnt = 0;
+	    // The simplest operation is to find vertices close to each other with
+	    // enough freedom of movement (per triangle edge length) that we can shift
+	    // the two close neighbors to surface points that are both the respective
+	    // closest points to a center point between the two originals.
+	    avcnt = adjust_close_verts(ocheck_pairs);
+	    if (avcnt) {
+		std::cout << "Adjusted " << avcnt << " vertices\n";
+	    }
+
+	    // Process edge_verts
+	    //
+	    // TODO - if we introduce new vertices in this step, we'll need at least
+	    // one more refinement pass - return information to manage this
+	    bedge_replaced_tris = bedge_split_near_verts(edge_verts, f2omap);
+
+
+	    face_ov_cnt = face_omesh_ovlps(ocheck_pairs, edge_verts, f2omap);
 	}
-
-	// Process edge_verts
-	//
-	// TODO - if we introduce new vertices in this step, we'll need at least
-	// one more refinement pass - return information to manage this
-	bedge_split_near_verts(edge_verts, f2omap);
 
 	// Once edge splits are handled, use remaining closest points and find nearest interior
 	// edge curve, building sets of points near each interior edge.  Then, for all interior
 	// edges, yank the two triangles associated with that edge, build a polygon with interior
 	// points and tessellate.  I think we probably need this to introduce no changes
 	// to the meshes as a condition of termination...
-	omesh_interior_edge_verts(ocheck_pairs);
+	int interior_replaced_tris = INT_MAX;
+	while (interior_replaced_tris) {
+	    interior_replaced_tris = omesh_interior_edge_verts(ocheck_pairs);
+	    face_ov_cnt = face_omesh_ovlps(ocheck_pairs, edge_verts, f2omap);
+	}
 
 
-	// If any edge splits were needed for overlapping triangles that already
-	// have aligned vertices, do that now.  Any changes here will require at
-	// least one more refinement pass...
-
-	// TODO - need to remove any edges from the refinement set that are removed
-	// in any triangle operations above - stale edges will cause problems here
-	// by inducing splitting on the wrong edges
-
+	// TODO - Instead of splitting to refine these last cases, instead we need to build
+	// a set of vertex points common to both overlapping triangle pairs, construct in
+	// each mesh the bounding polygon that has all of the corresponding closest verts
+	// in both meshes in the polygon, project that polygon to a COMMON plane best
+	// fitting all the points, retriangulate in that plane, then construct the corresponding
+	// triangles in both meshes from the shared triangulation.  Splitting won't necessarily
+	// clear these cases - it may create more like them on a smaller scale - so instead
+	// the idea is to construct a shared triangulation where both meshes agree which triangles
+	// get which vertices
 	refine_omeshes(ocheck_pairs, f2omap);
 
 
