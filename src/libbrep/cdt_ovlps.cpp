@@ -2770,29 +2770,27 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 
 	while (bedge_replaced_tris) {
 	    int avcnt = 0;
-	    // The simplest operation is to find vertices close to each other with
-	    // enough freedom of movement (per triangle edge length) that we can shift
-	    // the two close neighbors to surface points that are both the respective
-	    // closest points to a center point between the two originals.
+	    // The simplest operation is to find vertices close to each other
+	    // with enough freedom of movement (per triangle edge length) that
+	    // we can shift the two close neighbors to surface points that are
+	    // both the respective closest points to a center point between the
+	    // two originals.
 	    avcnt = adjust_close_verts(ocheck_pairs);
 	    if (avcnt) {
 		std::cout << "Adjusted " << avcnt << " vertices\n";
 	    }
 
 	    // Process edge_verts
-	    //
-	    // TODO - if we introduce new vertices in this step, we'll need at least
-	    // one more refinement pass - return information to manage this
 	    bedge_replaced_tris = bedge_split_near_verts(edge_verts, f2omap);
-
 
 	    face_ov_cnt = face_omesh_ovlps(ocheck_pairs, edge_verts, f2omap);
 	}
 
-	// Once edge splits are handled, use remaining closest points and find nearest interior
-	// edge curve, building sets of points near each interior edge.  Then, for all interior
-	// edges, yank the two triangles associated with that edge, build a polygon with interior
-	// points and tessellate.  I think we probably need this to introduce no changes
+	// Once edge splits are handled, use remaining closest points and find
+	// nearest interior edge curve, building sets of points near each
+	// interior edge.  Then, for all interior edges, yank the two triangles
+	// associated with that edge, build a polygon with interior points and
+	// tessellate.  I think we probably need this to introduce no changes
 	// to the meshes as a condition of termination...
 	int interior_replaced_tris = INT_MAX;
 	while (interior_replaced_tris) {
@@ -2801,16 +2799,19 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	}
 
 
-	// TODO - Instead of splitting to refine these last cases, instead we need to build
-	// a set of vertex points common to both overlapping triangle pairs, construct in
-	// each mesh the bounding polygon that has all of the corresponding closest verts
-	// in both meshes in the polygon, project that polygon to a COMMON plane best
-	// fitting all the points, retriangulate in that plane, then construct the corresponding
-	// triangles in both meshes from the shared triangulation.  Splitting won't necessarily
-	// clear these cases - it may create more like them on a smaller scale - so instead
-	// the idea is to construct a shared triangulation where both meshes agree which triangles
-	// get which vertices
-	refine_omeshes(ocheck_pairs, f2omap);
+	// TODO - Instead of splitting to refine these last cases, we need to
+	// build a set of vertex points common to both overlapping triangle
+	// pairs, construct in each mesh the bounding polygon that has all of
+	// the corresponding closest verts in both meshes in the polygon,
+	// project that polygon to a COMMON plane best fitting all the points,
+	// retriangulate in that plane, then construct the corresponding
+	// triangles in both meshes from the shared triangulation.  Splitting
+	// won't necessarily clear these cases - it may create more like them
+	// on a smaller scale - so instead the idea is to construct a shared
+	// triangulation where both meshes agree which triangles get which
+	// vertices
+
+	//refine_omeshes(ocheck_pairs, f2omap);
 
 
 	check_faces_validity(check_pairs);
