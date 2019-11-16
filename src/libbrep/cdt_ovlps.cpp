@@ -2490,6 +2490,7 @@ shared_cdts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs)
 		    }
 		    std::set<long> o1tris = omesh2->aligned_ovlps[*t2_it].begin()->second;
 		    om1_tris.insert(o1tris.begin(), o1tris.end());
+		    std::cout << "om1_tris cnt: " << om1_tris.size() << "\n";
 		    omesh2->aligned_ovlps.erase(*t2_it);
 		}
 		for (t1_it = om1_tris.begin(); t1_it != om1_tris.end(); t1_it++) {
@@ -2500,12 +2501,37 @@ shared_cdts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs)
 		    }
 		    std::set<long> o2tris = omesh1->aligned_ovlps[*t1_it].begin()->second;
 		    om2_tris.insert(o2tris.begin(), o2tris.end());
+		    std::cout << "om2_tris cnt: " << om1_tris.size() << "\n";
 		    omesh1->aligned_ovlps.erase(*t1_it);
 		}
 	    }
 	    std::cout << "t1 cnt: " << t1cnt << "\n";
 	    std::cout << "t2 cnt: " << t2cnt << "\n";
 	}
+
+	// After the initial pass, assemble the set of vertices for each mesh that are either
+	// one of the triangle vertices or the closest vertex on the mesh to a vertex in the
+	// other set.  After this pass, every vertex on each mesh should have an assigned
+	// counterpart in the other mesh.
+	
+	// Find the best fit plane of all 3D points from all the vertices in play from both
+	// meshes.  This will be our polygon plane.
+	
+	// With a seed triangle from each mesh, grow two polygons such that all active
+	// vertices from each mesh are either boundary or interior points on the polygons.
+	// Normally, shouldn't grow beyond the active triangle set in the mesh - there may
+	// however be cases were we need to for a valid projection (next step)
+	
+	// If any points are not contained or too close to an edge but not on
+	// it, we need to grow *both* meshes' polygons out from the edge nearest to the
+	// problematic point.
+	
+	// Maybe? Adjust the polygon starting point so that everything lines up with both polygons - 
+	// may not be strictly necessary, depending on how we assemble things...
+	
+	// CDT the polygon in the shared plane.  Those triangles will now map back to matching
+	// closest points in both meshes.  Remove the original triangles from each mesh, and
+	// replace with the new in both meshes.
     }
 }
 
