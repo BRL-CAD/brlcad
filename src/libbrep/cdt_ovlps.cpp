@@ -171,7 +171,7 @@ class omesh_t
 	void refinement_clear();
 	std::set<long> refinement_split_tris();
 
-	std::set<cdt_mesh::uedge_t> split_edges;
+	std::map<long, std::map<omesh_t *, std::set<long>>> aligned_ovlps;
 
 	cdt_mesh::cdt_mesh_t *fmesh;
 
@@ -722,7 +722,7 @@ omesh_t::vert_add(long f3ind, ON_BoundingBox *bb)
 void
 omesh_t::refinement_clear()
 {
-    split_edges.clear();
+    aligned_ovlps.clear();
     refinement_overts.clear();
     intruding_overts.clear();
     intruding_tris.clear();
@@ -1048,20 +1048,12 @@ aligned_isect(
 	return 0;
     }
 
-#if 0
-    // If we've gotten here, we've found a case where we need to split
-    // some triangle edges to provide more degrees of freedom for
-    // refinement
-    cdt_mesh::uedge_t sedge;
-    std::set<cdt_mesh::uedge_t>::iterator ue_it;
-    sedge = tri_shortest_edge(omesh1->fmesh, t1.ind);
-    std::set<cdt_mesh::uedge_t> uedges1 = omesh1->fmesh->uedges(t1);
-    for (ue_it = uedges1.begin(); ue_it != uedges1.end(); ue_it++) {
-	if (*ue_it != sedge) {
-	    omesh1->split_edges.insert(*ue_it);
-	}
-    }
-#endif
+    // We won't use this information for most of the processing, but at the end
+    // we may need to re-triangulate using this particular category of triangle
+    // intersects as a guide.  Make a record.
+    omesh1->aligned_ovlps[t1.ind][omesh2].insert(t2.ind);
+    omesh2->aligned_ovlps[t2.ind][omesh1].insert(t1.ind);
+
     return 1;
 }
 
@@ -1380,32 +1372,6 @@ tri_isect(
     // the edges for splitting.
     int a1 = aligned_isect(omesh1, t1, omesh2, t2, etol);
     int a2 = aligned_isect(omesh2, t2, omesh1, t1, etol);
-
-    if (a1 || a2) {
-#if 0
-	cdt_mesh::uedge_t sedge;
-	std::set<cdt_mesh::uedge_t>::iterator ue_it;
-	sedge = tri_shortest_edge(omesh1->fmesh, t1.ind);
-	std::set<cdt_mesh::uedge_t> uedges1 = omesh1->fmesh->uedges(t1);
-	for (ue_it = uedges1.begin(); ue_it != uedges1.end(); ue_it++) {
-	    if (*ue_it != sedge) {
-		omesh1->split_edges.insert(*ue_it);
-	    }
-	}
-	sedge = tri_shortest_edge(omesh2->fmesh, t2.ind);
-	std::set<cdt_mesh::uedge_t> uedges2 = omesh2->fmesh->uedges(t2);
-	for (ue_it = uedges2.begin(); ue_it != uedges2.end(); ue_it++) {
-	    if (*ue_it != sedge) {
-		omesh2->split_edges.insert(*ue_it);
-	    }
-	}
-#endif
-	cdt_mesh::uedge_t ue1 = tri_longest_edge(omesh1->fmesh, t1.ind);
-	omesh1->split_edges.insert(ue1);
-	cdt_mesh::uedge_t ue2 = tri_longest_edge(omesh2->fmesh, t2.ind);
-	omesh2->split_edges.insert(ue2);
-    }
-
     // If they're both aligned we're done, otherwise we need to keep checking
     if (a1 && a2) {
 	return 1;
@@ -2476,89 +2442,70 @@ check_faces_validity(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_me
 }
 
 void
-refine_omeshes(
-	std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs,
-	std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap
-	)
+shared_cdts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs)
 {
     std::set<omesh_t *> omeshes;
     std::set<std::pair<omesh_t *, omesh_t *>>::iterator cp_it;
     for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
 	omesh_t *omesh1 = cp_it->first;
 	omesh_t *omesh2 = cp_it->second;
-	if (omesh1->split_edges.size()) {
+	if (omesh1->aligned_ovlps.size()) {
 	    omeshes.insert(omesh1);
 	}
-	if (omesh2->split_edges.size()) {
+	if (omesh2->aligned_ovlps.size()) {
 	    omeshes.insert(omesh2);
 	}
     }
     std::cout << "Need to refine " << omeshes.size() << " meshes\n";
 
-    // Filter out brep face edges - they must be handled first in a face independent split
-    std::set<cdt_mesh::bedge_seg_t *> brep_edges_to_split;
     std::set<omesh_t *>::iterator o_it;
     for (o_it = omeshes.begin(); o_it != omeshes.end(); o_it++) {
-	omesh_t *omesh = *o_it;
-	std::set<cdt_mesh::uedge_t> bedges;
-	std::set<cdt_mesh::uedge_t>::iterator u_it;
-	for (u_it = omesh->split_edges.begin(); u_it != omesh->split_edges.end(); u_it++) {
-	    if (omesh->fmesh->brep_edges.find(*u_it) != omesh->fmesh->brep_edges.end()) {
-		brep_edges_to_split.insert(omesh->fmesh->ue2b_map[*u_it]); 
-		bedges.insert(*u_it);
+	omesh_t *omesh1 = *o_it;
+	std::map<long, std::map<omesh_t *, std::set<long>>>::iterator a_it;
+
+	while (omesh1->aligned_ovlps.size()) {
+	    a_it = omesh1->aligned_ovlps.begin();
+	    if (a_it->second.size() > 1) {
+		std::cout << "Error: unhandled case of multiple meshes with aligned overlaps on this one triangle.\n";
+		return;
 	    }
-	}
-	for (u_it = bedges.begin(); u_it != bedges.end(); u_it++) {
-	    omesh->split_edges.erase(*u_it);
-	}
-    }
+	
+	    omesh_t *omesh2 = a_it->second.begin()->first;
 
-    std::cout << "Split " << brep_edges_to_split.size() << " brep edges\n";
-
-    while (brep_edges_to_split.size()) {
-	cdt_mesh::bedge_seg_t *bseg = *brep_edges_to_split.begin();
-	brep_edges_to_split.erase(brep_edges_to_split.begin());
-	double tmid = (bseg->edge_start + bseg->edge_end) * 0.5;
-	int rtris = ovlp_split_edge(NULL, bseg, tmid, f2omap);
-	if (rtris <= 0) {
-	    std::cout << "edge split failed!\n";
-	}
-    }
-
-    for (o_it = omeshes.begin(); o_it != omeshes.end(); o_it++) {
-	omesh_t *omesh = *o_it;
-
-	std::vector<cdt_mesh::uedge_t> sorted_uedges = omesh->fmesh->sorted_uedges_l_to_s(omesh->split_edges);
-
-	for (size_t i = 0; i < sorted_uedges.size(); i++) {
-	    cdt_mesh::uedge_t ue = sorted_uedges[i];
-	    ON_3dPoint p1 = *omesh->fmesh->pnts[ue.v[0]];
-	    ON_3dPoint p2 = *omesh->fmesh->pnts[ue.v[1]];
-	    double dist = p1.DistanceTo(p2);
-	    ON_3dPoint pmid = (p1 + p2) * 0.5;
-	    ON_3dPoint spnt;
-	    ON_3dVector sn;
-	    closest_surf_pnt(spnt, sn, *omesh->fmesh, &pmid, 2*dist);
-	    long f3ind = omesh->fmesh->add_point(new ON_3dPoint(spnt));
-	    long fnind = omesh->fmesh->add_normal(new ON_3dPoint(sn));
-	    struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)omesh->fmesh->p_cdt;
-	    std::cout << s_cdt->name << " face " << omesh->fmesh->f_id << " validity: " << omesh->fmesh->valid(1) << "\n";
-	    CDT_Add3DPnt(s_cdt, omesh->fmesh->pnts[f3ind], omesh->fmesh->f_id, -1, -1, -1, 0, 0);
-	    CDT_Add3DNorm(s_cdt, omesh->fmesh->normals[fnind], omesh->fmesh->pnts[f3ind], omesh->fmesh->f_id, -1, -1, -1, 0, 0);
-	    omesh->fmesh->nmap[f3ind] = fnind;
-	    std::set<size_t> rtris = omesh->fmesh->uedges2tris[ue];
-	    if (!rtris.size()) {
-		std::cout << "ERROR! no triangles associated with edge!\n";
-		continue;
+	    // Need to assemble the set of all triangles involved as an overlapping
+	    // "group" in order to identify the inputs for polygon building
+	    size_t t1cnt = 0;
+	    size_t t2cnt = 0;
+	    std::set<long> om1_tris, om2_tris;
+	    om1_tris.insert(a_it->first);
+	    std::set<long>::iterator t1_it, t2_it;
+	    while (t1cnt != om1_tris.size() || t2cnt != om2_tris.size()) {
+		t1cnt = om1_tris.size();
+		t2cnt = om2_tris.size();
+		for (t2_it = om2_tris.begin(); t2_it != om2_tris.end(); t2_it++) {
+		    if (omesh2->aligned_ovlps.find(*t2_it) == omesh2->aligned_ovlps.end()) continue;
+		    if (omesh2->aligned_ovlps[*t2_it].size() > 1) {
+			std::cout << "Error: unhandled case of multiple meshes with aligned overlaps on this one triangle.\n";
+			return;
+		    }
+		    std::set<long> o1tris = omesh2->aligned_ovlps[*t2_it].begin()->second;
+		    om1_tris.insert(o1tris.begin(), o1tris.end());
+		    omesh2->aligned_ovlps.erase(*t2_it);
+		}
+		for (t1_it = om1_tris.begin(); t1_it != om1_tris.end(); t1_it++) {
+		    if (omesh1->aligned_ovlps.find(*t1_it) == omesh1->aligned_ovlps.end()) continue;
+		    if (omesh1->aligned_ovlps[*t1_it].size() > 1) {
+			std::cout << "Error: unhandled case of multiple meshes with aligned overlaps on this one triangle.\n";
+		    return;
+		    }
+		    std::set<long> o2tris = omesh1->aligned_ovlps[*t1_it].begin()->second;
+		    om2_tris.insert(o2tris.begin(), o2tris.end());
+		    omesh1->aligned_ovlps.erase(*t1_it);
+		}
 	    }
-	    std::set<size_t>::iterator r_it;
-	    for (r_it = rtris.begin(); r_it != rtris.end(); r_it++) {
-		replace_edge_split_tri(*omesh->fmesh, *r_it, f3ind, ue);
-	    }
-
-	    omesh->vert_add(f3ind);
+	    std::cout << "t1 cnt: " << t1cnt << "\n";
+	    std::cout << "t2 cnt: " << t2cnt << "\n";
 	}
-	omesh->split_edges.clear();
     }
 }
 
@@ -2811,7 +2758,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	// triangulation where both meshes agree which triangles get which
 	// vertices
 
-	//refine_omeshes(ocheck_pairs, f2omap);
+	shared_cdts(ocheck_pairs);
 
 
 	check_faces_validity(check_pairs);
