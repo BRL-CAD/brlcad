@@ -2425,181 +2425,98 @@ shared_cdts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs)
 
     // Need to assemble the set of all triangles involved as an overlapping
     // "group" in order to identify the inputs for polygon building
-    std::vector<std::set<std::pair<omesh_t *, size_t>>>::iterator tm_it;
-    for (tm_it = bins.begin(); tm_it != bins.end(); tm_it++) {
-	std::cout << "Ovlp group:\n";
+    std::map<size_t, std::map<omesh_t *,std::set<overt_t *>>> vert_bins;
+    for (size_t i = 0; i < bins.size(); i++) {
 	std::set<std::pair<omesh_t *, size_t>>::iterator g_it;
-	for (g_it = tm_it->begin(); g_it != tm_it->end(); g_it++)
-	    std::cout << "                  " << g_it->first->fmesh->name << " " << g_it->first->fmesh->f_id << " triangle " << g_it->second << "\n";
+	for (g_it = bins[i].begin(); g_it != bins[i].end(); g_it++) {
+	    omesh_t *om = g_it->first;
+	    cdt_mesh::triangle_t tri = om->fmesh->tris_vect[g_it->second];
+	    for (int j = 0; j < 3; j++) {
+		overt_t *ov = om->overts[tri.v[j]];
+		if (!ov) {
+		    std::cout << "WARNING: - no overt for tri vertex??\n";
+		    continue;
+		}
+		vert_bins[i][om].insert(ov);
+	    }
+	}
     }
 
-#if 0
-	while (omesh1->aligned_ovlps.size()) {
-	    a_it = omesh1->aligned_ovlps.begin();
-	    if (a_it->second.size() > 1) {
-		std::cout << "Error: unhandled case of multiple meshes with aligned overlaps on this one triangle.\n";
+    std::map<size_t, std::map<omesh_t *,std::set<overt_t *>>> cvert_bins = vert_bins;
+    std::map<size_t, std::map<omesh_t *,std::set<overt_t *>>>::iterator v_it;
+    for (v_it = vert_bins.begin(); v_it != vert_bins.end(); v_it++) {
+	std::map<omesh_t *,std::set<overt_t *>>::iterator m_it;
+	omesh_t *om[2];
+	std::vector<std::set<overt_t *>> vsets;
+	int mcnt = 0;
+	for (m_it = v_it->second.begin(); m_it != v_it->second.end(); m_it++) {
+
+	    if (mcnt > 1) {
+		std::cerr << "Fatal error - complex multi-face overlap interaction\n";
 		return;
 	    }
 
-	    omesh_t *omesh2 = a_it->second.begin()->first;
-
-	    // Need to assemble the set of all triangles involved as an overlapping
-	    // "group" in order to identify the inputs for polygon building
-	    size_t t1cnt = 0;
-	    size_t t2cnt = 0;
-	    std::set<size_t> om1_tris, om2_tris;
-	    om1_tris.insert(a_it->first);
-	    std::set<size_t>::iterator t1_it, t2_it;
-	    while (t1cnt != om1_tris.size() || t2cnt != om2_tris.size()) {
-		t1cnt = om1_tris.size();
-		t2cnt = om2_tris.size();
-		for (t2_it = om2_tris.begin(); t2_it != om2_tris.end(); t2_it++) {
-		    if (omesh2->aligned_ovlps.find(*t2_it) == omesh2->aligned_ovlps.end()) continue;
-		    if (omesh2->aligned_ovlps[*t2_it].size() > 1) {
-			std::cout << "Error: unhandled case of multiple meshes with aligned overlaps on this one triangle.\n";
-			return;
-		    }
-		    std::set<long> o1tris = omesh2->aligned_ovlps[*t2_it].begin()->second;
-		    om1_tris.insert(o1tris.begin(), o1tris.end());
-		    omesh2->aligned_ovlps.erase(*t2_it);
-		}
-		for (t1_it = om1_tris.begin(); t1_it != om1_tris.end(); t1_it++) {
-		    if (omesh1->aligned_ovlps.find(*t1_it) == omesh1->aligned_ovlps.end()) continue;
-		    if (omesh1->aligned_ovlps[*t1_it].size() > 1) {
-			std::cout << "Error: unhandled case of multiple meshes with aligned overlaps on this one triangle.\n";
-			return;
-		    }
-		    std::set<long> o2tris = omesh1->aligned_ovlps[*t1_it].begin()->second;
-		    om2_tris.insert(o2tris.begin(), o2tris.end());
-		    omesh1->aligned_ovlps.erase(*t1_it);
-		}
-	    }
-	    std::cout << "t1 cnt: " << t1cnt << "\n";
-	    std::cout << "t2 cnt: " << t2cnt << "\n";
-
-	    // After the initial pass, assemble the set of vertices for each mesh that are either
-	    // one of the triangle vertices or the closest vertex on the mesh to a vertex in the
-	    // other set.  After this pass, every vertex on each mesh should have an assigned
-	    // counterpart in the other mesh.
-	    std::set<overt_t *> om1_verts, om2_verts;
-	    for (t1_it = om1_tris.begin(); t1_it != om1_tris.end(); t1_it++) {
-		cdt_mesh::triangle_t tri = omesh1->fmesh->tris_vect[*t1_it];
-
-		for (int i = 0; i < 3; i++) {
-		    overt_t *ov = omesh1->overts[tri.v[i]];
-		    if (!ov) {
-			std::cout << "WARNING: - no overt for tri vertex??\n";
-			continue;
-		    }
-		    om1_verts.insert(ov);
-		}
-	    }
-	    for (t2_it = om2_tris.begin(); t2_it != om2_tris.end(); t2_it++) {
-		cdt_mesh::triangle_t tri = omesh2->fmesh->tris_vect[*t2_it];
-		for (int i = 0; i < 3; i++) {
-		    overt_t *ov = omesh2->overts[tri.v[i]];
-		    if (!ov) {
-			std::cout << "WARNING: - no overt for tri vertex??\n";
-			continue;
-		    }
-		    om2_verts.insert(ov);
-		}
-	    }
-	    std::cout << "om1_verts.size(): " << om1_verts.size() << "\n";
-	    std::cout << "om2_verts.size(): " << om2_verts.size() << "\n";
-
-	    // TODO - This doesn't work reliably - we're getting vertices from
-	    // triangles that were never assigned a closest point per the
-	    // resolving criteria.  It looks like a triangle is being pulled
-	    // in that isn't actually one of these overlapping cases... 
-	    size_t v1cnt = 0;
-	    size_t v2cnt = 0;
-	    std::map<overt_t *, overt_t *> om1_vmap, om2_vmap;
-	    while (om1_verts.size() != v1cnt || om2_verts.size() != v2cnt) {
-		v1cnt = om1_verts.size();
-		v2cnt = om2_verts.size();
-	
-		std::set<overt_t *>::iterator v_it;
-		for (v_it = om1_verts.begin(); v_it != om1_verts.end(); v_it++) {
-		    overt_t *ov = *v_it;
-		    overt_t *nv = omesh2->vert_closest(NULL, ov);
-		    if (!nv) {
-			std::cerr << "Couldn't find closest vert!\n";
-			continue;
-		    }
-		    om2_verts.insert(nv);
-		    om1_vmap[ov] = nv;
-		}
-		for (v_it = om2_verts.begin(); v_it != om2_verts.end(); v_it++) {
-		    overt_t *ov = *v_it;
-		    overt_t *nv = omesh1->vert_closest(NULL, ov);
-		    if (!nv) {
-			std::cerr << "Couldn't find closest vert!\n";
-			continue;
-		    }
-		    om1_verts.insert(nv);
-		    om2_vmap[ov] = nv;
-		}
-	    }
-	    std::cout << "om1_verts.size(): " << om1_verts.size() << "\n";
-	    std::cout << "om2_verts.size(): " << om2_verts.size() << "\n";
-
-
-	    // TODO - The plotting of the intruding triangles appears to be
-	    // a better match for what we need to work than anything that
-	    // has come from the aligned triangles so far...  May need to
-	    // adjust this whole stack to use the intruding triangles,
-	    // find the intersecting triangles from the other mesh, and use
-	    // those data as the driving inputs.
-
-	    omesh1->fmesh->tris_ind_set_plot(om1_tris, "om1_tris.plot3");
-	    omesh2->fmesh->tris_ind_set_plot(om2_tris, "om2_tris.plot3");
-
-	    if (om1_vmap.size() != om2_vmap.size()) {
-		std::cerr << "Fatal - couldn't build matching vert set\n";
-		return;
-	    }
-
-	    // For now, validate that the maps are consistent - hopefully we can
-	    // skip this once we're confident the logic is solid
-	    std::map<overt_t *, overt_t *>::iterator vm_it;
-	    for (vm_it = om1_vmap.begin(); vm_it != om1_vmap.end(); vm_it++) {
-		overt_t *ov1 = vm_it->first;
-		overt_t *ov2 = vm_it->second;
-		if (om2_vmap[ov2] != ov1) {
-		    std::cerr << "Fatal - vert map inconsistency\n";
-		    return;
-		}
-	    }
-	    for (vm_it = om2_vmap.begin(); vm_it != om2_vmap.end(); vm_it++) {
-		overt_t *ov1 = vm_it->first;
-		overt_t *ov2 = vm_it->second;
-		if (om1_vmap[ov2] != ov1) {
-		    std::cerr << "Fatal - vert map inconsistency\n";
-		    return;
-		}
-	    }
-
-	    // Find the best fit plane of all 3D points from all the vertices in play from both
-	    // meshes.  This will be our polygon plane.
-
-	    // With a seed triangle from each mesh, grow two polygons such that all active
-	    // vertices from each mesh are either boundary or interior points on the polygons.
-	    // Normally, shouldn't grow beyond the active triangle set in the mesh - there may
-	    // however be cases were we need to for a valid projection (next step)
-
-	    // If any points are not contained or too close to an edge but not on
-	    // it, we need to grow *both* meshes' polygons out from the edge nearest to the
-	    // problematic point.
-
-	    // Maybe? Adjust the polygon starting point so that everything lines up with both polygons - 
-	    // may not be strictly necessary, depending on how we assemble things...
-
-	    // CDT the polygon in the shared plane.  Those triangles will now map back to matching
-	    // closest points in both meshes.  Remove the original triangles from each mesh, and
-	    // replace with the new in both meshes.
+	    om[mcnt] = m_it->first;
+	    vsets.push_back(m_it->second);
+	    mcnt++;
 	}
-#endif
+	for (int i = 0; i < 2; i++) {
+	    int other = (i == 0) ? 1 : 0;
+	    std::set<overt_t *>::iterator ov_it;
+	    for (ov_it = vsets[i].begin(); ov_it != vsets[i].end(); ov_it++) {
+		overt_t *ov = *ov_it;
+		overt_t *nv = om[other]->vert_closest(NULL, ov);
+		cvert_bins[v_it->first][om[other]].insert(nv);
+	    }
+	}
+    }
+
+    for (v_it = cvert_bins.begin(); v_it != cvert_bins.end(); v_it++) {
+	std::map<omesh_t *,std::set<overt_t *>>::iterator m_it;
+
+	bool aligned = true;
+	size_t vcnt = v_it->second.begin()->second.size();
+	for (m_it = v_it->second.begin(); m_it != v_it->second.end(); m_it++) {
+	    if (m_it->second.size() != vcnt) {
+		aligned = false;
+		break;
+	    }
+	}
+
+	if (aligned) {
+	    std::cout << "Group " << v_it->first << " vert cnts:\n";
+	    for (m_it = v_it->second.begin(); m_it != v_it->second.end(); m_it++) {
+		std::cout << "      " << m_it->first->fmesh->name << " " << m_it->first->fmesh->f_id << ": " << m_it->second.size() << " verts\n";
+	    }
+	} else {
+	    std::cout << "Non-aligned overlap persisting in mesh:\n";
+	    std::set<std::pair<omesh_t *, size_t>>::iterator g_it;
+	    for (g_it = bins[v_it->first].begin(); g_it != bins[v_it->first].end(); g_it++) {
+		std::cout << "                  " << g_it->first->fmesh->name << " " << g_it->first->fmesh->f_id << " triangle " << g_it->second << "\n";
+	    }
+	    bins[v_it->first].clear();
+	    v_it->second.clear();
+	}
+    }
+
+    // Find the best fit plane of all 3D points from all the vertices in play from both
+    // meshes.  This will be our polygon plane.
+
+    // With a seed triangle from each mesh, grow two polygons such that all active
+    // vertices from each mesh are either boundary or interior points on the polygons.
+    // Normally, shouldn't grow beyond the active triangle set in the mesh - there may
+    // however be cases were we need to for a valid projection (next step)
+
+    // If any points are not contained or too close to an edge but not on
+    // it, we need to grow *both* meshes' polygons out from the edge nearest to the
+    // problematic point.
+
+    // Maybe? Adjust the polygon starting point so that everything lines up with both polygons - 
+    // may not be strictly necessary, depending on how we assemble things...
+
+    // CDT the polygon in the shared plane.  Those triangles will now map back to matching
+    // closest points in both meshes.  Remove the original triangles from each mesh, and
+    // replace with the new in both meshes.
 }
 
 int
