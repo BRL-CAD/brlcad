@@ -145,6 +145,8 @@ class omesh_t
 	// Add an fmesh vertex to the overts array and tree.
 	overt_t *vert_add(long, ON_BoundingBox *bb = NULL);
 
+	// Find the closest uedge in the mesh to a point
+	cdt_mesh::uedge_t closest_uedge(ON_3dPoint &p);
 	// Find close (non-face-boundary) edges
 	std::set<cdt_mesh::uedge_t> interior_uedges_search(ON_BoundingBox &bb);
 
@@ -154,7 +156,6 @@ class omesh_t
 	// Find close vertices
 	std::set<overt_t *> vert_search(ON_BoundingBox &bb);
 	std::set<overt_t *> vert_search(overt_t *v);
-
 	overt_t * vert_closest(double *vdist, overt_t *v);
 
 	void retessellate(std::set<size_t> &ov);
@@ -578,6 +579,59 @@ omesh_t::vert_closest(double *vdist, overt_t *v)
 	(*vdist) = dist;
     }
     return nv;
+}
+
+cdt_mesh::uedge_t
+omesh_t::closest_uedge(ON_3dPoint &p)
+{
+    cdt_mesh::uedge_t uedge;
+
+    if (!fmesh->pnts.size()) return uedge;
+
+    ON_BoundingBox fbbox = fmesh->bbox();
+
+    ON_BoundingBox bb(p, p);
+    bb.m_min.x = bb.Min().x - ON_ZERO_TOLERANCE;
+    bb.m_min.y = bb.Min().y - ON_ZERO_TOLERANCE;
+    bb.m_min.z = bb.Min().z - ON_ZERO_TOLERANCE;
+    bb.m_max.x = bb.Max().x + ON_ZERO_TOLERANCE;
+    bb.m_max.y = bb.Max().y + ON_ZERO_TOLERANCE;
+    bb.m_max.z = bb.Max().z + ON_ZERO_TOLERANCE;
+
+    // Find close triangles, iterate through them and
+    // find the closest interior edge
+    ON_BoundingBox s_bb = bb;
+    std::set<size_t> ntris = tris_search(s_bb);
+    bool last_try = false;
+    while (!ntris.size() && !last_try) {
+	ON_3dVector vmin = s_bb.Min() - s_bb.Center();
+	ON_3dVector vmax = s_bb.Max() - s_bb.Center();
+	vmin.Unitize();
+	vmax.Unitize();
+	vmin = vmin * s_bb.Diagonal().Length() * 2;
+	vmax = vmax * s_bb.Diagonal().Length() * 2;
+	s_bb.m_min = p + vmin;
+	s_bb.m_max = p + vmax;
+	if (s_bb.Includes(fbbox, true)) {
+	    last_try = true;
+	}
+	ntris = tris_search(s_bb);
+    }
+
+    double uedist = DBL_MAX;
+    std::set<size_t>::iterator tr_it;
+    for (tr_it = ntris.begin(); tr_it != ntris.end(); tr_it++) {
+	cdt_mesh::triangle_t t = fmesh->tris_vect[*tr_it];
+	ON_3dPoint tp = bb.Center();
+	cdt_mesh::uedge_t ue = fmesh->closest_uedge(t, tp);
+	double ue_cdist = fmesh->uedge_dist(ue, p);
+	if (ue_cdist < uedist) {
+	    uedge = ue;
+	    uedist = ue_cdist;
+	}
+    }
+
+    return uedge;
 }
 
 
