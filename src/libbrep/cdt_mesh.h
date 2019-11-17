@@ -518,6 +518,7 @@ public:
     bool face_edge_tri(const triangle_t &t);
 
     ON_BoundingBox bbox();
+    ON_BoundingBox tri_bbox(size_t tind);
 
     // Find the edge of the triangle that is closest to the
     // specified point

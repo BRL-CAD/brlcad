@@ -1854,6 +1854,20 @@ cdt_mesh_t::bbox()
     return bb;
 }
 
+
+ON_BoundingBox
+cdt_mesh_t::tri_bbox(size_t ind)
+{
+    triangle_t tri = tris_vect[ind];
+    ON_3dPoint p0 = *pnts[tri.v[0]];
+    ON_3dPoint p1 = *pnts[tri.v[1]];
+    ON_3dPoint p2 = *pnts[tri.v[2]];
+    ON_BoundingBox bb(p0,p0);
+    bb.Set(p1, true);
+    bb.Set(p2, true);
+    return bb;
+}
+
 uedge_t
 cdt_mesh_t::closest_uedge(const triangle_t &t, ON_3dPoint &p)
 {
