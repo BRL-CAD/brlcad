@@ -977,6 +977,21 @@ isect_plot(cdt_mesh::cdt_mesh_t *fmesh1, long t1_ind, cdt_mesh::cdt_mesh_t *fmes
     fclose(plot);
 }
 
+static void
+isect_process_edge_vert2(
+	overt_t *v, omesh_t *omesh2, ON_3dPoint &sp,
+	std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> *edge_verts)
+{
+    cdt_mesh::uedge_t closest_edge = omesh2->closest_uedge(sp);
+    if (omesh2->fmesh->brep_edges.find(closest_edge) != omesh2->fmesh->brep_edges.end()) {
+	cdt_mesh::bedge_seg_t *bseg = omesh2->fmesh->ue2b_map[closest_edge];
+	if (!bseg) {
+	    std::cout << "couldn't find bseg pointer??\n";
+	} else {
+	    (*edge_verts)[bseg].insert(v);
+	}
+    }
+}
 
 static void
 isect_process_vert(
@@ -2430,159 +2445,6 @@ check_faces_validity(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_me
     }
 }
 
-void
-shared_cdts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs)
-{
-    std::vector<std::set<std::pair<omesh_t *, size_t>>> bins;
-    std::map<std::pair<omesh_t *, size_t>, size_t> bin_map;
-
-    std::set<std::pair<omesh_t *, omesh_t *>>::iterator cp_it;
-    for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
-	omesh_t *omesh1 = cp_it->first;
-	omesh_t *omesh2 = cp_it->second;
-	if (omesh1->intruding_tris.size() && omesh2->intruding_tris.size()) {
-	    std::cout << "Need to check " << omesh1->fmesh->name << " " << omesh1->fmesh->f_id << " vs " << omesh2->fmesh->name << " " << omesh2->fmesh->f_id << "\n";
-	    std::set<size_t> om1_tris = omesh1->intruding_tris;
-	    while (om1_tris.size()) {
-		size_t t1 = *om1_tris.begin();
-		std::pair<omesh_t *, size_t> ckey(omesh1, t1);
-		om1_tris.erase(t1);
-		std::cout << "Processing triangle " << t1 << "\n";
-		ON_BoundingBox tri_bb = omesh1->fmesh->tri_bbox(t1);
-		std::set<size_t> ntris = omesh2->tris_search(tri_bb);
-		std::set<size_t>::iterator nt_it;
-		for (nt_it = ntris.begin(); nt_it != ntris.end(); nt_it++) {
-		    int real_ovlp = tri_isect(false, omesh1, omesh1->fmesh->tris_vect[t1], omesh2, omesh2->fmesh->tris_vect[*nt_it], NULL);
-		    if (real_ovlp) {
-			std::cout << "real overlap with " << *nt_it << "\n";
-			std::pair<omesh_t *, size_t> nkey(omesh2, *nt_it);
-			size_t key_id;
-			if (bin_map.find(ckey) == bin_map.end() && bin_map.find(nkey) == bin_map.end()) {
-			    // New group
-			    std::set<std::pair<omesh_t *, size_t>> ngrp;
-			    ngrp.insert(ckey);
-			    ngrp.insert(nkey);
-			    bins.push_back(ngrp);
-			    key_id = bins.size() - 1;
-			    bin_map[ckey] = key_id;
-			    bin_map[nkey] = key_id;
-			} else {
-			    if (bin_map.find(ckey) != bin_map.end()) {
-				key_id = bin_map[ckey];
-				bins[key_id].insert(nkey);
-				bin_map[nkey] = key_id;
-			    } else {
-				key_id = bin_map[nkey];
-				bins[key_id].insert(ckey);
-				bin_map[ckey] = key_id;
-			    }
-			}
-		    }
-		}
-	    }
-	}
-    }
-
-    // Need to assemble the set of all triangles involved as an overlapping
-    // "group" in order to identify the inputs for polygon building
-    std::map<size_t, std::map<omesh_t *,std::set<overt_t *>>> vert_bins;
-    for (size_t i = 0; i < bins.size(); i++) {
-	std::set<std::pair<omesh_t *, size_t>>::iterator g_it;
-	for (g_it = bins[i].begin(); g_it != bins[i].end(); g_it++) {
-	    omesh_t *om = g_it->first;
-	    cdt_mesh::triangle_t tri = om->fmesh->tris_vect[g_it->second];
-	    for (int j = 0; j < 3; j++) {
-		overt_t *ov = om->overts[tri.v[j]];
-		if (!ov) {
-		    std::cout << "WARNING: - no overt for tri vertex??\n";
-		    continue;
-		}
-		vert_bins[i][om].insert(ov);
-	    }
-	}
-    }
-
-    std::map<size_t, std::map<omesh_t *,std::set<overt_t *>>> cvert_bins = vert_bins;
-    std::map<size_t, std::map<omesh_t *,std::set<overt_t *>>>::iterator v_it;
-    for (v_it = vert_bins.begin(); v_it != vert_bins.end(); v_it++) {
-	std::map<omesh_t *,std::set<overt_t *>>::iterator m_it;
-	omesh_t *om[2];
-	std::vector<std::set<overt_t *>> vsets;
-	int mcnt = 0;
-	for (m_it = v_it->second.begin(); m_it != v_it->second.end(); m_it++) {
-
-	    if (mcnt > 1) {
-		std::cerr << "Fatal error - complex multi-face overlap interaction\n";
-		return;
-	    }
-
-	    om[mcnt] = m_it->first;
-	    vsets.push_back(m_it->second);
-	    mcnt++;
-	}
-	for (int i = 0; i < mcnt; i++) {
-	    int other = (i == 0) ? 1 : 0;
-	    std::set<overt_t *>::iterator ov_it;
-	    for (ov_it = vsets[i].begin(); ov_it != vsets[i].end(); ov_it++) {
-		overt_t *ov = *ov_it;
-		overt_t *nv = om[other]->vert_closest(NULL, ov);
-		cvert_bins[v_it->first][om[other]].insert(nv);
-	    }
-	}
-    }
-
-    std::set<std::pair<omesh_t *, size_t>>::iterator g_it;
-    for (v_it = cvert_bins.begin(); v_it != cvert_bins.end(); v_it++) {
-	std::map<omesh_t *,std::set<overt_t *>>::iterator m_it;
-
-	bool aligned = true;
-	size_t vcnt = v_it->second.begin()->second.size();
-	for (m_it = v_it->second.begin(); m_it != v_it->second.end(); m_it++) {
-	    if (m_it->second.size() != vcnt) {
-		aligned = false;
-		break;
-	    }
-	}
-
-	if (aligned) {
-	    std::cout << "Group " << v_it->first << " vert cnts:\n";
-	    for (m_it = v_it->second.begin(); m_it != v_it->second.end(); m_it++) {
-		std::cout << "      " << m_it->first->fmesh->name << " " << m_it->first->fmesh->f_id << ": " << m_it->second.size() << " verts\n";
-	    }
-	    for (g_it = bins[v_it->first].begin(); g_it != bins[v_it->first].end(); g_it++) {
-		std::cout << "      " << g_it->first->fmesh->name << " " << g_it->first->fmesh->f_id << " triangle " << g_it->second << "\n";
-	    }
-	
-	} else {
-	    std::cout << "Non-aligned overlap persisting in mesh:\n";
-	    for (g_it = bins[v_it->first].begin(); g_it != bins[v_it->first].end(); g_it++) {
-		std::cout << "                  " << g_it->first->fmesh->name << " " << g_it->first->fmesh->f_id << " triangle " << g_it->second << "\n";
-	    }
-	    bins[v_it->first].clear();
-	    v_it->second.clear();
-	}
-    }
-
-    // Find the best fit plane of all 3D points from all the vertices in play from both
-    // meshes.  This will be our polygon plane.
-
-    // With a seed triangle from each mesh, grow two polygons such that all active
-    // vertices from each mesh are either boundary or interior points on the polygons.
-    // Normally, shouldn't grow beyond the active triangle set in the mesh - there may
-    // however be cases were we need to for a valid projection (next step)
-
-    // If any points are not contained or too close to an edge but not on
-    // it, we need to grow *both* meshes' polygons out from the edge nearest to the
-    // problematic point.
-
-    // Maybe? Adjust the polygon starting point so that everything lines up with both polygons - 
-    // may not be strictly necessary, depending on how we assemble things...
-
-    // CDT the polygon in the shared plane.  Those triangles will now map back to matching
-    // closest points in both meshes.  Remove the original triangles from each mesh, and
-    // replace with the new in both meshes.
-}
-
 int
 omesh_interior_edge_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs)
 {
@@ -2723,6 +2585,247 @@ omesh_interior_edge_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs
     return rcnt;
 }
 
+void
+shared_cdts(
+	std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs,
+	std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap
+	)
+{
+    bool have_refine_pnts = true;
+    std::vector<std::set<std::pair<omesh_t *, size_t>>> bins;
+    std::map<std::pair<omesh_t *, size_t>, size_t> bin_map;
+
+    while (have_refine_pnts) {
+
+	std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> edge_verts;
+
+	bins.clear();
+	bin_map.clear();
+	have_refine_pnts = false;
+
+	std::set<std::pair<omesh_t *, omesh_t *>>::iterator cp_it;
+	for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
+	    omesh_t *omesh1 = cp_it->first;
+	    omesh_t *omesh2 = cp_it->second;
+	    if (omesh1->intruding_tris.size() && omesh2->intruding_tris.size()) {
+		//std::cout << "Need to check " << omesh1->fmesh->name << " " << omesh1->fmesh->f_id << " vs " << omesh2->fmesh->name << " " << omesh2->fmesh->f_id << "\n";
+		std::set<size_t> om1_tris = omesh1->intruding_tris;
+		while (om1_tris.size()) {
+		    size_t t1 = *om1_tris.begin();
+		    std::pair<omesh_t *, size_t> ckey(omesh1, t1);
+		    om1_tris.erase(t1);
+		    //std::cout << "Processing triangle " << t1 << "\n";
+		    ON_BoundingBox tri_bb = omesh1->fmesh->tri_bbox(t1);
+		    std::set<size_t> ntris = omesh2->tris_search(tri_bb);
+		    std::set<size_t>::iterator nt_it;
+		    for (nt_it = ntris.begin(); nt_it != ntris.end(); nt_it++) {
+			int real_ovlp = tri_isect(false, omesh1, omesh1->fmesh->tris_vect[t1], omesh2, omesh2->fmesh->tris_vect[*nt_it], NULL);
+			if (real_ovlp) {
+			    //std::cout << "real overlap with " << *nt_it << "\n";
+			    std::pair<omesh_t *, size_t> nkey(omesh2, *nt_it);
+			    size_t key_id;
+			    if (bin_map.find(ckey) == bin_map.end() && bin_map.find(nkey) == bin_map.end()) {
+				// New group
+				std::set<std::pair<omesh_t *, size_t>> ngrp;
+				ngrp.insert(ckey);
+				ngrp.insert(nkey);
+				bins.push_back(ngrp);
+				key_id = bins.size() - 1;
+				bin_map[ckey] = key_id;
+				bin_map[nkey] = key_id;
+			    } else {
+				if (bin_map.find(ckey) != bin_map.end()) {
+				    key_id = bin_map[ckey];
+				    bins[key_id].insert(nkey);
+				    bin_map[nkey] = key_id;
+				} else {
+				    key_id = bin_map[nkey];
+				    bins[key_id].insert(ckey);
+				    bin_map[ckey] = key_id;
+				}
+			    }
+			}
+		    }
+		}
+	    }
+	}
+
+	// Have groupings - reset refinement info
+	for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
+	    omesh_t *omesh1 = cp_it->first;
+	    omesh_t *omesh2 = cp_it->second;
+	    omesh1->refinement_clear();
+	    omesh2->refinement_clear();
+	}
+
+	// Need to assemble the set of all triangles involved as an overlapping
+	// "group" in order to identify the inputs for polygon building
+	std::map<size_t, std::map<omesh_t *,std::set<overt_t *>>> vert_bins;
+	for (size_t i = 0; i < bins.size(); i++) {
+	    std::set<std::pair<omesh_t *, size_t>>::iterator g_it;
+	    for (g_it = bins[i].begin(); g_it != bins[i].end(); g_it++) {
+		omesh_t *om = g_it->first;
+		cdt_mesh::triangle_t tri = om->fmesh->tris_vect[g_it->second];
+		for (int j = 0; j < 3; j++) {
+		    overt_t *ov = om->overts[tri.v[j]];
+		    if (!ov) {
+			std::cout << "WARNING: - no overt for tri vertex??\n";
+			continue;
+		    }
+		    vert_bins[i][om].insert(ov);
+		}
+	    }
+	}
+
+	std::map<size_t, std::map<omesh_t *,std::set<overt_t *>>> cvert_bins = vert_bins;
+	std::map<size_t, std::map<omesh_t *,std::set<overt_t *>>>::iterator v_it;
+	for (v_it = vert_bins.begin(); v_it != vert_bins.end(); v_it++) {
+	    std::map<omesh_t *,std::set<overt_t *>>::iterator m_it;
+	    omesh_t *om[2];
+	    std::vector<std::set<overt_t *>> vsets;
+	    int mcnt = 0;
+	    for (m_it = v_it->second.begin(); m_it != v_it->second.end(); m_it++) {
+
+		if (mcnt > 1) {
+		    std::cerr << "Fatal error - complex multi-face overlap interaction\n";
+		    return;
+		}
+
+		om[mcnt] = m_it->first;
+		vsets.push_back(m_it->second);
+		mcnt++;
+	    }
+	    for (int i = 0; i < mcnt; i++) {
+		int other = (i == 0) ? 1 : 0;
+		std::set<overt_t *>::iterator ov_it;
+		for (ov_it = vsets[i].begin(); ov_it != vsets[i].end(); ov_it++) {
+		    overt_t *ov = *ov_it;
+		    overt_t *nv = om[other]->vert_closest(NULL, ov);
+		    cvert_bins[v_it->first][om[other]].insert(nv);
+		}
+	    }
+	}
+
+	std::set<std::pair<omesh_t *, size_t>>::iterator g_it;
+	for (v_it = cvert_bins.begin(); v_it != cvert_bins.end(); v_it++) {
+	    std::map<omesh_t *,std::set<overt_t *>>::iterator m_it;
+	    omesh_t *om[2];
+	    std::vector<std::set<overt_t *>> vsets;
+	    int mcnt = 0;
+	    for (m_it = v_it->second.begin(); m_it != v_it->second.end(); m_it++) {
+		om[mcnt] = m_it->first;
+		vsets.push_back(m_it->second);
+		mcnt++;
+	    }
+
+	    if (vsets[0].size() != vsets[1].size()) {
+		std::cout << "Non-aligned overlap persisting in mesh:\n";
+		for (g_it = bins[v_it->first].begin(); g_it != bins[v_it->first].end(); g_it++) {
+		    std::cout << "                  " << g_it->first->fmesh->name << " " << g_it->first->fmesh->f_id << " triangle " << g_it->second << "\n";
+		}
+
+		if (vsets[0].size() > vsets[1].size()) {
+		    std::set<overt_t *>::iterator ov_it;
+		    for (ov_it = vsets[0].begin(); ov_it != vsets[0].end(); ov_it++) {
+			// Find any points whose closes surface point isn't close
+			// to an opposing mesh per the vtree.  That point is a refinement
+			// point.
+			overt_t *ov = *ov_it;
+			overt_t *nv = om[1]->vert_closest(NULL, ov);
+			ON_3dPoint target_point = ov->vpnt();
+			double pdist = ov->bb.Diagonal().Length() * 10;
+			ON_3dPoint s_p;
+			ON_3dVector s_n;
+			bool feval = closest_surf_pnt(s_p, s_n, *om[1]->fmesh, &target_point, 2*pdist);
+			if (!feval) {
+			    std::cout << "Error - couldn't find closest point for unpaired vert\n";
+			}
+			if (s_p.DistanceTo(nv->vpnt()) > ON_ZERO_TOLERANCE) {
+			    std::cout << "Need new vert paring: " << target_point.x << "," << target_point.y << "," << target_point.z << "\n";
+			    isect_process_edge_vert2(ov, om[1], s_p, &edge_verts);
+			    // Ensure the count for this vert is above the processing threshold
+			    om[1]->refinement_overts[ov].insert(-1);
+			    om[1]->refinement_overts[ov].insert(-2);
+			    have_refine_pnts = true;
+			}
+		    }
+		} else {
+		    std::set<overt_t *>::iterator ov_it;
+		    for (ov_it = vsets[1].begin(); ov_it != vsets[1].end(); ov_it++) {
+			// Find any points whose closes surface point isn't close
+			// to an opposing mesh per the vtree.  That point is a refinement
+			// point.
+			overt_t *ov = *ov_it;
+			overt_t *nv = om[0]->vert_closest(NULL, ov);
+			ON_3dPoint target_point = ov->vpnt();
+			double pdist = ov->bb.Diagonal().Length() * 10;
+			ON_3dPoint s_p;
+			ON_3dVector s_n;
+			bool feval = closest_surf_pnt(s_p, s_n, *om[0]->fmesh, &target_point, 2*pdist);
+			if (!feval) {
+			    std::cout << "Error - couldn't find closest point for unpaired vert\n";
+			}
+			if (s_p.DistanceTo(nv->vpnt()) > ON_ZERO_TOLERANCE) {
+			    std::cout << "Need new vert paring: " << target_point.x << "," << target_point.y << "," << target_point.z << "\n";
+			    isect_process_edge_vert2(ov, om[0], s_p, &edge_verts);
+			    // Ensure the count for this vert is above the processing threshold
+			    om[0]->refinement_overts[ov].insert(-1);
+			    om[0]->refinement_overts[ov].insert(-2);
+			    have_refine_pnts = true;
+			}
+		    }
+		}
+
+		continue;
+	    }
+
+	    std::cout << "Group " << v_it->first << " vert cnts:\n";
+	    for (int i = 0; i < 2; i++) {
+		std::cout << "      " << om[i]->fmesh->name << " " << om[i]->fmesh->f_id << ": " << vsets[i].size() << " verts\n";
+	    }
+	    for (g_it = bins[v_it->first].begin(); g_it != bins[v_it->first].end(); g_it++) {
+		std::cout << "      " << g_it->first->fmesh->name << " " << g_it->first->fmesh->f_id << " triangle " << g_it->second << "\n";
+	    }
+
+	}
+
+	// If refinement points were added above, refine and repeat
+	if (have_refine_pnts) {
+	    int bedge_replaced_tris = INT_MAX;
+	    while (bedge_replaced_tris) {
+		// Process edge_verts
+		bedge_replaced_tris = bedge_split_near_verts(edge_verts, f2omap);
+	    }
+	    int interior_replaced_tris = INT_MAX;
+	    while (interior_replaced_tris) {
+		interior_replaced_tris = omesh_interior_edge_verts(check_pairs);
+	    }
+	    // Restore "normal" overlap information for next pass
+	    face_omesh_ovlps(check_pairs, edge_verts, f2omap);
+	}
+    }
+
+    // Find the best fit plane of all 3D points from all the vertices in play from both
+    // meshes.  This will be our polygon plane.
+
+    // With a seed triangle from each mesh, grow two polygons such that all active
+    // vertices from each mesh are either boundary or interior points on the polygons.
+    // Normally, shouldn't grow beyond the active triangle set in the mesh - there may
+    // however be cases were we need to for a valid projection (next step)
+
+    // If any points are not contained or too close to an edge but not on
+    // it, we need to grow *both* meshes' polygons out from the edge nearest to the
+    // problematic point.
+
+    // Maybe? Adjust the polygon starting point so that everything lines up with both polygons - 
+    // may not be strictly necessary, depending on how we assemble things...
+
+    // CDT the polygon in the shared plane.  Those triangles will now map back to matching
+    // closest points in both meshes.  Remove the original triangles from each mesh, and
+    // replace with the new in both meshes.
+}
+
+
 static void
 make_omeshes(
 	std::set<std::pair<omesh_t *, omesh_t *>> &ocheck_pairs,
@@ -2832,7 +2935,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	// triangulation where both meshes agree which triangles get which
 	// vertices
 
-	shared_cdts(ocheck_pairs);
+	shared_cdts(ocheck_pairs, f2omap);
 
 
 	check_faces_validity(check_pairs);
