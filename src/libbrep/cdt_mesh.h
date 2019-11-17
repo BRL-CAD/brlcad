@@ -544,6 +544,7 @@ public:
     void ctris_vect_plot(std::vector<struct ctriangle_t> &tvect, const char *filename);
     void tris_plot(const char *filename);
     void tri_plot(const triangle_t &tri, const char *filename);
+    void tri_plot(long ind, const char *filename);
     void plot_tri(const triangle_t &t, struct bu_color *buc, FILE *plot, int r, int g, int b);
 
     void tris_vect_plot_2d(std::vector<triangle_t> &tset, const char *filename);

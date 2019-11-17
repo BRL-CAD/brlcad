@@ -3215,6 +3215,12 @@ void cdt_mesh_t::tri_plot(const triangle_t &tri, const char *filename)
     fclose(plot_file);
 }
 
+void cdt_mesh_t::tri_plot(long ind, const char *filename)
+{
+    triangle_t tri = tris_vect[ind];
+    tri_plot(tri, filename);
+}
+
 void cdt_mesh_t::ctris_vect_plot(std::vector<struct ctriangle_t> &tvect, const char *filename)
 {
     FILE* plot_file = fopen(filename, "w");
