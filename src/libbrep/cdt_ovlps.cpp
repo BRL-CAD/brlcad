@@ -1280,7 +1280,13 @@ tri_isect(
     }
 
     if (vert_isect) {
-	return 1;
+	if (process) {
+	    return 1;
+	} else {
+	    // If we're not vertex processing, this category of intersection
+	    // isn't one that warrants a hit return.
+	    return 0;
+	}
     }
 
 #if 0
@@ -2460,7 +2466,7 @@ shared_cdts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs)
 	    vsets.push_back(m_it->second);
 	    mcnt++;
 	}
-	for (int i = 0; i < 2; i++) {
+	for (int i = 0; i < mcnt; i++) {
 	    int other = (i == 0) ? 1 : 0;
 	    std::set<overt_t *>::iterator ov_it;
 	    for (ov_it = vsets[i].begin(); ov_it != vsets[i].end(); ov_it++) {
@@ -2471,6 +2477,7 @@ shared_cdts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs)
 	}
     }
 
+    std::set<std::pair<omesh_t *, size_t>>::iterator g_it;
     for (v_it = cvert_bins.begin(); v_it != cvert_bins.end(); v_it++) {
 	std::map<omesh_t *,std::set<overt_t *>>::iterator m_it;
 
@@ -2488,9 +2495,12 @@ shared_cdts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs)
 	    for (m_it = v_it->second.begin(); m_it != v_it->second.end(); m_it++) {
 		std::cout << "      " << m_it->first->fmesh->name << " " << m_it->first->fmesh->f_id << ": " << m_it->second.size() << " verts\n";
 	    }
+	    for (g_it = bins[v_it->first].begin(); g_it != bins[v_it->first].end(); g_it++) {
+		std::cout << "      " << g_it->first->fmesh->name << " " << g_it->first->fmesh->f_id << " triangle " << g_it->second << "\n";
+	    }
+	
 	} else {
 	    std::cout << "Non-aligned overlap persisting in mesh:\n";
-	    std::set<std::pair<omesh_t *, size_t>>::iterator g_it;
 	    for (g_it = bins[v_it->first].begin(); g_it != bins[v_it->first].end(); g_it++) {
 		std::cout << "                  " << g_it->first->fmesh->name << " " << g_it->first->fmesh->f_id << " triangle " << g_it->second << "\n";
 	    }
