@@ -2585,6 +2585,75 @@ omesh_interior_edge_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs
     return rcnt;
 }
 
+static int
+ptri_process(cdt_mesh::cpolygon_t *polygon, omesh_t *om, std::set<long> &overts, size_t tind, std::set<cdt_mesh::uedge_t> *ne, std::set<cdt_mesh::uedge_t> *se)
+{
+    cdt_mesh::triangle_t t = om->fmesh->tris_vect[tind];
+
+    bool e_shared[3];
+    struct cdt_mesh::edge_t e[3];
+    struct cdt_mesh::uedge_t ue[3];
+    for (int i = 0; i < 3; i++) {
+	e_shared[i] = false;
+    }
+    e[0].set(t.v[0], t.v[1]);
+    e[1].set(t.v[1], t.v[2]);
+    e[2].set(t.v[2], t.v[0]);
+    ue[0].set(t.v[0], t.v[1]);
+    ue[1].set(t.v[1], t.v[2]);
+    ue[2].set(t.v[2], t.v[0]);
+
+    // Check the polygon edges against the triangle edges
+    for (int i = 0; i < 3; i++) {
+	std::set<cdt_mesh::cpolyedge_t *>::iterator pe_it;
+	for (pe_it = polygon->poly.begin(); pe_it != polygon->poly.end(); pe_it++) {
+	    cdt_mesh::cpolyedge_t *pe = *pe_it;
+	    cdt_mesh::uedge_t pue(pe->v[0], pe->v[1]);
+	    if (ue[i] == pue) {
+		e_shared[i] = true;
+		break;
+	    }
+	}
+    }
+
+    // Count categories and file edges in the appropriate output sets
+    long shared_cnt = 0;
+    for (int i = 0; i < 3; i++) {
+	if (e_shared[i]) {
+	    shared_cnt++;
+	    se->insert(ue[i]);
+	} else {
+	    ne->insert(ue[i]);
+	}
+    }
+
+    if (shared_cnt == 0) {
+	std::cerr << "ovlp aligned resolve triangle growth error\n";
+	return 0;
+    }
+
+    if (shared_cnt == 1) {
+	// If we've got only one shared edge, there should be a vertex not currently
+	// involved with the loop - verify that, and if it's true report it.
+	long unshared_vert = polygon->unshared_vertex(t);
+
+	if (overts.find(unshared_vert) != overts.end()) {
+	    // Adds a vert we want
+	    return 1;
+	}
+	return 0;
+    }
+
+
+    if (shared_cnt == 2) {
+	// Two shared edges - all three verts are already in the polygon.  We want
+	// this one
+	return 1;
+    }
+
+    return 0;
+}
+
 void
 shared_cdts(
 	std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs,
@@ -2805,24 +2874,157 @@ shared_cdts(
 	}
     }
 
-    // Find the best fit plane of all 3D points from all the vertices in play from both
-    // meshes.  This will be our polygon plane.
+    for (size_t bin_id = 0; bin_id < bins.size(); bin_id++) {
+	// Find the best fit plane of all 3D points from all the vertices in play from both
+	// meshes.  This will be our polygon plane.
+	std::set<std::pair<omesh_t *, size_t>> &grp = bins[bin_id];
+	omesh_t *om[2] = {NULL, NULL};
+	int gcnt = 0;
+	std::set<std::pair<omesh_t *, size_t>>::iterator g_it;
+	for (g_it = grp.begin(); g_it != grp.end(); g_it++) {
+	    if (!gcnt || (om[gcnt - 1] != g_it->first) ) {
+		om[gcnt] = g_it->first;
+		gcnt++;
+		continue;
+	    }
+	    if (g_it->first == om[0] || g_it->first == om[1]) {
+		continue;
+	    }
+	    if (gcnt > 1) {
+		std::cout << "Error - more than two meshes in group??\n";
+	    }
+	}
+	std::set<size_t> om1_tris, om2_tris;
+	std::set<long> om1_verts, om2_verts;
+	for (g_it = grp.begin(); g_it != grp.end(); g_it++) {
+	    if (g_it->first == om[0]) {
+		om1_tris.insert(g_it->second);
+		for (int i = 0; i < 3; i++) {
+		    om1_verts.insert(om[0]->fmesh->tris_vect[g_it->second].v[i]);
+		}
+		continue;
+	    }
+	    if (g_it->first == om[1]) {
+		om2_tris.insert(g_it->second);
+		for (int i = 0; i < 3; i++) {
+		    om2_verts.insert(om[1]->fmesh->tris_vect[g_it->second].v[i]);
+		}
+		continue;
+	    }
+	    std::cout << "Error - triangle not assigned to either mesh??\n";
+	}
 
-    // With a seed triangle from each mesh, grow two polygons such that all active
-    // vertices from each mesh are either boundary or interior points on the polygons.
-    // Normally, shouldn't grow beyond the active triangle set in the mesh - there may
-    // however be cases were we need to for a valid projection (next step)
+	std::set<ON_3dPoint> plane_pnts;
+	std::set<long>::iterator vp_it;
+	for (vp_it = om1_verts.begin(); vp_it != om1_verts.end(); vp_it++) {
+	    ON_3dPoint p = *om[0]->fmesh->pnts[*vp_it];
+	    plane_pnts.insert(p);
+	}
+	for (vp_it = om2_verts.begin(); vp_it != om2_verts.end(); vp_it++) {
+	    ON_3dPoint p = *om[1]->fmesh->pnts[*vp_it];
+	    plane_pnts.insert(p);
+	}
 
-    // If any points are not contained or too close to an edge but not on
-    // it, we need to grow *both* meshes' polygons out from the edge nearest to the
-    // problematic point.
+	point_t pcenter;
+	vect_t pnorm;
+	point_t *fpnts = (point_t *)bu_calloc(plane_pnts.size(), sizeof(point_t), "fitting points");
+	std::set<ON_3dPoint>::iterator p_it;
+	int pcnt = 0;
+	for (p_it = plane_pnts.begin(); p_it != plane_pnts.end(); p_it++) {
+	    fpnts[pcnt][X] = p_it->x;
+	    fpnts[pcnt][Y] = p_it->y;
+	    fpnts[pcnt][Z] = p_it->z;
+	    pcnt++;
+	}
+	if (bn_fit_plane(&pcenter, &pnorm, plane_pnts.size(), fpnts)) {
+	    std::cout << "fitting plane failed!\n";
+	}
+	bu_free(fpnts, "fitting points");
 
-    // Maybe? Adjust the polygon starting point so that everything lines up with both polygons - 
-    // may not be strictly necessary, depending on how we assemble things...
+	ON_Plane fit_plane(pcenter, pnorm);
 
-    // CDT the polygon in the shared plane.  Those triangles will now map back to matching
-    // closest points in both meshes.  Remove the original triangles from each mesh, and
-    // replace with the new in both meshes.
+
+	// With a seed triangle from each mesh, grow two polygons such that all active
+	// vertices from each mesh are either boundary or interior points on the polygons.
+	// Normally, shouldn't grow beyond the active triangle set in the mesh - there may
+	// however be cases were we need to for a valid projection (next step)
+	//
+	// TODO - the below logic is the right idea, but om1_verts is not the
+	// vertex list to use - that's just from the overlapping triangles.  We
+	// need the vert_bin set that includes all of the vertices active due
+	// to the other mesh's triangles as well.
+	std::set<long>::iterator tv_it;
+
+	cdt_mesh::cpolygon_t *polygon = new cdt_mesh::cpolygon_t;
+	polygon->pdir = fit_plane.Normal();
+	polygon->tplane = fit_plane;
+	for (tv_it = om1_verts.begin(); tv_it != om1_verts.end(); tv_it++) {
+	    double u, v;
+	    long pind = *tv_it;
+	    ON_3dPoint *p = om[0]->fmesh->pnts[pind];
+	    fit_plane.ClosestPointTo(*p, &u, &v);
+	    std::pair<double, double> proj_2d;
+	    proj_2d.first = u;
+	    proj_2d.second = v;
+	    polygon->pnts_2d.push_back(proj_2d);
+	    polygon->p2o[polygon->pnts_2d.size() - 1] = pind;
+	}
+	// Seed the polygon with one of the triangles.
+	cdt_mesh::triangle_t tri1 = om[0]->fmesh->tris_vect[*(om1_tris.begin())];
+	cdt_mesh::edge_t e1(tri1.v[0], tri1.v[1]);
+	cdt_mesh::edge_t e2(tri1.v[1], tri1.v[2]);
+	cdt_mesh::edge_t e3(tri1.v[2], tri1.v[0]);
+	polygon->add_edge(e1);
+	polygon->add_edge(e2);
+	polygon->add_edge(e3);
+
+	// Now, the hard part.  We need to grow the polygon to encompass the om1_vert vertices.  This
+	// may involve more triangles than om1_tris, but shouldn't involve vertices that aren't in the
+	// om1_vert set.
+	std::set<long> unused_verts = om1_verts;
+	std::set<size_t> visited_tris, added_tris;
+	visited_tris.insert(tri1.ind);
+	added_tris.insert(tri1.ind);
+	unused_verts.erase(tri1.v[0]);
+	unused_verts.erase(tri1.v[1]);
+	unused_verts.erase(tri1.v[2]);
+
+	while (unused_verts.size()) {
+	    std::set<cdt_mesh::cpolyedge_t *>::iterator pe_it;
+	    for (pe_it = polygon->poly.begin(); pe_it != polygon->poly.end(); pe_it++) {
+		cdt_mesh::cpolyedge_t *pe = *pe_it;
+		cdt_mesh::uedge_t ue(pe->v[0], pe->v[1]);
+		std::set<size_t> petris = om[0]->fmesh->uedges2tris[ue];
+		std::set<size_t>::iterator t_it;
+		for (t_it = petris.begin(); t_it != petris.end(); t_it++) {
+		    if (visited_tris.find(*t_it) != visited_tris.end()) continue;
+		    visited_tris.insert(*t_it);
+		    // If either all three points are in the active set or the
+		    // point not on the shared edge is in the set, the triangle
+		    // should be considered.
+		    std::set<cdt_mesh::uedge_t> new_edges;
+		    std::set<cdt_mesh::uedge_t> shared_edges;
+		    if (ptri_process(polygon, om[0], om1_verts, *t_it, &new_edges, &shared_edges)) {
+			added_tris.insert(*t_it);
+			cdt_mesh::triangle_t ntri = om[0]->fmesh->tris_vect[*t_it];
+			unused_verts.erase(ntri.v[0]);
+			unused_verts.erase(ntri.v[1]);
+			unused_verts.erase(ntri.v[2]);
+			polygon->replace_edges(new_edges, shared_edges);
+		    }
+		}
+	    }
+	}
+
+
+	// TODO - If any points are not contained or too close to an edge but not on
+	// it, we need to grow *both* meshes' polygons out from the edge nearest to the
+	// problematic point.
+
+	// CDT the polygon in the shared plane.  Those triangles will now map back to matching
+	// closest points in both meshes.  Remove the original triangles from each mesh, and
+	// replace with the new in both meshes.
+    }
 }
 
 
