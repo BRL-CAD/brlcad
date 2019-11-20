@@ -41,6 +41,7 @@ set(documentation_DATA
   irprep.tr
   mater.txt
   matrix.txt
+  pre_BRL-CAD.bib
   )
 ADD_DOC(documentation_DATA ".")
 
