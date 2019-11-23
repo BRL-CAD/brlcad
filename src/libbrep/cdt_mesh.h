@@ -195,6 +195,8 @@ struct triangle_t {
 	ind = other.ind;
     }
 
+    triangle_t& operator=(const triangle_t &other) = default;
+
     std::set<uedge_t> uedges()
     {
 	std::set<uedge_t> ue;
