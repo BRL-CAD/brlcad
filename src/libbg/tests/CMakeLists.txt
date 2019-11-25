@@ -57,7 +57,11 @@ CMAKEFILES(chull_test004_bot.asc)
 # 3D Convex Hull tests
 BRLCAD_ADDEXEC(bg_chull3d chull3d.c "libbg;libbn;libbu" TEST)
 
+#  ************ lseg_lseg.c tests ***********
 
+BRLCAD_ADDEXEC(bg_lseg_lseg_dist lseg_lseg.c "libbg;libbn;libbu" TEST)
+
+add_test(NAME bg_lseg_lseg_1   COMMAND bg_lseg_lseg_dist 1)
 
 #  ************ tri_tri.c tests ***********
 

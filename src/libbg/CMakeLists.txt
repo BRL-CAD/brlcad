@@ -14,6 +14,7 @@ set(LIBBG_SOURCES
   QuickHull.cpp
   chull3d.cpp
   clipper.cpp
+  lseg_lseg.c
   obr.c
   polygon.c
   polygon_triangulate.cpp
