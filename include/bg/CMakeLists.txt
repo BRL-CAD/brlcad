@@ -1,6 +1,7 @@
 set(bg_headers
   chull.h
   defines.h
+  lseg.h
   obr.h
   polygon.h
   spsr.h
