@@ -20,6 +20,7 @@
 
 #include "common.h"
 #include "vmath.h"
+#include "bg/lseg.h"
 
 struct bg_lseg_result {
     double distance, sqrDistance;
