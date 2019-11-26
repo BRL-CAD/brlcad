@@ -1973,10 +1973,6 @@ event_check(int non_blocking)
 	}
     }
 
-    if (bu_debug > 0) {
-	bu_log("Handled %d events\n", handled);
-    }
-
     non_blocking = 0;
 
     if (DBIP == DBI_NULL)
