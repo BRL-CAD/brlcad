@@ -62,9 +62,8 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 * g-obj not exporting colors
 
-* finish implementation and testing of bu_dir. bu_brlcad_root and
-  bu_brlcad_data will need verbose deprecation process.  Also need
-  need matching tcl function.
+* finish testing of libbu bu_dir API and matching bu_dir TCL function.
+  bu_brlcad_root and bu_brlcad_data will need verbose deprecation process.
 
 * Need to eliminate bu_argv0_full_path and rework the bu_brlcad_*
   functions that currently rely on it to take that path as a
