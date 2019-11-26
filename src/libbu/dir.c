@@ -350,10 +350,10 @@ vdir(char *result, size_t len, va_list args)
 		append(&vls, cpath);
 		break;
 	    case BU_DIR_EXT:
-		bu_log("UNIMPLEMENTED\n");
+		append(&vls, EXE_SUFFIX);
 		break;
 	    case BU_DIR_LIBEXT:
-		bu_log("UNIMPLEMENTED\n");
+		append(&vls, SHARED_LIB_SUFFIX);
 		break;
 	    default:
 		append(&vls, (const char *)arg);

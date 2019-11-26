@@ -948,6 +948,11 @@ if(DEFINED BRLCAD_VERSION_AMEND)
   CONFIG_H_APPEND(BRLCAD "#define BRLCAD_VERSION_AMEND ${BRLCAD_VERSION_AMEND}\n")
 endif(DEFINED BRLCAD_VERSION_AMEND)
 
+# bu_dir needs to know some platform-specific information about executable and library
+# suffixes - just use CMake's knowledge of this information
+CONFIG_H_APPEND(BRLCAD "#define EXE_SUFFIX \"${CMAKE_EXECUTABLE_SUFFIX}\"\n")
+CONFIG_H_APPEND(BRLCAD "#define SHARED_LIB_SUFFIX \"${CMAKE_SHARED_LIBRARY_SUFFIX}\"\n")
+
 #----------------------------------------------------------------------
 # If we're not debugging, we want HIDDEN to be defined as static.  Set
 # the NDEBUG flag accordingly, and common.h will take it from there.
